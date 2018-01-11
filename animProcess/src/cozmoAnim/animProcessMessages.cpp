@@ -35,7 +35,10 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
+#include "osState/osState.h"
+
 #include "util/console/consoleSystem.h"
+#include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 
 #define LOG_CHANNEL    "AnimProcessMessages"
@@ -55,6 +58,11 @@ namespace {
   Anki::Cozmo::AnimationStreamer*            _animStreamer = nullptr;
   Anki::Cozmo::Audio::EngineRobotAudioInput* _audioInput = nullptr;
   const Anki::Cozmo::CozmoAnimContext*       _context = nullptr;
+
+  #ifndef SIMULATOR
+  const u8 kNumTicksToCheckForBC = 60; // ~2seconds
+  u8 _bcCheckCount = 0;
+  #endif
 }
 
 namespace Anki {
@@ -160,6 +168,25 @@ void Process_setDebugConsoleVarMessage(const Anki::Cozmo::RobotInterface::SetDeb
     //                                       consoleVar, false);
   }
 }
+
+void Process_startRecordingMics(const Anki::Cozmo::RobotInterface::StartRecordingMics& msg)
+{
+  auto* micDataProcessor = _context->GetMicDataProcessor();
+  if (micDataProcessor == nullptr)
+  {
+    return;
+  }
+
+  micDataProcessor->RecordRawAudio(msg.duration_ms,
+                                   std::string(msg.path,
+                                               msg.path_length),
+                                   msg.runFFT);
+}
+
+void Process_drawTextOnScreen(const Anki::Cozmo::RobotInterface::DrawTextOnScreen& msg)
+{
+  FaceDisplay::GetDebugDraw()->SetCustomText(msg);
+}
   
 void Process_runDebugConsoleFuncMessage(const Anki::Cozmo::RobotInterface::RunDebugConsoleFuncMessage& msg)
 {
@@ -216,6 +243,8 @@ void AnimProcessMessages::ProcessMessageFromEngine(const RobotInterface::EngineT
 
 static void ProcessMicDataMessage(const RobotInterface::MicData& payload)
 {
+  FaceDisplay::GetDebugDraw()->DrawMicInfo(payload);
+
   auto * micDataProcessor = _context->GetMicDataProcessor();
   if (micDataProcessor != nullptr)
   {
@@ -225,6 +254,8 @@ static void ProcessMicDataMessage(const RobotInterface::MicData& payload)
 
 static void HandleRobotStateUpdate(const Anki::Cozmo::RobotState& robotState)
 {
+  FaceDisplay::GetDebugDraw()->DrawStateInfo(robotState);
+
   static bool buttonWasPressed = false;
   const auto buttonIsPressed = static_cast<bool>(robotState.status & (uint16_t)RobotStatusFlag::IS_BUTTON_PRESSED);
   const auto buttonReleased = buttonWasPressed && !buttonIsPressed;
@@ -288,6 +319,14 @@ Result AnimProcessMessages::Init(AnimationStreamer* animStreamer,
   DEV_ASSERT(_audioInput != nullptr, "AnimProcessMessages.Init.NullAudioInput");
   DEV_ASSERT(_context != nullptr, "AnimProcessMessages.Init.NullContext");
 
+  #ifdef SIMULATOR
+  const bool haveBC = true;
+  #else
+  const bool haveBC = Util::FileUtils::FileExists("/data/persist/factory/80000000.nvdata");
+  #endif
+
+  FaceDisplay::GetDebugDraw()->SetShouldDrawFAC(!haveBC);
+
   return RESULT_OK;
 }
 
@@ -300,6 +339,7 @@ Result AnimProcessMessages::MonitorConnectionState(void)
 
     RobotInterface::RobotAvailable idMsg;
     idMsg.hwRevision = 0;
+    idMsg.serialNumber = OSState::getInstance()->GetSerialNumber();
     RobotInterface::SendAnimToEngine(idMsg);
 
     // send firmware info indicating simulated or physical robot type
@@ -377,6 +417,15 @@ void AnimProcessMessages::Update()
     }
     ProcessMessageFromRobot(msgBuf);
   }
+
+  #ifndef SIMULATOR
+  if(++_bcCheckCount >= kNumTicksToCheckForBC)
+  {
+    _bcCheckCount = 0;
+    const bool haveBC = Util::FileUtils::FileExists("/data/persist/factory/80000000.nvdata");
+    FaceDisplay::GetDebugDraw()->SetShouldDrawFAC(!haveBC);
+  }
+  #endif
 }
 
 bool AnimProcessMessages::SendAnimToRobot(const RobotInterface::EngineToRobot& msg)

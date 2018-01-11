@@ -430,7 +430,7 @@ struct DockingErrorSignal;
   }
   
   inline void VisionComponent::StoreNextImageForCameraCalibration() {
-    StoreNextImageForCameraCalibration(Rectangle<s32>(-1,-1,-1, -1));
+    StoreNextImageForCameraCalibration(Rectangle<s32>(-1,-1,0,0));
   }
   
   inline void VisionComponent::StoreNextImageForCameraCalibration(const Rectangle<s32>& targetROI) {

@@ -1670,16 +1670,24 @@ namespace Anki {
 
               case (s32)'@':
               {
-                static bool enable = true;
-                ExternalInterface::SendAvailableObjects msg;
-                msg.enable = enable;
-                
-                LOG_INFO("SendAvailableObjects", "enable: %d", enable);
-                ExternalInterface::MessageGameToEngine msgWrapper;
-                msgWrapper.Set_SendAvailableObjects(msg);
-                SendMessage(msgWrapper);
-                
-                enable = !enable;
+                if(altKeyPressed)
+                {
+                  SendMessage(ExternalInterface::MessageGameToEngine(
+                              ExternalInterface::ExecuteBehaviorByID("PlaypenTest", -1)));
+                }
+                else
+                {
+                  static bool enable = true;
+                  ExternalInterface::SendAvailableObjects msg;
+                  msg.enable = enable;
+                  
+                  LOG_INFO("SendAvailableObjects", "enable: %d", enable);
+                  ExternalInterface::MessageGameToEngine msgWrapper;
+                  msgWrapper.Set_SendAvailableObjects(msg);
+                  SendMessage(msgWrapper);
+                  
+                  enable = !enable;
+                }
                 break;
               }
               case (s32)'#':
@@ -1695,6 +1703,7 @@ namespace Anki {
                 if(altKeyPressed) {
                   SendClearCalibrationImages();
                 } else {
+                  LOG_INFO("", "Saving image");
                   SendSaveCalibrationImage();
                 }
                 break;

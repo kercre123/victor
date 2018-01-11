@@ -36,6 +36,8 @@ protected:
 public:
   u16 GetLatestDistance_mm() const { return _latestData.distance_mm; }
   
+  const ProxSensorData& GetLatestProxData() const { return _latestData; }
+
   // Returns the current pose of the prox sensor w.r.t. robot. Computed on-the-fly
   // since it depends on the robot's pose.
   Pose3d GetPose() const;

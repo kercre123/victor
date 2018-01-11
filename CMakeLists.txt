@@ -45,7 +45,9 @@ add_compile_options(
 # Factory build options
 #
 if (FACTORY_TEST)
-  add_definitions(-DFACTORY_TEST)
+  add_definitions(-DFACTORY_TEST=1)
+else()
+  add_definitions(-DFACTORY_TEST=0)
 endif()
 
 if (FACTORY_TEST_DEV)

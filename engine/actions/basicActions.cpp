@@ -164,6 +164,8 @@ namespace Anki {
     
     ActionResult TurnInPlaceAction::Init()
     {
+      _turnStarted = false;
+      
       // Ensure that the OffTreadsState is valid
       if (!IsOffTreadsStateValid()) {
         return ActionResult::INVALID_OFF_TREADS_STATE;
@@ -222,7 +224,6 @@ namespace Anki {
       _previousAngle = _currentAngle;
       
       _inPosition = IsBodyInPosition(_currentAngle);
-      _turnStarted = false;
       
       if(!_inPosition) {
 

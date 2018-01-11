@@ -114,7 +114,12 @@ namespace Vision {
     void DrawFilledConvexPolygon(const std::vector<Point2i> points, const ColorRGBA& color);
 
     // TODO: Expose font?
-    void DrawText(const Point2f& position, const std::string& str, const ColorRGBA& color, f32 scale = 1.f, bool dropShadow = false);
+    void DrawText(const Point2f& position, 
+                  const std::string& str, 
+                  const ColorRGBA& color, 
+                  f32 scale = 1.f, 
+                  bool dropShadow = false, 
+                  int thickness = 1);
     
     using Array2d<T>::GetDataPointer;
     using Array2d<T>::IsEmpty;

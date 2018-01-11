@@ -307,7 +307,7 @@ robot/fixture/ankilog/Release
 robot/fixture/ankilog/Debug
 robot/fixture/ankilog/obj
 
-robot2/hal/dfu/dfu
+robot/hal/dfu/dfu
 
 buildMakefile
 

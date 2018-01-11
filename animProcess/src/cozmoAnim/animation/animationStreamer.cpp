@@ -916,7 +916,10 @@ namespace Cozmo {
         _wasAnimationInterruptedWithNothing = false;
       }
       
-      _trackLayerComponent->KeepFaceAlive(_liveAnimParams);
+      if(!FACTORY_TEST)
+      {
+        _trackLayerComponent->KeepFaceAlive(_liveAnimParams);
+      }
     }
     
     if(_streamingAnimation != nullptr) {

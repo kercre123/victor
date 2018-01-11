@@ -21,6 +21,8 @@
 #include "util/helpers/templateHelpers.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 
+#include "osState/osState.h"
+
 namespace Anki {
 namespace Cozmo {
 
@@ -28,12 +30,68 @@ FaceDebugDraw::FaceDebugDraw()
 : _scratchDrawingImg(new Vision::ImageRGB())
 {
   _scratchDrawingImg->Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
+
+  memset(&_customText, 0, sizeof(_customText));
+}
+
+void FaceDebugDraw::SetShouldDrawFAC(bool draw) 
+{ 
+  // TODO(Al): Remove once BC is written to persistent storage and it is easy to revert robots
+  // to factory firmware to rerun them through playpen
+  if(!FACTORY_TEST)
+  {
+    return;
+  }
+
+  bool changed = (_drawFAC != draw);
+  _drawFAC = draw; 
+
+  if(changed) 
+  { 
+    if(draw)
+    {
+      _drawState = DrawState::FAC;
+      DrawFAC();
+    }
+    else
+    {
+      _drawState = DrawState::None;
+    }
+  }
 }
 
 void FaceDebugDraw::ChangeDrawState()
 {
   constexpr auto stateCount = Util::EnumToUnderlying(DrawState::Count);
   _drawState = static_cast<DrawState>((Util::EnumToUnderlying(_drawState) + 1) % stateCount);
+
+  if(_drawFAC && _drawState == DrawState::None)
+  {
+    _drawState = DrawState::FAC;
+  }
+  else if(!_drawFAC && _drawState == DrawState::FAC)
+  {
+    _drawState = static_cast<DrawState>((Util::EnumToUnderlying(_drawState) + 1) % stateCount);
+  }
+
+  _scratchDrawingImg->FillWith(0);
+  DrawScratch();
+
+  // Any debug drawing that does not update very frequently should immediately try to
+  // draw on state change
+  DrawFAC();
+  DrawCustomText();
+}
+
+void FaceDebugDraw::DrawFAC()
+{
+  if(_drawFAC && GetDrawState() == DrawState::FAC)
+  {
+    DrawTextOnScreen({"FAC"},
+                     NamedColors::BLACK,
+                     NamedColors::RED,
+                     { 0, FACE_DISPLAY_HEIGHT-10 });
+  }
 }
 
 void FaceDebugDraw::DrawConfidenceClock(const RobotInterface::MicDirection& micData)
@@ -166,7 +224,173 @@ void FaceDebugDraw::DrawConfidenceClock(const RobotInterface::MicDirection& micD
     (float) (center_px.y() + (int)(barLenFactor[winningIndex].y() * (float)(circleRadius_px + 1.f)))
     }, NamedColors::RED, 5);
 
-  FaceDisplay::getInstance()->DrawToFaceDebug(drawImg);
+  DrawScratch();
+}
+
+void FaceDebugDraw::DrawStateInfo(const RobotState& state)
+{
+  const auto& drawState = GetDrawState();
+
+  if(drawState == DrawState::GeneralInfo)
+  {
+    const std::string ip       = OSState::getInstance()->GetIPAddress();
+    const std::string serialNo = OSState::getInstance()->GetSerialNumberAsString();
+    const std::string osNum    = std::to_string(OSState::getInstance()->GetOSBuildNumber());
+
+    std::vector<std::string> text = {ip, serialNo, osNum};
+
+    if(FACTORY_TEST)
+    {
+      text.push_back("V2");
+    }
+
+    DrawTextOnScreen(text, 
+                     NamedColors::WHITE, 
+                     NamedColors::BLACK, 
+                     {0, 30}, 
+                     20, 
+                     0.5f);
+  }
+  else if(drawState == DrawState::SensorInfo1)
+  {
+    char temp[32] = "";
+    sprintf(temp, 
+            "%u %u %u %u", 
+            state.cliffDataRaw[0], 
+            state.cliffDataRaw[1], 
+            state.cliffDataRaw[2], 
+            state.cliffDataRaw[3]);
+    const std::string cliffs = temp;
+
+    sprintf(temp, 
+            "%.2f %.2f %.1f %.1f", 
+            state.headAngle, 
+            state.liftAngle, 
+            state.lwheel_speed_mmps, 
+            state.rwheel_speed_mmps);
+    const std::string motors = temp;
+
+    sprintf(temp, 
+            "%u %0.2fv", 
+            state.backpackTouchSensorRaw,
+            state.batteryVoltage);
+    const std::string touchAndBat = temp;
+
+    sprintf(temp, 
+            "%.1f %.1f %.1f %u", 
+            state.proxData.signalIntensity,
+            state.proxData.ambientIntensity,
+            state.proxData.spadCount,
+            state.proxData.distance_mm);
+    const std::string prox = temp;
+
+    DrawTextOnScreen({cliffs, motors, prox, touchAndBat}, 
+                     NamedColors::WHITE, 
+                     NamedColors::BLACK, 
+                     {0, 30}, 
+                     20, 
+                     0.5f);
+  }
+  else if(drawState == DrawState::SensorInfo2)
+  {
+    char temp[32] = "";
+    sprintf(temp, 
+            "%*.2f %*.2f", 
+            8,
+            state.accel.x,
+            8, 
+            state.gyro.x);
+    const std::string accelGyroX = temp;
+
+    sprintf(temp, 
+            "%*.2f %*.2f",
+            8, 
+            state.accel.y,
+            8, 
+            state.gyro.y);
+    const std::string accelGyroY = temp;
+
+    sprintf(temp, 
+            "%*.2f %*.2f", 
+            8,
+            state.accel.z,
+            8,
+            state.gyro.z);
+    const std::string accelGyroZ = temp;
+
+    DrawTextOnScreen({accelGyroX, accelGyroY, accelGyroZ}, 
+                     NamedColors::WHITE, 
+                     NamedColors::BLACK, 
+                     {0, 30}, 
+                     20, 
+                     0.5f);
+  }
+}
+
+void FaceDebugDraw::DrawMicInfo(const RobotInterface::MicData& micData)
+{
+  if(GetDrawState() != DrawState::MicInfo)
+  {
+    return;
+  }
+
+  char temp[32] = "";
+  sprintf(temp, 
+          "%d", 
+          micData.data[0]);
+  const std::string micData0 = temp;
+
+  sprintf(temp, 
+          "%d", 
+          micData.data[1]);
+  const std::string micData1 = temp;
+
+  sprintf(temp, 
+          "%d", 
+          micData.data[2]);
+  const std::string micData2 = temp;
+
+  sprintf(temp, 
+          "%d", 
+          micData.data[3]);
+  const std::string micData3 = temp;
+
+  DrawTextOnScreen({micData0, micData1, micData2, micData3}, 
+                   NamedColors::WHITE, 
+                   NamedColors::BLACK, 
+                   {0, 30}, 
+                   20, 
+                   0.5f);
+}
+
+void FaceDebugDraw::SetCustomText(const RobotInterface::DrawTextOnScreen& text)
+{ 
+  _customText = text;
+
+  if(text.drawNow)
+  {
+    _drawState = DrawState::CustomText;
+  }
+
+  DrawCustomText(); 
+}
+
+void FaceDebugDraw::DrawCustomText()
+{
+  if(GetDrawState() != DrawState::CustomText)
+  {
+    return;
+  }
+
+  DrawTextOnScreen({std::string(_customText.text,
+                                _customText.text_length)},
+                   ColorRGBA(_customText.textColor.r,
+                             _customText.textColor.g,
+                             _customText.textColor.b),
+                   ColorRGBA(_customText.bgColor.r,
+                             _customText.bgColor.g,
+                             _customText.bgColor.b),
+                   { 0, FACE_DISPLAY_HEIGHT-10 });
 }
 
 // Draws each element of the textVec on a separate line (spacing determined by textSpacing_pix)
@@ -196,6 +420,33 @@ void FaceDebugDraw::DrawTextOnScreen(const std::vector<std::string>& textVec,
 
     textLocY += textSpacing_pix;
   }
+
+  // Draw the word "Factory" in the top right corner if this is a 
+  // factory build
+  if(FACTORY_TEST)
+  {
+    const Point2f factoryTextLoc = {0, 10};
+    const f32 factoryScale = 0.5f;
+    _scratchDrawingImg->DrawText(factoryTextLoc,
+                                 "Factory",
+                                 NamedColors::WHITE,
+                                 factoryScale);
+  }
+
+  DrawScratch();
+}
+
+void FaceDebugDraw::DrawScratch()
+{
+  const std::string kDebugCount = std::to_string(Util::EnumToUnderlying(DrawState::Count));
+  std::string text = std::to_string(Util::EnumToUnderlying(_drawState)) + "/" + kDebugCount;
+
+  const Point2f textLoc = {static_cast<float>(FACE_DISPLAY_WIDTH - (text.length()*16)), 10};
+  const f32 textScale = 0.5f;
+  _scratchDrawingImg->DrawText(textLoc,
+                               text,
+                               NamedColors::WHITE,
+                               textScale);
 
   FaceDisplay::getInstance()->DrawToFaceDebug(*_scratchDrawingImg);
 }

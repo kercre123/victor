@@ -296,6 +296,30 @@ message SetBackpackLights
   uint_8 layer = 0      // 0 is BPL_USER
 }
 
+message StartRecordingMics
+{
+  uint_32 duration_ms,
+  bool    runFFT,
+  string  path
+}
+
+structure ColorRGB
+{
+  uint_8 r,
+  uint_8 g,
+  uint_8 b
+}
+
+message DrawTextOnScreen
+{
+  // Whether or not to override what is currently on screen, otherwise draws to "CustomText" debug
+  // screen which will show when selected with the backpack button
+  bool drawNow = 0,
+  ColorRGB textColor,
+  ColorRGB bgColor,
+  string   text
+}
+
 // DisplayProceduralFace
 message DisplayProceduralFace 
 {
@@ -440,10 +464,14 @@ union EngineToRobot
   LockAnimTracks                lockAnimTracks              = 0x51,
   //      FREE SLOT                                         = 0x52,
   AbortAnimation                abortAnimation              = 0x53,
-  DisplayProceduralFace         displayProceduralFace       = 0x54,
-  SetFaceHue                    setFaceHue                  = 0x55,
-  DisplayFaceImageBinaryChunk   displayFaceImageBinaryChunk = 0x56,
-  DisplayFaceImageRGBChunk      displayFaceImageRGBChunk    = 0x57,
+
+  StartRecordingMics            startRecordingMics          = 0x54,
+  DrawTextOnScreen              drawTextOnScreen            = 0x55,
+
+  DisplayProceduralFace         displayProceduralFace       = 0x56,
+  SetFaceHue                    setFaceHue                  = 0x57,
+  DisplayFaceImageBinaryChunk   displayFaceImageBinaryChunk = 0x58,
+  DisplayFaceImageRGBChunk      displayFaceImageRGBChunk    = 0x59,
 
   AudioEngine::Multiplexer::PostAudioEvent        postAudioEvent       = 0x70,
   AudioEngine::Multiplexer::StopAllAudioEvents    stopAllAudioEvents   = 0x71,
