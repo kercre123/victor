@@ -87,4 +87,9 @@ if (MACOSX)
     COMMAND test_engine
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   )
+
+  set_tests_properties(test_engine
+    PROPERTIES
+    ENVIRONMENT "GTEST_OUTPUT=xml:cozmoEngineGoogleTest.xml"
+  )
 endif(MACOSX)

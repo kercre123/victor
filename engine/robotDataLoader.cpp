@@ -42,6 +42,12 @@
 #include <string>
 #include <sys/stat.h>
 
+#define LOG_CHANNEL    "RobotDataLoader"
+#define LOG_ERROR      PRINT_NAMED_ERROR
+#define LOG_WARNING    PRINT_NAMED_WARNING
+#define LOG_INFO(...)  PRINT_CH_INFO(LOG_CHANNEL, ##__VA_ARGS__)
+#define LOG_DEBUG(...) PRINT_CH_INFO(LOG_CHANNEL, ##__VA_ARGS__)
+
 namespace {
 
 CONSOLE_VAR(bool, kStressTestThreadedPrintsDuringLoad, "RobotDataLoader", false);
@@ -276,7 +282,7 @@ void RobotDataLoader::LoadAnimationGroups()
   const auto size = fileList.size();
   for (int i = 0; i < size; i++) {
     myWorker.PushJob(fileList[i]);
-    //PRINT_NAMED_DEBUG("RobotDataLoader.LoadAnimationGroups", "loaded anim group %d of %zu", i, size);
+    //LOG_DEBUG("RobotDataLoader.LoadAnimationGroups", "loaded anim group %d of %zu", i, size);
   }
   myWorker.Process();
 }
@@ -291,7 +297,7 @@ void RobotDataLoader::WalkAnimationDir(const std::string& animationDir, Timestam
     struct stat attrib{0};
     int result = stat(path.c_str(), &attrib);
     if (result == -1) {
-      PRINT_NAMED_WARNING("RobotDataLoader.WalkAnimationDir", "could not get mtime for %s", path.c_str());
+      LOG_WARNING("RobotDataLoader.WalkAnimationDir", "could not get mtime for %s", path.c_str());
       continue;
     }
     bool loadFile = false;
@@ -352,11 +358,11 @@ void RobotDataLoader::LoadEmotionEvents()
     if (success && !eventJson.empty())
     {
       _emotionEvents.emplace(std::piecewise_construct, std::forward_as_tuple(filename), std::forward_as_tuple(std::move(eventJson)));
-      PRINT_NAMED_DEBUG("RobotDataLoader.EmotionEvents", "Loaded '%s'", filename.c_str());
+      LOG_DEBUG("RobotDataLoader.EmotionEvents", "Loaded '%s'", filename.c_str());
     }
     else
     {
-      PRINT_NAMED_WARNING("RobotDataLoader.EmotionEvents", "Failed to read '%s'", filename.c_str());
+      LOG_WARNING("RobotDataLoader.EmotionEvents", "Failed to read '%s'", filename.c_str());
     }
   }
 }
@@ -386,7 +392,7 @@ void RobotDataLoader::LoadBehaviors()
     }
     else if (!success)
     {
-      PRINT_NAMED_WARNING("RobotDataLoader.Behavior", "Failed to read '%s'", filename.c_str());
+      LOG_WARNING("RobotDataLoader.Behavior", "Failed to read '%s'", filename.c_str());
     }
   }
 }
@@ -401,9 +407,9 @@ void RobotDataLoader::LoadVoiceCommandConfigs()
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _voiceCommandConfig);
     if (!success)
     {
-      PRINT_NAMED_ERROR("RobotDataLoader.VoiceCommandConfigJsonFailed",
-                        "Voice Command Json config file %s not found or failed to parse",
-                        jsonFilename.c_str());
+      LOG_ERROR("RobotDataLoader.VoiceCommandConfigJsonFailed",
+                "Voice Command Json config file %s not found or failed to parse",
+                jsonFilename.c_str());
       _voiceCommandConfig.clear();
     }
   }
@@ -415,9 +421,9 @@ void RobotDataLoader::LoadVoiceCommandConfigs()
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _gameRequestWeights);
     if (!success)
     {
-      PRINT_NAMED_ERROR("RobotDataLoader.LetsPlayWeightsConfigFailed",
-                        "Lets play Json config file %s not found or failed to parse",
-                        jsonFilename.c_str());
+      LOG_ERROR("RobotDataLoader.LetsPlayWeightsConfigFailed",
+                "Lets play Json config file %s not found or failed to parse",
+                jsonFilename.c_str());
       _gameRequestWeights.clear();
     }
   }
@@ -428,9 +434,9 @@ void RobotDataLoader::LoadVoiceCommandConfigs()
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _doATrickWeights);
     if (!success)
     {
-      PRINT_NAMED_ERROR("RobotDataLoader.DoATrickWeightsConfigFailed",
-                        "Do a trick Json config file %s not found or failed to parse",
-                        jsonFilename.c_str());
+      LOG_ERROR("RobotDataLoader.DoATrickWeightsConfigFailed",
+                "Do a trick Json config file %s not found or failed to parse",
+                  jsonFilename.c_str());
       _doATrickWeights.clear();
     }
   }
@@ -460,9 +466,9 @@ void RobotDataLoader::LoadRobotConfigs()
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _robotMoodConfig);
     if (!success)
     {
-      PRINT_NAMED_ERROR("RobotDataLoader.MoodConfigJsonNotFound",
-                        "Mood Json config file %s not found or failed to parse",
-                        jsonFilename.c_str());
+      LOG_ERROR("RobotDataLoader.MoodConfigJsonNotFound",
+                "Mood Json config file %s not found or failed to parse",
+                jsonFilename.c_str());
     }
   }
   
@@ -472,9 +478,9 @@ void RobotDataLoader::LoadRobotConfigs()
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _victorFreeplayBehaviorConfig);
     if (!success)
     {
-      PRINT_NAMED_ERROR("RobotDataLoader.BehaviorSystemJsonFailed",
-                        "Behavior Json config file %s not found or failed to parse",
-                        jsonFilename.c_str());
+      LOG_ERROR("RobotDataLoader.BehaviorSystemJsonFailed",
+                "Behavior Json config file %s not found or failed to parse",
+                jsonFilename.c_str());
       _victorFreeplayBehaviorConfig.clear();
     }
   }
@@ -485,9 +491,9 @@ void RobotDataLoader::LoadRobotConfigs()
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _robotWorkoutConfig);
     if (!success)
     {
-      PRINT_NAMED_ERROR("RobotDataLoader.WorkoutConfigJsonFailed",
-                        "Workout Json config file %s not found or failed to parse",
-                        jsonFilename.c_str());
+      LOG_ERROR("RobotDataLoader.WorkoutConfigJsonFailed",
+                "Workout Json config file %s not found or failed to parse",
+                jsonFilename.c_str());
       _robotWorkoutConfig.clear();
     }
   }
@@ -498,9 +504,9 @@ void RobotDataLoader::LoadRobotConfigs()
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _robotVisionConfig);
     if (!success)
     {
-      PRINT_NAMED_ERROR("RobotDataLoader.VisionConfigJsonNotFound",
-                        "Vision Json config file %s not found or failed to parse",
-                        jsonFilename.c_str());
+      LOG_ERROR("RobotDataLoader.VisionConfigJsonNotFound",
+                "Vision Json config file %s not found or failed to parse",
+                jsonFilename.c_str());
     }
   }
   
@@ -515,9 +521,9 @@ void RobotDataLoader::LoadRobotConfigs()
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _needsSystemConfig);
     if (!success)
     {
-      PRINT_NAMED_ERROR("RobotDataLoader.NeedsConfigJsonNotFound",
-                        "Needs System Json config file %s not found or failed to parse",
-                        jsonFilename.c_str());
+      LOG_ERROR("RobotDataLoader.NeedsConfigJsonNotFound",
+                "Needs System Json config file %s not found or failed to parse",
+                jsonFilename.c_str());
     }
   }
   
@@ -527,9 +533,9 @@ void RobotDataLoader::LoadRobotConfigs()
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _starRewardsConfig);
     if (!success)
     {
-      PRINT_NAMED_ERROR("RobotDataLoader.StarsConfigJsonNotFound",
-                        "Needs Level (star rewards) Json config file %s not found or failed to parse",
-                        jsonFilename.c_str());
+      LOG_ERROR("RobotDataLoader.StarsConfigJsonNotFound",
+                "Needs Level (star rewards) Json config file %s not found or failed to parse",
+                jsonFilename.c_str());
     }
   }
 
@@ -539,9 +545,9 @@ void RobotDataLoader::LoadRobotConfigs()
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _needsActionConfig);
     if (!success)
     {
-      PRINT_NAMED_ERROR("RobotDataLoader.ActionConfigJsonNotFound",
-                        "Needs System Action Json config file %s not found or failed to parse",
-                        jsonFilename.c_str());
+      LOG_ERROR("RobotDataLoader.ActionConfigJsonNotFound",
+                "Needs System Action Json config file %s not found or failed to parse",
+                jsonFilename.c_str());
     }
   }
 
@@ -551,9 +557,9 @@ void RobotDataLoader::LoadRobotConfigs()
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _needsDecayConfig);
     if (!success)
     {
-      PRINT_NAMED_ERROR("RobotDataLoader.DecayConfigJsonNotFound",
-                        "Needs System Decay Json config file %s not found or failed to parse",
-                        jsonFilename.c_str());
+      LOG_ERROR("RobotDataLoader.DecayConfigJsonNotFound",
+                "Needs System Decay Json config file %s not found or failed to parse",
+                jsonFilename.c_str());
     }
   }
 
@@ -563,9 +569,9 @@ void RobotDataLoader::LoadRobotConfigs()
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _needsHandlersConfig);
     if (!success)
     {
-      PRINT_NAMED_ERROR("RobotDataLoader.NeedsHandlersConfigJsonNotFound",
-                        "Needs System Handlers Json config file %s not found or failed to parse",
-                        jsonFilename.c_str());
+      LOG_ERROR("RobotDataLoader.NeedsHandlersConfigJsonNotFound",
+                "Needs System Handlers Json config file %s not found or failed to parse",
+                jsonFilename.c_str());
     }
   }
     
@@ -575,9 +581,9 @@ void RobotDataLoader::LoadRobotConfigs()
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _localNotificationConfig);
     if (!success)
     {
-      PRINT_NAMED_ERROR("RobotDataLoader.LocalNotificationConfigJsonNotFound",
-                        "Local notification Json config file %s not found or failed to parse",
-                        jsonFilename.c_str());
+      LOG_ERROR("RobotDataLoader.LocalNotificationConfigJsonNotFound",
+                "Local notification Json config file %s not found or failed to parse",
+                jsonFilename.c_str());
     }
   }
   
@@ -587,9 +593,9 @@ void RobotDataLoader::LoadRobotConfigs()
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _dasEventConfig);
     if (!success)
     {
-      PRINT_NAMED_ERROR("RobotDataLoader.DasEventConfigJsonNotFound",
-                        "DAS Event Json config file %s not found or failed to parse",
-                        jsonFilename.c_str());
+      LOG_ERROR("RobotDataLoader.DasEventConfigJsonNotFound",
+                "DAS Event Json config file %s not found or failed to parse",
+                jsonFilename.c_str());
     }
   }
   
@@ -613,9 +619,9 @@ void RobotDataLoader::LoadRobotConfigs()
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _inventoryConfig);
     if (!success)
     {
-      PRINT_NAMED_ERROR("RobotDataLoader.InventoryConfigNotFound",
-                        "Inventory Config file %s not found or failed to parse",
-                        jsonFilename.c_str());
+      LOG_ERROR("RobotDataLoader.InventoryConfigNotFound",
+                "Inventory Config file %s not found or failed to parse",
+                jsonFilename.c_str());
     }
   }
 }

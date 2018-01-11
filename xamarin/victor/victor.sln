@@ -1,0 +1,96 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "victor", "victor\victor.shproj", "{4173453F-9C5D-4478-879C-5061DC7E2B90}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "victor.Droid", "Droid\victor.Droid.csproj", "{103B2155-CB69-488F-B4DE-424BDDC44D91}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "victor.iOS", "iOS\victor.iOS.csproj", "{9F17C2F4-C1AA-4313-B009-5EEBD47D0069}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+		Debug|iPhoneSimulator = Debug|iPhoneSimulator
+		Release|iPhone = Release|iPhone
+		Release|iPhoneSimulator = Release|iPhoneSimulator
+		Debug|iPhone = Debug|iPhone
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{103B2155-CB69-488F-B4DE-424BDDC44D91}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{103B2155-CB69-488F-B4DE-424BDDC44D91}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{103B2155-CB69-488F-B4DE-424BDDC44D91}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{103B2155-CB69-488F-B4DE-424BDDC44D91}.Release|Any CPU.Build.0 = Release|Any CPU
+		{103B2155-CB69-488F-B4DE-424BDDC44D91}.Debug|iPhoneSimulator.ActiveCfg = Debug|Any CPU
+		{103B2155-CB69-488F-B4DE-424BDDC44D91}.Debug|iPhoneSimulator.Build.0 = Debug|Any CPU
+		{103B2155-CB69-488F-B4DE-424BDDC44D91}.Release|iPhone.ActiveCfg = Release|Any CPU
+		{103B2155-CB69-488F-B4DE-424BDDC44D91}.Release|iPhone.Build.0 = Release|Any CPU
+		{103B2155-CB69-488F-B4DE-424BDDC44D91}.Release|iPhoneSimulator.ActiveCfg = Release|Any CPU
+		{103B2155-CB69-488F-B4DE-424BDDC44D91}.Release|iPhoneSimulator.Build.0 = Release|Any CPU
+		{103B2155-CB69-488F-B4DE-424BDDC44D91}.Debug|iPhone.ActiveCfg = Debug|Any CPU
+		{103B2155-CB69-488F-B4DE-424BDDC44D91}.Debug|iPhone.Build.0 = Debug|Any CPU
+		{9F17C2F4-C1AA-4313-B009-5EEBD47D0069}.Debug|Any CPU.ActiveCfg = Debug|iPhoneSimulator
+		{9F17C2F4-C1AA-4313-B009-5EEBD47D0069}.Debug|Any CPU.Build.0 = Debug|iPhoneSimulator
+		{9F17C2F4-C1AA-4313-B009-5EEBD47D0069}.Release|Any CPU.ActiveCfg = Release|iPhone
+		{9F17C2F4-C1AA-4313-B009-5EEBD47D0069}.Release|Any CPU.Build.0 = Release|iPhone
+		{9F17C2F4-C1AA-4313-B009-5EEBD47D0069}.Debug|iPhoneSimulator.ActiveCfg = Debug|iPhoneSimulator
+		{9F17C2F4-C1AA-4313-B009-5EEBD47D0069}.Debug|iPhoneSimulator.Build.0 = Debug|iPhoneSimulator
+		{9F17C2F4-C1AA-4313-B009-5EEBD47D0069}.Release|iPhone.ActiveCfg = Release|iPhone
+		{9F17C2F4-C1AA-4313-B009-5EEBD47D0069}.Release|iPhone.Build.0 = Release|iPhone
+		{9F17C2F4-C1AA-4313-B009-5EEBD47D0069}.Release|iPhoneSimulator.ActiveCfg = Release|iPhoneSimulator
+		{9F17C2F4-C1AA-4313-B009-5EEBD47D0069}.Release|iPhoneSimulator.Build.0 = Release|iPhoneSimulator
+		{9F17C2F4-C1AA-4313-B009-5EEBD47D0069}.Debug|iPhone.ActiveCfg = Debug|iPhone
+		{9F17C2F4-C1AA-4313-B009-5EEBD47D0069}.Debug|iPhone.Build.0 = Debug|iPhone
+	EndGlobalSection
+	GlobalSection(MonoDevelopProperties) = preSolution
+		Policies = $0
+		$0.TextStylePolicy = $1
+		$1.FileWidth = 80
+		$1.TabWidth = 2
+		$1.TabsToSpaces = True
+		$1.IndentWidth = 2
+		$1.scope = text/x-csharp
+		$0.CSharpFormattingPolicy = $2
+		$2.IndentSwitchSection = False
+		$2.NewLinesForBracesInTypes = False
+		$2.NewLinesForBracesInMethods = False
+		$2.NewLinesForBracesInProperties = False
+		$2.NewLinesForBracesInAccessors = False
+		$2.NewLinesForBracesInAnonymousMethods = False
+		$2.NewLinesForBracesInControlBlocks = False
+		$2.NewLinesForBracesInAnonymousTypes = False
+		$2.NewLinesForBracesInObjectCollectionArrayInitializers = False
+		$2.NewLinesForBracesInLambdaExpressionBody = False
+		$2.SpaceAfterControlFlowStatementKeyword = False
+		$2.scope = text/x-csharp
+		$0.TextStylePolicy = $3
+		$3.FileWidth = 80
+		$3.TabWidth = 2
+		$3.TabsToSpaces = True
+		$3.IndentWidth = 2
+		$3.scope = text/plain
+		$0.TextStylePolicy = $4
+		$4.FileWidth = 80
+		$4.TabWidth = 2
+		$4.TabsToSpaces = True
+		$4.IndentWidth = 2
+		$4.scope = text/x-json
+		$0.JSONFormattingPolicy = $5
+		$5.AutoStructureCompletion = True
+		$5.BracePositions = SemiExpanded
+		$5.FormatOnPaste = True
+		$5.scope = text/x-json
+		$0.TextStylePolicy = $6
+		$6.FileWidth = 80
+		$6.TabWidth = 2
+		$6.TabsToSpaces = True
+		$6.IndentWidth = 2
+		$6.scope = text/x-web
+		$0.TextStylePolicy = $7
+		$7.FileWidth = 80
+		$7.TabWidth = 2
+		$7.TabsToSpaces = True
+		$7.IndentWidth = 2
+		$7.scope = text/x-vs
+	EndGlobalSection
+EndGlobal

@@ -135,8 +135,10 @@ struct MotorPower
 
 struct BatteryState
 {
-  int32_t battery;
-  int32_t charger;
+  int16_t battery;
+  int16_t charger;
+  int16_t temperature;
+  int16_t _unused;
   BatteryFlags flags;
 };
 
@@ -184,7 +186,7 @@ struct SpineMessageFooter
 
 // TODO(Al/Lee): Put back once mics and camera can co-exist
 #define MICDATA_ENABLED 0
-#define MICDATA_SAMPLES_COUNT 480 // 120 samples per channel * 4 channels
+#define MICDATA_SAMPLES_COUNT 320 // 120 samples per channel * 4 channels
 /// Start Packets
 struct BodyToHead
 {
@@ -195,6 +197,7 @@ struct BodyToHead
   struct BatteryState battery;
   struct RangeData proximity;
   uint16_t touchLevel[2];
+  uint8_t _unused[32];  // Future expansion
 #if MICDATA_ENABLED
   int16_t audio[MICDATA_SAMPLES_COUNT];
 #endif
@@ -211,6 +214,7 @@ struct HeadToBody
   PowerState powerState;
   int16_t motorPower[4];
   uint8_t ledColors[16];
+  uint8_t _unused[32];  // Future expansion
 };
 
 struct AckMessage

@@ -8,13 +8,15 @@
 static inline void kick_off();
 static void terminate(void);
 
+#define wait() __asm("nop\n");
+
 #include "led_func.h" // Generated with LEDs.py
 
 static const void_funct function_table[4][8] = {
-  { led_0x0, led_1x0, led_2x0, led_3x0, led_4x0, led_5x0, led_6x0, led_7x0 },
-  { led_0x1, led_1x1, led_2x1, led_3x1, led_4x1, led_5x1, led_6x1, led_7x1 },
   { led_0x2, led_1x2, led_2x2, led_3x2, led_4x2, led_5x2, led_6x2, led_7x2 },
-  { led_0x3, led_1x3, led_2x3, led_3x3, led_4x3, led_5x3, led_6x3, led_7x3 }
+  { led_0x1, led_1x1, led_2x1, led_3x1, led_4x1, led_5x1, led_6x1, led_7x1 },
+  { led_0x0, led_1x0, led_2x0, led_3x0, led_4x0, led_5x0, led_6x0, led_7x0 },
+  { led_0x3, led_1x3, led_0x3, led_1x3, led_2x3, led_3x3, led_2x3, led_3x3 }  // Green channel is fixed
 };
 
 struct LightChannel {
@@ -46,6 +48,7 @@ static LightChannel *current_light;
 static bool disabled;
 
 void Lights::init(void) {
+  LED_CLK::type(TYPE_OPENDRAIN);
   LED_DAT::reset();
   LED_CLK::reset();
   LED_DAT::mode(MODE_OUTPUT);
@@ -80,14 +83,13 @@ static void kick_off(void) {
 }
 
 static void terminate(void) {
-  // Shifing by 3 is enough to disable LEDs
-  LED_DAT::set();
-  LED_CLK::set();
-  LED_CLK::reset();
-  LED_CLK::set();
-  LED_CLK::reset();
-  LED_CLK::set();
-  LED_CLK::reset();
+  // Shifing by 5 is enough to disable LEDs
+  LED_DAT::reset();
+  wait(); LED_CLK::set(); wait(); LED_CLK::reset();
+  wait(); LED_CLK::set(); wait(); LED_CLK::reset();
+  wait(); LED_CLK::set(); wait(); LED_CLK::reset();
+  wait(); LED_CLK::set(); wait(); LED_CLK::reset();
+  wait(); LED_CLK::set(); wait(); LED_CLK::reset();
 }
 
 void Lights::tick(void) {
@@ -130,7 +132,7 @@ void Lights::tick(void) {
       target->funct = function_table[ch][mask];
       target->time = delta;
 
-      mask &= ~sorted[x]->mask;
+      mask ^= sorted[x]->mask;
 
       if (delta >= LIGHT_MINIMUM) target++;
     }

@@ -1,28 +1,28 @@
 #include <string.h>
 
 #include "bignum.h"
-#include "sha512.h"
+#include "sha256.h"
 #include "rsa_pss.h"
 #include "publickeys.h"
 
 // This is encoded in big-endian format
 static const uint8_t PADDING[] = {
-  0x00, 0xFF, 0xFF,
-  SHA512_OID,
+  0x00, 0xFF, 0xFF, 
+  SHA256_OID,
   0xFF, 0xFF, 0x01, 0x00
 };
 
 static void MGF1(uint8_t* db, const uint8_t* checksum, int length) {
   for (uint32_t count = 0; ; count++) {
-    sha512_state digest;
-    uint8_t mask[SHA512_DIGEST_SIZE];
+    sha256_state digest;
+    uint8_t mask[SHA256_DIGEST_SIZE];
 
-    sha512_init(digest);
-    sha512_process(digest, checksum, SHA512_DIGEST_SIZE);
-    sha512_process(digest, &count, sizeof(count));
-    sha512_done(digest, mask);
+    sha_init(digest);
+    sha_process(digest, checksum, SHA256_DIGEST_SIZE);
+    sha_process(digest, &count, sizeof(count));
+    sha_done(digest, mask);
 
-    for (int i = 0; i < SHA512_DIGEST_SIZE; i++) {
+    for (int i = 0; i < SHA256_DIGEST_SIZE; i++) {
       if (length-- <= 0) {
         return ;
       }
@@ -54,13 +54,13 @@ bool verify_cert(const uint8_t* target, const int target_size, const uint8_t* ce
   // Calculate constants
   const int keySize  = big_msb(AS_BN(RSA_CERT_MONT.modulo));
   const int modLength  = keySize / 8;
-  const int dbLength   = modLength - SHA512_DIGEST_SIZE;
+  const int dbLength   = modLength - SHA256_DIGEST_SIZE;
   const int saltLength = dbLength - sizeof(PADDING);
   const int padLength  = keySize % 8;
 
   uint8_t* const decoded = (uint8_t*)rsa_decoded.digits;
   const uint8_t* const mHash = decoded;
-  uint8_t* const dbMasked = &decoded[SHA512_DIGEST_SIZE]; // Also a pointer to the salt
+  uint8_t* const dbMasked = &decoded[SHA256_DIGEST_SIZE]; // Also a pointer to the salt
   const uint8_t* const dbSalt = dbMasked;
   const uint8_t* const dbPadding = &dbMasked[saltLength];
 
@@ -77,22 +77,22 @@ bool verify_cert(const uint8_t* target, const int target_size, const uint8_t* ce
 
   // Generate stage 2 hash
   {
-    sha512_state digest;
-    uint8_t sha_ref[SHA512_DIGEST_SIZE];
+    sha256_state digest;
+    uint8_t sha_ref[SHA256_DIGEST_SIZE];
 
     // Find our application hash
-    sha512_init(digest);
-    sha512_process(digest, target, target_size);
-    sha512_done(digest, sha_ref);
+    sha_init(digest);
+    sha_process(digest, target, target_size);
+    sha_done(digest, sha_ref);
 
     // Check it against our mHash
-    sha512_init(digest);
-    sha512_process(digest, dbSalt, saltLength);
-    sha512_process(digest, sha_ref, sizeof(sha_ref));
-    sha512_process(digest, PADDING, sizeof(PADDING));
-    sha512_done(digest, sha_ref);
+    sha_init(digest);
+    sha_process(digest, dbSalt, saltLength);
+    sha_process(digest, sha_ref, sizeof(sha_ref));
+    sha_process(digest, PADDING, sizeof(PADDING));
+    sha_done(digest, sha_ref);
 
     // If our hashes do not match, cert is bunk
-    return memcmp(sha_ref, mHash, SHA512_DIGEST_SIZE) == 0;
+    return memcmp(sha_ref, mHash, SHA256_DIGEST_SIZE) == 0;
   }
 }

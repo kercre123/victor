@@ -136,7 +136,18 @@ if (MACOSX)
   enable_testing()
 
   add_test(NAME cti_common_test_shared COMMAND cti_common_test_shared)
+
+  set_tests_properties(cti_common_test_shared
+    PROPERTIES
+    ENVIRONMENT "GTEST_OUTPUT=xml:ctiCommonSharedGoogleTest.xml"
+  )
+
   add_test(NAME cti_common_test_engine COMMAND cti_common_test_engine)
+
+  set_tests_properties(cti_common_test_engine
+    PROPERTIES
+    ENVIRONMENT "GTEST_OUTPUT=xml:ctiCommonEngineGoogleTest.xml"
+  )
 
 endif()
 

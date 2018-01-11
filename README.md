@@ -169,11 +169,9 @@ You can view output from all processes by running `victor_log`.
 
 1. Make sure you have built for mac by running `./project/victor/build-victor.sh -p mac` on the same branch as the binaries on the physical robot.
 
-1. Open the world `cozmo2Viz.wbt` in a text editor, and set the fields `forcedRobotIP` and `engineIP` to match your robot's IP address. 
+1. Open the world `cozmo2Viz.wbt` in a text editor, and set the field `engineIP` to match your robot's IP address. 
 
 1. Run the world to connect to the robot. The processes must be fully up and running before connecting with webots. If in doubt, stop the world and run `victor_restart` first.
-
-1. Ad-hoc connections to a robot are not yet supported. If you disconnect Webots and you want to connect again, you will first need to restart the engine, animation, and robot processes by running `victor_restart`.
 
 ## Running Victor in Webots (simulated robot)
 

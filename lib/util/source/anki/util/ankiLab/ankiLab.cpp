@@ -17,6 +17,12 @@
 #include "util/math/numericCast.h"
 #include "util/string/stringUtils.h"
 
+#define LOG_CHANNEL    "AnkiLab"
+#define LOG_ERROR      PRINT_NAMED_ERROR
+#define LOG_WARNING    PRINT_NAMED_WARNING
+#define LOG_INFO(...)  PRINT_CH_INFO(LOG_CHANNEL, ##__VA_ARGS__)
+#define LOG_DEBUG(...) PRINT_CH_DEBUG(LOG_CHANNEL, ##__VA_ARGS__)
+
 namespace Anki {
 namespace Util {
 namespace AnkiLab {
@@ -32,9 +38,9 @@ void AnkiLab::Enable(const bool enabled)
 {
   _enabled = enabled;
   if (_enabled) {
-    PRINT_NAMED_INFO("AnkiLab.Enable", "Enabling the lab");
+    LOG_INFO("AnkiLab.Enable", "Enabling the lab");
   } else {
-    PRINT_NAMED_INFO("AnkiLab.Enable", "Disabling the lab");
+    LOG_INFO("AnkiLab.Enable", "Disabling the lab");
     _activeAssignments.clear();
     _forceAssignments.clear();
     _overrideAssignments.clear();
@@ -48,7 +54,7 @@ bool AnkiLab::Load(const std::string& jsonContents)
 
   bool success = reader.parse(jsonContents, root);
   if (!success) {
-    PRINT_NAMED_ERROR("AnkiLab.Load", "Invalid json format in AnkiLab file");
+    LOG_ERROR("AnkiLab.Load", "Invalid json format in AnkiLab file");
     return false;
   }
 
@@ -184,9 +190,9 @@ size_t AnkiLab::AutoActivateExperimentsForUser(const std::string& userId,
                                                    userId,
                                                    audienceTags,
                                                    variationKey);
-      PRINT_NAMED_INFO("AnkiLab.AutoActivateExperimentsForUser",
-                       "%s : %s : %s",
-                       e.GetKey().c_str(), variationKey.c_str(), EnumToString(status));
+      LOG_INFO("AnkiLab.AutoActivateExperimentsForUser",
+               "%s : %s : %s",
+               e.GetKey().c_str(), variationKey.c_str(), EnumToString(status));
       ++count;
     }
   }
@@ -249,24 +255,24 @@ AssignmentStatus AnkiLab::ActivateExperimentInternal(const std::string& experime
   // If we made it this far, the user is either unassigned or assigned
   AssignmentStatus status = AssignmentStatus::Unassigned;
   if (!IsEnabled()) {
-    PRINT_NAMED_INFO("AnkiLab.ActivateExperiment.LabIsDisabled", "");
+    LOG_INFO("AnkiLab.ActivateExperiment.LabIsDisabled", "");
     return status;
   }
 
   const uint8_t userHashBucket = CalculateExperimentHashBucket(experimentKey, userId);
-  PRINT_NAMED_INFO("AnkiLab.ActivateExperiment.bucket",
-                   "%s : %u",
-                   experimentKey.c_str(), userHashBucket);
+  LOG_INFO("AnkiLab.ActivateExperiment.bucket",
+           "%s : %u",
+            experimentKey.c_str(), userHashBucket);
   const ExperimentVariation* variation = GetExperimentVariation(experiment, userHashBucket);
 
 
   if (nullptr != variation) {
     outVariationKey = variation->GetKey();
-    PRINT_NAMED_INFO("AnkiLab.ActivateExperiment",
-                     "%s : %u : %s",
-                     experiment->GetKey().c_str(),
-                     userHashBucket,
-                     outVariationKey.c_str());
+    LOG_INFO("AnkiLab.ActivateExperiment",
+             "%s : %u : %s",
+             experiment->GetKey().c_str(),
+             userHashBucket,
+             outVariationKey.c_str());
 
     AssignmentDef assignment{experimentKey, userId, variation->GetKey()};
     AssignExperimentVariation(assignment);
@@ -300,12 +306,12 @@ void AnkiLab::ReportExperimentAssignmentResult(const AssignmentDef& assignment,
       { DDATA  , statusInfo.c_str() }
     }, experimentKey.c_str());
 
-    PRINT_NAMED_DEBUG("AnkiLab.experiment.invalid",
-                      "%s:%s:%s - %s",
-                      experimentKey.c_str(),
-                      assignment.GetVariation_key().c_str(),
-                      assignment.GetUser_id().c_str(),
-                      statusInfo.c_str());
+    LOG_DEBUG("AnkiLab.experiment.invalid",
+              "%s:%s:%s - %s",
+              experimentKey.c_str(),
+              assignment.GetVariation_key().c_str(),
+              assignment.GetUser_id().c_str(),
+              statusInfo.c_str());
     return;
   }
 
@@ -331,12 +337,12 @@ void AnkiLab::ReportExperimentAssignmentResult(const AssignmentDef& assignment,
       { DDATA  , info.c_str() }
     }, experimentKey.c_str());
 
-    PRINT_NAMED_DEBUG("AnkiLab.experiment.unassigned",
-                      "%s:%s:%s - %s",
-                      experimentKey.c_str(),
-                      assignment.GetVariation_key().c_str(),
-                      assignment.GetUser_id().c_str(),
-                      info.c_str());
+    LOG_DEBUG("AnkiLab.experiment.unassigned",
+              "%s:%s:%s - %s",
+              experimentKey.c_str(),
+              assignment.GetVariation_key().c_str(),
+              assignment.GetUser_id().c_str(),
+              info.c_str());
   } else {
     Anki::Util::sEvent("experiment.assigned", {
       { "$user", assignment.GetUser_id().c_str() },
@@ -344,12 +350,12 @@ void AnkiLab::ReportExperimentAssignmentResult(const AssignmentDef& assignment,
       { DDATA  , info.c_str() }
     }, experimentKey.c_str());
 
-    PRINT_NAMED_DEBUG("AnkiLab.experiment.assigned",
-                      "%s:%s:%s - %s",
-                      experimentKey.c_str(),
-                      variation->GetKey().c_str(),
-                      assignment.GetUser_id().c_str(),
-                      info.c_str());
+    LOG_DEBUG("AnkiLab.experiment.assigned",
+              "%s:%s:%s - %s",
+              experimentKey.c_str(),
+              variation->GetKey().c_str(),
+              assignment.GetUser_id().c_str(),
+              info.c_str());
   }
 }
 
@@ -398,7 +404,7 @@ AssignmentStatus AnkiLab::ForceActivateExperiment(const std::string& experimentK
     }
   }
 
-  PRINT_NAMED_INFO("AnkiLab.ForceActivate", "ForceAssigned: %s -> %s",
+  LOG_INFO("AnkiLab.ForceActivate", "ForceAssigned: %s -> %s",
                    experiment->GetKey().c_str(), variation->GetKey().c_str());
 
   return AssignmentStatus::ForceAssigned;
