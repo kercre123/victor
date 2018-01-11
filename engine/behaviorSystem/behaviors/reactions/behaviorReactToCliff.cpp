@@ -161,11 +161,8 @@ void BehaviorReactToCliff::TransitionToPlayingStopReaction(Robot& robot)
 
   
   auto action = new CompoundActionParallel(robot);
-#ifndef COZMO_V2
-  // For pre-V2 robots, play the ReactToCliffDetectorStop animations right away. Can't do this for
-  // V2 robots, since the animation drives backwards, which could fling us over the cliff.
   action->AddAction(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::ReactToCliffDetectorStop));
-#endif
+  
   // Wait for the cliff event before jumping to cliff reaction
   auto waitForCliffLambda = [this](Robot& robot) {
     return _gotCliff;
@@ -197,13 +194,8 @@ void BehaviorReactToCliff::TransitionToPlayingCliffReaction(Robot& robot)
       reactionAnim = AnimationTrigger::NeedsSevereLowRepairCliffReact;
     }
     
-#ifdef COZMO_V2
-    auto action = GetCliffPreReactAction(robot, _detectedFlags);
-    action->AddAction(new TriggerLiftSafeAnimationAction(robot, reactionAnim));
-#else
     auto action = new TriggerLiftSafeAnimationAction(robot, reactionAnim);
-#endif
-    
+
     StartActing(action, &BehaviorReactToCliff::TransitionToBackingUp);
   }
   // else end the behavior now
@@ -317,100 +309,6 @@ void BehaviorReactToCliff::HandleWhileRunning(const EngineToGameEvent& event, Ro
       break;
   }
 }
-  
-#ifdef COZMO_V2
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-CompoundActionSequential* BehaviorReactToCliff::GetCliffPreReactAction(Robot& robot, uint8_t cliffDetectedFlags)
-{
-  // Bit flags for each of the cliff sensors:
-  const uint8_t FL = (1<<Util::EnumToUnderlying(CliffSensor::CLIFF_FL));
-  const uint8_t FR = (1<<Util::EnumToUnderlying(CliffSensor::CLIFF_FR));
-  const uint8_t BL = (1<<Util::EnumToUnderlying(CliffSensor::CLIFF_BL));
-  const uint8_t BR = (1<<Util::EnumToUnderlying(CliffSensor::CLIFF_BR));
-  
-  auto action = new CompoundActionSequential(robot);
-  
-  float amountToTurn_deg = 0.f;
-  float amountToDrive_mm = 0.f;
-  bool turnThenDrive = true;
-  
-  // TODO: These actions should most likely be replaced by animations.
-  switch (cliffDetectedFlags) {
-    case (FL | FR):
-      // Hit cliff straight-on. Play stop reaction and move on
-      action->AddAction(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::ReactToCliffDetectorStop));
-      break;
-    case FL:
-      // Play stop reaction animation and turn CCW a bit
-      action->AddAction(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::ReactToCliffDetectorStop));
-      amountToTurn_deg = 15.f;
-      break;
-    case FR:
-      // Play stop reaction animation and turn CW a bit
-      action->AddAction(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::ReactToCliffDetectorStop));
-      amountToTurn_deg = -15.f;
-      break;
-    case BL:
-      // Drive forward and turn CCW to face the cliff
-      amountToDrive_mm = 35.f;
-      amountToTurn_deg = 135.f;
-      turnThenDrive = false;
-      break;
-    case BR:
-      // Drive forward and turn CW to face the cliff
-      amountToDrive_mm = 35.f;
-      amountToTurn_deg = -135.f;
-      turnThenDrive = false;
-      break;
-    case (FL | BL):
-      // Left side hanging off edge. Try to turn back onto the surface.
-      amountToTurn_deg = 90.f;
-      amountToDrive_mm = -30.f;
-      break;
-    case (FR | BR):
-      // Right side hanging off edge. Try to turn back onto the surface.
-      amountToTurn_deg = -90.f;
-      amountToDrive_mm = -30.f;
-      break;
-    case (BL | BR):
-      // Hit cliff straight-on driving backwards. Flip around to face the cliff.
-      amountToDrive_mm = 35.f;
-      amountToTurn_deg = 180.f;
-      turnThenDrive = false;
-      break;
-    default:
-      // In the default case, just play the stop reaction and move on.
-      action->AddAction(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::ReactToCliffDetectorStop));
-      break;
-  }
-  
-  auto turnAction = new TurnInPlaceAction(robot, DEG_TO_RAD(amountToTurn_deg), false);
-  turnAction->SetAccel(MAX_BODY_ROTATION_ACCEL_RAD_PER_SEC2);
-  turnAction->SetMaxSpeed(MAX_BODY_ROTATION_SPEED_RAD_PER_SEC);
-  
-  auto driveAction = new DriveStraightAction(robot, amountToDrive_mm, MAX_WHEEL_SPEED_MMPS, false);
-  driveAction->SetAccel(MAX_WHEEL_ACCEL_MMPS2);
-  driveAction->SetDecel(MAX_WHEEL_ACCEL_MMPS2);
-  
-  if (turnThenDrive) {
-    if (amountToTurn_deg != 0.f) {
-      action->AddAction(turnAction);
-    }
-    if (amountToDrive_mm != 0.f) {
-      action->AddAction(driveAction);
-    }
-  } else {
-    if (amountToDrive_mm != 0.f) {
-      action->AddAction(driveAction);
-    }
-    if (amountToTurn_deg != 0.f) {
-      action->AddAction(turnAction);
-    }
-  }
-  
-  return action;
-}
-#endif // COZMO_V2
 
 } // namespace Cozmo
 } // namespace Anki

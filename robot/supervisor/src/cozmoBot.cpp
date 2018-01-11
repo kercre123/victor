@@ -34,11 +34,9 @@
 #endif
 
 #ifdef SIMULATOR
-#ifndef COZMO_V2
 #include "anki/vision/CameraSettings.h"
 #include "nvStorage.h"
 #include <math.h>
-#endif // COZMO_V2
 #endif // SIMULATOR
 
 
@@ -134,12 +132,6 @@ namespace Anki {
 
         lastResult = LiftController::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 226, "CozmoBot.InitFail.LiftController", 305, "", 0);
-
-#ifdef COZMO_V2
-        // Calibrate motors
-        LiftController::StartCalibrationRoutine(1);
-        HeadController::StartCalibrationRoutine(1);
-#endif
         
         robotStateMessageCounter_ = 0;
 
@@ -182,9 +174,7 @@ namespace Anki {
         // Simulated NVStorage
         //////////////////////////////////////////////////////////////
 #ifdef SIMULATOR
-#ifndef COZMO_V2
         NVStorage::Update();
-#endif
 #endif
 
         //////////////////////////////////////////////////////////////
@@ -223,7 +213,6 @@ namespace Anki {
           PickAndPlaceController::SetCarryState(CARRY_NONE);
           ProxSensors::EnableStopOnCliff(true);
           ProxSensors::SetCliffDetectThreshold(CLIFF_SENSOR_DROP_LEVEL);
-          #ifndef COZMO_V2
           LiftController::Disable();
           LiftController::ClearCalibration();
           HeadController::Disable();
@@ -238,7 +227,6 @@ namespace Anki {
           bMsg.wifiChannel = 0;
           bMsg.radioMode = BODY_BLUETOOTH_OPERATING_MODE;
           while (RobotInterface::SendMessage(bMsg) == false) {}
-          #endif
           #endif
           waitForFirstMotorCalibAfterConnect_ = true;
           mode_ = INIT_MOTOR_CALIBRATION;
@@ -393,7 +381,6 @@ namespace Anki {
         Result retVal = RESULT_OK;
 
 #       ifdef SIMULATOR
-#       ifndef COZMO_V2
 
         if (!HAL::IsVideoEnabled()) {
           return retVal;
@@ -445,7 +432,6 @@ namespace Anki {
 
         } // if (HAL::imageSendMode_ != ISM_OFF)
 
-#       endif // ifndef COZMO_V2
 #       endif // ifdef SIMULATOR
 
         return retVal;

@@ -11,9 +11,7 @@
 #include "anki/cozmo/transport/IUnreliableTransport.h"
 #include "anki/cozmo/transport/IReceiver.h"
 #include "anki/cozmo/transport/reliableTransport.h"
-#ifndef COZMO_V2
 #include "nvStorage.h"
-#endif // #ifndef COZMO_V2
 #endif // #ifndef TARGET_K02
 #include <string.h>
 
@@ -103,12 +101,10 @@ namespace Anki {
         bodyRadioMode_ = BODY_ACCESSORY_OPERATING_MODE;
 #endif
         ResetMissedLogCount();
-#ifndef COZMO_V2
         // For pre-V2 robots, only the 0th entry of cliffDataRaw is used, so initialize the other entries
         for (int i=0 ; i<CLIFF_COUNT ; i++) {
           robotState_.cliffDataRaw[i] = 0;
         }
-#endif
         return RESULT_OK;
       }
 
@@ -197,16 +193,7 @@ namespace Anki {
         robotState_.gyro.y = IMUFilter::GetBiasCorrectedGyroData()[1];
         robotState_.gyro.z = IMUFilter::GetBiasCorrectedGyroData()[2];
 
-#ifdef COZMO_V2
-        for (int i=0 ; i < CLIFF_COUNT ; i++) {
-          robotState_.cliffDataRaw[i] = ProxSensors::GetRawCliffValue(i);
-        }
-        
-        robotState_.backpackTouchSensorRaw = HAL::GetButtonState(HAL::BUTTON_CAPACITIVE);
-#else
         robotState_.cliffDataRaw[0] = ProxSensors::GetRawCliffValue(0);
-#endif
-        
         robotState_.currPathSegment = PathFollower::GetCurrPathSegment();
 
         robotState_.status = 0;
@@ -556,28 +543,17 @@ namespace Anki {
 
       void Process_imageRequest(const RobotInterface::ImageRequest& msg)
       {
-        #ifdef COZMO_V2
-        AnkiWarn( 1206, "Messages.Process_imageRequest.Unsupported", 305, "", 0);
-        #else
         AnkiInfo( 110, "Messages.Process_imageRequest.Recvd", 358, "mode: %d, resolution: %d", 2, msg.sendMode, msg.resolution);
         HAL::SetImageSendMode(msg.sendMode, msg.resolution);
-        #endif // ifdef COZMO_V2
       }
 
       void Process_enableColorImages(const RobotInterface::EnableColorImages& msg)
       {
-        #ifdef COZMO_V2
-        AnkiWarn( 1197, "Messages.Process_enableColorImages.Unsupported", 305, "", 0);
-        #else
         HAL::CameraSetColorEnabled(msg.enable);
-        #endif  // ifdef COZMO_V2
       }
 
       void Process_setCameraParams(const SetCameraParams& msg)
       {
-        #ifdef COZMO_V2
-        AnkiWarn( 1198, "Messages.Process_setCameraParams.Unsupported", 305, "", 0);
-        #else
         if(msg.requestDefaultParams)
         {
           DefaultCameraParams params;
@@ -588,16 +564,11 @@ namespace Anki {
         {
           HAL::CameraSetParameters(msg.exposure_ms, msg.gain);
         }
-        #endif // ifdef COZMO_V2
       }
 
       void Process_cameraFOVInfo(const CameraFOVInfo& msg)
       {
-        #ifdef COZMO_V2
-        DockingController::SetCameraFieldOfView(msg.horizontalFOV, msg.verticalFOV);
-        #else
         AnkiWarn( 1200, "Messages.Process_cameraFOVInfo.Unsupported", 305, "", 0);
-        #endif
       }
 
       void Process_rollActionParams(const RobotInterface::RollActionParams& msg) {
@@ -779,12 +750,8 @@ namespace Anki {
 
       void Process_flashObjectIDs(const  FlashObjectIDs& msg)
       {
-        #ifdef COZMO_V2
-        AnkiWarn( 1207, "Messages.Process_flashObjectIDs.Unsupported", 305, "", 0);
-        #else
         // Start flash pattern on blocks
         HAL::FlashBlockIDs();
-        #endif
       }
 
       void Process_setObjectBeingCarried(const ObjectBeingCarried& msg)
@@ -942,14 +909,10 @@ namespace Anki {
       /// Stub message handlers to satisfy simulator build
       void Process_commandNV(NVStorage::NVCommand const& msg)
       {
-        #ifdef COZMO_V2
-        AnkiWarn( 1196, "Messages.Process_commandNV.Unsupported", 631, "Cozmo 2.0 NVStorage is in engine only", 0);
-        #else
         auto callback = [](NVStorage::NVOpResult& res) {
           RobotInterface::SendMessage(res);
         };
         NVStorage::Command(msg, callback);
-        #endif   // ifdef COZMO_V2
       }
       void Process_setHeadlight(RobotInterface::SetHeadlight const&)
       {
@@ -1204,9 +1167,7 @@ namespace Anki {
         initReceived_ = false;
         syncTimeAckSent_ = false;
         #ifdef SIMULATOR
-        #ifndef COZMO_V2
         HAL::SetImageSendMode(Stream, QVGA);
-        #endif
         #endif
       }
 

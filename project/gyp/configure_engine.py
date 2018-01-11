@@ -62,7 +62,7 @@ def main(scriptArgs):
   parser.add_argument('--crashReporting', metavar='CRASH_REPORTING_PATH', dest='crashPath', action='store', default=None,
                       help='Use CrashReportingAndroid repo checked out at CRASH_REPORTING_PATH')
   parser.add_argument('--cozmo-engine-target', action='store',
-                      choices=('cozmoEngine', 'cozmoEngine2'),
+                      choices=('cozmoEngine'),
                       default='cozmoEngine',
                       help='Name of build target for Cozmo Engine')
   parser.add_argument('--projectRoot', dest='projectRoot', action='store', default=None,
@@ -215,11 +215,6 @@ def main(scriptArgs):
     UtilLog.error("error compiling robot clad files")
     return False
 
-  #run robot2 clad's make
-  if (subprocess.call(['make', '--silent'], cwd=os.path.join(projectRoot, 'robot2/clad')) != 0):
-    UtilLog.error("error compiling robot2 clad files")
-    return False
-
   #generate AnkiLogStringTables.json
   if (subprocess.call(['make', '--silent', 'app'], cwd=os.path.join(projectRoot, 'robot')) != 0):
       UtilLog.error("Error generating AnkiLogStringTables.json")
@@ -233,25 +228,16 @@ def main(scriptArgs):
   generator.processFolder(['engine', 'resources'],
                           ['project/gyp/cozmoEngine2.lst'],
                           ['engine/tools/*'])
-  generator.processFolder(['androidHAL'],
-                          ['project/gyp/androidHAL.lst'])
   generator.processFolder(['test/engine', 'robot/test'], ['project/gyp/cozmoEngine-test.lst'])
   generator.processFolder(['robot/sim_hal', 'robot/supervisor/src', 'robot/transport', 'simulator/robot', 'simulator/controllers/webotsCtrlRobot'],
                           ['project/gyp/ctrlRobot.lst'],
                           ['reliableSequenceId.c', 'reliableMessageTypes.c'])
-  generator.processFolder(['robot2/hal/sim/src', 'robot/supervisor/src', 'robot/transport', 'simulator/robot', 'simulator/controllers/webotsCtrlRobot2'],
-                          ['project/gyp/ctrlRobot2.lst'],
-                          ['reliableSequenceId.c', 'reliableMessageTypes.c', 'nvStorage.*'])
-  generator.processFolder(['robot2/hal/src', 'robot2/hal/spine', 'robot/supervisor/src', 'robot/transport'],
-                          ['project/gyp/cozmoRobot2.lst'],
-                          ['matlabVisionProcessor.*', 'matlabVisualization.*', 'nvStorage.*'])
   generator.processFolder(['robot/generated/clad/robot'], ['project/gyp/robotGeneratedClad.lst'])
   generator.processFolder(['simulator/controllers/shared'], ['project/gyp/ctrlShared.lst'])
   generator.processFolder(['simulator/controllers/webotsCtrlViz'], ['project/gyp/ctrlViz.lst'])
   generator.processFolder(['simulator/controllers/webotsCtrlKeyboard', 'simulator/game'], ['project/gyp/ctrlKeyboard.lst'])
   generator.processFolder(['simulator/controllers/webotsCtrlBuildServerTest', 'simulator/game'], ['project/gyp/ctrlBuildServerTest.lst'])
   generator.processFolder(['simulator/controllers/webotsCtrlGameEngine'], ['project/gyp/ctrlGameEngine.lst'], ['*.dylib'])
-  generator.processFolder(['simulator/controllers/webotsCtrlGameEngine2'], ['project/gyp/ctrlGameEngine2.lst'], ['*.dylib'])
   generator.processFolder(['simulator/controllers/webotsCtrlDevLog'], ['project/gyp/ctrlDevLog.lst'])
   generator.processFolder(['clad/src', 'clad/vizSrc', 'robot/clad/src'], ['project/gyp/clad.lst'])
   webotsPhysicsPath = os.path.join(projectRoot, 'generated/webots/src/plugins/physics/')

@@ -1830,11 +1830,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::AbortAll& msg)
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::RequestUnlockDataFromBackup& msg)
 {
-# ifndef COZMO_V2
   RobotDataBackupManager::HandleRequestUnlockDataFromBackup(msg, _context);
-# else
-  PRINT_NAMED_WARNING("RobotEventHandler.HandleRequestUnlockDataFromBackup.UnsupportedForCozmo2", "Restoring from backup belongs in Unity in Cozmo 2.0");
-# endif
 }
 
 } // namespace Cozmo

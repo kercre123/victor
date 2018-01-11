@@ -665,20 +665,11 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
     RAD_TO_DEG(payload.state.pose.pitch_angle + payload.state.headAngle));
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_PITCH, Anki::NamedColors::GREEN, txt);
   
-#ifdef COZMO_V2
-  sprintf(txt, "Acc:  %6.0f %6.0f %6.0f mm/s2  ImuTemp %+6.2f degC",
-          payload.state.accel.x,
-          payload.state.accel.y,
-          payload.state.accel.z,
-          payload.imuTemperature_degC);
-  DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_ACCEL, Anki::NamedColors::GREEN, txt);
-#else
   sprintf(txt, "Acc:  %6.0f %6.0f %6.0f mm/s2",
           payload.state.accel.x,
           payload.state.accel.y,
           payload.state.accel.z);
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_ACCEL, Anki::NamedColors::GREEN, txt);
-#endif
   
   sprintf(txt, "Gyro: %6.1f %6.1f %6.1f deg/s",
     RAD_TO_DEG(payload.state.gyro.x),
@@ -687,21 +678,10 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_GYRO, Anki::NamedColors::GREEN, txt);
 
   bool cliffDetected = payload.state.status & (uint32_t)RobotStatusFlag::CLIFF_DETECTED;
-#ifdef COZMO_V2
-  sprintf(txt, "Cliff: {%4u, %4u, %4u, %4u} %s",
-          payload.state.cliffDataRaw[0],
-          payload.state.cliffDataRaw[1],
-          payload.state.cliffDataRaw[2],
-          payload.state.cliffDataRaw[3],
-          cliffDetected ? "CLIFF DETECTED" : "");
-  DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_CLIFF, cliffDetected ? Anki::NamedColors::RED : Anki::NamedColors::GREEN, txt);
-
-#else
   sprintf(txt, "Cliff: %4u %s",
           payload.state.cliffDataRaw[0],
           cliffDetected ? "CLIFF DETECTED" : "");
           DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_CLIFF, cliffDetected ? Anki::NamedColors::RED : Anki::NamedColors::GREEN, txt);
-#endif // COZMO_V2
 
   
   sprintf(txt, "Speed L: %4d  R: %4d mm/s",

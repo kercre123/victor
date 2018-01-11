@@ -524,20 +524,16 @@ namespace Anki {
 
       Result Init()
       {
-        #ifndef COZMO_V2
-        {
-          const HAL::CameraInfo* headCamInfo = HAL::GetHeadCamInfo();
+        const HAL::CameraInfo* headCamInfo = HAL::GetHeadCamInfo();
 
-          AnkiConditionalErrorAndReturnValue(headCamInfo != NULL, RESULT_FAIL_INVALID_OBJECT, 362, "DockingController.Init.NullHeadCamInfo", 305, "", 0);
+        AnkiConditionalErrorAndReturnValue(headCamInfo != NULL, RESULT_FAIL_INVALID_OBJECT, 362, "DockingController.Init.NullHeadCamInfo", 305, "", 0);
 
-          // Compute FOV from focal length (currently used for tracker prediciton)
-          headCamFOV_ver_ = 2.f * atanf((f32)(headCamInfo->nrows) /
-                                        (2.f * headCamInfo->focalLength_y));
-          headCamFOV_hor_ = 2.f * atanf((f32)(headCamInfo->ncols) /
-                                        (2.f * headCamInfo->focalLength_x));
-        }
-        #endif // COZMO_V2
-        
+        // Compute FOV from focal length (currently used for tracker prediciton)
+        headCamFOV_ver_ = 2.f * atanf((f32)(headCamInfo->nrows) /
+                                    (2.f * headCamInfo->focalLength_y));
+        headCamFOV_hor_ = 2.f * atanf((f32)(headCamInfo->ncols) /
+                                    (2.f * headCamInfo->focalLength_x));
+
         return RESULT_OK;
       }
 

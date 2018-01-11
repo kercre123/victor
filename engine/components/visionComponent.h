@@ -276,14 +276,7 @@ struct DockingErrorSignal;
     bool AreColorImagesEnabled() const { return _enableColorImages; }
     s32  GetCurrentCameraExposureTime_ms() const;
     f32  GetCurrentCameraGain() const;
-    
-#   ifdef COZMO_V2
-    // COZMO 2.0 ONLY
-    // Captures image to be queued for processing and sent to game and viz
-    void CaptureAndSendImage();
-#   endif
-
-    f32 GetBodyTurnSpeedThresh_degPerSec() const;
+    f32  GetBodyTurnSpeedThresh_degPerSec() const;
     
     void SetPhysicalRobot(const bool isPhysical);
 

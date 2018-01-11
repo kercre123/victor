@@ -365,8 +365,7 @@ def main(scriptArgs):
   cozmoEngineConfigurePath = os.path.join(options.cozmoEnginePath, 'project/gyp')
   coretechInternalConfigurePath = os.path.join(options.coretechInternalPath, 'project/gyp')
   cozmo_gyp_projects = { 'game': 'cozmoGame.gyp', 'engine': 'cozmoEngine.gyp' }
-  cozmo2_gyp_projects = { 'game': 'cozmoGame2.gyp', 'engine': 'cozmoEngine2.gyp' }
-  gyp_projects = [cozmo_gyp_projects, cozmo2_gyp_projects]
+  gyp_projects = [cozmo_gyp_projects]
   # gypify path names
   cgGtestPath = os.path.relpath(gtestPath, configurePath)
   ceGtestPath = os.path.relpath(gtestPath, cozmoEngineConfigurePath)

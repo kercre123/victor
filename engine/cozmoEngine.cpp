@@ -244,11 +244,7 @@ Result CozmoEngine::Init(const Json::Value& config) {
 
   _context->GetPerfMetric()->Init();
 
-#ifdef COZMO_V2
-  PRINT_NAMED_INFO("CozmoEngine.Init.Version", "2");
-#else
   PRINT_NAMED_INFO("CozmoEngine.Init.Version", "1");
-#endif
 
   // DAS Event: "cozmo_engine.init.build_configuration"
   // s_val: Build configuration

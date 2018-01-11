@@ -13,9 +13,6 @@
 
 
 #include "engine/actions/basicActions.h"
-#ifdef COZMO_V2
-#include "androidHAL/androidHAL.h"
-#endif
 #include "engine/ankiEventUtil.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/dockingComponent.h"
@@ -81,10 +78,6 @@ namespace Cozmo {
   
   CONSOLE_VAR(bool, kVisualizeObservedMarkersIn3D, "Vision.General", false);
   CONSOLE_VAR(bool, kDrawMarkerNames,              "Vision.General", false); // In viz camera view
-  
-# ifdef COZMO_V2
-  CONSOLE_VAR(bool, kDisplayUndistortedImages,     "Vision.General", false);
-# endif
   
   namespace JsonKey
   {
@@ -2292,62 +2285,6 @@ namespace Cozmo {
     return _visionSystem->GetMaxCameraGain();
   }
   
-# ifdef COZMO_V2
-  void VisionComponent::CaptureAndSendImage()
-  {
-    // This resolution should match AndroidHAL::_imageCaptureResolution!
-    const ImageResolution expectedResolution = ImageResolution::QVGA;
-    DEV_ASSERT(expectedResolution == AndroidHAL::getInstance()->CameraGetResolution(),
-               "VisionComponent.CaptureAndSendImage.ResolutionMismatch");
-    const int cameraRes = static_cast<const int>(expectedResolution);
-    const int numRows = Vision::CameraResInfo[cameraRes].height;
-    const int numCols = Vision::CameraResInfo[cameraRes].width;
-    
-    const int bufferSize = numRows * numCols * 3;
-    u8 buffer[bufferSize];
-    
-    // Get image buffer
-    // TODO: ImageImuData can be engine-only, non-clad, struct
-    std::vector<ImageImuData> imuData;
-    u32 imageId;
-    if (AndroidHAL::getInstance()->CameraGetFrame(buffer, imageId, imuData)) {
-      
-      // Add IMU data to history
-      for (const auto& data : imuData) {
-        GetImuDataHistory().AddImuData(data.imageId , data.rateX, data.rateY, data.rateZ, data.line2Number);
-      }
-      
-      // Create ImageRGB object from image buffer
-      Vision::ImageRGB imgRGB(numRows, numCols, buffer);
-      
-      if(kDisplayUndistortedImages)
-      {
-        Vision::ImageRGB imgUndistorted(numRows,numCols);
-        cv::undistort(imgRGB.get_CvMat_(), imgUndistorted.get_CvMat_(),
-                      _camera.GetCalibration()->GetCalibrationMatrix().get_CvMatx_(),
-                      _camera.GetCalibration()->GetDistortionCoeffs());
-        imgUndistorted.Display("UndistortedImage");
-      }
-        
-      // Create EncodedImage with proper imageID and timestamp
-      // ***** TODO: Timestamp needs to be in sync with RobotState timestamp!!! ******
-      TimeStamp_t ts = AndroidHAL::getInstance()->GetTimeStamp() - BS_TIME_STEP;
-      
-      // ***** TODO: Get rid of encodedImage since we no longer need "encoded" images internally *****
-      imgRGB.SetTimestamp(ts);
-      EncodedImage encodedImage(imgRGB, imageId);
-      
-      // Set next image for VisionComponent
-      Result lastResult = SetNextImage(encodedImage);
-      
-      // Compress to jpeg and send to game and viz
-      lastResult = CompressAndSendImage(imgRGB, 50);
-      DEV_ASSERT(RESULT_OK == lastResult, "VisionComponent.CompressAndSendImage.Failed");
-    }
-  }
-  
-# endif // #ifdef COZMO_V2
-  
   f32 VisionComponent::GetBodyTurnSpeedThresh_degPerSec() const
   {
     return kBodyTurnSpeedThreshBlock_degs;
@@ -2518,35 +2455,10 @@ namespace Cozmo {
                                                                      payload.skew,
                                                                      payload.distCoeffs);
             
-            SetCameraCalibration(calib);
-            
-            #ifdef COZMO_V2
-            {
-              // Compute FOV from focal length and send
-              CameraFOVInfo msg(calib->ComputeHorizontalFOV().ToFloat(), calib->ComputeVerticalFOV().ToFloat());
-              if (_robot.SendMessage(RobotInterface::EngineToRobot(std::move(msg))) != RESULT_OK) {
-                PRINT_NAMED_WARNING("VisionComponent.ReadCameraCalibration.SendCameraFOVFailed", "");
-              }
-            }
-            #endif // ifdef COZMO_V2
-            
-            
+            SetCameraCalibration(calib);        
           }
         } else {
-          PRINT_NAMED_WARNING("VisionComponent.ReadCameraCalibration.Failed", "");
-          
-#ifdef COZMO_V2
-          // TEMP HACK: Use dummy calibration for now since final camera not available yet
-          PRINT_NAMED_WARNING("VisionComponent.ReadCameraCalibration.UsingDummyV2Calibration", "");
-          std::array<float,8> distCoeffs{{0.2f,0.1f,0.05f,0.025f,0.f,0.f,0.f,0.f}};
-          auto calib = std::make_shared<Vision::CameraCalibration>(240, 320,
-                                                                   280, 280,
-                                                                   160, 120,
-                                                                   0,
-                                                                   distCoeffs);
-          SetCameraCalibration(calib);
-#endif
-          
+          PRINT_NAMED_WARNING("VisionComponent.ReadCameraCalibration.Failed", "");          
         }
         
         Enable(true);

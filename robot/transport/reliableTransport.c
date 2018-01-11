@@ -23,7 +23,7 @@
 #define unlikely
 #define TxStalled() (0)       // Return true if transmission is not possible at this time (never on PC)
 #endif
-#if defined(SIMULATOR) || defined(COZMO_V2)
+#if defined(SIMULATOR)
 // Forward declaration. We are counting on this function being implemented somewhere.
 uint32_t GetTimeStamp(void);
 uint32_t GetMicroCounter(void) { return GetTimeStamp() * 1000; }

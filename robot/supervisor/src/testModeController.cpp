@@ -27,7 +27,7 @@ namespace Anki {
     namespace TestModeController {
 
 // Only enable TestModeController for V2 because the resulting binary is too big for V1
-#ifdef COZMO_V2
+#if (0)
       
       // "Private Member Variables"
       namespace {
@@ -1207,10 +1207,7 @@ namespace Anki {
       Result Update() {
         return RESULT_OK;
       }
-      
-#endif // #ifdef COZMO_V2
-      
-
+#endif
     } // namespace TestModeController
   } // namespace Cozmo
 } // namespace Anki

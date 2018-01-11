@@ -720,9 +720,7 @@ namespace AnimationController {
                     _currentTime_ms, system_get_time());
 #               endif
 
-#             ifndef COZMO_V2
               HAL::FaceAnimate(msg.animFaceImage.image, msg.animFaceImage.image_length);
-#             endif
 
               _tracksInUse |= FACE_IMAGE_TRACK;
             }

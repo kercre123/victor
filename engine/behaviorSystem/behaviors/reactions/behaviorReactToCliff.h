@@ -61,11 +61,6 @@ private:
   void TransitionToPlayingCliffReaction(Robot& robot);
   void TransitionToBackingUp(Robot& robot);
   void SendFinishedReactToCliffMessage(Robot& robot);
-  
-#ifdef COZMO_V2
-  // Based on which cliff sensor(s) was tripped, select an appropriate pre-animation action
-  CompoundActionSequential* GetCliffPreReactAction(Robot& robot, uint8_t cliffDetectedFlags);
-#endif // COZMO_V2
 
   u16 _cliffDetectThresholdAtStart = 0;
   bool _quitReaction = false;

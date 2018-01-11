@@ -18,10 +18,6 @@
 
 #include "anki/cozmo/robot/buildTypes.h"
 
-#if defined(COZMO_V2) && !defined(SIMULATOR)
-#include <stdio.h>
-#endif
-
 template<typename T>
 inline int trace_cast(const T arg)
 {
@@ -66,8 +62,6 @@ template<> inline int trace_cast(const double arg)
 
 #ifdef ESPRESSIF_CONSOLE_LOGGING
 #define console_printf(...) os_printf(__VA_ARGS__)
-#elif defined(COZMO_V2) && !defined(SIMULATOR)
-#define console_printf(...) printf(__VA_ARGS__)
 #else
 #define console_printf(...)
 #endif

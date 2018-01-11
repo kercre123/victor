@@ -68,12 +68,8 @@ namespace Anki {
     
     const u16 HistRobotState::GetCliffData(unsigned int ind) const
     {
-      #ifdef COZMO_V2
-      DEV_ASSERT(ind < Util::EnumToUnderlying(CliffSensor::CLIFF_COUNT), "HistRobotState.GetCliffData.InvalidIndex");
-      #else
       // For pre-V2 robots, there is only one cliff sensor, so index should be 0.
       DEV_ASSERT(ind == 0, "HistRobotState.GetCliffData.InvalidIndex");
-      #endif // COZMO_V2
       
       return _state.cliffDataRaw[ind];
     }
@@ -116,15 +112,9 @@ namespace Anki {
       interpState.liftAngle = histState1.GetLiftAngle_rad() + fraction * (histState2.GetLiftAngle_rad() - histState1.GetLiftAngle_rad());
       
       // Interp cliff data
-#ifdef COZMO_V2
-      for (int i=0 ; i<interpState.cliffDataRaw.size() ; i++) {
-        interpState.cliffDataRaw[i] = std::round(f32(histState1.GetCliffData(i)) + fraction * f32(histState2.GetCliffData(i) - histState1.GetCliffData(i)));
-      }
-#else
       // For pre-V2 robots, the single cliff sensor is the 0th entry.
       interpState.cliffDataRaw.fill(std::numeric_limits<uint16_t>::max());
       interpState.cliffDataRaw[0] = std::round(f32(histState1.GetCliffData()) + fraction * f32(histState2.GetCliffData() - histState1.GetCliffData()));
-#endif // COZMO_V2
       
       
       // Interp wheel speeds

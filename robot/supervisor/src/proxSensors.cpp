@@ -20,15 +20,10 @@ namespace Anki {
       namespace {
 
         // Cliff sensor
-        #ifdef COZMO_V2
-        const int _nCliffSensors = CLIFF_COUNT;
-        #else
         const int _nCliffSensors = 1;
         // The upper bound on the cliff detection threshold is computed by subtracting
         // cliff off value from this.
         const u16 MAX_CLIFF_SENSOR_DETECT_THRESH_UPPER_BOUND = 2*CLIFF_SENSOR_DROP_LEVEL;
-        #endif
-        
         u16 _cliffVals[_nCliffSensors] = {0};
         
         // Bits correspond to each of the cliff sensors (4 for V2, 1 otherwise)
@@ -51,14 +46,11 @@ namespace Anki {
         if (_pendingCliffEvent == 0) {
           _pendingCliffEvent = HAL::GetTimeStamp() + CLIFF_EVENT_DELAY_MS;
           _cliffMsg.timestamp = HAL::GetTimeStamp();
-          #ifdef COZMO_V2
-          _cliffMsg.detectedFlags = _cliffDetectedFlags;
-          #else
+
           // For pre-V2 robots, there is only one cliff sensor in the front. However,
           // send the message as if the front left and front right cliffs were detected
           // so that the engine will handle it appropriately.
           _cliffMsg.detectedFlags = (1<<CLIFF_FL) | (1<<CLIFF_FR);
-          #endif // COZMO_V2
           _cliffMsg.didStopForCliff = _stopOnCliff;
         }
       }
@@ -77,13 +69,8 @@ namespace Anki {
 
       u16 GetRawCliffValue(unsigned int ind)
       {
-        #ifdef COZMO_V2
-        AnkiConditionalErrorAndReturnValue(ind < CLIFF_COUNT, 0, 1233, "ProxSensors.GetRawCliffValue.InvalidIndex", 647, "Index %d is not valid", 1, ind);
-        return HAL::GetRawCliffData(static_cast<HAL::CliffID>(ind));
-        #else
         AnkiConditionalErrorAndReturnValue(ind == 0, 0, 1233, "ProxSensors.GetRawCliffValue.InvalidIndex", 647, "Index %d is not valid", 1, ind);
         return HAL::GetRawCliffData();
-        #endif // COZMO_V2
       }
       
       // Stops robot if cliff detected as wheels are driving forward.
@@ -97,15 +84,7 @@ namespace Anki {
         }
         
         // Compute bounds on cliff detect/undetect thresholds which may be adjusted according to the
-        // intensity of ambient light as measured by the LED-off level.
-        #ifdef COZMO_V2
-        
-        // TODO: Not doing it yet, but should do this for Cozmo 2 as well
-        const u16 cliffDetectThresh = _cliffDetectThresh;
-        const u16 cliffUndetectThresh = CLIFF_SENSOR_UNDROP_LEVEL;
-        
-        #else
-        
+        // intensity of ambient light as measured by the LED-off level.        
         const u16 offLevel = HAL::GetCliffOffLevel();
         
         // Compute cliff detect threshold
@@ -122,8 +101,6 @@ namespace Anki {
         
         //AnkiDebugPeriodic(100, 1208, "ProxSensors.UpdateCliff.CliffData", 635, "raw: %d, off: %d, thresh: %d / %d", 4, GetMinRawCliffValue(), offLevel, cliffDetectThresh, cliffUndetectThresh);
         
-        #endif  // ifdef COZMO_V2
-        
         for (int i=0 ; i < _nCliffSensors ; i++) {
           // Update cliff status with hysteresis
           const bool alreadyDetected = (_cliffDetectedFlags & (1<<i)) != 0;
@@ -134,14 +111,8 @@ namespace Anki {
           }
         }
         
-        #ifdef COZMO_V2
-        f32 leftSpeed, rightSpeed;
-        WheelController::GetFilteredWheelSpeeds(leftSpeed, rightSpeed);
-        const bool isDriving = (ABS(leftSpeed) + ABS(rightSpeed)) > WheelController::WHEEL_SPEED_CONSIDER_STOPPED_MM_S;
-        #else
         const f32 avgWheelSpeed = WheelController::GetAverageFilteredWheelSpeed();
         const bool isDriving = avgWheelSpeed > WheelController::WHEEL_SPEED_CONSIDER_STOPPED_MM_S;
-        #endif
         
         // Check for whether or not wheels are already stopping.
         // When reversing and stopping fast enough it's possible for the wheels to report forward speeds.
@@ -204,13 +175,7 @@ namespace Anki {
         _wasPickedup = IMUFilter::IsPickedUp();
         
         // Send or update queued cliff event
-        if (_pendingCliffEvent != 0) {
-          #ifdef COZMO_V2
-          // Update the detectedFlags field if any new cliffs have been detected
-          // since first queuing the message
-          _cliffMsg.detectedFlags |= _cliffDetectedFlags;
-          #endif // COZMO_V2
-          
+        if (_pendingCliffEvent != 0) {          
           if (HAL::GetTimeStamp() >= _pendingCliffEvent) {
             RobotInterface::SendMessage(_cliffMsg);
             _pendingCliffEvent = 0;

@@ -34,7 +34,7 @@
 #include <vector>
 #include <map>
 
-#if (defined(ANKI_PLATFORM_ANDROID) || defined(ANKI_PLATFORM_IOS)) && !defined(COZMO_V2)
+#if (defined(ANKI_PLATFORM_ANDROID) || defined(ANKI_PLATFORM_IOS))
 #define VIZ_ON_DEVICE 1
 #else
 #define VIZ_ON_DEVICE 0

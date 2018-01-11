@@ -13,9 +13,7 @@
 #ifndef __Cozmo_Basestation_NVStorageComponent_H__
 #define __Cozmo_Basestation_NVStorageComponent_H__
 
-#ifndef COZMO_V2
 #include "engine/robotDataBackupManager.h"
-#endif
 #include "util/signals/simpleSignal_fwd.h"
 #include "util/helpers/noncopyable.h"
 #include "util/helpers/templateHelpers.h"
@@ -55,9 +53,6 @@ public:
   
   // Get the maximum number of bytes that can be saved for the given tag
   u32 GetMaxSizeForEntryTag(NVStorage::NVEntryTag tag);
-  
-  // TODO: For COZMO_V2 consider making Write(), Read(), and Erase() just return NVResult
-  //       and and not take a callback since they should return immediately.
   
   // Save data to robot under the given tag.
   // Returns true if request was successfully sent.
@@ -134,34 +129,12 @@ public:
   // For dev only!
   void Test();
   
-# ifndef COZMO_V2
   RobotDataBackupManager& GetRobotDataBackupManager() { return _backupManager; }
-# endif
  
 private:
   
   Robot&       _robot;
   
-# pragma mark --- Start of Cozmo 2.0 only members ---  
-# ifdef COZMO_V2
-  
-  // Map of all stored data
-  using TagDataMap = std::unordered_map<u32, std::vector<u8> >;
-  TagDataMap _tagDataMap;
-  
-  // Data file read/write methods
-  void LoadDataFromFiles();
-  void WriteEntryToFile(u32 tag);
-  
-  // Path of NVStorage data folder
-  const std::string _kStoragePath;
-
-# ifdef SIMULATOR
-  void LoadSimData();
-# endif
-  
-# pragma mark --- End of Cozmo 2.0 only members ---
-# else
 # pragma mark --- Start of Cozmo 1.x only members ---
   
   static constexpr u32 _kHeaderMagic = 0x435a4d4f; // "CZMO" in hex
@@ -364,8 +337,6 @@ private:
   std::queue<NVStorageOnIdleCallback> _onIdleCallbackQueue;
   
   void ProcessOnIdleCallbacks();
-  
-# endif // #ifdef COZMO_V2
 # pragma mark --- End of Cozmo 1.x only members ---
   
   // Stores blobs of a multi-blob messgage.
