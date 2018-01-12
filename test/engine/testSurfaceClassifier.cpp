@@ -26,7 +26,7 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
-#define DISPLAY_IMAGES true
+#define DISPLAY_IMAGES false
 
 extern Anki::Cozmo::CozmoContext *cozmoContext;
 
@@ -70,6 +70,25 @@ void convertToVector(const cv::Mat& mat, std::vector<u8>& vec)
 
 }
 
+// my local templated lambda ... don't ask :)
+template <typename T>
+struct __fillPixels{
+  void operator()(cv::Mat& positiveY, std::vector<std::vector<u8>>& pixels,
+                  const cv::Mat& trainingSamples, const cv::Mat& trainingLabels) {
+    ASSERT_EQ(trainingLabels.type(), cv::DataType<T>::type);
+    auto elementY = trainingLabels.begin<T>();
+    for (uint rowNumber = 0; elementY != trainingLabels.end<T>(); rowNumber++, elementY++) {
+      const float value = *elementY;
+      if ( value != 0) {
+        std::vector<u8> rowPixels;
+        convertToVector<float>(trainingSamples.row(rowNumber), rowPixels);
+        pixels.push_back(std::move(rowPixels));
+        positiveY.push_back(value);
+      }
+    }
+  }
+};
+
 void visualizeClassifierOnImages(const std::string& pathToImages, const Anki::Cozmo::DrivingSurfaceClassifier& clf) {
 
   std::vector<std::string> imageFiles;
@@ -93,28 +112,11 @@ void visualizeClassifierOnImages(const std::string& pathToImages, const Anki::Co
     Anki::Vision::Image mask(image.GetNumRows(), image.GetNumCols());
     clf.ClassifyImage(image, mask);
 
-//    // create a mask of pixels
-//    cv::Mat mask(image.GetNumRows(), image.GetNumCols(), CV_8UC3);
-//    auto imageIterator = image.begin<cv::Vec3b>();
-//    auto maskIterator = mask.begin<cv::Vec3b>();
-//    // iterate over all the pixels in image, if classifier says 1 then set mask to red
-//    while (imageIterator != image.end<cv::Vec3b>()) {
-//      const cv::Vec3b vec = *imageIterator;
-//      const Anki::Vision::PixelRGB pixel(vec[2], vec[1], vec[0]);
-//      const uchar label = clf.PredictClass(pixel);
-//      if (label) {
-//        *maskIterator = cv::Vec3b(0,0,255); // Red
-//      }
-//      else {
-//        *maskIterator = cv::Vec3b(0,0,0); // Black
-//      }
-//      ++maskIterator;
-//      ++imageIterator;
-//    }
-
     cv::namedWindow("Mask", cv::WINDOW_AUTOSIZE);
     cv::imshow("Mask", mask.get_CvMat_());
     cv::namedWindow("Image", cv::WINDOW_AUTOSIZE);
+    // back to BGR before visualization
+    cv::cvtColor(image.get_CvMat_(), image.get_CvMat_(), cv::COLOR_RGB2BGR);
     cv::imshow("Image", image.get_CvMat_());
     cv::waitKey(0);
 
@@ -189,18 +191,6 @@ void checkClassifier(Anki::Cozmo::DrivingSurfaceClassifier& clf,
 
   // Error on whole training set
   {
-//    // building a std::vector<Vision::PixelRGB>
-//    std::vector<Anki::Vision::PixelRGB> pixels;
-//    {
-//      pixels.reserve(trainingSamples.rows);
-//      EXPECT_EQ(trainingSamples.type(), CV_32FC1);
-//      const cv::Vec3f* data = trainingSamples.ptr<cv::Vec3f>(0);
-//      for (int i = 0; i < trainingSamples.rows; ++i) {
-//        const cv::Vec3f& vec = data[i];
-//        pixels.emplace_back(vec[0], vec[1], vec[2]);
-//      }
-//    }
-
     std::vector<std::vector<u8>> pixels;
     convertToVector<float>(trainingSamples, pixels);
 
@@ -215,20 +205,23 @@ void checkClassifier(Anki::Cozmo::DrivingSurfaceClassifier& clf,
 
   // Error on positive elements
   {
+
     cv::Mat positiveY;
     std::vector<std::vector<u8>> pixels;
     pixels.reserve(trainingSamples.rows); // probably won't be using that much
 
-    auto elementY = trainingLabels.begin<float>();
-    for (uint rowNumber = 0; elementY != trainingLabels.end<float>(); rowNumber++, elementY++) {
-      const float value = *elementY;
-      if ( value != 0) {
-        std::vector<u8> rowPixels;
-        convertToVector<float>(trainingSamples.row(rowNumber), rowPixels);
-        pixels.push_back(std::move(rowPixels));
-        positiveY.push_back(value);
-      }
+    if (trainingLabels.type() == cv::DataType<int>::type) {
+      __fillPixels<int> fillPixels;
+      fillPixels(positiveY, pixels, trainingSamples, trainingLabels);
     }
+    else if (trainingLabels.type() == cv::DataType<float>::type) {
+      __fillPixels<float> fillPixels;
+      fillPixels(positiveY, pixels, trainingSamples, trainingLabels);
+    }
+    else {
+      EXPECT_TRUE(false) << ("Unkown type for trainingLabels");
+    }
+
     ASSERT_EQ(positiveY.rows, realNumberOfPositives);
 
     // calculate error
@@ -272,20 +265,8 @@ TEST(SurfaceClassifier, LRClassifier_TestWholeErrorNoWeighting) {
   cv::Mat trainingSamples, trainingLabels;
   clf.GetTrainingData(trainingSamples, trainingLabels);
 
-//  // building a std::vector<Vision::PixelRGB>
-//  std::vector<Anki::Vision::PixelRGB> pixels;
-//  {
-//    pixels.reserve(trainingSamples.rows);
-//    EXPECT_EQ(trainingSamples.type(), CV_32FC1);
-//    const cv::Vec3f* data = trainingSamples.ptr<cv::Vec3f>(0);
-//    for (int i = 0; i < trainingSamples.rows; ++i) {
-//      const cv::Vec3f& vec = data[i];
-//      pixels.emplace_back(vec[0], vec[1], vec[2]);
-//    }
-//  }
   std::vector<std::vector<u8>> pixels;
   convertToVector<float>(trainingSamples, pixels);
-//  trainingSamples.convertTo(pixels, CV_8U);
 
   // calculate error
   std::vector<uchar> responses = clf.PredictClass(pixels);
@@ -420,21 +401,8 @@ TEST(SurfaceClassifier, THClassifier_TestRealRun) {
   cv::Mat trainingSamples, trainingLabels;
   clf.GetTrainingData(trainingSamples, trainingLabels);
 
-//  // building a std::vector<Vision::PixelRGB>
-//  std::vector<Anki::Vision::PixelRGB> pixels;
-//  {
-//    pixels.reserve(trainingSamples.rows);
-//    EXPECT_EQ(trainingSamples.type(), CV_32FC1);
-//    const cv::Vec3f* data = trainingSamples.ptr<cv::Vec3f>(0);
-//    for (int i = 0; i < trainingSamples.rows; ++i) {
-//      const cv::Vec3f& vec = data[i];
-//      pixels.emplace_back(vec[0], vec[1], vec[2]);
-//    }
-//  }
-
   std::vector<std::vector<u8>> pixels;
   convertToVector<float>(trainingSamples, pixels);
-//  trainingSamples.convertTo(pixels, CV_8U);
 
   std::vector<uchar> responses = clf.PredictClass(pixels);
   uint sum = 0;
@@ -557,7 +525,7 @@ TEST(SurfaceClassifier, GroundPlaneClassifier_TestNoise) {
     PRINT_CH_INFO("VisionSystem", "Test.GroundPlaneClassifier.LoadImage", "Loading image %s", imagepath.c_str());
 
     Anki::Vision::ImageRGB testImg;
-    ASSERT_EQ(testImg.Load(imagepath, true), Anki::RESULT_OK);
+    ASSERT_EQ(testImg.Load(imagepath), Anki::RESULT_OK);
     const Anki::Cozmo::VisionPoseData poseData = populateVisionPoseData(Anki::Util::DegToRad(-15));
 
     Anki::Result result = clf.Update(testImg, poseData, debugImageList, outEdges);

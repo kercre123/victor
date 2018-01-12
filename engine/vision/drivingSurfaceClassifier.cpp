@@ -262,7 +262,7 @@ void DrivingSurfaceClassifier::ClassifyImage(const Vision::ImageRGB& image, Visi
 
   if (_padding == 0) { //special case, way faster
     auto f = [this](const Vision::PixelRGB& pixel) {
-      const std::vector<u8> input{pixel.r(), pixel.b(), pixel.g()};
+      const std::vector<u8> input{pixel.r(), pixel.g(), pixel.b()};
       return u8(255 * this->PredictClass(input));
     };
 
@@ -647,6 +647,7 @@ uchar DTDrivingSurfaceClassifier::PredictClass(const std::vector<u8>& values) co
 
   DEV_ASSERT(values.size() == (2*_padding + 1)*3, "DTDrivingSurfaceClassifier.PredictClass.WrongInputSize");
 
+  // we need to copy since DTree requires float as input
   cv::Mat_<float> inputRow(1, int(values.size()));
   auto rowItr = inputRow.begin();
   auto valuesItr = values.begin();
