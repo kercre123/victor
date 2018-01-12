@@ -47,7 +47,7 @@ namespace Vision {
     ImageBase(const Array2d<T>& array) : Array2d<T>(array) { }
     
     // Read from file. If isBGR == true then it's converted to RGB
-    Result Load(const std::string& filename, bool isBGR = false);
+    Result Load(const std::string& filename);
     
     // Write to a file, format determined by extension (quality is only used for JPEG)
     Result Save(const std::string& filename, s32 quality = 90) const;

@@ -62,21 +62,43 @@ namespace Vision {
 #pragma mark --- ImageBase ---
   
   template<typename T>
-  Result ImageBase<T>::Load(const std::string& filename, bool isBGR)
+  Result ImageBase<T>::Load(const std::string& filename)
   {
-    //TODO Since OpenCV is loading the image, won't it always be BGR, therefore it needs to be converted?
-    this->get_CvMat_() = cv::imread(filename, (GetNumChannels() == 1 ?
-                                               CV_LOAD_IMAGE_GRAYSCALE :
-                                               CV_LOAD_IMAGE_COLOR));
-    if (!IsEmpty()) {
-      if (isBGR) {
-        cv::cvtColor(this->get_CvMat_(), this->get_CvMat_(), cv::COLOR_BGR2RGB);
+    switch(GetNumChannels())
+    {
+      case 1:
+      {
+        this->get_CvMat_() = cv::imread(filename, CV_LOAD_IMAGE_GRAYSCALE);
+        break;
       }
+
+      case 3:
+      {
+        this->get_CvMat_() = cv::imread(filename, CV_LOAD_IMAGE_COLOR);
+        cv::cvtColor(this->get_CvMat_(), this->get_CvMat_(), cv::COLOR_BGR2RGB);
+        break;
+      }
+
+      case 4:
+      {
+        this->get_CvMat_() = cv::imread(filename, CV_LOAD_IMAGE_COLOR);
+        cv::cvtColor(this->get_CvMat_(), this->get_CvMat_(), cv::COLOR_BGRA2RGBA);
+        break;
+      }
+
+      default:
+        PRINT_NAMED_WARNING("ImageBase.Load.UnexpectedNumChannels",
+                            "Don't know how to load %d-channel image",
+                            GetNumChannels());
+        return RESULT_FAIL;
+    }
+
+    if(IsEmpty()) {
+      return RESULT_FAIL;
+    } else {
       return RESULT_OK;
     }
-    else {
-      return RESULT_FAIL;
-    }
+
   }
   
   template<typename T>
