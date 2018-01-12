@@ -30,9 +30,6 @@
 #include <utility>
 #include <vector>
 
-struct SpeexResamplerState_;
-typedef struct SpeexResamplerState_ SpeexResamplerState;
-
 class LocalUdpServer;
 
 namespace Anki {
@@ -81,7 +78,6 @@ private:
   // Members for general purpose processing and state
   std::array<AudioUtil::AudioSample, kSamplesPerBlock * kNumInputChannels> _inProcessAudioBlock;
   bool _inProcessAudioBlockFirstHalf = true;
-  SpeexResamplerState* _speexState = nullptr;
   std::unique_ptr<SpeechRecognizerTHF> _recognizer;
   std::unique_ptr<LocalUdpServer> _udpServer;
   std::unique_ptr<MicImmediateDirection> _micImmediateDirection;
@@ -105,7 +101,7 @@ private:
   // Index of the buffer that is currently being used by the processing thread
   uint32_t _rawAudioProcessingIndex = 0;
   std::thread _processThread;
-  std::mutex _resampleMutex;
+  std::mutex _rawMicDataMutex;
   bool _processThreadStop = false;
   
   // Members for managing the results of async FFT processing
@@ -126,12 +122,10 @@ private:
 
   void InitVAD();
   void TriggerWordDetectCallback(const char* resultFound, float score);
-  bool ProcessResampledAudio(TimeStamp_t timestamp, const AudioUtil::AudioSample* audioChunk);
+  bool ProcessRawAudio(TimeStamp_t timestamp, const AudioUtil::AudioSample* audioChunk);
 
   MicDirectionData ProcessMicrophonesSE(const AudioUtil::AudioSample* audioChunk,
                                      AudioUtil::AudioSample* bufferOut) const;
-
-  void ResampleAudioChunk(const AudioUtil::AudioSample* audioChunk, AudioUtil::AudioSample* bufferOut);
 
   void ProcessLoop();
   void ClearCurrentStreamingJob();
