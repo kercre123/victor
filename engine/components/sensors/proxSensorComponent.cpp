@@ -210,7 +210,7 @@ void ProxSensorComponent::UpdateNavMap()
       currentNavMemoryMap->AddTriangle(tri, clearRegion);
 
       // Add proxObstacle if detected and close to robot 
-      if (_latestData.distance_mm <= kMaxObsThreshold_mm) { 
+      if (_latestData.distance_mm <= kMaxObsThreshold_mm && !noObject) { 
         const float obstacleHalfWidth_mm = ROBOT_BOUNDING_Y * .5 + kObsPadding_mm;
         Vec3f offset1(-kObsPadding_mm,  -obstacleHalfWidth_mm, 0);   
         Vec3f offset2(-kObsPadding_mm,   obstacleHalfWidth_mm, 0);
