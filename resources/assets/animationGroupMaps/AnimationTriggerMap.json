@@ -30,7 +30,7 @@
     },
     {
       "CladEvent": "BlockReact",
-      "AnimName": "blockReact"
+      "AnimName": "ag_blockreact"
     },
     {
       "CladEvent": "BuildPyramidFirstBlockOnSide",
@@ -114,11 +114,11 @@
     },
     {
       "CladEvent": "PatternGuessNewIdea",
-      "AnimName": "ag_PatternGuessNewIdea"
+      "AnimName": "ag_patternguessnewidea"
     },
     {
       "CladEvent": "PatternGuessThinking",
-      "AnimName": "ag_PatternGuessThinking"
+      "AnimName": "ag_patternguessthinking"
     },
     {
       "CladEvent": "CodeLab123Go",
@@ -266,7 +266,7 @@
     },
     {
       "CladEvent": "ConnectWakeUp",
-      "AnimName": "ag_ConnectWakeUp"
+      "AnimName": "ag_connectwakeup"
     },
     {
       "CladEvent": "ConnectWakeUp_SevereEnergy",
@@ -350,7 +350,7 @@
     },
     {
       "CladEvent": "CubePounceLoseRound",
-      "AnimName": "cubePounce_LoseRound"
+      "AnimName": "ag_cubepounce_loseround"
     },
     {
       "CladEvent": "CubePounceLoseSession",
@@ -370,7 +370,7 @@
     },
     {
       "CladEvent": "CubePounceWinRound",
-      "AnimName": "cubePounce_WinRound"
+      "AnimName": "ag_cubepounce_winround"
     },
     {
       "CladEvent": "CubePounceWinSession",
@@ -442,7 +442,7 @@
     },
     {
       "CladEvent": "DriveEndDefault",
-      "AnimName": "ag_driving01_endDriving"
+      "AnimName": "ag_driving01_enddriving"
     },
     {
       "CladEvent": "DriveEndHappy",
@@ -450,15 +450,15 @@
     },
     {
       "CladEvent": "DriveEndLaunch",
-      "AnimName": "ag_driving01_endDriving"
+      "AnimName": "ag_driving01_enddriving"
     },
     {
       "CladEvent": "DriveLoopAngry",
-      "AnimName": "ag_driving_upset_Loop"
+      "AnimName": "ag_driving_upset_loop"
     },
     {
       "CladEvent": "DriveLoopDefault",
-      "AnimName": "ag_driving01_drivingLoop"
+      "AnimName": "ag_driving01_drivingloop"
     },
     {
       "CladEvent": "DriveLoopHappy",
@@ -466,7 +466,7 @@
     },
     {
       "CladEvent": "DriveLoopLaunch",
-      "AnimName": "ag_driving01_drivingLoop"
+      "AnimName": "ag_driving01_drivingloop"
     },
     {
       "CladEvent": "DriveStartAngry",
@@ -474,7 +474,7 @@
     },
     {
       "CladEvent": "DriveStartDefault",
-      "AnimName": "ag_driving01_startDriving"
+      "AnimName": "ag_driving01_startdriving"
     },
     {
       "CladEvent": "DriveStartHappy",
@@ -482,7 +482,7 @@
     },
     {
       "CladEvent": "DriveStartLaunch",
-      "AnimName": "ag_driving01_startDriving"
+      "AnimName": "ag_driving01_startdriving"
     },
     {
       "CladEvent": "DroneModeBackwardDrivingEnd",
@@ -502,15 +502,15 @@
     },
     {
       "CladEvent": "DroneModeForwardDrivingEnd",
-      "AnimName": "ag_explorer_endDriving"
+      "AnimName": "ag_explorer_enddriving"
     },
     {
       "CladEvent": "DroneModeForwardDrivingLoop",
-      "AnimName": "ag_explorer_drivingLoop"
+      "AnimName": "ag_explorer_drivingloop"
     },
     {
       "CladEvent": "DroneModeForwardDrivingStart",
-      "AnimName": "ag_explorer_startDriving"
+      "AnimName": "ag_explorer_startdriving"
     },
     {
       "CladEvent": "DroneModeGetIn",
@@ -830,7 +830,7 @@
     },
     {
       "CladEvent": "HikingLookAround",
-      "AnimName": "ag_hiking_lookAround"
+      "AnimName": "ag_hiking_lookaround"
     },
     {
       "CladEvent": "HikingReactToEdge",
@@ -862,7 +862,7 @@
     },
     {
       "CladEvent": "IdleOnCharger",
-      "AnimName": "ag_SleepLoop"
+      "AnimName": "ag_sleeploop"
     },
     {
       "CladEvent": "InteractWithFaceTrackingIdle",
@@ -886,7 +886,7 @@
     },
     {
       "CladEvent": "KnockOverGrabAttempt",
-      "AnimName": "knockOverStack_grabAttempt"
+      "AnimName": "ag_knockoverstack_grabattempt"
     },
     {
       "CladEvent": "KnockOverPreActionNamedFace",
@@ -898,7 +898,7 @@
     },
     {
       "CladEvent": "KnockOverSuccess",
-      "AnimName": "knockOverStack_success"
+      "AnimName": "ag_knockoverstack_success"
     },
     {
       "CladEvent": "LaserAcknowledge",
@@ -906,43 +906,43 @@
     },
     {
       "CladEvent": "LaserDriveEnd",
-      "AnimName": "ag_pounceDriveEnd"
+      "AnimName": "ag_pouncedriveend"
     },
     {
       "CladEvent": "LaserDriveLoop",
-      "AnimName": "ag_laserDriveLoop"
+      "AnimName": "ag_laserdriveloop"
     },
     {
       "CladEvent": "LaserDriveStart",
-      "AnimName": "ag_laserDriveStart"
+      "AnimName": "ag_laserdrivestart"
     },
     {
       "CladEvent": "LaserFace",
-      "AnimName": "ag_pounceDriveFace"
+      "AnimName": "ag_pouncedriveface"
     },
     {
       "CladEvent": "LaserGetOut",
-      "AnimName": "ag_pounceDriveFace_getOut"
+      "AnimName": "ag_pouncedriveface_getout"
     },
     {
       "CladEvent": "LaserPounce",
-      "AnimName": "ag_pounceOnMotionPounce"
+      "AnimName": "ag_pounceonmotionpounce"
     },
     {
       "CladEvent": "LookInPlaceForFacesBodyPause",
-      "AnimName": "ag_lookInPlaceForFaces_bodyMovePause"
+      "AnimName": "ag_lookinplaceforfaces_bodymovepause"
     },
     {
       "CladEvent": "LookInPlaceForFacesHeadMovePause",
-      "AnimName": "ag_lookInPlaceForFaces_headMovePauses"
+      "AnimName": "ag_lookinplaceforfaces_headmovepauses"
     },
     {
       "CladEvent": "MajorFail",
-      "AnimName": "ag_majorFail"
+      "AnimName": "ag_majorfail"
     },
     {
       "CladEvent": "MajorWin",
-      "AnimName": "ag_majorWin"
+      "AnimName": "ag_majorwin"
     },
     {
       "CladEvent": "MeetCozmoGetIn",
@@ -1186,7 +1186,7 @@
     },
     {
       "CladEvent": "NothingToDoBoredIdle",
-      "AnimName": "ag_hiking_lookAround"
+      "AnimName": "ag_hiking_lookaround"
     },
     {
       "CladEvent": "NothingToDoBoredIntro",
@@ -1206,87 +1206,87 @@
     },
     {
       "CladEvent": "OnSawNewNamedFace",
-      "AnimName": "ag_interactFaces_Enrolled"
+      "AnimName": "ag_interactfaces_enrolled"
     },
     {
       "CladEvent": "OnSawNewUnnamedFace",
-      "AnimName": "ag_interactFaces_Unenrolled"
+      "AnimName": "ag_interactfaces_unenrolled"
     },
     {
       "CladEvent": "OnSawOldNamedFace",
-      "AnimName": "ag_interactFaces_Enrolled"
+      "AnimName": "ag_interactfaces_enrolled"
     },
     {
       "CladEvent": "OnSawOldUnnamedFace",
-      "AnimName": "ag_interactFaces_Unenrolled"
+      "AnimName": "ag_interactfaces_unenrolled"
     },
     {
       "CladEvent": "OnSpeedtapCozmoConfirm",
-      "AnimName": "ag_speedTap_tap"
+      "AnimName": "ag_speedtap_tap"
     },
     {
       "CladEvent": "OnSpeedtapFakeout",
-      "AnimName": "ag_speedTap_fake"
+      "AnimName": "ag_speedtap_fake"
     },
     {
       "CladEvent": "OnSpeedtapGameCozmoWinHighIntensity",
-      "AnimName": "ag_speedTap_winGame_intensity03"
+      "AnimName": "ag_speedtap_wingame_intensity03"
     },
     {
       "CladEvent": "OnSpeedtapGameCozmoWinLowIntensity",
-      "AnimName": "ag_speedTap_winGame_intensity02"
+      "AnimName": "ag_speedtap_wingame_intensity02"
     },
     {
       "CladEvent": "OnSpeedtapGamePlayerWinHighIntensity",
-      "AnimName": "ag_speedTap_loseGame_intensity03"
+      "AnimName": "ag_speedtap_losegame_intensity03"
     },
     {
       "CladEvent": "OnSpeedtapGamePlayerWinLowIntensity",
-      "AnimName": "ag_speedTap_loseGame_intensity02"
+      "AnimName": "ag_speedtap_losegame_intensity02"
     },
     {
       "CladEvent": "OnSpeedtapGetOut",
-      "AnimName": "ag_speedTap_getOut"
+      "AnimName": "ag_speedtap_getout"
     },
     {
       "CladEvent": "OnSpeedtapHandCozmoWin",
-      "AnimName": "ag_speedTap_winHand"
+      "AnimName": "ag_speedtap_winhand"
     },
     {
       "CladEvent": "OnSpeedtapHandPlayerWin",
-      "AnimName": "ag_speedTap_loseHand"
+      "AnimName": "ag_speedtap_losehand"
     },
     {
       "CladEvent": "OnSpeedtapIdle",
-      "AnimName": "ag_speedTap_peek"
+      "AnimName": "ag_speedtap_peek"
     },
     {
       "CladEvent": "OnSpeedtapRoundCozmoWinHighIntensity",
-      "AnimName": "ag_speedTap_winRound_intensity02"
+      "AnimName": "ag_speedtap_winround_intensity02"
     },
     {
       "CladEvent": "OnSpeedtapRoundCozmoWinLowIntensity",
-      "AnimName": "ag_speedTap_winRound_intensity01"
+      "AnimName": "ag_speedtap_winround_intensity01"
     },
     {
       "CladEvent": "OnSpeedtapRoundPlayerWinHighIntensity",
-      "AnimName": "ag_speedTap_loseRound_intensity02"
+      "AnimName": "ag_speedtap_loseround_intensity02"
     },
     {
       "CladEvent": "OnSpeedtapRoundPlayerWinLowIntensity",
-      "AnimName": "ag_speedTap_loseRound_intensity01"
+      "AnimName": "ag_speedtap_loseround_intensity01"
     },
     {
       "CladEvent": "OnSpeedtapTap",
-      "AnimName": "ag_speedTap_tap"
+      "AnimName": "ag_speedtap_tap"
     },
     {
       "CladEvent": "OnWaitForCubesMinigameSetup",
-      "AnimName": "ag_speedTap_wait"
+      "AnimName": "ag_speedtap_wait"
     },
     {
       "CladEvent": "OnWiggle",
-      "AnimName": "ag_faceEnrollment_Wiggle"
+      "AnimName": "ag_faceenrollment_wiggle"
     },
     {
       "CladEvent": "OnboardingPreBirth",
@@ -1338,7 +1338,7 @@
     },
     {
       "CladEvent": "OnboardingReactToFace",
-      "AnimName": "ag_reactToNewBlock"
+      "AnimName": "ag_reacttonewblock"
     },
     {
       "CladEvent": "OnboardingReactToCube",
@@ -1354,7 +1354,7 @@
     },
     {
       "CladEvent": "OnboardingCubeDockFail",
-      "AnimName": "ag_RequestGameDriveFail"
+      "AnimName": "ag_requestgamedrivefail"
     },
     {
       "CladEvent": "OnboardingInteractWithCube",
@@ -1450,11 +1450,11 @@
     },
     {
       "CladEvent": "PlacedOnCharger",
-      "AnimName": "ag_reactToCharger"
+      "AnimName": "ag_reacttocharger"
     },
     {
       "CladEvent": "PopAWheelieInitial",
-      "AnimName": "rollCube_initial"
+      "AnimName": "ag_rollcube_initial"
     },
     {
       "CladEvent": "PopAWheeliePreActionNamedFace",
@@ -1466,63 +1466,63 @@
     },
     {
       "CladEvent": "PopAWheelieRealign",
-      "AnimName": "rollCube_realign"
+      "AnimName": "ag_rollcube_realign"
     },
     {
       "CladEvent": "PopAWheelieRetry",
-      "AnimName": "rollCube_retry"
+      "AnimName": "ag_rollcube_retry"
     },
     {
       "CladEvent": "PounceDriveEnd",
-      "AnimName": "ag_pounceDriveEnd"
+      "AnimName": "ag_pouncedriveend"
     },
     {
       "CladEvent": "PounceDriveLoop",
-      "AnimName": "ag_pounceDriveLoop"
+      "AnimName": "ag_pouncedriveloop"
     },
     {
       "CladEvent": "PounceDriveStart",
-      "AnimName": "ag_pounceDriveStart"
+      "AnimName": "ag_pouncedrivestart"
     },
     {
       "CladEvent": "PounceFace",
-      "AnimName": "ag_pounceDriveFace"
+      "AnimName": "ag_pouncedriveface"
     },
     {
       "CladEvent": "PounceFail",
-      "AnimName": "ag_pounceOnMotionFail"
+      "AnimName": "ag_pounceonmotionfail"
     },
     {
       "CladEvent": "PounceGetOut",
-      "AnimName": "ag_pounceDriveFace_getOut"
+      "AnimName": "ag_pouncedriveface_getout"
     },
     {
       "CladEvent": "PounceInitial",
-      "AnimName": "ag_pounceWarningInitial"
+      "AnimName": "ag_pouncewarninginitial"
     },
     {
       "CladEvent": "PouncePounce",
-      "AnimName": "ag_pounceOnMotionPounce"
+      "AnimName": "ag_pounceonmotionpounce"
     },
     {
       "CladEvent": "PounceSuccess",
-      "AnimName": "ag_pounceOnMotionSuccess"
+      "AnimName": "ag_pounceonmotionsuccess"
     },
     {
       "CladEvent": "PutDownBlockKeepAlive",
-      "AnimName": "ag_lookAtFace_keepAlive"
+      "AnimName": "ag_lookatface_keepalive"
     },
     {
       "CladEvent": "PutDownBlockPutDown",
-      "AnimName": "ag_putDownBlock"
+      "AnimName": "ag_putdownblock"
     },
     {
       "CladEvent": "ReactToBlockPickupSuccess",
-      "AnimName": "ag_pickUpCube_success"
+      "AnimName": "ag_pickupcube_success"
     },
     {
       "CladEvent": "ReactToBlockRetryPickup",
-      "AnimName": "rollCube_retry"
+      "AnimName": "ag_rollcube_retry"
     },
     {
       "CladEvent": "ReactToCliff",
@@ -1534,15 +1534,15 @@
     },
     {
       "CladEvent": "ReactToNewBlockAsk",
-      "AnimName": "ag_askForBlock"
+      "AnimName": "ag_askforblock"
     },
     {
       "CladEvent": "ReactToNewBlockBig",
-      "AnimName": "ag_reactToNewBlock"
+      "AnimName": "ag_reacttonewblock"
     },
     {
       "CladEvent": "ReactToNewBlockSmall",
-      "AnimName": "ag_reactToNewBlockOnGround"
+      "AnimName": "ag_reacttonewblockonground"
     },
     {
       "CladEvent": "ReactToOnLeftSide",
@@ -1562,11 +1562,11 @@
     },
     {
       "CladEvent": "ReactToPokeReaction",
-      "AnimName": "pokeReaction"
+      "AnimName": "ag_pokereaction"
     },
     {
       "CladEvent": "ReactToPokeStartled",
-      "AnimName": "pokeStartled"
+      "AnimName": "ag_pokestartled"
     },
     {
       "CladEvent": "ReactToCliffDetectorStop",
@@ -1574,7 +1574,7 @@
     },
     {
       "CladEvent": "ReactToUnexpectedMovement",
-      "AnimName": "ag_reactToStop"
+      "AnimName": "ag_reacttostop"
     },
     {
       "CladEvent": "ReactToUnexpectedMovement_Severe_Energy",
@@ -1798,11 +1798,11 @@
     },
     {
       "CladEvent": "RequestGameMemoryMatchPreDrive0",
-      "AnimName": "requestGame_speedTap_predrive"
+      "AnimName": "ag_requestgame_speedtap_predrive"
     },
     {
       "CladEvent": "RequestGameMemoryMatchPreDrive1",
-      "AnimName": "requestGame_speedTap_predrive"
+      "AnimName": "ag_requestgame_speedtap_predrive"
     },
     {
       "CladEvent": "RequestGameMemoryMatchRequest0",
@@ -1814,59 +1814,59 @@
     },
     {
       "CladEvent": "RequestGamePickupFail",
-      "AnimName": "ag_RequestGamePickupFail"
+      "AnimName": "ag_requestgamepickupfail"
     },
     {
       "CladEvent": "RequestGameSpeedTapDeny0",
-      "AnimName": "requestGame_speedTap_deny"
+      "AnimName": "ag_requestgame_speedtap_deny"
     },
     {
       "CladEvent": "RequestGameSpeedTapDeny1",
-      "AnimName": "requestGame_speedTap_deny"
+      "AnimName": "ag_requestgame_speedtap_deny"
     },
     {
       "CladEvent": "RequestGameSpeedTapInitial0",
-      "AnimName": "requestGame_speedTap_initial"
+      "AnimName": "ag_requestgame_speedtap_initial"
     },
     {
       "CladEvent": "RequestGameSpeedTapInitial1",
-      "AnimName": "requestGame_speedTap_initial"
+      "AnimName": "ag_requestgame_speedtap_initial"
     },
     {
       "CladEvent": "RequestGameSpeedTapPreDrive0",
-      "AnimName": "requestGame_speedTap_predrive"
+      "AnimName": "ag_requestgame_speedtap_predrive"
     },
     {
       "CladEvent": "RequestGameSpeedTapPreDrive1",
-      "AnimName": "requestGame_speedTap_predrive"
+      "AnimName": "ag_requestgame_speedtap_predrive"
     },
     {
       "CladEvent": "RequestGameSpeedTapRequest0",
-      "AnimName": "requestGame_speedTap_request"
+      "AnimName": "ag_requestgame_speedtap_request"
     },
     {
       "CladEvent": "RequestGameSpeedTapRequest1",
-      "AnimName": "requestGame_speedTap_request"
+      "AnimName": "ag_requestgame_speedtap_request"
     },
     {
       "CladEvent": "RequestGameSpeedTapIdle0",
-      "AnimName": "ag_speedTap_wait"
+      "AnimName": "ag_speedtap_wait"
     },
     {
       "CladEvent": "RequestGameSpeedTapIdle1",
-      "AnimName": "ag_speedTap_wait"
+      "AnimName": "ag_speedtap_wait"
     },
     {
       "CladEvent": "RequestGameSpeedTapAccept0",
-      "AnimName": "requestGame_Confirm"
+      "AnimName": "ag_requestgame_confirm"
     },
     {
       "CladEvent": "RequestGameSpeedTapAccept1",
-      "AnimName": "requestGame_Confirm"
+      "AnimName": "ag_requestgame_confirm"
     },
     {
       "CladEvent": "RollBlockInitial",
-      "AnimName": "rollCube_initial"
+      "AnimName": "ag_rollcube_initial"
     },
     {
       "CladEvent": "RollBlockPreActionNamedFace",
@@ -1878,19 +1878,19 @@
     },
     {
       "CladEvent": "RollBlockPutDown",
-      "AnimName": "ag_putDownBlock"
+      "AnimName": "ag_putdownblock"
     },
     {
       "CladEvent": "RollBlockRealign",
-      "AnimName": "rollCube_realign"
+      "AnimName": "ag_rollcube_realign"
     },
     {
       "CladEvent": "RollBlockRetry",
-      "AnimName": "rollCube_retry"
+      "AnimName": "ag_rollcube_retry"
     },
     {
       "CladEvent": "RollBlockSuccess",
-      "AnimName": "rollCube_success"
+      "AnimName": "ag_rollcube_success"
     },
     {
       "CladEvent": "SdkTextToSpeech",
@@ -1938,19 +1938,19 @@
     },
     {
       "CladEvent": "SoundOnlyLiftEffortPickup",
-      "AnimName": "LiftEffortPickup"
+      "AnimName": "ag_lifteffortpickup"
     },
     {
       "CladEvent": "SoundOnlyLiftEffortPlaceHigh",
-      "AnimName": "LiftEffortPlaceHigh"
+      "AnimName": "ag_lifteffortplacehigh"
     },
     {
       "CladEvent": "SoundOnlyLiftEffortPlaceLow",
-      "AnimName": "LiftEffortPlaceLow"
+      "AnimName": "ag_lifteffortplacelow"
     },
     {
       "CladEvent": "SoundOnlyLiftEffortPlaceRoll",
-      "AnimName": "LiftEffortRoll"
+      "AnimName": "ag_lifteffortroll"
     },
     {
       "CladEvent": "SoundOnlyRamIntoBlock",
@@ -1958,7 +1958,7 @@
     },
     {
       "CladEvent": "SoundOnlyTurnSmall",
-      "AnimName": "ag_soundOnlyTurnSmall"
+      "AnimName": "ag_soundonlyturnsmall"
     },
     {
       "CladEvent": "SparkDrivingLoop",
@@ -1994,7 +1994,7 @@
     },
     {
       "CladEvent": "SparkPickupFinalCubeReaction",
-      "AnimName": "ag_pickUpCube_success"
+      "AnimName": "ag_pickupcube_success"
     },
     {
       "CladEvent": "SparkSuccess",
@@ -2002,23 +2002,23 @@
     },
     {
       "CladEvent": "SpeedTapDrivingEnd",
-      "AnimName": "ag_speedTap_endDriving"
+      "AnimName": "ag_speedtap_enddriving"
     },
     {
       "CladEvent": "SpeedTapDrivingLoop",
-      "AnimName": "ag_speedTap_drivingLoop"
+      "AnimName": "ag_speedtap_drivingloop"
     },
     {
       "CladEvent": "SpeedTapDrivingStart",
-      "AnimName": "ag_speedTap_startDriving"
+      "AnimName": "ag_speedtap_startdriving"
     },
     {
       "CladEvent": "StackBlocksSuccess",
-      "AnimName": "stackCube_success"
+      "AnimName": "ag_stackcube_success"
     },
     {
       "CladEvent": "StartSleeping",
-      "AnimName": "ag_startSleeping"
+      "AnimName": "ag_startsleeping"
     },
     {
       "CladEvent": "SuccessfulWheelie",
@@ -2034,7 +2034,7 @@
     },
     {
       "CladEvent": "UnitTestAnim",
-      "AnimName": "ag_askForBlock"
+      "AnimName": "ag_askforblock"
     },
     {
       "CladEvent": "VC_Alrighty",
