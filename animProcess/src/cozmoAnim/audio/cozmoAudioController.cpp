@@ -97,10 +97,11 @@ CozmoAudioController::CozmoAudioController( const CozmoAnimContext* context )
   {
     DEV_ASSERT(nullptr != context, "CozmoAudioController.CozmoAudioController.CozmoAnimContext.IsNull");
 
-    const Util::Data::DataPlatform* dataPlatfrom = context->GetDataPlatform();
-    const std::string assetPath = dataPlatfrom->pathToResource(Util::Data::Scope::Resources, "sound/" );
+    const Util::Data::DataPlatform* dataPlatform = context->GetDataPlatform();
+    const std::string assetPath = dataPlatform->pathToResource(Util::Data::Scope::Resources, "sound" );
+    const std::string writePath = dataPlatform->pathToResource(Util::Data::Scope::Cache, "sound");
     PRINT_CH_INFO("Audio", "CozmoAudioController.CozmoAudioController", "AssetPath '%s'", assetPath.c_str());
-
+    PRINT_CH_INFO("Audio", "CozmoAudioController.CozmoAudioController", "WritePath '%s'", writePath.c_str());
     // If assets don't exist don't init the Audio engine
     const bool assetsExist = Util::FileUtils::DirectoryExists( assetPath );
     if ( !assetsExist ) {
@@ -114,6 +115,7 @@ CozmoAudioController::CozmoAudioController( const CozmoAnimContext* context )
     SetupConfig config{};
     // Read/Write Asset path
     config.assetFilePath = assetPath;
+    config.writeFilePath = writePath;
     
     // Cozmo uses default audio locale regardless of current context.
     // Locale-specific adjustments are made by setting GameState::External_Language

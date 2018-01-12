@@ -791,6 +791,7 @@ Supervisor {
                     HingeJoint {
                       jointParameters HingeJointParameters {
                         axis 0 1 0
+                        position IS liftAngle
                       }
                       endPoint DEF SmallFingerGripper Solid {
                         name "GripperPlate"
@@ -1064,6 +1065,7 @@ Supervisor {
                 DEF SHOULDER_LOWER HingeJoint {
                   jointParameters HingeJointParameters {
                     axis 0 -1 0
+                    position IS liftAngle
                   }
                   endPoint Solid {
                     children [

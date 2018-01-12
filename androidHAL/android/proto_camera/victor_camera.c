@@ -1138,8 +1138,12 @@ static void mm_app_snapshot_notify_cb_raw(mm_camera_super_buf_t *bufs,
   const int raw_frame_width = buf_planes->plane_info.mp[0].stride;
   const int raw_frame_height = buf_planes->plane_info.mp[0].scanline;
 
-  if(frame_requested_)
+  const static uint8_t kProcessEveryNthFrame = 4;
+  static uint8_t count = 0;
+  if(frame_requested_ && ++count > kProcessEveryNthFrame)
   {
+    count = 0;
+
     // find snapshot frame
     if (user_frame_callback) {
       for (i = 0; i < bufs->num_bufs; i++) {

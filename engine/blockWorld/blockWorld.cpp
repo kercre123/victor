@@ -109,6 +109,7 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
   {
     DEV_ASSERT(_robot != nullptr, "BlockWorld.Constructor.InvalidRobot");
     
+    
     // TODO: Create each known block / matpiece from a configuration/definitions file
     
     //////////////////////////////////////////////////////////////////////////
@@ -1234,8 +1235,12 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
                                                                                 wasRobotMoving,
                                                                                 distToObjSeen);
         if ( !isConfirmingObservation ) {
+          // Don't print this during the factory test because it spams when seeing the 
+          // calibration target
+          #ifndef FACTORY_TEST
           PRINT_CH_INFO("BlockWorld", "BlockWorld.AddAndUpdateObjects.NonConfirmingObservation",
-            "Added non-confirming visual observation for %d", objSeen->GetID().GetValue() );
+                        "Added non-confirming visual observation for %d", objSeen->GetID().GetValue() );
+          #endif
           
           // TODO should we broadcast RobotObservedPossibleObject here?
           continue;
@@ -3506,6 +3511,5 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
     FindLocatedObjectHelper(filter, visualizeHelper, false);
     
   } // DrawAllObjects()
-    
 } // namespace Cozmo
 } // namespace Anki

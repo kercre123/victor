@@ -17,7 +17,8 @@
 #include "speex/speex_resampler.h"
 
 #include "coretech/messaging/shared/UdpServer.h"
-#include "cozmoAnim/engineMessages.h"
+
+#include "cozmoAnim/animProcessMessages.h"
 #include "cozmoAnim/faceDisplay/faceDebugDraw.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "cozmoAnim/micDataProcessor.h"
@@ -34,7 +35,7 @@
 #include "util/math/math.h"
 #include "util/threading/threadPriority.h"
 
-#include "clad/robotInterface/messageRobotToEngine_sendToEngine_helper.h"
+#include "clad/robotInterface/messageRobotToEngine_sendAnimToEngine_helper.h"
 
 #include <iomanip>
 #include <sstream>
@@ -519,34 +520,38 @@ void MicDataProcessor::ProcessLoop()
         job->CollectRawAudio(audioChunk.data(), audioChunk.size());
       }
       
-      // Resample the audio, then collect it if desired
-      std::array<AudioUtil::AudioSample, kResampledAudioChunkSize> resampledAudioChunk;
-      ResampleAudioChunk(audioChunk.data(), resampledAudioChunk.data());
-      for (auto& job : stolenJobs)
+      // Factory test doesn't need to do any mic processing, it just uses raw data
+      if(!FACTORY_TEST)
       {
-        job->CollectResampledAudio(resampledAudioChunk.data(), resampledAudioChunk.size());
-      }
-      
-      // Process the audio into a single channel, and collect it if desired
-      bool audioBlockReady = ProcessResampledAudio(nextData.timestamp, resampledAudioChunk.data());
-      if (audioBlockReady)
-      {
-        const auto& processedAudio = _immediateAudioBuffer.back().audioBlock;
+        // Resample the audio, then collect it if desired
+        std::array<AudioUtil::AudioSample, kResampledAudioChunkSize> resampledAudioChunk;
+        ResampleAudioChunk(audioChunk.data(), resampledAudioChunk.data());
         for (auto& job : stolenJobs)
         {
-          job->CollectProcessedAudio(processedAudio.data(), processedAudio.size());
+          job->CollectResampledAudio(resampledAudioChunk.data(), resampledAudioChunk.size());
         }
+        
+        // Process the audio into a single channel, and collect it if desired
+        bool audioBlockReady = ProcessResampledAudio(nextData.timestamp, resampledAudioChunk.data());
+        if (audioBlockReady)
+        {
+          const auto& processedAudio = _immediateAudioBuffer.back().audioBlock;
+          for (auto& job : stolenJobs)
+          {
+            job->CollectProcessedAudio(processedAudio.data(), processedAudio.size());
+          }
 
-        kMicData_NextTriggerIndex = Util::Clamp(kMicData_NextTriggerIndex, 0, kTriggerDataListLen-1);
-        if (kMicData_NextTriggerIndex != _currentTriggerSearchIndex)
-        {
-          _currentTriggerSearchIndex = kMicData_NextTriggerIndex;
-          _recognizer->SetRecognizerIndex(_currentTriggerSearchIndex);
-        }
-        // Run the trigger detection, which will use the callback defined above
-        {
-          ANKI_CPU_PROFILE("RecognizeTriggerWord");
-          _recognizer->Update(processedAudio.data(), (unsigned int)processedAudio.size());
+          kMicData_NextTriggerIndex = Util::Clamp(kMicData_NextTriggerIndex, 0, kTriggerDataListLen-1);
+          if (kMicData_NextTriggerIndex != _currentTriggerSearchIndex)
+          {
+            _currentTriggerSearchIndex = kMicData_NextTriggerIndex;
+            _recognizer->SetRecognizerIndex(_currentTriggerSearchIndex);
+          }
+          // Run the trigger detection, which will use the callback defined above
+          {
+            ANKI_CPU_PROFILE("RecognizeTriggerWord");
+            _recognizer->Update(processedAudio.data(), (unsigned int)processedAudio.size());
+          }
         }
       }
       
@@ -651,9 +656,16 @@ void MicDataProcessor::Update()
     _fftResultList.pop_front();
     _fftResultMutex.unlock();
     
-    // Do something with the result
-    PRINT_NAMED_INFO("MicDataProcessor.Update.FFTResult", "%d %d %d %d", result[0], result[1], result[2], result[3]);
-    
+    // Populate the fft result message
+    auto msg = RobotInterface::AudioFFTResult();
+
+    for(uint8_t i = 0; i < result.size(); ++i)
+    {
+      msg.result[i] = result[i];
+    }
+    RobotInterface::SendAnimToEngine(std::move(msg));
+
+
     _fftResultMutex.lock();
   }
   _fftResultMutex.unlock();
@@ -747,7 +759,7 @@ void MicDataProcessor::Update()
   {
     if (msg->tag == RobotInterface::RobotToEngine::Tag_triggerWordDetected)
     {
-      RobotInterface::SendMessageToEngine(msg->triggerWordDetected);
+      RobotInterface::SendAnimToEngine(msg->triggerWordDetected);
     }
     else if (msg->tag == RobotInterface::RobotToEngine::Tag_micDirection)
     {
@@ -755,7 +767,7 @@ void MicDataProcessor::Update()
         micDirectionData = msg->micDirection;
         updatedMicDirection = true;
       #endif
-      RobotInterface::SendMessageToEngine(msg->micDirection);
+      RobotInterface::SendAnimToEngine(msg->micDirection);
     }
     else
     {

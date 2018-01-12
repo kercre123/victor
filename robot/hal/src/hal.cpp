@@ -15,7 +15,7 @@
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 
-#include "../spine/spine_hal.h"
+#include "../spine/spine.h"
 #include "../spine/cc_commander.h"
 
 #include "schema/messages.h"
@@ -23,6 +23,7 @@
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 
+#include <errno.h>
 
 namespace Anki {
 namespace Cozmo {
@@ -49,6 +50,18 @@ namespace { // "Private members"
   // so we cache the last non-0xFFFF value and return this as the latest touch sensor reading
   u16 lastValidTouchIntensity_;
 
+
+  struct spine_ctx spine_;
+  uint8_t frameBuffer_[SPINE_B2H_FRAME_LEN];
+  uint8_t readBuffer_[4096];
+  TimeStamp_t nextSleepTimeMs_ = 1000;
+  bool processedPartialFrame_ = false;
+  bool processedIMU_ = false;
+  uint32_t lastFrameCounter_ = 0;
+  Result lastResult_;
+
+  bool chargingEnabled_ = false;
+
 } // "private" namespace
 
 // Forward Declarations
@@ -59,26 +72,54 @@ void ProcessIMUEvents();
 void ProcessTouchLevel(void);
 void PrintConsoleOutput(void);
 
-
-#define MAX_RETRIES 4
-#define SPINE_DATA_TIMEOUT_MS 500
-Result GetSpineDataFrame(void)
+ssize_t robot_io(spine_ctx_t spine, uint32_t sleepTimeMicroSec = 1000)
 {
-  int_fast8_t retries = MAX_RETRIES;
-  while (retries--) {
-    const SpineMessageHeader* hdr = (const SpineMessageHeader*)
-      hal_get_next_frame(SPINE_DATA_TIMEOUT_MS/MAX_RETRIES);
-    if (!hdr) { continue; }
-    if (hdr->payload_type == PAYLOAD_DATA_FRAME) {
-      bodyData_ = (BodyToHead*)(hdr + 1);
-      return RESULT_OK;
-    }
-    else if (hdr->payload_type == PAYLOAD_CONT_DATA) {
-      ccc_data_process( (ContactData*)(hdr+1) );
-      return RESULT_OK;
+  usleep(sleepTimeMicroSec);
+
+  int fd = spine_get_fd(spine);
+  ssize_t r = read(fd, readBuffer_, sizeof(readBuffer_));
+  if (r > 0) {
+    r = spine_receive_data(spine, (const void*)readBuffer_, r);
+  } else if (r < 0) {
+    if (errno == EAGAIN) {
+      r = 0;
     }
   }
-  return RESULT_FAIL_IO_TIMEOUT;
+  return r;
+}
+
+Result spine_wait_for_first_frame(spine_ctx_t spine)
+{
+  bool initialized = false;
+  int read_count = 0;
+
+  while (!initialized) {
+    ssize_t r = spine_parse_frame(spine, &frameBuffer_, sizeof(frameBuffer_), NULL);
+
+    if (r < 0) {
+      continue;
+    } else if (r > 0) {
+      const struct SpineMessageHeader* hdr = (const struct SpineMessageHeader*)frameBuffer_;
+      if (hdr->payload_type == PAYLOAD_DATA_FRAME) {
+        initialized = true;
+        const struct spine_frame_b2h* frame = (const struct spine_frame_b2h*)frameBuffer_;
+        bodyData_ = (BodyToHead*)&frame->payload;
+      }
+    } else {
+      // r == 0 (waiting)
+      if (read_count > 50) {
+        if (!initialized) {
+          spine_set_mode(&spine_, RobotMode_RUN);
+        }
+        read_count = 0;
+      }
+    }
+
+    robot_io(&spine_, 1000);
+    read_count++;
+  }
+
+  return RESULT_OK;
 }
 
 
@@ -100,26 +141,22 @@ Result HAL::Init()
   {
     AnkiInfo("HAL.Init.StartingSpineHAL", "");
 
-    SpineErr_t error = hal_init(SPINE_TTY, SPINE_BAUD);
+    spine_init(&spine_);
+    struct spine_params params = {
+      .devicename = SPINE_TTY,
+      .baudrate = SPINE_BAUD
+    };
+    int errCode = spine_open(&spine_, params);
 
-    if (error != err_OK) {
+    if (errCode != err_OK) {
       return RESULT_FAIL;
     }
     AnkiDebug("HAL.Init.SettingRunMode", "");
 
-    hal_set_mode(RobotMode_RUN);
+    spine_set_mode(&spine_, RobotMode_RUN);
 
     AnkiDebug("HAL.Init.WaitingForDataFrame", "");
-    Result result;
-    do {
-      result = GetSpineDataFrame();
-      //spin on good frame
-      if (result == RESULT_FAIL_IO_TIMEOUT) {
-        AnkiWarn("HAL.Init.SpineTimeout", "Kicking the body again!");
-        hal_set_mode(RobotMode_RUN);
-      }
-    } while (result != RESULT_OK);
-
+    Result result = spine_wait_for_first_frame(&spine_);
   }
 #else
   bodyData_ = &dummyBodyData_;
@@ -149,41 +186,80 @@ void ForwardMicData(void)
 #endif
 }
 
+
+
+void handle_payload_data(const uint8_t frame_buffer[]) {
+  const struct spine_frame_b2h* frame = (const struct spine_frame_b2h*)frame_buffer;
+  memcpy(frameBuffer_, frame_buffer, sizeof(frameBuffer_));
+  bodyData_ = (BodyToHead*)(frameBuffer_ + sizeof(struct SpineMessageHeader));
+  // BRC: Should accumulate all of the audio data and send it in one shot
+  ForwardMicData();
+}
+
+
+Result spine_get_frame() {
+  Result result = RESULT_FAIL_IO_TIMEOUT;
+  uint8_t frame_buffer[SPINE_B2H_FRAME_LEN];
+  bool processedFrame = false;
+
+  ssize_t r = 0;
+  do {
+    r = spine_parse_frame(&spine_, frame_buffer, sizeof(frame_buffer), NULL);
+
+    if (r < 0) {
+      continue;
+    } else if (r > 0) {
+      const struct SpineMessageHeader* hdr = (const struct SpineMessageHeader*)frame_buffer;
+      if (hdr->payload_type == PAYLOAD_DATA_FRAME) {
+        handle_payload_data(frame_buffer);  //payload starts immediately after header
+        result = RESULT_OK;
+        continue;
+      }
+      else if (hdr->payload_type == PAYLOAD_CONT_DATA) {
+        ccc_data_process( (ContactData*)(hdr+1) );
+        result = RESULT_OK;
+        continue;
+      }
+
+    } else {
+      // get more data
+      robot_io(&spine_, 1000);
+    }
+  } while (r != 0);
+
+  return result;
+}
+
+  //check if the charge contact commander is active,
+  //if so, override normal operation
+    bool commander_is_active = ccc_commander_is_active();
+    struct HeadToBody* h2bp = (commander_is_active) ? ccc_data_get_response() : &headData_;
+
+
 Result HAL::Step(void)
 {
   Result result = RESULT_OK;
 
-#ifndef USING_ANDROID_PHONE
+  headData_.framecounter++;
+
+  // Send zero motor power when charging is enabled
+  if(chargingEnabled_)
   {
-    headData_.framecounter++;
-
-    //check if the charge contact commander is active,
-    //if so, override normal operation
-    bool commander_is_active = ccc_commander_is_active();
-    if (commander_is_active) {
-      hal_send_frame(PAYLOAD_DATA_FRAME, ccc_data_get_response(), sizeof(HeadToBody));
-    }
-    else {
-      hal_send_frame(PAYLOAD_DATA_FRAME, &headData_, sizeof(HeadToBody));
-
-      // Process IMU while next frame is buffering in the background
-      ProcessIMUEvents();
-
-    }
-    result =  GetSpineDataFrame();
-
-    if (commander_is_active) {
-      ccc_payload_process(bodyData_);
-      return RESULT_FAIL;
-    }
-
-    ProcessTouchLevel(); // filter invalid values from touch sensor
-
-    PrintConsoleOutput();
+    memset(h2bp->motorPower, 0, sizeof(h2bp->motorPower));
   }
-#endif
 
-  ForwardMicData();
+  spine_write_h2b_frame(&spine_, &headData_);
+
+  ProcessIMUEvents();
+
+  do {
+    result = spine_get_frame();
+  } while(result != RESULT_OK);
+
+  ProcessTouchLevel(); // filter invalid values from touch sensor
+
+  PrintConsoleOutput();
+
   return result;
 }
 
@@ -280,8 +356,8 @@ u16 HAL::GetCliffOffLevel(const CliffID cliff_id)
 
 f32 HAL::BatteryGetVoltage()
 {
-  // On charger battery.battery reports ~2500 so scale it to 5v
-  static const f32 kBatteryScale = 5.f/2500;
+  // On charger battery.battery reports ~3520 so scale it to 5v
+  static const f32 kBatteryScale = 5.f/3520;
   return kBatteryScale * bodyData_->battery.battery;
 }
 

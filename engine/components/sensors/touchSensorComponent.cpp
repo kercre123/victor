@@ -85,10 +85,17 @@ TouchSensorComponent::TouchSensorComponent(Robot& robot)
 
 void TouchSensorComponent::UpdateInternal(const RobotState& msg)
 {
+  if(FACTORY_TEST &&_dataToRecord != nullptr)
+  {
+    _dataToRecord->data.push_back(msg.backpackTouchSensorRaw);
+  }
+
   // sometimes spurious values that are absurdly high come through the sensor
   if(msg.backpackTouchSensorRaw > kMaxTouchIntensityInvalid) {
     return;
   }
+
+  _lastRawTouchValue = msg.backpackTouchSensorRaw;
 
   const bool isPickedUp = (msg.status & (uint32_t)RobotStatusFlag::IS_PICKED_UP) != 0;
 
@@ -153,6 +160,10 @@ std::string TouchSensorComponent::GetLogRow()
   return str;
 }
 
+void TouchSensorComponent::StartRecordingData(TouchSensorValues* data)
+{
+  _dataToRecord = data;
+}
   
 } // Cozmo namespace
 } // Anki namespace

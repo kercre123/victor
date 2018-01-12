@@ -109,6 +109,21 @@ private:
   friend class BehaviorFactoryTest;
   friend class BehaviorDockingTestSimple;
   friend class BehaviorLiftLoadTest;
+
+  friend class IBehaviorPlaypen;
+  friend class BehaviorPlaypenInitChecks;
+  friend class BehaviorPlaypenDriftCheck;
+  friend class BehaviorPlaypenPickupCube;
+  friend class BehaviorPlaypenMotorCalibration;
+  friend class BehaviorPlaypenDistanceSensor;
+  friend class BehaviorPlaypenSoundCheck;
+  friend class BehaviorPlaypenEndChecks;
+  friend class BehaviorPlaypenDriveForwards;
+  friend class BehaviorPlaypenTest;
+  friend class BehaviorPlaypenWaitToStart;
+  friend class BehaviorPlaypenCameraCalibration;
+  friend class BehaviorPlaypenReadToolCode;
+
   Robot& _robot;
 };
 
