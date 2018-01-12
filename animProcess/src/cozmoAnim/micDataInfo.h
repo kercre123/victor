@@ -44,7 +44,6 @@ public:
   
   void SetTimeToRecord(uint32_t timeToRecord);
   void CollectRawAudio(const AudioUtil::AudioSample* audioChunk, size_t size);
-  void CollectResampledAudio(const AudioUtil::AudioSample* audioChunk, size_t size);
   void CollectProcessedAudio(const AudioUtil::AudioSample* audioChunk, size_t size);
 
   AudioUtil::AudioChunkList GetProcessedAudio(size_t beginIndex);
@@ -54,7 +53,6 @@ private:
   // These members are accessed via multiple threads when the job is running, so they use a mutex
   uint32_t _timeToRecord_ms  = 0;
   AudioUtil::AudioChunkList _rawAudioData{};
-  AudioUtil::AudioChunkList _resampledAudioData{};
   AudioUtil::AudioChunkList _processedAudioData{};
   std::mutex _dataMutex;
 

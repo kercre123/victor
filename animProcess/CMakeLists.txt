@@ -9,7 +9,6 @@ anki_build_cxx_library(victor_anim ${ANKI_SRCLIST_DIR} STATIC)
 include(flatbuffers)
 include(opencv)
 include(signalessence)
-include(speexdsp)
 include(text2speech)
 include(sensory)
 include(robot_core)
@@ -53,7 +52,6 @@ target_link_libraries(victor_anim
   ${OPENCV_LIBS}
   ${FLATBUFFERS_LIBS} 
   ${SIGNALESSENCE_LIBS}
-  ${SPEEXDSP_LIBS}
   ${TEXT2SPEECH_LIBS}
   ${SENSORY_LIBS}
   # platform

@@ -149,8 +149,8 @@ namespace Anki {
       
       // MicData
       // Use the mac mic as input with AudioCaptureSystem
-      constexpr uint32_t kSamplesPerChunk = 120;
-      constexpr uint32_t kSampleRate_hz = 24000;
+      constexpr uint32_t kSamplesPerChunk = 80;
+      constexpr uint32_t kSampleRate_hz = 16000;
       AudioUtil::AudioCaptureSystem audioCaptureSystem_(kSamplesPerChunk, kSampleRate_hz);
       
       uint32_t audioInputSequenceID_ = 0;
