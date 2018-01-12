@@ -27,12 +27,12 @@ public:
   
   virtual ~BehaviorDevTurnInPlaceTest() { }
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual bool CarryingObjectHandledInternally() const override { return false;}
 
 protected:
-  
   friend class BehaviorContainer;
   BehaviorDevTurnInPlaceTest(const Json::Value& config);
+
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
 
 private:
 

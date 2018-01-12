@@ -33,9 +33,9 @@ public:
     return true;
   }
 
-  virtual bool CarryingObjectHandledInternally() const override {return false;}
-
 protected:
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
+
 
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
 

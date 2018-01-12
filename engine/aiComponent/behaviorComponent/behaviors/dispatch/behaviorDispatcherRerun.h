@@ -30,17 +30,20 @@ public:
   static Json::Value CreateConfig(BehaviorID newConfigID, BehaviorID delegateID, const int numRuns);  
 
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override{return true;}
-  virtual bool CarryingObjectHandledInternally() const override{ return true;}
-  virtual bool ShouldRunWhileOffTreads() const override{return true;}
-  virtual bool ShouldRunWhileOnCharger() const override { return true;}
   
 protected:
   // Construction has to go through BehvaiorContainer
   friend class BehaviorContainer;
   BehaviorDispatcherRerun(const Json::Value& config);
 
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenCarryingObject = true;
+    modifiers.wantsToBeActivatedWhenOffTreads = true;
+    modifiers.wantsToBeActivatedWhenOnCharger = true;
+    modifiers.behaviorAlwaysDelegates = false;
+  }
+
   virtual void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual bool ShouldCancelWhenInControl() const override { return false;}
 
   virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;

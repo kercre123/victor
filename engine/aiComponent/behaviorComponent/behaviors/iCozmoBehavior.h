@@ -66,6 +66,27 @@ namespace ExternalInterface {
 struct BehaviorObjectiveAchieved;
 }
 
+
+// This struct defines some of the operation modes iCozmoBehavior
+// provides to derived classes. They have the opportunity to override
+// the default values set below in order to change the way the behavior
+// operates
+struct BehaviorOperationModifiers{
+  // WantsToBeActivated modifiers
+  bool wantsToBeActivatedWhenCarryingObject = false;
+  bool wantsToBeActivatedWhenOffTreads = false;
+  bool wantsToBeActivatedWhenOnCharger = true;
+
+  // If true iCozmoBehavior will automatically cancel the behavior if it hasn't delegated control by the end of its tick
+  // Default is True for two reasons:
+  //   1) Most behaviors don't want the robot to sit still not doing anything
+  //      so they are always delegating or have hit an unexpected bug, and it's better to cancel so the robot doesn't freeze
+  //   2) It supports open-ended final Delegation calls. After the final delegation the behavior doesn't have to
+  //      monitor its status - it will be automatically canceled when the final delegation completes.
+  // Override to false if the behavior will always cancel itself when it's done
+  bool behaviorAlwaysDelegates = true;
+};
+
 // Base Behavior Interface specification
 class ICozmoBehavior : public IBehavior
 {
@@ -182,20 +203,12 @@ public:
                 { DEV_ASSERT(false, "AddListener.FistBumpListener.Unimplemented"); }
   virtual void AddListener(IFeedingListener* listener)
                 { DEV_ASSERT(false, "AddListener.FeedingListener.Unimplemented"); }
-  
-  // Return true if the behavior explicitly handles the case where the robot starts holding the block
-  // Equivalent to !robot.IsCarryingObject() in WantsToBeActivated()
-  virtual bool CarryingObjectHandledInternally() const = 0;
 
-  // Can be overridden to allow the behavior to run while the robot is not on its treads (default is to not run)
-  virtual bool ShouldRunWhileOffTreads() const { return false;}
-
-  // Can be overridden to allow the behavior to run while the robot is on the charger platform
-  virtual bool ShouldRunWhileOnCharger() const { return false;}
+  // Give derived behaviors the opportunity to override default behavior operations
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const = 0;
 
 protected:
-  // Function which indicates whether a behavior wants to be canceled when it's done delegating or not
-  virtual bool ShouldCancelWhenInControl() const { return true;}
+
 
   // default is no delegates, but behaviors which delegate can overload this
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override { }
@@ -445,6 +458,7 @@ private:
   // only used if we aren't using the BSM
   u32 _lastActionTag = 0;
   std::vector<IBEIConditionPtr> _wantsToBeActivatedConditions;
+  BehaviorOperationModifiers _operationModifiers;
   
   // Returns true if the state of the world/robot is sufficient for this behavior to be executed
   bool WantsToBeActivatedBase(BehaviorExternalInterface& behaviorExternalInterface) const;

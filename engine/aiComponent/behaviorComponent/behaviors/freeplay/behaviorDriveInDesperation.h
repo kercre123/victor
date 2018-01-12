@@ -34,17 +34,18 @@ protected:
   // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
   BehaviorDriveInDesperation(const Json::Value& config);
+
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenOffTreads = true;
+  }
+
   virtual void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) override;
 
   virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
-
-  // Do nothing while in the air, just idle
-  virtual bool ShouldRunWhileOffTreads() const override { return true; } 
   
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual bool CarryingObjectHandledInternally() const override {return false;}
 
 private:
   using super = ICozmoBehavior;

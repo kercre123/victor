@@ -27,15 +27,16 @@ protected:
   BehaviorPlaypenMotorCalibration(const Json::Value& config);
   
 protected:
-  
+  virtual void GetBehaviorOperationModifiersInternal(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenOnCharger = true;
+  }
+
   virtual Result         OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)   override;
   virtual PlaypenStatus PlaypenUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void           OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)   override;
   
   virtual void HandleWhileActivatedInternal(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
-  
-  virtual bool ShouldRunWhileOnCharger() const override { return true; }
-  
+    
 private:
   
   bool _liftCalibrated = false;

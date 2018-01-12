@@ -37,19 +37,18 @@ public:
   
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override {
     return true; }
-  
-  virtual bool CarryingObjectHandledInternally() const override {return false;}
-  virtual bool ShouldRunWhileOnCharger() const override { return true; }
-  virtual bool ShouldRunWhileOffTreads() const override { return true;}
-
 protected:
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override{
+    modifiers.wantsToBeActivatedWhenOffTreads = true;
+    modifiers.wantsToBeActivatedWhenOnCharger = true;
+    modifiers.behaviorAlwaysDelegates = false;
+  }
 
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
 
   virtual void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) override;
 
   virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual bool ShouldCancelWhenInControl() const override { return false;}
   virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
 

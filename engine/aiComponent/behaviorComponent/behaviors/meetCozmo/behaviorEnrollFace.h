@@ -48,10 +48,7 @@ protected:
   friend class BehaviorContainer;
   BehaviorEnrollFace(const Json::Value& config);
     
-public:
-
-  virtual bool CarryingObjectHandledInternally() const override { return false;}
-  
+public:  
   // Is activatable when FaceWorld has enrollment settings set
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
   
@@ -60,7 +57,9 @@ protected:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // ICozmoBehavior API
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
+
+
   virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)   override;
   virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)   override;

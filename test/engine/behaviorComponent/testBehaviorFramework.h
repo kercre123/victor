@@ -138,8 +138,11 @@ public:
   int _calledRobotFunc = 0;
   
 
-  
-  virtual bool CarryingObjectHandledInternally() const override {return true;}
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenCarryingObject = true;
+    modifiers.behaviorAlwaysDelegates = false;
+  }
+
   void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) override;
   
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override {
@@ -149,7 +152,6 @@ public:
   virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   
   virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual bool ShouldCancelWhenInControl() const override { return false;}
   
   virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   
@@ -210,12 +212,15 @@ public:
   
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
   
-  virtual bool CarryingObjectHandledInternally() const override;
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenCarryingObject = true;
+    modifiers.behaviorAlwaysDelegates = false;
+  }
+
   
   virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   
   virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual bool ShouldCancelWhenInControl() const override { return false;}
   
   virtual void  OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   

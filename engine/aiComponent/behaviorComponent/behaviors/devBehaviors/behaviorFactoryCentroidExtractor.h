@@ -40,13 +40,16 @@ namespace Cozmo {
     virtual ~BehaviorFactoryCentroidExtractor() { }
     
     virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-    virtual bool CarryingObjectHandledInternally() const override {return true;}
     
-  private:
-    
+  protected:
+    virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+      modifiers.wantsToBeActivatedWhenCarryingObject = true;
+      modifiers.behaviorAlwaysDelegates = false;
+    }
+
+  private:    
     virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
     virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
-    virtual bool ShouldCancelWhenInControl() const override { return false;}
 
     virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
     

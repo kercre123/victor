@@ -86,6 +86,12 @@ public:
   static const std::set<ExternalInterface::MessageEngineToGameTag>& GetFailureTags();
 
 protected:
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override final {
+    modifiers.behaviorAlwaysDelegates = false;
+    GetBehaviorOperationModifiersInternal(modifiers);
+  }
+  virtual void GetBehaviorOperationModifiersInternal(BehaviorOperationModifiers& modifiers) const {}
+
 
   enum PlaypenStatus
   {
@@ -93,8 +99,6 @@ protected:
     Running,
     Complete
   };
-
-  virtual bool ShouldCancelWhenInControl() const override { return false; }
 
   virtual void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) override {InitBehaviorInternal(behaviorExternalInterface);};  
 
@@ -108,9 +112,6 @@ protected:
   // Final override of UpdateInternal so we can do things before the subclass updates
   // PlaypenUpdateInternal() is provided for the subclass to override if they wish
   virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override final;
-  
-  // No playpen behavior can start while carrying an object
-  virtual bool CarryingObjectHandledInternally() const override { return false; }
   
   // Final override of HandleWhileActivated so we can do things before the subclass handles the event
   // HandleWhileActivatedInternal() is provided for the subclass to override

@@ -39,7 +39,6 @@ protected:
 
 public:
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual bool CarryingObjectHandledInternally() const override {return false;}
   
   virtual void AddListener(IFeedingListener* listener) override{
     _feedingListeners.insert(listener);
@@ -51,6 +50,8 @@ public:
   void SetTargetObject(const ObjectID& objID){_targetID = objID;}
   
 protected:
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
+
   using base = ICozmoBehavior;
   virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;

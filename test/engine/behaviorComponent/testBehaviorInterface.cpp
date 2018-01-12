@@ -609,7 +609,10 @@ public:
 
   bool _stopAction = false;
 
-  virtual bool CarryingObjectHandledInternally() const override {return true;}
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenCarryingObject = true;
+    modifiers.behaviorAlwaysDelegates = false;
+  }
 
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override {
     return true;
@@ -627,7 +630,6 @@ public:
     }
     _numUpdates++;
   }
-  virtual bool ShouldCancelWhenInControl() const override { return false;}
   virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override {
     _stopped = true;
   }

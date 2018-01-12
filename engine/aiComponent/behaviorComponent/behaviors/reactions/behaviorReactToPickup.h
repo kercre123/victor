@@ -28,14 +28,18 @@ private:
   
 public:
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual bool CarryingObjectHandledInternally() const override {return true;}
 
 protected:
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenCarryingObject = true;
+    modifiers.wantsToBeActivatedWhenOffTreads = true;
+    modifiers.wantsToBeActivatedWhenOnCharger = true;
+    modifiers.behaviorAlwaysDelegates = false;
+  }
+
   virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual bool ShouldCancelWhenInControl() const override { return false;}
   virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual bool ShouldRunWhileOffTreads() const override { return true;}
 
   
   void StartAnim(BehaviorExternalInterface& behaviorExternalInterface);

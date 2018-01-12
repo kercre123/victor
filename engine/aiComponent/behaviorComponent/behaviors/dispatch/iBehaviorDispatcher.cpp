@@ -77,44 +77,26 @@ bool IBehaviorDispatcher::WantsToBeActivatedBehavior(BehaviorExternalInterface& 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IBehaviorDispatcher::CarryingObjectHandledInternally() const
+void IBehaviorDispatcher::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const 
 {
+  // set up return variables
+  bool subBehaviorCarryingObject = false;
+  bool subBehaviorOffTreads = false;
+  bool subBehaviorOnCharger = false;
+
+  // check all sub behavior values
   for( const auto& behaviorPtr : _behaviors ) {
-    if( behaviorPtr->CarryingObjectHandledInternally() ) {
-      // if any of our behaviors can handle carrying an object, then so can we
-      // NOTE: this might not be valid, because this behavior might not want to run
-      return true;
-    }
+    behaviorPtr->GetBehaviorOperationModifiers(modifiers);
+    subBehaviorCarryingObject |= modifiers.wantsToBeActivatedWhenCarryingObject;
+    subBehaviorOffTreads      |= modifiers.wantsToBeActivatedWhenOffTreads;
+    subBehaviorOnCharger      |= modifiers.wantsToBeActivatedWhenOnCharger;
   }
 
-  // if none of our sub-behaviors can handle carrying a cube, then neither can we
-  return false;
+  // assign return variables
+  modifiers.wantsToBeActivatedWhenCarryingObject = subBehaviorCarryingObject;
+  modifiers.wantsToBeActivatedWhenOffTreads = subBehaviorOffTreads;
+  modifiers.wantsToBeActivatedWhenOnCharger = subBehaviorOnCharger;
 }
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IBehaviorDispatcher::ShouldRunWhileOffTreads() const
-{
-  for( const auto& behaviorPtr : _behaviors ) {
-    if( behaviorPtr->ShouldRunWhileOffTreads() ) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IBehaviorDispatcher::ShouldRunWhileOnCharger() const
-{
-  for( const auto& behaviorPtr : _behaviors ) {
-    if( behaviorPtr->ShouldRunWhileOnCharger() ) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IBehaviorDispatcher::GetAllDelegates(std::set<IBehavior*>& delegates) const

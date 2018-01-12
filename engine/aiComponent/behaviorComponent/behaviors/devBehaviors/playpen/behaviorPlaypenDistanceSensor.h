@@ -27,14 +27,15 @@ protected:
   BehaviorPlaypenDistanceSensor(const Json::Value& config);
   
 protected:
-  
+  virtual void GetBehaviorOperationModifiersInternal(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenOnCharger = true;
+    modifiers.wantsToBeActivatedWhenCarryingObject = true;
+  }
+
   virtual Result         OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)   override;
   virtual PlaypenStatus PlaypenUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void           OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)           override;
-  
-  virtual bool ShouldRunWhileOnCharger() const override { return true; }
-  virtual bool CarryingObjectHandledInternally() const override { return true; }
-  
+    
 private:
 
   // If seeing the expected marker/object, turns us to be perpendicular to it

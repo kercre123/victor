@@ -26,17 +26,18 @@ enum class ConfigurationType;
   
 class BehaviorOnConfigSeen: public ICozmoBehavior
 {
-private:
+protected:
   // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
   BehaviorOnConfigSeen(const Json::Value& config);
   
-  
 public:
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual bool CarryingObjectHandledInternally() const override {return false;}
   
 protected:
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
+
+
   virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   void TransitionToPlayAnimationSequence(BehaviorExternalInterface& behaviorExternalInterface);
 

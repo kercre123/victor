@@ -31,7 +31,6 @@ private:
   
 public:
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual bool CarryingObjectHandledInternally() const override {return true;}
   void SetDesiredFace(const SmartFaceID& desiredFace){_desiredFace = desiredFace;}
   
   // Empty override of AddListener because the strategy that controls this behavior is a listener
@@ -40,6 +39,10 @@ public:
   virtual void AddListener(ISubtaskListener* listener) override {};
   
 protected:
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenCarryingObject = true;
+  }
+
   virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   

@@ -35,10 +35,13 @@ private:
 
 public:
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual bool CarryingObjectHandledInternally() const override { return true;}
   void SetObjectToAcknowledge(const ObjectID& objID){_activeObjectID = objID;}
 
 protected:
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenCarryingObject = true;
+  }
+
   virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   

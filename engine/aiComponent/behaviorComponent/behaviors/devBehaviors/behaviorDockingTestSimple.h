@@ -44,15 +44,17 @@ namespace Anki {
         friend class BehaviorContainer;
         BehaviorDockingTestSimple(const Json::Value& config);
       
-      public:
-      
+      public:      
         virtual ~BehaviorDockingTestSimple() { }
       
         virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
 
-        virtual bool CarryingObjectHandledInternally() const override { return false;}
-
       protected:
+        virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+          modifiers.behaviorAlwaysDelegates = false;
+        }
+
+      
         void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) override;
       
       private:
@@ -60,7 +62,6 @@ namespace Anki {
         virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
       
         virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
-        virtual bool ShouldCancelWhenInControl() const override { return false;}
 
         virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
         

@@ -468,11 +468,6 @@ bool TestBehaviorWithHelpers::WantsToBeActivatedBehavior(BehaviorExternalInterfa
   return true;
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool TestBehaviorWithHelpers::CarryingObjectHandledInternally() const {return true;}
-
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TestBehaviorWithHelpers::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) {
 }

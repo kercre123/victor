@@ -32,16 +32,12 @@ protected:
   void AddPossibleDispatch(BehaviorID id) { _behaviorIds.push_back(id); }
 
 public:
-
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-
-  virtual bool CarryingObjectHandledInternally() const override;
-  virtual bool ShouldRunWhileOffTreads() const override;
-  virtual bool ShouldRunWhileOnCharger() const override;
-
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const final override;
 
 protected:
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
+
 
   // This function should be overridden to return the behavior that should run. This will only be called at
   // "appropriate" times by the base class (the base class handles whether or not to interrupt running

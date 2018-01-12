@@ -352,6 +352,7 @@ void ICozmoBehavior::InitInternal(BehaviorExternalInterface& behaviorExternalInt
     behaviorExternalInterface.GetBehaviorEventComponent().SubscribeToTags(this,{tag});
   }
   
+  GetBehaviorOperationModifiers(_operationModifiers);
 }
 
 
@@ -520,6 +521,11 @@ bool ICozmoBehavior::WantsToBeActivatedInternal(BehaviorExternalInterface& behav
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ICozmoBehavior::WantsToBeActivatedBase(BehaviorExternalInterface& behaviorExternalInterface) const
 {
+  // Factory test does not need to check behavior runnability
+  if(FACTORY_TEST){
+    return true;
+  }
+
   // Some reaction trigger strategies allow behaviors to interrupt themselves.
   DEV_ASSERT(!IsActivated(), "ICozmoBehavior.WantsToBeActivatedCalledOnRunningBehavior");
   if (IsActivated()) {
@@ -527,91 +533,87 @@ bool ICozmoBehavior::WantsToBeActivatedBase(BehaviorExternalInterface& behaviorE
     return true;
   }
 
-  // Factory test does not need to check behavior runnability
-  if(!FACTORY_TEST)
+  // check if required processes are running
+  if ( _requiredProcess != AIInformationAnalysis::EProcess::Invalid )
   {
-    // check if required processes are running
-    if ( _requiredProcess != AIInformationAnalysis::EProcess::Invalid )
-    {
-      const bool isProcessOn = behaviorExternalInterface.GetAIComponent().GetAIInformationAnalyzer().IsProcessRunning(_requiredProcess);
-      if ( !isProcessOn ) {
-        PRINT_NAMED_ERROR("ICozmoBehavior.WantsToBeActivated.RequiredProcessNotFound",
-          "Required process '%s' is not enabled for '%s'",
-          AIInformationAnalysis::StringFromEProcess(_requiredProcess),
-          GetIDStr().c_str());
-        return false;
-      }
+    const bool isProcessOn = behaviorExternalInterface.GetAIComponent().GetAIInformationAnalyzer().IsProcessRunning(_requiredProcess);
+    if ( !isProcessOn ) {
+      PRINT_NAMED_ERROR("ICozmoBehavior.WantsToBeActivated.RequiredProcessNotFound",
+        "Required process '%s' is not enabled for '%s'",
+        AIInformationAnalysis::StringFromEProcess(_requiredProcess),
+        GetIDStr().c_str());
+      return false;
     }
+  }
 
-    // check if a severe needs state is required
-    if( _requiredSevereNeed != NeedId::Count &&
-        _requiredSevereNeed != behaviorExternalInterface.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression() ) {
-      // not in the correct state
-      return false;
-    }
+  // check if a severe needs state is required
+  if( _requiredSevereNeed != NeedId::Count &&
+      _requiredSevereNeed != behaviorExternalInterface.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression() ) {
+    // not in the correct state
+    return false;
+  }
 
-    const float curTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    // first check the unlock
-    if ( _requiredUnlockId != UnlockId::Count )
-    {
-      if(GetBEI().HasProgressionUnlockComponent()){
-        // ask progression component if the unlockId is currently unlocked
-        auto& progressionUnlockComp = behaviorExternalInterface.GetProgressionUnlockComponent();
-        const bool forFreeplay = true;
-        const bool isUnlocked = progressionUnlockComp.IsUnlocked(_requiredUnlockId,
-                                                                 forFreeplay );
-        if ( !isUnlocked ) {
-          return false;
-        }
-      }
-    }
-    
-    // if there's a timer requiring a recent drive off the charger, check with whiteboard
-    const bool requiresRecentDriveOff = FLT_GE(_requiredRecentDriveOffCharger_sec, 0.0f);
-    if ( requiresRecentDriveOff )
-    {
-      const float lastDriveOff = behaviorExternalInterface.GetAIComponent().GetWhiteboard().GetTimeAtWhichRobotGotOffCharger();
-      const bool hasDrivenOff = FLT_GE(lastDriveOff, 0.0f);
-      if ( !hasDrivenOff ) {
-        // never driven off the charger, can't run
-        return false;
-      }
-      
-      const bool isRecent = FLT_LE(curTime, (lastDriveOff + _requiredRecentDriveOffCharger_sec));
-      if ( !isRecent ) {
-        // driven off, but not recently enough
+  const float curTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  // first check the unlock
+  if ( _requiredUnlockId != UnlockId::Count )
+  {
+    if(GetBEI().HasProgressionUnlockComponent()){
+      // ask progression component if the unlockId is currently unlocked
+      auto& progressionUnlockComp = behaviorExternalInterface.GetProgressionUnlockComponent();
+      const bool forFreeplay = true;
+      const bool isUnlocked = progressionUnlockComp.IsUnlocked(_requiredUnlockId,
+                                                                forFreeplay );
+      if ( !isUnlocked ) {
         return false;
       }
     }
-    
-    // if there's a timer requiring a recent parent switch
-    const bool requiresRecentParentSwitch = FLT_GE(_requiredRecentSwitchToParent_sec, 0.0);
-    if ( requiresRecentParentSwitch ) {
-      const float lastTime = 0.f;// robot.GetBehaviorManager().GetLastBehaviorChooserSwitchTime();
-      const float changedAgoSecs = curTime - lastTime;
-      const bool isSwitchRecent = FLT_LE(changedAgoSecs, _requiredRecentSwitchToParent_sec);
-      if ( !isSwitchRecent ) {
-        return false;
-      }
-    }
-    
-    //check if the behavior runs while in the air
-    if(behaviorExternalInterface.GetOffTreadsState() != OffTreadsState::OnTreads
-       && !ShouldRunWhileOffTreads()){
+  }
+  
+  // if there's a timer requiring a recent drive off the charger, check with whiteboard
+  const bool requiresRecentDriveOff = FLT_GE(_requiredRecentDriveOffCharger_sec, 0.0f);
+  if ( requiresRecentDriveOff )
+  {
+    const float lastDriveOff = behaviorExternalInterface.GetAIComponent().GetWhiteboard().GetTimeAtWhichRobotGotOffCharger();
+    const bool hasDrivenOff = FLT_GE(lastDriveOff, 0.0f);
+    if ( !hasDrivenOff ) {
+      // never driven off the charger, can't run
       return false;
     }
+    
+    const bool isRecent = FLT_LE(curTime, (lastDriveOff + _requiredRecentDriveOffCharger_sec));
+    if ( !isRecent ) {
+      // driven off, but not recently enough
+      return false;
+    }
+  }
+  
+  // if there's a timer requiring a recent parent switch
+  const bool requiresRecentParentSwitch = FLT_GE(_requiredRecentSwitchToParent_sec, 0.0);
+  if ( requiresRecentParentSwitch ) {
+    const float lastTime = 0.f;// robot.GetBehaviorManager().GetLastBehaviorChooserSwitchTime();
+    const float changedAgoSecs = curTime - lastTime;
+    const bool isSwitchRecent = FLT_LE(changedAgoSecs, _requiredRecentSwitchToParent_sec);
+    if ( !isSwitchRecent ) {
+      return false;
+    }
+  }
+  
+  //check if the behavior runs while in the air
+  if(behaviorExternalInterface.GetOffTreadsState() != OffTreadsState::OnTreads
+      && !_operationModifiers.wantsToBeActivatedWhenOffTreads){
+    return false;
+  }
 
-    const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
-    //check if the behavior can run from the charger platform (don't want most to run because they could damage
-    //the robot by moving too much, and also will generally look dumb if they try to turn)
-    if(robotInfo.IsOnChargerPlatform() && !ShouldRunWhileOnCharger()) {
-      return false;
-    }
-    
-    //check if the behavior can handle holding a block
-    if(robotInfo.GetCarryingComponent().IsCarryingObject() && !CarryingObjectHandledInternally()){
-      return false;
-    }
+  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  //check if the behavior can run from the charger platform (don't want most to run because they could damage
+  //the robot by moving too much, and also will generally look dumb if they try to turn)
+  if(robotInfo.IsOnChargerPlatform() && !_operationModifiers.wantsToBeActivatedWhenCarryingObject){
+    return false;
+  }
+  
+  //check if the behavior can handle holding a block
+  if(robotInfo.GetCarryingComponent().IsCarryingObject() && !_operationModifiers.wantsToBeActivatedWhenCarryingObject){
+    return false;
   }
 
   for(auto& strategy: _wantsToBeActivatedConditions){
@@ -666,7 +668,7 @@ void ICozmoBehavior::UpdateInternal(BehaviorExternalInterface& behaviorExternalI
 
   // Check whether we should cancel the behavior if control is no longer delegated
   if(IsActivated()){
-    if(ShouldCancelWhenInControl() && !IsControlDelegated()){
+    if(_operationModifiers.behaviorAlwaysDelegates && !IsControlDelegated()){
       if(behaviorExternalInterface.HasDelegationComponent()){
         auto& delegationComponent = behaviorExternalInterface.GetDelegationComponent();
         delegationComponent.CancelSelf(this);
