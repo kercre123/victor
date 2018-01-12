@@ -25,6 +25,7 @@ if [ $# -eq 0 ]
 fi
 
 echo "**********INFO: Installing Scripts and Profile..."
+mkdir -p "${DATA_LOCATION}/"
 rm -f "${DATA_LOCATION}"/*_Results.log
 rm -rf "${DATA_LOCATION}/SaveData.json"
 rm -rf "${DATA_LOCATION}/SaveData.json.bak"
