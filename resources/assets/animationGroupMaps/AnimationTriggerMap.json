@@ -922,7 +922,7 @@
     },
     {
       "CladEvent": "LaserGetOut",
-      "AnimName": "ag_pouncedriveface_getOut"
+      "AnimName": "ag_pouncedriveface_getout"
     },
     {
       "CladEvent": "LaserPounce",
@@ -1494,7 +1494,7 @@
     },
     {
       "CladEvent": "PounceGetOut",
-      "AnimName": "ag_pouncedriveface_getOut"
+      "AnimName": "ag_pouncedriveface_getout"
     },
     {
       "CladEvent": "PounceInitial",
