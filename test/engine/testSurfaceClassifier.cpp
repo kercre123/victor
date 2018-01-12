@@ -26,7 +26,7 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
-#define DISPLAY_IMAGES false
+#define DISPLAY_IMAGES true
 
 extern Anki::Cozmo::CozmoContext *cozmoContext;
 
@@ -461,7 +461,7 @@ TEST(SurfaceClassifier, DTClassifier_TestSerialization) {
     config["MinSampleCount"] = 10;
     config["TruncatePrunedTree"] = true;
     config["Use1SERule"] = true;
-    config["PositiveWeight"] = 3.0f;
+    config["PositiveWeight"] = 1.0f;
   }
 
   Anki::Cozmo::DTDrivingSurfaceClassifier clf(config, cozmoContext);

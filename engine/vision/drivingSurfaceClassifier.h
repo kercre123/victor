@@ -100,6 +100,7 @@ protected:
   cv::Mat _trainingSamples;
   cv::Mat _trainingLabels;
   const CozmoContext* _context;
+  // TODO this whole padding thing should be outside this class. Make the Classifier independent from images and let GroundPlaneClassifier handle the images
   uint _padding = 0; // Padding = 0 is single pixels classification, > 0 a square of size 2*padding+1 is used
 
   virtual bool Train(const cv::Mat& allInputs, const cv::Mat& allClasses, uint numberOfPositives) = 0;

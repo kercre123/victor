@@ -47,27 +47,6 @@ float DiagonalMahalanobisDistance(const float *input, const double *means, const
   return sum;
 }
 
-//int AppendFileToMatrix(const char *filename, cv::Mat& mat) {
-//
-//  std::ifstream file(filename);
-//  if (!file.is_open()) {
-//    PRINT_NAMED_ERROR("GMMDrivingSurfaceClassifier.TrainFromFiles.ErrorOpeningFile", "Error while opening file %s",
-//                      filename);
-//    return -1;
-//  }
-//
-//  int numElements = 0;
-//  using SingleRow = cv::Matx<float,1, 3>;
-//  while (! file.eof()) {
-//    int r, g, b;
-//    file >> r >> g >> b;
-//    mat.push_back(SingleRow(float(r), float(g), float(b)));
-//    numElements++;
-//  }
-////  numElements--; // remove last additional eof
-//  return numElements;
-//}
-
 int AppendFileToMatrix(const char *filename, cv::Mat& mat) {
 
   std::ifstream file(filename);
@@ -243,6 +222,20 @@ bool DrivingSurfaceClassifier::TrainFromFiles(const char *positiveDataFileName, 
   // reshaping the matrix to be n x m with 1 channel
   inputElements = inputElements.reshape(1);
 
+  // attempt to infer the padding size
+  {
+    int numCols = inputElements.cols;
+    if (numCols % 3) { // there's 3 pixels, so it has to be divisible by 3
+      PRINT_NAMED_ERROR("DrivingSurfaceClassifier.TrainFromFiles.WrongFileSize",
+                        "Number of values in training files %s and %s is not a multiple of 3: %d",
+                        positiveDataFileName, negativeDataFileName, numCols);
+      return false;
+    }
+    numCols /= 3;
+    // with a padding of p, the size of a patch is (2*p+1)^2
+    _padding = (uint(sqrt(numCols)) - 1)/2;
+  }
+
   cv::Mat classes;
   cv::vconcat(cv::Mat::ones(numberOfPositives, 1, CV_32FC1),
           cv::Mat::zeros(inputElements.rows - numberOfPositives, 1, CV_32FC1),
@@ -284,8 +277,28 @@ uchar DrivingSurfaceClassifier::PredictClass(const Vision::ImageRGB& image, uint
 {
   cv::Mat submatrix = image.get_CvMat_()(cv::Range(row-_padding, row+_padding+1),
                                          cv::Range(col-_padding, col+_padding+1)); // O(1) operation
+
+  // Need to copy here, submatrix is probably not continuous
   std::vector<u8> vec;
-  submatrix.copyTo(vec); // Need to copy here, submatrix is probably not continuous
+  vec.reserve(submatrix.rows * submatrix.cols * submatrix.channels());
+
+  {
+    DEV_ASSERT(submatrix.type() == CV_8UC3, "DrivingSurfaceClassifier.PredictClass.WrongSumbatrixType");
+    const int channels = submatrix.channels();
+    const int nRows = submatrix.rows;
+    const int nCols = submatrix.cols * channels;
+    uchar* p;
+    for(int i = 0; i < nRows; ++i)
+    {
+      p = submatrix.ptr<uchar>(i);
+      for (int j = 0; j < nCols; ++j)
+      {
+        vec.push_back(p[j]);
+      }
+    }
+  }
+
+
   u8 res =  u8(255*this->PredictClass(vec));
   return res;
 }
@@ -645,7 +658,8 @@ DTDrivingSurfaceClassifier::DTDrivingSurfaceClassifier(const std::string& serial
 uchar DTDrivingSurfaceClassifier::PredictClass(const std::vector<u8>& values) const
 {
 
-  DEV_ASSERT(values.size() == (2*_padding + 1)*3, "DTDrivingSurfaceClassifier.PredictClass.WrongInputSize");
+  // with a padding of p, the size of an input vector patch is (2*p+1)^2 times 3 channels
+  DEV_ASSERT(values.size() == (2*_padding +1)*(2*_padding+1)*3, "DTDrivingSurfaceClassifier.PredictClass.WrongInputSize");
 
   // we need to copy since DTree requires float as input
   cv::Mat_<float> inputRow(1, int(values.size()));
