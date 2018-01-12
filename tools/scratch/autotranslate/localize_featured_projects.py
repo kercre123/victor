@@ -81,6 +81,11 @@ def parse_command_args():
                         default=None,
                         action='store',
                         help='Specifies featured project to be scanned or translated')
+    arg_parser.add_argument('-b', '--blacklist',
+                        dest='blacklist',
+                        default=None,
+                        action='store',
+                        help='Specifies a json blacklist to exclude specific projects')
     arg_parser.add_argument('-d', '--desktop',
                         dest='target_desktop',
                         default=False,
@@ -359,7 +364,7 @@ def load_and_build_localization_dictionary():
             resultDict[language] = load_localization_for_language(loc_path, language)
     return resultDict
 
-def build_project_translation_queue(specified_project, use_all_projects):
+def build_project_translation_queue(specified_project, use_all_projects, blacklist):
     result = []
     script_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -369,11 +374,17 @@ def build_project_translation_queue(specified_project, use_all_projects):
 
     project_folder = os.path.join(script_path, BASE_SRC_SCRATCH_PATH, TARGET_PROJECT_FOLDER)
 
+    blacklisted_files = []
+    if blacklist != None:
+        with open(blacklist) as input_file:
+            blacklisted_files = json.load(input_file)
+
     for featured_project_config in featured_config:
         base_file_name = os.path.join(project_folder, featured_project_config['ProjectJSONFile'])
         entry = { 'project_name': featured_project_config['DASProjectName'], 'base_file_name': base_file_name }
         if entry['project_name'] == specified_project or use_all_projects:
-            result.append( entry )
+            if entry['project_name'] not in blacklisted_files:
+                result.append( entry )
     return result
 
 # --------------------------------------------------------------------------------------------------------
@@ -394,7 +405,7 @@ def main():
     if not command_args.scan_project and not command_args.translate_project and not command_args.list_project:
         sys.exit("Must specify either list, scan or translate")
 
-    project_list = build_project_translation_queue(command_args.project, command_args.all_projects)
+    project_list = build_project_translation_queue(command_args.project, command_args.all_projects, command_args.blacklist)
 
     if len(project_list) <= 0:
         sys.exit("Could not find source project %s" % command_args.project)
