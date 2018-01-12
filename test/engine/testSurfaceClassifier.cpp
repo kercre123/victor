@@ -70,25 +70,6 @@ void convertToVector(const cv::Mat& mat, std::vector<u8>& vec)
 
 }
 
-// my local templated lambda ... don't ask :)
-template <typename T>
-struct __fillPixels{
-  void operator()(cv::Mat& positiveY, std::vector<std::vector<u8>>& pixels,
-                  const cv::Mat& trainingSamples, const cv::Mat& trainingLabels) {
-    ASSERT_EQ(trainingLabels.type(), cv::DataType<T>::type);
-    auto elementY = trainingLabels.begin<T>();
-    for (uint rowNumber = 0; elementY != trainingLabels.end<T>(); rowNumber++, elementY++) {
-      const float value = *elementY;
-      if ( value != 0) {
-        std::vector<u8> rowPixels;
-        convertToVector<float>(trainingSamples.row(rowNumber), rowPixels);
-        pixels.push_back(std::move(rowPixels));
-        positiveY.push_back(value);
-      }
-    }
-  }
-};
-
 void visualizeClassifierOnImages(const std::string& pathToImages, const Anki::Cozmo::DrivingSurfaceClassifier& clf) {
 
   std::vector<std::string> imageFiles;
@@ -210,13 +191,29 @@ void checkClassifier(Anki::Cozmo::DrivingSurfaceClassifier& clf,
     std::vector<std::vector<u8>> pixels;
     pixels.reserve(trainingSamples.rows); // probably won't be using that much
 
+    // The local friendly lambda. There's a lot going on here just because trainingLabels is a cv::Mat_ with a template
+    // type. Getting the type out of the Mat_ is not easy though, hence the dance with decltype
+    auto fillPixels = [&trainingSamples = static_cast<const cv::Mat&>(trainingSamples)]
+        (cv::Mat& positiveY, std::vector<std::vector<u8>>& pixels, const auto& trainingLabels) {
+      using T = decltype(trainingLabels(0)); //either float or int
+      auto elementY = trainingLabels.template begin(); // probably don't need the .template here, but it looks cool :)
+      for (uint rowNumber = 0; elementY != trainingLabels.template end(); rowNumber++, elementY++) {
+        const T value = *elementY;
+        if ( value != 0) {
+          std::vector<u8> rowPixels;
+          convertToVector<float>(trainingSamples.row(rowNumber), rowPixels);
+          pixels.push_back(std::move(rowPixels));
+          positiveY.push_back(value);
+        }
+      }
+    };
+
+
     if (trainingLabels.type() == cv::DataType<int>::type) {
-      __fillPixels<int> fillPixels;
-      fillPixels(positiveY, pixels, trainingSamples, trainingLabels);
+      fillPixels(positiveY, pixels, cv::Mat_<int>(trainingLabels));
     }
     else if (trainingLabels.type() == cv::DataType<float>::type) {
-      __fillPixels<float> fillPixels;
-      fillPixels(positiveY, pixels, trainingSamples, trainingLabels);
+      fillPixels(positiveY, pixels, cv::Mat_<float>(trainingLabels));
     }
     else {
       EXPECT_TRUE(false) << ("Unkown type for trainingLabels");
