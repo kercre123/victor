@@ -103,22 +103,66 @@ void Mics::transmit(int16_t* payload) {
   memcpy(payload, audio_data[sample_index < IRQS_PER_FRAME ? 1 : 0], sizeof(audio_data[0]));
 }
 
+#define STAGE2(t_a) \
+  ptr = &DECIMATION_TABLE[t_a][*(samples++)]; \
+  accumulator[0] += *ptr; \
+  ptr += 0xC00; accumulator[1] += *ptr; \
+  ptr = &DECIMATION_TABLE[t_a][*(samples++)]; \
+  accumulator[2] += *ptr; \
+  ptr += 0xC00; accumulator[3] += *ptr
+
+#define STAGE3(t_a) \
+  ptr = &DECIMATION_TABLE[t_a][*(samples++)]; \
+  acc_l += *ptr; \
+  ptr += 0xC00; accumulator[0] += *ptr;  \
+  ptr += 0xC00; accumulator[1] += *ptr; \
+  ptr = &DECIMATION_TABLE[t_a][*(samples++)]; \
+  acc_r += *ptr; \
+  ptr += 0xC00; accumulator[2] += *ptr; \
+  ptr += 0xC00; accumulator[3] += *ptr
+
+#define STAGE3_A() \
+  ptr = &DECIMATION_TABLE[31][*(samples++)]; \
+  output[0] = (int16_t)((accumulator[1] + *ptr) >> 16); \
+  ptr -= 0xC00; accumulator[1] = accumulator[0] + *ptr; \
+  ptr -= 0xC00; accumulator[0] = acc_l + *ptr; \
+  ptr = &DECIMATION_TABLE[31][*(samples++)]; \
+  output[1] = (int16_t)((accumulator[3] + *ptr) >> 16); \
+  ptr -= 0xC00; accumulator[3] = accumulator[2] + *ptr; \
+  ptr -= 0xC00; accumulator[2] = acc_l + *ptr;
+
 static void decimate(const uint8_t* input, int32_t* accumulator,  int16_t* output) {
   static uint8_t deinter[sizeof(uint16_t) * 12 * SAMPLES_PER_IRQ];
   uint16_t* target = (uint16_t*)&deinter;
 
   // Deinterlace the channel data
   for (int i = 0; i < 12 * SAMPLES_PER_IRQ; i++) {
-    uint16_t word;
+    uint8_t b_a = *(input++);
+    uint8_t b_b = *(input++);
 
-    word        = DEINTERLACE_TABLE[0][*(input++)];
-    *(target++) = word | DEINTERLACE_TABLE[1][*(input++)];
+    *(target++) = DEINTERLACE_TABLE[0][b_a] | DEINTERLACE_TABLE[1][b_b];
   }
-  
+
+  uint8_t* samples = deinter;
   for (int i = 0; i < SAMPLES_PER_IRQ; i++) {
+    const int32_t *ptr;
     int32_t acc_l = 0;
     int32_t acc_r = 0;
-    //DECIMATION_TABLE[8]
+
+    STAGE2( 8);
+    STAGE2( 9);
+    STAGE2(10);
+    STAGE2(11);
+    STAGE3( 0);
+    STAGE3( 1);
+    STAGE3( 2);
+    STAGE3( 3);
+    STAGE3( 4);
+    STAGE3( 5);
+    STAGE3( 6);
+    STAGE3_A();
+
+    output += 4;
   }
 }
 
