@@ -701,6 +701,11 @@ def parse_output(log_level, log_file):
         UtilLog.info(line)
     elif log_level is ForwardWebotsLogLevel.full_forwarding:
       UtilLog.info(line)
+    
+    # Stop parsing the output if we encounter the end of the webots run, since
+    # there can be nonsense error messages while processes are terminating.
+    if 'UiGameController.QuitWebots.Result' in line:
+      break
 
   return (crash_count, error_count, warning_count)
 
