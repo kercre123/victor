@@ -74,6 +74,10 @@ class Scratch3ControlBlocks {
 
     wait (args) {
         const duration = Math.max(0, 1000 * Cast.toNumber(args.DURATION));
+        
+        // *** ANKI CHANGE *** flush messages immediatey (reduce latency of batched messages)
+        window.Unity.flushMessageList();
+
         return new Promise(resolve => {
             setTimeout(() => {
                 resolve();

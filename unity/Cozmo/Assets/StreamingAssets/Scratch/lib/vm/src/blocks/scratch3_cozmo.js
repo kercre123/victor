@@ -714,16 +714,20 @@ Scratch3CozmoBlocks.prototype.verticalCubeAnim = function(args, util) {
 };
 
 Scratch3CozmoBlocks.prototype.verticalPlaySound = function(args, util) {
+    // Note: Play Sound blocks always force the message list to flush, to prevent
+    // users from spamming this block too much (it locks up the app).
     var soundSelection = Cast.toNumber(args.SOUND_MENU);
-    window.Unity.call({requestId: -1, command: "cozVertPlaySoundEffects", argInt: soundSelection, argBool: false});
+    window.Unity.call({requestId: -1, command: "cozVertPlaySoundEffects", argInt: soundSelection, argBool: false}, true);
     return window.Unity.sleepPromiseIfNecessary();
 };
 
 Scratch3CozmoBlocks.prototype.verticalPlaySoundAndWait = function(args, util) {
+    // Note: Play Sound blocks always force the message list to flush, to prevent
+    // users from spamming this block too much (it locks up the app).
     var soundSelection = Cast.toNumber(args.SOUND_MENU);
     var requestId = this._getRequestId();
     var commandPromise = this._promiseForCommand(requestId);      
-    window.Unity.call({requestId: requestId, command: "cozVertPlaySoundEffects", argInt: soundSelection, argBool: true});
+    window.Unity.call({requestId: requestId, command: "cozVertPlaySoundEffects", argInt: soundSelection, argBool: true}, true);
     return commandPromise;
 };
 
@@ -741,7 +745,10 @@ Scratch3CozmoBlocks.prototype.verticalCozmoFaceClear = function(args, util) {
 };
 
 Scratch3CozmoBlocks.prototype.verticalCozmoFaceDisplay = function(args, util) {
-    window.Unity.call({requestId: -1, command: "cozVertCozmoFaceDisplay"});
+    // Note: Display blocks always force the message list to flush, to prevent
+    // users from spamming this block too much (it sends a large amount of
+    // data to the robot each time).
+    window.Unity.call({requestId: -1, command: "cozVertCozmoFaceDisplay"}, true);
     return window.Unity.sleepPromiseIfNecessary();
 };   
 

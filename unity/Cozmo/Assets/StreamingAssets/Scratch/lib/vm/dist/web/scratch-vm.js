@@ -16566,6 +16566,10 @@ var Scratch3ControlBlocks = function () {
         key: 'wait',
         value: function wait(args) {
             var duration = Math.max(0, 1000 * Cast.toNumber(args.DURATION));
+
+            // *** ANKI CHANGE *** flush messages immediatey (reduce latency of batched messages)
+            window.Unity.flushMessageList();
+
             return new Promise(function (resolve) {
                 setTimeout(function () {
                     resolve();
@@ -17345,16 +17349,20 @@ Scratch3CozmoBlocks.prototype.verticalCubeAnim = function (args, util) {
 };
 
 Scratch3CozmoBlocks.prototype.verticalPlaySound = function (args, util) {
+    // Note: Play Sound blocks always force the message list to flush, to prevent
+    // users from spamming this block too much (it locks up the app).
     var soundSelection = Cast.toNumber(args.SOUND_MENU);
-    window.Unity.call({ requestId: -1, command: "cozVertPlaySoundEffects", argInt: soundSelection, argBool: false });
+    window.Unity.call({ requestId: -1, command: "cozVertPlaySoundEffects", argInt: soundSelection, argBool: false }, true);
     return window.Unity.sleepPromiseIfNecessary();
 };
 
 Scratch3CozmoBlocks.prototype.verticalPlaySoundAndWait = function (args, util) {
+    // Note: Play Sound blocks always force the message list to flush, to prevent
+    // users from spamming this block too much (it locks up the app).
     var soundSelection = Cast.toNumber(args.SOUND_MENU);
     var requestId = this._getRequestId();
     var commandPromise = this._promiseForCommand(requestId);
-    window.Unity.call({ requestId: requestId, command: "cozVertPlaySoundEffects", argInt: soundSelection, argBool: true });
+    window.Unity.call({ requestId: requestId, command: "cozVertPlaySoundEffects", argInt: soundSelection, argBool: true }, true);
     return commandPromise;
 };
 
@@ -17372,7 +17380,10 @@ Scratch3CozmoBlocks.prototype.verticalCozmoFaceClear = function (args, util) {
 };
 
 Scratch3CozmoBlocks.prototype.verticalCozmoFaceDisplay = function (args, util) {
-    window.Unity.call({ requestId: -1, command: "cozVertCozmoFaceDisplay" });
+    // Note: Display blocks always force the message list to flush, to prevent
+    // users from spamming this block too much (it sends a large amount of
+    // data to the robot each time).
+    window.Unity.call({ requestId: -1, command: "cozVertCozmoFaceDisplay" }, true);
     return window.Unity.sleepPromiseIfNecessary();
 };
 
@@ -39928,7 +39939,7 @@ function extend() {
 /* 156 */
 /***/ (function(module, exports) {
 
-module.exports = {"name":"scratch-vm","version":"0.1.0","description":"Virtual Machine for Scratch 3.0","author":"Massachusetts Institute of Technology","license":"BSD-3-Clause","homepage":"https://github.com/LLK/scratch-vm#readme","repository":{"type":"git","url":"git+ssh://git@github.com/LLK/scratch-vm.git"},"main":"./dist/node/scratch-vm.js","scripts":{"build":"./node_modules/.bin/webpack --progress --colors --bail","coverage":"./node_modules/.bin/tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov","deploy":"touch playground/.nojekyll && ./node_modules/.bin/gh-pages -t -d playground -m \"Build for $(git log --pretty=format:%H -n1)\"","lint":"./node_modules/.bin/eslint .","prepublish":"in-publish && npm run build || not-in-publish","start":"./node_modules/.bin/webpack-dev-server","tap":"./node_modules/.bin/tap ./test/{unit,integration}/*.js","tap:unit":"./node_modules/.bin/tap ./test/unit/*.js","tap:integration":"./node_modules/.bin/tap ./test/integration/*.js","test":"npm run lint && npm run tap","watch":"./node_modules/.bin/webpack --progress --colors --watch","version":"./node_modules/.bin/json -f package.json -I -e \"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\""},"devDependencies":{"adm-zip":"0.4.7","babel-core":"^6.24.1","babel-eslint":"^7.1.1","babel-loader":"^7.0.0","babel-preset-es2015":"^6.24.1","copy-webpack-plugin":"4.0.1","eslint":"^4.14.0","eslint-config-scratch":"^4.0.1","expose-loader":"0.7.3","gh-pages":"^0.12.0","got":"5.7.1","highlightjs":"^9.8.0","htmlparser2":"3.9.2","immutable":"3.8.1","in-publish":"^2.0.0","json":"^9.0.4","lodash.defaultsdeep":"4.6.0","minilog":"3.1.0","promise":"7.1.1","scratch-audio":"0.1.0-prerelease.1513803406","scratch-blocks":"0.1.0-prerelease.1505757278","scratch-render":"0.1.0-prerelease.1505763609","scratch-storage":"^0.2.1","script-loader":"0.7.0","socket.io-client":"1.7.3","stats.js":"^0.17.0","tap":"^10.2.0","tiny-worker":"^2.1.1","webpack":"^2.4.1","webpack-dev-server":"^2.9.5"}}
+module.exports = {"name":"scratch-vm","version":"0.1.0","description":"Virtual Machine for Scratch 3.0","author":"Massachusetts Institute of Technology","license":"BSD-3-Clause","homepage":"https://github.com/LLK/scratch-vm#readme","repository":{"type":"git","url":"git+ssh://git@github.com/LLK/scratch-vm.git"},"main":"./dist/node/scratch-vm.js","scripts":{"build":"./node_modules/.bin/webpack --progress --colors --bail","coverage":"./node_modules/.bin/tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov","deploy":"touch playground/.nojekyll && ./node_modules/.bin/gh-pages -t -d playground -m \"Build for $(git log --pretty=format:%H -n1)\"","lint":"./node_modules/.bin/eslint .","prepublish":"in-publish && npm run build || not-in-publish","start":"./node_modules/.bin/webpack-dev-server","tap":"./node_modules/.bin/tap ./test/{unit,integration}/*.js","tap:unit":"./node_modules/.bin/tap ./test/unit/*.js","tap:integration":"./node_modules/.bin/tap ./test/integration/*.js","test":"npm run lint && npm run tap","watch":"./node_modules/.bin/webpack --progress --colors --watch","version":"./node_modules/.bin/json -f package.json -I -e \"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\""},"devDependencies":{"adm-zip":"0.4.7","babel-core":"^6.24.1","babel-eslint":"^7.1.1","babel-loader":"^7.0.0","babel-preset-es2015":"^6.24.1","copy-webpack-plugin":"4.0.1","eslint":"^4.15.0","eslint-config-scratch":"^4.0.1","expose-loader":"0.7.3","gh-pages":"^0.12.0","got":"5.7.1","highlightjs":"^9.8.0","htmlparser2":"3.9.2","immutable":"3.8.1","in-publish":"^2.0.0","json":"^9.0.4","lodash.defaultsdeep":"4.6.0","minilog":"3.1.0","promise":"7.1.1","scratch-audio":"0.1.0-prerelease.1513803406","scratch-blocks":"0.1.0-prerelease.1505757278","scratch-render":"0.1.0-prerelease.1505763609","scratch-storage":"^0.2.1","script-loader":"0.7.0","socket.io-client":"1.7.3","stats.js":"^0.17.0","tap":"^10.7.3","tiny-worker":"^2.1.1","webpack":"^2.4.1","webpack-dev-server":"^2.10.1"}}
 
 /***/ }),
 /* 157 */

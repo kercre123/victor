@@ -9,7 +9,7 @@
         return paddedString;
     }
 
-    getTimeStamp = function() {
+    window.getTimeStamp = function() {
         var now = new Date();
         var milliseconds = now;
         // Adjust to local time (offset is in minutes)
@@ -32,19 +32,19 @@
     }
 
     window.cozmoDASLog = function(eventName, messageContents) {
-        messageContents = "[" + getTimeStamp() + "] " + messageContents;
+        messageContents = "[" + window.getTimeStamp() + "] " + messageContents;
         console.log(messageContents);
         window.Unity.call({command: "cozmoDASLog", argString: eventName, argString2: messageContents});
     }
 
     window.cozmoDASWarn = function(eventName, messageContents) {
-        messageContents = "[" + getTimeStamp() + "] " + messageContents;
+        messageContents = "[" + window.getTimeStamp() + "] " + messageContents;
         console.log(messageContents);
         window.Unity.call({command: "cozmoDASWarn", argString: eventName, argString2: messageContents});
     }
 
     window.cozmoDASError = function(eventName, messageContents) {
-        messageContents = "[" + getTimeStamp() + "] " + messageContents;
+        messageContents = "[" + window.getTimeStamp() + "] " + messageContents;
         console.log(messageContents);
         window.Unity.call({command: "cozmoDASError", argString: eventName, argString2: messageContents});
     }

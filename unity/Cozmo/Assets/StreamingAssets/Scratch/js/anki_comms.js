@@ -4,13 +4,14 @@ String.prototype.replaceAll = function(search, replacement) {
 };
 
 window.Unity = {
-    _firstMsgSentTime: null,
-    _numMsgSentThisPeriod: 0,
+    _firstMsgQueuedTime: null,
+    _numMsgListsSentThisPeriod: 0,
+    _numSubMsgQueuedThisPeriod: 0,
     _pendingMessages: [],
     _pendingMessagesQueueTime: null,
     _flushTimeoutId: null,
+    kMaxPendingMessages: 150,
     call: function(msg, forceFlush) {
-        var kMaxPendingMessages = 250;
         var kMaxTimeQueued_ms = 15;
 
         var now = new Date().getTime();
@@ -20,13 +21,20 @@ window.Unity = {
         if (this._pendingMessagesQueueTime == null) {
             this._pendingMessagesQueueTime = now;
         }
+
+        if (this._firstMsgQueuedTime == null) {
+            this._firstMsgQueuedTime = new Date().getTime();
+            this._numMsgListsSentThisPeriod = 0;
+            this._numSubMsgQueuedThisPeriod = 0;
+        }
+        ++this._numSubMsgQueuedThisPeriod;
                 
         // If this message has a valid requestId, then it will wait on a promise, and we should flush + send this immediately
         // Otherwise the caller can specifically request the messages are flushed immediately, or the flush will occur when
         // either (a) sufficient messages are queued or (b) the queue is too old
         var hasValidRequestId = (msg.requestId != "undefined") && (msg.requestId >= 0);
         var timeQueued = (this._pendingMessagesQueueTime != null) ? (now - this._pendingMessagesQueueTime) : 0;
-        var flushNow = forceFlush || hasValidRequestId || (this._pendingMessages.length > kMaxPendingMessages) || (timeQueued > kMaxTimeQueued_ms);
+        var flushNow = forceFlush || hasValidRequestId || (this._pendingMessages.length >= this.kMaxPendingMessages) || (timeQueued >= kMaxTimeQueued_ms);
 
         if (flushNow) {
             this.flushMessageList();
@@ -75,25 +83,21 @@ window.Unity = {
             iframe = null;    
         }
 
-        if (this._firstMsgSentTime == null) {
-            this._firstMsgSentTime = new Date().getTime();
-            this._numMsgSentThisPeriod = 0;
-        }
-        else {
-            ++this._numMsgSentThisPeriod;
-        }
+        ++this._numMsgListsSentThisPeriod;
     },
     resetMsgTracking: function() {
         // Reset - start a new period with the next message
-        this._firstMsgSentTime = null;
-        this._numMsgSentThisPeriod = 0;
+        this._firstMsgQueuedTime = null;
+        this._numMsgListsSentThisPeriod = 0;
+        this._numSubMsgQueuedThisPeriod = 0;
     },
     calculateSleepRequiredToThrottle: function() {
-        if (this._numMsgSentThisPeriod > 30) {
-            var duration = new Date().getTime() - this._firstMsgSentTime;
-            // Cap calls to 30 per 100ms, e.g ~10 calls per 33ms (0.033s) Unity tick
-            // Note: Clock was doing ~9 calls in 0.2s = 200ms
-            var minDuration = 100;
+        // Cap the number of calls to 10 per 33ms (0.033s) - e.g 1 Unity tick, any more frequent than that then add a sleep
+        // Also, with the message lists reducing the number of overall messages but still adding some overhead, then ensure
+        // that there's a sleep if many sub-messages have been queued
+        if ((this._numMsgListsSentThisPeriod >= 10) || (this._numSubMsgQueuedThisPeriod >= this.kMaxPendingMessages)) {
+            var duration = new Date().getTime() - this._firstMsgQueuedTime;
+            var minDuration = 33;
             if (duration < minDuration) {
                 return (minDuration - duration);
             }
@@ -112,12 +116,13 @@ window.Unity = {
         // (and prevent Scratch locking up in busy-loops that call into Unity a lot)
         var sleepRequired_ms = this.calculateSleepRequiredToThrottle();
         if (sleepRequired_ms > 0) {
-            // Don't reset the tracking - that's done as soon as it's slept for long enough
+            // Reset the message tracking (otherwise the next check is automatically ignored anyway)
+            this.resetMsgTracking();
             return new Promise(function (resolve) {
                 setTimeout(function(){
                     resolve();                    
                 }, sleepRequired_ms);
-            });
+            });            
         }
         else if (sleepRequired_ms < 0) {
             // Reset it so that we can respond to future spikes

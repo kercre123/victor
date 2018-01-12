@@ -1005,6 +1005,106 @@ class CodeLabInterface():
 
                     self.send_to_webpage(
                         jsCallback + "('" + userProjectsAsEncodedJSON + "','" + sampleProjectsAsEncodedJSON + "');")
+            elif command == "cozmoRequestToRemixProject":
+                if command_args.use_python_projects or not is_connected_to_unity:
+                    new_project_name = sub_message["argString"]
+                    og_project_type = sub_message["argString2"]  # // "user" or "sample"
+                    og_project_uuid = sub_message["argUUID"]
+                    og_project = None
+
+                    if og_project_type == "user":
+                        try:
+                            og_project = self._user_projects[og_project_uuid]
+                        except KeyError:
+                            log_text("ERROR: Ignoring command %s - no %s project %s" % (command, og_project_type, og_project_uuid))
+                    elif og_project_type == "sample":
+                        # sample _or_ featured
+                        try:
+                            og_project = self._sample_projects[og_project_uuid]
+                        except KeyError:
+                            pass
+
+                        if og_project is None:
+                            # See if it's a featured project instead
+                            try:
+                                og_project = self._featured_projects[og_project_uuid]
+                                og_project_type = "featured"
+                            except KeyError:
+                                pass
+
+                    if og_project is not None:
+                        # copy the project data to a new project with a new UUID
+                        user_project_uuid = str(uuid.uuid4())  # Create a new UUID
+                        project_data = dict(og_project)
+                        project_data['ProjectUUID'] = user_project_uuid
+                        project_data['ProjectName'] = new_project_name
+
+                        base_das_project_name = None
+
+                        # Remove any DAS project name entry, transfer it to base
+                        if og_project_type == "user":
+                            # Inherit BaseDASProjectName directly
+                            try:
+                                base_das_project_name = project_data['BaseDASProjectName']
+                            except KeyError:
+                                pass
+                        else:
+                            # Remove the project's DASProjectName entry, and transfer it to the BaseDASProjectName of the remix
+                            try:
+                                base_das_project_name = project_data['DASProjectName']
+                                del project_data['DASProjectName']
+                            except KeyError:
+                                # no entry
+                                pass
+
+                        if base_das_project_name is None:
+                            # force a non-null value (empty string)
+                            base_das_project_name = ""
+
+                        project_data['BaseDASProjectName'] = base_das_project_name
+
+                        self._update_project(project_data)
+
+                        is_first_remix_str = "false"  # always skip "your first remix" dialog
+                        project_name_escaped = self.escape_project_name(new_project_name);
+                        self.send_to_webpage("window.onRemixedProject('" + user_project_uuid + "','" + project_name_escaped + "','" + is_first_remix_str + "');")
+
+            elif command == "cozmoRequestToRenameProject":
+                if command_args.use_python_projects or not is_connected_to_unity:
+                    project_uuid = sub_message["argUUID"]
+                    js_callback = sub_message["argString"]
+                    new_project_name = sub_message["argString2"]
+
+                    user_project = None
+                    try:
+                        user_project = self._user_projects[project_uuid]
+                    except KeyError:
+                        log_text("ERROR: Ignoring command %s - no user project %s" % (command, project_uuid))
+
+                    if user_project is not None:
+                        cleaned_name = ""
+                        # all punctuation is allowed in C#, but quotes seem a bad idea (they break codelab.py anyway)
+                        allowed_chars = [" ", ".", "-", "~", ":", ";", "!", "(", ")", "[", "]"]
+                        for ch in new_project_name:
+                            if ch.isalnum() or ch in allowed_chars:
+                                cleaned_name += ch
+
+                        if command_args.verbose:
+                            log_text("%s: '%s' cleaned to '%s'" % (command, new_project_name, cleaned_name))
+
+                        is_valid_name = False
+                        for ch in cleaned_name:
+                            if ch != " ":
+                                is_valid_name = True
+
+                        if is_valid_name:
+                            user_project["ProjectName"] = cleaned_name
+                            self._save_project(project_uuid, user_project)
+                        else:
+                            log_text("ERROR: new name '%s' cleaned to '%s' is not valid" % (new_project_name, cleaned_name))
+
+                        escaped_name = self.escape_project_name(user_project["ProjectName"])
+                        self.send_to_webpage(js_callback +"('" + escaped_name + "');")
 
             if forward_message:
                 list_of_messages_to_forward.append(sub_message)
