@@ -440,6 +440,11 @@ void AnimationComponent::HandleMessage(const ExternalInterface::RequestAvailable
 template<>
 void AnimationComponent::HandleMessage(const ExternalInterface::DisplayProceduralFace& msg)
 {
+  static_assert( std::tuple_size<decltype(msg.faceParams.leftEye)>::value == (size_t)ProceduralEyeParameter::NumParameters,
+                "LeftEye parameter array is the wrong length");
+  static_assert( std::tuple_size<decltype(msg.faceParams.rightEye)>::value == (size_t)ProceduralEyeParameter::NumParameters,
+                "RightEye parameter array is the wrong length");
+  
   if (!_isInitialized) {
     PRINT_NAMED_WARNING("AnimationComponent.DisplayProceduralFace.Uninitialized", "");
     return;
