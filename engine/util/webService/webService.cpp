@@ -800,7 +800,8 @@ void WebService::Stop()
   }
   _ctx = nullptr;
 }
-  
+
+#if 0
 void WebService::SendWebSocketError(struct mg_connection* conn, const std::string& str) const
 {
   Json::Value err;
@@ -808,7 +809,7 @@ void WebService::SendWebSocketError(struct mg_connection* conn, const std::strin
   err["reason"] = str;
   SendToWebSocket(conn, err);
 }
-  
+
 void WebService::SendToWebSockets(const std::string& service, const Json::Value& data)
 {
   for( const auto& connData : _webSocketConnections ) {
@@ -817,7 +818,8 @@ void WebService::SendToWebSockets(const std::string& service, const Json::Value&
     }
   }
 }
-  
+#endif
+
 int WebService::HandleWebSocketsConnect(const struct mg_connection* conn, void* cbparams)
 {
   return 0; // proceed with connection
@@ -880,6 +882,7 @@ void WebService::HandleWebSocketsClose(const struct mg_connection* conn, void* c
   that->OnCloseWebSocket( conn );
 }
 
+#if 0 // websockets used for OD game tuning...disabling for now
 void WebService::SendToWebSocket(struct mg_connection* conn, const Json::Value& data)
 {
   // todo: deal with threads if this is used outside dev
@@ -889,6 +892,7 @@ void WebService::SendToWebSocket(struct mg_connection* conn, const Json::Value& 
   std::string str = ss.str();
   mg_websocket_write(conn, WebSocketsTypeText, str.c_str(), str.size());
 }
+#endif
 
 const std::string& WebService::getConsoleVarsTemplate()
 {
@@ -1175,14 +1179,3 @@ std::string WebService::OnFlashFirmwareFile(const std::vector<std::string>& carU
 } // namespace Cozmo
 } // namespace Anki
 
-namespace Anki {
-namespace Util {
-
-// todo
-//void StartWebService()
-//{
-//  RushHour::getInstance()->StartWebService();
-//}
-
-} // namespace Util
-} // namespace Anki

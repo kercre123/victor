@@ -57,7 +57,7 @@ public:
   const std::string& getMetaGameJsonTemplate();
 
 private:
-  
+
   struct WebSocketConnectionData {
     struct mg_connection* conn = nullptr;
     std::string serviceName;
@@ -103,14 +103,6 @@ private:
 
 } // namespace WebService
   
-} // namespace Cozmo
-} // namespace Anki
-
-namespace Anki {
-namespace Cozmo {
-
-ANKI_EXPORT void StartWebService();
-
 } // namespace Cozmo
 } // namespace Anki
 

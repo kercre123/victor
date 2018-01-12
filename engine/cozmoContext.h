@@ -50,7 +50,10 @@ class RobotManager;
 class VizManager;
 class NeedsManager;
 class PerfMetric;
-  
+
+namespace WebService {
+  class WebService;
+}
 namespace VoiceCommand {
   class VoiceCommandComponent;
 }
@@ -96,6 +99,7 @@ public:
   NeedsManager*                         GetNeedsManager() const { return _needsManager.get(); }
   CozmoExperiments*                     GetExperiments() const { return _cozmoExperiments.get(); }
   PerfMetric*                           GetPerfMetric() const { return _perfMetric.get(); }
+  WebService::WebService*               GetWebService() const { return _webService.get(); }
 
   bool  IsInSdkMode() const;
   void  SetSdkStatus(SdkStatusType statusType, std::string&& statusText) const;
@@ -130,6 +134,7 @@ private:
   std::unique_ptr<NeedsManager>                         _needsManager;
   std::unique_ptr<CozmoExperiments>                     _cozmoExperiments;
   std::unique_ptr<PerfMetric>                           _perfMetric;
+  std::unique_ptr<WebService::WebService>               _webService;
 
   // for holding the thread id (and avoiding needed to include the .h here)
   std::unique_ptr<ThreadIDInternal> _threadIdHolder;

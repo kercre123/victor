@@ -29,6 +29,7 @@
 #include "engine/robotDataLoader.h"
 #include "engine/robotManager.h"
 #include "engine/util/transferQueue/transferQueueMgr.h"
+#include "engine/util/webService/webService.h"
 #include "engine/utils/cozmoExperiments.h"
 #include "engine/utils/cozmoFeatureGate.h"
 #include "engine/factory/factoryTestLogger.h"
@@ -220,6 +221,8 @@ Result CozmoEngine::Init(const Json::Value& config) {
   PRINT_NAMED_INFO("CozmoEngine.Init.Version", "2");
 
   SetEngineState(EngineState::LoadingData);
+
+  _context->GetWebService()->Start(_context->GetDataPlatform());
 
   // DAS Event: "cozmo_engine.init.build_configuration"
   // s_val: Build configuration
