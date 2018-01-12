@@ -137,9 +137,9 @@ Result HAL::Init()
 
 void ForwardMicData(void)
 {
-  static_assert(MICDATA_SAMPLES_COUNT ==
-                (sizeof(RobotInterface::MicData::data) / sizeof(RobotInterface::MicData::data[0])),
-                "bad mic data sample count define");
+  // static_assert(MICDATA_SAMPLES_COUNT ==
+  //               (sizeof(RobotInterface::MicData::data) / sizeof(RobotInterface::MicData::data[0])),
+  //               "bad mic data sample count define");
   RobotInterface::MicData micData;
   micData.sequenceID = bodyData_->framecounter;
   micData.timestamp = HAL::GetTimeStamp();

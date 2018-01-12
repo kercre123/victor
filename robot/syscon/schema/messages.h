@@ -186,7 +186,7 @@ struct SpineMessageFooter
 
 // TODO(Al/Lee): Put back once mics and camera can co-exist
 #define MICDATA_ENABLED 0
-#define MICDATA_SAMPLES_COUNT 320 // 120 samples per channel * 4 channels
+#define MICDATA_SAMPLES_COUNT 320 // 80 samples per channel * 4 channels
 /// Start Packets
 struct BodyToHead
 {
