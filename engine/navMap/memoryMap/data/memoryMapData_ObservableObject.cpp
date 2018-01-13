@@ -18,12 +18,11 @@ namespace Anki {
 namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-MemoryMapData_ObservableObject::MemoryMapData_ObservableObject(MemoryMapTypes::EContentType type, 
-                                                               const ObjectID& i, 
-                                                               const Poly2f& p,
+MemoryMapData_ObservableObject::MemoryMapData_ObservableObject(const ObservableObject& o, 
+                                                               const Poly2f& p, 
                                                                TimeStamp_t t)
-: MemoryMapData(type, t, true)
-, id(i)
+: MemoryMapData(MemoryMapTypes::EContentType::ObstacleObservable, t, true)
+, id(o.GetID())
 , boundingPoly(p)
 {
 

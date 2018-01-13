@@ -34,7 +34,6 @@ enum uint_8 ENodeContentTypeDebugVizEnum
   ClearOfObstacle,
   ClearOfCliff,
   ObstacleCube,
-  ObstacleCubeRemoved,
   ObstacleCharger,
   ObstacleChargerRemoved,
   ObstacleProx,

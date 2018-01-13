@@ -45,8 +45,7 @@ ENodeContentTypeEnum ConvertContentType(EContentType contentType)
     case EContentType::Unknown:               { externalContentType = ENodeContentTypeEnum::Unknown;         break; }
     case EContentType::ClearOfObstacle:       { externalContentType = ENodeContentTypeEnum::ClearOfObstacle; break; }
     case EContentType::ClearOfCliff:          { externalContentType = ENodeContentTypeEnum::ClearOfCliff;    break; }
-    case EContentType::ObstacleCube:          { externalContentType = ENodeContentTypeEnum::ObstacleCube;    break; }
-    case EContentType::ObstacleCubeRemoved:   { DEV_ASSERT(false, "NavMeshQuadTreeNode.ConvertContentType"); break; } // Should never get this
+    case EContentType::ObstacleObservable:    { externalContentType = ENodeContentTypeEnum::ObstacleCube;    break; }
     case EContentType::ObstacleCharger:       { externalContentType = ENodeContentTypeEnum::ObstacleCharger; break; }
     case EContentType::ObstacleChargerRemoved:{ DEV_ASSERT(false, "NavMeshQuadTreeNode.ConvertContentType"); break; } // Should never get this
     case EContentType::ObstacleProx:          { externalContentType = ENodeContentTypeEnum::ObstacleProx;    break; } 
@@ -68,8 +67,7 @@ ENodeContentTypeDebugVizEnum ConvertContentTypeDebugViz(EContentType contentType
     case EContentType::Unknown:               { internalContentType = ENodeContentTypeDebugVizEnum::Unknown;                break; }
     case EContentType::ClearOfObstacle:       { internalContentType = ENodeContentTypeDebugVizEnum::ClearOfObstacle;        break; }
     case EContentType::ClearOfCliff:          { internalContentType = ENodeContentTypeDebugVizEnum::ClearOfCliff;           break; }
-    case EContentType::ObstacleCube:          { internalContentType = ENodeContentTypeDebugVizEnum::ObstacleCube;           break; }
-    case EContentType::ObstacleCubeRemoved:   { internalContentType = ENodeContentTypeDebugVizEnum::ObstacleCubeRemoved;    break; }
+    case EContentType::ObstacleObservable:    { internalContentType = ENodeContentTypeDebugVizEnum::ObstacleCube;           break; }
     case EContentType::ObstacleCharger:       { internalContentType = ENodeContentTypeDebugVizEnum::ObstacleCharger;        break; }
     case EContentType::ObstacleChargerRemoved:{ internalContentType = ENodeContentTypeDebugVizEnum::ObstacleChargerRemoved; break; }
     case EContentType::ObstacleProx:          { internalContentType = ENodeContentTypeDebugVizEnum::ObstacleProx;           break; }
@@ -541,7 +539,7 @@ bool QuadTreeNode::CanOverrideSelfWithContent(EContentType newContentType, ESetO
     // not clear basic types unless it has covered them fully. For example, this fixes obstacles or borders
     // being cleared just because we clear from the robot to the marker. We do not want to clear below the marker
     // unless the quad is fully contained (this will prevent lines from destroying content)
-    if ( ( dataType == EContentType::ObstacleCube         ) ||
+    if ( ( dataType == EContentType::ObstacleObservable   ) ||
          ( dataType == EContentType::ObstacleCharger      ) ||
          ( dataType == EContentType::ObstacleUnrecognized ) ||
          ( dataType == EContentType::InterestingEdge      ) ||
@@ -555,7 +553,7 @@ bool QuadTreeNode::CanOverrideSelfWithContent(EContentType newContentType, ESetO
   {
     // InterestingEdge can only override basic node types, because it would cause data loss otherwise. For example,
     // we don't want to override a recognized marked cube or a cliff with their own border
-    if ( ( dataType == EContentType::ObstacleCube         ) ||
+    if ( ( dataType == EContentType::ObstacleObservable   ) ||
          ( dataType == EContentType::ObstacleCharger      ) ||
          ( dataType == EContentType::ObstacleUnrecognized ) ||
          ( dataType == EContentType::Cliff                ) ||
@@ -568,13 +566,6 @@ bool QuadTreeNode::CanOverrideSelfWithContent(EContentType newContentType, ESetO
   {
     // NotInterestingEdge can only override interesting edges
     if ( dataType != EContentType::InterestingEdge ) {
-      return false;
-    }
-  }
-  else if ( newContentType == EContentType::ObstacleCubeRemoved )
-  {
-    // ObstacleCubeRemoved can only remove ObstacleCube
-    if ( dataType != EContentType::ObstacleCube ) {
       return false;
     }
   }
@@ -672,8 +663,7 @@ void QuadTreeNode::ForceSetDetectedContentType(const NodeContent& detectedConten
   NodeContent finalContent = detectedContent;
   {
     const EContentType newContent = detectedContent.data->type;
-    const bool isObstacleRemoved = (newContent == EContentType::ObstacleChargerRemoved) ||
-                                   (newContent == EContentType::ObstacleCubeRemoved);
+    const bool isObstacleRemoved = (newContent == EContentType::ObstacleChargerRemoved);
     if ( isObstacleRemoved )
     {
       MemoryMapData newData(EContentType::ClearOfObstacle, detectedContent.data->GetLastObservedTime());

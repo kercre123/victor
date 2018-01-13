@@ -757,8 +757,7 @@ void LatticePlannerImpl::ImportBlockworldObstaclesIfNeeded(const bool isReplanni
       {MemoryMapTypes::EContentType::Unknown               , true},
       {MemoryMapTypes::EContentType::ClearOfObstacle       , true},
       {MemoryMapTypes::EContentType::ClearOfCliff          , true},
-      {MemoryMapTypes::EContentType::ObstacleCube          , true},
-      {MemoryMapTypes::EContentType::ObstacleCubeRemoved   , true},
+      {MemoryMapTypes::EContentType::ObstacleObservable    , true},
       {MemoryMapTypes::EContentType::ObstacleCharger       , true},
       {MemoryMapTypes::EContentType::ObstacleChargerRemoved, true},
       {MemoryMapTypes::EContentType::ObstacleProx          , true},
@@ -776,8 +775,7 @@ void LatticePlannerImpl::ImportBlockworldObstaclesIfNeeded(const bool isReplanni
       {MemoryMapTypes::EContentType::Unknown               , true},
       {MemoryMapTypes::EContentType::ClearOfObstacle       , true},
       {MemoryMapTypes::EContentType::ClearOfCliff          , true},
-      {MemoryMapTypes::EContentType::ObstacleCube          , true},
-      {MemoryMapTypes::EContentType::ObstacleCubeRemoved   , true},
+      {MemoryMapTypes::EContentType::ObstacleObservable    , true},
       {MemoryMapTypes::EContentType::ObstacleCharger       , true},
       {MemoryMapTypes::EContentType::ObstacleChargerRemoved, true},
       {MemoryMapTypes::EContentType::ObstacleProx          , true},
@@ -818,7 +816,7 @@ void LatticePlannerImpl::ImportBlockworldObstaclesIfNeeded(const bool isReplanni
     MemoryMapTypes::NodePredicate pred = 
       [](MemoryMapTypes::MemoryMapDataPtr d) -> bool
       {
-          return (d->type == MemoryMapTypes::EContentType::ObstacleCube);
+          return (d->type == MemoryMapTypes::EContentType::ObstacleObservable);
       };
       
     memoryMap->FindContentIf(pred, observableObjectData);

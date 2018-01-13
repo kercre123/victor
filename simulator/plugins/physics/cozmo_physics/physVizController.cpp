@@ -976,7 +976,6 @@ bool MemoryMapNode::AddChild(SimpleQuadVector& destSimpleQuads, const ExternalIn
       case ENodeContentTypeDebugVizEnum::ClearOfObstacle        : { color = Anki::NamedColors::GREEN;    color.SetAlpha(0.5f); break; }
       case ENodeContentTypeDebugVizEnum::ClearOfCliff           : { color = Anki::NamedColors::DARKGREEN;color.SetAlpha(0.8f); break; }
       case ENodeContentTypeDebugVizEnum::ObstacleCube           : { color = Anki::NamedColors::RED;      color.SetAlpha(0.5f); break; }
-      case ENodeContentTypeDebugVizEnum::ObstacleCubeRemoved    : { color = Anki::NamedColors::WHITE;    color.SetAlpha(1.0f); break; } // not stored, it clears ObstacleCube
       case ENodeContentTypeDebugVizEnum::ObstacleCharger        : { color = Anki::NamedColors::ORANGE;   color.SetAlpha(0.5f); break; }
       case ENodeContentTypeDebugVizEnum::ObstacleChargerRemoved : { color = Anki::NamedColors::WHITE;    color.SetAlpha(1.0f); break; } // not stored, it clears ObstacleCharger
       case ENodeContentTypeDebugVizEnum::ObstacleProx           : { color = Anki::NamedColors::CYAN;     color.SetAlpha(0.5f); break; }
