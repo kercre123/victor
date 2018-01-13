@@ -125,6 +125,7 @@ if [ $FORCE_PUSH_ASSETS -eq 1 ] || [ $REMOVE_ALL_ASSETS -eq 1 ] || [ $HAS_RSYNC 
   echo "loading rsync to device"
   $ADB shell mkdir -p ${DEVICE_RSYNC_BIN_DIR}
   $ADB shell mkdir -p ${DEVICE_RSYNC_CONF_DIR}
+  $ADB shell mkdir -p ${DEVICE_ASSET_DIR}
 
   $ADB push ${RSYNC_BIN_DIR}/rsync.bin ${DEVICE_RSYNC_BIN_DIR}
   $ADB push ${RSYNC_BIN_DIR}/rsyncd.conf ${DEVICE_RSYNC_CONF_DIR}
