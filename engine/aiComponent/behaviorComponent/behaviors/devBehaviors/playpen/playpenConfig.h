@@ -144,7 +144,7 @@ static u32 kTimeoutForComputingCalibration_ms         = 5000;
 static u32 kPlaypenCalibTarget                        = 2; // 1 = INVERTED_BOX 2 = QBERT (I don't feel like including cameraCalibrator.h here)
 
 // How big the calibration target's markers are
-static f32 kCalibMarkerSize_mm                        = 15;
+static f32 kCalibMarkerSize_mm                        = 14;
 
 // How big the calibration target's entire marker faces are
 static f32 kCalibMarkerCubeSize_mm                    = 20;
