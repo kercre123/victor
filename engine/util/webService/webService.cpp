@@ -23,15 +23,7 @@
 #include "civetweb.h"
 
 #include "coretech/common/engine/utils/data/dataPlatform.h"
-//#include "driveEngine/components/metagame/metagameComponent.h"
-//#include "driveEngine/controllers/vehicleController.h"
-//#include "driveEngine/models/vehicle/vehicle.h"
-//#include "driveEngine/models/vehicle/vehicleFirmware.h"
-//#include "driveEngine/models/vehicle/virtualVehicle.h"
 //#include "driveEngine/luaScriptService/luaScriptService.h"
-//#include "driveEngine/rushHour.h"
-//#include "driveEngine/rushHourAdapters/appInfo.h"
-//#include "driveEngine/rushHourAdapters/rushHourAppInfo.h"
 #include "util/logging/logging.h"
 #include "util/console/consoleSystem.h"
 #include "util/console/consoleChannel.h"
@@ -158,8 +150,8 @@ LogHandler(struct mg_connection *conn, void *cbdata)
 {
 #if USE_DAS
   // Stop rolling over logs so they are viewable
-// TODO-pterry what to do here?  Victor doesn't have a "DASDisableNetworkReason_LogRollover"
-//  DASDisableNetwork(DASDisableNetworkReason_LogRollover);
+  // (otherwise, they get uploaded and then deleted pretty quickly)
+  DASDisableNetwork(DASDisableNetworkReason_LogRollover);
 #endif
 
   // pretend we didn't handle it and pass onto the default handler
@@ -396,7 +388,7 @@ ConsoleVarsList(struct mg_connection *conn, void *cbdata)
     }
   }
 
-  Anki::Util::ConsoleSystem& consoleSystem = Anki::Util::ConsoleSystem::Instance();
+  const Anki::Util::ConsoleSystem& consoleSystem = Anki::Util::ConsoleSystem::Instance();
   const Anki::Util::ConsoleSystem::VariableDatabase& varDatabase = consoleSystem.GetVariableDatabase();
 
   mg_printf(conn,
@@ -598,9 +590,9 @@ dasinfo(struct mg_connection *conn, void *cbdata)
   if (disabled & DASDisableNetworkReason_Shutdown) {
     dasString += " Shutdown";
   }
-//  if (disabled & DASDisableNetworkReason_LogRollover) {
-//    dasString += " LogRollover";
-//  }
+  if (disabled & DASDisableNetworkReason_LogRollover) {
+    dasString += " LogRollover";
+  }
 //  if (disabled & DASDisableNetworkReason_Debug) {
 //    dasString += " Debug";
 //  }
@@ -720,10 +712,9 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform)
   rewrite += "/currentgamelog=" + platform->pathToResource(Util::Data::Scope::CurrentGameLog, "");
   rewrite += ",";
   rewrite += "/external=" + platform->pathToResource(Util::Data::Scope::External, "");
-  rewrite += ",";
 #if USE_DAS
+  rewrite += ",";
   rewrite += "/daslog=" + std::string(DASGetLogDir());
-  // pterry todo: Does this also need to append a comma, as we do above?
 #endif
 
   const std::string& passwordFile = platform->pathToResource(Util::Data::Scope::Resources, "webserver/htpasswd");
@@ -752,8 +743,8 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform)
 
   struct mg_callbacks callbacks;
   memset(&callbacks, 0, sizeof(callbacks));
-  callbacks.log_message      = LogMessage;
-  
+  callbacks.log_message = LogMessage;
+
   _ctx = mg_start(&callbacks, this, options);
   
   mg_set_websocket_handler(_ctx,
@@ -768,13 +759,11 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform)
   mg_set_request_handler(_ctx, "/consolevars", ConsoleVarsUI, 0);
 //  mg_set_request_handler(_ctx, "/json", JsonUploadUI, 0);
 
-  
   mg_set_request_handler(_ctx, "/consolevarset", ConsoleVarsSet, 0);
   mg_set_request_handler(_ctx, "/consolevarget", ConsoleVarsGet, 0);
   mg_set_request_handler(_ctx, "/consolevarlist", ConsoleVarsList, 0);
   mg_set_request_handler(_ctx, "/consolefunccall", ConsoleFuncCall, 0);
 //  mg_set_request_handler(_ctx, "/jsonUpload", JsonUpload, 0);
-//  mg_set_request_handler(_ctx, "/firmwareUpload", &WebService::HandleFirmwareUpload, 0);
 
 //  mg_set_request_handler(_ctx, "/sku", sku, 0);
 //  mg_set_request_handler(_ctx, "/appinfo", appinfo, 0);
@@ -1088,92 +1077,6 @@ void WebService::HandleLuaStop(struct mg_connection* conn, const Json::Value& da
 }
 
 #endif  /////
-
-#if 0 /////
-
-int WebService::HandleFirmwareUpload(struct mg_connection *conn, void *cbdata)
-{
-  bool success = false;
-  
-  const struct mg_request_info* info = mg_get_request_info(conn);
-  
-  std::string carUUIDs;
-  std::string flashOutput;
-  
-  if( info->query_string ) {
-    std::string key = info->query_string;
-    // a POST+querystring is not desireable, but it makes the js easier to send a binary file + string
-    if (key.substr(0, 5) == "cars=") {
-      carUUIDs = key.substr(5);
-    }
-  }
-
-
-  if( !carUUIDs.empty() ) {
-    if( info->content_length > 0 ) {
-      struct mg_context* ctx = mg_get_context(conn);
-      Anki::Cozmo::WebService::WebService* that = static_cast<Anki::Cozmo::WebService::WebService*>(mg_get_user_data(ctx));
-      DEV_ASSERT(that != nullptr, "Expecting valid webservice this pointer");
-
-
-      uint8_t buff[info->content_length];
-      mg_read(conn, buff, sizeof(buff));
-      const std::vector<std::string> splitComponents = Anki::Util::StringSplit(carUUIDs, '+');
-      flashOutput = that->OnFlashFirmwareFile(splitComponents, buff, static_cast<int>(sizeof(buff)));
-      success = flashOutput.empty();
-    }
-  }
-
-  if( success ) {
-    mg_printf(conn,
-              "HTTP/1.1 200 OK\r\nContent-Type: "
-              "text/html\r\nConnection: close\r\n\r\n");
-  } else {
-    mg_printf(conn,
-              "HTTP/1.1 400 Bad Request\r\nContent-Type: "
-              "text/html\r\nConnection: close\r\n\r\n");
-    mg_printf(conn, "%s", flashOutput.c_str());
-  }
-  
-
-  return 1;
-}
-
-
-std::string WebService::OnFlashFirmwareFile(const std::vector<std::string>& carUUIDs, uint8_t* data, int len)
-{
-  VehicleFirmware* firmware = nullptr;
-
-  bool found = false;
-  for( auto* vehicle : _vehicles ) {
-    auto it = std::find(carUUIDs.begin(), carUUIDs.end(), std::to_string(vehicle->GetIdentifier()));
-    if( it != carUUIDs.end() ) {
-
-      if( !found ) {
-        firmware = new VehicleFirmware(data, len);
-        AddOrReplaceFirmware(firmware);
-      }
-      found = true;
-
-      auto* rushHour = Anki::DriveEngine::RushHour::getInstance();
-      Anki::Util::Dispatch::Queue* mainQueue = rushHour->GetMainQueue();
-      Anki::Util::Dispatch::Async(mainQueue, [vehicle, firmware] { 
-        int options = 4; // force (other bitflags are none=0, nodisconnect=1, bootloader=2)
-        auto* vehicleController = RushHour::getRefInstance().GetVehicleController();
-        
-        vehicleController->OTAFlashVehicle(vehicle->GetIdentifier(), firmware, options);
-      });
-    }
-  }
-
-  if( found ) {
-    return "";
-  } else {
-    return "No matching vehicles found";
-  }
-}
-
-#endif  //////
 
 } // namespace WebService
 } // namespace Cozmo

@@ -25,9 +25,6 @@
         $.post("dasinfo", function(data){
             $("#dasinfo").html(data);
         });
-        $.post("bundle", function(data){
-            $("#content").html(data);
-        });
     });    
     $(function() {
         $(".widget input[type=submit], .widget a, .widget button").button();
@@ -72,21 +69,16 @@
             <tr>
                 <td>Get console variable</td><td>/consolevarget</td>
             </tr>
-            <tr>
+<!--             <tr>
                 <td>Replace a metagame json</td><td><a href="/json">/json</a></td>
             </tr>
-            <tr>
-                <td>"Carpool"</td><td><a href="/carpool">/carpool</a></td>
-            </tr>
-        </table><br>
+ -->        </table><br>
         <div>
             <input type="submit" value="output">
             <input type="submit" value="resources">
             <input type="submit" value="cache">
             <input type="submit" value="currentgamelog">
             <input type="submit" value="external">
-            <input type="submit" value="internal">
-            <input type="submit" value="bundle">
             &nbsp;
             <input type="submit" value="daslog">
             <input type="submit" value="consolevars">
@@ -94,7 +86,6 @@
     </div>
 
     <div id="content">
-    content
     </div>
 </body>
 

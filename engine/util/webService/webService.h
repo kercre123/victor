@@ -35,8 +35,6 @@ namespace Data {
 
 namespace Cozmo {
 
-class Vehicle;
-
 namespace WebService {
 
 class WebService
@@ -86,11 +84,8 @@ private:
   void HandleLuaPlay(struct mg_connection* conn, const Json::Value& data);
   void HandleLuaStop(struct mg_connection* conn, const Json::Value& data);
   
-  // carpool (firmware)
-  static int HandleFirmwareUpload(struct mg_connection* conn, void* cbdata); // called upon page visit
-  std::string OnFlashFirmwareFile(const std::vector<std::string>& carUUIDs, uint8_t* data, int len); // return is empty or err str
-  std::vector<Vehicle*> _vehicles;
-  
+  // todo: OTA update somehow?
+
   struct mg_context* _ctx;
   
   std::vector<WebSocketConnectionData> _webSocketConnections;
