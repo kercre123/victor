@@ -127,10 +127,10 @@ def parse_command_args():
 class FilterVariable:
     def augment_context_by_dict_key(self, src, key, context):
         if key == 'variables':
-            context['scope'][-1] = 'variable'
+            context['scope'][-1] = 'parentedUnderVariables'
 
     def test_and_apply_transform(self, src, context, transform):
-        if context['scope'][-1] == 'variable' and type(src) == dict and 'name' in src:
+        if 'parentedUnderVariables' in context['scope'] and type(src) == dict and 'name' in src:
             string = src['name']
             try:
                 if len(string) > 1 and string[0] == '.':
@@ -209,8 +209,6 @@ def translate_lower(string, context):
 
 # Traverses a hierarchy of json objects/lists, using the supplied filters to identify where to apply the supplied transform
 def walk_json_tree_and_perform_transformations(node, filters, context, transform):
-    if len( context['scope'] ) == 0 :
-        context['scope'].append('none')
     if type(node) == list:
         for subNode in node:
             walk_json_tree_and_perform_transformations( subNode, filters, context, transform )
@@ -230,19 +228,24 @@ def translate_project(project, sourceLanguageTable, destinationLanguageTable):
 
     projectJson = json.loads(project['ProjectJSON'])
 
+    #with open('testIn.txt', 'w') as output_file:
+    #    json.dump(projectJson, output_file, indent=4)
+
     # encode the original project into localization keys, with matches lowercased
-    encodingContext = { 'loc': {}, 'scope': [] }#{ 'loc': sourceLanguageTable['encodings'] }
+    encodingContext = { 'loc': {}, 'scope': ['none'] }#{ 'loc': sourceLanguageTable['encodings'] }
     for key in sourceLanguageTable['encodings']:
         encodingContext['loc'][key.lower()] = sourceLanguageTable['encodings'][key]
     walk_json_tree_and_perform_transformations(projectJson, allFilters, encodingContext, translate_lower)
 
     # decode the localization keys into the proper language
-    decodingContext = { 'loc': destinationLanguageTable['decodings'], 'scope': [] }
+    decodingContext = { 'loc': destinationLanguageTable['decodings'], 'scope': ['none'] }
     walk_json_tree_and_perform_transformations(projectJson, allFilters, decodingContext, translate)
 
     newProject = {}
     newProject['ProjectUUID'] = project['ProjectUUID']
     newProject['ProjectJSON'] = json.dumps(projectJson)
+    #with open('testOut.txt', 'w') as output_file:
+    #    json.dump(projectJson, output_file, indent=4)
 
     return newProject
 
@@ -304,7 +307,7 @@ def scan_project(project, source_language, target_desktop):
     with open(source_project_file) as input_file:
         json_contents = json.load(input_file)
         if 'ProjectJSON' in json_contents:
-            extraction_context = { 'outputList' : output_list, 'scope': [] }
+            extraction_context = { 'outputList' : output_list, 'scope': ['none'] }
             encoded_project_json = json.loads(json_contents['ProjectJSON'])
             walk_json_tree_and_perform_transformations(encoded_project_json, allFilters, extraction_context, pull_string)
         else:
