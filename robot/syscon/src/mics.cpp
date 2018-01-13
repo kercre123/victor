@@ -129,7 +129,7 @@ void Mics::transmit(int16_t* payload) {
   ptr = &DECIMATION_TABLE[31][*(samples++)]; \
   output[1] = (int16_t)((accumulator[3] + *ptr) >> 16); \
   ptr -= 0xC00; accumulator[3] = accumulator[2] + *ptr; \
-  ptr -= 0xC00; accumulator[2] = acc_l + *ptr;
+  ptr -= 0xC00; accumulator[2] = acc_r + *ptr;
 
 static void decimate(const uint8_t* input, int32_t* accumulator,  int16_t* output) {
   static uint8_t deinter[sizeof(uint16_t) * 12 * SAMPLES_PER_IRQ];
