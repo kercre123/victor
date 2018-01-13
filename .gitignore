@@ -228,11 +228,14 @@ build_xcode/game_osx
 build_xcode/game_ios
 build_xcode/game_sim
 generated
-unity/ios/UnityBuild
+#
+unity/ios/appboy-anki
 unity/ios/build
 unity/ios/opencv
 unity/ios/sphinx
 unity/ios/HockeyApp
+unity/ios/UnityBuild
+#
 animationTool.zip
 UnityDASDll/UnityDASDll/obj/*
 UnityDASDll/UnityDASDll/bin/*
