@@ -25,7 +25,12 @@ namespace Cozmo {
   CONSOLE_VAR(f32,        kProcFace_GlowSizeMultiplier,       CONSOLE_GROUP, 1.f);
   CONSOLE_VAR(f32,        kProcFace_GlowBrightnessMultiplier, CONSOLE_GROUP, 1.f);
   CONSOLE_VAR(f32,        kProcFace_EyeBrightnessMultiplier,  CONSOLE_GROUP, 1.f);
-  
+
+  CONSOLE_VAR(bool,       kProcFace_RenderInnerOuterGlow,     CONSOLE_GROUP, false); // Render glow
+  CONSOLE_VAR(bool,       kProcFace_ApplyGlowFilter,          CONSOLE_GROUP, false); // Gausssian or boxfilter for glow
+  CONSOLE_VAR(bool,       kProcFace_UseAntialiasing,          CONSOLE_GROUP, false); // Gausssian or boxfilter for antialiasing
+  CONSOLE_VAR(bool,       kProcFace_DistortScanlines,         CONSOLE_GROUP, false); // Post-process scanline distort
+
   #undef CONSOLE_GROUP
   
   // Initialize static vars
@@ -372,7 +377,7 @@ namespace Cozmo {
       // Inner Glow = the brighter glow at the center of the eye that falls off radially towards the edge of the eye
       // Outer Glow = the "halo" effect around the outside of the eye shape
       // Add inner glow to the eye shape, before we compute the outer glow, so that boundaries conditions match.
-      {
+      if(kProcFace_RenderInnerOuterGlow) {
         const f32 sigmaX = kProcFace_InnerGlowFrac*scaledEyeWidth;
         const f32 sigmaY = kProcFace_InnerGlowFrac*scaledEyeHeight;
         const f32 invInnerGlowSigmaX_sq = 1.f / (2.f * (sigmaX*sigmaX));
@@ -409,39 +414,43 @@ namespace Cozmo {
       // Compute glow from the final eye shape (after lids are drawn)
       _glowImg.Allocate(faceImg.GetNumRows(), faceImg.GetNumCols());
       _glowImg.FillWith(0);
-      
-      if(Util::IsFltGTZero(glowFraction))
-      {
-        Vision::Image glowImgROI  = _glowImg.GetROI(eyeBoundingBoxS32);
-        
-        s32 glowSizeX = std::ceil(glowFraction * 0.5f * scaledEyeWidth);
-        s32 glowSizeY = std::ceil(glowFraction * 0.5f * scaledEyeHeight);
 
-        // Make sure sizes are odd:
-        if(glowSizeX % 2 == 0) {
-          ++glowSizeX;
-        }
-        if(glowSizeY % 2 == 0) {
-          ++glowSizeY;
-        }
-        
-        if(kProcFace_GaussianGlowFilter) {
-          cv::GaussianBlur(eyeShapeROI.get_CvMat_(), glowImgROI.get_CvMat_(), cv::Size(glowSizeX,glowSizeY),
-                           (f32)glowSizeX, (f32)glowSizeY);
-        } else {
-          cv::boxFilter(eyeShapeROI.get_CvMat_(), glowImgROI.get_CvMat_(), -1, cv::Size(glowSizeX,glowSizeY));
+      if(kProcFace_ApplyGlowFilter) {
+        if(Util::IsFltGTZero(glowFraction))
+        {
+          Vision::Image glowImgROI  = _glowImg.GetROI(eyeBoundingBoxS32);
+
+          s32 glowSizeX = std::ceil(glowFraction * 0.5f * scaledEyeWidth);
+          s32 glowSizeY = std::ceil(glowFraction * 0.5f * scaledEyeHeight);
+
+          // Make sure sizes are odd:
+          if(glowSizeX % 2 == 0) {
+            ++glowSizeX;
+          }
+          if(glowSizeY % 2 == 0) {
+            ++glowSizeY;
+          }
+
+          if(kProcFace_GaussianGlowFilter) {
+            cv::GaussianBlur(eyeShapeROI.get_CvMat_(), glowImgROI.get_CvMat_(), cv::Size(glowSizeX,glowSizeY),
+                             (f32)glowSizeX, (f32)glowSizeY);
+          } else {
+            cv::boxFilter(eyeShapeROI.get_CvMat_(), glowImgROI.get_CvMat_(), -1, cv::Size(glowSizeX,glowSizeY));
+          }
         }
       }
-      
-      // Antialiasing (AFTER glow because it changes eyeShape, which we use to compute the glow above)
-      const s32 kAntiAliasingSize = 5;
-      static_assert(kAntiAliasingSize % 2 == 1, "Antialiasing filter size should be odd");
-      if(kProcFace_GaussianGlowFilter) {
-        const f32 kAntiAliasingSigmaFraction = 0.5f;
-        cv::GaussianBlur(eyeShapeROI.get_CvMat_(), eyeShapeROI.get_CvMat_(), cv::Size(kAntiAliasingSize,kAntiAliasingSize),
-                         (f32)kAntiAliasingSize * kAntiAliasingSigmaFraction);
-      } else {
-        cv::boxFilter(eyeShapeROI.get_CvMat_(), eyeShapeROI.get_CvMat_(), -1, cv::Size(kAntiAliasingSize,kAntiAliasingSize));
+
+      if(kProcFace_UseAntialiasing) {
+        // Antialiasing (AFTER glow because it changes eyeShape, which we use to compute the glow above)
+        const s32 kAntiAliasingSize = 5;
+        static_assert(kAntiAliasingSize % 2 == 1, "Antialiasing filter size should be odd");
+        if(kProcFace_GaussianGlowFilter) {
+          const f32 kAntiAliasingSigmaFraction = 0.5f;
+          cv::GaussianBlur(eyeShapeROI.get_CvMat_(), eyeShapeROI.get_CvMat_(), cv::Size(kAntiAliasingSize,kAntiAliasingSize),
+                           (f32)kAntiAliasingSize * kAntiAliasingSigmaFraction);
+        } else {
+          cv::boxFilter(eyeShapeROI.get_CvMat_(), eyeShapeROI.get_CvMat_(), -1, cv::Size(kAntiAliasingSize,kAntiAliasingSize));
+        }
       }
       
  
@@ -579,31 +588,32 @@ namespace Cozmo {
 
     if(rowMax > rowMin)
     {   
-      // Distort the scanlines
-      auto scanlineDistorter = faceData.GetScanlineDistorter();
-      if(nullptr != scanlineDistorter)
-      {
-        const f32 scale = 1.f / (rowMax - rowMin);
-        for(s32 row=rowMin; row < rowMax; ++row)
+      if(kProcFace_DistortScanlines) {
+        // Distort the scanlines
+        auto scanlineDistorter = faceData.GetScanlineDistorter();
+        if(nullptr != scanlineDistorter)
         {
-          const f32 eyeFrac = (row - rowMin) * scale;
-          const s32 shift = scanlineDistorter->GetEyeDistortionAmount(eyeFrac) * sizeof(Vision::PixelRGB);
-          
-          if(shift < 0)
+          const f32 scale = 1.f / (rowMax - rowMin);
+          for(s32 row=rowMin; row < rowMax; ++row)
           {
-            Vision::PixelRGB* faceImg_row = faceImg.GetRow(row);
-            memmove(faceImg_row, faceImg_row-shift, ProceduralFace::WIDTH+shift);
-            memset(faceImg_row+ProceduralFace::WIDTH+shift, 0, -shift);
-          }
-          else if(shift > 0)
-          {
-            Vision::PixelRGB* faceImg_row = faceImg.GetRow(row);
-            memmove(faceImg_row+shift, faceImg_row, ProceduralFace::WIDTH-shift);
-            memset(faceImg_row, 0, shift);
+            const f32 eyeFrac = (row - rowMin) * scale;
+            const s32 shift = scanlineDistorter->GetEyeDistortionAmount(eyeFrac) * sizeof(Vision::PixelRGB);
+
+            if(shift < 0)
+            {
+              Vision::PixelRGB* faceImg_row = faceImg.GetRow(row);
+              memmove(faceImg_row, faceImg_row-shift, ProceduralFace::WIDTH+shift);
+              memset(faceImg_row+ProceduralFace::WIDTH+shift, 0, -shift);
+            }
+            else if(shift > 0)
+            {
+              Vision::PixelRGB* faceImg_row = faceImg.GetRow(row);
+              memmove(faceImg_row+shift, faceImg_row, ProceduralFace::WIDTH-shift);
+              memset(faceImg_row, 0, shift);
+            }
           }
         }
       }
-      
       Rectangle<s32> eyesROI(colMin, rowMin, colMax-colMin+1, rowMax-rowMin+1);
       cv::cvtColor(faceImg.GetROI(eyesROI).get_CvMat_(), faceImg.GetROI(eyesROI).get_CvMat_(), CV_HSV2RGB);
     }
