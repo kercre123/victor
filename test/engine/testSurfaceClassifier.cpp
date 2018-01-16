@@ -393,7 +393,7 @@ TEST(SurfaceClassifier, DTClassifier_TestSerialization) {
     config["MinSampleCount"] = 10;
     config["TruncatePrunedTree"] = true;
     config["Use1SERule"] = true;
-    config["PositiveWeight"] = 1.0f;
+    config["PositiveWeight"] = 3.0f;
   }
 
   Anki::Cozmo::DTDrivingSurfaceClassifier clf(config, cozmoContext);
