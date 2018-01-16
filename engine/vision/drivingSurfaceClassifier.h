@@ -51,6 +51,8 @@ class DrivingSurfaceClassifier {
 
 public:
 
+  typedef float FeatureType;
+
   DrivingSurfaceClassifier(const CozmoContext *context);
 
   /*
@@ -66,19 +68,19 @@ public:
   /*
    * Predict the class of a single pixel (1 is drivable, 0 is not)
    */
-  virtual uchar PredictClass(const std::vector<u8>& values) const = 0;
+  virtual uchar PredictClass(const std::vector<FeatureType>& values) const = 0;
 
   /*
    * Predict the class of a vector of pixels (1 is drivable, 0 is not)
    */
-  virtual std::vector<uchar> PredictClass(const std::vector<std::vector<u8>>& pixels) const;
+  virtual std::vector<uchar> PredictClass(const std::vector<std::vector<FeatureType>>& pixels) const;
 
   /*
    * Predict the class of the pixel at image[row, col]. Useful when padding needs to be considered
    */
-  virtual uchar PredictClass(const Vision::ImageRGB& image, uint row, uint col) const;
+//  virtual uchar PredictClass(const Vision::ImageRGB& image, uint row, uint col) const;
 
-  void ClassifyImage(const Vision::ImageRGB& image, Vision::Image& outputMask) const;
+//  void ClassifyImage(const Vision::ImageRGB& image, Vision::Image& outputMask) const;
 
   /*
    * Load data from two files and use it for training
@@ -91,17 +93,10 @@ public:
   virtual bool Serialize(const char* filename) = 0;
   virtual bool DeSerialize(const char* filename) = 0;
 
-  virtual void setPadding(uint padding) // base classes can decide to exclude certain levels of padding
-  {
-    _padding = padding;
-  }
-
 protected:
   cv::Mat _trainingSamples;
   cv::Mat _trainingLabels;
   const CozmoContext* _context;
-  // TODO this whole padding thing should be outside this class. Make the Classifier independent from images and let GroundPlaneClassifier handle the images
-  uint _padding = 0; // Padding = 0 is single pixels classification, > 0 a square of size 2*padding+1 is used
 
   virtual bool Train(const cv::Mat& allInputs, const cv::Mat& allClasses, uint numberOfPositives) = 0;
 
@@ -158,7 +153,7 @@ public:
   explicit LRDrivingSurfaceClassifier(const Json::Value& config, const CozmoContext *context);
 
   using GMMDrivingSurfaceClassifier::PredictClass;
-  uchar PredictClass(const std::vector<u8>& values) const override;
+  uchar PredictClass(const std::vector<FeatureType>& values) const override;
 
   bool Serialize(const char *filename) override
   {
@@ -198,7 +193,7 @@ public:
   explicit THDrivingSurfaceClassifier(const Json::Value& config, const CozmoContext *context);
 
   using GMMDrivingSurfaceClassifier::PredictClass;
-  uchar PredictClass(const std::vector<u8>& values) const override;
+  uchar PredictClass(const std::vector<FeatureType>& values) const override;
 
   bool TrainFromFiles(const char *positiveDataFileName, const char *negativeDataFileName) override;
 
@@ -241,7 +236,7 @@ public:
   explicit DTDrivingSurfaceClassifier(const Json::Value& config, const CozmoContext *context);
   DTDrivingSurfaceClassifier(const std::string& serializedFilename, const CozmoContext* context);
 
-  uchar PredictClass(const std::vector<u8>& values) const override;
+  uchar PredictClass(const std::vector<FeatureType>& values) const override;
 
   bool Serialize(const char *filename) override;
 

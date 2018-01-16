@@ -29,31 +29,24 @@
 namespace Anki {
 namespace Cozmo {
 
-namespace
+void ClassifyImage(const DrivingSurfaceClassifier& clf, const Anki::Cozmo::FeaturesExtractor& extractor,
+                   const Vision::ImageRGB& image, Vision::Image outputMask)
 {
-template<typename T>
-void convertToVector(const cv::Mat& mat, std::vector<std::vector<u8>>& vec)
-{
-  DEV_ASSERT(mat.type() == cv::DataType<T>::type, "convertTo.WrongMatrixType");
 
-  int nRows = mat.rows;
-  int nCols = mat.cols;
-  vec.clear();
-  vec.reserve(nRows);
+  s32 nrows = image.GetNumRows();
+  s32 ncols = image.GetNumCols();
+  DEV_ASSERT(outputMask.GetNumRows() == nrows && outputMask.GetNumCols() == ncols,
+             "ClassifyImage.ResultArraySizeMismatch");
 
-  for(int i = 0; i < nRows; ++i)
-  {
-    const T* p = mat.ptr<T>(i);
-    std::vector<u8> singleRow;
-    singleRow.reserve(nRows);
-    for (int j = 0; j < nCols; ++j)
-    {
-      singleRow.push_back(cv::saturate_cast<u8>(p[j]));
+  // calculating features over all the image
+  for (uint i =0; i<image.GetNumRows(); i++) {
+    for (int j = 0; j <image.GetNumCols(); ++j) {
+      const std::vector<DrivingSurfaceClassifier::FeatureType> features = extractor.Extract(image, i, j);
+      uchar res = clf.PredictClass(features);
+      outputMask(i, j) = u8(255 * res);
     }
-    vec.push_back(singleRow);
   }
 }
-} // anonymous namespace
 
 GroundPlaneClassifier::GroundPlaneClassifier(const Json::Value& config, const CozmoContext *context)
 : _context(context)
@@ -62,7 +55,10 @@ GroundPlaneClassifier::GroundPlaneClassifier(const Json::Value& config, const Co
   DEV_ASSERT(context != nullptr, "GroundPlaneClassifier.ContextCantBeNULL");
 
   const Json::Value& detectionConfig = config["GroundPlaneClassifier"];
+
+  // TODO Classifier and extractor (with their parameters should be passed at config time!
   _classifier.reset(new DTDrivingSurfaceClassifier(detectionConfig, context));
+  _extractor.reset(new MeanStdFeaturesExtractor(1));
 
   // Train or load serialized file?
   bool onTheFlyTrain;
@@ -117,7 +113,8 @@ Result GroundPlaneClassifier::Update(const Vision::ImageRGB& image, const Vision
 
   // STEP 2: Classify the overhead image
   Vision::Image rawClassifiedImage(groundPlaneImage.GetNumRows(), groundPlaneImage.GetNumCols(), u8(0));
-  _classifier->ClassifyImage(groundPlaneImage, rawClassifiedImage);
+  ClassifyImage(*_classifier.get(), *_extractor.get(), groundPlaneImage, rawClassifiedImage);
+//  _classifier->ClassifyImage(groundPlaneImage, rawClassifiedImage);
   const Vision::Image classifiedMask = processClassifiedImage(rawClassifiedImage);
 
   // STEP 3: Find leading edge in the classified mask (i.e. closest edge of obstacle to robot)
@@ -252,7 +249,7 @@ void GroundPlaneClassifier::trainClassifier(const std::string& path)
     _classifier->GetTrainingData(trainingSamples, trainingLabels);
 
     // building a std::vector<std::vector<u8>>
-    std::vector<std::vector<u8>> values;
+    std::vector<std::vector<DrivingSurfaceClassifier::FeatureType>> values;
     values.reserve(trainingSamples.rows);
     convertToVector<float>(trainingSamples, values);
 
@@ -268,7 +265,7 @@ void GroundPlaneClassifier::trainClassifier(const std::string& path)
 //    }
 
     // calculate error
-    const std::vector<uchar> responses = _classifier->PredictClass(values);
+    const std::vector<u8> responses = _classifier->PredictClass(values);
     const cv::Mat responsesMat(responses);
 
     const float error = Anki::calculateError(responsesMat, trainingLabels);
@@ -292,5 +289,41 @@ bool GroundPlaneClassifier::loadClassifier(const std::string& filename)
   }
 }
 
+std::vector<DrivingSurfaceClassifier::FeatureType>
+MeanStdFeaturesExtractor::Extract(const Vision::ImageRGB& image, int row, int col) const
+{
+  // Border checking
+  const int minRow = std::max(0, row-_padding);
+  const int maxRow = std::min(image.GetNumRows()-1, row+_padding+1);
+  const int minCol = std::max(0, col-_padding);
+  const int maxCol = std::min(image.GetNumCols()-1, col+_padding+1);
+
+  cv::Mat submatrix = image.get_CvMat_()(cv::Range(minRow, maxRow),
+                                         cv::Range(minCol, maxCol)); // O(1) operation
+
+  DEV_ASSERT(submatrix.type() == CV_8UC3, "DrivingSurfaceClassifier.PredictClass.WrongSumbatrixType");
+  cv::Vec3d mean, std;
+  cv::meanStdDev(submatrix, mean, std);
+
+  std::vector<DrivingSurfaceClassifier::FeatureType> toRet = {DrivingSurfaceClassifier::FeatureType(mean[0]),
+                                                              DrivingSurfaceClassifier::FeatureType(mean[1]),
+                                                              DrivingSurfaceClassifier::FeatureType(mean[2]),
+                                                              DrivingSurfaceClassifier::FeatureType(std[0]),
+                                                              DrivingSurfaceClassifier::FeatureType(std[1]),
+                                                              DrivingSurfaceClassifier::FeatureType(std[2])};
+
+  return toRet;
+
+}
+
+std::vector<DrivingSurfaceClassifier::FeatureType>
+SinglePixelFeaturesExtraction::Extract(const Vision::ImageRGB& image, int row, int col) const
+{
+  const Vision::PixelRGB& pixel = image(row, col);
+  const std::vector<DrivingSurfaceClassifier::FeatureType> toRet{DrivingSurfaceClassifier::FeatureType(pixel.r()),
+                                                                 DrivingSurfaceClassifier::FeatureType(pixel.g()),
+                                                                 DrivingSurfaceClassifier::FeatureType(pixel.b())};
+  return toRet;
+}
 } // namespace Cozmo
 } // namespace Anki

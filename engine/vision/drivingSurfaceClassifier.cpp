@@ -137,7 +137,7 @@ void DrivingSurfaceClassifier::GetTrainingData(cv::Mat& trainingSamples, cv::Mat
   trainingLabels = _trainingLabels;
 }
 
-std::vector<uchar> DrivingSurfaceClassifier::PredictClass(const std::vector<std::vector<u8>>& pixels) const
+std::vector<uchar> DrivingSurfaceClassifier::PredictClass(const std::vector<std::vector<FeatureType>>& pixels) const
 {
   std::vector<uchar> responses;
   responses.reserve(pixels.size());
@@ -222,20 +222,6 @@ bool DrivingSurfaceClassifier::TrainFromFiles(const char *positiveDataFileName, 
   // reshaping the matrix to be n x m with 1 channel
   inputElements = inputElements.reshape(1);
 
-  // attempt to infer the padding size
-  {
-    int numCols = inputElements.cols;
-    if (numCols % 3) { // there's 3 pixels, so it has to be divisible by 3
-      PRINT_NAMED_ERROR("DrivingSurfaceClassifier.TrainFromFiles.WrongFileSize",
-                        "Number of values in training files %s and %s is not a multiple of 3: %d",
-                        positiveDataFileName, negativeDataFileName, numCols);
-      return false;
-    }
-    numCols /= 3;
-    // with a padding of p, the size of a patch is (2*p+1)^2
-    _padding = (uint(sqrt(numCols)) - 1)/2;
-  }
-
   cv::Mat classes;
   cv::vconcat(cv::Mat::ones(numberOfPositives, 1, CV_32FC1),
           cv::Mat::zeros(inputElements.rows - numberOfPositives, 1, CV_32FC1),
@@ -244,64 +230,63 @@ bool DrivingSurfaceClassifier::TrainFromFiles(const char *positiveDataFileName, 
   return Train(inputElements, classes, numberOfPositives);
 }
 
-// TODO Add a mask here to classify only certain pixels
-void DrivingSurfaceClassifier::ClassifyImage(const Vision::ImageRGB& image, Vision::Image& outputMask) const
-{
+//void DrivingSurfaceClassifier::ClassifyImage(const Vision::ImageRGB& image, Vision::Image& outputMask) const
+//{
+//
+//  s32 nrows = image.GetNumRows();
+//  s32 ncols = image.GetNumCols();
+//  DEV_ASSERT(outputMask.GetNumRows() == nrows && outputMask.GetNumCols() == ncols,
+//             "DrivingSurfaceClassifier.ClassifyImage.ResultArraySizeMismatch");
+//
+//  if (_padding == 0) { //special case, way faster
+//    auto f = [this](const Vision::PixelRGB& pixel) {
+//      const std::vector<u8> input{pixel.r(), pixel.g(), pixel.b()};
+//      return u8(255 * this->PredictClass(input));
+//    };
+//
+//    image.ApplyScalarFunction<u8>(f, outputMask);
+//  }
+//
+//  else {
+//    // TODO Handle boundaries!
+//    for (uint i = _padding; i < image.GetNumRows() - _padding - 1; i++) {
+//      u8 *resultRow = outputMask.GetRow(i);
+//      for (uint j = _padding; j < image.GetNumCols() - _padding - 1; j++) {
+//        resultRow[j] = PredictClass(image, i, j);
+//      }
+//    }
+//  }
+//}
 
-  s32 nrows = image.GetNumRows();
-  s32 ncols = image.GetNumCols();
-  DEV_ASSERT(outputMask.GetNumRows() == nrows && outputMask.GetNumCols() == ncols,
-             "DrivingSurfaceClassifier.ClassifyImage.ResultArraySizeMismatch");
-
-  if (_padding == 0) { //special case, way faster
-    auto f = [this](const Vision::PixelRGB& pixel) {
-      const std::vector<u8> input{pixel.r(), pixel.g(), pixel.b()};
-      return u8(255 * this->PredictClass(input));
-    };
-
-    image.ApplyScalarFunction<u8>(f, outputMask);
-  }
-
-  else {
-    // TODO Handle boundaries!
-    for (uint i = _padding; i < image.GetNumRows() - _padding - 1; i++) {
-      u8 *resultRow = outputMask.GetRow(i);
-      for (uint j = _padding; j < image.GetNumCols() - _padding - 1; j++) {
-        resultRow[j] = PredictClass(image, i, j);
-      }
-    }
-  }
-}
-
-uchar DrivingSurfaceClassifier::PredictClass(const Vision::ImageRGB& image, uint row, uint col) const
-{
-  cv::Mat submatrix = image.get_CvMat_()(cv::Range(row-_padding, row+_padding+1),
-                                         cv::Range(col-_padding, col+_padding+1)); // O(1) operation
-
-  // Need to copy here, submatrix is probably not continuous
-  std::vector<u8> vec;
-  vec.reserve(submatrix.rows * submatrix.cols * submatrix.channels());
-
-  {
-    DEV_ASSERT(submatrix.type() == CV_8UC3, "DrivingSurfaceClassifier.PredictClass.WrongSumbatrixType");
-    const int channels = submatrix.channels();
-    const int nRows = submatrix.rows;
-    const int nCols = submatrix.cols * channels;
-    uchar* p;
-    for(int i = 0; i < nRows; ++i)
-    {
-      p = submatrix.ptr<uchar>(i);
-      for (int j = 0; j < nCols; ++j)
-      {
-        vec.push_back(p[j]);
-      }
-    }
-  }
-
-
-  u8 res =  u8(255*this->PredictClass(vec));
-  return res;
-}
+//uchar DrivingSurfaceClassifier::PredictClass(const Vision::ImageRGB& image, uint row, uint col) const
+//{
+//  cv::Mat submatrix = image.get_CvMat_()(cv::Range(row-_padding, row+_padding+1),
+//                                         cv::Range(col-_padding, col+_padding+1)); // O(1) operation
+//
+//  // Need to copy here, submatrix is probably not continuous
+//  std::vector<u8> vec;
+//  vec.reserve(submatrix.rows * submatrix.cols * submatrix.channels());
+//
+//  {
+//    DEV_ASSERT(submatrix.type() == CV_8UC3, "DrivingSurfaceClassifier.PredictClass.WrongSumbatrixType");
+//    const int channels = submatrix.channels();
+//    const int nRows = submatrix.rows;
+//    const int nCols = submatrix.cols * channels;
+//    uchar* p;
+//    for(int i = 0; i < nRows; ++i)
+//    {
+//      p = submatrix.ptr<uchar>(i);
+//      for (int j = 0; j < nCols; ++j)
+//      {
+//        vec.push_back(p[j]);
+//      }
+//    }
+//  }
+//
+//
+//  u8 res =  u8(255*this->PredictClass(vec));
+//  return res;
+//}
 
 /****************************************************************
  *                     GMMDrivingSurfaceClassifier               *
@@ -506,7 +491,7 @@ bool LRDrivingSurfaceClassifier::Train(const cv::Mat& allInputs, const cv::Mat& 
   return true;
 }
 
-uchar LRDrivingSurfaceClassifier::PredictClass(const std::vector<u8>& values) const
+uchar LRDrivingSurfaceClassifier::PredictClass(const std::vector<FeatureType>& values) const
 {
   //TODO Assuming a single pixel here
   DEV_ASSERT(values.size() == 3, "LRDrivingSurfaceClassifier.PredictClass.WrongInputSize");
@@ -530,7 +515,7 @@ uchar LRDrivingSurfaceClassifier::PredictClass(const std::vector<u8>& values) co
  *                     THDrivingSurfaceClassifier               *
  ****************************************************************/
 
-uchar THDrivingSurfaceClassifier::PredictClass(const std::vector<u8>& values) const
+uchar THDrivingSurfaceClassifier::PredictClass(const std::vector<FeatureType>& values) const
 {
   //TODO Assuming a single pixel here
   DEV_ASSERT(values.size() == 3, "LRDrivingSurfaceClassifier.PredictClass.WrongInputSize");
@@ -655,11 +640,8 @@ DTDrivingSurfaceClassifier::DTDrivingSurfaceClassifier(const std::string& serial
   }
 }
 
-uchar DTDrivingSurfaceClassifier::PredictClass(const std::vector<u8>& values) const
+uchar DTDrivingSurfaceClassifier::PredictClass(const std::vector<FeatureType>& values) const
 {
-
-  // with a padding of p, the size of an input vector patch is (2*p+1)^2 times 3 channels
-  DEV_ASSERT(values.size() == (2*_padding +1)*(2*_padding+1)*3, "DTDrivingSurfaceClassifier.PredictClass.WrongInputSize");
 
   // we need to copy since DTree requires float as input
   cv::Mat_<float> inputRow(1, int(values.size()));

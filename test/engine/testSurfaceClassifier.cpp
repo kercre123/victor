@@ -26,51 +26,12 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
-#define DISPLAY_IMAGES true
+#define DISPLAY_IMAGES false
 
 extern Anki::Cozmo::CozmoContext *cozmoContext;
 
-template<typename T>
-void convertToVector(const cv::Mat& mat, std::vector<std::vector<u8>>& vec)
-{
-  DEV_ASSERT(mat.type() == cv::DataType<T>::type, "convertTo.WrongMatrixType");
-
-  int nRows = mat.rows;
-  int nCols = mat.cols;
-  vec.clear();
-  vec.reserve(nRows);
-
-  for(int i = 0; i < nRows; ++i)
-  {
-    const T* p = mat.ptr<T>(i);
-    std::vector<u8> singleRow;
-    singleRow.reserve(nRows);
-    for (int j = 0; j < nCols; ++j)
-    {
-      singleRow.push_back(cv::saturate_cast<u8>(p[j]));
-    }
-    vec.push_back(singleRow);
-  }
-}
-template<typename T>
-void convertToVector(const cv::Mat& mat, std::vector<u8>& vec)
-{
-  DEV_ASSERT(mat.type() == cv::DataType<T>::type, "convertToVector.WrongMatrixType");
-  DEV_ASSERT(mat.rows == 1, "convertToVector.OnlySingleRowAllowed");
-
-  int nCols = mat.cols;
-  vec.clear();
-  vec.reserve(nCols);
-
-  const T* p = mat.ptr<T>(0);
-  for (int j = 0; j < nCols; ++j)
-  {
-    vec.push_back(cv::saturate_cast<u8>(p[j]));
-  }
-
-}
-
-void visualizeClassifierOnImages(const std::string& pathToImages, const Anki::Cozmo::DrivingSurfaceClassifier& clf) {
+void visualizeClassifierOnImages(const std::string& pathToImages, const Anki::Cozmo::DrivingSurfaceClassifier& clf,
+                                const Anki::Cozmo::FeaturesExtractor& extractor= Anki::Cozmo::SinglePixelFeaturesExtraction()) {
 
   std::vector<std::string> imageFiles;
   if (Anki::Util::FileUtils::DirectoryExists(pathToImages)) {
@@ -91,7 +52,7 @@ void visualizeClassifierOnImages(const std::string& pathToImages, const Anki::Co
     }
 
     Anki::Vision::Image mask(image.GetNumRows(), image.GetNumCols());
-    clf.ClassifyImage(image, mask);
+    ClassifyImage(clf, extractor, image, mask);
 
     cv::namedWindow("Mask", cv::WINDOW_AUTOSIZE);
     cv::imshow("Mask", mask.get_CvMat_());
@@ -172,8 +133,8 @@ void checkClassifier(Anki::Cozmo::DrivingSurfaceClassifier& clf,
 
   // Error on whole training set
   {
-    std::vector<std::vector<u8>> pixels;
-    convertToVector<float>(trainingSamples, pixels);
+    std::vector<std::vector<Anki::Cozmo::DrivingSurfaceClassifier::FeatureType>> pixels;
+    Anki::Cozmo::convertToVector<float>(trainingSamples, pixels);
 
     // calculate error
     std::vector<uchar> responses = clf.PredictClass(pixels);
@@ -188,20 +149,23 @@ void checkClassifier(Anki::Cozmo::DrivingSurfaceClassifier& clf,
   {
 
     cv::Mat positiveY;
-    std::vector<std::vector<u8>> pixels;
+    std::vector<std::vector<Anki::Cozmo::DrivingSurfaceClassifier::FeatureType>> pixels;
     pixels.reserve(trainingSamples.rows); // probably won't be using that much
 
     // The local friendly lambda. There's a lot going on here just because trainingLabels is a cv::Mat_ with a template
     // type. Getting the type out of the Mat_ is not easy though, hence the dance with decltype
     auto fillPixels = [&trainingSamples = static_cast<const cv::Mat&>(trainingSamples)]
-        (cv::Mat& positiveY, std::vector<std::vector<u8>>& pixels, const auto& trainingLabels) {
+        (cv::Mat& positiveY,
+         std::vector<std::vector<Anki::Cozmo::DrivingSurfaceClassifier::FeatureType>>& pixels,
+         const auto& trainingLabels) {
+
       using T = decltype(trainingLabels(0)); //either float or int
       auto elementY = trainingLabels.template begin(); // probably don't need the .template here, but it looks cool :)
       for (uint rowNumber = 0; elementY != trainingLabels.template end(); rowNumber++, elementY++) {
         const T value = *elementY;
-        if ( value != 0) {
-          std::vector<u8> rowPixels;
-          convertToVector<float>(trainingSamples.row(rowNumber), rowPixels);
+        if ( value != 0) { // if it's positive class, add the sample to pixels
+          std::vector<Anki::Cozmo::DrivingSurfaceClassifier::FeatureType> rowPixels;
+          Anki::Cozmo::convertToVector<float>(trainingSamples.row(rowNumber), rowPixels);
           pixels.push_back(std::move(rowPixels));
           positiveY.push_back(value);
         }
@@ -216,12 +180,13 @@ void checkClassifier(Anki::Cozmo::DrivingSurfaceClassifier& clf,
       fillPixels(positiveY, pixels, cv::Mat_<float>(trainingLabels));
     }
     else {
-      EXPECT_TRUE(false) << ("Unkown type for trainingLabels");
+      ASSERT_TRUE(false) << ("Unknown type for trainingLabels");
     }
 
     ASSERT_EQ(positiveY.rows, realNumberOfPositives);
 
     // calculate error
+
     std::vector<uchar> responses = clf.PredictClass(pixels);
     cv::Mat responsesMat(responses);
 
@@ -262,8 +227,8 @@ TEST(SurfaceClassifier, LRClassifier_TestWholeErrorNoWeighting) {
   cv::Mat trainingSamples, trainingLabels;
   clf.GetTrainingData(trainingSamples, trainingLabels);
 
-  std::vector<std::vector<u8>> pixels;
-  convertToVector<float>(trainingSamples, pixels);
+  std::vector<std::vector<Anki::Cozmo::DrivingSurfaceClassifier::FeatureType>> pixels;
+  Anki::Cozmo::convertToVector<float>(trainingSamples, pixels);
 
   // calculate error
   std::vector<uchar> responses = clf.PredictClass(pixels);
@@ -303,42 +268,9 @@ TEST(SurfaceClassifier, LRClassifier_TestPositiveClassOnlyWithWeights)
   const std::string positivePath = Anki::Util::FileUtils::FullFilePath({path, "positivePixels.txt"});
   const std::string negativePath = Anki::Util::FileUtils::FullFilePath({path, "negativePixels.txt"});
 
-  bool result = clf.TrainFromFiles(positivePath.c_str(), negativePath.c_str());
-  ASSERT_TRUE(result);
-
-  cv::Mat trainingSamples, trainingLabels;
-  clf.GetTrainingData(trainingSamples, trainingLabels);
-
-  const float realNumberOfPositives = float(cv::sum(trainingLabels)[0]);
-
-  // Test the positive class only
-  ASSERT_EQ(trainingSamples.type(), CV_32FC1);
-  ASSERT_EQ(trainingLabels.type(), CV_32FC1);
-
-  cv::Mat positiveY;
-  std::vector<std::vector<u8>> pixels;
-  pixels.reserve(trainingSamples.rows); // probably won't be using that much
-
-  auto elementY = trainingLabels.begin<float>();
-  for (uint rowNumber = 0; elementY != trainingLabels.end<float>(); rowNumber++, elementY++) {
-    const float value = *elementY;
-    if ( value != 0) {
-      std::vector<u8> rowPixels;
-      trainingSamples.row(rowNumber).convertTo(rowPixels, CV_8U);
-      pixels.push_back(std::move(rowPixels)); // TODO is std::move safe here?
-      positiveY.push_back(value);
-    }
-  }
-  ASSERT_EQ(positiveY.rows, realNumberOfPositives);
-
-  // calculate error
-  std::vector<uchar> responses = clf.PredictClass(pixels);
-  cv::Mat responsesMat(responses);
-
-  const float error = Anki::calculateError(responsesMat, positiveY);
-
-  // Expect the error to be below 0.12 for the positive elements
-  EXPECT_PRED_FORMAT2(::testing::FloatLE, error, 0.12);
+  float error = std::numeric_limits<float>::max();
+  // There will be a high error on the whole training set, but low on the positives only
+  checkClassifier(clf, positivePath, negativePath, error, 0.46, 0.12 );
 
 }
 
@@ -398,8 +330,8 @@ TEST(SurfaceClassifier, THClassifier_TestRealRun) {
   cv::Mat trainingSamples, trainingLabels;
   clf.GetTrainingData(trainingSamples, trainingLabels);
 
-  std::vector<std::vector<u8>> pixels;
-  convertToVector<float>(trainingSamples, pixels);
+  std::vector<std::vector<Anki::Cozmo::DrivingSurfaceClassifier::FeatureType>> pixels;
+  Anki::Cozmo::convertToVector<float>(trainingSamples, pixels);
 
   std::vector<uchar> responses = clf.PredictClass(pixels);
   uint sum = 0;
@@ -528,16 +460,17 @@ TEST(SurfaceClassifier, GroundPlaneClassifier_TestNoise) {
     Anki::Result result = clf.Update(testImg, poseData, debugImageList, outEdges);
     ASSERT_EQ(result, Anki::RESULT_OK);
 
-    for (auto& name_image : debugImageList) {
-      std::string& name = name_image.first;
-      Anki::Vision::ImageRGB& image = name_image.second;
-      cv::cvtColor(image.get_CvMat_(), image.get_CvMat_(), cv::COLOR_RGB2BGR);
-      cv::namedWindow(name, cv::WINDOW_AUTOSIZE);
+    if (DISPLAY_IMAGES) {
+      for (auto& name_image : debugImageList) {
+        std::string& name = name_image.first;
+        Anki::Vision::ImageRGB& image = name_image.second;
+        cv::cvtColor(image.get_CvMat_(), image.get_CvMat_(), cv::COLOR_RGB2BGR);
+        cv::namedWindow(name, cv::WINDOW_AUTOSIZE);
 
-      cv::imshow(name, image.get_CvMat_());
+        cv::imshow(name, image.get_CvMat_());
+      }
+      visualizeClassifierOnImages(imagepath, clf.GetClassifier());
     }
-    visualizeClassifierOnImages(imagepath, clf.GetClassifier());
-
   }
 
   cv::waitKey(0);
