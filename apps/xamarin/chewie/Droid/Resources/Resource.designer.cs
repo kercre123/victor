@@ -9,9 +9,9 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-[assembly: global::Android.Runtime.ResourceDesignerAttribute("victor.Droid.Resource", IsApplication=true)]
+[assembly: global::Android.Runtime.ResourceDesignerAttribute("chewie.Droid.Resource", IsApplication=true)]
 
-namespace victor.Droid
+namespace chewie.Droid
 {
 	
 	
