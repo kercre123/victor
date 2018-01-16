@@ -2279,13 +2279,21 @@ namespace CodeLab {
         }
 
         // Clean the Cozmo Says text input using the same process as Cozmo Says minigame
-        string text = RemoveUnsupportedChars(scratchRequest.argString);
-
-        // Trim text to fit message size 
-        text = TextToSpeech.Trim(text);
+        string text = RemoveUnsupportedCharsAndTrim(scratchRequest.argString);
 
         // Check for bad words
         bool hasBadWords = BadWordsFilterManager.Instance.Contains(text);
+
+        // TODO Japanese workaround for featured projects "Remote Control Racer" and "Putt Putt".
+        // For some reason, these strings are getting caught by the bad word filter.
+        if (Localization.GetStringsLocale() == "ja-JP") {
+          String remoteControlTiltText = RemoveUnsupportedCharsAndTrim(Localization.Get(LocalizationKeys.kCodeLabFeaturedProjectRemoteControlRacerTilt_your_device_to_drive));
+          String puttPuttPutMeDownText = RemoveUnsupportedCharsAndTrim(Localization.Get(LocalizationKeys.kCodeLabFeaturedProjectPuttPuttPlease_put_me_down_on_a_flat_surface));
+          if (text.Equals(remoteControlTiltText) || text.Equals(puttPuttPutMeDownText)) {
+            hasBadWords = false;
+          }
+        }
+
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(hasBadWords.ToString()));  // deliberately don't send string as it's PII
         uint idTag;
         if (hasBadWords) {
@@ -3658,6 +3666,13 @@ namespace CodeLab {
         }
       }
       return cleanedString;
+    }
+
+    public static string RemoveUnsupportedCharsAndTrim(string rawString) {
+      rawString = RemoveUnsupportedChars(rawString);
+
+      // Trim text to fit message size 
+      return TextToSpeech.Trim(rawString);
     }
 
     public static void PushImportError(string errorLocString) {
