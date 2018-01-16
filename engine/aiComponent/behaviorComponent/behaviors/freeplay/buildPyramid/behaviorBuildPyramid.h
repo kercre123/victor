@@ -34,17 +34,17 @@ protected:
   BehaviorBuildPyramid(const Json::Value& config);
   
 public:
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;  
+  virtual bool WantsToBeActivatedBehavior() const override;  
 
 protected:
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated() override;
   
 private:
   typedef std::vector<const ObservableObject*> BlockList;
   
-  void TransitionToDrivingToTopBlock(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToPlacingTopBlock(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToReactingToPyramid(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToDrivingToTopBlock();
+  void TransitionToPlacingTopBlock();
+  void TransitionToReactingToPyramid();
         
 }; //class BehaviorBuildPyramid
 

@@ -31,11 +31,11 @@ protected:
     modifiers.wantsToBeActivatedWhenOnCharger = true;
   }
 
-  virtual Result         OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)   override;
-  virtual PlaypenStatus PlaypenUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void           OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)   override;
+  virtual Result         OnBehaviorActivatedInternal()   override;
+  virtual PlaypenStatus PlaypenUpdateInternal() override;
+  virtual void           OnBehaviorDeactivated()   override;
   
-  virtual void HandleWhileActivatedInternal(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void HandleWhileActivatedInternal(const EngineToGameEvent& event) override;
     
 private:
   

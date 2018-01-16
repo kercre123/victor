@@ -33,12 +33,12 @@ BehaviorGoHome::BehaviorGoHome(const Json::Value& config)
  
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorGoHome::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorGoHome::WantsToBeActivatedBehavior() const
 {
   // If we have a located Home/charger, then we can be activated.
   
   std::vector<const ObservableObject*> locatedHomes;
-  behaviorExternalInterface.GetBlockWorld().FindLocatedMatchingObjects(*_homeFilter, locatedHomes);
+  GetBEI().GetBlockWorld().FindLocatedMatchingObjects(*_homeFilter, locatedHomes);
   
   const bool hasAHome = !locatedHomes.empty();
   
@@ -47,10 +47,10 @@ bool BehaviorGoHome::WantsToBeActivatedBehavior(BehaviorExternalInterface& behav
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorGoHome::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorGoHome::OnBehaviorActivated()
 {
-  const auto& robotPose = behaviorExternalInterface.GetRobotInfo().GetPose();
-  const auto* object = behaviorExternalInterface.GetBlockWorld().FindLocatedObjectClosestTo(robotPose, *_homeFilter);
+  const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
+  const auto* object = GetBEI().GetBlockWorld().FindLocatedObjectClosestTo(robotPose, *_homeFilter);
   
   if (object == nullptr) {
     PRINT_NAMED_WARNING("BehaviorGoHome.OnBehaviorActivated", "No homes found!");
@@ -63,7 +63,7 @@ void BehaviorGoHome::OnBehaviorActivated(BehaviorExternalInterface& behaviorExte
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorGoHome::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorGoHome::OnBehaviorDeactivated()
 {
 
 }

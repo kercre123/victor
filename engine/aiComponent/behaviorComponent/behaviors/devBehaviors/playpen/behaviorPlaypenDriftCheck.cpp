@@ -26,11 +26,11 @@ BehaviorPlaypenDriftCheck::BehaviorPlaypenDriftCheck(const Json::Value& config)
 {
 }
 
-Result BehaviorPlaypenDriftCheck::OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)
+Result BehaviorPlaypenDriftCheck::OnBehaviorActivatedInternal()
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
+  Robot& robot = GetBEI().GetRobotInfo()._robot;
 
   robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartRecordingMics(PlaypenConfig::kDurationOfAudioToRecord_ms,
                                                                                      false,
@@ -49,16 +49,16 @@ Result BehaviorPlaypenDriftCheck::OnBehaviorActivatedInternal(BehaviorExternalIn
   CompoundActionSequential* action = new CompoundActionSequential({liftAndHead, 
      new WaitAction(Util::MilliSecToSec((float)PlaypenConfig::kDurationOfAudioToRecord_ms))});
   
-  DelegateIfInControl(action, [this, &behaviorExternalInterface](){ TransitionToStartDriftCheck(behaviorExternalInterface); });
+  DelegateIfInControl(action, [this](){ TransitionToStartDriftCheck(); });
   
   return RESULT_OK;
 }
 
-void BehaviorPlaypenDriftCheck::TransitionToStartDriftCheck(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPlaypenDriftCheck::TransitionToStartDriftCheck()
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
+  Robot& robot = GetBEI().GetRobotInfo()._robot;
 
   // Record intial starting orientation and after kIMUDriftDetectPeriod_ms check for drift
   _startingRobotOrientation = robot.GetPose().GetRotationMatrix().GetAngleAroundAxis<'Z'>();
@@ -67,14 +67,14 @@ void BehaviorPlaypenDriftCheck::TransitionToStartDriftCheck(BehaviorExternalInte
 
   RecordTouchSensorData(robot, GetIDStr());
   
-  AddTimer(PlaypenConfig::kIMUDriftDetectPeriod_ms, [this, &behaviorExternalInterface](){ CheckDrift(behaviorExternalInterface); });
+  AddTimer(PlaypenConfig::kIMUDriftDetectPeriod_ms, [this](){ CheckDrift(); });
 }
 
-void BehaviorPlaypenDriftCheck::CheckDrift(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPlaypenDriftCheck::CheckDrift()
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
+  Robot& robot = GetBEI().GetRobotInfo()._robot;
 
   f32 angleChange = std::fabsf((robot.GetPose().GetRotationMatrix().GetAngleAroundAxis<'Z'>() - _startingRobotOrientation).getDegrees());
   
@@ -102,7 +102,7 @@ void BehaviorPlaypenDriftCheck::CheckDrift(BehaviorExternalInterface& behaviorEx
   _driftCheckComplete = true;
 }
 
-IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenDriftCheck::PlaypenUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenDriftCheck::PlaypenUpdateInternal()
 {
   // Wait until both sound and drift check complete
   if(_driftCheckComplete)
@@ -113,7 +113,7 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenDriftCheck::PlaypenUpdateInternal
   return PlaypenStatus::Running;
 }
 
-void BehaviorPlaypenDriftCheck::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPlaypenDriftCheck::OnBehaviorDeactivated()
 {
   _driftCheckComplete = false;
   _startingRobotOrientation = 0;

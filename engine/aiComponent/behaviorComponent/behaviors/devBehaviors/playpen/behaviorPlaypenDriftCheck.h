@@ -31,14 +31,14 @@ protected:
     modifiers.wantsToBeActivatedWhenOnCharger = true;
   }
 
-  virtual Result OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)   override;
-  virtual PlaypenStatus PlaypenUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void           OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)   override;
+  virtual Result OnBehaviorActivatedInternal()   override;
+  virtual PlaypenStatus PlaypenUpdateInternal() override;
+  virtual void           OnBehaviorDeactivated()   override;
     
 private:
   
-  void TransitionToStartDriftCheck(BehaviorExternalInterface& behaviorExternalInterface);
-  void CheckDrift(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToStartDriftCheck();
+  void CheckDrift();
   
   // Angle at the start of drift check
   Radians _startingRobotOrientation = 0;

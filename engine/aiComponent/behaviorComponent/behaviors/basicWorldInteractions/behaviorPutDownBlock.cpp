@@ -41,14 +41,14 @@ BehaviorPutDownBlock::BehaviorPutDownBlock(const Json::Value& config)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorPutDownBlock::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorPutDownBlock::WantsToBeActivatedBehavior() const
 {
-  return behaviorExternalInterface.GetRobotInfo().GetCarryingComponent().IsCarryingObject() || IsControlDelegated();
+  return GetBEI().GetRobotInfo().GetCarryingComponent().IsCarryingObject() || IsControlDelegated();
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPutDownBlock::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPutDownBlock::OnBehaviorActivated()
 {
   // Choose where to put the block down
   // TODO: Make this smarter and find a place away from other known objects
@@ -66,11 +66,11 @@ void BehaviorPutDownBlock::OnBehaviorActivated(BehaviorExternalInterface& behavi
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPutDownBlock::LookDownAtBlock(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPutDownBlock::LookDownAtBlock()
 {
-  DelegateIfInControl(CreateLookAfterPlaceAction(behaviorExternalInterface, true),
-              [&behaviorExternalInterface]() {
-                auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  DelegateIfInControl(CreateLookAfterPlaceAction(GetBEI().GetRobotInfo().GetCarryingComponent(), true),
+              [this]() {
+                auto& robotInfo = GetBEI().GetRobotInfo();
                 if(robotInfo.GetCarryingComponent().IsCarryingObject()) {
                   // No matter what, even if we didn't see the object we were
                   // putting down for some reason, mark the robot as not carrying
@@ -86,11 +86,10 @@ void BehaviorPutDownBlock::LookDownAtBlock(BehaviorExternalInterface& behaviorEx
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IActionRunner* BehaviorPutDownBlock::CreateLookAfterPlaceAction(BehaviorExternalInterface& behaviorExternalInterface, bool doLookAtFaceAfter)
+IActionRunner* BehaviorPutDownBlock::CreateLookAfterPlaceAction(CarryingComponent& carryingComponent, bool doLookAtFaceAfter)
 {
-  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   CompoundActionSequential* action = new CompoundActionSequential();
-  if( robotInfo.GetCarryingComponent().IsCarryingObject() ) {
+  if( carryingComponent.IsCarryingObject() ) {
     // glance down to see if we see the cube if we still think we are carrying
     static const int kNumFrames = 2;
     

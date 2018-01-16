@@ -33,12 +33,12 @@ namespace Anki {
       BehaviorPopAWheelie(const Json::Value& config);
       
       virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
-      virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-      virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+      virtual void OnBehaviorActivated() override;
+      virtual void OnBehaviorDeactivated() override;
       
-      virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
+      virtual bool WantsToBeActivatedBehavior() const override;
       
-      virtual void UpdateTargetBlocksInternal(BehaviorExternalInterface& behaviorExternalInterface) const override { UpdateTargetBlock(behaviorExternalInterface); }
+      virtual void UpdateTargetBlocksInternal() const override { UpdateTargetBlock(); }
       
       virtual std::set<ObjectInteractionIntention>
             GetBehaviorObjectInteractionIntentions() const override {
@@ -61,15 +61,15 @@ namespace Anki {
         PerformingAction
       };
             
-      void TransitionToReactingToBlock(BehaviorExternalInterface& behaviorExternalInterface);
-      void TransitionToPerformingAction(BehaviorExternalInterface& behaviorExternalInterface);
-      void TransitionToPerformingAction(BehaviorExternalInterface& behaviorExternalInterface, bool isRetry);
+      void TransitionToReactingToBlock();
+      void TransitionToPerformingAction();
+      void TransitionToPerformingAction(bool isRetry);
       
-      void SetupRetryAction(BehaviorExternalInterface& behaviorExternalInterface, const ExternalInterface::RobotCompletedAction& msg);
+      void SetupRetryAction(const ExternalInterface::RobotCompletedAction& msg);
       
-      void ResetBehavior(BehaviorExternalInterface& behaviorExternalInterface);
+      void ResetBehavior();
       
-      virtual void UpdateTargetBlock(BehaviorExternalInterface& behaviorExternalInterface) const;
+      virtual void UpdateTargetBlock() const;
     };
     
   }

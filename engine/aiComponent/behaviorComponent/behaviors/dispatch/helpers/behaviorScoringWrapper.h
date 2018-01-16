@@ -29,7 +29,7 @@ public:
   BehaviorScoringWrapper(const Json::Value& config);
   virtual ~BehaviorScoringWrapper();
   
-  void Init(BehaviorExternalInterface& behaviorExternalInterface);
+  void Init(BehaviorExternalInterface& bei);
    
   // Notify the wrapper of the behaviors activation/deactivation state
   void BehaviorWillBeActivated();
@@ -38,7 +38,7 @@ public:
   // Allow us to load scored JSON in seperately from the rest of parameters
   bool ReadFromJson(const Json::Value& config);
   
-  float EvaluateScore(BehaviorExternalInterface& behaviorExternalInterface) const;
+  float EvaluateScore(BehaviorExternalInterface& bei) const;
   const MoodScorer& GetMoodScorer() const { return _moodScorer; }
   size_t GetEmotionScorerCount() const { return _moodScorer.GetEmotionScorerCount(); }
   const EmotionScorer& GetEmotionScorer(size_t index) const { return _moodScorer.GetEmotionScorer(index); }

@@ -83,19 +83,19 @@ BehaviorLookInPlaceMemoryMap::~BehaviorLookInPlaceMemoryMap()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorLookInPlaceMemoryMap::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorLookInPlaceMemoryMap::WantsToBeActivatedBehavior() const
 {
-  if(!behaviorExternalInterface.HasMapComponent()){
+  if(!GetBEI().HasMapComponent()){
     return false;
   }
   
   // obviously this behavior needs memory map
-  const INavMap* memoryMap = behaviorExternalInterface.GetMapComponent().GetCurrentMemoryMap();
+  const INavMap* memoryMap = GetBEI().GetMapComponent().GetCurrentMemoryMap();
   if ( nullptr == memoryMap ) {
     return false;
   }
   
-  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  auto& robotInfo = GetBEI().GetRobotInfo();
 
   // Unfortunately we need to calculate borders in the memory map in order to check whether they are
   // inside our radius of action. Since I don't wanna break the const correctness of the Robot during WantsToBeActivated,
@@ -155,7 +155,7 @@ void BehaviorLookInPlaceMemoryMap::LoadConfig(const Json::Value& config)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorLookInPlaceMemoryMap::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorLookInPlaceMemoryMap::OnBehaviorActivated()
 {
   // PRINT_CH_INFO("Behaviors", (GetIDStr() + ".InitInternal").c_str(), "Starting first iteration");
   
@@ -176,24 +176,24 @@ void BehaviorLookInPlaceMemoryMap::OnBehaviorActivated(BehaviorExternalInterface
   
   _visitedSectorCount = 0; // note that doing this here will be reset if we Resume (should consider different ResumeInternal)
   
-  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  auto& robotInfo = GetBEI().GetRobotInfo();
   _startingBodyFacing_rad = robotInfo.GetPose().GetWithRespectToRoot().GetRotationAngle<'Z'>();
   
   // restart all sectors
   _sectors.assign( _sectors.size(), SectorStatus::NeedsChecking);
-  UpdateSectorRender(behaviorExternalInterface);
+  UpdateSectorRender();
   
   // find the closest sector to visit starting at 0 (forward)
-  FindAndVisitClosestVisitableSector(behaviorExternalInterface, 0, kSectorsPerLocation-1, 0);
+  FindAndVisitClosestVisitableSector(0, kSectorsPerLocation-1, 0);
   
   
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorLookInPlaceMemoryMap::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorLookInPlaceMemoryMap::OnBehaviorDeactivated()
 {
   if ( kDrawDebugInfo ) {
-    auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+    auto& robotInfo = GetBEI().GetRobotInfo();
     
     robotInfo.GetContext()->GetVizManager()->EraseSegments("BehaviorLookInPlaceMemoryMap.kDrawDebugInfo");
     robotInfo.GetContext()->GetVizManager()->EraseSegments("BehaviorLookInPlaceMemoryMap.kDrawDebugInfo.UpdateSectorRender");
@@ -229,8 +229,9 @@ float BehaviorLookInPlaceMemoryMap::MaxCircleDist()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorLookInPlaceMemoryMap::FindAndVisitClosestVisitableSector(BehaviorExternalInterface& behaviorExternalInterface,
-  const int16_t lastIndex, const int16_t nextLeft, const int16_t nextRight)
+void BehaviorLookInPlaceMemoryMap::FindAndVisitClosestVisitableSector(const int16_t lastIndex, 
+                                                                      const int16_t nextLeft, 
+                                                                      const int16_t nextRight)
 {
   // correct nextLeft if it went past 0 into negatives (it should wrap to kSectorsPerLocation-1)
   DEV_ASSERT(nextLeft<kSectorsPerLocation, "BehaviorLookInPlaceMemoryMap.FindClosestSector.LeftIndexMovedRight");
@@ -250,33 +251,33 @@ void BehaviorLookInPlaceMemoryMap::FindAndVisitClosestVisitableSector(BehaviorEx
     if ( leftIsCloser )
     {
       // check left sector
-      CheckIfSectorNeedsVisit(behaviorExternalInterface, leftIdx);
+      CheckIfSectorNeedsVisit(leftIdx);
 
       // if we need to visit left sector, do it now
       if ( NeedsVisit(leftIdx) )
       {
-        VisitSector(behaviorExternalInterface, leftIdx, leftIdx-1, rightIdx);
+        VisitSector(leftIdx, leftIdx-1, rightIdx);
         return; // and do not cascade down more
       }
       
       // we did not visit the left index, but it was closer, advance nextLeft
-      FindAndVisitClosestVisitableSector(behaviorExternalInterface, lastIndex, leftIdx-1, rightIdx);
+      FindAndVisitClosestVisitableSector(lastIndex, leftIdx-1, rightIdx);
       return; // do not cascade down more
     }
     else
     {
       // check right sector
-      CheckIfSectorNeedsVisit(behaviorExternalInterface, rightIdx);
+      CheckIfSectorNeedsVisit(rightIdx);
       
       // if we need to visit the right sector, do it now
       if ( NeedsVisit(rightIdx) )
       {
-        VisitSector(behaviorExternalInterface, rightIdx, leftIdx, rightIdx+1);
+        VisitSector(rightIdx, leftIdx, rightIdx+1);
         return; // and do not cascade down more
       }
       
       // we did not visit the right index, but it was closer, advance nextRight
-      FindAndVisitClosestVisitableSector(behaviorExternalInterface, lastIndex, leftIdx, rightIdx+1);
+      FindAndVisitClosestVisitableSector(lastIndex, leftIdx, rightIdx+1);
       return; // do not cascade down more
     }
   }
@@ -285,12 +286,12 @@ void BehaviorLookInPlaceMemoryMap::FindAndVisitClosestVisitableSector(BehaviorEx
     const int16_t finalIdx = leftIdx; // or right, it's the same
     
     // check final sector
-    CheckIfSectorNeedsVisit(behaviorExternalInterface, finalIdx);
+    CheckIfSectorNeedsVisit(finalIdx);
 
     // if we need to visit the sector, do it now
     if ( NeedsVisit(finalIdx) )
     {
-      VisitSector(behaviorExternalInterface, finalIdx, finalIdx, finalIdx);
+      VisitSector(finalIdx, finalIdx, finalIdx);
       return; // do not cascade down more
     }
   }
@@ -306,11 +307,11 @@ void BehaviorLookInPlaceMemoryMap::FindAndVisitClosestVisitableSector(BehaviorEx
   #endif
   
   // no more sectors to visit
-  FinishedAllSectorsAtLocation(behaviorExternalInterface);
+  FinishedAllSectorsAtLocation();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorLookInPlaceMemoryMap::CheckIfSectorNeedsVisit(BehaviorExternalInterface& behaviorExternalInterface, int16_t index)
+void BehaviorLookInPlaceMemoryMap::CheckIfSectorNeedsVisit(int16_t index)
 {
   DEV_ASSERT_MSG(NeedsChecking(index),
     "BehaviorLookInPlaceMemoryMap.CheckIfSectorNeedsVisit.MultipleChecksOnIndex",
@@ -332,19 +333,19 @@ void BehaviorLookInPlaceMemoryMap::CheckIfSectorNeedsVisit(BehaviorExternalInter
   
   const Vec3f& sectorNormal = rotateAbsAroundUp * kFwdVector;
   
-  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  auto& robotInfo = GetBEI().GetRobotInfo();
   
   // from robot current pose towards
   const Point3f robotLocation = robotInfo.GetPose().GetWithRespectToRoot().GetTranslation();
   const Point3f& from3D = robotLocation + sectorNormal * minDist;
   const Point3f& to3D   = robotLocation + sectorNormal * maxDist;
   
-  if(!behaviorExternalInterface.HasMapComponent()){
+  if(!GetBEI().HasMapComponent()){
     return;
   }
 
   // grab mem map
-  const INavMap* memoryMap = behaviorExternalInterface.GetMapComponent().GetCurrentMemoryMap();
+  const INavMap* memoryMap = GetBEI().GetMapComponent().GetCurrentMemoryMap();
   DEV_ASSERT(memoryMap, "BehaviorLookInPlaceMemoryMap.NeedMemoryMap"); // checked before
   
   // ask the memory map by tracing the ray cast whether we want to visit the sector
@@ -360,15 +361,15 @@ void BehaviorLookInPlaceMemoryMap::CheckIfSectorNeedsVisit(BehaviorExternalInter
   // debug render
   if ( kDrawDebugInfo ) {
     const ColorRGBA& color = needsVisit ? NamedColors::YELLOW : NamedColors::DARKGRAY;
-    behaviorExternalInterface.GetRobotInfo().GetContext()->GetVizManager()->
+    GetBEI().GetRobotInfo().GetContext()->GetVizManager()->
       DrawSegment("BehaviorLookInPlaceMemoryMap.kDrawDebugInfo", from3D, to3D, color, false, 15.0f);
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorLookInPlaceMemoryMap::VisitSector(BehaviorExternalInterface& behaviorExternalInterface, const int16_t index, const int16_t nextLeft, const int16_t nextRight)
+void BehaviorLookInPlaceMemoryMap::VisitSector(const int16_t index, const int16_t nextLeft, const int16_t nextRight)
 {
-  auto runAfterAction = [this, &behaviorExternalInterface, index, nextRight, nextLeft](const ExternalInterface::RobotCompletedAction& actionRet)
+  auto runAfterAction = [this, index, nextRight, nextLeft](const ExternalInterface::RobotCompletedAction& actionRet)
   {
     // What should we do on failure? Should we bail? Currently we just pretend we visited the sector.
     // It's not the worst thing, unless we have actually become stuck, eval in the future
@@ -387,12 +388,12 @@ void BehaviorLookInPlaceMemoryMap::VisitSector(BehaviorExternalInterface& behavi
     if ( shouldCheckNext )
     {
       // continue checking next sector
-      this->FindAndVisitClosestVisitableSector(behaviorExternalInterface, index, nextLeft, nextRight);
+      this->FindAndVisitClosestVisitableSector(index, nextLeft, nextRight);
     }
     else
     {
       // this means we checked all sectors at this location
-      this->FinishedAllSectorsAtLocation(behaviorExternalInterface);
+      this->FinishedAllSectorsAtLocation();
     }
   };
 
@@ -408,7 +409,7 @@ void BehaviorLookInPlaceMemoryMap::VisitSector(BehaviorExternalInterface& behavi
   CompoundActionSequential* fullVisitAction = new CompoundActionSequential();
   
   // 1) turn to the sector
-  IAction* turnAction1 = CreateBodyAndHeadTurnAction( behaviorExternalInterface,
+  IAction* turnAction1 = CreateBodyAndHeadTurnAction(
     _configParams.bodyAngleFromSectorCenterRangeMin_deg,
     _configParams.bodyAngleFromSectorCenterRangeMax_deg,
     bodyTargetAngle_deg,
@@ -432,7 +433,7 @@ void BehaviorLookInPlaceMemoryMap::VisitSector(BehaviorExternalInterface& behavi
   }
   
   // 4) explore different angle
-  IAction* turnAction2 = CreateBodyAndHeadTurnAction( behaviorExternalInterface,
+  IAction* turnAction2 = CreateBodyAndHeadTurnAction(
     -1.0f * _configParams.bodyAngleFromSectorCenterRangeMin_deg,
     -1.0f * _configParams.bodyAngleFromSectorCenterRangeMax_deg,
     bodyTargetAngle_deg,
@@ -446,11 +447,11 @@ void BehaviorLookInPlaceMemoryMap::VisitSector(BehaviorExternalInterface& behavi
   DelegateIfInControl( fullVisitAction, runAfterAction );
   
   // update sector render because it will have changed right before deciding to visit
-  UpdateSectorRender(behaviorExternalInterface);
+  UpdateSectorRender();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorLookInPlaceMemoryMap::FinishedAllSectorsAtLocation(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorLookInPlaceMemoryMap::FinishedAllSectorsAtLocation()
 {
   PRINT_CH_INFO("Behaviors", (GetIDStr()).c_str(), "Finished all sectors without interruption. Flagging location");
   
@@ -462,7 +463,7 @@ void BehaviorLookInPlaceMemoryMap::FinishedAllSectorsAtLocation(BehaviorExternal
       _previousFullLocations.pop_front();
     }
 
-    auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+    auto& robotInfo = GetBEI().GetRobotInfo();
     
     // add this new one
     _previousFullLocations.emplace_back( robotInfo.GetPose() );
@@ -478,7 +479,7 @@ float BehaviorLookInPlaceMemoryMap::GetRelativeAngleOfSectorInDegrees(int16_t in
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IAction* BehaviorLookInPlaceMemoryMap::CreateBodyAndHeadTurnAction(BehaviorExternalInterface& behaviorExternalInterface,
+IAction* BehaviorLookInPlaceMemoryMap::CreateBodyAndHeadTurnAction(
   float bodyRelativeMin_deg, float bodyRelativeMax_deg,
   float bodyAbsoluteTargetAngle_deg,
   float headAbsoluteMin_deg, float headAbsoluteMax_deg,
@@ -503,13 +504,13 @@ IAction* BehaviorLookInPlaceMemoryMap::CreateBodyAndHeadTurnAction(BehaviorExter
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorLookInPlaceMemoryMap::UpdateSectorRender(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorLookInPlaceMemoryMap::UpdateSectorRender()
 {
   #if ANKI_DEV_CHEATS
   {
     if ( kDrawDebugInfo )
     {
-      auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+      auto& robotInfo = GetBEI().GetRobotInfo();
 
       // clear previous
       const std::string debugId("BehaviorLookInPlaceMemoryMap.kDrawDebugInfo.UpdateSectorRender");

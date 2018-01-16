@@ -23,11 +23,11 @@ BehaviorPlaypenMotorCalibration::BehaviorPlaypenMotorCalibration(const Json::Val
   SubscribeToTags({EngineToGameTag::MotorCalibration});
 }
 
-Result BehaviorPlaypenMotorCalibration::OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)
+Result BehaviorPlaypenMotorCalibration::OnBehaviorActivatedInternal()
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
+  Robot& robot = GetBEI().GetRobotInfo()._robot;
 
   robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartMotorCalibration(true, true)));
   AddTimer(PlaypenConfig::kMotorCalibrationTimeout_ms,
@@ -36,7 +36,7 @@ Result BehaviorPlaypenMotorCalibration::OnBehaviorActivatedInternal(BehaviorExte
   return RESULT_OK;
 }
 
-IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenMotorCalibration::PlaypenUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenMotorCalibration::PlaypenUpdateInternal()
 {
   if(_liftCalibrated && _headCalibrated)
   {
@@ -46,13 +46,13 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenMotorCalibration::PlaypenUpdateIn
   return PlaypenStatus::Running;
 }
 
-void BehaviorPlaypenMotorCalibration::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPlaypenMotorCalibration::OnBehaviorDeactivated()
 {
   _liftCalibrated = false;
   _headCalibrated = false;
 }
 
-void BehaviorPlaypenMotorCalibration::HandleWhileActivatedInternal(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPlaypenMotorCalibration::HandleWhileActivatedInternal(const EngineToGameEvent& event)
 {
   const EngineToGameTag tag = event.GetData().GetTag();
   if(tag == EngineToGameTag::MotorCalibration)

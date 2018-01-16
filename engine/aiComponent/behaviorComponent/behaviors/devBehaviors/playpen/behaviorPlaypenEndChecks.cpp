@@ -30,7 +30,7 @@ BehaviorPlaypenEndChecks::BehaviorPlaypenEndChecks(const Json::Value& config)
 }
 
 
-void BehaviorPlaypenEndChecks::InitBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPlaypenEndChecks::InitBehaviorInternal()
 {
   CubeBleClient::GetInstance()->RegisterObjectAvailableCallback(std::bind(&BehaviorPlaypenEndChecks::HandleObjectAvailable, 
                                                                           this, 
@@ -38,11 +38,11 @@ void BehaviorPlaypenEndChecks::InitBehaviorInternal(BehaviorExternalInterface& b
 }
 
 
-Result BehaviorPlaypenEndChecks::OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)
+Result BehaviorPlaypenEndChecks::OnBehaviorActivatedInternal()
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
+  Robot& robot = GetBEI().GetRobotInfo()._robot;
 
   if(robot.GetBatteryVoltage() < PlaypenConfig::kMinBatteryVoltage)
   {
@@ -69,7 +69,7 @@ Result BehaviorPlaypenEndChecks::OnBehaviorActivatedInternal(BehaviorExternalInt
   return RESULT_OK;
 }
 
-void BehaviorPlaypenEndChecks::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPlaypenEndChecks::OnBehaviorDeactivated()
 {
   _heardFromLightCube = false;
 }

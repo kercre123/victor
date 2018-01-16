@@ -55,7 +55,7 @@ public:
   
   // This behavior is activatable if when we check the memory map around the current robot position, there are still
   // undiscovered areas
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual bool WantsToBeActivatedBehavior() const override;
   
 protected:
   
@@ -72,8 +72,8 @@ protected:
   
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
 
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated() override;
+  virtual void OnBehaviorDeactivated() override;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // State transitions
@@ -125,16 +125,16 @@ private:
   static float MaxCircleDist();
   
   // find the closest sector that needs visiting, and visit it (will finish if no more sectores require visiting)
-  void FindAndVisitClosestVisitableSector(BehaviorExternalInterface& behaviorExternalInterface, const int16_t lastIndex, const int16_t nextRight, const int16_t nextLeft);
+  void FindAndVisitClosestVisitableSector(const int16_t lastIndex, const int16_t nextRight, const int16_t nextLeft);
   
   // udpates the status flag of the given sector (by index), by checking in the memory map if we want to visit it
-  void CheckIfSectorNeedsVisit(BehaviorExternalInterface& behaviorExternalInterface, int16_t index);
+  void CheckIfSectorNeedsVisit(int16_t index);
   
   // turn towards the given sector to clear its memory map, the continue onto the closest next sector
-  void VisitSector(BehaviorExternalInterface& behaviorExternalInterface, int16_t index, const int16_t nextLeft, const int16_t nextRight);
+  void VisitSector(int16_t index, const int16_t nextLeft, const int16_t nextRight);
 
   // we visited all the sectors and are done turning in place
-  void FinishedAllSectorsAtLocation(BehaviorExternalInterface& behaviorExternalInterface);
+  void FinishedAllSectorsAtLocation();
   
   // returns true if the given sector (by index) needs to be checked, false otherwise. Asserts it's only called in non-visited (to ensure algorithm completion)
   inline bool NeedsChecking(int16_t index) const;
@@ -145,15 +145,14 @@ private:
   float GetRelativeAngleOfSectorInDegrees(int16_t index) const;
   
   // request the proper action given the parameters so that the robot turns and moves head
-  IAction* CreateBodyAndHeadTurnAction(BehaviorExternalInterface& behaviorExternalInterface,
-            float bodyRelativeMin_deg, float bodyRelativeMax_deg,         // body min/max range relative to target (randomizes to +-range)
-            float bodyAbsoluteTargetAngle_deg,                            // center of the body rotation range
-            float headAbsoluteMin_deg, float headAbsoluteMax_deg,         // head min/max range absolute
-            float bodyTurnSpeed_degPerSec,                                // body turn speed
-            float headTurnSpeed_degPerSec);                               // head turn speed
+  IAction* CreateBodyAndHeadTurnAction(float bodyRelativeMin_deg, float bodyRelativeMax_deg,         // body min/max range relative to target (randomizes to +-range)
+                                       float bodyAbsoluteTargetAngle_deg,                            // center of the body rotation range
+                                       float headAbsoluteMin_deg, float headAbsoluteMax_deg,         // head min/max range absolute
+                                       float bodyTurnSpeed_degPerSec,                                // body turn speed
+                                       float headTurnSpeed_degPerSec);                               // head turn speed
   
   // debug render sector status
-  void UpdateSectorRender(BehaviorExternalInterface& behaviorExternalInterface);
+  void UpdateSectorRender();
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes

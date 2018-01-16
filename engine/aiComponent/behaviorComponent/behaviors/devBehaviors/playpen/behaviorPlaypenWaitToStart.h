@@ -33,9 +33,9 @@ protected:
     modifiers.wantsToBeActivatedWhenOnCharger = true;
   }
   
-  virtual Result        OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual PlaypenStatus PlaypenUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void          OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual Result        OnBehaviorActivatedInternal() override;
+  virtual PlaypenStatus PlaypenUpdateInternal() override;
+  virtual void          OnBehaviorDeactivated() override;
     
 private:
   

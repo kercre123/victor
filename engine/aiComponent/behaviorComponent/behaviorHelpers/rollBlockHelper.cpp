@@ -36,13 +36,12 @@ static const int kMaxNumRetrys = 3;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-RollBlockHelper::RollBlockHelper(BehaviorExternalInterface& behaviorExternalInterface,
-                                 ICozmoBehavior& behavior,
+RollBlockHelper::RollBlockHelper(ICozmoBehavior& behavior,
                                  BehaviorHelperFactory& helperFactory,
                                  const ObjectID& targetID,
                                  bool rollToUpright,
                                  const RollBlockParameters& parameters)
-: IHelper("RollBlock", behaviorExternalInterface, behavior, helperFactory)
+: IHelper("RollBlock", behavior, helperFactory)
 , _targetID(targetID)
 , _params(parameters)
 , _shouldUpright(rollToUpright)
@@ -59,52 +58,51 @@ RollBlockHelper::~RollBlockHelper()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool RollBlockHelper::ShouldCancelDelegates(BehaviorExternalInterface& behaviorExternalInterface) const
+bool RollBlockHelper::ShouldCancelDelegates() const
 {
   return false;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IHelper::HelperStatus RollBlockHelper::InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface)
+IHelper::HelperStatus RollBlockHelper::InitBehaviorHelper()
 {
   // do first update immediately
   _shouldRoll = true;
   _tmpRetryCounter = 0;
-  DetermineAppropriateAction(behaviorExternalInterface);
+  DetermineAppropriateAction();
   return _status;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IHelper::HelperStatus RollBlockHelper::UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IHelper::HelperStatus RollBlockHelper::UpdateWhileActiveInternal()
 {
   return _status;
 }
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RollBlockHelper::DetermineAppropriateAction(BehaviorExternalInterface& behaviorExternalInterface)
+void RollBlockHelper::DetermineAppropriateAction()
 {
   bool carryingObject = false;
   {
-    CarryingComponent& carryingComp = behaviorExternalInterface.GetRobotInfo().GetCarryingComponent();
+    CarryingComponent& carryingComp = GetBEI().GetRobotInfo().GetCarryingComponent();
     carryingObject = carryingComp.IsCarryingObject();
   }
   // If the robot is carrying a block, put it down
   if(carryingObject){
-    DelegateToPutDown(behaviorExternalInterface);
+    DelegateToPutDown();
   }else{
     // If the block can't be accessed, pick it up and move it so it can be rolled
-    const ObservableObject* obj = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_targetID);
+    const ObservableObject* obj = GetBEI().GetBlockWorld().GetLocatedObjectByID(_targetID);
     if(obj != nullptr){
-      DockingComponent& dockComp = behaviorExternalInterface.GetRobotInfo().GetDockingComponent();
+      DockingComponent& dockComp = GetBEI().GetRobotInfo().GetDockingComponent();
       const bool canActionRoll = RollObjectAction::CanActionRollObject(dockComp, obj);
 
       if(canActionRoll){
         PRINT_CH_INFO("BehaviorHelpers", "RollBlockHelper.Update.Rolling", "Doing roll action");
-        const ActionResult isAtPreAction = IsAtPreActionPoseWithVisualVerification(
-                                   behaviorExternalInterface, _targetID, PreActionPose::ActionType::ROLLING);
+        const ActionResult isAtPreAction = IsAtPreActionPoseWithVisualVerification(_targetID, PreActionPose::ActionType::ROLLING);
         
         if(isAtPreAction != ActionResult::SUCCESS){
           DriveToParameters params;
@@ -112,8 +110,8 @@ void RollBlockHelper::DetermineAppropriateAction(BehaviorExternalInterface& beha
           
           // If rolling to upright, set the drive to helper approach angle if possible
           f32 uprightApproachAngle_rad;
-          const auto& robotPose = behaviorExternalInterface.GetRobotInfo().GetPose();
-          const auto& blockWorld = behaviorExternalInterface.GetBlockWorld();
+          const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
+          const auto& blockWorld = GetBEI().GetBlockWorld();
           if(_shouldUpright &&
              DriveToRollObjectAction::GetRollToUprightApproachAngle(blockWorld,
                                                                     robotPose,
@@ -125,17 +123,17 @@ void RollBlockHelper::DetermineAppropriateAction(BehaviorExternalInterface& beha
           
           // Delegate to the drive to helper
           DelegateProperties delegateProperties;
-          delegateProperties.SetDelegateToSet(CreateDriveToHelper(behaviorExternalInterface, _targetID, params));
-          delegateProperties.SetOnSuccessFunction([this](BehaviorExternalInterface& behaviorExternalInterface)
-                                  {StartRollingAction(behaviorExternalInterface); return _status;});
-          delegateProperties.SetOnFailureFunction([this](BehaviorExternalInterface& behaviorExternalInterface)
-                                  {DetermineAppropriateAction(behaviorExternalInterface); return _status;});
+          delegateProperties.SetDelegateToSet(CreateDriveToHelper(_targetID, params));
+          delegateProperties.SetOnSuccessFunction([this]()
+                                  {StartRollingAction(); return _status;});
+          delegateProperties.SetOnFailureFunction([this]()
+                                  {DetermineAppropriateAction(); return _status;});
           DelegateAfterUpdate(delegateProperties);
         }else{
-          StartRollingAction(behaviorExternalInterface);
+          StartRollingAction();
         }
       }else{
-        UnableToRollDelegate(behaviorExternalInterface);
+        UnableToRollDelegate();
       }
       
     }else{
@@ -150,11 +148,11 @@ void RollBlockHelper::DetermineAppropriateAction(BehaviorExternalInterface& beha
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RollBlockHelper::UnableToRollDelegate(BehaviorExternalInterface& behaviorExternalInterface)
+void RollBlockHelper::UnableToRollDelegate()
 {
-  const ObservableObject* obj = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_targetID);
+  const ObservableObject* obj = GetBEI().GetBlockWorld().GetLocatedObjectByID(_targetID);
   if(obj != nullptr) {
-    auto& objInfoCache = behaviorExternalInterface.GetAIComponent().GetObjectInteractionInfoCache();
+    auto& objInfoCache = GetBEI().GetAIComponent().GetObjectInteractionInfoCache();
 
     const bool canPickup = objInfoCache.IsObjectValidForInteraction(
                              ObjectInteractionIntention::PickUpObjectNoAxisCheck,
@@ -163,7 +161,7 @@ void RollBlockHelper::UnableToRollDelegate(BehaviorExternalInterface& behaviorEx
     // See if any blocks are on top of the one we want to roll
     BlockWorldFilter blocksOnlyFilter;
     blocksOnlyFilter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-    const ObservableObject* objOnTop = behaviorExternalInterface.GetBlockWorld().FindLocatedObjectOnTopOf(
+    const ObservableObject* objOnTop = GetBEI().GetBlockWorld().FindLocatedObjectOnTopOf(
                                               *obj,
                                               BlockWorld::kOnCubeStackHeightTolerance,
                                               blocksOnlyFilter);
@@ -174,13 +172,13 @@ void RollBlockHelper::UnableToRollDelegate(BehaviorExternalInterface& behaviorEx
                     obj->GetID().GetValue());
       // If we can pickup the cube, pick it up, put it down somewhere we can roll it
       // and then roll it
-      auto pickupHelper = CreatePickupBlockHelper(behaviorExternalInterface, _targetID);
+      auto pickupHelper = CreatePickupBlockHelper( _targetID);
       DelegateProperties delegateProperties;
       delegateProperties.SetDelegateToSet(pickupHelper);
-      delegateProperties.SetOnSuccessFunction([this](BehaviorExternalInterface& behaviorExternalInterface)
-                                              {DelegateToPutDown(behaviorExternalInterface); return _status;});
+      delegateProperties.SetOnSuccessFunction([this]()
+                                              {DelegateToPutDown(); return _status;});
 
-      delegateProperties.SetOnFailureFunction( [](BehaviorExternalInterface& behaviorExternalInterface)
+      delegateProperties.SetOnFailureFunction( []()
                                               {return IHelper::HelperStatus::Failure;});
       DelegateAfterUpdate(delegateProperties);
     }else if(objOnTop != nullptr){
@@ -189,13 +187,13 @@ void RollBlockHelper::UnableToRollDelegate(BehaviorExternalInterface& behaviorEx
                     objOnTop->GetID().GetValue());
       // The cube can't be rolled b/c it's under another cube - pickup the top
       // cube and then we can roll the one it's beneath
-      auto pickupHelper = CreatePickupBlockHelper(behaviorExternalInterface, objOnTop->GetID());
+      auto pickupHelper = CreatePickupBlockHelper(objOnTop->GetID());
       DelegateProperties delegateProperties;
       delegateProperties.SetDelegateToSet(pickupHelper);
-      delegateProperties.SetOnSuccessFunction([this](BehaviorExternalInterface& behaviorExternalInterface)
-                                              {DelegateToPutDown(behaviorExternalInterface); return _status;});
+      delegateProperties.SetOnSuccessFunction([this]()
+                                              {DelegateToPutDown(); return _status;});
 
-      delegateProperties.SetOnFailureFunction( [](BehaviorExternalInterface& behaviorExternalInterface)
+      delegateProperties.SetOnFailureFunction( []()
                                               {return IHelper::HelperStatus::Failure;});
       DelegateAfterUpdate(delegateProperties);
     }else{
@@ -213,27 +211,27 @@ void RollBlockHelper::UnableToRollDelegate(BehaviorExternalInterface& behaviorEx
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RollBlockHelper::DelegateToPutDown(BehaviorExternalInterface& behaviorExternalInterface)
+void RollBlockHelper::DelegateToPutDown()
 {
   DelegateProperties delegateProperties;
-  delegateProperties.SetDelegateToSet(CreatePlaceBlockHelper(behaviorExternalInterface));
+  delegateProperties.SetDelegateToSet(CreatePlaceBlockHelper());
   delegateProperties.SetOnSuccessFunction(
-                                          [this](BehaviorExternalInterface& behaviorExternalInterface) {
+                                          [this]() {
                                             _shouldRoll = true;
-                                            DetermineAppropriateAction(behaviorExternalInterface);
+                                            DetermineAppropriateAction();
                                             return IHelper::HelperStatus::Running;
                                           });
-  delegateProperties.SetOnFailureFunction([](BehaviorExternalInterface& behaviorExternalInterface)
+  delegateProperties.SetOnFailureFunction([]()
                                           { return IHelper::HelperStatus::Failure;});
   DelegateAfterUpdate(delegateProperties);
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RollBlockHelper::StartRollingAction(BehaviorExternalInterface& behaviorExternalInterface)
+void RollBlockHelper::StartRollingAction()
 {
   if(_tmpRetryCounter >= kMaxNumRetrys){
-    MarkTargetAsFailedToRoll(behaviorExternalInterface);
+    MarkTargetAsFailedToRoll();
     _status = IHelper::HelperStatus::Failure;
     return;
   }
@@ -246,9 +244,9 @@ void RollBlockHelper::StartRollingAction(BehaviorExternalInterface& behaviorExte
   }
   
   if( _shouldUpright ) {
-    const Pose3d& pose = behaviorExternalInterface.GetRobotInfo().GetPose();
+    const Pose3d& pose = GetBEI().GetRobotInfo().GetPose();
     
-    rollAction->RollToUpright(behaviorExternalInterface.GetBlockWorld(), pose);
+    rollAction->RollToUpright(GetBEI().GetBlockWorld(), pose);
   }
   if(_params.preDockCallback != nullptr){
     rollAction->SetPreDockCallback(_params.preDockCallback);
@@ -282,7 +280,7 @@ void RollBlockHelper::StartRollingAction(BehaviorExternalInterface& behaviorExte
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RollBlockHelper::RespondToRollingResult(ActionResult result, BehaviorExternalInterface& behaviorExternalInterface)
+void RollBlockHelper::RespondToRollingResult(ActionResult result)
 {
   switch(result){
     case ActionResult::SUCCESS:
@@ -295,18 +293,18 @@ void RollBlockHelper::RespondToRollingResult(ActionResult result, BehaviorExtern
       break;
     default:
     {
-      StartRollingAction(behaviorExternalInterface);
+      StartRollingAction();
       break;
     }
   }
 }
  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RollBlockHelper::MarkTargetAsFailedToRoll(BehaviorExternalInterface& behaviorExternalInterface)
+void RollBlockHelper::MarkTargetAsFailedToRoll()
 {
-  const ObservableObject* obj = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_targetID);
+  const ObservableObject* obj = GetBEI().GetBlockWorld().GetLocatedObjectByID(_targetID);
   if(obj != nullptr){
-    auto& whiteboard = behaviorExternalInterface.GetAIComponent().GetWhiteboard();
+    auto& whiteboard = GetBEI().GetAIComponent().GetWhiteboard();
     whiteboard.SetFailedToUse(*obj, AIWhiteboard::ObjectActionFailure::RollOrPopAWheelie);
   }
 }

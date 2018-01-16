@@ -53,7 +53,7 @@
 //  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //
 //  // true if currently there are marked cubes that Cozmo would like to explore
-//  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
+//  virtual bool WantsToBeActivatedBehavior() const override;
 //  virtual bool CarryingObjectHandledInternally() const override { return false;}
 //
 //protected:
@@ -62,11 +62,11 @@
 //  // ICozmoBehavior API
 //  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //  
-//  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-//  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
-//  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+//  virtual void OnBehaviorActivated() override;
+//  virtual void BehaviorUpdate() override;
+//  virtual void OnBehaviorDeactivated() override;
 //
-//  virtual void AlwaysHandleInScope(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+//  virtual void AlwaysHandleInScope(const EngineToGameEvent& event) override;
 //
 //  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //  // Events

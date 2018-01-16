@@ -32,25 +32,24 @@ protected:
     modifiers.wantsToBeActivatedWhenCarryingObject = true;
   }
 
-  virtual Result         OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)   override;
-  virtual PlaypenStatus PlaypenUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void           OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)           override;
+  virtual Result         OnBehaviorActivatedInternal()   override;
+  virtual PlaypenStatus PlaypenUpdateInternal() override;
+  virtual void           OnBehaviorDeactivated()           override;
     
 private:
 
   // If seeing the expected marker/object, turns us to be perpendicular to it
-  void TransitionToRefineTurn(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToRefineTurn();
 
   // Starts recording distance sensor readings
-  void TransitionToRecordSensor(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToRecordSensor();
 
   // Turns back to the starting angle
-  void TransitionToTurnBack(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToTurnBack();
   
   // Gets the most recently observed marker pose (wrt robot) of the expected object
   // Returns true if markerPoseWrtRobot is valid
-  bool GetExpectedObjectMarkerPoseWrtRobot(BehaviorExternalInterface& behaviorExternalInterface,
-                                           Pose3d& markerPoseWrtRobot);
+  bool GetExpectedObjectMarkerPoseWrtRobot(Pose3d& markerPoseWrtRobot);
   
   // Initial starting angle when the behavior started
   Radians    _startingAngle               = 0;

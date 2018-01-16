@@ -32,14 +32,14 @@ protected:
   BehaviorOnConfigSeen(const Json::Value& config);
   
 public:
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual bool WantsToBeActivatedBehavior() const override;
   
 protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
 
 
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  void TransitionToPlayAnimationSequence(BehaviorExternalInterface& behaviorExternalInterface);
+  virtual void OnBehaviorActivated() override;
+  void TransitionToPlayAnimationSequence();
 
 private:
   // Configurations to look for set in json

@@ -41,13 +41,13 @@ BehaviorThinkAboutBeacons::~BehaviorThinkAboutBeacons()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorThinkAboutBeacons::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorThinkAboutBeacons::WantsToBeActivatedBehavior() const
 {
   // we want to think about beacons if we don't have any or we have finished the current one
   bool needsBeacon = true;
   
   // check current beacon
-  const AIWhiteboard& whiteboard = behaviorExternalInterface.GetAIComponent().GetWhiteboard();
+  const AIWhiteboard& whiteboard = GetBEI().GetAIComponent().GetWhiteboard();
   const AIBeacon* activeBeacon = whiteboard.GetActiveBeacon();
   if ( nullptr != activeBeacon )
   {
@@ -59,12 +59,12 @@ bool BehaviorThinkAboutBeacons::WantsToBeActivatedBehavior(BehaviorExternalInter
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorThinkAboutBeacons::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorThinkAboutBeacons::OnBehaviorActivated()
 {
   PRINT_CH_INFO("Behaviors", (std::string(GetIDStr()) + ".InitInternal").c_str(), "Selecting new beacon");
   
   // select new beacon
-  SelectNewBeacon(behaviorExternalInterface);
+  SelectNewBeacon();
   
   // play animation since we have discovered a new area
   const std::string& animGroupName = _configParams.newAreaAnimTrigger;
@@ -87,11 +87,11 @@ void BehaviorThinkAboutBeacons::LoadConfig(const Json::Value& config)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorThinkAboutBeacons::SelectNewBeacon(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorThinkAboutBeacons::SelectNewBeacon()
 {
   // TODO implement the real deal
-   AIWhiteboard& whiteboard = behaviorExternalInterface.GetAIComponent().GetWhiteboard();
-  whiteboard.AddBeacon( behaviorExternalInterface.GetRobotInfo().GetPose().GetWithRespectToRoot(), _configParams.beaconRadius_mm );
+   AIWhiteboard& whiteboard = GetBEI().GetAIComponent().GetWhiteboard();
+  whiteboard.AddBeacon( GetBEI().GetRobotInfo().GetPose().GetWithRespectToRoot(), _configParams.beaconRadius_mm );
 }
 
 } // namespace Cozmo

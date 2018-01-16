@@ -49,7 +49,7 @@ void IBehavior::Init(BehaviorExternalInterface& behaviorExternalInterface)
   SetActivationState_DevOnly(ActivationState::OutOfScope);
   
   _beiWrapper = std::make_unique<BEIWrapper>(behaviorExternalInterface);
-  InitInternal(behaviorExternalInterface);
+  InitInternal();
 }
 
 
@@ -78,7 +78,7 @@ void IBehavior::OnEnteredActivatableScope()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBehavior::Update(BehaviorExternalInterface& behaviorExternalInterface)
+void IBehavior::Update()
 {
   AssertNotActivationState_DevOnly(ActivationState::NotInitialized);
   AssertNotActivationState_DevOnly(ActivationState::OutOfScope);
@@ -93,22 +93,22 @@ void IBehavior::Update(BehaviorExternalInterface& behaviorExternalInterface)
                 _lastTickOfUpdate);
   _lastTickOfUpdate = tickCount;
   
-  UpdateInternal(behaviorExternalInterface);
+  UpdateInternal();
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IBehavior::WantsToBeActivated(BehaviorExternalInterface& behaviorExternalInterface) const
+bool IBehavior::WantsToBeActivated() const
 {
   AssertActivationState_DevOnly(ActivationState::InScope);
   _lastTickWantsToBeActivatedCheckedOn = BaseStationTimer::getInstance()->GetTickCount();
-  auto accessGuard = behaviorExternalInterface.GetComponentWrapper(BEIComponentID::Delegation).StripComponent();
-  return WantsToBeActivatedInternal(behaviorExternalInterface);
+  auto accessGuard = GetBEI().GetComponentWrapper(BEIComponentID::Delegation).StripComponent();
+  return WantsToBeActivatedInternal();
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBehavior::OnActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void IBehavior::OnActivated()
 {
   AssertActivationState_DevOnly(ActivationState::InScope);
 
@@ -121,17 +121,17 @@ void IBehavior::OnActivated(BehaviorExternalInterface& behaviorExternalInterface
                   _lastTickWantsToBeActivatedCheckedOn);
   
   SetActivationState_DevOnly(ActivationState::Activated);
-  OnActivatedInternal(behaviorExternalInterface);
+  OnActivatedInternal();
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBehavior::OnDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void IBehavior::OnDeactivated()
 {
   AssertActivationState_DevOnly(ActivationState::Activated);
   
   SetActivationState_DevOnly(ActivationState::InScope);
-  OnDeactivatedInternal(behaviorExternalInterface);
+  OnDeactivatedInternal();
 }
 
 

@@ -28,18 +28,17 @@ protected:
   
 protected:
   
-  virtual Result         OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)   override;
-  virtual void           OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)   override;
+  virtual Result         OnBehaviorActivatedInternal()   override;
+  virtual void           OnBehaviorDeactivated()   override;
   
-  virtual void HandleWhileActivatedInternal(const RobotToEngineEvent& event, 
-                                            BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void HandleWhileActivatedInternal(const RobotToEngineEvent& event) override;
 
 private:
   
-  void TransitionToWaitForCube(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToPickupCube(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToPlaceCube(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToBackup(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToWaitForCube();
+  void TransitionToPickupCube();
+  void TransitionToPlaceCube();
+  void TransitionToBackup();
   
   Pose3d _expectedCubePose;
   Radians _robotAngleAtPickup;

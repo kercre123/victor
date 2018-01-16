@@ -31,8 +31,10 @@
 
 namespace Anki {
 namespace Cozmo {
-  
-  
+
+// forward declaration  
+class BehaviorExternalInterface;
+
 class BehaviorHelperComponent : public IDependencyManagedComponent<BCComponentID>, private Util::noncopyable{
 public:
   BehaviorHelperComponent();
@@ -40,8 +42,10 @@ public:
   //////
   // IDependencyManagedComponent functions
   //////
-  virtual void InitDependent(Robot* robot, const BCCompMap& dependentComponents) override {};
-  virtual void GetInitDependencies(BCCompIDSet& dependencies) const override {};
+  virtual void InitDependent(Robot* robot, const BCCompMap& dependentComponents) override;
+  virtual void GetInitDependencies(BCCompIDSet& dependencies) const override {
+    dependencies.insert(BCComponentID::BehaviorExternalInterface);
+  };
   virtual void GetUpdateDependencies(BCCompIDSet& dependencies) const override {};
   //////
   // end IDependencyManagedComponent functions
@@ -53,10 +57,9 @@ public:
   // bool CanRunHelper(HelperHandle helper);
   
   
-  bool DelegateToHelper(BehaviorExternalInterface& behaviorExternalInterface,
-                        HelperHandle handleToRun,
-                        BehaviorSimpleCallbackWithExternalInterface successCallback,
-                        BehaviorSimpleCallbackWithExternalInterface failureCallback);
+  bool DelegateToHelper(HelperHandle handleToRun,
+                        BehaviorSimpleCallback successCallback,
+                        BehaviorSimpleCallback failureCallback);
   
   
   bool StopHelperWithoutCallback(const HelperHandle& helperToStop);
@@ -65,27 +68,34 @@ protected:
   friend class BehaviorComponent;
   friend class BehaviorHelperFactory;
   friend class IHelper;
-  void Update(BehaviorExternalInterface& behaviorExternalInterface);
-  HelperHandle AddHelperToComponent(IHelper*& helper,BehaviorExternalInterface& behaviorExternalInterface);
+  void Update();
+  HelperHandle AddHelperToComponent(IHelper*& helper);
   
 private:
   std::unique_ptr<BehaviorHelperFactory> _helperFactory;
-  
+  struct BEIWrapper{
+    BEIWrapper(BehaviorExternalInterface& bei)
+    : _bei(bei){}
+
+    BehaviorExternalInterface& _bei;
+  };
+  std::unique_ptr<BEIWrapper> _beiWrapper;
+    
   using HelperStack = std::vector<HelperHandle>;
   using HelperIter = HelperStack::iterator;
   
   HelperStack _helperStack;
-  BehaviorSimpleCallbackWithExternalInterface _behaviorSuccessCallback;
-  BehaviorSimpleCallbackWithExternalInterface _behaviorFailureCallback;
+  BehaviorSimpleCallback _behaviorSuccessCallback;
+  BehaviorSimpleCallback _behaviorFailureCallback;
   
   // TODO: When COZMO-10389 cancels actions on re-jigger
   // it won't be necessary to store/check this value
   // Currently used to track when the block world origin changes
   PoseOriginID_t                  _worldOriginIDAtStart;
   
-  void CheckInactiveStackHelpers(BehaviorExternalInterface& behaviorExternalInterface);
-  void UpdateActiveHelper(BehaviorExternalInterface& behaviorExternalInterface);
-  void PushHelperOntoStackAndUpdate(BehaviorExternalInterface& behaviorExternalInterface, HelperHandle helper);
+  void CheckInactiveStackHelpers();
+  void UpdateActiveHelper();
+  void PushHelperOntoStackAndUpdate(HelperHandle helper);
 
   // Variables which persist for the life of a stack but should be cleared
   // when the stack fully empties or is cleared

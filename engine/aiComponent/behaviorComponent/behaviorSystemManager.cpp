@@ -115,7 +115,7 @@ void BehaviorSystemManager::ResetBehaviorStack(IBehavior* baseBehavior)
   if(_behaviorStack != nullptr){
     _behaviorStack->ClearStack();
   }
-  _behaviorStack.reset(new BehaviorStack(_behaviorExternalInterface));
+  _behaviorStack.reset(new BehaviorStack());
 }
 
 
@@ -137,7 +137,7 @@ void BehaviorSystemManager::Update(BehaviorExternalInterface& behaviorExternalIn
 
     IBehavior* baseBehavior = _baseBehaviorTmp;
     
-    _behaviorStack->InitBehaviorStack(behaviorExternalInterface, baseBehavior);
+    _behaviorStack->InitBehaviorStack(baseBehavior);
     _baseBehaviorTmp = nullptr;
   }
 
@@ -191,7 +191,7 @@ void BehaviorSystemManager::UpdateInActivatableScope(BehaviorExternalInterface& 
        entry,
        behaviorExternalInterface.GetBehaviorEventComponent()._robotToEngineEvents);
 
-    entry->Update(behaviorExternalInterface);
+    entry->Update();
   }
 }
 

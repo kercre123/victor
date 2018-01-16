@@ -47,7 +47,7 @@ namespace Anki {
       public:      
         virtual ~BehaviorDockingTestSimple() { }
       
-        virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
+        virtual bool WantsToBeActivatedBehavior() const override;
 
       protected:
         virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
@@ -55,17 +55,17 @@ namespace Anki {
         }
 
       
-        void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) override;
+        void InitBehavior() override;
       
       private:
       
-        virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+        virtual void OnBehaviorActivated() override;
       
-        virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
+        virtual void BehaviorUpdate() override;
 
-        virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+        virtual void OnBehaviorDeactivated() override;
         
-        virtual void HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+        virtual void HandleWhileActivated(const EngineToGameEvent& event) override;
       
         // Handlers for signals coming from the engine/robot
         void HandleObservedObject(Robot& robot, const ExternalInterface::RobotObservedObject& msg);

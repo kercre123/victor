@@ -29,11 +29,11 @@ BehaviorPlaypenDriveForwards::BehaviorPlaypenDriveForwards(const Json::Value& co
                     EngineToGameTag::CliffEvent}});
 }
 
-Result BehaviorPlaypenDriveForwards::OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)
+Result BehaviorPlaypenDriveForwards::OnBehaviorActivatedInternal()
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
+  Robot& robot = GetBEI().GetRobotInfo()._robot;
 
   // Clear and pause cliff sensor component so it doesn't try to update the cliff thresholds
   robot.GetCliffSensorComponent().SetPause(true);
@@ -65,7 +65,7 @@ Result BehaviorPlaypenDriveForwards::OnBehaviorActivatedInternal(BehaviorExterna
   
   _waitingForCliffsState = WAITING_FOR_FRONT_CLIFFS;
   
-  DelegateIfInControl(action, [this, &behaviorExternalInterface](ActionResult result) {
+  DelegateIfInControl(action, [this](ActionResult result) {
     // Seeing the cliff will cause the drive straight action to be cancelled
     // Action should only complete with CANCELLED_WHILE_RUNNING, if it completes in any other manner then
     // fail
@@ -81,7 +81,7 @@ Result BehaviorPlaypenDriveForwards::OnBehaviorActivatedInternal(BehaviorExterna
     // We have a delay between the action being cancelled from the RobotStopped event and
     // when the cliff event will be confirmed and sent from the robot so we need to wait a little bit
     // to receive it
-    AddTimer(PlaypenConfig::kTimeToWaitForCliffEvent_ms, [this, &behaviorExternalInterface]() {
+    AddTimer(PlaypenConfig::kTimeToWaitForCliffEvent_ms, [this]() {
       // If front cliff was successfully detected then move onto waiting for the back cliffs to be detected
       // otherwise fail
       if(!_frontCliffsDetected)
@@ -90,25 +90,25 @@ Result BehaviorPlaypenDriveForwards::OnBehaviorActivatedInternal(BehaviorExterna
       }
       
       _waitingForCliffsState = WAITING_FOR_FRONT_CLIFFS_UNDETECTED;
-      TransitionToWaitingForBackCliffs(behaviorExternalInterface);
+      TransitionToWaitingForBackCliffs();
     });
   });
   
   return RESULT_OK;
 }
 
-IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenDriveForwards::PlaypenUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenDriveForwards::PlaypenUpdateInternal()
 {
   // There are times during this behavior that we are not acting (waiting for a message to come from the robot)
   // so we need to keep Running using this empty PlaypenUpdateInternal
   return PlaypenStatus::Running;
 }
 
-void BehaviorPlaypenDriveForwards::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPlaypenDriveForwards::OnBehaviorDeactivated()
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
+  Robot& robot = GetBEI().GetRobotInfo()._robot;
 
   _waitingForCliffsState = NONE;
   _frontCliffsDetected = false;
@@ -116,14 +116,14 @@ void BehaviorPlaypenDriveForwards::OnBehaviorDeactivated(BehaviorExternalInterfa
   robot.GetCliffSensorComponent().SetPause(false);
 }
 
-void BehaviorPlaypenDriveForwards::TransitionToWaitingForBackCliffs(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPlaypenDriveForwards::TransitionToWaitingForBackCliffs()
 {
   // We have seen the front cliffs fire so we need to drive forwards until the back cliffs fire
   DriveStraightAction* action = new DriveStraightAction(PlaypenConfig::kDistanceToTriggerBackCliffs_mm,
                                                         PlaypenConfig::kCliffSpeed_mmps);
   action->SetShouldPlayAnimation(false);
   
-  DelegateIfInControl(action, [this, &behaviorExternalInterface](ActionResult result) {
+  DelegateIfInControl(action, [this](ActionResult result) {
     // Seeing the cliff will cause the drive straight action to be cancelled
     if(result != ActionResult::CANCELLED_WHILE_RUNNING)
     {
@@ -137,7 +137,7 @@ void BehaviorPlaypenDriveForwards::TransitionToWaitingForBackCliffs(BehaviorExte
     // We have a delay between the action being cancelled from the RobotStopped event and
     // when the cliff event will be confirmed and sent from the robot so we need to wait a little bit
     // to receive it
-    AddTimer(PlaypenConfig::kTimeToWaitForCliffEvent_ms, [this, &behaviorExternalInterface]() {
+    AddTimer(PlaypenConfig::kTimeToWaitForCliffEvent_ms, [this]() {
       // If back cliffs were successfully detected then transition to waiting for them to be undetected
       // inidicating we are no longer on the cliff section of playpen
       if(!_backCliffsDetected)
@@ -156,17 +156,17 @@ void BehaviorPlaypenDriveForwards::TransitionToWaitingForBackCliffs(BehaviorExte
       
       _waitingForCliffsState = WAITING_FOR_BACK_CLIFFS_UNDETECTED;
       
-      TransitionToWaitingForBackCliffUndetected(behaviorExternalInterface);
+      TransitionToWaitingForBackCliffUndetected();
       
     });
   });
 }
 
-void BehaviorPlaypenDriveForwards::TransitionToWaitingForBackCliffUndetected(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPlaypenDriveForwards::TransitionToWaitingForBackCliffUndetected()
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
+  Robot& robot = GetBEI().GetRobotInfo()._robot;
 
   // Drive forwards completely over the cliff section of playpen
   DriveStraightAction* driveAction = new DriveStraightAction(PlaypenConfig::kDistanceToDriveOverCliff_mm);
@@ -203,11 +203,11 @@ void BehaviorPlaypenDriveForwards::TransitionToWaitingForBackCliffUndetected(Beh
   });
 }
 
-void BehaviorPlaypenDriveForwards::HandleWhileActivatedInternal(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPlaypenDriveForwards::HandleWhileActivatedInternal(const EngineToGameEvent& event)
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
+  Robot& robot = GetBEI().GetRobotInfo()._robot;
 
   const EngineToGameTag tag = event.GetData().GetTag();
   if(tag == EngineToGameTag::CliffEvent)

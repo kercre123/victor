@@ -34,10 +34,10 @@ BehaviorReactToPyramid::BehaviorReactToPyramid(const Json::Value& config)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorReactToPyramid::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorReactToPyramid::WantsToBeActivatedBehavior() const
 {
   using namespace BlockConfigurations;
-  auto allPyramids = behaviorExternalInterface.GetBlockWorld().GetBlockConfigurationManager().GetPyramidCache().GetPyramids();
+  auto allPyramids = GetBEI().GetBlockWorld().GetBlockConfigurationManager().GetPyramidCache().GetPyramids();
   if(allPyramids.size() > 0){
     const auto currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     if(currentTime > _nextValidReactionTime_s){
@@ -50,7 +50,7 @@ bool BehaviorReactToPyramid::WantsToBeActivatedBehavior(BehaviorExternalInterfac
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToPyramid::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToPyramid::OnBehaviorActivated()
 {
   _nextValidReactionTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + kTimeBetweenReactions_s;
   

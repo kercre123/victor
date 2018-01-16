@@ -27,7 +27,7 @@ private:
   BehaviorReactToPlacedOnSlope(const Json::Value& config);
   
 public:
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual bool WantsToBeActivatedBehavior() const override;
 
 protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
@@ -35,12 +35,12 @@ protected:
     modifiers.wantsToBeActivatedWhenOffTreads = true;
   }
 
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated() override;
 
 private:
 
   // Check robot's pitch angle at the end of the behavior
-  void CheckPitch(BehaviorExternalInterface& behaviorExternalInterface);
+  void CheckPitch();
   
   // Keeps track of whether or not the robot ended the behavior still inclined
   bool _endedOnInclineLastTime = false;

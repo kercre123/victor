@@ -24,7 +24,7 @@ namespace Cozmo {
 
 class PickupBlockHelper : public IHelper{
 public:
-  PickupBlockHelper(BehaviorExternalInterface& behaviorExternalInterface, ICozmoBehavior& behavior,
+  PickupBlockHelper(ICozmoBehavior& behavior,
                     BehaviorHelperFactory& helperFactory,
                     const ObjectID& targetID,
                     const PickupBlockParamaters& parameters = {});
@@ -32,9 +32,9 @@ public:
 
 protected:
   // IHelper functions
-  virtual bool ShouldCancelDelegates(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual HelperStatus InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual HelperStatus UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual bool ShouldCancelDelegates() const override;
+  virtual HelperStatus InitBehaviorHelper() override;
+  virtual HelperStatus UpdateWhileActiveInternal() override;
   
 private:
   ObjectID _targetID;
@@ -43,10 +43,10 @@ private:
   u32 _dockAttemptCount;
   bool _hasTriedOtherPose;
   
-  void StartPickupAction(BehaviorExternalInterface& behaviorExternalInterface, bool ignoreCurrentPredockPose = false);
-  void RespondToPickupResult(const ExternalInterface::RobotCompletedAction& rca, BehaviorExternalInterface& behaviorExternalInterface);
+  void StartPickupAction(bool ignoreCurrentPredockPose = false);
+  void RespondToPickupResult(const ExternalInterface::RobotCompletedAction& rca);
 
-  void MarkTargetAsFailedToPickup(BehaviorExternalInterface& behaviorExternalInterface);
+  void MarkTargetAsFailedToPickup();
   
 };
 

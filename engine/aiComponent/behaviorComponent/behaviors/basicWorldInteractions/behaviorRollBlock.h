@@ -37,13 +37,13 @@ protected:
     modifiers.wantsToBeActivatedWhenCarryingObject = true;
   }
 
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated() override;
+  virtual void BehaviorUpdate() override;
+  virtual void OnBehaviorDeactivated() override;
 
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual bool WantsToBeActivatedBehavior() const override;
   
-  virtual void UpdateTargetBlocksInternal(BehaviorExternalInterface& behaviorExternalInterface) const override { UpdateTargetBlock(behaviorExternalInterface); }
+  virtual void UpdateTargetBlocksInternal() const override { UpdateTargetBlock(); }
   
   virtual std::set<ObjectInteractionIntention>
         GetBehaviorObjectInteractionIntentions() const override {
@@ -67,12 +67,12 @@ private:
   AxisName _upAxisOnBehaviorStart;
   State    _behaviorState;
 
-  void TransitionToPerformingAction(BehaviorExternalInterface& behaviorExternalInterface, bool isRetry = false);
-  void TransitionToRollSuccess(BehaviorExternalInterface& behaviorExternalInterface);
-  void ResetBehavior(BehaviorExternalInterface& behaviorExternalInterface);
-  virtual void UpdateTargetBlock(BehaviorExternalInterface& behaviorExternalInterface) const;
+  void TransitionToPerformingAction(bool isRetry = false);
+  void TransitionToRollSuccess();
+  void ResetBehavior();
+  virtual void UpdateTargetBlock() const;
   
-  void UpdateTargetsUpAxis(BehaviorExternalInterface& behaviorExternalInterface);
+  void UpdateTargetsUpAxis();
   
   void SetState_internal(State state, const std::string& stateName);
 

@@ -41,10 +41,9 @@ public:
   bool Delegate(IBehavior* delegatingBehavior, IActionRunner* action);
   bool Delegate(IBehavior* delegatingBehavior, IBehavior* delegated);
   bool Delegate(IBehavior* delegatingBehavior,
-                BehaviorExternalInterface& behaviorExternalInterface,
                 HelperHandle helper,
-                BehaviorSimpleCallbackWithExternalInterface successCallback,
-                BehaviorSimpleCallbackWithExternalInterface failureCallback);
+                BehaviorSimpleCallback successCallback,
+                BehaviorSimpleCallback failureCallback);
   
 protected:
   friend class DelegationComponent;

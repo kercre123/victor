@@ -34,14 +34,14 @@ public:
   void TriggeringAsInterrupt() { _wasTriggeredAsInterrupt = true;}
 
 protected:
-  virtual void RequestGame_OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void RequestGame_UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void   RequestGame_OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void RequestGame_OnBehaviorActivated() override;
+  virtual void RequestGame_UpdateInternal() override;
+  virtual void   RequestGame_OnBehaviorDeactivated() override;
 
-  virtual void HandleGameDeniedRequest(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void HandleGameDeniedRequest() override;
   virtual f32 GetRequestMinDelayComplete_s() const override;
 
-  virtual u32 GetNumBlocks(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual u32 GetNumBlocks() const override;
 
 private:
 
@@ -107,20 +107,20 @@ private:
   
   void SetState_internal(State state, const std::string& stateName);
   
-  void TransitionToPlayingInitialAnimation(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToFacingBlock(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToPlayingPreDriveAnimation(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToPickingUpBlock(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToDrivingToFace(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToPlacingBlock(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToLookingAtFace(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToVerifyingFace(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToPlayingRequstAnim(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToIdle(BehaviorExternalInterface& behaviorExternalInterface);
-  void IdleLoop(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToPlayingDenyAnim(BehaviorExternalInterface& behaviorExternalInterface);
-  bool GetFaceInteractionPose(BehaviorExternalInterface& behaviorExternalInterface, Pose3d& pose);
-  void ComputeFaceInteractionPose(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToPlayingInitialAnimation();
+  void TransitionToFacingBlock();
+  void TransitionToPlayingPreDriveAnimation();
+  void TransitionToPickingUpBlock();
+  void TransitionToDrivingToFace();
+  void TransitionToPlacingBlock();
+  void TransitionToLookingAtFace();
+  void TransitionToVerifyingFace();
+  void TransitionToPlayingRequstAnim();
+  void TransitionToIdle();
+  void IdleLoop();
+  void TransitionToPlayingDenyAnim();
+  bool GetFaceInteractionPose(Pose3d& pose);
+  void ComputeFaceInteractionPose();
   bool CheckRequestTimeout();
 
 };

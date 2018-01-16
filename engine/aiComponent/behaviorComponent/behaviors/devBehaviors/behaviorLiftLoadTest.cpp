@@ -73,21 +73,21 @@ namespace Anki {
       });
     }
     
-    void BehaviorLiftLoadTest::InitBehavior(BehaviorExternalInterface& behaviorExternalInterface)
+    void BehaviorLiftLoadTest::InitBehavior()
     {
       _logger = std::make_unique<Util::RollingFileLogger>(nullptr, 
-        behaviorExternalInterface.GetRobotInfo()._robot.GetContextDataPlatform()->pathToResource(Util::Data::Scope::Cache, "liftLoadTest"));
+        GetBEI().GetRobotInfo()._robot.GetContextDataPlatform()->pathToResource(Util::Data::Scope::Cache, "liftLoadTest"));
     }
 
     
-    bool BehaviorLiftLoadTest::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+    bool BehaviorLiftLoadTest::WantsToBeActivatedBehavior() const
     {
       return _canRun && (_currentState == State::Init || _currentState == State::TestComplete);
     }
     
-    void BehaviorLiftLoadTest::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+    void BehaviorLiftLoadTest::OnBehaviorActivated()
     {
-      Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
+      Robot& robot = GetBEI().GetRobotInfo()._robot;
 
       _abortTest = false;
       _currentState = State::Init;
@@ -120,7 +120,7 @@ namespace Anki {
       Write(ss.str());
     }
     
-    void BehaviorLiftLoadTest::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
+    void BehaviorLiftLoadTest::BehaviorUpdate()
     {
       if(!IsActivated()){
         return;
@@ -155,7 +155,7 @@ namespace Anki {
       {
         case State::Init:
         {
-          Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
+          Robot& robot = GetBEI().GetRobotInfo()._robot;
           auto lowerLiftAction = new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK);
           lowerLiftAction->SetMaxLiftSpeed(DEFAULT_LIFT_SPEED_RAD_PER_SEC);
           lowerLiftAction->SetLiftAccel(DEFAULT_LIFT_ACCEL_RAD_PER_SEC2);
@@ -191,7 +191,7 @@ namespace Anki {
         }
         case State::WaitForPutdown:
         {
-          if(behaviorExternalInterface.GetOffTreadsState() == OffTreadsState::OnTreads){
+          if(GetBEI().GetOffTreadsState() == OffTreadsState::OnTreads){
             _abortTest = true;
           }
           break;
@@ -210,7 +210,7 @@ namespace Anki {
       }
     }
     
-    void BehaviorLiftLoadTest::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+    void BehaviorLiftLoadTest::OnBehaviorDeactivated()
     {
     }
     
@@ -255,7 +255,7 @@ namespace Anki {
       SetDebugStateName(name);
     }
     
-    void BehaviorLiftLoadTest::HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+    void BehaviorLiftLoadTest::HandleWhileActivated(const EngineToGameEvent& event)
     {
       switch(event.GetData().GetTag())
       {
@@ -274,7 +274,7 @@ namespace Anki {
       }
     }
     
-    void BehaviorLiftLoadTest::AlwaysHandleInScope(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+    void BehaviorLiftLoadTest::AlwaysHandleInScope(const GameToEngineEvent& event)
     {
       switch(event.GetData().GetTag())
       {
@@ -292,7 +292,7 @@ namespace Anki {
       }
     }
     
-    void BehaviorLiftLoadTest::HandleWhileActivated(const RobotToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+    void BehaviorLiftLoadTest::HandleWhileActivated(const RobotToEngineEvent& event)
     {
       switch(event.GetData().GetTag()) {
         case RobotInterface::RobotToEngineTag::liftLoad:

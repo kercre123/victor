@@ -42,26 +42,26 @@ namespace Anki {
       
         virtual ~BehaviorLiftLoadTest() { }
       
-        virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
+        virtual bool WantsToBeActivatedBehavior() const override;
     
       protected:
         virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
           modifiers.behaviorAlwaysDelegates = false;
         }
 
-        void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) override;
+        void InitBehavior() override;
       private:
       
-        virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+        virtual void OnBehaviorActivated() override;
       
-        virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
+        virtual void BehaviorUpdate() override;
 
-        virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+        virtual void OnBehaviorDeactivated() override;
         
-        virtual void HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
-        virtual void HandleWhileActivated(const RobotToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+        virtual void HandleWhileActivated(const EngineToGameEvent& event) override;
+        virtual void HandleWhileActivated(const RobotToEngineEvent& event) override;
       
-        virtual void AlwaysHandleInScope(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+        virtual void AlwaysHandleInScope(const GameToEngineEvent& event) override;
       
         void PrintStats();
       

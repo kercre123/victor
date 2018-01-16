@@ -67,45 +67,45 @@ BehaviorObservingOnCharger::~BehaviorObservingOnCharger()
 
 }
 
-bool BehaviorObservingOnCharger::CanBeGentlyInterruptedNow(BehaviorExternalInterface& bei) const
+bool BehaviorObservingOnCharger::CanBeGentlyInterruptedNow() const
 {
   return !_isTransitioning;
 }
 
-void BehaviorObservingOnCharger::OnBehaviorActivated(BehaviorExternalInterface& bei)
+void BehaviorObservingOnCharger::OnBehaviorActivated()
 {
-  TransitionToLookingUp(bei);
+  TransitionToLookingUp();
   
   
 }
 
-void BehaviorObservingOnCharger::TransitionToLookingUp(BehaviorExternalInterface& bei)
+void BehaviorObservingOnCharger::TransitionToLookingUp()
 {
   SET_STATE(LookingUp);
   _isTransitioning = true;
-  ResetSmallHeadMoveTimer(bei);
+  ResetSmallHeadMoveTimer();
   
   DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::ObservingLookUp),
                       &BehaviorObservingOnCharger::Loop);
 }
 
-void BehaviorObservingOnCharger::TransitionToLookingStraight(BehaviorExternalInterface& bei)
+void BehaviorObservingOnCharger::TransitionToLookingStraight()
 {
   SET_STATE(LookingStraight);
   _isTransitioning = true;
-  ResetSmallHeadMoveTimer(bei);
+  ResetSmallHeadMoveTimer();
 
   DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::ObservingLookStraight),
                       &BehaviorObservingOnCharger::Loop);
 }
 
-void BehaviorObservingOnCharger::ResetSmallHeadMoveTimer(BehaviorExternalInterface& bei)
+void BehaviorObservingOnCharger::ResetSmallHeadMoveTimer()
 {
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _lastSmallHeadMoveTime_s = currTime_s;
 
-  const TimeStamp_t lastChargingTime_ms = bei.GetRobotInfo().GetLastChargingStateChangeTimestamp();
-  const TimeStamp_t currRobotTime_ms = bei.GetRobotInfo().GetLastMsgTimestamp();
+  const TimeStamp_t lastChargingTime_ms = GetBEI().GetRobotInfo().GetLastChargingStateChangeTimestamp();
+  const TimeStamp_t currRobotTime_ms = GetBEI().GetRobotInfo().GetLastMsgTimestamp();
   const TimeStamp_t timeOnCharger_ms = currRobotTime_ms > lastChargingTime_ms ?
                                        currRobotTime_ms - lastChargingTime_ms :
                                        0;
@@ -121,7 +121,7 @@ void BehaviorObservingOnCharger::ResetSmallHeadMoveTimer(BehaviorExternalInterfa
                  _currSmallMovePeriod_s);
 }
 
-void BehaviorObservingOnCharger::Loop(BehaviorExternalInterface& bei)
+void BehaviorObservingOnCharger::Loop()
 {
   _isTransitioning = false;
 
@@ -129,14 +129,14 @@ void BehaviorObservingOnCharger::Loop(BehaviorExternalInterface& bei)
   const float stateChangePeriod_s = GetStateChangePeriod();
 
   if( currTime_s >= _lastStateChangeTime_s + stateChangePeriod_s ) {
-    SwitchState(bei);
+    SwitchState();
   }
   else {
     AnimationTrigger animToPlay = AnimationTrigger::Count;
     
     if( currTime_s >= _lastSmallHeadMoveTime_s + _currSmallMovePeriod_s ) {
       animToPlay = GetSmallHeadMoveAnim();
-      ResetSmallHeadMoveTimer(bei);
+      ResetSmallHeadMoveTimer();
     }
     else {
       animToPlay = AnimationTrigger::ObservingIdleEyesOnly;
@@ -166,14 +166,14 @@ float BehaviorObservingOnCharger::GetStateChangePeriod() const
   }
 }
 
-void BehaviorObservingOnCharger::SwitchState(BehaviorExternalInterface& bei)
+void BehaviorObservingOnCharger::SwitchState()
 {
   switch(_state) {
     case State::LookingUp:
-      TransitionToLookingStraight(bei);
+      TransitionToLookingStraight();
       break;
     case State::LookingStraight:
-      TransitionToLookingUp(bei);
+      TransitionToLookingUp();
       break;
   }
 }

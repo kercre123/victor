@@ -72,7 +72,7 @@
 //}
 //
 //// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//bool BehaviorExploreMarkedCube::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+//bool BehaviorExploreMarkedCube::WantsToBeActivatedBehavior() const
 //{
 //  const INavMemoryMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
 //  if ( nullptr == memoryMap ) {
@@ -83,7 +83,7 @@
 //}
 //  
 //// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//void BehaviorExploreMarkedCube::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+//void BehaviorExploreMarkedCube::OnBehaviorActivated()
 //{
 //  // select borders we want to visit
 //  BorderScoreVector borderGoals;
@@ -132,7 +132,7 @@
 //
 //
 //// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//void BehaviorExploreMarkedCube::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
+//void BehaviorExploreMarkedCube::BehaviorUpdate()
 //{
 //  if(!IsActivated()){
 //    return;
@@ -150,14 +150,14 @@
 //}
 //
 //// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//void BehaviorExploreMarkedCube::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+//void BehaviorExploreMarkedCube::OnBehaviorDeactivated()
 //{
 //  _currentActionTag = ActionConstants::INVALID_TAG;
 //  robot.GetContext()->GetVizManager()->EraseSegments("BehaviorExploreMarkedCube::InitInternal");
 //}
 //
 //// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//void BehaviorExploreMarkedCube::AlwaysHandleInScope(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+//void BehaviorExploreMarkedCube::AlwaysHandleInScope(const EngineToGameEvent& event)
 //{
 //  switch(event.GetData().GetTag())
 //  {

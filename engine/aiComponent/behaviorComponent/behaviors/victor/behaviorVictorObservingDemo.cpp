@@ -355,20 +355,20 @@ void BehaviorVictorObservingDemo::CreatePreDefinedStrategies()
     });
 }
 
-void BehaviorVictorObservingDemo::InitBehavior(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorVictorObservingDemo::InitBehavior()
 {
   std::set< std::shared_ptr<IBEICondition> > allTransitions;
   
   // init all of the states
   for( auto& statePair : *_states ) {
     auto& state = statePair.second;
-    state.Init(behaviorExternalInterface);
+    state.Init(GetBEI());
     state.GetAllTransitions(allTransitions);
   }
 
   // initialize all transitions (from the set so they each only get initialized once)
   for( auto& strategy : allTransitions ) {
-    strategy->Init(behaviorExternalInterface);
+    strategy->Init(GetBEI());
   }
 
   PRINT_CH_INFO("Behaviors", "VictorObservingDemo.Init",
@@ -398,10 +398,10 @@ void BehaviorVictorObservingDemo::GetAllDelegates(std::set<IBehavior*>& delegate
 }
 
 
-void BehaviorVictorObservingDemo::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorVictorObservingDemo::OnBehaviorActivated()
 {
   // _visionModesToReEnable.clear();
-  // auto& visionComponent = behaviorExternalInterface.GetVisionComponent();
+  // auto& visionComponent = GetBEI().GetVisionComponent();
   // for (VisionMode mode = VisionMode::Idle; mode < VisionMode::Count; ++mode) {
   //   if( visionComponent.IsModeEnabled(mode) ) {
   //     _visionModesToReEnable.push_back(mode);
@@ -421,24 +421,24 @@ void BehaviorVictorObservingDemo::OnBehaviorActivated(BehaviorExternalInterface&
        new MoveHeadToAngleAction(DEG_TO_RAD(kInitialHeadAngle_deg)) }};
   CompoundActionSequential *initialAction = new CompoundActionSequential(std::move(actions));
 
-  DelegateIfInControl(initialAction, [this](BehaviorExternalInterface& behaviorExternalInterface) {
-      const bool onCharger = behaviorExternalInterface.GetRobotInfo().IsOnChargerPlatform();
+  DelegateIfInControl(initialAction, [this]() {
+      const bool onCharger = GetBEI().GetRobotInfo().IsOnChargerPlatform();
       if( onCharger ) {
-        TransitionToState(behaviorExternalInterface, GetStateID("ObservingOnCharger"));
+        TransitionToState(GetStateID("ObservingOnCharger"));
       }
       else {
-        TransitionToState(behaviorExternalInterface, GetStateID("Observing"));
+        TransitionToState(GetStateID("Observing"));
       }
     });
   
   
 }
 
-void BehaviorVictorObservingDemo::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorVictorObservingDemo::OnBehaviorDeactivated()
 {
-  TransitionToState(behaviorExternalInterface, InvalidStateID);
+  TransitionToState(InvalidStateID);
 
-  auto& visionComponent = behaviorExternalInterface.GetVisionComponent();
+  auto& visionComponent = GetBEI().GetVisionComponent();
   for( const auto& mode : _visionModesToReEnable ) {
     visionComponent.EnableMode(mode, true);
   }
@@ -446,7 +446,7 @@ void BehaviorVictorObservingDemo::OnBehaviorDeactivated(BehaviorExternalInterfac
   _visionModesToReEnable.clear();
 }
 
-void BehaviorVictorObservingDemo::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorVictorObservingDemo::BehaviorUpdate()
 {
   if(!IsActivated()){
     return;
@@ -467,7 +467,7 @@ void BehaviorVictorObservingDemo::BehaviorUpdate(BehaviorExternalInterface& beha
       _debugLightsDirty = true;
     }
 
-    auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+    auto& robotInfo = GetBEI().GetRobotInfo();
     
     ColorRGBA robotStateColor = NamedColors::BLACK;
     if( robotInfo.IsOnChargerPlatform() ) {
@@ -486,7 +486,7 @@ void BehaviorVictorObservingDemo::BehaviorUpdate(BehaviorExternalInterface& beha
 
     if( _debugLightsDirty ) {
       
-      behaviorExternalInterface.GetBodyLightComponent().SetBackpackLights(_currDebugLights);
+      GetBEI().GetBodyLightComponent().SetBackpackLights(_currDebugLights);
       _debugLightsDirty = false;
     }
   }
@@ -507,8 +507,8 @@ void BehaviorVictorObservingDemo::BehaviorUpdate(BehaviorExternalInterface& beha
     const auto stateID = transitionPair.first;
     const auto& iConditionPtr = transitionPair.second;
 
-    if( iConditionPtr->AreConditionsMet(behaviorExternalInterface) ) {
-      TransitionToState(behaviorExternalInterface, stateID);
+    if( iConditionPtr->AreConditionsMet(GetBEI()) ) {
+      TransitionToState(stateID);
       return;
     }
   }
@@ -520,14 +520,14 @@ void BehaviorVictorObservingDemo::BehaviorUpdate(BehaviorExternalInterface& beha
   bool okToDispatch = ! IsControlDelegated();
 
   if( !okToDispatch ) {
-    if(behaviorExternalInterface.HasDelegationComponent()){
+    if(GetBEI().HasDelegationComponent()){
       // TODO:(bn) rather than calling this directly, we can introduce a "stop yourself in X seconds" event
       // that ICozmoBehavior implements (and hears about from StateChangeComponent)
-      auto& delegationComponent = behaviorExternalInterface.GetDelegationComponent();
+      auto& delegationComponent = GetBEI().GetDelegationComponent();
       const IBehavior* delegate = delegationComponent.GetBehaviorDelegatedTo(this);
       const ICozmoBehavior* delegateBehavior = dynamic_cast<const ICozmoBehavior*>(delegate);
       if( delegateBehavior ) {
-        okToDispatch = delegateBehavior->CanBeGentlyInterruptedNow(behaviorExternalInterface);
+        okToDispatch = delegateBehavior->CanBeGentlyInterruptedNow();
       }
     }
   }
@@ -537,8 +537,8 @@ void BehaviorVictorObservingDemo::BehaviorUpdate(BehaviorExternalInterface& beha
       const auto stateID = transitionPair.first;
       const auto& iConditionPtr = transitionPair.second;
       
-      if( iConditionPtr->AreConditionsMet(behaviorExternalInterface) ) {
-        TransitionToState(behaviorExternalInterface, stateID);
+      if( iConditionPtr->AreConditionsMet(GetBEI()) ) {
+        TransitionToState(stateID);
         return;
       }
     }
@@ -549,8 +549,8 @@ void BehaviorVictorObservingDemo::BehaviorUpdate(BehaviorExternalInterface& beha
         const auto stateID = transitionPair.first;
         const auto& iConditionPtr = transitionPair.second;
       
-        if( iConditionPtr->AreConditionsMet(behaviorExternalInterface) ) {
-          TransitionToState(behaviorExternalInterface, stateID);
+        if( iConditionPtr->AreConditionsMet(GetBEI()) ) {
+          TransitionToState(stateID);
           return;
         }
       }
@@ -560,8 +560,8 @@ void BehaviorVictorObservingDemo::BehaviorUpdate(BehaviorExternalInterface& beha
     // run and isn't already running
     
     // TODO:(bn) can behaviors be null?
-    if( !IsControlDelegated() && state._behavior->WantsToBeActivated( behaviorExternalInterface ) ) {
-      DelegateIfInControl(behaviorExternalInterface,  state._behavior.get() );
+    if( !IsControlDelegated() && state._behavior->WantsToBeActivated() ) {
+      DelegateIfInControl(state._behavior.get() );
     }
     // else we'll just sit here doing nothing evaluating the conditions each tick
   }
@@ -569,8 +569,7 @@ void BehaviorVictorObservingDemo::BehaviorUpdate(BehaviorExternalInterface& beha
   // This demo behavior never ends, it's always running
 }
 
-void BehaviorVictorObservingDemo::TransitionToState(BehaviorExternalInterface& behaviorExternalInterface,
-                                                    const StateID targetState)
+void BehaviorVictorObservingDemo::TransitionToState(const StateID targetState)
 {
 
   // TODO:(bn) don't de- and re-activate behaviors if switching states doesn't change the behavior  
@@ -596,9 +595,9 @@ void BehaviorVictorObservingDemo::TransitionToState(BehaviorExternalInterface& b
 
   _currState = targetState;
 
-  auto setVisionModes = [&behaviorExternalInterface](const std::set<VisionMode>& modes, const bool enabled) {
+  auto setVisionModes = [this](const std::set<VisionMode>& modes, const bool enabled) {
     for( const auto& mode : modes ) {
-      auto& visionComponent = behaviorExternalInterface.GetVisionComponent();      
+      auto& visionComponent = GetBEI().GetVisionComponent();      
       if( visionComponent.IsModeEnabled(mode) != enabled ) {
         visionComponent.EnableMode(mode, enabled);
       }
@@ -616,7 +615,7 @@ void BehaviorVictorObservingDemo::TransitionToState(BehaviorExternalInterface& b
     setVisionModes(visionModesToDisable, false);
     setVisionModes(state._requiredVisionModes, true);
     
-    state.OnActivated(behaviorExternalInterface);
+    state.OnActivated(GetBEI());
 
     if( _useDebugLights ) {
       if( _currDebugLights.onColors[kDebugStateLED] != state._debugColor ) {
@@ -626,8 +625,8 @@ void BehaviorVictorObservingDemo::TransitionToState(BehaviorExternalInterface& b
       }
     }
 
-    if( state._behavior->WantsToBeActivated( behaviorExternalInterface ) ) {
-      DelegateIfInControl(behaviorExternalInterface,  state._behavior.get() );
+    if( state._behavior->WantsToBeActivated() ) {
+      DelegateIfInControl(state._behavior.get() );
     }
   }
   else {

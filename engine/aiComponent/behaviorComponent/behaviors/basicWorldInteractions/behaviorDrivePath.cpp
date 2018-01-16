@@ -30,25 +30,25 @@ BehaviorDrivePath::BehaviorDrivePath(const Json::Value& config)
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorDrivePath::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorDrivePath::WantsToBeActivatedBehavior() const
 {
   return true;
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDrivePath::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDrivePath::OnBehaviorActivated()
 {
-  TransitionToFollowingPath(behaviorExternalInterface);
+  TransitionToFollowingPath();
   
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDrivePath::TransitionToFollowingPath(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDrivePath::TransitionToFollowingPath()
 {
   DEBUG_SET_STATE(FollowingPath);
-  SelectPath(behaviorExternalInterface.GetRobotInfo().GetPose(), _path);
+  SelectPath(GetBEI().GetRobotInfo().GetPose(), _path);
   
   IActionRunner* drivePath = new DrivePathAction(_path);
   //Perform action and then callback

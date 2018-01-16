@@ -27,7 +27,7 @@ private:
   BehaviorReactToRobotOnSide(const Json::Value& config);
   
 public:
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual bool WantsToBeActivatedBehavior() const override;
   
 protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
@@ -35,15 +35,15 @@ protected:
     modifiers.wantsToBeActivatedWhenOffTreads = true;
   }
     
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated() override;
+  virtual void OnBehaviorDeactivated() override;
 
 private:
 
-  void ReactToBeingOnSide(BehaviorExternalInterface& behaviorExternalInterface);
-  void AskToBeRighted(BehaviorExternalInterface& behaviorExternalInterface);
+  void ReactToBeingOnSide();
+  void AskToBeRighted();
   //Ensures no other behaviors run while Cozmo is still on his side
-  void HoldingLoop(BehaviorExternalInterface& behaviorExternalInterface);
+  void HoldingLoop();
 
   float _timeToPerformBoredAnim_s = -1.0f;
   

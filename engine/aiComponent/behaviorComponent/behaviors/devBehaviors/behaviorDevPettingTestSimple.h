@@ -28,7 +28,7 @@ class BehaviorDevPettingTestSimple : public ICozmoBehavior
 public:
   
   virtual ~BehaviorDevPettingTestSimple() { }
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual bool WantsToBeActivatedBehavior() const override;
   
 protected:
   
@@ -39,13 +39,13 @@ protected:
     modifiers.behaviorAlwaysDelegates = false;
   }
 
-  void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) override;
+  void InitBehavior() override;
   
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated() override;
 
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorDeactivated() override;
   
-  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void BehaviorUpdate() override;
 
 private:
   

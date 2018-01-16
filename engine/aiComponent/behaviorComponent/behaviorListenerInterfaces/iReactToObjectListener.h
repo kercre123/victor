@@ -18,8 +18,8 @@ namespace Cozmo {
 
 class IReactToObjectListener{
 public:
-  virtual void ReactedToID(BehaviorExternalInterface& behaviorExternalInterface, s32 id) = 0;
-  virtual void ClearDesiredTargets(BehaviorExternalInterface& behaviorExternalInterface) = 0;
+  virtual void ReactedToID(s32 id) = 0;
+  virtual void ClearDesiredTargets() = 0;
 
 };
 

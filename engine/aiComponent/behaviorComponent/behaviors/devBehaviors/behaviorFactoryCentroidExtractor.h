@@ -39,7 +39,7 @@ namespace Cozmo {
     
     virtual ~BehaviorFactoryCentroidExtractor() { }
     
-    virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
+    virtual bool WantsToBeActivatedBehavior() const override;
     
   protected:
     virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
@@ -48,14 +48,14 @@ namespace Cozmo {
     }
 
   private:    
-    virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-    virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
+    virtual void OnBehaviorActivated() override;
+    virtual void BehaviorUpdate() override;
 
-    virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+    virtual void OnBehaviorDeactivated() override;
     
     void TransitionToMovingHead(Robot& robot);
     
-    virtual void HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+    virtual void HandleWhileActivated(const EngineToGameEvent& event) override;
     
     bool _waitingForDots = false;
     bool _headCalibrated = false;

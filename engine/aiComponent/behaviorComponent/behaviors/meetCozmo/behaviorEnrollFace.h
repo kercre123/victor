@@ -50,7 +50,7 @@ protected:
     
 public:  
   // Is activatable when FaceWorld has enrollment settings set
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual bool WantsToBeActivatedBehavior() const override;
   
 protected:
 
@@ -60,14 +60,14 @@ protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
 
 
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)   override;
-  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)   override;
+  virtual void OnBehaviorActivated()   override;
+  virtual void BehaviorUpdate() override;
+  virtual void OnBehaviorDeactivated()   override;
 
-  virtual void AlwaysHandleInScope(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void HandleWhileActivated(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void HandleWhileInScopeButNotActivated(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void AlwaysHandleInScope(const EngineToGameEvent& event) override;
+  virtual void HandleWhileActivated(const GameToEngineEvent& event) override;
+  virtual void HandleWhileActivated(const EngineToGameEvent& event) override;
+  virtual void HandleWhileInScopeButNotActivated(const GameToEngineEvent& event) override;
   
 private:
   
@@ -99,28 +99,28 @@ private:
   // Methods
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  Result InitEnrollmentSettings(BehaviorExternalInterface& behaviorExternalInterface);
+  Result InitEnrollmentSettings();
   
-  void TransitionToLookingForFace(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToEnrolling(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToScanningInterrupted(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToSayingName(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToSavingToRobot(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToLookingForFace();
+  void TransitionToEnrolling();
+  void TransitionToScanningInterrupted();
+  void TransitionToSayingName();
+  void TransitionToSavingToRobot();
   
-  void UpdateFaceToEnroll(BehaviorExternalInterface& behaviorExternalInterface);
+  void UpdateFaceToEnroll();
   void UpdateFaceIDandTime(const Face* newFace);
   
-  IActionRunner* CreateTurnTowardsFaceAction(BehaviorExternalInterface& behaviorExternalInterface, FaceID_t faceID, FaceID_t saveID, bool playScanningGetOut);
-  IActionRunner* CreateLookAroundAction(BehaviorExternalInterface& behaviorExternalInterface);
+  IActionRunner* CreateTurnTowardsFaceAction(FaceID_t faceID, FaceID_t saveID, bool playScanningGetOut);
+  IActionRunner* CreateLookAroundAction();
 
   bool HasTimedOut() const;
   bool IsSeeingTooManyFaces(FaceWorld& faceWorld, const TimeStamp_t lastImgTime);
   
   // Helper which returns false if the robot is not on its treads or a cliff is being detected
-  bool CanMoveTreads(BehaviorExternalInterface& behaviorExternalInterface) const;
+  bool CanMoveTreads() const;
   
   bool IsEnrollmentRequested() const;
-  void DisableEnrollment(BehaviorExternalInterface& behaviorExternalInterface);
+  void DisableEnrollment();
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Members

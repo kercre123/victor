@@ -42,11 +42,11 @@ protected:
   }
 
   // IReactionaryBehavior
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated() override;
+  virtual void OnBehaviorDeactivated() override;
+  virtual void BehaviorUpdate() override;
   
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual bool WantsToBeActivatedBehavior() const override;
 
   virtual void AddListener(IReactToPetListener* listener) override;
   
@@ -66,8 +66,8 @@ private:
   float _endReactionTime_s = NEVER;
   
   // Stages of reaction
-  void BeginIteration(BehaviorExternalInterface& behaviorExternalInterface);
-  void EndIteration(BehaviorExternalInterface& behaviorExternalInterface);
+  void BeginIteration();
+  void EndIteration();
 
   
   bool AlreadyReacting() const;

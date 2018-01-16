@@ -41,7 +41,7 @@ protected:
 public:
   virtual ~BehaviorLookAround() override;
 
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual bool WantsToBeActivatedBehavior() const override;
   void SetLookAroundHeadAngle(float angle_rads) { _lookAroundHeadAngle_rads = angle_rads; }
   
 protected:
@@ -50,12 +50,12 @@ protected:
     modifiers.behaviorAlwaysDelegates = false;
   }
 
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated() override;
+  virtual void BehaviorUpdate() override;
+  virtual void OnBehaviorDeactivated() override;
 
-  virtual void HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void AlwaysHandleInScope(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void HandleWhileActivated(const EngineToGameEvent& event) override;
+  virtual void AlwaysHandleInScope(const EngineToGameEvent& event) override;
 
 private:
   enum class State {
@@ -67,11 +67,11 @@ private:
   };
   void SetState_internal(State state, const std::string& stateName);
 
-  void TransitionToWaitForOtherActions(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToInactive(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToRoaming(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToLookingAtPossibleObject(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToExaminingFoundObject(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToWaitForOtherActions();
+  void TransitionToInactive();
+  void TransitionToRoaming();
+  void TransitionToLookingAtPossibleObject();
+  void TransitionToExaminingFoundObject();
 
   enum class Destination {
     North = 0,
@@ -118,10 +118,10 @@ private:
   Pose3d _lastPossibleObjectPose;
   
   Pose3d GetDestinationPose(Destination destination);
-  void ResetBehavior(BehaviorExternalInterface& behaviorExternalInterface);
+  void ResetBehavior();
   Destination GetNextDestination(Destination current);
 
-  void ResetSafeRegion(BehaviorExternalInterface& behaviorExternalInterface);
+  void ResetSafeRegion();
 
   // this function may extend the safe region, since we know that if a cube can rest there, we probably can as
   // well
@@ -130,9 +130,9 @@ private:
   // This version may shrink the safe region, and/or move it away from the position of the cliff
   void UpdateSafeRegionForCliff(const Pose3d& objectPose);
 
-  void HandleObjectObserved(const ExternalInterface::RobotObservedObject& msg, bool confirmed, BehaviorExternalInterface& behaviorExternalInterface);
-  void HandleRobotOfftreadsStateChanged(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface);
-  void HandleCliffEvent(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface);
+  void HandleObjectObserved(const ExternalInterface::RobotObservedObject& msg, bool confirmed);
+  void HandleRobotOfftreadsStateChanged(const EngineToGameEvent& event);
+  void HandleCliffEvent(const EngineToGameEvent& event);
 
 };
   

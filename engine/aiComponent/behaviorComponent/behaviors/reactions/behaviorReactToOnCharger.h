@@ -26,7 +26,7 @@ private:
   BehaviorReactToOnCharger(const Json::Value& config);
   
 public:
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual bool WantsToBeActivatedBehavior() const override;
 protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
     modifiers.wantsToBeActivatedWhenCarryingObject = true;
@@ -35,11 +35,11 @@ protected:
     modifiers.behaviorAlwaysDelegates = false;
   }
 
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated() override;
+  virtual void BehaviorUpdate() override;
   
-  virtual void HandleWhileActivated(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void HandleWhileActivated(const GameToEngineEvent& event) override;
+  virtual void OnBehaviorDeactivated() override;
   
 private:
   bool _onChargerCanceled;

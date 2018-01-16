@@ -37,36 +37,36 @@ BehaviorPlayAnimSequenceWithObject::BehaviorPlayAnimSequenceWithObject(const Jso
 }
   
   
-bool BehaviorPlayAnimSequenceWithObject::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorPlayAnimSequenceWithObject::WantsToBeActivatedBehavior() const
 {
-  return (GetLocatedObject(behaviorExternalInterface) != nullptr);
+  return (GetLocatedObject() != nullptr);
 }
   
 
-void BehaviorPlayAnimSequenceWithObject::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPlayAnimSequenceWithObject::OnBehaviorActivated()
 {
-  const auto* obj = GetLocatedObject(behaviorExternalInterface);
+  const auto* obj = GetLocatedObject();
   
   if (ANKI_VERIFY(obj != nullptr,
                   "BehaviorPlayAnimSequenceWithObject.OnBehaviorActivated.NullObject",
                   "Null object!")) {
     // Attempt to turn toward the specified object, and even if fails, move on to the animations
-    DelegateIfInControl(new TurnTowardsObjectAction(obj->GetID()), [this](BehaviorExternalInterface& behaviorExternalInterface) {
-      BaseClass::StartPlayingAnimations(behaviorExternalInterface);
+    DelegateIfInControl(new TurnTowardsObjectAction(obj->GetID()), [this]() {
+      BaseClass::StartPlayingAnimations();
     });
   }
 }
   
 
-const ObservableObject* BehaviorPlayAnimSequenceWithObject::GetLocatedObject(BehaviorExternalInterface& behaviorExternalInterface) const
+const ObservableObject* BehaviorPlayAnimSequenceWithObject::GetLocatedObject() const
 {
   // Find matching objects
   BlockWorldFilter filter;
   if (_objectType != ObjectType::UnknownObject) {
     filter.AddAllowedType(_objectType);
   }
-  const auto& robotPose = behaviorExternalInterface.GetRobotInfo().GetPose();
-  const auto* object = behaviorExternalInterface.GetBlockWorld().FindLocatedObjectClosestTo(robotPose, filter);
+  const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
+  const auto* object = GetBEI().GetBlockWorld().FindLocatedObjectClosestTo(robotPose, filter);
   
   return object;
 }

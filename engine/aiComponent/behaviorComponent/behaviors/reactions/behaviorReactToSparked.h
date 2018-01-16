@@ -29,8 +29,8 @@ protected:
     modifiers.wantsToBeActivatedWhenOffTreads = true;
   }
 
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual void OnBehaviorActivated() override;
+  virtual bool WantsToBeActivatedBehavior() const override;
   
 }; // class BehaviorReactToSparked
 
