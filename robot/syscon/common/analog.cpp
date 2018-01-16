@@ -30,6 +30,7 @@ static const int BOUNCE_LENGTH = 3;
 
 static volatile bool onBatPower;
 static bool chargeAllowed;
+static bool is_charging;
 static int vext_debounce;
 static bool last_vext = false;
 static bool bouncy_button;
@@ -142,8 +143,9 @@ void Analog::allowCharge(bool enable) {
   vext_debounce = 0;
 }
 
-void Analog::delayCharge() {
+bool Analog::delayCharge() {
   vext_debounce = 0;
+  return is_charging;
 }
 
 void Analog::tick(void) {
@@ -159,7 +161,8 @@ void Analog::tick(void) {
   last_vext = vext_now;
 
   // Charge logic
-  if (chargeAllowed && vext_debounce >= MINIMUM_VEXT_TIME) {
+  is_charging = chargeAllowed && vext_debounce >= MINIMUM_VEXT_TIME;
+  if (is_charging) {
     CHG_PWR::set();
   } else {
     CHG_PWR::reset();

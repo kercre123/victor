@@ -23,7 +23,7 @@ namespace Analog {
   void stop(void);
   void transmit(BodyToHead* data);
   void allowCharge(bool);
-  void delayCharge();
+  bool delayCharge();
 };
 
 #endif

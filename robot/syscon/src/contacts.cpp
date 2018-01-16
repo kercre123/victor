@@ -13,11 +13,13 @@ static int rxDataIndex;
 static ContactData txData;
 static int txDataIndex;
 
+static const ContactData boot_msg = {"\xFF\xFF\xFF\xFF\nbooted\n"};
+
 void Contacts::init(void) {
-  VEXT_SENSE::alternate(1);  // USART2_TX
-  VEXT_SENSE::speed(SPEED_HIGH);
-  VEXT_SENSE::pull(PULL_NONE);
-  VEXT_SENSE::mode(MODE_ALTERNATE);
+  VEXT_TX::alternate(1);  // USART2_TX
+  VEXT_TX::speed(SPEED_HIGH);
+  VEXT_TX::pull(PULL_NONE);
+  VEXT_TX::mode(MODE_ALTERNATE);
 
   // Configure our USART2
   USART2->BRR = SYSTEM_CLOCK / CONTACT_BAUDRATE;
@@ -37,7 +39,6 @@ void Contacts::init(void) {
   rxDataIndex = 0;
   txDataIndex = 0;
   
-  static const ContactData boot_msg = {"\nbooted\n"};
   Contacts::forward( boot_msg );
 }
 
@@ -68,14 +69,20 @@ void Contacts::tick(void) {
 
 extern "C" void USART2_IRQHandler(void) {
   // Transmit data
-  if (USART2->ISR & USART_ISR_TXE && txDataIndex < sizeof(txData)) {
-    uint8_t byte = txData.data[txDataIndex++];
-    
-    if (byte > 0) { 
-      USART2->TDR = byte;
+  if (USART2->ISR & USART_ISR_TXE) {
+    if (txDataIndex < sizeof(txData)) {
+      uint8_t byte = txData.data[txDataIndex++];
+
+      if (byte > 0) { 
+        USART2->TDR = byte;
+      } else {
+        txDataIndex = sizeof(txData);
+      }
     }
-  } else {
-    USART2->CR1 &= ~USART_CR1_TXEIE;
+
+    if (txDataIndex >= sizeof(txData)) {
+      USART2->CR1 &= ~USART_CR1_TXEIE;
+    }
   }
 
   // Receive data
@@ -88,3 +95,4 @@ extern "C" void USART2_IRQHandler(void) {
     }
   }
 }
+  
