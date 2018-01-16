@@ -401,7 +401,7 @@ unity/Cozmo/Assets/StreamingAssets/Scratch/lib/vm/dist/web/scratch-vm.js.map.met
 .vscode
 
 # Xamarin
-apps/xamarin/victor/Droid/bin
-apps/xamarin/victor/Droid/obj
-apps/xamarin/victor/iOS/bin
-apps/xamarin/victor/iOS/obj
+apps/xamarin/chewie/Droid/bin
+apps/xamarin/chewie/Droid/obj
+apps/xamarin/chewie/iOS/bin
+apps/xamarin/chewie/iOS/obj

@@ -3,11 +3,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{103B2155-CB69-488F-B4DE-424BDDC44D91}</ProjectGuid>
+    <ProjectGuid>{65564713-1226-4472-90DD-BD27C8B95EF8}</ProjectGuid>
     <ProjectTypeGuids>{EFBA0AD7-5A72-4C68-AF49-83D382785DCF};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <OutputType>Library</OutputType>
-    <RootNamespace>victor.Droid</RootNamespace>
-    <AssemblyName>victor.Droid</AssemblyName>
+    <RootNamespace>chewie.Droid</RootNamespace>
+    <AssemblyName>chewie.Droid</AssemblyName>
     <TargetFrameworkVersion>v8.0</TargetFrameworkVersion>
     <AndroidApplication>True</AndroidApplication>
     <AndroidResgenFile>Resources\Resource.designer.cs</AndroidResgenFile>
@@ -62,6 +62,6 @@
     <AndroidResource Include="Resources\mipmap-xxhdpi\Icon.png" />
     <AndroidResource Include="Resources\mipmap-xxxhdpi\Icon.png" />
   </ItemGroup>
-  <Import Project="..\victor\victor.projitems" Label="Shared" Condition="Exists('..\victor\victor.projitems')" />
+  <Import Project="..\chewie\chewie.projitems" Label="Shared" Condition="Exists('..\chewie\chewie.projitems')" />
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
 </Project>

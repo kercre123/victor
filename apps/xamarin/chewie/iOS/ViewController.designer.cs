@@ -5,14 +5,18 @@
 //		
 using Foundation;
 
-namespace victor.iOS {
+namespace chewie.iOS
+{
     [Register("ViewController")]
-    partial class ViewController {
+    partial class ViewController
+    {
         [Outlet]
         UIKit.UIButton Button { get; set; }
 
-        void ReleaseDesignerOutlets() {
-            if (Button != null) {
+        void ReleaseDesignerOutlets()
+        {
+            if (Button != null)
+            {
                 Button.Dispose();
                 Button = null;
             }
