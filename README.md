@@ -11,6 +11,8 @@ If you need to work on Cozmo, you should look in [cozmo-one].
 
 [cozmo-one]: https://github.com/anki/cozmo-one
 
+For more information about the system architecture, components, organization at a high level, check out the [Victor System Architecture](docs/architecture/README.md) page.
+
 ## Getting Started
 
 If you are new to Anki please also see the [New Hire Onboarding](https://ankiinc.atlassian.net/wiki/pages/viewpage.action?pageId=72614010) page.
@@ -186,3 +188,7 @@ Most developers shouldn't have to do this. Better to ask someone in hardware or 
 1. If the robot has previously run the robot process since last boot then you'll need to first reboot the robot. 
 
 1. Run `dfu.sh` in `robot/`. There should be a bunch of messages indicating transfer of data. Might need to run twice.
+
+## Having trouble?
+
+Check out the [Frequently Asked Questions](docs/faq.md) page. When you get new questions answered, consider adding them to the list to help others!

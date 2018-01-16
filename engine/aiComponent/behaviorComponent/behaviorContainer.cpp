@@ -19,6 +19,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorPlayAnimOnNeedsChange.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorPlayAnimSequence.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorPlayAnimSequenceWithFace.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorPlayAnimSequenceWithObject.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorDriveOffCharger.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorDrivePath.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorFindFaces.h"
@@ -137,6 +138,7 @@ namespace Cozmo {
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorContainer::BehaviorContainer(const BehaviorIDJsonMap& behaviorData)
+: IDependencyManagedComponent<BCComponentID>(BCComponentID::BehaviorContainer)
 {
   for( const auto& behaviorIDJsonPair : behaviorData )
   {
@@ -176,6 +178,15 @@ BehaviorContainer::~BehaviorContainer()
   // Delete all behaviors owned by the factory
   _idToBehaviorMap.clear();
 }
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorContainer::InitDependent(Robot* robot, const BCCompMap& dependentComponents)
+{
+  auto& bei = dependentComponents.find(BCComponentID::BehaviorExternalInterface)->second.GetValue<BehaviorExternalInterface>();
+  Init(bei);
+}
+
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -324,6 +335,11 @@ ICozmoBehaviorPtr BehaviorContainer::CreateBehaviorBase(BehaviorClass behaviorTy
     case BehaviorClass::PlayAnimWithFace:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorPlayAnimSequenceWithFace(config));
+      break;
+    }
+    case BehaviorClass::PlayAnimWithObject:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorPlayAnimSequenceWithObject(config));
       break;
     }
     case BehaviorClass::PounceOnMotion:

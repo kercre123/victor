@@ -39,9 +39,7 @@ class BehaviorAcknowledgeObject : public ICozmoBehavior
 private:
   using super = ICozmoBehavior;
 
-public:
-  virtual bool CarryingObjectHandledInternally() const override { return true;}
-  
+public:  
   void SetObjectsToAcknowledge(const std::set<s32>& targets){_targets = targets;}
   
 protected:
@@ -59,6 +57,10 @@ protected:
   // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
   BehaviorAcknowledgeObject(const Json::Value& config);
+
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenCarryingObject = true;
+  }
 
   void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;

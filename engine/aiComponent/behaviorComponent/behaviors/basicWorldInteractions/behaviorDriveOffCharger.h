@@ -28,20 +28,17 @@ protected:
   BehaviorDriveOffCharger(const Json::Value& config);
 
 public:
-
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual bool CarryingObjectHandledInternally() const override {return false;}
-  virtual bool ShouldRunWhileOnCharger() const override { return true;}
-
-  // true so that we can handle edge cases where the robot is on the charger and not on his treads
-  virtual bool ShouldRunWhileOffTreads() const override { return true;}
 
 protected:
-
   virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  
+
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override{
+    modifiers.wantsToBeActivatedWhenOffTreads = true;
+  }
+
   enum class DebugState {
     DrivingForward,
   };

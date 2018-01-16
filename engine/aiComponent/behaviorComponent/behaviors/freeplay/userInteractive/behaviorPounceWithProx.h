@@ -28,17 +28,17 @@ private:
   
 public:
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override { return true;}
-  virtual bool CarryingObjectHandledInternally() const override {return false;}
 
 protected:
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
 
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.behaviorAlwaysDelegates = false;
+  }
   virtual void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual bool ShouldCancelWhenInControl() const override { return false;}
-
 
 private:
   enum class PounceState{

@@ -60,7 +60,6 @@ public:
   
   // todo: document. Is this behavior alway activatable, or we won't look around in an area we already know everything?
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual bool CarryingObjectHandledInternally() const override { return _configParams.behavior_CanCarryCube;}
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Methods
@@ -70,6 +69,9 @@ public:
   unsigned int GetNumIterationsCompleted() const { return _numIterationsCompleted; }
 
 protected:
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenCarryingObject = _configParams.behavior_CanCarryCube;
+  }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Initialization

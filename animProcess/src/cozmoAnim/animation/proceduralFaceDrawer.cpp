@@ -16,8 +16,6 @@
 namespace Anki {
 namespace Cozmo {
   
-  #define FIXED_INNER_GLOW_POSITION 1
-
   #define CONSOLE_GROUP "ProceduralFace"
 
   CONSOLE_VAR_RANGED(f32, kProcFace_InnerGlowFrac,            CONSOLE_GROUP, 0.4f, 0.05f, 1.f);
@@ -354,18 +352,22 @@ namespace Cozmo {
       const f32 scaledEyeWidth  = eyeScaleX * static_cast<f32>(eyeWidth);
       const f32 scaledEyeHeight = eyeScaleY * static_cast<f32>(eyeHeight);
       
-#     if FIXED_INNER_GLOW_POSITION
-      const s32 glowCenX = eyeCenter.x();
-      const s32 glowCenY = eyeCenter.y();
-#     else
-      // WIP: Move glow center with eye
-      const s32 glowCenOffsetX = eyeCenter.x() - (whichEye == ProceduralFace::Left ? ProceduralFace::GetNominalLeftEyeX()+10 : ProceduralFace::GetNominalRightEyeX()-13);
-      const s32 glowCenOffsetY = eyeCenter.y() - (whichEye == ProceduralFace::Left ? ProceduralFace::GetNominalEyeY()+4      : ProceduralFace::GetNominalEyeY()+3);
+      s32 glowCenX = eyeCenter.x();
+      s32 glowCenY = eyeCenter.y();
       
-      const f32 innerGlowCenFrac = 4.f;
-      const f32 glowCenX = eyeCenter.x() - innerGlowCenFrac*glowCenOffsetX;
-      const f32 glowCenY = eyeCenter.y() - innerGlowCenFrac*glowCenOffsetY;
-#     endif 
+      // The hotspot center params leave the hot spot at the eye center if zero. If non-zero,
+      // they shift left/right/up/down where a magnitude of 1.0 moves the center to the extreme
+      // edge of the eye shape
+      const Value hotSpotCenterX = faceData.GetParameter(whichEye, Parameter::HotSpotCenterX);
+      const Value hotSpotCenterY = faceData.GetParameter(whichEye, Parameter::HotSpotCenterY);
+      if(!Util::IsNearZero(hotSpotCenterX))
+      {
+        glowCenX += hotSpotCenterX * (0.5f*scaledEyeWidth);
+      }
+      if(!Util::IsNearZero(hotSpotCenterY))
+      {
+        glowCenY += hotSpotCenterY * (0.5f*scaledEyeHeight);
+      }
       
       // Inner Glow = the brighter glow at the center of the eye that falls off radially towards the edge of the eye
       // Outer Glow = the "halo" effect around the outside of the eye shape

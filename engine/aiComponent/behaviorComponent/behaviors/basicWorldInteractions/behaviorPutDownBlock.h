@@ -32,8 +32,10 @@ protected:
   friend class BehaviorContainer;
   BehaviorPutDownBlock(const Json::Value& config);
 
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenCarryingObject = true;
+  }
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual bool CarryingObjectHandledInternally() const override {return true;}
 
   virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   

@@ -54,6 +54,7 @@ enum uint_8 BehaviorClass {
   PlayAnim,
   PlayAnimOnNeedsChange,
   PlayAnimWithFace,
+  PlayAnimWithObject,
 
   PlaypenCameraCalibration,
   PlaypenDistanceSensor,
@@ -132,6 +133,7 @@ enum uint_8 BehaviorClass {
 // so that they can be referenced by other parts of the behavior system
 // PLEASE KEEP ALPHABETIZED
 enum uint_8 BehaviorID {
+  AcknowledgeCharger,
   AcknowledgeFace,
   AcknowledgeObject,
   Anonymous,

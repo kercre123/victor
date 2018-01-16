@@ -240,36 +240,18 @@ Supervisor {
                     }
                   }
 
-                # Connects CozmoEngine2 to CozmoBot2
-                %{ if not fields.vizMode.value then }%                 
-                Connector {
-                  name "engineConnector"
-                  model "engineConnector"
-                  type "symmetric"
-                  isLocked TRUE
-                  autoLock TRUE
-                  distanceTolerance 0.1
-                  axisTolerance 3.14
-                  rotationTolerance 3.14
-                  numberOfRotations 1
-
-                  rotation 0 1 0 1.5707963
+                %{ if not fields.vizMode.value then }%
+                
+                # Anim process:
+                CozmoAnim {
+                  robotID IS robotID
+                  filterLogs IS filterLogs
                 }
-
-                # Connects CozmoAnim to CozmoBot2
-                Connector {
-                  name "animConnector"
-                  model "animConnector"
-                  type "symmetric"
-                  isLocked TRUE
-                  autoLock TRUE
-                  distanceTolerance 0.1
-                  axisTolerance 3.14
-                  rotationTolerance 3.14
-                  numberOfRotations 1
-
-                  translation 0.0001 0.0001 0
-                  rotation 0 1 0 1.5707963
+                
+                # Engine process:
+                CozmoEngine2 {
+                  robotID IS robotID
+                  filterLogs IS filterLogs
                 }
 
                 # This IMU is positioned in the same place as the one in CozmoEngine2.proto

@@ -58,20 +58,35 @@ void PlanParameters::Reset() {
   commonOriginID = PoseOriginList::UnknownOriginID;
 }
 
-PathComponent::PathComponent(Robot& robot, const RobotID_t robotID, const CozmoContext* context)
-  : _speedChooser(new SpeedChooser(robot))
-  , _shortPathPlanner(new FaceAndApproachPlanner)
-  , _shortMinAnglePathPlanner(new MinimalAnglePlanner)
-  , _pathMotionProfile(new PathMotionProfile(DEFAULT_PATH_MOTION_PROFILE))
-  , _currPlanParams(new PlanParameters)
-  , _robot(robot)
+PathComponent::PathComponent()
+: IDependencyManagedComponent<RobotComponentID>(RobotComponentID::PathPlanning)
+, _shortPathPlanner(new FaceAndApproachPlanner)
+, _shortMinAnglePathPlanner(new MinimalAnglePlanner)
+, _pathMotionProfile(new PathMotionProfile(DEFAULT_PATH_MOTION_PROFILE))
+, _currPlanParams(new PlanParameters)
 {
+}
+
+PathComponent::~PathComponent()
+{
+  // If there's no context the robot is being destroyed - no need to abort
+  if(_robot->HasComponent(RobotComponentID::CozmoContext)){
+    Abort();
+  }
+}
+
+void PathComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+{
+  _robot = robot;
+  const CozmoContext* context =  _robot->GetContext();
+  const RobotID_t robotID = _robot->GetID();
+  _speedChooser = std::make_unique<SpeedChooser>(*_robot);
   if( context ) {
     // might not exist (e.g. unit tests)
     _pdo.reset(new PathDolerOuter(context->GetRobotManager()->GetMsgHandler(), robotID));
 
     if (nullptr != context->GetDataPlatform()) {
-      _longPathPlanner.reset(new LatticePlanner(&robot, context->GetDataPlatform()));
+      _longPathPlanner.reset(new LatticePlanner(_robot, context->GetDataPlatform()));
     }
     else {
       // For unit tests, or cases where we don't have data, use the short planner in it's place
@@ -223,15 +238,12 @@ PathComponent::PathComponent(Robot& robot, const RobotID_t robotID, const CozmoC
     }
   };
   
-  _pathEventHandle = _robot.GetRobotMessageHandler()->Subscribe(_robot.GetID(),
+  _pathEventHandle = _robot->GetRobotMessageHandler()->Subscribe(_robot->GetID(),
                                                                 RobotInterface::RobotToEngineTag::pathFollowingEvent,
                                                                 eventLambda);
+
 }
 
-PathComponent::~PathComponent()
-{
-  Abort();
-}
 
 Result PathComponent::Abort()
 {
@@ -283,7 +295,7 @@ void PathComponent::AbortAndSetFailure()
 void PathComponent::OnPathComplete()
 {
   _plannerActive = false;
-  _robot.GetContext()->GetVizManager()->ErasePath(_robot.GetID());
+  _robot->GetContext()->GetVizManager()->ErasePath(_robot->GetID());
   SetDriveToPoseStatus(ERobotDriveToPoseStatus::Ready);
 }
 
@@ -355,7 +367,7 @@ void PathComponent::HandlePossibleOriginChanges()
   ANKI_VERIFY(_currPlanParams->commonOriginID != PoseOriginList::UnknownOriginID,
               "PathComponent.HandlePossibleOriginChanges.NullParamsOrigin", "");
   
-  ANKI_VERIFY(_robot.GetPoseOriginList().ContainsOriginID(_currPlanParams->commonOriginID),
+  ANKI_VERIFY(_robot->GetPoseOriginList().ContainsOriginID(_currPlanParams->commonOriginID),
               "PathComponent.Update.CommonOriginNotInRobotPoseOriginList",
               "ID:%d", _currPlanParams->commonOriginID);
   
@@ -366,10 +378,10 @@ void PathComponent::HandlePossibleOriginChanges()
   // where this happens would be that the robot localizes to object 1 (origin A), get picked up and put down
   // (creating origin B), starts driving somewhere, and while driving sees object 1, which causes a rejigger
   // to origin A
-  const bool haveOriginsChanged = ( _currPlanParams->commonOriginID != _robot.GetPoseOriginList().GetCurrentOriginID() );
+  const bool haveOriginsChanged = ( _currPlanParams->commonOriginID != _robot->GetPoseOriginList().GetCurrentOriginID() );
   
-  const Pose3d& commonOrigin = _robot.GetPoseOriginList().GetOriginByID(_currPlanParams->commonOriginID);
-  const bool canAdjustOrigin = _robot.IsPoseInWorldOrigin(commonOrigin);
+  const Pose3d& commonOrigin = _robot->GetPoseOriginList().GetOriginByID(_currPlanParams->commonOriginID);
+  const bool canAdjustOrigin = _robot->IsPoseInWorldOrigin(commonOrigin);
 
   if ( haveOriginsChanged && !canAdjustOrigin ) {
     // the origins changed and we can't rejigger our goal to the new origin (we probably delocalized),
@@ -397,7 +409,7 @@ void PathComponent::RejiggerTargetsAndReplan()
     return;
   }
   
-  _currPlanParams->commonOriginID = _robot.GetPoseOriginList().GetCurrentOriginID();
+  _currPlanParams->commonOriginID = _robot->GetPoseOriginList().GetCurrentOriginID();
 
   if( _plannerActive ) {
     // no use carrying on with an old plan, if there is one going
@@ -412,13 +424,13 @@ void PathComponent::RejiggerTargetsAndReplan()
   // the rejigger into account
   bool rejiggerSuccess = true;
   for( auto& targetPose : _currPlanParams->targetPoses ) {
-    rejiggerSuccess &= targetPose.GetWithRespectTo(_robot.GetWorldOrigin(), targetPose);
+    rejiggerSuccess &= targetPose.GetWithRespectTo(_robot->GetWorldOrigin(), targetPose);
   }
   
   if( ANKI_VERIFY(rejiggerSuccess, "PathComponent.Update.Rejigger",
                   "Rejiggering %zu target poses to new origin '%s' failed",
                   _currPlanParams->targetPoses.size(),
-                  _robot.GetWorldOrigin().GetName().c_str())) {
+                  _robot->GetWorldOrigin().GetName().c_str())) {
 
     const bool started = StartPlanner();
     if( started ) {
@@ -504,7 +516,7 @@ void PathComponent::HandlePlanComplete()
   Planning::GoalID selectedPoseIdx;
   Planning::Path newPath;
 
-  const Pose3d& driveCenterPose = _robot.GetDriveCenterPose();
+  const Pose3d& driveCenterPose = _robot->GetDriveCenterPose();
   
   _selectedPathPlanner->GetCompletePath(driveCenterPose,
                                         newPath,
@@ -587,19 +599,19 @@ void PathComponent::HandlePlanComplete()
 void PathComponent::SelectPlannerHelper(const Pose3d& targetPose)
 {
   Pose2d target2d(targetPose);
-  Pose2d start2d(_robot.GetPose().GetWithRespectToRoot());
+  Pose2d start2d(_robot->GetPose().GetWithRespectToRoot());
 
   float distSquared = pow(target2d.GetX() - start2d.GetX(), 2) + pow(target2d.GetY() - start2d.GetY(), 2);
 
   if(distSquared < std::pow(kMaxDistanceForShortPlanner_mm, 2)) {
 
-    Radians finalAngleDelta = targetPose.GetRotationAngle<'Z'>() - _robot.GetDriveCenterPose().GetRotationAngle<'Z'>();
+    Radians finalAngleDelta = targetPose.GetRotationAngle<'Z'>() - _robot->GetDriveCenterPose().GetRotationAngle<'Z'>();
     const bool withinFinalAngleTolerance = finalAngleDelta.getAbsoluteVal().ToFloat() <=
       2 * PLANNER_MAINTAIN_ANGLE_THRESHOLD;
 
-    Radians initialTurnAngle = atan2( target2d.GetY() - _robot.GetDriveCenterPose().GetTranslation().y(),
-                                      target2d.GetX() - _robot.GetDriveCenterPose().GetTranslation().x()) -
-      _robot.GetDriveCenterPose().GetRotationAngle<'Z'>();
+    Radians initialTurnAngle = atan2( target2d.GetY() - _robot->GetDriveCenterPose().GetTranslation().y(),
+                                      target2d.GetX() - _robot->GetDriveCenterPose().GetTranslation().x()) -
+      _robot->GetDriveCenterPose().GetRotationAngle<'Z'>();
 
     const bool initialTurnAngleLarge = initialTurnAngle.getAbsoluteVal().ToFloat() >
       0.5 * PLANNER_MAINTAIN_ANGLE_THRESHOLD;
@@ -651,7 +663,7 @@ void PathComponent::SelectPlanner()
     // for now, just grab the closest pose and use that to select the planner. Note that this pose might be
     // different from the target pose the selected planner actually plans to (because planning distance is not
     // the same as euclidean distance)
-    Planning::GoalID closest = IPathPlanner::ComputeClosestGoalPose(_robot.GetDriveCenterPose(),
+    Planning::GoalID closest = IPathPlanner::ComputeClosestGoalPose(_robot->GetDriveCenterPose(),
                                                                     _currPlanParams->targetPoses);
     SelectPlannerHelper(_currPlanParams->targetPoses[closest]);
   }
@@ -732,9 +744,9 @@ Result PathComponent::StartDrivingToPose(const std::vector<Pose3d>& poses,
   _usingManualPathSpeed = useManualSpeed;
   _plannerSelectedPoseIndex = selectedPoseIndexPtr;
 
-  _currPlanParams->commonOriginID = _robot.GetPoseOriginList().GetCurrentOriginID();
+  _currPlanParams->commonOriginID = _robot->GetPoseOriginList().GetCurrentOriginID();
   
-  const Pose3d& driveCenterPose = _robot.GetDriveCenterPose();
+  const Pose3d& driveCenterPose = _robot->GetDriveCenterPose();
   
   // TODO: this is really a sanity check and is not "free". Disable or make ANKI_DEV_CODE once COZMO-1637 is sorted out
   const Pose3d& driveCenterOrigin = driveCenterPose.FindRoot();
@@ -747,14 +759,14 @@ Result PathComponent::StartDrivingToPose(const std::vector<Pose3d>& poses,
     return RESULT_FAIL;
   }
   
-  const Pose3d& commonOrigin = _robot.GetPoseOriginList().GetCurrentOrigin();
+  const Pose3d& commonOrigin = _robot->GetPoseOriginList().GetCurrentOrigin();
   
   // Compute drive center pose for start pose and goal poses
   _currPlanParams->targetPoses.resize(poses.size());
   for (int i=0; i< poses.size(); ++i) {
     Pose3d& targetPose_i = _currPlanParams->targetPoses[i];
     
-    _robot.ComputeDriveCenterPose(poses[i], targetPose_i);
+    _robot->ComputeDriveCenterPose(poses[i], targetPose_i);
 
     // assure that all targets and the robot share an origin
     if(!_currPlanParams->targetPoses[i].HasSameRootAs(commonOrigin)) {
@@ -814,7 +826,7 @@ bool PathComponent::StartPlanner(const Pose3d& driveCenterPose)
 
 bool PathComponent::StartPlanner()
 {
-  const Pose3d& driveCenterPose(_robot.GetDriveCenterPose());  
+  const Pose3d& driveCenterPose(_robot->GetDriveCenterPose());  
   return StartPlanner(driveCenterPose);
 }
 
@@ -857,7 +869,7 @@ void PathComponent::RestartPlannerIfNeeded()
     return;
   }
   
-  switch( _selectedPathPlanner->ComputeNewPathIfNeeded( _robot.GetDriveCenterPose() ) ) {
+  switch( _selectedPathPlanner->ComputeNewPathIfNeeded( _robot->GetDriveCenterPose() ) ) {
     case EComputePathStatus::Error:
       if( ReplanWithFallbackPlanner() ) {
         PRINT_CH_INFO("Planner", "PathComponent.RestartIfNeeded.Error.Fallback",
@@ -913,7 +925,7 @@ Result PathComponent::ClearPath()
     _lastCanceledPathID = _lastSentPathID;
   }
   
-  _robot.GetContext()->GetVizManager()->ErasePath(_robot.GetID());
+  _robot->GetContext()->GetVizManager()->ErasePath(_robot->GetID());
   if(_pdo) {
     _pdo->ClearPath();
   }
@@ -923,7 +935,7 @@ Result PathComponent::ClearPath()
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _lastMsgSendTime_s = currTime_s;
 
-  return _robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::ClearPath(0)));
+  return _robot->SendMessage(RobotInterface::EngineToRobot(RobotInterface::ClearPath(0)));
 }
 
    
@@ -1027,7 +1039,7 @@ Result PathComponent::ExecutePath(const Planning::Path& path, const bool useManu
       PRINT_CH_INFO("Planner", "PathComponent.SendExecutePath",
                     "sending start execution message (pathID = %d, manualSpeed == %d)",
                     _lastSentPathID, useManualSpeed);
-      lastResult = _robot.SendMessage(RobotInterface::EngineToRobot(
+      lastResult = _robot->SendMessage(RobotInterface::EngineToRobot(
                                         RobotInterface::ExecutePath(_lastSentPathID, useManualSpeed)));
 
       if( lastResult == RESULT_OK) {
@@ -1039,7 +1051,7 @@ Result PathComponent::ExecutePath(const Planning::Path& path, const bool useManu
     }
         
     // Visualize path if robot has just started traversing it.
-    _robot.GetContext()->GetVizManager()->DrawPath(_robot.GetID(), path, NamedColors::EXECUTED_PATH);
+    _robot->GetContext()->GetVizManager()->DrawPath(_robot->GetID(), path, NamedColors::EXECUTED_PATH);
   }
       
   return lastResult;
@@ -1049,7 +1061,7 @@ void PathComponent::ExecuteTestPath(const PathMotionProfile& motionProfile)
 {
   // NOTE: no need to use the custom motion profile here, we just manually pass it in to the test path
   Planning::Path p;
-  _longPathPlanner->GetTestPath(_robot.GetPose(), p, &motionProfile);
+  _longPathPlanner->GetTestPath(_robot->GetPose(), p, &motionProfile);
   ExecutePath(p, false);
 }
 

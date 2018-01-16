@@ -43,7 +43,6 @@ private:
   using super = ICozmoBehavior;
 
 public:
-  virtual bool CarryingObjectHandledInternally() const override {return false;}
 
   virtual void AddListener(IReactToFaceListener* listener) override;
   
@@ -53,6 +52,8 @@ protected:
   // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
   BehaviorAcknowledgeFace(const Json::Value& config);
+
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
 
   virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;

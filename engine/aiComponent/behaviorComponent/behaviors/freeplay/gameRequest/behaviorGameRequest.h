@@ -42,13 +42,17 @@ public:
   
   virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) final override;
   virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) final override;
-  virtual bool ShouldCancelWhenInControl() const override { return false;}
 
 protected:
 
   using Face = Vision::TrackedFace;
   using FaceID_t = Vision::FaceID_t;
   
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.behaviorAlwaysDelegates = false;
+    modifiers.wantsToBeActivatedWhenCarryingObject = true;
+  }
+
   void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) override;
   
   // --------------------------------------------------------------------------------

@@ -38,8 +38,8 @@ TEST(DelegationComponent, TestDelegationVariants)
 {
   std::unique_ptr<TestSuperPoweredBehavior> baseBehavior = std::make_unique<TestSuperPoweredBehavior>();
   TestBehaviorFramework testFramework;
-  auto initializeBehavior = [&baseBehavior](const BehaviorComponent::ComponentsPtr& comps){
-    baseBehavior->SetBehaviorContainer(comps->_behaviorContainer);
+  auto initializeBehavior = [&baseBehavior](const BehaviorComponent::UniqueComponents& comps){
+    baseBehavior->SetBehaviorContainer(comps->_array.GetComponent(BCComponentID::BehaviorContainer).GetValue<BehaviorContainer>());
   };
   testFramework.InitializeStandardBehaviorComponent(baseBehavior.get(),initializeBehavior);
   
@@ -122,7 +122,7 @@ TEST(DelegationComponent, TestDelegationVariants)
 
   // Delegate to helper
   {
-    auto& factory = testFramework.GetBehaviorComponent()._behaviorHelperComponent->GetBehaviorHelperFactory();
+    auto& factory = testFramework.GetBehaviorComponent().GetComponent<BehaviorHelperComponent>(BCComponentID::BehaviorHelperComponent).GetBehaviorHelperFactory();
     bunchOfHelpers.push_back(factory.CreatePlaceBlockHelper(testFramework.GetBehaviorExternalInterface(),
                                                             *bunchOfCozmoBehaviors.back().get()));
     HelperHandle toDelegate = bunchOfHelpers.back();

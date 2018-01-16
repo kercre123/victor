@@ -28,14 +28,13 @@ private:
   
 public:
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  // don't know where the robot will land, so don't resume
-  // TODO:(bn) should this depend on how long the robot was "in the air"?
-  virtual bool ShouldRunWhileOffTreads() const override { return true;}
-
-  virtual bool CarryingObjectHandledInternally() const override {return true;}
 
 protected:
-  
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenCarryingObject = true;
+    modifiers.wantsToBeActivatedWhenOffTreads = true;
+  }
+
   virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
 

@@ -1,0 +1,53 @@
+/**
+* File: aiComponents_fwd.h
+*
+* Author: Kevin M. Karol
+* Created: 1/5/18
+*
+* Description: Enumeration of components within aiComponent.h's entity
+*
+* Copyright: Anki, Inc. 2018
+*
+**/
+
+#ifndef __Cozmo_Basestation_BehaviorSystem_AI_Components_fwd_H__
+#define __Cozmo_Basestation_BehaviorSystem_AI_Components_fwd_H__
+
+namespace Anki {
+namespace Cozmo {
+
+enum class AIComponentID{
+  // component which manages all aspects of the AI system that relate to behaviors
+  BehaviorComponent,
+  // component which behaviors can delegate to for selecting a random Trick / Spark
+  DoATrick,
+  // provide a simple interface for selecting the best face to interact with
+  FaceSelection,
+  // Coordinates sound effect events across various feeding cubes/activities etc
+  FeedingSoundEffect,
+  // component for tracking freeplay DAS data
+  FreeplayDataTracker,
+  // module to analyze information for the AI in processes common to more than one behavior, for example
+  // border calculation
+  InformationAnalyzer,
+  // Component which tracks and caches the best objects to use for certain interactions
+  ObjectInteractionInfoCache,
+  // Component that maintains the puzzles victor can solve
+  Puzzle,
+  // component for keeping track of what game cozmo should request next
+  RequestGame,
+  // component for tracking severe needs states
+  SevereNeeds,
+  // whiteboard for behaviors to share information, or to store information only useful to behaviors
+  Whiteboard,
+  // component for tracking cozmo's work-out behaviors
+  Workout,
+  
+  Count
+};
+
+
+} // namespace Cozmo
+} // namespace Anki
+
+#endif // __Cozmo_Basestation_BehaviorSystem_BEI_Components_fwd_H__

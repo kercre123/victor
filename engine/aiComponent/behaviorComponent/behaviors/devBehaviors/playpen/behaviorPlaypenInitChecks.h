@@ -28,10 +28,10 @@ protected:
   BehaviorPlaypenInitChecks(const Json::Value& config);
   
 protected:
-  
+  virtual void GetBehaviorOperationModifiersInternal(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenOnCharger = true;
+  }  
   virtual Result OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
-  
-  virtual bool ShouldRunWhileOnCharger() const override { return true; }
   
 };
 

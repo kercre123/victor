@@ -42,7 +42,8 @@ const int kArbitrarilyLargeCancelBound = 1000000;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorSystemManager::BehaviorSystemManager()
-: _initializationStage(InitializationStage::SystemNotInitialized)
+: IDependencyManagedComponent(BCComponentID::BehaviorSystemManager)
+, _initializationStage(InitializationStage::SystemNotInitialized)
 {
   _behaviorStack.reset();
 }
@@ -52,6 +53,19 @@ BehaviorSystemManager::BehaviorSystemManager()
 BehaviorSystemManager::~BehaviorSystemManager()
 {
 
+}
+
+
+void BehaviorSystemManager::InitDependent(Robot* robot, const BCCompMap& dependentComponents)
+{
+  auto& baseBehaviorWrapper = dependentComponents.find(BCComponentID::BaseBehaviorWrapper)->second.GetValue<BaseBehaviorWrapper>();
+  auto& bei = dependentComponents.find(BCComponentID::BehaviorExternalInterface)->second.GetValue<BehaviorExternalInterface>();
+  auto& async = dependentComponents.find(BCComponentID::AsyncMessageComponent)->second.GetValue<AsyncMessageGateComponent>();
+
+  InitConfiguration(*robot,
+                    baseBehaviorWrapper._baseBehavior,
+                    bei,
+                    &async);
 }
 
 

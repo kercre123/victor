@@ -325,6 +325,12 @@ add_c_compiler_flag(-fstack-protector-strong RELEASE)
 if (CIVETWEB_ALLOW_LTO)
   add_c_compiler_flag(-flto RELEASE)
 endif()
+
+if (CIVETWEB_ALLOW_SANITIZE)
+  add_c_compiler_flag(-fsanitize=undefined DEBUG)
+  add_c_compiler_flag(-fsanitize=address DEBUG)
+endif()
+
 if (HAVE_C_FLAG_FSANITIZE_ADDRESS)
   add_c_compiler_flag(-static-asan DEBUG)
 endif()

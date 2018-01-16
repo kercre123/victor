@@ -21,11 +21,7 @@ namespace Cozmo {
 
 class BehaviorPeekABoo : public ICozmoBehavior
 {
-  
-public:
-  
-  virtual bool CarryingObjectHandledInternally() const override { return false; }
-  
+public:  
   // for COZMO-8914
   void PeekABooSparkStarted(float sparkTimeout);
   
@@ -50,6 +46,8 @@ protected:
 
 
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
+
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
 
   virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;

@@ -40,9 +40,7 @@ protected:
   
 public:
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  
-  virtual bool CarryingObjectHandledInternally() const override {return true;}
-  
+    
   // returns false if the base block id has not been set
   bool GetBaseBlockID(ObjectID& id) const;
   bool GetStaticBlockID(ObjectID& id) const;
@@ -60,6 +58,9 @@ protected:
     SearchingForObject
   };
   
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenCarryingObject = true;
+  }
   
   virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;

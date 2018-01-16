@@ -33,17 +33,20 @@ public:
   virtual ~BehaviorPlayAnimSequence();
   
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual bool CarryingObjectHandledInternally() const override { return true;}
   virtual void AddListener(ISubtaskListener* listener) override;
 
-  virtual bool ShouldRunWhileOnCharger() const override { return _supportCharger; }
   
   // Begin playing the animations
   void StartPlayingAnimations(BehaviorExternalInterface& behaviorExternalInterface);
   void SetAnimSequence(const std::vector<AnimationTrigger>& animations){_animTriggers = animations;}
 
 protected:
-  
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override{
+    modifiers.wantsToBeActivatedWhenCarryingObject = true;
+    modifiers.wantsToBeActivatedWhenOffTreads = true;
+    modifiers.wantsToBeActivatedWhenOnCharger = _supportCharger;
+  }
+
   virtual bool WantsToBeActivatedAnimSeqInternal(BehaviorExternalInterface& behaviorExternalInterface) const { return true;}
   
   virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;

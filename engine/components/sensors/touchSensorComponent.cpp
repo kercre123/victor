@@ -61,8 +61,8 @@ namespace {
   const float kBaselineMaxAllowStdevFactorForLowMean = 1.5f;
 } // end anonymous namespace
 
-TouchSensorComponent::TouchSensorComponent(Robot& robot) 
-: ISensorComponent(robot, kLogDirectory)
+TouchSensorComponent::TouchSensorComponent() 
+: ISensorComponent(kLogDirectory, RobotComponentID::TouchSensor)
 , _debouncer(kDebounceLimitPressLow, 
              kDebounceLimitPressHi)
 , _gestureClassifier(kGestureMinTimeForHeld_s,
@@ -112,7 +112,7 @@ void TouchSensorComponent::UpdateInternal(const RobotState& msg)
                             (_touchDetectStdevFactor*_baselineCalib.GetFilteredTouchStdev());
     if( _debouncer.ProcessRawPress(isTouched) ) {
       const bool debouncedButtonState = _debouncer.GetDebouncedPress();
-      _robot.Broadcast(ExternalInterface::MessageEngineToGame(
+      _robot->Broadcast(ExternalInterface::MessageEngineToGame(
                         ExternalInterface::TouchButtonEvent(debouncedButtonState)));
       if( debouncedButtonState ) {
         _gestureClassifier.AddTouchPressed();
@@ -137,7 +137,7 @@ void TouchSensorComponent::UpdateInternal(const RobotState& msg)
 
   if (curGesture != _touchGesture) {
     _touchGesture = curGesture;
-    _robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::TouchGestureEvent(_touchGesture)));
+    _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::TouchGestureEvent(_touchGesture)));
   }  
 
 }

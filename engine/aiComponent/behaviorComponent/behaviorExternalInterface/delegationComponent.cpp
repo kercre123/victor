@@ -134,7 +134,16 @@ void Delegator::HandleActionComplete(u32 actionTag)
 ///////////////////////
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 DelegationComponent::DelegationComponent()
+: IDependencyManagedComponent(BCComponentID::DelegationComponent)
 {
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void DelegationComponent::InitDependent(Robot* robot, const BCCompMap& dependentComponents)
+{
+  auto& bsm = dependentComponents.find(BCComponentID::BehaviorSystemManager)->second.GetValue<BehaviorSystemManager>();
+  Init(*robot, bsm);
 }
 
 

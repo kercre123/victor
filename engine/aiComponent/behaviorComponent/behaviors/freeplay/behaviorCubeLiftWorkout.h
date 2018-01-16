@@ -31,11 +31,10 @@ protected:
   friend class BehaviorContainer;
   BehaviorCubeLiftWorkout(const Json::Value& config);
 
-public:
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenCarryingObject = true;
+  }
 
-  virtual bool CarryingObjectHandledInternally() const override { return true; }
-
-protected:
 
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
 

@@ -31,11 +31,8 @@ protected:
   friend class BehaviorContainer;  
   BehaviorObservingOnCharger(const Json::Value& config);
 
-  virtual bool ShouldRunWhileOnCharger() const override { return true;}
-  virtual bool CarryingObjectHandledInternally() const override {return false;}
-
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override{}
   virtual bool CanBeGentlyInterruptedNow(BehaviorExternalInterface& bei) const override;
-
   virtual void OnBehaviorActivated(BehaviorExternalInterface& bei) override;
 
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& bei) const override {

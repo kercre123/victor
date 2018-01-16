@@ -27,10 +27,10 @@ private:
 
 public:
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual bool ShouldRunWhileOffTreads() const override { return false;}
-  virtual bool CarryingObjectHandledInternally() const override {return false;}
   
 protected:
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
+
   virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   
 private:

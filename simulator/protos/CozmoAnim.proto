@@ -22,21 +22,6 @@ Supervisor {
 
 
   children [
-    # Allows the engine to connect to CozmoBot2
-    Connector {
-      name "animConnector"
-      model "animConnector"
-      type "symmetric"
-      isLocked TRUE
-      autoLock TRUE
-      distanceTolerance 0.1
-      axisTolerance 3.14
-      rotationTolerance 3.14
-      numberOfRotations 1
-
-      rotation 0 1 0 -1.5707963
-    }
-  
     CozmoFaceDisplay {
       translation 0.012 0 0
     }

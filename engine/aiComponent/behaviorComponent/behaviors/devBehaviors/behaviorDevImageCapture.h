@@ -35,18 +35,16 @@ public:
   }
 
 protected:
-
-  virtual bool ShouldRunWhileOffTreads() const override { return true;}
-  virtual bool ShouldRunWhileOnCharger() const override { return true;}
-  virtual bool CarryingObjectHandledInternally() const override { return false; }
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenOffTreads = true;
+    modifiers.wantsToBeActivatedWhenOnCharger = true;
+    modifiers.behaviorAlwaysDelegates = false;
+  }
 
   virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
 
   virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
-  
-  // Always stay running, even with no action
-  virtual bool ShouldCancelWhenInControl() const override { return false; }
   
 private:
 

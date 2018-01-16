@@ -22,6 +22,8 @@
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/behaviorHelperFactory.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/helperHandle.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/iHelper.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
+#include "engine/dependencyManagedComponent.h"
 
 #include <vector>
 #include <memory>
@@ -31,9 +33,19 @@ namespace Anki {
 namespace Cozmo {
   
   
-class BehaviorHelperComponent : private Util::noncopyable{
+class BehaviorHelperComponent : public IDependencyManagedComponent<BCComponentID>, private Util::noncopyable{
 public:
   BehaviorHelperComponent();
+
+  //////
+  // IDependencyManagedComponent functions
+  //////
+  virtual void InitDependent(Robot* robot, const BCCompMap& dependentComponents) override {};
+  virtual void GetInitDependencies(BCCompIDSet& dependencies) const override {};
+  virtual void GetUpdateDependencies(BCCompIDSet& dependencies) const override {};
+  //////
+  // end IDependencyManagedComponent functions
+  //////
   
   BehaviorHelperFactory& GetBehaviorHelperFactory(){ assert(_helperFactory); return *_helperFactory;}
   

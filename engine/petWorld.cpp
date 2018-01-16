@@ -27,12 +27,21 @@ namespace Cozmo {
 CONSOLE_VAR(f32, kHeadTurnSpeedThreshPet_degs, "WasRotatingTooFast.Pet.Head_deg/s", 10.f);
 CONSOLE_VAR(f32, kBodyTurnSpeedThreshPet_degs, "WasRotatingTooFast.Pet.Body_deg/s", 30.f);
 CONSOLE_VAR(u8,  kNumImuDataToLookBackPet,     "WasRotatingTooFast.Pet.NumToLookBack", 5);
-  
-PetWorld::PetWorld(Robot& robot)
-: _robot(robot)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
+PetWorld::PetWorld()
+: IDependencyManagedComponent(RobotComponentID::PetWorld)
 {
   
 }
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void PetWorld::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+{
+  _robot = robot;
+}
+
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result PetWorld::Update(const std::list<Vision::TrackedPet>& pets)
@@ -64,7 +73,7 @@ Result PetWorld::Update(const std::list<Vision::TrackedPet>& pets)
         const bool rotatingTooFastCheckEnabled = (Util::IsFltGT(kBodyTurnSpeedThreshPet_degs, 0.f) ||
                                                   Util::IsFltGT(kHeadTurnSpeedThreshPet_degs, 0.f));
         const bool wasRotatingTooFast = (rotatingTooFastCheckEnabled &&
-                                         _robot.GetVisionComponent().WasRotatingTooFast(petDetection.GetTimeStamp(),
+                                         _robot->GetVisionComponent().WasRotatingTooFast(petDetection.GetTimeStamp(),
                                                                                         DEG_TO_RAD(kBodyTurnSpeedThreshPet_degs),
                                                                                         DEG_TO_RAD(kHeadTurnSpeedThreshPet_degs),
                                                                                         (petDetection.IsBeingTracked() ? kNumImuDataToLookBackPet : 0)));
@@ -111,7 +120,7 @@ Result PetWorld::Update(const std::list<Vision::TrackedPet>& pets)
         }
       }
       
-      Util::sEventF("robot.vision.detected_pet", {{DDATA, EnumToString(knownPet.GetType())}}, "%d", knownPet.GetID());
+      Util::sEventF("robot->vision.detected_pet", {{DDATA, EnumToString(knownPet.GetType())}}, "%d", knownPet.GetID());
     }
     
     // Broadcast the detection for Game/SDK
@@ -128,14 +137,14 @@ Result PetWorld::Update(const std::list<Vision::TrackedPet>& pets)
                                             knownPet.GetRect().GetHeight()),
                                    knownPet.GetType());
       
-      _robot.Broadcast(MessageEngineToGame(std::move(observedPet)));
+      _robot->Broadcast(MessageEngineToGame(std::move(observedPet)));
     }
     
     // Visualize the detection
     if(ANKI_DEV_CHEATS)
     {
       const ColorRGBA& vizColor = ColorRGBA::CreateFromColorIndex(knownPet.GetID());
-      _robot.GetContext()->GetVizManager()->DrawCameraOval(Point2f(knownPet.GetRect().GetXmid(),
+      _robot->GetContext()->GetVizManager()->DrawCameraOval(Point2f(knownPet.GetRect().GetXmid(),
                                                                    knownPet.GetRect().GetYmid()),
                                                            knownPet.GetRect().GetWidth() * 0.5f,
                                                            knownPet.GetRect().GetHeight() * 0.5f,
@@ -150,7 +159,7 @@ Result PetWorld::Update(const std::list<Vision::TrackedPet>& pets)
                knownPet.GetID(),
                knownPet.GetNumTimesObserved());
       
-      _robot.GetContext()->GetVizManager()->DrawCameraText(Point2f(knownPet.GetRect().GetX(),
+      _robot->GetContext()->GetVizManager()->DrawCameraText(Point2f(knownPet.GetRect().GetX(),
                                                                    knownPet.GetRect().GetY()),
                                                            strbuffer, vizColor);
     }

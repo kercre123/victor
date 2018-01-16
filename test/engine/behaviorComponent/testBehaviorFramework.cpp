@@ -64,7 +64,7 @@ TestBehaviorFramework::TestBehaviorFramework(int robotID,
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseBehavior,
-                                         std::function<void(const BehaviorComponent::ComponentsPtr&)> initializeBehavior,
+                                         std::function<void(const BehaviorComponent::UniqueComponents&)> initializeBehavior,
                                          bool shouldCallInitOnBase)
 {
   BehaviorContainer* empty = nullptr;
@@ -75,9 +75,9 @@ void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseB
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseBehavior,
-                                         std::function<void(const BehaviorComponent::ComponentsPtr&)> initializeBehavior,
-                                         bool shouldCallInitOnBase,
-                                         BehaviorContainer*& customContainer)
+                                                                std::function<void(const BehaviorComponent::UniqueComponents&)> initializeBehavior,
+                                                                bool shouldCallInitOnBase,
+                                                                BehaviorContainer*& customContainer)
 {
   if(customContainer != nullptr){
     _behaviorContainer.reset(customContainer);
@@ -87,25 +87,36 @@ void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseB
                              cozmoContext->GetDataLoader()->GetBehaviorJsons());
   }
   
-  BehaviorComponent::ComponentsPtr subComponents = BehaviorComponent::GenerateComponents(*_robot,
-                                                                                         nullptr,
-                                                                                         nullptr,
-                                                                                         _behaviorContainer.get());
-  
   // stack is unused - put an arbitrary behavior on it
   if(baseBehavior == nullptr){
-    baseBehavior = subComponents->_behaviorContainer.FindBehaviorByID(BEHAVIOR_ID(Wait)).get();
+    baseBehavior = _behaviorContainer->FindBehaviorByID(BEHAVIOR_ID(Wait)).get();
     shouldCallInitOnBase = false;
   }
   
-  BehaviorComponent* bc = new BehaviorComponent();
-  subComponents->_aiComponent.Init(subComponents->_robot, bc);
-  _behaviorComponent = &subComponents->_aiComponent.GetBehaviorComponent();
-  _behaviorComponent->Init(std::move(subComponents),
-                           baseBehavior);
+  // swap out the robot's ai component for a custom one
+  {
+    {
+      auto aiComp = new AIComponent();
+      _robot->DevReplaceAIComponent(aiComp);
+    }
+    BehaviorComponent::UniqueComponents subComponents = BehaviorComponent::GenerateManagedComponents(*_robot,
+                                                                                                     _robot->GetAIComponent(),
+                                                                                                     baseBehavior,
+                                                                                                     nullptr,
+                                                                                                     nullptr,
+                                                                                                     _behaviorContainer.get());
+    
+
+
+    BehaviorComponent* bc = new BehaviorComponent();
+    _robot->GetAIComponent().Init(_robot.get(), bc);
+    _behaviorComponent = &_robot->GetAIComponent().GetBehaviorComponent();
+    _behaviorComponent->Init(_robot.get(), std::move(subComponents));
+  }
   
   if(shouldCallInitOnBase){
-    baseBehavior->Init(_behaviorComponent->_components->_behaviorExternalInterface);
+    auto& bei = _behaviorComponent->GetComponent<BehaviorExternalInterface>(BCComponentID::BehaviorExternalInterface);
+    baseBehavior->Init(bei);
   }
   if(initializeBehavior != nullptr){
     initializeBehavior(_behaviorComponent->_components);
@@ -115,10 +126,18 @@ void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseB
   _behaviorComponent->Update(*_robot, empty, empty);
   
   // Grab components from the behaviorComponent
-  _behaviorExternalInterface = &_behaviorComponent->_components->_behaviorExternalInterface;
-  _behaviorSystemManager = &_behaviorComponent->_components->_behaviorSysMgr;
-  _aiComponent = &_behaviorComponent->_components->_aiComponent;
-  
+  {
+    auto& bei = _behaviorComponent->GetComponent<BehaviorExternalInterface>(BCComponentID::BehaviorExternalInterface);
+    _behaviorExternalInterface = &bei;
+  }
+  {
+    auto& bsm = _behaviorComponent->GetComponent<BehaviorSystemManager>(BCComponentID::BehaviorSystemManager);
+    _behaviorSystemManager = &bsm;
+  }
+  {
+    auto& aiComp = _behaviorComponent->GetComponent<AIComponent>(BCComponentID::AIComponent);
+    _aiComponent = &aiComp;
+  }
 }
 
 
@@ -180,12 +199,15 @@ void DoBehaviorInterfaceTicks(Robot& robot, ICozmoBehavior& behavior, BehaviorEx
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void InjectBehaviorIntoStack(ICozmoBehavior& injectBehavior, TestBehaviorFramework& testFramework)
 {
-  auto& behaviorStack = testFramework.GetBehaviorComponent()._components->_behaviorSysMgr._behaviorStack->_behaviorStack;
+  auto& bc = testFramework.GetBehaviorComponent();
+  auto& bsm = bc.GetComponent<BehaviorSystemManager>(BCComponentID::BehaviorSystemManager);
+
+  auto& behaviorStack = bsm._behaviorStack->_behaviorStack;
   if(ANKI_VERIFY(!behaviorStack.empty(),"InjectBehaviorIntoStack.NoBaseBehavior","")){
     IBehavior* lastEntry = behaviorStack.back();
-    auto& delegatesMap = testFramework.GetBehaviorComponent()._components->_behaviorSysMgr._behaviorStack->_delegatesMap;
+    auto& delegatesMap = bsm._behaviorStack->_delegatesMap;
     delegatesMap[lastEntry].insert(&injectBehavior);    
-    testFramework.GetBehaviorComponent()._components->_behaviorSysMgr.Delegate(lastEntry, &injectBehavior);
+    bsm.Delegate(lastEntry, &injectBehavior);
   }
 }
 
@@ -445,11 +467,6 @@ void TestBehaviorWithHelpers::SetActionToRunOnNextUpdate(IActionRunner* action) 
 bool TestBehaviorWithHelpers::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const {
   return true;
 }
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool TestBehaviorWithHelpers::CarryingObjectHandledInternally() const {return true;}
-
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TestBehaviorWithHelpers::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) {

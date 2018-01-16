@@ -15,6 +15,7 @@
 #ifndef __Cozmo_Basestation_CozmoContext_H__
 #define __Cozmo_Basestation_CozmoContext_H__
 
+
 #include "util/helpers/noncopyable.h"
 #include <memory>
 
@@ -79,7 +80,7 @@ namespace Cozmo {
   
 class CozmoContext : private Util::noncopyable
 {
-  
+
 public:
   CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInterface* externalInterface);
   CozmoContext();

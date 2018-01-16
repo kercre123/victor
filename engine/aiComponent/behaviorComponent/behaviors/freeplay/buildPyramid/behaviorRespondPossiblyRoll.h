@@ -85,7 +85,6 @@ private:
 
 public:
   virtual ~BehaviorRespondPossiblyRoll();
-  virtual bool CarryingObjectHandledInternally() const override { return false;}
   
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
   
@@ -94,6 +93,8 @@ public:
   void SetRespondPossiblyRollMetadata(const RespondPossiblyRollMetadata& metadata){_metadata = metadata;}
 
 protected:
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
+
   void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) override;
   
   virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;

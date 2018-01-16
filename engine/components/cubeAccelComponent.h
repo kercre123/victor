@@ -19,6 +19,12 @@
 #include "coretech/common/engine/objectIDs.h"
 #include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/shared/types.h"
+#include "engine/components/cubeAccelComponentListeners.h"
+#include "engine/dependencyManagedComponent.h"
+#include "engine/events/ankiEvent.h"
+#include "engine/robotComponents_fwd.h"
+#include "engine/robotInterface/messageHandler.h"
+
 
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
@@ -35,11 +41,26 @@ namespace Cozmo {
 
 class Robot;
 
-class CubeAccelComponent : private Util::noncopyable
+class CubeAccelComponent : public IDependencyManagedComponent<RobotComponentID>, private Util::noncopyable
 {
 public:
-  CubeAccelComponent(Robot& robot);
+  CubeAccelComponent();
   virtual ~CubeAccelComponent();
+
+  //////
+  // IDependencyManagedComponent functions
+  //////
+  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
+  // Maintain the chain of initializations currently in robot - it might be possible to
+  // change the order of initialization down the line, but be sure to check for ripple effects
+  // when changing this function
+  virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
+    dependencies.insert(RobotComponentID::BodyLights);
+  };
+  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
+  //////
+  // end IDependencyManagedComponent functions
+  //////
 
   // Runs the listener on the accelerometer data stream coming from the specified object
   // Enables streaming object accel data if not already enabled for object
@@ -82,7 +103,7 @@ private:
   // Culls history to it's window size
   void CullToWindowSize(AccelHistory& accelHistory);
   
-  Robot& _robot;
+  Robot* _robot = nullptr;
   
   std::map<ObjectID, AccelHistory> _objectAccelHistory;
   

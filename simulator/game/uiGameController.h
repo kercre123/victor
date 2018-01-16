@@ -540,7 +540,6 @@ private:
   webots::Supervisor _supervisor;
   
   webots::Node* _robotNode       = nullptr;
-  webots::Node* _robotEngineNode = nullptr;
 
   std::vector<webots::Node*> _lightCubes;
   std::vector<webots::Node*>::iterator _lightCubeOriginIter = _lightCubes.end();

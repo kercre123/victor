@@ -35,14 +35,14 @@ protected:
   friend class BehaviorContainer;
   BehaviorExpressNeeds(const Json::Value& config);
 
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenOnCharger = _supportCharger;
+  }
+
   virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
 
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-
-  virtual bool CarryingObjectHandledInternally() const override { return false; }
-
-  virtual bool ShouldRunWhileOnCharger() const override { return _supportCharger; }
 
 private:
 

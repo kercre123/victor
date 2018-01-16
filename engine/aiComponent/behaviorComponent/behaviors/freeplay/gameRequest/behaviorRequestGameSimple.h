@@ -29,8 +29,6 @@ private:
   BehaviorRequestGameSimple(const Json::Value& config);
 
 public:
-
-  virtual bool CarryingObjectHandledInternally() const override { return true;}
   virtual ~BehaviorRequestGameSimple() {}
   
   void TriggeringAsInterrupt() { _wasTriggeredAsInterrupt = true;}

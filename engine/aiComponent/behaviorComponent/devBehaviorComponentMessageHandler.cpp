@@ -31,11 +31,38 @@ static const BehaviorID kBehaviorIDForDevMessage = BEHAVIOR_ID(DevExecuteBehavio
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-DevBehaviorComponentMessageHandler::DevBehaviorComponentMessageHandler(Robot& robot, BehaviorComponent& bComponent, BehaviorContainer& bContainer)
-: _behaviorComponent(bComponent)
+DevBehaviorComponentMessageHandler::DevBehaviorComponentMessageHandler(Robot& robot)
+: IDependencyManagedComponent<BCComponentID>(BCComponentID::DevBehaviorComponentMessageHandler)
+, _robot(robot)
 {
-  if(robot.HasExternalInterface()){
-    auto handlerCallback = [this, &bContainer](const GameToEngineEvent& event) {
+
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+DevBehaviorComponentMessageHandler::~DevBehaviorComponentMessageHandler()
+{
+  _eventHandles.clear();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void DevBehaviorComponentMessageHandler::GetInitDependencies(BCCompIDSet& dependencies) const
+{ 
+  dependencies.insert(BCComponentID::BehaviorExternalInterface);
+  dependencies.insert(BCComponentID::BehaviorSystemManager);
+  dependencies.insert(BCComponentID::BehaviorContainer);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void DevBehaviorComponentMessageHandler::InitDependent(Robot* robot, const BCCompMap& dependentComponents) 
+{
+  auto& bContainer = dependentComponents.find(BCComponentID::BehaviorContainer)->second.GetValue<BehaviorContainer>();
+  auto& bsm = dependentComponents.find(BCComponentID::BehaviorSystemManager)->second.GetValue<BehaviorSystemManager>();
+  auto& bei = dependentComponents.find(BCComponentID::BehaviorExternalInterface)->second.GetValue<BehaviorExternalInterface>();
+
+  if(_robot.HasExternalInterface()){
+    auto handlerCallback = [this, &bContainer, &bsm, &bei](const GameToEngineEvent& event) {
       const auto& msg = event.GetData().Get_ExecuteBehaviorByID();
       
       BehaviorID behaviorID = BehaviorTypesWrapper::BehaviorIDFromString(msg.behaviorID);
@@ -45,26 +72,18 @@ DevBehaviorComponentMessageHandler::DevBehaviorComponentMessageHandler(Robot& ro
           WrapRequestedBehaviorInDispatcherRerun(bContainer,
                                                  behaviorID,
                                                  msg.numRuns);
-        newRerunBaseBehavior->Init(_behaviorComponent._components->_behaviorExternalInterface);
-        auto& subComps = _behaviorComponent._components;
-        subComps->_behaviorSysMgr.ResetBehaviorStack(newRerunBaseBehavior.get());
+        newRerunBaseBehavior->Init(bei);
+        bsm.ResetBehaviorStack(newRerunBaseBehavior.get());
         _rerunBehavior = newRerunBaseBehavior;
       }
     };
 
     _eventHandles.push_back(
-      robot.GetExternalInterface()->Subscribe(GameToEngineTag::ExecuteBehaviorByID, 
-                                              handlerCallback)
+      _robot.GetExternalInterface()->Subscribe(GameToEngineTag::ExecuteBehaviorByID, 
+                                               handlerCallback)
     );
   }
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-DevBehaviorComponentMessageHandler::~DevBehaviorComponentMessageHandler()
-{
-  _eventHandles.clear();
-}
+};
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -1890,6 +1890,8 @@ namespace Anki {
                   faceParams.leftEye[static_cast<s32>(Param::Lightness)]     = rng.RandDblInRange(0.5f, 1.f);
                   faceParams.leftEye[static_cast<s32>(Param::Saturation)]    = rng.RandDblInRange(0.5f, 1.f);
                   faceParams.leftEye[static_cast<s32>(Param::GlowSize)]      = rng.RandDblInRange(0.f, 1.f);
+                  faceParams.leftEye[static_cast<s32>(Param::HotSpotCenterX)]= rng.RandDblInRange(-0.8f, 0.8f);
+                  faceParams.leftEye[static_cast<s32>(Param::HotSpotCenterY)]= rng.RandDblInRange(-0.8f, 0.8f);
                   
                   faceParams.rightEye[static_cast<s32>(Param::UpperInnerRadiusX)]   = rng.RandDblInRange(0., 1.);
                   faceParams.rightEye[static_cast<s32>(Param::UpperInnerRadiusY)]   = rng.RandDblInRange(0., 1.);
@@ -1913,6 +1915,8 @@ namespace Anki {
                   faceParams.rightEye[static_cast<s32>(Param::Lightness)]     = rng.RandDblInRange(0.5f, 1.f);
                   faceParams.rightEye[static_cast<s32>(Param::Saturation)]    = rng.RandDblInRange(0.5f, 1.f);
                   faceParams.rightEye[static_cast<s32>(Param::GlowSize)]      = rng.RandDblInRange(0.f, 0.75f);
+                  faceParams.rightEye[static_cast<s32>(Param::HotSpotCenterX)]= rng.RandDblInRange(-0.8f, 0.8f);
+                  faceParams.rightEye[static_cast<s32>(Param::HotSpotCenterY)]= rng.RandDblInRange(-0.8f, 0.8f);
                   
                   faceParams.faceAngle_deg = 0; //rng.RandIntInRange(-10, 10);
                   faceParams.faceScaleX = 1.f;//rng.RandDblInRange(0.9, 1.1);

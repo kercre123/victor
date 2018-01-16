@@ -82,16 +82,9 @@ CONSOLE_FUNC(FakeCubeShake, "CubeAccelComponent.FakeAccel");
   
   
   
-CubeAccelComponent::CubeAccelComponent(Robot& robot)
-: _robot(robot)
-{
-  // Subscribe to messages
-  if( _robot.HasExternalInterface() ) {
-    auto helper = MakeAnkiEventUtil(*_robot.GetExternalInterface(), *this, _eventHandlers);
-    using namespace ExternalInterface;
-    helper.SubscribeEngineToGame<MessageEngineToGameTag::ObjectConnectionState>();
-  }
-  
+CubeAccelComponent::CubeAccelComponent()
+: IDependencyManagedComponent(RobotComponentID::CubeAccel)
+{  
   sThis = this;
 }
 
@@ -99,6 +92,18 @@ CubeAccelComponent::~CubeAccelComponent()
 {
   sThis = nullptr;
 }
+
+void CubeAccelComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) 
+{
+  _robot = robot;
+  // Subscribe to messages
+  if( _robot->HasExternalInterface() ) {
+    auto helper = MakeAnkiEventUtil(*_robot->GetExternalInterface(), *this, _eventHandlers);
+    using namespace ExternalInterface;
+    helper.SubscribeEngineToGame<MessageEngineToGameTag::ObjectConnectionState>();
+  }
+}
+
 
 void CubeAccelComponent::AddListener(const ObjectID& objectID,
                                      const std::shared_ptr<CubeAccelListeners::ICubeAccelListener>& listener,
@@ -118,7 +123,7 @@ void CubeAccelComponent::AddListener(const ObjectID& objectID,
   // is not enabled for the object so enable it
   if(iter->second.listeners.empty())
   {
-    const ActiveObject* obj = _robot.GetBlockWorld().GetConnectedActiveObjectByID(objectID);
+    const ActiveObject* obj = _robot->GetBlockWorld().GetConnectedActiveObjectByID(objectID);
     if(obj != nullptr)
     {
       PRINT_CH_INFO("CubeAccelComponent",
@@ -127,7 +132,7 @@ void CubeAccelComponent::AddListener(const ObjectID& objectID,
                     objectID.GetValue(),
                     obj->GetActiveID());
       
-      _robot.GetCubeCommsComponent().SetStreamObjectAccel(obj->GetActiveID(), true);
+      _robot->GetCubeCommsComponent().SetStreamObjectAccel(obj->GetActiveID(), true);
     }else{
       PRINT_NAMED_WARNING("CubeAccelComponent.AddListener.InvalidObject",
                           "Object id %d is not connected",
@@ -162,7 +167,7 @@ bool CubeAccelComponent::RemoveListener(const ObjectID& objectID,
       // If there are no more listeners then disable object accel streaming
       if(accelHistory->second.listeners.empty())
       {
-        const ActiveObject* obj = _robot.GetBlockWorld().GetConnectedActiveObjectByID(accelHistory->first);
+        const ActiveObject* obj = _robot->GetBlockWorld().GetConnectedActiveObjectByID(accelHistory->first);
         if(obj != nullptr)
         {
           PRINT_CH_INFO("CubeAccelComponent",
@@ -171,7 +176,7 @@ bool CubeAccelComponent::RemoveListener(const ObjectID& objectID,
                         obj->GetID().GetValue(),
                         obj->GetActiveID());
           
-          _robot.GetCubeCommsComponent().SetStreamObjectAccel(obj->GetActiveID(), false);
+          _robot->GetCubeCommsComponent().SetStreamObjectAccel(obj->GetActiveID(), false);
         }
         
         // Reset window size to default value
@@ -186,7 +191,7 @@ bool CubeAccelComponent::RemoveListener(const ObjectID& objectID,
   
 void CubeAccelComponent::HandleObjectAccel(const ObjectAccel& objectAccel)
 {
-  const ActiveObject* object = _robot.GetBlockWorld().GetConnectedActiveObjectByActiveID(objectAccel.objectID);
+  const ActiveObject* object = _robot->GetBlockWorld().GetConnectedActiveObjectByActiveID(objectAccel.objectID);
   if(object == nullptr)
   {
     // It's possible to receive an objectAccel message before the cube
@@ -224,8 +229,8 @@ void CubeAccelComponent::HandleObjectAccel(const ObjectAccel& objectAccel)
   }
   
   // Forward to game and viz
-  _robot.Broadcast(ExternalInterface::MessageEngineToGame(ObjectAccel(objectAccel.timestamp, objectID, objectAccel.accel)));
-  _robot.GetContext()->GetVizManager()->SendObjectAccelState(objectID, objectAccel.accel);
+  _robot->Broadcast(ExternalInterface::MessageEngineToGame(ObjectAccel(objectAccel.timestamp, objectID, objectAccel.accel)));
+  _robot->GetContext()->GetVizManager()->SendObjectAccelState(objectID, objectAccel.accel);
 }
   
 void CubeAccelComponent::CullToWindowSize(AccelHistory& accelHistory)
@@ -263,7 +268,7 @@ void CubeAccelComponent::Dev_HandleObjectAccel(const u32 whichLightCubeType, Obj
     BlockWorldFilter filter;
     filter.SetAllowedTypes({objectTypeIter->second});
 
-    const ObservableObject* object = _robot.GetBlockWorld().FindConnectedActiveMatchingObject(filter);
+    const ObservableObject* object = _robot->GetBlockWorld().FindConnectedActiveMatchingObject(filter);
     if(object != nullptr)
     {
       objectAccel.objectID = object->GetID();
