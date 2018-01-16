@@ -29,7 +29,6 @@ namespace Cozmo {
   CONSOLE_VAR(bool,       kProcFace_RenderInnerOuterGlow,     CONSOLE_GROUP, false); // Render glow
   CONSOLE_VAR(bool,       kProcFace_ApplyGlowFilter,          CONSOLE_GROUP, false); // Gausssian or boxfilter for glow
   CONSOLE_VAR(bool,       kProcFace_UseAntialiasing,          CONSOLE_GROUP, false); // Gausssian or boxfilter for antialiasing
-  CONSOLE_VAR(bool,       kProcFace_DistortScanlines,         CONSOLE_GROUP, false); // Post-process scanline distort
 
   #undef CONSOLE_GROUP
   
@@ -588,32 +587,31 @@ namespace Cozmo {
 
     if(rowMax > rowMin)
     {   
-      if(kProcFace_DistortScanlines) {
-        // Distort the scanlines
-        auto scanlineDistorter = faceData.GetScanlineDistorter();
-        if(nullptr != scanlineDistorter)
+      // Distort the scanlines
+      auto scanlineDistorter = faceData.GetScanlineDistorter();
+      if(nullptr != scanlineDistorter)
+      {
+        const f32 scale = 1.f / (rowMax - rowMin);
+        for(s32 row=rowMin; row < rowMax; ++row)
         {
-          const f32 scale = 1.f / (rowMax - rowMin);
-          for(s32 row=rowMin; row < rowMax; ++row)
+          const f32 eyeFrac = (row - rowMin) * scale;
+          const s32 shift = scanlineDistorter->GetEyeDistortionAmount(eyeFrac) * sizeof(Vision::PixelRGB);
+          
+          if(shift < 0)
           {
-            const f32 eyeFrac = (row - rowMin) * scale;
-            const s32 shift = scanlineDistorter->GetEyeDistortionAmount(eyeFrac) * sizeof(Vision::PixelRGB);
-
-            if(shift < 0)
-            {
-              Vision::PixelRGB* faceImg_row = faceImg.GetRow(row);
-              memmove(faceImg_row, faceImg_row-shift, ProceduralFace::WIDTH+shift);
-              memset(faceImg_row+ProceduralFace::WIDTH+shift, 0, -shift);
-            }
-            else if(shift > 0)
-            {
-              Vision::PixelRGB* faceImg_row = faceImg.GetRow(row);
-              memmove(faceImg_row+shift, faceImg_row, ProceduralFace::WIDTH-shift);
-              memset(faceImg_row, 0, shift);
-            }
+            Vision::PixelRGB* faceImg_row = faceImg.GetRow(row);
+            memmove(faceImg_row, faceImg_row-shift, ProceduralFace::WIDTH+shift);
+            memset(faceImg_row+ProceduralFace::WIDTH+shift, 0, -shift);
+          }
+          else if(shift > 0)
+          {
+            Vision::PixelRGB* faceImg_row = faceImg.GetRow(row);
+            memmove(faceImg_row+shift, faceImg_row, ProceduralFace::WIDTH-shift);
+            memset(faceImg_row, 0, shift);
           }
         }
       }
+      
       Rectangle<s32> eyesROI(colMin, rowMin, colMax-colMin+1, rowMax-rowMin+1);
       cv::cvtColor(faceImg.GetROI(eyesROI).get_CvMat_(), faceImg.GetROI(eyesROI).get_CvMat_(), CV_HSV2RGB);
     }

@@ -50,11 +50,7 @@
 namespace Anki {
 namespace Cozmo {
 
-  #define CONSOLE_GROUP "ProceduralFace"
-
-  CONSOLE_VAR(bool,       kProcFace_UseNoise,          CONSOLE_GROUP, false); // Victor vs Cozmo effect, no noise = lazy updates
-
-  #undef CONSOLE_GROUP
+  CONSOLE_VAR(bool, kProcFace_UseNoise, "ProceduralFace", false); // Victor vs Cozmo effect, no noise = lazy updates
 
   namespace{
     
