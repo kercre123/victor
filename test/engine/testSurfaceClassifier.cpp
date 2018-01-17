@@ -31,7 +31,7 @@
 extern Anki::Cozmo::CozmoContext *cozmoContext;
 
 void visualizeClassifierOnImages(const std::string& pathToImages, const Anki::Cozmo::DrivingSurfaceClassifier& clf,
-                                const Anki::Cozmo::FeaturesExtractor& extractor= Anki::Cozmo::SinglePixelFeaturesExtraction()) {
+                                 const Anki::Cozmo::FeaturesExtractor& extractor=Anki::Cozmo::SinglePixelFeaturesExtraction()) {
 
   std::vector<std::string> imageFiles;
   if (Anki::Util::FileUtils::DirectoryExists(pathToImages)) {
@@ -61,7 +61,6 @@ void visualizeClassifierOnImages(const std::string& pathToImages, const Anki::Co
     cv::cvtColor(image.get_CvMat_(), image.get_CvMat_(), cv::COLOR_RGB2BGR);
     cv::imshow("Image", image.get_CvMat_());
     cv::waitKey(0);
-
   }
 }
 
@@ -123,7 +122,9 @@ void checkClassifier(Anki::Cozmo::DrivingSurfaceClassifier& clf,
                      float maxTotalError = 0.12,
                      float maxPositivesError = 0.12) {
 
+  std::cout<<"Training the classifier..."<<std::endl;
   bool result = clf.TrainFromFiles(positivePath.c_str(), negativePath.c_str());
+  std::cout<<"Training done!"<<std::endl;
   ASSERT_TRUE(result);
 
   cv::Mat trainingSamples, trainingLabels;
@@ -132,7 +133,9 @@ void checkClassifier(Anki::Cozmo::DrivingSurfaceClassifier& clf,
   const float realNumberOfPositives = float(cv::sum(trainingLabels)[0]);
 
   // Error on whole training set
+  if (maxTotalError > 0)
   {
+    std::cout<<"Testing the whole training set"<<std::endl;
     std::vector<std::vector<Anki::Cozmo::DrivingSurfaceClassifier::FeatureType>> pixels;
     Anki::Cozmo::convertToVector<float>(trainingSamples, pixels);
 
@@ -146,8 +149,9 @@ void checkClassifier(Anki::Cozmo::DrivingSurfaceClassifier& clf,
   }
 
   // Error on positive elements
+  if (maxPositivesError > 0)
   {
-
+    std::cout<<"Testing the positive class in the training set"<<std::endl;
     cv::Mat positiveY;
     std::vector<std::vector<Anki::Cozmo::DrivingSurfaceClassifier::FeatureType>> pixels;
     pixels.reserve(trainingSamples.rows); // probably won't be using that much
@@ -401,8 +405,6 @@ TEST(SurfaceClassifier, DTClassifier_TestSerialization) {
   const std::string path = cozmoContext->GetDataPlatform()->pathToResource(Anki::Util::Data::Scope::Resources,
                                                                            "test/overheadMap/RealImagesDesk");
 
-//  const std::string path = "/Users/lorenzori/tmp/images_training/real_images/selective_annotation";
-
   PRINT_NAMED_INFO("TestSurfaceClassifier.TrainingFromFile.PrintPath",
                    "Path to training data is %s", path.c_str());
 
@@ -428,51 +430,38 @@ TEST(SurfaceClassifier, DTClassifier_TestSerialization) {
   }
 }
 
-TEST(SurfaceClassifier, GroundPlaneClassifier_TestNoise) {
+TEST(SurfaceClassifier, DTClassifier_TestMeanStdData) {
 
   Json::Value root;
   Json::Value& config = root["GroundPlaneClassifier"];
   {
-    config["MaxDepth"] = 10;
+    config["MaxDepth"] = 7;
     config["MinSampleCount"] = 10;
     config["TruncatePrunedTree"] = true;
     config["Use1SERule"] = true;
-    config["PositiveWeight"] = 3.0f;
-    config["OnTheFlyTrain"] = true;
+    config["PositiveWeight"] = 1.0f;
+    config["OnTheFlyTrain"] = false;
     config["FileOrDirName"] = "test/overheadMap/RealImagesDesk";
   }
 
-  Anki::Cozmo::GroundPlaneClassifier clf(root, cozmoContext);
+  Anki::Cozmo::DTDrivingSurfaceClassifier clf(config, cozmoContext);
 
-  Anki::Cozmo::DebugImageList <Anki::Vision::ImageRGB> debugImageList;
-  std::list<Anki::Cozmo::OverheadEdgeFrame> outEdges;
+//  const std::string path = cozmoContext->GetDataPlatform()->pathToResource(Anki::Util::Data::Scope::Resources,
+//                                                                           "test/overheadMap/RealImagesDesk");
+  const std::string path = "/Users/lorenzori/tmp/images_training/real_images/selective_annotation";
 
-  const std::string path = cozmoContext->GetDataPlatform()->pathToResource(Anki::Util::Data::Scope::Resources,
-                                                                           "test/overheadMap/RealImagesDesk");
-  {
-    const std::string imagepath = Anki::Util::FileUtils::FullFilePath({path, "00000305.jpg"});
-    PRINT_CH_INFO("VisionSystem", "Test.GroundPlaneClassifier.LoadImage", "Loading image %s", imagepath.c_str());
+  PRINT_NAMED_INFO("TestSurfaceClassifier.TrainingFromFile.PrintPath",
+                   "Path to training data is %s", path.c_str());
 
-    Anki::Vision::ImageRGB testImg;
-    ASSERT_EQ(testImg.Load(imagepath), Anki::RESULT_OK);
-    const Anki::Cozmo::VisionPoseData poseData = populateVisionPoseData(Anki::Util::DegToRad(-15));
+  const std::string positivePath = Anki::Util::FileUtils::FullFilePath({path, "positivePixels.txt"});
+  const std::string negativePath = Anki::Util::FileUtils::FullFilePath({path, "negativePixels.txt"});
 
-    Anki::Result result = clf.Update(testImg, poseData, debugImageList, outEdges);
-    ASSERT_EQ(result, Anki::RESULT_OK);
+  float error = std::numeric_limits<float>::max();
+  checkClassifier(clf, positivePath, negativePath, error, 0.06, 0.03);
 
-    if (DISPLAY_IMAGES) {
-      for (auto& name_image : debugImageList) {
-        std::string& name = name_image.first;
-        Anki::Vision::ImageRGB& image = name_image.second;
-        cv::cvtColor(image.get_CvMat_(), image.get_CvMat_(), cv::COLOR_RGB2BGR);
-        cv::namedWindow(name, cv::WINDOW_AUTOSIZE);
-
-        cv::imshow(name, image.get_CvMat_());
-      }
-      visualizeClassifierOnImages(imagepath, clf.GetClassifier());
-    }
+  if (DISPLAY_IMAGES) {
+    const Anki::Cozmo::MeanStdFeaturesExtractor extractor = Anki::Cozmo::MeanStdFeaturesExtractor(1);
+    visualizeClassifierOnImages("/Users/lorenzori/tmp/images_training/real_images/single_shots_desk/desk",
+                                clf, extractor);
   }
-
-  cv::waitKey(0);
-
 }
