@@ -112,6 +112,9 @@ static f32 kVisualDistanceToDistanceSensorObjectThresh_mm = 30;
 // distance sensor behavior json file
 static f32 kDistanceSensorReadingThresh_mm = 20;
 
+// Bias adjustment for raw distance sensor reading when comparing to visual distance
+static f32 kDistanceSensorBiasAdjustment_mm = 30;
+
 // ----------Camera Calibration----------
 // Exposure setting for playpen
 static u16 kExposure_ms                               = 3;
