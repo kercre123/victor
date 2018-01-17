@@ -18,7 +18,9 @@ namespace CodeLab {
     private byte[] _DrawToFacePixels = new byte[kFaceTextureWidth * kFaceTextureHeight]; // One byte per pixel
 
     private TMP_FontAsset _FontAsset = null;
+    private TMP_FontAsset _KanaFontAsset = null;
     private Texture2D _FontTexture = null;
+    private Texture2D _KanaFontTexture = null;
     private bool _IsFontInitialized = false;
     private const float kDefaultFontSpaceWidth = 20.0f;
     private float _FontSpaceWidth = kDefaultFontSpaceWidth;
@@ -39,7 +41,9 @@ namespace CodeLab {
       }
 
       var fontName = "AvenirLTStd-Medium SDF.asset";
+      var kanaFontName = "AvenirLTStd-Medium SDF Kana.asset";
       _FontAsset = CozmoThemeSystemUtils.sInstance.LoadFontTMP(fontName) as TMP_FontAsset;
+      _KanaFontAsset = CozmoThemeSystemUtils.sInstance.LoadFontTMP(kanaFontName) as TMP_FontAsset;
 
       if (_FontAsset == null) {
         DAS.Error("CodeLab.InitFontAsset.NullFont", "Failed to load font: " + fontName);
@@ -47,9 +51,32 @@ namespace CodeLab {
         return false;
       }
 
-      // Copy the font's texture to a CPU-readable version
+      if (_KanaFontAsset == null) {
+        DAS.Warn("CodeLab.InitFontAsset.NullKanaFont", "Failed to load font: " + kanaFontName);
+      }
 
-      var sourceTexture = _FontAsset.atlas;
+      // Copy the font's texture to a CPU-readable version
+      _FontTexture = InitFontTexture(_FontAsset);
+      if (_KanaFontAsset != null) {
+        _KanaFontTexture = InitFontTexture(_KanaFontAsset);
+      }
+
+      TMP_Glyph glyph = null;
+      if (_FontAsset.characterDictionary.TryGetValue((int)' ', out glyph)) {
+        _FontSpaceWidth = glyph.xAdvance;
+      }
+      else {
+        DAS.Error("CodeLab.GetSpaceWidth.NoSpace", "No space in font: " + _FontAsset.fontInfo.Name);
+        _FontSpaceWidth = kDefaultFontSpaceWidth;
+      }
+
+      _IsFontInitialized = true;
+
+      return true;
+    }
+
+    private Texture2D InitFontTexture(TMP_FontAsset fontAsset) {
+      var sourceTexture = fontAsset.atlas;
 
       RenderTexture tempRenderTexture = RenderTexture.GetTemporary(
           sourceTexture.width,
@@ -66,29 +93,17 @@ namespace CodeLab {
       RenderTexture.active = tempRenderTexture;
 
       // Create a new readable Texture2D to copy the pixels to it
-      _FontTexture = new Texture2D(sourceTexture.width, sourceTexture.height);
+      var fontTexture = new Texture2D(sourceTexture.width, sourceTexture.height);
 
       // Copy the pixels from the RenderTexture to the new Texture
-      //_FontTexture will then have the same pixels as _FontAsset.atlas, _and_ be readable from CPU
-      _FontTexture.ReadPixels(new Rect(0, 0, tempRenderTexture.width, tempRenderTexture.height), 0, 0);
-      _FontTexture.Apply();
+      //fontTexture will then have the same pixels as fontAsset.atlas, _and_ be readable from CPU
+      fontTexture.ReadPixels(new Rect(0, 0, tempRenderTexture.width, tempRenderTexture.height), 0, 0);
+      fontTexture.Apply();
 
       // Reset the active RenderTexture and release our temp texture
       RenderTexture.active = cachedActiveRenderTexture;
       RenderTexture.ReleaseTemporary(tempRenderTexture);
-
-      TMP_Glyph glyph = null;
-      if (_FontAsset.characterDictionary.TryGetValue((int)' ', out glyph)) {
-        _FontSpaceWidth = glyph.xAdvance;
-      }
-      else {
-        DAS.Error("CodeLab.GetSpaceWidth.NoSpace", "No space in font: " + _FontAsset.fontInfo.Name);
-        _FontSpaceWidth = kDefaultFontSpaceWidth;
-      }
-
-      _IsFontInitialized = true;
-
-      return true;
+      return fontTexture;
     }
 
     public void CalculateTextBounds(float scale, string text, out float outWidth, out float outHeight) {
@@ -99,6 +114,7 @@ namespace CodeLab {
       }
 
       var characterDictionary = _FontAsset.characterDictionary;
+      var kanaCharacterDictionary = _KanaFontAsset != null ? _KanaFontAsset.characterDictionary : null;
 
       float x = 0.0f;
       float maxY = 0.0f;
@@ -107,7 +123,7 @@ namespace CodeLab {
         int charKey = (int)text[cI];
         TMP_Glyph glyph = null;
 
-        if (characterDictionary.TryGetValue(charKey, out glyph)) {
+        if (characterDictionary.TryGetValue(charKey, out glyph) || (kanaCharacterDictionary != null && kanaCharacterDictionary.TryGetValue(charKey, out glyph))) {
           float charMaxY = (Mathf.Abs(glyph.height) - glyph.yOffset) * scale;
           maxY = Mathf.Max(maxY, charMaxY);
           x += glyph.xAdvance * scale;
@@ -162,15 +178,26 @@ namespace CodeLab {
       }
 
       Texture2D fontTexture = _FontTexture;
+      Texture2D kanaFontTexture = _KanaFontTexture;
+      Texture2D currentTexture = fontTexture;
       var characterDictionary = _FontAsset.characterDictionary;
-
+      var kanaCharacterDictionary = _KanaFontAsset != null ? _KanaFontAsset.characterDictionary : null;
       var fontInfo = _FontAsset.fontInfo;
 
       for (int cI = 0; cI < text.Length; ++cI) {
         int charKey = (int)text[cI];
         TMP_Glyph glyph = null;
 
-        if (characterDictionary.TryGetValue(charKey, out glyph)) {
+        bool isNormalCharacter = characterDictionary.TryGetValue(charKey, out glyph);
+
+        if (isNormalCharacter || (kanaCharacterDictionary != null && kanaCharacterDictionary.TryGetValue(charKey, out glyph))) {
+          if (isNormalCharacter) {
+            currentTexture = fontTexture;
+            fontInfo = _FontAsset.fontInfo;
+          } else {
+            currentTexture = kanaFontTexture;
+            fontInfo = _KanaFontAsset.fontInfo;
+          }
           float srcMinX = (glyph.x);
           float srcMaxX = (glyph.x + glyph.width);
           float srcMinY = (glyph.y);
@@ -216,7 +243,7 @@ namespace CodeLab {
           for (int destY = destMinY; destY <= destMaxY; ++destY) {
             // Calculate the texel indices and ratios for bilinear filtering in Y
             int srcYInt = (int)srcY;
-            int srcYInt1 = fontTexture.height - srcYInt; // y coordinate is flipped
+            int srcYInt1 = currentTexture.height - srcYInt; // y coordinate is flipped
             int srcYInt2 = srcYInt1 - 1;
             float srcYRatio = srcY - (float)srcYInt;
             float srcX = clippedSrcX;
@@ -227,10 +254,10 @@ namespace CodeLab {
               float srcXRatio = srcX - (float)srcXInt1;
 
               // Calculate the relative weights to use from each of the 4 texels
-              bool srcXInt1InBounds = ((srcXInt1 >= 0) && (srcXInt1 < fontTexture.width));
-              bool srcXInt2InBounds = ((srcXInt2 >= 0) && (srcXInt2 < fontTexture.width));
-              bool srcYInt1InBounds = ((srcYInt1 >= 0) && (srcYInt1 < fontTexture.height));
-              bool srcYInt2InBounds = ((srcYInt2 >= 0) && (srcYInt2 < fontTexture.height));
+              bool srcXInt1InBounds = ((srcXInt1 >= 0) && (srcXInt1 < currentTexture.width));
+              bool srcXInt2InBounds = ((srcXInt2 >= 0) && (srcXInt2 < currentTexture.width));
+              bool srcYInt1InBounds = ((srcYInt1 >= 0) && (srcYInt1 < currentTexture.height));
+              bool srcYInt2InBounds = ((srcYInt2 >= 0) && (srcYInt2 < currentTexture.height));
 
               // Calculate weights for each texel, if texel is clamped then give the weight to their neighboring texels.
               float xRatio1 = srcXInt2InBounds ? (1.0f - srcXRatio) : 1.0f;
@@ -242,21 +269,21 @@ namespace CodeLab {
               float fontAlpha = 0.0f;
               if (srcXInt1InBounds) {
                 if (srcYInt1InBounds) {
-                  Color fontColor = fontTexture.GetPixel(srcXInt1, srcYInt1);
+                  Color fontColor = currentTexture.GetPixel(srcXInt1, srcYInt1);
                   fontAlpha += fontColor.a * xRatio1 * yRatio1;
                 }
                 if (srcYInt2InBounds) {
-                  Color fontColor = fontTexture.GetPixel(srcXInt1, srcYInt2);
+                  Color fontColor = currentTexture.GetPixel(srcXInt1, srcYInt2);
                   fontAlpha += fontColor.a * xRatio1 * yRatio2;
                 }
               }
               if (srcXInt2InBounds) {
                 if (srcYInt1InBounds) {
-                  Color fontColor = fontTexture.GetPixel(srcXInt2, srcYInt1);
+                  Color fontColor = currentTexture.GetPixel(srcXInt2, srcYInt1);
                   fontAlpha += fontColor.a * xRatio2 * yRatio1;
                 }
                 if (srcYInt2InBounds) {
-                  Color fontColor = fontTexture.GetPixel(srcXInt2, srcYInt2);
+                  Color fontColor = currentTexture.GetPixel(srcXInt2, srcYInt2);
                   fontAlpha += fontColor.a * xRatio2 * yRatio2;
                 }
               }
