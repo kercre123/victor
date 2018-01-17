@@ -605,7 +605,7 @@ bool ICozmoBehavior::WantsToBeActivatedBase() const
   const auto& robotInfo = GetBEI().GetRobotInfo();
   //check if the behavior can run from the charger platform (don't want most to run because they could damage
   //the robot by moving too much, and also will generally look dumb if they try to turn)
-  if(robotInfo.IsOnChargerPlatform() && !_operationModifiers.wantsToBeActivatedWhenCarryingObject){
+  if(robotInfo.IsOnChargerPlatform() && !_operationModifiers.wantsToBeActivatedWhenOnCharger){
     return false;
   }
   
