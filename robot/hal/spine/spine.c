@@ -16,7 +16,7 @@
 #define spine_debug(fmt, args...)  (LOGD( fmt, ##args))
 #endif
 
-#define EXTENDED_SPINE_DEBUG 1
+#define EXTENDED_SPINE_DEBUG 0
 #if EXTENDED_SPINE_DEBUG
 #define spine_debug_x spine_debug
 #else
