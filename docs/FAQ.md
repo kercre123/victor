@@ -37,6 +37,10 @@ If you have a question that you get answered (e.g. in a Slack channel) which mig
     Modify `vic_join_wifi.sh`, replace the `elif [ "K" ...` block in the `robot configs` section with your robot's `robotname` (serial number). Run the script with `./vic_join_wifi.sh K` to reconfigure your robot to connect to the AnkiRobits network.
   - This connection will likely only be temporary, if after power cycling your robot is again not autoconnecting then bring to Al or Nathan
   
+* I get `Failed to connect to non-global ctrl_ifname: wlan0  error: No such file or directory` errors in the [BLE-CLI](../tools/victor-ble-cli) tool
+  - Trying restarting the [wpa_supplicant](https://en.wikipedia.org/wiki/Wpa_supplicant)
+  - `pkill wpa_supplicant` then `wpa_supplicant -iwlan0 -Dnl80211 -c/data/misc/wifi/wpa_supplicant.conf -O/data/misc/wifi/sockets -B`
+
 * Deploying is super slow
   - Try turning off wifi on your laptop and use ethernet instead
   - Run `victor_stop` before deploying
@@ -50,3 +54,7 @@ If you have a question that you get answered (e.g. in a Slack channel) which mig
   
 * How do I run unit tests
   - https://ankiinc.atlassian.net/wiki/spaces/VD/pages/149363555/Victor+Unit+Tests
+
+* I get permission denied during build `error: can't exec 'victor/_build/mac/Debug-Xcode/launch-c' (Permission denied)`
+  - `chmod u=rwx victor/_build/mac/Debug-Xcode/launch-c`
+  - `chmod u=rwx victor/_build/mac/Debug-Xcode/launch-cxx`
