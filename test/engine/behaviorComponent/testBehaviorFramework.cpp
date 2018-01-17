@@ -61,6 +61,11 @@ TestBehaviorFramework::TestBehaviorFramework(int robotID,
   _robot = std::make_unique<Robot>(robotID, context);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TestBehaviorFramework::~TestBehaviorFramework()
+{
+
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseBehavior,

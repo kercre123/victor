@@ -59,6 +59,7 @@ public:
   // Create the test behavior framework with an appropriate robot
   TestBehaviorFramework(int robotID = 1,
                         CozmoContext* context = nullptr);
+  ~TestBehaviorFramework();
   Robot& GetRobot(){ assert(_robot); return *_robot;}
 
   
