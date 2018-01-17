@@ -26,7 +26,8 @@ enum uint_8 BEIConditionType {
   RobotShaken,
   RobotTouchGesture,
   Lambda,
-  Timer
+  Timer,
+  Not,
 }
 
 } // namespace Cozmo

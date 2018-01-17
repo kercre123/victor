@@ -18,6 +18,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionFacePositionUpdated.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionFrustration.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionInNeedsBracket.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionNot.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectInitialDetection.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectMoved.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectPositionUpdated.h"
@@ -27,7 +28,6 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotShaken.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotTouchGesture.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionTimer.h"
-
 
 #include "clad/types/behaviorComponent/beiConditionTypes.h"
 
@@ -124,6 +124,11 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
     case BEIConditionType::Timer:
     {
       strategy = std::make_shared<ConditionTimer>(config);
+      break;
+    }
+    case BEIConditionType::Not:
+    {
+      strategy = std::make_shared<ConditionNot>(config);
       break;
     }
     case BEIConditionType::Lambda:

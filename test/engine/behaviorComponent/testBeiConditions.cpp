@@ -16,6 +16,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionLambda.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionNot.h"
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
 #include "engine/moodSystem/moodManager.h"
 #include "util/math/math.h"
@@ -37,8 +38,77 @@ void CreateBEI(const std::string& json, IBEIConditionPtr& cond)
   ASSERT_TRUE( cond != nullptr );
 }
 
+class TestCondition : public IBEICondition
+{
+public:
+  explicit TestCondition()
+    // use an arbitrary type to make the system happy
+    : IBEICondition(IBEICondition::GenerateBaseConditionConfig(BEIConditionType::AlwaysRun))
+    {
+    }
+
+  virtual void ResetInternal(BehaviorExternalInterface& behaviorExternalInterface) override {
+    _resetCount++;
+  }
+  
+  virtual void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) override {
+    _initCount++;
+  }
+  
+  virtual bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override {
+    _areMetCount++;
+    return _val;
+  }
+
+  bool _val = false;
+
+  int _resetCount = 0;
+  int _initCount = 0;
+  mutable int _areMetCount = 0;  
+};
+
 }
 
+TEST(BeiConditions, TestCondition)
+{
+  // a test of the test, if you will
+
+  BehaviorExternalInterface bei;
+
+  auto cond = std::make_shared<TestCondition>();
+
+  EXPECT_EQ(cond->_resetCount, 0);
+  EXPECT_EQ(cond->_initCount, 0);
+  EXPECT_EQ(cond->_areMetCount, 0);
+
+  cond->Init(bei);
+  EXPECT_EQ(cond->_resetCount, 0);
+  EXPECT_EQ(cond->_initCount, 1);
+  EXPECT_EQ(cond->_areMetCount, 0);
+
+  cond->Reset(bei);
+  EXPECT_EQ(cond->_resetCount, 1);
+  EXPECT_EQ(cond->_initCount, 1);
+  EXPECT_EQ(cond->_areMetCount, 0);
+
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+  EXPECT_EQ(cond->_resetCount, 1);
+  EXPECT_EQ(cond->_initCount, 1);
+  EXPECT_EQ(cond->_areMetCount, 1);
+
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+  EXPECT_EQ(cond->_resetCount, 1);
+  EXPECT_EQ(cond->_initCount, 1);
+  EXPECT_EQ(cond->_areMetCount, 2);
+
+  cond->_val = true;
+
+  EXPECT_TRUE( cond->AreConditionsMet(bei) );
+  EXPECT_EQ(cond->_resetCount, 1);
+  EXPECT_EQ(cond->_initCount, 1);
+  EXPECT_EQ(cond->_areMetCount, 3);
+
+}
 
 TEST(BeiConditions, CreateLambda)
 {
@@ -180,5 +250,147 @@ TEST(BeiConditions, Timer)
 
   BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(900.0));
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
+
+  cond->Reset(bei);
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+
+  BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(920.0));
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+
+  BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(930.1));
+  EXPECT_TRUE( cond->AreConditionsMet(bei) );
+
+  BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(9001.0));
+  EXPECT_TRUE( cond->AreConditionsMet(bei) );
 }
 
+TEST(BeiConditions, Not)
+{
+  BehaviorExternalInterface bei;
+
+  auto subCond = std::make_shared<TestCondition>();
+
+  auto cond = std::make_shared<ConditionNot>(subCond);
+
+  EXPECT_EQ(subCond->_resetCount, 0);
+  EXPECT_EQ(subCond->_initCount, 0);
+  EXPECT_EQ(subCond->_areMetCount, 0);
+
+  cond->Init(bei);
+  EXPECT_EQ(subCond->_resetCount, 0);
+  EXPECT_EQ(subCond->_initCount, 1);
+  EXPECT_EQ(subCond->_areMetCount, 0);
+
+  cond->Reset(bei);
+  EXPECT_EQ(subCond->_resetCount, 1);
+  EXPECT_EQ(subCond->_initCount, 1);
+  EXPECT_EQ(subCond->_areMetCount, 0);
+
+  EXPECT_TRUE(cond->AreConditionsMet(bei));
+  EXPECT_EQ(subCond->_resetCount, 1);
+  EXPECT_EQ(subCond->_initCount, 1);
+  EXPECT_EQ(subCond->_areMetCount, 1);
+
+  EXPECT_TRUE(cond->AreConditionsMet(bei));
+  EXPECT_EQ(subCond->_resetCount, 1);
+  EXPECT_EQ(subCond->_initCount, 1);
+  EXPECT_EQ(subCond->_areMetCount, 2);
+
+  subCond->_val = true;
+  EXPECT_FALSE(cond->AreConditionsMet(bei));
+  EXPECT_EQ(subCond->_resetCount, 1);
+  EXPECT_EQ(subCond->_initCount, 1);
+  EXPECT_EQ(subCond->_areMetCount, 3);
+
+  cond->Reset(bei);
+  EXPECT_EQ(subCond->_resetCount, 2);
+  EXPECT_EQ(subCond->_initCount, 1);
+  EXPECT_EQ(subCond->_areMetCount, 3);
+
+  EXPECT_FALSE(cond->AreConditionsMet(bei));
+  EXPECT_EQ(subCond->_resetCount, 2);
+  EXPECT_EQ(subCond->_initCount, 1);
+  EXPECT_EQ(subCond->_areMetCount, 4);
+
+}
+
+TEST(BeiConditions, NotTrue)
+{
+  const std::string json = R"json(
+  {
+    "conditionType": "Not",
+    "subCondition": {
+      "conditionType": "AlwaysRun"
+    }
+  })json";
+
+  IBEIConditionPtr cond;
+  CreateBEI(json, cond);
+
+  BehaviorExternalInterface bei;
+  
+  cond->Init(bei);
+  cond->Reset(bei);
+
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+
+  cond->Reset(bei);
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+}
+
+TEST(BeiConditions, NotTimer)
+{
+  const std::string json = R"json(
+  {
+    "conditionType": "Not",
+    "subCondition": {
+      "conditionType": "Timer",
+      "timeout": 30.0
+    }
+  })json";
+
+  IBEIConditionPtr cond;
+  CreateBEI(json, cond);
+
+  BehaviorExternalInterface bei;
+
+  cond->Init(bei);
+  cond->Reset(bei);
+
+  EXPECT_TRUE( cond->AreConditionsMet(bei) );
+
+  BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(2.0));
+  EXPECT_TRUE( cond->AreConditionsMet(bei) );
+
+  BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(29.9));
+  EXPECT_TRUE( cond->AreConditionsMet(bei) );
+
+  BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(30.0001));
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+
+  BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(35.0));
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+
+  BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(65.0));
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+
+  BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(900.0));
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+
+  cond->Reset(bei);
+  EXPECT_TRUE( cond->AreConditionsMet(bei) );
+
+  BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(920.0));
+  EXPECT_TRUE( cond->AreConditionsMet(bei) );
+
+  BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(930.1));
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+
+  BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(9001.0));
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+
+}
