@@ -1,0 +1,143 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+
+        {
+            "name": "engine:debug",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceRoot}/_build/android/Debug/bin/cozmoengined",
+            "env": {
+                "LD_LIBRARY_PATH": "/data/data/com.anki.cozmoengine/lib",
+                "COZMO_ENGINE_CONFIG": "/data/data/com.anki.cozmoengine/config/engine_config.json"
+            },
+            "stopOnEntry": false,
+            "initCommands": [
+                "platform select remote-android",
+                "platform connect connect://localhost:55001",
+                "platform shell killall cozmoengined || true",
+                "settings set target.exec-search-paths ${workspaceRoot}/_build/android/Debug/lib"
+            ]
+        },
+        {
+            "name": "engine:release",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceRoot}/_build/android/Release/bin/cozmoengined",
+            "env": {
+                "LD_LIBRARY_PATH": "/data/data/com.anki.cozmoengine/lib",
+                "COZMO_ENGINE_CONFIG": "/data/data/com.anki.cozmoengine/config/engine_config.json"
+            },
+            "stopOnEntry": false,
+            "initCommands": [
+                "platform select remote-android",
+                "platform connect connect://localhost:55001",
+                "platform shell killall cozmoengined || true",
+                "settings set target.exec-search-paths ${workspaceRoot}/_build/android/Release/lib"
+            ]
+        },
+        {
+            "name": "lldb test_engine",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceRoot}/_build/mac/Debug/bin/test_engine",
+            "env": {
+                "GTEST_FILTER": "-BlockWorld*:-Localization*",
+                "ANKIWORKROOT": "_build/tmp",
+                "ANKICONFIGROOT": "_build/mac/Debug/assets/cozmo_resources",
+                "DYLD_LIBRARY_PATH": "_build/mac/Debug/lib:/Applications/Webots.app/lib"
+            },
+            "stopOnEntry": false,
+            "initCommands": [
+                "settings set target.exec-search-paths ${workspaceRoot}/_build/mac/Debug/lib"
+            ]
+        },
+        {
+            "name": "anim:debug",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceRoot}/_build/android/Debug/bin/victor_animator",
+            "env": {
+                "LD_LIBRARY_PATH": "/data/data/com.anki.cozmoengine/lib"
+            },
+            "stopOnEntry": false,
+            "initCommands": [
+                "platform select remote-android",
+                "platform connect connect://localhost:55001",
+                "platform shell killall victor_animator || true",
+                "settings set target.exec-search-paths ${workspaceRoot}/_build/android/Debug/lib"
+            ]
+        },
+        {
+            "name": "robot:debug",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceRoot}/_build/android/Debug/bin/robot_supervisor",
+            "env": {
+                "LD_LIBRARY_PATH": "/data/data/com.anki.cozmoengine/lib"
+            },
+            "stopOnEntry": false,
+            "initCommands": [
+                "platform select remote-android",
+                "platform connect connect://localhost:55001",
+                "platform shell killall robot_supervisor || true",
+                "settings set target.exec-search-paths ${workspaceRoot}/_build/android/Debug/lib"
+            ]
+        },
+        
+        {
+            "name": "webotsCtrlAnim:attach",
+            "type": "lldb",
+            "request": "attach",
+            "program": "${workspaceRoot}/simulator/controllers/webotsCtrlAnim/webotsCtrlAnim"
+        },
+        {
+            "name": "webotsCtrlBuildServerTest:attach",
+            "type": "lldb",
+            "request": "attach",
+            "program": "${workspaceRoot}/simulator/controllers/webotsCtrlBuildServerTest/webotsCtrlBuildServerTest"
+        },
+        {
+            "name": "webotsCtrlDevLog:attach",
+            "type": "lldb",
+            "request": "attach",
+            "program": "${workspaceRoot}/simulator/controllers/webotsCtrlDevLog/webotsCtrlDevLog"
+        },
+        {
+            "name": "webotsCtrlGameEngine2:attach",
+            "type": "lldb",
+            "request": "attach",
+            "program": "${workspaceRoot}/simulator/controllers/webotsCtrlGameEngine2/webotsCtrlGameEngine2"
+        },
+        {
+            "name": "webotsCtrlHandEmitter:attach",
+            "type": "lldb",
+            "request": "attach",
+            "program": "${workspaceRoot}/simulator/controllers/webotsCtrlHandEmitter/webotsCtrlHandEmitter"
+        },
+        {
+            "name": "webotsCtrlKeyboard:attach",
+            "type": "lldb",
+            "request": "attach",
+            "program": "${workspaceRoot}/simulator/controllers/webotsCtrlKeyboard/webotsCtrlKeyboard"
+        },
+        {
+            "name": "webotsCtrlLightCube:attach",
+            "type": "lldb",
+            "request": "attach",
+            "program": "${workspaceRoot}/simulator/controllers/webotsCtrlLightCube/webotsCtrlLightCube"
+        },
+        {
+            "name": "webotsCtrlRobot2:attach",
+            "type": "lldb",
+            "request": "attach",
+            "program": "${workspaceRoot}/simulator/controllers/webotsCtrlRobot2/webotsCtrlRobot2"
+        },
+        {
+            "name": "webotsCtrlViz:attach",
+            "type": "lldb",
+            "request": "attach",
+            "program": "${workspaceRoot}/simulator/controllers/webotsCtrlViz/webotsCtrlViz"
+        }
+    ]
+}
