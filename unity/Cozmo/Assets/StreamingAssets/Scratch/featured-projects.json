@@ -187,5 +187,25 @@
             "Day": "22",
             "Year": "2018"
         }
+    },
+    {
+        "ProjectUUID": "3fab62c3-f268-4faa-8f68-db5bd67f11c1",
+        "ProjectName": "codeLabFeaturedCompliment_Generator.projectName",
+        "DASProjectName": "ComplimentGenerator",
+        "VersionNum": "3",
+        "IsVertical": "true",
+        "DisplayOrder": "2",
+        "FeaturedProjectDescription": "codeLabFeaturedComplimentGenerator.projectDescription",
+        "FeaturedProjectInstructions": "codeLabFeaturedComplimentGenerator.projectInstructions",
+        "FeaturedProjectImageName": "ShakeIt",
+        "FeaturedProjectBackgroundColor": "#ffe700",
+        "FeaturedProjectTitleTextColor": "#696b68",
+        "ProjectJSONFile": "compliment_generator",
+        "StartDate": {
+            "Month": "2",
+            "Day": "22",
+            "Year": "2018"
+        }
     }
 ]
+
