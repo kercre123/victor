@@ -12,14 +12,32 @@
 
 #include "gtest/gtest.h"
 
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionLambda.h"
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
 #include "engine/moodSystem/moodManager.h"
+#include "util/math/math.h"
 
 using namespace Anki;
 using namespace Anki::Cozmo;
+
+namespace {
+
+void CreateBEI(const std::string& json, IBEIConditionPtr& cond)
+{
+  Json::Reader reader;
+  Json::Value config;
+  const bool parsedOK = reader.parse(json, config, false);
+  ASSERT_TRUE(parsedOK);
+
+  cond = BEIConditionFactory::CreateBEICondition(config);
+
+  ASSERT_TRUE( cond != nullptr );
+}
+
+}
 
 
 TEST(BeiConditions, CreateLambda)
@@ -57,15 +75,8 @@ TEST(BeiConditions, True)
     "conditionType": "AlwaysRun" 
   })json";
 
-
-  Json::Reader reader;
-  Json::Value config;
-  const bool parsedOK = reader.parse(json, config, false);
-  ASSERT_TRUE(parsedOK);
-
-  auto cond = BEIConditionFactory::CreateBEICondition(config);
-
-  ASSERT_TRUE( cond != nullptr );
+  IBEIConditionPtr cond;
+  CreateBEI(json, cond);
 
   BehaviorExternalInterface bei;
   
@@ -92,14 +103,8 @@ TEST(BeiConditions, Frustration)
     }
   })json";
 
-  Json::Reader reader;
-  Json::Value config;
-  const bool parsedOK = reader.parse(json, config, false);
-  ASSERT_TRUE(parsedOK);
-
-  auto cond = BEIConditionFactory::CreateBEICondition(config);
-
-  ASSERT_TRUE( cond != nullptr );
+  IBEIConditionPtr cond;
+  CreateBEI(json, cond);
 
   BehaviorExternalInterface bei;
 
@@ -138,5 +143,42 @@ TEST(BeiConditions, Frustration)
 
   moodManager.SetEmotion(EmotionType::Confident, 1.0f);
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
+}
+
+TEST(BeiConditions, Timer)
+{
+  const std::string json = R"json(
+  {
+    "conditionType": "Timer",
+    "timeout": 30.0
+  })json";
+
+  IBEIConditionPtr cond;
+  CreateBEI(json, cond);
+
+  BehaviorExternalInterface bei;
+
+  cond->Init(bei);
+  cond->Reset(bei);
+
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+
+  BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(2.0));
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+
+  BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(29.9));
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+
+  BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(30.0001));
+  EXPECT_TRUE( cond->AreConditionsMet(bei) );
+
+  BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(35.0));
+  EXPECT_TRUE( cond->AreConditionsMet(bei) );
+
+  BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(65.0));
+  EXPECT_TRUE( cond->AreConditionsMet(bei) );
+
+  BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(900.0));
+  EXPECT_TRUE( cond->AreConditionsMet(bei) );
 }
 
