@@ -4,17 +4,32 @@
 #include <stdbool.h>
 #include <ctype.h>
 
+
+
+
 #ifdef STANDALONE_UTILITY
 #include "core/common.h"
 #include "core/lcd.h"
 #include "helpware/kbhit.h"
 #include "helpware/display.h"
 #endif
+
 #include "spine_hal.h"
 #include "schema/messages.h"
 
+#define ccc_debug(fmt, args...)  (LOGD( fmt, ##args))
+
+#define EXTENDED_CCC_DEBUG 1
+#if EXTENDED_CCC_DEBUG
+#define ccc_debug_x ccc_debug
+#else
+#define ccc_debug_x(fmt, args...)
+#endif
+
 
 const struct SpineMessageHeader* hal_read_frame();
+void start_overrride(int count);
+
 
 enum {
   show_ENCODER,
@@ -28,15 +43,32 @@ enum {
 
 struct HeadToBody gHeadData = {0};
 
-
 typedef struct CozmoCommand_t {
-  int enable_cycles;
   int repeat_count;
   int16_t motorValues[MOTOR_COUNT];
   uint16_t printmask;
+  char reply[30];
 } CozmoCommand;
 
 CozmoCommand gActiveState = {0};
+int gRemainingActiveCycles = 0;
+
+#define MAX_SERIAL_LEN 20
+int get_esn(char buf[], int len)
+{
+  /* int fd = open("/sys/devices/virtual/android_usb/androit0/iSerial", O_RDONLY); */
+  /* if (len > MAX_SERIAL_LEN) len = MAX_SERIAL_LEN; */
+  /* int nchars = read(fd, buf, len-1); */
+  /* close(fd); */
+  /* if (nchars > 0) { */
+  /*   buf[nchars]='\0'; */
+  /* } */
+  /* return nchars; */
+  return 0;
+}
+
+
+int print_response(const char* format, ...);
 
 
 
@@ -45,35 +77,76 @@ CozmoCommand gActiveState = {0};
 #define MIN(a,b) ((a)<(b)?(a):(b))
 
 typedef uint_fast16_t idx_t;
-#define CB_CAPACITY (1<<8)
-#define CB_SIZE_MASK (CB_CAPACITY-1)
+#define CMDBUF_CAPACITY (1<<8)
+#define CMDBUF_SIZE_MASK (CMDBUF_CAPACITY-1)
 
-static struct circular_buffer_t {
-  CozmoCommand buffer[CB_CAPACITY];
+static struct command_buffer_t {
+  CozmoCommand buffer[CMDBUF_CAPACITY];
   idx_t head;
   idx_t tail;
 } gCommandList = {{{0}},0,0};
 
-static inline idx_t circular_buffer_count() {
-  return ((gCommandList.head-gCommandList.tail) & CB_SIZE_MASK);
+static inline idx_t command_buffer_count() {
+  return ((gCommandList.head-gCommandList.tail) & CMDBUF_SIZE_MASK);
 }
 
-idx_t circular_buffer_put(CozmoCommand* data) {
-  idx_t available = CB_CAPACITY-1 - circular_buffer_count();
+idx_t command_buffer_put(CozmoCommand* data) {
+  idx_t available = CMDBUF_CAPACITY-1 - command_buffer_count();
   if (available) {
     gCommandList.buffer[gCommandList.head++]=*data;
-    gCommandList.head &= CB_SIZE_MASK;
+    gCommandList.head &= CMDBUF_SIZE_MASK;
     return available-1;
   }
   return 0;
 }
 
-idx_t circular_buffer_get(CozmoCommand* data) {
-  idx_t available = circular_buffer_count();
+idx_t command_buffer_get(CozmoCommand* data) {
+  idx_t available = command_buffer_count();
   if (available) {
     *data = gCommandList.buffer[gCommandList.tail++];
-    gCommandList.tail &= CB_SIZE_MASK;
+    gCommandList.tail &= CMDBUF_SIZE_MASK;
     return available-1;
+  }
+  return 0;
+}
+
+/************* CIRCULAR BUFFER for outgoing contact text ***************/
+
+#define MIN(a,b) ((a)<(b)?(a):(b))
+
+#define TXTBUF_CAPACITY (1<<8)
+#define TXTBUF_SIZE_MASK (TXTBUF_CAPACITY-1)
+
+
+struct text_buffer_t {
+  struct ContactData buffer[TXTBUF_CAPACITY];
+  idx_t head;
+  idx_t tail;
+};
+
+#pragma clang diagnostic ignored "-Wmissing-braces" //F'in Clang doesn't know how to init.
+static struct text_buffer_t gOutgoingText = {0};
+
+static inline idx_t contact_text_buffer_count() {
+  return ((gOutgoingText.head-gOutgoingText.tail) & TXTBUF_SIZE_MASK);
+}
+
+idx_t contact_text_buffer_put(struct ContactData* data) {
+  idx_t available = TXTBUF_CAPACITY-1 - contact_text_buffer_count();
+  if (available) {
+    gOutgoingText.buffer[gOutgoingText.head++]=*data;
+    gOutgoingText.head &= TXTBUF_SIZE_MASK;
+    return available-1;
+  }
+  return 0;
+}
+
+idx_t contact_text_buffer_get(struct ContactData* data) {
+  idx_t available = contact_text_buffer_count();
+  if (available) {
+    *data = gOutgoingText.buffer[gOutgoingText.tail++];
+    gOutgoingText.tail &= TXTBUF_SIZE_MASK;
+    return available;
   }
   return 0;
 }
@@ -83,7 +156,7 @@ idx_t circular_buffer_get(CozmoCommand* data) {
 CozmoCommand gPending = {0};
 
 void show_command(CozmoCommand* cmd) {
-  printf("{%d, [%d %d %d %d], %x}\n",
+  ccc_debug_x("CCC {%d, [%d %d %d %d], %x}\n",
          cmd->repeat_count,
          cmd->motorValues[0],
          cmd->motorValues[1],
@@ -100,11 +173,13 @@ void AddMotorCommand(RobotMotor motor, float power) {
   if (power < -1.0) { power = -1.0;}
   gPending.motorValues[motor] = 0x7FFF * power;
 }
-void SubmitCommand(void) {
-  printf("submitting command");
+void SubmitCommand(bool cmd_rcvd, const char* text, int len) {
+  ccc_debug("CCC submitting command");
+  snprintf(gPending.reply, sizeof(gPending.reply), "<<%s: %.*s\n",
+             (cmd_rcvd ? " OK " : " ERR"), len, text);
   show_command(&gPending);
   if (!gPending.repeat_count) { gPending.repeat_count=1;}
-  circular_buffer_put(&gPending);
+  command_buffer_put(&gPending);
   PrepCommand(); //make sure it is cleared
 }
 
@@ -192,6 +267,19 @@ const char* handle_cliff_command(const char* text, int len)
   return text;
 }
 
+const char* handle_esn_command(const char* text, int len)
+{
+  char esn_text[MAX_SERIAL_LEN];
+  if ( get_esn(esn_text, sizeof(esn_text)) ) {
+    print_response("ESN = %s", esn_text);
+  }
+  else {
+    print_response("ESN : READ_ERR");
+  }
+
+  return text;
+}
+
 const char* handle_mode_command(const char* text, int len)
 {
   hal_set_mode(RobotMode_RUN);
@@ -204,7 +292,7 @@ const char* handle_override_command(const char* text, int len)
   long enable_count = strtol(text, &end, 10);
   if (end!=text && end<=text+len) //converted some chars
   {
-    gActiveState.enable_cycles = enable_count;
+    start_overrride(enable_count);
   }
   return end;
 }
@@ -259,6 +347,7 @@ static const CommandHandler handlers[] = {
   REGISTER_COMMAND(cliff),
   REGISTER_COMMAND(prox),
   REGISTER_COMMAND(touch),
+  REGISTER_COMMAND(esn),
   REGISTER_COMMAND(mode),
   REGISTER_COMMAND(override),
   REGISTER_COMMAND(quit),
@@ -276,13 +365,13 @@ bool parse_command_text(const char* command, int len)
     const char* next_word = NULL;
     const CommandHandler* candidate = &handlers[0];
 
-    printf("HANDLING [ %.*s ] ...", len, command);
+    ccc_debug("CCC HANDLING [ %.*s ] ...", len, command);
 
     while (candidate->name) {
       if (len >= candidate->len &&
           strncmp(command, candidate->name, candidate->len)==0)
       {
-//        printf("MATCH %s [ %.*s ] \n", candidate->name, len-candidate->len, command+candidate->len);
+        ccc_debug("CCC MATCH %s [ %.*s ] \n", candidate->name, len-candidate->len, command+candidate->len);
         cmd_rcvd = true;
         next_word =  candidate->handler(command+candidate->len, len-candidate->len);
         break;
@@ -291,7 +380,7 @@ bool parse_command_text(const char* command, int len)
     }
     //not recognized, echo back invalid command with error code
     if(!candidate->name) {
-      printf("UNKNOWN command: %.*s\n", len, command);
+      ccc_debug("UNKNOWN command: %.*s\n", len, command);
       next_word = memchr(command, ' ', len);
     }
     if (next_word) {
@@ -303,14 +392,14 @@ bool parse_command_text(const char* command, int len)
       len = 0;
     }
   }
-  SubmitCommand();
+  SubmitCommand(cmd_rcvd, command, len);
   return cmd_rcvd;
 }
 
 #define LINEBUFSZ 512
 
 char* handle_overflow(char* linebuf, int maxlen) {
-  printf("TOO MANY CHARACTERS, truncating to %d\n", maxlen);
+  ccc_debug("TOO MANY CHARACTERS, truncating to %d\n", maxlen);
   char* endl = linebuf-maxlen-1;
   *endl = '\n';
   return endl;
@@ -323,7 +412,7 @@ int kbd_command_process(void) {
   if (kbhit()) {
     int nread = read(0, linebuf+linelen, LINEBUFSZ-linelen);
     if (nread<0) { return 1; }
-    printf("%.*s", nread, linebuf+linelen);
+    ccc_debug("%.*s", nread, linebuf+linelen);
     fflush(0);
 
 
@@ -360,17 +449,22 @@ bool gather_contact_text(const char* contactData, int len)
   bool cmd_rcvd = false;
   while (*contactData && len-->0) {
     char c = *contactData++;
+
+
     printf(".%c",c);
     if (c=='\n' || c=='\r') {
       linebuf[linelen]='\0';
-      cmd_rcvd = cmd_rcvd || parse_command_text(linebuf, linelen);
+      ccc_debug("CCC Line recieved [ %.*s ]", linelen, linebuf);
+      if (linebuf[0]=='>' && linebuf[1]=='>') {
+        cmd_rcvd = cmd_rcvd || parse_command_text(linebuf+2, linelen-2);
+      }
       linelen = 0;
     }
     else if (linelen < LINEBUFSZ) {
       linebuf[linelen++]=c;
     }
     else {
-      printf("contact buffer overflow");
+      ccc_debug("contact buffer overflow");
       linelen = 0;
     }
   }
@@ -408,27 +502,46 @@ void populate_outgoing_frame(void) {
 
 }
 
+#ifdef STANDALONE_TEST
+#define print_response printf
+#else
+
+int print_response(const char* format, ...) {
+  struct ContactData response = {{0}};
+  va_list argptr;
+  va_start(argptr, format);
+  int nchars = vsnprintf((char*)response.data, sizeof(response.data), format, argptr);
+  va_end(argptr);
+  memset(response.data+nchars, sizeof(response.data)-nchars, '0');
+  ccc_debug_x("CCC preparing response [ %s ]", response.data);
+//  contact_text_buffer_put(&response);
+  return nchars;
+}
+
+#endif
+
+
 uint16_t show_legend(uint16_t mask) {
-  printf("frame ");
+  print_response("frame ");
   if (mask & (1<<show_ENCODER)) {
-    printf("left_enc right_enc lift_enc head_enc ");
+    print_response("left_enc right_enc lift_enc head_enc ");
   }
   if (mask & (1<<show_SPEED)) {
-    printf("left_spd right_spd lift_spd head_spd ");
+    print_response("left_spd right_spd lift_spd head_spd ");
   }
   if (mask & (1<<show_CLIFF)) {
-    printf("fl_cliff fr_cliff br_cliff bl_cliff ");
+    print_response("fl_cliff fr_cliff br_cliff bl_cliff ");
   }
   if (mask & (1<<show_BAT)) {
-    printf("bat ");
+    print_response("bat ");
   }
   if (mask & (1<<show_PROX)) {
-    printf("rangeMM ");
+    print_response("rangeMM ");
   }
   if (mask & (1<<show_TOUCH)) {
-    printf("touch0 touch1 ");
+    print_response("touch0 touch1 ");
   }
-  printf("\n");
+  print_response("\n");
   return mask;
 }
 
@@ -441,10 +554,10 @@ void process_incoming_frame(struct BodyToHead* bodyData)
       oldmask = show_legend(gActiveState.printmask);
     }
 
-    printf("%d ", bodyData->framecounter);
+    print_response("%d ", bodyData->framecounter);
 
     if (gActiveState.printmask & (1<<show_ENCODER)) {
-      printf("%d %d %d %d ",
+      print_response("%d %d %d %d ",
              bodyData->motor[0].position,
              bodyData->motor[1].position,
              bodyData->motor[2].position,
@@ -457,47 +570,71 @@ void process_incoming_frame(struct BodyToHead* bodyData)
         speeds[i]= bodyData->motor[i].time ?
           ((float)bodyData->motor[i].delta / bodyData->motor[i].time) : 0;
       }
-      printf("%f %f %f %f ",
+      print_response("%f %f %f %f ",
              speeds[0],
              speeds[1],
              speeds[2],
              speeds[3] );
     }
     if (gActiveState.printmask & (1<<show_CLIFF)) {
-      printf("%d %d %d %d ",
+      print_response("%d %d %d %d ",
              bodyData->cliffSense[0],
              bodyData->cliffSense[1],
              bodyData->cliffSense[2],
              bodyData->cliffSense[3] );
     }
     if (gActiveState.printmask & (1<<show_BAT)) {
-      printf("%d ",
+      print_response("%d ",
              bodyData->battery.battery);
     }
     if (gActiveState.printmask & (1<<show_PROX)) {
-      printf("%d",
+      print_response("%d",
              bodyData->proximity.rangeMM);
     }
     if (gActiveState.printmask & (1<<show_TOUCH)) {
-      printf("%d %d",
+      print_response("%d %d",
              bodyData->touchLevel[0],
              bodyData->touchLevel[1]);
     }
-    printf("\n");
+    print_response("\n");
     if (--gActiveState.repeat_count == 0) {
       //clear print request at end
       gActiveState.printmask = 0;
+      print_response(gActiveState.reply);
+
     }
   }
 }
 
+#define CCC_COOLDOWN_TIME 100 //half second
+
+void start_overrride(int count) {
+  ccc_debug_x("CCC active for %d cycles", count + gActiveState.repeat_count);
+  gRemainingActiveCycles = count;
+}
+
+void stop_override(void) {
+  ccc_debug_x("CCC deactivating");
+  gRemainingActiveCycles = 0;
+
+}
+
 int run_commands(void) {
   if (gActiveState.repeat_count == 0) {
-    if (circular_buffer_count() > 0) {
-      circular_buffer_get(&gActiveState);
-      printf("executing command");
+    //when no active command, start countingdown active time.
+    if (gRemainingActiveCycles>0) {
+      --gRemainingActiveCycles;
+      if (gRemainingActiveCycles==0) { stop_override(); }
+    }
+    //when no active command, check if there is another one pending
+    if (command_buffer_count() > 0) {
+      command_buffer_get(&gActiveState);
+      //reset active time
+      ccc_debug("CCC executing command");
+      start_overrride(CCC_COOLDOWN_TIME);
       show_command(&gActiveState);
-
+    }
+    else {
     }
   }
   return (gActiveState.repeat_count == 0 && gQuit);
@@ -533,7 +670,7 @@ int main(int argc, const char* argv[])
 
   while (!exit)
   {
-    gActiveState.enable_cycles = 1000; //Force on
+    start_overrride(1000);; //Force on
     kbd_command_process();
 
     exit = run_commands();
@@ -555,7 +692,7 @@ int main(int argc, const char* argv[])
         gather_contact_text((char*)contactData->data, sizeof(contactData->data));
       }
       else {
-        printf("got header %x\n", hdr->payload_type);
+        ccc_debug("got header %x\n", hdr->payload_type);
       }
     }
 
@@ -568,18 +705,17 @@ int main(int argc, const char* argv[])
 
 #else
 
-#define CCC_COOLDOWN_TIME 100 //half second
 
 bool ccc_commander_is_active(void) {
-  return gActiveState.enable_cycles > 0;
+  return gRemainingActiveCycles > 0 || gActiveState.repeat_count > 0;
 }
 
 void ccc_data_process(const struct ContactData* data)
 {
+  ccc_debug("CCC data frame rcvd\n");
+  start_overrride( CCC_COOLDOWN_TIME);
   if (gather_contact_text((const char*)data->data,
                           sizeof(data->data))) {
-    // Restart active time.
-    gActiveState.enable_cycles = CCC_COOLDOWN_TIME;
   }
 }
 
@@ -589,16 +725,22 @@ void ccc_payload_process(struct BodyToHead* data)
   if (data->framecounter != framecounter) {
     framecounter = data->framecounter;
     process_incoming_frame(data);
-    if (gActiveState.repeat_count == 0 &&
-        gActiveState.enable_cycles ) {
-      --gActiveState.enable_cycles;
-    }
+    run_commands();
   }
 }
 
 struct HeadToBody* ccc_data_get_response(void) {
   populate_outgoing_frame();
   return &gHeadData;
+}
+
+struct ContactData* ccc_text_response(void) {
+  /* static struct ContactData response; */
+  /* if (contact_text_buffer_get(&response)) { */
+  /*   ccc_debug_x("CCC transmitting response [ %s ]", response.data); */
+  /*   return &response; */
+  /* } */
+  return NULL;
 }
 
 #endif
