@@ -27,6 +27,10 @@ namespace Cozmo {
 class CozmoContext;
 struct OverheadEdgeFrame;
 
+/****************************************************************
+ *                     Features Extractors                      *
+ ****************************************************************/
+
 class FeaturesExtractor {
 public:
   virtual std::vector<DrivingSurfaceClassifier::FeatureType>
@@ -60,23 +64,21 @@ void ClassifyImage(const DrivingSurfaceClassifier& clf, const Anki::Cozmo::Featu
 template<typename T1, typename T2>
 void convertToVector(const cv::Mat& mat, std::vector<std::vector<T2>>& vec)
 {
-  DEV_ASSERT(mat.type() == cv::DataType<T1>::type, "convertTo.WrongMatrixType");
+  DEV_ASSERT(mat.type() == cv::DataType<T1>::type, "convertToVector.WrongMatrixType");
+  DEV_ASSERT(mat.channels() == 1, "convertToVector.WrongNuberOfChannels");
 
   int nRows = mat.rows;
   int nCols = mat.cols;
-  vec.clear();
-  vec.reserve(nRows);
+  vec = std::vector<std::vector<T2>>(nRows, std::vector<T2>(nCols));
 
   for(int i = 0; i < nRows; ++i)
   {
     const T1* p = mat.ptr<T1>(i);
-    std::vector<T2> singleRow;
-    singleRow.reserve(nRows);
+    std::vector<T2>& singleRow  = vec[i];
     for (int j = 0; j < nCols; ++j)
     {
-      singleRow.push_back(cv::saturate_cast<T2>(p[j]));
+      singleRow[j] = cv::saturate_cast<T2>(p[j]);
     }
-    vec.push_back(singleRow);
   }
 }
 
@@ -85,18 +87,22 @@ void convertToVector(const cv::Mat& mat, std::vector<T2>& vec)
 {
   DEV_ASSERT(mat.type() == cv::DataType<T1>::type, "convertToVector.WrongMatrixType");
   DEV_ASSERT(mat.rows == 1, "convertToVector.OnlySingleRowAllowed");
+  DEV_ASSERT(mat.channels() == 1, "convertToVector.WrongNuberOfChannels");
 
   int nCols = mat.cols;
-  vec.clear();
-  vec.reserve(nCols);
+  vec = std::vector<T2>(nCols);
 
   const T1* p = mat.ptr<T1>(0);
   for (int j = 0; j < nCols; ++j)
   {
-    vec.push_back(cv::saturate_cast<T2>(p[j]));
+    vec[j] = cv::saturate_cast<T2>(p[j]);
   }
 
 }
+
+/****************************************************************
+ *                    Ground Plane Classifier                   *
+ ****************************************************************/
 
 class GroundPlaneClassifier
 {
