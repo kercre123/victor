@@ -15,6 +15,7 @@ bool ccc_commander_is_active(void);
 void ccc_data_process(const struct ContactData* data);
 void ccc_payload_process(const struct BodyToHead* data);
 struct HeadToBody* ccc_data_get_response(void);
+struct ContactData* ccc_text_response(void);
 
 #ifdef __cplusplus
 }

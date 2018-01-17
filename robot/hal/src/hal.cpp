@@ -105,6 +105,14 @@ Result spine_wait_for_first_frame(spine_ctx_t spine)
         const struct spine_frame_b2h* frame = (const struct spine_frame_b2h*)frameBuffer_;
         bodyData_ = (BodyToHead*)&frame->payload;
       }
+      else if (hdr->payload_type == PAYLOAD_CONT_DATA) {
+        ccc_data_process( (ContactData*)(hdr+1) );
+        continue;
+      }
+      else {
+        LOGD("Unknown Frame Type\n");
+      }
+
     } else {
       // r == 0 (waiting)
       if (read_count > 50) {
@@ -191,7 +199,13 @@ void ForwardMicData(void)
 void handle_payload_data(const uint8_t frame_buffer[]) {
   const struct spine_frame_b2h* frame = (const struct spine_frame_b2h*)frame_buffer;
   memcpy(frameBuffer_, frame_buffer, sizeof(frameBuffer_));
+
   bodyData_ = (BodyToHead*)(frameBuffer_ + sizeof(struct SpineMessageHeader));
+
+  if (ccc_commander_is_active()) {
+    ccc_payload_process(bodyData_);
+  }
+
   // BRC: Should accumulate all of the audio data and send it in one shot
   ForwardMicData();
 }
@@ -210,6 +224,7 @@ Result spine_get_frame() {
       continue;
     } else if (r > 0) {
       const struct SpineMessageHeader* hdr = (const struct SpineMessageHeader*)frame_buffer;
+      LOGD("Handling payload type %x\n", hdr->payload_type);
       if (hdr->payload_type == PAYLOAD_DATA_FRAME) {
         handle_payload_data(frame_buffer);  //payload starts immediately after header
         result = RESULT_OK;
@@ -219,6 +234,9 @@ Result spine_get_frame() {
         ccc_data_process( (ContactData*)(hdr+1) );
         result = RESULT_OK;
         continue;
+      }
+      else {
+        LOGD("Unknown Frame Type\n");
       }
 
     } else {
@@ -230,11 +248,8 @@ Result spine_get_frame() {
   return result;
 }
 
-  //check if the charge contact commander is active,
-  //if so, override normal operation
-    bool commander_is_active = ccc_commander_is_active();
-    struct HeadToBody* h2bp = (commander_is_active) ? ccc_data_get_response() : &headData_;
 
+extern "C"  ssize_t spine_write_ccc_frame(spine_ctx_t spine, const struct ContactData* ccc_payload);
 
 Result HAL::Step(void)
 {
@@ -242,13 +257,25 @@ Result HAL::Step(void)
 
   headData_.framecounter++;
 
+  //check if the charge contact commander is active,
+  //if so, override normal operation
+  bool commander_is_active = ccc_commander_is_active();
+  //  struct HeadToBody* h2bp = (commander_is_active) ? ccc_data_get_response() : &headData_;
+  struct HeadToBody* h2bp =  &headData_;
+
+
   // Send zero motor power when charging is enabled
   if(chargingEnabled_)
   {
     memset(h2bp->motorPower, 0, sizeof(h2bp->motorPower));
   }
 
-  spine_write_h2b_frame(&spine_, &headData_);
+  spine_write_h2b_frame(&spine_, h2bp);
+
+  struct ContactData* ccc_response = ccc_text_response();
+  if (ccc_response) {
+    spine_write_ccc_frame(&spine_, ccc_response);
+  }
 
   ProcessIMUEvents();
 
