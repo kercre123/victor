@@ -596,7 +596,7 @@ void QuadTreeProcessor::ClearDraw() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool QuadTreeProcessor::IsCached(EContentType contentType)
 {
-  const bool isCached = (contentType == EContentType::ObstacleCube         ) ||
+  const bool isCached = (contentType == EContentType::ObstacleObservable   ) ||
                         (contentType == EContentType::ObstacleProx         ) ||
                         (contentType == EContentType::ObstacleUnrecognized ) ||
                         (contentType == EContentType::InterestingEdge      ) ||
@@ -613,8 +613,7 @@ ColorRGBA QuadTreeProcessor::GetDebugColor(MemoryMapTypes::EContentType contentT
     case EContentType::ClearOfObstacle:       { ret = ColorRGBA(0.0f, 1.0f, 0.0f, 0.3f); break; };
     case EContentType::ClearOfCliff:          { ret = ColorRGBA(0.0f, 0.5f, 0.0f, 0.3f); break; };
     case EContentType::Unknown:               { ret = ColorRGBA(0.2f, 0.2f, 0.6f, 0.3f); break; };
-    case EContentType::ObstacleCube:          { ret = ColorRGBA(1.0f, 0.0f, 0.0f, 0.3f); break; };
-    case EContentType::ObstacleCubeRemoved:   { ret = ColorRGBA(1.0f, 0.0f, 0.0f, 1.0f); break; };
+    case EContentType::ObstacleObservable:    { ret = ColorRGBA(1.0f, 0.0f, 0.0f, 0.3f); break; };
     case EContentType::ObstacleCharger:       { ret = ColorRGBA(1.0f, 1.0f, 0.0f, 0.3f); break; };
     case EContentType::ObstacleChargerRemoved:{ ret = ColorRGBA(1.0f, 1.0f, 0.0f, 1.0f); break; };
     case EContentType::ObstacleProx:          { ret = ColorRGBA(0.0f, 0.5f, 0.5f, 0.3f); break; };
