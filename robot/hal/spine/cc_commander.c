@@ -53,8 +53,8 @@ typedef struct CozmoCommand_t {
 CozmoCommand gActiveState = {0};
 int gRemainingActiveCycles = 0;
 
-static struct ContactData gResponse;
-int gRespPending = 0;
+//static struct ContactData gResponse;
+//int gRespPending = 0;
 
 
 #define MAX_SERIAL_LEN 20
@@ -517,18 +517,17 @@ int print_response(const char* format, ...) {
   va_list argptr;
   va_start(argptr, format);
 
-  /* int nchars = vsnprintf((char*)response.data, sizeof(response.data), format, argptr); */
+ int nchars = vsnprintf((char*)response.data, sizeof(response.data), format, argptr);
 
-  strcpy((char*)response.data, "<< TEST RESPONSE");
-  int nchars = 16;
+  /* strcpy((char*)response.data, "<< TEST RESPONSE"); */
+  /* int nchars = 16; */
 
   va_end(argptr);
   memset(response.data+nchars, 0, sizeof(response.data)-nchars);
-//  memcpy(&gResponse, &response, sizeof(gResponse));
-  gResponse = response;
-  gRespPending = 1;
+//  gResponse = response;
+//  gRespPending = 1;
   ccc_debug_x("CCC preparing response [ %s ]", response.data);
-//  contact_text_buffer_put(&response);
+  contact_text_buffer_put(&response);
   return nchars;
 }
 
@@ -750,17 +749,17 @@ struct HeadToBody* ccc_data_get_response(void) {
 }
 
 
-
+static struct ContactData response;
 struct ContactData* ccc_text_response(void) {
-  /* if (contact_text_buffer_get(&response)) { */
-  /*   ccc_debug_x("CCC transmitting response [ %s ]", response.data); */
-  /*   return &response; */
-  /* } */
-  if  (ccc_commander_is_active() && gRespPending) {
-    ccc_debug_x("CCC transmitting response [ %s ]", gResponse.data);
-    gRespPending = 0;
-    return &gResponse;
+  if (contact_text_buffer_get(&response)) {
+    ccc_debug_x("CCC transmitting response [ %s ]", response.data);
+    return &response;
   }
+  /* if  (ccc_commander_is_active() && gRespPending) { */
+  /*   ccc_debug_x("CCC transmitting response [ %s ]", gResponse.data); */
+  /*   gRespPending = 0; */
+  /*   return &gResponse; */
+  /* } */
   return NULL;
 }
 
