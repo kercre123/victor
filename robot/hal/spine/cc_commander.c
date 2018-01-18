@@ -53,6 +53,10 @@ typedef struct CozmoCommand_t {
 CozmoCommand gActiveState = {0};
 int gRemainingActiveCycles = 0;
 
+static struct ContactData gResponse;
+int gRespPending = 0;
+
+
 #define MAX_SERIAL_LEN 20
 int get_esn(char buf[], int len)
 {
@@ -67,9 +71,11 @@ int get_esn(char buf[], int len)
   return 0;
 }
 
-
+#ifdef STANDALONE_TEST
+#define print_response printf
+#else
 int print_response(const char* format, ...);
-
+#endif
 
 
 /************* CIRCULAR BUFFER for commands ***************/
@@ -510,13 +516,22 @@ int print_response(const char* format, ...) {
   struct ContactData response = {{0}};
   va_list argptr;
   va_start(argptr, format);
-  int nchars = vsnprintf((char*)response.data, sizeof(response.data), format, argptr);
+
+  /* int nchars = vsnprintf((char*)response.data, sizeof(response.data), format, argptr); */
+
+  strcpy((char*)response.data, "<< TEST RESPONSE");
+  int nchars = 16;
+
   va_end(argptr);
-  memset(response.data+nchars, sizeof(response.data)-nchars, '0');
+  memset(response.data+nchars, 0, sizeof(response.data)-nchars);
+//  memcpy(&gResponse, &response, sizeof(gResponse));
+  gResponse = response;
+  gRespPending = 1;
   ccc_debug_x("CCC preparing response [ %s ]", response.data);
 //  contact_text_buffer_put(&response);
   return nchars;
 }
+
 
 #endif
 
@@ -600,7 +615,7 @@ void process_incoming_frame(struct BodyToHead* bodyData)
     if (--gActiveState.repeat_count == 0) {
       //clear print request at end
       gActiveState.printmask = 0;
-      print_response(gActiveState.reply);
+      print_response("%s", gActiveState.reply);
 
     }
   }
@@ -734,12 +749,18 @@ struct HeadToBody* ccc_data_get_response(void) {
   return &gHeadData;
 }
 
+
+
 struct ContactData* ccc_text_response(void) {
-  /* static struct ContactData response; */
   /* if (contact_text_buffer_get(&response)) { */
   /*   ccc_debug_x("CCC transmitting response [ %s ]", response.data); */
   /*   return &response; */
   /* } */
+  if  (ccc_commander_is_active() && gRespPending) {
+    ccc_debug_x("CCC transmitting response [ %s ]", gResponse.data);
+    gRespPending = 0;
+    return &gResponse;
+  }
   return NULL;
 }
 
