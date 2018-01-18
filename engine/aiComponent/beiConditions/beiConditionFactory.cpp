@@ -23,6 +23,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectMoved.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectPositionUpdated.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionObstacleDetected.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionOnCharger.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionPetInitialDetection.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotPlacedOnSlope.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotShaken.h"
@@ -131,6 +132,12 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
       strategy = std::make_shared<ConditionNot>(config);
       break;
     }
+    case BEIConditionType::OnCharger:
+    {
+      strategy = std::make_shared<ConditionOnCharger>(config);
+      break;
+    }
+    
     case BEIConditionType::Lambda:
     {
       DEV_ASSERT(false, "BEIConditionFactory.CreateWantsToRunStrategy.CantCreateLambdaFromConfig");

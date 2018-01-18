@@ -77,7 +77,12 @@
       "interruptingTransitions": [
         {
           "to": "Observing",
-          "preDefinedStrategyName": "OffCharger"
+          "condition": {
+            "conditionType": "Not",
+            "subCondition": {
+              "conditionType": "OnCharger"
+            }
+          }
         },
         {
           "to": "DriveOffChargerIntoFeeding",
@@ -110,7 +115,12 @@
       "interruptingTransitions": [
         {
           "to": "Observing",
-          "preDefinedStrategyName": "OffCharger"
+          "condition": {
+            "conditionType": "Not",
+            "subCondition": {
+              "conditionType": "OnCharger"
+            }
+          }
         }
       ],
       "nonInterruptingTransitions": [
@@ -133,7 +143,9 @@
       "interruptingTransitions": [
         {
           "to": "ObservingOnChargerRecentlyPlaced",
-          "preDefinedStrategyName": "OnCharger"
+          "condition": {
+            "conditionType": "OnCharger"
+          }
         },
         {
           "to": "Feeding",
@@ -157,7 +169,9 @@
       "interruptingTransitions": [
         {
           "to": "ObservingOnChargerRecentlyPlaced",
-          "preDefinedStrategyName": "OnCharger"
+          "condition": {
+            "conditionType": "OnCharger"
+          }
         }
       ],
       "nonInterruptingTransitions": [
@@ -184,7 +198,9 @@
       "interruptingTransitions": [
         {
           "to": "ObservingOnChargerRecentlyPlaced",
-          "preDefinedStrategyName": "OnCharger"
+          "condition": {
+            "conditionType": "OnCharger"
+          }
         }
       ],
       "nonInterruptingTransitions": [
@@ -254,7 +270,12 @@
       "interruptingTransitions": [
         {
           "to": "WakingUp",
-          "preDefinedStrategyName": "OffCharger"
+          "condition": {
+            "conditionType": "Not",
+            "subCondition": {
+              "conditionType": "OnCharger"
+            }
+          }
         }
       ],
       "nonInterruptingTransitions": [
@@ -286,7 +307,9 @@
       "exitTransitions": [
         {
           "to": "ObservingOnChargerRecentlyPlaced",
-          "preDefinedStrategyName": "OnCharger"
+          "condition": {
+            "conditionType": "OnCharger"
+          }
         },
         {
           // TODO:(bn) this doesn't work right now because FindAndGoToHome never stops unless it find a charger
@@ -309,7 +332,9 @@
       "exitTransitions": [
         {
           "to": "ObservingOnChargerRecentlyPlaced",
-          "preDefinedStrategyName": "OnCharger"
+          "condition": {
+            "conditionType": "OnCharger"
+          }
         },
         {
           "to": "Napping",

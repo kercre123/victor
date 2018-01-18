@@ -53,6 +53,9 @@ void InjectValidDelegateIntoBSM(TestBehaviorFramework& testFramework,
 void InjectAndDelegate(TestBehaviorFramework& testFramework,
                        IBehavior* delegator,
                        IBehavior* delegated);
+
+using BEIComponentMap = std::map<BEIComponentID, void*>;
+void InitBEIPartial( const BEIComponentMap& map, BehaviorExternalInterface& bei );
   
 class TestBehaviorFramework{
 public:

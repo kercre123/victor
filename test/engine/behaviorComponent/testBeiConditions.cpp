@@ -12,13 +12,20 @@
 
 #include "gtest/gtest.h"
 
+// access robot internals for test
+#define private public
+#define protected public
+
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionLambda.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionNot.h"
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
 #include "engine/moodSystem/moodManager.h"
+#include "engine/robot.h"
+#include "test/engine/behaviorComponent/testBehaviorFramework.h"
 #include "util/math/math.h"
 
 using namespace Anki;
@@ -179,29 +186,7 @@ TEST(BeiConditions, Frustration)
   BehaviorExternalInterface bei;
 
   MoodManager moodManager;
-  bei.Init(nullptr,
-           nullptr,
-           nullptr,
-           nullptr,
-           nullptr,
-           nullptr,
-           nullptr,
-           nullptr,
-           nullptr,
-           nullptr,
-           nullptr,
-           nullptr,
-           &moodManager,
-           nullptr,
-           nullptr,
-           nullptr,
-           nullptr,
-           nullptr,
-           nullptr,
-           nullptr,
-           nullptr,
-           nullptr,
-           nullptr);
+  InitBEIPartial( { {BEIComponentID::MoodManager, &moodManager} }, bei );
   
   cond->Init(bei);
   cond->Reset(bei);
@@ -393,4 +378,47 @@ TEST(BeiConditions, NotTimer)
   BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(9001.0));
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
 
+}
+
+TEST(BeiConditions, OnCharger)
+{
+  const std::string json = R"json(
+  {
+    "conditionType": "OnCharger"
+  })json";
+
+  IBEIConditionPtr cond;
+  CreateBEI(json, cond);
+
+  BehaviorExternalInterface bei;
+
+  TestBehaviorFramework tbf;
+  Robot& robot = tbf.GetRobot();
+  
+  BEIRobotInfo info(robot);
+  InitBEIPartial( { {BEIComponentID::RobotInfo, &info} }, bei );
+  
+  cond->Init(bei);
+  cond->Reset(bei);
+
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+
+  // charger implies platform here
+  robot.SetOnCharger(true);
+  EXPECT_TRUE( cond->AreConditionsMet(bei) );
+  EXPECT_TRUE( cond->AreConditionsMet(bei) );
+
+  // off charger, but still on platform
+  robot.SetOnCharger(false);
+  EXPECT_TRUE( cond->AreConditionsMet(bei) );
+  EXPECT_TRUE( cond->AreConditionsMet(bei) );
+
+  robot.SetOnChargerPlatform(false);
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+
+  // just on platform
+  robot.SetOnChargerPlatform(true);
+  EXPECT_TRUE( cond->AreConditionsMet(bei) );
+  EXPECT_TRUE( cond->AreConditionsMet(bei) );
 }

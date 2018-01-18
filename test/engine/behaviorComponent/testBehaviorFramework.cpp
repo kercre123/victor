@@ -47,6 +47,47 @@ using namespace Anki::Cozmo;
 namespace Anki{
 namespace Cozmo{
 
+namespace {
+
+template<typename T>
+T* GetFromMap(const BEIComponentMap& map, const BEIComponentID componentID) {
+  auto it = map.find(componentID);
+  if( it != map.end() ) {
+    return static_cast<T*>(it->second);
+  }
+  return nullptr;
+}     
+
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void InitBEIPartial( const BEIComponentMap& map, BehaviorExternalInterface& bei )
+{
+  bei.Init(GetFromMap<AIComponent>(map, BEIComponentID::AIComponent),
+           GetFromMap<AnimationComponent>(map, BEIComponentID::Animation),
+           GetFromMap<BehaviorContainer>(map, BEIComponentID::BehaviorContainer),
+           GetFromMap<BehaviorEventComponent>(map, BEIComponentID::BehaviorEvent),
+           GetFromMap<BlockWorld>(map, BEIComponentID::BlockWorld),
+           GetFromMap<BodyLightComponent>(map, BEIComponentID::BodyLightComponent),
+           GetFromMap<CubeAccelComponent>(map, BEIComponentID::CubeAccel),
+           GetFromMap<CubeLightComponent>(map, BEIComponentID::CubeLight),
+           GetFromMap<DelegationComponent>(map, BEIComponentID::Delegation),
+           GetFromMap<FaceWorld>(map, BEIComponentID::FaceWorld),
+           GetFromMap<MapComponent>(map, BEIComponentID::Map),
+           GetFromMap<MicDirectionHistory>(map, BEIComponentID::MicDirectionHistory),
+           GetFromMap<MoodManager>(map, BEIComponentID::MoodManager),
+           GetFromMap<NeedsManager>(map, BEIComponentID::NeedsManager),
+           GetFromMap<ObjectPoseConfirmer>(map, BEIComponentID::ObjectPoseConfirmer),
+           GetFromMap<PetWorld>(map, BEIComponentID::PetWorld),
+           GetFromMap<ProgressionUnlockComponent>(map, BEIComponentID::ProgressionUnlock),
+           GetFromMap<ProxSensorComponent>(map, BEIComponentID::ProxSensor),
+           GetFromMap<PublicStateBroadcaster>(map, BEIComponentID::PublicStateBroadcaster),
+           GetFromMap<Audio::EngineRobotAudioClient>(map, BEIComponentID::RobotAudioClient),
+           GetFromMap<BEIRobotInfo>(map, BEIComponentID::RobotInfo),
+           GetFromMap<TouchSensorComponent>(map, BEIComponentID::TouchSensor),
+           GetFromMap<VisionComponent>(map, BEIComponentID::Vision));
+
+}
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
