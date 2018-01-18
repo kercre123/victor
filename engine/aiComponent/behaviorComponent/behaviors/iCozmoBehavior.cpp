@@ -351,6 +351,13 @@ void ICozmoBehavior::InitInternal()
   for(auto tag: _robotToEngineTags) {
     GetBEI().GetBehaviorEventComponent().SubscribeToTags(this,{tag});
   }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::InitBehaviorOperationModifiers()
+{
+  // N.B. this can't happen in Init because some behaviors actually rely on other behaviors having been
+  // initialized to properly handler GetBehaviorOperationModifiers
   
   GetBehaviorOperationModifiers(_operationModifiers);
 }

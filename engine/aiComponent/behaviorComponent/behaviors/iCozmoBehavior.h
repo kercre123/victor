@@ -108,6 +108,10 @@ public:
   static BehaviorID ExtractBehaviorIDFromConfig(const Json::Value& config, const std::string& fileName = "");
   static BehaviorClass ExtractBehaviorClassFromConfig(const Json::Value& config);
 
+  // After Init is called, this function should be called on every behavior to set the operation modifiers. It
+  // will internally call GetBehaviorOperationModifiers() as needed
+  void InitBehaviorOperationModifiers();
+
   bool IsActivated() const { return _isActivated; }
 
   // returns true if the behavior has delegated control to a helper/action/behavior

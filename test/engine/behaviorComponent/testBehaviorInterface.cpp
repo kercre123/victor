@@ -47,6 +47,7 @@ TEST(BehaviorInterface, Create)
   
   TestBehavior b(empty);
   b.Init(behaviorExternalInterface);
+  b.InitBehaviorOperationModifiers();
   b.OnEnteredActivatableScope();
 
   EXPECT_FALSE( b.IsActivated() );
@@ -72,6 +73,7 @@ TEST(BehaviorInterface, Init)
   
   TestBehavior b(empty);
   b.Init(behaviorExternalInterface);
+  b.InitBehaviorOperationModifiers();
   b.OnEnteredActivatableScope();
 
   EXPECT_FALSE( b._inited );
@@ -99,6 +101,7 @@ TEST(BehaviorInterface, InitWithInterface)
 
   TestBehavior b(empty);
   b.Init(behaviorExternalInterface);
+  b.InitBehaviorOperationModifiers();
   b.OnEnteredActivatableScope();
 
   EXPECT_FALSE( b._inited );
@@ -129,6 +132,7 @@ TEST(BehaviorInterface, Run)
 
   TestBehavior b(empty);
   b.Init(behaviorExternalInterface);
+  b.InitBehaviorOperationModifiers();
   b.OnEnteredActivatableScope();
   
   b.WantsToBeActivated();
@@ -164,6 +168,7 @@ TEST(BehaviorInterface, HandleMessages)
   
   BehaviorExternalInterface& behaviorExternalInterface = testBehaviorFramework.GetBehaviorExternalInterface();  
   b2.Init(behaviorExternalInterface);
+  b2.InitBehaviorOperationModifiers();
   b2.OnEnteredActivatableScope();
   b2.WantsToBeActivated();
   InjectBehaviorIntoStack(b2, testBehaviorFramework);
@@ -239,6 +244,7 @@ TEST(BehaviorInterface, OutsideAction)
   
   TestBehavior b(empty);
   b.Init(behaviorExternalInterface);
+  b.InitBehaviorOperationModifiers();
   b.OnEnteredActivatableScope();
   b.WantsToBeActivated();
   b.OnActivated();
