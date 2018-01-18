@@ -11,7 +11,7 @@
  *
  **/
 
-#include "drivingSurfaceClassifier.h"
+#include "rawPixelsClassifier.h"
 
 #include "anki/common/basestation/math/logisticRegression.h"
 #include "basestation/utils/data/dataPlatform.h"
@@ -25,7 +25,7 @@
 // support macro
 #define GET_JSON_PARAMETER(__config, __paramname, __variable) \
   if (! JsonTools::GetValueOptional(__config, __paramname, __variable)) { \
-    PRINT_NAMED_WARNING("DrivingSurfaceClassifier.MissingJsonParameter", "Missing parameter %s", __paramname); \
+    PRINT_NAMED_WARNING("RawPixelsClassifier.MissingJsonParameter", "Missing parameter %s", __paramname); \
   }
 
 namespace Anki {
@@ -52,7 +52,7 @@ int AppendFileToMatrix(const char *filename, cv::Mat& mat) {
 
   std::ifstream file(filename);
   if (!file.is_open()) {
-    PRINT_NAMED_ERROR("GMMDrivingSurfaceClassifier.TrainFromFiles.ErrorOpeningFile", "Error while opening file %s",
+    PRINT_NAMED_ERROR("GMMRawPixelsClassifier.TrainFromFiles.ErrorOpeningFile", "Error while opening file %s",
                       filename);
     return -1;
   }
@@ -87,7 +87,7 @@ int AppendFileToMatrix(const char *filename, cv::Mat& mat) {
  *                     DrivingSurfaceClassifier               *
  ****************************************************************/
 
-bool DrivingSurfaceClassifier::Train(const OverheadMap::PixelSet& drivablePixels,
+bool RawPixelsClassifier::Train(const OverheadMap::PixelSet& drivablePixels,
                                      const OverheadMap::PixelSet& nonDrivablePixels)
 {
   // Build the training matrices for openCV
@@ -126,19 +126,19 @@ bool DrivingSurfaceClassifier::Train(const OverheadMap::PixelSet& drivablePixels
   return Train(allInputs, allClasses, uint(drivablePixels.size()));
 }
 
-DrivingSurfaceClassifier::DrivingSurfaceClassifier(const CozmoContext *context)
+RawPixelsClassifier::RawPixelsClassifier(const CozmoContext *context)
     : _context(context)
 {
 
 }
 
-void DrivingSurfaceClassifier::GetTrainingData(cv::Mat& trainingSamples, cv::Mat& trainingLabels) const
+void RawPixelsClassifier::GetTrainingData(cv::Mat& trainingSamples, cv::Mat& trainingLabels) const
 {
   trainingSamples = _trainingSamples;
   trainingLabels = _trainingLabels;
 }
 
-std::vector<uchar> DrivingSurfaceClassifier::PredictClass(const std::vector<std::vector<FeatureType>>& pixels) const
+std::vector<uchar> RawPixelsClassifier::PredictClass(const std::vector<std::vector<FeatureType>>& pixels) const
 {
   std::vector<uchar> responses;
   responses.reserve(pixels.size());
@@ -150,29 +150,29 @@ std::vector<uchar> DrivingSurfaceClassifier::PredictClass(const std::vector<std:
   return responses;
 }
 
-void DrivingSurfaceClassifier::WriteMat(const cv::Mat& mat, const char *filename) const
+void RawPixelsClassifier::WriteMat(const cv::Mat& mat, const char *filename) const
 {
-  DEV_ASSERT(mat.channels() == 1, "GMMDrivingSurfaceClassifier.WriteMat.WrongNumberOfChannels");
+  DEV_ASSERT(mat.channels() == 1, "GMMRawPixelsClassifier.WriteMat.WrongNumberOfChannels");
   DEV_ASSERT((mat.type() == CV_32F) ||
              (mat.type() == CV_64F) ||
-             (mat.type() == CV_8U), "GMMDrivingSurfaceClassifier.WriteMat.InvalidMatType");
+             (mat.type() == CV_8U), "GMMRawPixelsClassifier.WriteMat.InvalidMatType");
 
   const std::string path = _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Persistent,
                                                                        Util::FileUtils::FullFilePath({"vision",
                                                                                                       "overheadmap"}));
   if (!Util::FileUtils::CreateDirectory(path, false, true)) {
-    PRINT_NAMED_ERROR("GMMDrivingSurfaceClassifier.WriteMat.DirectoryError", "Error while creating folder %s",
+    PRINT_NAMED_ERROR("GMMRawPixelsClassifier.WriteMat.DirectoryError", "Error while creating folder %s",
                       path.c_str());
     return;
   }
 
-  PRINT_CH_INFO("GMMDrivingSurfaceClassifier", "GMMDrivingSurfaceClassifier.WriteMat.PathInfo",
+  PRINT_CH_INFO("GMMRawPixelsClassifier", "GMMRawPixelsClassifier.WriteMat.PathInfo",
                 "Saving the files to %s", path.c_str());
 
   const std::string fullPath = Util::FileUtils::FullFilePath({path, filename});
   std::ofstream outputFile(fullPath);
   if (! outputFile.is_open()) {
-    PRINT_NAMED_ERROR("GMMDrivingSurfaceClassifier.WriteMat.FileNotOpen", "Error while opening file %s for writing",
+    PRINT_NAMED_ERROR("GMMRawPixelsClassifier.WriteMat.FileNotOpen", "Error while opening file %s for writing",
                       fullPath.c_str());
     return;
   }
@@ -187,14 +187,14 @@ void DrivingSurfaceClassifier::WriteMat(const cv::Mat& mat, const char *filename
       WriteMat<uchar>(mat, outputFile);
       break;
     default: // this will never happen
-      DEV_ASSERT(false, "GMMDrivingSurfaceClassifier.WriteMat.WrongType");
+      DEV_ASSERT(false, "GMMRawPixelsClassifier.WriteMat.WrongType");
       break;
   }
 
 }
 
 template<class T>
-void DrivingSurfaceClassifier::WriteMat(const cv::Mat& mat, std::ofstream& outputFile) const
+void RawPixelsClassifier::WriteMat(const cv::Mat& mat, std::ofstream& outputFile) const
 {
   for (int i = 0; i < mat.rows; ++i) {
     const T* row = mat.ptr<T>(i);
@@ -205,7 +205,7 @@ void DrivingSurfaceClassifier::WriteMat(const cv::Mat& mat, std::ofstream& outpu
   }
 }
 
-bool DrivingSurfaceClassifier::TrainFromFiles(const char *positiveDataFileName, const char *negativeDataFileName)
+bool RawPixelsClassifier::TrainFromFiles(const char *positiveDataFileName, const char *negativeDataFileName)
 {
   cv::Mat inputElements;
 
@@ -231,19 +231,19 @@ bool DrivingSurfaceClassifier::TrainFromFiles(const char *positiveDataFileName, 
   return Train(inputElements, classes, numberOfPositives);
 }
 
-void DrivingSurfaceClassifier::SetTrainingData(const cv::Mat& trainingSamples, const cv::Mat& trainingLabels)
+void RawPixelsClassifier::SetTrainingData(const cv::Mat& trainingSamples, const cv::Mat& trainingLabels)
 {
   _trainingSamples = trainingSamples;
   _trainingLabels = trainingLabels;
 }
 
-//void DrivingSurfaceClassifier::ClassifyImage(const Vision::ImageRGB& image, Vision::Image& outputMask) const
+//void RawPixelsClassifier::ClassifyImage(const Vision::ImageRGB& image, Vision::Image& outputMask) const
 //{
 //
 //  s32 nrows = image.GetNumRows();
 //  s32 ncols = image.GetNumCols();
 //  DEV_ASSERT(outputMask.GetNumRows() == nrows && outputMask.GetNumCols() == ncols,
-//             "DrivingSurfaceClassifier.ClassifyImage.ResultArraySizeMismatch");
+//             "RawPixelsClassifier.ClassifyImage.ResultArraySizeMismatch");
 //
 //  if (_padding == 0) { //special case, way faster
 //    auto f = [this](const Vision::PixelRGB& pixel) {
@@ -265,7 +265,7 @@ void DrivingSurfaceClassifier::SetTrainingData(const cv::Mat& trainingSamples, c
 //  }
 //}
 
-//uchar DrivingSurfaceClassifier::PredictClass(const Vision::ImageRGB& image, uint row, uint col) const
+//uchar RawPixelsClassifier::PredictClass(const Vision::ImageRGB& image, uint row, uint col) const
 //{
 //  cv::Mat submatrix = image.get_CvMat_()(cv::Range(row-_padding, row+_padding+1),
 //                                         cv::Range(col-_padding, col+_padding+1)); // O(1) operation
@@ -275,7 +275,7 @@ void DrivingSurfaceClassifier::SetTrainingData(const cv::Mat& trainingSamples, c
 //  vec.reserve(submatrix.rows * submatrix.cols * submatrix.channels());
 //
 //  {
-//    DEV_ASSERT(submatrix.type() == CV_8UC3, "DrivingSurfaceClassifier.PredictClass.WrongSumbatrixType");
+//    DEV_ASSERT(submatrix.type() == CV_8UC3, "RawPixelsClassifier.PredictClass.WrongSumbatrixType");
 //    const int channels = submatrix.channels();
 //    const int nRows = submatrix.rows;
 //    const int nCols = submatrix.cols * channels;
@@ -299,8 +299,8 @@ void DrivingSurfaceClassifier::SetTrainingData(const cv::Mat& trainingSamples, c
  *                     GMMDrivingSurfaceClassifier               *
  ****************************************************************/
 
-GMMDrivingSurfaceClassifier::GMMDrivingSurfaceClassifier(const Json::Value& config, const CozmoContext *context)
-  : DrivingSurfaceClassifier(context)
+GMMRawPixelsClassifier::GMMRawPixelsClassifier(const Json::Value& config, const CozmoContext *context)
+  : RawPixelsClassifier(context)
 {
 
   int numClusters = 5;
@@ -312,18 +312,18 @@ GMMDrivingSurfaceClassifier::GMMDrivingSurfaceClassifier(const Json::Value& conf
 
 }
 
-bool GMMDrivingSurfaceClassifier::TrainGMM(const cv::Mat& input)
+bool GMMRawPixelsClassifier::TrainGMM(const cv::Mat& input)
 {
   bool result;
   try {
     result = this->_gmm->trainEM(input);
   }
   catch (cv::Exception& e) {
-    PRINT_NAMED_ERROR("GMMDrivingSurfaceClassifier.Train.ErrorWhileTrainingEM", "%s", e.what());
+    PRINT_NAMED_ERROR("GMMRawPixelsClassifier.Train.ErrorWhileTrainingEM", "%s", e.what());
     return false;
   }
   if (! result) {
-    PRINT_NAMED_ERROR("GMMDrivingSurfaceClassifier.Train.EMTRainingFail","");
+    PRINT_NAMED_ERROR("GMMRawPixelsClassifier.Train.EMTRainingFail","");
     return false;
   }
   else {
@@ -331,11 +331,11 @@ bool GMMDrivingSurfaceClassifier::TrainGMM(const cv::Mat& input)
   }
 }
 
-std::vector<float> GMMDrivingSurfaceClassifier::MinMahalanobisDistanceFromGMM(const cv::Mat& input, bool useWeight) const
+std::vector<float> GMMRawPixelsClassifier::MinMahalanobisDistanceFromGMM(const cv::Mat& input, bool useWeight) const
 {
 
 
-  DEV_ASSERT(input.cols == 3, "GMMDrivingSurfaceClassifier.MinMahalanobisDistanceFromGMM.Expected3Cols");
+  DEV_ASSERT(input.cols == 3, "GMMRawPixelsClassifier.MinMahalanobisDistanceFromGMM.Expected3Cols");
 
   DEV_ASSERT(input.channels() == 1, "Input matrix must have 1 channel");
   DEV_ASSERT(input.type() == CV_32F, "Input matrix must have float type");
@@ -361,10 +361,10 @@ std::vector<float> GMMDrivingSurfaceClassifier::MinMahalanobisDistanceFromGMM(co
     for (int k = 0; k < _gmm->getClustersNumber(); ++k) {
       const double w = weights[k];
       const cv::Mat meansMat = _gmm->getMeans();
-      DEV_ASSERT(meansMat.type() == CV_64FC1, "GMMDrivingSurfaceClassifier.MinMahalanobisDistanceFromGMM.WrongMatrixType");
+      DEV_ASSERT(meansMat.type() == CV_64FC1, "GMMRawPixelsClassifier.MinMahalanobisDistanceFromGMM.WrongMatrixType");
       const double* means = _gmm->getMeans().ptr<double>(k);
       const cv::Mat& covariance = covs[k];
-      DEV_ASSERT(covariance.type() == CV_64FC1, "GMMDrivingSurfaceClassifier.MinMahalanobisDistanceFromGMM.WrongMatrixType");
+      DEV_ASSERT(covariance.type() == CV_64FC1, "GMMRawPixelsClassifier.MinMahalanobisDistanceFromGMM.WrongMatrixType");
       const int dims = 3;
       float dist = DiagonalMahalanobisDistance(inputRow, means, covariance, dims);
       if (useWeight) {
@@ -384,8 +384,8 @@ std::vector<float> GMMDrivingSurfaceClassifier::MinMahalanobisDistanceFromGMM(co
  *                     LRDrivingSurfaceClassifier               *
  ****************************************************************/
 
-LRDrivingSurfaceClassifier::LRDrivingSurfaceClassifier(const Json::Value& config, const CozmoContext *context)
-  : GMMDrivingSurfaceClassifier(config, context)
+LRRawPixelsClassifier::LRRawPixelsClassifier(const Json::Value& config, const CozmoContext *context)
+  : GMMRawPixelsClassifier(config, context)
 {
   GET_JSON_PARAMETER(config, "TrainingAlpha", _trainingAlpha);
   GET_JSON_PARAMETER(config, "PositiveClassWeight", _positiveClassWeight);
@@ -403,7 +403,7 @@ LRDrivingSurfaceClassifier::LRDrivingSurfaceClassifier(const Json::Value& config
       cvRegularization = cv::ml::LogisticRegression::REG_DISABLE;
     }
     else {
-      PRINT_NAMED_WARNING("GMMDrivingSurfaceClassifier.WrongJsonParameter", "Regularization value is unknown: %s. Valid"
+      PRINT_NAMED_WARNING("GMMRawPixelsClassifier.WrongJsonParameter", "Regularization value is unknown: %s. Valid"
           " values are (L1, L2, Disable)", regularization.c_str());
     }
   }
@@ -417,7 +417,7 @@ LRDrivingSurfaceClassifier::LRDrivingSurfaceClassifier(const Json::Value& config
 
 }
 
-bool LRDrivingSurfaceClassifier::Train(const cv::Mat& allInputs, const cv::Mat& allClasses, uint numberOfPositives)
+bool LRRawPixelsClassifier::Train(const cv::Mat& allInputs, const cv::Mat& allClasses, uint numberOfPositives)
 {
   DEV_ASSERT(allInputs.cols == 3, "Input matrix must have 3 columns");
   DEV_ASSERT(allInputs.channels() == 1, "Input matrix must have 1 channel");
@@ -486,11 +486,11 @@ bool LRDrivingSurfaceClassifier::Train(const cv::Mat& allInputs, const cv::Mat& 
       result = this->_logisticRegressor->train(trainingData);
     }
     catch (cv::Exception& e) {
-      PRINT_NAMED_ERROR("GMMDrivingSurfaceClassifier.Train.ErrorWhileTrainingLogistic", "%s", e.what());
+      PRINT_NAMED_ERROR("GMMRawPixelsClassifier.Train.ErrorWhileTrainingLogistic", "%s", e.what());
       return false;
     }
     if (! result) {
-      PRINT_NAMED_ERROR("GMMDrivingSurfaceClassifier.Train.LogisticTrainingFail","Result from training is false!");
+      PRINT_NAMED_ERROR("GMMRawPixelsClassifier.Train.LogisticTrainingFail","Result from training is false!");
       return false;
     }
   }
@@ -498,10 +498,10 @@ bool LRDrivingSurfaceClassifier::Train(const cv::Mat& allInputs, const cv::Mat& 
   return true;
 }
 
-uchar LRDrivingSurfaceClassifier::PredictClass(const std::vector<FeatureType>& values) const
+uchar LRRawPixelsClassifier::PredictClass(const std::vector<FeatureType>& values) const
 {
   //TODO Assuming a single pixel here
-  DEV_ASSERT(values.size() == 3, "LRDrivingSurfaceClassifier.PredictClass.WrongInputSize");
+  DEV_ASSERT(values.size() == 3, "LRRawPixelsClassifier.PredictClass.WrongInputSize");
 
   // Step 1: get the GMM response
   const cv::Mat pixelMat = (cv::Mat_<float>(1,3) << values[0], values[1], values[2]);
@@ -514,7 +514,7 @@ uchar LRDrivingSurfaceClassifier::PredictClass(const std::vector<FeatureType>& v
   std::vector<float> result;
   _logisticRegressor->predict(minDistancesMat, result);
 
-  DEV_ASSERT(result.size() == 1, "LRDrivingSurfaceClassifier.PredictClass.EmptyResultVector");
+  DEV_ASSERT(result.size() == 1, "LRRawPixelsClassifier.PredictClass.EmptyResultVector");
   return uchar(result[0]);
 }
 
@@ -522,10 +522,10 @@ uchar LRDrivingSurfaceClassifier::PredictClass(const std::vector<FeatureType>& v
  *                     THDrivingSurfaceClassifier               *
  ****************************************************************/
 
-uchar THDrivingSurfaceClassifier::PredictClass(const std::vector<FeatureType>& values) const
+uchar THRawPixelsClassifier::PredictClass(const std::vector<FeatureType>& values) const
 {
   //TODO Assuming a single pixel here
-  DEV_ASSERT(values.size() == 3, "LRDrivingSurfaceClassifier.PredictClass.WrongInputSize");
+  DEV_ASSERT(values.size() == 3, "LRRawPixelsClassifier.PredictClass.WrongInputSize");
 
   // Step 1: get the GMM response
   const cv::Mat pixelMat = (cv::Mat_<float>(1,3) << values[0], values[1], values[2]);
@@ -534,13 +534,13 @@ uchar THDrivingSurfaceClassifier::PredictClass(const std::vector<FeatureType>& v
   const std::vector<float> minDistances = this->MinMahalanobisDistanceFromGMM(pixelMat);
 
   // There should be only one element
-  DEV_ASSERT(minDistances.size() == 1, "THDrivingSurfaceClassifier.PredictClass.WrongMinDistancesSize");
+  DEV_ASSERT(minDistances.size() == 1, "THRawPixelsClassifier.PredictClass.WrongMinDistancesSize");
   const float minDistance = minDistances[0];
 
   return (minDistance <= _threshold) ? uchar(1) : uchar(0);
 }
 
-bool THDrivingSurfaceClassifier::Train(const cv::Mat& allInputs, const cv::Mat&, uint)
+bool THRawPixelsClassifier::Train(const cv::Mat& allInputs, const cv::Mat&, uint)
 {
   DEV_ASSERT(allInputs.cols == 3, "Input matrix must have 3 columns");
   DEV_ASSERT(allInputs.channels() == 1, "Input matrix must have 1 channel");
@@ -558,17 +558,17 @@ bool THDrivingSurfaceClassifier::Train(const cv::Mat& allInputs, const cv::Mat&,
   std::vector<float> minDistances = this->MinMahalanobisDistanceFromGMM(allInputs, true);
   _threshold = FindThreshold(minDistances);
 
-  PRINT_CH_DEBUG("VisionSystem", "THDrivingSurfaceClassifier.Train.Threshold", "Found a threshold of %f", _threshold);
+  PRINT_CH_DEBUG("VisionSystem", "THRawPixelsClassifier.Train.Threshold", "Found a threshold of %f", _threshold);
   return true;
 }
 
-THDrivingSurfaceClassifier::THDrivingSurfaceClassifier(const Json::Value& config, const CozmoContext *context)
-    : GMMDrivingSurfaceClassifier(config, context)
+THRawPixelsClassifier::THRawPixelsClassifier(const Json::Value& config, const CozmoContext *context)
+    : GMMRawPixelsClassifier(config, context)
 {
   GET_JSON_PARAMETER(config, "MedianMultiplier", _medianMultiplier);
 }
 
-bool THDrivingSurfaceClassifier::TrainFromFile(const char *positiveDataFilename)
+bool THRawPixelsClassifier::TrainFromFile(const char *positiveDataFilename)
 {
   cv::Mat inputElements;
   const int numberOfElements = AppendFileToMatrix(positiveDataFilename, inputElements);
@@ -582,7 +582,7 @@ bool THDrivingSurfaceClassifier::TrainFromFile(const char *positiveDataFilename)
   return Train(inputElements, cv::Mat(), numberOfElements);
 }
 
-float THDrivingSurfaceClassifier::FindThreshold(std::vector<float>& distances) const
+float THRawPixelsClassifier::FindThreshold(std::vector<float>& distances) const
 {
   // find the median element and set the threshold to be a multiple of that number
   size_t halfSize = distances.size() / 2;
@@ -592,10 +592,10 @@ float THDrivingSurfaceClassifier::FindThreshold(std::vector<float>& distances) c
   return median * _medianMultiplier;
 }
 
-bool THDrivingSurfaceClassifier::TrainFromFiles(const char*, const char*)
+bool THRawPixelsClassifier::TrainFromFiles(const char*, const char*)
 {
-  PRINT_NAMED_ERROR("THDrivingSurfaceClassifier.TrainFromFiles.NotImplemented",
-                    "THDrivingSurfaceClassifier does not support training from positive and negative elements "
+  PRINT_NAMED_ERROR("THRawPixelsClassifier.TrainFromFiles.NotImplemented",
+                    "THRawPixelsClassifier does not support training from positive and negative elements "
                     "(only positive)");
   return false;
 }
@@ -604,8 +604,8 @@ bool THDrivingSurfaceClassifier::TrainFromFiles(const char*, const char*)
  *                     DTDrivingSurfaceClassifier               *
  ****************************************************************/
 
-DTDrivingSurfaceClassifier::DTDrivingSurfaceClassifier(const Json::Value& config, const CozmoContext *context) :
-  DrivingSurfaceClassifier(context)
+DTRawPixelsClassifier::DTRawPixelsClassifier(const Json::Value& config, const CozmoContext *context) :
+  RawPixelsClassifier(context)
 {
   _dtree = cv::ml::DTrees::create();
 
@@ -634,23 +634,23 @@ DTDrivingSurfaceClassifier::DTDrivingSurfaceClassifier(const Json::Value& config
 
 }
 
-DTDrivingSurfaceClassifier::DTDrivingSurfaceClassifier(const std::string& serializedFilename,
+DTRawPixelsClassifier::DTRawPixelsClassifier(const std::string& serializedFilename,
                                                        const CozmoContext *context) :
-  DrivingSurfaceClassifier(context)
+  RawPixelsClassifier(context)
 {
   bool result = DeSerialize(serializedFilename.c_str());
 
   // no other way here than throwing an exception
   if (! result) {
-    std::string errorMsg = "Error while creating DTDrivingSurfaceClassifier: " + serializedFilename + " does not exist";
+    std::string errorMsg = "Error while creating DTRawPixelsClassifier: " + serializedFilename + " does not exist";
     throw std::runtime_error(errorMsg);
   }
 }
 
-uchar DTDrivingSurfaceClassifier::PredictClass(const std::vector<FeatureType>& values) const
+uchar DTRawPixelsClassifier::PredictClass(const std::vector<FeatureType>& values) const
 {
 
-  DEV_ASSERT(values.size() == _dtree->getVarCount(), "DTDrivingSurfaceClassifier.PredictClass.WrongInputSize");
+  DEV_ASSERT(values.size() == _dtree->getVarCount(), "DTRawPixelsClassifier.PredictClass.WrongInputSize");
 
   cv::Mat_<float> inputRow;
   if (typeid(FeatureType) == typeid(float)) {
@@ -673,11 +673,11 @@ uchar DTDrivingSurfaceClassifier::PredictClass(const std::vector<FeatureType>& v
   const auto& tree = *_dtree;
   tree.predict(inputRow, result);
 
-  DEV_ASSERT(result.size() == 1, "DTDrivingSurfaceClassifier.PredictClass.EmptyResultVector");
+  DEV_ASSERT(result.size() == 1, "DTRawPixelsClassifier.PredictClass.EmptyResultVector");
   return uchar(result[0]);
 }
 
-bool DTDrivingSurfaceClassifier::Train(const cv::Mat& allInputs, const cv::Mat& allClasses, uint)
+bool DTRawPixelsClassifier::Train(const cv::Mat& allInputs, const cv::Mat& allClasses, uint)
 {
 
   DEV_ASSERT(allInputs.cols % 3 == 0, "Input matrix must have a multiple of 3 columns");
@@ -705,25 +705,25 @@ bool DTDrivingSurfaceClassifier::Train(const cv::Mat& allInputs, const cv::Mat& 
                                                                             categoricalClasses
                                                                             );
   DEV_ASSERT(trainingData->getResponseType() == cv::ml::VAR_CATEGORICAL,
-             "DTDrivingSurfaceClassifier.Train.WrongTrainingDataType");
+             "DTRawPixelsClassifier.Train.WrongTrainingDataType");
 
   bool result;
   try {
     result = this->_dtree->train(trainingData);
   }
   catch (cv::Exception& e) {
-    PRINT_NAMED_ERROR("DTDrivingSurfaceClassifier.Train.ErrorWhileTrainingLogistic", "%s", e.what());
+    PRINT_NAMED_ERROR("DTRawPixelsClassifier.Train.ErrorWhileTrainingLogistic", "%s", e.what());
     return false;
   }
   if (! result) {
-    PRINT_NAMED_ERROR("DTDrivingSurfaceClassifier.Train.LogisticTrainingFail","Result from training is false!");
+    PRINT_NAMED_ERROR("DTRawPixelsClassifier.Train.LogisticTrainingFail","Result from training is false!");
     return false;
   }
 
   return true;
 }
 
-bool DTDrivingSurfaceClassifier::Serialize(const char *filename)
+bool DTRawPixelsClassifier::Serialize(const char *filename)
 {
 
   _dtree->save(filename);
@@ -731,18 +731,18 @@ bool DTDrivingSurfaceClassifier::Serialize(const char *filename)
   return true;
 }
 
-bool DTDrivingSurfaceClassifier::DeSerialize(const char *filename)
+bool DTRawPixelsClassifier::DeSerialize(const char *filename)
 {
 
   if (!Anki::Util::FileUtils::FileExists(filename)) {
-    PRINT_NAMED_ERROR("DTDrivingSurfaceClassifier.DeSerialize.FileDoesntExist", "Error: file %s doesn't exist!",
+    PRINT_NAMED_ERROR("DTRawPixelsClassifier.DeSerialize.FileDoesntExist", "Error: file %s doesn't exist!",
                       filename);
   }
 
   _dtree = cv::ml::DTrees::load<cv::ml::DTrees>(filename);
 
   if (_dtree->empty()) {
-    PRINT_NAMED_ERROR("DTDrivingSurfaceClassifier.DeSerialize.ErrorWhileDeserializing", "Error: dtree is empty after"
+    PRINT_NAMED_ERROR("DTRawPixelsClassifier.DeSerialize.ErrorWhileDeserializing", "Error: dtree is empty after"
         "loading from %s", filename);
     return false;
   }

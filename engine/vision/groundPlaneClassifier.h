@@ -17,7 +17,7 @@
 #include "anki/common/types.h"
 #include "anki/vision/basestation/image.h"
 #include "engine/debugImageList.h"
-#include "engine/vision/drivingSurfaceClassifier.h"
+#include "engine/vision/rawPixelsClassifier.h"
 #include "engine/vision/visionPoseData.h"
 
 namespace Anki {
@@ -33,7 +33,7 @@ struct OverheadEdgeFrame;
 
 class FeaturesExtractor {
 public:
-  virtual std::vector<DrivingSurfaceClassifier::FeatureType>
+  virtual std::vector<RawPixelsClassifier::FeatureType>
   Extract(const Vision::ImageRGB& image, int row, int col) const = 0;
 };
 
@@ -42,7 +42,7 @@ public:
 
   MeanStdFeaturesExtractor(int padding) : _padding(padding) {};
 
-  std::vector<DrivingSurfaceClassifier::FeatureType>
+  std::vector<RawPixelsClassifier::FeatureType>
   Extract(const Vision::ImageRGB& image, int row, int col) const override;
 
 private:
@@ -51,14 +51,14 @@ private:
 
 class SinglePixelFeaturesExtraction : public FeaturesExtractor {
 public:
-  std::vector<DrivingSurfaceClassifier::FeatureType> Extract(const Vision::ImageRGB& image, int row, int col) const override;
+  std::vector<RawPixelsClassifier::FeatureType> Extract(const Vision::ImageRGB& image, int row, int col) const override;
 };
 
 /****************************************************************
  *                     Helper Functions                         *
  ****************************************************************/
 
-void ClassifyImage(const DrivingSurfaceClassifier& clf, const Anki::Cozmo::FeaturesExtractor& extractor,
+void ClassifyImage(const RawPixelsClassifier& clf, const Anki::Cozmo::FeaturesExtractor& extractor,
                    const Vision::ImageRGB& image, Vision::Image outputMask);
 
 template<typename T1, typename T2>
@@ -117,14 +117,14 @@ public:
     return _initialized;
   }
 
-  const DrivingSurfaceClassifier& GetClassifier() const {
+  const RawPixelsClassifier& GetClassifier() const {
     return *(_classifier.get());
   }
 
   static Vision::Image processClassifiedImage(const Vision::Image& binaryImage); //TODO remove static and put const
 
 protected:
-  std::unique_ptr<DrivingSurfaceClassifier> _classifier;
+  std::unique_ptr<RawPixelsClassifier> _classifier;
   std::unique_ptr<FeaturesExtractor> _extractor;
   const CozmoContext* _context;
   bool _initialized = false;

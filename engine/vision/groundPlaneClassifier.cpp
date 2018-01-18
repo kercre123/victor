@@ -29,7 +29,7 @@
 namespace Anki {
 namespace Cozmo {
 
-void ClassifyImage(const DrivingSurfaceClassifier& clf, const Anki::Cozmo::FeaturesExtractor& extractor,
+void ClassifyImage(const RawPixelsClassifier& clf, const Anki::Cozmo::FeaturesExtractor& extractor,
                    const Vision::ImageRGB& image, Vision::Image outputMask)
 {
 
@@ -41,7 +41,7 @@ void ClassifyImage(const DrivingSurfaceClassifier& clf, const Anki::Cozmo::Featu
   // calculating features over all the image
   for (uint i =0; i<image.GetNumRows(); i++) {
     for (int j = 0; j <image.GetNumCols(); ++j) {
-      const std::vector<DrivingSurfaceClassifier::FeatureType> features = extractor.Extract(image, i, j);
+      const std::vector<RawPixelsClassifier::FeatureType> features = extractor.Extract(image, i, j);
       uchar res = clf.PredictClass(features);
       outputMask(i, j) = u8(255 * res);
     }
@@ -57,7 +57,7 @@ GroundPlaneClassifier::GroundPlaneClassifier(const Json::Value& config, const Co
   const Json::Value& detectionConfig = config["GroundPlaneClassifier"];
 
   // TODO Classifier and extractor (with their parameters should be passed at config time!
-  _classifier.reset(new DTDrivingSurfaceClassifier(detectionConfig, context));
+  _classifier.reset(new DTRawPixelsClassifier(detectionConfig, context));
   _extractor.reset(new MeanStdFeaturesExtractor(1));
 
   // Train or load serialized file?
@@ -250,7 +250,7 @@ void GroundPlaneClassifier::trainClassifier(const std::string& path)
     _classifier->GetTrainingData(trainingSamples, trainingLabels);
 
     // building a std::vector<std::vector<u8>>
-    std::vector<std::vector<DrivingSurfaceClassifier::FeatureType>> values;
+    std::vector<std::vector<RawPixelsClassifier::FeatureType>> values;
     values.reserve(trainingSamples.rows);
     convertToVector<float>(trainingSamples, values);
 
@@ -290,7 +290,7 @@ bool GroundPlaneClassifier::loadClassifier(const std::string& filename)
   }
 }
 
-std::vector<DrivingSurfaceClassifier::FeatureType>
+std::vector<RawPixelsClassifier::FeatureType>
 MeanStdFeaturesExtractor::Extract(const Vision::ImageRGB& image, int row, int col) const
 {
   // Border checking
@@ -302,28 +302,28 @@ MeanStdFeaturesExtractor::Extract(const Vision::ImageRGB& image, int row, int co
   cv::Mat submatrix = image.get_CvMat_()(cv::Range(minRow, maxRow),
                                          cv::Range(minCol, maxCol)); // O(1) operation
 
-  DEV_ASSERT(submatrix.type() == CV_8UC3, "DrivingSurfaceClassifier.PredictClass.WrongSumbatrixType");
+  DEV_ASSERT(submatrix.type() == CV_8UC3, "RawPixelsClassifier.PredictClass.WrongSumbatrixType");
   cv::Vec3d mean, std;
   cv::meanStdDev(submatrix, mean, std);
 
-  std::vector<DrivingSurfaceClassifier::FeatureType> toRet = {DrivingSurfaceClassifier::FeatureType(mean[0]),
-                                                              DrivingSurfaceClassifier::FeatureType(mean[1]),
-                                                              DrivingSurfaceClassifier::FeatureType(mean[2]),
-                                                              DrivingSurfaceClassifier::FeatureType(std[0]),
-                                                              DrivingSurfaceClassifier::FeatureType(std[1]),
-                                                              DrivingSurfaceClassifier::FeatureType(std[2])};
+  std::vector<RawPixelsClassifier::FeatureType> toRet = {RawPixelsClassifier::FeatureType(mean[0]),
+                                                              RawPixelsClassifier::FeatureType(mean[1]),
+                                                              RawPixelsClassifier::FeatureType(mean[2]),
+                                                              RawPixelsClassifier::FeatureType(std[0]),
+                                                              RawPixelsClassifier::FeatureType(std[1]),
+                                                              RawPixelsClassifier::FeatureType(std[2])};
 
   return toRet;
 
 }
 
-std::vector<DrivingSurfaceClassifier::FeatureType>
+std::vector<RawPixelsClassifier::FeatureType>
 SinglePixelFeaturesExtraction::Extract(const Vision::ImageRGB& image, int row, int col) const
 {
   const Vision::PixelRGB& pixel = image(row, col);
-  const std::vector<DrivingSurfaceClassifier::FeatureType> toRet{DrivingSurfaceClassifier::FeatureType(pixel.r()),
-                                                                 DrivingSurfaceClassifier::FeatureType(pixel.g()),
-                                                                 DrivingSurfaceClassifier::FeatureType(pixel.b())};
+  const std::vector<RawPixelsClassifier::FeatureType> toRet{RawPixelsClassifier::FeatureType(pixel.r()),
+                                                                 RawPixelsClassifier::FeatureType(pixel.g()),
+                                                                 RawPixelsClassifier::FeatureType(pixel.b())};
   return toRet;
 }
 } // namespace Cozmo

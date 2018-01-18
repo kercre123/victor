@@ -17,7 +17,7 @@
 #include "engine/overheadEdge.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
-#include "engine/vision/drivingSurfaceClassifier.h"
+#include "engine/vision/rawPixelsClassifier.h"
 #include "engine/vision/groundPlaneClassifier.h"
 #include "util/fileUtils/fileUtils.h"
 
@@ -30,7 +30,7 @@
 
 extern Anki::Cozmo::CozmoContext *cozmoContext;
 
-void visualizeClassifierOnImages(const std::string& pathToImages, const Anki::Cozmo::DrivingSurfaceClassifier& clf,
+void visualizeClassifierOnImages(const std::string& pathToImages, const Anki::Cozmo::RawPixelsClassifier& clf,
                                  const Anki::Cozmo::FeaturesExtractor& extractor=Anki::Cozmo::SinglePixelFeaturesExtraction()) {
 
   std::vector<std::string> imageFiles;
@@ -115,7 +115,7 @@ Anki::Cozmo::VisionPoseData populateVisionPoseData() {
 /*
  * Trains the classifier from the files and performs accuracy checks
  */
-void checkClassifier(Anki::Cozmo::DrivingSurfaceClassifier& clf,
+void checkClassifier(Anki::Cozmo::RawPixelsClassifier& clf,
                      const std::string& positivePath,
                      const std::string& negativePath,
                      float& resultErrorTrainingSet,
@@ -140,7 +140,7 @@ void checkClassifier(Anki::Cozmo::DrivingSurfaceClassifier& clf,
   if (maxTotalError > 0)
   {
     std::cout<<"Testing the whole training set"<<std::endl;
-    std::vector<std::vector<Anki::Cozmo::DrivingSurfaceClassifier::FeatureType>> pixels;
+    std::vector<std::vector<Anki::Cozmo::RawPixelsClassifier::FeatureType>> pixels;
     Anki::Cozmo::convertToVector<float>(trainingSamples, pixels);
 
     // calculate error
@@ -157,14 +157,14 @@ void checkClassifier(Anki::Cozmo::DrivingSurfaceClassifier& clf,
   {
     std::cout<<"Testing the positive class in the training set"<<std::endl;
     cv::Mat positiveY;
-    std::vector<std::vector<Anki::Cozmo::DrivingSurfaceClassifier::FeatureType>> pixels;
+    std::vector<std::vector<Anki::Cozmo::RawPixelsClassifier::FeatureType>> pixels;
     pixels.reserve(trainingSamples.rows); // probably won't be using that much
 
     // The local friendly lambda. There's a lot going on here just because trainingLabels is a cv::Mat_ with a template
     // type. Getting the type out of the Mat_ is not easy though, hence the dance with decltype
     auto fillPixels = [&trainingSamples = static_cast<const cv::Mat&>(trainingSamples)]
         (cv::Mat& positiveY,
-         std::vector<std::vector<Anki::Cozmo::DrivingSurfaceClassifier::FeatureType>>& pixels,
+         std::vector<std::vector<Anki::Cozmo::RawPixelsClassifier::FeatureType>>& pixels,
          const auto& trainingLabels) {
 
       using T = decltype(trainingLabels(0)); //either float or int
@@ -172,7 +172,7 @@ void checkClassifier(Anki::Cozmo::DrivingSurfaceClassifier& clf,
       for (uint rowNumber = 0; elementY != trainingLabels.template end(); rowNumber++, elementY++) {
         const T value = *elementY;
         if ( value != 0) { // if it's positive class, add the sample to pixels
-          std::vector<Anki::Cozmo::DrivingSurfaceClassifier::FeatureType> rowPixels;
+          std::vector<Anki::Cozmo::RawPixelsClassifier::FeatureType> rowPixels;
           Anki::Cozmo::convertToVector<float>(trainingSamples.row(rowNumber), rowPixels);
           pixels.push_back(std::move(rowPixels));
           positiveY.push_back(value);
@@ -218,7 +218,7 @@ TEST(SurfaceClassifier, DISABLED_LRClassifier_TestWholeErrorNoWeighting) {
     config["RegularizationType"] = "Disable";
   }
 
-  Anki::Cozmo::LRDrivingSurfaceClassifier clf(config, cozmoContext);
+  Anki::Cozmo::LRRawPixelsClassifier clf(config, cozmoContext);
 
   const std::string path = cozmoContext->GetDataPlatform()->pathToResource(Anki::Util::Data::Scope::Resources,
                                                                            "test/overheadMap/run7");
@@ -235,7 +235,7 @@ TEST(SurfaceClassifier, DISABLED_LRClassifier_TestWholeErrorNoWeighting) {
   cv::Mat trainingSamples, trainingLabels;
   clf.GetTrainingData(trainingSamples, trainingLabels);
 
-  std::vector<std::vector<Anki::Cozmo::DrivingSurfaceClassifier::FeatureType>> pixels;
+  std::vector<std::vector<Anki::Cozmo::RawPixelsClassifier::FeatureType>> pixels;
   Anki::Cozmo::convertToVector<float>(trainingSamples, pixels);
 
   // calculate error
@@ -265,7 +265,7 @@ TEST(SurfaceClassifier, DISABLED_LRClassifier_TestPositiveClassOnlyWithWeights)
     config["RegularizationType"] = "Disable";
   }
 
-  Anki::Cozmo::LRDrivingSurfaceClassifier clf(config, cozmoContext);
+  Anki::Cozmo::LRRawPixelsClassifier clf(config, cozmoContext);
 
   const std::string path = cozmoContext->GetDataPlatform()->pathToResource(Anki::Util::Data::Scope::Resources,
                                                                            "test/overheadMap/run7");
@@ -296,7 +296,7 @@ TEST(SurfaceClassifier, DISABLED_LRClassifier_TestManualLabels) {
     config["RegularizationType"] = "Disable";
   }
 
-  Anki::Cozmo::LRDrivingSurfaceClassifier clf(config, cozmoContext);
+  Anki::Cozmo::LRRawPixelsClassifier clf(config, cozmoContext);
 
   const std::string path = cozmoContext->GetDataPlatform()->pathToResource(Anki::Util::Data::Scope::Resources,
                                                                            "test/overheadMap/manual_labels");
@@ -327,7 +327,7 @@ TEST(SurfaceClassifier, DISABLED_THClassifier_TestRealRun) {
     config["MedianMultiplier"] = 2.0;
   }
 
-  Anki::Cozmo::THDrivingSurfaceClassifier clf(config, cozmoContext);
+  Anki::Cozmo::THRawPixelsClassifier clf(config, cozmoContext);
 
   const std::string path = cozmoContext->GetDataPlatform()->pathToResource(Anki::Util::Data::Scope::Resources,
                                                                            "test/overheadMap/run7/positivePixels.txt");
@@ -338,7 +338,7 @@ TEST(SurfaceClassifier, DISABLED_THClassifier_TestRealRun) {
   cv::Mat trainingSamples, trainingLabels;
   clf.GetTrainingData(trainingSamples, trainingLabels);
 
-  std::vector<std::vector<Anki::Cozmo::DrivingSurfaceClassifier::FeatureType>> pixels;
+  std::vector<std::vector<Anki::Cozmo::RawPixelsClassifier::FeatureType>> pixels;
   Anki::Cozmo::convertToVector<float>(trainingSamples, pixels);
 
   std::vector<uchar> responses = clf.PredictClass(pixels);
@@ -370,7 +370,7 @@ TEST(SurfaceClassifier, DTClassifier_TestManualLabels) {
     config["Use1SERule"] = false;
   }
 
-  Anki::Cozmo::DTDrivingSurfaceClassifier clf(config, cozmoContext);
+  Anki::Cozmo::DTRawPixelsClassifier clf(config, cozmoContext);
 
   const std::string path = cozmoContext->GetDataPlatform()->pathToResource(Anki::Util::Data::Scope::Resources,
                                                                            "test/overheadMap/manual_labels");
@@ -404,7 +404,7 @@ TEST(SurfaceClassifier, DTClassifier_TestSerialization) {
     config["PositiveWeight"] = 3.0f;
   }
 
-  Anki::Cozmo::DTDrivingSurfaceClassifier clf(config, cozmoContext);
+  Anki::Cozmo::DTRawPixelsClassifier clf(config, cozmoContext);
 
   const std::string path = cozmoContext->GetDataPlatform()->pathToResource(Anki::Util::Data::Scope::Resources,
                                                                            "test/overheadMap/RealImagesDesk");
@@ -424,7 +424,7 @@ TEST(SurfaceClassifier, DTClassifier_TestSerialization) {
   ASSERT_TRUE(result);
 
   // deserialize the classifier
-  Anki::Cozmo::DTDrivingSurfaceClassifier clf2(serializeFileName, cozmoContext);
+  Anki::Cozmo::DTRawPixelsClassifier clf2(serializeFileName, cozmoContext);
   {
     cv::Mat trainingSamples, trainingLabels;
     clf.GetTrainingData(trainingSamples, trainingLabels);
@@ -453,7 +453,7 @@ TEST(SurfaceClassifier, DTClassifier_TestMeanStdData) {
     config["FileOrDirName"] = "test/overheadMap/RealImagesDesk";
   }
 
-  Anki::Cozmo::DTDrivingSurfaceClassifier clf(config, cozmoContext);
+  Anki::Cozmo::DTRawPixelsClassifier clf(config, cozmoContext);
 
   const std::string path = cozmoContext->GetDataPlatform()->pathToResource(Anki::Util::Data::Scope::Resources,
                                                                            "test/overheadMap/selectiveAnnotation");

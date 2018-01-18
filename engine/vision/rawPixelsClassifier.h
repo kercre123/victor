@@ -11,8 +11,8 @@
  *
  **/
 
-#ifndef __Anki_Cozmo_DrivingSurfaceClassifier_H__
-#define __Anki_Cozmo_DrivingSurfaceClassifier_H__
+#ifndef __Anki_Cozmo_RawPixelsClassifier_H__
+#define __Anki_Cozmo_RawPixelsClassifier_H__
 
 
 #include "basestation/jsonTools.h"
@@ -39,7 +39,7 @@ namespace Cozmo {
 class CozmoContext;
 
 /****************************************************************
- *                     DrivingSurfaceClassifier                 *
+ *                     RawPixelsClassifier                 *
  ****************************************************************/
 /*
  * Generic class for drivable surface classifier. See Individual implementations below. The class can be
@@ -47,13 +47,13 @@ class CozmoContext;
  * use the Predict methods. The pixels are provided by the OverheadMap class. Training is performed in
  * batches.
  */
-class DrivingSurfaceClassifier {
+class RawPixelsClassifier {
 
 public:
 
   typedef float FeatureType;
 
-  DrivingSurfaceClassifier(const CozmoContext *context);
+  RawPixelsClassifier(const CozmoContext *context);
 
   /*
    * Train from a set of drivable and non-drivable pixels. Data might come from OverheadMap
@@ -111,16 +111,16 @@ protected:
 };
 
 /****************************************************************
- *                     GMMDrivingSurfaceClassifier              *
+ *                     GMMRawPixelsClassifier              *
  ****************************************************************/
 
 /*
- * Abstract class for drivable surface classification using Gaussian Mixture Models. See LRDrivingSurfaceClassifier
+ * Abstract class for drivable surface classification using Gaussian Mixture Models. See LRRawPixelsClassifier
  * and THrivingSurfaceClassifier for implementations
  */
-class GMMDrivingSurfaceClassifier : public DrivingSurfaceClassifier{
+class GMMRawPixelsClassifier : public RawPixelsClassifier{
 public:
-  explicit GMMDrivingSurfaceClassifier(const Json::Value& config, const CozmoContext *context);
+  explicit GMMRawPixelsClassifier(const Json::Value& config, const CozmoContext *context);
 
 protected:
   cv::Ptr<cv::ml::EM> _gmm;
@@ -137,7 +137,7 @@ protected:
 };
 
 /****************************************************************
- *                     LRDrivingSurfaceClassifier               *
+ *                     LRRawPixelsClassifier               *
  ****************************************************************/
 /*
  * This class uses Gaussian Mixture Models (GMM) and Logistic Regression (LR) to classify pixels as drivable or not.
@@ -148,25 +148,25 @@ protected:
  * Since the OverheadMap only labels pixels the robot has driven on as positive, a higher weight should be given to the
  * positive (1) class during training.
  */
-class LRDrivingSurfaceClassifier : public GMMDrivingSurfaceClassifier
+class LRRawPixelsClassifier : public GMMRawPixelsClassifier
 {
 public:
-  explicit LRDrivingSurfaceClassifier(const Json::Value& config, const CozmoContext *context);
+  explicit LRRawPixelsClassifier(const Json::Value& config, const CozmoContext *context);
 
-  using GMMDrivingSurfaceClassifier::PredictClass;
+  using GMMRawPixelsClassifier::PredictClass;
   uchar PredictClass(const std::vector<FeatureType>& values) const override;
 
   bool Serialize(const char *filename) override
   {
-    PRINT_NAMED_ERROR("LRDrivingSurfaceClassifier.SerializeNotImplemented", "Serialize is not implementd for "
-                                                                            "LRDrivingSurfaceClassifier");
+    PRINT_NAMED_ERROR("LRRawPixelsClassifier.SerializeNotImplemented", "Serialize is not implementd for "
+                                                                            "LRRawPixelsClassifier");
     return false;
   }
 
   bool DeSerialize(const char *filename) override
   {
-    PRINT_NAMED_ERROR("LRDrivingSurfaceClassifier.SerializeNotImplemented", "DeSerialize is not implementd for "
-                                                                            "LRDrivingSurfaceClassifier");
+    PRINT_NAMED_ERROR("LRRawPixelsClassifier.SerializeNotImplemented", "DeSerialize is not implementd for "
+                                                                            "LRRawPixelsClassifier");
     return false;
   }
 
@@ -180,7 +180,7 @@ protected:
 };
 
 /****************************************************************
- *                     THDrivingSurfaceClassifier               *
+ *                     THRawPixelsClassifier               *
  ****************************************************************/
 
 /*
@@ -188,12 +188,12 @@ protected:
  * data. Then during prediction the minimum Mahlanobis distance between the test point and the kernels is computed,
  * and the result is thresholded. The threshold is automatically found as a multiple of the median of the training data.
  */
-class THDrivingSurfaceClassifier : public GMMDrivingSurfaceClassifier
+class THRawPixelsClassifier : public GMMRawPixelsClassifier
 {
 public:
-  explicit THDrivingSurfaceClassifier(const Json::Value& config, const CozmoContext *context);
+  explicit THRawPixelsClassifier(const Json::Value& config, const CozmoContext *context);
 
-  using GMMDrivingSurfaceClassifier::PredictClass;
+  using GMMRawPixelsClassifier::PredictClass;
   uchar PredictClass(const std::vector<FeatureType>& values) const override;
 
   bool TrainFromFiles(const char *positiveDataFileName, const char *negativeDataFileName) override;
@@ -202,15 +202,15 @@ public:
 
   bool Serialize(const char *filename) override
   {
-    PRINT_NAMED_ERROR("THDrivingSurfaceClassifier.SerializeNotImplemented", "Serialize is not implementd for "
-                                                                            "THDrivingSurfaceClassifier");
+    PRINT_NAMED_ERROR("THRawPixelsClassifier.SerializeNotImplemented", "Serialize is not implementd for "
+                                                                            "THRawPixelsClassifier");
     return false;
   }
 
   bool DeSerialize(const char *filename) override
   {
-    PRINT_NAMED_ERROR("THDrivingSurfaceClassifier.SerializeNotImplemented", "DeSerialize is not implementd for "
-                                                                            "THDrivingSurfaceClassifier");
+    PRINT_NAMED_ERROR("THRawPixelsClassifier.SerializeNotImplemented", "DeSerialize is not implementd for "
+                                                                            "THRawPixelsClassifier");
     return false;
   }
 
@@ -224,18 +224,18 @@ protected:
 };
 
 /****************************************************************
- *                     DTDrivingSurfaceClassifier               *
+ *                     DTRawPixelsClassifier               *
  ****************************************************************/
 
 /*
  * This class uses Decision Trees to classify drivable pixels. It does not build a Gaussian Mixture Model. It currently
  * is the fastest among the other classifiers and possibly the most accurate.
  */
-class DTDrivingSurfaceClassifier : public DrivingSurfaceClassifier
+class DTRawPixelsClassifier : public RawPixelsClassifier
 {
 public:
-  explicit DTDrivingSurfaceClassifier(const Json::Value& config, const CozmoContext *context);
-  DTDrivingSurfaceClassifier(const std::string& serializedFilename, const CozmoContext* context);
+  explicit DTRawPixelsClassifier(const Json::Value& config, const CozmoContext *context);
+  DTRawPixelsClassifier(const std::string& serializedFilename, const CozmoContext* context);
 
   uchar PredictClass(const std::vector<FeatureType>& values) const override;
 
