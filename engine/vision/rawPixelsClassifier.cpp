@@ -1,10 +1,10 @@
 /**
- * File: DrivingSurfaceClassifier.cpp
+ * File: rawPixelsClassifier.cpp
  *
  * Author: Lorenzo Riano
  * Created: 11/9/17
  *
- * Description: A set of classes to classify pixels as drivable or non drivable. Works in tandem with OverheadMap.
+ * Description: A set of classes to classify pixels. Used mainly by GroundClassifier
  *              See testSurfaceClassifier.cpp for examples of use.
  *
  * Copyright: Anki, Inc. 2017
@@ -236,64 +236,6 @@ void RawPixelsClassifier::SetTrainingData(const cv::Mat& trainingSamples, const 
   _trainingSamples = trainingSamples;
   _trainingLabels = trainingLabels;
 }
-
-//void RawPixelsClassifier::ClassifyImage(const Vision::ImageRGB& image, Vision::Image& outputMask) const
-//{
-//
-//  s32 nrows = image.GetNumRows();
-//  s32 ncols = image.GetNumCols();
-//  DEV_ASSERT(outputMask.GetNumRows() == nrows && outputMask.GetNumCols() == ncols,
-//             "RawPixelsClassifier.ClassifyImage.ResultArraySizeMismatch");
-//
-//  if (_padding == 0) { //special case, way faster
-//    auto f = [this](const Vision::PixelRGB& pixel) {
-//      const std::vector<u8> input{pixel.r(), pixel.g(), pixel.b()};
-//      return u8(255 * this->PredictClass(input));
-//    };
-//
-//    image.ApplyScalarFunction<u8>(f, outputMask);
-//  }
-//
-//  else {
-//    // TODO Handle boundaries!
-//    for (uint i = _padding; i < image.GetNumRows() - _padding - 1; i++) {
-//      u8 *resultRow = outputMask.GetRow(i);
-//      for (uint j = _padding; j < image.GetNumCols() - _padding - 1; j++) {
-//        resultRow[j] = PredictClass(image, i, j);
-//      }
-//    }
-//  }
-//}
-
-//uchar RawPixelsClassifier::PredictClass(const Vision::ImageRGB& image, uint row, uint col) const
-//{
-//  cv::Mat submatrix = image.get_CvMat_()(cv::Range(row-_padding, row+_padding+1),
-//                                         cv::Range(col-_padding, col+_padding+1)); // O(1) operation
-//
-//  // Need to copy here, submatrix is probably not continuous
-//  std::vector<u8> vec;
-//  vec.reserve(submatrix.rows * submatrix.cols * submatrix.channels());
-//
-//  {
-//    DEV_ASSERT(submatrix.type() == CV_8UC3, "RawPixelsClassifier.PredictClass.WrongSumbatrixType");
-//    const int channels = submatrix.channels();
-//    const int nRows = submatrix.rows;
-//    const int nCols = submatrix.cols * channels;
-//    uchar* p;
-//    for(int i = 0; i < nRows; ++i)
-//    {
-//      p = submatrix.ptr<uchar>(i);
-//      for (int j = 0; j < nCols; ++j)
-//      {
-//        vec.push_back(p[j]);
-//      }
-//    }
-//  }
-//
-//
-//  u8 res =  u8(255*this->PredictClass(vec));
-//  return res;
-//}
 
 /****************************************************************
  *                     GMMDrivingSurfaceClassifier               *
@@ -652,12 +594,14 @@ uchar DTRawPixelsClassifier::PredictClass(const std::vector<FeatureType>& values
 
   DEV_ASSERT(values.size() == _dtree->getVarCount(), "DTRawPixelsClassifier.PredictClass.WrongInputSize");
 
+  //DTree requires Mat_<float> as input
+
   cv::Mat_<float> inputRow;
   if (typeid(FeatureType) == typeid(float)) {
     inputRow = cv::Mat_<float>(values).reshape(1, 1); // make it a single row
   }
   else {
-    // we need to copy since DTree requires float as input
+    // Need to copy
     // TODO can the Mat_ constructor just do this?
 
     inputRow = cv::Mat_<float>(1, int(values.size()));

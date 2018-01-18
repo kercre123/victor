@@ -1,10 +1,10 @@
 /**
- * File: DrivingSurfaceClassifier.h
+ * File: rawPixelsClassifier.h
  *
  * Author: Lorenzo Riano
  * Created: 11/9/17
  *
- * Description: A set of classes to classify pixels as drivable or non drivable. Works in tandem with OverheadMap.
+ * Description: A set of classes to classify pixels. Used mainly by GroundClassifier
  *              See testSurfaceClassifier.cpp for examples of use.
  *
  * Copyright: Anki, Inc. 2017
@@ -75,13 +75,6 @@ public:
    * Predict the class of a vector of pixels (1 is drivable, 0 is not)
    */
   virtual std::vector<uchar> PredictClass(const std::vector<std::vector<FeatureType>>& pixels) const;
-
-  /*
-   * Predict the class of the pixel at image[row, col]. Useful when padding needs to be considered
-   */
-//  virtual uchar PredictClass(const Vision::ImageRGB& image, uint row, uint col) const;
-
-//  void ClassifyImage(const Vision::ImageRGB& image, Vision::Image& outputMask) const;
 
   /*
    * Load data from two files and use it for training
