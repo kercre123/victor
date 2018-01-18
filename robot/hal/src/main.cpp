@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <chrono>
 #include <thread>
+#include <sys/mman.h>
+#include <sched.h>
 
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/logging.h"
@@ -28,6 +30,12 @@ void Cleanup(int signum)
 
 int main(int argc, const char* argv[])
 {
+  mlockall(MCL_FUTURE);
+
+  struct sched_param params;
+  params.sched_priority = sched_get_priority_max(SCHED_FIFO);
+  sched_setscheduler(0, SCHED_FIFO, &params);
+
   signal(SIGTERM, Cleanup);
 
   AnkiEvent("robot.main", "Starting robot process");
@@ -62,6 +70,31 @@ int main(int argc, const char* argv[])
       AnkiInfo("robot.main.shutdown", "%d", shutdownSignal);
       exit(shutdownSignal);
     }
+  }
+  return 0;
+}
+
+#include "spine/spine.h"
+int main_test(int argc, const char* argv[])
+{
+  mlockall(MCL_FUTURE);
+
+  struct sched_param params;
+  params.sched_priority = sched_get_priority_max(SCHED_FIFO);
+  sched_setscheduler(0, SCHED_FIFO, &params);
+
+  signal(SIGTERM, Cleanup);
+
+  spine_test_setup();
+
+  while (1) {
+    spine_test_loop_once();
+    Anki::Cozmo::Robot::step_MainExecution();
+  }
+
+  if (shutdownSignal != 0 && --shutdownCounter == 0) {
+    AnkiInfo("robot.main.shutdown", "%d", shutdownSignal);
+    exit(shutdownSignal);
   }
   return 0;
 }

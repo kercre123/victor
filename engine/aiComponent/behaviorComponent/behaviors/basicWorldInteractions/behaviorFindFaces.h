@@ -31,17 +31,17 @@ public:
 
   virtual ~BehaviorFindFaces() override {}
 
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual bool WantsToBeActivatedBehavior() const override;
     
 protected:
   
-  virtual void BeginStateMachine(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void BeginStateMachine() override;
   
 private:
 
-  void TransitionToLookUp(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToLookAtLastFace(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToBaseClass(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToLookUp();
+  void TransitionToLookAtLastFace();
+  void TransitionToBaseClass();
 
   u32 _maxFaceAgeToLook_ms = 0;
   

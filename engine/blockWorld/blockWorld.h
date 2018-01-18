@@ -17,9 +17,12 @@
 #include <map>
 #include <vector>
 
+#include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/block.h"
 #include "engine/blockWorld/blockWorldFilter.h"
+#include "engine/dependencyManagedComponent.h"
+#include "engine/robotComponents_fwd.h"
 #include "engine/mat.h"
 #include "engine/namedColors/namedColors.h"
 #include "engine/overheadEdge.h"
@@ -49,15 +52,41 @@ namespace Anki
     class BlockConfigurationManager;
     }
     
-    class BlockWorld
+    // BlockWorld is updated at the robot component level, same as BehaviorComponent
+    // Therefore BCComponents (which are managed by BehaviorComponent) can't declare dependencies on BlockWorld 
+    // since when it's Init/Update relative to BehaviorComponent must be declared by BehaviorComponent explicitly, 
+    // not by individual components within BehaviorComponent
+    class BlockWorld : public UnreliableComponent<BCComponentID>, 
+                       public IDependencyManagedComponent<RobotComponentID>
     {
     public:
       using ObservableObjectLibrary = Vision::ObservableObjectLibrary<ObservableObject>;
       constexpr static const float kOnCubeStackHeightTolerance = 2 * STACKED_HEIGHT_TOL_MM;
       
-      BlockWorld(Robot* robot);
+      BlockWorld();
             
       ~BlockWorld();
+
+      //////
+      // IDependencyManagedComponent functions
+      //////
+      virtual void InitDependent(Robot* robot, const RobotCompMap& dependentComponents) override final;
+      // Maintain the chain of initializations currently in robot - it might be possible to
+      // change the order of initialization down the line, but be sure to check for ripple effects
+      // when changing this function
+      virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
+        dependencies.insert(RobotComponentID::CozmoContext);
+      };
+      virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
+
+      // Prevent hiding function warnings by exposing the (valid) unreliable component methods
+      using UnreliableComponent<BCComponentID>::InitDependent;
+      using UnreliableComponent<BCComponentID>::GetInitDependencies;
+      using UnreliableComponent<BCComponentID>::GetUpdateDependencies;
+      //////
+      // end IDependencyManagedComponent functions
+      //////
+
       
       // Update the BlockWorld's state by processing all queued ObservedMarkers
       // and updating robot's and objects' poses from them.
@@ -491,7 +520,7 @@ namespace Anki
       // Member Variables
       //
       
-      Robot*             _robot;
+      Robot*             _robot = nullptr;
       
       f32 _lastPlayAreaSizeEventSec;
       const f32 _playAreaSizeEventIntervalSec;

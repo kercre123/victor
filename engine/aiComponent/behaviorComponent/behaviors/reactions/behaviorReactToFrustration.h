@@ -30,18 +30,21 @@ private:
   BehaviorReactToFrustration(const Json::Value& config);
 
 public:
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override { return true; }
-  virtual bool CarryingObjectHandledInternally() const override { return true;}
+  virtual bool WantsToBeActivatedBehavior() const override { return true; }
   
   virtual void AddListener(ISubtaskListener* listener) override;
 
 protected:
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenCarryingObject = true;
+  }
+
+  virtual void OnBehaviorActivated() override;
+  virtual void OnBehaviorDeactivated() override;
 
 private:
-  void TransitionToReaction(BehaviorExternalInterface& behaviorExternalInterface);
-  void AnimationComplete(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToReaction();
+  void AnimationComplete();
   
   void LoadJson(const Json::Value& config);
   

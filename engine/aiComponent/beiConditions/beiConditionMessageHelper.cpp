@@ -1,5 +1,5 @@
 /**
- * File: stateConceptStrategyMessageHelper.cpp
+ * File: beiConditionMessageHelper.cpp
  *
  * Author: Brad Neuman
  * Created: 2017-12-07

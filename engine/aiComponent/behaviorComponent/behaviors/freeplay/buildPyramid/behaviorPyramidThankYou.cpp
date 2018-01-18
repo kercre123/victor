@@ -46,16 +46,16 @@ BehaviorPyramidThankYou::~BehaviorPyramidThankYou()
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorPyramidThankYou::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorPyramidThankYou::WantsToBeActivatedBehavior() const
 {
   // Check to see if there's a person we can turn to look at
-  if(behaviorExternalInterface.GetFaceWorld().HasAnyFaces(kTimeSinceFaceSeenForTurn)){
+  if(GetBEI().GetFaceWorld().HasAnyFaces(kTimeSinceFaceSeenForTurn)){
     return true;
   }
   
   // Check to see if there's a block with a location we can turn to to say thanks
   if(_targetID > -1){
-    const ObservableObject* obj = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_targetID);
+    const ObservableObject* obj = GetBEI().GetBlockWorld().GetLocatedObjectByID(_targetID);
     if(obj != nullptr){
       return true;
     }
@@ -67,12 +67,12 @@ bool BehaviorPyramidThankYou::WantsToBeActivatedBehavior(BehaviorExternalInterfa
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPyramidThankYou::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPyramidThankYou::OnBehaviorActivated()
 {
   CompoundActionSequential* turnVerifyThank = new CompoundActionSequential();
   Pose3d facePose;
-  behaviorExternalInterface.GetFaceWorld().GetLastObservedFace(facePose);
-  const bool lastFaceInCurrentOrigin = behaviorExternalInterface.GetRobotInfo().IsPoseInWorldOrigin(facePose);
+  GetBEI().GetFaceWorld().GetLastObservedFace(facePose);
+  const bool lastFaceInCurrentOrigin = GetBEI().GetRobotInfo().IsPoseInWorldOrigin(facePose);
   if(lastFaceInCurrentOrigin){
    // Turn to the user and say thank you
     TurnTowardsFaceAction* turnTowardsAction = new TurnTowardsLastFacePoseAction();
@@ -92,7 +92,7 @@ void BehaviorPyramidThankYou::OnBehaviorActivated(BehaviorExternalInterface& beh
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPyramidThankYou::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPyramidThankYou::OnBehaviorDeactivated()
 {
   _targetID = -1;
 }

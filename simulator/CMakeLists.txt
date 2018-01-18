@@ -155,7 +155,6 @@ target_link_libraries(webotsCtrlRobot2
   cti_common_robot
   cti_vision
   cti_messaging
-  cti_planning
   supervisor
   robot_interface
   robot_clad_cpplite

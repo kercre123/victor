@@ -19,6 +19,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_C_STANDARD 99)
 
+if (CMAKE_GENERATOR MATCHES "Xcode")
+  set(CMAKE_XCODE_GENERATE_SCHEME ON)
+endif()
+
 # Set up custom property for file locations for custom targets
 define_property(TARGET PROPERTY ANKI_OUT_PATH
                 BRIEF_DOCS "The output path for this custom target"
@@ -45,11 +49,15 @@ add_compile_options(
 # Factory build options
 #
 if (FACTORY_TEST)
-  add_definitions(-DFACTORY_TEST)
+  add_definitions(-DFACTORY_TEST=1)
+else()
+  add_definitions(-DFACTORY_TEST=0)
 endif()
 
 if (FACTORY_TEST_DEV)
-  add_definitions(-DFACTORY_TEST_DEV)
+  add_definitions(-DFACTORY_TEST_DEV=1)
+else()
+  add_definitions(-DFACTORY_TEST_DEV=0)
 endif()
 
 if (ANDROID)

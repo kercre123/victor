@@ -210,7 +210,6 @@ namespace Anki {
         AnkiEvent( "watchdog_reset_count", "%d", HAL::GetWatchdogResetCounter());
       } // ProcessRobotInit()
 
-
       void Process_absLocalizationUpdate(const RobotInterface::AbsoluteLocalizationUpdate& msg)
       {
         // Don't modify localization while running path following test.

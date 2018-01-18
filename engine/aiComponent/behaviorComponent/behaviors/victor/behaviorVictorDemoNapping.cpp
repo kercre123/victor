@@ -47,31 +47,31 @@ BehaviorVictorDemoNapping::BehaviorVictorDemoNapping(const Json::Value& config)
 {
 }
 
-bool BehaviorVictorDemoNapping::CanBeGentlyInterruptedNow(BehaviorExternalInterface& bei) const
+bool BehaviorVictorDemoNapping::CanBeGentlyInterruptedNow() const
 {
   return !_animIsPlaying;
 }
 
-void BehaviorVictorDemoNapping::OnBehaviorActivated(BehaviorExternalInterface& bei)
+void BehaviorVictorDemoNapping::OnBehaviorActivated()
 {
   _animIsPlaying = false;
   
-  TransitionToSleeping(bei);
+  TransitionToSleeping();
   
   
 }
 
-void BehaviorVictorDemoNapping::TransitionToSleeping(BehaviorExternalInterface& bei)
+void BehaviorVictorDemoNapping::TransitionToSleeping()
 {
   SetDebugStateName("sleeping");
   
   _numRemainingInBout = GetRNG().RandIntInRange(kSleepingBoutNumStirs_min, kSleepingBoutNumStirs_max);
   
   const float waitTime_s = GetRNG().RandDblInRange(kSleepingStirSpacing_min_s, kSleepingStirSpacing_max_s);
-  HoldFaceForTime(bei, waitTime_s, &BehaviorVictorDemoNapping::TransitionToBoutOfStirring);
+  HoldFaceForTime(waitTime_s, &BehaviorVictorDemoNapping::TransitionToBoutOfStirring);
 }
 
-void BehaviorVictorDemoNapping::TransitionToBoutOfStirring(BehaviorExternalInterface& bei)
+void BehaviorVictorDemoNapping::TransitionToBoutOfStirring()
 {
   SetDebugStateName("inBout");
 
@@ -80,16 +80,16 @@ void BehaviorVictorDemoNapping::TransitionToBoutOfStirring(BehaviorExternalInter
   if( _numRemainingInBout-- >= 0 ) {
     // start bout (wait first, then animate)    
     const float waitTime_s = GetRNG().RandDblInRange(kSleepingBoutSpacing_min_s, kSleepingBoutSpacing_max_s);
-    HoldFaceForTime(bei, waitTime_s, &BehaviorVictorDemoNapping::TransitionToPlayStirAnim);
+    HoldFaceForTime(waitTime_s, &BehaviorVictorDemoNapping::TransitionToPlayStirAnim);
   }
   else {
     // back to sleep
-    TransitionToSleeping(bei);
+    TransitionToSleeping();
   }
 
 }
 
-void BehaviorVictorDemoNapping::TransitionToPlayStirAnim(BehaviorExternalInterface& bei)
+void BehaviorVictorDemoNapping::TransitionToPlayStirAnim()
 {
   SetDebugStateName("stirring");
   _animIsPlaying = true;
@@ -100,9 +100,8 @@ void BehaviorVictorDemoNapping::TransitionToPlayStirAnim(BehaviorExternalInterfa
 
 
 void BehaviorVictorDemoNapping::HoldFaceForTime(
-  BehaviorExternalInterface& bei,
   const float waitTime_s,
-  void(BehaviorVictorDemoNapping::*callback)(BehaviorExternalInterface& bei))
+  void(BehaviorVictorDemoNapping::*callback)())
 {
   // This implementation is a huge hack which should go away as soon as VIC-364 is implemented so we can have
   // controls to directly turn off the procedural idles. In the meantime, we play an "engine-defined"
@@ -114,23 +113,22 @@ void BehaviorVictorDemoNapping::HoldFaceForTime(
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _stopHoldingFaceAtTime_s = currTime_s + waitTime_s;
 
-  LoopHoldFace(bei, callback);
+  LoopHoldFace(callback);
 }
 
 void BehaviorVictorDemoNapping::LoopHoldFace(
-  BehaviorExternalInterface& bei,
-  void(BehaviorVictorDemoNapping::*callback)(BehaviorExternalInterface& bei))
+  void(BehaviorVictorDemoNapping::*callback)())
 {
 
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   if( currTime_s > _stopHoldingFaceAtTime_s ) {
-    (this->*callback)(bei);
+    (this->*callback)();
   }
   else {
     // play one iteration of the animation, then check the time again
     DelegateIfInControl(new PlayAnimationAction(kSleepingFaceLoopAnimClip),
-                        [this, callback](BehaviorExternalInterface& bei){
-                          BehaviorVictorDemoNapping::LoopHoldFace(bei, callback);});
+                        [this, callback](){
+                          BehaviorVictorDemoNapping::LoopHoldFace(callback);});
   }
 }
 

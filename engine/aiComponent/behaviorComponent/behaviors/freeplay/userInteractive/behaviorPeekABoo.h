@@ -21,11 +21,7 @@ namespace Cozmo {
 
 class BehaviorPeekABoo : public ICozmoBehavior
 {
-  
-public:
-  
-  virtual bool CarryingObjectHandledInternally() const override { return false; }
-  
+public:  
   // for COZMO-8914
   void PeekABooSparkStarted(float sparkTimeout);
   
@@ -49,27 +45,29 @@ protected:
   BehaviorPeekABoo(const Json::Value& config);
 
 
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual bool WantsToBeActivatedBehavior() const override;
 
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
 
-  void TransitionToIntroAnim(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionTurnToFace(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionPlayPeekABooAnim(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionWaitToHideFace(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionWaitToSeeFace(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionSeeFaceAfterHiding(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionExit(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToNoUserInteraction(BehaviorExternalInterface& behaviorExternalInterface);
+  virtual void OnBehaviorActivated() override;
+  virtual void BehaviorUpdate() override;
+  virtual void OnBehaviorDeactivated() override;
 
-  bool WasFaceHiddenAfterTimestamp(BehaviorExternalInterface& behaviorExternalInterface, TimeStamp_t timestamp);
+  void TransitionToIntroAnim();
+  void TransitionTurnToFace();
+  void TransitionPlayPeekABooAnim();
+  void TransitionWaitToHideFace();
+  void TransitionWaitToSeeFace();
+  void TransitionSeeFaceAfterHiding();
+  void TransitionExit();
+  void TransitionToNoUserInteraction();
+
+  bool WasFaceHiddenAfterTimestamp(TimeStamp_t timestamp);
   
   AnimationTrigger GetPeekABooAnimation();
-  SmartFaceID GetInteractionFace(const BehaviorExternalInterface& behaviorExternalInterface) const;
+  SmartFaceID GetInteractionFace() const;
 
-  IActionRunner* GetIdleAndReRequestAction(BehaviorExternalInterface& behaviorExternalInterface, bool lockHead) const;
+  IActionRunner* GetIdleAndReRequestAction(bool lockHead) const;
   
   void SetState_internal(State state, const std::string& stateName);
   
@@ -106,7 +104,7 @@ private:
   // for COZMO-8914
   mutable float _timeSparkAboutToEnd_Sec;
   
-  void UpdateTimestampSets(BehaviorExternalInterface& behaviorExternalInterface);
+  void UpdateTimestampSets();
   
 
 

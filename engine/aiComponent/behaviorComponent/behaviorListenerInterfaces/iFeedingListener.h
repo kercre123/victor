@@ -19,9 +19,9 @@ namespace Cozmo {
   
 class IFeedingListener{
 public:
-  virtual void StartedEating(BehaviorExternalInterface& behaviorExternalInterface, const int duration_s) = 0;
-  virtual void EatingComplete(BehaviorExternalInterface& behaviorExternalInterface) = 0;
-  virtual void EatingInterrupted(BehaviorExternalInterface& behaviorExternalInterface) = 0;
+  virtual void StartedEating(const int duration_s) = 0;
+  virtual void EatingComplete() = 0;
+  virtual void EatingInterrupted() = 0;
 
 };
 

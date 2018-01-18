@@ -18,6 +18,8 @@
 #include "coretech/common/shared/types.h"
 #include "util/singleton/dynamicSingleton.h"
 
+#include <string>
+
 // Forward declaration
 namespace webots {
   class Supervisor;
@@ -64,11 +66,63 @@ public:
   // Asserts if update rate is 0
   uint32_t GetTemperature_mC() const;
 
+  // Returns our ip address
+  const std::string& GetIPAddress()
+  {
+    if(_ipAddress.empty())
+    {
+      _ipAddress = GetIPAddressInternal();
+    }
+
+    return _ipAddress;
+  }
+
+  u32 GetSerialNumber()
+  {
+    const std::string& serialNum = GetSerialNumberAsString();
+    if(!serialNum.empty())
+    {
+      return static_cast<u32>(std::stoul(serialNum, nullptr, 16));
+    }
+
+    return 0;
+  }
+
+  const std::string& GetSerialNumberAsString()
+  {
+    if(_serialNumString == "")
+    {
+      _serialNumString = ExecCommand("getprop ro.serialno");
+    }
+
+    return _serialNumString;
+  }
+
+  u32 GetOSBuildNumber()
+  {
+    if(_osBuildNum == 0)
+    {
+      std::string osBuildNum = ExecCommand("getprop ro.anki.os_build_number");
+      _osBuildNum = static_cast<u32>(std::stoi(osBuildNum));
+    }
+
+    return _osBuildNum;
+  }
+
 private:
   // private ctor
   OSState();
+
+  std::string GetIPAddressInternal();
+
+  // Executes the provided command and returns the output as a string
+  std::string ExecCommand(const char* cmd);
   
-  const uint32_t kNominalCPUFreq_kHz = 800000;
+  uint32_t kNominalCPUFreq_kHz = 800000;
+
+  std::string _ipAddress       = "";
+  std::string _serialNumString = "";
+  u32         _osBuildNum      = 0;
 
 }; // class OSState
   

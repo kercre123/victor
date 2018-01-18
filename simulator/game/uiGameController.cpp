@@ -495,7 +495,6 @@ namespace Anki {
     {
       _stepTimeMS = step_time_ms;
       _robotNode = nullptr;
-      _robotEngineNode = nullptr;
       _robotPose.SetTranslation({0.f, 0.f, 0.f});
       _robotPose.SetRotation(0, Z_AXIS_3D());
       _robotPoseActual.SetTranslation({0.f, 0.f, 0.f});
@@ -793,14 +792,6 @@ namespace Anki {
             PRINT_NAMED_INFO("UiGameController.UpdateActualObjectPoses",
                              "Found LightCube with name %s", nodeName.c_str());
 
-          }
-          else if(nodeType == static_cast<int>(webots::Node::SUPERVISOR) &&
-                  nodeName.find("CozmoEngine") != std::string::npos) {
-
-            PRINT_NAMED_INFO("UiGameController.UpdateActualObjectPoses",
-                             "Found engine with name %s", nodeName.c_str());
-            
-            _robotEngineNode = nd;
           }
         }
       }
@@ -2008,22 +1999,7 @@ namespace Anki {
     }
     
     void UiGameController::SetActualRobotPose(const Pose3d& newPose)
-    {
-        Pose3d origin;
-        Pose3d enginePose = GetPose3dOfNode(_robotEngineNode);
-        Pose3d cpyRobotPose = _robotPoseActual;
-        Pose3d newEnginePose = newPose;
-        
-        enginePose.SetParent(origin);
-        newEnginePose.SetParent(origin);
-        cpyRobotPose.SetParent(origin);
-        
-        if (enginePose.GetWithRespectTo(cpyRobotPose, newEnginePose)) {
-          SetNodePose(_robotEngineNode, newPose*newEnginePose);
-        } else {
-          PRINT_NAMED_WARNING("UiGameController.SetActualRobotPose.SetEnginePose", "Could not set engine pose");
-        }
-      
+    {      
       SetNodePose(_robotNode, newPose);
     }
     

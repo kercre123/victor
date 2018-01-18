@@ -75,7 +75,7 @@
 //}
 //
 //// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//bool BehaviorExploreCliff::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+//bool BehaviorExploreCliff::WantsToBeActivatedBehavior() const
 //{
 //  const INavMemoryMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
 //  if ( nullptr == memoryMap ) {
@@ -87,7 +87,7 @@
 //}
 //  
 //// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//void BehaviorExploreCliff::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+//void BehaviorExploreCliff::OnBehaviorActivated()
 //{
 //  // select borders we want to visit
 //  BorderScoreVector borderGoals;
@@ -136,7 +136,7 @@
 //
 //
 //// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//void BehaviorExploreCliff::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
+//void BehaviorExploreCliff::BehaviorUpdate()
 //{
 //  if(!IsActivated()){
 //    return;
@@ -152,14 +152,14 @@
 //}
 //
 //// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//void BehaviorExploreCliff::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+//void BehaviorExploreCliff::OnBehaviorDeactivated()
 //{
 //  _currentActionTag = ActionConstants::INVALID_TAG;
 //  robot.GetContext()->GetVizManager()->EraseSegments("BehaviorExploreCliff::InitInternal");
 //}
 //
 //// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//void BehaviorExploreCliff::AlwaysHandleInScope(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+//void BehaviorExploreCliff::AlwaysHandleInScope(const EngineToGameEvent& event)
 //{
 //  switch(event.GetData().GetTag())
 //  {

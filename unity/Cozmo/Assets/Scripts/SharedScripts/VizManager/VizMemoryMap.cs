@@ -27,7 +27,6 @@ namespace Anki.Cozmo.Viz {
         case ExternalInterface.ENodeContentTypeDebugVizEnum.ClearOfObstacle: { color = Color.green; color.a = 0.5f; break; }
         case ExternalInterface.ENodeContentTypeDebugVizEnum.ClearOfCliff: { color.r = 0.0f; color.g = 0.5f; color.b = 0.0f; color.a = 0.8f; break; }  // dark green
         case ExternalInterface.ENodeContentTypeDebugVizEnum.ObstacleCube: { color = Color.red; color.a = 0.5f; break; }
-        case ExternalInterface.ENodeContentTypeDebugVizEnum.ObstacleCubeRemoved: { color = Color.white; color.a = 1.0f; break; } // not stored, it clears ObstacleCube
         case ExternalInterface.ENodeContentTypeDebugVizEnum.ObstacleCharger: { color.r = 1.0f; color.g = 0.5f; color.b = 0.0f; ; color.a = 0.5f; break; } // ORANGE
         case ExternalInterface.ENodeContentTypeDebugVizEnum.ObstacleChargerRemoved: { color = Color.white; color.a = 1.0f; break; } // not stored, it clears ObstacleCharge
         case ExternalInterface.ENodeContentTypeDebugVizEnum.ObstacleUnrecognized: { color = Color.magenta; color.a = 0.5f; break; }

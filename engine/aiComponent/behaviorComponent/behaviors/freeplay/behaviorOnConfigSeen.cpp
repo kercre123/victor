@@ -64,7 +64,7 @@ void BehaviorOnConfigSeen::ReadJson(const Json::Value& config)
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorOnConfigSeen::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorOnConfigSeen::WantsToBeActivatedBehavior() const
 {
   // if this is the first update in a long time consider that the config was already known
   const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -72,7 +72,7 @@ bool BehaviorOnConfigSeen::WantsToBeActivatedBehavior(BehaviorExternalInterface&
   _lastWantsToBeActivatedCheck_s = currentTime;
   
   for(auto& mapEntry: _configurationCountMap){
-    const auto& blockWorld = behaviorExternalInterface.GetBlockWorld();
+    const auto& blockWorld = GetBEI().GetBlockWorld();
     const auto& configs = blockWorld.GetBlockConfigurationManager().GetCacheByType(mapEntry.first);
     if(configs.ConfigurationCount() > mapEntry.second){
       _lastTimeNewConfigSeen_s = currentTime;
@@ -85,15 +85,15 @@ bool BehaviorOnConfigSeen::WantsToBeActivatedBehavior(BehaviorExternalInterface&
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorOnConfigSeen::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorOnConfigSeen::OnBehaviorActivated()
 {
   _animTriggerIndex = 0;
-  TransitionToPlayAnimationSequence(behaviorExternalInterface);
+  TransitionToPlayAnimationSequence();
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorOnConfigSeen::TransitionToPlayAnimationSequence(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorOnConfigSeen::TransitionToPlayAnimationSequence()
 {
   if(_animTriggerIndex < _animTriggers.size()){
     const AnimationTrigger animTrigger = _animTriggers[0];

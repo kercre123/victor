@@ -35,7 +35,7 @@ target_compile_definitions(proto_camera
 )
 
 target_compile_options(proto_camera
-  PRIVATE
+PRIVATE
   -O3
 )
 
@@ -94,4 +94,3 @@ target_include_directories(androidHAL
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../robot/include>
   ${PLATFORM_INCLUDES}
 )
-

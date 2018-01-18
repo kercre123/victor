@@ -35,12 +35,10 @@ struct RobotCompletedAction;
   
 class BehaviorStack : private Util::noncopyable {
 public:
-  BehaviorStack(BehaviorExternalInterface* behaviorExternalInterface)
-  :_behaviorExternalInterface(behaviorExternalInterface){};
+  BehaviorStack(){};
   virtual ~BehaviorStack();
   
-  void InitBehaviorStack(BehaviorExternalInterface& behaviorExternalInterface,
-                         IBehavior* baseOfStack);
+  void InitBehaviorStack(IBehavior* baseOfStack);
   // Clear the stack if it needs to be re-initialized
   void ClearStack();
   
@@ -69,7 +67,6 @@ public:
   void SendDebugVizMessages(BehaviorExternalInterface& behaviorExternalInterface) const;
   
 private:
-  BehaviorExternalInterface* _behaviorExternalInterface;
   std::vector<IBehavior*> _behaviorStack;
   std::unordered_map<const IBehavior*, int> _behaviorToIndexMap;
   std::map<IBehavior*,std::set<IBehavior*>> _delegatesMap;

@@ -43,7 +43,6 @@ private:
   using super = ICozmoBehavior;
 
 public:
-  virtual bool CarryingObjectHandledInternally() const override {return false;}
 
   virtual void AddListener(IReactToFaceListener* listener) override;
   
@@ -54,20 +53,22 @@ protected:
   friend class BehaviorContainer;
   BehaviorAcknowledgeFace(const Json::Value& config);
 
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
 
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual void OnBehaviorActivated() override;
+  virtual void OnBehaviorDeactivated() override;
+  virtual void BehaviorUpdate() override;
+
+  virtual bool WantsToBeActivatedBehavior() const override;
 
   
 private:
-  void BeginIteration(BehaviorExternalInterface& behaviorExternalInterface);
-  void FinishIteration(BehaviorExternalInterface& behaviorExternalInterface);
+  void BeginIteration();
+  void FinishIteration();
 
   // sets _targetFace to the best face to look at from _desiredTargets. Returns true if it found one to react
   // to, false otherwise
-  bool UpdateBestTarget(BehaviorExternalInterface& behaviorExternalInterface);
+  bool UpdateBestTarget();
 
   // current target
   SmartFaceID _targetFace;

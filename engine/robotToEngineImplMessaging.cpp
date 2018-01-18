@@ -75,15 +75,17 @@ namespace Cozmo {
   
 using GameToEngineEvent = AnkiEvent<ExternalInterface::MessageGameToEngine>;
 
-RobotToEngineImplMessaging::RobotToEngineImplMessaging(Robot* robot) :
-    _hasMismatchedEngineToRobotCLAD(false)
-  , _hasMismatchedRobotToEngineCLAD(false)
+RobotToEngineImplMessaging::RobotToEngineImplMessaging() 
+: IDependencyManagedComponent(RobotComponentID::RobotToEngineImplMessaging)
+, _hasMismatchedEngineToRobotCLAD(false)
+, _hasMismatchedRobotToEngineCLAD(false)
 {
 }
 
 RobotToEngineImplMessaging::~RobotToEngineImplMessaging()
 {
 }
+
 
 void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHandler, RobotID_t robotId, Robot* const robot)
 {

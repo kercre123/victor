@@ -47,7 +47,6 @@ static bool boot_test(void) {
   }
 
   BODY_TX::set();
-
   return validate();
 }
 
@@ -68,7 +67,7 @@ void timer_init(void) {
   TIM14->DIER = TIM_DIER_UIE;
   TIM14->CR1 = TIM_CR1_CEN;
 
-  NVIC_SetPriority(TIM14_IRQn, 0);
+  NVIC_SetPriority(TIM14_IRQn, 3);
   NVIC_EnableIRQ(TIM14_IRQn);
 }
 
@@ -81,13 +80,13 @@ extern "C" void TIM14_IRQHandler(void) {
   IWDG->KR = 0xAAAA;
   #endif
   TIM14->SR = 0;
+  Analog::tick();
 }
 
 int main(void) {
-  Power::enableClocking();
+  Power::init();
   timer_init();
   Analog::init();
-  Power::init();
 
   // If fingerprint is invalid, cert is invalid, or reset counter is zero
   // 1) Wipe flash

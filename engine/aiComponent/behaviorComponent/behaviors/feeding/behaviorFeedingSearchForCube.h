@@ -29,12 +29,13 @@ protected:
   BehaviorFeedingSearchForCube(const Json::Value& config);
   
 public:
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual bool CarryingObjectHandledInternally() const override {return false;}
+  virtual bool WantsToBeActivatedBehavior() const override;
     
 protected:
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
+
+  virtual void OnBehaviorActivated() override;
+  virtual void BehaviorUpdate() override;
   
 private:
   enum class State {
@@ -47,13 +48,13 @@ private:
   State _currentState;
   float _timeEndSearch_s;
   
-  void TransitionToSearchForFoodBase(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToFirstSearchForFood(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToSecondSearchForFood(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToSearchForFoodBase();
+  void TransitionToFirstSearchForFood();
+  void TransitionToSecondSearchForFood();
 
   
-  void TransitionToMakeFoodRequest(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToFailedToFindCubeReaction(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToMakeFoodRequest();
+  void TransitionToFailedToFindCubeReaction();
 
   
   void SetState_internal(State state, const std::string& stateName);

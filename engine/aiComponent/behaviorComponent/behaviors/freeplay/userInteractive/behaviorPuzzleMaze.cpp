@@ -111,9 +111,8 @@ BehaviorPuzzleMaze::BehaviorPuzzleMaze(const Json::Value& config)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPuzzleMaze::StartAnimation(BehaviorExternalInterface& behaviorExternalInterface,
-                                     const AnimationTrigger& animationTrigger,
-                                     const MazeState& nextState)
+void BehaviorPuzzleMaze::StartAnimation(const AnimationTrigger& animationTrigger,
+                                        const MazeState& nextState)
 {
   LOG_TRACE("BehaviorPuzzleMaze.StartAnimation", "Start animation %s, nextState %s",
             AnimationTriggerToString(animationTrigger), EnumToString(nextState));
@@ -132,9 +131,9 @@ void BehaviorPuzzleMaze::StartAnimation(BehaviorExternalInterface& behaviorExter
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPuzzleMaze::StartAnimation(BehaviorExternalInterface& behaviorExternalInterface, const AnimationTrigger& animationTrigger)
+void BehaviorPuzzleMaze::StartAnimation(const AnimationTrigger& animationTrigger)
 {
-  StartAnimation(behaviorExternalInterface, animationTrigger, _state);
+  StartAnimation(animationTrigger, _state);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -227,7 +226,7 @@ MazeWalls BehaviorPuzzleMaze::GetNextDir(const MazeWalls& currCell, const MazeWa
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Check if behavior can run at this time
-bool BehaviorPuzzleMaze::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorPuzzleMaze::WantsToBeActivatedBehavior() const
 {
   return true;
 }
@@ -236,11 +235,11 @@ bool BehaviorPuzzleMaze::WantsToBeActivatedBehavior(BehaviorExternalInterface& b
 // Behavior is starting. Reset behavior state.
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPuzzleMaze::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPuzzleMaze::OnBehaviorActivated()
 {
   LOG_TRACE("BehaviorPuzzleMaze.InitInternal", "Init behavior");
   
-  const auto& currMaze = behaviorExternalInterface.GetAIComponent().GetPuzzleComponent().GetCurrentMaze();
+  const auto& currMaze = GetBEI().GetAIComponent().GetPuzzleComponent().GetCurrentMaze();
   _currFacing = MazeWalls::South;
   _currPos = currMaze._start;
   _path.clear();
@@ -258,9 +257,9 @@ void BehaviorPuzzleMaze::OnBehaviorActivated(BehaviorExternalInterface& behavior
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPuzzleMaze::SingleStepMaze(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPuzzleMaze::SingleStepMaze()
 {
-  const auto& currMaze = behaviorExternalInterface.GetAIComponent().GetPuzzleComponent().GetCurrentMaze();
+  const auto& currMaze = GetBEI().GetAIComponent().GetPuzzleComponent().GetCurrentMaze();
   // This function is called once we've reached the end of an animation, so update our tile position
   _currPos = _nextPos;
   // step if we're not at the end.
@@ -273,7 +272,7 @@ void BehaviorPuzzleMaze::SingleStepMaze(BehaviorExternalInterface& behaviorExter
     if( _avatarState == AvatarState::MovingBetweenTiles && numExits > 2)
     {
       _avatarState = AvatarState::ThinkingAnim;
-      float thinkingTime = behaviorExternalInterface.GetRNG().RandDblInRange(_timePauseAtIntersectionMin_Sec, _timePauseAtIntersectionMax_Sec);
+      float thinkingTime = GetBEI().GetRNG().RandDblInRange(_timePauseAtIntersectionMin_Sec, _timePauseAtIntersectionMax_Sec);
       _nextStep_Sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + thinkingTime;
       // Even when doing our balancing and we skip animating we want this to simulate as if we had animated.
       _totalTimeInLastPuzzle_Sec += thinkingTime;
@@ -290,7 +289,7 @@ void BehaviorPuzzleMaze::SingleStepMaze(BehaviorExternalInterface& behaviorExter
       bool makeWrongTurn = false;
       if( numExits > 2 )
       {
-        makeWrongTurn = behaviorExternalInterface.GetRNG().RandDbl() < _chanceWrongTurn ;
+        makeWrongTurn = GetBEI().GetRNG().RandDbl() < _chanceWrongTurn ;
       }
       Point2i moveDir;
       _currFacing = GetNextDir(currcell, _currFacing, moveDir, makeWrongTurn);
@@ -308,21 +307,21 @@ void BehaviorPuzzleMaze::SingleStepMaze(BehaviorExternalInterface& behaviorExter
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPuzzleMaze::UpdateMaze(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPuzzleMaze::UpdateMaze()
 {
   // Do single step update, when done animating or when running in fast mode.
   if( (_nextStep_Sec < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() || !_animateBetweenTiles) &&
      !_isMazeSolved)
   {
-    SingleStepMaze(behaviorExternalInterface);
+    SingleStepMaze();
   }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPuzzleMaze::DrawMaze(Vision::Image& image, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPuzzleMaze::DrawMaze(Vision::Image& image)
 {
-  const auto& currMaze = behaviorExternalInterface.GetAIComponent().GetPuzzleComponent().GetCurrentMaze();
+  const auto& currMaze = GetBEI().GetAIComponent().GetPuzzleComponent().GetCurrentMaze();
   size_t h = currMaze.GetHeight();
   size_t w = currMaze.GetWidth();
   
@@ -393,7 +392,7 @@ void BehaviorPuzzleMaze::DrawCozmo(Vision::Image& image)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPuzzleMaze::UpdateDisplay(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPuzzleMaze::UpdateDisplay()
 {
   // Do we need to draw a new face?
   if (!IsControlDelegated() && !IsActing() && _animateBetweenTiles) {
@@ -401,17 +400,17 @@ void BehaviorPuzzleMaze::UpdateDisplay(BehaviorExternalInterface& behaviorExtern
     // Init background, height by width
     Vision::Image image(FACE_DISPLAY_HEIGHT,FACE_DISPLAY_WIDTH, NamedColors::BLACK);
     
-    DrawMaze(image, behaviorExternalInterface);
+    DrawMaze(image);
     DrawCozmo(image);
     
-    behaviorExternalInterface.GetAnimationComponent().DisplayFaceImage(image, 1.0f, true);
+    GetBEI().GetAnimationComponent().DisplayFaceImage(image, 1.0f, true);
   }
 
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPuzzleMaze::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPuzzleMaze::BehaviorUpdate()
 {
   if(!IsActivated()){
     return;
@@ -434,21 +433,21 @@ void BehaviorPuzzleMaze::BehaviorUpdate(BehaviorExternalInterface& behaviorExter
     case MazeState::GetIn:
     {
       if (!IsControlDelegated()) {
-        StartAnimation(behaviorExternalInterface, AnimationTrigger::BouncerGetIn, MazeState::MazeStep);
+        StartAnimation(AnimationTrigger::BouncerGetIn, MazeState::MazeStep);
       }
       break;
     }
     case MazeState::MazeStep:
     {
       // This is the actual game loop
-      UpdateMaze(behaviorExternalInterface);
-      UpdateDisplay(behaviorExternalInterface);
+      UpdateMaze();
+      UpdateDisplay();
       break;
     }
     case MazeState::GetOut:
     {
       if (!IsControlDelegated()) {
-        StartAnimation(behaviorExternalInterface, AnimationTrigger::BouncerGetOut, MazeState::Complete);
+        StartAnimation(AnimationTrigger::BouncerGetOut, MazeState::Complete);
       }
       break;
     }
@@ -465,7 +464,7 @@ void BehaviorPuzzleMaze::BehaviorUpdate(BehaviorExternalInterface& behaviorExter
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPuzzleMaze::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPuzzleMaze::OnBehaviorDeactivated()
 {
   LOG_TRACE("BehaviorPuzzleMaze.StopInternal", "Stop behavior");
   

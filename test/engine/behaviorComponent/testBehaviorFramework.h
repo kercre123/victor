@@ -39,7 +39,7 @@ class TestBehaviorFramework;
 
 // Function to do ticks on a behavior
 void DoTicks_(TestBehaviorFramework& testFramework, Robot& robot, TestBehaviorWithHelpers& behavior, int num, bool expectComplete = false);
-void DoBehaviorInterfaceTicks(Robot& robot, ICozmoBehavior& behavior, BehaviorExternalInterface& behaviorExternalInterface, int num=1);
+void DoBehaviorInterfaceTicks(Robot& robot, ICozmoBehavior& behavior, int num=1);
 void DoBehaviorComponentTicks(Robot& robot, ICozmoBehavior& behavior, BehaviorComponent& behaviorComponent, int num);
 
 void InjectBehaviorIntoStack(ICozmoBehavior& behavior, TestBehaviorFramework& testFramework);
@@ -63,12 +63,12 @@ public:
 
   
   void InitializeStandardBehaviorComponent(IBehavior* baseBehavior = nullptr,
-                                           std::function<void(const BehaviorComponent::ComponentsPtr&)> initializeBehavior = {},
+                                           std::function<void(const BehaviorComponent::UniqueComponents&)> initializeBehavior = {},
                                            bool shouldCallInitOnBase = true);
   
   // Call in order to set up and initialize a standard behavior component
   void InitializeStandardBehaviorComponent(IBehavior* baseBehavior,
-                                           std::function<void(const BehaviorComponent::ComponentsPtr&)> initializeBehavior,
+                                           std::function<void(const BehaviorComponent::UniqueComponents&)> initializeBehavior,
                                            bool shouldCallInitOnBase,
                                            BehaviorContainer*& customContainer);
   
@@ -103,12 +103,12 @@ public:
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
   
 protected:
-  virtual void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void InitInternal() override;
   virtual void OnEnteredActivatableScopeInternal() override;
-  virtual void UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual bool WantsToBeActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual void OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void OnDeactivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void UpdateInternal() override;
+  virtual bool WantsToBeActivatedInternal() const override;
+  virtual void OnActivatedInternal() override;
+  virtual void OnDeactivatedInternal() override;
   virtual void OnLeftActivatableScopeInternal() override;
   
 private:
@@ -138,29 +138,31 @@ public:
   int _calledRobotFunc = 0;
   
 
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenCarryingObject = true;
+    modifiers.behaviorAlwaysDelegates = false;
+  }
+
+  void InitBehavior() override;
   
-  virtual bool CarryingObjectHandledInternally() const override {return true;}
-  void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) override;
-  
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override {
+  virtual bool WantsToBeActivatedBehavior() const override {
     return true;
   }
   
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated() override;
   
-  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual bool ShouldCancelWhenInControl() const override { return false;}
+  virtual void BehaviorUpdate() override;
   
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorDeactivated() override;
   
-  virtual void AlwaysHandleInScope(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void AlwaysHandleInScope(const EngineToGameEvent& event) override;
   
-  virtual void HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void HandleWhileActivated(const EngineToGameEvent& event) override;
   
-  virtual void HandleWhileInScopeButNotActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void HandleWhileInScopeButNotActivated(const EngineToGameEvent& event) override;
   
   void Foo();
-  void Bar(BehaviorExternalInterface& behaviorExternalInterface);
+  void Bar();
   
   bool CallDelegateIfInControl(Robot& robot, bool& actionCompleteRef);
     
@@ -202,22 +204,25 @@ public:
   void SetUpdateResult(UpdateResult res);
   
   void DelegateToHelperOnNextUpdate(HelperHandle handleToRun,
-                                    SimpleCallbackWithRobot successCallback,
-                                    SimpleCallbackWithRobot failureCallback);
+                                    SimpleCallback successCallback,
+                                    SimpleCallback failureCallback);
   void StopHelperOnNextUpdate();
   
   void SetActionToRunOnNextUpdate(IActionRunner* action);
   
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual bool WantsToBeActivatedBehavior() const override;
   
-  virtual bool CarryingObjectHandledInternally() const override;
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenCarryingObject = true;
+    modifiers.behaviorAlwaysDelegates = false;
+  }
+
   
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated() override;
   
-  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual bool ShouldCancelWhenInControl() const override { return false;}
+  virtual void BehaviorUpdate() override;
   
-  virtual void  OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void  OnBehaviorDeactivated() override;
   
   bool _lastDelegateSuccess = false;
   bool _lastDelegateIfInControlResult = false;
@@ -228,8 +233,8 @@ private:
   IActionRunner* _nextActionToRun = nullptr;
   bool _stopHelper = false;
   HelperHandle _helperHandleToDelegate;
-  SimpleCallbackWithRobot _successCallbackToDelegate;
-  SimpleCallbackWithRobot _failureCallbackToDelegate;
+  SimpleCallback _successCallbackToDelegate;
+  SimpleCallback _failureCallbackToDelegate;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -241,21 +246,20 @@ static int _TestHelper_g_num = 0;
 class TestHelper : public IHelper
 {
 public:
-  
-  TestHelper(BehaviorExternalInterface& behaviorExternalInterface, ICozmoBehavior& behavior, const std::string& name = "");
+  TestHelper(BehaviorExternalInterface& bei,ICozmoBehavior& behavior, const std::string& name = "");
   
   void SetActionToRunOnNextUpdate(IActionRunner* action);
   
-  void StartAutoAction(BehaviorExternalInterface& behaviorExternalInterface);
+  void StartAutoAction();
   
   void StopAutoAction();
   
-  virtual void OnActivatedHelper(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnActivatedHelper() override;
   
   virtual void StopInternal(bool isActive) override;
-  virtual bool ShouldCancelDelegates(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual IHelper::HelperStatus InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual IHelper::HelperStatus UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual bool ShouldCancelDelegates() const override;
+  virtual IHelper::HelperStatus InitBehaviorHelper() override;
+  virtual IHelper::HelperStatus UpdateWhileActiveInternal() override;
   void CheckActions();
   
   WeakHelperHandle GetSubHelper();

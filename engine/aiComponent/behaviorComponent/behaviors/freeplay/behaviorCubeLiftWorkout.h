@@ -31,28 +31,27 @@ protected:
   friend class BehaviorContainer;
   BehaviorCubeLiftWorkout(const Json::Value& config);
 
-public:
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenCarryingObject = true;
+  }
 
-  virtual bool CarryingObjectHandledInternally() const override { return true; }
 
-protected:
+  virtual bool WantsToBeActivatedBehavior() const override;
 
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual void OnBehaviorActivated() override;
+  virtual void BehaviorUpdate() override;
 
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorDeactivated() override;
 
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-
-  void TransitionToPickingUpCube(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToPostLiftAnim(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToStrongLifts(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToWeakPose(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToWeakLifts(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToPuttingDown(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToCheckPutDown(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToManualPutDown(BehaviorExternalInterface& behaviorExternalInterface);
-  void EndIteration(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToPickingUpCube();
+  void TransitionToPostLiftAnim();
+  void TransitionToStrongLifts();
+  void TransitionToWeakPose();
+  void TransitionToWeakLifts();
+  void TransitionToPuttingDown();
+  void TransitionToCheckPutDown();
+  void TransitionToManualPutDown();
+  void EndIteration();
 
   // set by init to the number of lifts we should do, then decremented in the state machine
   unsigned int _numStrongLiftsToDo = 0;

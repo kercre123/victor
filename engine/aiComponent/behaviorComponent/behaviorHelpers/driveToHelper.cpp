@@ -19,7 +19,7 @@
 #include "engine/actions/driveToActions.h"
 #include "engine/actions/visuallyVerifyActions.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/blockWorld/blockWorld.h"
@@ -35,12 +35,11 @@ static const int kMaxNumRetrys = 3;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-DriveToHelper::DriveToHelper(BehaviorExternalInterface& behaviorExternalInterface,
-                                   ICozmoBehavior& behavior,
-                                   BehaviorHelperFactory& helperFactory,
-                                   const ObjectID& targetID,
-                                   const DriveToParameters& params)
-: IHelper("DriveToHelper", behaviorExternalInterface, behavior, helperFactory)
+DriveToHelper::DriveToHelper(ICozmoBehavior& behavior,
+                             BehaviorHelperFactory& helperFactory,
+                             const ObjectID& targetID,
+                             const DriveToParameters& params)
+: IHelper("DriveToHelper", behavior, helperFactory)
 , _targetID(targetID)
 , _params(params)
 , _tmpRetryCounter(0)
@@ -61,30 +60,30 @@ DriveToHelper::~DriveToHelper()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool DriveToHelper::ShouldCancelDelegates(BehaviorExternalInterface& behaviorExternalInterface) const
+bool DriveToHelper::ShouldCancelDelegates() const
 {
   return false;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IHelper::HelperStatus DriveToHelper::InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface)
+IHelper::HelperStatus DriveToHelper::InitBehaviorHelper()
 {
-  _initialRobotPose = behaviorExternalInterface.GetRobotInfo().GetPose();
-  DriveToPreActionPose(behaviorExternalInterface);
+  _initialRobotPose = GetBEI().GetRobotInfo().GetPose();
+  DriveToPreActionPose();
   return _status;
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IHelper::HelperStatus DriveToHelper::UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IHelper::HelperStatus DriveToHelper::UpdateWhileActiveInternal()
 {
   return _status;
 }
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void DriveToHelper::DriveToPreActionPose(BehaviorExternalInterface& behaviorExternalInterface)
+void DriveToHelper::DriveToPreActionPose()
 {
   if(_tmpRetryCounter >= kMaxNumRetrys){
     _status = IHelper::HelperStatus::Failure;
@@ -127,20 +126,20 @@ void DriveToHelper::DriveToPreActionPose(BehaviorExternalInterface& behaviorExte
   }else{
     // Calculate the pre-dock pose directly for PLACE_RELATIVE and drive to that pose
     const ActionableObject* obj = dynamic_cast<const ActionableObject*>(
-                                    behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_targetID));
+                                    GetBEI().GetBlockWorld().GetLocatedObjectByID(_targetID));
     if(obj != nullptr &&
-       behaviorExternalInterface.HasVisionComponent()){
+       GetBEI().HasVisionComponent()){
       std::vector<Pose3d> possiblePoses;
       bool alreadyInPosition;
 
-      auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+      auto& robotInfo = GetBEI().GetRobotInfo();
       PlaceRelObjectAction::ComputePlaceRelObjectOffsetPoses(
                               obj, _params.placeRelOffsetX_mm, _params.placeRelOffsetY_mm,
                               robotInfo.GetPose(),
                               robotInfo.GetWorldOrigin(),
                               robotInfo.GetCarryingComponent(),
-                              behaviorExternalInterface.GetBlockWorld(),
-                              behaviorExternalInterface.GetVisionComponent(),
+                              GetBEI().GetBlockWorld(),
+                              GetBEI().GetVisionComponent(),
                               possiblePoses, alreadyInPosition);
       if(possiblePoses.size() > 0){
         if(alreadyInPosition){
@@ -164,7 +163,7 @@ void DriveToHelper::DriveToPreActionPose(BehaviorExternalInterface& behaviorExte
                          "No valid predock poses for objectID: %d with offsets x:%f y:%f",
                          _targetID.GetValue(),
                          _params.placeRelOffsetX_mm, _params.placeRelOffsetY_mm);
-        behaviorExternalInterface.GetAIComponent().GetWhiteboard().SetNoPreDockPosesOnObject(_targetID);
+        GetBEI().GetAIComponent().GetWhiteboard().SetNoPreDockPosesOnObject(_targetID);
         _status = IHelper::HelperStatus::Failure;
       }
     }else{
@@ -177,7 +176,7 @@ void DriveToHelper::DriveToPreActionPose(BehaviorExternalInterface& behaviorExte
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void DriveToHelper::RespondToDriveResult(ActionResult result, BehaviorExternalInterface& behaviorExternalInterface)
+void DriveToHelper::RespondToDriveResult(ActionResult result)
 {
   switch(result){
     case ActionResult::SUCCESS:
@@ -188,14 +187,14 @@ void DriveToHelper::RespondToDriveResult(ActionResult result, BehaviorExternalIn
     case ActionResult::VISUAL_OBSERVATION_FAILED:
     {
       // If the object is still located search for it
-      const auto locatedObj = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_targetID);
+      const auto locatedObj = GetBEI().GetBlockWorld().GetLocatedObjectByID(_targetID);
       if(locatedObj != nullptr){        
         SearchParameters searchParams;
         searchParams.searchingForID = _targetID;
         DelegateProperties delegateProperties;
-        delegateProperties.SetDelegateToSet(CreateSearchForBlockHelper(behaviorExternalInterface, searchParams));
-        delegateProperties.SetOnSuccessFunction([this](BehaviorExternalInterface& behaviorExternalInterface){
-          DriveToPreActionPose(behaviorExternalInterface);
+        delegateProperties.SetDelegateToSet(CreateSearchForBlockHelper(searchParams));
+        delegateProperties.SetOnSuccessFunction([this](){
+          DriveToPreActionPose();
           return _status;
         });
         delegateProperties.FailImmediatelyOnDelegateFailure();
@@ -213,7 +212,7 @@ void DriveToHelper::RespondToDriveResult(ActionResult result, BehaviorExternalIn
     case ActionResult::NO_PREACTION_POSES:
     {
       if( !_params.ignoreCurrentPredockPose ) {
-        behaviorExternalInterface.GetAIComponent().GetWhiteboard().SetNoPreDockPosesOnObject(_targetID);
+        GetBEI().GetAIComponent().GetWhiteboard().SetNoPreDockPosesOnObject(_targetID);
       }
       _status = IHelper::HelperStatus::Failure;
       break;
@@ -222,7 +221,7 @@ void DriveToHelper::RespondToDriveResult(ActionResult result, BehaviorExternalIn
     case ActionResult::MOTOR_STOPPED_MAKING_PROGRESS:
     case ActionResult::FAILED_TRAVERSING_PATH:
     {
-      DriveToPreActionPose(behaviorExternalInterface);
+      DriveToPreActionPose();
       break;
     }
     case ActionResult::NOT_STARTED:
@@ -235,7 +234,7 @@ void DriveToHelper::RespondToDriveResult(ActionResult result, BehaviorExternalIn
     {
       if (PreActionPose::ActionType::ROLLING == _params.actionType && _params.useApproachAngle) {
         _params.useApproachAngle = false;
-        DriveToPreActionPose(behaviorExternalInterface);
+        DriveToPreActionPose();
       }
       break;
     }
@@ -243,7 +242,7 @@ void DriveToHelper::RespondToDriveResult(ActionResult result, BehaviorExternalIn
     {
       //DEV_ASSERT(false, "HANDLE CASE!");
       if( IActionRunner::GetActionResultCategory(result) == ActionResultCategory::RETRY ) {
-        DriveToPreActionPose(behaviorExternalInterface);
+        DriveToPreActionPose();
       }
       else {
         _status = IHelper::HelperStatus::Failure;

@@ -17,6 +17,9 @@
 
 #include "coretech/vision/engine/trackedPet.h"
 
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
+#include "engine/entity.h"
+
 #include <list>
 #include <map>
 #include <set>
@@ -27,13 +30,27 @@ namespace Cozmo {
 // Forward declarations:
 class Robot;
 
-class PetWorld
+class PetWorld : public IDependencyManagedComponent<RobotComponentID>
 {
-public:
-  
+public: 
   using PetContainer = std::map<Vision::FaceID_t, Vision::TrackedPet>;
   
-  PetWorld(Robot& robot);
+  PetWorld();
+
+  //////
+  // IDependencyManagedComponent functions
+  //////
+  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
+  // Maintain the chain of initializations currently in robot - it might be possible to
+  // change the order of initialization down the line, but be sure to check for ripple effects
+  // when changing this function
+  virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
+    dependencies.insert(RobotComponentID::FaceWorld);
+  };
+  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
+  //////
+  // end IDependencyManagedComponent functions
+  //////
   
   // Pass in observed faces (e.g. from Vision thread to keep this class in sync)
   // Also takes care of Broadcasting RobotObservedPet messages and updating Viz.
@@ -52,7 +69,7 @@ public:
   
 private:
   
-  Robot& _robot;
+  Robot* _robot;
   
   PetContainer _knownPets;
   

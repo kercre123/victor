@@ -28,8 +28,9 @@ DirectionalLight {
 CozmoMat {
   showMarkers FALSE
 }
-VictorChargerSimple {
+VictorCharger {
   translation -0.076696196 0.00014978189 2.4646951e-14
+  rotation 0 0 1 4.7124
 }
 Face {
   translation 0.57139415 -0.0017680771 0.39
@@ -43,27 +44,35 @@ Face {
 LightCube {
   translation -0.1067011 0.29601634 0.022
   rotation 0 0 1 0.523599
+  colorizeStderrOutput TRUE
 }
 LightCube {
   translation -0.010376264 0.32666562 0.0219929
   rotation 1.39537e-05 -1.83704e-06 1 0.261799
   objectType "Block_LIGHTCUBE3"
+  colorizeStderrOutput TRUE
 }
 LightCube {
   translation 0.08610605 0.32966413 0.0219929
   rotation 0 0 -1 6.23319
   objectType "Block_LIGHTCUBE2"
+  colorizeStderrOutput TRUE
 }
 CozmoBot2 {
+  translation 0 0 0.005
+  rotation 0 1 0 0.1222
   filterLogs TRUE
+  colorizeStderrOutput TRUE
 }
 WebotsKeyboardController {
   behaviorName "VictorObservingDemo"
   translation -0.24686749 0.2921897 0.08
   rotation 0 0 1 6.0213859
+  colorizeStderrOutput TRUE
 }
 CozmoVizDisplay {
   streamResolution "NHD"
+  colorizeStderrOutput TRUE
 }
 SolidBox {
   translation 0.0014556051 0.23224103 1.110223e-15

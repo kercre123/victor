@@ -34,7 +34,10 @@ vlog "Check homebrew dependencies"
     ninja \
     python3 \
     libsndfile \
-    go
+    go \
+    graphviz \
+    --pip2 graphviz \
+    --pip3 graphviz
 
 vlog "Android SDK"
 ./tools/build/tools/ankibuild/android.py --install-sdk r3

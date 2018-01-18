@@ -34,18 +34,21 @@ private:
 
 
 public:
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual bool CarryingObjectHandledInternally() const override { return true;}
+  virtual bool WantsToBeActivatedBehavior() const override;
   void SetObjectToAcknowledge(const ObjectID& objID){_activeObjectID = objID;}
 
 protected:
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenCarryingObject = true;
+  }
+
+  virtual void OnBehaviorDeactivated() override;
+  virtual void OnBehaviorActivated() override;
   
   // allows the reaction to interrupt itself
-  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void BehaviorUpdate() override;
 
-  virtual void HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void HandleWhileActivated(const EngineToGameEvent& event) override;
   
 private:  
   ObjectID _activeObjectID; //Most recent move - object to turn towards
@@ -61,11 +64,11 @@ private:
   //  active object observed - play acknowledge reaction
   bool _activeObjectSeen;
   
-  void TransitionToPlayingSenseReaction(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToTurningToLastLocationOfBlock(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToReactingToBlockAbsence(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToPlayingSenseReaction();
+  void TransitionToTurningToLastLocationOfBlock();
+  void TransitionToReactingToBlockAbsence();
   
-  void HandleObservedObject(const BehaviorExternalInterface& behaviorExternalInterface, const ExternalInterface::RobotObservedObject& msg);
+  void HandleObservedObject(const ExternalInterface::RobotObservedObject& msg);
 
   void SetState_internal(State state, const std::string& stateName);
 

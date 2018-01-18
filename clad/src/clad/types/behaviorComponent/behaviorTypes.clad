@@ -54,6 +54,21 @@ enum uint_8 BehaviorClass {
   PlayAnim,
   PlayAnimOnNeedsChange,
   PlayAnimWithFace,
+  PlayAnimWithObject,
+
+  PlaypenCameraCalibration,
+  PlaypenDistanceSensor,
+  PlaypenDriftCheck,
+  PlaypenDriveForwards,
+  PlaypenInitChecks,
+  PlaypenEndChecks,
+  PlaypenMotorCalibration,
+  PlaypenPickupCube,
+  PlaypenReadToolCode,
+  PlaypenSoundCheck,
+  PlaypenTest,
+  PlaypenWaitToStart,
+
   PopAWheelie,
   PounceOnMotion,
   PounceWithProx,
@@ -119,6 +134,7 @@ enum uint_8 BehaviorClass {
 // so that they can be referenced by other parts of the behavior system
 // PLEASE KEEP ALPHABETIZED
 enum uint_8 BehaviorID {
+  AcknowledgeCharger,
   AcknowledgeFace,
   AcknowledgeObject,
   Anonymous,
@@ -201,6 +217,23 @@ enum uint_8 BehaviorID {
   NothingToDo_BoredAnim,
   NothingToDo_Idle,
   OnboardingShowCube,
+  PlayArbitraryAnim,
+
+  PlaypenCameraCalibration,
+  PlaypenDistanceSensor80mm,
+  PlaypenDistanceSensor100mm,
+  PlaypenDistanceSensor300mm,
+  PlaypenDriftCheck,
+  PlaypenDriveForwards,
+  PlaypenEndChecks,
+  PlaypenInitChecks,
+  PlaypenMotorCalibration,
+  PlaypenPickupCube,
+  PlaypenReadToolCode,
+  PlaypenSoundCheck,
+  PlaypenTest,
+  PlaypenWaitToStart,
+
   PopAWheelie,
   
   PounceOnMotion_Socialize,

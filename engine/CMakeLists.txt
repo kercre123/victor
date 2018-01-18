@@ -50,6 +50,7 @@ target_link_libraries(cozmo_engine
   # anki libs
   clad
   util
+  civetweb
   cti_common
   cti_messaging
   robot_interface
@@ -62,7 +63,6 @@ target_link_libraries(cozmo_engine
   DAS 
   androidHAL
   # cti
-  cti_common
   cti_vision
   cti_planning
   cubeBleClient

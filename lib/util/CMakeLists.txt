@@ -33,6 +33,10 @@ if (NOT TARGET kazmath)
   add_subdirectory("source/3rd/kazmath")
 endif()
 
+if (NOT TARGET civetweb)
+  add_subdirectory("source/3rd/civetweb")
+endif()
+
 # Disable webp until we are going to use it
 # if (NOT TARGET webp)
 #  add_subdirectory("source/3rd/libwebp")
@@ -58,6 +62,11 @@ if (MACOSX)
   enable_testing()
 
   add_test(NAME utilUnitTest COMMAND utilUnitTest)
+
+  set_tests_properties(utilUnitTest
+    PROPERTIES
+    ENVIRONMENT "GTEST_OUTPUT=xml:utilUnitGoogleTest.xml"
+  )
 
 endif()
 

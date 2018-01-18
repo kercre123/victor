@@ -12,7 +12,7 @@
                 "branch": "branches/victor",
                 "version": "143"
             },
-            "cozmo-assets": {
+            "victor-animation-assets": {
                 "additional_files": [
                     "${PROJECT_ROOT_DIR}/resources/config/engine/animations/"
                 ],
@@ -27,7 +27,7 @@
                     "animationGroups",
                     "faceAnimations"
                 ],
-                "version": "2562"
+                "version": "2571"
             },
             "victor-audio-assets": {
                 "allow_extra_files": "True",

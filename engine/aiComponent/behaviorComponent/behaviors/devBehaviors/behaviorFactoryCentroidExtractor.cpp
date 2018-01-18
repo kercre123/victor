@@ -77,14 +77,14 @@ namespace{
     }});
   }
   
-  bool BehaviorFactoryCentroidExtractor::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+  bool BehaviorFactoryCentroidExtractor::WantsToBeActivatedBehavior() const
   {
     return !IsControlDelegated() && !_waitingForDots;
   }
 
-  void BehaviorFactoryCentroidExtractor::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+  void BehaviorFactoryCentroidExtractor::OnBehaviorActivated()
   {
-    Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
+    Robot& robot = GetBEI().GetRobotInfo()._robot;
     std::stringstream serialNumString;
     serialNumString << std::hex << robot.GetHeadSerialNumber();
     _factoryTestLogger.StartLog(serialNumString.str() + "_centroids", true, robot.GetContextDataPlatform());
@@ -104,7 +104,7 @@ namespace{
     
   }
   
-  void BehaviorFactoryCentroidExtractor::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
+  void BehaviorFactoryCentroidExtractor::BehaviorUpdate()
   {
     if(!IsActivated()){
       return;
@@ -120,7 +120,7 @@ namespace{
     }
   }
   
-  void BehaviorFactoryCentroidExtractor::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+  void BehaviorFactoryCentroidExtractor::OnBehaviorDeactivated()
   {
     _waitingForDots = false;
     _liftCalibrated = false;
@@ -146,9 +146,9 @@ namespace{
                 });
   }
   
-  void BehaviorFactoryCentroidExtractor::HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+  void BehaviorFactoryCentroidExtractor::HandleWhileActivated(const EngineToGameEvent& event)
   {
-    Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
+    Robot& robot = GetBEI().GetRobotInfo()._robot;
     if(event.GetData().GetTag() == EngineToGameTag::RobotCompletedFactoryDotTest)
     {
       const auto& msg = event.GetData().Get_RobotCompletedFactoryDotTest();
