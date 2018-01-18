@@ -182,6 +182,8 @@ void tryExecuteBackgroundTransfers()
 - (void)applicationDidBecomeActive:(UIApplication * )application
 {
     [AnkiNotificationsInstance applicationDidBecomeActive:application];
+  
+    [[UNUserNotificationCenter currentNotificationCenter] removeAllDeliveredNotifications];
     [super applicationDidBecomeActive:application];
 }
 
