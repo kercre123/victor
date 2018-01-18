@@ -88,6 +88,10 @@
 	</dict>
 	<key>NSCameraUsageDescription</key>
 	<string>Required for crash reporting</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Required for crash reporting</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>Required for crash reporting</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string></string>
 	<key>NSMicrophoneUsageDescription</key>
