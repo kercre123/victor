@@ -329,6 +329,8 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
   _context->GetVizManager()->ResetMessageCount();
   
   _context->GetVoiceCommandComponent()->Update();
+
+  _context->GetWebService()->Update();
   
   // Handle UI
   if (!_uiWasConnected && _uiMsgHandler->HasDesiredNumUiDevices()) {

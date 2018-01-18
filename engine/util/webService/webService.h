@@ -45,6 +45,7 @@ public:
   ~WebService();
 
   void Start(Anki::Util::Data::DataPlatform* platform);
+  void Update();
   void Stop();
   
   // send data to any client subscribed to service

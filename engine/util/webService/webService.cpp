@@ -236,7 +236,7 @@ ConsoleVarsUI(struct mg_connection *conn, void *cbdata)
       category_html[cat] += "                <div>\n";
       category_html[cat] += "                  <label for=\""+label+"_amount\">"+label+":</label>\n";
       category_html[cat] += "                  <div id=\""+label+"\" class=\"slider\" "+sliderRange+" style=\"width: 100px; margin: 0.25em;\"></div>\n";
-      category_html[cat] += "                  <input type=\"text\" id=\""+label+"_amount\" class=\"amount\" "+inputRange+" style=\"margin: 0.25em; border:0; font-weight:bold;\">\n";
+      category_html[cat] += "                  <input type=\"text\" id=\""+label+"_amount\" class=\"amount\" "+inputRange+" style=\"margin: 0.25em; border:1; font-weight:bold;\">\n";
       category_html[cat] += "                </div><br>\n";
     }
   }
@@ -257,13 +257,14 @@ ConsoleVarsUI(struct mg_connection *conn, void *cbdata)
 
     if (sig.empty()) {
       category_html[cat] += "                <div>\n";
-      category_html[cat] += "                  <input type=\"submit\" value=\""+label+"\">";
+      category_html[cat] += "                  <input type=\"submit\" value=\""+label+"\">\n";
       category_html[cat] += "                </div><br>\n";
     }
     else {
       category_html[cat] += "                <div>\n";
       category_html[cat] += "                  <a id=\"tt\" title=\"("+sig+")\"><label for=\""+label+"_function\">"+label+":</label></a>\n";
-      category_html[cat] += "                  <input type=\"text\" id=\""+label+"_function\" class=\"function\"  style=\"margin: 0.25em; border:0; font-weight:bold;\">\n";
+      category_html[cat] += "                  <input type=\"text\" id=\""+label+"_args\" value=\"\" style=\"margin: 0.25em; border:1; font-weight:bold;\">\n";
+      category_html[cat] += "                  <input type=\"submit\" id=\""+label+"_function\" value=\"Call\" class=\"function\">\n";
       category_html[cat] += "                </div><br>\n";
     }
   }
@@ -384,7 +385,7 @@ ConsoleVarsList(struct mg_connection *conn, void *cbdata)
 
   if (info->query_string) {
     if (!strncmp(info->query_string, "key=", 4)) {
-      key = std::string(info->query_string+4);
+      key = std::string(info->query_string + 4);
     }
   }
 
@@ -779,6 +780,11 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform)
   
   const std::string& metaGameJsonTemplate = platform->pathToResource(Util::Data::Scope::Resources, "webserver/json.html");
   _metaGameJsonHTMLTemplate = Anki::Util::StringFromContentsOfFile(metaGameJsonTemplate);
+}
+
+void WebService::Update()
+{
+  //PRINT_NAMED_INFO("WebService", "Calling Update on WebService");
 }
 
 void WebService::Stop()
