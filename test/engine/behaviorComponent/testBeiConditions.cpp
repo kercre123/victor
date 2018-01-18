@@ -202,6 +202,8 @@ TEST(BeiConditions, Frustration)
 
 TEST(BeiConditions, Timer)
 {
+  BaseStationTimer::getInstance()->UpdateTime(0);
+  
   const std::string json = R"json(
   {
     "conditionType": "Timer",
@@ -224,7 +226,7 @@ TEST(BeiConditions, Timer)
   BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(29.9));
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
 
-  BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(30.0001));
+  BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(30.01));
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
 
   BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(35.0));
@@ -329,6 +331,8 @@ TEST(BeiConditions, NotTrue)
 
 TEST(BeiConditions, NotTimer)
 {
+  BaseStationTimer::getInstance()->UpdateTime(0);
+
   const std::string json = R"json(
   {
     "conditionType": "Not",
@@ -345,7 +349,7 @@ TEST(BeiConditions, NotTimer)
 
   cond->Init(bei);
   cond->Reset(bei);
-
+  
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
 
   BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(2.0));
@@ -354,7 +358,7 @@ TEST(BeiConditions, NotTimer)
   BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(29.9));
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
 
-  BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(30.0001));
+  BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(30.01));
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
 
   BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(35.0));

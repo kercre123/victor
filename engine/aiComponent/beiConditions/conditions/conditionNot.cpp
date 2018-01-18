@@ -13,6 +13,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionNot.h"
 
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
+#include "lib/util/source/anki/util/logging/logging.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -36,22 +37,22 @@ ConditionNot::ConditionNot(IBEIConditionPtr subCondition)
 }
 
 void ConditionNot::ResetInternal(BehaviorExternalInterface& bei)
-{
-  if( _subCondition ) {
+{  
+  if( ANKI_VERIFY(_subCondition, "ConditionNot.ResetInternal.NullSubCondition", "" ) ) {
     _subCondition->Reset(bei);
   }
 }
 
 void ConditionNot::InitInternal(BehaviorExternalInterface& bei)
 {
-  if( _subCondition ) {
+  if( ANKI_VERIFY(_subCondition, "ConditionNot.ResetInternal.NullSubCondition", "" ) ) {
     _subCondition->Init(bei);
   }
 }
   
 bool ConditionNot::AreConditionsMetInternal(BehaviorExternalInterface& bei) const
 {
-  if( _subCondition ) {
+  if( ANKI_VERIFY(_subCondition, "ConditionNot.ResetInternal.NullSubCondition", "" ) ) {
     const bool subResult = _subCondition->AreConditionsMet(bei);
     return !subResult;
   }
