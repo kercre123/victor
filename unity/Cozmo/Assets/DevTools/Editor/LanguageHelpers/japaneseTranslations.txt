@@ -352,7 +352,7 @@ Cube 1を振りました
 #31：キューブを元の場所に戻す：<span class='yellow'>キューブが見えたら、</span>COZMOを<span class='blue'>後ろを向かせ、</span>キューブをCOZMOの数フィート後ろに置いて戻ります。<span class='orange'>無制限に繰り返します。</span>
 ホールインワンを決められるかな？
 勝者
-ADVANCED CODE BLOCK. The Cozmo Python SDK provides access to hundreds more of Cozmo's animations. The animation's id string can be played using this block. Learn more about the SDK at developer.anki.com. Note that we recommend using the "play SDK animation group" block over this block as the animation id strings can change over time, meaning your program may not work in the future without changes.
+上級のコードブロック。Cozmo Python SDKを使うと、数百以上のCOZMOのアニメーションにアクセスできます。アニメーションのid文字列は、このブロックを使って再生します。SDKの詳細については、developer.anki.com をご覧ください。このブロックには「play SDK animation group（SDKアニメーショングループを再生）」ブロックを使用されることをお薦めします。アニメーションのid文字列は、時間とともに変更される可能性があるためです。お使いのプログラムは、これらの変更を実施しないと今後使用できなくなることがあります。
 #9の答え
 COZMOと言いましょう
 [アニメーション名]アニメーションを再生
@@ -721,7 +721,7 @@ COZMOの顔の現在保留中の画像のすべてのピクセルをクリアし
 COZMOの前/後の傾きの角度を度数で返します。前の場合の値は負、後ろの場合の値は正です。
 ワールド上での顔の位置[X/Y/Z]
 #8の答え
-Returns a random number between [X] and [Y] (inclusive).
+[X]と[Y]の間（[X]と[Y]を含む）のランダムな整数を返します。
 音楽が止まったとき、ホットポテトを持っていないようにしましょう!
 [X]、[Y]に半径[Z]の塗りつぶされた円を描画
 猫の真似
@@ -900,11 +900,11 @@ COZMOが完了するまで待機%1
 顔の名前
 左の車輪は%1mm/s、右の車輪は%2mm/sで進む
 上級： %1 SDKアニメーションを再生
-36 - whee #1
+36 - わーい #1
 有効にする：%1をアニメーション使用時
-38 - whee #3
-37 - whee #2
-39 - whee #4
+38 - わーい #3
+37 - わーい #2
+39 - わーい #4
 12－おしゃべり
 31－ゲームに敗北
 テキストの配置を%1%2に設定
@@ -936,15 +936,15 @@ COZMOが完了するまで待機%1
 COZMOの回転（°）
 %1、%2に半径%3の塗りつぶされた円を描画
 %1、%2から%3、%4に線を描画
-37 - victory
+37 - かち
 24－マンボを踊る
 カメラでのキューブ%1の位置%2
 17－「ホットポテト」終了
 30－ゲームに勝利
 右
-38 - fun music loop
+38 - たのしいおんがくのループ
 悲しい顔が見えたら
-35 - wondering
+35 - おどろく
 15－シューッ
 ヘッドを%1°まで%2°/sで動かす
 キューブ%2の%1ライトを%3に設定
@@ -963,7 +963,7 @@ COZMOの顔に表示
 17－ペチャクチャしゃべる
 3－ディスコミュージック
 28－クラクラする（終了）
-40 - whoa
+40 - うわぁ
 動いているヘッド
 %2°/sで%1°回転
  %1 を発信し完了まで待機
@@ -1051,7 +1051,7 @@ COZMOのリフトの高さ%
 左
 中央
 ワールド上でのCOZMOの位置 %1
-41 - whew
+41 - ふぅ
 COZMOを充電ドックに置いてください。
 COZMOに接続しています...
 接続しています...
