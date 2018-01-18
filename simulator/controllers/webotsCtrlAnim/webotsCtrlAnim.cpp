@@ -64,7 +64,8 @@ int main(int argc, char **argv)
   OSState::SetSupervisor(&animSupervisor);
 
   // - create and set logger
-  Util::IFormattedLoggerProvider* printfLoggerProvider = new Util::PrintfLoggerProvider(Anki::Util::ILoggerProvider::LOG_LEVEL_WARN);
+  Util::IFormattedLoggerProvider* printfLoggerProvider = new Util::PrintfLoggerProvider(Anki::Util::ILoggerProvider::LOG_LEVEL_WARN,
+                                                                                        params.colorizeStderrOutput);
   Util::MultiFormattedLoggerProvider loggerProvider({
     printfLoggerProvider
   });

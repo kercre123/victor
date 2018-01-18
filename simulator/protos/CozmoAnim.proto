@@ -6,6 +6,7 @@ PROTO CozmoAnim [
   field SFRotation rotation 0 0 1 0
   
   field SFBool filterLogs FALSE
+  field SFBool colorizeStderrOutput FALSE
 ]
 {
 Supervisor {
@@ -14,12 +15,16 @@ Supervisor {
   rotation IS rotation
   controller "webotsCtrlAnim"
 
+  # append optional command line parameters
+  %{ ctrlArgs="" }%
   %{ if fields.filterLogs.value then }%
-  controllerArgs "--applyLogFilter"
-  %{ else }%
-  controllerArgs ""
+    %{ ctrlArgs = ctrlArgs .. " --applyLogFilter"}%
+  %{ end }%
+  %{ if fields.colorizeStderrOutput.value then }%
+    %{ ctrlArgs = ctrlArgs .. " --colorizeStderrOutput"}%
   %{ end }%
 
+  controllerArgs "%{=ctrlArgs}%"
 
   children [
     CozmoFaceDisplay {

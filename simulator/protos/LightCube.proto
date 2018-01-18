@@ -6,6 +6,7 @@ PROTO LightCube [
   field SFRotation rotation     0 0 1 0
   field MFVec3f    ledColors    [ 0 0 0, 0 0 0, 0 0 0, 0 0 0 ]
   field SFBool     filterLogs FALSE
+  field SFBool     colorizeStderrOutput FALSE
   
   # Maps to CLAD ObjectType
   field SFString   objectType "Block_LIGHTCUBE1"
@@ -20,6 +21,7 @@ PROTO LightCube [
     translation IS translation
     rotation IS rotation
     filterLogs IS filterLogs
+    colorizeStderrOutput IS colorizeStderrOutput
     blockColor 0.8 0.8 0.8
     %{ if fields.objectType.value == "Block_LIGHTCUBE1" then }%
       markerImg_front  "lightCubes/lightCubeI_front.png"
