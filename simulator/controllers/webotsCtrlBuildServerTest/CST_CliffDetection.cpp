@@ -160,7 +160,7 @@ void CST_CliffDetection::SetupToTestCliffSensor(CliffSensor cliffID)
 bool CST_CliffDetection::CheckCliffDetected(CliffSensor cliffID)
 {
   const auto cliffInd = Util::EnumToUnderlying(cliffID);
-  IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
+  IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(25.0,
                                         !IsRobotStatus(RobotStatusFlag::IS_MOVING),
                                         _lastCliffEvent.detectedFlags == (1<<cliffInd),
                                         _cliffThresholds[cliffInd] < CLIFF_SENSOR_THRESHOLD_DEFAULT)
