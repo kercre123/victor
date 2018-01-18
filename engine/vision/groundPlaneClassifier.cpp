@@ -49,7 +49,7 @@ void ClassifyImage(const DrivingSurfaceClassifier& clf, const Anki::Cozmo::Featu
 }
 
 GroundPlaneClassifier::GroundPlaneClassifier(const Json::Value& config, const CozmoContext *context)
-: _context(context)
+: _context(context), _initialized(false)
 {
 
   DEV_ASSERT(context != nullptr, "GroundPlaneClassifier.ContextCantBeNULL");
@@ -80,8 +80,8 @@ GroundPlaneClassifier::GroundPlaneClassifier(const Json::Value& config, const Co
     trainClassifier(fullpath);
   }
   else {
-    PRINT_CH_DEBUG("VisionSystem", "GroundPlaneClassifier.LoadingSavedClassifier","Error while loading classifier!");
     if (!loadClassifier(fullpath)) {
+      PRINT_CH_DEBUG("VisionSystem", "GroundPlaneClassifier.LoadingSavedClassifier","Error while loading classifier!");
       return;
     }
   }
@@ -224,11 +224,12 @@ Vision::Image GroundPlaneClassifier::processClassifiedImage(const Vision::Image&
   binaryImage.CopyTo(clone);
   cv::Mat_<u8> cvImage = binaryImage.get_CvMat_();
 
+  // TODO these values should be parameters
   cv::morphologyEx(cvImage, cvImage,
-                   cv::MORPH_OPEN,
-                   cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3,3)),
+                   cv::MORPH_CLOSE,
+                   cv::getStructuringElement(cv::MORPH_RECT, cv::Size(5,5)),
                    cv::Point(-1, -1),
-                   0
+                   2
   );
 
   return Vision::Image(cvImage);
