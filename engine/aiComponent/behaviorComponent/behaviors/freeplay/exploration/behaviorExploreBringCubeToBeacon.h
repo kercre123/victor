@@ -66,13 +66,13 @@ public:
   // ICozmoBehavior API
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual bool WantsToBeActivatedBehavior() const override;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // State functions
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void TransitionToPickUpObject(BehaviorExternalInterface& behaviorExternalInterface, int attempt);   // state when we are ready to go pick up a cube
-  void TransitionToObjectPickedUp(BehaviorExternalInterface& behaviorExternalInterface); // state when the object is picked up
+  void TransitionToPickUpObject(int attempt);   // state when we are ready to go pick up a cube
+  void TransitionToObjectPickedUp(); // state when the object is picked up
   
 protected:
   
@@ -84,8 +84,8 @@ protected:
   // ICozmoBehavior API
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated() override;
+  virtual void OnBehaviorDeactivated() override;
   
 private:
 
@@ -94,7 +94,7 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // find cube in the beacon to stack the one we have on top of the former
-  const ObservableObject* FindFreeCubeToStackOn(const ObservableObject* object, const AIBeacon* beacon, const BehaviorExternalInterface& behaviorExternalInterface) const;
+  const ObservableObject* FindFreeCubeToStackOn(const ObservableObject* object, const AIBeacon* beacon) const;
   
   // find pose to drop the object inside the selected beacon. Return true/false on success/failure
   static bool FindFreePoseInBeacon(const ObservableObject* object, const AIBeacon* selectedBeacon, const BehaviorExternalInterface& behaviorExternalInterface, Pose3d& freePose, float recentFailureCooldown_sec);
@@ -103,13 +103,13 @@ private:
   const ObservableObject* GetCandidate(const BlockWorld& world, size_t index) const;
   
   // generate the proper action and callback to try to stack the cube we are carrying on top of the given one
-  void TryToStackOn(BehaviorExternalInterface& behaviorExternalInterface, const ObjectID& bottomCubeID, int attempt);
+  void TryToStackOn(const ObjectID& bottomCubeID, int attempt);
   
   // generate the proper action and callback to try to place the cube we are carrying at the given location
-  void TryToPlaceAt(BehaviorExternalInterface& behaviorExternalInterface, const Pose3d& pose, int attempt);
+  void TryToPlaceAt(const Pose3d& pose, int attempt);
   
   // Fires appropriate emotion events depending on if a cube was placed at a beacon or all cubes are in beacon
-  void FireEmotionEvents(BehaviorExternalInterface& behaviorExternalInterface);
+  void FireEmotionEvents();
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes

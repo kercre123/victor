@@ -45,12 +45,12 @@ protected:
 
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
 
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated() override;
+  virtual void BehaviorUpdate() override;
 
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual bool WantsToBeActivatedBehavior() const override;
   
-  virtual void UpdateTargetBlocksInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual void UpdateTargetBlocksInternal() const override;
   
   virtual std::set<ObjectInteractionIntention>
         GetBehaviorObjectInteractionIntentions() const override {
@@ -68,9 +68,9 @@ private:
   mutable ObjectID    _targetBlockID;
   std::vector<BlockConfigurations::ConfigurationType> _configurationsToIgnore;
   
-  void TransitionToDoingInitialReaction(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToPickingUpCube(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToSuccessReaction(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToDoingInitialReaction();
+  void TransitionToPickingUpCube();
+  void TransitionToSuccessReaction();
 
 
 }; // class BehaviorPickUpCube

@@ -65,9 +65,9 @@ BehaviorAcknowledgeObject::BehaviorAcknowledgeObject(const Json::Value& config)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAcknowledgeObject::InitBehavior(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorAcknowledgeObject::InitBehavior()
 {
-  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  const auto& robotInfo = GetBEI().GetRobotInfo();
   
   // give the ghost object and ID so we can visualize it
   _ghostStackedObject->SetVizManager(robotInfo.GetContext()->GetVizManager());
@@ -76,7 +76,7 @@ void BehaviorAcknowledgeObject::InitBehavior(BehaviorExternalInterface& behavior
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAcknowledgeObject::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorAcknowledgeObject::OnBehaviorActivated()
 {
   // don't actually init until the first Update call. This gives other messages that came in this tick a
   // chance to be processed, in case we see multiple objects in the same tick.
@@ -95,7 +95,7 @@ void BehaviorAcknowledgeObject::OnBehaviorActivated(BehaviorExternalInterface& b
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAcknowledgeObject::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorAcknowledgeObject::BehaviorUpdate()
 {
   if(!IsActivated()){
     return;
@@ -104,7 +104,7 @@ void BehaviorAcknowledgeObject::BehaviorUpdate(BehaviorExternalInterface& behavi
   if( _shouldStart ) {
     _shouldStart = false;
     // now figure out which object to react to
-    BeginIteration(behaviorExternalInterface);
+    BeginIteration();
   }
 }
   
@@ -139,7 +139,7 @@ void BehaviorAcknowledgeObject::LoadConfig(const Json::Value& config)
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAcknowledgeObject::BeginIteration(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorAcknowledgeObject::BeginIteration()
 {
   _currTarget.UnSet();
   if(_targets.size() <= 0) {
@@ -149,7 +149,7 @@ void BehaviorAcknowledgeObject::BeginIteration(BehaviorExternalInterface& behavi
   _currTarget = *_targets.begin();
   DEV_ASSERT(_currTarget.IsSet(), "BehaviorAcknowledgeObject.GotUnsetTarget");
 
-  const ObservableObject* targetObj = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_currTarget);
+  const ObservableObject* targetObj = GetBEI().GetBlockWorld().GetLocatedObjectByID(_currTarget);
 
   if( nullptr == targetObj ) {
     // could happen if the cube "disappears" somehow between this behavior getting triggered and the time this
@@ -162,13 +162,13 @@ void BehaviorAcknowledgeObject::BeginIteration(BehaviorExternalInterface& behavi
     
     // let it try again with another target, if there is one
     if( !_targets.empty() ) {
-      BeginIteration(behaviorExternalInterface);
+      BeginIteration();
     }
     
     return;
   }
   
-  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  auto& robotInfo = GetBEI().GetRobotInfo();
 
   Pose3d poseWrtRobot;
   targetObj->GetPose().GetWithRespectTo(robotInfo.GetPose(), poseWrtRobot);
@@ -198,32 +198,32 @@ void BehaviorAcknowledgeObject::BeginIteration(BehaviorExternalInterface& behavi
   }
 
   DelegateIfInControl(action,
-              [this, &behaviorExternalInterface](ActionResult result)
+              [this](ActionResult result)
               {
                 if(result == ActionResult::SUCCESS)
                 {
                   // The first try, don't need to force a backup: computing a look up may be sufficient
                   _forceBackupWhenCheckingForStack = false;
-                  LookForStackedCubes(behaviorExternalInterface);
+                  LookForStackedCubes();
                 }
                 else
                 {
                   // If we don't successfully turn towards the cube, then just finish
-                  FinishIteration(behaviorExternalInterface);
+                  FinishIteration();
                 }
               });
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAcknowledgeObject::LookForStackedCubes(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorAcknowledgeObject::LookForStackedCubes()
 {
-  const ObservableObject* obj = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_currTarget);
+  const ObservableObject* obj = GetBEI().GetBlockWorld().GetLocatedObjectByID(_currTarget);
   if( nullptr == obj ) {
     PRINT_NAMED_WARNING("BehaviorAcknowledgeObject.StackedCube.NullTargetObject",
                         "Target object %d returned null from blockworld",
                         _currTarget.GetValue());
-    FinishIteration(behaviorExternalInterface);
+    FinishIteration();
     return;
   }
 
@@ -234,17 +234,17 @@ void BehaviorAcknowledgeObject::LookForStackedCubes(BehaviorExternalInterface& b
   
   // if we can already see below block, don't look down after looking up
   if(_shouldCheckBelowTarget){
-    _shouldCheckBelowTarget = !CheckIfGhostBlockVisible(behaviorExternalInterface, obj, offsetBelowTarget);
+    _shouldCheckBelowTarget = !CheckIfGhostBlockVisible(obj, offsetBelowTarget);
   }
   
   // if we can already see above block, don't bother looking up
   bool outsideFOV = false;
-  const bool ghostBlockAboveVisibleFromHere = CheckIfGhostBlockVisible(behaviorExternalInterface, obj, offsetAboveTarget, outsideFOV);
+  const bool ghostBlockAboveVisibleFromHere = CheckIfGhostBlockVisible(obj, offsetAboveTarget, outsideFOV);
   if(!ghostBlockAboveVisibleFromHere && outsideFOV)
   {
     // Can't see ghost cube from current position, but it's because it's outside our
     // current FOV.
-    SetGhostBlockPoseRelObject(behaviorExternalInterface, obj, offsetAboveTarget);
+    SetGhostBlockPoseRelObject(obj, offsetAboveTarget);
     
     bool backupFirst = false;
     
@@ -254,7 +254,7 @@ void BehaviorAcknowledgeObject::LookForStackedCubes(BehaviorExternalInterface& b
     }
     else
     {
-      const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+      const auto& robotInfo = GetBEI().GetRobotInfo();
       // First see if we need to back up first, by checking if we can even reach a head
       // angle that would put the center of the closest marker (in XY) in our FOV. Note that
       // we don't just use the ghost object's pose b/c at close range, seeing the closest
@@ -285,24 +285,24 @@ void BehaviorAcknowledgeObject::LookForStackedCubes(BehaviorExternalInterface& b
                    "BehaviorAcknowledgeObject.LookForStackedCubes.LookingUpToSeeCubeAbove",
                    "BackingUpFirst=%c", backupFirst ? 'Y' : 'N');
     
-    LookAtGhostBlock(behaviorExternalInterface, backupFirst, &BehaviorAcknowledgeObject::LookForStackedCubes);
+    LookAtGhostBlock(backupFirst, &BehaviorAcknowledgeObject::LookForStackedCubes);
     return;
   }
   
   // check for blocks below
   if(_shouldCheckBelowTarget){
     PRINT_CH_DEBUG(kLogChannelName, "BehaviorAcknowledgeObject.LookForStackedCubes.LookingDownToSeeCubeBelow", "");
-    SetGhostBlockPoseRelObject(behaviorExternalInterface, obj, offsetBelowTarget);
-    LookAtGhostBlock(behaviorExternalInterface, false, &BehaviorAcknowledgeObject::FinishIteration);
+    SetGhostBlockPoseRelObject(obj, offsetBelowTarget);
+    LookAtGhostBlock(false, &BehaviorAcknowledgeObject::FinishIteration);
     return;
   }
   
-  FinishIteration(behaviorExternalInterface);
+  FinishIteration();
 }
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAcknowledgeObject::SetGhostBlockPoseRelObject(BehaviorExternalInterface& behaviorExternalInterface, const ObservableObject* obj, float zOffset)
+void BehaviorAcknowledgeObject::SetGhostBlockPoseRelObject(const ObservableObject* obj, float zOffset)
 {
   Pose3d ghostPose = obj->GetPose().GetWithRespectToRoot();
   ghostPose.SetTranslation({
@@ -310,28 +310,28 @@ void BehaviorAcknowledgeObject::SetGhostBlockPoseRelObject(BehaviorExternalInter
     ghostPose.GetTranslation().y(),
     ghostPose.GetTranslation().z() + zOffset});
 
-  if(behaviorExternalInterface.HasObjectPoseConfirmer()){
+  if(GetBEI().HasObjectPoseConfirmer()){
     // Using the PoseConfimer for ghost objects is weird, we need to fake PoseConfirmations here
-    behaviorExternalInterface.GetObjectPoseConfirmer().SetGhostObjectPose(_ghostStackedObject.get(), ghostPose, PoseState::Dirty);
+    GetBEI().GetObjectPoseConfirmer().SetGhostObjectPose(_ghostStackedObject.get(), ghostPose, PoseState::Dirty);
   }
 }
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-inline bool BehaviorAcknowledgeObject::CheckIfGhostBlockVisible(BehaviorExternalInterface& behaviorExternalInterface, const ObservableObject* obj, float zOffset)
+inline bool BehaviorAcknowledgeObject::CheckIfGhostBlockVisible(const ObservableObject* obj, float zOffset)
 {
   bool temp = false;
-  return CheckIfGhostBlockVisible(behaviorExternalInterface, obj, zOffset, temp);
+  return CheckIfGhostBlockVisible(obj, zOffset, temp);
 }
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorAcknowledgeObject::CheckIfGhostBlockVisible(BehaviorExternalInterface& behaviorExternalInterface, const ObservableObject* obj, float zOffset, bool& shouldRetry)
+bool BehaviorAcknowledgeObject::CheckIfGhostBlockVisible(const ObservableObject* obj, float zOffset, bool& shouldRetry)
 {
   // store the current ghost pose so that it can be restored after the check
   const Pose3d currentGhostPose = _ghostStackedObject->GetPose();
   
-  SetGhostBlockPoseRelObject(behaviorExternalInterface, obj, zOffset);
+  SetGhostBlockPoseRelObject(obj, zOffset);
   
   if( kVizPossibleStackCube ) {
     _ghostStackedObject->Visualize(NamedColors::WHITE);
@@ -349,14 +349,14 @@ bool BehaviorAcknowledgeObject::CheckIfGhostBlockVisible(BehaviorExternalInterfa
     Vision::KnownMarker::NotVisibleReason::NOTHING_BEHIND }};
   
 
-  Vision::KnownMarker::NotVisibleReason reason = _ghostStackedObject->IsVisibleFromWithReason(behaviorExternalInterface.GetVisionComponent().GetCamera(),
+  Vision::KnownMarker::NotVisibleReason reason = _ghostStackedObject->IsVisibleFromWithReason(GetBEI().GetVisionComponent().GetCamera(),
                                                                                               kMaxNormalAngle,
                                                                                               kMinImageSizePix,
                                                                                               false);
   
-  if(behaviorExternalInterface.HasObjectPoseConfirmer()){
+  if(GetBEI().HasObjectPoseConfirmer()){
     //restore ghost pose
-    behaviorExternalInterface.GetObjectPoseConfirmer().SetGhostObjectPose(_ghostStackedObject.get(), currentGhostPose, PoseState::Dirty);
+    GetBEI().GetObjectPoseConfirmer().SetGhostObjectPose(_ghostStackedObject.get(), currentGhostPose, PoseState::Dirty);
   }
 
   
@@ -380,7 +380,7 @@ bool BehaviorAcknowledgeObject::CheckIfGhostBlockVisible(BehaviorExternalInterfa
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<typename T>
-void BehaviorAcknowledgeObject::LookAtGhostBlock(BehaviorExternalInterface& behaviorExternalInterface, bool backupFirst, void(T::*callback)(BehaviorExternalInterface&))
+void BehaviorAcknowledgeObject::LookAtGhostBlock(bool backupFirst, void(T::*callback)())
 {
   CompoundActionSequential* compoundAction = new CompoundActionSequential();
   
@@ -398,26 +398,27 @@ void BehaviorAcknowledgeObject::LookAtGhostBlock(BehaviorExternalInterface& beha
   compoundAction->AddAction(new WaitForImagesAction(_params.numImagesToWaitFor,
                                                     VisionMode::DetectingMarkers));
   
-  DelegateIfInControl(compoundAction, std::bind(callback, static_cast<T*>(this), std::placeholders::_1));
+  SimpleCallback unambiguous = std::bind(callback, static_cast<T*>(this));
+  DelegateIfInControl(compoundAction, unambiguous);
 }
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAcknowledgeObject::FinishIteration(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorAcknowledgeObject::FinishIteration()
 {
   // notify about the id being done and decide what to do next
   // inform parent class that we completed a reaction
   for(auto listener: _objectListeners){
-    listener->ReactedToID(behaviorExternalInterface, _currTarget.GetValue());
+    listener->ReactedToID(_currTarget.GetValue());
   }
   
   _targets.erase(_currTarget.GetValue());
   
-  auto callback = [this,&behaviorExternalInterface]()
+  auto callback = [this]()
   {
     BehaviorObjectiveAchieved(BehaviorObjective::ReactedAcknowledgedObject);
     // move on to the next target, if there is one
-    BeginIteration(behaviorExternalInterface);
+    BeginIteration();
   };
   
   // NOTE: this is not really sufficient logic, because we could fail to turn towards
@@ -437,12 +438,12 @@ void BehaviorAcknowledgeObject::FinishIteration(BehaviorExternalInterface& behav
  
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAcknowledgeObject::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorAcknowledgeObject::OnBehaviorDeactivated()
 {
   // if we get interrupted for any reason, kill the queue. We don't want to back up a bunch of stuff in here,
   // this is meant to handle seeing new objects while we are running
   for(auto listener: _objectListeners){
-    listener->ClearDesiredTargets(behaviorExternalInterface);
+    listener->ClearDesiredTargets();
   }
   
   _currTarget.UnSet();
@@ -452,7 +453,7 @@ void BehaviorAcknowledgeObject::OnBehaviorDeactivated(BehaviorExternalInterface&
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorAcknowledgeObject::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorAcknowledgeObject::WantsToBeActivatedBehavior() const
 {
   return !_targets.empty();
 }

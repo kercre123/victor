@@ -28,16 +28,16 @@ namespace Cozmo {
 
 class SearchForBlockHelper : public IHelper{
 public:
-  SearchForBlockHelper(BehaviorExternalInterface& behaviorExternalInterface, ICozmoBehavior& behavior,
+  SearchForBlockHelper(ICozmoBehavior& behavior,
                        BehaviorHelperFactory& helperFactory,
                        const SearchParameters& params = {});
   virtual ~SearchForBlockHelper();
 
 protected:
   // IHelper functions
-  virtual bool ShouldCancelDelegates(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual HelperStatus InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual HelperStatus UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual bool ShouldCancelDelegates() const override;
+  virtual HelperStatus InitBehaviorHelper() override;
+  virtual HelperStatus UpdateWhileActiveInternal() override;
   
 private:
   SearchParameters _params;
@@ -47,9 +47,9 @@ private:
   std::set<ObjectID> _objectsSeenDuringSearch;
   
   
-  void SearchForBlock(ActionResult result, BehaviorExternalInterface& behaviorExternalInterface);
-  void SearchFinishedWithoutInterruption(BehaviorExternalInterface& behaviorExternalInterface);
-  bool ShouldBeAbleToFindTarget(BehaviorExternalInterface& behaviorExternalInterface);
+  void SearchForBlock(ActionResult result);
+  void SearchFinishedWithoutInterruption();
+  bool ShouldBeAbleToFindTarget();
   
 };
 

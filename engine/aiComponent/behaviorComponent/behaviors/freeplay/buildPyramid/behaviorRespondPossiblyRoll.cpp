@@ -59,33 +59,33 @@ BehaviorRespondPossiblyRoll::~BehaviorRespondPossiblyRoll()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRespondPossiblyRoll::InitBehavior(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRespondPossiblyRoll::InitBehavior()
 {
   SubscribeToTags({ExternalInterface::MessageEngineToGameTag::ObjectUpAxisChanged});
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorRespondPossiblyRoll::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorRespondPossiblyRoll::WantsToBeActivatedBehavior() const
 {
   return true;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRespondPossiblyRoll::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRespondPossiblyRoll::OnBehaviorActivated()
 {
   _lastActionTag = ActionConstants::INVALID_TAG;
   _upAxisChangedIDs.clear();
 
-  DetermineNextResponse(behaviorExternalInterface);
+  DetermineNextResponse();
 
   
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRespondPossiblyRoll::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRespondPossiblyRoll::BehaviorUpdate()
 {
   if(!IsActivated()){
     return;
@@ -96,7 +96,7 @@ void BehaviorRespondPossiblyRoll::BehaviorUpdate(BehaviorExternalInterface& beha
   if(targetAxisChanged != _upAxisChangedIDs.end()){
     CancelDelegates(false, false);
     if(targetAxisChanged->second != UpAxis::ZPositive){
-      TurnAndRespondNegatively(behaviorExternalInterface);
+      TurnAndRespondNegatively();
     }
   }
   
@@ -105,24 +105,24 @@ void BehaviorRespondPossiblyRoll::BehaviorUpdate(BehaviorExternalInterface& beha
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRespondPossiblyRoll::DetermineNextResponse(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRespondPossiblyRoll::DetermineNextResponse()
 {  
-  const ObservableObject* object = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_metadata.GetObjectID());
+  const ObservableObject* object = GetBEI().GetBlockWorld().GetLocatedObjectByID(_metadata.GetObjectID());
   if(nullptr != object){
     if (!_metadata.GetPoseUpAxisAccurate() ||
         (object->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() != AxisName::Z_POS))
     {
       _metadata.SetPoseUpAxisWillBeChecked();
-      TurnAndRespondNegatively(behaviorExternalInterface);
+      TurnAndRespondNegatively();
     }else{
-      TurnAndRespondPositively(behaviorExternalInterface);
+      TurnAndRespondPositively();
     }
   }
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRespondPossiblyRoll::TurnAndRespondPositively(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRespondPossiblyRoll::TurnAndRespondPositively()
 {
   DEBUG_SET_STATE(RespondingPositively);
   
@@ -141,7 +141,7 @@ void BehaviorRespondPossiblyRoll::TurnAndRespondPositively(BehaviorExternalInter
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRespondPossiblyRoll::TurnAndRespondNegatively(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRespondPossiblyRoll::TurnAndRespondNegatively()
 {
   DEBUG_SET_STATE(RespondingNegatively);
   
@@ -160,26 +160,25 @@ void BehaviorRespondPossiblyRoll::TurnAndRespondNegatively(BehaviorExternalInter
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRespondPossiblyRoll::DelegateToRollHelper(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRespondPossiblyRoll::DelegateToRollHelper()
 {
   DEBUG_SET_STATE(RollingObject);
 
-  auto& factory = behaviorExternalInterface.GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
+  auto& factory = GetBEI().GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
   const bool upright = true;
   RollBlockParameters parameters;
   parameters.preDockCallback = [this](Robot& robot){_metadata.SetReachedPreDockRoll();};
-  HelperHandle rollHelper = factory.CreateRollBlockHelper(behaviorExternalInterface,
-                                                          *this,
+  HelperHandle rollHelper = factory.CreateRollBlockHelper(*this,
                                                           _metadata.GetObjectID(),
                                                           upright,
                                                           parameters);
   
-  SmartDelegateToHelper(behaviorExternalInterface, rollHelper, [this](BehaviorExternalInterface& behaviorExternalInterface){DetermineNextResponse(behaviorExternalInterface);}, nullptr);
+  SmartDelegateToHelper(rollHelper, [this](){DetermineNextResponse();}, nullptr);
 }
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRespondPossiblyRoll::AlwaysHandleInScope(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRespondPossiblyRoll::AlwaysHandleInScope(const EngineToGameEvent& event)
 {
   if(event.GetData().GetTag() ==ExternalInterface::MessageEngineToGameTag::ObjectUpAxisChanged){
     _upAxisChangedIDs.insert(std::make_pair(event.GetData().Get_ObjectUpAxisChanged().objectID,

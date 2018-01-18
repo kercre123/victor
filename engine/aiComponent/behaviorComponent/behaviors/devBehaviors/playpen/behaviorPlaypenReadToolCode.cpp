@@ -26,22 +26,21 @@ BehaviorPlaypenReadToolCode::BehaviorPlaypenReadToolCode(const Json::Value& conf
 
 }
 
-Result BehaviorPlaypenReadToolCode::OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)
+Result BehaviorPlaypenReadToolCode::OnBehaviorActivatedInternal()
 {
   ReadToolCodeAction* action = new ReadToolCodeAction(false);
-  DelegateIfInControl(action, [this, &behaviorExternalInterface](const ExternalInterface::RobotCompletedAction& rca) {
-    TransitionToToolCodeRead(behaviorExternalInterface, rca);
+  DelegateIfInControl(action, [this](const ExternalInterface::RobotCompletedAction& rca) {
+    TransitionToToolCodeRead(rca);
   });
   
   return RESULT_OK;
 }
 
-void BehaviorPlaypenReadToolCode::TransitionToToolCodeRead(BehaviorExternalInterface& behaviorExternalInterface,
-                                                           const ExternalInterface::RobotCompletedAction& rca)
+void BehaviorPlaypenReadToolCode::TransitionToToolCodeRead(const ExternalInterface::RobotCompletedAction& rca)
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
+  Robot& robot = GetBEI().GetRobotInfo()._robot;
 
   // Save tool code images to robot (whether it succeeded to read code or not)
   std::list<std::vector<u8> > rawJpegData = robot.GetVisionComponent().GetToolCodeImageJpegData();

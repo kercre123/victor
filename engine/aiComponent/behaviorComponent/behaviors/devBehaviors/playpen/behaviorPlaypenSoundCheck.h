@@ -27,16 +27,16 @@ protected:
   BehaviorPlaypenSoundCheck(const Json::Value& config);
   
 protected:
-  virtual void InitBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void InitBehaviorInternal() override;
   
-  virtual Result OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual Result OnBehaviorActivatedInternal() override;
+  virtual void   OnBehaviorDeactivated() override;
 
-  virtual void AlwaysHandleInScope(const RobotToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void AlwaysHandleInScope(const RobotToEngineEvent& event) override;
   
 private:
   
-  void TransitionToPlayingSound(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToPlayingSound();
   
   // Whether or not the sound animation has completed
   bool _soundComplete = false;

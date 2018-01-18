@@ -31,7 +31,7 @@ protected:
   virtual void GetBehaviorOperationModifiersInternal(BehaviorOperationModifiers& modifiers) const override {
     modifiers.wantsToBeActivatedWhenOnCharger = true;
   }  
-  virtual Result OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual Result OnBehaviorActivatedInternal() override;
   
 };
 

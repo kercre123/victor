@@ -64,29 +64,29 @@ BehaviorPickUpCube::BehaviorPickUpCube(const Json::Value& config)
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorPickUpCube::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorPickUpCube::WantsToBeActivatedBehavior() const
 {
   // check even if we haven't seen a block so that we can pickup blocks we know of
   // that are outside FOV  
-  UpdateTargetBlocksInternal(behaviorExternalInterface);
+  UpdateTargetBlocksInternal();
   return _targetBlockID.IsSet();
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPickUpCube::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPickUpCube::OnBehaviorActivated()
 {
   if(!ShouldStreamline()){
-    TransitionToDoingInitialReaction(behaviorExternalInterface);
+    TransitionToDoingInitialReaction();
   }else{
-    TransitionToPickingUpCube(behaviorExternalInterface);
+    TransitionToPickingUpCube();
   }
   
 }
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPickUpCube::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPickUpCube::BehaviorUpdate()
 {
   if(!IsActivated()){
     return;
@@ -95,7 +95,7 @@ void BehaviorPickUpCube::BehaviorUpdate(BehaviorExternalInterface& behaviorExter
   // If the block we're going to pickup ever becomes part of an illegal configuration
   // immediately stop the behavior
   for(auto configType: _configurationsToIgnore) {
-    if(behaviorExternalInterface.GetBlockWorld().GetBlockConfigurationManager()
+    if(GetBEI().GetBlockWorld().GetBlockConfigurationManager()
                   .IsObjectPartOfConfigurationType(configType, _targetBlockID)){
       CancelSelf();
       return;
@@ -105,11 +105,11 @@ void BehaviorPickUpCube::BehaviorUpdate(BehaviorExternalInterface& behaviorExter
  
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPickUpCube::UpdateTargetBlocksInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+void BehaviorPickUpCube::UpdateTargetBlocksInternal() const
 {
   _targetBlockID.UnSet();
   
-  auto& objInfoCache = behaviorExternalInterface.GetAIComponent().GetObjectInteractionInfoCache();
+  auto& objInfoCache = GetBEI().GetAIComponent().GetObjectInteractionInfoCache();
   const ObjectInteractionIntention intent = ObjectInteractionIntention::PickUpObjectNoAxisCheck;
   const ObjectID& possiblyBestObjID = objInfoCache.GetBestObjectForIntention(intent);
   
@@ -122,11 +122,11 @@ void BehaviorPickUpCube::UpdateTargetBlocksInternal(BehaviorExternalInterface& b
     
     BlockWorldFilter filter(defaultFilter);
     filter.AddFilterFcn(
-      [&behaviorExternalInterface, this](const ObservableObject* object)
+      [this](const ObservableObject* object)
       {
         bool isPartOfIllegalConfiguration = false;
         for(auto configType: _configurationsToIgnore){
-          const BlockWorld& blockWorld = behaviorExternalInterface.GetBlockWorld();
+          const BlockWorld& blockWorld = GetBEI().GetBlockWorld();
           if(blockWorld.GetBlockConfigurationManager()
                   .GetCacheByType(configType).AnyConfigContainsObject(object->GetID())){
             isPartOfIllegalConfiguration = true;
@@ -140,14 +140,14 @@ void BehaviorPickUpCube::UpdateTargetBlocksInternal(BehaviorExternalInterface& b
     // If the "best" object is valid, use that one - this allows tapped objects
     // to be given preference when valid
     std::vector<const ObservableObject *> validObjs;
-    behaviorExternalInterface.GetBlockWorld().FindLocatedMatchingObjects(filter, validObjs);
+    GetBEI().GetBlockWorld().FindLocatedMatchingObjects(filter, validObjs);
     
-    const ObservableObject* possiblyBestObj = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(possiblyBestObjID);
+    const ObservableObject* possiblyBestObj = GetBEI().GetBlockWorld().GetLocatedObjectByID(possiblyBestObjID);
     if(std::find(validObjs.begin(), validObjs.end(), possiblyBestObj) != validObjs.end()){
       _targetBlockID = possiblyBestObjID;
     }else{
-      const ObservableObject* closestObject = behaviorExternalInterface.GetBlockWorld().
-              FindLocatedObjectClosestTo(behaviorExternalInterface.GetRobotInfo().GetPose(), filter);
+      const ObservableObject* closestObject = GetBEI().GetBlockWorld().
+              FindLocatedObjectClosestTo(GetBEI().GetRobotInfo().GetPose(), filter);
       
       if(closestObject != nullptr)
       {
@@ -159,7 +159,7 @@ void BehaviorPickUpCube::UpdateTargetBlocksInternal(BehaviorExternalInterface& b
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPickUpCube::TransitionToDoingInitialReaction(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPickUpCube::TransitionToDoingInitialReaction()
 {
   DEBUG_SET_STATE(DoingInitialReaction);
   
@@ -171,22 +171,22 @@ void BehaviorPickUpCube::TransitionToDoingInitialReaction(BehaviorExternalInterf
  
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPickUpCube::TransitionToPickingUpCube(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPickUpCube::TransitionToPickingUpCube()
 {
   DEBUG_SET_STATE(PickingUpCube);
   
-  auto& factory = behaviorExternalInterface.GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
+  auto& factory = GetBEI().GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
   PickupBlockParamaters params;
   params.sayNameBeforePickup = !ShouldStreamline();
   params.maxTurnTowardsFaceAngle_rad = ShouldStreamline() ? 0 : M_PI_2;
   params.allowedToRetryFromDifferentPose = true;
-  HelperHandle pickupHelper = factory.CreatePickupBlockHelper(behaviorExternalInterface, *this, _targetBlockID, params);
-  SmartDelegateToHelper(behaviorExternalInterface, pickupHelper, &BehaviorPickUpCube::TransitionToSuccessReaction);
+  HelperHandle pickupHelper = factory.CreatePickupBlockHelper(*this, _targetBlockID, params);
+  SmartDelegateToHelper(pickupHelper, &BehaviorPickUpCube::TransitionToSuccessReaction);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPickUpCube::TransitionToSuccessReaction(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPickUpCube::TransitionToSuccessReaction()
 {
   if(!ShouldStreamline()){
     DEBUG_SET_STATE(DoingFinalReaction);

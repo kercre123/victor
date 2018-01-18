@@ -26,8 +26,7 @@ protected:
   using PreDockCallback = std::function<void(Robot&)>;
 
 public:
-  RollBlockHelper(BehaviorExternalInterface& behaviorExternalInterface,
-                  ICozmoBehavior& behavior,
+  RollBlockHelper(ICozmoBehavior& behavior,
                   BehaviorHelperFactory& helperFactory,
                   const ObjectID& targetID,
                   bool rollToUpright = true,
@@ -36,21 +35,21 @@ public:
 
 protected:
   // IHelper functions
-  virtual bool ShouldCancelDelegates(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual HelperStatus InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual HelperStatus UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual bool ShouldCancelDelegates() const override;
+  virtual HelperStatus InitBehaviorHelper() override;
+  virtual HelperStatus UpdateWhileActiveInternal() override;
 private:
   ObjectID _targetID;
   RollBlockParameters _params;
 
   
-  void DetermineAppropriateAction(BehaviorExternalInterface& behaviorExternalInterface);
-  void UnableToRollDelegate(BehaviorExternalInterface& behaviorExternalInterface);
-  void DelegateToPutDown(BehaviorExternalInterface& behaviorExternalInterface);
-  void StartRollingAction(BehaviorExternalInterface& behaviorExternalInterface);
-  void RespondToRollingResult(ActionResult result, BehaviorExternalInterface& behaviorExternalInterface);
+  void DetermineAppropriateAction();
+  void UnableToRollDelegate();
+  void DelegateToPutDown();
+  void StartRollingAction();
+  void RespondToRollingResult(ActionResult result);
   
-  void MarkTargetAsFailedToRoll(BehaviorExternalInterface& behaviorExternalInterface);
+  void MarkTargetAsFailedToRoll();
 
   bool _shouldRoll = true;
   const bool _shouldUpright;

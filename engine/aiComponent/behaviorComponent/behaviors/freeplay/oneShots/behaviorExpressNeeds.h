@@ -39,10 +39,10 @@ protected:
     modifiers.wantsToBeActivatedWhenOnCharger = _supportCharger;
   }
 
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated() override;
+  virtual void OnBehaviorDeactivated() override;
 
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual bool WantsToBeActivatedBehavior() const override;
 
 private:
 
@@ -76,11 +76,11 @@ private:
   // Functions
   ////////////
   
-  float GetCooldownSec(BehaviorExternalInterface& behaviorExternalInterface) const;
+  float GetCooldownSec() const;
 
   // internal helper to properly handle locking extra tracks if needed
   // TODO:(bn) this is code duplication from BehaviorPlayAnimSequence. See if we can combine
-  u8 GetTracksToLock(BehaviorExternalInterface& behaviorExternalInterface) const; 
+  u8 GetTracksToLock() const; 
   
   
 };

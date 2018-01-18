@@ -30,23 +30,23 @@ protected:
   BehaviorVictorDemoFeeding(const Json::Value& config);
 
 public:
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual bool WantsToBeActivatedBehavior() const override;
 
 protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override{}
 
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
 
-  virtual void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void InitBehavior() override;
 
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated() override;
+  virtual void BehaviorUpdate() override;
 
 private:
 
-  void TransitionToVerifyFood(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToWaitForFood(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToEating(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToVerifyFood();
+  void TransitionToWaitForFood();
+  void TransitionToEating();
 
   TimeStamp_t _imgTimeStartedWaitngForFood = 0;
 

@@ -26,7 +26,7 @@ private:
   BehaviorReactToRobotOnFace(const Json::Value& config);
   
 public:
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;  
+  virtual bool WantsToBeActivatedBehavior() const override;  
 
 protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
@@ -34,13 +34,13 @@ protected:
     modifiers.wantsToBeActivatedWhenOffTreads = true;
   }
 
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated() override;
+  virtual void OnBehaviorDeactivated() override;
 
 private:
-  void FlipOverIfNeeded(BehaviorExternalInterface& behaviorExternalInterface);
-  void DelayThenCheckState(BehaviorExternalInterface& behaviorExternalInterface);
-  void CheckFlipSuccess(BehaviorExternalInterface& behaviorExternalInterface);
+  void FlipOverIfNeeded();
+  void DelayThenCheckState();
+  void CheckFlipSuccess();
   
   
 };

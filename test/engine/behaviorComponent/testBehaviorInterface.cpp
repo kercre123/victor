@@ -50,7 +50,7 @@ TEST(BehaviorInterface, Create)
   b.OnEnteredActivatableScope();
 
   EXPECT_FALSE( b.IsActivated() );
-  EXPECT_TRUE( b.WantsToBeActivated(behaviorExternalInterface));
+  EXPECT_TRUE( b.WantsToBeActivated());
   EXPECT_FALSE( b._inited );
   EXPECT_EQ( b._numUpdates, 0 );
   EXPECT_FALSE( b._stopped );
@@ -75,8 +75,8 @@ TEST(BehaviorInterface, Init)
   b.OnEnteredActivatableScope();
 
   EXPECT_FALSE( b._inited );
-  b.WantsToBeActivated(behaviorExternalInterface);
-  b.OnActivated(behaviorExternalInterface);
+  b.WantsToBeActivated();
+  b.OnActivated();
   EXPECT_TRUE( b._inited );
   EXPECT_EQ( b._numUpdates, 0 );
   EXPECT_FALSE( b._stopped );
@@ -102,8 +102,8 @@ TEST(BehaviorInterface, InitWithInterface)
   b.OnEnteredActivatableScope();
 
   EXPECT_FALSE( b._inited );
-  b.WantsToBeActivated(behaviorExternalInterface);
-  b.OnActivated(behaviorExternalInterface);
+  b.WantsToBeActivated();
+  b.OnActivated();
   EXPECT_TRUE( b._inited );
   EXPECT_EQ( b._numUpdates, 0 );
   EXPECT_FALSE( b._stopped );
@@ -131,13 +131,13 @@ TEST(BehaviorInterface, Run)
   b.Init(behaviorExternalInterface);
   b.OnEnteredActivatableScope();
   
-  b.WantsToBeActivated(behaviorExternalInterface);
-  b.OnActivated(behaviorExternalInterface);
+  b.WantsToBeActivated();
+  b.OnActivated();
 
 
   BaseStationTimer::getInstance()->UpdateTime( BaseStationTimer::getInstance()->GetTickCount() + 1);
 
-  b.OnDeactivated(behaviorExternalInterface);
+  b.OnDeactivated();
 
   EXPECT_TRUE( b._inited );
   EXPECT_TRUE( b._stopped );
@@ -165,7 +165,7 @@ TEST(BehaviorInterface, HandleMessages)
   BehaviorExternalInterface& behaviorExternalInterface = testBehaviorFramework.GetBehaviorExternalInterface();  
   b2.Init(behaviorExternalInterface);
   b2.OnEnteredActivatableScope();
-  b2.WantsToBeActivated(behaviorExternalInterface);
+  b2.WantsToBeActivated();
   InjectBehaviorIntoStack(b2, testBehaviorFramework);
 
   Robot& robot = testBehaviorFramework.GetRobot();
@@ -198,7 +198,7 @@ TEST(BehaviorInterface, HandleMessages)
   EXPECT_EQ(b2._handleWhileNotRunningCalls,  0);
 
   IncrementBaseStationTimerTicks();
-  b.OnDeactivated(behaviorExternalInterface);
+  b.OnDeactivated();
 
   robot.Broadcast( MessageEngineToGame( Ping() ) );
 
@@ -240,13 +240,13 @@ TEST(BehaviorInterface, OutsideAction)
   TestBehavior b(empty);
   b.Init(behaviorExternalInterface);
   b.OnEnteredActivatableScope();
-  b.WantsToBeActivated(behaviorExternalInterface);
-  b.OnActivated(behaviorExternalInterface);
+  b.WantsToBeActivated();
+  b.OnActivated();
 
   
-  b.Update(behaviorExternalInterface);
+  b.Update();
   BaseStationTimer::getInstance()->UpdateTime(BaseStationTimer::getInstance()->GetTickCount() + 1);
-  b.Update(behaviorExternalInterface);
+  b.Update();
   BaseStationTimer::getInstance()->UpdateTime(BaseStationTimer::getInstance()->GetTickCount() + 1);
 
   bool done = false;
@@ -256,15 +256,15 @@ TEST(BehaviorInterface, OutsideAction)
   WaitForLambdaAction* action = new WaitForLambdaAction([&done](Robot& r){ return done; });
   robot.GetActionList().QueueAction(QueueActionPosition::NOW, action);
 
-  DoBehaviorInterfaceTicks(robot, b, behaviorExternalInterface);
+  DoBehaviorInterfaceTicks(robot, b);
 
   EXPECT_FALSE(robot.GetActionList().IsEmpty());
 
-  DoBehaviorInterfaceTicks(robot, b, behaviorExternalInterface, 3);
+  DoBehaviorInterfaceTicks(robot, b, 3);
 
   done = true;
 
-  DoBehaviorInterfaceTicks(robot, b, behaviorExternalInterface, 3);
+  DoBehaviorInterfaceTicks(robot, b, 3);
 
   EXPECT_TRUE(robot.GetActionList().IsEmpty());
 
@@ -290,23 +290,22 @@ TEST(BehaviorInterface, DelegateIfInControlSimple)
   }
   
   Robot& robot = testBehaviorFramework.GetRobot();
-  auto& behaviorExternalInterface = testBehaviorFramework.GetBehaviorExternalInterface();
   
   IncrementBaseStationTimerTicks();
-  DoBehaviorInterfaceTicks(robot, b, behaviorExternalInterface, 3);
+  DoBehaviorInterfaceTicks(robot, b, 3);
 
   EXPECT_TRUE(robot.GetActionList().IsEmpty());
 
   bool done = false;
   EXPECT_TRUE( b.CallDelegateIfInControl(robot, done) );
 
-  DoBehaviorInterfaceTicks(robot, b, behaviorExternalInterface, 3);
+  DoBehaviorInterfaceTicks(robot, b, 3);
 
   EXPECT_FALSE(robot.GetActionList().IsEmpty());
 
   done = true;
 
-  DoBehaviorInterfaceTicks(robot, b, behaviorExternalInterface, 3);
+  DoBehaviorInterfaceTicks(robot, b, 3);
 
   EXPECT_TRUE(robot.GetActionList().IsEmpty());
 
@@ -475,13 +474,12 @@ TEST(BehaviorInterface, DelegateIfInControlWhenNotRunning)
   }
   
   Robot& robot = testBehaviorFramework.GetRobot();
-  auto& behaviorExternalInterface = testBehaviorFramework.GetBehaviorExternalInterface();
   
   IncrementBaseStationTimerTicks();
 
   DoBehaviorComponentTicks(robot, b, testBehaviorFramework.GetBehaviorComponent(), 3);
 
-  b.OnDeactivated(behaviorExternalInterface);
+  b.OnDeactivated();
 
   bool done1 = false;
   bool callbackCalled1 = false;
@@ -495,8 +493,8 @@ TEST(BehaviorInterface, DelegateIfInControlWhenNotRunning)
   b.OnLeftActivatableScope();
   b.OnEnteredActivatableScope();
   
-  b.WantsToBeActivated(behaviorExternalInterface);
-  b.OnActivated(behaviorExternalInterface);
+  b.WantsToBeActivated();
+  b.OnActivated();
 
   DoBehaviorComponentTicks(robot, b, testBehaviorFramework.GetBehaviorComponent(), 3);
 
@@ -518,7 +516,7 @@ TEST(BehaviorInterface, DelegateIfInControlWhenNotRunning)
   
   BaseStationTimer::getInstance()->UpdateTime( Util::SecToNanoSec( 2.0 ) );  
 
-  b.OnDeactivated(behaviorExternalInterface);
+  b.OnDeactivated();
   
   robot.GetActionList().Update();
   robot.GetActionList().Update();
@@ -614,23 +612,23 @@ public:
     modifiers.behaviorAlwaysDelegates = false;
   }
 
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override {
+  virtual bool WantsToBeActivatedBehavior() const override {
     return true;
   }
 
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override {
+  virtual void OnBehaviorActivated() override {
     _inited = true;
     WaitForLambdaAction* action = new WaitForLambdaAction([this](Robot& r){ return _stopAction; });
     DelegateIfInControl(action);
   }
   
-  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override {
+  virtual void BehaviorUpdate() override {
     if(!IsActivated()){
       return;
     }
     _numUpdates++;
   }
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override {
+  virtual void OnBehaviorDeactivated() override {
     _stopped = true;
   }
 
@@ -653,19 +651,18 @@ TEST(BehaviorInterface, DelegateIfInControlInsideInit)
   }
   
   Robot& robot = testBehaviorFramework.GetRobot();
-  auto& behaviorExternalInterface = testBehaviorFramework.GetBehaviorExternalInterface();
   
   IncrementBaseStationTimerTicks();
 
   EXPECT_FALSE(robot.GetActionList().IsEmpty()) << "action should be started by Init";
 
-  DoBehaviorInterfaceTicks(robot, b, behaviorExternalInterface, 3);
+  DoBehaviorInterfaceTicks(robot, b, 3);
 
   EXPECT_FALSE(robot.GetActionList().IsEmpty());
 
   b._stopAction = true;
 
-  DoBehaviorInterfaceTicks(robot, b, behaviorExternalInterface, 3);
+  DoBehaviorInterfaceTicks(robot, b, 3);
 
   EXPECT_TRUE(robot.GetActionList().IsEmpty());
 }

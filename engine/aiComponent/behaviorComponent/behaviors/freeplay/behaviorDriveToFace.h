@@ -24,7 +24,7 @@ class BehaviorDriveToFace : public ICozmoBehavior
 public:
   // Returns true if Cozmo is close enough to the face that he won't actually
   // drive forward when this behavior runs
-  bool IsCozmoAlreadyCloseEnoughToFace(BehaviorExternalInterface& behaviorExternalInterface, Vision::FaceID_t faceID);
+  bool IsCozmoAlreadyCloseEnoughToFace(Vision::FaceID_t faceID);
   
   void SetTargetFace(const SmartFaceID faceID){_targetFace = faceID;}
   
@@ -35,11 +35,11 @@ protected:
 
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
 
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated() override;
+  virtual void BehaviorUpdate() override;
+  virtual void OnBehaviorDeactivated() override;
   
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual bool WantsToBeActivatedBehavior() const override;
   
 private:
   using base = ICozmoBehavior;
@@ -54,13 +54,13 @@ private:
   float _timeCancelTracking_s;
   mutable SmartFaceID _targetFace;
   
-  void TransitionToTurningTowardsFace(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToDrivingToFace(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToAlreadyCloseEnough(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToTrackingFace(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToTurningTowardsFace();
+  void TransitionToDrivingToFace();
+  void TransitionToAlreadyCloseEnough();
+  void TransitionToTrackingFace();
   
   // Returns true if able to calculate distance to face - false otherwise
-  bool CalculateDistanceToFace(BehaviorExternalInterface& behaviorExternalInterface, Vision::FaceID_t faceID, float& distance);
+  bool CalculateDistanceToFace(Vision::FaceID_t faceID, float& distance);
   void SetState_internal(State state, const std::string& stateName);
 
   

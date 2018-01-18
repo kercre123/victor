@@ -26,7 +26,7 @@ class BehaviorDevTurnInPlaceTest : public ICozmoBehavior
 public:
   
   virtual ~BehaviorDevTurnInPlaceTest() { }
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual bool WantsToBeActivatedBehavior() const override;
 
 protected:
   friend class BehaviorContainer;
@@ -59,15 +59,15 @@ private:
     }
   };
   
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated() override;
 
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorDeactivated() override;
   
   void Reset();
 
   CompoundActionSequential* GenerateTestAction(const Pose3d& robotPose, const int testInd) const;
   
-  void ActionCallback(BehaviorExternalInterface&);
+  void ActionCallback();
 
   // member variables:
   

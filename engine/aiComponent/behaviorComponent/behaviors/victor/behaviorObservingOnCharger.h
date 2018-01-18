@@ -32,23 +32,23 @@ protected:
   BehaviorObservingOnCharger(const Json::Value& config);
 
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override{}
-  virtual bool CanBeGentlyInterruptedNow(BehaviorExternalInterface& bei) const override;
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& bei) override;
+  virtual bool CanBeGentlyInterruptedNow() const override;
+  virtual void OnBehaviorActivated() override;
 
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& bei) const override {
+  virtual bool WantsToBeActivatedBehavior() const override {
     return true;
   }
 
 private:
 
-  void TransitionToLookingUp(BehaviorExternalInterface& bei);
-  void TransitionToLookingStraight(BehaviorExternalInterface& bei);
+  void TransitionToLookingUp();
+  void TransitionToLookingStraight();
   
-  void Loop(BehaviorExternalInterface& bei);
-  void SwitchState(BehaviorExternalInterface& bei);
+  void Loop();
+  void SwitchState();
 
   // reset the timer to set when to play the next small head move (from the current time)
-  void ResetSmallHeadMoveTimer(BehaviorExternalInterface& bei);
+  void ResetSmallHeadMoveTimer();
 
   // when it's time for a small head move, this function will return which anim to use
   AnimationTrigger GetSmallHeadMoveAnim() const;

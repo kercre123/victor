@@ -41,12 +41,12 @@ BehaviorReactToRobotShaken::BehaviorReactToRobotShaken(const Json::Value& config
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToRobotShaken::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToRobotShaken::OnBehaviorActivated()
 {  
   // Clear severe needs expression since eyes are being re-set
-  if(behaviorExternalInterface.GetAIComponent().GetSevereNeedsComponent().HasSevereNeedExpression())
+  if(GetBEI().GetAIComponent().GetSevereNeedsComponent().HasSevereNeedExpression())
   {
-    behaviorExternalInterface.GetAIComponent().GetSevereNeedsComponent().ClearSevereNeedExpression();
+    GetBEI().GetAIComponent().GetSevereNeedsComponent().ClearSevereNeedExpression();
   }
   
   // Reset variables:
@@ -66,7 +66,7 @@ void BehaviorReactToRobotShaken::OnBehaviorActivated(BehaviorExternalInterface& 
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToRobotShaken::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToRobotShaken::BehaviorUpdate()
 {
   if(!IsActivated()){
     return;
@@ -76,7 +76,7 @@ void BehaviorReactToRobotShaken::BehaviorUpdate(BehaviorExternalInterface& behav
   switch(_state) {
     case EState::Shaking:
     {
-      const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+      const auto& robotInfo = GetBEI().GetRobotInfo();
       const float accMag = robotInfo.GetHeadAccelMagnitudeFiltered();
       _maxShakingAccelMag = std::max(_maxShakingAccelMag, accMag);
       
@@ -104,7 +104,7 @@ void BehaviorReactToRobotShaken::BehaviorUpdate(BehaviorExternalInterface& behav
     case EState::WaitTilOnTreads:
     {
       // Wait until on treads or the animations that are playing finish (timeout).
-      if (behaviorExternalInterface.GetOffTreadsState() == OffTreadsState::OnTreads) {
+      if (GetBEI().GetOffTreadsState() == OffTreadsState::OnTreads) {
         _state = EState::ActDizzy;
       } else if (!IsControlDelegated()) {
         // The "DizzyStillPickedUp" reaction played to completion, so log that as the played reaction:
@@ -150,7 +150,7 @@ void BehaviorReactToRobotShaken::BehaviorUpdate(BehaviorExternalInterface& behav
 }
   
 
-void BehaviorReactToRobotShaken::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToRobotShaken::OnBehaviorDeactivated()
 {
   // Log some DAS stuff:
   const int shakenDuration_ms = std::round(_shakenDuration_s * 1000.f);

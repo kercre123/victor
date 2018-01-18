@@ -156,7 +156,7 @@ BehaviorRequestGameSimple::BehaviorRequestGameSimple(const Json::Value& config)
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRequestGameSimple::RequestGame_OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRequestGameSimple::RequestGame_OnBehaviorActivated()
 {
   _verifyStartTime_s = std::numeric_limits<float>::max();
 
@@ -167,19 +167,19 @@ void BehaviorRequestGameSimple::RequestGame_OnBehaviorActivated(BehaviorExternal
     _activeConfig = &_zeroBlockConfig;
     DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::RequestGameInterrupt),
                 &BehaviorRequestGameSimple::TransitionToLookingAtFace);
-  }else if( GetNumBlocks(behaviorExternalInterface) == 0 ) {
+  }else if( GetNumBlocks() == 0 ) {
     _activeConfig = &_zeroBlockConfig;
     if( ! IsControlDelegated() ) {
       // skip the block stuff and go right to the face
-      TransitionToLookingAtFace(behaviorExternalInterface);
+      TransitionToLookingAtFace();
     }
   }
   else {
     _activeConfig = &_oneBlockConfig;
-    if(behaviorExternalInterface.GetRobotInfo().GetCarryingComponent().IsCarryingObject()){
-      TransitionToDrivingToFace(behaviorExternalInterface);
+    if(GetBEI().GetRobotInfo().GetCarryingComponent().IsCarryingObject()){
+      TransitionToDrivingToFace();
     }else if( ! IsControlDelegated() ) {
-      TransitionToPlayingInitialAnimation(behaviorExternalInterface);
+      TransitionToPlayingInitialAnimation();
     }
   }
 
@@ -189,23 +189,23 @@ void BehaviorRequestGameSimple::RequestGame_OnBehaviorActivated(BehaviorExternal
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRequestGameSimple::RequestGame_UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRequestGameSimple::RequestGame_UpdateInternal()
 {
   if( _state == State::SearchingForBlock ) {
     // if we are searching for a block, stop immediately when we find one
-    if( GetNumBlocks(behaviorExternalInterface) > 0 ) {
+    if( GetNumBlocks() > 0 ) {
       PRINT_NAMED_INFO("BehaviorRequestGameSimple.FoundBlock",
                        "found block during search");
       CancelDelegates(false);
-      TransitionToFacingBlock(behaviorExternalInterface);
+      TransitionToFacingBlock();
     }
   }
   
   if(CheckRequestTimeout()) {
     // timeout acts as a deny
     CancelDelegates(false);
-    SendDeny(behaviorExternalInterface);
-    TransitionToPlayingDenyAnim(behaviorExternalInterface);
+    SendDeny();
+    TransitionToPlayingDenyAnim();
   }
 
   if( IsControlDelegated() ) {
@@ -229,7 +229,7 @@ bool BehaviorRequestGameSimple::CheckRequestTimeout()
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRequestGameSimple::RequestGame_OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRequestGameSimple::RequestGame_OnBehaviorDeactivated()
 {
   PRINT_NAMED_INFO("BehaviorRequestGameSimple.RequestGame_StopInternal", "");
 
@@ -238,7 +238,7 @@ void BehaviorRequestGameSimple::RequestGame_OnBehaviorDeactivated(BehaviorExtern
     PRINT_NAMED_INFO("BehaviorRequestGameSimple.DenyRequest",
                      "behavior is denying it's own request");
 
-    SendDeny(behaviorExternalInterface);
+    SendDeny();
     // action is can canceled automatically by ICozmoBehavior
     
   }
@@ -251,7 +251,7 @@ void BehaviorRequestGameSimple::RequestGame_OnBehaviorDeactivated(BehaviorExtern
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRequestGameSimple::TransitionToPlayingInitialAnimation(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRequestGameSimple::TransitionToPlayingInitialAnimation()
 {
   
   IActionRunner* animationAction = new TurnTowardsFaceWrapperAction(
@@ -262,10 +262,10 @@ void BehaviorRequestGameSimple::TransitionToPlayingInitialAnimation(BehaviorExte
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRequestGameSimple::TransitionToFacingBlock(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRequestGameSimple::TransitionToFacingBlock()
 {
 
-  ObjectID targetBlockID = GetRobotsBlockID(behaviorExternalInterface);
+  ObjectID targetBlockID = GetRobotsBlockID();
   if( targetBlockID.IsSet() ) {
     DelegateIfInControl(new TurnTowardsObjectAction(targetBlockID),
                 &BehaviorRequestGameSimple::TransitionToPlayingPreDriveAnimation);
@@ -277,17 +277,17 @@ void BehaviorRequestGameSimple::TransitionToFacingBlock(BehaviorExternalInterfac
     
     SET_STATE(SearchingForBlock);
 
-    auto& factory = behaviorExternalInterface.GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
+    auto& factory = GetBEI().GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
     SearchParameters params;
     params.numberOfBlocksToLocate = 1;
-    HelperHandle searchHelper = factory.CreateSearchForBlockHelper(behaviorExternalInterface, *this, params);
-    SmartDelegateToHelper(behaviorExternalInterface, searchHelper, &BehaviorRequestGameSimple::TransitionToFacingBlock);
+    HelperHandle searchHelper = factory.CreateSearchForBlockHelper(*this, params);
+    SmartDelegateToHelper(searchHelper, &BehaviorRequestGameSimple::TransitionToFacingBlock);
   }
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRequestGameSimple::TransitionToPlayingPreDriveAnimation(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRequestGameSimple::TransitionToPlayingPreDriveAnimation()
 {
   IActionRunner* animationAction = new TriggerAnimationAction(_activeConfig->preDriveAnimTrigger);
   DelegateIfInControl(animationAction, &BehaviorRequestGameSimple::TransitionToPickingUpBlock);
@@ -296,30 +296,30 @@ void BehaviorRequestGameSimple::TransitionToPlayingPreDriveAnimation(BehaviorExt
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRequestGameSimple::TransitionToPickingUpBlock(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRequestGameSimple::TransitionToPickingUpBlock()
 {
   
-  ObjectID targetBlockID = GetRobotsBlockID(behaviorExternalInterface);
+  ObjectID targetBlockID = GetRobotsBlockID();
 
   // use the pickup motion profile for pickup, clearing the driving one first
   SmartClearMotionProfile();
   SmartSetMotionProfile(_driveToPickupProfile);
 
-  auto onPickupSuccess = [this](BehaviorExternalInterface& behaviorExternalInterface){
+  auto onPickupSuccess = [this](){
     // restore the driving motion profile
     SmartClearMotionProfile();
     SmartSetMotionProfile(_driveToPlaceProfile);
     
-    TransitionToDrivingToFace(behaviorExternalInterface);
+    TransitionToDrivingToFace();
   };
   
-  auto onPickupFailure = [this](BehaviorExternalInterface& behaviorExternalInterface){
+  auto onPickupFailure = [this](){
     // restore the driving motion profile
     SmartClearMotionProfile();
     SmartSetMotionProfile(_driveToPlaceProfile);
 
     // couldn't pick up this block. If we have another, try that. Otherwise, fail
-    if( SwitchRobotsBlock(behaviorExternalInterface) ) {
+    if( SwitchRobotsBlock() ) {
       DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::RequestGamePickupFail),
                               &BehaviorRequestGameSimple::TransitionToPickingUpBlock);
     }else {
@@ -330,13 +330,13 @@ void BehaviorRequestGameSimple::TransitionToPickingUpBlock(BehaviorExternalInter
     }
   };
   
-  auto& helperComp = behaviorExternalInterface.GetAIComponent().GetBehaviorHelperComponent();
+  auto& helperComp = GetBEI().GetAIComponent().GetBehaviorHelperComponent();
   
   auto& factory = helperComp.GetBehaviorHelperFactory();
   PickupBlockParamaters params;
   params.allowedToRetryFromDifferentPose = true;
-  HelperHandle pickupHelper = factory.CreatePickupBlockHelper(behaviorExternalInterface, *this, targetBlockID, params);
-  SmartDelegateToHelper(behaviorExternalInterface, pickupHelper,
+  HelperHandle pickupHelper = factory.CreatePickupBlockHelper(*this, targetBlockID, params);
+  SmartDelegateToHelper(pickupHelper,
                         onPickupSuccess,
                         onPickupFailure);
 
@@ -345,22 +345,22 @@ void BehaviorRequestGameSimple::TransitionToPickingUpBlock(BehaviorExternalInter
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRequestGameSimple::ComputeFaceInteractionPose(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRequestGameSimple::ComputeFaceInteractionPose()
 {
-  _hasFaceInteractionPose = GetFaceInteractionPose(behaviorExternalInterface, _faceInteractionPose);
+  _hasFaceInteractionPose = GetFaceInteractionPose(_faceInteractionPose);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRequestGameSimple::TransitionToDrivingToFace(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRequestGameSimple::TransitionToDrivingToFace()
 {
   // Ensure we don't loop forever
   if(_numRetriesDrivingToFace > kMaxNumberOfRetries){
-    TransitionToPlacingBlock(behaviorExternalInterface);
+    TransitionToPlacingBlock();
     return;
   }
   
-  ComputeFaceInteractionPose(behaviorExternalInterface);
+  ComputeFaceInteractionPose();
   if( ! _hasFaceInteractionPose ) {
     PRINT_NAMED_INFO("BehaviorRequestGameSimple.TransitionToDrivingToFace.NoPose",
                      "%s: No interaction pose set to drive to face!",
@@ -374,14 +374,14 @@ void BehaviorRequestGameSimple::TransitionToDrivingToFace(BehaviorExternalInterf
                                                       _driveToPlacePoseThreshold_mm,
                                                       _driveToPlacePoseThreshold_rads);
     DelegateIfInControl(action,
-                [this, &behaviorExternalInterface](ActionResult result) {
+                [this](ActionResult result) {
                   if ( result == ActionResult::SUCCESS ) {
                     // transition back here, but don't reset the face pose to drive to
-                    TransitionToPlacingBlock(behaviorExternalInterface);
+                    TransitionToPlacingBlock();
                   }
                   else if (IActionRunner::GetActionResultCategory(result) == ActionResultCategory::RETRY) {
                     _numRetriesDrivingToFace++;
-                    TransitionToDrivingToFace(behaviorExternalInterface);
+                    TransitionToDrivingToFace();
                   }
                   else {
                     // if its an abort failure, do nothing, which will cause the behavior to stop
@@ -395,11 +395,11 @@ void BehaviorRequestGameSimple::TransitionToDrivingToFace(BehaviorExternalInterf
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRequestGameSimple::TransitionToPlacingBlock(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRequestGameSimple::TransitionToPlacingBlock()
 {
   // Ensure we don't loop forever
   if(_numRetriesPlacingBlock > kMaxNumberOfRetries){
-    TransitionToLookingAtFace(behaviorExternalInterface);
+    TransitionToLookingAtFace();
     return;
   }
 
@@ -414,14 +414,14 @@ void BehaviorRequestGameSimple::TransitionToPlacingBlock(BehaviorExternalInterfa
   action->AddAction(new DriveStraightAction(-_afterPlaceBackupDist_mm, _afterPlaceBackupSpeed_mmps));
 
   DelegateIfInControl(action,
-              [this, &behaviorExternalInterface](ActionResult result) {
+              [this](ActionResult result) {
                 ActionResultCategory resCat = IActionRunner::GetActionResultCategory(result);
                 if ( resCat == ActionResultCategory::SUCCESS ) {
                   _numRetriesPlacingBlock++;
-                  TransitionToLookingAtFace(behaviorExternalInterface);
+                  TransitionToLookingAtFace();
                 }
                 else if (resCat == ActionResultCategory::RETRY) {
-                  TransitionToPlacingBlock(behaviorExternalInterface);
+                  TransitionToPlacingBlock();
                 }
                 else {
                   // the place action can fail if visual verify fails (it doesn't see the cube after it
@@ -431,7 +431,7 @@ void BehaviorRequestGameSimple::TransitionToPlacingBlock(BehaviorExternalInterfa
                   PRINT_NAMED_INFO("BehaviorRequestGameSimple.PlacingBlock.Failed",
                                    "failed to place the block on the ground, but pretending it didn't");
 
-                  TransitionToLookingAtFace(behaviorExternalInterface);
+                  TransitionToLookingAtFace();
                 }
               } );
   
@@ -441,7 +441,7 @@ void BehaviorRequestGameSimple::TransitionToPlacingBlock(BehaviorExternalInterfa
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRequestGameSimple::TransitionToLookingAtFace(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRequestGameSimple::TransitionToLookingAtFace()
 {
   const bool sayName = true;
   DelegateIfInControl(new TurnTowardsLastFacePoseAction(M_PI_F, sayName),
@@ -451,34 +451,34 @@ void BehaviorRequestGameSimple::TransitionToLookingAtFace(BehaviorExternalInterf
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRequestGameSimple::TransitionToVerifyingFace(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRequestGameSimple::TransitionToVerifyingFace()
 {
   if( DO_FACE_VERIFICATION_STEP ) {
     _verifyStartTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     DelegateIfInControl(new WaitForImagesAction(kFaceVerificationNumImages, VisionMode::DetectingFaces),
-                [this, &behaviorExternalInterface](ActionResult result) {
+                [this](ActionResult result) {
                   if( result == ActionResult::SUCCESS && GetLastSeenFaceTime() >= _verifyStartTime_s ) {
-                    TransitionToPlayingRequstAnim(behaviorExternalInterface);
+                    TransitionToPlayingRequstAnim();
                   }
                   else {
                     // the face must not have been where we expected, so drop out of the behavior for now
                     // TODO:(bn) try to bring the block to a different face if we have more than one?
                     PRINT_NAMED_INFO("BehaviorRequestGameSimple.VerifyingFace.Failed",
                                      "failed to verify the face, so considering this a rejection");
-                    TransitionToPlayingDenyAnim(behaviorExternalInterface);
+                    TransitionToPlayingDenyAnim();
                   }
                 } );
     SET_STATE(VerifyingFace);
   }
   else {
     // just skip verification and go straight to playing the request
-    TransitionToPlayingRequstAnim(behaviorExternalInterface);
+    TransitionToPlayingRequstAnim();
   }
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRequestGameSimple::TransitionToPlayingRequstAnim(BehaviorExternalInterface& behaviorExternalInterface) {
+void BehaviorRequestGameSimple::TransitionToPlayingRequstAnim() {
 
   DelegateIfInControl(new TriggerAnimationAction(_activeConfig->requestAnimTrigger),
               &BehaviorRequestGameSimple::TransitionToIdle);
@@ -487,20 +487,20 @@ void BehaviorRequestGameSimple::TransitionToPlayingRequstAnim(BehaviorExternalIn
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRequestGameSimple::TransitionToIdle(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRequestGameSimple::TransitionToIdle()
 {
   SET_STATE(Idle);
-  SendRequest(behaviorExternalInterface);
-  IdleLoop(behaviorExternalInterface);
+  SendRequest();
+  IdleLoop();
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRequestGameSimple::IdleLoop(BehaviorExternalInterface& behaviorExternalInterface){
+void BehaviorRequestGameSimple::IdleLoop(){
   if(_activeConfig->idleAnimTrigger != AnimationTrigger::Count){
-    SmartPushIdleAnimation(behaviorExternalInterface, _activeConfig->idleAnimTrigger);
+    SmartPushIdleAnimation(_activeConfig->idleAnimTrigger);
   }else{
-    SmartPushIdleAnimation(behaviorExternalInterface, AnimationTrigger::Count);
+    SmartPushIdleAnimation(AnimationTrigger::Count);
   }
 
   if(GetFaceID() != Vision::UnknownFaceID){
@@ -514,7 +514,7 @@ void BehaviorRequestGameSimple::IdleLoop(BehaviorExternalInterface& behaviorExte
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRequestGameSimple::TransitionToPlayingDenyAnim(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRequestGameSimple::TransitionToPlayingDenyAnim()
 {
   IActionRunner* denyAnimAction = new TriggerAnimationAction(_activeConfig->denyAnimTrigger );
   DelegateIfInControl(denyAnimAction);
@@ -531,10 +531,10 @@ void BehaviorRequestGameSimple::SetState_internal(State state, const std::string
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-u32 BehaviorRequestGameSimple::GetNumBlocks(BehaviorExternalInterface& behaviorExternalInterface) const
+u32 BehaviorRequestGameSimple::GetNumBlocks() const
 {
   if( _shouldUseBlocks ) {
-    return ICozmoBehaviorRequestGame::GetNumBlocks(behaviorExternalInterface);
+    return ICozmoBehaviorRequestGame::GetNumBlocks();
   }
   else {
     return 0;
@@ -543,18 +543,18 @@ u32 BehaviorRequestGameSimple::GetNumBlocks(BehaviorExternalInterface& behaviorE
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorRequestGameSimple::GetFaceInteractionPose(BehaviorExternalInterface& behaviorExternalInterface, Pose3d& targetPoseRet)
+bool BehaviorRequestGameSimple::GetFaceInteractionPose(Pose3d& targetPoseRet)
 {
   Pose3d facePose;
   
-  const bool hasFace = GetFacePose(behaviorExternalInterface, facePose);
+  const bool hasFace = GetFacePose(facePose);
   if(!hasFace) {
     PRINT_NAMED_WARNING("BehaviorRequestGameSimple.NoFace",
                         "Face pose is invalid!");
     return false;
   }
   
-  auto& robotPose = behaviorExternalInterface.GetRobotInfo().GetPose();
+  auto& robotPose = GetBEI().GetRobotInfo().GetPose();
   if( ! facePose.GetWithRespectTo(robotPose, facePose) ) {
     PRINT_NAMED_ERROR("BehaviorRequestGameSimple.NoFacePose",
                       "could not get face pose with respect to robot. This should never happen");
@@ -586,7 +586,7 @@ bool BehaviorRequestGameSimple::GetFaceInteractionPose(BehaviorExternalInterface
           // ignore unknown obstacles
           return false;
         }
-        auto& carryingComp = behaviorExternalInterface.GetRobotInfo().GetCarryingComponent();
+        auto& carryingComp = GetBEI().GetRobotInfo().GetCarryingComponent();
         if( carryingComp.IsCarryingObject() &&
             carryingComp.GetCarryingObject() == obj->GetID() ) {
           // ignore the block we are carrying
@@ -607,7 +607,7 @@ bool BehaviorRequestGameSimple::GetFaceInteractionPose(BehaviorExternalInterface
       });
 
     std::vector<ObservableObject*> blocks;
-    behaviorExternalInterface.GetBlockWorld().FindLocatedMatchingObjects(filter, blocks);
+    GetBEI().GetBlockWorld().FindLocatedMatchingObjects(filter, blocks);
 
     if(blocks.empty()) {
       targetPoseRet = targetPose;
@@ -625,11 +625,11 @@ bool BehaviorRequestGameSimple::GetFaceInteractionPose(BehaviorExternalInterface
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRequestGameSimple::HandleGameDeniedRequest(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRequestGameSimple::HandleGameDeniedRequest()
 {
   CancelDelegates(false);
 
-  TransitionToPlayingDenyAnim(behaviorExternalInterface);
+  TransitionToPlayingDenyAnim();
 }
   
   

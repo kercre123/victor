@@ -66,12 +66,13 @@ namespace Anki {
     
     void TurnInPlaceAction::SetRequestedTurnAngle(const f32 turnAngle_rad)
     {
-      DEV_ASSERT(!IsRunning(), "TurnInPlaceAction.SetRequestedTurnAngle.ActionAlreadyRunning");
+      DEV_ASSERT(!_isInitialized, "TurnInPlaceAction.SetRequestedTurnAngle.ActionAlreadyInitialized");
       _requestedAngle_rad = turnAngle_rad;
     }
     
     void TurnInPlaceAction::SetMaxSpeed(f32 maxSpeed_radPerSec)
     {
+      DEV_ASSERT(!_isInitialized, "TurnInPlaceAction.SetMaxSpeed.ActionAlreadyInitialized");
       if (std::fabsf(maxSpeed_radPerSec) > MAX_BODY_ROTATION_SPEED_RAD_PER_SEC) {
         PRINT_NAMED_WARNING("TurnInPlaceAction.SetMaxSpeed.SpeedExceedsLimit",
                             "Speed of %f deg/s exceeds limit of %f deg/s. Clamping.",
@@ -86,7 +87,9 @@ namespace Anki {
       }
     }
     
-    void TurnInPlaceAction::SetAccel(f32 accel_radPerSec2) {
+    void TurnInPlaceAction::SetAccel(f32 accel_radPerSec2)
+    {
+      DEV_ASSERT(!_isInitialized, "TurnInPlaceAction.SetAccel.ActionAlreadyInitialized");
       if (accel_radPerSec2 == 0) {
         _accel_radPerSec2 = _kDefaultAccel;
       } else {
@@ -98,6 +101,7 @@ namespace Anki {
 
     bool TurnInPlaceAction::SetMotionProfile(const PathMotionProfile& motionProfile)
     {
+      DEV_ASSERT(!_isInitialized, "TurnInPlaceAction.SetMotionProfile.ActionAlreadyInitialized");
       if( _motionProfileManuallySet ) {
         // don't want to use the custom profile since someone manually specified speeds
         return false;
@@ -111,6 +115,7 @@ namespace Anki {
   
     void TurnInPlaceAction::SetTolerance(const Radians& angleTol_rad)
     {
+      DEV_ASSERT(!_isInitialized, "TurnInPlaceAction.SetTolerance.ActionAlreadyInitialized");
       _angleTolerance = angleTol_rad.getAbsoluteVal();
       
       // NOTE: can't be lower than what is used internally on the robot
@@ -260,6 +265,8 @@ namespace Anki {
            */
         }
       }
+      
+      _isInitialized = true;
       
       return ActionResult::SUCCESS;
     }

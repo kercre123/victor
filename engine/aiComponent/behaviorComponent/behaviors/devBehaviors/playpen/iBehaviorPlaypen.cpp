@@ -57,13 +57,13 @@ IBehaviorPlaypen::IBehaviorPlaypen(const Json::Value& config)
   ICozmoBehavior::SubscribeToTags(std::move(failureTagCopy));
 }
 
-bool IBehaviorPlaypen::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool IBehaviorPlaypen::WantsToBeActivatedBehavior() const
 {
   _factoryTestLogger = &BehaviorPlaypenTest::GetFactoryTestLogger();
   return true;
 }
 
-void IBehaviorPlaypen::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void IBehaviorPlaypen::OnBehaviorActivated()
 {
   // Add a timer to force the behavior to end if it runs too long
   AddTimer(PlaypenConfig::kDefaultTimeout_ms, [this](){
@@ -82,10 +82,10 @@ void IBehaviorPlaypen::OnBehaviorActivated(BehaviorExternalInterface& behaviorEx
     }
   });
   
-  OnBehaviorActivatedInternal(behaviorExternalInterface);
+  OnBehaviorActivatedInternal();
 }
   
-void IBehaviorPlaypen::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
+void IBehaviorPlaypen::BehaviorUpdate()
 {
   if(!IsActivated())
   {
@@ -109,7 +109,7 @@ void IBehaviorPlaypen::BehaviorUpdate(BehaviorExternalInterface& behaviorExterna
   // Keep updating behavior until it completes
   if(_lastStatus != PlaypenStatus::Complete)
   {
-    _lastStatus = PlaypenUpdateInternal(behaviorExternalInterface);
+    _lastStatus = PlaypenUpdateInternal();
   }
   
   // Finish recording touch data before letting the behavior complete
@@ -124,7 +124,7 @@ void IBehaviorPlaypen::BehaviorUpdate(BehaviorExternalInterface& behaviorExterna
   }
 }
   
-void IBehaviorPlaypen::HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void IBehaviorPlaypen::HandleWhileActivated(const EngineToGameEvent& event)
 {
   EngineToGameTag tag = event.GetData().GetTag();
   
@@ -132,7 +132,7 @@ void IBehaviorPlaypen::HandleWhileActivated(const EngineToGameEvent& event, Beha
   // to, one of the kFailureTags
   if(_tagsSubclassSubscribeTo.count(tag) > 0)
   {
-    HandleWhileActivatedInternal(event, behaviorExternalInterface);
+    HandleWhileActivatedInternal(event);
   }
   else
   {
@@ -214,9 +214,9 @@ void IBehaviorPlaypen::HandleWhileActivated(const EngineToGameEvent& event, Beha
   }
 }
 
-void IBehaviorPlaypen::HandleWhileActivated(const RobotToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void IBehaviorPlaypen::HandleWhileActivated(const RobotToEngineEvent& event)
 {
-  HandleWhileActivatedInternal(event, behaviorExternalInterface);
+  HandleWhileActivatedInternal(event);
 }
 
 void IBehaviorPlaypen::SubscribeToTags(std::set<EngineToGameTag>&& tags)

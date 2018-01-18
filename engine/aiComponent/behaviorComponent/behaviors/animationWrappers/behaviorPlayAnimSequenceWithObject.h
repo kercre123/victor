@@ -31,10 +31,10 @@ protected:
   
 public:
   
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual bool WantsToBeActivatedBehavior() const override;
+  virtual void OnBehaviorActivated() override;
   
-  const ObservableObject* GetLocatedObject(BehaviorExternalInterface& behaviorExternalInterface) const;
+  const ObservableObject* GetLocatedObject() const;
   
 private:
   

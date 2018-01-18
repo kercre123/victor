@@ -133,22 +133,18 @@ public:
   // Will be called upon first switching to a behavior before calling update.
   // Calls protected virtual OnBehaviorActivated() method, which each derived class
   // should implement.
-  void OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override final;
+  void OnActivatedInternal() override final;
     
   // This behavior was active, but is now stopping (to make way for a new current
   // behavior). Any behaviors from DelegateIfInControl will be canceled.
-  void OnDeactivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) final override;
-
-  // optional override for child classes to be called when they are deactivated
-  virtual void OnCozmoBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) {}
-
+  void OnDeactivatedInternal() final override;
   
   // Prevents the behavior from calling a callback function when ActionCompleted occurs
   // this allows the behavior to be stopped gracefully
   void StopOnNextActionComplete();
   
   // Returns true if the state of the world/robot is sufficient for this behavior to be executed
-  bool WantsToBeActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) const override final;
+  bool WantsToBeActivatedInternal() const override final;
 
   BehaviorID         GetID()      const { return _id; }
   const std::string& GetIDStr()   const { return _idString; }
@@ -164,7 +160,7 @@ public:
   // Return true if this is a good time to interrupt this behavior. This allows more gentle interruptions for
   // things which aren't immediately urgent. Eventually this may become a mandatory override, but for now, the
   // default is that we can never interrupt gently
-  virtual bool CanBeGentlyInterruptedNow(BehaviorExternalInterface& behaviorExternalInterface) const { return false; }
+  virtual bool CanBeGentlyInterruptedNow() const { return false; }
 
   // Helper function for having DriveToObjectActions use the second closest preAction pose useful when the action
   // is being retried or the action failed due to visualVerification
@@ -183,7 +179,7 @@ public:
   NeedId GetRequiredSevereNeedExpression() const { return _requiredSevereNeed; }
 
   // Force a behavior to update its target blocks but only if it is in a state where it can
-  void UpdateTargetBlocks(BehaviorExternalInterface& behaviorExternalInterface) const { UpdateTargetBlocksInternal(behaviorExternalInterface); }
+  void UpdateTargetBlocks() const { UpdateTargetBlocksInternal(); }
   
   // Get the ObjectUseIntentions this behavior uses
   virtual std::set<ObjectInteractionIntention>
@@ -224,21 +220,21 @@ protected:
   virtual void OnEnteredActivatableScopeInternal() override;
   virtual void OnLeftActivatableScopeInternal() override;
 
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) = 0;
+  virtual void OnBehaviorActivated() = 0;
   
-  void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) override final;
-  virtual void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) {};
+  void InitInternal() override final;
+  virtual void InitBehavior() {};
   
   // To keep passing through data generic, if robot is not overridden
   // check the NoPreReqs WantsToBeActivatedBehavior
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const = 0;
+  virtual bool WantsToBeActivatedBehavior() const = 0;
 
   // This function can be implemented by behaviors. It should return Running while it is running, and Complete
   // or Failure as needed. If it returns Complete, Stop will be called. Default implementation is to
   // return Running while ControlIsDelegated, and Complete otherwise
-  virtual void UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override final;
-  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) {};
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) { };
+  virtual void UpdateInternal() override final;
+  virtual void BehaviorUpdate() {};
+  virtual void OnBehaviorDeactivated() { };
 
   Util::RandomGenerator& GetRNG() const;
   
@@ -247,7 +243,7 @@ protected:
   void SubscribeToTags(std::set<RobotInterface::RobotToEngineTag>&& tags);
   
   // Function that calls message handling helper functions
-  void UpdateMessageHandlingHelpers(BehaviorExternalInterface& behaviorExternalInterface);
+  void UpdateMessageHandlingHelpers();
 
   // Derived classes must override this method to handle events that come in
   // irrespective of whether the behavior is running or not. Note that the Robot
@@ -255,9 +251,9 @@ protected:
   // is not running. If the behavior is subscribed to multiple tags, the presumption
   // is that this will handle switching based on tag internally.
   // NOTE: AlwaysHandle is called before HandleWhileRunning and HandleWhileNotRunning!
-  virtual void AlwaysHandleInScope(const GameToEngineEvent& event,  BehaviorExternalInterface& behaviorExternalInterface) { }
-  virtual void AlwaysHandleInScope(const EngineToGameEvent& event,  BehaviorExternalInterface& behaviorExternalInterface) { }
-  virtual void AlwaysHandleInScope(const RobotToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) { }
+  virtual void AlwaysHandleInScope(const GameToEngineEvent& event) { }
+  virtual void AlwaysHandleInScope(const EngineToGameEvent& event) { }
+  virtual void AlwaysHandleInScope(const RobotToEngineEvent& event) { }
   
   // Derived classes must override this method to handle events that come in
   // while the behavior is running. In this case, the behavior is allowed to
@@ -265,9 +261,9 @@ protected:
   // If the behavior is subscribed to multiple tags, the presumption is that it
   // will handle switching based on tag internally.
   // NOTE: AlwaysHandle is called first!
-  virtual void HandleWhileActivated(const GameToEngineEvent& event,  BehaviorExternalInterface& behaviorExternalInterface) { }
-  virtual void HandleWhileActivated(const EngineToGameEvent& event,  BehaviorExternalInterface& behaviorExternalInterface) { }
-  virtual void HandleWhileActivated(const RobotToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) { }
+  virtual void HandleWhileActivated(const GameToEngineEvent& event) { }
+  virtual void HandleWhileActivated(const EngineToGameEvent& event) { }
+  virtual void HandleWhileActivated(const RobotToEngineEvent& event) { }
   
   // Derived classes must override this method to handle events that come in
   // only while the behavior is NOT running. If it doesn't matter whether the
@@ -275,9 +271,9 @@ protected:
   // If the behavior is subscribed to multiple tags, the presumption is that it
   // will handle switching based on tag internally.
   // NOTE: AlwaysHandle is called first!
-  virtual void HandleWhileInScopeButNotActivated(const GameToEngineEvent& event,  BehaviorExternalInterface& behaviorExternalInterface) { }
-  virtual void HandleWhileInScopeButNotActivated(const EngineToGameEvent& event,  BehaviorExternalInterface& behaviorExternalInterface) { }
-  virtual void HandleWhileInScopeButNotActivated(const RobotToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) { }
+  virtual void HandleWhileInScopeButNotActivated(const GameToEngineEvent& event) { }
+  virtual void HandleWhileInScopeButNotActivated(const EngineToGameEvent& event) { }
+  virtual void HandleWhileInScopeButNotActivated(const RobotToEngineEvent& event) { }
   
   // Many behaviors use a pattern of executing an action, then waiting for it to finish before selecting the
   // next action. Instead of directly starting actions and handling ActionCompleted callbacks, derived
@@ -301,16 +297,9 @@ protected:
   using RobotCompletedActionCallback =  BehaviorRobotCompletedActionCallback;
   bool DelegateIfInControl(IActionRunner* action, RobotCompletedActionCallback callback = {});
 
-  bool DelegateIfInControl(IActionRunner* action, BehaviorRobotCompletedActionWithExternalInterfaceCallback callback);
-
   // helper that just looks at the result (simpler, but you can't get things like the completion union)
   using ActionResultCallback = BehaviorActionResultCallback;
   bool DelegateIfInControl(IActionRunner* action, ActionResultCallback callback);
-  
-  // helper that passes through both the ActionResult and Robot so that behaviors don't have
-  // to store references to robot as much
-  using ActionResultWithRobotCallback = BehaviorActionResultWithExternalInterfaceCallback;
-  bool DelegateIfInControl(IActionRunner* action, ActionResultWithRobotCallback callback);
 
   // If you want to do something when the action finishes, regardless of its result, you can use the
   // following callbacks, with either a callback function taking no arguments or taking a single BehaviorExternalInterface&
@@ -320,38 +309,30 @@ protected:
   using SimpleCallback = BehaviorSimpleCallback;
   bool DelegateIfInControl(IActionRunner* action, SimpleCallback callback);
 
-  using SimpleCallbackWithRobot = BehaviorSimpleCallbackWithExternalInterface;
-  bool DelegateIfInControl(IActionRunner* action, SimpleCallbackWithRobot callback);
+  template<typename T>
+  bool DelegateIfInControl(IActionRunner* action, void(T::*callback)());
 
   template<typename T>
-  bool DelegateIfInControl(IActionRunner* action, void(T::*callback)(BehaviorExternalInterface& behaviorExternalInterface));
-
-  template<typename T>
-  bool DelegateIfInControl(IActionRunner* action, void(T::*callback)(void));
-  
-  template<typename T>
-  bool DelegateIfInControl(IActionRunner* action, void(T::*callback)(ActionResult, BehaviorExternalInterface& behaviorExternalInterface));
+  bool DelegateIfInControl(IActionRunner* action, void(T::*callback)(ActionResult));
   
   
   // If possible (without canceling anything), delegate to the given behavior and return true. Otherwise,
   // return false
-  bool DelegateIfInControl(BehaviorExternalInterface& behaviorExternalInterface, IBehavior* delegate);
+  bool DelegateIfInControl(IBehavior* delegate);
   
+  // same as above but with a callback that will get called as soon as the delegate stops itself (regardless
+  // of why)
+  bool DelegateIfInControl(IBehavior* delegate,
+                           SimpleCallback callback);
+
   // If possible (even if it means canceling delegated, delegate to the given behavior and return
   // true. Otherwise, return false (e.g. if the passed in interface doesn't have access to the delegation
   // component)
-  bool DelegateNow(BehaviorExternalInterface& behaviorExternalInterface, IBehavior* delegate);
-
-  // same as above but with a callback that will get called as soon as the delegate stops itself (regardless
-  // of why)
-  bool DelegateIfInControl(BehaviorExternalInterface& behaviorExternalInterface,
-                           IBehavior* delegate,
-                           BehaviorSimpleCallbackWithExternalInterface callback);
+  bool DelegateNow(IBehavior* delegate);
 
   template<typename T>
-  bool DelegateIfInControl(BehaviorExternalInterface& behaviorExternalInterface,
-                           IBehavior* delegate,
-                           void(T::*callback)(BehaviorExternalInterface& behaviorExternalInterface));
+  bool DelegateIfInControl(IBehavior* delegate,
+                           void(T::*callback)());
 
   // Behaviors can easily create delegates using "anonymous" behaviors in their config file (see _anonymousBehaviorMap
   // comments below).  This function enables access to those anonymous behaviors.
@@ -392,10 +373,10 @@ protected:
   ////////////////
   
   // Push an idle animation which will be removed when the behavior stops
-  void SmartPushIdleAnimation(BehaviorExternalInterface& behaviorExternalInterface, AnimationTrigger animation);
+  void SmartPushIdleAnimation(AnimationTrigger animation);
   
   // Remove an idle animation before the beahvior stops
-  void SmartRemoveIdleAnimation(BehaviorExternalInterface& behaviorExternalInterface);
+  void SmartRemoveIdleAnimation();
 
   // For the duration of this behavior, or until SmartClearMotionProfile() is called (whichever is sooner),
   // use the specified motion profile for all motions. Note that this will result in an error if the behavior
@@ -417,26 +398,23 @@ protected:
                                      const std::vector<CubeAnimationTrigger>& anims);
   
   // Ensures that a handle is stopped if the behavior is stopped
-  bool SmartDelegateToHelper(BehaviorExternalInterface& behaviorExternalInterface,
-                             HelperHandle handleToRun,
-                             SimpleCallbackWithRobot successCallback = nullptr,
-                             SimpleCallbackWithRobot failureCallback = nullptr);
+  bool SmartDelegateToHelper(HelperHandle handleToRun,
+                             SimpleCallback successCallback = nullptr,
+                             SimpleCallback failureCallback = nullptr);
 
   template<typename T>
-  bool SmartDelegateToHelper(BehaviorExternalInterface& behaviorExternalInterface,
-                             HelperHandle handleToRun,
-                             void(T::*successCallback)(BehaviorExternalInterface& behaviorExternalInterface));
+  bool SmartDelegateToHelper(HelperHandle handleToRun,
+                             void(T::*successCallback)());
 
   template<typename T>
-  bool SmartDelegateToHelper(BehaviorExternalInterface& behaviorExternalInterface,
-                             HelperHandle handleToRun,
-                             void(T::*successCallback)(BehaviorExternalInterface& behaviorExternalInterface),
-                             void(T::*failureCallback)(BehaviorExternalInterface& behaviorExternalInterface));
+  bool SmartDelegateToHelper(HelperHandle handleToRun,
+                             void(T::*successCallback)(),
+                             void(T::*failureCallback)());
 
   // Stop a helper delegated with SmartDelegateToHelper
   bool StopHelperWithoutCallback();
 
-  virtual void UpdateTargetBlocksInternal(BehaviorExternalInterface& behaviorExternalInterface) const {};
+  virtual void UpdateTargetBlocksInternal() const {};
   
   // Convenience Method for accessing the behavior helper factory
   BehaviorHelperFactory& GetBehaviorHelperFactory();
@@ -461,7 +439,7 @@ private:
   BehaviorOperationModifiers _operationModifiers;
   
   // Returns true if the state of the world/robot is sufficient for this behavior to be executed
-  bool WantsToBeActivatedBase(BehaviorExternalInterface& behaviorExternalInterface) const;
+  bool WantsToBeActivatedBase() const;
   
   bool ReadFromJson(const Json::Value& config);
   
@@ -512,7 +490,7 @@ private:
   bool _stopRequestedAfterAction = false;
 
   // for when delegation to a _behavior_ finishes. If invalid, no callback
-  BehaviorSimpleCallbackWithExternalInterface _behaviorDelegateCallback;
+  SimpleCallback _behaviorDelegateCallback;
   
   bool _isActivated;
   
@@ -559,54 +537,41 @@ private:
   
   
 template<typename T>
-bool ICozmoBehavior::DelegateIfInControl(IActionRunner* action, void(T::*callback)(BehaviorExternalInterface& behaviorExternalInterface))
+bool ICozmoBehavior::DelegateIfInControl(IActionRunner* action, void(T::*callback)(void))
+{
+  SimpleCallback unambiguous = std::bind(callback, static_cast<T*>(this));
+  return DelegateIfInControl(action, unambiguous);
+}
+
+template<typename T>
+bool ICozmoBehavior::DelegateIfInControl(IActionRunner* action, void(T::*callback)(ActionResult))
 {
   return DelegateIfInControl(action, std::bind(callback, static_cast<T*>(this), std::placeholders::_1));
 }
 
 template<typename T>
-bool ICozmoBehavior::DelegateIfInControl(IActionRunner* action, void(T::*callback)(void))
+bool ICozmoBehavior::SmartDelegateToHelper(HelperHandle handleToRun,
+                                           void(T::*successCallback)())
 {
-  std::function<void(void)> boundCallback = std::bind(callback, static_cast<T*>(this));
-  return DelegateIfInControl(action, boundCallback);
+  SimpleCallback unambiguous = std::bind(successCallback, static_cast<T*>(this));
+  return SmartDelegateToHelper(handleToRun, unambiguous);
 }
 
 template<typename T>
-bool ICozmoBehavior::DelegateIfInControl(IActionRunner* action, void(T::*callback)(ActionResult, BehaviorExternalInterface& behaviorExternalInterface))
+bool ICozmoBehavior::SmartDelegateToHelper(HelperHandle handleToRun,
+                                           void(T::*successCallback)(),
+                                           void(T::*failureCallback)())
 {
-  return DelegateIfInControl(action, std::bind(callback, static_cast<T*>(this), std::placeholders::_1, std::placeholders::_2));
-}
-
-
-
-template<typename T>
-bool ICozmoBehavior::SmartDelegateToHelper(BehaviorExternalInterface& behaviorExternalInterface,
-                                      HelperHandle handleToRun,
-                                      void(T::*successCallback)(BehaviorExternalInterface& behaviorExternalInterface))
-{
-  return SmartDelegateToHelper(behaviorExternalInterface, handleToRun,
-                               std::bind(successCallback, static_cast<T*>(this), std::placeholders::_1));
+  SimpleCallback unambiguousSuccess = std::bind(successCallback, static_cast<T*>(this));
+  SimpleCallback unambiguousFailure = std::bind(failureCallback, static_cast<T*>(this));
+  return SmartDelegateToHelper(handleToRun, unambiguousSuccess, unambiguousFailure);
 }
 
 template<typename T>
-bool ICozmoBehavior::SmartDelegateToHelper(BehaviorExternalInterface& behaviorExternalInterface,
-                                      HelperHandle handleToRun,
-                                      void(T::*successCallback)(BehaviorExternalInterface& behaviorExternalInterface),
-                                      void(T::*failureCallback)(BehaviorExternalInterface& behaviorExternalInterface))
+bool ICozmoBehavior::DelegateIfInControl(IBehavior* delegate,
+                                         void(T::*callback)())
 {
-  return SmartDelegateToHelper(behaviorExternalInterface, handleToRun,
-                               std::bind(successCallback, static_cast<T*>(this), std::placeholders::_1),
-                               std::bind(failureCallback, static_cast<T*>(this), std::placeholders::_1));
-}
-
-
-template<typename T>
-bool ICozmoBehavior::DelegateIfInControl(BehaviorExternalInterface& behaviorExternalInterface,
-                                         IBehavior* delegate,
-                                         void(T::*callback)(BehaviorExternalInterface& behaviorExternalInterface))
-{
-  return DelegateIfInControl(behaviorExternalInterface,
-                             delegate,
+  return DelegateIfInControl(delegate,
                              std::bind(callback, static_cast<T*>(this), std::placeholders::_1));
 }
 

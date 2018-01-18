@@ -31,14 +31,14 @@ BehaviorReactToReturnedToTreads::BehaviorReactToReturnedToTreads(const Json::Val
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorReactToReturnedToTreads::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorReactToReturnedToTreads::WantsToBeActivatedBehavior() const
 {
   return true;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToReturnedToTreads::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToReturnedToTreads::OnBehaviorActivated()
 {
   // Wait for a bit to allow pitch to correct
   DelegateIfInControl(new WaitAction(0.5f),
@@ -49,9 +49,9 @@ void BehaviorReactToReturnedToTreads::OnBehaviorActivated(BehaviorExternalInterf
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToReturnedToTreads::CheckForHighPitch(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToReturnedToTreads::CheckForHighPitch()
 {
-  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  auto& robotInfo = GetBEI().GetRobotInfo();
   // Check for pitch exceeding a certain threshold.
   // This threshold defines how small a miscalibration can be corrected for,
   // but also inherently assumes that a well-calibrated robot won't be used on
@@ -67,7 +67,7 @@ void BehaviorReactToReturnedToTreads::CheckForHighPitch(BehaviorExternalInterfac
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToReturnedToTreads::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToReturnedToTreads::OnBehaviorDeactivated()
 {
 }
 

@@ -38,7 +38,7 @@ protected:
   BehaviorFeedingEat(const Json::Value& config);
 
 public:
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual bool WantsToBeActivatedBehavior() const override;
   
   virtual void AddListener(IFeedingListener* listener) override{
     _feedingListeners.insert(listener);
@@ -53,10 +53,10 @@ protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
 
   using base = ICozmoBehavior;
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated() override;
+  virtual void BehaviorUpdate() override;
 
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorDeactivated() override;
   
 private:
   enum class State{
@@ -81,17 +81,17 @@ private:
   // ignore it. If the pose has updated after this timestamp, consider it valid again
   std::map< ObjectID, TimeStamp_t > _badCubesMap;
   
-  void TransitionToDrivingToFood(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToPlacingLiftOnCube(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToEating(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToReactingToInterruption(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToDrivingToFood();
+  void TransitionToPlacingLiftOnCube();
+  void TransitionToEating();
+  void TransitionToReactingToInterruption();
 
-  void CubeMovementHandler(BehaviorExternalInterface& behaviorExternalInterface, const float movementScore);
-  AnimationTrigger CheckNeedsStateAndCalculateAnimation(BehaviorExternalInterface& behaviorExternalInterface);
+  void CubeMovementHandler(const float movementScore);
+  AnimationTrigger CheckNeedsStateAndCalculateAnimation();
 
   // sets the target cube as invalid for future runs of the behavior (unless it is observed again);
-  void MarkCubeAsBad(BehaviorExternalInterface& behaviorExternalInterface);
-  bool IsCubeBad(BehaviorExternalInterface& behaviorExternalInterface, const ObjectID& objectID) const;
+  void MarkCubeAsBad();
+  bool IsCubeBad(const ObjectID& objectID) const;
   
   void SetState_internal(State state, const std::string& stateName);
   

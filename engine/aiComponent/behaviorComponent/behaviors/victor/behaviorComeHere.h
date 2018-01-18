@@ -31,7 +31,7 @@ public:
   //
   // Abstract methods to be overloaded:
   //
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override { return true; }
+  virtual bool WantsToBeActivatedBehavior() const override { return true; }
 
 protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override{
@@ -39,7 +39,7 @@ protected:
     modifiers.wantsToBeActivatedWhenOnCharger = true;
   }
 
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated() override;
 
 private:
   using FaceSelectionPenaltyMultiplier = FaceSelectionComponent::FaceSelectionPenaltyMultiplier;
@@ -59,11 +59,11 @@ private:
   std::vector<FaceSelectionComponent::FaceSelectionPenaltyMultiplier> _facePriorities;
   SmartFaceID _currentFaceID;
 
-  void TurnTowardsMicDirection(BehaviorExternalInterface& behaviorExternalInterface);
-  void TurnTowardsFace(BehaviorExternalInterface& behaviorExternalInterface);
-  void AlreadyHere(BehaviorExternalInterface& behaviorExternalInterface);
-  void DriveTowardsFace(BehaviorExternalInterface& behaviorExternalInterface);
-  void NoFaceFound(BehaviorExternalInterface& behaviorExternalInterface);
+  void TurnTowardsMicDirection();
+  void TurnTowardsFace();
+  void AlreadyHere();
+  void DriveTowardsFace();
+  void NoFaceFound();
 
 };
 

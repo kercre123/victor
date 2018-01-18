@@ -36,10 +36,10 @@ public:
   //
   // Abstract methods to be overloaded:
   //
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override { return true; }
+  virtual bool WantsToBeActivatedBehavior() const override { return true; }
 
 
-  virtual bool CanBeGentlyInterruptedNow(BehaviorExternalInterface& behaviorExternalInterface) const override {
+  virtual bool CanBeGentlyInterruptedNow() const override {
     return true; }
 
 protected:
@@ -51,12 +51,12 @@ protected:
   }
 
 
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override
+  virtual void OnBehaviorActivated() override
   {
     
   }
 
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override
+  virtual void OnBehaviorDeactivated() override
   {
   }
 };

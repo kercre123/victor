@@ -37,25 +37,24 @@ BehaviorReactToRobotOnFace::BehaviorReactToRobotOnFace(const Json::Value& config
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorReactToRobotOnFace::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorReactToRobotOnFace::WantsToBeActivatedBehavior() const
 {
   return true;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToRobotOnFace::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToRobotOnFace::OnBehaviorActivated()
 {
-  FlipOverIfNeeded(behaviorExternalInterface);
-  
+  FlipOverIfNeeded();
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToRobotOnFace::FlipOverIfNeeded(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToRobotOnFace::FlipOverIfNeeded()
 {
-  if( behaviorExternalInterface.GetOffTreadsState() == OffTreadsState::OnFace ) {
-    auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  if( GetBEI().GetOffTreadsState() == OffTreadsState::OnFace ) {
+    auto& robotInfo = GetBEI().GetRobotInfo();
     AnimationTrigger anim;
     if(robotInfo.GetLiftAngle() < kRobotMinLiftAngleForArmUpAnim_s){
       anim = AnimationTrigger::FacePlantRoll;
@@ -63,7 +62,7 @@ void BehaviorReactToRobotOnFace::FlipOverIfNeeded(BehaviorExternalInterface& beh
       anim = AnimationTrigger::FacePlantRollArmUp;
     }
     
-    if(behaviorExternalInterface.GetAIComponent().GetWhiteboard().HasHiccups())
+    if(GetBEI().GetAIComponent().GetWhiteboard().HasHiccups())
     {
       anim = AnimationTrigger::HiccupRobotOnFace;
     }
@@ -76,9 +75,9 @@ void BehaviorReactToRobotOnFace::FlipOverIfNeeded(BehaviorExternalInterface& beh
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToRobotOnFace::DelayThenCheckState(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToRobotOnFace::DelayThenCheckState()
 {
-  if( behaviorExternalInterface.GetOffTreadsState() == OffTreadsState::OnFace ) {
+  if( GetBEI().GetOffTreadsState() == OffTreadsState::OnFace ) {
     DelegateIfInControl(new WaitAction(kWaitTimeBeforeRepeatAnim_s),
                 &BehaviorReactToRobotOnFace::CheckFlipSuccess);
   }
@@ -87,9 +86,9 @@ void BehaviorReactToRobotOnFace::DelayThenCheckState(BehaviorExternalInterface& 
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToRobotOnFace::CheckFlipSuccess(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToRobotOnFace::CheckFlipSuccess()
 {
-  if(behaviorExternalInterface.GetOffTreadsState() == OffTreadsState::OnFace) {
+  if(GetBEI().GetOffTreadsState() == OffTreadsState::OnFace) {
     DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::FailedToRightFromFace),
                 &BehaviorReactToRobotOnFace::FlipOverIfNeeded);
   }else{
@@ -99,7 +98,7 @@ void BehaviorReactToRobotOnFace::CheckFlipSuccess(BehaviorExternalInterface& beh
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToRobotOnFace::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToRobotOnFace::OnBehaviorDeactivated()
 {
 }
 

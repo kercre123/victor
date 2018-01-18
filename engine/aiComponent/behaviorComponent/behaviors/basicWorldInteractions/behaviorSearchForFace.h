@@ -28,13 +28,13 @@ protected:
   
 public:
   virtual ~BehaviorSearchForFace() override {}
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual bool WantsToBeActivatedBehavior() const override;
   
 protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
 
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated() override;
+  virtual void BehaviorUpdate() override;
   
 private:
   enum class State {
@@ -44,8 +44,8 @@ private:
   
   State    _behaviorState;
   
-  void TransitionToSearchingAnimation(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToFoundFace(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToSearchingAnimation();
+  void TransitionToFoundFace();
   
   void SetState_internal(State state, const std::string& stateName);
 

@@ -34,14 +34,14 @@ BehaviorReactToRobotOnSide::BehaviorReactToRobotOnSide(const Json::Value& config
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorReactToRobotOnSide::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorReactToRobotOnSide::WantsToBeActivatedBehavior() const
 {
   return true;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToRobotOnSide::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToRobotOnSide::OnBehaviorActivated()
 {
   // clear bored animation timer
   _timeToPerformBoredAnim_s = -1.0f;
@@ -49,41 +49,41 @@ void BehaviorReactToRobotOnSide::OnBehaviorActivated(BehaviorExternalInterface& 
   // play meter damage
   NeedActionCompleted(NeedsActionId::PlacedOnSide);
   
-  ReactToBeingOnSide(behaviorExternalInterface);
+  ReactToBeingOnSide();
   
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToRobotOnSide::ReactToBeingOnSide(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToRobotOnSide::ReactToBeingOnSide()
 {
   AnimationTrigger anim = AnimationTrigger::Count;
   
-  if( behaviorExternalInterface.GetOffTreadsState() == OffTreadsState::OnLeftSide){
+  if( GetBEI().GetOffTreadsState() == OffTreadsState::OnLeftSide){
     anim = AnimationTrigger::ReactToOnLeftSide;
   }
   
-  if(behaviorExternalInterface.GetOffTreadsState() == OffTreadsState::OnRightSide) {
+  if(GetBEI().GetOffTreadsState() == OffTreadsState::OnRightSide) {
     anim = AnimationTrigger::ReactToOnRightSide;
   }
   
   if(anim != AnimationTrigger::Count){
     DelegateIfInControl(new TriggerAnimationAction(anim),
-                &BehaviorReactToRobotOnSide::AskToBeRighted);
+                        &BehaviorReactToRobotOnSide::AskToBeRighted);
   }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToRobotOnSide::AskToBeRighted(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToRobotOnSide::AskToBeRighted()
 {
   AnimationTrigger anim = AnimationTrigger::Count;
   
-  if( behaviorExternalInterface.GetOffTreadsState() == OffTreadsState::OnLeftSide){
+  if( GetBEI().GetOffTreadsState() == OffTreadsState::OnLeftSide){
     anim = AnimationTrigger::AskToBeRightedLeft;
   }
   
-  if(behaviorExternalInterface.GetOffTreadsState() == OffTreadsState::OnRightSide) {
+  if(GetBEI().GetOffTreadsState() == OffTreadsState::OnRightSide) {
     anim = AnimationTrigger::AskToBeRightedRight;
   }
   
@@ -95,10 +95,10 @@ void BehaviorReactToRobotOnSide::AskToBeRighted(BehaviorExternalInterface& behav
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToRobotOnSide::HoldingLoop(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToRobotOnSide::HoldingLoop()
 {
-  if( behaviorExternalInterface.GetOffTreadsState() == OffTreadsState::OnRightSide
-     || behaviorExternalInterface.GetOffTreadsState() == OffTreadsState::OnLeftSide) {
+  if( GetBEI().GetOffTreadsState() == OffTreadsState::OnRightSide
+     || GetBEI().GetOffTreadsState() == OffTreadsState::OnLeftSide) {
 
     const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     
@@ -134,7 +134,7 @@ void BehaviorReactToRobotOnSide::HoldingLoop(BehaviorExternalInterface& behavior
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToRobotOnSide::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToRobotOnSide::OnBehaviorDeactivated()
 {
 }
 

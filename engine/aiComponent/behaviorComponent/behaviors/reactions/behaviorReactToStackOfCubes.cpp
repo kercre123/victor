@@ -32,10 +32,10 @@ BehaviorReactToStackOfCubes::BehaviorReactToStackOfCubes(const Json::Value& conf
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorReactToStackOfCubes::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorReactToStackOfCubes::WantsToBeActivatedBehavior() const
 {
   using namespace BlockConfigurations;
-  auto allPyramids = behaviorExternalInterface.GetBlockWorld().GetBlockConfigurationManager().GetStackCache().GetStacks();
+  auto allPyramids = GetBEI().GetBlockWorld().GetBlockConfigurationManager().GetStackCache().GetStacks();
   if(allPyramids.size() > 0){
     auto currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     if(currentTime > _nextValidReactionTime_s){
@@ -48,7 +48,7 @@ bool BehaviorReactToStackOfCubes::WantsToBeActivatedBehavior(BehaviorExternalInt
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToStackOfCubes::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToStackOfCubes::OnBehaviorActivated()
 {
   _nextValidReactionTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + kTimeBetweenReactions_s;
   

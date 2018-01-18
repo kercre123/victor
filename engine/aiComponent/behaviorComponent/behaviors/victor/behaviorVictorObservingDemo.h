@@ -35,7 +35,7 @@ public:
 
   virtual ~BehaviorVictorObservingDemo();
   
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override {
+  virtual bool WantsToBeActivatedBehavior() const override {
     return true; }
 protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override{
@@ -46,11 +46,11 @@ protected:
 
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
 
-  virtual void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void InitBehavior() override;
 
-  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void BehaviorUpdate() override;
+  virtual void OnBehaviorActivated() override;
+  virtual void OnBehaviorDeactivated() override;
 
 private:
 
@@ -81,7 +81,7 @@ private:
   
   void AddState( State&& state );
   
-  void TransitionToState(BehaviorExternalInterface& behaviorExternalInterface, StateID targetState);
+  void TransitionToState(StateID targetState);
 
   bool StateExitCooldownExpired(StateID state, float timeout) const;
 

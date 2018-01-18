@@ -89,10 +89,9 @@ bool Delegator::Delegate(IBehavior* delegatingBehavior, IBehavior* delegated)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool Delegator::Delegate(IBehavior* delegatingBehavior,
-                         BehaviorExternalInterface& behaviorExternalInterface,
                          HelperHandle helper,
-                         BehaviorSimpleCallbackWithExternalInterface successCallback,
-                         BehaviorSimpleCallbackWithExternalInterface failureCallback)
+                         BehaviorSimpleCallback successCallback,
+                         BehaviorSimpleCallback failureCallback)
 {
   EnsureHandleIsUpdated();
   
@@ -104,8 +103,7 @@ bool Delegator::Delegate(IBehavior* delegatingBehavior,
   _behaviorThatDelegatedHelper = delegatingBehavior;
   _delegateHelperHandle = helper;
   return _robot.GetAIComponent().GetBehaviorHelperComponent().
-                     DelegateToHelper(behaviorExternalInterface,
-                                      helper, successCallback, failureCallback);
+                     DelegateToHelper(helper, successCallback, failureCallback);
 }
 
 

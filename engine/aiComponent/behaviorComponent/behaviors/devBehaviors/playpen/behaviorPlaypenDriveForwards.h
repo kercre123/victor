@@ -31,16 +31,16 @@ protected:
     modifiers.wantsToBeActivatedWhenOnCharger = true;
   }
 
-  virtual Result         OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)   override;
-  virtual PlaypenStatus PlaypenUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void           OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)   override;
+  virtual Result         OnBehaviorActivatedInternal()   override;
+  virtual PlaypenStatus PlaypenUpdateInternal() override;
+  virtual void           OnBehaviorDeactivated()   override;
   
-  virtual void HandleWhileActivatedInternal(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void HandleWhileActivatedInternal(const EngineToGameEvent& event) override;
     
 private:
 
-  void TransitionToWaitingForBackCliffs(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToWaitingForBackCliffUndetected(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToWaitingForBackCliffs();
+  void TransitionToWaitingForBackCliffUndetected();
   
   // Driving over the narrow cliff in playpen should trigger four cliff events
   // First the front cliffs should be detected and then undetected, then the back cliffs should

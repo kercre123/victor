@@ -31,12 +31,12 @@ protected:
 
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
 
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated() override;
+  virtual void OnBehaviorDeactivated() override;
   
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual bool WantsToBeActivatedBehavior() const override;
   
-  virtual void AlwaysHandleInScope(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void AlwaysHandleInScope(const EngineToGameEvent& event) override;
   
 private:
   mutable BlockConfigurations::StackWeakPtr _currentTallestStack;
@@ -56,12 +56,12 @@ private:
     Disapointment
   };
   
-  void TransitionToLookingUpAndDown(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToDisapointment(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToLookingUpAndDown();
+  void TransitionToDisapointment();
 
   
   virtual void ClearStack();
-  virtual void UpdateTargetStack(const BehaviorExternalInterface& behaviorExternalInterface) const;
+  virtual void UpdateTargetStack() const;
 
 };
 

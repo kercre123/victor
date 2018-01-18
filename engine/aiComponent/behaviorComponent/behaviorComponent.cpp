@@ -285,7 +285,7 @@ void BehaviorComponent::Update(Robot& robot,
 
   BehaviorExternalInterface& bei = GetComponent<BehaviorExternalInterface>(BCComponentID::BehaviorExternalInterface);
 
-  GetBehaviorHelperComponent().Update(bei);
+  GetBehaviorHelperComponent().Update();
   
   {
     BehaviorSystemManager& bsm = GetComponent<BehaviorSystemManager>(BCComponentID::BehaviorSystemManager);

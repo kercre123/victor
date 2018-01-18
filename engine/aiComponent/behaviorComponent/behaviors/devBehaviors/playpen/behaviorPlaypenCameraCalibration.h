@@ -31,16 +31,16 @@ protected:
     modifiers.wantsToBeActivatedWhenOnCharger = true;
   }
 
-  virtual Result         OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)   override;
-  virtual PlaypenStatus PlaypenUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void           OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)   override;
+  virtual Result         OnBehaviorActivatedInternal()   override;
+  virtual PlaypenStatus PlaypenUpdateInternal() override;
+  virtual void           OnBehaviorDeactivated()   override;
   
-  virtual void HandleWhileActivatedInternal(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void HandleWhileActivatedInternal(const EngineToGameEvent& event) override;
     
 private:
 
-  void HandleCameraCalibration(BehaviorExternalInterface& behaviorExternalInterface, const CameraCalibration& calibMsg);
-  void HandleRobotObservedObject(BehaviorExternalInterface& behaviorExternalInterface, const ExternalInterface::RobotObservedObject& msg);
+  void HandleCameraCalibration(const CameraCalibration& calibMsg);
+  void HandleRobotObservedObject(const ExternalInterface::RobotObservedObject& msg);
 
   // Whether or not we are currently computing camera calibration
   bool _computingCalibration = false;

@@ -75,8 +75,6 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "MapComponent", true);
 
 // Whether or not to put unrecognized markerless objects like collision/prox obstacles and cliffs into the memory map
 CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "MapComponent", false);
-// Whether or not to put custom objects in the memory map (COZMO-9360)
-CONSOLE_VAR(bool, kAddCustomObjectsToMemMap, "MapComponent", false);
 
 // kRobotRotationChangeToReport_deg: if the rotation of the robot changes by this much, memory map will be notified
 CONSOLE_VAR(float, kRobotRotationChangeToReport_deg, "MapComponent", 20.0f);
@@ -99,9 +97,10 @@ MemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily fam
     case ObjectFamily::Block:
     case ObjectFamily::LightCube:
       // pick depending on addition or removal
-      retType = isAdding ? ContentType::ObstacleCube : ContentType::ObstacleCubeRemoved;
+      retType = isAdding ? ContentType::ObstacleObservable : ContentType::ClearOfObstacle;
       break;
     case ObjectFamily::Charger:
+      // this scase should be merged into observable object types (COZMO-16117)
       retType = isAdding ? ContentType::ObstacleCharger : ContentType::ObstacleChargerRemoved;
       break;
     case ObjectFamily::MarkerlessObject:
@@ -125,19 +124,7 @@ MemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily fam
       
     case ObjectFamily::CustomObject:
     {
-      // old .badIsAdding message
-      if(!isAdding)
-      {
-        PRINT_NAMED_WARNING("ObjectFamilyToMemoryMapContentType.CustomObject.RemovalNotSupported",
-                            "ContentType CustomObject removal is not supported. kCustomObjectsToMemMap was (%s)",
-                            kAddCustomObjectsToMemMap ? "true" : "false");
-      }
-      else
-      {
-        PRINT_NAMED_WARNING("ObjectFamilyToMemoryMapContentType.CustomObject.AdditionNotSupported",
-                            "ContentType CustomObject addition is not supported. kCustomObjectsToMemMap was (%s)",
-                            kAddCustomObjectsToMemMap ? "true" : "false");
-      }
+      retType = isAdding ? ContentType::ObstacleObservable : ContentType::ClearOfObstacle;
       break;
     }
       
@@ -636,10 +623,7 @@ void MapComponent::UpdateObjectPose(const ObservableObject& object, const Pose3d
   const PoseState newPoseState = object.GetPoseState();
   const ObjectFamily family = object.GetFamily();
   bool objectTrackedInMemoryMap = true;
-  if (family == ObjectFamily::CustomObject && !kAddCustomObjectsToMemMap) {
-    objectTrackedInMemoryMap = false; // COZMO-9360
-  }
-  else if (family == ObjectFamily::MarkerlessObject && !kAddUnrecognizedMarkerlessObjectsToMemMap) {
+  if (family == ObjectFamily::MarkerlessObject && !kAddUnrecognizedMarkerlessObjectsToMemMap) {
     objectTrackedInMemoryMap = false; // COZMO-7496?
   }
   
@@ -671,38 +655,33 @@ void MapComponent::UpdateObjectPose(const ObservableObject& object, const Pose3d
                      "ID:%d", curOriginID);
       const auto poseInNewOriginIter = reportedPosesForObject.find( curOriginID );
 
-      if ( newPoseState == PoseState::Dirty && poseInNewOriginIter != reportedPosesForObject.end() )
+      if ( poseInNewOriginIter != reportedPosesForObject.end() )
       {
-        // Object is dirty, so remove it so we dont try to plan around it. Ideally we would differentiate 
-        // between "object moved" and "object seen from far away", but that distinction is not available now,
-        // so just keep fully verified cubes in the map.
-        RemoveObservableObject(object, curOriginID);
-      } else {
-        if ( poseInNewOriginIter != reportedPosesForObject.end() )
-        {
-          // note that for distThreshold, since Z affects whether we add to the memory map, distThreshold should
-          // be smaller than the threshold to not report
-          DEV_ASSERT(kObjectPositionChangeToReport_mm < object.GetDimInParentFrame<'Z'>()*0.5f,
-                    "OnObjectPoseChanged.ChangeThresholdTooBig");
-          const float distThreshold = kObjectPositionChangeToReport_mm;
-          const Radians angleThreshold( DEG_TO_RAD(kObjectRotationChangeToReport_deg) );
+        // note that for distThreshold, since Z affects whether we add to the memory map, distThreshold should
+        // be smaller than the threshold to not report
+        DEV_ASSERT(kObjectPositionChangeToReport_mm < object.GetDimInParentFrame<'Z'>()*0.5f,
+                  "OnObjectPoseChanged.ChangeThresholdTooBig");
+        const float distThreshold = kObjectPositionChangeToReport_mm;
+        const Radians angleThreshold( DEG_TO_RAD(kObjectRotationChangeToReport_deg) );
 
-          // compare new pose with previous entry and decide if isFarFromPrev
-          const PoseInMapInfo& info = poseInNewOriginIter->second;
-          const bool isFarFromPrev =
-            ( !info.isInMap || (!object.GetPose().IsSameAs(info.pose, Point3f(distThreshold), angleThreshold)));
-          
-          // if it is far from previous (or previous was not in the map, remove-add)
-          if ( isFarFromPrev ) {
+        // compare new pose with previous entry and decide if isFarFromPrev
+        const PoseInMapInfo& info = poseInNewOriginIter->second;
+        const bool isFarFromPrev =
+          ( !info.isInMap || (!object.GetPose().IsSameAs(info.pose, Point3f(distThreshold), angleThreshold)));
+        
+        // if it is far from previous (or previous was not in the map, remove-add)
+        if ( isFarFromPrev ) {
+          if (object.IsUnique())
+          {
             RemoveObservableObject(object, curOriginID);
-            AddObservableObject(object, object.GetPose());
           }
-        }
-        else
-        {
-          // did not find an entry in the current origin for this object, add it now
           AddObservableObject(object, object.GetPose());
         }
+      }
+      else
+      {
+        // did not find an entry in the current origin for this object, add it now
+        AddObservableObject(object, object.GetPose());
       }
     }
     else if ( oldValid && !newValid )
@@ -760,20 +739,16 @@ void MapComponent::AddObservableObject(const ObservableObject& object, const Pos
         Pose3d newPoseWrtOrigin = newPose.GetWithRespectToRoot();
         const Quad2f& newQuad = object.GetBoundingQuadXY(newPoseWrtOrigin);
         switch (addType) {
-          case MemoryMapTypes::EContentType::ObstacleCube:
+          case MemoryMapTypes::EContentType::ObstacleObservable:
           {
             // eventually we will want to store multiple ID's to the node data in the case for multiple blocks
             // however, we have no mechanism for merging data, so for now we just replace with the new id
             Poly2f boundingPoly;
             boundingPoly.ImportQuad2d(newQuad);
-            MemoryMapData_ObservableObject data(addType, object.GetID(), boundingPoly, _robot->GetLastImageTimeStamp());
+            MemoryMapData_ObservableObject data(object, boundingPoly, _robot->GetLastImageTimeStamp());
             memoryMap->AddQuad(newQuad, data);
             break;
           }
-          case MemoryMapTypes::EContentType::ObstacleCubeRemoved:
-            PRINT_NAMED_WARNING("MapComponent.AddObservableObject.AddedRemovalType",
-                                "Called add on removal type rather than explicit RemoveObservableObject.");
-            break;
           default:
             PRINT_NAMED_WARNING("MapComponent.AddObservableObject.AddedNonObservableType",
                                 "AddObservableObject was called to add a non observable object");
@@ -816,9 +791,11 @@ void MapComponent::AddObservableObject(const ObservableObject& object, const Pos
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MapComponent::RemoveObservableObject(const ObservableObject& object, PoseOriginID_t originID)
 {
+  using namespace MemoryMapTypes;
+
   const ObjectFamily objectFam = object.GetFamily();
   const MemoryMapTypes::EContentType removalType = ObjectFamilyToMemoryMapContentType(objectFam, false);
-  if ( removalType == MemoryMapTypes::EContentType::Unknown )
+  if ( removalType == EContentType::Unknown )
   {
     // this is not ok, this obstacle family can be added but can't be removed from the map
     PRINT_NAMED_WARNING("MapComponent.RemoveObservableObject.InvalidRemovalType",
@@ -834,9 +811,11 @@ void MapComponent::RemoveObservableObject(const ObservableObject& object, PoseOr
   if ( matchPair != _navMaps.end() )
   {
     TimeStamp_t timeStamp = _robot->GetLastImageTimeStamp();
+
+    // for Cubes, we can lookup by ID
     NodeTransformFunction transform = [id, removalType, timeStamp](MemoryMapDataPtr data)
     {
-      if (data->type == MemoryMapTypes::EContentType::ObstacleCube) 
+      if (data->type == EContentType::ObstacleObservable) 
       {
         // eventually we will want to store multiple ID's to the node data in the case for multiple blocks
         // however, we have no mechanism for merging data, so for now we are just completely replacing
@@ -1025,8 +1004,7 @@ void MapComponent::ReviewInterestingEdges(const Quad2f& withinQuad, INavMap* map
       {EContentType::Unknown               , false},
       {EContentType::ClearOfObstacle       , false},
       {EContentType::ClearOfCliff          , false},
-      {EContentType::ObstacleCube          , true },
-      {EContentType::ObstacleCubeRemoved   , false},
+      {EContentType::ObstacleObservable    , true },
       {EContentType::ObstacleCharger       , true },
       {EContentType::ObstacleChargerRemoved, true },
       {EContentType::ObstacleProx          , true },
@@ -1221,8 +1199,7 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
             {MemoryMapTypes::EContentType::Unknown               , false},
             {MemoryMapTypes::EContentType::ClearOfObstacle       , false},
             {MemoryMapTypes::EContentType::ClearOfCliff          , false},
-            {MemoryMapTypes::EContentType::ObstacleCube          , true },
-            {MemoryMapTypes::EContentType::ObstacleCubeRemoved   , false},
+            {MemoryMapTypes::EContentType::ObstacleObservable    , true },
             {MemoryMapTypes::EContentType::ObstacleCharger       , true },
             {MemoryMapTypes::EContentType::ObstacleChargerRemoved, true },
             {MemoryMapTypes::EContentType::ObstacleProx          , true },
@@ -1261,8 +1238,7 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
           {MemoryMapTypes::EContentType::Unknown               , false},
           {MemoryMapTypes::EContentType::ClearOfObstacle       , false},
           {MemoryMapTypes::EContentType::ClearOfCliff          , false},
-          {MemoryMapTypes::EContentType::ObstacleCube          , true },
-          {MemoryMapTypes::EContentType::ObstacleCubeRemoved   , false},
+          {MemoryMapTypes::EContentType::ObstacleObservable    , true },
           {MemoryMapTypes::EContentType::ObstacleCharger       , true },
           {MemoryMapTypes::EContentType::ObstacleChargerRemoved, true },
           {MemoryMapTypes::EContentType::ObstacleProx          , true },

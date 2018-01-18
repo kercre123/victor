@@ -36,7 +36,7 @@ protected:
   BehaviorOnboardingShowCube(const Json::Value& config);
 
 public:
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual bool WantsToBeActivatedBehavior() const override;
 
 protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
@@ -44,13 +44,13 @@ protected:
     modifiers.wantsToBeActivatedWhenOnCharger = true;
     modifiers.behaviorAlwaysDelegates = false;
   }
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated() override;
+  virtual void BehaviorUpdate() override;
+  virtual void OnBehaviorDeactivated() override;
   
-  virtual void AlwaysHandleInScope(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void HandleWhileActivated(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void AlwaysHandleInScope(const EngineToGameEvent& event) override;
+  virtual void HandleWhileActivated(const EngineToGameEvent& event) override;
+  virtual void HandleWhileActivated(const GameToEngineEvent& event) override;
 
   
 private:
@@ -67,16 +67,16 @@ private:
   uint8_t     _timesPickedUpCube = 0;
   ObjectID    _targetBlock;
     
-  void HandleObjectObserved(BehaviorExternalInterface& behaviorExternalInterface, const ExternalInterface::RobotObservedObject& msg);
+  void HandleObjectObserved(const ExternalInterface::RobotObservedObject& msg);
   
-  void SetState_internal(State state, const std::string& stateName, BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToWaitToInspectCube(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToErrorState(State state, BehaviorExternalInterface& behaviorExternalInterface);
+  void SetState_internal(State state, const std::string& stateName);
+  void TransitionToWaitToInspectCube();
+  void TransitionToErrorState(State state);
   
-  void TransitionToNextState(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToNextState();
   
-  void StartSubStatePickUpBlock(BehaviorExternalInterface& behaviorExternalInterface);
-  void StartSubStateCelebratePickup(BehaviorExternalInterface& behaviorExternalInterface);
+  void StartSubStatePickUpBlock();
+  void StartSubStateCelebratePickup();
   
   bool IsSequenceComplete();
   

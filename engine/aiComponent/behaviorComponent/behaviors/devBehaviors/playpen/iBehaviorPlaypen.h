@@ -72,7 +72,7 @@ public:
   // Will be UNKNOWN while running and either SUCCESS or something else when complete
   FactoryTestResultCode GetResult() { if(_recordingTouch) { return FactoryTestResultCode::UNKNOWN; } return _result; }
   
-  void Reset(BehaviorExternalInterface& behaviorExternalInterface) { 
+  void Reset() { 
     _timers.clear(); 
     _result = FactoryTestResultCode::UNKNOWN; 
     _recordingTouch = false;
@@ -100,23 +100,23 @@ protected:
     Complete
   };
 
-  virtual void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) override {InitBehaviorInternal(behaviorExternalInterface);};  
+  virtual void InitBehavior() override {InitBehaviorInternal();};  
 
   // Override of IBehavior functions
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual bool WantsToBeActivatedBehavior() const override;
   
   // Final override of OnBehaviorActivated so we can do things before the subclass inits
   // OnBehaviorActivatedInternal() is provided for the subclass to override
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override final;
+  virtual void OnBehaviorActivated() override final;
   
   // Final override of UpdateInternal so we can do things before the subclass updates
   // PlaypenUpdateInternal() is provided for the subclass to override if they wish
-  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override final;
+  virtual void BehaviorUpdate() override final;
   
   // Final override of HandleWhileActivated so we can do things before the subclass handles the event
   // HandleWhileActivatedInternal() is provided for the subclass to override
-  virtual void HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override final;
-  virtual void HandleWhileActivated(const RobotToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override final;
+  virtual void HandleWhileActivated(const EngineToGameEvent& event) override final;
+  virtual void HandleWhileActivated(const RobotToEngineEvent& event) override final;
 
   // Hides IBehavior's SubscribeToTags function so we can do some bookkeeping on what the subclass
   // is subscribing to
@@ -130,15 +130,15 @@ protected:
   
 
   // Virtual functions for subclasses to override
-  virtual void InitBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface) {}; 
+  virtual void InitBehaviorInternal() {}; 
   
-  virtual Result OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) = 0;
+  virtual Result OnBehaviorActivatedInternal() = 0;
   
-  virtual PlaypenStatus PlaypenUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) { return PlaypenStatus::Running; }
+  virtual PlaypenStatus PlaypenUpdateInternal() { return PlaypenStatus::Running; }
   
-  virtual void HandleWhileActivatedInternal(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) { }
+  virtual void HandleWhileActivatedInternal(const EngineToGameEvent& event) { }
   
-  virtual void HandleWhileActivatedInternal(const RobotToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) { }
+  virtual void HandleWhileActivatedInternal(const RobotToEngineEvent& event) { }
 
   FactoryTestLogger& GetLogger() { return *_factoryTestLogger; }
   
