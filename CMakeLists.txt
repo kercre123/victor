@@ -55,7 +55,9 @@ else()
 endif()
 
 if (FACTORY_TEST_DEV)
-  add_definitions(-DFACTORY_TEST_DEV)
+  add_definitions(-DFACTORY_TEST_DEV=1)
+else()
+  add_definitions(-DFACTORY_TEST_DEV=0)
 endif()
 
 if (ANDROID)

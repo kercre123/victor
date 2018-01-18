@@ -1244,7 +1244,7 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
         if ( !isConfirmingObservation ) {
           // Don't print this during the factory test because it spams when seeing the 
           // calibration target
-          #ifndef FACTORY_TEST
+          #if !FACTORY_TEST
           PRINT_CH_INFO("BlockWorld", "BlockWorld.AddAndUpdateObjects.NonConfirmingObservation",
                         "Added non-confirming visual observation for %d", objSeen->GetID().GetValue() );
           #endif
