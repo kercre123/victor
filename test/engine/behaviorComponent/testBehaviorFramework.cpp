@@ -117,6 +117,11 @@ void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseB
   if(shouldCallInitOnBase){
     auto& bei = _behaviorComponent->GetComponent<BehaviorExternalInterface>(BCComponentID::BehaviorExternalInterface);
     baseBehavior->Init(bei);
+
+    ICozmoBehavior* cozmoBehavior = dynamic_cast<ICozmoBehavior*>(baseBehavior);
+    if( cozmoBehavior ){
+      cozmoBehavior->InitBehaviorOperationModifiers();
+    }
   }
   if(initializeBehavior != nullptr){
     initializeBehavior(_behaviorComponent->_components);
@@ -156,7 +161,7 @@ void DoTicks_(TestBehaviorFramework& testFramework, Robot& robot, TestBehaviorWi
     behaviorComponent.Update(robot, currentActivityName, behaviorDebugStr);
     
     updateTicks++;
-    ASSERT_EQ(behavior._updateCount, updateTicks) << "behavior not ticked as often as it should be";
+    ASSERT_EQ(behavior._updateCount, updateTicks) << "behavior not ticked as often as it should be. i=" << i;
     
     // If the test behavior with helpers' helper finishes it automatically cancels and won't be activated anymore 
     behaviorIsActive = (behavior._currentActivationState == IBehavior::ActivationState::Activated);

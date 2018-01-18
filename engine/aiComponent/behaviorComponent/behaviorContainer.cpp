@@ -203,6 +203,10 @@ void BehaviorContainer::Init(BehaviorExternalInterface& behaviorExternalInterfac
   for(auto& behaviorMap: _idToBehaviorMap){
     behaviorMap.second->Init(behaviorExternalInterface);
   }
+
+  for(auto& behaviorMap: _idToBehaviorMap){
+    behaviorMap.second->InitBehaviorOperationModifiers();
+  }
 }
 
 
