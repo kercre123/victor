@@ -64,6 +64,7 @@ public:
    * This function is used mainly for testing the class and debugging
    */
   void GetTrainingData(cv::Mat& trainingSamples, cv::Mat& trainingLabels) const;
+  void SetTrainingData(const cv::Mat& trainingSamples, const cv::Mat& trainingLabels);
 
   /*
    * Predict the class of a single pixel (1 is drivable, 0 is not)

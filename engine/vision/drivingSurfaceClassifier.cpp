@@ -19,6 +19,7 @@
 #include "util/fileUtils/fileUtils.h"
 
 #include <fstream>
+#include <typeinfo>
 
 #define DEBUG_WRITE_DATA false
 // support macro
@@ -228,6 +229,12 @@ bool DrivingSurfaceClassifier::TrainFromFiles(const char *positiveDataFileName, 
           classes);
 
   return Train(inputElements, classes, numberOfPositives);
+}
+
+void DrivingSurfaceClassifier::SetTrainingData(const cv::Mat& trainingSamples, const cv::Mat& trainingLabels)
+{
+  _trainingSamples = trainingSamples;
+  _trainingLabels = trainingLabels;
 }
 
 //void DrivingSurfaceClassifier::ClassifyImage(const Vision::ImageRGB& image, Vision::Image& outputMask) const
@@ -643,17 +650,28 @@ DTDrivingSurfaceClassifier::DTDrivingSurfaceClassifier(const std::string& serial
 uchar DTDrivingSurfaceClassifier::PredictClass(const std::vector<FeatureType>& values) const
 {
 
-  // we need to copy since DTree requires float as input
-  cv::Mat_<float> inputRow(1, int(values.size()));
-  auto rowItr = inputRow.begin();
-  auto valuesItr = values.begin();
-  // copying all the elements into a mat
-  for (; valuesItr != values.end(); valuesItr++, rowItr++) {
-    *rowItr = float(*valuesItr);
+  DEV_ASSERT(values.size() == _dtree->getVarCount(), "DTDrivingSurfaceClassifier.PredictClass.WrongInputSize");
+
+  cv::Mat_<float> inputRow;
+  if (typeid(FeatureType) == typeid(float)) {
+    inputRow = cv::Mat_<float>(values).reshape(1, 1); // make it a single row
+  }
+  else {
+    // we need to copy since DTree requires float as input
+    // TODO can the Mat_ constructor just do this?
+
+    inputRow = cv::Mat_<float>(1, int(values.size()));
+    auto rowItr = inputRow.begin();
+    auto valuesItr = values.begin();
+    // copying all the elements into a mat
+    for (; valuesItr != values.end(); valuesItr++, rowItr++) {
+      *rowItr = float(*valuesItr);
+    }
   }
 
   std::vector<float> result;
-  _dtree->predict(inputRow, result);
+  const auto& tree = *_dtree;
+  tree.predict(inputRow, result);
 
   DEV_ASSERT(result.size() == 1, "DTDrivingSurfaceClassifier.PredictClass.EmptyResultVector");
   return uchar(result[0]);
@@ -707,32 +725,27 @@ bool DTDrivingSurfaceClassifier::Train(const cv::Mat& allInputs, const cv::Mat& 
 
 bool DTDrivingSurfaceClassifier::Serialize(const char *filename)
 {
-  cv::FileStorage fs(filename, cv::FileStorage::WRITE);
-  if (! fs.isOpened()) {
-    PRINT_NAMED_ERROR("DTDrivingSurfaceClassifier.Serialize.CantOpenFile", "Error: can't open file %s", filename);
-    return false;
-  }
 
-  // TODO this doesn't follow the OpenCV approach of fs<<"DTree"<<(*_dtree), but that doesn't compile :(
-  _dtree->write(fs);
-
-  // TODO this doesn't compile
-//  fs << "Dtree" << (*_dtree);
+  _dtree->save(filename);
 
   return true;
 }
 
 bool DTDrivingSurfaceClassifier::DeSerialize(const char *filename)
 {
-  cv::FileStorage fs(filename, cv::FileStorage::READ);
-  if (! fs.isOpened()) {
-    PRINT_NAMED_ERROR("DTDrivingSurfaceClassifier.Serialize.CantOpenFile", "Error: can't open file %s", filename);
-    return false;
+
+  if (!Anki::Util::FileUtils::FileExists(filename)) {
+    PRINT_NAMED_ERROR("DTDrivingSurfaceClassifier.DeSerialize.FileDoesntExist", "Error: file %s doesn't exist!",
+                      filename);
   }
 
-  _dtree = cv::ml::DTrees::create();
-  const cv::FileNode node = fs.root();
-  _dtree->read(node);
+  _dtree = cv::ml::DTrees::load<cv::ml::DTrees>(filename);
+
+  if (_dtree->empty()) {
+    PRINT_NAMED_ERROR("DTDrivingSurfaceClassifier.DeSerialize.ErrorWhileDeserializing", "Error: dtree is empty after"
+        "loading from %s", filename);
+    return false;
+  }
   return true;
 
 }
