@@ -31,6 +31,7 @@ If you have a question that you get answered (e.g. in a Slack channel) which mig
 * I can `adb connect` to Victor and ping it but I can't deploy or access the shell
   - Run `adb devices`, make sure only one device, Victor, is listed
   - If Victor is listed as being `offline`, power cycle the robot. Multiple devices might have been connected or adb got into a bad state possibly due to the network connection changing while you were connected
+  - Another solution to Victor being `offline` is to connect with the `victor-ble-cli` tool and run `restart-adb` (you'll have to run `adb connect` again on your computer)
   
 * I can't connect or ping Victor, he doesn't seem to be connected to wifi
   - Use the [BLE-CLI](../tools/victor-ble-cli) tool to connect over BLE and configure wifi
