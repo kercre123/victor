@@ -407,7 +407,7 @@ namespace Anki {
                                                              f32 headAngle_rad)
     : IAction("SearchForNearbyObjectAction",
               RobotActionType::SEARCH_FOR_NEARBY_OBJECT,
-              (u8)AnimTrackFlag::BODY_TRACK)
+              (u8)AnimTrackFlag::NO_TRACKS)
     , _compoundAction()
     , _desiredObjectID(desiredObjectID)
     , _objectObservedDuringSearch(false)
@@ -518,9 +518,6 @@ namespace Anki {
 
       AddToCompoundAction(new WaitAction(afterSecondTurnWait_s));
 
-      // Prevent the compound action from locking tracks (the PanAndTiltAction handles it itself)
-      _compoundAction.ShouldSuppressTrackLocking(true);
-
       // Go ahead and do the first Update for the compound action so we don't
       // "waste" the first CheckIfDone call doing so. Proceed so long as this
       // first update doesn't _fail_
@@ -555,12 +552,6 @@ namespace Anki {
 
     void SearchForNearbyObjectAction::AddToCompoundAction(IActionRunner* action)
     {
-      // in addition to whichever tracks the action is using, also lock the head and lift so that they don't
-      // move during idles
-      const u8 bodyAndHead = ((u8)AnimTrackFlag::BODY_TRACK | (u8)AnimTrackFlag::HEAD_TRACK);
-      const u8 tracksToLock = action->GetTracksToLock() | bodyAndHead;
-      action->SetTracksToLock( tracksToLock );
-
       _compoundAction.AddAction(action);
     }
 

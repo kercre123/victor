@@ -101,7 +101,19 @@ RSYNC_BIN_DIR=(${TOPLEVEL}/tools/rsync)
 source android_env.sh
 
 # get device IP Address
-DEVICE_IP_ADDRESS=`($ADB devices) | grep -o "[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}"`
+DEVICE_IP_ADDRESS=`$ADB shell ip addr show wlan0 | grep "inet\s" | awk '{print $2}' | awk -F'/' '{print $1}'`
+if [ -z $DEVICE_IP_ADDRESS ]; then
+  DEVICE_IP_ADDRESS=`$ADB shell ip addr show lo | grep "inet\s" | awk '{print $2}' | awk -F'/' '{print $1}'`
+  if [ -z $DEVICE_IP_ADDRESS ]; then
+    echo "no valid android device found"
+    exit 1
+  fi
+
+  DEVICE_IP_ADDRESS="$DEVICE_IP_ADDRESS:6010"
+  $ADB forward tcp:6010 tcp:1873
+else
+  DEVICE_IP_ADDRESS="$DEVICE_IP_ADDRESS:1873"
+fi
 
 # delete all old bundles from asset folder if REMOVE_ALL_ASSETS=1
 if [ $REMOVE_ALL_ASSETS -eq 1 ]; then
@@ -118,9 +130,14 @@ pushd ${ASSETSDIR} > /dev/null 2>&1
 set +e
 $ADB shell [ -f "$DEVICE_RSYNC_BIN_DIR/rsync.bin" ]
 HAS_RSYNC=$?
+$ADB shell [ -f "$DEVICE_RSYNC_CONF_DIR/rsyncd.conf" ]
+HAS_RSYNC_CONF=$?
 set -e
 
-if [ $FORCE_PUSH_ASSETS -eq 1 ] || [ $REMOVE_ALL_ASSETS -eq 1 ] || [ $HAS_RSYNC -ne 0 ]; then
+if [ $FORCE_PUSH_ASSETS -eq 1 ] || 
+   [ $REMOVE_ALL_ASSETS -eq 1 ] || 
+   [ $HAS_RSYNC -ne 0 ] || 
+   [ $HAS_RSYNC_CONF -ne 0 ]; then
 
   echo "loading rsync to device"
   $ADB shell mkdir -p ${DEVICE_RSYNC_BIN_DIR}
