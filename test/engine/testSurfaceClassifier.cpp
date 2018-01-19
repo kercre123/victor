@@ -481,8 +481,7 @@ TEST(SurfaceClassifier, DTClassifier_TestMeanStdData) {
 
 TEST(SurfaceClassifier, GroundClassifier_NoiseRemoval) {
 
-  Json::Value root;
-  Json::Value& config = root["GroundPlaneClassifier"];
+  Json::Value config;
   {
     config["MaxDepth"] = 7;
     config["MinSampleCount"] = 10;
@@ -490,10 +489,10 @@ TEST(SurfaceClassifier, GroundClassifier_NoiseRemoval) {
     config["Use1SERule"] = true;
     config["PositiveWeight"] = 1.0f;
     config["OnTheFlyTrain"] = false;
-    config["FileOrDirName"] = "test/overheadMap/selectiveAnnotation/deskClassifier.json";
+    config["FileOrDirName"] = "config/engine/vision/groundClassifier/deskClassifier.json";
   }
 
-  Anki::Cozmo::GroundPlaneClassifier clf(root, cozmoContext);
+  Anki::Cozmo::GroundPlaneClassifier clf(config, cozmoContext);
 
   Anki::Cozmo::DebugImageList <Anki::Vision::ImageRGB> debugImageList;
   std::list<Anki::Cozmo::OverheadEdgeFrame> outEdges;

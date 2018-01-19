@@ -690,6 +690,9 @@ bool DTRawPixelsClassifier::DeSerialize(const char *filename)
         "loading from %s", filename);
     return false;
   }
+
+  PRINT_CH_DEBUG("VisionSystem","DTRawPixelsClassifier.DeSerialize.Success", "Successfully loaded file %s",
+                 filename);
   return true;
 
 }

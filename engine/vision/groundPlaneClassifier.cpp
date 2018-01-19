@@ -54,20 +54,18 @@ GroundPlaneClassifier::GroundPlaneClassifier(const Json::Value& config, const Co
 
   DEV_ASSERT(context != nullptr, "GroundPlaneClassifier.ContextCantBeNULL");
 
-  const Json::Value& detectionConfig = config["GroundPlaneClassifier"];
-
-  // TODO Classifier and extractor (with their parameters should be passed at config time!
-  _classifier.reset(new DTRawPixelsClassifier(detectionConfig, context));
+  // TODO Classifier and extractor (with their parameters) should be passed at config time!
+  _classifier.reset(new DTRawPixelsClassifier(config, context));
   _extractor.reset(new MeanStdFeaturesExtractor(1));
 
   // Train or load serialized file?
   bool onTheFlyTrain;
-  if (!JsonTools::GetValueOptional(detectionConfig, "OnTheFlyTrain", onTheFlyTrain)) {
+  if (!JsonTools::GetValueOptional(config, "OnTheFlyTrain", onTheFlyTrain)) {
     PRINT_NAMED_ERROR("GroundPlaneClassifier.MissingOnTheFlyTrain","Variable OnTheFlyTrain has to be specified!");
     return;
   }
   std::string path;
-  if (!JsonTools::GetValueOptional(detectionConfig, "FileOrDirName", path)) {
+  if (!JsonTools::GetValueOptional(config, "FileOrDirName", path)) {
     PRINT_NAMED_ERROR("GroundPlaneClassifier.MissingFileOrDirName","Variable FileOrDirName has to be specified!");
     return;
   }
@@ -104,6 +102,7 @@ Result GroundPlaneClassifier::Update(const Vision::ImageRGB& image, const Vision
     return RESULT_FAIL;
   }
 
+  PRINT_CH_DEBUG("VisionSystyem", "GroundPlaneClassifier.Update.Starting","");
   // TODO Probably STEP 1 and 2 and 3 can be combined in a single pass
 
   // STEP 1: Obtain the overhead ground plane image
@@ -214,7 +213,8 @@ Result GroundPlaneClassifier::Update(const Vision::ImageRGB& image, const Vision
 
   // Actually return the resulting edges in the provided list
   outEdges.emplace_back(std::move(edgeFrame));
-  
+
+  PRINT_CH_DEBUG("VisionSystyem", "GroundPlaneClassifier.Update.Stopping","");
   return RESULT_OK;
 }
 
