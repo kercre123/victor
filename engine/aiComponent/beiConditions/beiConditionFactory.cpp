@@ -12,7 +12,7 @@
 
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 
-#include "engine/aiComponent/beiConditions/conditions/conditionAlwaysRun.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionTrue.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionCloudIntentPending.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionExpressNeedsTransition.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionFacePositionUpdated.h"
@@ -52,9 +52,9 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
   IBEIConditionPtr strategy = nullptr;
 
   switch (strategyType) {
-    case BEIConditionType::AlwaysRun:
+    case BEIConditionType::TrueCondition:
     {
-      strategy = std::make_shared<ConditionAlwaysRun>(config);
+      strategy = std::make_shared<ConditionTrue>(config);
       break;
     }
     case BEIConditionType::CloudIntentPending:

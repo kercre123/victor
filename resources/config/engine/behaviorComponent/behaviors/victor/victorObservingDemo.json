@@ -187,7 +187,7 @@
         {
           "to": "Observing",
           "condition": {
-            "conditionType": "AlwaysRun" 
+            "conditionType": "TrueCondition" 
           }
         }
       ]
@@ -213,7 +213,7 @@
         {
           "to": "Observing",
           "condition": {
-            "conditionType": "AlwaysRun" 
+            "conditionType": "TrueCondition" 
           }
         }
       ]
@@ -230,7 +230,7 @@
           // fall back to observing if can't eat after driving off the charger
           "to": "Observing",
           "condition": {
-            "conditionType": "AlwaysRun"  // TODO:(bn) rename this type
+            "conditionType": "TrueCondition"
           }
         }
       ]
@@ -247,8 +247,8 @@
           // fall back to observing if can't eat after driving off the charger
           "to": "Observing",
           "condition": {
-            "conditionType": "AlwaysRun"  // TODO:(bn) rename this type
-          } // TODO:(bn) add "default" of "AlwaysRun" if nothing is specified?
+            "conditionType": "TrueCondition"
+          }
         }
       ]
     },
@@ -259,7 +259,7 @@
         {
           "to": "Socializing",
           "condition": {
-            "conditionType": "AlwaysRun"  // TODO:(bn) rename this type
+            "conditionType": "TrueCondition"
           }
         }
       ]
@@ -296,7 +296,7 @@
         {
           "to": "ObservingOnCharger",
           "condition": {
-            "conditionType": "AlwaysRun" 
+            "conditionType": "TrueCondition" 
           }
         }
       ]
@@ -315,7 +315,7 @@
           // TODO:(bn) this doesn't work right now because FindAndGoToHome never stops unless it find a charger
           "to": "FailedToFindCharger",
           "condition": {
-            "conditionType": "AlwaysRun" 
+            "conditionType": "TrueCondition" 
           }
         }
       ]
@@ -339,7 +339,7 @@
         {
           "to": "Napping",
           "condition": {
-            "conditionType": "AlwaysRun" 
+            "conditionType": "TrueCondition" 
           }
         }
       ]

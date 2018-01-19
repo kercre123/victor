@@ -11,7 +11,7 @@ namespace Cozmo {
 enum uint_8 BEIConditionType {
   Invalid,
 
-  AlwaysRun,
+  TrueCondition, // (note: name can't be True due to clad rules)
   CloudIntentPending,
   ExpressNeedsTransition,
   FacePositionUpdated,
@@ -26,8 +26,8 @@ enum uint_8 BEIConditionType {
   RobotShaken,
   RobotTouchGesture,
   Lambda,
-  Timer,
-  Not,
+  Timer, // TODO: rename to TimerInRange,
+  Not, // TODO: rename to  Negate,
   OnCharger,
 }
 

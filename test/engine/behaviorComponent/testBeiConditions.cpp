@@ -50,7 +50,7 @@ class TestCondition : public IBEICondition
 public:
   explicit TestCondition()
     // use an arbitrary type to make the system happy
-    : IBEICondition(IBEICondition::GenerateBaseConditionConfig(BEIConditionType::AlwaysRun))
+    : IBEICondition(IBEICondition::GenerateBaseConditionConfig(BEIConditionType::TrueCondition))
     {
     }
 
@@ -149,7 +149,7 @@ TEST(BeiConditions, True)
 {
   const std::string json = R"json(
   {
-    "conditionType": "AlwaysRun" 
+    "conditionType": "TrueCondition" 
   })json";
 
   IBEIConditionPtr cond;
@@ -307,7 +307,7 @@ TEST(BeiConditions, NotTrue)
   {
     "conditionType": "Not",
     "subCondition": {
-      "conditionType": "AlwaysRun"
+      "conditionType": "TrueCondition"
     }
   })json";
 
