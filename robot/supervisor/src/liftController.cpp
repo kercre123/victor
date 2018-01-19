@@ -567,7 +567,7 @@ namespace Anki {
           if (IsInPosition() || IMUFilter::IsPickedUp() || ProxSensors::IsAnyCliffDetected()) {
             // Stop messing with the lift! Going limp until you do!
             Messages::SendMotorAutoEnabledMsg(MotorID::MOTOR_LIFT, false);
-            DisableInternal(true);
+            Disable(true);
           } else {
             // Burnout protection triggered. Recalibrating.
             StartCalibrationRoutine(true);
@@ -628,7 +628,7 @@ namespace Anki {
             return RESULT_OK;
           } else if (currTime >= enableAtTime_ms_) {
             Messages::SendMotorAutoEnabledMsg(MotorID::MOTOR_LIFT, true);
-            EnableInternal();
+            Enable();
           } else {
             return RESULT_OK;
           }
