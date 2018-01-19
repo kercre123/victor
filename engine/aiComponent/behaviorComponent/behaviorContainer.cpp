@@ -55,6 +55,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenTest.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenWaitToStart.h"
 
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDispatchAfterShake.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherQueue.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherRandom.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherRerun.h"
@@ -862,6 +863,11 @@ ICozmoBehaviorPtr BehaviorContainer::CreateBehaviorBase(BehaviorClass behaviorTy
     case BehaviorClass::ObservingOnCharger:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorObservingOnCharger(config));
+      break;
+    }
+    case BehaviorClass::DispatchAfterShake:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorDispatchAfterShake(config));
       break;
     }
   }

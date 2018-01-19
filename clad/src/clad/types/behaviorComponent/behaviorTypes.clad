@@ -119,6 +119,8 @@ enum uint_8 BehaviorClass {
   DispatcherQueue,
   DispatcherRandom,
   DispatcherScoring,
+  
+  DispatchAfterShake,
 
   // Victor / demo behavior
   VictorObservingDemo,
@@ -379,6 +381,7 @@ enum uint_8 BehaviorID {
   ShortLookAroundForFaceAndCube,
 
   DevImageCapture,
+  DevBaseBehavior,
 
   Wait,
   Wait_TestInjectable // BehaviorID used by tests to create fake behaviors
