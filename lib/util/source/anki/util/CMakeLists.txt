@@ -6,6 +6,13 @@ include(android_strip)
 
 anki_build_cxx_library(util ${ANKI_SRCLIST_DIR})
 
+#
+# Create output files named 'libankiutil' to prevent collision with MacOS 'libutil'.
+# Target name remains 'util' for convenience of downstream projects.
+#
+
+set_target_properties(util PROPERTIES OUTPUT_NAME ankiutil)
+
 target_include_directories(util 
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
