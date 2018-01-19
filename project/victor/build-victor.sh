@@ -243,28 +243,14 @@ if [ $CONFIGURE -eq 1 ]; then
     else
         METABUILD_VERBOSE=""
     fi
-    ${BUILD_TOOLS}/metabuild/metabuild.py $METABUILD_VERBOSE -o ${GEN_SRC_DIR} \
-        androidHAL/BUILD.in \
-        animProcess/BUILD.in \
-        clad/BUILD.in \
-        cloud/BUILD.in \
-        coretech/common/BUILD.in \
-        coretech/common/clad/BUILD.in \
-        coretech/vision/BUILD.in \
-        coretech/vision/clad/BUILD.in \
-        coretech/planning/BUILD.in \
-        coretech/messaging/BUILD.in \
-        cubeBleClient/BUILD.in \
-        engine/BUILD.in \
-        engine/tools/BUILD.in \
-        lib/util/source/anki/util/BUILD.in \
-        lib/util/source/anki/utilUnitTest/BUILD.in \
-        osState/BUILD.in \
-        resources/BUILD.in \
-        robot/BUILD.in \
-        robot/clad/BUILD.in \
-        simulator/BUILD.in \
-        test/BUILD.in
+
+    # Scan for BUILD.in files
+    METABUILD_INPUTS=`find . -name BUILD.in`
+
+    # Process BUILD.in files
+    ${BUILD_TOOLS}/metabuild/metabuild.py $METABUILD_VERBOSE \
+        -o ${GEN_SRC_DIR} \
+        ${METABUILD_INPUTS} 
 
     if [ $GEN_SRC_ONLY -eq 1 ]; then
         exit 0

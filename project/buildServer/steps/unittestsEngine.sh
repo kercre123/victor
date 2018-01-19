@@ -52,7 +52,7 @@ echo "Entering directory \`${SCRIPTDIR}'"
 cd $SCRIPTDIR
 
 : ${TOPLEVEL:=`$GIT rev-parse --show-toplevel`}
-BUILDPATH=${TOPLEVEL}/_build/${PLATFORM}/${CONFIGURATION}/test
+BUILDPATH=${TOPLEVEL}/_build/${PLATFORM}/${CONFIGURATION}/test/engine
 
 XML="*GoogleTest.xml"
 LOG=cozmoEngineGoogleTest.log
