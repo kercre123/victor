@@ -10,8 +10,9 @@
 static ContactData rxData;
 static int rxDataIndex;
 
-static ContactData txData;
-static int txDataIndex;
+static uint8_t txData[64];
+static int txReadIndex;
+static int txWriteIndex;
 
 static const ContactData boot_msg = {"\xFF\xFF\xFF\xFF\nbooted\n"};
 
@@ -33,23 +34,30 @@ void Contacts::init(void) {
 
   NVIC_SetPriority(USART2_IRQn, PRIORITY_CONTACTS_COMMS);
   NVIC_EnableIRQ(USART2_IRQn);
-  
-  memset(&rxData, 0, sizeof(ContactData));
-  memset(&txData, 0, sizeof(ContactData));
+
+  memset(&rxData, 0, sizeof(rxData));
   rxDataIndex = 0;
-  txDataIndex = 0;
-  
+  txReadIndex = 0;
+  txWriteIndex = 0;
+
   Contacts::forward( boot_msg );
 }
 
 void Contacts::forward(const ContactData& pkt) {
   Analog::delayCharge();
-
   NVIC_DisableIRQ(USART2_IRQn);
-  memcpy(&txData, &pkt, sizeof(ContactData));
-  txDataIndex = 0;
+  memcpy(&txData, &pkt.data, sizeof(pkt.data));
 
+  for (int i = 0; i < sizeof(pkt.data); i++) {
+    uint8_t byte = pkt.data[i];
+    if (!byte) continue ;
+    txData[txWriteIndex++] = byte;
+    if (txWriteIndex >= sizeof(txData)) txWriteIndex = 0;
+  }
+  
+  USART2->CR1 &= ~USART_CR1_RE;
   USART2->CR1 |= USART_CR1_TXEIE;
+
   NVIC_EnableIRQ(USART2_IRQn);
 }
 
@@ -58,11 +66,10 @@ void Contacts::tick(void) {
     ContactData pkt;
 
     NVIC_DisableIRQ(USART2_IRQn);
-    memcpy(&pkt, &rxData, sizeof(ContactData));  
+    memcpy(&pkt, &rxData, sizeof(ContactData));
     memset(&rxData, 0, sizeof(ContactData));
     rxDataIndex = 0;
     NVIC_EnableIRQ(USART2_IRQn);
-
     Comms::enqueue(PAYLOAD_CONT_DATA, &pkt, sizeof(pkt));
   }
 }
@@ -70,21 +77,22 @@ void Contacts::tick(void) {
 extern "C" void USART2_IRQHandler(void) {
   // Transmit data
   if (USART2->ISR & USART_ISR_TXE) {
-    if (txDataIndex < sizeof(txData)) {
-      uint8_t byte = txData.data[txDataIndex++];
-
-      if (byte > 0) { 
-        USART2->TDR = byte;
-      } else {
-        txDataIndex = sizeof(txData);
-      }
-    }
-
-    if (txDataIndex >= sizeof(txData)) {
+    if (txReadIndex != txWriteIndex) {
+      USART2->TDR = txData[txReadIndex++];
+      if (txReadIndex >= sizeof(txData)) txReadIndex = 0;
+    } else {
       USART2->CR1 &= ~USART_CR1_TXEIE;
+      USART2->CR1 |= USART_CR1_TCIE;
     }
   }
 
+  if (USART2->ISR & USART_ISR_TC) {
+    if (txReadIndex == txWriteIndex) {
+      USART2->CR1 &= ~USART_CR1_TCIE;
+      USART2->CR1 |= USART_CR1_RE;
+    }
+  }
+  
   // Receive data
   if (USART2->ISR & USART_ISR_RXNE) {
     volatile uint8_t rxd = USART2->RDR;
@@ -95,4 +103,3 @@ extern "C" void USART2_IRQHandler(void) {
     }
   }
 }
-  
