@@ -136,7 +136,10 @@ Blockly.Blocks['operator_random'] = {
   init: function() {
     this.jsonInit(
       {
+
         "message0": "%{BKY_OPERATORS_PICK_RANDOM_SCRATCH_2}", // *** ANKI CHANGE ***
+        //"message0": "pick random %1 to %2",
+
         "args0": [
           {
             "type": "input_value",
@@ -232,7 +235,10 @@ Blockly.Blocks['operator_and'] = {
    */
   init: function() {
     this.jsonInit({
+
       "message0": "%{BKY_OPERATORS_AND_SCRATCH_2}", // *** ANKI CHANGE ***
+      //"message0": "%1 and %2",
+
       "args0": [
         {
           "type": "input_value",
@@ -258,7 +264,10 @@ Blockly.Blocks['operator_or'] = {
    */
   init: function() {
     this.jsonInit({
+
       "message0": "%{BKY_OPERATORS_OR_SCRATCH_2}", // *** ANKI CHANGE ***
+      //"message0": "%1 or %2",
+
       "args0": [
         {
           "type": "input_value",
@@ -284,7 +293,10 @@ Blockly.Blocks['operator_not'] = {
    */
   init: function() {
     this.jsonInit({
+
       "message0": "%{BKY_OPERATORS_NOT_SCRATCH_2}", // *** ANKI CHANGE ***
+      //"message0": "not %1",
+
       "args0": [
         {
           "type": "input_value",
@@ -305,7 +317,10 @@ Blockly.Blocks['operator_join'] = {
    */
   init: function() {
     this.jsonInit({
+
       "message0": "%{BKY_OPERATORS_JOIN_SCRATCH_2}", // *** ANKI CHANGE ***
+      //"message0": "join %1 %2",
+
       "args0": [
         {
           "type": "input_value",
@@ -329,7 +344,10 @@ Blockly.Blocks['operator_letter_of'] = {
    */
   init: function() {
     this.jsonInit({
+
       "message0": "%{BKY_OPERATORS_LETTER_X_OF_SCRATCH_2}", // *** ANKI CHANGE ***
+      //"message0": "letter %1 of %2",
+
       "args0": [
         {
           "type": "input_value",
@@ -353,7 +371,10 @@ Blockly.Blocks['operator_length'] = {
    */
   init: function() {
     this.jsonInit({
+
       "message0": "%{BKY_OPERATORS_LENGTH_OF_SCRATCH_2}", // *** ANKI CHANGE ***
+      //"message0": "length of %1",
+
       "args0": [
         {
           "type": "input_value",
@@ -374,7 +395,7 @@ Blockly.Blocks['operator_contains'] = {
   init: function() {
     this.jsonInit(
       {
-        "message0": "%1 contains %2?",
+        "message0": "%1 contains %2?", // TODO Fix missing translation
         "args0": [
           {
             "type": "input_value",
@@ -399,7 +420,10 @@ Blockly.Blocks['operator_mod'] = {
   init: function() {
     this.jsonInit(
       {
+
         "message0": "%{BKY_OPERATORS_MOD_SCRATCH_2}", // *** ANKI CHANGE ***
+        //"message0": "%1 mod %2",
+
         "args0": [
           {
             "type": "input_value",
@@ -424,7 +448,10 @@ Blockly.Blocks['operator_round'] = {
   init: function() {
     this.jsonInit(
       {
+
         "message0": "%{BKY_OPERATORS_ROUND_SCRATCH_2}", // *** ANKI CHANGE ***
+        //"message0": "round %1",
+
         "args0": [
           {
             "type": "input_value",
@@ -445,12 +472,16 @@ Blockly.Blocks['operator_mathop'] = {
   init: function() {
     this.jsonInit(
       {
-        "message0": "%{BKY_OPERATORS_MATH_OP_SCRATCH_2}",
+
+        "message0": "%{BKY_OPERATORS_MATH_OP_SCRATCH_2}", // *** ANKI CHANGE ***
+        //"message0": "%1 of %2",
+
         "args0": [
           {
             "type": "field_dropdown",
             "name": "OPERATOR",
             "options": [
+              // *** ANKI CHANGE ***
               ['%{BKY_OPERATORS_ABS_SCRATCH_2}', 'abs'],
               ['%{BKY_OPERATORS_FLOOR_SCRATCH_2}', 'floor'],
               ['%{BKY_OPERATORS_CEILING_SCRATCH_2}', 'ceiling'],
@@ -465,6 +496,20 @@ Blockly.Blocks['operator_mathop'] = {
               ['%{BKY_OPERATORS_LOG_SCRATCH_2}', 'log'],
               ['%{BKY_OPERATORS_EULER_MULT_SCRATCH_2}', 'e ^'],
               ['%{BKY_OPERATORS_TEN_MULT_SCRATCH_2}', '10 ^']
+              // ['abs', 'abs'],
+              // ['floor', 'floor'],
+              // ['ceiling', 'ceiling'],
+              // ['sqrt', 'sqrt'],
+              // ['sin', 'sin'],
+              // ['cos', 'cos'],
+              // ['tan', 'tan'],
+              // ['asin', 'asin'],
+              // ['acos', 'acos'],
+              // ['atan', 'atan'],
+              // ['ln', 'ln'],
+              // ['log', 'log'],
+              // ['e ^', 'e ^'],
+              // ['10 ^', '10 ^']
             ]
           },
           {

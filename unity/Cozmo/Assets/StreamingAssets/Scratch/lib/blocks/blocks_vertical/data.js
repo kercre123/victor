@@ -59,7 +59,10 @@ Blockly.Blocks['data_setvariableto'] = {
    */
   init: function() {
     this.jsonInit({
+
       "message0": "%{BKY_DATA_SET_VAR_SCRATCH_2}",  // *** ANKI CHANGE ***
+      //"message0": "set %1 to %2",
+
       "args0": [
         {
           "type": "field_variable",
@@ -83,7 +86,10 @@ Blockly.Blocks['data_changevariableby'] = {
    */
   init: function() {
     this.jsonInit({
+
       "message0": "%{BKY_DATA_CHANGE_VAR_SCRATCH_2}",  // *** ANKI CHANGE ***
+      //"message0": "change %1 by %2",
+
       "args0": [
         {
           "type": "field_variable",

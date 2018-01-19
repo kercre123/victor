@@ -98,6 +98,7 @@ Blockly.Toolbox.prototype.width = 90;
  */
 Blockly.Toolbox.prototype.height = 0;
 
+// *** ANKI CHANGE ***
 Blockly.Toolbox.prototype.top = 0;
 
 Blockly.Toolbox.prototype.selectedItem_ = null;
@@ -468,7 +469,7 @@ Blockly.Toolbox.CategoryMenu.prototype.populate = function(domTree) {
     // Create a single column of categories
     for (var i = 0; i < categories.length; i++) {
       var child = categories[i];
-      var row = goog.dom.createDom('div', 'scratchCategoryMenuRowVertical');
+      var row = goog.dom.createDom('div', 'scratchCategoryMenuRowVertical'); // *** ANKI CHANGE ***
 
       // *** ANKI CHANGE ***
       // Make categories less tall on phones.

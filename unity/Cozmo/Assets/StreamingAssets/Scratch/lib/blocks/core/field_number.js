@@ -213,7 +213,7 @@ Blockly.FieldNumber.prototype.position_ = function() {
   // If we can fit it, render below the shadow block
   var primaryX = position.x + bBox.width / 2;
   var primaryY = position.y + bBox.height +
-                 Blockly.FieldNumber.DROPDOWN_Y_PADDING;
+       Blockly.FieldNumber.DROPDOWN_Y_PADDING;
   // If we can't fit it, render above the entire parent block
   var secondaryX = primaryX;
   // *** Anki change ***
@@ -221,7 +221,7 @@ Blockly.FieldNumber.prototype.position_ = function() {
   var secondaryY = position.y;
   if (!window.isVertical) {
     secondaryY = secondaryY - (Blockly.BlockSvg.MIN_BLOCK_Y * scale) -
-                 (Blockly.BlockSvg.FIELD_Y_OFFSET * scale);
+       (Blockly.BlockSvg.FIELD_Y_OFFSET * scale);
   }
 
   Blockly.DropDownDiv.setBoundsElement(

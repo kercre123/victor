@@ -590,7 +590,10 @@ Blockly.Blocks['sensing_current'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "%{BKY_SENSING_CURRENT_SCRATCH_2}",
+
+      "message0": "%{BKY_SENSING_CURRENT_SCRATCH_2}", // *** ANKI CHANGE ***
+      //"message0": "current %1",
+
       "args0": [
         {
           "type": "input_value",
@@ -619,6 +622,7 @@ Blockly.Blocks['sensing_currentmenu'] = {
             "type": "field_dropdown",
             "name": "CURRENTMENU",
             "options": [
+              // *** ANKI CHANGE ***
               ['%{BKY_SENSING_DROPDOWN_YEAR_SCRATCH_2}', 'YEAR'],
               ['%{BKY_SENSING_DROPDOWN_MONTH_SCRATCH_2}', 'MONTH'],
               ['%{BKY_SENSING_DROPDOWN_DATE_SCRATCH_2}', 'DATE'],
@@ -626,6 +630,13 @@ Blockly.Blocks['sensing_currentmenu'] = {
               ['%{BKY_SENSING_DROPDOWN_HOUR_SCRATCH_2}', 'HOUR'],
               ['%{BKY_SENSING_DROPDOWN_MINUTE_SCRATCH_2}', 'MINUTE'],
               ['%{BKY_SENSING_DROPDOWN_SECOND_SCRATCH_2}', 'SECOND']
+              // ['year', 'YEAR'],
+              // ['month', 'MONTH'],
+              // ['date', 'DATE'],
+              // ['day of week', 'DAYOFWEEK'],
+              // ['hour', 'HOUR'],
+              // ['minute', 'MINUTE'],
+              // ['second', 'SECOND']
             ]
           }
         ],

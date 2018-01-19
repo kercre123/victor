@@ -36,7 +36,10 @@ Blockly.Blocks['event_whenflagclicked'] = {
   init: function() {
     this.jsonInit({
       "id": "event_whenflagclicked",
-      "message0": "%{BKY_EVENTS_GREEN_FLAG_SCRATCH_2}",
+
+      "message0": "%{BKY_EVENTS_GREEN_FLAG_SCRATCH_2}", // *** ANKI CHANGE ***
+      //"message0": "when %1 clicked",
+
       "args0": [
         {
           "type": "field_image",
@@ -74,12 +77,16 @@ Blockly.Blocks['event_whenbroadcastreceived'] = {
   init: function() {
     this.jsonInit({
       "id": "event_whenbroadcastreceived",
-      "message0": "%{BKY_EVENTS_BROADCAST_HAT}",
+
+      "message0": "%{BKY_EVENTS_BROADCAST_HAT}", // *** ANKI CHANGE ***
+      //"message0": "when I receive %1",
+
       "args0": [
         {
           "type": "field_dropdown",
           "name": "BROADCAST_OPTION",
           "options": [
+            // ANKI CHANGE
             ['%{BKY_EVENTS_BROADCAST_MESSAGE_1_SCRATCH_2}', 'message1'],
             ['%{BKY_EVENTS_BROADCAST_MESSAGE_2_SCRATCH_2}', 'message2'],
             ['%{BKY_EVENTS_BROADCAST_MESSAGE_3_SCRATCH_2}', 'message3'],
@@ -106,6 +113,16 @@ Blockly.Blocks['event_whenbroadcastreceived'] = {
             ['%{BKY_EVENTS_BROADCAST_MESSAGE_24_SCRATCH_2}', 'message24'],
             ['%{BKY_EVENTS_BROADCAST_MESSAGE_25_SCRATCH_2}', 'message25']
             /*['%{BKY_EVENTS_BROADCAST_NEW_MESSAGE_SCRATCH_2}', 'new message']*/
+            // ['message1', 'message1'],
+            // ['message2', 'message2'],
+            // ['message3', 'message3'],
+            // ['message4', 'message4'],
+            // ['message5', 'message5'],
+            // ['message6', 'message6'],
+            // ['message7', 'message7'],
+            // ['message8', 'message8'],
+            // ['message9', 'message9'],
+            // ['new message', 'new message']
           ]
         }
       ],
@@ -179,6 +196,7 @@ Blockly.Blocks['event_broadcast_menu'] = {
             "type": "field_dropdown",
             "name": "BROADCAST_OPTION",
             "options": [
+              // *** ANKI CHANGE ***
               ['%{BKY_EVENTS_BROADCAST_MESSAGE_1_SCRATCH_2}', 'message1'],
               ['%{BKY_EVENTS_BROADCAST_MESSAGE_2_SCRATCH_2}', 'message2'],
               ['%{BKY_EVENTS_BROADCAST_MESSAGE_3_SCRATCH_2}', 'message3'],
@@ -205,6 +223,16 @@ Blockly.Blocks['event_broadcast_menu'] = {
               ['%{BKY_EVENTS_BROADCAST_MESSAGE_24_SCRATCH_2}', 'message24'],
               ['%{BKY_EVENTS_BROADCAST_MESSAGE_25_SCRATCH_2}', 'message25']
               /*['%{BKY_EVENTS_BROADCAST_NEW_MESSAGE_SCRATCH_2}', 'new message']*/
+              // ['message1', 'message1'],
+              // ['message2', 'message2'],
+              // ['message3', 'message3'],
+              // ['message4', 'message4'],
+              // ['message5', 'message5'],
+              // ['message6', 'message6'],
+              // ['message7', 'message7'],
+              // ['message8', 'message8'],
+              // ['message9', 'message9'],
+              // ['new message', 'new message']
             ]
           }
         ],
@@ -224,7 +252,10 @@ Blockly.Blocks['event_broadcast'] = {
   init: function() {
     this.jsonInit({
       "id": "event_broadcast",
-      "message0": "%{BKY_EVENTS_BROADCAST_SCRATCH_2}",
+      
+      "message0": "%{BKY_EVENTS_BROADCAST_SCRATCH_2}", // *** ANKI CHANGE ***
+      //"message0": "broadcast %1",
+
       "args0": [
         {
           "type": "input_value",
@@ -244,7 +275,10 @@ Blockly.Blocks['event_broadcastandwait'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "%{BKY_EVENTS_BROADCAST_AND_WAIT}",
+      
+      "message0": "%{BKY_EVENTS_BROADCAST_AND_WAIT}", // *** ANKI CHANGE ***
+      //"message0": "broadcast %1 and wait",
+
       "args0": [
         {
           "type": "input_value",
