@@ -9,7 +9,7 @@
 
 #define DEBUG_PATH 0
 
-#ifdef CORETECH_BASESTATION
+#ifdef CORETECH_ENGINE
 #define DEBUG_PATH_APPEND 0
 #include <stdio.h>
 #include <float.h>
@@ -538,14 +538,14 @@ namespace Anki
       capacity_ = MAX_NUM_PATH_SEGMENTS;
 
 #ifdef CORETECH_ROBOT
-  #if defined CORETECH_BASESTATION
-  #error "only one of CORETECH_BASESTATION or CORETECH_ROBOT can be defined"
+  #if defined CORETECH_ENGINE
+  #error "only one of CORETECH_ENGINE or CORETECH_ROBOT can be defined"
   #endif
       path_ = __pathSegmentStackForRobot;
-#elif defined CORETECH_BASESTATION
+#elif defined CORETECH_ENGINE
       path_ = new PathSegment[MAX_NUM_PATH_SEGMENTS];
 #else
-#error "one of CORETECH_BASESTATION or CORETECH_ROBOT must be defined"
+#error "one of CORETECH_ENGINE or CORETECH_ROBOT must be defined"
 #endif
 
       Clear();
@@ -556,14 +556,14 @@ namespace Anki
       capacity_ = MAX_NUM_PATH_SEGMENTS;
 
 #ifdef CORETECH_ROBOT
-  #if defined CORETECH_BASESTATION
-  #error "only one of CORETECH_BASESTATION or CORETECH_ROBOT can be defined"
+  #if defined CORETECH_ENGINE
+  #error "only one of CORETECH_ENGINE or CORETECH_ROBOT can be defined"
   #endif
       path_ = __pathSegmentStackForRobot;
-#elif defined CORETECH_BASESTATION
+#elif defined CORETECH_ENGINE
       path_ = new PathSegment[MAX_NUM_PATH_SEGMENTS];
 #else
-#error "one of CORETECH_BASESTATION or CORETECH_ROBOT must be defined"
+#error "one of CORETECH_ENGINE or CORETECH_ROBOT must be defined"
 #endif
 
       Clear();
@@ -573,7 +573,7 @@ namespace Anki
 
     Path::~Path()
     {
-#ifdef CORETECH_BASESTATION
+#ifdef CORETECH_ENGINE
       delete [] path_;
       path_ = nullptr;
 #endif

@@ -105,6 +105,8 @@ namespace Cozmo {
       bool    _moveEyes = true;
       AnimationTag _eyeShiftTag = kNotAnimatingTag;
       
+      bool _isInitialized = false;
+      
     }; // class TurnInPlaceAction
 
     // A simple compound action which is useful for identifying blocks that are close
@@ -328,6 +330,7 @@ namespace Cozmo {
       
       AnimationTag _eyeShiftTag = kNotAnimatingTag;
       
+      bool        _motionCommanded = false;
       bool        _motionStarted = false;
       
     };  // class MoveHeadToAngleAction
@@ -383,6 +386,7 @@ namespace Cozmo {
       bool        _waitUntilMovementStops = true;
       
       bool        _inPosition;
+      bool        _motionCommanded = false;      
       bool        _motionStarted = false;
       
     }; // class MoveLiftToHeightAction

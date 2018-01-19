@@ -77,7 +77,12 @@
       "interruptingTransitions": [
         {
           "to": "Observing",
-          "preDefinedStrategyName": "OffCharger"
+          "condition": {
+            "conditionType": "Negate",
+            "operand": {
+              "conditionType": "OnCharger"
+            }
+          }
         },
         {
           "to": "DriveOffChargerIntoFeeding",
@@ -91,8 +96,8 @@
       "nonInterruptingTransitions": [
         {
           "to": "DriveOffChargerIntoObserving",
-          "strategy": {
-            "strategyType": "InNeedsBracket",
+          "condition": {
+            "conditionType": "InNeedsBracket",
             "need": "Energy",
             "needBracket": "Critical"
           }
@@ -110,7 +115,12 @@
       "interruptingTransitions": [
         {
           "to": "Observing",
-          "preDefinedStrategyName": "OffCharger"
+          "condition": {
+            "conditionType": "Negate",
+            "operand": {
+              "conditionType": "OnCharger"
+            }
+          }
         }
       ],
       "nonInterruptingTransitions": [
@@ -120,9 +130,9 @@
         },
         {
           "to": "ObservingOnCharger",
-          "strategy": {
-            "strategyType": "Timer",
-            "timeout": 120.0
+          "condition": {
+            "conditionType": "TimerInRange",
+            "begin_s": 120.0
           }
         }
       ]
@@ -133,7 +143,9 @@
       "interruptingTransitions": [
         {
           "to": "ObservingOnChargerRecentlyPlaced",
-          "preDefinedStrategyName": "OnCharger"
+          "condition": {
+            "conditionType": "OnCharger"
+          }
         },
         {
           "to": "Feeding",
@@ -157,23 +169,25 @@
       "interruptingTransitions": [
         {
           "to": "ObservingOnChargerRecentlyPlaced",
-          "preDefinedStrategyName": "OnCharger"
+          "condition": {
+            "conditionType": "OnCharger"
+          }
         }
       ],
       "nonInterruptingTransitions": [
         {
           "to": "Observing",
-          "strategy": {
-            "strategyType": "Timer",
-            "timeout": 30.0
+          "condition": {
+            "conditionType": "TimerInRange",
+            "begin_s": 30.0
           }
         }
       ],
       "exitTransitions": [
         {
           "to": "Observing",
-          "strategy": {
-            "strategyType": "AlwaysRun" 
+          "condition": {
+            "conditionType": "TrueCondition" 
           }
         }
       ]
@@ -184,7 +198,9 @@
       "interruptingTransitions": [
         {
           "to": "ObservingOnChargerRecentlyPlaced",
-          "preDefinedStrategyName": "OnCharger"
+          "condition": {
+            "conditionType": "OnCharger"
+          }
         }
       ],
       "nonInterruptingTransitions": [
@@ -196,8 +212,8 @@
       "exitTransitions": [
         {
           "to": "Observing",
-          "strategy": {
-            "strategyType": "AlwaysRun" 
+          "condition": {
+            "conditionType": "TrueCondition" 
           }
         }
       ]
@@ -213,8 +229,8 @@
         {
           // fall back to observing if can't eat after driving off the charger
           "to": "Observing",
-          "strategy": {
-            "strategyType": "AlwaysRun"  // TODO:(bn) rename this type
+          "condition": {
+            "conditionType": "TrueCondition"
           }
         }
       ]
@@ -230,9 +246,9 @@
         {
           // fall back to observing if can't eat after driving off the charger
           "to": "Observing",
-          "strategy": {
-            "strategyType": "AlwaysRun"  // TODO:(bn) rename this type
-          } // TODO:(bn) add "default" of "AlwaysRun" if nothing is specified?
+          "condition": {
+            "conditionType": "TrueCondition"
+          }
         }
       ]
     },
@@ -242,8 +258,8 @@
       "exitTransitions": [
         {
           "to": "Socializing",
-          "strategy": {
-            "strategyType": "AlwaysRun"  // TODO:(bn) rename this type
+          "condition": {
+            "conditionType": "TrueCondition"
           }
         }
       ]
@@ -254,14 +270,19 @@
       "interruptingTransitions": [
         {
           "to": "WakingUp",
-          "preDefinedStrategyName": "OffCharger"
+          "condition": {
+            "conditionType": "Negate",
+            "operand": {
+              "conditionType": "OnCharger"
+            }
+          }
         }
       ],
       "nonInterruptingTransitions": [
         {
           "to": "WakingUp",
-          "strategy": {
-            "strategyType": "InNeedsBracket",
+          "condition": {
+            "conditionType": "InNeedsBracket",
             "need": "Energy",
             "needBracket": "Critical"
           }
@@ -274,8 +295,8 @@
       "exitTransitions": [
         {
           "to": "ObservingOnCharger",
-          "strategy": {
-            "strategyType": "AlwaysRun" 
+          "condition": {
+            "conditionType": "TrueCondition" 
           }
         }
       ]
@@ -286,13 +307,15 @@
       "exitTransitions": [
         {
           "to": "ObservingOnChargerRecentlyPlaced",
-          "preDefinedStrategyName": "OnCharger"
+          "condition": {
+            "conditionType": "OnCharger"
+          }
         },
         {
           // TODO:(bn) this doesn't work right now because FindAndGoToHome never stops unless it find a charger
           "to": "FailedToFindCharger",
-          "strategy": {
-            "strategyType": "AlwaysRun" 
+          "condition": {
+            "conditionType": "TrueCondition" 
           }
         }
       ]
@@ -309,12 +332,14 @@
       "exitTransitions": [
         {
           "to": "ObservingOnChargerRecentlyPlaced",
-          "preDefinedStrategyName": "OnCharger"
+          "condition": {
+            "conditionType": "OnCharger"
+          }
         },
         {
           "to": "Napping",
-          "strategy": {
-            "strategyType": "AlwaysRun" 
+          "condition": {
+            "conditionType": "TrueCondition" 
           }
         }
       ]

@@ -38,7 +38,7 @@ MountChargerAction::MountChargerAction(ObjectID chargerID,
 ActionResult MountChargerAction::Init()
 {
   // Reset the compound actions to ensure they get re-configured:
-  _turnAndMountAction.reset();
+  _mountAction.reset();
   _driveForRetryAction.reset();
   
   // Verify that we have a charger in the world that matches _chargerID
@@ -55,7 +55,7 @@ ActionResult MountChargerAction::Init()
   GetRobot().SetCharger(_chargerID);
 
   // Set up the turnAndMount compound action
-  ActionResult result = ConfigureTurnAndMountAction();
+  ActionResult result = ConfigureMountAction();
   
   return result;
 }
@@ -66,8 +66,8 @@ ActionResult MountChargerAction::CheckIfDone()
   auto result = ActionResult::RUNNING;
   
   // Tick the turnAndMount action (if needed):
-  if (_turnAndMountAction != nullptr) {
-    result = _turnAndMountAction->Update();
+  if (_mountAction != nullptr) {
+    result = _mountAction->Update();
     // If the action fails and the robot has already turned toward
     // the charger, then position for a retry
     if ((result != ActionResult::SUCCESS) &&
@@ -85,7 +85,7 @@ ActionResult MountChargerAction::CheckIfDone()
                             "Turning and mounting the charger failed (action result = %s). Driving forward to position for a retry.",
                             EnumToString(result));
         // Finished with turnAndMountAction
-        _turnAndMountAction.reset();
+        _mountAction.reset();
         // We need to add the driveForRetryAction:
         result = ConfigureDriveForRetryAction();
         if (result != ActionResult::SUCCESS) {
@@ -110,54 +110,25 @@ ActionResult MountChargerAction::CheckIfDone()
 }
 
 
-ActionResult MountChargerAction::ConfigureTurnAndMountAction()
+ActionResult MountChargerAction::ConfigureMountAction()
 {
-  DEV_ASSERT(_turnAndMountAction == nullptr, "MountChargerAction.ConfigureTurnAndMountAction.AlreadyConfigured");
-  _turnAndMountAction.reset(new CompoundActionSequential());
-  _turnAndMountAction->ShouldSuppressTrackLocking(true);
-  _turnAndMountAction->SetRobot(&GetRobot());
-
-  const auto* charger = GetRobot().GetBlockWorld().GetLocatedObjectByID(_chargerID, ObjectFamily::Charger);
-  if ((charger == nullptr) ||
-      (charger->GetType() != ObjectType::Charger_Basic)) {
-    PRINT_NAMED_WARNING("MountChargerAction.ConfigureTurnAndMountAction.InvalidCharger",
-                        "No charger object with ID %d in block world!",
-                        _chargerID.GetValue());
-    return ActionResult::BAD_OBJECT;
-  }
-  
-  // The charger's origin is at the 'front' edge of the ramp (furthest from the marker).
-  // This value is the distance from the origin into the charger of the point that the
-  // robot should angle towards. Setting this distance to 0 means the robot will angle
-  // itself toward the charger origin.
-  const float distanceIntoChargerToAimFor_mm = 30.f;
-  Pose3d poseToAngleToward(0.f, Z_AXIS_3D(),
-                           {distanceIntoChargerToAimFor_mm, 0.f, 0.f});
-  poseToAngleToward.PreComposeWith(charger->GetPose());
-  poseToAngleToward.SetParent(GetRobot().GetWorldOrigin());
-  
-  const auto targetToRobotVec = ComputeVectorBetween(GetRobot().GetDriveCenterPose(), poseToAngleToward);
-  const float angleToTurnTo = atan2f(targetToRobotVec.y(), targetToRobotVec.x());
-
-  auto turnAction = new TurnInPlaceAction(angleToTurnTo,
-                                          true);
-  turnAction->SetMaxSpeed(DEG_TO_RAD(100.f));
-  turnAction->SetAccel(DEG_TO_RAD(300.f));
-  
-  _turnAndMountAction->AddAction(turnAction);
+  DEV_ASSERT(_mountAction == nullptr, "MountChargerAction.ConfigureMountAction.AlreadyConfigured");
+  _mountAction.reset(new CompoundActionSequential());
+  _mountAction->ShouldSuppressTrackLocking(true);
+  _mountAction->SetRobot(&GetRobot());
   
   // Raise lift slightly so it doesn't drag against the ground (if necessary)
   const float backingUpLiftHeight_mm = 45.f;
   if (GetRobot().GetLiftHeight() < backingUpLiftHeight_mm) {
-    _turnAndMountAction->AddAction(new MoveLiftToHeightAction(backingUpLiftHeight_mm));
+    _mountAction->AddAction(new MoveLiftToHeightAction(backingUpLiftHeight_mm));
   }
   
   // Finally, actually back up into the charger
-  _turnAndMountAction->AddAction(new BackupOntoChargerAction(_chargerID,
-                                                             _useCliffSensorCorrection));
+  _mountAction->AddAction(new BackupOntoChargerAction(_chargerID,
+                                                      _useCliffSensorCorrection));
   
   // Lower the lift back to the ground
-  _turnAndMountAction->AddAction(new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK));
+  _mountAction->AddAction(new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK));
   
   return ActionResult::SUCCESS;
 }
@@ -176,9 +147,50 @@ ActionResult MountChargerAction::ConfigureDriveForRetryAction()
   return ActionResult::SUCCESS;
 }
 
+#pragma mark ---- TurnToAlignWithChargerAction ----
+  
+TurnToAlignWithChargerAction::TurnToAlignWithChargerAction(ObjectID chargerID)
+  : TurnInPlaceAction(0.f,  // actual angle will be set in Init()
+                      true) // absolute turn
+  , _chargerID(chargerID)
+{
+}
+  
+ActionResult TurnToAlignWithChargerAction::Init()
+{
+  const auto* charger = GetRobot().GetBlockWorld().GetLocatedObjectByID(_chargerID, ObjectFamily::Charger);
+  if ((charger == nullptr) ||
+      (charger->GetType() != ObjectType::Charger_Basic)) {
+    PRINT_NAMED_WARNING("TurnToAlignWithChargerAction.Init.InvalidCharger",
+                        "No charger object with ID %d in block world!",
+                        _chargerID.GetValue());
+    return ActionResult::BAD_OBJECT;
+  }
+  // Compute the angle to turn.
+  //
+  // The charger's origin is at the 'front' edge of the ramp (furthest from the marker).
+  // This value is the distance from the origin into the charger of the point that the
+  // robot should angle towards. Setting this distance to 0 means the robot will angle
+  // itself toward the charger origin.
+  const float distanceIntoChargerToAimFor_mm = 30.f;
+  Pose3d poseToAngleToward(0.f, Z_AXIS_3D(),
+                           {distanceIntoChargerToAimFor_mm, 0.f, 0.f});
+  poseToAngleToward.PreComposeWith(charger->GetPose());
+  poseToAngleToward.SetParent(GetRobot().GetWorldOrigin());
+  
+  const auto targetToRobotVec = ComputeVectorBetween(GetRobot().GetDriveCenterPose(), poseToAngleToward);
+  const float angleToTurnTo = atan2f(targetToRobotVec.y(), targetToRobotVec.x());
+  
+  SetRequestedTurnAngle(angleToTurnTo);
+  SetMaxSpeed(DEG_TO_RAD(100.f));
+  SetAccel(DEG_TO_RAD(300.f));
+  
+  return BaseClass::Init();
+}
+  
 #pragma mark ---- BackupOntoChargerAction ----
 
-BackupOntoChargerAction::BackupOntoChargerAction( ObjectID chargerID,
+BackupOntoChargerAction::BackupOntoChargerAction(ObjectID chargerID,
                                                  bool useCliffSensorCorrection)
   : IDockAction(chargerID,
                 "BackupOntoCharger",
@@ -247,6 +259,7 @@ DriveToAndMountChargerAction::DriveToAndMountChargerAction(const ObjectID& objec
                                                useManualSpeed);
   driveToAction->SetPreActionPoseAngleTolerance(DEG_TO_RAD(15.f));
   AddAction(driveToAction);
+  AddAction(new TurnToAlignWithChargerAction(objectID));
   AddAction(new MountChargerAction(objectID, useCliffSensorCorrection));
 }
   

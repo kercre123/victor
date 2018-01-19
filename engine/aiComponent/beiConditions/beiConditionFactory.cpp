@@ -12,21 +12,23 @@
 
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 
-#include "engine/aiComponent/beiConditions/conditions/conditionAlwaysRun.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionTrue.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionCloudIntentPending.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionExpressNeedsTransition.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionFacePositionUpdated.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionFrustration.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionInNeedsBracket.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionNegate.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionObjectInitialDetection.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectMoved.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectPositionUpdated.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionObstacleDetected.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionOnCharger.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionPetInitialDetection.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotPlacedOnSlope.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotShaken.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotTouchGesture.h"
-#include "engine/aiComponent/beiConditions/conditions/conditionTimer.h"
-
+#include "engine/aiComponent/beiConditions/conditions/conditionTimerInRange.h"
 
 #include "clad/types/behaviorComponent/beiConditionTypes.h"
 
@@ -50,9 +52,9 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
   IBEIConditionPtr strategy = nullptr;
 
   switch (strategyType) {
-    case BEIConditionType::AlwaysRun:
+    case BEIConditionType::TrueCondition:
     {
-      strategy = std::make_shared<ConditionAlwaysRun>(config);
+      strategy = std::make_shared<ConditionTrue>(config);
       break;
     }
     case BEIConditionType::CloudIntentPending:
@@ -78,6 +80,11 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
     case BEIConditionType::InNeedsBracket:
     {
       strategy = std::make_shared<ConditionInNeedsBracket>(config);
+      break;
+    }
+    case BEIConditionType::ObjectInitialDetection:
+    {
+      strategy = std::make_shared<ConditionObjectInitialDetection>(config);
       break;
     }
     case BEIConditionType::ObjectMoved:
@@ -115,11 +122,22 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
       strategy = std::make_shared<ConditionRobotTouchGesture>(config);
       break;
     }
-    case BEIConditionType::Timer:
+    case BEIConditionType::TimerInRange:
     {
-      strategy = std::make_shared<ConditionTimer>(config);
+      strategy = std::make_shared<ConditionTimerInRange>(config);
       break;
     }
+    case BEIConditionType::Negate:
+    {
+      strategy = std::make_shared<ConditionNegate>(config);
+      break;
+    }
+    case BEIConditionType::OnCharger:
+    {
+      strategy = std::make_shared<ConditionOnCharger>(config);
+      break;
+    }
+    
     case BEIConditionType::Lambda:
     {
       DEV_ASSERT(false, "BEIConditionFactory.CreateWantsToRunStrategy.CantCreateLambdaFromConfig");

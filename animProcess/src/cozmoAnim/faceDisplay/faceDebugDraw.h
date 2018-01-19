@@ -17,6 +17,8 @@
 
 #include "coretech/common/shared/types.h"
 #include "coretech/common/engine/math/point.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
+
 #include <memory>
 
 namespace Anki {
@@ -30,16 +32,24 @@ namespace Vision {
 namespace Cozmo {
 
 namespace RobotInterface {
+  struct MicData;
   struct MicDirection;
-}
+} 
 
 class FaceDebugDraw {
 public:
   FaceDebugDraw();
 
   enum class DrawState {
-    None,
+    None = 0,
+    FAC  = 1, // Needs to be after None
+
+    GeneralInfo,
+    SensorInfo1,
+    SensorInfo2,
+    MicInfo,
     MicDirectionClock,
+    CustomText,
 
     Count
   };
@@ -48,12 +58,22 @@ public:
   DrawState GetDrawState() const { return _drawState; }
   void ChangeDrawState();
 
+  void SetShouldDrawFAC(bool draw);
+
   // Begin drawing functionality
   void DrawConfidenceClock(const RobotInterface::MicDirection& micData);
+  void DrawStateInfo(const RobotState& state);
+  void DrawMicInfo(const RobotInterface::MicData& micData);
+  void DrawFAC();
+  void SetCustomText(const RobotInterface::DrawTextOnScreen& text);
   
 private:
   DrawState                         _drawState = DrawState::None;
   std::unique_ptr<Vision::ImageRGB> _scratchDrawingImg;
+
+  // Draw the _scratchDrawingImg to the face
+  // Adds a debug menu page indicator in the top right
+  void DrawScratch();
 
   // Helper methods for drawing debug data to face
   void ClearFace();
@@ -63,6 +83,12 @@ private:
                         const Point2f& loc = {0, 0},
                         u32 textSpacing_pix = 10,
                         f32 textScale = 3.f);
+  
+  void DrawCustomText();
+
+  bool _drawFAC = false;
+
+  RobotInterface::DrawTextOnScreen _customText;
 };
 
 } // namespace Cozmo

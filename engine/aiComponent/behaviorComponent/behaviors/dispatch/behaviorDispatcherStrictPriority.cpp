@@ -36,13 +36,12 @@ BehaviorDispatcherStrictPriority::BehaviorDispatcherStrictPriority(const Json::V
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehaviorPtr BehaviorDispatcherStrictPriority::GetDesiredBehavior(
-  BehaviorExternalInterface& behaviorExternalInterface)
+ICozmoBehaviorPtr BehaviorDispatcherStrictPriority::GetDesiredBehavior()
 {
   // Iterate through available behaviors, and use the first one that is activated or wants to be activated
   // since this is the highest priority behavior
   for(const auto& entry: GetAllPossibleDispatches()) {
-    if(entry->IsActivated() || entry->WantsToBeActivated(behaviorExternalInterface)) {
+    if(entry->IsActivated() || entry->WantsToBeActivated()) {
       return entry;
     }
   }

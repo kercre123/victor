@@ -13,6 +13,11 @@
 #ifndef __Cozmo_Basestation_NVStorageComponent_H__
 #define __Cozmo_Basestation_NVStorageComponent_H__
 
+
+#include "engine/dependencyManagedComponent.h"
+#include "engine/robotComponents_fwd.h"
+
+
 #include "util/signals/simpleSignal_fwd.h"
 #include "util/helpers/noncopyable.h"
 #include "util/helpers/templateHelpers.h"
@@ -43,12 +48,26 @@ namespace RobotInterface {
 }
   
   
-class NVStorageComponent : private Util::noncopyable
+class NVStorageComponent : public IDependencyManagedComponent<RobotComponentID>, private Util::noncopyable
 {
 public: 
-
-  NVStorageComponent(Robot& inRobot, const CozmoContext* context);
+  NVStorageComponent();
   virtual ~NVStorageComponent();
+
+  //////
+  // IDependencyManagedComponent functions
+  //////
+  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
+  // Maintain the chain of initializations currently in robot - it might be possible to
+  // change the order of initialization down the line, but be sure to check for ripple effects
+  // when changing this function
+  virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
+    dependencies.insert(RobotComponentID::Map);
+  };
+  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
+  //////
+  // end IDependencyManagedComponent functions
+  //////
   
   // Get the maximum number of bytes that can be saved for the given tag
   u32 GetMaxSizeForEntryTag(NVStorage::NVEntryTag tag);
@@ -123,10 +142,10 @@ public:
   // Kevin's sandbox function for testing
   // For dev only!
   void Test();
-  
+
 private:
   
-  Robot&       _robot;
+  Robot*       _robot = nullptr;
   
   // Map of all stored data
   using TagDataMap = std::unordered_map<u32, std::vector<u8> >;
@@ -137,7 +156,7 @@ private:
   void WriteEntryToFile(u32 tag);
   
   // Path of NVStorage data folder
-  const std::string _kStoragePath;
+  std::string _kStoragePath;
 
 # ifdef SIMULATOR
   void LoadSimData();
@@ -213,6 +232,7 @@ private:
   
   // Only BehaviorFactoryTest should ever call this function since it is special and is writing factory data
   friend class BehaviorFactoryTest;
+  friend class BehaviorPlaypenTest;
   void EnableWritingFactory(bool enable) { _writingFactory = enable; }
   
 };

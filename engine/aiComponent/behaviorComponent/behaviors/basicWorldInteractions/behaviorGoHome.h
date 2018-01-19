@@ -10,11 +10,12 @@
 *
 **/
 
-#ifndef __Cozmo_Basestation_Behaviors_BehaviorGoHome_H__
-#define __Cozmo_Basestation_Behaviors_BehaviorGoHome_H__
+#ifndef __Engine_Behaviors_BehaviorGoHome_H__
+#define __Engine_Behaviors_BehaviorGoHome_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/smartFaceId.h"
+
+#include "clad/types/animationTrigger.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -30,17 +31,31 @@ protected:
   
 public:
   virtual ~BehaviorGoHome() override {}
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-
-  virtual bool CarryingObjectHandledInternally() const override{ return false;}
+  virtual bool WantsToBeActivatedBehavior() const override;
   
 protected:
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
+
+  virtual void OnBehaviorActivated() override;
 
 private:
   
+  void TransitionToTurn();
+  void TransitionToMountCharger();
+  void TransitionToPlayingNuzzleAnim();
+  
+  struct {
+    bool useCliffSensorCorrection = true;
+    AnimationTrigger turningAnimTrigger = AnimationTrigger::Count;
+    AnimationTrigger backupAnimTrigger = AnimationTrigger::Count;
+    AnimationTrigger nuzzleAnimTrigger = AnimationTrigger::Count;
+  } _params;
+  
+  void LoadConfig(const Json::Value& config);
+  
   std::unique_ptr<BlockWorldFilter> _homeFilter;
+  
+  ObjectID _chargerID;
   
 };
   
@@ -48,4 +63,4 @@ private:
 } // namespace Cozmo
 } // namespace Anki
 
-#endif // __Cozmo_Basestation_Behaviors_BehaviorGoHome_H__
+#endif // __Engine_Behaviors_BehaviorGoHome_H__

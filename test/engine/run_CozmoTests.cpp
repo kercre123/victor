@@ -2882,11 +2882,12 @@ int main(int argc, char ** argv)
     std::string path = aux.substr(0,pos);
 */
     std::string path = cwdPath;
-    resourcePath = path + "/resources";
+    resourcePath = path + "/../../assets/cozmo_resources";
     filesPath = path + "/files";
     cachePath = path + "/temp";
     externalPath = path + "/temp";
   } else {
+    // build server specifies configRoot and workRoot
     resourcePath = configRoot + "/resources";
     filesPath = workRoot + "/files";
     cachePath = workRoot + "/temp";

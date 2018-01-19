@@ -20,6 +20,7 @@
 #include "coretech/vision/engine/visionMarker.h"
 #include "coretech/vision/engine/faceTracker.h"
 #include "engine/components/nvStorageComponent.h"
+#include "engine/entity.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robotStateHistory.h"
 #include "engine/rollingShutterCorrector.h"
@@ -63,12 +64,28 @@ class VizManager;
   
 struct DockingErrorSignal;
 
-  class VisionComponent : public Util::noncopyable
+  class VisionComponent : public IDependencyManagedComponent<RobotComponentID>, public Util::noncopyable
   {
   public:
   
-    VisionComponent(Robot& robot, const CozmoContext* context);
+    VisionComponent();
     virtual ~VisionComponent();
+
+    //////
+    // IDependencyManagedComponent functions
+    //////
+    virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
+    // Maintain the chain of initializations currently in robot - it might be possible to
+    // change the order of initialization down the line, but be sure to check for ripple effects
+    // when changing this function
+    virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
+      dependencies.insert(RobotComponentID::Movement);
+    };
+    virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
+    //////
+    // end IDependencyManagedComponent functions
+    //////
+
     
     Result Init(const Json::Value& config);
 
@@ -140,7 +157,7 @@ struct DockingErrorSignal;
     Vision::Camera& GetCamera(void);
     
     const std::shared_ptr<Vision::CameraCalibration> GetCameraCalibration() const;
-    bool IsCameraCalibrationSet() const { return _camera.IsCalibrated(); }
+    bool IsCameraCalibrationSet() const { return _camera->IsCalibrated(); }
     Result ClearCalibrationImages();
     
     // If enabled, the camera calibration will be updated based on the
@@ -292,7 +309,7 @@ struct DockingErrorSignal;
 
     bool _isInitialized = false;
     
-    Robot& _robot;
+    Robot* _robot = nullptr;
     const CozmoContext* _context = nullptr;
     
     VisionSystem* _visionSystem = nullptr;
@@ -303,7 +320,7 @@ struct DockingErrorSignal;
     // Robot stores the calibration, camera just gets a reference to it
     // This is so we can share the same calibration data across multiple
     // cameras (e.g. those stored inside the pose history)
-    Vision::Camera            _camera;
+    std::unique_ptr<Vision::Camera> _camera;
     bool                      _enabled = false;
     
     bool   _isSynchronous = false;
@@ -393,15 +410,15 @@ struct DockingErrorSignal;
   }
   
   inline const Vision::Camera& VisionComponent::GetCamera(void) const {
-    return _camera;
+    return *_camera;
   }
   
   inline Vision::Camera& VisionComponent::GetCamera(void) {
-    return _camera;
+    return *_camera;
   }
   
   inline const std::shared_ptr<Vision::CameraCalibration> VisionComponent::GetCameraCalibration() const {
-    return _camera.GetCalibration();
+    return _camera->GetCalibration();
   }
   
   inline void VisionComponent::EnableVisionWhileMovingFast(bool enable) {
@@ -432,7 +449,7 @@ struct DockingErrorSignal;
   }
   
   inline void VisionComponent::StoreNextImageForCameraCalibration() {
-    StoreNextImageForCameraCalibration(Rectangle<s32>(-1,-1,-1, -1));
+    StoreNextImageForCameraCalibration(Rectangle<s32>(-1,-1,0,0));
   }
   
   inline void VisionComponent::StoreNextImageForCameraCalibration(const Rectangle<s32>& targetROI) {

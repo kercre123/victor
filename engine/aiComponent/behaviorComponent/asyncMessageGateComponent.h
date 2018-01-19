@@ -19,8 +19,11 @@
 #include "clad/robotInterface/messageRobotToEngineTag.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
+#include "engine/dependencyManagedComponent.h"
 
 #include "util/signals/simpleSignal_fwd.h"
+#include "util/helpers/noncopyable.h"
 
 #include <set>
 #include <unordered_map>
@@ -31,7 +34,7 @@ namespace Cozmo {
 class IBehavior;
 class IExternalInterface;
   
-class AsyncMessageGateComponent : private Util::noncopyable
+class AsyncMessageGateComponent : public IDependencyManagedComponent<BCComponentID>, private Util::noncopyable
 {
 public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -42,6 +45,16 @@ public:
                             RobotInterface::MessageHandler* robotInterface,
                             RobotID_t robotID);
   virtual ~AsyncMessageGateComponent() {};
+
+  //////
+  // IDependencyManagedComponent functions
+  //////
+  virtual void GetInitDependencies(BCCompIDSet& dependencies) const override {}
+  virtual void GetUpdateDependencies(BCCompIDSet& dependencies) const override {};
+  virtual void InitDependent(Cozmo::Robot* robot, const BCCompMap& dependentComponents) override {};
+  //////
+  // end IDependencyManagedComponent functions
+  //////
   
   void SubscribeToTags(IBehavior* subscriber, std::set<ExternalInterface::MessageGameToEngineTag>&& tags);
   void SubscribeToTags(IBehavior* subscriber, std::set<ExternalInterface::MessageEngineToGameTag>&& tags);

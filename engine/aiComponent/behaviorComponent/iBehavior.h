@@ -34,7 +34,7 @@ public:
   IBehavior(const std::string& idString);
   virtual ~IBehavior(){};
   
-  const std::string& GetPrintableID(){ return _idString;}
+  const std::string& GetPrintableID() const { return _idString;}
   
   // Function that allows the behavior to initialize variables/subscribe
   // through the behaviorExternalInterface
@@ -45,16 +45,16 @@ public:
   void OnEnteredActivatableScope();
   
   // Guaranteed to be ticked every tick that the behavior is within activatable scope
-  void Update(BehaviorExternalInterface& behaviorExternalInterface);
+  void Update();
   
   // Check to see if the behavior wants to run right now
-  bool WantsToBeActivated(BehaviorExternalInterface& behaviorExternalInterface) const;
+  bool WantsToBeActivated() const;
   
   // Informs the behavior that it has been activated
-  void OnActivated(BehaviorExternalInterface& behaviorExternalInterface);
+  void OnActivated();
   
   // Informs the behavior that it has been deactivated
-  void OnDeactivated(BehaviorExternalInterface& behaviorExternalInterface);
+  void OnDeactivated();
   
   // Function which informs the Behavior that it has fallen out of scope to be activated
   // the behavior should stop any processes it started on entering selectable scope
@@ -65,11 +65,11 @@ public:
 protected:
 
   // Called once after this behavior is constructed
-  virtual void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) { }
+  virtual void InitInternal() { }
 
   // Returns true if this behavior wants to be active, false otherwise
   // TODO:(bn) default to true??
-  virtual bool WantsToBeActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) const = 0;
+  virtual bool WantsToBeActivatedInternal() const = 0;
 
   // Called when this behavior has entered activatable scope (it could be delegated to)
   virtual void OnEnteredActivatableScopeInternal() { }
@@ -78,13 +78,13 @@ protected:
   virtual void OnLeftActivatableScopeInternal() { }
 
   // Called once per tick with the behavior is in activatable scope
-  virtual void UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) { }
+  virtual void UpdateInternal() { }
 
   // Called when this behavior becomes active and has control
-  virtual void OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) { }
+  virtual void OnActivatedInternal() { }
 
   // Called when this behavior is deactivated (it no longer has control)
-  virtual void OnDeactivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) { }
+  virtual void OnDeactivatedInternal() { }
   
   // Allow all behavior functions access to the bei after initialization
   BehaviorExternalInterface& GetBEI() const {assert(_beiWrapper); return _beiWrapper->_bei;}

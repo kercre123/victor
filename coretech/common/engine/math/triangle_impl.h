@@ -6,8 +6,8 @@
 //
 //
 
-#ifndef CORETECH_BASESTATION_MATH_TRIANGLE_IMPL_H
-#define CORETECH_BASESTATION_MATH_TRIANGLE_IMPL_H
+#ifndef CORETECH_ENGINE_MATH_TRIANGLE_IMPL_H
+#define CORETECH_ENGINE_MATH_TRIANGLE_IMPL_H
 
 
 #include "coretech/common/engine/math/triangle.h"
@@ -150,4 +150,4 @@ namespace Anki {
   
 } // namespace Anki
 
-#endif // CORETECH_BASESTATION_MATH_TRIANGLE_IMPL_H
+#endif // CORETECH_ENGINE_MATH_TRIANGLE_IMPL_H

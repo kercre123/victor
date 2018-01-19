@@ -2,9 +2,13 @@
 include(anki_build_cxx_compile_definitions)
 include(anki_build_cxx_compile_options)
 include(anki_build_source_list)
+include(anki_build_header_file_only_list)
 
 macro(anki_build_cxx_library target_name srclist_dir)
+
 anki_build_source_list(${target_name} ${srclist_dir})
+
+anki_build_header_file_only_list(${HEADERS})
 
 set(extra_argv ${ARGN})
 list(LENGTH extra_argv extra_argc)
@@ -33,7 +37,10 @@ target_compile_options(${target_name}
 endmacro()
 
 macro(anki_build_cxx_executable target_name srclist_dir)
+
 anki_build_source_list(${target_name} ${srclist_dir})
+
+anki_build_header_file_only_list(${HEADERS})
 
 set(extra_argv ${ARGN})
 list(LENGTH extra_argv extra_argc)

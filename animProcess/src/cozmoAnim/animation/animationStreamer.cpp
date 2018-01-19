@@ -17,12 +17,14 @@
 #include "coretech/common/engine/utils/timer.h"
 #include "cozmoAnim/animation/animationStreamer.h"
 //#include "cozmoAnim/animation/trackLayerManagers/faceLayerManager.h"
+
 #include "cozmoAnim/animation/cannedAnimationContainer.h"
 #include "cozmoAnim/animation/faceAnimationManager.h"
 #include "cozmoAnim/animation/proceduralFaceDrawer.h"
 #include "cozmoAnim/animation/trackLayerComponent.h"
 #include "cozmoAnim/audio/animationAudioClient.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
+#include "cozmoAnim/animProcessMessages.h"
 #include "cozmoAnim/cozmoAnimContext.h"
 #include "cozmoAnim/robotDataLoader.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
@@ -34,11 +36,10 @@
 #include "util/logging/logging.h"
 #include "util/time/universalTime.h"
 
-#include "cozmoAnim/engineMessages.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
-#include "clad/robotInterface/messageRobotToEngine_sendToEngine_helper.h"
-#include "clad/robotInterface/messageEngineToRobot_sendToRobot_helper.h"
+#include "clad/robotInterface/messageRobotToEngine_sendAnimToEngine_helper.h"
+#include "clad/robotInterface/messageEngineToRobot_sendAnimToRobot_helper.h"
 
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
@@ -48,7 +49,9 @@
 
 namespace Anki {
 namespace Cozmo {
-  
+
+  CONSOLE_VAR(bool, kProcFace_UseNoise, "ProceduralFace", false); // Victor vs Cozmo effect, no noise = lazy updates
+
   namespace{
     
   const char* kLogChannelName = "Animations";
@@ -458,7 +461,7 @@ namespace Cozmo {
           case AnimTrackFlag::LIFT_TRACK:
           case AnimTrackFlag::BODY_TRACK:
           case AnimTrackFlag::BACKPACK_LIGHTS_TRACK:
-            res = Messages::SendToRobot(*msg);
+            res = AnimProcessMessages::SendAnimToRobot(*msg);
             _tracksInUse |= (u8)track;
             break;
           default:
@@ -511,6 +514,18 @@ namespace Cozmo {
     }
     else
     {
+      if(!kProcFace_UseNoise) {
+        static ProceduralFace::EyeParamArray previousEyeParameters[2];
+
+        if (previousEyeParameters[ProceduralFace::WhichEye::Left] == procFace.GetParameters(ProceduralFace::WhichEye::Left) &&
+            previousEyeParameters[ProceduralFace::WhichEye::Right] == procFace.GetParameters(ProceduralFace::WhichEye::Right)) {
+          return;
+        }
+
+        previousEyeParameters[ProceduralFace::WhichEye::Left] = procFace.GetParameters(ProceduralFace::WhichEye::Left);
+        previousEyeParameters[ProceduralFace::WhichEye::Right] = procFace.GetParameters(ProceduralFace::WhichEye::Right);
+      }
+
       DEV_ASSERT(_context != nullptr, "AnimationStreamer.BufferFaceToSend.NoContext");
       DEV_ASSERT(_context->GetRandom() != nullptr, "AnimationStreamer.BufferFaceToSend.NoRNGinContext");
       ProceduralFaceDrawer::DrawFace(procFace, *_context->GetRandom(), _procFaceImg);
@@ -534,8 +549,9 @@ namespace Cozmo {
     if (kDisplayThermalThrottling && 
         allowOverlay &&
         OSState::getInstance()->IsThermalThrottling()) {
-      const Rectangle<s32> rect( 0, 0, 20, 20);
-      const Vision::PixelRGB565 pixel(255, 0, 0);
+
+      const Rectangle<f32> rect( 0, 0, 20, 20);
+      const ColorRGBA pixel(1.f, 0.f, 0.f);
       faceImg565.DrawFilledRect(rect, pixel);
     }
 
@@ -557,7 +573,7 @@ namespace Cozmo {
       return RESULT_OK;
     }
 
-    if (!RobotInterface::SendMessageToRobot(msg)) {
+    if (!RobotInterface::SendAnimToRobot(msg)) {
       return RESULT_FAIL;
     }
 
@@ -584,7 +600,7 @@ namespace Cozmo {
         memcpy(startMsg.animName, streamingAnimName.c_str(), streamingAnimName.length());
         startMsg.animName_length = streamingAnimName.length();
         startMsg.tag = _tag;
-        if (!RobotInterface::SendMessageToEngine(startMsg)) {
+        if (!RobotInterface::SendAnimToEngine(startMsg)) {
           return RESULT_FAIL;
         }
       }
@@ -619,7 +635,7 @@ namespace Cozmo {
         endMsg.animName_length = streamingAnimName.length();
         endMsg.tag = _tag;
         endMsg.wasAborted = abortingAnim;
-        if (!RobotInterface::SendMessageToEngine(endMsg)) {
+        if (!RobotInterface::SendAnimToEngine(endMsg)) {
           return RESULT_FAIL;
         }
       }
@@ -788,7 +804,7 @@ namespace Cozmo {
         eventMsg.event_id = eventKeyFrame.GetAnimEvent();
         eventMsg.timestamp = currTime_ms;
         eventMsg.tag = _tag;
-        RobotInterface::SendMessageToEngine(eventMsg);
+        RobotInterface::SendAnimToEngine(eventMsg);
 
         eventTrack.MoveToNextKeyFrame();
       }
@@ -914,7 +930,10 @@ namespace Cozmo {
         _wasAnimationInterruptedWithNothing = false;
       }
       
-      _trackLayerComponent->KeepFaceAlive(_liveAnimParams);
+      if(!FACTORY_TEST)
+      {
+        _trackLayerComponent->KeepFaceAlive(_liveAnimParams);
+      }
     }
     
     if(_streamingAnimation != nullptr) {
@@ -981,7 +1000,7 @@ namespace Cozmo {
       msg.lockedTracks             = _lockedTracks;
       msg.tracksInUse              = _tracksInUse;
 
-      RobotInterface::SendMessageToEngine(msg);
+      RobotInterface::SendAnimToEngine(msg);
       _numTicsToSendAnimState = kAnimStateReportingPeriod_tics;
     }
 
@@ -1056,14 +1075,14 @@ namespace Cozmo {
       {
         RobotInterface::MoveHead msg;
         msg.speed_rad_per_sec = 0;
-        RobotInterface::SendMessageToRobot(std::move(msg));
+        RobotInterface::SendAnimToRobot(std::move(msg));
       }
       
       if(whichTracks & (u8)AnimTrackFlag::LIFT_TRACK)
       {
         RobotInterface::MoveLift msg;
         msg.speed_rad_per_sec = 0;
-        RobotInterface::SendMessageToRobot(std::move(msg));
+        RobotInterface::SendAnimToRobot(std::move(msg));
       }
       
       if(whichTracks & (u8)AnimTrackFlag::BODY_TRACK)
@@ -1073,7 +1092,7 @@ namespace Cozmo {
         msg.rwheel_speed_mmps = 0;
         msg.lwheel_accel_mmps2 = 0;
         msg.rwheel_accel_mmps2 = 0;
-        RobotInterface::SendMessageToRobot(std::move(msg));
+        RobotInterface::SendAnimToRobot(std::move(msg));
       }
       
       _tracksInUse &= ~whichTracks;

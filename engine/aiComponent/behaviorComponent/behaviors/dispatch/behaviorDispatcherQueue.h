@@ -27,9 +27,9 @@ class BehaviorDispatcherQueue : public IBehaviorDispatcher
 
 protected:
   
-  virtual ICozmoBehaviorPtr GetDesiredBehavior(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void BehaviorDispatcher_OnActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void DispatcherUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual ICozmoBehaviorPtr GetDesiredBehavior() override;
+  virtual void BehaviorDispatcher_OnActivated() override;
+  virtual void DispatcherUpdate() override;
 
 private:
 

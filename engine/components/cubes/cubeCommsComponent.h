@@ -16,6 +16,7 @@
 #include "engine/cozmoObservableObject.h" // alias ActiveID
 
 #include "cubeBleClient/cubeBleClient.h" // alias BleFactoryId (should be moved to CLAD)
+#include "engine/entity.h"
 
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h" // Signal::SmartHandle
@@ -39,11 +40,26 @@ namespace ExternalInterface {
   class MessageEngineToGame;
 }
   
-class CubeCommsComponent : private Util::noncopyable
+class CubeCommsComponent : public IDependencyManagedComponent<RobotComponentID>, private Util::noncopyable
 {
 public:
-  CubeCommsComponent(Robot& robot);
+  CubeCommsComponent();
   ~CubeCommsComponent() = default;
+
+  //////
+  // IDependencyManagedComponent functions
+  //////
+  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
+  // Maintain the chain of initializations currently in robot - it might be possible to
+  // change the order of initialization down the line, but be sure to check for ripple effects
+  // when changing this function
+  virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
+    dependencies.insert(RobotComponentID::CubeAccel);
+  };
+  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
+  //////
+  // end IDependencyManagedComponent functions
+  //////
 
   void Update();
   
@@ -66,7 +82,7 @@ public:
   
 private:
   
-  Robot& _robot;
+  Robot* _robot = nullptr;
   
   CubeBleClient* _cubeBleClient;
   

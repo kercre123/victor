@@ -85,6 +85,8 @@ namespace {
     {ProceduralFace::Parameter::Saturation,        {false, true,  -1.f,  1.f, EyeParamCombineMethod::None,     {-1.f, 1.f}   }     },
     {ProceduralFace::Parameter::Lightness,         {false, true,  -1.f,  1.f, EyeParamCombineMethod::None,     {-1.f, 1.f}   }     },
     {ProceduralFace::Parameter::GlowSize,          {false, true,  -1.f, 0.5f, EyeParamCombineMethod::None,     {-1.f, 1.f}   }     },
+    {ProceduralFace::Parameter::HotSpotCenterX,    {false, true,   0.f, 0.0f, EyeParamCombineMethod::AverageIfBothUnset,     {-1.f, 1.f}   }     },
+    {ProceduralFace::Parameter::HotSpotCenterY,    {false, true,   0.f, 0.0f, EyeParamCombineMethod::AverageIfBothUnset,     {-1.f, 1.f}   }     },
   };
   
   static_assert( Util::FullEnumToValueArrayChecker::IsSequentialArray(kEyeParamInfoLUT),
@@ -184,7 +186,7 @@ void ProceduralFace::SetEyeArrayHelper(WhichEye eye, const std::vector<Value>& e
   const char* eyeStr = (eye == WhichEye::Left) ? kLeftEyeKey : kRightEyeKey;
 
   const size_t N = static_cast<size_t>(Parameter::NumParameters);
-  const size_t N_old = N - 3; // Before Saturation, Lightness, and Glow were added
+  const size_t N_old = N - 5; // Before Saturation, Lightness, Glow, and HotSpotCenterX/Y were added
   if(eyeArray.size() != N && eyeArray.size() != N_old)
   {
     PRINT_NAMED_WARNING("ProceduralFace.SetEyeArrayHelper.WrongNumParams",

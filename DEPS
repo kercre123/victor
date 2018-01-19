@@ -7,7 +7,7 @@
                 "branch": "branches/victor",
                 "version": "143"
             },
-            "cozmo-assets": {
+            "victor-animation-assets": {
                 "allow_extra_files": "True",
                 "extract_types_from_tar": [
                     ".json",
@@ -22,7 +22,7 @@
                 "additional_files": [
                     "${PROJECT_ROOT_DIR}/resources/config/engine/animations/"
                 ],
-                "version": "2553"
+                "version": "2571"
             },
             "victor-audio-assets": {
                 "allow_extra_files": "True",

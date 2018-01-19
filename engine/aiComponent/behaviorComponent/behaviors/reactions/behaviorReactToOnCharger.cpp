@@ -62,23 +62,23 @@ BehaviorReactToOnCharger::BehaviorReactToOnCharger(const Json::Value& config)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorReactToOnCharger::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorReactToOnCharger::WantsToBeActivatedBehavior() const
 {
   return true;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToOnCharger::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToOnCharger::OnBehaviorActivated()
 {
-  /**auto externalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
+  /**auto externalInterface = GetBEI().GetRobotExternalInterface().lock();
   if(externalInterface != nullptr){
     externalInterface->BroadcastToGame<ExternalInterface::GoingToSleep>(_triggerableFromVoiceCommand);
     externalInterface->BroadcastToEngine<StartIdleTimeout>(_timeTilSleepAnimation_s, _timeTilDisconnect_s);
   }**/
   
-  if(NeedId::Count == behaviorExternalInterface.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression()){
-    SmartPushIdleAnimation(behaviorExternalInterface, AnimationTrigger::Count);
+  if(NeedId::Count == GetBEI().GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression()){
+    SmartPushIdleAnimation(AnimationTrigger::Count);
   }
 
   DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::PlacedOnCharger));
@@ -87,14 +87,14 @@ void BehaviorReactToOnCharger::OnBehaviorActivated(BehaviorExternalInterface& be
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToOnCharger::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToOnCharger::OnBehaviorDeactivated()
 {
   _onChargerCanceled = false;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToOnCharger::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToOnCharger::BehaviorUpdate()
 {
   if(!IsActivated()){
     return;
@@ -109,7 +109,7 @@ void BehaviorReactToOnCharger::BehaviorUpdate(BehaviorExternalInterface& behavio
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToOnCharger::HandleWhileActivated(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToOnCharger::HandleWhileActivated(const GameToEngineEvent& event)
 {
   switch (event.GetData().GetTag())
   {

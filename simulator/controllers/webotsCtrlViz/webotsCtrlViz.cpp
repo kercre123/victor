@@ -32,7 +32,7 @@ int main(int argc, char **argv)
   // create platform
   const Anki::Util::Data::DataPlatform& dataPlatform = WebotsCtrlShared::CreateDataPlatformBS(argv[0], "webotsCtrlViz");
   // initialize logger
-  WebotsCtrlShared::DefaultAutoGlobalLogger autoLogger(dataPlatform, params.filterLog);
+  WebotsCtrlShared::DefaultAutoGlobalLogger autoLogger(dataPlatform, params.filterLog, params.colorizeStderrOutput);
 
   webots::Supervisor vizSupervisor;
   VizControllerImpl vizController(vizSupervisor);

@@ -56,14 +56,14 @@ BehaviorDevTurnInPlaceTest::BehaviorDevTurnInPlaceTest(const Json::Value& config
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorDevTurnInPlaceTest::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorDevTurnInPlaceTest::WantsToBeActivatedBehavior() const
 {
   return (ANKI_DEV_CHEATS != 0);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDevTurnInPlaceTest::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDevTurnInPlaceTest::OnBehaviorActivated()
 {
   Reset();
   
@@ -71,7 +71,7 @@ void BehaviorDevTurnInPlaceTest::OnBehaviorActivated(BehaviorExternalInterface& 
   DEV_ASSERT(_testInd == 0, "BehaviorDevTurnInPlaceTest.TestIndexNonzero");
   DEV_ASSERT(_nRunsPerTest > 0, "BehaviorDevTurnInPlaceTest.InvalidNRunsPerTest");
   
-  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  auto& robotInfo = GetBEI().GetRobotInfo();
   // Start the tests rolling
   const auto action = GenerateTestAction(robotInfo.GetPose(), _testInd);
   DelegateIfInControl(action, &BehaviorDevTurnInPlaceTest::ActionCallback);
@@ -79,7 +79,7 @@ void BehaviorDevTurnInPlaceTest::OnBehaviorActivated(BehaviorExternalInterface& 
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDevTurnInPlaceTest::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDevTurnInPlaceTest::OnBehaviorDeactivated()
 {
 
 }
@@ -96,9 +96,9 @@ void BehaviorDevTurnInPlaceTest::Reset()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDevTurnInPlaceTest::ActionCallback(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDevTurnInPlaceTest::ActionCallback()
 {
-  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  auto& robotInfo = GetBEI().GetRobotInfo();
   auto& currTest = _tests[_testInd];
   
   PRINT_CH_INFO(kChannelName,

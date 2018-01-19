@@ -17,7 +17,7 @@
 #include "util/helpers/templateHelpers.h"
 
 #if !defined(DEV_LOGGER_ENABLED)
-  #if defined(FACTORY_TEST)
+  #if FACTORY_TEST
     #define DEV_LOGGER_ENABLED 1
   #else
     #define DEV_LOGGER_ENABLED 0

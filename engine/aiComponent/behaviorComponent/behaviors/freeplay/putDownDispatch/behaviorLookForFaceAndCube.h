@@ -55,10 +55,9 @@ public:
   
   // This behavior is activatable if when we check the memory map around the current robot position, there are still
   // undiscovered areas
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual bool CarryingObjectHandledInternally() const override { return false;}
+  virtual bool WantsToBeActivatedBehavior() const override;
 
-  virtual void HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void HandleWhileActivated(const EngineToGameEvent& event) override;
   
 protected:
   
@@ -73,8 +72,10 @@ protected:
   // ICozmoBehavior API
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
+
+  virtual void OnBehaviorActivated() override;
+  virtual void OnBehaviorDeactivated() override;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // State transitions
@@ -92,12 +93,12 @@ protected:
   };
   
   // S0: look for face center
-  void TransitionToS1_FaceOnLeft(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToS2_FaceOnRight(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToS3_CubeOnRight(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToS4_CubeOnLeft(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToS5_Center(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToS6_Done(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToS1_FaceOnLeft();
+  void TransitionToS2_FaceOnRight();
+  void TransitionToS3_CubeOnRight();
+  void TransitionToS4_CubeOnLeft();
+  void TransitionToS5_Center();
+  void TransitionToS6_Done();
  
 private:
 
@@ -138,20 +139,20 @@ private:
   // State helpers
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  IAction* CreateBodyAndHeadTurnAction(BehaviorExternalInterface& behaviorExternalInterface,
+  IAction* CreateBodyAndHeadTurnAction(
             const Radians& bodyRelativeMin_rad, const Radians& bodyRelativeMax_rad, // body min/max range added relative to target
             const Radians& bodyAbsoluteTargetAngle_rad,                             // center of the body rotation range
             const Radians& headAbsoluteMin_rad, const Radians& headAbsoluteMax_rad, // head min/max range absolute
             const Radians& bodyTurnSpeed_radPerSec,                                 // body turn speed
             const Radians& headTurnSpeed_radPerSec);                                // head turn speed
 
-  void ResumeCurrentState(BehaviorExternalInterface& behaviorExternalInterface);
+  void ResumeCurrentState();
 
   // stop the behavior if desired based on observing the given face
-  void StopBehaviorOnFaceIfNeeded(BehaviorExternalInterface& behaviorExternalInterface, FaceID_t observedFace);
+  void StopBehaviorOnFaceIfNeeded(FaceID_t observedFace);
 
   // cancel the current action and do a verify face action instead
-  void CancelActionAndVerifyFace(BehaviorExternalInterface& behaviorExternalInterface, FaceID_t observedFace);
+  void CancelActionAndVerifyFace(FaceID_t observedFace);
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes

@@ -26,12 +26,12 @@ namespace Cozmo {
 static const int kMinimumTimeBetweenRobotSaves_sec = 5;
 static const std::string kInventoryTypeCapsConfigKey = "InventoryTypeCaps";
 
-InventoryComponent::InventoryComponent(Robot& robot)
-  : _robot(robot)
-  , _readFromRobot(false)
-  , _timeLastWrittenToRobot(std::chrono::system_clock::now())
-  , _robotWritePending(false)
-  , _isWritingToRobot(false)
+InventoryComponent::InventoryComponent()
+: IDependencyManagedComponent<RobotComponentID>(RobotComponentID::Inventory)
+, _readFromRobot(false)
+, _timeLastWrittenToRobot(std::chrono::system_clock::now())
+, _robotWritePending(false)
+, _isWritingToRobot(false)
 {
   // Default onboarding values initted by unity config to match old API where sparks were on device.
   for( int i = 0; i < InventoryTypeNumEntries; ++i )
@@ -40,15 +40,23 @@ InventoryComponent::InventoryComponent(Robot& robot)
   }
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void InventoryComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+{
+  _robot = robot;
+}
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void InventoryComponent::Init(const Json::Value& config)
 {
   ReadCurrentInventoryFromRobot();
   
   // Subscribe to messages
-  if (_robot.HasExternalInterface())
+  if (_robot->HasExternalInterface())
   {
-    auto helper = MakeAnkiEventUtil(*_robot.GetExternalInterface(), *this, _signalHandles);
+    auto helper = MakeAnkiEventUtil(*_robot->GetExternalInterface(), *this, _signalHandles);
     using namespace ExternalInterface;
     helper.SubscribeGameToEngine<MessageGameToEngineTag::InventoryRequestAdd>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::InventoryRequestSet>();
@@ -148,10 +156,10 @@ int InventoryComponent::GetInventorySpaceRemaining(InventoryType inventoryID) co
   
 void InventoryComponent::SendInventoryAllToGame()
 {
-  if( _readFromRobot && _robot.HasExternalInterface())
+  if( _readFromRobot && _robot->HasExternalInterface())
   {
     ExternalInterface::InventoryStatus message(_currentInventory);
-    _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
+    _robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
     
 #if ANKI_DEV_CHEATS
     for( int i = 0; i < InventoryTypeNumEntries; ++i )
@@ -189,7 +197,7 @@ void InventoryComponent::HandleMessage(const ExternalInterface::InventoryRequest
 void InventoryComponent::ReadCurrentInventoryFromRobot()
 {
   PRINT_CH_INFO(CONSOLE_GROUP_NAME,"InventoryComponent.ReadCurrentInventoryFromRobot","");
-  if(!_robot.GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_InventoryData,
+  if(!_robot->GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_InventoryData,
                                           [this](u8* data, size_t size, NVStorage::NVResult res)
                                           {
                                             _readFromRobot = true;
@@ -206,10 +214,10 @@ void InventoryComponent::ReadCurrentInventoryFromRobot()
                                             SendInventoryAllToGame();
                                             
                                             // Unity has the default inventory for sparks, so request and it will get added
-                                            if( res == NVStorage::NVResult::NV_NOT_FOUND && _robot.HasExternalInterface())
+                                            if( res == NVStorage::NVResult::NV_NOT_FOUND && _robot->HasExternalInterface())
                                             {
                                               ExternalInterface::RequestDefaultSparks message;
-                                              _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
+                                              _robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
                                             }
                                           }))
   {
@@ -244,7 +252,7 @@ void InventoryComponent::WriteCurrentInventoryToRobot()
   u8 buf[_currentInventory.Size()];
   size_t numBytes = _currentInventory.Pack(buf, sizeof(buf));
   
-  if(!_robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_InventoryData, buf, numBytes,
+  if(!_robot->GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_InventoryData, buf, numBytes,
                                            [this](NVStorage::NVResult res)
                                            {
                                              _robotWritePending = false;

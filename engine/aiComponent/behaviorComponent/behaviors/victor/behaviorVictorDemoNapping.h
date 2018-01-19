@@ -25,27 +25,25 @@ protected:
   friend class BehaviorContainer;  
   BehaviorVictorDemoNapping(const Json::Value& config);
 
-  virtual bool ShouldRunWhileOnCharger() const override { return true;}
-  virtual bool CarryingObjectHandledInternally() const override {return false;}
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override{}
 
-  virtual bool CanBeGentlyInterruptedNow(BehaviorExternalInterface& behaviorExternalInterface) const override;
 
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual bool CanBeGentlyInterruptedNow() const override;
 
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override {
+  virtual void OnBehaviorActivated() override;
+
+  virtual bool WantsToBeActivatedBehavior() const override {
     return true;}
 private:
 
-  void TransitionToSleeping(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToBoutOfStirring(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToPlayStirAnim(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToSleeping();
+  void TransitionToBoutOfStirring();
+  void TransitionToPlayStirAnim();
 
   // helper to "wait" without doing procedural face motions and then run a callback
-  void HoldFaceForTime(BehaviorExternalInterface& behaviorExternalInterface,
-                       const float waitTime_s,
-                       void(BehaviorVictorDemoNapping::*callback)(BehaviorExternalInterface& behaviorExternalInterface));
-  void LoopHoldFace(BehaviorExternalInterface& behaviorExternalInterface,
-                    void(BehaviorVictorDemoNapping::*callback)(BehaviorExternalInterface& behaviorExternalInterface));
+  void HoldFaceForTime(const float waitTime_s,
+                       void(BehaviorVictorDemoNapping::*callback)());
+  void LoopHoldFace(void(BehaviorVictorDemoNapping::*callback)());
 
   bool _animIsPlaying = false;
 

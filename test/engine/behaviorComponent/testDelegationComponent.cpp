@@ -38,8 +38,8 @@ TEST(DelegationComponent, TestDelegationVariants)
 {
   std::unique_ptr<TestSuperPoweredBehavior> baseBehavior = std::make_unique<TestSuperPoweredBehavior>();
   TestBehaviorFramework testFramework;
-  auto initializeBehavior = [&baseBehavior](const BehaviorComponent::ComponentsPtr& comps){
-    baseBehavior->SetBehaviorContainer(comps->_behaviorContainer);
+  auto initializeBehavior = [&baseBehavior](const BehaviorComponent::UniqueComponents& comps){
+    baseBehavior->SetBehaviorContainer(comps->_array.GetComponent(BCComponentID::BehaviorContainer).GetValue<BehaviorContainer>());
   };
   testFramework.InitializeStandardBehaviorComponent(baseBehavior.get(),initializeBehavior);
   
@@ -68,7 +68,7 @@ TEST(DelegationComponent, TestDelegationVariants)
       toDelegate->SetBehaviorContainer(behaviorContainer);
       toDelegate->Init(bei);
       toDelegate->OnEnteredActivatableScope();
-      toDelegate->WantsToBeActivated(bei);
+      toDelegate->WantsToBeActivated();
       InjectValidDelegateIntoBSM(testFramework, behaviorDelegating, toDelegate.get());
       
       ASSERT_TRUE(delegationComp.HasDelegator(behaviorDelegating));
@@ -98,7 +98,7 @@ TEST(DelegationComponent, TestDelegationVariants)
       auto& toDelegate = bunchOfCozmoBehaviors.back();
       toDelegate->Init(bei);
       toDelegate->OnEnteredActivatableScope();
-      toDelegate->WantsToBeActivated(bei);
+      toDelegate->WantsToBeActivated();
       InjectValidDelegateIntoBSM(testFramework, behaviorDelegating, toDelegate.get());
       
       ASSERT_TRUE(delegationComp.HasDelegator(behaviorDelegating));
@@ -122,9 +122,8 @@ TEST(DelegationComponent, TestDelegationVariants)
 
   // Delegate to helper
   {
-    auto& factory = testFramework.GetBehaviorComponent()._behaviorHelperComponent->GetBehaviorHelperFactory();
-    bunchOfHelpers.push_back(factory.CreatePlaceBlockHelper(testFramework.GetBehaviorExternalInterface(),
-                                                            *bunchOfCozmoBehaviors.back().get()));
+    auto& factory = testFramework.GetBehaviorComponent().GetComponent<BehaviorHelperComponent>(BCComponentID::BehaviorHelperComponent).GetBehaviorHelperFactory();
+    bunchOfHelpers.push_back(factory.CreatePlaceBlockHelper(*bunchOfCozmoBehaviors.back().get()));
     HelperHandle toDelegate = bunchOfHelpers.back();
     InjectValidDelegateIntoBSM(testFramework, behaviorDelegating, toDelegate.get(), false);
     
@@ -132,7 +131,6 @@ TEST(DelegationComponent, TestDelegationVariants)
     auto& delegatorComp = delegationComp.GetDelegator(behaviorDelegating);
     
     EXPECT_TRUE(delegatorComp.Delegate(behaviorDelegating,
-                                       testFramework.GetBehaviorExternalInterface(),
                                        toDelegate,
                                        nullptr,
                                        nullptr));

@@ -61,16 +61,16 @@ BehaviorDispatcherScoring::~BehaviorDispatcherScoring()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDispatcherScoring::InitDispatcher(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDispatcherScoring::InitDispatcher()
 {
   for(auto& entry: _scoringTracker){
-    entry.Init(behaviorExternalInterface);
+    entry.Init(GetBEI());
   }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDispatcherScoring::BehaviorDispatcher_OnDeactivated(BehaviorExternalInterface& behaviorExternalInterface) 
+void BehaviorDispatcherScoring::BehaviorDispatcher_OnDeactivated() 
 {
   if(_currentScoringTracker != nullptr){
     _currentScoringTracker->BehaviorDeactivated();
@@ -81,8 +81,7 @@ void BehaviorDispatcherScoring::BehaviorDispatcher_OnDeactivated(BehaviorExterna
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehaviorPtr BehaviorDispatcherScoring::GetDesiredBehavior(
-  BehaviorExternalInterface& behaviorExternalInterface)
+ICozmoBehaviorPtr BehaviorDispatcherScoring::GetDesiredBehavior()
 {
   ICozmoBehaviorPtr desiredDispatch;  
   if(ANKI_VERIFY(GetAllPossibleDispatches().size() == _scoringTracker.size(),
@@ -99,8 +98,8 @@ ICozmoBehaviorPtr BehaviorDispatcherScoring::GetDesiredBehavior(
     auto& allDispatches = GetAllPossibleDispatches();
     for(int i = 0; i < allDispatches.size(); i++) {
       auto& entry = allDispatches[i];
-      if(entry->IsActivated() || entry->WantsToBeActivated(behaviorExternalInterface)) {
-        const float newScore = _scoringTracker[i].EvaluateScore(behaviorExternalInterface);
+      if(entry->IsActivated() || entry->WantsToBeActivated()) {
+        const float newScore = _scoringTracker[i].EvaluateScore(GetBEI());
         if(FLT_GT(newScore, highestScore)){
           highestScore = newScore;
           highestScoreIdx = i;

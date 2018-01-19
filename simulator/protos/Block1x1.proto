@@ -2,6 +2,7 @@
 
 PROTO Block1x1 [
   field SFBool filterLogs FALSE
+  field SFBool colorizeStderrOutput FALSE
   field SFString name "Block000"
   field SFString type "1" # BlockType
   field SFVec3f translation 0 0 0.022
@@ -37,11 +38,16 @@ Supervisor {
   %{ if fields.active.value then }%
     controller "webotsCtrlLightCube"
 
-    # append filter command line parameter if filter is set to TRUE
+    # append optional command line parameters
+    %{ ctrlArgs="" }%
     %{ if fields.filterLogs.value then }%
-      %{ autoArgs="--applyLogFilter"}%
+      %{ ctrlArgs = ctrlArgs .. " --applyLogFilter"}%
     %{ end }%
-    controllerArgs "%{=autoArgs}%"
+    %{ if fields.colorizeStderrOutput.value then }%
+      %{ ctrlArgs = ctrlArgs .. " --colorizeStderrOutput"}%
+    %{ end }%
+
+    controllerArgs "%{=ctrlArgs}%"
   %{ end }%
 
   name IS name

@@ -13,6 +13,7 @@ function usage() {
     echo "  -v                      print verbose output"
     echo "  -c [CONFIGURATION]      build configuration {Debug,Release}"
     echo "  -p [PLATFORM]           build target platform {android,mac}"
+    echo "  -a                      append cmake platform argument {arg}"
     echo "  -g [CMAKE_GENERATOR]    CMake generator {Ninja,Xcode}"
     echo "  -f                      force-run filelist updates and cmake configure before building, and force-copy assets"
     echo "  -d                      DEBUG: generate file lists and exit"
@@ -23,6 +24,7 @@ function usage() {
     echo "  -t [target]             build specified cmake target"
     echo "  -e                      export compile commands"
     echo "  -I                      ignore external dependencies"
+    echo "  -S                      build static libraries"
 }
 
 #
@@ -34,21 +36,23 @@ GEN_SRC_ONLY=0
 RM_BUILD_ASSETS=0
 RUN_BUILD=1
 CMAKE_TARGET=""
-CMAKE_EXE="${HOME}/.anki/cmake/dist/3.8.1/CMake.app/Contents/bin/cmake"
+CMAKE_EXE="${HOME}/.anki/cmake/dist/3.9.6/CMake.app/Contents/bin/cmake"
 EXPORT_COMPILE_COMMANDS=0
 IGNORE_EXTERNAL_DEPENDENCIES=0
+BUILD_SHARED_LIBS=1
 
 CONFIGURATION=Debug
 PLATFORM=android
 CMAKE_GENERATOR=Ninja
 FEATURES=""
+ADDITIONAL_PLATFORM_ARGS=()
 
 # TODO: provide command line option?
 # NOTE: these can't both be true (but can both be false)
 USE_TENSORFLOW=0
 USE_TENSORFLOW_LITE=0
 
-while getopts ":x:c:p:t:g:F:hvfdCTeI" opt; do
+while getopts ":x:c:p:a:t:g:F:hvfdCTeIS" opt; do
     case $opt in
         h)
             usage
@@ -84,6 +88,9 @@ while getopts ":x:c:p:t:g:F:hvfdCTeI" opt; do
         p)
             PLATFORM="${OPTARG}"
             ;;
+        a)
+            ADDITIONAL_PLATFORM_ARGS+=("${OPTARG}")
+            ;;
         g)
             CMAKE_GENERATOR="${OPTARG}"
             ;;
@@ -98,6 +105,9 @@ while getopts ":x:c:p:t:g:F:hvfdCTeI" opt; do
             ;;
         I)
             IGNORE_EXTERNAL_DEPENDENCIES=1
+            ;;
+        S)
+            BUILD_SHARED_LIBS=0
             ;;
         :)
             echo "Option -${OPTARG} required an argument." >&2
@@ -143,7 +153,7 @@ esac
 #
 # Enable feature flags
 #
-FEATURE_FLAGS=""
+FEATURE_FLAGS="-DFACTORY_TEST=0"
 
 for feature in ${FEATURES} ; do
   case $feature in
@@ -258,7 +268,6 @@ if [ $CONFIGURE -eq 1 ]; then
         resources/BUILD.in \
         robot/BUILD.in \
         robot/clad/BUILD.in \
-        robot2/BUILD.in \
         simulator/BUILD.in \
         test/BUILD.in
 
@@ -308,11 +317,14 @@ if [ $CONFIGURE -eq 1 ]; then
         exit 1
     fi
 
+    # Append additional platrom args
+    PLATFORM_ARGS+=(${ADDITIONAL_PLATFORM_ARGS[@]})
+
     $CMAKE_EXE ${TOPLEVEL} \
         ${VERBOSE_ARG} \
         -G${CMAKE_GENERATOR} \
         -DCMAKE_BUILD_TYPE=${CONFIGURATION} \
-        -DBUILD_SHARED_LIBS=1 \
+        -DBUILD_SHARED_LIBS=${BUILD_SHARED_LIBS} \
         ${EXPORT_FLAGS} \
         ${FEATURE_FLAGS} \
         -DUSE_TENSORFLOW=${USE_TENSORFLOW} \

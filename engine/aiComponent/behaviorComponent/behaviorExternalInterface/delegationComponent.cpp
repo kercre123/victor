@@ -89,10 +89,9 @@ bool Delegator::Delegate(IBehavior* delegatingBehavior, IBehavior* delegated)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool Delegator::Delegate(IBehavior* delegatingBehavior,
-                         BehaviorExternalInterface& behaviorExternalInterface,
                          HelperHandle helper,
-                         BehaviorSimpleCallbackWithExternalInterface successCallback,
-                         BehaviorSimpleCallbackWithExternalInterface failureCallback)
+                         BehaviorSimpleCallback successCallback,
+                         BehaviorSimpleCallback failureCallback)
 {
   EnsureHandleIsUpdated();
   
@@ -104,8 +103,7 @@ bool Delegator::Delegate(IBehavior* delegatingBehavior,
   _behaviorThatDelegatedHelper = delegatingBehavior;
   _delegateHelperHandle = helper;
   return _robot.GetAIComponent().GetBehaviorHelperComponent().
-                     DelegateToHelper(behaviorExternalInterface,
-                                      helper, successCallback, failureCallback);
+                     DelegateToHelper(helper, successCallback, failureCallback);
 }
 
 
@@ -134,7 +132,16 @@ void Delegator::HandleActionComplete(u32 actionTag)
 ///////////////////////
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 DelegationComponent::DelegationComponent()
+: IDependencyManagedComponent(BCComponentID::DelegationComponent)
 {
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void DelegationComponent::InitDependent(Robot* robot, const BCCompMap& dependentComponents)
+{
+  auto& bsm = dependentComponents.find(BCComponentID::BehaviorSystemManager)->second.GetValue<BehaviorSystemManager>();
+  Init(*robot, bsm);
 }
 
 
