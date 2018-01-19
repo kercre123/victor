@@ -39,11 +39,8 @@ import sys
 import argparse
 import zipfile
 
-BASE_SRC_SCRATCH_PATH = "../../../unity/Cozmo/Assets/StreamingAssets"
 LOCALIZATION_ROOT_PATH = "LocalizedStrings"
 LOCALIZATION_TARGET_FILES = [ "CodeLabStrings.json", "CodeLabFeaturedContentStrings.json" ]
-PROJECT_CONFIGURATION_FILE = "Scratch/featured-projects.json"
-TARGET_PROJECT_FOLDER = "Scratch/featuredProjects"
 
 # Plenty of string fields contain these values 
 # but even if they were to be localization translations, it might break a lot ot reverse key them
@@ -86,12 +83,6 @@ def parse_command_args():
                         default=None,
                         action='store',
                         help='Specifies a json blacklist to exclude specific projects')
-    arg_parser.add_argument('-d', '--desktop',
-                        dest='target_desktop',
-                        default=False,
-                        action='store_const',
-                        const=True,
-                        help='Specifies that scan exports should be sent to the desktop instead of the script\'s folder')
 
     arg_parser.add_argument('-o', '--source_language',
                         dest='source_language',
@@ -99,6 +90,30 @@ def parse_command_args():
                         action='store',
                         help='Specify the source language to be operated on')
 
+    arg_parser.add_argument('--streaming_assets_path',
+                        dest='streaming_assets_path',
+                        type=str,
+                        default='',
+                        action='store',
+                        help='Specify the root path of the StreamingAssets')
+    arg_parser.add_argument('--project_config_file',
+                        dest='project_config_file',
+                        type=str,
+                        default='',
+                        action='store',
+                        help='Specify the project configuration file')
+    arg_parser.add_argument('--project_folder',
+                        dest='project_folder',
+                        type=str,
+                        default='',
+                        action='store',
+                        help='Specify the project folder')
+    arg_parser.add_argument('--scan_output_path',
+                        dest='scan_output_path',
+                        type=str,
+                        default='',
+                        action='store',
+                        help='Path to export project scans to')
 
     options = arg_parser.parse_args()
     return options
@@ -298,7 +313,7 @@ def execute_translations_on_project(project, source_language, loc_table):
 #                                          Loc String Scanning Code
 # --------------------------------------------------------------------------------------------------------
 
-def scan_project(project, source_language, target_desktop):
+def scan_project(project, source_language, target_folder):
     source_project_file = project['base_file_name'] + '_' + source_language + '.json'
 
     json_out = {}
@@ -319,15 +334,7 @@ def scan_project(project, source_language, target_desktop):
             key = 'codeLabFeaturedProject.' + project['project_name'] + '.' + simplified_content
             json_out[key] = { 'translation': content }
 
-    if target_desktop:
-        export_folder = os.path.expanduser('~/Desktop/CodeLabLocStrings')
-        try:
-            os.stat(export_folder)
-        except:
-            os.mkdir(export_folder)
-        export_filename = os.path.join(export_folder, os.path.basename(project['project_name']) + '_loc_strings.json')
-    else:
-        export_filename = project['project_name'] + '_loc_strings.json'
+    export_filename = os.path.join(target_folder, os.path.basename(project['project_name']) + '_loc_strings.json')
 
     with open(export_filename, 'w') as output_file:
         json.dump(json_out, output_file, indent=4)
@@ -341,11 +348,11 @@ def scan_project(project, source_language, target_desktop):
 # --------------------------------------------------------------------------------------------------------
 
 # collect all localization key->translation and translation->key mappings from a language folder
-def load_localization_for_language(rootPath, language):
+def load_localization_for_language(streaming_assets_path, language):
     resultDict = {'encodings':{}, 'decodings':{}}
-    for file in os.listdir(os.path.join(rootPath, language)):
+    for file in os.listdir(os.path.join(streaming_assets_path, language)):
         if file.endswith('.json') and file in LOCALIZATION_TARGET_FILES:
-            filePath = os.path.join(rootPath, language, file)
+            filePath = os.path.join(streaming_assets_path, language, file)
             with open(filePath) as dataFile:
                 #print( 'loading language file ' + filePath )
                 rootData = json.load(dataFile)
@@ -357,25 +364,20 @@ def load_localization_for_language(rootPath, language):
     return resultDict
 
 # build a dictionary of all loc tables by crawling the loc base path
-def load_and_build_localization_dictionary():
+def load_and_build_localization_dictionary(streaming_assets_path):
     resultDict = {}
-    script_path = os.path.dirname(os.path.realpath(__file__))
-    loc_path = os.path.join(script_path, BASE_SRC_SCRATCH_PATH, LOCALIZATION_ROOT_PATH)
+    loc_path = os.path.join(streaming_assets_path, LOCALIZATION_ROOT_PATH)
     for language in os.listdir(loc_path):
         if '.' not in language:
             #print( 'loading language path: ' + language )
             resultDict[language] = load_localization_for_language(loc_path, language)
     return resultDict
 
-def build_project_translation_queue(specified_project, use_all_projects, blacklist):
+def build_project_translation_queue(streaming_assets_path, project_config_file, project_folder, specified_project, use_all_projects, blacklist):
     result = []
-    script_path = os.path.dirname(os.path.realpath(__file__))
 
-    project_config_path = os.path.join(script_path, BASE_SRC_SCRATCH_PATH, PROJECT_CONFIGURATION_FILE)
-    with open(project_config_path, 'r') as json_data:
+    with open(project_config_file, 'r') as json_data:
         featured_config = json.load(json_data)
-
-    project_folder = os.path.join(script_path, BASE_SRC_SCRATCH_PATH, TARGET_PROJECT_FOLDER)
 
     blacklisted_files = []
     if blacklist != None:
@@ -397,7 +399,16 @@ def build_project_translation_queue(specified_project, use_all_projects, blackli
 def main():
     command_args = parse_command_args()
 
-    loc_table = load_and_build_localization_dictionary()
+    if command_args.streaming_assets_path == '':
+        sys.exit("Must specify streaming_assets_path")
+
+    if command_args.project_config_file == '':
+        sys.exit("Must specify project_config_file")
+
+    if command_args.project_folder == '':
+        sys.exit("Must specify project_folder")
+
+    loc_table = load_and_build_localization_dictionary(command_args.streaming_assets_path)
 
     if command_args.source_language not in loc_table:
         sys.exit("Unexpected source_language %s" % command_args.source_language)
@@ -408,15 +419,18 @@ def main():
     if not command_args.scan_project and not command_args.translate_project and not command_args.list_project:
         sys.exit("Must specify either list, scan or translate")
 
-    project_list = build_project_translation_queue(command_args.project, command_args.all_projects, command_args.blacklist)
+    project_list = build_project_translation_queue(command_args.streaming_assets_path, command_args.project_config_file, command_args.project_folder, command_args.project, command_args.all_projects, command_args.blacklist)
 
     if len(project_list) <= 0:
         sys.exit("Could not find source project %s" % command_args.project)
 
     if command_args.scan_project:
+        if command_args.scan_output_path == '':
+            sys.exit("Must specify a scan output path to use scan_project functionality")
+
         projects_scanned = 0
         for project_entry in project_list:
-            if scan_project(project_entry, command_args.source_language, command_args.target_desktop):
+            if scan_project(project_entry, command_args.source_language, command_args.scan_output_path):
                 projects_scanned += 1
         print(str(projects_scanned) + ' project(s) scanned')
 

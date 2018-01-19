@@ -12,14 +12,18 @@
 #
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+STREAMING_ASSETS=${DIR}/../../../unity/Cozmo/Assets/StreamingAssets
+PROJECT_FOLDER=${STREAMING_ASSETS}/Scratch/featuredProjects
+PROJECT_MANIFEST=${STREAMING_ASSETS}/Scratch/featured-projects.json
+
 if [ $# -eq 0 ]
   then
     echo " "
-    python3 $DIR/localize_featured_projects.py -al
+    python3 $DIR/localize_featured_projects.py -al --streaming_assets_path $STREAMING_ASSETS --project_config_file $PROJECT_MANIFEST --project_folder $PROJECT_FOLDER
     echo " "
     echo "Please specify the project to translate"
     read PROJECT_NAME
-    python3 $DIR/localize_featured_projects.py -t -p $PROJECT_NAME
+    python3 $DIR/localize_featured_projects.py -t -p $PROJECT_NAME --streaming_assets_path $STREAMING_ASSETS --project_config_file $PROJECT_MANIFEST --project_folder $PROJECT_FOLDER
   else
-    python3 $DIR/localize_featured_projects.py -t -p $1
+    python3 $DIR/localize_featured_projects.py -t -p $1 --streaming_assets_path $STREAMING_ASSETS --project_config_file $PROJECT_MANIFEST --project_folder $PROJECT_FOLDER
 fi
