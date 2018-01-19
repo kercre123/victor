@@ -5,8 +5,12 @@
   
   "params" : {
     "useCliffSensorCorrection" : true,
-    "turningAnimTrigger" : "ChargerDockingLeftTurn",
-    "backupAnimTrigger" : "AcknowledgeObject",  // placeholder
-    "nuzzleAnimTrigger" : "ChargerDockingSettle"
+    "leftTurnAnimTrigger"    : "ChargerDockingLeftTurn",
+    "rightTurnAnimTrigger"   : "ChargerDockingRightTurn",
+    "backupStartAnimTrigger" : "ChargerDockingBackupDriveStart",
+    "backupEndAnimTrigger"   : "ChargerDockingBackupDriveEnd",
+    "backupLoopAnimTrigger"  : "ChargerDockingBackupDriveLoop",
+    "raiseLiftAnimTrigger"   : "ChargerDockingRaiseLift",
+    "nuzzleAnimTrigger"      : "ChargerDockingSettle"
   }
 }

@@ -22,7 +22,7 @@
                 "additional_files": [
                     "${PROJECT_ROOT_DIR}/resources/config/engine/animations/"
                 ],
-                "version": "2571"
+                "version": "2576"
             },
             "victor-audio-assets": {
                 "allow_extra_files": "True",

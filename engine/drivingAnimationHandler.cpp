@@ -32,7 +32,6 @@ namespace Anki {
 
     // Which docking method actions should use
     CONSOLE_VAR(bool, kEnableDrivingAnimations, "DrivingAnimationHandler", true);
-    const int kBoundedWhileRemoveIdleMax = 1000;
     
     DrivingAnimationHandler::DrivingAnimationHandler()
     : IDependencyManagedComponent(RobotComponentID::DrivingAnimationHandler)
@@ -94,27 +93,32 @@ namespace Anki {
     {
       if(_state != AnimState::ActionDestroyed)
       {
-        PRINT_NAMED_WARNING("DrivingAnimationHandler.PopDrivingAnimations",
+        PRINT_NAMED_WARNING("DrivingAnimationHandler.RemoveDrivingAnimations",
                             "Popping animations while currently playing");
       }
     
       if (_drivingAnimationStack.empty())
       {
-        PRINT_NAMED_WARNING("DrivingAnimationHandler.PopDrivingAnimations",
+        PRINT_NAMED_WARNING("DrivingAnimationHandler.RemoveDrivingAnimations",
                             "Tried to pop animations but the stack is empty!");
       }
       else
       {
+        // find the driving animation with the matching lock name in the driving animation stack (top down)
+        auto drivingAnimReverseIter = std::find_if(_drivingAnimationStack.rbegin(),
+                                                   _drivingAnimationStack.rend(),
+                                                   [&lockName](const std::pair<DrivingAnimations, std::string>& stackEntry) {
+                                                     return (stackEntry.second == lockName);
+                                                   });
         
-        // find the driving animation with the matching lock name in the driving animation stack
-        auto drivingAnimIter = _drivingAnimationStack.begin();
-        BOUNDED_WHILE(kBoundedWhileRemoveIdleMax, drivingAnimIter != _drivingAnimationStack.end()){
-          if(drivingAnimIter->second == lockName){
-            _drivingAnimationStack.erase(drivingAnimIter);
-            break;
-          }else{
-            ++drivingAnimIter;
-          }
+        if (drivingAnimReverseIter != _drivingAnimationStack.rend()) {
+          // convert back to forward iterator and erase the element
+          auto forwardIt = std::next(drivingAnimReverseIter).base();
+          _drivingAnimationStack.erase(forwardIt);
+        } else {
+          PRINT_NAMED_WARNING("DrivingAnimationHandler.RemoveDrivingAnimations.NotFound",
+                              "Could not find driving animation with name '%s'",
+                              lockName.c_str());
         }
       }
     }

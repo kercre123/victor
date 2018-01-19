@@ -121,8 +121,24 @@
       "AnimName": "ag_patternguessthinking"
     },
     {
+      "CladEvent": "ChargerDockingBackupDriveEnd",
+      "AnimName": "ag_reacttocharger_driving_end"
+    },
+    {
+      "CladEvent": "ChargerDockingBackupDriveLoop",
+      "AnimName": "ag_reacttocharger_driving_loop"
+    },
+    {
+      "CladEvent": "ChargerDockingBackupDriveStart",
+      "AnimName": "ag_reacttocharger_drive_start"
+    },
+    {
       "CladEvent": "ChargerDockingLeftTurn",
       "AnimName": "ag_reacttocharger_leftturn"
+    },
+    {
+      "CladEvent": "ChargerDockingRaiseLift",
+      "AnimName": "ag_reacttocharger_liftup"
     },
     {
       "CladEvent": "ChargerDockingRightTurn",
