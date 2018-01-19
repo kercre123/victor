@@ -21,7 +21,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionLambda.h"
-#include "engine/aiComponent/beiConditions/conditions/conditionNot.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionNegate.h"
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
 #include "engine/moodSystem/moodManager.h"
 #include "engine/robot.h"
@@ -263,13 +263,13 @@ TEST(BeiConditions, Timer)
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
 }
 
-TEST(BeiConditions, Not)
+TEST(BeiConditions, Negate)
 {
   BehaviorExternalInterface bei;
 
   auto subCond = std::make_shared<TestCondition>();
 
-  auto cond = std::make_shared<ConditionNot>(subCond);
+  auto cond = std::make_shared<ConditionNegate>(subCond);
 
   EXPECT_EQ(subCond->_resetCount, 0);
   EXPECT_EQ(subCond->_initCount, 0);
@@ -313,12 +313,12 @@ TEST(BeiConditions, Not)
 
 }
 
-TEST(BeiConditions, NotTrue)
+TEST(BeiConditions, NegateTrue)
 {
   const std::string json = R"json(
   {
-    "conditionType": "Not",
-    "subCondition": {
+    "conditionType": "Negate",
+    "operand": {
       "conditionType": "TrueCondition"
     }
   })json";
@@ -341,14 +341,14 @@ TEST(BeiConditions, NotTrue)
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
 }
 
-TEST(BeiConditions, NotTimerInRange)
+TEST(BeiConditions, NegateTimerInRange)
 {
   BaseStationTimer::getInstance()->UpdateTime(0);
   
   const std::string json = R"json(
   {
-    "conditionType": "Not",
-    "subCondition": {
+    "conditionType": "Negate",
+    "operand": {
       "conditionType": "TimerInRange",
       "begin_s": 30.0,
       "end_s": 35.0

@@ -18,7 +18,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionFacePositionUpdated.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionFrustration.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionInNeedsBracket.h"
-#include "engine/aiComponent/beiConditions/conditions/conditionNot.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionNegate.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectInitialDetection.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectMoved.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectPositionUpdated.h"
@@ -127,9 +127,9 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
       strategy = std::make_shared<ConditionTimerInRange>(config);
       break;
     }
-    case BEIConditionType::Not:
+    case BEIConditionType::Negate:
     {
-      strategy = std::make_shared<ConditionNot>(config);
+      strategy = std::make_shared<ConditionNegate>(config);
       break;
     }
     case BEIConditionType::OnCharger:

@@ -78,8 +78,8 @@
         {
           "to": "Observing",
           "condition": {
-            "conditionType": "Not",
-            "subCondition": {
+            "conditionType": "Negate",
+            "operand": {
               "conditionType": "OnCharger"
             }
           }
@@ -116,8 +116,8 @@
         {
           "to": "Observing",
           "condition": {
-            "conditionType": "Not",
-            "subCondition": {
+            "conditionType": "Negate",
+            "operand": {
               "conditionType": "OnCharger"
             }
           }
@@ -271,8 +271,8 @@
         {
           "to": "WakingUp",
           "condition": {
-            "conditionType": "Not",
-            "subCondition": {
+            "conditionType": "Negate",
+            "operand": {
               "conditionType": "OnCharger"
             }
           }

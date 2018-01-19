@@ -27,7 +27,7 @@ enum uint_8 BEIConditionType {
   RobotTouchGesture,
   Lambda,
   TimerInRange,
-  Not, // TODO: rename to  Negate,
+  Negate,
   OnCharger,
 }
 
