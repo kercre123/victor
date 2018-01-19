@@ -131,8 +131,8 @@
         {
           "to": "ObservingOnCharger",
           "condition": {
-            "conditionType": "Timer",
-            "timeout": 120.0
+            "conditionType": "TimerInRange",
+            "begin_s": 120.0
           }
         }
       ]
@@ -178,8 +178,8 @@
         {
           "to": "Observing",
           "condition": {
-            "conditionType": "Timer",
-            "timeout": 30.0
+            "conditionType": "TimerInRange",
+            "begin_s": 30.0
           }
         }
       ],
