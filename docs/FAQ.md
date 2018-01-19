@@ -59,3 +59,7 @@ If you have a question that you get answered (e.g. in a Slack channel) which mig
 * I get permission denied during build `error: can't exec 'victor/_build/mac/Debug-Xcode/launch-c' (Permission denied)`
   - `chmod u=rwx victor/_build/mac/Debug-Xcode/launch-c`
   - `chmod u=rwx victor/_build/mac/Debug-Xcode/launch-cxx`
+
+* To check the battery level:
+  - With the processes running, press the backpack button twice. The battery voltage is in the bottom right. It should be around 4.0v. The backpack lights will blink green when charging (and the processes are running)
+  - Otherwise: `adb shell cat /sys/devices/soc.0/qpnp-linear-charger-8/power_supply/battery/voltage_now`
