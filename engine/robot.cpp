@@ -261,6 +261,8 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
     _components = std::make_unique<RobotComponentWrapper>(std::move(entity));
     _components->_array.InitComponents(this);
   }
+
+  _audioWorldObjects.reset(new Audio::AudioWorldObjects(*this));
       
   _pose.SetName("Robot_" + std::to_string(_ID));
   _driveCenterPose.SetName("RobotDriveCenter_" + std::to_string(_ID));

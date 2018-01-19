@@ -79,7 +79,6 @@ enum uint_8 BehaviorClass {
   RequestGameSimple,
   RespondPossiblyRoll,
   RespondToRenameFace,
-  RndAudioDemo,
   RollBlock,
   SearchForFace,
   Singing,
@@ -277,7 +276,6 @@ enum uint_8 BehaviorID {
   RequestSpeedTap,
   RespondToPyramidBase,
   RespondToRenameFace,
-  RndAudioDemo,
   RollBlockOnSide,
   RollBlockOnSideLowScore,
 
