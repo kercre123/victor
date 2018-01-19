@@ -280,10 +280,10 @@ def get_file_path(base_file_name, language):
     return (base_file_name + '_' + language + '.json').lower()
 
 def run_translation_target(target, loc_table):
-    with open(target['source_file_name']) as input_file:
+    with open(target['source_file_name'], encoding='utf8') as input_file:
         project = json.load(input_file)
         translated = translate_project(project, loc_table[target['source_language']], loc_table[target['target_language']])
-        with open(target['target_file_name'], 'w') as output_file:
+        with open(target['target_file_name'], 'w', encoding='utf8') as output_file:
             json.dump(translated, output_file, indent=4)
             output_file.write('\n')
 
@@ -319,7 +319,7 @@ def scan_project(project, source_language, target_folder):
     json_out = {}
     output_list = []
 
-    with open(source_project_file) as input_file:
+    with open(source_project_file, encoding='utf8') as input_file:
         json_contents = json.load(input_file)
         if 'ProjectJSON' in json_contents:
             extraction_context = { 'outputList' : output_list, 'scope': ['none'] }
@@ -336,7 +336,7 @@ def scan_project(project, source_language, target_folder):
 
     export_filename = os.path.join(target_folder, os.path.basename(project['project_name']) + '_loc_strings.json')
 
-    with open(export_filename, 'w') as output_file:
+    with open(export_filename, 'w', encoding='utf8') as output_file:
         json.dump(json_out, output_file, indent=4)
         output_file.write('\n')
 
@@ -353,7 +353,7 @@ def load_localization_for_language(streaming_assets_path, language):
     for file in os.listdir(os.path.join(streaming_assets_path, language)):
         if file.endswith('.json') and file in LOCALIZATION_TARGET_FILES:
             filePath = os.path.join(streaming_assets_path, language, file)
-            with open(filePath) as dataFile:
+            with open(filePath, encoding='utf8') as dataFile:
                 #print( 'loading language file ' + filePath )
                 rootData = json.load(dataFile)
                 for key in rootData:
@@ -376,12 +376,12 @@ def load_and_build_localization_dictionary(streaming_assets_path):
 def build_project_translation_queue(streaming_assets_path, project_config_file, project_folder, specified_project, use_all_projects, blacklist):
     result = []
 
-    with open(project_config_file, 'r') as json_data:
+    with open(project_config_file, 'r', encoding='utf8') as json_data:
         featured_config = json.load(json_data)
 
     blacklisted_files = []
     if blacklist != None:
-        with open(blacklist) as input_file:
+        with open(blacklist, encoding='utf8') as input_file:
             blacklisted_files = json.load(input_file)
 
     for featured_project_config in featured_config:
