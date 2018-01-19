@@ -9,7 +9,6 @@ PROTO Block1x1 [
   field SFRotation rotation 0 0 1 0
   field SFFloat mass 0.085
   field SFColor blockColor 1 0 0
-  field SFBool  useWhiteMarkerBackgrounds TRUE
   field SFString markerImg ""  # Image path relative to textures/
   field SFBool active FALSE  # Whether or not this block has active lights
   field SFInt32 activeID 1   # Must be unique in the world among all active blocks

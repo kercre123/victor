@@ -47,10 +47,33 @@ namespace Anki
     //NO_INLINE void ecvcs_computeBinaryImage_numFilters5(const Array<u8> &image, const Array<u8> * restrict filteredRows, const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier, const s32 imageY, const s32 imageWidth, u8 * restrict pBinaryImageRow);
     //NO_INLINE void ecvcs_computeBinaryImage_numPyramids3_thresholdMultiplier1(const Array<u8> &image, const Array<u8> * restrict filteredRows, const s32 scaleImage_numPyramidLevels, const s32 imageY, const s32 imageWidth, u8 * restrict pBinaryImageRow);
 
-    NO_INLINE void ecvcs_computeBinaryImage(const Array<u8> &image, FixedLengthList<Array<u8> > &filteredRows, const s32 scaleImage_thresholdMultiplier, const s32 imageY, u8 * restrict pBinaryImageRow);
-    NO_INLINE void ecvcs_computeBinaryImage_numFilters3(const Array<u8> &image, FixedLengthList<Array<u8> > &filteredRows, const s32 scaleImage_thresholdMultiplier, const s32 imageY, u8 * restrict pBinaryImageRow);
-    NO_INLINE void ecvcs_computeBinaryImage_numFilters5(const Array<u8> &image, FixedLengthList<Array<u8> > &filteredRows, const s32 scaleImage_thresholdMultiplier, const s32 imageY, u8 * restrict pBinaryImageRow);
-    NO_INLINE void ecvcs_computeBinaryImage_numFilters5_thresholdMultiplier1(const Array<u8> &image, FixedLengthList<Array<u8> > &filteredRows, const s32 scaleImage_thresholdMultiplier, const s32 imageY, u8 * restrict pBinaryImageRow);
+    NO_INLINE void ecvcs_computeBinaryImage(const Array<u8> &image,
+                                            FixedLengthList<Array<u8> > &filteredRows,
+                                            const s32 scaleImage_thresholdMultiplier,
+                                            const s32 imageY,
+                                            u8 * restrict pBinaryImageRow,
+                                            const bool isDarkOnLight);
+    
+    NO_INLINE void ecvcs_computeBinaryImage_numFilters3(const Array<u8> &image,
+                                                        FixedLengthList<Array<u8> > &filteredRows,
+                                                        const s32 scaleImage_thresholdMultiplier,
+                                                        const s32 imageY,
+                                                        u8 * restrict pBinaryImageRow,
+                                                        const bool isDarkOnLight);
+    
+    NO_INLINE void ecvcs_computeBinaryImage_numFilters5(const Array<u8> &image,
+                                                        FixedLengthList<Array<u8> > &filteredRows,
+                                                        const s32 scaleImage_thresholdMultiplier,
+                                                        const s32 imageY,
+                                                        u8 * restrict pBinaryImageRow,
+                                                        const bool isDarkOnLight);
+    
+    NO_INLINE void ecvcs_computeBinaryImage_numFilters5_thresholdMultiplier1(const Array<u8> &image,
+                                                                             FixedLengthList<Array<u8> > &filteredRows,
+                                                                             const s32 scaleImage_thresholdMultiplier,
+                                                                             const s32 imageY,
+                                                                             u8 * restrict pBinaryImageRow,
+                                                                             const bool isDarkOnLight);
 
     NO_INLINE void ecvcs_filterRows(const ScrollingIntegralImage_u8_s32 &integralImage, const FixedLengthList<s32> &filterHalfWidths, const s32 imageY, FixedLengthList<Array<u8> > &filteredRows)
     {
@@ -82,7 +105,7 @@ namespace Anki
       } // for(s32 pyramidLevel=0; pyramidLevel<=numLevels; pyramidLevel++)
     } // staticInline ecvcs_filterRows()
 
-    NO_INLINE void ecvcs_computeBinaryImage_numFilters3(const Array<u8> &image, FixedLengthList<Array<u8> > &filteredRows, const s32 scaleImage_thresholdMultiplier, const s32 imageY, u8 * restrict pBinaryImageRow)
+    NO_INLINE void ecvcs_computeBinaryImage_numFilters3(const Array<u8> &image, FixedLengthList<Array<u8> > &filteredRows, const s32 scaleImage_thresholdMultiplier, const s32 imageY, u8 * restrict pBinaryImageRow, const bool isDarkOnLight)
     {
       AnkiAssert(filteredRows.get_size() == 3);
       
@@ -122,14 +145,14 @@ namespace Anki
         
         const s32 thresholdValue = (scaleValue*scaleImage_thresholdMultiplier) >> thresholdMultiplier_numFractionalBits;
         if(pImage[x] < thresholdValue) {
-          pBinaryImageRow[x] = 1;
+          pBinaryImageRow[x] = isDarkOnLight;
         } else {
-          pBinaryImageRow[x] = 0;
+          pBinaryImageRow[x] = !isDarkOnLight;
         }
       } // for(s32 x=0; x<imageWidth; x++)
     } // staticInline void ecvcs_computeBinaryImage_numFilters5()
     
-    NO_INLINE void ecvcs_computeBinaryImage_numFilters5(const Array<u8> &image, FixedLengthList<Array<u8> > &filteredRows, const s32 scaleImage_thresholdMultiplier, const s32 imageY, u8 * restrict pBinaryImageRow)
+    NO_INLINE void ecvcs_computeBinaryImage_numFilters5(const Array<u8> &image, FixedLengthList<Array<u8> > &filteredRows, const s32 scaleImage_thresholdMultiplier, const s32 imageY, u8 * restrict pBinaryImageRow, const bool isDarkOnLight)
     {
       AnkiAssert(filteredRows.get_size() == 5);
 
@@ -179,14 +202,14 @@ namespace Anki
 
         const s32 thresholdValue = (scaleValue*scaleImage_thresholdMultiplier) >> thresholdMultiplier_numFractionalBits;
         if(pImage[x] < thresholdValue) {
-          pBinaryImageRow[x] = 1;
+          pBinaryImageRow[x] = isDarkOnLight;
         } else {
-          pBinaryImageRow[x] = 0;
+          pBinaryImageRow[x] = !isDarkOnLight;
         }
       } // for(s32 x=0; x<imageWidth; x++)
     } // staticInline void ecvcs_computeBinaryImage_numFilters5()
 
-    NO_INLINE void ecvcs_computeBinaryImage_numFilters5_thresholdMultiplier1(const Array<u8> &image, FixedLengthList<Array<u8> > &filteredRows, const s32 scaleImage_thresholdMultiplier, const s32 imageY, u8 * restrict pBinaryImageRow)
+    NO_INLINE void ecvcs_computeBinaryImage_numFilters5_thresholdMultiplier1(const Array<u8> &image, FixedLengthList<Array<u8> > &filteredRows, const s32 scaleImage_thresholdMultiplier, const s32 imageY, u8 * restrict pBinaryImageRow, const bool isDarkOnLight)
     {
       AnkiAssert(filteredRows.get_size() == 5);
       AnkiAssert(scaleImage_thresholdMultiplier == 65536);
@@ -276,14 +299,14 @@ namespace Anki
 
         const u8 thresholdValue = scaleValue;
         if(pImage[x] < thresholdValue) {
-          pBinaryImageRow[x] = 1;
+          pBinaryImageRow[x] = isDarkOnLight;
         } else {
-          pBinaryImageRow[x] = 0;
+          pBinaryImageRow[x] = !isDarkOnLight;
         }
       } // for(s32 x=0; x<imageWidth; x++)
     } // staticInline void ecvcs_computeBinaryImage_numFilters5()
 
-    NO_INLINE void ecvcs_computeBinaryImage(const Array<u8> &image, FixedLengthList<Array<u8> > &filteredRows, const s32 scaleImage_thresholdMultiplier, const s32 imageY, u8 * restrict pBinaryImageRow)
+    NO_INLINE void ecvcs_computeBinaryImage(const Array<u8> &image, FixedLengthList<Array<u8> > &filteredRows, const s32 scaleImage_thresholdMultiplier, const s32 imageY, u8 * restrict pBinaryImageRow, const bool isDarkOnLight)
     {
       const s32 thresholdMultiplier_numFractionalBits = 16;
 
@@ -314,9 +337,9 @@ namespace Anki
 
         const s32 thresholdValue = (scaleValue*scaleImage_thresholdMultiplier) >> thresholdMultiplier_numFractionalBits;
         if(pImage[x] < thresholdValue) {
-          pBinaryImageRow[x] = 1;
+          pBinaryImageRow[x] = isDarkOnLight;
         } else {
-          pBinaryImageRow[x] = 0;
+          pBinaryImageRow[x] = !isDarkOnLight;
         }
       } // for(s32 x=0; x<imageWidth; x++)
     } // staticInline void ecvcs_computeBinaryImage()
@@ -325,6 +348,7 @@ namespace Anki
       const Array<u8> &image,
       const FixedLengthList<s32> &filterHalfWidths, const s32 scaleImage_thresholdMultiplier,
       const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
+      const bool isDarkOnLight,
       ConnectedComponents &components,
       MemoryStack fastScratch,
       MemoryStack slowerScratch,
@@ -428,7 +452,7 @@ namespace Anki
       }
 #endif
 
-      std::function<void(const Array<u8>&, FixedLengthList<Array<u8>>&, const s32, const s32, u8 * restrict)> binarizationFcn = nullptr;
+      std::function<void(const Array<u8>&, FixedLengthList<Array<u8>>&, const s32, const s32, u8 * restrict, const bool)> binarizationFcn = nullptr;
       
       switch(numFilterHalfWidths)
       {
@@ -457,7 +481,7 @@ namespace Anki
 
         BeginBenchmark("ecvcs_computeBinaryImage");
 
-        binarizationFcn(image, filteredRows, scaleImage_thresholdMultiplier, imageY, pBinaryImageRow);
+        binarizationFcn(image, filteredRows, scaleImage_thresholdMultiplier, imageY, pBinaryImageRow, isDarkOnLight);
         
 #if STORE_BINARY_IMAGE
         memcpy(g_binaryImage.Pointer(imageY, 0), pBinaryImageRow, imageWidth);

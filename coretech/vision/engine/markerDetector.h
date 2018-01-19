@@ -40,6 +40,9 @@ public:
   
   Result Detect(const Image& inputImage, std::list<ObservedMarker>& observedMarkers);
   
+  // Returns true when looking for dark-on-light markers, false for light-on-dark mode.
+  static bool IsDarkOnLight();
+  
 private:
 
   const Camera&           _camera;
