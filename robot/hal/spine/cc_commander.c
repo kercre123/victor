@@ -530,19 +530,25 @@ int print_response(const char* format, ...) {
 
   memset(response.data, SLUG_PAD_CHAR, SLUG_PAD_SIZE);
 
- int nchars = vsnprintf((char*)response.data+SLUG_PAD_SIZE,
-                        sizeof(response.data)-SLUG_PAD_SIZE,
-                        format, argptr);
+  const int space_remaining = sizeof(response.data)-SLUG_PAD_SIZE;
+
+  int nchars = vsnprintf((char*)response.data+SLUG_PAD_SIZE,
+                         space_remaining,
+                         format, argptr);
 
  va_end(argptr);
- if (nchars >= 0)  {
-   nchars+=SLUG_PAD_SIZE; //this is the end of valid data in the packet
-   memset(response.data+nchars, 0, sizeof(response.data)-nchars);
-
+ if (nchars >= 0)  { //successful write
+   int remainder = space_remaining - nchars;
+   if (remainder > 0)  { //print not truncated, free space at end of packet
+     memset(response.data+SLUG_PAD_SIZE+nchars, 0, remainder); //pad it
+   }
    ccc_debug_x("CCC preparing response [ %s ]", response.data);
    contact_text_buffer_put(&response);
+   if (remainder < 0) { // the string was truncated
+     return nchars + print_response("...");
+   }
  }
-  return nchars;
+ return nchars;
 }
 
 
