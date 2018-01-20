@@ -2326,6 +2326,21 @@ namespace Anki {
                 }
                 break;
               }
+
+              case (s32)'I':
+              {
+                using namespace ExternalInterface;
+
+                static bool toggle = false;
+                SendMessage(MessageGameToEngine(SetDebugConsoleVarMessage("ImageCompressQuality", 
+                                                                          (toggle ? "50" : "0"))));
+                
+                LOG_INFO("ToggleImageStreaming", "%s image streaming", (toggle ? "Enabling" : "Disabling"));
+
+                toggle = !toggle;
+                
+                break;
+              }
             
               case 0x04: // Webots carriage return?
               {

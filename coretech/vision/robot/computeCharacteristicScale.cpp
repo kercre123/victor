@@ -105,7 +105,11 @@ namespace Anki
       } // for(s32 pyramidLevel=0; pyramidLevel<=numLevels; pyramidLevel++)
     } // staticInline ecvcs_filterRows()
 
-    NO_INLINE void ecvcs_computeBinaryImage_numFilters3(const Array<u8> &image, FixedLengthList<Array<u8> > &filteredRows, const s32 scaleImage_thresholdMultiplier, const s32 imageY, u8 * restrict pBinaryImageRow, const bool isDarkOnLight)
+
+    NO_INLINE void ecvcs_computeBinaryImage_numFilters3(const Array<u8> &image, FixedLengthList<Array<u8> > &filteredRows, 
+                                                        const s32 scaleImage_thresholdMultiplier, 
+                                                        const s32 imageY, u8 * restrict pBinaryImageRow, 
+                                                        const bool isDarkOnLight)
     {
       AnkiAssert(filteredRows.get_size() == 3);
       
@@ -118,38 +122,173 @@ namespace Anki
       const u8 * restrict pFilteredRows2 = filteredRows[2][0];
       
       const s32 imageWidth = image.get_size(1);
-      
-      const s32 numFilteredRows = filteredRows.get_size();
-      
+            
       AnkiAssert(filteredRows.get_size() <= MAX_FILTER_HALF_WIDTH);
-      
-      const u8 * restrict pFilteredRows[MAX_FILTER_HALF_WIDTH+1];
-      for(s32 i=0; i<numFilteredRows; i++) {
-        pFilteredRows[i] = filteredRows[i][0];
+
+#if ACCELERATION_TYPE == ACCELERATION_ARM_A7
+
+      const int32x4_t kThreshMult = vdupq_n_s32(scaleImage_thresholdMultiplier);
+      const int32x4_t kFracBits = vdupq_n_s32(-thresholdMultiplier_numFractionalBits); // Negative for right shift
+      const uint8x16_t kZeros = vdupq_n_u8(!isDarkOnLight);
+      const uint8x16_t kOnes = vdupq_n_u8(isDarkOnLight);
+
+      const u32 kNumElementsProcessedPerLoop = 16;
+
+      s32 x = 0;
+      for(; x < imageWidth; x += kNumElementsProcessedPerLoop)
+      {
+        // Load FilteredRows
+        uint8x16_t rows0 = vld1q_u8(pFilteredRows0);
+        pFilteredRows0 += kNumElementsProcessedPerLoop;
+        uint8x16_t rows1 = vld1q_u8(pFilteredRows1);
+        pFilteredRows1 += kNumElementsProcessedPerLoop;
+        uint8x16_t rows2 = vld1q_u8(pFilteredRows2);
+        pFilteredRows2 += kNumElementsProcessedPerLoop;
+
+        // Figure out which elements from the rows to use as the scale values
+        uint8x16_t dog0 = vabdq_u8(rows1, rows0); // Absolute difference
+        uint8x16_t dog1 = vabdq_u8(rows2, rows1);
+        // Get all the elements in dog0 that are greater than dog1
+        uint8x16_t dog0GTdog1 = vcgtq_u8(dog0, dog1);
+        // If dog0 > dog1 select the value from rows1 otherwise use rows2
+        uint8x16_t scaleValue = vbslq_u8(dog0GTdog1, rows1, rows2);
+
+        // The following block converts scaleValue from a uint8x16 to 4 uint32x4s
+        uint8x8_t scale8x8_1 = vget_low_u8(scaleValue);
+        uint8x8_t scale8x8_2 = vget_high_u8(scaleValue);
+        uint16x8_t scale16x8_1 = vmovl_u8(scale8x8_1);
+        uint16x8_t scale16x8_2 = vmovl_u8(scale8x8_2);
+        uint16x4_t scale16x4_1_1 = vget_low_u16(scale16x8_1);
+        uint16x4_t scale16x4_1_2 = vget_high_u16(scale16x8_1);
+        uint16x4_t scale16x4_2_1 = vget_low_u16(scale16x8_2);
+        uint16x4_t scale16x4_2_2 = vget_high_u16(scale16x8_2);
+        uint32x4_t scale32x4_1 = vmovl_u16(scale16x4_1_1);
+        uint32x4_t scale32x4_2 = vmovl_u16(scale16x4_1_2);
+        uint32x4_t scale32x4_3 = vmovl_u16(scale16x4_2_1);
+        uint32x4_t scale32x4_4 = vmovl_u16(scale16x4_2_2);
+
+        // Multiple scale by threshold multiplier
+        int32x4_t thresholdValue_1 = vmulq_s32((int32x4_t)scale32x4_1, kThreshMult);
+        int32x4_t thresholdValue_2 = vmulq_s32((int32x4_t)scale32x4_2, kThreshMult);
+        int32x4_t thresholdValue_3 = vmulq_s32((int32x4_t)scale32x4_3, kThreshMult);
+        int32x4_t thresholdValue_4 = vmulq_s32((int32x4_t)scale32x4_4, kThreshMult);
+        
+        // Shift by numFracBits
+        thresholdValue_1 = vshlq_s32(thresholdValue_1, kFracBits);
+        thresholdValue_2 = vshlq_s32(thresholdValue_2, kFracBits);
+        thresholdValue_3 = vshlq_s32(thresholdValue_3, kFracBits);
+        thresholdValue_4 = vshlq_s32(thresholdValue_4, kFracBits);
+
+        // Load image data and convert from uint8x16 to 4 uint32x4s
+        uint8x16_t img = vld1q_u8(pImage);
+        pImage += kNumElementsProcessedPerLoop;
+        uint8x8_t img8x8_1 = vget_low_u8(img);
+        uint8x8_t img8x8_2 = vget_high_u8(img);
+        uint16x8_t img16x8_1 = vmovl_u8(img8x8_1);
+        uint16x8_t img16x8_2 = vmovl_u8(img8x8_2);
+        uint16x4_t img16x4_1_1 = vget_low_u16(img16x8_1);
+        uint16x4_t img16x4_1_2 = vget_high_u16(img16x8_1);
+        uint16x4_t img16x4_2_1 = vget_low_u16(img16x8_2);
+        uint16x4_t img16x4_2_2 = vget_high_u16(img16x8_2);
+        uint32x4_t img32x4_1 = vmovl_u16(img16x4_1_1);
+        uint32x4_t img32x4_2 = vmovl_u16(img16x4_1_2);
+        uint32x4_t img32x4_3 = vmovl_u16(img16x4_2_1);
+        uint32x4_t img32x4_4 = vmovl_u16(img16x4_2_2);
+
+        // Compare image value to threshold, if it is less than a 1 will be written otherwise 0
+        uint32x4_t lessThanThresh_1 = vcltq_s32((int32x4_t)img32x4_1, thresholdValue_1);
+        uint32x4_t lessThanThresh_2 = vcltq_s32((int32x4_t)img32x4_2, thresholdValue_2);
+        uint32x4_t lessThanThresh_3 = vcltq_s32((int32x4_t)img32x4_3, thresholdValue_3);
+        uint32x4_t lessThanThresh_4 = vcltq_s32((int32x4_t)img32x4_4, thresholdValue_4);
+        
+        // Covert 4 uint32x4s to one uint8x16
+        uint16x4_t lt16x4_1 = vmovn_u32(lessThanThresh_1);
+        uint16x4_t lt16x4_2 = vmovn_u32(lessThanThresh_2);
+        uint16x4_t lt16x4_3 = vmovn_u32(lessThanThresh_3);
+        uint16x4_t lt16x4_4 = vmovn_u32(lessThanThresh_4);
+        uint16x8_t lt16x8_1 = vcombine_u16(lt16x4_1, lt16x4_2);
+        uint16x8_t lt16x8_2 = vcombine_u16(lt16x4_3, lt16x4_4);
+        uint8x8_t  lt8x8_1 = vmovn_u16(lt16x8_1);
+        uint8x8_t  lt8x8_2 = vmovn_u16(lt16x8_2);
+        uint8x16_t lessThanThresh = vcombine_u8(lt8x8_1, lt8x8_2);
+
+        // Use lessThanThresh to select either 1 or 0 to be written as output to the binary image
+        uint8x16_t output = vbslq_u8(lessThanThresh, kOnes, kZeros);
+        vst1q_u8(pBinaryImageRow, output);
+        pBinaryImageRow += kNumElementsProcessedPerLoop;
       }
+
+      // Above loop exits after adding to x so subtract what it added so we
+      // can finish processing what is left over
+      if(x >= imageWidth)
+      {
+        x -= (kNumElementsProcessedPerLoop-1);
+      }
+
+      for(; x < imageWidth; x++)
+      {
+        const s32 dog0 = ABS(static_cast<s32>(*pFilteredRows1) - static_cast<s32>(*pFilteredRows0));
+        const s32 dog1 = ABS(static_cast<s32>(*pFilteredRows2) - static_cast<s32>(*pFilteredRows1));
+        
+        s32 scaleValue;
+        
+        if(dog0 > dog1)
+        {
+          scaleValue = *pFilteredRows1;
+        }
+        else
+        {
+          scaleValue = *pFilteredRows2;
+        }
+                
+        const s32 thresholdValue = (scaleValue*scaleImage_thresholdMultiplier) >> thresholdMultiplier_numFractionalBits;
+        if(*pImage < thresholdValue) 
+        {
+          *pBinaryImageRow = 1;
+        } 
+        else
+        {
+          *pBinaryImageRow = 0;
+        }
+
+        pFilteredRows0++;
+        pFilteredRows1++;
+        pFilteredRows2++;
+        pBinaryImageRow++;
+      }
+
+#else
       
-      for(s32 x=0; x<imageWidth; x++) {
+      for(s32 x=0; x<imageWidth; x++) 
+      {
         //for(s32 iHalfWidth=0; iHalfWidth<(numFilteredRows-1); iHalfWidth++) {
         const s32 dog0 = ABS(static_cast<s32>(pFilteredRows1[x]) - static_cast<s32>(pFilteredRows0[x]));
         const s32 dog1 = ABS(static_cast<s32>(pFilteredRows2[x]) - static_cast<s32>(pFilteredRows1[x]));
         
         s32 scaleValue;
         
-        if(dog0 > dog1) {
+        if(dog0 > dog1)
+        {
           scaleValue = pFilteredRows1[x];
-        } else  {
+        }
+        else
+        {
           scaleValue = pFilteredRows2[x];
         }
         
         //} // for(s32 pyramidLevel=0; pyramidLevel<scaleImage_numPyramidLevels; scaleImage_numPyramidLevels++)
         
         const s32 thresholdValue = (scaleValue*scaleImage_thresholdMultiplier) >> thresholdMultiplier_numFractionalBits;
-        if(pImage[x] < thresholdValue) {
+        if(pImage[x] < thresholdValue)
+        {
           pBinaryImageRow[x] = isDarkOnLight;
-        } else {
+        } 
+        else 
+        {
           pBinaryImageRow[x] = !isDarkOnLight;
         }
       } // for(s32 x=0; x<imageWidth; x++)
+#endif
     } // staticInline void ecvcs_computeBinaryImage_numFilters5()
     
     NO_INLINE void ecvcs_computeBinaryImage_numFilters5(const Array<u8> &image, FixedLengthList<Array<u8> > &filteredRows, const s32 scaleImage_thresholdMultiplier, const s32 imageY, u8 * restrict pBinaryImageRow, const bool isDarkOnLight)
@@ -272,7 +411,7 @@ namespace Anki
 
         vst1q_u8(&pBinaryImageRow[x], binaryVector);
       } // for(s32 x=0; x<imageWidth; x++)
-#endif // #if ACCELERATION_TYPE == ACCELERATION_ARM_A7
+#else // #if ACCELERATION_TYPE == ACCELERATION_ARM_A7
 
       for(; x<imageWidth; x++) {
         //for(s32 iHalfWidth=0; iHalfWidth<(numFilteredRows-1); iHalfWidth++) {
@@ -304,6 +443,7 @@ namespace Anki
           pBinaryImageRow[x] = !isDarkOnLight;
         }
       } // for(s32 x=0; x<imageWidth; x++)
+#endif
     } // staticInline void ecvcs_computeBinaryImage_numFilters5()
 
     NO_INLINE void ecvcs_computeBinaryImage(const Array<u8> &image, FixedLengthList<Array<u8> > &filteredRows, const s32 scaleImage_thresholdMultiplier, const s32 imageY, u8 * restrict pBinaryImageRow, const bool isDarkOnLight)

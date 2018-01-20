@@ -262,7 +262,11 @@ namespace Anki
       
     } // ExtractLineFitsPeaks_Ransac()
     
-    Result ExtractLineFitsPeaks(const FixedLengthList<Point<s16> > &boundary, FixedLengthList<Point<s16> > &peaks, const s32 imageHeight, const s32 imageWidth, MemoryStack scratch)
+    Result ExtractLineFitsPeaks(const FixedLengthList<Point<s16>> &boundary, 
+                                FixedLengthList<Point<s16>> &peaks, 
+                                const s32 imageHeight, 
+                                const s32 imageWidth, 
+                                MemoryStack scratch)
     {
       AnkiConditionalErrorAndReturnValue(boundary.IsValid(),
         RESULT_FAIL_INVALID_OBJECT, "ComputeQuadrilateralsFromConnectedComponents", "boundary is not valid");

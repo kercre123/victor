@@ -1488,7 +1488,7 @@ namespace Cozmo {
   template<class PixelType>
   Result VisionComponent::CompressAndSendImage(const Vision::ImageBase<PixelType>& img, s32 quality, const std::string& identifier)
   {
-    if(quality == 0)
+    if(quality == 0 || !_robot->GetContext()->GetVizManager()->IsConnected())
     {
       // Don't send anything
       return RESULT_OK;
