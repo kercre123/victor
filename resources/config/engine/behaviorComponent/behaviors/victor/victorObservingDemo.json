@@ -22,10 +22,6 @@
       "visionModes": [ "DetectingFaces", "DetectingMarkers" ]
     },
     {
-      "name": "DriveOffChargerIntoFeeding",
-      "behavior": "DriveOffCharger"
-    },
-    {
       "name": "DriveOffChargerIntoSocializing",
       "behavior": "DriveOffCharger"
     },
@@ -34,12 +30,6 @@
       "behavior": "VictorDemoObservingState",
       "visionModes": [ "DetectingFaces", "DetectingMarkers" ],
       "debugColor": "BLUE"
-    },
-    {
-      "name": "Feeding",
-      "behavior": "VictorDemoFeedingState",
-      "visionModes": [ "DetectingMarkers" ],
-      "debugColor": "CYAN"
     },
     {
       "name": "Socializing",
@@ -83,11 +73,7 @@
               "conditionType": "OnCharger"
             }
           }
-        },
-        {
-          "to": "DriveOffChargerIntoFeeding",
-          "preDefinedStrategyName": "HungryAndCanEat"
-        },
+        },        
         {
           "to": "DriveOffChargerIntoSocializing",
           "preDefinedStrategyName": "CloseFaceForSocializing"
@@ -123,11 +109,7 @@
           }
         }
       ],
-      "nonInterruptingTransitions": [
-        {
-          "to": "DriveOffChargerIntoFeeding",
-          "preDefinedStrategyName": "HungryAndCanEat"
-        },
+      "nonInterruptingTransitions": [        
         {
           "to": "ObservingOnCharger",
           "condition": {
@@ -148,10 +130,6 @@
           }
         },
         {
-          "to": "Feeding",
-          "preDefinedStrategyName": "HasCubeToEat"
-        },
-        {
           "to": "Socializing",
           "preDefinedStrategyName": "CloseFaceForSocializing"
         }
@@ -165,35 +143,6 @@
     },
 
     {
-      "from": "Feeding",
-      "interruptingTransitions": [
-        {
-          "to": "ObservingOnChargerRecentlyPlaced",
-          "condition": {
-            "conditionType": "OnCharger"
-          }
-        }
-      ],
-      "nonInterruptingTransitions": [
-        {
-          "to": "Observing",
-          "condition": {
-            "conditionType": "TimerInRange",
-            "begin_s": 30.0
-          }
-        }
-      ],
-      "exitTransitions": [
-        {
-          "to": "Observing",
-          "condition": {
-            "conditionType": "TrueCondition" 
-          }
-        }
-      ]
-    },
-
-    {
       "from": "Socializing",
       "interruptingTransitions": [
         {
@@ -201,12 +150,6 @@
           "condition": {
             "conditionType": "OnCharger"
           }
-        }
-      ],
-      "nonInterruptingTransitions": [
-        {
-          "to": "Feeding",
-          "preDefinedStrategyName": "HungryAndCanEat"
         }
       ],
       "exitTransitions": [
@@ -225,23 +168,6 @@
         {
           "to": "Socializing",
           "preDefinedStrategyName": "CloseFaceForSocializing"
-        },
-        {
-          // fall back to observing if can't eat after driving off the charger
-          "to": "Observing",
-          "condition": {
-            "conditionType": "TrueCondition"
-          }
-        }
-      ]
-    },
-
-    {
-      "from": "DriveOffChargerIntoFeeding",
-      "exitTransitions": [
-        {
-          "to": "Feeding",
-          "preDefinedStrategyName": "HasCubeToEat"
         },
         {
           // fall back to observing if can't eat after driving off the charger
@@ -282,9 +208,8 @@
         {
           "to": "WakingUp",
           "condition": {
-            "conditionType": "InNeedsBracket",
-            "need": "Energy",
-            "needBracket": "Critical"
+            "conditionType": "TimerInRange",
+            "begin_s": 300.0
           }
         }
       ]

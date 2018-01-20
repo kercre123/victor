@@ -4,17 +4,7 @@
 
   "interruptActiveBehavior": false,
 
-  "behaviors": [
-    {
-      "behavior": "Needs_SevereLowEnergyRequest",
-      "cooldown_s": 5.0,
-      "cooldown_random_factor": 0.5
-    },
-    {
-      "behavior": "Needs_MildLowEnergyRequest",
-      "cooldown_s": 30.0,
-      "cooldown_random_factor": 0.3
-    },
+  "behaviors": [    
     {
       "behavior": "VictorDemoObservingFaceInteraction",
       "cooldown_s": 30.0,

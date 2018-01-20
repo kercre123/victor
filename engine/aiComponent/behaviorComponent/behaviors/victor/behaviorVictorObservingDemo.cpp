@@ -12,7 +12,6 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorVictorObservingDemo.h"
 
-#include "clad/types/needsSystemTypes.h"
 #include "clad/types/objectTypes.h"
 #include "coretech/common/engine/colorRGBA.h"
 #include "coretech/common/engine/jsonTools.h"
@@ -26,7 +25,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/feeding/behaviorFeedingEat.h"
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionLambda.h"
@@ -35,8 +33,6 @@
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/faceWorld.h"
-#include "engine/needsSystem/needsManager.h"
-#include "engine/needsSystem/needsState.h"
 #include "engine/vision/visionModesHelpers.h"
 
 namespace Anki {
@@ -238,31 +234,6 @@ BehaviorVictorObservingDemo::~BehaviorVictorObservingDemo()
 
 void BehaviorVictorObservingDemo::CreatePreDefinedStrategies()
 {
-  _preDefinedStrategies["HasCubeToEat"] = std::make_shared<ConditionLambda>(
-    [](BehaviorExternalInterface& behaviorExternalInterface) {
-      const AIWhiteboard& whiteboard = behaviorExternalInterface.GetAIComponent().GetWhiteboard();
-      return whiteboard.Victor_HasCubeToEat();
-    });  
-
-  _preDefinedStrategies["HungryAndCanEat"] = std::make_shared<ConditionLambda>(
-    [](BehaviorExternalInterface& behaviorExternalInterface) {
-      const AIWhiteboard& whiteboard = behaviorExternalInterface.GetAIComponent().GetWhiteboard();
-      if( ! whiteboard.Victor_HasCubeToEat() ) {
-        return false;
-      }
-
-      if(behaviorExternalInterface.HasNeedsManager()){
-        auto& needsManager = behaviorExternalInterface.GetNeedsManager();
-        NeedsState& currNeedState = needsManager.GetCurNeedsStateMutable();
-
-        if( // currNeedState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Warning) ||
-          currNeedState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Critical) ) {
-          return true;
-        }
-      }
-      return false;
-    });
-
   _preDefinedStrategies["CloseFaceForSocializing"] = std::make_shared<ConditionLambda>(
     [this](BehaviorExternalInterface& behaviorExternalInterface) {
       if( !StateExitCooldownExpired(GetStateID("Socializing"), kSocializeKnownFaceCooldown_s) ) {

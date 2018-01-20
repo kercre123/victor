@@ -4,8 +4,6 @@
 
   "behaviors": [
     "DriveOffCharger",
-    "ShortLookAroundForFaceAndCube",
-    "Needs_SevereLowEnergyRequest",
-    "Needs_MildLowEnergyRequest"
+    "ShortLookAroundForFaceAndCube"
   ]
 }
