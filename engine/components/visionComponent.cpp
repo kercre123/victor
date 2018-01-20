@@ -1246,7 +1246,7 @@ namespace Cozmo {
   {
     for(auto & edgeFrame : procResult.visualObstacles)
     {
-      _robot.GetMapComponent().AddDetectedObstacles(edgeFrame);
+      _robot->GetMapComponent().AddDetectedObstacles(edgeFrame);
     }
     
     return RESULT_OK;

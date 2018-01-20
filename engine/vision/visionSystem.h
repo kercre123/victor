@@ -21,9 +21,7 @@
 #  define ANKI_COZMO_USE_MATLAB_VISION 0
 #endif
 
-#include "anki/common/basestation/math/polygon.h"
-#include "anki/common/types.h"
-
+#include "coretech/common/engine/math/polygon.h"
 #include "coretech/common/shared/types.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
