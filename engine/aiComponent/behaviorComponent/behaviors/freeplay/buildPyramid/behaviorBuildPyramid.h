@@ -14,8 +14,8 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorBuildPyramid_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorBuildPyramid_H__
 
-#include "anki/common/basestation/objectIDs.h"
-#include "anki/common/basestation/math/pose.h"
+#include "coretech/common/engine/objectIDs.h"
+#include "coretech/common/engine/math/pose.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/buildPyramid/behaviorBuildPyramidBase.h"
 
@@ -34,20 +34,17 @@ protected:
   BehaviorBuildPyramid(const Json::Value& config);
   
 public:
-  
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual bool CarryingObjectHandledInternally() const override {return true;}
-  
+  virtual bool WantsToBeActivatedBehavior() const override;  
+
 protected:
-  
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated() override;
   
 private:
   typedef std::vector<const ObservableObject*> BlockList;
   
-  void TransitionToDrivingToTopBlock(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToPlacingTopBlock(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToReactingToPyramid(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToDrivingToTopBlock();
+  void TransitionToPlacingTopBlock();
+  void TransitionToReactingToPyramid();
         
 }; //class BehaviorBuildPyramid
 

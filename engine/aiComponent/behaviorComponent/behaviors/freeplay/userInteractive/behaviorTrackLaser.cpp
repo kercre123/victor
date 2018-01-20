@@ -13,10 +13,10 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorTrackLaser.h"
 
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/math/point.h"
-#include "anki/common/basestation/math/pose.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/math/point.h"
+#include "coretech/common/engine/math/pose.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
@@ -128,9 +128,9 @@ void BehaviorTrackLaser::SetParamsFromConfig(const Json::Value& config)
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorTrackLaser::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorTrackLaser::WantsToBeActivatedBehavior() const
 {
-  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  const auto& robotInfo = GetBEI().GetRobotInfo();
   const bool featureEnabled = robotInfo.GetContext()->GetFeatureGate()->IsFeatureEnabled(Anki::Cozmo::FeatureType::Laser);
   if(!featureEnabled)
   {
@@ -176,32 +176,32 @@ bool BehaviorTrackLaser::WantsToBeActivatedBehavior(BehaviorExternalInterface& b
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorTrackLaser::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorTrackLaser::OnBehaviorActivated()
 {
-  InitHelper(behaviorExternalInterface);
+  InitHelper();
   const bool haveSeenLaser = (_lastLaserObservation.type != LaserObservation::Type::None);
   if(haveSeenLaser || ShouldStreamline())
   {
     // Pretend we just rotated so we don't immediately rotate to start
     _lastTimeRotate = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     
-    TransitionToWaitForExposureChange(behaviorExternalInterface);
+    TransitionToWaitForExposureChange();
   }
   else
   {
-    TransitionToInitialSearch(behaviorExternalInterface);
+    TransitionToInitialSearch();
   }
-  return Result::RESULT_OK;
+  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorTrackLaser::InitHelper(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorTrackLaser::InitHelper()
 {
   _haveEverConfirmedLaser = false;
   _shouldSendTrackingObjectiveAchieved = false;
   
-  _originalCameraSettings.exposureTime_ms = behaviorExternalInterface.GetVisionComponent().GetCurrentCameraExposureTime_ms();
-  _originalCameraSettings.gain = behaviorExternalInterface.GetVisionComponent().GetCurrentCameraGain();
+  _originalCameraSettings.exposureTime_ms = GetBEI().GetVisionComponent().GetCurrentCameraExposureTime_ms();
+  _originalCameraSettings.gain = GetBEI().GetVisionComponent().GetCurrentCameraGain();
   
   // disable all vision except what's needed laser point detection and confirmation
   const bool kUseDefaultsForUnspecified = false;
@@ -209,8 +209,8 @@ void BehaviorTrackLaser::InitHelper(BehaviorExternalInterface& behaviorExternalI
     {VisionMode::DetectingLaserPoints, VisionModeSchedule(true)},
     {VisionMode::ComputingStatistics,  VisionModeSchedule(true)},
   }, kUseDefaultsForUnspecified);
-  behaviorExternalInterface.GetVisionComponent().PushNextModeSchedule(std::move(schedule));
-  behaviorExternalInterface.GetVisionComponent().SetAndDisableAutoExposure(_params.darkenedExposure_ms, _params.darkenedGain);
+  GetBEI().GetVisionComponent().PushNextModeSchedule(std::move(schedule));
+  GetBEI().GetVisionComponent().SetAndDisableAutoExposure(_params.darkenedExposure_ms, _params.darkenedGain);
   
   _exposureChangedTime_ms = 0;
   _imageMean = -1;
@@ -218,13 +218,18 @@ void BehaviorTrackLaser::InitHelper(BehaviorExternalInterface& behaviorExternalI
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorTrackLaser::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorTrackLaser::BehaviorUpdate()
 {
+  if(!IsActivated()){
+    return;
+  }
+
   switch(_state)
   {
     case State::WaitForStop:
     {
-      return Status::Complete;
+      CancelSelf();
+      return;
     }
   
     case State::WaitingForExposureChange:
@@ -239,7 +244,7 @@ ICozmoBehavior::Status BehaviorTrackLaser::UpdateInternal_WhileRunning(BehaviorE
       // transition to WaitingForLaser. Immediately fall through to the case below
       // to avoid waiting a tick to check if we also saw a confirmed laser in the same image.
       CancelDelegates(false); // Stop the WaitForImages action
-      TransitionToWaitForLaser(behaviorExternalInterface);
+      TransitionToWaitForLaser();
       
       // NOTE: Deliberate fallthrough!!
     }
@@ -249,29 +254,30 @@ ICozmoBehavior::Status BehaviorTrackLaser::UpdateInternal_WhileRunning(BehaviorE
       if(LaserObservation::Type::Confirmed == _lastLaserObservation.type)
       {
         LOG_EVENT("robot.laser_behavior.confirmed_laser", "");
-        TransitionToRespondToLaser(behaviorExternalInterface);
+        TransitionToRespondToLaser();
         break;
       }
       else
       {
-        if(!CheckForTimeout(behaviorExternalInterface))
+        if(!CheckForTimeout())
         {
           // Check to see if it's time to rotate again
           const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
           if ( (_lastTimeRotate + _params.maxTimeBeforeRotate_sec) < currentTime_sec )
           {
-            TransitionToRotateToWatchingNewArea(behaviorExternalInterface);
+            TransitionToRotateToWatchingNewArea();
           }
         }
         else // Have timed out
         {
           if(_haveEverConfirmedLaser)
           {
-            TransitionToGetOutBored(behaviorExternalInterface);
+            TransitionToGetOutBored();
           }
           else
           {
-            return Status::Complete;
+            CancelSelf();
+            return;
           }
         }
       }
@@ -303,52 +309,51 @@ ICozmoBehavior::Status BehaviorTrackLaser::UpdateInternal_WhileRunning(BehaviorE
     default:
     {
       // If not already in the process of getting out, check to see if there has been a timeout.
-      if(CheckForTimeout(behaviorExternalInterface))
+      if(CheckForTimeout())
       {
         if(_haveEverConfirmedLaser)
         {
-          TransitionToGetOutBored(behaviorExternalInterface);
+          TransitionToGetOutBored();
         }
         else
         {
-          return Status::Complete;
+          CancelSelf();
+          return;
         }
       }
       
       break;
     }
   }
-
-  return Status::Running;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-/**Result BehaviorTrackLaser::ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface)
+/**void BehaviorTrackLaser::ResumeInternal()
 {
   _lastLaserObservation.type = LaserObservation::Type::None;
-  InitHelper(behaviorExternalInterface);
-  TransitionToBringingHeadDown(behaviorExternalInterface);
-  return Result::RESULT_OK;
+  InitHelper();
+  TransitionToBringingHeadDown();
+  
 }**/
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorTrackLaser::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorTrackLaser::OnBehaviorDeactivated()
 {
   if(_shouldSendTrackingObjectiveAchieved){
     BehaviorObjectiveAchieved(BehaviorObjective::LaserTracked);
     NeedActionCompleted();
   }
   
-  Cleanup(behaviorExternalInterface);
+  Cleanup();
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorTrackLaser::CheckForTimeout(BehaviorExternalInterface& behaviorExternalInterface)
+bool BehaviorTrackLaser::CheckForTimeout()
 {
   // We're done if we haven't seen a laser in a long while or we've exceeded the max time for the behavior
   bool isTimedOut = false;
   
-  const TimeStamp_t lastImgTime_ms = behaviorExternalInterface.GetRobotInfo().GetLastImageTimeStamp();
+  const TimeStamp_t lastImgTime_ms = GetBEI().GetRobotInfo().GetLastImageTimeStamp();
   
   if (_haveEverConfirmedLaser &&
       (_lastLaserObservation.timestamp_ms + (_currentLostLaserTimeout_s * 1000)) < lastImgTime_ms )
@@ -395,7 +400,7 @@ bool BehaviorTrackLaser::CheckForTimeout(BehaviorExternalInterface& behaviorExte
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorTrackLaser::TransitionToInitialSearch(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorTrackLaser::TransitionToInitialSearch()
 {
   PRINT_CH_DEBUG(kLogChannelName, "BehaviorTrackLaser.TransitionToInitialSearch",
                  "BehaviorTrackLaser.TransitionToInitialSearch");
@@ -440,7 +445,7 @@ void BehaviorTrackLaser::TransitionToInitialSearch(BehaviorExternalInterface& be
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorTrackLaser::TransitionToBringingHeadDown(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorTrackLaser::TransitionToBringingHeadDown()
 {
   SET_STATE(BringingHeadDown);
   
@@ -455,7 +460,7 @@ void BehaviorTrackLaser::TransitionToBringingHeadDown(BehaviorExternalInterface&
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorTrackLaser::TransitionToRotateToWatchingNewArea(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorTrackLaser::TransitionToRotateToWatchingNewArea()
 {
   SET_STATE( RotateToWatchingNewArea );
   _lastTimeRotate = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -482,7 +487,7 @@ void BehaviorTrackLaser::TransitionToRotateToWatchingNewArea(BehaviorExternalInt
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorTrackLaser::TransitionToWaitForExposureChange(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorTrackLaser::TransitionToWaitForExposureChange()
 {
   SET_STATE(WaitingForExposureChange);
   
@@ -499,12 +504,12 @@ void BehaviorTrackLaser::TransitionToWaitForExposureChange(BehaviorExternalInter
   
   // Once we've gottena a couple of images, switch to looking for a laser dot
   // to confirm it.
-  DelegateIfInControl(action, [this](BehaviorExternalInterface& behaviorExternalInterface)
+  DelegateIfInControl(action, [this]()
   {
     // We *assume* exposure has changed after seeing enough images, no way to know for sure!
     // Once this is true, observed lasers will be considered "confirmed".
-    _exposureChangedTime_ms = behaviorExternalInterface.GetRobotInfo().GetLastImageTimeStamp();
-    TransitionToWaitForLaser(behaviorExternalInterface);
+    _exposureChangedTime_ms = GetBEI().GetRobotInfo().GetLastImageTimeStamp();
+    TransitionToWaitForLaser();
     
     PRINT_CH_DEBUG(kLogChannelName, "BehaviorTrackLaser.TransitionToWaitForExposureChange.AssumingChanged",
                    "%d images have passed. Assuming exposure change has taken effect at t=%dms",
@@ -514,23 +519,23 @@ void BehaviorTrackLaser::TransitionToWaitForExposureChange(BehaviorExternalInter
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorTrackLaser::TransitionToWaitForLaser(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorTrackLaser::TransitionToWaitForLaser()
 {
   SET_STATE(WaitingForLaser);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorTrackLaser::TransitionToRespondToLaser(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorTrackLaser::TransitionToRespondToLaser()
 {
   SET_STATE(RespondToLaser);
-  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  auto& robotInfo = GetBEI().GetRobotInfo();
   // Wait until we actually confirm a laser to adjust the idle/driving animations, to
   // avoid eyes changing if we see a possible laser and end up _not_ confirming.
   // However, don't override sparks driving or idle animations (i.e. when "streamlining").
   if(!ShouldStreamline() && !_haveAdjustedAnimations)
   {
-    SmartPushIdleAnimation(behaviorExternalInterface, AnimationTrigger::LaserFace);    
+    SmartPushIdleAnimation(AnimationTrigger::LaserFace);    
     robotInfo.GetDrivingAnimationHandler().PushDrivingAnimations(
                                                              {AnimationTrigger::LaserDriveStart,
                                                                AnimationTrigger::LaserDriveLoop,
@@ -554,7 +559,7 @@ void BehaviorTrackLaser::TransitionToRespondToLaser(BehaviorExternalInterface& b
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorTrackLaser::TransitionToTrackLaser(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorTrackLaser::TransitionToTrackLaser()
 {
   SET_STATE(TrackLaser);
   
@@ -613,7 +618,7 @@ void BehaviorTrackLaser::TransitionToTrackLaser(BehaviorExternalInterface& behav
   const float startedActionTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
   DelegateIfInControl(trackAction,
-              [this,&behaviorExternalInterface, startedActionTime_sec](ActionResult result)
+              [this, startedActionTime_sec](ActionResult result)
               {
                 const bool doPounce = (ActionResult::SUCCESS == result);
                 const f32  actionTrackingTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - startedActionTime_sec;
@@ -631,28 +636,28 @@ void BehaviorTrackLaser::TransitionToTrackLaser(BehaviorExternalInterface& behav
                               {{DDATA, (doPounce ? "1" : "0")}}, "%f", actionTrackingTime_sec);
                 
                 if(doPounce) {
-                  TransitionToPounce(behaviorExternalInterface);
+                  TransitionToPounce();
                 } else {
-                  TransitionToRotateToWatchingNewArea(behaviorExternalInterface);
+                  TransitionToRotateToWatchingNewArea();
                 }
               });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorTrackLaser::TransitionToPounce(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorTrackLaser::TransitionToPounce()
 {
   SET_STATE(Pouncing);
   
   IActionRunner* pounceAction = new TriggerLiftSafeAnimationAction(AnimationTrigger::LaserPounce);
   
-  DelegateIfInControl(pounceAction, [this,&behaviorExternalInterface]() {
+  DelegateIfInControl(pounceAction, [this]() {
     BehaviorObjectiveAchieved(BehaviorObjective::LaserPounced);
-    TransitionToBringingHeadDown(behaviorExternalInterface);
+    TransitionToBringingHeadDown();
   });
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorTrackLaser::TransitionToGetOutBored(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorTrackLaser::TransitionToGetOutBored()
 {
   SET_STATE(GetOutBored);
   
@@ -672,7 +677,7 @@ void BehaviorTrackLaser::TransitionToGetOutBored(BehaviorExternalInterface& beha
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorTrackLaser::AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorTrackLaser::AlwaysHandleInScope(const EngineToGameEvent& event)
 {
   const EngineToGameTag& tag = event.GetData().GetTag();
   switch( tag )
@@ -680,7 +685,7 @@ void BehaviorTrackLaser::AlwaysHandle(const EngineToGameEvent& event, BehaviorEx
     case MessageEngineToGameTag::RobotObservedLaserPoint:
     {
       // Note this helper does slightly different things depending on running/not running
-      SetLastLaserObservation(behaviorExternalInterface, event);
+      SetLastLaserObservation(event);
       break;
     }
       
@@ -746,7 +751,7 @@ void BehaviorTrackLaser::AlwaysHandle(const EngineToGameEvent& event, BehaviorEx
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorTrackLaser::SetLastLaserObservation(const BehaviorExternalInterface& behaviorExternalInterface, const EngineToGameEvent& event)
+void BehaviorTrackLaser::SetLastLaserObservation(const EngineToGameEvent& event)
 {
   const auto & laserObserved = event.GetData().Get_RobotObservedLaserPoint();
   const bool inGroundPlane   = (laserObserved.ground_area_fraction > 0.f);
@@ -772,7 +777,7 @@ void BehaviorTrackLaser::SetLastLaserObservation(const BehaviorExternalInterface
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorTrackLaser::Cleanup(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorTrackLaser::Cleanup()
 {
   SET_STATE(Complete);
   
@@ -781,16 +786,16 @@ void BehaviorTrackLaser::Cleanup(BehaviorExternalInterface& behaviorExternalInte
   _lastLaserObservation.type = LaserObservation::Type::None;
   
   // Leave the exposure/color settings as they were when we started
-  behaviorExternalInterface.GetVisionComponent().PopCurrentModeSchedule();
-  behaviorExternalInterface.GetVisionComponent().SetAndDisableAutoExposure(
+  GetBEI().GetVisionComponent().PopCurrentModeSchedule();
+  GetBEI().GetVisionComponent().SetAndDisableAutoExposure(
     _originalCameraSettings.exposureTime_ms, _originalCameraSettings.gain);
-  behaviorExternalInterface.GetVisionComponent().EnableAutoExposure(true);
+  GetBEI().GetVisionComponent().EnableAutoExposure(true);
   
   // Only pop animations if set within this behavior
   if(_haveAdjustedAnimations)
   {
-    SmartRemoveIdleAnimation(behaviorExternalInterface);
-    behaviorExternalInterface.GetRobotInfo().GetDrivingAnimationHandler().RemoveDrivingAnimations(GetIDStr());
+    SmartRemoveIdleAnimation();
+    GetBEI().GetRobotInfo().GetDrivingAnimationHandler().RemoveDrivingAnimations(GetIDStr());
     _haveAdjustedAnimations = false;
   }
 }

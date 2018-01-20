@@ -13,15 +13,15 @@
 #ifndef ANKI_COZMO_BASIC_ACTIONS_H
 #define ANKI_COZMO_BASIC_ACTIONS_H
 
-#include "anki/common/basestation/math/pose.h"
+#include "coretech/common/engine/math/pose.h"
 #include "engine/actions/actionInterface.h"
 #include "engine/actions/compoundActions.h"
 #include "engine/smartFaceId.h"
 #include "anki/cozmo/shared/animationTag.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
-#include "anki/vision/basestation/faceIdTypes.h"
-#include "anki/vision/basestation/visionMarker.h"
+#include "coretech/vision/engine/faceIdTypes.h"
+#include "coretech/vision/engine/visionMarker.h"
 #include "clad/externalInterface/messageActions.h"
 #include "clad/types/actionTypes.h"
 #include "clad/types/animationTypes.h"
@@ -104,6 +104,8 @@ namespace Cozmo {
       
       bool    _moveEyes = true;
       AnimationTag _eyeShiftTag = kNotAnimatingTag;
+      
+      bool _isInitialized = false;
       
     }; // class TurnInPlaceAction
 
@@ -328,6 +330,7 @@ namespace Cozmo {
       
       AnimationTag _eyeShiftTag = kNotAnimatingTag;
       
+      bool        _motionCommanded = false;
       bool        _motionStarted = false;
       
     };  // class MoveHeadToAngleAction
@@ -378,6 +381,7 @@ namespace Cozmo {
       f32         _liftAccelRacPerSec2 = 20.0f;
       
       bool        _inPosition;
+      bool        _motionCommanded = false;      
       bool        _motionStarted = false;
       
     }; // class MoveLiftToHeightAction

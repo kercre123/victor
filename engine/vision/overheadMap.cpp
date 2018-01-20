@@ -14,9 +14,9 @@
 #include "overheadMap.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
-#include "basestation/jsonTools.h"
-#include "basestation/math/quad_impl.h" // include this to avoid linking error in android
-#include "basestation/utils/data/dataPlatform.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/math/quad_impl.h" // include this to avoid linking error in android
+#include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "util/fileUtils/fileUtils.h"

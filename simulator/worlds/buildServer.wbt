@@ -80,17 +80,17 @@ DEF ArrowBlock Block1x1 {
 LightCube {
   translation -0.100 0.120 0.022
   rotation 0 0 1 0.23
-  ID 0
+  objectType "Block_LIGHTCUBE1"
 }
 LightCube {
   translation -0.120 0.070 0.022
   rotation 0 0 1 0.23
-  ID 1
+  objectType "Block_LIGHTCUBE2"
 }
 LightCube {
   translation -0.154 0.014 0.022
   rotation 0 0 1 0.23
-  ID 2
+  objectType "Block_LIGHTCUBE3"
 }
 #Block2x1 {
 #  translation -0.172268 -0.170815 0.0219949

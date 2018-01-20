@@ -1,14 +1,16 @@
 #define private public
 #define protected public
 
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/math/poseOriginList.h"
-#include "anki/common/basestation/utils/data/dataPlatform.h"
-#include "anki/common/robot/matlabInterface.h"
-#include "anki/common/types.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/engine/math/poseOriginList.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "coretech/common/robot/matlabInterface.h"
+#include "coretech/common/shared/types.h"
 
 #include "androidHAL/androidHAL.h"
+#include "osState/osState.h"
+#include "cubeBleClient/cubeBleClient.h"
 
 #include "engine/activeObject.h"
 #include "engine/activeCube.h"
@@ -18,6 +20,7 @@
 #include "engine/blockWorld/blockConfigurationPyramid.h"
 #include "engine/blockWorld/blockConfigurationStack.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/components/cubes/cubeCommsComponent.h"
 #include "engine/components/cubeLightComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/visionComponent.h"
@@ -559,21 +562,18 @@ void FakeRecvConnectionMessage(Robot& robot, double time, uint32_t activeID, uin
 {
   DEV_ASSERT(IsValidLightCube(objectType, false), "FaceRecvConnectionMessage.UnsupportedObjectType");
   
-  using namespace RobotInterface;
-  RobotToEngine msg = RobotToEngine::CreateactiveObjectConnectionState(
-                        ObjectConnectionState(activeID, factoryID, objectType, connected) );
-  AnkiEvent<RobotToEngine> event(time, static_cast<uint32_t>(msg.GetTag()), msg);
-  robot.GetRobotToEngineImplMessaging().HandleActiveObjectConnectionState(event, &robot);
+  if (connected) {
+    robot.GetBlockWorld().AddConnectedActiveObject(activeID, factoryID, objectType);
+  } else {
+    robot.GetBlockWorld().RemoveConnectedActiveObject(activeID);
+  }
 }
 
 // helper for move messages
 void FakeRecvMovedMessage(Robot& robot, double time, Anki::TimeStamp_t timestamp, uint32_t activeID)
 {
-  using namespace RobotInterface;
-  RobotToEngine msg = RobotToEngine::CreateactiveObjectMoved(
-      ObjectMoved(timestamp, activeID, ActiveAccel(1,1,1), Anki::Cozmo::UpAxis::ZPositive ) );
-  AnkiEvent<RobotToEngine> event(time, static_cast<uint32_t>(msg.GetTag()), msg);
-  robot.GetRobotToEngineImplMessaging().HandleActiveObjectMoved(event, &robot);
+  const auto& msg = ObjectMoved(timestamp, activeID, ActiveAccel(1,1,1), Anki::Cozmo::UpAxis::ZPositive );
+  robot.GetRobotToEngineImplMessaging().HandleActiveObjectMoved(msg, &robot);
 }
 
 }
@@ -2882,11 +2882,12 @@ int main(int argc, char ** argv)
     std::string path = aux.substr(0,pos);
 */
     std::string path = cwdPath;
-    resourcePath = path + "/resources";
+    resourcePath = path + "/../../assets/cozmo_resources";
     filesPath = path + "/files";
     cachePath = path + "/temp";
     externalPath = path + "/temp";
   } else {
+    // build server specifies configRoot and workRoot
     resourcePath = configRoot + "/resources";
     filesPath = workRoot + "/files";
     cachePath = workRoot + "/temp";
@@ -2898,6 +2899,12 @@ int main(int argc, char ** argv)
 
   // Initialize AndroidHAL singleton without supervisor
   AndroidHAL::SetSupervisor(nullptr);
+  
+  // Initialize OSState singleton without supervisor
+  OSState::SetSupervisor(nullptr);
+
+  // Initialize CubeBleClient singleton without supervisor
+  CubeBleClient::SetSupervisor(nullptr);
 
   //LEAKING HERE
   Anki::Util::Data::DataPlatform* dataPlatform = new Anki::Util::Data::DataPlatform(filesPath, cachePath, externalPath, resourcePath);

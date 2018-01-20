@@ -60,30 +60,30 @@
             "version": 0,
             "activation_mode": "manual",
             "start_time_utc_iso8601": "2017-12-07T00:00:00Z",
-            "stop_time_utc_iso8601": "2018-07-15T00:00:00Z",
+            "stop_time_utc_iso8601": "2018-01-01T00:00:00Z",
             "pause_time_utc_iso8601": "",
             "resume_time_utc_iso8601": "",
             "pop_frac_pct": 100,
             "variations": [
                 {
                     "key": "control",
-                    "pop_frac_pct": 5
-                },
-                {
-                    "key": "variationA",
-                    "pop_frac_pct": 5
-                },
-                {
-                    "key": "variationB",
-                    "pop_frac_pct": 5
-                },
-                {
-                    "key": "variationC",
-                    "pop_frac_pct": 5
-                },
-                {
-                    "key": "variationD",
                     "pop_frac_pct": 80
+                },
+                {
+                    "key": "testAoff",
+                    "pop_frac_pct": 5
+                },
+                {
+                    "key": "testBoff",
+                    "pop_frac_pct": 5
+                },
+                {
+                    "key": "testCoff",
+                    "pop_frac_pct": 5
+                },
+                {
+                    "key": "alloff",
+                    "pop_frac_pct": 5
                 }
             ],
             "audience_tags": [],

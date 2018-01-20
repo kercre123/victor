@@ -12,10 +12,8 @@
 #include "clad/types/dockingSignals.clad"
 #include "clad/types/imu.clad"
 #include "clad/types/proxMessages.clad"
-#include "clad/robotInterface/messageFromActiveObject.clad"
 #include "clad/robotInterface/otaMessages.clad"
 #include "clad/robotInterface/messageFromAnimProcess.clad"
-#include "clad/types/animationEvents.clad"
 #include "clad/types/pathEventTypes.clad"
 #include "clad/types/factoryFWOnly.clad"
 
@@ -28,11 +26,6 @@ message SyncTimeAck
 {
 }
 
-message BackpackButton
-{
-  bool depressed
-}
-
 message RobotPoked
 {
 }
@@ -40,6 +33,16 @@ message RobotPoked
 // Indicates the robot has heard the trigger word
 message TriggerWordDetected
 {
+  uint_32 timestamp,
+  uint_16 direction
+}
+
+message MicDirection
+{
+  uint_32   timestamp,
+  uint_16   direction,
+  int_16    confidence,
+  float_32  confidenceList[13]
 }
 
 // This message indicates that the robot experienced a freefall event
@@ -61,32 +64,6 @@ message PathFollowingEvent
   PathEventType  eventType
 }
 
-message AnimationAvailable {
-  uint_32 id,
-  string  name
-}
-
-// These two messages bookend animations as they are played on the robot
-message AnimationStarted
-{
-  uint_32 id,
-  uint_8  tag
-}
-
-message AnimationEnded
-{
-  uint_32 id,
-  uint_8  tag,
-  bool    wasAborted
-}
-
-message AnimationEvent
-{
-  uint_32   timestamp,
-  uint_8    tag,
-  AnimEvent event_id
-}
-
 message ManufacturingID
 { // See definitions in syscon/hal/hardware.h
   uint_32 esn,
@@ -102,7 +79,13 @@ message LiftLoad
 message MicData
 {
   int_16  data[480], // 120 samples of audio 4 channels
-  uint_32 sequenceID
+  uint_32 sequenceID,
+  uint_32 timestamp
+}
+
+message AudioFFTResult
+{
+  uint_32 result[4]
 }
 
 /// *************** Overall message pipe ******************************* ///
@@ -142,7 +125,7 @@ union RobotToEngine {
   BridgeTraverseComplete     bridgeTraverseCompleted= 0xC0,
 
   // Sensors
-  BackpackButton             backpackButton         = 0xC1,  
+  // FREE SLOT                                      = 0xC1,  
   IMUDataChunk               imuDataChunk           = 0xC2,
   IMURawDataChunk            imuRawDataChunk        = 0xC3,
   IMUTemperature             imuTemperature         = 0xC4,
@@ -157,25 +140,19 @@ union RobotToEngine {
   ManufacturingID            mfgId                  = 0xCB,
   FirmwareVersion            firmwareVersion        = 0xCC,  
 
-  // TODO: These cube messages will need to be modified and moved to a 
-  //       separate file once we update block connection logic for BLE
-  ObjectConnectionState activeObjectConnectionState = 0xCD,
-  ObjectMoved                activeObjectMoved      = 0xCE,
-  ObjectStoppedMoving        activeObjectStopped    = 0xCF,
-  ObjectTapped               activeObjectTapped     = 0xD0,
-  ObjectTappedFiltered       objectTappedFiltered   = 0xD1,  
-  ObjectUpAxisChanged        activeObjectUpAxisChanged = 0xD2,
-  ObjectPowerLevel           objectPowerLevel       = 0xD3,
+  // FREE SLOTS 0xCD to 0xD3
 
   // Messages from animation process to engine
   RobotAvailable             robotAvailable         = 0xD4,
   AnimationEvent             animEvent              = 0xD5,
   AnimationStarted           animStarted            = 0xD6,
   AnimationEnded             animEnded              = 0xD7,
-  EndOfMessage               endOfMessage           = 0xD8,
+
+  AudioFFTResult             audioFFTResult         = 0xD8,
 
   // Messages relating to trigger word detection
   TriggerWordDetected        triggerWordDetected    = 0xD9,
+  MicDirection               micDirection           = 0xDA,
 
   // Audio
   AudioEngine::Multiplexer::AudioCallbackDuration audioCallbackDuration = 0xE0,
@@ -191,13 +168,7 @@ union RobotToEngine {
   MicData                    micData                = 0xF2,
 
   // From anim process  
-  AnimationAvailable         animationAvailable     = 0xF3,
-  AnimationState             animState              = 0xF4,
-
-  // TODO: These cube messages will need to be modified and moved to a 
-  //       separate file once we update block connection logic for BLE
-  ObjectAvailable            activeObjectAvailable  = 0xF5,
-  ObjectAccel                objectAccel            = 0xF6,
+  AnimationState             animState              = 0xF3,
   
 }
 

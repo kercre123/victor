@@ -30,13 +30,13 @@ protected:
   
 public:
   virtual ~BehaviorTurnToFace() override {}
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-
-  virtual bool CarryingObjectHandledInternally() const override{ return false;}
+  virtual bool WantsToBeActivatedBehavior() const override;
   
 protected:
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
+
+  virtual void OnBehaviorActivated() override;
+  virtual void OnBehaviorDeactivated() override;
   
 private:
   mutable SmartFaceID _targetFace;

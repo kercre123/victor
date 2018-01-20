@@ -15,7 +15,7 @@
 #define __Cozmo_Basestation_BehaviorSystem_BehaviorHelpers_PickupBlockHelper_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/iHelper.h"
-#include "anki/common/basestation/objectIDs.h"
+#include "coretech/common/engine/objectIDs.h"
 #include "clad/types/animationTrigger.h"
 
 namespace Anki {
@@ -24,7 +24,7 @@ namespace Cozmo {
 
 class PickupBlockHelper : public IHelper{
 public:
-  PickupBlockHelper(BehaviorExternalInterface& behaviorExternalInterface, ICozmoBehavior& behavior,
+  PickupBlockHelper(ICozmoBehavior& behavior,
                     BehaviorHelperFactory& helperFactory,
                     const ObjectID& targetID,
                     const PickupBlockParamaters& parameters = {});
@@ -32,9 +32,9 @@ public:
 
 protected:
   // IHelper functions
-  virtual bool ShouldCancelDelegates(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual BehaviorStatus InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual BehaviorStatus UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual bool ShouldCancelDelegates() const override;
+  virtual HelperStatus InitBehaviorHelper() override;
+  virtual HelperStatus UpdateWhileActiveInternal() override;
   
 private:
   ObjectID _targetID;
@@ -43,10 +43,10 @@ private:
   u32 _dockAttemptCount;
   bool _hasTriedOtherPose;
   
-  void StartPickupAction(BehaviorExternalInterface& behaviorExternalInterface, bool ignoreCurrentPredockPose = false);
-  void RespondToPickupResult(const ExternalInterface::RobotCompletedAction& rca, BehaviorExternalInterface& behaviorExternalInterface);
+  void StartPickupAction(bool ignoreCurrentPredockPose = false);
+  void RespondToPickupResult(const ExternalInterface::RobotCompletedAction& rca);
 
-  void MarkTargetAsFailedToPickup(BehaviorExternalInterface& behaviorExternalInterface);
+  void MarkTargetAsFailedToPickup();
   
 };
 

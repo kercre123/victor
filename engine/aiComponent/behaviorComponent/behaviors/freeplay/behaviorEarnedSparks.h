@@ -22,23 +22,23 @@ namespace Cozmo {
 
 class BehaviorEarnedSparks : public ICozmoBehavior
 {
-
-private:
-
+protected:
   // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
   BehaviorEarnedSparks(const Json::Value& config);
 
 public:
-
   virtual ~BehaviorEarnedSparks();
 
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual bool CarryingObjectHandledInternally() const override { return true; }
+  virtual bool WantsToBeActivatedBehavior() const override;
 
 protected:
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenCarryingObject = true;
+  }
+
+  virtual void OnBehaviorActivated() override;
+  virtual void OnBehaviorDeactivated() override;
 
 };
 

@@ -19,12 +19,12 @@
 #include "engine/actions/driveToActions.h"
 #include "engine/actions/visuallyVerifyActions.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/visionComponent.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 
 
 namespace Anki {
@@ -35,12 +35,11 @@ static const int kMaxNumRetrys = 3;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-DriveToHelper::DriveToHelper(BehaviorExternalInterface& behaviorExternalInterface,
-                                   ICozmoBehavior& behavior,
-                                   BehaviorHelperFactory& helperFactory,
-                                   const ObjectID& targetID,
-                                   const DriveToParameters& params)
-: IHelper("DriveToHelper", behaviorExternalInterface, behavior, helperFactory)
+DriveToHelper::DriveToHelper(ICozmoBehavior& behavior,
+                             BehaviorHelperFactory& helperFactory,
+                             const ObjectID& targetID,
+                             const DriveToParameters& params)
+: IHelper("DriveToHelper", behavior, helperFactory)
 , _targetID(targetID)
 , _params(params)
 , _tmpRetryCounter(0)
@@ -61,33 +60,33 @@ DriveToHelper::~DriveToHelper()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool DriveToHelper::ShouldCancelDelegates(BehaviorExternalInterface& behaviorExternalInterface) const
+bool DriveToHelper::ShouldCancelDelegates() const
 {
   return false;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStatus DriveToHelper::InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface)
+IHelper::HelperStatus DriveToHelper::InitBehaviorHelper()
 {
-  _initialRobotPose = behaviorExternalInterface.GetRobotInfo().GetPose();
-  DriveToPreActionPose(behaviorExternalInterface);
+  _initialRobotPose = GetBEI().GetRobotInfo().GetPose();
+  DriveToPreActionPose();
   return _status;
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStatus DriveToHelper::UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IHelper::HelperStatus DriveToHelper::UpdateWhileActiveInternal()
 {
   return _status;
 }
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void DriveToHelper::DriveToPreActionPose(BehaviorExternalInterface& behaviorExternalInterface)
+void DriveToHelper::DriveToPreActionPose()
 {
   if(_tmpRetryCounter >= kMaxNumRetrys){
-    _status = BehaviorStatus::Failure;
+    _status = IHelper::HelperStatus::Failure;
     return;
   }
   _tmpRetryCounter++;
@@ -127,25 +126,25 @@ void DriveToHelper::DriveToPreActionPose(BehaviorExternalInterface& behaviorExte
   }else{
     // Calculate the pre-dock pose directly for PLACE_RELATIVE and drive to that pose
     const ActionableObject* obj = dynamic_cast<const ActionableObject*>(
-                                    behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_targetID));
+                                    GetBEI().GetBlockWorld().GetLocatedObjectByID(_targetID));
     if(obj != nullptr &&
-       behaviorExternalInterface.HasVisionComponent()){
+       GetBEI().HasVisionComponent()){
       std::vector<Pose3d> possiblePoses;
       bool alreadyInPosition;
 
-      auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+      auto& robotInfo = GetBEI().GetRobotInfo();
       PlaceRelObjectAction::ComputePlaceRelObjectOffsetPoses(
                               obj, _params.placeRelOffsetX_mm, _params.placeRelOffsetY_mm,
                               robotInfo.GetPose(),
                               robotInfo.GetWorldOrigin(),
                               robotInfo.GetCarryingComponent(),
-                              behaviorExternalInterface.GetBlockWorld(),
-                              behaviorExternalInterface.GetVisionComponent(),
+                              GetBEI().GetBlockWorld(),
+                              GetBEI().GetVisionComponent(),
                               possiblePoses, alreadyInPosition);
       if(possiblePoses.size() > 0){
         if(alreadyInPosition){
           // Already in pose, no drive to necessary
-          _status = BehaviorStatus::Complete;
+          _status = IHelper::HelperStatus::Complete;
         }else{
           // Drive to the nearest allowed pose, and then perform a visual verify
           CompoundActionSequential* compoundAction = new CompoundActionSequential();
@@ -164,44 +163,44 @@ void DriveToHelper::DriveToPreActionPose(BehaviorExternalInterface& behaviorExte
                          "No valid predock poses for objectID: %d with offsets x:%f y:%f",
                          _targetID.GetValue(),
                          _params.placeRelOffsetX_mm, _params.placeRelOffsetY_mm);
-        behaviorExternalInterface.GetAIComponent().GetWhiteboard().SetNoPreDockPosesOnObject(_targetID);
-        _status = BehaviorStatus::Failure;
+        GetBEI().GetAIComponent().GetWhiteboard().SetNoPreDockPosesOnObject(_targetID);
+        _status = IHelper::HelperStatus::Failure;
       }
     }else{
       PRINT_NAMED_WARNING("DriveToHelper.DriveToPreActionPose.TargetBlockNull",
                           "Failed to get ActionableObject for id:%d", _targetID.GetValue());
-      _status = BehaviorStatus::Failure;
+      _status = IHelper::HelperStatus::Failure;
     }
   }
 }
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void DriveToHelper::RespondToDriveResult(ActionResult result, BehaviorExternalInterface& behaviorExternalInterface)
+void DriveToHelper::RespondToDriveResult(ActionResult result)
 {
   switch(result){
     case ActionResult::SUCCESS:
     {
-      _status = BehaviorStatus::Complete;
+      _status = IHelper::HelperStatus::Complete;
       break;
     }
     case ActionResult::VISUAL_OBSERVATION_FAILED:
     {
       // If the object is still located search for it
-      const auto locatedObj = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_targetID);
+      const auto locatedObj = GetBEI().GetBlockWorld().GetLocatedObjectByID(_targetID);
       if(locatedObj != nullptr){        
         SearchParameters searchParams;
         searchParams.searchingForID = _targetID;
         DelegateProperties delegateProperties;
-        delegateProperties.SetDelegateToSet(CreateSearchForBlockHelper(behaviorExternalInterface, searchParams));
-        delegateProperties.SetOnSuccessFunction([this](BehaviorExternalInterface& behaviorExternalInterface){
-          DriveToPreActionPose(behaviorExternalInterface);
+        delegateProperties.SetDelegateToSet(CreateSearchForBlockHelper(searchParams));
+        delegateProperties.SetOnSuccessFunction([this](){
+          DriveToPreActionPose();
           return _status;
         });
         delegateProperties.FailImmediatelyOnDelegateFailure();
         DelegateAfterUpdate(delegateProperties);
       }else{
-        _status = BehaviorStatus::Failure;
+        _status = IHelper::HelperStatus::Failure;
       }
       break;
     }
@@ -213,32 +212,40 @@ void DriveToHelper::RespondToDriveResult(ActionResult result, BehaviorExternalIn
     case ActionResult::NO_PREACTION_POSES:
     {
       if( !_params.ignoreCurrentPredockPose ) {
-        behaviorExternalInterface.GetAIComponent().GetWhiteboard().SetNoPreDockPosesOnObject(_targetID);
+        GetBEI().GetAIComponent().GetWhiteboard().SetNoPreDockPosesOnObject(_targetID);
       }
-      _status = BehaviorStatus::Failure;
+      _status = IHelper::HelperStatus::Failure;
       break;
     }
     case ActionResult::DID_NOT_REACH_PREACTION_POSE:
     case ActionResult::MOTOR_STOPPED_MAKING_PROGRESS:
     case ActionResult::FAILED_TRAVERSING_PATH:
     {
-      DriveToPreActionPose(behaviorExternalInterface);
+      DriveToPreActionPose();
       break;
     }
     case ActionResult::NOT_STARTED:
     case ActionResult::BAD_OBJECT:
     {
-      _status = BehaviorStatus::Failure;
+      _status = IHelper::HelperStatus::Failure;
+      break;
+    }
+    case ActionResult::PATH_PLANNING_FAILED_ABORT:
+    {
+      if (PreActionPose::ActionType::ROLLING == _params.actionType && _params.useApproachAngle) {
+        _params.useApproachAngle = false;
+        DriveToPreActionPose();
+      }
       break;
     }
     default:
     {
       //DEV_ASSERT(false, "HANDLE CASE!");
       if( IActionRunner::GetActionResultCategory(result) == ActionResultCategory::RETRY ) {
-        DriveToPreActionPose(behaviorExternalInterface);
+        DriveToPreActionPose();
       }
       else {
-        _status = BehaviorStatus::Failure;
+        _status = IHelper::HelperStatus::Failure;
       }
       break;
     }

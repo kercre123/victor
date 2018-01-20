@@ -13,7 +13,7 @@
  **/
 
 #include "cozmoAnim/audio/cozmoAudioController.h"
-#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "audioEngine/audioScene.h"
 #include "audioEngine/soundbankLoader.h"
 #include "clad/audio/audioGameObjectTypes.h"
@@ -63,27 +63,29 @@ static void AudioEngineLogCallback( uint32_t, const char*, ErrorLevel, AudioPlay
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Console Vars
-CONSOLE_VAR(bool, kWriteProfilerCapture, "CozmoAudioController.ProfilerCapture", false);
-CONSOLE_VAR(bool, kWriteAudioOutputCapture, "CozmoAudioController.AudioOutputCapture", false);
+CONSOLE_VAR( bool, kWriteAudioProfilerCapture, "CozmoAudioController", false );
+CONSOLE_VAR( bool, kWriteAudioOutputCapture, "CozmoAudioController", false );
 
 // Console Functions
-void ProfilerCaptureConsVarFunc(ConsoleFunctionContextRef context)
+void SetWriteAudioProfilerCapture( ConsoleFunctionContextRef context )
 {
-  if (sThis != nullptr) {
-    sThis->WriteProfilerCapture(kWriteProfilerCapture);
+  kWriteAudioProfilerCapture = ConsoleArg_Get_Bool( context, "writeProfiler" );
+  if ( sThis != nullptr ) {
+    sThis->WriteProfilerCapture( kWriteAudioProfilerCapture );
   }
 }
 
-void AudioOutputCaptureConsVarFunc(ConsoleFunctionContextRef context)
+void SetWriteAudioOutputCapture( ConsoleFunctionContextRef context )
 {
-  if (sThis != nullptr) {
-    sThis->WriteAudioOutputCapture(kWriteAudioOutputCapture);
+  kWriteAudioOutputCapture = ConsoleArg_Get_Bool( context, "writeOutput" );
+  if ( sThis != nullptr ) {
+    sThis->WriteAudioOutputCapture( kWriteAudioOutputCapture );
   }
 }
 
 // Register console var func
-CONSOLE_FUNC(ProfilerCaptureConsVarFunc, "CozmoAudioController.ProfilerCapture");
-CONSOLE_FUNC(AudioOutputCaptureConsVarFunc, "CozmoAudioController.AudioOutputCapture");
+CONSOLE_FUNC( SetWriteAudioProfilerCapture, "CozmoAudioController", bool writeProfiler );
+CONSOLE_FUNC( SetWriteAudioOutputCapture, "CozmoAudioController", bool writeOutput );
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -95,10 +97,11 @@ CozmoAudioController::CozmoAudioController( const CozmoAnimContext* context )
   {
     DEV_ASSERT(nullptr != context, "CozmoAudioController.CozmoAudioController.CozmoAnimContext.IsNull");
 
-    const Util::Data::DataPlatform* dataPlatfrom = context->GetDataPlatform();
-    const std::string assetPath = dataPlatfrom->pathToResource(Util::Data::Scope::Resources, "sound/" );
+    const Util::Data::DataPlatform* dataPlatform = context->GetDataPlatform();
+    const std::string assetPath = dataPlatform->pathToResource(Util::Data::Scope::Resources, "sound" );
+    const std::string writePath = dataPlatform->pathToResource(Util::Data::Scope::Cache, "sound");
     PRINT_CH_INFO("Audio", "CozmoAudioController.CozmoAudioController", "AssetPath '%s'", assetPath.c_str());
-
+    PRINT_CH_INFO("Audio", "CozmoAudioController.CozmoAudioController", "WritePath '%s'", writePath.c_str());
     // If assets don't exist don't init the Audio engine
     const bool assetsExist = Util::FileUtils::DirectoryExists( assetPath );
     if ( !assetsExist ) {
@@ -112,6 +115,7 @@ CozmoAudioController::CozmoAudioController( const CozmoAnimContext* context )
     SetupConfig config{};
     // Read/Write Asset path
     config.assetFilePath = assetPath;
+    config.writeFilePath = writePath;
     
     // Cozmo uses default audio locale regardless of current context.
     // Locale-specific adjustments are made by setting GameState::External_Language
@@ -148,7 +152,7 @@ CozmoAudioController::CozmoAudioController( const CozmoAnimContext* context )
     }
 
     // Use Console vars to controll profiling settings
-    if ( kWriteProfilerCapture ) {
+    if ( kWriteAudioProfilerCapture ) {
       WriteProfilerCapture( true );
     }
     if ( kWriteAudioOutputCapture ) {

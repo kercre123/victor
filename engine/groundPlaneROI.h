@@ -14,8 +14,8 @@
 #ifndef __Anki_Cozmo_Basestation_GroundPlaneROI_H__
 #define __Anki_Cozmo_Basestation_GroundPlaneROI_H__
 
-#include "anki/vision/basestation/image.h"
-#include "anki/common/basestation/math/matrix.h"
+#include "coretech/vision/engine/image.h"
+#include "coretech/common/engine/math/matrix.h"
 
 namespace Anki {
 namespace Cozmo {

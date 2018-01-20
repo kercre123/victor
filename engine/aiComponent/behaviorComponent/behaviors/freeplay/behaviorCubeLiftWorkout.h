@@ -16,7 +16,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
-#include "anki/common/basestation/objectIDs.h"
+#include "coretech/common/engine/objectIDs.h"
 #include "clad/types/animationTrigger.h"
 
 namespace Anki {
@@ -31,28 +31,27 @@ protected:
   friend class BehaviorContainer;
   BehaviorCubeLiftWorkout(const Json::Value& config);
 
-public:
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenCarryingObject = true;
+  }
 
-  virtual bool CarryingObjectHandledInternally() const override { return true; }
 
-protected:
+  virtual bool WantsToBeActivatedBehavior() const override;
 
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual void OnBehaviorActivated() override;
+  virtual void BehaviorUpdate() override;
 
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
-  
-  virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorDeactivated() override;
 
-  void TransitionToPickingUpCube(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToPostLiftAnim(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToStrongLifts(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToWeakPose(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToWeakLifts(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToPuttingDown(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToCheckPutDown(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToManualPutDown(BehaviorExternalInterface& behaviorExternalInterface);
-  void EndIteration(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToPickingUpCube();
+  void TransitionToPostLiftAnim();
+  void TransitionToStrongLifts();
+  void TransitionToWeakPose();
+  void TransitionToWeakLifts();
+  void TransitionToPuttingDown();
+  void TransitionToCheckPutDown();
+  void TransitionToManualPutDown();
+  void EndIteration();
 
   // set by init to the number of lifts we should do, then decremented in the state machine
   unsigned int _numStrongLiftsToDo = 0;

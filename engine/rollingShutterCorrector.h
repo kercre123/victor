@@ -14,8 +14,8 @@
 #ifndef ANKI_COZMO_ROLLING_SHUTTER_CORRECTOR_H
 #define ANKI_COZMO_ROLLING_SHUTTER_CORRECTOR_H
 
-#include "anki/vision/basestation/image.h"
-#include "anki/common/basestation/math/rotation.h"
+#include "coretech/vision/engine/image.h"
+#include "coretech/common/engine/math/rotation.h"
 #include <deque>
 #include <vector>
 
@@ -63,7 +63,7 @@ namespace Anki {
       
       private:
         std::deque<ImuData> _history;
-        static const int maxSizeOfHistory = 40;
+        static const int maxSizeOfHistory = 80;
     };
     
     class RollingShutterCorrector

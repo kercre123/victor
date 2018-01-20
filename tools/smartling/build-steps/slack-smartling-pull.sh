@@ -72,7 +72,7 @@ _CHECK_JSON_KEYS=${_TOPLEVEL}/tools/smartling/smartling-check-json-keys.py
 _UNITY_PROJECT_DIR=${_TOPLEVEL}/unity/Cozmo/
 _TRANSLATED_ASSETS_DIR=Assets/StreamingAssets/LocalizedStrings/ja-JP
 _ASSET_BUNDLES_DIR=${_TOPLEVEL}/unity/Cozmo/Assets/AssetBundles
-_TRANSALATED_OUTPUT_FILE=Assets/DevTools/Editor/LanguageHelpers/japaneseTranslations.txt
+_TRANSLATED_OUTPUT_FILE=Assets/DevTools/Editor/LanguageHelpers/japaneseTranslations.txt
 _LOCALIZED_STRINGS_DIR=${_TOPLEVEL}/unity/Cozmo/Assets/StreamingAssets/LocalizedStrings
 _GIT_COZMO_URI=https://$ANKI_SMARTLING_ACCESS_TOKEN:x-oauth-basic@github.com/anki/cozmo-one.git
 _GIT_COZMO_PR_URI=https://$ANKI_SMARTLING_ACCESS_TOKEN:x-oauth-basic@api.github.com/repos/anki/cozmo-one/pulls
@@ -94,7 +94,7 @@ if [ $exit_status -ne 0 ]; then
 fi
 
 $PYTHON $_GENERATE_SDF_SCRIPT --project-dir $_UNITY_PROJECT_DIR --translated-json-asset-dir $_TRANSLATED_ASSETS_DIR \
---txt-output-asset-path $_TRANSALATED_OUTPUT_FILE || exit_status=$?
+--txt-output-asset-path $_TRANSLATED_OUTPUT_FILE || exit_status=$?
 if [ $exit_status -ne 0 ]; then
     send_slack_message_no_exit "There was a problem generating JP SDF from translations. Check build log!" "danger"
 fi

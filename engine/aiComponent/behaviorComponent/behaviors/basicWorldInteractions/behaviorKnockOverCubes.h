@@ -13,7 +13,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorKnockOverCubes_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorKnockOverCubes_H__
 
-#include "anki/common/basestation/objectIDs.h"
+#include "coretech/common/engine/objectIDs.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/blockWorld/blockConfiguration.h"
 #include "engine/blockWorld/stackConfigurationContainer.h"
@@ -32,15 +32,16 @@ protected:
   friend class BehaviorContainer;
   BehaviorKnockOverCubes(const Json::Value& config);
 
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
+
+  virtual void OnBehaviorActivated() override;
+  virtual void OnBehaviorDeactivated() override;
   
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual bool CarryingObjectHandledInternally() const override {return false;}
+  virtual bool WantsToBeActivatedBehavior() const override;
   
-  virtual void HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
-  void HandleObjectUpAxisChanged(const ObjectUpAxisChanged& msg, BehaviorExternalInterface& behaviorExternalInterface);
+  virtual void HandleWhileActivated(const EngineToGameEvent& event) override;
+  virtual void AlwaysHandleInScope(const EngineToGameEvent& event) override;
+  void HandleObjectUpAxisChanged(const ObjectUpAxisChanged& msg);
   
 private:
   // TODO:(bn) a few behaviors have used this pattern now, maybe we should re-think having some kind of
@@ -75,15 +76,15 @@ private:
   AnimationTrigger _knockOverSuccessTrigger = AnimationTrigger::Count;
   AnimationTrigger _knockOverFailureTrigger = AnimationTrigger::Count;
 
-  void TransitionToReachingForBlock(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToKnockingOverStack(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToBlindlyFlipping(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToPlayingReaction(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToReachingForBlock();
+  void TransitionToKnockingOverStack();
+  void TransitionToBlindlyFlipping();
+  void TransitionToPlayingReaction();
   
   void LoadConfig(const Json::Value& config);
   bool InitializeMemberVars();
   virtual void ClearStack();
-  virtual void UpdateTargetStack(BehaviorExternalInterface& behaviorExternalInterface) const;
+  virtual void UpdateTargetStack() const;
   
   void PrepareForKnockOverAttempt();
 

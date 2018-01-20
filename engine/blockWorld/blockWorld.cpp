@@ -11,20 +11,20 @@
  **/
 #include "engine/blockWorld/blockWorld.h"
 
-// Putting engine config include first so we get anki/common/types.h instead of anki/types.h
+// Putting engine config include first so we get coretech/common/shared/types.h instead of anki/types.h
 // TODO: Fix this types.h include mess (COZMO-3752)
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 
-#include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/math/poseOriginList.h"
-#include "anki/common/basestation/math/quad_impl.h"
-#include "anki/common/basestation/math/rect_impl.h"
-#include "anki/common/basestation/utils/timer.h"
-#include "anki/common/shared/utilities_shared.h"
+#include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/engine/math/poseOriginList.h"
+#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/engine/math/rect_impl.h"
+#include "coretech/common/engine/utils/timer.h"
+#include "coretech/common/shared/utilities_shared.h"
 #include "engine/activeCube.h"
 #include "engine/activeObjectHelpers.h"
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/block.h"
 #include "engine/blockWorld/blockConfigurationManager.h"
@@ -53,8 +53,8 @@
 #include "engine/robot.h"
 #include "engine/robotInterface/messageHandler.h"
 #include "engine/viz/vizManager.h"
-#include "anki/vision/basestation/observableObjectLibrary_impl.h"
-#include "anki/vision/basestation/visionMarker.h"
+#include "coretech/vision/engine/observableObjectLibrary_impl.h"
+#include "coretech/vision/engine/visionMarker.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -98,16 +98,24 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
 CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10.0f);
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  BlockWorld::BlockWorld(Robot* robot)
-  : _robot(robot)
+  BlockWorld::BlockWorld()
+  : UnreliableComponent<BCComponentID>(BCComponentID::BlockWorld)
+  , IDependencyManagedComponent<RobotComponentID>(RobotComponentID::BlockWorld)
   , _lastPlayAreaSizeEventSec(0)
   , _playAreaSizeEventIntervalSec(60)
   , _didObjectsChange(false)
   , _robotMsgTimeStampAtChange(0)
   , _trackPoseChanges(false)
-  , _blockConfigurationManager(new BlockConfigurations::BlockConfigurationManager(*robot))
   {
+  } // BlockWorld() Constructor
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::InitDependent(Robot* robot, const RobotCompMap& dependentComponents)
+  {
+    _robot = robot;
     DEV_ASSERT(_robot != nullptr, "BlockWorld.Constructor.InvalidRobot");
+    _blockConfigurationManager = std::make_unique<BlockConfigurations::BlockConfigurationManager>(*robot);
+    
     
     // TODO: Create each known block / matpiece from a configuration/definitions file
     
@@ -205,8 +213,8 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
     {
       SetupEventHandlers(*_robot->GetExternalInterface());
     }
-          
-  } // BlockWorld() Constructor
+  }
+
 
   void BlockWorld::SetupEventHandlers(IExternalInterface& externalInterface)
   {
@@ -1234,8 +1242,12 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
                                                                                 wasRobotMoving,
                                                                                 distToObjSeen);
         if ( !isConfirmingObservation ) {
+          // Don't print this during the factory test because it spams when seeing the 
+          // calibration target
+          #if !FACTORY_TEST
           PRINT_CH_INFO("BlockWorld", "BlockWorld.AddAndUpdateObjects.NonConfirmingObservation",
-            "Added non-confirming visual observation for %d", objSeen->GetID().GetValue() );
+                        "Added non-confirming visual observation for %d", objSeen->GetID().GetValue() );
+          #endif
           
           // TODO should we broadcast RobotObservedPossibleObject here?
           continue;
@@ -1796,14 +1808,12 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
     switch (type) {
       case ObjectType::CliffDetection:
       {
-        // cliffs currently have extra data (for directionality)
-        const Pose3d& robotPose = _robot->GetPose();
-        const Pose3d& robotPoseWrtOrigin = robotPose.GetWithRespectToRoot();
-        Vec3f rotatedFwdVector = robotPoseWrtOrigin.GetRotation() * X_AXIS_3D();
-        MemoryMapData_Cliff cliffData(Vec2f {rotatedFwdVector.x(), rotatedFwdVector.y()}, lastTimestamp);
+        // cliffs currently have extra data (for directionality and position)
+        Pose3d cliffPose = obsPose.GetWithRespectToRoot();
+        MemoryMapData_Cliff cliffData(cliffPose, lastTimestamp);
         
         // calculate cliff quad where it's being placed (wrt origin since memory map is 2d wrt current origin)
-        const Quad2f& cliffQuad = markerlessObject->GetBoundingQuadXY( p.GetWithRespectToRoot() );
+        const Quad2f& cliffQuad = markerlessObject->GetBoundingQuadXY( cliffPose );
       
         INavMap* currentNavMemoryMap = _robot->GetMapComponent().GetCurrentMemoryMap();
         DEV_ASSERT(currentNavMemoryMap, "BlockWorld.AddMarkerlessObject.NoMemoryMap");
@@ -1876,11 +1886,6 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
   {
     // only connected objects should be added through this method, so a required activeID is a must
     DEV_ASSERT(activeID != ObservableObject::InvalidActiveID, "BlockWorld.AddConnectedActiveObject.CantAddInvalidActiveID");
-  
-    if (activeID >= (int)ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS) {
-      PRINT_NAMED_WARNING("BlockWorld.AddConnectedActiveObject.InvalidActiveID", "activeID %d", activeID);
-      return ObjectID();
-    }
 
     // NOTE: If you hit any of the following VERIFY, please notify Raul and Al.
     // rsam: Al and I have made assumptions about when this gets called. Checking here that the assumptions are correct,
@@ -2309,21 +2314,9 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
         }
       }
     }
-
-    // - - - - -
-    // update memory map
-    // - - - - -
-    _robot->GetMapComponent().UpdateObjectPose(object, oldPose, oldPoseState);
     
     // notify the block configuration manager
     _blockConfigurationManager->SetObjectPoseChanged(objectID, object.GetPoseState());
-  }
-  
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void BlockWorld::OnObjectVisuallyVerified(const ObservableObject* object)
-  {
-      // -- clear memory map from robot to markers
-      _robot->GetMapComponent().ClearRobotToMarkers(object);
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -3525,6 +3518,5 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
     FindLocatedObjectHelper(filter, visualizeHelper, false);
     
   } // DrawAllObjects()
-    
 } // namespace Cozmo
 } // namespace Anki

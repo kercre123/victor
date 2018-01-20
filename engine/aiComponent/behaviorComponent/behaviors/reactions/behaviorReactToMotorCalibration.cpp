@@ -31,17 +31,17 @@ BehaviorReactToMotorCalibration::BehaviorReactToMotorCalibration(const Json::Val
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorReactToMotorCalibration::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorReactToMotorCalibration::WantsToBeActivatedBehavior() const
 {
   return true;
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorReactToMotorCalibration::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToMotorCalibration::OnBehaviorActivated()
 {
   LOG_EVENT("BehaviorReactToMotorCalibration.InitInternalReactionary.Start", "");  
-  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  auto& robotInfo = GetBEI().GetRobotInfo();
   
   // Start a hang action just to keep this behavior alive until the calibration complete message is received
   DelegateIfInControl(new WaitAction(_kTimeout_sec), [&robotInfo](ActionResult res)
@@ -53,18 +53,16 @@ Result BehaviorReactToMotorCalibration::OnBehaviorActivated(BehaviorExternalInte
                             robotInfo.IsLiftCalibrated(), robotInfo.IsHeadCalibrated());
       }
     });
-
-  return RESULT_OK;
 }
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToMotorCalibration::HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToMotorCalibration::HandleWhileActivated(const EngineToGameEvent& event)
 {
   switch(event.GetData().GetTag()) {
     case EngineToGameTag::MotorCalibration:
     {
-      auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+      auto& robotInfo = GetBEI().GetRobotInfo();
 
       if (robotInfo.IsHeadCalibrated() && robotInfo.IsLiftCalibrated()) {
         PRINT_CH_INFO("Behaviors", "BehaviorReactToMotorCalibration.HandleWhileRunning.Stop", "");

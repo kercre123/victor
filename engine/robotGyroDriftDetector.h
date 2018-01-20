@@ -8,9 +8,12 @@
 #ifndef __Anki_Cozmo_RobotGyroDriftDetector_H__
 #define __Anki_Cozmo_RobotGyroDriftDetector_H__
 
-#include "anki/common/basestation/math/point.h"
-#include "anki/common/shared/radians.h"
-#include "anki/common/types.h"
+#include "coretech/common/engine/math/point.h"
+#include "coretech/common/shared/radians.h"
+#include "coretech/common/shared/types.h"
+
+#include "engine/robotComponents_fwd.h"
+#include "engine/dependencyManagedComponent.h"
 
 #include "util/helpers/noncopyable.h"
 
@@ -21,10 +24,25 @@ namespace Cozmo {
 class Robot;
 struct RobotState;
   
-class RobotGyroDriftDetector : private Util::noncopyable
+class RobotGyroDriftDetector : public IDependencyManagedComponent<RobotComponentID>, private Util::noncopyable
 {
 public:
-  RobotGyroDriftDetector(const Robot& robot);
+  RobotGyroDriftDetector();
+
+  //////
+  // IDependencyManagedComponent functions
+  //////
+  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
+  // Maintain the chain of initializations currently in robot - it might be possible to
+  // change the order of initialization down the line, but be sure to check for ripple effects
+  // when changing this function
+  virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
+    dependencies.insert(RobotComponentID::CubeComms);
+  };
+  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
+  //////
+  // end IDependencyManagedComponent functions
+  //////
   
   // 'Legacy' drift detection, which uses robot's computed pose to determine
   // if gyro drift is occurring.
@@ -39,7 +57,7 @@ public:
   
 private:
   
-  const Robot& _robot;
+  const Robot* _robot;
   
   // For 'legacy' DetectGyroDrift:
   bool          _gyroDriftReported = false;

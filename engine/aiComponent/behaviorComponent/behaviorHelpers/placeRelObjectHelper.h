@@ -15,14 +15,14 @@
 #define __Cozmo_Basestation_BehaviorSystem_BehaviorHelpers_PlaceRelObjectHelper_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/iHelper.h"
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 
 namespace Anki {
 namespace Cozmo {
 
 class PlaceRelObjectHelper : public IHelper{
 public:
-  PlaceRelObjectHelper(BehaviorExternalInterface& behaviorExternalInterface, ICozmoBehavior& behavior,
+  PlaceRelObjectHelper(ICozmoBehavior& behavior,
                        BehaviorHelperFactory& helperFactory,
                        const ObjectID& targetID,
                        const bool placingOnGround = false,
@@ -31,19 +31,19 @@ public:
 
 protected:
   // IHelper functions
-  virtual bool ShouldCancelDelegates(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual BehaviorStatus InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual BehaviorStatus UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual bool ShouldCancelDelegates() const override;
+  virtual HelperStatus InitBehaviorHelper() override;
+  virtual HelperStatus UpdateWhileActiveInternal() override;
 private:
   ObjectID _targetID;
   bool _placingOnGround;
   PlaceRelObjectParameters _params;
   u32 _tmpRetryCounter;
   
-  void StartPlaceRelObject(BehaviorExternalInterface& behaviorExternalInterface);
-  void RespondToPlaceRelResult(ActionResult result, BehaviorExternalInterface& behaviorExternalInterface);
+  void StartPlaceRelObject();
+  void RespondToPlaceRelResult(ActionResult result);
 
-  void MarkFailedToStackOrPlace(BehaviorExternalInterface& behaviorExternalInterface);
+  void MarkFailedToStackOrPlace();
   
 };
 

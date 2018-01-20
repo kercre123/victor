@@ -17,6 +17,8 @@ import android.util.Log;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+import com.anki.daslib.DAS;
+
 public class BackgroundConnectivity extends IntentService {
 
     private static boolean _installed = false;
@@ -56,8 +58,25 @@ public class BackgroundConnectivity extends IntentService {
     }
 
     private boolean isInternetAvailable() {
-        ConnectivityManager manager = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+        ConnectivityManager manager = null;
+        try {
+            manager = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+        } catch (java.lang.NullPointerException e) {
+            // COZMO-7682: Some platforms throw exception instead of returning null
+        }
+
+        if (manager == null) {
+            DAS.Error("BackgroundConnectivity.isInternetAvailable.NoConnectivityManager", "No connectivity manager");
+            return false;
+        }
+
         NetworkInfo[] networks = manager.getAllNetworkInfo();
+
+        if (networks == null) {
+            DAS.Error("BackgroundConnectivity.isInternetAvailable.NoNetworkInfo", "No network info");
+            return false;
+        }
+
         for (NetworkInfo info : networks) {
             if (info.getType() == ConnectivityManager.TYPE_WIFI && info.isAvailable() && info.isConnected()) {
                 return testGoogleConnection();

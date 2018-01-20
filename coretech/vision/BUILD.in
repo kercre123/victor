@@ -1,20 +1,22 @@
 cxx_project(
-    name = 'cti_vision',
-    srcs = cxx_src_glob(['basestation/src', 'robot/src']),
-    platform_srcs = [
-        ('android', glob(['basestation/src/**/*_android.cpp', 'robot/src/**/*_android.cpp']))
-    ],
-    headers = cxx_header_glob(['include/anki/vision']),
-    platform_headers = [
-        ('android', glob(['include/anki/vision/**/*_android.h']))
-    ]
+  name = 'cti_vision',
+  srcs = cxx_src_glob(
+    ['engine', 'robot', 'shared'],
+    excludes=['robot/mex/**']
+  ),
+  platform_srcs = [],
+  headers = cxx_header_glob(
+    ['engine', 'robot', 'shared'],
+    excludes=['robot/mex/**']
+  ),
+  platform_headers = []
 )
 
 cxx_project(
-    name = 'cti_vision_basestation_test',
-    srcs = cxx_src_glob(['basestation/test']),
-    platform_srcs = [],
-    headers = cxx_header_glob(['basestation/test']),
-    platform_headers = []
+  name = 'cti_vision_test',
+  srcs = cxx_src_glob(['test']),
+  platform_srcs = [],
+  headers = cxx_header_glob(['test']),
+  platform_headers = []
 )
 

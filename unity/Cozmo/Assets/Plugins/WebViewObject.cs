@@ -344,7 +344,13 @@ public class WebViewObject : MonoBehaviour
 #elif UNITY_ANDROID
         if (webView == null)
             return;
-        webView.Call("LoadURL", "javascript:" + js);
+        // *** Anki Change ***
+        // LoadURL's url unescaping was breaking project loading, so we need to escape first
+        // Fixes a number of problems with random things, but most specifically sequences of `%##`
+        // in a js command were being converted to their unicode representations and blowing up.
+        // Also, WWW.EscapeURL turns spaces into + where they need to be %20 for the android webview
+        // under the hood.
+        webView.Call("LoadURL", "javascript:" + WWW.EscapeURL(js).Replace("+", "%20"));
 #endif
     }
 

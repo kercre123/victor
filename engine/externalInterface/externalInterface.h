@@ -67,6 +67,10 @@ public:
   
   virtual void SetSdkStatus(SdkStatusType statusType, std::string&& statusText) = 0;
   
+  virtual uint32_t GetMessageCountGtE() const = 0;
+  virtual uint32_t GetMessageCountEtG() const = 0;
+  virtual void     ResetMessageCounts() = 0;
+
   using DestinationId = uint32_t;
   static constexpr DestinationId kDestinationIdEveryone = 0xffffffff;
   

@@ -22,17 +22,17 @@ namespace Cozmo {
 
 class PlaceBlockHelper : public IHelper{
 public:
-  PlaceBlockHelper(BehaviorExternalInterface& behaviorExternalInterface, ICozmoBehavior& behavior, BehaviorHelperFactory& helperFactory);
+  PlaceBlockHelper(ICozmoBehavior& behavior, BehaviorHelperFactory& helperFactory);
   virtual ~PlaceBlockHelper();
 
 protected:
   // IHelper functions
-  virtual bool ShouldCancelDelegates(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual BehaviorStatus InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual BehaviorStatus UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual bool ShouldCancelDelegates() const override;
+  virtual HelperStatus InitBehaviorHelper() override;
+  virtual HelperStatus UpdateWhileActiveInternal() override;
   
-  void RespondToTurnAction(ActionResult result, BehaviorExternalInterface& behaviorExternalInterface);
-  void RespondToPlacedAction(ActionResult result, BehaviorExternalInterface& behaviorExternalInterface);
+  void RespondToTurnAction(ActionResult result);
+  void RespondToPlacedAction(ActionResult result);
 };
 
 } // namespace Cozmo

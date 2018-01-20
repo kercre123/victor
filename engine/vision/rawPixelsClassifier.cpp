@@ -13,8 +13,8 @@
 
 #include "rawPixelsClassifier.h"
 
-#include "anki/common/basestation/math/logisticRegression.h"
-#include "basestation/utils/data/dataPlatform.h"
+#include "coretech/common/engine/math/logisticRegression.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "engine/cozmoContext.h"
 #include "util/fileUtils/fileUtils.h"
 

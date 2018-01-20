@@ -10,7 +10,7 @@
  * Copyright: Anki, Inc. 2014
  **/
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/compoundActions.h"
 #include "engine/actions/dockActions.h"
@@ -112,10 +112,12 @@ namespace Anki {
                                                    u32 numLoops,
                                                    bool interruptRunning,
                                                    u8 tracksToLock,
-                                                   float timeout_sec)
+                                                   float timeout_sec,
+                                                   bool strictCooldown)
     : PlayAnimationAction("", numLoops, interruptRunning, tracksToLock, timeout_sec)
     , _animTrigger(animEvent)
     , _animGroupName("")
+    , _strictCooldown(strictCooldown)
     {
       SetName("PlayAnimation" + _animGroupName);
       // will FAILURE_ABORT on Init if not an event
@@ -153,7 +155,7 @@ namespace Anki {
         return ActionResult::NO_ANIM_NAME;
       }
       
-      _animName = GetRobot().GetAnimationComponent().GetAnimationNameFromGroup(_animGroupName, GetRobot());
+      _animName = GetRobot().GetAnimationComponent().GetAnimationNameFromGroup(_animGroupName, _strictCooldown);
 
       if( _animName.empty() ) {
         return ActionResult::NO_ANIM_NAME;
@@ -182,8 +184,10 @@ namespace Anki {
     TriggerLiftSafeAnimationAction::TriggerLiftSafeAnimationAction(AnimationTrigger animEvent,
                                                                    u32 numLoops,
                                                                    bool interruptRunning,
-                                                                   u8 tracksToLock)
-    : TriggerAnimationAction(animEvent, numLoops, interruptRunning, tracksToLock)
+                                                                   u8 tracksToLock,
+                                                                   float timeout_sec,
+                                                                   bool strictCooldown)
+    : TriggerAnimationAction(animEvent, numLoops, interruptRunning, tracksToLock, timeout_sec, strictCooldown)
     {
     }
     

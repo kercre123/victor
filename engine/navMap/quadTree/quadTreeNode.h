@@ -21,9 +21,9 @@
 #include "engine/navMap/memoryMap/memoryMapTypes.h"
 #include "engine/navMap/memoryMap/data/memoryMapData.h"
 
-#include "anki/common/basestation/math/point.h"
-#include "anki/common/basestation/math/triangle.h"
-#include "anki/common/basestation/math/lineSegment2d.h"
+#include "coretech/common/engine/math/point.h"
+#include "coretech/common/engine/math/triangle.h"
+#include "coretech/common/engine/math/lineSegment2d.h"
 
 #include "util/helpers/noncopyable.h"
 
@@ -46,8 +46,6 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   using NodeCPtrVector = std::vector<const QuadTreeNode*>;  
-  using QuadInfoVector = std::vector<ExternalInterface::MemoryMapQuadInfo>;
-  using QuadInfoDebugVizVector = std::vector<ExternalInterface::MemoryMapQuadInfoDebugViz>;
   
   // type of overlap for two sets
   enum class ESetOverlap { Disjoint, Intersecting, SupersetOf, SubsetOf};
@@ -119,7 +117,7 @@ public:
   // populate a list of all data that matches the predicate
   void FindIf(const FastPolygon& poly,
               NodePredicate pred, 
-              MemoryMapDataConstList& output);    
+              MemoryMapDataConstList& output) const;
               
   // moves this node's center towards the required points, so that they can be included in this node
   // returns true if the root shifts, false if it can't shift to accomodate all points or the points are already contained
@@ -173,8 +171,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // adds the necessary quad infos to the given vector to be sent
-  void AddQuadsToSend(QuadInfoVector& quadInfoVector) const;
-  void AddQuadsToSendDebugViz(QuadInfoDebugVizVector& quadInfoVector) const;
+  void AddQuadsToSend(MemoryMapTypes::QuadInfoVector& quadInfoVector) const;
   
 private:
 

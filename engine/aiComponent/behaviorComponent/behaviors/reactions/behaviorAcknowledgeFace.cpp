@@ -14,19 +14,19 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorAcknowledgeFace.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/visuallyVerifyActions.h"
-#include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorListenerInterfaces/iReactToFaceListener.h"
+#include "engine/aiComponent/faceSelectionComponent.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/faceWorld.h"
 #include "engine/moodSystem/moodManager.h"
 #include "clad/externalInterface/messageEngineToGame.h"
-#include "clad/robotInterface/messageFromActiveObject.h"
+#include "clad/externalInterface/messageFromActiveObject.h"
 #include "util/console/consoleInterface.h"
 
 namespace Anki {
@@ -49,25 +49,25 @@ BehaviorAcknowledgeFace::BehaviorAcknowledgeFace(const Json::Value& config)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorAcknowledgeFace::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorAcknowledgeFace::WantsToBeActivatedBehavior() const
 {
   return !_desiredTargets.empty();
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorAcknowledgeFace::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorAcknowledgeFace::OnBehaviorActivated()
 {
   // don't actually init until the first Update call. This gives other messages that came in this tick a
   // chance to be processed, in case we see multiple faces in the same tick.
   _shouldStart = true;
 
-  return Result::RESULT_OK;
+  
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAcknowledgeFace::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorAcknowledgeFace::OnBehaviorDeactivated()
 {
   for(auto& listener: _faceListeners){
     listener->ClearDesiredTargets();
@@ -77,24 +77,28 @@ void BehaviorAcknowledgeFace::OnBehaviorDeactivated(BehaviorExternalInterface& b
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorAcknowledgeFace::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorAcknowledgeFace::BehaviorUpdate()
 {
+  if(!IsActivated()){
+    return;
+  }
+
   if( _shouldStart ) {
     _shouldStart = false;
     // now figure out which object to react to
-    BeginIteration(behaviorExternalInterface);
+    BeginIteration();
   }
-
-  return super::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorAcknowledgeFace::UpdateBestTarget(BehaviorExternalInterface& behaviorExternalInterface)
+bool BehaviorAcknowledgeFace::UpdateBestTarget()
 {
-  const AIWhiteboard& whiteboard = behaviorExternalInterface.GetAIComponent().GetWhiteboard();
-  const bool preferName = false;  
-  SmartFaceID bestFace = whiteboard.GetBestFaceToTrack( _desiredTargets, preferName );
+  const auto& faceSelection = GetBEI().GetAIComponent().GetFaceSelectionComponent();
+  FaceSelectionComponent::FaceSelectionFactorMap criteriaMap;
+  criteriaMap.insert(std::make_pair(FaceSelectionComponent::FaceSelectionPenaltyMultiplier::RelativeHeadAngleRadians, 1));
+  criteriaMap.insert(std::make_pair(FaceSelectionComponent::FaceSelectionPenaltyMultiplier::RelativeBodyAngleRadians, 3));
+  SmartFaceID bestFace  = faceSelection.GetBestFaceToUse(criteriaMap, _desiredTargets);
   
   if( !bestFace.IsValid() ) {
     return false;
@@ -107,10 +111,10 @@ bool BehaviorAcknowledgeFace::UpdateBestTarget(BehaviorExternalInterface& behavi
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAcknowledgeFace::BeginIteration(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorAcknowledgeFace::BeginIteration()
 {
   _targetFace.Reset();
-  if( !UpdateBestTarget(behaviorExternalInterface) ) {
+  if( !UpdateBestTarget() ) {
     return;
   }
 
@@ -123,7 +127,7 @@ void BehaviorAcknowledgeFace::BeginIteration(BehaviorExternalInterface& behavior
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();  
   const bool withinMinSessionTime = freeplayStartedTime_s >= 0.0f &&
     (currTime_s - freeplayStartedTime_s) <= kMaxTimeForInitialGreeting_s;
-  const bool alreadyTurnedTowards = behaviorExternalInterface.GetFaceWorld().HasTurnedTowardsFace(_targetFace);
+  const bool alreadyTurnedTowards = GetBEI().GetFaceWorld().HasTurnedTowardsFace(_targetFace);
   const bool shouldPlayInitialGreeting = !_hasPlayedInitialGreeting && withinMinSessionTime && !alreadyTurnedTowards;
 
   PRINT_CH_INFO("Behaviors", "AcknowledgeFace.DoAcknowledgement",
@@ -133,7 +137,7 @@ void BehaviorAcknowledgeFace::BeginIteration(BehaviorExternalInterface& behavior
                 shouldPlayInitialGreeting ? 1 : 0);
   
   if( shouldPlayInitialGreeting ) {
-    auto& moodManager = behaviorExternalInterface.GetMoodManager();
+    auto& moodManager = GetBEI().GetMoodManager();
     turnAction->SetSayNameTriggerCallback([this, &moodManager](const Robot& robot, const SmartFaceID& faceID){
         // only play the initial greeting once, so if we are going to use it, mark that here
         _hasPlayedInitialGreeting = true;
@@ -155,18 +159,18 @@ void BehaviorAcknowledgeFace::BeginIteration(BehaviorExternalInterface& behavior
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAcknowledgeFace::FinishIteration(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorAcknowledgeFace::FinishIteration()
 {
   _desiredTargets.erase( _targetFace );
  
   // notify the listeners that a face reaction has completed fully
   for(auto& listener: _faceListeners){
-    listener->FinishedReactingToFace(behaviorExternalInterface, _targetFace);
+    listener->FinishedReactingToFace(_targetFace);
   }
   
   BehaviorObjectiveAchieved(BehaviorObjective::ReactedAcknowledgedFace);
   // move on to the next target, if there is one
-  BeginIteration(behaviorExternalInterface);
+  BeginIteration();
 }
 
 

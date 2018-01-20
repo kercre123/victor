@@ -15,6 +15,7 @@
 #ifndef __Cozmo_Basestation_CozmoContext_H__
 #define __Cozmo_Basestation_CozmoContext_H__
 
+
 #include "util/helpers/noncopyable.h"
 #include <memory>
 
@@ -42,7 +43,6 @@ namespace Comms {
 namespace Cozmo {
   
 class CozmoAudienceTags;
-class CozmoEngine;
 class CozmoExperiments;
 class CozmoFeatureGate;
 class IExternalInterface;
@@ -50,6 +50,7 @@ class RobotDataLoader;
 class RobotManager;
 class VizManager;
 class NeedsManager;
+class PerfMetric;
   
 namespace VoiceCommand {
   class VoiceCommandComponent;
@@ -76,7 +77,7 @@ namespace Cozmo {
   
 class CozmoContext : private Util::noncopyable
 {
-  
+
 public:
   CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInterface* externalInterface);
   CozmoContext();
@@ -95,6 +96,7 @@ public:
   VoiceCommand::VoiceCommandComponent*  GetVoiceCommandComponent() const { return _voiceCommandComponent.get(); }
   NeedsManager*                         GetNeedsManager() const { return _needsManager.get(); }
   CozmoExperiments*                     GetExperiments() const { return _cozmoExperiments.get(); }
+  PerfMetric*                           GetPerfMetric() const { return _perfMetric.get(); }
 
   bool  IsInSdkMode() const;
   void  SetSdkStatus(SdkStatusType statusType, std::string&& statusText) const;
@@ -128,6 +130,7 @@ private:
   std::unique_ptr<VoiceCommand::VoiceCommandComponent>  _voiceCommandComponent;
   std::unique_ptr<NeedsManager>                         _needsManager;
   std::unique_ptr<CozmoExperiments>                     _cozmoExperiments;
+  std::unique_ptr<PerfMetric>                           _perfMetric;
 
   // for holding the thread id (and avoiding needed to include the .h here)
   std::unique_ptr<ThreadIDInternal> _threadIdHolder;

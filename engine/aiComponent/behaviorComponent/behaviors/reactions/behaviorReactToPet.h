@@ -12,7 +12,7 @@
 #define __Cozmo_Basestation_Behaviors_ReactToPet_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "anki/vision/basestation/faceIdTypes.h"
+#include "coretech/vision/engine/faceIdTypes.h"
 #include "clad/types/animationTrigger.h"
 #include "clad/types/petTypes.h"
 
@@ -28,10 +28,8 @@ namespace ExternalInterface {
 }
 
 class BehaviorReactToPet : public ICozmoBehavior
-{
-  
+{  
 public:
-  virtual bool CarryingObjectHandledInternally() const override { return false; }
   void SetTargets(const std::set<Vision::FaceID_t>& targets){_targets = targets;}
 
 protected:
@@ -39,11 +37,16 @@ protected:
   friend class BehaviorContainer;
   BehaviorReactToPet(const Json::Value& config);
   
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.behaviorAlwaysDelegates = false;
+  }
+
   // IReactionaryBehavior
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual void OnBehaviorActivated() override;
+  virtual void OnBehaviorDeactivated() override;
+  virtual void BehaviorUpdate() override;
+  
+  virtual bool WantsToBeActivatedBehavior() const override;
 
   virtual void AddListener(IReactToPetListener* listener) override;
   
@@ -63,8 +66,8 @@ private:
   float _endReactionTime_s = NEVER;
   
   // Stages of reaction
-  void BeginIteration(BehaviorExternalInterface& behaviorExternalInterface);
-  void EndIteration(BehaviorExternalInterface& behaviorExternalInterface);
+  void BeginIteration();
+  void EndIteration();
 
   
   bool AlreadyReacting() const;

@@ -12,11 +12,12 @@
 #include "engine/actions/animActions.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/aiComponent/faceSelectionComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
 #include "engine/utils/cozmoFeatureGate.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "util/console/consoleInterface.h"
 
@@ -78,10 +79,10 @@ CONSOLE_VAR_RANGED(s32, kBouncerBallRadius_px, CONSOLE_GROUP, 3, 1, 5);
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Check if feature gate is open
-static inline bool IsFeatureEnabled(BehaviorExternalInterface& behaviorExternalInterface)
+static inline bool IsFeatureEnabled(BehaviorExternalInterface& bei)
 {
   // Is this feature enabled?
-  const auto * ctx = behaviorExternalInterface.GetRobotInfo().GetContext();
+  const auto * ctx = bei.GetRobotInfo().GetContext();
   const auto * featureGate = ctx->GetFeatureGate();
   return featureGate->IsFeatureEnabled(Anki::Cozmo::FeatureType::Bouncer);
 }
@@ -210,8 +211,7 @@ void BehaviorBouncer::TransitionToState(const BouncerState& state)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorBouncer::StartAnimation(BehaviorExternalInterface& behaviorExternalInterface,
-                                     const AnimationTrigger& animationTrigger,
+void BehaviorBouncer::StartAnimation(const AnimationTrigger& animationTrigger,
                                      const BouncerState& nextState)
 {
   LOG_TRACE("BehaviorBouncer.StartAnimation", "Start animation %s, nextState %s",
@@ -235,9 +235,9 @@ void BehaviorBouncer::StartAnimation(BehaviorExternalInterface& behaviorExternal
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorBouncer::StartAnimation(BehaviorExternalInterface& behaviorExternalInterface, const AnimationTrigger& animationTrigger)
+void BehaviorBouncer::StartAnimation(const AnimationTrigger& animationTrigger)
 {
-  StartAnimation(behaviorExternalInterface, animationTrigger, _state);
+  StartAnimation(animationTrigger, _state);
 }
 
 
@@ -249,16 +249,16 @@ BehaviorBouncer::BehaviorBouncer(const Json::Value& config)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Check if behavior can run at this time
-bool BehaviorBouncer::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorBouncer::WantsToBeActivatedBehavior() const
 {
   // Is this feature enabled?
-  if (!IsFeatureEnabled(behaviorExternalInterface)) {
+  if (!IsFeatureEnabled(GetBEI())) {
     LOG_TRACE("BehaviorBouncer.WantsToBeActivatedBehavior", "Feature is disabled");
     return false;
   }
   
   // Look for a target
-  const auto & faceWorld = behaviorExternalInterface.GetFaceWorld();
+  const auto & faceWorld = GetBEI().GetFaceWorld();
   const auto & faceIDs = faceWorld.GetFaceIDs();
   
   if (faceIDs.empty()) {
@@ -270,11 +270,13 @@ bool BehaviorBouncer::WantsToBeActivatedBehavior(BehaviorExternalInterface& beha
   for(auto& entry: faceIDs){
     smartIDs.insert(faceWorld.GetSmartFaceID(entry));
   }
-  
-  const auto & whiteboard = behaviorExternalInterface.GetAIComponent().GetWhiteboard();
-  const bool preferKnownFaces = true;
-  _target = whiteboard.GetBestFaceToTrack(smartIDs, preferKnownFaces);
 
+  const auto& faceSelection = GetBEI().GetAIComponent().GetFaceSelectionComponent();
+  FaceSelectionComponent::FaceSelectionFactorMap criteriaMap;
+  criteriaMap.insert(std::make_pair(FaceSelectionComponent::FaceSelectionPenaltyMultiplier::UnnamedFace, 1000));
+  criteriaMap.insert(std::make_pair(FaceSelectionComponent::FaceSelectionPenaltyMultiplier::RelativeHeadAngleRadians, 1));
+  criteriaMap.insert(std::make_pair(FaceSelectionComponent::FaceSelectionPenaltyMultiplier::RelativeBodyAngleRadians, 3));
+  _target = faceSelection.GetBestFaceToUse(criteriaMap, smartIDs);
 
   if (!_target.IsValid()) {
     LOG_WARNING("BehaviorBouncer.WantsToBeActivatedBehavior", "Best face (%s) is not valid", _target.GetDebugStr().c_str());
@@ -290,14 +292,14 @@ bool BehaviorBouncer::WantsToBeActivatedBehavior(BehaviorExternalInterface& beha
 // Behavior is starting. Reset behavior state.
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorBouncer::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorBouncer::OnBehaviorActivated()
 {
   LOG_TRACE("BehaviorBouncer.InitInternal", "Init behavior");
   
   // Disable idle animation
-  SmartPushIdleAnimation(behaviorExternalInterface, AnimationTrigger::Count);
+  SmartPushIdleAnimation(AnimationTrigger::Count);
   
-  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  auto& robotInfo = GetBEI().GetRobotInfo();
   // Stash robot parameters
   _displayWidth_px = robotInfo.GetDisplayWidthInPixels();
   _displayHeight_px = robotInfo.GetDisplayHeightInPixels();
@@ -314,7 +316,7 @@ Result BehaviorBouncer::OnBehaviorActivated(BehaviorExternalInterface& behaviorE
   // Ball starts at center of bottom row with small upward velocity.
   _ballPosX = (_displayWidth_px/2);
   _ballPosY = _displayHeight_px;
-  auto& rng = behaviorExternalInterface.GetRNG();
+  auto& rng = GetBEI().GetRNG();
   _ballSpeedX = GetRandomSign(rng) * GetRandomFloat(rng, kBouncerMinBallSpeed, kBouncerMaxBallSpeed);
   _ballSpeedY = -1 * GetRandomFloat(rng, kBouncerMinBallSpeed, kBouncerMaxBallSpeed);
   
@@ -323,7 +325,7 @@ Result BehaviorBouncer::OnBehaviorActivated(BehaviorExternalInterface& behaviorE
   
   TransitionToState(BouncerState::GetIn);
   
-  return Result::RESULT_OK;
+  
 }
 
 
@@ -424,7 +426,7 @@ void BehaviorBouncer::UpdateBall()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorBouncer::UpdateSound(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorBouncer::UpdateSound()
 {
   // TODO: Use arcade bounce sounds when available
   static const auto animationTrigger = AnimationTrigger::SoundOnlyLiftEffortPlaceLow;
@@ -441,13 +443,13 @@ void BehaviorBouncer::UpdateSound(BehaviorExternalInterface& behaviorExternalInt
   
   if (playBounceSound) {
     LOG_TRACE("BehaviorBouncer.UpdateSound", "Start sound action");
-    StartAnimation(behaviorExternalInterface, animationTrigger);
+    StartAnimation(animationTrigger);
   }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorBouncer::UpdateDisplay(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorBouncer::UpdateDisplay()
 {
   LOG_TRACE("BehaviorBouncer.UpdateInternal", "paddleX=%.2f ballX=%.2f ballY=%.2f", _paddlePosX, _ballPosX, _ballPosY);
   
@@ -464,9 +466,9 @@ void BehaviorBouncer::UpdateDisplay(BehaviorExternalInterface& behaviorExternalI
     // Display image
     LOG_TRACE("BehaviorBouncer.UpdateDisplay", "Start face action");
 
-    if(ANKI_VERIFY(behaviorExternalInterface.HasAnimationComponent(),
+    if(ANKI_VERIFY(GetBEI().HasAnimationComponent(),
                    "BehaviorBouncer.UpdateDisplay.NoAnimationComponent","")){
-      behaviorExternalInterface.GetAnimationComponent().DisplayFaceImageBinary(image, ANIM_TIME_STEP_MS);
+      GetBEI().GetAnimationComponent().DisplayFaceImageBinary(image, ANIM_TIME_STEP_MS);
     }
   }
 
@@ -474,37 +476,45 @@ void BehaviorBouncer::UpdateDisplay(BehaviorExternalInterface& behaviorExternalI
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStatus BehaviorBouncer::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorBouncer::BehaviorUpdate()
 {
+  if(!IsActivated()){
+    return;
+  }
+
   LOG_TRACE("BehaviorBouncer.UpdateIntern_Legacy", "Update behavior with state=%s", EnumToString(_state));
 
   // Check elapsed time
   if (GetActivatedDuration() > kBouncerTimeout_sec) {
     LOG_WARNING("BehaviorBouncer.UpdateIntern_Legacy", "Behavior has timed out");
-    return BehaviorStatus::Complete;
+    CancelSelf();
+    return;
   }
   
   // Validate target state
   if (!_target.IsValid()) {
     LOG_WARNING("BehaviorBouncer.UpdateIntern_Legacy", "Target face (%s) is not valid", _target.GetDebugStr().c_str());
-    return BehaviorStatus::Complete;
+    CancelSelf();
+    return;
   }
   
   // Get target face
-  const auto & faceWorld = behaviorExternalInterface.GetFaceWorld();
+  const auto & faceWorld = GetBEI().GetFaceWorld();
   const auto * face = faceWorld.GetFace(_target);
   if (nullptr == face) {
     LOG_WARNING("BehaviorBouncer.UpdateIntern_Legacy", "Target face (%s) has disappeared", _target.GetDebugStr().c_str());
-    return BehaviorStatus::Complete;
+    CancelSelf();
+    return;
   }
   
   // Validate face
   TimeStamp_t lastObserved_ms = face->GetTimeStamp();
-  TimeStamp_t lastImage_ms = behaviorExternalInterface.GetRobotInfo().GetLastImageTimeStamp();
+  TimeStamp_t lastImage_ms = GetBEI().GetRobotInfo().GetLastImageTimeStamp();
   if (lastImage_ms - lastObserved_ms > Util::SecToMilliSec(kBouncerMissingFace_sec)) {
     LOG_WARNING("BehaviorBouncer.UpdateIntern_Legacy", "Target face (%s) has gone stale",
                 _target.GetDebugStr().c_str());
-    return BehaviorStatus::Complete;
+    CancelSelf();
+    return;
   }
   
   switch (_state) {
@@ -517,28 +527,28 @@ BehaviorStatus BehaviorBouncer::UpdateInternal_WhileRunning(BehaviorExternalInte
     case BouncerState::GetIn:
     {
       if (!IsControlDelegated()) {
-        StartAnimation(behaviorExternalInterface, AnimationTrigger::BouncerGetIn, BouncerState::IdeaToPlay);
+        StartAnimation(AnimationTrigger::BouncerGetIn, BouncerState::IdeaToPlay);
       }
       break;
     }
     case BouncerState::IdeaToPlay:
     {
       if (!IsControlDelegated()) {
-        StartAnimation(behaviorExternalInterface, AnimationTrigger::BouncerIdeaToPlay, BouncerState::RequestToPlay);
+        StartAnimation(AnimationTrigger::BouncerIdeaToPlay, BouncerState::RequestToPlay);
       }
       break;
     }
     case BouncerState::RequestToPlay:
     {
       if (!IsControlDelegated()) {
-        StartAnimation(behaviorExternalInterface, AnimationTrigger::BouncerRequestToPlay, BouncerState::WaitToPlay);
+        StartAnimation(AnimationTrigger::BouncerRequestToPlay, BouncerState::WaitToPlay);
       }
       break;
     }
     case BouncerState::WaitToPlay:
     {
       if (!IsControlDelegated()) {
-        StartAnimation(behaviorExternalInterface, AnimationTrigger::BouncerWait, BouncerState::Play);
+        StartAnimation(AnimationTrigger::BouncerWait, BouncerState::Play);
       }
       break;
     }
@@ -547,14 +557,14 @@ BehaviorStatus BehaviorBouncer::UpdateInternal_WhileRunning(BehaviorExternalInte
       // This is the actual game loop
       UpdatePaddle(face);
       UpdateBall();
-      UpdateSound(behaviorExternalInterface);
-      UpdateDisplay(behaviorExternalInterface);
+      UpdateSound();
+      UpdateDisplay();
       break;
     }
     case BouncerState::Timeout:
     {
       if (!IsControlDelegated()) {
-        StartAnimation(behaviorExternalInterface, AnimationTrigger::BouncerTimeout, BouncerState::ShowScore);
+        StartAnimation(AnimationTrigger::BouncerTimeout, BouncerState::ShowScore);
       }
       break;
     }
@@ -562,14 +572,14 @@ BehaviorStatus BehaviorBouncer::UpdateInternal_WhileRunning(BehaviorExternalInte
     {
       if (!IsControlDelegated()) {
         // TO DO: Choose between BouncerIntoScore1, BouncerIntoScore2, BouncerIntoScore3
-        StartAnimation(behaviorExternalInterface, AnimationTrigger::BouncerIntoScore1, BouncerState::GetOut);
+        StartAnimation(AnimationTrigger::BouncerIntoScore1, BouncerState::GetOut);
       }
       break;
     }
     case BouncerState::GetOut:
     {
       if (!IsControlDelegated()) {
-        StartAnimation(behaviorExternalInterface, AnimationTrigger::BouncerGetOut, BouncerState::Complete);
+        StartAnimation(AnimationTrigger::BouncerGetOut, BouncerState::Complete);
       }
       break;
     }
@@ -577,18 +587,16 @@ BehaviorStatus BehaviorBouncer::UpdateInternal_WhileRunning(BehaviorExternalInte
     {
       if (!IsControlDelegated()) {
         LOG_TRACE("BehaviorBouncer.Update.Complete", "Behavior complete");
-        return BehaviorStatus::Complete;
+        CancelSelf();
+        return;
       }
     }
-  }
-    
-  return BehaviorStatus::Running;
-  
+  }  
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorBouncer::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorBouncer::OnBehaviorDeactivated()
 {
   LOG_TRACE("BehaviorBouncer.StopInternal", "Stop behavior");
   

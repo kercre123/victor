@@ -16,10 +16,12 @@
 #ifndef __Anki_Cozmo_Basestation_ObjectPoseConfirmer_H__
 #define __Anki_Cozmo_Basestation_ObjectPoseConfirmer_H__
 
-#include "anki/common/types.h"
-#include "anki/common/basestation/math/pose.h"
-#include "anki/common/basestation/objectIDs.h"
+#include "coretech/common/shared/types.h"
+#include "coretech/common/engine/math/pose.h"
+#include "coretech/common/engine/objectIDs.h"
 #include "clad/types/objectFamilies.h"
+#include "engine/dependencyManagedComponent.h"
+#include "engine/robotComponents_fwd.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -29,11 +31,25 @@ class Robot;
 class ObservableObject;
 class Charger;
   
-class ObjectPoseConfirmer
+class ObjectPoseConfirmer : public IDependencyManagedComponent<RobotComponentID>
 {
 public:
-  
-  ObjectPoseConfirmer(Robot& robot);
+  ObjectPoseConfirmer();
+
+  //////
+  // IDependencyManagedComponent functions
+  //////
+  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
+  // Maintain the chain of initializations currently in robot - it might be possible to
+  // change the order of initialization down the line, but be sure to check for ripple effects
+  // when changing this function
+  virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
+    dependencies.insert(RobotComponentID::AIComponent);
+  };
+  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
+  //////
+  // end IDependencyManagedComponent functions
+  //////
   
   // Search for an unconfirmed or confirmed object and pose match. Returns true if the object is already confirmed at
   // the observed pose (pose of the objSeen), false if the object is not confirmed there, either because it's not
@@ -206,7 +222,7 @@ protected:
   void FindObjectMatchForObservation(const std::shared_ptr<ObservableObject>& objSeen,
                                      const ObservableObject*& objectToCopyIDFrom) const;
   
-  Robot& _robot;
+  Robot* _robot = nullptr;
   PoseConfirmations _poseConfirmations;
   
 private:

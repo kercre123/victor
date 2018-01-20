@@ -29,7 +29,7 @@ from cozmo.util import degrees, distance_mm, speed_mmps, Pose
 from cozmo.objects import LightCube1Id, LightCube2Id, LightCube3Id
 
 async def run_anim_test(robot: cozmo.robot.Robot):
-    action = robot.play_anim(name="id_poked_giggle")
+    action = robot.play_anim(name="anim_poked_giggle")
     action.abort()
     
     action = robot.play_anim_trigger(cozmo.anim.Triggers.MajorWin)

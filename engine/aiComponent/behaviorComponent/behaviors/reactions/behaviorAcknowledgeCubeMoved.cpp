@@ -12,7 +12,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorAcknowledgeCubeMoved.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/blockWorld/blockWorld.h"
@@ -49,33 +49,37 @@ BehaviorAcknowledgeCubeMoved::BehaviorAcknowledgeCubeMoved(const Json::Value& co
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorAcknowledgeCubeMoved::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorAcknowledgeCubeMoved::WantsToBeActivatedBehavior() const
 {
   return _activeObjectID.IsSet();
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorAcknowledgeCubeMoved::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorAcknowledgeCubeMoved::OnBehaviorActivated()
 {
   _activeObjectSeen = false;
   switch(_state){
     case State::TurningToLastLocationOfBlock:
-      TransitionToTurningToLastLocationOfBlock(behaviorExternalInterface);
+      TransitionToTurningToLastLocationOfBlock();
       break;
       
     default:
-      TransitionToPlayingSenseReaction(behaviorExternalInterface);
+      TransitionToPlayingSenseReaction();
       break;
   }
   
-  return Result::RESULT_OK;
+  
 }
  
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorAcknowledgeCubeMoved::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorAcknowledgeCubeMoved::BehaviorUpdate()
 {
+  if(!IsActivated()){
+    return;
+  }
+
   // object seen - cancel turn and play response
   if(_state == State::TurningToLastLocationOfBlock
      && _activeObjectSeen)
@@ -84,20 +88,18 @@ ICozmoBehavior::Status BehaviorAcknowledgeCubeMoved::UpdateInternal_WhileRunning
     DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::AcknowledgeObject));
     SET_STATE(ReactingToBlockPresence);
   }
-  
-  return ICozmoBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAcknowledgeCubeMoved::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorAcknowledgeCubeMoved::OnBehaviorDeactivated()
 {  
   _activeObjectID.UnSet();
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAcknowledgeCubeMoved::TransitionToPlayingSenseReaction(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorAcknowledgeCubeMoved::TransitionToPlayingSenseReaction()
 {
   SET_STATE(PlayingSenseReaction);
 
@@ -110,11 +112,11 @@ void BehaviorAcknowledgeCubeMoved::TransitionToPlayingSenseReaction(BehaviorExte
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAcknowledgeCubeMoved::TransitionToTurningToLastLocationOfBlock(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorAcknowledgeCubeMoved::TransitionToTurningToLastLocationOfBlock()
 {
   SET_STATE(TurningToLastLocationOfBlock);
   
-  const ObservableObject* obj = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_activeObjectID );
+  const ObservableObject* obj = GetBEI().GetBlockWorld().GetLocatedObjectByID(_activeObjectID );
   if(obj == nullptr)
   {
     PRINT_NAMED_WARNING("BehaviorAcknowledgeCubeMoved.TransitionToTurningToLastLocationOfBlock.NullObject",
@@ -132,7 +134,7 @@ void BehaviorAcknowledgeCubeMoved::TransitionToTurningToLastLocationOfBlock(Beha
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAcknowledgeCubeMoved::TransitionToReactingToBlockAbsence(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorAcknowledgeCubeMoved::TransitionToReactingToBlockAbsence()
 {
   SET_STATE(ReactingToBlockAbsence);
   DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::CubeMovedUpset));
@@ -149,12 +151,12 @@ void BehaviorAcknowledgeCubeMoved::SetState_internal(State state, const std::str
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAcknowledgeCubeMoved::HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorAcknowledgeCubeMoved::HandleWhileActivated(const EngineToGameEvent& event)
 {
     switch(event.GetData().GetTag()){
       case EngineToGameTag::RobotObservedObject:
       {
-        HandleObservedObject(behaviorExternalInterface, event.GetData().Get_RobotObservedObject());
+        HandleObservedObject(event.GetData().Get_RobotObservedObject());
         break;
       }
       default:
@@ -164,7 +166,7 @@ void BehaviorAcknowledgeCubeMoved::HandleWhileActivated(const EngineToGameEvent&
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAcknowledgeCubeMoved::HandleObservedObject(const BehaviorExternalInterface& behaviorExternalInterface, const ExternalInterface::RobotObservedObject& msg)
+void BehaviorAcknowledgeCubeMoved::HandleObservedObject(const ExternalInterface::RobotObservedObject& msg)
 {
   if(_activeObjectID.IsSet() && msg.objectID == _activeObjectID){
     _activeObjectSeen = true;

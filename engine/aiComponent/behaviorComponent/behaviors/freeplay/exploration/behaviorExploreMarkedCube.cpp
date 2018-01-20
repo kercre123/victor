@@ -72,7 +72,7 @@
 //}
 //
 //// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//bool BehaviorExploreMarkedCube::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+//bool BehaviorExploreMarkedCube::WantsToBeActivatedBehavior() const
 //{
 //  const INavMemoryMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
 //  if ( nullptr == memoryMap ) {
@@ -83,7 +83,7 @@
 //}
 //  
 //// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//Result BehaviorExploreMarkedCube::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+//void BehaviorExploreMarkedCube::OnBehaviorActivated()
 //{
 //  // select borders we want to visit
 //  BorderScoreVector borderGoals;
@@ -127,13 +127,16 @@
 //  _currentActionTag = driveToPoseAction->GetTag();
 //  robot.GetActionList().QueueActionNow(driveToPoseAction);
 //
-//  return Result::RESULT_OK;
+//  
 //}
 //
 //
 //// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//BehaviorExploreMarkedCube::Status BehaviorExploreMarkedCube::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+//void BehaviorExploreMarkedCube::BehaviorUpdate()
 //{
+//  if(!IsActivated()){
+//    return;
+//  }
 //  // while we are moving towards a vantage point, wait patiently
 //  if ( _currentActionTag != ActionConstants::INVALID_TAG )
 //  {
@@ -147,14 +150,14 @@
 //}
 //
 //// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//void BehaviorExploreMarkedCube::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+//void BehaviorExploreMarkedCube::OnBehaviorDeactivated()
 //{
 //  _currentActionTag = ActionConstants::INVALID_TAG;
 //  robot.GetContext()->GetVizManager()->EraseSegments("BehaviorExploreMarkedCube::InitInternal");
 //}
 //
 //// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//void BehaviorExploreMarkedCube::AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+//void BehaviorExploreMarkedCube::AlwaysHandleInScope(const EngineToGameEvent& event)
 //{
 //  switch(event.GetData().GetTag())
 //  {

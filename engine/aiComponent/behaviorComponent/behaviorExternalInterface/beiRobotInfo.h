@@ -14,8 +14,10 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_BEIRobotInfo_H__
 #define __Cozmo_Basestation_BehaviorSystem_BEIRobotInfo_H__
 
-#include "anki/common/types.h"
-#include "anki/common/basestation/math/pose.h"
+#include "coretech/common/shared/types.h"
+#include "coretech/common/engine/math/pose.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
+#include "engine/dependencyManagedComponent.h"
 #include "clad/types/offTreadsStates.h"
 
 // forward declaration
@@ -50,11 +52,23 @@ struct AccelData;
 struct GyroData;
 
   
-class BEIRobotInfo {
+class BEIRobotInfo : public IDependencyManagedComponent<BCComponentID> {
 public:
   BEIRobotInfo(Robot& robot)
-  : _robot(robot){};
+  : IDependencyManagedComponent(BCComponentID::RobotInfo)
+  , _robot(robot){};
   virtual ~BEIRobotInfo();
+
+  //////
+  // IDependencyManagedComponent functions
+  //////
+  virtual void InitDependent(Robot* robot, const BCCompMap& dependentComponents) override {};
+  virtual void GetInitDependencies(BCCompIDSet& dependencies) const override {};
+  virtual void GetUpdateDependencies(BCCompIDSet& dependencies) const override {};
+  //////
+  // end IDependencyManagedComponent functions
+  //////
+
 
   Quad2f GetBoundingQuadXY(const Pose3d& atPose) const;
   CarryingComponent& GetCarryingComponent() const;
@@ -84,6 +98,7 @@ public:
   Util::RandomGenerator& GetRNG();
   const Pose3d& GetWorldOrigin()  const;
   PoseOriginID_t GetWorldOriginID() const;
+  bool IsPowerButtonPressed() const;
 
   bool HasExternalInterface() const;
   IExternalInterface* GetExternalInterface();
@@ -107,6 +122,21 @@ private:
   friend class BehaviorFactoryTest;
   friend class BehaviorDockingTestSimple;
   friend class BehaviorLiftLoadTest;
+
+  friend class IBehaviorPlaypen;
+  friend class BehaviorPlaypenInitChecks;
+  friend class BehaviorPlaypenDriftCheck;
+  friend class BehaviorPlaypenPickupCube;
+  friend class BehaviorPlaypenMotorCalibration;
+  friend class BehaviorPlaypenDistanceSensor;
+  friend class BehaviorPlaypenSoundCheck;
+  friend class BehaviorPlaypenEndChecks;
+  friend class BehaviorPlaypenDriveForwards;
+  friend class BehaviorPlaypenTest;
+  friend class BehaviorPlaypenWaitToStart;
+  friend class BehaviorPlaypenCameraCalibration;
+  friend class BehaviorPlaypenReadToolCode;
+
   Robot& _robot;
 };
 

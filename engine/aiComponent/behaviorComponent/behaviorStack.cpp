@@ -37,15 +37,14 @@ BehaviorStack::~BehaviorStack()
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorStack::InitBehaviorStack(BehaviorExternalInterface& behaviorExternalInterface,
-                                                             IBehavior* baseOfStack)
+void BehaviorStack::InitBehaviorStack(IBehavior* baseOfStack)
 {
   ANKI_VERIFY(_behaviorStack.empty(),
               "BehaviorSystemManager.BehaviorStack.InitBehaviorStack.StackNotEmptyOnInit",
               "");
   
   baseOfStack->OnEnteredActivatableScope();
-  ANKI_VERIFY(baseOfStack->WantsToBeActivated(behaviorExternalInterface),
+  ANKI_VERIFY(baseOfStack->WantsToBeActivated(),
               "BehaviorSystemManager.BehaviorStack.InitConfig.BasebehaviorDoesn'tWantToRun",
               "");
   PushOntoStack(baseOfStack);
@@ -97,29 +96,29 @@ void BehaviorStack::UpdateBehaviorStack(BehaviorExternalInterface& behaviorExter
   // an action - to save on complexity we're accepting this tradeoff for the time being
   // but may decide to address it directly here or within the BSbehavior/one of its subclasses
   // in the future
-  behaviorExternalInterface.GetStateChangeComponent()._actionsCompletedThisTick.clear();  
+  behaviorExternalInterface.GetBehaviorEventComponent()._actionsCompletedThisTick.clear();  
   for(int idx = 0; idx < _behaviorStack.size(); idx++){
     tickedInStack.insert(_behaviorStack.at(idx));
-    behaviorExternalInterface.GetStateChangeComponent()._gameToEngineEvents.clear();
-    behaviorExternalInterface.GetStateChangeComponent()._engineToGameEvents.clear();
-    behaviorExternalInterface.GetStateChangeComponent()._robotToEngineEvents.clear();
+    behaviorExternalInterface.GetBehaviorEventComponent()._gameToEngineEvents.clear();
+    behaviorExternalInterface.GetBehaviorEventComponent()._engineToGameEvents.clear();
+    behaviorExternalInterface.GetBehaviorEventComponent()._robotToEngineEvents.clear();
     
     asyncMessageGateComp.GetEventsForBehavior(
        _behaviorStack.at(idx),
-       behaviorExternalInterface.GetStateChangeComponent()._gameToEngineEvents);
+       behaviorExternalInterface.GetBehaviorEventComponent()._gameToEngineEvents);
     asyncMessageGateComp.GetEventsForBehavior(
        _behaviorStack.at(idx),
-       behaviorExternalInterface.GetStateChangeComponent()._engineToGameEvents);
+       behaviorExternalInterface.GetBehaviorEventComponent()._engineToGameEvents);
     asyncMessageGateComp.GetEventsForBehavior(
        _behaviorStack.at(idx),
-       behaviorExternalInterface.GetStateChangeComponent()._robotToEngineEvents);
+       behaviorExternalInterface.GetBehaviorEventComponent()._robotToEngineEvents);
     
     // Set the actions completed this tick for the top of the stack
     if(idx == (_behaviorStack.size() - 1)){
-      behaviorExternalInterface.GetStateChangeComponent()._actionsCompletedThisTick = actionsCompletedThisTick;
+      behaviorExternalInterface.GetBehaviorEventComponent()._actionsCompletedThisTick = actionsCompletedThisTick;
     }
     
-    _behaviorStack.at(idx)->Update(behaviorExternalInterface);
+    _behaviorStack.at(idx)->Update();
   }
 
   if( ANKI_DEV_CHEATS ) {
@@ -150,7 +149,7 @@ void BehaviorStack::PushOntoStack(IBehavior* behavior)
   _behaviorStack.push_back(behavior);
   
   PrepareDelegatesToEnterScope(behavior);
-  behavior->OnActivated(*_behaviorExternalInterface);
+  behavior->OnActivated();
 }
 
 
@@ -159,7 +158,7 @@ void BehaviorStack::PopStack()
 {
   PrepareDelegatesForRemovalFromStack(_behaviorStack.back());
 
-  _behaviorStack.back()->OnDeactivated(*_behaviorExternalInterface);
+  _behaviorStack.back()->OnDeactivated();
   
   _behaviorToIndexMap.erase(_behaviorStack.back());
   _behaviorStack.pop_back();

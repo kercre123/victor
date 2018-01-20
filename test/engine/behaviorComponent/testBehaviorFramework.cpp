@@ -17,7 +17,7 @@
 
 #include "test/engine/behaviorComponent/testBehaviorFramework.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
@@ -47,6 +47,47 @@ using namespace Anki::Cozmo;
 namespace Anki{
 namespace Cozmo{
 
+namespace {
+
+template<typename T>
+T* GetFromMap(const BEIComponentMap& map, const BEIComponentID componentID) {
+  auto it = map.find(componentID);
+  if( it != map.end() ) {
+    return static_cast<T*>(it->second);
+  }
+  return nullptr;
+}     
+
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void InitBEIPartial( const BEIComponentMap& map, BehaviorExternalInterface& bei )
+{
+  bei.Init(GetFromMap<AIComponent>(map, BEIComponentID::AIComponent),
+           GetFromMap<AnimationComponent>(map, BEIComponentID::Animation),
+           GetFromMap<BehaviorContainer>(map, BEIComponentID::BehaviorContainer),
+           GetFromMap<BehaviorEventComponent>(map, BEIComponentID::BehaviorEvent),
+           GetFromMap<BlockWorld>(map, BEIComponentID::BlockWorld),
+           GetFromMap<BodyLightComponent>(map, BEIComponentID::BodyLightComponent),
+           GetFromMap<CubeAccelComponent>(map, BEIComponentID::CubeAccel),
+           GetFromMap<CubeLightComponent>(map, BEIComponentID::CubeLight),
+           GetFromMap<DelegationComponent>(map, BEIComponentID::Delegation),
+           GetFromMap<FaceWorld>(map, BEIComponentID::FaceWorld),
+           GetFromMap<MapComponent>(map, BEIComponentID::Map),
+           GetFromMap<MicDirectionHistory>(map, BEIComponentID::MicDirectionHistory),
+           GetFromMap<MoodManager>(map, BEIComponentID::MoodManager),
+           GetFromMap<NeedsManager>(map, BEIComponentID::NeedsManager),
+           GetFromMap<ObjectPoseConfirmer>(map, BEIComponentID::ObjectPoseConfirmer),
+           GetFromMap<PetWorld>(map, BEIComponentID::PetWorld),
+           GetFromMap<ProgressionUnlockComponent>(map, BEIComponentID::ProgressionUnlock),
+           GetFromMap<ProxSensorComponent>(map, BEIComponentID::ProxSensor),
+           GetFromMap<PublicStateBroadcaster>(map, BEIComponentID::PublicStateBroadcaster),
+           GetFromMap<Audio::EngineRobotAudioClient>(map, BEIComponentID::RobotAudioClient),
+           GetFromMap<BEIRobotInfo>(map, BEIComponentID::RobotInfo),
+           GetFromMap<TouchSensorComponent>(map, BEIComponentID::TouchSensor),
+           GetFromMap<VisionComponent>(map, BEIComponentID::Vision));
+
+}
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -61,10 +102,15 @@ TestBehaviorFramework::TestBehaviorFramework(int robotID,
   _robot = std::make_unique<Robot>(robotID, context);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TestBehaviorFramework::~TestBehaviorFramework()
+{
+
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseBehavior,
-                                         std::function<void(const BehaviorComponent::ComponentsPtr&)> initializeBehavior,
+                                         std::function<void(const BehaviorComponent::UniqueComponents&)> initializeBehavior,
                                          bool shouldCallInitOnBase)
 {
   BehaviorContainer* empty = nullptr;
@@ -75,9 +121,9 @@ void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseB
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseBehavior,
-                                         std::function<void(const BehaviorComponent::ComponentsPtr&)> initializeBehavior,
-                                         bool shouldCallInitOnBase,
-                                         BehaviorContainer*& customContainer)
+                                                                std::function<void(const BehaviorComponent::UniqueComponents&)> initializeBehavior,
+                                                                bool shouldCallInitOnBase,
+                                                                BehaviorContainer*& customContainer)
 {
   if(customContainer != nullptr){
     _behaviorContainer.reset(customContainer);
@@ -87,25 +133,41 @@ void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseB
                              cozmoContext->GetDataLoader()->GetBehaviorJsons());
   }
   
-  BehaviorComponent::ComponentsPtr subComponents = BehaviorComponent::GenerateComponents(*_robot,
-                                                                                         nullptr,
-                                                                                         nullptr,
-                                                                                         _behaviorContainer.get());
-  
   // stack is unused - put an arbitrary behavior on it
   if(baseBehavior == nullptr){
-    baseBehavior = subComponents->_behaviorContainer.FindBehaviorByID(BEHAVIOR_ID(Wait)).get();
+    baseBehavior = _behaviorContainer->FindBehaviorByID(BEHAVIOR_ID(Wait)).get();
     shouldCallInitOnBase = false;
   }
   
-  BehaviorComponent* bc = new BehaviorComponent();
-  subComponents->_aiComponent.Init(subComponents->_robot, bc);
-  _behaviorComponent = &subComponents->_aiComponent.GetBehaviorComponent();
-  _behaviorComponent->Init(std::move(subComponents),
-                           baseBehavior);
+  // swap out the robot's ai component for a custom one
+  {
+    {
+      auto aiComp = new AIComponent();
+      _robot->DevReplaceAIComponent(aiComp);
+    }
+    BehaviorComponent::UniqueComponents subComponents = BehaviorComponent::GenerateManagedComponents(*_robot,
+                                                                                                     _robot->GetAIComponent(),
+                                                                                                     baseBehavior,
+                                                                                                     nullptr,
+                                                                                                     nullptr,
+                                                                                                     _behaviorContainer.get());
+    
+
+
+    BehaviorComponent* bc = new BehaviorComponent();
+    _robot->GetAIComponent().Init(_robot.get(), bc);
+    _behaviorComponent = &_robot->GetAIComponent().GetBehaviorComponent();
+    _behaviorComponent->Init(_robot.get(), std::move(subComponents));
+  }
   
   if(shouldCallInitOnBase){
-    baseBehavior->Init(_behaviorComponent->_components->_behaviorExternalInterface);
+    auto& bei = _behaviorComponent->GetComponent<BehaviorExternalInterface>(BCComponentID::BehaviorExternalInterface);
+    baseBehavior->Init(bei);
+
+    ICozmoBehavior* cozmoBehavior = dynamic_cast<ICozmoBehavior*>(baseBehavior);
+    if( cozmoBehavior ){
+      cozmoBehavior->InitBehaviorOperationModifiers();
+    }
   }
   if(initializeBehavior != nullptr){
     initializeBehavior(_behaviorComponent->_components);
@@ -115,10 +177,18 @@ void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseB
   _behaviorComponent->Update(*_robot, empty, empty);
   
   // Grab components from the behaviorComponent
-  _behaviorExternalInterface = &_behaviorComponent->_components->_behaviorExternalInterface;
-  _behaviorSystemManager = &_behaviorComponent->_components->_behaviorSysMgr;
-  _aiComponent = &_behaviorComponent->_components->_aiComponent;
-  
+  {
+    auto& bei = _behaviorComponent->GetComponent<BehaviorExternalInterface>(BCComponentID::BehaviorExternalInterface);
+    _behaviorExternalInterface = &bei;
+  }
+  {
+    auto& bsm = _behaviorComponent->GetComponent<BehaviorSystemManager>(BCComponentID::BehaviorSystemManager);
+    _behaviorSystemManager = &bsm;
+  }
+  {
+    auto& aiComp = _behaviorComponent->GetComponent<AIComponent>(BCComponentID::AIComponent);
+    _aiComponent = &aiComp;
+  }
 }
 
 
@@ -137,7 +207,7 @@ void DoTicks_(TestBehaviorFramework& testFramework, Robot& robot, TestBehaviorWi
     behaviorComponent.Update(robot, currentActivityName, behaviorDebugStr);
     
     updateTicks++;
-    ASSERT_EQ(behavior._updateCount, updateTicks) << "behavior not ticked as often as it should be";
+    ASSERT_EQ(behavior._updateCount, updateTicks) << "behavior not ticked as often as it should be. i=" << i;
     
     // If the test behavior with helpers' helper finishes it automatically cancels and won't be activated anymore 
     behaviorIsActive = (behavior._currentActivationState == IBehavior::ActivationState::Activated);
@@ -167,11 +237,11 @@ void DoBehaviorComponentTicks(Robot& robot, ICozmoBehavior& behavior, BehaviorCo
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void DoBehaviorInterfaceTicks(Robot& robot, ICozmoBehavior& behavior, BehaviorExternalInterface& behaviorExternalInterface, int num)
+void DoBehaviorInterfaceTicks(Robot& robot, ICozmoBehavior& behavior, int num)
 {
   for(int i=0; i<num; i++) {
     robot.GetActionList().Update();
-    behavior.Update(behaviorExternalInterface);
+    behavior.Update();
     IncrementBaseStationTimerTicks();
   }
 }
@@ -180,12 +250,15 @@ void DoBehaviorInterfaceTicks(Robot& robot, ICozmoBehavior& behavior, BehaviorEx
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void InjectBehaviorIntoStack(ICozmoBehavior& injectBehavior, TestBehaviorFramework& testFramework)
 {
-  auto& behaviorStack = testFramework.GetBehaviorComponent()._components->_behaviorSysMgr._behaviorStack->_behaviorStack;
+  auto& bc = testFramework.GetBehaviorComponent();
+  auto& bsm = bc.GetComponent<BehaviorSystemManager>(BCComponentID::BehaviorSystemManager);
+
+  auto& behaviorStack = bsm._behaviorStack->_behaviorStack;
   if(ANKI_VERIFY(!behaviorStack.empty(),"InjectBehaviorIntoStack.NoBaseBehavior","")){
     IBehavior* lastEntry = behaviorStack.back();
-    auto& delegatesMap = testFramework.GetBehaviorComponent()._components->_behaviorSysMgr._behaviorStack->_delegatesMap;
+    auto& delegatesMap = bsm._behaviorStack->_delegatesMap;
     delegatesMap[lastEntry].insert(&injectBehavior);    
-    testFramework.GetBehaviorComponent()._components->_behaviorSysMgr.Delegate(lastEntry, &injectBehavior);
+    bsm.Delegate(lastEntry, &injectBehavior);
   }
 }
 
@@ -215,7 +288,7 @@ void InjectValidDelegateIntoBSM(TestBehaviorFramework& testFramework,
   
   if(shouldMarkAsEnterdScope){
     delegated->OnEnteredActivatableScope();
-    delegated->WantsToBeActivated(testFramework.GetBehaviorExternalInterface());
+    delegated->WantsToBeActivated();
   }
 }
 
@@ -245,7 +318,7 @@ void TestSuperPoweredBehavior::GetAllDelegates(std::set<IBehavior*>& delegates) 
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TestSuperPoweredBehavior::InitInternal(BehaviorExternalInterface& behaviorExternalInterface) {
+void TestSuperPoweredBehavior::InitInternal() {
   
 }
 
@@ -257,25 +330,25 @@ void TestSuperPoweredBehavior::OnEnteredActivatableScopeInternal() {
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TestSuperPoweredBehavior::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) {
+void TestSuperPoweredBehavior::UpdateInternal() {
   
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool TestSuperPoweredBehavior::WantsToBeActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) const {
+bool TestSuperPoweredBehavior::WantsToBeActivatedInternal() const {
   return true;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TestSuperPoweredBehavior::OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) {
+void TestSuperPoweredBehavior::OnActivatedInternal() {
   
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TestSuperPoweredBehavior::OnDeactivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) {
+void TestSuperPoweredBehavior::OnDeactivatedInternal() {
   
 }
 
@@ -291,8 +364,8 @@ void TestSuperPoweredBehavior::OnLeftActivatableScopeInternal() {
 //////////
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TestBehavior::InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) {
-  auto robotInfo = behaviorExternalInterface.GetRobotInfo();
+void TestBehavior::InitBehavior() {
+  auto robotInfo = GetBEI().GetRobotInfo();
   auto robotExternalInterface = robotInfo.HasExternalInterface() ? robotInfo.GetExternalInterface() : nullptr;
   if(robotExternalInterface != nullptr) {
     SubscribeToTags({EngineToGameTag::Ping});
@@ -301,39 +374,40 @@ void TestBehavior::InitBehavior(BehaviorExternalInterface& behaviorExternalInter
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result TestBehavior::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)  {
+void TestBehavior::OnBehaviorActivated()  {
   _inited = true;
-  return RESULT_OK;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStatus TestBehavior::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)  {
+void TestBehavior::BehaviorUpdate()  {
+  if(!IsActivated()){
+    return;
+  }
   _numUpdates++;
-  return Status::Running;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TestBehavior::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)  {
+void TestBehavior::OnBehaviorDeactivated()  {
   _stopped = true;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TestBehavior::AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)  {
+void TestBehavior::AlwaysHandleInScope(const EngineToGameEvent& event)  {
   _alwaysHandleCalls++;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TestBehavior::HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)  {
+void TestBehavior::HandleWhileActivated(const EngineToGameEvent& event)  {
   _handleWhileRunningCalls++;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TestBehavior::HandleWhileInScopeButNotActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)  {
+void TestBehavior::HandleWhileInScopeButNotActivated(const EngineToGameEvent& event)  {
   _handleWhileNotRunningCalls++;
 }
 
@@ -345,7 +419,7 @@ void TestBehavior::Foo() {
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TestBehavior::Bar(BehaviorExternalInterface& behaviorExternalInterface) {
+void TestBehavior::Bar() {
   _calledRobotFunc++;
 }
 
@@ -419,8 +493,8 @@ void TestBehaviorWithHelpers::SetUpdateResult(UpdateResult res) {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TestBehaviorWithHelpers::DelegateToHelperOnNextUpdate(HelperHandle handleToRun,
-                                  SimpleCallbackWithRobot successCallback,
-                                  SimpleCallbackWithRobot failureCallback) {
+                                                           SimpleCallback successCallback,
+                                                           SimpleCallback failureCallback) {
   _helperHandleToDelegate = handleToRun;
   _successCallbackToDelegate = successCallback;
   _failureCallbackToDelegate = failureCallback;
@@ -441,24 +515,21 @@ void TestBehaviorWithHelpers::SetActionToRunOnNextUpdate(IActionRunner* action) 
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool TestBehaviorWithHelpers::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const {
+bool TestBehaviorWithHelpers::WantsToBeActivatedBehavior() const {
   return true;
 }
 
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool TestBehaviorWithHelpers::CarryingObjectHandledInternally() const {return true;}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result TestBehaviorWithHelpers::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) {
-  return RESULT_OK;
+void TestBehaviorWithHelpers::OnBehaviorActivated() {
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status TestBehaviorWithHelpers::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) {
-  
+void TestBehaviorWithHelpers::BehaviorUpdate() {
+  if(!IsActivated()){
+    return; 
+  }
+
   _updateCount++;
   
   if( _stopHelper ) {
@@ -467,8 +538,7 @@ ICozmoBehavior::Status TestBehaviorWithHelpers::UpdateInternal_WhileRunning(Beha
   }
   
   if( _helperHandleToDelegate ) {
-    _lastDelegateSuccess = SmartDelegateToHelper(behaviorExternalInterface,
-                                                 _helperHandleToDelegate,
+    _lastDelegateSuccess = SmartDelegateToHelper(_helperHandleToDelegate,
                                                  _successCallbackToDelegate,
                                                  _failureCallbackToDelegate);
     _helperHandleToDelegate.reset();
@@ -488,25 +558,27 @@ ICozmoBehavior::Status TestBehaviorWithHelpers::UpdateInternal_WhileRunning(Beha
   switch(_updateResult) {
     case UpdateResult::UseBaseClass: {
       printf("TestBehaviorWithHelpers.Update UseBaseClass: IsControlDelegated:%d\n", IsControlDelegated());
-      return ICozmoBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
+      if(!IsControlDelegated()){
+        CancelSelf();
+        return;
+      }
     }
     case UpdateResult::Running: {
       printf("TestBehaviorWithHelpers.Update Running\n");
-      return Status::Running;
+      return;
     }
     case UpdateResult::Complete: {
       printf("TestBehaviorWithHelpers.Update Complete\n");
-      if(behaviorExternalInterface.HasDelegationComponent()){
-        behaviorExternalInterface.GetDelegationComponent().CancelSelf(this);
+      if(GetBEI().HasDelegationComponent()){
+        GetBEI().GetDelegationComponent().CancelSelf(this);
       }
-      return Status::Running;
     }
   }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void  TestBehaviorWithHelpers::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) {
+void  TestBehaviorWithHelpers::OnBehaviorDeactivated() {
 }
 
 
@@ -515,8 +587,8 @@ void  TestBehaviorWithHelpers::OnBehaviorDeactivated(BehaviorExternalInterface& 
 // Test Helper which runs actions and delegates to other helpers
 ////////////////////////////////////////////////////////////////////////////////
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TestHelper::TestHelper(BehaviorExternalInterface& behaviorExternalInterface, ICozmoBehavior& behavior, const std::string& name)
-: IHelper("", behaviorExternalInterface, behavior, behaviorExternalInterface.GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory())
+TestHelper::TestHelper(BehaviorExternalInterface& bei, ICozmoBehavior& behavior, const std::string& name)
+: IHelper("", behavior, bei.GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory())
 , _name(name)
 , _behavior(behavior)
 {
@@ -535,7 +607,7 @@ void TestHelper::SetActionToRunOnNextUpdate(IActionRunner* action) {
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TestHelper::StartAutoAction(BehaviorExternalInterface& behaviorExternalInterface) {
+void TestHelper::StartAutoAction() {
   _selfActionDone = false;
   _nextActionToRun = new WaitForLambdaAction([this](Robot& t) {
     printf("%s: ShouldStopActing: %d\n", _name.c_str(), _selfActionDone);
@@ -551,7 +623,7 @@ void TestHelper::StopAutoAction() {
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TestHelper::OnActivatedHelper(BehaviorExternalInterface& behaviorExternalInterface) {
+void TestHelper::OnActivatedHelper() {
   _initOnStackCount++;
 }
 
@@ -564,7 +636,7 @@ void TestHelper::StopInternal(bool isActive) {
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool TestHelper::ShouldCancelDelegates(BehaviorExternalInterface& behaviorExternalInterface) const {
+bool TestHelper::ShouldCancelDelegates() const {
   _shouldCancelCount++;
   printf("%s: ShouldCancel:%d\n", _name.c_str(), _cancelDelegates);
   bool ret = false;
@@ -577,19 +649,19 @@ bool TestHelper::ShouldCancelDelegates(BehaviorExternalInterface& behaviorExtern
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status TestHelper::InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface) {
+IHelper::HelperStatus TestHelper::InitBehaviorHelper() {
   _initCount++;
   
   printf("%s: Init. Action=%p\n", _name.c_str(), _nextActionToRun);
   
   CheckActions();
   
-  return ICozmoBehavior::Status::Running;
+  return IHelper::HelperStatus::Running;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status TestHelper::UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface) {
+IHelper::HelperStatus TestHelper::UpdateWhileActiveInternal() {
   _updateCount++;
   
   printf("%s: Update. IsControlDelegated:%d, _delegateAfter:%d\n",
@@ -601,24 +673,25 @@ ICozmoBehavior::Status TestHelper::UpdateWhileActiveInternal(BehaviorExternalInt
   
   if( !IsActing() && _delegateAfterAction ) {
     _delegateAfterAction = false;
-    _subHelperRaw = new TestHelper(behaviorExternalInterface, _behavior, _name + "_child");
-    _subHelperRaw->StartAutoAction(behaviorExternalInterface);
+    _subHelperRaw = new TestHelper(GetBEI(), _behavior, _name + "_child");
+    _subHelperRaw->Init(GetBEI());
+    _subHelperRaw->StartAutoAction();
     auto newHelperHandle = std::shared_ptr<IHelper>(_subHelperRaw);
     _subHelper = newHelperHandle;
     DelegateProperties delegateProperties;
     delegateProperties.SetDelegateToSet(newHelperHandle);
-    delegateProperties.SetOnSuccessFunction([this](BehaviorExternalInterface& behaviorExternalInterface) {
+    delegateProperties.SetOnSuccessFunction([this]() {
       if( _immediateCompleteOnSubSuccess ) {
-        return ICozmoBehavior::Status::Complete;
+        return IHelper::HelperStatus::Complete;
       }
       else {
-        _updateResult = ICozmoBehavior::Status::Complete;
-        return ICozmoBehavior::Status::Running;
+        _updateResult = IHelper::HelperStatus::Complete;
+        return IHelper::HelperStatus::Running;
       }
     });
     
     DelegateAfterUpdate(delegateProperties);
-    return ICozmoBehavior::Status::Running;
+    return IHelper::HelperStatus::Running;
   }
   
   return _updateResult;
@@ -628,10 +701,10 @@ ICozmoBehavior::Status TestHelper::UpdateWhileActiveInternal(BehaviorExternalInt
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TestHelper::CheckActions() {
   if( _nextActionToRun ) {
-    DelegateIfInControl(_nextActionToRun, [this](ActionResult res, BehaviorExternalInterface& behaviorExternalInterface) {
+    DelegateIfInControl(_nextActionToRun, [this](ActionResult res) {
       _actionCompleteCount++;
       if( _thisSucceedsOnActionSuccess ) {
-        _updateResult = ICozmoBehavior::Status::Complete;
+        _updateResult = IHelper::HelperStatus::Complete;
       }});
     _nextActionToRun = nullptr;
   }

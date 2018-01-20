@@ -19,6 +19,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/iBehavior.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
@@ -41,7 +42,8 @@ const int kArbitrarilyLargeCancelBound = 1000000;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorSystemManager::BehaviorSystemManager()
-: _initializationStage(InitializationStage::SystemNotInitialized)
+: IDependencyManagedComponent(BCComponentID::BehaviorSystemManager)
+, _initializationStage(InitializationStage::SystemNotInitialized)
 {
   _behaviorStack.reset();
 }
@@ -51,6 +53,19 @@ BehaviorSystemManager::BehaviorSystemManager()
 BehaviorSystemManager::~BehaviorSystemManager()
 {
 
+}
+
+
+void BehaviorSystemManager::InitDependent(Robot* robot, const BCCompMap& dependentComponents)
+{
+  auto& baseBehaviorWrapper = dependentComponents.find(BCComponentID::BaseBehaviorWrapper)->second.GetValue<BaseBehaviorWrapper>();
+  auto& bei = dependentComponents.find(BCComponentID::BehaviorExternalInterface)->second.GetValue<BehaviorExternalInterface>();
+  auto& async = dependentComponents.find(BCComponentID::AsyncMessageComponent)->second.GetValue<AsyncMessageGateComponent>();
+
+  InitConfiguration(*robot,
+                    baseBehaviorWrapper._baseBehavior,
+                    bei,
+                    &async);
 }
 
 
@@ -66,6 +81,13 @@ Result BehaviorSystemManager::InitConfiguration(Robot& robot,
   DEV_ASSERT(_initializationStage == InitializationStage::SystemNotInitialized &&
              baseBehavior != nullptr,
              "BehaviorSystemManager.InitConfiguration.AlreadyInitialized");
+
+  // If this is the factory test forcibly set baseBehavior as playpen
+  if(FACTORY_TEST)
+  {
+    baseBehavior = behaviorExternalInterface.GetBehaviorContainer().FindBehaviorByID(BEHAVIOR_ID(PlaypenTest)).get();
+    DEV_ASSERT(baseBehavior != nullptr, "BehaviorSystemManager.InitConfiguration.ForcingPlaypen.Null");
+  }
 
   // Assumes there's only one instance of the behavior external Intarfec
   _behaviorExternalInterface = &behaviorExternalInterface;
@@ -93,7 +115,7 @@ void BehaviorSystemManager::ResetBehaviorStack(IBehavior* baseBehavior)
   if(_behaviorStack != nullptr){
     _behaviorStack->ClearStack();
   }
-  _behaviorStack.reset(new BehaviorStack(_behaviorExternalInterface));
+  _behaviorStack.reset(new BehaviorStack());
 }
 
 
@@ -115,7 +137,7 @@ void BehaviorSystemManager::Update(BehaviorExternalInterface& behaviorExternalIn
 
     IBehavior* baseBehavior = _baseBehaviorTmp;
     
-    _behaviorStack->InitBehaviorStack(behaviorExternalInterface, baseBehavior);
+    _behaviorStack->InitBehaviorStack(baseBehavior);
     _baseBehaviorTmp = nullptr;
   }
 
@@ -155,21 +177,21 @@ void BehaviorSystemManager::UpdateInActivatableScope(BehaviorExternalInterface& 
     }
   }
   for(auto& entry: allInActivatableScope){
-    behaviorExternalInterface.GetStateChangeComponent()._gameToEngineEvents.clear();
-    behaviorExternalInterface.GetStateChangeComponent()._engineToGameEvents.clear();
-    behaviorExternalInterface.GetStateChangeComponent()._robotToEngineEvents.clear();
+    behaviorExternalInterface.GetBehaviorEventComponent()._gameToEngineEvents.clear();
+    behaviorExternalInterface.GetBehaviorEventComponent()._engineToGameEvents.clear();
+    behaviorExternalInterface.GetBehaviorEventComponent()._robotToEngineEvents.clear();
 
     _asyncMessageComponent->GetEventsForBehavior(
        entry,
-       behaviorExternalInterface.GetStateChangeComponent()._gameToEngineEvents);
+       behaviorExternalInterface.GetBehaviorEventComponent()._gameToEngineEvents);
     _asyncMessageComponent->GetEventsForBehavior(
        entry,
-       behaviorExternalInterface.GetStateChangeComponent()._engineToGameEvents);
+       behaviorExternalInterface.GetBehaviorEventComponent()._engineToGameEvents);
     _asyncMessageComponent->GetEventsForBehavior(
        entry,
-       behaviorExternalInterface.GetStateChangeComponent()._robotToEngineEvents);
+       behaviorExternalInterface.GetBehaviorEventComponent()._robotToEngineEvents);
 
-    entry->Update(behaviorExternalInterface);
+    entry->Update();
   }
 }
 
@@ -261,6 +283,13 @@ void BehaviorSystemManager::CancelDelegates(IBehavior* delegator)
 // TODO:(bn) kevink: consider rename to "stop" rather than cancel
 void BehaviorSystemManager::CancelSelf(IBehavior* delegator)
 {
+  if(!ANKI_VERIFY(_behaviorStack->IsInStack(delegator),
+                  "BehaviorSystemManager.CancelSelf.NotINStack",
+                  "%s is not in stack",
+                  delegator->GetPrintableID().c_str())){
+    return;
+  }
+  
   CancelDelegates(delegator);
   
   if(ANKI_VERIFY(!IsControlDelegated(delegator),

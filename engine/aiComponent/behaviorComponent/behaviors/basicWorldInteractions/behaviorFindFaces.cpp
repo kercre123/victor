@@ -15,7 +15,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/faceWorld.h"
-#include "anki/common/basestation/jsonTools.h"
+#include "coretech/common/engine/jsonTools.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "util/console/consoleInterface.h"
 #include "engine/actions/basicActions.h"
@@ -51,7 +51,7 @@ BehaviorFindFaces::BehaviorFindFaces(const Json::Value& config)
  
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorFindFaces::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorFindFaces::WantsToBeActivatedBehavior() const
 {
   // we can always search for faces (override base class restrictions)
   return true;
@@ -59,22 +59,21 @@ bool BehaviorFindFaces::WantsToBeActivatedBehavior(BehaviorExternalInterface& be
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorFindFaces::BeginStateMachine(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorFindFaces::BeginStateMachine()
 {
-  TransitionToLookUp(behaviorExternalInterface);
+  TransitionToLookUp();
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorFindFaces::TransitionToLookUp(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorFindFaces::TransitionToLookUp()
 {
   DEBUG_SET_STATE(FindFacesLookUp);
   
-  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  const auto& robotInfo = GetBEI().GetRobotInfo();
 
   // use the base class's helper function to create a random head motion
-  IAction* moveHeadAction = BaseClass::CreateHeadTurnAction(behaviorExternalInterface,
-                                                            kHeadUpBodyAngleRelativeMin_deg,
+  IAction* moveHeadAction = BaseClass::CreateHeadTurnAction(kHeadUpBodyAngleRelativeMin_deg,
                                                             kHeadUpBodyAngleRelativeMax_deg,
                                                             robotInfo.GetPose().GetRotationAngle<'Z'>().getDegrees(),
                                                             kHeadUpHeadAngleMin_deg,
@@ -82,26 +81,26 @@ void BehaviorFindFaces::TransitionToLookUp(BehaviorExternalInterface& behaviorEx
                                                             kHeadUpBodyTurnSpeed_degPerSec,
                                                             kHeadUpHeadTurnSpeed_degPerSec);
 
-  DelegateIfInControl(moveHeadAction, [this](BehaviorExternalInterface& behaviorExternalInterface) {
-      const TimeStamp_t latestTimestamp = behaviorExternalInterface.GetRobotInfo().GetLastImageTimeStamp();
+  DelegateIfInControl(moveHeadAction, [this]() {
+      const TimeStamp_t latestTimestamp = GetBEI().GetRobotInfo().GetLastImageTimeStamp();
       // check if we should turn towards the last face, even if it's not in the current origin
       const bool kMustBeInCurrentOrigin = false;
       Pose3d waste;
-      TimeStamp_t lastFaceTime = behaviorExternalInterface.GetFaceWorld().GetLastObservedFace(waste, kMustBeInCurrentOrigin);
+      TimeStamp_t lastFaceTime = GetBEI().GetFaceWorld().GetLastObservedFace(waste, kMustBeInCurrentOrigin);
       const bool useAnyFace = _maxFaceAgeToLook_ms == 0;
       if( lastFaceTime > 0 &&
           ( useAnyFace || latestTimestamp <= lastFaceTime + _maxFaceAgeToLook_ms ) ) {
-        TransitionToLookAtLastFace(behaviorExternalInterface);
+        TransitionToLookAtLastFace();
       }
       else {
-        TransitionToBaseClass(behaviorExternalInterface);
+        TransitionToBaseClass();
       }
     });
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorFindFaces::TransitionToLookAtLastFace(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorFindFaces::TransitionToLookAtLastFace()
 {
   DEBUG_SET_STATE(FindFacesLookAtLast);
   DelegateIfInControl(new TurnTowardsLastFacePoseAction(), &BehaviorFindFaces::TransitionToBaseClass);
@@ -109,15 +108,15 @@ void BehaviorFindFaces::TransitionToLookAtLastFace(BehaviorExternalInterface& be
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorFindFaces::TransitionToBaseClass(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorFindFaces::TransitionToBaseClass()
 {
   PRINT_CH_INFO("Behaviors", "BehaviorFindFaces.TransitionToBaseClass",
                 " %s is transitioning to base class, setting initial body direction",
                 GetIDStr().c_str());
 
-  const Pose3d& robotPose = behaviorExternalInterface.GetRobotInfo().GetPose();
+  const Pose3d& robotPose = GetBEI().GetRobotInfo().GetPose();
   SetInitialBodyDirection( robotPose.GetRotationAngle<'Z'>() );
-  BaseClass::BeginStateMachine(behaviorExternalInterface);
+  BaseClass::BeginStateMachine();
 }
 
 

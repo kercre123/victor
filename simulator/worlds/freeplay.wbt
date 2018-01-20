@@ -54,13 +54,13 @@ LightCube {
 LightCube {
   translation -0.0200182 0.441269 0.022
   rotation 0 0 1 0.23
-  ID 2
+  objectType "Block_LIGHTCUBE3"
   filterLogs TRUE
 }
 LightCube {
   translation 0.0509967 0.474244 0.062
   rotation 0 0 1 0.23
-  ID 1
+  objectType "Block_LIGHTCUBE2"
   filterLogs TRUE
 }
 SolidBox {

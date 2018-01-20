@@ -20,14 +20,17 @@
 #ifndef __Anki_Cozmo_Basestation_Components_CubeLightComponent_H__
 #define __Anki_Cozmo_Basestation_Components_CubeLightComponent_H__
 
-#include "anki/common/basestation/colorRGBA.h"
-#include "anki/common/basestation/math/point.h"
-#include "anki/common/basestation/objectIDs.h"
-#include "anki/common/types.h"
-#include "clad/types/activeObjectConstants.h"
+#include "coretech/common/engine/colorRGBA.h"
+#include "coretech/common/engine/math/point.h"
+#include "coretech/common/engine/objectIDs.h"
+#include "coretech/common/shared/types.h"
 #include "clad/types/animationTrigger.h"
 #include "clad/types/ledTypes.h"
 #include "clad/types/poseStructs.h"
+
+#include "engine/dependencyManagedComponent.h"
+#include "engine/robotComponents_fwd.h"
+
 #include "json/json.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
@@ -45,7 +48,7 @@ class CubeLightAnimationContainer;
 class Robot;
 
 
-using ObjectLEDArray = std::array<u32, (size_t)ActiveObjectConstants::NUM_CUBE_LEDS>;
+using ObjectLEDArray = std::array<u32, 4>;
 struct ObjectLights {
   ObjectLEDArray onColors{};
   ObjectLEDArray offColors{};
@@ -53,7 +56,7 @@ struct ObjectLights {
   ObjectLEDArray offPeriod_ms{};
   ObjectLEDArray transitionOnPeriod_ms{};
   ObjectLEDArray transitionOffPeriod_ms{};
-  std::array<s32, (size_t)ActiveObjectConstants::NUM_CUBE_LEDS> offset{};
+  std::array<s32, 4> offset{};
   u32 rotationPeriod_ms = 0;
   MakeRelativeMode makeRelative = MakeRelativeMode::RELATIVE_LED_MODE_OFF;
   Point2f relativePoint;
@@ -83,10 +86,25 @@ struct LightPattern
   void Print() const;
 };
 
-class CubeLightComponent : private Util::noncopyable
+class CubeLightComponent : public IDependencyManagedComponent<RobotComponentID>, private Util::noncopyable
 {
 public:
-  CubeLightComponent(Robot& robot, const CozmoContext* context);
+  CubeLightComponent();
+
+  //////
+  // IDependencyManagedComponent functions
+  //////
+  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
+  // Maintain the chain of initializations currently in robot - it might be possible to
+  // change the order of initialization down the line, but be sure to check for ripple effects
+  // when changing this function
+  virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
+    dependencies.insert(RobotComponentID::ObjectPoseConfirmer);
+  };
+  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
+  //////
+  // end IDependencyManagedComponent functions
+  //////
   
   // Updates the currently playing anims
   // shouldPickNextAnim determines if we can immediately pick a default anim to
@@ -290,10 +308,15 @@ private:
   // Applies white balancing to a color
   ColorRGBA WhiteBalanceColor(const ColorRGBA& color) const;
 
-  Robot& _robot;
-  
-  // Reference to the container of cube light animations
-  CubeLightAnimationContainer& _cubeLightAnimations;
+  Robot* _robot = nullptr;
+  struct CubeLightAnimWrapper{
+    CubeLightAnimWrapper(CubeLightAnimationContainer& container)
+    : _container(container){}
+    // Reference to the container of cube light animations
+    CubeLightAnimationContainer& _container;
+  };
+  std::unique_ptr<CubeLightAnimWrapper> _cubeLightAnimations;
+
   
   // An array of all the animations that are playing on each layer (indexed by layer)
   // Multiple animations can be "playing" on a given layer (hence the list of PatternPlayInfo)

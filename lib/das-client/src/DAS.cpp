@@ -271,13 +271,13 @@ void DASConfigure(const char* configurationJsonFilePath,
           flush_interval = root["dasConfig"].get("flushInterval", DASClient::Json::uintValue).asUInt();
         }
         
-        size_t maxLogLength = Anki::Das::DasLogFileAppender::kDefaultMaxLogLength;
+        size_t maxLogLength = Anki::Das::kDefaultMaxLogLength;
         if( root["dasConfig"].isMember("maxLogLength") )
         {
           maxLogLength = root["dasConfig"].get("maxLogLength", DASClient::Json::uintValue).asUInt();
         }
         
-        size_t maxLogFiles = Anki::Das::DasLogFileAppender::kDasDefaultMaxLogFiles;
+        size_t maxLogFiles = Anki::Das::kDasDefaultMaxLogFiles;
         if( root["dasConfig"].isMember("maxLogFiles") )
         {
           maxLogFiles = root["dasConfig"].get("maxLogFiles", DASClient::Json::uintValue).asUInt();
@@ -336,6 +336,10 @@ void SetDASLocalLoggerMode(DASLocalLoggerMode logMode)
 void DASClose() {
   _DAS_DestroyRemoteAppender();
   _DAS_DestroyGameLogAppender();
+  if (nullptr != sLocalAppender) {
+    sLocalAppender->flush();
+    delete sLocalAppender;
+  }
 }
 
 void DASForceFlushNow() {
@@ -349,7 +353,7 @@ void DASForceFlushWithCallback(const DASFlushCallback& callback) {
     sRemoteAppender->ForceFlushWithCallback(callback);
   }
   else if (callback) {
-    callback(false);
+    callback(false, "");
   }
 }
 

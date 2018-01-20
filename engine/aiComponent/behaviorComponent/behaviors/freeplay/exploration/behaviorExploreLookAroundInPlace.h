@@ -17,8 +17,8 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
-#include "anki/common/basestation/math/point.h"
-#include "anki/common/basestation/math/pose.h"
+#include "coretech/common/engine/math/point.h"
+#include "coretech/common/engine/math/pose.h"
 
 #include <list>
 #include <set>
@@ -59,8 +59,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // todo: document. Is this behavior alway activatable, or we won't look around in an area we already know everything?
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual bool CarryingObjectHandledInternally() const override { return _configParams.behavior_CanCarryCube;}
+  virtual bool WantsToBeActivatedBehavior() const override;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Methods
@@ -70,6 +69,9 @@ public:
   unsigned int GetNumIterationsCompleted() const { return _numIterationsCompleted; }
 
 protected:
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenCarryingObject = _configParams.behavior_CanCarryCube;
+  }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Initialization
@@ -82,23 +84,23 @@ protected:
   // ICozmoBehavior API
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) final override;
-  virtual void AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated() final override;
+  virtual void AlwaysHandleInScope(const EngineToGameEvent& event) override;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // State transitions
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // called by Init to enter the state machine after setup
-  virtual void BeginStateMachine(BehaviorExternalInterface& behaviorExternalInterface);
+  virtual void BeginStateMachine();
   
-  void TransitionToS1_OppositeTurn(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToS2_Pause(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToS3_MainTurn(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToS4_HeadOnlyUp(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToS5_HeadOnlyDown(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToS6_MainTurnFinal(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToS7_IterationEnd(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToS1_OppositeTurn();
+  void TransitionToS2_Pause();
+  void TransitionToS3_MainTurn();
+  void TransitionToS4_HeadOnlyUp();
+  void TransitionToS5_HeadOnlyDown();
+  void TransitionToS6_MainTurnFinal();
+  void TransitionToS7_IterationEnd();
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // State helpers accessible to derived classes
@@ -107,7 +109,6 @@ protected:
   // request the proper action given the parameters so that the robot moves its head.
   // Animation team suggested to also do a small body move
   IAction* CreateHeadTurnAction(
-    BehaviorExternalInterface& behaviorExternalInterface,
     float bodyRelativeMin_deg, float bodyRelativeMax_deg,           // to provide mini-turns with head moves (animation team suggests)
     float bodyReference_deg,                                        // angle the relative ones use as referance (to turn absolute)
     float headAbsoluteMin_deg, float headAbsoluteMax_deg,           // head min/max range absolute
@@ -213,7 +214,7 @@ private:
   void DecideTurnDirection();
   
   // request the proper action given the parameters so that the robot turns and moves head
-  IAction* CreateBodyAndHeadTurnAction(BehaviorExternalInterface& behaviorExternalInterface,
+  IAction* CreateBodyAndHeadTurnAction(
             EClockDirection clockDirection,                                 // body turn clock direction
             float bodyStartRelativeMin_deg, float bodyStartRelativeMax_deg, // body min/max range relative to starting angle (from original state)
             float headAbsoluteMin_deg, float headAbsoluteMax_deg,           // head min/max range absolute

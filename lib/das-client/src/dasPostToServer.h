@@ -21,7 +21,7 @@
 extern "C" {
 #endif
 
-bool dasPostToServer(const std::string& url, const std::string& postBody);
+bool dasPostToServer(const std::string& url, const std::string& postBody, std::string& out_response);
 
 #ifdef __cplusplus
 }

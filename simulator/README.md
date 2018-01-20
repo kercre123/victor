@@ -1,6 +1,6 @@
 # Webots Simulator Setup
 
-We are currently using [Webots version 8.5.3](https://www.cyberbotics.com/archive/mac/webots-8.5.3.dmg). A license is required to run the Webots simulator. Submit a ticket to the Helpdesk to request a license. 
+We are currently using [Webots version R2018a](https://www.cyberbotics.com/archive/mac/webots-R2018a.dmg). A license is required to run the Webots simulator. Submit a ticket to the Helpdesk to request a license. 
 
 ## Setup
 
@@ -16,7 +16,7 @@ Once Webots is installed, test it out by trying opening `simulator/worlds/cozmo2
 
     This is necessary to build controller or supervisor projects from the command line, which seems necessary when you have more than one controller or supervisor in your world.
 
-1. Create a file called `console_vars.ini` in the directory `simulator/controllers/webotsCtrlGameEngine`. Add the following lines to the file:
+1. Create a file called `console_vars.ini` in the directory `simulator/controllers/webotsCtrlGameEngine2`. Add the following lines to the file:
 
     ```
     ; Console Var Ini Settings
@@ -71,8 +71,7 @@ ps -ef | grep simulator\/controllers | cut -d ' ' -f 4 | xargs kill
  
 You can also search for orphaned processes in Activity Monitor.
 
-### Considerations for Running with a Physical Robot
+### Connecting to a Physical Robot
 
-The 'pause' button does not really work with a physical robot, since the timing of robot<>engine messages is affected.
+It's often useful to connect to a physical robot with a Webots world running only the UI (i.e. `webotsCtrlKeyboard`) and Viz (i.e. `webotsCtrlViz`) controllers in order to view the pose of the robot and various other debug information that is streamed from the engine in real-time. You can do so by opening  `cozmo2Viz.wbt` and entering the IP of the robot you want to connect to under the `engineIP` field of the `WebotsKeyboardController` found in the Webots Scene Tree Viewer.
 
-Also, keep in mind that once Webots connects to the robot, the connection will remain alive until the Webots world is reset with "Revert World" button. This may cause your robot to seem unresponsive if you have an open webots world that is still running or paused.

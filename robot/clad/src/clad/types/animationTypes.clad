@@ -21,7 +21,7 @@ enum uint_8 AnimTrackFlag {
 
 enum int_32 AnimConstants
 {
-  PROCEDURAL_ANIM_ID    = 0,
+  PROCEDURAL_ANIM       = 0,
   NUM_TRACKS            = 8
 }
 

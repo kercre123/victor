@@ -13,7 +13,7 @@
 #ifndef __Cozmo_WebotsCtrlShared_CtrlCommonInitialization_H__
 #define __Cozmo_WebotsCtrlShared_CtrlCommonInitialization_H__
 
-#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "util/helpers/noncopyable.h"
 
 // - - fwd declaration
@@ -32,6 +32,7 @@ namespace WebotsCtrlShared {
 // structure to store the result of command line parameters
 struct ParsedCommandLine {
   bool filterLog = false;
+  bool colorizeStderrOutput = false;
 };
 
 // parses the parameters from a command line into ParseCommandLine struct
@@ -74,7 +75,7 @@ protected:
 class DefaultAutoGlobalLogger : public AutoGlobalLogger {
 public:
   // constructs a provider and sets it as global, automatically cleaning it up
-  DefaultAutoGlobalLogger(const Util::Data::DataPlatform& dataPlatform, bool loadLoggerFilter);
+  DefaultAutoGlobalLogger(const Util::Data::DataPlatform& dataPlatform, bool loadLoggerFilter, bool colorizeStderrOutput);
 };
 
 }; // namespace

@@ -1,11 +1,10 @@
 #VRML_SIM V7.3.0 utf8
 PROTO CozmoBot2 [
-
-  field SFString advertisementHost "127.0.0.1"
+  field SFString name "CozmoBot2"
+  field SFInt32 robotID 0
 
   field SFVec3f translation 0 0 0
   field SFRotation rotation 0 0 1 0
-  field SFString name "CozmoBot2"
 
   field SFFloat headAngle          0
   field SFFloat headAngle_lowLimit -0.4014 # 23 degrees down
@@ -17,6 +16,7 @@ PROTO CozmoBot2 [
   field SFFloat liftAngle_highLimit 1.06
 
   field SFBool filterLogs FALSE
+  field SFBool colorizeStderrOutput FALSE
   field SFString controller "webotsCtrlRobot2"
   field SFString controllerArgs ""
 
@@ -33,9 +33,6 @@ PROTO CozmoBot2 [
   # The number of intermediate wheels to simulate in each tread between the two end wheels.
   field SFInt32 numInterTreadWheels 2
 
-  # Autoconnect to all blocks in world (as if they were paired in flash)
-  field SFBool autoConnectToBlocks FALSE
-
   # Used for animation tests, specify animation to test
   field SFString animationTestName ""
 ]
@@ -48,11 +45,13 @@ Supervisor {
 
   %{ if not fields.vizMode.value then }%
 
-    # append filter command line parameter if filter is set to TRUE
+    # append optional command line parameters
+    %{ autoArgs=fields.controllerArgs.value }%
     %{ if fields.filterLogs.value then }%
-      %{ autoArgs=fields.controllerArgs.value .. "--applyLogFilter"}%
-    %{ else }%
-      %{ autoArgs=fields.controllerArgs.value}%
+      %{ autoArgs = autoArgs .. " --applyLogFilter"}%
+    %{ end }%
+    %{ if fields.colorizeStderrOutput.value then }%
+      %{ autoArgs = autoArgs .. " --colorizeStderrOutput"}%
     %{ end }%
 
     controller IS controller
@@ -75,31 +74,6 @@ Supervisor {
       children [
 
         %{ if not fields.vizMode.value then }%
-
-        # Comms for communicating with blocks
-        Emitter {
-          name "blockCommsEmitter"
-        }
-
-        # There should be a total of MAX_NUM_ACTIVE_OBJECTS (defined in activeObjectTypes.clad) receivers plus a receiver for discovery
-        Receiver {
-          name "discoveryReceiver"
-        }
-        Receiver {
-          name "blockCommsReceiver0"
-        }
-        Receiver {
-          name "blockCommsReceiver1"
-        }
-        Receiver {
-          name "blockCommsReceiver2"
-        }
-        Receiver {
-          name "blockCommsReceiver3"
-        }
-        Receiver {
-          name "blockCommsReceiver4"
-        }
 
         # Are these still needed?
         GPS {
@@ -146,6 +120,7 @@ Supervisor {
 
         DEF BODY Solid {
           translation -0.015 0 0
+          name "Body"
           children [
             DEF BODY_SHAPE Group {
               children [
@@ -268,36 +243,20 @@ Supervisor {
                     }
                   }
 
-                # Connects CozmoEngine2 to CozmoBot2
-                %{ if not fields.vizMode.value then }%                 
-                Connector {
-                  name "engineConnector"
-                  model "engineConnector"
-                  type "symmetric"
-                  isLocked TRUE
-                  autoLock TRUE
-                  distanceTolerance 0.1
-                  axisTolerance 3.14
-                  rotationTolerance 3.14
-                  numberOfRotations 1
-
-                  rotation 0 1 0 1.5707963
+                %{ if not fields.vizMode.value then }%
+                
+                # Anim process:
+                CozmoAnim {
+                  robotID IS robotID
+                  filterLogs IS filterLogs
+                  colorizeStderrOutput IS colorizeStderrOutput
                 }
-
-                # Connects CozmoAnim to CozmoBot2
-                Connector {
-                  name "animConnector"
-                  model "animConnector"
-                  type "symmetric"
-                  isLocked TRUE
-                  autoLock TRUE
-                  distanceTolerance 0.1
-                  axisTolerance 3.14
-                  rotationTolerance 3.14
-                  numberOfRotations 1
-
-                  translation 0.0001 0.0001 0
-                  rotation 0 1 0 1.5707963
+                
+                # Engine process:
+                CozmoEngine2 {
+                  robotID IS robotID
+                  filterLogs IS filterLogs
+                  colorizeStderrOutput IS colorizeStderrOutput
                 }
 
                 # This IMU is positioned in the same place as the one in CozmoEngine2.proto
@@ -476,6 +435,7 @@ Supervisor {
 
         DEF BACKPACK Solid {
           translation -0.04 0 0.018
+          name "Backpack"
           children [
             DEF BACKPACK_GROUP Group {
               children [
@@ -808,6 +768,7 @@ Supervisor {
               ]
               %{ end }%
               endPoint Solid {
+              name "LiftAssembly"
               children [
 
                 #GRIPPER PLATE
@@ -817,6 +778,7 @@ Supervisor {
                     HingeJoint {
                       jointParameters HingeJointParameters {
                         axis 0 1 0
+                        position IS liftAngle
                       }
                       endPoint DEF SmallFingerGripper Solid {
                         name "GripperPlate"
@@ -1090,6 +1052,7 @@ Supervisor {
                 DEF SHOULDER_LOWER HingeJoint {
                   jointParameters HingeJointParameters {
                     axis 0 -1 0
+                    position IS liftAngle
                   }
                   endPoint Solid {
                     children [

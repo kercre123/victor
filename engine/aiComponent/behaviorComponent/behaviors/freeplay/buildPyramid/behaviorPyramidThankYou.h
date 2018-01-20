@@ -14,7 +14,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorPyramidThankYou_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorPyramidThankYou_H__
 
-#include "anki/common/basestation/objectIDs.h"
+#include "coretech/common/engine/objectIDs.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 namespace Anki {
@@ -34,11 +34,12 @@ protected:
   friend class BehaviorContainer;
   BehaviorPyramidThankYou(const Json::Value& config);
 
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
 
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual bool CarryingObjectHandledInternally() const override { return false;}
+  virtual void OnBehaviorActivated() override;
+  virtual void OnBehaviorDeactivated() override;
+
+  virtual bool WantsToBeActivatedBehavior() const override;
     
 private:
   mutable s32 _targetID;

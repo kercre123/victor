@@ -33,43 +33,45 @@ protected:
   friend class BehaviorContainer;
   BehaviorGuardDog(const Json::Value& config);
   
-public:
-  
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual bool CarryingObjectHandledInternally() const override { return false;}
+public:  
+  virtual bool WantsToBeActivatedBehavior() const override;
 
 protected:
-  
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.behaviorAlwaysDelegates = false;
+  }
+
+
+  virtual void OnBehaviorActivated() override;
+  virtual void BehaviorUpdate() override;
+  virtual void OnBehaviorDeactivated() override;
+  virtual void HandleWhileActivated(const EngineToGameEvent& event) override;
   
 private:
   
   // Message handlers:
-  void HandleObjectConnectionState(BehaviorExternalInterface& behaviorExternalInterface, const ObjectConnectionState& msg);
-  void HandleObjectMoved(BehaviorExternalInterface& behaviorExternalInterface, const ObjectMoved& msg);
-  void HandleObjectUpAxisChanged(BehaviorExternalInterface& behaviorExternalInterface, const ObjectUpAxisChanged& msg);
-  void CubeMovementHandler(BehaviorExternalInterface& behaviorExternalInterface, const ObjectID& objId, const float movementScore);
+  void HandleObjectConnectionState(const ObjectConnectionState& msg);
+  void HandleObjectMoved(const ObjectMoved& msg);
+  void HandleObjectUpAxisChanged(const ObjectUpAxisChanged& msg);
+  void CubeMovementHandler(const ObjectID& objId, const float movementScore);
 
   // Helpers:
   
   // Compute a goal starting pose near the blocks
-  void ComputeStartingPose(BehaviorExternalInterface& behaviorExternalInterface, Pose3d& startingPose);
+  void ComputeStartingPose(Pose3d& startingPose);
   
   // Start/stop monitoring for cube motion
-  void StartMonitoringCubeMotion(BehaviorExternalInterface& behaviorExternalInterface, const bool enable = true);
+  void StartMonitoringCubeMotion(const bool enable = true);
   
   // Start a light cube animation on the specified cube
-  bool StartLightCubeAnim(BehaviorExternalInterface& behaviorExternalInterface, const ObjectID& objId, const CubeAnimationTrigger& cubeAnimTrigger);
+  bool StartLightCubeAnim(const ObjectID& objId, const CubeAnimationTrigger& cubeAnimTrigger);
   
   // Start a light cube animation on all cubes
-  bool StartLightCubeAnims(BehaviorExternalInterface& behaviorExternalInterface, const CubeAnimationTrigger& cubeAnimTrigger);
+  bool StartLightCubeAnims(const CubeAnimationTrigger& cubeAnimTrigger);
   
   // Update the behavior stage for the PublicStateBroadcaster (this is used to trigger the proper
   //   music to match the current behavior state, e.g. tension for when a cube is being moved)
-  void UpdatePublicBehaviorStage(BehaviorExternalInterface& behaviorExternalInterface, const GuardDogStage& stage);
+  void UpdatePublicBehaviorStage(const GuardDogStage& stage);
   
   // Record the game result (also computes the game duration)
   void RecordResult(std::string&& result);

@@ -7,6 +7,7 @@ PROTO CozmoVizDisplay
   field SFString streamResolution "QVGA"
 
   field SFBool filterLogs FALSE
+  field SFBool colorizeStderrOutput FALSE
   field SFInt32 accelPlotObjectId 0
   field SFInt32 numBehaviorStackLines 8
 
@@ -60,7 +61,7 @@ Supervisor {
       ]
       name "cozmo_viz_display"
       width 400
-      height 240
+      height 300
     }
     
     Display {
@@ -231,11 +232,16 @@ Supervisor {
 
   controller "webotsCtrlViz"
 
-  # append filter command line parameter if filter is set to TRUE
+  # append optional command line parameters
+  %{ ctrlArgs="" }%
   %{ if fields.filterLogs.value then }%
-    %{ autoArgs="--applyLogFilter"}%
+    %{ ctrlArgs = ctrlArgs .. " --applyLogFilter"}%
   %{ end }%
-  controllerArgs "%{=autoArgs}%"
+  %{ if fields.colorizeStderrOutput.value then }%
+    %{ ctrlArgs = ctrlArgs .. " --colorizeStderrOutput"}%
+  %{ end }%
+
+  controllerArgs "%{=ctrlArgs}%"
 
 } # Supervisor
 

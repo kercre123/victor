@@ -13,13 +13,16 @@
 #ifndef __Anki_Cozmo_Basestation_Components_CarryingComponent_H__
 #define __Anki_Cozmo_Basestation_Components_CarryingComponent_H__
 
-#include "anki/common/basestation/objectIDs.h"
-#include "anki/common/types.h"
+#include "coretech/common/engine/objectIDs.h"
+#include "coretech/common/shared/types.h"
 
-#include "anki/vision/basestation/visionMarker.h"
-#include "anki/vision/MarkerCodeDefinitions.h"
+#include "coretech/vision/engine/visionMarker.h"
+#include "coretech/vision/shared/MarkerCodeDefinitions.h"
 
 #include "clad/types/robotStatusAndActions.h"
+
+#include "engine/dependencyManagedComponent.h"
+#include "engine/robotComponents_fwd.h"
 
 #include "util/helpers/noncopyable.h"
 
@@ -29,11 +32,25 @@ namespace Cozmo {
 class ObservableObject;
 class Robot;
 
-class CarryingComponent : private Util::noncopyable
+class CarryingComponent : public IDependencyManagedComponent<RobotComponentID>, private Util::noncopyable
 {
 public:
-  
-  CarryingComponent(Robot& robot);
+  CarryingComponent();
+
+  //////
+  // IDependencyManagedComponent functions
+  //////
+  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
+  // Maintain the chain of initializations currently in robot - it might be possible to
+  // change the order of initialization down the line, but be sure to check for ripple effects
+  // when changing this function
+  virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
+    dependencies.insert(RobotComponentID::Docking);
+  };
+  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
+  //////
+  // end IDependencyManagedComponent functions
+  //////
   
   // Send a message to the robot to place whatever it is carrying on the
   // ground right where it is. Returns RESULT_FAIL if robot is not carrying
@@ -75,7 +92,7 @@ private:
   Result SetObjectAsAttachedToLift(const ObjectID& objectID,
                                    const Vision::KnownMarker::Code atMarkerCode);
   
-  Robot& _robot;
+  Robot* _robot = nullptr;
   
   ObjectID                  _carryingObjectID;
   Vision::KnownMarker::Code _carryingMarkerCode = Vision::MARKER_INVALID;

@@ -19,15 +19,15 @@
 #include "engine/actions/flipBlockAction.h"
 #include "engine/actions/retryWrapperAction.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/blockWorld/blockConfigurationManager.h"
 #include "engine/blockWorld/blockConfigurationStack.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/events/animationTriggerHelpers.h"
-#include "anki/common/basestation/utils/timer.h"
-#include "anki/common/basestation/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
+#include "coretech/common/engine/jsonTools.h"
 #include "util/console/consoleInterface.h"
 
 
@@ -85,9 +85,9 @@ void BehaviorKnockOverCubes::LoadConfig(const Json::Value& config)
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorKnockOverCubes::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorKnockOverCubes::WantsToBeActivatedBehavior() const
 {
-  UpdateTargetStack(behaviorExternalInterface);
+  UpdateTargetStack();
   if(auto tallestStack = _currentTallestStack.lock()){
     return tallestStack->GetStackHeight() >= _minStackHeight;
   }
@@ -97,34 +97,32 @@ bool BehaviorKnockOverCubes::WantsToBeActivatedBehavior(BehaviorExternalInterfac
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorKnockOverCubes::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorKnockOverCubes::OnBehaviorActivated()
 {
   if(InitializeMemberVars()){
     if(!ShouldStreamline()){
-      TransitionToReachingForBlock(behaviorExternalInterface);
+      TransitionToReachingForBlock();
     }else{
-      TransitionToKnockingOverStack(behaviorExternalInterface);
+      TransitionToKnockingOverStack();
     }
-    return Result::RESULT_OK;
-  }else{
-    return Result::RESULT_FAIL;
+    
   }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorKnockOverCubes::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorKnockOverCubes::OnBehaviorDeactivated()
 {
   ClearStack();
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorKnockOverCubes::TransitionToReachingForBlock(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorKnockOverCubes::TransitionToReachingForBlock()
 {
   DEBUG_SET_STATE(ReachingForBlock);
 
-  const ObservableObject* topBlock = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_topBlockID);
+  const ObservableObject* topBlock = GetBEI().GetBlockWorld().GetLocatedObjectByID(_topBlockID);
   
   if(topBlock == nullptr){
     ClearStack();
@@ -136,7 +134,7 @@ void BehaviorKnockOverCubes::TransitionToReachingForBlock(BehaviorExternalInterf
   action->AddAction(new TurnTowardsObjectAction(_bottomBlockID));
   
   Pose3d poseWrtRobot;
-  if(topBlock->GetPose().GetWithRespectTo(behaviorExternalInterface.GetRobotInfo().GetPose(), poseWrtRobot) ) {
+  if(topBlock->GetPose().GetWithRespectTo(GetBEI().GetRobotInfo().GetPose(), poseWrtRobot) ) {
     const float fudgeFactor = 10.0f;
     if( poseWrtRobot.GetTranslation().x() + fudgeFactor > kBKS_distanceToTryToGrabFrom_mm) {
       float distToDrive = poseWrtRobot.GetTranslation().x() - kBKS_distanceToTryToGrabFrom_mm;
@@ -151,28 +149,28 @@ void BehaviorKnockOverCubes::TransitionToReachingForBlock(BehaviorExternalInterf
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorKnockOverCubes::TransitionToKnockingOverStack(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorKnockOverCubes::TransitionToKnockingOverStack()
 {
   DEBUG_SET_STATE(KnockingOverStack);
   
-  auto flipCallback = [this, &behaviorExternalInterface](const ActionResult& result){
+  auto flipCallback = [this](const ActionResult& result){
     // Mark the object as having no preaction poses - there's nothing else we can do
     if(result == ActionResult::NO_PREACTION_POSES){
-      behaviorExternalInterface.GetAIComponent().GetWhiteboard().SetNoPreDockPosesOnObject(_bottomBlockID);
+      GetBEI().GetAIComponent().GetWhiteboard().SetNoPreDockPosesOnObject(_bottomBlockID);
       return;
     }
     
     const ActionResultCategory resCat = IActionRunner::GetActionResultCategory(result);
     if(resCat == ActionResultCategory::SUCCESS){
       //Knocked over stack successfully
-      TransitionToPlayingReaction(behaviorExternalInterface);
+      TransitionToPlayingReaction();
     }else if(resCat == ActionResultCategory::RETRY){
       //Assume we had an alignment issue
       if(_numRetries < kMaxNumRetries){
-        TransitionToKnockingOverStack(behaviorExternalInterface);
+        TransitionToKnockingOverStack();
       }else{
         // We've aligned a bunch of times - just go for it
-        TransitionToBlindlyFlipping(behaviorExternalInterface);
+        TransitionToBlindlyFlipping();
       }
       _numRetries++;
     }
@@ -211,7 +209,7 @@ void BehaviorKnockOverCubes::TransitionToKnockingOverStack(BehaviorExternalInter
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorKnockOverCubes::TransitionToBlindlyFlipping(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorKnockOverCubes::TransitionToBlindlyFlipping()
 {
   CompoundActionSequential* flipAndWaitAction = new CompoundActionSequential();
   {
@@ -228,12 +226,12 @@ void BehaviorKnockOverCubes::TransitionToBlindlyFlipping(BehaviorExternalInterfa
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorKnockOverCubes::TransitionToPlayingReaction(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorKnockOverCubes::TransitionToPlayingReaction()
 {
   DEBUG_SET_STATE(PlayingReaction);
 
   // notify configuration manager that the tower was knocked over
-  behaviorExternalInterface.GetBlockWorld().GetBlockConfigurationManager().FlagForRebuild();
+  GetBEI().GetBlockWorld().GetBlockConfigurationManager().FlagForRebuild();
   
   // determine if the robot successfully knocked over the min number of cubes
   auto animationTrigger = _knockOverFailureTrigger;
@@ -278,14 +276,14 @@ void BehaviorKnockOverCubes::ClearStack()
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorKnockOverCubes::UpdateTargetStack(BehaviorExternalInterface& behaviorExternalInterface) const
+void BehaviorKnockOverCubes::UpdateTargetStack() const
 {
-   _currentTallestStack = behaviorExternalInterface.GetBlockWorld().GetBlockConfigurationManager().GetStackCache().GetTallestStack();
+   _currentTallestStack = GetBEI().GetBlockWorld().GetBlockConfigurationManager().GetStackCache().GetTallestStack();
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorKnockOverCubes::HandleObjectUpAxisChanged(const ObjectUpAxisChanged& msg, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorKnockOverCubes::HandleObjectUpAxisChanged(const ObjectUpAxisChanged& msg)
 {
   const auto& objectID = msg.objectID;
   if(objectID == _bottomBlockID ||
@@ -297,11 +295,11 @@ void BehaviorKnockOverCubes::HandleObjectUpAxisChanged(const ObjectUpAxisChanged
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorKnockOverCubes::HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorKnockOverCubes::HandleWhileActivated(const EngineToGameEvent& event)
 {
   switch (event.GetData().GetTag()) {
     case ExternalInterface::MessageEngineToGameTag::ObjectUpAxisChanged:
-      HandleObjectUpAxisChanged(event.GetData().Get_ObjectUpAxisChanged(), behaviorExternalInterface);
+      HandleObjectUpAxisChanged(event.GetData().Get_ObjectUpAxisChanged());
       break;
       
     case ExternalInterface::MessageEngineToGameTag::RobotObservedObject:
@@ -316,7 +314,7 @@ void BehaviorKnockOverCubes::HandleWhileActivated(const EngineToGameEvent& event
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorKnockOverCubes::AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorKnockOverCubes::AlwaysHandleInScope(const EngineToGameEvent& event)
 {
   switch (event.GetData().GetTag()) {
     case ExternalInterface::MessageEngineToGameTag::ObjectUpAxisChanged:

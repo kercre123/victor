@@ -24,7 +24,7 @@
 #include "engine/needsSystem/needsManager.h"
 #include "engine/needsSystem/needsState.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "util/console/consoleInterface.h"
 
 namespace Anki {
@@ -49,62 +49,64 @@ BehaviorFeedingSearchForCube::BehaviorFeedingSearchForCube(const Json::Value& co
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorFeedingSearchForCube::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorFeedingSearchForCube::WantsToBeActivatedBehavior() const
 {
   return true;
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorFeedingSearchForCube::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorFeedingSearchForCube::OnBehaviorActivated()
 {
-  TransitionToFirstSearchForFood(behaviorExternalInterface);
-  return Result::RESULT_OK;
+  TransitionToFirstSearchForFood();
+  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorFeedingSearchForCube::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorFeedingSearchForCube::BehaviorUpdate()
 {
+  if(!IsActivated()){
+    return;
+  }
+
   if((_currentState == State::FirstSearchForCube) ||
      (_currentState == State::SecondSearchForCube)){
     const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     if(currentTime_s > _timeEndSearch_s){
       CancelDelegates(false);
       if(_currentState == State::FirstSearchForCube){
-        TransitionToMakeFoodRequest(behaviorExternalInterface);
+        TransitionToMakeFoodRequest();
       }else{
-        TransitionToFailedToFindCubeReaction(behaviorExternalInterface);
+        TransitionToFailedToFindCubeReaction();
       }
     }
-  }
-  
-  return Base::UpdateInternal_WhileRunning(behaviorExternalInterface);
+  }  
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorFeedingSearchForCube::TransitionToFirstSearchForFood(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorFeedingSearchForCube::TransitionToFirstSearchForFood()
 {
   SET_STATE(FirstSearchForCube);
   _timeEndSearch_s = kFirstSearchLength_s + BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  TransitionToSearchForFoodBase(behaviorExternalInterface);
+  TransitionToSearchForFoodBase();
 }
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorFeedingSearchForCube::TransitionToSecondSearchForFood(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorFeedingSearchForCube::TransitionToSecondSearchForFood()
 {
   SET_STATE(SecondSearchForCube);
   _timeEndSearch_s = kSecondSearchLength_s + BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  TransitionToSearchForFoodBase(behaviorExternalInterface);
+  TransitionToSearchForFoodBase();
 }
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorFeedingSearchForCube::TransitionToSearchForFoodBase(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorFeedingSearchForCube::TransitionToSearchForFoodBase()
 {
   AnimationTrigger searchIdle = AnimationTrigger::FeedingIdleSearch_Normal;
-  if(behaviorExternalInterface.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression() == NeedId::Energy){
+  if(GetBEI().GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression() == NeedId::Energy){
     searchIdle = AnimationTrigger::FeedingIdleSearch_Severe;
   }
   
@@ -119,12 +121,12 @@ void BehaviorFeedingSearchForCube::TransitionToSearchForFoodBase(BehaviorExterna
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorFeedingSearchForCube::TransitionToMakeFoodRequest(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorFeedingSearchForCube::TransitionToMakeFoodRequest()
 {
   SET_STATE(MakeFoodRequest);
   
   AnimationTrigger reactionAnimation = AnimationTrigger::FeedingSearchRequest ;
-  if(behaviorExternalInterface.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression() == NeedId::Energy){
+  if(GetBEI().GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression() == NeedId::Energy){
     reactionAnimation = AnimationTrigger::FeedingSearchRequest_Severe;
   }
 
@@ -137,12 +139,12 @@ void BehaviorFeedingSearchForCube::TransitionToMakeFoodRequest(BehaviorExternalI
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorFeedingSearchForCube::TransitionToFailedToFindCubeReaction(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorFeedingSearchForCube::TransitionToFailedToFindCubeReaction()
 {
   SET_STATE(FailedToFindCubeReaction);
   
   AnimationTrigger reactionAnimation = AnimationTrigger::FeedingSearchFailure;
-  if(behaviorExternalInterface.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression() == NeedId::Energy){
+  if(GetBEI().GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression() == NeedId::Energy){
     reactionAnimation = AnimationTrigger::FeedingSearchFailure_Severe;
   }
   

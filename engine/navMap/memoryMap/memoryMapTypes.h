@@ -12,9 +12,10 @@
 #ifndef ANKI_COZMO_MEMORY_MAP_TYPES_H
 #define ANKI_COZMO_MEMORY_MAP_TYPES_H
 
-#include "anki/common/basestation/math/point.h"
+#include "coretech/common/engine/math/point.h"
 #include "util/helpers/fullEnumToValueArrayChecker.h"
 #include "util/helpers/templateHelpers.h"
+#include "clad/types/memoryMap.h"
 
 #include <cstdint>
 #include <memory>
@@ -28,13 +29,17 @@ class MemoryMapData;
 
 namespace MemoryMapTypes {
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// structs
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 // content detected in the map
 enum class EContentType : uint8_t {
   Unknown,               // not discovered
   ClearOfObstacle,       // an area without obstacles
   ClearOfCliff,          // an area without obstacles or cliffs
-  ObstacleCube,          // an area with obstacles we recognize as cubes
-  ObstacleCubeRemoved,   // an area that used to have a cube and now the cube has moved somewhere else
+  ObstacleObservable,    // an area with obstacles we recognize as observable
+  // we should roll charger types into ObstacleObservable class now that it can fully support it (COZMO-16117)
   ObstacleCharger,       // an area with obstacles we recognize as a charger
   ObstacleChargerRemoved,// an area that used to have a charger and now the charger has moved somewhere else
   ObstacleProx,          // an area with an obstacle found with the prox sensor
@@ -44,12 +49,6 @@ enum class EContentType : uint8_t {
   NotInterestingEdge,    // a border/edge detected by the camera that we have already explored and it's not interesting anymore
   _Count // Flag, not a type
 };
-
-// this function returns true if the given content type expects additional data (MemoryMapData), false otherwise
-bool ExpectsAdditionalData(EContentType type);
-
-// String representing ENodeContentType for debugging purposes
-const char* EContentTypeToString(EContentType contentType);
 
 // each segment in a border region
 struct BorderSegment
@@ -88,6 +87,17 @@ struct BorderRegion {
   BorderSegmentList segments;
 };
 
+struct MapBroadcastData {
+  MapBroadcastData() : mapInfo(), quadInfo() {}
+  ExternalInterface::MemoryMapInfo                  mapInfo;
+  std::vector<ExternalInterface::MemoryMapQuadInfo> quadInfo;
+  bool                                              isDirty;
+};
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Common Aliases
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 using MemoryMapDataPtr       = std::shared_ptr<MemoryMapData>;
 using MemoryMapDataConstPtr  = std::shared_ptr<const MemoryMapData>;
 
@@ -98,11 +108,29 @@ using BorderRegionVector     = std::vector<BorderRegion>;
 using NodeTransformFunction  = std::function<MemoryMapDataPtr (MemoryMapDataPtr)>;
 using NodePredicate          = std::function<bool (MemoryMapDataPtr)>;
 
+using QuadInfoVector         = std::vector<ExternalInterface::MemoryMapQuadInfo>;
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Helper Functions
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+// returns false if the base constructor for MemoryMapData can be used with content type, and true if a derived 
+// class constructor must be called, forcing additional data to be provided on instantiation
+bool ExpectsAdditionalData(EContentType type);
+
+// String representing ENodeContentType for debugging purposes
+const char* EContentTypeToString(EContentType contentType);
+
+// returns true if type is a removal type, false otherwise. Removal types are not expected to be stored in the memory
+// map, but rather reset other types to defaults.
+bool IsRemovalType(EContentType type);
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Array of content that provides an API with compilation checks for algorithms that require combinations
 // of content types. It's for example used to make sure that you define a value for all content types, rather
 // than including only those you want to be true.
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 using FullContentArray = Util::FullEnumToValueArrayChecker::FullEnumToValueArray<EContentType, bool>;
 using Util::FullEnumToValueArrayChecker::IsSequentialArray; // import IsSequentialArray to this namespace
 
@@ -113,10 +141,6 @@ using EContentTypePackedType = uint32_t;
 // the smallest type possible since we have a lot of quad nodes, but I want to pass groups as bit flags in one
 // packed variable
 EContentTypePackedType EContentTypeToFlag(EContentType nodeContentType);
-
-// returns true if type is a removal type, false otherwise. Removal types are not expected to be stored in the memory
-// map, but rather reset other types to defaults.
-bool IsRemovalType(EContentType type);
 
 } // namespace MemoryMapTypes
 } // namespace Cozmo

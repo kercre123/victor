@@ -16,7 +16,7 @@ enum uint_32 RobotStatusFlag {
     IS_CARRYING_BLOCK       = 0x00000002,
     IS_PICKING_OR_PLACING   = 0x00000004,
     IS_PICKED_UP            = 0x00000008,
-
+    IS_BUTTON_PRESSED       = 0x00000010,
     IS_FALLING              = 0x00000020,
     IS_ANIMATING            = 0x00000040,
     IS_PATHING              = 0x00000080,
@@ -108,17 +108,6 @@ enum int_8 BodyColor
   CE_LM_v15 = 3,  // Black/Collector's Edition/Liquid Metal Cozmo 1.5
 
   COUNT
-}
-
-namespace RobotInterface {
-
-  message AnimationState
-  {
-    uint_32 numProcAnimFaceKeyframes,
-    uint_8  lockedTracks,
-    uint_8  tracksInUse,
-  }
-
 }
 
 } // namespace Cozmo

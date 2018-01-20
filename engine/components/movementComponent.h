@@ -13,10 +13,11 @@
 #ifndef __Anki_Cozmo_Basestation_Components_MovementComponent_H__
 #define __Anki_Cozmo_Basestation_Components_MovementComponent_H__
 
-#include "anki/common/types.h"
-#include "anki/common/basestation/objectIDs.h"
-#include "anki/vision/basestation/trackedFace.h"
+#include "coretech/common/shared/types.h"
+#include "coretech/common/engine/objectIDs.h"
+#include "coretech/vision/engine/trackedFace.h"
 #include "engine/components/animationComponent.h"
+#include "engine/entity.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include <list>
@@ -31,11 +32,26 @@ struct RobotState;
 class IExternalInterface;
 enum class AnimTrackFlag : uint8_t;
   
-class MovementComponent : private Util::noncopyable
+class MovementComponent : public IDependencyManagedComponent<RobotComponentID>, private Util::noncopyable
 {
 public:
-  MovementComponent(Robot& robot);
+  MovementComponent();
   virtual ~MovementComponent() { }
+
+  //////
+  // IDependencyManagedComponent functions
+  //////
+  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
+  // Maintain the chain of initializations currently in robot - it might be possible to
+  // change the order of initialization down the line, but be sure to check for ripple effects
+  // when changing this function
+  virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
+    dependencies.insert(RobotComponentID::ActionList);
+  };
+  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override{};
+  //////
+  // end IDependencyManagedComponent functions
+  //////
   
   void Update(const RobotState& robotState);
   
@@ -160,7 +176,7 @@ private:
   void DirectDriveCheckSpeedAndLockTracks(f32 speed, bool& flag, u8 tracks, const std::string& who,
                                           const std::string& debugName);
   
-  Robot& _robot;
+  Robot* _robot = nullptr;
   
   bool _isMoving = false;
   bool _isHeadMoving = false;

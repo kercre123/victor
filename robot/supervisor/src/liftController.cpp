@@ -6,7 +6,7 @@
 #include "velocityProfileGenerator.h"
 
 #include "anki/common/constantsAndMacros.h"
-#include "anki/common/shared/radians.h"
+#include "coretech/common/shared/radians.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/logging.h"
 
@@ -191,6 +191,13 @@ namespace Anki {
         return RESULT_OK;
       }
 
+      void ResetAnglePosition(f32 currAngle)
+      {
+        currentAngle_ = currAngle;
+        desiredAngle_ = currentAngle_;
+        currDesiredAngle_ = currentAngle_.ToFloat();
+        desiredHeight_ = GetHeightMM();
+      }
 
       void EnableInternal()
       {
@@ -198,8 +205,7 @@ namespace Anki {
           enable_ = true;
           enableAtTime_ms_ = 0;  // Reset auto-enable trigger time
 
-          currDesiredAngle_ = currentAngle_.ToFloat();
-          SetDesiredHeight(GetHeightMM());
+          ResetAnglePosition(currentAngle_.ToFloat());
 #ifdef SIMULATOR
           // SetDesiredHeight might engage the gripper, but we don't want it engaged right now.
           HAL::DisengageGripper();
@@ -238,19 +244,6 @@ namespace Anki {
       {
         enabledExternally_ = false;
         DisableInternal(autoReEnable);
-      }
-
-
-      void ResetAnglePosition(f32 currAngle)
-      {
-        currentAngle_ = currAngle;
-        desiredAngle_ = currentAngle_;
-        currDesiredAngle_ = currentAngle_.ToFloat();
-        desiredHeight_ = GetHeightMM();
-
-        HAL::MotorResetPosition(MotorID::MOTOR_LIFT);
-        prevHalPos_ = HAL::MotorGetPosition(MotorID::MOTOR_LIFT);
-        isCalibrated_ = true;
       }
 
       void StartCalibrationRoutine(bool autoStarted)
@@ -328,6 +321,11 @@ namespace Anki {
               if (HAL::GetTimeStamp() - lastLiftMovedTime_ms > LIFT_RELAX_TIME_MS) {
                 AnkiInfo( "LiftController.Calibrated", "");
                 ResetAnglePosition(LIFT_ANGLE_LOW_LIMIT_RAD);
+
+                HAL::MotorResetPosition(MotorID::MOTOR_LIFT);
+                prevHalPos_ = HAL::MotorGetPosition(MotorID::MOTOR_LIFT);
+                isCalibrated_ = true;
+
                 calState_ = LCS_IDLE;
                 Messages::SendMotorCalibrationMsg(MotorID::MOTOR_LIFT, false);
               }
@@ -569,7 +567,7 @@ namespace Anki {
           if (IsInPosition() || IMUFilter::IsPickedUp() || ProxSensors::IsAnyCliffDetected()) {
             // Stop messing with the lift! Going limp until you do!
             Messages::SendMotorAutoEnabledMsg(MotorID::MOTOR_LIFT, false);
-            DisableInternal(true);
+            Disable(true);
           } else {
             // Burnout protection triggered. Recalibrating.
             StartCalibrationRoutine(true);
@@ -602,6 +600,10 @@ namespace Anki {
 
         PoseAndSpeedFilterUpdate();
 
+        if (!IsCalibrated()) {
+          return RESULT_OK;
+        }
+
 #if DISABLE_MOTORS_ON_CHARGER
         if (inPosition_ && HAL::BatteryIsOnCharger()) {
           // Disables motor if robot placed on charger and it's
@@ -626,14 +628,10 @@ namespace Anki {
             return RESULT_OK;
           } else if (currTime >= enableAtTime_ms_) {
             Messages::SendMotorAutoEnabledMsg(MotorID::MOTOR_LIFT, true);
-            EnableInternal();
+            Enable();
           } else {
             return RESULT_OK;
           }
-        }
-
-        if (!IsCalibrated()) {
-          return RESULT_OK;
         }
         
         if (MotorBurnoutProtection()) {

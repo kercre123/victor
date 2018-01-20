@@ -10,7 +10,7 @@
  *
  **/
 
-#include "anki/common/basestation/jsonTools.h"
+#include "coretech/common/engine/jsonTools.h"
 #include <unordered_map>
 
 #ifndef __Anki_Cozmo_Backpack_Light_Animation_Container_H__

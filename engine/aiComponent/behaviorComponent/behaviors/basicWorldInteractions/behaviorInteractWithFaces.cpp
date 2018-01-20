@@ -14,10 +14,10 @@
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/trackFaceAction.h"
-#include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/aiComponent/faceSelectionComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -28,11 +28,11 @@
 #include "engine/needsSystem/needsManager.h"
 #include "engine/viz/vizManager.h"
 
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
 
-#include "anki/vision/basestation/faceTracker.h"
-#include "anki/vision/basestation/trackedFace.h"
+#include "coretech/vision/engine/faceTracker.h"
+#include "coretech/vision/engine/trackedFace.h"
 
 #include "util/console/consoleInterface.h"
 
@@ -76,8 +76,7 @@ constexpr MemoryMapTypes::FullContentArray typesToBlockDriving =
   {MemoryMapTypes::EContentType::Unknown               , false},
   {MemoryMapTypes::EContentType::ClearOfObstacle       , false},
   {MemoryMapTypes::EContentType::ClearOfCliff          , false},
-  {MemoryMapTypes::EContentType::ObstacleCube          , true },
-  {MemoryMapTypes::EContentType::ObstacleCubeRemoved   , false},
+  {MemoryMapTypes::EContentType::ObstacleObservable    , true },
   {MemoryMapTypes::EContentType::ObstacleCharger       , true },
   {MemoryMapTypes::EContentType::ObstacleChargerRemoved, false},
   {MemoryMapTypes::EContentType::ObstacleProx          , true },
@@ -135,65 +134,65 @@ void BehaviorInteractWithFaces::LoadConfig(const Json::Value& config)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorInteractWithFaces::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorInteractWithFaces::OnBehaviorActivated()
 {
   // reset the time to stop tracking (in the tracking state)
   _trackFaceUntilTime_s = -1.0f;
 
   if( _targetFace.IsValid() ) {
-    TransitionToInitialReaction(behaviorExternalInterface);
-    return RESULT_OK;
+    TransitionToInitialReaction();
   }
   else {
     PRINT_NAMED_WARNING("BehaviorInteractWithFaces.Init.NoValidTarget",
                         "Decided to run, but don't have valid target when Init is called. This shouldn't happen");
-    return RESULT_FAIL;
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorInteractWithFaces::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorInteractWithFaces::BehaviorUpdate()
 {
+  if(!IsActivated()){
+    return;
+  }
+
   if( _trackFaceUntilTime_s >= 0.0f ) {
     const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     if( currTime_s >= _trackFaceUntilTime_s ) {
       BehaviorObjectiveAchieved(BehaviorObjective::InteractedWithFace);
       CancelDelegates();
       
-      if(behaviorExternalInterface.HasNeedsManager()){
-        auto& needsManager = behaviorExternalInterface.GetNeedsManager();
+      if(GetBEI().HasNeedsManager()){
+        auto& needsManager = GetBEI().GetNeedsManager();
         needsManager.RegisterNeedsActionCompleted(NeedsActionId::SeeFace);
       }
     }
-  }
-  
-  return BaseClass::UpdateInternal_WhileRunning(behaviorExternalInterface);
+  }  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorInteractWithFaces::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorInteractWithFaces::WantsToBeActivatedBehavior() const
 {
   _targetFace.Reset();
-  SelectFaceToTrack(behaviorExternalInterface);
+  SelectFaceToTrack();
 
   return _targetFace.IsValid();
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorInteractWithFaces::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorInteractWithFaces::OnBehaviorDeactivated()
 {
-  _lastImageTimestampWhileRunning = behaviorExternalInterface.GetRobotInfo().GetLastImageTimeStamp();
+  _lastImageTimestampWhileRunning = GetBEI().GetRobotInfo().GetLastImageTimeStamp();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorInteractWithFaces::CanDriveIdealDistanceForward(BehaviorExternalInterface& behaviorExternalInterface)
+bool BehaviorInteractWithFaces::CanDriveIdealDistanceForward()
 {
   if( kInteractWithFaces_DoMemoryMapCheckForDriveForward && 
-      behaviorExternalInterface.HasMapComponent()) {
-    const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+      GetBEI().HasMapComponent()) {
+    const auto& robotInfo = GetBEI().GetRobotInfo();
 
-    const INavMap* memoryMap = behaviorExternalInterface.GetMapComponent().GetCurrentMemoryMap();
+    const INavMap* memoryMap = GetBEI().GetMapComponent().GetCurrentMemoryMap();
     
     DEV_ASSERT(nullptr != memoryMap, "BehaviorInteractWithFaces.CanDriveIdealDistanceForward.NeedMemoryMap");
 
@@ -229,7 +228,7 @@ bool BehaviorInteractWithFaces::CanDriveIdealDistanceForward(BehaviorExternalInt
 #pragma mark State Machine
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorInteractWithFaces::TransitionToInitialReaction(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorInteractWithFaces::TransitionToInitialReaction()
 {
   DEBUG_SET_STATE(VerifyFace);
 
@@ -243,26 +242,26 @@ void BehaviorInteractWithFaces::TransitionToInitialReaction(BehaviorExternalInte
     action->AddAction(turnAndAnimateAction);
   }
   
-  DelegateIfInControl(action, [this, &behaviorExternalInterface](ActionResult ret ) {
+  DelegateIfInControl(action, [this](ActionResult ret ) {
       if( ret == ActionResult::SUCCESS ) {
-        TransitionToGlancingDown(behaviorExternalInterface);
+        TransitionToGlancingDown();
       }
       else {
         // one possible cause of failure is that the face id we tried to track wasn't there (but another face
         // was). So, see if there is a new "best face", and if so, track that one. This will only run if a new
         // face is observed.
 
-        if(behaviorExternalInterface.HasMoodManager()){
+        if(GetBEI().HasMoodManager()){
           // increase frustration to avoid loops
-          auto& moodManager = behaviorExternalInterface.GetMoodManager();
+          auto& moodManager = GetBEI().GetMoodManager();
           moodManager.TriggerEmotionEvent("InteractWithFaceRetry",
                                           MoodManager::GetCurrentTimeInSeconds());
         }
         
-        _lastImageTimestampWhileRunning =  behaviorExternalInterface.GetRobotInfo().GetLastImageTimeStamp();
+        _lastImageTimestampWhileRunning =  GetBEI().GetRobotInfo().GetLastImageTimeStamp();
         
         SmartFaceID oldTargetFace = _targetFace;
-        SelectFaceToTrack(behaviorExternalInterface);
+        SelectFaceToTrack();
         if(_targetFace != oldTargetFace) {
           // only retry a max of one time to avoid loops
           PRINT_CH_INFO("Behaviors","BehaviorInteractWithFaces.InitialReactionFailed.TryAgain",
@@ -270,7 +269,7 @@ void BehaviorInteractWithFaces::TransitionToInitialReaction(BehaviorExternalInte
                         oldTargetFace.GetDebugStr().c_str(),
                         _targetFace.GetDebugStr().c_str());
 
-          TransitionToInitialReaction(behaviorExternalInterface);
+          TransitionToInitialReaction();
         }
         else {
           PRINT_CH_INFO("Behaviors","BehaviorInteractWithFaces.InitialReactionFailed",
@@ -282,7 +281,7 @@ void BehaviorInteractWithFaces::TransitionToInitialReaction(BehaviorExternalInte
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorInteractWithFaces::TransitionToGlancingDown(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorInteractWithFaces::TransitionToGlancingDown()
 {
   DEBUG_SET_STATE(GlancingDown);
 
@@ -293,17 +292,17 @@ void BehaviorInteractWithFaces::TransitionToGlancingDown(BehaviorExternalInterfa
                 &BehaviorInteractWithFaces::TransitionToDrivingForward);
   }
   else {
-    TransitionToDrivingForward(behaviorExternalInterface);
+    TransitionToDrivingForward();
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorInteractWithFaces::TransitionToDrivingForward(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorInteractWithFaces::TransitionToDrivingForward()
 {
   DEBUG_SET_STATE(DrivingForward);
   
   // check if we should do the long or short distance
-  const bool doLongDrive = CanDriveIdealDistanceForward(behaviorExternalInterface);
+  const bool doLongDrive = CanDriveIdealDistanceForward();
   const float distToDrive_mm = doLongDrive ?
     kInteractWithFaces_DriveForwardIdealDist_mm :
     kInteractWithFaces_DriveForwardMinDist_mm;
@@ -345,7 +344,7 @@ void BehaviorInteractWithFaces::TransitionToDrivingForward(BehaviorExternalInter
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorInteractWithFaces::TransitionToTrackingFace(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorInteractWithFaces::TransitionToTrackingFace()
 {
   DEBUG_SET_STATE(TrackingFace);
 
@@ -373,13 +372,13 @@ void BehaviorInteractWithFaces::TransitionToTrackingFace(BehaviorExternalInterfa
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorInteractWithFaces::TransitionToTriggerEmotionEvent(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorInteractWithFaces::TransitionToTriggerEmotionEvent()
 {
   DEBUG_SET_STATE(TriggerEmotionEvent);
 
-  if(behaviorExternalInterface.HasMoodManager()){
-    auto& moodManager = behaviorExternalInterface.GetMoodManager();
-    const Vision::TrackedFace* face = behaviorExternalInterface.GetFaceWorld().GetFace( _targetFace );
+  if(GetBEI().HasMoodManager()){
+    auto& moodManager = GetBEI().GetMoodManager();
+    const Vision::TrackedFace* face = GetBEI().GetFaceWorld().GetFace( _targetFace );
     
     if( nullptr != face && face->HasName() ) {
       moodManager.TriggerEmotionEvent("InteractWithNamedFace", MoodManager::GetCurrentTimeInSeconds());
@@ -391,19 +390,22 @@ void BehaviorInteractWithFaces::TransitionToTriggerEmotionEvent(BehaviorExternal
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorInteractWithFaces::SelectFaceToTrack(BehaviorExternalInterface& behaviorExternalInterface) const
+void BehaviorInteractWithFaces::SelectFaceToTrack() const
 {  
   const bool considerTrackingOnlyFaces = false;
-  std::set< Vision::FaceID_t > faces = behaviorExternalInterface.GetFaceWorld().GetFaceIDsObservedSince(_lastImageTimestampWhileRunning,
+  std::set< Vision::FaceID_t > faces = GetBEI().GetFaceWorld().GetFaceIDsObservedSince(_lastImageTimestampWhileRunning,
                                                                                  considerTrackingOnlyFaces);
   
   std::set<SmartFaceID> smartFaces;
   for(auto& entry : faces){
-    smartFaces.insert(behaviorExternalInterface.GetFaceWorld().GetSmartFaceID(entry));
+    smartFaces.insert(GetBEI().GetFaceWorld().GetSmartFaceID(entry));
   }
-  const AIWhiteboard& whiteboard = behaviorExternalInterface.GetAIComponent().GetWhiteboard();
-  const bool preferName = true;
-  _targetFace = whiteboard.GetBestFaceToTrack(smartFaces, preferName);
+  const auto& faceSelection = GetBEI().GetAIComponent().GetFaceSelectionComponent();
+  FaceSelectionComponent::FaceSelectionFactorMap criteriaMap;
+  criteriaMap.insert(std::make_pair(FaceSelectionComponent::FaceSelectionPenaltyMultiplier::UnnamedFace, 1000));
+  criteriaMap.insert(std::make_pair(FaceSelectionComponent::FaceSelectionPenaltyMultiplier::RelativeHeadAngleRadians, 1));
+  criteriaMap.insert(std::make_pair(FaceSelectionComponent::FaceSelectionPenaltyMultiplier::RelativeBodyAngleRadians, 3));
+  _targetFace = faceSelection.GetBestFaceToUse(criteriaMap, smartFaces);
 }
 
 

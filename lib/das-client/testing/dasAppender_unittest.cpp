@@ -34,6 +34,9 @@ TEST(DasAppenderTest, DasAppenderCleanupOldEmptyInProgress) {
   EXPECT_EQ(0, access(inProg2.c_str(), F_OK)) << inProg2 << " should have been created";
   EXPECT_EQ(0, access(inProg3.c_str(), F_OK)) << inProg3 << " should have been created";
   Anki::Das::DasAppender* testAppender = new Anki::Das::DasAppender(testDASDir,testDASURL);
+  EXPECT_EQ(0, access(inProg2.c_str(), F_OK)) << inProg2 << " should not be deleted yet";
+  EXPECT_EQ(0, access(inProg3.c_str(), F_OK)) << inProg3 << " should not be deleted yet";
+  testAppender->SetIsUploadingPaused(false);
   delete testAppender; testAppender = nullptr;
   EXPECT_EQ(-1, access(inProg2.c_str(), F_OK)) << inProg2 << " should have been rolled over";
   EXPECT_EQ(-1, access(inProg3.c_str(), F_OK)) << inProg3 << " should have been rolled over";
@@ -51,6 +54,9 @@ TEST(DasAppenderTest, DasAppenderCleanupOldNonEmptyInProgress) {
   EXPECT_EQ(0, access(inProg2.c_str(), F_OK)) << inProg2 << " should have been created";
   EXPECT_EQ(0, access(inProg3.c_str(), F_OK)) << inProg3 << " should have been created";
   Anki::Das::DasAppender* testAppender = new Anki::Das::DasAppender(testDASDir,testDASURL);
+  EXPECT_EQ(0, access(inProg2.c_str(), F_OK)) << inProg2 << " should not be deleted yet";
+  EXPECT_EQ(0, access(inProg3.c_str(), F_OK)) << inProg3 << " should not be deleted yet";
+  testAppender->SetIsUploadingPaused(false);
   delete testAppender; testAppender = nullptr;
   EXPECT_EQ(-1, access(inProg2.c_str(), F_OK)) << inProg2 << " should have been rolled over";
   EXPECT_EQ(-1, access(inProg3.c_str(), F_OK)) << inProg3 << " should have been rolled over";
@@ -67,8 +73,9 @@ TEST(DasAppenderTest, DasAppenderFlushWithCallback) {
   std::mutex mutex;
   std::unique_lock<std::mutex> lock{mutex};
   std::condition_variable cv;
-  auto const completionFunc = [&finished, &cv, &mutex](const bool lastFlushFailed) {
+  auto const completionFunc = [&finished, &cv, &mutex](const bool lastFlushFailed, std::string response) {
     {
+      (void) response;
       std::lock_guard<std::mutex> lg{mutex};
       finished = true;
     }

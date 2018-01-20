@@ -14,7 +14,7 @@
 
 #include "engine/actions/basicActions.h"
 #include "engine/actions/dockActions.h"
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
@@ -33,9 +33,9 @@ BehaviorPickUpAndPutDownCube::BehaviorPickUpAndPutDownCube(const Json::Value& co
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorPickUpAndPutDownCube::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorPickUpAndPutDownCube::WantsToBeActivatedBehavior() const
 {
-  auto& objInfoCache = behaviorExternalInterface.GetAIComponent().GetObjectInteractionInfoCache();
+  auto& objInfoCache = GetBEI().GetAIComponent().GetObjectInteractionInfoCache();
   const ObjectInteractionIntention intent = ObjectInteractionIntention::PickUpObjectNoAxisCheck;
   _targetBlockID = objInfoCache.GetBestObjectForIntention(intent);
   return _targetBlockID.IsSet();
@@ -43,33 +43,33 @@ bool BehaviorPickUpAndPutDownCube::WantsToBeActivatedBehavior(BehaviorExternalIn
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorPickUpAndPutDownCube::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPickUpAndPutDownCube::OnBehaviorActivated()
 {
-  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  auto& robotInfo = GetBEI().GetRobotInfo();
   if(robotInfo.GetCarryingComponent().IsCarryingObject()){
     _targetBlockID = robotInfo.GetCarryingComponent().GetCarryingObject();
-    TransitionToDriveWithCube(behaviorExternalInterface);
-    return Result::RESULT_OK;
+    TransitionToDriveWithCube();
+    
   }
   
-  auto& factory = behaviorExternalInterface.GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
+  auto& factory = GetBEI().GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
   PickupBlockParamaters params;
   params.allowedToRetryFromDifferentPose = true;
-  HelperHandle pickupHelper = factory.CreatePickupBlockHelper(behaviorExternalInterface, *this, _targetBlockID, params);
-  SmartDelegateToHelper(behaviorExternalInterface, pickupHelper, &BehaviorPickUpAndPutDownCube::TransitionToDriveWithCube);
+  HelperHandle pickupHelper = factory.CreatePickupBlockHelper(*this, _targetBlockID, params);
+  SmartDelegateToHelper(pickupHelper, &BehaviorPickUpAndPutDownCube::TransitionToDriveWithCube);
   // delegate failure will end the behavior here
   
-  return Result::RESULT_OK;
+  
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPickUpAndPutDownCube::TransitionToDriveWithCube(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPickUpAndPutDownCube::TransitionToDriveWithCube()
 {
   DEBUG_SET_STATE(DriveWithCube);
     
-  double turn_rad = behaviorExternalInterface.GetRNG().RandDblInRange(M_PI_4 ,M_PI_F);
-  if( behaviorExternalInterface.GetRNG().RandDbl() < 0.5 )
+  double turn_rad = GetBEI().GetRNG().RandDblInRange(M_PI_4 ,M_PI_F);
+  if( GetBEI().GetRNG().RandDbl() < 0.5 )
   {
     turn_rad *= -1;
   }
@@ -80,7 +80,7 @@ void BehaviorPickUpAndPutDownCube::TransitionToDriveWithCube(BehaviorExternalInt
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPickUpAndPutDownCube::TransitionToPutDownCube(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPickUpAndPutDownCube::TransitionToPutDownCube()
 {
   DEBUG_SET_STATE(PutDownCube);
   
@@ -94,7 +94,7 @@ void BehaviorPickUpAndPutDownCube::TransitionToPutDownCube(BehaviorExternalInter
   {  
     static constexpr float kBackUpMinMM = 40.0;
     static constexpr float kBackUpMaxMM = 70.0;
-    double backup_amount = behaviorExternalInterface.GetRNG().RandDblInRange(kBackUpMinMM,kBackUpMaxMM);
+    double backup_amount = GetBEI().GetRNG().RandDblInRange(kBackUpMinMM,kBackUpMaxMM);
     
     action->AddAction( new DriveStraightAction(-backup_amount, DEFAULT_PATH_MOTION_PROFILE.speed_mmps) );
   }

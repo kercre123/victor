@@ -9,6 +9,8 @@
 #ifndef __Anki_Cozmo_Basestation_RobotToEngineImplMessaging_H__
 #define __Anki_Cozmo_Basestation_RobotToEngineImplMessaging_H__
 
+#include "engine/dependencyManagedComponent.h"
+#include "engine/robotComponents_fwd.h"
 #include "engine/robotInterface/messageHandler.h"
 #include "clad/robotInterface/messageRobotToEngine_hash.h"
 #include "util/helpers/noncopyable.h"
@@ -22,14 +24,31 @@ namespace Anki {
 namespace Cozmo {
 
 class Robot;
-
+struct ObjectMoved;
+struct ObjectPowerLevel;
+struct ObjectStoppedMoving;
+struct ObjectUpAxisChanged;
   
-class RobotToEngineImplMessaging : private Util::noncopyable, public Util::SignalHolder
+class RobotToEngineImplMessaging : public IDependencyManagedComponent<RobotComponentID>, private Util::noncopyable, public Util::SignalHolder
 {
 public:
-  
-  RobotToEngineImplMessaging(Robot* robot);
+  RobotToEngineImplMessaging();
   ~RobotToEngineImplMessaging();
+
+  //////
+  // IDependencyManagedComponent functions
+  //////
+  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override {};
+  // Maintain the chain of initializations currently in robot - it might be possible to
+  // change the order of initialization down the line, but be sure to check for ripple effects
+  // when changing this function
+  virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
+    dependencies.insert(RobotComponentID::BlockTapFilter);
+  };
+  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
+  //////
+  // end IDependencyManagedComponent functions
+  //////
   
   // Version checks
   const RobotInterface::FWVersionInfo& GetFWVersionInfo() const { return _factoryFirmwareVersion; }
@@ -44,11 +63,9 @@ public:
   void HandleFWVersionInfo(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandlePickAndPlaceResult(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleDockingStatus(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-  void HandleActiveObjectAvailable(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
-  void HandleActiveObjectConnectionState(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
-  void HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
-  void HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
-  void HandleActiveObjectUpAxisChanged(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
+  void HandleActiveObjectMoved(const ObjectMoved& message, Robot* const robot);
+  void HandleActiveObjectStopped(const ObjectStoppedMoving& message, Robot* const robot);
+  void HandleActiveObjectUpAxisChanged(const ObjectUpAxisChanged& message, Robot* const robot);
   void HandleFallingEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleGoalPose(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleRobotStopped(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
@@ -66,10 +83,10 @@ public:
   void HandleRobotPoked(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleMotorCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleMotorAutoEnabled(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
-  void HandleObjectPowerLevel(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
-  void HandleObjectAccel(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
+  void HandleObjectPowerLevel(const ObjectPowerLevel& message, Robot* const robot);
   void HandleTimeProfileStat(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   void HandleAudioInput(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
+  void HandleMicDirection(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   
   double GetLastImageReceivedTime() const { return _lastImageRecvTime; }
   
@@ -84,7 +101,7 @@ private:
   // These methods actually do the creation of messages and sending
   // (via MessageHandler) to the physical robot
 
-  uint8_t _imuSeqID = 0;
+  uint32_t _imuSeqID = 0;
   std::ofstream _imuLogFileStream;
   
   // For handling multiple images coming in on the same tick

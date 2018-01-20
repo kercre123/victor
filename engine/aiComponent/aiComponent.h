@@ -13,7 +13,12 @@
 #ifndef __Cozmo_Basestation_Behaviors_AiComponent_H__
 #define __Cozmo_Basestation_Behaviors_AiComponent_H__
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
+#include "engine/aiComponent/aiComponents_fwd.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
+#include "engine/robotComponents_fwd.h"
+#include "engine/entity.h"
+#include "engine/dependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
 
 #include <assert.h>
@@ -25,52 +30,88 @@ namespace Cozmo {
 // Forward declarations
 class AIInformationAnalyzer;
 class AIWhiteboard;
+class BEIRobotInfo;
 class BehaviorComponent;
 class BehaviorContainer;
 class BehaviorHelperComponent;
 class DoATrickSelector;
+class FaceSelectionComponent;
 class FeedingSoundEffectManager;
 class FreeplayDataTracker;
 class ObjectInteractionInfoCache;
+class PuzzleComponent;
 class RequestGameComponent;
 class Robot;
 class SevereNeedsComponent;
 class WorkoutComponent;
-  
 
 namespace ComponentWrappers{
-struct AIComponentComponents{
-  AIComponentComponents(Robot& robot)
-  :_robot(robot){}
+class AIComponentComponents{
+public:
+  AIComponentComponents(Robot&                      robot,
+                        BehaviorComponent*&         behaviorComponent,
+                        DoATrickSelector*           doATrickSelector,
+                        FaceSelectionComponent*     faceSelectionComponent,
+                        FeedingSoundEffectManager*  feedingSoundEFfectManager,
+                        FreeplayDataTracker*        freeplayDataTracker,
+                        AIInformationAnalyzer*      infoAnalyzer,
+                        ObjectInteractionInfoCache* objectInteractionInfoCache,
+                        PuzzleComponent*            puzzleComponent,
+                        RequestGameComponent*       requestGameComponent,
+                        SevereNeedsComponent*       severeNeedsComponent,
+                        AIWhiteboard*               aiWhiteboard,
+                        WorkoutComponent*           workoutComponent);
+  virtual ~AIComponentComponents();
+  
   Robot& _robot;
+  EntityFullEnumeration<AIComponentID, ComponentWrapper, AIComponentID::Count> _components;
+
 };
 }
 
-  
-class AIComponent : private Util::noncopyable
+  // AIComponent is updated at the robot component level, same as BehaviorComponent
+  // Therefore BCComponents (which are managed by BehaviorComponent) can't declare dependencies on AIComponent 
+  // since when it's Init/Update relative to BehaviorComponent must be declared by BehaviorComponent explicitly, 
+  // not by individual components within BehaviorComponent
+class AIComponent :  public UnreliableComponent<BCComponentID>, 
+                     public IDependencyManagedComponent<RobotComponentID>,  
+                     private Util::noncopyable
 {
 public:
-  
   explicit AIComponent();
-  ~AIComponent();
+  virtual ~AIComponent();
+
+  //////
+  // IDependencyManagedComponent functions
+  //////
+  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override final{};
+  virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {};
+  virtual void UpdateDependent(const RobotCompMap& dependentComponents) override {};
+  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
+
+  // Prevent hiding function warnings by exposing the (valid) unreliable component methods
+  using UnreliableComponent<BCComponentID>::InitDependent;
+  using UnreliableComponent<BCComponentID>::GetInitDependencies;
+  using UnreliableComponent<BCComponentID>::UpdateDependent;
+  using UnreliableComponent<BCComponentID>::GetUpdateDependencies;
+  //////
+  // end IDependencyManagedComponent functions
+  //////
+
 
   ////////////////////////////////////////////////////////////////////////////////
   // Components
   ////////////////////////////////////////////////////////////////////////////////
+  template<typename T>
+  T& GetComponent(AIComponentID componentID) const {assert(_aiComponents); return _aiComponents->_components.GetComponent(componentID).GetValue<T>();}
 
 
-  inline const AIInformationAnalyzer& GetAIInformationAnalyzer() const {
-    assert(_aiInformationAnalyzer);
-    return *_aiInformationAnalyzer;
-  }
-  inline AIInformationAnalyzer& GetAIInformationAnalyzer() {
-    assert(_aiInformationAnalyzer);
-    return *_aiInformationAnalyzer;
-  }
+  inline const AIInformationAnalyzer& GetAIInformationAnalyzer() const { return GetComponent<AIInformationAnalyzer>(AIComponentID::InformationAnalyzer);}
+  inline AIInformationAnalyzer& GetAIInformationAnalyzer() { return GetComponent<AIInformationAnalyzer>(AIComponentID::InformationAnalyzer);}
   
   
-  inline const BehaviorComponent& GetBehaviorComponent() const { assert(_behaviorComponent); return *_behaviorComponent; }
-  inline BehaviorComponent&       GetBehaviorComponent()       { assert(_behaviorComponent); return *_behaviorComponent; }
+  inline const BehaviorComponent& GetBehaviorComponent() const {  return GetComponent<BehaviorComponent>(AIComponentID::BehaviorComponent); }
+  inline BehaviorComponent&       GetBehaviorComponent()       {  return GetComponent<BehaviorComponent>(AIComponentID::BehaviorComponent); }
   
   // Support legacy code until move helper comp into delegate component
   const BehaviorHelperComponent& GetBehaviorHelperComponent() const;
@@ -78,28 +119,33 @@ public:
   // For test only
   BehaviorContainer& GetBehaviorContainer();
   
-  inline ObjectInteractionInfoCache& GetObjectInteractionInfoCache() const { assert(_objectInteractionInfoCache); return *_objectInteractionInfoCache; }
-  inline ObjectInteractionInfoCache& GetObjectInteractionInfoCache()       { assert(_objectInteractionInfoCache); return *_objectInteractionInfoCache; }
+  inline ObjectInteractionInfoCache& GetObjectInteractionInfoCache() const {  return GetComponent<ObjectInteractionInfoCache>(AIComponentID::ObjectInteractionInfoCache); }
+  inline ObjectInteractionInfoCache& GetObjectInteractionInfoCache()       {  return GetComponent<ObjectInteractionInfoCache>(AIComponentID::ObjectInteractionInfoCache); }
   
-  inline const AIWhiteboard& GetWhiteboard() const { assert(_whiteboard); return *_whiteboard; }
-  inline AIWhiteboard& GetNonConstWhiteboard() const { assert(_whiteboard); return *_whiteboard; }
-  inline AIWhiteboard&       GetWhiteboard()       { assert(_whiteboard); return *_whiteboard; }
+  inline const AIWhiteboard& GetWhiteboard()   const {  return GetComponent<AIWhiteboard>(AIComponentID::Whiteboard); }
+  inline AIWhiteboard& GetNonConstWhiteboard() const {  return GetComponent<AIWhiteboard>(AIComponentID::Whiteboard); }
+  inline AIWhiteboard&       GetWhiteboard()         {  return GetComponent<AIWhiteboard>(AIComponentID::Whiteboard); }
   
-  inline const WorkoutComponent& GetWorkoutComponent() const { assert(_workoutComponent); return *_workoutComponent; }
-  inline WorkoutComponent&       GetWorkoutComponent()       { assert(_workoutComponent); return *_workoutComponent; }
-  
-  inline RequestGameComponent& GetRequestGameComponent()  { assert(_requestGameComponent); return *_requestGameComponent;}
-  inline RequestGameComponent& GetNonConstRequestGameComponent() const { assert(_requestGameComponent); return *_requestGameComponent;}
+  inline const PuzzleComponent& GetPuzzleComponent() const { return GetComponent<PuzzleComponent>(AIComponentID::Puzzle);}
+  inline PuzzleComponent&       GetPuzzleComponent()       { return GetComponent<PuzzleComponent>(AIComponentID::Puzzle);}
 
-  inline FeedingSoundEffectManager& GetFeedingSoundEffectManager() { assert(_feedingSoundEffectManager); return  *_feedingSoundEffectManager; };
-  
-  inline DoATrickSelector& GetDoATrickSelector()  { assert(_doATrickSelector); return *_doATrickSelector; }
+  inline const FaceSelectionComponent& GetFaceSelectionComponent() const {return GetComponent<FaceSelectionComponent>(AIComponentID::FaceSelection);}
 
-  inline FreeplayDataTracker& GetFreeplayDataTracker()  { assert(_freeplayDataTracker); return *_freeplayDataTracker; }  
+  inline const WorkoutComponent& GetWorkoutComponent() const {  return GetComponent<WorkoutComponent>(AIComponentID::Workout); }
+  inline WorkoutComponent&       GetWorkoutComponent()       {  return GetComponent<WorkoutComponent>(AIComponentID::Workout); }
   
-  inline const SevereNeedsComponent& GetSevereNeedsComponent() const  { assert(_severeNeedsComponent); return *_severeNeedsComponent; }
-  inline SevereNeedsComponent& GetSevereNeedsComponent()  { assert(_severeNeedsComponent); return *_severeNeedsComponent; }
-  inline SevereNeedsComponent& GetNonConstSevereNeedsComponent() const { assert(_severeNeedsComponent); return *_severeNeedsComponent; }
+  inline RequestGameComponent& GetRequestGameComponent()               {  return GetComponent<RequestGameComponent>(AIComponentID::RequestGame);}
+  inline RequestGameComponent& GetNonConstRequestGameComponent() const {  return GetComponent<RequestGameComponent>(AIComponentID::RequestGame);}
+
+  inline FeedingSoundEffectManager& GetFeedingSoundEffectManager() {  return GetComponent<FeedingSoundEffectManager>(AIComponentID::FeedingSoundEffect); };
+  
+  inline DoATrickSelector& GetDoATrickSelector()  {  return GetComponent<DoATrickSelector>(AIComponentID::DoATrick); }
+
+  inline FreeplayDataTracker& GetFreeplayDataTracker()  {  return GetComponent<FreeplayDataTracker>(AIComponentID::FreeplayDataTracker); }  
+  
+  inline const SevereNeedsComponent& GetSevereNeedsComponent() const   {  return GetComponent<SevereNeedsComponent>(AIComponentID::SevereNeeds); }
+  inline SevereNeedsComponent& GetSevereNeedsComponent()               {  return GetComponent<SevereNeedsComponent>(AIComponentID::SevereNeeds); }
+  inline SevereNeedsComponent& GetNonConstSevereNeedsComponent() const {  return GetComponent<SevereNeedsComponent>(AIComponentID::SevereNeeds); }
 
   
   ////////////////////////////////////////////////////////////////////////////////
@@ -109,7 +155,7 @@ public:
   // Pass in behavior component if you have a custom component already set up
   // If nullptr is passed in AIComponent will generate a default behavior component
   // AIComponent takes over contrrol of the customBehaviorComponent's memory
-  Result Init(Robot& robot, BehaviorComponent*& customBehaviorComponent);
+  Result Init(Robot* robot, BehaviorComponent*& customBehaviorComponent);
   Result Update(Robot& robot, std::string& currentActivityName,
                               std::string& behaviorDebugStr);
 
@@ -129,37 +175,6 @@ public:
 private:
   std::unique_ptr<ComponentWrappers::AIComponentComponents> _aiComponents;
   bool   _suddenObstacleDetected;
-  
-  // module to analyze information for the AI in processes common to more than one behavior, for example
-  // border calculation
-  std::unique_ptr<AIInformationAnalyzer>   _aiInformationAnalyzer;
-  
-  // component hwich manages all aspects of the AI system that relate to behaviors
-  std::unique_ptr<BehaviorComponent> _behaviorComponent;
-  
-  // Component which tracks and caches the best objects to use for certain interactions
-  std::unique_ptr<ObjectInteractionInfoCache> _objectInteractionInfoCache;
-  
-  // whiteboard for behaviors to share information, or to store information only useful to behaviors
-  std::unique_ptr<AIWhiteboard>            _whiteboard;
-  
-  // component for tracking cozmo's work-out behaviors
-  std::unique_ptr< WorkoutComponent >      _workoutComponent;
-  
-  // component for keeping track of what game cozmo should request next
-  std::unique_ptr<RequestGameComponent> _requestGameComponent;
-  
-  // component which behaviors can delegate to for selecting a random Trick / Spark
-  std::unique_ptr<DoATrickSelector>    _doATrickSelector;
-
-  // Coordinates sound effect events across various feeding cubes/activities etc
-  std::unique_ptr<FeedingSoundEffectManager> _feedingSoundEffectManager;
-  
-  // component for tracking freeplay DAS data
-  std::unique_ptr<FreeplayDataTracker> _freeplayDataTracker;
-  
-  // component for tracking severe needs states
-  std::unique_ptr<SevereNeedsComponent> _severeNeedsComponent;
   
   void CheckForSuddenObstacle(Robot& robot);
 };

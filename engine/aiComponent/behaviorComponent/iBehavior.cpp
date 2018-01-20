@@ -11,7 +11,7 @@
 *
 **/
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
@@ -48,7 +48,8 @@ void IBehavior::Init(BehaviorExternalInterface& behaviorExternalInterface)
   AssertActivationState_DevOnly(ActivationState::NotInitialized);
   SetActivationState_DevOnly(ActivationState::OutOfScope);
   
-  InitInternal(behaviorExternalInterface);
+  _beiWrapper = std::make_unique<BEIWrapper>(behaviorExternalInterface);
+  InitInternal();
 }
 
 
@@ -77,7 +78,7 @@ void IBehavior::OnEnteredActivatableScope()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBehavior::Update(BehaviorExternalInterface& behaviorExternalInterface)
+void IBehavior::Update()
 {
   AssertNotActivationState_DevOnly(ActivationState::NotInitialized);
   AssertNotActivationState_DevOnly(ActivationState::OutOfScope);
@@ -92,21 +93,22 @@ void IBehavior::Update(BehaviorExternalInterface& behaviorExternalInterface)
                 _lastTickOfUpdate);
   _lastTickOfUpdate = tickCount;
   
-  UpdateInternal(behaviorExternalInterface);
+  UpdateInternal();
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IBehavior::WantsToBeActivated(BehaviorExternalInterface& behaviorExternalInterface) const
+bool IBehavior::WantsToBeActivated() const
 {
   AssertActivationState_DevOnly(ActivationState::InScope);
   _lastTickWantsToBeActivatedCheckedOn = BaseStationTimer::getInstance()->GetTickCount();
-  return WantsToBeActivatedInternal(behaviorExternalInterface);
+  auto accessGuard = GetBEI().GetComponentWrapper(BEIComponentID::Delegation).StripComponent();
+  return WantsToBeActivatedInternal();
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBehavior::OnActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void IBehavior::OnActivated()
 {
   AssertActivationState_DevOnly(ActivationState::InScope);
 
@@ -119,17 +121,17 @@ void IBehavior::OnActivated(BehaviorExternalInterface& behaviorExternalInterface
                   _lastTickWantsToBeActivatedCheckedOn);
   
   SetActivationState_DevOnly(ActivationState::Activated);
-  OnActivatedInternal(behaviorExternalInterface);
+  OnActivatedInternal();
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBehavior::OnDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void IBehavior::OnDeactivated()
 {
   AssertActivationState_DevOnly(ActivationState::Activated);
   
   SetActivationState_DevOnly(ActivationState::InScope);
-  OnDeactivatedInternal(behaviorExternalInterface);
+  OnDeactivatedInternal();
 }
 
 
@@ -162,11 +164,11 @@ void IBehavior::OnLeftActivatableScope()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IBehavior::SetActivationState_DevOnly(ActivationState state)
 {
-  PRINT_CH_INFO("Behaviors",
-                "IBehavior.SetActivationState",
-                "%s: Activation state set to %s",
-                _idString.c_str(),
-                ActivationStateToString(state).c_str());
+  PRINT_CH_DEBUG("Behaviors",
+                 "IBehavior.SetActivationState",
+                 "%s: Activation state set to %s",
+                 _idString.c_str(),
+                 ActivationStateToString(state).c_str());
   
   #if ANKI_DEV_CHEATS
     _currentActivationState = state;

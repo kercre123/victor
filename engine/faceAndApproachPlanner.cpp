@@ -12,11 +12,11 @@
  **/
 
 
-#include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/math/pose.h"
+#include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/engine/math/pose.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
-#include "anki/planning/shared/path.h"
+#include "coretech/planning/shared/path.h"
 #include "faceAndApproachPlanner.h"
 #include "util/logging/logging.h"
 

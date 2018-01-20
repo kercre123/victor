@@ -119,7 +119,8 @@ namespace Cozmo.Needs.UI {
 
       if (DebugMenuManager.Instance.DemoMode) {
         _DemoSetNeedsLevelButton.onClick.AddListener(HandleDemoSetNeedsLevelButton);
-        NeedsStateManager.Instance.OnNeedsLevelChanged += HandleOnFirstNeedsUpdate;
+        // Reset needs to full whenever the user returns to the HubView
+        DemoSetNeedsLevels(1.0f, 1.0f, 1.0f);
       }
       else {
         _DemoSetNeedsLevelButton.gameObject.SetActive(false);
@@ -238,7 +239,7 @@ namespace Cozmo.Needs.UI {
       }
     }
 
-    private void PopLatestBracketAndUpdateButtons() {
+    public void PopLatestBracketAndUpdateButtons() {
       // Wait until Needs meter animates up for first time
       if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.NurtureIntro)) {
         return;
@@ -301,13 +302,6 @@ namespace Cozmo.Needs.UI {
       PopLatestBracketAndUpdateButtons();
     }
 
-    // Catch and "override" the first needs update
-    private void HandleOnFirstNeedsUpdate(NeedsActionId actionId) {
-      NeedsStateManager.Instance.OnNeedsLevelChanged -= HandleOnFirstNeedsUpdate;
-      // Set levels to defaults for demo mode
-      DemoSetNeedsLevels(1.0f, 1.0f, 1.0f);
-    }
-
     #region Onboarding
     public CozmoImage OnboardingBlockoutImage;
     public CozmoImage NavBackgroundImage;
@@ -340,14 +334,17 @@ namespace Cozmo.Needs.UI {
       OnboardingManager.Instance.OnOnboardingAnimEvent.Invoke(param);
     }
     public void OnboardingSkipped() {
+      // The first phase on onboarding causes the needshub to be inactive, so it didn't start the opening logic.
+      HandleDialogFinishedOpenAnimation();
 
       // They've completed everything really.
+      const bool kCompleted = true;
+      const bool kSkipped = true;
       RobotEngineManager.Instance.Message.RegisterOnboardingComplete =
                  new Anki.Cozmo.ExternalInterface.RegisterOnboardingComplete(
-                      System.Enum.GetNames(typeof(OnboardingManager.OnboardingPhases)).Length - 1, true);
+                      System.Enum.GetNames(typeof(OnboardingManager.OnboardingPhases)).Length - 1,
+                            kCompleted, kSkipped);
       RobotEngineManager.Instance.SendMessage();
-
-      PopLatestBracketAndUpdateButtons();
       if (_MetersWidget != null) {
         _MetersWidget.OnboardingSkipped();
       }

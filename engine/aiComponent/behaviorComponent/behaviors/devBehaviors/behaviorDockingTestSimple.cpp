@@ -21,8 +21,8 @@
  * Copyright: Anki, Inc. 2016
  **/
 
-#include "anki/common/basestation/utils/data/dataPlatform.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/dockActions.h"
 #include "engine/actions/driveToActions.h"
@@ -128,12 +128,12 @@ namespace Anki {
 
     }
     
-    void BehaviorDockingTestSimple::InitBehavior(BehaviorExternalInterface& behaviorExternalInterface)
+    void BehaviorDockingTestSimple::InitBehavior()
     {
       _logger = std::make_unique<Util::RollingFileLogger>(nullptr, 
-           behaviorExternalInterface.GetRobotInfo()._robot.GetContextDataPlatform()->pathToResource(Util::Data::Scope::Cache, "dockingTest"));
+           GetBEI().GetRobotInfo()._robot.GetContextDataPlatform()->pathToResource(Util::Data::Scope::Cache, "dockingTest"));
 
-      const Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
+      const Robot& robot = GetBEI().GetRobotInfo()._robot;
       if(nullptr != robot.GetContext()->GetRobotManager() &&
          robot.GetContext()->GetRobotManager()->GetMsgHandler() != nullptr)
       {
@@ -144,14 +144,14 @@ namespace Anki {
     }
 
     
-    bool BehaviorDockingTestSimple::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+    bool BehaviorDockingTestSimple::WantsToBeActivatedBehavior() const
     {
       return _currentState == State::Init;
     }
     
-    Result BehaviorDockingTestSimple::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+    void BehaviorDockingTestSimple::OnBehaviorActivated()
     {
-      Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
+      Robot& robot = GetBEI().GetRobotInfo()._robot;
       _cubePlacementPose = Pose3d(Radians(DEG_TO_RAD(0)), Z_AXIS_3D(), {176, 0, 22}, robot.GetWorldOrigin());
 
       // force the default speeds
@@ -204,14 +204,12 @@ namespace Anki {
         ss << "images_" << now->tm_mon+1 << "-" << now->tm_mday << "-" << now->tm_hour << "." << now->tm_min;
         _imageFolder = ss.str();
         robot.GetContext()->GetVizManager()->SendSaveImages(ImageSendMode::Stream, ss.str());
-      }
-      
-      return RESULT_OK;
+      }      
     }
     
-    ICozmoBehavior::Status BehaviorDockingTestSimple::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+    void BehaviorDockingTestSimple::BehaviorUpdate()
     {
-      Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
+      Robot& robot = GetBEI().GetRobotInfo()._robot;
       if(_numAttempts == kMaxNumAttempts && _currentState != State::ManualReset)
       {
         Write("\nTest Completed Successfully");
@@ -229,7 +227,7 @@ namespace Anki {
       
       if(IsControlDelegated())
       {
-        return Status::Running;
+        return;
       }
       
       DEV_ASSERT(robot.IsPoseInWorldOrigin(robot.GetPose()),
@@ -299,7 +297,8 @@ namespace Anki {
             if(nullptr == object)
             {
               EndAttempt(robot, ActionResult::ABORT, "PickupObjectIsNull", true);
-              return Status::Failure;
+              CancelSelf();
+              return;
             }
             
             _initialCubePose = object->GetPose();
@@ -372,7 +371,8 @@ namespace Anki {
             if(aObject == nullptr)
             {
               PRINT_NAMED_ERROR("BehaviorDockingTest.PickupLow.NullObject", "ActionableObject is null");
-              return Status::Failure;
+              CancelSelf();
+              return;
             }
             
             // Get the preAction poses corresponding with _initialVisionMarker
@@ -601,7 +601,8 @@ namespace Anki {
                                 "MaxYAwayFromPreDock_mm is too small %f <= %f need to be able to drive into obstacles",
                                 kMaxYAwayFromPreDock_mm,
                                 kNoObstaclesWithinXmmOfPreDockPose);
-              return Status::Failure;
+              CancelSelf();
+              return;
             }
             
             // Make sure y falls outside the no obstacle zone so we will always have to drive to a point
@@ -626,7 +627,8 @@ namespace Anki {
           if(aObject == nullptr)
           {
             PRINT_NAMED_ERROR("BehaviorDockingTest.Reset.NullObject", "ActionableObject is null");
-            return Status::Failure;
+            CancelSelf();
+            return;
           }
           
           std::vector<PreActionPose> preActionPoses;
@@ -658,7 +660,8 @@ namespace Anki {
                                   "Found %i preActionPoses for marker %s",
                                  (int)preActionPoses.size(),
                                  _markerBeingSeen.GetCodeName());
-                return Status::Failure;
+                CancelSelf();
+                return;
               }
             }
             else
@@ -667,7 +670,8 @@ namespace Anki {
                                 "Found %i preActionPoses for marker %s",
                                 (int)preActionPoses.size(),
                                 _initialVisionMarker.GetCodeName());
-              return Status::Failure;
+              CancelSelf();
+              return;
             }
           }
           
@@ -770,15 +774,15 @@ namespace Anki {
         default:
         {
           PRINT_NAMED_ERROR("BehaviorDockingTest.Update.UnknownState", "Reached unknown state %d", (u32)_currentState);
-          return Status::Failure;
+          CancelSelf();
+          return;
         }
       }
-      return Status::Running;
     }
     
-    void BehaviorDockingTestSimple::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+    void BehaviorDockingTestSimple::OnBehaviorDeactivated()
     {
-      Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
+      Robot& robot = GetBEI().GetRobotInfo()._robot;
 
       // Cancel all actions
       for (const auto& tag : _actionCallbackMap) {
@@ -861,9 +865,9 @@ namespace Anki {
       SetDebugStateName(name);
     }
     
-    void BehaviorDockingTestSimple::HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+    void BehaviorDockingTestSimple::HandleWhileActivated(const EngineToGameEvent& event)
     {
-      Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
+      Robot& robot = GetBEI().GetRobotInfo()._robot;
       switch(event.GetData().GetTag())
       {
         case EngineToGameTag::RobotCompletedAction:

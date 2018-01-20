@@ -15,7 +15,7 @@
 #define __Anki_Cozmo_RawPixelsClassifier_H__
 
 
-#include "basestation/jsonTools.h"
+#include "coretech/common/engine/jsonTools.h"
 #include "engine/vision/overheadMap.h"
 
 #include <opencv2/core.hpp>

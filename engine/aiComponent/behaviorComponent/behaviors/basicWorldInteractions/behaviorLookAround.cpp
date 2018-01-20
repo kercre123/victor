@@ -13,12 +13,12 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorLookAround.h"
 
-#include "anki/common/basestation/utils/timer.h"
-#include "anki/common/shared/radians.h"
+#include "coretech/common/engine/utils/timer.h"
+#include "coretech/common/shared/radians.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/driveToActions.h"
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/blockWorld/blockWorld.h"
@@ -33,7 +33,7 @@
 
 #if SAFE_ZONE_VIZ
 #include "engine/viz/vizManager.h"
-#include "anki/common/basestation/math/polygon_impl.h"
+#include "coretech/common/engine/math/polygon_impl.h"
 #endif
 
 #define SET_STATE(s) SetState_internal(s, #s)
@@ -70,31 +70,29 @@ BehaviorLookAround::~BehaviorLookAround()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorLookAround::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorLookAround::WantsToBeActivatedBehavior() const
 {
   return true;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorLookAround::HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorLookAround::HandleWhileActivated(const EngineToGameEvent& event)
 {
   switch(event.GetData().GetTag())
   {
     case EngineToGameTag::RobotObservedObject:
       HandleObjectObserved(event.GetData().Get_RobotObservedObject(),
-                           true,
-                           behaviorExternalInterface);
+                           true);
       break;
 
     case EngineToGameTag::RobotObservedPossibleObject:
       HandleObjectObserved(event.GetData().Get_RobotObservedPossibleObject().possibleObject,
-                           false,
-                           behaviorExternalInterface);
+                           false);
       break;
             
     case EngineToGameTag::RobotOffTreadsStateChanged:
-      HandleRobotOfftreadsStateChanged(event, behaviorExternalInterface);
+      HandleRobotOfftreadsStateChanged(event);
       break;
 
     case EngineToGameTag::CliffEvent:
@@ -111,7 +109,7 @@ void BehaviorLookAround::HandleWhileActivated(const EngineToGameEvent& event, Be
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorLookAround::AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorLookAround::AlwaysHandleInScope(const EngineToGameEvent& event)
 {
   switch(event.GetData().GetTag())
   {
@@ -124,7 +122,7 @@ void BehaviorLookAround::AlwaysHandle(const EngineToGameEvent& event, BehaviorEx
     case EngineToGameTag::CliffEvent:
       // always handle cliff events. Most of the time we'll reset the safe region anyway, but if we get
       // resumed we won't
-      HandleCliffEvent(event, behaviorExternalInterface);
+      HandleCliffEvent(event);
       break;
 
     default:
@@ -138,17 +136,17 @@ void BehaviorLookAround::AlwaysHandle(const EngineToGameEvent& event, BehaviorEx
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorLookAround::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorLookAround::OnBehaviorActivated()
 {
   // Update explorable area center to current robot pose
-  ResetSafeRegion(behaviorExternalInterface);
+  ResetSafeRegion();
   
-  return Result::RESULT_OK;
+  
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorLookAround::TransitionToWaitForOtherActions(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorLookAround::TransitionToWaitForOtherActions()
 {
   // Special state so that we can wait for other actions (from other behaviors) to complete before we do anything
   SET_STATE(State::WaitForOtherActions);
@@ -156,14 +154,14 @@ void BehaviorLookAround::TransitionToWaitForOtherActions(BehaviorExternalInterfa
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorLookAround::TransitionToInactive(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorLookAround::TransitionToInactive()
 {
   SET_STATE(State::Inactive);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorLookAround::TransitionToRoaming(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorLookAround::TransitionToRoaming()
 {
   // Check for a collision-free pose
   Pose3d destPose;
@@ -171,12 +169,12 @@ void BehaviorLookAround::TransitionToRoaming(BehaviorExternalInterface& behavior
   for (int i = MAX_NUM_CONSIDERED_DEST_POSES; i > 0; --i) {
     destPose = GetDestinationPose(_currentDestination);
     
-    auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+    auto& robotInfo = GetBEI().GetRobotInfo();
     // Get robot bounding box at destPose
     Quad2f robotQuad = robotInfo.GetBoundingQuadXY(destPose);
     
     std::vector<ObservableObject*> existingObjects;
-    behaviorExternalInterface.GetBlockWorld().FindLocatedIntersectingObjects(robotQuad, existingObjects, 10);
+    GetBEI().GetBlockWorld().FindLocatedIntersectingObjects(robotQuad, existingObjects, 10);
     
     if (existingObjects.empty()) {
       break;
@@ -190,7 +188,7 @@ void BehaviorLookAround::TransitionToRoaming(BehaviorExternalInterface& behavior
       // Try another destination
       _currentDestination = GetNextDestination(_currentDestination);
       if (_numDestinationsLeft == 0) {
-        TransitionToInactive(behaviorExternalInterface);
+        TransitionToInactive();
         return;
       }
     }
@@ -207,27 +205,27 @@ void BehaviorLookAround::TransitionToRoaming(BehaviorExternalInterface& behavior
       new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK) });
 
   DelegateIfInControl(new CompoundActionSequential({setHeadAndLiftAction, goToPoseAction}),
-              [this, &behaviorExternalInterface](ActionResult result) {
+              [this](ActionResult result) {
                 const ActionResultCategory resCat = IActionRunner::GetActionResultCategory(result);
                 if( resCat == ActionResultCategory::SUCCESS || resCat == ActionResultCategory::RETRY ) {
                   _currentDestination = GetNextDestination(_currentDestination);
                 }
                 if (_numDestinationsLeft == 0) {
-                  TransitionToInactive(behaviorExternalInterface);
+                  TransitionToInactive();
                 }
                 else {
-                  TransitionToRoaming(behaviorExternalInterface);
+                  TransitionToRoaming();
                 }
               });
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorLookAround::TransitionToLookingAtPossibleObject(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorLookAround::TransitionToLookingAtPossibleObject()
 {
   SET_STATE(State::LookingAtPossibleObject);
 
-  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  auto& robotInfo = GetBEI().GetRobotInfo();
   CompoundActionSequential* action = new CompoundActionSequential();
   action->AddAction(new TurnTowardsPoseAction(_lastPossibleObjectPose));
 
@@ -267,27 +265,27 @@ void BehaviorLookAround::TransitionToLookingAtPossibleObject(BehaviorExternalInt
   // Note that in the positive case, this drive to action is likely to get canceled
   // because we discover it is a real object
   DelegateIfInControl(action,
-              [this,&behaviorExternalInterface](ActionResult result) {
+              [this](ActionResult result) {
                 if( IActionRunner::GetActionResultCategory(result) != ActionResultCategory::CANCELLED ) {
                   // we finished without observing an object, so go back to roaming
-                  TransitionToRoaming(behaviorExternalInterface);
+                  TransitionToRoaming();
                 }
               });
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorLookAround::TransitionToExaminingFoundObject(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorLookAround::TransitionToExaminingFoundObject()
 {
   if( _recentObjects.empty() ) {
-    TransitionToRoaming(behaviorExternalInterface);
+    TransitionToRoaming();
     return;
   }
 
   SET_STATE(State::ExaminingFoundObject);
   
-  if(behaviorExternalInterface.HasMoodManager()){
-    auto& moodManager = behaviorExternalInterface.GetMoodManager();
+  if(GetBEI().HasMoodManager()){
+    auto& moodManager = GetBEI().GetMoodManager();
     moodManager.TriggerEmotionEvent("FoundObservedObject",
                                     MoodManager::GetCurrentTimeInSeconds());
   }
@@ -300,7 +298,7 @@ void BehaviorLookAround::TransitionToExaminingFoundObject(BehaviorExternalInterf
   DelegateIfInControl(new CompoundActionSequential({
                   new TurnTowardsObjectAction(recentObjectID),
                   new TriggerLiftSafeAnimationAction(AnimationTrigger::BlockReact) }),
-               [this, &behaviorExternalInterface, recentObjectID](ActionResult result) {
+               [this, recentObjectID](ActionResult result) {
                  if( result == ActionResult::SUCCESS ) {
                    PRINT_NAMED_DEBUG("BehaviorLookAround.Objects",
                                      "Done examining object %d, adding to boring list",
@@ -310,37 +308,39 @@ void BehaviorLookAround::TransitionToExaminingFoundObject(BehaviorExternalInterf
                  }
 
                  if( IActionRunner::GetActionResultCategory(result) != ActionResultCategory::CANCELLED ) {
-                   TransitionToRoaming(behaviorExternalInterface);
+                   TransitionToRoaming();
                  }
              });
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorLookAround::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorLookAround::BehaviorUpdate()
 {
+  if(!IsActivated()){
+    return;
+  }
 #if SAFE_ZONE_VIZ
-  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  const auto& robotInfo = GetBEI().GetRobotInfo();
   Point2f center = { _moveAreaCenter.GetTranslation().x(), _moveAreaCenter.GetTranslation().y() };
   robotInfo.GetContext()->GetVizManager()->DrawXYCircle(robotInfo.GetID(), ::Anki::NamedColors::GREEN, center, _safeRadius);
 #endif
 
   if( IsControlDelegated() ) {
-    return Status::Running;
+    return;
   }
   
   if( _currentState == State::WaitForOtherActions ) {
     if( !IsControlDelegated() ) {
-      TransitionToRoaming(behaviorExternalInterface);
+      TransitionToRoaming();
     }
-    return Status::Running;
+    return;
   }
   
 #if SAFE_ZONE_VIZ
   robotInfo.GetContext()->GetVizManager()->EraseCircle(robotInfo.GetID());
 #endif
-  
-  return Status::Complete;
+  CancelSelf();
 }
 
 
@@ -408,14 +408,14 @@ Pose3d BehaviorLookAround::GetDestinationPose(BehaviorLookAround::Destination de
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorLookAround::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorLookAround::OnBehaviorDeactivated()
 {
-  ResetBehavior(behaviorExternalInterface);
+  ResetBehavior();
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorLookAround::ResetBehavior(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorLookAround::ResetBehavior()
 {
   // Reset our number of destinations for next time we run this behavior
   _numDestinationsLeft = kDestinationsToReach;
@@ -428,7 +428,7 @@ void BehaviorLookAround::ResetBehavior(BehaviorExternalInterface& behaviorExtern
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorLookAround::HandleObjectObserved(const RobotObservedObject& msg, bool confirmed, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorLookAround::HandleObjectObserved(const RobotObservedObject& msg, bool confirmed)
 {
   assert(IsActivated());
 
@@ -445,14 +445,14 @@ void BehaviorLookAround::HandleObjectObserved(const RobotObservedObject& msg, bo
   if (familyList.count(msg.objectFamily) > 0) {
     if( ! confirmed ) {
       if( _currentState != State::LookingAtPossibleObject && _currentState != State::ExaminingFoundObject ) {
-        const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+        const auto& robotInfo = GetBEI().GetRobotInfo();
         _lastPossibleObjectPose = Pose3d{0, Z_AXIS_3D(),
                                          {msg.pose.x, msg.pose.y, msg.pose.z},
                                          robotInfo.GetWorldOrigin()};
         PRINT_NAMED_DEBUG("BehaviorLookAround.HandleObjectObserved.LookingAtPossibleObject",
                           "stopping to look at possible object");
         CancelDelegates(false);
-        TransitionToLookingAtPossibleObject(behaviorExternalInterface);
+        TransitionToLookingAtPossibleObject();
       }
     }
     else if( 0 == _oldBoringObjects.count(msg.objectID) && _currentState != State::ExaminingFoundObject) {
@@ -464,10 +464,10 @@ void BehaviorLookAround::HandleObjectObserved(const RobotObservedObject& msg, bo
       _recentObjects.insert(msg.objectID);
 
       CancelDelegates(false);
-      TransitionToExaminingFoundObject(behaviorExternalInterface);
+      TransitionToExaminingFoundObject();
     }
 
-    const ObservableObject* object = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(msg.objectID);
+    const ObservableObject* object = GetBEI().GetBlockWorld().GetLocatedObjectByID(msg.objectID);
     if (nullptr != object)
     {
       UpdateSafeRegionForCube(object->GetPose().GetTranslation());
@@ -662,26 +662,26 @@ BehaviorLookAround::Destination BehaviorLookAround::GetNextDestination(BehaviorL
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorLookAround::HandleRobotOfftreadsStateChanged(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorLookAround::HandleRobotOfftreadsStateChanged(const EngineToGameEvent& event)
 {
-  ResetSafeRegion(behaviorExternalInterface);
+  ResetSafeRegion();
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorLookAround::HandleCliffEvent(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorLookAround::HandleCliffEvent(const EngineToGameEvent& event)
 {
   if( event.GetData().Get_CliffEvent().detectedFlags != 0 ) {
     // consider this location an obstacle
-    UpdateSafeRegionForCliff(behaviorExternalInterface.GetRobotInfo().GetPose());
+    UpdateSafeRegionForCliff(GetBEI().GetRobotInfo().GetPose());
   }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorLookAround::ResetSafeRegion(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorLookAround::ResetSafeRegion()
 {
-  _moveAreaCenter = behaviorExternalInterface.GetRobotInfo().GetPose();
+  _moveAreaCenter = GetBEI().GetRobotInfo().GetPose();
   _safeRadius = kDefaultSafeRadius;
   PRINT_NAMED_DEBUG("BehaviorLookAround.ResetSafeRegion", "safe region reset");
 }

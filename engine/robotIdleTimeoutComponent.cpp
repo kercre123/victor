@@ -12,7 +12,7 @@
 *
 */
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/compoundActions.h"
@@ -25,12 +25,18 @@
 namespace Anki {
 namespace Cozmo {
 
-RobotIdleTimeoutComponent::RobotIdleTimeoutComponent(Robot& robot)
-: _robot(robot)
+RobotIdleTimeoutComponent::RobotIdleTimeoutComponent()
+: IDependencyManagedComponent(RobotComponentID::RobotIdleTimeout)
 {
-  if (robot.HasExternalInterface())
+
+}
+
+void RobotIdleTimeoutComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+{
+  _robot = robot;
+  if (_robot->HasExternalInterface())
   {
-    IExternalInterface* externalInterface = robot.GetExternalInterface();
+    IExternalInterface* externalInterface = _robot->GetExternalInterface();
     using namespace ExternalInterface;
     auto helper = MakeAnkiEventUtil(*externalInterface, *this, GetSignalHandles());
     
@@ -39,13 +45,14 @@ RobotIdleTimeoutComponent::RobotIdleTimeoutComponent(Robot& robot)
   }
 }
 
+
 void RobotIdleTimeoutComponent::Update(float currentTime_s)
 {
   // If it's time to do sleep and face off
   if(_faceOffTimeout_s > 0.0f && _faceOffTimeout_s <= currentTime_s)
   {
     _faceOffTimeout_s = 0.0f;
-    _robot.GetActionList().QueueAction(QueueActionPosition::NOW,
+    _robot->GetActionList().QueueAction(QueueActionPosition::NOW,
                                        CreateGoToSleepAnimSequence());
   }
   
@@ -53,7 +60,7 @@ void RobotIdleTimeoutComponent::Update(float currentTime_s)
   if(_disconnectTimeout_s > 0.0f && _disconnectTimeout_s <= currentTime_s)
   {
     _disconnectTimeout_s = 0.0f;
-    _robot.GetRobotMessageHandler()->Disconnect();
+    _robot->GetRobotMessageHandler()->Disconnect();
   }
 }
   
@@ -74,7 +81,7 @@ void RobotIdleTimeoutComponent::HandleMessage(const ExternalInterface::StartIdle
 {
   const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   // We need to have received our first state message from the robot (indicating successful communication) to send animations
-  if (_robot.HasReceivedFirstStateMessage() && ShouldUpdateTimeoutHelper(currentTime, _faceOffTimeout_s, msg.faceOffTime_s))
+  if (_robot->HasReceivedFirstStateMessage() && ShouldUpdateTimeoutHelper(currentTime, _faceOffTimeout_s, msg.faceOffTime_s))
   {
     _faceOffTimeout_s = currentTime + msg.faceOffTime_s;
   }

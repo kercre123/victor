@@ -21,41 +21,44 @@
 namespace Anki {
 namespace Cozmo {
   
-class IStateConceptStrategy;
+class IBEICondition;
   
 class BehaviorDevPettingTestSimple : public ICozmoBehavior
 {
 public:
   
   virtual ~BehaviorDevPettingTestSimple() { }
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual bool CarryingObjectHandledInternally() const override { return false; }
+  virtual bool WantsToBeActivatedBehavior() const override;
   
 protected:
   
   friend class BehaviorContainer;
   BehaviorDevPettingTestSimple(const Json::Value& config);
   
-  void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) override;
-  
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.behaviorAlwaysDelegates = false;
+  }
 
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  void InitBehavior() override;
   
-  virtual BehaviorStatus UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated() override;
+
+  virtual void OnBehaviorDeactivated() override;
   
+  virtual void BehaviorUpdate() override;
+
 private:
   
   // helper struct to organize the mapping between
   // touch-gesture and the animation metadata
   struct TouchGestureAnimationConfig
   {
-    IStateConceptStrategyPtr strategy;
+    IBEIConditionPtr strategy;
     std::string animationName;
     float animationRate_s;
     float timeLastPlayed_s;
     
-    TouchGestureAnimationConfig(IStateConceptStrategy* sp,
+    TouchGestureAnimationConfig(IBEIConditionPtr sp,
                                 std::string animationName,
                                 float animationRate_s,
                                 float timeLastPlayed_s)
@@ -68,7 +71,6 @@ private:
     
   };
   
-  Json::Value _configArray;
   std::vector<TouchGestureAnimationConfig> _tgAnimConfigs;
 };
 

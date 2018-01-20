@@ -11,12 +11,12 @@
  **/
 
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorDrivePath.h"
-#include "anki/common/basestation/math/pose.h"
+#include "coretech/common/engine/math/pose.h"
 #include "engine/actions/drivePathAction.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
-#include "anki/planning/shared/path.h"
-#include "anki/planning/basestation/pathHelper.h"
+#include "coretech/planning/shared/path.h"
+#include "coretech/planning/engine/pathHelper.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -30,25 +30,25 @@ BehaviorDrivePath::BehaviorDrivePath(const Json::Value& config)
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorDrivePath::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorDrivePath::WantsToBeActivatedBehavior() const
 {
   return true;
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorDrivePath::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDrivePath::OnBehaviorActivated()
 {
-  TransitionToFollowingPath(behaviorExternalInterface);
-  return Result::RESULT_OK;
+  TransitionToFollowingPath();
+  
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDrivePath::TransitionToFollowingPath(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDrivePath::TransitionToFollowingPath()
 {
   DEBUG_SET_STATE(FollowingPath);
-  SelectPath(behaviorExternalInterface.GetRobotInfo().GetPose(), _path);
+  SelectPath(GetBEI().GetRobotInfo().GetPose(), _path);
   
   IActionRunner* drivePath = new DrivePathAction(_path);
   //Perform action and then callback

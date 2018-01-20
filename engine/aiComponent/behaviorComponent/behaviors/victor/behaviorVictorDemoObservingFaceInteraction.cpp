@@ -40,9 +40,9 @@ BehaviorVictorDemoObservingFaceInteraction::BehaviorVictorDemoObservingFaceInter
 {
 }
 
-void BehaviorVictorDemoObservingFaceInteraction::InitBehavior(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorVictorDemoObservingFaceInteraction::InitBehavior()
 {
-  const auto& BC = behaviorExternalInterface.GetBehaviorContainer();
+  const auto& BC = GetBEI().GetBehaviorContainer();
 
   BC.FindBehaviorByIDAndDowncast(BEHAVIOR_ID(VictorDemoObservingFindFaces),
                                  BEHAVIOR_CLASS(FindFaces),
@@ -55,25 +55,24 @@ void BehaviorVictorDemoObservingFaceInteraction::GetAllDelegates(std::set<IBehav
   delegates.insert(_searchBehavior.get());
 }
 
-Result BehaviorVictorDemoObservingFaceInteraction::OnBehaviorActivated(
-  BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorVictorDemoObservingFaceInteraction::OnBehaviorActivated()
 {
   _faceIdsLookedAt.clear();
 
   // if we have any faces, stare at one. Otherwise, search
-  const auto& faceWorld = behaviorExternalInterface.GetFaceWorld();
+  const auto& faceWorld = GetBEI().GetFaceWorld();
 
-  if( faceWorld.HasAnyFaces( GetRecentFaceTime( behaviorExternalInterface ) ) ) {
-    TransitionToTurnTowardsAFace(behaviorExternalInterface);
+  if(faceWorld.HasAnyFaces(GetRecentFaceTime())) {
+    TransitionToTurnTowardsAFace();
   }
   else {
-    TransitionToFindFaces(behaviorExternalInterface);
+    TransitionToFindFaces();
   }
 
-  return Result::RESULT_OK;
+  
 }
 
-bool BehaviorVictorDemoObservingFaceInteraction::CanBeGentlyInterruptedNow(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorVictorDemoObservingFaceInteraction::CanBeGentlyInterruptedNow() const
 {
   switch (_state ) {
     case State::FindFaces: {
@@ -89,32 +88,30 @@ bool BehaviorVictorDemoObservingFaceInteraction::CanBeGentlyInterruptedNow(Behav
 }
 
 
-ICozmoBehavior::Status BehaviorVictorDemoObservingFaceInteraction::UpdateInternal_WhileRunning(
-  BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorVictorDemoObservingFaceInteraction::BehaviorUpdate()
 {
+  if(!IsActivated()){
+    return;
+  }
 
   if( _state == State::FindFaces ) {
     // check if we have found a new face during the search
     // TODO:(bn) make a HasFaceToStareAt function?
-    if( GetFaceToStareAt(behaviorExternalInterface).IsValid() ) {
+    if( GetFaceToStareAt().IsValid() ) {
       const bool allowCallback = false;
       CancelDelegates(allowCallback);
-      TransitionToTurnTowardsAFace(behaviorExternalInterface);
+      TransitionToTurnTowardsAFace();
     }
   }
-
-  return ICozmoBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
 
 
-void BehaviorVictorDemoObservingFaceInteraction::TransitionToFindFaces(
-  BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorVictorDemoObservingFaceInteraction::TransitionToFindFaces()
 {
   SET_STATE(FindFaces);
   
-  if( _searchBehavior->WantsToBeActivated(behaviorExternalInterface) ) {
-    DelegateIfInControl( behaviorExternalInterface,
-                         _searchBehavior.get() );
+  if( _searchBehavior->WantsToBeActivated() ) {
+    DelegateIfInControl(_searchBehavior.get());
   }
   else {
     PRINT_NAMED_WARNING("BehaviorVictorDemoObservingFaceInteraction.FindFaces.DoesntWantToActivate",
@@ -123,45 +120,41 @@ void BehaviorVictorDemoObservingFaceInteraction::TransitionToFindFaces(
   }
 }
 
-void BehaviorVictorDemoObservingFaceInteraction::TransitionToTurnTowardsAFace(
-  BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorVictorDemoObservingFaceInteraction::TransitionToTurnTowardsAFace()
 {
   SET_STATE(TurnTowardsFace);
   
-  const SmartFaceID face = GetFaceToStareAt(behaviorExternalInterface);
+  const SmartFaceID face = GetFaceToStareAt();
   if( face.IsValid() ) {
     
     TurnTowardsFaceAction* action = new TurnTowardsFaceAction(face);
 
-    DelegateIfInControl(action, [this, face](ActionResult res,
-                                             BehaviorExternalInterface& behaviorExternalInterface) {
+    DelegateIfInControl(action, [this, face](ActionResult res) {
         if( res == ActionResult::SUCCESS &&
             face.IsValid() ) {
           // turned towards a good face, let's stare at it for a bit
-          TransitionToStareAtFace(behaviorExternalInterface, face);
+          TransitionToStareAtFace(face);
         }
         else {
           // either action failed, or the face is gone now. In either case, try to find a new face
-          TransitionToTurnTowardsAFace(behaviorExternalInterface);
+          TransitionToTurnTowardsAFace();
         }
       });
           
   }
   else {
     // there's no face to look at, so search instead
-    TransitionToFindFaces(behaviorExternalInterface);
+    TransitionToFindFaces();
   }
 }
 
 
-void BehaviorVictorDemoObservingFaceInteraction::TransitionToStareAtFace(
-  BehaviorExternalInterface& behaviorExternalInterface,
-  SmartFaceID face)
+void BehaviorVictorDemoObservingFaceInteraction::TransitionToStareAtFace(SmartFaceID face)
 {
   SET_STATE(StareAtFace);
   
   if( face.IsValid() &&
-      ShouldStareAtFace(behaviorExternalInterface, face) ) {
+      ShouldStareAtFace(face) ) {
     // if the face is still valid and one we want to look at, go ahead and stare for a bit
     
     PRINT_CH_INFO("Behaviors", "BehaviorVictorDemoObservingFaceInteraction.StareAtFace",
@@ -188,22 +181,21 @@ void BehaviorVictorDemoObservingFaceInteraction::TransitionToStareAtFace(
                   face.GetDebugStr().c_str());
     
     // otherwise, pick another face to look at (or fall back to searching)
-    TransitionToTurnTowardsAFace(behaviorExternalInterface);
+    TransitionToTurnTowardsAFace();
   }
 }
 
-SmartFaceID BehaviorVictorDemoObservingFaceInteraction::GetFaceToStareAt(
-  BehaviorExternalInterface& behaviorExternalInterface)
+SmartFaceID BehaviorVictorDemoObservingFaceInteraction::GetFaceToStareAt()
 {
   // NOTE: because face ids can start out different and then become equal, _faceIdsLookedAt may have multiple
   // entries that are now equal
 
-  const auto& faceWorld = behaviorExternalInterface.GetFaceWorld();
-  const auto& faces = faceWorld.GetFaceIDsObservedSince( GetRecentFaceTime( behaviorExternalInterface ) );
+  const auto& faceWorld = GetBEI().GetFaceWorld();
+  const auto& faces = faceWorld.GetFaceIDsObservedSince( GetRecentFaceTime() );
 
   for( const auto& rawFaceID : faces ) {
     const SmartFaceID faceID = faceWorld.GetSmartFaceID(rawFaceID);
-    if( ShouldStareAtFace(behaviorExternalInterface, faceID) ) {
+    if( ShouldStareAtFace(faceID) ) {
       PRINT_CH_INFO("Behaviors", "BehaviorVictorDemoObservingFaceInteraction.GetFaceToStareAt",
                     "Face %s is a valid one (didn't match any of the %zu we've already seen)",
                     faceID.GetDebugStr().c_str(),
@@ -219,9 +211,7 @@ SmartFaceID BehaviorVictorDemoObservingFaceInteraction::GetFaceToStareAt(
   return SmartFaceID{};
 }
 
-bool BehaviorVictorDemoObservingFaceInteraction::ShouldStareAtFace(
-  BehaviorExternalInterface& behaviorExternalInterface,
-  const SmartFaceID& face) const
+bool BehaviorVictorDemoObservingFaceInteraction::ShouldStareAtFace(const SmartFaceID& face) const
 {
   for( const auto& boringFace : _faceIdsLookedAt ) {
     if( face == boringFace ) {
@@ -234,11 +224,10 @@ bool BehaviorVictorDemoObservingFaceInteraction::ShouldStareAtFace(
   return true;
 }
 
-TimeStamp_t BehaviorVictorDemoObservingFaceInteraction::GetRecentFaceTime(
-  BehaviorExternalInterface& behaviorExternalInterface)
+TimeStamp_t BehaviorVictorDemoObservingFaceInteraction::GetRecentFaceTime()
 {
 
-  const TimeStamp_t lastImgTime = behaviorExternalInterface.GetRobotInfo().GetLastImageTimeStamp();
+  const TimeStamp_t lastImgTime = GetBEI().GetRobotInfo().GetLastImageTimeStamp();
   const TimeStamp_t recentTime = lastImgTime > kMaxTimeSinceSeenFaceToLook_ms ?
                                  ( lastImgTime - kMaxTimeSinceSeenFaceToLook_ms ) :
                                  0;

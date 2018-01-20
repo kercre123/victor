@@ -30,7 +30,7 @@
 #include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
-#include "anki/vision/basestation/observableObject.h"
+#include "coretech/vision/engine/observableObject.h"
 
 #include "util/math/math.h"
 

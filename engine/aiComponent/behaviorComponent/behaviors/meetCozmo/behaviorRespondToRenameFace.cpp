@@ -41,7 +41,7 @@ BehaviorRespondToRenameFace::BehaviorRespondToRenameFace(const Json::Value& conf
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRespondToRenameFace::HandleWhileInScopeButNotActivated(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRespondToRenameFace::HandleWhileInScopeButNotActivated(const GameToEngineEvent& event)
 {
   auto & msg = event.GetData().Get_UpdateEnrolledFaceByID();
   
@@ -51,7 +51,7 @@ void BehaviorRespondToRenameFace::HandleWhileInScopeButNotActivated(const GameTo
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorRespondToRenameFace::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorRespondToRenameFace::WantsToBeActivatedBehavior() const
 {
   const bool haveValidName = !_name.empty();
   return haveValidName;
@@ -59,12 +59,12 @@ bool BehaviorRespondToRenameFace::WantsToBeActivatedBehavior(BehaviorExternalInt
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorRespondToRenameFace::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRespondToRenameFace::OnBehaviorActivated()
 {
   if(_name.empty())
   {
     PRINT_NAMED_ERROR("BehaviorRespondToRenameFace.InitInternal.EmptyName", "");
-    return RESULT_FAIL;
+    return;
   }
   
   PRINT_CH_INFO("Behaviors", "BehaviorRespondToRenameFace.InitInternal",
@@ -93,20 +93,6 @@ Result BehaviorRespondToRenameFace::OnBehaviorActivated(BehaviorExternalInterfac
   
   _name.clear();
   _faceID = Vision::UnknownFaceID;
-  
-  return RESULT_OK;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorRespondToRenameFace::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
-{
-  if(!IsControlDelegated())
-  {
-    return Status::Complete;
-  }
-  
-  return Status::Running;
 }
 
 

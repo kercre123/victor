@@ -13,14 +13,17 @@
 #ifndef __Anki_Cozmo_Basestation_Components_DockingComponent_H__
 #define __Anki_Cozmo_Basestation_Components_DockingComponent_H__
 
-#include "anki/common/basestation/objectIDs.h"
-#include "anki/common/types.h"
+#include "coretech/common/engine/objectIDs.h"
+#include "coretech/common/shared/types.h"
 
-#include "anki/vision/basestation/visionMarker.h"
-#include "anki/vision/MarkerCodeDefinitions.h"
+#include "coretech/vision/engine/visionMarker.h"
+#include "coretech/vision/shared/MarkerCodeDefinitions.h"
 
 #include "clad/types/dockingSignals.h"
 #include "clad/types/robotStatusAndActions.h"
+
+#include "engine/dependencyManagedComponent.h"
+#include "engine/robotComponents_fwd.h"
 
 #include "util/helpers/noncopyable.h"
 
@@ -30,11 +33,26 @@ namespace Cozmo {
 class ObservableObject;
 class Robot;
   
-class DockingComponent : private Util::noncopyable
+class DockingComponent : public IDependencyManagedComponent<RobotComponentID>, private Util::noncopyable
 {
 public:
 
-  DockingComponent(Robot& robot);
+  DockingComponent();
+
+  //////
+  // IDependencyManagedComponent functions
+  //////
+  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
+  // Maintain the chain of initializations currently in robot - it might be possible to
+  // change the order of initialization down the line, but be sure to check for ripple effects
+  // when changing this function
+  virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
+    dependencies.insert(RobotComponentID::GyroDriftDetector);
+  };
+  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
+  //////
+  // end IDependencyManagedComponent functions
+  //////
   
   // Tell the robot to docking with the specified object with markerCode using
   // dockAction.
@@ -94,7 +112,7 @@ private:
   // Helper for CanStackOnTopOfObject and CanPickUpObjectFromGround
   bool CanInteractWithObjectHelper(const ObservableObject& object, Pose3d& relPose) const;
   
-  Robot& _robot;
+  Robot* _robot = nullptr;
   
   bool _isPickingOrPlacing    = false;
   bool _lastPickOrPlaceSucceeded = false;

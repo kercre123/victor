@@ -114,6 +114,7 @@ for lang in ${ANKI_BUILD_TRANSLATED_LANGS}; do
         echo "Post process ${string_file}..."
         # fix newlines
         perl -p -i -e 's/\\n/\\u000a/g' "${string_file}"
+        perl -p -i -e 's/\\u23CE/\\u000a/gi' "${string_file}"
         # replace "&quot;" with an escaped double-quote
         perl -p -i -e 's/\&quot;/\\"/g' "${string_file}"
         # replace "&lt;" with "<"

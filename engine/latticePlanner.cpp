@@ -11,12 +11,12 @@
  *
  **/
 
-#include "anki/common/basestation/math/fastPolygon2d.h"
-#include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/math/polygon_impl.h"
-#include "anki/common/basestation/math/quad_impl.h"
-#include "anki/common/basestation/math/rotatedRect.h"
-#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "coretech/common/engine/math/fastPolygon2d.h"
+#include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/engine/math/rotatedRect.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "engine/namedColors/namedColors.h"
 #include "engine/navMap/mapComponent.h"
 #include "engine/navMap/memoryMap/memoryMapTypes.h"
@@ -26,9 +26,9 @@
 #include "engine/robot.h"
 #include "engine/viz/vizManager.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
-#include "anki/planning/basestation/xythetaEnvironment.h"
-#include "anki/planning/basestation/xythetaPlanner.h"
-#include "anki/planning/basestation/xythetaPlannerContext.h"
+#include "coretech/planning/engine/xythetaEnvironment.h"
+#include "coretech/planning/engine/xythetaPlanner.h"
+#include "coretech/planning/engine/xythetaPlannerContext.h"
 #include "json/json.h"
 #include "latticePlanner.h"
 #include "util/console/consoleInterface.h"
@@ -39,6 +39,7 @@
 #include "util/logging/logging.h"
 #include "util/math/numericCast.h"
 #include "util/signals/simpleSignal_fwd.h"
+#include "util/threading/threadPriority.h"
 #include <chrono>
 #include <condition_variable>
 #include <thread>
@@ -643,6 +644,7 @@ void LatticePlannerImpl::DoPlanning()
 
 void LatticePlannerImpl::worker()
 {
+  Anki::Util::SetThreadName(pthread_self(), "LatticePlanner");
   if( LATTICE_PLANNER_THREAD_DEBUG ) {
     std::cout << "hello from planner worker thread! I am object " << this
               << " running in thread " << std::this_thread::get_id() << std::endl;
@@ -753,8 +755,7 @@ void LatticePlannerImpl::ImportBlockworldObstaclesIfNeeded(const bool isReplanni
       {MemoryMapTypes::EContentType::Unknown               , true},
       {MemoryMapTypes::EContentType::ClearOfObstacle       , true},
       {MemoryMapTypes::EContentType::ClearOfCliff          , true},
-      {MemoryMapTypes::EContentType::ObstacleCube          , true},
-      {MemoryMapTypes::EContentType::ObstacleCubeRemoved   , true},
+      {MemoryMapTypes::EContentType::ObstacleObservable    , true},
       {MemoryMapTypes::EContentType::ObstacleCharger       , true},
       {MemoryMapTypes::EContentType::ObstacleChargerRemoved, true},
       {MemoryMapTypes::EContentType::ObstacleProx          , true},
@@ -772,8 +773,7 @@ void LatticePlannerImpl::ImportBlockworldObstaclesIfNeeded(const bool isReplanni
       {MemoryMapTypes::EContentType::Unknown               , true},
       {MemoryMapTypes::EContentType::ClearOfObstacle       , true},
       {MemoryMapTypes::EContentType::ClearOfCliff          , true},
-      {MemoryMapTypes::EContentType::ObstacleCube          , true},
-      {MemoryMapTypes::EContentType::ObstacleCubeRemoved   , true},
+      {MemoryMapTypes::EContentType::ObstacleObservable    , true},
       {MemoryMapTypes::EContentType::ObstacleCharger       , true},
       {MemoryMapTypes::EContentType::ObstacleChargerRemoved, true},
       {MemoryMapTypes::EContentType::ObstacleProx          , true},
@@ -790,8 +790,7 @@ void LatticePlannerImpl::ImportBlockworldObstaclesIfNeeded(const bool isReplanni
       {MemoryMapTypes::EContentType::Unknown               , true},
       {MemoryMapTypes::EContentType::ClearOfObstacle       , true},
       {MemoryMapTypes::EContentType::ClearOfCliff          , true},
-      {MemoryMapTypes::EContentType::ObstacleCube          , true},
-      {MemoryMapTypes::EContentType::ObstacleCubeRemoved   , true},
+      {MemoryMapTypes::EContentType::ObstacleObservable    , true },
       {MemoryMapTypes::EContentType::ObstacleCharger       , true},
       {MemoryMapTypes::EContentType::ObstacleChargerRemoved, true},
       {MemoryMapTypes::EContentType::ObstacleProx          , false},
@@ -815,7 +814,7 @@ void LatticePlannerImpl::ImportBlockworldObstaclesIfNeeded(const bool isReplanni
     MemoryMapTypes::NodePredicate pred = 
       [](MemoryMapTypes::MemoryMapDataPtr d) -> bool
       {
-          return (d->type == MemoryMapTypes::EContentType::ObstacleCube);
+          return (d->type == MemoryMapTypes::EContentType::ObstacleObservable);
       };
       
     memoryMap->FindContentIf(pred, observableObjectData);

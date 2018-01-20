@@ -1,9 +1,9 @@
 #include "cozmoAnim/animation/proceduralFaceDrawer.h"
 #include "cozmoAnim/animation/scanlineDistorter.h"
 
-#include "anki/common/basestation/array2d_impl.h"
+#include "coretech/common/engine/array2d_impl.h"
 
-//#include "anki/vision/basestation/trackedFace.h"
+//#include "coretech/vision/engine/trackedFace.h"
 
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -16,8 +16,6 @@
 namespace Anki {
 namespace Cozmo {
   
-  #define FIXED_INNER_GLOW_POSITION 1
-
   #define CONSOLE_GROUP "ProceduralFace"
 
   CONSOLE_VAR_RANGED(f32, kProcFace_InnerGlowFrac,            CONSOLE_GROUP, 0.4f, 0.05f, 1.f);
@@ -27,7 +25,11 @@ namespace Cozmo {
   CONSOLE_VAR(f32,        kProcFace_GlowSizeMultiplier,       CONSOLE_GROUP, 1.f);
   CONSOLE_VAR(f32,        kProcFace_GlowBrightnessMultiplier, CONSOLE_GROUP, 1.f);
   CONSOLE_VAR(f32,        kProcFace_EyeBrightnessMultiplier,  CONSOLE_GROUP, 1.f);
-  
+
+  CONSOLE_VAR(bool,       kProcFace_RenderInnerOuterGlow,     CONSOLE_GROUP, false); // Render glow
+  CONSOLE_VAR(bool,       kProcFace_ApplyGlowFilter,          CONSOLE_GROUP, false); // Gausssian or boxfilter for glow
+  CONSOLE_VAR(bool,       kProcFace_UseAntialiasing,          CONSOLE_GROUP, false); // Gausssian or boxfilter for antialiasing
+
   #undef CONSOLE_GROUP
   
   // Initialize static vars
@@ -354,23 +356,27 @@ namespace Cozmo {
       const f32 scaledEyeWidth  = eyeScaleX * static_cast<f32>(eyeWidth);
       const f32 scaledEyeHeight = eyeScaleY * static_cast<f32>(eyeHeight);
       
-#     if FIXED_INNER_GLOW_POSITION
-      const s32 glowCenX = eyeCenter.x();
-      const s32 glowCenY = eyeCenter.y();
-#     else
-      // WIP: Move glow center with eye
-      const s32 glowCenOffsetX = eyeCenter.x() - (whichEye == ProceduralFace::Left ? ProceduralFace::GetNominalLeftEyeX()+10 : ProceduralFace::GetNominalRightEyeX()-13);
-      const s32 glowCenOffsetY = eyeCenter.y() - (whichEye == ProceduralFace::Left ? ProceduralFace::GetNominalEyeY()+4      : ProceduralFace::GetNominalEyeY()+3);
+      s32 glowCenX = eyeCenter.x();
+      s32 glowCenY = eyeCenter.y();
       
-      const f32 innerGlowCenFrac = 4.f;
-      const f32 glowCenX = eyeCenter.x() - innerGlowCenFrac*glowCenOffsetX;
-      const f32 glowCenY = eyeCenter.y() - innerGlowCenFrac*glowCenOffsetY;
-#     endif 
+      // The hotspot center params leave the hot spot at the eye center if zero. If non-zero,
+      // they shift left/right/up/down where a magnitude of 1.0 moves the center to the extreme
+      // edge of the eye shape
+      const Value hotSpotCenterX = faceData.GetParameter(whichEye, Parameter::HotSpotCenterX);
+      const Value hotSpotCenterY = faceData.GetParameter(whichEye, Parameter::HotSpotCenterY);
+      if(!Util::IsNearZero(hotSpotCenterX))
+      {
+        glowCenX += hotSpotCenterX * (0.5f*scaledEyeWidth);
+      }
+      if(!Util::IsNearZero(hotSpotCenterY))
+      {
+        glowCenY += hotSpotCenterY * (0.5f*scaledEyeHeight);
+      }
       
       // Inner Glow = the brighter glow at the center of the eye that falls off radially towards the edge of the eye
       // Outer Glow = the "halo" effect around the outside of the eye shape
       // Add inner glow to the eye shape, before we compute the outer glow, so that boundaries conditions match.
-      {
+      if(kProcFace_RenderInnerOuterGlow) {
         const f32 sigmaX = kProcFace_InnerGlowFrac*scaledEyeWidth;
         const f32 sigmaY = kProcFace_InnerGlowFrac*scaledEyeHeight;
         const f32 invInnerGlowSigmaX_sq = 1.f / (2.f * (sigmaX*sigmaX));
@@ -407,39 +413,43 @@ namespace Cozmo {
       // Compute glow from the final eye shape (after lids are drawn)
       _glowImg.Allocate(faceImg.GetNumRows(), faceImg.GetNumCols());
       _glowImg.FillWith(0);
-      
-      if(Util::IsFltGTZero(glowFraction))
-      {
-        Vision::Image glowImgROI  = _glowImg.GetROI(eyeBoundingBoxS32);
-        
-        s32 glowSizeX = std::ceil(glowFraction * 0.5f * scaledEyeWidth);
-        s32 glowSizeY = std::ceil(glowFraction * 0.5f * scaledEyeHeight);
 
-        // Make sure sizes are odd:
-        if(glowSizeX % 2 == 0) {
-          ++glowSizeX;
-        }
-        if(glowSizeY % 2 == 0) {
-          ++glowSizeY;
-        }
-        
-        if(kProcFace_GaussianGlowFilter) {
-          cv::GaussianBlur(eyeShapeROI.get_CvMat_(), glowImgROI.get_CvMat_(), cv::Size(glowSizeX,glowSizeY),
-                           (f32)glowSizeX, (f32)glowSizeY);
-        } else {
-          cv::boxFilter(eyeShapeROI.get_CvMat_(), glowImgROI.get_CvMat_(), -1, cv::Size(glowSizeX,glowSizeY));
+      if(kProcFace_ApplyGlowFilter) {
+        if(Util::IsFltGTZero(glowFraction))
+        {
+          Vision::Image glowImgROI  = _glowImg.GetROI(eyeBoundingBoxS32);
+
+          s32 glowSizeX = std::ceil(glowFraction * 0.5f * scaledEyeWidth);
+          s32 glowSizeY = std::ceil(glowFraction * 0.5f * scaledEyeHeight);
+
+          // Make sure sizes are odd:
+          if(glowSizeX % 2 == 0) {
+            ++glowSizeX;
+          }
+          if(glowSizeY % 2 == 0) {
+            ++glowSizeY;
+          }
+
+          if(kProcFace_GaussianGlowFilter) {
+            cv::GaussianBlur(eyeShapeROI.get_CvMat_(), glowImgROI.get_CvMat_(), cv::Size(glowSizeX,glowSizeY),
+                             (f32)glowSizeX, (f32)glowSizeY);
+          } else {
+            cv::boxFilter(eyeShapeROI.get_CvMat_(), glowImgROI.get_CvMat_(), -1, cv::Size(glowSizeX,glowSizeY));
+          }
         }
       }
-      
-      // Antialiasing (AFTER glow because it changes eyeShape, which we use to compute the glow above)
-      const s32 kAntiAliasingSize = 5;
-      static_assert(kAntiAliasingSize % 2 == 1, "Antialiasing filter size should be odd");
-      if(kProcFace_GaussianGlowFilter) {
-        const f32 kAntiAliasingSigmaFraction = 0.5f;
-        cv::GaussianBlur(eyeShapeROI.get_CvMat_(), eyeShapeROI.get_CvMat_(), cv::Size(kAntiAliasingSize,kAntiAliasingSize),
-                         (f32)kAntiAliasingSize * kAntiAliasingSigmaFraction);
-      } else {
-        cv::boxFilter(eyeShapeROI.get_CvMat_(), eyeShapeROI.get_CvMat_(), -1, cv::Size(kAntiAliasingSize,kAntiAliasingSize));
+
+      if(kProcFace_UseAntialiasing) {
+        // Antialiasing (AFTER glow because it changes eyeShape, which we use to compute the glow above)
+        const s32 kAntiAliasingSize = 5;
+        static_assert(kAntiAliasingSize % 2 == 1, "Antialiasing filter size should be odd");
+        if(kProcFace_GaussianGlowFilter) {
+          const f32 kAntiAliasingSigmaFraction = 0.5f;
+          cv::GaussianBlur(eyeShapeROI.get_CvMat_(), eyeShapeROI.get_CvMat_(), cv::Size(kAntiAliasingSize,kAntiAliasingSize),
+                           (f32)kAntiAliasingSize * kAntiAliasingSigmaFraction);
+        } else {
+          cv::boxFilter(eyeShapeROI.get_CvMat_(), eyeShapeROI.get_CvMat_(), -1, cv::Size(kAntiAliasingSize,kAntiAliasingSize));
+        }
       }
       
  

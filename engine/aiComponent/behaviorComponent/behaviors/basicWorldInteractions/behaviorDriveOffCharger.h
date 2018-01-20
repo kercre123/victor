@@ -13,7 +13,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorDriveOffCharger_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorDriveOffCharger_H__
 
-#include "anki/common/basestation/math/pose.h"
+#include "coretech/common/engine/math/pose.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 namespace Anki {
@@ -28,20 +28,17 @@ protected:
   BehaviorDriveOffCharger(const Json::Value& config);
 
 public:
-
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual bool CarryingObjectHandledInternally() const override {return false;}
-  virtual bool ShouldRunWhileOnCharger() const override { return true;}
-
-  // true so that we can handle edge cases where the robot is on the charger and not on his treads
-  virtual bool ShouldRunWhileOffTreads() const override { return true;}
+  virtual bool WantsToBeActivatedBehavior() const override;
 
 protected:
+  virtual void OnBehaviorActivated() override;
+  virtual void BehaviorUpdate() override;
+  virtual void OnBehaviorDeactivated() override;
 
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override{
+    modifiers.wantsToBeActivatedWhenOffTreads = true;
+  }
+
   enum class DebugState {
     DrivingForward,
   };
@@ -59,7 +56,7 @@ private:
   // Methods
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  void TransitionToDrivingForward(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToDrivingForward();
   
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

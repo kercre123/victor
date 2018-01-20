@@ -14,7 +14,7 @@
 #include "engine/blockWorld/blockConfigurationManager.h"
 #include "engine/blockWorld/blockWorld.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -32,10 +32,10 @@ BehaviorReactToStackOfCubes::BehaviorReactToStackOfCubes(const Json::Value& conf
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorReactToStackOfCubes::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorReactToStackOfCubes::WantsToBeActivatedBehavior() const
 {
   using namespace BlockConfigurations;
-  auto allPyramids = behaviorExternalInterface.GetBlockWorld().GetBlockConfigurationManager().GetStackCache().GetStacks();
+  auto allPyramids = GetBEI().GetBlockWorld().GetBlockConfigurationManager().GetStackCache().GetStacks();
   if(allPyramids.size() > 0){
     auto currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     if(currentTime > _nextValidReactionTime_s){
@@ -48,10 +48,10 @@ bool BehaviorReactToStackOfCubes::WantsToBeActivatedBehavior(BehaviorExternalInt
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorReactToStackOfCubes::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToStackOfCubes::OnBehaviorActivated()
 {
   _nextValidReactionTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + kTimeBetweenReactions_s;
-  return Result::RESULT_OK;
+  
 }
 
 } // namespace Cozmo

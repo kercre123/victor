@@ -13,8 +13,8 @@
 #ifndef __Anki_Cozmo_ScanlineDistorter_H__
 #define __Anki_Cozmo_ScanlineDistorter_H__
 
-#include "anki/common/types.h"
-#include "anki/common/basestation/math/point.h"
+#include "coretech/common/shared/types.h"
+#include "coretech/common/engine/math/point.h"
 
 #include <array>
 #include <vector>

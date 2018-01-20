@@ -140,14 +140,7 @@ public class FirstTimeConnectView : BaseView {
   }
 
   private void ShowProfileCreationScreen() {
-    if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.DataCollectionEnabled) {
-      UIManager.OpenModal(_ProfileCreationModalPrefab, new ModalPriorityData(), HandleProfileCreationViewCreated);
-    }
-    else {
-      DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileCreated = true;
-      DataPersistence.DataPersistenceManager.Instance.Save();
-      ShowPlaceCozmoOnCharger();
-    }
+    UIManager.OpenModal(_ProfileCreationModalPrefab, new ModalPriorityData(), HandleProfileCreationViewCreated);
   }
 
   private void HandleProfileCreationViewCreated(BaseModal newProfileCreationModal) {

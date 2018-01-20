@@ -28,23 +28,22 @@ class BehaviorVictorDemoObservingFaceInteraction : public ICozmoBehavior
 
 public:
 
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override {
+  virtual bool WantsToBeActivatedBehavior() const override {
     // can always either search or interact
     return true;
   }
 
-  virtual bool CarryingObjectHandledInternally() const override {return false;}
-
 protected:
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
+
 
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
 
-  virtual void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void InitBehavior() override;
   
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
-
-  virtual bool CanBeGentlyInterruptedNow(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual void OnBehaviorActivated() override;
+  virtual void BehaviorUpdate() override;
+  virtual bool CanBeGentlyInterruptedNow() const override;
 
 private:
 
@@ -54,13 +53,13 @@ private:
     StareAtFace
   };
 
-  TimeStamp_t GetRecentFaceTime(BehaviorExternalInterface& behaviorExternalInterface);
-  SmartFaceID GetFaceToStareAt(BehaviorExternalInterface& behaviorExternalInterface);
-  bool ShouldStareAtFace(BehaviorExternalInterface& behaviorExternalInterface, const SmartFaceID& face) const;
+  TimeStamp_t GetRecentFaceTime();
+  SmartFaceID GetFaceToStareAt();
+  bool ShouldStareAtFace(const SmartFaceID& face) const;
   
-  void TransitionToFindFaces(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToTurnTowardsAFace(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToStareAtFace(BehaviorExternalInterface& behaviorExternalInterface, SmartFaceID face);
+  void TransitionToFindFaces();
+  void TransitionToTurnTowardsAFace();
+  void TransitionToStareAtFace(SmartFaceID face);
 
   void SetState_internal(State state, const std::string& stateName);
 

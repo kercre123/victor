@@ -21,8 +21,9 @@
 #include "engine/robotInterface/messageHandler.h"
 #include "engine/robotManager.h"
 #include "engine/utils/cozmoFeatureGate.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "clad/externalInterface/messageGameToEngine.h"
+#include "clad/externalInterface/messageFromActiveObject.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/math/math.h"
@@ -38,43 +39,38 @@ CONSOLE_VAR(bool, kIgnoreMovementWhileWaitingForDoubleTap, "DoubleTap", true);
 namespace Anki {
 namespace Cozmo {
 
-BlockTapFilterComponent::BlockTapFilterComponent(Robot& robot)
-  : _robot(robot)
-  ,_enabled(true)
-  ,_waitToTime(0)
+BlockTapFilterComponent::BlockTapFilterComponent()
+: IDependencyManagedComponent(RobotComponentID::BlockTapFilter)
+, _enabled(true)
+, _waitToTime(0)
 {
-  if( _robot.GetContext()->GetRobotManager()->GetMsgHandler() )
-  {
-    _robotToEngineSignalHandle.push_back(_robot.GetContext()->GetRobotManager()->GetMsgHandler()->Subscribe(_robot.GetID(),
-                                                                                                     RobotInterface::RobotToEngineTag::activeObjectTapped,
-                                                                                                     std::bind(&BlockTapFilterComponent::HandleActiveObjectTapped, this, std::placeholders::_1)));
-    
-    _robotToEngineSignalHandle.push_back(_robot.GetContext()->GetRobotManager()->GetMsgHandler()->Subscribe(_robot.GetID(),
-                                                                                                            RobotInterface::RobotToEngineTag::activeObjectMoved,
-                                                                                                            std::bind(&BlockTapFilterComponent::HandleActiveObjectMoved, this, std::placeholders::_1)));
-    
-    _robotToEngineSignalHandle.push_back(_robot.GetContext()->GetRobotManager()->GetMsgHandler()->Subscribe(_robot.GetID(),
-                                                                                                           RobotInterface::RobotToEngineTag::activeObjectStopped,
-                                                                                                           std::bind(&BlockTapFilterComponent::HandleActiveObjectStopped, this, std::placeholders::_1)));
-    
-  }
+}
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BlockTapFilterComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+{
+  _robot = robot;
   // Null for unit tests
-  if( _robot.GetContext()->GetExternalInterface() )
+  if( _robot->GetContext()->GetExternalInterface() )
   {
-    _gameToEngineSignalHandle = (_robot.GetContext()->GetExternalInterface()->Subscribe(
+    _gameToEngineSignalHandle = (_robot->GetContext()->GetExternalInterface()->Subscribe(
                                                                                         ExternalInterface::MessageGameToEngineTag::EnableBlockTapFilter,
                                                                                         std::bind(&BlockTapFilterComponent::HandleEnableTapFilter, this, std::placeholders::_1)));
   }
   
 #if ANKI_DEV_CHEATS
-  if( _robot.GetContext()->GetExternalInterface() )
+  if( _robot->GetContext()->GetExternalInterface() )
   {
-    _debugGameToEngineSignalHandle =(_robot.GetContext()->GetExternalInterface()->Subscribe(
-                                                                                           ExternalInterface::MessageGameToEngineTag::GetBlockTapFilterStatus,
-                                                                                           std::bind(&BlockTapFilterComponent::HandleSendTapFilterStatus, this, std::placeholders::_1)));;
+    _debugGameToEngineSignalHandle =(_robot->GetContext()->GetExternalInterface()->Subscribe(
+                                                                                            ExternalInterface::MessageGameToEngineTag::GetBlockTapFilterStatus,
+                                                                                            std::bind(&BlockTapFilterComponent::HandleSendTapFilterStatus, this, std::placeholders::_1)));;
   }
 #endif
+
+  
 }
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BlockTapFilterComponent::Update()
@@ -99,7 +95,7 @@ void BlockTapFilterComponent::Update()
         }
       }
       PRINT_CH_INFO("BlockPool","BlockTapFilterComponent.Update","intensity %d time: %d id: %d",highIntensity,currTime,(*highIter).objectID);
-      _robot.Broadcast(ExternalInterface::MessageEngineToGame(ObjectTapped(*highIter)));
+      _robot->Broadcast(ExternalInterface::MessageEngineToGame(ObjectTapped(*highIter)));
       _tapInfo.clear();
     }
   }
@@ -122,9 +118,9 @@ void BlockTapFilterComponent::Update()
       });
       
       std::vector<ObservableObject *> matchingObjects;
-      _robot.GetBlockWorld().FindLocatedMatchingObjects(filter, matchingObjects);
+      _robot->GetBlockWorld().FindLocatedMatchingObjects(filter, matchingObjects);
       
-      const ActiveObject* tappedObject = _robot.GetBlockWorld().GetConnectedActiveObjectByActiveID( doubleTapInfo.first );
+      const ActiveObject* tappedObject = _robot->GetBlockWorld().GetConnectedActiveObjectByActiveID( doubleTapInfo.first );
       if ( nullptr != tappedObject ) {
         PRINT_CH_DEBUG("BlockTapFilterComponent", "BlockTapFilterComponent.Update.ExpiredTap",
                        "Marking object %d as dirty due to tap timeout",
@@ -135,7 +131,7 @@ void BlockTapFilterComponent::Update()
       {
         if ( object->IsPoseStateKnown() ) {
           const bool propagateStack = false;
-          _robot.GetObjectPoseConfirmer().MarkObjectDirty(object, propagateStack);
+          _robot->GetObjectPoseConfirmer().MarkObjectDirty(object, propagateStack);
         }
       }
     }
@@ -157,16 +153,16 @@ void BlockTapFilterComponent::HandleSendTapFilterStatus(const AnkiEvent<External
 {
   if( message.GetData().GetTag() == ExternalInterface::MessageGameToEngineTag::GetBlockTapFilterStatus)
   {
-    _robot.Broadcast(ExternalInterface::MessageEngineToGame(
+    _robot->Broadcast(ExternalInterface::MessageEngineToGame(
                                         Anki::Cozmo::ExternalInterface::BlockTapFilterStatus(_enabled,kTapIntensityMin,kTapWaitOffset_ms)));
   }
 }
 #endif
   
-void BlockTapFilterComponent::HandleActiveObjectTapped(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+void BlockTapFilterComponent::HandleActiveObjectTapped(const ObjectTapped& message)
 {
   // We make a copy of this message so we can update the object ID before broadcasting
-  ObjectTapped payload = message.GetData().Get_activeObjectTapped();
+  ObjectTapped payload = message;
   
   // Taps below threshold should be filtered and ignored.
   const int16_t intensity = payload.tapPos - payload.tapNeg;
@@ -179,7 +175,7 @@ void BlockTapFilterComponent::HandleActiveObjectTapped(const AnkiEvent<RobotInte
 
   // find connected object by activeID
   const ActiveID tappedActiveID = payload.objectID;
-  const ActiveObject* tappedObject = _robot.GetBlockWorld().GetConnectedActiveObjectByActiveID( tappedActiveID );
+  const ActiveObject* tappedObject = _robot->GetBlockWorld().GetConnectedActiveObjectByActiveID( tappedActiveID );
 
   if(nullptr == tappedObject)
   {
@@ -199,10 +195,10 @@ void BlockTapFilterComponent::HandleActiveObjectTapped(const AnkiEvent<RobotInte
   // Update the ID to be the blockworld ID before broadcasting
   payload.objectID = tappedObject->GetID();
   // In the simulator, taps are soft and also webots doesn't simulate the phantom taps.
-  if (!_enabled || !_robot.IsPhysical())
+  if (!_enabled || !_robot->IsPhysical())
   {
     // Do not filter any taps if block tap filtering was disabled.
-    _robot.Broadcast(ExternalInterface::MessageEngineToGame(ObjectTapped(payload)));
+    _robot->Broadcast(ExternalInterface::MessageEngineToGame(ObjectTapped(payload)));
   }
   else
   {
@@ -220,12 +216,11 @@ void BlockTapFilterComponent::HandleActiveObjectTapped(const AnkiEvent<RobotInte
   CheckForDoubleTap(payload.objectID);
 }
 
-void BlockTapFilterComponent::HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+void BlockTapFilterComponent::HandleActiveObjectMoved(const ObjectMoved& payload)
 {
-  const auto& payload = message.GetData().Get_activeObjectMoved();
   // In the message coming from the robot, the objectID is the slot the object is connected on which is its
   // engine activeID
-  const ObservableObject* object = _robot.GetBlockWorld().GetConnectedActiveObjectByActiveID(payload.objectID);
+  const ObservableObject* object = _robot->GetBlockWorld().GetConnectedActiveObjectByActiveID(payload.objectID);
   if( object == nullptr )
   {
     PRINT_NAMED_WARNING("BlockTapFilterComponent.HandleActiveObjectMoved.ObjectIDNull",
@@ -252,12 +247,11 @@ void BlockTapFilterComponent::HandleActiveObjectMoved(const AnkiEvent<RobotInter
   }
 }
 
-void BlockTapFilterComponent::HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+void BlockTapFilterComponent::HandleActiveObjectStopped(const ObjectStoppedMoving& payload)
 {
-  const auto& payload = message.GetData().Get_activeObjectStopped();
   // In the message coming from the robot, the objectID is the slot the object is connected on which is its
   // engine activeID
-  const ObservableObject* object = _robot.GetBlockWorld().GetConnectedActiveObjectByActiveID(payload.objectID);
+  const ObservableObject* object = _robot->GetBlockWorld().GetConnectedActiveObjectByActiveID(payload.objectID);
   if( object == nullptr )
   {
     PRINT_NAMED_WARNING("BlockTapFilterComponent.HandleActiveObjectStopped.ObjectIDNull",

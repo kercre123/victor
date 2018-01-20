@@ -28,14 +28,14 @@
 
 #include "engine/viz/vizManager.h"
 #include "engine/buildVersion.h"
-#include "anki/common/basestation/math/quad_impl.h"
-#include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/utils/data/dataPlatform.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
-#include <anki/messaging/basestation/IComms.h>
+#include "coretech/messaging/engine/IComms.h"
 
 #include "clad/externalInterface/messageGameToEngine_hash.h"
 #include "clad/externalInterface/messageEngineToGame_hash.h"
@@ -47,11 +47,20 @@
 #include "util/helpers/ankiDefines.h"
 #include "util/time/universalTime.h"
 
+#ifdef SIMULATOR
+#include "osState/osState.h"
+#endif
+
 #define USE_DIRECT_COMMS 0
 
 // The amount of time that the UI must have not been
 // returning pings before we consider it disconnected
+#ifdef SIMULATOR
+// No timeout in sim
+static const u32 kPingTimeoutForDisconnect_ms = 0;
+#else
 static const u32 kPingTimeoutForDisconnect_ms = 5000;
+#endif
 
 namespace Anki {
   namespace Cozmo {
@@ -60,17 +69,20 @@ namespace Anki {
 #if (defined(ANKI_PLATFORM_IOS) || defined(ANKI_PLATFORM_ANDROID))
   #define ANKI_ENABLE_SDK_OVER_UDP  0
   #if defined(SHIPPING)
-    CONSOLE_VAR(bool, kEnableSdkCommsAlways,  "Sdk", false);
+    CONSOLE_VAR(bool, kEnableSdkCommsInInternalSdk,  "Sdk", false);
   #else
-    CONSOLE_VAR(bool, kEnableSdkCommsAlways,  "Sdk", true);
+    CONSOLE_VAR(bool, kEnableSdkCommsInInternalSdk, "Sdk", true);
   #endif
+  CONSOLE_VAR(bool, kEnableSdkCommsAlways,  "Sdk", false);
 #else
   #define ANKI_ENABLE_SDK_OVER_UDP  0
   CONSOLE_VAR(bool, kEnableSdkCommsAlways,  "Sdk", true);
+  CONSOLE_VAR(bool, kEnableSdkCommsInInternalSdk, "Sdk", true);
 #endif
     
 #if defined(SHIPPING)
     static_assert(!kEnableSdkCommsAlways, "Must be const and false - we cannot leave the socket open outside of sdk for released builds!");
+    static_assert(!kEnableSdkCommsInInternalSdk, "Must be const and false - we cannot leave the socket open outside of sdk for released builds!");
 #endif
     
 CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enabled in non-SHIPPING apps, for internal dev
@@ -84,7 +96,7 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
     
     CONSOLE_VAR(bool, kAcceptMessagesFromUI,  "UiComms", true);
     CONSOLE_VAR(bool, kAcceptMessagesFromSDK, "UiComms", true);
-    CONSOLE_VAR(uint32_t, kPingSendFreq, "UiComms", 20); // 0 = never
+    CONSOLE_VAR(double, kPingSendFreq_ms, "UiComms", 1000.0); // 0 = never
     CONSOLE_VAR(uint32_t, kSdkStatusSendFreq, "UiComms", 1); // 0 = never
     
     
@@ -151,7 +163,26 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
     UiMessageHandler::UiMessageHandler(u32 hostUiDeviceID, GameMessagePort* gameMessagePort)
       : _sdkStatus(this)
       , _hostUiDeviceID(hostUiDeviceID)
+      , _messageCountGtE(0)
+      , _messageCountEtG(0)
     {
+
+      // Currently not supporting UI connections for any sim robot other
+      // than the default ID
+      #ifdef SIMULATOR
+      const auto robotID = OSState::getInstance()->GetRobotID();
+      if (robotID != DEFAULT_ROBOT_ID) {
+        PRINT_NAMED_WARNING("UiMessageHandler.Ctor.SkippingUIConnections", 
+                            "RobotID: %d - Only DEFAULT_ROBOT_ID may accept UI connections", 
+                            robotID);
+        
+        for (UiConnectionType i=UiConnectionType(0); i < UiConnectionType::Count; ++i) {
+          _socketComms[(uint32_t)i] = 0;
+        }
+        return;
+      }
+      #endif
+
       const bool isSdkCommunicationEnabled = IsSdkCommunicationEnabled();
       for (UiConnectionType i=UiConnectionType(0); i < UiConnectionType::Count; ++i)
       {
@@ -249,7 +280,8 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
     
     bool UiMessageHandler::IsSdkCommunicationEnabled() const
     {
-      return (_sdkStatus.IsInExternalSdkMode() || kEnableSdkCommsAlways);
+      return _sdkStatus.IsInExternalSdkMode() || kEnableSdkCommsAlways ||
+             (_sdkStatus.IsInInternalSdkMode() && kEnableSdkCommsInInternalSdk);
     }
     
 
@@ -274,6 +306,8 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
       //if (GetNumConnectedDevicesOnAnySocket() > 0)
       {
         ANKI_CPU_PROFILE("UiMH::DeliverToGame");
+
+        ++_messageCountEtG;
         
         Comms::MsgPacket p;
         message.Pack(p.data, Comms::MsgPacket::MAX_SIZE);
@@ -434,7 +468,6 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
         case GameToEngineTag::TransitionToNextOnboardingState:  return true;
         case GameToEngineTag::RegisterOnboardingComplete:       return true;
         case GameToEngineTag::SetNeedsActionWhitelist:          return true;
-        case GameToEngineTag::ForceSetNeedsLevels:              return true;
         case GameToEngineTag::ForceSetDamagedParts:             return true;
         case GameToEngineTag::SetNeedsPauseState:               return true;
         case GameToEngineTag::SetNeedsPauseStates:              return true;
@@ -451,6 +484,8 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
         case GameToEngineTag::NVStorageReadEntry:               return true;
         case GameToEngineTag::EnterSdkMode:                     return true;
         case GameToEngineTag::ExitSdkMode:                      return true;
+        case GameToEngineTag::PerfMetricCommand:                return true;
+        case GameToEngineTag::PerfMetricGetStatus:              return true;
         default:
           return false;
       }
@@ -460,6 +495,8 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
     void UiMessageHandler::HandleProcessedMessage(const ExternalInterface::MessageGameToEngine& message,
                                 UiConnectionType connectionType, size_t messageSize, bool handleMessagesFromConnection)
     {
+      ++_messageCountGtE;
+
       const ExternalInterface::MessageGameToEngine::Tag messageTag = message.GetTag();
       if (!handleMessagesFromConnection)
       {
@@ -678,11 +715,13 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
     Result UiMessageHandler::Update()
     {
       ANKI_CPU_PROFILE("UiMH::Update");
+
+      ++_updateCount;
       
       // Update all the comms
       
-      const bool sendPingThisTick = (kPingSendFreq > 0) && ((_updateCount % kPingSendFreq) == 0);
-      ++_updateCount;
+      const double currTime_ms = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
+      const bool sendPingThisTick = (kPingSendFreq_ms > 0.0) && (currTime_ms - _lastPingTime_ms > kPingSendFreq_ms);
       
       for (UiConnectionType i=UiConnectionType(0); i < UiConnectionType::Count; ++i)
       {
@@ -697,10 +736,10 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
             
             ANKI_CPU_PROFILE("UiMH::Update::SendPing");
             
-            ExternalInterface::Ping outPing( socketComms->NextPingCounter(),
-                                            Util::Time::UniversalTime::GetCurrentTimeInMilliseconds(), false );
+            ExternalInterface::Ping outPing(socketComms->NextPingCounter(), currTime_ms, false);
             ExternalInterface::MessageEngineToGame message(std::move(outPing));
             DeliverToGame(message, (DestinationId)i);
+            _lastPingTime_ms = currTime_ms;
           }
         }
       }
@@ -1095,9 +1134,7 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
       const ExternalInterface::EnterSdkMode& msg = event.GetData().Get_EnterSdkMode();
       _sdkStatus.EnterMode(msg.isExternalSdkMode);
       
-      if (msg.isExternalSdkMode) {
-        UpdateIsSdkCommunicationEnabled();
-      }
+      UpdateIsSdkCommunicationEnabled();
 
       _context->GetNeedsManager()->SetPaused(true);
     }

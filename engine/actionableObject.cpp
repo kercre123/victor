@@ -15,8 +15,8 @@
 
 #include "engine/actionableObject.h"
 
-#include "anki/common/basestation/math/quad_impl.h"
-#include "anki/common/basestation/math/point_impl.h"
+#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/engine/math/point_impl.h"
 
 #include "util/math/math.h"
 

@@ -23,8 +23,10 @@ namespace Cozmo.UI {
     }
 
     private void HandleEngineErrorCode(Anki.Cozmo.ExternalInterface.EngineErrorCodeMessage message) {
-      if (_BadLightAlertInstance != null && message.errorCode == Anki.Cozmo.EngineErrorCode.ImageQualityGood) {
-        _BadLightAlertInstance.CloseDialog();
+      if (message.errorCode == Anki.Cozmo.EngineErrorCode.ImageQualityGood) {
+        if (_BadLightAlertInstance != null) {
+          _BadLightAlertInstance.CloseDialog();
+        }
       }
       else if (message.errorCode == Anki.Cozmo.EngineErrorCode.ImageQualityTooBright ||
         message.errorCode == Anki.Cozmo.EngineErrorCode.ImageQualityTooDark) {
@@ -33,7 +35,7 @@ namespace Cozmo.UI {
     }
 
     private void CreateBadLightAlert() {
-      if (!EnableBadLightAlerts) {
+      if (!EnableBadLightAlerts || _BadLightAlertInstance != null) {
         return;
       }
 

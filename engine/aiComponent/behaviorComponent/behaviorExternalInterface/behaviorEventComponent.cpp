@@ -13,6 +13,8 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 
+#include "engine/aiComponent/aiComponent.h"
+#include "engine/robot.h"
 #include "util/logging/logging.h"
 
 namespace Anki {
@@ -25,16 +27,24 @@ namespace{
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorEventComponent::BehaviorEventComponent()
-: _messageSubscriber(nullptr)
+: IDependencyManagedComponent(BCComponentID::BehaviorEventComponent)
+, _messageSubscriber(nullptr)
 {
 
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorEventComponent::InitDependent(Robot* robot, const BCCompMap& dependentComponents)
+{
+  Init(robot->GetAIComponent().GetBehaviorComponent());
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEventComponent::Init(IBehaviorMessageSubscriber& messageSubscriber)
 {
-  _messageSubscriber = &messageSubscriber;
+  _messageSubscriber = std::make_unique<SubscriberWrapper>(messageSubscriber);
 }
 
 
@@ -45,7 +55,7 @@ void BehaviorEventComponent::SubscribeToTags(IBehavior* subscriber,
   if(ANKI_VERIFY(_messageSubscriber != nullptr,
                  "BehaviorEventComponent.SubscribeToTags.NoMessageSubscriber",
                  "")){
-    _messageSubscriber->SubscribeToTags(subscriber, std::move(tags));
+    _messageSubscriber->_ref.SubscribeToTags(subscriber, std::move(tags));
   }
 }
 
@@ -57,7 +67,7 @@ void BehaviorEventComponent::SubscribeToTags(IBehavior* subscriber,
   if(ANKI_VERIFY(_messageSubscriber != nullptr,
                  "BehaviorEventComponent.SubscribeToTags.NoMessageSubscriber",
                  "")){
-    _messageSubscriber->SubscribeToTags(subscriber, std::move(tags));
+    _messageSubscriber->_ref.SubscribeToTags(subscriber, std::move(tags));
   }
 }
 
@@ -69,7 +79,7 @@ void BehaviorEventComponent::SubscribeToTags(IBehavior* subscriber,
   if(ANKI_VERIFY(_messageSubscriber != nullptr,
                  "BehaviorEventComponent.SubscribeToTags.NoMessageSubscriber",
                  "")){
-    _messageSubscriber->SubscribeToTags(subscriber, std::move(tags));
+    _messageSubscriber->_ref.SubscribeToTags(subscriber, std::move(tags));
   }
 }
 

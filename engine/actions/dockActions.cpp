@@ -12,7 +12,7 @@
 
 #include "engine/actions/dockActions.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/driveToActions.h"
 #include "engine/actions/visuallyVerifyActions.h"
@@ -497,7 +497,7 @@ namespace Anki {
       
       if(dockObject == nullptr)
       {
-        PRINT_NAMED_WARNING("IDockAction.NullDockObject", "Dock object is null returning failure");
+        PRINT_NAMED_WARNING("IDockAction.NullDockObject", "Dock object is null");
         return ActionResult::BAD_OBJECT;
       }
       

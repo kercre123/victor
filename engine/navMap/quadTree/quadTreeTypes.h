@@ -12,7 +12,7 @@
 #ifndef ANKI_COZMO_NAV_MESH_QUAD_TREE_TYPES_H
 #define ANKI_COZMO_NAV_MESH_QUAD_TREE_TYPES_H
 
-#include "anki/common/basestation/math/point.h"
+#include "coretech/common/engine/math/point.h"
 #include "engine/navMap/memoryMap/memoryMapTypes.h"
 
 #include <cstdint>

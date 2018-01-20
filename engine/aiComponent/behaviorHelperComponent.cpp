@@ -32,24 +32,31 @@ namespace Cozmo {
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorHelperComponent::BehaviorHelperComponent()
-: _helperFactory(new BehaviorHelperFactory(*this))
+: IDependencyManagedComponent<BCComponentID>(BCComponentID::BehaviorHelperComponent)
+, _helperFactory(new BehaviorHelperFactory(*this))
 {
-  
-  
 }
+
+void BehaviorHelperComponent::InitDependent(Robot* robot, const BCCompMap& dependentComponents) 
+{
+  _beiWrapper = std::make_unique<BEIWrapper>(
+    dependentComponents.find(BCComponentID::BehaviorExternalInterface)->second.GetValue<BehaviorExternalInterface>()
+  );
+}
+
+
 
 ///////
 // Functions for creating new handles
 //////
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-HelperHandle BehaviorHelperComponent::AddHelperToComponent(IHelper*& helper,
-                                                           BehaviorExternalInterface& behaviorExternalInterface)
+HelperHandle BehaviorHelperComponent::AddHelperToComponent(IHelper*& helper)
 {
   // We actually don't want to track for right now
   auto helperHandle = std::shared_ptr<IHelper>(helper);
   helper = nullptr;
-  helperHandle->Init(behaviorExternalInterface);
+  helperHandle->Init(_beiWrapper->_bei);
   helperHandle->OnEnteredActivatableScope();
   return helperHandle;
 }
@@ -60,10 +67,9 @@ HelperHandle BehaviorHelperComponent::AddHelperToComponent(IHelper*& helper,
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorHelperComponent::DelegateToHelper(BehaviorExternalInterface& behaviorExternalInterface,
-                                               HelperHandle handleToRun,
-                                               BehaviorSimpleCallbackWithExternalInterface successCallback,
-                                               BehaviorSimpleCallbackWithExternalInterface failureCallback)
+bool BehaviorHelperComponent::DelegateToHelper(HelperHandle handleToRun,
+                                               BehaviorSimpleCallback successCallback,
+                                               BehaviorSimpleCallback failureCallback)
 {
   ClearStackMaintenanceVars();
   _behaviorSuccessCallback = successCallback;
@@ -74,8 +80,8 @@ bool BehaviorHelperComponent::DelegateToHelper(BehaviorExternalInterface& behavi
     return false;
   }
   
-  PushHelperOntoStackAndUpdate(behaviorExternalInterface, handleToRun);
-  _worldOriginIDAtStart = behaviorExternalInterface.GetRobotInfo().GetWorldOriginID();
+  PushHelperOntoStackAndUpdate(handleToRun);
+  _worldOriginIDAtStart = _beiWrapper->_bei.GetRobotInfo().GetWorldOriginID();
   return true;
 }
 
@@ -95,16 +101,16 @@ bool BehaviorHelperComponent::StopHelperWithoutCallback(const HelperHandle& help
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorHelperComponent::Update(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorHelperComponent::Update()
 {
   // Update the active helper stack
-  CheckInactiveStackHelpers(behaviorExternalInterface);
-  UpdateActiveHelper(behaviorExternalInterface);
+  CheckInactiveStackHelpers();
+  UpdateActiveHelper();
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorHelperComponent::CheckInactiveStackHelpers(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorHelperComponent::CheckInactiveStackHelpers()
 {
   if(!_helperStack.empty()){
     // Grab the iterator to the active helper
@@ -115,7 +121,7 @@ void BehaviorHelperComponent::CheckInactiveStackHelpers(BehaviorExternalInterfac
     // to clear the stack on top of them and become active again.
     auto inactiveIter = _helperStack.begin();
     while(inactiveIter != activeIter){
-      const bool shouldCancelDelegates = (*inactiveIter)->ShouldCancelDelegates(behaviorExternalInterface);
+      const bool shouldCancelDelegates = (*inactiveIter)->ShouldCancelDelegates();
 
       inactiveIter++;
       if(shouldCancelDelegates){
@@ -128,14 +134,14 @@ void BehaviorHelperComponent::CheckInactiveStackHelpers(BehaviorExternalInterfac
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorHelperComponent::UpdateActiveHelper(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorHelperComponent::UpdateActiveHelper()
 {
-  ICozmoBehavior::Status helperStatus = ICozmoBehavior::Status::Running;
+  IHelper::HelperStatus helperStatus = IHelper::HelperStatus::Running;
   if(!_helperStack.empty()){
     auto activeIter = _helperStack.end();
     activeIter--;
 
-    const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+    const auto& robotInfo = _beiWrapper->_bei.GetRobotInfo();
     // TODO: COZMO-10389 - return to base helper if origin changes
     bool blockWorldOriginChange = (robotInfo.GetWorldOriginID() != _worldOriginIDAtStart);
     if(blockWorldOriginChange){
@@ -145,10 +151,10 @@ void BehaviorHelperComponent::UpdateActiveHelper(BehaviorExternalInterface& beha
           activeIter != _helperStack.end()){
       
       // First, check to see if we've just completed a helper
-      if(helperStatus == ICozmoBehavior::Status::Complete){
-        helperStatus = (*activeIter)->OnDelegateSuccess(behaviorExternalInterface);
-      }else if(helperStatus == ICozmoBehavior::Status::Failure){
-        helperStatus = (*activeIter)->OnDelegateFailure(behaviorExternalInterface);
+      if(helperStatus == IHelper::HelperStatus::Complete){
+        helperStatus = (*activeIter)->OnDelegateSuccess();
+      }else if(helperStatus == IHelper::HelperStatus::Failure){
+        helperStatus = (*activeIter)->OnDelegateFailure();
       }
       
       
@@ -157,20 +163,20 @@ void BehaviorHelperComponent::UpdateActiveHelper(BehaviorExternalInterface& beha
       // Override the helper status to fail out of all delegates and return
       // to the lowest level delegate
       if(blockWorldOriginChange && _helperStack.size() != 1){
-        helperStatus = ICozmoBehavior::Status::Failure;
+        helperStatus = IHelper::HelperStatus::Failure;
       }else if(blockWorldOriginChange && _helperStack.size() == 1){
         blockWorldOriginChange = false;
       }
       
       // Allows Delegate to directly check on success/failure
-      if(helperStatus == ICozmoBehavior::Status::Running){
+      if(helperStatus == IHelper::HelperStatus::Running){
         // Give helper update tick
-        helperStatus = (*activeIter)->UpdateWhileActive(behaviorExternalInterface, newDelegate);
+        helperStatus = (*activeIter)->UpdateWhileActive(newDelegate);
       }
       
       // If helper completed, start the next helper, or if the
       // helper specified a new delegate, make that the actiev helper
-      if(helperStatus != ICozmoBehavior::Status::Running){
+      if(helperStatus != IHelper::HelperStatus::Running){
 
         PRINT_CH_INFO("Behaviors", "HelperComponent.UpdateActive.Complete", "%s no longer running",
                       (*activeIter)->GetName().c_str());
@@ -196,7 +202,7 @@ void BehaviorHelperComponent::UpdateActiveHelper(BehaviorExternalInterface& beha
         activeIter = _helperStack.end();
 
         if(newDelegate){          
-          PushHelperOntoStackAndUpdate(behaviorExternalInterface, newDelegate);
+          PushHelperOntoStackAndUpdate(newDelegate);
           activeIter = _helperStack.end();
           activeIter--;
         }
@@ -205,16 +211,16 @@ void BehaviorHelperComponent::UpdateActiveHelper(BehaviorExternalInterface& beha
   }
 
   // If the helpers have just completed, notify the behavior appropriately
-  if(_helperStack.empty() && helperStatus != ICozmoBehavior::Status::Running){
+  if(_helperStack.empty() && helperStatus != IHelper::HelperStatus::Running){
     // Copy the callback function so that it can be called after
     // this helper stack has been cleared in case it wants to set up a
     // new helper stack/callbacks
-    BehaviorSimpleCallbackWithExternalInterface behaviorCallbackToRun = nullptr;
+    BehaviorSimpleCallback behaviorCallbackToRun = nullptr;
     
-    if(helperStatus == ICozmoBehavior::Status::Complete &&
+    if(helperStatus == IHelper::HelperStatus::Complete &&
        _behaviorSuccessCallback != nullptr){
       behaviorCallbackToRun = _behaviorSuccessCallback;
-    }else if(helperStatus == ICozmoBehavior::Status::Failure &&
+    }else if(helperStatus == IHelper::HelperStatus::Failure &&
              _behaviorFailureCallback != nullptr){
       behaviorCallbackToRun = _behaviorFailureCallback;
     }
@@ -226,21 +232,21 @@ void BehaviorHelperComponent::UpdateActiveHelper(BehaviorExternalInterface& beha
     // in case the callback wants to set up helpers/callbacks of its own
     ClearStackMaintenanceVars();
     if(behaviorCallbackToRun != nullptr){
-      behaviorCallbackToRun(behaviorExternalInterface);
+      behaviorCallbackToRun();
     }
   }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorHelperComponent::PushHelperOntoStackAndUpdate(BehaviorExternalInterface& behaviorExternalInterface, HelperHandle handle)
+void BehaviorHelperComponent::PushHelperOntoStackAndUpdate(HelperHandle handle)
 {
   PRINT_CH_INFO("Behaviors", "HelperComponent.StartNewHelper", "%s", handle->GetName().c_str());
   
-  handle->OnActivatedInternal(behaviorExternalInterface);
+  handle->OnActivatedInternal();
   _helperStack.push_back(handle);
 
   // Run the first update immediately so the helper can delegate control
-  UpdateActiveHelper(behaviorExternalInterface);
+  UpdateActiveHelper();
 }
 
   

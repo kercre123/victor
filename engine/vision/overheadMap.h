@@ -14,8 +14,8 @@
 #ifndef __Anki_Cozmo_OverheadMap_H__
 #define __Anki_Cozmo_OverheadMap_H__
 
-#include "anki/common/types.h"
-#include "anki/vision/basestation/image.h"
+#include "coretech/common/shared/types.h"
+#include "coretech/vision/engine/image.h"
 #include "engine/debugImageList.h"
 #include "engine/vision/visionPoseData.h"
 

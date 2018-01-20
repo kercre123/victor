@@ -12,6 +12,7 @@
 #include "engine/events/animationTriggerResponsesContainer.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/needsSystem/needsManager.h"
+#include "engine/perfMetric.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
 #include "engine/robotInitialConnection.h"
@@ -19,8 +20,8 @@
 #include "engine/robotManager.h"
 #include "engine/robotToEngineImplMessaging.h"
 #include "engine/utils/cozmoExperiments.h"
-#include "anki/common/basestation/utils/timer.h"
-#include "anki/common/robot/config.h"
+#include "coretech/common/engine/utils/timer.h"
+#include "coretech/common/robot/config.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/animationTrigger.h"
@@ -33,7 +34,7 @@
 #include <vector>
 #include <sys/stat.h>
 
-#include "anki/common/robot/config.h"
+#include "coretech/common/robot/config.h"
 #include "util/global/globalDefinitions.h"
 
 #if USE_DAS
@@ -153,6 +154,7 @@ void RobotManager::RemoveRobot(const RobotID_t withID, bool robotRejectedConnect
     }
 
     _context->GetNeedsManager()->OnRobotDisconnected();
+    _context->GetPerfMetric()->OnRobotDisconnected();
 
 #if USE_DAS
     // Resume trying to upload DAS files to the server, because at
@@ -260,10 +262,10 @@ void RobotManager::UpdateAllRobots()
 
     if(robot->HasReceivedRobotState()) {
       _context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(robot->GetRobotState()));
-    } else {
-      PRINT_NAMED_WARNING("RobotManager.UpdateAllRobots",
-                          "Not sending robot %d state (none available).",
-                          robotId);
+    }
+    else {
+      PRINT_PERIODIC_CH_INFO(10, "Unnamed", "RobotManager.UpdateAllRobots",
+                              "Not sending robot %d state (none available).",robotId);
     }
   } // End loop on _robots
   

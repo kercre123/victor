@@ -12,8 +12,8 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/helpers/behaviorScoringWrapper.h"
 
-#include "coretech/common/include/anki/common/basestation/jsonTools.h"
-#include "coretech/common/include/anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -46,9 +46,9 @@ BehaviorScoringWrapper::~BehaviorScoringWrapper()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorScoringWrapper::Init(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorScoringWrapper::Init(BehaviorExternalInterface& bei)
 {
-  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  auto& robotInfo = bei.GetRobotInfo();
   if(robotInfo.HasExternalInterface()){
     using namespace ExternalInterface;
     _eventHandlers.push_back(robotInfo.GetExternalInterface()->Subscribe(
@@ -79,12 +79,12 @@ void BehaviorScoringWrapper::BehaviorDeactivated()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-float BehaviorScoringWrapper::EvaluateScore(BehaviorExternalInterface& behaviorExternalInterface) const
+float BehaviorScoringWrapper::EvaluateScore(BehaviorExternalInterface& bei) const
 {
   float score = _flatScore;
   if (!_moodScorer.IsEmpty()  &&
-      behaviorExternalInterface.HasMoodManager()) {
-    auto& moodManager = behaviorExternalInterface.GetMoodManager();
+      bei.HasMoodManager()) {
+    auto& moodManager = bei.GetMoodManager();
     score = _moodScorer.EvaluateEmotionScore(moodManager);
   }
 

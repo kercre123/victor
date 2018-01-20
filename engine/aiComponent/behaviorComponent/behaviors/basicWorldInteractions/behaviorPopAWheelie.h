@@ -13,7 +13,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorPopAWheelie_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorPopAWheelie_H__
 
-#include "anki/common/basestation/objectIDs.h"
+#include "coretech/common/engine/objectIDs.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/objectInteractionInfoCache.h"
 
@@ -32,13 +32,13 @@ namespace Anki {
       friend class BehaviorContainer;
       BehaviorPopAWheelie(const Json::Value& config);
       
-      virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-      virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+      virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
+      virtual void OnBehaviorActivated() override;
+      virtual void OnBehaviorDeactivated() override;
       
-      virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-      virtual bool CarryingObjectHandledInternally() const override { return false;}
+      virtual bool WantsToBeActivatedBehavior() const override;
       
-      virtual void UpdateTargetBlocksInternal(BehaviorExternalInterface& behaviorExternalInterface) const override { UpdateTargetBlock(behaviorExternalInterface); }
+      virtual void UpdateTargetBlocksInternal() const override { UpdateTargetBlock(); }
       
       virtual std::set<ObjectInteractionIntention>
             GetBehaviorObjectInteractionIntentions() const override {
@@ -61,15 +61,15 @@ namespace Anki {
         PerformingAction
       };
             
-      void TransitionToReactingToBlock(BehaviorExternalInterface& behaviorExternalInterface);
-      void TransitionToPerformingAction(BehaviorExternalInterface& behaviorExternalInterface);
-      void TransitionToPerformingAction(BehaviorExternalInterface& behaviorExternalInterface, bool isRetry);
+      void TransitionToReactingToBlock();
+      void TransitionToPerformingAction();
+      void TransitionToPerformingAction(bool isRetry);
       
-      void SetupRetryAction(BehaviorExternalInterface& behaviorExternalInterface, const ExternalInterface::RobotCompletedAction& msg);
+      void SetupRetryAction(const ExternalInterface::RobotCompletedAction& msg);
       
-      void ResetBehavior(BehaviorExternalInterface& behaviorExternalInterface);
+      void ResetBehavior();
       
-      virtual void UpdateTargetBlock(BehaviorExternalInterface& behaviorExternalInterface) const;
+      virtual void UpdateTargetBlock() const;
     };
     
   }

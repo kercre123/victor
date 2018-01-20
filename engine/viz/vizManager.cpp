@@ -14,12 +14,12 @@
 #include "engine/viz/vizObjectBaseId.h"
 #include "engine/debug/devLoggingSystem.h"
 #include "engine/cozmoAPI/comms/gameMessagePort.h"
-#include "anki/common/basestation/exceptions.h"
-#include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/math/polygon_impl.h"
-#include "anki/common/basestation/math/rect_impl.h"
-#include "anki/vision/basestation/imageIO.h"
-#include "anki/vision/basestation/faceTracker.h"
+#include "coretech/common/engine/exceptions.h"
+#include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/math/rect_impl.h"
+#include "coretech/vision/engine/imageIO.h"
+#include "coretech/vision/engine/faceTracker.h"
 #include "engine/utils/parsingConstants/parsingConstants.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/ankiEventUtil.h"
@@ -89,6 +89,7 @@ namespace Anki {
     
     VizManager::VizManager()
     : _isConnected(false)
+    , _messageCountViz(0)
     , _sendImages(false)
     {
       // Compute the max IDs permitted by VizObject type
@@ -105,6 +106,8 @@ namespace Anki {
       }
       
       ANKI_CPU_PROFILE("VizManager::SendMessage");
+
+      ++_messageCountViz;
 
       const size_t MAX_MESSAGE_SIZE{(size_t)VizConstants::MaxMessageSize};
       uint8_t buffer[MAX_MESSAGE_SIZE];
@@ -834,15 +837,19 @@ namespace Anki {
                                     const u8  imageProcFrameRateHz,
                                     const u32 numProcAnimFaceKeyframes,
                                     const u8  lockedTracks,
-                                    const u8  tracksInUse,             
-                                    const u32 animId,
-                                    const u8  animTag,                       
+                                    const u8  tracksInUse,                                    
                                     const f32 imuTemperature_degC,
                                     std::array<uint16_t, 4> cliffThresholds
                                     )
     {
       ANKI_CPU_PROFILE("VizManager::SendRobotState");
-      SendMessage(VizInterface::MessageViz(VizInterface::RobotStateMessage(msg, imuTemperature_degC, numProcAnimFaceKeyframes, animId, cliffThresholds, videoFrameRateHz, imageProcFrameRateHz, lockedTracks, tracksInUse, animTag)));
+      SendMessage(VizInterface::MessageViz(VizInterface::RobotStateMessage(msg, imuTemperature_degC, numProcAnimFaceKeyframes, cliffThresholds, videoFrameRateHz, imageProcFrameRateHz, lockedTracks, tracksInUse)));
+    }
+
+    void VizManager::SendCurrentAnimation(const std::string& animName, u8 animTag)
+    {
+      ANKI_CPU_PROFILE("VizManager::SendCurrentAnimation");
+      SendMessage(VizInterface::MessageViz(VizInterface::CurrentAnimation(animTag, animName)));  
     }
     
     void VizManager::SendRobotMood(VizInterface::RobotMood&& robotMood)

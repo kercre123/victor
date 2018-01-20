@@ -23,7 +23,7 @@
 //#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 //#include "engine/navMemoryMap/iNavMemoryMap.h"
 //
-//#include "anki/common/basestation/math/pose.h"
+//#include "coretech/common/engine/math/pose.h"
 //
 //namespace Anki {
 //namespace Cozmo {
@@ -50,7 +50,7 @@
 //  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //
 //  // true if currently there are cliffs that Cozmo would like to explore
-//  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
+//  virtual bool WantsToBeActivatedBehavior() const override;
 //  virtual bool CarryingObjectHandledInternally() const override {return false;}
 //
 //protected:
@@ -59,11 +59,11 @@
 //  // ICozmoBehavior API
 //  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //  
-//  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-//  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
-//  virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+//  virtual void OnBehaviorActivated() override;
+//  virtual void BehaviorUpdate() override;
+//  virtual void OnBehaviorDeactivated() override;
 //
-//  virtual void AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+//  virtual void AlwaysHandleInScope(const EngineToGameEvent& event) override;
 //
 //  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //  // Events

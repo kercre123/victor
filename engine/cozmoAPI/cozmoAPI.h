@@ -13,7 +13,7 @@
 
 #ifndef __Anki_Cozmo_CozmoAPI_h__
 #define __Anki_Cozmo_CozmoAPI_h__
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 #include "util/export/export.h"
 #include "util/helpers/noncopyable.h"
 #include "json/json.h"
@@ -56,12 +56,17 @@ public:
   // Activate A/B experiment
   ANKI_VISIBLE uint32_t ActivateExperiment(const uint8_t* requestBuffer, size_t requestLen,
                                            uint8_t* responseBuffer, size_t responseLen);
+
+  ANKI_VISIBLE void RegisterEngineTickPerformance(const float tickDuration_ms,
+                                                  const float tickFrequency_ms,
+                                                  const float sleepDurationIntended_ms,
+                                                  const float sleepDurationActual_ms) const;
   
   // Destroys any running thread and game instance
   ANKI_VISIBLE void Clear();
   
   ANKI_VISIBLE ~CozmoAPI();
-  
+
 private:
   class CozmoInstanceRunner
   {

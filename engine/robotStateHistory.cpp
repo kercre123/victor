@@ -10,8 +10,8 @@
 
 #include "engine/robot.h"
 
-#include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/robot/utilities.h"
+#include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/robot/utilities.h"
 
 #include "util/logging/logging.h"
 #include "util/math/math.h"
@@ -143,7 +143,8 @@ namespace Anki {
     HistStateKey RobotStateHistory::currHistStateKey_ = 0;
     
     RobotStateHistory::RobotStateHistory()
-    : _windowSize_ms(3000)
+    : IDependencyManagedComponent(RobotComponentID::StateHistory)
+    , _windowSize_ms(3000)
     {
 
     }

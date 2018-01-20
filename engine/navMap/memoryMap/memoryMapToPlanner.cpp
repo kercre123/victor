@@ -15,8 +15,8 @@
 #include "engine/viz/vizManager.h" // only for debug render
 #include "engine/robot.h"
 
-#include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/math/polygon_impl.h"
+#include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/engine/math/polygon_impl.h"
 
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/logging/logging.h"
@@ -439,8 +439,7 @@ void TestNavMemoryMapToPlanner(Robot& robot)
     {MemoryMapTypes::EContentType::Unknown               , true},
     {MemoryMapTypes::EContentType::ClearOfObstacle       , true},
     {MemoryMapTypes::EContentType::ClearOfCliff          , true},
-    {MemoryMapTypes::EContentType::ObstacleCube          , true},
-    {MemoryMapTypes::EContentType::ObstacleCubeRemoved   , true},
+    {MemoryMapTypes::EContentType::ObstacleObservable    , true},
     {MemoryMapTypes::EContentType::ObstacleCharger       , true},
     {MemoryMapTypes::EContentType::ObstacleChargerRemoved, true},
     {MemoryMapTypes::EContentType::ObstacleProx          , true},
@@ -457,8 +456,7 @@ void TestNavMemoryMapToPlanner(Robot& robot)
     {MemoryMapTypes::EContentType::Unknown               , true},
     {MemoryMapTypes::EContentType::ClearOfObstacle       , true},
     {MemoryMapTypes::EContentType::ClearOfCliff          , true},
-    {MemoryMapTypes::EContentType::ObstacleCube          , true},
-    {MemoryMapTypes::EContentType::ObstacleCubeRemoved   , true},
+    {MemoryMapTypes::EContentType::ObstacleObservable    , true},
     {MemoryMapTypes::EContentType::ObstacleCharger       , true},
     {MemoryMapTypes::EContentType::ObstacleChargerRemoved, true},
     {MemoryMapTypes::EContentType::ObstacleProx          , true},

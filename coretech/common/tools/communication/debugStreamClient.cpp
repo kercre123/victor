@@ -14,8 +14,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/serialize.h"
 #include "anki/common/robot/fixedLengthList.h"
 
-#include "anki/vision/robot/fiducialMarkers.h"
-#include "anki/vision/robot/binaryTracker.h"
+#include "coretech/vision/robot/fiducialMarkers.h"
+#include "coretech/vision/robot/binaryTracker.h"
 
 #include <ctime>
 #include <vector>

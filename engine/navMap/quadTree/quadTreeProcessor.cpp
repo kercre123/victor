@@ -12,9 +12,9 @@
 #include "quadTreeProcessor.h"
 #include "quadTreeNode.h"
 
-#include "anki/common/basestation/math/quad_impl.h"
-#include "anki/common/basestation/math/polygon_impl.h"
-#include "anki/vision/basestation/profiler.h"
+#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/vision/engine/profiler.h"
 
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
@@ -487,7 +487,7 @@ void QuadTreeProcessor::Transform(NodeTransformFunction transform)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeProcessor::FindIf(NodePredicate pred, MemoryMapDataConstList& output)
+void QuadTreeProcessor::FindIf(NodePredicate pred, MemoryMapDataConstList& output) const
 {
   // TODO: use cached data in the processor to access all data directly, since we don't have constraints on locality
   if (_root) {
@@ -596,7 +596,7 @@ void QuadTreeProcessor::ClearDraw() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool QuadTreeProcessor::IsCached(EContentType contentType)
 {
-  const bool isCached = (contentType == EContentType::ObstacleCube         ) ||
+  const bool isCached = (contentType == EContentType::ObstacleObservable   ) ||
                         (contentType == EContentType::ObstacleProx         ) ||
                         (contentType == EContentType::ObstacleUnrecognized ) ||
                         (contentType == EContentType::InterestingEdge      ) ||
@@ -613,8 +613,7 @@ ColorRGBA QuadTreeProcessor::GetDebugColor(MemoryMapTypes::EContentType contentT
     case EContentType::ClearOfObstacle:       { ret = ColorRGBA(0.0f, 1.0f, 0.0f, 0.3f); break; };
     case EContentType::ClearOfCliff:          { ret = ColorRGBA(0.0f, 0.5f, 0.0f, 0.3f); break; };
     case EContentType::Unknown:               { ret = ColorRGBA(0.2f, 0.2f, 0.6f, 0.3f); break; };
-    case EContentType::ObstacleCube:          { ret = ColorRGBA(1.0f, 0.0f, 0.0f, 0.3f); break; };
-    case EContentType::ObstacleCubeRemoved:   { ret = ColorRGBA(1.0f, 0.0f, 0.0f, 1.0f); break; };
+    case EContentType::ObstacleObservable:    { ret = ColorRGBA(1.0f, 0.0f, 0.0f, 0.3f); break; };
     case EContentType::ObstacleCharger:       { ret = ColorRGBA(1.0f, 1.0f, 0.0f, 0.3f); break; };
     case EContentType::ObstacleChargerRemoved:{ ret = ColorRGBA(1.0f, 1.0f, 0.0f, 1.0f); break; };
     case EContentType::ObstacleProx:          { ret = ColorRGBA(0.0f, 0.5f, 0.5f, 0.3f); break; };

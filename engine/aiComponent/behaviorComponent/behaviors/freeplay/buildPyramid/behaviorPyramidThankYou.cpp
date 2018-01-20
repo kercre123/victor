@@ -20,7 +20,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/faceWorld.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 
 
 
@@ -46,16 +46,16 @@ BehaviorPyramidThankYou::~BehaviorPyramidThankYou()
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorPyramidThankYou::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorPyramidThankYou::WantsToBeActivatedBehavior() const
 {
   // Check to see if there's a person we can turn to look at
-  if(behaviorExternalInterface.GetFaceWorld().HasAnyFaces(kTimeSinceFaceSeenForTurn)){
+  if(GetBEI().GetFaceWorld().HasAnyFaces(kTimeSinceFaceSeenForTurn)){
     return true;
   }
   
   // Check to see if there's a block with a location we can turn to to say thanks
   if(_targetID > -1){
-    const ObservableObject* obj = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_targetID);
+    const ObservableObject* obj = GetBEI().GetBlockWorld().GetLocatedObjectByID(_targetID);
     if(obj != nullptr){
       return true;
     }
@@ -67,12 +67,12 @@ bool BehaviorPyramidThankYou::WantsToBeActivatedBehavior(BehaviorExternalInterfa
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorPyramidThankYou::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPyramidThankYou::OnBehaviorActivated()
 {
   CompoundActionSequential* turnVerifyThank = new CompoundActionSequential();
   Pose3d facePose;
-  behaviorExternalInterface.GetFaceWorld().GetLastObservedFace(facePose);
-  const bool lastFaceInCurrentOrigin = behaviorExternalInterface.GetRobotInfo().IsPoseInWorldOrigin(facePose);
+  GetBEI().GetFaceWorld().GetLastObservedFace(facePose);
+  const bool lastFaceInCurrentOrigin = GetBEI().GetRobotInfo().IsPoseInWorldOrigin(facePose);
   if(lastFaceInCurrentOrigin){
    // Turn to the user and say thank you
     TurnTowardsFaceAction* turnTowardsAction = new TurnTowardsLastFacePoseAction();
@@ -87,12 +87,12 @@ Result BehaviorPyramidThankYou::OnBehaviorActivated(BehaviorExternalInterface& b
   }
   
   DelegateIfInControl(turnVerifyThank);
-  return Result::RESULT_OK;
+  
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPyramidThankYou::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPyramidThankYou::OnBehaviorDeactivated()
 {
   _targetID = -1;
 }

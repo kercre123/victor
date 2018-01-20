@@ -47,7 +47,7 @@ BehaviorDance::BehaviorDance(const Json::Value& config)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorDance::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDance::OnBehaviorActivated()
 {
   BlockWorldFilter filter;
   filter.AddAllowedFamily(ObjectFamily::LightCube);
@@ -55,7 +55,7 @@ Result BehaviorDance::OnBehaviorActivated(BehaviorExternalInterface& behaviorExt
 
   // Get all connected light cubes
   std::vector<const ActiveObject*> connectedObjects;
-  behaviorExternalInterface.GetBlockWorld().FindConnectedActiveMatchingObjects(filter, connectedObjects);
+  GetBEI().GetBlockWorld().FindConnectedActiveMatchingObjects(filter, connectedObjects);
   
   s32 durationModifier_ms = 0;
   // For each of the connected light cubes
@@ -64,16 +64,15 @@ Result BehaviorDance::OnBehaviorActivated(BehaviorExternalInterface& behaviorExt
     // Start playing a random dance related light animation
     const ObjectID& objectID = object->GetID();
     
-    CubeLightComponent::AnimCompletedCallback animCompleteCallback = [this, objectID, &behaviorExternalInterface](){
-      CubeAnimComplete(behaviorExternalInterface, objectID);
+    CubeLightComponent::AnimCompletedCallback animCompleteCallback = [this, objectID](){
+      CubeAnimComplete(objectID);
     };
     
     _lastAnimTrigger[objectID] = CubeAnimationTrigger::Count;
     
-    const CubeAnimationTrigger trigger = GetRandomAnimTrigger(behaviorExternalInterface,
-                                                              CubeAnimationTrigger::Count);
+    const CubeAnimationTrigger trigger = GetRandomAnimTrigger(CubeAnimationTrigger::Count);
     
-    behaviorExternalInterface.GetCubeLightComponent().PlayLightAnim(objectID,
+    GetBEI().GetCubeLightComponent().PlayLightAnim(objectID,
                                                                     trigger,
                                                                     animCompleteCallback,
                                                                     false,
@@ -96,16 +95,16 @@ Result BehaviorDance::OnBehaviorActivated(BehaviorExternalInterface& behaviorExt
   DEV_ASSERT(false, "BehaviorDance.Init.MusicTurnedOff");
   
   // Init base class to play our animation sequence
-  return BehaviorPlayAnimSequence::OnBehaviorActivated(behaviorExternalInterface);
+  return BehaviorPlayAnimSequence::OnBehaviorActivated();
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDance::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDance::OnBehaviorDeactivated()
 {
-  if(behaviorExternalInterface.HasPublicStateBroadcaster()){
+  if(GetBEI().HasPublicStateBroadcaster()){
     // Stop dancing audio and go back to previous
-    auto& publicStateBroadcaster = behaviorExternalInterface.GetRobotPublicStateBroadcaster();
+    auto& publicStateBroadcaster = GetBEI().GetRobotPublicStateBroadcaster();
     publicStateBroadcaster.UpdateBroadcastBehaviorStage(BehaviorStageTag::Count, 0);
   }
 
@@ -115,7 +114,7 @@ void BehaviorDance::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExt
   
   // Get all connected light cubes
   std::vector<const ActiveObject*> connectedObjects;
-  behaviorExternalInterface.GetBlockWorld().FindConnectedActiveMatchingObjects(filter, connectedObjects);
+  GetBEI().GetBlockWorld().FindConnectedActiveMatchingObjects(filter, connectedObjects);
   
   // For each of the connected light cubes
   for(const ActiveObject* object : connectedObjects)
@@ -123,11 +122,11 @@ void BehaviorDance::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExt
     // Layer the fadeOff light animation on top of the last played animation
     // and stop all animations once the fadeOff completes
     const ObjectID& objectID = object->GetID();
-    behaviorExternalInterface.GetCubeLightComponent().PlayLightAnim(
+    GetBEI().GetCubeLightComponent().PlayLightAnim(
       objectID,
       CubeAnimationTrigger::DanceFadeOff,
-      [&behaviorExternalInterface](){
-        behaviorExternalInterface.GetCubeLightComponent().StopAllAnims();
+      [this](){
+        GetBEI().GetCubeLightComponent().StopAllAnims();
       }
     );
   }
@@ -135,7 +134,7 @@ void BehaviorDance::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExt
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDance::CubeAnimComplete(BehaviorExternalInterface& behaviorExternalInterface, const ObjectID& objectID)
+void BehaviorDance::CubeAnimComplete(const ObjectID& objectID)
 {
   // When the light anims are stopped due to the behavior stopping, this callback
   // is called so don't do anything
@@ -146,14 +145,14 @@ void BehaviorDance::CubeAnimComplete(BehaviorExternalInterface& behaviorExternal
   
   // When the animation completes it will call this function again to play a
   // different random dance animation
-  CubeLightComponent::AnimCompletedCallback animCompleteCallback = [this, objectID, &behaviorExternalInterface](){
-    CubeAnimComplete(behaviorExternalInterface, objectID);
+  CubeLightComponent::AnimCompletedCallback animCompleteCallback = [this, objectID](){
+    CubeAnimComplete(objectID);
   };
 
-  const CubeAnimationTrigger trigger = GetRandomAnimTrigger(behaviorExternalInterface, _lastAnimTrigger[objectID]);
+  const CubeAnimationTrigger trigger = GetRandomAnimTrigger(_lastAnimTrigger[objectID]);
 
   // Stop the previous animation and play the new random one
-  behaviorExternalInterface.GetCubeLightComponent().PlayLightAnim(objectID,
+  GetBEI().GetCubeLightComponent().PlayLightAnim(objectID,
                                                                   trigger,
                                                                   animCompleteCallback);
   
@@ -162,8 +161,7 @@ void BehaviorDance::CubeAnimComplete(BehaviorExternalInterface& behaviorExternal
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-CubeAnimationTrigger BehaviorDance::GetRandomAnimTrigger(BehaviorExternalInterface& behaviorExternalInterface,
-                                                         const CubeAnimationTrigger& prevTrigger) const
+CubeAnimationTrigger BehaviorDance::GetRandomAnimTrigger(const CubeAnimationTrigger& prevTrigger) const
 {
   std::set<CubeAnimationTrigger> triggersInUse;
   for(const auto& trigger : _lastAnimTrigger)
@@ -182,7 +180,7 @@ CubeAnimationTrigger BehaviorDance::GetRandomAnimTrigger(BehaviorExternalInterfa
   const u32 kBoundedWhileLoops = 100;
   BOUNDED_WHILE(kBoundedWhileLoops, triggersInUse.count(trigger) > 0)
   {
-    const int rand = behaviorExternalInterface.GetRNG().RandInt(static_cast<int>(kNumDanceAnims));
+    const int rand = GetBEI().GetRNG().RandInt(static_cast<int>(kNumDanceAnims));
     trigger = kDanceCubeAnims[rand];
   }
   

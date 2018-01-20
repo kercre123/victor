@@ -10,13 +10,32 @@ then
 fi                                                                                                  
 TOPLEVEL=`$GIT rev-parse --show-toplevel`
 
+: ${FORCE:=0}
+: ${BUILD_ROOT:="${TOPLEVEL}/_build/android/Release"}
+: ${INSTALL_ROOT:="/data/data/com.anki.cozmoengine"}
+
+# Warn if BUILD_ROOT points to Debug output
+# Should only profile Release builds.
+case $BUILD_ROOT in *Debug)
+    echo "warning: You are attempting to profile a Debug build."
+    echo "         Please use Release builds for profiling to ensure accurate measurements"
+
+    # exit unless FORCE variable is set
+    [ $FORCE -eq 0 ] && exit 1
+esac
+
+if [ ! -d ${BUILD_ROOT} ]; then
+    echo "error: Build artifacts not found at ${BUILD_ROOT}"
+    exit 1
+fi
+
 # Path to native executables on build host
-native_bin_dir="${TOPLEVEL}/_build/android/Debug/bin"
-native_lib_dir="${TOPLEVEL}/_build/android/Debug/lib"
+native_bin_dir="${BUILD_ROOT}/bin"
+native_lib_dir="${BUILD_ROOT}/lib"
 
 # Path to native executables on device
-device_bin_dir="/data/data/com.anki.cozmoengine/bin"
-device_lib_dir="/data/data/com.anki.cozmoengine/lib"
+device_bin_dir="${INSTALL_ROOT}/bin"
+device_lib_dir="${INSTALL_ROOT}/lib"
 
 # Path to symbolicated version of native executables
 symbol_bin_dir="symbol_cache/${device_bin_dir}"

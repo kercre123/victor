@@ -5,8 +5,8 @@
 #include "anki/common/robot/matlabInterface.h"
 #include "anki/common/robot/fixedLengthList.h"
 
-#include "anki/vision/robot/lucasKanade.h"
-#include "anki/vision/robot/imageProcessing_declarations.h"
+#include "coretech/vision/robot/lucasKanade.h"
+#include "coretech/vision/robot/imageProcessing_declarations.h"
 
 #include "anki/common/matlab/mexWrappers.h"
 #include "anki/common/shared/utilities_shared.h"

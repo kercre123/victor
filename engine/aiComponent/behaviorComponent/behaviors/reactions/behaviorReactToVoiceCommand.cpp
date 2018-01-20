@@ -19,7 +19,7 @@
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
 #include "engine/voiceCommands/voiceCommandComponent.h"
-#include "anki/common/basestation/math/pose.h"
+#include "coretech/common/engine/math/pose.h"
 #include "clad/types/animationTrigger.h"
 
 
@@ -35,15 +35,15 @@ BehaviorReactToVoiceCommand::BehaviorReactToVoiceCommand(const Json::Value& conf
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorReactToVoiceCommand::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorReactToVoiceCommand::WantsToBeActivatedBehavior() const
 {
   if (_desiredFace.IsValid())
   {
     // If we don't know where this face is right now, switch it to Invalid so we just look toward the last face pose
-    const auto* face = behaviorExternalInterface.GetFaceWorld().GetFace(_desiredFace);
+    const auto* face = GetBEI().GetFaceWorld().GetFace(_desiredFace);
     Pose3d pose;
 
-    const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+    const auto& robotInfo = GetBEI().GetRobotInfo();
     if(nullptr == face || !face->GetHeadPose().HasSameRootAs(robotInfo.GetPose()))
     {
       _desiredFace.Reset();
@@ -55,9 +55,9 @@ bool BehaviorReactToVoiceCommand::WantsToBeActivatedBehavior(BehaviorExternalInt
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorReactToVoiceCommand::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToVoiceCommand::OnBehaviorActivated()
 {
-  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  const auto& robotInfo = GetBEI().GetRobotInfo();
   
   // Stop all movement so we can listen for a command
   robotInfo.GetMoveComponent().StopAllMotors();
@@ -107,15 +107,13 @@ Result BehaviorReactToVoiceCommand::OnBehaviorActivated(BehaviorExternalInterfac
   Anki::Util::sEvent("voice_command.responding_to_command", {}, EnumToString(VoiceCommandType::HeyCozmo));
   robotInfo.GetContext()->GetVoiceCommandComponent()->BroadcastVoiceEvent(RespondingToCommand(VoiceCommandType::HeyCozmo));
   robotInfo.GetContext()->GetVoiceCommandComponent()->BroadcastVoiceEvent(RespondingToCommandStart(VoiceCommandType::HeyCozmo));
-  
-  return RESULT_OK;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToVoiceCommand::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToVoiceCommand::OnBehaviorDeactivated()
 {
-  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  const auto& robotInfo = GetBEI().GetRobotInfo();
   robotInfo.GetContext()->GetVoiceCommandComponent()->ForceListenContext(VoiceCommand::VoiceCommandListenContext::TriggerPhrase);
   
   using namespace ::Anki::Cozmo::VoiceCommand;

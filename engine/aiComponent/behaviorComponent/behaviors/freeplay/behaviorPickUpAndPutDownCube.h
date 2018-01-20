@@ -13,7 +13,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_Sparkable_BehaviorPickUpAndPutDownCube_H__
 #define __Cozmo_Basestation_Behaviors_Sparkable_BehaviorPickUpAndPutDownCube_H__
 
-#include "anki/common/basestation/objectIDs.h"
+#include "coretech/common/engine/objectIDs.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 #include <vector>
@@ -29,10 +29,9 @@ protected:
   friend class BehaviorContainer;
   BehaviorPickUpAndPutDownCube(const Json::Value& config);
 
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual bool CarryingObjectHandledInternally() const override { return false;}
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
+  virtual void OnBehaviorActivated() override;
+  virtual bool WantsToBeActivatedBehavior() const override;
   
 private:
   
@@ -42,8 +41,8 @@ private:
     PutDownCube,
   };
   
-  void TransitionToDriveWithCube(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToPutDownCube(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToDriveWithCube();
+  void TransitionToPutDownCube();
 
   mutable ObjectID _targetBlockID;
   

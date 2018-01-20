@@ -1,6 +1,6 @@
 if (ANDROID)
-  file(GLOB ROBOT_CORE_SRCS ${CMAKE_SOURCE_DIR}/robot2/core/src/*.c)
-  file(GLOB ROBOT_CORE_INCS ${CMAKE_SOURCE_DIR}/robot2/core/inc/*.h)
+  file(GLOB ROBOT_CORE_SRCS ${CMAKE_SOURCE_DIR}/robot/core/src/*.c)
+  file(GLOB ROBOT_CORE_INCS ${CMAKE_SOURCE_DIR}/robot/core/inc/*.h)
 
   set(ROBOT_CORE_LIBS
     robot_core
@@ -14,12 +14,12 @@ if (ANDROID)
 
     target_include_directories(${LIB} 
       PRIVATE
-      $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot2/core/inc>
+      $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot/core/inc>
     )
 
     set_target_properties(${LIB} PROPERTIES
       INTERFACE_INCLUDE_DIRECTORIES
-      "${CMAKE_SOURCE_DIR}/robot2/core/inc"
+      "${CMAKE_SOURCE_DIR}/robot/core/inc"
     )
   endforeach()
 endif()

@@ -17,11 +17,12 @@
 #include "engine/ankiEventUtil.h"
 #include "engine/ble/BLESystem.h"
 #include "engine/debug/cladLoggerProvider.h"
-#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "engine/components/visionComponent.h"
 #include "engine/deviceData/deviceDataManager.h"
 #include "engine/needsSystem/needsManager.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "engine/perfMetric.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/utils/parsingConstants/parsingConstants.h"
 #include "engine/viz/vizManager.h"
 #include "engine/robot.h"
@@ -33,7 +34,13 @@
 #include "engine/factory/factoryTestLogger.h"
 #include "engine/voiceCommands/voiceCommandComponent.h"
 #include "engine/cozmoAPI/comms/uiMessageHandler.h"
+
+#include "anki/cozmo/shared/cozmoConfig.h"
+
+#include "osState/osState.h"
+
 #include "clad/externalInterface/messageGameToEngine.h"
+
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/global/globalDefinitions.h"
@@ -44,6 +51,7 @@
 #include "util/time/universalTime.h"
 #include "util/environment/locale.h"
 #include "util/transport/connectionStats.h"
+
 #include <cstdlib>
 #include <ctime>
 #include <iomanip>
@@ -116,7 +124,7 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort
   helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestLocale>();
 
   auto handler = [this] (const std::vector<Util::AnkiLab::AssignmentDef>& assignments) {
-    _context->GetExperiments()->WriteLabAssignmentsToRobot(assignments);
+    _context->GetExperiments()->UpdateLabAssignments(assignments);
   };
   _signalHandles.emplace_back(_context->GetExperiments()->GetAnkiLab()
                               .ActiveAssignmentsUpdatedSignal().ScopedSubscribe(handler));
@@ -144,15 +152,15 @@ Result CozmoEngine::Init(const Json::Value& config) {
   
   _isInitialized = false;
 
+  // Engine currently has no reason to know about CPU
+  // freq or temperature so we set the update period to 0
+  // avoid time-wasting file access
+  OSState::getInstance()->SetUpdatePeriod(0);
+
   _config = config;
   
   if(!_config.isMember(AnkiUtil::kP_ADVERTISING_HOST_IP)) {
     PRINT_NAMED_ERROR("CozmoEngine.Init", "No AdvertisingHostIP defined in Json config.");
-    return RESULT_FAIL;
-  }
-  
-  if(!_config.isMember(AnkiUtil::kP_ROBOT_ADVERTISING_PORT)) {
-    PRINT_NAMED_ERROR("CozmoEngine.Init", "No RobotAdvertisingPort defined in Json config.");
     return RESULT_FAIL;
   }
   
@@ -171,40 +179,10 @@ Result CozmoEngine::Init(const Json::Value& config) {
   // Disable Viz entirely on shipping builds
   if(ANKI_DEV_CHEATS)
   {
-    if(!_config.isMember(AnkiUtil::kP_VIZ_HOST_IP))
+    if (nullptr != _context->GetExternalInterface())
     {
-      PRINT_NAMED_WARNING("CozmoEngineInit.NoVizHostIP",
-                          "No VizHostIP member in JSON config file. Not initializing VizManager.");
-    }
-    else if(!_config[AnkiUtil::kP_VIZ_HOST_IP].asString().empty())
-    {
-      const char* hostIPStr = (_config[AnkiUtil::kP_ADVERTISING_HOST_IP].isString() ?
-                               _config[AnkiUtil::kP_ADVERTISING_HOST_IP].asCString() :
-                               "127.0.0.1");
-      
-      _context->GetVizManager()->Connect(_config[AnkiUtil::kP_VIZ_HOST_IP].asCString(),
-                                         (uint16_t)VizConstants::VIZ_SERVER_PORT,
-                                         hostIPStr,
-                                         (uint16_t)VizConstants::UNITY_VIZ_SERVER_PORT);
-      
-      // Erase anything that's still being visualized in case there were leftovers from
-      // a previous run?? (We should really be cleaning up after ourselves when
-      // we tear down, but it seems like Webots restarts aren't always allowing
-      // the cleanup to happen)
-      _context->GetVizManager()->EraseAllVizObjects();
-      
-      // Only send images if the viz host is the same as the robot advertisement service
-      // (so we don't waste bandwidth sending (uncompressed) viz data over the network
-      //  to be displayed on another machine)
-      if(_config[AnkiUtil::kP_VIZ_HOST_IP] == _config[AnkiUtil::kP_ADVERTISING_HOST_IP]) {
-        _context->GetVizManager()->EnableImageSend(true);
-      }
-      
-      if (nullptr != _context->GetExternalInterface())
-      {
-        // Have VizManager subscribe to the events it should care about
-        _context->GetVizManager()->SubscribeToEngineEvents(*_context->GetExternalInterface());
-      }
+      // Have VizManager subscribe to the events it should care about
+      _context->GetVizManager()->SubscribeToEngineEvents(*_context->GetExternalInterface());
     }
   }
   
@@ -236,6 +214,8 @@ Result CozmoEngine::Init(const Json::Value& config) {
   // VIC-722: Set this automatically using location services
   //          and/or set from UI/SDK?
   _context->SetLocale("en-US");
+
+  _context->GetPerfMetric()->Init();
 
   PRINT_NAMED_INFO("CozmoEngine.Init.Version", "2");
 
@@ -340,6 +320,10 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
     firstUpdate = false;
   }
 #endif // ENABLE_CE_SLEEP_TIME_DIAGNOSTICS
+
+  _uiMsgHandler->ResetMessageCounts();
+  _context->GetRobotManager()->GetMsgHandler()->ResetMessageCounts();
+  _context->GetVizManager()->ResetMessageCount();
   
   _context->GetVoiceCommandComponent()->Update();
   
@@ -396,7 +380,10 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
     {
       // Update time
       BaseStationTimer::getInstance()->UpdateTime(currTime_nanosec);
-      
+
+      // Update OSState
+      OSState::getInstance()->Update();
+
       _context->GetRobotManager()->UpdateRobotConnection();
       
       const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -420,19 +407,17 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
     const double maxUpdateDuration = BS_TIME_STEP;
     if (updateLengthMs > maxUpdateDuration)
     {
+      static const std::string targetMs = std::to_string(BS_TIME_STEP);
       Anki::Util::sEventF("cozmo_engine.update.run.slow",
-                          {{DDATA,std::to_string(BS_TIME_STEP).c_str()}},
+                          {{DDATA, targetMs.c_str()}},
                           "%.2f", updateLengthMs);
     }
-    ExternalInterface::MessageEngineToGame debugPerfMessage(
-                                          ExternalInterface::DebugPerformanceTick("Engine",updateLengthMs));
-    _context->GetExternalInterface()->Broadcast( std::move(debugPerfMessage) );
   }
 #endif // ENABLE_CE_RUN_TIME_DIAGNOSTICS
 
   return RESULT_OK;
 }
-  
+
 #if REMOTE_CONSOLE_ENABLED
 void PrintTimingInfoStats(const ExternalInterface::TimingInfo& timingInfo, const char* name)
 {
@@ -569,16 +554,16 @@ Result CozmoEngine::InitInternal()
 
 Result CozmoEngine::ConnectToRobotProcess()
 {
-  const RobotID_t kDefaultRobotID = 1;
-  if(HasRobotWithID(kDefaultRobotID)) {
+  const RobotID_t robotID = OSState::getInstance()->GetRobotID();
+  if (HasRobotWithID(robotID)) {
     PRINT_NAMED_INFO("CozmoEngine.HandleMessage.ConnectToRobotProcess.AlreadyConnected", "Robot already connected");
     return RESULT_OK;
   }
 
-  _context->GetRobotManager()->GetMsgHandler()->AddRobotConnection(kDefaultRobotID);
+  _context->GetRobotManager()->GetMsgHandler()->AddRobotConnection(robotID);
 
   // Another exception for hosts: have to tell the basestation to add the robot as well
-  if(AddRobot(kDefaultRobotID) == RESULT_OK) {
+  if(AddRobot(robotID) == RESULT_OK) {
     PRINT_NAMED_INFO("CozmoEngine.ConnectToRobotProcess.Success", "Connected to robot!!!");
   } else {
     PRINT_NAMED_ERROR("CozmoEngine.ConnectToRobotProcess.Fail", "Failed to connect to robot!!!");
@@ -727,18 +712,27 @@ void CozmoEngine::HandleMessage(const ExternalInterface::RequestDataCollectionOp
 template<>
 void CozmoEngine::HandleMessage(const ExternalInterface::RedirectViz& msg)
 {
-  const uint8_t* ipBytes = (const uint8_t*)&msg.ipAddr;
-  std::ostringstream ss;
-  ss << (int)ipBytes[0] << "." << (int)ipBytes[1] << "." << (int)ipBytes[2] << "." << (int)ipBytes[3];
-  std::string ipAddr = ss.str();
-  PRINT_NAMED_INFO("CozmoEngine.RedirectViz.ipAddr", "%s", ipAddr.c_str());
-  
-  _context->GetVizManager()->Disconnect();
-  _context->GetVizManager()->Connect(ipAddr.c_str(),
-                                     (uint16_t)VizConstants::VIZ_SERVER_PORT,
-                                     ipAddr.c_str(),
-                                     (uint16_t)VizConstants::UNITY_VIZ_SERVER_PORT);
-  _context->GetVizManager()->EnableImageSend(true);
+  // Disable viz in shipping
+  if(ANKI_DEV_CHEATS) {
+    const uint8_t* ipBytes = (const uint8_t*)&msg.ipAddr;
+    std::ostringstream ss;
+    ss << (int)ipBytes[0] << "." << (int)ipBytes[1] << "." << (int)ipBytes[2] << "." << (int)ipBytes[3];
+    std::string ipAddr = ss.str();
+    PRINT_NAMED_INFO("CozmoEngine.RedirectViz.ipAddr", "%s", ipAddr.c_str());
+    
+    _context->GetVizManager()->Disconnect();
+    _context->GetVizManager()->Connect(ipAddr.c_str(),
+                                      (uint16_t)VizConstants::VIZ_SERVER_PORT,
+                                      ipAddr.c_str(),
+                                      (uint16_t)VizConstants::UNITY_VIZ_SERVER_PORT);
+    _context->GetVizManager()->EnableImageSend(true);
+
+    // Erase anything that's still being visualized in case there were leftovers from
+    // a previous run?? (We should really be cleaning up after ourselves when
+    // we tear down, but it seems like Webots restarts aren't always allowing
+    // the cleanup to happen)
+    _context->GetVizManager()->EraseAllVizObjects();
+  }
 }
   
   
@@ -751,6 +745,25 @@ Util::AnkiLab::AssignmentStatus CozmoEngine::ActivateExperiment(
   const Util::AnkiLab::ActivateExperimentRequest& request, std::string& outVariationKey)
 {
   return _context->GetExperiments()->ActivateExperiment(request, outVariationKey);
+}
+
+void CozmoEngine::RegisterEngineTickPerformance(const float tickDuration_ms,
+                                                const float tickFrequency_ms,
+                                                const float sleepDurationIntended_ms,
+                                                const float sleepDurationActual_ms) const
+{
+  // Send two of these stats to the game for on-screen display
+  ExternalInterface::MessageEngineToGame perfEngMsg(ExternalInterface::DebugPerformanceTick(
+                                                    "Engine", tickDuration_ms));
+  _context->GetExternalInterface()->Broadcast(std::move(perfEngMsg));
+
+  ExternalInterface::MessageEngineToGame perfEngFreqMsg(ExternalInterface::DebugPerformanceTick(
+                                                    "EngineFreq", tickFrequency_ms));
+   _context->GetExternalInterface()->Broadcast(std::move(perfEngFreqMsg));
+
+  // Update the PerfMetric system for end of tick
+  _context->GetPerfMetric()->Update(tickDuration_ms, tickFrequency_ms,
+                                    sleepDurationIntended_ms, sleepDurationActual_ms);
 }
 
 } // namespace Cozmo

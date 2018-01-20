@@ -229,6 +229,7 @@ namespace Cozmo.Energy.UI {
 
     private void NeedsLevelChangedInternal(NeedsActionId actionId, bool triggeredFromMessage) {
       NeedsStateManager nsm = NeedsStateManager.Instance;
+      bool wasFullBeforeChange = (_WasFull != null) && _WasFull.Value;
       RefreshForCurrentBracket(nsm);
 
       if (actionId == NeedsActionId.Feed) {
@@ -239,9 +240,8 @@ namespace Cozmo.Energy.UI {
 
         // If Cozmo was full and the user fed him again, there's a chance he gets the hiccups
         if (triggeredFromMessage &&
-          (_WasFull != null) &&
-          (_WasFull == true) &&
-          !OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.FeedIntro)) {
+            wasFullBeforeChange &&
+            !OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.FeedIntro)) {
           System.Random rand = new System.Random();
           float shouldTriggerFloat = (float)rand.NextDouble();
           if (shouldTriggerFloat < _AlreadyFullTriggerHiccupOdds) {

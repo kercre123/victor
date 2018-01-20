@@ -96,12 +96,12 @@ namespace Onboarding {
       if (robot != null) {
         robot.ActivateHighLevelActivity(Anki.Cozmo.HighLevelActivity.Selection);
         robot.ExecuteBehaviorByID(Anki.Cozmo.BehaviorID.Wait);
+        // we don't want to stop them in the event they got a broken cozmo and it cant work.
+        // so success or fail just move on.
+        OnboardingManager.Instance.GoToNextStage();
       }
 
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.AudioMetaData.GameState.Music.Freeplay);
-      // we don't want to stop them in the event they got a broken cozmo and it cant work.
-      // so success or fail just move on.
-      OnboardingManager.Instance.GoToNextStage();
       // just get the users used to having their sparks taken away but don't do it if they quit the app before completion
       // as they will have to go through this phase again.
       int sparkCost = (int)Anki.Cozmo.EnumConcept.GetSparkCosts(Anki.Cozmo.SparkableThings.DoATrick, 1);

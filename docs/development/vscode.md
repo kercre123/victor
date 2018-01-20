@@ -1,6 +1,9 @@
 # Visual Studio Code
 
-Visual Studio Code (VSCode) is the main supported environment for writing code that will run on the embedded android system. Xcode is supported for debugging and profiling on Mac, but not much effort has been made to make it nice to use beyond the default cmake generated projects.
+Visual Studio Code (VSCode) is the main supported environment for writing code 
+that will run on the embedded android system. Xcode is supported for debugging 
+and profiling on Mac, but not much effort has been made to make it nice to use 
+beyond the default cmake generated projects.
 
 ## Why VSCode?
 
@@ -11,8 +14,20 @@ Visual Studio Code (VSCode) is the main supported environment for writing code t
 
 ## Download
 
-Download and install the [latest version of VSCode](https://code.visualstudio.com/) unless otherwise stated.
+Download and install the [latest version of VSCode](https://code.visualstudio.com/) 
+unless otherwise stated.
 
+## Setup
+
+Bootstrap your VSCode configuration by copying some [template files](/templates/vscode):
+```
+  cd [repo]
+  mkdir -p .vscode
+  cp templates/vscode/*.json .vscode
+```
+This will give you a basic set of [task definitions](/templates/vscode/tasks.json) 
+and [project settings](/templates/vscode/settings.json) so you 
+don't have to start with a blank slate.
 
 ## Required Extensions
 
@@ -27,39 +42,11 @@ ext install cpptools
 You will need to configure cpptools as described here:
 https://code.visualstudio.com/docs/languages/cpp
 
-You will need to create a c_cpp_properties.json file to locate C/C++ header files.
-Bootstrap your include path by pasting something like this:
-```json
-{
-    "configurations": [
-        {
-            "name": "Mac",
-            "includePath": [
-                "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1",
-                "/usr/local/include",
-                "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/8.1.0/include",
-                "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include",
-                "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include",
-                "${workspaceRoot}",
-                "${workspaceRoot}/lib/util",
-                "${workspaceRoot}/lib/util/source/anki",
-                "${workspaceRoot}/lib/util/source/3rd/jsoncpp",
-                "${workspaceRoot}/coretech/common/include",
-                "${workspaceRoot}/coretech/vision/include",
-                "${workspaceRoot}/coretech/planning/include",
-                "${workspaceRoot}/coretech/messaging/include",
-                "${workspaceRoot}/coretech/generated/clad/common",               
-                "${workspaceRoot}/coretech/generated/clad/vision",
-                "${workspaceRoot}/generated/clad/engine",
-                "${workspaceRoot}/generated/clad/util",
-                "${workspaceRoot}/tools/message-buffers/support/cpp/include",
-                "${workspaceRoot}/robot/include",
-                "${workspaceRoot}/EXTERNALS/coretech_external/opencv-3.1.0/modules/core/include",
-            ],
-        }
-    ]
-}
-```
+You will need to create a c_cpp_properties.json file to locate C/C++ header 
+files.  
+
+You can copy [template settings](/templates/vscode/c_cpp_properties.json) 
+to get started.
 
 
 ### LLDB

@@ -33,6 +33,8 @@ protected:
   
   void TestLightCube();
   
+  Pose3d GetGoalMarkerPose();
+  
   virtual void InitInternal() override;
   virtual s32 UpdateInternal() override;
 

@@ -19,6 +19,8 @@
 
 
 #include "audioEngine/multiplexer/audioMuxClient.h"
+#include "engine/dependencyManagedComponent.h"
+#include "engine/robotComponents_fwd.h"
 #include "engine/events/ankiEvent.h"
 #include <vector>
 
@@ -33,13 +35,29 @@ class Robot;
 namespace Audio {
 
 
-class EngineRobotAudioClient : public AudioEngine::Multiplexer::AudioMuxClient {
-  
-  using CurveType = AudioEngine::Multiplexer::CurveType;
-  
+class EngineRobotAudioClient : public IDependencyManagedComponent<RobotComponentID>, 
+                               public AudioEngine::Multiplexer::AudioMuxClient 
+{
 public:
-  
-  EngineRobotAudioClient() {}
+  using CurveType = AudioEngine::Multiplexer::CurveType;
+
+  EngineRobotAudioClient()
+  : IDependencyManagedComponent(RobotComponentID::EngineAudioClient) {}
+
+  //////
+  // IDependencyManagedComponent functions
+  //////
+  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override {};
+  // Maintain the chain of initializations currently in robot - it might be possible to
+  // change the order of initialization down the line, but be sure to check for ripple effects
+  // when changing this function
+  virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
+    dependencies.insert(RobotComponentID::PublicStateBroadcaster);
+  };
+  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
+  //////
+  // end IDependencyManagedComponent functions
+  //////
 
 
   // Engine Robot Audio Client Helper Methods

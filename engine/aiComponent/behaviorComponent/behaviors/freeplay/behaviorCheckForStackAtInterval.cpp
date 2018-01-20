@@ -18,7 +18,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/blockWorld/blockWorld.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 
 namespace {
 
@@ -46,12 +46,12 @@ BehaviorCheckForStackAtInterval::BehaviorCheckForStackAtInterval(const Json::Val
   
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorCheckForStackAtInterval::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorCheckForStackAtInterval::WantsToBeActivatedBehavior() const
 {
   const float currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   if(currTime > _nextCheckTime_s)
   {
-    UpdateTargetBlocks(behaviorExternalInterface);
+    UpdateTargetBlocks();
     const bool hasBlocks = !_knownBlockIDs.empty();
     return hasBlocks;
   }
@@ -61,7 +61,7 @@ bool BehaviorCheckForStackAtInterval::WantsToBeActivatedBehavior(BehaviorExterna
  
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorCheckForStackAtInterval::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorCheckForStackAtInterval::OnBehaviorActivated()
 {
   
   if(!_ghostStackedObject->GetID().IsSet()){
@@ -69,16 +69,14 @@ Result BehaviorCheckForStackAtInterval::OnBehaviorActivated(BehaviorExternalInte
   }
   
   if(!_knownBlockIDs.empty()) {
-    TransitionToSetup(behaviorExternalInterface);
-    return Result::RESULT_OK;
+    TransitionToSetup();
+    
   }
-  
-  return Result::RESULT_FAIL;
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorCheckForStackAtInterval::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorCheckForStackAtInterval::OnBehaviorDeactivated()
 {
   _knownBlockIndex = -1;
   _knownBlockIDs.clear();
@@ -86,19 +84,19 @@ void BehaviorCheckForStackAtInterval::OnBehaviorDeactivated(BehaviorExternalInte
   
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorCheckForStackAtInterval::TransitionToSetup(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorCheckForStackAtInterval::TransitionToSetup()
 {
-  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  const auto& robotInfo = GetBEI().GetRobotInfo();
   _initialRobotPose = robotInfo.GetPose();
   _knownBlockIndex = 0;
-  TransitionToFacingBlock(behaviorExternalInterface);
+  TransitionToFacingBlock();
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorCheckForStackAtInterval::TransitionToFacingBlock(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorCheckForStackAtInterval::TransitionToFacingBlock()
 {
-  const ObservableObject* obj = GetKnownObject(behaviorExternalInterface, _knownBlockIndex);
+  const ObservableObject* obj = GetKnownObject(_knownBlockIndex);
   if(nullptr != obj)
   {
     IActionRunner* action = new TurnTowardsObjectAction(obj->GetID());
@@ -108,15 +106,15 @@ void BehaviorCheckForStackAtInterval::TransitionToFacingBlock(BehaviorExternalIn
   }
   else
   {
-    TransitionToCheckingAboveBlock(behaviorExternalInterface);
+    TransitionToCheckingAboveBlock();
   }
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorCheckForStackAtInterval::TransitionToCheckingAboveBlock(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorCheckForStackAtInterval::TransitionToCheckingAboveBlock()
 {
-  const ObservableObject* obj = GetKnownObject(behaviorExternalInterface, _knownBlockIndex);
+  const ObservableObject* obj = GetKnownObject(_knownBlockIndex);
   if ( nullptr != obj )
   {
     Pose3d ghostPose = obj->GetPose().GetWithRespectToRoot();
@@ -125,7 +123,7 @@ void BehaviorCheckForStackAtInterval::TransitionToCheckingAboveBlock(BehaviorExt
       ghostPose.GetTranslation().y(),
       ghostPose.GetTranslation().z() + obj->GetDimInParentFrame<'Z'>(ghostPose)});
     
-    auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+    auto& robotInfo = GetBEI().GetRobotInfo();
     robotInfo.GetObjectPoseConfirmer().SetGhostObjectPose(_ghostStackedObject.get(), ghostPose, PoseState::Dirty);
     
     // use 0 for max turn angle so we only look with the head
@@ -133,13 +131,13 @@ void BehaviorCheckForStackAtInterval::TransitionToCheckingAboveBlock(BehaviorExt
     turnAction->UseCustomObject(_ghostStackedObject.get());
     
     // after checking the object, go back to the rotation we had at start, or continue with next block if any left
-    DelegateIfInControl(turnAction, [this, &behaviorExternalInterface](const ActionResult& result) {
+    DelegateIfInControl(turnAction, [this](const ActionResult& result) {
       ++_knownBlockIndex;
       const bool hasMoreBlocks = _knownBlockIndex < _knownBlockIDs.size();
       if (hasMoreBlocks) {
-        TransitionToFacingBlock(behaviorExternalInterface);
+        TransitionToFacingBlock();
       } else {
-        TransitionToReturnToSearch(behaviorExternalInterface);
+        TransitionToReturnToSearch();
       }
     });
   }
@@ -155,7 +153,7 @@ void BehaviorCheckForStackAtInterval::TransitionToCheckingAboveBlock(BehaviorExt
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorCheckForStackAtInterval::TransitionToReturnToSearch(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorCheckForStackAtInterval::TransitionToReturnToSearch()
 {
   const Radians initialRobotRotation = _initialRobotPose.GetWithRespectToRoot()
                                            .GetRotation().GetAngleAroundZaxis();
@@ -181,13 +179,13 @@ ObjectID BehaviorCheckForStackAtInterval::GetKnownObjectID(int index) const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const ObservableObject* BehaviorCheckForStackAtInterval::GetKnownObject(const BehaviorExternalInterface& behaviorExternalInterface, int index) const
+const ObservableObject* BehaviorCheckForStackAtInterval::GetKnownObject(int index) const
 {
   // get id from the given index
   const ObjectID& objID = GetKnownObjectID(index);
   if ( objID.IsSet() ) {
     // find object currently in world
-    const ObservableObject* ret = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID( objID );
+    const ObservableObject* ret = GetBEI().GetBlockWorld().GetLocatedObjectByID( objID );
     return ret;
   } else {
     return nullptr;
@@ -195,14 +193,14 @@ const ObservableObject* BehaviorCheckForStackAtInterval::GetKnownObject(const Be
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorCheckForStackAtInterval::UpdateTargetBlocks(const BehaviorExternalInterface& behaviorExternalInterface) const
+void BehaviorCheckForStackAtInterval::UpdateTargetBlocks() const
 {
   
   BlockWorldFilter knownBlockFilter;
   knownBlockFilter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
  
   std::vector<const ObservableObject*> objectList;
-  behaviorExternalInterface.GetBlockWorld().FindLocatedMatchingObjects(knownBlockFilter, objectList);
+  GetBEI().GetBlockWorld().FindLocatedMatchingObjects(knownBlockFilter, objectList);
   for( const auto& objPtr : objectList ) {
     _knownBlockIDs.emplace_back( objPtr->GetID() );
   }

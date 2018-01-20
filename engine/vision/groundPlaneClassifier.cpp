@@ -13,9 +13,8 @@
 
 #include "groundPlaneClassifier.h"
 
-#include "anki/common/basestation/math/polygon_impl.h"
-#include "anki/common/basestation/math/logisticRegression.h" // TODO this is temporary only for calculateError
-#include "basestation/utils/data/dataPlatform.h"
+#include "coretech/common/engine/math/logisticRegression.h" // TODO this is temporary only for calculateError
+#include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "engine/cozmoContext.h"
 #include "engine/groundPlaneROI.h"
 #include "engine/overheadEdge.h"

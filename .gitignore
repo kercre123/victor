@@ -16,7 +16,7 @@ buck-out/
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Visual Studio Code
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-.vscode/tags
+.vscode/
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Sublime Project Files
@@ -269,6 +269,9 @@ resources/config/engine/firmware_*
 .vagrant
 .idea
 *.swo
+binary_cache
+perf.data
+symbol_cache
 
 
 # victor envsetup.sh
@@ -304,7 +307,7 @@ robot/fixture/ankilog/Release
 robot/fixture/ankilog/Debug
 robot/fixture/ankilog/obj
 
-robot2/hal/dfu/dfu
+robot/hal/dfu/dfu
 
 buildMakefile
 
@@ -396,3 +399,9 @@ unity/Cozmo/Assets/StreamingAssets/Scratch/lib/closure-library.meta
 unity/Cozmo/Assets/StreamingAssets/Scratch/lib/vm/dist/web/scratch-vm.js.map
 unity/Cozmo/Assets/StreamingAssets/Scratch/lib/vm/dist/web/scratch-vm.js.map.meta
 .vscode
+
+# Xamarin
+apps/xamarin/chewie/Droid/bin
+apps/xamarin/chewie/Droid/obj
+apps/xamarin/chewie/iOS/bin
+apps/xamarin/chewie/iOS/obj

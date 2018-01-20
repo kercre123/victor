@@ -17,10 +17,16 @@
 #include "util/logging/logging.h"
 #include "util/math/math.h"
 #include "util/math/numericCast.h"
-
+#include "util/threading/threadPriority.h"
 #include <iomanip>
 #include <sstream>
 #include <thread>
+
+#define LOG_CHANNEL    "MicData"
+#define LOG_ERROR      PRINT_NAMED_ERROR
+#define LOG_WARNING    PRINT_NAMED_WARNING
+#define LOG_INFO(...)  PRINT_CH_INFO(LOG_CHANNEL, ##__VA_ARGS__)
+#define LOG_DEBUG(...) PRINT_CH_DEBUG(LOG_CHANNEL, ##__VA_ARGS__)
 
 namespace Anki {
 namespace Cozmo {
@@ -33,38 +39,38 @@ namespace {
   const std::string kResampledFileExtension = "_resamp.wav";
 }
 
-void MicDataInfo::CollectRawAudio(const AudioUtil::AudioChunk& audioChunk)
+void MicDataInfo::CollectRawAudio(const AudioUtil::AudioSample* audioChunk, size_t size)
 {
   std::lock_guard<std::mutex> lock(_dataMutex);
   if (_typesToRecord.IsBitFlagSet(MicDataType::Raw))
   {
     AudioUtil::AudioChunk newChunk;
     newChunk.resize(kRawAudioChunkSize);
-    std::copy(audioChunk.begin(), audioChunk.end(), newChunk.begin());
+    std::copy(audioChunk, audioChunk + size, newChunk.begin());
     _rawAudioData.push_back(std::move(newChunk));
   }
 }
 
-void MicDataInfo::CollectResampledAudio(const AudioUtil::AudioChunk& audioChunk)
+void MicDataInfo::CollectResampledAudio(const AudioUtil::AudioSample* audioChunk, size_t size)
 {
   std::lock_guard<std::mutex> lock(_dataMutex);
   if (_typesToRecord.IsBitFlagSet(MicDataType::Resampled))
   {
     AudioUtil::AudioChunk newChunk;
     newChunk.resize(kResampledAudioChunkSize);
-    std::copy(audioChunk.begin(), audioChunk.end(), newChunk.begin());
+    std::copy(audioChunk, audioChunk + size, newChunk.begin());
     _resampledAudioData.push_back(std::move(newChunk));
   }
 }
 
-void MicDataInfo::CollectProcessedAudio(const AudioUtil::AudioChunk& audioChunk)
+void MicDataInfo::CollectProcessedAudio(const AudioUtil::AudioSample* audioChunk, size_t size)
 {
   std::lock_guard<std::mutex> lock(_dataMutex);
   if (_typesToRecord.IsBitFlagSet(MicDataType::Processed))
   {
     AudioUtil::AudioChunk newChunk;
     newChunk.resize(kSamplesPerBlock);
-    std::copy(audioChunk.begin(), audioChunk.end(), newChunk.begin());
+    std::copy(audioChunk, audioChunk + size, newChunk.begin());
     _processedAudioData.push_back(std::move(newChunk));
   }
 }
@@ -166,9 +172,10 @@ void MicDataInfo::SaveCollectedAudio(const std::string& dataDirectory,
                         doFFTProcess = _doFFTProcess,
                         fftCallback = std::move(_rawAudioFFTCallback),
                         length_ms = _timeRecorded_ms] () {
-      
+      Anki::Util::SetThreadName(pthread_self(), "saveRawWave");
       AudioUtil::WaveFile::SaveFile(dest, data, kNumInputChannels, kSampleRateIncoming_hz);
-      PRINT_NAMED_INFO("MicDataInfo.WriteRawWaveFile", "%s", dest.c_str());
+
+      LOG_INFO("MicDataInfo.WriteRawWaveFile", "%s", dest.c_str());
       
       if (doFFTProcess)
       {
@@ -176,7 +183,7 @@ void MicDataInfo::SaveCollectedAudio(const std::string& dataDirectory,
         if (!Util::IsNearZero(length_s))
         {
           std::vector<uint32_t> result = GetFFTResultFromRaw(data, length_s);
-          PRINT_NAMED_INFO("MicDataInfo.FFTResultFromRaw", "%d %d %d %d", result[0], result[1], result[2], result[3]);
+          LOG_INFO("MicDataInfo.FFTResultFromRaw", "%d %d %d %d", result[0], result[1], result[2], result[3]);
           if (fftCallback)
           {
             fftCallback(std::move(result));
@@ -192,8 +199,9 @@ void MicDataInfo::SaveCollectedAudio(const std::string& dataDirectory,
   {
     auto saveResampledWave = [dest = (writeLocationBase + kResampledFileExtension),
                               data = std::move(_resampledAudioData)] () {
+      Anki::Util::SetThreadName(pthread_self(), "saveResmplWave");
       AudioUtil::WaveFile::SaveFile(dest, data, kNumInputChannels);
-      PRINT_NAMED_INFO("MicDataInfo.WriteResampledWaveFile", "%s", dest.c_str());
+      LOG_INFO("MicDataInfo.WriteResampledWaveFile", "%s", dest.c_str());
     };
     std::thread(saveResampledWave).detach();
     _resampledAudioData.clear();
@@ -203,8 +211,9 @@ void MicDataInfo::SaveCollectedAudio(const std::string& dataDirectory,
   {
     auto saveProcessedWave = [dest = (writeLocationBase + kWavFileExtension),
                               data = std::move(_processedAudioData)] () {
+      Anki::Util::SetThreadName(pthread_self(), "saveProcWave");
       AudioUtil::WaveFile::SaveFile(dest, data);
-      PRINT_NAMED_INFO("MicDataInfo.WriteProcessedWaveFile", "%s", dest.c_str());
+      LOG_INFO("MicDataInfo.WriteProcessedWaveFile", "%s", dest.c_str());
     };
     std::thread(saveProcessedWave).detach();
     _processedAudioData.clear();
@@ -255,9 +264,9 @@ std::string MicDataInfo::ChooseNextFileNameBase(std::string& out_dirToDelete)
   const auto iterationNum = std::stoi(entryToReplace.substr(iterStrBegin, kNumberDigitsLength));
   if (iterationNum == kMaxIterationNum)
   {
-    PRINT_NAMED_ERROR("MicDataInfo.ChooseNextFileNameBase",
-                      "Reached max number of iterations %d. Won't save more files.",
-                      kMaxIterationNum);
+    LOG_ERROR("MicDataInfo.ChooseNextFileNameBase",
+              "Reached max number of iterations %d. Won't save more files.",
+              kMaxIterationNum);
     return "";
   }
   out_dirToDelete = entryToReplace;

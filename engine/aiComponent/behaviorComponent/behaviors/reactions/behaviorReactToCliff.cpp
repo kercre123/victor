@@ -54,24 +54,24 @@ BehaviorReactToCliff::BehaviorReactToCliff(const Json::Value& config)
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorReactToCliff::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorReactToCliff::WantsToBeActivatedBehavior() const
 {
   return true;
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorReactToCliff::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToCliff::OnBehaviorActivated()
 {
-  if(behaviorExternalInterface.HasMoodManager()){
-    auto& moodManager = behaviorExternalInterface.GetMoodManager();
+  if(GetBEI().HasMoodManager()){
+    auto& moodManager = GetBEI().GetMoodManager();
     moodManager.TriggerEmotionEvent("CliffReact", MoodManager::GetCurrentTimeInSeconds());
   }
   
   switch( _state ) {
     case State::PlayingStopReaction:
     {
-      auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+      auto& robotInfo = GetBEI().GetRobotInfo();
 
       // Record cliff detection threshold before at start of stop
       _cliffDetectThresholdAtStart = robotInfo.GetCliffSensorComponent().GetCliffDetectThreshold(0);
@@ -93,7 +93,7 @@ Result BehaviorReactToCliff::OnBehaviorActivated(BehaviorExternalInterface& beha
       
       // skip the "huh" animation if in severe energy or repair
       auto callbackFunc = &BehaviorReactToCliff::TransitionToPlayingStopReaction;
-      NeedId expressedNeed = behaviorExternalInterface.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression();
+      NeedId expressedNeed = GetBEI().GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression();
       if((expressedNeed == NeedId::Energy) || (expressedNeed == NeedId::Repair)){
         callbackFunc = &BehaviorReactToCliff::TransitionToPlayingCliffReaction;
       }
@@ -104,27 +104,26 @@ Result BehaviorReactToCliff::OnBehaviorActivated(BehaviorExternalInterface& beha
     }
     case State::PlayingCliffReaction:
       _gotCliff = true;
-      TransitionToPlayingCliffReaction(behaviorExternalInterface);
+      TransitionToPlayingCliffReaction();
       break;
 
     default: {
       PRINT_NAMED_ERROR("BehaviorReactToCliff.Init.InvalidState",
                         "Init called with invalid state");
-      return Result::RESULT_FAIL;
     }
   }
   
-  return Result::RESULT_OK;
+  
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToCliff::TransitionToPlayingStopReaction(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToCliff::TransitionToPlayingStopReaction()
 {
   DEBUG_SET_STATE(PlayingStopReaction);
 
   if(_quitReaction) {
-    SendFinishedReactToCliffMessage(behaviorExternalInterface);
+    SendFinishedReactToCliffMessage();
     return;
   }
   
@@ -144,12 +143,12 @@ void BehaviorReactToCliff::TransitionToPlayingStopReaction(BehaviorExternalInter
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToCliff::TransitionToPlayingCliffReaction(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToCliff::TransitionToPlayingCliffReaction()
 {
   DEBUG_SET_STATE(PlayingCliffReaction);
   
   if(ShouldStreamline()){
-    TransitionToBackingUp(behaviorExternalInterface);
+    TransitionToBackingUp();
   }
   else if( _gotCliff || ALWAYS_PLAY_REACT_TO_CLIFF) {
     Anki::Util::sEvent("robot.cliff_detected", {}, "");
@@ -158,7 +157,7 @@ void BehaviorReactToCliff::TransitionToPlayingCliffReaction(BehaviorExternalInte
     AnimationTrigger reactionAnim = AnimationTrigger::ReactToCliff;
     
     // special animations for maintaining eye shape in severe need states
-    const NeedId severeExpressedNeed = behaviorExternalInterface.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression();
+    const NeedId severeExpressedNeed = GetBEI().GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression();
     if(NeedId::Energy == severeExpressedNeed){
       reactionAnim = AnimationTrigger::NeedsSevereLowEnergyCliffReact;
     }else if(NeedId::Repair == severeExpressedNeed){
@@ -166,7 +165,7 @@ void BehaviorReactToCliff::TransitionToPlayingCliffReaction(BehaviorExternalInte
     }
     
 
-    auto action = GetCliffPreReactAction(behaviorExternalInterface, _detectedFlags);
+    auto action = GetCliffPreReactAction(_detectedFlags);
 
     action->AddAction(new TriggerLiftSafeAnimationAction(reactionAnim));
     
@@ -177,33 +176,33 @@ void BehaviorReactToCliff::TransitionToPlayingCliffReaction(BehaviorExternalInte
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToCliff::TransitionToBackingUp(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToCliff::TransitionToBackingUp()
 {
-  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  auto& robotInfo = GetBEI().GetRobotInfo();
 
   // if the animation doesn't drive us backwards enough, do it manually
   if( robotInfo.GetCliffSensorComponent().IsCliffDetected() ) {
       DelegateIfInControl(new DriveStraightAction(-kCliffBackupDist_mm, kCliffBackupSpeed_mmps),
-                  [this,&behaviorExternalInterface](){
-                      SendFinishedReactToCliffMessage(behaviorExternalInterface);
+                  [this](){
+                      SendFinishedReactToCliffMessage();
                   });
   }
   else {
-    SendFinishedReactToCliffMessage(behaviorExternalInterface);
+    SendFinishedReactToCliffMessage();
     BehaviorObjectiveAchieved(BehaviorObjective::ReactedToCliff);
   }
 }
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToCliff::SendFinishedReactToCliffMessage(BehaviorExternalInterface& behaviorExternalInterface) {
+void BehaviorReactToCliff::SendFinishedReactToCliffMessage() {
   // Send message that we're done reacting
   //robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCliffEventFinished()));
 }
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToCliff::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToCliff::OnBehaviorDeactivated()
 {
   _state = State::PlayingStopReaction;
   _gotCliff = false;
@@ -212,18 +211,21 @@ void BehaviorReactToCliff::OnBehaviorDeactivated(BehaviorExternalInterface& beha
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorReactToCliff::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToCliff::BehaviorUpdate()
 {
+  if(!IsActivated()){
+    return;
+  }
+
   if(_shouldStopDueToCharger){
     _shouldStopDueToCharger = false;
-    return Status::Complete;
+    CancelSelf();
   }
-  return base::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToCliff::HandleWhileInScopeButNotActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToCliff::HandleWhileInScopeButNotActivated(const EngineToGameEvent& event)
 {  
   switch( event.GetData().GetTag() ) {
     case EngineToGameTag::CliffEvent: {
@@ -260,7 +262,7 @@ void BehaviorReactToCliff::HandleWhileInScopeButNotActivated(const EngineToGameE
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToCliff::HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToCliff::HandleWhileActivated(const EngineToGameEvent& event)
 {
   switch( event.GetData().GetTag() ) {
     case EngineToGameTag::CliffEvent: {
@@ -287,7 +289,7 @@ void BehaviorReactToCliff::HandleWhileActivated(const EngineToGameEvent& event, 
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-CompoundActionSequential* BehaviorReactToCliff::GetCliffPreReactAction(BehaviorExternalInterface& behaviorExternalInterface, uint8_t cliffDetectedFlags)
+CompoundActionSequential* BehaviorReactToCliff::GetCliffPreReactAction(uint8_t cliffDetectedFlags)
 {
   // Bit flags for each of the cliff sensors:
   const uint8_t FL = (1<<Util::EnumToUnderlying(CliffSensor::CLIFF_FL));

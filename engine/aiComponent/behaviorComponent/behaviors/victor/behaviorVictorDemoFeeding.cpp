@@ -14,7 +14,7 @@
 
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
@@ -39,9 +39,9 @@ BehaviorVictorDemoFeeding::BehaviorVictorDemoFeeding(const Json::Value& config)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorVictorDemoFeeding::InitBehavior(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorVictorDemoFeeding::InitBehavior()
 {
-  const auto& BC = behaviorExternalInterface.GetBehaviorContainer();
+  const auto& BC = GetBEI().GetBehaviorContainer();
 
   BC.FindBehaviorByIDAndDowncast(BEHAVIOR_ID(FeedingEat),
                                  BEHAVIOR_CLASS(FeedingEat),
@@ -55,26 +55,29 @@ void BehaviorVictorDemoFeeding::GetAllDelegates(std::set<IBehavior*>& delegates)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorVictorDemoFeeding::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorVictorDemoFeeding::WantsToBeActivatedBehavior() const
 {
-  const AIWhiteboard& whiteboard = behaviorExternalInterface.GetAIComponent().GetWhiteboard();
+  const AIWhiteboard& whiteboard = GetBEI().GetAIComponent().GetWhiteboard();
   return whiteboard.Victor_HasCubeToEat();
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorVictorDemoFeeding::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorVictorDemoFeeding::OnBehaviorActivated()
 {
   // not yet waiting for food
   _imgTimeStartedWaitngForFood = 0;
   
-  return Result::RESULT_OK;
+  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorVictorDemoFeeding::UpdateInternal_WhileRunning(
-  BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorVictorDemoFeeding::BehaviorUpdate()
 {
+  if(!IsActivated()){
+    return;
+  }
+
   if(_imgTimeStartedWaitngForFood > 0 ) {
     // TODO:(bn) share this filter with AI whiteboard. It's the same, but also checks observation time
     BlockWorldFilter filter;
@@ -85,8 +88,8 @@ ICozmoBehavior::Status BehaviorVictorDemoFeeding::UpdateInternal_WhileRunning(
           obj->GetLastObservedTime() > _imgTimeStartedWaitngForFood;
       });
 
-    const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
-    const auto& blockWorld = behaviorExternalInterface.GetBlockWorld();
+    const auto& robotInfo = GetBEI().GetRobotInfo();
+    const auto& blockWorld = GetBEI().GetBlockWorld();
     const ObservableObject* obj = blockWorld.FindLocatedObjectClosestTo(robotInfo.GetPose(), filter);
     if( obj != nullptr ) {
       PRINT_CH_INFO("Behaviors",
@@ -94,29 +97,28 @@ ICozmoBehavior::Status BehaviorVictorDemoFeeding::UpdateInternal_WhileRunning(
                     "found food after started waiting, varifying now");
       _imgTimeStartedWaitngForFood = 0;
       CancelDelegates(false);
-      TransitionToVerifyFood(behaviorExternalInterface);
+      TransitionToVerifyFood();
     }
   }
   
   if( !IsControlDelegated() &&
-      WantsToBeActivatedBehavior(behaviorExternalInterface) &&
+      WantsToBeActivatedBehavior() &&
      _imgTimeStartedWaitngForFood == 0) {
     IActionRunner* animAction = new TriggerAnimationAction(AnimationTrigger::FeedingReactToFullCube_Normal);
 
     DelegateIfInControl(animAction, &BehaviorVictorDemoFeeding::TransitionToVerifyFood);
   }
 
-  return ICozmoBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorVictorDemoFeeding::TransitionToVerifyFood(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorVictorDemoFeeding::TransitionToVerifyFood()
 {
   SetDebugStateName("VerifyFood");
     
   DEV_ASSERT(!IsControlDelegated(), "BehaviorVictorDemoFeeding.TransitionToVerifyFood.NotInControl");
 
-  const AIWhiteboard& whiteboard = behaviorExternalInterface.GetAIComponent().GetWhiteboard();
+  const AIWhiteboard& whiteboard = GetBEI().GetAIComponent().GetWhiteboard();
   const ObjectID foodCubeID = whiteboard.Victor_GetCubeToEat();
   
   if( foodCubeID.IsSet() ) {
@@ -127,36 +129,36 @@ void BehaviorVictorDemoFeeding::TransitionToVerifyFood(BehaviorExternalInterface
 
     DelegateIfInControl(
       turnAndVerifyAction,
-      [this](ActionResult result, BehaviorExternalInterface& behaviorExternalInterface) {
+      [this](ActionResult result) {
         const ActionResultCategory category = IActionRunner::GetActionResultCategory(result);
         if( category == ActionResultCategory::SUCCESS ) {
           // grab the cube and check if it's on the ground (so we can eat it)
-          const AIWhiteboard& whiteboard = behaviorExternalInterface.GetAIComponent().GetWhiteboard();
-          const auto& blockWorld = behaviorExternalInterface.GetBlockWorld();
+          const AIWhiteboard& whiteboard = GetBEI().GetAIComponent().GetWhiteboard();
+          const auto& blockWorld = GetBEI().GetBlockWorld();
           
-          const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+          const auto& robotInfo = GetBEI().GetRobotInfo();
           const ObjectID foodCubeID = whiteboard.Victor_GetCubeToEat();
           const ObservableObject* cube = blockWorld.GetLocatedObjectByID(foodCubeID);
 
           if( cube &&
               robotInfo.GetDockingComponent().CanPickUpObjectFromGround(*cube) ) {
-            TransitionToEating(behaviorExternalInterface);
+            TransitionToEating();
             return;
           }
         }
         // otherwise, wait for the cube
-        TransitionToWaitForFood(behaviorExternalInterface);
+        TransitionToWaitForFood();
       });
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorVictorDemoFeeding::TransitionToWaitForFood(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorVictorDemoFeeding::TransitionToWaitForFood()
 {
   SetDebugStateName("WaitForFood");
 
   // TODO:(bn) better animation or something here, but for now just look down and wait
-  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  const auto& robotInfo = GetBEI().GetRobotInfo();
   _imgTimeStartedWaitngForFood = robotInfo.GetLastImageTimeStamp();
 
   // if wait finishes without interruption, we lost the food, so also queue a frustrated anim
@@ -172,20 +174,20 @@ void BehaviorVictorDemoFeeding::TransitionToWaitForFood(BehaviorExternalInterfac
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorVictorDemoFeeding::TransitionToEating(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorVictorDemoFeeding::TransitionToEating()
 {
   SetDebugStateName("Eating");
 
   DEV_ASSERT(!IsControlDelegated(), "BehaviorVictorDemoFeeding.TransitionToEating.NotInControl");
 
-  const AIWhiteboard& whiteboard = behaviorExternalInterface.GetAIComponent().GetWhiteboard();
+  const AIWhiteboard& whiteboard = GetBEI().GetAIComponent().GetWhiteboard();
   const ObjectID foodCubeID = whiteboard.Victor_GetCubeToEat();
 
   if( foodCubeID.IsSet() ) {
     _eatFoodBehavior->SetTargetObject( foodCubeID );
 
-    if( _eatFoodBehavior->WantsToBeActivated(behaviorExternalInterface) ) {
-      DelegateIfInControl( behaviorExternalInterface, _eatFoodBehavior.get() );
+    if( _eatFoodBehavior->WantsToBeActivated() ) {
+      DelegateIfInControl( _eatFoodBehavior.get() );
       // TODO:(bn) error handling if this doesn't work
     }
   }

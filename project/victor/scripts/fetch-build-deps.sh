@@ -16,6 +16,8 @@ function vlog()
 
 pushd "${TOPLEVEL}" > /dev/null 2>&1
 
+$GIT config --global url."git@github.com:".insteadOf https://github.com
+
 
 vlog "Check brew installation."
 is_brew=`which brew`
@@ -31,7 +33,11 @@ vlog "Check homebrew dependencies"
     -d python2 \
     ninja \
     python3 \
-    libsndfile
+    libsndfile \
+    go \
+    graphviz \
+    --pip2 graphviz \
+    --pip3 graphviz
 
 vlog "Android SDK"
 ./tools/build/tools/ankibuild/android.py --install-sdk r3

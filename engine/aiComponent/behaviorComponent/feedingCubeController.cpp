@@ -23,8 +23,8 @@
 #include "engine/components/cubeAccelComponent.h"
 #include "engine/components/cubeLightComponent.h"
 
-#include "anki/common/basestation/colorRGBA.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/colorRGBA.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
 
@@ -44,11 +44,11 @@ enum class ChargeState{
 
 #define CONSOLE_GROUP "Activity.Feeding"
   
-CONSOLE_VAR(f32, kTimeBetweenShakes_s,            CONSOLE_GROUP, 0.1f);
+CONSOLE_VAR(f32, kTimeBetweenShakes_s,            CONSOLE_GROUP, 0.07f);
 CONSOLE_VAR(f32, kTimeBeforeStartLosingCharge_s,  CONSOLE_GROUP, 1.0f);
 CONSOLE_VAR(f32, kTimeBetweenLoosingCharge_s,     CONSOLE_GROUP, 0.1f);
 CONSOLE_VAR(f32, kChargeLevelToFillSide,          CONSOLE_GROUP, 4.0f);
-CONSOLE_VAR(f32, kShakeMinThresh,                 CONSOLE_GROUP, 1500.f);
+CONSOLE_VAR(f32, kShakeMinThresh,                 CONSOLE_GROUP, 1200.f);
 
 // Constants for the Shake Component MovementListener:
 const float kHighPassFiltCoef    = 0.4f;

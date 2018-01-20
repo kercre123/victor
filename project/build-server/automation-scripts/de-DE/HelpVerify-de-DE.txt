@@ -1,0 +1,45 @@
+0.867898:click:help_button:0.1381912
+2.84805:text:WEITER
+0.944433:text:ZURÜCK
+0.04811:text:1 von 9
+0.543587:text:Hilfe und Tipps
+0.804224:text:Schaffe die ideale Spielfläche.
+0.02875:text:Cozmo gefällt es auf einem sauberen und nicht mit anderen Gegenständen bedeckten Tisch in einem gut beleuchteten Raum am besten. Wenn er sich innerhalb von Gebäuden befindet und nicht dem direkten Sonnenlicht ausgesetzt ist, sieht er am besten.
+0.514873:click:next_button:0.1380463
+1.804331:text:2 von 9
+0.45959:text:Cubes von Cozmo
+0.305829:text:Cozmo hat gerne seine Cubes bei sich. Diese funktionieren am besten, wenn Cozmo das Symbol klar erkennen kann und die Oberseite nach oben weist. Informationen zur Pflege der Cubes findest du unter <b><color=#d3d3d3>EINSTELLUNGEN</color></b>.
+0.378986:click:next_button:0.1203766
+0.583325:text:3 von 9
+0.031785:text:Wenn du gerade kein Spiel spielst,\u000azeigen die Cube-Lichter Folgendes an:
+0.93681:text:Cozmo hat diesen\u000aCube gesehen.
+0.63921:text:Cozmo möchte diesen\u000aCube verwenden.
+0.550708:click:next_button:0.1572113
+1.369576:text:4 von 9
+0.03998:text:Cozmo wird mit der Zeit immer besser.
+0.503734:text:Für jeden Tag, an dem du Cozmos Spielbedarf erfüllst, erhältst du eine tägliche Bonusmarke. Mit diesen Marken kannst du Bonuskisten freischalten, die Belohnungen wie Sparks und Tricks enthalten.
+0.120306:text:<color=#FFFFFF>Verdiene dir jeden Tag </color><b><color=#F5BF2D>Spielmarken</color></b><color=#FFFFFF>.</color>
+0.507623:text:<color=#FFFFFF>Mit 3 Marken lässt sich eine </color><b><color=#F5BF2D>Bonuskiste</color></b> <color=#FFFFFF>freischalten</color>.
+0.069129:click:next_button:0.1307373
+1.315209:text:5 von 9
+0.01703:text:Sieh regelmäßig nach, was Cozmo momentan macht.
+0.583176:text:Starte die Cozmo-App jeden Tag, damit es Cozmo gut geht. Wenn du jeden Tag seinen Spielbedarf erfüllst, kann er sich mithilfe der verdienten Bonuskisten neues Wissen und neue Fähigkeiten aneignen. Stelle eine Verbindung zu Cozmo her, um ihn aufzuwecken und ihm die Aufmerksamkeit zu schenken, die er braucht.
+0.752011:click:next_button:0.08306885
+0.628084:text:6 von 9
+0.888306:text:Achte auf die Sicherheit von Cozmo.
+0.739126:text:Du musst darauf achten, dass Cozmo nichts zustößt – genau wie bei einem kleinen Haustier. Wirf ein Auge auf ihn, falls er in Schwierigkeiten gerät; er braucht vielleicht deine Hilfe, falls er sich festfährt.
+0.052135:click:next_button:0.1242676
+0.843828:text:7 von 9
+0.139922:text:Die Lichter am Rucksack von Cozmo können Folgendes anzeigen:
+0.781291:text:Cozmo ist\u000aaufgeladen.
+0.083601:text:Cozmo wird gerade\u000aaufgeladen.
+0.323769:text:Der Batterieladestand \u000avon Cozmo ist niedrig.
+0.499652:click:next_button:0.09915161
+0.96032:text:8 von 9
+0.852565:text:Cozmo ist sicher.
+0.734814:text:Cozmo und seine Kamera sind sicher. Es werden keine Bilder oder Videos gespeichert – weder online noch offline. Außerdem kommuniziert Cozmo nur mit Geräten, die du autorisierst.
+0.704815:click:next_button:0.1269836
+0.69929:text:9 von 9
+0.98112:text:Achte darauf, dass Cozmo immer aufgeladen ist.
+0.87138:text:Cozmo braucht seine Ladestation. Daher solltest du diese immer dabeihaben. Setze Cozmo nach dem Spielen auf die Ladestation, damit er schlafen geht.
+0.667872:click:default_close_view_button:0.1272888

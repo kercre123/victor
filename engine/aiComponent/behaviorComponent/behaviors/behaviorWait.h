@@ -36,27 +36,27 @@ public:
   //
   // Abstract methods to be overloaded:
   //
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override { return true; }
-  virtual bool CarryingObjectHandledInternally() const override { return true;}
-  virtual bool ShouldRunWhileOffTreads() const override { return true;}
-  virtual bool ShouldRunWhileOnCharger() const override { return true;}
+  virtual bool WantsToBeActivatedBehavior() const override { return true; }
 
-  virtual bool CanBeGentlyInterruptedNow(BehaviorExternalInterface& behaviorExternalInterface) const override {
+
+  virtual bool CanBeGentlyInterruptedNow() const override {
     return true; }
 
 protected:
-  
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override
-  {
-    return Result::RESULT_OK;
-  }
-  
-  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override
-  {
-    return Status::Running;
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenCarryingObject = true;
+    modifiers.wantsToBeActivatedWhenOffTreads = true;
+    modifiers.wantsToBeActivatedWhenOnCharger = true;
+    modifiers.behaviorAlwaysDelegates = false;
   }
 
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override
+
+  virtual void OnBehaviorActivated() override
+  {
+    
+  }
+
+  virtual void OnBehaviorDeactivated() override
   {
   }
 };

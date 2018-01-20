@@ -9,15 +9,15 @@
 #ifndef __UI_GAME_CONTROLLER_H__
 #define __UI_GAME_CONTROLLER_H__
 
-#include "anki/common/basestation/math/pose.h"
-#include "anki/common/basestation/math/poseOriginList.h"
-#include "anki/common/basestation/objectIDs.h"
+#include "coretech/common/engine/math/pose.h"
+#include "coretech/common/engine/math/poseOriginList.h"
+#include "coretech/common/engine/objectIDs.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 #include "engine/robot.h"
 #include "engine/cozmoAPI/comms/gameComms.h"
 #include "engine/cozmoAPI/comms/gameMessageHandler.h"
-#include "anki/common/types.h"
-#include "anki/vision/basestation/faceIdTypes.h"
+#include "coretech/common/shared/types.h"
+#include "coretech/vision/engine/faceIdTypes.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -128,7 +128,7 @@ protected:
   virtual void HandleSetCliffDetectThresholds(const SetCliffDetectThresholds& msg){};
   
   virtual void HandleBehaviorTransition(const ExternalInterface::BehaviorTransition& msg){};
-  virtual void HandleEndOfMessage(const EndOfMessage& msg){};
+  virtual void HandleEndOfMessage(const ExternalInterface::EndOfMessage& msg){};
   virtual void HandleRobotOffTreadsStateChanged(const ExternalInterface::RobotOffTreadsStateChanged& msg){};
   virtual void HandleEngineErrorCode(const ExternalInterface::EngineErrorCodeMessage& msg) {};
   virtual void HandleDefinedCustomObject(const ExternalInterface::DefinedCustomObject& msg) {};
@@ -166,7 +166,7 @@ protected:
   void SendStopAllMotors();
   void SendImageRequest(ImageSendMode mode);
   void SendSetRobotImageSendMode(ImageSendMode mode);
-  void SendSaveImages(ImageSendMode imageMode, const std::string& path = "");
+  void SendSaveImages(ImageSendMode imageMode, const std::string& path = "", const int8_t qualityOnRobot = -1);
   void SendSaveState(bool enabled, const std::string& path = "");
   void SendEnableDisplay(bool on);
   void SendExecutePathToPose(const Pose3d& p,
@@ -511,7 +511,7 @@ private:
   void HandleDebugStringBase(const ExternalInterface::DebugString& msg);
   void HandleNVStorageOpResultBase(const ExternalInterface::NVStorageOpResult& msg);
   void HandleBehaviorTransitionBase(const ExternalInterface::BehaviorTransition& msg);
-  void HandleEndOfMessageBase(const EndOfMessage& msg);
+  void HandleEndOfMessageBase(const ExternalInterface::EndOfMessage& msg);
   void HandleFactoryTestResultEntryBase(const FactoryTestResultEntry& msg);
   void HandleLoadedKnownFaceBase(const Vision::LoadedKnownFace& msg);
   void HandleFaceEnrollmentCompletedBase(const ExternalInterface::FaceEnrollmentCompleted &msg);
@@ -540,7 +540,6 @@ private:
   webots::Supervisor _supervisor;
   
   webots::Node* _robotNode       = nullptr;
-  webots::Node* _robotEngineNode = nullptr;
 
   std::vector<webots::Node*> _lightCubes;
   std::vector<webots::Node*>::iterator _lightCubeOriginIter = _lightCubes.end();

@@ -13,9 +13,9 @@
 #ifndef __Anki_Cozmo_Basestation_GroundplaneClassifier_h
 #define __Anki_Cozmo_Basestation_GroundplaneClassifier_h
 
-#include "anki/common/basestation/math/polygon.h"
-#include "anki/common/types.h"
-#include "anki/vision/basestation/image.h"
+#include "coretech/common/engine/math/polygon.h"
+#include "coretech/common/shared/types.h"
+#include "coretech/vision/engine/image.h"
 #include "engine/debugImageList.h"
 #include "engine/vision/rawPixelsClassifier.h"
 #include "engine/vision/visionPoseData.h"

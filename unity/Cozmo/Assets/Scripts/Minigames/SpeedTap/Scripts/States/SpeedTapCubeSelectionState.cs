@@ -152,7 +152,6 @@ namespace SpeedTap {
       SpeedTapPlayerInfo player = (SpeedTapPlayerInfo)playerBase;
       if (player.playerType == PlayerType.Cozmo) {
         valid = true;
-        _SpeedTapGame.SetCozmoOrigPos();
         _SpeedTapGame.SharedMinigameView.HideSpinnerWidget();
         // Cozmo's goal ends once the animation is done
       }

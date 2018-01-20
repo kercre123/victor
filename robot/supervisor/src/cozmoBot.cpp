@@ -25,9 +25,8 @@
 #include "wheelController.h"
 
 #ifdef SIMULATOR
-#include "anki/common/shared/utilities_shared.h"
+#include "coretech/common/shared/utilities_shared.h"
 #include "clad/types/imageTypes.h"
-#include "blockLightController.h"
 #endif
 
 
@@ -219,11 +218,6 @@ namespace Anki {
         
         MARK_NEXT_TIME_PROFILE(CozmoBot, LIGHTS);
         BackpackLightController::Update();
-        
-#ifdef SIMULATOR
-        // TODO: Move this to animation process since that's where they'll be controlled from
-        BlockLightController::Update();
-#endif
         
         MARK_NEXT_TIME_PROFILE(CozmoBot, PATHDOCK);
         PathFollower::Update();

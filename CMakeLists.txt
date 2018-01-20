@@ -19,6 +19,15 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_C_STANDARD 99)
 
+if (CMAKE_GENERATOR MATCHES "Xcode")
+  set(CMAKE_XCODE_GENERATE_SCHEME ON)
+endif()
+
+# Set up custom property for file locations for custom targets
+define_property(TARGET PROPERTY ANKI_OUT_PATH
+                BRIEF_DOCS "The output path for this custom target"
+                FULL_DOCS "The output path for this custom target")
+
 set(SYMBOL_VISIBILITY_FLAGS "")
 
 set(ANKI_PLATFORM_NAME "unknown")
@@ -33,18 +42,22 @@ endif()
 
 add_compile_options(
     $<$<CONFIG:Debug>:-O0>
-    $<$<CONFIG:Release>:-Os>
+    $<$<CONFIG:Release>:-O2>
 )
 
 #
 # Factory build options
 #
 if (FACTORY_TEST)
-  add_definitions(-DFACTORY_TEST)
+  add_definitions(-DFACTORY_TEST=1)
+else()
+  add_definitions(-DFACTORY_TEST=0)
 endif()
 
 if (FACTORY_TEST_DEV)
-  add_definitions(-DFACTORY_TEST_DEV)
+  add_definitions(-DFACTORY_TEST_DEV=1)
+else()
+  add_definitions(-DFACTORY_TEST_DEV=0)
 endif()
 
 if (ANDROID)
@@ -73,6 +86,19 @@ set(CORETECH_EXTERNAL_DIR "${ANKI_EXTERNAL_DIR}/coretech_external")
 
 set(ANKI_SRCLIST_DIR "${CMAKE_SOURCE_DIR}/generated/cmake")
 
+if (ANDROID)
+  set(ANDROID_TOOLCHAIN_DIR "${CMAKE_BINARY_DIR}/toolchain")
+  set(ANDROID_TOOLCHAIN_CC "${ANDROID_TOOLCHAIN_DIR}/bin/arm-linux-androideabi-gcc")
+  set(ANDROID_TOOLCHAIN_CXX "${ANDROID_TOOLCHAIN_DIR}/bin/arm-linux-androideabi-g++")
+  add_custom_command(
+    OUTPUT "${ANDROID_TOOLCHAIN_CC}" "${ANDROID_TOOLCHAIN_CXX}"
+    COMMAND "${ANDROID_NDK}/build/tools/make_standalone_toolchain.py" --install-dir=${ANDROID_TOOLCHAIN_DIR}
+            --arch=arm --api=24 --stl libc++ --force --unified-headers
+  )
+  add_custom_target(android_toolchain DEPENDS "${ANDROID_TOOLCHAIN_CXX}" "${ANDROID_TOOLCHAIN_CC}")
+
+endif()
+
 #if (ANDROID)
 #  add_subdirectory("lib/crash-reporting-android/Breakpad")
 #endif()
@@ -95,18 +121,20 @@ include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 import(coretech "coretech")
 add_subdirectory("clad")
+add_subdirectory("cloud")
+add_subdirectory("cubeBleClient")
+add_subdirectory("osState")
 add_subdirectory("androidHAL")
 add_subdirectory("animProcess")
+
 target_include_directories(victor_anim PRIVATE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/anki/cozmo>
 )
+
 add_subdirectory("robot")
 
-if (ANDROID)
-    add_subdirectory("robot2")
-endif()
-
 import(cozmo_engine "engine")
+
 target_include_directories(cozmo_engine PRIVATE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/anki/cozmo>
 )

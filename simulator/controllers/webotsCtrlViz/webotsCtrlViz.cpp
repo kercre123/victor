@@ -13,8 +13,8 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "clad/types/vizTypes.h"
 #include "clad/vizInterface/messageViz.h"
-#include "anki/messaging/shared/UdpServer.h"
-#include "anki/messaging/shared/UdpClient.h"
+#include "coretech/messaging/shared/UdpServer.h"
+#include "coretech/messaging/shared/UdpClient.h"
 #include <webots/Supervisor.hpp>
 #include <webots/ImageRef.hpp>
 #include <webots/Display.hpp>
@@ -32,7 +32,7 @@ int main(int argc, char **argv)
   // create platform
   const Anki::Util::Data::DataPlatform& dataPlatform = WebotsCtrlShared::CreateDataPlatformBS(argv[0], "webotsCtrlViz");
   // initialize logger
-  WebotsCtrlShared::DefaultAutoGlobalLogger autoLogger(dataPlatform, params.filterLog);
+  WebotsCtrlShared::DefaultAutoGlobalLogger autoLogger(dataPlatform, params.filterLog, params.colorizeStderrOutput);
 
   webots::Supervisor vizSupervisor;
   VizControllerImpl vizController(vizSupervisor);

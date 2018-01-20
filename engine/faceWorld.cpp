@@ -11,8 +11,8 @@
  *
  **/
 
-#include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/math/poseOriginList.h"
+#include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/engine/math/poseOriginList.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -75,14 +75,23 @@ namespace Cozmo {
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  FaceWorld::FaceWorld(Robot& robot)
-  : _robot(robot)
+  FaceWorld::FaceWorld()
+  : UnreliableComponent<BCComponentID>(BCComponentID::FaceWorld)
+  , IDependencyManagedComponent<RobotComponentID>(RobotComponentID::FaceWorld)
   {
-    if(robot.HasExternalInterface()) {
-      SetupEventHandlers(*robot.GetExternalInterface());
-    }
+
   }
   
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void FaceWorld::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+  {
+    _robot = robot;
+    if(robot->HasExternalInterface()) {
+      SetupEventHandlers(*robot->GetExternalInterface());
+    }
+  }
+
+
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void FaceWorld::SetupEventHandlers(IExternalInterface& externalInterface)
   {
@@ -96,7 +105,7 @@ namespace Cozmo {
   {
     if(faceEntry.vizHandle != VizManager::INVALID_HANDLE)
     {
-      _robot.GetContext()->GetVizManager()->EraseVizObject(faceEntry.vizHandle);
+      _robot->GetContext()->GetVizManager()->EraseVizObject(faceEntry.vizHandle);
       faceEntry.vizHandle = VizManager::INVALID_HANDLE;
     }
   }
@@ -107,7 +116,7 @@ namespace Cozmo {
     if(broadcast)
     {
       using namespace ExternalInterface;
-      _robot.Broadcast(MessageEngineToGame(RobotDeletedFace(faceEntryIter->first)));
+      _robot->Broadcast(MessageEngineToGame(RobotDeletedFace(faceEntryIter->first)));
     }
     
     EraseFaceViz(faceEntryIter->second);
@@ -200,7 +209,7 @@ namespace Cozmo {
     
     // Always notify game: let it decide whether or not it cares or knows about oldID
     using namespace ExternalInterface;
-    _robot.Broadcast(MessageEngineToGame(RobotChangedObservedFaceID(oldID, newID)));
+    _robot->Broadcast(MessageEngineToGame(RobotChangedObservedFaceID(oldID, newID)));
 
     return RESULT_OK;
   }
@@ -215,7 +224,7 @@ namespace Cozmo {
     TimeStamp_t t=0;
     HistRobotState* histStatePtr = nullptr;
     HistStateKey histStateKey;
-    const Result histStateResult = _robot.GetStateHistory()->ComputeAndInsertStateAt(face.GetTimeStamp(), t,
+    const Result histStateResult = _robot->GetStateHistory()->ComputeAndInsertStateAt(face.GetTimeStamp(), t,
                                                                                      &histStatePtr, &histStateKey,
                                                                                      true);
     
@@ -227,9 +236,9 @@ namespace Cozmo {
     
     const PoseOriginID_t histOriginID = histStatePtr->GetPose().GetRootID();
     Pose3d headPoseWrtWorldOrigin(face.GetHeadPose());
-    headPoseWrtWorldOrigin.SetParent(_robot.GetPoseOriginList().GetOriginByID(histOriginID));
+    headPoseWrtWorldOrigin.SetParent(_robot->GetPoseOriginList().GetOriginByID(histOriginID));
     
-    const bool robotOnTreads = _robot.GetOffTreadsState() == OffTreadsState::OnTreads;
+    const bool robotOnTreads = _robot->GetOffTreadsState() == OffTreadsState::OnTreads;
     const bool headBelowRobot = headPoseWrtWorldOrigin.GetTranslation().z() < 0.f;
     if(kIgnoreFacesBelowRobot && robotOnTreads && headBelowRobot)
     {
@@ -352,7 +361,7 @@ namespace Cozmo {
         const bool rotatingTooFastCheckEnabled = (Util::IsFltGT(kBodyTurnSpeedThreshFace_degs, 0.f) ||
                                                   Util::IsFltGT(kHeadTurnSpeedThreshFace_degs, 0.f));
         const bool wasRotatingTooFast = (rotatingTooFastCheckEnabled &&
-                                         _robot.GetVisionComponent().WasRotatingTooFast(face.GetTimeStamp(),
+                                         _robot->GetVisionComponent().WasRotatingTooFast(face.GetTimeStamp(),
                                                                                         DEG_TO_RAD(kBodyTurnSpeedThreshFace_degs),
                                                                                         DEG_TO_RAD(kHeadTurnSpeedThreshFace_degs),
                                                                                         (face.IsBeingTracked() ? kNumImuDataToLookBackFace : 0)));
@@ -445,14 +454,14 @@ namespace Cozmo {
       // Update the last observed face pose.
       // If more than one was observed in the same timestamp then take the closest one.
       if (((_lastObservedFaceTimeStamp != faceEntry->face.GetTimeStamp()) ||
-          (ComputeDistanceBetween(_robot.GetPose(), _lastObservedFacePose) >
-           ComputeDistanceBetween(_robot.GetPose(), faceEntry->face.GetHeadPose())))) 
+          (ComputeDistanceBetween(_robot->GetPose(), _lastObservedFacePose) >
+           ComputeDistanceBetween(_robot->GetPose(), faceEntry->face.GetHeadPose())))) 
       {
         _lastObservedFacePose = faceEntry->face.GetHeadPose();
         _lastObservedFaceTimeStamp = faceEntry->face.GetTimeStamp();
 
         // Draw 3D face for the last observed pose
-        faceEntry->vizHandle = _robot.GetContext()->GetVizManager()->DrawHumanHead(0,
+        faceEntry->vizHandle = _robot->GetContext()->GetVizManager()->DrawHumanHead(0,
                                                                                    kHumanHeadSize,
                                                                                    faceEntry->face.GetHeadPose(),
                                                                                    ::Anki::NamedColors::DARKGRAY);
@@ -500,9 +509,9 @@ namespace Cozmo {
         }
       }
         
-      _robot.Broadcast(MessageEngineToGame(RobotObservedFace(faceEntry->face.GetID(),
+      _robot->Broadcast(MessageEngineToGame(RobotObservedFace(faceEntry->face.GetID(),
                                                              faceEntry->face.GetTimeStamp(),
-                                                             faceEntry->face.GetHeadPose().ToPoseStruct3d(_robot.GetPoseOriginList()),
+                                                             faceEntry->face.GetHeadPose().ToPoseStruct3d(_robot->GetPoseOriginList()),
                                                              CladRect(faceEntry->face.GetRect().GetX(),
                                                                       faceEntry->face.GetRect().GetY(),
                                                                       faceEntry->face.GetRect().GetWidth(),
@@ -527,7 +536,7 @@ namespace Cozmo {
         msg.faceID = faceEntry->face.GetID();
         cv::imencode(".jpg",  faceThumbnail.get_CvMat_(), msg.jpgImage, compressionParams);
 
-        _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+        _robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
       }
       */
     }
@@ -550,7 +559,7 @@ namespace Cozmo {
       }
     }
     
-    const TimeStamp_t lastProcImageTime = _robot.GetVisionComponent().GetLastProcessedImageTimeStamp();
+    const TimeStamp_t lastProcImageTime = _robot->GetVisionComponent().GetLastProcessedImageTimeStamp();
     
     // Delete any unnamed faces we haven't seen in awhile
     for(auto faceIter = _faceEntries.begin(); faceIter != _faceEntries.end(); )
@@ -590,7 +599,7 @@ namespace Cozmo {
     {
       if( !includeRecognizableOnly || faceEntry.face.GetID() > 0 )
       {
-        const bool isWrtRobotOrigin = _robot.IsPoseInWorldOrigin(faceEntry.face.GetHeadPose());
+        const bool isWrtRobotOrigin = _robot->IsPoseInWorldOrigin(faceEntry.face.GetHeadPose());
         if(isWrtRobotOrigin)
         {
           return true;
@@ -618,13 +627,13 @@ namespace Cozmo {
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   int FaceWorld::UpdateFaceOrigins(PoseOriginID_t oldOriginID, PoseOriginID_t newOriginID)
   {
-    DEV_ASSERT_MSG(_robot.GetPoseOriginList().ContainsOriginID(oldOriginID),
+    DEV_ASSERT_MSG(_robot->GetPoseOriginList().ContainsOriginID(oldOriginID),
                    "FaceWorld.UpdateFaceOrigins.InvalidOldOrigin", "ID:%d", oldOriginID);
-    DEV_ASSERT_MSG(_robot.GetPoseOriginList().ContainsOriginID(newOriginID),
+    DEV_ASSERT_MSG(_robot->GetPoseOriginList().ContainsOriginID(newOriginID),
                    "FaceWorld.UpdateFaceOrigins.InvalidNewOrigin", "ID:%d", newOriginID);
     
-    const Pose3d& oldOrigin = _robot.GetPoseOriginList().GetOriginByID(oldOriginID);
-    const Pose3d& newOrigin = _robot.GetPoseOriginList().GetOriginByID(newOriginID);
+    const Pose3d& oldOrigin = _robot->GetPoseOriginList().GetOriginByID(oldOriginID);
+    const Pose3d& newOrigin = _robot->GetPoseOriginList().GetOriginByID(newOriginID);
     
     s32 updateCount = 0;
     
@@ -684,13 +693,13 @@ namespace Cozmo {
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   SmartFaceID FaceWorld::GetSmartFaceID(Vision::FaceID_t faceID) const
   {
-    return SmartFaceID{_robot, faceID};
+    return SmartFaceID{*_robot, faceID};
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void FaceWorld::UpdateSmartFaceToID(const Vision::FaceID_t faceID, SmartFaceID& smartFaceID)
   {
-    smartFaceID.Reset(_robot, faceID);
+    smartFaceID.Reset(*_robot, faceID);
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -766,7 +775,7 @@ namespace Cozmo {
     
     if(_lastObservedFaceTimeStamp > 0)
     {
-      const bool lastPoseIsWrtRobotOrigin = _robot.IsPoseInWorldOrigin(_lastObservedFacePose);
+      const bool lastPoseIsWrtRobotOrigin = _robot->IsPoseInWorldOrigin(_lastObservedFacePose);
       
       // We have a last observed pose at all...
       if(lastPoseIsWrtRobotOrigin)
@@ -780,7 +789,7 @@ namespace Cozmo {
         // Pose is not w.r.t. robot origin, but we're allowed to use it anyway.
         // Create a fake pose as if it were w.r.t. current robot origin.
         poseWrtRobotOrigin = _lastObservedFacePose.GetWithRespectToRoot();
-        poseWrtRobotOrigin.SetParent(_robot.GetWorldOrigin()); // Totally not true, but we're faking it!
+        poseWrtRobotOrigin.SetParent(_robot->GetWorldOrigin()); // Totally not true, but we're faking it!
         returnTime = _lastObservedFaceTimeStamp;
       }
     }
@@ -840,7 +849,7 @@ namespace Cozmo {
     ColorRGBA drawFaceColor = ColorRGBA::CreateFromColorIndex((u32)trackedFace.GetID());
     
     const s32 vizID = (s32)trackedFace.GetID() + (trackedFace.GetID() >= 0 ? 1 : 0);
-    faceEntry.vizHandle = _robot.GetContext()->GetVizManager()->DrawHumanHead(vizID,
+    faceEntry.vizHandle = _robot->GetContext()->GetVizManager()->DrawHumanHead(vizID,
                                                                               kHumanHeadSize,
                                                                               trackedFace.GetHeadPose(),
                                                                               drawFaceColor);
@@ -848,7 +857,7 @@ namespace Cozmo {
     if(drawInImage)
     {
       // Draw box around recognized face (with ID) now that we have the real ID set
-      _robot.GetContext()->GetVizManager()->DrawCameraFace(trackedFace, drawFaceColor);
+      _robot->GetContext()->GetVizManager()->DrawCameraFace(trackedFace, drawFaceColor);
     }
   }
   
@@ -861,7 +870,7 @@ namespace Cozmo {
     const s32 numEnrollmentsRequired = (sessionOnly ? -1 :
                                         (s32)Vision::FaceRecognitionConstants::MaxNumEnrollDataPerAlbumEntry);
     
-    _robot.GetVisionComponent().SetFaceEnrollmentMode(Vision::FaceEnrollmentPose::LookingStraight,
+    _robot->GetVisionComponent().SetFaceEnrollmentMode(Vision::FaceEnrollmentPose::LookingStraight,
                                                       faceID,
                                                       numEnrollmentsRequired);
   }

@@ -13,17 +13,29 @@ fi
 
 
 # Begin robot configs
-if [ "F" = "$1" ]; then
+if [ "A" = "$1" ]; then
+    robotname="VICTOR_ed3dd846"
+    robotip="192.168.40.205"
+elif [ "C" = "$1" ]; then
+    robotname="VICTOR_ed3dd857"
+    robotip="192.168.40.204"
+elif [ "F" = "$1" ]; then
     robotname="VICTOR_1dcae602"
     robotip="192.168.40.200"
+elif [ "H" = "$1" ]; then
+    robotname="VICTOR_162b1e51"
+    robotip="192.168.40.201"
+elif [ "J" = "$1" ]; then
+    robotname="VICTOR_304aefeb"
+    robotip="192.168.40.202"
 elif [ "K" = "$1" ]; then
     robotname="VICTOR_2ecbdf7d"
-    robotip="192.168.40.201"
+    robotip="192.168.40.203"
 fi
 
 
 if [ -n "$robotname" ] && [ -n "$robotip" ]; then
     expect -f vic_join_robits.sh $robotname $robotip
 else
-    echo "No config found for robot $1"
+    expect -f vic_join_test2.sh $1
 fi
