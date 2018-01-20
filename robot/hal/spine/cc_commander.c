@@ -392,7 +392,7 @@ bool parse_command_text(const char* command, int len)
       ccc_debug("UNKNOWN command: %.*s\n", len, command);
       next_word = memchr(command, ' ', len);
       int n = (next_word)?  next_word-command : len;
-      print_response("<<*.*s -1\n", n, command);
+      print_response("<<%.*s -1\n", n, command);
     }
     if (next_word) {
       len -= next_word-command;
@@ -532,17 +532,16 @@ int print_response(const char* format, ...) {
 
  int nchars = vsnprintf((char*)response.data+SLUG_PAD_SIZE,
                         sizeof(response.data)-SLUG_PAD_SIZE,
-                        format, argptr) + SLUG_PAD_SIZE;
+                        format, argptr);
 
-  /* strcpy((char*)response.data, "<< TEST RESPONSE"); */
-  /* int nchars = 16; */
+ va_end(argptr);
+ if (nchars >= 0)  {
+   nchars+=SLUG_PAD_SIZE; //this is the end of valid data in the packet
+   memset(response.data+nchars, 0, sizeof(response.data)-nchars);
 
-  va_end(argptr);
-  memset(response.data+nchars, 0, sizeof(response.data)-nchars);
-//  gResponse = response;
-//  gRespPending = 1;
-  ccc_debug_x("CCC preparing response [ %s ]", response.data);
-  contact_text_buffer_put(&response);
+   ccc_debug_x("CCC preparing response [ %s ]", response.data);
+   contact_text_buffer_put(&response);
+ }
   return nchars;
 }
 
