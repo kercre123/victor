@@ -26,7 +26,7 @@ int main(int argc, char **argv)
   // create platform
   const Anki::Util::Data::DataPlatform& dataPlatform = WebotsCtrlShared::CreateDataPlatformBS(argv[0], "webotsCtrlLightCube");
   // initialize logger
-  WebotsCtrlShared::DefaultAutoGlobalLogger autoLogger(dataPlatform, params.filterLog);
+  WebotsCtrlShared::DefaultAutoGlobalLogger autoLogger(dataPlatform, params.filterLog, params.colorizeStderrOutput);
   
   if (ActiveBlock::Init() == Anki::RESULT_FAIL) {
     printf("ERROR (webotsCtrlLightCube): Failed to init block");

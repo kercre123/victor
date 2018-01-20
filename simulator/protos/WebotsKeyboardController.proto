@@ -50,7 +50,8 @@ PROTO WebotsKeyboardController [
   field SFString consoleVarValue ""
 
   field SFBool filterLogs FALSE
-  field SFString controllerArgs ""
+  field SFBool colorizeStderrOutput FALSE
+  
   field SFVec3f translation 0 0 0.08
   field SFRotation rotation 0 0 1 0
 
@@ -302,13 +303,16 @@ Supervisor {
   name IS name
   controller "webotsCtrlKeyboard"
 
-  # append filter command line parameter if filter is set to TRUE
+  # append optional command line parameters
+  %{ ctrlArgs="" }%
   %{ if fields.filterLogs.value then }%
-    %{ autoArgs=fields.controllerArgs.value .. "--applyLogFilter"}%
-  %{ else }%
-    %{ autoArgs=fields.controllerArgs.value}%
+    %{ ctrlArgs = ctrlArgs .. " --applyLogFilter"}%
   %{ end }%
-  controllerArgs "%{=autoArgs}%"
+  %{ if fields.colorizeStderrOutput.value then }%
+    %{ ctrlArgs = ctrlArgs .. " --colorizeStderrOutput"}%
+  %{ end }%
+
+  controllerArgs "%{=ctrlArgs}%"
 
 } # Supervisor definition
 } # PROTO definition

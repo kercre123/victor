@@ -117,7 +117,8 @@ int main(int argc, char **argv)
 #endif
 
   // - create and set logger
-  Util::IFormattedLoggerProvider* printfLoggerProvider = new Util::PrintfLoggerProvider(Anki::Util::ILoggerProvider::LOG_LEVEL_WARN);
+  Util::IFormattedLoggerProvider* printfLoggerProvider = new Util::PrintfLoggerProvider(Anki::Util::ILoggerProvider::LOG_LEVEL_WARN,
+                                                                                        params.colorizeStderrOutput);
   Anki::Util::MultiFormattedLoggerProvider loggerProvider({
     printfLoggerProvider
 #if ANKI_DEV_CHEATS

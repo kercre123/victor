@@ -32,17 +32,22 @@ DEF CozmoViz_1 CozmoBot {
 
   # Enable vizMode
   vizMode TRUE
+  
+  colorizeStderrOutput TRUE
 }
 DEF WorldComms BlockWorldComms {
   filterLogs TRUE
+  colorizeStderrOutput TRUE
   sleepUntilEndOfTic TRUE
 }
 CozmoVizDisplay {
+  colorizeStderrOutput TRUE
 }
 WebotsKeyboardController{
   forcedRobotIsSimulated FALSE
   forcedRobotIP "172.31.1.1"
   doAutoBlockpool FALSE
   filterLogs TRUE
+  colorizeStderrOutput TRUE
 }
 

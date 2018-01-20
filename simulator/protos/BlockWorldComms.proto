@@ -4,6 +4,7 @@ PROTO BlockWorldComms [
   field SFInt32 numUIDevicesToWaitFor 1
 
   field SFBool filterLogs FALSE
+  field SFBool colorizeStderrOutput FALSE
 
   # When true this inserts sleeps such that the engine tic
   # runs no faster than 60ms. Should only be true for worlds
@@ -18,11 +19,16 @@ Supervisor {
   name IS name
   controller "webotsCtrlGameEngine"
 
+  # append optional command line parameters
+  %{ ctrlArgs="" }%
   %{ if fields.filterLogs.value then }%
-  controllerArgs "--applyLogFilter"
-  %{ else }%
-  controllerArgs ""
+    %{ ctrlArgs = ctrlArgs .. " --applyLogFilter"}%
   %{ end }%
+  %{ if fields.colorizeStderrOutput.value then }%
+    %{ ctrlArgs = ctrlArgs .. " --colorizeStderrOutput"}%
+  %{ end }%
+
+  controllerArgs "%{=ctrlArgs}%"
 
   # Referencing a field that is used in code but not in the proto model
   # to suppress a Webots error message.

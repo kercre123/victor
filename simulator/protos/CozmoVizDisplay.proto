@@ -6,6 +6,7 @@ PROTO CozmoVizDisplay
   # Set this to match IMG_STREAM_RES in cozmoConfig.h
   field SFString streamResolution "QVGA"
   field SFBool filterLogs FALSE
+  field SFBool colorizeStderrOutput FALSE
   field SFInt32 accelPlotObjectId 0
 ]
 {
@@ -195,11 +196,16 @@ Supervisor {
 
   controller "webotsCtrlViz"
 
-  # append filter command line parameter if filter is set to TRUE
+  # append optional command line parameters
+  %{ ctrlArgs="" }%
   %{ if fields.filterLogs.value then }%
-    %{ autoArgs="--applyLogFilter"}%
+    %{ ctrlArgs = ctrlArgs .. " --applyLogFilter"}%
   %{ end }%
-  controllerArgs "%{=autoArgs}%"
+  %{ if fields.colorizeStderrOutput.value then }%
+    %{ ctrlArgs = ctrlArgs .. " --colorizeStderrOutput"}%
+  %{ end }%
+
+  controllerArgs "%{=ctrlArgs}%"
 
 } # Supervisor
 
