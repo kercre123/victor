@@ -26,7 +26,7 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
-#define DISPLAY_IMAGES true
+#define DISPLAY_IMAGES false
 
 extern Anki::Cozmo::CozmoContext *cozmoContext;
 
@@ -207,7 +207,7 @@ void checkClassifier(Anki::Cozmo::RawPixelsClassifier& clf,
 /*
  * Tests that training works with a specific error when not using class weighting
  */
-TEST(SurfaceClassifier, DISABLED_LRClassifier_TestWholeErrorNoWeighting) {
+TEST(SurfaceClassifier, LRClassifier_TestWholeErrorNoWeighting) {
   Json::Value config;
   // populate the Json file
   {
@@ -252,7 +252,7 @@ TEST(SurfaceClassifier, DISABLED_LRClassifier_TestWholeErrorNoWeighting) {
 /*
  * Test that training works better with a higher weight for the positive class.
  */
-TEST(SurfaceClassifier, DISABLED_LRClassifier_TestPositiveClassOnlyWithWeights)
+TEST(SurfaceClassifier, LRClassifier_TestPositiveClassOnlyWithWeights)
 {
 
   Json::Value config;
@@ -285,7 +285,7 @@ TEST(SurfaceClassifier, DISABLED_LRClassifier_TestPositiveClassOnlyWithWeights)
 /*
  * Test the Logistic Regression classifier on manually labeled data
  */
-TEST(SurfaceClassifier, DISABLED_LRClassifier_TestManualLabels) {
+TEST(SurfaceClassifier, LRClassifier_TestManualLabels) {
   Json::Value config;
   // populate the Json file
   {
@@ -319,7 +319,7 @@ TEST(SurfaceClassifier, DISABLED_LRClassifier_TestManualLabels) {
 /*
  * Test the threshold classifier
  */
-TEST(SurfaceClassifier, DISABLED_THClassifier_TestRealRun) {
+TEST(SurfaceClassifier, THClassifier_TestRealRun) {
   Json::Value config;
   // populate the Json file
   {
