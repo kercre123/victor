@@ -32,23 +32,24 @@ public class AndroidConnectToNetwork : AndroidConnectionFlowStage {
     try {
       DasTracker.Instance.TrackConnectFlowStarted();
     }
-    catch (ArgumentException ex) {
+    catch (Exception ex) {
       DAS.Error("AndroidConnectToNetwork.Start.TrackConnectFlowStarted", ex.ToString());
     }
+
 
     _StartTime = DateTime.Now;
 
     try {
       _CancelButton.Initialize(AndroidConnectionFlow.Instance.UseOldFlow, "cancel_button", "android_connect_to_network");
     }
-    catch (ArgumentException ex) {
+    catch (Exception ex) {
       DAS.Error("AndroidConnectToNetwork.Start.InitCancelButton", ex.ToString());
     }
 
     try {
       UpdateStatusLabels(AndroidConnectionFlow.CallJava<string>("getCurrentSSID"), AndroidConnectionFlow.CallJava<string>("getCurrentStatus"));
     }
-    catch (ArgumentException ex) {
+    catch (Exception ex) {
       DAS.Error("AndroidConnectToNetwork.Start.UpdateStatusLabels", ex.ToString());
     }
 
@@ -58,7 +59,7 @@ public class AndroidConnectToNetwork : AndroidConnectionFlowStage {
       RegisterJavaListener(receiver, "connectionFinished", HandleConnectionFinished);
       RegisterJavaListener(receiver, "wifiStatus", HandleWifiStatus);
     }
-    catch (ArgumentException ex) {
+    catch (Exception ex) {
       DAS.Error("AndroidConnectToNetwork.Start.RegisterJavaListener", ex.ToString());
     }
   }
