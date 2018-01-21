@@ -11,7 +11,7 @@
  **/
 
 
-#include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorObservingOnCharger.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/observing/behaviorObservingOnCharger.h"
 
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"

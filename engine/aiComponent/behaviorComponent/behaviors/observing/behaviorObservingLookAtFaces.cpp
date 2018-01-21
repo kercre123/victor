@@ -11,7 +11,7 @@
  **/
 
 
-#include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorVictorDemoObservingFaceInteraction.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/observing/behaviorObservingLookAtFaces.h"
 
 #include "engine/actions/basicActions.h"
 #include "engine/actions/compoundActions.h"

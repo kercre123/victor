@@ -11,7 +11,7 @@
  *
  **/
 
-#include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorVictorObservingDemo.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/behaviorHighLevelAI.h"
 
 #include "clad/types/objectTypes.h"
 #include "coretech/common/engine/colorRGBA.h"

@@ -118,22 +118,21 @@ BehaviorID ICozmoBehavior::ExtractBehaviorIDFromConfig(const Json::Value& config
   const std::string debugName = "IBeh.NoBehaviorIdSpecified";
   const std::string behaviorID_str = JsonTools::ParseString(config, kBehaviorIDConfigKey, debugName);
   
-  // // To make it easy to find behaviors, assert that the file name and behaviorID match
-  // if(ANKI_DEV_CHEATS && !fileName.empty()){
-  //   std::string jsonFileName = Util::FileUtils::GetFileName(fileName);
-  //   auto dotIndex = jsonFileName.find_last_of(".");
-  //   std::string lowerFileName = dotIndex == std::string::npos ? jsonFileName : jsonFileName.substr(0, dotIndex);
-  //   std::transform(lowerFileName.begin(), lowerFileName.end(), lowerFileName.begin(), ::tolower);
+  // To make it easy to find behaviors, assert that the file name and behaviorID match
+  if(ANKI_DEV_CHEATS && !fileName.empty()){
+    std::string jsonFileName = Util::FileUtils::GetFileName(fileName);
+    auto dotIndex = jsonFileName.find_last_of(".");
+    std::string lowerFileName = dotIndex == std::string::npos ? jsonFileName : jsonFileName.substr(0, dotIndex);
+    std::transform(lowerFileName.begin(), lowerFileName.end(), lowerFileName.begin(), ::tolower);
     
-  //   std::string behaviorIDLower = behaviorID_str;
-  //   std::transform(behaviorIDLower.begin(), behaviorIDLower.end(), behaviorIDLower.begin(), ::tolower);
-  //   DEV_ASSERT_MSG(behaviorIDLower == lowerFileName,
-  //                  "RobotDataLoader.LoadBehaviors.BehaviorIDFileNameMismatch",
-  //                  "File name %s does not match BehaviorID %s",
-  //                  fileName.c_str(),
-  //                  behaviorID_str.c_str());
-  // }
-  // TEMP: temporarily disabled while I do the demo rename
+    std::string behaviorIDLower = behaviorID_str;
+    std::transform(behaviorIDLower.begin(), behaviorIDLower.end(), behaviorIDLower.begin(), ::tolower);
+    DEV_ASSERT_MSG(behaviorIDLower == lowerFileName,
+                   "RobotDataLoader.LoadBehaviors.BehaviorIDFileNameMismatch",
+                   "File name %s does not match BehaviorID %s",
+                   fileName.c_str(),
+                   behaviorID_str.c_str());
+  }
   
   return BehaviorTypesWrapper::BehaviorIDFromString(behaviorID_str);
 }

@@ -10,7 +10,7 @@
  *
  **/
 
-#include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorVictorDemoNapping.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/sleeping/behaviorSleeping.h"
 
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/animActions.h"
