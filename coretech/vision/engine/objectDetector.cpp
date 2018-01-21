@@ -118,6 +118,7 @@ bool ObjectDetector::StartProcessingIfIdle(ImageCache& imageCache)
         _profiler.Tic("Inference");
         Result result = _model->Run(_imgBeingProcessed, objects);
         _profiler.Toc("Inference");
+
         if(RESULT_OK != result)
         {
           PRINT_NAMED_WARNING("ObjectDetector.Detect.AsyncLambda.ModelRunFailed", "");

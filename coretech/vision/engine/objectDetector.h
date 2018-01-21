@@ -1,5 +1,9 @@
 /**
+<<<<<<< HEAD
  * File: objectDetector.h
+=======
+ * File: objectDetector.cpp
+>>>>>>> * Add ObjectDetector with OpenCV DNN Model support (as private implementation)
  *
  * Author: Andrew Stein
  * Date:   6/29/2017
@@ -63,7 +67,6 @@ public:
   // Returns true if processing of the last image provided using StartProcessingIfIdle is complete
   // and populates objects with any detections.
   bool GetObjects(std::list<DetectedObject>& objects);
-  
   
   // Example usage:
   //
