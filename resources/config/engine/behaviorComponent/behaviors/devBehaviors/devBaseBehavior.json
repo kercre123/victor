@@ -3,5 +3,5 @@
   "behaviorClass": "DispatchAfterShake",
 
   // after the robot is shaken and put down, this behavior will be dispatched to
-  "behavior": "VictorObservingDemo"
+  "behavior": "HighLevelAI"
 }

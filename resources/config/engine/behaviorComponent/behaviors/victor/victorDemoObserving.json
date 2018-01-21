@@ -1,12 +1,12 @@
 {
-  "behaviorID" : "VictorDemoObserving",
+  "behaviorID" : "Observing",
   "behaviorClass" : "DispatcherStrictPriorityWithCooldown",
 
   "interruptActiveBehavior": false,
 
   "behaviors": [    
     {
-      "behavior": "VictorDemoObservingFaceInteraction",
+      "behavior": "ObservingLookAtFaces",
       "cooldown_s": 30.0,
       "cooldown_random_factor": 0.5
     },

@@ -1,5 +1,5 @@
 /**
- * File: behaviorVictorDemoNapping.cpp
+ * File: behaviorSleeping.cpp
  *
  * Author: Brad Neuman
  * Created: 2017-11-01
@@ -27,7 +27,7 @@ namespace Cozmo {
 
 namespace {
 
-static const char* kConsoleGroup = "VictorDemoNapping";
+static const char* kConsoleGroup = "Sleeping";
 
 CONSOLE_VAR_RANGED(f32, kSleepingStirSpacing_min_s, kConsoleGroup, 20.0f, 0.0f, 7200.0f);
 CONSOLE_VAR_RANGED(f32, kSleepingStirSpacing_max_s, kConsoleGroup, 40.0f, 0.0f, 7200.0f);
@@ -42,17 +42,17 @@ constexpr const char* kSleepingFaceLoopAnimClip = "anim_face_sleeping";
 
 }
 
-BehaviorVictorDemoNapping::BehaviorVictorDemoNapping(const Json::Value& config)
+BehaviorSleeping::BehaviorSleeping(const Json::Value& config)
   : ICozmoBehavior(config)
 {
 }
 
-bool BehaviorVictorDemoNapping::CanBeGentlyInterruptedNow() const
+bool BehaviorSleeping::CanBeGentlyInterruptedNow() const
 {
   return !_animIsPlaying;
 }
 
-void BehaviorVictorDemoNapping::OnBehaviorActivated()
+void BehaviorSleeping::OnBehaviorActivated()
 {
   _animIsPlaying = false;
   
@@ -61,17 +61,17 @@ void BehaviorVictorDemoNapping::OnBehaviorActivated()
   
 }
 
-void BehaviorVictorDemoNapping::TransitionToSleeping()
+void BehaviorSleeping::TransitionToSleeping()
 {
   SetDebugStateName("sleeping");
   
   _numRemainingInBout = GetRNG().RandIntInRange(kSleepingBoutNumStirs_min, kSleepingBoutNumStirs_max);
   
   const float waitTime_s = GetRNG().RandDblInRange(kSleepingStirSpacing_min_s, kSleepingStirSpacing_max_s);
-  HoldFaceForTime(waitTime_s, &BehaviorVictorDemoNapping::TransitionToBoutOfStirring);
+  HoldFaceForTime(waitTime_s, &BehaviorSleeping::TransitionToBoutOfStirring);
 }
 
-void BehaviorVictorDemoNapping::TransitionToBoutOfStirring()
+void BehaviorSleeping::TransitionToBoutOfStirring()
 {
   SetDebugStateName("inBout");
 
@@ -80,7 +80,7 @@ void BehaviorVictorDemoNapping::TransitionToBoutOfStirring()
   if( _numRemainingInBout-- >= 0 ) {
     // start bout (wait first, then animate)    
     const float waitTime_s = GetRNG().RandDblInRange(kSleepingBoutSpacing_min_s, kSleepingBoutSpacing_max_s);
-    HoldFaceForTime(waitTime_s, &BehaviorVictorDemoNapping::TransitionToPlayStirAnim);
+    HoldFaceForTime(waitTime_s, &BehaviorSleeping::TransitionToPlayStirAnim);
   }
   else {
     // back to sleep
@@ -89,19 +89,19 @@ void BehaviorVictorDemoNapping::TransitionToBoutOfStirring()
 
 }
 
-void BehaviorVictorDemoNapping::TransitionToPlayStirAnim()
+void BehaviorSleeping::TransitionToPlayStirAnim()
 {
   SetDebugStateName("stirring");
   _animIsPlaying = true;
 
   DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::GoToSleepSleeping),
-                      &BehaviorVictorDemoNapping::TransitionToBoutOfStirring);  
+                      &BehaviorSleeping::TransitionToBoutOfStirring);  
 }
 
 
-void BehaviorVictorDemoNapping::HoldFaceForTime(
+void BehaviorSleeping::HoldFaceForTime(
   const float waitTime_s,
-  void(BehaviorVictorDemoNapping::*callback)())
+  void(BehaviorSleeping::*callback)())
 {
   // This implementation is a huge hack which should go away as soon as VIC-364 is implemented so we can have
   // controls to directly turn off the procedural idles. In the meantime, we play an "engine-defined"
@@ -116,8 +116,8 @@ void BehaviorVictorDemoNapping::HoldFaceForTime(
   LoopHoldFace(callback);
 }
 
-void BehaviorVictorDemoNapping::LoopHoldFace(
-  void(BehaviorVictorDemoNapping::*callback)())
+void BehaviorSleeping::LoopHoldFace(
+  void(BehaviorSleeping::*callback)())
 {
 
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -128,7 +128,7 @@ void BehaviorVictorDemoNapping::LoopHoldFace(
     // play one iteration of the animation, then check the time again
     DelegateIfInControl(new PlayAnimationAction(kSleepingFaceLoopAnimClip),
                         [this, callback](){
-                          BehaviorVictorDemoNapping::LoopHoldFace(callback);});
+                          BehaviorSleeping::LoopHoldFace(callback);});
   }
 }
 

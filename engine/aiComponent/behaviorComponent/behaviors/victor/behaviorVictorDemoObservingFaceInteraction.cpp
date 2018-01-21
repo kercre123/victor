@@ -1,5 +1,5 @@
 /**
- * File: behaviorVictorDemoObservingFaceInteraction.cpp
+ * File: behaviorObservingLookAtFaces.cpp
  *
  * Author: Brad Neuman
  * Created: 2017-10-24
@@ -35,27 +35,27 @@ static const float kMinTrackingClampPeriod_s = 0.2f;
 static const float kMaxTrackingClampPeriod_s = 0.7f;
 }
 
-BehaviorVictorDemoObservingFaceInteraction::BehaviorVictorDemoObservingFaceInteraction(const Json::Value& config)
+BehaviorObservingLookAtFaces::BehaviorObservingLookAtFaces(const Json::Value& config)
   : ICozmoBehavior(config)
 {
 }
 
-void BehaviorVictorDemoObservingFaceInteraction::InitBehavior()
+void BehaviorObservingLookAtFaces::InitBehavior()
 {
   const auto& BC = GetBEI().GetBehaviorContainer();
 
-  BC.FindBehaviorByIDAndDowncast(BEHAVIOR_ID(VictorDemoObservingFindFaces),
+  BC.FindBehaviorByIDAndDowncast(BEHAVIOR_ID(ObservingFindFaces),
                                  BEHAVIOR_CLASS(FindFaces),
                                  _searchBehavior);
 
 }
 
-void BehaviorVictorDemoObservingFaceInteraction::GetAllDelegates(std::set<IBehavior*>& delegates) const
+void BehaviorObservingLookAtFaces::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
   delegates.insert(_searchBehavior.get());
 }
 
-void BehaviorVictorDemoObservingFaceInteraction::OnBehaviorActivated()
+void BehaviorObservingLookAtFaces::OnBehaviorActivated()
 {
   _faceIdsLookedAt.clear();
 
@@ -72,7 +72,7 @@ void BehaviorVictorDemoObservingFaceInteraction::OnBehaviorActivated()
   
 }
 
-bool BehaviorVictorDemoObservingFaceInteraction::CanBeGentlyInterruptedNow() const
+bool BehaviorObservingLookAtFaces::CanBeGentlyInterruptedNow() const
 {
   switch (_state ) {
     case State::FindFaces: {
@@ -88,7 +88,7 @@ bool BehaviorVictorDemoObservingFaceInteraction::CanBeGentlyInterruptedNow() con
 }
 
 
-void BehaviorVictorDemoObservingFaceInteraction::BehaviorUpdate()
+void BehaviorObservingLookAtFaces::BehaviorUpdate()
 {
   if(!IsActivated()){
     return;
@@ -106,7 +106,7 @@ void BehaviorVictorDemoObservingFaceInteraction::BehaviorUpdate()
 }
 
 
-void BehaviorVictorDemoObservingFaceInteraction::TransitionToFindFaces()
+void BehaviorObservingLookAtFaces::TransitionToFindFaces()
 {
   SET_STATE(FindFaces);
   
@@ -114,13 +114,13 @@ void BehaviorVictorDemoObservingFaceInteraction::TransitionToFindFaces()
     DelegateIfInControl(_searchBehavior.get());
   }
   else {
-    PRINT_NAMED_WARNING("BehaviorVictorDemoObservingFaceInteraction.FindFaces.DoesntWantToActivate",
+    PRINT_NAMED_WARNING("BehaviorObservingLookAtFaces.FindFaces.DoesntWantToActivate",
                         "Behavior %s doesn't want to activate, so face interaction will end",
                         _searchBehavior->GetIDStr().c_str());
   }
 }
 
-void BehaviorVictorDemoObservingFaceInteraction::TransitionToTurnTowardsAFace()
+void BehaviorObservingLookAtFaces::TransitionToTurnTowardsAFace()
 {
   SET_STATE(TurnTowardsFace);
   
@@ -149,7 +149,7 @@ void BehaviorVictorDemoObservingFaceInteraction::TransitionToTurnTowardsAFace()
 }
 
 
-void BehaviorVictorDemoObservingFaceInteraction::TransitionToStareAtFace(SmartFaceID face)
+void BehaviorObservingLookAtFaces::TransitionToStareAtFace(SmartFaceID face)
 {
   SET_STATE(StareAtFace);
   
@@ -157,7 +157,7 @@ void BehaviorVictorDemoObservingFaceInteraction::TransitionToStareAtFace(SmartFa
       ShouldStareAtFace(face) ) {
     // if the face is still valid and one we want to look at, go ahead and stare for a bit
     
-    PRINT_CH_INFO("Behaviors", "BehaviorVictorDemoObservingFaceInteraction.StareAtFace",
+    PRINT_CH_INFO("Behaviors", "BehaviorObservingLookAtFaces.StareAtFace",
                   "Adding %s as a 'stared at' face",
                   face.GetDebugStr().c_str());
     
@@ -173,10 +173,10 @@ void BehaviorVictorDemoObservingFaceInteraction::TransitionToStareAtFace(SmartFa
 
     // stare for a while, then turn towards another face
     DelegateIfInControl( new CompoundActionParallel({waitAction, trackAction}),
-                         &BehaviorVictorDemoObservingFaceInteraction::TransitionToTurnTowardsAFace );
+                         &BehaviorObservingLookAtFaces::TransitionToTurnTowardsAFace );
   }
   else {
-    PRINT_CH_INFO("Behaviors", "BehaviorVictorDemoObservingFaceInteraction.StareAtFace.Invalid",
+    PRINT_CH_INFO("Behaviors", "BehaviorObservingLookAtFaces.StareAtFace.Invalid",
                   "After turning, we see that face %s is not valid for staring",
                   face.GetDebugStr().c_str());
     
@@ -185,7 +185,7 @@ void BehaviorVictorDemoObservingFaceInteraction::TransitionToStareAtFace(SmartFa
   }
 }
 
-SmartFaceID BehaviorVictorDemoObservingFaceInteraction::GetFaceToStareAt()
+SmartFaceID BehaviorObservingLookAtFaces::GetFaceToStareAt()
 {
   // NOTE: because face ids can start out different and then become equal, _faceIdsLookedAt may have multiple
   // entries that are now equal
@@ -196,7 +196,7 @@ SmartFaceID BehaviorVictorDemoObservingFaceInteraction::GetFaceToStareAt()
   for( const auto& rawFaceID : faces ) {
     const SmartFaceID faceID = faceWorld.GetSmartFaceID(rawFaceID);
     if( ShouldStareAtFace(faceID) ) {
-      PRINT_CH_INFO("Behaviors", "BehaviorVictorDemoObservingFaceInteraction.GetFaceToStareAt",
+      PRINT_CH_INFO("Behaviors", "BehaviorObservingLookAtFaces.GetFaceToStareAt",
                     "Face %s is a valid one (didn't match any of the %zu we've already seen)",
                     faceID.GetDebugStr().c_str(),
                     _faceIdsLookedAt.size());
@@ -211,7 +211,7 @@ SmartFaceID BehaviorVictorDemoObservingFaceInteraction::GetFaceToStareAt()
   return SmartFaceID{};
 }
 
-bool BehaviorVictorDemoObservingFaceInteraction::ShouldStareAtFace(const SmartFaceID& face) const
+bool BehaviorObservingLookAtFaces::ShouldStareAtFace(const SmartFaceID& face) const
 {
   for( const auto& boringFace : _faceIdsLookedAt ) {
     if( face == boringFace ) {
@@ -224,7 +224,7 @@ bool BehaviorVictorDemoObservingFaceInteraction::ShouldStareAtFace(const SmartFa
   return true;
 }
 
-TimeStamp_t BehaviorVictorDemoObservingFaceInteraction::GetRecentFaceTime()
+TimeStamp_t BehaviorObservingLookAtFaces::GetRecentFaceTime()
 {
 
   const TimeStamp_t lastImgTime = GetBEI().GetRobotInfo().GetLastImageTimeStamp();
@@ -236,8 +236,8 @@ TimeStamp_t BehaviorVictorDemoObservingFaceInteraction::GetRecentFaceTime()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorVictorDemoObservingFaceInteraction::SetState_internal(
-  BehaviorVictorDemoObservingFaceInteraction::State state,
+void BehaviorObservingLookAtFaces::SetState_internal(
+  BehaviorObservingLookAtFaces::State state,
   const std::string& stateName)
 {
   _state = state;

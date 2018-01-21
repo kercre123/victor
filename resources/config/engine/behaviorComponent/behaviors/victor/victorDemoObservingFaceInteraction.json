@@ -1,4 +1,4 @@
 {
-  "behaviorID": "VictorDemoObservingFaceInteraction",
-  "behaviorClass": "VictorDemoObservingFaceInteraction"
+  "behaviorID": "ObservingLookAtFaces",
+  "behaviorClass": "ObservingLookAtFaces"
 }

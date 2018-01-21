@@ -1,5 +1,5 @@
 {
-  "behaviorID" : "VictorDemoPlay",
+  "behaviorID" : "PlayWithCubes",
   "behaviorClass" : "DispatcherRandom",
 
   "behaviors" : [

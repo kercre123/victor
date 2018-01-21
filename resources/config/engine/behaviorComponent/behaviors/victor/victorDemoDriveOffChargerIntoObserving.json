@@ -1,5 +1,5 @@
 {
-  "behaviorID" : "VictorDemoDriveOffChargerIntoObserving",
+  "behaviorID" : "DriveOffChargerIntoObserving",
   "behaviorClass" : "DispatcherQueue",
 
   "behaviors": [

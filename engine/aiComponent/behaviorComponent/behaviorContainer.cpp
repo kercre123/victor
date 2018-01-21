@@ -122,7 +122,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToVoiceCommand.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorComeHere.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorObservingOnCharger.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorVictorDemoFeeding.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorVictorDemoNapping.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorVictorDemoObservingFaceInteraction.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorVictorObservingDemo.h"
@@ -309,7 +308,7 @@ ICozmoBehaviorPtr BehaviorContainer::CreateAnonymousBehavior(BehaviorClass behav
 ICozmoBehaviorPtr BehaviorContainer::CreateBehaviorBase(BehaviorClass behaviorType, const Json::Value& config) const
 {
   ICozmoBehaviorPtr newBehavior;
-  
+
   switch (behaviorType)
   {
     case BehaviorClass::Wait:
@@ -840,24 +839,19 @@ ICozmoBehaviorPtr BehaviorContainer::CreateBehaviorBase(BehaviorClass behaviorTy
       break;
     }
 
-    case BehaviorClass::VictorDemoFeeding:
+    case BehaviorClass::HighLevelAI:
     {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorVictorDemoFeeding(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorHighLevelAI(config));
       break;
     }
-    case BehaviorClass::VictorObservingDemo:
+    case BehaviorClass::ObservingLookAtFaces:
     {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorVictorObservingDemo(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorObservingLookAtFaces(config));
       break;
     }
-    case BehaviorClass::VictorDemoObservingFaceInteraction:
+    case BehaviorClass::Sleeping:
     {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorVictorDemoObservingFaceInteraction(config));
-      break;
-    }
-    case BehaviorClass::VictorDemoNapping:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorVictorDemoNapping(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorSleeping(config));
       break;
     }
     case BehaviorClass::ObservingOnCharger:

@@ -1,5 +1,5 @@
 /**
- * File: behaviorVictorDemoNapping.h
+ * File: behaviorSleeping.h
  *
  * Author: Brad Neuman
  * Created: 2017-11-01
@@ -10,20 +10,20 @@
  *
  **/
 
-#ifndef __Engine_AiComponent_BehaviorComponent_Behaviors_Victor_BehaviorVictorDemoNapping_H__
-#define __Engine_AiComponent_BehaviorComponent_Behaviors_Victor_BehaviorVictorDemoNapping_H__
+#ifndef __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorSleeping_H__
+#define __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorSleeping_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 namespace Anki {
 namespace Cozmo {
 
-class BehaviorVictorDemoNapping : public ICozmoBehavior
+class BehaviorSleeping : public ICozmoBehavior
 {
 protected:
   // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;  
-  BehaviorVictorDemoNapping(const Json::Value& config);
+  BehaviorSleeping(const Json::Value& config);
 
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override{}
 
@@ -42,8 +42,8 @@ private:
 
   // helper to "wait" without doing procedural face motions and then run a callback
   void HoldFaceForTime(const float waitTime_s,
-                       void(BehaviorVictorDemoNapping::*callback)());
-  void LoopHoldFace(void(BehaviorVictorDemoNapping::*callback)());
+                       void(BehaviorSleeping::*callback)());
+  void LoopHoldFace(void(BehaviorSleeping::*callback)());
 
   bool _animIsPlaying = false;
 

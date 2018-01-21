@@ -1,17 +1,18 @@
 /**
- * File: behaviorVictorObservingDemo.h
+ * File: behaviorHighLevelAI.h
  *
  * Author: Brad Neuman
  * Created: 2017-10-16
  *
- * Description: Root behavior to handle the state machine for the victor observing demo
+ * Description: Root behavior to handle the state machine for the high level AI of victor (similar to Cozmo's
+ *              freeplay activities)
  *
  * Copyright: Anki, Inc. 2017
  *
  **/
 
-#ifndef __Engine_AiComponent_BehaviorComponent_Behaviors_Victor_BehaviorVictorObservingDemo_H__
-#define __Engine_AiComponent_BehaviorComponent_Behaviors_Victor_BehaviorVictorObservingDemo_H__
+#ifndef __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorHighLevelAI_H__
+#define __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorHighLevelAI_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
@@ -24,16 +25,16 @@ namespace Cozmo {
 
 class BehaviorFeedingEat;
 
-class BehaviorVictorObservingDemo : public ICozmoBehavior
+class BehaviorHighLevelAI : public ICozmoBehavior
 {
 protected:
   // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;  
-  BehaviorVictorObservingDemo(const Json::Value& config);
+  BehaviorHighLevelAI(const Json::Value& config);
   
 public:
 
-  virtual ~BehaviorVictorObservingDemo();
+  virtual ~BehaviorHighLevelAI();
   
   virtual bool WantsToBeActivatedBehavior() const override {
     return true; }

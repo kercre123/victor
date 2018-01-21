@@ -65,7 +65,7 @@ CozmoBot2 {
   colorizeStderrOutput TRUE
 }
 WebotsKeyboardController {
-  behaviorName "VictorObservingDemo"
+  behaviorName "HighLevelAI"
   consoleVarName "DevDispatchAfterShake"
   consoleVarValue "1"
   translation -0.24686749 0.2921897 0.08

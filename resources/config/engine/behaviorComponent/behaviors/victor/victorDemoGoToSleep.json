@@ -1,5 +1,5 @@
 {
-  "behaviorID" : "VictorDemoGoToSleep",
+  "behaviorID" : "GoToSleep",
   "behaviorClass" : "PlayAnim",
 
   "playOnChargerWithoutBody": true,

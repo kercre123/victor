@@ -1,24 +1,24 @@
 {
-  "behaviorID" : "VictorObservingDemo",
-  "behaviorClass" : "VictorObservingDemo",
+  "behaviorID" : "HighLevelAI",
+  "behaviorClass" : "HighLevelAI",
 
 
   "states": [
     {
       "name": "ObservingOnCharger",
-      "behavior": "VictorDemoObservingOnChargerState",
+      "behavior": "ObservingOnChargerState",
       "visionModes": [ "DetectingMarkers", "DetectingFaces" ],
       "debugColor": "ORANGE"
     },
     {
       "name": "ObservingOnChargerRecentlyPlaced",
-      "behavior": "VictorDemoObservingOnChargerState",
+      "behavior": "ObservingOnChargerState",
       "visionModes": [ "DetectingMarkers" ],
       "debugColor": "RED"
     },
     {
       "name": "DriveOffChargerIntoObserving",
-      "behavior": "VictorDemoDriveOffChargerIntoObserving",
+      "behavior": "DriveOffChargerIntoObserving",
       "visionModes": [ "DetectingFaces", "DetectingMarkers" ]
     },
     {
@@ -27,24 +27,24 @@
     },
     {
       "name": "Observing",
-      "behavior": "VictorDemoObservingState",
+      "behavior": "ObservingState",
       "visionModes": [ "DetectingFaces", "DetectingMarkers" ],
       "debugColor": "BLUE"
     },
     {
       "name": "Socializing",
-      "behavior": "VictorDemoSocialize",
+      "behavior": "Socialize",
       "visionModes": [ "DetectingFaces" ],
       "debugColor": "MAGENTA"
     },
     {
       "name": "Napping",
-      "behavior": "VictorDemoNappingState",
+      "behavior": "SleepingState",
       "debugColor": "GREEN"
     },
     {
       "name": "WakingUp",
-      "behavior": "VictorDemoNappingWakeUp"
+      "behavior": "SleepingWakeUp"
     },
     {
       "name": "ReturningToCharger",
@@ -54,7 +54,7 @@
     },
     {
       "name": "FailedToFindCharger",
-      "behavior": "VictorDemoFailedToFindCharger",
+      "behavior": "ObservingFailedToFindCharger",
       "visionModes": [ "DetectingMarkers" ]
     }
   ],

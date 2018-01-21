@@ -1,11 +1,11 @@
 {
-  "behaviorID" : "VictorDemoPlayState",
+  "behaviorID" : "PlayWithCubesState",
   "behaviorClass" : "DispatcherQueue",
 
   "behaviors" : [
     "DriveOffCharger",
     "ShortLookAroundForFaceAndCube",
-    "VictorDemoPlay",
+    "PlayWithCubes",
     "PutDownBlock"
   ]
 }

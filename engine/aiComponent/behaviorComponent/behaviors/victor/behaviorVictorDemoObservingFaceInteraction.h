@@ -1,5 +1,5 @@
 /**
- * File: behaviorVictorDemoObservingFaceInteraction.h
+ * File: behaviorObservingLookAtFaces.h
  *
  * Author: Brad Neuman
  * Created: 2017-10-24
@@ -10,8 +10,8 @@
  *
  **/
 
-#ifndef __Engine_AiComponent_BehaviorComponent_Behaviors_Victor_BehaviorVictorDemoObservingFaceInteraction_H__
-#define __Engine_AiComponent_BehaviorComponent_Behaviors_Victor_BehaviorVictorDemoObservingFaceInteraction_H__
+#ifndef __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorObservingLookAtFaces_H__
+#define __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorObservingLookAtFaces_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
@@ -20,11 +20,11 @@
 namespace Anki {
 namespace Cozmo {
 
-class BehaviorVictorDemoObservingFaceInteraction : public ICozmoBehavior
+class BehaviorObservingLookAtFaces : public ICozmoBehavior
 {
   // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;  
-  BehaviorVictorDemoObservingFaceInteraction(const Json::Value& config);
+  BehaviorObservingLookAtFaces(const Json::Value& config);
 
 public:
 

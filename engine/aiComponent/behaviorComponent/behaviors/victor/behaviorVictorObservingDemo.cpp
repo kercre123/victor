@@ -1,10 +1,11 @@
 /**
- * File: behaviorVictorObservingDemo.cpp
+ * File: behaviorHighLevelAI.cpp
  *
  * Author: Brad Neuman
  * Created: 2017-10-16
  *
- * Description: Root behavior to handle the state machine for the victor observing demo
+ * Description: Root behavior to handle the state machine for the high level AI of victor (similar to Cozmo's
+ *              freeplay activities)
  *
  * Copyright: Anki, Inc. 2017
  *
@@ -64,7 +65,7 @@ static const BackpackLights kLightsOff = {
 /** backpack debug lights description
  * on based on json param (see constructor)
  *
- * light 0: demo state (front)
+ * light 0: behavior state (front)
  * light 1: green = on charger, red = cliff detected (purple = both) (middle light)
  * light 2: blinking while update is running (status light)
  */
@@ -79,7 +80,7 @@ static constexpr const float kHeartbeatPeriod_s = 0.6f;
 }
 
 
-class BehaviorVictorObservingDemo::State
+class BehaviorHighLevelAI::State
 {
 public:
   
@@ -132,7 +133,7 @@ public:
 
 ////////////////////////////////////////////////////////////////////////////////
 
-BehaviorVictorObservingDemo::BehaviorVictorObservingDemo(const Json::Value& config)
+BehaviorHighLevelAI::BehaviorHighLevelAI(const Json::Value& config)
   : ICozmoBehavior(config)
   , _states(new StateMap)
   , _currDebugLights(kLightsOff)
@@ -141,7 +142,7 @@ BehaviorVictorObservingDemo::BehaviorVictorObservingDemo(const Json::Value& conf
 
   // First, parse the state definitions to create all of the "state names" as a first pass
   for( const auto& stateConfig : config[kStateConfgKey] ) {
-    AddStateName( JsonTools::ParseString(stateConfig, kStateNameConfgKey, "BehaviorVictorObservingDemo.StateConfig") );
+    AddStateName( JsonTools::ParseString(stateConfig, kStateNameConfgKey, "BehaviorHighLevelAI.StateConfig") );
   }
 
   // Define hard-coded conditions
@@ -150,14 +151,14 @@ BehaviorVictorObservingDemo::BehaviorVictorObservingDemo(const Json::Value& conf
   // Parse the state config again to create the actual states
   for( const auto& stateConfig : config[kStateConfgKey] ) {
     State state(stateConfig);
-    PRINT_CH_DEBUG("Behaviors", "VictorObservingDemo.LoadStateFromConfig",
+    PRINT_CH_DEBUG("Behaviors", "HighLevelAI.LoadStateFromConfig",
                    "%s",
                    state._name.c_str());
     AddState(std::move(state));
   }
 
   DEV_ASSERT( _states->size() == _stateNameToID.size(),
-              "VictorObservingDemo.StateConfig.InternalError.NotAllStatesDefined");
+              "HighLevelAI.StateConfig.InternalError.NotAllStatesDefined");
 
   ////////////////////////////////////////////////////////////////////////////////
   // Define transitions from json
@@ -171,7 +172,7 @@ BehaviorVictorObservingDemo::BehaviorVictorObservingDemo(const Json::Value& conf
     const StateID fromStateID = ParseStateFromJson(transitionDefConfig, "from");
 
     if( allFromStates.find(fromStateID) != allFromStates.end() ) {
-      PRINT_NAMED_WARNING("VictorObservingDemo.TransitionDefinitions.DuplicateFromState",
+      PRINT_NAMED_WARNING("HighLevelAI.TransitionDefinitions.DuplicateFromState",
                           "The transition definitions have multiple blocks defining transitions from '%s'.",
                           _states->at(fromStateID)._name.c_str());
     }
@@ -210,29 +211,29 @@ BehaviorVictorObservingDemo::BehaviorVictorObservingDemo(const Json::Value& conf
   }
 
   if( allFromStates.size() != _states->size() ) {
-    PRINT_NAMED_WARNING("VictorObservingDemo.TransitionDefinitions.DeadEndStates",
+    PRINT_NAMED_WARNING("HighLevelAI.TransitionDefinitions.DeadEndStates",
                         "Some states don't have any outgoing transition strategies! %zu from states, but %zu states",
                         allFromStates.size(),
                         _states->size());
   }
 
   if( allToStates.size() != _states->size() ) {
-    PRINT_NAMED_WARNING("VictorObservingDemo.TransitionDefinitions.UnusedStates",
+    PRINT_NAMED_WARNING("HighLevelAI.TransitionDefinitions.UnusedStates",
                         "Some states don't have any incoming transition strategies! %zu to states, but %zu states",
                         allToStates.size(),
                         _states->size());
   }
 
-  PRINT_CH_INFO("Behaviors", "VictorObservingDemo.StatesCreated",
+  PRINT_CH_INFO("Behaviors", "HighLevelAI.StatesCreated",
                 "Created %zu states",
                 _states->size());
 }
 
-BehaviorVictorObservingDemo::~BehaviorVictorObservingDemo()
+BehaviorHighLevelAI::~BehaviorHighLevelAI()
 {
 }
 
-void BehaviorVictorObservingDemo::CreatePreDefinedStrategies()
+void BehaviorHighLevelAI::CreatePreDefinedStrategies()
 {
   _preDefinedStrategies["CloseFaceForSocializing"] = std::make_shared<ConditionLambda>(
     [this](BehaviorExternalInterface& behaviorExternalInterface) {
@@ -262,7 +263,7 @@ void BehaviorVictorObservingDemo::CreatePreDefinedStrategies()
   _preDefinedStrategies["WantsToSleep"] = std::make_shared<ConditionLambda>(
     [this](BehaviorExternalInterface& behaviorExternalInterface) {
       if( _currState != GetStateID("ObservingOnCharger") ) {
-        PRINT_NAMED_WARNING("BehaviorVictorObservingDemo.WantsToSleepCondition.WrongState",
+        PRINT_NAMED_WARNING("BehaviorHighLevelAI.WantsToSleepCondition.WrongState",
                             "This condition only works from ObservingOnCharger");
         return false;
       }
@@ -311,7 +312,7 @@ void BehaviorVictorObservingDemo::CreatePreDefinedStrategies()
     });
 }
 
-void BehaviorVictorObservingDemo::InitBehavior()
+void BehaviorHighLevelAI::InitBehavior()
 {
   std::set< std::shared_ptr<IBEICondition> > allTransitions;
   
@@ -327,24 +328,24 @@ void BehaviorVictorObservingDemo::InitBehavior()
     strategy->Init(GetBEI());
   }
 
-  PRINT_CH_INFO("Behaviors", "VictorObservingDemo.Init",
+  PRINT_CH_INFO("Behaviors", "HighLevelAI.Init",
                 "initialized %zu states",
                 _states->size());
 }
 
-void BehaviorVictorObservingDemo::AddState( State&& state )
+void BehaviorHighLevelAI::AddState( State&& state )
 {
   if( ANKI_VERIFY( GetStateID(state._name) != InvalidStateID,
-                   "BehaviorVictorObservingDemo.AddState.InvalidName",
+                   "BehaviorHighLevelAI.AddState.InvalidName",
                    "State has invalid name '%s'",
                    state._name.c_str()) &&
       ANKI_VERIFY( _states->find(GetStateID(state._name)) == _states->end(),
-                   "BehaviorVictorObservingDemo.AddState.StateAlreadyExists", "") ) {    
+                   "BehaviorHighLevelAI.AddState.StateAlreadyExists", "") ) {    
     _states->emplace(GetStateID(state._name), state);
   }
 }
 
-void BehaviorVictorObservingDemo::GetAllDelegates(std::set<IBehavior*>& delegates) const
+void BehaviorHighLevelAI::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
   for( const auto& statePair : *_states ) {
     if( statePair.second._behavior != nullptr ) {
@@ -354,7 +355,7 @@ void BehaviorVictorObservingDemo::GetAllDelegates(std::set<IBehavior*>& delegate
 }
 
 
-void BehaviorVictorObservingDemo::OnBehaviorActivated()
+void BehaviorHighLevelAI::OnBehaviorActivated()
 {
   // _visionModesToReEnable.clear();
   // auto& visionComponent = GetBEI().GetVisionComponent();
@@ -390,7 +391,7 @@ void BehaviorVictorObservingDemo::OnBehaviorActivated()
   
 }
 
-void BehaviorVictorObservingDemo::OnBehaviorDeactivated()
+void BehaviorHighLevelAI::OnBehaviorDeactivated()
 {
   TransitionToState(InvalidStateID);
 
@@ -402,7 +403,7 @@ void BehaviorVictorObservingDemo::OnBehaviorDeactivated()
   _visionModesToReEnable.clear();
 }
 
-void BehaviorVictorObservingDemo::BehaviorUpdate()
+void BehaviorHighLevelAI::BehaviorUpdate()
 {
   if(!IsActivated()){
     return;
@@ -522,10 +523,10 @@ void BehaviorVictorObservingDemo::BehaviorUpdate()
     // else we'll just sit here doing nothing evaluating the conditions each tick
   }
 
-  // This demo behavior never ends, it's always running
+  // This behavior never ends, it's always running
 }
 
-void BehaviorVictorObservingDemo::TransitionToState(const StateID targetState)
+void BehaviorHighLevelAI::TransitionToState(const StateID targetState)
 {
 
   // TODO:(bn) don't de- and re-activate behaviors if switching states doesn't change the behavior  
@@ -540,11 +541,11 @@ void BehaviorVictorObservingDemo::TransitionToState(const StateID targetState)
   }
   else {
     DEV_ASSERT( !IsControlDelegated() || targetState == InvalidStateID,
-                "VictorObservingDemo.TransitionToState.WasInCountButHadDelegate" );
+                "HighLevelAI.TransitionToState.WasInCountButHadDelegate" );
   }
           
-  // TODO:(bn) channel for demo?
-  PRINT_CH_INFO("Unfiltered", "VictorObservingDemo.TransitionToState",
+  // TODO:(bn) channel for high level ai?
+  PRINT_CH_INFO("Unfiltered", "HighLevelAI.TransitionToState",
                 "Transition from state '%s' -> '%s'",
                 _currState  != InvalidStateID ? _states->at(_currState )._name.c_str() : "<NONE>",
                 targetState != InvalidStateID ? _states->at(targetState)._name.c_str() : "<NONE>");
@@ -592,16 +593,16 @@ void BehaviorVictorObservingDemo::TransitionToState(const StateID targetState)
 }
 
 
-BehaviorVictorObservingDemo::State::State(const std::string& stateName, const std::string& behaviorName)
+BehaviorHighLevelAI::State::State(const std::string& stateName, const std::string& behaviorName)
   : _name(stateName)
   , _behaviorName(behaviorName)
 {
 }
 
-BehaviorVictorObservingDemo::State::State(const Json::Value& config)
+BehaviorHighLevelAI::State::State(const Json::Value& config)
 {
-  _name = JsonTools::ParseString(config, kStateNameConfgKey, "BehaviorVictorObservingDemo.StateConfig");
-  _behaviorName = JsonTools::ParseString(config, "behavior", "BehaviorVictorObservingDemo.StateConfig");
+  _name = JsonTools::ParseString(config, kStateNameConfgKey, "BehaviorHighLevelAI.StateConfig");
+  _behaviorName = JsonTools::ParseString(config, "behavior", "BehaviorHighLevelAI.StateConfig");
 
   for( const auto& visionModeJson : config["visionModes"] ) {
     _requiredVisionModes.insert( VisionModeFromString( visionModeJson.asString() ) );
@@ -611,18 +612,18 @@ BehaviorVictorObservingDemo::State::State(const Json::Value& config)
   _debugColor = NamedColors::GetByString(debugColorStr);  
 }
 
-void BehaviorVictorObservingDemo::State::Init(BehaviorExternalInterface& bei)
+void BehaviorHighLevelAI::State::Init(BehaviorExternalInterface& bei)
 {
   const auto& BC = bei.GetBehaviorContainer();
   _behavior = BC.FindBehaviorByID( BehaviorTypesWrapper::BehaviorIDFromString( _behaviorName ) );
-  DEV_ASSERT_MSG(_behavior != nullptr, "ObservingDemo.State.NoBehavior",
+  DEV_ASSERT_MSG(_behavior != nullptr, "HighLevelAI.State.NoBehavior",
                  "State '%s' cannot find behavior '%s'",
                  _name.c_str(),
                  _behaviorName.c_str());
 }
 
 
-void BehaviorVictorObservingDemo::State::GetAllTransitions( std::set<IBEIConditionPtr>& allTransitions )
+void BehaviorHighLevelAI::State::GetAllTransitions( std::set<IBEIConditionPtr>& allTransitions )
 {
   for( auto& transitionPair : _interruptingTransitions ) {
     allTransitions.insert(transitionPair.second);
@@ -635,25 +636,25 @@ void BehaviorVictorObservingDemo::State::GetAllTransitions( std::set<IBEIConditi
   }
 }
 
-void BehaviorVictorObservingDemo::State::AddInterruptingTransition(StateID toState,
+void BehaviorHighLevelAI::State::AddInterruptingTransition(StateID toState,
                                                                    IBEIConditionPtr condition)
 {
   // TODO:(bn) references / rvalue / avoid copies?
   _interruptingTransitions.emplace_back(toState, condition);
 }
 
-void BehaviorVictorObservingDemo::State::AddNonInterruptingTransition(StateID toState,
+void BehaviorHighLevelAI::State::AddNonInterruptingTransition(StateID toState,
                                                                       IBEIConditionPtr condition )
 {
   _nonInterruptingTransitions.emplace_back(toState, condition);
 }
 
-void BehaviorVictorObservingDemo::State::AddExitTransition(StateID toState, IBEIConditionPtr condition)
+void BehaviorHighLevelAI::State::AddExitTransition(StateID toState, IBEIConditionPtr condition)
 {
   _exitTransitions.emplace_back(toState, condition);
 }
 
-void BehaviorVictorObservingDemo::State::OnActivated(BehaviorExternalInterface& bei)
+void BehaviorHighLevelAI::State::OnActivated(BehaviorExternalInterface& bei)
 {
   for( const auto& transitionPair : _interruptingTransitions ) {
     const auto& iConditionPtr = transitionPair.second;
@@ -672,13 +673,13 @@ void BehaviorVictorObservingDemo::State::OnActivated(BehaviorExternalInterface& 
   _lastTimeStarted_s = currTime_s;       
 }
 
-void BehaviorVictorObservingDemo::State::OnDeactivated()
+void BehaviorHighLevelAI::State::OnDeactivated()
 {
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _lastTimeEnded_s = currTime_s;
 }
 
-bool BehaviorVictorObservingDemo::StateExitCooldownExpired(StateID state, float timeout) const
+bool BehaviorHighLevelAI::StateExitCooldownExpired(StateID state, float timeout) const
 {
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   if( _states->at(state)._lastTimeEnded_s < 0.0f ||
@@ -691,25 +692,25 @@ bool BehaviorVictorObservingDemo::StateExitCooldownExpired(StateID state, float 
 }
 
 
-BehaviorVictorObservingDemo::StateID BehaviorVictorObservingDemo::AddStateName(const std::string& stateName)
+BehaviorHighLevelAI::StateID BehaviorHighLevelAI::AddStateName(const std::string& stateName)
 {
   if( ANKI_VERIFY( _stateNameToID.find(stateName) == _stateNameToID.end(),
-                   "BehaviorVictorObservingDemo.AddStateName.DuplicateName",
+                   "BehaviorHighLevelAI.AddStateName.DuplicateName",
                    "Adding '%s' more than once",
                    stateName.c_str()) ) {
     const size_t newID = _stateNameToID.size() + 2; // +1 for the state itself, +1 to skip 0
     _stateNameToID[stateName] = newID;
-    DEV_ASSERT(GetStateID(stateName) == newID, "BehaviorVictorObservingDemo.StateNameBug");
+    DEV_ASSERT(GetStateID(stateName) == newID, "BehaviorHighLevelAI.StateNameBug");
     return newID;
   }
   return InvalidStateID;
 }
 
-BehaviorVictorObservingDemo::StateID BehaviorVictorObservingDemo::GetStateID(const std::string& stateName) const
+BehaviorHighLevelAI::StateID BehaviorHighLevelAI::GetStateID(const std::string& stateName) const
 {
   auto it = _stateNameToID.find(stateName);
   if( ANKI_VERIFY( it != _stateNameToID.end(),
-                   "BehaviorVictorObservingDemo.GetStateID.NoSuchState",
+                   "BehaviorHighLevelAI.GetStateID.NoSuchState",
                    "State named '%s' does not exist",
                    stateName.c_str()) ) {
     return it->second;
@@ -717,11 +718,11 @@ BehaviorVictorObservingDemo::StateID BehaviorVictorObservingDemo::GetStateID(con
   return InvalidStateID;
 }
 
-BehaviorVictorObservingDemo::StateID BehaviorVictorObservingDemo::ParseStateFromJson(const Json::Value& config,
+BehaviorHighLevelAI::StateID BehaviorHighLevelAI::ParseStateFromJson(const Json::Value& config,
                                                                                      const std::string& key)
 {
   if( ANKI_VERIFY( config[key].isString(),
-                   "VictorObservingDemo.ParseStateFromJson.InvalidJson",
+                   "HighLevelAI.ParseStateFromJson.InvalidJson",
                    "key '%s' not present in json",
                    key.c_str() ) ) {
     return GetStateID( config[key].asString() );
@@ -729,7 +730,7 @@ BehaviorVictorObservingDemo::StateID BehaviorVictorObservingDemo::ParseStateFrom
   return InvalidStateID;
 }
 
-IBEIConditionPtr BehaviorVictorObservingDemo::ParseTransitionStrategy(const Json::Value& transitionConfig)
+IBEIConditionPtr BehaviorHighLevelAI::ParseTransitionStrategy(const Json::Value& transitionConfig)
 {
   const Json::Value& strategyConfig = transitionConfig["condition"];
   if( strategyConfig.isObject() ) {
@@ -740,11 +741,11 @@ IBEIConditionPtr BehaviorVictorObservingDemo::ParseTransitionStrategy(const Json
     // use code-defined named strategy
     const std::string& strategyName = JsonTools::ParseString(transitionConfig,
                                                              "preDefinedStrategyName",
-                                                             "BehaviorVictorObservingDemo.StateConfig");
+                                                             "BehaviorHighLevelAI.StateConfig");
 
     auto it = _preDefinedStrategies.find(strategyName);
     if( ANKI_VERIFY( it != _preDefinedStrategies.end(),
-                     "VictorObservingDemo.LoadTransitionConfig.PreDefinedStrategy.NotFound",
+                     "HighLevelAI.LoadTransitionConfig.PreDefinedStrategy.NotFound",
                      "No predefined strategy called '%s' exists",
                      strategyName.c_str()) ) {
       return it->second;
@@ -755,13 +756,13 @@ IBEIConditionPtr BehaviorVictorObservingDemo::ParseTransitionStrategy(const Json
   }
 }
 
-BehaviorVictorObservingDemo::TransitionType BehaviorVictorObservingDemo::TransitionTypeFromString(const std::string& str)
+BehaviorHighLevelAI::TransitionType BehaviorHighLevelAI::TransitionTypeFromString(const std::string& str)
 {
   if( str == "NonInterrupting" ) return TransitionType::NonInterrupting;
   else if( str == "Interrupting" ) return TransitionType::Interrupting;
   else if( str == "Exit" ) return TransitionType::Exit;
   else {
-    PRINT_NAMED_ERROR("BehaviorVictorObservingDemo.TransitionTypeFromString.InvalidString",
+    PRINT_NAMED_ERROR("BehaviorHighLevelAI.TransitionTypeFromString.InvalidString",
                       "String '%s' does not match a transition type",
                       str.c_str());
     // return something to make the compiler happy

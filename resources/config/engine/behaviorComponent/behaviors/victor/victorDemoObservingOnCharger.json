@@ -1,5 +1,5 @@
 {
-  "behaviorID" : "VictorDemoObservingOnCharger",
+  "behaviorID" : "ObservingOnCharger",
   "behaviorClass" : "DispatcherStrictPriorityWithCooldown",
 
   "interruptActiveBehavior": false,
