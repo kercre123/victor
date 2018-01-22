@@ -67,8 +67,6 @@ fi
 _TOPLEVEL=`$GIT rev-parse --show-toplevel`
 _SMARTLING_PULL_SCRIPT=${_TOPLEVEL}/tools/smartling/smartling-pull.sh
 _GENERATE_SDF_SCRIPT=${_TOPLEVEL}/tools/smartling/generateSDFfromTranslations.py
-_TRANSLATE_SCRIPT=${_TOPLEVEL}/tools/scratch/autotranslate/localize_featured_projects.py
-_TRANSLATE_BLACKLIST=${_TOPLEVEL}/tools/scratch/autotranslate/blacklist.json
 _STRIP_SPECIAL_CHARACTERS=${_TOPLEVEL}/tools/smartling/smartling-strip-special-characters.py
 _CHECK_JSON_KEYS=${_TOPLEVEL}/tools/smartling/smartling-check-json-keys.py
 _UNITY_PROJECT_DIR=${_TOPLEVEL}/unity/Cozmo/
@@ -77,8 +75,10 @@ _ASSET_BUNDLES_DIR=${_TOPLEVEL}/unity/Cozmo/Assets/AssetBundles
 _TRANSLATED_OUTPUT_FILE=Assets/DevTools/Editor/LanguageHelpers/japaneseTranslations.txt
 _LOCALIZED_STRINGS_DIR=${_TOPLEVEL}/unity/Cozmo/Assets/StreamingAssets/LocalizedStrings
 _STREAMING_ASSETS_DIR=${_TOPLEVEL}/unity/Cozmo/Assets/StreamingAssets
-_TRANSLATED_PROJECT_CONFIG_FILE=${_STREAMING_ASSETS_DIR}/Scratch/featured-projects.json
-_TRANSLATED_PROJECTS_DIR=${_STREAMING_ASSETS_DIR}/Scratch/featuredProjects
+_TRANSLATE_CODELAB_SCRIPT=${_TOPLEVEL}/tools/scratch/autotranslate/localize_featured_projects.py
+_TRANSLATE_CODELAB_BLACKLIST=${_TOPLEVEL}/tools/scratch/autotranslate/blacklist.json
+_TRANSLATED_CODELAB_PROJECT_CONFIG_FILE=${_STREAMING_ASSETS_DIR}/Scratch/featured-projects.json
+_TRANSLATED_CODELAB_PROJECTS_DIR=${_STREAMING_ASSETS_DIR}/Scratch/featuredProjects
 _GIT_COZMO_URI=https://$ANKI_SMARTLING_ACCESS_TOKEN:x-oauth-basic@github.com/anki/cozmo-one.git
 _GIT_COZMO_PR_URI=https://$ANKI_SMARTLING_ACCESS_TOKEN:x-oauth-basic@api.github.com/repos/anki/cozmo-one/pulls
 
@@ -104,7 +104,7 @@ if [ $exit_status -ne 0 ]; then
     send_slack_message_no_exit "There was a problem generating JP SDF from translations. Check build log!" "danger"
 fi
 
-$PYTHON3 $_TRANSLATE_SCRIPT -at -b $_TRANSLATE_BLACKLIST --streaming_assets_path $_STREAMING_ASSETS_DIR --project_folder $_TRANSLATED_PROJECTS_DIR --project_config_file $_TRANSLATED_PROJECT_CONFIG_FILE || exit_status=$?
+$PYTHON3 $_TRANSLATE_CODELAB_SCRIPT -at -b $_TRANSLATE_CODELAB_BLACKLIST --streaming_assets_path $_STREAMING_ASSETS_DIR --project_folder $_TRANSLATED_CODELAB_PROJECTS_DIR --project_config_file $_TRANSLATED_CODELAB_PROJECT_CONFIG_FILE || exit_status=$?
 if [ $exit_status -ne 0 ]; then
     send_slack_message_no_exit "There was a problem translating featured projects. Check build log!" "danger"
 fi
@@ -131,7 +131,7 @@ if [ "$_status" ]; then
     $GIT checkout -b update-localized-strings-json
     $GIT add $_LOCALIZED_STRINGS_DIR/*
     $GIT add $_ASSET_BUNDLES_DIR/*
-    $GIT add $_TRANSLATED_PROJECTS_DIR/*
+    $GIT add $_TRANSLATED_CODELAB_PROJECTS_DIR/*
     $GIT commit -am "Updating localized *.json from Smartling download."
     $GIT push origin update-localized-strings-json
 
