@@ -115,25 +115,31 @@ SolidBox {
 LightCube {
   translation -0.54820241 0.58985791 0.022
   rotation 0 0 1 0.523599
+  colorizeStderrOutput TRUE
 }
 LightCube {
   translation 0.30768196 -0.18417264 0.0219929
   rotation 1.39537e-05 -1.83704e-06 1 0.261799
   objectType "Block_LIGHTCUBE3"
+  colorizeStderrOutput TRUE
 }
 LightCube {
   translation -0.30623531 0.42059343 0.0219929
   rotation 0 0 -1 6.23319
   objectType "Block_LIGHTCUBE2"
+  colorizeStderrOutput TRUE
 }
 CozmoBot2 {
   translation -0.78730284 0.77366239 -3.5527137e-15
   filterLogs TRUE
+  colorizeStderrOutput TRUE
 }
 WebotsKeyboardController {
   translation -0.78288058 0.37264738 0.08
   rotation 0 0 1 1.5707963
+  colorizeStderrOutput TRUE
 }
 CozmoVizDisplay {
   streamResolution "NHD"
+  colorizeStderrOutput TRUE
 }

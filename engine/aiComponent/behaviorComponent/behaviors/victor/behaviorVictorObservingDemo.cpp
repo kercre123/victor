@@ -238,21 +238,6 @@ BehaviorVictorObservingDemo::~BehaviorVictorObservingDemo()
 
 void BehaviorVictorObservingDemo::CreatePreDefinedStrategies()
 {
-  // TODO:(bn) make proper strategy for this
-  _preDefinedStrategies["OnCharger"] = std::make_shared<ConditionLambda>(
-    [](BehaviorExternalInterface& behaviorExternalInterface) {
-      const bool onCharger = behaviorExternalInterface.GetRobotInfo().IsOnChargerPlatform();
-      return onCharger;
-    });
-
-  // TODO:(bn) create a "not" strategy for this
-  _preDefinedStrategies["OffCharger"] = std::make_shared<ConditionLambda>(
-    [](BehaviorExternalInterface& behaviorExternalInterface) {
-      const bool onCharger = behaviorExternalInterface.GetRobotInfo().IsOnChargerPlatform();
-      return !onCharger;
-    });
-
-
   _preDefinedStrategies["HasCubeToEat"] = std::make_shared<ConditionLambda>(
     [](BehaviorExternalInterface& behaviorExternalInterface) {
       const AIWhiteboard& whiteboard = behaviorExternalInterface.GetAIComponent().GetWhiteboard();

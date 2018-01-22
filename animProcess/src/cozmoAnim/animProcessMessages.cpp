@@ -37,6 +37,7 @@
 
 #include "osState/osState.h"
 
+#include "util/console/consoleInterface.h"
 #include "util/console/consoleSystem.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
@@ -63,6 +64,9 @@ namespace {
   const u8 kNumTicksToCheckForBC = 60; // ~2seconds
   u8 _bcCheckCount = 0;
   #endif
+
+  CONSOLE_VAR(bool, kDebugFaceDraw_CycleWithButton, "DebugFaceDraw", true);   
+
 }
 
 namespace Anki {
@@ -263,8 +267,23 @@ static void HandleRobotStateUpdate(const Anki::Cozmo::RobotState& robotState)
 
   if (buttonReleased)
   {
-    FaceDisplay::GetDebugDraw()->ChangeDrawState();
+    if(kDebugFaceDraw_CycleWithButton)
+    {
+      FaceDisplay::GetDebugDraw()->ChangeDrawState();
+    }
   }
+
+#if ANKI_DEV_CHEATS
+  auto * micDataProcessor = _context->GetMicDataProcessor();
+  if (micDataProcessor != nullptr)
+  {
+    const auto liftHeight_mm = ConvertLiftAngleToLiftHeightMM(robotState.liftAngle);
+    if (LIFT_HEIGHT_CARRY-1.f <= liftHeight_mm)
+    {
+      micDataProcessor->SetForceRecordClip(true);
+    }
+  }
+#endif
 }
 
 void AnimProcessMessages::ProcessMessageFromRobot(const RobotInterface::RobotToEngine& msg)

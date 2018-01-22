@@ -1,6 +1,6 @@
 cxx_project(
     name = 'test_engine',
-    srcs = cxx_src_glob(['engine'],
+    srcs = cxx_src_glob(['.'],
                         excludes = [
                             '**/android/*',
                             'latticePlannerTest.cpp',

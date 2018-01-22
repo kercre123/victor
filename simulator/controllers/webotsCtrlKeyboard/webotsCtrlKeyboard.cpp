@@ -2326,6 +2326,21 @@ namespace Anki {
                 }
                 break;
               }
+
+              case (s32)'I':
+              {
+                using namespace ExternalInterface;
+
+                static bool toggle = false;
+                SendMessage(MessageGameToEngine(SetDebugConsoleVarMessage("ImageCompressQuality", 
+                                                                          (toggle ? "50" : "0"))));
+                
+                LOG_INFO("ToggleImageStreaming", "%s image streaming", (toggle ? "Enabling" : "Disabling"));
+
+                toggle = !toggle;
+                
+                break;
+              }
             
               case 0x04: // Webots carriage return?
               {
@@ -2690,7 +2705,7 @@ int main(int argc, char **argv)
   // create platform
   const Anki::Util::Data::DataPlatform& dataPlatform = WebotsCtrlShared::CreateDataPlatformBS(argv[0], "webotsCtrlKeyboard");
   // initialize logger
-  WebotsCtrlShared::DefaultAutoGlobalLogger autoLogger(dataPlatform, params.filterLog);
+  WebotsCtrlShared::DefaultAutoGlobalLogger autoLogger(dataPlatform, params.filterLog, params.colorizeStderrOutput);
 
   Anki::Cozmo::WebotsKeyboardController webotsCtrlKeyboard(BS_TIME_STEP);
   webotsCtrlKeyboard.PreInit();

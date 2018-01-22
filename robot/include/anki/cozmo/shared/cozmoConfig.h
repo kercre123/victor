@@ -9,6 +9,8 @@
 #include "util/math/math.h"
 #endif
 
+#include <math.h>
+
 namespace Anki {
 namespace Cozmo {
 
@@ -125,6 +127,12 @@ namespace Cozmo {
   const s32 FACE_DISPLAY_WIDTH = 184;
   const s32 FACE_DISPLAY_HEIGHT = 96;
   const s32 FACE_DISPLAY_NUM_PIXELS = FACE_DISPLAY_WIDTH * FACE_DISPLAY_HEIGHT;
+
+  // Common conversion functionality for lift height
+  #define ConvertLiftHeightToLiftAngleRad(height_mm) asinf((CLIP(height_mm, LIFT_HEIGHT_LOWDOCK, LIFT_HEIGHT_CARRY) \
+                                                     - LIFT_BASE_POSITION[2] - LIFT_FORK_HEIGHT_REL_TO_ARM_END)/LIFT_ARM_LENGTH)
+  #define ConvertLiftAngleToLiftHeightMM(angle_rad) ((sinf(angle_rad) * LIFT_ARM_LENGTH) \
+                                                    + LIFT_BASE_POSITION[2] + LIFT_FORK_HEIGHT_REL_TO_ARM_END)
   
   /***************************************************************************
    *
@@ -171,10 +179,10 @@ namespace Cozmo {
    *
    **************************************************************************/
 
-  // Cliff detection thresholds (these come from testing with prototype 2 robots - will need
+  // Cliff detection thresholds (these come from testing with DVT1 robots - will need
   // to be adjusted for production hardware)
-  const u16 CLIFF_SENSOR_THRESHOLD_MAX = 180;
-  const u16 CLIFF_SENSOR_THRESHOLD_MIN = 25;
+  const u16 CLIFF_SENSOR_THRESHOLD_MAX = 40;
+  const u16 CLIFF_SENSOR_THRESHOLD_MIN = 15;
   const u16 CLIFF_SENSOR_THRESHOLD_DEFAULT = CLIFF_SENSOR_THRESHOLD_MAX;
   
   // Cliff sensor value must rise this far above the threshold to 'untrigger' cliff detection.

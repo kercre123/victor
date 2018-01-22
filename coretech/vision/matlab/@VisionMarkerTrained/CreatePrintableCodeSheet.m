@@ -45,8 +45,9 @@ function CreatePrintableCodeSheet(varargin)
 %
 %  'backgroundColor' [1 1 1]
 %
-%  'whiteOnBloack'  [false]
-%    Set to true to make negated/inverted markers (white on black)
+%  'contrast' [1]
+%    Set < 1 to reduce contrast of markers. Can also be a vector to
+%    cycle through a set of contrasts.
 %
 %
 % Example Usage:
@@ -70,7 +71,7 @@ markerSize = 25; % in mm
 numPerCode = 1;
 outsideBorderSize = []; % in mm, empty to not use
 backgroundColor = [1 1 1];
-whiteOnBlack = false;
+contrast = 1;
 
 parseVarargin(varargin{:});
 
@@ -138,6 +139,8 @@ ygrid = ygrid';
 %     numImages = numRows*numCols;
 % end
 
+contrast = repmat(contrast, [1 ceil(numImages/length(contrast))]);
+  
 iFigure = 0;
 
 for iFile = 1:numImages 
@@ -172,8 +175,24 @@ for iFile = 1:numImages
     end
     
     [img, ~, alpha] = imread(fnames{iFile});
+    
     img = mean(im2double(img),3);
     img(alpha < .5) = 1;
+    
+    currentBackgroundColor = backgroundColor;
+    if contrast(iFile) ~= 1
+      [nrows,ncols,nchannels] = size(img);
+      if nchannels == 1
+        img = img(:,:,ones(1,3));
+      end
+      img = reshape(img, [], 3);
+      background = currentBackgroundColor(ones(nrows*ncols,1),:);
+      index= find(all(img >= .5,2));
+      img(index,:) = contrast(iFile)*(1-currentBackgroundColor) + background(index,:);
+      index = find(all(img < .5,2));
+      img(index,:) = background(index,:);
+      img = reshape(img, nrows, ncols, 3);
+    end
     
     iPos = mod(iFile-1, numRows*numCols) + 1;
     
@@ -182,26 +201,19 @@ for iFile = 1:numImages
         ygrid(iPos)-outsideBorderSize(2)/20 outsideBorderSize/10], ...
         'Parent', h_axes, 'EdgeColor', [0.8 0.8 0.8], ...
         'LineWidth', .5, 'LineStyle', ':');
-      if whiteOnBlack
-        set(h_rect,  'EdgeColor', 1-backgroundColor, 'LineStyle', 'none', 'FaceColor', 1-backgroundColor);
-      else 
-        set(h_rect, 'FaceColor', backgroundColor);
-        if any(backgroundColor ~= 1) 
+        set(h_rect, 'FaceColor', currentBackgroundColor);
+        if any(currentBackgroundColor ~= 1)
           set(h_rect, 'LineStyle', 'none');
         end
-      end
     end
     
-    h_img = imagesc(xgrid(iPos)+markerSize(1)/10*[-.5 .5], ...
+    imagesc(xgrid(iPos)+markerSize(1)/10*[-.5 .5], ...
       ygrid(iPos)+markerSize(2)/10*[-.5 .5], img, ...
       'AlphaData', alpha, ...
       'Parent', h_axes);
     
-    if whiteOnBlack
-      temp = get(h_img, 'CData');
-      set(h_img, 'CData', 1 - get(h_img, 'CData'));
-    end
-    
+    set(h_axes, 'CLim', [0 1]);
+        
 end % FOR each File
 
 end % FUNCTION CreatePrintableCodeSheet

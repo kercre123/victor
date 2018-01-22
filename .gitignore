@@ -405,3 +405,7 @@ apps/xamarin/chewie/Droid/bin
 apps/xamarin/chewie/Droid/obj
 apps/xamarin/chewie/iOS/bin
 apps/xamarin/chewie/iOS/obj
+apps/xamarin/chewie/codelab.Droid/bin
+apps/xamarin/chewie/codelab.Droid/obj
+apps/xamarin/chewie/codelab.iOS/bin
+apps/xamarin/chewie/codelab.iOS/obj

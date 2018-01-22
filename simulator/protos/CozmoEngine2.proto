@@ -11,6 +11,7 @@ PROTO CozmoEngine2 [
   field SFInt32 numCubeReceivers 5
 
   field SFBool filterLogs FALSE
+  field SFBool colorizeStderrOutput FALSE
 ]
 {
 Supervisor {
@@ -19,11 +20,16 @@ Supervisor {
   rotation IS rotation
   controller "webotsCtrlGameEngine2"
 
+  # append optional command line parameters
+  %{ ctrlArgs="" }%
   %{ if fields.filterLogs.value then }%
-  controllerArgs "--applyLogFilter"
-  %{ else }%
-  controllerArgs ""
+    %{ ctrlArgs = ctrlArgs .. " --applyLogFilter"}%
   %{ end }%
+  %{ if fields.colorizeStderrOutput.value then }%
+    %{ ctrlArgs = ctrlArgs .. " --colorizeStderrOutput"}%
+  %{ end }%
+
+  controllerArgs "%{=ctrlArgs}%"
 
 
   children [  

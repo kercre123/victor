@@ -19,6 +19,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/drivingAnimationHandler.h"
 #include "engine/events/animationTriggerHelpers.h"
 
 #include "coretech/common/engine/jsonTools.h"
@@ -28,12 +29,16 @@ namespace Cozmo {
 
 namespace {
 const char* kUseCliffSensorsKey = "useCliffSensorCorrection";
-const char* kTurningAnimKey = "turningAnimTrigger";
-const char* kBackupAnimKey = "backupAnimTrigger";
-const char* kNuzzleAnimKey = "nuzzleAnimTrigger";
+const char* kLeftTurnAnimKey    = "leftTurnAnimTrigger";
+const char* kRightTurnAnimKey   = "rightTurnAnimTrigger";
+const char* kBackupStartAnimKey = "backupStartAnimTrigger";
+const char* kBackupEndAnimKey   = "backupEndAnimTrigger";
+const char* kBackupLoopAnimKey  = "backupLoopAnimTrigger";
+const char* kRaiseLiftAnimKey   = "raiseLiftAnimTrigger";
+const char* kNuzzleAnimKey      = "nuzzleAnimTrigger";
 }
   
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
 BehaviorGoHome::BehaviorGoHome(const Json::Value& config)
   : ICozmoBehavior(config)
   , _homeFilter(std::make_unique<BlockWorldFilter>())
@@ -45,8 +50,7 @@ BehaviorGoHome::BehaviorGoHome(const Json::Value& config)
   _homeFilter->AddAllowedType(ObjectType::Charger_Basic);
 }
  
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 bool BehaviorGoHome::WantsToBeActivatedBehavior() const
 {
   // If we have a located Home/charger, then we can be activated.
@@ -60,7 +64,6 @@ bool BehaviorGoHome::WantsToBeActivatedBehavior() const
 }
 
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorGoHome::OnBehaviorActivated()
 {
   const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
@@ -71,6 +74,9 @@ void BehaviorGoHome::OnBehaviorActivated()
     return;
   }
   
+  // Push driving animations
+  PushDrivingAnims();
+  
   _chargerID = object->GetID();
   
   auto driveToAction = new DriveToObjectAction(_chargerID, PreActionPose::ActionType::DOCKING);
@@ -79,23 +85,28 @@ void BehaviorGoHome::OnBehaviorActivated()
 }
 
 
+void BehaviorGoHome::OnBehaviorDeactivated()
+{
+  PopDrivingAnims();
+}
+
+
 void BehaviorGoHome::TransitionToTurn()
 {
-  // Turn to align with the charger while playing the turning animation
-  auto* action = new CompoundActionParallel();
-  action->AddAction(new TurnToAlignWithChargerAction(_chargerID));
-  action->AddAction(new TriggerAnimationAction(_params.turningAnimTrigger));
-  
-  DelegateIfInControl(action, &BehaviorGoHome::TransitionToMountCharger);
+  // Turn to align with the charger
+  DelegateIfInControl(new TurnToAlignWithChargerAction(_chargerID,
+                                                       _params.leftTurnAnimTrigger,
+                                                       _params.rightTurnAnimTrigger),
+                      &BehaviorGoHome::TransitionToMountCharger);
 }
 
 
 void BehaviorGoHome::TransitionToMountCharger()
 {
-  // Mount the charger while playing the backup animation
-  auto* action = new CompoundActionParallel();
+  // Play the animations to raise lift, then mount the charger
+  auto* action = new CompoundActionSequential();
+  action->AddAction(new TriggerAnimationAction(_params.raiseLiftAnimTrigger));
   action->AddAction(new MountChargerAction(_chargerID, _params.useCliffSensorCorrection));
-  action->AddAction(new TriggerAnimationAction(_params.backupAnimTrigger));
   
   DelegateIfInControl(action, &BehaviorGoHome::TransitionToPlayingNuzzleAnim);
 }
@@ -103,23 +114,62 @@ void BehaviorGoHome::TransitionToMountCharger()
 
 void BehaviorGoHome::TransitionToPlayingNuzzleAnim()
 {
+  // Remove driving animations
+  PopDrivingAnims();
+  
   DelegateIfInControl(new TriggerAnimationAction(_params.nuzzleAnimTrigger));
 }
 
+
+void BehaviorGoHome::TransitionToOnChargerCheck()
+{
+  // If we're off the charger, try backing up a little
+  if (!GetBEI().GetRobotInfo().IsOnCharger()) {
+    const float backupDistance_mm = -10.f;
+    const float backupSpeed_mmps = 50.f;
+    DelegateIfInControl(new DriveStraightAction(backupDistance_mm, backupSpeed_mmps));
+  }
+}
+  
   
 void BehaviorGoHome::LoadConfig(const Json::Value& config)
 {
   const std::string& debugName = "Behavior" + GetIDStr() + ".LoadConfig";
   
   _params.useCliffSensorCorrection = JsonTools::ParseBool(config, kUseCliffSensorsKey, debugName);
-  
-  _params.turningAnimTrigger = JsonTools::ParseAnimationTrigger(config, kTurningAnimKey, debugName);
-  
-  _params.backupAnimTrigger = JsonTools::ParseAnimationTrigger(config, kBackupAnimKey, debugName);
-  
-  _params.nuzzleAnimTrigger = JsonTools::ParseAnimationTrigger(config, kNuzzleAnimKey, debugName);
+  _params.leftTurnAnimTrigger      = JsonTools::ParseAnimationTrigger(config, kLeftTurnAnimKey, debugName);
+  _params.rightTurnAnimTrigger     = JsonTools::ParseAnimationTrigger(config, kRightTurnAnimKey, debugName);
+  _params.backupStartAnimTrigger   = JsonTools::ParseAnimationTrigger(config, kBackupStartAnimKey, debugName);
+  _params.backupEndAnimTrigger     = JsonTools::ParseAnimationTrigger(config, kBackupEndAnimKey, debugName);
+  _params.backupLoopAnimTrigger    = JsonTools::ParseAnimationTrigger(config, kBackupLoopAnimKey, debugName);
+  _params.raiseLiftAnimTrigger     = JsonTools::ParseAnimationTrigger(config, kRaiseLiftAnimKey, debugName);
+  _params.nuzzleAnimTrigger        = JsonTools::ParseAnimationTrigger(config, kNuzzleAnimKey, debugName);
 }
 
+
+void BehaviorGoHome::PushDrivingAnims()
+{
+  DEV_ASSERT(!_drivingAnimsPushed, "BehaviorGoHome.PushDrivingAnims.AnimsAlreadyPushed");
+  
+  if (!_drivingAnimsPushed) {
+    auto& drivingAnimHandler = GetBEI().GetRobotInfo().GetDrivingAnimationHandler();
+    drivingAnimHandler.PushDrivingAnimations({_params.backupStartAnimTrigger,
+                                              _params.backupLoopAnimTrigger,
+                                              _params.backupEndAnimTrigger},
+                                             GetIDStr());
+    _drivingAnimsPushed = true;
+  }
+}
+
+
+void BehaviorGoHome::PopDrivingAnims()
+{
+  if (_drivingAnimsPushed) {
+    auto& drivingAnimHandler = GetBEI().GetRobotInfo().GetDrivingAnimationHandler();
+    drivingAnimHandler.RemoveDrivingAnimations(GetIDStr());
+    _drivingAnimsPushed = false;
+  }
+}
 
 } // namespace Cozmo
 } // namespace Anki

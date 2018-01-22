@@ -16,7 +16,6 @@
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "coretech/common/engine/array2d_impl.h"
 #include "coretech/common/engine/math/point_impl.h"
-#include "anki/cozmo/shared/cozmoConfig.h"
 #include "coretech/vision/engine/image.h"
 #include "util/helpers/templateHelpers.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
@@ -94,10 +93,17 @@ void FaceDebugDraw::DrawFAC()
   }
 }
 
-void FaceDebugDraw::DrawConfidenceClock(const RobotInterface::MicDirection& micData)
+void FaceDebugDraw::DrawConfidenceClock(const RobotInterface::MicDirection& micData, uint32_t secondsRemaining)
 {
   if (GetDrawState() != DrawState::MicDirectionClock)
   {
+    return;
+  }
+
+  if (secondsRemaining > 0)
+  {
+    const auto drawText = std::string(" ") + std::to_string(secondsRemaining);
+    DrawTextOnScreen({drawText}, NamedColors::WHITE, NamedColors::BLACK);
     return;
   }
 

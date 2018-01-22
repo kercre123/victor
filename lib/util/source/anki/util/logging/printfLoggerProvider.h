@@ -20,7 +20,8 @@ class PrintfLoggerProvider : public IFormattedLoggerProvider {
 
 public:
   PrintfLoggerProvider();
-  PrintfLoggerProvider(ILoggerProvider::LogLevel minToStderrLogLevel);
+  PrintfLoggerProvider(ILoggerProvider::LogLevel minToStderrLogLevel,
+                       bool colorizeStderrOutput = false);
   
   void Log(ILoggerProvider::LogLevel logLevel, const std::string& message) override;
   
@@ -28,9 +29,14 @@ public:
   // Everything above prints to stdout.
   void SetMinToStderrLevel(int level) { _minToStderrLevel = level; };
   
+  void SetColorizeStderrOutput(bool b = true) { _colorizeStderrOutput = b; };
+  
 private:
   
   int _minToStderrLevel;
+  
+  // Use ANSI escape color codes to colorize printf output to stderr
+  bool _colorizeStderrOutput = false;
 };
 
 } // end namespace Util

@@ -12,6 +12,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevImageCapture.h"
 
+#include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/imageTypes.h"
 
 #include "coretech/common/engine/utils/data/dataPlatform.h"
@@ -25,6 +26,7 @@
 #include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
+#include "engine/externalInterface/externalInterface.h"
 
 #include "util/fileUtils/fileUtils.h"
 
@@ -94,6 +96,17 @@ BehaviorDevImageCapture::~BehaviorDevImageCapture()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+static inline void EnableDebugFaceDrawButton(BehaviorExternalInterface& bei, bool enable)
+{
+  // Gross way to make sure the FaceDebugDraw doesn't hijack the button, using console interface to talk to
+  // animation process
+  using namespace ExternalInterface;
+  const char* enableStr = (enable ? "1" : "0");
+  bei.GetRobotInfo().GetExternalInterface()->Broadcast(MessageGameToEngine(SetAnimDebugConsoleVarMessage("DebugFaceDraw_CycleWithButton",
+                                                                                                         enableStr)));
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevImageCapture::OnBehaviorActivated()
 {
   _touchStartedTime_s = -1.0f;
@@ -112,6 +125,9 @@ void BehaviorDevImageCapture::OnBehaviorActivated()
   auto& robotInfo = GetBEI().GetRobotInfo();
   // wait for the lift to relax 
   robotInfo.GetMoveComponent().EnableLiftPower(false);
+
+  // Hijack the backpack button
+  EnableDebugFaceDrawButton(GetBEI(), false);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -124,6 +140,9 @@ void BehaviorDevImageCapture::OnBehaviorDeactivated()
   auto& visionComponent = GetBEI().GetComponentWrapper(BEIComponentID::Vision).GetValue<VisionComponent>();
   visionComponent.EnableDrawImagesToScreen(false);
   visionComponent.PopCurrentModeSchedule();
+
+  // Relinquish the button
+  EnableDebugFaceDrawButton(GetBEI(), true);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

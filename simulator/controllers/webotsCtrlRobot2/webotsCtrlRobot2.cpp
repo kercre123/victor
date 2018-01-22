@@ -42,7 +42,7 @@ int main(int argc, char **argv)
   // create platform
   const Anki::Util::Data::DataPlatform& dataPlatform = WebotsCtrlShared::CreateDataPlatformBS(argv[0], "webotsCtrlRobot2");
   // initialize logger
-  WebotsCtrlShared::DefaultAutoGlobalLogger autoLogger(dataPlatform, params.filterLog);  
+  WebotsCtrlShared::DefaultAutoGlobalLogger autoLogger(dataPlatform, params.filterLog, params.colorizeStderrOutput);
   
   if(Robot::Init() != Anki::RESULT_OK) {
     fprintf(stdout, "Failed to initialize Cozmo::Robot!\n");

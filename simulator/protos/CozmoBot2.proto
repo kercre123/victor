@@ -16,6 +16,7 @@ PROTO CozmoBot2 [
   field SFFloat liftAngle_highLimit 1.06
 
   field SFBool filterLogs FALSE
+  field SFBool colorizeStderrOutput FALSE
   field SFString controller "webotsCtrlRobot2"
   field SFString controllerArgs ""
 
@@ -44,11 +45,13 @@ Supervisor {
 
   %{ if not fields.vizMode.value then }%
 
-    # append filter command line parameter if filter is set to TRUE
+    # append optional command line parameters
+    %{ autoArgs=fields.controllerArgs.value }%
     %{ if fields.filterLogs.value then }%
-      %{ autoArgs=fields.controllerArgs.value .. "--applyLogFilter"}%
-    %{ else }%
-      %{ autoArgs=fields.controllerArgs.value}%
+      %{ autoArgs = autoArgs .. " --applyLogFilter"}%
+    %{ end }%
+    %{ if fields.colorizeStderrOutput.value then }%
+      %{ autoArgs = autoArgs .. " --colorizeStderrOutput"}%
     %{ end }%
 
     controller IS controller
@@ -246,12 +249,14 @@ Supervisor {
                 CozmoAnim {
                   robotID IS robotID
                   filterLogs IS filterLogs
+                  colorizeStderrOutput IS colorizeStderrOutput
                 }
                 
                 # Engine process:
                 CozmoEngine2 {
                   robotID IS robotID
                   filterLogs IS filterLogs
+                  colorizeStderrOutput IS colorizeStderrOutput
                 }
 
                 # This IMU is positioned in the same place as the one in CozmoEngine2.proto
