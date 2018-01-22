@@ -2,6 +2,7 @@
   "behaviorID" : "HighLevelAI",
   "behaviorClass" : "HighLevelAI",
 
+  "initialState": "ObservingOnCharger",
 
   "states": [
     {
