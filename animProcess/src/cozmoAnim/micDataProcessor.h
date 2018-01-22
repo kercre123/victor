@@ -15,10 +15,9 @@
 #define __AnimProcess_CozmoAnim_MicDataProcessor_H_
 
 #include "cozmoAnim/micDataTypes.h"
-
-#include "util/container/fixedCircularBuffer.h"
-
 #include "coretech/common/shared/types.h"
+#include "util/container/fixedCircularBuffer.h"
+#include "util/global/globalDefinitions.h"
 
 #include <array>
 #include <cstdint>
@@ -60,7 +59,9 @@ public:
   void RecordRawAudio(uint32_t duration_ms, const std::string& path, bool runFFT);
   void Update();
 
+#if ANKI_DEV_CHEATS
   void SetForceRecordClip(bool newValue) { _forceRecordClip = newValue; }
+#endif
 
 private:
   std::string _writeLocationDir = "";
@@ -82,7 +83,9 @@ private:
   std::unique_ptr<SpeechRecognizerTHF> _recognizer;
   std::unique_ptr<UdpServer> _udpServer;
   std::unique_ptr<MicImmediateDirection> _micImmediateDirection;
+#if ANKI_DEV_CHEATS
   bool _forceRecordClip = false;
+#endif
 
   // Members for managing the incoming raw audio jobs
   struct TimedRawMicData {

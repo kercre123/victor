@@ -29,17 +29,6 @@ namespace Anki {
       // Internal function declarations
       void EnableInternal();
       void DisableInternal(bool autoReEnable = false);
-
-      
-      // Returns the angle between the shoulder joint and the wrist joint.
-      f32 Height2Rad(f32 height_mm) {
-        height_mm = CLIP(height_mm, LIFT_HEIGHT_LOWDOCK, LIFT_HEIGHT_CARRY);
-        return asinf((height_mm - LIFT_BASE_POSITION[2] - LIFT_FORK_HEIGHT_REL_TO_ARM_END)/LIFT_ARM_LENGTH);
-      }
-      
-      f32 Rad2Height(f32 angle) {
-        return (sinf(angle) * LIFT_ARM_LENGTH) + LIFT_BASE_POSITION[2] + LIFT_FORK_HEIGHT_REL_TO_ARM_END;
-      }
       
       namespace {
 
@@ -63,8 +52,8 @@ namespace Anki {
         const f32 ENCODER_ANGLE_RES = DEG_TO_RAD_F32(0.35f);
         
         // Physical limits in radians
-        const f32 LIFT_ANGLE_LOW_LIMIT_RAD = Height2Rad(LIFT_HEIGHT_LOWDOCK);
-        const f32 LIFT_ANGLE_HIGH_LIMIT_RAD = Height2Rad(LIFT_HEIGHT_CARRY);
+        const f32 LIFT_ANGLE_LOW_LIMIT_RAD = ConvertLiftHeightToLiftAngleRad(LIFT_HEIGHT_LOWDOCK);
+        const f32 LIFT_ANGLE_HIGH_LIMIT_RAD = ConvertLiftHeightToLiftAngleRad(LIFT_HEIGHT_CARRY);
         
         // If the lift angle falls outside of the range defined by these thresholds, do not use D control.
         // This is to prevent vibrating that tends to occur at the physical limits.
@@ -342,7 +331,7 @@ namespace Anki {
 
       f32 GetHeightMM()
       {
-        return Rad2Height(currentAngle_.ToFloat());
+        return ConvertLiftAngleToLiftHeightMM(currentAngle_.ToFloat());
       }
 
       f32 GetAngleRad()
@@ -448,7 +437,7 @@ namespace Anki {
               newDesiredHeight == LIFT_HEIGHT_HIGHDOCK))
           {
             disengageGripperAtDest_ = true;
-            disengageAtAngle_ = Height2Rad(newDesiredHeight + 3.f*LIFT_FINGER_HEIGHT);
+            disengageAtAngle_ = ConvertLiftHeightToLiftAngleRad(newDesiredHeight + 3.f*LIFT_FINGER_HEIGHT);
           }
           else {
             disengageGripperAtDest_ = false;
@@ -457,7 +446,7 @@ namespace Anki {
 #endif
         // Check if already at desired height
         if (inPosition_ &&
-            (Height2Rad(newDesiredHeight) == desiredAngle_) &&
+            (ConvertLiftHeightToLiftAngleRad(newDesiredHeight) == desiredAngle_) &&
             (fabsf((desiredAngle_ - currentAngle_).ToFloat()) < LIFT_ANGLE_TOL) ) {
           #if(DEBUG_LIFT_CONTROLLER)
           AnkiDebug( "LiftController", "Already at desired height %f", newDesiredHeight);
@@ -466,7 +455,7 @@ namespace Anki {
         }
 
         desiredHeight_ = newDesiredHeight;
-        desiredAngle_ = Height2Rad(desiredHeight_);
+        desiredAngle_ = ConvertLiftHeightToLiftAngleRad(desiredHeight_);
 
         // Convert desired height into the necessary angle:
 #if(DEBUG_LIFT_CONTROLLER)

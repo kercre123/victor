@@ -75,8 +75,6 @@ namespace {
 # undef CONSOLE_GROUP_NAME
 }
   
-static_assert(ANKI_DEV_CHEATS || kMotionDetectionDebug==false,
-              "kMotionDetectionDebug should be disabled if ANKI_DEV_CHEATS are disabled");
 
 // This class is used to accumulate data for peripheral motion detection. The image area is divided in three sections:
 // top, right and left. If the centroid of a motion patch falls inside one these areas, it's increased, otherwise it's

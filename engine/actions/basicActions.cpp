@@ -1087,9 +1087,9 @@ namespace Anki {
       // Convert target height, height - tol, and height + tol to angles.
       f32 heightLower = _heightWithVariation - _heightTolerance;
       f32 heightUpper = _heightWithVariation + _heightTolerance;
-      f32 targetAngle = Robot::ConvertLiftHeightToLiftAngleRad(_heightWithVariation);
-      f32 targetAngleLower = Robot::ConvertLiftHeightToLiftAngleRad(heightLower);
-      f32 targetAngleUpper = Robot::ConvertLiftHeightToLiftAngleRad(heightUpper);
+      f32 targetAngle = ConvertLiftHeightToLiftAngleRad(_heightWithVariation);
+      f32 targetAngleLower = ConvertLiftHeightToLiftAngleRad(heightLower);
+      f32 targetAngleUpper = ConvertLiftHeightToLiftAngleRad(heightUpper);
       
       // Neither of the angular differences between targetAngle and its associated
       // lower and upper tolerance limits should be smaller than LIFT_ANGLE_TOL.
@@ -1104,8 +1104,8 @@ namespace Anki {
       
       if (minAngleDiff < LIFT_ANGLE_TOL) {
         // Tolerance is too small. Clip to be within range.
-        f32 desiredHeightLower = Robot::ConvertLiftAngleToLiftHeightMM(targetAngle - LIFT_ANGLE_TOL);
-        f32 desiredHeightUpper = Robot::ConvertLiftAngleToLiftHeightMM(targetAngle + LIFT_ANGLE_TOL);
+        f32 desiredHeightLower = ConvertLiftAngleToLiftHeightMM(targetAngle - LIFT_ANGLE_TOL);
+        f32 desiredHeightUpper = ConvertLiftAngleToLiftHeightMM(targetAngle + LIFT_ANGLE_TOL);
         f32 newHeightTolerance = std::max(_height_mm - desiredHeightLower, desiredHeightUpper - _height_mm);
         
         PRINT_NAMED_WARNING("MoveLiftToHeightAction.Init.TolTooSmall",

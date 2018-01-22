@@ -272,6 +272,18 @@ static void HandleRobotStateUpdate(const Anki::Cozmo::RobotState& robotState)
       FaceDisplay::GetDebugDraw()->ChangeDrawState();
     }
   }
+
+#if ANKI_DEV_CHEATS
+  auto * micDataProcessor = _context->GetMicDataProcessor();
+  if (micDataProcessor != nullptr)
+  {
+    const auto liftHeight_mm = ConvertLiftAngleToLiftHeightMM(robotState.liftAngle);
+    if (LIFT_HEIGHT_CARRY-1.f <= liftHeight_mm)
+    {
+      micDataProcessor->SetForceRecordClip(true);
+    }
+  }
+#endif
 }
 
 void AnimProcessMessages::ProcessMessageFromRobot(const RobotInterface::RobotToEngine& msg)

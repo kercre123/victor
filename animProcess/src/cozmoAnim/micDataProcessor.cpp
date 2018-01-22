@@ -305,8 +305,8 @@ void MicDataProcessor::TriggerWordDetectCallback(const char* resultFound, float 
   newJob->_writeNameBase = ""; // Use the autogen names in this subfolder
   newJob->_numMaxFiles = 100;
   newJob->_typesToRecord.SetBitFlag(MicDataType::Processed, true);
-  newJob->_typesToRecord.SetBitFlag(MicDataType::Resampled, _forceRecordClip);
-  newJob->_typesToRecord.SetBitFlag(MicDataType::Raw, _forceRecordClip);
+  newJob->_typesToRecord.SetBitFlag(MicDataType::Resampled, false);
+  newJob->_typesToRecord.SetBitFlag(MicDataType::Raw, false);
   newJob->SetTimeToRecord(MicDataInfo::kMaxRecordTime_ms);
 
   // Copy the current audio chunks in the trigger overlap buffer
@@ -559,6 +559,7 @@ void MicDataProcessor::ProcessLoop()
       auto jobIter = stolenJobs.begin();
       while (jobIter != stolenJobs.end())
       {
+        (*jobIter)->UpdateForNextChunk();
         bool jobDone = (*jobIter)->CheckDone();
         if (jobDone)
         {
@@ -673,6 +674,45 @@ void MicDataProcessor::Update()
   bool receivedStopMessage = false;
   static constexpr int kMaxReceiveBytes = 2000;
   char receiveArray[kMaxReceiveBytes];
+
+#if ANKI_DEV_CHEATS
+  uint32_t recordingSecondsRemaining = 0;
+  static std::shared_ptr<MicDataInfo> _saveJob;
+  if (_saveJob != nullptr)
+  {
+    if (_saveJob->CheckDone())
+    {
+      _saveJob = nullptr;
+      _forceRecordClip = false;
+    }
+    else
+    {
+      recordingSecondsRemaining = (_saveJob->GetTimeToRecord_ms() - _saveJob->GetTimeRecorded_ms()) / 1000;
+    }
+  }
+
+  const bool isMicFace = FaceDisplay::GetDebugDraw()->GetDrawState() == FaceDebugDraw::DrawState::MicDirectionClock;
+  if (!isMicFace)
+  {
+    _forceRecordClip = false;
+  }
+  else if (_forceRecordClip && nullptr == _saveJob)
+  {
+    MicDataInfo* newJob = new MicDataInfo{};
+    newJob->_writeLocationDir = Util::FileUtils::FullFilePath({_writeLocationDir, "triggeredCapture"});
+    newJob->_writeNameBase = ""; // Use the autogen names in this subfolder
+    newJob->_numMaxFiles = 30;
+    newJob->_typesToRecord.SetBitFlag(MicDataType::Raw, true);
+    newJob->_typesToRecord.SetBitFlag(MicDataType::Processed, true);
+    newJob->SetTimeToRecord(10000);
+
+    {
+      std::lock_guard<std::recursive_mutex> lock(_dataRecordJobMutex);
+      _micProcessingJobs.push_back(std::shared_ptr<MicDataInfo>(newJob));
+      _saveJob = _micProcessingJobs.back();
+    }
+  }
+#endif
   
   const ssize_t bytesReceived = _udpServer->Recv(receiveArray, kMaxReceiveBytes);
   if (bytesReceived == 2)
@@ -695,7 +735,7 @@ void MicDataProcessor::Update()
     // check if the pointer to the currently streaming job is valid
     if (!_currentlyStreaming && _currentStreamingJob != nullptr)
     {
-      if (_forceRecordClip || _udpServer->GetNumClients() > 0)
+      if (_udpServer->GetNumClients() > 0)
       {
         _currentlyStreaming = true;
         streamingAudioIndex = 0;
@@ -778,9 +818,9 @@ void MicDataProcessor::Update()
   }
 
   #if ANKI_DEV_CHEATS
-    if (updatedMicDirection)
+    if (updatedMicDirection || recordingSecondsRemaining != 0)
     {
-      FaceDisplay::GetDebugDraw()->DrawConfidenceClock(micDirectionData);
+      FaceDisplay::GetDebugDraw()->DrawConfidenceClock(micDirectionData, recordingSecondsRemaining);
     }
   #endif
 }

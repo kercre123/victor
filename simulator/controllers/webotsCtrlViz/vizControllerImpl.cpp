@@ -737,10 +737,6 @@ void VizControllerImpl::ProcessVizTrackerQuadMessage(const AnkiEvent<VizInterfac
   _camDisp->drawLine((int)payload.bottomLeft_x, (int)payload.bottomLeft_y, (int)payload.topLeft_x, (int)payload.topLeft_y);
 }
   
-float ConvertLiftAngleToLiftHeightMM(float angle_rad) {
-  return (sinf(angle_rad) * LIFT_ARM_LENGTH) + LIFT_BASE_POSITION[2] + LIFT_FORK_HEIGHT_REL_TO_ARM_END;
-}
-  
 void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
 {
   const auto& payload = msg.GetData().Get_RobotStateMessage();

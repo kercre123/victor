@@ -7,7 +7,7 @@
 //
 
 #include "robotStateHistory.h"
-
+#include "anki/cozmo/shared/cozmoConfig.h"
 #include "engine/robot.h"
 
 #include "coretech/common/engine/math/point_impl.h"
@@ -63,7 +63,7 @@ namespace Anki {
     
     const f32 HistRobotState::GetLiftHeight_mm() const
     {
-      return Robot::ConvertLiftAngleToLiftHeightMM(_state.liftAngle);
+      return ConvertLiftAngleToLiftHeightMM(_state.liftAngle);
     }
     
     const u16 HistRobotState::GetCliffData(unsigned int ind) const

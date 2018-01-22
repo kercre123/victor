@@ -2503,17 +2503,6 @@ Transform3d Robot::GetLiftTransformWrtCamera(const f32 atLiftAngle, const f32 at
   return liftPoseWrtCam.GetTransform();
 }
     
-f32 Robot::ConvertLiftHeightToLiftAngleRad(f32 height_mm)
-{
-  height_mm = CLIP(height_mm, LIFT_HEIGHT_LOWDOCK, LIFT_HEIGHT_CARRY);
-  return asinf((height_mm - LIFT_BASE_POSITION[2] - LIFT_FORK_HEIGHT_REL_TO_ARM_END)/LIFT_ARM_LENGTH);
-}
-
-f32 Robot::ConvertLiftAngleToLiftHeightMM(f32 angle_rad)
-{
-  return (sinf(angle_rad) * LIFT_ARM_LENGTH) + LIFT_BASE_POSITION[2] + LIFT_FORK_HEIGHT_REL_TO_ARM_END;
-}
-    
 Result Robot::RequestIMU(const u32 length_ms) const
 {
   return SendIMURequest(length_ms);

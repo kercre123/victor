@@ -423,10 +423,6 @@ public:
   // Return current height of lift's gripper
   f32 GetLiftHeight() const;
   
-  // Conversion functions between lift height and angle
-  static f32 ConvertLiftHeightToLiftAngleRad(f32 height_mm);
-  static f32 ConvertLiftAngleToLiftHeightMM(f32 angle_rad);
-  
   // Leaves input liftPose's parent alone and computes its position w.r.t.
   // liftBasePose, given the angle
   static void ComputeLiftPose(const f32 atAngle, Pose3d& liftPose);
