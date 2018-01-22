@@ -391,14 +391,19 @@ void BehaviorHighLevelAI::OnBehaviorActivated()
 
 void BehaviorHighLevelAI::OnBehaviorDeactivated()
 {
+  // hold the state in case we get re-activated, but still "transition" out of it (e.g. to disable vision
+  // modes)
+  // TODO:(bn) not this.
+  const StateID endState = _currState;
   TransitionToState(InvalidStateID);
+  _currState = endState;
 
-  auto& visionComponent = GetBEI().GetVisionComponent();
-  for( const auto& mode : _visionModesToReEnable ) {
-    visionComponent.EnableMode(mode, true);
-  }
+  // auto& visionComponent = GetBEI().GetVisionComponent();
+  // for( const auto& mode : _visionModesToReEnable ) {
+  //   visionComponent.EnableMode(mode, true);
+  // }
   
-  _visionModesToReEnable.clear();
+  // _visionModesToReEnable.clear();
 }
 
 void BehaviorHighLevelAI::BehaviorUpdate()
