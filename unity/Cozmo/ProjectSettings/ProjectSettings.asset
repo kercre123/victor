@@ -588,7 +588,7 @@ PlayerSettings:
     Standalone: 0
     WebGL: 1
     WebPlayer: 0
-    iOS: 0
+    iOS: 1
   incrementalIl2cppBuild:
     iOS: 0
   additionalIl2CppArgs: 

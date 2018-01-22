@@ -653,5 +653,452 @@
     },
     "codeLabFeaturedProject.ValentinesCozmogram.draw_a_valentine_envelope_on_cozmos_face": {
         "translation": "Draw a Valentine envelope on Cozmos face."
+    },
+    "codeLabFeaturedProject.Constellations.x_coordinates": {
+        "translation": "x coordinates"
+    },
+    "codeLabFeaturedProject.Constellations.y_coordinates": {
+        "translation": "y coordinates"
+    },
+    "codeLabFeaturedProject.Constellations.count": {
+        "translation": "count"
+    },
+    "codeLabFeaturedProject.Constellations.x1": {
+        "translation": "x1"
+    },
+    "codeLabFeaturedProject.Constellations.y1": {
+        "translation": "y1"
+    },
+    "codeLabFeaturedProject.Constellations.constellation_number": {
+        "translation": "constellation number"
+    },
+    "codeLabFeaturedProject.Constellations.constellation_name": {
+        "translation": "constellation name"
+    },
+    "codeLabFeaturedProject.Constellations.x_segment": {
+        "translation": "x segment"
+    },
+    "codeLabFeaturedProject.Constellations.y_segment": {
+        "translation": "y segment"
+    },
+    "codeLabFeaturedProject.Constellations.last_position_x": {
+        "translation": "last position x"
+    },
+    "codeLabFeaturedProject.Constellations.last_position_y": {
+        "translation": "last position y"
+    },
+    "codeLabFeaturedProject.Constellations.distance_multiplier": {
+        "translation": "distance multiplier"
+    },
+    "codeLabFeaturedProject.Constellations.x2": {
+        "translation": "x2"
+    },
+    "codeLabFeaturedProject.Constellations.y2": {
+        "translation": "y2"
+    },
+    "codeLabFeaturedProject.Constellations.slope1": {
+        "translation": "slope1"
+    },
+    "codeLabFeaturedProject.Constellations.slope2": {
+        "translation": "slope2"
+    },
+    "codeLabFeaturedProject.Constellations.angle_in_radians": {
+        "translation": "angle in radians"
+    },
+    "codeLabFeaturedProject.Constellations.angle_in_degrees": {
+        "translation": "angle in degrees"
+    },
+    "codeLabFeaturedProject.Constellations.drive_distance": {
+        "translation": "drive distance"
+    },
+    "codeLabFeaturedProject.Constellations.ordered_pair_x": {
+        "translation": "ordered pair x"
+    },
+    "codeLabFeaturedProject.Constellations.ordered_pair_y": {
+        "translation": "ordered pair y"
+    },
+    "codeLabFeaturedProject.Constellations.use_the_pythagorean_theorem_to_get_the_distace_between_two_points": {
+        "translation": "Use the Pythagorean Theorem to get the distace between two points."
+    },
+    "codeLabFeaturedProject.Constellations.x3": {
+        "translation": "x3"
+    },
+    "codeLabFeaturedProject.Constellations.y3": {
+        "translation": "y3"
+    },
+    "codeLabFeaturedProject.Constellations.line_distance": {
+        "translation": "line distance"
+    },
+    "codeLabFeaturedProject.Constellations.pi": {
+        "translation": "Pi"
+    },
+    "codeLabFeaturedProject.Constellations.use_the_slopes_of_two_intersecting_lines_to_get_turn_degrees_for_cozmo": {
+        "translation": "Use the slopes of two intersecting lines to get turn degrees for Cozmo."
+    },
+    "codeLabFeaturedProject.Constellations.turn_angle": {
+        "translation": "turn angle"
+    },
+    "codeLabFeaturedProject.Constellations.cozmo": {
+        "translation": "cozmo"
+    },
+    "codeLabFeaturedProject.Constellations.anki": {
+        "translation": "anki"
+    },
+    "codeLabFeaturedProject.Constellations.cassiopeia_": {
+        "translation": "Cassiopeia "
+    },
+    "codeLabFeaturedProject.Constellations.leo": {
+        "translation": "Leo"
+    },
+    "codeLabFeaturedProject.Constellations.hi": {
+        "translation": "Hi"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.center_x": {
+        "translation": "center x"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.center_y": {
+        "translation": "center y"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.radius": {
+        "translation": "radius"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.pi": {
+        "translation": "pi"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.count": {
+        "translation": "count"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.x2": {
+        "translation": "x2"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.y2": {
+        "translation": "y2"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.segment_angle_in_radians": {
+        "translation": "segment angle in radians"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.amount_of_segments": {
+        "translation": "amount of segments"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.angle": {
+        "translation": "angle"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.inner_wheel_speed": {
+        "translation": "inner wheel speed"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.outer_wheel_speed": {
+        "translation": "outer wheel speed"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.segment_angle": {
+        "translation": "segment angle"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.speed_multiplier": {
+        "translation": "speed multiplier"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.segment_length": {
+        "translation": "segment length"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.x1": {
+        "translation": "x1"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.y1": {
+        "translation": "y1"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.ordered_pair_x": {
+        "translation": "ordered pair x"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.ordered_pair_y": {
+        "translation": "ordered pair y"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.segment_time": {
+        "translation": "segment time"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.current_radius": {
+        "translation": "current radius"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.radius_pair_x": {
+        "translation": "radius pair x"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.radius_pair_y": {
+        "translation": "radius pair y"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.current_cube_x": {
+        "translation": "current cube x"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.current_cube_y": {
+        "translation": "current cube y"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.current_cube": {
+        "translation": "current cube"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.cube_1": {
+        "translation": "cube 1"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.cube_2": {
+        "translation": "cube 2"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.cube_3": {
+        "translation": "cube 3"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.current_direction": {
+        "translation": "current direction"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.clockwise": {
+        "translation": "clockwise"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.counter_clockwise": {
+        "translation": "counter clockwise"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.cozmo_is_moving": {
+        "translation": "Cozmo is moving"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.show_me_a_cube": {
+        "translation": "Show me a cube!"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.radians": {
+        "translation": "radians"
+    },
+    "codeLabFeaturedProject.PaddleBall.ball_radius": {
+        "translation": "ball radius"
+    },
+    "codeLabFeaturedProject.PaddleBall.ball_position_x": {
+        "translation": "ball position x"
+    },
+    "codeLabFeaturedProject.PaddleBall.ball_position_y": {
+        "translation": "ball position y"
+    },
+    "codeLabFeaturedProject.PaddleBall.ball_speed_x": {
+        "translation": "ball speed x"
+    },
+    "codeLabFeaturedProject.PaddleBall.ball_speed_y": {
+        "translation": "ball speed y"
+    },
+    "codeLabFeaturedProject.PaddleBall.ball_acceleration_x": {
+        "translation": "ball acceleration x"
+    },
+    "codeLabFeaturedProject.PaddleBall.ball_acceleration_y": {
+        "translation": "ball acceleration y"
+    },
+    "codeLabFeaturedProject.PaddleBall.loop_rate": {
+        "translation": "loop rate"
+    },
+    "codeLabFeaturedProject.PaddleBall.points_to_win": {
+        "translation": "points to win"
+    },
+    "codeLabFeaturedProject.PaddleBall.half_of_cozmo_paddle_height": {
+        "translation": "half of Cozmo paddle height"
+    },
+    "codeLabFeaturedProject.PaddleBall.paddle_width": {
+        "translation": "paddle width"
+    },
+    "codeLabFeaturedProject.PaddleBall.player_paddle_position_y": {
+        "translation": "player paddle position y"
+    },
+    "codeLabFeaturedProject.PaddleBall.cozmo_paddle_position_y": {
+        "translation": "Cozmo paddle position y"
+    },
+    "codeLabFeaturedProject.PaddleBall.cozmo_paddle_speed": {
+        "translation": "Cozmo paddle speed"
+    },
+    "codeLabFeaturedProject.PaddleBall.cozmo_paddle_acceleration": {
+        "translation": "Cozmo paddle acceleration"
+    },
+    "codeLabFeaturedProject.PaddleBall.cozmo_paddle_max_speed": {
+        "translation": "Cozmo paddle max speed"
+    },
+    "codeLabFeaturedProject.PaddleBall.cozmo_skill_level": {
+        "translation": "Cozmo skill level"
+    },
+    "codeLabFeaturedProject.PaddleBall.where_cozmo_thinks_the_ball_is": {
+        "translation": "where Cozmo thinks the ball is"
+    },
+    "codeLabFeaturedProject.PaddleBall.player_score": {
+        "translation": "player score"
+    },
+    "codeLabFeaturedProject.PaddleBall.cozmo_score": {
+        "translation": "Cozmo score"
+    },
+    "codeLabFeaturedProject.PaddleBall.round_is_over": {
+        "translation": "round is over"
+    },
+    "codeLabFeaturedProject.PaddleBall.game_is_over": {
+        "translation": "game is over"
+    },
+    "codeLabFeaturedProject.PaddleBall.draw_rate": {
+        "translation": "draw rate"
+    },
+    "codeLabFeaturedProject.PaddleBall.cozmo": {
+        "translation": "Cozmo"
+    },
+    "codeLabFeaturedProject.PaddleBall.player": {
+        "translation": "player"
+    },
+    "codeLabFeaturedProject.PaddleBall.none": {
+        "translation": "none"
+    },
+    "codeLabFeaturedProject.PaddleBall.round_winner": {
+        "translation": "round winner"
+    },
+    "codeLabFeaturedProject.PaddleBall.game_winner": {
+        "translation": "game winner"
+    },
+    "codeLabFeaturedProject.PaddleBall.half_of_player_paddle_height": {
+        "translation": "half of player paddle height"
+    },
+    "codeLabFeaturedProject.PaddleBall.decrease_paddle_height_by": {
+        "translation": "decrease paddle height by"
+    },
+    "codeLabFeaturedProject.PaddleBall.set_adjustable_game_settings": {
+        "translation": "Set adjustable game settings."
+    },
+    "codeLabFeaturedProject.PaddleBall.set_gameplay_variables": {
+        "translation": "Set gameplay variables."
+    },
+    "codeLabFeaturedProject.PaddleBall.start_the_game": {
+        "translation": "Start the game."
+    },
+    "codeLabFeaturedProject.PaddleBall.start_a_new_round_of_gameplay": {
+        "translation": "Start a new round of gameplay."
+    },
+    "codeLabFeaturedProject.PaddleBall.when_cozmo_scores_give_him_a_point_and_he_celebrates": {
+        "translation": "When Cozmo scores give him a point and he celebrates"
+    },
+    "codeLabFeaturedProject.PaddleBall.when_the_player_scores_give_them_a_point_and_cozmo_is_frustrated": {
+        "translation": "When the player scores give them a point and Cozmo is frustrated"
+    },
+    "codeLabFeaturedProject.PaddleBall.once_either_cozmo_or_the_player_score_decide_what_to_do_next": {
+        "translation": "Once either Cozmo or the player score decide what to do next"
+    },
+    "codeLabFeaturedProject.PaddleBall.decide_whether_to_end_the_game_or_start_a_new_round__cozmo_acts_accordingly": {
+        "translation": "Decide whether to end the game or start a new round - Cozmo acts accordingly."
+    },
+    "codeLabFeaturedProject.PaddleBall.set_where_cozmo_thinks_the_ball_is_based_on_his_skill_level": {
+        "translation": "Set where Cozmo thinks the ball is based on his skill level."
+    },
+    "codeLabFeaturedProject.PaddleBall.when_the_ball_is_on_cozmos_side_of_the_court_move_his_paddle_towards_the_ball": {
+        "translation": "When the ball is on Cozmos side of the court move his paddle towards the ball"
+    },
+    "codeLabFeaturedProject.PaddleBall.while_gameplay_is_active_update_the_player_paddle_position_relative_to_the_player_face_in_cozmos_camera": {
+        "translation": "While gameplay is active update the player paddle position relative to the player face in Cozmos camera"
+    },
+    "codeLabFeaturedProject.PaddleBall.while_gameplay_is_active_upday_cozmos_paddle_position_with_its_current_speed": {
+        "translation": "While gameplay is active upday Cozmos paddle position with its current speed"
+    },
+    "codeLabFeaturedProject.PaddleBall.check_whether_the_ball_has_hit_a_wall_or_a_paddle_or_scored": {
+        "translation": "Check whether the ball has hit a wall or a paddle or scored."
+    },
+    "codeLabFeaturedProject.PaddleBall.while_gameplay_is_active_update_the_position_of_the_ball": {
+        "translation": "While gameplay is active update the position of the ball."
+    },
+    "codeLabFeaturedProject.PaddleBall.apply_a_short_burst_of_acceleration_to_ball_speed_x": {
+        "translation": "Apply a short burst of acceleration to ball speed x"
+    },
+    "codeLabFeaturedProject.PaddleBall.apply_a_short_burst_of_acceleration_to_ball_speed_y": {
+        "translation": "Apply a short burst of acceleration to ball speed y."
+    },
+    "codeLabFeaturedProject.PaddleBall.while_gameplay_is_active_use_the_game_data_to_draw_everything_on_cozmos_face": {
+        "translation": "While gameplay is active use the game data to draw everything on Cozmos face"
+    },
+    "codeLabFeaturedProject.PaddleBall.acceleration_time": {
+        "translation": "acceleration time"
+    },
+    "codeLabFeaturedProject.PaddleBall.hi": {
+        "translation": "Hi"
+    },
+    "codeLabFeaturedProject.PaddleBall.text": {
+        "translation": "text"
+    },
+    "codeLabFeaturedProject.PaddleBall.true_": {
+        "translation": "true "
+    },
+    "codeLabFeaturedProject.PotOGoldDetector.default_yaw_zero": {
+        "translation": "default yaw zero"
+    },
+    "codeLabFeaturedProject.PotOGoldDetector.drive_distance": {
+        "translation": "drive distance"
+    },
+    "codeLabFeaturedProject.PotOGoldDetector.drive_speed": {
+        "translation": "drive speed"
+    },
+    "codeLabFeaturedProject.PotOGoldDetector.turn_radius": {
+        "translation": "turn radius"
+    },
+    "codeLabFeaturedProject.PotOGoldDetector.turn_speed": {
+        "translation": "turn speed"
+    },
+    "codeLabFeaturedProject.PotOGoldDetector.device_pitch_forward": {
+        "translation": "device pitch forward"
+    },
+    "codeLabFeaturedProject.PotOGoldDetector.device_pitch_reverse": {
+        "translation": "device pitch reverse"
+    },
+    "codeLabFeaturedProject.PotOGoldDetector.device_yaw_radius": {
+        "translation": "device yaw radius"
+    },
+    "codeLabFeaturedProject.PotOGoldDetector.max_x": {
+        "translation": "max x"
+    },
+    "codeLabFeaturedProject.PotOGoldDetector.max_y": {
+        "translation": "max y"
+    },
+    "codeLabFeaturedProject.PotOGoldDetector.treasure_x": {
+        "translation": "treasure x"
+    },
+    "codeLabFeaturedProject.PotOGoldDetector.treasure_y": {
+        "translation": "treasure y"
+    },
+    "codeLabFeaturedProject.PotOGoldDetector.detect_mode": {
+        "translation": "detect mode"
+    },
+    "codeLabFeaturedProject.PotOGoldDetector.proximity_0": {
+        "translation": "proximity 0"
+    },
+    "codeLabFeaturedProject.PotOGoldDetector.proximity_1": {
+        "translation": "proximity 1"
+    },
+    "codeLabFeaturedProject.PotOGoldDetector.proximity_2": {
+        "translation": "proximity 2"
+    },
+    "codeLabFeaturedProject.PotOGoldDetector.proximity_3": {
+        "translation": "proximity 3"
+    },
+    "codeLabFeaturedProject.PotOGoldDetector.ordered_pair_x": {
+        "translation": "ordered pair x"
+    },
+    "codeLabFeaturedProject.PotOGoldDetector.ordered_pair_y": {
+        "translation": "ordered pair y"
+    },
+    "codeLabFeaturedProject.PotOGoldDetector.distance_from_treasure": {
+        "translation": "distance from treasure"
+    },
+    "codeLabFeaturedProject.PotOGoldDetector.beep_rate": {
+        "translation": "beep rate"
+    },
+    "codeLabFeaturedProject.PotOGoldDetector.random_treasure_number": {
+        "translation": "random treasure number"
+    },
+    "codeLabFeaturedProject.PotOGoldDetector.radar_angle": {
+        "translation": "radar angle"
+    },
+    "codeLabFeaturedProject.PotOGoldDetector.radar_radius": {
+        "translation": "radar radius"
+    },
+    "codeLabFeaturedProject.PotOGoldDetector.radar_x": {
+        "translation": "radar x"
+    },
+    "codeLabFeaturedProject.PotOGoldDetector.radar_y": {
+        "translation": "radar y"
+    },
+    "codeLabFeaturedProject.PotOGoldDetector.theres_a_treasure_nearby": {
+        "translation": "There's a treasure nearby!"
+    },
+    "codeLabFeaturedProject.PotOGoldDetector.lets_find_it": {
+        "translation": "Let's find it"
+    },
+    "codeLabFeaturedProject.PotOGoldDetector.use_your_device_to_drive_me": {
+        "translation": "Use your device to drive me!"
+    },
+    "codeLabFeaturedProject.PotOGoldDetector.we_found_the_treasure": {
+        "translation": "We found the treasure!"
     }
 }

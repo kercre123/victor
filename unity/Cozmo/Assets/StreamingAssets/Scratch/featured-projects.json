@@ -190,7 +190,7 @@
     },
     {
         "ProjectUUID": "3fab62c3-f268-4faa-8f68-db5bd67f11c1",
-        "ProjectName": "codeLabFeaturedCompliment_Generator.projectName",
+        "ProjectName": "codeLabFeaturedComplimentGenerator.projectName",
         "DASProjectName": "ComplimentGenerator",
         "VersionNum": "3",
         "IsVertical": "true",
@@ -201,6 +201,82 @@
         "FeaturedProjectBackgroundColor": "#ffe700",
         "FeaturedProjectTitleTextColor": "#696b68",
         "ProjectJSONFile": "compliment_generator",
+        "StartDate": {
+            "Month": "2",
+            "Day": "22",
+            "Year": "2018"
+        }
+    },
+    {
+        "ProjectUUID": "9238bb68-e2e3-46c0-ad0e-d2f88a7f6bb4",
+        "ProjectName": "codeLabFeaturedConstellations.projectName",
+        "DASProjectName": "Constellations",
+        "VersionNum": "3",
+        "IsVertical": "true",
+        "DisplayOrder": "8",
+        "FeaturedProjectDescription": "codeLabFeaturedConstellations.projectDescription",
+        "FeaturedProjectInstructions": "codeLabFeaturedConstellations.projectInstructions",
+        "FeaturedProjectImageName": "ShakeIt",
+        "FeaturedProjectBackgroundColor": "#ffe700",
+        "FeaturedProjectTitleTextColor": "#696b68",
+        "ProjectJSONFile": "constellations",
+        "StartDate": {
+            "Month": "2",
+            "Day": "22",
+            "Year": "2018"
+        }
+    },
+    {
+        "ProjectUUID": "03dfa788-73c1-4b93-9e2c-f105f855c6a4",
+        "ProjectName": "codeLabFeaturedDrivingInCircles.projectName",
+        "DASProjectName": "DrivingInCircles",
+        "VersionNum": "3",
+        "IsVertical": "true",
+        "DisplayOrder": "9",
+        "FeaturedProjectDescription": "codeLabFeaturedDrivingInCircles.projectDescription",
+        "FeaturedProjectInstructions": "codeLabFeaturedDrivingInCircles.projectInstructions",
+        "FeaturedProjectImageName": "ShakeIt",
+        "FeaturedProjectBackgroundColor": "#ffe700",
+        "FeaturedProjectTitleTextColor": "#696b68",
+        "ProjectJSONFile": "driving_in_circles",
+        "StartDate": {
+            "Month": "2",
+            "Day": "22",
+            "Year": "2018"
+        }
+    },
+    {
+        "ProjectUUID": "37e52fab-983f-49f9-83bd-90c284cd9f6b",
+        "ProjectName": "codeLabFeaturedPaddleBall.projectName",
+        "DASProjectName": "PaddleBall",
+        "VersionNum": "3",
+        "IsVertical": "true",
+        "DisplayOrder": "10",
+        "FeaturedProjectDescription": "codeLabFeaturedPaddleBall.projectDescription",
+        "FeaturedProjectInstructions": "codeLabFeaturedPaddleBall.projectInstructions",
+        "FeaturedProjectImageName": "ShakeIt",
+        "FeaturedProjectBackgroundColor": "#ffe700",
+        "FeaturedProjectTitleTextColor": "#696b68",
+        "ProjectJSONFile": "paddle_ball",
+        "StartDate": {
+            "Month": "2",
+            "Day": "22",
+            "Year": "2018"
+        }
+    },
+    {
+        "ProjectUUID": "66eab634-e300-4b28-9633-9e65eba2c488",
+        "ProjectName": "codeLabFeaturedPotOGoldDetector.projectName",
+        "DASProjectName": "PotOGoldDetector",
+        "VersionNum": "3",
+        "IsVertical": "true",
+        "DisplayOrder": "11",
+        "FeaturedProjectDescription": "codeLabFeaturedPotOGoldDetector.projectDescription",
+        "FeaturedProjectInstructions": "codeLabFeaturedPotOGoldDetector.projectInstructions",
+        "FeaturedProjectImageName": "ShakeIt",
+        "FeaturedProjectBackgroundColor": "#ffe700",
+        "FeaturedProjectTitleTextColor": "#696b68",
+        "ProjectJSONFile": "pot_o_gold_detector",
         "StartDate": {
             "Month": "2",
             "Day": "22",

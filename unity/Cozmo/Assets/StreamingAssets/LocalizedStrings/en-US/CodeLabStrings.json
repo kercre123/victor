@@ -1563,5 +1563,50 @@
   },
   "codeLabSampleProject_ScrollingText.projectName": {
       "translation": "Scrolling Text"
+  },
+  "codeLabFeaturedConstellations.projectName": {
+      "translation":  "Constellations"
+  },
+  "codeLabFeaturedConstellations.projectDescription": {
+      "translation":  "Celebrate Astronomy Day with cosmic constellations."
+  },
+  "codeLabFeaturedConstellations.projectInstructions": {
+      "translation":  "1. Tap the start flag, and watch as stars connect to form a constellation.\n\n2. Be sure to replay and see them all!"
+  },
+  "codeLabFeaturedDrivingInCircles.projectName": {
+      "translation":  "Driving in Circles"
+  },
+  "codeLabFeaturedDrivingInCircles.projectDescription": {
+      "translation":  "Circle up for Pi Day!"
+  },
+  "codeLabFeaturedDrivingInCircles.projectInstructions": {
+      "translation":  "1. Space Cozmo’s Cubes out so he can drive between them.\n\n2. Once you tap the start flag, Cozmo will use Pi and math to drive circles around his Cubes."
+  },
+  "codeLabFeaturedComplimentGenerator.projectName": {
+      "translation":  "Compliment Generator"
+  },
+  "codeLabFeaturedComplimentGenerator.projectDescription": {
+      "translation":  "Cozmo's got something nice to say!"
+  },
+  "codeLabFeaturedComplimentGenerator.projectInstructions": {
+      "translation":  "1. Place Cozmo facing yourself or a friend who needs cheering up.\n\n2. Be happy."
+  },
+  "codeLabFeaturedPaddleBall.projectName": {
+      "translation":  "Paddle Ball"
+  },
+  "codeLabFeaturedPaddleBall.projectDescription": {
+      "translation":  "Challenge Cozmo to a match. Be sure to use your head!"
+  },
+  "codeLabFeaturedPaddleBall.projectInstructions": {
+      "translation":  "1. Once you tap the start flag, Move your head up and down to control the the paddle on the right.\n\n2. Score points by bouncing the ball past Cozmo’s paddle. Try not to let Cozmo score by bouncing the ball past yours.\n\n3. The first to earn 3 points wins!"
+  },
+  "codeLabFeaturedPotOGoldDetector.projectName": {
+      "translation":  "Pot o' Gold Detector"
+  },
+  "codeLabFeaturedPotOGoldDetector.projectDescription": {
+      "translation":  "The ultimate St. Paddy’s treasure hunt!"
+  },
+  "codeLabFeaturedPotOGoldDetector.projectInstructions": {
+      "translation":  "1. Once you tap the start flag, a treasure will appear at a secret location near Cozmo.\n\n2. It's up to you to use your device to move Cozmo towards the hidden treasure.\n\n3. Tilt your screen up and down and left and right to move Cozmo.\n\n4. Listen to Cozmo’s 'treasure detector blips' get faster as he gets closer to the treasure."
   }
 }
