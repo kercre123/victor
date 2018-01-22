@@ -21,7 +21,7 @@
 #include "util/signals/simpleSignal_fwd.h"
 #include "util/helpers/noncopyable.h"
 #include "util/helpers/templateHelpers.h"
-#include "clad/types/nvStorage.h"
+#include "clad/types/nvStorageTypes.h"
 #include "coretech/common/shared/types.h"
 
 #include <vector>

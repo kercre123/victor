@@ -89,6 +89,12 @@ else
     fi
 fi
 
+# Check that the assets directory exists
+if [ ! -d "$ASSETSDIR" ]; then
+  echo "Assets directory ${ASSETSDIR} does not exist!"
+  exit 1
+fi
+
 DEVICE_RSYNC_BIN_DIR="/data/local/tmp"
 DEVICE_RSYNC_CONF_DIR="/data/rsync"
 
@@ -148,7 +154,7 @@ if [ $FORCE_PUSH_ASSETS -eq 1 ] ||
   $ADB push ${RSYNC_BIN_DIR}/rsyncd.conf ${DEVICE_RSYNC_CONF_DIR}
 fi
 
-echo "deploying assets"
+echo "deploying assets: ${ASSETSDIR}"
 
 # startup rsync daemon
 $ADB shell "${DEVICE_RSYNC_BIN_DIR}/rsync.bin --daemon --config=${DEVICE_RSYNC_CONF_DIR}/rsyncd.conf &"

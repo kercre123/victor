@@ -1,5 +1,4 @@
 /** Clad message definitions for the messages sent from the WiFi to the engine.
- * ROBOT_CLAD_SHARED
  */
 
 
@@ -41,13 +40,6 @@ message ImageChunk {
   uint_8          imageChunkCount,
   uint_8          chunkId,
   uint_8          data[uint_16:1200], // ^ IMAGE_CHUNK_SIZE above. Also need chunk to be u32 aligned
-}
-
-message ImageImuData {
-  uint_32  systemTimestamp_ms,
-  float_32 rateX,
-  float_32 rateY,
-  float_32 rateZ
 }
 
 message CameraCalibration

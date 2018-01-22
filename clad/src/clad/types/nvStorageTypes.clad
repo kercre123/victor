@@ -1,7 +1,6 @@
 /** CLAD definitions for robot non-volatile storage
  * WARNING For backwards forward compatibility, all structures must be left as defined and new versions added with their
  * Own unique identifier when needed.
- * ROBOT_CLAD_SHARED
  */
 
 namespace Anki {
