@@ -74,46 +74,51 @@ def parse_command_args():
                             const=True,
                             help='Applies over all featured projects')
     arg_parser.add_argument('-p', '--project',
-                        dest='project',
-                        default=None,
-                        action='store',
-                        help='Specifies featured project to be scanned or translated')
+                            dest='project',
+                            default=None,
+                            action='store',
+                            help='Specifies featured project to be scanned or translated')
     arg_parser.add_argument('-b', '--blacklist',
-                        dest='blacklist',
-                        default=None,
-                        action='store',
-                        help='Specifies a json blacklist to exclude specific projects')
+                            dest='blacklist',
+                            default=None,
+                            action='store',
+                            help='Specifies a json blacklist to exclude specific projects')
 
     arg_parser.add_argument('-o', '--source_language',
-                        dest='source_language',
-                        default='en-US',
-                        action='store',
-                        help='Specify the source language to be operated on')
+                            dest='source_language',
+                            default='en-US',
+                            action='store',
+                            help='Specify the source language to be operated on')
+    arg_parser.add_argument('--scan_loc_target',
+                            dest='scan_loc_target',
+                            default=None,
+                            action='store',
+                            help='Specify the target file to merge new localizable strings into')
 
     arg_parser.add_argument('--streaming_assets_path',
-                        dest='streaming_assets_path',
-                        type=str,
-                        default='',
-                        action='store',
-                        help='Specify the root path of the StreamingAssets')
+                            dest='streaming_assets_path',
+                            type=str,
+                            default='',
+                            action='store',
+                            help='Specify the root path of the StreamingAssets')
     arg_parser.add_argument('--project_config_file',
-                        dest='project_config_file',
-                        type=str,
-                        default='',
-                        action='store',
-                        help='Specify the project configuration file')
+                            dest='project_config_file',
+                            type=str,
+                            default='',
+                            action='store',
+                            help='Specify the project configuration file')
     arg_parser.add_argument('--project_folder',
-                        dest='project_folder',
-                        type=str,
-                        default='',
-                        action='store',
-                        help='Specify the project folder')
+                            dest='project_folder',
+                            type=str,
+                            default='',
+                            action='store',
+                            help='Specify the project folder')
     arg_parser.add_argument('--scan_output_path',
-                        dest='scan_output_path',
-                        type=str,
-                        default='',
-                        action='store',
-                        help='Path to export project scans to')
+                            dest='scan_output_path',
+                            type=str,
+                            default=None,
+                            action='store',
+                            help='Path to export project scans to')
 
     options = arg_parser.parse_args()
     return options
@@ -334,14 +339,16 @@ def scan_project(project, source_language, target_folder):
             key = 'codeLabFeaturedProject.' + project['project_name'] + '.' + simplified_content
             json_out[key] = { 'translation': content }
 
-    export_filename = os.path.join(target_folder, os.path.basename(project['project_name']) + '_loc_strings.json')
+    if target_folder is not None:
+        export_filename = os.path.join(target_folder, os.path.basename(project['project_name']) + '_loc_strings.json')
 
-    with open(export_filename, 'w', encoding='utf8') as output_file:
-        json.dump(json_out, output_file, indent=4)
-        output_file.write('\n')
+        with open(export_filename, 'w', encoding='utf8') as output_file:
+            json.dump(json_out, output_file, indent=4)
+            output_file.write('\n')
 
-    print('scanning ' + project['project_name'] + ' and found ' + str(len(output_list)) + ' strings -> ' + export_filename)
-    return True
+        print('scanning ' + project['project_name'] + ' and found ' + str(len(output_list)) + ' strings -> ' + export_filename)
+
+    return json_out
 
 # --------------------------------------------------------------------------------------------------------
 #                                          Local State Construction
@@ -392,6 +399,25 @@ def build_project_translation_queue(streaming_assets_path, project_config_file, 
                 result.append( entry )
     return result
 
+def modify_base_loc_file(extracted_json, file_path):
+    #grab loc data
+    loc_file_json = {}
+    with open(file_path, 'r') as input_file:
+        loc_file_json = json.load(input_file)
+
+    #filter existing loc keys out of extracted_json
+    for key in loc_file_json:
+        extracted_json.pop(key, None)
+
+    #inject new keys into the loc target's json
+    for key in extracted_json:
+        loc_file_json[key] = extracted_json[key]
+
+    #replace the loc target's json
+    with open(file_path, 'w') as output_file:
+        json.dump(loc_file_json, output_file, indent=4)
+        output_file.write('\n')
+
 # --------------------------------------------------------------------------------------------------------
 #                                               Core Path
 # --------------------------------------------------------------------------------------------------------
@@ -425,14 +451,16 @@ def main():
         sys.exit("Could not find source project %s" % command_args.project)
 
     if command_args.scan_project:
-        if command_args.scan_output_path == '':
-            sys.exit("Must specify a scan output path to use scan_project functionality")
+        if command_args.scan_output_path is None and command_args.scan_loc_target is None:
+            sys.exit("Must specify a scan_output_path or scan_log_target to use scan_project functionality")
 
-        projects_scanned = 0
+        generated_json = {}
         for project_entry in project_list:
-            if scan_project(project_entry, command_args.source_language, command_args.scan_output_path):
-                projects_scanned += 1
-        print(str(projects_scanned) + ' project(s) scanned')
+            generated_json = {**generated_json, **scan_project(project_entry, command_args.source_language, command_args.scan_output_path)}
+        print(str(len(project_list)) + ' project(s) scanned')
+
+        if command_args.scan_loc_target:
+            modify_base_loc_file(generated_json, command_args.scan_loc_target)
 
     if command_args.translate_project:
         projects_translated = 0
