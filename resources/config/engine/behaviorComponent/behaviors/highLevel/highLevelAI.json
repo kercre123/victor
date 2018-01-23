@@ -230,6 +230,15 @@
 
     {
       "from": "ReturningToCharger",
+      "interruptingTransitions": [
+        {
+          "to": "Observing",
+          "condition": {
+            "conditionType": "OffTreadsState",
+            "targetState": "InAir"
+          }
+        }
+      ],
       "exitTransitions": [
         {
           "to": "ObservingOnChargerRecentlyPlaced",
