@@ -40,6 +40,9 @@ CONSOLE_VAR(float, kObsPadding_mm, "ProxSensorComponent", 0.05f);
 CONSOLE_VAR(u16, kMinObsThreshold_mm, "ProxSensorComponent", 30);
 CONSOLE_VAR(u16, kMaxObsThreshold_mm, "ProxSensorComponent", 400);
 
+// max forward tilt of the robot to still consider a valid reading
+CONSOLE_VAR(float, kMaxForwardTilt_rad, "ProxSensorComponent", -.08);
+
 // Minimum sensor reading strength before trying to use sensor data
 CONSOLE_VAR(float, kMinQualityThreshold, "ProxSensorComponent", 0.05f);
 
@@ -193,8 +196,9 @@ void ProxSensorComponent::UpdateNavMap()
   const bool noObject       = quality <= kMinQualityThreshold;                      // sensor is pointed at free space
   const bool objectDetected = (quality >= kMinQualityThreshold &&                   // sensor is getting some reading
                                _latestData.distance_mm >= kMinObsThreshold_mm);     // the sensor is not seeing the lift
-  
-  if (objectDetected || noObject)
+  const bool tiltedForward  = _robot->GetPitchAngle() < kMaxForwardTilt_rad;        // if the robot is titled too far forward (- rad) 
+
+  if ((objectDetected || noObject) && !tiltedForward)
   {  
     // Clear out any obstacles between the robot and ray if we have good signal strength 
     TimeStamp_t lastTimestamp = _robot->GetLastMsgTimestamp();
