@@ -39,6 +39,7 @@ namespace Cozmo {
 
 class AnimationGroupContainer;
 class BackpackLightAnimationContainer;
+class CannedAnimationContainer;
 class CubeLightAnimationContainer;
 class CozmoContext;
 class AnimationTriggerResponsesContainer;
@@ -68,6 +69,7 @@ public:
   const FileJsonMap& GetEmotionEventJsons()   const { return _emotionEvents; }
   const BehaviorIDJsonMap& GetBehaviorJsons() const { return _behaviors; }
   
+  CannedAnimationContainer* GetCannedAnimationContainer() const { return _cannedAnimations.get(); }
   CubeLightAnimationContainer* GetCubeLightAnimations() const { return _cubeLightAnimations.get(); }
   AnimationGroupContainer* GetAnimationGroups() const { return _animationGroups.get(); }
   AnimationTriggerResponsesContainer* GetAnimationTriggerResponses() const { return _animationTriggerResponses.get(); }
@@ -134,6 +136,7 @@ private:
   std::unordered_map<int, std::vector<std::string>> _jsonFiles;
 
   // animation data
+  std::unique_ptr<CannedAnimationContainer>           _cannedAnimations;
   std::unique_ptr<CubeLightAnimationContainer>        _cubeLightAnimations;
   std::unique_ptr<AnimationGroupContainer>            _animationGroups;
   std::unique_ptr<AnimationTriggerResponsesContainer> _animationTriggerResponses;

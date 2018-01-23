@@ -14,7 +14,7 @@
 #ifndef __Anki_Cozmo_Basestation_Animations_Track_H__
 #define __Anki_Cozmo_Basestation_Animations_Track_H__
 
-#include "cozmoAnim/animation/keyframe.h"
+#include "cannedAnimLib/keyframe.h"
 #include "coretech/common/shared/types.h"
 #include "json/json-forwards.h"
 #include <stdint.h>

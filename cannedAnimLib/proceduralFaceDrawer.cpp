@@ -1,5 +1,5 @@
-#include "cozmoAnim/animation/proceduralFaceDrawer.h"
-#include "cozmoAnim/animation/scanlineDistorter.h"
+#include "cannedAnimLib/proceduralFaceDrawer.h"
+#include "cannedAnimLib/scanlineDistorter.h"
 
 #include "coretech/common/engine/array2d_impl.h"
 

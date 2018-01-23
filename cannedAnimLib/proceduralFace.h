@@ -16,7 +16,6 @@
 #include "coretech/common/shared/types.h"
 #include "coretech/common/engine/math/point.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
-#include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "clad/types/proceduralFaceTypes.h"
 #include "util/logging/logging.h"
 #include <array>

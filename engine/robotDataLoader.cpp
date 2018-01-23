@@ -12,6 +12,8 @@
 
 #include "engine/robotDataLoader.h"
 
+#include "cannedAnimLib/cannedAnimationContainer.h"
+#include "cannedAnimLib/cannedAnimationLoader.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/sayTextAction.h"
@@ -146,6 +148,13 @@ void RobotDataLoader::LoadNonConfigData()
     // Load SayText Action Intent Config
     ANKI_CPU_PROFILE("RobotDataLoader::LoadSayTextActionIntentConfigs");
     SayTextAction::LoadMetadata(*_context->GetDataPlatform());
+  }
+
+  {
+    // Load animations into engine - disabled for the time being to save the 30 MB hit
+    // of loading animations into engine in addition to anim process
+    //CannedAnimationLoader animLoader(_platform, _loadingCompleteRatio, _abortLoad);
+    //_cannedAnimations.reset(animLoader.LoadAnimations());
   }
 
   // this map doesn't need to be persistent

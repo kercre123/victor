@@ -18,9 +18,9 @@
 #include "coretech/common/engine/colorRGBA.h"
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
-#include "cozmoAnim/animation/cozmo_anim_generated.h"
-#include "cozmoAnim/animation/faceAnimationManager.h"
-#include "cozmoAnim/animation/keyframe.h"
+#include "cannedAnimLib/cozmo_anim_generated.h"
+#include "cannedAnimLib/faceAnimationManager.h"
+#include "cannedAnimLib/keyframe.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "util/helpers/quoteMacro.h"
@@ -149,23 +149,25 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
      , _angle_deg(angle_deg)
      , _angleVariability_deg(angle_variability_deg)
      {
-       
+       _streamHeadMsg.duration_sec = 0;
      }
     
-    RobotInterface::EngineToRobot* HeadAngleKeyFrame::GetStreamMessage()
-    {
-      _streamHeadMsg.duration_sec = 0.001 * _durationTime_ms;
-      
-      // Add variability:
-      if(_angleVariability_deg > 0) {
-        _streamHeadMsg.angle_rad = DEG_TO_RAD(static_cast<s8>(GetRNG().RandIntInRange(_angle_deg - _angleVariability_deg,
-                                                                                      _angle_deg + _angleVariability_deg)));
-      } else {
-        _streamHeadMsg.angle_rad = DEG_TO_RAD(_angle_deg);
+    #if CAN_STREAM
+      RobotInterface::EngineToRobot* HeadAngleKeyFrame::GetStreamMessage()
+      {
+        _streamHeadMsg.duration_sec = 0.001 * _durationTime_ms;
+        
+        // Add variability:
+        if(_angleVariability_deg > 0) {
+          _streamHeadMsg.angle_rad = DEG_TO_RAD(static_cast<s8>(GetRNG().RandIntInRange(_angle_deg - _angleVariability_deg,
+                                                                                        _angle_deg + _angleVariability_deg)));
+        } else {
+          _streamHeadMsg.angle_rad = DEG_TO_RAD(_angle_deg);
+        }
+        
+        return new RobotInterface::EngineToRobot(_streamHeadMsg);
       }
-      
-      return new RobotInterface::EngineToRobot(_streamHeadMsg);
-    }
+    #endif
 
     Result HeadAngleKeyFrame::DefineFromFlatBuf(const CozmoAnim::HeadAngle* headAngleKeyframe, const std::string& animNameDebug)
     {
@@ -204,23 +206,25 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     , _height_mm(height_mm)
     , _heightVariability_mm(heightVariability_mm)
     {
-      
+      _streamLiftMsg.duration_sec = 0;
     }
     
-    RobotInterface::EngineToRobot* LiftHeightKeyFrame::GetStreamMessage()
-    {
-      _streamLiftMsg.duration_sec = 0.001 * _durationTime_ms;
-      
-      // Add variability:
-      if(_heightVariability_mm > 0) {
-        _streamLiftMsg.height_mm = (uint8_t)static_cast<s8>(GetRNG().RandIntInRange(_height_mm - _heightVariability_mm,
-                                                                                    _height_mm + _heightVariability_mm));
-      } else {
-        _streamLiftMsg.height_mm = _height_mm;
-      }
+    #if CAN_STREAM
+      RobotInterface::EngineToRobot* LiftHeightKeyFrame::GetStreamMessage()
+      {
+        _streamLiftMsg.duration_sec = 0.001 * _durationTime_ms;
+        
+        // Add variability:
+        if(_heightVariability_mm > 0) {
+          _streamLiftMsg.height_mm = (uint8_t)static_cast<s8>(GetRNG().RandIntInRange(_height_mm - _heightVariability_mm,
+                                                                                      _height_mm + _heightVariability_mm));
+        } else {
+          _streamLiftMsg.height_mm = _height_mm;
+        }
 
-      return new RobotInterface::EngineToRobot(_streamLiftMsg);
-    }
+        return new RobotInterface::EngineToRobot(_streamLiftMsg);
+      }
+    #endif
 
     Result LiftHeightKeyFrame::DefineFromFlatBuf(const CozmoAnim::LiftHeight* liftHeightKeyframe, const std::string& animNameDebug)
     {
@@ -610,12 +614,14 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     // EventKeyFrame
     //
     
-    RobotInterface::EngineToRobot* EventKeyFrame::GetStreamMessage()
-    {
-      // This function isn't actually used. Instead GetAnimEvent() is used by animationStreamer.
-      DEV_ASSERT(false, "EventKeyFrame.GetStreamMessage.ShouldntCallThis");
-      return nullptr;
-    }
+    #if CAN_STREAM
+      RobotInterface::EngineToRobot* EventKeyFrame::GetStreamMessage()
+      {
+        // This function isn't actually used. Instead GetAnimEvent() is used by animationStreamer.
+        DEV_ASSERT(false, "EventKeyFrame.GetStreamMessage.ShouldntCallThis");
+        return nullptr;
+      }
+    #endif
 
     Result EventKeyFrame::DefineFromFlatBuf(const CozmoAnim::Event* eventKeyframe, const std::string& animNameDebug)
     {
@@ -717,11 +723,13 @@ _streamMsg.lights[__LED_NAME__].offset = 0; } while(0)
       
       return RESULT_OK;
     }
-    
-    RobotInterface::EngineToRobot* BackpackLightsKeyFrame::GetStreamMessage()
-    {
-      return new RobotInterface::EngineToRobot(_streamMsg);
-    }
+  
+    #if CAN_STREAM
+      RobotInterface::EngineToRobot* BackpackLightsKeyFrame::GetStreamMessage()
+      {
+        return new RobotInterface::EngineToRobot(_streamMsg);
+      }
+    #endif
   
   
     bool BackpackLightsKeyFrame::IsDone()
@@ -872,24 +880,26 @@ _streamMsg.lights[__LED_NAME__].offset = 0; } while(0)
       return RESULT_OK;
     }
 
-    RobotInterface::EngineToRobot* BodyMotionKeyFrame::GetStreamMessage()
-    {
-      //PRINT_NAMED_INFO("BodyMotionKeyFrame.GetStreamMessage",
-      //                 "currentTime=%d, duration=%d\n", _currentTime_ms, _duration_ms);
-      
-      if(GetCurrentTime() == 0) {
-        // Send the motion command at the beginning
-        return new RobotInterface::EngineToRobot(_streamMsg);
-      } else if(_enableStopMessage && GetCurrentTime() >= _durationTime_ms) {
-        // Send a stop command when the duration has passed
-        return new RobotInterface::EngineToRobot(_stopMsg);
-      } else {
-        // Do nothing in the middle or if no done message is required.
-        // (Note that IsDone() will return false during
-        // this period so the animation track won't advance.)
-        return nullptr;
+    #if CAN_STREAM
+      RobotInterface::EngineToRobot* BodyMotionKeyFrame::GetStreamMessage()
+      {
+        //PRINT_NAMED_INFO("BodyMotionKeyFrame.GetStreamMessage",
+        //                 "currentTime=%d, duration=%d\n", _currentTime_ms, _duration_ms);
+        
+        if(GetCurrentTime() == 0) {
+          // Send the motion command at the beginning
+          return new RobotInterface::EngineToRobot(_streamMsg);
+        } else if(_enableStopMessage && GetCurrentTime() >= _durationTime_ms) {
+          // Send a stop command when the duration has passed
+          return new RobotInterface::EngineToRobot(_stopMsg);
+        } else {
+          // Do nothing in the middle or if no done message is required.
+          // (Note that IsDone() will return false during
+          // this period so the animation track won't advance.)
+          return nullptr;
+        }
       }
-    }
+    #endif
     
     bool BodyMotionKeyFrame::IsDone()
     {
@@ -927,10 +937,12 @@ _streamMsg.lights[__LED_NAME__].offset = 0; } while(0)
       return RESULT_OK;
     }
     
-    RobotInterface::EngineToRobot* RecordHeadingKeyFrame::GetStreamMessage()
-    {
-      return new RobotInterface::EngineToRobot(_streamMsg);
-    }
+    #if CAN_STREAM
+      RobotInterface::EngineToRobot* RecordHeadingKeyFrame::GetStreamMessage()
+      {
+        return new RobotInterface::EngineToRobot(_streamMsg);
+      }
+    #endif
     
     bool RecordHeadingKeyFrame::IsDone()
     {
@@ -1043,10 +1055,12 @@ _streamMsg.lights[__LED_NAME__].offset = 0; } while(0)
       return RESULT_OK;
     }
     
-    RobotInterface::EngineToRobot* TurnToRecordedHeadingKeyFrame::GetStreamMessage()
-    {
-      return new RobotInterface::EngineToRobot(_streamMsg);
-    }
+    #if CAN_STREAM
+      RobotInterface::EngineToRobot* TurnToRecordedHeadingKeyFrame::GetStreamMessage()
+      {
+        return new RobotInterface::EngineToRobot(_streamMsg);
+      }
+    #endif
     
     bool TurnToRecordedHeadingKeyFrame::IsDone()
     {

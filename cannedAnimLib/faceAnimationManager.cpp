@@ -9,8 +9,8 @@
  * Copyright: Anki, Inc. 2015
  **/
 
-#include "cozmoAnim/animation/faceAnimationManager.h"
-#include "cozmoAnim/animation/keyframe.h"
+#include "cannedAnimLib/faceAnimationManager.h"
+#include "cannedAnimLib/keyframe.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/data/dataScope.h"
 #include "coretech/common/engine/array2d_impl.h"

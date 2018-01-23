@@ -17,6 +17,7 @@
 #include "cozmoAnim/animation/animationStreamer.h"
 #include "cozmoAnim/audio/engineRobotAudioInput.h"
 #include "cozmoAnim/cozmoAnimContext.h"
+#include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "cozmoAnim/faceDisplay/faceDebugDraw.h"
 #include "cozmoAnim/micDataProcessor.h"
 #include "audioEngine/multiplexer/audioMultiplexer.h"

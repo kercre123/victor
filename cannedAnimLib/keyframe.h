@@ -19,7 +19,7 @@
 
 #include "coretech/common/engine/colorRGBA.h"
 #include "coretech/vision/engine/image.h"
-#include "cozmoAnim/animation/proceduralFace.h"
+#include "cannedAnimLib/proceduralFace.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/ledTypes.h"
 #include "clad/audio/audioEventTypes.h"
@@ -27,6 +27,9 @@
 #include "json/json-forwards.h"
 
 #define kNoAudioRefIndex -1
+#ifndef CAN_STREAM
+#define CAN_STREAM true
+#endif
 
 namespace CozmoAnim {
   struct HeadAngle;
@@ -48,13 +51,6 @@ namespace Anki {
   }
   
 namespace Cozmo {
-  
-  // Forward declaration
-  namespace RobotInterface {
-  struct EngineToRobot;
-  //enum class EngineToRobotTag : uint8_t;
-  }
-  
   // IKeyFrame defines an abstract interface for all KeyFrames below.
   class IKeyFrame
   {
@@ -85,10 +81,12 @@ namespace Cozmo {
     // how to populate their members. Second argument is used to print nicer debug strings if something goes wrong
     Result DefineFromJson(const Json::Value &json, const std::string& animNameDebug = "");
     
-    // Fill some kind of message for streaming and return it. Return nullptr
-    // if not available.
-    virtual RobotInterface::EngineToRobot* GetStreamMessage() = 0;
-    
+    #if CAN_STREAM
+      // Fill some kind of message for streaming and return it. Return nullptr
+      // if not available.
+      virtual RobotInterface::EngineToRobot* GetStreamMessage() = 0;
+    #endif
+
     // Whether or not this KeyFrame is "done" after calling GetStreamMessage().
     // Override for special keyframes that need to keep parceling out data into
     // multiple returned messages.
@@ -136,8 +134,10 @@ namespace Cozmo {
     
     Result DefineFromFlatBuf(const CozmoAnim::HeadAngle* headAngleKeyframe, const std::string& animNameDebug);
 
+    #if CAN_STREAM
     virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
-    
+    #endif
+
     static const std::string& GetClassName() {
       static const std::string ClassName("HeadAngleKeyFrame");
       return ClassName;
@@ -168,8 +168,10 @@ namespace Cozmo {
     
     Result DefineFromFlatBuf(const CozmoAnim::LiftHeight* liftHeightKeyframe, const std::string& animNameDebug);
 
-    virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
-    
+    #if CAN_STREAM
+      virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
+    #endif
+
     static const std::string& GetClassName() {
       static const std::string ClassName("LiftHeightKeyFrame");
       return ClassName;
@@ -218,9 +220,11 @@ namespace Cozmo {
     
     Result DefineFromFlatBuf(const CozmoAnim::RobotAudio* audioKeyframe, const std::string& animNameDebug);
 
-    // NOTE: Always returns nullptr for RobotAudioKeyframe!
-    virtual RobotInterface::EngineToRobot* GetStreamMessage() override { return nullptr; };
-    
+    #if CAN_STREAM
+      // NOTE: Always returns nullptr for RobotAudioKeyframe!
+      virtual RobotInterface::EngineToRobot* GetStreamMessage() override { return nullptr; };
+    #endif
+
     static const std::string& GetClassName() {
       static const std::string ClassName("RobotAudioKeyFrame");
       return ClassName;
@@ -268,12 +272,14 @@ namespace Cozmo {
     Result DefineFromFlatBuf(const CozmoAnim::FaceAnimation* faceAnimKeyframe, const std::string& animNameDebug);
 
     Result Process(const std::string& animNameDebug);
-
-    // The face image isn't actually returned via this function since the
-    // message does not go to robot process. Instead, images are grabbed via GetFaceImage().
-    // TODO: Is it better to create a wrapper EngineToRobot message so that we don't have
-    //       to duplicate keyframe checking logic in animationStreamer?
-    virtual RobotInterface::EngineToRobot* GetStreamMessage() override {return nullptr;}
+  
+    #if CAN_STREAM
+      // The face image isn't actually returned via this function since the
+      // message does not go to robot process. Instead, images are grabbed via GetFaceImage().
+      // TODO: Is it better to create a wrapper EngineToRobot message so that we don't have
+      //       to duplicate keyframe checking logic in animationStreamer?
+      virtual RobotInterface::EngineToRobot* GetStreamMessage() override {return nullptr;}
+    #endif
     
     static const std::string& GetClassName() {
       static const std::string ClassName("FaceAnimationKeyFrame");
@@ -312,9 +318,11 @@ namespace Cozmo {
 
     Result DefineFromFlatBuf(const CozmoAnim::ProceduralFace* procFaceKeyframe, const std::string& animNameDebug);
     
-    // Always returns nullptr. Use GetInterpolatedFace() to get the face stored in this
-    // keyframe.
-    virtual RobotInterface::EngineToRobot* GetStreamMessage() override { return nullptr; }
+    #if CAN_STREAM
+      // Always returns nullptr. Use GetInterpolatedFace() to get the face stored in this
+      // keyframe.
+      virtual RobotInterface::EngineToRobot* GetStreamMessage() override { return nullptr; }
+    #endif
     
     // Returns message for the face interpolated between the stored face in this
     // keyframe and the one in the next keyframe.
@@ -344,9 +352,11 @@ namespace Cozmo {
     bool            _isDone = false;
 
     
-    // This is what actually populates the message to stream, and is used
-    // by GetStreamMessage() and GetInterpolatedStreamMessage().
-    RobotInterface::EngineToRobot* GetStreamMessageHelper(const ProceduralFace& procFace);
+    #if CAN_STREAM
+      // This is what actually populates the message to stream, and is used
+      // by GetStreamMessage() and GetInterpolatedStreamMessage().
+      RobotInterface::EngineToRobot* GetStreamMessageHelper(const ProceduralFace& procFace);
+    #endif
     
     void Reset();
     
@@ -370,8 +380,10 @@ namespace Cozmo {
 
     Result DefineFromFlatBuf(const CozmoAnim::Event* eventKeyframe, const std::string& animNameDebug);
     
-    virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
-    
+    #if CAN_STREAM
+     virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
+    #endif
+
     static const std::string& GetClassName() {
       static const std::string ClassName("EventKeyFrame");
       return ClassName;
@@ -400,7 +412,9 @@ namespace Cozmo {
 
     Result DefineFromFlatBuf(CozmoAnim::BackpackLights* backpackKeyframe, const std::string& animNameDebug);
     
-    virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
+    #if CAN_STREAM
+      virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
+    #endif
     
     static const std::string& GetClassName() {
       static const std::string ClassName("BackpackLightsKeyFrame");
@@ -441,8 +455,10 @@ namespace Cozmo {
 
     Result ProcessRadiusString(const std::string& radiusStr, const std::string& animNameDebug);
 
-    virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
-    
+    #if CAN_STREAM
+      virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
+    #endif
+
     static const std::string& GetClassName() {
       static const std::string ClassName("BodyMotionKeyFrame");
       return ClassName;
@@ -479,7 +495,9 @@ namespace Cozmo {
     
     Result DefineFromFlatBuf(const CozmoAnim::RecordHeading* recordHeadingKeyframe, const std::string& animNameDebug);
     
-    virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
+    #if CAN_STREAM
+      virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
+    #endif
     
     static const std::string& GetClassName() {
       static const std::string ClassName("RecordHeadingKeyFrame");
@@ -496,7 +514,9 @@ namespace Cozmo {
     
   private:
     
-    RobotInterface::RecordHeading _streamMsg;
+    #if CAN_STREAM
+      RobotInterface::RecordHeading _streamMsg;
+    #endif
     
   }; // class RecordHeadingKeyFrame
   
@@ -520,7 +540,9 @@ namespace Cozmo {
     
     void CheckRotationSpeed(const std::string& animNameDebug);
     
-    virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
+    #if CAN_STREAM
+      virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
+    #endif
     
     static const std::string& GetClassName() {
       static const std::string ClassName("TurnToRecordedHeadingKeyFrame");

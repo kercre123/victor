@@ -11,8 +11,8 @@
  *
  **/
 
-#include "cozmoAnim/animation/cannedAnimationContainer.h"
-#include "cozmoAnim/animation/faceAnimationManager.h"
+#include "cannedAnimLib/cannedAnimationContainer.h"
+#include "cannedAnimLib/faceAnimationManager.h"
 
 #include "util/logging/logging.h"
 

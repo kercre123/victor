@@ -125,6 +125,7 @@ add_subdirectory("cloud")
 add_subdirectory("cubeBleClient")
 add_subdirectory("osState")
 add_subdirectory("androidHAL")
+add_subdirectory("cannedAnimLib")
 add_subdirectory("animProcess")
 
 target_include_directories(victor_anim PRIVATE

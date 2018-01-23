@@ -10,10 +10,10 @@
  *
  **/
 
-#include "cozmoAnim/animation/scanlineDistorter.h"
+#include "cannedAnimLib/scanlineDistorter.h"
 
-#include "cozmoAnim/animation/keyframe.h"
-#include "cozmoAnim/animation/proceduralFace.h"
+#include "cannedAnimLib/keyframe.h"
+#include "cannedAnimLib/proceduralFace.h"
 
 #include "coretech/common/engine/math/matrix_impl.h"
 #include "coretech/vision/engine/image.h" 
