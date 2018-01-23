@@ -1,0 +1,491 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 48;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		DA5EC9E620084554003ABD16 /* libsodium.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DA5EC9E520084554003ABD16 /* libsodium.a */; };
+		DA65A9FC20059B54006EEBA0 /* aes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DACEF06A200599B700894864 /* aes.cpp */; };
+		DA65A9FD20059B54006EEBA0 /* hmac.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DACEF06C200599B700894864 /* hmac.cpp */; };
+		DA65A9FE20059B54006EEBA0 /* md5.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DACEF06E200599B700894864 /* md5.cpp */; };
+		DA65A9FF20059B54006EEBA0 /* packet.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DACEF070200599B700894864 /* packet.cpp */; };
+		DA65AA0020059B54006EEBA0 /* random.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DACEF072200599B700894864 /* random.cpp */; };
+		DA65AA0120059E4C006EEBA0 /* bluetooth.mm in Sources */ = {isa = PBXBuildFile; fileRef = DACEF076200599B700894864 /* bluetooth.mm */; };
+		DAB7E39D200EB76600D57664 /* BLENetworkStream.mm in Sources */ = {isa = PBXBuildFile; fileRef = DAB7E39C200EB76600D57664 /* BLENetworkStream.mm */; };
+		DAB7E3A1200EB84F00D57664 /* BLEPeripheral.mm in Sources */ = {isa = PBXBuildFile; fileRef = DAB7E3A0200EB84F00D57664 /* BLEPeripheral.mm */; };
+		DAB7E3A3200EB8A600D57664 /* SecurePairing.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DAB7E3A2200EB8A600D57664 /* SecurePairing.cpp */; };
+		DAB7E3B0200ED2ED00D57664 /* KeyExchange.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DAB7E3AF200ED2ED00D57664 /* KeyExchange.cpp */; };
+		DACEF047200598FF00894864 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = DACEF046200598FF00894864 /* AppDelegate.m */; };
+		DACEF04A200598FF00894864 /* ViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = DACEF049200598FF00894864 /* ViewController.mm */; };
+		DACEF04D200598FF00894864 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = DACEF04B200598FF00894864 /* Main.storyboard */; };
+		DACEF050200598FF00894864 /* ios_server.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = DACEF04E200598FF00894864 /* ios_server.xcdatamodeld */; };
+		DACEF052200598FF00894864 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DACEF051200598FF00894864 /* Assets.xcassets */; };
+		DACEF055200598FF00894864 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = DACEF053200598FF00894864 /* LaunchScreen.storyboard */; };
+		DACEF058200598FF00894864 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = DACEF057200598FF00894864 /* main.m */; };
+		DACEF0662005994B00894864 /* CoreBluetooth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DACEF0652005994600894864 /* CoreBluetooth.framework */; };
+		DAE4FC282008451A007D04BB /* sodium in Resources */ = {isa = PBXBuildFile; fileRef = DAE4FC2720084519007D04BB /* sodium */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		DA5EC9E520084554003ABD16 /* libsodium.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libsodium.a; path = "ios-server/sodium/libsodium.a"; sourceTree = "<group>"; };
+		DA65AA0220068500006EEBA0 /* AnkiKeyExchange.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AnkiKeyExchange.h; sourceTree = "<group>"; };
+		DA8141B7201173A700AC8A73 /* signalHolder.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = signalHolder.h; sourceTree = "<group>"; };
+		DA8141B8201173D900AC8A73 /* simpleSignal.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = simpleSignal.hpp; sourceTree = "<group>"; };
+		DA8141B9201173F300AC8A73 /* simpleSignal_fwd.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = simpleSignal_fwd.h; sourceTree = "<group>"; };
+		DAB7E39B200EB59B00D57664 /* INetworkStream.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = INetworkStream.h; sourceTree = "<group>"; };
+		DAB7E39C200EB76600D57664 /* BLENetworkStream.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = BLENetworkStream.mm; sourceTree = "<group>"; };
+		DAB7E39E200EB77700D57664 /* BLENetworkStream.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BLENetworkStream.h; sourceTree = "<group>"; };
+		DAB7E39F200EB84200D57664 /* BLEPeripheral.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BLEPeripheral.h; sourceTree = "<group>"; };
+		DAB7E3A0200EB84F00D57664 /* BLEPeripheral.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = BLEPeripheral.mm; sourceTree = "<group>"; };
+		DAB7E3A2200EB8A600D57664 /* SecurePairing.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SecurePairing.cpp; sourceTree = "<group>"; };
+		DAB7E3A4200EB8C000D57664 /* SecurePairing.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SecurePairing.h; sourceTree = "<group>"; };
+		DAB7E3A5200EB8F800D57664 /* KeyExchange.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = KeyExchange.h; sourceTree = "<group>"; };
+		DAB7E3A6200EB92300D57664 /* BLEPairingController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BLEPairingController.h; sourceTree = "<group>"; };
+		DAB7E3AF200ED2ED00D57664 /* KeyExchange.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = KeyExchange.cpp; sourceTree = "<group>"; };
+		DACEF042200598FF00894864 /* ios-server.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "ios-server.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		DACEF045200598FF00894864 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
+		DACEF046200598FF00894864 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+		DACEF048200598FF00894864 /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
+		DACEF049200598FF00894864 /* ViewController.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = ViewController.mm; sourceTree = "<group>"; };
+		DACEF04C200598FF00894864 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		DACEF04F200598FF00894864 /* ios_server.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = ios_server.xcdatamodel; sourceTree = "<group>"; };
+		DACEF051200598FF00894864 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		DACEF054200598FF00894864 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		DACEF056200598FF00894864 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		DACEF057200598FF00894864 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		DACEF0652005994600894864 /* CoreBluetooth.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreBluetooth.framework; path = System/Library/Frameworks/CoreBluetooth.framework; sourceTree = SDKROOT; };
+		DACEF06A200599B700894864 /* aes.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = aes.cpp; sourceTree = "<group>"; };
+		DACEF06B200599B700894864 /* aes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = aes.h; sourceTree = "<group>"; };
+		DACEF06C200599B700894864 /* hmac.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = hmac.cpp; sourceTree = "<group>"; };
+		DACEF06D200599B700894864 /* hmac.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = hmac.h; sourceTree = "<group>"; };
+		DACEF06E200599B700894864 /* md5.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = md5.cpp; sourceTree = "<group>"; };
+		DACEF06F200599B700894864 /* md5.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = md5.h; sourceTree = "<group>"; };
+		DACEF070200599B700894864 /* packet.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = packet.cpp; sourceTree = "<group>"; };
+		DACEF071200599B700894864 /* packet.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = packet.h; sourceTree = "<group>"; };
+		DACEF072200599B700894864 /* random.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = random.cpp; sourceTree = "<group>"; };
+		DACEF073200599B700894864 /* random.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = random.h; sourceTree = "<group>"; };
+		DACEF075200599B700894864 /* bluetooth.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = bluetooth.h; sourceTree = "<group>"; };
+		DACEF076200599B700894864 /* bluetooth.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = bluetooth.mm; sourceTree = "<group>"; };
+		DAE4FC2720084519007D04BB /* sodium */ = {isa = PBXFileReference; lastKnownFileType = folder; path = sodium; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		DACEF03F200598FF00894864 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DA5EC9E620084554003ABD16 /* libsodium.a in Frameworks */,
+				DACEF0662005994B00894864 /* CoreBluetooth.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		DA8141B62011738800AC8A73 /* signals */ = {
+			isa = PBXGroup;
+			children = (
+				DA8141B7201173A700AC8A73 /* signalHolder.h */,
+				DA8141B8201173D900AC8A73 /* simpleSignal.hpp */,
+				DA8141B9201173F300AC8A73 /* simpleSignal_fwd.h */,
+			);
+			path = signals;
+			sourceTree = "<group>";
+		};
+		DAB7E39A200EB57500D57664 /* networking */ = {
+			isa = PBXGroup;
+			children = (
+				DAB7E39B200EB59B00D57664 /* INetworkStream.h */,
+				DAB7E39E200EB77700D57664 /* BLENetworkStream.h */,
+				DAB7E39C200EB76600D57664 /* BLENetworkStream.mm */,
+				DAB7E39F200EB84200D57664 /* BLEPeripheral.h */,
+				DAB7E3A0200EB84F00D57664 /* BLEPeripheral.mm */,
+				DAB7E3A4200EB8C000D57664 /* SecurePairing.h */,
+				DAB7E3A2200EB8A600D57664 /* SecurePairing.cpp */,
+				DAB7E3A5200EB8F800D57664 /* KeyExchange.h */,
+				DAB7E3AF200ED2ED00D57664 /* KeyExchange.cpp */,
+				DAB7E3A6200EB92300D57664 /* BLEPairingController.h */,
+			);
+			path = networking;
+			sourceTree = "<group>";
+		};
+		DACEF039200598FF00894864 = {
+			isa = PBXGroup;
+			children = (
+				DACEF044200598FF00894864 /* ios-server */,
+				DACEF043200598FF00894864 /* Products */,
+				DACEF0642005994600894864 /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		DACEF043200598FF00894864 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				DACEF042200598FF00894864 /* ios-server.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		DACEF044200598FF00894864 /* ios-server */ = {
+			isa = PBXGroup;
+			children = (
+				DA8141B62011738800AC8A73 /* signals */,
+				DAB7E39A200EB57500D57664 /* networking */,
+				DAE4FC2720084519007D04BB /* sodium */,
+				DACEF074200599B700894864 /* bluetooth */,
+				DACEF069200599B700894864 /* crypto */,
+				DACEF045200598FF00894864 /* AppDelegate.h */,
+				DACEF046200598FF00894864 /* AppDelegate.m */,
+				DACEF048200598FF00894864 /* ViewController.h */,
+				DACEF049200598FF00894864 /* ViewController.mm */,
+				DACEF04B200598FF00894864 /* Main.storyboard */,
+				DACEF051200598FF00894864 /* Assets.xcassets */,
+				DACEF053200598FF00894864 /* LaunchScreen.storyboard */,
+				DACEF056200598FF00894864 /* Info.plist */,
+				DACEF057200598FF00894864 /* main.m */,
+				DACEF04E200598FF00894864 /* ios_server.xcdatamodeld */,
+			);
+			path = "ios-server";
+			sourceTree = "<group>";
+		};
+		DACEF0642005994600894864 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				DA5EC9E520084554003ABD16 /* libsodium.a */,
+				DACEF0652005994600894864 /* CoreBluetooth.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		DACEF069200599B700894864 /* crypto */ = {
+			isa = PBXGroup;
+			children = (
+				DACEF06A200599B700894864 /* aes.cpp */,
+				DACEF06B200599B700894864 /* aes.h */,
+				DACEF06C200599B700894864 /* hmac.cpp */,
+				DACEF06D200599B700894864 /* hmac.h */,
+				DACEF06E200599B700894864 /* md5.cpp */,
+				DACEF06F200599B700894864 /* md5.h */,
+				DACEF070200599B700894864 /* packet.cpp */,
+				DACEF071200599B700894864 /* packet.h */,
+				DACEF072200599B700894864 /* random.cpp */,
+				DACEF073200599B700894864 /* random.h */,
+			);
+			path = crypto;
+			sourceTree = "<group>";
+		};
+		DACEF074200599B700894864 /* bluetooth */ = {
+			isa = PBXGroup;
+			children = (
+				DACEF075200599B700894864 /* bluetooth.h */,
+				DACEF076200599B700894864 /* bluetooth.mm */,
+				DA65AA0220068500006EEBA0 /* AnkiKeyExchange.h */,
+			);
+			path = bluetooth;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		DACEF041200598FF00894864 /* ios-server */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DACEF05B200598FF00894864 /* Build configuration list for PBXNativeTarget "ios-server" */;
+			buildPhases = (
+				DACEF03E200598FF00894864 /* Sources */,
+				DACEF03F200598FF00894864 /* Frameworks */,
+				DACEF040200598FF00894864 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "ios-server";
+			productName = "ios-server";
+			productReference = DACEF042200598FF00894864 /* ios-server.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		DACEF03A200598FF00894864 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				KnownAssetTags = (
+					openssl,
+				);
+				LastUpgradeCheck = 0910;
+				ORGANIZATIONNAME = "Paul Aluri";
+				TargetAttributes = {
+					DACEF041200598FF00894864 = {
+						CreatedOnToolsVersion = 9.1;
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = DACEF03D200598FF00894864 /* Build configuration list for PBXProject "ios-server" */;
+			compatibilityVersion = "Xcode 8.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = DACEF039200598FF00894864;
+			productRefGroup = DACEF043200598FF00894864 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				DACEF041200598FF00894864 /* ios-server */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		DACEF040200598FF00894864 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DACEF055200598FF00894864 /* LaunchScreen.storyboard in Resources */,
+				DACEF052200598FF00894864 /* Assets.xcassets in Resources */,
+				DACEF04D200598FF00894864 /* Main.storyboard in Resources */,
+				DAE4FC282008451A007D04BB /* sodium in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		DACEF03E200598FF00894864 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DA65A9FC20059B54006EEBA0 /* aes.cpp in Sources */,
+				DACEF050200598FF00894864 /* ios_server.xcdatamodeld in Sources */,
+				DA65A9FD20059B54006EEBA0 /* hmac.cpp in Sources */,
+				DA65A9FF20059B54006EEBA0 /* packet.cpp in Sources */,
+				DAB7E3B0200ED2ED00D57664 /* KeyExchange.cpp in Sources */,
+				DA65AA0120059E4C006EEBA0 /* bluetooth.mm in Sources */,
+				DACEF04A200598FF00894864 /* ViewController.mm in Sources */,
+				DAB7E39D200EB76600D57664 /* BLENetworkStream.mm in Sources */,
+				DAB7E3A1200EB84F00D57664 /* BLEPeripheral.mm in Sources */,
+				DA65AA0020059B54006EEBA0 /* random.cpp in Sources */,
+				DACEF058200598FF00894864 /* main.m in Sources */,
+				DA65A9FE20059B54006EEBA0 /* md5.cpp in Sources */,
+				DAB7E3A3200EB8A600D57664 /* SecurePairing.cpp in Sources */,
+				DACEF047200598FF00894864 /* AppDelegate.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		DACEF04B200598FF00894864 /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				DACEF04C200598FF00894864 /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+		DACEF053200598FF00894864 /* LaunchScreen.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				DACEF054200598FF00894864 /* Base */,
+			);
+			name = LaunchScreen.storyboard;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		DACEF059200598FF00894864 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.1;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+			};
+			name = Debug;
+		};
+		DACEF05A200598FF00894864 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.1;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = iphoneos;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		DACEF05C200598FF00894864 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 6N4JN4E7V7;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
+				INFOPLIST_FILE = "ios-server/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					/usr/local/Cellar/openssl/1.0.2n/lib,
+					"$(PROJECT_DIR)/ios-server/sodium",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.anki.paul.ios-server";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		DACEF05D200598FF00894864 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 6N4JN4E7V7;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
+				INFOPLIST_FILE = "ios-server/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					/usr/local/Cellar/openssl/1.0.2n/lib,
+					"$(PROJECT_DIR)/ios-server/sodium",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.anki.paul.ios-server";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		DACEF03D200598FF00894864 /* Build configuration list for PBXProject "ios-server" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DACEF059200598FF00894864 /* Debug */,
+				DACEF05A200598FF00894864 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		DACEF05B200598FF00894864 /* Build configuration list for PBXNativeTarget "ios-server" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DACEF05C200598FF00894864 /* Debug */,
+				DACEF05D200598FF00894864 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCVersionGroup section */
+		DACEF04E200598FF00894864 /* ios_server.xcdatamodeld */ = {
+			isa = XCVersionGroup;
+			children = (
+				DACEF04F200598FF00894864 /* ios_server.xcdatamodel */,
+			);
+			currentVersion = DACEF04F200598FF00894864 /* ios_server.xcdatamodel */;
+			path = ios_server.xcdatamodeld;
+			sourceTree = "<group>";
+			versionGroupType = wrapper.xcdatamodel;
+		};
+/* End XCVersionGroup section */
+	};
+	rootObject = DACEF03A200598FF00894864 /* Project object */;
+}
