@@ -910,9 +910,10 @@ static void downsample_frame(uint8_t *bayer, uint8_t *rgb, int bayer_sx, int bay
 
   uint8_t* bayer2 = bayer + bayer_sx;
 
-  for(int i = 0; i < kNumOuterLoops; ++i)
+  uint32_t i, j;
+  for(i = 0; i < kNumOuterLoops; ++i)
   {
-    for(int j = 0; j < kNumInnerLoops; ++j)
+    for(j = 0; j < kNumInnerLoops; ++j)
     {
       __asm__ volatile
       (
@@ -968,9 +969,7 @@ static void downsample_frame(uint8_t *bayer, uint8_t *rgb, int bayer_sx, int bay
         : [ptr] "+r" (bayer),  // Output list because we want the output of the pointer adds, + since we are reading
           [out] "+r" (rgb),    //   and writing from these registers
           [ptr2] "+r" (bayer2)
-        : [ptr] "r" (bayer),   // Input list automatically put in registers
-          [out] "r" (rgb), 
-          [ptr2] "r" (bayer2)
+        :
         : "d0","d1","d2","d3","d4","memory" // Clobber list of registers used and memory since it is being written to
       );
     }
@@ -1138,7 +1137,7 @@ static void mm_app_snapshot_notify_cb_raw(mm_camera_super_buf_t *bufs,
   const int raw_frame_width = buf_planes->plane_info.mp[0].stride;
   const int raw_frame_height = buf_planes->plane_info.mp[0].scanline;
 
-  const static uint8_t kProcessEveryNthFrame = 4;
+  static const uint8_t kProcessEveryNthFrame = 4;
   static uint8_t count = 0;
   if(frame_requested_ && ++count > kProcessEveryNthFrame)
   {
