@@ -17,7 +17,7 @@ using a behavior
 
 ## Running behaviors
 
-The default behavior is set in [victor_behavior_config.json](../../resources/config/engine/behaviorComponent/victor_behavior_config.json)
+The default behavior is set in [victor_behavior_config.json](/resources/config/engine/behaviorComponent/victor_behavior_config.json)
 
 Using [webots](/simulator/README.md) you can run a behavior by pasting the ID (see
 [behaviorTypes.clad](../../clad/src/clad/types/behaviorComponent/behaviorTypes.clad)) into the `behaviorName`
@@ -25,10 +25,10 @@ field and pressing "Shift+C"
 
 ## Examples
 
-1. The very simple ["observing on charger"](../../engine/aiComponent/behaviorComponent/behaviors/victor/behaviorObservingOnCharger.h) behavior
+1. The very simple ["observing on charger"](/engine/aiComponent/behaviorComponent/behaviors/observing/behaviorObservingOnCharger.h) behavior
    which simply looks up and down with random delays (and can run on the charger)
 
-2. The ["come here"](../../engine/aiComponent/behaviorComponent/behaviors/victor/behaviorComeHere.h) behavior
+2. The ["come here"](/engine/aiComponent/behaviorComponent/behaviors/victor/behaviorComeHere.h) behavior
    in response to a voice command which turns and drives towards a face, handling some edge cases
    
 ## Basic concepts

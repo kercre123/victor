@@ -49,7 +49,7 @@ for file in files:
   
   # Check internal (repository) links
   excludeTerms = ['://', 'mailto:']
-  with open(file) as f:
+  with open(file, 'r', encoding='utf-8') as f:
     for num, line in enumerate(f, 1):
       # find pattern "[link text](some/link)"
       result = re.search("\[([^\[\]]+)\]\(([^)]+)\)", line)
