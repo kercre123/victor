@@ -50,9 +50,9 @@ LR_IROM5 0x20000440 0x93c0 {
         .ANY (+RW)
     }
 
-    ER_OTA_SPACE 0x20005800 0x22C0 {
-        user_periph_setup.o (+RO, +RW, +ZI)
-    }
+    ;ER_OTA_SPACE 0x20005800 0x22C0 {
+        ;user_periph_setup.o (+RO, +RW, +ZI)
+    ;}
 
     ; *********************************************************************************************
     ; * END OF OTP - ANYTHING BELOW THIS POINT IS NOT WRITTEN WHEN THE CODE IS BURNED TO THE OTP! *
