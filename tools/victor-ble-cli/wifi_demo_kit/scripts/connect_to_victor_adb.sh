@@ -11,6 +11,9 @@ function run_adb_command {
   adb shell timeout -t 30 $* 2>&1
 }
 
+function run_adb_command_no_output {
+  adb shell timeout -t 30 $* 2>&1
+}
 
 echo "Starting add_network"
 output=$(run_adb_command wpa_cli add_network)
@@ -24,7 +27,7 @@ run_adb_command ifconfig wlan0 down
 run_adb_command ifconfig wlan0 up
 
 run_adb_command wpa_cli set_network $NETWORK_NUM ssid \\\"$SSID\\\"
-run_adb_command wpa_cli set_network $NETWORK_NUM psk \\\"$PASSWORD\\\"
+run_adb_command_no_output wpa_cli set_network $NETWORK_NUM psk \\\"$PASSWORD\\\"
 run_adb_command wpa_cli select_network $NETWORK_NUM
 run_adb_command wpa_cli reassociate
 run_adb_command wpa_cli status

@@ -12,7 +12,7 @@ if [ -z $ADB ];then
 fi
 
 function run_iperf_command {
-  IPERF_ANDROID_COMMAND="export ANDROID_DATA=/data && export ANDROID_ROOT=/system && timeout -t 30 ./$IPERF_ANDROID -p $IPERF_PORT -c $IP_ADDRESS $*"
+  IPERF_ANDROID_COMMAND="export ANDROID_DATA=/data && export ANDROID_ROOT=/system && timeout -t 30 ./$IPERF_ANDROID --json -p $IPERF_PORT -c $IP_ADDRESS $*"
   adb shell $IPERF_ANDROID_COMMAND
   echo
   echo
@@ -22,7 +22,7 @@ adb push $IPERF_ANDROID_LOC /
 killall iperf
 
 IPERF_PORT=5201
-if [ -z $1 ];then
+if [ "$1" = "127.0.0.1" ];then
   IP_ADDRESS="$(ipconfig getifaddr en0)"
   $IPERF_MAC -s -p $IPERF_PORT &
 else
@@ -32,26 +32,26 @@ echo "Running against: $IP_ADDRESS:$IPERF_PORT"
 
 
 echo "Basic iperf test"
-run_iperf_command  -V -t 5 -T "Basic"
+run_iperf_command  -V -t 5 -T "Basic" > "$2/basic.log"
 echo "Omitting the first 2 seconds"
-run_iperf_command  -i .3 -O 2 -t 5 -T "Omit"
+run_iperf_command  -i .3 -O 2 -t 5 -T "Omit" > "$2/omit.log"
 echo "IPv4 Only"
-run_iperf_command  -4 -t 5 -T "IPv4"
+run_iperf_command  -4 -t 5 -T "IPv4" > "$2/ipv4.log"
 echo "IPv6 Only"
-run_iperf_command  -6 -t 5 -T "IPv6"
+run_iperf_command  -6 -t 5 -T "IPv6" > "$2/ipv6.log"
 echo "Parallel streams"
-run_iperf_command  -P 3 -t 5 -T "Parallel"
+run_iperf_command  -P 3 -t 5 -T "Parallel" > "$2/parallel.log"
 echo "Laptop to Victor"
-run_iperf_command  -P 2 -t 5 -R -T "Reverse"
+run_iperf_command  -P 2 -t 5 -R -T "Reverse" > "$2/reverse.log"
 echo "64k Window"
-run_iperf_command  -t 5 -w 64k -T "64k-Window"
+run_iperf_command  -t 5 -w 64k -T "64k-Window" > "$2/64k_window.log"
 echo "5M Bytes"
-run_iperf_command  -n 5M -T "5M-Bytes"
+run_iperf_command  -n 5M -T "5M-Bytes" > "$2/5m_bytes.log"
 echo "1K Packets"
-run_iperf_command  -k 1K -T "1K-Packets"
+run_iperf_command  -k 1K -T "1K-Packets" > "$2/1k_packets.log"
 echo "Burst"
-run_iperf_command  -b1G/100 -T "Burst"
+run_iperf_command  -b1G/100 -T "Burst" > "$2/burst.log"
 echo "1000 maximum segment size"
-run_iperf_command  -M 1000 -V -T "1000-MSS"
+run_iperf_command  -M 1000 -V -T "1000-MSS" > "$2/1000_mss.log"
 
 killall iperf
