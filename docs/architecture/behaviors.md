@@ -19,7 +19,7 @@ using a behavior
 
 The default behavior is set in [victor_behavior_config.json](../../resources/config/engine/behaviorComponent/victor_behavior_config.json)
 
-Using [webots](../development/webots.md) you can run a behavior by pasting the ID (see
+Using [webots](/simulator/README.md) you can run a behavior by pasting the ID (see
 [behaviorTypes.clad](../../clad/src/clad/types/behaviorComponent/behaviorTypes.clad)) into the `behaviorName`
 field and pressing "Shift+C"
 
