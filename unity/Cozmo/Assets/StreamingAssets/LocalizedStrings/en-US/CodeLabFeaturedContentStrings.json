@@ -1,24 +1,24 @@
 {
-  "smartling" : {
-    "translate_paths": [
-      "*/translation"
-    ],
-    "variants_enabled" : true,
-    "translate_mode" : "custom",
-    "placeholder_format_custom": [
-      "%%[^%]+?%%",
-      "%[^%]+?%",
-      "##[^#]+?##",
-      "[$]\\{[^\\}\\{]+?\\}",
-      "__[^_]+?__",
-      "\\{\\{[^\\}\\{]+?\\}\\}",
-      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
-    ],
-    "source_key_paths": [
-      "/{*}"
-    ]
-  },
-  "codeLabFeaturedProject.HotPotato.place_cube_under_my_lift": {
+    "smartling": {
+        "translate_paths": [
+            "*/translation"
+        ],
+        "variants_enabled": true,
+        "translate_mode": "custom",
+        "placeholder_format_custom": [
+            "%%[^%]+?%%",
+            "%[^%]+?%",
+            "##[^#]+?##",
+            "[$]\\{[^\\}\\{]+?\\}",
+            "__[^_]+?__",
+            "\\{\\{[^\\}\\{]+?\\}\\}",
+            "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
+        ],
+        "source_key_paths": [
+            "/{*}"
+        ]
+    },
+    "codeLabFeaturedProject.HotPotato.place_cube_under_my_lift": {
         "translation": "Place Cube under my lift."
     },
     "codeLabFeaturedProject.HotPotato.cozmos_cube": {
@@ -1100,5 +1100,161 @@
     },
     "codeLabFeaturedProject.PotOGoldDetector.we_found_the_treasure": {
         "translation": "We found the treasure!"
+    },
+    "codeLabFeaturedProject.LaserSmile.the_goal_is_to_turn_that_frown_upside_down": {
+        "translation": "The goal is to turn that frown upside down!"
+    },
+    "codeLabFeaturedProject.LaserSmile.smile_to_shoot_your_laser_move_your_head_to_aim": {
+        "translation": "Smile to shoot your laser! Move your head to aim."
+    },
+    "codeLabFeaturedProject.LaserSmile.frown_radius": {
+        "translation": "frown radius"
+    },
+    "codeLabFeaturedProject.LaserSmile.laser_location_x": {
+        "translation": "laser location x"
+    },
+    "codeLabFeaturedProject.LaserSmile.frown_location_x": {
+        "translation": "frown location x"
+    },
+    "codeLabFeaturedProject.LaserSmile.frown_location_y": {
+        "translation": "frown location y"
+    },
+    "codeLabFeaturedProject.LaserSmile.points": {
+        "translation": "Points:"
+    },
+    "codeLabFeaturedProject.LaserSmile.laser_fired": {
+        "translation": "laser fired"
+    },
+    "codeLabFeaturedProject.LaserSmile.pause_face_display_updating": {
+        "translation": "pause face display updating"
+    },
+    "codeLabFeaturedProject.LaserSmile.emoji_expression": {
+        "translation": "emoji expression"
+    },
+    "codeLabFeaturedProject.LaserSmile.laser_successful": {
+        "translation": "laser successful"
+    },
+    "codeLabFeaturedProject.LaserSmile.frown": {
+        "translation": "frown"
+    },
+    "codeLabFeaturedProject.text": {
+        "translation": "text"
+    },
+    "codeLabFeaturedProject.cozmo": {
+        "translation": "Cozmo"
+    },
+    "codeLabFeaturedProject.LaserSmile.smile": {
+        "translation": "smile"
+    },
+    "codeLabFeaturedProject.LaserSmile.x": {
+        "translation": "X"
+    },
+    "codeLabFeaturedProject.anki": {
+        "translation": "anki"
+    },
+    "codeLabFeaturedProject.ShakeIt.shake_cozmo": {
+        "translation": "shake Cozmo"
+    },
+    "codeLabFeaturedProject.ComplimentGenerator.generate_a_compliment": {
+        "translation": "Generate a compliment."
+    },
+    "codeLabFeaturedProject.ComplimentGenerator.choose_an_adjective": {
+        "translation": "Choose an adjective."
+    },
+    "codeLabFeaturedProject.ComplimentGenerator.adjective": {
+        "translation": "adjective"
+    },
+    "codeLabFeaturedProject.ComplimentGenerator.random": {
+        "translation": "random"
+    },
+    "codeLabFeaturedProject.ComplimentGenerator.choose_an_animation": {
+        "translation": "Choose an animation."
+    },
+    "codeLabFeaturedProject.ComplimentGenerator.choose_a_sentence": {
+        "translation": "Choose a sentence."
+    },
+    "codeLabFeaturedProject.ComplimentGenerator.hi": {
+        "translation": "Hi"
+    },
+    "codeLabFeaturedProject.ComplimentGenerator.cool_": {
+        "translation": "Cool "
+    },
+    "codeLabFeaturedProject.ComplimentGenerator.inspiring_": {
+        "translation": "Inspiring "
+    },
+    "codeLabFeaturedProject.ComplimentGenerator.funny_": {
+        "translation": "Funny "
+    },
+    "codeLabFeaturedProject.ComplimentGenerator.beautiful_": {
+        "translation": "Beautiful "
+    },
+    "codeLabFeaturedProject.ComplimentGenerator.strong_": {
+        "translation": "Strong "
+    },
+    "codeLabFeaturedProject.ComplimentGenerator.stylish_": {
+        "translation": "Stylish "
+    },
+    "codeLabFeaturedProject.ComplimentGenerator.friendly_": {
+        "translation": "Friendly "
+    },
+    "codeLabFeaturedProject.ComplimentGenerator.brilliant_": {
+        "translation": "Brilliant "
+    },
+    "codeLabFeaturedProject.ComplimentGenerator.fantastic_": {
+        "translation": "Fantastic "
+    },
+    "codeLabFeaturedProject.ComplimentGenerator.clever_": {
+        "translation": "Clever "
+    },
+    "codeLabFeaturedProject.ComplimentGenerator.smart_": {
+        "translation": "Smart "
+    },
+    "codeLabFeaturedProject.ComplimentGenerator.awesome_": {
+        "translation": "Awesome "
+    },
+    "codeLabFeaturedProject.ComplimentGenerator.brave_": {
+        "translation": "Brave "
+    },
+    "codeLabFeaturedProject.ComplimentGenerator.charming_": {
+        "translation": "Charming "
+    },
+    "codeLabFeaturedProject.ComplimentGenerator.wonderful_": {
+        "translation": "Wonderful "
+    },
+    "codeLabFeaturedProject.ComplimentGenerator.adorable_": {
+        "translation": "Adorable "
+    },
+    "codeLabFeaturedProject.ComplimentGenerator.thoughtful": {
+        "translation": "Thoughtful"
+    },
+    "codeLabFeaturedProject.ComplimentGenerator.kind_": {
+        "translation": "Kind "
+    },
+    "codeLabFeaturedProject.ComplimentGenerator.you_are_so_": {
+        "translation": "You are so "
+    },
+    "codeLabFeaturedProject.ComplimentGenerator.how_": {
+        "translation": "How "
+    },
+    "codeLabFeaturedProject.ComplimentGenerator._you_are": {
+        "translation": " You are"
+    },
+    "codeLabFeaturedProject.ComplimentGenerator.anyone_can_see_youre_super_": {
+        "translation": "Anyone can see you're super "
+    },
+    "codeLabFeaturedProject.ComplimentGenerator._are_you": {
+        "translation": " Are you"
+    },
+    "codeLabFeaturedProject.ComplimentGenerator.youre_the_most_": {
+        "translation": "You're the most "
+    },
+    "codeLabFeaturedProject.ComplimentGenerator._person_in_the_world": {
+        "translation": " Person in the world."
+    },
+    "codeLabFeaturedProject.ComplimentGenerator.i_love_": {
+        "translation": "I love "
+    },
+    "codeLabFeaturedProject.ComplimentGenerator._people_like_you": {
+        "translation": " People like you."
     }
 }

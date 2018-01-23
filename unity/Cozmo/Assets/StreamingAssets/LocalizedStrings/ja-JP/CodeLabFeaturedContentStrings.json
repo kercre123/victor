@@ -393,6 +393,9 @@
   "codeLabFeaturedProject.RemoteControlRacer.tilt_your_device_to_drive" : {
     "translation" : "デバイスをドライブにかたむけてください！"
   },
+  "codeLabFeaturedProject.ShakeIt.shake_cozmo": {
+      "translation": "COZMOをふる"
+  },
   "codeLabFeaturedProject.ShakeIt.game_length" : {
     "translation" : "ゲーム時間"
   },
