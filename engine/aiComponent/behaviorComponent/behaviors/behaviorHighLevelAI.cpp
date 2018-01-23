@@ -234,6 +234,7 @@ BehaviorHighLevelAI::BehaviorHighLevelAI(const Json::Value& config)
                    "State named '%s' does not exist",
                    initialStateStr.c_str()) ) {
     _currState = stateIt->second;
+    _defaultState = stateIt->second;
   }
 
 }
@@ -384,8 +385,11 @@ void BehaviorHighLevelAI::OnBehaviorActivated()
   // keep the state the same (either set from constructor or the last run)
   if( ANKI_VERIFY( _currState != InvalidStateID,
                    "BehaviorHighLevelAI.OnActivated.InvalidStateID",
-                   "_currState set to invalid state id, behavior will not function properly") ) {
+                   "_currState set to invalid state id, falling back to initial state") ) {
     TransitionToState(_currState);
+  }
+  else {
+    TransitionToState(_defaultState);
   }
 }
 

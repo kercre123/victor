@@ -376,6 +376,8 @@ enum uint_8 BehaviorID {
 
   ShortLookAroundForFaceAndCube,
 
+  GlobalInterruptions,
+
   DevImageCapture,
   DevBaseBehavior,
 
