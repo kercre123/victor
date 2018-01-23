@@ -355,7 +355,7 @@ def scan_project(project, source_language, target_folder):
 # --------------------------------------------------------------------------------------------------------
 
 # collect all localization key->translation and translation->key mappings from a language folder
-def load_localization_for_language(streaming_assets_path, language):
+def load_localization_for_language(streaming_assets_path, language, active_project_name):
     resultDict = {'encodings':{}, 'decodings':{}}
     for file in os.listdir(os.path.join(streaming_assets_path, language)):
         if file.endswith('.json') and file in LOCALIZATION_TARGET_FILES:
@@ -367,17 +367,23 @@ def load_localization_for_language(streaming_assets_path, language):
                     if key != 'smartling':
                         value = rootData[key]['translation']
                         resultDict['decodings'][key.lower()] = value
-                        resultDict['encodings'][value] = key.lower()
+                        if value not in resultDict['encodings'] or active_project_name in key:
+                            # NOTE: The following can be useful for debugging whether the correct strings are being prioritized for projects
+                            #if value in resultDict['encodings']:
+                            #    print("Overriding loc encoding target: " + value + " (was: " +
+                            #          resultDict['encodings'][value] + ", becoming: " + key.lower() +
+                            #          ") - within scope of active_project_name " + active_project_name )
+                            resultDict['encodings'][value] = key.lower()
     return resultDict
 
 # build a dictionary of all loc tables by crawling the loc base path
-def load_and_build_localization_dictionary(streaming_assets_path):
+def load_and_build_localization_dictionary(streaming_assets_path, target_project):
     resultDict = {}
     loc_path = os.path.join(streaming_assets_path, LOCALIZATION_ROOT_PATH)
     for language in os.listdir(loc_path):
         if '.' not in language:
             #print( 'loading language path: ' + language )
-            resultDict[language] = load_localization_for_language(loc_path, language)
+            resultDict[language] = load_localization_for_language(loc_path, language, target_project['project_name'])
     return resultDict
 
 def build_project_translation_queue(streaming_assets_path, project_config_file, project_folder, specified_project, use_all_projects, blacklist):
@@ -434,11 +440,6 @@ def main():
     if command_args.project_folder == '':
         sys.exit("Must specify project_folder")
 
-    loc_table = load_and_build_localization_dictionary(command_args.streaming_assets_path)
-
-    if command_args.source_language not in loc_table:
-        sys.exit("Unexpected source_language %s" % command_args.source_language)
-
     if command_args.project is None and not command_args.all_projects:
         sys.exit("Must specify a project to operate on")
 
@@ -465,6 +466,11 @@ def main():
     if command_args.translate_project:
         projects_translated = 0
         for project_entry in project_list:
+            loc_table = load_and_build_localization_dictionary(command_args.streaming_assets_path, project_entry)
+
+            if command_args.source_language not in loc_table:
+                sys.exit("Unexpected source_language %s" % command_args.source_language)
+
             if execute_translations_on_project(project_entry, command_args.source_language, loc_table):
                 projects_translated += 1
         print(str(projects_translated) + ' project(s) translated')
