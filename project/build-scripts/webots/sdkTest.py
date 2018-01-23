@@ -377,6 +377,7 @@ def run_sdk(output, sdk_root, sdk_file_name, log_file_name):
   mkdir_p(log_folder)
 
   with open(log_file_name, 'w') as log_file:
+    time.sleep(10.0)
     start_time = time.time()
     return_code = subprocess.call(run_command, stdout=log_file, stderr=log_file, cwd=log_folder)
     output.test_return_code = return_code
