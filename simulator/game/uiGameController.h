@@ -436,7 +436,8 @@ protected:
   //
   bool AddLightCubeByType(ObjectType type, const Pose3d& p, const u32 factoryID = 0);
 
-  
+  // Sets the "pluggedIn" field for the given charger.
+  void SetChargerPluggedIn(webots::Node* chargerNode, const bool pluggedIn);
   
   static size_t MakeWordAligned(size_t size);
   const std::string GetAnimationTestName() const;

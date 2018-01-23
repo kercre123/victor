@@ -4,6 +4,9 @@
 PROTO VictorCharger [
   field SFString name "VictorCharger"
 
+  # Simulates whether or not the charger is plugged in
+  field SFBool isPluggedIn TRUE
+
   # Dimensions
   field SFFloat backThickness  .015
   field SFFloat backWidth      .070
@@ -92,7 +95,12 @@ Robot {
       children [
         Connector {
           name      "ChargeContact"
-          model     "ChargeContact"
+          # Optionally simulate the charger being unplugged by making the 'model' field incompatible
+          %{ if fields.isPluggedIn.value then }%
+            model     "ChargeContact"
+          %{ else }%
+            model     "NULL"
+          %{ end }%
           type      "symmetric"
           isLocked  FALSE
           autoLock  FALSE
