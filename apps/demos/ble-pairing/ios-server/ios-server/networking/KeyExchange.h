@@ -21,39 +21,37 @@ namespace Anki {
       }
       
       void Reset();
-      unsigned char* GenerateKeys();
-      bool AttemptKeyMatch(unsigned char* partnerHashedKey);
-      void SetForeignKey(unsigned char* pubKey);
-      bool CalculateSharedKeys(unsigned char* pin);
+      uint8_t* GenerateKeys();
+      bool AttemptKeyMatch(uint8_t* partnerHashedKey);
+      void SetRemotePublicKey(uint8_t* pubKey);
+      bool CalculateSharedKeys(uint8_t* pin);
       
-      unsigned char* GetEncryptKey() {
+      uint8_t* GetEncryptKey() {
         return _EncryptKey;
       }
       
-      unsigned char* GetDecryptKey() {
+      uint8_t* GetDecryptKey() {
         return _DecryptKey;
       }
       
-      unsigned char* GetPublicKey() {
+      uint8_t* GetPublicKey() {
         // Return public key
         return _PublicKey;
       }
       
-      unsigned char* GetVerificationHash() {
+      uint8_t* GetVerificationHash() {
         crypto_generichash(_HashedKey, crypto_kx_SESSIONKEYBYTES, _EncryptKey, crypto_kx_SESSIONKEYBYTES, nullptr, 0);
         
         return _HashedKey;
       }
       
     private:
-      unsigned char _SecretKey [crypto_kx_SECRETKEYBYTES];
-      unsigned char _DecryptKey [crypto_kx_SESSIONKEYBYTES]; // rx
-      unsigned char _EncryptKey [crypto_kx_SESSIONKEYBYTES]; // tx
-      unsigned char _ForeignKey [crypto_kx_PUBLICKEYBYTES];
-      unsigned char _PublicKey [crypto_kx_PUBLICKEYBYTES];
-      unsigned char _HashedKey [crypto_kx_SESSIONKEYBYTES];
-      unsigned char _KeyMatchAttempts = 0;
-      const unsigned char MAX_MATCH_ATTEMPTS = 5;
+      uint8_t _SecretKey [crypto_kx_SECRETKEYBYTES];   // our secret key
+      uint8_t _DecryptKey [crypto_kx_SESSIONKEYBYTES]; // rx
+      uint8_t _EncryptKey [crypto_kx_SESSIONKEYBYTES]; // tx
+      uint8_t _RemotePublicKey [crypto_kx_PUBLICKEYBYTES];  // partner's public key
+      uint8_t _PublicKey [crypto_kx_PUBLICKEYBYTES];   // our public key
+      uint8_t _HashedKey [crypto_kx_SESSIONKEYBYTES];  // size of code
       uint8_t _NumPinDigits = 6;
     };
   }

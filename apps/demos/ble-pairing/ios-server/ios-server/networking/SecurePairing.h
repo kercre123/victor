@@ -24,25 +24,27 @@ namespace Anki {
       AwaitingPartnerReady,
       AwaitingPublicKey,
       AwaitingKeyMatchAck,
+      AwaitingNonce,
       ConfirmedSharedSecret
     };
     
-    enum PairingMessageType : char {
+    enum PairingMessageType : uint8_t {
       Nop = 0,
       Ack = 1,
       PublicKey = 2,
       HashedKey = 3,
       Verified = 4,
+      Nonce = 5,
     };
     
     struct PairingMessage {
       uint32_t bufferSize;
       PairingMessageType type;
-      char* buffer;
+      uint8_t* buffer;
       
     public:
-      char* GetBuffer() {
-        char* bufferCpy = (char*)malloc(sizeof(uint32_t) + sizeof(PairingMessageType) + bufferSize);
+      uint8_t* GetBuffer() {
+        uint8_t* bufferCpy = (uint8_t*)malloc(sizeof(uint32_t) + sizeof(PairingMessageType) + bufferSize);
         
         memcpy(bufferCpy, &bufferSize, sizeof(uint32_t));
         memcpy(bufferCpy + sizeof(uint32_t), &type, sizeof(PairingMessageType));
@@ -51,7 +53,7 @@ namespace Anki {
         return bufferCpy;
       }
       
-      int GetSize() {
+      uint32_t GetSize() {
         return sizeof(uint32_t) + sizeof(PairingMessageType) + bufferSize;
       }
     };
@@ -62,16 +64,22 @@ namespace Anki {
       
       void SharePublicKey();
       
-      unsigned char* GetPin() { return _Pin; }
+      uint8_t* GetPin() { return _Pin; }
       
     private:
-      unsigned char _Pin[NUM_PIN_DIGITS];
-      
       void Init();
       void Reset();
-      void HandleMessageReceive(char* bytes, int length);
       
+      void HandleMessageReceive(uint8_t* bytes, uint32_t length);
+      void HandleReceivedPublicKey();
+      void HandleReceivedHashedKey();
+      void HandleReceivedNonce();
+      
+      const uint8_t MAX_MATCH_ATTEMPTS = 5;
+      uint8_t _Pin[NUM_PIN_DIGITS];
+      uint8_t _KeyMatchAttempts = 0;
       uint8_t _NumPinDigits;
+      
       INetworkStream* _Stream;
       KeyExchange* _KeyExchange;
       PairingState _State = PairingState::Initial;

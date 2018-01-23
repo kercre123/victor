@@ -16,17 +16,23 @@
 @interface BLEPeripheral : NSObject <CBPeripheralManagerDelegate> {
   CBUUID* CHAR_WRITE;
   CBUUID* CHAR_READ;
+  CBUUID* CHAR_SECURE_WRITE;
+  CBUUID* CHAR_SECURE_READ;
   CBUUID* CHAR_PING;
   
   CBMutableCharacteristic* CH_WRITE;
   CBMutableCharacteristic* CH_READ;
   CBMutableCharacteristic* CH_PING;
+  CBMutableCharacteristic* CH_SECURE_WRITE;
+  CBMutableCharacteristic* CH_SECURE_READ;
   
   CBMutableService* SERV_PING;
   CBMutableService* SERV_INTERFACE;
+  CBMutableService* SERV_SECURE_INTERFACE;
   
   CBUUID* UUID_PING;
   CBUUID* UUID_INTERFACE;
+  CBUUID* UUID_SECURE_INTERFACE;
   
   NSString* _LocalName;
   NSString* _ServiceUUID;
@@ -42,6 +48,8 @@
   bool _SubscribedPing;
   bool _SubscribedRead;
   bool _SubscribedWrite;
+  bool _SubscribedSecureRead;
+  bool _SubscribedSecureWrite;
 }
 
 -(void) setConnectedSignal: (Signal::Signal<void (Anki::Networking::BLENetworkStream*)> *)connectedSignal;

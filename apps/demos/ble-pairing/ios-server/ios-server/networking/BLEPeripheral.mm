@@ -18,6 +18,10 @@
   UUID_PING = [CBUUID UUIDWithString:@"ABCD"];
   UUID_INTERFACE = [CBUUID UUIDWithString:@"1234"];
   
+  CHAR_SECURE_READ = [CBUUID UUIDWithString:@"6677"];
+  CHAR_SECURE_WRITE = [CBUUID UUIDWithString:@"7766"];
+  UUID_SECURE_INTERFACE = [CBUUID UUIDWithString:@"6767"];
+  
   CH_WRITE = [[CBMutableCharacteristic alloc]
               initWithType:CHAR_WRITE
               properties: CBCharacteristicPropertyRead |
@@ -45,15 +49,37 @@
              permissions:CBAttributePermissionsReadable |
              CBAttributePermissionsWriteable];
   
+  CH_SECURE_WRITE = [[CBMutableCharacteristic alloc]
+              initWithType:CHAR_SECURE_WRITE
+              properties: CBCharacteristicPropertyRead |
+              CBCharacteristicPropertyWrite |
+              CBCharacteristicPropertyNotify
+              value:nil
+              permissions:CBAttributePermissionsReadable |
+              CBAttributePermissionsWriteable];
+  
+  CH_SECURE_READ = [[CBMutableCharacteristic alloc]
+             initWithType:CHAR_SECURE_READ
+             properties: CBCharacteristicPropertyRead |
+             CBCharacteristicPropertyWrite |
+             CBCharacteristicPropertyNotify
+             value:nil
+             permissions:CBAttributePermissionsReadable |
+             CBAttributePermissionsWriteable];
+  
   SERV_PING = [[CBMutableService alloc] initWithType:UUID_PING primary:true];
   SERV_INTERFACE = [[CBMutableService alloc] initWithType:UUID_INTERFACE primary:true];
+  SERV_SECURE_INTERFACE = [[CBMutableService alloc] initWithType:UUID_SECURE_INTERFACE primary:true];
   
   SERV_PING.characteristics = @[ CH_PING ];
   SERV_INTERFACE.characteristics = @[ CH_READ, CH_WRITE ];
+  SERV_SECURE_INTERFACE.characteristics = @[ CH_SECURE_READ, CH_SECURE_WRITE ];
   
   _SubscribedWrite = false;
   _SubscribedRead = false;
   _SubscribedPing = false;
+  _SubscribedSecureRead = false;
+  _SubscribedSecureWrite = false;
   
   return [super init];
 }
@@ -69,7 +95,7 @@
   _PeripheralManager = [[CBPeripheralManager alloc] init];
   _PeripheralManager.delegate = self;
   
-  _BLEStream = new Anki::Networking::BLENetworkStream(_PeripheralManager, CH_WRITE);
+  _BLEStream = new Anki::Networking::BLENetworkStream(_PeripheralManager, CH_WRITE, CH_SECURE_WRITE);
 }
 
 - (void)peripheralManager:(CBPeripheralManager *)peripheral central:(CBCentral *)central didSubscribeToCharacteristic:(CBCharacteristic *)characteristic {
@@ -79,9 +105,17 @@
     _SubscribedRead = true;
   } else if(characteristic.UUID.UUIDString == CH_WRITE.UUID.UUIDString) {
     _SubscribedWrite = true;
+  } else if(characteristic.UUID.UUIDString == CH_SECURE_READ.UUID.UUIDString) {
+    _SubscribedSecureRead = true;
+  } else if(characteristic.UUID.UUIDString == CH_SECURE_WRITE.UUID.UUIDString) {
+    _SubscribedSecureWrite = true;
   }
   
-  if(_SubscribedPing && _SubscribedRead && _SubscribedWrite) {
+  if(_SubscribedPing &&
+     _SubscribedRead &&
+     _SubscribedWrite &&
+     _SubscribedSecureRead &&
+     _SubscribedSecureWrite) {
     // call connection signal
     _ConnectedSignal->emit(_BLEStream);
   }
@@ -97,6 +131,7 @@
     
     [peripheral addService:SERV_PING];
     [peripheral addService:SERV_INTERFACE];
+    [peripheral addService:SERV_SECURE_INTERFACE];
     
     [_PeripheralManager startAdvertising:adData];
   }
@@ -108,7 +143,11 @@
   for(int i = 0; i < requests.count; i++) {
     if(requests[i].characteristic.UUID.UUIDString == CH_READ.UUID.UUIDString) {
       // We are receiving input to read stream
-      ((Anki::Networking::INetworkStream*)_BLEStream)->Receive((char*)requests[i].value.bytes, (int)requests[i].value.length);
+      ((Anki::Networking::INetworkStream*)_BLEStream)->Receive((uint8_t*)requests[i].value.bytes, (int)requests[i].value.length, false);
+      [peripheral respondToRequest:requests[i] withResult:CBATTErrorSuccess];
+    } else if(requests[i].characteristic.UUID.UUIDString == CH_SECURE_READ.UUID.UUIDString) {
+      // We are receiving input to read stream
+      ((Anki::Networking::INetworkStream*)_BLEStream)->Receive((uint8_t*)requests[i].value.bytes, (int)requests[i].value.length, true);
       [peripheral respondToRequest:requests[i] withResult:CBATTErrorSuccess];
     }
   }

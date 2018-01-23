@@ -8,12 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		DA5EC9E620084554003ABD16 /* libsodium.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DA5EC9E520084554003ABD16 /* libsodium.a */; };
-		DA65A9FC20059B54006EEBA0 /* aes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DACEF06A200599B700894864 /* aes.cpp */; };
-		DA65A9FD20059B54006EEBA0 /* hmac.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DACEF06C200599B700894864 /* hmac.cpp */; };
-		DA65A9FE20059B54006EEBA0 /* md5.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DACEF06E200599B700894864 /* md5.cpp */; };
-		DA65A9FF20059B54006EEBA0 /* packet.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DACEF070200599B700894864 /* packet.cpp */; };
-		DA65AA0020059B54006EEBA0 /* random.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DACEF072200599B700894864 /* random.cpp */; };
-		DA65AA0120059E4C006EEBA0 /* bluetooth.mm in Sources */ = {isa = PBXBuildFile; fileRef = DACEF076200599B700894864 /* bluetooth.mm */; };
 		DAB7E39D200EB76600D57664 /* BLENetworkStream.mm in Sources */ = {isa = PBXBuildFile; fileRef = DAB7E39C200EB76600D57664 /* BLENetworkStream.mm */; };
 		DAB7E3A1200EB84F00D57664 /* BLEPeripheral.mm in Sources */ = {isa = PBXBuildFile; fileRef = DAB7E3A0200EB84F00D57664 /* BLEPeripheral.mm */; };
 		DAB7E3A3200EB8A600D57664 /* SecurePairing.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DAB7E3A2200EB8A600D57664 /* SecurePairing.cpp */; };
@@ -31,7 +25,6 @@
 
 /* Begin PBXFileReference section */
 		DA5EC9E520084554003ABD16 /* libsodium.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libsodium.a; path = "ios-server/sodium/libsodium.a"; sourceTree = "<group>"; };
-		DA65AA0220068500006EEBA0 /* AnkiKeyExchange.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AnkiKeyExchange.h; sourceTree = "<group>"; };
 		DA8141B7201173A700AC8A73 /* signalHolder.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = signalHolder.h; sourceTree = "<group>"; };
 		DA8141B8201173D900AC8A73 /* simpleSignal.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = simpleSignal.hpp; sourceTree = "<group>"; };
 		DA8141B9201173F300AC8A73 /* simpleSignal_fwd.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = simpleSignal_fwd.h; sourceTree = "<group>"; };
@@ -57,18 +50,6 @@
 		DACEF056200598FF00894864 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		DACEF057200598FF00894864 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		DACEF0652005994600894864 /* CoreBluetooth.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreBluetooth.framework; path = System/Library/Frameworks/CoreBluetooth.framework; sourceTree = SDKROOT; };
-		DACEF06A200599B700894864 /* aes.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = aes.cpp; sourceTree = "<group>"; };
-		DACEF06B200599B700894864 /* aes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = aes.h; sourceTree = "<group>"; };
-		DACEF06C200599B700894864 /* hmac.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = hmac.cpp; sourceTree = "<group>"; };
-		DACEF06D200599B700894864 /* hmac.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = hmac.h; sourceTree = "<group>"; };
-		DACEF06E200599B700894864 /* md5.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = md5.cpp; sourceTree = "<group>"; };
-		DACEF06F200599B700894864 /* md5.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = md5.h; sourceTree = "<group>"; };
-		DACEF070200599B700894864 /* packet.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = packet.cpp; sourceTree = "<group>"; };
-		DACEF071200599B700894864 /* packet.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = packet.h; sourceTree = "<group>"; };
-		DACEF072200599B700894864 /* random.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = random.cpp; sourceTree = "<group>"; };
-		DACEF073200599B700894864 /* random.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = random.h; sourceTree = "<group>"; };
-		DACEF075200599B700894864 /* bluetooth.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = bluetooth.h; sourceTree = "<group>"; };
-		DACEF076200599B700894864 /* bluetooth.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = bluetooth.mm; sourceTree = "<group>"; };
 		DAE4FC2720084519007D04BB /* sodium */ = {isa = PBXFileReference; lastKnownFileType = folder; path = sodium; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -132,11 +113,9 @@
 		DACEF044200598FF00894864 /* ios-server */ = {
 			isa = PBXGroup;
 			children = (
+				DAE4FC2720084519007D04BB /* sodium */,
 				DA8141B62011738800AC8A73 /* signals */,
 				DAB7E39A200EB57500D57664 /* networking */,
-				DAE4FC2720084519007D04BB /* sodium */,
-				DACEF074200599B700894864 /* bluetooth */,
-				DACEF069200599B700894864 /* crypto */,
 				DACEF045200598FF00894864 /* AppDelegate.h */,
 				DACEF046200598FF00894864 /* AppDelegate.m */,
 				DACEF048200598FF00894864 /* ViewController.h */,
@@ -158,33 +137,6 @@
 				DACEF0652005994600894864 /* CoreBluetooth.framework */,
 			);
 			name = Frameworks;
-			sourceTree = "<group>";
-		};
-		DACEF069200599B700894864 /* crypto */ = {
-			isa = PBXGroup;
-			children = (
-				DACEF06A200599B700894864 /* aes.cpp */,
-				DACEF06B200599B700894864 /* aes.h */,
-				DACEF06C200599B700894864 /* hmac.cpp */,
-				DACEF06D200599B700894864 /* hmac.h */,
-				DACEF06E200599B700894864 /* md5.cpp */,
-				DACEF06F200599B700894864 /* md5.h */,
-				DACEF070200599B700894864 /* packet.cpp */,
-				DACEF071200599B700894864 /* packet.h */,
-				DACEF072200599B700894864 /* random.cpp */,
-				DACEF073200599B700894864 /* random.h */,
-			);
-			path = crypto;
-			sourceTree = "<group>";
-		};
-		DACEF074200599B700894864 /* bluetooth */ = {
-			isa = PBXGroup;
-			children = (
-				DACEF075200599B700894864 /* bluetooth.h */,
-				DACEF076200599B700894864 /* bluetooth.mm */,
-				DA65AA0220068500006EEBA0 /* AnkiKeyExchange.h */,
-			);
-			path = bluetooth;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -262,18 +214,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				DA65A9FC20059B54006EEBA0 /* aes.cpp in Sources */,
 				DACEF050200598FF00894864 /* ios_server.xcdatamodeld in Sources */,
-				DA65A9FD20059B54006EEBA0 /* hmac.cpp in Sources */,
-				DA65A9FF20059B54006EEBA0 /* packet.cpp in Sources */,
 				DAB7E3B0200ED2ED00D57664 /* KeyExchange.cpp in Sources */,
-				DA65AA0120059E4C006EEBA0 /* bluetooth.mm in Sources */,
 				DACEF04A200598FF00894864 /* ViewController.mm in Sources */,
 				DAB7E39D200EB76600D57664 /* BLENetworkStream.mm in Sources */,
 				DAB7E3A1200EB84F00D57664 /* BLEPeripheral.mm in Sources */,
-				DA65AA0020059B54006EEBA0 /* random.cpp in Sources */,
 				DACEF058200598FF00894864 /* main.m in Sources */,
-				DA65A9FE20059B54006EEBA0 /* md5.cpp in Sources */,
 				DAB7E3A3200EB8A600D57664 /* SecurePairing.cpp in Sources */,
 				DACEF047200598FF00894864 /* AppDelegate.m in Sources */,
 			);

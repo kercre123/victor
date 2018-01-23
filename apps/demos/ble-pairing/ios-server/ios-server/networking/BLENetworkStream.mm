@@ -8,7 +8,12 @@
 
 #include "BLENetworkStream.h"
 
-void Anki::Networking::BLENetworkStream::Send(char* bytes, int length) {
+void Anki::Networking::BLENetworkStream::Send(uint8_t* bytes, int length) {
   NSData* data = [NSData dataWithBytes:bytes length:length];
   bool couldSend = [_peripheralManager updateValue:data forCharacteristic:_writeCharacteristic onSubscribedCentrals:nil];
+}
+
+void Anki::Networking::BLENetworkStream::SendEncrypted(uint8_t* bytes, int length) {
+  NSData* data = [NSData dataWithBytes:bytes length:length];
+  bool couldSend = [_peripheralManager updateValue:data forCharacteristic:_encryptedWriteCharacteristic onSubscribedCentrals:nil];
 }

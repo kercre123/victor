@@ -21,7 +21,7 @@ Anki::Networking::SecurePairing::SecurePairing(INetworkStream* stream) {
 
 void Anki::Networking::SecurePairing::SharePublicKey() {
   _State = PairingState::AwaitingPublicKey;
-  char* publicKey = (char*)_KeyExchange->GenerateKeys();
+  uint8_t* publicKey = (uint8_t*)_KeyExchange->GenerateKeys();
   
   PairingMessage msg;
   msg.bufferSize = 32;
@@ -44,28 +44,18 @@ void Anki::Networking::SecurePairing::Reset() {
   memset(_Pin, 0, NUM_PIN_DIGITS);
   
   _KeyExchange->Reset();
+  _KeyMatchAttempts = 0;
 
   Init();
 }
 
-void Anki::Networking::SecurePairing::HandleMessageReceive(char* bytes, int length) {
+void Anki::Networking::SecurePairing::HandleMessageReceive(uint8_t* bytes, uint32_t length) {
   switch(bytes[4]) {
     case Anki::Networking::PairingMessageType::PublicKey:
-      _KeyExchange->SetForeignKey((unsigned char*)(bytes + 5));
+      _KeyExchange->SetForeignKey((uint8_t*)(bytes + 5));
       _KeyExchange->CalculateSharedKeys(_Pin);
       
-      printf("\nEncryptKey:\n");
-      for(int i = 0; i < 32; i++) {
-        printf("%x ", _KeyExchange->GetEncryptKey()[i]);
-      }
-      printf("\n");
-      printf("\n\nDecryptKey:\n");
-      for(int i = 0; i < 32; i++) {
-        printf("%x ", _KeyExchange->GetDecryptKey()[i]);
-      }
-      printf("\n");
-      
-      _Stream->SetCryptoKeys((char*)_KeyExchange->GetEncryptKey(), (char*)_KeyExchange->GetDecryptKey());
+      _Stream->SetCryptoKeys(_KeyExchange->GetEncryptKey(), _KeyExchange->GetDecryptKey());
       _State = PairingState::AwaitingKeyMatchAck;
       
       break;
@@ -78,10 +68,14 @@ void Anki::Networking::SecurePairing::HandleMessageReceive(char* bytes, int leng
         PairingMessage msg;
         msg.bufferSize = 32;
         msg.type = PairingMessageType::HashedKey;
-        msg.buffer = (char*)_KeyExchange->GetVerificationHash();
+        msg.buffer = (uint8_t*)_KeyExchange->GetVerificationHash();
         _Stream->Send(msg.GetBuffer(), msg.GetSize());
       } else {
-        printf("Sadness!\n");
+        // Increment our attack counter, and if at or above max attempts
+        // reset.
+        if(++_KeyMatchAttempts >= MAX_MATCH_ATTEMPTS) {
+          Reset();
+        }
       }
       
       break;

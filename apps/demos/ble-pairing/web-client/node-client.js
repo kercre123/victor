@@ -7,13 +7,19 @@ let sodium = null;
 let pingChar;
 let writeChar;
 let readChar;
+let secureReadChar;
+let secureWriteChar;
 
 let pairingService = "00112233445566778899887766554433";
 let pingService = "ABCD";
 let interfaceService = "1234";
+let secureInterfaceService = "6767";
+
 let pingCharService = "5555";
 let readCharService = "4444";
 let writeCharService = "3333";
+let secureReadCharService = "6677";
+let secureWriteCharService = "7766";
 
 function tryConnect() {
     noble.on('discover', function(peripheral) {
@@ -37,6 +43,8 @@ function onConnect(peripheral) {
         let pingChar = characteristics[0];
         let writeChar = characteristics[1];
         let readChar = characteristics[2];
+        let secureWriteChar = characteristics[3];
+        let secureReadChar = characteristics[4];
 
         printConnectionMessage("Finished discovering services and characteristics...", "\x1b[31m");
 
@@ -96,7 +104,7 @@ function discoverServices(peripheral) {
     console.log("Discovering services...");
 
     return new Promise(function(resolve, reject) {
-        peripheral.discoverServices([pingService, interfaceService], function(error, services) {
+        peripheral.discoverServices([pingService, interfaceService, secureInterfaceService], function(error, services) {
             console.log("Discovering characteristics...");
             let pingPromise = new Promise(function(resolve, reject) {
                 services[0].discoverCharacteristics([pingCharService], function(error, characteristics) {
@@ -131,9 +139,30 @@ function discoverServices(peripheral) {
                     }
                 });
             });
+
+            let secureStreamPromise = new Promise(function(resolve, reject) {
+                services[2].discoverCharacteristics([secureWriteCharService, secureReadCharService], function(error, characteristics) {
+                    if(error != undefined) {
+                        reject();
+                    } else {
+                        if(characteristics[0].uuid == secureReadCharService) {
+                            secureReadChar = characteristics[0];
+                            secureWriteChar = characteristics[1];
+                        } else {
+                            secureWriteChar = characteristics[0];
+                            secureReadChar = characteristics[1];
+                        }
+
+                        secureReadChar.subscribe();
+                        secureWriteChar.subscribe();
+                        
+                        resolve([secureWriteChar, secureReadChar]);
+                    }
+                });
+            });
             
-            Promise.all([pingPromise, streamPromise]).then(function(data) {
-                resolve([data[0], data[1][0], data[1][1]]);
+            Promise.all([pingPromise, streamPromise, secureStreamPromise]).then(function(data) {
+                resolve([data[0], data[1][0], data[1][1], data[2][0], data[2][1]]);
             });
         });
     });
@@ -160,8 +189,6 @@ loadSodium().then(function() {
 
 let nonce = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1];
 function sendMessage(msg, encrypt) {
-    console.log("sending Message");
-
     let buffer = msg;
 
     if(encrypt) {
@@ -176,7 +203,11 @@ function sendMessage(msg, encrypt) {
         console.log(buffer);
     }
 
-    readChar.write(Buffer.concat([Buffer.from([encrypt?1:0]),buffer]), true);
+    if(encrypt) {
+        secureReadChar.write(buffer, true);
+    } else {
+        readChar.write(buffer, true);
+    }
 }
 
 function onDisconnect(event) {

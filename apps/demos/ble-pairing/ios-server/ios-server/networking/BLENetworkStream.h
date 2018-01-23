@@ -16,16 +16,19 @@ namespace Anki {
   namespace Networking {
     class BLENetworkStream : public INetworkStream {
     public:
-      BLENetworkStream(CBPeripheralManager* manager, CBMutableCharacteristic* writeCharacteristic) {
+      BLENetworkStream(CBPeripheralManager* manager, CBMutableCharacteristic* writeCharacteristic, CBMutableCharacteristic* encryptedWriteCharacteristic) {
         _peripheralManager = manager;
         _writeCharacteristic = writeCharacteristic;
+        _encryptedWriteCharacteristic = encryptedWriteCharacteristic;
       }
       
-      void Send(char* bytes, int length);
+      void Send(uint8_t* bytes, int length);
+      void SendEncrypted(uint8_t* bytes, int length);
       
     private:
       CBPeripheralManager* _peripheralManager;
       CBMutableCharacteristic* _writeCharacteristic;
+      CBMutableCharacteristic* _encryptedWriteCharacteristic;
     };
   }
 }

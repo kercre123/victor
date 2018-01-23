@@ -17,10 +17,11 @@ namespace Anki {
     class INetworkStream {
       
     public:
-      virtual void Send(char* bytes, int length) = 0;
+      virtual void Send(uint8_t* bytes, int length) = 0;
+      virtual void SendEncrypted(uint8_t* bytes, int length) = 0;
       
       // Message Receive Signal
-      using ReceivedSignal = Signal::Signal<void (char*, int)>;
+      using ReceivedSignal = Signal::Signal<void (uint8_t*, int)>;
       
       // Message Receive Event
       ReceivedSignal& OnReceivedEvent() {
@@ -32,56 +33,47 @@ namespace Anki {
         memset(_DecryptKey, 0, crypto_kx_SESSIONKEYBYTES);
       }
       
-      void SetCryptoKeys(char* encryptKey, char* decryptKey) {
+      void SetCryptoKeys(uint8_t* encryptKey, uint8_t* decryptKey) {
         memcpy(_EncryptKey, encryptKey, crypto_kx_SESSIONKEYBYTES);
         memcpy(_DecryptKey, decryptKey, crypto_kx_SESSIONKEYBYTES);
       }
       
-      virtual void Receive(char* bytes, int length) {
+      virtual void Receive(uint8_t* bytes, int length, bool encrypted) {
         if(length == 0) {
           return;
         }
         
-        if(IsEncrypted(bytes[0])) {
-          char* buffer = (char*)malloc(length - 1);
+        if(encrypted) {
+          uint8_t* buffer = (uint8_t*)malloc(length);
           
           // insert decrypted chunk into new buffer
-          Decrypt((unsigned char*)(bytes+6), length-6, (unsigned char*)buffer+5);
+          Decrypt(bytes+5, length-5, buffer+5);
           
           // copy over meta info
-          memcpy(buffer, bytes + 1, 5);
+          memcpy(buffer, bytes, 5);
           
-          _receivedSignal.emit(buffer, length - 1);
+          _receivedSignal.emit(buffer, length);
         } else {
-          _receivedSignal.emit(bytes + 1, length - 1);
+          _receivedSignal.emit(bytes, length);
         }
       }
       
     private:
       ReceivedSignal _receivedSignal;
-      std::vector<char*> _buffers;
+      std::vector<uint8_t*> _buffers;
       std::vector<int> _bufferSizes;
       int _buffersTotalSize = 0;
-      const unsigned char MASK_ENCRYPTED = 0x80;
-      const unsigned char MASK_STATE = 0x60;
-      unsigned char _DecryptKey[crypto_kx_SESSIONKEYBYTES];
-      unsigned char _EncryptKey[crypto_kx_SESSIONKEYBYTES];
-      unsigned char _Nonce[crypto_secretbox_NONCEBYTES];
+      uint8_t _DecryptKey[crypto_kx_SESSIONKEYBYTES];
+      uint8_t _EncryptKey[crypto_kx_SESSIONKEYBYTES];
+      uint8_t _Nonce[crypto_secretbox_NONCEBYTES];
       
-      void Decrypt(unsigned char* buffer, int length, unsigned char* output) {
+      int Decrypt(uint8_t* buffer, int length, uint8_t* output) {
+        // fixme: remove this fake nonce nonsense
         for(int i = 0; i < crypto_secretbox_NONCEBYTES; i++) {
           _Nonce[i] = 1;
         }
         
-        crypto_secretbox_open_easy(output, buffer, (unsigned long long)length, _Nonce, _DecryptKey);
-      }
-      
-      bool IsEncrypted(char byte) {
-        return byte == 1;//((byte & MASK_ENCRYPTED) >> 7) != 0;
-      }
-      
-      char GetState(char byte) {
-        return ((byte & MASK_STATE) >> 5);
+        return crypto_secretbox_open_easy(output, buffer, (uint64_t)length, _Nonce, _DecryptKey);
       }
     };
   }
