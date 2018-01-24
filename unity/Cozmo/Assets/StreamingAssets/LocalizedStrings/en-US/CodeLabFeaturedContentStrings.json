@@ -672,111 +672,6 @@
     "codeLabFeaturedProject.Constellations.hi": {
         "translation": "Hi"
     },
-    "codeLabFeaturedProject.DrivingInCircles.center_x": {
-        "translation": "center x"
-    },
-    "codeLabFeaturedProject.DrivingInCircles.center_y": {
-        "translation": "center y"
-    },
-    "codeLabFeaturedProject.DrivingInCircles.radius": {
-        "translation": "radius"
-    },
-    "codeLabFeaturedProject.DrivingInCircles.pi": {
-        "translation": "pi"
-    },
-    "codeLabFeaturedProject.DrivingInCircles.count": {
-        "translation": "count"
-    },
-    "codeLabFeaturedProject.DrivingInCircles.x2": {
-        "translation": "x2"
-    },
-    "codeLabFeaturedProject.DrivingInCircles.y2": {
-        "translation": "y2"
-    },
-    "codeLabFeaturedProject.DrivingInCircles.segment_angle_in_radians": {
-        "translation": "segment angle in radians"
-    },
-    "codeLabFeaturedProject.DrivingInCircles.amount_of_segments": {
-        "translation": "amount of segments"
-    },
-    "codeLabFeaturedProject.DrivingInCircles.angle": {
-        "translation": "angle"
-    },
-    "codeLabFeaturedProject.DrivingInCircles.inner_wheel_speed": {
-        "translation": "inner wheel speed"
-    },
-    "codeLabFeaturedProject.DrivingInCircles.outer_wheel_speed": {
-        "translation": "outer wheel speed"
-    },
-    "codeLabFeaturedProject.DrivingInCircles.segment_angle": {
-        "translation": "segment angle"
-    },
-    "codeLabFeaturedProject.DrivingInCircles.speed_multiplier": {
-        "translation": "speed multiplier"
-    },
-    "codeLabFeaturedProject.DrivingInCircles.segment_length": {
-        "translation": "segment length"
-    },
-    "codeLabFeaturedProject.DrivingInCircles.x1": {
-        "translation": "x1"
-    },
-    "codeLabFeaturedProject.DrivingInCircles.y1": {
-        "translation": "y1"
-    },
-    "codeLabFeaturedProject.DrivingInCircles.ordered_pair_x": {
-        "translation": "ordered pair x"
-    },
-    "codeLabFeaturedProject.DrivingInCircles.ordered_pair_y": {
-        "translation": "ordered pair y"
-    },
-    "codeLabFeaturedProject.DrivingInCircles.segment_time": {
-        "translation": "segment time"
-    },
-    "codeLabFeaturedProject.DrivingInCircles.current_radius": {
-        "translation": "current radius"
-    },
-    "codeLabFeaturedProject.DrivingInCircles.radius_pair_x": {
-        "translation": "radius pair x"
-    },
-    "codeLabFeaturedProject.DrivingInCircles.radius_pair_y": {
-        "translation": "radius pair y"
-    },
-    "codeLabFeaturedProject.DrivingInCircles.current_cube_x": {
-        "translation": "current cube x"
-    },
-    "codeLabFeaturedProject.DrivingInCircles.current_cube_y": {
-        "translation": "current cube y"
-    },
-    "codeLabFeaturedProject.DrivingInCircles.current_cube": {
-        "translation": "current cube"
-    },
-    "codeLabFeaturedProject.DrivingInCircles.cube_1": {
-        "translation": "cube 1"
-    },
-    "codeLabFeaturedProject.DrivingInCircles.cube_2": {
-        "translation": "cube 2"
-    },
-    "codeLabFeaturedProject.DrivingInCircles.cube_3": {
-        "translation": "cube 3"
-    },
-    "codeLabFeaturedProject.DrivingInCircles.current_direction": {
-        "translation": "current direction"
-    },
-    "codeLabFeaturedProject.DrivingInCircles.clockwise": {
-        "translation": "clockwise"
-    },
-    "codeLabFeaturedProject.DrivingInCircles.counter_clockwise": {
-        "translation": "counter clockwise"
-    },
-    "codeLabFeaturedProject.DrivingInCircles.cozmo_is_moving": {
-        "translation": "Cozmo is moving"
-    },
-    "codeLabFeaturedProject.DrivingInCircles.show_me_a_cube": {
-        "translation": "Show me a cube!"
-    },
-    "codeLabFeaturedProject.DrivingInCircles.radians": {
-        "translation": "radians"
-    },
     "codeLabFeaturedProject.LaserSmile.the_goal_is_to_turn_that_frown_upside_down": {
         "translation": "The goal is to turn that frown upside down!"
     },
@@ -1316,5 +1211,98 @@
     },
     "codeLabFeaturedProject.PotOGoldDetector.we_found_the_treasure": {
         "translation": "We found the treasure!"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.pi": {
+        "translation": "Pi"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.number_of_segments": {
+        "translation": "number of segments"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.segment_angle": {
+        "translation": "segment angle"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.radians": {
+        "translation": "radians"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.speed_multiplier": {
+        "translation": "speed multiplier"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.center_x": {
+        "translation": "center x"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.center_y": {
+        "translation": "center y"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.current_radius": {
+        "translation": "current radius"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.radius_pair_x": {
+        "translation": "radius pair x"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.radius_pair_y": {
+        "translation": "radius pair y"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.x1": {
+        "translation": "x1"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.x2": {
+        "translation": "x2"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.y1": {
+        "translation": "y1"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.y2": {
+        "translation": "y2"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.current_angle": {
+        "translation": "current angle"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.cozmo_axle_width": {
+        "translation": "Cozmo axle width"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.inner_wheel_speed": {
+        "translation": "inner wheel speed"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.outer_wheel_speed": {
+        "translation": "outer wheel speed"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.segment_pair_x": {
+        "translation": "segment pair x"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.segment_pair_y": {
+        "translation": "segment pair y"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.segment_length": {
+        "translation": "segment length"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.segment_time": {
+        "translation": "segment time"
+    },
+    "codeLabFeaturedProject.DrivingInCircles.set_adjustable_variables": {
+        "translation": "Set adjustable variables."
+    },
+    "codeLabFeaturedProject.DrivingInCircles.cozmo_looks_for_his_cubes": {
+        "translation": "Cozmo looks for his Cubes."
+    },
+    "codeLabFeaturedProject.DrivingInCircles.cozmo_asks_to_be_shown_a_cube": {
+        "translation": "Cozmo asks to be shown a Cube."
+    },
+    "codeLabFeaturedProject.DrivingInCircles.set_the_center_x_and_y_variables_to_the_location_of_cube_1": {
+        "translation": "Set the center x and y variables to the location of Cube 1."
+    },
+    "codeLabFeaturedProject.DrivingInCircles.set_the_center_x_and_y_variables_to_the_location_of_cube_2": {
+        "translation": "Set the center x and y variables to the location of Cube 2."
+    },
+    "codeLabFeaturedProject.DrivingInCircles.set_the_center_x_and_y_variables_to_the_location_of_cube_3": {
+        "translation": "Set the center x and y variables to the location of Cube 3."
+    },
+    "codeLabFeaturedProject.DrivingInCircles.get_the_circle_radius_and_wheel_speeds_by_measuring_the_distance_between_cozmo_and_the_cube_center": {
+        "translation": "Get the circle radius and wheel speeds by measuring the distance between Cozmo and the Cube center."
+    },
+    "codeLabFeaturedProject.DrivingInCircles.for_each_segment_of_the_circle_get_its_length_and_drive_cozmo_along_the_segment_arc": {
+        "translation": "For each segment of the circle, get its length and drive Cozmo along the segment arc."
+    },
+    "codeLabFeaturedProject.DrivingInCircles.show_me_a_cube": {
+        "translation": "Show me a cube"
     }
 }
