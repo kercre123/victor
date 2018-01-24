@@ -46,6 +46,10 @@ LOCALIZATION_TARGET_FILES = [ "CodeLabStrings.json", "CodeLabFeaturedContentStri
 # but even if they were to be localization translations, it might break a lot ot reverse key them
 IGNORE_TEXT_KEYS = ['', 'True', 'False', 'true', 'false']
 
+# Certain keys should be treated as project agnostic so they are only translated once
+# These are primarily default fields that can be buried under variables.
+PROJECT_AGNOSTIC_KEYS = ['text', 'anki', 'cozmo']
+
 def parse_command_args():
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument('-t', '--translate',
@@ -336,7 +340,10 @@ def scan_project(project, source_language, target_folder):
     for content in output_list:
         simplified_content = re.sub('[^a-z^0-9^_]+', '', content.lower().replace(' ', '_'))
         if simplified_content != '':
-            key = 'codeLabFeaturedProject.' + project['project_name'] + '.' + simplified_content
+            if simplified_content in PROJECT_AGNOSTIC_KEYS:
+                key = 'codeLabFeaturedProject.' + simplified_content
+            else:
+                key = 'codeLabFeaturedProject.' + project['project_name'] + '.' + simplified_content
             json_out[key] = { 'translation': content }
 
     if target_folder is not None:
@@ -457,7 +464,7 @@ def main():
 
         generated_json = {}
         for project_entry in project_list:
-            generated_json = {**generated_json, **scan_project(project_entry, command_args.source_language, command_args.scan_output_path)}
+            generated_json.update( scan_project(project_entry, command_args.source_language, command_args.scan_output_path) )
         print(str(len(project_list)) + ' project(s) scanned')
 
         if command_args.scan_loc_target:
