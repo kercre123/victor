@@ -31,7 +31,7 @@
 struct SpeexResamplerState_;
 typedef struct SpeexResamplerState_ SpeexResamplerState;
 
-class UdpServer;
+class LocalUdpServer;
 
 namespace Anki {
 namespace Cozmo {
@@ -81,7 +81,7 @@ private:
   bool _inProcessAudioBlockFirstHalf = true;
   SpeexResamplerState* _speexState = nullptr;
   std::unique_ptr<SpeechRecognizerTHF> _recognizer;
-  std::unique_ptr<UdpServer> _udpServer;
+  std::unique_ptr<LocalUdpServer> _udpServer;
   std::unique_ptr<MicImmediateDirection> _micImmediateDirection;
 #if ANKI_DEV_CHEATS
   bool _forceRecordClip = false;

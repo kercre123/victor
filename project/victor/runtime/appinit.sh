@@ -6,6 +6,7 @@
 robotctl=/data/data/com.anki.cozmoengine/robotctl.sh
 animctl=/data/data/com.anki.cozmoengine/animctl.sh
 cozmoctl=/data/data/com.anki.cozmoengine/cozmoctl.sh
+cloudctl=/data/data/com.anki.cozmoengine/cloudctl.sh
 
 if [ -x $robotctl ]; then
   $robotctl restart
@@ -17,5 +18,9 @@ fi
 
 if [ -x $cozmoctl ]; then
   $cozmoctl restart
+fi
+
+if [ -x $cloudctl ]; then
+  $cloudctl restart
 fi
 

@@ -309,9 +309,11 @@ namespace Cozmo {
   // RobotID will be appended to generate unique paths for each robot.
   //
   #ifdef SIMULATOR
+  constexpr char LOCAL_SOCKET_PATH[]  = "/tmp/";
   constexpr char ROBOT_SERVER_PATH[]  = "/tmp/_robot_server_";
   constexpr char ANIM_CLIENT_PATH[]   = "/tmp/_anim_client_";
   #else
+  constexpr char LOCAL_SOCKET_PATH[]  = "/dev/";
   constexpr char ROBOT_SERVER_PATH[]  = "/dev/socket/_robot_server_";
   constexpr char ANIM_CLIENT_PATH[]   = "/dev/socket/_anim_client_";
   #endif
