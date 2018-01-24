@@ -29,6 +29,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotPlacedOnSlope.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotShaken.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotTouchGesture.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionTimedDedup.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionTimerInRange.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionTrue.h"
 
@@ -132,6 +133,11 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
     case BEIConditionType::TimerInRange:
     {
       strategy = std::make_shared<ConditionTimerInRange>(config);
+      break;
+    }
+    case BEIConditionType::TimedDedup:
+    {
+      strategy = std::make_shared<ConditionTimedDedup>(config);
       break;
     }
     case BEIConditionType::Negate:

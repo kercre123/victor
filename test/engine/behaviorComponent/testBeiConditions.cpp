@@ -449,3 +449,38 @@ TEST(BeiConditions, OnCharger)
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
 }
+
+TEST(BeiConditions, TimedDedup)
+{
+  BaseStationTimer::getInstance()->UpdateTime(0);
+  
+  const std::string json = R"json(
+  {
+    "conditionType": "TimedDedup",
+    "dedupInterval_ms" : 4000.0,
+    "subCondition": {
+      "conditionType": "TrueCondition"
+    }
+  })json";
+
+  IBEIConditionPtr cond;
+  CreateBEI(json, cond);
+
+  BehaviorExternalInterface bei;
+
+  cond->Init(bei);
+  cond->Reset(bei);
+
+  EXPECT_TRUE( cond->AreConditionsMet(bei) );
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+
+  BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(2.0));
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+
+  BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(3.9));
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+
+  BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(4.1));
+  EXPECT_TRUE( cond->AreConditionsMet(bei) );
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+}
