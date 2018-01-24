@@ -11,6 +11,7 @@ using DataPersistence;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text.RegularExpressions;
 using Cozmo.UI;
 using Cozmo.MinigameWidgets;
 using Cozmo.WhatsNew;
@@ -1533,6 +1534,9 @@ namespace CodeLab {
           projectToExport.ProjectName = Localization.Get(projectToExport.ProjectName);
         }
 
+        string projectExportCharacterBlacklistRegex = "[\\.\\,\\;\\:\\\'\\\"\\\\\\*/@#¡!¿?%&()※、。・]+";
+        string projectToExportFilename = Regex.Replace(projectToExport.ProjectName, projectExportCharacterBlacklistRegex, "");
+
         string projectToExportJSON = kCodelabPrefix + WWW.EscapeURL(projectToExport.GetSerializedJson());
 
         SessionState.DAS_Event("robot.code_lab.export_project", projectType,
@@ -1559,7 +1563,7 @@ namespace CodeLab {
           DAS.Error("Codelab.OnCozmoShareProject.PlatformNotFound", "Could not create an export call for the current platform.");
         }
         else {
-          sendFileCall(projectToExport.ProjectName, projectToExportJSON);
+          sendFileCall(projectToExportFilename, projectToExportJSON);
         }
       }
       else {
