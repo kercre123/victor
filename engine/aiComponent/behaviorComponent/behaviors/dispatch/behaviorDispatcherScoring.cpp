@@ -39,7 +39,8 @@ BehaviorDispatcherScoring::BehaviorDispatcherScoring(const Json::Value& config)
     for(const auto& behavior: behaviorsConfig)
     {
       BehaviorID behaviorID = ICozmoBehavior::ExtractBehaviorIDFromConfig(behavior);
-      IBehaviorDispatcher::AddPossibleDispatch(behaviorID);
+      // TODO:(bn) support anonymous behaviors here?
+      IBehaviorDispatcher::AddPossibleDispatch(BehaviorTypesWrapper::BehaviorIDToString(behaviorID));
       
       const Json::Value& scoringConfig = (behavior)[kScoringConfigKey];
       DEV_ASSERT_MSG(!scoringConfig.isNull(),

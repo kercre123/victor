@@ -55,16 +55,27 @@ IBehaviorDispatcher::IBehaviorDispatcher(const Json::Value& config, bool shouldI
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IBehaviorDispatcher::InitBehavior()
 {
-  for( const auto& behaviorID : _behaviorIds ) {      
-    ICozmoBehaviorPtr behavior =  GetBEI().GetBehaviorContainer().FindBehaviorByID(behaviorID);
-    DEV_ASSERT_MSG(behavior != nullptr,
-                   "IBehaviorDispatcher.InitBehavior.FailedToFindBehavior",
-                   "Behavior not found: %s",
-                   BehaviorTypesWrapper::BehaviorIDToString(behaviorID));
+  for( const auto& behaviorStr : _behaviorStrs ) {
+    // first check anonymous behaviors
+    ICozmoBehaviorPtr behavior = FindAnonymousBehaviorByName(behaviorStr);
+    if( nullptr == behavior ) {
+      // no match, try behavior IDs
+      const BehaviorID behaviorID = BehaviorTypesWrapper::BehaviorIDFromString(behaviorStr);
+      behavior = GetBEI().GetBehaviorContainer().FindBehaviorByID(behaviorID);
+      
+      DEV_ASSERT_MSG(behavior != nullptr,
+                     "IBehaviorDispatcher.InitBehavior.FailedToFindBehavior",
+                     "Behavior not found: %s",
+                     behaviorStr.c_str());
+    }
     if(behavior != nullptr){
       _behaviors.push_back(behavior);
     }
   }
+
+  // don't need the strings anymore, so clear them to release memory
+  _behaviorStrs.clear();
+  
   InitDispatcher();
 }
 

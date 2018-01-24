@@ -320,6 +320,7 @@ void ICozmoBehavior::InitInternal()
 
         // we need to initlaize the anon behaviors as well
         resultPair.first->second->Init(GetBEI());
+        resultPair.first->second->InitBehaviorOperationModifiers();
       }
       else
       {
