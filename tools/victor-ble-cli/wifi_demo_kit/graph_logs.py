@@ -15,6 +15,7 @@ import plotly.graph_objs as go
 import shutil
 import sys
 import argparse
+import colorlover
 
 # set up default logger
 Logger = logging.getLogger('wifi_test')
