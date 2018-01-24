@@ -1,9 +1,5 @@
 /**
-<<<<<<< HEAD
  * File: objectDetector.h
-=======
- * File: objectDetector.cpp
->>>>>>> * Add ObjectDetector with OpenCV DNN Model support (as private implementation)
  *
  * Author: Andrew Stein
  * Date:   6/29/2017
