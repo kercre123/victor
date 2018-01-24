@@ -52,8 +52,7 @@ When running webots, if you get pop-ups asking "Do you want the application 'web
 
 1. Close Webots.
 1. Follow the instructions in [FirewallCertificateInstructions.md](/project/build-scripts/webots/FirewallCertificateInstructions.md).
-1. Run the Webots test script (which will automatically set up firewall exceptions for you) with the following command: `project/build-scripts/webots/webotsTest.py --password <YOUR_PASSWORD>`.
-1. Unfortunately this requires typing your password into the command line as plain text. You can delete this command from your bash history by opening `~/.bash_history` and removing the lines containing your password. Restart terminal and make sure the command no longer exists in your history (type `history` in the command line).
+1. Run the Webots test script (which will automatically set up firewall exceptions for you) with the following command: `project/build-scripts/webots/webotsTest.py --setupFirewall`. You will need to enter your password.
 
 ### Crash in webotsCtrlGameEngine2
 

@@ -60,7 +60,7 @@ namespace Cozmo {
   const u16 kProxSensorMaxDistance_mm = 410;
   
   // Forward distance sensor measurements (TODO: finalize these dimensions on production robot)
-  const float kProxSensorTiltAngle_rad = DEG_TO_RAD(6.f);    // Angle that the prox sensor is tilted (upward is positive)
+  const float kProxSensorTiltAngle_rad = DEG_TO_RAD(6.5f);    // Angle that the prox sensor is tilted (upward is positive)
   const float kProxSensorPosition_mm[3] = {10.f, 0.f, 16.f}; // With respect to robot origin
   const float kProxSensorFullFOV_rad = DEG_TO_RAD(25.f);     // Full Field of View (FOV) of the sensor cone
   
