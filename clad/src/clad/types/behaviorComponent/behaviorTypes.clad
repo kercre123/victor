@@ -354,6 +354,8 @@ enum uint_8 BehaviorID {
   VictorCloudDemoTriggerDetected,
   VictorCloudDemoReturnToCharger,
 
+  FistBumpVoiceCommand,
+
   ObservingState,
   Observing,
   ObservingLookAtFaces,

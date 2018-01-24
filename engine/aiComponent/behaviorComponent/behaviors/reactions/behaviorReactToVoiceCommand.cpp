@@ -61,17 +61,23 @@ void BehaviorReactToVoiceCommand::OnBehaviorActivated()
   
   // Stop all movement so we can listen for a command
   robotInfo.GetMoveComponent().StopAllMotors();
+
+  const bool onCharger = robotInfo.IsOnChargerPlatform();
   
   auto* actionSeries = new CompoundActionSequential();
   
   // Tilt the head up slightly, like we're listening, and wait a bit
   {
-    actionSeries->AddAction(
-      new TriggerLiftSafeAnimationAction(AnimationTrigger::VC_Listening));
+    if( onCharger ) {
+      actionSeries->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::ListeningOnCharger));
+    }
+    else {
+      actionSeries->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::VC_Listening));
+    }
   }
   
   // After waiting let's turn toward the face we know about, if we have one
-  if(_desiredFace.IsValid()){
+  if(_desiredFace.IsValid() && !onCharger){
     const bool sayName = true;
     TurnTowardsFaceAction* turnAction = new TurnTowardsFaceAction(_desiredFace,
                                                                   M_PI_F,
@@ -87,8 +93,16 @@ void BehaviorReactToVoiceCommand::OnBehaviorActivated()
        new TriggerLiftSafeAnimationAction(AnimationTrigger::VC_NoFollowupCommand_WithFace));
   }else{
     // Play animation to indicate "What was that" since no face to tun towards
-    actionSeries->AddAction(
-       new TriggerLiftSafeAnimationAction(AnimationTrigger::VC_NoFollowupCommand_NoFace));
+    TriggerLiftSafeAnimationAction* animAction =
+      new TriggerLiftSafeAnimationAction(AnimationTrigger::VC_NoFollowupCommand_NoFace);
+
+    if( onCharger ) {
+      // lock body on charger
+      // TODO:(bn) play a different anim?
+      animAction->SetTracksToLock( animAction->GetTracksToLock() | (u8)AnimTrackFlag::BODY_TRACK );
+    }
+    
+    actionSeries->AddAction(animAction);
   }
   
   using namespace ::Anki::Cozmo::VoiceCommand;

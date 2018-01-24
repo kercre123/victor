@@ -35,6 +35,7 @@ protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
     modifiers.wantsToBeActivatedWhenCarryingObject = true;
     modifiers.behaviorAlwaysDelegates = false;
+    modifiers.wantsToBeActivatedWhenOnCharger = false;
   }
 
 

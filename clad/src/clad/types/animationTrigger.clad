@@ -255,6 +255,7 @@ enum int_32 AnimationTrigger
   LaserFace,
   LaserGetOut,
   LaserPounce,
+  ListeningOnCharger,
   LookInPlaceForFacesBodyPause,
   LookInPlaceForFacesHeadMovePause,
   MajorFail,

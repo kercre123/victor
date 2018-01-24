@@ -84,9 +84,8 @@
         {
           "to": "DriveOffChargerIntoObserving",
           "condition": {
-            "conditionType": "InNeedsBracket",
-            "need": "Energy",
-            "needBracket": "Critical"
+            "conditionType": "TimerInRange",
+            "begin_s": 600.0
           }
         },
         {
