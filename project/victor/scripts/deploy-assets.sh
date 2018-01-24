@@ -132,6 +132,11 @@ fi
 # Install new assets
 pushd ${ASSETSDIR} > /dev/null 2>&1
 
+# Make sure we have the directories we expect
+$ADB shell mkdir -p ${DEVICE_RSYNC_BIN_DIR}
+$ADB shell mkdir -p ${DEVICE_RSYNC_CONF_DIR}
+$ADB shell mkdir -p ${DEVICE_ASSET_DIR}
+
 # install rsync binary and config if needed
 set +e
 $ADB shell [ -f "$DEVICE_RSYNC_BIN_DIR/rsync.bin" ]
@@ -146,9 +151,6 @@ if [ $FORCE_PUSH_ASSETS -eq 1 ] ||
    [ $HAS_RSYNC_CONF -ne 0 ]; then
 
   echo "loading rsync to device"
-  $ADB shell mkdir -p ${DEVICE_RSYNC_BIN_DIR}
-  $ADB shell mkdir -p ${DEVICE_RSYNC_CONF_DIR}
-  $ADB shell mkdir -p ${DEVICE_ASSET_DIR}
 
   $ADB push ${RSYNC_BIN_DIR}/rsync.bin ${DEVICE_RSYNC_BIN_DIR}
   $ADB push ${RSYNC_BIN_DIR}/rsyncd.conf ${DEVICE_RSYNC_CONF_DIR}

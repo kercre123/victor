@@ -26,7 +26,7 @@ namespace Anki {
 namespace Cozmo {
 
 FaceDebugDraw::FaceDebugDraw()
-: _scratchDrawingImg(new Vision::ImageRGB())
+: _scratchDrawingImg(new Vision::ImageRGB565())
 {
   _scratchDrawingImg->Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
 
@@ -107,7 +107,8 @@ void FaceDebugDraw::DrawConfidenceClock(const RobotInterface::MicDirection& micD
     return;
   }
 
-  Vision::ImageRGB& drawImg = *_scratchDrawingImg;
+  DEV_ASSERT(_scratchDrawingImg != nullptr, "FaceDebugDraw::DrawConfidenceClock.InvalidScratchImage");
+  Vision::ImageRGB565& drawImg = *_scratchDrawingImg;
   const auto& clearColor = NamedColors::BLACK;
   drawImg.FillWith( {clearColor.r(), clearColor.g(), clearColor.b()} );
 
