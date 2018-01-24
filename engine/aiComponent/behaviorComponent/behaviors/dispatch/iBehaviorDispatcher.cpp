@@ -83,19 +83,23 @@ void IBehaviorDispatcher::GetBehaviorOperationModifiers(BehaviorOperationModifie
   bool subBehaviorCarryingObject = false;
   bool subBehaviorOffTreads = false;
   bool subBehaviorOnCharger = false;
-
+  
   // check all sub behavior values
   for( const auto& behaviorPtr : _behaviors ) {
-    behaviorPtr->GetBehaviorOperationModifiers(modifiers);
-    subBehaviorCarryingObject |= modifiers.wantsToBeActivatedWhenCarryingObject;
-    subBehaviorOffTreads      |= modifiers.wantsToBeActivatedWhenOffTreads;
-    subBehaviorOnCharger      |= modifiers.wantsToBeActivatedWhenOnCharger;
+    BehaviorOperationModifiers subModifiers;
+    behaviorPtr->GetBehaviorOperationModifiers(subModifiers);
+    subBehaviorCarryingObject |= subModifiers.wantsToBeActivatedWhenCarryingObject;
+    subBehaviorOffTreads      |= subModifiers.wantsToBeActivatedWhenOffTreads;
+    subBehaviorOnCharger      |= subModifiers.wantsToBeActivatedWhenOnCharger;
   }
 
   // assign return variables
   modifiers.wantsToBeActivatedWhenCarryingObject = subBehaviorCarryingObject;
   modifiers.wantsToBeActivatedWhenOffTreads = subBehaviorOffTreads;
   modifiers.wantsToBeActivatedWhenOnCharger = subBehaviorOnCharger;
+
+  // dispatchers always delegate to a behavior if they are meant to keep running
+  modifiers.behaviorAlwaysDelegates = true;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
