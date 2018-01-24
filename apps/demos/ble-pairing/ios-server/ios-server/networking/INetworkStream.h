@@ -17,7 +17,7 @@ namespace Anki {
     class INetworkStream {
       
     public:
-      virtual void Send(uint8_t* bytes, int length) = 0;
+      virtual void SendPlainText(uint8_t* bytes, int length) = 0;
       virtual void SendEncrypted(uint8_t* bytes, int length) = 0;
       
       // Message Receive Signal

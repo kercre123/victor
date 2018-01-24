@@ -22,7 +22,7 @@ namespace Anki {
         _encryptedWriteCharacteristic = encryptedWriteCharacteristic;
       }
       
-      void Send(uint8_t* bytes, int length);
+      void SendPlainText(uint8_t* bytes, int length);
       void SendEncrypted(uint8_t* bytes, int length);
       
     private:

@@ -28,7 +28,7 @@ void Anki::Networking::SecurePairing::SharePublicKey() {
   msg.type = PairingMessageType::PublicKey;
   msg.buffer = publicKey;
   
-  _Stream->Send(msg.GetBuffer(), msg.GetSize());
+  _Stream->SendPlainText(msg.GetBuffer(), msg.GetSize());
 }
 
 void Anki::Networking::SecurePairing::Init() {
@@ -52,7 +52,7 @@ void Anki::Networking::SecurePairing::Reset() {
 void Anki::Networking::SecurePairing::HandleMessageReceive(uint8_t* bytes, uint32_t length) {
   switch(bytes[4]) {
     case Anki::Networking::PairingMessageType::PublicKey:
-      _KeyExchange->SetForeignKey((uint8_t*)(bytes + 5));
+      _KeyExchange->SetRemotePublicKey(bytes + 5);
       _KeyExchange->CalculateSharedKeys(_Pin);
       
       _Stream->SetCryptoKeys(_KeyExchange->GetEncryptKey(), _KeyExchange->GetDecryptKey());
@@ -69,7 +69,7 @@ void Anki::Networking::SecurePairing::HandleMessageReceive(uint8_t* bytes, uint3
         msg.bufferSize = 32;
         msg.type = PairingMessageType::HashedKey;
         msg.buffer = (uint8_t*)_KeyExchange->GetVerificationHash();
-        _Stream->Send(msg.GetBuffer(), msg.GetSize());
+        _Stream->SendPlainText(msg.GetBuffer(), msg.GetSize());
       } else {
         // Increment our attack counter, and if at or above max attempts
         // reset.
