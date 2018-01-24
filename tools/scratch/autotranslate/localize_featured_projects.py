@@ -323,7 +323,7 @@ def execute_translations_on_project(project, source_language, loc_table):
 # --------------------------------------------------------------------------------------------------------
 
 def scan_project(project, source_language, target_folder):
-    source_project_file = project['base_file_name'] + '_' + source_language + '.json'
+    source_project_file = get_file_path(project['base_file_name'], source_language)
 
     json_out = {}
     output_list = []
