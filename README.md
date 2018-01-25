@@ -104,7 +104,14 @@ See [build-instructions](docs/development/build-instructions.md) for a more thor
 
 ### ADB setup
 
-Since the Android SDK and NDK are automatically downloaded with `./configure.py` you should be using `adb` from there. Make sure you do not have android-sdk installed from `brew` by running. 
+You can get the android SDK and NDK by running the following commands:
+
+```
+./tools/build/tools/ankibuild/android.py --install-sdk
+./tools/build/tools/ankibuild/android.py --install-ndk
+```
+
+Make sure you do not have android-sdk installed from `brew` by running. 
 
 `brew uninstall android-sdk`
 
