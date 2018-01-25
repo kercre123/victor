@@ -483,6 +483,13 @@ namespace Anki {
         HeadController::SetAngularVelocity(msg.speed_rad_per_sec, MAX_HEAD_ACCEL_RAD_PER_S2);
       }
 
+      // Send ack of head motor action
+      void AckMotorCommand(u8 actionID) {
+        RobotInterface::MotorActionAck ack;
+        ack.actionID = actionID;
+        RobotInterface::SendMessage(ack);
+      }
+      
       void Process_liftHeight(const RobotInterface::SetLiftHeight& msg) {
         //AnkiInfo( 109, "Messages.Process_liftHeight.Recvd", 357, "height %f, maxSpeed %f, duration %f", 3, msg.height_mm, msg.max_speed_rad_per_sec, msg.duration_sec);
         if (msg.duration_sec > 0) {
@@ -490,6 +497,7 @@ namespace Anki {
         } else {
           LiftController::SetDesiredHeight(msg.height_mm, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
         }
+        AckMotorCommand(msg.actionID);
       }
 
       void Process_headAngle(const RobotInterface::SetHeadAngle& msg) {
@@ -499,6 +507,7 @@ namespace Anki {
         } else {
           HeadController::SetDesiredAngle(msg.angle_rad, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
         }
+        AckMotorCommand(msg.actionID);
       }
 
       void Process_headAngleUpdate(const RobotInterface::HeadAngleUpdate& msg) {
@@ -513,6 +522,7 @@ namespace Anki {
                                              msg.angle_tolerance,
                                              msg.use_shortest_direction,
                                              msg.num_half_revolutions);
+        AckMotorCommand(msg.actionID);
       }
 
       void Process_setCarryState(const CarryStateUpdate& update)

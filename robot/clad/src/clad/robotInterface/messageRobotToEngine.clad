@@ -62,6 +62,11 @@ message PathFollowingEvent
   PathEventType  eventType
 }
 
+// Returned in response to receiving a head, lift, or turn-in-place command
+message MotorActionAck {
+  uint_8  actionID,
+}
+
 // These two messages bookend animations as they are played on the robot
 message AnimationStarted
 {
@@ -126,7 +131,7 @@ union RobotToEngine {
   PotentialCliff             potentialCliff         = 0xC1,
   SyncTimeAck                syncTimeAck            = 0xC2,
   RobotPoked                 robotPoked             = 0xC3,
-//               FREE SLOT!!!                       = 0xC4,
+  MotorActionAck             motorActionAck         = 0xC4,
   MovingLiftPostDock         movingLiftPostDock     = 0xC5,
   PathFollowingEvent         pathFollowingEvent     = 0xC6,
   IMURawDataChunk            imuRawDataChunk        = 0xC7,

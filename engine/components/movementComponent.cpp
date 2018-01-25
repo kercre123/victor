@@ -593,28 +593,58 @@ Result MovementComponent::EnableHeadPower(bool enable)
   return _robot.SendRobotMessage<RobotInterface::EnableMotorPower>(MotorID::MOTOR_HEAD, enable);
 }
   
+MovementComponent::MotorActionID MovementComponent::GetNextMotorActionID(MotorActionID* actionID_out)
+{
+  ++_lastMotorActionID;
+  if (actionID_out != nullptr) {
+    *actionID_out = _lastMotorActionID;
+  }
+  return _lastMotorActionID;
+}
+  
 // Sends a message to the robot to move the lift to the specified height
 Result MovementComponent::MoveLiftToHeight(const f32 height_mm,
                                            const f32 max_speed_rad_per_sec,
                                            const f32 accel_rad_per_sec2,
-                                           const f32 duration_sec)
+                                           const f32 duration_sec,
+                                           MotorActionID* actionID_out)
 {
   return _robot.SendRobotMessage<RobotInterface::SetLiftHeight>(height_mm,
                                                                 max_speed_rad_per_sec,
                                                                 accel_rad_per_sec2,
-                                                                duration_sec);
+                                                                duration_sec,
+                                                                GetNextMotorActionID(actionID_out));
 }
 
 // Sends a message to the robot to move the head to the specified angle
 Result MovementComponent::MoveHeadToAngle(const f32 angle_rad,
                                           const f32 max_speed_rad_per_sec,
                                           const f32 accel_rad_per_sec2,
-                                          const f32 duration_sec)
+                                          const f32 duration_sec,
+                                          MotorActionID* actionID_out)
 {
   return _robot.SendRobotMessage<RobotInterface::SetHeadAngle>(angle_rad,
                                                                max_speed_rad_per_sec,
                                                                accel_rad_per_sec2,
-                                                               duration_sec);
+                                                               duration_sec,
+                                                               GetNextMotorActionID(actionID_out));
+}
+  
+Result MovementComponent::TurnInPlace(const f32 angle_rad,
+                                      const f32 max_speed_rad_per_sec,
+                                      const f32 accel_rad_per_sec2,
+                                      const f32 angle_tolerance,
+                                      const u16 num_half_revolutions,
+                                      bool use_shortest_direction,
+                                      MotorActionID* actionID_out)
+{
+  return _robot.SendRobotMessage<RobotInterface::SetBodyAngle>(angle_rad,
+                                                               max_speed_rad_per_sec,
+                                                               accel_rad_per_sec2,
+                                                               angle_tolerance,
+                                                               num_half_revolutions,
+                                                               use_shortest_direction,
+                                                               GetNextMotorActionID(actionID_out));
 }
 
 Result MovementComponent::StopAllMotors()
