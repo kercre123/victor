@@ -15,6 +15,8 @@
 
 #include "coretech/common/engine/math/logisticRegression.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "coretech/common/engine/array2d_impl.h"
+#include "coretech/vision/engine/profiler.h"
 #include "engine/cozmoContext.h"
 #include "util/fileUtils/fileUtils.h"
 
@@ -27,6 +29,9 @@
   if (! JsonTools::GetValueOptional(__config, __paramname, __variable)) { \
     PRINT_NAMED_WARNING("RawPixelsClassifier.MissingJsonParameter", "Missing parameter %s", __paramname); \
   }
+
+#define TIC(name) if (_profiler) {_profiler->Tic(name);}
+#define TOC(name) if (_profiler) {_profiler->Toc(name);}
 
 namespace Anki {
 namespace Cozmo {
@@ -84,7 +89,7 @@ int AppendFileToMatrix(const char *filename, cv::Mat& mat) {
 } // anonymous namespace
 
 /****************************************************************
- *                     DrivingSurfaceClassifier               *
+ *                     RawPixelsClassifier                      *
  ****************************************************************/
 
 bool RawPixelsClassifier::Train(const OverheadMap::PixelSet& drivablePixels,
@@ -126,8 +131,8 @@ bool RawPixelsClassifier::Train(const OverheadMap::PixelSet& drivablePixels,
   return Train(allInputs, allClasses, uint(drivablePixels.size()));
 }
 
-RawPixelsClassifier::RawPixelsClassifier(const CozmoContext *context)
-    : _context(context)
+RawPixelsClassifier::RawPixelsClassifier(const CozmoContext *context, Anki::Vision::Profiler* profiler)
+    : _context(context), _profiler(profiler)
 {
 
 }
@@ -138,11 +143,11 @@ void RawPixelsClassifier::GetTrainingData(cv::Mat& trainingSamples, cv::Mat& tra
   trainingLabels = _trainingLabels;
 }
 
-std::vector<uchar> RawPixelsClassifier::PredictClass(const std::vector<std::vector<FeatureType>>& pixels) const
+std::vector<uchar> RawPixelsClassifier::PredictClass(const std::vector<std::vector<FeatureType>>& features) const
 {
   std::vector<uchar> responses;
-  responses.reserve(pixels.size());
-  for (const auto& pixel : pixels) {
+  responses.reserve(features.size());
+  for (const auto& pixel : features) {
 
     uchar predictedClass = PredictClass(pixel);
     responses.push_back(predictedClass);
@@ -460,6 +465,12 @@ uchar LRRawPixelsClassifier::PredictClass(const std::vector<FeatureType>& values
   return uchar(result[0]);
 }
 
+std::vector<uchar> LRRawPixelsClassifier::PredictClass(const Array2d<RawPixelsClassifier::FeatureType>& features) const
+{
+  PRINT_NAMED_ERROR("LRRawPixelsClassifier.PredictClass.NoImplemented", "PredictClass with Array2d is not implemented!");
+  throw std::runtime_error("PredictClass with Array2d is not implemented!");
+}
+
 /****************************************************************
  *                     THDrivingSurfaceClassifier               *
  ****************************************************************/
@@ -542,12 +553,19 @@ bool THRawPixelsClassifier::TrainFromFiles(const char*, const char*)
   return false;
 }
 
+std::vector<uchar> THRawPixelsClassifier::PredictClass(const Array2d<RawPixelsClassifier::FeatureType>& features) const
+{
+  PRINT_NAMED_ERROR("THRawPixelsClassifier.PredictClass.NoImplemented", "PredictClass with Array2d is not implemented!");
+  throw std::runtime_error("PredictClass with Array2d is not implemented!");
+}
+
 /****************************************************************
  *                     DTDrivingSurfaceClassifier               *
  ****************************************************************/
 
-DTRawPixelsClassifier::DTRawPixelsClassifier(const Json::Value& config, const CozmoContext *context) :
-  RawPixelsClassifier(context)
+DTRawPixelsClassifier::DTRawPixelsClassifier(const Json::Value& config, const CozmoContext *context,
+                                             Anki::Vision::Profiler* profiler) :
+  RawPixelsClassifier(context, profiler)
 {
   _dtree = cv::ml::DTrees::create();
 
@@ -577,8 +595,10 @@ DTRawPixelsClassifier::DTRawPixelsClassifier(const Json::Value& config, const Co
 }
 
 DTRawPixelsClassifier::DTRawPixelsClassifier(const std::string& serializedFilename,
-                                                       const CozmoContext *context) :
-  RawPixelsClassifier(context)
+                                             const CozmoContext *context,
+                                             Anki::Vision::Profiler* profiler
+                                            ) :
+  RawPixelsClassifier(context, profiler)
 {
   bool result = DeSerialize(serializedFilename.c_str());
 
@@ -695,6 +715,28 @@ bool DTRawPixelsClassifier::DeSerialize(const char *filename)
                  filename);
   return true;
 
+}
+
+std::vector<uchar> DTRawPixelsClassifier::PredictClass(const Array2d<RawPixelsClassifier::FeatureType>& features) const
+{
+  DEV_ASSERT(features.GetNumCols() == _dtree->getVarCount(), "DTRawPixelsClassifier.PredictClass.WrongInputSize");
+
+  cv::Mat cvFeatures = features.get_CvMat_(); // intentionally not taking const reference here, might need to overwrite
+
+  //DTree requires Mat_<float> as input
+  if (typeid(RawPixelsClassifier::FeatureType) != typeid(float)) {
+    cv::Mat converted;
+    cvFeatures.convertTo(converted, CV_32F);
+    cvFeatures = converted;
+  }
+  cv::Mat output;
+  const auto& tree = *_dtree;
+  tree.predict(cvFeatures, output);
+
+  // now convert to a std::vector uchar scaling 1 to 255
+  std::vector<uchar> toRet;
+  output.convertTo(toRet, CV_8U, 255);
+  return toRet;
 }
 
 

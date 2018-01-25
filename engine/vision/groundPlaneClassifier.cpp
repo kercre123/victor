@@ -28,33 +28,62 @@
 namespace Anki {
 namespace Cozmo {
 
-void ClassifyImage(const RawPixelsClassifier& clf, const Anki::Cozmo::FeaturesExtractor& extractor,
-                   const Vision::ImageRGB& image, Vision::Image outputMask)
-{
 
+// TODO These two functions here should be one, but right now classifiers and feature extractors don't work on whole images
+void ClassifyImage(const RawPixelsClassifier& clf, const Anki::Cozmo::FeaturesExtractor& extractor,
+                   const Vision::ImageRGB& image, Vision::Image& outputMask, Anki::Vision::Profiler *profiler)
+{
   s32 nrows = image.GetNumRows();
   s32 ncols = image.GetNumCols();
   DEV_ASSERT(outputMask.GetNumRows() == nrows && outputMask.GetNumCols() == ncols,
              "ClassifyImage.ResultArraySizeMismatch");
 
+  cv::Mat& cvMask = outputMask.get_CvMat_();
+  DEV_ASSERT(cvMask.type() == CV_8U, "ClassifyImage.WrongMaskType");
+
   // calculating features over all the image
   for (uint i =0; i<image.GetNumRows(); i++) {
+    u8* p = cvMask.ptr<u8>(i);
+
     for (int j = 0; j <image.GetNumCols(); ++j) {
       const std::vector<RawPixelsClassifier::FeatureType> features = extractor.Extract(image, i, j);
       uchar res = clf.PredictClass(features);
-      outputMask(i, j) = u8(255 * res);
+      p[j] = cv::saturate_cast<u8>(255 * res);
     }
   }
 }
 
-GroundPlaneClassifier::GroundPlaneClassifier(const Json::Value& config, const CozmoContext *context)
-: _context(context), _initialized(false)
+void ClassifyImage(const DTRawPixelsClassifier& clf, const Anki::Cozmo::MeanStdFeaturesExtractor& extractor,
+                   const Vision::ImageRGB& image, Vision::Image& outputMask, Vision::Profiler *profiler)
 {
+  s32 nrows = image.GetNumRows();
+  s32 ncols = image.GetNumCols();
+  DEV_ASSERT(outputMask.GetNumRows() == nrows && outputMask.GetNumCols() == ncols,
+             "ClassifyImage.ResultArraySizeMismatch");
+
+  // Get the features and pass them to the classifier
+  auto featuresList = extractor.Extract(image);
+  std::vector<uchar> classes = clf.PredictClass(featuresList);
+
+  // convert into a binary image
+  cv::Mat& cvMask = outputMask.get_CvMat_();
+  cvMask = cv::Mat(classes, true).reshape(1, image.GetNumRows()); //need to copy data here, the vector will go out of scope
+
+  // That's it folks!
+}
+
+GroundPlaneClassifier::GroundPlaneClassifier(const Json::Value& config, const CozmoContext *context)
+  : _context(context),
+    _initialized(false),
+    _profiler("GroundPlaneClassifier")
+{
+
+//  _profiler.SetPrintFrequency(0);
 
   DEV_ASSERT(context != nullptr, "GroundPlaneClassifier.ContextCantBeNULL");
 
   // TODO Classifier and extractor (with their parameters) should be passed at config time!
-  _classifier.reset(new DTRawPixelsClassifier(config, context));
+  _classifier.reset(new DTRawPixelsClassifier(config, context, &_profiler));
   _extractor.reset(new MeanStdFeaturesExtractor(1));
 
   // Train or load serialized file?
@@ -91,6 +120,7 @@ Result GroundPlaneClassifier::Update(const Vision::ImageRGB& image, const Vision
                                      std::list<OverheadEdgeFrame>& outEdges)
 {
 
+  _profiler.Tic("GroundPlaneClassifier.Update");
   // nothing to do here if there's no ground plane visible
   if (! poseData.groundPlaneVisible) {
     PRINT_CH_DEBUG("VisionSystem", "GroundPlaneClassifier.Update.GroundPlane", "Ground plane is not visible");
@@ -111,8 +141,9 @@ Result GroundPlaneClassifier::Update(const Vision::ImageRGB& image, const Vision
 
   // STEP 2: Classify the overhead image
   Vision::Image rawClassifiedImage(groundPlaneImage.GetNumRows(), groundPlaneImage.GetNumCols(), u8(0));
-  ClassifyImage(*_classifier.get(), *_extractor.get(), groundPlaneImage, rawClassifiedImage);
-//  _classifier->ClassifyImage(groundPlaneImage, rawClassifiedImage);
+  _profiler.Tic("GroundPlaneClassifier.ClassifyImage");
+  ClassifyImage(*_classifier.get(), *_extractor.get(), groundPlaneImage, rawClassifiedImage, &_profiler);
+  _profiler.Toc("GroundPlaneClassifier.ClassifyImage");
   const Vision::Image classifiedMask = processClassifiedImage(rawClassifiedImage);
 
   // STEP 3: Find leading edge in the classified mask (i.e. closest edge of obstacle to robot)
@@ -214,6 +245,7 @@ Result GroundPlaneClassifier::Update(const Vision::ImageRGB& image, const Vision
   outEdges.emplace_back(std::move(edgeFrame));
 
   PRINT_CH_DEBUG("VisionSystyem", "GroundPlaneClassifier.Update.Stopping","");
+  _profiler.Toc("GroundPlaneClassifier.Update");
   return RESULT_OK;
 }
 
@@ -292,28 +324,90 @@ bool GroundPlaneClassifier::loadClassifier(const std::string& filename)
 std::vector<RawPixelsClassifier::FeatureType>
 MeanStdFeaturesExtractor::Extract(const Vision::ImageRGB& image, int row, int col) const
 {
-  // Border checking
-  const int minRow = std::max(0, row-_padding);
-  const int maxRow = std::min(image.GetNumRows()-1, row+_padding+1);
-  const int minCol = std::max(0, col-_padding);
-  const int maxCol = std::min(image.GetNumCols()-1, col+_padding+1);
 
-  cv::Mat submatrix = image.get_CvMat_()(cv::Range(minRow, maxRow),
-                                         cv::Range(minCol, maxCol)); // O(1) operation
+  const cv::Mat& cvImage = image.get_CvMat_();
+  // if the image has changed
+  if (cvImage.data != _prevImageData) {
+    auto tictoc = _profiler.TicToc("MeanStdFeaturesExtractor.Extract.CreateMeanMatrix");
+    _prevImageData = cvImage.data;
 
-  DEV_ASSERT(submatrix.type() == CV_8UC3, "RawPixelsClassifier.PredictClass.WrongSumbatrixType");
-  cv::Vec3d mean, std;
-  cv::meanStdDev(submatrix, mean, std);
+    const uint kernelSize = 2*_padding + 1;
+    cv::boxFilter(cvImage, _meanImage, CV_32F, cv::Size(kernelSize, kernelSize),
+                                                        cv::Point(-1, -1), true,
+                                                        cv::BORDER_REPLICATE);
+    DEV_ASSERT(_meanImage.type() == CV_32FC3, "MeanStdFeaturesExtractor.Extract.WrongOutputType");
+    _meanMatIterator = _meanImage.begin<cv::Vec3f>();
+  }
 
-  std::vector<RawPixelsClassifier::FeatureType> toRet = {RawPixelsClassifier::FeatureType(mean[0]),
-                                                              RawPixelsClassifier::FeatureType(mean[1]),
-                                                              RawPixelsClassifier::FeatureType(mean[2]),
-                                                              RawPixelsClassifier::FeatureType(std[0]),
-                                                              RawPixelsClassifier::FeatureType(std[1]),
-                                                              RawPixelsClassifier::FeatureType(std[2])};
+  // Need to make sure that we are scanning the image the right way
+  {
+    const cv::Point iteratorPoint = _meanMatIterator.pos();
+    DEV_ASSERT(iteratorPoint.x == col, "MeanStdFeaturesExtractor.Extract.WrongIteratorX");
+    DEV_ASSERT(iteratorPoint.y == row, "MeanStdFeaturesExtractor.Extract.WrongIteratorY");
+  }
 
+  cv::Vec3f& vec = *_meanMatIterator;
+  std::vector<RawPixelsClassifier::FeatureType> toRet = {RawPixelsClassifier::FeatureType(vec[0]),
+                                                         RawPixelsClassifier::FeatureType(vec[1]),
+                                                         RawPixelsClassifier::FeatureType(vec[2])};
+  _meanMatIterator++;
   return toRet;
 
+
+  //TODO SPEEDUP can use filters like: filter(img, ones(3,3)/9) for mean and similar for std
+  //Also see the filtering operations in openCV (e.g. box filter or Gaussian Filter)
+
+//  if(_prevImageData == nullptr) {}
+//
+//  // Border checking
+//  const int minRow = std::max(0, row-_padding);
+//  const int maxRow = std::min(image.GetNumRows()-1, row+_padding+1);
+//  const int minCol = std::max(0, col-_padding);
+//  const int maxCol = std::min(image.GetNumCols()-1, col+_padding+1);
+//
+//  cv::Mat submatrix = image.get_CvMat_()(cv::Range(minRow, maxRow),
+//                                         cv::Range(minCol, maxCol)); // O(1) operation
+//
+//  DEV_ASSERT(submatrix.type() == CV_8UC3, "RawPixelsClassifier.PredictClass.WrongSumbatrixType");
+//  cv::Vec3d mean, std;
+//  cv::meanStdDev(submatrix, mean, std);
+//
+//  std::vector<RawPixelsClassifier::FeatureType> toRet = {RawPixelsClassifier::FeatureType(mean[0]),
+//                                                         RawPixelsClassifier::FeatureType(mean[1]),
+//                                                         RawPixelsClassifier::FeatureType(mean[2])};
+//
+//  return toRet;
+
+}
+
+Array2d<RawPixelsClassifier::FeatureType> MeanStdFeaturesExtractor::Extract(const Vision::ImageRGB& image) const
+{
+  auto tictoc = _profiler.TicToc("MeanStdFeaturesExtractor.Extract.SinglePassWholeImage");
+  const cv::Mat& cvImage = image.get_CvMat_();
+
+  // Calculate mean over all image
+  cv::Mat meanImage;
+  const uint kernelSize = 2*_padding + 1;
+  cv::boxFilter(cvImage, meanImage, CV_32F, cv::Size(kernelSize, kernelSize),
+                cv::Point(-1, -1), true,
+                cv::BORDER_REPLICATE);
+
+  DEV_ASSERT(meanImage.type() == CV_32FC3, "MeanStdFeaturesExtractor.Extract.WrongOutputType");
+
+  // reshaping the matrix to be n x 3 with 1 channel
+  const int newNumberOfRows = meanImage.rows * meanImage.cols;
+  cv::Mat listOfRows = meanImage.reshape(1, newNumberOfRows); // non-const, might need to be changed for the type
+  DEV_ASSERT(listOfRows.type() == CV_32FC1, "MeanStdFeaturesExtractor.Extract.WrongReshape");
+  DEV_ASSERT(listOfRows.cols == 3, "MeanStdFeaturesExtractor.Extract.Not3Columns");
+
+  // convert to FeatureType if necessary
+  if (typeid(RawPixelsClassifier::FeatureType) != typeid(float)) {
+    cv::Mat converted;
+    listOfRows.convertTo(converted, cv::DataType<RawPixelsClassifier::FeatureType>::type);
+    listOfRows = converted;
+  }
+
+  return Array2d<RawPixelsClassifier::FeatureType>(listOfRows);
 }
 
 std::vector<RawPixelsClassifier::FeatureType>
@@ -324,6 +418,12 @@ SinglePixelFeaturesExtraction::Extract(const Vision::ImageRGB& image, int row, i
                                                                  RawPixelsClassifier::FeatureType(pixel.g()),
                                                                  RawPixelsClassifier::FeatureType(pixel.b())};
   return toRet;
+}
+
+Array2d<RawPixelsClassifier::FeatureType> SinglePixelFeaturesExtraction::Extract(const Vision::ImageRGB& image) const
+{
+  PRINT_NAMED_ERROR("SinglePixelFeaturesExtraction.Extract.NotImplemeted", "Extract whole image not implemented here");
+  throw std::runtime_error("Extract whole image not implemented here");
 }
 } // namespace Cozmo
 } // namespace Anki

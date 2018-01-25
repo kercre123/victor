@@ -34,6 +34,10 @@ namespace Anki {
 
 class WeightedLogisticRegression;
 
+namespace Vision{
+class Profiler;
+}
+
 namespace Cozmo {
 
 class CozmoContext;
@@ -53,7 +57,7 @@ public:
 
   typedef float FeatureType;
 
-  RawPixelsClassifier(const CozmoContext *context);
+  RawPixelsClassifier(const CozmoContext *context, Anki::Vision::Profiler* profiler= nullptr);
 
   /*
    * Train from a set of drivable and non-drivable pixels. Data might come from OverheadMap
@@ -74,7 +78,9 @@ public:
   /*
    * Predict the class of a vector of pixels (1 is drivable, 0 is not)
    */
-  virtual std::vector<uchar> PredictClass(const std::vector<std::vector<FeatureType>>& pixels) const;
+  virtual std::vector<uchar> PredictClass(const std::vector<std::vector<FeatureType>>& features) const;
+
+  virtual std::vector<uchar> PredictClass(const Anki::Array2d<FeatureType>& features) const = 0;
 
   /*
    * Load data from two files and use it for training
@@ -91,6 +97,7 @@ protected:
   cv::Mat _trainingSamples;
   cv::Mat _trainingLabels;
   const CozmoContext* _context;
+  Anki::Vision::Profiler* _profiler;
 
   virtual bool Train(const cv::Mat& allInputs, const cv::Mat& allClasses, uint numberOfPositives) = 0;
 
@@ -149,16 +156,18 @@ public:
   using GMMRawPixelsClassifier::PredictClass;
   uchar PredictClass(const std::vector<FeatureType>& values) const override;
 
+  std::vector<uchar> PredictClass(const Anki::Array2d<FeatureType>& features) const override;
+
   bool Serialize(const char *filename) override
   {
-    PRINT_NAMED_ERROR("LRRawPixelsClassifier.SerializeNotImplemented", "Serialize is not implementd for "
+    PRINT_NAMED_ERROR("LRRawPixelsClassifier.SerializeNotImplemented", "Serialize is not implemented for "
                                                                             "LRRawPixelsClassifier");
     return false;
   }
 
   bool DeSerialize(const char *filename) override
   {
-    PRINT_NAMED_ERROR("LRRawPixelsClassifier.SerializeNotImplemented", "DeSerialize is not implementd for "
+    PRINT_NAMED_ERROR("LRRawPixelsClassifier.SerializeNotImplemented", "DeSerialize is not implemented for "
                                                                             "LRRawPixelsClassifier");
     return false;
   }
@@ -188,6 +197,8 @@ public:
 
   using GMMRawPixelsClassifier::PredictClass;
   uchar PredictClass(const std::vector<FeatureType>& values) const override;
+
+  std::vector<uchar> PredictClass(const Anki::Array2d<FeatureType>& features) const override;
 
   bool TrainFromFiles(const char *positiveDataFileName, const char *negativeDataFileName) override;
 
@@ -227,10 +238,14 @@ protected:
 class DTRawPixelsClassifier : public RawPixelsClassifier
 {
 public:
-  explicit DTRawPixelsClassifier(const Json::Value& config, const CozmoContext *context);
-  DTRawPixelsClassifier(const std::string& serializedFilename, const CozmoContext* context);
+  explicit DTRawPixelsClassifier(const Json::Value& config, const CozmoContext *context,
+                                 Anki::Vision::Profiler* profiler= nullptr);
+  DTRawPixelsClassifier(const std::string& serializedFilename, const CozmoContext* context,
+                        Anki::Vision::Profiler* profiler= nullptr);
 
   uchar PredictClass(const std::vector<FeatureType>& values) const override;
+  using RawPixelsClassifier::PredictClass;
+  std::vector<uchar> PredictClass(const Anki::Array2d<FeatureType>& features) const override;
 
   bool Serialize(const char *filename) override;
 

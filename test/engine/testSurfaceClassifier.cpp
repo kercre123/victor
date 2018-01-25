@@ -26,7 +26,10 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
-#define DISPLAY_IMAGES false
+#include <typeinfo>
+
+#define DISPLAY_IMAGES true
+#define WAIT_KEY (-1)
 
 extern Anki::Cozmo::CozmoContext *cozmoContext;
 
@@ -52,15 +55,27 @@ void visualizeClassifierOnImages(const std::string& pathToImages, const Anki::Co
     }
 
     Anki::Vision::Image mask(image.GetNumRows(), image.GetNumCols());
-    ClassifyImage(clf, extractor, image, mask);
+    // ugly but necessary
+    try {
+      auto clf2 = dynamic_cast<const Anki::Cozmo::DTRawPixelsClassifier&>(clf);
+      auto extractor2 = dynamic_cast<const Anki::Cozmo::MeanStdFeaturesExtractor&>(extractor);
+      ClassifyImage(clf2, extractor2, image, mask);
+    }
+    catch (const std::bad_cast&) {
+      // never mind, it was worth trying
+      ClassifyImage(clf, extractor, image, mask);
+    }
+
 
     cv::namedWindow("Mask", cv::WINDOW_AUTOSIZE);
     cv::imshow("Mask", mask.get_CvMat_());
     cv::namedWindow("Image", cv::WINDOW_AUTOSIZE);
     // back to BGR before visualization
     cv::cvtColor(image.get_CvMat_(), image.get_CvMat_(), cv::COLOR_RGB2BGR);
-    cv::imshow("Image", image.get_CvMat_());
-    cv::waitKey(0);
+    if (WAIT_KEY >=0) {
+      cv::imshow("Image", image.get_CvMat_());
+      cv::waitKey(WAIT_KEY);
+    }
   }
 }
 
@@ -449,7 +464,7 @@ TEST(SurfaceClassifier, DTClassifier_TestMeanStdData) {
     config["TruncatePrunedTree"] = true;
     config["Use1SERule"] = true;
     config["PositiveWeight"] = 1.0f;
-    config["OnTheFlyTrain"] = false;
+    config["OnTheFlyTrain"] = true;
     config["FileOrDirName"] = "test/overheadMap/RealImagesDesk";
   }
 
@@ -492,30 +507,30 @@ TEST(SurfaceClassifier, GroundClassifier_NoiseRemoval) {
     config["FileOrDirName"] = "config/engine/vision/groundClassifier/deskClassifier.json";
   }
 
-  Anki::Cozmo::GroundPlaneClassifier clf(config, cozmoContext);
+  Anki::Cozmo::GroundPlaneClassifier groundPlaneClassifier(config, cozmoContext);
 
   Anki::Cozmo::DebugImageList <Anki::Vision::ImageRGB> debugImageList;
   std::list<Anki::Cozmo::OverheadEdgeFrame> outEdges;
 //  const std::string path = cozmoContext->GetDataPlatform()->pathToResource(Anki::Util::Data::Scope::Resources,
 //                                                                           "test/overheadMap/RealImagesDesk");
 
-  const std::string path = "/Users/lorenzori/tmp/images_training/real_images/MikesDesk";
+  const std::string path = "/Users/lorenzori/tmp/images_training/real_images/selective_annotation";
 
   std::vector<std::string> imageFiles = Anki::Util::FileUtils::FilesInDirectory(path, true, "jpg");
+  const Anki::Cozmo::VisionPoseData poseData = populateVisionPoseData(Anki::Util::DegToRad(-30));
+  Anki::Cozmo::MeanStdFeaturesExtractor extractor(1);
+
   for (const auto& imagepath : imageFiles)
   {
-//    const std::string imagepath = Anki::Util::FileUtils::FullFilePath({path, "00000305.jpg"});
     PRINT_CH_INFO("VisionSystem", "Test.GroundPlaneClassifier.LoadImage", "Loading image %s", imagepath.c_str());
 
     Anki::Vision::ImageRGB testImg;
     ASSERT_EQ(testImg.Load(imagepath), Anki::RESULT_OK);
-    const Anki::Cozmo::VisionPoseData poseData = populateVisionPoseData(Anki::Util::DegToRad(-30));
 
-    Anki::Result result = clf.Update(testImg, poseData, debugImageList, outEdges);
+    Anki::Result result = groundPlaneClassifier.Update(testImg, poseData, debugImageList, outEdges);
     ASSERT_EQ(result, Anki::RESULT_OK);
 
     if (DISPLAY_IMAGES) {
-      Anki::Cozmo::MeanStdFeaturesExtractor extractor(1);
       for (auto& name_image : debugImageList) {
         std::string& name = name_image.first;
         Anki::Vision::ImageRGB& image = name_image.second;
@@ -524,12 +539,12 @@ TEST(SurfaceClassifier, GroundClassifier_NoiseRemoval) {
 
         cv::imshow(name, image.get_CvMat_());
       }
-      visualizeClassifierOnImages(imagepath, clf.GetClassifier(), extractor);
+      visualizeClassifierOnImages(imagepath, groundPlaneClassifier.GetClassifier(), extractor);
     }
   }
 
-  if (DISPLAY_IMAGES) {
-    cv::waitKey(0);
-  }
+//  if (DISPLAY_IMAGES) {
+//    cv::waitKey(WAIT_KEY);
+//  }
 
 }
