@@ -10,18 +10,23 @@
 *
 **/
 
+#include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToVoiceCommand.h"
+
+#include "clad/types/animationTrigger.h"
+#include "clad/types/behaviorComponent/cloudIntents.h"
+#include "coretech/common/engine/math/pose.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/compoundActions.h"
+#include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponentCloudReceiver.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToVoiceCommand.h"
 #include "engine/components/movementComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
 #include "engine/voiceCommands/voiceCommandComponent.h"
-#include "coretech/common/engine/math/pose.h"
-#include "clad/types/animationTrigger.h"
-
 
 namespace Anki {
 namespace Cozmo {
@@ -31,6 +36,7 @@ namespace Cozmo {
 BehaviorReactToVoiceCommand::BehaviorReactToVoiceCommand(const Json::Value& config)
 : ICozmoBehavior(config)
 {
+  SetRespondToCloudIntent(CloudIntent::TriggerDetected);
 }
 
 

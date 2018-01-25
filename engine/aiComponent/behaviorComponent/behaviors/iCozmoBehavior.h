@@ -219,7 +219,11 @@ protected:
                   GetIDStr().c_str(), _debugStateName.c_str(), inName.c_str());
     _debugStateName = inName;
   }
-  
+
+  // set the cloud intent that this responds to. Only valid to call this before Init is called (i.e. from the
+  // constructor). Normally this can be specified in json, but in some cases it may be more desirable to set
+  // it from code
+  void SetRespondToCloudIntent(CloudIntent intent);
   
   virtual void OnEnteredActivatableScopeInternal() override;
   virtual void OnLeftActivatableScopeInternal() override;
@@ -520,7 +524,8 @@ private:
   // Whether or not the behavior is always be streamlined (set via json)
   bool _alwaysStreamline = false;
   
-
+  bool _initHasBeenCalled = false;
+  
   
   ///////
   // Tracking subscribe tags for initialization
