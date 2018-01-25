@@ -637,7 +637,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _SlidePrefabs: []
   _SwipeContainer: {fileID: 224167029939247450}
-  _PageIndicatorPrefab: {fileID: 11435474, guid: 21499c84522ef45ed93f569f90663b16,
+  _PageIndicatorPrefab: {fileID: 114910634087720408, guid: 82dfce5417efb44718fbf663c74e31d6,
     type: 2}
   _CacheSlides: 0
 --- !u!114 &114568815057204096
@@ -694,6 +694,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _MaskImage: {fileID: 114941665646867230}
+  _GlintRateModifier: 8
+  _GlintSpeedModifier: 5
 --- !u!114 &114941665646867230
 MonoBehaviour:
   m_ObjectHideFlags: 1

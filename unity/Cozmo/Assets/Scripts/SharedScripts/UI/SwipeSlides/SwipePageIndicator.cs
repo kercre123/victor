@@ -50,17 +50,21 @@ public class SwipePageIndicator : MonoBehaviour {
   private int _PageCount;
 
   private void Awake() {
-    _NextButton.Initialize(() => {
-      if (OnNextButton != null) {
-        OnNextButton();
-      }
-    }, "next_button", "swipe_page_indicator");
+    if (_NextButton != null) {
+      _NextButton.Initialize(() => {
+        if (OnNextButton != null) {
+          OnNextButton();
+        }
+      }, "next_button", "swipe_page_indicator");
+    }
 
-    _BackButton.Initialize(() => {
-      if (OnBackButton != null) {
-        OnBackButton();
-      }
-    }, "back_button", "swipe_page_indicator");
+    if (_BackButton != null) {
+      _BackButton.Initialize(() => {
+        if (OnBackButton != null) {
+          OnBackButton();
+        }
+      }, "back_button", "swipe_page_indicator");
+    }
   }
 
   public void SetPageCount(int pageCount) {
@@ -87,6 +91,11 @@ public class SwipePageIndicator : MonoBehaviour {
   public void SetCurrentPage(int currentPage) {
     if (currentPage < 0 || currentPage >= _PageCount) {
       DAS.Error("SwipePageIndicator.SetCurrentPage", "index out of range");
+      return;
+    }
+
+    if (_BackButton == null || _NextButton == null || _BackArrowImage == null || _NextArrowImage == null) {
+      DAS.Error("SwipePageIndicator.SetCurrentPage", "Back or Next button was not properly set up in prefab!");
       return;
     }
 
