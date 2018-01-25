@@ -578,14 +578,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     Result RobotAudioKeyFrame::SetMembersFromFlatBuf(const CozmoAnim::RobotAudio* audioKeyframe, const std::string& animNameDebug)
     {
       f32 volume = audioKeyframe->volume();
-      bool hasAlts = audioKeyframe->hasAlts();;
-
-      if(audioKeyframe->audioName()->size() < 1) {
-        PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromFlatBuf.MissingAudioName",
-                          "%s: No 'audioName' field in FlatBuffers frame.",
-                          animNameDebug.c_str());
-        return RESULT_FAIL;
-      }
+      bool hasAlts = audioKeyframe->hasAlts();
 
       auto audioEventData = audioKeyframe->audioEventId();
       auto* probabilities = audioKeyframe->probability();
@@ -646,13 +639,6 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       JsonTools::GetValueOptional(jsonRoot, "volume", volume);
       bool hasAlts = false;
       JsonTools::GetValueOptional(jsonRoot, "hasAlts", hasAlts);
-      
-      if(!jsonRoot.isMember("audioName")) {
-        PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromJson.MissingAudioName",
-                          "%s: No 'audioName' field in Json frame.",
-                          animNameDebug.c_str());
-        return RESULT_FAIL;
-      }
 
       f32 probability = 1.0f;
 
