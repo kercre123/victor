@@ -26,7 +26,6 @@
 #include <string.h>
 
 #define LOG_CHANNEL "Keyboard"
-#define LOG_INFO(...) PRINT_CH_INFO(LOG_CHANNEL, ##__VA_ARGS__)
 
 namespace Anki {
   namespace Cozmo {

@@ -40,7 +40,6 @@
 #include <webots/Keyboard.hpp>
 
 #define LOG_CHANNEL "Keyboard"
-#define LOG_INFO(...) PRINT_CH_INFO(LOG_CHANNEL, ##__VA_ARGS__)
 
 // CAUTION: If enabled, you can mess up stuff stored on the robot's flash.
 #define ENABLE_NVSTORAGE_WRITE 0

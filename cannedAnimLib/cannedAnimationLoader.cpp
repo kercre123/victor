@@ -27,11 +27,7 @@
 #include "util/time/universalTime.h"
 #include <sys/stat.h>
 
-
 #define LOG_CHANNEL   "RobotDataLoader"
-#define LOG_INFO(...)  PRINT_CH_INFO(LOG_CHANNEL, ##__VA_ARGS__)
-#define LOG_ERROR      PRINT_NAMED_ERROR
-#define LOG_WARNING    PRINT_NAMED_WARNING
 
 namespace Anki {
 namespace Cozmo {

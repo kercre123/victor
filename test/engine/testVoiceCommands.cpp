@@ -28,7 +28,6 @@
 #include <functional>
 
 #define LOG_CHANNEL "VoiceCommands"
-#define LOG_INFO(...) PRINT_CH_INFO(LOG_CHANNEL, ##__VA_ARGS__)
 
 extern Anki::Cozmo::CozmoContext* cozmoContext;
 
