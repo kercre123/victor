@@ -15,6 +15,7 @@
 
 #include <string>
 #include <vector>
+#include <mutex>
 
 #include "util/export/export.h"
 
@@ -54,6 +55,25 @@ public:
   const std::string& getConsoleVarsTemplate();
   const std::string& getLuaTemplate();
   const std::string& getMetaGameJsonTemplate();
+
+  enum RequestType
+  {
+    ConsoleVarList,
+  };
+
+  struct Request
+  {
+    Request(RequestType rt, const std::string& param1, const std::string& param2);
+    RequestType _requestType;
+    std::string _param1;
+    std::string _param2;
+    std::string _result;
+    bool        _resultReady; // Result is ready for use by the webservice thread
+    bool        _done;        // Result has been used and now it's OK for main thread to delete this item
+  };
+
+  void AddRequest(Request* requestPtr);
+  std::mutex _requestMutex;
 
 private:
 
@@ -95,6 +115,7 @@ private:
   std::string _metaGameJsonHTMLTemplate;
   std::string _luaHTMLTemplate;
 
+  std::vector<Request*> _requests;
 };
 
 } // namespace WebService

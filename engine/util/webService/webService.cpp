@@ -13,9 +13,6 @@
 
 #include "webService.h"
 
-#include <cassert>
-#include <string>
-
 #if USE_DAS
 #include "DAS/DAS.h"
 #endif
@@ -27,10 +24,19 @@
 #include "util/logging/logging.h"
 #include "util/console/consoleSystem.h"
 #include "util/console/consoleChannel.h"
+#include "util/helpers/ankiDefines.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/string/stringUtils.h"
 
 #include "json/json.h"
+#if defined(ANKI_PLATFORM_ANDROID)
+#include <android/log.h>
+#endif
+
+#include <cassert>
+#include <string>
+#include <chrono>
+#include <thread>
 
 // Used websockets codes, see websocket RFC pg 29
 // http://tools.ietf.org/html/rfc6455#section-5.2
@@ -162,6 +168,9 @@ LogHandler(struct mg_connection *conn, void *cbdata)
 static int
 ConsoleVarsUI(struct mg_connection *conn, void *cbdata)
 {
+#if defined(ANKI_PLATFORM_ANDROID)
+  __android_log_print(ANDROID_LOG_VERBOSE, "SOME_TAG", "ConsoleVarsUI:  Start of function");
+#endif
   std::string style;
   std::string script;
   std::string html;
@@ -171,8 +180,11 @@ ConsoleVarsUI(struct mg_connection *conn, void *cbdata)
 
   // Variables
 
-  const Anki::Util::ConsoleSystem::VariableDatabase& varDatabase = consoleSystem.GetVariableDatabase();
+  const Anki::Util::ConsoleSystem::VariableDatabase varDatabase = consoleSystem.GetVariableDatabase();
 
+#if defined(ANKI_PLATFORM_ANDROID)
+  __android_log_print(ANDROID_LOG_VERBOSE, "SOME_TAG", "ConsoleVarsUI:  About to enter var database loop");
+#endif
   for (Anki::Util::ConsoleSystem::VariableDatabase::const_iterator it = varDatabase.begin();
        it != varDatabase.end();
        ++it) {
@@ -183,6 +195,10 @@ ConsoleVarsUI(struct mg_connection *conn, void *cbdata)
       cat = cat.substr(0, dot);
     }
 
+    if (category_html.find(cat) == category_html.end()) {
+      category_html[cat] = "";
+    }
+
     if (it->second->IsToggleable()) {
       category_html[cat] += "                <div>\n";
       category_html[cat] += "                    <label for=\""+label+"\">"+label+"</label>\n";
@@ -191,8 +207,8 @@ ConsoleVarsUI(struct mg_connection *conn, void *cbdata)
       category_html[cat] += "                <br>\n";
     }
     else {
-      char sliderRange[100];
-      char inputRange[100];
+      char sliderRange[200];
+      char inputRange[200];
 
       if (it->second->IsIntegerType()) {
         if (it->second->IsSignedType()) {
@@ -239,7 +255,11 @@ ConsoleVarsUI(struct mg_connection *conn, void *cbdata)
       category_html[cat] += "                  <input type=\"text\" id=\""+label+"_amount\" class=\"amount\" "+inputRange+" style=\"margin: 0.25em; border:1; font-weight:bold;\">\n";
       category_html[cat] += "                </div><br>\n";
     }
+#if defined(ANKI_PLATFORM_ANDROID)
+    __android_log_print(ANDROID_LOG_VERBOSE, "SOME_TAG", "%s", category_html[cat].c_str());
+#endif
   }
+#if 0
 
   // Functions
 
@@ -268,7 +288,11 @@ ConsoleVarsUI(struct mg_connection *conn, void *cbdata)
       category_html[cat] += "                </div><br>\n";
     }
   }
+#endif
 
+#if defined(ANKI_PLATFORM_ANDROID)
+  __android_log_print(ANDROID_LOG_VERBOSE, "SOME_TAG", "ConsoleVarsUI:  About to enter HTML generation loop");
+#endif
   for (std::map<std::string, std::string>::const_iterator it = category_html.begin();
        it != category_html.end();
        ++it) {
@@ -278,14 +302,19 @@ ConsoleVarsUI(struct mg_connection *conn, void *cbdata)
     html += "            </div>\n";
   }
 
+#if defined(ANKI_PLATFORM_ANDROID)
+  __android_log_print(ANDROID_LOG_VERBOSE, "SOME_TAG", "ConsoleVarsUI:  About to get webservice context");
+#endif
   struct mg_context *ctx = mg_get_context(conn);
   Anki::Cozmo::WebService::WebService* that = static_cast<Anki::Cozmo::WebService::WebService*>(mg_get_user_data(ctx));
-
   std::string page = that->getConsoleVarsTemplate();
 
   std::string tmp;
   size_t pos;
 
+#if defined(ANKI_PLATFORM_ANDROID)
+  __android_log_print(ANDROID_LOG_VERBOSE, "SOME_TAG", "ConsoleVarsUI:  About to inject style/script to template");
+#endif
   tmp = "/* -- generated style -- */";
   pos = page.find(tmp);
   if (pos != std::string::npos) {
@@ -298,12 +327,18 @@ ConsoleVarsUI(struct mg_connection *conn, void *cbdata)
     page = page.replace(pos, tmp.length(), script);
   }
 
+#if defined(ANKI_PLATFORM_ANDROID)
+  __android_log_print(ANDROID_LOG_VERBOSE, "SOME_TAG", "ConsoleVarsUI:  About to inject HTML to template");
+#endif
   tmp = "<!-- generated html -->";
   pos = page.find(tmp);
   if (pos != std::string::npos) {
     page = page.replace(pos, tmp.length(), html);
   }
 
+#if defined(ANKI_PLATFORM_ANDROID)
+  __android_log_print(ANDROID_LOG_VERBOSE, "SOME_TAG", "ConsoleVarsUI:  About to send results");
+#endif
   mg_printf(conn,
             "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
             "close\r\n\r\n");
@@ -389,21 +424,27 @@ ConsoleVarsList(struct mg_connection *conn, void *cbdata)
     }
   }
 
-  const Anki::Util::ConsoleSystem& consoleSystem = Anki::Util::ConsoleSystem::Instance();
-  const Anki::Util::ConsoleSystem::VariableDatabase& varDatabase = consoleSystem.GetVariableDatabase();
+  using namespace Anki::Cozmo::WebService;
+  WebService::Request* requestPtr = new WebService::Request(WebService::RequestType::ConsoleVarList, key, "");
+
+  struct mg_context *ctx = mg_get_context(conn);
+  Anki::Cozmo::WebService::WebService* that = static_cast<Anki::Cozmo::WebService::WebService*>(mg_get_user_data(ctx));
+
+  that->AddRequest(requestPtr);
+
+  // Now wait until the main thread processes the request
+  do
+  {
+    std::this_thread::sleep_for(std::chrono::milliseconds(120));
+  } while (!requestPtr->_resultReady);
 
   mg_printf(conn,
             "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
             "close\r\n\r\n");
+  mg_printf(conn, "%s", requestPtr->_result.c_str());
 
-  for (Anki::Util::ConsoleSystem::VariableDatabase::const_iterator it = varDatabase.begin();
-       it != varDatabase.end();
-       ++it) {
-    std::string label = it->second->GetID();
-    if (key.length() == 0 || Anki::Util::StringCaseInsensitiveEquals(label.substr(0, key.length()), key)) {
-      mg_printf(conn, "%s<br>\n", label.c_str());
-    }
-  }
+  // Now mark the request as done so the main thread can delete it
+  requestPtr->_done = true;
 
   return 1;
 }
@@ -480,6 +521,16 @@ ConsoleFuncCall(struct mg_connection *conn, void *cbdata)
             "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
             "close\r\n\r\n");
   return 1;
+}
+
+Anki::Cozmo::WebService::WebService::Request::Request(RequestType rt, const std::string& param1, const std::string& param2)
+{
+  _requestType = rt;
+  _param1 = param1;
+  _param2 = param2;
+  _result = "";
+  _resultReady = false;
+  _done = false;
 }
 
 #if 0 //////// temp
@@ -780,11 +831,68 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform)
   
   const std::string& metaGameJsonTemplate = platform->pathToResource(Util::Data::Scope::Resources, "webserver/json.html");
   _metaGameJsonHTMLTemplate = Anki::Util::StringFromContentsOfFile(metaGameJsonTemplate);
+
+  _requests.clear();
 }
 
+
+// This is called from the main engine thread
 void WebService::Update()
 {
-  //PRINT_NAMED_INFO("WebService", "Calling Update on WebService");
+  std::lock_guard<std::mutex> lock(_requestMutex);
+
+  // First pass:  Delete any completely-finished requests from the list (and delete the requests themselves)
+  size_t destIndex = 0;
+  for (size_t srcIndex = 0; srcIndex < _requests.size(); srcIndex++)
+  {
+    Request* requestPtr = _requests[srcIndex];
+    if (requestPtr->_done)
+    {
+      delete requestPtr;
+    }
+    else
+    {
+      if (srcIndex != destIndex)
+      {
+        _requests[destIndex] = _requests[srcIndex];
+      }
+      destIndex++;
+    }
+  }
+  _requests.resize(destIndex);
+
+  const Anki::Util::ConsoleSystem& consoleSystem = Anki::Util::ConsoleSystem::Instance();
+  const Anki::Util::ConsoleSystem::VariableDatabase varDatabase = consoleSystem.GetVariableDatabase();
+
+  // Second pass:  Process any requests that haven't been processed yet
+  for (const auto requestPtr : _requests)
+  {
+    if (!requestPtr->_resultReady)
+    {
+      switch (requestPtr->_requestType)
+      {
+        case ConsoleVarList:
+          {
+            const std::string& key = requestPtr->_param1;
+            const auto keyLen = key.length();
+
+            for (Anki::Util::ConsoleSystem::VariableDatabase::const_iterator it = varDatabase.begin();
+                 it != varDatabase.end(); ++it)
+            {
+              std::string label = it->second->GetID();
+              if (keyLen == 0 || Anki::Util::StringCaseInsensitiveEquals(label.substr(0, keyLen), key))
+              {
+                requestPtr->_result += label.c_str();
+                requestPtr->_result += "<br>\n";
+              }
+            }
+          }
+          break;
+        // todo: the other cases
+      }
+      requestPtr->_resultReady = true;
+    }
+  }
 }
 
 void WebService::Stop()
@@ -795,6 +903,14 @@ void WebService::Stop()
   }
   _ctx = nullptr;
 }
+
+
+void WebService::AddRequest(Request* requestPtr)
+{
+  std::lock_guard<std::mutex> lock(_requestMutex);
+  _requests.push_back(requestPtr);
+}
+
 
 #if 0
 void WebService::SendWebSocketError(struct mg_connection* conn, const std::string& str) const
