@@ -286,7 +286,7 @@ def pull_string(string, context):
 # where to import and export that list from and to, and where to pull in localization data
 
 def get_file_path(base_file_name, language):
-    return (base_file_name + '_' + language + '.json').lower()
+    return base_file_name + '_' + language.lower() + '.json'
 
 def run_translation_target(target, loc_table):
     with open(target['source_file_name'], encoding='utf8') as input_file:
@@ -312,7 +312,7 @@ def execute_translations_on_project(project, source_language, loc_table):
             targets.append(target_entry)
 
     for target in targets:
-        print('translating ' + project['project_name'] + ' ' + target['source_language'] + ' -> ' + target['target_language'])
+        print('translating ' + project['project_name'] + ' ' + source_project_file + ' -> ' + target['target_file_name'])
         if not run_translation_target(target, loc_table):
             return False
 
@@ -328,6 +328,7 @@ def scan_project(project, source_language, target_folder):
     json_out = {}
     output_list = []
 
+    print('scanning ' + project['project_name'] + ' ' + source_project_file)
     with open(source_project_file, encoding='utf8') as input_file:
         json_contents = json.load(input_file)
         if 'ProjectJSON' in json_contents:
