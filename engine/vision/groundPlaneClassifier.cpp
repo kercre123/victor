@@ -120,7 +120,7 @@ Result GroundPlaneClassifier::Update(const Vision::ImageRGB& image, const Vision
                                      std::list<OverheadEdgeFrame>& outEdges)
 {
 
-  _profiler.Tic("GroundPlaneClassifier.Update");
+  auto tictoc = _profiler.TicToc("GroundPlaneClassifier.Update");
   // nothing to do here if there's no ground plane visible
   if (! poseData.groundPlaneVisible) {
     PRINT_CH_DEBUG("VisionSystem", "GroundPlaneClassifier.Update.GroundPlane", "Ground plane is not visible");
@@ -144,6 +144,8 @@ Result GroundPlaneClassifier::Update(const Vision::ImageRGB& image, const Vision
   _profiler.Tic("GroundPlaneClassifier.ClassifyImage");
   ClassifyImage(*_classifier.get(), *_extractor.get(), groundPlaneImage, rawClassifiedImage, &_profiler);
   _profiler.Toc("GroundPlaneClassifier.ClassifyImage");
+
+  // STEP 2.5: Postprocess the classified mask (e.g. smoothing, noise removal)
   const Vision::Image classifiedMask = processClassifiedImage(rawClassifiedImage);
 
   // STEP 3: Find leading edge in the classified mask (i.e. closest edge of obstacle to robot)
@@ -245,7 +247,6 @@ Result GroundPlaneClassifier::Update(const Vision::ImageRGB& image, const Vision
   outEdges.emplace_back(std::move(edgeFrame));
 
   PRINT_CH_DEBUG("VisionSystyem", "GroundPlaneClassifier.Update.Stopping","");
-  _profiler.Toc("GroundPlaneClassifier.Update");
   return RESULT_OK;
 }
 
