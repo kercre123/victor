@@ -17,6 +17,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionFacePositionUpdated.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionFrustration.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionInNeedsBracket.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionMotionDetected.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionNegate.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectInitialDetection.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectMoved.h"
@@ -81,6 +82,11 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
     case BEIConditionType::InNeedsBracket:
     {
       strategy = std::make_shared<ConditionInNeedsBracket>(config);
+      break;
+    }
+    case BEIConditionType::MotionDetected:
+    {
+      strategy = std::make_shared<ConditionMotionDetected>(config);
       break;
     }
     case BEIConditionType::ObjectInitialDetection:
