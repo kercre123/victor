@@ -2,7 +2,7 @@
   "InitialVisionModes" :
   {
     // If a vision mode is not listed, it will be left in its default state
-    "DetectingMarkers"           : true,
+    "DetectingMarkers"           : false,
     "DetectingFaces"             : false,
     "DetectingPets"              : false,
     "DetectingMotion"            : false,
@@ -15,7 +15,7 @@
     "DetectingLaserPoints"       : false,
     "ComputingStatistics"        : false,
     "BuildingOverheadMap"        : false,
-    "DetectingVisualObstacles"   : false
+    "DetectingVisualObstacles"   : true
   },
   
   "InitialModeSchedules" :
@@ -103,6 +103,6 @@
     "Use1SERule"          : true,
     "PositiveWeight"      : 1.0,
     "OnTheFlyTrain"       : false,
-    "FileOrDirName"       : "config/engine/vision/groundClassifier/deskClassifier.json"
+    "FileOrDirName"       : "config/engine/vision/groundClassifier/reflectiveMazeClassifier.json"
   }
 }

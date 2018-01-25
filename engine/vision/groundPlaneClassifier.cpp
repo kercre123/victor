@@ -353,31 +353,6 @@ MeanStdFeaturesExtractor::Extract(const Vision::ImageRGB& image, int row, int co
   _meanMatIterator++;
   return toRet;
 
-
-  //TODO SPEEDUP can use filters like: filter(img, ones(3,3)/9) for mean and similar for std
-  //Also see the filtering operations in openCV (e.g. box filter or Gaussian Filter)
-
-//  if(_prevImageData == nullptr) {}
-//
-//  // Border checking
-//  const int minRow = std::max(0, row-_padding);
-//  const int maxRow = std::min(image.GetNumRows()-1, row+_padding+1);
-//  const int minCol = std::max(0, col-_padding);
-//  const int maxCol = std::min(image.GetNumCols()-1, col+_padding+1);
-//
-//  cv::Mat submatrix = image.get_CvMat_()(cv::Range(minRow, maxRow),
-//                                         cv::Range(minCol, maxCol)); // O(1) operation
-//
-//  DEV_ASSERT(submatrix.type() == CV_8UC3, "RawPixelsClassifier.PredictClass.WrongSumbatrixType");
-//  cv::Vec3d mean, std;
-//  cv::meanStdDev(submatrix, mean, std);
-//
-//  std::vector<RawPixelsClassifier::FeatureType> toRet = {RawPixelsClassifier::FeatureType(mean[0]),
-//                                                         RawPixelsClassifier::FeatureType(mean[1]),
-//                                                         RawPixelsClassifier::FeatureType(mean[2])};
-//
-//  return toRet;
-
 }
 
 Array2d<RawPixelsClassifier::FeatureType> MeanStdFeaturesExtractor::Extract(const Vision::ImageRGB& image) const

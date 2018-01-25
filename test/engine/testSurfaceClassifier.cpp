@@ -29,7 +29,7 @@
 #include <typeinfo>
 
 #define DISPLAY_IMAGES true
-#define WAIT_KEY (-1)
+#define WAIT_KEY (0)
 
 extern Anki::Cozmo::CozmoContext *cozmoContext;
 
@@ -542,9 +542,55 @@ TEST(SurfaceClassifier, GroundClassifier_NoiseRemoval) {
       visualizeClassifierOnImages(imagepath, groundPlaneClassifier.GetClassifier(), extractor);
     }
   }
+}
 
-//  if (DISPLAY_IMAGES) {
-//    cv::waitKey(WAIT_KEY);
-//  }
+/*
+ * Test decision tree classifier on reflective maze
+ */
+TEST(SurfaceClassifier, DTClassifier_TestReflectiveDesk) {
 
+  Json::Value config;
+  // populate the Json file
+  {
+    config["MaxDepth"] = 10;
+    config["MinSampleCount"] = 10;
+    config["TruncatePrunedTree"] = true;
+    config["Use1SERule"] = true;
+    config["PositiveWeight"] = 10.0f;
+  }
+
+  Anki::Cozmo::DTRawPixelsClassifier clf(config, cozmoContext);
+
+  const std::string path = cozmoContext->GetDataPlatform()->pathToResource(Anki::Util::Data::Scope::Resources,
+                                                                           "test/overheadMap/ReflectiveDesk");
+
+  PRINT_NAMED_INFO("TestSurfaceClassifier.TrainingFromFile.PrintPath",
+                   "Path to training data is %s", path.c_str());
+
+  const std::string positivePath = Anki::Util::FileUtils::FullFilePath({path, "positivePixels.txt"});
+  const std::string negativePath = Anki::Util::FileUtils::FullFilePath({path, "negativePixels.txt"});
+
+  float error = std::numeric_limits<float>::max();
+  checkClassifier(clf, positivePath, negativePath, error, 0.25, 0.01);
+
+  // serialize the classifier
+  const std::string serializeFileName = Anki::Util::FileUtils::FullFilePath({path, "reflectiveMazeClassifier.json"});
+  bool result = clf.Serialize(serializeFileName.c_str());
+  ASSERT_TRUE(result);
+
+  // deserialize the classifier
+  Anki::Cozmo::DTRawPixelsClassifier clf2(serializeFileName, cozmoContext);
+  {
+    cv::Mat trainingSamples, trainingLabels;
+    clf.GetTrainingData(trainingSamples, trainingLabels);
+    clf2.SetTrainingData(trainingSamples, trainingLabels);
+  }
+  float error2 = std::numeric_limits<float>::max();
+  checkClassifier(clf2, "", "", error2, 0.25, 0.01);
+  ASSERT_EQ(error, error2);
+
+  if (DISPLAY_IMAGES) {
+    auto extractor = Anki::Cozmo::MeanStdFeaturesExtractor(3);
+    visualizeClassifierOnImages("/Users/lorenzori/tmp/images_training/real_images/reflectiveMaze", clf2, extractor);
+  }
 }
