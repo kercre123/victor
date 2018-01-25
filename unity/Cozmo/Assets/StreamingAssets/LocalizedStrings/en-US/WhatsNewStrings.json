@@ -89,5 +89,29 @@
   },
   "whatsNew.CodeLab_RemoteControlRacer.description": {
     "translation": "Vroom, vroom! Drive Cozmo at top speed."
+  },
+  "whatsNew.CodeLab_ComplimentGenerator.title": {
+    "translation": "Compliment Generator"
+  },
+  "whatsNew.CodeLab_ComplimentGenerator.description": {
+    "translation": "Cozmo's got something nice to say!"
+  },
+  "whatsNew.CodeLab_PotOGoldDetector.title": {
+    "translation": "Pot o' Gold Detector"
+  },
+  "whatsNew.CodeLab_PotOGoldDetector.description": {
+    "translation": "The ultimate St. Paddy’s treasure hunt!"
+  },
+  "whatsNew.CodeLab_DrivingInCircles.title": {
+    "translation": "Driving in Circles"
+  },
+  "whatsNew.CodeLab_DrivingInCircles.description": {
+    "translation": "Circle up for Pi Day!"
+  },
+  "whatsNew.CodeLab_PaddleBall.title": {
+    "translation": "Paddle Ball"
+  },
+  "whatsNew.CodeLab_PaddleBall.description": {
+    "translation": "Challenge Cozmo to a match. Be sure to use your head!"
   }
 }
