@@ -56,6 +56,7 @@ _TRANSLATE_CODELAB_BLACKLIST=${_TOPLEVEL}/tools/scratch/autotranslate/blacklist.
 _TRANSLATED_CODELAB_PROJECT_CONFIG_FILE=${_STREAMING_ASSETS_DIR}/Scratch/featured-projects.json
 _TRANSLATED_CODELAB_PROJECTS_DIR=${_STREAMING_ASSETS_DIR}/Scratch/featuredProjects
 _ENGLISH_LOCALIZATION_STRINGS_FILE=${_STREAMING_ASSETS_DIR}/LocalizedStrings/en-US/CodeLabFeaturedContentStrings.json
+_SMARTLING_PARSE_PR_RESPONSE_SCRIPT=${_TOPLEVEL}/tools/smartling/smartling-parse-pr-response.py
 
 _GIT_BRANCH_NAME=update-localization-codelab-english-json
 _GIT_COZMO_URI=https://$ANKI_SMARTLING_ACCESS_TOKEN:x-oauth-basic@github.com/anki/cozmo-one.git
@@ -93,7 +94,7 @@ if [ "$_status" ]; then
 
     pr_url=$($CURL -H "Content-Type: application/json" -X POST -d \
     '{"title": "$_GIT_BRANCH_NAME","head": "$_GIT_BRANCH_NAME","base": "master"}' \
-    $_GIT_COZMO_PR_URI | $PYTHON -c "import sys, json; print json.load(sys.stdin)['html_url']")
+    $_GIT_COZMO_PR_URI | $PYTHON3 $_SMARTLING_PARSE_PR_RESPONSE_SCRIPT)
 
     send_slack_message "cozmo-one PR for Smartling localized strings: $pr_url" "good" 0
     popd
