@@ -191,4 +191,4 @@ Most developers shouldn't have to do this. Better to ask someone in hardware or 
 
 ## Having trouble?
 
-Check out the [Frequently Asked Questions](docs/faq.md) page. When you get new questions answered, consider adding them to the list to help others!
+Check out the [Frequently Asked Questions](docs/FAQ.md) page. When you get new questions answered, consider adding them to the list to help others!
