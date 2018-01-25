@@ -2,7 +2,7 @@
   "InitialVisionModes" :
   {
     // If a vision mode is not listed, it will be left in its default state
-    "DetectingMarkers"           : false,
+    "DetectingMarkers"           : true,
     "DetectingFaces"             : false,
     "DetectingPets"              : false,
     "DetectingMotion"            : false,
@@ -15,7 +15,7 @@
     "DetectingLaserPoints"       : false,
     "ComputingStatistics"        : false,
     "BuildingOverheadMap"        : false,
-    "DetectingVisualObstacles"   : true
+    "DetectingVisualObstacles"   : false
   },
   
   "InitialModeSchedules" :
