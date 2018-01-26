@@ -216,6 +216,13 @@ void ConsoleSystem::Register( const std::string& keystring, IConsoleFunction* fu
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
+void ConsoleSystem::Unregister( const std::string& keystring )
+{
+  const StringID key = GetSearchKey( keystring );
+  editvars_.erase( editvars_.find( key ) );
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
 IConsoleVariable* ConsoleSystem::FindVariable( const char* name )
 {
   IConsoleVariable* var = NULL;
