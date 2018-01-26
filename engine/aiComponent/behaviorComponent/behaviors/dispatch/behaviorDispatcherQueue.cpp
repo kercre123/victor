@@ -31,8 +31,7 @@ BehaviorDispatcherQueue::BehaviorDispatcherQueue(const Json::Value& config)
                  "No Behaviors key found");
   if(!behaviorArray.isNull()) {
     for(const auto& behaviorIDStr: behaviorArray) {
-      const BehaviorID& behaviorID = BehaviorTypesWrapper::BehaviorIDFromString(behaviorIDStr.asString());
-      IBehaviorDispatcher::AddPossibleDispatch(behaviorID);
+      IBehaviorDispatcher::AddPossibleDispatch(behaviorIDStr.asString());
     }
   }
 }

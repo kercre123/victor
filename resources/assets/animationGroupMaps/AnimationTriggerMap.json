@@ -2211,6 +2211,10 @@
     {
       "CladEvent": "ObservingIdleWithHeadLookingStraight",
       "AnimName": "ag_keepalive_eyesandhead_loop_01"
+    },
+    {
+      "CladEvent": "ListeningOnCharger",
+      "AnimName": "ag_reacttocharger"
     }
     
   ]

@@ -2,6 +2,7 @@
   "behaviorID" : "HighLevelAI",
   "behaviorClass" : "HighLevelAI",
 
+  "initialState": "ObservingOnCharger",
 
   "states": [
     {
@@ -83,9 +84,8 @@
         {
           "to": "DriveOffChargerIntoObserving",
           "condition": {
-            "conditionType": "InNeedsBracket",
-            "need": "Energy",
-            "needBracket": "Critical"
+            "conditionType": "TimerInRange",
+            "begin_s": 600.0
           }
         },
         {
@@ -229,6 +229,15 @@
 
     {
       "from": "ReturningToCharger",
+      "interruptingTransitions": [
+        {
+          "to": "Observing",
+          "condition": {
+            "conditionType": "OffTreadsState",
+            "targetState": "InAir"
+          }
+        }
+      ],
       "exitTransitions": [
         {
           "to": "ObservingOnChargerRecentlyPlaced",

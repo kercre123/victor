@@ -279,7 +279,9 @@ ICozmoBehavior::~ICozmoBehavior()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::InitInternal()
-{  
+{
+  _initHasBeenCalled = true;
+
   {
     for( auto& strategy : _wantsToBeActivatedConditions ) {
       strategy->Init(GetBEI());
@@ -320,6 +322,7 @@ void ICozmoBehavior::InitInternal()
 
         // we need to initlaize the anon behaviors as well
         resultPair.first->second->Init(GetBEI());
+        resultPair.first->second->InitBehaviorOperationModifiers();
       }
       else
       {
@@ -362,6 +365,25 @@ void ICozmoBehavior::InitBehaviorOperationModifiers()
   GetBehaviorOperationModifiers(_operationModifiers);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::SetRespondToCloudIntent(CloudIntent intent)
+{
+  if( ANKI_VERIFY( !_initHasBeenCalled,
+                   "ICozmoBehavior.SetRespondToCloudIntent.AfterInit",
+                   "behavior '%s' trying to set cloud intent to '%s' after init has already been called",
+                   GetIDStr().c_str(),
+                   CloudIntentToString(intent)) ) {
+    if( _respondToCloudIntent != CloudIntent::Count ) {
+      PRINT_NAMED_WARNING("ICozmoBehavior.SetRespondToCloudIntent.ReplaceIntent",
+                          "behavior '%s' setting cloud intent to '%s', but it was previously '%s'",
+                          GetIDStr().c_str(),
+                          CloudIntentToString(intent),
+                          CloudIntentToString(_respondToCloudIntent));
+    }
+
+    _respondToCloudIntent = intent;
+  }
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::SubscribeToTags(std::set<GameToEngineTag> &&tags)

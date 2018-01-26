@@ -119,6 +119,8 @@ void BehaviorComponentCloudReceiver::ClearIntentIfPending(CloudIntent intent)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorComponentCloudReceiver::AddPendingIntent(std::string&& intent)
 {
+  PRINT_CH_INFO("BehaviorSystem","BehaviorComponentCloudReceiver.AddPendingIntent","'%s'", intent.c_str());
+  
     std::lock_guard<std::mutex> lock{_mutex};
     // handle message here; wrap other calls that access/modify
     // fields modified here in a mutex lock as well

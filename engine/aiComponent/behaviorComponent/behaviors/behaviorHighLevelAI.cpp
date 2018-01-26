@@ -46,7 +46,6 @@ constexpr const float kGoToSleepTimeout_s = 60.0f * 4;
 constexpr const u32 kMinFaceAgeToAllowSleep_ms = 5000;
 constexpr const u32 kNeedsToChargeTime_ms = 1000 * 60 * 5;
 constexpr const float kMaxFaceDistanceToSocialize_mm = 1000.0f;
-constexpr const float kInitialHeadAngle_deg = 20.0f;
 
 constexpr const char* kStateConfgKey = "states";
 constexpr const char* kStateNameConfgKey = "name";
@@ -227,6 +226,17 @@ BehaviorHighLevelAI::BehaviorHighLevelAI(const Json::Value& config)
   PRINT_CH_INFO("Behaviors", "HighLevelAI.StatesCreated",
                 "Created %zu states",
                 _states->size());
+
+  const std::string& initialStateStr = JsonTools::ParseString(config, "initialState", "BehaviorHighLevelAI.StateConfig");
+  auto stateIt = _stateNameToID.find(initialStateStr);
+  if( ANKI_VERIFY( stateIt != _stateNameToID.end(),
+                   "BehaviorHighLevelAI.Config.InitialState.NoSuchState",
+                   "State named '%s' does not exist",
+                   initialStateStr.c_str()) ) {
+    _currState = stateIt->second;
+    _defaultState = stateIt->second;
+  }
+
 }
 
 BehaviorHighLevelAI::~BehaviorHighLevelAI()
@@ -372,35 +382,32 @@ void BehaviorHighLevelAI::OnBehaviorActivated()
     _debugLightsDirty = true;
   }
 
-  // start with a simple animation to make sure the eyes appear
-  // TEMP: NeutralFace is currently broken, so use observing instead
-  std::list<IActionRunner*> actions = {{ new TriggerAnimationAction(AnimationTrigger::ObservingLookStraight),
-       new MoveHeadToAngleAction(DEG_TO_RAD(kInitialHeadAngle_deg)) }};
-  CompoundActionSequential *initialAction = new CompoundActionSequential(std::move(actions));
-
-  DelegateIfInControl(initialAction, [this]() {
-      const bool onCharger = GetBEI().GetRobotInfo().IsOnChargerPlatform();
-      if( onCharger ) {
-        TransitionToState(GetStateID("ObservingOnCharger"));
-      }
-      else {
-        TransitionToState(GetStateID("Observing"));
-      }
-    });
-  
-  
+  // keep the state the same (either set from constructor or the last run)
+  if( ANKI_VERIFY( _currState != InvalidStateID,
+                   "BehaviorHighLevelAI.OnActivated.InvalidStateID",
+                   "_currState set to invalid state id, falling back to initial state") ) {
+    TransitionToState(_currState);
+  }
+  else {
+    TransitionToState(_defaultState);
+  }
 }
 
 void BehaviorHighLevelAI::OnBehaviorDeactivated()
 {
+  // hold the state in case we get re-activated, but still "transition" out of it (e.g. to disable vision
+  // modes)
+  // TODO:(bn) not this.
+  const StateID endState = _currState;
   TransitionToState(InvalidStateID);
+  _currState = endState;
 
-  auto& visionComponent = GetBEI().GetVisionComponent();
-  for( const auto& mode : _visionModesToReEnable ) {
-    visionComponent.EnableMode(mode, true);
-  }
+  // auto& visionComponent = GetBEI().GetVisionComponent();
+  // for( const auto& mode : _visionModesToReEnable ) {
+  //   visionComponent.EnableMode(mode, true);
+  // }
   
-  _visionModesToReEnable.clear();
+  // _visionModesToReEnable.clear();
 }
 
 void BehaviorHighLevelAI::BehaviorUpdate()

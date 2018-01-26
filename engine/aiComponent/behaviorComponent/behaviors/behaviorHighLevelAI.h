@@ -98,6 +98,8 @@ private:
 
   StateID _currState = InvalidStateID;
 
+  StateID _defaultState = InvalidStateID;
+
   BackpackLights _currDebugLights;
   bool _debugLightsDirty = false;
   bool _useDebugLights = false;
