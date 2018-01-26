@@ -173,6 +173,10 @@
       "AnimName": "ag_codelab_dog"
     },
     {
+       "CladEvent": "CodeLabEnergyEat",
+       "AnimName": "ag_codelab_kitchen_eating"
+    },
+    {
       "CladEvent": "CodeLabEnter",
       "AnimName": "ag_codelab_getin"
     },
@@ -199,6 +203,14 @@
     {
       "CladEvent": "CodeLabHappy",
       "AnimName": "ag_codelab_happy"
+    },
+    {
+       "CladEvent": "CodeLabHelium",
+       "AnimName": "ag_codelab_kitchen_helium"
+    },
+    {
+       "CladEvent": "CodeLabHiccup",
+       "AnimName": "ag_codelab_kitchen_hiccups"
     },
     {
       "CladEvent": "CodeLabIDK",
@@ -291,6 +303,10 @@
     {
       "CladEvent": "CodeLabYes",
       "AnimName": "ag_codelab_yes"
+    },
+    {
+       "CladEvent": "CodeLabYuck",
+       "AnimName": "ag_codelab_kitchen_yucky"
     },
     {
       "CladEvent": "ConnectWakeUp",

@@ -91,6 +91,10 @@ Blockly.Blocks['cozmo_animation_select_menu'] = {
               ['%{BKY_ANIM_WHEE4}', '39'],
               ['%{BKY_ANIM_WHOA}', '40'],
               ['%{BKY_ANIM_WHEW}', '41']
+              // ['%{BKY_ANIM_HICCUP}', '42'],
+              // ['%{BKY_ANIM_HELIUM}', '43'],
+              // ['%{BKY_ANIM_YUCK}', '44'],
+              // ['%{BKY_ANIM_ENERGETIC_EATING}', '45']
             ]
           }
         ],
@@ -297,7 +301,21 @@ Blockly.Blocks['cozmo_sound_sounds_menu'] = {
               ['%{BKY_SOUND_CUBE_CHARGE}','35'],
               ['%{BKY_SOUND_BACKGROUND_MUSIC}','36'],
               ['%{BKY_SOUND_VICTORY}','37'],
-              ['%{BKY_SOUND_FUN_MUSIC_LOOP}','38']
+              ['%{BKY_SOUND_FUN_MUSIC_LOOP}','38'],
+              ['%{BKY_SOUND_BLIP_1}','39'],
+              ['%{BKY_SOUND_BLIP_2}','40'],
+              ['%{BKY_SOUND_BLIP_3}','41'],
+              ['%{BKY_SOUND_BOUNCE}','42']
+              // ['%{BKY_SOUND_TWINKLE}','43'],
+              // ['%{BKY_SOUND_MORSE_CODE_DOT}','44'],
+              // ['%{BKY_SOUND_MORSE_CODE_DASH}','45'],
+              // ['%{BKY_SOUND_MORSE_CODE_SPACE}','46'],
+              // ['%{BKY_SOUND_UFO}','47'],
+              // ['%{BKY_SOUND_BASH}','48'],
+              // ['%{BKY_SOUND_EGG_CRACK}','49'],
+              // ['%{BKY_SOUND_FLAPPING}','50'],
+              // ['%{BKY_SOUND_WIND_UP}','51'],
+              // ['%{BKY_SOUND_SPIN}','52']
             ]
           }
         ],

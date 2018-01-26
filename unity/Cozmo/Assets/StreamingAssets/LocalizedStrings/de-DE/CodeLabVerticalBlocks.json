@@ -336,6 +336,18 @@
   "codeLabVertical.ANIM_WHEW" : {
     "translation" : "41 - puh"
   },
+  "codeLabVertical.ANIM_HICCUP" : {
+    "translation" : "42 - hiccup"
+  },
+  "codeLabVertical.ANIM_HELIUM" : {
+    "translation" : "43 - helium"
+  },
+  "codeLabVertical.ANIM_YUCK" : {
+    "translation" : "44 - yuck"
+  },
+  "codeLabVertical.ANIM_ENERGETIC_EATING" : {
+    "translation" : "45 - eating"
+  },
   "codeLabVertical.WHEELS" : {
     "translation" : "Räder"
   },
@@ -470,6 +482,48 @@
   },
   "codeLabVertical.SOUND_FUN_MUSIC_LOOP" : {
     "translation" : "38 - lustige Musik (Schleife)"
+  },
+  "codeLabVertical.SOUND_BLIP_1" : {
+    "translation" : "39 - blip #1"
+  },
+  "codeLabVertical.SOUND_BLIP_2" : {
+    "translation" : "40 - blip #2"
+  },
+  "codeLabVertical.SOUND_BLIP_3" : {
+    "translation" : "41 - blip #3"
+  },
+  "codeLabVertical.SOUND_BOUNCE" : {
+    "translation" : "42 - bounce"
+  },
+  "codeLabVertical.SOUND_TWINKLE" : {
+    "translation" : "43 - twinkle"
+  },
+  "codeLabVertical.SOUND_MORSE_CODE_DOT" : {
+    "translation" : "44 - morse code dot"
+  },
+  "codeLabVertical.SOUND_MORSE_CODE_DASH" : {
+    "translation" : "45 - morse code dash"
+  },
+  "codeLabVertical.SOUND_MORSE_CODE_SPACE" : {
+    "translation" : "46 - morse code space"
+  },
+  "codeLabVertical.SOUND_UFO" : {
+    "translation" : "47 - ufo"
+  },
+  "codeLabVertical.SOUND_BASH" : {
+    "translation" : "48 - bash"
+  },
+  "codeLabVertical.SOUND_EGG_CRACK" : {
+    "translation" : "49 - egg crack"
+  },
+  "codeLabVertical.SOUND_FLAPPING" : {
+    "translation" : "50 - flapping"
+  },
+  "codeLabVertical.SOUND_WIND_UP" : {
+    "translation" : "51 - wind up"
+  },
+  "codeLabVertical.SOUND_SPIN" : {
+    "translation" : "52 - spin"
   },
   "codeLabVertical.ANY" : {
     "translation" : "Alles"

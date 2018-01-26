@@ -2801,6 +2801,118 @@ namespace CodeLab {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Fun_Loop_Stop;
         }
         break;
+      case 39: // BKY_SOUND_BLIP_1
+        if (isStartSound) {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Pot_O_Gold_Blip_Level1;
+        }
+        else {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Pot_O_Gold_Blip_Level1_Stop;
+        }
+        break;
+      case 40: // BKY_SOUND_BLIP_2
+        if (isStartSound) {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Pot_O_Gold_Blip_Level2;
+        }
+        else {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Pot_O_Gold_Blip_Level2_Stop;
+        }
+        break;
+      case 41: // BKY_SOUND_BLIP_3
+        if (isStartSound) {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Pot_O_Gold_Blip_Level3;
+        }
+        else {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Pot_O_Gold_Blip_Level3_Stop;
+        }
+        break;
+      case 42:  // BKY_SOUND_BOUNCE
+        if (isStartSound) {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Paddle_Ball_Bounce;
+        }
+        else {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Paddle_Ball_Bounce_Stop;
+        }
+        break;
+      case 43:  // BKY_SOUND_TWINKLE
+        if (isStartSound) {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Constellation_Star;
+        }
+        else {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Constellation_Star_Stop;
+        }
+        break;
+      case 44:  // BKY_SOUND_MORSE_CODE_DOT
+        if (isStartSound) {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Morse_Code_Dot;
+        }
+        else {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Morse_Code_Dot_Stop;
+        }
+        break;
+      case 45:  // BKY_SOUND_MORSE_CODE_DASH
+        if (isStartSound) {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Morse_Code_Dash;
+        }
+        else {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Morse_Code_Dash_Stop;
+        }
+        break;
+      case 46:  // BKY_SOUND_MORSE_CODE_SPACE
+        if (isStartSound) {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Morse_Code_Silent;
+        }
+        else {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Morse_Code_Silent_Stop;
+        }
+        break;
+      case 47:  // BKY_SOUND_UFO
+        if (isStartSound) {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Alien_Invasion_Ufo;
+        }
+        else {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Alien_Invasion_Ufo_Stop;
+        }
+        break;
+      case 48:  // BKY_SOUND_BASH
+        if (isStartSound) {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Brick_Bash;
+        }
+        else {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Brick_Bash_Stop;
+        }
+        break;
+      case 49:  // BKY_SOUND_EGG_CRACK
+        if (isStartSound) {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Egg_Decorating_Crack;
+        }
+        else {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Egg_Decorating_Crack_Stop;
+        }
+        break;
+      case 50:  // BKY_SOUND_FLAPPING
+        if (isStartSound) {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Flappy_Increase;
+        }
+        else {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Flappy_Increase_Stop;
+        }
+        break;
+      case 51:  // BKY_SOUND_WIND_UP
+        if (isStartSound) {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Fidget_Spinner_Start;
+        }
+        else {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Fidget_Spinner_Start_Stop;
+        }
+        break;
+      case 52: // BKY_SOUND_SPIN
+        if (isStartSound) {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Fidget_Spinner_Loop_Play;
+        }
+        else {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Fidget_Spinner_Loop_Stop;
+        }
+        break;
       default:
         // Will happen a lot in vertical now that users can pass in any value
         DAS.Info("CodeLab.BadSoundIndex", "index = " + soundToPlay.ToString());
@@ -3243,6 +3355,14 @@ namespace CodeLab {
         return AnimationTrigger.CodeLabWhoa;
       case 41:
         return AnimationTrigger.CodeLabWhew;
+      case 42:
+        return AnimationTrigger.CodeLabHiccup;
+      case 43:
+        return AnimationTrigger.CodeLabHelium;
+      case 44:
+        return AnimationTrigger.CodeLabYuck;
+      case 45:
+        return AnimationTrigger.CodeLabEnergyEat;
       default:
         // Will happen a lot in vertical now that users can pass in any value
         DAS.Info("CodeLab.BadAnimIndex", "Index = " + scratchAnimationIndex.ToString());
