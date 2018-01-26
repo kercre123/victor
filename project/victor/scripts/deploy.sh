@@ -15,6 +15,7 @@ fi
 TOPLEVEL=`$GIT rev-parse --show-toplevel`
 
 source ${SCRIPT_PATH}/android_env.sh
+export -f adb_shell
 
 # Settings can be overridden through environment
 : ${VERBOSE:=0}
@@ -84,14 +85,14 @@ function adb_deploy()
     log_v "check $DST_PATH"
 
     EXISTS=0
-    $ADB shell test -f "${DST_PATH}" || EXISTS=1
+    adb_shell "test -f ${DST_PATH}" || EXISTS=1
 
     if [ $EXISTS -eq 0 ]; then
       log_v "$DST_PATH exists"
-      X_DIGEST=$($ADB shell "${XATTR} -n ${XATTR_KEY} ${DST_PATH}" || true)
+      X_DIGEST=$($ADB shell "${XATTR} -n ${XATTR_KEY} ${DST_PATH} | tr -d [:space:] || true")
       DIGEST=$(md5 -q "${SRC}")
       if [ "$DIGEST" != "${X_DIGEST}" ]; then
-        log_v "$DST_PATH differs"
+        log_v "$DST_PATH differs [ '$DIGEST' != '${X_DIGEST}' ]"
         NEEDS_INSTALL=1
       else
         log_v "$DST_PATH up-to-date [$DIGEST]"
@@ -107,7 +108,7 @@ function adb_deploy()
       if [ -n $DIGEST ]; then
         DIGEST=$(md5 -q "${SRC}")
       fi
-      $ADB shell "${XATTR} -n ${XATTR_KEY} -v ${DIGEST} ${DST_PATH}"
+      adb_shell "${XATTR} -n ${XATTR_KEY} -v ${DIGEST} ${DST_PATH}"
     fi
 }
 
@@ -154,7 +155,7 @@ find "${TOPLEVEL}/project/victor/runtime/config" -type f -depth 1 \
 HAL_CONF_PATH=/data/persist
 $ADB shell mkdir -p $HAL_CONF_PATH
 # If hal.conf already exists in com.anki.cozmoengine directory, move it to /data/persist (if folder exists)
-$ADB shell test -f ${INSTALL_ROOT}/hal.conf && $ADB shell mv ${INSTALL_ROOT}/hal.conf $HAL_CONF_PATH
+adb_shell "test -f ${INSTALL_ROOT}/hal.conf" && $ADB shell mv ${INSTALL_ROOT}/hal.conf $HAL_CONF_PATH
 
 #
 # Put a link in /data/appinit.sh for automatic startup

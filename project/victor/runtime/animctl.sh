@@ -49,7 +49,7 @@ source ${SCRIPT_PATH}/ankienv.sh
 set +e
 
 
-function start_program()
+start_program ()
 {
     PROG_PID=$(pidof ${PROGRAM_EXE})
     PROG_RUNNING=$?
@@ -68,12 +68,12 @@ function start_program()
     echo $!
 }
 
-function stop_program()
+stop_program ()
 {
     stop_process ${PROGRAM_EXE}
 }
 
-function program_status()
+program_status ()
 {
     process_status ${PROGRAM_EXE}
 }

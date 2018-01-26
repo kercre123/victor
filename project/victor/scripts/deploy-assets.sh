@@ -139,9 +139,9 @@ $ADB shell mkdir -p ${DEVICE_ASSET_DIR}
 
 # install rsync binary and config if needed
 set +e
-$ADB shell [ -f "$DEVICE_RSYNC_BIN_DIR/rsync.bin" ]
+adb_shell "[ -f "$DEVICE_RSYNC_BIN_DIR/rsync.bin" ]"
 HAS_RSYNC=$?
-$ADB shell [ -f "$DEVICE_RSYNC_CONF_DIR/rsyncd.conf" ]
+adb_shell "[ -f "$DEVICE_RSYNC_CONF_DIR/rsyncd.conf" ]"
 HAS_RSYNC_CONF=$?
 set -e
 
@@ -152,17 +152,17 @@ if [ $FORCE_PUSH_ASSETS -eq 1 ] ||
 
   echo "loading rsync to device"
 
-  $ADB push ${RSYNC_BIN_DIR}/rsync.bin ${DEVICE_RSYNC_BIN_DIR}
-  $ADB push ${RSYNC_BIN_DIR}/rsyncd.conf ${DEVICE_RSYNC_CONF_DIR}
+  $ADB push ${RSYNC_BIN_DIR}/rsync.bin ${DEVICE_RSYNC_BIN_DIR}/rsync.bin
+  $ADB push ${RSYNC_BIN_DIR}/rsyncd.conf ${DEVICE_RSYNC_CONF_DIR}/rsyncd.conf
 fi
 
 echo "deploying assets: ${ASSETSDIR}"
 
 # startup rsync daemon
-$ADB shell "${DEVICE_RSYNC_BIN_DIR}/rsync.bin --daemon --config=${DEVICE_RSYNC_CONF_DIR}/rsyncd.conf &"
+$ADB shell "${DEVICE_RSYNC_BIN_DIR}/rsync.bin --daemon --config=${DEVICE_RSYNC_CONF_DIR}/rsyncd.conf"
 
 # sync files
-rsync -rP --stats --delete . rsync://${DEVICE_IP_ADDRESS}/files/${DEVICE_ASSET_REL_DIR}
+rsync -rcP --stats --delete . rsync://${DEVICE_IP_ADDRESS}/files/${DEVICE_ASSET_REL_DIR}
 
 # record the asset directory for the animation process
 $ADB shell "echo '${DEVICE_ASSET_REL_DIR}' > '${DEVICE_ASSET_ROOT_DIR}/current'"

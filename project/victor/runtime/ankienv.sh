@@ -1,6 +1,6 @@
 # Helper functions for control (ctl) scripts
 
-function exec_background()
+exec_background ()
 {
     if [ $# -eq 0 ]; then
         echo "error: missing program to execute"
@@ -10,10 +10,11 @@ function exec_background()
     EXE="$1"
     shift
 
-    nohup logwrapper ${EXE} $* </dev/null >/dev/null 2>&1 &
+    #nohup logwrapper ${EXE} $* </dev/null >/dev/null 2>&1 &
+    nohup ${EXE} $* </dev/null >/dev/null 2>&1 &
 }
 
-function stop_process()
+stop_process ()
 {
     if [ $# -eq 0 ]; then
         echo "error: missing program name"
@@ -39,7 +40,7 @@ function stop_process()
     echo "stopped ${PROG_PID}"
 }
 
-function process_status()
+process_status ()
 {
     if [ $# -eq 0 ]; then
         echo "error: missing program name"
@@ -58,18 +59,18 @@ function process_status()
     fi
 }
 
-function get_process_pid()
+get_process_pid ()
 {
     PROG_NAME="$1"
     echo $(pidof ${PROG_NAME})
 }
 
-function get_process_name()
+get_process_name ()
 {
     echo $1
 }
 
-function usage()
+usage ()
 {
     echo "$SCRIPT_NAME [COMMAND]"
     echo "start                 start $PROGRAM_NAME"
@@ -78,7 +79,7 @@ function usage()
     echo "status                report run status"
 }
 
-function main()
+main ()
 {
     ERROR=0
     case $ARGV in
