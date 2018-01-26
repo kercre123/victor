@@ -351,7 +351,7 @@ def scan_project(project, source_language, target_folder):
         export_filename = os.path.join(target_folder, os.path.basename(project['project_name']) + '_loc_strings.json')
 
         with open(export_filename, 'w', encoding='utf8') as output_file:
-            json.dump(json_out, output_file, indent=4)
+            json.dump(json_out, output_file, indent=4, sort_keys=True)
             output_file.write('\n')
 
         print('scanning ' + project['project_name'] + ' and found ' + str(len(output_list)) + ' strings -> ' + export_filename)
@@ -429,7 +429,7 @@ def modify_base_loc_file(extracted_json, file_path):
 
     #replace the loc target's json
     with open(file_path, 'w') as output_file:
-        json.dump(loc_file_json, output_file, indent=4)
+        json.dump(loc_file_json, output_file, indent=4, sort_keys=True)
         output_file.write('\n')
 
 # --------------------------------------------------------------------------------------------------------
