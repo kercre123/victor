@@ -1,0 +1,95 @@
+
+<!doctype html>
+<html lang="en">
+
+<!-- page preamble -->
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Anki Webservices</title>
+    <link rel="stylesheet" href="jquery-ui.css">
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+    <script>
+    $(document).ready(function(){
+        $.post("sku", function(data){
+            $("#sku").html(data);
+        });
+        $.post("appinfo", function(data){
+            $("#appinfo").html(data);
+        });
+        $.post("dasinfo", function(data){
+            $("#dasinfo").html(data);
+        });
+    });    
+    $(function() {
+        $(".widget input[type=submit], .widget a, .widget button").button();
+
+        $("button, input").click(function(event) {
+            $.post("/"+event.target.value, function(data){
+                $("#content").html(data);
+            });
+            event.preventDefault();
+        });
+    });
+    </script>
+
+</head>
+
+<!-- page content -->
+
+<body class="ui-widget-content" style="border:0;">
+    <div>
+        <h1>anki&nbsp;<span id="sku">sku</span></h1>
+        <h3><div id="appinfo">appinfo</div></h3>
+        <p><div id="dasinfo">dasinfo</div></p>
+        <table border=1>
+            <tr>
+                <th>description</th><th>url</th>
+            </tr>
+            <tr>
+                <td>View DAS logs:</td><td><a href="/daslog">/daslog</a></td>
+            </tr>
+            <tr>
+                <td>View and edit console variables</td><td><a href="/consolevars">/consolevars</a></td>
+            </tr>
+            <tr>
+                <td>List console variables</td><td><a href="/consolevarlist">/consolevarlist</a></td>
+            </tr>
+            <tr>
+                <td>List console variables matching</td><td>/consolevarlist?key=search_key</td>
+            </tr>
+            <tr>
+                <td>Set console variable</td><td>/consolevarset?key=name_of_variable&amp;value=new_value_of_variable</td>
+            </tr>
+            <tr>
+                <td>Get console variable</td><td>/consolevarget?key=name_of_variable</td>
+            </tr>
+            <tr>
+                <td>Call console function</td><td>/consolefunccall?func=name_of_function&amp;args=arguments</td>
+            </tr>
+<!--             <tr>
+                <td>Replace a metagame json</td><td><a href="/json">/json</a></td>
+            </tr>
+ -->        </table><br>
+        <div>
+            <input type="submit" value="output">
+            <input type="submit" value="resources">
+            <input type="submit" value="cache">
+            <input type="submit" value="currentgamelog">
+            <input type="submit" value="external">
+            &nbsp;
+            <input type="submit" value="daslog">
+            <input type="submit" value="consolevars">
+        </div>
+    </div>
+
+    <div id="content">
+    </div>
+</body>
+
+</html>

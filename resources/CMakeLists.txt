@@ -19,6 +19,12 @@ anki_build_copy_assets(
 )
 
 anki_build_copy_assets(
+    TARGET cozmo_resources_webserver
+    SRCLIST_DIR ${ANKI_SRCLIST_DIR}
+    OUTPUT_DIR "${CMAKE_BINARY_DIR}/assets/cozmo_resources"
+)
+
+anki_build_copy_assets(
     TARGET cozmo_bundle
     SRCLIST_DIR ${ANKI_SRCLIST_DIR}
     OUTPUT_DIR "${CMAKE_BINARY_DIR}/assets"
@@ -33,6 +39,7 @@ anki_build_copy_assets(
 set(ASSET_TARGETS
     cozmo_resources_assets
     cozmo_resources_config
+    cozmo_resources_webserver
     cozmo_bundle)
 
 # Bundle test assets on OSX
