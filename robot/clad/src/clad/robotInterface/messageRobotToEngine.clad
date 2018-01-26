@@ -74,6 +74,12 @@ message LiftLoad
   bool hasLoad
 }
 
+// Returned in response to receiving a head, lift, or turn-in-place command
+message MotorActionAck
+{
+  uint_8  actionID,
+}
+
 message MicData
 {
   int_16  data[480], // 120 samples of audio 4 channels
@@ -102,7 +108,7 @@ union RobotToEngine {
   // Init / Debug
   SyncTimeAck                syncTimeAck            = 0xB0,
   //  FREE SLOT!!!                                  = 0xB1,
-  //  FREE SLOT!!!                                  = 0xB2,
+  MotorActionAck             motorActionAck         = 0xB2,
 
   // Motors / Driving
   MotorCalibration           motorCalibration       = 0xB3,

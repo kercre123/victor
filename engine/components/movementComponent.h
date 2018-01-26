@@ -35,6 +35,8 @@ enum class AnimTrackFlag : uint8_t;
 class MovementComponent : public IDependencyManagedComponent<RobotComponentID>, private Util::noncopyable
 {
 public:
+  using MotorActionID = u8;
+
   MovementComponent();
   virtual ~MovementComponent() { }
 
@@ -120,17 +122,38 @@ public:
   // Below are low-level actions to tell the robot to do something "now"
   // without using the ActionList system:
   
-  // Sends a message to the robot to move the lift to the specified height
+  // Sends a message to the robot to move the lift to the specified height.
+  // When the command is received by the robot, it returns a MotorActionAck
+  // message with the ID that can optionally be written to actionID_out.
   Result MoveLiftToHeight(const f32 height_mm,
                           const f32 max_speed_rad_per_sec,
                           const f32 accel_rad_per_sec2,
-                          const f32 duration_sec = 0.f);
+                          const f32 duration_sec = 0.f,
+                          MotorActionID* actionID_out = nullptr);
   
-  // Sends a message to the robot to move the head to the specified angle
+  // Sends a message to the robot to move the head to the specified angle.
+  // When the command is received by the robot, it returns a MotorActionAck
+  // message with the ID that can optionally be written to actionID_out.
   Result MoveHeadToAngle(const f32 angle_rad,
                          const f32 max_speed_rad_per_sec,
                          const f32 accel_rad_per_sec2,
-                         const f32 duration_sec = 0.f);
+                         const f32 duration_sec = 0.f,
+                         MotorActionID* actionID_out = nullptr);
+  
+  // Sends a message to the robot to turn in place to the specified angle.
+  // When the command is received by the robot, it returns a MotorActionAck
+  // message with the ID that can optionally be written to actionID_out.
+  Result TurnInPlace(const f32 angle_rad,              // Absolute angle the robot should achieve at the end of the turn.
+                     const f32 max_speed_rad_per_sec,  // Maximum speed of the turn (sign determines the direction of the turn)
+                     const f32 accel_rad_per_sec2,     // Accel/decel to use during the turn
+                     const f32 angle_tolerance,
+                     const u16 num_half_revolutions,   // Used for turns greater than 180 degrees (e.g. "turn 720 degrees")
+                     bool use_shortest_direction,      // If true, robot should take the shortest path to angle_rad and disregard
+                                                       // the sign of max_speed and num_half_revolutions. If false, consider sign
+                                                       // of max_speed and num_half_revolutions to determine which direction to
+                                                       // turn and how far to turn (e.g. for turns longer than 360 deg)
+                     MotorActionID* actionID_out = nullptr);
+
   
   // Register a persistent face layer tag for removal next time head moves
   // You may optionally specify the duration of the layer removal (i.e. how
@@ -175,8 +198,14 @@ private:
   // otherwise it will set flag to true and lock the tracks if they are not locked
   void DirectDriveCheckSpeedAndLockTracks(f32 speed, bool& flag, u8 tracks, const std::string& who,
                                           const std::string& debugName);
+
+  // Return an actionID for the next motor command to be sent to robot.
+  // Also writes same actionID to actionID_out if it's non-null.
+  MotorActionID GetNextMotorActionID(MotorActionID* actionID_out = nullptr);
   
   Robot* _robot = nullptr;
+  
+  MotorActionID _lastMotorActionID = 0;
   
   bool _isMoving = false;
   bool _isHeadMoving = false;
