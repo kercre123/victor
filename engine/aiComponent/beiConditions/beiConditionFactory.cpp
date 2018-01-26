@@ -26,6 +26,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionOffTreadsState.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionOnCharger.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionPetInitialDetection.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionProxInRange.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotPlacedOnSlope.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotShaken.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotTouchGesture.h"
@@ -113,6 +114,11 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
     case BEIConditionType::PetInitialDetection:
     {
       strategy = std::make_shared<ConditionPetInitialDetection>(config);
+      break;
+    }
+    case BEIConditionType::ProxInRange:
+    {
+      strategy = std::make_shared<ConditionProxInRange>(config);
       break;
     }
     case BEIConditionType::RobotPlacedOnSlope:

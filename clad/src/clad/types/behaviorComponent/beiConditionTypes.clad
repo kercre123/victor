@@ -23,6 +23,7 @@ enum uint_8 BEIConditionType {
   ObjectPositionUpdated,
   ObstacleDetected,
   PetInitialDetection,
+  ProxInRange,
   RobotPlacedOnSlope,
   RobotShaken,
   RobotTouchGesture,
