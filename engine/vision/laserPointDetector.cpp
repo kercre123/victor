@@ -71,9 +71,6 @@ namespace Params
 # undef CONSOLE_GROUP_NAME
 }
 
-static_assert(ANKI_DEV_CHEATS || Params::kLaserDetectionDebug==0,
-              "kLaserDetectionDebug should be disabled if ANKI_DEV_CHEATS are disabled");
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LaserPointDetector::LaserPointDetector(VizManager* vizManager)
 : _vizManager(vizManager)

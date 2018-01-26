@@ -23,9 +23,6 @@
 #include "coretech/messaging/shared/LocalUdpClient.h"
 
 #define LOG_CHANNEL    "Transport"
-#define LOG_ERROR      PRINT_NAMED_ERROR
-#define LOG_INFO(...)  PRINT_CH_INFO(LOG_CHANNEL, ##__VA_ARGS__)
-#define LOG_DEBUG(...) PRINT_CH_DEBUG(LOG_CHANNEL, ##_VA_ARGS__)
 
 namespace Anki {
 namespace Cozmo {

@@ -40,11 +40,10 @@ namespace {
 }
   
   
-AnimationComponent::AnimationComponent(Robot& robot, const CozmoContext* context)
-: _isInitialized(false)
+AnimationComponent::AnimationComponent()
+: IDependencyManagedComponent(RobotComponentID::Animation)
+, _isInitialized(false)
 , _tagCtr(0)
-, _robot(robot)
-, _animationGroups(context->GetRobotManager()->GetAnimationGroups())
 , _isDolingAnims(false)
 , _nextAnimToDole("")
 , _currPlayingAnim("")
@@ -53,6 +52,14 @@ AnimationComponent::AnimationComponent(Robot& robot, const CozmoContext* context
 , _currAnimName("")
 , _currAnimTag(0)
 {
+
+}
+
+void AnimationComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+{
+  _robot = robot;
+  const CozmoContext* context = _robot->GetContext();
+  _animationGroups = std::make_unique<AnimationGroupWrapper>(context->GetRobotManager()->GetAnimationGroups());
   if (context) {
     // Setup game message handlers
     IExternalInterface *extInterface = context->GetExternalInterface();
@@ -69,8 +76,8 @@ AnimationComponent::AnimationComponent(Robot& robot, const CozmoContext* context
   }
   
   // Setup robot message handlers
-  RobotInterface::MessageHandler *messageHandler = robot.GetContext()->GetRobotManager()->GetMsgHandler();
-  RobotID_t robotId = robot.GetID();
+  RobotInterface::MessageHandler *messageHandler = _robot->GetContext()->GetRobotManager()->GetMsgHandler();
+  RobotID_t robotId = _robot->GetID();
 
   // Subscribe to RobotToEngine messages
   using localHandlerType = void(AnimationComponent::*)(const AnkiEvent<RobotInterface::RobotToEngine>&);
@@ -87,12 +94,13 @@ AnimationComponent::AnimationComponent(Robot& robot, const CozmoContext* context
   doRobotSubscribe(RobotInterface::RobotToEngineTag::animState,             &AnimationComponent::HandleAnimState);
 }
 
+
 void AnimationComponent::Init()
 {
   // Open manifest file
   static const std::string manifestFile = "assets/anim_manifest.json";
   Json::Value jsonManifest;
-  const bool success = _robot.GetContext()->GetDataPlatform()->readAsJson(Util::Data::Scope::Resources, manifestFile, jsonManifest);
+  const bool success = _robot->GetContext()->GetDataPlatform()->readAsJson(Util::Data::Scope::Resources, manifestFile, jsonManifest);
   if (!success) {
     PRINT_NAMED_ERROR("AnimationComponent.Init.ManifestNotFound", "");
     return;
@@ -136,7 +144,7 @@ void AnimationComponent::Update()
   while(it != _callbackMap.end()) {
     if (it->second.abortTime_sec != 0 && currTime_sec >= it->second.abortTime_sec) {
       PRINT_NAMED_WARNING("AnimationComponent.Update.AnimTimedOut", "Anim: %s", it->second.animName.c_str());
-      _robot.SendRobotMessage<RobotInterface::AbortAnimation>();
+      _robot->SendRobotMessage<RobotInterface::AbortAnimation>();
       it->second.ExecuteCallback(AnimResult::Timedout);
       it = _callbackMap.erase(it);
     }
@@ -166,14 +174,18 @@ void AnimationComponent::DoleAvailableAnimations()
 
     auto it = _nextAnimToDole.empty() ? _availableAnims.begin() : _availableAnims.find(_nextAnimToDole);
     for (; it != _availableAnims.end() && numAnimsDoledThisTic < kMaxNumAvailableAnimsToReportPerTic; ++it) {
-      _robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::AnimationAvailable(it->first)));
+      _robot->Broadcast(ExternalInterface::MessageEngineToGame(
+        ExternalInterface::AnimationAvailable(it->first))
+      );
       ++numAnimsDoledThisTic;
     }
     if (it == _availableAnims.end()) {
       PRINT_CH_INFO(kLogChannelName, "DoleAvailableAnimations.Done", "");
       _isDolingAnims = false;
       _nextAnimToDole = "";
-      _robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::EndOfMessage(ExternalInterface::MessageType::AnimationAvailable)));
+      _robot->Broadcast(ExternalInterface::MessageEngineToGame(
+        ExternalInterface::EndOfMessage(ExternalInterface::MessageType::AnimationAvailable))
+      );
     } else {
       _nextAnimToDole = it->first;
     }
@@ -183,9 +195,10 @@ void AnimationComponent::DoleAvailableAnimations()
 
 const std::string& AnimationComponent::GetAnimationNameFromGroup(const std::string& name, bool strictCooldown) const
 {
-  const AnimationGroup* group = _animationGroups.GetAnimationGroup(name);
+  const AnimationGroup* group = _animationGroups->_container.GetAnimationGroup(name);
   if(group != nullptr && !group->IsEmpty()) {
-    return group->GetAnimationName(_robot.GetMoodManager(), _animationGroups, _robot.GetHeadAngle(), strictCooldown);
+    return group->GetAnimationName(_robot->GetMoodManager(),  _animationGroups->_container, 
+                                   _robot->GetHeadAngle(), strictCooldown);
   }
   static const std::string empty("");
   return empty;
@@ -227,7 +240,7 @@ Result AnimationComponent::PlayAnimByName(const std::string& animName,
   }
   
   const Tag currTag = GetNextTag();
-  if (_robot.SendRobotMessage<RobotInterface::PlayAnim>(numLoops, currTag, animName) == RESULT_OK) {
+  if (_robot->SendRobotMessage<RobotInterface::PlayAnim>(numLoops, currTag, animName) == RESULT_OK) {
     // Check if tag already exists in callback map.
     // If so, trigger callback with Stale
     {
@@ -266,7 +279,7 @@ Result AnimationComponent::StopAnimByName(const std::string& animName)
     const Tag tag = IsAnimPlaying(animName);
     if (tag != kNotAnimatingTag) {
       PRINT_CH_DEBUG(kLogChannelName, "AnimationComponent.StopAnimByName.AbortingAnim", "%s", animName.c_str());
-      return _robot.SendRobotMessage<RobotInterface::AbortAnimation>();
+      return _robot->SendRobotMessage<RobotInterface::AbortAnimation>();
     }
     else {
       PRINT_NAMED_WARNING("AnimationComponent.StopAnimByName.AnimNotPlaying",
@@ -288,14 +301,14 @@ Result AnimationComponent::StopAnimByName(const std::string& animName)
 void AnimationComponent::UnlockTracks(u8 tracks)
 {
   _lockedTracks &= ~tracks;
-  _robot.SendRobotMessage<RobotInterface::LockAnimTracks>(_lockedTracks);
+  _robot->SendRobotMessage<RobotInterface::LockAnimTracks>(_lockedTracks);
 }
 
 void AnimationComponent::UnlockAllTracks()
 {
   if (_lockedTracks != 0) {
     _lockedTracks = 0;
-    _robot.SendRobotMessage<RobotInterface::LockAnimTracks>(_lockedTracks);
+    _robot->SendRobotMessage<RobotInterface::LockAnimTracks>(_lockedTracks);
   }
 }
 
@@ -304,7 +317,7 @@ void AnimationComponent::UnlockAllTracks()
 void AnimationComponent::LockTracks(u8 tracks)
 {
   _lockedTracks |= tracks;
-  _robot.SendRobotMessage<RobotInterface::LockAnimTracks>(_lockedTracks);
+  _robot->SendRobotMessage<RobotInterface::LockAnimTracks>(_lockedTracks);
 }
 
 
@@ -359,7 +372,7 @@ Result AnimationComponent::DisplayFaceImageBinary(const Vision::Image& img, u32 
       }
       ++byte;
     }
-    _robot.SendMessage(RobotInterface::EngineToRobot(std::move(msg)));
+    _robot->SendMessage(RobotInterface::EngineToRobot(std::move(msg)));
   }
 
   return RESULT_OK;
@@ -398,7 +411,7 @@ Result AnimationComponent::DisplayFaceImage(const Vision::ImageRGB565& imgRGB565
     pixelsLeftToSend -= msg.numPixels;
     std::advance(startIt, msg.numPixels);
 
-    _robot.SendMessage(RobotInterface::EngineToRobot(std::move(msg)));
+    _robot->SendMessage(RobotInterface::EngineToRobot(std::move(msg)));
   }
 
   static const int kExpectedNumChunks = static_cast<int>(std::ceilf( (f32)FACE_DISPLAY_NUM_PIXELS / kMaxPixelsPerMsg ));
@@ -416,7 +429,7 @@ Result AnimationComponent::DisplayFaceImage(const Vision::ImageRGB& img, u32 dur
 
 
 
-// ================ Game messsage handlers ======================
+// ================ Game message handlers ======================
 template<>
 void AnimationComponent::HandleMessage(const ExternalInterface::RequestAvailableAnimations& msg)
 {
@@ -427,6 +440,11 @@ void AnimationComponent::HandleMessage(const ExternalInterface::RequestAvailable
 template<>
 void AnimationComponent::HandleMessage(const ExternalInterface::DisplayProceduralFace& msg)
 {
+  static_assert( std::tuple_size<decltype(msg.faceParams.leftEye)>::value == (size_t)ProceduralEyeParameter::NumParameters,
+                "LeftEye parameter array is the wrong length");
+  static_assert( std::tuple_size<decltype(msg.faceParams.rightEye)>::value == (size_t)ProceduralEyeParameter::NumParameters,
+                "RightEye parameter array is the wrong length");
+  
   if (!_isInitialized) {
     PRINT_NAMED_WARNING("AnimationComponent.DisplayProceduralFace.Uninitialized", "");
     return;
@@ -440,13 +458,13 @@ void AnimationComponent::HandleMessage(const ExternalInterface::DisplayProcedura
   }
 
   // Convert ExternalInterface version of DisplayProceduralFace to RobotInterface version and send
-  _robot.SendRobotMessage<RobotInterface::DisplayProceduralFace>(msg.faceParams, msg.duration_ms);
+  _robot->SendRobotMessage<RobotInterface::DisplayProceduralFace>(msg.faceParams, msg.duration_ms);
 }
 
 template<>
 void AnimationComponent::HandleMessage(const ExternalInterface::SetFaceHue& msg)
 {
-  _robot.SendRobotMessage<RobotInterface::SetFaceHue>(msg.hue);
+  _robot->SendRobotMessage<RobotInterface::SetFaceHue>(msg.hue);
 }
 
 template<>
@@ -465,7 +483,7 @@ void AnimationComponent::HandleMessage(const ExternalInterface::DisplayFaceImage
   }
 
   // Convert ExternalInterface version of DisplayFaceImage to RobotInterface version and send
-  _robot.SendRobotMessage<RobotInterface::DisplayFaceImageBinaryChunk>(msg.duration_ms, msg.faceData, msg.imageId, msg.chunkIndex);
+  _robot->SendRobotMessage<RobotInterface::DisplayFaceImageBinaryChunk>(msg.duration_ms, msg.faceData, msg.imageId, msg.chunkIndex);
 }
 
 // ================ Robot message handlers ======================
@@ -485,7 +503,7 @@ void AnimationComponent::HandleAnimStarted(const AnkiEvent<RobotInterface::Robot
   _currAnimName = payload.animName;
   _currAnimTag = payload.tag;
 
-  _robot.GetContext()->GetVizManager()->SendCurrentAnimation(_currAnimName, _currAnimTag);
+  _robot->GetContext()->GetVizManager()->SendCurrentAnimation(_currAnimName, _currAnimTag);
 }
 
 void AnimationComponent::HandleAnimEnded(const AnkiEvent<RobotInterface::RobotToEngine>& message)
@@ -510,7 +528,7 @@ void AnimationComponent::HandleAnimEnded(const AnkiEvent<RobotInterface::RobotTo
   _currAnimName = "";
   _currAnimTag = kNotAnimatingTag;
 
-  _robot.GetContext()->GetVizManager()->SendCurrentAnimation(_currAnimName, _currAnimTag);
+  _robot->GetContext()->GetVizManager()->SendCurrentAnimation(_currAnimName, _currAnimTag);
 }
   
 void AnimationComponent::HandleAnimationEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message)
@@ -522,7 +540,7 @@ void AnimationComponent::HandleAnimationEvent(const AnkiEvent<RobotInterface::Ro
     ExternalInterface::AnimationEvent msg;
     msg.timestamp = payload.timestamp;
     msg.event_id = payload.event_id;
-    _robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::AnimationEvent>(std::move(msg));
+    _robot->GetExternalInterface()->BroadcastToGame<ExternalInterface::AnimationEvent>(std::move(msg));
   }
 }
   

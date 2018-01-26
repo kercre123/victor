@@ -9,6 +9,8 @@
 #include "util/math/math.h"
 #endif
 
+#include <math.h>
+
 namespace Anki {
 namespace Cozmo {
 
@@ -58,7 +60,7 @@ namespace Cozmo {
   const u16 kProxSensorMaxDistance_mm = 410;
   
   // Forward distance sensor measurements (TODO: finalize these dimensions on production robot)
-  const float kProxSensorTiltAngle_rad = DEG_TO_RAD(6.f);    // Angle that the prox sensor is tilted (upward is positive)
+  const float kProxSensorTiltAngle_rad = DEG_TO_RAD(6.5f);    // Angle that the prox sensor is tilted (upward is positive)
   const float kProxSensorPosition_mm[3] = {10.f, 0.f, 16.f}; // With respect to robot origin
   const float kProxSensorFullFOV_rad = DEG_TO_RAD(25.f);     // Full Field of View (FOV) of the sensor cone
   
@@ -125,6 +127,12 @@ namespace Cozmo {
   const s32 FACE_DISPLAY_WIDTH = 184;
   const s32 FACE_DISPLAY_HEIGHT = 96;
   const s32 FACE_DISPLAY_NUM_PIXELS = FACE_DISPLAY_WIDTH * FACE_DISPLAY_HEIGHT;
+
+  // Common conversion functionality for lift height
+  #define ConvertLiftHeightToLiftAngleRad(height_mm) asinf((CLIP(height_mm, LIFT_HEIGHT_LOWDOCK, LIFT_HEIGHT_CARRY) \
+                                                     - LIFT_BASE_POSITION[2] - LIFT_FORK_HEIGHT_REL_TO_ARM_END)/LIFT_ARM_LENGTH)
+  #define ConvertLiftAngleToLiftHeightMM(angle_rad) ((sinf(angle_rad) * LIFT_ARM_LENGTH) \
+                                                    + LIFT_BASE_POSITION[2] + LIFT_FORK_HEIGHT_REL_TO_ARM_END)
   
   /***************************************************************************
    *
@@ -171,10 +179,10 @@ namespace Cozmo {
    *
    **************************************************************************/
 
-  // Cliff detection thresholds (these come from testing with prototype 2 robots - will need
+  // Cliff detection thresholds (these come from testing with DVT1 robots - will need
   // to be adjusted for production hardware)
-  const u16 CLIFF_SENSOR_THRESHOLD_MAX = 180;
-  const u16 CLIFF_SENSOR_THRESHOLD_MIN = 25;
+  const u16 CLIFF_SENSOR_THRESHOLD_MAX = 40;
+  const u16 CLIFF_SENSOR_THRESHOLD_MIN = 15;
   const u16 CLIFF_SENSOR_THRESHOLD_DEFAULT = CLIFF_SENSOR_THRESHOLD_MAX;
   
   // Cliff sensor value must rise this far above the threshold to 'untrigger' cliff detection.
@@ -301,9 +309,11 @@ namespace Cozmo {
   // RobotID will be appended to generate unique paths for each robot.
   //
   #ifdef SIMULATOR
+  constexpr char LOCAL_SOCKET_PATH[]  = "/tmp/";
   constexpr char ROBOT_SERVER_PATH[]  = "/tmp/_robot_server_";
   constexpr char ANIM_CLIENT_PATH[]   = "/tmp/_anim_client_";
   #else
+  constexpr char LOCAL_SOCKET_PATH[]  = "/dev/";
   constexpr char ROBOT_SERVER_PATH[]  = "/dev/socket/_robot_server_";
   constexpr char ANIM_CLIENT_PATH[]   = "/dev/socket/_anim_client_";
   #endif

@@ -5,8 +5,9 @@
 
 #include "encoders.h"
 #include "motors.h"
-#include "power.h"
+#include "analog.h"
 #include "messages.h"
+#include "timer.h"
 
 static const int MOTOR_SERVICE_COUNTDOWN = 4;
 static const int MAX_ENCODER_FRAMES = 25; // 0.1250s
@@ -28,6 +29,8 @@ enum MotorDirection {
 };
 
 struct MotorConfig {
+  bool            charge_exclusive;
+
   // Pin BRSS
   volatile uint32_t* P_BSRR;
   uint32_t           P_Set;
@@ -61,21 +64,25 @@ struct MotorStatus {
 
 static const MotorConfig MOTOR_DEF[MOTOR_COUNT] = {
   {
+    true,
     &LTP1::bank->BSRR, LTP1::mask,
     &TIM1->CCR2, CONFIG_N(LTN1),
     &TIM1->CCR2, CONFIG_N(LTN2)
   },
   {
+    true,
     &RTP1::bank->BSRR, RTP1::mask,
     &TIM1->CCR1, CONFIG_N(RTN1),
     &TIM1->CCR1, CONFIG_N(RTN2)
   },
   {
+    false,
     &LP1::bank->BSRR, LP1::mask,
     &TIM1->CCR3, CONFIG_N(LN1),
     &TIM1->CCR4, CONFIG_N(LN2)
   },
   {
+    false,
     &HP1::bank->BSRR, HP1::mask,
     &TIM3->CCR2, CONFIG_N(HN1),
     &TIM3->CCR4, CONFIG_N(HN2)
@@ -186,6 +193,22 @@ void Motors::init() {
   LTN1::mode(MODE_OUTPUT);
   LTN2::mode(MODE_OUTPUT);
 
+  // Preconfigure the timers for the motor treads
+  LN1::alternate(2);
+  LN2::alternate(2);
+  HN1::alternate(1);
+  HN2::alternate(1);
+  LTN1::alternate(2);
+  LTN2::alternate(2);
+  RTN1::alternate(2);
+  RTN2::alternate(2);
+  
+  // Setup the P-Fets for head and lift
+  LP1::reset();
+  HP1::reset();
+  LP1::mode(MODE_OUTPUT);
+  HP1::mode(MODE_OUTPUT);
+
   // Configure P pins
   LP1::type(TYPE_OPENDRAIN);
   HP1::type(TYPE_OPENDRAIN);
@@ -197,6 +220,16 @@ void Motors::init() {
 }
 
 void Motors::stop() {
+  LN1::mode(MODE_OUTPUT);
+  LN2::mode(MODE_OUTPUT);
+  HN1::mode(MODE_OUTPUT);
+  HN2::mode(MODE_OUTPUT);
+  RTN1::mode(MODE_OUTPUT);
+  RTN2::mode(MODE_OUTPUT);
+  LTN1::mode(MODE_OUTPUT);
+  LTN2::mode(MODE_OUTPUT);
+
+  MicroWait(5000);
   LP1::mode(MODE_INPUT);
   HP1::mode(MODE_INPUT);
   RTP1::mode(MODE_INPUT);
@@ -223,44 +256,29 @@ void Motors::tick() {
     // Disable phase
     switch (targetEnable) {
     case TARGET_ENABLE_MOTORS:
-      LP1::mode(MODE_INPUT);
-      HP1::mode(MODE_INPUT);
       RTP1::mode(MODE_INPUT);
       LTP1::mode(MODE_INPUT);
-    
+
       targetEnable = TARGET_DISABLE;
       break ;
     case TARGET_ENABLE_CHARGER:
-      Power::setCharge(false);
-    
+      Analog::allowCharge(false);
+
       targetEnable = TARGET_DISABLE;
       break ;
     case TARGET_DISABLE:
       // Enable phase
       switch (desiredEnable)  {
         case TARGET_ENABLE_CHARGER:
-          Power::setCharge(true);
+          Analog::allowCharge(true);
           break ;
         case TARGET_ENABLE_MOTORS:
           // Reset our ports (This is portable, but ugly, can easily collapse this into 6 writes)
-          LP1::reset();
-          HP1::reset();
           RTP1::reset();
           LTP1::reset();
 
-          LP1::mode(MODE_OUTPUT);
-          HP1::mode(MODE_OUTPUT);
           RTP1::mode(MODE_OUTPUT);
           LTP1::mode(MODE_OUTPUT);
-
-          LN1::alternate(2);
-          LN2::alternate(2);
-          HN1::alternate(1);
-          HN2::alternate(1);
-          LTN1::alternate(2);
-          LTN2::alternate(2);
-          RTN1::alternate(2);
-          RTN2::alternate(2);
           break ;
         default:
           break ;
@@ -280,11 +298,15 @@ void Motors::tick() {
 
     // Make sure motors are enabled by next phase
     // We will need to table this power change for one transition
-    if (state->power != 0) {
-      idleTimer = 0;
+    if (config->charge_exclusive) {
+      // Reset our timer
+      if (state->power != 0) {
+        idleTimer = 0;
+      }
 
+      // Cannot service this motor if the motor is inactive
       if (targetEnable != TARGET_ENABLE_MOTORS) {
-        break ;
+        continue ;
       }
     }
 
@@ -311,10 +333,10 @@ void Motors::tick() {
         // Set our Ns to 0 (should happen anyway)
         config->N2_Bank->MODER = (config->N2_Bank->MODER & config->N2_ModeMask) | config->N2_ModeOutput;
         config->N1_Bank->MODER = (config->N1_Bank->MODER & config->N1_ModeMask) | config->N1_ModeOutput;
-      
+
         state->direction = DIRECTION_IDLE;
         break ;
-      
+
       // We are transitioning out of 'idle' state
       case DIRECTION_IDLE:
         switch (direction) {

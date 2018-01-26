@@ -217,7 +217,9 @@ class Victor {
     };
 
     syncTime () {
-        var date_set_args = ["date", "-u", "@" + Math.round(Date.now() / 1000)];
+        var old_date_set_args = ["date", "-u", "@" + Math.round(Date.now() / 1000)];
+        this.sendCommand(old_date_set_args);
+        var date_set_args = ["date", "-u", "-s", "@" + Math.round(Date.now() / 1000)];
         this.sendCommand(date_set_args);
         var setprop_args = ["setprop", "persist.sys.timezone", moment.tz.guess()];
         this.sendCommand(setprop_args);

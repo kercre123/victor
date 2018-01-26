@@ -46,6 +46,45 @@ BehaviorExternalInterface::~BehaviorExternalInterface()
 
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorExternalInterface::InitDependent(Robot* robot, const BCCompMap& dependentComponents)
+{
+  auto& aiComponent            = dependentComponents.find(BCComponentID::AIComponent)->second.GetValue<AIComponent>();
+  auto& behaviorContainer      = dependentComponents.find(BCComponentID::BehaviorContainer)->second.GetValue<BehaviorContainer>();
+  auto& behaviorEventComponent = dependentComponents.find(BCComponentID::BehaviorEventComponent)->second.GetValue<BehaviorEventComponent>();
+  auto& blockWorld             = dependentComponents.find(BCComponentID::BlockWorld)->second.GetValue<BlockWorld>();
+  auto& delegationComponent    = dependentComponents.find(BCComponentID::DelegationComponent)->second.GetValue<DelegationComponent>();
+  auto& faceWorld              = dependentComponents.find(BCComponentID::FaceWorld)->second.GetValue<FaceWorld>();
+  auto& robotInfo              = dependentComponents.find(BCComponentID::RobotInfo)->second.GetValue<BEIRobotInfo>();
+
+
+  Init(&aiComponent,
+       &robot->GetAnimationComponent(),
+       &behaviorContainer,
+       &behaviorEventComponent,
+       &blockWorld,
+       &robot->GetBodyLightComponent(),
+       &robot->GetCubeAccelComponent(), 
+       &robot->GetCubeLightComponent(),
+       &delegationComponent,
+       &faceWorld,
+       &robot->GetMapComponent(),
+       &robot->GetMicDirectionHistory(),
+       &robot->GetMoodManager(),
+       robot->GetContext()->GetNeedsManager(),
+       &robot->GetObjectPoseConfirmer(),
+       &robot->GetPetWorld(),
+       &robot->GetProgressionUnlockComponent(),
+       &robot->GetProxSensorComponent(),
+       &robot->GetPublicStateBroadcaster(),
+       robot->GetAudioClient(),
+       &robotInfo,
+       &robot->GetTouchSensorComponent(),
+       &robot->GetVisionComponent());
+}
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExternalInterface::Init(AIComponent*                   aiComponent,
                                      AnimationComponent*            animationComponent,

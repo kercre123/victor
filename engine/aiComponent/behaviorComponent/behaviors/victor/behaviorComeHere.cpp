@@ -52,24 +52,24 @@ BehaviorComeHere::BehaviorComeHere(const Json::Value& config)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorComeHere::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorComeHere::OnBehaviorActivated()
 {
   _currentFaceID.Reset();
   if(_params.preferMicData){
-    TurnTowardsMicDirection(behaviorExternalInterface);
+    TurnTowardsMicDirection();
   }else{
-    TurnTowardsFace(behaviorExternalInterface);
+    TurnTowardsFace();
   }
   
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorComeHere::TurnTowardsMicDirection(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorComeHere::TurnTowardsMicDirection()
 {
   DEBUG_SET_STATE(TurnTowardsMicDirection);
   // Calculate radians to turn based on mic data
-  MicDirectionHistory::DirectionIndex dirIdx = behaviorExternalInterface.GetMicDirectionHistory().GetRecentDirection();
+  MicDirectionHistory::DirectionIndex dirIdx = GetBEI().GetMicDirectionHistory().GetRecentDirection();
   dirIdx = dirIdx < 6 ? dirIdx : -(dirIdx - 6);
   const float radiansPerIdx = (2.0f/12.0f);
   const bool isAbsolute = false;
@@ -79,19 +79,19 @@ void BehaviorComeHere::TurnTowardsMicDirection(BehaviorExternalInterface& behavi
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorComeHere::TurnTowardsFace(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorComeHere::TurnTowardsFace()
 {
   DEBUG_SET_STATE(TurnTowardsFace);
   // Get all faces we have locations for  
   std::set<SmartFaceID> allFaces; 
   {
-    const std::set<Vision::FaceID_t> possibleFaces = behaviorExternalInterface.GetFaceWorld().GetFaceIDs();
+    const std::set<Vision::FaceID_t> possibleFaces = GetBEI().GetFaceWorld().GetFaceIDs();
     for(auto& entry : possibleFaces){
-      allFaces.insert(behaviorExternalInterface.GetFaceWorld().GetSmartFaceID(entry));
+      allFaces.insert(GetBEI().GetFaceWorld().GetSmartFaceID(entry));
     }
   }
 
-  const auto& faceSelectionComp = behaviorExternalInterface.GetAIComponent().GetFaceSelectionComponent();
+  const auto& faceSelectionComp = GetBEI().GetAIComponent().GetFaceSelectionComponent();
   // Select face based on priority penalties
   FaceSelectionComponent::FaceSelectionFactorMap map;
   for(auto& priority: _facePriorities){
@@ -117,22 +117,22 @@ void BehaviorComeHere::TurnTowardsFace(BehaviorExternalInterface& behaviorExtern
     auto action = new TurnTowardsFaceAction(_currentFaceID, M_PI_F, sayName);
     action->SetRequireFaceConfirmation(true);
     DelegateIfInControl(action,
-                        [this](const ActionResult& result, BehaviorExternalInterface& bei){
+                        [this](const ActionResult& result){
                             if(result == ActionResult::SUCCESS){
-                              DriveTowardsFace(bei);
+                              DriveTowardsFace();
                             }else{
-                              NoFaceFound(bei);
+                              NoFaceFound();
                             }
                         });
   }else{
     // No face, so turn towards mic data
-    TurnTowardsMicDirection(behaviorExternalInterface);
+    TurnTowardsMicDirection();
   }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorComeHere::AlreadyHere(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorComeHere::AlreadyHere()
 {
   DEBUG_SET_STATE(AlreadyHere);
   DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::ComeHere_AlreadyHere));
@@ -140,31 +140,31 @@ void BehaviorComeHere::AlreadyHere(BehaviorExternalInterface& behaviorExternalIn
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorComeHere::DriveTowardsFace(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorComeHere::DriveTowardsFace()
 {
   DEBUG_SET_STATE(DriveTowardsFace);
   // Calculate distance to face
-  const Vision::TrackedFace* currentFace = behaviorExternalInterface.GetFaceWorld().GetFace(_currentFaceID);
+  const Vision::TrackedFace* currentFace = GetBEI().GetFaceWorld().GetFace(_currentFaceID);
   if( nullptr == currentFace ) {
     return;
   }
 
   f32 distToFace;
-  const Pose3d& robotPose = behaviorExternalInterface.GetRobotInfo().GetPose();
+  const Pose3d& robotPose = GetBEI().GetRobotInfo().GetPose();
   if(ComputeDistanceSQBetween(currentFace->GetHeadPose(),robotPose,distToFace)){
     if(distToFace > _params.distAlreadyHere_mm_sqr){
       const float distToDrive = sqrt(distToFace);
       DelegateIfInControl(new DriveStraightAction(distToDrive));
     }else{
       // We're close enough
-      AlreadyHere(behaviorExternalInterface);
+      AlreadyHere();
     }
   }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorComeHere::NoFaceFound(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorComeHere::NoFaceFound()
 {
   DEBUG_SET_STATE(NoFaceFound);
   DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::ComeHere_SearchForFace));

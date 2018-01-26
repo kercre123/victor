@@ -31,7 +31,7 @@ macro(__anki_setup_go_environment target_basedir gopath)
     # set android flags for `go build`
     list(APPEND __go_compile_env "CC=${ANDROID_TOOLCHAIN_CC}")
     list(APPEND __go_compile_env "CXX=${ANDROID_TOOLCHAIN_CXX}")
-    list(APPEND __go_compile_env "CGO_FLAGS=\"-march=armv7-a\"")
+    list(APPEND __go_compile_env "CGO_FLAGS=\"-g -march=armv7-a\"")
     list(APPEND __go_build_flags "-pkgdir" "${CMAKE_CURRENT_BINARY_DIR}/pkgdir")
     list(APPEND __go_deps android_toolchain)
   endif()
@@ -56,7 +56,6 @@ macro(__anki_run_go_build target_name)
 
   add_custom_command(
     OUTPUT ${__gobuild_out}
-    COMMAND echo ${__go_build_ldflags} > ./asdfldflags
     COMMAND ${CMAKE_COMMAND} -E env ${__go_get_env} go get -d ${__gobuild_basedir}
     COMMAND ${CMAKE_COMMAND} -E env ${__go_compile_env} ${__include_env} ${__link_env}
                              go build ${__go_build_flags} ${__ldflags_str} ${__go_build_ldflags} ${__gobuild_basedir}
@@ -104,9 +103,8 @@ macro(anki_build_go_c_library target_name gensrc_var srclist_dir)
 
   # some stuff I don't understand at all to export {target}_out as a library
   # that other projects can link to:
-  add_custom_target(__gobuild_${target_name}_target DEPENDS ${__gobuild_out})
   add_library(${target_name} STATIC IMPORTED GLOBAL)
-  add_dependencies(${target_name} __gobuild_${target_name}_target)
+  add_dependencies(${target_name} ${__gobuild_out})
   set_property(TARGET ${target_name} PROPERTY IMPORTED_LOCATION ${__gobuild_primary_out})
 
   __anki_build_go_fake_target(${target_name})

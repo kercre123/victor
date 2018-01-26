@@ -32,8 +32,8 @@ public:
   virtual ~BehaviorPlayAnimOnNeedsChange();
 
 protected:
-  virtual bool WantsToBeActivatedAnimSeqInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual bool WantsToBeActivatedAnimSeqInternal() const override;
+  virtual void OnBehaviorDeactivated() override;
 
   
 private:
@@ -44,7 +44,7 @@ private:
   Params _params;
   
   /// Methods
-  bool ShouldGetInBePlayed(BehaviorExternalInterface& behaviorExternalInterface) const;
+  bool ShouldGetInBePlayed() const;
   
 };
   

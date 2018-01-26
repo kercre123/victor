@@ -404,6 +404,7 @@ namespace Anki {
       // Audio Input
       audioCaptureSystem_.SetCallback(std::bind(&AudioInputCallback, std::placeholders::_1, std::placeholders::_2));
       audioCaptureSystem_.Init();
+
       if (audioCaptureSystem_.IsValid())
       {
         audioCaptureSystem_.StartRecording();
@@ -771,6 +772,11 @@ namespace Anki {
 
           // XXX rescale the signal strength to fit within a u16 (to match real sensor)
           u16 ss = Util::numeric_cast_clamped<u16>(signalStrength);
+          // HACK: Temp scaling to rough actual values
+          const u16 maxPhysSignal = 700;
+          const u16 minPhysSignal = 600;
+          const f32 maxSimSignal  = std::numeric_limits<u16>::max();
+          ss = (u16)((((maxPhysSignal - minPhysSignal) * ss) / maxSimSignal) + minPhysSignal);
           return ss;
         }
 
@@ -790,7 +796,7 @@ namespace Anki {
     {
       if (cliff_id == HAL::CLIFF_COUNT) {
         PRINT_NAMED_ERROR("simHAL.GetRawCliffData.InvalidCliffID", "");
-        return static_cast<u16>(cliffSensors_[HAL::CLIFF_FL]->getMaxRange());
+        return static_cast<u16>(cliffSensors_[HAL::CLIFF_FL]->getMaxValue());
       }
       return static_cast<u16>(cliffSensors_[cliff_id]->getValue());
     }
@@ -807,14 +813,15 @@ namespace Anki {
 
     bool HAL::BatteryIsCharging()
     {
-      //return false; // XXX On Cozmo 3, head is off if robot is charging
       return (chargeContact_->getPresence() == 1);
     }
 
     bool HAL::BatteryIsOnCharger()
     {
-      //return false; // XXX On Cozmo 3, head is off if robot is charging
-      return (chargeContact_->getPresence() == 1);
+      // The _physical_ robot only knows that it's on the charger if
+      // the charge contacts are powered, so treat this the same as
+      // BatteryIsCharging()
+      return HAL::BatteryIsCharging();
     }
     
     bool HAL::BatteryIsChargerOOS()

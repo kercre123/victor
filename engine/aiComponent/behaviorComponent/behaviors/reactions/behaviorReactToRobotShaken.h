@@ -27,16 +27,18 @@ private:
   BehaviorReactToRobotShaken(const Json::Value& config);
   
 public:
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override { return true;}
-  virtual bool ShouldRunWhileOffTreads() const override { return true;}
-  virtual bool CarryingObjectHandledInternally() const override {return true;}
+  virtual bool WantsToBeActivatedBehavior() const override { return true;}
   
 protected:
-  
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual bool ShouldCancelWhenInControl() const override { return false;}
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenCarryingObject = true;
+    modifiers.wantsToBeActivatedWhenOffTreads = true;
+    modifiers.behaviorAlwaysDelegates = false;
+  }
+
+  virtual void OnBehaviorActivated() override;
+  virtual void BehaviorUpdate() override;
+  virtual void OnBehaviorDeactivated() override;
   
 private:
 

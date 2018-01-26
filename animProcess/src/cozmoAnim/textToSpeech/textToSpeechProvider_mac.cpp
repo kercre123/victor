@@ -27,10 +27,6 @@
 
 // Log options
 #define LOG_CHANNEL    "TextToSpeech"
-#define LOG_ERROR      PRINT_NAMED_ERROR
-#define LOG_WARNING    PRINT_NAMED_WARNING
-#define LOG_INFO(...)  PRINT_CH_INFO(LOG_CHANNEL, ##__VA_ARGS__)
-#define LOG_DEBUG(...) PRINT_CH_DEBUG(LOG_CHANNEL, ##__VA_ARGS__)
 
 // Acapela declarations
 #include "ioBabTts.h"

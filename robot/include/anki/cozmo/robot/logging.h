@@ -17,7 +17,6 @@
 #define __ANKI_COZMO_ROBOT_LOGGING_H_
 
 #include "anki/cozmo/robot/buildTypes.h"
-#include "clad/types/robotLogging.h"
 #include <stdio.h>
 #include <stdlib.h>
 

@@ -20,6 +20,7 @@
 #include "coretech/vision/engine/visionMarker.h"
 #include "coretech/vision/engine/faceTracker.h"
 #include "engine/components/nvStorageComponent.h"
+#include "engine/entity.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robotStateHistory.h"
 #include "engine/rollingShutterCorrector.h"
@@ -63,12 +64,28 @@ class VizManager;
   
 struct DockingErrorSignal;
 
-  class VisionComponent : public Util::noncopyable
+  class VisionComponent : public IDependencyManagedComponent<RobotComponentID>, public Util::noncopyable
   {
   public:
   
-    VisionComponent(Robot& robot, const CozmoContext* context);
+    VisionComponent();
     virtual ~VisionComponent();
+
+    //////
+    // IDependencyManagedComponent functions
+    //////
+    virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
+    // Maintain the chain of initializations currently in robot - it might be possible to
+    // change the order of initialization down the line, but be sure to check for ripple effects
+    // when changing this function
+    virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
+      dependencies.insert(RobotComponentID::Movement);
+    };
+    virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
+    //////
+    // end IDependencyManagedComponent functions
+    //////
+
     
     Result Init(const Json::Value& config);
 
@@ -117,6 +134,7 @@ struct DockingErrorSignal;
     // Set whether or not we draw each processed image to the robot's screen
     // (Not using the word "face" because of confusion with "faces" in vision)
     void   EnableDrawImagesToScreen(bool enable) { _drawImagesToScreen = enable; }
+    void   AddDrawScreenModifier(const std::function<void(Vision::ImageRGB&)>& modFcn) { _screenImageModFuncs.push_back(modFcn); }
     
     // Looks through all results available from the VisionSystem and processes them.
     // This updates the Robot's BlockWorld and FaceWorld using those results.
@@ -138,7 +156,7 @@ struct DockingErrorSignal;
     Vision::Camera& GetCamera(void);
     
     const std::shared_ptr<Vision::CameraCalibration> GetCameraCalibration() const;
-    bool IsCameraCalibrationSet() const { return _camera.IsCalibrated(); }
+    bool IsCameraCalibrationSet() const { return _camera->IsCalibrated(); }
     Result ClearCalibrationImages();
     
     // If enabled, the camera calibration will be updated based on the
@@ -254,6 +272,9 @@ struct DockingErrorSignal;
     Result LoadFaceAlbumFromFile(const std::string& path); // Broadcasts any loaded names and IDs
     Result LoadFaceAlbumFromFile(const std::string& path, std::list<Vision::LoadedKnownFace>& loadedFaces); // Populates list, does not broadcast
     
+    // See VisionSystem::SetSaveParameters for details on the arguments
+    void SetSaveImageParameters(const ImageSendMode saveMode, const std::string& path, const int8_t onRobotQuality);
+
     // This is for faking images being processed for unit tests
     void FakeImageProcessed(TimeStamp_t t);
     
@@ -287,7 +308,7 @@ struct DockingErrorSignal;
 
     bool _isInitialized = false;
     
-    Robot& _robot;
+    Robot* _robot = nullptr;
     const CozmoContext* _context = nullptr;
     
     VisionSystem* _visionSystem = nullptr;
@@ -297,13 +318,16 @@ struct DockingErrorSignal;
     // Robot stores the calibration, camera just gets a reference to it
     // This is so we can share the same calibration data across multiple
     // cameras (e.g. those stored inside the pose history)
-    Vision::Camera            _camera;
+    std::unique_ptr<Vision::Camera> _camera;
     bool                      _enabled = false;
     
     bool   _isSynchronous = false;
     bool   _running = false;
     bool   _paused  = false;
     bool   _drawImagesToScreen = false;
+
+    std::list<std::function<void(Vision::ImageRGB&)>> _screenImageModFuncs;
+
     std::mutex _lock;
     
     // Current image is the one the vision system (thread) is actively working on.
@@ -384,15 +408,15 @@ struct DockingErrorSignal;
   }
   
   inline const Vision::Camera& VisionComponent::GetCamera(void) const {
-    return _camera;
+    return *_camera;
   }
   
   inline Vision::Camera& VisionComponent::GetCamera(void) {
-    return _camera;
+    return *_camera;
   }
   
   inline const std::shared_ptr<Vision::CameraCalibration> VisionComponent::GetCameraCalibration() const {
-    return _camera.GetCalibration();
+    return _camera->GetCalibration();
   }
   
   inline void VisionComponent::EnableVisionWhileMovingFast(bool enable) {
@@ -423,7 +447,7 @@ struct DockingErrorSignal;
   }
   
   inline void VisionComponent::StoreNextImageForCameraCalibration() {
-    StoreNextImageForCameraCalibration(Rectangle<s32>(-1,-1,-1, -1));
+    StoreNextImageForCameraCalibration(Rectangle<s32>(-1,-1,0,0));
   }
   
   inline void VisionComponent::StoreNextImageForCameraCalibration(const Rectangle<s32>& targetROI) {

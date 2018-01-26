@@ -28,8 +28,9 @@ target_link_libraries(cti_vision
 )
 
 target_compile_options(cti_vision
-  PRIVATE
-  -Os
+PRIVATE
+  $<$<CONFIG:Debug>:-O0>
+  $<$<CONFIG:Release>:-O2>
   ${SYMBOL_VISIBILITY_FLAGS}
 )
 
@@ -87,6 +88,11 @@ if (MACOSX)
   )
 
   add_test(NAME cti_vision_test COMMAND cti_vision_test)
+
+  set_tests_properties(cti_vision_test
+    PROPERTIES
+    ENVIRONMENT "GTEST_OUTPUT=xml:ctiVisionGoogleTest.xml"
+  )
 
 endif()
 

@@ -107,7 +107,6 @@ namespace Anki {
       return RESULT_OK;
     }
     
-    
     TimeStamp_t AndroidHAL::GetTimeStamp(void)
     {
       auto currTime = std::chrono::steady_clock::now();
@@ -127,9 +126,6 @@ namespace Anki {
       if(_currentFrame != nullptr && _frameReady)
       {
         _frameReady = false;
-
-        // Tell the camera we will be processing this frame
-        camera_set_processing_frame();
         
         frame = _currentFrame;
 
@@ -143,5 +139,9 @@ namespace Anki {
       return false;
     } // CameraGetFrame()
     
+    void AndroidHAL::CameraSwapLocks()
+    {
+      camera_swap_locks();
+    }
   } // namespace Cozmo
 } // namespace Anki

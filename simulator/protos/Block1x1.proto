@@ -2,13 +2,13 @@
 
 PROTO Block1x1 [
   field SFBool filterLogs FALSE
+  field SFBool colorizeStderrOutput FALSE
   field SFString name "Block000"
   field SFString type "1" # BlockType
   field SFVec3f translation 0 0 0.022
   field SFRotation rotation 0 0 1 0
   field SFFloat mass 0.085
   field SFColor blockColor 1 0 0
-  field SFBool  useWhiteMarkerBackgrounds TRUE
   field SFString markerImg ""  # Image path relative to textures/
   field SFBool active FALSE  # Whether or not this block has active lights
   field SFInt32 activeID 1   # Must be unique in the world among all active blocks
@@ -37,11 +37,16 @@ Supervisor {
   %{ if fields.active.value then }%
     controller "webotsCtrlLightCube"
 
-    # append filter command line parameter if filter is set to TRUE
+    # append optional command line parameters
+    %{ ctrlArgs="" }%
     %{ if fields.filterLogs.value then }%
-      %{ autoArgs="--applyLogFilter"}%
+      %{ ctrlArgs = ctrlArgs .. " --applyLogFilter"}%
     %{ end }%
-    controllerArgs "%{=autoArgs}%"
+    %{ if fields.colorizeStderrOutput.value then }%
+      %{ ctrlArgs = ctrlArgs .. " --colorizeStderrOutput"}%
+    %{ end }%
+
+    controllerArgs "%{=ctrlArgs}%"
   %{ end }%
 
   name IS name

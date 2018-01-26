@@ -22,10 +22,9 @@ namespace Anki {
 namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-PlaceBlockHelper::PlaceBlockHelper(BehaviorExternalInterface& behaviorExternalInterface,
-                                   ICozmoBehavior& behavior,
+PlaceBlockHelper::PlaceBlockHelper(ICozmoBehavior& behavior,
                                    BehaviorHelperFactory& helperFactory)
-: IHelper("PlaceBlock", behaviorExternalInterface, behavior, helperFactory)
+: IHelper("PlaceBlock", behavior, helperFactory)
 {
   
 }
@@ -38,23 +37,23 @@ PlaceBlockHelper::~PlaceBlockHelper()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool PlaceBlockHelper::ShouldCancelDelegates(BehaviorExternalInterface& behaviorExternalInterface) const
+bool PlaceBlockHelper::ShouldCancelDelegates() const
 {
   return false;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IHelper::HelperStatus PlaceBlockHelper::InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface)
+IHelper::HelperStatus PlaceBlockHelper::InitBehaviorHelper()
 {
-  double turn_rad = behaviorExternalInterface.GetRNG().RandDblInRange(M_PI_4 ,M_PI_2);
-  if( behaviorExternalInterface.GetRNG().RandDbl() < 0.5 )
+  double turn_rad = GetBEI().GetRNG().RandDblInRange(M_PI_4 ,M_PI_2);
+  if( GetBEI().GetRNG().RandDbl() < 0.5 )
   {
     turn_rad *= -1;
   }
   {
     DelegateIfInControl(new TurnInPlaceAction((float) turn_rad, false),
-                &PlaceBlockHelper::RespondToTurnAction);
+                        &PlaceBlockHelper::RespondToTurnAction);
   }
 
   
@@ -63,14 +62,14 @@ IHelper::HelperStatus PlaceBlockHelper::InitBehaviorHelper(BehaviorExternalInter
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IHelper::HelperStatus PlaceBlockHelper::UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IHelper::HelperStatus PlaceBlockHelper::UpdateWhileActiveInternal()
 {
   return _status;
 }
   
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void PlaceBlockHelper::RespondToTurnAction(ActionResult result, BehaviorExternalInterface& behaviorExternalInterface)
+void PlaceBlockHelper::RespondToTurnAction(ActionResult result)
 {
   CompoundActionSequential* action = new CompoundActionSequential();
   
@@ -93,7 +92,7 @@ void PlaceBlockHelper::RespondToTurnAction(ActionResult result, BehaviorExternal
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void PlaceBlockHelper::RespondToPlacedAction(ActionResult result, BehaviorExternalInterface& behaviorExternalInterface)
+void PlaceBlockHelper::RespondToPlacedAction(ActionResult result)
 {
   _status = IHelper::HelperStatus::Complete;
 }

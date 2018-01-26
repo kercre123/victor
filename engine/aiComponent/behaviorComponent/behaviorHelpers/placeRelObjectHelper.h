@@ -22,7 +22,7 @@ namespace Cozmo {
 
 class PlaceRelObjectHelper : public IHelper{
 public:
-  PlaceRelObjectHelper(BehaviorExternalInterface& behaviorExternalInterface, ICozmoBehavior& behavior,
+  PlaceRelObjectHelper(ICozmoBehavior& behavior,
                        BehaviorHelperFactory& helperFactory,
                        const ObjectID& targetID,
                        const bool placingOnGround = false,
@@ -31,19 +31,19 @@ public:
 
 protected:
   // IHelper functions
-  virtual bool ShouldCancelDelegates(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual HelperStatus InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual HelperStatus UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual bool ShouldCancelDelegates() const override;
+  virtual HelperStatus InitBehaviorHelper() override;
+  virtual HelperStatus UpdateWhileActiveInternal() override;
 private:
   ObjectID _targetID;
   bool _placingOnGround;
   PlaceRelObjectParameters _params;
   u32 _tmpRetryCounter;
   
-  void StartPlaceRelObject(BehaviorExternalInterface& behaviorExternalInterface);
-  void RespondToPlaceRelResult(ActionResult result, BehaviorExternalInterface& behaviorExternalInterface);
+  void StartPlaceRelObject();
+  void RespondToPlaceRelResult(ActionResult result);
 
-  void MarkFailedToStackOrPlace(BehaviorExternalInterface& behaviorExternalInterface);
+  void MarkFailedToStackOrPlace();
   
 };
 

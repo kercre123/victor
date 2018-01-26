@@ -14,6 +14,9 @@
 #define __Anki_Cozmo_Basestation_Components_InventoryComponent_H__
 
 #include "clad/types/inventoryTypes.h"
+
+#include "engine/dependencyManagedComponent.h"
+#include "engine/robotComponents_fwd.h"
 #include "json/json-forwards.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
@@ -28,12 +31,27 @@ namespace Cozmo {
 class Robot;
 class CozmoContext;
 
-class InventoryComponent : private Util::noncopyable
+class InventoryComponent : public IDependencyManagedComponent<RobotComponentID>, private Util::noncopyable
 {
 public:
   static const int kInfinity = -1;
 
-  explicit InventoryComponent(Robot& robot);
+  explicit InventoryComponent();
+
+  //////
+  // IDependencyManagedComponent functions
+  //////
+  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
+  // Maintain the chain of initializations currently in robot - it might be possible to
+  // change the order of initialization down the line, but be sure to check for ripple effects
+  // when changing this function
+  virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
+    dependencies.insert(RobotComponentID::StateHistory);
+  }
+  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
+  //////
+  // end IDependencyManagedComponent functions
+  //////
 
   void Init(const Json::Value& config);
   void Update(const float currentTime_s);
@@ -50,8 +68,7 @@ public:
   void SendInventoryAllToGame();
 
 private:
-
-  Robot& _robot;
+  Robot* _robot = nullptr;
 
   void TryWriteCurrentInventoryToRobot();
   void WriteCurrentInventoryToRobot();

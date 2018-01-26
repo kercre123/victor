@@ -1,0 +1,10 @@
+{
+  "behaviorID" : "SleepingWakeUp",
+  "behaviorClass" : "PlayAnim",
+
+  "playOnChargerWithoutBody": true,
+  
+  "animTriggers": [
+    "ConnectWakeUp"
+  ]
+}

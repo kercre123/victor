@@ -49,18 +49,18 @@ protected:
     
 public:
 
-  virtual bool CarryingObjectHandledInternally() const override { return false;}
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual bool WantsToBeActivatedBehavior() const override;
     
 protected:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // ICozmoBehavior API
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
+
+  virtual void OnBehaviorActivated() override;
+  virtual void BehaviorUpdate() override;
+  virtual void OnBehaviorDeactivated() override;
 
 private:
   
@@ -79,15 +79,15 @@ private:
   void LoadConfig(const Json::Value& config);
 
   // sets the mutbale _targetFace to the face we want to interact with
-  void SelectFaceToTrack(BehaviorExternalInterface& behaviorExternalInterface) const;
+  void SelectFaceToTrack() const;
 
-  void TransitionToInitialReaction(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToGlancingDown(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToDrivingForward(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToTrackingFace(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToTriggerEmotionEvent(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToInitialReaction();
+  void TransitionToGlancingDown();
+  void TransitionToDrivingForward();
+  void TransitionToTrackingFace();
+  void TransitionToTriggerEmotionEvent();
 
-  bool CanDriveIdealDistanceForward(BehaviorExternalInterface& behaviorExternalInterface);
+  bool CanDriveIdealDistanceForward();
 
   ////////////////////////////////////////////////////////////////////////////////
   // Members

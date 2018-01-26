@@ -25,6 +25,7 @@ elseif (ANDROID)
   )
 endif()
 
+
 add_library(robot_hal STATIC
   ${CMAKE_SOURCE_DIR}/robot/hal/src/hal.cpp
   ${CMAKE_SOURCE_DIR}/robot/hal/src/hal_motors.cpp
@@ -169,6 +170,7 @@ if (ANDROID)
 
   target_include_directories(spine
     PRIVATE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/clad/src>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/syscon>
   )
@@ -201,6 +203,7 @@ if (ANDROID)
     PRIVATE
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot/hal>
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot/hal/include>
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot/syscon>
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/generated/clad/robot>
   )
 

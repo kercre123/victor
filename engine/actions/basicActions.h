@@ -105,6 +105,8 @@ namespace Cozmo {
       bool    _moveEyes = true;
       AnimationTag _eyeShiftTag = kNotAnimatingTag;
       
+      bool _isInitialized = false;
+      
     }; // class TurnInPlaceAction
 
     // A simple compound action which is useful for identifying blocks that are close
@@ -328,6 +330,7 @@ namespace Cozmo {
       
       AnimationTag _eyeShiftTag = kNotAnimatingTag;
       
+      bool        _motionCommanded = false;
       bool        _motionStarted = false;
       
     };  // class MoveHeadToAngleAction
@@ -378,6 +381,7 @@ namespace Cozmo {
       f32         _liftAccelRacPerSec2 = 20.0f;
       
       bool        _inPosition;
+      bool        _motionCommanded = false;      
       bool        _motionStarted = false;
       
     }; // class MoveLiftToHeightAction
@@ -590,7 +594,7 @@ namespace Cozmo {
 
       // Sets whether or not we require a face. Default is false (it will play animations and return success
       // even if no face is found). If set to true and no face is found, the action will fail with
-      // FAILURE_ABORT and no animations will be played
+      // NO_FACE and no animations will be played
       void SetRequireFaceConfirmation(bool isRequired) { _requireFaceConfirmation = isRequired; }
       
       // Template for all events we subscribe to
@@ -630,7 +634,7 @@ namespace Cozmo {
       void CreateFineTuneAction();
       void SetAction(IActionRunner* action);
       
-    }; // TurnTowardsLastFacePoseAction
+    }; // TurnTowardsFaceAction
 
   
     class TurnTowardsLastFacePoseAction : public TurnTowardsFaceAction

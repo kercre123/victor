@@ -30,7 +30,6 @@ class MicDataInfo
 {
 public:
   Util::BitFlags8<MicDataType>  _typesToRecord;
-  uint32_t                      _timeRecorded_ms  = 0;
   bool                          _doFFTProcess     = false;
   bool                          _repeating        = false;
   uint32_t                      _numMaxFiles      = kDefaultFilesToCapture;
@@ -48,15 +47,19 @@ public:
   void CollectProcessedAudio(const AudioUtil::AudioSample* audioChunk, size_t size);
 
   AudioUtil::AudioChunkList GetProcessedAudio(size_t beginIndex);
-  bool CheckDone();
+  void UpdateForNextChunk();
+  bool CheckDone() const;
+  uint32_t GetTimeToRecord_ms() const;
+  uint32_t GetTimeRecorded_ms() const;
   
 private:
   // These members are accessed via multiple threads when the job is running, so they use a mutex
+  uint32_t _timeRecorded_ms  = 0;
   uint32_t _timeToRecord_ms  = 0;
   AudioUtil::AudioChunkList _rawAudioData{};
   AudioUtil::AudioChunkList _resampledAudioData{};
   AudioUtil::AudioChunkList _processedAudioData{};
-  std::mutex _dataMutex;
+  mutable std::mutex _dataMutex;
 
   void SaveCollectedAudio(const std::string& dataDirectory, const std::string& nameToUse, const std::string& nameToRemove);
   std::string ChooseNextFileNameBase(std::string& out_dirToDelete);

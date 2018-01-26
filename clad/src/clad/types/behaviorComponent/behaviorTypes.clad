@@ -20,6 +20,7 @@ enum uint_8 BehaviorClass {
   ComeHere,
   CubeLiftWorkout,
   Dance,
+  DevImageCapture,
   DevPettingTestSimple,
   DevTurnInPlaceTest,
   DockingTestSimple,
@@ -53,6 +54,21 @@ enum uint_8 BehaviorClass {
   PlayAnim,
   PlayAnimOnNeedsChange,
   PlayAnimWithFace,
+  PlayAnimWithObject,
+
+  PlaypenCameraCalibration,
+  PlaypenDistanceSensor,
+  PlaypenDriftCheck,
+  PlaypenDriveForwards,
+  PlaypenInitChecks,
+  PlaypenEndChecks,
+  PlaypenMotorCalibration,
+  PlaypenPickupCube,
+  PlaypenReadToolCode,
+  PlaypenSoundCheck,
+  PlaypenTest,
+  PlaypenWaitToStart,
+
   PopAWheelie,
   PounceOnMotion,
   PounceWithProx,
@@ -61,6 +77,7 @@ enum uint_8 BehaviorClass {
   PuzzleMaze,
   PyramidThankYou,
   RequestGameSimple,
+  RequestToGoHome,
   RespondPossiblyRoll,
   RespondToRenameFace,
   RollBlock,
@@ -103,13 +120,14 @@ enum uint_8 BehaviorClass {
   DispatcherQueue,
   DispatcherRandom,
   DispatcherScoring,
+  
+  DispatchAfterShake,
 
-  // Victor / demo behavior
-  VictorObservingDemo,
-  VictorDemoFeeding,
-  VictorDemoObservingFaceInteraction,
-  VictorDemoNapping,
-  ObservingOnCharger
+  HighLevelAI,
+  ObservingLookAtFaces,
+  ObservingOnCharger,
+  Sleeping
+  
 }
 
 
@@ -117,6 +135,7 @@ enum uint_8 BehaviorClass {
 // so that they can be referenced by other parts of the behavior system
 // PLEASE KEEP ALPHABETIZED
 enum uint_8 BehaviorID {
+  AcknowledgeCharger,
   AcknowledgeFace,
   AcknowledgeObject,
   Anonymous,
@@ -180,6 +199,7 @@ enum uint_8 BehaviorID {
   InteractWithFaces,
   KnockOverCubes,
   LiftLoadTest,
+  LookInPlaceHeadUp,
   MeetCozmo_FindFaces_Socialize,
   MeetCozmo_InteractWithFaces,
 
@@ -199,6 +219,23 @@ enum uint_8 BehaviorID {
   NothingToDo_BoredAnim,
   NothingToDo_Idle,
   OnboardingShowCube,
+  PlayArbitraryAnim,
+
+  PlaypenCameraCalibration,
+  PlaypenDistanceSensor80mm,
+  PlaypenDistanceSensor100mm,
+  PlaypenDistanceSensor300mm,
+  PlaypenDriftCheck,
+  PlaypenDriveForwards,
+  PlaypenEndChecks,
+  PlaypenInitChecks,
+  PlaypenMotorCalibration,
+  PlaypenPickupCube,
+  PlaypenReadToolCode,
+  PlaypenSoundCheck,
+  PlaypenTest,
+  PlaypenWaitToStart,
+
   PopAWheelie,
   
   PounceOnMotion_Socialize,
@@ -240,6 +277,7 @@ enum uint_8 BehaviorID {
   RequestKeepAway,
   RequestMemoryMatch,
   RequestSpeedTap,
+  RequestToGoHome,
   RespondToPyramidBase,
   RespondToRenameFace,
   RollBlockOnSide,
@@ -307,8 +345,8 @@ enum uint_8 BehaviorID {
 
   StackBlocks,
 
-  VictorFreeplay,
- 
+  HighLevelAI,
+
   VictorCloudComeHere,
   VictorCloudDemoBase,
   VictorCloudDemoAutonomousStub,
@@ -319,31 +357,35 @@ enum uint_8 BehaviorID {
   VictorCloudDemoTriggerDetected,
   VictorCloudDemoReturnToCharger,
 
-  VictorObservingDemo,
-  VictorDemoFeedingState,
-  VictorDemoFeeding,
-  VictorDemoObservingState,
-  VictorDemoObserving,
-  VictorDemoObservingFaceInteraction,
-  VictorDemoObservingFindFaces,
-  VictorDemoObservingOnChargerState,
-  VictorDemoObservingOnCharger,
-  VictorDemoDriveOffChargerIntoObserving,
-  VictorDemoSocialize,
-  VictorDemoSocializeGame,
-  VictorDemoPlayState,
-  VictorDemoPlay,
-  VictorDemoGoToSleep,
-  VictorDemoNappingState,
-  VictorDemoNapping,
-  VictorDemoNappingWakeUp,
-  VictorDemoFailedToFindCharger,
+  FistBumpVoiceCommand,
+
+  ObservingState,
+  Observing,
+  ObservingLookAtFaces,
+  ObservingFindFaces,
+  ObservingOnChargerState,
+  ObservingOnCharger,
+  DriveOffChargerIntoObserving,
+  Socialize,
+  SocializeGame,
+  PlayWithCubesState,
+  PlayWithCubes,
+  GoToSleep,
+  SleepingState,
+  Sleeping,
+  SleepingWakeUp,
+  ObservingFailedToFindCharger,
 
   Needs_SevereLowEnergyRequest,
   ObservingOnChargerIdle,
 
   ShortLookAroundForFaceAndCube,
-  
+
+  GlobalInterruptions,
+
+  DevImageCapture,
+  DevBaseBehavior,
+
   Wait,
   Wait_TestInjectable // BehaviorID used by tests to create fake behaviors
 }

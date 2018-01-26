@@ -497,7 +497,7 @@ namespace Anki {
       
       if(dockObject == nullptr)
       {
-        PRINT_NAMED_WARNING("IDockAction.NullDockObject", "Dock object is null returning failure");
+        PRINT_NAMED_WARNING("IDockAction.NullDockObject", "Dock object is null");
         return ActionResult::BAD_OBJECT;
       }
       

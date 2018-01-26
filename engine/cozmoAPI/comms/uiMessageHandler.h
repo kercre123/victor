@@ -175,6 +175,8 @@ namespace Anki {
       
       uint32_t                            _updateCount = 0;
       
+      double                              _lastPingTime_ms = 0.f;
+      
       UiConnectionType                    _connectionSource = UiConnectionType::Count;  // Connection source currently processing messages
       
       bool                                _isInitialized = false;

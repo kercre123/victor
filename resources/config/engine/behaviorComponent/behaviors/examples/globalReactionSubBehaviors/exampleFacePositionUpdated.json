@@ -2,7 +2,7 @@
   "behaviorClass": "PlayAnim",
   "behaviorID": "ExampleFacePositionUpdated",
   "animTriggers": ["OnboardingReactToCube"],
-  "wantsToRunStrategyConfig": {
-    "strategyType" : "FacePositionUpdated"
+  "wantsToBeActivatedCondition": {
+    "conditionType" : "FacePositionUpdated"
   }  
 }

@@ -159,6 +159,7 @@ namespace Anki
                            const s32 quads_minDistanceFromImageEdge,
                            const Point<f32>& fiducialThicknessFraction,
                            const Point<f32>& roundedCornerFraction,
+                           const bool isDarkOnLight,
                            u8 &meanGrayvalueThreshold, //< Computed for Extract()
                            MemoryStack scratch);
 
@@ -221,8 +222,8 @@ namespace Anki
       //Result ComputeThreshold(const Array <u8> &image, const Array<f32> &homography,
       //  const f32 minContrastRatio, bool &isHighContrast, u8 &meanGrayvalueThreshold);
 
-      Result ComputeBrightDarkValues(const Array <u8> &image, const f32 minContrastRatio,
-                                     f32& brightValue, f32& darkValue,
+      Result ComputeBrightDarkValues(const Array <u8> &image, const f32 minContrastRatio, const bool isDarkOnLight,
+                                     f32& backgroundValue, f32& foregroundValue,
                                      bool& enoughContrast);
 
 #     if RECOGNITION_METHOD == RECOGNITION_METHOD_DECISION_TREES

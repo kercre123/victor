@@ -40,7 +40,6 @@
 #include <webots/Keyboard.hpp>
 
 #define LOG_CHANNEL "Keyboard"
-#define LOG_INFO(...) PRINT_CH_INFO(LOG_CHANNEL, ##__VA_ARGS__)
 
 // CAUTION: If enabled, you can mess up stuff stored on the robot's flash.
 #define ENABLE_NVSTORAGE_WRITE 0
@@ -1670,16 +1669,24 @@ namespace Anki {
 
               case (s32)'@':
               {
-                static bool enable = true;
-                ExternalInterface::SendAvailableObjects msg;
-                msg.enable = enable;
-                
-                LOG_INFO("SendAvailableObjects", "enable: %d", enable);
-                ExternalInterface::MessageGameToEngine msgWrapper;
-                msgWrapper.Set_SendAvailableObjects(msg);
-                SendMessage(msgWrapper);
-                
-                enable = !enable;
+                if(altKeyPressed)
+                {
+                  SendMessage(ExternalInterface::MessageGameToEngine(
+                              ExternalInterface::ExecuteBehaviorByID("PlaypenTest", -1)));
+                }
+                else
+                {
+                  static bool enable = true;
+                  ExternalInterface::SendAvailableObjects msg;
+                  msg.enable = enable;
+                  
+                  LOG_INFO("SendAvailableObjects", "enable: %d", enable);
+                  ExternalInterface::MessageGameToEngine msgWrapper;
+                  msgWrapper.Set_SendAvailableObjects(msg);
+                  SendMessage(msgWrapper);
+                  
+                  enable = !enable;
+                }
                 break;
               }
               case (s32)'#':
@@ -1695,6 +1702,7 @@ namespace Anki {
                 if(altKeyPressed) {
                   SendClearCalibrationImages();
                 } else {
+                  LOG_INFO("", "Saving image");
                   SendSaveCalibrationImage();
                 }
                 break;
@@ -1881,6 +1889,8 @@ namespace Anki {
                   faceParams.leftEye[static_cast<s32>(Param::Lightness)]     = rng.RandDblInRange(0.5f, 1.f);
                   faceParams.leftEye[static_cast<s32>(Param::Saturation)]    = rng.RandDblInRange(0.5f, 1.f);
                   faceParams.leftEye[static_cast<s32>(Param::GlowSize)]      = rng.RandDblInRange(0.f, 1.f);
+                  faceParams.leftEye[static_cast<s32>(Param::HotSpotCenterX)]= rng.RandDblInRange(-0.8f, 0.8f);
+                  faceParams.leftEye[static_cast<s32>(Param::HotSpotCenterY)]= rng.RandDblInRange(-0.8f, 0.8f);
                   
                   faceParams.rightEye[static_cast<s32>(Param::UpperInnerRadiusX)]   = rng.RandDblInRange(0., 1.);
                   faceParams.rightEye[static_cast<s32>(Param::UpperInnerRadiusY)]   = rng.RandDblInRange(0., 1.);
@@ -1904,6 +1914,8 @@ namespace Anki {
                   faceParams.rightEye[static_cast<s32>(Param::Lightness)]     = rng.RandDblInRange(0.5f, 1.f);
                   faceParams.rightEye[static_cast<s32>(Param::Saturation)]    = rng.RandDblInRange(0.5f, 1.f);
                   faceParams.rightEye[static_cast<s32>(Param::GlowSize)]      = rng.RandDblInRange(0.f, 0.75f);
+                  faceParams.rightEye[static_cast<s32>(Param::HotSpotCenterX)]= rng.RandDblInRange(-0.8f, 0.8f);
+                  faceParams.rightEye[static_cast<s32>(Param::HotSpotCenterY)]= rng.RandDblInRange(-0.8f, 0.8f);
                   
                   faceParams.faceAngle_deg = 0; //rng.RandIntInRange(-10, 10);
                   faceParams.faceScaleX = 1.f;//rng.RandDblInRange(0.9, 1.1);
@@ -2313,6 +2325,21 @@ namespace Anki {
                 }
                 break;
               }
+
+              case (s32)'I':
+              {
+                using namespace ExternalInterface;
+
+                static bool toggle = false;
+                SendMessage(MessageGameToEngine(SetDebugConsoleVarMessage("ImageCompressQuality", 
+                                                                          (toggle ? "50" : "0"))));
+                
+                LOG_INFO("ToggleImageStreaming", "%s image streaming", (toggle ? "Enabling" : "Disabling"));
+
+                toggle = !toggle;
+                
+                break;
+              }
             
               case 0x04: // Webots carriage return?
               {
@@ -2677,7 +2704,7 @@ int main(int argc, char **argv)
   // create platform
   const Anki::Util::Data::DataPlatform& dataPlatform = WebotsCtrlShared::CreateDataPlatformBS(argv[0], "webotsCtrlKeyboard");
   // initialize logger
-  WebotsCtrlShared::DefaultAutoGlobalLogger autoLogger(dataPlatform, params.filterLog);
+  WebotsCtrlShared::DefaultAutoGlobalLogger autoLogger(dataPlatform, params.filterLog, params.colorizeStderrOutput);
 
   Anki::Cozmo::WebotsKeyboardController webotsCtrlKeyboard(BS_TIME_STEP);
   webotsCtrlKeyboard.PreInit();

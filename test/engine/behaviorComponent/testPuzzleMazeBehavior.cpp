@@ -64,7 +64,7 @@ float GetTimeForCurrentPuzzle(BehaviorPuzzleMaze* puzzleMazePtr,AIComponent& aiC
   std::string currentActivityName;
   std::string behaviorDebugStr;
   puzzleMazePtr->SetAnimateBetweenPoints(false);
-  puzzleMazePtr->OnActivated(behaviorExternalInterface);
+  puzzleMazePtr->OnActivated();
   puzzleMazePtr->TransitionToState(BehaviorPuzzleMaze::MazeState::MazeStep);
   int i = 0;
   constexpr int maxIterations = 100000;
@@ -73,13 +73,13 @@ float GetTimeForCurrentPuzzle(BehaviorPuzzleMaze* puzzleMazePtr,AIComponent& aiC
     // Tick
     IncrementBaseStationTimerTicks();
     aiComponent.Update(robot, currentActivityName, behaviorDebugStr);
-    puzzleMazePtr->Update(behaviorExternalInterface);
+    puzzleMazePtr->Update();
     i++;
   }
   // Expect every puzzle is solvable in under max iterations. This is the actually reasonable unit tests part.
   EXPECT_LT(i, maxIterations);
   float totalTime = puzzleMazePtr->GetTotalTimeFromLastRun();
-  puzzleMazePtr->OnBehaviorDeactivated(behaviorExternalInterface);
+  puzzleMazePtr->OnBehaviorDeactivated();
   return totalTime;
 }
 

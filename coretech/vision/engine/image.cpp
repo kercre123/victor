@@ -69,10 +69,12 @@ namespace Vision {
   template<typename T>
   Result ImageBase<T>::Load(const std::string& filename)
   {
-    this->get_CvMat_() = cv::imread(filename, (GetNumChannels() == 1 ?
-                                               CV_LOAD_IMAGE_GRAYSCALE :
-                                               CV_LOAD_IMAGE_COLOR));
+    const cv::Mat showableImage = cv::imread(filename, (GetNumChannels() == 1 ?
+                                             CV_LOAD_IMAGE_GRAYSCALE :
+                                             CV_LOAD_IMAGE_COLOR));
     
+    SetFromShowableFormat(showableImage);
+
     if(IsEmpty()) {
       return RESULT_FAIL;
     } else {
@@ -89,26 +91,7 @@ namespace Vision {
     
     // Convert color images to BGR(A) for saving (as assumed by imwrite)
     cv::Mat saveImg;
-    switch(GetNumChannels())
-    {
-      case 1:
-        saveImg = this->get_CvMat_();
-        break;
-        
-      case 3:
-        cv::cvtColor(this->get_CvMat_(), saveImg, cv::COLOR_RGB2BGR);
-        break;
-        
-      case 4:
-        cv::cvtColor(this->get_CvMat_(), saveImg, cv::COLOR_RGBA2BGRA);
-        break;
-        
-      default:
-        PRINT_NAMED_WARNING("ImageBase.Save.UnexpectedNumChannels",
-                            "Don't know how to save %d-channel image",
-                            GetNumChannels());
-        return RESULT_FAIL;
-    }
+    ConvertToShowableFormat(saveImg);
     
     Util::FileUtils::CreateDirectory(filename, true, true);
     
@@ -150,33 +133,10 @@ namespace Vision {
     }
 #   endif
     
-    switch(GetNumChannels())
-    {
-      case 1:
-      {
-        cv::imshow(windowName, this->get_CvMat_());
-        break;
-      }
-      case 3:
-      {
-        cv::Mat dispImg;
-        cvtColor(this->get_CvMat_(), dispImg, CV_RGB2BGR); // imshow expects BGR color ordering
-        cv::imshow(windowName, dispImg);
-        break;
-      }
-      case 4:
-      {
-        cv::Mat dispImg;
-        cvtColor(this->get_CvMat_(), dispImg, CV_RGBA2BGR);
-        cv::imshow(windowName, dispImg);
-        break;
-      }
-      default:
-        PRINT_NAMED_ERROR("ImageBase.Display.InvalidNumChannels",
-                          "Cannot display image with %d channels.", GetNumChannels());
-        return;
-    }
-    
+    cv::Mat dispImg;
+    ConvertToShowableFormat(dispImg);
+
+    cv::imshow(windowName, dispImg);
     cv::waitKey(pauseTime_ms);
   }
 
@@ -209,11 +169,12 @@ namespace Vision {
     
     cv::destroyAllWindows();
   }
-  
-  inline cv::Scalar GetCvColor(const ColorRGBA& color) {
-    return CV_RGB(color.b(), color.g(), color.r());
+
+  template<typename T>
+  inline cv::Scalar ImageBase<T>::GetCvColor(const ColorRGBA& color) const {
+    return cv::Scalar(color.r(), color.g(), color.b(), 0);
   }
-  
+
   template<typename T>
   void ImageBase<T>::DrawLine(const Point2f& start, const Point2f& end,
                               const ColorRGBA& color, const s32 thickness)
@@ -288,15 +249,16 @@ namespace Vision {
   
   template<typename T>
   void ImageBase<T>::DrawText(const Point2f& position, const std::string& str,
-                              const ColorRGBA& color, f32 scale, bool dropShadow)
+                              const ColorRGBA& color, f32 scale, bool dropShadow,
+                              int thickness)
   {
     if(dropShadow) {
       cv::Point shadowPos(position.get_CvPoint_());
       shadowPos.x += 1;
       shadowPos.y += 1;
-      cv::putText(this->get_CvMat_(), str, shadowPos, CV_FONT_NORMAL, scale, GetCvColor(NamedColors::BLACK));
+      cv::putText(this->get_CvMat_(), str, shadowPos, CV_FONT_NORMAL, scale, GetCvColor(NamedColors::BLACK), thickness);
     }
-    cv::putText(this->get_CvMat_(), str, position.get_CvPoint_(), CV_FONT_NORMAL, scale, GetCvColor(color));
+    cv::putText(this->get_CvMat_(), str, position.get_CvPoint_(), CV_FONT_NORMAL, scale, GetCvColor(color), thickness);
   }
   
   template<typename T>
@@ -366,6 +328,7 @@ namespace Vision {
   template class ImageBase<u8>;
   template class ImageBase<PixelRGB>;
   template class ImageBase<PixelRGBA>;
+  template class ImageBase<PixelRGB565>;
   
 #pragma mark --- Image ---
   
@@ -467,6 +430,23 @@ namespace Vision {
     
     return count;
   }
+
+  inline cv::Scalar Image::GetCvColor(const ColorRGBA& color) const {
+    // Copied formula from Matlab's rgb2gray
+    u8 gray = static_cast<u8>(0.2989f * color.r()) + (0.5870f * color.g()) + (0.1140f * color.b()); 
+    return cv::Scalar(gray, gray, gray, 0);
+  }
+
+  void Image::ConvertToShowableFormat(cv::Mat& showImg) const {
+    this->get_CvMat_().copyTo(showImg);
+  }
+
+  void Image::SetFromShowableFormat(const cv::Mat& showImg) {
+    DEV_ASSERT(showImg.channels() == 1, "Image.SetFromShowableFormat.UnexpectedNumChannels");
+    showImg.copyTo(this->get_CvMat_());
+  }
+
+
   
 #if 0
 #pragma mark --- ImageRGBA ---
@@ -518,6 +498,15 @@ namespace Vision {
   {
     grayImage.SetTimestamp(GetTimestamp()); // Make sure timestamp gets transferred!
     cv::cvtColor(this->get_CvMat_(), grayImage.get_CvMat_(), CV_RGBA2GRAY);
+  }
+
+  void ImageRGBA::ConvertToShowableFormat(cv::Mat& showImg) const {
+    cv::cvtColor(this->get_CvMat_(), showImg, cv::COLOR_RGBA2BGRA);
+  }
+
+  void ImageRGBA::SetFromShowableFormat(const cv::Mat& showImg) {
+    DEV_ASSERT(showImg.channels() == 3, "ImageRGBA.SetFromShowableFormat.UnexpectedNumChannels");
+    cv::cvtColor(showImg, this->get_CvMat_(), cv::COLOR_BGR2RGBA);
   }
   
 #if 0 
@@ -585,15 +574,9 @@ namespace Vision {
   
   ImageRGB& ImageRGB::SetFromRGB565(const ImageRGB565 &rgb565)
   {
-    Allocate(rgb565.GetNumRows(), rgb565.GetNumCols());
-    
-    std::function<PixelRGB(const PixelRGB565& pixRGB565)> convertFcn = [](const PixelRGB565& pixRGB565)
-    {
-      return pixRGB565.ToPixelRGB();
-    };
-    
-    rgb565.ApplyScalarFunction(convertFcn, *this);
-
+    // Similar to how COLOR_BGR5652BGR appears to be swapping R and B in ConvertToShowableFormat(),
+    // COLOR_BGR5652RGB here appears not to, which is what we want.
+    cv::cvtColor(rgb565.get_CvMat_(), this->get_CvMat_(), cv::COLOR_BGR5652RGB);
     return *this;
   }
   
@@ -683,6 +666,15 @@ namespace Vision {
     }
   }
   
+  void ImageRGB::ConvertToShowableFormat(cv::Mat& showImg) const {
+    cv::cvtColor(this->get_CvMat_(), showImg, cv::COLOR_RGB2BGR);
+  }
+
+  void ImageRGB::SetFromShowableFormat(const cv::Mat& showImg) {
+    DEV_ASSERT(showImg.channels() == 3, "ImageRGB.SetFromShowableFormat.UnexpectedNumChannels");
+    cv::cvtColor(showImg, this->get_CvMat_(), cv::COLOR_BGR2RGB);
+  }
+
 #if 0
 #pragma mark --- ImageRGB565 ---
 #endif
@@ -695,13 +687,13 @@ namespace Vision {
   }
   
   ImageRGB565::ImageRGB565()
-  : Array2d<PixelRGB565>()
+  : ImageBase<PixelRGB565>()
   {
     
   }
   
   ImageRGB565::ImageRGB565(s32 nrows, s32 ncols)
-  : Array2d<PixelRGB565>(nrows, ncols)
+  : ImageBase<PixelRGB565>(nrows, ncols)
   {
     
   }
@@ -723,16 +715,9 @@ namespace Vision {
   
   ImageRGB565& ImageRGB565::SetFromImageRGB(const ImageRGB& imageRGB)
   {
-    Allocate(imageRGB.GetNumRows(), imageRGB.GetNumCols());
-    
-    std::function<PixelRGB565(const PixelRGB&)> convertFcn = [](const PixelRGB& pixRGB)
-    {
-      PixelRGB565 pixRGB565(pixRGB);
-      return pixRGB565;
-    };
-    
-    imageRGB.ApplyScalarFunction(convertFcn, *this);
-    
+    // Similar to how COLOR_BGR5652BGR appears to be swapping R and B in ConvertToShowableFormat(),
+    // COLOR_RGB2BGR565 here appears not to, which is what we want.
+    cv::cvtColor(imageRGB.get_CvMat_(), this->get_CvMat_(), cv::COLOR_RGB2BGR565);
     return *this;
   }
   
@@ -757,21 +742,28 @@ namespace Vision {
     return *this;
   }
 
-  void ImageRGB565::DrawFilledRect(const Rectangle<s32>& rect, const PixelRGB565& pixel)
-  {
-    const s32 start_x = Util::Clamp(rect.GetX(), 0, GetNumCols());
-    const s32 end_x = Util::Clamp(rect.GetXmax(), 0, GetNumCols());
+  cv::Scalar ImageRGB565::GetCvColor(const ColorRGBA& color) const {
+    PixelRGB565 color565(color.r(), color.g(), color.b());
 
-    const s32 start_y = Util::Clamp(rect.GetY(), 0, GetNumRows());
-    const s32 end_y = Util::Clamp(rect.GetYmax(), 0, GetNumRows());
-
-    for (s32 y = start_y; y < end_y; ++y) {
-      PixelRGB565 *row = GetRow(y);
-      for (s32 x = start_x; x < end_x; ++x) {
-        row[x] = pixel;
-      }
-    }
+    // This is kinda weird that the low byte is expected first, but
+    // it must be something about the way opencv is treating PixelRGB565
+    // as a 2-channel u8 type.
+    return cv::Scalar(color565.GetLowByte(), color565.GetHighByte(), 0, 0);
   }
-  
+
+  void ImageRGB565::ConvertToShowableFormat(cv::Mat& showImg) const {
+    // Pixel format is actually RGB565 so by using COLOR_BGR5652RGB
+    // it actually gets converted to BGR.
+    // OR so I thought... It appears COLOR_BGR5652RGB does not swap
+    // the R and B channels as expected. Oddly enough COLOR_BGR5652BGR does!
+    // Chalking this up to an OpenCV bug!
+    cv::cvtColor(this->get_CvMat_(), showImg, cv::COLOR_BGR5652BGR);
+  }
+
+  void ImageRGB565::SetFromShowableFormat(const cv::Mat& showImg) {
+    DEV_ASSERT(showImg.channels() == 3, "ImageRGB565.SetFromShowableFormat.UnexpectedNumChannels");
+    cv::cvtColor(showImg, this->get_CvMat_(), cv::COLOR_BGR2BGR565);
+  }
+
 } // namespace Vision
 } // namespace Anki

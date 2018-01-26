@@ -15,7 +15,7 @@
 
 #include "engine/actions/dockActions.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/blockWorld/blockWorld.h"
@@ -31,13 +31,12 @@ static const int kMaxNumRetrys = 3;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-PlaceRelObjectHelper::PlaceRelObjectHelper(BehaviorExternalInterface& behaviorExternalInterface,
-                                           ICozmoBehavior& behavior,
+PlaceRelObjectHelper::PlaceRelObjectHelper(ICozmoBehavior& behavior,
                                            BehaviorHelperFactory& helperFactory,
                                            const ObjectID& targetID,
                                            const bool placingOnGround,
                                            const PlaceRelObjectParameters& parameters)
-: IHelper("PlaceRelObject", behaviorExternalInterface, behavior, helperFactory)
+: IHelper("PlaceRelObject", behavior, helperFactory)
 , _targetID(targetID)
 , _placingOnGround(placingOnGround)
 , _params(parameters)
@@ -54,20 +53,19 @@ PlaceRelObjectHelper::~PlaceRelObjectHelper()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool PlaceRelObjectHelper::ShouldCancelDelegates(BehaviorExternalInterface& behaviorExternalInterface) const
+bool PlaceRelObjectHelper::ShouldCancelDelegates() const
 {
   return false;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IHelper::HelperStatus PlaceRelObjectHelper::InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface)
+IHelper::HelperStatus PlaceRelObjectHelper::InitBehaviorHelper()
 {
   _tmpRetryCounter = 0;
   
   const PreActionPose::ActionType actionType = PreActionPose::PreActionPose::PLACE_RELATIVE;
-  const ActionResult isAtPreAction = IsAtPreActionPoseWithVisualVerification(behaviorExternalInterface,
-                                                                             _targetID,
+  const ActionResult isAtPreAction = IsAtPreActionPoseWithVisualVerification(_targetID,
                                                                              actionType,
                                                                              _params.placementOffsetX_mm,
                                                                              _params.placementOffsetY_mm);
@@ -77,11 +75,11 @@ IHelper::HelperStatus PlaceRelObjectHelper::InitBehaviorHelper(BehaviorExternalI
     params.placeRelOffsetX_mm = _params.placementOffsetX_mm;
     params.placeRelOffsetY_mm = _params.placementOffsetY_mm;
     DelegateProperties delegateProperties;
-    delegateProperties.SetDelegateToSet(CreateDriveToHelper(behaviorExternalInterface, _targetID, params));
-    delegateProperties.SetOnSuccessFunction([this](BehaviorExternalInterface& behaviorExternalInterface){StartPlaceRelObject(behaviorExternalInterface); return _status;});
+    delegateProperties.SetDelegateToSet(CreateDriveToHelper(_targetID, params));
+    delegateProperties.SetOnSuccessFunction([this](){StartPlaceRelObject(); return _status;});
     DelegateAfterUpdate(delegateProperties);
   }else{
-    StartPlaceRelObject(behaviorExternalInterface);
+    StartPlaceRelObject();
   }
   
 
@@ -90,25 +88,24 @@ IHelper::HelperStatus PlaceRelObjectHelper::InitBehaviorHelper(BehaviorExternalI
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IHelper::HelperStatus PlaceRelObjectHelper::UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IHelper::HelperStatus PlaceRelObjectHelper::UpdateWhileActiveInternal()
 {
   return _status;
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void PlaceRelObjectHelper::StartPlaceRelObject(BehaviorExternalInterface& behaviorExternalInterface)
+void PlaceRelObjectHelper::StartPlaceRelObject()
 {
   if(_tmpRetryCounter >= kMaxNumRetrys){
-    MarkFailedToStackOrPlace(behaviorExternalInterface);
+    MarkFailedToStackOrPlace();
     _status = IHelper::HelperStatus::Failure;
     return;
   }
   _tmpRetryCounter++;
 
   const PreActionPose::ActionType actionType = PreActionPose::PreActionPose::PLACE_RELATIVE;
-  const ActionResult isAtPreAction = IsAtPreActionPoseWithVisualVerification(behaviorExternalInterface,
-                                                                             _targetID,
+  const ActionResult isAtPreAction = IsAtPreActionPoseWithVisualVerification(_targetID,
                                                                              actionType,
                                                                              _params.placementOffsetX_mm,
                                                                              _params.placementOffsetY_mm);
@@ -118,11 +115,10 @@ void PlaceRelObjectHelper::StartPlaceRelObject(BehaviorExternalInterface& behavi
     params.placeRelOffsetX_mm = _params.placementOffsetX_mm;
     params.placeRelOffsetY_mm = _params.placementOffsetY_mm;
     DelegateProperties properties;
-    properties.SetDelegateToSet(CreateDriveToHelper(behaviorExternalInterface,
-                                                    _targetID,
+    properties.SetDelegateToSet(CreateDriveToHelper(_targetID,
                                                     params));
-    properties.SetOnSuccessFunction([this](BehaviorExternalInterface& behaviorExternalInterface){
-                                      StartPlaceRelObject(behaviorExternalInterface); return _status;
+    properties.SetOnSuccessFunction([this](){
+                                      StartPlaceRelObject(); return _status;
                                     });
     DelegateAfterUpdate(properties);
   }else{
@@ -138,7 +134,7 @@ void PlaceRelObjectHelper::StartPlaceRelObject(BehaviorExternalInterface& behavi
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void PlaceRelObjectHelper::RespondToPlaceRelResult(ActionResult result, BehaviorExternalInterface& behaviorExternalInterface)
+void PlaceRelObjectHelper::RespondToPlaceRelResult(ActionResult result)
 {
   switch(result){
     case ActionResult::SUCCESS:
@@ -148,14 +144,14 @@ void PlaceRelObjectHelper::RespondToPlaceRelResult(ActionResult result, Behavior
     }
     case ActionResult::NO_PREACTION_POSES:
     {
-      behaviorExternalInterface.GetAIComponent().GetWhiteboard().SetNoPreDockPosesOnObject(_targetID);
+      GetBEI().GetAIComponent().GetWhiteboard().SetNoPreDockPosesOnObject(_targetID);
       break;
     }
     case ActionResult::VISUAL_OBSERVATION_FAILED:
     case ActionResult::LAST_PICK_AND_PLACE_FAILED:
     case ActionResult::DID_NOT_REACH_PREACTION_POSE:
     {
-      StartPlaceRelObject(behaviorExternalInterface);
+      StartPlaceRelObject();
       break;
     }
     case ActionResult::CANCELLED_WHILE_RUNNING:
@@ -172,24 +168,24 @@ void PlaceRelObjectHelper::RespondToPlaceRelResult(ActionResult result, Behavior
     {
       //DEV_ASSERT(false, "HANDLE CASE!");
       //_status = IHelper::HelperStatus::Failure;
-      StartPlaceRelObject(behaviorExternalInterface);
+      StartPlaceRelObject();
       break;
     }
   }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void PlaceRelObjectHelper::MarkFailedToStackOrPlace(BehaviorExternalInterface& behaviorExternalInterface)
+void PlaceRelObjectHelper::MarkFailedToStackOrPlace()
 {
-  const BlockWorld& blockWorld = behaviorExternalInterface.GetBlockWorld();
-  auto& carryingComp = behaviorExternalInterface.GetRobotInfo().GetCarryingComponent();
+  const BlockWorld& blockWorld = GetBEI().GetBlockWorld();
+  auto& carryingComp = GetBEI().GetRobotInfo().GetCarryingComponent();
   
   const ObservableObject* placeRelObj = blockWorld.GetLocatedObjectByID(_targetID);
   const ObservableObject* carryingObj = blockWorld.GetLocatedObjectByID(carryingComp.GetCarryingObject());
   
   if((placeRelObj != nullptr) &&
      (carryingObj != nullptr)){
-    auto& whiteboard = behaviorExternalInterface.GetAIComponent().GetWhiteboard();
+    auto& whiteboard = GetBEI().GetAIComponent().GetWhiteboard();
     if(!_placingOnGround){
       // CODE REVIEW - to clarify, should this failure indicate the block that I
       // failed to stack on, or the one in my hand?

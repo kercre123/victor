@@ -33,8 +33,7 @@ BehaviorDispatcherRandom::BehaviorDispatcherRandom(const Json::Value& config)
                                                                 "behavior",
                                                                 "BehaviorDispatcherRandom.BehaviorGroup.NoBehaviorID");
       
-      const BehaviorID behaviorID = BehaviorTypesWrapper::BehaviorIDFromString(behaviorIDStr);
-      IBehaviorDispatcher::AddPossibleDispatch(behaviorID);
+      IBehaviorDispatcher::AddPossibleDispatch(behaviorIDStr);
 
       _cooldownInfo.emplace_back( BehaviorCooldownInfo{behaviorDefinitionGroup} );
 
@@ -48,13 +47,13 @@ BehaviorDispatcherRandom::BehaviorDispatcherRandom(const Json::Value& config)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDispatcherRandom::BehaviorDispatcher_OnActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDispatcherRandom::BehaviorDispatcher_OnActivated()
 {
   _shouldEndAfterBehavior = false;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehaviorPtr BehaviorDispatcherRandom::GetDesiredBehavior(BehaviorExternalInterface& behaviorExternalInterface)
+ICozmoBehaviorPtr BehaviorDispatcherRandom::GetDesiredBehavior()
 {
   DEV_ASSERT_MSG( _cooldownInfo.size() == IBehaviorDispatcher::GetAllPossibleDispatches().size(),
                   "BehaviorDispatcherRandom.CooldownSizeMismatch",
@@ -79,7 +78,7 @@ ICozmoBehaviorPtr BehaviorDispatcherRandom::GetDesiredBehavior(BehaviorExternalI
 
     if( !cooldownInfo.OnCooldown() &&
         ( behavior->IsActivated() ||
-          behavior->WantsToBeActivated(behaviorExternalInterface) ) ) {
+          behavior->WantsToBeActivated() ) ) {
       availableBehaviors.PushBack(behavior, _weights[idx]);
 
       PRINT_CH_DEBUG("Behaviors", "BehaviorDispatcherRandom.ConsiderBehavior",
@@ -110,7 +109,7 @@ ICozmoBehaviorPtr BehaviorDispatcherRandom::GetDesiredBehavior(BehaviorExternalI
       const auto& behavior = IBehaviorDispatcher::GetAllPossibleDispatches().at(idx);    
 
       if( ( behavior->IsActivated() ||
-            behavior->WantsToBeActivated(behaviorExternalInterface) ) ) {
+            behavior->WantsToBeActivated() ) ) {
         auto& cooldownInfo = _cooldownInfo.at(idx);
         const float remCooldown = cooldownInfo.GetRemainingCooldownTime_s();
         if( remCooldown < minCooldownRemaining ) {
@@ -134,7 +133,7 @@ ICozmoBehaviorPtr BehaviorDispatcherRandom::GetDesiredBehavior(BehaviorExternalI
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDispatcherRandom::DispatcherUpdate(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDispatcherRandom::DispatcherUpdate()
 {
   if( _shouldEndAfterBehavior &&
       ! IsControlDelegated() ) {
