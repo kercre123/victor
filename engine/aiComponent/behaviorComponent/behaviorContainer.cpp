@@ -30,6 +30,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorPickupCube.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorPopAWheelie.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorPutDownBlock.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorRequestToGoHome.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorRollBlock.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorSearchForFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorStackBlocks.h"
@@ -437,6 +438,11 @@ ICozmoBehaviorPtr BehaviorContainer::CreateBehaviorBase(BehaviorClass behaviorTy
     case BehaviorClass::GoHome:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorGoHome(config));
+      break;
+    }
+    case BehaviorClass::RequestToGoHome:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorRequestToGoHome(config));
       break;
     }
     case BehaviorClass::PopAWheelie:

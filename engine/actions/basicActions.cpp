@@ -1836,7 +1836,7 @@ namespace Anki {
       return PanAndTiltAction::Init();
     }
     
-#pragma mark ---- TurnTowardsLastFacePoseAction ----
+#pragma mark ---- TurnTowardsFaceAction ----
 
     TurnTowardsFaceAction::TurnTowardsFaceAction(const SmartFaceID& faceID,
                                                  Radians maxTurnAngle,

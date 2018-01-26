@@ -141,12 +141,36 @@
       "AnimName": "ag_chargerdocking_liftup"
     },
     {
+      "CladEvent": "ChargerDockingRequest",
+      "AnimName": "ag_chargerdocking_request"
+    },
+    {
+      "CladEvent": "ChargerDockingRequestGetout",
+      "AnimName": "ag_chargerdocking_request"
+    },
+    {
+      "CladEvent": "ChargerDockingRequestPickup",
+      "AnimName": "ag_chargerdocking_pickup"
+    },
+    {
+      "CladEvent": "ChargerDockingRequestWaitLoop",
+      "AnimName": "ag_chargerdocking_requestwait"
+    },
+    {
       "CladEvent": "ChargerDockingRightTurn",
       "AnimName": "ag_chargerdocking_rightturn"
     },
     {
       "CladEvent": "ChargerDockingSettle",
       "AnimName": "ag_chargerdocking_settle"
+    },
+    {
+      "CladEvent": "ChargerDockingSevereRequest",
+      "AnimName": "ag_chargerdocking_request"
+    },
+    {
+      "CladEvent": "ChargerDockingSevereRequestGetout",
+      "AnimName": "ag_chargerdocking_request"
     },
     {
       "CladEvent": "ChargerReaction",
