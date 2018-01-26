@@ -166,185 +166,40 @@ LogHandler(struct mg_connection *conn, void *cbdata)
 
 
 static int
-ConsoleVarsUI(struct mg_connection *conn, void *cbdata)
+ProcessRequest(struct mg_connection *conn, Anki::Cozmo::WebService::WebService::RequestType requestType,
+               const std::string& param1, const std::string& param2)
 {
-#if defined(ANKI_PLATFORM_ANDROID)
-  __android_log_print(ANDROID_LOG_VERBOSE, "SOME_TAG", "ConsoleVarsUI:  Start of function");
-#endif
-  std::string style;
-  std::string script;
-  std::string html;
-  std::map<std::string, std::string> category_html;
+  using namespace Anki::Cozmo::WebService;
+  WebService::Request* requestPtr = new WebService::Request(requestType, param1, param2);
 
-  Anki::Util::ConsoleSystem& consoleSystem = Anki::Util::ConsoleSystem::Instance();
-
-  // Variables
-
-  const Anki::Util::ConsoleSystem::VariableDatabase varDatabase = consoleSystem.GetVariableDatabase();
-
-#if defined(ANKI_PLATFORM_ANDROID)
-  __android_log_print(ANDROID_LOG_VERBOSE, "SOME_TAG", "ConsoleVarsUI:  About to enter var database loop");
-#endif
-  for (Anki::Util::ConsoleSystem::VariableDatabase::const_iterator it = varDatabase.begin();
-       it != varDatabase.end();
-       ++it) {
-    std::string label = it->second->GetID();
-    std::string cat = it->second->GetCategory();
-    size_t dot = cat.find(".");
-    if (dot != std::string::npos) {
-      cat = cat.substr(0, dot);
-    }
-
-    if (category_html.find(cat) == category_html.end()) {
-      category_html[cat] = "";
-    }
-
-    if (it->second->IsToggleable()) {
-      category_html[cat] += "                <div>\n";
-      category_html[cat] += "                    <label for=\""+label+"\">"+label+"</label>\n";
-      category_html[cat] += "                    <input type=\"checkbox\" name=\""+label+"\" id=\""+label+"\" onclick=\"onCheckboxClickHandler(this)\">\n";
-      category_html[cat] += "                </div>\n";
-      category_html[cat] += "                <br>\n";
-    }
-    else {
-      char sliderRange[200];
-      char inputRange[200];
-
-      if (it->second->IsIntegerType()) {
-        if (it->second->IsSignedType()) {
-          snprintf(sliderRange, sizeof(sliderRange),
-          "data-value=\"%lld\" data-begin=\"%lld\" data-end=\"%lld\" data-scale=\"1\"",
-          it->second->GetAsInt64(),
-          it->second->GetMinAsInt64(),
-          it->second->GetMaxAsInt64());
-
-          snprintf(inputRange, sizeof(inputRange),
-          "min=\"%lld\" max=\"%lld\"",
-          it->second->GetMinAsInt64(),
-          it->second->GetMaxAsInt64());
-        }
-        else {
-          snprintf(sliderRange, sizeof(sliderRange),
-          "data-value=\"%llu\" data-begin=\"%llu\" data-end=\"%llu\" data-scale=\"1\"",
-          it->second->GetAsUInt64(),
-          it->second->GetMinAsUInt64(),
-          it->second->GetMaxAsUInt64());
-
-          snprintf(inputRange, sizeof(inputRange),
-          "min=\"%llu\" max=\"%llu\"",
-          it->second->GetMinAsUInt64(),
-          it->second->GetMaxAsUInt64());
-        }
-      }
-      else {
-        snprintf(sliderRange, sizeof(sliderRange),
-        "data-value=\"%g\" data-begin=\"%g\" data-end=\"%g\" data-scale=\"100.0\"",
-        it->second->GetAsDouble(),
-        it->second->GetMinAsDouble(),
-        it->second->GetMaxAsDouble());
-
-        snprintf(inputRange, sizeof(inputRange),
-        "min=\"%g\" max=\"%g\"",
-        it->second->GetMinAsDouble(),
-        it->second->GetMaxAsDouble());
-      }
-
-      category_html[cat] += "                <div>\n";
-      category_html[cat] += "                  <label for=\""+label+"_amount\">"+label+":</label>\n";
-      category_html[cat] += "                  <div id=\""+label+"\" class=\"slider\" "+sliderRange+" style=\"width: 100px; margin: 0.25em;\"></div>\n";
-      category_html[cat] += "                  <input type=\"text\" id=\""+label+"_amount\" class=\"amount\" "+inputRange+" style=\"margin: 0.25em; border:1; font-weight:bold;\">\n";
-      category_html[cat] += "                </div><br>\n";
-    }
-#if defined(ANKI_PLATFORM_ANDROID)
-    __android_log_print(ANDROID_LOG_VERBOSE, "SOME_TAG", "%s", category_html[cat].c_str());
-#endif
-  }
-#if 0
-
-  // Functions
-
-  const Anki::Util::ConsoleSystem::FunctionDatabase& funcDatabase = consoleSystem.GetFunctionDatabase();
-  for (Anki::Util::ConsoleSystem::FunctionDatabase::const_iterator it = funcDatabase.begin();
-       it != funcDatabase.end();
-       ++it) {
-    std::string label = it->second->GetID();
-    std::string cat = it->second->GetCategory();
-    std::string sig = it->second->GetSignature();
-    size_t dot = cat.find(".");
-    if (dot != std::string::npos) {
-      cat = cat.substr(0, dot);
-    }
-
-    if (sig.empty()) {
-      category_html[cat] += "                <div>\n";
-      category_html[cat] += "                  <input type=\"submit\" value=\""+label+"\">\n";
-      category_html[cat] += "                </div><br>\n";
-    }
-    else {
-      category_html[cat] += "                <div>\n";
-      category_html[cat] += "                  <a id=\"tt\" title=\"("+sig+")\"><label for=\""+label+"_function\">"+label+":</label></a>\n";
-      category_html[cat] += "                  <input type=\"text\" id=\""+label+"_args\" value=\"\" style=\"margin: 0.25em; border:1; font-weight:bold;\">\n";
-      category_html[cat] += "                  <input type=\"submit\" id=\""+label+"_function\" value=\"Call\" class=\"function\">\n";
-      category_html[cat] += "                </div><br>\n";
-    }
-  }
-#endif
-
-#if defined(ANKI_PLATFORM_ANDROID)
-  __android_log_print(ANDROID_LOG_VERBOSE, "SOME_TAG", "ConsoleVarsUI:  About to enter HTML generation loop");
-#endif
-  for (std::map<std::string, std::string>::const_iterator it = category_html.begin();
-       it != category_html.end();
-       ++it) {
-    html += "            <h3>"+it->first+"</h3>\n";
-    html += "            <div>\n";
-    html += it->second;
-    html += "            </div>\n";
-  }
-
-#if defined(ANKI_PLATFORM_ANDROID)
-  __android_log_print(ANDROID_LOG_VERBOSE, "SOME_TAG", "ConsoleVarsUI:  About to get webservice context");
-#endif
   struct mg_context *ctx = mg_get_context(conn);
   Anki::Cozmo::WebService::WebService* that = static_cast<Anki::Cozmo::WebService::WebService*>(mg_get_user_data(ctx));
-  std::string page = that->getConsoleVarsTemplate();
 
-  std::string tmp;
-  size_t pos;
+  that->AddRequest(requestPtr);
 
-#if defined(ANKI_PLATFORM_ANDROID)
-  __android_log_print(ANDROID_LOG_VERBOSE, "SOME_TAG", "ConsoleVarsUI:  About to inject style/script to template");
-#endif
-  tmp = "/* -- generated style -- */";
-  pos = page.find(tmp);
-  if (pos != std::string::npos) {
-    page = page.replace(pos, tmp.length(), style);
-  }
+  // Now wait until the main thread processes the request
+  do
+  {
+    std::this_thread::sleep_for(std::chrono::milliseconds(20));
+  } while (!requestPtr->_resultReady);
 
-  tmp = "// -- generated script --";
-  pos = page.find(tmp);
-  if (pos != std::string::npos) {
-    page = page.replace(pos, tmp.length(), script);
-  }
-
-#if defined(ANKI_PLATFORM_ANDROID)
-  __android_log_print(ANDROID_LOG_VERBOSE, "SOME_TAG", "ConsoleVarsUI:  About to inject HTML to template");
-#endif
-  tmp = "<!-- generated html -->";
-  pos = page.find(tmp);
-  if (pos != std::string::npos) {
-    page = page.replace(pos, tmp.length(), html);
-  }
-
-#if defined(ANKI_PLATFORM_ANDROID)
-  __android_log_print(ANDROID_LOG_VERBOSE, "SOME_TAG", "ConsoleVarsUI:  About to send results");
-#endif
   mg_printf(conn,
             "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
             "close\r\n\r\n");
-  mg_printf(conn, "%s", page.c_str());
+  mg_printf(conn, "%s\n", requestPtr->_result.c_str());
+
+  // Now mark the request as done so the main thread can delete it
+  requestPtr->_done = true;
 
   return 1;
+}
+
+static int
+ConsoleVarsUI(struct mg_connection *conn, void *cbdata)
+{
+  const int returnCode = ProcessRequest(conn, Anki::Cozmo::WebService::WebService::RequestType::RT_ConsoleVarsUI, "", "");
+
+  return returnCode;
 }
 
 static int
@@ -365,6 +220,8 @@ ConsoleVarsSet(struct mg_connection *conn, void *cbdata)
     key = info->query_string;
   }
 
+  int returnCode = 1;
+
   if (key.substr(0, 4) =="key=") {
     size_t amp = key.find('&');
     if (amp != std::string::npos) {
@@ -372,17 +229,9 @@ ConsoleVarsSet(struct mg_connection *conn, void *cbdata)
       key = key.substr(4, amp-4);
     }
 
-    Anki::Util::IConsoleVariable* consoleVar = Anki::Util::ConsoleSystem::Instance().FindVariable(key.c_str());
-    if (consoleVar && consoleVar->ParseText(value.c_str() )) {
-      // success
-      PRINT_NAMED_INFO("WebService", "CONSOLE_VAR %s %s", key.c_str(), value.c_str());
-    }
-
-    mg_printf(conn,
-              "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
-              "close\r\n\r\n");
+    returnCode = ProcessRequest(conn, Anki::Cozmo::WebService::WebService::RequestType::RT_ConsoleVarSet, key, value);
   }
-  return 1;
+  return returnCode;
 }
 
 static int
@@ -398,17 +247,9 @@ ConsoleVarsGet(struct mg_connection *conn, void *cbdata)
     }
   }
 
-  if (!key.empty()) {
-    Anki::Util::IConsoleVariable* consoleVar = Anki::Util::ConsoleSystem::Instance().FindVariable(key.c_str());
-    if (consoleVar) {
-      mg_printf(conn,
-                "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
-                "close\r\n\r\n");
-      mg_printf(conn, "%s<br>", consoleVar->ToString().c_str());
-    }
-  }
+  const int returnCode = ProcessRequest(conn, Anki::Cozmo::WebService::WebService::RequestType::RT_ConsoleVarGet, key, "");
 
-  return 1;
+  return returnCode;
 }
 
 static int
@@ -423,30 +264,10 @@ ConsoleVarsList(struct mg_connection *conn, void *cbdata)
       key = std::string(info->query_string + 4);
     }
   }
+  
+  const int returnCode = ProcessRequest(conn, Anki::Cozmo::WebService::WebService::RequestType::RT_ConsoleVarList, key, "");
 
-  using namespace Anki::Cozmo::WebService;
-  WebService::Request* requestPtr = new WebService::Request(WebService::RequestType::ConsoleVarList, key, "");
-
-  struct mg_context *ctx = mg_get_context(conn);
-  Anki::Cozmo::WebService::WebService* that = static_cast<Anki::Cozmo::WebService::WebService*>(mg_get_user_data(ctx));
-
-  that->AddRequest(requestPtr);
-
-  // Now wait until the main thread processes the request
-  do
-  {
-    std::this_thread::sleep_for(std::chrono::milliseconds(120));
-  } while (!requestPtr->_resultReady);
-
-  mg_printf(conn,
-            "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
-            "close\r\n\r\n");
-  mg_printf(conn, "%s", requestPtr->_result.c_str());
-
-  // Now mark the request as done so the main thread can delete it
-  requestPtr->_done = true;
-
-  return 1;
+  return returnCode;
 }
 
 static int
@@ -466,13 +287,15 @@ ConsoleFuncCall(struct mg_connection *conn, void *cbdata)
     func = info->query_string;
   }
 
+  int returnCode = 1;
+
   if (func.substr(0,5) == "func=") {
     size_t amp = func.find('&');
     if (amp == std::string::npos) {
       func = func.substr(5);
     }
     else {
-      args = func.substr(amp+6);
+      args = func.substr(amp+6);  // skip over "args="
       func = func.substr(5, amp-5);
 
       // unescape '+' => ' '
@@ -492,35 +315,10 @@ ConsoleFuncCall(struct mg_connection *conn, void *cbdata)
       }
     }
 
-    // call func
-
-    Anki::Util::IConsoleFunction* consoleFunc = Anki::Util::ConsoleSystem::Instance().FindFunction(func.c_str());
-    if (consoleFunc)
-    {
-      char outText[255+1];
-      uint32_t outTextLength = sizeof(outText);
-
-      ExternalOnlyConsoleChannel consoleChannel(outText, outTextLength);
-
-      Anki::Util::ConsoleSystem& consoleSystem = Anki::Util::ConsoleSystem::Instance();
-      bool success = consoleSystem.ParseConsoleFunctionCall(consoleFunc, args.c_str(), consoleChannel);
-      if (success) {
-        PRINT_NAMED_INFO("WebService", "CONSOLE_FUNC %s %s success", func.c_str(), args.c_str());
-      }
-      else {
-        PRINT_NAMED_INFO("WebService", "CONSOLE_FUNC %s %s failed %s", func.c_str(), args.c_str(), outText);
-      }
-    }
-    else
-    {
-      PRINT_NAMED_INFO("WebService", "CONSOLE_FUNC %s %s not found", func.c_str(), args.c_str());
-    }
+    returnCode = ProcessRequest(conn, Anki::Cozmo::WebService::WebService::RequestType::RT_ConsoleFuncCall, func, args);
   }
 
-  mg_printf(conn,
-            "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
-            "close\r\n\r\n");
-  return 1;
+  return returnCode;
 }
 
 Anki::Cozmo::WebService::WebService::Request::Request(RequestType rt, const std::string& param1, const std::string& param2)
@@ -871,7 +669,52 @@ void WebService::Update()
     {
       switch (requestPtr->_requestType)
       {
-        case ConsoleVarList:
+        case RT_ConsoleVarsUI:
+          {
+            GenerateConsoleVarsUI(requestPtr->_result);
+          }
+          break;
+        case RT_ConsoleVarGet:
+          {
+            const std::string& key = requestPtr->_param1;
+
+            if (!key.empty()) {
+              Anki::Util::IConsoleVariable* consoleVar = Anki::Util::ConsoleSystem::Instance().FindVariable(key.c_str());
+              if (consoleVar) {
+                requestPtr->_result = consoleVar->ToString() + "<br>";
+              }
+              else {
+                requestPtr->_result = "Variable not found<br>";
+              }
+            }
+            else {
+              requestPtr->_result = "Key required (name of variable)<br>";
+            }
+          }
+          break;
+        case RT_ConsoleVarSet:
+          {
+            const std::string& key = requestPtr->_param1;
+            const std::string& value = requestPtr->_param2;
+
+            Anki::Util::IConsoleVariable* consoleVar = Anki::Util::ConsoleSystem::Instance().FindVariable(key.c_str());
+            if (consoleVar) {
+              if (consoleVar->ParseText(value.c_str() )) {
+                // success
+                PRINT_NAMED_INFO("WebService", "CONSOLE_VAR %s %s", key.c_str(), value.c_str());
+                requestPtr->_result = consoleVar->ToString() + "<br>";
+              }
+              else {
+                requestPtr->_result = "Error setting variable<br>";
+              }
+            }
+            else {
+              requestPtr->_result = "Variable not found<br>";
+            }
+          }
+          break;
+
+        case RT_ConsoleVarList:
           {
             const std::string& key = requestPtr->_param1;
             const auto keyLen = key.length();
@@ -888,8 +731,36 @@ void WebService::Update()
             }
           }
           break;
-        // todo: the other cases
+
+        case RT_ConsoleFuncCall:
+          {
+            const std::string& func = requestPtr->_param1;
+            const std::string& args = requestPtr->_param2;
+
+            Anki::Util::IConsoleFunction* consoleFunc = Anki::Util::ConsoleSystem::Instance().FindFunction(func.c_str());
+            if (consoleFunc) {
+              char outText[255+1];
+              uint32_t outTextLength = sizeof(outText);
+
+              ExternalOnlyConsoleChannel consoleChannel(outText, outTextLength);
+
+              Anki::Util::ConsoleSystem& consoleSystem = Anki::Util::ConsoleSystem::Instance();
+              bool success = consoleSystem.ParseConsoleFunctionCall(consoleFunc, args.c_str(), consoleChannel);
+              if (success) {
+                PRINT_NAMED_INFO("WebService", "CONSOLE_FUNC %s %s success", func.c_str(), args.c_str());
+              }
+              else {
+                PRINT_NAMED_INFO("WebService", "CONSOLE_FUNC %s %s failed %s", func.c_str(), args.c_str(), outText);
+              }
+            }
+            else {
+              PRINT_NAMED_INFO("WebService", "CONSOLE_FUNC %s %s not found", func.c_str(), args.c_str());
+            }
+          }
+          break;
       }
+
+      // Notify the requesting thread that the result is now ready
       requestPtr->_resultReady = true;
     }
   }
@@ -909,6 +780,176 @@ void WebService::AddRequest(Request* requestPtr)
 {
   std::lock_guard<std::mutex> lock(_requestMutex);
   _requests.push_back(requestPtr);
+}
+
+
+void WebService::GenerateConsoleVarsUI(std::string& page)
+{
+#if defined(ANKI_PLATFORM_ANDROID)
+  __android_log_print(ANDROID_LOG_VERBOSE, "SOME_TAG", "ConsoleVarsUI:  Start of function");
+#endif
+  std::string style;
+  std::string script;
+  std::string html;
+  // TODO;  Use stringstream instead of appending strings (for category_html); may help uncover bug on android
+  std::map<std::string, std::string> category_html;
+
+  Anki::Util::ConsoleSystem& consoleSystem = Anki::Util::ConsoleSystem::Instance();
+
+  // Variables
+
+  const Anki::Util::ConsoleSystem::VariableDatabase& varDatabase = consoleSystem.GetVariableDatabase();
+
+#if defined(ANKI_PLATFORM_ANDROID)
+  __android_log_print(ANDROID_LOG_VERBOSE, "SOME_TAG", "ConsoleVarsUI:  About to enter var database loop");
+#endif
+  for (Anki::Util::ConsoleSystem::VariableDatabase::const_iterator it = varDatabase.begin();
+       it != varDatabase.end();
+       ++it) {
+    std::string label = it->second->GetID();
+    std::string cat = it->second->GetCategory();
+    size_t dot = cat.find(".");
+    if (dot != std::string::npos) {
+      cat = cat.substr(0, dot);
+    }
+
+    if (category_html.find(cat) == category_html.end()) {
+      category_html[cat] = "";
+    }
+
+    if (it->second->IsToggleable()) {
+      category_html[cat] += "                <div>\n";
+      category_html[cat] += "                    <label for=\""+label+"\">"+label+"</label>\n";
+      category_html[cat] += "                    <input type=\"checkbox\" name=\""+label+"\" id=\""+label+"\" onclick=\"onCheckboxClickHandler(this)\">\n";
+      category_html[cat] += "                </div>\n";
+      category_html[cat] += "                <br>\n";
+    }
+    else {
+      char sliderRange[200];
+      char inputRange[200];
+
+      if (it->second->IsIntegerType()) {
+        if (it->second->IsSignedType()) {
+          snprintf(sliderRange, sizeof(sliderRange),
+                   "data-value=\"%lld\" data-begin=\"%lld\" data-end=\"%lld\" data-scale=\"1\"",
+                   it->second->GetAsInt64(),
+                   it->second->GetMinAsInt64(),
+                   it->second->GetMaxAsInt64());
+
+          snprintf(inputRange, sizeof(inputRange),
+                   "min=\"%lld\" max=\"%lld\"",
+                   it->second->GetMinAsInt64(),
+                   it->second->GetMaxAsInt64());
+        }
+        else {
+          snprintf(sliderRange, sizeof(sliderRange),
+                   "data-value=\"%llu\" data-begin=\"%llu\" data-end=\"%llu\" data-scale=\"1\"",
+                   it->second->GetAsUInt64(),
+                   it->second->GetMinAsUInt64(),
+                   it->second->GetMaxAsUInt64());
+
+          snprintf(inputRange, sizeof(inputRange),
+                   "min=\"%llu\" max=\"%llu\"",
+                   it->second->GetMinAsUInt64(),
+                   it->second->GetMaxAsUInt64());
+        }
+      }
+      else {
+        snprintf(sliderRange, sizeof(sliderRange),
+                 "data-value=\"%g\" data-begin=\"%g\" data-end=\"%g\" data-scale=\"100.0\"",
+                 it->second->GetAsDouble(),
+                 it->second->GetMinAsDouble(),
+                 it->second->GetMaxAsDouble());
+
+        snprintf(inputRange, sizeof(inputRange),
+                 "min=\"%g\" max=\"%g\"",
+                 it->second->GetMinAsDouble(),
+                 it->second->GetMaxAsDouble());
+      }
+
+      category_html[cat] += "                <div>\n";
+      category_html[cat] += "                  <label for=\""+label+"_amount\">"+label+":</label>\n";
+      category_html[cat] += "                  <div id=\""+label+"\" class=\"slider\" "+sliderRange+" style=\"width: 100px; margin: 0.25em;\"></div>\n";
+      category_html[cat] += "                  <input type=\"text\" id=\""+label+"_amount\" class=\"amount\" "+inputRange+" style=\"margin: 0.25em; border:1; font-weight:bold;\">\n";
+      category_html[cat] += "                </div><br>\n";
+    }
+#if defined(ANKI_PLATFORM_ANDROID)
+    __android_log_print(ANDROID_LOG_VERBOSE, "SOME_TAG", "%s", category_html[cat].c_str());
+#endif
+  }
+
+  // Functions
+
+  const Anki::Util::ConsoleSystem::FunctionDatabase& funcDatabase = consoleSystem.GetFunctionDatabase();
+  for (Anki::Util::ConsoleSystem::FunctionDatabase::const_iterator it = funcDatabase.begin();
+       it != funcDatabase.end();
+       ++it) {
+    std::string label = it->second->GetID();
+    std::string cat = it->second->GetCategory();
+    std::string sig = it->second->GetSignature();
+    size_t dot = cat.find(".");
+    if (dot != std::string::npos) {
+      cat = cat.substr(0, dot);
+    }
+
+    if (sig.empty()) {
+      category_html[cat] += "                <div>\n";
+      category_html[cat] += "                  <input type=\"submit\" value=\""+label+"\">\n";
+      category_html[cat] += "                </div><br>\n";
+    }
+    else {
+      category_html[cat] += "                <div>\n";
+      category_html[cat] += "                  <a id=\"tt\" title=\"("+sig+")\"><label for=\""+label+"_function\">"+label+":</label></a>\n";
+      category_html[cat] += "                  <input type=\"text\" id=\""+label+"_args\" value=\"\" style=\"margin: 0.25em; border:1; font-weight:bold;\">\n";
+      category_html[cat] += "                  <input type=\"submit\" id=\""+label+"_function\" value=\"Call\" class=\"function\">\n";
+      category_html[cat] += "                </div><br>\n";
+    }
+  }
+
+#if defined(ANKI_PLATFORM_ANDROID)
+  __android_log_print(ANDROID_LOG_VERBOSE, "SOME_TAG", "ConsoleVarsUI:  About to enter HTML generation loop");
+#endif
+  for (std::map<std::string, std::string>::const_iterator it = category_html.begin();
+       it != category_html.end();
+       ++it) {
+    html += "            <h3>"+it->first+"</h3>\n";
+    html += "            <div>\n";
+    html += it->second;
+    html += "            </div>\n";
+  }
+
+  page = getConsoleVarsTemplate();
+
+  std::string tmp;
+  size_t pos;
+
+#if defined(ANKI_PLATFORM_ANDROID)
+  __android_log_print(ANDROID_LOG_VERBOSE, "SOME_TAG", "ConsoleVarsUI:  About to inject style/script to template");
+#endif
+  tmp = "/* -- generated style -- */";
+  pos = page.find(tmp);
+  if (pos != std::string::npos) {
+    page = page.replace(pos, tmp.length(), style);
+  }
+
+  tmp = "// -- generated script --";
+  pos = page.find(tmp);
+  if (pos != std::string::npos) {
+    page = page.replace(pos, tmp.length(), script);
+  }
+
+#if defined(ANKI_PLATFORM_ANDROID)
+  __android_log_print(ANDROID_LOG_VERBOSE, "SOME_TAG", "ConsoleVarsUI:  About to inject HTML to template");
+#endif
+  tmp = "<!-- generated html -->";
+  pos = page.find(tmp);
+  if (pos != std::string::npos) {
+    page = page.replace(pos, tmp.length(), html);
+  }
+
+#if defined(ANKI_PLATFORM_ANDROID)
+  __android_log_print(ANDROID_LOG_VERBOSE, "SOME_TAG", "ConsoleVarsUI:  About to send results");
+#endif
 }
 
 

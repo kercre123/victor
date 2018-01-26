@@ -58,7 +58,11 @@ public:
 
   enum RequestType
   {
-    ConsoleVarList,
+    RT_ConsoleVarsUI,
+    RT_ConsoleVarGet,
+    RT_ConsoleVarSet,
+    RT_ConsoleVarList,
+    RT_ConsoleFuncCall,
   };
 
   struct Request
@@ -76,6 +80,8 @@ public:
   std::mutex _requestMutex;
 
 private:
+
+  void GenerateConsoleVarsUI(std::string& page);
 
   struct WebSocketConnectionData {
     struct mg_connection* conn = nullptr;
