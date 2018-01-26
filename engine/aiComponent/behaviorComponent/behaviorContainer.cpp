@@ -34,6 +34,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorRollBlock.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorSearchForFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorStackBlocks.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorTurn.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorTurnToFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/behaviorHighLevelAI.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/behaviorWait.h"
@@ -584,6 +585,11 @@ ICozmoBehaviorPtr BehaviorContainer::CreateBehaviorBase(BehaviorClass behaviorTy
     case BehaviorClass::EarnedSparks:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorEarnedSparks(config));
+      break;
+    }
+    case BehaviorClass::Turn:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorTurn(config));
       break;
     }
     case BehaviorClass::TurnToFace:

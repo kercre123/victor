@@ -86,6 +86,8 @@ enum uint_8 BehaviorClass {
   StackBlocks,
   ThinkAboutBeacons,
   TrackLaser,
+  Turn,
+  
   TurnToFace,
   VisitInterestingEdge,
   Wait,
