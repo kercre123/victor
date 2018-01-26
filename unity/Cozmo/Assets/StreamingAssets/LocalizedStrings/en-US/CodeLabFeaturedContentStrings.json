@@ -584,21 +584,6 @@
     "codeLabFeaturedProject.MagicFortuneTeller.yes": {
         "translation": "yes"
     },
-    "codeLabFeaturedProject.PaddleBall.acceleration_time": {
-        "translation": "acceleration time"
-    },
-    "codeLabFeaturedProject.PaddleBall.apply_a_short_burst_of_acceleration_to_ball_speed_x": {
-        "translation": "Apply a short burst of acceleration to ball speed x"
-    },
-    "codeLabFeaturedProject.PaddleBall.apply_a_short_burst_of_acceleration_to_ball_speed_y": {
-        "translation": "Apply a short burst of acceleration to ball speed y."
-    },
-    "codeLabFeaturedProject.PaddleBall.ball_acceleration_x": {
-        "translation": "ball acceleration x"
-    },
-    "codeLabFeaturedProject.PaddleBall.ball_acceleration_y": {
-        "translation": "ball acceleration y"
-    },
     "codeLabFeaturedProject.PaddleBall.ball_position_x": {
         "translation": "ball position x"
     },
@@ -617,9 +602,6 @@
     "codeLabFeaturedProject.PaddleBall.check_whether_the_ball_has_hit_a_wall_or_a_paddle_or_scored": {
         "translation": "Check whether the ball has hit a wall or a paddle or scored."
     },
-    "codeLabFeaturedProject.PaddleBall.cozmo": {
-        "translation": "Cozmo"
-    },
     "codeLabFeaturedProject.PaddleBall.cozmo_paddle_acceleration": {
         "translation": "Cozmo paddle acceleration"
     },
@@ -634,6 +616,9 @@
     },
     "codeLabFeaturedProject.PaddleBall.cozmo_paddle_width": {
         "translation": "Cozmo paddle width"
+    },
+    "codeLabFeaturedProject.PaddleBall.cozmo_response": {
+        "translation": "Cozmo response"
     },
     "codeLabFeaturedProject.PaddleBall.cozmo_score": {
         "translation": "Cozmo score"
@@ -656,9 +641,6 @@
     "codeLabFeaturedProject.PaddleBall.game_winner": {
         "translation": "game winner"
     },
-    "codeLabFeaturedProject.PaddleBall.go": {
-        "translation": "Go!"
-    },
     "codeLabFeaturedProject.PaddleBall.half_of_cozmo_paddle_height": {
         "translation": "half of Cozmo paddle height"
     },
@@ -668,8 +650,23 @@
     "codeLabFeaturedProject.PaddleBall.hi": {
         "translation": "Hi"
     },
+    "codeLabFeaturedProject.PaddleBall.hole_in_your_paddle": {
+        "translation": "Hole in your paddle?"
+    },
+    "codeLabFeaturedProject.PaddleBall.i_win": {
+        "translation": "I win!"
+    },
+    "codeLabFeaturedProject.PaddleBall.im_the_best": {
+        "translation": "I'm the best!"
+    },
     "codeLabFeaturedProject.PaddleBall.loop_rate": {
         "translation": "loop rate"
+    },
+    "codeLabFeaturedProject.PaddleBall.my_paddle_slipped": {
+        "translation": "My paddle slipped"
+    },
+    "codeLabFeaturedProject.PaddleBall.nice_shot": {
+        "translation": "Nice shot!"
     },
     "codeLabFeaturedProject.PaddleBall.none": {
         "translation": "none"
@@ -677,8 +674,17 @@
     "codeLabFeaturedProject.PaddleBall.once_either_cozmo_or_the_player_score_decide_what_to_do_next": {
         "translation": "Once either Cozmo or the player score decide what to do next"
     },
+    "codeLabFeaturedProject.PaddleBall.paddle": {
+        "translation": "Paddle!"
+    },
     "codeLabFeaturedProject.PaddleBall.paddle_width": {
         "translation": "paddle width"
+    },
+    "codeLabFeaturedProject.PaddleBall.pick_a_random_saying_for_cozmo_when_he_scores": {
+        "translation": "Pick a random saying for Cozmo when he scores."
+    },
+    "codeLabFeaturedProject.PaddleBall.pick_a_random_saying_for_cozmo_when_player_scores": {
+        "translation": "Pick a random saying for Cozmo when player scores."
     },
     "codeLabFeaturedProject.PaddleBall.player": {
         "translation": "player"
@@ -694,6 +700,9 @@
     },
     "codeLabFeaturedProject.PaddleBall.points_to_win": {
         "translation": "points to win"
+    },
+    "codeLabFeaturedProject.PaddleBall.random_response_number": {
+        "translation": "random response number"
     },
     "codeLabFeaturedProject.PaddleBall.ready": {
         "translation": "Ready"
@@ -722,9 +731,6 @@
     "codeLabFeaturedProject.PaddleBall.start_the_game": {
         "translation": "Start the game."
     },
-    "codeLabFeaturedProject.PaddleBall.text": {
-        "translation": "text"
-    },
     "codeLabFeaturedProject.PaddleBall.true_": {
         "translation": "true "
     },
@@ -751,6 +757,15 @@
     },
     "codeLabFeaturedProject.PaddleBall.while_gameplay_is_active_use_the_game_data_to_draw_everything_on_cozmos_face": {
         "translation": "While gameplay is active use the game data to draw everything on Cozmos face"
+    },
+    "codeLabFeaturedProject.PaddleBall.whoops": {
+        "translation": "Whoops!"
+    },
+    "codeLabFeaturedProject.PaddleBall.yes": {
+        "translation": "Yes!"
+    },
+    "codeLabFeaturedProject.PaddleBall.you_win": {
+        "translation": "You win!"
     },
     "codeLabFeaturedProject.PotOGoldDetector.animate_a_radar_on_cozmos_face": {
         "translation": "Animate a radar on Cozmos face."

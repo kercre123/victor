@@ -1580,7 +1580,7 @@
       "translation":  "Circle up for Pi Day!"
   },
   "codeLabFeaturedDrivingInCircles.projectInstructions": {
-      "translation":  "1. National Pi day is March 14th!\n\n2. Place one of Cozmo's Cubes where he can see it.\n\n2. Once you tap the start flag, Cozmo will use Pi and math to drive circles around his Cubes."
+      "translation":  "1. National Pi Day is March 14th!\n\n2. Place one of Cozmo's Cubes where he can see it.\n\n3. Once you tap the start flag, Cozmo will use pi and math to drive circles around his Cubes."
   },
   "codeLabFeaturedComplimentGenerator.projectName": {
       "translation":  "Compliment Generator"
@@ -1598,7 +1598,7 @@
       "translation":  "Challenge Cozmo to a match. Be sure to use your head!"
   },
   "codeLabFeaturedPaddleBall.projectInstructions": {
-      "translation":  "1. Once you tap the start flag, Move your head up and down to control the the paddle on the right.\n\n2. Score points by bouncing the ball past Cozmo’s paddle. Try not to let Cozmo score by bouncing the ball past yours.\n\n3. Your paddle is on the left, and Cozmo's paddle is on the right.\n\n4. The first to earn 3 points wins!"
+      "translation":  "1. Once you tap the start flag, Move your head up and down to control the the paddle.\n\n2. Score points by bouncing the ball past Cozmo’s paddle. Try not to let Cozmo score by bouncing the ball past yours.\n\n3. Your paddle is on the left, and Cozmo's paddle is on the right.\n\n4. The first to earn 3 points wins!"
   },
   "codeLabFeaturedPotOGoldDetector.projectName": {
       "translation":  "Pot o' Gold Detector"
