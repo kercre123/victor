@@ -659,8 +659,7 @@ void WebService::Update()
   }
   _requests.resize(destIndex);
 
-  const Anki::Util::ConsoleSystem& consoleSystem = Anki::Util::ConsoleSystem::Instance();
-  const Anki::Util::ConsoleSystem::VariableDatabase varDatabase = consoleSystem.GetVariableDatabase();
+  Anki::Util::ConsoleSystem& consoleSystem = Anki::Util::ConsoleSystem::Instance();
 
   // Second pass:  Process any requests that haven't been processed yet
   for (const auto requestPtr : _requests)
@@ -679,7 +678,7 @@ void WebService::Update()
             const std::string& key = requestPtr->_param1;
 
             if (!key.empty()) {
-              Anki::Util::IConsoleVariable* consoleVar = Anki::Util::ConsoleSystem::Instance().FindVariable(key.c_str());
+              const Anki::Util::IConsoleVariable* consoleVar = consoleSystem.FindVariable(key.c_str());
               if (consoleVar) {
                 requestPtr->_result = consoleVar->ToString() + "<br>";
               }
@@ -697,7 +696,7 @@ void WebService::Update()
             const std::string& key = requestPtr->_param1;
             const std::string& value = requestPtr->_param2;
 
-            Anki::Util::IConsoleVariable* consoleVar = Anki::Util::ConsoleSystem::Instance().FindVariable(key.c_str());
+            Anki::Util::IConsoleVariable* consoleVar = consoleSystem.FindVariable(key.c_str());
             if (consoleVar) {
               if (consoleVar->ParseText(value.c_str() )) {
                 // success
@@ -719,6 +718,7 @@ void WebService::Update()
             const std::string& key = requestPtr->_param1;
             const auto keyLen = key.length();
 
+            const Anki::Util::ConsoleSystem::VariableDatabase& varDatabase = consoleSystem.GetVariableDatabase();
             for (Anki::Util::ConsoleSystem::VariableDatabase::const_iterator it = varDatabase.begin();
                  it != varDatabase.end(); ++it)
             {
@@ -737,14 +737,13 @@ void WebService::Update()
             const std::string& func = requestPtr->_param1;
             const std::string& args = requestPtr->_param2;
 
-            Anki::Util::IConsoleFunction* consoleFunc = Anki::Util::ConsoleSystem::Instance().FindFunction(func.c_str());
+            Anki::Util::IConsoleFunction* consoleFunc = consoleSystem.FindFunction(func.c_str());
             if (consoleFunc) {
               char outText[255+1];
               uint32_t outTextLength = sizeof(outText);
 
               ExternalOnlyConsoleChannel consoleChannel(outText, outTextLength);
 
-              Anki::Util::ConsoleSystem& consoleSystem = Anki::Util::ConsoleSystem::Instance();
               bool success = consoleSystem.ParseConsoleFunctionCall(consoleFunc, args.c_str(), consoleChannel);
               if (success) {
                 PRINT_NAMED_INFO("WebService", "CONSOLE_FUNC %s %s success", func.c_str(), args.c_str());
@@ -785,24 +784,17 @@ void WebService::AddRequest(Request* requestPtr)
 
 void WebService::GenerateConsoleVarsUI(std::string& page)
 {
-#if defined(ANKI_PLATFORM_ANDROID)
-  __android_log_print(ANDROID_LOG_VERBOSE, "SOME_TAG", "ConsoleVarsUI:  Start of function");
-#endif
   std::string style;
   std::string script;
   std::string html;
   // TODO;  Use stringstream instead of appending strings (for category_html); may help uncover bug on android
   std::map<std::string, std::string> category_html;
 
-  Anki::Util::ConsoleSystem& consoleSystem = Anki::Util::ConsoleSystem::Instance();
+  const Anki::Util::ConsoleSystem& consoleSystem = Anki::Util::ConsoleSystem::Instance();
 
   // Variables
 
   const Anki::Util::ConsoleSystem::VariableDatabase& varDatabase = consoleSystem.GetVariableDatabase();
-
-#if defined(ANKI_PLATFORM_ANDROID)
-  __android_log_print(ANDROID_LOG_VERBOSE, "SOME_TAG", "ConsoleVarsUI:  About to enter var database loop");
-#endif
   for (Anki::Util::ConsoleSystem::VariableDatabase::const_iterator it = varDatabase.begin();
        it != varDatabase.end();
        ++it) {
@@ -873,9 +865,6 @@ void WebService::GenerateConsoleVarsUI(std::string& page)
       category_html[cat] += "                  <input type=\"text\" id=\""+label+"_amount\" class=\"amount\" "+inputRange+" style=\"margin: 0.25em; border:1; font-weight:bold;\">\n";
       category_html[cat] += "                </div><br>\n";
     }
-#if defined(ANKI_PLATFORM_ANDROID)
-    __android_log_print(ANDROID_LOG_VERBOSE, "SOME_TAG", "%s", category_html[cat].c_str());
-#endif
   }
 
   // Functions
@@ -906,9 +895,6 @@ void WebService::GenerateConsoleVarsUI(std::string& page)
     }
   }
 
-#if defined(ANKI_PLATFORM_ANDROID)
-  __android_log_print(ANDROID_LOG_VERBOSE, "SOME_TAG", "ConsoleVarsUI:  About to enter HTML generation loop");
-#endif
   for (std::map<std::string, std::string>::const_iterator it = category_html.begin();
        it != category_html.end();
        ++it) {
@@ -923,9 +909,6 @@ void WebService::GenerateConsoleVarsUI(std::string& page)
   std::string tmp;
   size_t pos;
 
-#if defined(ANKI_PLATFORM_ANDROID)
-  __android_log_print(ANDROID_LOG_VERBOSE, "SOME_TAG", "ConsoleVarsUI:  About to inject style/script to template");
-#endif
   tmp = "/* -- generated style -- */";
   pos = page.find(tmp);
   if (pos != std::string::npos) {
@@ -938,19 +921,11 @@ void WebService::GenerateConsoleVarsUI(std::string& page)
     page = page.replace(pos, tmp.length(), script);
   }
 
-#if defined(ANKI_PLATFORM_ANDROID)
-  __android_log_print(ANDROID_LOG_VERBOSE, "SOME_TAG", "ConsoleVarsUI:  About to inject HTML to template");
-#endif
   tmp = "<!-- generated html -->";
   pos = page.find(tmp);
   if (pos != std::string::npos) {
     page = page.replace(pos, tmp.length(), html);
-  }
-
-#if defined(ANKI_PLATFORM_ANDROID)
-  __android_log_print(ANDROID_LOG_VERBOSE, "SOME_TAG", "ConsoleVarsUI:  About to send results");
-#endif
-}
+  }}
 
 
 #if 0
