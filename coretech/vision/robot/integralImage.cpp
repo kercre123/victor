@@ -521,10 +521,11 @@ namespace Anki
 
       const u32 kNumElementsProcessedPerLoop = 8;
       const u32 kNumIntegralElementsLoadedAtATime = kNumElementsProcessedPerLoop/2;
+      const s32 kMaxXNeon = maxX - (kNumElementsProcessedPerLoop - 1);
 
       // Process as much as we can with NEON, whatever is left over will need to be done one element at a time
       s32 x = minX;
-      for(; x <= maxX; x += kNumElementsProcessedPerLoop)
+      for(; x <= kMaxXNeon; x += kNumElementsProcessedPerLoop)
       {
         // Load 4 elements from each pIntegralImage
         int32x4_t img_00 = vld1q_s32(pIntegralImage_00);
@@ -571,13 +572,6 @@ namespace Anki
         // Store to pOutput as u8
         vst1_u8(pOutput, (uint8x8_t)output);
         pOutput += kNumElementsProcessedPerLoop;
-      }
-
-      // Above loop exits after adding to x so subtract what it added so we
-      // can finish processing what is left over
-      if(x > maxX)
-      { 
-        x -= (kNumElementsProcessedPerLoop-1);
       }
 
       for(; x <= maxX; x++)
