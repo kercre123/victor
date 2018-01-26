@@ -18,8 +18,8 @@
 
 #include "coretech/common/shared/types.h"
 #include "coretech/vision/engine/image.h"
-#include "cozmoAnim/animation/animation.h"
-#include "cozmoAnim/animation/track.h"
+#include "cannedAnimLib/animation.h"
+#include "cannedAnimLib/track.h"
 #include "clad/types/liveIdleAnimationParameters.h"
 
 #include <list>
@@ -87,7 +87,7 @@ namespace Cozmo {
     const Animation* GetStreamingAnimation() const { return _streamingAnimation; }
     
     const Animation* GetCannedAnimation(const std::string& name) const;
-    const CannedAnimationContainer& GetCannedAnimationContainer() const { return _animationContainer; }
+    const CannedAnimationContainer& GetCannedAnimationContainer() const { return *_animationContainer; }
 
     void SetDefaultParams();
     
@@ -158,7 +158,7 @@ namespace Cozmo {
     const CozmoAnimContext* _context = nullptr;
     
     // Container for all known "canned" animations (i.e. non-live)
-    CannedAnimationContainer& _animationContainer;
+    CannedAnimationContainer* _animationContainer = nullptr;
     
     Animation*  _streamingAnimation = nullptr;
     Animation*  _neutralFaceAnimation = nullptr;

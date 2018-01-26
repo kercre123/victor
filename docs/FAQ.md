@@ -63,3 +63,21 @@ If you have a question that you get answered (e.g. in a Slack channel) which mig
 * To check the battery level:
   - With the processes running, press the backpack button twice. The battery voltage is in the bottom right. It should be around 4.0v. The backpack lights will blink green when charging (and the processes are running)
   - Otherwise: `adb shell cat /sys/devices/soc.0/qpnp-linear-charger-8/power_supply/battery/voltage_now`
+  
+* Webots Firewall Connection issues?
+  - [Create a code signing certificate](/project/build-scripts/webots/FirewallCertificateInstructions.md)
+  - [Run a sample script to initially sign](/simulator/README.md#firewall)
+
+* Can't generate Xcode project using `build-victor.sh -p mac -g Xcode -C` and getting error output like this
+```
+-- The C compiler identification is unknown
+-- The CXX compiler identification is unknown
+CMake Error at CMakeLists.txt:9 (project):
+  No CMAKE_C_COMPILER could be found.
+CMake Error at CMakeLists.txt:9 (project):
+  No CMAKE_CXX_COMPILER could be found.
+```
+
+  * ... then perform these steps (continued from above)
+   	* Install command line tools
+    * `sudo xcode-select -s /Applications/Xcode.app/Contents/Developer`# New Document

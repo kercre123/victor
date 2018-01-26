@@ -119,13 +119,14 @@ enum uint_8 BehaviorClass {
   DispatcherQueue,
   DispatcherRandom,
   DispatcherScoring,
+  
+  DispatchAfterShake,
 
-  // Victor / demo behavior
-  VictorObservingDemo,
-  VictorDemoFeeding,
-  VictorDemoObservingFaceInteraction,
-  VictorDemoNapping,
-  ObservingOnCharger
+  HighLevelAI,
+  ObservingLookAtFaces,
+  ObservingOnCharger,
+  Sleeping
+  
 }
 
 
@@ -341,8 +342,8 @@ enum uint_8 BehaviorID {
 
   StackBlocks,
 
-  VictorFreeplay,
- 
+  HighLevelAI,
+
   VictorCloudComeHere,
   VictorCloudDemoBase,
   VictorCloudDemoAutonomousStub,
@@ -353,25 +354,22 @@ enum uint_8 BehaviorID {
   VictorCloudDemoTriggerDetected,
   VictorCloudDemoReturnToCharger,
 
-  VictorObservingDemo,
-  VictorDemoFeedingState,
-  VictorDemoFeeding,
-  VictorDemoObservingState,
-  VictorDemoObserving,
-  VictorDemoObservingFaceInteraction,
-  VictorDemoObservingFindFaces,
-  VictorDemoObservingOnChargerState,
-  VictorDemoObservingOnCharger,
-  VictorDemoDriveOffChargerIntoObserving,
-  VictorDemoSocialize,
-  VictorDemoSocializeGame,
-  VictorDemoPlayState,
-  VictorDemoPlay,
-  VictorDemoGoToSleep,
-  VictorDemoNappingState,
-  VictorDemoNapping,
-  VictorDemoNappingWakeUp,
-  VictorDemoFailedToFindCharger,
+  ObservingState,
+  Observing,
+  ObservingLookAtFaces,
+  ObservingFindFaces,
+  ObservingOnChargerState,
+  ObservingOnCharger,
+  DriveOffChargerIntoObserving,
+  Socialize,
+  SocializeGame,
+  PlayWithCubesState,
+  PlayWithCubes,
+  GoToSleep,
+  SleepingState,
+  Sleeping,
+  SleepingWakeUp,
+  ObservingFailedToFindCharger,
 
   Needs_SevereLowEnergyRequest,
   ObservingOnChargerIdle,
@@ -379,6 +377,7 @@ enum uint_8 BehaviorID {
   ShortLookAroundForFaceAndCube,
 
   DevImageCapture,
+  DevBaseBehavior,
 
   Wait,
   Wait_TestInjectable // BehaviorID used by tests to create fake behaviors

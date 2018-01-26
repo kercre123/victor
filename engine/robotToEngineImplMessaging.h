@@ -84,7 +84,6 @@ public:
   void HandleMotorCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleMotorAutoEnabled(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleObjectPowerLevel(const ObjectPowerLevel& message, Robot* const robot);
-  void HandleTimeProfileStat(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   void HandleAudioInput(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleMicDirection(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   

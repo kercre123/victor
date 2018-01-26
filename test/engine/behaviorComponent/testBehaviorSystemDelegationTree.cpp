@@ -19,6 +19,7 @@
 #include "gtest/gtest.h"
 
 #include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
@@ -44,6 +45,12 @@ void RecursiveDelegation(Robot& robot,
     if(iter != delegateMap.end()){
       for(auto& delegate: iter->second){
         delegate->WantsToBeActivated();
+
+        // cancel all delegates (including actions) because the behaviors OnActivated may have delegated to
+        // something
+        auto& delegationComponent = testFramework.GetBehaviorExternalInterface().GetDelegationComponent();
+        delegationComponent.CancelDelegates(topOfStack);
+
         bsm.Delegate(topOfStack, delegate);
         RecursiveDelegation(robot, testFramework, delegateMap);
       }

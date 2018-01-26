@@ -122,35 +122,35 @@
     },
     {
       "CladEvent": "ChargerDockingBackupDriveEnd",
-      "AnimName": "ag_reacttocharger_driving_end"
+      "AnimName": "ag_chargerdocking_driving_end"
     },
     {
       "CladEvent": "ChargerDockingBackupDriveLoop",
-      "AnimName": "ag_reacttocharger_driving_loop"
+      "AnimName": "ag_chargerdocking_driving_loop"
     },
     {
       "CladEvent": "ChargerDockingBackupDriveStart",
-      "AnimName": "ag_reacttocharger_drive_start"
+      "AnimName": "ag_chargerdocking_drive_start"
     },
     {
       "CladEvent": "ChargerDockingLeftTurn",
-      "AnimName": "ag_reacttocharger_leftturn"
+      "AnimName": "ag_chargerdocking_leftturn"
     },
     {
       "CladEvent": "ChargerDockingRaiseLift",
-      "AnimName": "ag_reacttocharger_liftup"
+      "AnimName": "ag_chargerdocking_liftup"
     },
     {
       "CladEvent": "ChargerDockingRightTurn",
-      "AnimName": "ag_reacttocharger_rightturn"
+      "AnimName": "ag_chargerdocking_rightturn"
     },
     {
       "CladEvent": "ChargerDockingSettle",
-      "AnimName": "ag_reacttocharger_settle"
+      "AnimName": "ag_chargerdocking_settle"
     },
     {
       "CladEvent": "ChargerReaction",
-      "AnimName": "ag_reacttocharger_reaction"
+      "AnimName": "ag_chargerdocking_reaction"
     },
     {
       "CladEvent": "CodeLab123Go",

@@ -4,7 +4,7 @@
  * Author: Brad Neuman
  * Created: 2018-01-16
  *
- * Description: Condition which reversed the result of it's sub-condition
+ * Description: Condition which reversed the result of it's operand
  *
  * Copyright: Anki, Inc. 2018
  *

@@ -60,7 +60,7 @@ namespace Cozmo {
   const u16 kProxSensorMaxDistance_mm = 410;
   
   // Forward distance sensor measurements (TODO: finalize these dimensions on production robot)
-  const float kProxSensorTiltAngle_rad = DEG_TO_RAD(6.f);    // Angle that the prox sensor is tilted (upward is positive)
+  const float kProxSensorTiltAngle_rad = DEG_TO_RAD(6.5f);    // Angle that the prox sensor is tilted (upward is positive)
   const float kProxSensorPosition_mm[3] = {10.f, 0.f, 16.f}; // With respect to robot origin
   const float kProxSensorFullFOV_rad = DEG_TO_RAD(25.f);     // Full Field of View (FOV) of the sensor cone
   
@@ -309,9 +309,11 @@ namespace Cozmo {
   // RobotID will be appended to generate unique paths for each robot.
   //
   #ifdef SIMULATOR
+  constexpr char LOCAL_SOCKET_PATH[]  = "/tmp/";
   constexpr char ROBOT_SERVER_PATH[]  = "/tmp/_robot_server_";
   constexpr char ANIM_CLIENT_PATH[]   = "/tmp/_anim_client_";
   #else
+  constexpr char LOCAL_SOCKET_PATH[]  = "/dev/";
   constexpr char ROBOT_SERVER_PATH[]  = "/dev/socket/_robot_server_";
   constexpr char ANIM_CLIENT_PATH[]   = "/dev/socket/_anim_client_";
   #endif

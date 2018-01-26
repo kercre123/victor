@@ -89,6 +89,12 @@ else
     fi
 fi
 
+# Check that the assets directory exists
+if [ ! -d "$ASSETSDIR" ]; then
+  echo "Assets directory ${ASSETSDIR} does not exist!"
+  exit 1
+fi
+
 DEVICE_RSYNC_BIN_DIR="/data/local/tmp"
 DEVICE_RSYNC_CONF_DIR="/data/rsync"
 
@@ -126,6 +132,11 @@ fi
 # Install new assets
 pushd ${ASSETSDIR} > /dev/null 2>&1
 
+# Make sure we have the directories we expect
+$ADB shell mkdir -p ${DEVICE_RSYNC_BIN_DIR}
+$ADB shell mkdir -p ${DEVICE_RSYNC_CONF_DIR}
+$ADB shell mkdir -p ${DEVICE_ASSET_DIR}
+
 # install rsync binary and config if needed
 set +e
 $ADB shell [ -f "$DEVICE_RSYNC_BIN_DIR/rsync.bin" ]
@@ -140,15 +151,12 @@ if [ $FORCE_PUSH_ASSETS -eq 1 ] ||
    [ $HAS_RSYNC_CONF -ne 0 ]; then
 
   echo "loading rsync to device"
-  $ADB shell mkdir -p ${DEVICE_RSYNC_BIN_DIR}
-  $ADB shell mkdir -p ${DEVICE_RSYNC_CONF_DIR}
-  $ADB shell mkdir -p ${DEVICE_ASSET_DIR}
 
   $ADB push ${RSYNC_BIN_DIR}/rsync.bin ${DEVICE_RSYNC_BIN_DIR}
   $ADB push ${RSYNC_BIN_DIR}/rsyncd.conf ${DEVICE_RSYNC_CONF_DIR}
 fi
 
-echo "deploying assets"
+echo "deploying assets: ${ASSETSDIR}"
 
 # startup rsync daemon
 $ADB shell "${DEVICE_RSYNC_BIN_DIR}/rsync.bin --daemon --config=${DEVICE_RSYNC_CONF_DIR}/rsyncd.conf &"

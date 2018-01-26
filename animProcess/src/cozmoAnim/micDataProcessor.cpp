@@ -16,7 +16,7 @@
 #include "se_diag.h"
 #include "speex/speex_resampler.h"
 
-#include "coretech/messaging/shared/UdpServer.h"
+#include "coretech/messaging/shared/LocalUdpServer.h"
 
 #include "cozmoAnim/animProcessMessages.h"
 #include "cozmoAnim/faceDisplay/faceDebugDraw.h"
@@ -76,8 +76,6 @@ namespace {
 # define CONSOLE_GROUP "MicData"
   CONSOLE_VAR_RANGED(s32, kMicData_NextTriggerIndex, CONSOLE_GROUP, 0, 0, kTriggerDataListLen-1);
 # undef CONSOLE_GROUP
-
-  const unsigned short kCloudProcessCommunicationPort = 9880;
 }
 
 namespace Anki {
@@ -210,7 +208,7 @@ const HALConfig::Item  configitems_[]  = {
 MicDataProcessor::MicDataProcessor(const std::string& writeLocation, const std::string& triggerWordDataDir)
 : _writeLocationDir(writeLocation)
 , _recognizer(new SpeechRecognizerTHF())
-, _udpServer(new UdpServer())
+, _udpServer(new LocalUdpServer())
 , _micImmediateDirection(new MicImmediateDirection())
 {
   if (!_writeLocationDir.empty())
@@ -280,12 +278,13 @@ MicDataProcessor::MicDataProcessor(const std::string& writeLocation, const std::
   }
 
   const RobotID_t robotID = OSState::getInstance()->GetRobotID();
-  const bool udpSuccess = _udpServer->StartListening(kCloudProcessCommunicationPort + robotID);
+  const std::string sockName = std::string{LOCAL_SOCKET_PATH} + "mic_sock" + (robotID == 0 ? "" : std::to_string(robotID));
+  const bool udpSuccess = _udpServer->StartListening(sockName);
   ANKI_VERIFY(udpSuccess,
               "MicDataProcessor.Constructor.UdpStartListening",
-              "Failed to start listening on port %d",
-              kCloudProcessCommunicationPort);
-  
+              "Failed to start listening on socket %s",
+              sockName.c_str());
+
   _processThread = std::thread(&MicDataProcessor::ProcessLoop, this);
 }
 
@@ -735,7 +734,7 @@ void MicDataProcessor::Update()
     // check if the pointer to the currently streaming job is valid
     if (!_currentlyStreaming && _currentStreamingJob != nullptr)
     {
-      if (_udpServer->GetNumClients() > 0)
+      if (_udpServer->HasClient())
       {
         _currentlyStreaming = true;
         streamingAudioIndex = 0;
@@ -770,7 +769,7 @@ void MicDataProcessor::Update()
         streamingAudioIndex += newAudio.size();
     
         // Send the audio to any clients we've got
-        if (_udpServer->GetNumClients() > 0)
+        if (_udpServer->HasClient())
         {
           for(const auto& audioChunk : newAudio)
           {

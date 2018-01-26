@@ -42,7 +42,7 @@ FaceDisplay::~FaceDisplay()
   _faceDrawThread.join();
 }
 
-void FaceDisplay::DrawToFaceDebug(const Vision::ImageRGB& img)
+void FaceDisplay::DrawToFaceDebug(const Vision::ImageRGB565& img)
 {
   if (_faceDebugDraw->GetDrawState() == FaceDebugDraw::DrawState::None)
   {
@@ -60,20 +60,6 @@ void FaceDisplay::DrawToFace(const Vision::ImageRGB565& img)
   }
 
   DrawToFaceInternal(img);
-}
-
-void FaceDisplay::DrawToFaceInternal(const Vision::ImageRGB& img)
-{
-  std::lock_guard<std::mutex> lock(_faceDrawMutex);
-  if (_faceDrawNextImg == nullptr)
-  {
-    _faceDrawNextImg = _faceDrawImg[0].get();
-    if (_faceDrawCurImg == _faceDrawNextImg)
-    {
-      _faceDrawNextImg = _faceDrawImg[1].get();
-    }
-  }
-  _faceDrawNextImg->SetFromImageRGB(img);
 }
 
 void FaceDisplay::DrawToFaceInternal(const Vision::ImageRGB565& img)

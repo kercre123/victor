@@ -1,0 +1,11 @@
+{
+  "testExternalLinks" : false,
+  "directoriesToCheck" : [
+    {"dirName" : ".",         "recursive" : false},
+    {"dirName" : "coretech",  "recursive" : true},
+    {"dirName" : "docs",      "recursive" : true},
+    {"dirName" : "project",   "recursive" : true},
+    {"dirName" : "robot",     "recursive" : true},
+    {"dirName" : "simulator", "recursive" : true}
+  ]
+}

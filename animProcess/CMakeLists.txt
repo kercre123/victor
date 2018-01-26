@@ -40,6 +40,7 @@ target_link_libraries(victor_anim
   PRIVATE
   util
   util_audio
+  canned_anim_lib_anim
   # cti
   cti_common_robot
   cti_vision

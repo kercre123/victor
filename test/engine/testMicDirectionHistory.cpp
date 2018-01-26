@@ -20,7 +20,6 @@
 #include <functional>
 
 #define LOG_CHANNEL "MicDirectionHistory"
-#define LOG_INFO(...) PRINT_CH_INFO(LOG_CHANNEL, ##__VA_ARGS__)
 
 using namespace Anki;
 using namespace Anki::Cozmo;

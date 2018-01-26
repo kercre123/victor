@@ -19,6 +19,7 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "clad/robotInterface/messageEngineToRobot.h"
+#include "util/console/consoleInterface.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -27,12 +28,23 @@ namespace {
   const std::string kLogDirName = "proxSensor";
 
   const Vec3f kProxSensorPositionVec_mm{kProxSensorPosition_mm[0], kProxSensorPosition_mm[1], kProxSensorPosition_mm[2]};
-
-  const f32 kObsPadding_mm       = 1.0; // extra padding to add to prox obstacle
-  const u16 kMinObsThreshold_mm  = 30;  // Minimum distance for registering an object detected as an obstacle
-  const u16 kMaxObsThreshold_mm  = 400; // Maximum distance for registering an object detected as an obstacle  
-  const f32 kMinQualityThreshold = .15; // Minimum sensor reading strength before trying to use sensor data
 } // end anonymous namespace
+
+// enable/disable prox sensor data
+CONSOLE_VAR(bool, kProxSensorEnabled, "ProxSensorComponent", true);
+
+// extra padding to add to prox obstacle
+CONSOLE_VAR(float, kObsPadding_mm, "ProxSensorComponent", 0.05f);
+
+// distance range for registering an object detected as an obstacle
+CONSOLE_VAR(u16, kMinObsThreshold_mm, "ProxSensorComponent", 30);
+CONSOLE_VAR(u16, kMaxObsThreshold_mm, "ProxSensorComponent", 400);
+
+// max forward tilt of the robot to still consider a valid reading
+CONSOLE_VAR(float, kMaxForwardTilt_rad, "ProxSensorComponent", -.08);
+
+// Minimum sensor reading strength before trying to use sensor data
+CONSOLE_VAR(float, kMinQualityThreshold, "ProxSensorComponent", 0.05f);
 
   
 ProxSensorComponent::ProxSensorComponent() 
@@ -43,10 +55,13 @@ ProxSensorComponent::ProxSensorComponent()
   
 void ProxSensorComponent::UpdateInternal(const RobotState& msg)
 {
-  _lastMsgTimestamp = msg.timestamp;
-  _latestData = msg.proxData;
-  
-  UpdateNavMap();
+  if (kProxSensorEnabled)
+  {
+    _lastMsgTimestamp = msg.timestamp;
+    _latestData = msg.proxData;
+    
+    UpdateNavMap();
+  }
 }
 
 
@@ -181,8 +196,9 @@ void ProxSensorComponent::UpdateNavMap()
   const bool noObject       = quality <= kMinQualityThreshold;                      // sensor is pointed at free space
   const bool objectDetected = (quality >= kMinQualityThreshold &&                   // sensor is getting some reading
                                _latestData.distance_mm >= kMinObsThreshold_mm);     // the sensor is not seeing the lift
-  
-  if (objectDetected || noObject)
+  const bool tiltedForward  = _robot->GetPitchAngle() < kMaxForwardTilt_rad;        // if the robot is titled too far forward (- rad) 
+
+  if ((objectDetected || noObject) && !tiltedForward)
   {  
     // Clear out any obstacles between the robot and ray if we have good signal strength 
     TimeStamp_t lastTimestamp = _robot->GetLastMsgTimestamp();

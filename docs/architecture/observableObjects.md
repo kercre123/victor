@@ -33,5 +33,5 @@ Additionally, objects can be defined to be "unique", meaning the user is assurin
 ### Markerless Objects [Deprecated]
 `MarkerlessObject` also derives from ObservableObject, but (as the name suggests) does not have any Markers. They inherit from ObservableObject just so they work within BlockWorld in the same way, but they must be "observed" via some other means than VisionMarkers, such as a proximity sensor. 
 
-NOTE: MarkerlessObjects are somewhat deprecated and we are moving towards maintaining these "objects" directly in the [Nav Map](navMap.md) instead.
+NOTE: MarkerlessObjects are somewhat deprecated and we are moving towards maintaining these "objects" directly in the nav map instead.
 

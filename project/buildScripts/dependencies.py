@@ -388,6 +388,7 @@ def svn_package(svn_dict):
                     try:
                         anim_name_length_mapping = extract_files_from_tar(subdir, extract_types, put_in_subdir)
                     except EnvironmentError, e:
+                        anim_name_length_mapping = {}
                         print("Failed to unpack one or more tar files in [%s] because: %s" % (subdir, e))
                         print(stale_warning)
                     file_stats = get_file_stats(subdir)

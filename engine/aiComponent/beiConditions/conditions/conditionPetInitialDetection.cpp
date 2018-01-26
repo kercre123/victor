@@ -16,10 +16,10 @@
 #include "engine/cozmoContext.h"
 #include "engine/petWorld.h"
 
+#define LOG_CHANNEL "BehaviorSystem"
+
 namespace Anki {
 namespace Cozmo {
-#define LOG_DEBUG(...) PRINT_CH_DEBUG("BehaviorSystem", ##__VA_ARGS__)
-#define LOG_INFO(...) PRINT_CH_INFO("BehaviorSystem", ##__VA_ARGS__)
 
 namespace {
 static const int kReactToPetNumTimesObserved = 3;
