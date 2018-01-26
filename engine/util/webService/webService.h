@@ -45,7 +45,7 @@ public:
   WebService();
   ~WebService();
 
-  void Start(Anki::Util::Data::DataPlatform* platform);
+  void Start(Anki::Util::Data::DataPlatform* platform, const char* portNumStr);
   void Update();
   void Stop();
   

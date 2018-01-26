@@ -60,6 +60,7 @@ target_link_libraries(victor_anim
   # platform
   ${PLATFORM_LIBS}
   PUBLIC
+  civetweb  # Temporary until standalone web server
   robot_interface  # Needs to be public for cozmoConfig.h
 )
 

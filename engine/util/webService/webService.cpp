@@ -541,7 +541,7 @@ WebService::~WebService()
   Stop();
 }
 
-void WebService::Start(Anki::Util::Data::DataPlatform* platform)
+void WebService::Start(Anki::Util::Data::DataPlatform* platform, const char* portNumStr)
 {
   if (platform == nullptr) {
     return;
@@ -573,7 +573,7 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform)
     "document_root",
     webserverPath.c_str(),
     "listening_ports",
-    "8888",
+    portNumStr, // "8888",
     "num_threads",
     "4",
     "url_rewrite_patterns",
@@ -787,7 +787,6 @@ void WebService::GenerateConsoleVarsUI(std::string& page)
   std::string style;
   std::string script;
   std::string html;
-  // TODO;  Use stringstream instead of appending strings (for category_html); may help uncover bug on android
   std::map<std::string, std::string> category_html;
 
   const Anki::Util::ConsoleSystem& consoleSystem = Anki::Util::ConsoleSystem::Instance();

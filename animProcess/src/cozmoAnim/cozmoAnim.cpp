@@ -22,6 +22,8 @@
 #include "audioEngine/multiplexer/audioMultiplexer.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 
+#include "engine/util/webService/webService.h"
+
 #include "osState/osState.h"
 
 #include "util/logging/logging.h"
@@ -96,6 +98,8 @@ Result CozmoAnimEngine::Init() {
   auto * audioInput = static_cast<Audio::EngineRobotAudioInput*>(audioMux->GetInput(regId));
   AnimProcessMessages::Init( _animationStreamer.get(), audioInput, _context.get());
 
+  _context->GetWebService()->Start(_context->GetDataPlatform(), "8889");
+
   LOG_INFO("CozmoAnimEngine.Init.Success","Success");
   _isInitialized = true;
 
@@ -136,6 +140,8 @@ Result CozmoAnimEngine::Update(const BaseStationTime_t currTime_nanosec)
   
   BaseStationTimer::getInstance()->UpdateTime(currTime_nanosec);
   
+  _context->GetWebService()->Update();
+
   AnimProcessMessages::Update();
   
   OSState::getInstance()->Update();
