@@ -31,7 +31,7 @@ An animation consists of a set of `Tracks`, each comprised by a set of `KeyFrame
 * Backpack Lights
 * Event ("special" keyframes which can be used to indicate back to the engine where that a certain point in the animation has been reached)
 
-All keyframes have a trigger time, in milliseconds starting from zero, and most have a duration, a delta, also in milliseconds. Animations are scaled by 99% so that keyframes fall on integer boundaries, multiples of 33ms, rather than 33.33ms
+All keyframes have a trigger time, in milliseconds starting when the animation starts, and most have a duration, a delta, also in milliseconds. Animations are scaled by 99% so that keyframes fall on integer boundaries, multiples of 33ms, rather than 33.33ms
 
 ### Layers
 Additional tracks can be "layered" on top of a playing animation by combining them with the corresponding tracks in that animation. The `AnimationStreamer` has a `TrackLayerManager` for each track that supports layering. A notable example is the use of face, audio, and backpack light layering for the "glitchy" face the robot exhibits when the repair need is high.
@@ -69,7 +69,7 @@ Animations are exported by the Maya Game Exporter, segments on the Maya time lin
 
 `export_from_maya.py` takes a list of source Maya files (.ma) and calls export_for_robot() for each; when the export is complete a list of files needed to be committed to svn is reported.
 
-`export_for_robot.py` processes keyframes and yields .tar files of JSON files. There are special cases and restrictions for each kinds of keyframe, for example, lift keyframes take the first frame as the bind pose.
+`export_for_robot.py` processes keyframes and yields .tar files of JSON files. There are special cases and restrictions for each kind of keyframe, for example, lift keyframes take the first frame as the bind pose.
 
 ## Deploy
 
