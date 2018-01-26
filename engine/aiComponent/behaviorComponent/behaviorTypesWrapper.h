@@ -23,7 +23,7 @@
 #include <cstdint>
 
 // if set to 1, use strings to avoid triggering massive rebuilds when clad changes
-// otherwise, use the enums to gauarantee compile-time errors for invalid ids
+// otherwise, use the enums to guarantee compile-time errors for invalid ids
 #define BEHAVIOR_ID_DEV_MODE ANKI_DEVELOPER_CODE
 
 #if BEHAVIOR_ID_DEV_MODE

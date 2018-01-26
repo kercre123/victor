@@ -42,6 +42,11 @@ If you have a question that you get answered (e.g. in a Slack channel) which mig
   - Trying restarting the [wpa_supplicant](https://en.wikipedia.org/wiki/Wpa_supplicant)
   - `pkill wpa_supplicant` then `wpa_supplicant -iwlan0 -Dnl80211 -c/data/misc/wifi/wpa_supplicant.conf -O/data/misc/wifi/sockets -B`
 
+* Seriously... I cannot get connected to my home WIFI using wifi-set-config ^^
+  - These issues should be resolved when we update the OS, but in the meantime:
+  - You can connect with a static IP to your network using a shell script located at .../victor/tools/victor-ble-cli/vic_join_network.sh
+  - You will have to rerun the script every time you power cycle so it may be worth your time to make an alias with your network config as arguments
+
 * Deploying is super slow
   - Try turning off wifi on your laptop and use ethernet instead
   - Run `victor_stop` before deploying

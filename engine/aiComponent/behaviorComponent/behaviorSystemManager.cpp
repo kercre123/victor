@@ -272,7 +272,7 @@ void BehaviorSystemManager::CancelDelegates(IBehavior* delegator)
   }
 
   PRINT_CH_INFO("BehaviorSystem", "BehaviorSystemManager.CancelDelegates",
-                "'%s' canceled it's delegates",
+                "'%s' canceled its delegates",
                 delegator->GetPrintableID().c_str());
 
   _behaviorStack->DebugPrintStack("AfterCancelDelgates");
