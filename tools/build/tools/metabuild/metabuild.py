@@ -28,7 +28,7 @@ def is_special(pat):
 
 def path_component_contains_dot(relative_path):
     for p in relative_path.parts:
-        if p.startswith('.'):
+        if p.startswith('.') and p != "..":
             return True
     return False
 
