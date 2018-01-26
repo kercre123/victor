@@ -1,10 +1,11 @@
 /**
- * File: behaviorFindFaces.h
+ * File: behaviorFindFaces.cpp
  *
- * Author: Brad Neuman
+ * Author: Lee Crippen / Brad Neuman / Matt Michini
  * Created: 2016-08-31
  *
- * Description: Originally written by Lee, rewritten by Brad to be based on the "look in place" behavior
+ * Description: Delegates to the configured search behavior, terminating based on
+ *              configurable stopping conditions.
  *
  * Copyright: Anki, Inc. 2016
  *
@@ -12,6 +13,8 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorFindFaces.h"
 
+#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/faceWorld.h"
@@ -24,102 +27,157 @@ namespace Anki {
 namespace Cozmo {
 
 namespace {
-CONSOLE_VAR_RANGED(f32, kHeadUpBodyAngleRelativeMin_deg, "Behavior.FindFaces", 1.0f, 0.0f, 180.0f); 
-CONSOLE_VAR_RANGED(f32, kHeadUpBodyAngleRelativeMax_deg, "Behavior.FindFaces", 6.0f, 0.0f, 180.0f); 
-CONSOLE_VAR_RANGED(f32, kHeadUpHeadAngleMin_deg, "Behavior.FindFaces", 20.0f, 0.0f, MAX_HEAD_ANGLE);
-CONSOLE_VAR_RANGED(f32, kHeadUpHeadAngleMax_deg, "Behavior.FindFaces", 40.0f, 0.0f, MAX_HEAD_ANGLE);
-CONSOLE_VAR(f32, kHeadUpBodyTurnSpeed_degPerSec, "Behavior.FindFaces", 150.0f);
-CONSOLE_VAR(f32, kHeadUpHeadTurnSpeed_degPerSec, "Behavior.FindFaces", 90.0f);
+
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorFindFaces::BehaviorFindFaces(const Json::Value& config)
-: BaseClass(config)
+  : ICozmoBehavior(config)
 {
-
   JsonTools::GetValueOptional(config, "maxFaceAgeToLook_ms", _maxFaceAgeToLook_ms);
-
-  if( _configParams.behavior_RecentLocationsMax != 0 ) {
-    PRINT_NAMED_WARNING("BehaviorFindFaces.Config.InvalidRecentLocationsMax",
-                        "Config specified a maximum recent locations of %d, but FindFaces doesn't support recent locations. Clearing",
-                        _configParams.behavior_RecentLocationsMax);
-    _configParams.behavior_RecentLocationsMax = 0;
-  }
   
+  const std::string& debugName = "Behavior" + GetIDStr() + ".LoadConfig";
+
+  const auto& conditionStr = JsonTools::ParseString(config, "stoppingCondition", debugName);
+  _stoppingCondition = StoppingConditionFromString(conditionStr);
+  
+  _searchBehaviorStr = JsonTools::ParseString(config, "searchBehavior", debugName);
+  
+  JsonTools::GetValueOptional(config, "timeout_sec", _timeout_sec);
+  
+  // Make sure a nonzero timeout was provided if the stopping
+  // condition is "timeout"
+  if (_stoppingCondition == StoppingCondition::Timeout) {
+    DEV_ASSERT(Util::IsFltGTZero(_timeout_sec), "BehaviorFindFaces.InvalidTimeout");
+  }
 }
  
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorFindFaces::WantsToBeActivatedBehavior() const
 {
-  // we can always search for faces (override base class restrictions)
+  // we can always search for faces
   return true;
 }
 
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorFindFaces::BeginStateMachine()
+void BehaviorFindFaces::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
-  TransitionToLookUp();
+  delegates.insert(_searchBehavior.get());
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorFindFaces::TransitionToLookUp()
+void BehaviorFindFaces::InitBehavior()
 {
-  DEBUG_SET_STATE(FindFacesLookUp);
+  const auto& BC = GetBEI().GetBehaviorContainer();
+  _searchBehavior = BC.FindBehaviorByID(BehaviorTypesWrapper::BehaviorIDFromString(_searchBehaviorStr));
+  DEV_ASSERT(_searchBehavior != nullptr,
+             "BehaviorFindFaces.InitBehavior.NullSearchBehavior");
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorFindFaces::OnBehaviorActivated()
+{
+  DEV_ASSERT(_stoppingCondition != StoppingCondition::Invalid,
+             "BehaviorFindFaces.OnBehaviorActivated.InvalidStoppingCondition");
   
   const auto& robotInfo = GetBEI().GetRobotInfo();
-
-  // use the base class's helper function to create a random head motion
-  IAction* moveHeadAction = BaseClass::CreateHeadTurnAction(kHeadUpBodyAngleRelativeMin_deg,
-                                                            kHeadUpBodyAngleRelativeMax_deg,
-                                                            robotInfo.GetPose().GetRotationAngle<'Z'>().getDegrees(),
-                                                            kHeadUpHeadAngleMin_deg,
-                                                            kHeadUpHeadAngleMax_deg,
-                                                            kHeadUpBodyTurnSpeed_degPerSec,
-                                                            kHeadUpHeadTurnSpeed_degPerSec);
-
-  DelegateIfInControl(moveHeadAction, [this]() {
-      const TimeStamp_t latestTimestamp = GetBEI().GetRobotInfo().GetLastImageTimeStamp();
-      // check if we should turn towards the last face, even if it's not in the current origin
-      const bool kMustBeInCurrentOrigin = false;
-      Pose3d waste;
-      TimeStamp_t lastFaceTime = GetBEI().GetFaceWorld().GetLastObservedFace(waste, kMustBeInCurrentOrigin);
-      const bool useAnyFace = _maxFaceAgeToLook_ms == 0;
-      if( lastFaceTime > 0 &&
-          ( useAnyFace || latestTimestamp <= lastFaceTime + _maxFaceAgeToLook_ms ) ) {
-        TransitionToLookAtLastFace();
-      }
-      else {
-        TransitionToBaseClass();
-      }
-    });
-}
-
   
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorFindFaces::TransitionToLookAtLastFace()
-{
-  DEBUG_SET_STATE(FindFacesLookAtLast);
-  DelegateIfInControl(new TurnTowardsLastFacePoseAction(), &BehaviorFindFaces::TransitionToBaseClass);
-}
-
+  // Get known faces
+  const TimeStamp_t latestImageTimeStamp = robotInfo.GetLastImageTimeStamp();
+  _imageTimestampWhenActivated = latestImageTimeStamp;
   
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorFindFaces::TransitionToBaseClass()
-{
-  PRINT_CH_INFO("Behaviors", "BehaviorFindFaces.TransitionToBaseClass",
-                " %s is transitioning to base class, setting initial body direction",
-                GetIDStr().c_str());
-
-  const Pose3d& robotPose = GetBEI().GetRobotInfo().GetPose();
-  SetInitialBodyDirection( robotPose.GetRotationAngle<'Z'>() );
-  BaseClass::BeginStateMachine();
+  _startingFaces = GetBEI().GetFaceWorld().GetFaceIDsObservedSince(latestImageTimeStamp > _maxFaceAgeToLook_ms ?
+                                                                   latestImageTimeStamp - _maxFaceAgeToLook_ms :
+                                                                   0);
+  const bool hasRecentFaces = !_startingFaces.empty();
+  if ((_stoppingCondition == StoppingCondition::AnyFace) &&
+      hasRecentFaces){
+    return;
+  }
+  
+  // Delegate to the search behavior
+  if (_searchBehavior->WantsToBeActivated()) {
+    DelegateIfInControl(_searchBehavior.get());
+    _searchingForFaces = true;
+  }
 }
 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorFindFaces::OnBehaviorDeactivated()
+{
+  _startingFaces.clear();
+  _imageTimestampWhenActivated = 0;
+  _searchingForFaces = false;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorFindFaces::BehaviorUpdate()
+{
+  if (!IsActivated() || !IsControlDelegated()) {
+    return;
+  }
+  
+  if (_searchingForFaces) {
+    // Check stopping conditions
+    bool shouldStop = false;
+    if (_stoppingCondition == StoppingCondition::AnyFace) {
+      shouldStop = GetBEI().GetFaceWorld().HasAnyFaces(_imageTimestampWhenActivated);
+    } else if (_stoppingCondition == StoppingCondition::NewFace) {
+      const auto& newFaces = GetBEI().GetFaceWorld().GetFaceIDsObservedSince(_imageTimestampWhenActivated);
+      // Check if newFaces is a subset of startingFaces.
+      // If not, then a new face ID must have been added at some point.
+      const bool newFaceAdded = !std::includes(_startingFaces.begin(), _startingFaces.end(),
+                                               newFaces.begin(), newFaces.end());
+      shouldStop = newFaceAdded;
+    } else if (_stoppingCondition == StoppingCondition::Timeout) {
+      shouldStop = (GetActivatedDuration() > _timeout_sec);
+    }
+    
+    if (shouldStop) {
+      PRINT_CH_INFO("Behaviors",
+                    "FindFaces.CancellingSearch",
+                    "Cancelling face search due to stopping condition %s",
+                    StoppingConditionToString(_stoppingCondition));
+      CancelDelegates();
+    }
+  }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorFindFaces::StoppingCondition BehaviorFindFaces::StoppingConditionFromString(const std::string& str) const
+{
+  if (str == "AnyFace")      { return StoppingCondition::AnyFace; }
+  else if (str == "NewFace") { return StoppingCondition::NewFace; }
+  else if (str == "Timeout") { return StoppingCondition::Timeout; }
+  else if (str == "None")    { return StoppingCondition::None; }
+  else {
+    DEV_ASSERT_MSG(false,
+                   "BehaviorFindFaces.StoppingConditionFromString.InvalidString",
+                   "String %s is not a valid StoppingCondition",
+                   str.c_str());
+    return StoppingCondition::Invalid;
+  }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const char* BehaviorFindFaces::StoppingConditionToString(BehaviorFindFaces::StoppingCondition condition) const
+{
+  switch(condition) {
+    case StoppingCondition::Invalid: return "Invalid";
+    case StoppingCondition::None:    return "None";
+    case StoppingCondition::AnyFace: return "AnyFace";
+    case StoppingCondition::NewFace: return "NewFace";
+    case StoppingCondition::Timeout: return "Timeout";
+  }
+}
   
 } // namespace Cozmo
 } // namespace Anki

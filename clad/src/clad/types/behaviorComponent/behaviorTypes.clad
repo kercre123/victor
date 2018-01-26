@@ -199,6 +199,7 @@ enum uint_8 BehaviorID {
   InteractWithFaces,
   KnockOverCubes,
   LiftLoadTest,
+  LookInPlaceHeadUp,
   MeetCozmo_FindFaces_Socialize,
   MeetCozmo_InteractWithFaces,
 

@@ -1,10 +1,11 @@
 /**
  * File: behaviorFindFaces.h
  *
- * Author: Brad Neuman
+ * Author: Lee Crippen / Brad Neuman / Matt Michini
  * Created: 2016-08-31
  *
- * Description: Originally written by Lee, rewritten by Brad to be based on the "look in place" behavior
+ * Description: Delegates to the configured search behavior, terminating based on
+ *              configurable stopping conditions.
  *
  * Copyright: Anki, Inc. 2016
  *
@@ -13,14 +14,13 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorFindFaces_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorFindFaces_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/freeplay/exploration/behaviorExploreLookAroundInPlace.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 namespace Anki {
 namespace Cozmo {
   
-class BehaviorFindFaces : public BehaviorExploreLookAroundInPlace
+class BehaviorFindFaces : public ICozmoBehavior
 {
-  using BaseClass = BehaviorExploreLookAroundInPlace;
 protected:
   
   // Enforce creation through BehaviorContainer
@@ -28,23 +28,47 @@ protected:
   BehaviorFindFaces(const Json::Value& config);
   
 public:
-
   virtual ~BehaviorFindFaces() override {}
-
   virtual bool WantsToBeActivatedBehavior() const override;
-    
-protected:
   
-  virtual void BeginStateMachine() override;
+  void InitBehavior() override;
+  
+protected:
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
+  virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
+  virtual void OnBehaviorActivated() override;
+  virtual void OnBehaviorDeactivated() override;
+  virtual void BehaviorUpdate() override;
   
 private:
 
-  void TransitionToLookUp();
-  void TransitionToLookAtLastFace();
-  void TransitionToBaseClass();
-
+  enum class StoppingCondition {
+    Invalid,
+    None,    // Simply let the search behavior finish on its own
+    AnyFace, // Stop searching as soon as we know about any face
+    NewFace, // Stop searching as soon as a _new_ face is seen
+    Timeout, // Stop searching after a configurable timeout
+  };
+  
+  StoppingCondition _stoppingCondition = StoppingCondition::Invalid;
+  StoppingCondition StoppingConditionFromString(const std::string&) const;
+  const char* StoppingConditionToString(StoppingCondition) const;
+  
+  std::string _searchBehaviorStr;
+  ICozmoBehaviorPtr _searchBehavior;
+  
+  bool _searchingForFaces = false;
+  
+  // The robot's image timestamp at the time the behavior was activated
+  // (used to determine if new faces have been observed since the behavior started)
+  TimeStamp_t _imageTimestampWhenActivated = 0;
+  
+  std::set<Vision::FaceID_t> _startingFaces;
+  
   u32 _maxFaceAgeToLook_ms = 0;
   
+  // Behavior timeout (used only for StoppingCondition::Timeout)
+  float _timeout_sec = 0.f;
 };
   
 
