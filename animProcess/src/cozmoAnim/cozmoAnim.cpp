@@ -22,6 +22,7 @@
 #include "audioEngine/multiplexer/audioMultiplexer.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 
+// TODO HACK this is temporary until we get a webserver >process<
 #include "engine/util/webService/webService.h"
 
 #include "osState/osState.h"
