@@ -93,7 +93,11 @@ void FaceDebugDraw::DrawFAC()
   }
 }
 
-void FaceDebugDraw::DrawConfidenceClock(const RobotInterface::MicDirection& micData, uint32_t secondsRemaining)
+void FaceDebugDraw::DrawConfidenceClock(
+  const RobotInterface::MicDirection& micData,
+  float bufferFullPercent,
+  uint32_t secondsRemaining,
+  bool triggerRecognized)
 {
   if (GetDrawState() != DrawState::MicDirectionClock)
   {
@@ -231,6 +235,60 @@ void FaceDebugDraw::DrawConfidenceClock(const RobotInterface::MicDirection& micD
     (float) (center_px.y() + (int)(barLenFactor[winningIndex].y() * (float)(circleRadius_px + 1.f)))
     }, NamedColors::RED, 5);
 
+
+  // If we have an active state flag set, draw a blue circle for it
+  constexpr int activeCircleRad_px = 10;
+  if (micData.activeState != 0)
+  {
+    drawImg.DrawFilledCircle({
+      (float) FACE_DISPLAY_WIDTH - activeCircleRad_px, 
+      (float) FACE_DISPLAY_HEIGHT - activeCircleRad_px
+      }, NamedColors::BLUE, activeCircleRad_px);
+  }
+
+  // Display the trigger recognized symbol if needed
+  constexpr int triggerDispWidth_px = 15;
+  constexpr int triggerDispHeight = 16;
+  constexpr int triggerOffsetFromActiveCircle_px = 20;
+  if (triggerRecognized)
+  {
+    drawImg.DrawFilledConvexPolygon({
+      {FACE_DISPLAY_WIDTH - triggerDispWidth_px, 
+        FACE_DISPLAY_HEIGHT - activeCircleRad_px*2 - triggerOffsetFromActiveCircle_px},
+      {FACE_DISPLAY_WIDTH - triggerDispWidth_px, 
+        FACE_DISPLAY_HEIGHT - activeCircleRad_px*2 - triggerOffsetFromActiveCircle_px + triggerDispHeight},
+      {FACE_DISPLAY_WIDTH, 
+        FACE_DISPLAY_HEIGHT - activeCircleRad_px*2 - triggerOffsetFromActiveCircle_px + triggerDispHeight/2}
+      }, 
+      NamedColors::GREEN);
+  }
+
+  constexpr int endOfBarHeight_px = 20;
+  constexpr int endOfBarWidth_px = 5;
+
+  constexpr int buffFullBarHeight_px = endOfBarHeight_px / 2;
+  constexpr int buffFullBarWidth_px = 52;
+  bufferFullPercent = CLIP(bufferFullPercent, 0.0f, 1.0f);
+
+  // Draw the end-of-bar line
+  drawImg.DrawFilledConvexPolygon({
+    {buffFullBarWidth_px, FACE_DISPLAY_HEIGHT - endOfBarHeight_px},
+    {buffFullBarWidth_px, FACE_DISPLAY_HEIGHT},
+    {buffFullBarWidth_px + endOfBarWidth_px, FACE_DISPLAY_HEIGHT},
+    {buffFullBarWidth_px + endOfBarWidth_px, FACE_DISPLAY_HEIGHT - endOfBarHeight_px}
+    }, 
+    NamedColors::RED);
+    
+  // Draw the bar showing the mic data buffer fullness
+  drawImg.DrawFilledConvexPolygon({
+    {0, FACE_DISPLAY_HEIGHT - endOfBarHeight_px + buffFullBarHeight_px / 2},
+    {0, FACE_DISPLAY_HEIGHT - buffFullBarHeight_px / 2},
+    {(int) (bufferFullPercent * (float) buffFullBarWidth_px), FACE_DISPLAY_HEIGHT - buffFullBarHeight_px / 2},
+    {(int) (bufferFullPercent * (float) buffFullBarWidth_px), FACE_DISPLAY_HEIGHT - endOfBarHeight_px + buffFullBarHeight_px / 2}
+    }, 
+    NamedColors::RED);
+
+  // Draw the debug page number
   DrawScratch();
 }
 

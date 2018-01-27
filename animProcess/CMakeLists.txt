@@ -8,7 +8,6 @@ anki_build_cxx_library(victor_anim ${ANKI_SRCLIST_DIR} STATIC)
 
 include(flatbuffers)
 include(opencv)
-include(signalessence)
 include(speexdsp)
 include(text2speech)
 include(sensory)
@@ -53,7 +52,7 @@ target_link_libraries(victor_anim
   # vendor
   ${OPENCV_LIBS}
   ${FLATBUFFERS_LIBS} 
-  ${SIGNALESSENCE_LIBS}
+  signal_essence
   ${SPEEXDSP_LIBS}
   ${TEXT2SPEECH_LIBS}
   ${SENSORY_LIBS}
@@ -96,5 +95,3 @@ if (ANDROID)
   android_strip(TARGET victor_animator)
     
 endif()
-
-set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/src/signalEssence/policy_actions.c PROPERTIES COMPILE_FLAGS -Wno-shorten-64-to-32)

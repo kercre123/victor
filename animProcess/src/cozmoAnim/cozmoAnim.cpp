@@ -107,7 +107,7 @@ Result CozmoAnimEngine::Init() {
   return RESULT_OK;
 }
 
-Result CozmoAnimEngine::Update(const BaseStationTime_t currTime_nanosec)
+Result CozmoAnimEngine::Update(BaseStationTime_t currTime_nanosec)
 {
   //ANKI_CPU_PROFILE("CozmoAnimEngine::Update");
   
@@ -143,7 +143,7 @@ Result CozmoAnimEngine::Update(const BaseStationTime_t currTime_nanosec)
   
   _context->GetWebService()->Update();
 
-  AnimProcessMessages::Update();
+  AnimProcessMessages::Update(currTime_nanosec);
   
   OSState::getInstance()->Update();
   _animationStreamer->Update();

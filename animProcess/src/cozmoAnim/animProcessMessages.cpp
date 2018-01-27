@@ -382,11 +382,11 @@ Result AnimProcessMessages::MonitorConnectionState(void)
 
 }
 
-void AnimProcessMessages::Update()
+void AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
 {
   MonitorConnectionState();
 
-  _context->GetMicDataProcessor()->Update();
+  _context->GetMicDataProcessor()->Update(currTime_nanosec);
 
   // Process incoming messages from engine
   u32 dataLen;

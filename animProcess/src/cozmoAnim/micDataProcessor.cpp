@@ -245,6 +245,7 @@ MicDataProcessor::MicDataProcessor(const std::string& writeLocation, const std::
   _recognizer->Start();
 
   MMIfInit(0, nullptr);
+  InitVAD();
 
   _bestSearchBeamIndex = SEDiagGetIndex("fdsearch_best_beam_index");
   _bestSearchBeamConfidence = SEDiagGetIndex("fdsearch_best_beam_confidence");
@@ -286,6 +287,18 @@ MicDataProcessor::MicDataProcessor(const std::string& writeLocation, const std::
               sockName.c_str());
 
   _processThread = std::thread(&MicDataProcessor::ProcessLoop, this);
+}
+
+void MicDataProcessor::InitVAD()
+{
+  _sVadConfig.reset(new SVadConfig_t());
+  _sVadObject.reset(new SVadObject_t());
+
+  /* set up VAD */
+  SVadSetDefaultConfig(_sVadConfig.get(), kSamplesPerBlock, (float)AudioUtil::kSampleRate_hz);
+  _sVadConfig->AbsThreshold = 250.0f; // was 400
+  _sVadConfig->HangoverCountDownStart = 60;  // was 25, make 25 blocks (1/4 second) to see it actually end a couple times
+  SVadInit(_sVadObject.get(), _sVadConfig.get());
 }
 
 void MicDataProcessor::TriggerWordDetectCallback(const char* resultFound, float score)
@@ -414,6 +427,7 @@ bool MicDataProcessor::ProcessResampledAudio(TimeStamp_t timestamp,
     newMessage.timestamp = timestamp;
     newMessage.direction = directionResult.winningDirection;
     newMessage.confidence = directionResult.winningConfidence;
+    newMessage.activeState = directionResult.activeState;
     std::copy(
       directionResult.confidenceList.begin(),
       directionResult.confidenceList.end(),
@@ -435,6 +449,13 @@ bool MicDataProcessor::ProcessResampledAudio(TimeStamp_t timestamp,
 MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSample* audioChunk,
                                                         AudioUtil::AudioSample* bufferOut) const
 {
+  // We only care about checking one channel, and since the channel data is uninterleaved when passed in here,
+  // we simply give the start of the buffer as the input to run the vad detection on
+  int activityFlag = DoSVad(_sVadObject.get(), // object
+                            1.0f,              // confidence it is okay to measure noise floor, i.e. no known activity like gear noise
+                            (int16_t*)audioChunk);       // pointer to input data
+
+
   static const std::array<AudioUtil::AudioSample, kSamplesPerBlock * kNumInputChannels> dummySpeakerOut{};
   {
     ANKI_CPU_PROFILE("ProcessMicrophonesSE");
@@ -448,6 +469,7 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
 
   MicDirectionData result = 
   {
+    .activeState = activityFlag,
     .winningDirection = latestDirection,
     .winningConfidence = latestConf
   };
@@ -547,6 +569,7 @@ void MicDataProcessor::ProcessLoop()
             _recognizer->SetRecognizerIndex(_currentTriggerSearchIndex);
           }
           // Run the trigger detection, which will use the callback defined above
+          if (_micImmediateDirection->GetLatestSample().activeState != 0)
           {
             ANKI_CPU_PROFILE("RecognizeTriggerWord");
             _recognizer->Update(processedAudio.data(), (unsigned int)processedAudio.size());
@@ -647,7 +670,7 @@ void MicDataProcessor::RecordRawAudio(uint32_t duration_ms, const std::string& p
   }
 }
 
-void MicDataProcessor::Update()
+void MicDataProcessor::Update(BaseStationTime_t currTime_nanosec)
 {
   _fftResultMutex.lock();
   while (_fftResultList.size() > 0)
@@ -727,6 +750,17 @@ void MicDataProcessor::Update()
     receivedStopMessage = true;
   }
 
+  #if ANKI_DEV_CHEATS
+    // Minimum length of time to display the "trigger heard" symbol on the mic data debug screen
+    // (is extended by streaming)
+    constexpr uint32_t kTriggerDisplayTime_ns = 1000 * 1000 * 2000; // 2 seconds
+    static BaseStationTime_t endTriggerDispTime_ns = 0;
+    if (endTriggerDispTime_ns > 0 && endTriggerDispTime_ns < currTime_nanosec)
+    {
+      endTriggerDispTime_ns = 0;
+    }
+  #endif
+
   static size_t streamingAudioIndex = 0;
   // lock the job mutex
   {
@@ -734,6 +768,9 @@ void MicDataProcessor::Update()
     // check if the pointer to the currently streaming job is valid
     if (!_currentlyStreaming && _currentStreamingJob != nullptr)
     {
+      #if ANKI_DEV_CHEATS
+        endTriggerDispTime_ns = currTime_nanosec + kTriggerDisplayTime_ns;
+      #endif
       if (_udpServer->HasClient())
       {
         _currentlyStreaming = true;
@@ -819,7 +856,11 @@ void MicDataProcessor::Update()
   #if ANKI_DEV_CHEATS
     if (updatedMicDirection || recordingSecondsRemaining != 0)
     {
-      FaceDisplay::GetDebugDraw()->DrawConfidenceClock(micDirectionData, recordingSecondsRemaining);
+      FaceDisplay::GetDebugDraw()->DrawConfidenceClock(
+        micDirectionData,
+        GetIncomingMicDataPercentUsed(),
+        recordingSecondsRemaining,
+        endTriggerDispTime_ns != 0 || _currentlyStreaming);
     }
   #endif
 }
@@ -834,6 +875,15 @@ void MicDataProcessor::ClearCurrentStreamingJob()
     _currentStreamingJob = nullptr;
   }
 }
+
+float MicDataProcessor::GetIncomingMicDataPercentUsed()
+{
+  std::lock_guard<std::mutex> lock(_resampleMutex);
+  // Use whichever buffer is currently _not_ being processed
+  auto& bufferInUse = (_rawAudioProcessingIndex == 1) ? _rawAudioBuffers[0] : _rawAudioBuffers[1];
+  return ((float)bufferInUse.size()) / ((float)bufferInUse.capacity());
+}
+
 
 } // namespace MicData
 } // namespace Cozmo
