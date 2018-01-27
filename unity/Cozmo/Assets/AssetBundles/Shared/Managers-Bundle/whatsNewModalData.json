@@ -280,8 +280,8 @@
     "DescriptionKey": "whatsNew.CodeLab_ComplimentGenerator.description",
     "IconAssetBundleName": "whats_new_icon_sprites",
     "IconAssetName": "icon_complimentGenerator",
-    "LeftTintColor": [212,172,3],
-    "RightTintColor": [255,220,26],
+    "LeftTintColor": [130,31,183],
+    "RightTintColor": [150,73,190],
     "CodeLabData": {
         "ShowButton": true,
         "ProjectGuid": "3fab62c3-f268-4faa-8f68-db5bd67f11c1"
@@ -304,8 +304,8 @@
     "DescriptionKey": "whatsNew.CodeLab_PotOGoldDetector.description",
     "IconAssetBundleName": "whats_new_icon_sprites",
     "IconAssetName": "icon_potOGold",
-    "LeftTintColor": [158,227,54],
-    "RightTintColor": [128,201,20],
+    "LeftTintColor": [93,197,21],
+    "RightTintColor": [157,227,53],
     "CodeLabData": {
         "ShowButton": true,
         "ProjectGuid": "66eab634-e300-4b28-9633-9e65eba2c488"
@@ -328,8 +328,8 @@
     "DescriptionKey": "whatsNew.CodeLab_DrivingInCircles.description",
     "IconAssetBundleName": "whats_new_icon_sprites",
     "IconAssetName": "icon_drivingInCircles",
-    "LeftTintColor": [255,231,0],
-    "RightTintColor": [217,180,0],
+    "LeftTintColor": [212,172,3],
+    "RightTintColor": [255,220,26],
     "CodeLabData": {
         "ShowButton": true,
         "ProjectGuid": "03dfa788-73c1-4b93-9e2c-f105f855c6a4"
@@ -352,8 +352,8 @@
     "DescriptionKey": "whatsNew.CodeLab_PaddleBall.description",
     "IconAssetBundleName": "whats_new_icon_sprites",
     "IconAssetName": "icon_shakeIt",
-    "LeftTintColor": [212,172,3],
-    "RightTintColor": [255,220,26],
+    "LeftTintColor": [195,50,50],
+    "RightTintColor": [253,78,93],
     "CodeLabData": {
         "ShowButton": true,
         "ProjectGuid": "37e52fab-983f-49f9-83bd-90c284cd9f6b"

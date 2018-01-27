@@ -203,7 +203,7 @@
         "ProjectJSONFile": "compliment_generator",
         "StartDate": {
             "Month": "2",
-            "Day": "22",
+            "Day": "28",
             "Year": "2018"
         }
     },
@@ -221,7 +221,7 @@
         "FeaturedProjectTitleTextColor": "#e4e4e4",
         "ProjectJSONFile": "constellations",
         "StartDate": {
-            "Month": "2",
+            "Month": "3",
             "Day": "22",
             "Year": "2018"
         }
@@ -240,8 +240,8 @@
         "FeaturedProjectTitleTextColor": "#696b68",
         "ProjectJSONFile": "driving_in_circles",
         "StartDate": {
-            "Month": "2",
-            "Day": "22",
+            "Month": "3",
+            "Day": "14",
             "Year": "2018"
         }
     },
@@ -254,9 +254,9 @@
         "DisplayOrder": "10",
         "FeaturedProjectDescription": "codeLabFeaturedPaddleBall.projectDescription",
         "FeaturedProjectInstructions": "codeLabFeaturedPaddleBall.projectInstructions",
-        "FeaturedProjectImageName": "ShakeIt",
+        "FeaturedProjectImageName": "PaddleBall",
         "FeaturedProjectBackgroundColor": "#ffe700",
-        "FeaturedProjectTitleTextColor": "#696b68",
+        "FeaturedProjectTitleTextColor": "#f2f2f2",
         "ProjectJSONFile": "paddle_ball",
         "StartDate": {
             "Month": "3",
@@ -278,8 +278,8 @@
         "FeaturedProjectTitleTextColor": "#696b68",
         "ProjectJSONFile": "pot_o_gold_detector",
         "StartDate": {
-            "Month": "2",
-            "Day": "22",
+            "Month": "3",
+            "Day": "7",
             "Year": "2018"
         }
     }

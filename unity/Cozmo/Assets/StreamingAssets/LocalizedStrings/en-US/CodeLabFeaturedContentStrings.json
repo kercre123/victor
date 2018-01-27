@@ -599,8 +599,8 @@
     "codeLabFeaturedProject.PaddleBall.ball_speed_y": {
         "translation": "ball speed y"
     },
-    "codeLabFeaturedProject.PaddleBall.check_whether_the_ball_has_hit_a_wall_or_a_paddle_or_scored": {
-        "translation": "Check whether the ball has hit a wall or a paddle or scored."
+    "codeLabFeaturedProject.PaddleBall.check_whether_the_ball_has_hit_a_wall_paddle_or_scored": {
+        "translation": "Check whether the ball has hit a wall, paddle, or scored."
     },
     "codeLabFeaturedProject.PaddleBall.cozmo_paddle_acceleration": {
         "translation": "Cozmo paddle acceleration"
@@ -622,6 +622,9 @@
     },
     "codeLabFeaturedProject.PaddleBall.cozmo_score": {
         "translation": "Cozmo score"
+    },
+    "codeLabFeaturedProject.PaddleBall.cozmo_scores_a_point": {
+        "translation": "Cozmo scores a point."
     },
     "codeLabFeaturedProject.PaddleBall.cozmo_skill_level": {
         "translation": "Cozmo skill level"
@@ -731,32 +734,29 @@
     "codeLabFeaturedProject.PaddleBall.start_the_game": {
         "translation": "Start the game."
     },
+    "codeLabFeaturedProject.PaddleBall.the_player_scores_a_point": {
+        "translation": "The player scores a point."
+    },
     "codeLabFeaturedProject.PaddleBall.true_": {
         "translation": "true "
     },
-    "codeLabFeaturedProject.PaddleBall.when_cozmo_scores_give_him_a_point_and_he_celebrates": {
-        "translation": "When Cozmo scores give him a point and he celebrates"
-    },
-    "codeLabFeaturedProject.PaddleBall.when_the_ball_is_on_cozmos_side_of_the_court_move_his_paddle_towards_the_ball": {
-        "translation": "When the ball is on Cozmos side of the court move his paddle towards the ball"
-    },
-    "codeLabFeaturedProject.PaddleBall.when_the_player_scores_give_them_a_point_and_cozmo_is_frustrated": {
-        "translation": "When the player scores give them a point and Cozmo is frustrated"
+    "codeLabFeaturedProject.PaddleBall.when_the_ball_is_on_cozmos_side_move_his_paddle_towards_it": {
+        "translation": "When the ball is on Cozmos side, move his paddle towards it."
     },
     "codeLabFeaturedProject.PaddleBall.where_cozmo_thinks_the_ball_is": {
         "translation": "where Cozmo thinks the ball is"
     },
-    "codeLabFeaturedProject.PaddleBall.while_gameplay_is_active_update_the_player_paddle_position_relative_to_the_player_face_in_cozmos_camera": {
-        "translation": "While gameplay is active update the player paddle position relative to the player face in Cozmos camera"
+    "codeLabFeaturedProject.PaddleBall.while_gameplay_is_active_update_cozmos_paddle_position_with_its_current_speed": {
+        "translation": "While gameplay is active, update Cozmos paddle position with its current speed."
+    },
+    "codeLabFeaturedProject.PaddleBall.while_gameplay_is_active_update_the_players_paddle_position_relative_to_their_face_in_the_camera": {
+        "translation": "While gameplay is active, update the players paddle position relative to their face in the camera."
     },
     "codeLabFeaturedProject.PaddleBall.while_gameplay_is_active_update_the_position_of_the_ball": {
-        "translation": "While gameplay is active update the position of the ball."
+        "translation": "While gameplay is active, update the position of the ball."
     },
-    "codeLabFeaturedProject.PaddleBall.while_gameplay_is_active_upday_cozmos_paddle_position_with_its_current_speed": {
-        "translation": "While gameplay is active upday Cozmos paddle position with its current speed"
-    },
-    "codeLabFeaturedProject.PaddleBall.while_gameplay_is_active_use_the_game_data_to_draw_everything_on_cozmos_face": {
-        "translation": "While gameplay is active use the game data to draw everything on Cozmos face"
+    "codeLabFeaturedProject.PaddleBall.while_gameplay_is_active_use_data_to_draw_everything_on_cozmos_face": {
+        "translation": "While gameplay is active, use data to draw everything on Cozmos face."
     },
     "codeLabFeaturedProject.PaddleBall.whoops": {
         "translation": "Whoops!"
@@ -770,11 +770,35 @@
     "codeLabFeaturedProject.PotOGoldDetector.animate_a_radar_on_cozmos_face": {
         "translation": "Animate a radar on Cozmos face."
     },
-    "codeLabFeaturedProject.PotOGoldDetector.beep_rate": {
-        "translation": "beep rate"
+    "codeLabFeaturedProject.PotOGoldDetector.arc_angle": {
+        "translation": "arc angle"
+    },
+    "codeLabFeaturedProject.PotOGoldDetector.arc_angle_end": {
+        "translation": "arc angle end"
+    },
+    "codeLabFeaturedProject.PotOGoldDetector.arc_center_x": {
+        "translation": "arc center x"
+    },
+    "codeLabFeaturedProject.PotOGoldDetector.arc_center_y": {
+        "translation": "arc center y"
+    },
+    "codeLabFeaturedProject.PotOGoldDetector.arc_major_radius": {
+        "translation": "arc major radius"
+    },
+    "codeLabFeaturedProject.PotOGoldDetector.arc_minor_radius": {
+        "translation": "arc minor radius"
+    },
+    "codeLabFeaturedProject.PotOGoldDetector.arc_x": {
+        "translation": "arc x"
+    },
+    "codeLabFeaturedProject.PotOGoldDetector.arc_y": {
+        "translation": "arc y"
     },
     "codeLabFeaturedProject.PotOGoldDetector.blip_rate": {
         "translation": "blip rate"
+    },
+    "codeLabFeaturedProject.PotOGoldDetector.blip_type": {
+        "translation": "blip type"
     },
     "codeLabFeaturedProject.PotOGoldDetector.calculate_the_distance_between_cozmo_and_the_treasure": {
         "translation": "Calculate the distance between Cozmo and the treasure."
@@ -806,11 +830,17 @@
     "codeLabFeaturedProject.PotOGoldDetector.distance_from_treasure": {
         "translation": "distance from treasure"
     },
+    "codeLabFeaturedProject.PotOGoldDetector.draw_a_horizontal_ellipse": {
+        "translation": "Draw a horizontal ellipse."
+    },
     "codeLabFeaturedProject.PotOGoldDetector.draw_a_rainbow_on_cozmos_face": {
         "translation": "Draw a rainbow on Cozmos face."
     },
     "codeLabFeaturedProject.PotOGoldDetector.draw_a_shamrock_on_cozmos_face": {
         "translation": "Draw a shamrock on Cozmos face."
+    },
+    "codeLabFeaturedProject.PotOGoldDetector.draw_a_top_hat_on_cozmos_face": {
+        "translation": "Draw a top hat on Cozmos face."
     },
     "codeLabFeaturedProject.PotOGoldDetector.drive_cozmo_backwards": {
         "translation": "Drive Cozmo backwards."
@@ -850,9 +880,6 @@
     },
     "codeLabFeaturedProject.PotOGoldDetector.proximity_2": {
         "translation": "proximity 2"
-    },
-    "codeLabFeaturedProject.PotOGoldDetector.proximity_3": {
-        "translation": "proximity 3"
     },
     "codeLabFeaturedProject.PotOGoldDetector.radar_angle": {
         "translation": "radar angle"
