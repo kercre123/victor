@@ -926,13 +926,43 @@ namespace CodeLab {
       _IsPerformingIntroActions = false;
     }
 
+    private bool IsOnOrVeryNearCharger(IRobot robot) {
+      // Sometimes, especially when triggered via WhatsNew, the robot wiggles off the contacts (e.g. during the
+      // severe-needs state on wakeup) so doesn't register as on the charger even though it really is
+      // so as a special case also consider "very close to charger" as "on charger"
+
+      bool isOnCharger = ((robot.RobotStatus & RobotStatusFlag.IS_ON_CHARGER) != 0);
+
+      if (!isOnCharger) {
+        if (robot.LastPoseIdOnCharger == robot.PoseId) {
+          // There is a valid, comparable pose for both robot and charger
+          var toChargerVec = robot.LastWorldPositionOnCharger - robot.WorldPosition;
+          float distToChargerSqr = toChargerVec.sqrMagnitude;
+          const float kMaxDistToChargerForOnCharger = 10; // in millimeters
+          const float kMaxDistToChargerForOnChargerSqr = kMaxDistToChargerForOnCharger * kMaxDistToChargerForOnCharger;
+          if (distToChargerSqr < kMaxDistToChargerForOnChargerSqr) {
+            isOnCharger = true;
+            DAS.Info("CodeLab.IsOnOrVeryNearCharger.OffContacts.Close", "DistSqr = " + distToChargerSqr);
+          }
+          else {
+            DAS.Info("CodeLab.IsOnOrVeryNearCharger.OffContacts.TooFar", "DistSqr = " + distToChargerSqr);
+          }
+        }
+        else {
+          DAS.Info("CodeLab.IsOnOrVeryNearCharger.OffContacts.NoPose", "");
+        }
+      }
+
+      return isOnCharger;
+    }
+
     private void LoadWebView() {
       // Send EnterSDKMode to engine as we enter this view
       var robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
         robot.PushDrivingAnimations(AnimationTrigger.Count, AnimationTrigger.Count, AnimationTrigger.Count, kCodeLabGameDrivingAnimLock);
         robot.EnterSDKMode(false);
-        bool isOnCharger = ((robot.RobotStatus & RobotStatusFlag.IS_ON_CHARGER) != 0);
+        bool isOnCharger = IsOnOrVeryNearCharger(robot);
         if (isOnCharger) {
           DAS.Info("CodeLab.LoadWebView.OnCharger", "Step1: Drive off contacts");
           _IsPerformingIntroActions = true;

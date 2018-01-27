@@ -63,6 +63,10 @@ public interface IRobot : IDisposable {
 
   Vector3 WorldPosition { get; }
 
+  Vector3 LastWorldPositionOnCharger { get; }
+  uint LastPoseIdOnCharger { get; }
+  uint PoseId { get; }
+
   Quaternion Rotation { get; }
 
   Vector3 Forward { get; }

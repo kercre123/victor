@@ -824,6 +824,10 @@ public class MockRobot : IRobot {
     private set;
   }
 
+  public Vector3 LastWorldPositionOnCharger { get; private set; }
+  public uint LastPoseIdOnCharger { get; private set; }
+  public uint PoseId { get; private set; }
+
   public Quaternion Rotation {
     get;
     private set;

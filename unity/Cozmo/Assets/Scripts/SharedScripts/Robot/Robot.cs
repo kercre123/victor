@@ -154,6 +154,10 @@ public class Robot : IRobot {
 
   public Vector3 WorldPosition { get; private set; }
 
+  public Vector3 LastWorldPositionOnCharger { get; private set; }
+  public uint LastPoseIdOnCharger { get; private set; }
+  public uint PoseId { get; private set; }
+
   public Quaternion Rotation { get; private set; }
 
   public Vector3 Forward { get { return Rotation * Vector3.right; } }
@@ -701,6 +705,13 @@ public class Robot : IRobot {
 
     WorldPosition = new Vector3(message.pose.x, message.pose.y, message.pose.z);
     Rotation = new Quaternion(message.pose.q1, message.pose.q2, message.pose.q3, message.pose.q0);
+
+    PoseId = message.pose.originID;
+
+    if (Status(RobotStatusFlag.IS_ON_CHARGER)) {
+      LastWorldPositionOnCharger = WorldPosition;
+      LastPoseIdOnCharger = PoseId;
+    }
   }
 
   private void HandleRobotOffTreadsStateChanged(G2U.RobotOffTreadsStateChanged message) {
@@ -2139,7 +2150,7 @@ public class Robot : IRobot {
   #endregion
 
   public uint SayTextWithEvent(string text, AnimationTrigger playEvent, SayTextIntent intent = SayTextIntent.Text, bool fitToDuration = false, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
-    uint tag = (uint) ActionConstants.INVALID_TAG;
+    uint tag = (uint)ActionConstants.INVALID_TAG;
     try {
       DAS.Debug("Robot.SayTextWithEvent", "Saying text: " + PrivacyGuard.HidePersonallyIdentifiableInfo(text));
       tag = SendQueueSingleAction(Singleton<SayTextWithIntent>.Instance.Initialize(text, playEvent, intent, fitToDuration), callback, queueActionPosition);
