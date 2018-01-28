@@ -146,7 +146,7 @@
     },
     {
       "CladEvent": "ChargerDockingRequestGetout",
-      "AnimName": "ag_chargerdocking_request"
+      "AnimName": "ag_chargerdocking_requestgetout"
     },
     {
       "CladEvent": "ChargerDockingRequestPickup",
@@ -166,11 +166,11 @@
     },
     {
       "CladEvent": "ChargerDockingSevereRequest",
-      "AnimName": "ag_chargerdocking_request"
+      "AnimName": "ag_chargerdocking_severerequest"
     },
     {
       "CladEvent": "ChargerDockingSevereRequestGetout",
-      "AnimName": "ag_chargerdocking_request"
+      "AnimName": "ag_chargerdocking_severegetout"
     },
     {
       "CladEvent": "ChargerReaction",
