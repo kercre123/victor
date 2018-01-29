@@ -242,11 +242,13 @@ class HEnumEmitter(BaseEmitter):
 
     def emitSuffix(self, node, globals):
         self.output.write('const char* EnumToString(const {enum_name} m);\n'.format(**globals))
+        self.output.write('inline const char* {enum_name}ToString(const {enum_name} m) {{ return EnumToString(m); }}\n\n'.format(**globals))
         if self.options.emitJSON:
+            self.output.write('template<typename T>\nbool EnumFromString(const std::string& str, T& enumOutput);\n')
+            self.output.write('bool {enum_name}FromString(const std::string& str, {enum_name}& enumOutput);\n\n'.format(**globals))
             self.output.write('{enum_name} {enum_name}FromString(const std::string&);\n\n'.format(**globals))
         else:
             self.output.write('\n')
-        self.output.write('inline const char* {enum_name}ToString(const {enum_name} m) {{ return EnumToString(m); }}\n\n'.format(**globals))
         self.output.write('extern const char* {enum_name}VersionHashStr;\n'.format(**globals))
         self.output.write('extern const uint8_t {enum_name}VersionHash[16];\n\n'.format(**globals))
         self.output.write('constexpr {enum_storage_type} {enum_name}NumEntries = {enum_member_count};\n\n'.format(**globals))
@@ -297,7 +299,8 @@ class CPPEnumEmitter(HEnumEmitter):
 
     def emitStringToEnum(self, node, globals):
         self.output.write(textwrap.dedent('''\
-            {enum_name} {enum_name}FromString(const std::string& str)
+            template<>
+            bool EnumFromString(const std::string& str, {enum_name}& enumOutput)
             {{
             ''').format(num_values=len(node.members()), **globals))
 
@@ -310,16 +313,43 @@ class CPPEnumEmitter(HEnumEmitter):
             self.output.write(textwrap.dedent('''\
                 auto it = stringToEnumMap.find(str);
                 if(it == stringToEnumMap.end()) {{
-                    std::cerr << "error: string '" << str << "' is not a valid {enum_name} value" << std::endl;
-                    assert(false && "string must be a valid {enum_name} value");
-                    return {enum_name}::{first_val};
+                  return false;
                 }}
 
-            ''').format(first_val=node.members()[0].name, **globals))
-
-            self.output.write('return it->second;\n')
+                enumOutput = it->second;
+                return true;
+            ''').format(**globals))
 
         self.output.write('}\n\n')
+
+        self.output.write(textwrap.dedent('''\
+        bool {enum_name}FromString(const std::string& str, {enum_name}& enumOutput)
+        {{
+          return EnumFromString(str, enumOutput);
+        }}
+
+        ''').format(**globals))
+
+        self.output.write(textwrap.dedent('''\
+        {enum_name} {enum_name}FromString(const std::string& str)
+        {{
+        ''').format(**globals))
+        
+        with self.output.indent(1):
+            self.output.write(textwrap.dedent('''\
+            {enum_name} returnVal;
+            if( !EnumFromString(str, returnVal) ) {{
+              std::cerr << "error: string '" << str << "' is not a valid {enum_name} value" << std::endl;
+              assert(false && "string must be a valid {enum_name} value");
+              return {enum_name}::{first_val};
+            }}
+            else {{
+              return returnVal;
+            }}
+            ''').format(first_val=node.members()[0].name, **globals))
+
+        self.output.write('}\n\n')
+
 
     def emitSuffix(self, node, globals):
         self.output.write('const char* {enum_name}VersionHashStr = "{enum_hash}";\n\n'.format(**globals))
