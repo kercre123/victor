@@ -93,7 +93,7 @@ if [ "$_status" ]; then
     $GIT push origin $_GIT_BRANCH_NAME
 
     pr_url=$($CURL -H "Content-Type: application/json" -X POST -d \
-    '{"title": "update-localization-codelab-english-json","head": "update-localization-codelab-english-json","base": "master"}' \
+    '{"title": "'"$_GIT_BRANCH_NAME"'","head": "'"$_GIT_BRANCH_NAME"'","base": "master"}' \
     $_GIT_COZMO_PR_URI | $PYTHON3 $_SMARTLING_PARSE_PR_RESPONSE_SCRIPT)
 
     send_slack_message "cozmo-one PR for Smartling localized strings: $pr_url" "good" 0

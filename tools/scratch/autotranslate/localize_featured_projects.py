@@ -29,6 +29,8 @@
 # The intent is that the cozmo app will then mask on locale for any featured project that specifies a language.
 #
 
+import argparse
+import collections
 import copy
 import json
 import os
@@ -36,7 +38,6 @@ from pprint import pprint
 import random
 import re
 import sys
-import argparse
 import zipfile
 
 LOCALIZATION_ROOT_PATH = "LocalizedStrings"
@@ -427,9 +428,12 @@ def modify_base_loc_file(extracted_json, file_path):
     for key in extracted_json:
         loc_file_json[key] = extracted_json[key]
 
+    ordered_loc_file_json = collections.OrderedDict(sorted(loc_file_json.items(), key=lambda t: t[0]))
+    ordered_loc_file_json.move_to_end('smartling', last=False)
+
     #replace the loc target's json
     with open(file_path, 'w') as output_file:
-        json.dump(loc_file_json, output_file, indent=4, sort_keys=True)
+        json.dump(ordered_loc_file_json, output_file, indent=4)
         output_file.write('\n')
 
 # --------------------------------------------------------------------------------------------------------
