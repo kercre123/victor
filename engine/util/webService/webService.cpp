@@ -584,7 +584,7 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform, const char* por
     "anki.com",
     "websocket_timeout_ms",
     "3600000", // 1 hour
-#if defined(NDEBUG)
+#if defined(SHIPPING)
     "global_auth_file",
     passwordFile.c_str(),
 #endif
