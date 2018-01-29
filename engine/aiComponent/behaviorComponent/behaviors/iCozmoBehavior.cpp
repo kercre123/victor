@@ -302,7 +302,15 @@ void ICozmoBehavior::InitInternal()
     for(auto& entry: _anonymousBehaviorMapConfig){
       const std::string debugStr = "ICozmoBehavior.ReadFromJson.";
       
-      const std::string behaviorName = JsonTools::ParseString(entry, kAnonymousBehaviorName, debugStr + "BehaviorNameMissing");      
+      const std::string behaviorName = JsonTools::ParseString(entry, kAnonymousBehaviorName, debugStr + "BehaviorNameMissing");
+
+      const bool isBehaviorID = BehaviorTypesWrapper::IsValidBehaviorID(behaviorName);
+      ANKI_VERIFY(!isBehaviorID,
+                  "ICozmoBehavior.InitInternal.AnonymousNameIsABehaviorID",
+                  "behavior '%s' declares an anonymous behavior named '%s', but that matches an existing behavior ID",
+                  GetIDStr().c_str(),
+                  behaviorName.c_str());
+      
       const BehaviorClass behaviorClass = BehaviorTypesWrapper::BehaviorClassFromString(
         JsonTools::ParseString(entry, kBehaviorClassKey, debugStr + "BehaviorClassMissing"));
       Json::Value params;
