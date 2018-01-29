@@ -89,11 +89,11 @@ if [ "$_status" ]; then
     $GIT config user.name "anki-smartling"
     $GIT checkout -b $_GIT_BRANCH_NAME
     $GIT add $_ENGLISH_LOCALIZATION_STRINGS_FILE
-    $GIT commit -am "Updating english CodeLabFeaturedContentStrings.json with strings extracted from current codelab projects."
+    $GIT commit -am "Updating english CodeLabFeaturedContentStrings.json"
     $GIT push origin $_GIT_BRANCH_NAME
 
     pr_url=$($CURL -H "Content-Type: application/json" -X POST -d \
-    '{"title": "$_GIT_BRANCH_NAME","head": "$_GIT_BRANCH_NAME","base": "master"}' \
+    '{"title": "update-localization-codelab-english-json","head": "update-localization-codelab-english-json","base": "master"}' \
     $_GIT_COZMO_PR_URI | $PYTHON3 $_SMARTLING_PARSE_PR_RESPONSE_SCRIPT)
 
     send_slack_message "cozmo-one PR for Smartling localized strings: $pr_url" "good" 0
