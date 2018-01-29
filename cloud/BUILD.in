@@ -44,3 +44,9 @@ go_project(
     gopath = 'go',
     dir = 'servbench'
 )
+
+go_project(
+    name = 'wavtest',
+    gopath = 'go',
+    dir = 'wavtest'
+)

@@ -6,6 +6,9 @@ If you have a question that you get answered (e.g. in a Slack channel) which mig
   - Set the `consoleVarName` and `consoleVarValue` strings under the WebotsKeyboardController in the scene tree at left. Press `]` (closing square bracket) to send the message to the engine to set the console var. 
   - Using `}` (closing curly brace) instead will use the name and value strings as a console _function_ and its arguments instead.
   - Hold down `ALT` to send either of the above to the animation process to set console vars/functions there.
+
+* How do I access the Victor embedded web server, from which I can set console vars?
+  - [Run the Victor web server](/docs/web-server.md) 
   
 * `victor_stop`/`victor_restart` hangs with `stopping <number>...` when trying to kill one of the processes
   - Manually kill the process with `adb shell kill -9 <number>`
@@ -42,6 +45,11 @@ If you have a question that you get answered (e.g. in a Slack channel) which mig
   - Trying restarting the [wpa_supplicant](https://en.wikipedia.org/wiki/Wpa_supplicant)
   - `pkill wpa_supplicant` then `wpa_supplicant -iwlan0 -Dnl80211 -c/data/misc/wifi/wpa_supplicant.conf -O/data/misc/wifi/sockets -B`
 
+* Seriously... I cannot get connected to my home WIFI using wifi-set-config ^^
+  - These issues should be resolved when we update the OS, but in the meantime:
+  - You can connect with a static IP to your network using a shell script located at .../victor/tools/victor-ble-cli/vic_join_network.sh
+  - You will have to rerun the script every time you power cycle so it may be worth your time to make an alias with your network config as arguments
+
 * Deploying is super slow
   - Try turning off wifi on your laptop and use ethernet instead
   - Run `victor_stop` before deploying
@@ -63,3 +71,21 @@ If you have a question that you get answered (e.g. in a Slack channel) which mig
 * To check the battery level:
   - With the processes running, press the backpack button twice. The battery voltage is in the bottom right. It should be around 4.0v. The backpack lights will blink green when charging (and the processes are running)
   - Otherwise: `adb shell cat /sys/devices/soc.0/qpnp-linear-charger-8/power_supply/battery/voltage_now`
+  
+* Webots Firewall Connection issues?
+  - [Create a code signing certificate](/project/build-scripts/webots/FirewallCertificateInstructions.md)
+  - [Run a sample script to initially sign](/simulator/README.md#firewall)
+
+* Can't generate Xcode project using `build-victor.sh -p mac -g Xcode -C` and getting error output like this
+```
+-- The C compiler identification is unknown
+-- The CXX compiler identification is unknown
+CMake Error at CMakeLists.txt:9 (project):
+  No CMAKE_C_COMPILER could be found.
+CMake Error at CMakeLists.txt:9 (project):
+  No CMAKE_CXX_COMPILER could be found.
+```
+
+  * ... then perform these steps (continued from above)
+   	* Install command line tools
+    * `sudo xcode-select -s /Applications/Xcode.app/Contents/Developer`# New Document

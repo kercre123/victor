@@ -28,6 +28,7 @@ enum class BEIComponentID{
   RobotInfo,
   TouchSensor,
   Vision,
+  VisionScheduleMediator,
 
   Count
 };

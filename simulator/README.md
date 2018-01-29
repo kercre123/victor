@@ -46,6 +46,14 @@ Webots runs concurrent processes for each active simulation object via "controll
 
 ## Troubleshooting
 
+### Firewall
+
+When running webots, if you get pop-ups asking "Do you want the application 'webotsCtrl...' to accept incoming network connections?", then you have to set up a firewall certificate.
+
+1. Close Webots.
+1. Follow the instructions in [FirewallCertificateInstructions.md](/project/build-scripts/webots/FirewallCertificateInstructions.md).
+1. Run the Webots test script (which will automatically set up firewall exceptions for you) with the following command: `project/build-scripts/webots/webotsTest.py --setupFirewall`. You will need to enter your password.
+
 ### Crash in webotsCtrlGameEngine2
 
 If you get a crash in  `webotsCtrlGameEngine2` process, and an error message mentioning "shared memory" appears in the console log for Webots (towards the beginning), then it may be because simulating the Cozmo2 camera requires a larger memory budget than allocated. To increase it, edit the `/etc/sysctl.conf` file to have the following contents:

@@ -2,8 +2,8 @@
 CozmoWorldInfo {
 }
 Viewpoint {
-  orientation -0.2408952 0.63631081 0.7328561 3.6828741
-  position -2.1261488 2.455865 0.79941287
+  orientation -0.23013514393218407 0.46228201236631994 0.8563487353700352 3.947560634368608
+  position -1.8245716775419583 1.2809454025876654 1.5771613409945828
 }
 Background {
   skyColor [
@@ -27,6 +27,9 @@ DirectionalLight {
 }
 CozmoMat {
   showMarkers FALSE
+}
+VictorCharger {
+  translation -0.0650650263404583 -0.3833437665763433 1.2212453270876722e-15
 }
 Face {
   translation 0.34 -0.97 0.27

@@ -41,6 +41,24 @@ struct VisionPoseData;
 
 class VizManager;
 
+namespace {
+  // Declared static here and wrapped as an extern console
+  // inorder to allow motionDetector_neon.h to have access
+  static u8  kMotionDetection_MinBrightness  = 10;
+  static f32 kMotionDetection_RatioThreshold = 1.25f;
+
+  static inline f32 RatioTestHelper(u8 value1, u8 value2)
+  {
+    // NOTE: not checking for divide-by-zero here because kMotionDetection_MinBrightness (DEV_ASSERTed to be > 0 in
+    //  the constructor) prevents values of zero from getting to this helper
+    if(value1 > value2) {
+      return static_cast<f32>(value1) / std::max(1.f, static_cast<f32>(value2));
+    } else {
+      return static_cast<f32>(value2) / std::max(1.f, static_cast<f32>(value1));
+    }
+  }
+}
+
 // Class for detecting motion in various areas of the image.
 // There's two main components: one that detects motion on the ground plane, and one that detects motion in the
 // peripheral areas (top, left and right).
@@ -94,6 +112,9 @@ private:
                                 Point2f &groundPlaneCentroid,
                                 f32 &groundRegionArea) const;
 
+  template<class ImageType>
+  s32 RatioTestNeon(const ImageType& image, Vision::Image& ratioImg);
+
   // Returns the number of times the ratio between the pixels in image and the pixels
   // in the previous image is above a threshold. The corresponding pixels in ratio12
   // will be set to 255
@@ -110,6 +131,13 @@ private:
   static size_t GetCentroid(const Vision::Image& motionImg,
                             Anki::Point2f& centroid,
                             f32 xPercentile, f32 yPercentile);
+
+  template<class ImageType>
+  inline s32 RatioTestNeonHelper(const u8*& imagePtr,
+                                 const u8*& prevImagePtr,
+                                 u8*& ratioImgPtr,
+                                 u32 numElementsToProcess);
+
   // The joy of pimpl :)
   class ImageRegionSelector;
   std::unique_ptr<ImageRegionSelector> _regionSelector;

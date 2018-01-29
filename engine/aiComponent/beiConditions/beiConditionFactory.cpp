@@ -12,7 +12,6 @@
 
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 
-#include "engine/aiComponent/beiConditions/conditions/conditionTrue.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionCloudIntentPending.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionExpressNeedsTransition.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionFacePositionUpdated.h"
@@ -23,12 +22,14 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectMoved.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectPositionUpdated.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionObstacleDetected.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionOffTreadsState.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionOnCharger.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionPetInitialDetection.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotPlacedOnSlope.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotShaken.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotTouchGesture.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionTimerInRange.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionTrue.h"
 
 #include "clad/types/behaviorComponent/beiConditionTypes.h"
 
@@ -135,6 +136,11 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
     case BEIConditionType::OnCharger:
     {
       strategy = std::make_shared<ConditionOnCharger>(config);
+      break;
+    }
+    case BEIConditionType::OffTreadsState:
+    {
+      strategy = std::make_shared<ConditionOffTreadsState>(config);
       break;
     }
     

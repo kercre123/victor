@@ -22,10 +22,6 @@
 using namespace std;
 
 #define LOG_CHANNEL    "ConsoleSystem"
-#define LOG_ERROR      PRINT_NAMED_ERROR
-#define LOG_WARNING    PRINT_NAMED_WARNING
-#define LOG_INFO(...)  PRINT_CH_INFO(LOG_CHANNEL, ##__VA_ARGS__)
-#define LOG_DEBUG(...) PRINT_CH_DEBUG(LOG_CHANNEL, ##__VA_ARGS__)
 
 void NativeAnkiUtilConsoleLoadVarsWithContext(ConsoleFunctionContextRef context);
 void NativeAnkiUtilConsoleSaveVarsWithContext(ConsoleFunctionContextRef context);
@@ -217,6 +213,13 @@ void ConsoleSystem::Register( const std::string& keystring, IConsoleFunction* fu
     // We added one, keep track of the name we added.
     functIds_.push_back( key );
   }
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void ConsoleSystem::Unregister( const std::string& keystring )
+{
+  const StringID key = GetSearchKey( keystring );
+  editvars_.erase( editvars_.find( key ) );
 }
 
 //------------------------------------------------------------------------------------------------------------------------------

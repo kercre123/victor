@@ -30,6 +30,7 @@ enum class RobotComponentID{
   ActionList,
   Movement,
   Vision,
+  VisionScheduleMediator,
   Map,
   NVStorage,
   AIComponent,

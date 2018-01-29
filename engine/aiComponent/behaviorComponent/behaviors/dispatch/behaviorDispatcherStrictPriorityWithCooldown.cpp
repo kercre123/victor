@@ -34,8 +34,7 @@ BehaviorDispatcherStrictPriorityWithCooldown::BehaviorDispatcherStrictPriorityWi
         "behavior",
         "BehaviorDispatcherStrictPriorityWithCooldown.BehaviorGroup.NoBehaviorID");
       
-      const BehaviorID behaviorID = BehaviorTypesWrapper::BehaviorIDFromString(behaviorIDStr);
-      IBehaviorDispatcher::AddPossibleDispatch(behaviorID);
+      IBehaviorDispatcher::AddPossibleDispatch(behaviorIDStr);
 
       _cooldownInfo.emplace_back( BehaviorCooldownInfo{behaviorDefinitionGroup} );
     }

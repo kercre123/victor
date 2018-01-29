@@ -34,21 +34,32 @@ public:
   virtual bool WantsToBeActivatedBehavior() const override;
   
 protected:
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.visionModesForActiveScope->push_back({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::Standard });
+  }
 
   virtual void OnBehaviorActivated() override;
+  virtual void OnBehaviorDeactivated() override;
 
 private:
   
   void TransitionToTurn();
   void TransitionToMountCharger();
   void TransitionToPlayingNuzzleAnim();
+  void TransitionToOnChargerCheck();
+  
+  void PushDrivingAnims();
+  void PopDrivingAnims();
   
   struct {
     bool useCliffSensorCorrection = true;
-    AnimationTrigger turningAnimTrigger = AnimationTrigger::Count;
-    AnimationTrigger backupAnimTrigger = AnimationTrigger::Count;
-    AnimationTrigger nuzzleAnimTrigger = AnimationTrigger::Count;
+    AnimationTrigger leftTurnAnimTrigger    = AnimationTrigger::Count;
+    AnimationTrigger rightTurnAnimTrigger   = AnimationTrigger::Count;
+    AnimationTrigger backupStartAnimTrigger = AnimationTrigger::Count;
+    AnimationTrigger backupEndAnimTrigger   = AnimationTrigger::Count;
+    AnimationTrigger backupLoopAnimTrigger  = AnimationTrigger::Count;
+    AnimationTrigger raiseLiftAnimTrigger   = AnimationTrigger::Count;
+    AnimationTrigger nuzzleAnimTrigger      = AnimationTrigger::Count;
   } _params;
   
   void LoadConfig(const Json::Value& config);
@@ -56,6 +67,8 @@ private:
   std::unique_ptr<BlockWorldFilter> _homeFilter;
   
   ObjectID _chargerID;
+  
+  bool _drivingAnimsPushed = false;
   
 };
   

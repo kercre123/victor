@@ -401,5 +401,25 @@ PRINT_PERIODIC_CH_HELPER(sChanneledDebugF, num_calls_between_prints, channel, na
   ::Anki::Util::sEventF(name, {}, format, ##__VA_ARGS__); \
 } while(0)
 
+
+//
+// Compact version of PRINT_NAMED_ERROR & friends
+// LOG_INFO and LOG_DEBUG assume you declared something like
+//  #define LOG_CHANNEL "Name"
+// near the top of your cpp file.
+//
+#define LOG_ERROR(name, fmt, ...)   PRINT_NAMED_ERROR(name, fmt, ##__VA_ARGS__)
+#define LOG_WARNING(name, fmt, ...) PRINT_NAMED_WARNING(name, fmt, ##__VA_ARGS__)
+#define LOG_INFO(name, fmt, ...)    PRINT_CH_INFO(LOG_CHANNEL, name, fmt, ##__VA_ARGS__)
+#define LOG_DEBUG(name, fmt, ...)   PRINT_CH_DEBUG(LOG_CHANNEL, name, fmt, ##__VA_ARGS__)
+
+//
+// Compact version of PRINT_CH_INFO & PRINT_CH_DEBUG macros.
+// These macros can be used in header files or templates
+// where "#define LOG_CHANNEL" is not appropriate.
+//
+#define LOG_CH_INFO(ch, name, fmt, ...)  PRINT_CH_INFO(ch, name, fmt, ##__VA_ARGS__)
+#define LOG_CH_DEBUG(ch, name, fmt, ...) PRINT_CH_DEBUG(ch, name, fmt, ##__VA_ARGS__)
+
 #endif // __Util_Logging_Logging_H_
 

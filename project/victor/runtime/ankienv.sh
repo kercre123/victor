@@ -58,6 +58,17 @@ function process_status()
     fi
 }
 
+function get_process_pid()
+{
+    PROG_NAME="$1"
+    echo $(pidof ${PROG_NAME})
+}
+
+function get_process_name()
+{
+    echo $1
+}
+
 function usage()
 {
     echo "$SCRIPT_NAME [COMMAND]"
@@ -85,6 +96,14 @@ function main()
             ;;
         status)
             program_status
+            ERROR=$?
+            ;;
+        get_pid)
+            get_program_pid
+            ERROR=$?
+            ;;
+        get_name)
+            get_program_name
             ERROR=$?
             ;;
         -h)

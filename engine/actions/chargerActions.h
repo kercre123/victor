@@ -32,7 +32,9 @@ class MountChargerAction : public IAction
 {
 public:
   MountChargerAction(ObjectID chargerID,
-                     const bool useCliffSensorCorrection = true);
+                     const bool useCliffSensorCorrection = true,
+                     const bool shouldPlayDrivingAnimation = true);
+  ~MountChargerAction();
   
 protected:
   
@@ -43,6 +45,7 @@ private:
   const ObjectID _chargerID;
 
   const bool _useCliffSensorCorrection;
+  const bool _playDrivingAnimation;
   
   // Pointers to compound actions which comprise this action:
   std::unique_ptr<ICompoundAction> _mountAction = nullptr;
@@ -60,17 +63,25 @@ private:
 //
 // Compute the proper angle to turn, and turn away from
 // the charger to prepare for backing up onto it.
-class TurnToAlignWithChargerAction : public TurnInPlaceAction
+// Optionally play an animation depending on turn direction.
+class TurnToAlignWithChargerAction : public IAction
 {
-using BaseClass = TurnInPlaceAction;
 public:
-  TurnToAlignWithChargerAction(ObjectID chargerID);
+  TurnToAlignWithChargerAction(ObjectID chargerID,
+                               AnimationTrigger leftTurnAnimTrigger = AnimationTrigger::Count,
+                               AnimationTrigger rightTurnAnimTrigger = AnimationTrigger::Count);
   
 protected:
   virtual ActionResult Init() override;
+  virtual ActionResult CheckIfDone() override;
   
 private:
   const ObjectID _chargerID;
+  
+  const AnimationTrigger _leftTurnAnimTrigger;
+  const AnimationTrigger _rightTurnAnimTrigger;
+  
+  std::unique_ptr<CompoundActionParallel> _compoundAction = nullptr;
   
 }; // class TurnToAlignWithChargerAction
   

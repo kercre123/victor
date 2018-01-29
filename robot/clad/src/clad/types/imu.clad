@@ -57,5 +57,15 @@ message IMUTemperature {
 }
 
 } // RobotInterface
+
+
+message ImageImuData {
+  uint_32  systemTimestamp_ms,
+  float_32 rateX,
+  float_32 rateY,
+  float_32 rateZ
+}
+
+
 } // Cozmo
 } // Anki

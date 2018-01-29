@@ -46,8 +46,8 @@ const FullCloudIntentArray cloudStringMap{
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorComponentCloudReceiver::BehaviorComponentCloudReceiver(Robot& robot)
 : IDependencyManagedComponent(BCComponentID::BehaviorComponentCloudReceiver)
-, _server(std::bind(&BehaviorComponentCloudReceiver::AddPendingIntent, this, std::placeholders::_1), 
-                    12345 + robot.GetID() )  // Offset port by robotID so that we can run sims with multiple robots
+, _server(std::bind(&BehaviorComponentCloudReceiver::AddPendingIntent, this, std::placeholders::_1),
+                    "ai_sock" + (robot.GetID() == 0 ? "" : std::to_string(robot.GetID())))  // Offset port by robotID so that we can run sims with multiple robots
 {
   if(robot.HasExternalInterface()){
     auto fakeTriggerWordCallback = [this](const GameToEngineEvent& event) {
@@ -119,6 +119,8 @@ void BehaviorComponentCloudReceiver::ClearIntentIfPending(CloudIntent intent)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorComponentCloudReceiver::AddPendingIntent(std::string&& intent)
 {
+  PRINT_CH_INFO("BehaviorSystem","BehaviorComponentCloudReceiver.AddPendingIntent","'%s'", intent.c_str());
+  
     std::lock_guard<std::mutex> lock{_mutex};
     // handle message here; wrap other calls that access/modify
     // fields modified here in a mutex lock as well

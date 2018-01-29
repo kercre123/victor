@@ -30,18 +30,20 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorPickupCube.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorPopAWheelie.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorPutDownBlock.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorRequestToGoHome.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorRollBlock.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorSearchForFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorStackBlocks.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorTurnToFace.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/behaviorHighLevelAI.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/behaviorWait.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevImageCapture.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevPettingTestSimple.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevTurnInPlaceTest.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDispatchAfterShake.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDockingTestSimple.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorFactoryCentroidExtractor.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorLiftLoadTest.h"
-
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenCameraCalibration.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenDistanceSensor.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenDriftCheck.h"
@@ -54,7 +56,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenSoundCheck.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenTest.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenWaitToStart.h"
-
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherQueue.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherRandom.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherRerun.h"
@@ -96,6 +97,8 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorTrackLaser.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/meetCozmo/behaviorEnrollFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/meetCozmo/behaviorRespondToRenameFace.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/observing/behaviorObservingLookAtFaces.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/observing/behaviorObservingOnCharger.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorOnboardingShowCube.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/proxBehaviors/behaviorProxGetToDistance.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorAcknowledgeCubeMoved.h"
@@ -119,12 +122,8 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToStackOfCubes.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToUnexpectedMovement.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToVoiceCommand.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/sleeping/behaviorSleeping.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorComeHere.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorObservingOnCharger.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorVictorDemoFeeding.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorVictorDemoNapping.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorVictorDemoObservingFaceInteraction.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorVictorObservingDemo.h"
 
 #include "engine/robot.h"
 
@@ -308,7 +307,7 @@ ICozmoBehaviorPtr BehaviorContainer::CreateAnonymousBehavior(BehaviorClass behav
 ICozmoBehaviorPtr BehaviorContainer::CreateBehaviorBase(BehaviorClass behaviorType, const Json::Value& config) const
 {
   ICozmoBehaviorPtr newBehavior;
-  
+
   switch (behaviorType)
   {
     case BehaviorClass::Wait:
@@ -439,6 +438,11 @@ ICozmoBehaviorPtr BehaviorContainer::CreateBehaviorBase(BehaviorClass behaviorTy
     case BehaviorClass::GoHome:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorGoHome(config));
+      break;
+    }
+    case BehaviorClass::RequestToGoHome:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorRequestToGoHome(config));
       break;
     }
     case BehaviorClass::PopAWheelie:
@@ -839,29 +843,29 @@ ICozmoBehaviorPtr BehaviorContainer::CreateBehaviorBase(BehaviorClass behaviorTy
       break;
     }
 
-    case BehaviorClass::VictorDemoFeeding:
+    case BehaviorClass::HighLevelAI:
     {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorVictorDemoFeeding(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorHighLevelAI(config));
       break;
     }
-    case BehaviorClass::VictorObservingDemo:
+    case BehaviorClass::ObservingLookAtFaces:
     {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorVictorObservingDemo(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorObservingLookAtFaces(config));
       break;
     }
-    case BehaviorClass::VictorDemoObservingFaceInteraction:
+    case BehaviorClass::Sleeping:
     {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorVictorDemoObservingFaceInteraction(config));
-      break;
-    }
-    case BehaviorClass::VictorDemoNapping:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorVictorDemoNapping(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorSleeping(config));
       break;
     }
     case BehaviorClass::ObservingOnCharger:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorObservingOnCharger(config));
+      break;
+    }
+    case BehaviorClass::DispatchAfterShake:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorDispatchAfterShake(config));
       break;
     }
   }

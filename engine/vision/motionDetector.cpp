@@ -10,7 +10,8 @@
  * Copyright: Anki, Inc. 2017
  **/
 
-#include "motionDetector.h"
+#include "engine/vision/motionDetector.h"
+#include "engine/vision/motionDetector_neon.h"
 
 #include "coretech/common/engine/math/linearAlgebra_impl.h"
 #include "coretech/vision/engine/camera.h"
@@ -39,11 +40,11 @@ namespace {
   
   // Affects sensitivity (darker pixels are inherently noisier and should be ignored for
   // change detection). Range is [0,255]
-  CONSOLE_VAR(u8,   kMotionDetection_MinBrightness,       CONSOLE_GROUP_NAME, 10);
+  WRAP_EXTERN_CONSOLE_VAR(u8,   kMotionDetection_MinBrightness,       CONSOLE_GROUP_NAME);
   
   // This is the main sensitivity parameter: higher means more image difference is required
   // to register a change and thus report motion.
-  CONSOLE_VAR(f32,  kMotionDetection_RatioThreshold,      CONSOLE_GROUP_NAME, 1.25f);
+  WRAP_EXTERN_CONSOLE_VAR(f32,  kMotionDetection_RatioThreshold,      CONSOLE_GROUP_NAME);
   CONSOLE_VAR(f32,  kMotionDetection_MinAreaFraction,     CONSOLE_GROUP_NAME, 1.f/225.f); // 1/15 of each image dimension
   
   // For computing robust "centroid" of motion
@@ -75,8 +76,6 @@ namespace {
 # undef CONSOLE_GROUP_NAME
 }
   
-static_assert(ANKI_DEV_CHEATS || kMotionDetectionDebug==false,
-              "kMotionDetectionDebug should be disabled if ANKI_DEV_CHEATS are disabled");
 
 // This class is used to accumulate data for peripheral motion detection. The image area is divided in three sections:
 // top, right and left. If the centroid of a motion patch falls inside one these areas, it's increased, otherwise it's
@@ -313,34 +312,28 @@ void MotionDetector::SetPrevImage(const Vision::ImageRGB &image, bool wasBlurred
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-static inline f32 ratioTestHelper(u8 value1, u8 value2)
-{
-  // NOTE: not checking for divide-by-zero here because kMotionDetection_MinBrightness (DEV_ASSERTed to be > 0 in
-  //  the constructor) prevents values of zero from getting to this helper
-  if(value1 > value2) {
-    return static_cast<f32>(value1) / std::max(1.f, static_cast<f32>(value2));
-  } else {
-    return static_cast<f32>(value2) / std::max(1.f, static_cast<f32>(value1));
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 s32 MotionDetector::RatioTest(const Vision::ImageRGB& image, Vision::Image& ratioImg)
 {
   DEV_ASSERT(ratioImg.GetNumRows() == image.GetNumRows() && ratioImg.GetNumCols() == image.GetNumCols(),
              "MotionDetector.RatioTestColor.MismatchedSize");
   
-  s32 numAboveThresh = 0;
+  u32 numAboveThresh = 0;
   
+#ifdef ANDROID
+
+  return RatioTestNeon(image, ratioImg);
+
+#else
+
   std::function<u8(const Vision::PixelRGB& thisElem, const Vision::PixelRGB& otherElem)> ratioTest = [&numAboveThresh](const Vision::PixelRGB& p1, const Vision::PixelRGB& p2)
   {
     u8 retVal = 0;
     if(p1.IsBrighterThan(kMotionDetection_MinBrightness) &&
        p2.IsBrighterThan(kMotionDetection_MinBrightness))
     {
-      const f32 ratioR = ratioTestHelper(p1.r(), p2.r());
-      const f32 ratioG = ratioTestHelper(p1.g(), p2.g());
-      const f32 ratioB = ratioTestHelper(p1.b(), p2.b());
+      const f32 ratioR = RatioTestHelper(p1.r(), p2.r());
+      const f32 ratioG = RatioTestHelper(p1.g(), p2.g());
+      const f32 ratioB = RatioTestHelper(p1.b(), p2.b());
       if(ratioR > kMotionDetection_RatioThreshold || ratioG > kMotionDetection_RatioThreshold || ratioB > kMotionDetection_RatioThreshold) {
         ++numAboveThresh;
         retVal = 255; // use 255 because it will actually display
@@ -351,6 +344,8 @@ s32 MotionDetector::RatioTest(const Vision::ImageRGB& image, Vision::Image& rati
   };
   
   image.ApplyScalarFunction(ratioTest, _prevImageRGB, ratioImg);
+
+#endif
   
   return numAboveThresh;
 }
@@ -361,13 +356,19 @@ s32 MotionDetector::RatioTest(const Vision::Image& image, Vision::Image& ratioIm
              "MotionDetector.RatioTestGray.MismatchedSize");
   
   s32 numAboveThresh = 0;
+
+#ifdef ANDROID
+
+  return RatioTestNeon(image, ratioImg);
+
+#else
   
   std::function<u8(const u8& thisElem, const u8& otherElem)> ratioTest = [&numAboveThresh](const u8& p1, const u8& p2)
   {
     u8 retVal = 0;
     if((p1 > kMotionDetection_MinBrightness) && (p2 > kMotionDetection_MinBrightness))
     {
-      const f32 ratio = ratioTestHelper(p1, p2);
+      const f32 ratio = RatioTestHelper(p1, p2);
       if(ratio > kMotionDetection_RatioThreshold)
       {
         ++numAboveThresh;
@@ -379,6 +380,8 @@ s32 MotionDetector::RatioTest(const Vision::Image& image, Vision::Image& ratioIm
   };
   
   image.ApplyScalarFunction(ratioTest, _prevImageGray, ratioImg);
+
+#endif
   
   return numAboveThresh;
 }

@@ -30,8 +30,8 @@ class IConsoleVariable
 {
 public:
   IConsoleVariable( const char* id, const char* category );
-  virtual ~IConsoleVariable() {};
-  
+  virtual ~IConsoleVariable();
+
   const std::string& GetID() const { return id_; }
   const std::string& GetCategory() const { return category_; }
   const std::string GetFullPathString() const { return ( category_ + "." + id_ ); }

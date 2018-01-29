@@ -36,6 +36,7 @@
 #include "engine/components/movementComponent.h"
 #include "engine/components/pathComponent.h"
 #include "engine/components/progressionUnlockComponent.h"
+#include "engine/components/visionScheduleMediator/visionScheduleMediator.h"
 #include "engine/cozmoContext.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -279,7 +280,9 @@ ICozmoBehavior::~ICozmoBehavior()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::InitInternal()
-{  
+{
+  _initHasBeenCalled = true;
+
   {
     for( auto& strategy : _wantsToBeActivatedConditions ) {
       strategy->Init(GetBEI());
@@ -320,6 +323,7 @@ void ICozmoBehavior::InitInternal()
 
         // we need to initlaize the anon behaviors as well
         resultPair.first->second->Init(GetBEI());
+        resultPair.first->second->InitBehaviorOperationModifiers();
       }
       else
       {
@@ -362,6 +366,25 @@ void ICozmoBehavior::InitBehaviorOperationModifiers()
   GetBehaviorOperationModifiers(_operationModifiers);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::SetRespondToCloudIntent(CloudIntent intent)
+{
+  if( ANKI_VERIFY( !_initHasBeenCalled,
+                   "ICozmoBehavior.SetRespondToCloudIntent.AfterInit",
+                   "behavior '%s' trying to set cloud intent to '%s' after init has already been called",
+                   GetIDStr().c_str(),
+                   CloudIntentToString(intent)) ) {
+    if( _respondToCloudIntent != CloudIntent::Count ) {
+      PRINT_NAMED_WARNING("ICozmoBehavior.SetRespondToCloudIntent.ReplaceIntent",
+                          "behavior '%s' setting cloud intent to '%s', but it was previously '%s'",
+                          GetIDStr().c_str(),
+                          CloudIntentToString(intent),
+                          CloudIntentToString(_respondToCloudIntent));
+    }
+
+    _respondToCloudIntent = intent;
+  }
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::SubscribeToTags(std::set<GameToEngineTag> &&tags)
@@ -433,6 +456,12 @@ void ICozmoBehavior::OnActivatedInternal()
                  GetCloudReceiver().ClearIntentIfPending(_respondToCloudIntent);
   }
 
+  // Handle Vision Mode Subscriptions
+  if(!_operationModifiers.visionModesForActiveScope->empty()){
+    GetBEI().GetVisionScheduleMediator().SetVisionModeSubscriptions(this, 
+      *_operationModifiers.visionModesForActiveScope);
+  }
+
   OnBehaviorActivated();
 }
 
@@ -447,6 +476,13 @@ void ICozmoBehavior::OnEnteredActivatableScopeInternal()
   for( auto& strategy : _wantsToBeActivatedConditions ) {
     strategy->Reset(GetBEI());
   }
+
+  // Handle Vision Mode Subscriptions
+  if(!_operationModifiers.visionModesForActivatableScope->empty()){
+    GetBEI().GetVisionScheduleMediator().SetVisionModeSubscriptions(this, 
+      *_operationModifiers.visionModesForActivatableScope);
+  }
+
 }
 
 
@@ -457,6 +493,8 @@ void ICozmoBehavior::OnLeftActivatableScopeInternal()
     auto& infoProcessor = GetBEI().GetAIComponent().GetAIInformationAnalyzer();
     infoProcessor.RemoveEnableRequest(_requiredProcess, GetIDStr().c_str());
   }
+
+  GetBEI().GetVisionScheduleMediator().ReleaseAllVisionModeSubscriptions(this);
 }
 
 
@@ -478,7 +516,13 @@ void ICozmoBehavior::OnDeactivatedInternal()
   if(_hasSetIdle){
     SmartRemoveIdleAnimation();
   }
-  
+
+  // Set Mode Subscriptions back to ActivatableScope values. OnLeftActivatableScopeInternal handles final unsubscribe
+  if(!_operationModifiers.visionModesForActivatableScope->empty()){
+    GetBEI().GetVisionScheduleMediator().SetVisionModeSubscriptions(this, 
+      *_operationModifiers.visionModesForActivatableScope);
+  }
+
   // clear the path component motion profile if it was set by the behavior
   if( _hasSetMotionProfile ) {
     SmartClearMotionProfile();

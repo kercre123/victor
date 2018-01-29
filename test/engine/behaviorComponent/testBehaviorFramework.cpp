@@ -85,7 +85,8 @@ void InitBEIPartial( const BEIComponentMap& map, BehaviorExternalInterface& bei 
            GetFromMap<Audio::EngineRobotAudioClient>(map, BEIComponentID::RobotAudioClient),
            GetFromMap<BEIRobotInfo>(map, BEIComponentID::RobotInfo),
            GetFromMap<TouchSensorComponent>(map, BEIComponentID::TouchSensor),
-           GetFromMap<VisionComponent>(map, BEIComponentID::Vision));
+           GetFromMap<VisionComponent>(map, BEIComponentID::Vision),
+           GetFromMap<VisionScheduleMediator>(map, BEIComponentID::VisionScheduleMediator));
 
 }
 

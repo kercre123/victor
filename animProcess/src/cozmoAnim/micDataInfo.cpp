@@ -23,10 +23,6 @@
 #include <thread>
 
 #define LOG_CHANNEL    "MicData"
-#define LOG_ERROR      PRINT_NAMED_ERROR
-#define LOG_WARNING    PRINT_NAMED_WARNING
-#define LOG_INFO(...)  PRINT_CH_INFO(LOG_CHANNEL, ##__VA_ARGS__)
-#define LOG_DEBUG(...) PRINT_CH_DEBUG(LOG_CHANNEL, ##__VA_ARGS__)
 
 namespace Anki {
 namespace Cozmo {
@@ -104,14 +100,9 @@ void MicDataInfo::SetTimeToRecord(uint32_t timeToRecord)
   _timeToRecord_ms = timeToRecord;
 }
 
-bool MicDataInfo::CheckDone()
+void MicDataInfo::UpdateForNextChunk()
 {
   std::lock_guard<std::mutex> lock(_dataMutex);
-  if (!_typesToRecord.AreAnyFlagsSet())
-  {
-    return true;
-  }
-  
   _timeRecorded_ms += kTimePerChunk_ms;
   if (_timeRecorded_ms >= _timeToRecord_ms)
   {
@@ -128,7 +119,8 @@ bool MicDataInfo::CheckDone()
       // If we fail to find a name with which to save a file, bail now
       if (nextFileNameBase.empty())
       {
-        return true;
+        _typesToRecord.ClearFlags();
+        return;
       }
     }
     // Note this results in consuming the current audio chunks and fftcallback
@@ -137,11 +129,27 @@ bool MicDataInfo::CheckDone()
     
     if (!_repeating)
     {
-      return true;
+      _typesToRecord.ClearFlags();
     }
   }
-  
-  return false;
+}
+
+bool MicDataInfo::CheckDone() const
+{
+  std::lock_guard<std::mutex> lock(_dataMutex);
+  return !_typesToRecord.AreAnyFlagsSet();
+}
+
+uint32_t MicDataInfo::GetTimeToRecord_ms() const
+{  
+  std::lock_guard<std::mutex> lock(_dataMutex);
+  return _timeToRecord_ms;
+}
+
+uint32_t MicDataInfo::GetTimeRecorded_ms() const
+{  
+  std::lock_guard<std::mutex> lock(_dataMutex);
+  return _timeRecorded_ms;
 }
 
 void MicDataInfo::SaveCollectedAudio(const std::string& dataDirectory,

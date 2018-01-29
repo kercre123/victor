@@ -25,7 +25,6 @@
 namespace Anki {
 
 namespace Vision {
-  class ImageRGB;
   class ImageRGB565;
 }
 
@@ -42,7 +41,7 @@ public:
   void DrawToFace(const Vision::ImageRGB565& img);
 
   // For drawing to face in various debug modes
-  void DrawToFaceDebug(const Vision::ImageRGB& img);
+  void DrawToFaceDebug(const Vision::ImageRGB565& img);
 
   static FaceDebugDraw* GetDebugDraw() { return getInstance()->_faceDebugDraw.get(); }
 
@@ -50,7 +49,6 @@ protected:
   FaceDisplay();
   virtual ~FaceDisplay();
 
-  void DrawToFaceInternal(const Vision::ImageRGB& img);
   void DrawToFaceInternal(const Vision::ImageRGB565& img);
 
 private:

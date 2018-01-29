@@ -125,7 +125,9 @@ add_subdirectory("cloud")
 add_subdirectory("cubeBleClient")
 add_subdirectory("osState")
 add_subdirectory("androidHAL")
+add_subdirectory("cannedAnimLib")
 add_subdirectory("animProcess")
+add_subdirectory("lib/signalEssence")
 
 target_include_directories(victor_anim PRIVATE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/anki/cozmo>

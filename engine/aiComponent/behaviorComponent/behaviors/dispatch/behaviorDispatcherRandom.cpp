@@ -33,8 +33,7 @@ BehaviorDispatcherRandom::BehaviorDispatcherRandom(const Json::Value& config)
                                                                 "behavior",
                                                                 "BehaviorDispatcherRandom.BehaviorGroup.NoBehaviorID");
       
-      const BehaviorID behaviorID = BehaviorTypesWrapper::BehaviorIDFromString(behaviorIDStr);
-      IBehaviorDispatcher::AddPossibleDispatch(behaviorID);
+      IBehaviorDispatcher::AddPossibleDispatch(behaviorIDStr);
 
       _cooldownInfo.emplace_back( BehaviorCooldownInfo{behaviorDefinitionGroup} );
 

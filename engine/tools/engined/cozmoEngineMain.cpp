@@ -191,7 +191,7 @@ int cozmo_start(const Json::Value& configuration)
     // set filter in the loggers
     std::shared_ptr<const IChannelFilter> filterPtr( consoleFilter );
 
-    // logcatProvider->SetFilter(filterPtr);
+    // loggerProvider->SetFilter(filterPtr);
   }
   
   PRINT_NAMED_INFO("cozmo_startup", "Creating engine");

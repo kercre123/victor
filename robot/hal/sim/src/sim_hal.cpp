@@ -813,14 +813,15 @@ namespace Anki {
 
     bool HAL::BatteryIsCharging()
     {
-      //return false; // XXX On Cozmo 3, head is off if robot is charging
       return (chargeContact_->getPresence() == 1);
     }
 
     bool HAL::BatteryIsOnCharger()
     {
-      //return false; // XXX On Cozmo 3, head is off if robot is charging
-      return (chargeContact_->getPresence() == 1);
+      // The _physical_ robot only knows that it's on the charger if
+      // the charge contacts are powered, so treat this the same as
+      // BatteryIsCharging()
+      return HAL::BatteryIsCharging();
     }
     
     bool HAL::BatteryIsChargerOOS()

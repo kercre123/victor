@@ -10,6 +10,7 @@
 *
 */
 
+#include "simulator/controllers/shared/webotsHelpers.h"
 #include "coretech/common/engine/array2d_impl.h"
 #include "coretech/common/engine/colorRGBA.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
@@ -98,6 +99,8 @@ void VizControllerImpl::Init()
     std::bind(&VizControllerImpl::ProcessVizEndRobotUpdate, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::SaveImages,
     std::bind(&VizControllerImpl::ProcessSaveImages, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::SaveState,
+    std::bind(&VizControllerImpl::ProcessSaveState, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::CameraInfo,
     std::bind(&VizControllerImpl::ProcessCameraInfo, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::ObjectConnectionState,
@@ -168,18 +171,12 @@ void VizControllerImpl::Init()
   
   // === Look for CozmoBot in scene tree ===
 
-  // Get world root node
-  webots::Node* root = _vizSupervisor.getRoot();
-
   // Look for controller-less CozmoBot in children.
   // These will be used as visualization robots.
-  webots::Field* rootChildren = root->getField("children");
-  int numRootChildren = rootChildren->getCount();
-  for (int n = 0 ; n<numRootChildren; ++n) {
-    webots::Node* nd = rootChildren->getMFNode(n);
-
-    // Get the node name
-    std::string nodeName = nd->getTypeName();
+  const auto& nodeInfo = WebotsHelpers::GetFirstMatchingSceneTreeNode(&_vizSupervisor, "CozmoBot");
+  const auto* nd = nodeInfo.nodePtr;
+  if (nd != nullptr) {
+    DEV_ASSERT(nodeInfo.type == webots::Node::SUPERVISOR, "VizControllerImpl.Init.CozmoBotNotASupervisor");
     
     // Get the vizMode status
     bool vizMode = false;
@@ -187,16 +184,10 @@ void VizControllerImpl::Init()
     if (vizModeField) {
       vizMode = vizModeField->getSFBool();
     }
-
-    //printf(" Node %d: name \"%s\" typeName \"%s\" controllerName \"%s\"\n",
-    //       n, nodeName.c_str(), nd->getTypeName().c_str(), controllerName.c_str());
-    int nodeType = nd->getType();
     
-    if (nodeType == static_cast<int>(webots::Node::SUPERVISOR) &&
-      nodeName.find("CozmoBot") != std::string::npos &&
-      vizMode) {
-
-      printf("Found Viz robot with name %s\n", nodeName.c_str());
+    if (vizMode) {
+      PRINT_NAMED_INFO("VizControllerImpl.Init.FoundVizRobot",
+                       "Found Viz robot with name %s", nodeInfo.typeName.c_str());
       CozmoBotVizParams p;
       p.supNode = (webots::Supervisor*)nd;
 
@@ -209,10 +200,12 @@ void VizControllerImpl::Init()
       p.liftAngle = nd->getField("liftAngle");
 
       if (p.supNode && p.trans && p.rot && p.headAngle && p.liftAngle) {
-        printf("Added viz robot %s\n", nodeName.c_str());
+        PRINT_NAMED_INFO("VizControllerImpl.Init.AddedVizRobot",
+                         "Added viz robot %s", nodeInfo.typeName.c_str());
         vizBots_.push_back(p);
       } else {
-        printf("ERROR: Could not find all required fields in CozmoBot supervisor\n");
+        PRINT_NAMED_ERROR("VizControllerImpl.Init.MissingFields",
+                          "ERROR: Could not find all required fields in CozmoBot supervisor");
       }
     }
   }
@@ -249,7 +242,8 @@ void VizControllerImpl::ProcessSaveImages(const AnkiEvent<VizInterface::MessageV
   }
   else
   {
-    printf("ProcessSaveImages: disabling image saving\n");
+    PRINT_NAMED_INFO("VizControllerImpl.ProcessSaveImages.DisablingImageSaving",
+                     "Disabling image saving");
   }
 }
   
@@ -735,10 +729,6 @@ void VizControllerImpl::ProcessVizTrackerQuadMessage(const AnkiEvent<VizInterfac
   _camDisp->drawLine((int)payload.topRight_x, (int)payload.topRight_y, (int)payload.bottomRight_x, (int)payload.bottomRight_y);
   _camDisp->drawLine((int)payload.bottomRight_x, (int)payload.bottomRight_y, (int)payload.bottomLeft_x, (int)payload.bottomLeft_y);
   _camDisp->drawLine((int)payload.bottomLeft_x, (int)payload.bottomLeft_y, (int)payload.topLeft_x, (int)payload.topLeft_y);
-}
-  
-float ConvertLiftAngleToLiftHeightMM(float angle_rad) {
-  return (sinf(angle_rad) * LIFT_ARM_LENGTH) + LIFT_BASE_POSITION[2] + LIFT_FORK_HEIGHT_REL_TO_ARM_END;
 }
   
 void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface::MessageViz>& msg)

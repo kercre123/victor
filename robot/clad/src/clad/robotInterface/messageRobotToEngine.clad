@@ -6,8 +6,6 @@
 
 #include "clad/audio/audioCallbackMessage.clad"
 #include "clad/types/robotStatusAndActions.clad"
-#include "clad/types/robotLogging.clad"
-#include "clad/types/imageTypes.clad"
 #include "clad/types/motorTypes.clad"
 #include "clad/types/dockingSignals.clad"
 #include "clad/types/imu.clad"
@@ -42,7 +40,8 @@ message MicDirection
   uint_32   timestamp,
   uint_16   direction,
   int_16    confidence,
-  float_32  confidenceList[13]
+  float_32  confidenceList[13],
+  int_32  activeState,
 }
 
 // This message indicates that the robot experienced a freefall event
@@ -76,6 +75,12 @@ message LiftLoad
   bool hasLoad
 }
 
+// Returned in response to receiving a head, lift, or turn-in-place command
+message MotorActionAck
+{
+  uint_8  actionID,
+}
+
 message MicData
 {
   int_16  data[480], // 120 samples of audio 4 channels
@@ -103,8 +108,8 @@ union RobotToEngine {
 
   // Init / Debug
   SyncTimeAck                syncTimeAck            = 0xB0,
-  MainCycleTimeError         mainCycleTimeError     = 0xB1,
-  TimeProfileStat            timeProfStat           = 0xB2,
+  //  FREE SLOT!!!                                  = 0xB1,
+  MotorActionAck             motorActionAck         = 0xB2,
 
   // Motors / Driving
   MotorCalibration           motorCalibration       = 0xB3,
