@@ -78,7 +78,7 @@ GroundPlaneClassifier::GroundPlaneClassifier(const Json::Value& config, const Co
     _profiler("GroundPlaneClassifier")
 {
 
-//  _profiler.SetPrintFrequency(0);
+  _profiler.SetPrintFrequency(2000);
 
   DEV_ASSERT(context != nullptr, "GroundPlaneClassifier.ContextCantBeNULL");
 
@@ -252,6 +252,8 @@ Result GroundPlaneClassifier::Update(const Vision::ImageRGB& image, const Vision
 
 Vision::Image GroundPlaneClassifier::processClassifiedImage(const Vision::Image& binaryImage)
 {
+
+  // TODO morphologyEx seems to be very slow on Victor
   Vision::Image clone;
   binaryImage.CopyTo(clone);
   cv::Mat_<u8> cvImage = binaryImage.get_CvMat_();
@@ -358,7 +360,6 @@ MeanStdFeaturesExtractor::Extract(const Vision::ImageRGB& image, int row, int co
 
 Array2d<RawPixelsClassifier::FeatureType> MeanStdFeaturesExtractor::Extract(const Vision::ImageRGB& image) const
 {
-  auto tictoc = _profiler.TicToc("MeanStdFeaturesExtractor.Extract.SinglePassWholeImage");
   const cv::Mat& cvImage = image.get_CvMat_();
 
   // Calculate mean over all image
