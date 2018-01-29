@@ -279,6 +279,8 @@ protected:
   void SendTrackToObject(const u32 objectID, bool headOnly = false);
   void SendTrackToFace(const u32 faceID, bool headOnly = false);
   void SendExecuteTestPlan(PathMotionProfile motionProf);
+  void SendFakeTriggerWordDetect();
+  void SendForceDelocalize();
   void SendClearAllBlocks();
   void SendClearAllObjects();
   void SendSelectNextObject();
@@ -295,8 +297,6 @@ protected:
   void SendLogProxDataRequest(const u32 length_ms);
   void SendAnimation(const char* animName, u32 numLoops, bool throttleMessages = false);
   void SendAnimationGroup(const char* animName, bool throttleMessages = false);
-  void SendDevAnimation(const char* animName, u32 numLoops); // FIXME: Remove after code refactor - JMR
-  void SendReplayLastAnimation();
   void SendReadAnimationFile();
   void SendEnableVisionMode(VisionMode mode, bool enable);
   void SendSetIdleAnimation(const std::string &animName);

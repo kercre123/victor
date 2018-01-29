@@ -1175,6 +1175,17 @@ namespace Anki {
       SendMessage(message);
     }
     
+    void UiGameController::SendFakeTriggerWordDetect()
+    {
+      SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::FakeTriggerWordDetected()));
+    }
+    
+    void UiGameController::SendForceDelocalize()
+    {
+      ExternalInterface::ForceDelocalizeRobot delocMsg;
+      SendMessage(ExternalInterface::MessageGameToEngine(std::move(delocMsg)));
+    }
+    
 //    void UiGameController::SendClearAllBlocks()
 //    {
 //      ExternalInterface::ClearAllBlocks m;
@@ -1569,36 +1580,6 @@ namespace Anki {
       } else {
         PRINT_NAMED_INFO("SendAnimationGroup", "Ignoring duplicate SendAnimation keystroke.");
       }
-    }
-    
-    // FIXME: Remove after code refactor - JMR
-    void UiGameController::SendDevAnimation(const char* animName, u32 numLoops)
-    {
-      static double lastSendTime_sec = -1e6;
-      
-      // Don't send repeated animation commands within a half second
-      if(_supervisor.getTime() > lastSendTime_sec + 0.5f)
-      {
-        PRINT_NAMED_INFO("SendDevAnimation", "sending %s", animName);
-        ExternalInterface::PlayAnimation_DEV m;
-        m.animationName = animName;
-        m.numLoops = numLoops;
-        ExternalInterface::MessageGameToEngine message;
-        message.Set_PlayAnimation_DEV(m);
-        SendMessage(message);
-        lastSendTime_sec = _supervisor.getTime();
-      } else {
-        PRINT_NAMED_INFO("SendDevAnimation", "Ignoring duplicate SendAnimation keystroke.");
-      }
-    }
-
-    void UiGameController::SendReplayLastAnimation()
-    {
-      ExternalInterface::ReplayLastAnimation m;
-      m.numLoops = 1;
-      ExternalInterface::MessageGameToEngine message;
-      message.Set_ReplayLastAnimation(m);
-      SendMessage(message);
     }
 
     void UiGameController::SendReadAnimationFile()

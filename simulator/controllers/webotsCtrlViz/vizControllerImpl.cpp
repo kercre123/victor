@@ -99,6 +99,8 @@ void VizControllerImpl::Init()
     std::bind(&VizControllerImpl::ProcessVizEndRobotUpdate, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::SaveImages,
     std::bind(&VizControllerImpl::ProcessSaveImages, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::SaveState,
+    std::bind(&VizControllerImpl::ProcessSaveState, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::CameraInfo,
     std::bind(&VizControllerImpl::ProcessCameraInfo, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::ObjectConnectionState,
