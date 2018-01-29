@@ -22,10 +22,19 @@ namespace Anki {
       
       // Message Receive Signal
       using ReceivedSignal = Signal::Signal<void (uint8_t*, int)>;
+      using NotificationSignal = Signal::Signal<void ()>;
       
       // Message Receive Event
-      ReceivedSignal& OnReceivedEvent() {
-        return _receivedSignal;
+      ReceivedSignal& OnReceivedPlainTextEvent() {
+        return _receivedPlainTextSignal;
+      }
+      
+      ReceivedSignal& OnReceivedEncryptedEvent() {
+        return _receivedEncryptedSignal;
+      }
+      
+      NotificationSignal& OnFailedDecryptionEvent() {
+        return _failedDecryptionSignal;
       }
       
       void ClearCryptoKeys() {
@@ -38,42 +47,77 @@ namespace Anki {
         memcpy(_DecryptKey, decryptKey, crypto_kx_SESSIONKEYBYTES);
       }
       
-      virtual void Receive(uint8_t* bytes, int length, bool encrypted) {
+      void SetNonce(uint8_t* nonce) {
+        memcpy(_EncryptNonce, nonce, crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
+        memcpy(_DecryptNonce, nonce, crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
+      }
+      
+      virtual void ReceivePlainText(uint8_t* bytes, int length)
+      {
         if(length == 0) {
           return;
         }
         
-        if(encrypted) {
-          uint8_t* buffer = (uint8_t*)malloc(length);
-          
-          // insert decrypted chunk into new buffer
-          Decrypt(bytes+5, length-5, buffer+5);
-          
-          // copy over meta info
-          memcpy(buffer, bytes, 5);
-          
-          _receivedSignal.emit(buffer, length);
-        } else {
-          _receivedSignal.emit(bytes, length);
+        _receivedPlainTextSignal.emit(bytes, length);
+      }
+      
+      virtual void ReceiveEncrypted(uint8_t* bytes, int length)
+      {
+        if(length == 0) {
+          return;
         }
+        
+        uint8_t* buffer = (uint8_t*)malloc(length);
+        
+        // insert decrypted chunk into new buffer
+        Decrypt(bytes, length, buffer);
+                
+        _receivedEncryptedSignal.emit(buffer, length);
+        
+        free(buffer);
       }
       
     private:
-      ReceivedSignal _receivedSignal;
+      ReceivedSignal _receivedPlainTextSignal;
+      ReceivedSignal _receivedEncryptedSignal;
+      NotificationSignal _failedDecryptionSignal;
+      
       std::vector<uint8_t*> _buffers;
       std::vector<int> _bufferSizes;
+      
       int _buffersTotalSize = 0;
       uint8_t _DecryptKey[crypto_kx_SESSIONKEYBYTES];
       uint8_t _EncryptKey[crypto_kx_SESSIONKEYBYTES];
-      uint8_t _Nonce[crypto_secretbox_NONCEBYTES];
+      uint8_t _DecryptNonce[crypto_aead_xchacha20poly1305_ietf_NPUBBYTES];
+      uint8_t _EncryptNonce[crypto_aead_xchacha20poly1305_ietf_NPUBBYTES];
       
       int Decrypt(uint8_t* buffer, int length, uint8_t* output) {
-        // fixme: remove this fake nonce nonsense
-        for(int i = 0; i < crypto_secretbox_NONCEBYTES; i++) {
-          _Nonce[i] = 1;
+        uint64_t msgLength = 0;
+        
+        // decrypt message
+        int result = crypto_aead_xchacha20poly1305_ietf_decrypt(output, &msgLength, nullptr, buffer, length, nullptr, 0, _DecryptNonce, _DecryptKey);
+        
+        if(result == 0) {
+          // increment nonce if successful (don't let attacker derail our comms)
+          sodium_increment(_DecryptNonce, crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
+        } else {
+          _failedDecryptionSignal.emit();
         }
         
-        return crypto_secretbox_open_easy(output, buffer, (uint64_t)length, _Nonce, _DecryptKey);
+        return result;
+      }
+      
+    protected:
+      int Encrypt(uint8_t* buffer, int length, uint8_t* output, uint64_t* outputLength) {
+        // encrypt message
+        int result = crypto_aead_xchacha20poly1305_ietf_encrypt(output, outputLength, buffer, length, nullptr, 0, nullptr, _EncryptNonce, _EncryptKey);
+        
+        if(result == 0) {
+          // increment nonce if successful (don't let attacker derail our comms)
+          sodium_increment(_EncryptNonce, crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
+        }
+        
+        return result;
       }
     };
   }

@@ -23,8 +23,8 @@ namespace Anki {
       Initial,
       AwaitingPartnerReady,
       AwaitingPublicKey,
-      AwaitingKeyMatchAck,
-      AwaitingNonce,
+      AwaitingNonceAck,
+      AwaitingChallengeResponse,
       ConfirmedSharedSecret
     };
     
@@ -62,27 +62,53 @@ namespace Anki {
     public:
       SecurePairing(INetworkStream* stream);
       
-      void SharePublicKey();
+      void BeginPairing();
+      void StopPairing();
       
       uint8_t* GetPin() { return _Pin; }
+      
+      using ReceivedWifiCredentialsSignal = Signal::Signal<void (std::string, std::string)>;
+      
+      // WiFi Receive Event
+      ReceivedWifiCredentialsSignal& OnReceivedWifiCredentialsEvent() {
+        return _ReceivedWifiCredentialSignal;
+      }
       
     private:
       void Init();
       void Reset();
       
-      void HandleMessageReceive(uint8_t* bytes, uint32_t length);
-      void HandleReceivedPublicKey();
-      void HandleReceivedHashedKey();
-      void HandleReceivedNonce();
+      void HandleMessageReceived(uint8_t* bytes, uint32_t length);
+      void HandleEncryptedMessageReceived(uint8_t* bytes, uint32_t length);
+      void HandleDecryptionFailed();
+      void HandleInitialPair(uint8_t* bytes, uint32_t length);
+      void HandleRestoreConnection();
+      void HandleCancelSetup();
+      void HandleNonceAck();
+      void HandlePingResponse(uint8_t* bytes, uint32_t length);
+      
+      void SendPublicKey();
+      void SendNonce();
+      void SendChallenge();
+      void SendCancelPairing();
+      void SendChallengeSuccess();
+      
+      void IncrementAbnormalityCount();
+      void IncrementChallengeCount();
       
       const uint8_t MAX_MATCH_ATTEMPTS = 5;
+      const uint32_t MAX_ABNORMALITY_COUNT = 20;
+      
       uint8_t _Pin[NUM_PIN_DIGITS];
-      uint8_t _KeyMatchAttempts = 0;
+      uint8_t _ChallengeAttempts = 0;
       uint8_t _NumPinDigits;
+      uint32_t _PingChallenge;
+      uint32_t _AbnormalityCount = 0;
       
       INetworkStream* _Stream;
       KeyExchange* _KeyExchange;
       PairingState _State = PairingState::Initial;
+      ReceivedWifiCredentialsSignal _ReceivedWifiCredentialSignal;
     };
   }
 }

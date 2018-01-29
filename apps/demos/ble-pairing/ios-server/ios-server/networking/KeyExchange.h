@@ -22,7 +22,6 @@ namespace Anki {
       
       void Reset();
       uint8_t* GenerateKeys();
-      bool AttemptKeyMatch(uint8_t* partnerHashedKey);
       void SetRemotePublicKey(uint8_t* pubKey);
       bool CalculateSharedKeys(uint8_t* pin);
       
@@ -39,6 +38,11 @@ namespace Anki {
         return _PublicKey;
       }
       
+      uint8_t* GetNonce() {
+        // Return nonce
+        return _InitialNonce;
+      }
+      
       uint8_t* GetVerificationHash() {
         crypto_generichash(_HashedKey, crypto_kx_SESSIONKEYBYTES, _EncryptKey, crypto_kx_SESSIONKEYBYTES, nullptr, 0);
         
@@ -52,6 +56,7 @@ namespace Anki {
       uint8_t _RemotePublicKey [crypto_kx_PUBLICKEYBYTES];  // partner's public key
       uint8_t _PublicKey [crypto_kx_PUBLICKEYBYTES];   // our public key
       uint8_t _HashedKey [crypto_kx_SESSIONKEYBYTES];  // size of code
+      uint8_t _InitialNonce [crypto_aead_chacha20poly1305_ietf_NPUBBYTES];
       uint8_t _NumPinDigits = 6;
     };
   }

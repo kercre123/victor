@@ -1,4 +1,5 @@
 const aes = require("./aes.js");
+const os = require('os');
 var noble = require('noble');
 var math = require('mathjs');
 const _sodium = require('libsodium-wrappers');
@@ -48,22 +49,56 @@ function onConnect(peripheral) {
 
         printConnectionMessage("Finished discovering services and characteristics...", "\x1b[31m");
 
+        secureWriteChar.on('data', function(ctext, isNotification) {
+            let CRYPTO_PING = 1;
+            let CRYPTO_ACCEPTED = 4;
+
+            let cipher = new Uint8Array(ctext);
+            let nonce = new Uint8Array(decryptNonce);
+
+            try{
+                let data = sodium.crypto_aead_xchacha20poly1305_ietf_decrypt(null, cipher, null, nonce, cryptoKeys["decrypt"]);
+                sodium.increment(decryptNonce);
+
+                if(data[0] == CRYPTO_PING) {
+                    let challenge = ConvertByteBufferToUInt(Buffer.from(data.slice(1)));
+                    let arr = ConvertIntToByteBufferLittleEndian(challenge + 1);
+                    arr.unshift(CRYPTO_PING);
+                    let buf = Buffer.from(arr);
+    
+                    // send challenge response
+                    sendMessage(buf, true);
+                } else if(data[0] == CRYPTO_ACCEPTED) {
+                    printConnectionMessage("Secure connection has been established...", "\x1b[32m");
+
+                    let wifiCred = Buffer.concat([Buffer.from([5]), Buffer.from([12]), Buffer.from("vic-home-wifi"), Buffer.from([8]), Buffer.from("password")]);
+
+                    console.log(wifiCred);
+                    sendMessage(wifiCred, true);
+                }
+            } catch(err) {
+                console.log(err);
+            }
+
+
+        });
+
         writeChar.on('data', function(data, isNotification) {
-            if(data[4] == 2) {
+            let MSG_PUBK = 4;
+            let MSG_NONCE = 5;
+
+            if(data[0] == MSG_PUBK) {
                 keys = sodium.crypto_kx_keypair();
 
-                let buf = ConvertIntToByteBufferLittleEndian(keys.publicKey.length);
-                buf.push(2);
+                // let buf = ConvertIntToByteBufferLittleEndian(keys.publicKey.length);
+                // buf.push(2);
+                let buf = [2]; // initial pairing request
                 let msg = buf.concat(Array.from(keys.publicKey));
 
                 sendMessage(Buffer.from(msg), false);
 
-                let foreignKey = data.slice(5);
-
+                let foreignKey = data.slice(1);
                 let clientKeys = sodium.crypto_kx_client_session_keys(keys.publicKey, keys.privateKey, foreignKey);
-
-                    //sharedRx
-                    //sharedTx
 
                 var readline = require('readline');
 
@@ -76,25 +111,22 @@ function onConnect(peripheral) {
                     let hashedShared = sodium.crypto_generichash(32, clientKeys.sharedRx, pin);
                     cryptoKeys["decrypt"] = hashedShared;
                     cryptoKeys["encrypt"] = clientKeys.sharedTx;
-                    console.log("Decrypt key:");
-                    console.log(Buffer.from(hashedShared));
-                    console.log("Encrypt key:");
-                    console.log(Buffer.from(clientKeys.sharedTx));
 
-                    let verBuf = ConvertIntToByteBufferLittleEndian(32);
-                    verBuf.push(3);
-                    verHash = sodium.crypto_generichash(32, hashedShared);
-                    let verMsg = verBuf.concat(Array.from(verHash));
+                    if(receivedNonce) {
+                        sendMessage(Buffer.from([1, MSG_NONCE]), false);
+                    }
 
-                    sendMessage(Buffer.from(verMsg), false);
+                    enteredPin = true;
                 });
-            } else if(data[4] == 3) { 
-                let verified = Buffer.from(data.slice(5)).equals(Buffer.from(verHash));
+            } else if(data[0] == MSG_NONCE) { 
+                decryptNonce = Buffer.from(data.slice(1));
+                encryptNonce = Buffer.from(data.slice(1));
 
-                printConnectionMessage("Secure connection has been established...", "\x1b[32m");
+                if(enteredPin) {
+                    sendMessage(Buffer.from([1, MSG_NONCE]), false);
+                }
 
-                // Send encrypted message
-                sendMessage("Hello, world......", true);
+                receivedNonce = true;
             }
         });
     });
@@ -182,25 +214,51 @@ async function loadSodium() {
 let keys = null;
 let cryptoKeys = {};
 let verHash = [];
+let enteredPin = false;
+let receivedNonce = false;
 
 loadSodium().then(function() {
     tryConnect();
 });
 
-let nonce = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1];
+function testEncryption() {
+    let serverKeys = sodium.crypto_kx_keypair();
+    let clientKeys = sodium.crypto_kx_keypair();
+
+    let clientSessionKeys = sodium.crypto_kx_client_session_keys(clientKeys.publicKey, clientKeys.privateKey, serverKeys.publicKey);
+    let serverSessionKeys = sodium.crypto_kx_server_session_keys(serverKeys.publicKey, serverKeys.privateKey, clientKeys.publicKey);
+
+    let nonce = sodium.randombytes_buf(sodium.crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
+
+    let msg0 = "Hello, world!";
+
+    let ciphertext = sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(msg0, null, null, nonce, serverSessionKeys.sharedTx);
+    let msg1 = Buffer.from(sodium.crypto_aead_xchacha20poly1305_ietf_decrypt(null, ciphertext, null, nonce, clientSessionKeys.sharedRx)).toString('utf8');
+
+    console.log("Encryption test: " + (msg0==msg1));
+    console.log(ciphertext);
+    console.log(nonce);
+    console.log(clientSessionKeys.sharedRx);
+    console.log("Nonce length: " + nonce.length);
+    console.log("Key length: " + clientSessionKeys.sharedRx.length);
+    console.log("");
+}
+
+let encryptNonce;
+let decryptNonce;
 function sendMessage(msg, encrypt) {
     let buffer = msg;
 
     if(encrypt) {
-        buffer = Buffer.from(sodium.crypto_secretbox_easy(msg, Buffer.from(nonce), cryptoKeys["encrypt"]));
+        let nonce = new Uint8Array(encryptNonce);
+        let msgBuffer = Buffer.from(msg);
+        let data = new Uint8Array(msgBuffer);
 
-        let msgBuf = ConvertIntToByteBufferLittleEndian(msg.length);
-        msgBuf.push(0);
+        encrypted = sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(data, null, null, nonce, cryptoKeys["encrypt"]);
 
-        buffer = Buffer.concat([Buffer.from(msgBuf), buffer]);
+        sodium.increment(encryptNonce);
 
-        console.log("Sending encrypted");
-        console.log(buffer);
+        buffer = Buffer.from(encrypted);
     }
 
     if(encrypt) {
@@ -248,6 +306,20 @@ function ConvertByteBufferToShort(buffer) {
 
     return view.getInt16(0);
 }
+
+function ConvertByteBufferToUInt(buffer) {
+    var buf = new ArrayBuffer(4);
+    var view = new DataView(buf);
+
+    console.log("Endianness: " + os.endianness());
+
+    buffer.forEach(function (b, i) {
+        view.setUint8(i, b);
+    });
+
+    return view.getUint32(0, true);
+}
+
 
 function ConvertByteBufferToDouble(buffer) {
     // Create a buffer

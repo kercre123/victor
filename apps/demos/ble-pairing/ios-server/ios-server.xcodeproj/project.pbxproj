@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		DA27A59C20193A6A00359EE0 /* SecurePairingMessages.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DA27A59A20193A6A00359EE0 /* SecurePairingMessages.cpp */; };
+		DA27A5A6201D0AE800359EE0 /* NetworkExtension.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA27A5A5201D0AE800359EE0 /* NetworkExtension.framework */; };
 		DA5EC9E620084554003ABD16 /* libsodium.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DA5EC9E520084554003ABD16 /* libsodium.a */; };
 		DAB7E39D200EB76600D57664 /* BLENetworkStream.mm in Sources */ = {isa = PBXBuildFile; fileRef = DAB7E39C200EB76600D57664 /* BLENetworkStream.mm */; };
 		DAB7E3A1200EB84F00D57664 /* BLEPeripheral.mm in Sources */ = {isa = PBXBuildFile; fileRef = DAB7E3A0200EB84F00D57664 /* BLEPeripheral.mm */; };
@@ -24,6 +26,11 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		DA27A59A20193A6A00359EE0 /* SecurePairingMessages.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SecurePairingMessages.cpp; sourceTree = "<group>"; };
+		DA27A59B20193A6A00359EE0 /* SecurePairingMessages.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SecurePairingMessages.h; sourceTree = "<group>"; };
+		DA27A59D201BAD0300359EE0 /* EndianHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EndianHelper.h; sourceTree = "<group>"; };
+		DA27A5A2201C083900359EE0 /* ios-server.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "ios-server.entitlements"; sourceTree = "<group>"; };
+		DA27A5A5201D0AE800359EE0 /* NetworkExtension.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = NetworkExtension.framework; path = System/Library/Frameworks/NetworkExtension.framework; sourceTree = SDKROOT; };
 		DA5EC9E520084554003ABD16 /* libsodium.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libsodium.a; path = "ios-server/sodium/libsodium.a"; sourceTree = "<group>"; };
 		DA8141B7201173A700AC8A73 /* signalHolder.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = signalHolder.h; sourceTree = "<group>"; };
 		DA8141B8201173D900AC8A73 /* simpleSignal.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = simpleSignal.hpp; sourceTree = "<group>"; };
@@ -59,6 +66,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				DA5EC9E620084554003ABD16 /* libsodium.a in Frameworks */,
+				DA27A5A6201D0AE800359EE0 /* NetworkExtension.framework in Frameworks */,
 				DACEF0662005994B00894864 /* CoreBluetooth.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -80,6 +88,8 @@
 			isa = PBXGroup;
 			children = (
 				DAB7E39B200EB59B00D57664 /* INetworkStream.h */,
+				DA27A59B20193A6A00359EE0 /* SecurePairingMessages.h */,
+				DA27A59A20193A6A00359EE0 /* SecurePairingMessages.cpp */,
 				DAB7E39E200EB77700D57664 /* BLENetworkStream.h */,
 				DAB7E39C200EB76600D57664 /* BLENetworkStream.mm */,
 				DAB7E39F200EB84200D57664 /* BLEPeripheral.h */,
@@ -89,6 +99,7 @@
 				DAB7E3A5200EB8F800D57664 /* KeyExchange.h */,
 				DAB7E3AF200ED2ED00D57664 /* KeyExchange.cpp */,
 				DAB7E3A6200EB92300D57664 /* BLEPairingController.h */,
+				DA27A59D201BAD0300359EE0 /* EndianHelper.h */,
 			);
 			path = networking;
 			sourceTree = "<group>";
@@ -113,6 +124,7 @@
 		DACEF044200598FF00894864 /* ios-server */ = {
 			isa = PBXGroup;
 			children = (
+				DA27A5A2201C083900359EE0 /* ios-server.entitlements */,
 				DAE4FC2720084519007D04BB /* sodium */,
 				DA8141B62011738800AC8A73 /* signals */,
 				DAB7E39A200EB57500D57664 /* networking */,
@@ -133,6 +145,7 @@
 		DACEF0642005994600894864 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				DA27A5A5201D0AE800359EE0 /* NetworkExtension.framework */,
 				DA5EC9E520084554003ABD16 /* libsodium.a */,
 				DACEF0652005994600894864 /* CoreBluetooth.framework */,
 			);
@@ -174,6 +187,14 @@
 					DACEF041200598FF00894864 = {
 						CreatedOnToolsVersion = 9.1;
 						ProvisioningStyle = Automatic;
+						SystemCapabilities = {
+							com.apple.HotspotConfiguration = {
+								enabled = 1;
+							};
+							com.apple.WAC = {
+								enabled = 0;
+							};
+						};
 					};
 				};
 			};
@@ -216,6 +237,7 @@
 			files = (
 				DACEF050200598FF00894864 /* ios_server.xcdatamodeld in Sources */,
 				DAB7E3B0200ED2ED00D57664 /* KeyExchange.cpp in Sources */,
+				DA27A59C20193A6A00359EE0 /* SecurePairingMessages.cpp in Sources */,
 				DACEF04A200598FF00894864 /* ViewController.mm in Sources */,
 				DAB7E39D200EB76600D57664 /* BLENetworkStream.mm in Sources */,
 				DAB7E3A1200EB84F00D57664 /* BLEPeripheral.mm in Sources */,
@@ -355,8 +377,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = "ios-server/ios-server.entitlements";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 6N4JN4E7V7;
+				DEVELOPMENT_TEAM = BEJF9NAYCL;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)",
@@ -368,8 +392,10 @@
 					/usr/local/Cellar/openssl/1.0.2n/lib,
 					"$(PROJECT_DIR)/ios-server/sodium",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.anki.paul.ios-server";
+				PRODUCT_BUNDLE_IDENTIFIER = com.anki.paul.iosserver;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -378,8 +404,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = "ios-server/ios-server.entitlements";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 6N4JN4E7V7;
+				DEVELOPMENT_TEAM = BEJF9NAYCL;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)",
@@ -391,8 +419,9 @@
 					/usr/local/Cellar/openssl/1.0.2n/lib,
 					"$(PROJECT_DIR)/ios-server/sodium",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.anki.paul.ios-server";
+				PRODUCT_BUNDLE_IDENTIFIER = com.anki.paul.iosserver;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
