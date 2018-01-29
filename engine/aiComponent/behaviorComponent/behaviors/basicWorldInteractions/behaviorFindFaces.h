@@ -33,8 +33,11 @@ public:
   
   void InitBehavior() override;
   
-protected:
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
+
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.visionModesForActiveScope->push_back({ VisionMode::DetectingFaces, EVisionUpdateFrequency::High });
+  }
+
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;

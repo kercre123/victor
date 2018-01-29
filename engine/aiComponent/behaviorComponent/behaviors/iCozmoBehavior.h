@@ -22,6 +22,8 @@
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/helperHandle.h"
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
 #include "engine/components/cubeLightComponent.h"
+#include "engine/components/visionScheduleMediator/iVisionModeSubscriber.h"
+#include "engine/components/visionScheduleMediator/visionScheduleMediator_fwd.h"
 #include "engine/robotInterface/messageHandler.h"
 #include <set>
 
@@ -72,6 +74,11 @@ struct BehaviorObjectiveAchieved;
 // the default values set below in order to change the way the behavior
 // operates
 struct BehaviorOperationModifiers{
+  BehaviorOperationModifiers(){
+    visionModesForActivatableScope = std::make_unique<std::vector<VisionModeRequest>>();
+    visionModesForActiveScope = std::make_unique<std::vector<VisionModeRequest>>();
+  }
+
   // WantsToBeActivated modifiers
   bool wantsToBeActivatedWhenCarryingObject = false;
   bool wantsToBeActivatedWhenOffTreads = false;
@@ -85,10 +92,15 @@ struct BehaviorOperationModifiers{
   //      monitor its status - it will be automatically canceled when the final delegation completes.
   // Override to false if the behavior will always cancel itself when it's done
   bool behaviorAlwaysDelegates = true;
+
+  // Behaviors which require vision processing can add requests to these vectors to have the base class
+  // manage subscriptions to those VisionModes. Default is none.
+  std::unique_ptr<std::vector<VisionModeRequest>> visionModesForActivatableScope;
+  std::unique_ptr<std::vector<VisionModeRequest>> visionModesForActiveScope;
 };
 
 // Base Behavior Interface specification
-class ICozmoBehavior : public IBehavior
+class ICozmoBehavior : public IBehavior, public IVisionModeSubscriber
 {
 protected:  
   friend class BehaviorContainer;
@@ -212,7 +224,6 @@ protected:
 
   // default is no delegates, but behaviors which delegate can overload this
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override { }
-  
 
   inline void SetDebugStateName(const std::string& inName) {
     PRINT_CH_INFO("Behaviors", "Behavior.TransitionToState", "Behavior:%s, FromState:%s ToState:%s",

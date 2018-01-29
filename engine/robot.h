@@ -95,6 +95,7 @@ class BodyLightComponent;
 class RobotToEngineImplMessaging;
 class PublicStateBroadcaster;
 class VisionComponent;
+class VisionScheduleMediator;
 class PathComponent;
 class DockingComponent;
 class CarryingComponent;
@@ -183,7 +184,10 @@ public:
 
   inline VisionComponent&       GetVisionComponent()       { return GetComponent<VisionComponent>(RobotComponentID::Vision); }
   inline const VisionComponent& GetVisionComponent() const { return GetComponent<VisionComponent>(RobotComponentID::Vision); }
-  
+
+  inline VisionScheduleMediator& GetVisionScheduleMediator() {return GetComponent<VisionScheduleMediator>(RobotComponentID::VisionScheduleMediator); }
+  inline const VisionScheduleMediator& GetVisionScheduleMediator() const {return GetComponent<VisionScheduleMediator>(RobotComponentID::VisionScheduleMediator); }
+
   inline MapComponent&       GetMapComponent()       {return GetComponent<MapComponent>(RobotComponentID::Map);}
   inline const MapComponent& GetMapComponent() const {return GetComponent<MapComponent>(RobotComponentID::Map);}
   

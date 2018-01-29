@@ -56,6 +56,7 @@ class ProxSensorComponent;
 class PublicStateBroadcaster;
 class TouchSensorComponent;
 class VisionComponent;
+class VisionScheduleMediator;
   
 namespace Audio {
 class EngineRobotAudioClient;
@@ -134,7 +135,8 @@ public:
             Audio::EngineRobotAudioClient* robotAudioClient,
             BEIRobotInfo*                  robotInfo,
             TouchSensorComponent*          touchSensorComponent,
-            VisionComponent*               visionComponent);
+            VisionComponent*               visionComponent,
+            VisionScheduleMediator*        visionScheduleMediator);
     
   virtual ~BehaviorExternalInterface();
 
@@ -177,6 +179,9 @@ public:
 
   inline bool HasVisionComponent() const { return GetComponentWrapper(BEIComponentID::Vision).IsValueValid();}
   VisionComponent& GetVisionComponent() const { return GetComponentWrapper(BEIComponentID::Vision).GetValue<VisionComponent>();}
+
+  inline bool HasVisionScheduleMediator() const { return GetComponentWrapper(BEIComponentID::VisionScheduleMediator).IsValueValid();}
+  VisionScheduleMediator& GetVisionScheduleMediator() const { return GetComponentWrapper(BEIComponentID::VisionScheduleMediator).GetValue<VisionScheduleMediator>();}
 
   inline bool HasMapComponent() const { return GetComponentWrapper(BEIComponentID::Map).IsValueValid();}
   MapComponent& GetMapComponent() const { return GetComponentWrapper(BEIComponentID::Map).GetValue<MapComponent>();}
@@ -232,7 +237,8 @@ private:
                        Audio::EngineRobotAudioClient* robotAudioClient,
                        BEIRobotInfo*                  robotInfo,
                        TouchSensorComponent*          touchSensorComponent,
-                       VisionComponent*               visionComponent);
+                       VisionComponent*               visionComponent,
+                       VisionScheduleMediator*        visionSchedulMediator);
       ~CompArrayWrapper(){};
       EntityFullEnumeration<BEIComponentID, BEIComponentWrapper, BEIComponentID::Count> _array;
   };

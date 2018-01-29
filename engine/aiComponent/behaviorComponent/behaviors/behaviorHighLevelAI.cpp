@@ -32,7 +32,6 @@
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
-#include "engine/components/visionComponent.h"
 #include "engine/faceWorld.h"
 #include "engine/vision/visionModesHelpers.h"
 
@@ -367,16 +366,6 @@ void BehaviorHighLevelAI::GetAllDelegates(std::set<IBehavior*>& delegates) const
 
 void BehaviorHighLevelAI::OnBehaviorActivated()
 {
-  // _visionModesToReEnable.clear();
-  // auto& visionComponent = GetBEI().GetVisionComponent();
-  // for (VisionMode mode = VisionMode::Idle; mode < VisionMode::Count; ++mode) {
-  //   if( visionComponent.IsModeEnabled(mode) ) {
-  //     _visionModesToReEnable.push_back(mode);
-  //     visionComponent.EnableMode(mode, false);
-  //   }
-  // }
-  // Leave modes alone for now, seems to be a bug with disabled and re-enabling in the same tick
-
   if( _useDebugLights ) {
     // force an update
     _debugLightsDirty = true;
@@ -401,13 +390,6 @@ void BehaviorHighLevelAI::OnBehaviorDeactivated()
   const StateID endState = _currState;
   TransitionToState(InvalidStateID);
   _currState = endState;
-
-  // auto& visionComponent = GetBEI().GetVisionComponent();
-  // for( const auto& mode : _visionModesToReEnable ) {
-  //   visionComponent.EnableMode(mode, true);
-  // }
-  
-  // _visionModesToReEnable.clear();
 }
 
 void BehaviorHighLevelAI::BehaviorUpdate()
@@ -538,10 +520,7 @@ void BehaviorHighLevelAI::TransitionToState(const StateID targetState)
 
   // TODO:(bn) don't de- and re-activate behaviors if switching states doesn't change the behavior  
 
-  std::set<VisionMode> visionModesToDisable;
-  
   if( _currState != InvalidStateID ) {
-    visionModesToDisable = _states->at(_currState)._requiredVisionModes;
     _states->at(_currState).OnDeactivated();
     const bool allowCallback = false;
     CancelDelegates(allowCallback);
@@ -559,26 +538,9 @@ void BehaviorHighLevelAI::TransitionToState(const StateID targetState)
 
   _currState = targetState;
 
-  auto setVisionModes = [this](const std::set<VisionMode>& modes, const bool enabled) {
-    for( const auto& mode : modes ) {
-      auto& visionComponent = GetBEI().GetVisionComponent();      
-      if( visionComponent.IsModeEnabled(mode) != enabled ) {
-        visionComponent.EnableMode(mode, enabled);
-      }
-    }
-  };    
-  
   if( _currState != InvalidStateID ) {
     State& state = _states->at(_currState);
 
-    // don't disable any vision modes that we'll still need
-    for( const auto& mode : state._requiredVisionModes ) {
-      visionModesToDisable.erase(mode);
-    }
-
-    setVisionModes(visionModesToDisable, false);
-    setVisionModes(state._requiredVisionModes, true);
-    
     state.OnActivated(GetBEI());
 
     if( _useDebugLights ) {
@@ -592,10 +554,6 @@ void BehaviorHighLevelAI::TransitionToState(const StateID targetState)
     if( state._behavior->WantsToBeActivated() ) {
       DelegateIfInControl(state._behavior.get() );
     }
-  }
-  else {
-    // disable all modes that were enabled by this state
-    setVisionModes(visionModesToDisable, false);
   }
 }
 

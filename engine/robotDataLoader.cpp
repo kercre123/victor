@@ -517,6 +517,18 @@ void RobotDataLoader::LoadRobotConfigs()
                 jsonFilename.c_str());
     }
   }
+
+  // visionScheduleMediator config
+  {
+    static const std::string jsonFilename = "config/engine/visionScheduleMediator_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _visionScheduleMediatorConfig);
+    if(!success)
+    {
+      LOG_ERROR("RobotDataLoader.VisionScheduleMediatorConfigNotFound",
+                "VisionScheduleMediator Json config file %s not found or failed to parse",
+                jsonFilename.c_str());
+    }
+  }
   
   // Voice Command config
   {

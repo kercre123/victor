@@ -56,11 +56,18 @@ protected:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // ICozmoBehavior API
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.visionModesForActivatableScope->push_back({ VisionMode::DetectingFaces, EVisionUpdateFrequency::Low });
+    modifiers.visionModesForActiveScope->push_back({ VisionMode::DetectingFaces, EVisionUpdateFrequency::Standard });
+  }
 
   virtual void OnBehaviorActivated() override;
   virtual void BehaviorUpdate() override;
   virtual void OnBehaviorDeactivated() override;
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // ICozmoBehavior API
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 private:
   

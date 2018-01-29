@@ -31,7 +31,10 @@ protected:
   friend class BehaviorContainer;  
   BehaviorObservingOnCharger(const Json::Value& config);
 
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override{}
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override{
+    modifiers.visionModesForActiveScope->push_back({ VisionMode::DetectingFaces, EVisionUpdateFrequency::Low});
+    modifiers.visionModesForActiveScope->push_back({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::Low });
+  }
   virtual bool CanBeGentlyInterruptedNow() const override;
   virtual void OnBehaviorActivated() override;
 

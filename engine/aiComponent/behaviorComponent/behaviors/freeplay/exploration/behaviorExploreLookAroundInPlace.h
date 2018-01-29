@@ -71,6 +71,9 @@ public:
 protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
     modifiers.wantsToBeActivatedWhenCarryingObject = _configParams.behavior_CanCarryCube;
+    modifiers.visionModesForActiveScope->push_back({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::Standard });
+    modifiers.visionModesForActiveScope->push_back({ VisionMode::DetectingFaces, EVisionUpdateFrequency::Standard });
+    modifiers.visionModesForActiveScope->push_back({ VisionMode::DetectingPets, EVisionUpdateFrequency::Standard });
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -86,7 +89,7 @@ protected:
   
   virtual void OnBehaviorActivated() final override;
   virtual void AlwaysHandleInScope(const EngineToGameEvent& event) override;
-  
+
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // State transitions
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

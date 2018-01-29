@@ -46,6 +46,7 @@
 #include "engine/components/publicStateBroadcaster.h"
 #include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/components/visionComponent.h"
+#include "engine/components/visionScheduleMediator/visionScheduleMediator.h"
 #include "engine/cozmoContext.h"
 #include "engine/micDirectionHistory.h"
 #include "engine/navMap/mapComponent.h"
@@ -173,6 +174,7 @@ Robot::RobotComponentWrapper::RobotComponentWrapper(DependencyManagedEntity<Robo
   {RobotComponentID::ActionList,                  entity.GetComponent(RobotComponentID::ActionList)},
   {RobotComponentID::Movement,                    entity.GetComponent(RobotComponentID::Movement)},
   {RobotComponentID::Vision,                      entity.GetComponent(RobotComponentID::Vision)},
+  {RobotComponentID::VisionScheduleMediator,      entity.GetComponent(RobotComponentID::VisionScheduleMediator)},
   {RobotComponentID::Map,                         entity.GetComponent(RobotComponentID::Map)},
   {RobotComponentID::NVStorage,                   entity.GetComponent(RobotComponentID::NVStorage)},
   {RobotComponentID::AIComponent,                 entity.GetComponent(RobotComponentID::AIComponent)},
@@ -234,6 +236,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
     entity.AddDependentComponent(RobotComponentID::ActionList,                  RobotComp(new ActionList(), true));
     entity.AddDependentComponent(RobotComponentID::Movement,                    RobotComp(new MovementComponent(), true));
     entity.AddDependentComponent(RobotComponentID::Vision,                      RobotComp(new VisionComponent(), true));
+    entity.AddDependentComponent(RobotComponentID::VisionScheduleMediator,      RobotComp(new VisionScheduleMediator(), true));
     entity.AddDependentComponent(RobotComponentID::Map,                         RobotComp(new MapComponent(), true));
     entity.AddDependentComponent(RobotComponentID::NVStorage,                   RobotComp(new NVStorageComponent(), true));
     entity.AddDependentComponent(RobotComponentID::AIComponent,                 RobotComp(new AIComponent(), true));
@@ -307,7 +310,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   {
     GetVisionComponent().Init(GetContext()->GetDataLoader()->GetRobotVisionConfig());
   }
-  
+
   // Used for CONSOLE_FUNCTION "PlayAnimationByName" above
 #if REMOTE_CONSOLE_ENABLED
   _thisRobot = this;

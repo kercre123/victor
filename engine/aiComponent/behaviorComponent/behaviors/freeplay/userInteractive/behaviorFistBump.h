@@ -36,6 +36,7 @@ protected:
     modifiers.wantsToBeActivatedWhenCarryingObject = true;
     modifiers.behaviorAlwaysDelegates = false;
     modifiers.wantsToBeActivatedWhenOnCharger = false;
+    modifiers.visionModesForActiveScope->push_back({ VisionMode::DetectingFaces, EVisionUpdateFrequency::High });
   }
 
 

@@ -36,6 +36,7 @@
 #include "engine/components/movementComponent.h"
 #include "engine/components/pathComponent.h"
 #include "engine/components/progressionUnlockComponent.h"
+#include "engine/components/visionScheduleMediator/visionScheduleMediator.h"
 #include "engine/cozmoContext.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -455,6 +456,12 @@ void ICozmoBehavior::OnActivatedInternal()
                  GetCloudReceiver().ClearIntentIfPending(_respondToCloudIntent);
   }
 
+  // Handle Vision Mode Subscriptions
+  if(!_operationModifiers.visionModesForActiveScope->empty()){
+    GetBEI().GetVisionScheduleMediator().SetVisionModeSubscriptions(this, 
+      *_operationModifiers.visionModesForActiveScope);
+  }
+
   OnBehaviorActivated();
 }
 
@@ -469,6 +476,13 @@ void ICozmoBehavior::OnEnteredActivatableScopeInternal()
   for( auto& strategy : _wantsToBeActivatedConditions ) {
     strategy->Reset(GetBEI());
   }
+
+  // Handle Vision Mode Subscriptions
+  if(!_operationModifiers.visionModesForActivatableScope->empty()){
+    GetBEI().GetVisionScheduleMediator().SetVisionModeSubscriptions(this, 
+      *_operationModifiers.visionModesForActivatableScope);
+  }
+
 }
 
 
@@ -479,6 +493,8 @@ void ICozmoBehavior::OnLeftActivatableScopeInternal()
     auto& infoProcessor = GetBEI().GetAIComponent().GetAIInformationAnalyzer();
     infoProcessor.RemoveEnableRequest(_requiredProcess, GetIDStr().c_str());
   }
+
+  GetBEI().GetVisionScheduleMediator().ReleaseAllVisionModeSubscriptions(this);
 }
 
 
@@ -500,7 +516,13 @@ void ICozmoBehavior::OnDeactivatedInternal()
   if(_hasSetIdle){
     SmartRemoveIdleAnimation();
   }
-  
+
+  // Set Mode Subscriptions back to ActivatableScope values. OnLeftActivatableScopeInternal handles final unsubscribe
+  if(!_operationModifiers.visionModesForActivatableScope->empty()){
+    GetBEI().GetVisionScheduleMediator().SetVisionModeSubscriptions(this, 
+      *_operationModifiers.visionModesForActivatableScope);
+  }
+
   // clear the path component motion profile if it was set by the behavior
   if( _hasSetMotionProfile ) {
     SmartClearMotionProfile();

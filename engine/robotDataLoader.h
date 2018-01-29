@@ -81,6 +81,7 @@ public:
   const Json::Value& GetVictorFreeplayBehaviorConfig() const { return _victorFreeplayBehaviorConfig; }
   const Json::Value& GetRobotWorkoutConfig() const           { return _robotWorkoutConfig; }
   const Json::Value& GetRobotVisionConfig() const            { return _robotVisionConfig; }
+  const Json::Value& GetVisionScheduleMediatorConfig() const { return _visionScheduleMediatorConfig; }
   const Json::Value& GetVoiceCommandConfig() const           { return _voiceCommandConfig; }
   const Json::Value& GetRobotNeedsConfig() const             { return _needsSystemConfig; }
   const Json::Value& GetStarRewardsConfig() const            { return _starRewardsConfig; }
@@ -153,6 +154,7 @@ private:
   Json::Value _robotMoodConfig;
   Json::Value _victorFreeplayBehaviorConfig;
   Json::Value _robotVisionConfig;
+  Json::Value _visionScheduleMediatorConfig;
   Json::Value _robotWorkoutConfig;
   Json::Value _voiceCommandConfig;
   Json::Value _needsSystemConfig;
