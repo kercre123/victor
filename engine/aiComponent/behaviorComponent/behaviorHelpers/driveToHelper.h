@@ -24,7 +24,7 @@ namespace Cozmo {
 
 class DriveToHelper : public IHelper{
 public:
-  DriveToHelper(BehaviorExternalInterface& behaviorExternalInterface, ICozmoBehavior& behavior,
+  DriveToHelper(ICozmoBehavior& behavior,
                 BehaviorHelperFactory& helperFactory,
                 const ObjectID& targetID,
                 const DriveToParameters& params = {});
@@ -32,9 +32,9 @@ public:
 
 protected:
   // IHelper functions
-  virtual bool ShouldCancelDelegates(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual HelperStatus InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual HelperStatus UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual bool ShouldCancelDelegates() const override;
+  virtual HelperStatus InitBehaviorHelper() override;
+  virtual HelperStatus UpdateWhileActiveInternal() override;
   
 private:
   ObjectID _targetID;
@@ -43,8 +43,8 @@ private:
   u32 _tmpRetryCounter;
   Pose3d _initialRobotPose;
 
-  void DriveToPreActionPose(BehaviorExternalInterface& behaviorExternalInterface);
-  void RespondToDriveResult(ActionResult result, BehaviorExternalInterface& behaviorExternalInterface);
+  void DriveToPreActionPose();
+  void RespondToDriveResult(ActionResult result);
     
 };
 

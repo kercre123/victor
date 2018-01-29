@@ -20,30 +20,12 @@
 #include "speedController.h"
 #include "steeringController.h"
 #include "testModeController.h"
-
 #include "timeProfiler.h"
 #include "wheelController.h"
-
-#ifdef SIMULATOR
-#include "coretech/common/shared/utilities_shared.h"
-#include "clad/types/imageTypes.h"
-#endif
 
 
 namespace Anki {
   namespace Cozmo {
-
-#ifdef SIMULATOR
-    namespace HAL {
-      ImageSendMode imageSendMode_;
-  
-      void SetImageSendMode(const ImageSendMode mode)
-      {
-        imageSendMode_ = mode;
-      }
-    }
-#endif
-
     namespace Robot {
 
       // "Private Member Variables"
@@ -262,17 +244,8 @@ namespace Anki {
         if ((mainTooLateCnt_ > 0 || mainTooLongCnt_ > 0) &&
             (cycleEndTime - lastMainCycleTimeErrorReportTime_ > MAIN_CYCLE_ERROR_REPORTING_PERIOD_USEC)) {
           
-          // TODO: Can this just be a log in V2? Why send to engine first?
           AnkiWarn( "CozmoBot.MainCycleTimeError", "TooLateCount: %d, avgTooLateTime: %d us, tooLongCount: %d, avgTooLongTime: %d us",
                    mainTooLateCnt_, avgMainTooLateTime_, mainTooLongCnt_, avgMainTooLongTime_);
-          
-          RobotInterface::MainCycleTimeError m;
-          m.numMainTooLateErrors = mainTooLateCnt_;
-          m.avgMainTooLateTime = avgMainTooLateTime_;
-          m.numMainTooLongErrors = mainTooLongCnt_;
-          m.avgMainTooLongTime = avgMainTooLongTime_;
-
-          RobotInterface::SendMessage(m);
 
           mainTooLateCnt_ = 0;
           avgMainTooLateTime_ = 0;

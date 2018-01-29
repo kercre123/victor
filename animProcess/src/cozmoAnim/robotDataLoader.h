@@ -14,15 +14,13 @@
 #define ANKI_COZMO_ANIM_DATA_LOADER_H
 
 #include "util/helpers/noncopyable.h"
+#include "assert.h"
 #include <json/json.h>
 #include <atomic>
 #include <functional>
 #include <memory>
-#include <mutex>
 #include <string>
 #include <thread>
-#include <unordered_map>
-#include <vector>
 
 namespace Anki {
 
@@ -56,50 +54,23 @@ public:
   // false if loading is ongoing, otherwise returns true
   bool DoNonConfigDataLoading(float& loadingCompleteRatio_out);
 
-  // refresh individual data pieces after initial load
-  void LoadAnimations();
-  void LoadFaceAnimations();
-
   const Json::Value & GetTextToSpeechConfig() const { return _tts_config; }
-
-  using FileJsonMap       = std::unordered_map<std::string, const Json::Value>;
-  
-  CannedAnimationContainer* GetCannedAnimations() const { return _cannedAnimations.get(); }
+  CannedAnimationContainer* GetCannedAnimations() const { assert(_cannedAnimations); return _cannedAnimations.get(); }
   
 private:
-  void CollectAnimFiles();
-  
-  void LoadAnimationsInternal();
-  void LoadAnimationFile(const std::string& path);
-  
-  void AddToLoadingRatio(float delta);
-
-  using TimestampMap = std::unordered_map<std::string, time_t>;
-  void WalkAnimationDir(const std::string& animationDir, TimestampMap& timestamps,
-                        const std::function<void(const std::string& filePath)>& walkFunc);
-
-
   const CozmoAnimContext* const _context;
   const Util::Data::DataPlatform* _platform;
 
-  enum FileType {
-      Animation,
-  };
-  std::unordered_map<int, std::vector<std::string>> _jsonFiles;
-
   // animation data
   std::unique_ptr<CannedAnimationContainer>           _cannedAnimations;
-  TimestampMap _animFileTimestamps;
-  
-  bool                  _isNonConfigDataLoaded = false;
-  std::mutex            _parallelLoadingMutex;
+  // loading properties shared with the animiation loader
   std::atomic<float>    _loadingCompleteRatio{0};
-  std::thread           _dataLoadingThread;
   std::atomic<bool>     _abortLoad{false};
-  
-  // This gets set when we start loading animations and know the total number
-  float _perAnimationLoadingRatio = 0.0f;
 
+  bool                  _isNonConfigDataLoaded = false;
+  std::thread           _dataLoadingThread;
+
+  
   Json::Value _tts_config;
   
 };

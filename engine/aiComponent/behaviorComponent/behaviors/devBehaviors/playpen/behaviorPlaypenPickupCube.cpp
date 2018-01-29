@@ -59,11 +59,11 @@ PoseData ConvertToPoseData(const Pose3d& p)
   return poseData;
 }
 
-Result BehaviorPlaypenPickupCube::OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)
+Result BehaviorPlaypenPickupCube::OnBehaviorActivatedInternal()
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
+  Robot& robot = GetBEI().GetRobotInfo()._robot;
 
   RecordTouchSensorData(robot, GetIDStr());
   
@@ -73,16 +73,16 @@ Result BehaviorPlaypenPickupCube::OnBehaviorActivatedInternal(BehaviorExternalIn
   MoveHeadToAngleAction* head = new MoveHeadToAngleAction(DEG_TO_RAD(0));
   // TurnInPlaceAction* turn = new TurnInPlaceAction(robot, DEG_TO_RAD(-90), false);
   // CompoundActionParallel* action = new CompoundActionParallel(robot, {head, turn});
-  DelegateIfInControl(head, [this, &behaviorExternalInterface](){ TransitionToWaitForCube(behaviorExternalInterface); });
+  DelegateIfInControl(head, [this](){ TransitionToWaitForCube(); });
 
   return RESULT_OK;
 }
 
-void BehaviorPlaypenPickupCube::TransitionToWaitForCube(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPlaypenPickupCube::TransitionToWaitForCube()
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
+  Robot& robot = GetBEI().GetRobotInfo()._robot;
 
   // Clear all objects from blockworld since the marker for the distance sensor check creates an
   // object that is in the way of the pickup object's predock pose
@@ -92,14 +92,14 @@ void BehaviorPlaypenPickupCube::TransitionToWaitForCube(BehaviorExternalInterfac
   robot.GetBlockWorld().DeleteLocatedObjects(filter);
 
   WaitForImagesAction* action = new WaitForImagesAction(2, VisionMode::DetectingMarkers);
-  DelegateIfInControl(action, [this, &behaviorExternalInterface](){ TransitionToPickupCube(behaviorExternalInterface); });
+  DelegateIfInControl(action, [this](){ TransitionToPickupCube(); });
 }
 
-void BehaviorPlaypenPickupCube::TransitionToPickupCube(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPlaypenPickupCube::TransitionToPickupCube()
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
+  Robot& robot = GetBEI().GetRobotInfo()._robot;
 
   _expectedCubePose = kExpectedCubePose;
   _expectedCubePose.SetParent(robot.GetWorldOrigin());
@@ -180,10 +180,10 @@ void BehaviorPlaypenPickupCube::TransitionToPickupCube(BehaviorExternalInterface
   action->SetShouldCheckForObjectOnTopOf(false);
   action->SetDoLiftLoadCheck(true);
   
-  DelegateIfInControl(action, [this, &behaviorExternalInterface, objectID = object->GetID()](ActionResult result) {
+  DelegateIfInControl(action, [this, objectID = object->GetID()](ActionResult result) {
     // DEPRECATED - Grabbing robot to support current cozmo code, but this should
     // be removed
-    Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
+    Robot& robot = GetBEI().GetRobotInfo()._robot;
     
     
     if(!(result == ActionResult::SUCCESS &&
@@ -192,7 +192,7 @@ void BehaviorPlaypenPickupCube::TransitionToPickupCube(BehaviorExternalInterface
       PLAYPEN_SET_RESULT(FactoryTestResultCode::PICKUP_FAILED)
     }
     
-    TransitionToPlaceCube(behaviorExternalInterface);
+    TransitionToPlaceCube();
   });
   
   if(object->GetType() == ObjectType::Block_LIGHTCUBE_GHOST)
@@ -202,11 +202,11 @@ void BehaviorPlaypenPickupCube::TransitionToPickupCube(BehaviorExternalInterface
   }
 }
 
-void BehaviorPlaypenPickupCube::TransitionToPlaceCube(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPlaypenPickupCube::TransitionToPlaceCube()
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
+  Robot& robot = GetBEI().GetRobotInfo()._robot;
 
   Radians robotAngleAfterBackup = robot.GetPose().GetRotationMatrix().GetAngleAroundAxis<'Z'>();
   f32 angleChange_rad = std::fabsf((robotAngleAfterBackup - _robotAngleAtPickup).ToFloat());
@@ -220,10 +220,10 @@ void BehaviorPlaypenPickupCube::TransitionToPlaceCube(BehaviorExternalInterface&
   }
   
   PlaceObjectOnGroundAction* action = new PlaceObjectOnGroundAction();
-  DelegateIfInControl(action, [this, &behaviorExternalInterface](ActionResult result) {
+  DelegateIfInControl(action, [this](ActionResult result) {
     // DEPRECATED - Grabbing robot to support current cozmo code, but this should
     // be removed
-    Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
+    Robot& robot = GetBEI().GetRobotInfo()._robot;
 
     if(!(result == ActionResult::SUCCESS &&
          !robot.GetCarryingComponent().IsCarryingObject()))
@@ -231,17 +231,17 @@ void BehaviorPlaypenPickupCube::TransitionToPlaceCube(BehaviorExternalInterface&
       PLAYPEN_SET_RESULT(FactoryTestResultCode::PLACEMENT_FAILED);
     }
     
-    TransitionToBackup(behaviorExternalInterface);
+    TransitionToBackup();
   });
 }
 
-void BehaviorPlaypenPickupCube::TransitionToBackup(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPlaypenPickupCube::TransitionToBackup()
 {
   PlayAnimationAction* action = new PlayAnimationAction("anim_triple_backup");
-  DelegateIfInControl(action, [this, &behaviorExternalInterface]() {
+  DelegateIfInControl(action, [this]() {
     // DEPRECATED - Grabbing robot to support current cozmo code, but this should
     // be removed
-    Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
+    Robot& robot = GetBEI().GetRobotInfo()._robot;
 
     // Check that robot orientation didn't change much since it lifted up the block
     Radians robotAngleAfterBackAndForth = robot.GetPose().GetRotation().GetAngleAroundZaxis();
@@ -259,13 +259,12 @@ void BehaviorPlaypenPickupCube::TransitionToBackup(BehaviorExternalInterface& be
   });
 }
 
-void BehaviorPlaypenPickupCube::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPlaypenPickupCube::OnBehaviorDeactivated()
 {
   _robotAngleAtPickup = 0;
 }
 
-void BehaviorPlaypenPickupCube::HandleWhileActivatedInternal(const RobotToEngineEvent& event, 
-                                                             BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPlaypenPickupCube::HandleWhileActivatedInternal(const RobotToEngineEvent& event)
 {
   const auto& tag = event.GetData().GetTag();
   if(tag == RobotInterface::RobotToEngineTag::pickAndPlaceResult)
@@ -275,7 +274,7 @@ void BehaviorPlaypenPickupCube::HandleWhileActivatedInternal(const RobotToEngine
     {
       // DEPRECATED - Grabbing robot to support current cozmo code, but this should
       // be removed
-      Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
+      Robot& robot = GetBEI().GetRobotInfo()._robot;
       
       _robotAngleAtPickup = robot.GetPose().GetRotation().GetAngleAroundZaxis();
     }

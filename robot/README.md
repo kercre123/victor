@@ -1,3 +1,5 @@
+# OUT OF DATE
+
 # Cozmo Firmware
 
 Cozmo 1.x firmware for inclusion in the app is now build on the build servers. This document describes how the multiple
@@ -15,7 +17,7 @@ Each processor needs firmware and some of the firmware images rely on sub-images
 firmware for all processors except the Espressif is built via Keil on Windows, much of the firmware build is done
 in Windows. However, [CLAD](../tools/message-buffers/README.md) generated code is used extensively in the
 firmware and it must be run in a unix like environment. Debugging strings in the firmware are also replaced with 
-a shared string table by [AnkiLogPP](tools/ankiLogPP.py) tool. Finally, the firmware images are packed together
+a shared string table by AnkiLogPP tool. Finally, the firmware images are packed together
 into a secure _.safe_ file.
 
 ### Build Flavors
@@ -46,7 +48,7 @@ build flavor and will cause some code to be compiled in or out. See below for mo
 * Keil 4 or greater
 
 **Espressif**
-* Espressif toolchain, see [Espressif readme](espressif/README.md)
+* Espressif toolchain
 
 ## Building Firmware Locally
 
@@ -66,8 +68,7 @@ This will place copies of the current build server created firmware for your bra
 
 ### Pre-build
 
-Before building any firmware, CLAD code generation must be run and the debug string table –
-[AnkiLogPP](tools/ankiLogPP.py) – must be updated, and the build flavor must be set. The prebuild step does all these as
+Before building any firmware, CLAD code generation must be run and the debug string table – AnkiLogPP – must be updated, and the build flavor must be set. The prebuild step does all these as
 
 ```
 make dev [BUILD_TYPE=<type>]
@@ -121,8 +122,7 @@ in each build flavor.
 
 ## Trace Strings
 
-To save code space and bandwidth, debugging strings in the firmware can be converted into a shared string table by the
-[AnkiLogPP](tools/ankiLogPP.py) tool. 
+To save code space and bandwidth, debugging strings in the firmware can be converted into a shared string table by the AnkiLogPP tool. 
 1. Walks over all the firmware looking for macros as defined in `include/anki/cozmo/robot/logging.h`
 2. If running in preprocessor mode (only during `make dev` prebuild step)
 3. Generates the string table json for the app / python tools to use to format trace messages.

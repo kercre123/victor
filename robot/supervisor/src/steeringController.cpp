@@ -656,7 +656,9 @@ namespace Anki {
         angularDistExpected_ = destAngle - currAngle;
       }
       
-      if (fabsf(angularDistExpected_) < pointTurnAngTol_) {
+      // Exit early if we're already within tolerance of the target and not currently moving.
+      // (If wheels are moving we might be outside of tolerance by the time they stop.)
+      if ((fabsf(angularDistExpected_) < pointTurnAngTol_) && !WheelController::AreWheelsMoving()) {
         ExitPointTurn();
         AnkiDebug( "SteeringController.ExecutePointTurn.AlreadyAtDest", "");
         return;

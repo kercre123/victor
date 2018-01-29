@@ -28,8 +28,134 @@ public:
   void WaitOnKeyboardToConnect();
 
 protected:
+  bool RegisterKeyFcn(int key, int modifier, std::function<void()> fcn, const char* help_msg, std::string display_string = "");
   void ProcessKeystroke();
+  void ProcessKeyPressFunction(int key, int modifier);
+  
+  // === Key press functions ===
   void PrintHelp();
+  
+  void LogRawProxData();
+  void ToggleVizDisplay();
+  void TogglePoseMarkerMode();
+  void PlayNeedsGetOutAnimIfNeeded();
+  void GotoPoseMarker();
+  
+  void ToggleEngineLightComponent();
+  void SearchForNearbyObject();
+  void ToggleCliffSensorEnable();
+  void ToggleTestBackpackLights();
+  
+  void ToggleTrackToFace();
+  void ToggleTrackToObject();
+  void TrackPet();
+  void ExecuteTestPlan();
+  
+  void ToggleCubeAccelStreaming();
+  void ExecuteBehavior();
+  void LogCliffSensorData();
+  
+  void FakeCloudIntent();
+  
+  void NVStorage_EraseTag();
+  void NVStorage_ReadTag();
+  void SetEmotion();
+  
+  void PickOrPlaceObject();
+  void MountSelectedCharger();
+  
+  void PopAWheelie();
+  void RollObject();
+  
+  void SetControllerGains();
+  
+  void ToggleVisionWhileMoving();
+  void SetRobotVolume();
+  
+  void SetActiveObjectLights();
+  
+  void AlignWithObject();
+  void TurnTowardsObject();
+  void GotoObject();
+  void RequestIMUData();
+  
+  void AssociateNameWithCurrentFace();
+  void TurnTowardsFace();
+  void EraseLastObservedFace();
+  void ToggleFaceDetection();
+  
+  void DenyGameStart();
+  void FillNeedsMeters();
+  void SetUnlock();
+  
+  void ToggleImageStreaming();
+  
+  void FlipSelectedBlock();
+  
+  void RequestSingleImageToGame();
+  void ToggleImageStreamingToGame();
+  void SaveSingleImage();
+  void ToggleImageSaving();
+  void ToggleImageAndStateSaving();
+  
+  void TurnInPlaceCCW();
+  void TurnInPlaceCW();
+  
+  void ExecutePlaypenTest();
+  void ToggleSendAvailableObjects();
+  
+  void ReadCameraCalibration();
+  void ReadGameSkills();
+  void ReadMfgTestData();
+  
+  void SetFaceDisplayHue();
+  void SendRandomProceduralFace();
+  
+  void PushIdleAnimation();
+  void PlayAnimation();
+  void PlayAnimationGroup();
+  
+  void RunDebugConsoleFunc();
+  void SetDebugConsoleVar();
+
+  void SetRollActionParams();
+  void SetCameraSettings();
+  void SayText();
+  void PlayCubeAnimation();
+  
+  void TurnTowardsImagePoint();
+  void QuitKeyboardController();
+  void ToggleLiftPower();
+  
+  void MoveLiftToLowDock();
+  void MoveLiftToHighDock();
+  void MoveLiftToCarryHeight();
+  
+  void MoveHeadToLowLimit();
+  void MoveHeadToHorizontal();
+  void MoveHeadToHighLimit();
+  
+  void MoveHeadUp();
+  void MoveHeadDown();
+  void MoveLiftUp();
+  void MoveLiftDown();
+  
+  void DriveForward();
+  void DriveBackward();
+  void DriveLeft();
+  void DriveRight();
+  
+  void ExecuteRobotTestMode();
+  
+  // ==== End of key press functions ====
+  
+  
+  f32 GetLiftSpeed_radps();
+  f32 GetLiftAccel_radps2();
+  f32 GetLiftDuration_sec();
+  f32 GetHeadSpeed_radps();
+  f32 GetHeadAccel_radps2();
+  f32 GetHeadDuration_sec();
   
   void TestLightCube();
   

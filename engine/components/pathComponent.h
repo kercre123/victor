@@ -16,6 +16,10 @@
 #include "coretech/common/shared/types.h"
 #include "coretech/planning/shared/goalDefs.h"
 #include "coretech/planning/shared/path.h"
+
+#include "engine/dependencyManagedComponent.h"
+#include "engine/robotComponents_fwd.h"
+
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include <vector>
@@ -83,14 +87,28 @@ constexpr const char* ERobotDriveToPoseStatusToString(ERobotDriveToPoseStatus st
 #undef HANDLE_ETDTPS_CASE
 }
 
-class PathComponent : private Util::noncopyable
+class PathComponent : public IDependencyManagedComponent<RobotComponentID>, private Util::noncopyable
 {
 public:
-
   // Constructor takes a robotID because the passed in robot may still be under construction when this
   // constructor is called, and therefore we shouldn't trust it's contents (just store it and pass it around)
-  PathComponent(Robot& robot, const RobotID_t robotID, const CozmoContext* context);
+  PathComponent();
   ~PathComponent();
+
+  //////
+  // IDependencyManagedComponent functions
+  //////
+  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
+  // Maintain the chain of initializations currently in robot - it might be possible to
+  // change the order of initialization down the line, but be sure to check for ripple effects
+  // when changing this function
+  virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
+    dependencies.insert(RobotComponentID::EngineAudioClient);
+  };
+  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override{};
+  //////
+  // end IDependencyManagedComponent functions
+  //////
 
   const SpeedChooser& GetSpeedChooser() const { return *_speedChooser; }
   SpeedChooser& GetSpeedChooser() { return *_speedChooser; }
@@ -255,7 +273,7 @@ private:
   std::unique_ptr<PathMotionProfile> _pathMotionProfile;
   std::unique_ptr<PlanParameters>    _currPlanParams;
   
-  Robot& _robot;
+  Robot* _robot;
   
   Signal::SmartHandle _pathEventHandle;
   

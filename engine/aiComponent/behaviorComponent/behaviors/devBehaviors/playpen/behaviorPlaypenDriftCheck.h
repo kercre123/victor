@@ -27,17 +27,18 @@ protected:
   BehaviorPlaypenDriftCheck(const Json::Value& config);
   
 protected:
-  
-  virtual Result OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)   override;
-  virtual PlaypenStatus PlaypenUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void           OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)   override;
-  
-  virtual bool ShouldRunWhileOnCharger() const override { return true; }
-  
+  virtual void GetBehaviorOperationModifiersInternal(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenOnCharger = true;
+  }
+
+  virtual Result OnBehaviorActivatedInternal()   override;
+  virtual PlaypenStatus PlaypenUpdateInternal() override;
+  virtual void           OnBehaviorDeactivated()   override;
+    
 private:
   
-  void TransitionToStartDriftCheck(BehaviorExternalInterface& behaviorExternalInterface);
-  void CheckDrift(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToStartDriftCheck();
+  void CheckDrift();
   
   // Angle at the start of drift check
   Radians _startingRobotOrientation = 0;

@@ -75,8 +75,8 @@ namespace Anki {
       const Point<f32>& squareSizeFraction,
       const Point<f32>& roundedCornerFraction,
       const s32 maxIterations,
-      const f32 darkGray,
-      const f32 brightGray,
+      const f32 foregroundGray,
+      const f32 backgroundGray,
       const s32 numSamples,
       const f32 maxCornerChange,
       const f32 minCornerChange,
@@ -131,7 +131,7 @@ namespace Anki {
       // Tx = Contrast/2 * diagonal*[TxInner TxOuter]';
       // Ty = Contrast/2 * diagonal*[TyInner TyOuter]';
 
-      const f32 contrast = (brightGray - darkGray)/255.f;
+      const f32 contrast = (backgroundGray - foregroundGray)/255.f;
       const f32 derivMagnitude = 0.5f * contrast * diagonal;
 
       // N = ceil(NumSamples/8);
@@ -526,7 +526,7 @@ namespace Anki {
       // NOTE: We don't need Tx or Ty from here on.  Can we pop them somehow?
 
       // template = (Contrast/2)*ones(size(xsquare));
-      const f32 templatePixelValue = 0.5f*(darkGray + brightGray);
+      const f32 templatePixelValue = 0.5f*(foregroundGray + backgroundGray);
 
       const s32 imageHeight = image.get_size(0);
       const s32 imageWidth = image.get_size(1);

@@ -59,7 +59,7 @@ BehaviorReactToPet::BehaviorReactToPet(const Json::Value& config)
 // Called at the start of each tick. Return true if behavior can run.
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorReactToPet::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorReactToPet::WantsToBeActivatedBehavior() const
 {
   if (AlreadyReacting()) {
     PRINT_TRACE("ReactToPet.WantsToBeActivatedBehavior.AlreadyReacting", "Already reacting to a pet");
@@ -79,17 +79,17 @@ bool BehaviorReactToPet::WantsToBeActivatedBehavior(BehaviorExternalInterface& b
 // Called each time behavior becomes active.
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToPet::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToPet::OnBehaviorActivated()
 {
   PRINT_INFO("ReactToPet.Init.BeginIteration", "Begin iteration");
-  BeginIteration(behaviorExternalInterface);
+  BeginIteration();
 }
   
 //
 // Called each tick while behavior is active.
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToPet::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToPet::BehaviorUpdate()
 {
   if(!IsActivated()){
     return;
@@ -102,7 +102,7 @@ void BehaviorReactToPet::BehaviorUpdate(BehaviorExternalInterface& behaviorExter
   //
   if (_target == UnknownFaceID) {
     PRINT_TRACE("ReactToPet.Update.MissingTarget", "Missing target during update");
-    EndIteration(behaviorExternalInterface);
+    EndIteration();
     CancelSelf();
     return;
   }
@@ -115,7 +115,7 @@ void BehaviorReactToPet::BehaviorUpdate(BehaviorExternalInterface& behaviorExter
     const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     if (_endReactionTime_s < currTime_s) {
       PRINT_TRACE("ReactToPet.Update.ReactionTimeExpired", "Reaction time has expired");
-      EndIteration(behaviorExternalInterface);
+      EndIteration();
       CancelSelf();
       return;
     }
@@ -128,7 +128,7 @@ void BehaviorReactToPet::BehaviorUpdate(BehaviorExternalInterface& behaviorExter
 // This can happen if behavior is preempted during iteration.
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToPet::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToPet::OnBehaviorDeactivated()
 {
   PRINT_TRACE("ReactToPet.Stop", "Stop behavior");
   
@@ -171,7 +171,7 @@ AnimationTrigger BehaviorReactToPet::GetAnimationTrigger(Vision::PetType petType
 // Called by ReactToPet.Init to start reaction cycle
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToPet::BeginIteration(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToPet::BeginIteration()
 {
   // Trigger should always provide targets
   DEV_ASSERT(!_targets.empty(), "BehaviorReactToPet.BeginIteration.NoTargets");
@@ -179,7 +179,7 @@ void BehaviorReactToPet::BeginIteration(BehaviorExternalInterface& behaviorExter
   _target = Vision::UnknownFaceID;
   
   // React to the first valid target.  Don't worry about choosing "best".
-  const auto & petWorld = behaviorExternalInterface.GetPetWorld();
+  const auto & petWorld = GetBEI().GetPetWorld();
   const Vision::TrackedPet * pet = nullptr;
   
   for (auto petID : _targets) {
@@ -206,7 +206,7 @@ void BehaviorReactToPet::BeginIteration(BehaviorExternalInterface& behaviorExter
   // Tracking animations do not end by themselves.
   // Choose a random duration and rely on BehaviorUpdate() to end the action.
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  const float randTime_s = Util::numeric_cast<float>(behaviorExternalInterface.GetRNG().RandDblInRange(kReactToPetMinTime_s, kReactToPetMaxTime_s));
+  const float randTime_s = Util::numeric_cast<float>(GetBEI().GetRNG().RandDblInRange(kReactToPetMinTime_s, kReactToPetMaxTime_s));
   const float endTime_s = currTime_s + randTime_s;
 
   PRINT_INFO("ReactToPet.BeginIteration", "Reacting to petID %d type %d from t=%f to t=%f",
@@ -250,7 +250,7 @@ void BehaviorReactToPet::BeginIteration(BehaviorExternalInterface& behaviorExter
 // Could also be called by tracking action if action reaches end.
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToPet::EndIteration(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToPet::EndIteration()
 {
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   

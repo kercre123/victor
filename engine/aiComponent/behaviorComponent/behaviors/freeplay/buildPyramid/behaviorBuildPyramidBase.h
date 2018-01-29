@@ -39,10 +39,8 @@ protected:
 
   
 public:
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  
-  virtual bool CarryingObjectHandledInternally() const override {return true;}
-  
+  virtual bool WantsToBeActivatedBehavior() const override;
+    
   // returns false if the base block id has not been set
   bool GetBaseBlockID(ObjectID& id) const;
   bool GetStaticBlockID(ObjectID& id) const;
@@ -60,23 +58,26 @@ protected:
     SearchingForObject
   };
   
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenCarryingObject = true;
+  }
   
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated() override;
+  virtual void BehaviorUpdate() override;
 
-  void TransitionToDrivingToBaseBlock(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToPlacingBaseBlock(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToObservingBase(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToDrivingToBaseBlock();
+  void TransitionToPlacingBaseBlock();
+  void TransitionToObservingBase();
 
   // utility functions
   void SetState_internal(State state, const std::string& stateName);
   void ResetMemberVars();
   // Returns true if any pyramid targets have changed
-  bool UpdatePyramidTargets(BehaviorExternalInterface& behaviorExternalInterface) const;
+  bool UpdatePyramidTargets() const;
   
   // Ensures that blocks IDs which become invalid are cleared out of
   // the assigned ObjectIDs below - not actually const
-  void ClearInvalidBlockIDs(BehaviorExternalInterface& behaviorExternalInterface) const;
+  void ClearInvalidBlockIDs() const;
   
   /// Attributes
   mutable ObjectID _staticBlockID;
@@ -90,7 +91,7 @@ protected:
   float _timeLastBaseDestroyed;
   
   // callback set by derived classes to continue performing actions after the base is built
-  SimpleCallbackWithRobot _continuePastBaseCallback;
+  BehaviorSimpleCallback _continuePastBaseCallback;
   
   // track the behavior state for update state checks
   State _behaviorState;
@@ -102,10 +103,8 @@ protected:
 private:
   // update the offsets for placing the block based on the nearest pose that
   // doesn't have a block in the way
-  void UpdateBlockPlacementOffsets(BehaviorExternalInterface& behaviorExternalInterface,
-                                   f32& xOffset, f32& yOffset) const;
-  bool CheckBaseBlockPoseIsFree(BehaviorExternalInterface& behaviorExternalInterface,
-                                f32 xOffset, f32 yOffset) const;
+  void UpdateBlockPlacementOffsets(f32& xOffset, f32& yOffset) const;
+  bool CheckBaseBlockPoseIsFree(f32 xOffset, f32 yOffset) const;
   bool AreAllBlockIDsUnique() const;
 
 }; //class BehaviorBuildPyramidBase

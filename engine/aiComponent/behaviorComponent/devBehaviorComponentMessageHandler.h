@@ -34,14 +34,20 @@ class Robot;
 class BehaviorComponent;
 class BehaviorContainer;
 
-class DevBehaviorComponentMessageHandler : private Util::noncopyable
+class DevBehaviorComponentMessageHandler : public IDependencyManagedComponent<BCComponentID>, private Util::noncopyable
 {
 public:
-  DevBehaviorComponentMessageHandler(Robot& robot, BehaviorComponent& bComponent, BehaviorContainer& bContainer);
+  virtual void InitDependent(Robot* robot, const BCCompMap& dependentComponents) override;
+  virtual void UpdateDependent(const BCCompMap& dependentComponents) override {};
+  virtual void GetInitDependencies(BCCompIDSet& dependencies) const override;
+  virtual void GetUpdateDependencies(BCCompIDSet& dependencies) const override {};
+
+public:
+  DevBehaviorComponentMessageHandler(Robot& robot);
   virtual ~DevBehaviorComponentMessageHandler();
   
 private:
-  BehaviorComponent& _behaviorComponent;
+  Robot& _robot;
   std::vector<::Signal::SmartHandle> _eventHandles;
   ICozmoBehaviorPtr _rerunBehavior;
 

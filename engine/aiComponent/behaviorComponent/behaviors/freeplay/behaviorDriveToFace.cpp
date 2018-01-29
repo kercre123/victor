@@ -50,17 +50,17 @@ BehaviorDriveToFace::BehaviorDriveToFace(const Json::Value& config)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorDriveToFace::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorDriveToFace::WantsToBeActivatedBehavior() const
 {
-  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  const auto& robotInfo = GetBEI().GetRobotInfo();
   
   Pose3d facePose;
-  const TimeStamp_t timeLastFaceObserved = behaviorExternalInterface.GetFaceWorld().GetLastObservedFace(facePose, true);
+  const TimeStamp_t timeLastFaceObserved = GetBEI().GetFaceWorld().GetLastObservedFace(facePose, true);
   const bool lastFaceInCurrentOrigin = robotInfo.IsPoseInWorldOrigin(facePose);
   if(lastFaceInCurrentOrigin){
-    const auto facesObserved = behaviorExternalInterface.GetFaceWorld().GetFaceIDsObservedSince(timeLastFaceObserved);
+    const auto facesObserved = GetBEI().GetFaceWorld().GetFaceIDsObservedSince(timeLastFaceObserved);
     if(facesObserved.size() > 0){
-      _targetFace = behaviorExternalInterface.GetFaceWorld().GetSmartFaceID(*facesObserved.begin());
+      _targetFace = GetBEI().GetFaceWorld().GetSmartFaceID(*facesObserved.begin());
     }else{
       _targetFace.Reset();
     }
@@ -71,10 +71,10 @@ bool BehaviorDriveToFace::WantsToBeActivatedBehavior(BehaviorExternalInterface& 
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDriveToFace::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDriveToFace::OnBehaviorActivated()
 {
   if(_targetFace.IsValid()){
-    TransitionToTurningTowardsFace(behaviorExternalInterface);
+    TransitionToTurningTowardsFace();
     
   }else{
     PRINT_NAMED_WARNING("BehaviorDriveToFace.InitInternal.NoValidFace",
@@ -84,7 +84,7 @@ void BehaviorDriveToFace::OnBehaviorActivated(BehaviorExternalInterface& behavio
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDriveToFace::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDriveToFace::BehaviorUpdate()
 {
   if(!IsActivated()){
     return;
@@ -99,29 +99,29 @@ void BehaviorDriveToFace::BehaviorUpdate(BehaviorExternalInterface& behaviorExte
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDriveToFace::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDriveToFace::OnBehaviorDeactivated()
 {
   _targetFace.Reset();
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDriveToFace::TransitionToTurningTowardsFace(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDriveToFace::TransitionToTurningTowardsFace()
 {
   SET_STATE(TurnTowardsFace);
-  const Vision::TrackedFace* facePtr = behaviorExternalInterface.GetFaceWorld().GetFace(_targetFace);
+  const Vision::TrackedFace* facePtr = GetBEI().GetFaceWorld().GetFace(_targetFace);
   if(facePtr != nullptr){
     CompoundActionSequential* turnAndVerifyAction = new CompoundActionSequential();
     turnAndVerifyAction->AddAction(new TurnTowardsFaceAction(_targetFace));
     turnAndVerifyAction->AddAction(new VisuallyVerifyFaceAction(facePtr->GetID()));
     
     DelegateIfInControl(new TurnTowardsFaceAction(_targetFace),
-                [this, &behaviorExternalInterface, &facePtr](ActionResult result){
+                [this, &facePtr](ActionResult result){
                   if(result == ActionResult::SUCCESS){
-                    if(IsCozmoAlreadyCloseEnoughToFace(behaviorExternalInterface, facePtr->GetID())){
-                      TransitionToAlreadyCloseEnough(behaviorExternalInterface);
+                    if(IsCozmoAlreadyCloseEnoughToFace(facePtr->GetID())){
+                      TransitionToAlreadyCloseEnough();
                     }else{
-                      TransitionToDrivingToFace(behaviorExternalInterface);
+                      TransitionToDrivingToFace();
                     }
                   }
                 });
@@ -130,13 +130,13 @@ void BehaviorDriveToFace::TransitionToTurningTowardsFace(BehaviorExternalInterfa
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDriveToFace::TransitionToDrivingToFace(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDriveToFace::TransitionToDrivingToFace()
 {
   SET_STATE(DriveToFace);
   float distToHead;
-  const Vision::TrackedFace* facePtr = behaviorExternalInterface.GetFaceWorld().GetFace(_targetFace);
+  const Vision::TrackedFace* facePtr = GetBEI().GetFaceWorld().GetFace(_targetFace);
   if(facePtr != nullptr &&
-     CalculateDistanceToFace(behaviorExternalInterface, facePtr->GetID(), distToHead)){
+     CalculateDistanceToFace(facePtr->GetID(), distToHead)){
     DriveStraightAction* driveAction = new DriveStraightAction(distToHead - kMinDriveToFaceDistance_mm,
                                                                MAX_WHEEL_SPEED_MMPS);
     driveAction->SetDecel(DEFAULT_PATH_MOTION_PROFILE.decel_mmps2/kArbitraryDecelFactor);
@@ -146,7 +146,7 @@ void BehaviorDriveToFace::TransitionToDrivingToFace(BehaviorExternalInterface& b
 
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDriveToFace::TransitionToAlreadyCloseEnough(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDriveToFace::TransitionToAlreadyCloseEnough()
 {
   SET_STATE(AlreadyCloseEnough);
   DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::ComeHere_AlreadyHere),
@@ -155,13 +155,13 @@ void BehaviorDriveToFace::TransitionToAlreadyCloseEnough(BehaviorExternalInterfa
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDriveToFace::TransitionToTrackingFace(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDriveToFace::TransitionToTrackingFace()
 {
   SET_STATE(TrackFace);
   _timeCancelTracking_s = kTimeUntilCancelFaceTrack_s + BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   // Runs forever - the behavior will be stopped in the Update loop when the
   // timeout for face tracking is hit
-  const Vision::TrackedFace* facePtr = behaviorExternalInterface.GetFaceWorld().GetFace(_targetFace);
+  const Vision::TrackedFace* facePtr = GetBEI().GetFaceWorld().GetFace(_targetFace);
   if(facePtr != nullptr){
     const Vision::FaceID_t faceID = facePtr->GetID();
     DelegateIfInControl(new TrackFaceAction(faceID));
@@ -178,10 +178,10 @@ void BehaviorDriveToFace::SetState_internal(State state, const std::string& stat
 
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorDriveToFace::IsCozmoAlreadyCloseEnoughToFace(BehaviorExternalInterface& behaviorExternalInterface, Vision::FaceID_t faceID)
+bool BehaviorDriveToFace::IsCozmoAlreadyCloseEnoughToFace(Vision::FaceID_t faceID)
 {
   float distToHead;
-  if(CalculateDistanceToFace(behaviorExternalInterface, faceID, distToHead)){
+  if(CalculateDistanceToFace(faceID, distToHead)){
     return distToHead <= kMinDriveToFaceDistance_mm;
   }
   
@@ -190,12 +190,12 @@ bool BehaviorDriveToFace::IsCozmoAlreadyCloseEnoughToFace(BehaviorExternalInterf
 
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorDriveToFace::CalculateDistanceToFace(BehaviorExternalInterface& behaviorExternalInterface, Vision::FaceID_t faceID, float& distance)
+bool BehaviorDriveToFace::CalculateDistanceToFace(Vision::FaceID_t faceID, float& distance)
 {
   // Get the distance between the robot and the head's pose on the X/Y plane
-  const Vision::TrackedFace* facePtr = behaviorExternalInterface.GetFaceWorld().GetFace(_targetFace);
+  const Vision::TrackedFace* facePtr = GetBEI().GetFaceWorld().GetFace(_targetFace);
   if(facePtr != nullptr){
-    const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+    const auto& robotInfo = GetBEI().GetRobotInfo();
 
     
     Pose3d headPoseModified = facePtr->GetHeadPose();

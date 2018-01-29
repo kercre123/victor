@@ -24,6 +24,9 @@ namespace Anki {
 namespace JsonTools
 {
   bool GetValueOptional(const Json::Value& config, const std::string& key, Cozmo::AnimationTrigger& value);
+  
+  Cozmo::AnimationTrigger ParseAnimationTrigger(const Json::Value& config, const char* key, const std::string& debugName);
+
 }
 } // namespace Anki
 

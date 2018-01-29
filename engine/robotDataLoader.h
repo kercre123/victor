@@ -39,6 +39,7 @@ namespace Cozmo {
 
 class AnimationGroupContainer;
 class BackpackLightAnimationContainer;
+class CannedAnimationContainer;
 class CubeLightAnimationContainer;
 class CozmoContext;
 class AnimationTriggerResponsesContainer;
@@ -68,6 +69,7 @@ public:
   const FileJsonMap& GetEmotionEventJsons()   const { return _emotionEvents; }
   const BehaviorIDJsonMap& GetBehaviorJsons() const { return _behaviors; }
   
+  CannedAnimationContainer* GetCannedAnimationContainer() const { return _cannedAnimations.get(); }
   CubeLightAnimationContainer* GetCubeLightAnimations() const { return _cubeLightAnimations.get(); }
   AnimationGroupContainer* GetAnimationGroups() const { return _animationGroups.get(); }
   AnimationTriggerResponsesContainer* GetAnimationTriggerResponses() const { return _animationTriggerResponses.get(); }
@@ -79,6 +81,7 @@ public:
   const Json::Value& GetVictorFreeplayBehaviorConfig() const { return _victorFreeplayBehaviorConfig; }
   const Json::Value& GetRobotWorkoutConfig() const           { return _robotWorkoutConfig; }
   const Json::Value& GetRobotVisionConfig() const            { return _robotVisionConfig; }
+  const Json::Value& GetVisionScheduleMediatorConfig() const { return _visionScheduleMediatorConfig; }
   const Json::Value& GetVoiceCommandConfig() const           { return _voiceCommandConfig; }
   const Json::Value& GetRobotNeedsConfig() const             { return _needsSystemConfig; }
   const Json::Value& GetStarRewardsConfig() const            { return _starRewardsConfig; }
@@ -134,6 +137,7 @@ private:
   std::unordered_map<int, std::vector<std::string>> _jsonFiles;
 
   // animation data
+  std::unique_ptr<CannedAnimationContainer>           _cannedAnimations;
   std::unique_ptr<CubeLightAnimationContainer>        _cubeLightAnimations;
   std::unique_ptr<AnimationGroupContainer>            _animationGroups;
   std::unique_ptr<AnimationTriggerResponsesContainer> _animationTriggerResponses;
@@ -150,6 +154,7 @@ private:
   Json::Value _robotMoodConfig;
   Json::Value _victorFreeplayBehaviorConfig;
   Json::Value _robotVisionConfig;
+  Json::Value _visionScheduleMediatorConfig;
   Json::Value _robotWorkoutConfig;
   Json::Value _voiceCommandConfig;
   Json::Value _needsSystemConfig;

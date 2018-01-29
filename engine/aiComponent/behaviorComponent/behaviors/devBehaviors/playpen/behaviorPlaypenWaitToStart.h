@@ -29,13 +29,14 @@ protected:
   BehaviorPlaypenWaitToStart(const Json::Value& config);
   
 protected:
+  virtual void GetBehaviorOperationModifiersInternal(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenOnCharger = true;
+  }
   
-  virtual Result        OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual PlaypenStatus PlaypenUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void          OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  
-  virtual bool ShouldRunWhileOnCharger() const override { return true; }
-  
+  virtual Result        OnBehaviorActivatedInternal() override;
+  virtual PlaypenStatus PlaypenUpdateInternal() override;
+  virtual void          OnBehaviorDeactivated() override;
+    
 private:
   
   TimeStamp_t _touchStartTime_ms = 0;

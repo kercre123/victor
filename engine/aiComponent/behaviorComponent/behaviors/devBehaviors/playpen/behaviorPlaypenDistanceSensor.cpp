@@ -65,11 +65,11 @@ BehaviorPlaypenDistanceSensor::BehaviorPlaypenDistanceSensor(const Json::Value& 
   SubscribeToTags({EngineToGameTag::RobotObservedObject});
 }
 
-Result BehaviorPlaypenDistanceSensor::OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)
+Result BehaviorPlaypenDistanceSensor::OnBehaviorActivatedInternal()
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
+  Robot& robot = GetBEI().GetRobotInfo()._robot;
 
   if(_expectedObjectType == ObjectType::UnknownObject)
   {
@@ -96,16 +96,16 @@ Result BehaviorPlaypenDistanceSensor::OnBehaviorActivatedInternal(BehaviorExtern
   WaitForImagesAction* wait = new WaitForImagesAction(5, VisionMode::DetectingMarkers);
   
   CompoundActionSequential* action = new CompoundActionSequential({liftHeadDrive, turn, wait});
-  DelegateIfInControl(action, [this, &behaviorExternalInterface]() { TransitionToRefineTurn(behaviorExternalInterface); });
+  DelegateIfInControl(action, [this]() { TransitionToRefineTurn(); });
   
   return RESULT_OK;
 }
 
-IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenDistanceSensor::PlaypenUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenDistanceSensor::PlaypenUpdateInternal()
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
+  Robot& robot = GetBEI().GetRobotInfo()._robot;
 
   // Haven't started recording distance readings yet
   if(_numRecordedReadingsLeft == -1)
@@ -124,7 +124,7 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenDistanceSensor::PlaypenUpdateInte
     data.visualAngleAwayFromTarget_rad = 0;
     
     Pose3d markerPose;
-    const bool res = GetExpectedObjectMarkerPoseWrtRobot(behaviorExternalInterface, markerPose);
+    const bool res = GetExpectedObjectMarkerPoseWrtRobot(markerPose);
     if(res)
     {
       data.visualDistanceToTarget_mm = markerPose.GetTranslation().x();
@@ -167,29 +167,29 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenDistanceSensor::PlaypenUpdateInte
     // If we aren't acting then turn back to where we were facing when the behavior started
     if(!IsActing())
     {
-      TransitionToTurnBack(behaviorExternalInterface);
+      TransitionToTurnBack();
     }
     return PlaypenStatus::Running;
   }
 }
 
-void BehaviorPlaypenDistanceSensor::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPlaypenDistanceSensor::OnBehaviorDeactivated()
 {
   _startingAngle = 0;
   _numRecordedReadingsLeft = -1;
 }
 
-void BehaviorPlaypenDistanceSensor::TransitionToRefineTurn(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPlaypenDistanceSensor::TransitionToRefineTurn()
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
+  Robot& robot = GetBEI().GetRobotInfo()._robot;
 
   TurnInPlaceAction* action = new TurnInPlaceAction(0, false);
 
   // Get the pose of the marker we should be seeing
   Pose3d markerPose;
-  const bool res = GetExpectedObjectMarkerPoseWrtRobot(behaviorExternalInterface, markerPose);
+  const bool res = GetExpectedObjectMarkerPoseWrtRobot(markerPose);
   if(res)
   {
     // Check that we are within expected distance to the marker
@@ -228,26 +228,25 @@ void BehaviorPlaypenDistanceSensor::TransitionToRefineTurn(BehaviorExternalInter
   }
   
   // Once we are perpendicular to the marker, start recording distance sensor readings
-  DelegateIfInControl(action, [this, &behaviorExternalInterface]() { TransitionToRecordSensor(behaviorExternalInterface); });
+  DelegateIfInControl(action, [this]() { TransitionToRecordSensor(); });
 }
 
-void BehaviorPlaypenDistanceSensor::TransitionToRecordSensor(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPlaypenDistanceSensor::TransitionToRecordSensor()
 {
   _numRecordedReadingsLeft = PlaypenConfig::kNumDistanceSensorReadingsToRecord;
 }
 
-void BehaviorPlaypenDistanceSensor::TransitionToTurnBack(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPlaypenDistanceSensor::TransitionToTurnBack()
 {
   TurnInPlaceAction* action = new TurnInPlaceAction(_startingAngle.ToFloat(), true);
   DelegateIfInControl(action, [this]() { PLAYPEN_SET_RESULT(FactoryTestResultCode::SUCCESS); });
 }
 
-bool BehaviorPlaypenDistanceSensor::GetExpectedObjectMarkerPoseWrtRobot(BehaviorExternalInterface& behaviorExternalInterface,
-                                                                        Pose3d& markerPoseWrtRobot)
+bool BehaviorPlaypenDistanceSensor::GetExpectedObjectMarkerPoseWrtRobot(Pose3d& markerPoseWrtRobot)
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
+  Robot& robot = GetBEI().GetRobotInfo()._robot;
 
   BlockWorldFilter filter;
   filter.AddAllowedType(_expectedObjectType);

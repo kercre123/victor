@@ -53,6 +53,7 @@ namespace MicData {
 
   struct MicDirectionData
   {
+    int                   activeState = 0;
     DirectionIndex        winningDirection = 0;
     DirectionConfidence   winningConfidence = 0;
     DirectionConfidences  confidenceList{};

@@ -796,10 +796,7 @@ namespace Anki {
     {
       if (cliff_id == HAL::CLIFF_COUNT) {
         PRINT_NAMED_ERROR("simHAL.GetRawCliffData.InvalidCliffID", "");
-        // Note: The following used to be called getMaxRange() prior to Webots R2018a, and it's now called
-        // getMaxValue(). Cannot use getMaxValue() until everyone switches to Webots R2018a.
-        //return static_cast<u16>(cliffSensors_[HAL::CLIFF_FL]->getMaxValue());
-        return 999;
+        return static_cast<u16>(cliffSensors_[HAL::CLIFF_FL]->getMaxValue());
       }
       return static_cast<u16>(cliffSensors_[cliff_id]->getValue());
     }
@@ -816,14 +813,15 @@ namespace Anki {
 
     bool HAL::BatteryIsCharging()
     {
-      //return false; // XXX On Cozmo 3, head is off if robot is charging
       return (chargeContact_->getPresence() == 1);
     }
 
     bool HAL::BatteryIsOnCharger()
     {
-      //return false; // XXX On Cozmo 3, head is off if robot is charging
-      return (chargeContact_->getPresence() == 1);
+      // The _physical_ robot only knows that it's on the charger if
+      // the charge contacts are powered, so treat this the same as
+      // BatteryIsCharging()
+      return HAL::BatteryIsCharging();
     }
     
     bool HAL::BatteryIsChargerOOS()

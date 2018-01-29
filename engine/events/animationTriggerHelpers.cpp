@@ -32,6 +32,14 @@ bool GetValueOptional(const Json::Value& config, const std::string& key, Cozmo::
   return true;
 }
 
+
+Cozmo::AnimationTrigger ParseAnimationTrigger(const Json::Value& config, const char* key, const std::string& debugName) {
+  const auto& val = config[key];
+  DEV_ASSERT_MSG(val.isString(), (debugName + ".ParseString.NotValidString").c_str(), "%s", key);
+  return Cozmo::AnimationTriggerFromString(val.asCString());
+};
+
+
 }
 } // namespace Anki
 

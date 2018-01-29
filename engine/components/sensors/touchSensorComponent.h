@@ -15,6 +15,8 @@
 
 #include "engine/components/sensors/iSensorComponent.h"
 #include "engine/components/sensors/touchSensorHelpers.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
+#include "engine/entity.h"
 #include "clad/types/touchGestureTypes.h"
 #include "clad/types/factoryTestTypes.h"
 
@@ -26,8 +28,23 @@ class IBehaviorPlaypen;
 class TouchSensorComponent : public ISensorComponent
 {
 public:
-  TouchSensorComponent(Robot& robot);
+
+public:
+  TouchSensorComponent();
   ~TouchSensorComponent() = default;
+
+  //////
+  // IDependencyManagedComponent functions
+  //////
+  // Maintain the chain of initializations currently in robot - it might be possible to
+  // change the order of initialization down the line, but be sure to check for ripple effects
+  // when changing this function
+  virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
+    dependencies.insert(RobotComponentID::ProxSensor);
+  };
+  //////
+  // end IDependencyManagedComponent functions
+  //////
   
 protected:
   virtual void UpdateInternal(const RobotState& msg) override;

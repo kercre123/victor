@@ -88,7 +88,8 @@ int main(int argc, char **argv)
 #endif
 
   // - create and set logger
-  Util::IFormattedLoggerProvider* printfLoggerProvider = new Util::PrintfLoggerProvider(Anki::Util::ILoggerProvider::LOG_LEVEL_WARN);
+  Util::IFormattedLoggerProvider* printfLoggerProvider = new Util::PrintfLoggerProvider(Anki::Util::ILoggerProvider::LOG_LEVEL_WARN,
+                                                                                        params.colorizeStderrOutput);
   std::vector<Util::IFormattedLoggerProvider*> loggerVec;
   loggerVec.push_back(printfLoggerProvider);
     

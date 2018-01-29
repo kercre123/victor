@@ -33,9 +33,9 @@ protected:
   BehaviorDispatcherScoring(const Json::Value& config);
   
 
-  virtual ICozmoBehaviorPtr GetDesiredBehavior(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void InitDispatcher(BehaviorExternalInterface& behaviorExternalInterface) override;  
-  virtual void BehaviorDispatcher_OnDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual ICozmoBehaviorPtr GetDesiredBehavior() override;
+  virtual void InitDispatcher() override;  
+  virtual void BehaviorDispatcher_OnDeactivated() override;
   
 private:
   // indexes of scoringTracker correspond to the dispatchers stored in IBehaviorDispatcher

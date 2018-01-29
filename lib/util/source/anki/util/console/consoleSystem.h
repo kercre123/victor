@@ -63,7 +63,8 @@ public:
   void Register( const std::string& keystring, IConsoleVariable* variable );
   void Register( const std::string& keystring, ConsoleFunc function, const char* categoryName, const std::string& args );
   void Register( const std::string& keystring, IConsoleFunction* function );
-  
+  void Unregister( const std::string& keystring );
+
   bool Eval( const char *text, IConsoleChannel& channel );
   
   template< typename T>

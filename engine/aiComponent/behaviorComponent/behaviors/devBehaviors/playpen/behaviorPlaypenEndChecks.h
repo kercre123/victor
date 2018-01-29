@@ -28,10 +28,10 @@ protected:
   BehaviorPlaypenEndChecks(const Json::Value& config);
   
 protected:
-  virtual void InitBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void InitBehaviorInternal() override;
   
-  virtual Result OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)   override;
-  virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)   override;
+  virtual Result OnBehaviorActivatedInternal()   override;
+  virtual void   OnBehaviorDeactivated()   override;
     
 private:
 

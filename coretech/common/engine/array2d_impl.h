@@ -292,8 +292,8 @@ namespace Anki
     bool equal = (array1.GetNumRows() == array2.GetNumRows() &&
                   array1.GetNumCols() == array2.GetNumCols());
     
-    const T* data1 = array1.getDataPointer();
-    const T* data2 = array2.getDataPointer();
+    const T* data1 = array1.GetDataPointer();
+    const T* data2 = array2.GetDataPointer();
     
     s32 i=0;
     while(equal && i < array1.GetNumElements())

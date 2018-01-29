@@ -19,6 +19,7 @@
 #include "gtest/gtest.h"
 
 #include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
@@ -43,7 +44,13 @@ void RecursiveDelegation(Robot& robot,
     auto iter = delegateMap.find(topOfStack);
     if(iter != delegateMap.end()){
       for(auto& delegate: iter->second){
-        delegate->WantsToBeActivated(testFramework.GetBehaviorExternalInterface());
+        delegate->WantsToBeActivated();
+
+        // cancel all delegates (including actions) because the behaviors OnActivated may have delegated to
+        // something
+        auto& delegationComponent = testFramework.GetBehaviorExternalInterface().GetDelegationComponent();
+        delegationComponent.CancelDelegates(topOfStack);
+
         bsm.Delegate(topOfStack, delegate);
         RecursiveDelegation(robot, testFramework, delegateMap);
       }
@@ -87,8 +94,7 @@ TEST(DelegationTree, FullTreeWalkthrough)
   // Clear out the default stack and put the base behavior on the stack
   BehaviorSystemManager& bsm = testFramework.GetBehaviorSystemManager();
   bsm._behaviorStack->ClearStack();
-  bsm._behaviorStack->InitBehaviorStack(testFramework.GetBehaviorExternalInterface(),
-                                        baseBehavior);
+  bsm._behaviorStack->InitBehaviorStack(baseBehavior);
   IBehavior* bottomOfStack = bsm._behaviorStack->GetTopOfStack();
   
   std::map<IBehavior*,std::set<IBehavior*>> delegateMap;

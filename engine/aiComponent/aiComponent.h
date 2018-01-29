@@ -14,7 +14,11 @@
 #define __Cozmo_Basestation_Behaviors_AiComponent_H__
 
 #include "coretech/common/shared/types.h"
+#include "engine/aiComponent/aiComponents_fwd.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
+#include "engine/robotComponents_fwd.h"
 #include "engine/entity.h"
+#include "engine/dependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
 
 #include <assert.h>
@@ -40,41 +44,10 @@ class RequestGameComponent;
 class Robot;
 class SevereNeedsComponent;
 class WorkoutComponent;
-  
-enum class AIComponentID{
-  // component which manages all aspects of the AI system that relate to behaviors
-  BehaviorComponent,
-  // component which behaviors can delegate to for selecting a random Trick / Spark
-  DoATrick,
-  // provide a simple interface for selecting the best face to interact with
-  FaceSelection,
-  // Coordinates sound effect events across various feeding cubes/activities etc
-  FeedingSoundEffect,
-  // component for tracking freeplay DAS data
-  FreeplayDataTracker,
-  // module to analyze information for the AI in processes common to more than one behavior, for example
-  // border calculation
-  InformationAnalyzer,
-  // Component which tracks and caches the best objects to use for certain interactions
-  ObjectInteractionInfoCache,
-  // Component that maintains the puzzles victor can solve
-  Puzzle,
-  // component for keeping track of what game cozmo should request next
-  RequestGame,
-  // component for tracking severe needs states
-  SevereNeeds,
-  // whiteboard for behaviors to share information, or to store information only useful to behaviors
-  Whiteboard,
-  // component for tracking cozmo's work-out behaviors
-  Workout,
-  
-  Count
-};
-
-
 
 namespace ComponentWrappers{
-struct AIComponentComponents{
+class AIComponentComponents{
+public:
   AIComponentComponents(Robot&                      robot,
                         BehaviorComponent*&         behaviorComponent,
                         DoATrickSelector*           doATrickSelector,
@@ -88,6 +61,7 @@ struct AIComponentComponents{
                         SevereNeedsComponent*       severeNeedsComponent,
                         AIWhiteboard*               aiWhiteboard,
                         WorkoutComponent*           workoutComponent);
+  virtual ~AIComponentComponents();
   
   Robot& _robot;
   EntityFullEnumeration<AIComponentID, ComponentWrapper, AIComponentID::Count> _components;
@@ -95,12 +69,35 @@ struct AIComponentComponents{
 };
 }
 
-  
-class AIComponent : private Util::noncopyable
+  // AIComponent is updated at the robot component level, same as BehaviorComponent
+  // Therefore BCComponents (which are managed by BehaviorComponent) can't declare dependencies on AIComponent 
+  // since when it's Init/Update relative to BehaviorComponent must be declared by BehaviorComponent explicitly, 
+  // not by individual components within BehaviorComponent
+class AIComponent :  public UnreliableComponent<BCComponentID>, 
+                     public IDependencyManagedComponent<RobotComponentID>,  
+                     private Util::noncopyable
 {
 public:
   explicit AIComponent();
-  ~AIComponent();
+  virtual ~AIComponent();
+
+  //////
+  // IDependencyManagedComponent functions
+  //////
+  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override final{};
+  virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {};
+  virtual void UpdateDependent(const RobotCompMap& dependentComponents) override {};
+  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
+
+  // Prevent hiding function warnings by exposing the (valid) unreliable component methods
+  using UnreliableComponent<BCComponentID>::InitDependent;
+  using UnreliableComponent<BCComponentID>::GetInitDependencies;
+  using UnreliableComponent<BCComponentID>::UpdateDependent;
+  using UnreliableComponent<BCComponentID>::GetUpdateDependencies;
+  //////
+  // end IDependencyManagedComponent functions
+  //////
+
 
   ////////////////////////////////////////////////////////////////////////////////
   // Components
@@ -158,7 +155,7 @@ public:
   // Pass in behavior component if you have a custom component already set up
   // If nullptr is passed in AIComponent will generate a default behavior component
   // AIComponent takes over contrrol of the customBehaviorComponent's memory
-  Result Init(Robot& robot, BehaviorComponent*& customBehaviorComponent);
+  Result Init(Robot* robot, BehaviorComponent*& customBehaviorComponent);
   Result Update(Robot& robot, std::string& currentActivityName,
                               std::string& behaviorDebugStr);
 

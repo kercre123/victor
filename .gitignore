@@ -16,7 +16,7 @@ buck-out/
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Visual Studio Code
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-.vscode/tags
+.vscode/
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Sublime Project Files
@@ -401,7 +401,11 @@ unity/Cozmo/Assets/StreamingAssets/Scratch/lib/vm/dist/web/scratch-vm.js.map.met
 .vscode
 
 # Xamarin
-xamarin/victor/Droid/bin
-xamarin/victor/Droid/obj
-xamarin/victor/iOS/bin
-xamarin/victor/iOS/obj
+apps/xamarin/chewie/Droid/bin
+apps/xamarin/chewie/Droid/obj
+apps/xamarin/chewie/iOS/bin
+apps/xamarin/chewie/iOS/obj
+apps/xamarin/chewie/codelab.Droid/bin
+apps/xamarin/chewie/codelab.Droid/obj
+apps/xamarin/chewie/codelab.iOS/bin
+apps/xamarin/chewie/codelab.iOS/obj

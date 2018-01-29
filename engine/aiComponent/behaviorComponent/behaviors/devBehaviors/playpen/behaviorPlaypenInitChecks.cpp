@@ -28,11 +28,11 @@ BehaviorPlaypenInitChecks::BehaviorPlaypenInitChecks(const Json::Value& config)
 
 }
 
-Result BehaviorPlaypenInitChecks::OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)
+Result BehaviorPlaypenInitChecks::OnBehaviorActivatedInternal()
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
+  Robot& robot = GetBEI().GetRobotInfo()._robot;
 
   // Should not be seeing any cliffs
   if(robot.GetCliffSensorComponent().IsCliffDetectedStatusBitOn())

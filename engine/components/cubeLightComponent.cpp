@@ -79,13 +79,22 @@ bool ObjectLights::operator==(const ObjectLights& other) const
 }
   
 
-CubeLightComponent::CubeLightComponent(Robot& robot, const CozmoContext* context)
-: _robot(robot)
-, _cubeLightAnimations(context->GetRobotManager()->GetCubeLightAnimations())
+CubeLightComponent::CubeLightComponent()
+: IDependencyManagedComponent(RobotComponentID::CubeLights)
 {
+  static_assert(AnimLayerEnum::User < AnimLayerEnum::Engine &&
+                AnimLayerEnum::Engine < AnimLayerEnum::State,
+                "CubeLightComponent.LayersInUnexpectedOrder");
+}
+
+
+void CubeLightComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+{
+  _robot = robot;
+  _cubeLightAnimations = std::make_unique<CubeLightAnimWrapper>(robot->GetContext()->GetRobotManager()->GetCubeLightAnimations());
   // Subscribe to messages
-  if( _robot.HasExternalInterface() ) {
-    auto helper = MakeAnkiEventUtil(*_robot.GetExternalInterface(), *this, _eventHandles);
+  if( _robot->HasExternalInterface() ) {
+    auto helper = MakeAnkiEventUtil(*_robot->GetExternalInterface(), *this, _eventHandles);
     using namespace ExternalInterface;
     helper.SubscribeEngineToGame<MessageEngineToGameTag::ObjectConnectionState>();
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotDelocalized>();
@@ -99,11 +108,8 @@ CubeLightComponent::CubeLightComponent(Robot& robot, const CozmoContext* context
     helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableLightStates>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableCubeSleep>();
   }
-  
-  static_assert(AnimLayerEnum::User < AnimLayerEnum::Engine &&
-                AnimLayerEnum::Engine < AnimLayerEnum::State,
-                "CubeLightComponent.LayersInUnexpectedOrder");
 }
+
 
 void CubeLightComponent::Update(bool shouldPickNextAnim)
 {
@@ -111,7 +117,7 @@ void CubeLightComponent::Update(bool shouldPickNextAnim)
   
   // We are going from delocalized to localized
   bool doRelocalizedUpdate = false;
-  if(_robotDelocalized && _robot.IsLocalized())
+  if(_robotDelocalized && _robot->IsLocalized())
   {
     doRelocalizedUpdate = true;
     _robotDelocalized = false;
@@ -335,8 +341,8 @@ bool CubeLightComponent::PlayLightAnim(const ObjectID& objectID,
     }
     
     // Get the name of the animation to play for this trigger
-    const std::string& animName = _robot.GetContext()->GetRobotManager()->GetCubeAnimationForTrigger(animTrigger);
-    auto* anim = _cubeLightAnimations.GetAnimation(animName);
+    const std::string& animName = _robot->GetContext()->GetRobotManager()->GetCubeAnimationForTrigger(animTrigger);
+    auto* anim = _cubeLightAnimations->_container.GetAnimation(animName);
     if(anim == nullptr)
     {
       PRINT_NAMED_WARNING("CubeLightComponent.NoAnimForTrigger",
@@ -643,7 +649,7 @@ bool CubeLightComponent::BlendAnimWithCurLights(const ObjectID& objectID,
                                                 const LightAnim& anim,
                                                 LightAnim& blendedAnim)
 {
-  ActiveObject* activeObject = _robot.GetBlockWorld().GetConnectedActiveObjectByID(objectID);
+  ActiveObject* activeObject = _robot->GetBlockWorld().GetConnectedActiveObjectByID(objectID);
   if(activeObject == nullptr)
   {
     PRINT_CH_INFO("CubeLightComponent", "CubeLightComponent.BlendAnimWithCurLights.NullActiveObject",
@@ -715,7 +721,7 @@ void CubeLightComponent::PickNextAnimForDefaultLayer(const ObjectID& objectID)
   
   CubeAnimationTrigger anim = CubeAnimationTrigger::Connected;
   
-  const ObservableObject* object = _robot.GetBlockWorld().GetLocatedObjectByID(objectID);
+  const ObservableObject* object = _robot->GetBlockWorld().GetLocatedObjectByID(objectID);
   if(object != nullptr)
   {
     if(object->IsPoseStateKnown())
@@ -724,7 +730,7 @@ void CubeLightComponent::PickNextAnimForDefaultLayer(const ObjectID& objectID)
     }
   }
   
-  if(_robot.GetCarryingComponent().GetCarryingObject() == objectID)
+  if(_robot->GetCarryingComponent().GetCarryingObject() == objectID)
   {
     anim = CubeAnimationTrigger::Carrying;
   }
@@ -734,8 +740,8 @@ void CubeLightComponent::PickNextAnimForDefaultLayer(const ObjectID& objectID)
 
 u32 CubeLightComponent::GetAnimDuration(const CubeAnimationTrigger& trigger)
 {
-  const std::string& animName = _robot.GetContext()->GetRobotManager()->GetCubeAnimationForTrigger(trigger);
-  const auto* anim = _cubeLightAnimations.GetAnimation(animName);
+  const std::string& animName = _robot->GetContext()->GetRobotManager()->GetCubeAnimationForTrigger(trigger);
+  const auto* anim = _cubeLightAnimations->_container.GetAnimation(animName);
   if(anim == nullptr)
   {
     PRINT_NAMED_WARNING("CubeLightComponent.NoAnimForTrigger",
@@ -850,7 +856,7 @@ void CubeLightComponent::SendTransitionMessage(const ObjectID& objectID, const O
   
   if(_sendTransitionMessages)
   {
-    ObservableObject* obj = _robot.GetBlockWorld().GetConnectedActiveObjectByID(objectID);
+    ObservableObject* obj = _robot->GetBlockWorld().GetConnectedActiveObjectByID(objectID);
     if(obj == nullptr)
     {
       PRINT_NAMED_WARNING("CubeLightComponent.SendTransitionMessage.NullObject",
@@ -878,7 +884,7 @@ void CubeLightComponent::SendTransitionMessage(const ObjectID& objectID, const O
     
     msg.lightRotation_ms = values.rotationPeriod_ms;
     
-    _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+    _robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
   }
 }
 
@@ -1028,7 +1034,7 @@ void CubeLightComponent::HandleMessage(const ExternalInterface::RobotDelocalized
   // (except for carried objects, because we still know where those are)
   for(auto& pair: _objectInfo)
   {
-    const bool isCarryingCube = _robot.GetCarryingComponent().IsCarryingObject(pair.first);
+    const bool isCarryingCube = _robot->GetCarryingComponent().IsCarryingObject(pair.first);
     if(!isCarryingCube)
     {
       PlayLightAnim(pair.first, CubeAnimationTrigger::Connected, AnimLayerEnum::State);
@@ -1075,12 +1081,12 @@ Result CubeLightComponent::SetObjectLights(const ObjectID& objectID, const Objec
   if ( values.makeRelative == MakeRelativeMode::RELATIVE_LED_MODE_OFF )
   {
     // note this could be a checked_cast
-    activeObject = dynamic_cast<ActiveCube*>( _robot.GetBlockWorld().GetConnectedActiveObjectByID(objectID) );
+    activeObject = dynamic_cast<ActiveCube*>( _robot->GetBlockWorld().GetConnectedActiveObjectByID(objectID) );
   }
   else
   {
     // note this could be a checked_cast
-    activeObject = dynamic_cast<ActiveCube*>( _robot.GetBlockWorld().GetLocatedObjectByID(objectID) );
+    activeObject = dynamic_cast<ActiveCube*>( _robot->GetBlockWorld().GetLocatedObjectByID(objectID) );
   }
   
   if(activeObject == nullptr)
@@ -1131,12 +1137,12 @@ Result CubeLightComponent::SetObjectLights(const ObjectID& objectID,
   if ( makeRelative == MakeRelativeMode::RELATIVE_LED_MODE_OFF )
   {
     // note this could be a checked_cast
-    activeCube = dynamic_cast<ActiveCube*>( _robot.GetBlockWorld().GetConnectedActiveObjectByID(objectID) );
+    activeCube = dynamic_cast<ActiveCube*>( _robot->GetBlockWorld().GetConnectedActiveObjectByID(objectID) );
   }
   else
   {
     // note this could be a checked_cast
-    activeCube = dynamic_cast<ActiveCube*>( _robot.GetBlockWorld().GetLocatedObjectByID(objectID) );
+    activeCube = dynamic_cast<ActiveCube*>( _robot->GetBlockWorld().GetLocatedObjectByID(objectID) );
   }
   
   // trying to do relative mode in an object that is not located in the current origin, will fail, since its
@@ -1214,7 +1220,7 @@ Result CubeLightComponent::SetLights(const ActiveObject* object, const u32 rotat
   if(gamma != _prevGamma)
   {
     // TODO: do we need this?
-    //_robot.SendMessage(RobotInterface::EngineToRobot(SetCubeGamma(gamma)));
+    //_robot->SendMessage(RobotInterface::EngineToRobot(SetCubeGamma(gamma)));
     _prevGamma = gamma;
   }
   
@@ -1222,9 +1228,9 @@ Result CubeLightComponent::SetLights(const ActiveObject* object, const u32 rotat
   // TODO: Implement proper setting of cube lights here, and send the appropriate
   // message via CubeCommsComponent() (VIC-766)
   
-//  _robot.SendMessage(RobotInterface::EngineToRobot(CubeID((uint32_t)object->GetActiveID(),
+//  _robot->SendMessage(RobotInterface::EngineToRobot(CubeID((uint32_t)object->GetActiveID(),
 //                                                          MS_TO_LED_FRAMES(rotationPeriod_ms))));
-//  return _robot.SendMessage(RobotInterface::EngineToRobot(CubeLights(lights)));
+//  return _robot->SendMessage(RobotInterface::EngineToRobot(CubeLights(lights)));
   
   return RESULT_OK;
 }

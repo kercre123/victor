@@ -23,11 +23,11 @@ BehaviorPlayAnimSequenceWithFace::BehaviorPlayAnimSequenceWithFace(const Json::V
 {
 }
 
-void BehaviorPlayAnimSequenceWithFace::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPlayAnimSequenceWithFace::OnBehaviorActivated()
 {
   // attempt to turn towards last face, and even if fails, move on to the animations
-  DelegateIfInControl(new TurnTowardsLastFacePoseAction(), [this](BehaviorExternalInterface& behaviorExternalInterface) {
-      BaseClass::StartPlayingAnimations(behaviorExternalInterface);
+  DelegateIfInControl(new TurnTowardsLastFacePoseAction(), [this]() {
+      BaseClass::StartPlayingAnimations();
     });
 
         

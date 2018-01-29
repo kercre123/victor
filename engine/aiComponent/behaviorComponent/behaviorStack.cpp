@@ -37,15 +37,14 @@ BehaviorStack::~BehaviorStack()
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorStack::InitBehaviorStack(BehaviorExternalInterface& behaviorExternalInterface,
-                                                             IBehavior* baseOfStack)
+void BehaviorStack::InitBehaviorStack(IBehavior* baseOfStack)
 {
   ANKI_VERIFY(_behaviorStack.empty(),
               "BehaviorSystemManager.BehaviorStack.InitBehaviorStack.StackNotEmptyOnInit",
               "");
   
   baseOfStack->OnEnteredActivatableScope();
-  ANKI_VERIFY(baseOfStack->WantsToBeActivated(behaviorExternalInterface),
+  ANKI_VERIFY(baseOfStack->WantsToBeActivated(),
               "BehaviorSystemManager.BehaviorStack.InitConfig.BasebehaviorDoesn'tWantToRun",
               "");
   PushOntoStack(baseOfStack);
@@ -119,7 +118,7 @@ void BehaviorStack::UpdateBehaviorStack(BehaviorExternalInterface& behaviorExter
       behaviorExternalInterface.GetBehaviorEventComponent()._actionsCompletedThisTick = actionsCompletedThisTick;
     }
     
-    _behaviorStack.at(idx)->Update(behaviorExternalInterface);
+    _behaviorStack.at(idx)->Update();
   }
 
   if( ANKI_DEV_CHEATS ) {
@@ -150,7 +149,7 @@ void BehaviorStack::PushOntoStack(IBehavior* behavior)
   _behaviorStack.push_back(behavior);
   
   PrepareDelegatesToEnterScope(behavior);
-  behavior->OnActivated(*_behaviorExternalInterface);
+  behavior->OnActivated();
 }
 
 
@@ -159,7 +158,7 @@ void BehaviorStack::PopStack()
 {
   PrepareDelegatesForRemovalFromStack(_behaviorStack.back());
 
-  _behaviorStack.back()->OnDeactivated(*_behaviorExternalInterface);
+  _behaviorStack.back()->OnDeactivated();
   
   _behaviorToIndexMap.erase(_behaviorStack.back());
   _behaviorStack.pop_back();

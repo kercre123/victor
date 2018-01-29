@@ -39,7 +39,7 @@ public:
                      const CozmoAnimContext* context);
 
   // Process message traffic
-  static void Update();
+  static void Update(BaseStationTime_t currTime_nanosec);
 
   // Send message to engine
   // Returns true on success, false on error

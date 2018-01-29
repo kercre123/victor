@@ -19,7 +19,7 @@
 
 
 #if ANKI_DEV_CHEATS
-  #define SEND_MOOD_TO_VIZ_DEBUG  1
+  #define SEND_MOOD_TO_VIZ_DEBUG  0
 #else
   #define SEND_MOOD_TO_VIZ_DEBUG  0
 #endif // ANKI_DEV_CHEATS

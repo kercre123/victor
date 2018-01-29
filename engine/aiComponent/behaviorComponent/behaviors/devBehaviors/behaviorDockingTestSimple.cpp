@@ -128,12 +128,12 @@ namespace Anki {
 
     }
     
-    void BehaviorDockingTestSimple::InitBehavior(BehaviorExternalInterface& behaviorExternalInterface)
+    void BehaviorDockingTestSimple::InitBehavior()
     {
       _logger = std::make_unique<Util::RollingFileLogger>(nullptr, 
-           behaviorExternalInterface.GetRobotInfo()._robot.GetContextDataPlatform()->pathToResource(Util::Data::Scope::Cache, "dockingTest"));
+           GetBEI().GetRobotInfo()._robot.GetContextDataPlatform()->pathToResource(Util::Data::Scope::Cache, "dockingTest"));
 
-      const Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
+      const Robot& robot = GetBEI().GetRobotInfo()._robot;
       if(nullptr != robot.GetContext()->GetRobotManager() &&
          robot.GetContext()->GetRobotManager()->GetMsgHandler() != nullptr)
       {
@@ -144,14 +144,14 @@ namespace Anki {
     }
 
     
-    bool BehaviorDockingTestSimple::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+    bool BehaviorDockingTestSimple::WantsToBeActivatedBehavior() const
     {
       return _currentState == State::Init;
     }
     
-    void BehaviorDockingTestSimple::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+    void BehaviorDockingTestSimple::OnBehaviorActivated()
     {
-      Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
+      Robot& robot = GetBEI().GetRobotInfo()._robot;
       _cubePlacementPose = Pose3d(Radians(DEG_TO_RAD(0)), Z_AXIS_3D(), {176, 0, 22}, robot.GetWorldOrigin());
 
       // force the default speeds
@@ -207,9 +207,9 @@ namespace Anki {
       }      
     }
     
-    void BehaviorDockingTestSimple::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
+    void BehaviorDockingTestSimple::BehaviorUpdate()
     {
-      Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
+      Robot& robot = GetBEI().GetRobotInfo()._robot;
       if(_numAttempts == kMaxNumAttempts && _currentState != State::ManualReset)
       {
         Write("\nTest Completed Successfully");
@@ -780,9 +780,9 @@ namespace Anki {
       }
     }
     
-    void BehaviorDockingTestSimple::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+    void BehaviorDockingTestSimple::OnBehaviorDeactivated()
     {
-      Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
+      Robot& robot = GetBEI().GetRobotInfo()._robot;
 
       // Cancel all actions
       for (const auto& tag : _actionCallbackMap) {
@@ -865,9 +865,9 @@ namespace Anki {
       SetDebugStateName(name);
     }
     
-    void BehaviorDockingTestSimple::HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+    void BehaviorDockingTestSimple::HandleWhileActivated(const EngineToGameEvent& event)
     {
-      Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
+      Robot& robot = GetBEI().GetRobotInfo()._robot;
       switch(event.GetData().GetTag())
       {
         case EngineToGameTag::RobotCompletedAction:

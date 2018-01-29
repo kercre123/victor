@@ -21,7 +21,7 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
-#include "clad/types/nvStorage.h"
+#include "clad/types/nvStorageTypes.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include <vector>
 #include <unordered_map>

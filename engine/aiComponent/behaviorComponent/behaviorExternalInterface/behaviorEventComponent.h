@@ -19,6 +19,7 @@
 #include "clad/robotInterface/messageRobotToEngineTag.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
+#include "engine/entity.h"
 
 #include <set>
 
@@ -29,11 +30,24 @@ namespace Cozmo {
 class BehaviorSystemManager;
 class IBehavior;
 
-class BehaviorEventComponent : public IBehaviorMessageSubscriber, private Util::noncopyable {
+class BehaviorEventComponent : public IBehaviorMessageSubscriber, 
+                               public IDependencyManagedComponent<BCComponentID>, 
+                               private Util::noncopyable {
 public:
   BehaviorEventComponent();
   virtual ~BehaviorEventComponent(){};
   
+  //////
+  // IDependencyManagedComponent functions
+  //////
+  virtual void InitDependent(Robot* robot, const BCCompMap& dependentComponents) override;
+  virtual void GetInitDependencies(BCCompIDSet& dependencies) const override {}
+  virtual void GetUpdateDependencies(BCCompIDSet& dependencies) const override {};
+  //////
+  // end IDependencyManagedComponent functions
+  //////
+
+
   void Init(IBehaviorMessageSubscriber& messageSubscriber);
 
   

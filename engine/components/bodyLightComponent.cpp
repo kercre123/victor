@@ -43,30 +43,37 @@ struct BackpackLightData
   BackpackLights _lightConfiguration{};
 };
 
-BodyLightComponent::BodyLightComponent(Robot& robot, const CozmoContext* context)
-: _robot(robot)
-, _backpackLightAnimations(context->GetRobotManager()->GetBackpackLightAnimations())
+BodyLightComponent::BodyLightComponent()
+: IDependencyManagedComponent(RobotComponentID::BodyLights)
+{  
+  static_assert((int)LEDId::NUM_BACKPACK_LEDS == 3, "BodyLightComponent.WrongNumBackpackLights");
+}
+
+
+void BodyLightComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
 {
+  _robot = robot;
+  _backpackLightAnimations = std::make_unique<BackpackLightWrapper>(
+              _robot->GetContext()->GetRobotManager()->GetBackpackLightAnimations());
   // Subscribe to messages
-  if( _robot.HasExternalInterface() ) {
-    auto helper = MakeAnkiEventUtil(*_robot.GetExternalInterface(), *this, _eventHandles);
+  if( _robot->HasExternalInterface() ) {
+    auto helper = MakeAnkiEventUtil(*_robot->GetExternalInterface(), *this, _eventHandles);
     using namespace ExternalInterface;
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetBackpackLEDs>();
   }
-  
-  static_assert((int)LEDId::NUM_BACKPACK_LEDS == 3, "BodyLightComponent.WrongNumBackpackLights");
 }
+
 
 void BodyLightComponent::UpdateChargingLightConfig()
 {
   BackpackLightsState state = BackpackLightsState::OffCharger;
-  if(_robot.IsOnCharger())
+  if(_robot->IsOnCharger())
   {
-    if(_robot.IsChargerOOS())
+    if(_robot->IsChargerOOS())
     {
       state = BackpackLightsState::BadCharger;
     }
-    else if(_robot.IsCharging())
+    else if(_robot->IsCharging())
     {
       state = BackpackLightsState::Charging;
     }
@@ -75,7 +82,7 @@ void BodyLightComponent::UpdateChargingLightConfig()
       state = BackpackLightsState::Charged;
     }
   }
-  else if(_robot.GetBatteryVoltage() < LOW_BATTERY_THRESH_VOLTS)
+  else if(_robot->GetBatteryVoltage() < LOW_BATTERY_THRESH_VOLTS)
   {
     // Both charger out of spec and low battery backpack lights are the same
     // so instead of duplicating a lightPattern in json just use what we've already got
@@ -86,7 +93,7 @@ void BodyLightComponent::UpdateChargingLightConfig()
   {
     _curBackpackChargeState = state;
     
-    const auto* anim = _backpackLightAnimations.GetAnimation(StateToString(state));
+    const auto* anim = _backpackLightAnimations->_container.GetAnimation(StateToString(state));
     if(anim == nullptr)
     {
       PRINT_NAMED_WARNING("BodyLightComponent.UpdateChargingLightConfig.NullAnim",
@@ -182,7 +189,7 @@ Result BodyLightComponent::SetBackpackLightsInternal(const BackpackLights& light
     }
   }
   
-  return _robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::SetBackpackLights(lightStates, 0)));
+  return _robot->SendMessage(RobotInterface::EngineToRobot(RobotInterface::SetBackpackLights(lightStates, 0)));
 }
 
 const char* BodyLightComponent::StateToString(const BackpackLightsState& state) const

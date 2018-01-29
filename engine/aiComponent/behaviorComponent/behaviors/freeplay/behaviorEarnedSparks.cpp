@@ -37,17 +37,17 @@ BehaviorEarnedSparks::~BehaviorEarnedSparks()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorEarnedSparks::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorEarnedSparks::WantsToBeActivatedBehavior() const
 {
-  if(behaviorExternalInterface.HasNeedsManager()){
-    auto& needsManager = behaviorExternalInterface.GetNeedsManager();
+  if(GetBEI().HasNeedsManager()){
+    auto& needsManager = GetBEI().GetNeedsManager();
     return needsManager.IsPendingSparksRewardMsg();
   }
   return false;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorEarnedSparks::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorEarnedSparks::OnBehaviorActivated()
 {
   const AnimationTrigger animTrigger = AnimationTrigger::EarnedSparks;
   DelegateIfInControl(new TriggerLiftSafeAnimationAction(animTrigger));
@@ -55,10 +55,10 @@ void BehaviorEarnedSparks::OnBehaviorActivated(BehaviorExternalInterface& behavi
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorEarnedSparks::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorEarnedSparks::OnBehaviorDeactivated()
 {
-  if(behaviorExternalInterface.HasNeedsManager()){
-    auto& needsManager = behaviorExternalInterface.GetNeedsManager();
+  if(GetBEI().HasNeedsManager()){
+    auto& needsManager = GetBEI().GetNeedsManager();
     if(needsManager.IsPendingSparksRewardMsg()){
       needsManager.SparksRewardCommunicatedToUser();
     }
