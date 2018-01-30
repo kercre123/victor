@@ -24,8 +24,11 @@
 #include "coretech/common/shared/types.h"
 #include "anki/cozmo/shared/animationTag.h"
 #include "engine/encodedImage.h"
+#include "engine/entity.h"
 #include "engine/events/ankiEvent.h"
+#include "engine/dependencyManagedEntity.h"
 #include "engine/ramp.h"
+#include "engine/robotComponents_fwd.h"
 #include "coretech/vision/engine/camera.h"
 #include "coretech/vision/engine/image.h"
 #include "coretech/vision/engine/visionMarker.h"
@@ -92,6 +95,7 @@ class BodyLightComponent;
 class RobotToEngineImplMessaging;
 class PublicStateBroadcaster;
 class VisionComponent;
+class VisionScheduleMediator;
 class PathComponent;
 class DockingComponent;
 class CarryingComponent;
@@ -113,6 +117,7 @@ class RobotToEngine;
 enum class EngineToRobotTag : uint8_t;
 enum class RobotToEngineTag : uint8_t;
 } // end namespace RobotInterface
+
 
 // indent 2 spaces << that way !!!! coding standards !!!!
 class Robot : private Util::noncopyable
@@ -156,179 +161,138 @@ public:
   void FakeSyncTimeAck() { _timeSynced = true; _isHeadCalibrated = true; _isLiftCalibrated = true; }
 
   // =========== Components ===========
-  
-  inline BlockWorld&       GetBlockWorld()       {assert(_blockWorld); return *_blockWorld;}
-  inline const BlockWorld& GetBlockWorld() const {assert(_blockWorld); return *_blockWorld;}
-  
-  inline FaceWorld&       GetFaceWorld()       {assert(_faceWorld); return *_faceWorld;}
-  inline const FaceWorld& GetFaceWorld() const {assert(_faceWorld); return *_faceWorld;}
 
-  inline PetWorld&       GetPetWorld()       {assert(_petWorld); return *_petWorld;}
-  inline const PetWorld& GetPetWorld() const {assert(_petWorld); return *_petWorld;}
-
-  inline VisionComponent&       GetVisionComponent()       { assert(_visionComponent); return *_visionComponent; }
-  inline const VisionComponent& GetVisionComponent() const { assert(_visionComponent); return *_visionComponent; }
+  bool HasComponent(RobotComponentID componentID) const {
+    return (_components != nullptr) && (_components->_array.GetComponent(componentID).IsValueValid());
+  }
   
-  inline MapComponent&       GetMapComponent()       {assert(_mapComponent); return *_mapComponent;}
-  inline const MapComponent& GetMapComponent() const {assert(_mapComponent); return *_mapComponent;}
-  
-  inline BlockTapFilterComponent& GetBlockTapFilter() {
-    assert(_tapFilterComponent);
-    return *_tapFilterComponent;
-  }
-  inline const BlockTapFilterComponent& GetBlockTapFilter() const {
-    assert(_tapFilterComponent);
-    return *_tapFilterComponent;
-  }
+  template<typename T>
+  T& GetComponent(RobotComponentID componentID) const {return _components->_array.GetComponent(componentID).GetValue<T>();}
 
-  inline MovementComponent& GetMoveComponent() {
-    assert(_movementComponent);
-    return *_movementComponent;
-  }
-  inline const MovementComponent& GetMoveComponent() const {
-    assert(_movementComponent);
-    return *_movementComponent;
-  }
+  template<typename T>
+  T& GetComponent(RobotComponentID componentID) {return _components->_array.GetComponent(componentID).GetValue<T>();}
+
+  
+  inline BlockWorld&       GetBlockWorld()       {return GetComponent<BlockWorld>(RobotComponentID::BlockWorld);}
+  inline const BlockWorld& GetBlockWorld() const {return GetComponent<BlockWorld>(RobotComponentID::BlockWorld);}
+  
+  inline FaceWorld&       GetFaceWorld()       {return GetComponent<FaceWorld>(RobotComponentID::FaceWorld);}
+  inline const FaceWorld& GetFaceWorld() const {return GetComponent<FaceWorld>(RobotComponentID::FaceWorld);}
+
+  inline PetWorld&       GetPetWorld()       {return GetComponent<PetWorld>(RobotComponentID::PetWorld);}
+  inline const PetWorld& GetPetWorld() const {return GetComponent<PetWorld>(RobotComponentID::PetWorld);}
+
+  inline VisionComponent&       GetVisionComponent()       { return GetComponent<VisionComponent>(RobotComponentID::Vision); }
+  inline const VisionComponent& GetVisionComponent() const { return GetComponent<VisionComponent>(RobotComponentID::Vision); }
+
+  inline VisionScheduleMediator& GetVisionScheduleMediator() {return GetComponent<VisionScheduleMediator>(RobotComponentID::VisionScheduleMediator); }
+  inline const VisionScheduleMediator& GetVisionScheduleMediator() const {return GetComponent<VisionScheduleMediator>(RobotComponentID::VisionScheduleMediator); }
+
+  inline MapComponent&       GetMapComponent()       {return GetComponent<MapComponent>(RobotComponentID::Map);}
+  inline const MapComponent& GetMapComponent() const {return GetComponent<MapComponent>(RobotComponentID::Map);}
+  
+  inline BlockTapFilterComponent& GetBlockTapFilter() {return GetComponent<BlockTapFilterComponent>(RobotComponentID::BlockTapFilter);}
+  inline const BlockTapFilterComponent& GetBlockTapFilter() const {return GetComponent<BlockTapFilterComponent>(RobotComponentID::BlockTapFilter);}
+
+  inline MovementComponent& GetMoveComponent() {return GetComponent<MovementComponent>(RobotComponentID::Movement);}
+  inline const MovementComponent& GetMoveComponent() const {return GetComponent<MovementComponent>(RobotComponentID::Movement);}
  
-  inline CubeLightComponent& GetCubeLightComponent() {
-    assert(_cubeLightComponent);
-    return *_cubeLightComponent;
-  }
-  inline const CubeLightComponent& GetCubeLightComponent() const {
-    assert(_cubeLightComponent);
-    return *_cubeLightComponent;
-  }
+  inline CubeLightComponent& GetCubeLightComponent() {return GetComponent<CubeLightComponent>(RobotComponentID::CubeLights);}
+  inline const CubeLightComponent& GetCubeLightComponent() const {return GetComponent<CubeLightComponent>(RobotComponentID::CubeLights);}
   
-  inline BodyLightComponent& GetBodyLightComponent() {
-    assert(_bodyLightComponent);
-    return *_bodyLightComponent;
-  }
-  inline const BodyLightComponent& GetBodyLightComponent() const {
-    assert(_bodyLightComponent);
-    return *_bodyLightComponent;
-  }
+  inline BodyLightComponent& GetBodyLightComponent() {return GetComponent<BodyLightComponent>(RobotComponentID::BodyLights);}
+  inline const BodyLightComponent& GetBodyLightComponent() const {return GetComponent<BodyLightComponent>(RobotComponentID::BodyLights);}
   
-  inline CubeAccelComponent& GetCubeAccelComponent() {
-    assert(_cubeAccelComponent);
-    return *_cubeAccelComponent;
-  }
-  inline const CubeAccelComponent& GetCubeAccelComponent() const {
-    assert(_cubeAccelComponent);
-    return *_cubeAccelComponent;
-  }
+  inline CubeAccelComponent& GetCubeAccelComponent() {return GetComponent<CubeAccelComponent>(RobotComponentID::CubeAccel);}
+  inline const CubeAccelComponent& GetCubeAccelComponent() const {return GetComponent<CubeAccelComponent>(RobotComponentID::CubeAccel);}
 
-  inline CubeCommsComponent& GetCubeCommsComponent() {
-    assert(_cubeCommsComponent);
-    return *_cubeCommsComponent;
-  }
-  inline const CubeCommsComponent& GetCubeCommsComponent() const {
-    assert(_cubeCommsComponent);
-    return *_cubeCommsComponent;
-  }
+  inline CubeCommsComponent& GetCubeCommsComponent() {return GetComponent<CubeCommsComponent>(RobotComponentID::CubeComms);}
+  inline const CubeCommsComponent& GetCubeCommsComponent() const {return GetComponent<CubeCommsComponent>(RobotComponentID::CubeComms);}
   
-  inline const MoodManager& GetMoodManager() const { assert(_moodManager); return *_moodManager; }
-  inline MoodManager&       GetMoodManager()       { assert(_moodManager); return *_moodManager; }
+  inline const MoodManager& GetMoodManager() const { return GetComponent<MoodManager>(RobotComponentID::MoodManager);}
+  inline MoodManager&       GetMoodManager()       { return GetComponent<MoodManager>(RobotComponentID::MoodManager);}
 
-  inline const std::string&     GetBehaviorDebugString() const { return _behaviorDebugStr; }
   
-  inline const ProgressionUnlockComponent& GetProgressionUnlockComponent() const {
-    assert(_progressionUnlockComponent);
-    return *_progressionUnlockComponent;
-  }  
-  inline ProgressionUnlockComponent& GetProgressionUnlockComponent() {
-    assert(_progressionUnlockComponent);
-    return *_progressionUnlockComponent;
-  }
+  inline const ProgressionUnlockComponent& GetProgressionUnlockComponent() const {return GetComponent<ProgressionUnlockComponent>(RobotComponentID::ProgressionUnlock);}  
+  inline ProgressionUnlockComponent& GetProgressionUnlockComponent() {return GetComponent<ProgressionUnlockComponent>(RobotComponentID::ProgressionUnlock);}
 
-  inline const InventoryComponent& GetInventoryComponent() const {
-    assert(_inventoryComponent);
-    return *_inventoryComponent;
-  }
-  inline InventoryComponent& GetInventoryComponent() {
-    assert(_inventoryComponent);
-    return *_inventoryComponent;
-  }
+  inline const InventoryComponent& GetInventoryComponent() const {return GetComponent<InventoryComponent>(RobotComponentID::Inventory);}
+  inline InventoryComponent& GetInventoryComponent() {return GetComponent<InventoryComponent>(RobotComponentID::Inventory);}
 
-  inline const NVStorageComponent& GetNVStorageComponent() const {
-    assert(_nvStorageComponent);
-    return *_nvStorageComponent;
-  }
-  inline NVStorageComponent& GetNVStorageComponent() {
-    assert(_nvStorageComponent);
-    return *_nvStorageComponent;
-  }
+  inline const NVStorageComponent& GetNVStorageComponent() const {return GetComponent<NVStorageComponent>(RobotComponentID::NVStorage);}
+  inline NVStorageComponent& GetNVStorageComponent() {return GetComponent<NVStorageComponent>(RobotComponentID::NVStorage);}
 
-  inline const AIComponent& GetAIComponent() const {
-    assert(_aiComponent);
-    return *_aiComponent;
-  }
-  inline AIComponent& GetAIComponent() {
-    assert(_aiComponent);
-    return *_aiComponent;
-  }
+  inline const AIComponent& GetAIComponent() const {return GetComponent<AIComponent>(RobotComponentID::AIComponent);}
+  inline AIComponent& GetAIComponent() {return GetComponent<AIComponent>(RobotComponentID::AIComponent);}
   
-  inline const PublicStateBroadcaster& GetPublicStateBroadcaster() const {
-    assert(_publicStateBroadcaster);
-    return *_publicStateBroadcaster;
-  }
+  inline const PublicStateBroadcaster& GetPublicStateBroadcaster() const {return GetComponent<PublicStateBroadcaster>(RobotComponentID::PublicStateBroadcaster);}
+  inline PublicStateBroadcaster& GetPublicStateBroadcaster(){return GetComponent<PublicStateBroadcaster>(RobotComponentID::PublicStateBroadcaster);}
   
-  inline PublicStateBroadcaster& GetPublicStateBroadcaster(){
-    assert(_publicStateBroadcaster);
-    return *_publicStateBroadcaster;
-  }
+  inline DockingComponent& GetDockingComponent() {return GetComponent<DockingComponent>(RobotComponentID::Docking);}
+  inline const DockingComponent& GetDockingComponent() const {return GetComponent<DockingComponent>(RobotComponentID::Docking);}
   
-  inline DockingComponent& GetDockingComponent() {
-    assert(_dockingComponent);
-    return *_dockingComponent;
-  }
-  inline const DockingComponent& GetDockingComponent() const {
-    assert(_dockingComponent);
-    return *_dockingComponent;
-  }
+  inline CarryingComponent& GetCarryingComponent() {return GetComponent<CarryingComponent>(RobotComponentID::Carrying);}
+  inline const CarryingComponent& GetCarryingComponent() const {return GetComponent<CarryingComponent>(RobotComponentID::Carrying);}
   
-  inline CarryingComponent& GetCarryingComponent() {
-    assert(_carryingComponent);
-    return *_carryingComponent;
-  }
-  inline const CarryingComponent& GetCarryingComponent() const {
-    assert(_carryingComponent);
-    return *_carryingComponent;
-  }
-  
-  inline RobotIdleTimeoutComponent& GetIdleTimeoutComponent() {
-    assert(_robotIdleTimeoutComponent);
-    return *_robotIdleTimeoutComponent;
-  }
-  inline const RobotIdleTimeoutComponent& GetIdleTimeoutComponent() const {
-    assert(_robotIdleTimeoutComponent);
-    return *_robotIdleTimeoutComponent;
-  }
+  inline RobotIdleTimeoutComponent& GetIdleTimeoutComponent() {return GetComponent<RobotIdleTimeoutComponent>(RobotComponentID::RobotIdleTimeout);}
+  inline const RobotIdleTimeoutComponent& GetIdleTimeoutComponent() const {return GetComponent<RobotIdleTimeoutComponent>(RobotComponentID::RobotIdleTimeout);}
 
-  inline const PathComponent& GetPathComponent() const { return *_pathComponent; }
-  inline       PathComponent& GetPathComponent()       { return *_pathComponent; }
+  inline const PathComponent& GetPathComponent() const { return GetComponent<PathComponent>(RobotComponentID::PathPlanning); }
+  inline       PathComponent& GetPathComponent()       { return GetComponent<PathComponent>(RobotComponentID::PathPlanning); }
   
-  inline const CliffSensorComponent& GetCliffSensorComponent() const { return *_cliffSensorComponent; }
-  inline       CliffSensorComponent& GetCliffSensorComponent()       { return *_cliffSensorComponent; }
+  inline const CliffSensorComponent& GetCliffSensorComponent() const { return GetComponent<CliffSensorComponent>(RobotComponentID::CliffSensor); }
+  inline       CliffSensorComponent& GetCliffSensorComponent()       { return GetComponent<CliffSensorComponent>(RobotComponentID::CliffSensor); }
   
-  inline const ProxSensorComponent& GetProxSensorComponent() const { return *_proxSensorComponent; }
-  inline       ProxSensorComponent& GetProxSensorComponent()       { return *_proxSensorComponent; }
+  inline const ProxSensorComponent& GetProxSensorComponent() const { return GetComponent<ProxSensorComponent>(RobotComponentID::ProxSensor); }
+  inline       ProxSensorComponent& GetProxSensorComponent()       { return GetComponent<ProxSensorComponent>(RobotComponentID::ProxSensor); }
 
-  inline const AnimationComponent& GetAnimationComponent() const { return *_animationComponent; }
-  inline       AnimationComponent& GetAnimationComponent()       { return *_animationComponent; }
+  inline const AnimationComponent& GetAnimationComponent() const { return GetComponent<AnimationComponent>(RobotComponentID::Animation); }
+  inline       AnimationComponent& GetAnimationComponent()       { return GetComponent<AnimationComponent>(RobotComponentID::Animation); }
   
-  inline const TouchSensorComponent& GetTouchSensorComponent() const { return *_touchSensorComponent; }
-  inline       TouchSensorComponent& GetTouchSensorComponent()       { return *_touchSensorComponent; }
+  inline const TouchSensorComponent& GetTouchSensorComponent() const { return GetComponent<TouchSensorComponent>(RobotComponentID::TouchSensor); }
+  inline       TouchSensorComponent& GetTouchSensorComponent()       { return GetComponent<TouchSensorComponent>(RobotComponentID::TouchSensor); }
   
-  const DrivingAnimationHandler& GetDrivingAnimationHandler() const { return *_drivingAnimationHandler; }
-  DrivingAnimationHandler& GetDrivingAnimationHandler() { return *_drivingAnimationHandler; }
+  const DrivingAnimationHandler& GetDrivingAnimationHandler() const { return GetComponent<DrivingAnimationHandler>(RobotComponentID::DrivingAnimationHandler); }
+  DrivingAnimationHandler& GetDrivingAnimationHandler() { return GetComponent<DrivingAnimationHandler>(RobotComponentID::DrivingAnimationHandler); }
   
-      
+  const MicDirectionHistory& GetMicDirectionHistory() const { return GetComponent<MicDirectionHistory>(RobotComponentID::MicDirectionHistory); }
+  MicDirectionHistory&       GetMicDirectionHistory()       { return GetComponent<MicDirectionHistory>(RobotComponentID::MicDirectionHistory); }
+
+  const PoseOriginList&  GetPoseOriginList() const { return *_poseOrigins.get(); }
+  
+  ObjectPoseConfirmer& GetObjectPoseConfirmer() { return GetComponent<ObjectPoseConfirmer>(RobotComponentID::ObjectPoseConfirmer); }
+  const ObjectPoseConfirmer& GetObjectPoseConfirmer() const {return GetComponent<ObjectPoseConfirmer>(RobotComponentID::ObjectPoseConfirmer);}
+  
+  ActionList& GetActionList() { return GetComponent<ActionList>(RobotComponentID::ActionList); }
+
+  Audio::EngineRobotAudioClient* GetAudioClient() { return &GetComponent<Audio::EngineRobotAudioClient>(RobotComponentID::EngineAudioClient); }
+  const Audio::EngineRobotAudioClient* GetAudioClient() const { return &GetComponent<Audio::EngineRobotAudioClient>(RobotComponentID::EngineAudioClient); }
+
+  RobotStateHistory* GetStateHistory() { return &GetComponent<RobotStateHistory>(RobotComponentID::StateHistory); }
+  const RobotStateHistory* GetStateHistory() const { return &GetComponent<RobotStateHistory>(RobotComponentID::StateHistory); }
+
+  RobotToEngineImplMessaging& GetRobotToEngineImplMessaging() { return GetComponent<RobotToEngineImplMessaging>(RobotComponentID::RobotToEngineImplMessaging); }
+
+  const CozmoContext* GetContext() const { return GetComponent<ContextWrapper>(RobotComponentID::CozmoContext).context; }
+  class ContextWrapper:  public IDependencyManagedComponent<RobotComponentID> {
+  public:
+    ContextWrapper(const CozmoContext* context)
+    : IDependencyManagedComponent(RobotComponentID::CozmoContext)
+    , context(context){}
+    const CozmoContext* context;
+
+    virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override {};
+    virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {};
+    virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
+  };
+
   const Util::RandomGenerator& GetRNG() const;
   Util::RandomGenerator& GetRNG();
 
-  const MicDirectionHistory& GetMicDirectionHistory() const { return *_micDirectionHistory; }
-  MicDirectionHistory&       GetMicDirectionHistory()       { return *_micDirectionHistory; }
-  
+
+
+  inline const std::string&     GetBehaviorDebugString() const { return _behaviorDebugStr; }
+
   // =========== Localization ===========
   
   bool IsLocalized() const;
@@ -439,12 +403,6 @@ public:
   Result ComputeTurnTowardsImagePointAngles(const Point2f& imgPoint, const TimeStamp_t timestamp,
                                             Radians& absPanAngle, Radians& absTiltAngle) const;
   
-  const PoseOriginList&  GetPoseOriginList() const { assert(_poseOriginList); return *_poseOriginList; }
-  
-  ObjectPoseConfirmer& GetObjectPoseConfirmer() { assert(_objectPoseConfirmerPtr); return *_objectPoseConfirmerPtr; }
-  const ObjectPoseConfirmer& GetObjectPoseConfirmer() const {
-    assert(_objectPoseConfirmerPtr); return *_objectPoseConfirmerPtr; }
-  
   // These change the robot's internal (basestation) representation of its
   // head angle, and lift angle, but do NOT actually command the
   // physical robot to do anything!
@@ -468,10 +426,6 @@ public:
     
   // Return current height of lift's gripper
   f32 GetLiftHeight() const;
-  
-  // Conversion functions between lift height and angle
-  static f32 ConvertLiftHeightToLiftAngleRad(f32 height_mm);
-  static f32 ConvertLiftAngleToLiftHeightMM(f32 angle_rad);
   
   // Leaves input liftPose's parent alone and computes its position w.r.t.
   // liftBasePose, given the angle
@@ -531,14 +485,7 @@ public:
   // send the request down to the robot
   Result RequestIMU(const u32 length_ms) const;
 
-  // =========== Actions Commands =============
-    
-  // Return a reference to the robot's action list for directly adding things
-  // to do, either "now" or in queues.
-  // TODO: This seems simpler than writing/maintaining wrappers, but maybe that would be better?
-  ActionList& GetActionList() { assert(_actionList); return *_actionList; }
 
-  bool HasActionList() const { return _actionList != nullptr; }
     
   // =========== Animation Commands =============
 
@@ -549,19 +496,12 @@ public:
 
   u8 GetEnabledAnimationTracks() const;
   
-  // =========== Audio =============
-  Audio::EngineRobotAudioClient* GetAudioClient() { return _audioClient.get(); }
-  const Audio::EngineRobotAudioClient* GetAudioClient() const { return _audioClient.get(); }
-  
   // =========== Mood =============
 
   // Load in all data-driven emotion events // TODO: move to mood manager?
   void LoadEmotionEvents();      
 
   // =========== Pose history =============
-  
-  RobotStateHistory* GetStateHistory() { return _stateHistory.get(); }
-  const RobotStateHistory* GetStateHistory() const { return _stateHistory.get(); }
   
   // Adds robot state information to history at t = state.timestamp
   // Only state updates should be calling this, however, it is exposed for unit tests
@@ -649,15 +589,12 @@ public:
   void BroadcastEngineErrorCode(EngineErrorCode error);
   
   Util::Data::DataPlatform* GetContextDataPlatform();
-  const CozmoContext* GetContext() const { return _context; }
   
   // Populate a RobotState message with robot's current state information (suitable for sending to external listeners)
   ExternalInterface::RobotState GetRobotState() const;
   
   // Populate a RobotState message with default values (suitable for sending to the robot itself, e.g. in unit tests)
   static RobotState GetDefaultRobotState();
-
-  RobotToEngineImplMessaging& GetRobotToEngineImplMessaging() { return *_robotToEngineImplMessaging; }
   
   const u32 GetHeadSerialNumber() const { return _serialNumberHead; }
   void SetHeadSerialNumber(const u32 num) { _serialNumberHead = num; }
@@ -674,14 +611,21 @@ public:
   
   bool HasReceivedFirstStateMessage() const { return _gotStateMsgAfterTimeSync; }
   
-protected:
-  // Geometry / Pose
-  std::unique_ptr<PoseOriginList> _poseOriginList;
-  
+protected:  
+  std::unique_ptr<PoseOriginList> _poseOrigins;
   Pose3d         _pose;
+  const Pose3d     _neckPose;     // joint around which head rotates
+  Pose3d           _headCamPose;  // in canonical (untilted) position w.r.t. neck joint
+  const Pose3d     _liftBasePose; // around which the base rotates/lifts
+  Pose3d           _liftPose;     // current, w.r.t. liftBasePose
   
-  
-  const CozmoContext* _context;
+  struct RobotComponentWrapper{
+    // pass in a fully enumerated entity
+    RobotComponentWrapper(DependencyManagedEntity<RobotComponentID, RobotComponentID::Count>&& entity);
+    using RequiredComponents = DependencyManagedEntityFullEnumeration<RobotComponentID, RobotComponentID::Count>;
+    RequiredComponents _array;
+  };
+  std::unique_ptr<RobotComponentWrapper> _components;
   
   RobotWorldOriginChangedSignal _robotWorldOriginChangedSignal;
   // The robot's identifier
@@ -699,46 +643,9 @@ protected:
   // Flag indicating whether a robotStateMessage was ever received
   TimeStamp_t _lastMsgTimestamp;
   bool        _newStateMsgAvailable = false;
-    
-  // A reference to the BlockWorld the robot lives in
-  std::unique_ptr<BlockWorld>            _blockWorld;
- 
-  // A container for faces/people the robot knows about
-  std::unique_ptr<FaceWorld>             _faceWorld;
- 
-  // A container for all pet faces the robot knows about
-  std::unique_ptr<PetWorld>              _petWorld;
- 
-  std::unique_ptr<PublicStateBroadcaster> _publicStateBroadcaster;
-
+  
   std::string                            _behaviorDebugStr;
 
-  ///////// Audio /////////
-  std::unique_ptr<Audio::EngineRobotAudioClient> _audioClient;
-
-  // handles planning and path following
-  std::unique_ptr<PathComponent> _pathComponent;
-  
-  std::unique_ptr<DrivingAnimationHandler> _drivingAnimationHandler;
-    
-  std::unique_ptr<ActionList>             _actionList;
-  std::unique_ptr<MovementComponent>      _movementComponent;
-  std::unique_ptr<VisionComponent>        _visionComponent;
-  std::unique_ptr<MapComponent>           _mapComponent;  
-  std::unique_ptr<NVStorageComponent>     _nvStorageComponent;
-  std::unique_ptr<AIComponent>            _aiComponent;
-  std::unique_ptr<ObjectPoseConfirmer>    _objectPoseConfirmerPtr;
-  std::unique_ptr<CubeLightComponent>     _cubeLightComponent;
-  std::unique_ptr<BodyLightComponent>     _bodyLightComponent;
-  std::unique_ptr<CubeAccelComponent>     _cubeAccelComponent;
-  std::unique_ptr<CubeCommsComponent>     _cubeCommsComponent;
-  std::unique_ptr<RobotGyroDriftDetector> _gyroDriftDetector;
-  std::unique_ptr<DockingComponent>       _dockingComponent;
-  std::unique_ptr<CarryingComponent>      _carryingComponent;
-  std::unique_ptr<CliffSensorComponent>   _cliffSensorComponent;
-  std::unique_ptr<ProxSensorComponent>    _proxSensorComponent;
-  std::unique_ptr<TouchSensorComponent>   _touchSensorComponent;
-  std::unique_ptr<AnimationComponent>     _animationComponent;
 
   // Hash to not spam debug messages
   size_t _lastDebugStringHash;
@@ -763,11 +670,9 @@ protected:
   
   Result UpdateWorldOrigin(Pose3d& newPoseWrtNewOrigin);
     
-  const Pose3d     _neckPose;     // joint around which head rotates
-  Pose3d           _headCamPose;  // in canonical (untilted) position w.r.t. neck joint
+
   static const RotationMatrix3d _kDefaultHeadCamRotation;
-  const Pose3d     _liftBasePose; // around which the base rotates/lifts
-  Pose3d           _liftPose;     // current, w.r.t. liftBasePose
+
 
   f32              _currentHeadAngle;
   
@@ -824,9 +729,6 @@ protected:
   // Unless you know what you're doing you probably want to use
   // the public function SetNewPose()
   void SetPose(const Pose3d &newPose);
-  
-  // State history
-  std::unique_ptr<RobotStateHistory> _stateHistory;
     
   // Takes startPose and moves it forward as if it were a robot pose by distance mm and
   // puts result in movedPose.
@@ -845,22 +747,6 @@ protected:
   
   // returns whether the tread state was updated or not
   bool CheckAndUpdateTreadsState(const RobotState& msg);
-  
-  ///////// Mood/Emotions ////////
-  MoodManager*         _moodManager;
-
-  ///////// Inventory ////////
-  std::unique_ptr<InventoryComponent> _inventoryComponent;
-  
-  ///////// Progression/Skills ////////
-  ProgressionUnlockComponent* _progressionUnlockComponent;
-  
-  //////// Block Taps Filter ////////
-  BlockTapFilterComponent* _tapFilterComponent;
-
-  std::unique_ptr<RobotToEngineImplMessaging> _robotToEngineImplMessaging;
-  std::unique_ptr<RobotIdleTimeoutComponent>  _robotIdleTimeoutComponent;
-  std::unique_ptr<MicDirectionHistory>        _micDirectionHistory;
 
   Result SendAbsLocalizationUpdate(const Pose3d&        pose,
                                    const TimeStamp_t&   t,
@@ -885,6 +771,12 @@ protected:
   Result SendIMURequest(const u32 length_ms) const;
 
   Result SendAbortAnimation();
+  
+  // As a temp dev step, try swapping out aiComponent after construction/initialization
+  // for something like unit tests - theoretically this should be handled by having a non
+  // fully enumerated constructor option, but for the time being use this for dev/testing purposes
+  // only since caching etc could blow it all to shreds
+  void DevReplaceAIComponent(AIComponent*& aiComponent);
   
 }; // class Robot
 

@@ -16,6 +16,8 @@
 
 #include "coretech/common/shared/types.h"
 #include "engine/actions/actionDefinitions.h"
+#include "engine/dependencyManagedComponent.h"
+#include "engine/robotComponents_fwd.h"
 
 #include "clad/types/actionTypes.h"
 
@@ -116,18 +118,37 @@ namespace Anki {
     // This is a list of concurrent actions to be run, addressable by ID handle.
     // Each slot in the list is really a queue, to which new actions can be added
     // using that slot's ID handle. When a slot finishes, it is popped.
-    class ActionList
+    class ActionList : public IDependencyManagedComponent<RobotComponentID>
     {
     public:
       using SlotHandle = s32;
       
       static const SlotHandle UnknownSlot = -1;
       
-      ActionList(Robot& robot);
+      ActionList();
       ~ActionList();
       
       // Updates the current action of each queue in each slot
       Result     Update();
+
+      //////
+      // IDependencyManagedComponent functions
+      /////
+
+      virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
+      // Maintain the chain of initializations currently in robot - it might be possible to
+      // change the order of initialization down the line, but be sure to check for ripple effects
+      // when changing this function
+      virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
+        dependencies.insert(RobotComponentID::DrivingAnimationHandler);
+      };
+      virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
+
+      //////
+      // end IDependencyManagedComponent functions
+      /////
+
+
       
       // Add a new action to be run concurrently, generating a new slot, whose
       // handle is returned. If there is no desire to queue anything to run after
@@ -203,7 +224,7 @@ namespace Anki {
     
     private:
       // Reference to robot so that actions queues receive a robot to inject into actions
-      Robot& _robot;
+      Robot* _robot = nullptr;
       
       // Whether or not the queues are in the process of being cleared
       bool _currentlyClearing = false;

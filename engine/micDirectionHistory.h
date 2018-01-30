@@ -14,6 +14,8 @@
 #define __Engine_MicDirectionHistory_H_
 
 #include "coretech/common/shared/types.h"
+#include "engine/dependencyManagedComponent.h"
+#include "engine/robotComponents_fwd.h"
 
 #include <array>
 #include <cstdint>
@@ -22,9 +24,24 @@
 namespace Anki {
 namespace Cozmo {
 
-class MicDirectionHistory
+class MicDirectionHistory : public IDependencyManagedComponent<RobotComponentID>
 {
 public:
+  MicDirectionHistory()
+  : IDependencyManagedComponent<RobotComponentID>(RobotComponentID::MicDirectionHistory){}
+
+  //////
+  // IDependencyManagedComponent functions
+  //////
+  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override {};
+  virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
+    dependencies.insert(RobotComponentID::RobotToEngineImplMessaging);
+  };
+  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
+  //////
+  // end IDependencyManagedComponent functions
+  //////
+
   using DirectionIndex = uint16_t;
   using DirectionConfidence = int16_t;
 

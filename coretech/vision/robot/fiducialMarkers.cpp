@@ -907,8 +907,8 @@ namespace Anki
 #endif
     
 
-    Result VisionMarker::ComputeBrightDarkValues(const Array <u8> &image, const f32 minContrastRatio,
-      f32& brightValue, f32& darkValue, bool& enoughContrast)
+    Result VisionMarker::ComputeBrightDarkValues(const Array <u8> &image, const f32 minContrastRatio, const bool isDarkOnLight,
+      f32& backgroundValue, f32& foregroundValue, bool& enoughContrast)
     {
 #     if RECOGNITION_METHOD == RECOGNITION_METHOD_DECISION_TREES
       using namespace VisionMarkerDecisionTree;
@@ -986,7 +986,7 @@ namespace Anki
 
       const f32 divisor = 1.f / static_cast<f32>(NUM_PROBE_POINTS);
 
-      u32 totalDarkAccumulator = 0, totalBrightAccumulator = 0; // for all pairs
+      u32 totalForegroundAccumulator = 0, totalBackgroundAccumulator = 0; // for all pairs
       for(s32 i_probe=0; i_probe<NUM_THRESHOLD_PROBES; ++i_probe) {
         const f32 xCenterDark = static_cast<f32>(ThresholdDarkProbe_X[i_probe]) * fixedPointDivider;
         const f32 yCenterDark = static_cast<f32>(ThresholdDarkProbe_Y[i_probe]) * fixedPointDivider;
@@ -994,7 +994,7 @@ namespace Anki
         const f32 xCenterBright = static_cast<f32>(ThresholdBrightProbe_X[i_probe]) * fixedPointDivider;
         const f32 yCenterBright = static_cast<f32>(ThresholdBrightProbe_Y[i_probe]) * fixedPointDivider;
 
-        u32 darkAccumulator = 0, brightAccumulator = 0; // for each bright/dark pair
+        u32 fgAccumulator = 0, bgAccumulator = 0; // for each bright/dark pair
 
         // TODO: Make getting the average value of a probe pattern into a function
         for(s32 i_pt=0; i_pt<NUM_PROBE_POINTS; i_pt++) {
@@ -1018,7 +1018,7 @@ namespace Anki
 
             const u8 imageValue = *image.Pointer(warpedY, warpedX);
 
-            darkAccumulator += imageValue;
+            fgAccumulator += imageValue;
             
 #           if DEBUG_BRIGHT_DARK_PAIRS
             if(probePointsX_F32[i_pt]==0.f && probePointsY_F32[i_pt]==0.f) {
@@ -1047,7 +1047,7 @@ namespace Anki
 
             const u8 imageValue = *image.Pointer(warpedY, warpedX);
 
-            brightAccumulator += imageValue;
+            bgAccumulator += imageValue;
             
 #           if DEBUG_BRIGHT_DARK_PAIRS
             if(probePointsX_F32[i_pt]==0.f && probePointsY_F32[i_pt]==0.f) {
@@ -1062,23 +1062,29 @@ namespace Anki
         cv::waitKey(5);
 #       endif
         
-        brightValue = static_cast<f32>(brightAccumulator) * divisor;
-        darkValue   = static_cast<f32>(darkAccumulator)   * divisor;
-        if(brightValue < minContrastRatio * darkValue) {
+        backgroundValue = static_cast<f32>(bgAccumulator) * divisor;
+        foregroundValue   = static_cast<f32>(fgAccumulator) * divisor;
+
+        enoughContrast = (isDarkOnLight ?
+                          backgroundValue > minContrastRatio * foregroundValue :
+                          foregroundValue > minContrastRatio * backgroundValue);
+        
+        if(!enoughContrast) {
           // Something is wrong: not enough constrast at this bright/dark pair
-          enoughContrast = false;
           return RESULT_OK;
         }
 
-        totalBrightAccumulator += brightAccumulator;
-        totalDarkAccumulator   += darkAccumulator;
+        totalBackgroundAccumulator += bgAccumulator;
+        totalForegroundAccumulator += fgAccumulator;
       } // FOR each probe
 
       const f32 totalDivisor = 1.f / static_cast<f32>(NUM_PROBE_POINTS * NUM_THRESHOLD_PROBES);
-      brightValue = static_cast<f32>(totalBrightAccumulator) * totalDivisor;
-      darkValue   = static_cast<f32>(totalDarkAccumulator)   * totalDivisor;
+      backgroundValue = static_cast<f32>(totalBackgroundAccumulator) * totalDivisor;
+      foregroundValue   = static_cast<f32>(totalForegroundAccumulator)   * totalDivisor;
 
-      enoughContrast = brightValue > minContrastRatio * darkValue;
+      enoughContrast = (isDarkOnLight ?
+                        backgroundValue > minContrastRatio * foregroundValue :
+                        foregroundValue > minContrastRatio * backgroundValue);
       
       return lastResult;
     }
@@ -1094,6 +1100,7 @@ namespace Anki
                                        const s32 quads_minDistanceFromImageEdge,
                                        const Point<f32>& fiducialThicknessFraction,
                                        const Point<f32>& roundedCornersFraction,
+                                       const bool isDarkOnLight,
                                        u8 &meanGrayvalueThreshold,
                                        MemoryStack scratch)
     {
@@ -1106,9 +1113,9 @@ namespace Anki
       this->validity = UNKNOWN;
 
       BeginBenchmark("vmrc_brightdarkvals");
-      f32 brightValue = 0.f, darkValue = 0.f;
+      f32 backgroundValue = 0.f, foregroundValue = 0.f;
       bool enoughContrast = false;
-      if((lastResult = this->ComputeBrightDarkValues(image, minContrastRatio, brightValue, darkValue, enoughContrast)) != RESULT_OK) {
+      if((lastResult = this->ComputeBrightDarkValues(image, minContrastRatio, isDarkOnLight, backgroundValue, foregroundValue, enoughContrast)) != RESULT_OK) {
         return lastResult;
       }
       EndBenchmark("vmrc_brightdarkvals");
@@ -1118,7 +1125,7 @@ namespace Anki
 
         const Quadrilateral<f32> initQuad = this->corners;
 
-        meanGrayvalueThreshold = static_cast<u8>(0.5f*(brightValue+darkValue));
+        meanGrayvalueThreshold = static_cast<u8>(0.5f*(backgroundValue+foregroundValue));
 
         if(refine_quadRefinementIterations > 0) {
           BeginBenchmark("vmrc_quadrefine");
@@ -1130,8 +1137,8 @@ namespace Anki
             fiducialThicknessFraction,
             roundedCornersFraction,
             refine_quadRefinementIterations,
-            darkValue,
-            brightValue,
+            foregroundValue,
+            backgroundValue,
             refine_numRefinementSamples,
             refine_quadRefinementMaxCornerChange,
             refine_quadRefinementMinCornerChange,

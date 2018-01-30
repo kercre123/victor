@@ -50,42 +50,42 @@ void BehaviorPounceWithProx::GetAllDelegates(std::set<IBehavior*>& delegates) co
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPounceWithProx::InitBehavior(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPounceWithProx::InitBehavior()
 {
-  _backupBehavior = behaviorExternalInterface.GetBehaviorContainer().FindBehaviorByID(BEHAVIOR_ID(PounceBackupWithProx));
-  _approachBehavior = behaviorExternalInterface.GetBehaviorContainer().FindBehaviorByID(BEHAVIOR_ID(PounceApproachWithProx));
+  _backupBehavior = GetBEI().GetBehaviorContainer().FindBehaviorByID(BEHAVIOR_ID(PounceBackupWithProx));
+  _approachBehavior = GetBEI().GetBehaviorContainer().FindBehaviorByID(BEHAVIOR_ID(PounceApproachWithProx));
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPounceWithProx::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPounceWithProx::OnBehaviorActivated()
 {
   
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPounceWithProx::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPounceWithProx::OnBehaviorDeactivated()
 {
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPounceWithProx::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPounceWithProx::BehaviorUpdate()
 {
   if(!IsActivated()){
     return;
   }
 
-  auto& proxSensor = behaviorExternalInterface.GetComponentWrapper(BEIComponentID::ProxSensor).GetValue<ProxSensorComponent>();
+  auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetValue<ProxSensorComponent>();
   if(proxSensor.IsSensorReadingValid()){
     // Transition conditions
     switch(_pounceState){
       case PounceState::BackupToIdealDistance:
       {
         if(!IsControlDelegated()){
-          if(_backupBehavior->WantsToBeActivated(behaviorExternalInterface)){
-            DelegateIfInControl(behaviorExternalInterface, _backupBehavior.get());
+          if(_backupBehavior->WantsToBeActivated()){
+            DelegateIfInControl(_backupBehavior.get());
           }else{
             _pounceState = PounceState::ApproachObject;
           }
@@ -95,8 +95,8 @@ void BehaviorPounceWithProx::BehaviorUpdate(BehaviorExternalInterface& behaviorE
       case PounceState::ApproachObject:
       {
         if(!IsControlDelegated()){
-          if(_approachBehavior->WantsToBeActivated(behaviorExternalInterface)){
-            DelegateIfInControl(behaviorExternalInterface, _approachBehavior.get());
+          if(_approachBehavior->WantsToBeActivated()){
+            DelegateIfInControl(_approachBehavior.get());
           }else{
             _motionObserved = false;
             _pounceState = PounceState::WaitForMotion;
@@ -115,9 +115,9 @@ void BehaviorPounceWithProx::BehaviorUpdate(BehaviorExternalInterface& behaviorE
       {
         // Pounce on the object
         if(!IsControlDelegated()){
-          const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+          const auto& robotInfo = GetBEI().GetRobotInfo();
           _prePouncePitch = robotInfo.GetPitchAngle().ToFloat();
-          TransitionToPounce(behaviorExternalInterface);
+          TransitionToPounce();
           _pounceState = PounceState::ReactToPounce;
         }
         break;
@@ -129,7 +129,7 @@ void BehaviorPounceWithProx::BehaviorUpdate(BehaviorExternalInterface& behaviorE
     }
   }else{
     // Sensor reading not valid - check if lift is in way
-    auto& proxSensor = behaviorExternalInterface.GetComponentWrapper(BEIComponentID::ProxSensor).GetValue<ProxSensorComponent>();
+    auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetValue<ProxSensorComponent>();
     bool liftBlocking = false;
     proxSensor.IsLiftInFOV(liftBlocking);
     if(!IsControlDelegated() &&
@@ -141,10 +141,10 @@ void BehaviorPounceWithProx::BehaviorUpdate(BehaviorExternalInterface& behaviorE
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPounceWithProx::TransitionToResultAnim(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPounceWithProx::TransitionToResultAnim()
 {
    
-  const bool caught = IsFingerCaught(behaviorExternalInterface);
+  const bool caught = IsFingerCaught();
 
   IActionRunner* newAction = nullptr;
   if( caught ) {
@@ -156,16 +156,16 @@ void BehaviorPounceWithProx::TransitionToResultAnim(BehaviorExternalInterface& b
     PRINT_CH_INFO("Behaviors", "BehaviorPounceOnMotion.CheckResult.Miss", "missed...");
   }
   
-  DelegateIfInControl(newAction, [this](BehaviorExternalInterface& behaviorExternalInterface){
+  DelegateIfInControl(newAction, [this](){
                                 _pounceState = PounceState::BackupToIdealDistance;
                               });
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorPounceWithProx::IsFingerCaught(BehaviorExternalInterface& behaviorExternalInterface)
+bool BehaviorPounceWithProx::IsFingerCaught()
 {
-  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  const auto& robotInfo = GetBEI().GetRobotInfo();
   const float liftHeightThresh = 35.5f;
   const float bodyAngleThresh = 0.02f;
   
@@ -183,7 +183,7 @@ bool BehaviorPounceWithProx::IsFingerCaught(BehaviorExternalInterface& behaviorE
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPounceWithProx::TransitionToPounce(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPounceWithProx::TransitionToPounce()
 {  
   IActionRunner* animation = new PlayAnimationAction("anim_pounce_04");
   IActionRunner* action = nullptr;
@@ -193,7 +193,7 @@ void BehaviorPounceWithProx::TransitionToPounce(BehaviorExternalInterface& behav
     Radians relPanAngle;
     Radians relTiltAngle;
     
-    behaviorExternalInterface.GetVisionComponent().GetCamera().ComputePanAndTiltAngles(motionCentroid, relPanAngle, relTiltAngle);
+    GetBEI().GetVisionComponent().GetCamera().ComputePanAndTiltAngles(motionCentroid, relPanAngle, relTiltAngle);
     TurnInPlaceAction* turnAction = new TurnInPlaceAction(relPanAngle.ToFloat(), false);
     turnAction->SetMaxSpeed(MAX_BODY_ROTATION_SPEED_RAD_PER_SEC);
     turnAction->SetAccel(1000.f);
@@ -210,7 +210,7 @@ void BehaviorPounceWithProx::TransitionToPounce(BehaviorExternalInterface& behav
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPounceWithProx::HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPounceWithProx::HandleWhileActivated(const EngineToGameEvent& event)
 {
   using namespace ExternalInterface;
   switch (event.GetData().GetTag())

@@ -24,6 +24,19 @@ include(AddCXXCompilerFlag)
 include(DetermineTargetArchitecture)
 include(CMakeDependentOption)
 
+# <anki>
+# Work around missing CMAKE_SIZEOF_VOID_P
+#
+# Resolves build error
+#   FindWinSock.cmake:77 (if):
+#   if given arguments:
+#     "x86_64" "STREQUAL" "AMD64" "AND" "EQUAL" "4"
+# </anki>
+if (NOT DEFINED CMAKE_SIZEOF_VOID_P)
+  include(CheckTypeSize)
+  check_type_size("void*"  CMAKE_SIZEOF_VOID_P)
+endif()
+
 # Set up the project
 project (civetweb)
 set(CIVETWEB_VERSION "1.9.1" CACHE STRING "The version of the civetweb library")
@@ -37,7 +50,7 @@ set(CIVETWEB_VERSION_PATCH "${CMAKE_MATCH_3}")
 determine_target_architecture(CIVETWEB_ARCHITECTURE)
 
 # Detect the platform reliably
-if(NOT MACOSX AND ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+if (NOT DARWIN AND ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
    SET(DARWIN YES)
 elseif(NOT BSD AND ${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
     SET(FREEBSD YES)
@@ -81,7 +94,8 @@ option(CIVETWEB_ENABLE_IPV6 "Enables the IP version 6 support" OFF)
 message(STATUS "IP Version 6 - ${CIVETWEB_ENABLE_IPV6}")
 
 # Websocket support
-option(CIVETWEB_ENABLE_WEBSOCKETS "Enable websockets connections" OFF)
+# <anki> Websockets ON by default </anki>
+option(CIVETWEB_ENABLE_WEBSOCKETS "Enable websockets connections" ON)
 message(STATUS "Websockets support - ${CIVETWEB_ENABLE_WEBSOCKETS}")
 
 # Memory debugging
@@ -185,8 +199,39 @@ option(CIVETWEB_ENABLE_DUKTAPE "Enable Duktape CGIs" OFF)
 message(STATUS "Duktape CGI support - ${CIVETWEB_ENABLE_DUKTAPE}")
 
 # SSL support
-option(CIVETWEB_ENABLE_SSL "Enables the secure socket layer" ON)
+option(CIVETWEB_ENABLE_SSL "Enables the secure socket layer" OFF)
 message(STATUS "SSL support - ${CIVETWEB_ENABLE_SSL}")
+
+# <anki>
+# Link-time optimization OFF unless enabled
+#
+# Resolves link error:
+#   ld: fatal error: Optimization level must be between 0 and 3
+# See also
+#   https://bugs.llvm.org/show_bug.cgi?id=32155
+# </anki>
+option(CIVETWEB_ALLOW_LTO "Allow link-time optimization" OFF)
+message(STATUS "Allow link-time optimization - ${CIVETWEB_ALLOW_LTO}")
+
+# <anki> 
+# Address sanitization OFF unless enabled
+#
+# Resolves link errors:
+#   undefined reference to '__ubsan_handle_sub_overflow'
+#   undefined reference to '__ubsan_handle_out_of_bounds'
+#  ...
+# </anki>
+option(CIVETWEB_ALLOW_SANITIZE "Allow address sanitization" OFF)
+message(STATUS "Allow address sanitization - ${CIVETWEB_ALLOW_SANITIZE}")
+
+# <anki>
+# Unit tests OFF unless enabled
+#
+# Resolves build error:
+#   error: 'third_party/lib/libcheck.a', needed by 'bin/main-c-unit-test'
+# </anki>
+option(CIVETWEB_BUILD_TESTING "Enable unit tests" OFF)
+message(STATUS "Enable unit tests - ${CIVETWEB_BUILD_TESTING}")
 
 # Dynamically load or link the SSL libraries
 cmake_dependent_option(
@@ -276,9 +321,16 @@ add_c_compiler_flag(/WX)
 add_c_compiler_flag(-pedantic-errors)
 add_c_compiler_flag(-fvisibility=hidden)
 add_c_compiler_flag(-fstack-protector-strong RELEASE)
-add_c_compiler_flag(-flto RELEASE)
-add_c_compiler_flag(-fsanitize=undefined DEBUG)
-add_c_compiler_flag(-fsanitize=address DEBUG)
+
+if (CIVETWEB_ALLOW_LTO)
+  add_c_compiler_flag(-flto RELEASE)
+endif()
+
+if (CIVETWEB_ALLOW_SANITIZE)
+  add_c_compiler_flag(-fsanitize=undefined DEBUG)
+  add_c_compiler_flag(-fsanitize=address DEBUG)
+endif()
+
 if (HAVE_C_FLAG_FSANITIZE_ADDRESS)
   add_c_compiler_flag(-static-asan DEBUG)
 endif()
@@ -406,8 +458,10 @@ add_definitions(-DMAX_REQUEST_SIZE=${CIVETWEB_MAX_REQUEST_SIZE})
 add_subdirectory(src)
 
 # Enable the testing of the library/executable
-include(CTest)
-if (BUILD_TESTING)
+if (CIVETWEB_BUILD_TESTING)
+
+  include(CTest)
+
   # Check unit testing framework Version
   set(CIVETWEB_CHECK_VERSION 0.11.0 CACHE STRING
     "The version of Check unit testing framework to build and include statically")
@@ -459,3 +513,7 @@ set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_PACKAGE_DEPENDS}")
 
 # Finalize CPack settings
 include(CPack)
+
+# <anki> Declare alias for external use </anki>
+add_library(civetweb ALIAS c-library)
+

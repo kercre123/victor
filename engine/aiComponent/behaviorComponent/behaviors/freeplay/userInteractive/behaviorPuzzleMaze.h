@@ -54,13 +54,14 @@ protected:
   BehaviorPuzzleMaze(const Json::Value& config);
   
   // ICozmoBehavior interface
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual bool CarryingObjectHandledInternally() const override { return false; }
+  virtual bool WantsToBeActivatedBehavior() const override;
   
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual bool ShouldCancelWhenInControl() const override { return false;}
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.behaviorAlwaysDelegates = false;
+  }
+  virtual void OnBehaviorActivated() override;
+  virtual void BehaviorUpdate() override;
+  virtual void OnBehaviorDeactivated() override;
   
   // Helper types
   enum class MazeState
@@ -117,17 +118,17 @@ private:
   Point2i DirFromEnum(MazeWalls dir);
   MazeWalls GetNextDir(const MazeWalls& currCell, const MazeWalls& currDir, Point2i& outMoveDir, bool rotateOrder = false);
   int GetNumberOfExitsFromCell(const MazeWalls& currCell);
-  void SingleStepMaze(BehaviorExternalInterface& behaviorExternalInterface);
-  void UpdateMaze(BehaviorExternalInterface& behaviorExternalInterface);
-  void UpdateDisplay(BehaviorExternalInterface& behaviorExternalInterface);
+  void SingleStepMaze();
+  void UpdateMaze();
+  void UpdateDisplay();
   
   // Draw helpers
-  void DrawMaze(Vision::Image& image, BehaviorExternalInterface& behaviorExternalInterface);
+  void DrawMaze(Vision::Image& image);
   void DrawCozmo(Vision::Image& image);
   
   // Action helpers
-  void StartAnimation(BehaviorExternalInterface& behaviorExternalInterface, const AnimationTrigger& animationTrigger);
-  void StartAnimation(BehaviorExternalInterface& behaviorExternalInterface, const AnimationTrigger& animationTrigger, const MazeState& nextState);
+  void StartAnimation(const AnimationTrigger& animationTrigger);
+  void StartAnimation(const AnimationTrigger& animationTrigger, const MazeState& nextState);
 };
   
 

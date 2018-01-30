@@ -14,6 +14,10 @@
 #define __Anki_Cozmo_Basestation_Components_ProgressionUnlockComponent_H__
 
 #include "clad/types/unlockTypes.h"
+
+#include "engine/dependencyManagedComponent.h"
+#include "engine/robotComponents_fwd.h"
+
 #include "json/json-forwards.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
@@ -27,11 +31,27 @@ namespace Cozmo {
 class Robot;
 class CozmoContext;
 
-class ProgressionUnlockComponent : private Util::noncopyable
+class ProgressionUnlockComponent : public IDependencyManagedComponent<RobotComponentID>, private Util::noncopyable
 {
 public:
 
-  explicit ProgressionUnlockComponent(Robot& robot);
+  explicit ProgressionUnlockComponent();
+
+  //////
+  // IDependencyManagedComponent functions
+  //////
+  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
+  // Maintain the chain of initializations currently in robot - it might be possible to
+  // change the order of initialization down the line, but be sure to check for ripple effects
+  // when changing this function
+  virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
+    dependencies.insert(RobotComponentID::Inventory);
+  };
+  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
+  //////
+  // end IDependencyManagedComponent functions
+  //////
+
 
   void Init();
 
@@ -66,7 +86,7 @@ private:
   
   void NotifyGameDefaultUnlocksSet();
 
-  Robot& _robot;
+  Robot* _robot = nullptr;
 
   // eventually this will be stored on the robot
   std::set<UnlockId> _currentUnlocks;

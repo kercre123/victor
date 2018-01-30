@@ -19,7 +19,7 @@ namespace Cozmo {
   
 class ISubtaskListener{
 public:
-  virtual void AnimationComplete(BehaviorExternalInterface& behaviorExternalInterface) = 0;
+  virtual void AnimationComplete() = 0;
 };
 
 

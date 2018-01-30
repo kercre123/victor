@@ -14,8 +14,8 @@
 
 #include "cozmoAnim/animation/trackLayerManagers/faceLayerManager.h"
 
-#include "cozmoAnim/animation/proceduralFaceDrawer.h"
-#include "cozmoAnim/animation/scanlineDistorter.h"
+#include "cannedAnimLib/proceduralFaceDrawer.h"
+#include "cannedAnimLib/scanlineDistorter.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "util/console/consoleInterface.h"

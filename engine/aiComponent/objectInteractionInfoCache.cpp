@@ -15,7 +15,7 @@
 #include "engine/aiComponent/objectInteractionInfoCache.h"
 
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/blockWorld/blockConfigurationManager.h"
 #include "engine/blockWorld/blockConfigurationPyramid.h"
 #include "engine/blockWorld/blockConfigurationStack.h"

@@ -28,22 +28,24 @@ class BehaviorDevPettingTestSimple : public ICozmoBehavior
 public:
   
   virtual ~BehaviorDevPettingTestSimple() { }
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual bool CarryingObjectHandledInternally() const override { return false; }
+  virtual bool WantsToBeActivatedBehavior() const override;
   
 protected:
   
   friend class BehaviorContainer;
   BehaviorDevPettingTestSimple(const Json::Value& config);
   
-  void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) override;
-  
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.behaviorAlwaysDelegates = false;
+  }
 
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  void InitBehavior() override;
   
-  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual bool ShouldCancelWhenInControl() const override { return false;}
+  virtual void OnBehaviorActivated() override;
+
+  virtual void OnBehaviorDeactivated() override;
+  
+  virtual void BehaviorUpdate() override;
 
 private:
   

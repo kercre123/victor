@@ -264,6 +264,12 @@ NeedsManager::NeedsManager(const CozmoContext* cozmoContext)
 , _sparksRewardMsg()
 , _tuningTestVariationKey("Unknown (unknown)")
 {
+  // Pause needs during factory test
+  if(FACTORY_TEST)
+  {
+    _isPausedOverall = true;
+  }
+
   for (int i = 0; i < static_cast<int>(NeedId::Count); i++)
   {
     _isDecayPausedForNeed[i] = false;

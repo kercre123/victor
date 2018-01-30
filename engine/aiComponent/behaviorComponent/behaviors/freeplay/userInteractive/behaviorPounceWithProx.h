@@ -27,18 +27,18 @@ private:
   BehaviorPounceWithProx(const Json::Value& config);
   
 public:
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override { return true;}
-  virtual bool CarryingObjectHandledInternally() const override {return false;}
+  virtual bool WantsToBeActivatedBehavior() const override { return true;}
 
 protected:
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
 
-  virtual void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual bool ShouldCancelWhenInControl() const override { return false;}
-
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.behaviorAlwaysDelegates = false;
+  }
+  virtual void InitBehavior() override;
+  virtual void OnBehaviorActivated() override;
+  virtual void OnBehaviorDeactivated() override;
+  virtual void BehaviorUpdate() override;
 
 private:
   enum class PounceState{
@@ -55,8 +55,8 @@ private:
 
   float _prePouncePitch = 0.0f;
 
-  void TransitionToResultAnim(BehaviorExternalInterface& behaviorExternalInterface);
-  bool IsFingerCaught(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToResultAnim();
+  bool IsFingerCaught();
 
 
   // vision work
@@ -66,8 +66,8 @@ private:
   bool _motionObserved = false;
   float _minGroundAreaForPounce = 0.01f;
 
-  virtual void HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
-  void TransitionToPounce(BehaviorExternalInterface& behaviorExternalInterface);
+  virtual void HandleWhileActivated(const EngineToGameEvent& event) override;
+  void TransitionToPounce();
 
 };
 

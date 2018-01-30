@@ -26,13 +26,15 @@ class Robot;
 
 // MountChargerAction
 //
-// Turn around and drive backward onto the charger, optionally using the cliff
-// sensors to detect the charger docking pattern and correct while reversing.
+// Drive backward onto the charger, optionally using the cliff sensors to
+// detect the charger docking pattern and correct while reversing.
 class MountChargerAction : public IAction
 {
 public:
   MountChargerAction(ObjectID chargerID,
-                     const bool useCliffSensorCorrection = true);
+                     const bool useCliffSensorCorrection = true,
+                     const bool shouldPlayDrivingAnimation = true);
+  ~MountChargerAction();
   
 protected:
   
@@ -43,18 +45,47 @@ private:
   const ObjectID _chargerID;
 
   const bool _useCliffSensorCorrection;
+  const bool _playDrivingAnimation;
   
   // Pointers to compound actions which comprise this action:
-  std::unique_ptr<ICompoundAction> _turnAndMountAction = nullptr;
+  std::unique_ptr<ICompoundAction> _mountAction = nullptr;
   std::unique_ptr<DriveStraightAction> _driveForRetryAction = nullptr;
   
   // Allocate and add actions to the member compound actions:
-  ActionResult ConfigureTurnAndMountAction();
+  ActionResult ConfigureMountAction();
   ActionResult ConfigureDriveForRetryAction();
   
 }; // class MountChargerAction
 
 
+  
+// TurnToAlignWithChargerAction
+//
+// Compute the proper angle to turn, and turn away from
+// the charger to prepare for backing up onto it.
+// Optionally play an animation depending on turn direction.
+class TurnToAlignWithChargerAction : public IAction
+{
+public:
+  TurnToAlignWithChargerAction(ObjectID chargerID,
+                               AnimationTrigger leftTurnAnimTrigger = AnimationTrigger::Count,
+                               AnimationTrigger rightTurnAnimTrigger = AnimationTrigger::Count);
+  
+protected:
+  virtual ActionResult Init() override;
+  virtual ActionResult CheckIfDone() override;
+  
+private:
+  const ObjectID _chargerID;
+  
+  const AnimationTrigger _leftTurnAnimTrigger;
+  const AnimationTrigger _rightTurnAnimTrigger;
+  
+  std::unique_ptr<CompoundActionParallel> _compoundAction = nullptr;
+  
+}; // class TurnToAlignWithChargerAction
+  
+  
 // BackupOntoChargerAction
 //
 // Reverse onto the charger, stopping when charger contacts are sensed.

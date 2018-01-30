@@ -1,0 +1,49 @@
+#VRML_SIM V7.3.0 utf8
+
+PROTO CalibrationPattern [
+  field SFString name "CalibrationPattern"
+
+  field SFVec3f       translation  0 0 0
+  field SFRotation    rotation     0 0 1 0
+
+  # Width of pattern measured between outside edge of dots
+  # on opposite sides of the long dimensions
+  field SFFloat       patternWidth 0.05
+
+
+  # Asymmetric circles pattern
+  # Image is 1830 x 1330
+  # Pattern is 1208 x 872
+  field SFString image                         "acircles_pattern.png"
+  field SFFloat  imageAspectRatio              0.72677595628415
+  field SFFloat  imageWidthToPatternWidthRatio 1.51490066225165
+]
+{
+Solid {
+
+  %{ imageURL = "textures/calibration/" .. fields.image.value }%
+
+  name IS name
+
+  translation IS translation
+  rotation IS rotation
+
+  children [
+
+    Shape {
+      appearance Appearance {
+        texture ImageTexture {
+          url [ "%{= imageURL }%" ]
+        }
+      }
+      geometry Box {
+        size %{=fields.patternWidth.value * fields.imageWidthToPatternWidthRatio.value}% 0.0001 %{=fields.patternWidth.value * fields.imageWidthToPatternWidthRatio.value * fields.imageAspectRatio.value}%
+      }
+    }
+
+  ] # Solid Children
+
+} # Parent Solid
+
+
+} # PROTO

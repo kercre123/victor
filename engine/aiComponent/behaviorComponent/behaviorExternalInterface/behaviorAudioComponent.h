@@ -18,11 +18,13 @@
 #ifndef __Basestation_Audio_BehaviorAudioComponent_H__
 #define __Basestation_Audio_BehaviorAudioComponent_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
+#include "engine/dependencyManagedComponent.h"
 #include "engine/events/ankiEventMgr.h"
 
 #include "clad/audio/audioStateTypes.h"
 #include "clad/audio/audioSwitchTypes.h"
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "clad/types/robotPublicState.h"
 #include "clad/types/unlockTypes.h"
 
@@ -39,11 +41,22 @@ namespace Audio {
 
 class EngineRobotAudioClient;
 
-class BehaviorAudioComponent {
-  
+class BehaviorAudioComponent : public IDependencyManagedComponent<BCComponentID> {
 public:
   BehaviorAudioComponent(Audio::EngineRobotAudioClient* robotAudioClient);
   
+  //////
+  // IDependencyManagedComponent functions
+  //////
+  virtual void InitDependent(Cozmo::Robot* robot, const BCCompMap& dependentComponents) override;
+  virtual void GetInitDependencies(BCCompIDSet& dependencies) const override { 
+    dependencies.insert(BCComponentID::BehaviorExternalInterface);
+  };
+  virtual void GetUpdateDependencies(BCCompIDSet& dependencies) const override {};
+  //////
+  // end IDependencyManagedComponent functions
+  //////
+
   void Init(BehaviorExternalInterface& behaviorExternalInterface);
 
   // True if Client has been Activated

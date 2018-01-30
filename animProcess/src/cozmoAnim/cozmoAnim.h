@@ -41,7 +41,7 @@ public:
   Result Init();
 
   // Hook this up to whatever is ticking the game "heartbeat"
-  Result Update(const BaseStationTime_t currTime_nanosec);
+  Result Update(BaseStationTime_t currTime_nanosec);
 
 protected:
   

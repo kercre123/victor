@@ -1,0 +1,9 @@
+{
+  "behaviorID" : "SleepingState",
+  "behaviorClass" : "DispatcherQueue",
+
+  "behaviors": [
+    "GoToSleep",
+    "Sleeping"
+  ]
+}

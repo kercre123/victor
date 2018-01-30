@@ -15,7 +15,9 @@
 #ifndef __Anki_Cozmo_Basestation_Components_PublicStateBroadcaster_H__
 #define __Anki_Cozmo_Basestation_Components_PublicStateBroadcaster_H__
 
+#include "engine/dependencyManagedComponent.h"
 #include "engine/events/ankiEventMgr.h"
+#include "engine/robotComponents_fwd.h"
 
 #include "clad/types/robotPublicState.h"
 
@@ -28,11 +30,26 @@ namespace Cozmo {
   
 class Robot;
 
-class PublicStateBroadcaster : private Util::noncopyable
+class PublicStateBroadcaster : public IDependencyManagedComponent<RobotComponentID>, private Util::noncopyable
 {
 public:
   PublicStateBroadcaster();
   ~PublicStateBroadcaster() {};
+
+  //////
+  // IDependencyManagedComponent functions
+  //////
+  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override {};
+  // Maintain the chain of initializations currently in robot - it might be possible to
+  // change the order of initialization down the line, but be sure to check for ripple effects
+  // when changing this function
+  virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
+    dependencies.insert(RobotComponentID::PetWorld);
+  };
+  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
+  //////
+  // end IDependencyManagedComponent functions
+  //////
   
   using SubscribeFunc = std::function<void(const AnkiEvent<RobotPublicState>&)>;
   Signal::SmartHandle Subscribe(SubscribeFunc messageHandler);

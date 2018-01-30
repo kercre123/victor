@@ -29,6 +29,7 @@
 
 #include <webots/Supervisor.hpp>
 
+#define LOG_CHANNEL    "webotsCtrlAnim"
 
 namespace Anki {
   namespace Cozmo {
@@ -59,7 +60,8 @@ int main(int argc, char **argv)
   OSState::SetSupervisor(&animSupervisor);
 
   // - create and set logger
-  Util::IFormattedLoggerProvider* printfLoggerProvider = new Util::PrintfLoggerProvider(Anki::Util::ILoggerProvider::LOG_LEVEL_WARN);
+  Util::IFormattedLoggerProvider* printfLoggerProvider = new Util::PrintfLoggerProvider(Anki::Util::ILoggerProvider::LOG_LEVEL_WARN,
+                                                                                        params.colorizeStderrOutput);
   Util::MultiFormattedLoggerProvider loggerProvider({
     printfLoggerProvider
   });
@@ -78,7 +80,7 @@ int main(int argc, char **argv)
     const std::string& consoleFilterConfigPath = "config/engine/console_filter_config.json";
     if (!dataPlatform.readAsJson(Util::Data::Scope::Resources, consoleFilterConfigPath, consoleFilterConfig))
     {
-      PRINT_NAMED_ERROR("webotsCtrlAnim.main.loadConsoleConfig", "Failed to parse Json file '%s'", consoleFilterConfigPath.c_str());
+      LOG_ERROR("webotsCtrlAnim.main.loadConsoleConfig", "Failed to parse Json file '%s'", consoleFilterConfigPath.c_str());
     }
     
     // initialize console filter for this platform
@@ -96,7 +98,7 @@ int main(int argc, char **argv)
   }
   else
   {
-    PRINT_NAMED_INFO("webotsCtrlAnim.main.noFilter", "Console will not be filtered due to program args");
+    LOG_INFO("webotsCtrlAnim.main.noFilter", "Console will not be filtered due to program args");
   }
 
   // Start with a step so that we can attach to the process here for debugging
@@ -110,7 +112,7 @@ int main(int argc, char **argv)
   CozmoAnimEngine cozmoAnim(&dataPlatform);
   cozmoAnim.Init();
 
-  PRINT_NAMED_INFO("webotsCtrlAnim.main", "CozmoAnim created and initialized.");
+  LOG_INFO("webotsCtrlAnim.main", "CozmoAnim created and initialized.");
 
   //
   // Main Execution loop: step the world forward forever

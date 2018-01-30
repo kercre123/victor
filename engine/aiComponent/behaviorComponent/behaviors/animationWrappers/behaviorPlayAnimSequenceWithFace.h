@@ -29,7 +29,7 @@ protected:
 
 public:
 
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated() override;
   void SetAnimationsToPlay(const std::vector<AnimationTrigger>& animations){
     _animTriggers = animations;
   }

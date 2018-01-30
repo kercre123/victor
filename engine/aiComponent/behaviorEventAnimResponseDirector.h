@@ -18,6 +18,8 @@
 #include "clad/types/animationTrigger.h"
 #include "clad/types/userFacingResults.h"
 
+#include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
+#include "engine/dependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
 
 #include <map>
@@ -39,10 +41,25 @@ private:
 };
 
 
-class BehaviorEventAnimResponseDirector : private Util::noncopyable {
+class BehaviorEventAnimResponseDirector : public IDependencyManagedComponent<BCComponentID>, 
+                                          private Util::noncopyable 
+{
 public:
   BehaviorEventAnimResponseDirector();
   virtual ~BehaviorEventAnimResponseDirector() {};
+
+  //////
+  // IDependencyManagedComponent functions
+  //////
+  virtual void InitDependent(Robot* robot, const BCCompMap& dependentComponents) override {};
+  virtual void UpdateDependent(const BCCompMap& dependentComponents) override {};
+  virtual void GetInitDependencies(BCCompIDSet& dependencies) const override {};
+  virtual void GetUpdateDependencies(BCCompIDSet& dependencies) const override {};
+  //////
+  // end IDependencyManagedComponent functions
+  //////
+
+
   AnimationTrigger GetAnimationToPlayForActionResult(const UserFacingActionResult result) const;
   
 private:

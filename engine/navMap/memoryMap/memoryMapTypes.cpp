@@ -29,7 +29,6 @@ bool ExpectsAdditionalData(EContentType type)
     case EContentType::Unknown:
     case EContentType::ClearOfObstacle:
     case EContentType::ClearOfCliff:
-    case EContentType::ObstacleCubeRemoved:
     case EContentType::ObstacleCharger:
     case EContentType::ObstacleChargerRemoved:
     case EContentType::ObstacleUnrecognized:
@@ -38,7 +37,7 @@ bool ExpectsAdditionalData(EContentType type)
     {
       return false;
     }
-    case EContentType::ObstacleCube:
+    case EContentType::ObstacleObservable:
     case EContentType::Cliff:
     case EContentType::ObstacleProx:
     {
@@ -59,8 +58,7 @@ const char* EContentTypeToString(EContentType contentType)
     case EContentType::Unknown: return "Unknown";
     case EContentType::ClearOfObstacle: return "ClearOfObstacle";
     case EContentType::ClearOfCliff: return "ClearOfCliff";
-    case EContentType::ObstacleCube: return "ObstacleCube";
-    case EContentType::ObstacleCubeRemoved: return "ObstacleCubeRemoved";
+    case EContentType::ObstacleObservable: return "ObstacleObservable";
     case EContentType::ObstacleCharger: return "ObstacleCharger";
     case EContentType::ObstacleChargerRemoved: return "ObstacleChargerRemoved";
     case EContentType::ObstacleProx: return "ObstacleProx";
@@ -91,8 +89,7 @@ bool IsRemovalType(EContentType type)
     {EContentType::Unknown               , false},
     {EContentType::ClearOfObstacle       , false},
     {EContentType::ClearOfCliff          , false},
-    {EContentType::ObstacleCube          , false},
-    {EContentType::ObstacleCubeRemoved   , true},
+    {EContentType::ObstacleObservable    , false},
     {EContentType::ObstacleCharger       , false},
     {EContentType::ObstacleChargerRemoved, true},
     {EContentType::ObstacleProx          , false},

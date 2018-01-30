@@ -184,7 +184,7 @@ static bool multiOp(I2C_Op func, uint8_t channel, uint8_t slave, uint8_t reg, in
   do {
     // Welp, something went wrong, we should just give up
     if (max_retries-- == 0) {
-      //return true;
+      return true;
     }
 
     I2C_Operation opTable[] = {

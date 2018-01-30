@@ -39,9 +39,7 @@ class BehaviorAcknowledgeObject : public ICozmoBehavior
 private:
   using super = ICozmoBehavior;
 
-public:
-  virtual bool CarryingObjectHandledInternally() const override { return true;}
-  
+public:  
   void SetObjectsToAcknowledge(const std::set<s32>& targets){_targets = targets;}
   
 protected:
@@ -60,32 +58,36 @@ protected:
   friend class BehaviorContainer;
   BehaviorAcknowledgeObject(const Json::Value& config);
 
-  void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenCarryingObject = true;
+  }
 
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  void InitBehavior() override;
+  virtual void OnBehaviorActivated() override;
+  virtual void BehaviorUpdate() override;
+  virtual void OnBehaviorDeactivated() override;
+
+  virtual bool WantsToBeActivatedBehavior() const override;
   
   virtual void AddListener(IReactToObjectListener* listener) override;
 
   
 private:
-  void BeginIteration(BehaviorExternalInterface& behaviorExternalInterface);
-  void LookForStackedCubes(BehaviorExternalInterface& behaviorExternalInterface);
-  void FinishIteration(BehaviorExternalInterface& behaviorExternalInterface);
+  void BeginIteration();
+  void LookForStackedCubes();
+  void FinishIteration();
   
   // helper functions to set the ghost object's pose
-  void SetGhostBlockPoseRelObject(BehaviorExternalInterface& behaviorExternalInterface, const ObservableObject* obj, float zOffset);
+  void SetGhostBlockPoseRelObject(const ObservableObject* obj, float zOffset);
   
   // helper function to check stack visibility, with optional output argument for whether
   // the ghost cube is outside the current FOV
-  bool CheckIfGhostBlockVisible(BehaviorExternalInterface& behaviorExternalInterface, const ObservableObject* obj, float zOffset);
-  bool CheckIfGhostBlockVisible(BehaviorExternalInterface& behaviorExternalInterface, const ObservableObject* obj, float zOffset, bool& outsideFOV);
+  bool CheckIfGhostBlockVisible(const ObservableObject* obj, float zOffset);
+  bool CheckIfGhostBlockVisible(const ObservableObject* obj, float zOffset, bool& outsideFOV);
   
   // helper function for looking at ghost block location
   template<typename T>
-  void LookAtGhostBlock(BehaviorExternalInterface& behaviorExternalInterface, bool backupFirst, void(T::*callback)(BehaviorExternalInterface&));
+  void LookAtGhostBlock(bool backupFirst, void(T::*callback)());
   
   // NOTE: uses s32 instead of ObjectID to match ICozmoBehaviorPoseBasedAcknowledgement's generic ids
   ObjectID _currTarget;

@@ -26,9 +26,9 @@ CMake will currently detect whether `ccache` is installed on your system and aut
 
 The build system uses wrapper scripts:
 
-- [cmake-launch-c.in](project/build-scripts/cmake-launch-c.in)
+- [cmake-launch-c.in](/project/build-scripts/cmake-launch-c.in)
 
-- [cmake-launch-cxx.in](project/build-scripts/cmake-launch-cxx.in)
+- [cmake-launch-cxx.in](/project/build-scripts/cmake-launch-cxx.in)
 
 Each of these contain the following settings:
 

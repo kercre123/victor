@@ -28,15 +28,23 @@ DirectionalLight {
 CozmoMat {
   showMarkers FALSE
 }
+VictorCharger {
+  translation -0.0650650263404583 -0.3833437665763433 1.2212453270876722e-15
+}
 Face {
   translation 0.34 -0.97 0.27
 }
 CozmoBot2 {
   filterLogs TRUE
+  colorizeStderrOutput TRUE
 }
 WebotsKeyboardController {
   translation 0.288125 0.0208444 0.08
+  filterLogs FALSE
+  colorizeStderrOutput TRUE
 }
 CozmoVizDisplay {
   streamResolution "NHD"
+  filterLogs FALSE
+  colorizeStderrOutput TRUE
 }

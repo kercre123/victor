@@ -37,7 +37,7 @@
     #define CDBG(fmt, args...) fprintf(stderr, fmt "\n", ##args)                                    
 //    #define ALOGE(fmt, args...) fprintf(stderr, fmt, ##args)                                      
 #else                                                                                               
-    #define CDBG(fmt, args...)                                                                      
+    #define CDBG(fmt, args...)
 #endif
 
 #if 0

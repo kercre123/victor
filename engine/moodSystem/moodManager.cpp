@@ -61,19 +61,24 @@ float MoodManager::GetCurrentTimeInSeconds()
 }
   
   
-MoodManager::MoodManager(Robot* inRobot)
-  : _robot(inRobot)
-  , _lastUpdateTime(0.0f)
+MoodManager::MoodManager()
+: IDependencyManagedComponent(RobotComponentID::MoodManager)
+, _lastUpdateTime(0.0f)
 {
 }
 
 MoodManager::~MoodManager()
 {
   // if the robot is destructing, it might not have an action list, so check that here
-  if( _actionCallbackID != 0 && _robot != nullptr && _robot->HasActionList() ) {
+  if( _actionCallbackID != 0 && _robot != nullptr && _robot->HasComponent(RobotComponentID::ActionList) ) {
     _robot->GetActionList().UnregisterCallback(_actionCallbackID);
     _actionCallbackID = 0;
   }
+}
+
+void MoodManager::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+{
+  _robot = robot;
 }
 
 
@@ -92,6 +97,23 @@ void MoodManager::Init(const Json::Value& inJson)
 
     _actionCallbackID = _robot->GetActionList().RegisterActionEndedCallbackForAllActions(
       std::bind(&MoodManager::HandleActionEnded, this, std::placeholders::_1));
+  }
+}
+
+void MoodManager::LoadEmotionEvents(const RobotDataLoader::FileJsonMap& emotionEventData)
+{
+  for (const auto& fileJsonPair : emotionEventData)
+  {
+    const auto& filename = fileJsonPair.first;
+    const auto& eventJson = fileJsonPair.second;
+    if (!eventJson.empty() && LoadEmotionEvents(eventJson))
+    {
+      //PRINT_NAMED_DEBUG("MoodManager.LoadEmotionEvents", "Loaded '%s'", filename.c_str());
+    }
+    else
+    {
+      PRINT_NAMED_WARNING("MoodManager.LoadEmotionEvents", "Failed to read '%s'", filename.c_str());
+    }
   }
 }
   
@@ -184,7 +206,9 @@ void MoodManager::Update(const float currentTime)
   _eventNames.clear();
   
   // Can have null robot for unit tests
-  if ((nullptr != _robot) && kSendMoodToViz)
+  if ((nullptr != _robot) &&
+      _robot->HasComponent(RobotComponentID::CozmoContext) &&
+      kSendMoodToViz)
   {
     _robot->GetContext()->GetVizManager()->SendRobotMood(std::move(robotMood));
   }

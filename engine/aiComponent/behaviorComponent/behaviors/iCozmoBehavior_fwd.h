@@ -46,11 +46,8 @@ class BehaviorExternalInterface;
 
 using ICozmoBehaviorPtr                                         = std::shared_ptr<ICozmoBehavior>;
 using BehaviorRobotCompletedActionCallback                      = std::function<void(const ExternalInterface::RobotCompletedAction&)>;
-using BehaviorRobotCompletedActionWithExternalInterfaceCallback = std::function<void(const ExternalInterface::RobotCompletedAction&, BehaviorExternalInterface&)>;
-using BehaviorActionResultCallback                              = std::function<void(ActionResult)>;
-using BehaviorActionResultWithExternalInterfaceCallback         = std::function<void(const ActionResult&, BehaviorExternalInterface&)>;
-using BehaviorSimpleCallback                                    = std::function<void(void)>;
-using BehaviorSimpleCallbackWithExternalInterface               = std::function<void(BehaviorExternalInterface& behaviorExternalInterface)>;
+using BehaviorActionResultCallback                              = std::function<void(const ActionResult&)>;
+using BehaviorSimpleCallback                                    = std::function<void()>;
 
 }
 }

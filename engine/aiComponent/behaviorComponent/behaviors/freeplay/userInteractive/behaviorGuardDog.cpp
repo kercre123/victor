@@ -75,16 +75,16 @@ BehaviorGuardDog::BehaviorGuardDog(const Json::Value& config)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorGuardDog::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorGuardDog::WantsToBeActivatedBehavior() const
 {
-  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  const auto& robotInfo = GetBEI().GetRobotInfo();
   // Is this feature enabled?
   if (!robotInfo.GetContext()->GetFeatureGate()->IsFeatureEnabled(Anki::Cozmo::FeatureType::GuardDog)) {
     return false;
   }
   
   // Don't run if we currently have the hiccups:
-  if (behaviorExternalInterface.GetAIComponent().GetWhiteboard().HasHiccups()) {
+  if (GetBEI().GetAIComponent().GetWhiteboard().HasHiccups()) {
     return false;
   }
   
@@ -95,7 +95,7 @@ bool BehaviorGuardDog::WantsToBeActivatedBehavior(BehaviorExternalInterface& beh
   //   4. The blocks are gathered together closely enough (within a specified radius or bounding box)
   
   std::vector<const ObservableObject*> locatedBlocks;
-  behaviorExternalInterface.GetBlockWorld().FindLocatedMatchingObjects(*_connectedCubesOnlyFilter, locatedBlocks);
+  GetBEI().GetBlockWorld().FindLocatedMatchingObjects(*_connectedCubesOnlyFilter, locatedBlocks);
   
   // Ensure there are three located and connected blocks:
   if (locatedBlocks.size() != 3) {
@@ -130,7 +130,7 @@ bool BehaviorGuardDog::WantsToBeActivatedBehavior(BehaviorExternalInterface& beh
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorGuardDog::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorGuardDog::OnBehaviorActivated()
 {  
   // Reset some members in case this is running again:
   _cubesDataMap.clear();
@@ -145,7 +145,7 @@ void BehaviorGuardDog::OnBehaviorActivated(BehaviorExternalInterface& behaviorEx
 
   // Grab cube starting locations (ideally would have done this in WantsToBeActivated(), but WantsToBeActivated() is const)
   std::vector<const ObservableObject*> locatedBlocks;
-  behaviorExternalInterface.GetBlockWorld().FindLocatedMatchingObjects(*_connectedCubesOnlyFilter, locatedBlocks);
+  GetBEI().GetBlockWorld().FindLocatedMatchingObjects(*_connectedCubesOnlyFilter, locatedBlocks);
   
   DEV_ASSERT(locatedBlocks.size() == 3, "BehaviorGuardDog.InitInternal.WrongNumLocatedBlocks");
   
@@ -156,7 +156,7 @@ void BehaviorGuardDog::OnBehaviorActivated(BehaviorExternalInterface& behaviorEx
   
   {
     // Stop light cube animations:
-    behaviorExternalInterface.GetCubeLightComponent().StopAllAnims();
+    GetBEI().GetCubeLightComponent().StopAllAnims();
   }
   
   SET_STATE(Init);
@@ -166,7 +166,7 @@ void BehaviorGuardDog::OnBehaviorActivated(BehaviorExternalInterface& behaviorEx
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorGuardDog::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorGuardDog::BehaviorUpdate()
 {
   if(!IsActivated()){
     return;
@@ -209,7 +209,7 @@ void BehaviorGuardDog::BehaviorUpdate(BehaviorExternalInterface& behaviorExterna
     }
     const auto newStage = anyBlocksMoving ? GuardDogStage::CubeBeingMoved : GuardDogStage::Sleeping;
     if (newStage != _currPublicBehaviorStage) {
-      UpdatePublicBehaviorStage(behaviorExternalInterface, newStage);
+      UpdatePublicBehaviorStage(newStage);
     }
   }
   
@@ -225,7 +225,7 @@ void BehaviorGuardDog::BehaviorUpdate(BehaviorExternalInterface& behaviorExterna
       DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::GuardDogPulse), [this]() { SET_STATE(DriveToBlocks); });
       
       // Set cube lights to 'setup'
-      StartLightCubeAnims(behaviorExternalInterface, CubeAnimationTrigger::GuardDogSetup);
+      StartLightCubeAnims(CubeAnimationTrigger::GuardDogSetup);
       
       break;
     }
@@ -239,7 +239,7 @@ void BehaviorGuardDog::BehaviorUpdate(BehaviorExternalInterface& behaviorExterna
     {
       // Compute a goal starting pose near the blocks and drive there.
       Pose3d startingPose;
-      ComputeStartingPose(behaviorExternalInterface, startingPose);
+      ComputeStartingPose(startingPose);
       const bool kForceHeadDown = false;
       auto driveToStartingPoseAction = new DriveToPoseAction(startingPose, kForceHeadDown);
       
@@ -260,10 +260,10 @@ void BehaviorGuardDog::BehaviorUpdate(BehaviorExternalInterface& behaviorExterna
     case State::SettleIn:
     {
       DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::GuardDogSettle),
-                  [this, &behaviorExternalInterface]() {
+                  [this]() {
                                      // Stop setup light cube animation and go to "sleeping" lights:
-                                     StartLightCubeAnims(behaviorExternalInterface, CubeAnimationTrigger::GuardDogSleeping);
-                                     StartMonitoringCubeMotion(behaviorExternalInterface);
+                                     StartLightCubeAnims(CubeAnimationTrigger::GuardDogSleeping);
+                                     StartMonitoringCubeMotion();
                                      _firstSleepingStartTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
                     
                                      using namespace ExternalInterface;
@@ -298,14 +298,14 @@ void BehaviorGuardDog::BehaviorUpdate(BehaviorExternalInterface& behaviorExterna
     case State::Busted:
     {
       RecordResult("Busted");
-      StartLightCubeAnims(behaviorExternalInterface, CubeAnimationTrigger::GuardDogBusted);
-      StartMonitoringCubeMotion(behaviorExternalInterface, false);
+      StartLightCubeAnims(CubeAnimationTrigger::GuardDogBusted);
+      StartMonitoringCubeMotion(false);
 
       using namespace ExternalInterface;
       //robot.Broadcast( MessageEngineToGame( GuardDogEnd(false) ) );
 
       DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::GuardDogBusted), [this]() { SET_STATE(Complete); });
-      UpdatePublicBehaviorStage(behaviorExternalInterface, GuardDogStage::Busted);
+      UpdatePublicBehaviorStage(GuardDogStage::Busted);
       break;
     }
     case State::BlockDisconnected:
@@ -319,7 +319,7 @@ void BehaviorGuardDog::BehaviorUpdate(BehaviorExternalInterface& behaviorExterna
     }
     case State::Timeout:
     {
-      StartMonitoringCubeMotion(behaviorExternalInterface, false);
+      StartMonitoringCubeMotion(false);
       auto action = new CompoundActionSequential();
       
       // Timeout wake-up animation:
@@ -330,8 +330,8 @@ void BehaviorGuardDog::BehaviorUpdate(BehaviorExternalInterface& behaviorExterna
       //  purely for aesthetics and we do not want failures to prevent the animations afterward from
       //  being played.
 
-      auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
-      const ObservableObject* closestBlock = behaviorExternalInterface.GetBlockWorld().FindLocatedObjectClosestTo(robotInfo.GetPose(), *_connectedCubesOnlyFilter);
+      auto& robotInfo = GetBEI().GetRobotInfo();
+      const ObservableObject* closestBlock = GetBEI().GetBlockWorld().FindLocatedObjectClosestTo(robotInfo.GetPose(), *_connectedCubesOnlyFilter);
       if (ANKI_VERIFY(closestBlock, "BehaviorGuardDog.UpdateInternal_Legacy.Timeout.NoClosestBlock", "No closest block returned by blockworld!")) {
         action->AddAction(new TurnTowardsPoseAction(closestBlock->GetPose()), true);
       }
@@ -339,7 +339,7 @@ void BehaviorGuardDog::BehaviorUpdate(BehaviorExternalInterface& behaviorExterna
       action->AddAction(new DriveStraightAction(-80.f, 150.f), true); // ignore failures (see note above)
       
       // Play the CubesRemaining music and animation at the same time:
-      auto updateStageCubesRemainingLambda = [this, &behaviorExternalInterface] (Robot& robot) { UpdatePublicBehaviorStage(behaviorExternalInterface, GuardDogStage::CubesRemaining); return true; };
+      auto updateStageCubesRemainingLambda = [this] (Robot& robot) { UpdatePublicBehaviorStage(GuardDogStage::CubesRemaining); return true; };
       action->AddAction(new WaitForLambdaAction(updateStageCubesRemainingLambda));
       
       if ((_nCubesMoved == 0) && (_nCubesFlipped == 0)) {
@@ -360,12 +360,12 @@ void BehaviorGuardDog::BehaviorUpdate(BehaviorExternalInterface& behaviorExterna
     {
       RecordResult("PlayerSuccess");
       
-      StartMonitoringCubeMotion(behaviorExternalInterface, false);
+      StartMonitoringCubeMotion(false);
      
       // Switch to the 'sleeping' music (in case a cube was being moved
       //   when transitioned into this state, so that the 'tension' music
       //   doesn't keep playing during the following actions)
-      UpdatePublicBehaviorStage(behaviorExternalInterface, GuardDogStage::Sleeping);
+      UpdatePublicBehaviorStage(GuardDogStage::Sleeping);
       auto action = new CompoundActionSequential();
       
       // Timeout wake-up animation:
@@ -375,8 +375,8 @@ void BehaviorGuardDog::BehaviorUpdate(BehaviorExternalInterface& behaviorExterna
       // Note: We ignore failures for the TurnTowardsPose and DriveStraight actions, since these are
       //  purely for aesthetics and we do not want failures to prevent the animations afterward from
       //  being played.
-      auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
-      const ObservableObject* closestBlock = behaviorExternalInterface.GetBlockWorld().FindLocatedObjectClosestTo(robotInfo.GetPose(), *_connectedCubesOnlyFilter);
+      auto& robotInfo = GetBEI().GetRobotInfo();
+      const ObservableObject* closestBlock = GetBEI().GetBlockWorld().FindLocatedObjectClosestTo(robotInfo.GetPose(), *_connectedCubesOnlyFilter);
       if (ANKI_VERIFY(closestBlock, "BehaviorGuardDog.UpdateInternal_Legacy.PlayerSuccess.NoClosestBlock", "No closest block returned by blockworld!")) {
         action->AddAction(new TurnTowardsPoseAction(closestBlock->GetPose()), true);
       }
@@ -384,7 +384,7 @@ void BehaviorGuardDog::BehaviorUpdate(BehaviorExternalInterface& behaviorExterna
       action->AddAction(new DriveStraightAction(-80.f, 150.f), true); // ignore failures (see note above)
       
       // Update the music stage
-      auto updateStageAllCubesGoneLambda = [this, &behaviorExternalInterface] (Robot& robot) { UpdatePublicBehaviorStage(behaviorExternalInterface, GuardDogStage::AllCubesGone); return true; };
+      auto updateStageAllCubesGoneLambda = [this] (Robot& robot) { UpdatePublicBehaviorStage(GuardDogStage::AllCubesGone); return true; };
       action->AddAction(new WaitForLambdaAction(updateStageAllCubesGoneLambda));
       
       // Play the PlayerSuccess animation
@@ -406,16 +406,16 @@ void BehaviorGuardDog::BehaviorUpdate(BehaviorExternalInterface& behaviorExterna
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorGuardDog::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorGuardDog::OnBehaviorDeactivated()
 {
   // Stop streaming accelerometer data from each block:
-  StartMonitoringCubeMotion(behaviorExternalInterface, false);
+  StartMonitoringCubeMotion(false);
   
   // Stop light cube animations:
-  behaviorExternalInterface.GetCubeLightComponent().StopAllAnims();
+  GetBEI().GetCubeLightComponent().StopAllAnims();
   
-  if(behaviorExternalInterface.HasPublicStateBroadcaster()){
-    auto& publicStateBroadcaster = behaviorExternalInterface.GetRobotPublicStateBroadcaster();
+  if(GetBEI().HasPublicStateBroadcaster()){
+    auto& publicStateBroadcaster = GetBEI().GetRobotPublicStateBroadcaster();
     // Update the public state broadcaster to indicate that Guard Dog is no longer active
     publicStateBroadcaster.UpdateBroadcastBehaviorStage(BehaviorStageTag::Count, 0);
   }
@@ -431,18 +431,18 @@ void BehaviorGuardDog::OnBehaviorDeactivated(BehaviorExternalInterface& behavior
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorGuardDog::HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorGuardDog::HandleWhileActivated(const EngineToGameEvent& event)
 {
   // Handle messages:
   switch( event.GetData().GetTag() ) {
     case EngineToGameTag::ObjectConnectionState:
-      HandleObjectConnectionState(behaviorExternalInterface, event.GetData().Get_ObjectConnectionState());
+      HandleObjectConnectionState(event.GetData().Get_ObjectConnectionState());
       break;
     case EngineToGameTag::ObjectMoved:
-      HandleObjectMoved(behaviorExternalInterface, event.GetData().Get_ObjectMoved());
+      HandleObjectMoved(event.GetData().Get_ObjectMoved());
       break;
     case EngineToGameTag::ObjectUpAxisChanged:
-      HandleObjectUpAxisChanged(behaviorExternalInterface, event.GetData().Get_ObjectUpAxisChanged());
+      HandleObjectUpAxisChanged(event.GetData().Get_ObjectUpAxisChanged());
       break;
     default:
       PRINT_NAMED_WARNING("BehaviorGuardDog.HandleWhileRunning",
@@ -454,7 +454,7 @@ void BehaviorGuardDog::HandleWhileActivated(const EngineToGameEvent& event, Beha
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorGuardDog::HandleObjectConnectionState(BehaviorExternalInterface& behaviorExternalInterface, const ObjectConnectionState& msg)
+void BehaviorGuardDog::HandleObjectConnectionState(const ObjectConnectionState& msg)
 {
   if (!msg.connected) {
     PRINT_NAMED_WARNING("BehaviorGuardDog.HandleObjectConnectionState",
@@ -468,7 +468,7 @@ void BehaviorGuardDog::HandleObjectConnectionState(BehaviorExternalInterface& be
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorGuardDog::HandleObjectMoved(BehaviorExternalInterface& behaviorExternalInterface, const ObjectMoved& msg)
+void BehaviorGuardDog::HandleObjectMoved(const ObjectMoved& msg)
 {
   // If an object has been moved before we start monitoring for motion
   //  and before we fall asleep, jump right to 'SetupInterrupted'.
@@ -484,7 +484,7 @@ void BehaviorGuardDog::HandleObjectMoved(BehaviorExternalInterface& behaviorExte
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorGuardDog::HandleObjectUpAxisChanged(BehaviorExternalInterface& behaviorExternalInterface, const ObjectUpAxisChanged& msg)
+void BehaviorGuardDog::HandleObjectUpAxisChanged(const ObjectUpAxisChanged& msg)
 {
   // If an object has a new UpAxis, it must have been moved. If this happens before
   //  monitoring for motion and before we fall asleep, jump right to 'Busted' reaction.
@@ -516,7 +516,7 @@ void BehaviorGuardDog::HandleObjectUpAxisChanged(BehaviorExternalInterface& beha
         block.hasBeenFlipped = true;
         block.flippedTime_s = now;
         ++_nCubesFlipped;
-        StartLightCubeAnim(behaviorExternalInterface, objId, CubeAnimationTrigger::GuardDogSuccessfullyFlipped);
+        StartLightCubeAnim(objId, CubeAnimationTrigger::GuardDogSuccessfullyFlipped);
       }
       
       // Record that a block was moved at this time
@@ -527,7 +527,7 @@ void BehaviorGuardDog::HandleObjectUpAxisChanged(BehaviorExternalInterface& beha
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorGuardDog::CubeMovementHandler(BehaviorExternalInterface& behaviorExternalInterface, const ObjectID& objId, const float movementScore)
+void BehaviorGuardDog::CubeMovementHandler(const ObjectID& objId, const float movementScore)
 {
   // Ignore if we're not monitoring for cube motion right now
   if (!_monitoringCubeMotion) {
@@ -577,18 +577,18 @@ void BehaviorGuardDog::CubeMovementHandler(BehaviorExternalInterface& behaviorEx
     }
     // Play the "being moved" light cube anim:
     if (block.lastCubeAnimTrigger != CubeAnimationTrigger::GuardDogBeingMoved) {
-      StartLightCubeAnim(behaviorExternalInterface, objId, CubeAnimationTrigger::GuardDogBeingMoved);
+      StartLightCubeAnim(objId, CubeAnimationTrigger::GuardDogBeingMoved);
     }
     // Record that a block was moved at this time
     _lastCubeMovementTime_s = now;
   } else if (block.lastCubeAnimTrigger != CubeAnimationTrigger::GuardDogSleeping) {
-    StartLightCubeAnim(behaviorExternalInterface, objId, CubeAnimationTrigger::GuardDogSleeping);
+    StartLightCubeAnim(objId, CubeAnimationTrigger::GuardDogSleeping);
   }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorGuardDog::ComputeStartingPose(BehaviorExternalInterface& behaviorExternalInterface,  Pose3d& startingPose)
+void BehaviorGuardDog::ComputeStartingPose(Pose3d& startingPose)
 {
   // The robot's starting pose should be as follows:
   //   - If there is a last observed face, the starting pose should be next to the cubes
@@ -614,7 +614,7 @@ void BehaviorGuardDog::ComputeStartingPose(BehaviorExternalInterface& behaviorEx
   // Create a polygon of the block centers
   Poly2f blocksPoly;
   std::vector<const ObservableObject*> locatedBlocks;
-  behaviorExternalInterface.GetBlockWorld().FindLocatedMatchingObjects(*_connectedCubesOnlyFilter, locatedBlocks);
+  GetBEI().GetBlockWorld().FindLocatedMatchingObjects(*_connectedCubesOnlyFilter, locatedBlocks);
   
   DEV_ASSERT(locatedBlocks.size() == 3, "BehaviorGuardDog.ComputeStartingPose.WrongNumLocatedBlocks");
 
@@ -625,13 +625,13 @@ void BehaviorGuardDog::ComputeStartingPose(BehaviorExternalInterface& behaviorEx
   }
   Pose2d blockCentroid(Radians(0.f), blocksPoly.ComputeCentroid());
 
-  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  const auto& robotInfo = GetBEI().GetRobotInfo();
   Pose2d robotPose(robotInfo.GetPose());
   Radians centroidToRobotAngle(atan2f(robotPose.GetY() - blockCentroid.GetY(),
                                       robotPose.GetX() - blockCentroid.GetX()));
   
   Pose3d lastObservedFace;
-  const bool haveLastObservedFace = (0 != behaviorExternalInterface.GetFaceWorld().GetLastObservedFace(lastObservedFace, false));
+  const bool haveLastObservedFace = (0 != GetBEI().GetFaceWorld().GetLastObservedFace(lastObservedFace, false));
   Radians centroidToFaceAngle(atan2f(lastObservedFace.GetTranslation().y() - blockCentroid.GetY(),
                                      lastObservedFace.GetTranslation().x() - blockCentroid.GetX()));
   
@@ -676,7 +676,7 @@ void BehaviorGuardDog::ComputeStartingPose(BehaviorExternalInterface& behaviorEx
     const auto candidatePoseBoundingQuad = robotInfo.GetBoundingQuadXY(Pose3d(goalPose));
     intersectingObjects.clear();
     
-    behaviorExternalInterface.GetBlockWorld().FindLocatedIntersectingObjects(candidatePoseBoundingQuad,
+    GetBEI().GetBlockWorld().FindLocatedIntersectingObjects(candidatePoseBoundingQuad,
                                                          intersectingObjects,
                                                          0.0f,
                                                          *_connectedCubesOnlyFilter);
@@ -706,7 +706,7 @@ void BehaviorGuardDog::ComputeStartingPose(BehaviorExternalInterface& behaviorEx
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorGuardDog::StartMonitoringCubeMotion(BehaviorExternalInterface& behaviorExternalInterface, const bool enable)
+void BehaviorGuardDog::StartMonitoringCubeMotion(const bool enable)
 {
   if (enable == _monitoringCubeMotion) {
     return;
@@ -721,8 +721,8 @@ void BehaviorGuardDog::StartMonitoringCubeMotion(BehaviorExternalInterface& beha
     auto objId = mapEntry.first;
     if (enable) {
       // generic lambda closure for cube accel listeners
-      auto movementDetectedCallback = [this, objId, &behaviorExternalInterface] (const float movementScore) {
-        CubeMovementHandler(behaviorExternalInterface, objId, movementScore);
+      auto movementDetectedCallback = [this, objId] (const float movementScore) {
+        CubeMovementHandler(objId, movementScore);
       };
 
       auto listener = std::make_shared<CubeAccelListeners::MovementListener>(kHighPassFiltCoef,
@@ -731,11 +731,11 @@ void BehaviorGuardDog::StartMonitoringCubeMotion(BehaviorExternalInterface& beha
                                                                              kMovementScoreMax, // max allowed movement score
                                                                              movementDetectedCallback);
 
-      behaviorExternalInterface.GetCubeAccelComponent().AddListener(objId, listener);
+      GetBEI().GetCubeAccelComponent().AddListener(objId, listener);
       // keep a pointer to this listener around so that we can remove it later:
       mapEntry.second.cubeMovementListener = listener;
     } else {
-      const bool res = behaviorExternalInterface.GetCubeAccelComponent().RemoveListener(objId, mapEntry.second.cubeMovementListener);
+      const bool res = GetBEI().GetCubeAccelComponent().RemoveListener(objId, mapEntry.second.cubeMovementListener);
       DEV_ASSERT(res, "BehaviorGuardDog.StartMonitoringCubeMotion.FailedRemovingListener");
     }
   }
@@ -745,7 +745,7 @@ void BehaviorGuardDog::StartMonitoringCubeMotion(BehaviorExternalInterface& beha
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorGuardDog::StartLightCubeAnim(BehaviorExternalInterface& behaviorExternalInterface, const ObjectID& objId, const CubeAnimationTrigger& cubeAnimTrigger)
+bool BehaviorGuardDog::StartLightCubeAnim(const ObjectID& objId, const CubeAnimationTrigger& cubeAnimTrigger)
 {
   // Retrieve a reference to the objectData struct corresponding to this message's object ID:
   auto it = _cubesDataMap.find(objId);
@@ -768,10 +768,10 @@ bool BehaviorGuardDog::StartLightCubeAnim(BehaviorExternalInterface& behaviorExt
   bool success = false;
   if (block.lastCubeAnimTrigger == CubeAnimationTrigger::Count) {
     // haven't played any light cube anim yet, just play the new one:
-    success = behaviorExternalInterface.GetCubeLightComponent().PlayLightAnim(objId, cubeAnimTrigger);
+    success = GetBEI().GetCubeLightComponent().PlayLightAnim(objId, cubeAnimTrigger);
   } else {
     // we've already played a light cube anim - cancel it and play the new one:
-    success = behaviorExternalInterface.GetCubeLightComponent().StopAndPlayLightAnim(objId, block.lastCubeAnimTrigger, cubeAnimTrigger);
+    success = GetBEI().GetCubeLightComponent().StopAndPlayLightAnim(objId, block.lastCubeAnimTrigger, cubeAnimTrigger);
   }
     
   if (!success) {
@@ -788,13 +788,13 @@ bool BehaviorGuardDog::StartLightCubeAnim(BehaviorExternalInterface& behaviorExt
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorGuardDog::StartLightCubeAnims(BehaviorExternalInterface& behaviorExternalInterface, const CubeAnimationTrigger& cubeAnimTrigger)
+bool BehaviorGuardDog::StartLightCubeAnims(const CubeAnimationTrigger& cubeAnimTrigger)
 {
   // Should have all three cubes in the cubesData container if this function is being called:
   DEV_ASSERT(_cubesDataMap.size() == 3, "BehaviorGuardDog.StartLightCubeAnims.WrongNumCubesDataEntries");
   
   for (const auto& mapEntry : _cubesDataMap) {
-    if(!StartLightCubeAnim(behaviorExternalInterface, mapEntry.first, cubeAnimTrigger)) {
+    if(!StartLightCubeAnim(mapEntry.first, cubeAnimTrigger)) {
       return false;
     }
   }
@@ -804,11 +804,11 @@ bool BehaviorGuardDog::StartLightCubeAnims(BehaviorExternalInterface& behaviorEx
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorGuardDog::UpdatePublicBehaviorStage(BehaviorExternalInterface& behaviorExternalInterface, const GuardDogStage& stage)
+void BehaviorGuardDog::UpdatePublicBehaviorStage(const GuardDogStage& stage)
 {
   PRINT_NAMED_INFO("GuardDog.UpdatePublicBehaviorStage", "Updating public behavior stage to %s", EnumToString(stage));
-  if(behaviorExternalInterface.HasPublicStateBroadcaster()){
-    auto& publicStateBroadcaster = behaviorExternalInterface.GetRobotPublicStateBroadcaster();
+  if(GetBEI().HasPublicStateBroadcaster()){
+    auto& publicStateBroadcaster = GetBEI().GetRobotPublicStateBroadcaster();
     publicStateBroadcaster.UpdateBroadcastBehaviorStage(BehaviorStageTag::GuardDog,
                                                         static_cast<uint8_t>(stage));
   }
