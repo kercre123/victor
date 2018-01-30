@@ -288,6 +288,19 @@ void FaceDebugDraw::DrawConfidenceClock(
     }, 
     NamedColors::RED);
 
+  // Also draw the delay time in milliseconds
+  // Copied from kRawAudioPerBuffer_ms in micDataProcessor.h
+  // and doubled for 2 buffers
+  const auto maxDelayTime_ms = 2000.f * 2.f;
+  const auto delayTime_ms = (int) (maxDelayTime_ms * bufferFullPercent);
+  const auto delayStr = std::to_string(delayTime_ms);
+  const Point2f textLoc = {0.f, FACE_DISPLAY_HEIGHT - endOfBarHeight_px};
+  const auto textScale = 0.5f;
+  _scratchDrawingImg->DrawText(textLoc,
+                               delayStr,
+                               NamedColors::WHITE,
+                               textScale);
+
   // Draw the debug page number
   DrawScratch();
 }

@@ -98,6 +98,7 @@ private:
   };
   static constexpr uint32_t kRawAudioPerBuffer_ms = 2000;
   static constexpr uint32_t kRawAudioBufferSize = kRawAudioPerBuffer_ms / kTimePerChunk_ms;
+  float _rawAudioBufferFullness[2] = { 0.f, 0.f };
   // We have 2 fixed buffers for incoming raw audio that we alternate between, so that the processing thread can work
   // on one set of data while the main thread can copy new data into the other set.
   Util::FixedCircularBuffer<TimedRawMicData, kRawAudioBufferSize> _rawAudioBuffers[2];
