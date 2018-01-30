@@ -431,14 +431,12 @@ def modify_base_loc_file(extracted_json, file_path):
     loc_file_json.pop('smartling')
 
     ordered_loc_file_json = collections.OrderedDict(sorted(loc_file_json.items(), key=lambda t: t[0]))
-    raw_smartling_heading={
-      "smartling": {
-        "translate_paths": [
-          "*/translation"
-        ],
-        "variants_enabled": True,
-        "translate_mode": "custom",
-        "placeholder_format_custom": [
+
+    raw_smartling_heading=collections.OrderedDict()
+    raw_smartling_heading.update({"translate_paths": [ "*/translation" ]})
+    raw_smartling_heading.update({"variants_enabled": True})
+    raw_smartling_heading.update({"translate_mode": "custom"})
+    raw_smartling_heading.update({"placeholder_format_custom": [
           "%%[^%]+?%%",
           "%[^%]+?%",
           "##[^#]+?##",
@@ -446,14 +444,11 @@ def modify_base_loc_file(extracted_json, file_path):
           "[$]\\{[^\\}\\{]+?\\}",
           "\\{\\{[^\\}\\{]+?\\}\\}",
           "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
-        ],
-        "source_key_paths": [
-          "/{*}"
-        ]
-      }
-    }
+        ]})
+    raw_smartling_heading.update({"source_key_paths": [ "/{*}" ]})
 
-    ordered_loc_file_json.update(raw_smartling_heading)
+    header=collections.OrderedDict({"smartling": raw_smartling_heading})
+    ordered_loc_file_json.update(header)
     ordered_loc_file_json.move_to_end('smartling', last=False)
 
     #replace the loc target's json
