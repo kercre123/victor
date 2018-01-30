@@ -38,8 +38,8 @@ enum class EContentType : uint8_t {
   Unknown,               // not discovered
   ClearOfObstacle,       // an area without obstacles
   ClearOfCliff,          // an area without obstacles or cliffs
-  ObstacleCube,          // an area with obstacles we recognize as cubes
-  ObstacleCubeRemoved,   // an area that used to have a cube and now the cube has moved somewhere else
+  ObstacleObservable,    // an area with obstacles we recognize as observable
+  // we should roll charger types into ObstacleObservable class now that it can fully support it (COZMO-16117)
   ObstacleCharger,       // an area with obstacles we recognize as a charger
   ObstacleChargerRemoved,// an area that used to have a charger and now the charger has moved somewhere else
   ObstacleProx,          // an area with an obstacle found with the prox sensor

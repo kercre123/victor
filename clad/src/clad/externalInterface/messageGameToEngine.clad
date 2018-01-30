@@ -672,11 +672,6 @@ message EraseQuad {
 // Animation Commands
 ///////////////////////////////////////////////////////////////////////////////
 
-// ReplayLastAnimation
-message ReplayLastAnimation {
-    uint_32 numLoops
-}
-
 // PushIdleAnimation
 //  Switches the idle animation (the one played in a continuous loop while no other
 //  animation is requested via PlayAnimation) to the one specified.

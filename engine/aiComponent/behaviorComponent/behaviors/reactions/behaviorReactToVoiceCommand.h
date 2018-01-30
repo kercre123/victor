@@ -30,8 +30,7 @@ private:
   BehaviorReactToVoiceCommand(const Json::Value& config);
   
 public:
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual bool CarryingObjectHandledInternally() const override {return true;}
+  virtual bool WantsToBeActivatedBehavior() const override;
   void SetDesiredFace(const SmartFaceID& desiredFace){_desiredFace = desiredFace;}
   
   // Empty override of AddListener because the strategy that controls this behavior is a listener
@@ -40,8 +39,12 @@ public:
   virtual void AddListener(ISubtaskListener* listener) override {};
   
 protected:
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenCarryingObject = true;
+  }
+
+  virtual void OnBehaviorActivated() override;
+  virtual void OnBehaviorDeactivated() override;
   
 private:
   mutable SmartFaceID _desiredFace;

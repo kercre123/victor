@@ -360,20 +360,10 @@ GTEST_TEST(ColorPixels, RGB565Conversion)
         const PixelRGB pRGB(rValue, gValue, bValue);
         
         //printf("RGB=(%d,%d,%d)\n", rValue, gValue, bValue);
+                
+        const PixelRGB565 pRGB565(pRGB);
         
-        // For byte-swapped version
-        const PixelRGB565_<true> pRGB565_swapped(pRGB);
-        
-        //printf("RGB565[swapped]=(%d,%d,%d)\n", pRGB565_swapped.r(), pRGB565_swapped.g(), pRGB565_swapped.b());
-        
-        EXPECT_EQ(pRGB565_swapped.r(), SCALE(pRGB.r(),3));
-        EXPECT_EQ(pRGB565_swapped.g(), SCALE(pRGB.g(),2));
-        EXPECT_EQ(pRGB565_swapped.b(), SCALE(pRGB.b(),3));
-        
-        // For unswapped version
-        const PixelRGB565_<false> pRGB565(pRGB);
-        
-        //printf("RGB565[UNswapped]=(%d,%d,%d)\n", pRGB565.r(), pRGB565.g(), pRGB565.b());
+        //printf("RGB565=(%d,%d,%d)\n", pRGB565.r(), pRGB565.g(), pRGB565.b());
         
         EXPECT_EQ(pRGB565.r(), SCALE(pRGB.r(),3));
         EXPECT_EQ(pRGB565.g(), SCALE(pRGB.g(),2));
@@ -407,22 +397,9 @@ GTEST_TEST(ColorPixels, RGB565Conversion)
         ASSERT_LT(bValue, 1<<5);
         bValue = (bValue << 3);
         
-        // For byte-swapped version
-        const PixelRGB565_<true> pRGB565_swapped(rValue, gValue, bValue);
-        PixelRGB pRGB = pRGB565_swapped.ToPixelRGB();
-        
-        //printf("RGB565_swapped=(%d,%d,%d) vs. (%d,%d,%d)\n", rValue, gValue, bValue,
-        //       pRGB565_swapped.r(), pRGB565_swapped.g(), pRGB565_swapped.b());
-        
-        //printf("RGB=(%d,%d,%d)\n", pRGB.r(), pRGB.g(), pRGB.b());
-        
-        EXPECT_EQ(pRGB.r(), pRGB565_swapped.r());
-        EXPECT_EQ(pRGB.g(), pRGB565_swapped.g());
-        EXPECT_EQ(pRGB.b(), pRGB565_swapped.b());
-        
         // For unswapped version
-        const PixelRGB565_<false> pRGB565(rValue, gValue, bValue);
-        pRGB = pRGB565.ToPixelRGB();
+        const PixelRGB565 pRGB565(rValue, gValue, bValue);
+        PixelRGB pRGB = pRGB565.ToPixelRGB();
         
         //printf("RGB565=(%d,%d,%d) vs. (%d,%d,%d)\n", rValue, gValue, bValue,
         //       pRGB565.r(), pRGB565.g(), pRGB565.b());
@@ -564,8 +541,8 @@ GTEST_TEST(ImageCache, ImageCacheGray)
   ASSERT_EQ(nrows, newGray.GetNumRows());
   ASSERT_EQ(ncols, newGray.GetNumCols());
   
-  // Gray value should be weighted average of the RGB values
-  ASSERT_EQ(colorPixel.weightedGray(), newGray(0,0));
+  // Gray value should be (R+2G+B)
+  ASSERT_EQ(colorPixel.gray(), newGray(0,0));
   
   // ReleaseMemory should clear out the cache and thus a request for an image should fail
   cache.ReleaseMemory();

@@ -35,7 +35,7 @@ target_compile_definitions(proto_camera
 )
 
 target_compile_options(proto_camera
-  PRIVATE
+PRIVATE
   -O3
 )
 
@@ -71,9 +71,7 @@ PRIVATE
 # cti
   cti_common
   cti_vision
-  cti_planning
-  cti_messaging
-  robot_clad # imageTypes.h
+  engine_clad # imageTypes.h
 # platform
   ${PLATFORM_LIBS}
 )
@@ -94,4 +92,3 @@ target_include_directories(androidHAL
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../robot/include>
   ${PLATFORM_INCLUDES}
 )
-

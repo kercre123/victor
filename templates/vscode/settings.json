@@ -1,0 +1,16 @@
+{
+    "files.associations": {
+        "cstddef": "cpp",
+        "__locale": "cpp"
+    },
+    "cSpell.words": [
+        "ANKICORETECH",
+        "CORETECH",
+        "MATLAB",
+        "anki",
+        "build",
+        "cpplite",
+        "cxx",
+        "library"
+    ]
+}

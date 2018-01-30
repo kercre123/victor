@@ -10,6 +10,7 @@
 #include "engine/util/transferQueue/dasTransferTask.h"
 #include "engine/util/transferQueue/gameLogTransferTask.h"
 #include "engine/util/transferQueue/transferQueueMgr.h"
+#include "engine/util/webService/webService.h"
 #include "engine/utils/cozmoExperiments.h"
 #include "engine/utils/cozmoFeatureGate.h"
 #include "engine/viz/vizManager.h"
@@ -48,6 +49,7 @@ CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInte
   , _needsManager(new NeedsManager(this))
   , _cozmoExperiments(new CozmoExperiments(this))
   , _perfMetric(new PerfMetric(this))
+  , _webService(new WebService::WebService())
   , _threadIdHolder(new ThreadIDInternal)
 {
 

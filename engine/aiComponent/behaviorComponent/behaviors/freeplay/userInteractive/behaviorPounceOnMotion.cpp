@@ -18,7 +18,7 @@
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/visionComponent.h"
@@ -107,34 +107,34 @@ BehaviorPounceOnMotion::BehaviorPounceOnMotion(const Json::Value& config)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorPounceOnMotion::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorPounceOnMotion::WantsToBeActivatedBehavior() const
 {
   return true;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPounceOnMotion::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPounceOnMotion::OnBehaviorActivated()
 {
   _humanInteracted = false;
-  InitHelper(behaviorExternalInterface);
-  TransitionToInitialPounce(behaviorExternalInterface);
+  InitHelper();
+  TransitionToInitialPounce();
   
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-/**void BehaviorPounceOnMotion::ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface)
+/**void BehaviorPounceOnMotion::ResumeInternal()
 {
   _motionObserved = false;
-  InitHelper(behaviorExternalInterface);
-  TransitionToBringingHeadDown(behaviorExternalInterface);
+  InitHelper();
+  TransitionToBringingHeadDown();
   
 }**/
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPounceOnMotion::InitHelper(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPounceOnMotion::InitHelper()
 {
   const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _startedBehaviorTime_sec = currentTime_sec;
@@ -143,8 +143,8 @@ void BehaviorPounceOnMotion::InitHelper(BehaviorExternalInterface& behaviorExter
   
   // Don't override sparks idle animation
   if(!ShouldStreamline()){
-    SmartPushIdleAnimation(behaviorExternalInterface, AnimationTrigger::PounceFace);
-    auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+    SmartPushIdleAnimation(AnimationTrigger::PounceFace);
+    auto& robotInfo = GetBEI().GetRobotInfo();
     robotInfo.GetDrivingAnimationHandler().PushDrivingAnimations(
      {AnimationTrigger::PounceDriveStart,
       AnimationTrigger::PounceDriveLoop,
@@ -156,9 +156,9 @@ void BehaviorPounceOnMotion::InitHelper(BehaviorExternalInterface& behaviorExter
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPounceOnMotion::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPounceOnMotion::OnBehaviorDeactivated()
 {
-  Cleanup(behaviorExternalInterface);
+  Cleanup();
 
   if (_humanInteracted)
   {
@@ -169,7 +169,7 @@ void BehaviorPounceOnMotion::OnBehaviorDeactivated(BehaviorExternalInterface& be
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPounceOnMotion::TransitionToInitialPounce(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPounceOnMotion::TransitionToInitialPounce()
 {
   SET_STATE(InitialPounce);
   
@@ -189,21 +189,20 @@ void BehaviorPounceOnMotion::TransitionToInitialPounce(BehaviorExternalInterface
   // Skip the initial pounce and go straight to search if streamlined
   if(ShouldStreamline())
   {
-    TransitionToInitialSearch(behaviorExternalInterface);
+    TransitionToInitialSearch();
   }
   else
   {
-    PounceOnMotionWithCallback(behaviorExternalInterface,
-                               &BehaviorPounceOnMotion::TransitionToInitialReaction,
+    PounceOnMotionWithCallback(&BehaviorPounceOnMotion::TransitionToInitialReaction,
                                potentialCliffSafetyTurn);
   }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorPounceOnMotion::IsFingerCaught(BehaviorExternalInterface& behaviorExternalInterface)
+bool BehaviorPounceOnMotion::IsFingerCaught()
 {
-  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  const auto& robotInfo = GetBEI().GetRobotInfo();
   const float liftHeightThresh = 35.5f;
   const float bodyAngleThresh = 0.02f;
   
@@ -221,11 +220,11 @@ bool BehaviorPounceOnMotion::IsFingerCaught(BehaviorExternalInterface& behaviorE
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPounceOnMotion::TransitionToInitialReaction(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPounceOnMotion::TransitionToInitialReaction()
 {
   SET_STATE(InitialReaction);
   // If we didn't catch anything this first anim is just showing intent, but react if he does happen to catch something.
-  bool caught = IsFingerCaught(behaviorExternalInterface);
+  bool caught = IsFingerCaught();
   if( caught )
   {
     DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::PounceSuccess), &BehaviorPounceOnMotion::TransitionToInitialSearch);
@@ -233,13 +232,13 @@ void BehaviorPounceOnMotion::TransitionToInitialReaction(BehaviorExternalInterfa
   }
   else
   {
-    TransitionToInitialSearch(behaviorExternalInterface);
+    TransitionToInitialSearch();
   }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPounceOnMotion::TransitionToInitialSearch(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPounceOnMotion::TransitionToInitialSearch()
 {
   PRINT_NAMED_DEBUG("BehaviorPounceOnMotion.TransitionToInitialSearch",
                     "BehaviorPounceOnMotion.TransitionToInitialSearch");
@@ -280,7 +279,7 @@ void BehaviorPounceOnMotion::TransitionToInitialSearch(BehaviorExternalInterface
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPounceOnMotion::TransitionToBringingHeadDown(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPounceOnMotion::TransitionToBringingHeadDown()
 {
   SmartUnLockTracks(kTrackLockName);
 
@@ -294,7 +293,7 @@ void BehaviorPounceOnMotion::TransitionToBringingHeadDown(BehaviorExternalInterf
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPounceOnMotion::TransitionToRotateToWatchingNewArea(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPounceOnMotion::TransitionToRotateToWatchingNewArea()
 {
   SET_STATE( RotateToWatchingNewArea );
   _lastTimeRotate = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -314,7 +313,7 @@ void BehaviorPounceOnMotion::TransitionToRotateToWatchingNewArea(BehaviorExterna
   //if we are above the threshold percentage, pounce and pan - otherwise, just pan
   const float shouldPounceOnTurn = GetRNG().RandDblInRange(0, 1);
   if(shouldPounceOnTurn < _oddsOfPouncingOnTurn){
-    PounceOnMotionWithCallback(behaviorExternalInterface, &BehaviorPounceOnMotion::TransitionToWaitForMotion, panAction);
+    PounceOnMotionWithCallback(&BehaviorPounceOnMotion::TransitionToWaitForMotion, panAction);
   }else{
     DelegateIfInControl(panAction, &BehaviorPounceOnMotion::TransitionToWaitForMotion);
   }
@@ -322,7 +321,7 @@ void BehaviorPounceOnMotion::TransitionToRotateToWatchingNewArea(BehaviorExterna
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPounceOnMotion::TransitionToWaitForMotion(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPounceOnMotion::TransitionToWaitForMotion()
 {
   SET_STATE( WaitingForMotion);
   _numValidPouncePoses = 0;
@@ -335,13 +334,13 @@ void BehaviorPounceOnMotion::TransitionToWaitForMotion(BehaviorExternalInterface
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPounceOnMotion::TransitionFromWaitForMotion(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPounceOnMotion::TransitionFromWaitForMotion()
 {
   SmartUnLockTracks(kTrackLockName);
 
   // In the event motion is seen, this callback is triggered immediately
   if(_motionObserved){
-    TransitionToTurnToMotion(behaviorExternalInterface, _observedX, _observedY);
+    TransitionToTurnToMotion(_observedX, _observedY);
     return;
   }
   
@@ -355,22 +354,22 @@ void BehaviorPounceOnMotion::TransitionFromWaitForMotion(BehaviorExternalInterfa
     PRINT_CH_INFO("Behaviors", "BehaviorPounceOnMotion.Timeout", "No motion found, giving up");
     
     //Set the exit state information and then cancel the hang action
-    TransitionToGetOutBored(behaviorExternalInterface);
+    TransitionToGetOutBored();
   }
   else if ( (_lastTimeRotate + _maxTimeBeforeRotate) < currentTime_sec )
   {
     //Set the exit state information and then cancel the hang action
-    TransitionToRotateToWatchingNewArea(behaviorExternalInterface);
+    TransitionToRotateToWatchingNewArea();
   } else if ( (_startedBehaviorTime_sec + _maxTimeBehaviorTimeout_sec) < currentTime_sec) {
-    TransitionToGetOutBored(behaviorExternalInterface);
+    TransitionToGetOutBored();
   } else {
-    TransitionToWaitForMotion(behaviorExternalInterface);
+    TransitionToWaitForMotion();
   }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPounceOnMotion::TransitionToTurnToMotion(BehaviorExternalInterface& behaviorExternalInterface, int16_t motion_img_x, int16_t motion_img_y)
+void BehaviorPounceOnMotion::TransitionToTurnToMotion(int16_t motion_img_x, int16_t motion_img_y)
 {
   SET_STATE(TurnToMotion);
   _lastTimeRotate = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -379,7 +378,7 @@ void BehaviorPounceOnMotion::TransitionToTurnToMotion(BehaviorExternalInterface&
   Radians relPanAngle;
   Radians relTiltAngle;
   
-  behaviorExternalInterface.GetVisionComponent().GetCamera().ComputePanAndTiltAngles(motionCentroid, relPanAngle, relTiltAngle);
+  GetBEI().GetVisionComponent().GetCamera().ComputePanAndTiltAngles(motionCentroid, relPanAngle, relTiltAngle);
   
   auto callback = &BehaviorPounceOnMotion::TransitionToCreepForward;
   // steadily increase the chance we'll pounce if we haven't pounced while seeing motion in a while
@@ -405,7 +404,7 @@ float BehaviorPounceOnMotion::GetDriveDistance()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPounceOnMotion::TransitionToCreepForward(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPounceOnMotion::TransitionToCreepForward()
 {
   SET_STATE(CreepForward);
   // Sneak... Sneak... Sneak...
@@ -420,11 +419,11 @@ void BehaviorPounceOnMotion::TransitionToCreepForward(BehaviorExternalInterface&
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPounceOnMotion::TransitionToPounce(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPounceOnMotion::TransitionToPounce()
 {
   SET_STATE(Pouncing);
   
-  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  const auto& robotInfo = GetBEI().GetRobotInfo();
   _prePouncePitch = robotInfo.GetPitchAngle().ToFloat();
   if( _backUpDistance <= 0.f )
   {
@@ -432,16 +431,16 @@ void BehaviorPounceOnMotion::TransitionToPounce(BehaviorExternalInterface& behav
   }
   
   
-  PounceOnMotionWithCallback(behaviorExternalInterface, &BehaviorPounceOnMotion::TransitionToResultAnim);
+  PounceOnMotionWithCallback(&BehaviorPounceOnMotion::TransitionToResultAnim);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPounceOnMotion::TransitionToResultAnim(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPounceOnMotion::TransitionToResultAnim()
 {
   SET_STATE(PlayingFinalReaction);
   
-  bool caught = IsFingerCaught(behaviorExternalInterface);
+  bool caught = IsFingerCaught();
 
   IActionRunner* newAction = nullptr;
   if( caught ) {
@@ -476,7 +475,7 @@ void BehaviorPounceOnMotion::TransitionToResultAnim(BehaviorExternalInterface& b
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPounceOnMotion::TransitionToBackUp(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPounceOnMotion::TransitionToBackUp()
 {
   SET_STATE(BackUp);
   // back up some of the way
@@ -486,7 +485,7 @@ void BehaviorPounceOnMotion::TransitionToBackUp(BehaviorExternalInterface& behav
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPounceOnMotion::TransitionToGetOutBored(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPounceOnMotion::TransitionToGetOutBored()
 {
   SET_STATE(GetOutBored);
   if(!_skipGetOutAnim)
@@ -497,7 +496,7 @@ void BehaviorPounceOnMotion::TransitionToGetOutBored(BehaviorExternalInterface& 
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPounceOnMotion::AlwaysHandleInScope(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPounceOnMotion::AlwaysHandleInScope(const EngineToGameEvent& event)
 {
   switch (event.GetData().GetTag())
   {
@@ -528,7 +527,7 @@ void BehaviorPounceOnMotion::AlwaysHandleInScope(const EngineToGameEvent& event,
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPounceOnMotion::HandleWhileInScopeButNotActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPounceOnMotion::HandleWhileInScopeButNotActivated(const EngineToGameEvent& event)
 {
   switch (event.GetData().GetTag())
   {
@@ -567,7 +566,7 @@ void BehaviorPounceOnMotion::HandleWhileInScopeButNotActivated(const EngineToGam
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPounceOnMotion::HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPounceOnMotion::HandleWhileActivated(const EngineToGameEvent& event)
 {
   switch (event.GetData().GetTag())
   {
@@ -650,7 +649,7 @@ void BehaviorPounceOnMotion::HandleWhileActivated(const EngineToGameEvent& event
  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<typename T>
-void BehaviorPounceOnMotion::PounceOnMotionWithCallback(BehaviorExternalInterface& behaviorExternalInterface, void(T::*callback)(BehaviorExternalInterface&),  IActionRunner* intermittentAction)
+void BehaviorPounceOnMotion::PounceOnMotionWithCallback(void(T::*callback)(),  IActionRunner* intermittentAction)
 {
   CompoundActionSequential* compAction = new CompoundActionSequential();
   
@@ -660,8 +659,8 @@ void BehaviorPounceOnMotion::PounceOnMotionWithCallback(BehaviorExternalInterfac
   
   compAction->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::PouncePounce));
 
-  DelegateIfInControl(compAction, [this, callback](BehaviorExternalInterface& behaviorExternalInterface){
-    auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  DelegateIfInControl(compAction, [this, callback](){
+    auto& robotInfo = GetBEI().GetRobotInfo();
     // wait for the lift to relax 
     robotInfo.GetMoveComponent().EnableLiftPower(false);
     SET_STATE(RelaxingLift);
@@ -670,10 +669,10 @@ void BehaviorPounceOnMotion::PounceOnMotionWithCallback(BehaviorExternalInterfac
     // so hold this for a bit longer
     const float relaxTime = 0.15f;
     
-    DelegateIfInControl(new WaitAction(relaxTime), [this, callback](BehaviorExternalInterface& behaviorExternalInterface){
-      behaviorExternalInterface.GetRobotInfo().GetMoveComponent().EnableLiftPower(true);
+    DelegateIfInControl(new WaitAction(relaxTime), [this, callback](){
+      GetBEI().GetRobotInfo().GetMoveComponent().EnableLiftPower(true);
       _relaxedLift = false;
-      (this->*callback)(behaviorExternalInterface);
+      (this->*callback)();
     });
   });
   
@@ -683,11 +682,11 @@ void BehaviorPounceOnMotion::PounceOnMotionWithCallback(BehaviorExternalInterfac
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPounceOnMotion::Cleanup(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPounceOnMotion::Cleanup()
 {
   SET_STATE(Complete);
   if( _relaxedLift ) {
-    behaviorExternalInterface.GetRobotInfo().GetMoveComponent().EnableLiftPower(true);
+    GetBEI().GetRobotInfo().GetMoveComponent().EnableLiftPower(true);
     _relaxedLift = false;
   }
   
@@ -698,8 +697,8 @@ void BehaviorPounceOnMotion::Cleanup(BehaviorExternalInterface& behaviorExternal
   
   // Only pop animations if set within this behavior
   if(!ShouldStreamline()){
-    SmartRemoveIdleAnimation(behaviorExternalInterface);
-    behaviorExternalInterface.GetRobotInfo().GetDrivingAnimationHandler().RemoveDrivingAnimations(GetIDStr());
+    SmartRemoveIdleAnimation();
+    GetBEI().GetRobotInfo().GetDrivingAnimationHandler().RemoveDrivingAnimations(GetIDStr());
   }
 }
 

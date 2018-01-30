@@ -1,6 +1,9 @@
 # Visual Studio Code
 
-Visual Studio Code (VSCode) is the main supported environment for writing code that will run on the embedded android system. Xcode is supported for debugging and profiling on Mac, but not much effort has been made to make it nice to use beyond the default cmake generated projects.
+Visual Studio Code (VSCode) is the main supported environment for writing code 
+that will run on the embedded android system. Xcode is supported for debugging 
+and profiling on Mac, but not much effort has been made to make it nice to use 
+beyond the default cmake generated projects.
 
 ## Why VSCode?
 
@@ -11,55 +14,48 @@ Visual Studio Code (VSCode) is the main supported environment for writing code t
 
 ## Download
 
-Download and install the [latest version of VSCode](https://code.visualstudio.com/) unless otherwise stated.
+Download and install the [latest version of VSCode](https://code.visualstudio.com/) 
+unless otherwise stated.
 
+## Setup
+
+Bootstrap your VSCode configuration by copying some [template files](/templates/vscode):
+```
+  cd [repo]
+  mkdir -p .vscode
+  cp templates/vscode/*.json .vscode
+```
+This will give you a basic set of [task definitions](/templates/vscode/tasks.json) 
+and [project settings](/templates/vscode/settings.json) so you 
+don't have to start with a blank slate.
 
 ## Required Extensions
+
+You must install a number of support extensions before you can build Anki software.
+You can install extensions by typing shorthand commands into the "Go To File"
+command prompt, or by opening the Extensions pane (Shift-Command-X) and using the
+GUI.
+
+Extensions in the marketplace may have very similar names.  Check the author name
+to make sure you are getting the right extension. Accept no substitutes!
 
 ### C/C++ (Microsoft)
 
 https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools
 
 ```
-ext install cpptools
+Command-P (Go To File)
+ext install ms-vscode.cpptools
 ```
 
 You will need to configure cpptools as described here:
 https://code.visualstudio.com/docs/languages/cpp
 
-You will need to create a c_cpp_properties.json file to locate C/C++ header files.
-Bootstrap your include path by pasting something like this:
-```json
-{
-    "configurations": [
-        {
-            "name": "Mac",
-            "includePath": [
-                "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1",
-                "/usr/local/include",
-                "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/8.1.0/include",
-                "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include",
-                "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include",
-                "${workspaceRoot}",
-                "${workspaceRoot}/lib/util",
-                "${workspaceRoot}/lib/util/source/anki",
-                "${workspaceRoot}/lib/util/source/3rd/jsoncpp",
-                "${workspaceRoot}/coretech/common/include",
-                "${workspaceRoot}/coretech/vision/include",
-                "${workspaceRoot}/coretech/planning/include",
-                "${workspaceRoot}/coretech/messaging/include",
-                "${workspaceRoot}/coretech/generated/clad/common",               
-                "${workspaceRoot}/coretech/generated/clad/vision",
-                "${workspaceRoot}/generated/clad/engine",
-                "${workspaceRoot}/generated/clad/util",
-                "${workspaceRoot}/tools/message-buffers/support/cpp/include",
-                "${workspaceRoot}/robot/include",
-                "${workspaceRoot}/EXTERNALS/coretech_external/opencv-3.1.0/modules/core/include",
-            ],
-        }
-    ]
-}
-```
+You will need to create a c_cpp_properties.json file to locate C/C++ header 
+files.  
+
+You can copy [template settings](/templates/vscode/c_cpp_properties.json) 
+to get started.
 
 
 ### LLDB
@@ -67,7 +63,8 @@ Bootstrap your include path by pasting something like this:
 https://marketplace.visualstudio.com/items?itemName=vadimcn.vscode-lldb
 
 ```
-ext install vscode-lldb
+Command-P (Go To File)
+ext install vadimcn.vscode-lldb
 ```
 
 
@@ -81,7 +78,8 @@ Provides fast header/source switch functionality.
 https://marketplace.visualstudio.com/items?itemName=ryzngard.vscode-header-source
 
 ```
-ext install vscode-header-source
+Command-P (Go To File)
+ext install ryzngard.vscode-header-source
 ```
 
 
@@ -90,7 +88,8 @@ ext install vscode-header-source
 https://marketplace.visualstudio.com/items?itemName=vector-of-bool.cmake-tools
 
 ```
-ext install cmake-tools
+Command-P (Go To File)
+ext install vector-of-bool.cmake-tools
 ```
 
 
@@ -99,5 +98,43 @@ ext install cmake-tools
 https://marketplace.visualstudio.com/items?itemName=twxs.cmake
 
 ```
-ext install cmake
+Command-P (Go To File)
+ext install twxs.cmake
 ```
+
+## Open Workspace
+
+Start by using "File -> Open" to open your top-level victor repo.
+
+Use "File -> Save Workspace As" to save your configuration into a VS Code 
+workspace for future use.
+
+Once you have created a workspace file, you can use "File -> Open Workspace" 
+to pick up where you left off.
+
+## Run Task: Build 
+
+Use "Tasks -> Run Build Task" to run the default build task.  
+
+You can set additional build flags (e.g. "-p mac" vs "-p android") by editing 
+the task configuration, or you can create a second set of tasks and switch 
+between them.
+
+## Run Task: Deploy
+
+After building, use "Tasks -> Run Task -> deploy:debug" to deploy executables
+to the robot.
+
+## Run Task: Debug
+
+After deploying, use "Tasks -> Run Task -> debug:debug" to launch the debugger
+on a robot process.
+
+## Customize
+
+VS Code is extensible and highly customizable.  Most of the configuration 
+settings use a simple JSON syntax and can be changed with 
+"Tasks -> Configure Tasks" or "Code -> Preferences -> Settings".
+
+If you don't like the default settings, change them!
+

@@ -39,7 +39,8 @@ typedef struct {
 
 static const INIT_SCRIPT init_scr[] = {
   { 0x11, 0 }, // Sleep Off
-  { 0x36, 1, { 0x00 } },
+  { 0x36, 1, { 0x00 } }, //0x00: RGB565, 0x08: BGR565
+  { 0xB0, 2, { 0x00, 0x08 } },  // Expect unswapped bytes in u16 pixel
   { 0xB7, 1, { 0x72 } }, // Gate control (VGH 14.97, VGL -8.23)
   { 0xBB, 1, { 0x36 } }, // VCOMS 1.45v
   { 0xC0, 1, { 0x2C } },
@@ -147,11 +148,6 @@ void lcd_set_brightness(int brightness)
 
 int lcd_init(void) {
 
-//TODO : BACKLIGHT and REGULATOR INTERFACE
-  // Echo to device to activate backlight
-  system("echo 1 > /sys/kernel/debug/regulator/8916_l17/enable");
-  system("echo 1 > /sys/kernel/debug/regulator/8916_l4/enable");
-
   lcd_set_brightness(10);
 
   // IO Setup
@@ -183,8 +179,6 @@ int lcd_init(void) {
 
 void lcd_shutdown(void) {
   //todo: turn off screen?
-  system("echo 0 > /sys/kernel/debug/regulator/8916_l17/enable");
-  system("echo 0 > /sys/kernel/debug/regulator/8916_l4/enable");
 
   if (spi_fd) {
     static const uint8_t SLEEP = 0x10;

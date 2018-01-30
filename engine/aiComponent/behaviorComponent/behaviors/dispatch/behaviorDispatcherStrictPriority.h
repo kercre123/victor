@@ -27,7 +27,7 @@ class BehaviorDispatcherStrictPriority : public IBehaviorDispatcher
 
 protected:
   
-  virtual ICozmoBehaviorPtr GetDesiredBehavior(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual ICozmoBehaviorPtr GetDesiredBehavior() override;
 
 };
 

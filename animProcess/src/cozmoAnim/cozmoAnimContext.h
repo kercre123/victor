@@ -50,7 +50,11 @@ class CozmoAudioController;
 namespace RobotInterface {
 class MessageHandler;
 }
-  
+namespace WebService {
+class WebService;
+}
+
+
 } // namespace Cozmo
 } // namespace Anki
 
@@ -78,6 +82,7 @@ public:
   Audio::CozmoAudioController*          GetAudioController() const; // Can return nullptr
   AudioMultiplexer*                     GetAudioMultiplexer() const { return _audioMux.get(); }
   MicData::MicDataProcessor*            GetMicDataProcessor() const { return _micDataProcessor.get(); }
+  WebService::WebService*               GetWebService() const { return _webService.get(); }
   
   void SetRandomSeed(uint32_t seed);
 
@@ -98,6 +103,7 @@ private:
   std::unique_ptr<Util::RandomGenerator>         _random;
   std::unique_ptr<RobotDataLoader>               _dataLoader;
   std::unique_ptr<MicData::MicDataProcessor>     _micDataProcessor;
+  std::unique_ptr<WebService::WebService>        _webService;
 
   // for holding the thread id (and avoiding needed to include the .h here)
   std::unique_ptr<ThreadIDInternal> _threadIdHolder;

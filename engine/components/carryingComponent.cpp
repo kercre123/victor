@@ -22,11 +22,17 @@
 namespace Anki {
 namespace Cozmo {
 
-CarryingComponent::CarryingComponent(Robot& robot)
-: _robot(robot)
+CarryingComponent::CarryingComponent()
+: IDependencyManagedComponent(RobotComponentID::Carrying)
 {
   
 }
+
+void CarryingComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+{
+  _robot = robot;
+}
+
 
 Result CarryingComponent::PlaceObjectOnGround(const bool useManualSpeed)
 {
@@ -36,9 +42,9 @@ Result CarryingComponent::PlaceObjectOnGround(const bool useManualSpeed)
     return RESULT_FAIL;
   }
   
-  _robot.GetDockingComponent().SetLastPickOrPlaceSucceeded(false);
+  _robot->GetDockingComponent().SetLastPickOrPlaceSucceeded(false);
   
-  return _robot.SendRobotMessage<Anki::Cozmo::PlaceObjectOnGround>(0, 0, 0,
+  return _robot->SendRobotMessage<Anki::Cozmo::PlaceObjectOnGround>(0, 0, 0,
                                                                    DEFAULT_PATH_MOTION_PROFILE.speed_mmps,
                                                                    DEFAULT_PATH_MOTION_PROFILE.accel_mmps2,
                                                                    DEFAULT_PATH_MOTION_PROFILE.decel_mmps2,
@@ -47,13 +53,13 @@ Result CarryingComponent::PlaceObjectOnGround(const bool useManualSpeed)
 
 Result CarryingComponent::SendSetCarryState(CarryState state) const
 {
-  return _robot.SendMessage(RobotInterface::EngineToRobot(Anki::Cozmo::CarryStateUpdate(state)));
+  return _robot->SendMessage(RobotInterface::EngineToRobot(Anki::Cozmo::CarryStateUpdate(state)));
 }
 
 Result CarryingComponent::SetDockObjectAsAttachedToLift()
 {
-  const ObjectID& dockObjectID = _robot.GetDockingComponent().GetDockObject();
-  const Vision::KnownMarker::Code dockMarkerCode = _robot.GetDockingComponent().GetDockMarkerCode();
+  const ObjectID& dockObjectID = _robot->GetDockingComponent().GetDockObject();
+  const Vision::KnownMarker::Code dockMarkerCode = _robot->GetDockingComponent().GetDockMarkerCode();
   return SetObjectAsAttachedToLift(dockObjectID, dockMarkerCode);
 }
 
@@ -70,7 +76,7 @@ Result CarryingComponent::SetCarriedObjectAsUnattached(bool deleteLocatedObjects
   DEV_ASSERT(GetCarryingObjects().size()<=2,"Robot.SetCarriedObjectAsUnattached.CountNotSupported");
   
   
-  ObservableObject* object = _robot.GetBlockWorld().GetLocatedObjectByID(_carryingObjectID);
+  ObservableObject* object = _robot->GetBlockWorld().GetLocatedObjectByID(_carryingObjectID);
   
   if(object == nullptr)
   {
@@ -81,7 +87,7 @@ Result CarryingComponent::SetCarriedObjectAsUnattached(bool deleteLocatedObjects
   }
   
   Pose3d placedPoseWrtRobot;
-  if(object->GetPose().GetWithRespectTo(_robot.GetPose(), placedPoseWrtRobot) == false) {
+  if(object->GetPose().GetWithRespectTo(_robot->GetPose(), placedPoseWrtRobot) == false) {
     PRINT_NAMED_ERROR("Robot.SetCarriedObjectAsUnattached.OriginMisMatch",
                       "Could not get carrying object's pose relative to robot's origin.");
     return RESULT_FAIL;
@@ -92,7 +98,7 @@ Result CarryingComponent::SetCarriedObjectAsUnattached(bool deleteLocatedObjects
   // unfortunate ordering dependencies with how we set the pose, set the pose state, and
   // unset the carrying objects below. It's safer to do all of that, and _then_
   // clear the objects at the end.
-  const Result poseResult = _robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(object, placedPoseWrtRobot, PoseState::Dirty);
+  const Result poseResult = _robot->GetObjectPoseConfirmer().AddRobotRelativeObservation(object, placedPoseWrtRobot, PoseState::Dirty);
   if(RESULT_OK != poseResult)
   {
     PRINT_NAMED_ERROR("Robot.SetCarriedObjectAsUnattached.TopRobotRelativeObservationFailed",
@@ -102,7 +108,7 @@ Result CarryingComponent::SetCarriedObjectAsUnattached(bool deleteLocatedObjects
   
   PRINT_NAMED_INFO("Robot.SetCarriedObjectAsUnattached.ObjectPlaced",
                    "Robot %d successfully placed object %d at (%.2f, %.2f, %.2f).",
-                   _robot.GetID(), object->GetID().GetValue(),
+                   _robot->GetID(), object->GetID().GetValue(),
                    object->GetPose().GetTranslation().x(),
                    object->GetPose().GetTranslation().y(),
                    object->GetPose().GetTranslation().z());
@@ -111,19 +117,19 @@ Result CarryingComponent::SetCarriedObjectAsUnattached(bool deleteLocatedObjects
   // recalculate its pose right where we think it is, but detach from the block, and hook directly to the origin
   if ( _carryingObjectOnTopID.IsSet() )
   {
-    ObservableObject* topObject = _robot.GetBlockWorld().GetLocatedObjectByID(_carryingObjectOnTopID);
+    ObservableObject* topObject = _robot->GetBlockWorld().GetLocatedObjectByID(_carryingObjectOnTopID);
     if ( nullptr != topObject )
     {
       // get wrt robot so that we can add a robot observation (handy way to modify a pose)
       Pose3d topPlacedPoseWrtRobot;
-      if(topObject->GetPose().GetWithRespectTo(_robot.GetPose(), topPlacedPoseWrtRobot) == true)
+      if(topObject->GetPose().GetWithRespectTo(_robot->GetPose(), topPlacedPoseWrtRobot) == true)
       {
-        const Result topPoseResult = _robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(topObject, topPlacedPoseWrtRobot, PoseState::Dirty);
+        const Result topPoseResult = _robot->GetObjectPoseConfirmer().AddRobotRelativeObservation(topObject, topPlacedPoseWrtRobot, PoseState::Dirty);
         if(RESULT_OK == topPoseResult)
         {
           PRINT_NAMED_INFO("Robot.SetCarriedObjectAsUnattached.TopObjectPlaced",
                            "Robot %d successfully placed object %d at (%.2f, %.2f, %.2f).",
-                           _robot.GetID(),
+                           _robot->GetID(),
                            topObject->GetID().GetValue(),
                            topObject->GetPose().GetTranslation().x(),
                            topObject->GetPose().GetTranslation().y(),
@@ -157,7 +163,7 @@ Result CarryingComponent::SetCarriedObjectAsUnattached(bool deleteLocatedObjects
   {
     BlockWorldFilter filter;
     filter.AddAllowedIDs(carriedObjectIDs);
-    _robot.GetBlockWorld().DeleteLocatedObjects(filter);
+    _robot->GetBlockWorld().DeleteLocatedObjects(filter);
   }
   
   return RESULT_OK;
@@ -166,7 +172,7 @@ Result CarryingComponent::SetCarriedObjectAsUnattached(bool deleteLocatedObjects
 
 void CarryingComponent::SetCarryingObject(ObjectID carryObjectID, Vision::Marker::Code atMarkerCode)
 {
-  ObservableObject* object = _robot.GetBlockWorld().GetLocatedObjectByID(carryObjectID);
+  ObservableObject* object = _robot->GetBlockWorld().GetLocatedObjectByID(carryObjectID);
   if(object == nullptr) {
     PRINT_NAMED_ERROR("Robot.SetCarryingObject.NullCarryObject",
                       "Object %d no longer exists in the world. Can't set it as robot's carried object.",
@@ -178,11 +184,11 @@ void CarryingComponent::SetCarryingObject(ObjectID carryObjectID, Vision::Marker
     _carryingMarkerCode = atMarkerCode;
     
     // Don't remain localized to an object if we are now carrying it
-    if(_carryingObjectID == _robot.GetLocalizedTo())
+    if(_carryingObjectID == _robot->GetLocalizedTo())
     {
       // Note that the robot may still remaing localized (based on its
       // odometry), but just not *to an object*
-      _robot.SetLocalizedTo(nullptr);
+      _robot->SetLocalizedTo(nullptr);
     } // if(_carryingObjectID == GetLocalizedTo())
     
     // Tell the robot it's carrying something
@@ -205,15 +211,15 @@ void CarryingComponent::UnSetCarryingObjects(bool topOnly)
       continue;
     }
     
-    ObservableObject* carriedObject = _robot.GetBlockWorld().GetLocatedObjectByID(objID);
+    ObservableObject* carriedObject = _robot->GetBlockWorld().GetLocatedObjectByID(objID);
     if(carriedObject == nullptr) {
       PRINT_NAMED_ERROR("Robot.UnSetCarryingObjects.NullObject",
                         "Object %d robot %d thought it was carrying no longer exists in the world.",
-                        objID.GetValue(), _robot.GetID());
+                        objID.GetValue(), _robot->GetID());
       continue;
     }
     
-    if ( carriedObject->GetPose().IsChildOf(_robot.GetLiftPose())) {
+    if ( carriedObject->GetPose().IsChildOf(_robot->GetLiftPose())) {
       // if the carried object is still attached to the lift it can cause issues. We had a bug
       // in which we delocalized and unset as carrying, but would not dettach from lift, causing
       // the cube to accidentally inherit the new origin via its parent, the lift, since the robot is always
@@ -299,7 +305,7 @@ Result CarryingComponent::SetObjectAsAttachedToLift(const ObjectID& objectID,
     return RESULT_FAIL;
   }
   
-  ObservableObject* object = _robot.GetBlockWorld().GetLocatedObjectByID(objectID);
+  ObservableObject* object = _robot->GetBlockWorld().GetLocatedObjectByID(objectID);
   if(object == nullptr) {
     PRINT_NAMED_ERROR("Robot.PickUpDockObject.ObjectDoesNotExist",
                       "Dock object with ID=%d no longer exists for picking up.", objectID.GetValue());
@@ -329,7 +335,7 @@ Result CarryingComponent::SetObjectAsAttachedToLift(const ObjectID& objectID,
   // marker is from the center of the block
   // TODO: compute the height adjustment per object or at least use values from cozmoConfig.h
   Pose3d objectPoseWrtLiftPose;
-  if(object->GetPose().GetWithRespectTo(_robot.GetLiftPose(), objectPoseWrtLiftPose) == false) {
+  if(object->GetPose().GetWithRespectTo(_robot->GetLiftPose(), objectPoseWrtLiftPose) == false) {
     PRINT_NAMED_ERROR("Robot.PickUpDockObject.ObjectAndLiftPoseHaveDifferentOrigins",
                       "Object robot is picking up and robot's lift must share a common origin.");
     return RESULT_FAIL;
@@ -342,7 +348,7 @@ Result CarryingComponent::SetObjectAsAttachedToLift(const ObjectID& objectID,
   // mark it as being carried too
   // TODO: Do we need to be able to handle non-actionable objects on top of actionable ones?
   
-  ObservableObject* objectOnTop = _robot.GetBlockWorld().FindLocatedObjectOnTopOf(*object, STACKED_HEIGHT_TOL_MM);
+  ObservableObject* objectOnTop = _robot->GetBlockWorld().FindLocatedObjectOnTopOf(*object, STACKED_HEIGHT_TOL_MM);
   if(objectOnTop != nullptr)
   {
     Pose3d onTopPoseWrtCarriedPose;
@@ -361,7 +367,7 @@ Result CarryingComponent::SetObjectAsAttachedToLift(const ObjectID& objectID,
       // Related to COZMO-3384: Consider whether top cubes (in a stack) should notify memory map
       // Notify blockworld of the change in pose for the object on top, but pretend the new pose is unknown since
       // we are not dropping the cube yet
-      Result poseResult = _robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(objectOnTop, onTopPoseWrtCarriedPose, object);
+      Result poseResult = _robot->GetObjectPoseConfirmer().AddObjectRelativeObservation(objectOnTop, onTopPoseWrtCarriedPose, object);
       if(RESULT_OK != poseResult)
       {
         PRINT_NAMED_WARNING("Robot.SetObjectAsAttachedToLift.AddObjectRelativeObservationFailed",
@@ -380,10 +386,10 @@ Result CarryingComponent::SetObjectAsAttachedToLift(const ObjectID& objectID,
   
   // Robot may have just destroyed a configuration
   // update the configuration manager
-  _robot.GetBlockWorld().GetBlockConfigurationManager().FlagForRebuild();
+  _robot->GetBlockWorld().GetBlockConfigurationManager().FlagForRebuild();
   
   // Don't actually change the object's pose until we've checked for objects on top
-  Result poseResult = _robot.GetObjectPoseConfirmer().AddLiftRelativeObservation(object, objectPoseWrtLiftPose);
+  Result poseResult = _robot->GetObjectPoseConfirmer().AddLiftRelativeObservation(object, objectPoseWrtLiftPose);
   if(RESULT_OK != poseResult)
   {
     // TODO: warn

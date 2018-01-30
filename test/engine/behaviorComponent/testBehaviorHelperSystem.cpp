@@ -155,8 +155,8 @@ TEST(BehaviorHelperSystem, SimpleDelegate)
     ASSERT_FALSE(weak.expired());
 
     b.DelegateToHelperOnNextUpdate(testHelper,
-                                   [&helperSucceeded](BehaviorExternalInterface& behaviorExternalInterface) {helperSucceeded = true;},
-                                   [&helperFailed](BehaviorExternalInterface& behaviorExternalInterface) {helperFailed = true;});
+                                   [&helperSucceeded]() {helperSucceeded = true;},
+                                   [&helperFailed]() {helperFailed = true;});
   }
 
   ASSERT_TRUE(rawPtr != nullptr);
@@ -195,8 +195,8 @@ TEST(BehaviorHelperSystem, SimpleDelegate)
     ASSERT_FALSE(weak.expired());
 
     b.DelegateToHelperOnNextUpdate(testHelper,
-                                   [&helperSucceeded](BehaviorExternalInterface& behaviorExternalInterface) {helperSucceeded = true;},
-                                   [&helperFailed](BehaviorExternalInterface& behaviorExternalInterface) {helperFailed = true;});
+                                   [&helperSucceeded]() {helperSucceeded = true;},
+                                   [&helperFailed]() {helperFailed = true;});
   }
 
   ASSERT_TRUE(rawPtr != nullptr);
@@ -266,8 +266,8 @@ TEST(BehaviorHelperSystem, DelegateWithActions)
     ASSERT_FALSE(weak.expired());
 
     b.DelegateToHelperOnNextUpdate(testHelper,
-                                   [&helperSucceeded](BehaviorExternalInterface& behaviorExternalInterface) {helperSucceeded = true;},
-                                   [&helperFailed](BehaviorExternalInterface& behaviorExternalInterface) {helperFailed = true;});
+                                   [&helperSucceeded]() {helperSucceeded = true;},
+                                   [&helperFailed]() {helperFailed = true;});
   }
 
   ASSERT_TRUE(rawPtr != nullptr);
@@ -369,8 +369,8 @@ TEST(BehaviorHelperSystem, BehaviorStopsHelper)
     ASSERT_FALSE(weak.expired());
 
     b.DelegateToHelperOnNextUpdate(testHelper,
-                                   [&helperSucceeded](BehaviorExternalInterface& behaviorExternalInterface) {helperSucceeded = true;},
-                                   [&helperFailed](BehaviorExternalInterface& behaviorExternalInterface) {helperFailed = true;});
+                                   [&helperSucceeded]() {helperSucceeded = true;},
+                                   [&helperFailed]() {helperFailed = true;});
   }
 
   ASSERT_TRUE(rawPtr != nullptr);
@@ -585,24 +585,25 @@ TEST(BehaviorHelperSystem, MultiLayerSuccess)
   
   {
     ptrs[0].raw = new TestHelper(behaviorExternalInterface, b);
+    ptrs[0].raw->Init(testBehaviorFramework.GetBehaviorExternalInterface());
     auto strong = std::shared_ptr<IHelper>( ptrs[0].raw );
     ptrs[0].weak = strong; // store weak pointer
     
-    ptrs[0].raw->StartAutoAction(behaviorExternalInterface);
+    ptrs[0].raw->StartAutoAction();
     ptrs[0].raw->_delegateAfterAction = true;
 
     ASSERT_FALSE(ptrs[0].weak.expired());
     // on success, set bool and also queue another action
     b.DelegateToHelperOnNextUpdate(
       strong,
-      [&baseHelperSucceeded, &b, &stopBehaviorAction](BehaviorExternalInterface& behaviorExternalInterface) {
+      [&baseHelperSucceeded, &b, &stopBehaviorAction]() {
         baseHelperSucceeded = true;
         b.SetActionToRunOnNextUpdate(new WaitForLambdaAction([&stopBehaviorAction](Robot& r) {
               printf("behavior post-helper action: %d\n", stopBehaviorAction);
               return stopBehaviorAction;
             }));
       },
-      [&baseHelperFailed](BehaviorExternalInterface& behaviorExternalInterface) {baseHelperFailed = true;});
+      [&baseHelperFailed]() {baseHelperFailed = true;});
     
     ASSERT_FALSE(ptrs[0].weak.expired());
     ptrs[0].strong = strong; // store strong pointer now, to make sure it stays alive during the delegation
@@ -694,24 +695,25 @@ TEST(BehaviorHelperSystem, CancelDelegates)
   
   {
     ptrs[0].raw = new TestHelper(behaviorExternalInterface, b);
+    ptrs[0].raw->Init(testBehaviorFramework.GetBehaviorExternalInterface());
     auto strong = std::shared_ptr<IHelper>( ptrs[0].raw );
     ptrs[0].weak = strong; // store weak pointer
     
-    ptrs[0].raw->StartAutoAction(behaviorExternalInterface);
+    ptrs[0].raw->StartAutoAction();
     ptrs[0].raw->_delegateAfterAction = true;
 
     ASSERT_FALSE(ptrs[0].weak.expired());
     // on success, set bool and also queue another action
     b.DelegateToHelperOnNextUpdate(
       strong,
-      [&baseHelperSucceeded, &b, &stopBehaviorAction](BehaviorExternalInterface& behaviorExternalInterface) {
+      [&baseHelperSucceeded, &b, &stopBehaviorAction]() {
         baseHelperSucceeded = true;
         b.SetActionToRunOnNextUpdate(new WaitForLambdaAction([&stopBehaviorAction](Robot& r) {
               printf("behavior post-helper action: %d\n", stopBehaviorAction);
               return stopBehaviorAction;
             }));
       },
-      [&baseHelperFailed](BehaviorExternalInterface& behaviorExternalInterface) {baseHelperFailed = true;});
+      [&baseHelperFailed]() {baseHelperFailed = true;});
     
     ASSERT_FALSE(ptrs[0].weak.expired());
     ptrs[0].strong = strong; // store strong pointer now, to make sure it stays alive during the delegation
@@ -737,7 +739,7 @@ TEST(BehaviorHelperSystem, CancelDelegates)
 
   // have some action in the middle cancel it's delegates
   ptrs[6].raw->_cancelDelegates = true;
-  ptrs[6].raw->StartAutoAction(behaviorExternalInterface);
+  ptrs[6].raw->StartAutoAction();
   
   DoTicks(testBehaviorFramework, robot, b, 2);
 
@@ -864,24 +866,25 @@ TEST(BehaviorHelperSystem, StopBehavior)
   
   {
     ptrs[0].raw = new TestHelper(behaviorExternalInterface, b);
+    ptrs[0].raw->Init(testBehaviorFramework.GetBehaviorExternalInterface());
     auto strong = std::shared_ptr<IHelper>( ptrs[0].raw );
     ptrs[0].weak = strong; // store weak pointer
     
-    ptrs[0].raw->StartAutoAction(behaviorExternalInterface);
+    ptrs[0].raw->StartAutoAction();
     ptrs[0].raw->_delegateAfterAction = true;
 
     ASSERT_FALSE(ptrs[0].weak.expired());
     // on success, set bool and also queue another action
     b.DelegateToHelperOnNextUpdate(
       strong,
-      [&baseHelperSucceeded, &b, &stopBehaviorAction](BehaviorExternalInterface& behaviorExternalInterface) {
+      [&baseHelperSucceeded, &b, &stopBehaviorAction]() {
         baseHelperSucceeded = true;
         b.SetActionToRunOnNextUpdate(new WaitForLambdaAction([&stopBehaviorAction](Robot& r) {
               printf("behavior post-helper action: %d\n", stopBehaviorAction);
               return stopBehaviorAction;
             }));
       },
-      [&baseHelperFailed](BehaviorExternalInterface& behaviorExternalInterface) {baseHelperFailed = true;});
+      [&baseHelperFailed]() {baseHelperFailed = true;});
     
     ASSERT_FALSE(ptrs[0].weak.expired());
     ptrs[0].strong = strong; // store strong pointer now, to make sure it stays alive during the delegation

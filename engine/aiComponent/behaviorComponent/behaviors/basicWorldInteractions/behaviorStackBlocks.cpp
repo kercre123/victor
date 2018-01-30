@@ -18,7 +18,7 @@
 #include "engine/actions/dockActions.h"
 #include "engine/actions/driveToActions.h"
 #include "engine/actions/retryWrapperAction.h"
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
@@ -57,42 +57,42 @@ BehaviorStackBlocks::BehaviorStackBlocks(const Json::Value& config)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorStackBlocks::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorStackBlocks::WantsToBeActivatedBehavior() const
 {
-  UpdateTargetBlocks(behaviorExternalInterface);
+  UpdateTargetBlocks();
   return _targetBlockBottom.IsSet() && _targetBlockTop.IsSet();
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorStackBlocks::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorStackBlocks::OnBehaviorActivated()
 {
-  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  const auto& robotInfo = GetBEI().GetRobotInfo();
   
   if(robotInfo.GetCarryingComponent().GetCarryingObject() == _targetBlockTop){
-    TransitionToStackingBlock(behaviorExternalInterface);
+    TransitionToStackingBlock();
   }else{
-    TransitionToPickingUpBlock(behaviorExternalInterface);
+    TransitionToPickingUpBlock();
   }
   
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorStackBlocks::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorStackBlocks::OnBehaviorDeactivated()
 {
   ResetBehavior();
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorStackBlocks::CanUseNonUprightBlocks(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorStackBlocks::CanUseNonUprightBlocks() const
 {
   const bool forFreeplay = true;
   bool isRollingUnlocked = true;
   
-  if(behaviorExternalInterface.HasProgressionUnlockComponent()){
-    auto& progressionUnlockComp = behaviorExternalInterface.GetProgressionUnlockComponent();
+  if(GetBEI().HasProgressionUnlockComponent()){
+    auto& progressionUnlockComp = GetBEI().GetProgressionUnlockComponent();
     isRollingUnlocked = progressionUnlockComp.IsUnlocked(UnlockId::RollCube, forFreeplay);
   }
   
@@ -101,11 +101,11 @@ bool BehaviorStackBlocks::CanUseNonUprightBlocks(BehaviorExternalInterface& beha
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorStackBlocks::UpdateTargetBlocks(BehaviorExternalInterface& behaviorExternalInterface) const
+void BehaviorStackBlocks::UpdateTargetBlocks() const
 {
-  auto& objInfoCache = behaviorExternalInterface.GetAIComponent().GetObjectInteractionInfoCache();
+  auto& objInfoCache = GetBEI().GetAIComponent().GetObjectInteractionInfoCache();
   
-  if(CanUseNonUprightBlocks(behaviorExternalInterface)){
+  if(CanUseNonUprightBlocks()){
     _targetBlockTop = objInfoCache.GetBestObjectForIntention(ObjectInteractionIntention::StackTopObjectNoAxisCheck);
     _targetBlockBottom = objInfoCache.GetBestObjectForIntention(ObjectInteractionIntention::StackBottomObjectNoAxisCheck);
   }else{
@@ -116,7 +116,7 @@ void BehaviorStackBlocks::UpdateTargetBlocks(BehaviorExternalInterface& behavior
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorStackBlocks::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorStackBlocks::BehaviorUpdate()
 {
   if(!IsActivated()){
     return;
@@ -125,12 +125,12 @@ void BehaviorStackBlocks::BehaviorUpdate(BehaviorExternalInterface& behaviorExte
   auto topBlockIntention  = ObjectInteractionIntention::StackTopObjectAxisCheck;
   auto bottomBlockIntention  = ObjectInteractionIntention::StackBottomObjectAxisCheck;
 
-  if(CanUseNonUprightBlocks(behaviorExternalInterface)){
+  if(CanUseNonUprightBlocks()){
     topBlockIntention  = ObjectInteractionIntention::StackTopObjectNoAxisCheck;
     bottomBlockIntention  = ObjectInteractionIntention::StackBottomObjectNoAxisCheck;
   }
   
-  auto& objInfoCache = behaviorExternalInterface.GetAIComponent().GetObjectInteractionInfoCache();
+  auto& objInfoCache = GetBEI().GetAIComponent().GetObjectInteractionInfoCache();
 
   // Verify that blocks are still valid
   auto validTopObjs = objInfoCache.GetValidObjectsForIntention(topBlockIntention);
@@ -146,12 +146,12 @@ void BehaviorStackBlocks::BehaviorUpdate(BehaviorExternalInterface& behaviorExte
     // the top block is now on top of it - in which case don't cancel the behavior
     bool shouldStop = true;
     if(!bottomValid){
-      const ObservableObject* bottomObj = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_targetBlockBottom);
-      const ObservableObject* topObj    = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_targetBlockTop);
+      const ObservableObject* bottomObj = GetBEI().GetBlockWorld().GetLocatedObjectByID(_targetBlockBottom);
+      const ObservableObject* topObj    = GetBEI().GetBlockWorld().GetLocatedObjectByID(_targetBlockTop);
       
       if((bottomObj != nullptr)  &&
          (topObj != nullptr)){
-        auto objOnTop = behaviorExternalInterface.GetBlockWorld().FindLocatedObjectOnTopOf(*bottomObj,
+        auto objOnTop = GetBEI().GetBlockWorld().FindLocatedObjectOnTopOf(*bottomObj,
                                                                        STACKED_HEIGHT_TOL_MM);
         if(objOnTop == topObj){
           shouldStop = false;
@@ -177,19 +177,19 @@ void BehaviorStackBlocks::BehaviorUpdate(BehaviorExternalInterface& behaviorExte
      !_hasBottomTargetSwitched){
     
     
-    auto bestBottom = GetClosestValidBottom(behaviorExternalInterface, bottomBlockIntention);
+    auto bestBottom = GetClosestValidBottom(bottomBlockIntention);
     if(bestBottom != _targetBlockBottom){
       CancelDelegates(false);
       _targetBlockBottom = bestBottom;
       _hasBottomTargetSwitched = true;
-      TransitionToStackingBlock(behaviorExternalInterface);
+      TransitionToStackingBlock();
     }
   }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorStackBlocks::TransitionToPickingUpBlock(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorStackBlocks::TransitionToPickingUpBlock()
 {
   SET_STATE(PickingUpBlock);
 
@@ -197,19 +197,19 @@ void BehaviorStackBlocks::TransitionToPickingUpBlock(BehaviorExternalInterface& 
   PickupBlockParamaters params;
   params.maxTurnTowardsFaceAngle_rad = ShouldStreamline() ? 0 : kBSB_MaxTurnTowardsFaceBeforePickupAngle_deg;
   HelperHandle pickupHelper = GetBehaviorHelperFactory().
-                                      CreatePickupBlockHelper(behaviorExternalInterface, *this,
+                                      CreatePickupBlockHelper(*this,
                                                               _targetBlockTop, params);
   
-  SmartDelegateToHelper(behaviorExternalInterface, pickupHelper, &BehaviorStackBlocks::TransitionToStackingBlock);
+  SmartDelegateToHelper(pickupHelper, &BehaviorStackBlocks::TransitionToStackingBlock);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorStackBlocks::TransitionToStackingBlock(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorStackBlocks::TransitionToStackingBlock()
 {
   SET_STATE(StackingBlock);
   
-  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  const auto& robotInfo = GetBEI().GetRobotInfo();
 
   // if we aren't carrying the top block, fail back to pick up
   const bool holdingTopBlock = robotInfo.GetCarryingComponent().IsCarryingObject() &&
@@ -217,24 +217,24 @@ void BehaviorStackBlocks::TransitionToStackingBlock(BehaviorExternalInterface& b
   if( ! holdingTopBlock ) {
     PRINT_NAMED_DEBUG("BehaviorStackBlocks.FailBackToPickup",
                       "wanted to stack, but we aren't carrying a block");
-    TransitionToPickingUpBlock(behaviorExternalInterface);
+    TransitionToPickingUpBlock();
     return;
   }
   
   const bool placingOnGround = false;
   HelperHandle placeHelper = GetBehaviorHelperFactory().
-                      CreatePlaceRelObjectHelper(behaviorExternalInterface, *this,
+                      CreatePlaceRelObjectHelper(*this,
                                                  _targetBlockBottom,
                                                  placingOnGround);
 
-  SmartDelegateToHelper(behaviorExternalInterface, placeHelper,
+  SmartDelegateToHelper(placeHelper,
                         &BehaviorStackBlocks::TransitionToPlayingFinalAnim,
                         &BehaviorStackBlocks::TransitionToFailedToStack);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorStackBlocks::TransitionToPlayingFinalAnim(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorStackBlocks::TransitionToPlayingFinalAnim()
 {
   SET_STATE(PlayingFinalAnim);
   
@@ -247,16 +247,16 @@ void BehaviorStackBlocks::TransitionToPlayingFinalAnim(BehaviorExternalInterface
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorStackBlocks::TransitionToFailedToStack(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorStackBlocks::TransitionToFailedToStack()
 {
-  auto retryIfPossible = [this](BehaviorExternalInterface& behaviorExternalInterface){
-    UpdateTargetBlocks(behaviorExternalInterface);
+  auto retryIfPossible = [this](){
+    UpdateTargetBlocks();
     if(_targetBlockTop.IsSet() && _targetBlockBottom.IsSet()){
-      TransitionToPickingUpBlock(behaviorExternalInterface);
+      TransitionToPickingUpBlock();
     }
   };
   
-  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  const auto& robotInfo = GetBEI().GetRobotInfo();
   // If cozmo thinks he's still carrying the cube, try placing it on the ground to
   // see if it's really there - then see if we can try again
   if(robotInfo.GetCarryingComponent().IsCarryingObject()){
@@ -266,30 +266,30 @@ void BehaviorStackBlocks::TransitionToFailedToStack(BehaviorExternalInterface& b
       new PlaceObjectOnGroundAction()});
     DelegateIfInControl(placeAction, retryIfPossible);
   }else{
-    retryIfPossible(behaviorExternalInterface);
+    retryIfPossible();
   }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ObjectID BehaviorStackBlocks::GetClosestValidBottom(BehaviorExternalInterface& behaviorExternalInterface, ObjectInteractionIntention bottomIntention) const
+ObjectID BehaviorStackBlocks::GetClosestValidBottom(ObjectInteractionIntention bottomIntention) const
 {
   DEV_ASSERT(_targetBlockBottom.IsSet(),
              "BehaviorStackBlocks.GetClosestValidBottom.TargetBlockNotValid");
   
-  auto& objInfoCache = behaviorExternalInterface.GetAIComponent().GetObjectInteractionInfoCache();
+  auto& objInfoCache = GetBEI().GetAIComponent().GetObjectInteractionInfoCache();
 
   ObjectID bestBottom = _targetBlockBottom;
-  const ObservableObject* currentTarget =  behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_targetBlockBottom);
+  const ObservableObject* currentTarget =  GetBEI().GetBlockWorld().GetLocatedObjectByID(_targetBlockBottom);
   f32 distToClosestBottom_mm_sq;
   
-  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  const auto& robotInfo = GetBEI().GetRobotInfo();
 
   if((currentTarget != nullptr) &&
      ComputeDistanceSQBetween(robotInfo.GetPose(), currentTarget->GetPose(), distToClosestBottom_mm_sq)){
     auto validObjs = objInfoCache.GetValidObjectsForIntention(bottomIntention);
     for(const auto& objID : validObjs){
-      const ObservableObject* obj = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(objID);
+      const ObservableObject* obj = GetBEI().GetBlockWorld().GetLocatedObjectByID(objID);
       f32 distanceToValid;
       if((obj != nullptr) &&
          ComputeDistanceSQBetween(robotInfo.GetPose(), obj->GetPose(), distanceToValid)){
@@ -323,8 +323,7 @@ void BehaviorStackBlocks::SetState_internal(State state, const std::string& stat
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorStackBlocks::PrintCubeDebug(BehaviorExternalInterface& behaviorExternalInterface,
-                                         const char* event, const ObservableObject* obj) const
+void BehaviorStackBlocks::PrintCubeDebug(const char* event, const ObservableObject* obj) const
 {
   // this should be helper so that it can be reused
   const char* poseStateStr = "";
@@ -338,8 +337,8 @@ void BehaviorStackBlocks::PrintCubeDebug(BehaviorExternalInterface& behaviorExte
                     "block %d: blockUpright?%d CanPickUpObject%d CanStackOnTopOfObject?%d poseState=%s moving?%d restingFlat?%d",
                     obj->GetID().GetValue(),
                     obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS,
-                    behaviorExternalInterface.GetRobotInfo().GetDockingComponent().CanPickUpObject(*obj),
-                    behaviorExternalInterface.GetRobotInfo().GetDockingComponent().CanStackOnTopOfObject(*obj),
+                    GetBEI().GetRobotInfo().GetDockingComponent().CanPickUpObject(*obj),
+                    GetBEI().GetRobotInfo().GetDockingComponent().CanStackOnTopOfObject(*obj),
                     poseStateStr,
                     obj->IsMoving(),
                     obj->IsRestingFlat());

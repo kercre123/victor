@@ -1,0 +1,35 @@
+cxx_project(
+    name = 'test_engine',
+    srcs = cxx_src_glob(['.'],
+                        excludes = [
+                            '**/android/*',
+                            'latticePlannerTest.cpp',
+                            'minAnglePlannerTest.cpp',
+                            'pathComponentTest.cpp',
+                            'run_RobotPoseHistoryTest.cpp',
+                            'testActionList.cpp'
+                        ]),
+    platform_srcs = [
+        ('android', glob([
+                            '**/*_android.cpp',
+                            '**/android/*.cpp',
+                         ])),
+        ('mac', glob([
+                        '**/*_iososx*.mm',
+                        '**/*_osx.mm',
+                        '**/*_osx.cpp',
+                     ]))
+    ],
+    headers = cxx_header_glob(['.'],
+                              excludes = ['**/android/*']),
+    platform_headers = [
+        ('android', glob([
+                            '**/*_android.h',
+                            '**/android/*.h',
+                         ])),
+        ('mac', glob([
+                        '**/*_ios*.h',
+                        '**/*_osx.h',
+                     ])),
+    ]
+)

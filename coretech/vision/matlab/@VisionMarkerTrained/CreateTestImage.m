@@ -76,10 +76,7 @@ for iRow = 1:numRows
             %h_axes = axes('Parent', gcf, 'Units', 'pixels', ...
             %    'Position', axesPositions{iMarker});
             
-            [img, ~, alpha] = imread(fnames{iMarker});
-            %img = mean(im2double(img),3);
-            img = ~any(im2double(img)<0.95,3);
-            img(im2double(alpha) < .5) = 1;
+            img = imreadAlphaHelper(fnames{iMarker});
             imagesc(markerPositions{iMarker}(1) + [0 markerPositions{iMarker}(3)], ...
                 markerPositions{iMarker}(2) + [0 markerPositions{iMarker}(4)], ...
                 img, 'Parent', h_axes);

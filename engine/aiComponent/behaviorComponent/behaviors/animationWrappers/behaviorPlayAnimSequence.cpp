@@ -72,58 +72,58 @@ BehaviorPlayAnimSequence::~BehaviorPlayAnimSequence()
 }
  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorPlayAnimSequence::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorPlayAnimSequence::WantsToBeActivatedBehavior() const
 {
   const bool hasAnims = !_animTriggers.empty() || !_animationNames.empty();
-  return hasAnims && WantsToBeActivatedAnimSeqInternal(behaviorExternalInterface);
+  return hasAnims && WantsToBeActivatedAnimSeqInternal();
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPlayAnimSequence::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPlayAnimSequence::OnBehaviorActivated()
 {
-  StartPlayingAnimations(behaviorExternalInterface);
+  StartPlayingAnimations();
 
   
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPlayAnimSequence::StartPlayingAnimations(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPlayAnimSequence::StartPlayingAnimations()
 {
   DEV_ASSERT(!_animTriggers.empty() || !_animationNames.empty(), "BehaviorPlayAnimSequence.InitInternal.NoTriggers");
   if(IsSequenceLoop()){
     _sequenceLoopsDone = 0;    
-    StartSequenceLoop(behaviorExternalInterface);
+    StartSequenceLoop();
   }else{
-    IActionRunner* action = GetAnimationAction(behaviorExternalInterface);    
-    DelegateIfInControl(action, [this](BehaviorExternalInterface& behaviorExternalInterface) {
-      CallToListeners(behaviorExternalInterface);
+    IActionRunner* action = GetAnimationAction();    
+    DelegateIfInControl(action, [this]() {
+      CallToListeners();
     });
   }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPlayAnimSequence::StartSequenceLoop(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPlayAnimSequence::StartSequenceLoop()
 {
     // if not done, start another sequence
     if (_sequenceLoopsDone < _numLoops)
     {
-      IActionRunner* action = GetAnimationAction(behaviorExternalInterface);
+      IActionRunner* action = GetAnimationAction();
       // count already that the loop is done for the next time
       ++_sequenceLoopsDone;
       // start it and come back here next time to check for more loops
-      DelegateIfInControl(action, [this](BehaviorExternalInterface& behaviorExternalInterface) {
-        CallToListeners(behaviorExternalInterface);
-        StartSequenceLoop(behaviorExternalInterface);
+      DelegateIfInControl(action, [this]() {
+        CallToListeners();
+        StartSequenceLoop();
       });
     }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IActionRunner* BehaviorPlayAnimSequence::GetAnimationAction(BehaviorExternalInterface& behaviorExternalInterface)
+IActionRunner* BehaviorPlayAnimSequence::GetAnimationAction()
 {
   u32 numLoops = _numLoops; 
   if(IsSequenceLoop()){
@@ -134,7 +134,7 @@ IActionRunner* BehaviorPlayAnimSequence::GetAnimationAction(BehaviorExternalInte
   CompoundActionSequential* sequenceAction = new CompoundActionSequential();
   for (AnimationTrigger trigger : _animTriggers) {
     const bool interruptRunning = true;
-    const u8 tracksToLock = GetTracksToLock(behaviorExternalInterface);
+    const u8 tracksToLock = GetTracksToLock();
 
     IAction* playAnim = new TriggerLiftSafeAnimationAction(trigger,
                                                            numLoops,
@@ -145,7 +145,7 @@ IActionRunner* BehaviorPlayAnimSequence::GetAnimationAction(BehaviorExternalInte
 
   for (const auto& name : _animationNames) {
     const bool interruptRunning = true;
-    const u8 tracksToLock = GetTracksToLock(behaviorExternalInterface);
+    const u8 tracksToLock = GetTracksToLock();
 
     IAction* playAnim = new PlayAnimationAction(name,
                                                 numLoops,
@@ -171,19 +171,19 @@ void BehaviorPlayAnimSequence::AddListener(ISubtaskListener* listener)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPlayAnimSequence::CallToListeners(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPlayAnimSequence::CallToListeners()
 {
   for(auto& listener : _listeners)
   {
-    listener->AnimationComplete(behaviorExternalInterface);
+    listener->AnimationComplete();
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-u8 BehaviorPlayAnimSequence::GetTracksToLock(BehaviorExternalInterface& behaviorExternalInterface) const
+u8 BehaviorPlayAnimSequence::GetTracksToLock() const
 {
   if( _supportCharger ) {
-    const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+    const auto& robotInfo = GetBEI().GetRobotInfo();
     if( robotInfo.IsOnChargerPlatform() ) {
       // we are supporting the charger and are on it, so lock out the body
       return (u8)AnimTrackFlag::BODY_TRACK;

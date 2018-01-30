@@ -42,24 +42,26 @@ namespace Anki {
       
         virtual ~BehaviorLiftLoadTest() { }
       
-        virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-        virtual bool CarryingObjectHandledInternally() const override { return false;}
+        virtual bool WantsToBeActivatedBehavior() const override;
     
       protected:
-        void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) override;
+        virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+          modifiers.behaviorAlwaysDelegates = false;
+        }
+
+        void InitBehavior() override;
       private:
       
-        virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+        virtual void OnBehaviorActivated() override;
       
-        virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
-        virtual bool ShouldCancelWhenInControl() const override { return false;}
+        virtual void BehaviorUpdate() override;
 
-        virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+        virtual void OnBehaviorDeactivated() override;
         
-        virtual void HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
-        virtual void HandleWhileActivated(const RobotToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+        virtual void HandleWhileActivated(const EngineToGameEvent& event) override;
+        virtual void HandleWhileActivated(const RobotToEngineEvent& event) override;
       
-        virtual void AlwaysHandleInScope(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+        virtual void AlwaysHandleInScope(const GameToEngineEvent& event) override;
       
         void PrintStats();
       

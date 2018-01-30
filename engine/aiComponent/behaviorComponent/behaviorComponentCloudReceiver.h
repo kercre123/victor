@@ -15,6 +15,8 @@
 
 #include "clad/types/behaviorComponent/cloudIntents.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponentCloudServer.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
+#include "engine/dependencyManagedComponent.h"
 
 #include "util/signals/simpleSignal_fwd.h"
 
@@ -27,9 +29,21 @@ namespace Cozmo {
 
 class Robot;
 
-class BehaviorComponentCloudReceiver {
+class BehaviorComponentCloudReceiver : public IDependencyManagedComponent<BCComponentID>{
+
 public:
   BehaviorComponentCloudReceiver(Robot& robot);
+
+  //////
+  // IDependencyManagedComponent functions
+  //////
+  virtual void InitDependent(Robot* robot, const BCCompMap& dependentComponents) override {};
+  virtual void GetInitDependencies(BCCompIDSet& dependencies) const override {}
+  virtual void GetUpdateDependencies(BCCompIDSet& dependencies) const override {};
+  //////
+  // end IDependencyManagedComponent functions
+  //////
+  
 
   // Returns true if there is an intent pending that matches
   // the intent type passed in

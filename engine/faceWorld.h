@@ -18,6 +18,9 @@
 #include "coretech/vision/engine/trackedFace.h"
 
 #include "engine/ankiEventUtil.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
+#include "engine/dependencyManagedComponent.h"
+#include "engine/robotComponents_fwd.h"
 #include "engine/smartFaceId.h"
 #include "engine/viz/vizManager.h"
 
@@ -33,7 +36,12 @@ namespace Cozmo {
   // Forward declarations:
   class Robot;
   
-  class FaceWorld
+  // FaceWorld is updated at the robot component level, same as BehaviorComponent
+  // Therefore BCComponents (which are managed by BehaviorComponent) can't declare dependencies on FaceWorld 
+  // since when it's Init/Update relative to BehaviorComponent must be declared by BehaviorComponent explicitly, 
+  // not by individual components within BehaviorComponent
+  class FaceWorld : public UnreliableComponent<BCComponentID>, 
+                    public IDependencyManagedComponent<RobotComponentID>
   {
   public:
     static const s32 MinTimesToSeeFace = 4;
@@ -43,7 +51,27 @@ namespace Cozmo {
     // changes and deleted faces. The raw face id API is maintained only for backwards
     // compatibility. COZMO-10839 is the task that will eventually remove this old interface
     
-    FaceWorld(Robot& robot);
+    FaceWorld();
+
+    //////
+    // IDependencyManagedComponent functions
+    //////
+    virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
+    // Maintain the chain of initializations currently in robot - it might be possible to
+    // change the order of initialization down the line, but be sure to check for ripple effects
+    // when changing this function
+    virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
+      dependencies.insert(RobotComponentID::BlockWorld);
+    };
+    virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
+
+    // Prevent hiding function warnings by exposing the (valid) unreliable component methods
+    using UnreliableComponent<BCComponentID>::InitDependent;
+    using UnreliableComponent<BCComponentID>::GetInitDependencies;
+    using UnreliableComponent<BCComponentID>::GetUpdateDependencies;
+    //////
+    // end IDependencyManagedComponent functions
+    //////
     
     Result Update(const std::list<Vision::TrackedFace>& observedFaces);
     Result AddOrUpdateFace(const Vision::TrackedFace& face);
@@ -115,7 +143,7 @@ namespace Cozmo {
     
   private:
     
-    Robot& _robot;
+    Robot* _robot;
     
     // FaceEntry is the internal storage for faces in FaceWorld, which include
     // the public-facing TrackedFace plus additional bookkeeping

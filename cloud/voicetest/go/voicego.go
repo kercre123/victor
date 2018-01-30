@@ -11,6 +11,8 @@ import (
 	"os"
 	"strings"
 
+	"anki/cloudproc"
+
 	"github.com/anki/sai-chipper-voice/client/chipper"
 	api "github.com/anki/sai-go-util/http/apiclient"
 	"github.com/google/uuid"
@@ -20,40 +22,50 @@ import (
 type appData struct {
 	samples     []int16
 	sampleCount int
+	lastSend    int
+	tail        []int16
 	client      *chipper.ChipperClient
 	notice      chan struct{}
+	dataStream  chan []byte
 	first       bool
 }
 
 var app = appData{}
 
+func (a *appData) audioRoutine() {
+	for data := range a.dataStream {
+		err := a.client.SendAudio(data)
+		if err != nil {
+			fmt.Println("Error sending audio:", err)
+			close(a.dataStream)
+			return
+		}
+		if a.first {
+			a.first = false
+			close(a.notice)
+		}
+	}
+}
+
 func (a *appData) AudioCallback(samples []int16) {
 	a.sampleCount += len(samples)
 	a.samples = append(a.samples, samples...)
+	a.tail = a.samples[a.lastSend:]
 	fmt.Print("\rSamples received: ", a.sampleCount)
 
-	if len(app.samples) < 1600 {
+	if len(app.tail) < 1600 {
 		return
 	}
 
-	samples = a.samples[:1600]
-	a.samples = a.samples[1600:]
+	samples = a.tail[:1600]
+	a.lastSend += 1600
 
 	data := &bytes.Buffer{}
 	binary.Write(data, binary.LittleEndian, samples)
 	if data.Len() != 3200 {
 		fmt.Println("WTF")
 	}
-
-	err := a.client.SendAudio(data.Bytes())
-	if err != nil {
-		fmt.Println("Error sending audio:", err)
-		return
-	}
-	if app.first {
-		app.first = false
-		close(app.notice)
-	}
+	a.dataStream <- data.Bytes()
 }
 
 //export GoAudioCallback
@@ -66,20 +78,23 @@ func GoAudioCallback(cSamples []int16) {
 
 //export GoMain
 func GoMain(startRecording, stopRecording C.voidFunc) {
-	client, err := chipper.NewClient("", "device-id", "dahfahz5ooThoophe9Eig5e",
+	client, err := chipper.NewClient("", cloudproc.ChipperSecret, "device-id",
 		uuid.New().String()[:16],
-		api.WithServerURL("http://127.0.0.1:8000"))
+		api.WithServerURL(cloudproc.ChipperURL))
 	if err != nil {
 		fmt.Println("Error starting chipper:", err)
 		return
 	}
 	app.notice = make(chan struct{})
+	app.dataStream = make(chan []byte, 40)
 	app.client = client
 	app.first = true
 
 	fmt.Println("Press enter to start recording!")
 	r := bufio.NewReader(os.Stdin)
 	_, _ = r.ReadString('\n')
+
+	go app.audioRoutine()
 	runCFunc(startRecording)
 	<-app.notice
 
@@ -91,6 +106,8 @@ func GoMain(startRecording, stopRecording C.voidFunc) {
 	}
 
 	runCFunc(stopRecording)
+	close(app.dataStream)
+
 	fmt.Println("")
 	fmt.Println("Stopped recording")
 	fmt.Println("Intent:", intent)
@@ -103,13 +120,27 @@ func GoMain(startRecording, stopRecording C.voidFunc) {
 	}
 
 	f, _ := os.Create(filename)
-	defer f.Close()
+	defer func() {
+		err := f.Close()
+		if err != nil {
+			fmt.Println("File close error:", err)
+		}
+	}()
 
 	bufWriter := bufio.NewWriter(f)
 	writer := wav.NewWriter(bufWriter, uint32(len(app.samples)), 1, 16000, 16)
-	writer.WriteSamples(convertSamples(app.samples))
-	bufWriter.Flush()
-	f.Sync()
+	err = writer.WriteSamples(convertSamples(app.samples))
+	if err != nil {
+		fmt.Println("Sample write error:", err)
+	}
+	err = bufWriter.Flush()
+	if err != nil {
+		fmt.Println("Buffer flush error:", err)
+	}
+	err = f.Sync()
+	if err != nil {
+		fmt.Println("File sycn error:", err)
+	}
 }
 
 func convertSamples(inSamples []int16) (samples []wav.Sample) {

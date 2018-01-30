@@ -10,18 +10,23 @@
 *
 **/
 
+#include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToVoiceCommand.h"
+
+#include "clad/types/animationTrigger.h"
+#include "clad/types/behaviorComponent/cloudIntents.h"
+#include "coretech/common/engine/math/pose.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/compoundActions.h"
+#include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponentCloudReceiver.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToVoiceCommand.h"
 #include "engine/components/movementComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
 #include "engine/voiceCommands/voiceCommandComponent.h"
-#include "coretech/common/engine/math/pose.h"
-#include "clad/types/animationTrigger.h"
-
 
 namespace Anki {
 namespace Cozmo {
@@ -31,19 +36,20 @@ namespace Cozmo {
 BehaviorReactToVoiceCommand::BehaviorReactToVoiceCommand(const Json::Value& config)
 : ICozmoBehavior(config)
 {
+  SetRespondToCloudIntent(CloudIntent::TriggerDetected);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorReactToVoiceCommand::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorReactToVoiceCommand::WantsToBeActivatedBehavior() const
 {
   if (_desiredFace.IsValid())
   {
     // If we don't know where this face is right now, switch it to Invalid so we just look toward the last face pose
-    const auto* face = behaviorExternalInterface.GetFaceWorld().GetFace(_desiredFace);
+    const auto* face = GetBEI().GetFaceWorld().GetFace(_desiredFace);
     Pose3d pose;
 
-    const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+    const auto& robotInfo = GetBEI().GetRobotInfo();
     if(nullptr == face || !face->GetHeadPose().HasSameRootAs(robotInfo.GetPose()))
     {
       _desiredFace.Reset();
@@ -55,23 +61,29 @@ bool BehaviorReactToVoiceCommand::WantsToBeActivatedBehavior(BehaviorExternalInt
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToVoiceCommand::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToVoiceCommand::OnBehaviorActivated()
 {
-  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  const auto& robotInfo = GetBEI().GetRobotInfo();
   
   // Stop all movement so we can listen for a command
   robotInfo.GetMoveComponent().StopAllMotors();
+
+  const bool onCharger = robotInfo.IsOnChargerPlatform();
   
   auto* actionSeries = new CompoundActionSequential();
   
   // Tilt the head up slightly, like we're listening, and wait a bit
   {
-    actionSeries->AddAction(
-      new TriggerLiftSafeAnimationAction(AnimationTrigger::VC_Listening));
+    if( onCharger ) {
+      actionSeries->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::ListeningOnCharger));
+    }
+    else {
+      actionSeries->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::VC_Listening));
+    }
   }
   
   // After waiting let's turn toward the face we know about, if we have one
-  if(_desiredFace.IsValid()){
+  if(_desiredFace.IsValid() && !onCharger){
     const bool sayName = true;
     TurnTowardsFaceAction* turnAction = new TurnTowardsFaceAction(_desiredFace,
                                                                   M_PI_F,
@@ -87,8 +99,16 @@ void BehaviorReactToVoiceCommand::OnBehaviorActivated(BehaviorExternalInterface&
        new TriggerLiftSafeAnimationAction(AnimationTrigger::VC_NoFollowupCommand_WithFace));
   }else{
     // Play animation to indicate "What was that" since no face to tun towards
-    actionSeries->AddAction(
-       new TriggerLiftSafeAnimationAction(AnimationTrigger::VC_NoFollowupCommand_NoFace));
+    TriggerLiftSafeAnimationAction* animAction =
+      new TriggerLiftSafeAnimationAction(AnimationTrigger::VC_NoFollowupCommand_NoFace);
+
+    if( onCharger ) {
+      // lock body on charger
+      // TODO:(bn) play a different anim?
+      animAction->SetTracksToLock( animAction->GetTracksToLock() | (u8)AnimTrackFlag::BODY_TRACK );
+    }
+    
+    actionSeries->AddAction(animAction);
   }
   
   using namespace ::Anki::Cozmo::VoiceCommand;
@@ -111,9 +131,9 @@ void BehaviorReactToVoiceCommand::OnBehaviorActivated(BehaviorExternalInterface&
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToVoiceCommand::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToVoiceCommand::OnBehaviorDeactivated()
 {
-  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  const auto& robotInfo = GetBEI().GetRobotInfo();
   robotInfo.GetContext()->GetVoiceCommandComponent()->ForceListenContext(VoiceCommand::VoiceCommandListenContext::TriggerPhrase);
   
   using namespace ::Anki::Cozmo::VoiceCommand;

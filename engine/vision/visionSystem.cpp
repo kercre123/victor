@@ -1326,20 +1326,23 @@ namespace Cozmo {
       cameraParamsRequested = false;
     }
     
+    MarkerDetectionCLAHE useCLAHE = MarkerDetectionCLAHE::Off;
     Vision::Image claheImage;
-    
-    // Apply CLAHE if enabled:
-    DEV_ASSERT(kUseCLAHE_u8 < Util::EnumToUnderlying(MarkerDetectionCLAHE::Count),
-               "VisionSystem.ApplyCLAHE.BadUseClaheVal");
-    
-    MarkerDetectionCLAHE kUseCLAHE = static_cast<MarkerDetectionCLAHE>(kUseCLAHE_u8);
-    
-    // Note: this will do nothing and leave claheImage empty if CLAHE is disabled
-    // entirely or for this frame.
-    lastResult = ApplyCLAHE(imageCache, kUseCLAHE, claheImage);
-    if(RESULT_OK != lastResult) {
-      PRINT_NAMED_WARNING("VisionSystem.Update.FailedCLAHE", "");
-      return lastResult;
+    if(_markerDetector->IsDarkOnLight())
+    {
+      // Apply CLAHE if enabled:
+      DEV_ASSERT(kUseCLAHE_u8 < Util::EnumToUnderlying(MarkerDetectionCLAHE::Count),
+                 "VisionSystem.ApplyCLAHE.BadUseClaheVal");
+      
+      useCLAHE = static_cast<MarkerDetectionCLAHE>(kUseCLAHE_u8);
+      
+      // Note: this will do nothing and leave claheImage empty if CLAHE is disabled
+      // entirely or for this frame.
+      lastResult = ApplyCLAHE(imageCache, useCLAHE, claheImage);
+      if(RESULT_OK != lastResult) {
+        PRINT_NAMED_WARNING("VisionSystem.Update.FailedCLAHE", "");
+        return lastResult;
+      }
     }
     
     // Rolling shutter correction
@@ -1363,7 +1366,7 @@ namespace Cozmo {
     if(ShouldProcessVisionMode(VisionMode::DetectingMarkers)) {
       Tic("TotalDetectingMarkers");
 
-      lastResult = DetectMarkersWithCLAHE(imageCache, claheImage, detectionRects, kUseCLAHE);
+      lastResult = DetectMarkersWithCLAHE(imageCache, claheImage, detectionRects, useCLAHE);
       if(RESULT_OK != lastResult) {
         PRINT_NAMED_ERROR("VisionSystem.Update.DetectMarkersFailed", "");
         return lastResult;

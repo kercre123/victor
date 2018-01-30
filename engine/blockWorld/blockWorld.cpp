@@ -24,7 +24,7 @@
 #include "coretech/common/shared/utilities_shared.h"
 #include "engine/activeCube.h"
 #include "engine/activeObjectHelpers.h"
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/block.h"
 #include "engine/blockWorld/blockConfigurationManager.h"
@@ -98,16 +98,24 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
 CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10.0f);
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  BlockWorld::BlockWorld(Robot* robot)
-  : _robot(robot)
+  BlockWorld::BlockWorld()
+  : UnreliableComponent<BCComponentID>(BCComponentID::BlockWorld)
+  , IDependencyManagedComponent<RobotComponentID>(RobotComponentID::BlockWorld)
   , _lastPlayAreaSizeEventSec(0)
   , _playAreaSizeEventIntervalSec(60)
   , _didObjectsChange(false)
   , _robotMsgTimeStampAtChange(0)
   , _trackPoseChanges(false)
-  , _blockConfigurationManager(new BlockConfigurations::BlockConfigurationManager(*robot))
   {
+  } // BlockWorld() Constructor
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::InitDependent(Robot* robot, const RobotCompMap& dependentComponents)
+  {
+    _robot = robot;
     DEV_ASSERT(_robot != nullptr, "BlockWorld.Constructor.InvalidRobot");
+    _blockConfigurationManager = std::make_unique<BlockConfigurations::BlockConfigurationManager>(*robot);
+    
     
     // TODO: Create each known block / matpiece from a configuration/definitions file
     
@@ -205,8 +213,8 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
     {
       SetupEventHandlers(*_robot->GetExternalInterface());
     }
-          
-  } // BlockWorld() Constructor
+  }
+
 
   void BlockWorld::SetupEventHandlers(IExternalInterface& externalInterface)
   {
@@ -1234,8 +1242,12 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
                                                                                 wasRobotMoving,
                                                                                 distToObjSeen);
         if ( !isConfirmingObservation ) {
+          // Don't print this during the factory test because it spams when seeing the 
+          // calibration target
+          #if !FACTORY_TEST
           PRINT_CH_INFO("BlockWorld", "BlockWorld.AddAndUpdateObjects.NonConfirmingObservation",
-            "Added non-confirming visual observation for %d", objSeen->GetID().GetValue() );
+                        "Added non-confirming visual observation for %d", objSeen->GetID().GetValue() );
+          #endif
           
           // TODO should we broadcast RobotObservedPossibleObject here?
           continue;
@@ -3506,6 +3518,5 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
     FindLocatedObjectHelper(filter, visualizeHelper, false);
     
   } // DrawAllObjects()
-    
 } // namespace Cozmo
 } // namespace Anki

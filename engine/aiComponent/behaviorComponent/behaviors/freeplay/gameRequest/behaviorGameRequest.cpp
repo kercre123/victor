@@ -13,7 +13,7 @@
 
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/actionInterface.h"
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
@@ -70,37 +70,37 @@ ICozmoBehaviorRequestGame::ICozmoBehaviorRequestGame(const Json::Value& config)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehaviorRequestGame::InitBehavior(BehaviorExternalInterface& behaviorExternalInterface)
+void ICozmoBehaviorRequestGame::InitBehavior()
 {  
   _blockworldFilter->OnlyConsiderLatestUpdate(false);
   _blockworldFilter->SetFilterFcn( std::bind( &ICozmoBehaviorRequestGame::FilterBlocks,
                                              this,
-                                             &behaviorExternalInterface.GetProgressionUnlockComponent(),
-                                             &behaviorExternalInterface.GetAIComponent(),
-                                             &behaviorExternalInterface.GetRobotInfo().GetDockingComponent(),
+                                             &GetBEI().GetProgressionUnlockComponent(),
+                                             &GetBEI().GetAIComponent(),
+                                             &GetBEI().GetRobotInfo().GetDockingComponent(),
                                              std::placeholders::_1) );
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ICozmoBehaviorRequestGame::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool ICozmoBehaviorRequestGame::WantsToBeActivatedBehavior() const
 {  
   // Save some computation by checking wether this request is the one the request component
   // wants next first
-  RequestGameComponent& requestComponent = behaviorExternalInterface.GetAIComponent().GetNonConstRequestGameComponent();
-  UnlockId nextRequest = requestComponent.IdentifyNextGameTypeToRequest(behaviorExternalInterface);
+  RequestGameComponent& requestComponent = GetBEI().GetAIComponent().GetNonConstRequestGameComponent();
+  UnlockId nextRequest = requestComponent.IdentifyNextGameTypeToRequest(GetBEI());
   if(nextRequest != GetRequiredUnlockID()){
     return false;
   }
   
-  const bool hasFace = HasFace(behaviorExternalInterface);
+  const bool hasFace = HasFace();
 
   if( DEBUG_BEHAVIOR_GAME_REQUEST_ACTIVATABLE ) {
     PRINT_NAMED_DEBUG("ICozmoBehaviorRequestGame.WantsToBeActivated",
                       "'%s': hasFace?%d (numBlocks=%d)",
                       GetIDStr().c_str(),
                       hasFace,
-                      GetNumBlocks(behaviorExternalInterface));
+                      GetNumBlocks());
   }
 
   return hasFace;
@@ -108,37 +108,37 @@ bool ICozmoBehaviorRequestGame::WantsToBeActivatedBehavior(BehaviorExternalInter
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehaviorRequestGame::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void ICozmoBehaviorRequestGame::OnBehaviorActivated()
 {
   _requestTime_s = -1.0f;
   _robotsBlockID.UnSet();
   _badBlocks.clear();
   
-  RequestGame_OnBehaviorActivated(behaviorExternalInterface);
+  RequestGame_OnBehaviorActivated();
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehaviorRequestGame::SendRequest(BehaviorExternalInterface& behaviorExternalInterface)
+void ICozmoBehaviorRequestGame::SendRequest()
 {
   using namespace ExternalInterface;
-  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  const auto& robotInfo = GetBEI().GetRobotInfo();
   robotInfo.GetContext()->GetVoiceCommandComponent()->ForceListenContext(VoiceCommand::VoiceCommandListenContext::SimplePrompt);
 
   //robot.Broadcast( MessageEngineToGame( RequestGameStart(GetRequiredUnlockID())) );
   _requestTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
   
-  behaviorExternalInterface.GetAIComponent().GetRequestGameComponent().RegisterRequestingGameType(GetRequiredUnlockID());
-  behaviorExternalInterface.GetRobotPublicStateBroadcaster().UpdateRequestingGame(true);
+  GetBEI().GetAIComponent().GetRequestGameComponent().RegisterRequestingGameType(GetRequiredUnlockID());
+  GetBEI().GetRobotPublicStateBroadcaster().UpdateRequestingGame(true);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehaviorRequestGame::SendDeny(BehaviorExternalInterface& behaviorExternalInterface)
+void ICozmoBehaviorRequestGame::SendDeny()
 {
   using namespace ExternalInterface;
   //robot.Broadcast( MessageEngineToGame( DenyGameStart() ) );
-  behaviorExternalInterface.GetRobotPublicStateBroadcaster().UpdateRequestingGame(false);
+  GetBEI().GetRobotPublicStateBroadcaster().UpdateRequestingGame(false);
 }
 
 
@@ -172,28 +172,28 @@ bool ICozmoBehaviorRequestGame::FilterBlocks(ProgressionUnlockComponent* unlockC
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-u32 ICozmoBehaviorRequestGame::GetNumBlocks(BehaviorExternalInterface& behaviorExternalInterface) const
+u32 ICozmoBehaviorRequestGame::GetNumBlocks() const
 {
   std::vector<const ObservableObject*> blocks;
-  behaviorExternalInterface.GetBlockWorld().FindLocatedMatchingObjects(*_blockworldFilter, blocks);
+  GetBEI().GetBlockWorld().FindLocatedMatchingObjects(*_blockworldFilter, blocks);
   
   return Util::numeric_cast<u32>( blocks.size() );
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const ObservableObject* ICozmoBehaviorRequestGame::GetClosestBlock(BehaviorExternalInterface& behaviorExternalInterface) const
+const ObservableObject* ICozmoBehaviorRequestGame::GetClosestBlock() const
 {
-  return behaviorExternalInterface.GetBlockWorld().FindMostRecentlyObservedObject( *_blockworldFilter );
+  return GetBEI().GetBlockWorld().FindMostRecentlyObservedObject( *_blockworldFilter );
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ObjectID ICozmoBehaviorRequestGame::GetRobotsBlockID(BehaviorExternalInterface& behaviorExternalInterface)
+ObjectID ICozmoBehaviorRequestGame::GetRobotsBlockID()
 {
   if( ! _robotsBlockID.IsSet() ) {
     // set the block ID, but then leave it the same for the duration of the behavior
-    const ObservableObject* closestObj = GetClosestBlock(behaviorExternalInterface);
+    const ObservableObject* closestObj = GetClosestBlock();
   
     if( closestObj != nullptr ) {
       PRINT_NAMED_DEBUG("BehaviorRequestGame.SetRobotBlockID", "%d",
@@ -208,11 +208,11 @@ ObjectID ICozmoBehaviorRequestGame::GetRobotsBlockID(BehaviorExternalInterface& 
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ICozmoBehaviorRequestGame::SwitchRobotsBlock(BehaviorExternalInterface& behaviorExternalInterface)
+bool ICozmoBehaviorRequestGame::SwitchRobotsBlock()
 {
   if( ! _robotsBlockID.IsSet() ) {
     // robot doesn't have a block, so just try to get it now
-    return GetRobotsBlockID(behaviorExternalInterface).IsSet();
+    return GetRobotsBlockID().IsSet();
   }
 
   // otherwise, try to find a new block that doesn't match this ID
@@ -220,15 +220,15 @@ bool ICozmoBehaviorRequestGame::SwitchRobotsBlock(BehaviorExternalInterface& beh
 
   // In this case (and only this case) we want to filter out _badBlocks, so make a new filter
   BlockWorldFilter filter( *_blockworldFilter );
-  filter.SetFilterFcn( [this,&behaviorExternalInterface](const ObservableObject* obj) {
-      return FilterBlocks(&behaviorExternalInterface.GetProgressionUnlockComponent(),
-                          &behaviorExternalInterface.GetAIComponent(),
-                          &behaviorExternalInterface.GetRobotInfo().GetDockingComponent(),
+  filter.SetFilterFcn( [this](const ObservableObject* obj) {
+      return FilterBlocks(&GetBEI().GetProgressionUnlockComponent(),
+                          &GetBEI().GetAIComponent(),
+                          &GetBEI().GetRobotInfo().GetDockingComponent(),
                           obj) && 
               _badBlocks.find( obj->GetID() ) == _badBlocks.end();
     } );
 
-  const ObservableObject* newBlock = behaviorExternalInterface.GetBlockWorld().FindMostRecentlyObservedObject( filter );
+  const ObservableObject* newBlock = GetBEI().GetBlockWorld().FindMostRecentlyObservedObject( filter );
   if( newBlock != nullptr ) {
     PRINT_NAMED_DEBUG("BehaviorRequestGame.SwitchRobotsBlock", "switch from %d to %d",
                       _robotsBlockID.GetValue(),
@@ -253,38 +253,38 @@ bool ICozmoBehaviorRequestGame::GetLastBlockPose(Pose3d& pose) const
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehaviorRequestGame::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
+void ICozmoBehaviorRequestGame::BehaviorUpdate()
 {
   if(!IsActivated()){
     return;
   }
 
-  const ObservableObject* obj = GetClosestBlock(behaviorExternalInterface);
+  const ObservableObject* obj = GetClosestBlock();
   if( obj != nullptr ) {
     _hasBlockPose = true;
     _lastBlockPose = obj->GetPose();
   }
   
-  RequestGame_UpdateInternal(behaviorExternalInterface);
+  RequestGame_UpdateInternal();
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ICozmoBehaviorRequestGame::HasFace(BehaviorExternalInterface& behaviorExternalInterface) const
+bool ICozmoBehaviorRequestGame::HasFace() const
 {
   Pose3d waste;
-  return GetFacePose(behaviorExternalInterface, waste);
+  return GetFacePose(waste);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ICozmoBehaviorRequestGame::GetFacePose(BehaviorExternalInterface& behaviorExternalInterface, Pose3d& facePoseWrtRobotOrigin) const
+bool ICozmoBehaviorRequestGame::GetFacePose(Pose3d& facePoseWrtRobotOrigin) const
 {
   float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   const u32 currTime_ms = Util::numeric_cast<u32>( std::floor( currentTime_sec * 0.001f ) );
   const bool kMustBeInRobotOrigin = true;
   
-  TimeStamp_t lastObservedFaceTime = behaviorExternalInterface.GetFaceWorld().GetLastObservedFace(facePoseWrtRobotOrigin, kMustBeInRobotOrigin);
+  TimeStamp_t lastObservedFaceTime = GetBEI().GetFaceWorld().GetLastObservedFace(facePoseWrtRobotOrigin, kMustBeInRobotOrigin);
   
   const bool hasFace = lastObservedFaceTime > 0 && lastObservedFaceTime + _maxFaceAge_ms > currTime_ms;
 
@@ -293,12 +293,12 @@ bool ICozmoBehaviorRequestGame::GetFacePose(BehaviorExternalInterface& behaviorE
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehaviorRequestGame::AlwaysHandleInScope(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void ICozmoBehaviorRequestGame::AlwaysHandleInScope(const EngineToGameEvent& event)
 {
   switch(event.GetData().GetTag())
   {
     case EngineToGameTag::RobotObservedFace:
-      HandleObservedFace(behaviorExternalInterface, event.GetData().Get_RobotObservedFace());
+      HandleObservedFace(event.GetData().Get_RobotObservedFace());
       break;
         
     case EngineToGameTag::RobotDeletedFace:
@@ -318,7 +318,7 @@ void ICozmoBehaviorRequestGame::AlwaysHandleInScope(const EngineToGameEvent& eve
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehaviorRequestGame::AlwaysHandleInScope(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void ICozmoBehaviorRequestGame::AlwaysHandleInScope(const GameToEngineEvent& event)
 {
   switch(event.GetData().GetTag())
   {
@@ -339,21 +339,21 @@ void ICozmoBehaviorRequestGame::AlwaysHandleInScope(const GameToEngineEvent& eve
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehaviorRequestGame::HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void ICozmoBehaviorRequestGame::HandleWhileActivated(const EngineToGameEvent& event)
 {
   if( event.GetData().GetTag() == EngineToGameTag::CliffEvent ) {
-    HandleCliffEvent(behaviorExternalInterface, event);
+    HandleCliffEvent(event);
   }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehaviorRequestGame::HandleWhileActivated(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void ICozmoBehaviorRequestGame::HandleWhileActivated(const GameToEngineEvent& event)
 {
   if( event.GetData().GetTag() == GameToEngineTag::DenyGameStart ) {
-    HandleGameDeniedRequest(behaviorExternalInterface);
-    if(behaviorExternalInterface.HasPublicStateBroadcaster()){
-      auto& publicStateBroadcaster = behaviorExternalInterface.GetRobotPublicStateBroadcaster();
+    HandleGameDeniedRequest();
+    if(GetBEI().HasPublicStateBroadcaster()){
+      auto& publicStateBroadcaster = GetBEI().GetRobotPublicStateBroadcaster();
       publicStateBroadcaster.UpdateRequestingGame(false);
     }
   }
@@ -371,8 +371,7 @@ void ICozmoBehaviorRequestGame::HandleWhileActivated(const GameToEngineEvent& ev
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehaviorRequestGame::HandleObservedFace(BehaviorExternalInterface& behaviorExternalInterface,
-                                              const ExternalInterface::RobotObservedFace& msg)
+void ICozmoBehaviorRequestGame::HandleObservedFace(const ExternalInterface::RobotObservedFace& msg)
 {
   // If faceID not already set or we're not currently tracking the update the faceID
   if (_faceID == Vision::UnknownFaceID
@@ -394,12 +393,12 @@ void ICozmoBehaviorRequestGame::HandleDeletedFace(const ExternalInterface::Robot
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehaviorRequestGame::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void ICozmoBehaviorRequestGame::OnBehaviorDeactivated()
 {
-  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  const auto& robotInfo = GetBEI().GetRobotInfo();
   robotInfo.GetContext()->GetVoiceCommandComponent()->ForceListenContext(VoiceCommand::VoiceCommandListenContext::TriggerPhrase);
   
-  RequestGame_OnBehaviorDeactivated(behaviorExternalInterface);
+  RequestGame_OnBehaviorDeactivated();
 }
 
 } // namespace Cozmo

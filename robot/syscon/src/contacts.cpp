@@ -2,6 +2,7 @@
 
 #include "common.h"
 #include "hardware.h"
+#include "analog.h"
 
 #include "contacts.h"
 #include "comms.h"
@@ -35,9 +36,14 @@ void Contacts::init(void) {
   memset(&txData, 0, sizeof(ContactData));
   rxDataIndex = 0;
   txDataIndex = 0;
+  
+  static const ContactData boot_msg = {"\nbooted\n"};
+  Contacts::forward( boot_msg );
 }
 
 void Contacts::forward(const ContactData& pkt) {
+  Analog::delayCharge();
+
   NVIC_DisableIRQ(USART2_IRQn);
   memcpy(&txData, &pkt, sizeof(ContactData));
   txDataIndex = 0;
@@ -76,6 +82,7 @@ extern "C" void USART2_IRQHandler(void) {
   if (USART2->ISR & USART_ISR_RXNE) {
     volatile uint8_t rxd = USART2->RDR;
 
+    Analog::delayCharge();
     if (rxDataIndex < sizeof(rxData.data)) {
       rxData.data[rxDataIndex++] = rxd;
     }

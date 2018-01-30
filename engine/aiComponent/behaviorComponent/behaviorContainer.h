@@ -15,8 +15,9 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_BehaviorContainer_H__
 #define __Cozmo_Basestation_BehaviorSystem_BehaviorContainer_H__
 
-
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
+#include "engine/dependencyManagedComponent.h"
 #include "util/global/globalDefinitions.h"
 #include "util/helpers/noncopyable.h"
 #include "util/logging/logging.h"
@@ -37,10 +38,24 @@ class IExternalInterface;
 class IReactionaryBehavior;
 class Robot;
   
-class BehaviorContainer : private Util::noncopyable
+class BehaviorContainer : public IDependencyManagedComponent<BCComponentID>, private Util::noncopyable
 {
 public:
   virtual ~BehaviorContainer();
+
+  //////
+  // IDependencyManagedComponent functions
+  //////
+  virtual void InitDependent(Robot* robot, const BCCompMap& dependentComponents) override;
+  virtual void UpdateDependent(const BCCompMap& dependentComponents) override {};
+  virtual void GetInitDependencies(BCCompIDSet& dependencies) const override { 
+    dependencies.insert(BCComponentID::BehaviorExternalInterface);
+  }
+  virtual void GetUpdateDependencies(BCCompIDSet& dependencies) const override {};
+  //////
+  // end IDependencyManagedComponent functions
+  //////
+
   
   ICozmoBehaviorPtr FindBehaviorByID(BehaviorID behaviorID) const;
   ICozmoBehaviorPtr FindBehaviorByExecutableType(ExecutableBehaviorType type) const;

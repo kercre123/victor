@@ -35,6 +35,7 @@ static const char* const kChannelName = "PublicStateBroadcast";
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 PublicStateBroadcaster::PublicStateBroadcaster()
+: IDependencyManagedComponent<RobotComponentID>(RobotComponentID::PublicStateBroadcaster)
 {
   BehaviorStageStruct empty;
   empty.behaviorStageTag = BehaviorStageTag::Count;

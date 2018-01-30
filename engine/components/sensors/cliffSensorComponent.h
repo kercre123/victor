@@ -19,6 +19,8 @@
 #include "clad/types/proxMessages.h"
 #include "clad/types/robotStatusAndActions.h"
 
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
+
 #include "util/helpers/templateHelpers.h"
 
 namespace Anki {
@@ -28,13 +30,29 @@ namespace Cozmo {
 class CliffSensorComponent : public ISensorComponent
 {
 public:
+
+public:
   static const int kNumCliffSensors = static_cast<int>(CliffSensor::CLIFF_COUNT);
   
   using CliffSensorDataArray = std::array<uint16_t, kNumCliffSensors>;
   static_assert(std::is_same<CliffSensorDataArray, decltype(RobotState::cliffDataRaw)>::value, "CliffSensorDataArray must be same as type used in RobotState");
 
-  CliffSensorComponent(Robot& robot);
+  CliffSensorComponent();
+
   ~CliffSensorComponent() = default;
+
+  //////
+  // IDependencyManagedComponent functions
+  //////
+  // Maintain the chain of initializations currently in robot - it might be possible to
+  // change the order of initialization down the line, but be sure to check for ripple effects
+  // when changing this function
+  virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
+    dependencies.insert(RobotComponentID::Carrying);
+  };
+  //////
+  // end IDependencyManagedComponent functions
+  //////
 
 protected:
   virtual void UpdateInternal(const RobotState& msg) override;
@@ -43,6 +61,8 @@ protected:
   virtual std::string GetLogRow() override;
 
 public:
+
+  void SetPause(bool b) { _isPaused = b; }
   
   bool IsCliffSensorEnabled() const { return _enableCliffSensor; }
   void SetEnableCliffSensor(const bool val) { _enableCliffSensor = val; }
@@ -74,6 +94,8 @@ private:
   void QueueCliffThresholdUpdate();
   
   void SetCliffDetectThreshold(unsigned int ind, uint16_t newThresh);
+  
+  bool _isPaused = false;
   
   bool _enableCliffSensor = true;
   bool _isCliffDetected = false;

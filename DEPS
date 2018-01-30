@@ -5,12 +5,9 @@
         "repo_names": {
             "anki-thirdparty": {
                 "branch": "branches/victor",
-                "version": "143"
+                "version": "145"
             },
-            "cozmo-assets": {
-                "additional_files": [
-                    "${PROJECT_ROOT_DIR}/resources/config/engine/animations/"
-                ],
+            "victor-animation-assets": {
                 "allow_extra_files": "True",
                 "export_dirname": "animation-assets",
                 "extract_types_from_tar": [
@@ -26,7 +23,7 @@
                 "additional_files": [
                     "${PROJECT_ROOT_DIR}/resources/config/engine/animations/"
                 ],
-                "version": "2553"
+                "version": "2587"
             },
             "victor-audio-assets": {
                 "allow_extra_files": "True",

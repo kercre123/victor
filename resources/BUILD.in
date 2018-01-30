@@ -61,6 +61,15 @@ asset_project(
 
 
 asset_project(
+    name = 'cozmo_resources_webserver',
+    srcs = glob([
+                'webserver/**/*',
+                ],
+           ),
+)
+
+
+asset_project(
     name = 'cozmo_bundle',
     srcs = subdir_glob([
                 ('bundle', 'DASConfig.json'),

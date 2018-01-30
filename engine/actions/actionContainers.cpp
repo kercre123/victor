@@ -26,8 +26,8 @@ namespace Anki {
     
 #pragma mark ---- ActionList ----
     
-    ActionList::ActionList(Robot& robot)
-    : _robot(robot)
+    ActionList::ActionList()
+    : IDependencyManagedComponent(RobotComponentID::ActionList)
     , _actionWatcher(new ActionWatcher())
     {
     
@@ -38,6 +38,12 @@ namespace Anki {
       Clear();
     }
     
+    void ActionList::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) 
+    {
+      _robot = robot;
+    }
+
+
     Result ActionList::QueueAction(QueueActionPosition inPosition,
                                    IActionRunner* action, u8 numRetries)
     {
@@ -47,7 +53,7 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
-      action->SetRobot(&_robot);
+      action->SetRobot(_robot);
       
       // If we are ignoring external actions and this is an external action or
       // if this action has a bad tag then delete it
@@ -375,7 +381,7 @@ namespace Anki {
     {
       auto iter = _queues.find(handle);
       if(iter == _queues.end()){
-        ActionQueue newQueue(_robot);
+        ActionQueue newQueue(*_robot);
         const auto resultPair = _queues.insert(std::make_pair(handle, std::move(newQueue)));
         ANKI_VERIFY(resultPair.second, 
                     "ActionList.GetActionQueueForSlot.FailedInsert","");

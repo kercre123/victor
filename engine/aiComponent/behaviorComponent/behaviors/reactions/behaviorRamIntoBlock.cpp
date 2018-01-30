@@ -41,39 +41,39 @@ BehaviorRamIntoBlock::BehaviorRamIntoBlock(const Json::Value& config)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorRamIntoBlock::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorRamIntoBlock::WantsToBeActivatedBehavior() const
 {
   return _targetID >= 0;
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRamIntoBlock::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRamIntoBlock::OnBehaviorActivated()
 {
-  if(behaviorExternalInterface.GetRobotInfo().GetCarryingComponent().IsCarryingObject()){
-    TransitionToPuttingDownBlock(behaviorExternalInterface);
+  if(GetBEI().GetRobotInfo().GetCarryingComponent().IsCarryingObject()){
+    TransitionToPuttingDownBlock();
   }else{
-    TransitionToTurningToBlock(behaviorExternalInterface);
+    TransitionToTurningToBlock();
   }
   
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRamIntoBlock::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRamIntoBlock::OnBehaviorDeactivated()
 {
   _targetID = -1;
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRamIntoBlock::TransitionToPuttingDownBlock(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRamIntoBlock::TransitionToPuttingDownBlock()
 {
-  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  auto& robotInfo = GetBEI().GetRobotInfo();
 
   CompoundActionSequential* placeAction = new CompoundActionSequential();
   if(robotInfo.GetCarryingComponent().GetCarryingObject() != _targetID){
-    const ObservableObject* obj = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(robotInfo.GetCarryingComponent().GetCarryingObject());
+    const ObservableObject* obj = GetBEI().GetBlockWorld().GetLocatedObjectByID(robotInfo.GetCarryingComponent().GetCarryingObject());
     if(obj != nullptr){
       Vec3f outVector;
       if(ComputeVectorBetween(robotInfo.GetPose(), obj->GetPose(), outVector)){
@@ -96,7 +96,7 @@ void BehaviorRamIntoBlock::TransitionToPuttingDownBlock(BehaviorExternalInterfac
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRamIntoBlock::TransitionToTurningToBlock(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRamIntoBlock::TransitionToTurningToBlock()
 {
   CompoundActionParallel* action = new CompoundActionParallel({
     new TurnTowardsObjectAction(_targetID),
@@ -106,11 +106,11 @@ void BehaviorRamIntoBlock::TransitionToTurningToBlock(BehaviorExternalInterface&
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRamIntoBlock::TransitionToRammingIntoBlock(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRamIntoBlock::TransitionToRammingIntoBlock()
 {  
-  const ObservableObject* obj = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_targetID);
+  const ObservableObject* obj = GetBEI().GetBlockWorld().GetLocatedObjectByID(_targetID);
   if(obj != nullptr){
-    auto& robotPose = behaviorExternalInterface.GetRobotInfo().GetPose();
+    auto& robotPose = GetBEI().GetRobotInfo().GetPose();
 
     const f32 distToObj = ComputeDistanceBetween(robotPose, obj->GetPose());
     

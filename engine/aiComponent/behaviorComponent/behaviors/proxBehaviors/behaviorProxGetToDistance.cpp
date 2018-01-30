@@ -50,54 +50,54 @@ BehaviorProxGetToDistance::BehaviorProxGetToDistance(const Json::Value& config)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorProxGetToDistance::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorProxGetToDistance::WantsToBeActivatedBehavior() const
 {
-  return !IsWithinGoalTolerence(behaviorExternalInterface);
+  return !IsWithinGoalTolerence();
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorProxGetToDistance::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorProxGetToDistance::OnBehaviorActivated()
 {
   
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorProxGetToDistance::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorProxGetToDistance::OnBehaviorDeactivated()
 {  
 
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorProxGetToDistance::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorProxGetToDistance::BehaviorUpdate()
 {
   if(!IsActivated()){
     return;
   }
 
-  auto& proxSensor = behaviorExternalInterface.GetComponentWrapper(BEIComponentID::ProxSensor).GetValue<ProxSensorComponent>();
+  auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetValue<ProxSensorComponent>();
   if(!proxSensor.IsSensorReadingValid()){
     CancelSelf();
     return;
   }
 
   if(_params.shouldEndWhenGoalReached && 
-     IsWithinGoalTolerence(behaviorExternalInterface)){
+     IsWithinGoalTolerence()){
     CancelSelf();
     return;
   }
 
   if(IsControlDelegated() &&
-    ShouldRecalculateDrive(behaviorExternalInterface)){
+    ShouldRecalculateDrive()){
     CancelDelegates(false);
   }
 
   if(!IsControlDelegated()){
     const u16 proxDist_mm = proxSensor.GetLatestDistance_mm();
     const float speed_mm_s = _params.distMMToSpeedMMGraph.EvaluateY(proxDist_mm);
-    DelegateIfInControl(new DriveStraightAction(CalculateDistanceToDrive(behaviorExternalInterface), speed_mm_s));
+    DelegateIfInControl(new DriveStraightAction(CalculateDistanceToDrive(), speed_mm_s));
     proxSensor.CalculateSensedObjectPose(_previousProxObjectPose);
   }
 
@@ -106,9 +106,9 @@ void BehaviorProxGetToDistance::BehaviorUpdate(BehaviorExternalInterface& behavi
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-float BehaviorProxGetToDistance::CalculateDistanceToDrive(BehaviorExternalInterface& behaviorExternalInterface) const
+float BehaviorProxGetToDistance::CalculateDistanceToDrive() const
 {
-  auto& proxSensor = behaviorExternalInterface.GetComponentWrapper(BEIComponentID::ProxSensor).GetValue<ProxSensorComponent>();
+  auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetValue<ProxSensorComponent>();
   const u16 proxDist_mm = proxSensor.GetLatestDistance_mm();
   float distanceToDrive = proxDist_mm - _params.goalDistance_mm;
   
@@ -154,11 +154,11 @@ const Util::GraphEvaluator2d::Node* BehaviorProxGetToDistance::GetNodeClosestToD
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorProxGetToDistance::ShouldRecalculateDrive(BehaviorExternalInterface& behaviorExternalInterface)
+bool BehaviorProxGetToDistance::ShouldRecalculateDrive()
 {
   Pose3d sensedObjectPose;
   f32 distSqrSensedChanged_mm = 0.f;
-  auto& proxSensor = behaviorExternalInterface.GetComponentWrapper(BEIComponentID::ProxSensor).GetValue<ProxSensorComponent>();
+  auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetValue<ProxSensorComponent>();
   const bool recalculate = proxSensor.CalculateSensedObjectPose(sensedObjectPose) &&
          ComputeDistanceSQBetween(_previousProxObjectPose, sensedObjectPose, distSqrSensedChanged_mm) &&
          distSqrSensedChanged_mm > (kThresholdSensedMoved_mm * kThresholdSensedMoved_mm);
@@ -170,9 +170,9 @@ bool BehaviorProxGetToDistance::ShouldRecalculateDrive(BehaviorExternalInterface
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorProxGetToDistance::IsWithinGoalTolerence(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorProxGetToDistance::IsWithinGoalTolerence() const
 {
-  auto& proxSensor = behaviorExternalInterface.GetComponentWrapper(BEIComponentID::ProxSensor).GetValue<ProxSensorComponent>();
+  auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetValue<ProxSensorComponent>();
   if(proxSensor.IsSensorReadingValid()){
     const u16 proxDist_mm = proxSensor.GetLatestDistance_mm();
     return (proxDist_mm < (_params.goalDistance_mm + _params.tolarance_mm)) &&

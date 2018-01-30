@@ -34,7 +34,8 @@ int main(int argc, char **argv)
   
   // initialize logger
   const bool filterLog = false;
-  WebotsCtrlShared::DefaultAutoGlobalLogger autoLogger(dataPlatform, filterLog);
+  const bool colorizeStderrOutput = false;
+  WebotsCtrlShared::DefaultAutoGlobalLogger autoLogger(dataPlatform, filterLog, colorizeStderrOutput);
   
   // Create specified test controller.
   // Only a single argument is supported and it must the name of a valid test.

@@ -298,7 +298,7 @@
               <OCR_RVCT9>
                 <Type>0</Type>
                 <StartAddress>0x20000000</StartAddress>
-                <Size>0x1f00</Size>
+                <Size>0x2000</Size>
               </OCR_RVCT9>
               <OCR_RVCT10>
                 <Type>0</Type>
@@ -347,7 +347,6 @@
             <NoWarn>0</NoWarn>
             <uSurpInc>0</uSurpInc>
             <useXO>0</useXO>
-            <uClangAs>0</uClangAs>
             <VariousControls>
               <MiscControls></MiscControls>
               <Define></Define>
@@ -399,11 +398,6 @@
               <FilePath>.\crypto\rsa_pss.cpp</FilePath>
             </File>
             <File>
-              <FileName>sha512.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\crypto\sha512.cpp</FilePath>
-            </File>
-            <File>
               <FileName>comms.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\boot\comms.cpp</FilePath>
@@ -417,6 +411,11 @@
               <FileName>power.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\boot\power.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>sha256.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\crypto\sha256.cpp</FilePath>
             </File>
           </Files>
         </Group>

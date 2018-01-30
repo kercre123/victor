@@ -135,6 +135,9 @@ namespace Anki {
       webots::Connector* chargeContact_;
       bool wasOnCharger_ = false;
 
+      // Backpack button
+      webots::Field* backpackButtonPressedField_ = nullptr;
+      
       // Upper Touch Sensor (for petting)
       webots::Receiver *backpackTouchSensorReceiver_;
       
@@ -391,6 +394,13 @@ namespace Anki {
       backpackTouchSensorReceiver_ = webotRobot_.getReceiver("touchSensorUpper");
       backpackTouchSensorReceiver_->enable(TIME_STEP);
 
+      // Backpack button
+      backpackButtonPressedField_ =  webotRobot_.getSelf()->getField("backpackButtonPressed");
+      if (backpackButtonPressedField_ == nullptr) {
+        AnkiError("sim_hal.Init.NoBackpackButtonPressedField", "");
+        return RESULT_FAIL;
+      }
+      
       if (InitRadio() != RESULT_OK) {
         AnkiError("sim_hal.Init.InitRadioFailed", "");
         return RESULT_FAIL;
@@ -404,6 +414,7 @@ namespace Anki {
       // Audio Input
       audioCaptureSystem_.SetCallback(std::bind(&AudioInputCallback, std::placeholders::_1, std::placeholders::_2));
       audioCaptureSystem_.Init();
+
       if (audioCaptureSystem_.IsValid())
       {
         audioCaptureSystem_.StartRecording();
@@ -771,11 +782,17 @@ namespace Anki {
 
           // XXX rescale the signal strength to fit within a u16 (to match real sensor)
           u16 ss = Util::numeric_cast_clamped<u16>(signalStrength);
+          // HACK: Temp scaling to rough actual values
+          const u16 maxPhysSignal = 700;
+          const u16 minPhysSignal = 600;
+          const f32 maxSimSignal  = std::numeric_limits<u16>::max();
+          ss = (u16)((((maxPhysSignal - minPhysSignal) * ss) / maxSimSignal) + minPhysSignal);
           return ss;
         }
-
-        // no need to simulate these button press types
-        case BUTTON_POWER: { return 0; }
+        case BUTTON_POWER:
+        {
+          return backpackButtonPressedField_->getSFBool() ? 1 : 0;
+        }
         default: 
         {
           AnkiError( "sim_hal.GetButtonState.UnexpectedButtonType", "Button ID=%d does not have a sensible return value", button_id);
@@ -790,10 +807,7 @@ namespace Anki {
     {
       if (cliff_id == HAL::CLIFF_COUNT) {
         PRINT_NAMED_ERROR("simHAL.GetRawCliffData.InvalidCliffID", "");
-        // Note: The following used to be called getMaxRange() prior to Webots R2018a, and it's now called
-        // getMaxValue(). Cannot use getMaxValue() until everyone switches to Webots R2018a.
-        //return static_cast<u16>(cliffSensors_[HAL::CLIFF_FL]->getMaxValue());
-        return 999;
+        return static_cast<u16>(cliffSensors_[HAL::CLIFF_FL]->getMaxValue());
       }
       return static_cast<u16>(cliffSensors_[cliff_id]->getValue());
     }
@@ -810,14 +824,15 @@ namespace Anki {
 
     bool HAL::BatteryIsCharging()
     {
-      //return false; // XXX On Cozmo 3, head is off if robot is charging
       return (chargeContact_->getPresence() == 1);
     }
 
     bool HAL::BatteryIsOnCharger()
     {
-      //return false; // XXX On Cozmo 3, head is off if robot is charging
-      return (chargeContact_->getPresence() == 1);
+      // The _physical_ robot only knows that it's on the charger if
+      // the charge contacts are powered, so treat this the same as
+      // BatteryIsCharging()
+      return HAL::BatteryIsCharging();
     }
     
     bool HAL::BatteryIsChargerOOS()

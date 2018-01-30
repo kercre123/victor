@@ -18,8 +18,8 @@
 
 #include "coretech/common/shared/types.h"
 #include "coretech/vision/engine/image.h"
-#include "cozmoAnim/animation/animation.h"
-#include "cozmoAnim/animation/track.h"
+#include "cannedAnimLib/animation.h"
+#include "cannedAnimLib/track.h"
 #include "clad/types/liveIdleAnimationParameters.h"
 
 #include <list>
@@ -87,7 +87,7 @@ namespace Cozmo {
     const Animation* GetStreamingAnimation() const { return _streamingAnimation; }
     
     const Animation* GetCannedAnimation(const std::string& name) const;
-    const CannedAnimationContainer& GetCannedAnimationContainer() const { return _animationContainer; }
+    const CannedAnimationContainer& GetCannedAnimationContainer() const { return *_animationContainer; }
 
     void SetDefaultParams();
     
@@ -102,8 +102,15 @@ namespace Cozmo {
     TrackLayerComponent* GetTrackLayerComponent() { return _trackLayerComponent.get(); }
     const TrackLayerComponent* GetTrackLayerComponent() const { return _trackLayerComponent.get(); }
 
+    // Sets all tracks that should be locked
     void SetLockedTracks(u8 whichTracks)   { _lockedTracks = whichTracks; }
     bool IsTrackLocked(u8 trackFlag) const { return ((_lockedTracks & trackFlag) == trackFlag); }
+
+    // Lock or unlock an individual track
+    void LockTrack(AnimTrackFlag track) { _lockedTracks |= (u8)track; }
+    void UnlockTrack(AnimTrackFlag track) { _lockedTracks &= ~(u8)track; }
+
+    void DrawToFace(const Vision::ImageRGB& img, Array2d<u16>& img565_out);
     
   private:
     
@@ -151,7 +158,7 @@ namespace Cozmo {
     const CozmoAnimContext* _context = nullptr;
     
     // Container for all known "canned" animations (i.e. non-live)
-    CannedAnimationContainer& _animationContainer;
+    CannedAnimationContainer* _animationContainer = nullptr;
     
     Animation*  _streamingAnimation = nullptr;
     Animation*  _neutralFaceAnimation = nullptr;

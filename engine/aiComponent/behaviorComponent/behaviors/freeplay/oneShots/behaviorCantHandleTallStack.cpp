@@ -59,17 +59,17 @@ BehaviorCantHandleTallStack::BehaviorCantHandleTallStack(const Json::Value& conf
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorCantHandleTallStack::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorCantHandleTallStack::WantsToBeActivatedBehavior() const
 {
   const bool forFreeplay = true;
-  if(behaviorExternalInterface.HasProgressionUnlockComponent()){
-    auto& progressionUnlockComp = behaviorExternalInterface.GetProgressionUnlockComponent();
+  if(GetBEI().HasProgressionUnlockComponent()){
+    auto& progressionUnlockComp = GetBEI().GetProgressionUnlockComponent();
     if(!progressionUnlockComp.IsUnlocked(UnlockId::KnockOverThreeCubeStack, forFreeplay)){
-      UpdateTargetStack(behaviorExternalInterface);
+      UpdateTargetStack();
       if(auto tallestStack = _currentTallestStack.lock()){
         const bool tallEnoughStack = tallestStack->GetStackHeight() >= _minStackHeight;
         if(tallEnoughStack){
-          auto bottomBlock = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(tallestStack->GetBottomBlockID());
+          auto bottomBlock = GetBEI().GetBlockWorld().GetLocatedObjectByID(tallestStack->GetBottomBlockID());
           if(bottomBlock == nullptr){
             return false;
           }
@@ -87,32 +87,30 @@ bool BehaviorCantHandleTallStack::WantsToBeActivatedBehavior(BehaviorExternalInt
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorCantHandleTallStack::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorCantHandleTallStack::OnBehaviorActivated()
 {
   if(auto tallestStack = _currentTallestStack.lock()){
-    auto bottomBlock = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(tallestStack->GetBottomBlockID());
+    auto bottomBlock = GetBEI().GetBlockWorld().GetLocatedObjectByID(tallestStack->GetBottomBlockID());
     if(bottomBlock == nullptr){
       return;
     }
     
     _lastReactionBasePose = bottomBlock->GetPose();
     _isLastReactionPoseValid = true;
-    TransitionToLookingUpAndDown(behaviorExternalInterface);
-    
-    
+    TransitionToLookingUpAndDown();
   }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorCantHandleTallStack::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorCantHandleTallStack::OnBehaviorDeactivated()
 {
   ClearStack();
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorCantHandleTallStack::TransitionToLookingUpAndDown(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorCantHandleTallStack::TransitionToLookingUpAndDown()
 {
   DEBUG_SET_STATE(DebugState::LookingUpAndDown);
   
@@ -129,7 +127,7 @@ void BehaviorCantHandleTallStack::TransitionToLookingUpAndDown(BehaviorExternalI
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorCantHandleTallStack::TransitionToDisapointment(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorCantHandleTallStack::TransitionToDisapointment()
 {
   DEBUG_SET_STATE(DebugState::Disapiontment);
   DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::CantHandleTallStack));
@@ -144,14 +142,14 @@ void BehaviorCantHandleTallStack::ClearStack()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorCantHandleTallStack::UpdateTargetStack(const BehaviorExternalInterface& behaviorExternalInterface) const
+void BehaviorCantHandleTallStack::UpdateTargetStack() const
 {
-  _currentTallestStack = behaviorExternalInterface.GetBlockWorld().GetBlockConfigurationManager().GetStackCache().GetTallestStack();
+  _currentTallestStack = GetBEI().GetBlockWorld().GetBlockConfigurationManager().GetStackCache().GetTallestStack();
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorCantHandleTallStack::AlwaysHandleInScope(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorCantHandleTallStack::AlwaysHandleInScope(const EngineToGameEvent& event)
 {
   switch (event.GetData().GetTag()) {
     case ExternalInterface::MessageEngineToGameTag::RobotDelocalized:

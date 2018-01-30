@@ -17,7 +17,7 @@
 #include "util/helpers/templateHelpers.h"
 
 #if !defined(DEV_LOGGER_ENABLED)
-  #if defined(FACTORY_TEST)
+  #if FACTORY_TEST
     #define DEV_LOGGER_ENABLED 1
   #else
     #define DEV_LOGGER_ENABLED 0
@@ -191,7 +191,7 @@ int cozmo_start(const Json::Value& configuration)
     // set filter in the loggers
     std::shared_ptr<const IChannelFilter> filterPtr( consoleFilter );
 
-    // logcatProvider->SetFilter(filterPtr);
+    // loggerProvider->SetFilter(filterPtr);
   }
   
   PRINT_NAMED_INFO("cozmo_startup", "Creating engine");

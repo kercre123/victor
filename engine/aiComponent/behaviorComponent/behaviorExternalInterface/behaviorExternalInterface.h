@@ -15,6 +15,7 @@
 #define __Cozmo_Basestation_BehaviorSystem_BehaviorExternalInterface_H__
 
 
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiComponents_fwd.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/entity.h"
 
@@ -55,6 +56,7 @@ class ProxSensorComponent;
 class PublicStateBroadcaster;
 class TouchSensorComponent;
 class VisionComponent;
+class VisionScheduleMediator;
   
 namespace Audio {
 class EngineRobotAudioClient;
@@ -64,33 +66,6 @@ class EngineRobotAudioClient;
 class BEIComponentAccessGuard{
 };
 
-enum class BEIComponentID{
-  AIComponent,
-  Animation,
-  BehaviorContainer,
-  BehaviorEvent,
-  BlockWorld,
-  BodyLightComponent,
-  CubeAccel,
-  CubeLight,
-  Delegation,
-  FaceWorld,
-  Map,
-  MicDirectionHistory,
-  MoodManager,
-  NeedsManager,
-  ObjectPoseConfirmer,
-  PetWorld,
-  ProgressionUnlock,
-  ProxSensor,
-  PublicStateBroadcaster,
-  RobotAudioClient,
-  RobotInfo,
-  TouchSensor,
-  Vision,
-
-  Count
-};
 
 class BEIComponentWrapper : public ComponentWrapper {
   public:
@@ -109,10 +84,35 @@ class BEIComponentWrapper : public ComponentWrapper {
     std::shared_ptr<BEIComponentAccessGuard> _accessGuard = std::make_shared<BEIComponentAccessGuard>();
 };
 
-class BehaviorExternalInterface : private Util::noncopyable{
+class BehaviorExternalInterface : public IDependencyManagedComponent<BCComponentID>, private Util::noncopyable{
 public:
-  BehaviorExternalInterface(){}
+  BehaviorExternalInterface()
+  :IDependencyManagedComponent(BCComponentID::BehaviorExternalInterface) {}
   
+  //////
+  // IDependencyManagedComponent functions
+  //////
+  virtual void InitDependent(Robot* robot, const BCCompMap& dependentComponents) override;
+  virtual void UpdateDependent(const BCCompMap& dependentComponents) override {};
+  virtual void GetUpdateDependencies(BCCompIDSet& dependencies) const override {};
+
+  virtual void GetInitDependencies(BCCompIDSet& dependencies) const override { 
+    dependencies.insert(BCComponentID::BehaviorEventComponent); 
+    dependencies.insert(BCComponentID::DelegationComponent);
+  };
+  virtual void AdditionalInitAccessibleComponents(BCCompIDSet& components) const override
+  { 
+    components.insert(BCComponentID::AIComponent);
+    components.insert(BCComponentID::BehaviorContainer);
+    components.insert(BCComponentID::BlockWorld);
+    components.insert(BCComponentID::FaceWorld);
+    components.insert(BCComponentID::RobotInfo);
+  }
+  //////
+  // end IDependencyManagedComponent functions
+  //////
+
+
   void Init(AIComponent*                   aiComponent,
             AnimationComponent*            animationComponent,
             BehaviorContainer*             behaviorContainer,
@@ -135,7 +135,8 @@ public:
             Audio::EngineRobotAudioClient* robotAudioClient,
             BEIRobotInfo*                  robotInfo,
             TouchSensorComponent*          touchSensorComponent,
-            VisionComponent*               visionComponent);
+            VisionComponent*               visionComponent,
+            VisionScheduleMediator*        visionScheduleMediator);
     
   virtual ~BehaviorExternalInterface();
 
@@ -178,6 +179,9 @@ public:
 
   inline bool HasVisionComponent() const { return GetComponentWrapper(BEIComponentID::Vision).IsValueValid();}
   VisionComponent& GetVisionComponent() const { return GetComponentWrapper(BEIComponentID::Vision).GetValue<VisionComponent>();}
+
+  inline bool HasVisionScheduleMediator() const { return GetComponentWrapper(BEIComponentID::VisionScheduleMediator).IsValueValid();}
+  VisionScheduleMediator& GetVisionScheduleMediator() const { return GetComponentWrapper(BEIComponentID::VisionScheduleMediator).GetValue<VisionScheduleMediator>();}
 
   inline bool HasMapComponent() const { return GetComponentWrapper(BEIComponentID::Map).IsValueValid();}
   MapComponent& GetMapComponent() const { return GetComponentWrapper(BEIComponentID::Map).GetValue<MapComponent>();}
@@ -233,7 +237,8 @@ private:
                        Audio::EngineRobotAudioClient* robotAudioClient,
                        BEIRobotInfo*                  robotInfo,
                        TouchSensorComponent*          touchSensorComponent,
-                       VisionComponent*               visionComponent);
+                       VisionComponent*               visionComponent,
+                       VisionScheduleMediator*        visionSchedulMediator);
       ~CompArrayWrapper(){};
       EntityFullEnumeration<BEIComponentID, BEIComponentWrapper, BEIComponentID::Count> _array;
   };
