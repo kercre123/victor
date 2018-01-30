@@ -714,7 +714,7 @@ void MicDataProcessor::Update(BaseStationTime_t currTime_nanosec)
     if (_saveJob->CheckDone())
     {
       _saveJob = nullptr;
-      _forceRecordClip = false;
+      //_forceRecordClip = false;
     }
     else
     {
@@ -725,7 +725,7 @@ void MicDataProcessor::Update(BaseStationTime_t currTime_nanosec)
   const bool isMicFace = FaceDisplay::GetDebugDraw()->GetDrawState() == FaceDebugDraw::DrawState::MicDirectionClock;
   if (!isMicFace)
   {
-    _forceRecordClip = false;
+    //_forceRecordClip = false;
   }
   else if (_forceRecordClip && nullptr == _saveJob)
   {
@@ -780,7 +780,7 @@ void MicDataProcessor::Update(BaseStationTime_t currTime_nanosec)
       #if ANKI_DEV_CHEATS
         endTriggerDispTime_ns = currTime_nanosec + kTriggerDisplayTime_ns;
       #endif
-      if (_udpServer->HasClient())
+      if (_forceRecordClip || _udpServer->HasClient())
       {
         _currentlyStreaming = true;
         streamingAudioIndex = 0;

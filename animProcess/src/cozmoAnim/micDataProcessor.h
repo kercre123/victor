@@ -90,7 +90,7 @@ private:
   std::unique_ptr<SVadConfig_t> _sVadConfig;
   std::unique_ptr<SVadObject_t> _sVadObject;
 #if ANKI_DEV_CHEATS
-  bool _forceRecordClip = false;
+  bool _forceRecordClip = true;
 #endif
 
   // Members for managing the incoming raw audio jobs
