@@ -56,6 +56,9 @@ namespace Cozmo {
     s8 _steeringDir = 0;  // -1 = left, 0 = straight, 1 = right
     s8 _throttleDir = 0;  // -1 = reverse, 0 = stop, 1 = forward
     
+    bool _pressBackpackButton = false;
+    bool _wasBackpackButtonPressed = false;
+    
     f32 _commandedLiftSpeed = 0.f;
     f32 _commandedHeadSpeed = 0.f;
     
@@ -1826,6 +1829,10 @@ namespace Cozmo {
     }
   }
   
+  void WebotsKeyboardController::PressBackButton()
+  {
+    _pressBackpackButton = true;
+  }
   
   // ===== End of key press functions ====
 
@@ -1872,7 +1879,7 @@ namespace Cozmo {
 //      REGISTER_KEY_FCN_WITH_SPECIAL_DISPLAY_CHAR(webots::Keyboard::PAGEDOWN, MOD_ALT,       , "", "<PageDown>");
 //      REGISTER_KEY_FCN_WITH_SPECIAL_DISPLAY_CHAR(webots::Keyboard::PAGEDOWN, MOD_SHIFT,     , "", "<PageDown>");
 //      REGISTER_KEY_FCN_WITH_SPECIAL_DISPLAY_CHAR(webots::Keyboard::PAGEDOWN, MOD_ALT_SHIFT, , "", "<PageDown>");
-//      REGISTER_KEY_FCN_WITH_SPECIAL_DISPLAY_CHAR(webots::Keyboard::HOME,     MOD_NONE,      , "", "<Home>");
+    REGISTER_KEY_FCN_WITH_SPECIAL_DISPLAY_CHAR(webots::Keyboard::HOME,  MOD_NONE,   PressBackButton, "Press backpack button", "<Home>");
 //      REGISTER_KEY_FCN_WITH_SPECIAL_DISPLAY_CHAR(webots::Keyboard::HOME,     MOD_ALT,       , "", "<Home>");
 //      REGISTER_KEY_FCN_WITH_SPECIAL_DISPLAY_CHAR(webots::Keyboard::HOME,     MOD_SHIFT,     , "", "<Home>");
 //      REGISTER_KEY_FCN_WITH_SPECIAL_DISPLAY_CHAR(webots::Keyboard::HOME,     MOD_ALT_SHIFT, , "", "<Home>");
@@ -2187,6 +2194,7 @@ namespace Cozmo {
   {
     _steeringDir = 0.f;
     _throttleDir = 0.f;
+    _pressBackpackButton = false;
     
     root_ = GetSupervisor()->getSelf();
     
@@ -2406,6 +2414,13 @@ namespace Cozmo {
       SendMoveHead(0);
       _wasMovingHead = false;
     }
+    
+    if (_pressBackpackButton && !_wasBackpackButtonPressed) {
+      PressBackpackButton(true);
+    } else if (!_pressBackpackButton && _wasBackpackButtonPressed) {
+      PressBackpackButton(false);
+    }
+    _wasBackpackButtonPressed = _pressBackpackButton;
    
     
   } // BSKeyboardController::ProcessKeyStroke()

@@ -400,6 +400,9 @@ protected:
   void ClearReceivedNVStorageData(NVStorage::NVEntryTag tag);
   bool IsMultiBlobEntryTag(u32 tag) const;
 
+  // Press or release the backpack button
+  void PressBackpackButton(bool pressed);
+  
   ///
   // @brief      Sets the actual robot pose.
   // @param[in]  newPose  The new pose with translation in millimeters.
@@ -541,6 +544,7 @@ private:
   webots::Supervisor _supervisor;
   
   webots::Node* _robotNode       = nullptr;
+  webots::Field* _backpackButtonPressedField = nullptr;
 
   std::vector<webots::Node*> _lightCubes;
   std::vector<webots::Node*>::iterator _lightCubeOriginIter = _lightCubes.end();
