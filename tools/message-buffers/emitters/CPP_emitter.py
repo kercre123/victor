@@ -204,11 +204,22 @@ class HEnumEmitter(BaseEmitter):
             enum_member_count=0
         )
 
+        self.emitPrefix(node, globals)
         self.emitHeader(node, globals)
         self.emitMembers(node, globals)
         self.emitFooter(node, globals)
         self.emitSuffix(node, globals)
 
+    def emitPrefix(self, node, globals):
+        if self.options.emitJSON:
+            # need optional macro for "warn unused"
+            self.output.write(textwrap.dedent('''\
+            #ifndef CLAD_CPP_WARN_UNUSED_RESULT
+            #define CLAD_CPP_WARN_UNUSED_RESULT __attribute__((warn_unused_result))
+            #endif
+
+            '''))
+        
     def emitHeader(self, node, globals):
         if (node.cpp_class):
             self.output.write(textwrap.dedent('''\
@@ -244,8 +255,8 @@ class HEnumEmitter(BaseEmitter):
         self.output.write('const char* EnumToString(const {enum_name} m);\n'.format(**globals))
         self.output.write('inline const char* {enum_name}ToString(const {enum_name} m) {{ return EnumToString(m); }}\n\n'.format(**globals))
         if self.options.emitJSON:
-            self.output.write('template<typename T>\nbool EnumFromString(const std::string& str, T& enumOutput);\n')
-            self.output.write('bool {enum_name}FromString(const std::string& str, {enum_name}& enumOutput);\n\n'.format(**globals))
+            self.output.write('template<typename T>\nCLAD_CPP_WARN_UNUSED_RESULT bool EnumFromString(const std::string& str, T& enumOutput);\n')
+            self.output.write('CLAD_CPP_WARN_UNUSED_RESULT bool {enum_name}FromString(const std::string& str, {enum_name}& enumOutput);\n\n'.format(**globals))
             self.output.write('{enum_name} {enum_name}FromString(const std::string&);\n\n'.format(**globals))
         else:
             self.output.write('\n')
