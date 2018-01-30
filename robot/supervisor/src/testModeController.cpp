@@ -308,8 +308,7 @@ namespace Anki {
                                               100,
                                               x_offset_mm,
                                               y_offset_mm,
-                                              DEG_TO_RAD_F32(angle_offset_degrees),
-                                              false);
+                                              DEG_TO_RAD_F32(angle_offset_degrees));
         return RESULT_OK;
       }
 

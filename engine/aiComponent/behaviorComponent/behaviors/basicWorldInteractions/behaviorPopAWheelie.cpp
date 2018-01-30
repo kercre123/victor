@@ -134,7 +134,6 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(bool isRetry)
   DriveToPopAWheelieAction* goPopAWheelie = new DriveToPopAWheelieAction(_targetBlock,
                                                                          false,
                                                                          0,
-                                                                         false,
                                                                          maxTurnToFaceAngle);
   goPopAWheelie->SetSayNameAnimationTrigger(AnimationTrigger::PopAWheeliePreActionNamedFace);
   goPopAWheelie->SetNoNameAnimationTrigger(AnimationTrigger::PopAWheeliePreActionUnnamedFace);

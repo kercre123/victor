@@ -408,7 +408,7 @@ namespace Cozmo {
     class TraverseObjectAction : public IActionRunner
     {
     public:
-      TraverseObjectAction(ObjectID objectID, const bool useManualSpeed);
+      TraverseObjectAction(ObjectID objectID);
       virtual ~TraverseObjectAction()
       {
         if(_chosenAction != nullptr)
@@ -430,7 +430,6 @@ namespace Cozmo {
       f32            _speed_mmps;
       f32            _accel_mmps2;
       f32            _decel_mmps2;
-      bool           _useManualSpeed;
       
     }; // class TraverseObjectAction
     

@@ -183,8 +183,7 @@ void BehaviorKnockOverCubes::TransitionToKnockingOverStack()
 
   DriveAndFlipBlockAction* flipAction = new DriveAndFlipBlockAction(_bottomBlockID, 
                                                                     false, 
-                                                                    0, 
-                                                                    false, 
+                                                                    0,
                                                                     angleTurnTowardsFace_rad, 
                                                                     false, 
                                                                     kMinThresholdRealign);

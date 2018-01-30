@@ -164,12 +164,6 @@ PROTO WebotsKeyboardController [
   field SFFloat steerDistOffsetCap_mm 20
   field SFFloat steerAngOffsetCap_rad 0.5
 
-  # Camera calibration
-  field SFFloat focalLength_x 290
-  field SFFloat focalLength_y 290
-  field SFFloat imageCenter_x 160
-  field SFFloat imageCenter_y 120
-
   # Camera display params
   # Note that camera display is OFF by default.
   # Width and height must be > 0 to enable.
@@ -197,8 +191,6 @@ PROTO WebotsKeyboardController [
   field SFInt32 headTest_powerPercent 0             # 0-100: If 0 then cycles through increasing power levels
 
   field SFInt32 nvTag 100
-  field SFInt32 nvNumBlobs 1
-  field SFInt32 nvBlobDataLength 1024
 
   field SFString drivingStartAnim ""
   field SFString drivingLoopAnim ""

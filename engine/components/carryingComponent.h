@@ -55,7 +55,7 @@ public:
   // Send a message to the robot to place whatever it is carrying on the
   // ground right where it is. Returns RESULT_FAIL if robot is not carrying
   // anything.
-  Result PlaceObjectOnGround(const bool useManualSpeed = false);
+  Result PlaceObjectOnGround();
   
   Result SendSetCarryState(CarryState state) const;
   

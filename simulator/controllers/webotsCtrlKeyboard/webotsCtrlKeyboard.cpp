@@ -415,17 +415,15 @@ namespace Cozmo {
   
   void WebotsKeyboardController::GotoPoseMarker()
   {
-    bool useManualSpeed = false;
     if (poseMarkerMode_ == 0) {
       // Execute path to pose
       
       // the pose of the green-cone marker in the WebotsOrigin frame
       Pose3d goalMarkerPose = GetGoalMarkerPose();
-      printf("Going to pose marker at x=%f y=%f angle=%f (useManualSpeed: %d)\n",
+      printf("Going to pose marker at x=%f y=%f angle=%f\n",
              goalMarkerPose.GetTranslation().x(),
              goalMarkerPose.GetTranslation().y(),
-             goalMarkerPose.GetRotationAngle<'Z'>().ToFloat(),
-             useManualSpeed);
+             goalMarkerPose.GetRotationAngle<'Z'>().ToFloat());
       
       // note: Goal is w.r.t. webots origin which may not match
       // engine origin (due to delocalization or drift). This
@@ -446,7 +444,7 @@ namespace Cozmo {
       GetRobotPoseActual().GetInverse() *
       goalMarkerPose;
       
-      SendExecutePathToPose(markerPose_inEngineFrame, pathMotionProfile_, useManualSpeed);
+      SendExecutePathToPose(markerPose_inEngineFrame, pathMotionProfile_);
       //SendMoveHeadToAngle(-0.26, headSpeed, headAccel);
     } else {
       Pose3d goalMarkerPose = GetGoalMarkerPose();
@@ -460,8 +458,7 @@ namespace Cozmo {
       
       SendPlaceObjectOnGroundSequence(goalMarkerPose,
                                       pathMotionProfile_,
-                                      useExactRotation,
-                                      useManualSpeed);
+                                      useExactRotation);
       // Make sure head is tilted down so that it can localize well
       //SendMoveHeadToAngle(-0.26, headSpeed, headAccel);
       
@@ -733,7 +730,6 @@ namespace Cozmo {
   
   void WebotsKeyboardController::PickOrPlaceObject()
   {
-    bool useManualSpeed = false;
     bool usePreDockPose = !_shiftKeyPressed;
     bool placeOnGroundAtOffset = _altKeyPressed;
     
@@ -752,22 +748,19 @@ namespace Cozmo {
       SendPickupSelectedObject(pathMotionProfile_,
                                usePreDockPose,
                                useApproachAngle,
-                               approachAngle_rad,
-                               useManualSpeed);
+                               approachAngle_rad);
     } else {
       if (placeOnGroundAtOffset) {
         SendPlaceRelSelectedObject(pathMotionProfile_,
                                    usePreDockPose,
                                    placementOffsetX_mm,
                                    useApproachAngle,
-                                   approachAngle_rad,
-                                   useManualSpeed);
+                                   approachAngle_rad);
       } else {
         SendPlaceOnSelectedObject(pathMotionProfile_,
                                   usePreDockPose,
                                   useApproachAngle,
-                                  approachAngle_rad,
-                                  useManualSpeed);
+                                  approachAngle_rad);
       }
     }
     
@@ -776,38 +769,32 @@ namespace Cozmo {
   
   void WebotsKeyboardController::MountSelectedCharger()
   {
-    bool useManualSpeed = false;
     bool useCliffSensorCorrection = !_shiftKeyPressed;
     
     SendMountSelectedCharger(pathMotionProfile_,
-                             useCliffSensorCorrection,
-                             useManualSpeed);
+                             useCliffSensorCorrection);
   }
   
   
   void WebotsKeyboardController::PopAWheelie()
   {
     bool usePreDockPose = !_shiftKeyPressed;
-    bool useManualSpeed = false;
     SendPopAWheelie(-1,
                     pathMotionProfile_,
                     usePreDockPose,
                     useApproachAngle,
-                    approachAngle_rad,
-                    useManualSpeed);
+                    approachAngle_rad);
   }
   
   void WebotsKeyboardController::RollObject()
   {
     bool usePreDockPose = !_shiftKeyPressed;
-    bool useManualSpeed = false;
     bool doDeepRoll = root_->getField("doDeepRoll")->getSFBool();
     SendRollSelectedObject(pathMotionProfile_,
                            doDeepRoll,
                            usePreDockPose,
                            useApproachAngle,
-                           approachAngle_rad,
-                           useManualSpeed);
+                           approachAngle_rad);
   }
   
   

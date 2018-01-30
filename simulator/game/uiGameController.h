@@ -170,13 +170,11 @@ protected:
   void SendSaveState(bool enabled, const std::string& path = "");
   void SendEnableDisplay(bool on);
   void SendExecutePathToPose(const Pose3d& p,
-                             PathMotionProfile motionProf,
-                             const bool useManualSpeed);
+                             PathMotionProfile motionProf);
                              
   void SendGotoObject(const s32 objectID,
                       const f32 distFromObjectOrigin_mm,
                       PathMotionProfile motionProf,
-                      const bool useManualSpeed = false,
                       const bool usePreDockPose = false);
   
   void SendAlignWithObject(const s32 objectID,
@@ -184,96 +182,81 @@ protected:
                            PathMotionProfile motionProf,
                            const bool usePreDockPose,
                            const bool useApproachAngle = false,
-                           const f32 approachAngle_rad = false,
-                           const bool useManualSpeed = false);
+                           const f32 approachAngle_rad = false);
   
   void SendPlaceObjectOnGroundSequence(const Pose3d& p,
                                        PathMotionProfile motionProf,
-                                       const bool useExactRotation = false,
-                                       const bool useManualSpeed = false);
+                                       const bool useExactRotation = false);
   
   void SendPickupObject(const s32 objectID,
                         PathMotionProfile motionProf,
                         const bool usePreDockPose,
                         const bool useApproachAngle = false,
-                        const f32 approachAngle_rad = 0,
-                        const bool useManualSpeed = false);
+                        const f32 approachAngle_rad = 0);
   
   void SendPickupSelectedObject(PathMotionProfile motionProf,
                                 const bool usePreDockPose,
                                 const bool useApproachAngle,
-                                const f32 approachAngle_rad,
-                                const bool useManualSpeed = false);
+                                const f32 approachAngle_rad);
   
   void SendPlaceOnObject(const s32 objectID,
                          PathMotionProfile motionProf,
                          const bool usePreDockPose,
                          const bool useApproachAngle = false,
-                         const f32 approachAngle_rad = 0,
-                         const bool useManualSpeed = false);
+                         const f32 approachAngle_rad = 0);
   
   void SendPlaceOnSelectedObject(PathMotionProfile motionProf,
                                  const bool usePreDockPose,
                                  const bool useApproachAngle = false,
-                                 const f32 approachAngle_rad = 0,
-                                 const bool useManualSpeed = false);
+                                 const f32 approachAngle_rad = 0);
 
   void SendPlaceRelObject(const s32 objectID,
                           PathMotionProfile motionProf,
                           const bool usePreDockPose,
                           const f32 placementOffsetX_mm,
                           const bool useApproachAngle = false,
-                          const f32 approachAngle_rad = 0,
-                          const bool useManualSpeed = false);
+                          const f32 approachAngle_rad = 0);
   
   void SendPlaceRelSelectedObject(PathMotionProfile motionProf,
                                   const bool usePreDockPose,
                                   const f32 placementOffsetX_mm,
                                   const bool useApproachAngle = false,
-                                  const f32 approachAngle_rad = 0,
-                                  const bool useManualSpeed = false);
+                                  const f32 approachAngle_rad = 0);
 
   void SendRollObject(const s32 objectID,
                       PathMotionProfile motionProf,
                       const bool doDeepRoll,
                       const bool usePreDockPose,
                       const bool useApproachAngle = false,
-                      const f32 approachAngle_rad = 0,
-                      const bool useManualSpeed = false);
+                      const f32 approachAngle_rad = 0);
   
   void SendRollSelectedObject(PathMotionProfile motionProf,
                               const bool doDeepRoll,
                               const bool usePreDockPose,
                               const bool useApproachAngle = false,
-                              const f32 approachAngle_rad = 0,
-                              const bool useManualSpeed = false);
+                              const f32 approachAngle_rad = 0);
 
   void SendPopAWheelie(const s32 objectID,
                        PathMotionProfile motionProf,
                        const bool usePreDockPose,
                        const bool useApproachAngle = false,
-                       const f32 approachAngle_rad = 0,
-                       const bool useManualSpeed = false);
+                       const f32 approachAngle_rad = 0);
 
   void SendFacePlant(const s32 objectID,
                      PathMotionProfile motionProf,
                      const bool usePreDockPose,
                      const bool useApproachAngle = false,
-                     const f32 approachAngle_rad = 0,
-                     const bool useManualSpeed = false);
+                     const f32 approachAngle_rad = 0);
   
   void SendTraverseSelectedObject(PathMotionProfile motionProf,
-                                  const bool usePreDockPose,
-                                  const bool useManualSpeed);
+                                  const bool usePreDockPose);
 
   void SendMountCharger(const s32 objectID,
                         PathMotionProfile motionProf,
-                        const bool useCliffSensorCorrection = true,
-                        const bool useManualSpeed = false);
+                        const bool useCliffSensorCorrection = true);
   
   void SendMountSelectedCharger(PathMotionProfile motionProf,
-                                const bool useCliffSensorCorrection = true,
-                                const bool useManualSpeed = false);
+                                const bool useCliffSensorCorrection = true);
   
   void SendRequestEnabledBehaviorList();
   void SendTrackToObject(const u32 objectID, bool headOnly = false);
