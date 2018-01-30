@@ -780,11 +780,10 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_CLIFF, cliffDetected ? Anki::NamedColors::RED : Anki::NamedColors::GREEN, txt);
 
   const auto& proxData = payload.state.proxData;
-  sprintf(txt, "Dist: %4u mm, sigStrength: %5.3f, status 0x%02X (%s)",
+  sprintf(txt, "Dist: %4u mm, sigStrength: %5.3f, status 0x%02X",
           proxData.distance_mm,
           proxData.signalIntensity / proxData.spadCount,
-          proxData.rangeStatus,
-          proxData.distance_mm < kProxSensorMaxDistance_mm ? "OBJ DETECTED" : "CLEAR");
+          proxData.rangeStatus);
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_DIST, Anki::NamedColors::GREEN, txt);
   
   sprintf(txt, "Speed L: %4d  R: %4d mm/s",
