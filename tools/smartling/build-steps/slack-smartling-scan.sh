@@ -96,7 +96,7 @@ if [ "$_status" ]; then
     '{"title": "'"$_GIT_BRANCH_NAME"'","head": "'"$_GIT_BRANCH_NAME"'","base": "master"}' \
     $_GIT_COZMO_PR_URI | $PYTHON3 $_SMARTLING_PARSE_PR_RESPONSE_SCRIPT)
 
-    send_slack_message "cozmo-one PR for Smartling localized strings: $pr_url" "good" 0
+    send_slack_message "cozmo-one PR for newly scanned Codelab strings for smartling: $pr_url" "good" 0
     popd
 
 else
