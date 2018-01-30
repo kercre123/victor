@@ -428,7 +428,32 @@ def modify_base_loc_file(extracted_json, file_path):
     for key in extracted_json:
         loc_file_json[key] = extracted_json[key]
 
+    loc_file_json.pop('smartling')
+
     ordered_loc_file_json = collections.OrderedDict(sorted(loc_file_json.items(), key=lambda t: t[0]))
+    raw_smartling_heading={
+      "smartling": {
+        "translate_paths": [
+          "*/translation"
+        ],
+        "variants_enabled": True,
+        "translate_mode": "custom",
+        "placeholder_format_custom": [
+          "%%[^%]+?%%",
+          "%[^%]+?%",
+          "##[^#]+?##",
+          "__[^_]+?__",
+          "[$]\\{[^\\}\\{]+?\\}",
+          "\\{\\{[^\\}\\{]+?\\}\\}",
+          "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
+        ],
+        "source_key_paths": [
+          "/{*}"
+        ]
+      }
+    }
+
+    ordered_loc_file_json.update(raw_smartling_heading)
     ordered_loc_file_json.move_to_end('smartling', last=False)
 
     #replace the loc target's json
