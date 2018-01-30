@@ -66,10 +66,10 @@ void ProxSensorComponent::UpdateInternal(const RobotState& msg)
     
     // Only start the theremin if the head is up
     if (!_thereminActive &&
-        _robot.GetHeadAngle() > 0.f) {
+        _robot->GetHeadAngle() > 0.f) {
       ActivateTheremin(true);
     } else if (_thereminActive &&
-               _robot.GetHeadAngle() < 0.f) {
+               _robot->GetHeadAngle() < 0.f) {
       ActivateTheremin(false);
     }
     
@@ -271,14 +271,14 @@ void ProxSensorComponent::ActivateTheremin(const bool enable)
   _thereminActive = enable;
   
   if (enable) {
-    _robot.GetAudioClient()->PostEvent(AudioMetaData::GameEvent::GenericEvent::Play__Robot_Sfx__Theremin_Loop_Play,
+    _robot->GetAudioClient()->PostEvent(AudioMetaData::GameEvent::GenericEvent::Play__Robot_Sfx__Theremin_Loop_Play,
                                        AudioMetaData::GameObjectType::Cozmo_OnDevice);
 
     // turn volume on:
-    _robot.GetAudioClient()->PostParameter(AudioMetaData::GameParameter::ParameterType::Robot_Volume,
+    _robot->GetAudioClient()->PostParameter(AudioMetaData::GameParameter::ParameterType::Robot_Volume,
                                            1.f);
   } else {
-    _robot.GetAudioClient()->PostEvent(AudioMetaData::GameEvent::GenericEvent::Stop__Robot_Sfx__Theremin_Loop_Stop,
+    _robot->GetAudioClient()->PostEvent(AudioMetaData::GameEvent::GenericEvent::Stop__Robot_Sfx__Theremin_Loop_Stop,
                                        AudioMetaData::GameObjectType::Cozmo_OnDevice);
   }
 }
@@ -329,12 +329,12 @@ void ProxSensorComponent::UpdateTheremin()
   volumeVal -= .7f * (pitchVal - pitchValToReduceVol)/(1.f - pitchValToReduceVol);
   
   // Post pitch parameter
-  _robot.GetAudioClient()->PostParameter(AudioMetaData::GameParameter::ParameterType::Theremin_Pitch,
+  _robot->GetAudioClient()->PostParameter(AudioMetaData::GameParameter::ParameterType::Theremin_Pitch,
                                          pitchVal,
                                          AudioMetaData::GameObjectType::Cozmo_OnDevice);
   
   // Post volume parameter
-  _robot.GetAudioClient()->PostParameter(AudioMetaData::GameParameter::ParameterType::Theremin_Volume,
+  _robot->GetAudioClient()->PostParameter(AudioMetaData::GameParameter::ParameterType::Theremin_Volume,
                                          volumeVal,
                                          AudioMetaData::GameObjectType::Cozmo_OnDevice);
   
