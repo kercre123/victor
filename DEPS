@@ -9,7 +9,6 @@
             },
             "victor-animation-assets": {
                 "allow_extra_files": "True",
-                "export_dirname": "animation-assets",
                 "extract_types_from_tar": [
                     ".json",
                     ".png"
