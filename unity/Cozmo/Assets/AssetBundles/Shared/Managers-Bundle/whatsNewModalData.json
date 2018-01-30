@@ -303,7 +303,7 @@
     "TitleKey": "whatsNew.CodeLab_PotOGoldDetector.title",
     "DescriptionKey": "whatsNew.CodeLab_PotOGoldDetector.description",
     "IconAssetBundleName": "whats_new_icon_sprites",
-    "IconAssetName": "icon_potOGold",
+    "IconAssetName": "icon_potOGoldDetector",
     "LeftTintColor": [93,197,21],
     "RightTintColor": [157,227,53],
     "CodeLabData": {
@@ -351,7 +351,7 @@
     "TitleKey": "whatsNew.CodeLab_PaddleBall.title",
     "DescriptionKey": "whatsNew.CodeLab_PaddleBall.description",
     "IconAssetBundleName": "whats_new_icon_sprites",
-    "IconAssetName": "icon_shakeIt",
+    "IconAssetName": "icon_paddleBall",
     "LeftTintColor": [195,50,50],
     "RightTintColor": [253,78,93],
     "CodeLabData": {
