@@ -15,6 +15,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/micDirectionHistory.h"
+#include "clad/types/animationTrigger.h"
 
 #include <vector>
 
@@ -33,9 +34,42 @@ class BehaviorObservingSounds : public ICozmoBehavior
 public:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Data Structure Definitions ...
 
-  virtual bool WantsToBeActivatedBehavior( BehaviorExternalInterface& behaviorExternalInterface ) const override;
-  virtual bool CarryingObjectHandledInternally() const override { return false; }
+  struct DirectionTrigger
+  {
+    MicDirectionHistory::DirectionConfidence  threshold;
+  };
+
+  using DirectionTriggerList   = const DirectionTrigger*;
+
+  struct DirectionResponse
+  {
+    AnimationTrigger                          animation;
+    Radians                                   facing; // note: temp until we get anims
+  };
+
+  using DirectionResponseList   = const DirectionResponse*;
+
+  enum EChargerStatus
+  {
+    EChargerStatus_OnCharger,
+    EChargerStatus_OffCharger,
+    EChargerStatus_Num
+  };
+
+  enum EObservationStatus
+  {
+    EObservationStatus_Asleep,
+    EObservationStatus_Awake,
+    EObservationStatus_Num
+  };
+
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  virtual bool WantsToBeActivatedBehavior() const override;
+  virtual void GetBehaviorOperationModifiers( BehaviorOperationModifiers& modifiers ) const override;
 
 
 protected:
@@ -44,13 +78,9 @@ protected:
   // Behavior Related Functions
 
   virtual void GetAllDelegates( std::set<IBehavior*>& delegates ) const override { }
-  virtual void InitBehavior( BehaviorExternalInterface& behaviorExternalInterface ) override;
-  
-  virtual Result OnBehaviorActivated( BehaviorExternalInterface& behaviorExternalInterface ) override;
-
-  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual Status UpdateInternal_WhileRunning( BehaviorExternalInterface& behaviorExternalInterface ) override;
-
+  virtual void OnBehaviorActivated() override;
+  virtual void OnBehaviorDeactivated() override;
+  virtual void BehaviorUpdate() override;
 
 
 private:
@@ -58,36 +88,47 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Helper Functions
 
-  void UpdateSoundDirection( const BehaviorExternalInterface& behaviorExternalInterface );
-  void TurnTowardsSound( MicDirectionHistory::DirectionIndex soundDirection );
+  MicDirectionHistory::DirectionNode GetLatestMicDirectionData() const;
+  DirectionTrigger GetTriggerData( MicDirectionHistory::DirectionIndex index ) const;
+  DirectionResponse GetResponseData( MicDirectionHistory::DirectionIndex index ) const;
 
-  MicDirectionHistory::DirectionIndex GetFocusDirection( const BehaviorExternalInterface& behaviorExternalInterface ) const;
-  bool IsSameDirection( MicDirectionHistory::DirectionIndex lhs, MicDirectionHistory::DirectionIndex rhs ) const;
+  bool HeardValidSound( MicDirectionHistory::DirectionIndex& outIndex ) const;
+
+  void RespondToSound();
+  void OnResponseComplete();
+
+  bool CanReactToSound() const;
 
   TimeStamp_t GetCurrentTime() const;
+  TimeStamp_t GetCooldownBeginTime() const;
+  TimeStamp_t GetCooldownEndTime() const;
+
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Scoring Functions
+  // Scoring Functions (not currently active)
 
-  struct DirectionScore
-  {
-    MicDirectionHistory::DirectionIndex       direction;
-    float                                     score;
+//  struct DirectionScore
+//  {
+//    MicDirectionHistory::DirectionIndex       direction;
+//    float                                     score;
+//
+//    MicDirectionHistory::DirectionConfidence  scoreConfidence;
+//    TimeStamp_t                               scoreDuration;
+//    TimeStamp_t                               scoreRecent;
+//  };
+//
+//  std::vector<DirectionScore> GetDirectionScores() const;
 
-    MicDirectionHistory::DirectionConfidence  scoreConfidence;
-    TimeStamp_t                               scoreDuration;
-    TimeStamp_t                               scoreRecent;
-  };
-
-  std::vector<DirectionScore> GetDirectionScores( const BehaviorExternalInterface& behaviorExternalInterface ) const;
-  
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Member Data
 
-  MicDirectionHistory::DirectionIndex   _focusDirection;
-  TimeStamp_t                           _focusLastChangedTime   = 0;
-  bool                                  _shouldProcessSound     = true;
+  static const MicDirectionHistory::DirectionIndex kInvalidDirectionIndex;
+
+  EObservationStatus                    _observationStatus        = EObservationStatus::EObservationStatus_Awake;
+  MicDirectionHistory::DirectionIndex   _triggeredDirection       = kInvalidDirectionIndex;
+
+  TimeStamp_t                           _reactionTriggeredTime    = 0;
 };
 
 }
