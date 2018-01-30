@@ -23,6 +23,14 @@ static inline void dut_uart_delay_bit_time_(const uint16_t nbits, int baud) {
 
 namespace DUT_UART {
   static int current_baud = 0;
+  
+  //recieve buffer
+  static const int rx_fifo_size = 0x40;
+  static struct {
+    char buf[rx_fifo_size]; 
+    volatile int len; 
+    int w, r, enabled;
+  } rx;
 }
 
 void DUT_UART::init(int baud)
@@ -47,6 +55,13 @@ void DUT_UART::init(int baud)
     USART_InitStruct.USART_Mode       = USART_Mode_Rx | USART_Mode_Tx;
     USART_InitStruct.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
     USART_Init(USART2, &USART_InitStruct);
+    
+    //set up rx ints
+    USART_ITConfig(USART2, USART_IT_RXNE, ENABLE); //rx int enable
+    NVIC_SetPriority(USART2_IRQn, 2);
+    NVIC_EnableIRQ(USART2_IRQn);
+    
+    //Enable UART
     USART_Cmd(USART2, ENABLE);
     
     #if DUT_UART_DEBUG
@@ -65,7 +80,9 @@ void DUT_UART::init(int baud)
     #endif
     
     dut_uart_delay_bit_time_(2,baud); //wait at least 1 bit-time for uart peripheral to spin up
+    dut_uart_delay_bit_time_(20,baud); //2 byte times on the wire for receiver to sync line change
     current_baud = baud;
+    rx.enabled = 1;
   }
 }
 
@@ -89,6 +106,12 @@ void DUT_UART::deinit(void)
   USART_Cmd(USART2, DISABLE);
   
   current_baud = 0;
+  
+  //clear rx buffer
+  rx.enabled = 0;
+  rx.len = 0;
+  rx.r = 0;
+  rx.w = 0;
 }
 
 int DUT_UART::printf(const char *format, ... )
@@ -125,6 +148,7 @@ void DUT_UART::putchar(char c)
 
 static int dut_uart_getchar_(void)
 {
+  /*
   volatile int junk;
   
   if( DUT_UART::current_baud > 0 ) //initialized
@@ -139,6 +163,23 @@ static int dut_uart_getchar_(void)
   }
   
   return -1;
+  */
+  
+  NVIC_DisableIRQ(USART2_IRQn);
+  __NOP();
+  __NOP();
+  
+  int c;
+  if( DUT_UART::rx.len > 0 ) {
+    c = DUT_UART::rx.buf[DUT_UART::rx.r];
+    if(++DUT_UART::rx.r >= DUT_UART::rx_fifo_size)
+      DUT_UART::rx.r = 0;
+    DUT_UART::rx.len--;
+  } else
+    c = -1; //no data
+  
+  NVIC_EnableIRQ(USART2_IRQn);
+  return c;
 }
 
 int DUT_UART::getchar(int timeout_us)
@@ -176,3 +217,26 @@ char* DUT_UART::getline(char* buf, int bufsize, int timeout_us, int *out_len)
   return eol ? buf : NULL;
 }
 
+namespace DUT_UART {
+  static inline void uart_isr_handler_(char c)
+  {
+    if( rx.enabled && rx.len < rx_fifo_size ) { //drop chars if fifo full
+      rx.buf[rx.w] = c;
+      if(++rx.w >= rx_fifo_size)
+        rx.w = 0;
+      rx.len++;
+    }
+  }
+}
+
+extern "C" void USART2_IRQHandler(void)
+{
+  volatile int junk;
+  
+  if( USART2->SR & (USART_SR_ORE | USART_SR_FE) ) { //framing and/or overrun error
+    junk = USART2->DR; //flush the dr & shift register
+    junk = USART2->DR; //reading DR clears error flags
+  } else if (USART2->SR & USART_SR_RXNE) {
+    DUT_UART::uart_isr_handler_(USART2->DR); //reading DR clears RXNE flag
+  }
+}

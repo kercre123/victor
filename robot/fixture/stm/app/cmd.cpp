@@ -124,9 +124,9 @@ char* cmdSend(cmd_io io, const char* scmd, int timeout_ms, int opts, void(*async
   
   //send command out the selected io channel (append prefix)
   flush_(io); //flush rx buffers first for correct response detection
-  write_(io, CMD_PREFIX, scmd, (newline ? "\n" : NULL) );
-  if( io != CMD_IO_CONSOLE ) //echo to log
+  if( io != CMD_IO_CONSOLE ) //echo to log BEFORE to DUT write or we'll miss response chars
     write_(CMD_IO_CONSOLE, LOG_CMD_PREFIX, scmd, (newline ? "\n" : NULL) );
+  write_(io, CMD_PREFIX, scmd, (newline ? "\n" : NULL) );
 
   //Get response
   m_status = INT_MIN;
@@ -144,14 +144,16 @@ char* cmdSend(cmd_io io, const char* scmd, int timeout_ms, int opts, void(*async
         m_time_ms = Timer::elapsedUs(Tstart)/1000; //time to response rx
         
         rsp += sizeof(RSP_PREFIX)-1; //'strip' prefix
-        if( io != CMD_IO_CONSOLE ) //echo to log with modified prefix
-          write_(CMD_IO_CONSOLE, LOG_RSP_PREFIX, rsp, "\n");
+        
+        //echo to log (optionally append debug stats)
+        write_(CMD_IO_CONSOLE, io == CMD_IO_CONSOLE ? RSP_PREFIX : LOG_RSP_PREFIX, rsp); //differentiate prefix depending on the sender
         if( opts & CMD_OPTS_DBG_PRINT_RSP_TIME )
-          write_(CMD_IO_CONSOLE, snformat(b,bz,"cmd time %ums\n", m_time_ms));
+          write_(CMD_IO_CONSOLE, snformat(b,bz," [%ums]", m_time_ms));
+        write_(CMD_IO_CONSOLE, "\n");
         
         //make sure response matches our command word
         int nargs = cmdNumArgs(rsp);
-        if( nargs < 1 || strcmp( cmdGetArg((char*)scmd,0,b,bz), cmdGetArg(rsp,0)) > 0 ) {
+        if( nargs < 1 || strcmp( cmdGetArg((char*)scmd,0,b,bz), cmdGetArg(rsp,0)) != 0 ) {
           ERROR_HANDLE("MISMATCH\n", ERROR_TESTPORT_RSP_MISMATCH);
           return NULL;
         }
@@ -163,16 +165,12 @@ char* cmdSend(cmd_io io, const char* scmd, int timeout_ms, int opts, void(*async
           return NULL;
         }
 
-        //try parse the 2nd arg as status code (with error checking)
+        //try parse the 2nd arg as status code
         if( nargs >= 2 )
         {
-          errno = 0;
-          char *endptr, *argstatus = cmdGetArg(rsp,1);
-          long val = strtol(argstatus, &endptr, 10); //enforce base10
-          
-          //check conversion errs, limit numerical range, and verify entire arg was parsed (stops at whitespace, invalid chars...)
-          if( errno == 0 && val <= INT_MAX && val >= INT_MIN+1 && endptr > argstatus && *endptr == '\0' )
-            m_status = val; //record parsed val
+          int val = cmdParseInt32( cmdGetArg(rsp,1) );
+          if( val != INT_MIN )
+            m_status = val; //record parsed value
         }
         
         //check for status code errors (if not allowed)
@@ -237,6 +235,21 @@ static char* nextArg_(char* s)
   }
   
   return s; //now pointing to first char of next arg (maybe an opening ")
+}
+
+int cmdParseInt32(char *s)
+{
+  if(s)
+  {
+    errno = 0;
+    char *endptr;
+    long val = strtol(s, &endptr, 10); //enforce base10
+
+    //check conversion errs, limit numerical range, and verify entire arg was parsed (stops at whitespace, invalid chars...)
+    if( errno == 0 && val <= INT_MAX && val >= INT_MIN+1 && endptr > s && *endptr == '\0' )
+      return val;
+  }
+  return INT_MIN; //parse error
 }
 
 char* cmdGetArg(char *s, int n, char* out_buf, int buflen)

@@ -22,7 +22,7 @@
   </DaveTm>
 
   <Target>
-    <TargetName>P3</TargetName>
+    <TargetName>DVT2-B</TargetName>
     <ToolsetNumber>0x4</ToolsetNumber>
     <ToolsetName>ARM-ADS</ToolsetName>
     <TargetOption>

@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<tns:sdk_configuration xmlns:tns="http://www.diasemi.com/sdkConfig" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.diasemi.com/sdkConfig config.xsd">
+<!--Please note that the following characters should be escaped in xml:
+"   &quot;
+'   &apos;
+<   &lt;
+>   &gt;
+&   &amp;-->
+	<sdk>
+		<family>DA1458x</family>
+		<manufacturer>Dialog Semiconductor</manufacturer>
+		<name>SmartSnippets DA1458x SDK</name>
+		<version>5.0.4</version>
+		<development_kits>
+			<development_kit id="da1458x_dkp">
+				<name>DA 1458x Development Kit Pro</name>
+			</development_kit>
+			<development_kit id="da1458x_cb">
+				<name>DA 1458x Customer board</name>
+			</development_kit>
+			<development_kit id="da1458x_dkb">
+				<name>DA 1458x Development Kit Basic</name>
+			</development_kit>				
+		</development_kits>
+		<platform name="win32" default="yes"> <!-- Default means which configuration to be used if platform failed to detect  -->
+			<tools>
+				<tool id="keil">
+					<name>uVision IDE Keil for ARM Embedded Processors</name>
+					<min_version>4</min_version> <!-- for future use -->
+					<max_version>5.20</max_version> <!-- for future use -->
+					<official_url>http://www.keil.com/download/product/</official_url> <!-- for info reasons -->
+					<!-- diasemi_download_url>https://diasemi.egnyte.com/sjlnhskdj</diasemi_download_url>   for future use -->
+					<!-- Element official_download_url is when we do not have redistributable license. It may contains 
+                    a link to an exe file for direct download (property direct_download), a link to a registration
+                    or license page users must accept to download and install the package themselves or the name of the bundled installer/archive -->
+					<official_download_url direct_download="no">https://www.keil.com/demo/eval/arm.htm</official_download_url>
+					<!-- User has to register -->
+				</tool>
+				<tool id="segger_jlink">
+					<name>J-Link software package components</name>
+					<min_version>5.12f</min_version> <!-- for future use -->
+					<max_version>5.12f</max_version> <!-- for future use -->
+					<official_url>https://www.segger.com/j-link-older-versions.html</official_url> <!-- for info reasons -->
+					<!-- diasemi_download_url></diasemi_download_url>  for future use -->
+					<official_download_url direct_download="no">Setup_JLink_V512f.exe</official_download_url>
+				</tool>
+			</tools>
+			<tool_buttons>
+				<tool_button id="ide" status="invisible"> <!-- status can be enabled, disabled or invisible --> 
+					<name>IDE</name>
+					<tooltip>Switch to the IDE in the C/C++ perspective</tooltip>
+				</tool_button>
+				<tool_button id="smartsnippets_toolbox" status="enabled"> <!-- status can be enabled, disabled or invisible --> 
+					<name>SmartSnippets Toolbox</name>
+					<tooltip>Launch SmartSnippets Toolbox as an external application</tooltip>
+				</tool_button>			
+				<tool_button id="segger_systemview" status="invisible">
+					<name>Segger Systemview</name>
+					<tooltip>Opens Segger&apos;s SystemView as an external application</tooltip>
+				</tool_button>
+				<tool_button id="segger_ozone" status="invisible">
+					<name>Segger Ozone</name>
+					<tooltip>Opens Segger&apos;s Ozone (JLink Debugger) as an external application</tooltip>
+				</tool_button>
+				<tool_button id="project_initializer" status="invisible">
+					<name>Application Creator</name>
+					<tooltip>Opens the Application Creator view</tooltip>
+				</tool_button>
+				<tool_button id="application_logger" status="invisible">
+					<name>Application Logger</name>
+					<tooltip>Opens the Application Logger view</tooltip>
+				</tool_button>
+				<tool_button id="keil_ide" status="enabled">
+					<name>Keil IDE</name>
+					<tooltip>Opens Keil uVision as an external application</tooltip>
+				</tool_button>					
+			</tool_buttons>
+		</platform>
+		<platform name="linux64" default="no">
+			<tools>
+				<tool id="segger_jlink">
+					<name>J-Link software package components</name>
+					<min_version>5.12f</min_version> <!-- for future use -->
+					<max_version>5.12f</max_version> <!-- for future use -->
+					<official_url>https://www.segger.com/j-link-software.html</official_url> <!-- for info reasons -->
+					<!-- diasemi_download_url></diasemi_download_url>  for future use -->
+					<official_download_url direct_download="no">JLink_Linux_V512f_x86_64.tgz</official_download_url>
+				</tool>
+			</tools>
+			<tool_buttons>
+				<tool_button id="ide" status="invisible"> <!-- status can be enabled, disabled or invisible --> 
+					<name>IDE</name>
+					<tooltip>Switch to the IDE in the C/C++ perspective</tooltip>
+				</tool_button>
+				<tool_button id="smartsnippets_toolbox" status="enabled"> <!-- status can be enabled, disabled or invisible --> 
+					<name>SmartSnippets Toolbox</name>
+					<tooltip>Launch SmartSnippets Toolbox as an external application</tooltip>
+				</tool_button>
+				<tool_button id="segger_ozone" status="invisible">
+					<name>Segger Ozone</name>
+					<tooltip>Opens Segger&apos;s Ozone (JLink Debugger) as an external application</tooltip>
+				</tool_button>
+				<tool_button id="segger_systemview" status="invisible">
+					<name>Segger Systemview</name>
+					<tooltip>Opens Segger&apos;s SystemView as an external application</tooltip>
+				</tool_button>
+				<tool_button id="project_initializer" status="invisible">
+					<name>Application Creator</name>
+					<tooltip>Opens the Application Creator view</tooltip>
+				</tool_button>
+				<tool_button id="application_logger" status="invisible">
+					<name>Application Logger</name>
+					<tooltip>Opens the Application Logger view</tooltip>
+				</tool_button>
+				<tool_button id="keil_ide" status="disabled">
+					<name>Keil IDE</name>
+					<tooltip>Opens Keil uVision as an external application</tooltip>
+				</tool_button>					
+			</tool_buttons>
+		</platform>
+		<platform name="osx" default="no">
+			<tools>
+				<tool id="segger_jlink">
+					<name>J-Link software package components</name>
+					<min_version>5.12f</min_version> <!-- for future use -->
+					<max_version>5.12f</max_version> <!-- for future use -->
+					<official_url>https://www.segger.com/j-link-software.html</official_url> <!-- for info reasons -->
+					<official_download_url direct_download="no">JLink_MacOSX_V512f.pkg</official_download_url>
+				</tool>
+			</tools>
+			<tool_buttons>
+				<tool_button id="ide" status="invisible"> <!-- status can be enabled, disabled or invisible --> 
+					<name>IDE</name>
+					<tooltip>Switch to the IDE in the C/C++ perspective</tooltip>
+				</tool_button>
+				<tool_button id="smartsnippets_toolbox" status="invisible"> <!-- status can be enabled, disabled or invisible --> 
+					<name>SmartSnippets Toolbox</name>
+					<tooltip>Launch SmartSnippets Toolbox as an external application</tooltip>
+				</tool_button>
+				<tool_button id="segger_ozone" status="invisible">
+					<name>Segger Ozone</name>
+					<tooltip>Opens Segger&apos;s Ozone (JLink Debugger) as an external application</tooltip>
+				</tool_button>
+				<tool_button id="segger_systemview" status="invisible">
+					<name>Segger Systemview</name>
+					<tooltip>Opens Segger&apos;s SystemView as an external application</tooltip>
+				</tool_button>
+				<tool_button id="project_initializer" status="invisible">
+					<name>Application Creator</name>
+					<tooltip>Opens the Application Creator view</tooltip>
+				</tool_button>
+				<tool_button id="application_logger" status="invisible">
+					<name>Application Logger</name>
+					<tooltip>Opens the Application Logger view</tooltip>
+				</tool_button>
+				<tool_button id="keil_ide" status="disabled">
+					<name>Keil IDE</name>
+					<tooltip>Opens Keil uVision as an external application</tooltip>
+				</tool_button>					
+			</tool_buttons>
+		</platform>
+	</sdk>
+</tns:sdk_configuration>
+

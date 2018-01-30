@@ -9,8 +9,6 @@
 #include "board.h"
 #include "cmd.h"
 #include "console.h"
-#include "cube.h"
-#include "display.h"
 #include "fixture.h"
 #include "flash.h"
 #include "meter.h"
@@ -18,7 +16,6 @@
 #include "nvReset.h"
 #include "portable.h"
 #include "random.h"
-#include "testport.h"
 #include "tests.h"
 #include "timer.h"
 #include "uart.h"
@@ -72,7 +69,7 @@ void TestDebug4(void)
   char b[40]; int bz = sizeof(b);
   
   ConsolePrintf("DEBUG: verify helper is properly responding to unknown commands\n");
-  cmdSend(CMD_IO_HELPER, "not-a-real-command 1234", 500, CMD_OPTS_DEFAULT | CMD_OPTS_ALLOW_STATUS_ERRS); //& ~CMD_OPTS_EXCEPTION_EN
+  cmdSend(CMD_IO_HELPER, "not_real_command 1234", 500, (CMD_OPTS_DEFAULT | CMD_OPTS_ALLOW_STATUS_ERRS) & ~CMD_OPTS_EXCEPTION_EN);
   if( cmdStatus() == 0 ) {
     ConsolePrintf("unknown commands MUST NOT return success! (e=%i)\n", cmdStatus() );
     throw ERROR_TESTPORT_RSP_BAD_ARG;
@@ -81,7 +78,7 @@ void TestDebug4(void)
   srand( Timer::get() );
   ConsolePrintf("DEBUG: test helper's shell timeout feature\n");
   int timeout_s = (rand() & 0x7) + 3; //3-10s random
-  cmdSend(CMD_IO_HELPER, snformat(b,bz,"shell-timeout-test %u", timeout_s), (timeout_s+5)*1000, CMD_OPTS_DEFAULT | CMD_OPTS_ALLOW_STATUS_ERRS );
+  cmdSend(CMD_IO_HELPER, snformat(b,bz,"shell_timeout_test %u", timeout_s), (timeout_s+5)*1000, CMD_OPTS_DEFAULT | CMD_OPTS_ALLOW_STATUS_ERRS );
   if( cmdStatus() != 0 ) {
     ConsolePrintf("shell returned error %i\n", cmdStatus() );
     //throw ERROR_TESTPORT_RSP_BAD_ARG;

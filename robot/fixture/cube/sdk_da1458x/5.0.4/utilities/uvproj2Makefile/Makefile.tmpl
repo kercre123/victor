@@ -1,0 +1,102 @@
+#
+# The Makefile must define the following variables, which are used by common.mk:
+#  O: output directory
+#  STACK_SIZE: number of bytes to reserve for the stack
+#  HEAP_SIZE: number of bytes to reserve for the heap
+#  CORTEX_M: the Cortex-M model to target
+#  STARTUP_DEFS: define's that configure the start-up code
+#  CFLAGS: flags used for compilation AND linking
+#  LDFLAGS: flags used for linking
+#  ROM_MAP_FILE:ROM map file
+#  OBJ: list of object files to compile and link
+#  TARGET_ELF: name of the target (used in the generated images)
+#
+
+# output directory
+O ?= out
+
+# stack size
+STACK_SIZE = 0x0600
+# heap size
+HEAP_SIZE = 0x0100
+
+# Startup code
+CORTEX_M := 0
+STARTUP = startup_ARMCM$(CORTEX_M).S
+
+# startup configuration
+STARTUP_DEFS += -D__STACK_SIZE=$(STACK_SIZE) -D__HEAP_SIZE=$(HEAP_SIZE)
+#STARTUP_DEFS += -D__START=main
+#STARTUP_DEFS += -D__STARTUP_COPY_MULTIPLE
+STARTUP_DEFS += -D__STARTUP_CLEAR_BSS_MULTIPLE
+
+# -Os -flto -ffunction-sections -fdata-sections to compile for code size
+#CFLAGS += -flto
+CFLAGS += -ffunction-sections -fdata-sections
+# Link for code size
+GC := -Wl,--gc-sections
+
+# optimisation flags
+CFLAGS += -Os -fplugin=tree_switch_shortcut_elf
+
+
+# include search paths
+core_inc_search_paths := \
+@@core_inc_search_paths@@
+
+app_inc_search_paths := \
+@@app_inc_search_paths@@
+
+inc_search_paths := $(core_inc_search_paths) $(app_inc_search_paths)
+CFLAGS += $(foreach d,$(inc_search_paths),-I $(d))
+
+
+# global configuration
+CFLAGS += -include da14580_config.h
+
+ROM_MAP_FILE := ../../../misc/rom_symdef.txt
+
+LDFLAGS += $(USE_NANO) $(USE_NOHOST) $(LDSCRIPTS) $(GC) $(MAP)
+
+# don't complain about unknown attributes (i.e. zero_init)
+CFLAGS += -Wno-attributes
+
+
+# CHECK: this flag prevents the warning
+# "uses 2-byte wchar_t yet the output is to use 4-byte wchar_t;
+# use of wchar_t values across objects may fail"
+# revisit if things don't work as expected with wchar_t strings.
+LDFLAGS += -Wl,--no-wchar-size-warning
+
+
+# source files
+core_src_cfiles := \
+@@core_src_cfiles@@
+
+app_src_files := \
+@@app_src_files@@
+
+src_cfiles := $(core_src_cfiles) $(app_src_files)
+
+src_Sfiles  := \
+
+obj_cfiles := $(src_cfiles:.c=.o)
+obj_Sfiles := $(src_Sfiles:.S=.o)
+
+# patch objects
+patch_objs := \
+@@patch_objs@@
+
+
+startup_obj := $(STARTUP:.S=.o)
+
+
+OBJ := $(obj_cfiles) $(obj_Sfiles) $(startup_obj)
+
+
+# target
+TARGET_ELF := full_emb_sysram
+
+
+include common.mk
+

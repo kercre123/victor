@@ -1,20 +1,20 @@
 #include <string.h>
 #include "app.h"
+#include "bdaddr.h"
 #include "binaries.h"
 #include "board.h"
 #include "cmd.h"
 #include "console.h"
 #include "dut_uart.h"
 #include "fixture.h"
+#include "hwid.h"
 #include "meter.h"
 #include "portable.h"
+#include "random.h"
 #include "swd.h"
 #include "testcommon.h"
 #include "tests.h"
 #include "timer.h"
-
-#define CUBE_CMD_OPTS   (CMD_OPTS_DEFAULT)
-//#define CUBE_CMD_OPTS   (CMD_OPTS_LOG_ERRORS | CMD_OPTS_REQUIRE_STATUS_CODE) /*disable exceptions*/
 
 //-----------------------------------------------------------------------------
 //                  Dialog Load
@@ -38,7 +38,7 @@ static void da14580_load_program_(const uint8_t *bin, int size, const char* name
   ConsolePrintf("da14580 load %s: %ikB (%u)\n", (name ? name : "program"), CEILDIV(size,1024), size );
   
   //power up and hold in reset
-  Board::enableVBAT();
+  Board::powerOn(PWR_CUBEBAT, 0);
   DUT_RESET::write(1);
   DUT_RESET::init(MODE_OUTPUT, PULL_NONE, TYPE_PUSHPULL);
   
@@ -55,7 +55,7 @@ static void da14580_load_program_(const uint8_t *bin, int size, const char* name
       Tupdate = Timer::get();
       ConsolePrintf("%u,", vbat3v_mv);
     }
-    if( Timer::elapsedUs(Tupdate) > 100*1000 || Timer::elapsedUs(Tstart) > 1000*1000 ) //stable or timeout
+    if( Timer::elapsedUs(Tupdate) > 250*1000 || Timer::elapsedUs(Tstart) > 2000*1000 ) //stable or timeout
       break;
   }
   ConsolePrintf("%u\n", vbat3v_mv); //print final value
@@ -130,18 +130,18 @@ bool TestCubeDetect(void)
   TestCubeCleanup();
   
   //weakly pulled-up - it will detect as grounded when the board is attached
-  DUT_RX::init(MODE_INPUT, PULL_UP);
+  DUT_TX::init(MODE_INPUT, PULL_UP);
   Timer::wait(100);
-  bool detected = !DUT_RX::read(); //true if pin is pulled down by the board
-  DUT_RX::init(MODE_INPUT, PULL_NONE); //prevent pu from doing strange things to mcu (phantom power?)
+  bool detected = !DUT_TX::read(); //true if pin is pulled down by the board
+  DUT_TX::init(MODE_INPUT, PULL_NONE); //prevent pu from doing strange things to mcu (phantom power?)
   
   return detected;
 }
 
 void TestCubeCleanup(void)
 {
-  Board::disableVBAT();
-  Board::disableDUTPROG();
+  Board::powerOff(PWR_CUBEBAT,100);
+  Board::powerOff(PWR_DUTPROG);
   DUT_VDD::init(MODE_INPUT, PULL_NONE);
   DUT_UART::deinit();
   DUT_RESET::init(MODE_INPUT, PULL_NONE);
@@ -150,10 +150,21 @@ void TestCubeCleanup(void)
 static void ShortCircuitTest(void)
 {
   ConsolePrintf("short circuit tests\n");
-  const int ima_limit_VBAT = 450;
-  TestCommon::powerShortVBAT( 100, ima_limit_VBAT );
-  Board::disableVBAT();
+  const int ima_limit_CUBEBAT = 450;
+  Board::powerOff(PWR_CUBEBAT);
+  TestCommon::powerOnProtected(PWR_CUBEBAT, 100, ima_limit_CUBEBAT );
+  Board::powerOff(PWR_CUBEBAT,100);
 }
+
+//led test array
+typedef struct { char* name; uint16_t bits; int i_meas; int i_nominal; } led_test_t;
+led_test_t ledtest[] = {
+  {(char*)"All.RED",  0x1111, 0, 15}, {(char*)"All.GRN",  0x2222, 0, 15}, {(char*)"All.BLU",  0x4444, 0, 15},
+  {(char*)"D1.RED",   0x0001, 0, 4 }, {(char*)"D1.GRN",   0x0002, 0, 4 }, {(char*)"D1.BLU",   0x0004, 0, 4 },
+  {(char*)"D2.RED",   0x0010, 0, 4 }, {(char*)"D2.GRN",   0x0020, 0, 4 }, {(char*)"D2.BLU",   0x0040, 0, 4 },
+  {(char*)"D3.RED",   0x0100, 0, 4 }, {(char*)"D3.GRN",   0x0200, 0, 4 }, {(char*)"D3.BLU",   0x0400, 0, 4 },
+  {(char*)"D4.RED",   0x1000, 0, 4 }, {(char*)"D4.GRN",   0x2000, 0, 4 }, {(char*)"D4.BLU",   0x4000, 0, 4 }
+};
 
 static void CubeTest(void)
 {
@@ -163,46 +174,106 @@ static void CubeTest(void)
   Timer::delayMs(250); //wait for ROM+app reboot sequence
   DUT_UART::init(57600);
   
-  cmdSend(CMD_IO_DUT_UART, "getvers", CMD_DEFAULT_TIMEOUT, CUBE_CMD_OPTS);
-  cmdSend(CMD_IO_DUT_UART, "delay 500", 600, CUBE_CMD_OPTS);
-  cmdSend(CMD_IO_DUT_UART, "vbat", CMD_DEFAULT_TIMEOUT, CUBE_CMD_OPTS);
-  cmdSend(CMD_IO_DUT_UART, "vled 1", CMD_DEFAULT_TIMEOUT, CUBE_CMD_OPTS); //turns on VLED reg
+  cmdSend(CMD_IO_DUT_UART, "getvers");
+  cmdSend(CMD_IO_DUT_UART, "vbat");
+  //cmdSend(CMD_IO_DUT_UART, "delay 500", 600);
   
-  uint32_t start = Timer::get();
-  uint16_t leds[] = {0x249/*RED*/, 0x492/*GRN*/, 0x924/*BLU*/};
-  while( Timer::elapsedUs(start) < 1500*1000 ) {
-    for(int n=0; n<sizeof(leds)/sizeof(uint16_t); n++) {
-      cmdSend(CMD_IO_DUT_UART, snformat(b,bz,"leds 0x%x", leds[n]), CMD_DEFAULT_TIMEOUT, CUBE_CMD_OPTS);
-      Timer::delayMs(500);
-    }
+  //measure LED current draws
+  cmdSend(CMD_IO_DUT_UART, "vled 1");
+  Timer::delayMs(50); //wait for VLED boost reg to stabilize
+  int i_base = Meter::getCurrentMa(PWR_CUBEBAT,10);
+  for(int n=0; n < sizeof(ledtest)/sizeof(led_test_t); n++)
+  {
+    cmdSend(CMD_IO_DUT_UART, snformat(b,bz,"leds 0x%x", ledtest[n].bits));
+    Timer::delayMs(20);
+    ledtest[n].i_meas = Meter::getCurrentMa(PWR_CUBEBAT,8);
   }
-  cmdSend(CMD_IO_DUT_UART, "leds 0", CMD_DEFAULT_TIMEOUT, CUBE_CMD_OPTS);
-  cmdSend(CMD_IO_DUT_UART, "vled 0", CMD_DEFAULT_TIMEOUT, CUBE_CMD_OPTS);
+  cmdSend(CMD_IO_DUT_UART, "leds 0");
+  cmdSend(CMD_IO_DUT_UART, "vled 0");
+  
+  //print/verify results
+  int e = ERROR_OK;
+  ConsolePrintf("base current %imA\n", i_base);
+  for(int n=0; n < sizeof(ledtest)/sizeof(led_test_t); n++)
+  {
+    int i = ledtest[n].i_meas - i_base;
+    bool pass = (ledtest[n].i_nominal-1) <= i && i <= (ledtest[n].i_nominal+1);
+    ConsolePrintf("%s current %imA %s\n", ledtest[n].name, i, pass ? "ok" : "--FAIL--");
+    if( !pass )
+      e = ERROR_CUBE_LED;
+  }
+  if( e != ERROR_OK )
+    throw e;
   
   //DEBUG: "test" accel
-  cmdSend(CMD_IO_DUT_UART, "accel", 250, CUBE_CMD_OPTS);
+  //cmdSend(CMD_IO_DUT_UART, "accel", 250);
   
-  //DEBUG: console bridge, manual testing
-  cmdSend(CMD_IO_DUT_UART, "echo on", CMD_DEFAULT_TIMEOUT, CUBE_CMD_OPTS);
+  /*/DEBUG: console bridge, manual testing
+  cmdSend(CMD_IO_DUT_UART, "echo on");
   TestCommon::consoleBridge(TO_DUT_UART,2000);
   //-*/
 }
 
 static void OTPbootloader(void)
 {
-  //XXX: is this getting rolled into cubetest?
+  char b[60]; int bz = sizeof(b);
+  
   da14580_load_program_( g_CubeStub, g_CubeStubEnd-g_CubeStub, "cube otp" );
   Timer::delayMs(250); //wait for ROM+app reboot sequence
   DUT_UART::init(57600);
   
-  cmdSend(CMD_IO_DUT_UART, "getvers", CMD_DEFAULT_TIMEOUT, CUBE_CMD_OPTS);
+  cmdSend(CMD_IO_DUT_UART, "getvers");
   
-  //DEBUG: console bridge, manual testing
-  cmdSend(CMD_IO_DUT_UART, "echo on", CMD_DEFAULT_TIMEOUT, CUBE_CMD_OPTS);
-  Board::enableDUTPROG();
-  TestCommon::consoleBridge(TO_DUT_UART,2000);
-  Board::disableDUTPROG();
-  //-*/
+  //Generate bd address
+  bdaddr_t bdaddr;
+  bdaddr_generate(&bdaddr, GetRandom ); //use RNG peripheral for proper randomness
+  
+  //prepare hwardware ids
+  cubeid_t cubeid;
+  cubeid.esn = CUBEID_ESN_INVALID;
+  cubeid.hwrev = CUBEID_HWREV_DVT2;
+  cubeid.model = (g_fixmode == FIXMODE_CUBE1) ? CUBEID_MODEL_CUBE1 : ((g_fixmode == FIXMODE_CUBE2) ? CUBEID_MODEL_CUBE2 : CUBEID_MODEL_INVALID);
+  
+  //pull a new s/n for release builds only (limited supply, don't waste during debug)
+  //if( g_isReleaseBuild )
+    cubeid.esn = fixtureGetSerial(); //get next 12.20 esn in the sequence
+  
+  //XXX: how long should this take?
+  int write_result = -1;
+  Board::powerOn(PWR_DUTPROG);
+  {
+    char *cmd = snformat(b,bz,"otp write %s 0x%08x %u %u", bdaddr2str(&bdaddr), cubeid.esn, cubeid.hwrev, cubeid.model);
+    cmdSend(CMD_IO_DUT_UART, cmd, 60*1000, (CMD_OPTS_DEFAULT | CMD_OPTS_ALLOW_STATUS_ERRS) & ~CMD_OPTS_EXCEPTION_EN );
+    write_result = cmdStatus();
+    
+    //DEBUG: console bridge, manual testing
+    //cmdSend(CMD_IO_DUT_UART, "echo on");
+    TestCommon::consoleBridge(TO_DUT_UART,2000);
+    //-*/
+  }
+  Board::powerOff(PWR_DUTPROG);
+  
+  if( write_result != 0 )
+    throw ERROR_CUBE_VERIFY_FAILED;
+}
+
+void CubeBootDebug(void)
+{
+  da14580_load_program_( g_CubeBoot, g_CubeBootEnd-g_CubeBoot, "cube boot" );
+  Timer::delayMs(250); //wait for ROM+app reboot sequence
+  //DUT_UART::init(57600);
+  TestCommon::consoleBridge(TO_DUT_UART,5000);
+}
+
+TestFunction* TestCube0GetTests(void)
+{
+  static TestFunction m_tests[] = {
+    ShortCircuitTest,
+    CubeTest,
+    //CubeBootDebug,
+    NULL,
+  };
+  return m_tests;
 }
 
 TestFunction* TestCube1GetTests(void)
@@ -219,7 +290,10 @@ TestFunction* TestCube1GetTests(void)
 TestFunction* TestCube2GetTests(void)
 {
   static TestFunction m_tests[] = {
-    NULL
+    ShortCircuitTest,
+    CubeTest,
+    OTPbootloader,
+    NULL,
   };
   return m_tests;
 }
@@ -260,4 +334,20 @@ TestFunction* TestCubeFinishXGetTests(void)
   };
   return m_tests;
 }
+
+//-----------------------------------------------------------------------------
+//                  Debug
+//-----------------------------------------------------------------------------
+
+void DbgPowerWaitTest(void)
+{
+  ConsolePrintf("power on and wait (debug)\n");
+  const int ima_limit_CUBEBAT = 450;
+  TestCommon::powerOnProtected(PWR_CUBEBAT, 100, ima_limit_CUBEBAT );
+  //leave power on
+  
+  //DEBUG: console bridge, manual testing
+  cmdSend(CMD_IO_DUT_UART, "echo on", CMD_DEFAULT_TIMEOUT, (CMD_OPTS_DEFAULT | CMD_OPTS_ALLOW_STATUS_ERRS) & ~CMD_OPTS_EXCEPTION_EN );
+  TestCommon::consoleBridge(TO_DUT_UART,10*1000);
+}//-*/
 

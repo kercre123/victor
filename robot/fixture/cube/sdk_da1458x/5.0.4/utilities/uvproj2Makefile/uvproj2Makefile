@@ -1,0 +1,91 @@
+#!/bin/bash
+
+version="1.0"
+
+
+function show_version () {
+	echo "BTLE Keil project to Makefile converter script v$version"
+}
+
+
+function usage () {
+	show_version
+	echo -e "\nUsage: $0 [options]"
+	echo -e "\t-i UVPROJ              input .uvproj file (must be defined)"
+	echo -e "\t-o OUTPUT_MAKEFILE     output Makefile (default: Makefile.out)"
+	echo -e "\t-t MAKEFILE_TEMPLATE   Makefile template (default: Makefile.tmpl)"
+	echo -e "\t-v:                    show version"
+	echo -e "\nFor bug reports, suggestions and questions,"
+	echo "contact aristotelis.iordanidis@diasemi.com"
+	exit 1
+}
+
+res=1
+show_usage=1
+tmpl=Makefile.tmpl
+out=Makefile.out
+uvproj=
+
+while getopts 'i:o:t:v' opt
+do
+	case $opt in
+		i)	uvproj="$OPTARG"
+			show_usage=0
+			;;
+		o)	out="$OPTARG"
+			show_usage=0
+			;;
+		t)	tmpl="$OPTARG"
+			show_usage=0
+			;;
+		v)	show_version
+			exit 0
+			;;
+		*)	;;
+	esac
+done
+
+if [ $show_usage != 0  -o  ! "$uvproj" ]
+then
+	usage
+	exit $res
+fi
+
+printf "Converting %s to %s using %s as template...\n" "$uvproj" "$out" "$tmpl"
+[ ! -r "$uvproj" ] && { echo -e "\a\nError: cannot read $uvproj..." ;  exit 2 ; }
+[ ! -r "$tmpl" ] && { echo -e "\a\nError: cannot read $tmpl" ;  exit 3 ; }
+
+res=0
+
+# extract include search paths
+core_inc_search_paths=$(sed -n 's/<IncludePath>\(.*\)<\/IncludePath>/\1/ p' $uvproj | sed 's!\\!\\/!g' | sed 's/;/ \\\\\\n/g' | sed ':a;N;$!ba;s/\n/ \\\\\\n/g')
+# substiture placeholder in the template
+sed "s!\@\@core_inc_search_paths\@\@!${core_inc_search_paths} \\\\!" $tmpl > $out
+sed '/^core_inc_search_paths /,/^$/ { /Keil/ d ; /^[[:blank:]]* \\/ d } ' -i $out
+
+# extract app include search paths
+app_inc_search_paths=$(sed -n '/^core_inc_search_paths /,/^$/ { /app_project/ p }' $out | sed ':a;N;$!ba;s/\n/ \\\\\\n/g')
+sed '/^core_inc_search_paths /,/^$/ { /app_project/ d ; s/^[[:blank:]]*// }' -i $out
+# substiture placeholder in the template
+sed "s!\@\@app_inc_search_paths\@\@!${app_inc_search_paths} \\\\!" -i $out
+
+# extract names of source files
+core_src_cfiles=$(sed -n '/<FileType>1<\/FileType>/{n ; p}' $uvproj | sed 's/^[[:blank:]]*<FilePath>\(.*\)<\/FilePath>/\1/' | sed 's!\\!\\/!g' | sed ':a;N;$!ba;s/\n/ \\\\\\n/g')
+# substiture placeholder in the template
+sed "s/\@\@core_src_cfiles\@\@/${core_src_cfiles} \\\\/" -i $out
+
+# extract names of app source files
+app_src_files=$(sed -n '/^core_src_cfiles /,/^$/ { /app_project/ p }' $out | sed ':a;N;$!ba;s/\n/ \\\\\\n/g')
+sed '/^core_src_cfiles /,/^$/ { /app_project/ d ; s/^[[:blank:]]*// }' -i $out
+# substiture placeholder in the template
+sed "s!\@\@app_src_files\@\@!${app_src_files} \\\\!" -i $out
+
+# extract names of patch files
+patch_objs=$(sed -n '/<FileType>3<\/FileType>/{n ; p}' $uvproj | sed 's/^[[:blank:]]*<FilePath>\(.*\)<\/FilePath>/\1/' | sed 's!\\!\\/!g' | sed ':a;N;$!ba;s/\n/ \\\\\\n/g')
+# substiture placeholder in the template
+sed "s/\@\@patch_objs\@\@/${patch_objs} \\\\/" -i $out
+
+exit $res
+
+# vim: set filetype=sh :
+

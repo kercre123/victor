@@ -1,0 +1,31 @@
+LICENSES
+
+NAME                    LICENSE FILE PATH                                        LICENSE TYPE    COPYRIGHT                       COMMENTS
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+SDK core and            doc\dialog_license.txt                                   Dialog          Dialog Semiconductor Ltd        Contained in file headers
+applications                                                                     proprietary                                     where applicable
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+BLE stack                                                                        RivieraWaves    RivieraWaves                    Licensed under the SLA
+                                                                                 proprietary                                     of the SDK
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+AES implementation      utilities\mkimage\sw_aes_license.txt                     Revised BSD     Cameron Rich                    Contained in file headers
+                                                                                                                                 where applicable
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+getopt                  utilities\prod_test\prod_test_cmds\getopt_license.txt    BSD             Microsoft Corporation,          Contained in file headers
+                                                                                                 The Regents of the University   where applicable
+                                                                                                 of California
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+crc32                   utilities\crc32_license.txt                              unrestricted use                                Contained in file headers
+                                                                                                                                 where applicable
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+ARM                     sdk\platform\arm_license.txt                             Revised BSD     ARM LIMITED                     Contained in file headers
+                                                                                                                                 where applicable
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+This software includes both proprietary and open source components. The proprietary components may only be used after execution of the
+relevant Dialog Semiconductor Licensing Agreement. If you have not executed such an agreement you are not authorised to use this software.
+All open source components constitute a separate delivery and are licensed according to the applicable terms of their respective open source
+licenses. All open source software is delivered "AS IS" with no warranties. While Dialog Semiconductor seeks to provide complete and
+accurate licensing information with regard to each open source package, Dialog Semiconductor does not warrant or represent that the
+licensing information is complete or error-free. Please contact customer support for any source code requests, as well as for any 
+licensing inquiries with respect to the proprietary components.

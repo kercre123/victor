@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual C++ Express 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "host_spotai", "host_spotai\host_spotai.vcxproj", "{5F1823C3-5188-43D2-AC85-5B9841792A0C}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "host_spotai_581", "host_spotai_581\host_spotai_581.vcxproj", "{26EACF5E-2974-41D2-B33A-4BCCE815C562}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5F1823C3-5188-43D2-AC85-5B9841792A0C}.Debug|Win32.ActiveCfg = Debug|Win32
+		{5F1823C3-5188-43D2-AC85-5B9841792A0C}.Debug|Win32.Build.0 = Debug|Win32
+		{5F1823C3-5188-43D2-AC85-5B9841792A0C}.Release|Win32.ActiveCfg = Release|Win32
+		{5F1823C3-5188-43D2-AC85-5B9841792A0C}.Release|Win32.Build.0 = Release|Win32
+		{26EACF5E-2974-41D2-B33A-4BCCE815C562}.Debug|Win32.ActiveCfg = Debug|Win32
+		{26EACF5E-2974-41D2-B33A-4BCCE815C562}.Debug|Win32.Build.0 = Debug|Win32
+		{26EACF5E-2974-41D2-B33A-4BCCE815C562}.Release|Win32.ActiveCfg = Release|Win32
+		{26EACF5E-2974-41D2-B33A-4BCCE815C562}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

@@ -85,6 +85,7 @@ int swd_stm32_deinit(); //teardown & de-init
 int swd_stm32_erase(void);
 int swd_stm32_flash(uint32_t flash_addr, const uint8_t* bin_start, const uint8_t* bin_end, bool verify = true); //return 0 (success) or error code
 int swd_stm32_verify(uint32_t flash_addr, const uint8_t* bin_start, const uint8_t* bin_end);
+int swd_stm32_read(uint32_t flash_addr, uint8_t *out_buf, int size);
 
 //Lock the JTAG port - upon next reset, JTAG will not work again - EVER
 //Returns 0 on success, 1 on erase failure (chip will survive), 2 on program failure (dead)

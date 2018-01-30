@@ -7,13 +7,11 @@
 #include "board.h"
 #include "console.h"
 #include "crypto/crypto.h"
-#include "display.h"
 #include "fixture.h"
 #include "flash.h"
 #include "meter.h"
 #include "motorled.h"
 #include "nvReset.h"
-#include "testport.h"
 #include "timer.h"
 #include "uart.h"
 
@@ -277,18 +275,18 @@ static void SetMode(void)
 
 static void SetSerial(void)
 {
-  char* arg;
+  char* arg = GetArgument(1);
   u32 serial = FIXTURE_SERIAL;
+  sscanf(arg, "%i", &serial);
   
   // Check if this fixture already has a serial
-  if (serial != 0xFFFFffff)
+  if (FIXTURE_SERIAL != 0xFFFFffff)
   {
-    ConsolePrintf("Fixture already has serial: %i\n", serial);
-    throw ERROR_SERIAL_EXISTS;
+    if( serial > 0 ) { //allow overwrite of existing serial to 0 (invalid)
+      ConsolePrintf("Fixture already has serial: %i\n", serial);
+      throw ERROR_SERIAL_EXISTS;
+    }
   }
-  
-  arg = GetArgument(1);
-  sscanf(arg, "%i", &serial);
   
   //if ((u32)serial >= 0xf0)
   //  throw ERROR_SERIAL_INVALID;
@@ -341,13 +339,13 @@ static void SetDateCode(void)
 
 static void TestCurrent(void)
 {
-  s32 v = Meter::getVextCurrentMa();
+  s32 v = Meter::getCurrentMa(PWR_VEXT);
   ConsolePrintf("I = %i, %X\n", v, v);
 }
 
 static void TestVoltage(void)
 {
-  s32 v = Meter::getVextVoltageMv();
+  s32 v = Meter::getVoltageMv(PWR_VEXT);
   ConsolePrintf("V = %i, %X\n", v, v);
 }
 
@@ -386,10 +384,10 @@ static void DutProgCmd_(void)
   try { enable = strtol(GetArgument(1),0,0); } catch (int e) { }
   
   if( enable ) {
-    Board::enableDUTPROG();
+    Board::powerOn(PWR_DUTPROG);
     ConsolePrintf("DUT_PROG enabled\n");
   } else {
-    Board::disableDUTPROG();
+    Board::powerOff(PWR_DUTPROG);
     ConsolePrintf("DUT_PROG disabled\n");
   }
 }

@@ -186,6 +186,27 @@ int swd_stm32_erase(void)
   return ERROR_OK;
 }
 
+int swd_stm32_read(uint32_t flash_addr, uint8_t *out_buf, int size)
+{
+  SwdPrintf("flash read %i bytes @ 0x%08x-0x%08x...", size, flash_addr, flash_addr+size-1 );
+  
+  if( !swd_initialized )
+    THROW_RETURN( ERROR_INVALID_STATE );
+  if( !out_buf || size < 1 )
+    THROW_RETURN( ERROR_BAD_ARG );
+  
+  uint32_t remain = size;
+  uint32_t Tstart = Timer::get();
+  for(int addr=0; addr<size; addr+=4, remain-=4 )
+  {
+    uint32_t w = swd_read32(flash_addr+addr);
+    memcpy( &out_buf[addr], &w, MIN(4,remain) );
+  }
+  
+  SwdPrintf("done [%ums]\n", (Timer::get() - Tstart)/1000 );
+  return ERROR_OK;
+}
+
 int swd_stm32_verify(uint32_t flash_addr, const uint8_t* bin_start, const uint8_t* bin_end)
 {
   int size = bin_end - bin_start;

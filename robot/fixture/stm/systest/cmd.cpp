@@ -134,12 +134,12 @@ int cmd_process(char* s)
   //is this a command?
   int len = strlen(s);
   if( !strncmp(s, CMD_PREFIX, sizeof(CMD_PREFIX)-1) && len > sizeof(CMD_PREFIX)-1 ) //valid cmd formatting
-    s += sizeof(CMD_PREFIX)-1; //skip the prefix for parsing
+    s += sizeof(CMD_PREFIX)-1, len -= sizeof(CMD_PREFIX)-1; //skip the prefix for parsing
   else
     return STATUS_NOT_A_CMD;
   
   //copy command arg into local buffer
-  char cmd_buf[10], *cmd = console_getarg(s, 0, cmd_buf, sizeof(cmd_buf));
+  char cmd_buf[20], *cmd = console_getarg(s, 0, cmd_buf, sizeof(cmd_buf));
   
   //================
   //get version
@@ -213,8 +213,7 @@ int cmd_process(char* s)
   }//-*/
   
   //==========================
-  //VDD
-  //>>vdd {0/1}
+  //>>vdd {0,1}
   //==========================
   if( !strcmp(cmd, "vdd") )
   {
@@ -225,32 +224,38 @@ int cmd_process(char* s)
     int on = strtol(console_getargl(s,1), 0,0);
     int rsp = respond_(cmd, STATUS_OK, snformat(b,bz, on ? "on" : "off") );
     
-    Board::vdd( on > 0 );
+    Board::pwr_vdd( on > 0 );
     return rsp;
   }//-*/
   
   //==========================
-  //VBATs
-  //>>vbats {on,vbat,vext,off}
+  //>>vdds {0,1}
   //==========================
-  if( !strcmp(cmd, "vbats") )
+  if( !strcmp(cmd, "vdds") )
+  {
+    if( console_num_args(s) < 2 )
+      return respond_(cmd, STATUS_ARG_NA, "missing-args");
+    
+    //since this will probably shut off the mcu, respond before enacting
+    int on = strtol(console_getargl(s,1), 0,0);
+    Board::pwr_vdds( on > 0 );
+    
+    return respond_(cmd, STATUS_OK, snformat(b,bz, on ? "on" : "off") );
+  }//-*/
+  
+  //==========================
+  //>>vmain {0,1}
+  //==========================
+  if( !strcmp(cmd, "vmain") )
   {
     int nargs = console_num_args(s);
     if( nargs < 2 )
       return respond_(cmd, STATUS_ARG_NA, "missing-args");
     
-    if( !strcmp(console_getargl(s,1), "vbat") || !strcmp(console_getargl(s,1), "on")) {
-      Board::vbats(VBATS_SRC_VBAT);
-      snformat(b,bz,"on,vbat");
-    } else if( !strcmp(console_getargl(s,1), "vext") ) {
-      Board::vbats(VBATS_SRC_VEXT);
-      snformat(b,bz,"on,vext");
-    } else { //"off", or any unrecognized param
-      Board::vbats(VBATS_SRC_OFF);
-      snformat(b,bz,"off");
-    }
+    int on = strtol(console_getargl(s,1), 0,0);
+    Board::pwr_vmain( on > 0 );
     
-    return respond_(cmd, STATUS_OK, b );
+    return respond_(cmd, STATUS_OK, snformat(b,bz, on ? "on" : "off") );
   }//-*/
   
   //==========================
@@ -263,18 +268,10 @@ int cmd_process(char* s)
     if( nargs < 2 )
       return respond_(cmd, STATUS_ARG_NA, "missing-args");
     
-    if( !strcmp(console_getargl(s,1), "on") || !strcmp(console_getargl(s,1), "low")) {
-      Board::charger(CHRG_LOW);
-      snformat(b,bz,"on,low");
-    } else if( !strcmp(console_getargl(s,1), "high") ) {
-      Board::charger(CHRG_HIGH);
-      snformat(b,bz,"on,high");
-    } else { //"off", or any unrecognized param
-      Board::charger(CHRG_HIGH);
-      snformat(b,bz,"off");
-    }
+    int on = strtol(console_getargl(s,1), 0,0);
+    Board::pwr_charge( on > 0 );
     
-    return respond_(cmd, STATUS_OK, b );
+    return respond_(cmd, STATUS_OK, snformat(b,bz, on ? "on" : "off") );
   }//-*/
   
   //==========================

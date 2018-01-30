@@ -1,0 +1,185 @@
+{
+    "failLimit": 1000,
+    "userMessages": {
+        "0": {
+            "title": "Success",
+            "message": "Operation completed successfully",
+            "action": ""
+        },
+        "1": {
+            "title": "Success",
+            "message": "Project successfully saved",
+            "action": ""
+        },
+        "2": {
+            "title": "Success",
+            "message": "Profile successfully saved",
+            "action": ""
+        },
+        "3": {
+            "title": "Success",
+            "message": "Profile successfully removed",
+            "action": "Any newly created custom profiles, services or characteristics may still be imported locally"
+        },
+        "4": {
+            "title": "Success",
+            "message": "No changes needed to be saved",
+            "action": ""
+        },
+        "10": {
+            "title": "Success",
+            "message": "Project successfully created",
+            "action": ""
+        },
+        "70": {
+            "title": "Profile Engine Success",
+            "message": "Profile generated/updated successfully",
+            "action": ""
+        },
+        "71": {
+            "title": "Profile Engine Success",
+            "message": "Profile newly generated",
+            "action": ""
+        },
+        "72": {
+            "title": "Profile Engine Success",
+            "message": "Profile generated with previous user source code removed",
+            "action": ""
+        },
+        "90": {
+            "title": "Warning",
+            "message": "There are unsaved changes, are you sure you want to cancel?",
+            "action": ""
+        },
+        "1000": {
+            "title": "Failure",
+            "message": "Unknown failure",
+            "action": "Contact support"
+        },
+        "1001": {
+            "title": "Failure",
+            "message": "Invalid configuration file",
+            "action": "Please use config_generator.py to create a valid configuration file"
+        },
+        "1002": {
+            "title": "Failure",
+            "message": "Invalid location path",
+            "action": "Please choose a valid path"
+        },
+        "1003": {
+            "title": "Failure",
+            "message": "Invalid project config file",
+            "action": "Contact support"
+        },
+        "1004": {
+            "title": "Failure",
+            "message": "Invalid project directory structure",
+            "action": "Please restart the project initialiser tool and create a non altered project directory structure"
+        },
+        "1005": {
+            "title": "Failure",
+            "message": "This project was not created by the project initialiser tool and therefore cannot be opened",
+            "action": "Please open a project that was previously created by the project initialiser tool"
+        },
+        "1006": {
+            "title": "Failure",
+            "message": "A directory with the same name as the project name already exists",
+            "action": "Please use a different directory location or alternative project name"
+        },
+        "1010": {
+            "title": "Profile Save Failure",
+            "message": "Cannot create new custom service. Custom service limit number reached.",
+            "action": "Please delete an existing custom service before creating a new one"
+        },
+        "1011": {
+            "title": "Profile Save Failure",
+            "message": "Missing a valid cidentifier for custom service",
+            "action": "Please enter a valid cidentifier for your custom service"
+        },
+        "1012": {
+            "title": "Profile Save Failure",
+            "message": "Missing a valid uuid for custom service",
+            "action": "Please enter a valid uuid for your custom service"
+        },
+        "1013": {
+            "title": "Profile Save Failure",
+            "message": "Missing a valid cidentifier for custom characteristic",
+            "action": "Please enter a valid cidentifier for your custom characteristic"
+        },
+        "1014": {
+            "title": "Profile Save Failure",
+            "message": "Missing a valid uuid for custom characteristic",
+            "action": "Please enter a valid uuid for your custom characteristic"
+        },
+        "1015": {
+            "title": "Profile Save Failure",
+            "message": "Missing a lower bound value for valid range descriptor",
+            "action": "Please enter a lower bound value for the valid range descriptor"
+        },
+        "1016": {
+            "title": "Profile Save Failure",
+            "message": "Missing a upper bound value for valid range descriptor",
+            "action": "Please enter a upper bound value for the valid range descriptor"
+        },
+        "1020": {
+            "title": "Failure",
+            "message": "Project json save failed",
+            "action": ""
+        },
+        "1021": {
+            "title": "Failiure",
+            "message": "Profile json save failed",
+            "action": ""
+        },
+        "1022": {
+            "title": "Failure",
+            "message": "Profile json remove failed",
+            "action": ""
+        },
+        "1030": {
+            "title": "Project Save Failure",
+            "message": "An invalid hexadecimal value has been entered.",
+            "action": "Please enter valid hexadecimal values"
+        },
+        "1031": {
+            "title": "Project Save Failure",
+            "message": "A hexadecimal value is missing.",
+            "action": "Please enter all required hexadecimal values"
+        },
+        "1050": {
+            "title": "Config Engine Failure",
+            "message": "Could not create destination directory",
+            "action": ""
+        },
+        "1051": {
+            "title": "Config Engine Failure",
+            "message": "Failed to copy template directory to destination",
+            "action": "Please check the Dialog SDK Tools have been installed and located in the correct location"
+        },
+        "1052": {
+            "title": "Config Engine Failure",
+            "message": "Failed to rename file",
+            "action": ""
+        },
+        "1053": {
+            "title": "Config Engine Failure",
+            "message": "Failed to modify Keil Project File",
+            "action": ""
+        },
+        "1054": {
+            "title": "Config Engine Failure",
+            "message": "Failed to modify Keil Option File",
+            "action": ""
+        },
+        "1070": {
+            "title": "Profile Engine Failure",
+            "message": "Unable to find templates.",
+            "action": ""
+        },
+        "1071": {
+            "title": "Profile Engine Failure",
+            "message": "Unable to copy file to project directory.",
+            "action": ""
+        }
+    }
+}

@@ -30,7 +30,7 @@ void test_manage_(void)
     Contacts::write( snformat(b,bz,"%is\n",txcnt+=10) );
   } //-*/
   
-  //blinky the led
+  /*/blinky the led
   static uint32_t Tled=0;
   if( Timer::elapsedUs(Tled) >= 500*1000 ) {
     Tled = Timer::get();
@@ -47,12 +47,6 @@ void test_manage_(void)
 int main(void)
 {
   Board::init();
-  
-  //Note: if using the debug connector, we supply VBAT into VBATs rail...so they need to be electrically connected
-  //also, don't do anything stupid like enabling VEXT->VBATs
-  //#warning "initialized for use with debug connector. Disabling VBATs will kill the mcu."
-  //Board::vbats(VBATS_SRC_VBAT);
-  
   Timer::init();
   
   Contacts::init(); //charge contact uart
@@ -65,7 +59,7 @@ int main(void)
 	while(1)
 	{
     contacts_manage();
-    test_manage_();
+    //test_manage_();
 	}
 }
 

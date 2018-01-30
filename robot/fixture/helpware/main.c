@@ -21,7 +21,7 @@
 #define FIXTURE_BAUD B1000000
 
 
-#define LINEBUFSZ 255
+#define LINEBUFSZ 1024
 
 
 
@@ -222,7 +222,6 @@ int fixture_serial(int serialFd) {
 static int gSerialFd;
 
 
-#define LINEBUFSZ 255
 
 
 
@@ -332,6 +331,13 @@ int main(int argc, const char* argv[])
   serial_write(gSerialFd, (uint8_t*)"reset\n", 6);
 
   enable_kbhit(1);
+  
+  //process bootup
+  exit = fixture_serial(gSerialFd);
+  exit |= user_terminal();
+  printf("helper build " __DATE__ " " __TIME__ "\n");
+  fflush(stdout);
+  
   while (!exit)
   {
     exit = fixture_serial(gSerialFd);

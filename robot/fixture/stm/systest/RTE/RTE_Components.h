@@ -4,7 +4,7 @@
  *      *** Do not modify ! ***
  *
  * Project: 'systest' 
- * Target:  'P3' 
+ * Target:  'DVT2-B' 
  */
 
 #ifndef RTE_COMPONENTS_H

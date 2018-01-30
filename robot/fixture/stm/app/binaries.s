@@ -18,6 +18,14 @@ g_CubeStub
   INCBIN releases\\cubeotp.bin
 g_CubeStubEnd
 
+  ;DEBUG -- include raw cube bootloader bin for ram-load testing
+  ALIGN
+  EXPORT g_CubeBoot
+  EXPORT g_CubeBootEnd
+g_CubeBoot
+  //INCBIN releases\\cubeboot.bin
+g_CubeBootEnd
+
   ALIGN
   EXPORT g_BodyTest
   EXPORT g_BodyTestEnd

@@ -1,0 +1,14 @@
+direct otp readback from a chip populated on cube 2.0 pcb
+never been OTP'd, but it has had factory_test app loaded...
+
+//Read data from blank DA14580 chip (non-zero fields):
+//FAC_rf_trim       = 0x00356888
+//FAC_crc           = 0x00008788
+//FAC_timestamp     = 0x0F9BE032
+//FAC_tester        = 0x000500DA
+//package           = 0x000000AA (QFN40)
+//cal_flags         = 0xA5A5002D (trim: VCO + RC16 + Bandgap + LNA)
+//FAC_trim_LNA      = 0x07421290
+//FAC_trim_bandgap  = 0x00002BB1
+//FAC_trim_RC16     = 0x00000008
+//FAC_trim_VCO      = 0x00000002

@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual C++ Express 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "host_proxr_sdk", "host_proxr_sdk\host_proxr_sdk.vcxproj", "{AA943688-3A29-422C-81C4-C290F6B894D8}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "host_proxr_sdk_581", "host_proxr_sdk_581\host_proxr_sdk_581.vcxproj", "{35A8E371-3335-4B38-AB96-E79655BF2BA0}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{AA943688-3A29-422C-81C4-C290F6B894D8}.Debug|Win32.ActiveCfg = Debug|Win32
+		{AA943688-3A29-422C-81C4-C290F6B894D8}.Debug|Win32.Build.0 = Debug|Win32
+		{AA943688-3A29-422C-81C4-C290F6B894D8}.Release|Win32.ActiveCfg = Release|Win32
+		{AA943688-3A29-422C-81C4-C290F6B894D8}.Release|Win32.Build.0 = Release|Win32
+		{35A8E371-3335-4B38-AB96-E79655BF2BA0}.Debug|Win32.ActiveCfg = Debug|Win32
+		{35A8E371-3335-4B38-AB96-E79655BF2BA0}.Debug|Win32.Build.0 = Debug|Win32
+		{35A8E371-3335-4B38-AB96-E79655BF2BA0}.Release|Win32.ActiveCfg = Release|Win32
+		{35A8E371-3335-4B38-AB96-E79655BF2BA0}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

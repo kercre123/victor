@@ -34,7 +34,7 @@ typedef enum cmd_io_e cmd_io;
 #define CMD_OPTS_ALLOW_STATUS_ERRS    0x0010  //status!=0 not considered an error
 #define CMD_OPTS_DBG_PRINT_ENTRY      0x1000  //print function entry with parsed params
 #define CMD_OPTS_DBG_PRINT_RSP_TIME   0x2000  //print elapsed cmd time
-#define CMD_OPTS_DEFAULT              (CMD_OPTS_EXCEPTION_EN | CMD_OPTS_LOG_ERRORS | CMD_OPTS_REQUIRE_STATUS_CODE)
+#define CMD_OPTS_DEFAULT              (CMD_OPTS_EXCEPTION_EN | CMD_OPTS_LOG_ERRORS | CMD_OPTS_REQUIRE_STATUS_CODE | CMD_OPTS_DBG_PRINT_RSP_TIME)
 
 //Send a command and return response string
 //@return response (NULL if timeout)
@@ -49,6 +49,9 @@ uint32_t cmdTimeMs(); //time it took for most recent cmdSend() to finish
 //-----------------------------------------------------------------------------
 //Parsing methods for ascii input strings.
 //Note: valid strings must guarantee no \r \n chars and one valid \0 terminator
+
+//@return parsed integer value of s. INT_MIN on parse err.
+int cmdParseInt32(char *s);
 
 //@return n-th argument (mutable static copy, \0-terminated). NULL if !exist.
 //n=0 is command. strings enclosed by "" are treated as a single arg.

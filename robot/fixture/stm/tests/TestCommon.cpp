@@ -21,20 +21,17 @@ namespace TestCommon
   //#define DBG_VERBOSE(x)  x
   #define DBG_VERBOSE(x)  {}
   
-  static void powerShort_(uint16_t time_ms, int ilimit_ma, int oversample, bool VEXT_nVBAT)
+  void powerOnProtected(pwr_e net, uint16_t time_ms, int ilimit_ma, int oversample)
   {
     int *ilog = (int*)app_global_buffer; //buffer to store sample data
     int ilogSize = APP_GLOBAL_BUF_SIZE / sizeof(int);
     int ima=0, icnt=0, peak=0, sum=0;
     
-    //make sure power is off before we start our test
-    VEXT_nVBAT ? Contacts::powerOff() : Board::disableVBAT(); //off-disable functions implement their own turn-off delays
-    
     uint32_t start = Timer::get();
-    VEXT_nVBAT ? Contacts::powerOn(0) : Board::enableVBAT(); //turn power on (no delays)
+    Board::powerOn(net,0); //turn power on (no delays)
     while( Timer::get()-start < time_ms*1000 )
     {
-      ima = VEXT_nVBAT ? Meter::getVextCurrentMa(oversample) : Meter::getVbatCurrentMa(oversample);
+      ima = Meter::getCurrentMa(net, oversample);
       
       //log sample & update metrics
       peak = ima > peak ? ima : peak;
@@ -45,11 +42,11 @@ namespace TestCommon
       
       //overcurrent
       if( ima > ilimit_ma ) {
-        VEXT_nVBAT ? Contacts::powerOff() : Board::disableVBAT(); //power off
+        Board::powerOff(net);
         break;
       }
     }
-    ConsolePrintf("%s startup current: peak %imA, avg %imA (%u samples)\n", (VEXT_nVBAT ? "VEXT" : "VBAT"), peak, sum/icnt, icnt);
+    ConsolePrintf("%s startup current: peak %imA, avg %imA (%u samples)\n", Board::power2str(net), peak, sum/icnt, icnt);
     
     //DEBUG: print current samples
     DBG_VERBOSE(
@@ -64,15 +61,6 @@ namespace TestCommon
     if( ima > ilimit_ma )
       throw ERROR_POWER_SHORT;
   }
-  
-  void powerShortVBAT(uint16_t time_ms, int ilimit_ma, int oversample) {
-    powerShort_( time_ms, ilimit_ma, oversample, 0);
-  }
-  
-  void powerShortVEXT(uint16_t time_ms, int ilimit_ma, int oversample) {
-    powerShort_( time_ms, ilimit_ma, oversample, 1 );
-  }
-  
 }
 
 //-----------------------------------------------------------------------------

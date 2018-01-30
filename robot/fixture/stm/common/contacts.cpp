@@ -46,7 +46,7 @@ namespace Contacts
     MODE_RX,
   };
   
-  static const uint32_t CONTACT_BAUD = 115200;
+  static const uint32_t CONTACT_BAUD = 57600;
   static int mode = MODE_UNINITIALIZED;
   static bool m_console_echo = 0;
   
@@ -164,6 +164,10 @@ void Contacts::setModeIdle(void)
   #if TARGET_SYSCON
     VEXT_SENSE::mode(MODE_INPUT);
   #elif TARGET_FIXTURE
+    if( (int)Board::revision >= BOARD_REV_2_0 ) {
+      CHGTX_EN::init(MODE_INPUT, PULL_NONE); //4V TX driver disabled
+      CHGPWR::init(MODE_INPUT, PULL_NONE); //5V charge power disabled
+    }
     CHGRX::mode(MODE_INPUT);
     CHGTX::mode(MODE_INPUT);
   #endif
@@ -189,6 +193,10 @@ void Contacts::setModePower(void)
   #if TARGET_SYSCON
     //doesn't supply power. effectively in idle mode.
   #elif TARGET_FIXTURE
+    if( (int)Board::revision >= BOARD_REV_2_0 ) {
+      CHGPWR::reset(); //5V charge power disabled
+      CHGPWR::init(MODE_OUTPUT, PULL_NONE);
+    }
     CHGTX::reset(); //VEXT floating(off)
     CHGTX::mode(MODE_OUTPUT);
     CHGRX::reset(); //prime output register for force discharge
@@ -206,6 +214,8 @@ void Contacts::powerOn(int turn_on_delay_ms)
   #elif TARGET_FIXTURE
     if( !powerIsOn() ) {
       CHGTX::set(); //VEXT drive 5V
+      if( (int)Board::revision >= BOARD_REV_2_0 )
+        CHGPWR::set(); //DUT_VEXT drive 5V
       Timer::delayMs(turn_on_delay_ms);
     }
   #endif
@@ -221,6 +231,9 @@ void Contacts::powerOff(int turn_off_delay_ms, bool force)
     if( powerIsOn() )
     {
       CHGTX::reset(); //VEXT float/off
+      if( (int)Board::revision >= BOARD_REV_2_0 )
+        CHGPWR::reset(); //DUT_VEXT disconnect from 5V
+      
       if( force ) //discharge VEXT through 330R
         CHGRX::mode(MODE_OUTPUT);
       
@@ -259,14 +272,20 @@ void Contacts::setModeTx(void)
     delay_bit_time_(2); //wait at least 1 bit-time for uart peripheral to spin up
     
   #elif TARGET_FIXTURE
-    //TX pin controls a high-current FET. 1->VEXT=5V 0->VEXT=Z
+    //v1.0 - TX pin controls a high-current FET. 1->VEXT=5V 0->VEXT=Z
+    //v2.0 - TX pin drives a 4V push-pull buffer
     CHGTX::mode(MODE_ALTERNATE); //hand over to uart control
     USART_Cmd(USART, ENABLE);
     delay_bit_time_(2); //wait at least 1 bit-time for uart peripheral to spin up
     
-    //Drive CHGRX low for the other half of push-pull (pulls VEXT down through 330R)
-    CHGRX::reset();
-    CHGRX::mode(MODE_OUTPUT);
+    if( (int)Board::revision >= BOARD_REV_2_0 ) {
+      CHGTX_EN::reset();  //enable 4V TX driver
+      CHGTX_EN::init(MODE_OUTPUT);
+    } else {
+      //Drive CHGRX low for the other half of push-pull (pulls VEXT down through 330R)
+      CHGRX::reset();
+      CHGRX::mode(MODE_OUTPUT);
+    }
     
   #endif
   
