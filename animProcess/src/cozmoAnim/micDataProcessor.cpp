@@ -49,7 +49,7 @@ namespace {
     std::string searchFile;
   };
 
-  const TriggerData kTriggerDataList[] = 
+  const TriggerData kTriggerDataList[] =
   {
     // "HeyCozmo" trigger trained on adults
     {
@@ -109,7 +109,7 @@ namespace HALConfig {
     DOUBLE,
     //Add more types here
   } ValueType;
-  
+
   typedef struct {
     const char* key;
     ValueType type;
@@ -124,13 +124,13 @@ namespace HALConfig {
 namespace {
   static const char CONFIG_SEPARATOR = ':';
 }
-  
+
 void HALConfig::ParseValue(const char* valstr, const char* end, const HALConfig::Item* item)
 {
   char* endconv = NULL;
   assert(strlen(valstr) <= end-valstr);
   double val = strtod(valstr, &endconv);
-  if (endconv > valstr) //valid conversion of at least some chars. 
+  if (endconv > valstr) //valid conversion of at least some chars.
     //Open Question: do we reject partially valid entries like "2.0pi", which would get scanned as 2.0?
   {
     switch (item->type)
@@ -239,7 +239,7 @@ MicDataProcessor::MicDataProcessor(const std::string& writeLocation, const std::
 
   _recognizer->SetRecognizerIndex(_currentTriggerSearchIndex);
   // Set up the callback that creates the recording job when the trigger is detected
-  auto triggerCallback = std::bind(&MicDataProcessor::TriggerWordDetectCallback, 
+  auto triggerCallback = std::bind(&MicDataProcessor::TriggerWordDetectCallback,
                                    this, std::placeholders::_1, std::placeholders::_2);
   _recognizer->SetCallback(triggerCallback);
   _recognizer->Start();
@@ -258,8 +258,8 @@ MicDataProcessor::MicDataProcessor(const std::string& writeLocation, const std::
     AudioUtil::kSampleRate_hz, // out rate, int
     10, // quality 0-10
     &error);
-  
-  
+
+
   // Enable this to test a repeating recording job.
   static constexpr bool enableCircularRecordingJob = false;
   if (enableCircularRecordingJob)
@@ -281,6 +281,7 @@ MicDataProcessor::MicDataProcessor(const std::string& writeLocation, const std::
   const RobotID_t robotID = OSState::getInstance()->GetRobotID();
   const std::string sockName = std::string{LOCAL_SOCKET_PATH} + "mic_sock" + (robotID == 0 ? "" : std::to_string(robotID));
   const bool udpSuccess = _udpServer->StartListening(sockName);
+  PRINT_NAMED_INFO("ASDFASDF cloud", "cloud mic listening at path %s", sockName.c_str());
   ANKI_VERIFY(udpSuccess,
               "MicDataProcessor.Constructor.UdpStartListening",
               "Failed to start listening on socket %s",
@@ -381,7 +382,7 @@ bool MicDataProcessor::ProcessResampledAudio(TimeStamp_t timestamp,
       }
     }
   }
-  
+
   // If we aren't starting a block, we're finishing it - time to convert to a single channel
   if (!_inProcessAudioBlockFirstHalf)
   {
@@ -402,7 +403,7 @@ bool MicDataProcessor::ProcessResampledAudio(TimeStamp_t timestamp,
           sumValue +=        _inProcessAudioBlock[sampleIdx + (1 * kSamplesPerBlock)];
           sumValue +=        _inProcessAudioBlock[sampleIdx + (2 * kSamplesPerBlock)];
           sumValue +=        _inProcessAudioBlock[sampleIdx + (3 * kSamplesPerBlock)];
-          
+
           const auto averagedValue = static_cast<AudioUtil::AudioSample>(sumValue / 4);
           averagedAudioChunk[sampleIdx + (kSamplesPerBlock * 0)] = averagedValue;
           averagedAudioChunk[sampleIdx + (kSamplesPerBlock * 1)] = averagedValue;
@@ -432,7 +433,7 @@ bool MicDataProcessor::ProcessResampledAudio(TimeStamp_t timestamp,
       directionResult.confidenceList.begin(),
       directionResult.confidenceList.end(),
       newMessage.confidenceList);
-    
+
     auto engineMessage = std::unique_ptr<RobotInterface::RobotToEngine>(
       new RobotInterface::RobotToEngine(std::move(newMessage)));
     {
@@ -440,9 +441,9 @@ bool MicDataProcessor::ProcessResampledAudio(TimeStamp_t timestamp,
       _msgsToEngine.push_back(std::move(engineMessage));
     }
   }
-  
+
   _inProcessAudioBlockFirstHalf = !_inProcessAudioBlockFirstHalf;
-  
+
   return _inProcessAudioBlockFirstHalf;
 }
 
@@ -467,7 +468,7 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
   const auto latestConf = SEDiagGetInt16(_bestSearchBeamConfidence);
   const auto* searchConfState = SEDiagGet(_searchConfidenceState);
 
-  MicDirectionData result = 
+  MicDirectionData result =
   {
     .activeState = activityFlag,
     .winningDirection = latestDirection,
@@ -486,8 +487,8 @@ void MicDataProcessor::ResampleAudioChunk(const AudioUtil::AudioSample* audioChu
   ANKI_CPU_PROFILE("ResampleAudioChunk");
   uint32_t numSamplesProcessed = kSamplesPerChunkIncoming;
   uint32_t numSamplesWritten = kSamplesPerChunkForSE;
-  speex_resampler_process_interleaved_int(_speexState, 
-                                          audioChunk, &numSamplesProcessed, 
+  speex_resampler_process_interleaved_int(_speexState,
+                                          audioChunk, &numSamplesProcessed,
                                           bufferOut, &numSamplesWritten);
   ANKI_VERIFY(numSamplesProcessed == kSamplesPerChunkIncoming,
               "MicDataProcessor.ResampleAudioChunk.SamplesProcessed",
@@ -508,7 +509,7 @@ void MicDataProcessor::ProcessLoop()
   while (!_processThreadStop)
   {
     const auto start = std::chrono::steady_clock::now();
-  
+
     // Switch which buffer we're processing if it's empty
     {
       std::lock_guard<std::mutex> lock(_resampleMutex);
@@ -525,7 +526,7 @@ void MicDataProcessor::ProcessLoop()
 
       const auto& nextData = rawAudioToProcess.front();
       const auto& audioChunk = nextData.audioChunk;
-      
+
       // Steal the current set of jobs we have for recording audio, so the list can be added to while processing
       // continues
       std::deque<std::shared_ptr<MicDataInfo>> stolenJobs;
@@ -540,7 +541,7 @@ void MicDataProcessor::ProcessLoop()
       {
         job->CollectRawAudio(audioChunk.data(), audioChunk.size());
       }
-      
+
       // Factory test doesn't need to do any mic processing, it just uses raw data
       if(!FACTORY_TEST)
       {
@@ -551,7 +552,7 @@ void MicDataProcessor::ProcessLoop()
         {
           job->CollectResampledAudio(resampledAudioChunk.data(), resampledAudioChunk.size());
         }
-        
+
         // Process the audio into a single channel, and collect it if desired
         bool audioBlockReady = ProcessResampledAudio(nextData.timestamp, resampledAudioChunk.data());
         if (audioBlockReady)
@@ -576,7 +577,7 @@ void MicDataProcessor::ProcessLoop()
           }
         }
       }
-      
+
       // Check if each of the jobs are done, removing the ones that are
       auto jobIter = stolenJobs.begin();
       while (jobIter != stolenJobs.end())
@@ -592,13 +593,13 @@ void MicDataProcessor::ProcessLoop()
           ++jobIter;
         }
       }
-      
+
       // Add back the remaining stolen jobs
       {
         std::lock_guard<std::recursive_mutex> lock(_dataRecordJobMutex);
         _micProcessingJobs.insert(_micProcessingJobs.begin(), stolenJobs.begin(), stolenJobs.end());
       }
-      
+
       rawAudioToProcess.pop_front();
     }
 
@@ -610,7 +611,7 @@ void MicDataProcessor::ProcessLoop()
     }
   }
 }
-  
+
 void MicDataProcessor::ProcessMicDataPayload(const RobotInterface::MicData& payload)
 {
   static uint32_t sLatestSequenceID = 0;
@@ -621,7 +622,7 @@ void MicDataProcessor::ProcessMicDataPayload(const RobotInterface::MicData& payl
     return;
   }
   sLatestSequenceID = payload.sequenceID;
-  
+
   const RawAudioChunk& audioChunk = payload.data;
   // Store off this next job
   {
@@ -638,7 +639,7 @@ void MicDataProcessor::ProcessMicDataPayload(const RobotInterface::MicData& payl
 void MicDataProcessor::RecordRawAudio(uint32_t duration_ms, const std::string& path, bool runFFT)
 {
   MicDataInfo* newJob = new MicDataInfo{};
-  
+
   // If the input path has a file separator, remove the filename at the end and use as the write directory
   if (path.find('/') != std::string::npos)
   {
@@ -652,7 +653,7 @@ void MicDataProcessor::RecordRawAudio(uint32_t duration_ms, const std::string& p
     newJob->_writeLocationDir = _writeLocationDir;
     newJob->_writeNameBase = path;
   }
-  
+
   newJob->_typesToRecord.SetBitFlag(MicDataType::Raw, true);
   newJob->SetTimeToRecord(duration_ms);
   newJob->_doFFTProcess = runFFT;
@@ -663,7 +664,7 @@ void MicDataProcessor::RecordRawAudio(uint32_t duration_ms, const std::string& p
       _fftResultList.push_back(std::move(result));
     };
   }
-  
+
   {
     std::lock_guard<std::recursive_mutex> lock(_dataRecordJobMutex);
     _micProcessingJobs.push_back(std::shared_ptr<MicDataInfo>(newJob));
@@ -678,7 +679,7 @@ void MicDataProcessor::Update(BaseStationTime_t currTime_nanosec)
     auto result = std::move(_fftResultList.front());
     _fftResultList.pop_front();
     _fftResultMutex.unlock();
-    
+
     // Populate the fft result message
     auto msg = RobotInterface::AudioFFTResult();
 
@@ -735,7 +736,7 @@ void MicDataProcessor::Update(BaseStationTime_t currTime_nanosec)
     }
   }
 #endif
-  
+
   const ssize_t bytesReceived = _udpServer->Recv(receiveArray, kMaxReceiveBytes);
   if (bytesReceived == 2)
   {
@@ -775,7 +776,7 @@ void MicDataProcessor::Update(BaseStationTime_t currTime_nanosec)
       {
         _currentlyStreaming = true;
         streamingAudioIndex = 0;
-  
+
         // Send out the message announcing the trigger word has been detected
         static const char* const hotwordSignal = "hotword";
         static const size_t hotwordSignalLen = std::strlen(hotwordSignal) + 1;
@@ -804,7 +805,7 @@ void MicDataProcessor::Update(BaseStationTime_t currTime_nanosec)
         // Copy any new data that has been pushed onto the currently streaming job
         AudioUtil::AudioChunkList newAudio = _currentStreamingJob->GetProcessedAudio(streamingAudioIndex);
         streamingAudioIndex += newAudio.size();
-    
+
         // Send the audio to any clients we've got
         if (_udpServer->HasClient())
         {
@@ -847,7 +848,7 @@ void MicDataProcessor::Update(BaseStationTime_t currTime_nanosec)
     }
     else
     {
-      DEV_ASSERT_MSG(false, 
+      DEV_ASSERT_MSG(false,
                      "MicDataProcessor.Update.UnhandledOutgoingMessageType",
                      "%s", RobotInterface::RobotToEngine::TagToString(msg->tag));
     }

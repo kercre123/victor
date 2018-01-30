@@ -246,7 +246,7 @@ if [ $IGNORE_EXTERNAL_DEPENDENCIES -eq 0 ]; then
   ${BUILD_TOOLS}/metabuild/metabuild.py --go-output \
       -o ${GEN_SRC_DIR} \
       ${METABUILD_INPUTS} 
-  time ${TOPLEVEL}/project/victor/scripts/run-go-get.sh -d ${GEN_SRC_DIR}
+  ${TOPLEVEL}/project/victor/scripts/run-go-get.sh -d ${GEN_SRC_DIR}
 else
   echo "Ignore Go dependencies"
 fi

@@ -14,7 +14,7 @@ import (
 
 const (
 	// ChipperURL is the location of the Chipper service
-	ChipperURL = "https://chipper-dev.api.anki.com"
+	ChipperURL = "chipper-dev.api.anki.com:443"
 )
 
 var (
@@ -165,14 +165,23 @@ procloop:
 				if ctx != nil {
 					fmt.Println("Got hotword event while already streaming, weird...")
 				}
-				client, err := chipper.NewClient(ChipperURL, ChipperSecret, "device-id",
-					uuid.New().String()[:16])
+				var err error
+				var client *chipper.Client
+
+				ctxTime := util.TimeFuncNs(func() {
+					client, err = chipper.NewClient(ChipperURL, ChipperSecret, "device-id",
+						uuid.New().String()[:16])
+				})
+
 				if err != nil {
 					fmt.Println("Error creating Chipper:", err)
 					continue
 				}
-				logVerbose("Received hotword event")
+
 				ctx = newVoiceContext(client, cloudChan)
+
+				logVerbose("Received hotword event, created context in",
+					ctxTime/int64(time.Millisecond/time.Nanosecond), "ms")
 			} else if ctx != nil {
 				logVerbose("Received", len(msg.buf), "bytes from mic")
 				ctx.addSamples(msg.buf)
@@ -197,6 +206,7 @@ procloop:
 			close(ctx.audioStream)
 			ctx = nil
 		case <-stop:
+			logVerbose("Received stop notification")
 			break procloop
 		}
 	}

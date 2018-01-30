@@ -49,7 +49,6 @@ func NewClient(serverUrl string, appKey string, deviceId string, sessionId strin
 	if err != nil {
 		return nil, err
 	}
-	conn.Close()
 
 	rpcClient := pb.NewChipperGrpcClient(conn)
 	stream, err := rpcClient.StreamingIntent(context.Background())
