@@ -447,7 +447,6 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
         case GameToEngineTag::IMURequest:                       return true;
         case GameToEngineTag::StartControllerTestMode:          return true;
         case GameToEngineTag::RawPWM:                           return true;
-        case GameToEngineTag::ReliableTransportRunMode:         return true;
         case GameToEngineTag::RequestFeatureToggles:            return true;
         case GameToEngineTag::SetFeatureToggle:                 return true;
         case GameToEngineTag::UpdateFirmware:                   return true;

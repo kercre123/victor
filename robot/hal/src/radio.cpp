@@ -37,7 +37,7 @@ namespace Anki {
     Result InitRadio()
     {
       const RobotID_t robotID = HAL::GetID();
-      std::string server_path = std::string(ROBOT_SERVER_PATH) + std::to_string(robotID);
+      const std::string & server_path = std::string(ANIM_ROBOT_SERVER_PATH) + std::to_string(robotID);
 
       AnkiInfo("HAL.InitRadio.StartListening", "Start listening at %s", server_path.c_str());
       if (!server.StartListening(server_path.c_str())) {

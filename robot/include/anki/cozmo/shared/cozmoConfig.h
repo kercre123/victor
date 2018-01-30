@@ -310,12 +310,16 @@ namespace Cozmo {
   //
   #ifdef SIMULATOR
   constexpr char LOCAL_SOCKET_PATH[]  = "/tmp/";
-  constexpr char ROBOT_SERVER_PATH[]  = "/tmp/_robot_server_";
-  constexpr char ANIM_CLIENT_PATH[]   = "/tmp/_anim_client_";
+  constexpr char ANIM_ROBOT_SERVER_PATH[]  = "/tmp/_anim_robot_server_";
+  constexpr char ANIM_ROBOT_CLIENT_PATH[]  = "/tmp/_anim_robot_client_";
+  constexpr char ENGINE_ANIM_SERVER_PATH[] = "/tmp/_engine_anim_server_";
+  constexpr char ENGINE_ANIM_CLIENT_PATH[] = "/tmp/_engine_anim_client_";
   #else
   constexpr char LOCAL_SOCKET_PATH[]  = "/dev/";
-  constexpr char ROBOT_SERVER_PATH[]  = "/dev/socket/_robot_server_";
-  constexpr char ANIM_CLIENT_PATH[]   = "/dev/socket/_anim_client_";
+  constexpr char ANIM_ROBOT_SERVER_PATH[]  = "/dev/socket/_anim_robot_server_";
+  constexpr char ANIM_ROBOT_CLIENT_PATH[]  = "/dev/socket/_anim_robot_client_";
+  constexpr char ENGINE_ANIM_SERVER_PATH[] = "/dev/socket/_engine_anim_server_";
+  constexpr char ENGINE_ANIM_CLIENT_PATH[] = "/dev/socket/_engine_anim_client_";
   #endif
   
 } // namespace Cozmo

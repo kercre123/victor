@@ -9,23 +9,16 @@
 * Copyright: Anki, inc. 2016
 *
 */
-#ifndef __Cozmo_Basestation_Comms_RobotConnectionManager_H_
-#define __Cozmo_Basestation_Comms_RobotConnectionManager_H_
+#ifndef __Cozmo_Engine_Comms_RobotConnectionManager_H_
+#define __Cozmo_Engine_Comms_RobotConnectionManager_H_
 
 #include "engine/comms/robotConnectionMessageData.h"
+#include "coretech/messaging/shared/LocalUdpClient.h"
 #include "util/stats/recentStatsAccumulator.h"
 #include "util/signals/signalHolder.h"
 
 #include <memory>
 #include <deque>
-
-namespace Anki {
-namespace Util {
-  class TransportAddress;
-  class UDPTransport;
-  class ReliableTransport;
-}
-}
 
 namespace Anki {
 namespace Cozmo {
@@ -39,24 +32,25 @@ public:
   virtual ~RobotConnectionManager();
   
   void Init();
-  void ConfigureReliableTransport();
-  
+
   bool IsValidConnection() const;
-  void Connect(const Util::TransportAddress& address);
+
   void DisconnectCurrent();
   
   void Update();
+
   void ProcessArrivedMessages();
   
   bool SendData(const uint8_t* buffer, unsigned int size);
   
   bool PopData(std::vector<uint8_t>& data_out);
+
   void ClearData();
   
   const Anki::Util::Stats::StatsAccumulator& GetQueuedTimes_ms() const;
-  
-  void SetReliableTransportRunMode(bool isSync);
-  
+
+  Result Connect(RobotID_t robotID);
+
 private:
   void SendAndResetQueueStats();
   
@@ -66,8 +60,6 @@ private:
   void HandleConnectionRequestMessage(RobotConnectionMessageData& nextMessage);
 
   std::unique_ptr<RobotConnectionData>      _currentConnectionData;
-  std::unique_ptr<Util::UDPTransport>       _udpTransport;
-  std::unique_ptr<Util::ReliableTransport>  _reliableTransport;
   RobotManager*                             _robotManager = nullptr;
   std::deque<std::vector<uint8_t>>          _readyData;
   
@@ -77,10 +69,12 @@ private:
 
   // track how large the incoming message queue gets in bytes
   Util::Stats::StatsAccumulator _queueSizeAccumulator;
+
+  LocalUdpClient _udpClient;
 };
 
 } // end namespace Cozmo
 } // end namespace Anki
 
 
-#endif //__Cozmo_Basestation_Comms_RobotConnectionManager_H_
+#endif //__Cozmo_Engine_Comms_RobotConnectionManager_H_
