@@ -63,7 +63,7 @@ function start_program()
 
     # start engine
     cd ${SCRIPT_PATH}
-    exec_background ${BIN_PATH}/${PROGRAM_EXE}
+    exec_background ${BIN_PATH}/${PROGRAM_EXE} -verbose
     echo $!
 }
 
