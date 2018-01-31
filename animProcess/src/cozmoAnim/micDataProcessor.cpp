@@ -575,7 +575,15 @@ void MicDataProcessor::ProcessLoop()
           if (_micImmediateDirection->GetLatestSample().activeState != 0)
           {
             ANKI_CPU_PROFILE("RecognizeTriggerWord");
-            _recognizer->Update(processedAudio.data(), (unsigned int)processedAudio.size());
+            bool streamingInProgress = false;
+            {
+              std::lock_guard<std::recursive_mutex> lock(_dataRecordJobMutex);
+              streamingInProgress = (_currentStreamingJob != nullptr);
+            }
+            if (!streamingInProgress)
+            {
+              _recognizer->Update(processedAudio.data(), (unsigned int)processedAudio.size());
+            }
           }
         }
       }
@@ -724,12 +732,12 @@ void MicDataProcessor::Update(BaseStationTime_t currTime_nanosec)
   else if (_forceRecordClip && nullptr == _saveJob)
   {
     MicDataInfo* newJob = new MicDataInfo{};
-    newJob->_writeLocationDir = Util::FileUtils::FullFilePath({_writeLocationDir, "triggeredCapture"});
+    newJob->_writeLocationDir = Util::FileUtils::FullFilePath({_writeLocationDir, "debugCapture"});
     newJob->_writeNameBase = ""; // Use the autogen names in this subfolder
     newJob->_numMaxFiles = 30;
     newJob->_typesToRecord.SetBitFlag(MicDataType::Raw, true);
     newJob->_typesToRecord.SetBitFlag(MicDataType::Processed, true);
-    newJob->SetTimeToRecord(10000);
+    newJob->SetTimeToRecord(15000);
 
     {
       std::lock_guard<std::recursive_mutex> lock(_dataRecordJobMutex);
