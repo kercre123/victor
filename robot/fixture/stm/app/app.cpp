@@ -19,7 +19,8 @@
 #include "timer.h"
 #include "uart.h"
 
-u8 g_fixtureReleaseVersion = 10;
+#include "app_release_ver.h"
+u8 g_fixtureReleaseVersion = APP_RELEASE_VERSION;
 #define BUILD_INFO "Victor DVT2"
 
 //Set this flag to modify display info - indicates a debug/test build
