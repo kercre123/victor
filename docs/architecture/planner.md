@@ -55,7 +55,7 @@ By varying relative cost of different actions, you can produce qualitatively dif
 preferring backing up vs. turning around, and smooth arc turns vs. sharp "in place" turns.
 
 Tools associated with the creation and visualization of the motion primitives can be found in the
-[planning](../../coretech/planning) directory (look in `/tools` and `/matlab`).
+[planning](/coretech/planning) directory (look in [`tools`](/coretech/planning/tools) and [`matlab`](/coretech/planning/matlab)).
 
 For historical reasons (Cozmo having limited number of obstacles), the planner internally uses a "list of
 polygons" as it's obstacle, rather than more traditional cost maps. To convert through the Nav Map, a convex

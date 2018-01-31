@@ -178,24 +178,24 @@ You can view output from all processes by running `victor_log`.
 
 1. Make sure you have built for mac by running `./project/victor/build-victor.sh -p mac` on the same branch as the binaries on the physical robot.
 
-1. Open the world `cozmo2Viz.wbt` in a text editor, and set the field `engineIP` to match your robot's IP address. 
+1. Open the world [cozmo2Viz.wbt](/simulator/worlds/cozmo2Viz.wbt) in a text editor, and set the field `engineIP` to match your robot's IP address. 
 
 1. Run the world to connect to the robot. The processes must be fully up and running before connecting with webots. If in doubt, stop the world and run `victor_restart` first.
 
 ## Running Victor in Webots (simulated robot)
 
-See [simulator/README.md](simulator/README.md).
+See [simulator/README.md](/simulator/README.md).
 
 ## Updating syscon (body firmware)
 
 Most developers shouldn't have to do this. Better to ask someone in hardware or Al or Kevin Y.
 
-1. To build syscon, run `vmake.sh` in `robot/`. 
+1. To build syscon, run `vmake.sh` in [robot/](/robot). 
 
 1. If the robot has previously run the robot process since last boot then you'll need to first reboot the robot. 
 
-1. Run `dfu.sh` in `robot/`. There should be a bunch of messages indicating transfer of data. Might need to run twice.
+1. Run [dfu.sh](/robot/dfu.sh) in [robot/](/robot). There should be a bunch of messages indicating transfer of data. Might need to run twice.
 
 ## Having trouble?
 
-Check out the [Frequently Asked Questions](docs/FAQ.md) page. When you get new questions answered, consider adding them to the list to help others!
+Check out the [Frequently Asked Questions](/docs/FAQ.md) page. When you get new questions answered, consider adding them to the list to help others!

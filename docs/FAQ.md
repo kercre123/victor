@@ -2,7 +2,7 @@
 
 If you have a question that you get answered (e.g. in a Slack channel) which might plague others, consider creating an entry here for it.
 
-* How do I set a console var fromm Webots?
+* How do I set a console var from Webots?
   - Set the `consoleVarName` and `consoleVarValue` strings under the WebotsKeyboardController in the scene tree at left. Press `]` (closing square bracket) to send the message to the engine to set the console var. 
   - Using `}` (closing curly brace) instead will use the name and value strings as a console _function_ and its arguments instead.
   - Hold down `ALT` to send either of the above to the animation process to set console vars/functions there.
@@ -20,8 +20,8 @@ If you have a question that you get answered (e.g. in a Slack channel) which mig
   - Reproduce the crash and you should now see symbols
   
 * How do I do performance analysis/benchmarking on robot?
-  - Use simpleperf to generate list of highest overhead functions in a process by running `project/victor/simpleperf/HOW-simpleperf.sh`
-  - Use inferno to generate a flame graph of call hierarchies by running `project/victor/simpleperf/HOW-inferno.sh`
+  - Use simpleperf to generate list of highest overhead functions in a process by running [`project/victor/simpleperf/HOW-simpleperf.sh`](/project/victor/simpleperf/HOW-simpleperf.sh)
+  - Use inferno to generate a flame graph of call hierarchies by running [`project/victor/simpleperf/HOW-inferno.sh`](/project/victor/simpleperf/HOW-inferno.sh)
   - By default both scripts run on the engine process, `cozmoengined`. Change this by prepending `ANKI_PROFILE_PROCNAME="<name_of_process>"` to the command to run the script. The other two process names are `victor_animator` and `robot_supervisor`
   - To see overall cpu load per process run `top -m 10`
   
