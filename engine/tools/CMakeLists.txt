@@ -19,9 +19,9 @@ elseif (MACOSX)
   )
 endif()
 
-anki_build_cxx_executable(cozmoengined ${ANKI_SRCLIST_DIR})
+anki_build_cxx_executable(vic-engine ${ANKI_SRCLIST_DIR})
 
-target_link_libraries(cozmoengined
+target_link_libraries(vic-engine
   PRIVATE
   # anki libs
   util
@@ -30,5 +30,5 @@ target_link_libraries(cozmoengined
   ${PLATFORM_LIBS}
 )
 
-android_strip(TARGET cozmoengined)
+android_strip(TARGET vic-engine)
 

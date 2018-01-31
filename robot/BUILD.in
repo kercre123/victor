@@ -28,7 +28,7 @@ cxx_project(
 )
 
 cxx_project(
-    name = 'robot_supervisor',
+    name = 'vic-robot',
     srcs = cxx_src_glob(['hal/src',],
                         excludes = ['hal.cpp', 'hal_motors.cpp', '*_android.*', 'android/**/*']),
     platform_srcs = [],
