@@ -56,6 +56,9 @@ namespace Cozmo {
     s8 _steeringDir = 0;  // -1 = left, 0 = straight, 1 = right
     s8 _throttleDir = 0;  // -1 = reverse, 0 = stop, 1 = forward
     
+    bool _pressBackpackButton = false;
+    bool _wasBackpackButtonPressed = false;
+    
     f32 _commandedLiftSpeed = 0.f;
     f32 _commandedHeadSpeed = 0.f;
     
@@ -412,17 +415,15 @@ namespace Cozmo {
   
   void WebotsKeyboardController::GotoPoseMarker()
   {
-    bool useManualSpeed = false;
     if (poseMarkerMode_ == 0) {
       // Execute path to pose
       
       // the pose of the green-cone marker in the WebotsOrigin frame
       Pose3d goalMarkerPose = GetGoalMarkerPose();
-      printf("Going to pose marker at x=%f y=%f angle=%f (useManualSpeed: %d)\n",
+      printf("Going to pose marker at x=%f y=%f angle=%f\n",
              goalMarkerPose.GetTranslation().x(),
              goalMarkerPose.GetTranslation().y(),
-             goalMarkerPose.GetRotationAngle<'Z'>().ToFloat(),
-             useManualSpeed);
+             goalMarkerPose.GetRotationAngle<'Z'>().ToFloat());
       
       // note: Goal is w.r.t. webots origin which may not match
       // engine origin (due to delocalization or drift). This
@@ -443,7 +444,7 @@ namespace Cozmo {
       GetRobotPoseActual().GetInverse() *
       goalMarkerPose;
       
-      SendExecutePathToPose(markerPose_inEngineFrame, pathMotionProfile_, useManualSpeed);
+      SendExecutePathToPose(markerPose_inEngineFrame, pathMotionProfile_);
       //SendMoveHeadToAngle(-0.26, headSpeed, headAccel);
     } else {
       Pose3d goalMarkerPose = GetGoalMarkerPose();
@@ -457,8 +458,7 @@ namespace Cozmo {
       
       SendPlaceObjectOnGroundSequence(goalMarkerPose,
                                       pathMotionProfile_,
-                                      useExactRotation,
-                                      useManualSpeed);
+                                      useExactRotation);
       // Make sure head is tilted down so that it can localize well
       //SendMoveHeadToAngle(-0.26, headSpeed, headAccel);
       
@@ -730,7 +730,6 @@ namespace Cozmo {
   
   void WebotsKeyboardController::PickOrPlaceObject()
   {
-    bool useManualSpeed = false;
     bool usePreDockPose = !_shiftKeyPressed;
     bool placeOnGroundAtOffset = _altKeyPressed;
     
@@ -749,22 +748,19 @@ namespace Cozmo {
       SendPickupSelectedObject(pathMotionProfile_,
                                usePreDockPose,
                                useApproachAngle,
-                               approachAngle_rad,
-                               useManualSpeed);
+                               approachAngle_rad);
     } else {
       if (placeOnGroundAtOffset) {
         SendPlaceRelSelectedObject(pathMotionProfile_,
                                    usePreDockPose,
                                    placementOffsetX_mm,
                                    useApproachAngle,
-                                   approachAngle_rad,
-                                   useManualSpeed);
+                                   approachAngle_rad);
       } else {
         SendPlaceOnSelectedObject(pathMotionProfile_,
                                   usePreDockPose,
                                   useApproachAngle,
-                                  approachAngle_rad,
-                                  useManualSpeed);
+                                  approachAngle_rad);
       }
     }
     
@@ -773,38 +769,32 @@ namespace Cozmo {
   
   void WebotsKeyboardController::MountSelectedCharger()
   {
-    bool useManualSpeed = false;
     bool useCliffSensorCorrection = !_shiftKeyPressed;
     
     SendMountSelectedCharger(pathMotionProfile_,
-                             useCliffSensorCorrection,
-                             useManualSpeed);
+                             useCliffSensorCorrection);
   }
   
   
   void WebotsKeyboardController::PopAWheelie()
   {
     bool usePreDockPose = !_shiftKeyPressed;
-    bool useManualSpeed = false;
     SendPopAWheelie(-1,
                     pathMotionProfile_,
                     usePreDockPose,
                     useApproachAngle,
-                    approachAngle_rad,
-                    useManualSpeed);
+                    approachAngle_rad);
   }
   
   void WebotsKeyboardController::RollObject()
   {
     bool usePreDockPose = !_shiftKeyPressed;
-    bool useManualSpeed = false;
     bool doDeepRoll = root_->getField("doDeepRoll")->getSFBool();
     SendRollSelectedObject(pathMotionProfile_,
                            doDeepRoll,
                            usePreDockPose,
                            useApproachAngle,
-                           approachAngle_rad,
-                           useManualSpeed);
+                           approachAngle_rad);
   }
   
   
@@ -1826,6 +1816,10 @@ namespace Cozmo {
     }
   }
   
+  void WebotsKeyboardController::PressBackButton()
+  {
+    _pressBackpackButton = true;
+  }
   
   // ===== End of key press functions ====
 
@@ -1872,7 +1866,7 @@ namespace Cozmo {
 //      REGISTER_KEY_FCN_WITH_SPECIAL_DISPLAY_CHAR(webots::Keyboard::PAGEDOWN, MOD_ALT,       , "", "<PageDown>");
 //      REGISTER_KEY_FCN_WITH_SPECIAL_DISPLAY_CHAR(webots::Keyboard::PAGEDOWN, MOD_SHIFT,     , "", "<PageDown>");
 //      REGISTER_KEY_FCN_WITH_SPECIAL_DISPLAY_CHAR(webots::Keyboard::PAGEDOWN, MOD_ALT_SHIFT, , "", "<PageDown>");
-//      REGISTER_KEY_FCN_WITH_SPECIAL_DISPLAY_CHAR(webots::Keyboard::HOME,     MOD_NONE,      , "", "<Home>");
+    REGISTER_KEY_FCN_WITH_SPECIAL_DISPLAY_CHAR(webots::Keyboard::HOME,  MOD_NONE,   PressBackButton, "Press backpack button", "<Home>");
 //      REGISTER_KEY_FCN_WITH_SPECIAL_DISPLAY_CHAR(webots::Keyboard::HOME,     MOD_ALT,       , "", "<Home>");
 //      REGISTER_KEY_FCN_WITH_SPECIAL_DISPLAY_CHAR(webots::Keyboard::HOME,     MOD_SHIFT,     , "", "<Home>");
 //      REGISTER_KEY_FCN_WITH_SPECIAL_DISPLAY_CHAR(webots::Keyboard::HOME,     MOD_ALT_SHIFT, , "", "<Home>");
@@ -2187,6 +2181,13 @@ namespace Cozmo {
   {
     _steeringDir = 0.f;
     _throttleDir = 0.f;
+    _pressBackpackButton = false;
+    
+    _commandedLiftSpeed = 0.f;
+    _commandedHeadSpeed = 0.f;
+    
+    _movingHead = false;
+    _movingLift = false;
     
     root_ = GetSupervisor()->getSelf();
     
@@ -2406,6 +2407,13 @@ namespace Cozmo {
       SendMoveHead(0);
       _wasMovingHead = false;
     }
+    
+    if (_pressBackpackButton && !_wasBackpackButtonPressed) {
+      PressBackpackButton(true);
+    } else if (!_pressBackpackButton && _wasBackpackButtonPressed) {
+      PressBackpackButton(false);
+    }
+    _wasBackpackButtonPressed = _pressBackpackButton;
    
     
   } // BSKeyboardController::ProcessKeyStroke()

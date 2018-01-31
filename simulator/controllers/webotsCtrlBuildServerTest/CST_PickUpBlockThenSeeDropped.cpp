@@ -104,7 +104,7 @@ s32 CST_PickUpBlockThenSeeDropped::UpdateSimInternal()
         CST_ASSERT(!cubeIds.empty(), "No lightcubes found!");
         _cubeId = cubeIds[0];
         
-        m.action.Set_pickupObject(ExternalInterface::PickupObject(_cubeId, _defaultTestMotionProfile, 0, false, true, false, true));
+        m.action.Set_pickupObject(ExternalInterface::PickupObject(_cubeId, _defaultTestMotionProfile, 0, false, true, true));
         ExternalInterface::MessageGameToEngine message;
         message.Set_QueueSingleAction(m);
         SendMessage(message);

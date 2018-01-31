@@ -126,7 +126,7 @@ void PlaceRelObjectHelper::StartPlaceRelObject()
             new PlaceRelObjectAction(_targetID, _placingOnGround,
                                      _params.placementOffsetX_mm,
                                      _params.placementOffsetY_mm,
-                                     false, _params.relativeCurrentMarker);
+                                     _params.relativeCurrentMarker);
     
     DelegateWithResponseAnim(placeObj, &PlaceRelObjectHelper::RespondToPlaceRelResult);
   }

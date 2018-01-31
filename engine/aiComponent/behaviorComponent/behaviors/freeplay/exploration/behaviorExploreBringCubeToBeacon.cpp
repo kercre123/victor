@@ -478,7 +478,7 @@ void BehaviorExploreBringCubeToBeacon::TryToPlaceAt(const Pose3d& pose, int atte
   const bool checkFreeDestination = true;
   const float padding_mm = kBebctb_PaddingBetweenCubes_mm;
   
-  PlaceObjectOnGroundAtPoseAction* placeObjectAction = new PlaceObjectOnGroundAtPoseAction(pose, false, false, checkFreeDestination, padding_mm);
+  PlaceObjectOnGroundAtPoseAction* placeObjectAction = new PlaceObjectOnGroundAtPoseAction(pose, false, checkFreeDestination, padding_mm);
   RobotCompletedActionCallback onPlaceActionResult = [this, pose, attempt](const ExternalInterface::RobotCompletedAction& actionRet)
   {
     bool placeAtCubeFinalFail = false;

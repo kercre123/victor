@@ -14,7 +14,7 @@
 
 An Animation is an open-loop sequence of highly coordinated movements, faces (eyes), lights, and sounds used to demonstrate an emotion or reaction. They can be created dynamically at runtime ("procedural" animations) or they are more commonly authored by Anki's animation team in Maya and loaded from files ("canned" animations). 
 
-The `CannedAnimationContainer` is the storage for available canned animations loaded at startup. Animations which are alternates for a similar use case are organized into an `AnimationGroup`. In code, we use an `AnimationTrigger` to select and play an animation from a group based on the robot's emotion, head angle, etc. The mapping from Triggers to Groups is in `AnimationTriggerMap.json`.
+The `CannedAnimationContainer` is the storage for available canned animations loaded at startup. Animations which are alternates for a similar use case are organized into an `AnimationGroup`. In code, we use an `AnimationTrigger` to select and play an animation from a group based on the robot's emotion, head angle, etc. The mapping from Triggers to Groups is in [`AnimationTriggerMap.json`](/resources/assets/animationGroupMaps/AnimationTriggerMap.json).
 
 The Robot has an `AnimationComponent` whose counterpart in the separate animation process is the `AnimationStreamer`.
 
@@ -53,7 +53,7 @@ Some limitations of the current implementation include:
 
 ## Animation Authoring
 
-Animation files and tools are stored in a separate subversion repository, setup instructions are here: https://ankiinc.atlassian.net/wiki/spaces/COZMO/pages/73498743/Setting+up+Cornerstone+for+the+first+time
+Animation files and tools are stored in a separate subversion repository, setup instructions are [here](https://ankiinc.atlassian.net/wiki/spaces/COZMO/pages/73498743/Setting+up+Cornerstone+for+the+first+time).
 
 Facial animations are created and edited in Maya; there is a rig that represents the Victor robot with manipulators for changing both face and eye parameters.
 
@@ -73,6 +73,6 @@ Animations are exported by the Maya Game Exporter, segments on the Maya time lin
 
 ## Deploy
 
-Exported animation files are pulled into the repo by `project/victor/build-victor.sh` that issues svn commands to update from the animation repo.
+Exported animation files are pulled into the repo by [`project/victor/build-victor.sh`](/project/victor/build-victor.sh) that issues svn commands to update from the animation repo.
 
 During deployment only the .bin files are copied onto the robot.

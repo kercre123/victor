@@ -326,7 +326,6 @@ void BehaviorDriveInDesperation::TransitionToDriveToCube()
 
     DriveToPoseAction* driveAction = new DriveToPoseAction(poses,
                                                            false, // don't force head down
-                                                           false, // no manual speed
                                                            Point3f{kDriveToCubeDistTolerance},
                                                            DEG_TO_RAD(kDriveToCubeAngleTolerance_deg));
     // don't bother with retries or anything, always just look at the cube once this is done

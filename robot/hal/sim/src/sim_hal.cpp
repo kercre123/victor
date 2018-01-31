@@ -135,6 +135,9 @@ namespace Anki {
       webots::Connector* chargeContact_;
       bool wasOnCharger_ = false;
 
+      // Backpack button
+      webots::Field* backpackButtonPressedField_ = nullptr;
+      
       // Upper Touch Sensor (for petting)
       webots::Receiver *backpackTouchSensorReceiver_;
       
@@ -391,6 +394,13 @@ namespace Anki {
       backpackTouchSensorReceiver_ = webotRobot_.getReceiver("touchSensorUpper");
       backpackTouchSensorReceiver_->enable(TIME_STEP);
 
+      // Backpack button
+      backpackButtonPressedField_ =  webotRobot_.getSelf()->getField("backpackButtonPressed");
+      if (backpackButtonPressedField_ == nullptr) {
+        AnkiError("sim_hal.Init.NoBackpackButtonPressedField", "");
+        return RESULT_FAIL;
+      }
+      
       if (InitRadio() != RESULT_OK) {
         AnkiError("sim_hal.Init.InitRadioFailed", "");
         return RESULT_FAIL;
@@ -779,9 +789,10 @@ namespace Anki {
           ss = (u16)((((maxPhysSignal - minPhysSignal) * ss) / maxSimSignal) + minPhysSignal);
           return ss;
         }
-
-        // no need to simulate these button press types
-        case BUTTON_POWER: { return 0; }
+        case BUTTON_POWER:
+        {
+          return backpackButtonPressedField_->getSFBool() ? 1 : 0;
+        }
         default: 
         {
           AnkiError( "sim_hal.GetButtonState.UnexpectedButtonType", "Button ID=%d does not have a sensible return value", button_id);

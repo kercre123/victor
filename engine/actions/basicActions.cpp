@@ -703,7 +703,7 @@ namespace Anki {
       _hasStarted = false;
       
       // Tell robot to execute this simple path
-      if(RESULT_OK != GetRobot().GetPathComponent().ExecuteCustomPath(path, false)) {
+      if(RESULT_OK != GetRobot().GetPathComponent().ExecuteCustomPath(path)) {
         return ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED;
       }
       
@@ -1670,12 +1670,11 @@ namespace Anki {
     
 #pragma mark ---- TraverseObjectAction ----
     
-    TraverseObjectAction::TraverseObjectAction(ObjectID objectID, const bool useManualSpeed)
+    TraverseObjectAction::TraverseObjectAction(ObjectID objectID)
     : IActionRunner("TraverseObject",
                     RobotActionType::TRAVERSE_OBJECT,
                     (u8)AnimTrackFlag::BODY_TRACK)
     , _objectID(objectID)
-    , _useManualSpeed(useManualSpeed)
     {
   
     }
@@ -1700,14 +1699,14 @@ namespace Anki {
         if(object->GetType() == ObjectType::Bridge_LONG ||
            object->GetType() == ObjectType::Bridge_SHORT)
         {
-          CrossBridgeAction* bridgeAction = new CrossBridgeAction(_objectID, _useManualSpeed);
+          CrossBridgeAction* bridgeAction = new CrossBridgeAction(_objectID);
           bridgeAction->SetSpeedAndAccel(_speed_mmps, _accel_mmps2, _decel_mmps2);
           bridgeAction->ShouldSuppressTrackLocking(true);
           _chosenAction.reset(bridgeAction);
           _chosenAction->SetRobot(&GetRobot());
         }
         else if(object->GetType() == ObjectType::Ramp_Basic) {
-          AscendOrDescendRampAction* rampAction = new AscendOrDescendRampAction(_objectID, _useManualSpeed);
+          AscendOrDescendRampAction* rampAction = new AscendOrDescendRampAction(_objectID);
           rampAction->SetSpeedAndAccel(_speed_mmps, _accel_mmps2, _decel_mmps2);
           rampAction->ShouldSuppressTrackLocking(true);
           _chosenAction.reset(rampAction);

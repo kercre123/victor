@@ -146,7 +146,7 @@ namespace Anki {
         for (int i=0 ; i < HAL::CLIFF_COUNT ; i++) {
           robotState_.cliffDataRaw[i] = ProxSensors::GetCliffValue(i);
         }
-        robotState_.proxData = HAL::GetRawProxData();
+        robotState_.proxData = ProxSensors::GetProxData();
         
         robotState_.backpackTouchSensorRaw = HAL::GetButtonState(HAL::BUTTON_CAPACITIVE);
         
@@ -333,13 +333,13 @@ namespace Anki {
 
       void Process_executePath(const RobotInterface::ExecutePath& msg) {
         AnkiInfo( "Messages.Process_executePath.StartingPath", "%d", msg.pathID);
-        PathFollower::StartPathTraversal(msg.pathID, msg.useManualSpeed);
+        PathFollower::StartPathTraversal(msg.pathID);
       }
 
       void Process_dockWithObject(const DockWithObject& msg)
       {
-        AnkiInfo( "Messages.Process_dockWithObject.Recvd", "action %hhu, dockMethod %hhu, doLiftLoadCheck %d, speed %f, acccel %f, decel %f, manualSpeed %d", 
-                 msg.action, msg.dockingMethod, msg.doLiftLoadCheck, msg.speed_mmps, msg.accel_mmps2, msg.decel_mmps2, msg.useManualSpeed);
+        AnkiInfo( "Messages.Process_dockWithObject.Recvd", "action %hhu, dockMethod %hhu, doLiftLoadCheck %d, speed %f, acccel %f, decel %f", 
+                 msg.action, msg.dockingMethod, msg.doLiftLoadCheck, msg.speed_mmps, msg.accel_mmps2, msg.decel_mmps2);
 
         DockingController::SetDockingMethod(msg.dockingMethod);
 
@@ -350,7 +350,6 @@ namespace Anki {
                                             msg.accel_mmps2,
                                             msg.decel_mmps2,
                                             0, 0, 0,
-                                            msg.useManualSpeed,
                                             msg.numRetries);
       }
 
@@ -362,8 +361,7 @@ namespace Anki {
                                               msg.decel_mmps2,
                                               msg.rel_x_mm,
                                               msg.rel_y_mm,
-                                              msg.rel_angle,
-                                              msg.useManualSpeed);
+                                              msg.rel_angle);
       }
 
       void Process_startMotorCalibration(const RobotInterface::StartMotorCalibration& msg) {
@@ -380,14 +378,7 @@ namespace Anki {
       void Process_drive(const RobotInterface::DriveWheels& msg) {
         // Do not process external drive commands if following a test path
         if (PathFollower::IsTraversingPath()) {
-          if (PathFollower::IsInManualSpeedMode()) {
-            // TODO: Maybe want to set manual speed via a different message?
-            //       For now, using average wheel speed.
-            f32 manualSpeed = 0.5f * (msg.lwheel_speed_mmps + msg.rwheel_speed_mmps);
-            PathFollower::SetManualPathSpeed(manualSpeed, 1000, 1000);
-          } else {
-            AnkiInfo( "Messages.Process_drive.IgnoringBecauseAlreadyOnPath", "");
-          }
+          AnkiWarn( "Messages.Process_drive.IgnoringBecauseAlreadyOnPath", "");
           return;
         }
 

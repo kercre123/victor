@@ -34,7 +34,7 @@ void CarryingComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& d
 }
 
 
-Result CarryingComponent::PlaceObjectOnGround(const bool useManualSpeed)
+Result CarryingComponent::PlaceObjectOnGround()
 {
   if(!IsCarryingObject()) {
     PRINT_NAMED_ERROR("Robot.PlaceObjectOnGround.NotCarryingObject",
@@ -47,8 +47,7 @@ Result CarryingComponent::PlaceObjectOnGround(const bool useManualSpeed)
   return _robot->SendRobotMessage<Anki::Cozmo::PlaceObjectOnGround>(0, 0, 0,
                                                                    DEFAULT_PATH_MOTION_PROFILE.speed_mmps,
                                                                    DEFAULT_PATH_MOTION_PROFILE.accel_mmps2,
-                                                                   DEFAULT_PATH_MOTION_PROFILE.decel_mmps2,
-                                                                   useManualSpeed);
+                                                                   DEFAULT_PATH_MOTION_PROFILE.decel_mmps2);
 }
 
 Result CarryingComponent::SendSetCarryState(CarryState state) const

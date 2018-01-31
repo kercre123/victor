@@ -43,7 +43,7 @@ public:
 
   // Send message to engine
   // Returns true on success, false on error
-  static bool SendAnimToEngine(const void *buffer, const u16 size, const u8 msgID);
+  static bool SendAnimToEngine(const RobotInterface::RobotToEngine& msg);
 
   // Send message to robot
   // Returns true on success, false on error

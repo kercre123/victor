@@ -33,7 +33,7 @@ ActionResult DrivePathAction::Init()
   ActionResult result = ActionResult::SUCCESS;
   
   // Tell robot to execute this simple path
-  if(RESULT_OK != GetRobot().GetPathComponent().ExecuteCustomPath(_path, false)) {
+  if(RESULT_OK != GetRobot().GetPathComponent().ExecuteCustomPath(_path)) {
     result = ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED;
     return result;
   }

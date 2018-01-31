@@ -104,15 +104,13 @@ namespace Anki {
 
     IDockAction::IDockAction(ObjectID objectID,
                              const std::string name,
-                             const RobotActionType type,
-                             const bool useManualSpeed)
+                             const RobotActionType type)
     : IAction(name,
               type,
               ((u8)AnimTrackFlag::HEAD_TRACK |
                (u8)AnimTrackFlag::LIFT_TRACK |
-               (useManualSpeed ? 0 : (u8)AnimTrackFlag::BODY_TRACK)))
+               (u8)AnimTrackFlag::BODY_TRACK))
     , _dockObjectID(objectID)
-    , _useManualSpeed(useManualSpeed)
     , _dockingMethod((DockingMethod)kDefaultDockingMethod)
     {
       
@@ -721,7 +719,6 @@ namespace Anki {
                                                     _placementOffsetX_mm,
                                                     _placementOffsetY_mm,
                                                     _placementOffsetAngle_rad,
-                                                    _useManualSpeed,
                                                     _numDockingRetries,
                                                     _dockingMethod,
                                                     _doLiftLoadCheck) == RESULT_OK)
@@ -862,12 +859,10 @@ namespace Anki {
     
 #pragma mark ---- PopAWheelieAction ----
     
-    PopAWheelieAction::PopAWheelieAction(ObjectID objectID,
-                                         const bool useManualSpeed)
+    PopAWheelieAction::PopAWheelieAction(ObjectID objectID)
     : IDockAction(objectID,
                   "PopAWheelie",
-                  RobotActionType::POP_A_WHEELIE,
-                  useManualSpeed)
+                  RobotActionType::POP_A_WHEELIE)
     {
       
     }
@@ -976,9 +971,8 @@ namespace Anki {
     
 #pragma mark ---- FacePlantAction ----
     
-    FacePlantAction::FacePlantAction(ObjectID objectID,
-                                     const bool useManualSpeed)
-    : IDockAction(objectID, "FacePlant", RobotActionType::FACE_PLANT, useManualSpeed)
+    FacePlantAction::FacePlantAction(ObjectID objectID)
+    : IDockAction(objectID, "FacePlant", RobotActionType::FACE_PLANT)
     {
       SetShouldCheckForObjectOnTopOf(false);      
     }
@@ -1123,12 +1117,10 @@ namespace Anki {
     
     AlignWithObjectAction::AlignWithObjectAction(ObjectID objectID,
                                                  const f32 distanceFromMarker_mm,
-                                                 const AlignmentType alignmentType,
-                                                 const bool useManualSpeed)
+                                                 const AlignmentType alignmentType)
     : IDockAction(objectID,
                   "AlignWithObject",
-                  RobotActionType::ALIGN_WITH_OBJECT,
-                  useManualSpeed)
+                  RobotActionType::ALIGN_WITH_OBJECT)
     , _alignmentType(alignmentType)
     {
       SetShouldCheckForObjectOnTopOf(false);
@@ -1243,11 +1235,10 @@ namespace Anki {
     
 #pragma mark ---- PickupObjectAction ----
     
-    PickupObjectAction::PickupObjectAction(ObjectID objectID, const bool useManualSpeed)
+    PickupObjectAction::PickupObjectAction(ObjectID objectID)
     : IDockAction(objectID,
                   "PickupObject",
-                  RobotActionType::PICK_AND_PLACE_INCOMPLETE,
-                  useManualSpeed)
+                  RobotActionType::PICK_AND_PLACE_INCOMPLETE)
     {
       _dockingMethod = (DockingMethod)kPickupDockingMethod;
       SetPostDockLiftMovingAnimation(AnimationTrigger::SoundOnlyLiftEffortPickup);
@@ -1688,7 +1679,6 @@ namespace Anki {
     
     PlaceObjectOnGroundAtPoseAction::PlaceObjectOnGroundAtPoseAction(const Pose3d& placementPose,
                                                                      const bool useExactRotation,
-                                                                     const bool useManualSpeed,
                                                                      const bool checkFreeDestination,
                                                                      const float destinationObjectPadding_mm)
     : CompoundActionSequential()
@@ -1696,7 +1686,6 @@ namespace Anki {
       auto* driveAction = new DriveToPlaceCarriedObjectAction(placementPose,
                                                               true,
                                                               useExactRotation,
-                                                              useManualSpeed,
                                                               checkFreeDestination,
                                                               destinationObjectPadding_mm);
       _driveAction = AddAction(driveAction);
@@ -1712,12 +1701,10 @@ namespace Anki {
                                                const bool placeOnGround,
                                                const f32 placementOffsetX_mm,
                                                const f32 placementOffsetY_mm,
-                                               const bool useManualSpeed,
                                                const bool relativeCurrentMarker)
     : IDockAction(objectID,
                   "PlaceRelObject",
-                  RobotActionType::PICK_AND_PLACE_INCOMPLETE,
-                  useManualSpeed)
+                  RobotActionType::PICK_AND_PLACE_INCOMPLETE)
     , _relOffsetX_mm(placementOffsetX_mm)
     , _relOffsetY_mm(placementOffsetY_mm)
     , _relativeCurrentMarker(relativeCurrentMarker)
@@ -2293,11 +2280,10 @@ namespace Anki {
     
 #pragma mark ---- RollObjectAction ----
     
-    RollObjectAction::RollObjectAction(ObjectID objectID, const bool useManualSpeed)
+    RollObjectAction::RollObjectAction(ObjectID objectID)
     : IDockAction(objectID,
                   "RollObject",
-                  RobotActionType::ROLL_OBJECT_LOW,
-                  useManualSpeed)
+                  RobotActionType::ROLL_OBJECT_LOW)
     {
       _dockingMethod = (DockingMethod)kRollDockingMethod;
       _dockAction = DockAction::DA_ROLL_LOW;
@@ -2491,11 +2477,10 @@ namespace Anki {
     
 #pragma mark ---- AscendOrDescendRampAction ----
     
-    AscendOrDescendRampAction::AscendOrDescendRampAction(ObjectID rampID, const bool useManualSpeed)
+    AscendOrDescendRampAction::AscendOrDescendRampAction(ObjectID rampID)
     : IDockAction(rampID,
                   "AscendOrDescendRamp",
-                  RobotActionType::ASCEND_OR_DESCEND_RAMP,
-                  useManualSpeed)
+                  RobotActionType::ASCEND_OR_DESCEND_RAMP)
     {
       
     }
@@ -2547,11 +2532,10 @@ namespace Anki {
 
 #pragma mark ---- CrossBridgeAction ----
     
-    CrossBridgeAction::CrossBridgeAction(ObjectID bridgeID, const bool useManualSpeed)
+    CrossBridgeAction::CrossBridgeAction(ObjectID bridgeID)
     : IDockAction(bridgeID,
                   "CrossBridge",
-                  RobotActionType::CROSS_BRIDGE,
-                  useManualSpeed)
+                  RobotActionType::CROSS_BRIDGE)
     {
       
     }

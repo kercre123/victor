@@ -264,8 +264,7 @@ BackupOntoChargerAction::BackupOntoChargerAction(ObjectID chargerID,
                                                  bool useCliffSensorCorrection)
   : IDockAction(chargerID,
                 "BackupOntoCharger",
-                RobotActionType::BACKUP_ONTO_CHARGER,
-                false)
+                RobotActionType::BACKUP_ONTO_CHARGER)
   , _useCliffSensorCorrection(useCliffSensorCorrection)
 {
   // We don't expect to be near the pre-action pose of the charger when we
@@ -316,8 +315,7 @@ ActionResult BackupOntoChargerAction::Verify()
 #pragma mark ---- DriveToAndMountChargerAction ----
   
 DriveToAndMountChargerAction::DriveToAndMountChargerAction(const ObjectID& objectID,
-                                                           const bool useCliffSensorCorrection,
-                                                           const bool useManualSpeed)
+                                                           const bool useCliffSensorCorrection)
 : CompoundActionSequential()
 {
   // Get DriveToObjectAction
@@ -325,8 +323,7 @@ DriveToAndMountChargerAction::DriveToAndMountChargerAction(const ObjectID& objec
                                                PreActionPose::ActionType::DOCKING,
                                                0,
                                                false,
-                                               0,
-                                               useManualSpeed);
+                                               0);
   driveToAction->SetPreActionPoseAngleTolerance(DEG_TO_RAD(15.f));
   AddAction(driveToAction);
   AddAction(new TurnToAlignWithChargerAction(objectID));

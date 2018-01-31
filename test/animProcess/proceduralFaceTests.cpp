@@ -1,19 +1,26 @@
 #include "gtest/gtest.h"
 
+#include <string>
 #include <vector>
+#include <functional>
 
-#include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/types.h"
-#include "cozmoAnim/animations/proceduralFaceDrawer.h"
+#include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/shared/types.h"
+#include "cannedAnimLib/proceduralFaceDrawer.h"
+#include "util/random/randomGenerator.h"
+#include "util/fileUtils/fileUtils.h"
 
-// TODO: Re-enable this test - nothing is running this (VIC-372)
+#define GENERATE_TEST_FILES 0
+
+using namespace Anki;
+using namespace Anki::Cozmo;
+
+extern std::string resourcePath;
 
 // Sweep all parameters and make sure we don't trigger an assert or crash when
 // we try to actually draw the face. (Clipping should prevent that.)
 TEST(ProceduralFace, ParameterSweep)
 {
-  using namespace Anki::Cozmo;
-  
   ProceduralFace procFace;
   
   const std::vector<ProceduralFace::Value> values {
@@ -36,7 +43,13 @@ TEST(ProceduralFace, ParameterSweep)
   // We know the following is gonna issue a zillion warnings. Let's not have them
   // all display.
   ProceduralFace::EnableClippingWarning(false);
-  
+
+  Vision::ImageRGB _procFaceImg(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
+
+  // Note: whichever test runs first generates the noise textures that are retained for
+  //       the duration of the test. For determinism hard-code the same seed for all tests.
+  Util::RandomGenerator rng(1);
+
   for(auto faceScale : faceScales) {
     procFace.SetFaceScale({faceScale, faceScale});
 
@@ -45,16 +58,185 @@ TEST(ProceduralFace, ParameterSweep)
       
       for(size_t iParam = 0; iParam < (size_t)Param::NumParameters; ++iParam)
       {
-        //for(auto whichEye : {ProceduralFaceParams::Left, ProceduralFaceParams::Right}) {
-          for(auto value : values) {
-            procFace.SetParameter(ProceduralFace::Left, (Param)iParam, value);
-            procFace.SetParameter(ProceduralFace::Right, (Param)iParam, value);
-            
-            EXPECT_NO_FATAL_FAILURE(ProceduralFaceDrawer::DrawFace(procFace));
-          }
-        //}
+        for(auto value : values) {
+          procFace.SetParameterBothEyes((Param)iParam, value);
+
+          EXPECT_NO_FATAL_FAILURE(ProceduralFaceDrawer::DrawFace(procFace, rng, _procFaceImg));
+        }
       }
     }
   }
   
 } // TEST(ProceduralFace, ParameterSweep)
+
+// Compare two images by getting the square-root of sum of squared error
+static double getSimilarity(const Vision::ImageRGB& testImage, const Vision::ImageRGB& storedImage) {
+    EXPECT_GT(testImage.GetNumRows(), 0);
+    EXPECT_GT(testImage.GetNumCols(), 0);
+    EXPECT_EQ(testImage.GetNumRows(), storedImage.GetNumRows());
+    EXPECT_EQ(testImage.GetNumCols(), storedImage.GetNumCols());
+
+    // Calculate the L2 relative error between images.
+    double errorL2 = cv::norm(testImage.get_CvMat_(), storedImage.get_CvMat_(), CV_L2);
+
+    // Convert to a reasonable scale, since L2 error is summed across all pixels of the image.
+    double similarity = errorL2 / (double)(testImage.GetNumRows() * testImage.GetNumCols());
+    return similarity;
+}
+
+static void testFaceAgainstStoredVersion(const ProceduralFace& procFace, const std::string& filename)
+{
+  SCOPED_TRACE(filename);
+
+  // Generate procedural face
+
+  Vision::ImageRGB procFaceImg;
+  procFaceImg.Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
+
+  // Note: whichever test runs first generates the noise textures that are retained for
+  //       the duration of the test. For determinism hard-code the same seed for all tests.
+  Util::RandomGenerator rng(1);
+
+  ProceduralFaceDrawer::DrawFace(procFace, rng, procFaceImg);
+#if GENERATE_TEST_FILES
+  procFaceImg.Save(filename);
+#endif
+
+  // Load previously generated procedural face
+
+  Vision::ImageRGB savedFaceImg;
+  savedFaceImg.Load(filename);
+
+  // Compare, threshold is 0.01f based on inspecton
+  // Note: see comment on random number generation and determinism
+
+  double similarity = getSimilarity(procFaceImg, savedFaceImg);
+  EXPECT_LT(similarity, 0.01f);
+}
+
+// Render known set of expressions and compare bitmap output to known good versions
+TEST(ProceduralFace, RenderKeyframeCheck)
+{
+  const std::vector<std::string> files = {
+    "anim_eyes_angry",
+    "anim_eyes_awe",
+    "anim_eyes_blink_line",
+    "anim_eyes_look_happy",
+    "anim_eyes_look_right",
+    "anim_eyes_neutral"
+  };
+
+  for(auto const& key : files) {
+    Json::Reader reader;
+    Json::Value data;
+    std::string fullpath = Util::FileUtils::FullFilePath({resourcePath, "test", "animProcessTests", key+".json"});
+    bool success = reader.parse(Util::FileUtils::ReadFile(fullpath), data);
+    ASSERT_TRUE(success);
+
+    ProceduralFace face;
+    face.SetFromJson(data[key][0]);
+
+    testFaceAgainstStoredVersion(face, Util::FileUtils::FullFilePath({resourcePath, "test", "animProcessTests", key+".png"}));
+  }
+
+} // TEST(ProceduralFace, RenderKeyframeCheck)
+
+
+// Render a sub-set of parames with a fixed expression and compare bitmap output to known good versions
+TEST(ProceduralFace, RenderParamsCheck)
+{
+  // Note: hard-coded values extracted by hand from .json files, original sources in resources
+
+  // anim_eyes_neutral.json
+  ProceduralFace anim_eyes_neutral;
+  anim_eyes_neutral.SetFromValues(
+                                  { 9.169665777907909, 0.0, 1.2143329245079946, 0.9052803986393223, 0.0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 },
+                                  { -10.206374337270427, 0.0, 1.2220369812777003, 0.9052803986393223, 0.0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 },
+                                  0.0f, // faceAngle_deg
+                                  0.0f, 0.0f, // faceCenterX, faceCenterY
+                                  1.0f, 1.0f, // faceScaleX, faceScaleY
+                                  1.0f // scanlineOpacity
+                                  );
+
+  ProceduralFace procFace;
+
+  procFace = anim_eyes_neutral;
+  procFace.SetFaceScale({.5f, .25f});
+  testFaceAgainstStoredVersion(procFace, Util::FileUtils::FullFilePath({resourcePath, "test", "animProcessTests", "anim_eyes_neutral_scale.png"}));
+
+  procFace = anim_eyes_neutral;
+  procFace.SetFaceAngle(33.f);
+  testFaceAgainstStoredVersion(procFace, Util::FileUtils::FullFilePath({resourcePath, "test", "animProcessTests", "anim_eyes_neutral_angle.png"}));
+
+  procFace = anim_eyes_neutral;
+  procFace.SetScanlineOpacity(0.75f);
+  testFaceAgainstStoredVersion(procFace, Util::FileUtils::FullFilePath({resourcePath, "test", "animProcessTests", "anim_eyes_neutral_scanline.png"}));
+
+  procFace = anim_eyes_neutral;
+  procFace.SetParameter(ProceduralFace::Left, ProceduralFace::Parameter::EyeCenterX, -FACE_DISPLAY_WIDTH/8);
+  procFace.SetParameter(ProceduralFace::Left, ProceduralFace::Parameter::EyeCenterY, -FACE_DISPLAY_HEIGHT/8);
+  procFace.SetParameter(ProceduralFace::Right, ProceduralFace::Parameter::EyeCenterX, FACE_DISPLAY_WIDTH/8);
+  procFace.SetParameter(ProceduralFace::Right, ProceduralFace::Parameter::EyeCenterY, FACE_DISPLAY_HEIGHT/8);
+  testFaceAgainstStoredVersion(procFace, Util::FileUtils::FullFilePath({resourcePath, "test", "animProcessTests", "anim_eyes_neutral_eyecenter.png"}));
+
+  procFace = anim_eyes_neutral;
+  procFace.SetParameter(ProceduralFace::Left, ProceduralFace::Parameter::EyeScaleX, 0.75f);
+  procFace.SetParameter(ProceduralFace::Left, ProceduralFace::Parameter::EyeScaleY, 0.5f);
+  procFace.SetParameter(ProceduralFace::Right, ProceduralFace::Parameter::EyeScaleX, 0.5f);
+  procFace.SetParameter(ProceduralFace::Right, ProceduralFace::Parameter::EyeScaleY, 0.75f);
+  testFaceAgainstStoredVersion(procFace, Util::FileUtils::FullFilePath({resourcePath, "test", "animProcessTests", "anim_eyes_neutral_eyescale.png"}));
+
+  procFace = anim_eyes_neutral;
+  procFace.SetParameter(ProceduralFace::Left, ProceduralFace::Parameter::EyeAngle, -45.f);
+  procFace.SetParameter(ProceduralFace::Right, ProceduralFace::Parameter::EyeAngle, 15.f);
+  testFaceAgainstStoredVersion(procFace, Util::FileUtils::FullFilePath({resourcePath, "test", "animProcessTests", "anim_eyes_neutral_eyeangle.png"}));
+
+  procFace = anim_eyes_neutral;
+  procFace.SetParameter(ProceduralFace::Left, ProceduralFace::Parameter::LowerInnerRadiusX, 0.f);
+  procFace.SetParameter(ProceduralFace::Left, ProceduralFace::Parameter::LowerInnerRadiusY, 0.f);
+  procFace.SetParameter(ProceduralFace::Left, ProceduralFace::Parameter::UpperInnerRadiusX, 0.f);
+  procFace.SetParameter(ProceduralFace::Left, ProceduralFace::Parameter::UpperInnerRadiusY, 0.f);
+  procFace.SetParameter(ProceduralFace::Right, ProceduralFace::Parameter::UpperOuterRadiusX, 0.f);
+  procFace.SetParameter(ProceduralFace::Right, ProceduralFace::Parameter::UpperOuterRadiusY, 0.f);
+  procFace.SetParameter(ProceduralFace::Right, ProceduralFace::Parameter::LowerOuterRadiusX, 0.f);
+  procFace.SetParameter(ProceduralFace::Right, ProceduralFace::Parameter::LowerOuterRadiusY, 0.f);
+  testFaceAgainstStoredVersion(procFace, Util::FileUtils::FullFilePath({resourcePath, "test", "animProcessTests", "anim_eyes_neutral_radius.png"}));
+
+  procFace = anim_eyes_neutral;
+  procFace.SetParameter(ProceduralFace::Left, ProceduralFace::Parameter::UpperLidY, 0.5f);
+  procFace.SetParameter(ProceduralFace::Right, ProceduralFace::Parameter::LowerLidY, 0.75f);
+  testFaceAgainstStoredVersion(procFace, Util::FileUtils::FullFilePath({resourcePath, "test", "animProcessTests", "anim_eyes_neutral_lidy.png"}));
+
+  procFace = anim_eyes_neutral;
+  procFace.SetParameter(ProceduralFace::Left, ProceduralFace::Parameter::UpperLidAngle, -45.0f);
+  procFace.SetParameter(ProceduralFace::Right, ProceduralFace::Parameter::LowerLidAngle, 15.0f);
+  testFaceAgainstStoredVersion(procFace, Util::FileUtils::FullFilePath({resourcePath, "test", "animProcessTests", "anim_eyes_neutral_lidangle.png"}));
+
+  procFace = anim_eyes_neutral;
+  procFace.SetParameter(ProceduralFace::Left, ProceduralFace::Parameter::UpperLidBend, 0.5f);
+  procFace.SetParameter(ProceduralFace::Right, ProceduralFace::Parameter::LowerLidBend, 0.75f);
+  testFaceAgainstStoredVersion(procFace, Util::FileUtils::FullFilePath({resourcePath, "test", "animProcessTests", "anim_eyes_neutral_lidbend.png"}));
+
+  procFace = anim_eyes_neutral;
+  procFace.SetParameter(ProceduralFace::Left, ProceduralFace::Parameter::Saturation, -1.f);
+  procFace.SetParameter(ProceduralFace::Right, ProceduralFace::Parameter::Saturation, 1.f);
+  testFaceAgainstStoredVersion(procFace, Util::FileUtils::FullFilePath({resourcePath, "test", "animProcessTests", "anim_eyes_neutral_saturation.png"}));
+
+  procFace = anim_eyes_neutral;
+  procFace.SetParameter(ProceduralFace::Left, ProceduralFace::Parameter::Lightness, 0.5f);
+  procFace.SetParameter(ProceduralFace::Right, ProceduralFace::Parameter::Lightness, 0.75f);
+  testFaceAgainstStoredVersion(procFace, Util::FileUtils::FullFilePath({resourcePath, "test", "animProcessTests", "anim_eyes_neutral_lightness.png"}));
+
+  procFace = anim_eyes_neutral;
+  procFace.SetParameter(ProceduralFace::Left, ProceduralFace::Parameter::GlowSize, 0.5f);
+  procFace.SetParameter(ProceduralFace::Right, ProceduralFace::Parameter::GlowSize, 0.75f);
+  testFaceAgainstStoredVersion(procFace, Util::FileUtils::FullFilePath({resourcePath, "test", "animProcessTests", "anim_eyes_neutral_glowsize.png"}));
+
+  procFace = anim_eyes_neutral;
+  procFace.SetParameter(ProceduralFace::Left, ProceduralFace::Parameter::HotSpotCenterX, -0.5f);
+  procFace.SetParameter(ProceduralFace::Left, ProceduralFace::Parameter::HotSpotCenterY, -0.5f);
+  procFace.SetParameter(ProceduralFace::Right, ProceduralFace::Parameter::HotSpotCenterX, 0.5f);
+  procFace.SetParameter(ProceduralFace::Right, ProceduralFace::Parameter::HotSpotCenterY, 0.5f);
+  testFaceAgainstStoredVersion(procFace, Util::FileUtils::FullFilePath({resourcePath, "test", "animProcessTests", "anim_eyes_neutral_hotspot.png"}));
+
+} // TEST(ProceduralFace, RenderParamsCheck)

@@ -451,10 +451,13 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
 {
   // We only care about checking one channel, and since the channel data is uninterleaved when passed in here,
   // we simply give the start of the buffer as the input to run the vad detection on
-  int activityFlag = DoSVad(_sVadObject.get(), // object
-                            1.0f,              // confidence it is okay to measure noise floor, i.e. no known activity like gear noise
-                            (int16_t*)audioChunk);       // pointer to input data
-
+  int activityFlag = 0;
+  {
+    ANKI_CPU_PROFILE("ProcessVAD");
+    activityFlag = DoSVad(_sVadObject.get(),      // object
+                          1.0f,                   // confidence it is okay to measure noise floor, i.e. no known activity like gear noise
+                          (int16_t*)audioChunk);  // pointer to input data
+  }
 
   static const std::array<AudioUtil::AudioSample, kSamplesPerBlock * kNumInputChannels> dummySpeakerOut{};
   {
@@ -880,8 +883,13 @@ float MicDataProcessor::GetIncomingMicDataPercentUsed()
 {
   std::lock_guard<std::mutex> lock(_resampleMutex);
   // Use whichever buffer is currently _not_ being processed
-  auto& bufferInUse = (_rawAudioProcessingIndex == 1) ? _rawAudioBuffers[0] : _rawAudioBuffers[1];
-  return ((float)bufferInUse.size()) / ((float)bufferInUse.capacity());
+  const auto inUseIndex = (_rawAudioProcessingIndex == 1) ? 0 : 1;
+  const auto& bufferInUse = _rawAudioBuffers[inUseIndex];
+  const auto updatedFullness = ((float)bufferInUse.size()) / ((float)bufferInUse.capacity());
+  // Cache the current fullness for this buffer and use the greater of the two buffer fullnesses
+  // This way the "fullness" returned is less variable and better covers the worst case
+  _rawAudioBufferFullness[inUseIndex] = updatedFullness;
+  return MAX(_rawAudioBufferFullness[0], _rawAudioBufferFullness[1]);
 }
 
 

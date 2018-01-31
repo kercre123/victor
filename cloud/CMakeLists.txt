@@ -75,4 +75,3 @@ anki_go_set_ldflags(cloud_process ${chipper_flags})
 android_strip(TARGET cloud_process)
 
 anki_build_go_executable(wavtest ${ANKI_SRCLIST_DIR})
-anki_disable_default_build(wavtest)

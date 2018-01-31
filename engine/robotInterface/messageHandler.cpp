@@ -56,7 +56,6 @@ void MessageHandler::Init(const Json::Value& config, RobotManager* robotMgr, con
   if (context->GetExternalInterface() != nullptr) {
     auto helper = MakeAnkiEventUtil(*context->GetExternalInterface(), *this, _signalHandles);
     using namespace ExternalInterface;
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::ReliableTransportRunMode>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::ExitSdkMode>();
   }
 }
@@ -172,15 +171,7 @@ void MessageHandler::Broadcast(const uint32_t robotId, RobotInterface::RobotToEn
   
 Result MessageHandler::AddRobotConnection(RobotID_t robotId)
 {
-  const char* robotProcessIPAddress = "127.0.0.1";
-
-  int port = Anki::Cozmo::ANIM_PROCESS_SERVER_BASE_PORT + robotId;
-  PRINT_NAMED_WARNING("AddRobotConnection", "%s:%d", robotProcessIPAddress, port);
-
-  Anki::Util::TransportAddress address(robotProcessIPAddress, static_cast<uint16_t>(port));
-  _robotConnectionManager->Connect(address);
-  
-  return RESULT_OK;
+  return _robotConnectionManager->Connect(robotId);
 }
   
 void MessageHandler::Disconnect()
@@ -201,13 +192,6 @@ void MessageHandler::ReadLabAssignmentsFromRobot(u32 serialNumber) const
 void MessageHandler::ConnectRobotToNeedsManager(u32 serialNumber) const
 {
   _robotManager->ConnectRobotToNeedsManager(serialNumber);
-}
-
-
-template<>
-void MessageHandler::HandleMessage(const ExternalInterface::ReliableTransportRunMode& msg)
-{
-  _robotConnectionManager->SetReliableTransportRunMode(msg.isSync);
 }
   
 template<>

@@ -29,11 +29,6 @@
 #include "clad/robotInterface/messageRobotToEngine_sendAnimToEngine_helper.h"
 #include "clad/robotInterface/messageEngineToRobot_sendAnimToRobot_helper.h"
 
-// For animProcess<->Engine communications
-#include "anki/cozmo/transport/IUnreliableTransport.h"
-#include "anki/cozmo/transport/IReceiver.h"
-#include "anki/cozmo/transport/reliableTransport.h"
-
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "osState/osState.h"
@@ -43,14 +38,18 @@
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 
+// Log options
 #define LOG_CHANNEL    "AnimProcessMessages"
+
+// Trace options
+// #define LOG_TRACE(name, format, ...) PRINT_CH_DEBUG(LOG_CHANNEL, name, format, ##__VA_ARGS__)
+#define LOG_TRACE(name, format, ...) {}
 
 // Anonymous namespace for private declarations
 namespace {
 
   // For comms with engine
-  ReliableConnection connection;
-  const int MAX_PACKET_BUFFER_SIZE = 2048;
+  constexpr int MAX_PACKET_BUFFER_SIZE = 2048;
   u8 pktBuffer_[MAX_PACKET_BUFFER_SIZE];
 
   Anki::Cozmo::AnimationStreamer*            _animStreamer = nullptr;
@@ -285,7 +284,8 @@ static void HandleRobotStateUpdate(const Anki::Cozmo::RobotState& robotState)
 
 void AnimProcessMessages::ProcessMessageFromRobot(const RobotInterface::RobotToEngine& msg)
 {
-  switch (msg.tag)
+  const auto tag = msg.tag;
+  switch (tag)
   {
     case RobotInterface::RobotToEngine::Tag_micData:
     {
@@ -306,9 +306,9 @@ void AnimProcessMessages::ProcessMessageFromRobot(const RobotInterface::RobotToE
     break;
   }
 
-  // Send up to engine
-  const int tagSize = sizeof(msg.tag);
-  SendAnimToEngine(msg.GetBuffer()+tagSize, msg.Size()-tagSize, msg.tag);
+  // Forward to engine
+  SendAnimToEngine(msg);
+
 } // ProcessMessageFromRobot()
 
 // ========== END OF PROCESSING MESSAGES FROM ROBOT ==========
@@ -322,10 +322,6 @@ Result AnimProcessMessages::Init(AnimationStreamer* animStreamer,
 {
   // Setup robot and engine sockets
   CozmoAnimComms::InitComms();
-
-  // Setup reliable transport
-  ReliableTransport_Init();
-  ReliableConnection_Init(&connection, NULL); // We only have one connection so dest pointer is superfluous
 
   _animStreamer = animStreamer;
   _audioInput   = audioInput;
@@ -351,8 +347,8 @@ Result AnimProcessMessages::MonitorConnectionState(void)
 {
   // Send block connection state when engine connects
   static bool wasConnected = false;
-  if (!wasConnected && CozmoAnimComms::EngineIsConnected()) {
-
+  if (!wasConnected && CozmoAnimComms::IsConnectedToEngine()) {
+    LOG_INFO("AnimProcessMessages.MonitorConnectionState", "Robot now available");
     RobotInterface::RobotAvailable idMsg;
     idMsg.hwRevision = 0;
     idMsg.serialNumber = OSState::getInstance()->GetSerialNumber();
@@ -374,7 +370,7 @@ Result AnimProcessMessages::MonitorConnectionState(void)
 
     wasConnected = true;
   }
-  else if (wasConnected && !CozmoAnimComms::EngineIsConnected()) {
+  else if (wasConnected && !CozmoAnimComms::IsConnectedToEngine()) {
     wasConnected = false;
   }
 
@@ -384,6 +380,10 @@ Result AnimProcessMessages::MonitorConnectionState(void)
 
 void AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
 {
+  if (!CozmoAnimComms::IsConnectedToRobot()) {
+    CozmoAnimComms::InitRobotComms();
+  }
+
   MonitorConnectionState();
 
   _context->GetMicDataProcessor()->Update(currTime_nanosec);
@@ -391,47 +391,40 @@ void AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
   // Process incoming messages from engine
   u32 dataLen;
 
-  //ReliableConnection_printState(&connection);
-
+  // Process messages from engine
   while((dataLen = CozmoAnimComms::GetNextPacketFromEngine(pktBuffer_, MAX_PACKET_BUFFER_SIZE)) > 0)
   {
-    s16 res = ReliableTransport_ReceiveData(&connection, pktBuffer_, dataLen);
-    if (res < 0)
-    {
-      //AnkiWarn( 1205, "ReliableTransport.PacketNotAccepted", 347, "%d", 1, res);
+    Anki::Cozmo::RobotInterface::EngineToRobot msg;
+    memcpy(msg.GetBuffer(), pktBuffer_, dataLen);
+    if (msg.Size() != dataLen) {
+      LOG_WARNING("AnimProcessMessages.Update.EngineToRobot.InvalidSize",
+                  "Invalid message size from engine (%d != %d)",
+                  msg.Size(), dataLen);
+      continue;
     }
+    if (!msg.IsValid()) {
+      LOG_WARNING("AnimProcessMessages.Update.EngineToRobot.InvalidData", "Invalid message from engine");
+      continue;
+    }
+    ProcessMessageFromEngine(msg);
   }
 
-  if (CozmoAnimComms::EngineIsConnected())
-  {
-    if (ReliableTransport_Update(&connection) == false) // Connection has timed out
-    {
-      Receiver_OnDisconnect(&connection);
-      // Can't print anything because we have no where to send it
-    }
-  }
-
-  // Process incoming messages from robot
+  // Process messages from robot
   while ((dataLen = CozmoAnimComms::GetNextPacketFromRobot(pktBuffer_, MAX_PACKET_BUFFER_SIZE)) > 0)
   {
-    Anki::Cozmo::RobotInterface::RobotToEngine msgBuf;
-
-    // Copy into structured memory
-    memcpy(msgBuf.GetBuffer(), pktBuffer_, dataLen);
-    if (!msgBuf.IsValid())
-    {
-      LOG_WARNING("AnimProcessMessages.Update.InvalidMessageData",
-                  "Received invalid message data %02x[%d] from robot", pktBuffer_[0], dataLen);
+    Anki::Cozmo::RobotInterface::RobotToEngine msg;
+    memcpy(msg.GetBuffer(), pktBuffer_, dataLen);
+    if (msg.Size() != dataLen) {
+      LOG_WARNING("AnimProcessMessages.Update.RobotToEngine.InvalidSize",
+                  "Invalid message size from robot (%d != %d)",
+                  msg.Size(), dataLen);
       continue;
     }
-    if (msgBuf.Size() != dataLen)
-    {
-      LOG_WARNING("AnimProcessMessages.Update.InvalidMessageSize",
-                  "Received invalid message size %d != %d (tag %02x) from robot",
-                  dataLen, msgBuf.Size(), msgBuf.tag);
+    if (!msg.IsValid()) {
+      LOG_WARNING("AnimProcessMessages.Update.RobotToEngine.InvalidData", "Invalid message from robot");
       continue;
     }
-    ProcessMessageFromRobot(msgBuf);
+    ProcessMessageFromRobot(msg);
   }
 
   #ifndef SIMULATOR
@@ -446,103 +439,16 @@ void AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
 
 bool AnimProcessMessages::SendAnimToRobot(const RobotInterface::EngineToRobot& msg)
 {
+  LOG_TRACE("AnimProcessMessages.SendAnimToRobot", "Send tag %d size %u", msg.tag, msg.Size());
   return CozmoAnimComms::SendPacketToRobot(msg.GetBuffer(), msg.Size());
 }
   
-bool AnimProcessMessages::SendAnimToEngine(const void *buffer, const u16 size, const u8 msgID)
+bool AnimProcessMessages::SendAnimToEngine(const RobotInterface::RobotToEngine & msg)
 {
-  // TODO: Don't need reliable transport between engine and anim process. Domain sockets should be good enough.
-  //       For now, send everything unreliable.
-  //const bool reliable = msgID < EnumToUnderlyingType(RobotInterface::ToRobotAddressSpace::TO_ENG_UNREL);
-  const bool reliable = false;
-  const bool hot = true;
-
-  if (CozmoAnimComms::EngineIsConnected())
-  {
-    if (reliable)
-    {
-      if (ReliableTransport_SendMessage((const uint8_t*)buffer, size, &connection, eRMT_SingleReliableMessage, hot, msgID) == false) // failed to queue reliable message!
-      {
-        // Have to drop the connection
-        LOG_ERROR("AnimProcessMessages.SendAnimToEngine", "Failed to queue reliable message");
-        ReliableTransport_Disconnect(&connection);
-        Receiver_OnDisconnect(&connection);
-        return false;
-      }
-      else
-      {
-        return true;
-      }
-    }
-    else
-    {
-      return ReliableTransport_SendMessage((const uint8_t*)buffer, size, &connection, eRMT_SingleUnreliableMessage, hot, msgID);
-    }
-  }
-  else
-  {
-    return false;
-  }
+  LOG_TRACE("AnimProcessMessages.SendAnimToEngine", "Send tag %d size %u", msg.tag, msg.Size());
+  return CozmoAnimComms::SendPacketToEngine(msg.GetBuffer(), msg.Size());
 }
 
 } // namespace Cozmo
 } // namespace Anki
-
-// ============== START OF GLOBAL CALLBACKS ==============
-// #pragma mark "Global callbacks"
-
-// Required by reliableTransport.c
-extern "C" Anki::TimeStamp_t GetTimeStamp()
-{
-  return Anki::BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-}
-
-// Shim for reliable transport
-bool UnreliableTransport_SendPacket(uint8_t* buffer, uint16_t bufferSize)
-{
-  return Anki::Cozmo::CozmoAnimComms::SendPacketToEngine(buffer, bufferSize);
-}
-
-void Receiver_ReceiveData(uint8_t* buffer, uint16_t bufferSize, ReliableConnection* connection)
-{
-  Anki::Cozmo::RobotInterface::EngineToRobot msgBuf;
-
-  // Copy into structured memory
-  memcpy(msgBuf.GetBuffer(), buffer, bufferSize);
-  if (!msgBuf.IsValid())
-  {
-    LOG_WARNING("AnimProcessMessages.ReceiveData.Invalid", "Received invalid data %02x[%d]",
-                buffer[0], bufferSize);
-  }
-  else if (msgBuf.Size() != bufferSize)
-  {
-    LOG_WARNING("AnimProcessMessages.ReceiveData.SizeError", "Received invalid size %d != %d",
-                bufferSize, msgBuf.Size());
-  }
-  else
-  {
-    Anki::Cozmo::AnimProcessMessages::ProcessMessageFromEngine(msgBuf);
-  }
-}
-
-void Receiver_OnConnectionRequest(ReliableConnection* connection)
-{
-  ReliableTransport_FinishConnection(connection); // Accept the connection
-  //AnkiInfo( 121, "Receiver_OnConnectionRequest", 369, "ReliableTransport new connection", 0);
-  Anki::Cozmo::CozmoAnimComms::UpdateEngineCommsState(1);
-}
-
-void Receiver_OnConnected(ReliableConnection* connection)
-{
-  //AnkiInfo( 122, "Receiver_OnConnected", 370, "ReliableTransport connection completed", 0);
-  Anki::Cozmo::CozmoAnimComms::UpdateEngineCommsState(1);
-}
-
-void Receiver_OnDisconnect(ReliableConnection* connection)
-{
-  Anki::Cozmo::CozmoAnimComms::UpdateEngineCommsState(0);   // Must mark connection disconnected BEFORE trying to print
-  //AnkiInfo( 123, "Receiver_OnDisconnect", 371, "ReliableTransport disconnected", 0);
-  ReliableConnection_Init(connection, NULL); // Reset the connection
-  Anki::Cozmo::CozmoAnimComms::UpdateEngineCommsState(0);
-}
 

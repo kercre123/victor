@@ -55,14 +55,10 @@ namespace Cozmo {
   // the drive center is the location between the two wheels)
   const f32 DRIVE_CENTER_OFFSET = -20.f;
   
-  // Length of the forward range sensor (with respect to the sensor's origin)
-  const u16 kProxSensorMinDistance_mm = 25;
-  const u16 kProxSensorMaxDistance_mm = 410;
-  
   // Forward distance sensor measurements (TODO: finalize these dimensions on production robot)
   const float kProxSensorTiltAngle_rad = DEG_TO_RAD(6.5f);    // Angle that the prox sensor is tilted (upward is positive)
-  const float kProxSensorPosition_mm[3] = {10.f, 0.f, 16.f}; // With respect to robot origin
-  const float kProxSensorFullFOV_rad = DEG_TO_RAD(25.f);     // Full Field of View (FOV) of the sensor cone
+  const float kProxSensorPosition_mm[3] = {10.f, 0.f, 16.f};  // With respect to robot origin
+  const float kProxSensorFullFOV_rad = DEG_TO_RAD(25.f);      // Full Field of View (FOV) of the sensor cone
   
   // The height of the lift at various configurations
   // Actual limit in proto is closer to 20.4mm, but there is a weird
@@ -310,12 +306,16 @@ namespace Cozmo {
   //
   #ifdef SIMULATOR
   constexpr char LOCAL_SOCKET_PATH[]  = "/tmp/";
-  constexpr char ROBOT_SERVER_PATH[]  = "/tmp/_robot_server_";
-  constexpr char ANIM_CLIENT_PATH[]   = "/tmp/_anim_client_";
+  constexpr char ANIM_ROBOT_SERVER_PATH[]  = "/tmp/_anim_robot_server_";
+  constexpr char ANIM_ROBOT_CLIENT_PATH[]  = "/tmp/_anim_robot_client_";
+  constexpr char ENGINE_ANIM_SERVER_PATH[] = "/tmp/_engine_anim_server_";
+  constexpr char ENGINE_ANIM_CLIENT_PATH[] = "/tmp/_engine_anim_client_";
   #else
   constexpr char LOCAL_SOCKET_PATH[]  = "/dev/";
-  constexpr char ROBOT_SERVER_PATH[]  = "/dev/socket/_robot_server_";
-  constexpr char ANIM_CLIENT_PATH[]   = "/dev/socket/_anim_client_";
+  constexpr char ANIM_ROBOT_SERVER_PATH[]  = "/dev/socket/_anim_robot_server_";
+  constexpr char ANIM_ROBOT_CLIENT_PATH[]  = "/dev/socket/_anim_robot_client_";
+  constexpr char ENGINE_ANIM_SERVER_PATH[] = "/dev/socket/_engine_anim_server_";
+  constexpr char ENGINE_ANIM_CLIENT_PATH[] = "/dev/socket/_engine_anim_client_";
   #endif
   
 } // namespace Cozmo

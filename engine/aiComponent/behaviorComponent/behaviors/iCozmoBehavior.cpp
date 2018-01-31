@@ -302,7 +302,15 @@ void ICozmoBehavior::InitInternal()
     for(auto& entry: _anonymousBehaviorMapConfig){
       const std::string debugStr = "ICozmoBehavior.ReadFromJson.";
       
-      const std::string behaviorName = JsonTools::ParseString(entry, kAnonymousBehaviorName, debugStr + "BehaviorNameMissing");      
+      const std::string behaviorName = JsonTools::ParseString(entry, kAnonymousBehaviorName, debugStr + "BehaviorNameMissing");
+
+      const bool isBehaviorID = BehaviorTypesWrapper::IsValidBehaviorID(behaviorName);
+      ANKI_VERIFY(!isBehaviorID,
+                  "ICozmoBehavior.InitInternal.AnonymousNameIsABehaviorID",
+                  "behavior '%s' declares an anonymous behavior named '%s', but that matches an existing behavior ID",
+                  GetIDStr().c_str(),
+                  behaviorName.c_str());
+      
       const BehaviorClass behaviorClass = BehaviorTypesWrapper::BehaviorClassFromString(
         JsonTools::ParseString(entry, kBehaviorClassKey, debugStr + "BehaviorClassMissing"));
       Json::Value params;
@@ -513,6 +521,10 @@ void ICozmoBehavior::OnDeactivatedInternal()
   _lastRunTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   CancelDelegates(false);
   
+  // Clear callbacks
+  _actionCallback = nullptr;
+  _behaviorDelegateCallback = nullptr;
+  
   if(_hasSetIdle){
     SmartRemoveIdleAnimation();
   }
@@ -684,7 +696,7 @@ Util::RandomGenerator& ICozmoBehavior::GetRNG() const {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::UpdateInternal()
 {
-  // fist call the behavior delegation callback if there is one
+  // first call the behavior delegation callback if there is one
   if( IsActivated() &&
       !IsControlDelegated() &&
       _behaviorDelegateCallback != nullptr ) {

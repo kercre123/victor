@@ -31,6 +31,17 @@ BehaviorClass BehaviorClassFromString(const std::string& name)
   return Anki::Cozmo::BehaviorClassFromString(name);
 }
 
+bool BehaviorIDFromString(const std::string& name, BehaviorID& id)
+{
+  return Anki::Cozmo::BehaviorIDFromString(name, id);
+}
+
+bool IsValidBehaviorID(const std::string& name)
+{
+  BehaviorID waste;
+  return Anki::Cozmo::BehaviorIDFromString(name, waste);
+}
+
 ExecutableBehaviorType ExecutableBehaviorTypeFromString(const std::string& name)
 {
   return Anki::Cozmo::ExecutableBehaviorTypeFromString(name);

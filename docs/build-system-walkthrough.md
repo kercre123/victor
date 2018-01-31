@@ -11,7 +11,7 @@ reading this, anyone will be able to add new components to the build system.
 Victor requires a properly configured Android build environment. Maybe you know what that means and
 have your shell correctly pointing to a version of the SDK and NDK. That might work, but we need
 a specific version for Victor builds. Rather than modifying any files on your computer, the environment
-required to build victor is encoded in `project/victor/envsetup.sh`. To load it into your shell, simply
+required to build victor is encoded in [`project/victor/envsetup.sh`](/project/victor/envsetup.sh). To load it into your shell, simply
 source the file:
 
 ```
@@ -33,7 +33,7 @@ This script performs 3 main functions, in order:
     Source file specifications for build targets are defined in `BUILD.in` files, which reside outside
     of CMake. These files are designed to work like `BUCK` and `BUILD` files from buck and bazel build systems.
     `BUILD.in` are python files that are evaluated using a sandboxed subset of python, using the self-contained
-    python script `metabuild.py`.
+    python script [`metabuild.py`](/tools/build/tools/metabuild/metabuild.py).
     
     Primarily these function
     to provide a clear definition of what files will be included in each build target and to
@@ -44,7 +44,7 @@ This script performs 3 main functions, in order:
 
 2. Configures CMake for the specified platform, generator and build-type
 
-    If `build-victor.sh` determines that no build rules are present, and then invokes CMake in "configure" mode.
+    If [`build-victor.sh`](/project/victor/build-victor.sh) determines that no build rules are present, and then invokes CMake in "configure" mode.
     This causes CMake to evaluate the graph of `CMakeLists.txt` files starting from the one in the root of the directory.
     This phase checks the compiler for the specified platform and then generated build rules that will evaluated
     by either `ninja` or `xcodebuild`.
@@ -75,8 +75,8 @@ This script performs 3 main functions, in order:
 - `BUILD.in`
 
     Used to declare source files that belong to build targets. These are Pythonic files, evaluated in a 
-    sandboxed python context. This process is performed by `metabuild.py`, which is called from inside
-    `build-victor.sh`. The syntax is modeled after [BUCK](http://buckbuild.com), and the `glob` and `subdir_glob`
+    sandboxed python context. This process is performed by [`metabuild.py`](/tools/build/tools/metabuild/metabuild.py), which is called from inside
+    [`build-victor.sh`](/project/victor/build-victor.sh). The syntax is modeled after [BUCK](http://buckbuild.com), and the `glob` and `subdir_glob`
     functions work the same way as described in the buck documentation.
     The output of each target in `BUILD.in` is a set of `.lst` files inside
     `generated/cmake`, named using the target name as the prefix. The helper functions used in `BUILD.in`
@@ -141,7 +141,7 @@ cxx_project(
 )
 ```
 
-`metabuild.py` interprets this file and outputs:
+[`metabuild.py`](/tools/build/tools/metabuild/metabuild.py) interprets this file and outputs:
 
 ```
 generated/cmake/
@@ -157,7 +157,7 @@ generated/cmake/
 The corresponding `CMakeLists.txt` file uses this definition to create a `library` target and then
 configures the library to define link and include deps, compiler options and precompiler definitions.
 
-from `animProcess/CMakeLists.txt`
+from [`animProcess/CMakeLists.txt`](/animProcess/CMakeLists.txt)
 
 ```
 # Include helper function for constructing targets from .lst files
@@ -209,11 +209,11 @@ target_include_directories(victor_anim PUBLIC
 
 ## Caveats
 
-These steps in `build-victor.sh` are intended to only run when necessary. If file lists exist, they will not be updated.
+These steps in [`build-victor.sh`](/project/victor/build-victor.sh) are intended to only run when necessary. If file lists exist, they will not be updated.
 If CMake determines that all build metadata and commands/rules are up-to-date, it will skip the configure
 phase.  The build command will typically always run.
 
-Unfortunately, file list generation is done directly by `metabuild.py`, which is outside of CMake.
+Unfortunately, file list generation is done directly by [`metabuild.py`](/tools/build/tools/metabuild/metabuild.py), which is outside of CMake.
 This means that if new files are added or old files are deleted, CMake currently won't be able to find them unless
 you "force" the build script to re-generate them. This can be done by running:
 

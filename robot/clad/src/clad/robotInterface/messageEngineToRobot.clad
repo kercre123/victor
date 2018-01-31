@@ -167,7 +167,6 @@ message TrimPath
 message ExecutePath
 {
   uint_16 pathID,
-  bool    useManualSpeed,
 }
 
 message AbsoluteLocalizationUpdate

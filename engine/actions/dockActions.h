@@ -56,8 +56,7 @@ namespace Anki {
     public:
       IDockAction(ObjectID objectID,
                   const std::string name,
-                  const RobotActionType type,
-                  const bool useManualSpeed = false);
+                  const RobotActionType type);
       
       virtual ~IDockAction();
 
@@ -239,7 +238,6 @@ namespace Anki {
       Radians                    _preActionPoseAngleTolerance    = DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE;
       f32                        _waitToVerifyTimeSecs           = -1.0f;
       bool                       _wasPickingOrPlacing            = false;
-      bool                       _useManualSpeed                 = false;
       UniqueCompoundPtr          _faceAndVerifyAction            = nullptr;
       f32                        _placementOffsetX_mm            = 0;
       f32                        _placementOffsetY_mm            = 0;
@@ -293,7 +291,7 @@ namespace Anki {
     class PopAWheelieAction : public IDockAction
     {
     public:
-      PopAWheelieAction(ObjectID objectID, const bool useManualSpeed = false);
+      PopAWheelieAction(ObjectID objectID);
       
       // Override completion signal to fill in information about rolled objects
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
@@ -312,7 +310,7 @@ namespace Anki {
     class FacePlantAction : public IDockAction
     {
     public:
-      FacePlantAction(ObjectID objectID, const bool useManualSpeed = false);
+      FacePlantAction(ObjectID objectID);
       
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
       
@@ -335,8 +333,7 @@ namespace Anki {
     public:
       AlignWithObjectAction(ObjectID objectID,
                             const f32 distanceFromMarker_mm,
-                            const AlignmentType alignmentType = AlignmentType::CUSTOM,
-                            const bool useManualSpeed = false);
+                            const AlignmentType alignmentType = AlignmentType::CUSTOM);
       
       virtual ~AlignWithObjectAction();
 
@@ -373,8 +370,7 @@ namespace Anki {
     class PickupObjectAction : public IDockAction
     {
     public:
-      PickupObjectAction(ObjectID objectID,
-                         const bool useManualSpeed = false);
+      PickupObjectAction(ObjectID objectID);
       
       virtual ~PickupObjectAction();
 
@@ -450,7 +446,6 @@ namespace Anki {
     public:
       PlaceObjectOnGroundAtPoseAction(const Pose3d& placementPose,
                                       const bool useExactRotation = false,
-                                      const bool useManualSpeed = false,
                                       const bool checkFreeDestination = false,
                                       const float destinationObjectPadding_mm = 0.0f);
       
@@ -467,7 +462,6 @@ namespace Anki {
                            const bool placeOnGround = false,
                            const f32 placementOffsetX_mm = 0,
                            const f32 placementOffsetY_mm = 0,
-                           const bool useManualSpeed = false,
                            const bool relativeCurrentMarker = true);
       virtual ~PlaceRelObjectAction()
       {
@@ -530,7 +524,7 @@ namespace Anki {
     class RollObjectAction : public IDockAction
     {
     public:
-      RollObjectAction(ObjectID objectID, const bool useManualSpeed = false);
+      RollObjectAction(ObjectID objectID);
       virtual ~RollObjectAction()
       {
         if(_rollVerifyAction != nullptr)
@@ -578,7 +572,7 @@ namespace Anki {
     class CrossBridgeAction : public IDockAction
     {
     public:
-      CrossBridgeAction(ObjectID bridgeID, const bool useManualSpeed);
+      CrossBridgeAction(ObjectID bridgeID);
       
     protected:
       
@@ -599,7 +593,7 @@ namespace Anki {
     class AscendOrDescendRampAction : public IDockAction
     {
     public:
-      AscendOrDescendRampAction(ObjectID rampID, const bool useManualSpeed);
+      AscendOrDescendRampAction(ObjectID rampID);
       
     protected:
       

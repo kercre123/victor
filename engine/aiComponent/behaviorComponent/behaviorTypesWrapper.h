@@ -52,6 +52,8 @@ namespace Cozmo {
 namespace BehaviorTypesWrapper {
 
 BehaviorID BehaviorIDFromString(const std::string& name);
+bool BehaviorIDFromString(const std::string& name, BehaviorID& id);
+bool IsValidBehaviorID(const std::string& name);
 BehaviorClass BehaviorClassFromString(const std::string& name);
 ExecutableBehaviorType ExecutableBehaviorTypeFromString(const std::string& name);
 
