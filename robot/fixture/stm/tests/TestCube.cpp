@@ -157,13 +157,13 @@ static void ShortCircuitTest(void)
 }
 
 //led test array
-typedef struct { char* name; uint16_t bits; int i_meas; int i_nominal; } led_test_t;
+typedef struct { char* name; uint16_t bits; int i_meas; int i_nominal; int i_variance; } led_test_t;
 led_test_t ledtest[] = {
-  {(char*)"All.RED",  0x1111, 0, 15}, {(char*)"All.GRN",  0x2222, 0, 15}, {(char*)"All.BLU",  0x4444, 0, 15},
-  {(char*)"D1.RED",   0x0001, 0, 4 }, {(char*)"D1.GRN",   0x0002, 0, 4 }, {(char*)"D1.BLU",   0x0004, 0, 4 },
-  {(char*)"D2.RED",   0x0010, 0, 4 }, {(char*)"D2.GRN",   0x0020, 0, 4 }, {(char*)"D2.BLU",   0x0040, 0, 4 },
-  {(char*)"D3.RED",   0x0100, 0, 4 }, {(char*)"D3.GRN",   0x0200, 0, 4 }, {(char*)"D3.BLU",   0x0400, 0, 4 },
-  {(char*)"D4.RED",   0x1000, 0, 4 }, {(char*)"D4.GRN",   0x2000, 0, 4 }, {(char*)"D4.BLU",   0x4000, 0, 4 }
+  {(char*)"All.RED",  0x1111, 0, 15, 4}, {(char*)"All.GRN",  0x2222, 0, 15, 4}, {(char*)"All.BLU",  0x4444, 0, 15, 4},
+  {(char*)"D1.RED",   0x0001, 0, 4 , 2}, {(char*)"D1.GRN",   0x0002, 0, 4 , 2}, {(char*)"D1.BLU",   0x0004, 0, 4 , 2},
+  {(char*)"D2.RED",   0x0010, 0, 4 , 2}, {(char*)"D2.GRN",   0x0020, 0, 4 , 2}, {(char*)"D2.BLU",   0x0040, 0, 4 , 2},
+  {(char*)"D3.RED",   0x0100, 0, 4 , 2}, {(char*)"D3.GRN",   0x0200, 0, 4 , 2}, {(char*)"D3.BLU",   0x0400, 0, 4 , 2},
+  {(char*)"D4.RED",   0x1000, 0, 4 , 2}, {(char*)"D4.GRN",   0x2000, 0, 4 , 2}, {(char*)"D4.BLU",   0x4000, 0, 4 , 2}
 };
 
 static void CubeTest(void)
@@ -197,7 +197,7 @@ static void CubeTest(void)
   for(int n=0; n < sizeof(ledtest)/sizeof(led_test_t); n++)
   {
     int i = ledtest[n].i_meas - i_base;
-    bool pass = (ledtest[n].i_nominal-1) <= i && i <= (ledtest[n].i_nominal+1);
+    bool pass = (ledtest[n].i_nominal - ledtest[n].i_variance) <= i && i <= (ledtest[n].i_nominal + ledtest[n].i_variance);
     ConsolePrintf("%s current %imA %s\n", ledtest[n].name, i, pass ? "ok" : "--FAIL--");
     if( !pass )
       e = ERROR_CUBE_LED;
