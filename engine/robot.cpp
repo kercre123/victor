@@ -1427,9 +1427,6 @@ Result Robot::Update()
       
   // Draw All Objects by calling their Visualize() methods.
   GetBlockWorld().DrawAllObjects();
-  
-  // Nav memory map
-  GetMapComponent().DrawMap();
 
   // Always draw robot w.r.t. the origin, not in its current frame
   Pose3d robotPoseWrtOrigin = GetPose().GetWithRespectToRoot();
@@ -1870,10 +1867,12 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
     {
       const PoseOriginID_t newOriginID = GetPoseOriginList().GetCurrentOriginID();
       
-      // Now we need to go through all objects and faces whose poses have been adjusted
+      // Now we need to go through all objects whose poses have been adjusted
       // by this origin switch and notify the outside world of the change.
-      GetBlockWorld().UpdateObjectOrigins(origOriginID, newOriginID);
+      // Note that map component must be updated before blockworld in case blockworld
+      // tries to insert a new object into the map.
       GetMapComponent().UpdateMapOrigins(origOriginID, newOriginID);
+      GetBlockWorld().UpdateObjectOrigins(origOriginID, newOriginID);
       GetFaceWorld().UpdateFaceOrigins(origOriginID, newOriginID); 
       
       // after updating all block world objects, flatten out origins to remove grandparents

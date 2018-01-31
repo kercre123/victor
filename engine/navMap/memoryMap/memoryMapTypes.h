@@ -91,7 +91,6 @@ struct MapBroadcastData {
   MapBroadcastData() : mapInfo(), quadInfo() {}
   ExternalInterface::MemoryMapInfo                  mapInfo;
   std::vector<ExternalInterface::MemoryMapQuadInfo> quadInfo;
-  bool                                              isDirty;
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
