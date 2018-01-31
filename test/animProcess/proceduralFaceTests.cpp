@@ -6,6 +6,7 @@
 
 #include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/shared/types.h"
+#include "coretech/common/engine/array2d_impl.h"
 #include "cannedAnimLib/proceduralFaceDrawer.h"
 #include "util/random/randomGenerator.h"
 #include "util/fileUtils/fileUtils.h"
