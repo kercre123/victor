@@ -23,7 +23,7 @@ u8 g_fixtureReleaseVersion = 10;
 #define BUILD_INFO "Victor DVT2"
 
 //Set this flag to modify display info - indicates a debug/test build
-#define NOT_FOR_FACTORY 0
+#include "app_build_flags.h"
 const bool g_isReleaseBuild = !NOT_FOR_FACTORY;
 
 #define APP_CMD_OPTS    ((CMD_OPTS_DEFAULT & ~CMD_OPTS_EXCEPTION_EN) | CMD_OPTS_DBG_PRINT_RSP_TIME)
