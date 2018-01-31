@@ -12,10 +12,19 @@ if $tasklist | grep -iq "UV4.exe"; then
   exit 1
 fi
 
+#read release version
+version=$(grep -oP '#define\s+APP_RELEASE_VERSION\s+\K([0-9]+)' $vers_file)
+vlen=$(echo -n $version | wc -m)
+echo release version \'$version\'
+
 #clean
+safefile=fixture.safe
+manifest=$(printf fixture%03d $version).manifest
+safefileVxx=$(printf fixture%03d $version).safe
+zipfileVxx=$(printf firmware%03d $version).zip
 echo cleaning
 rm -rf build
-rm -f fixture.safe #XXX: DELETE ALL 'fixture*.safe' files
+rm -f $safefile $safefileVxx $zipfileVxx $manifest
 
 #clear debug flag for release build
 echo clear debug flag
@@ -26,15 +35,28 @@ sleep 1 #delay for file system changes to clear cache
 echo building project
 Tstart=$(($(date +%s%N)/1000000))
 timeout 90.0s $keil -b $project -j0
-errlvl=$?
+builderr=$?
 Tend=$(($(date +%s%N)/1000000))
-if [ $errlvl = 0 ]; then result="succeeded"; else result="FAILED"; fi
-echo build: "("$errlvl")" $result in $(($Tend-$Tstart))ms
 
 #restore debug flag
 echo restore debug flag
 echo "#define NOT_FOR_FACTORY 1" > $flags_file
 
-#XXX: add release version to output safe filename
+#build the manifest
+echo $(printf timestamp:%s "$(date +'%m/%d/%Y %H:%M:%S')") > $manifest
+echo $(printf version:%d $version) >> $manifest
+echo $(printf "build-time-ms:%d" $(($Tend-$Tstart))) >> $manifest
+echo $(printf build-err:%d $builderr) >> $manifest
+
+#package for shipment
+if [ $builderr = 0 ]; then 
+  echo build: "("$builderr")" succeess in $(($Tend-$Tstart))ms
+  cp $safefile $safefileVxx
+  #XXX: bootloader tools need update to support 'fixture###.safe' filenames
+  #zip -9T $zipfileVxx $safefileVxx $manifest
+  zip -9T $zipfileVxx $safefile $manifest
+else
+  echo build: "("$builderr")" ---FAILED--- in $(($Tend-$Tstart))ms
+fi
 
 echo done
