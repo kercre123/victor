@@ -26,7 +26,9 @@ namespace Factory {
 
   namespace 
   {
-    static const char* kEMRFile = "/factory/birthcertificate";
+    // static const char* kEMRFile = "/factory/birthcertificate";
+    static const char* kEMRFile = "/data/persist/factory/birthcertificate";
+
     static Factory::EMR* _emr = nullptr;
   
     // Memory maps the EMR file to _emr
@@ -87,6 +89,21 @@ namespace Factory {
     if(FACTORY_TEST)
     {
       memcpy(_emr->data + offset, data, len);
+    }
+    else
+    {
+      printf("Failed to write to EMR not factory test\n");
+    }
+  }
+
+  static void WriteEMR(size_t offset, uint32_t data)
+  {
+    // Attempt to read the EMR, will do nothing if it has already been read
+    ReadEMR();
+
+    if(FACTORY_TEST)
+    {
+      _emr->data[offset] = data;
     }
     else
     {
