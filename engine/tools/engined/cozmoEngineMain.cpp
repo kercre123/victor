@@ -151,7 +151,7 @@ static int cozmo_start(const Json::Value& configuration)
   if (config.isMember("DataPlatformResourcesBasePath")) {
     resourcesBasePath = config["DataPlatformResourcesBasePath"].asCString();
   } else {
-    resourcesBasePath = externalPath + "/assets";
+    resourcesBasePath = externalPath;
     config["DataPlatformResourcesBasePath"] = resourcesBasePath;
   }
 
