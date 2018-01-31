@@ -298,6 +298,9 @@ struct DockingErrorSignal;
     // Returns true if image was captured, false if not
     bool CaptureImage(Vision::ImageRGB& image_out);
 
+    // Releases captured image backing data to CameraService
+    bool ReleaseImage(Vision::ImageRGB& image);
+
     f32 GetBodyTurnSpeedThresh_degPerSec() const;
     
     void SetPhysicalRobot(const bool isPhysical);

@@ -8,7 +8,7 @@
 //
 
 #include "engine/robot.h"
-#include "androidHAL/androidHAL.h"
+#include "camera/cameraService.h"
 
 #include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/poseOriginList.h"
@@ -276,7 +276,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
 #endif
 
   // This will create the AndroidHAL instance if it doesn't yet exist
-  AndroidHAL::getInstance();
+  CameraService::getInstance();
   
 } // Constructor: Robot
     
@@ -1286,8 +1286,8 @@ Result Robot::Update()
      lastUpdateTime = currentTime_sec;
   */
 
-  //////////// Android HAL Update ////////////
-  AndroidHAL::getInstance()->Update();
+  //////////// CameraService Update ////////////
+  CameraService::getInstance()->Update();
 
   //////////// VisionScheduleMediator ////////////
   // Applies the scheduling consequences of the last frame's subscriptions before ticking VisionComponent
@@ -2246,8 +2246,9 @@ Result Robot::SendMessage(const RobotInterface::EngineToRobot& msg, bool reliabl
 // Sync time with physical robot and trigger it robot to send back camera calibration
 Result Robot::SendSyncTime() const
 {
+  // BRC: Why are we call AndroidHAL/CameraService to get a timestamp?
   Result result = SendMessage(RobotInterface::EngineToRobot(
-                                RobotInterface::SyncTime(AndroidHAL::getInstance()->GetTimeStamp(),
+                                RobotInterface::SyncTime(CameraService::getInstance()->GetTimeStamp(),
                                                          DRIVE_CENTER_OFFSET)));
 
   if (result == RESULT_OK) {

@@ -30,7 +30,7 @@ target_link_libraries(test_animprocess
   victor_anim
   cti_common
   engine_clad
-  androidHAL
+  cameraService
   cubeBleClient
   osState
   util

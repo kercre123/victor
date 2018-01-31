@@ -82,9 +82,9 @@ target_include_directories(victor_anim
 # mac implementation uses (webotsCtrlAnim)
 if (ANDROID)
 
-  anki_build_cxx_executable(victor_animator ${ANKI_SRCLIST_DIR})
+  anki_build_cxx_executable(vic-anim ${ANKI_SRCLIST_DIR})
 
-  target_link_libraries(victor_animator
+  target_link_libraries(vic-anim
     PRIVATE
     victor_anim
     cti_common_robot
@@ -93,6 +93,6 @@ if (ANDROID)
     ${PLATFORM_LIBS}
   )
 
-  android_strip(TARGET victor_animator)
+  android_strip(TARGET vic-anim)
     
 endif()

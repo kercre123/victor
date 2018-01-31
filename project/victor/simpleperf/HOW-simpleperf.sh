@@ -5,7 +5,7 @@ set -eu
 SCRIPTDIR=$(dirname $([ -L $0 ] && echo "$(dirname $0)/$(readlink -n $0)" || echo $0))           
 
 # What do we want to profile?
-: ${ANKI_PROFILE_PROCNAME:="cozmoengined"}
+: ${ANKI_PROFILE_PROCNAME:="vic-engine"}
 
 # How long do we capture? (in seconds)
 : ${ANKI_PROFILE_DURATION:="10"}

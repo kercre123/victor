@@ -12,7 +12,7 @@
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/jsonTools.h"
 
-#include "androidHAL/androidHAL.h"
+#include "camera/cameraService.h"
 #include "cubeBleClient/cubeBleClient.h"
 #include "osState/osState.h"
 
@@ -66,7 +66,7 @@ int main(int argc, char **argv)
   
   // Instantiate supervisor and pass to AndroidHAL and cubeBleClient
   webots::Supervisor engineSupervisor;
-  AndroidHAL::SetSupervisor(&engineSupervisor);
+  CameraService::SetSupervisor(&engineSupervisor);
   OSState::SetSupervisor(&engineSupervisor);
   CubeBleClient::SetSupervisor(&engineSupervisor);
 

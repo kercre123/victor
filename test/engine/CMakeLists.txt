@@ -34,7 +34,7 @@ target_link_libraries(test_engine
   cti_vision
   cti_messaging
   engine_clad
-  androidHAL
+  cameraService
   cubeBleClient
   osState
   util
