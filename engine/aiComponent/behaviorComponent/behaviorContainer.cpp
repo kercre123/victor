@@ -124,7 +124,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToVoiceCommand.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/sleeping/behaviorSleeping.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorComeHere.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorObservingSounds.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorReactToSound.h"
 
 #include "engine/robot.h"
 
@@ -869,9 +869,9 @@ ICozmoBehaviorPtr BehaviorContainer::CreateBehaviorBase(BehaviorClass behaviorTy
       newBehavior = ICozmoBehaviorPtr(new BehaviorDispatchAfterShake(config));
       break;
     }
-    case BehaviorClass::ObservingSounds:
+    case BehaviorClass::ReactToSound:
     {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorObservingSounds(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToSound(config));
       break;
     }
   }

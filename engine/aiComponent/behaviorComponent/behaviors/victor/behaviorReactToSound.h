@@ -1,6 +1,6 @@
 /***********************************************************************************************************************
  *
- *  BehaviorObservingSounds
+ *  BehaviorReactToSound
  *  Cozmo
  *
  *  Created by Jarrod Hatfield on 12/06/17.
@@ -10,8 +10,8 @@
  *
  **********************************************************************************************************************/
 
-#ifndef __Cozmo__BehaviorObservingSounds_h__
-#define __Cozmo__BehaviorObservingSounds_h__
+#ifndef __Cozmo__BehaviorReactToSound_h__
+#define __Cozmo__BehaviorReactToSound_h__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/micDirectionHistory.h"
@@ -24,11 +24,11 @@ namespace Anki {
 namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class BehaviorObservingSounds : public ICozmoBehavior
+class BehaviorReactToSound : public ICozmoBehavior
 {
   // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
-  BehaviorObservingSounds( const Json::Value& config );
+  BehaviorReactToSound( const Json::Value& config );
 
 
 public:
@@ -134,4 +134,4 @@ private:
 }
 }
 
-#endif // __Cozmo__BehaviorObservingSounds_h__
+#endif // __Cozmo__BehaviorReactToSound_h__
