@@ -89,7 +89,8 @@ protected:
   void SetUnlock();
   
   void ToggleImageStreaming();
-  
+  void ToggleEyeRendering();
+
   void FlipSelectedBlock();
   
   void RequestSingleImageToGame();
