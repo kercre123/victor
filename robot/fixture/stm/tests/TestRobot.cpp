@@ -129,6 +129,7 @@ static inline int charge1_(uint16_t timeout_s, uint16_t i_done_ma, bool dbgPrint
   while( Timer::elapsedUs(Tstart) < (timeout_s*1000*1000) )
   {
     int current_ma = Meter::getCurrentMa(PWR_VEXT,6);
+    int voltage_mv = Meter::getVoltageMv(PWR_VEXT,4);
     
     //Debug: print real-time current usage in console (erasing behavior can cause problems with some terminals, logging etc)
     if( dbgPrint && Timer::elapsedUs(Tdisplay) > 50*1000 )
@@ -143,7 +144,7 @@ static inline int charge1_(uint16_t timeout_s, uint16_t i_done_ma, bool dbgPrint
       }
       
       const int DISP_MA_PER_CHAR = 15;
-      print_len = ConsolePrintf("%03d ", current_ma);
+      print_len = ConsolePrintf("%04dmV %03d ", voltage_mv, current_ma);
       for(int x=current_ma; x>0; x -= DISP_MA_PER_CHAR)
         print_len += ConsoleWrite((char*)"=");
       
@@ -261,6 +262,7 @@ void RobotChargeTest( u16 i_done_ma, u16 vbat_overvolt_v100x )
   while( Timer::elapsedUs(Twait) < 5*1000*1000 )
   {
     int current_ma = Meter::getCurrentMa(PWR_VEXT,6);
+    int voltage_mv = Meter::getVoltageMv(PWR_VEXT,4);
     avg = ((avg*avgCnt) + current_ma) / (avgCnt+1); //tracking average
     avgCnt = avgCnt < NUM_SAMPLES ? avgCnt + 1 : avgCnt;
     
@@ -273,7 +275,7 @@ void RobotChargeTest( u16 i_done_ma, u16 vbat_overvolt_v100x )
       {
         ibase_ma = current_ma;
         Tprint = Timer::get();
-        ConsolePrintf("%03d/%03d ", avg, current_ma );
+        ConsolePrintf("%04umV %03d/%03d ", voltage_mv, avg, current_ma );
         for(int x=1; x <= (avg > current_ma ? avg : current_ma); x += DISP_MA_PER_CHAR )
           ConsolePrintf( x <= avg && x <= current_ma ? "=" : x > avg ? "+" : "-" );
         ConsolePrintf("\n");
@@ -299,6 +301,13 @@ void RobotChargeTest( u16 i_done_ma, u16 vbat_overvolt_v100x )
       CHARGE_TEST_DEBUG( ConsolePrintf("\n"); );
       ConsolePrintf("robot off charger\n");
       throw ERROR_BAT_CHARGER;
+    }
+    
+    //keep an eye on output voltage from crappy power supplies
+    const int undervolt = 4700, overvolt = 5300;
+    if( voltage_mv < undervolt || voltage_mv > overvolt ) {
+      ConsolePrintf("bad voltage: %u\n", voltage_mv );
+      throw voltage_mv < undervolt ? ERROR_OUTPUT_VOLTAGE_LOW : ERROR_OUTPUT_VOLTAGE_HIGH;
     }
   }
   
