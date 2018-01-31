@@ -275,7 +275,7 @@
         "FeaturedProjectInstructions": "codeLabFeaturedPotOGoldDetector.projectInstructions",
         "FeaturedProjectImageName": "PotOGoldDetector",
         "FeaturedProjectBackgroundColor": "#ffe700",
-        "FeaturedProjectTitleTextColor": "#696b68",
+        "FeaturedProjectTitleTextColor": "#f2f2f2",
         "ProjectJSONFile": "pot_o_gold_detector",
         "StartDate": {
             "Month": "3",

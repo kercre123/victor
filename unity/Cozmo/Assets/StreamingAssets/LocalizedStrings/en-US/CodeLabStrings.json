@@ -1598,7 +1598,7 @@
       "translation":  "Challenge Cozmo to a match. Be sure to use your head!"
   },
   "codeLabFeaturedPaddleBall.projectInstructions": {
-      "translation":  "1. Once you tap the start flag, Move your head up and down to control the the paddle.\n\n2. Score points by bouncing the ball past Cozmo’s paddle. Try not to let Cozmo score by bouncing the ball past yours.\n\n3. Your paddle is on the left, and Cozmo's paddle is on the right.\n\n4. The first to earn 3 points wins!"
+      "translation":  "1. Once you tap the start flag, move your head up and down to control the paddle.\n\n2. Score points by bouncing the ball past Cozmo’s paddle. Try not to let Cozmo score by bouncing the ball past yours.\n\n3. Your paddle is on the left, and Cozmo's paddle is on the right.\n\n4. The first to earn 3 points wins!"
   },
   "codeLabFeaturedPotOGoldDetector.projectName": {
       "translation":  "Pot o' Gold Detector"
