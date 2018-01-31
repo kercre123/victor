@@ -426,7 +426,7 @@ void AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
   }
 
 // TODO(Al): Remove the !FACTORY_TEST condition once all robots have EMRs
-#if SIMULATOR || !FACTORY_TEST
+#if defined(SIMULATOR) || !FACTORY_TEST
   FaceDisplay::GetDebugDraw()->SetShouldDrawFAC(false);
 #else
   FaceDisplay::GetDebugDraw()->SetShouldDrawFAC(!Factory::GetEMR()->PACKED_OUT);

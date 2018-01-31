@@ -224,7 +224,7 @@ Result spine_get_frame() {
       continue;
     } else if (r > 0) {
       const struct SpineMessageHeader* hdr = (const struct SpineMessageHeader*)frame_buffer;
-      LOGD("Handling payload type %x\n", hdr->payload_type);
+      // LOGD("Handling payload type %x\n", hdr->payload_type);
       if (hdr->payload_type == PAYLOAD_DATA_FRAME) {
         handle_payload_data(frame_buffer);  //payload starts immediately after header
         result = RESULT_OK;
