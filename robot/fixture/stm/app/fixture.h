@@ -260,6 +260,8 @@ typedef int error_t;
 #define ERROR_BAT_UNDERVOLT         621   // Battery voltage too low
 #define ERROR_BAT_CHARGER           622   // Battery charger not working
 #define ERROR_BAT_OVERVOLT          623   // Battery voltage too high for this test (e.g. charge test)
+#define ERROR_OUTPUT_VOLTAGE_LOW    624   // Fixture's output voltage is too low - check supply and wiring
+#define ERROR_OUTPUT_VOLTAGE_HIGH   625   // Fixture's output voltage is too high - check supply and wiring
 
 //<export heading> Backpack Errors
 #define ERROR_BACKPACK_LED          650   // Backpack LED miswired or bad LED
