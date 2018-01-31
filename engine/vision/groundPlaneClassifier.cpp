@@ -244,6 +244,9 @@ Result GroundPlaneClassifier::Update(const Vision::ImageRGB& image, const Vision
   }
 
   // Actually return the resulting edges in the provided list
+  edgeFrame.timestamp = image.GetTimestamp();
+  edgeFrame.groundPlaneValid = true;
+
   outEdges.emplace_back(std::move(edgeFrame));
 
   PRINT_CH_DEBUG("VisionSystyem", "GroundPlaneClassifier.Update.Stopping","");
