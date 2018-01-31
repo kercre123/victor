@@ -6,7 +6,6 @@
  */
 
 #include "clad/audio/audioMessage.clad"
-#include "clad/types/imageTypes.clad"
 #include "clad/types/robotStatusAndActions.clad"
 #include "clad/types/ledTypes.clad"
 #include "clad/types/animationTypes.clad"
@@ -16,8 +15,6 @@
 #include "clad/types/controllerChannels.clad"
 #include "clad/types/proceduralFaceTypes.clad"
 #include "clad/types/proxMessages.clad"
-#include "clad/robotInterface/messageToActiveObject.clad"
-#include "clad/robotInterface/messageFromActiveObject.clad"
 #include "clad/robotInterface/otaMessages.clad"
 #include "clad/types/cameraFOVInfo.clad"
 #include "clad/types/motorTypes.clad"
@@ -25,17 +22,6 @@
 
 namespace Anki {
 namespace Cozmo {
-  
-  structure SetPropSlot
-  {
-    uint_32 factory_id,
-    uint_8  slot
-  }
-
-  message SetCubeGamma
-  {
-    uint_8  gamma
-  }
 
 namespace RobotInterface {
 
@@ -88,6 +74,7 @@ message SetLiftHeight
   float_32 max_speed_rad_per_sec,
   float_32 accel_rad_per_sec2,
   float_32 duration_sec,
+  uint_8   actionID,
 }
 
 message SetHeadAngle
@@ -96,6 +83,7 @@ message SetHeadAngle
   float_32 max_speed_rad_per_sec,
   float_32 accel_rad_per_sec2,
   float_32 duration_sec,
+  uint_8   actionID,
 }
 
 message HeadAngleUpdate
@@ -111,10 +99,11 @@ message SetBodyAngle
   float_32 accel_rad_per_sec2,     // Accel/decel to use during the turn
   float_32 angle_tolerance,
   uint_16 num_half_revolutions,    // Used for turns greater than 180 degrees (e.g. "turn 720 degrees")
-  bool use_shortest_direction      // If true, robot should take the shortest path to angle_rad and disregard
+  bool use_shortest_direction,     // If true, robot should take the shortest path to angle_rad and disregard
                                    // the sign of max_speed and num_half_revolutions. If false, consider sign
                                    // of max_speed and num_half_revolutions to determine which direction to
                                    // turn and how far to turn (e.g. for turns longer than 360 deg)
+  uint_8   actionID,
 }
 
 message TurnInPlaceAtSpeed
@@ -239,11 +228,6 @@ message GetManufacturingInfo
 {
 }
 
-message AbortAnimation
-{
-  uint_8 tag
-}
-
 message CheckLiftLoad
 {
 }
@@ -276,16 +260,16 @@ message EnableBraceWhenFalling
 
 // ========== V2 Animation process messages ===========
 
-// TODO: Make animation files referencable by integer tag so we don't have to send a string.
-message RequestAvailableAnimations
-{
-}
-
 message PlayAnim
 {
-  uint_32 animID,
   uint_32 numLoops = 1,
-  uint_8  tag
+  uint_8  tag,
+  string animName,
+}
+
+// Aborts the currently executing animation
+message AbortAnimation
+{
 }
 
 message LockAnimTracks
@@ -312,6 +296,30 @@ message SetBackpackLights
 {
   LightState lights[3],
   uint_8 layer = 0      // 0 is BPL_USER
+}
+
+message StartRecordingMics
+{
+  uint_32 duration_ms,
+  bool    runFFT,
+  string  path
+}
+
+structure ColorRGB
+{
+  uint_8 r,
+  uint_8 g,
+  uint_8 b
+}
+
+message DrawTextOnScreen
+{
+  // Whether or not to override what is currently on screen, otherwise draws to "CustomText" debug
+  // screen which will show when selected with the backpack button
+  bool drawNow = 0,
+  ColorRGB textColor,
+  ColorRGB bgColor,
+  string   text
 }
 
 // DisplayProceduralFace
@@ -357,6 +365,11 @@ message DisplayFaceImageRGBChunk {
 message SetDebugConsoleVarMessage {
   uint_8 varName[64],   // Array of chars, zero-terminated
   uint_8 tryValue[16]   //   "
+}
+
+message RunDebugConsoleFuncMessage {
+  uint_8 funcName[64],   // Array of chars, zero-terminated
+  uint_8 funcArgs[64]   //   "
 }
 
 // ====================================================
@@ -448,25 +461,19 @@ union EngineToRobot
   EnableStopOnCliff             enableStopOnCliff           = 0x35,
   EnableBraceWhenFalling        enableBraceWhenFalling      = 0x36,
 
-
-  // TODO: These cube messages will need to be modified and moved to a 
-  //       separate file once we update block connection logic for BLE
-  CubeLights                    setCubeLights               = 0x4B,
-  SetPropSlot                   setPropSlot                 = 0x4C,
-  StreamObjectAccel             streamObjectAccel           = 0x4D,
-  SetCubeGamma                  setCubeGamma                = 0x4E,
-  CubeID                        setCubeID                   = 0x4F,
-  
-
   // 0x50 to 0xAF: To Anim Process
   PlayAnim                      playAnim                    = 0x50,
   LockAnimTracks                lockAnimTracks              = 0x51,
-  RequestAvailableAnimations    requestAvailableAnimations  = 0x52,
+  //      FREE SLOT                                         = 0x52,
   AbortAnimation                abortAnimation              = 0x53,
-  DisplayProceduralFace         displayProceduralFace       = 0x54,
-  SetFaceHue                    setFaceHue                  = 0x55,
-  DisplayFaceImageBinaryChunk   displayFaceImageBinaryChunk = 0x56,
-  DisplayFaceImageRGBChunk      displayFaceImageRGBChunk    = 0x57,
+
+  StartRecordingMics            startRecordingMics          = 0x54,
+  DrawTextOnScreen              drawTextOnScreen            = 0x55,
+
+  DisplayProceduralFace         displayProceduralFace       = 0x56,
+  SetFaceHue                    setFaceHue                  = 0x57,
+  DisplayFaceImageBinaryChunk   displayFaceImageBinaryChunk = 0x58,
+  DisplayFaceImageRGBChunk      displayFaceImageRGBChunk    = 0x59,
 
   AudioEngine::Multiplexer::PostAudioEvent        postAudioEvent       = 0x70,
   AudioEngine::Multiplexer::StopAllAudioEvents    stopAllAudioEvents   = 0x71,
@@ -475,6 +482,7 @@ union EngineToRobot
   AudioEngine::Multiplexer::PostAudioParameter    postAudioParameter   = 0x74,
 
   SetDebugConsoleVarMessage     setDebugConsoleVarMessage   = 0x90,
+  RunDebugConsoleFuncMessage    runDebugConsoleFuncMessage  = 0x91,
 
   // 0xB0 to 0xFE: To engine, see messageRobotToEngine.clad
 }

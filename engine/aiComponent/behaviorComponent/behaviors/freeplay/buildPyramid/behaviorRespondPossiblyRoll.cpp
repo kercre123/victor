@@ -20,7 +20,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/behaviorHelperFactory.h"
 #include "engine/blockWorld/blockWorld.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 
 
 namespace Anki {
@@ -59,76 +59,70 @@ BehaviorRespondPossiblyRoll::~BehaviorRespondPossiblyRoll()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRespondPossiblyRoll::InitBehavior(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRespondPossiblyRoll::InitBehavior()
 {
-  // Listen for up-axis changes to update response scenarios
-  auto upAxisChangedCallback = [this](const EngineToGameEvent& event) {
-    _upAxisChangedIDs.insert(std::make_pair(
-                                            event.GetData().Get_ObjectUpAxisChanged().objectID,
-                                            event.GetData().Get_ObjectUpAxisChanged().upAxis)
-                             );
-  };
-  
-  SubscribeToTag(ExternalInterface::MessageEngineToGameTag::ObjectUpAxisChanged,
-                 upAxisChangedCallback);
+  SubscribeToTags({ExternalInterface::MessageEngineToGameTag::ObjectUpAxisChanged});
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorRespondPossiblyRoll::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorRespondPossiblyRoll::WantsToBeActivatedBehavior() const
 {
   return true;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorRespondPossiblyRoll::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRespondPossiblyRoll::OnBehaviorActivated()
 {
   _lastActionTag = ActionConstants::INVALID_TAG;
   _upAxisChangedIDs.clear();
 
-  DetermineNextResponse(behaviorExternalInterface);
+  DetermineNextResponse();
 
-  return Result::RESULT_OK;
+  
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorRespondPossiblyRoll::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRespondPossiblyRoll::BehaviorUpdate()
 {
+  if(!IsActivated()){
+    return;
+  }
+
   const auto& targetAxisChanged = _upAxisChangedIDs.find(_metadata.GetObjectID());
   
   if(targetAxisChanged != _upAxisChangedIDs.end()){
     CancelDelegates(false, false);
     if(targetAxisChanged->second != UpAxis::ZPositive){
-      TurnAndRespondNegatively(behaviorExternalInterface);
+      TurnAndRespondNegatively();
     }
   }
   
   _upAxisChangedIDs.clear();
-  return ICozmoBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRespondPossiblyRoll::DetermineNextResponse(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRespondPossiblyRoll::DetermineNextResponse()
 {  
-  const ObservableObject* object = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_metadata.GetObjectID());
+  const ObservableObject* object = GetBEI().GetBlockWorld().GetLocatedObjectByID(_metadata.GetObjectID());
   if(nullptr != object){
     if (!_metadata.GetPoseUpAxisAccurate() ||
         (object->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() != AxisName::Z_POS))
     {
       _metadata.SetPoseUpAxisWillBeChecked();
-      TurnAndRespondNegatively(behaviorExternalInterface);
+      TurnAndRespondNegatively();
     }else{
-      TurnAndRespondPositively(behaviorExternalInterface);
+      TurnAndRespondPositively();
     }
   }
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRespondPossiblyRoll::TurnAndRespondPositively(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRespondPossiblyRoll::TurnAndRespondPositively()
 {
   DEBUG_SET_STATE(RespondingPositively);
   
@@ -147,7 +141,7 @@ void BehaviorRespondPossiblyRoll::TurnAndRespondPositively(BehaviorExternalInter
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRespondPossiblyRoll::TurnAndRespondNegatively(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRespondPossiblyRoll::TurnAndRespondNegatively()
 {
   DEBUG_SET_STATE(RespondingNegatively);
   
@@ -166,22 +160,33 @@ void BehaviorRespondPossiblyRoll::TurnAndRespondNegatively(BehaviorExternalInter
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRespondPossiblyRoll::DelegateToRollHelper(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRespondPossiblyRoll::DelegateToRollHelper()
 {
   DEBUG_SET_STATE(RollingObject);
 
-  auto& factory = behaviorExternalInterface.GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
+  auto& factory = GetBEI().GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
   const bool upright = true;
   RollBlockParameters parameters;
   parameters.preDockCallback = [this](Robot& robot){_metadata.SetReachedPreDockRoll();};
-  HelperHandle rollHelper = factory.CreateRollBlockHelper(behaviorExternalInterface,
-                                                          *this,
+  HelperHandle rollHelper = factory.CreateRollBlockHelper(*this,
                                                           _metadata.GetObjectID(),
                                                           upright,
                                                           parameters);
   
-  SmartDelegateToHelper(behaviorExternalInterface, rollHelper, [this](BehaviorExternalInterface& behaviorExternalInterface){DetermineNextResponse(behaviorExternalInterface);}, nullptr);
+  SmartDelegateToHelper(rollHelper, [this](){DetermineNextResponse();}, nullptr);
 }
+  
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorRespondPossiblyRoll::AlwaysHandleInScope(const EngineToGameEvent& event)
+{
+  if(event.GetData().GetTag() ==ExternalInterface::MessageEngineToGameTag::ObjectUpAxisChanged){
+    _upAxisChangedIDs.insert(std::make_pair(event.GetData().Get_ObjectUpAxisChanged().objectID,
+                                            event.GetData().Get_ObjectUpAxisChanged().upAxis)
+                            );
+  }
+}
+
 
 } // namespace Cozmo
 } // namespace Anki

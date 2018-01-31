@@ -17,9 +17,9 @@
 #ifndef __Anki_Cozmo_TrackLayerComponent_H__
 #define __Anki_Cozmo_TrackLayerComponent_H__
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 
-#include "cozmoAnim/animation/animation.h"
+#include "cannedAnimLib/animation.h"
 
 #include "clad/types/liveIdleAnimationParameters.h"
 

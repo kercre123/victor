@@ -18,6 +18,8 @@ KEYFRAME_TYPE_ATTR = "Name"
 AUDIO_KEYFRAME_TYPE = "RobotAudioKeyFrame"
 AUDIO_EVENT_NAMES_ATTR = "audioName"
 AUDIO_EVENT_ID_ATTR = "audioEventId"
+TRIGGER_TIME_ATTR = "triggerTime_ms"
+DURATION_TIME_ATTR = "durationTime_ms"
 
 # These are the relevant attribute names in the SoundBanks info XML file
 SOUND_BANKS_XML_ATTR = "SoundBanks"
@@ -156,7 +158,7 @@ def check_audio_events_all_anims(externals_dir, anim_assets_dir=ANIM_ASSETS_DIR,
     """
 
     # Get a list of all available audio events
-    local_soundbanks_xml_file = os.path.join(externals_dir, audio_assets_dir, 'metadata', 'mac', soundbanks_xml_file)
+    local_soundbanks_xml_file = os.path.join(externals_dir, audio_assets_dir, 'metadata', 'Mac', soundbanks_xml_file)
     if os.path.isfile(local_soundbanks_xml_file):
         soundbanks_xml_file = local_soundbanks_xml_file
     else:
@@ -206,5 +208,40 @@ def check_audio_events_all_anims(externals_dir, anim_assets_dir=ANIM_ASSETS_DIR,
         msg += os.linesep.join(msgs)
         msg += os.linesep
         raise ValueError(msg)
+
+
+def get_anim_length(keyframe_list):
+    anim_length = 0
+    for keyframe in keyframe_list:
+        try:
+            trigger_time_ms = keyframe[TRIGGER_TIME_ATTR]
+        except KeyError:
+            continue
+        try:
+            duration_time_ms = keyframe[DURATION_TIME_ATTR]
+        except KeyError:
+            duration_time_ms = 0
+        keyframe_length_ms = trigger_time_ms + duration_time_ms
+        anim_length = max(anim_length, keyframe_length_ms)
+    return anim_length
+
+
+def get_anim_name_and_length(json_file):
+    anim_name_length_mapping = {}
+    if not json_file or not os.path.isfile(json_file):
+        raise ValueError("Invalid JSON file provided: %s" % json_file)
+    with open(json_file, 'r') as fh:
+        contents = json.load(fh)
+    for anim_name, keyframes in contents.items():
+        anim_name = str(anim_name)
+        anim_length = get_anim_length(keyframes)
+        if not isinstance(anim_length, int):
+            if anim_length == int(anim_length):
+                anim_length = int(anim_length)
+            else:
+                print("WARNING: The length of '%s' is not an integer (length = %s)"
+                      % (anim_name, anim_length))
+        anim_name_length_mapping[anim_name] = anim_length
+    return anim_name_length_mapping
 
 

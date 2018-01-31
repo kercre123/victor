@@ -23,13 +23,13 @@
 #include "engine/actions/driveToActions.h"
 #include "engine/actions/visuallyVerifyActions.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/visionComponent.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 
 
 namespace Anki {
@@ -42,15 +42,14 @@ static const int kSearchAdditionalSegments = 2;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-SearchForBlockHelper::SearchForBlockHelper(BehaviorExternalInterface& behaviorExternalInterface,
-                                           ICozmoBehavior& behavior,
+SearchForBlockHelper::SearchForBlockHelper(ICozmoBehavior& behavior,
                                            BehaviorHelperFactory& helperFactory,
                                            const SearchParameters& params)
-: IHelper("SearchForBlockHelper", behaviorExternalInterface, behavior, helperFactory)
+: IHelper("SearchForBlockHelper", behavior, helperFactory)
 , _params(params)
 , _nextSearchIntensity(SearchIntensity::QuickSearch)
 {
-  behaviorExternalInterface.GetStateChangeComponent().SubscribeToTags(this,
+  GetBEI().GetBehaviorEventComponent().SubscribeToTags(this,
   {
     ExternalInterface::MessageEngineToGameTag::RobotObservedObject
   });
@@ -65,7 +64,7 @@ SearchForBlockHelper::SearchForBlockHelper(BehaviorExternalInterface& behaviorEx
   // in the area or to search in general to acquire blocks - it should not
   // be used to search for blocks by ID that currently are not located - that
   // will result in an unnecessary nuke of block world
-  const auto& locatedObj = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(params.searchingForID);
+  const auto& locatedObj = GetBEI().GetBlockWorld().GetLocatedObjectByID(params.searchingForID);
   DEV_ASSERT((params.searchingForID.IsUnknown()) ||
              (locatedObj != nullptr), "SearchForBlockHelper.ObjectSpecifiedIsNotLocated");
 }
@@ -78,32 +77,32 @@ SearchForBlockHelper::~SearchForBlockHelper()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool SearchForBlockHelper::ShouldCancelDelegates(BehaviorExternalInterface& behaviorExternalInterface) const
+bool SearchForBlockHelper::ShouldCancelDelegates() const
 {
   return false;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStatus SearchForBlockHelper::InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface)
+IHelper::HelperStatus SearchForBlockHelper::InitBehaviorHelper()
 {
   _nextSearchIntensity = SearchIntensity::QuickSearch;
-  if(behaviorExternalInterface.HasVisionComponent()){
-    _robotCameraAtSearchStart = behaviorExternalInterface.GetVisionComponent().GetCamera();
+  if(GetBEI().HasVisionComponent()){
+    _robotCameraAtSearchStart = GetBEI().GetVisionComponent().GetCamera();
   }
   _objectsSeenDuringSearch.clear();
   
-  SearchForBlock(ActionResult::NOT_STARTED, behaviorExternalInterface);
+  SearchForBlock(ActionResult::NOT_STARTED);
 
   return _status;
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStatus SearchForBlockHelper::UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IHelper::HelperStatus SearchForBlockHelper::UpdateWhileActiveInternal()
 {
   // Event handles
-  const auto& stateChangeComp = behaviorExternalInterface.GetStateChangeComponent();
+  const auto& stateChangeComp = GetBEI().GetBehaviorEventComponent();
   for(const auto& event: stateChangeComp.GetEngineToGameEvents()){
     if(event.GetData().GetTag() == ExternalInterface::MessageEngineToGameTag::RobotObservedObject){
       const ObjectID& objSeen = event.GetData().Get_RobotObservedObject().objectID;
@@ -113,23 +112,23 @@ BehaviorStatus SearchForBlockHelper::UpdateWhileActiveInternal(BehaviorExternalI
         // therefore updated its known pose or 2) see an object that may have been
         // obstructing the robots view without its knowledge previously
         if(objSeen == _params.searchingForID){
-          _status = BehaviorStatus::Complete;
+          _status = IHelper::HelperStatus::Complete;
         }else if(_objectsSeenDuringSearch.count(objSeen) == 0){
-          if(!ShouldBeAbleToFindTarget(behaviorExternalInterface)){
-            _status = BehaviorStatus::Failure;
+          if(!ShouldBeAbleToFindTarget()){
+            _status = IHelper::HelperStatus::Failure;
           }
           _objectsSeenDuringSearch.insert(objSeen);
         }
       }else if((_params.numberOfBlocksToLocate > 0) &&
                (_objectsSeenDuringSearch.size() >= _params.numberOfBlocksToLocate)){
         // Search can also stop if we've seen the requested number of blocks
-        _status = BehaviorStatus::Complete;
+        _status = IHelper::HelperStatus::Complete;
       }
     }
   }
   
   
-  if(_status != BehaviorStatus::Running){
+  if(_status != IHelper::HelperStatus::Running){
     CancelDelegates(false);
   }
   
@@ -138,21 +137,21 @@ BehaviorStatus SearchForBlockHelper::UpdateWhileActiveInternal(BehaviorExternalI
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void SearchForBlockHelper::SearchForBlock(ActionResult result, BehaviorExternalInterface& behaviorExternalInterface)
+void SearchForBlockHelper::SearchForBlock(ActionResult result)
 {
   
   const auto& targetID = _params.searchingForID;
   
   if(targetID.IsSet()){
-    const ObservableObject* targetObj = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(targetID);
+    const ObservableObject* targetObj = GetBEI().GetBlockWorld().GetLocatedObjectByID(targetID);
     if(targetObj == nullptr) {
-      _status = BehaviorStatus::Failure;
+      _status = IHelper::HelperStatus::Failure;
       return;
     }
   }
   
   if(_nextSearchIntensity > _params.searchIntensity){
-    SearchFinishedWithoutInterruption(behaviorExternalInterface);
+    SearchFinishedWithoutInterruption();
     return;
   }
   
@@ -218,8 +217,8 @@ void SearchForBlockHelper::SearchForBlock(ActionResult result, BehaviorExternalI
         }
       }
       
-      auto exhaustiveSearchFailure = [this](ActionResult res, BehaviorExternalInterface& behaviorExternalInterface){
-        SearchFinishedWithoutInterruption(behaviorExternalInterface);
+      auto exhaustiveSearchFailure = [this](ActionResult res){
+        SearchFinishedWithoutInterruption();
       };
       
       DelegateIfInControl(compoundAction, exhaustiveSearchFailure);
@@ -230,13 +229,13 @@ void SearchForBlockHelper::SearchForBlock(ActionResult result, BehaviorExternalI
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void SearchForBlockHelper::SearchFinishedWithoutInterruption(BehaviorExternalInterface& behaviorExternalInterface)
+void SearchForBlockHelper::SearchFinishedWithoutInterruption()
 {
   // In the first two cases we finished a complete search without finding what we wanted
   // so we failed
   // In the third case, we wanted to complete the full search, so it's a success
   if(_params.searchingForID.IsSet()){
-    const ObservableObject* targetObj = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_params.searchingForID);
+    const ObservableObject* targetObj = GetBEI().GetBlockWorld().GetLocatedObjectByID(_params.searchingForID);
     if((targetObj != nullptr) &&
        targetObj->IsPoseStateKnown() &&
        (_params.searchIntensity >= SearchIntensity::StandardSearch)){
@@ -244,22 +243,22 @@ void SearchForBlockHelper::SearchFinishedWithoutInterruption(BehaviorExternalInt
                         "Failed to find known block - wiping");
       BlockWorldFilter filter;
       filter.SetOriginMode(BlockWorldFilter::OriginMode::InRobotFrame); // not necessary, just to be explicit
-      behaviorExternalInterface.GetBlockWorld().DeleteLocatedObjects(filter);
+      GetBEI().GetBlockWorld().DeleteLocatedObjects(filter);
     }
-    _status = BehaviorStatus::Failure;
+    _status = IHelper::HelperStatus::Failure;
   }else if((_params.numberOfBlocksToLocate > 0) &&
            (_objectsSeenDuringSearch.size() < _params.numberOfBlocksToLocate)){
-    _status = BehaviorStatus::Failure;
+    _status = IHelper::HelperStatus::Failure;
   }else{
-    _status = BehaviorStatus::Complete;
+    _status = IHelper::HelperStatus::Complete;
   }
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool SearchForBlockHelper::ShouldBeAbleToFindTarget(BehaviorExternalInterface& behaviorExternalInterface)
+bool SearchForBlockHelper::ShouldBeAbleToFindTarget()
 {
-  const ObservableObject* targetObj = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_params.searchingForID);
+  const ObservableObject* targetObj = GetBEI().GetBlockWorld().GetLocatedObjectByID(_params.searchingForID);
   if(targetObj != nullptr){
     // check if the known object should no longer be visible given the robot's
     // camera while at the pre-dock pose

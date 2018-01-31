@@ -34,9 +34,14 @@ target_compile_definitions(proto_camera
   NUM_RECORDING_BUFFERS=9
 )
 
- set_target_properties(proto_camera PROPERTIES LINKER_LANGUAGE C)
+target_compile_options(proto_camera
+PRIVATE
+  -O3
+)
+
+set_target_properties(proto_camera PROPERTIES LINKER_LANGUAGE C)
  
- endif()
+endif()
 
 include(anki_build_cxx)
 
@@ -66,9 +71,7 @@ PRIVATE
 # cti
   cti_common
   cti_vision
-  cti_planning
-  cti_messaging
-  robot_clad # imageTypes.h
+  engine_clad # imageTypes.h
 # platform
   ${PLATFORM_LIBS}
 )
@@ -89,4 +92,3 @@ target_include_directories(androidHAL
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../robot/include>
   ${PLATFORM_INCLUDES}
 )
-

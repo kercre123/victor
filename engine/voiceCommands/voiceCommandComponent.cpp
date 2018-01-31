@@ -24,8 +24,8 @@
 #include "engine/voiceCommands/commandPhraseData.h"
 #include "engine/voiceCommands/languagePhraseData.h"
 #include "engine/voiceCommands/phraseData.h"
-#include "anki/common/basestation/utils/data/dataPlatform.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "audioUtil/audioRecognizerProcessor.h"
 #include "audioUtil/speechRecognizer.h"
 #include "util/console/consoleInterface.h"
@@ -40,7 +40,6 @@
 #include <functional>
 
 #define LOG_CHANNEL "VoiceCommands"
-#define LOG_INFO(...) PRINT_CH_INFO(LOG_CHANNEL, ##__VA_ARGS__)
 
 namespace {
   Anki::Cozmo::VoiceCommand::VoiceCommandComponent* sThis = nullptr;

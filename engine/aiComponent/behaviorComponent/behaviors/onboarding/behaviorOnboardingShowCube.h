@@ -15,7 +15,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "clad/externalInterface/messageEngineToGame.h" // OnboardingStateEnum are in here.
-#include "anki/common/basestation/objectIDs.h"
+#include "coretech/common/engine/objectIDs.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -36,20 +36,21 @@ protected:
   BehaviorOnboardingShowCube(const Json::Value& config);
 
 public:
-
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual bool CarryingObjectHandledInternally() const override {return true;}
-  virtual bool ShouldRunWhileOnCharger() const override { return true;}
+  virtual bool WantsToBeActivatedBehavior() const override;
 
 protected:
-
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenCarryingObject = true;
+    modifiers.wantsToBeActivatedWhenOnCharger = true;
+    modifiers.behaviorAlwaysDelegates = false;
+  }
+  virtual void OnBehaviorActivated() override;
+  virtual void BehaviorUpdate() override;
+  virtual void OnBehaviorDeactivated() override;
   
-  virtual void AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void HandleWhileActivated(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void AlwaysHandleInScope(const EngineToGameEvent& event) override;
+  virtual void HandleWhileActivated(const EngineToGameEvent& event) override;
+  virtual void HandleWhileActivated(const GameToEngineEvent& event) override;
 
   
 private:
@@ -66,16 +67,16 @@ private:
   uint8_t     _timesPickedUpCube = 0;
   ObjectID    _targetBlock;
     
-  void HandleObjectObserved(BehaviorExternalInterface& behaviorExternalInterface, const ExternalInterface::RobotObservedObject& msg);
+  void HandleObjectObserved(const ExternalInterface::RobotObservedObject& msg);
   
-  void SetState_internal(State state, const std::string& stateName, BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToWaitToInspectCube(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToErrorState(State state, BehaviorExternalInterface& behaviorExternalInterface);
+  void SetState_internal(State state, const std::string& stateName);
+  void TransitionToWaitToInspectCube();
+  void TransitionToErrorState(State state);
   
-  void TransitionToNextState(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToNextState();
   
-  void StartSubStatePickUpBlock(BehaviorExternalInterface& behaviorExternalInterface);
-  void StartSubStateCelebratePickup(BehaviorExternalInterface& behaviorExternalInterface);
+  void StartSubStatePickUpBlock();
+  void StartSubStateCelebratePickup();
   
   bool IsSequenceComplete();
   

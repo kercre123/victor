@@ -381,7 +381,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: 'VERSION:'
+  m_Text: 
   _AllUppercase: 0
   GlowText: 0
   IsRaycastBlocker: 0
@@ -1031,7 +1031,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: 'DEVICE ID:'
+  m_Text: 
   _AllUppercase: 0
   GlowText: 0
   IsRaycastBlocker: 0

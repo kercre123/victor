@@ -13,7 +13,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorRollBlock_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorRollBlock_H__
 
-#include "anki/common/basestation/objectIDs.h"
+#include "coretech/common/engine/objectIDs.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/objectInteractionInfoCache.h"
 
@@ -33,14 +33,17 @@ protected:
   friend class BehaviorContainer;
   BehaviorRollBlock(const Json::Value& config);
 
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenCarryingObject = true;
+  }
 
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual bool CarryingObjectHandledInternally() const override {return true;}
+  virtual void OnBehaviorActivated() override;
+  virtual void BehaviorUpdate() override;
+  virtual void OnBehaviorDeactivated() override;
+
+  virtual bool WantsToBeActivatedBehavior() const override;
   
-  virtual void UpdateTargetBlocksInternal(BehaviorExternalInterface& behaviorExternalInterface) const override { UpdateTargetBlock(behaviorExternalInterface); }
+  virtual void UpdateTargetBlocksInternal() const override { UpdateTargetBlock(); }
   
   virtual std::set<ObjectInteractionIntention>
         GetBehaviorObjectInteractionIntentions() const override {
@@ -64,12 +67,12 @@ private:
   AxisName _upAxisOnBehaviorStart;
   State    _behaviorState;
 
-  void TransitionToPerformingAction(BehaviorExternalInterface& behaviorExternalInterface, bool isRetry = false);
-  void TransitionToRollSuccess(BehaviorExternalInterface& behaviorExternalInterface);
-  void ResetBehavior(BehaviorExternalInterface& behaviorExternalInterface);
-  virtual void UpdateTargetBlock(BehaviorExternalInterface& behaviorExternalInterface) const;
+  void TransitionToPerformingAction(bool isRetry = false);
+  void TransitionToRollSuccess();
+  void ResetBehavior();
+  virtual void UpdateTargetBlock() const;
   
-  void UpdateTargetsUpAxis(BehaviorExternalInterface& behaviorExternalInterface);
+  void UpdateTargetsUpAxis();
   
   void SetState_internal(State state, const std::string& stateName);
 

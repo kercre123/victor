@@ -4,6 +4,7 @@
 // Copyright: Anki Inc (c) 2016
 
 #include "clad/types/birthCertificate.clad"
+#include "clad/types/proxMessages.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -105,6 +106,34 @@ enum uint_8 FactoryTestResultCode {
   NVSTORAGE_ERASE_FAILED,
   PARSE_HEADER_FAILED,
   ONE_POINT_ZERO_FIRMWARE,
+  UNKNOWN_BODY_COLOR,
+
+  // Victor specific error codes
+  WRITE_TO_LOG_FAILED,
+  BEHAVIOR_NOT_RUNNABLE,
+  NOT_SEEING_CALIB_TARGET_TIMEOUT,
+  UNEXPECTED_ON_CHARGER,
+  HEAD_MOTOR_DISABLED,
+  LIFT_MOTOR_DISABLED,
+  MOTOR_DISABLED,
+  UNEXPECTED_MOVEMENT_DETECTED,
+  ACTION_FAILED,
+  FRONT_CLIFFS_NOT_DETECTED,
+  BACK_CLIFFS_NOT_DETECTED,
+  FRONT_CLIFFS_NOT_UNDETECTED,
+  BACK_CLIFFS_NOT_UNDETECTED,
+  CUBE_HEIGHT_TOO_LOW,
+  CUBE_HEIGHT_TOO_HIGH,
+  DISTORTION_VALUES_OOR,
+  DISTANCE_MARKER_NOT_FOUND,
+  DISTANCE_MARKER_OOR,
+  MIC_FR_NOT_WORKING, // Relative to robot
+  MIC_FL_NOT_WORKING,
+  MIC_BR_NOT_WORKING,
+  MIC_BL_NOT_WORKING,
+  SPEAKER_NOT_WORKING,
+  NO_FFT_RESULT,
+  TOUCH_VALUES_OOR,
 
   // ==== New result codes should be added at the end ========
   // ==== Never delete codes, even if they are deprecated! ===
@@ -123,12 +152,26 @@ structure CalibMetaInfo {
   uint_8 dotsFoundMask    // bit mask for which calibration images had dots found
 }
 
+structure IMUTempDuration {
+  float_32 tempStart_c = 0.0,
+  float_32 tempEnd_c   = 0.0,
+  uint_32  duration_ms = 0
+}
+
 structure IMUInfo {
-  float_32 driftRate_degPerSec
+  float_32 driftRate_degPerSec,
+  IMUTempDuration tempDuration
 }
 
 structure CliffSensorValue {
   uint_16 val
+}
+
+structure CliffSensorValues {
+  uint_16 FR,
+  uint_16 FL,
+  uint_16 BR,
+  uint_16 BL
 }
 
 structure PoseData {
@@ -138,6 +181,16 @@ structure PoseData {
   float_32 transX_mm,
   float_32 transY_mm,
   float_32 transZ_mm,
+}
+
+structure DistanceSensorData {
+  ProxSensorData proxSensorData,
+  float_32       visualDistanceToTarget_mm,
+  float_32       visualAngleAwayFromTarget_rad
+}
+
+structure TouchSensorValues {
+  uint_16 data[uint_16]
 }
 
 

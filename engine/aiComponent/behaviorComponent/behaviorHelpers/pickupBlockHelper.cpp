@@ -15,7 +15,7 @@
 #include "engine/actions/animActions.h"
 #include "engine/actions/dockActions.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/behaviorHelperParameters.h"
 #include "engine/blockWorld/blockWorld.h"
@@ -29,12 +29,11 @@ static const int kMaxDockRetries = 2;
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-PickupBlockHelper::PickupBlockHelper(BehaviorExternalInterface& behaviorExternalInterface,
-                                     ICozmoBehavior& behavior,
+PickupBlockHelper::PickupBlockHelper(ICozmoBehavior& behavior,
                                      BehaviorHelperFactory& helperFactory,
                                      const ObjectID& targetID,
                                      const PickupBlockParamaters& parameters)
-: IHelper("PickupBlock", behaviorExternalInterface, behavior, helperFactory)
+: IHelper("PickupBlock", behavior, helperFactory)
 , _targetID(targetID)
 , _params(parameters)
 , _dockAttemptCount(0)
@@ -55,31 +54,31 @@ PickupBlockHelper::~PickupBlockHelper()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool PickupBlockHelper::ShouldCancelDelegates(BehaviorExternalInterface& behaviorExternalInterface) const
+bool PickupBlockHelper::ShouldCancelDelegates() const
 {
   return false;
 }
   
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStatus PickupBlockHelper::InitBehaviorHelper(BehaviorExternalInterface& behaviorExternalInterface)
+IHelper::HelperStatus PickupBlockHelper::InitBehaviorHelper()
 {
   _dockAttemptCount = 0;
   _hasTriedOtherPose = false;
-  StartPickupAction(behaviorExternalInterface);
+  StartPickupAction();
   return _status;
 }
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStatus PickupBlockHelper::UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IHelper::HelperStatus PickupBlockHelper::UpdateWhileActiveInternal()
 {
   return _status;
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void PickupBlockHelper::StartPickupAction(BehaviorExternalInterface& behaviorExternalInterface, bool ignoreCurrentPredockPose)
+void PickupBlockHelper::StartPickupAction(bool ignoreCurrentPredockPose)
 {
   ActionResult isAtPreAction;
   if( ignoreCurrentPredockPose ) {
@@ -88,8 +87,7 @@ void PickupBlockHelper::StartPickupAction(BehaviorExternalInterface& behaviorExt
   }
   else {
     // if we are using second closest we always want to drive. Otherwise, check if we are already in place
-    isAtPreAction = IsAtPreActionPoseWithVisualVerification(behaviorExternalInterface,
-                                                            _targetID,
+    isAtPreAction = IsAtPreActionPoseWithVisualVerification(_targetID,
                                                             PreActionPose::ActionType::DOCKING);
   }
   
@@ -101,11 +99,10 @@ void PickupBlockHelper::StartPickupAction(BehaviorExternalInterface& behaviorExt
     params.actionType = PreActionPose::ActionType::DOCKING;
     params.ignoreCurrentPredockPose = ignoreCurrentPredockPose;
     DelegateProperties properties;
-    properties.SetDelegateToSet(CreateDriveToHelper(behaviorExternalInterface,
-                                                    _targetID,
+    properties.SetDelegateToSet(CreateDriveToHelper(_targetID,
                                                     params));
-    properties.SetOnSuccessFunction([this](BehaviorExternalInterface& behaviorExternalInterface){
-                                      StartPickupAction(behaviorExternalInterface); return _status;
+    properties.SetOnSuccessFunction([this](){
+                                      StartPickupAction(); return _status;
                                    });
     properties.FailImmediatelyOnDelegateFailure();
     DelegateAfterUpdate(properties);
@@ -173,8 +170,7 @@ void PickupBlockHelper::StartPickupAction(BehaviorExternalInterface& behaviorExt
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void PickupBlockHelper::RespondToPickupResult(const ExternalInterface::RobotCompletedAction& rca,
-                                              BehaviorExternalInterface& behaviorExternalInterface)
+void PickupBlockHelper::RespondToPickupResult(const ExternalInterface::RobotCompletedAction& rca)
 {
   const ActionResult& result = rca.result;
   PRINT_CH_DEBUG("BehaviorHelpers", (GetName() + ".PickupResult").c_str(),
@@ -183,7 +179,7 @@ void PickupBlockHelper::RespondToPickupResult(const ExternalInterface::RobotComp
   switch(result){
     case ActionResult::SUCCESS:
     {
-      _status = BehaviorStatus::Complete;
+      _status = IHelper::HelperStatus::Complete;
       break;
     }
     case ActionResult::VISUAL_OBSERVATION_FAILED:
@@ -198,8 +194,8 @@ void PickupBlockHelper::RespondToPickupResult(const ExternalInterface::RobotComp
                        (GetName() + ".VisualObservationFailed.SeeingUnexpectedObject").c_str(),
                        "Marking target as failed to pickup");
         
-        MarkTargetAsFailedToPickup(behaviorExternalInterface);
-        _status = BehaviorStatus::Failure;
+        MarkTargetAsFailedToPickup();
+        _status = IHelper::HelperStatus::Failure;
       }
       else
       {
@@ -207,12 +203,12 @@ void PickupBlockHelper::RespondToPickupResult(const ExternalInterface::RobotComp
         params.searchingForID = _targetID;
         params.searchIntensity = SearchIntensity::QuickSearch;
         DelegateProperties properties;
-        properties.SetDelegateToSet(CreateSearchForBlockHelper(behaviorExternalInterface, params));
-        properties.SetOnSuccessFunction([this](BehaviorExternalInterface& behaviorExternalInterface){
-          StartPickupAction(behaviorExternalInterface); return _status;
+        properties.SetDelegateToSet(CreateSearchForBlockHelper(params));
+        properties.SetOnSuccessFunction([this](){
+          StartPickupAction(); return _status;
         });
-        properties.SetOnFailureFunction([this](BehaviorExternalInterface& behaviorExternalInterface){
-          MarkTargetAsFailedToPickup(behaviorExternalInterface); return BehaviorStatus::Failure;
+        properties.SetOnFailureFunction([this](){
+          MarkTargetAsFailedToPickup(); return IHelper::HelperStatus::Failure;
         });
         DelegateAfterUpdate(properties);
       }
@@ -220,7 +216,7 @@ void PickupBlockHelper::RespondToPickupResult(const ExternalInterface::RobotComp
     }
     case ActionResult::NO_PREACTION_POSES:
     {
-      behaviorExternalInterface.GetAIComponent().GetWhiteboard().SetNoPreDockPosesOnObject(_targetID);
+      GetBEI().GetAIComponent().GetWhiteboard().SetNoPreDockPosesOnObject(_targetID);
       break;
     }
     case ActionResult::MOTOR_STOPPED_MAKING_PROGRESS:
@@ -234,7 +230,7 @@ void PickupBlockHelper::RespondToPickupResult(const ExternalInterface::RobotComp
                     kMaxDockRetries);                                        
       
       if( _dockAttemptCount < kMaxDockRetries ) {
-        StartPickupAction(behaviorExternalInterface);
+        StartPickupAction();
       }
       else if( _params.allowedToRetryFromDifferentPose && !_hasTriedOtherPose ) {
         PRINT_CH_INFO("BehaviorHelpers", (GetName() + ".RetryFromOtherPose").c_str(),
@@ -242,14 +238,14 @@ void PickupBlockHelper::RespondToPickupResult(const ExternalInterface::RobotComp
         _dockAttemptCount = 0;
         _hasTriedOtherPose = true;
         const bool ignoreCurrentPredockPose = true;
-        StartPickupAction(behaviorExternalInterface, ignoreCurrentPredockPose);
+        StartPickupAction(ignoreCurrentPredockPose);
       }
       else {
         PRINT_CH_INFO("BehaviorHelpers", (GetName() + ".PickupFailedTooManyTimes").c_str(),
                       "Failing helper because pickup was already attempted %d times",
                       _dockAttemptCount);
-        MarkTargetAsFailedToPickup(behaviorExternalInterface);
-        _status = BehaviorStatus::Failure;
+        MarkTargetAsFailedToPickup();
+        _status = IHelper::HelperStatus::Failure;
       }
       break;
     }
@@ -261,7 +257,7 @@ void PickupBlockHelper::RespondToPickupResult(const ExternalInterface::RobotComp
     }
     case ActionResult::BAD_OBJECT:
     {
-      _status = BehaviorStatus::Failure;
+      _status = IHelper::HelperStatus::Failure;
       break;
     }
 
@@ -269,7 +265,7 @@ void PickupBlockHelper::RespondToPickupResult(const ExternalInterface::RobotComp
     {
       // DriveToHelper should handle this, shouldn't see it here
       PRINT_NAMED_ERROR("PickupBlockHelper.InvalidPickupResponse", "%s", ActionResultToString(result));
-      _status = BehaviorStatus::Failure;
+      _status = IHelper::HelperStatus::Failure;
       break;
     }
 
@@ -277,11 +273,11 @@ void PickupBlockHelper::RespondToPickupResult(const ExternalInterface::RobotComp
     {
       //DEV_ASSERT(false, "HANDLE CASE!");
       if( IActionRunner::GetActionResultCategory(result) == ActionResultCategory::RETRY ) {
-        StartPickupAction(behaviorExternalInterface);
+        StartPickupAction();
       }
       else {
-        MarkTargetAsFailedToPickup(behaviorExternalInterface);
-        _status = BehaviorStatus::Failure;
+        MarkTargetAsFailedToPickup();
+        _status = IHelper::HelperStatus::Failure;
       }
       break;
     }
@@ -290,11 +286,11 @@ void PickupBlockHelper::RespondToPickupResult(const ExternalInterface::RobotComp
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void PickupBlockHelper::MarkTargetAsFailedToPickup(BehaviorExternalInterface& behaviorExternalInterface)
+void PickupBlockHelper::MarkTargetAsFailedToPickup()
 {
-  const ObservableObject* obj = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_targetID);
+  const ObservableObject* obj = GetBEI().GetBlockWorld().GetLocatedObjectByID(_targetID);
   if(obj != nullptr){
-    auto& whiteboard = behaviorExternalInterface.GetAIComponent().GetWhiteboard();
+    auto& whiteboard = GetBEI().GetAIComponent().GetWhiteboard();
     whiteboard.SetFailedToUse(*obj, AIWhiteboard::ObjectActionFailure::PickUpObject);
   }
 }

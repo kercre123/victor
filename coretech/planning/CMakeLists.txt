@@ -15,10 +15,10 @@ include(anki_build_cxx)
 #
 
 anki_build_cxx_library(cti_planning ${ANKI_SRCLIST_DIR} STATIC)
-  
+
 target_compile_definitions(cti_planning
   PRIVATE
-  CORETECH_BASESTATION
+  CORETECH_ENGINE
 )
 
 set_target_properties(cti_planning PROPERTIES
@@ -40,9 +40,9 @@ target_link_libraries(cti_planning
   ${OPENCV_LIBS}
 )
 
-target_include_directories(cti_planning 
+target_include_directories(cti_planning
   PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../..>
 )
 
 #
@@ -52,32 +52,32 @@ target_include_directories(cti_planning
 anki_build_cxx_library(cti_planning_robot ${ANKI_SRCLIST_DIR} STATIC)
 
 target_compile_definitions(cti_planning_robot
-PRIVATE
-CORETECH_ROBOT
+  PRIVATE
+  CORETECH_ROBOT
 )
 
 set_target_properties(cti_planning_robot PROPERTIES
-FOLDER "CoreTech"#/Basestation"
+  FOLDER "CoreTech"#/Basestation"
 )
 
 target_compile_options(cti_planning_robot
-PRIVATE
--stdlib=libc++
--Os
+  PRIVATE
+  -stdlib=libc++
+  -Os
 )
 
 set_property(TARGET cti_planning_robot PROPERTY CXX_STANDARD 11)
 
 target_link_libraries(cti_planning_robot
-PUBLIC
-cti_common_robot
-PRIVATE
-${OPENCV_LIBS}
+  PUBLIC
+  cti_common_robot
+  PRIVATE
+  ${OPENCV_LIBS}
 )
 
 target_include_directories(cti_planning_robot
-PUBLIC
-$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../..>
 )
 
 if (MACOSX)
@@ -94,7 +94,7 @@ if (MACOSX)
 
   target_compile_definitions(cti_planning_test
     PRIVATE
-    CORETECH_BASESTATION
+    CORETECH_ENGINE
     TEST_DATA_PATH=${CORETECH}
   )
 
@@ -112,5 +112,10 @@ if (MACOSX)
 
 
   add_test(NAME cti_planning_test COMMAND cti_planning_test)
+
+  set_tests_properties(cti_planning_test
+    PROPERTIES
+    ENVIRONMENT "GTEST_OUTPUT=xml:ctiPlanningGoogleTest.xml"
+  )
 
 endif()

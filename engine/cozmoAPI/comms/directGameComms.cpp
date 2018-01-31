@@ -14,7 +14,7 @@
 #include "engine/cozmoAPI/comms/directGameComms.h"
 #include "engine/cozmoAPI/comms/gameMessagePort.h"
 #include "util/logging/logging.h"
-#include <anki/messaging/basestation/IComms.h>
+#include "coretech/messaging/engine/IComms.h"
 
 namespace Anki {
 namespace Cozmo {

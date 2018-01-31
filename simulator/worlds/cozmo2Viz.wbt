@@ -36,6 +36,7 @@ DEF CozmoViz_1 CozmoBot2 {
 }
 CozmoVizDisplay {
   streamResolution "NHD"
+  colorizeStderrOutput TRUE
 }
 WebotsKeyboardController{
   
@@ -46,5 +47,6 @@ WebotsKeyboardController{
   redirectViz            TRUE
   doAutoBlockpool        FALSE
   #filterLogs             TRUE
+  colorizeStderrOutput   TRUE
 }
 

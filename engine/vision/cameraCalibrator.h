@@ -13,16 +13,18 @@
 #ifndef __Cozmo_Basestation_Vision_CameraCalibrator_H__
 #define __Cozmo_Basestation_Vision_CameraCalibrator_H__
 
-#include "anki/common/basestation/math/rect.h"
+#include "coretech/common/engine/math/rect.h"
 
-#include "anki/vision/basestation/cameraCalibration.h"
-#include "anki/vision/basestation/image.h"
-#include "anki/vision/basestation/visionMarker.h"
-#include "anki/vision/MarkerCodeDefinitions.h"
+#include "coretech/vision/engine/cameraCalibration.h"
+#include "coretech/vision/engine/image.h"
+#include "coretech/vision/engine/visionMarker.h"
+#include "coretech/vision/shared/MarkerCodeDefinitions.h"
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 
 #include "engine/debugImageList.h"
+
+#include <set>
 
 namespace Anki {
 namespace Cozmo {
@@ -92,8 +94,10 @@ private:
   
   // Populates markersTo3dCoords with the 3d world coordinates of each corner of each marker on
   // the respective target
-  void GetCalibTargetMarkersTo3dCoords_Qbert(std::map<Vision::MarkerType, Quad3f>& markersTo3dCoords);
-  void GetCalibTargetMarkersTo3dCoords_InvertedBox(std::map<Vision::MarkerType, Quad3f>& markersTo3dCoords);
+  void GetCalibTargetMarkersTo3dCoords_Qbert(std::map<Vision::MarkerType, Quad3f>& markersTo3dCoords,
+                                             std::set<Vision::MarkerType>& markersNeededToBeSeen);
+  void GetCalibTargetMarkersTo3dCoords_InvertedBox(std::map<Vision::MarkerType, Quad3f>& markersTo3dCoords,
+                                                   std::set<Vision::MarkerType>& markersNeededToBeSeen);
 
   VisionSystem& _visionSystem;
 

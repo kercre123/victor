@@ -16,8 +16,8 @@
 #include "quadTreeProcessor.h"
 
 #include "engine/navMap/memoryMap/memoryMapTypes.h"
-#include "anki/common/basestation/math/point.h"
-#include "anki/common/basestation/math/triangle.h"
+#include "coretech/common/engine/math/point.h"
+#include "coretech/common/engine/math/triangle.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -34,15 +34,12 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // constructor/destructor
-  QuadTree(VizManager* vizManager, Robot* robot, MemoryMapData rootData);
+  QuadTree(VizManager* vizManager, MemoryMapData rootData);
   ~QuadTree();
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Render
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-  // Render navmesh
-  void DrawDebugProcessorInfo(size_t mapIdxHint) const;
 
   // Stop rendering navmesh
   void ClearDraw() const;
@@ -55,13 +52,7 @@ public:
   // Broadcast
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  // Broadcast navmesh
-  // NOTE: (mrw)
-  //   The only difference between Broadcast and BoadcastMemoryMapDraw is whether or not we
-  //   are converting EContentType to ENodeContentTypeEnum or ENodeContentTypeDebugVizEnum. Why can't
-  //   the consumers share this data? 
-  void Broadcast(uint32_t originID) const;
-  void BroadcastMemoryMapDraw(uint32_t originID, size_t maxIdxHint) const;
+  void GetBroadcastInfo(MemoryMapTypes::MapBroadcastData& info) const;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors
@@ -116,11 +107,7 @@ private:
   QuadTreeProcessor _processor;
 
   // current root of the tree. It expands as needed
-  QuadTreeNode _root;
-  
-  VizManager* _vizManager;
-  Robot*      _robot;
-  
+  QuadTreeNode _root; 
 }; // class
   
 } // namespace

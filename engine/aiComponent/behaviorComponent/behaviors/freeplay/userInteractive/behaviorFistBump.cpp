@@ -19,8 +19,8 @@
 #include "engine/components/movementComponent.h"
 #include "engine/faceWorld.h"
 
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "util/console/consoleInterface.h"
 
@@ -73,17 +73,17 @@ BehaviorFistBump::BehaviorFistBump(const Json::Value& config)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorFistBump::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorFistBump::WantsToBeActivatedBehavior() const
 {
   return true;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorFistBump::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorFistBump::OnBehaviorActivated()
 {
   // Disable idle animation
-  SmartPushIdleAnimation(behaviorExternalInterface, AnimationTrigger::Count);
+  SmartPushIdleAnimation(AnimationTrigger::Count);
   
   _fistBumpRequestCnt = 0;
   _startLookingForFaceTime_s = 0.f;
@@ -91,28 +91,33 @@ Result BehaviorFistBump::OnBehaviorActivated(BehaviorExternalInterface& behavior
   _nextGazeChangeIndex = 0;
   _lastTimeOffTreads_s = 0.f;
   
-  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  const auto& robotInfo = GetBEI().GetRobotInfo();
   if (robotInfo.GetCarryingComponent().IsCarryingObject()) {
     _state = State::PutdownObject;
   } else {
     _state = State::LookForFace;
   }
 
-  return Result::RESULT_OK;
+  
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorFistBump::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorFistBump::BehaviorUpdate()
 {
+  if(!IsActivated()){
+    return;
+  }
+
   f32 now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
   // Check if should exit because of pickup
-  if (behaviorExternalInterface.GetOffTreadsState() != OffTreadsState::OnTreads) {
+  if (GetBEI().GetOffTreadsState() != OffTreadsState::OnTreads) {
     if (_lastTimeOffTreads_s == 0) {
       _lastTimeOffTreads_s = now;
     } else if (now > _lastTimeOffTreads_s + kMaxPickedupDurationBeforeExit_s) {
-      return Status::Complete;
+      CancelSelf();
+      return;
     }
   } else {
     _lastTimeOffTreads_s = 0;
@@ -130,7 +135,7 @@ ICozmoBehavior::Status BehaviorFistBump::UpdateInternal_WhileRunning(BehaviorExt
     default:
     {
       if (IsControlDelegated()) {
-        return Status::Running;
+        return;
       }
     }
   }
@@ -170,10 +175,10 @@ ICozmoBehavior::Status BehaviorFistBump::UpdateInternal_WhileRunning(BehaviorExt
         break;
       }
 
-      auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+      auto& robotInfo = GetBEI().GetRobotInfo();
       // Check if face observed very recently
       Pose3d facePose;
-      TimeStamp_t lastObservedFaceTime = behaviorExternalInterface.GetFaceWorld().GetLastObservedFace(facePose);
+      TimeStamp_t lastObservedFaceTime = GetBEI().GetFaceWorld().GetLastObservedFace(facePose);
       if (lastObservedFaceTime > 0 && (robotInfo.GetLastMsgTimestamp() - lastObservedFaceTime < kMaxTimeInPastToHaveObservedFace_ms)) {
         DelegateIfInControl(new TurnTowardsLastFacePoseAction());
         _state = State::RequestInitialFistBump;
@@ -202,7 +207,7 @@ ICozmoBehavior::Status BehaviorFistBump::UpdateInternal_WhileRunning(BehaviorExt
     }
     case State::RequestingFistBump:
     {
-      auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+      auto& robotInfo = GetBEI().GetRobotInfo();
       _waitStartTime_s = now;
       robotInfo.GetMoveComponent().EnableLiftPower(false);
       robotInfo.GetMoveComponent().EnableHeadPower(false);
@@ -215,7 +220,7 @@ ICozmoBehavior::Status BehaviorFistBump::UpdateInternal_WhileRunning(BehaviorExt
     }
     case State::WaitingForMotorsToSettle:
     {
-      auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+      auto& robotInfo = GetBEI().GetRobotInfo();
       if (!robotInfo.GetMoveComponent().IsLiftMoving() &&
           !robotInfo.GetMoveComponent().IsHeadMoving()) {
         _liftWaitingAngle_rad = robotInfo.GetLiftAngle();
@@ -229,7 +234,7 @@ ICozmoBehavior::Status BehaviorFistBump::UpdateInternal_WhileRunning(BehaviorExt
     }
     case State::WaitingForBump:
     {
-      auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+      auto& robotInfo = GetBEI().GetRobotInfo();
       if (CheckForBump(robotInfo)) {
         CancelDelegates();  // Stop the idle anim
         robotInfo.GetMoveComponent().EnableLiftPower(true);
@@ -270,19 +275,17 @@ ICozmoBehavior::Status BehaviorFistBump::UpdateInternal_WhileRunning(BehaviorExt
     {
       ResetTrigger(_updateLastCompletionTime);
       BehaviorObjectiveAchieved(BehaviorObjective::FistBumpComplete);
-      return Status::Complete;
+      CancelSelf();
+      return;
     }
   }
-  
-  
-  return Status::Running;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorFistBump::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorFistBump::OnBehaviorDeactivated()
 {
-  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  auto& robotInfo = GetBEI().GetRobotInfo();
   robotInfo.GetMoveComponent().EnableLiftPower(true);
   robotInfo.GetMoveComponent().EnableHeadPower(true);
   

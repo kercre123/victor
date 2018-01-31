@@ -19,6 +19,7 @@ function usage()
     echo "${SCRIPT_NAME} [OPTIONS] <ASSETS_BUILD_DIR>"
     echo "  -h          print this message"
     echo "  -f          force-push assets to device"
+    echo "  -x          remove all assets bundles from device"
     echo "${SCRIPT_NAME} with no arguments lists the available local assets"
 }
 
@@ -26,8 +27,10 @@ function usage()
 # defaults
 #
 FORCE_PUSH_ASSETS=0
+REMOVE_ALL_ASSETS=0
+: ${INSTALL_ROOT:="/data/data/com.anki.cozmoengine"}
 
-while getopts ":hf" opt; do
+while getopts ":hfx" opt; do
   case ${opt} in
     h )
       usage
@@ -35,6 +38,9 @@ while getopts ":hf" opt; do
       ;;
     f )
       FORCE_PUSH_ASSETS=1
+      ;;
+    x )
+      REMOVE_ALL_ASSETS=1
       ;;
     \? )
       usage
@@ -44,6 +50,7 @@ while getopts ":hf" opt; do
 done
                                                                                                     
 cd "${SCRIPT_PATH}"
+shift $((OPTIND -1))
 
 
 #
@@ -52,7 +59,7 @@ cd "${SCRIPT_PATH}"
 if [ $# -ne 0 ]; then
     ASSETSDIR="${@: -1}" # last argument
 else
-    ASSETDIRS=($(find ${TOPLEVEL}/_build -path '**/assets/cozmo_assets.ref'))
+    ASSETDIRS=($(find ${TOPLEVEL}/_build/android -path '**/assets/cozmo_assets.ref'))
     if [ "${#ASSETDIRS[@]}" -eq 1 ]; then
         ASSETSDIR=$(dirname "${ASSETDIRS[0]}")
     else
@@ -60,7 +67,7 @@ else
         echo ""
         echo "List of asset build dirs (new -> old)"
         # find asset dirs
-        ASSETDIRS=($(find ${TOPLEVEL}/_build -path '**/assets/cozmo_assets.ref'))
+        ASSETDIRS=($(find ${TOPLEVEL}/_build/android -path '**/assets/cozmo_assets.ref'))
         if [ "${#ASSETDIRS[@]}" -eq 0 ]; then
             exit 1
         fi
@@ -82,66 +89,83 @@ else
     fi
 fi
 
-# Check whether an existing hash already exists
-SOURCE_ASSET_HASH_FILE="${ASSETSDIR}/cozmo_assets.ref"
-
-if [ ! -f $SOURCE_ASSET_HASH_FILE ]; then
-    echo "Missing assets hash file: $SOURCE_ASSET_HASH_FILE"
-    echo "rebuild assets."
-    exit 1
+# Check that the assets directory exists
+if [ ! -d "$ASSETSDIR" ]; then
+  echo "Assets directory ${ASSETSDIR} does not exist!"
+  exit 1
 fi
 
-SOURCE_HASH=$(cat ${SOURCE_ASSET_HASH_FILE})
+DEVICE_RSYNC_BIN_DIR="/data/local/tmp"
+DEVICE_RSYNC_CONF_DIR="/data/rsync"
 
-DEVICE_ASSET_ROOT_DIR="/data/data/com.anki.cozmoengine/files/assets"
-DEVICE_ASSET_DIR="$DEVICE_ASSET_ROOT_DIR/$SOURCE_HASH"
-DEVICE_ASSET_TMP_DIR="$DEVICE_ASSET_ROOT_DIR/_tmp"
+DEVICE_ASSET_REL_DIR="files"
+DEVICE_ASSET_ROOT_DIR="${INSTALL_ROOT}/files/assets"
+DEVICE_ASSET_DIR="$DEVICE_ASSET_ROOT_DIR/$DEVICE_ASSET_REL_DIR"
+RSYNC_BIN_DIR=(${TOPLEVEL}/tools/rsync)
 
 # source adb env & helper functions
 source android_env.sh
 
+# get device IP Address
+DEVICE_IP_ADDRESS=`$ADB shell ip addr show wlan0 | grep "inet\s" | awk '{print $2}' | awk -F'/' '{print $1}'`
+if [ -z $DEVICE_IP_ADDRESS ]; then
+  DEVICE_IP_ADDRESS=`$ADB shell ip addr show lo | grep "inet\s" | awk '{print $2}' | awk -F'/' '{print $1}'`
+  if [ -z $DEVICE_IP_ADDRESS ]; then
+    echo "no valid android device found"
+    exit 1
+  fi
+
+  DEVICE_IP_ADDRESS="$DEVICE_IP_ADDRESS:6010"
+  $ADB forward tcp:6010 tcp:1873
+else
+  DEVICE_IP_ADDRESS="$DEVICE_IP_ADDRESS:1873"
+fi
+
+# delete all old bundles from asset folder if REMOVE_ALL_ASSETS=1
+if [ $REMOVE_ALL_ASSETS -eq 1 ]; then
+  $ADB shell rm -rf ${DEVICE_ASSET_ROOT_DIR}/*
 # blow away current assets folder to force re-push if FORCE_PUSH_ASSETS=1
-if [ $FORCE_PUSH_ASSETS -eq 1 ]; then
+elif [ $FORCE_PUSH_ASSETS -eq 1 ]; then
   $ADB shell rm -rf ${DEVICE_ASSET_DIR}
 fi
 
+# Install new assets
+pushd ${ASSETSDIR} > /dev/null 2>&1
+
+# Make sure we have the directories we expect
+$ADB shell mkdir -p ${DEVICE_RSYNC_BIN_DIR}
+$ADB shell mkdir -p ${DEVICE_RSYNC_CONF_DIR}
+$ADB shell mkdir -p ${DEVICE_ASSET_DIR}
+
+# install rsync binary and config if needed
 set +e
-$ADB shell [ -f "$DEVICE_ASSET_DIR/cozmo_assets.ref" ]
-HAS_ASSETS=$?
+$ADB shell [ -f "$DEVICE_RSYNC_BIN_DIR/rsync.bin" ]
+HAS_RSYNC=$?
+$ADB shell [ -f "$DEVICE_RSYNC_CONF_DIR/rsyncd.conf" ]
+HAS_RSYNC_CONF=$?
 set -e
 
-if [ $HAS_ASSETS -eq 0 ]; then
-    echo "assets available at $DEVICE_ASSET_DIR"
-    exit 0
+if [ $FORCE_PUSH_ASSETS -eq 1 ] || 
+   [ $REMOVE_ALL_ASSETS -eq 1 ] || 
+   [ $HAS_RSYNC -ne 0 ] || 
+   [ $HAS_RSYNC_CONF -ne 0 ]; then
+
+  echo "loading rsync to device"
+
+  $ADB push ${RSYNC_BIN_DIR}/rsync.bin ${DEVICE_RSYNC_BIN_DIR}
+  $ADB push ${RSYNC_BIN_DIR}/rsyncd.conf ${DEVICE_RSYNC_CONF_DIR}
 fi
 
-# Install new assets. Deploy to a tmp directory first
-# in case transfer is stopped midway through.
-echo "deploying assets"
-pushd ${ASSETSDIR} > /dev/null 2>&1
-$ADB shell rm -rf ${DEVICE_ASSET_DIR} ${DEVICE_ASSET_TMP_DIR} # make sure there is no existing assets directory or tmp directory
-$ADB push . ${DEVICE_ASSET_TMP_DIR}/
-$ADB shell mv ${DEVICE_ASSET_TMP_DIR} ${DEVICE_ASSET_DIR}
-$ADB push ${ASSETSDIR}/cozmo_assets.ref ${DEVICE_ASSET_ROOT_DIR}/current
+echo "deploying assets: ${ASSETSDIR}"
+
+# startup rsync daemon
+$ADB shell "${DEVICE_RSYNC_BIN_DIR}/rsync.bin --daemon --config=${DEVICE_RSYNC_CONF_DIR}/rsyncd.conf &"
+
+# sync files
+rsync -rP --stats --delete . rsync://${DEVICE_IP_ADDRESS}/files/${DEVICE_ASSET_REL_DIR}
+
+# record the asset directory for the animation process
+$ADB shell "echo '${DEVICE_ASSET_REL_DIR}' > '${DEVICE_ASSET_ROOT_DIR}/current'"
+
 popd > /dev/null 2>&1
 echo "assets installed to $DEVICE_ASSET_DIR"
-
-# reap old assets if there are more than 5 versions
-# listing is oldest -> newest
-DEVICE_DIR_LIST=($($ADB shell ls -1tr $DEVICE_ASSET_ROOT_DIR))
-
-_MAX_DIRS=5
-_COUNT=0
-for dir in "${DEVICE_DIR_LIST[@]}"
-do
-    name=`basename $dir`
-    if [ "$name" == ${SOURCE_HASH} ]; then
-        continue
-    fi
-    if [ $_COUNT -ge $_MAX_DIRS ]; then
-        old_dir="${DEVICE_ASSET_ROOT_DIR}/$dir"
-        echo "remove old assets dir: $old_dir"
-        $ADB shell rm -rf ${old_dir}
-    fi
-    _COUNT=$((_COUNT+1))
-done

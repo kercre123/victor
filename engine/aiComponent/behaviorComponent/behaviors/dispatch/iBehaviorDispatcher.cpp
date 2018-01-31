@@ -15,7 +15,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/iBehaviorDispatcher.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
-#include "coretech/common/include/anki/common/basestation/jsonTools.h"
+#include "coretech/common/engine/jsonTools.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
@@ -53,23 +53,34 @@ IBehaviorDispatcher::IBehaviorDispatcher(const Json::Value& config, bool shouldI
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBehaviorDispatcher::InitBehavior(BehaviorExternalInterface& behaviorExternalInterface)
+void IBehaviorDispatcher::InitBehavior()
 {
-  for( const auto& behaviorID : _behaviorIds ) {      
-    ICozmoBehaviorPtr behavior =  behaviorExternalInterface.GetBehaviorContainer().FindBehaviorByID(behaviorID);
-    DEV_ASSERT_MSG(behavior != nullptr,
-                   "IBehaviorDispatcher.InitBehavior.FailedToFindBehavior",
-                   "Behavior not found: %s",
-                   BehaviorTypesWrapper::BehaviorIDToString(behaviorID));
+  for( const auto& behaviorStr : _behaviorStrs ) {
+    // first check anonymous behaviors
+    ICozmoBehaviorPtr behavior = FindAnonymousBehaviorByName(behaviorStr);
+    if( nullptr == behavior ) {
+      // no match, try behavior IDs
+      const BehaviorID behaviorID = BehaviorTypesWrapper::BehaviorIDFromString(behaviorStr);
+      behavior = GetBEI().GetBehaviorContainer().FindBehaviorByID(behaviorID);
+      
+      DEV_ASSERT_MSG(behavior != nullptr,
+                     "IBehaviorDispatcher.InitBehavior.FailedToFindBehavior",
+                     "Behavior not found: %s",
+                     behaviorStr.c_str());
+    }
     if(behavior != nullptr){
       _behaviors.push_back(behavior);
     }
   }
-  InitDispatcher(behaviorExternalInterface);
+
+  // don't need the strings anymore, so clear them to release memory
+  _behaviorStrs.clear();
+  
+  InitDispatcher();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IBehaviorDispatcher::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const {
+bool IBehaviorDispatcher::WantsToBeActivatedBehavior() const {
 
   // TODO:(bn) only wants to be activated if one of it's sub-behaviors does?
   // problem: they might not be in scope yet
@@ -77,44 +88,30 @@ bool IBehaviorDispatcher::WantsToBeActivatedBehavior(BehaviorExternalInterface& 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IBehaviorDispatcher::CarryingObjectHandledInternally() const
+void IBehaviorDispatcher::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const 
 {
+  // set up return variables
+  bool subBehaviorCarryingObject = false;
+  bool subBehaviorOffTreads = false;
+  bool subBehaviorOnCharger = false;
+  
+  // check all sub behavior values
   for( const auto& behaviorPtr : _behaviors ) {
-    if( behaviorPtr->CarryingObjectHandledInternally() ) {
-      // if any of our behaviors can handle carrying an object, then so can we
-      // NOTE: this might not be valid, because this behavior might not want to run
-      return true;
-    }
+    BehaviorOperationModifiers subModifiers;
+    behaviorPtr->GetBehaviorOperationModifiers(subModifiers);
+    subBehaviorCarryingObject |= subModifiers.wantsToBeActivatedWhenCarryingObject;
+    subBehaviorOffTreads      |= subModifiers.wantsToBeActivatedWhenOffTreads;
+    subBehaviorOnCharger      |= subModifiers.wantsToBeActivatedWhenOnCharger;
   }
 
-  // if none of our sub-behaviors can handle carrying a cube, then neither can we
-  return false;
+  // assign return variables
+  modifiers.wantsToBeActivatedWhenCarryingObject = subBehaviorCarryingObject;
+  modifiers.wantsToBeActivatedWhenOffTreads = subBehaviorOffTreads;
+  modifiers.wantsToBeActivatedWhenOnCharger = subBehaviorOnCharger;
+
+  // dispatchers always delegate to a behavior if they are meant to keep running
+  modifiers.behaviorAlwaysDelegates = true;
 }
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IBehaviorDispatcher::ShouldRunWhileOffTreads() const
-{
-  for( const auto& behaviorPtr : _behaviors ) {
-    if( behaviorPtr->ShouldRunWhileOffTreads() ) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IBehaviorDispatcher::ShouldRunWhileOnCharger() const
-{
-  for( const auto& behaviorPtr : _behaviors ) {
-    if( behaviorPtr->ShouldRunWhileOnCharger() ) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IBehaviorDispatcher::GetAllDelegates(std::set<IBehavior*>& delegates) const
@@ -125,28 +122,26 @@ void IBehaviorDispatcher::GetAllDelegates(std::set<IBehavior*>& delegates) const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result IBehaviorDispatcher::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void IBehaviorDispatcher::OnBehaviorActivated()
 {
-  BehaviorDispatcher_OnActivated(behaviorExternalInterface);
-
-  return Result::RESULT_OK;
+  BehaviorDispatcher_OnActivated();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBehaviorDispatcher::OnCozmoBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void IBehaviorDispatcher::OnBehaviorDeactivated()
 {
-  BehaviorDispatcher_OnDeactivated(behaviorExternalInterface);
+  BehaviorDispatcher_OnDeactivated();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IBehaviorDispatcher::CanBeGentlyInterruptedNow(BehaviorExternalInterface& behaviorExternalInterface) const
+bool IBehaviorDispatcher::CanBeGentlyInterruptedNow() const
 {
   // it's a good time to interrupt if we aren't running a behavior, or if the behavior we're running says it's OK
   if( !IsControlDelegated() ) {
     return true;
   }
-  else if( behaviorExternalInterface.HasDelegationComponent() ) {
-    auto& delegationComponent = behaviorExternalInterface.GetDelegationComponent();
+  else if( GetBEI().HasDelegationComponent() ) {
+    auto& delegationComponent = GetBEI().GetDelegationComponent();
 
     const IBehavior* behaviorDelegatedTo = delegationComponent.GetBehaviorDelegatedTo(this);
 
@@ -156,7 +151,7 @@ bool IBehaviorDispatcher::CanBeGentlyInterruptedNow(BehaviorExternalInterface& b
     
     const ICozmoBehavior* delegate = static_cast<const ICozmoBehavior*>(behaviorDelegatedTo);
 
-    return delegate != nullptr && delegate->CanBeGentlyInterruptedNow(behaviorExternalInterface);
+    return delegate != nullptr && delegate->CanBeGentlyInterruptedNow();
   }
   else {
     // no delegation component, so I guess it's an OK time?
@@ -165,36 +160,39 @@ bool IBehaviorDispatcher::CanBeGentlyInterruptedNow(BehaviorExternalInterface& b
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status IBehaviorDispatcher::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void IBehaviorDispatcher::BehaviorUpdate()
 {
+  DispatcherUpdate();
+  if(!IsActivated()){
+    return;
+  }
 
-  if( ! ANKI_VERIFY( behaviorExternalInterface.HasDelegationComponent(),
+  if( ! ANKI_VERIFY( GetBEI().HasDelegationComponent(),
                      "IBehaviorDispatcher.BehaviorUpdate.NoDelegationComponent",
                      "Behavior should have a delegation component while running") ) {
-    return Status::Failure;
+    CancelSelf();
+    return;
   }
 
   // only choose a new behavior if we should interrupt the active behavior, or if no behavior is active
   if( ! IsControlDelegated() ||
       _shouldInterruptActiveBehavior ) {
   
-    auto& delegationComponent = behaviorExternalInterface.GetDelegationComponent();
+    auto& delegationComponent = GetBEI().GetDelegationComponent();
   
     const IBehavior* currBehavior = delegationComponent.GetBehaviorDelegatedTo(this);
     
-    ICozmoBehaviorPtr desiredBehavior = GetDesiredBehavior(behaviorExternalInterface);
+    ICozmoBehaviorPtr desiredBehavior = GetDesiredBehavior();
 
     if( desiredBehavior != nullptr &&
         static_cast<IBehavior*>( desiredBehavior.get() ) != currBehavior ) {
 
-      const bool delegated = DelegateNow(behaviorExternalInterface, desiredBehavior.get());
+      const bool delegated = DelegateNow(desiredBehavior.get());
       DEV_ASSERT_MSG(delegated, "IBehaviorDispatcher.BehaviorUpdate.DelegateFailed",
                      "Failed to delegate to behavior '%s'",
                      desiredBehavior->GetIDStr().c_str());
     }
-  }   
-
-  return ICozmoBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
+  }
 }
 
 }

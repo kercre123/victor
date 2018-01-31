@@ -39,7 +39,7 @@
  * Copyright: Anki, Inc. 2016
  **/
 
-#include "anki/common/robot/errorHandling.h"
+#include "coretech/common/robot/errorHandling.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/components/nvStorageComponent.h"
 #include "engine/cozmoContext.h"
@@ -60,7 +60,9 @@
 #include "androidHAL/androidHAL.h"
 #include "clad/types/imageTypes.h"
 #endif // ifdef SIMULATOR
-#include "anki/common/basestation/utils/data/dataPlatform.h"
+
+#include "coretech/common/engine/utils/data/dataPlatform.h"
+
 #include "util/fileUtils/fileUtils.h"
 
 // Immediately returns on write/erase commands as if they succeeded.
@@ -78,6 +80,7 @@ static constexpr u32 _kMaxNvStorageBlobSize = 1024;
 
 static const char*   _kNVDataFileExtension = ".nvdata";
 
+static const char*   _kFactoryPath = "/data/persist/factory/";
 
 namespace Anki {
 namespace Cozmo {
@@ -131,16 +134,27 @@ std::map<NVEntryTag, u32> NVStorageComponent::_maxFactoryEntrySizeTable = {
                                                           {NVEntryTag::NVEntry_IMUAverages,         0} };
 
   
-NVStorageComponent::NVStorageComponent(Robot& inRobot, const CozmoContext* context)
-  : _robot(inRobot)
-  , _kStoragePath((_robot.GetContextDataPlatform() != nullptr ? _robot.GetContextDataPlatform()->pathToResource(Util::Data::Scope::Persistent, "nvStorage/") : ""))
+NVStorageComponent::NVStorageComponent()
+: IDependencyManagedComponent<RobotComponentID>(RobotComponentID::NVStorage)
 {
+}
+
+NVStorageComponent::~NVStorageComponent()
+{
+  _signalHandles.clear();
+}
+
+void NVStorageComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) 
+{
+  _robot = robot;
+  _kStoragePath = (_robot->GetContextDataPlatform() != nullptr ? _robot->GetContextDataPlatform()->pathToResource(Util::Data::Scope::Persistent, "nvStorage/") : "");
+  const CozmoContext* context = robot->GetContext();
   #ifdef SIMULATOR
   LoadSimData();
   #endif
 
   LoadDataFromFiles();
-  
+
   if (context) {
     // Setup game message handlers
     IExternalInterface *extInterface = context->GetExternalInterface();
@@ -161,13 +175,8 @@ NVStorageComponent::NVStorageComponent(Robot& inRobot, const CozmoContext* conte
   } else {
     PRINT_NAMED_WARNING("NVStorageComponent.nullContext", "");
   }
-
 }
 
-NVStorageComponent::~NVStorageComponent()
-{
-  _signalHandles.clear();
-}
 
 void NVStorageComponent::InitSizeTable() {
   
@@ -345,16 +354,18 @@ bool NVStorageComponent::Write(NVEntryTag tag,
   // All data writes must be word-aligned
   size = MakeWordAligned(size);
   
-  // Sanity check on size
-  u32 allowedSize = GetMaxSizeForEntryTag(tag);
-  
-  if ((size > allowedSize) || size <= 0) {
-    PRINT_NAMED_WARNING("NVStorageComponent.Write.InvalidSize",
-                        "Tag: %s, %zu bytes (limit %d bytes)",
-                        EnumToString(tag), size, allowedSize);
-    validArgs = false;
+  if(!_writingFactory)
+  {
+    // Sanity check on size
+    u32 allowedSize = GetMaxSizeForEntryTag(tag);
+    
+    if ((size > allowedSize) || size <= 0) {
+      PRINT_NAMED_WARNING("NVStorageComponent.Write.InvalidSize",
+                          "Tag: %s, %zu bytes (limit %d bytes)",
+                          EnumToString(tag), size, allowedSize);
+      validArgs = false;
+    }
   }
-  
 
   // Fail immediately if invalid args found
   if (!validArgs) {
@@ -437,7 +448,7 @@ bool NVStorageComponent::Erase(NVEntryTag tag,
     }
     return false;
   }
-  
+
   PRINT_CH_INFO("NVStorage", "NVStorageComponent.Erase.ErasingData", "%s", EnumToString(tag));
   u32 entryTag = static_cast<u32>(tag);
   
@@ -481,10 +492,12 @@ bool NVStorageComponent::WipeFactory(NVStorageWriteEraseCallback callback)
 {
   if(_writingFactory)
   {
-    return Erase(NVEntryTag::NVEntry_FactoryBaseTag,
-                 callback,
-                 false,
-                 static_cast<u32>(NVConst::NVConst_FACTORY_BLOCK_SIZE));
+    Util::FileUtils::RemoveDirectory(_kFactoryPath);
+    if(callback != nullptr)
+    {
+      callback(NVStorage::NVResult::NV_OKAY);
+    }
+    return true;
   }
   PRINT_NAMED_ERROR("NVStorageComponent.WipeFactory.NotAllowed",
                     "Must be allowed to write to factory addresses");
@@ -560,19 +573,26 @@ void NVStorageComponent::WriteEntryToFile(u32 tag)
   // Create filename from tag
   std::stringstream ss;
   ss << std::hex << tag << _kNVDataFileExtension;
+  
+  std::string path = _kStoragePath;
+  // TODO(Al): This probably needs to write somewhere else for actual factory nvStorage
+  if(IsFactoryEntryTag(static_cast<NVEntryTag>(tag)))
+  {
+    path = _kFactoryPath;
+  }
 
   // If tag doesn't exist in map, then delete the associated file if it exists
   auto iter = _tagDataMap.find(tag);
   if (iter == _tagDataMap.end()) {
     PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.WriteEntryToFile.Erasing", "Tag 0x%x", tag);
-    Util::FileUtils::DeleteFile(_kStoragePath + ss.str());
+    Util::FileUtils::DeleteFile(path + ss.str());
     return;
   }
   
   // Write data to file
-  PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.WriteEntryToFile.Writing", "Tag 0x%x, side %zu", tag, iter->second.size());
-  Util::FileUtils::CreateDirectory(_kStoragePath);
-  if (!Util::FileUtils::WriteFile(_kStoragePath + ss.str(), iter->second)) {
+  PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.WriteEntryToFile.Writing", "Tag 0x%x, size %zu", tag, iter->second.size());
+  Util::FileUtils::CreateDirectory(path);
+  if (!Util::FileUtils::WriteFile(path + ss.str(), iter->second)) {
     PRINT_NAMED_ERROR("NVStorageComponent.WriteEntryToFile.Failed", "%s", ss.str().c_str());
   }
 
@@ -616,7 +636,7 @@ void NVStorageComponent::LoadDataFromFiles()
   
   // TODO: For now load factory related nvstorage files from the "factory" subdirectory. Will probably
   // be moved to some read only place
-  fileList = Util::FileUtils::FilesInDirectory(_kStoragePath + "factory/", false, _kNVDataFileExtension);
+  fileList = Util::FileUtils::FilesInDirectory(_kFactoryPath, false, _kNVDataFileExtension);
   
   for (auto& fileName : fileList) {
     
@@ -638,7 +658,7 @@ void NVStorageComponent::LoadDataFromFiles()
     }
     
     // Read data from file
-    std::vector<u8> file = Util::FileUtils::ReadFileAsBinary(_kStoragePath + "factory/" + fileName);
+    std::vector<u8> file = Util::FileUtils::ReadFileAsBinary(_kFactoryPath + fileName);
     if(file.empty())
     {
       PRINT_NAMED_ERROR("NVStorageComponent.LoadFactoryDataFromFiles.ReadFileFailed",
@@ -669,7 +689,6 @@ void NVStorageComponent::LoadSimData()
   _tagDataMap[static_cast<u32>(NVEntryTag::NVEntry_CameraCalib)].assign(reinterpret_cast<const u8*>(camCalib), reinterpret_cast<const u8*>(camCalib) + sizeof(*camCalib));
 }
 #endif  // ifdef SIMULATOR
- 
   
 void NVStorageComponent::BroadcastNVStorageOpResult(NVEntryTag tag, NVResult res, NVOperation op, u8 index, const u8* data, size_t data_length)
 {
@@ -684,7 +703,7 @@ void NVStorageComponent::BroadcastNVStorageOpResult(NVEntryTag tag, NVResult res
   if (nullptr != data) {
     msg.data.assign(data, data + data_length);
   }
-  _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+  _robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
 }
 
 void NVStorageComponent::BroadcastNVStorageReadResults(NVEntryTag tag, u8* dataPtr, size_t dataSize)

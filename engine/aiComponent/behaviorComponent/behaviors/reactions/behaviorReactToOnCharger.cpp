@@ -10,11 +10,11 @@
  *
  **/
 
-#include "anki/common/basestation/jsonTools.h"
+#include "coretech/common/engine/jsonTools.h"
 #include "engine/actions/animActions.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/severeNeedsComponent.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToOnCharger.h"
 #include "engine/cozmoContext.h"
 #include "engine/events/ankiEvent.h"
@@ -62,52 +62,54 @@ BehaviorReactToOnCharger::BehaviorReactToOnCharger(const Json::Value& config)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorReactToOnCharger::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorReactToOnCharger::WantsToBeActivatedBehavior() const
 {
   return true;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorReactToOnCharger::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToOnCharger::OnBehaviorActivated()
 {
-  /**auto externalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
+  /**auto externalInterface = GetBEI().GetRobotExternalInterface().lock();
   if(externalInterface != nullptr){
     externalInterface->BroadcastToGame<ExternalInterface::GoingToSleep>(_triggerableFromVoiceCommand);
     externalInterface->BroadcastToEngine<StartIdleTimeout>(_timeTilSleepAnimation_s, _timeTilDisconnect_s);
   }**/
   
-  if(NeedId::Count == behaviorExternalInterface.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression()){
-    SmartPushIdleAnimation(behaviorExternalInterface, AnimationTrigger::Count);
+  if(NeedId::Count == GetBEI().GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression()){
+    SmartPushIdleAnimation(AnimationTrigger::Count);
   }
 
   DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::PlacedOnCharger));
-  return Result::RESULT_OK;
+  
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToOnCharger::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToOnCharger::OnBehaviorDeactivated()
 {
   _onChargerCanceled = false;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorReactToOnCharger::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToOnCharger::BehaviorUpdate()
 {
+  if(!IsActivated()){
+    return;
+  }
+
   if( _onChargerCanceled )
   {
     _onChargerCanceled = false;
-    return Status::Complete;
+    CancelSelf();
   }
-  
-  return Status::Running;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToOnCharger::HandleWhileActivated(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToOnCharger::HandleWhileActivated(const GameToEngineEvent& event)
 {
   switch (event.GetData().GetTag())
   {

@@ -16,7 +16,7 @@
 #include "engine/actions/basicActions.h"
 #include "engine/actions/driveToActions.h"
 #include "engine/aiComponent/aiInformationAnalysis/aiInformationAnalyzer.h"
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
@@ -25,8 +25,8 @@
 #include "engine/events/animationTriggerHelpers.h"
 #include "engine/groundPlaneROI.h"
 
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/animationTrigger.h"
@@ -55,8 +55,7 @@ constexpr MemoryMapTypes::FullContentArray typesThatInvalidateGoals =
   {MemoryMapTypes::EContentType::Unknown               , false},
   {MemoryMapTypes::EContentType::ClearOfObstacle       , false},
   {MemoryMapTypes::EContentType::ClearOfCliff          , false},
-  {MemoryMapTypes::EContentType::ObstacleCube          , false}, // this could be ok, since we will walk around them
-  {MemoryMapTypes::EContentType::ObstacleCubeRemoved   , false},
+  {MemoryMapTypes::EContentType::ObstacleObservable    , false},
   {MemoryMapTypes::EContentType::ObstacleCharger       , false}, // this could be ok, since we will walk around the charger
   {MemoryMapTypes::EContentType::ObstacleChargerRemoved, false},
   {MemoryMapTypes::EContentType::ObstacleProx          , false}, // this could be ok, since we will walk around
@@ -75,8 +74,7 @@ constexpr MemoryMapTypes::FullContentArray typesThatInvalidateVantagePoints =
   {MemoryMapTypes::EContentType::Unknown               , false},
   {MemoryMapTypes::EContentType::ClearOfObstacle       , false},
   {MemoryMapTypes::EContentType::ClearOfCliff          , false},
-  {MemoryMapTypes::EContentType::ObstacleCube          , true},
-  {MemoryMapTypes::EContentType::ObstacleCubeRemoved   , false},
+  {MemoryMapTypes::EContentType::ObstacleObservable    , true},
   {MemoryMapTypes::EContentType::ObstacleCharger       , true},
   {MemoryMapTypes::EContentType::ObstacleChargerRemoved, false},
   {MemoryMapTypes::EContentType::ObstacleProx          , true},
@@ -139,11 +137,11 @@ BehaviorVisitInterestingEdge::~BehaviorVisitInterestingEdge()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorVisitInterestingEdge::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorVisitInterestingEdge::WantsToBeActivatedBehavior() const
 {
   ANKI_CPU_PROFILE("BehaviorVisitInterestingEdge::WantsToBeActivatedBehavior"); // we are doing some processing now, keep an eye
   
-  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  const auto& robotInfo = GetBEI().GetRobotInfo();
 
   // clear debug render from previous runs
   robotInfo.GetContext()->GetVizManager()->EraseSegments("BehaviorVisitInterestingEdge.kVieDrawDebugInfo");
@@ -153,7 +151,7 @@ bool BehaviorVisitInterestingEdge::WantsToBeActivatedBehavior(BehaviorExternalIn
 
   // pick a goal now
   BorderRegionScoreVector validRegions;
-  PickGoals(behaviorExternalInterface, validRegions);
+  PickGoals(validRegions);
   
   // if we have regions, process them to see if any is reachable
   if ( !validRegions.empty() )
@@ -176,7 +174,7 @@ bool BehaviorVisitInterestingEdge::WantsToBeActivatedBehavior(BehaviorExternalIn
       if ( !allowGoalsBehindOthers )
       {
         const Vec3f& goalPoint = candidateSegment.GetCenter();
-        const bool isReachable = CheckGoalReachable(behaviorExternalInterface, goalPoint);
+        const bool isReachable = CheckGoalReachable(goalPoint);
         if ( !isReachable ) {
           // next
           continue;
@@ -189,7 +187,7 @@ bool BehaviorVisitInterestingEdge::WantsToBeActivatedBehavior(BehaviorExternalIn
       const Vec3f& potentialLookAtPoint = candidateSegment.GetCenter() + (insideGoalDir * _configParams.distanceInsideGoalToLookAt_mm);
 
       // pick a vantage point from where to look at the goal. Those are the points we will feed the planner
-      GenerateVantagePoints(behaviorExternalInterface, regionScore, potentialLookAtPoint, potentialVantagePoints);
+      GenerateVantagePoints(regionScore, potentialLookAtPoint, potentialVantagePoints);
       
       // there are no available vantage points, not a good goal
       if ( potentialVantagePoints.empty() ) {
@@ -215,35 +213,35 @@ bool BehaviorVisitInterestingEdge::WantsToBeActivatedBehavior(BehaviorExternalIn
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorVisitInterestingEdge::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorVisitInterestingEdge::OnBehaviorActivated()
 {
   // this is the sauce, it's required
   DEV_ASSERT(_cache.IsSet(), "BehaviorVisitInterestingEdge.InitInternal.CantTrustCache");
   
   // make sure we are not updating borders while running the behavior (useless)
-  behaviorExternalInterface.GetAIComponent().GetAIInformationAnalyzer().AddDisableRequest(AIInformationAnalysis::EProcess::CalculateInterestingRegions, GetIDStr());
+  GetBEI().GetAIComponent().GetAIInformationAnalyzer().AddDisableRequest(AIInformationAnalysis::EProcess::CalculateInterestingRegions, GetIDStr());
 
   // reset operating state to pick the starting one
   _operatingState = EOperatingState::Invalid;
 
   // start moving to the vantage point we calculated
-  TransitionToS1_MoveToVantagePoint(behaviorExternalInterface, 0);
+  TransitionToS1_MoveToVantagePoint(0);
 
-  return Result::RESULT_OK;
+  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorVisitInterestingEdge::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorVisitInterestingEdge::OnBehaviorDeactivated()
 {
   // remove our request to disable the analysis process
-  behaviorExternalInterface.GetAIComponent().GetAIInformationAnalyzer().RemoveDisableRequest(AIInformationAnalysis::EProcess::CalculateInterestingRegions, GetIDStr());
+  GetBEI().GetAIComponent().GetAIInformationAnalyzer().RemoveDisableRequest(AIInformationAnalysis::EProcess::CalculateInterestingRegions, GetIDStr());
 
-  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  const auto& robotInfo = GetBEI().GetRobotInfo();
   // clear debug render
   robotInfo.GetContext()->GetVizManager()->EraseSegments("BehaviorVisitInterestingEdge.kVieDrawDebugInfo");
   
   // make sure if we were interrupted that this anim doesn't run anymore (since we queue in parallel)
-  StopSquintLoop(behaviorExternalInterface);
+  StopSquintLoop();
   
   // no need to receive notifications if not waiting for images, clear that. We could also stop the action, but it
   // has no effect on the robot, so keep it running but don't listen to it
@@ -251,17 +249,18 @@ void BehaviorVisitInterestingEdge::OnBehaviorDeactivated(BehaviorExternalInterfa
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorVisitInterestingEdge::BaseClass::Status BehaviorVisitInterestingEdge::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorVisitInterestingEdge::BehaviorUpdate()
 {
-  // return status
-  BaseClass::Status ret = BaseClass::Status::Failure;
+  if(!IsActivated()){
+    return;
+  }
   
   // delegate update depending on state
   const EOperatingState operatingState = _operatingState; // cache value because it can change during this update
   switch(operatingState)
   {
     case EOperatingState::GatheringAccurateEdge:
-      ret = StateUpdate_GatheringAccurateEdge(behaviorExternalInterface);
+      StateUpdate_GatheringAccurateEdge();
     break;
     
     case EOperatingState::Invalid:
@@ -273,15 +272,16 @@ BehaviorVisitInterestingEdge::BaseClass::Status BehaviorVisitInterestingEdge::Up
     case EOperatingState::DoneVisiting:
       // these states don't need special update since actions run in their place
       // delegate on parent for return value
-      ret = BaseClass::UpdateInternal_WhileRunning(behaviorExternalInterface);
+      if(!IsControlDelegated()){
+        CancelSelf();
+        return;
+      }
       break;
-  }
-  
-  return ret;
+  }  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IActionRunner* BehaviorVisitInterestingEdge::CreateLowLiftAndLowHeadActions(BehaviorExternalInterface& behaviorExternalInterface)
+IActionRunner* BehaviorVisitInterestingEdge::CreateLowLiftAndLowHeadActions()
 {
   CompoundActionParallel* allDownAction = new CompoundActionParallel();
 
@@ -307,23 +307,23 @@ IActionRunner* BehaviorVisitInterestingEdge::CreateLowLiftAndLowHeadActions(Beha
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorVisitInterestingEdge::StartWaitingForEdges(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorVisitInterestingEdge::StartWaitingForEdges()
 {
   DEV_ASSERT(!IsWaitingForImages(), "BehaviorVisitInterestingEdge.StartWaitingForEdges.AlreadyWaiting");
 
-  if(behaviorExternalInterface.HasMapComponent()){
+  if(GetBEI().HasMapComponent()){
     // clear the borders in front of us, so that we can get new ones
-    behaviorExternalInterface.GetMapComponent().FlagGroundPlaneROIInterestingEdgesAsUncertain();
+    GetBEI().GetMapComponent().FlagGroundPlaneROIInterestingEdgesAsUncertain();
 
     // after we have removed edges we expect to capture
     // cache the current interesting edge area so that when we get new ones we know how much we have grown
-    const INavMap* currentMap = behaviorExternalInterface.GetMapComponent().GetCurrentMemoryMap();
+    const INavMap* currentMap = GetBEI().GetMapComponent().GetCurrentMemoryMap();
     _interestingEdgesArea_m2 = currentMap->GetInterestingEdgeAreaM2();
     // create an action and store the tag so we know when it's done
     {
       WaitForImagesAction* waitForImgs = new WaitForImagesAction(kNumEdgeImagesToGetAccurateEdges, VisionMode::DetectingOverheadEdges);      
       const bool success = DelegateIfInControl(waitForImgs,
-        [this](BehaviorExternalInterface& behaviorExternalInterface){
+        [this](){
           _waitForImagesActionTag = ActionConstants::INVALID_TAG;
         });
 
@@ -338,7 +338,7 @@ void BehaviorVisitInterestingEdge::StartWaitingForEdges(BehaviorExternalInterfac
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorVisitInterestingEdge::StopSquintLoop(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorVisitInterestingEdge::StopSquintLoop()
 {
   // if looping, request to stop
   if ( IsPlayingSquintLoop() )
@@ -383,7 +383,7 @@ float dist_Point_to_SegmentSQ( const Point3f& p, const Point3f& s0, const Point3
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorVisitInterestingEdge::PickGoals(BehaviorExternalInterface& behaviorExternalInterface, BorderRegionScoreVector& validGoals) const
+void BehaviorVisitInterestingEdge::PickGoals(BorderRegionScoreVector& validGoals) const
 {
   
   // can't be running while picking the best goal, since we are not analyzing regions anymore
@@ -392,16 +392,16 @@ void BehaviorVisitInterestingEdge::PickGoals(BehaviorExternalInterface& behavior
   validGoals.clear();
 
   // ask the information analyzer about the regions it has detected (should have been this frame)
-  const INavMap::BorderRegionVector& interestingRegions = behaviorExternalInterface.GetAIComponent().GetAIInformationAnalyzer().GetDetectedInterestingRegions();
+  const INavMap::BorderRegionVector& interestingRegions = GetBEI().GetAIComponent().GetAIInformationAnalyzer().GetDetectedInterestingRegions();
   
   // process them and see if we can pick one
-  if ( !interestingRegions.empty() && behaviorExternalInterface.HasMapComponent() )
+  if ( !interestingRegions.empty() && GetBEI().HasMapComponent() )
   {
-    const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+    const auto& robotInfo = GetBEI().GetRobotInfo();
     const Vec3f& robotLoc = robotInfo.GetPose().GetWithRespectToRoot().GetTranslation();
 
     // define what a small region is in order to discard them as noise
-    const float memMapPrecision_mm = behaviorExternalInterface.GetMapComponent().GetCurrentMemoryMap()->GetContentPrecisionMM();
+    const float memMapPrecision_mm = GetBEI().GetMapComponent().GetCurrentMemoryMap()->GetContentPrecisionMM();
     const float memMapPrecision_m  = MM_TO_M(memMapPrecision_mm);
     const float kMinRegionArea_m2 = kMinUsefulRegionUnits*(memMapPrecision_m*memMapPrecision_m);
   
@@ -411,7 +411,7 @@ void BehaviorVisitInterestingEdge::PickGoals(BehaviorExternalInterface& behavior
       // if the region is too small, ignore it
       if ( FLT_LE(region.area_m2, kMinRegionArea_m2) ) {
         // debug render
-        RenderDiscardedRegion(behaviorExternalInterface, region);
+        RenderDiscardedRegion(region);
         // continue to next region
         continue;
       }
@@ -447,25 +447,25 @@ void BehaviorVisitInterestingEdge::PickGoals(BehaviorExternalInterface& behavior
         // insert this goal
         validGoals.emplace_back(&region, closestSegmentIdx, closestSegmentDistSQ);
         // debug render
-        RenderAcceptedRegion(behaviorExternalInterface, region);
+        RenderAcceptedRegion(region);
       }
       else
       {
         // debug render
-        RenderDiscardedRegion(behaviorExternalInterface, region);
+        RenderDiscardedRegion(region);
       }
     }
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorVisitInterestingEdge::CheckGoalReachable(BehaviorExternalInterface& behaviorExternalInterface, const Vec3f& goalPosition) const
+bool BehaviorVisitInterestingEdge::CheckGoalReachable(const Vec3f& goalPosition) const
 {
-  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  const auto& robotInfo = GetBEI().GetRobotInfo();
   
   INavMap* memoryMap = nullptr;
-  if(behaviorExternalInterface.HasMapComponent()){
-    memoryMap = behaviorExternalInterface.GetMapComponent().GetCurrentMemoryMap();
+  if(GetBEI().HasMapComponent()){
+    memoryMap = GetBEI().GetMapComponent().GetCurrentMemoryMap();
   }
   DEV_ASSERT(nullptr != memoryMap, "BehaviorVisitInterestingEdge.CheckGoalReachable.NeedMemoryMap");
   
@@ -496,13 +496,13 @@ bool BehaviorVisitInterestingEdge::CheckGoalReachable(BehaviorExternalInterface&
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorVisitInterestingEdge::GenerateVantagePoints(BehaviorExternalInterface& behaviorExternalInterface, const BorderRegionScore& goal, const Vec3f& lookAtPoint, VantagePointVector& outVantagePoints) const
+void BehaviorVisitInterestingEdge::GenerateVantagePoints(const BorderRegionScore& goal, const Vec3f& lookAtPoint, VantagePointVector& outVantagePoints) const
 {
   const Vec3f& kFwdVector = X_AXIS_3D();
   const Vec3f& kRightVector = -Y_AXIS_3D();
   const Vec3f& kUpVector = Z_AXIS_3D();
 
-  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  const auto& robotInfo = GetBEI().GetRobotInfo();
   const Pose3d& worldOrigin = robotInfo.GetWorldOrigin();
 
   outVantagePoints.clear();
@@ -562,7 +562,7 @@ void BehaviorVisitInterestingEdge::GenerateVantagePoints(BehaviorExternalInterfa
         const float clearDistanceBehind  = _configParams.additionalClearanceBehind_mm  + robotBack;
         const Vec3f& toPoint   = vantagePointPos - (normalFromLookAtTowardsVantage * clearDistanceInFront);
         const Vec3f& fromPoint = vantagePointPos + (normalFromLookAtTowardsVantage * clearDistanceBehind );
-        const INavMap* memoryMap = behaviorExternalInterface.GetMapComponent().GetCurrentMemoryMap();
+        const INavMap* memoryMap = GetBEI().GetMapComponent().GetCurrentMemoryMap();
         assert(memoryMap); // otherwise we are not even activatable
         
         // the vantage point is valid if there's no collision with the invalid types (would block the view or the pose)
@@ -606,7 +606,7 @@ void BehaviorVisitInterestingEdge::GenerateVantagePoints(BehaviorExternalInterfa
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorVisitInterestingEdge::TransitionToS1_MoveToVantagePoint(BehaviorExternalInterface& behaviorExternalInterface, uint8_t attemptsDone)
+void BehaviorVisitInterestingEdge::TransitionToS1_MoveToVantagePoint(uint8_t attemptsDone)
 {
   DEV_ASSERT(_operatingState == EOperatingState::Invalid || _operatingState == EOperatingState::MovingToVantagePoint,
    "BehaviorVisitInterestingEdge.TransitionToS1_MoveToVantagePoint.StateShouldNotBeSetOrShouldBeRetry" );
@@ -634,17 +634,17 @@ void BehaviorVisitInterestingEdge::TransitionToS1_MoveToVantagePoint(BehaviorExt
   
   // 2) make sure lift and head are down AFTER we reach the vantage point, since moving might move head up
   {
-    IActionRunner* liftAndHeadDownActions = CreateLowLiftAndLowHeadActions(behaviorExternalInterface);
+    IActionRunner* liftAndHeadDownActions = CreateLowLiftAndLowHeadActions();
     moveAction->AddAction( liftAndHeadDownActions );
   }
   
-  RobotCompletedActionCallback onActionResult = [this, &behaviorExternalInterface, attemptsDone](const ExternalInterface::RobotCompletedAction& actionRet)
+  RobotCompletedActionCallback onActionResult = [this, attemptsDone](const ExternalInterface::RobotCompletedAction& actionRet)
   {
     ActionResultCategory resCat = IActionRunner::GetActionResultCategory(actionRet.result);
     if ( resCat == ActionResultCategory::SUCCESS )
     {
       // we got there, gather accaurate border information
-      TransitionToS2_GatherAccurateEdge(behaviorExternalInterface);
+      TransitionToS2_GatherAccurateEdge();
     }
     else if (resCat == ActionResultCategory::RETRY)
     {
@@ -652,7 +652,7 @@ void BehaviorVisitInterestingEdge::TransitionToS1_MoveToVantagePoint(BehaviorExt
       if ( attemptsDone < kVie_MoveActionRetries ) {
         PRINT_CH_INFO("Behaviors", "BehaviorVisitInterestingEdge.TransitionToS1_MoveToVantagePoint.ActionFailedRetry",
           "Trying again (%d)", attemptsDone+1);
-        TransitionToS1_MoveToVantagePoint(behaviorExternalInterface, attemptsDone+1);
+        TransitionToS1_MoveToVantagePoint(attemptsDone+1);
       } else {
         PRINT_CH_INFO("Behaviors", "BehaviorVisitInterestingEdge.TransitionToS1_MoveToVantagePoint.ActionFailedRetry",
           "Attempted to retry (%d) times. Bailing", attemptsDone);
@@ -669,7 +669,7 @@ void BehaviorVisitInterestingEdge::TransitionToS1_MoveToVantagePoint(BehaviorExt
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorVisitInterestingEdge::TransitionToS2_GatherAccurateEdge(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorVisitInterestingEdge::TransitionToS2_GatherAccurateEdge()
 {
   // change operating state
   _operatingState = EOperatingState::GatheringAccurateEdge;
@@ -683,11 +683,11 @@ void BehaviorVisitInterestingEdge::TransitionToS2_GatherAccurateEdge(BehaviorExt
   _squintLoopAnimActionTag = squintLoopAnimAction->GetTag();
 
   // wait for new edges
-  StartWaitingForEdges(behaviorExternalInterface);
+  StartWaitingForEdges();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorVisitInterestingEdge::TransitionToS3_ObserveFromClose(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorVisitInterestingEdge::TransitionToS3_ObserveFromClose()
 {
   DEV_ASSERT(_operatingState == EOperatingState::GatheringAccurateEdge,
              "BehaviorVisitInterestingEdge.TransitionToS3_ObserveFromClose.InvalidState");
@@ -698,7 +698,7 @@ void BehaviorVisitInterestingEdge::TransitionToS3_ObserveFromClose(BehaviorExter
 
   // we know the distance to the closest border, so we can get as close as we want before playing the anim
   const float robotLen = (ROBOT_BOUNDING_X_FRONT + ROBOT_BOUNDING_X_LIFT);
-  const float lastEdgeDistance_mm = behaviorExternalInterface.GetAIComponent().GetWhiteboard().GetLastEdgeClosestDistance();
+  const float lastEdgeDistance_mm = GetBEI().GetAIComponent().GetWhiteboard().GetLastEdgeClosestDistance();
   DEV_ASSERT(!std::isnan(lastEdgeDistance_mm), "BehaviorVisitInterestingEdge.TransitionToS3_ObserveFromClose.NaNEdgeDist");
   const float distanceToMoveForward_mm = lastEdgeDistance_mm - robotLen - _configParams.observationDistanceFromBorder_mm;
   
@@ -713,7 +713,7 @@ void BehaviorVisitInterestingEdge::TransitionToS3_ObserveFromClose(BehaviorExter
   const float halfWidthAtRobot_mm = _configParams.forwardConeHalfWidthAtRobot_mm;
   const float farPlaneDistFromRobot_mm = _configParams.forwardConeFarPlaneDistFromRobot_mm;
   const float halfWidthAtFarPlane_mm = _configParams.forwardConeHalfWidthAtFarPlane_mm;
-  FlagVisitedQuadAsNotInteresting(behaviorExternalInterface, halfWidthAtRobot_mm, farPlaneDistFromRobot_mm, halfWidthAtFarPlane_mm);
+  FlagVisitedQuadAsNotInteresting(GetBEI(), halfWidthAtRobot_mm, farPlaneDistFromRobot_mm, halfWidthAtFarPlane_mm);
   
   CompoundActionSequential* observationActions = new CompoundActionSequential();
 
@@ -740,17 +740,18 @@ void BehaviorVisitInterestingEdge::TransitionToS3_ObserveFromClose(BehaviorExter
   
   // stop the squint loop and the movement, and start the new actions, which includes squint out
   CancelDelegates();
-  StopSquintLoop(behaviorExternalInterface);
+  StopSquintLoop();
   DelegateIfInControl(observationActions);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorVisitInterestingEdge::FlagVisitedQuadAsNotInteresting(BehaviorExternalInterface& behaviorExternalInterface,
+void BehaviorVisitInterestingEdge::FlagVisitedQuadAsNotInteresting(
+  BehaviorExternalInterface& bei,
   float halfWidthAtRobot_mm,
   float farPlaneDistFromRobot_mm,
   float halfWidthAtFarPlane_mm)
 {
-  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  auto& robotInfo = bei.GetRobotInfo();
   
   const Pose3d& robotPoseWrtOrigin = robotInfo.GetPose().GetWithRespectToRoot();
   
@@ -762,9 +763,9 @@ void BehaviorVisitInterestingEdge::FlagVisitedQuadAsNotInteresting(BehaviorExter
   const Point3f& cornerTL = robotPoseWrtOrigin * Vec3f{ +farPlaneDistFromRobot_mm, +halfWidthAtFarPlane_mm, 0.f};
   const Point3f& cornerTR = robotPoseWrtOrigin * Vec3f{ +farPlaneDistFromRobot_mm, -halfWidthAtFarPlane_mm, 0.f};
 
-  if(behaviorExternalInterface.HasMapComponent()){
+  if(bei.HasMapComponent()){
     const Quad2f robotToFarPlaneQuad{ cornerTL, cornerBL, cornerTR, cornerBR };
-    behaviorExternalInterface.GetMapComponent().FlagQuadAsNotInterestingEdges(robotToFarPlaneQuad);
+    bei.GetMapComponent().FlagQuadAsNotInterestingEdges(robotToFarPlaneQuad);
     // render the quad we are flagging as not interesting anymore
     if ( kVieDrawDebugInfo ) {
       robotInfo.GetContext()->GetVizManager()->DrawQuadAsSegments("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",
@@ -774,7 +775,11 @@ void BehaviorVisitInterestingEdge::FlagVisitedQuadAsNotInteresting(BehaviorExter
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorVisitInterestingEdge::FlagQuadAroundGoalAsNotInteresting(BehaviorExternalInterface& behaviorExternalInterface, const Vec3f& goalPoint, const Vec3f& goalNormal, float halfQuadSideSize_mm)
+void BehaviorVisitInterestingEdge::FlagQuadAroundGoalAsNotInteresting(
+  BehaviorExternalInterface& bei, 
+  const Vec3f& goalPoint, 
+  const Vec3f& goalNormal, 
+  float halfQuadSideSize_mm)
 {
   DEV_ASSERT(FLT_NEAR(goalNormal.z(), 0.0f),
              "BehaviorVisitInterestingEdge.FlagQuadAroundGoalAsNotInteresting.MemoryMapIs2DAtTheMoment");
@@ -788,12 +793,12 @@ void BehaviorVisitInterestingEdge::FlagQuadAroundGoalAsNotInteresting(BehaviorEx
   const Point3f& cornerTL = goalPoint + forwardDir - rightDir;
   const Point3f& cornerTR = goalPoint + forwardDir + rightDir;
 
-  if(behaviorExternalInterface.HasMapComponent()){
+  if(bei.HasMapComponent()){
     const Quad2f quadAroundGoal{ cornerTL, cornerBL, cornerTR, cornerBR };
-    behaviorExternalInterface.GetMapComponent().FlagQuadAsNotInterestingEdges(quadAroundGoal);
+    bei.GetMapComponent().FlagQuadAsNotInterestingEdges(quadAroundGoal);
     // render the quad we are flagging as not interesting beacuse
     if ( kVieDrawDebugInfo ) {
-      auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+      auto& robotInfo = bei.GetRobotInfo();
       robotInfo.GetContext()->GetVizManager()->DrawQuadAsSegments("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",
         quadAroundGoal, 32.0f, Anki::NamedColors::BLUE, true);
     }
@@ -801,7 +806,7 @@ void BehaviorVisitInterestingEdge::FlagQuadAroundGoalAsNotInteresting(BehaviorEx
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorVisitInterestingEdge::BaseClass::Status BehaviorVisitInterestingEdge::StateUpdate_GatheringAccurateEdge(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorVisitInterestingEdge::StateUpdate_GatheringAccurateEdge()
 {
   // if we are waiting for images we don't want to analyze them yet
   const bool isWaitingForImages = IsWaitingForImages();
@@ -813,20 +818,20 @@ BehaviorVisitInterestingEdge::BaseClass::Status BehaviorVisitInterestingEdge::St
     // moving stop by distance, since we may be ramming into stuff like a snowplow
     
     // even if not moving wait to receive edges
-    return BaseClass::Status::Running;
+    return;
   }
   
   // no need to receive notifications if not waiting for images
   _waitForImagesActionTag = ActionConstants::INVALID_TAG;
   
   // check distance to closest detected edge
-  const float lastEdgeDistance_mm = behaviorExternalInterface.GetAIComponent().GetWhiteboard().GetLastEdgeClosestDistance();
+  const float lastEdgeDistance_mm = GetBEI().GetAIComponent().GetWhiteboard().GetLastEdgeClosestDistance();
   const bool detectedEdges = !std::isnan(lastEdgeDistance_mm);
-  if ( detectedEdges && behaviorExternalInterface.HasMapComponent() )
+  if ( detectedEdges && GetBEI().HasMapComponent() )
   { 
     // are the new edges big enough? otherwise this is probably a reflection, noise, or something whose border
     // changes drastically depending on where we look from
-    const INavMap* currentMap = behaviorExternalInterface.GetMapComponent().GetCurrentMemoryMap();
+    const INavMap* currentMap = GetBEI().GetMapComponent().GetCurrentMemoryMap();
     const double newArea_m2 = currentMap->GetInterestingEdgeAreaM2();
     const double changeInArea_m2 = newArea_m2 - _interestingEdgesArea_m2;
     const float memMapPrecision_mm = currentMap->GetContentPrecisionMM();
@@ -856,7 +861,7 @@ BehaviorVisitInterestingEdge::BaseClass::Status BehaviorVisitInterestingEdge::St
       PRINT_CH_INFO("Behaviors", (GetIDStr() + ".GatheringAccurateEdge.Close").c_str(), "Got a close edge, observe from here");
       
       // we can observe from here
-      TransitionToS3_ObserveFromClose(behaviorExternalInterface);
+      TransitionToS3_ObserveFromClose();
     }
     else
     {
@@ -875,7 +880,7 @@ BehaviorVisitInterestingEdge::BaseClass::Status BehaviorVisitInterestingEdge::St
       }
 
       // wait for new edges
-      StartWaitingForEdges(behaviorExternalInterface);
+      StartWaitingForEdges();
     }
   }
   else
@@ -902,25 +907,22 @@ BehaviorVisitInterestingEdge::BaseClass::Status BehaviorVisitInterestingEdge::St
     }
     
     // stop the squint loop and start the new actions, which includes squint out
-    StopSquintLoop(behaviorExternalInterface);
+    StopSquintLoop();
     DelegateIfInControl(noEdgesFoundAnims);
 
     // done visiting (still playing anims)
     _operatingState = EOperatingState::DoneVisiting;
   }
-  
-  // other state will finish for us
-  return BaseClass::Status::Running;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorVisitInterestingEdge::RenderDiscardedRegion(BehaviorExternalInterface& behaviorExternalInterface, const MemoryMapTypes::BorderRegion& region) const
+void BehaviorVisitInterestingEdge::RenderDiscardedRegion(const MemoryMapTypes::BorderRegion& region) const
 {
   #if ANKI_DEV_CHEATS
   {
     if ( kVieDrawDebugInfo )
     {
-      auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+      auto& robotInfo = GetBEI().GetRobotInfo();
       for( size_t idx=0; idx<region.segments.size(); ++idx )
       {
         const MemoryMapTypes::BorderSegment& candidateSegment = region.segments[idx];
@@ -933,13 +935,13 @@ void BehaviorVisitInterestingEdge::RenderDiscardedRegion(BehaviorExternalInterfa
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorVisitInterestingEdge::RenderAcceptedRegion(BehaviorExternalInterface& behaviorExternalInterface, const MemoryMapTypes::BorderRegion& region) const
+void BehaviorVisitInterestingEdge::RenderAcceptedRegion(const MemoryMapTypes::BorderRegion& region) const
 {
   #if ANKI_DEV_CHEATS
   {
     if ( kVieDrawDebugInfo )
     {
-      auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+      auto& robotInfo = GetBEI().GetRobotInfo();
 
       for( size_t idx=0; idx<region.segments.size(); ++idx )
       {
@@ -953,13 +955,13 @@ void BehaviorVisitInterestingEdge::RenderAcceptedRegion(BehaviorExternalInterfac
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorVisitInterestingEdge::RenderChosenGoal(BehaviorExternalInterface& behaviorExternalInterface, const BorderRegionScore& bestGoal) const
+void BehaviorVisitInterestingEdge::RenderChosenGoal(const BorderRegionScore& bestGoal) const
 {
   #if ANKI_DEV_CHEATS
   {
     if ( kVieDrawDebugInfo && bestGoal.IsValid() )
     {
-      auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+      auto& robotInfo = GetBEI().GetRobotInfo();
       
       const MemoryMapTypes::BorderSegment& b = bestGoal.GetSegment();
       robotInfo.GetContext()->GetVizManager()->DrawSegment("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",

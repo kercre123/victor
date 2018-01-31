@@ -1,5 +1,6 @@
 {
   "behaviorClass": "FistBump",
   "behaviorID": "VictorCloudDemoFistBump",
+  "abortIfNoFaceFound": false,
   "respondToCloudIntent": "AnyTrick"
 }

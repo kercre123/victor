@@ -7,25 +7,25 @@
  */
 
 #include "simulator/game/uiGameController.h"
+#include "simulator/controllers/shared/webotsHelpers.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/cozmoAPI/comms/gameComms.h"
 #include "engine/cozmoAPI/comms/gameMessageHandler.h"
-#include "anki/common/basestation/math/point_impl.h"
+#include "coretech/common/engine/math/point_impl.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "engine/events/animationTriggerHelpers.h"
 #include "util/transport/udpTransport.h"
 // includes for physics functions
-#include "anki/messaging/shared/UdpClient.h"
-#include "clad/robotInterface/messageFromActiveObject.h"
+#include "coretech/messaging/shared/UdpClient.h"
+#include "clad/externalInterface/messageFromActiveObject.h"
 #include "clad/physicsInterface/messageSimPhysics.h"
 // end of physics includes
 #include <stdio.h>
 #include <string.h>
 
 #define LOG_CHANNEL "Keyboard"
-#define LOG_INFO(...) PRINT_CH_INFO(LOG_CHANNEL, ##__VA_ARGS__)
 
 namespace Anki {
   namespace Cozmo {
@@ -420,7 +420,7 @@ namespace Anki {
     }
 
 
-    void UiGameController::HandleEndOfMessageBase(const EndOfMessage& msg)
+    void UiGameController::HandleEndOfMessageBase(const ExternalInterface::EndOfMessage& msg)
     {
       PRINT_NAMED_INFO("HandleEndOfMessage",
                        "messageType: %s", EnumToString(msg.messageType));
@@ -495,7 +495,6 @@ namespace Anki {
     {
       _stepTimeMS = step_time_ms;
       _robotNode = nullptr;
-      _robotEngineNode = nullptr;
       _robotPose.SetTranslation({0.f, 0.f, 0.f});
       _robotPose.SetRotation(0, Z_AXIS_3D());
       _robotPoseActual.SetTranslation({0.f, 0.f, 0.f});
@@ -764,44 +763,24 @@ namespace Anki {
     void UiGameController::UpdateActualObjectPoses()
     {
       // Only look for the robot node once at the beginning
-      if (_robotNode == nullptr)
-      {
-        webots::Field* rootChildren = GetSupervisor()->getRoot()->getField("children");
-        int numRootChildren = rootChildren->getCount();
-        for (int n = 0 ; n<numRootChildren; ++n) {
-          webots::Node* nd = rootChildren->getMFNode(n);
+      if (_robotNode == nullptr) {
+        const auto& cozmoBotNodeInfo = WebotsHelpers::GetFirstMatchingSceneTreeNode(GetSupervisor(), "CozmoBot");
+        DEV_ASSERT(cozmoBotNodeInfo.nodePtr != nullptr, "UiGameController.UpdateActualObjectPoses.NoCozmoBot");
+        DEV_ASSERT(cozmoBotNodeInfo.type == webots::Node::SUPERVISOR, "UiGameController.UpdateActualObjectPoses.CozmoBotNotSupervisor");
+        
+        PRINT_NAMED_INFO("UiGameController.UpdateActualObjectPoses",
+                         "Found robot with name %s", cozmoBotNodeInfo.typeName.c_str());
+        _robotNode = cozmoBotNodeInfo.nodePtr;
+        
+        // Find any LightCube nodes in the world
+        const auto& lightCubes = WebotsHelpers::GetMatchingSceneTreeNodes(GetSupervisor(), "LightCube");
+        
+        for (const auto& lightCubeNodeInfo : lightCubes) {
+          _lightCubes.emplace_back(lightCubeNodeInfo.nodePtr);
+          _lightCubeOriginIter = _lightCubes.begin();
           
-          // Get the node name
-          std::string nodeName = nd->getTypeName();
-          
-          //PRINT_NAMED_INFO("UiGameController.UpdateActualObjectPoses", " Node %d: name \"%s\" typeName \"%s\" controllerName \"%s\"",
-          //       n, nodeName.c_str(), nd->getTypeName().c_str(), controllerName.c_str());
-          int nodeType = nd->getType();
-          
-          if (nodeType == static_cast<int>(webots::Node::SUPERVISOR) &&
-              nodeName.find("CozmoBot") != std::string::npos) {
-
-            PRINT_NAMED_INFO("UiGameController.UpdateActualObjectPoses",
-                             "Found robot with name %s", nodeName.c_str());
-            
-            _robotNode = nd;
-          }
-          else if(nodeName.find("LightCube") != std::string::npos) {
-            _lightCubes.emplace_back(nd);
-            _lightCubeOriginIter = _lightCubes.begin();
-            
-            PRINT_NAMED_INFO("UiGameController.UpdateActualObjectPoses",
-                             "Found LightCube with name %s", nodeName.c_str());
-
-          }
-          else if(nodeType == static_cast<int>(webots::Node::SUPERVISOR) &&
-                  nodeName.find("CozmoEngine") != std::string::npos) {
-
-            PRINT_NAMED_INFO("UiGameController.UpdateActualObjectPoses",
-                             "Found engine with name %s", nodeName.c_str());
-            
-            _robotEngineNode = nd;
-          }
+          PRINT_NAMED_INFO("UiGameController.UpdateActualObjectPoses",
+                           "Found LightCube with name %s", lightCubeNodeInfo.typeName.c_str());
         }
       }
       
@@ -1062,10 +1041,10 @@ namespace Anki {
       SendMessage(message);
     }
     
-    void UiGameController::SendSaveImages(ImageSendMode imageMode, const std::string& path)
+    void UiGameController::SendSaveImages(ImageSendMode imageMode, const std::string& path, const int8_t qualityOnRobot)
     {
       using namespace ExternalInterface;
-      SendMessage(MessageGameToEngine(SaveImages(imageMode, path)));
+      SendMessage(MessageGameToEngine(SaveImages(imageMode, qualityOnRobot, path)));
     }
     
     void UiGameController::SendSaveState(bool enabled, const std::string& path)
@@ -1194,6 +1173,17 @@ namespace Anki {
       ExternalInterface::MessageGameToEngine message;
       message.Set_ExecuteTestPlan(m);
       SendMessage(message);
+    }
+    
+    void UiGameController::SendFakeTriggerWordDetect()
+    {
+      SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::FakeTriggerWordDetected()));
+    }
+    
+    void UiGameController::SendForceDelocalize()
+    {
+      ExternalInterface::ForceDelocalizeRobot delocMsg;
+      SendMessage(ExternalInterface::MessageGameToEngine(std::move(delocMsg)));
     }
     
 //    void UiGameController::SendClearAllBlocks()
@@ -1510,7 +1500,6 @@ namespace Anki {
     void UiGameController::SendSetRobotVolume(const f32 volume)
     {
       ExternalInterface::SetRobotVolume m;
-      m.robotId = 1;
       m.volume = volume;
       ExternalInterface::MessageGameToEngine message;
       message.Set_SetRobotVolume(m);
@@ -1565,7 +1554,6 @@ namespace Anki {
       {
         PRINT_NAMED_INFO("SendAnimation", "sending %s", animName);
         ExternalInterface::PlayAnimation m;
-        //m.animationID = animId;
         m.animationName = animName;
         m.numLoops = numLoops;
         ExternalInterface::MessageGameToEngine message;
@@ -1592,38 +1580,6 @@ namespace Anki {
       } else {
         PRINT_NAMED_INFO("SendAnimationGroup", "Ignoring duplicate SendAnimation keystroke.");
       }
-    }
-    
-    // FIXME: Remove after code refactor - JMR
-    void UiGameController::SendDevAnimation(const char* animName, u32 numLoops)
-    {
-      static double lastSendTime_sec = -1e6;
-      
-      // Don't send repeated animation commands within a half second
-      if(_supervisor.getTime() > lastSendTime_sec + 0.5f)
-      {
-        PRINT_NAMED_INFO("SendDevAnimation", "sending %s", animName);
-        ExternalInterface::PlayAnimation_DEV m;
-        //m.animationID = animId;
-        m.robotId = 1;
-        m.animationName = animName;
-        m.numLoops = numLoops;
-        ExternalInterface::MessageGameToEngine message;
-        message.Set_PlayAnimation_DEV(m);
-        SendMessage(message);
-        lastSendTime_sec = _supervisor.getTime();
-      } else {
-        PRINT_NAMED_INFO("SendDevAnimation", "Ignoring duplicate SendAnimation keystroke.");
-      }
-    }
-
-    void UiGameController::SendReplayLastAnimation()
-    {
-      ExternalInterface::ReplayLastAnimation m;
-      m.numLoops = 1;
-      ExternalInterface::MessageGameToEngine message;
-      message.Set_ReplayLastAnimation(m);
-      SendMessage(message);
     }
 
     void UiGameController::SendReadAnimationFile()
@@ -2012,22 +1968,7 @@ namespace Anki {
     }
     
     void UiGameController::SetActualRobotPose(const Pose3d& newPose)
-    {
-        Pose3d origin;
-        Pose3d enginePose = GetPose3dOfNode(_robotEngineNode);
-        Pose3d cpyRobotPose = _robotPoseActual;
-        Pose3d newEnginePose = newPose;
-        
-        enginePose.SetParent(origin);
-        newEnginePose.SetParent(origin);
-        cpyRobotPose.SetParent(origin);
-        
-        if (enginePose.GetWithRespectTo(cpyRobotPose, newEnginePose)) {
-          SetNodePose(_robotEngineNode, newPose*newEnginePose);
-        } else {
-          PRINT_NAMED_WARNING("UiGameController.SetActualRobotPose.SetEnginePose", "Could not set engine pose");
-        }
-      
+    {      
       SetNodePose(_robotNode, newPose);
     }
     
@@ -2119,39 +2060,36 @@ namespace Anki {
       return pose;
     }
 
-    bool UiGameController::HasActualLightCubePose(ObjectType lightCubeType) const
+    bool UiGameController::HasActualLightCubePose(ObjectType inType) const
     {
-      int proto_type = static_cast<int>(lightCubeType) - 1;
       for (auto lightCube : _lightCubes) {
-        webots::Field* id = lightCube->getField("ID");
-        if (id && id->getSFInt32() == proto_type) {
+        webots::Field* type = lightCube->getField("objectType");
+        if (type && (ObjectTypeFromString(type->getSFString()) == inType)) {
           return true;
         }
       }
       return false;
     }
 
-    webots::Node* UiGameController::GetLightCubeByType(ObjectType type) const
+    webots::Node* UiGameController::GetLightCubeByType(ObjectType inType) const
     {
-      int proto_type = static_cast<int>(type) - 1;
       for (auto lightCube : _lightCubes) {
-        webots::Field* id = lightCube->getField("ID");
-        if (id && id->getSFInt32() == proto_type) {
+        webots::Field* type = lightCube->getField("objectType");
+        if (type && (ObjectTypeFromString(type->getSFString()) == inType)) {
           return lightCube;
         }
       }
 
       DEV_ASSERT_MSG(false, "UiGameController.GetLightCubeByType",
-                     "Can't find the light cube with type '%s' in the world", ObjectTypeToString(type));
+                     "Can't find the light cube with type '%s' in the world", ObjectTypeToString(inType));
       return nullptr;
     }
     
-    bool UiGameController::RemoveLightCubeByType(ObjectType type)
+    bool UiGameController::RemoveLightCubeByType(ObjectType inType)
     {
-      int proto_type = static_cast<int>(type) - 1;
       for (auto it = _lightCubes.begin(); it != _lightCubes.end(); ++it) {
-        webots::Field* id = (*it)->getField("ID");
-        if (id && id->getSFInt32() == proto_type) {
+        webots::Field* type = (*it)->getField("objectType");
+        if (type && (ObjectTypeFromString(type->getSFString()) == inType)) {
           (*it)->remove();
           _lightCubes.erase(it);
           return true;
@@ -2159,19 +2097,17 @@ namespace Anki {
       }
       
       DEV_ASSERT_MSG(false, "UiGameController.RemoveLightCubeById",
-                     "Can't find the light cube of ObjectType %d in the world", proto_type);
+                     "Can't find the light cube of ObjectType '%s' in the world", ObjectTypeToString(inType));
       return false;
-
     }
     
-    bool UiGameController::AddLightCubeByType(ObjectType type, const Pose3d& p, const u32 factoryID)
+    bool UiGameController::AddLightCubeByType(ObjectType inType, const Pose3d& p, const u32 factoryID)
     {
-      // Check if world already has a light cube with that ID
-      int proto_type = static_cast<int>(type) - 1;
+      // Check if world already has a light cube with that type
       for (auto lightCube : _lightCubes) {
-        webots::Field* id = lightCube->getField("ID");
-        if (id && id->getSFInt32() == proto_type) {
-          PRINT_NAMED_WARNING("UiGameController.AddLightCubeByType.ObjectTypeAlreadyExists", "%d", type);
+        webots::Field* type = lightCube->getField("objectType");
+        if (type && (ObjectTypeFromString(type->getSFString()) == inType)) {
+          PRINT_NAMED_WARNING("UiGameController.AddLightCubeByType.ObjectTypeAlreadyExists", "%s", ObjectTypeToString(inType));
           return false;
         }
       }
@@ -2179,7 +2115,7 @@ namespace Anki {
       // Import light cube proto instance into scene tree
       std::stringstream ss;
       ss << "LightCube { "
-      << " ID " << proto_type
+      << " objectType " << ObjectTypeToString(inType)
       << " factoryID " << factoryID
       << " translation "
       << 0.001f * p.GetTranslation().x() << " "
@@ -2198,6 +2134,14 @@ namespace Anki {
       _lightCubes.emplace_back(lightCubeNode);
       
       return true;
+    }
+    
+    void SetChargerPluggedIn(webots::Node* chargerNode, const bool pluggedIn)
+    {
+      DEV_ASSERT(chargerNode != nullptr, "UiGameController.SetChargerPluggedIn.NullNode");
+      auto* isPluggedInField = chargerNode->getField("isPluggedIn");
+      DEV_ASSERT(isPluggedInField != nullptr, "UiGameController.SetChargerPluggedIn.NoIsPluggedInField");
+      isPluggedInField->setSFBool(pluggedIn);
     }
 
     const double UiGameController::GetSupervisorTime() const

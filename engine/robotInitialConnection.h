@@ -14,7 +14,7 @@
 #define __Anki_Cozmo_Basestation_RobotInitialConnection_H__
 
 #include "engine/events/ankiEvent.h"
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 #include "clad/types/robotStatusAndActions.h"
 #include "util/signals/signalHolder.h"
 

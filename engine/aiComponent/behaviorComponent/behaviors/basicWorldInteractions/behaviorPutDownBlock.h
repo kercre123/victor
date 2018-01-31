@@ -18,6 +18,9 @@
 namespace Anki {
 namespace Cozmo {
 
+// forward declerations
+class CarryingComponent;
+
 class BehaviorPutDownBlock : public ICozmoBehavior
 {
 public:
@@ -25,21 +28,23 @@ public:
   // TODO: Use a PlaceObjectOnGround action (with animatino) and use its VisuallyVerify
   // helper for creating an action to make sure that the "put down" animation is working. It looks down at the
   // block to make sure we have a chance to see it
-  static IActionRunner* CreateLookAfterPlaceAction(BehaviorExternalInterface& behaviorExternalInterface, bool doLookAtFaceAfter=true);
+  static IActionRunner* CreateLookAfterPlaceAction(CarryingComponent& carryingComponent, bool doLookAtFaceAfter=true);
 
 protected:
   // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
   BehaviorPutDownBlock(const Json::Value& config);
 
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual bool CarryingObjectHandledInternally() const override {return true;}
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenCarryingObject = true;
+  }
+  virtual bool WantsToBeActivatedBehavior() const override;
 
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated() override;
   
 private:
 
-  void LookDownAtBlock(BehaviorExternalInterface& behaviorExternalInterface);
+  void LookDownAtBlock();
 
 };
 

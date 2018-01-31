@@ -16,7 +16,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/navMap/iNavMap.h"
 
-#include "anki/common/basestation/math/pose.h"
+#include "coretech/common/engine/math/pose.h"
 
 #include "clad/types/animationTrigger.h"
 
@@ -49,34 +49,36 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // true if currently there are edges that Cozmo would like to visit
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual bool CarryingObjectHandledInternally() const override { return false;}
+  virtual bool WantsToBeActivatedBehavior() const override;
   
 protected:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // ICozmoBehavior API
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.behaviorAlwaysDelegates = false;
+  }
+
+  virtual void OnBehaviorActivated() override;
+  virtual void OnBehaviorDeactivated() override;
 
   // update internal: to handle discarding more goals while running
-  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void BehaviorUpdate() override;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Logic Helpers
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // create parallel actions to lower lift and head. Caller is responsible for releasing memory
-  IActionRunner* CreateLowLiftAndLowHeadActions(BehaviorExternalInterface& behaviorExternalInterface);
+  IActionRunner* CreateLowLiftAndLowHeadActions();
   
   // wait for new edges (while playing other actions if needed)
-  void StartWaitingForEdges(BehaviorExternalInterface& behaviorExternalInterface);
+  void StartWaitingForEdges();
   bool IsWaitingForImages() const { return (_waitForImagesActionTag != ActionConstants::INVALID_TAG); }
   
   // squint loop needs to be stopped manually
-  void StopSquintLoop(BehaviorExternalInterface& behaviorExternalInterface);
+  void StopSquintLoop();
   bool IsPlayingSquintLoop() const { return (_squintLoopAnimActionTag != ActionConstants::INVALID_TAG); }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -84,11 +86,11 @@ protected:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // S1: move to a vantage point where we expect to see the border again
-  void TransitionToS1_MoveToVantagePoint(BehaviorExternalInterface& behaviorExternalInterface, uint8_t attemptsDone);
+  void TransitionToS1_MoveToVantagePoint(uint8_t attemptsDone);
   // S2: move slowly and try to gather more accurate information of where the border is
-  void TransitionToS2_GatherAccurateEdge(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToS2_GatherAccurateEdge();
   // S3: observe the border (play anim) from a safe close distance
-  void TransitionToS3_ObserveFromClose(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToS3_ObserveFromClose();
   
 private:
 
@@ -164,13 +166,13 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // select goals we would want to visit (big enough small and apparently reachable)
-  void PickGoals(BehaviorExternalInterface& behaviorExternalInterface, BorderRegionScoreVector& validGoals) const;
+  void PickGoals(BorderRegionScoreVector& validGoals) const;
   
   // returns true if the goal position appears to be reachable from the current position by raycasting in the memory map
-  bool CheckGoalReachable(BehaviorExternalInterface& behaviorExternalInterface, const Vec3f& goalPosition) const;
+  bool CheckGoalReachable(const Vec3f& goalPosition) const;
 
   // given a set of border goals, generate the vantage points for the robot to observe/clear those borders
-  void GenerateVantagePoints(BehaviorExternalInterface& behaviorExternalInterface, const BorderRegionScore& goal, const Vec3f& lookAtPoint, VantagePointVector& outVantagePoints) const;
+  void GenerateVantagePoints(const BorderRegionScore& goal, const Vec3f& lookAtPoint, VantagePointVector& outVantagePoints) const;
   
   // flags a quad in front of the robot as not interesting. The quad is defined from robot pose forward
   // Each plane (near/far) has a width defined in parameters
@@ -187,27 +189,27 @@ private:
   //          |<------------------------->|
   //               farPlaneDistFromRobot
   //
-  static void FlagVisitedQuadAsNotInteresting(BehaviorExternalInterface& behaviorExternalInterface, float halfWidthAtRobot_mm, float farPlaneDistFromRobot_mm, float halfWidthAtFarPlane_mm);
+  static void FlagVisitedQuadAsNotInteresting(BehaviorExternalInterface& bei, float halfWidthAtRobot_mm, float farPlaneDistFromRobot_mm, float halfWidthAtFarPlane_mm);
   
   // create a quad around a goal that is not interesting anymore (note it's around the goal, not around the lookAt point)
   // The quad is aligned with the given normal
-  static void FlagQuadAroundGoalAsNotInteresting(BehaviorExternalInterface& behaviorExternalInterface, const Vec3f& goalPoint, const Vec3f& goalNormal, float halfQuadSideSize_mm);
+  static void FlagQuadAroundGoalAsNotInteresting(BehaviorExternalInterface& bei, const Vec3f& goalPoint, const Vec3f& goalNormal, float halfQuadSideSize_mm);
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Operating state
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // Cozmo is gathering accurate edge information
-  BaseClass::Status StateUpdate_GatheringAccurateEdge(BehaviorExternalInterface& behaviorExternalInterface);
+  void StateUpdate_GatheringAccurateEdge();
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Debug helpers
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // debug render functions
-  void RenderDiscardedRegion(BehaviorExternalInterface& behaviorExternalInterface, const MemoryMapTypes::BorderRegion& region) const;
-  void RenderAcceptedRegion(BehaviorExternalInterface& behaviorExternalInterface, const MemoryMapTypes::BorderRegion& region) const;
-  void RenderChosenGoal(BehaviorExternalInterface& behaviorExternalInterface, const BorderRegionScore& bestGoal) const;
+  void RenderDiscardedRegion(const MemoryMapTypes::BorderRegion& region) const;
+  void RenderAcceptedRegion(const MemoryMapTypes::BorderRegion& region) const;
+  void RenderChosenGoal(const BorderRegionScore& bestGoal) const;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Init

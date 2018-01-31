@@ -32,13 +32,16 @@ private:
   UnexpectedMovementSide _unexpectedMovementSide = UnexpectedMovementSide::UNKNOWN;
   
 public:  
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual bool CarryingObjectHandledInternally() const override {return true;}
+  virtual bool WantsToBeActivatedBehavior() const override;
   
 protected:
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override { };
-  virtual void   AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenCarryingObject = true;
+  }
+
+  virtual void OnBehaviorActivated() override;
+  virtual void OnBehaviorDeactivated() override { };
+  virtual void AlwaysHandleInScope(const EngineToGameEvent& event) override;
 };
   
 }

@@ -15,7 +15,7 @@ PROTO CozmoCliffSensor [
         type "infra-red"
         aperture 0.5
         lookupTable [0   900 0,
-                     0.2  90 0]
+                     0.2  4 0]
       }
     ]
   } # Transform

@@ -13,9 +13,9 @@
 #define BASESTATION_COMMS_GAME_COMMS_H_
 
 #include <deque>
-#include <anki/messaging/basestation/IComms.h>
-#include "anki/messaging/shared/TcpServer.h"
-#include "anki/messaging/shared/UdpClient.h"
+#include "coretech/messaging/engine/IComms.h"
+#include "coretech/messaging/shared/TcpServer.h"
+#include "coretech/messaging/shared/UdpClient.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "clad/externalInterface/messageShared.h"
 #include "engine/messaging/advertisementService.h"
@@ -59,11 +59,7 @@ namespace Cozmo {
   private:
     
     // For connection from game
-#if(USE_UDP_UI_COMMS)
     UdpServer server_;
-#else
-    TcpServer server_;
-#endif
     
     // For connecting to advertisement service
     UdpClient regClient_;

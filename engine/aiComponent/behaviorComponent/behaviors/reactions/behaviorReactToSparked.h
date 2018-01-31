@@ -20,17 +20,17 @@ namespace Cozmo {
   
 class BehaviorReactToSparked : public ICozmoBehavior
 {
-public:
-  virtual bool CarryingObjectHandledInternally() const override {return false;}
-  
 protected:
   // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
   BehaviorReactToSparked(const Json::Value& config);
 
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual bool ShouldRunWhileOffTreads() const override { return true;}
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenOffTreads = true;
+  }
+
+  virtual void OnBehaviorActivated() override;
+  virtual bool WantsToBeActivatedBehavior() const override;
   
 }; // class BehaviorReactToSparked
 

@@ -14,8 +14,8 @@
 #ifndef __Anki_Cozmo_Basestation_GroundPlaneROI_H__
 #define __Anki_Cozmo_Basestation_GroundPlaneROI_H__
 
-#include "anki/vision/basestation/image.h"
-#include "anki/common/basestation/math/matrix.h"
+#include "coretech/vision/engine/image.h"
+#include "coretech/common/engine/math/matrix.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -69,7 +69,7 @@ public:
   // Creates the mask on first request and then just returns that one from then on
   const Vision::Image& GetOverheadMask() const;
 
-  // Returs the overhead mask updated with the current head position
+  // Returns the overhead mask updated with the current head position
   const Vision::Image GetVisibleOverheadMask(const Matrix_3x3f& H, s32 imgWidth, s32 imgHeight) const;
   
   Point2f GetOverheadImageOrigin() const { return Point2f{_dist, -_widthFar*0.5f}; }

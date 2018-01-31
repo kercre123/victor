@@ -19,9 +19,9 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-
 using namespace std;
 
+#define LOG_CHANNEL    "ConsoleSystem"
 
 void NativeAnkiUtilConsoleLoadVarsWithContext(ConsoleFunctionContextRef context);
 void NativeAnkiUtilConsoleSaveVarsWithContext(ConsoleFunctionContextRef context);
@@ -31,7 +31,7 @@ std::string g_ConsoleVarIniFilePath = "";
 CONSOLE_VAR(bool, kSaveModifiedConsoleVarsOnly, "Console", true);
 
 
-namespace Anki{ namespace Util {
+namespace Anki { namespace Util {
 
 
 #if defined(DEBUG)
@@ -106,7 +106,9 @@ void ConsoleSystem::FinishInitialization(const char* iniPath)
     _isInitializationComplete = true;
     NativeAnkiUtilConsoleLoadVars();
     
-    PRINT_NAMED_INFO("ConsoleSystem.FinishInitialization", "NativeAnkiUtilAreDevFeaturesEnabled() = %d", NativeAnkiUtilAreDevFeaturesEnabled() ? 1 : 0);
+    LOG_INFO("ConsoleSystem.FinishInitialization",
+             "NativeAnkiUtilAreDevFeaturesEnabled() = %d",
+             NativeAnkiUtilAreDevFeaturesEnabled() ? 1 : 0);
   }
 }
 
@@ -146,7 +148,7 @@ void ConsoleSystem::Register( const std::string& keystring, IConsoleVariable* va
   {
     // Most vars are added in static init (way before ini load), some are added manually but they should be added as
     // early as possible - vars added now won't be updated by ini file as that has already been applied
-    PRINT_NAMED_WARNING("ConsoleSystem.RegisterVar", "Adding var '%s' after initialization (and ini file was read)!", keystring.c_str());
+    LOG_WARNING("ConsoleSystem.RegisterVar", "Adding var '%s' after initialization (and ini file was read)!", keystring.c_str());
   }
   
   const StringID key = GetSearchKey( keystring );
@@ -158,7 +160,7 @@ void ConsoleSystem::Register( const std::string& keystring, IConsoleVariable* va
   if ( !result.second )
   {
     // Fail!  We're attempting to add a duplicate name.
-    PRINT_NAMED_WARNING("ConsoleSystem.Register.DuplicateVariable",
+    LOG_WARNING("ConsoleSystem.Register.DuplicateVariable",
       "Console variable '%s' has already been registered. Duplicate will be ignored.", 
       key.c_str());
   }
@@ -176,7 +178,7 @@ void ConsoleSystem::Register( const std::string& keystring, ConsoleFunc function
   {
     // Most funcs are added in static init (way before ini load), some are added manually but they should be added as
     // early as possible!
-    PRINT_NAMED_WARNING("ConsoleSystem.RegisterFunc", "Adding func '%s' after initialization!", keystring.c_str());
+    LOG_WARNING("ConsoleSystem.RegisterFunc", "Adding func '%s' after initialization!", keystring.c_str());
   }
 
   // The IConsoleVariable will register itself within its constructor.
@@ -191,7 +193,7 @@ void ConsoleSystem::Register( const std::string& keystring, IConsoleFunction* fu
   {
     // Most funcs are added in static init (way before ini load), some are added manually but they should be added as
     // early as possible!
-    PRINT_NAMED_WARNING("ConsoleSystem.RegisterFunc", "Adding func '%s' after initialization!", keystring.c_str());
+    LOG_WARNING("ConsoleSystem.RegisterFunc", "Adding func '%s' after initialization!", keystring.c_str());
   }
 
   const StringID key = GetSearchKey( keystring );
@@ -202,7 +204,7 @@ void ConsoleSystem::Register( const std::string& keystring, IConsoleFunction* fu
   if (!result.second)
   {
     // Fail!  We're attempting to add a duplicate name.
-    PRINT_NAMED_WARNING("ConsoleSystem.Register.DuplicateFunction", 
+    LOG_WARNING("ConsoleSystem.Register.DuplicateFunction",
       "Console function '%s' has already been registered. Duplicate will be ignored.", 
       key.c_str());
   }
@@ -211,6 +213,13 @@ void ConsoleSystem::Register( const std::string& keystring, IConsoleFunction* fu
     // We added one, keep track of the name we added.
     functIds_.push_back( key );
   }
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+void ConsoleSystem::Unregister( const std::string& keystring )
+{
+  const StringID key = GetSearchKey( keystring );
+  editvars_.erase( editvars_.find( key ) );
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -671,7 +680,7 @@ uint8_t NativeAnkiUtilConsoleGetVar(int varIndex,
   }
   
   // Variable not found!
-  PRINT_NAMED_WARNING("Util.Console.GetVar.NotFound", "Index = %d, Variable = %s", varIndex, variableId.c_str());
+  LOG_WARNING("Util.Console.GetVar.NotFound", "Index = %d, Variable = %s", varIndex, variableId.c_str());
   return 0;
 }
 
@@ -726,7 +735,7 @@ void NativeAnkiUtilConsoleToggleValue(const char* varName)
   }
   else
   {
-    PRINT_NAMED_WARNING("NativeAnkiUtilConsoleToggleValue", "No var named '%s'!", varName);
+    LOG_WARNING("NativeAnkiUtilConsoleToggleValue", "No var named '%s'!", varName);
   }
 }
 
@@ -740,7 +749,7 @@ void NativeAnkiUtilConsoleResetValueToDefault(const char* varName)
   }
   else
   {
-    PRINT_NAMED_WARNING("NativeAnkiUtilConsoleResetValueToDefault", "No var named '%s'!", varName);
+    LOG_WARNING("NativeAnkiUtilConsoleResetValueToDefault", "No var named '%s'!", varName);
   }
 }
 
@@ -754,7 +763,7 @@ uint32_t NativeAnkiUtilConsoleIsDefaultValue(const char* varName)
   }
   else
   {
-    PRINT_NAMED_WARNING("NativeAnkiUtilConsoleIsDefaultValue", "No var named '%s'!", varName);
+    LOG_WARNING("NativeAnkiUtilConsoleIsDefaultValue", "No var named '%s'!", varName);
     return 0;
   }
 }
@@ -782,12 +791,12 @@ void NativeAnkiUtilConsoleSetValueWithString(const char* varName, const char* in
     const bool parsedOK = consoleVar->ParseText(inString);
     if (!parsedOK)
     {
-      PRINT_NAMED_WARNING("NativeAnkiUtilConsoleSetValueWithString", "Error parsing '%s' into var '%s': was = '%s', now = '%s'", inString, varName, oldValue.c_str(), consoleVar->ToString().c_str());
+      LOG_WARNING("NativeAnkiUtilConsoleSetValueWithString", "Error parsing '%s' into var '%s': was = '%s', now = '%s'", inString, varName, oldValue.c_str(), consoleVar->ToString().c_str());
     }
   }
   else
   {
-    PRINT_NAMED_WARNING("NativeAnkiUtilConsoleSetValueWithString", "No var named '%s'!", varName);
+    LOG_WARNING("NativeAnkiUtilConsoleSetValueWithString", "No var named '%s'!", varName);
   }
 }
 
@@ -945,7 +954,7 @@ uint32_t NativeAnkiUtilConsoleCallFunction(const char* funcName, const char* fun
   }
   else
   {
-    PRINT_NAMED_WARNING("NativeAnkiUtilConsoleCallFunction", "No func named '%s'!", funcName);
+    LOG_WARNING("NativeAnkiUtilConsoleCallFunction", "No func named '%s'!", funcName);
     return 0;
   }
 }
@@ -1038,7 +1047,7 @@ void NativeAnkiUtilConsoleLoadVarsWithContext(ConsoleFunctionContextRef context)
                   }
                   else
                   {
-                    PRINT_NAMED_WARNING("ConsoleSystem.LoadVars", "Error parsing '%s' into var '%s': was = '%s' now = '%s'", valueString, varName, oldValue.c_str(), newValue.c_str());
+                    LOG_WARNING("ConsoleSystem.LoadVars", "Error parsing '%s' into var '%s': was = '%s' now = '%s'", valueString, varName, oldValue.c_str(), newValue.c_str());
                   }
                 }
 
@@ -1050,18 +1059,19 @@ void NativeAnkiUtilConsoleLoadVarsWithContext(ConsoleFunctionContextRef context)
                   }
                   else
                   {
-                    PRINT_NAMED_INFO("ConsoleSystem.LoadVars", "Updated var '%s' from '%s' to '%s'", varName, oldValue.c_str(), newValue.c_str());
+                    LOG_INFO("ConsoleSystem.LoadVars", "Updated var '%s' from '%s' to '%s'",
+                             varName, oldValue.c_str(), newValue.c_str());
                   }
                 }
               }
               else
               {
-                PRINT_NAMED_WARNING("ConsoleSystem.LoadVars", "Var '%s' from line '%s' NOT FOUND", varName, lineFromFile);
+                LOG_WARNING("ConsoleSystem.LoadVars", "Var '%s' from line '%s' NOT FOUND", varName, lineFromFile);
               }
             }
             else
             {
-              PRINT_NAMED_WARNING("ConsoleSystem.LoadVars", "Invalid line '%s' has no '=' to split 'VarName = Value' on!", lineFromFile);
+              LOG_WARNING("ConsoleSystem.LoadVars", "Invalid line '%s' has no '=' to split 'VarName = Value' on!", lineFromFile);
             }
           }
         }
@@ -1075,7 +1085,7 @@ void NativeAnkiUtilConsoleLoadVarsWithContext(ConsoleFunctionContextRef context)
     int closeRet = fclose(inputFile);
     if (closeRet != 0)
     {
-      PRINT_NAMED_WARNING("ConsoleSystem.LoadVars", "fclose '%s' error: returned %d", k_ConsoleVarIniFilePath, closeRet);
+      LOG_WARNING("ConsoleSystem.LoadVars", "fclose '%s' error: returned %d", k_ConsoleVarIniFilePath, closeRet);
     }
   }
   else
@@ -1086,7 +1096,7 @@ void NativeAnkiUtilConsoleLoadVarsWithContext(ConsoleFunctionContextRef context)
     }
     else
     {
-      PRINT_NAMED_INFO("ConsoleSystem.LoadVars", "No ini file '%s' to open", k_ConsoleVarIniFilePath);
+      LOG_INFO("ConsoleSystem.LoadVars", "No ini file '%s' to open", k_ConsoleVarIniFilePath);
     }
   }
 }
@@ -1104,7 +1114,7 @@ void WriteStringToFile(FILE* outputFile, const char* data)
   size_t ret = fwrite(data, sizeof(*data), len, outputFile);
   if (ret != len)
   {
-    PRINT_NAMED_WARNING("ConsoleSystem.WriteStringToFile", "fwrite returned %zu not %zu", ret, len);
+    LOG_WARNING("ConsoleSystem.WriteStringToFile", "fwrite returned %zu not %zu", ret, len);
   }
 }
 
@@ -1175,12 +1185,12 @@ void NativeAnkiUtilConsoleSaveVarsWithContext(ConsoleFunctionContextRef context)
     }
     else
     {
-      PRINT_NAMED_WARNING("ConsoleSystem.SaveVars", "fclose '%s' error: returned %d", k_ConsoleVarIniFilePath, closeRet);
+      LOG_WARNING("ConsoleSystem.SaveVars", "fclose '%s' error: returned %d", k_ConsoleVarIniFilePath, closeRet);
     }
   }
   else
   {
-    PRINT_NAMED_WARNING("ConsoleSystem.SaveVars", "failedToOpen file '%s' to write", k_ConsoleVarIniFilePath);
+    LOG_WARNING("ConsoleSystem.SaveVars", "failedToOpen file '%s' to write", k_ConsoleVarIniFilePath);
   }
   
   if (context)

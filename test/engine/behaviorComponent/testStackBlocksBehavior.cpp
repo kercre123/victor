@@ -15,7 +15,7 @@
 
 #include "gtest/gtest.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/activeObject.h"
 #include "engine/activeObjectHelpers.h"
 #include "engine/aiComponent/aiComponent.h"
@@ -121,7 +121,7 @@ void SetupStackTest(Robot& robot, ICozmoBehaviorPtr& stackBehavior,
 
   CreateStackBehavior(robot, stackBehavior, behaviorExternalInterface);
 
-  ASSERT_FALSE(stackBehavior->WantsToBeActivated(behaviorExternalInterface)) << "behavior should not be activatable without cubes";
+  ASSERT_FALSE(stackBehavior->WantsToBeActivated()) << "behavior should not be activatable without cubes";
   
   std::string currentActivityName;
   std::string behaviorDebugStr;
@@ -132,7 +132,7 @@ void SetupStackTest(Robot& robot, ICozmoBehaviorPtr& stackBehavior,
   aiComponent.Update(robot, currentActivityName, behaviorDebugStr);
   IncrementBaseStationTimerTicks();
   aiComponent.Update(robot, currentActivityName, behaviorDebugStr);
-  ASSERT_FALSE(stackBehavior->WantsToBeActivated(behaviorExternalInterface)) << "behavior should not be activatable without cubes after update";
+  ASSERT_FALSE(stackBehavior->WantsToBeActivated()) << "behavior should not be activatable without cubes after update";
 
   auto& blockWorld = robot.GetBlockWorld();
   blockWorld.AddConnectedActiveObject(0, 0, ObjectType::Block_LIGHTCUBE1);
@@ -140,7 +140,7 @@ void SetupStackTest(Robot& robot, ICozmoBehaviorPtr& stackBehavior,
 
   IncrementBaseStationTimerTicks();
   aiComponent.Update(robot, currentActivityName, behaviorDebugStr);
-  ASSERT_FALSE(stackBehavior->WantsToBeActivated(behaviorExternalInterface)) << "behavior should not be activatable with unknown cubes";
+  ASSERT_FALSE(stackBehavior->WantsToBeActivated()) << "behavior should not be activatable with unknown cubes";
 
   // Add two objects
   ObservableObject* object1 = CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE1);
@@ -166,7 +166,7 @@ void SetupStackTest(Robot& robot, ICozmoBehaviorPtr& stackBehavior,
   static float incrementEngineTime_ns = BaseStationTimer::getInstance()->GetCurrentTimeInNanoSeconds();
   incrementEngineTime_ns += 100000000.0f;
   BaseStationTimer::getInstance()->UpdateTime(incrementEngineTime_ns);
-  ASSERT_TRUE(stackBehavior->WantsToBeActivated(behaviorExternalInterface)) << "now behavior should be activatable";
+  ASSERT_TRUE(stackBehavior->WantsToBeActivated()) << "now behavior should be activatable";
 
 }
 
@@ -184,15 +184,12 @@ TEST(StackBlocksBehavior, InitBehavior)
   }
   
   Robot& robot = testBehaviorFramework.GetRobot();
-  BehaviorExternalInterface& behaviorExternalInterface = testBehaviorFramework.GetBehaviorExternalInterface();
   
   ICozmoBehaviorPtr stackBehavior = nullptr;
   ObjectID objID1, objID2;
   SetupStackTest(robot, stackBehavior, testBehaviorFramework, objID1, objID2);
   
-  auto result = stackBehavior->OnBehaviorActivated(behaviorExternalInterface);
-
-  EXPECT_EQ(RESULT_OK, result);
+  stackBehavior->OnActivated();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -208,7 +205,6 @@ TEST(StackBlocksBehavior, DeleteCubeCrash)
   }
   
   Robot& robot = testBehaviorFramework.GetRobot();
-  BehaviorExternalInterface& behaviorExternalInterface = testBehaviorFramework.GetBehaviorExternalInterface();
   
   auto& blockWorld = robot.GetBlockWorld();
   auto& aiComponent = robot.GetAIComponent();
@@ -248,13 +244,13 @@ TEST(StackBlocksBehavior, DeleteCubeCrash)
   
   aiComponent.Update(robot, currentActivityName, behaviorDebugStr);
   //auto result =
-  stackBehavior->WantsToBeActivated(behaviorExternalInterface);
-  stackBehavior->OnActivated(behaviorExternalInterface);
+  stackBehavior->WantsToBeActivated();
+  stackBehavior->OnActivated();
   //EXPECT_EQ(RESULT_OK, result);
 
   static float incrementEngineTime_ns = BaseStationTimer::getInstance()->GetCurrentTimeInNanoSeconds();
   incrementEngineTime_ns += 100000000.0f;
   BaseStationTimer::getInstance()->UpdateTime(incrementEngineTime_ns);
   
-  stackBehavior->BehaviorUpdate_Legacy(behaviorExternalInterface);
+  //stackBehavior->UpdateInternal();
 }

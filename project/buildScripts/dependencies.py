@@ -10,6 +10,8 @@ import tarfile
 import xml.etree.ElementTree as ET
 import json
 import tempfile
+import argparse
+import glob
 
 # These are the Anki modules/packages:
 import binary_conversion
@@ -22,8 +24,9 @@ REPORT_ERRORS = True
 RETRIES = 10
 SVN_INFO_CMD = "svn info %s %s --xml"
 SVN_CRED = "--username %s --password %s --no-auth-cache --non-interactive --trust-server-cert"
-RELATIVE_DEPS_FILE = os.path.join(os.path.dirname(__file__), '..', '..', 'DEPS')
-RELATIVE_EXTERNALS_DIR = os.path.join(os.path.dirname(__file__), '..', '..', 'EXTERNALS')
+PROJECT_ROOT_DIR = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', '..'))
+DEPS_FILE = os.path.join(PROJECT_ROOT_DIR, 'DEPS')
+EXTERNALS_DIR = os.path.join(PROJECT_ROOT_DIR, 'EXTERNALS')
 DIFF_BRANCH_MSG = "is already a working copy for a different URL"
 
 # Most animation tar files in SVN are packages of JSON files that should be unpacked in the root
@@ -32,6 +35,11 @@ DIFF_BRANCH_MSG = "is already a working copy for a different URL"
 # of tar files that should be unpacked in a subdirectory, which is named after the tar file.
 # TODO: Put this info (unpack files in root directory or subdirectory) somewhere in the DEPS file.
 UNPACK_INTO_SUBDIR = ["faceAnimations"]
+
+
+MANIFEST_FILE_NAME = "anim_manifest.json"
+MANIFEST_NAME_KEY = "name"
+MANIFEST_LENGTH_KEY = "length_ms"
 
 
 def is_tool(name):
@@ -69,7 +77,7 @@ def is_up(url_string):
         return False
 
 
-def _extract_files_from_tar(extract_dir, file_types, put_in_subdir=False):
+def extract_files_from_tar(extract_dir, file_types, put_in_subdir=False):
   """
   Given the path to a directory that contains .tar files and a list
   of file types, eg. [".json", ".png"], this function will unpack
@@ -77,6 +85,8 @@ def _extract_files_from_tar(extract_dir, file_types, put_in_subdir=False):
   'put_in_subdir' input argument is set to True, then the files are
   unpacked into a sub-directory named after the .tar file.
   """
+  anim_name_length_mapping = {}
+
   for (dir_path, dir_names, file_names) in os.walk(extract_dir):
 
     # Generate list of all .tar files in/under the directory provided by the caller (extract_dir)
@@ -94,13 +104,15 @@ def _extract_files_from_tar(extract_dir, file_types, put_in_subdir=False):
       delete_files_from_dir(file_types_to_cleanup, dir_path, file_names)
 
     for tar_file in tar_files:
-      unpack_tarball(tar_file, file_types, put_in_subdir)
+      anim_name_length_mapping.update(unpack_tarball(tar_file, file_types, put_in_subdir))
       # No need to remove the tar file here after unpacking it - all tar files are
       # deleted from cozmo_resources/assets/ on the device by Builder.cs
 
     if put_in_subdir:
       # If we are extracting tar files into subdirs, don't recurse into those subdirs.
       break
+
+  return anim_name_length_mapping
 
 
 def _get_specific_members(members, file_types):
@@ -173,6 +185,8 @@ def unpack_tarball(tar_file, file_types=[], put_in_subdir=False, add_metadata=Fa
   # metadata into the JSON files to indicate which .tar file and version
   # the data came from.
 
+  anim_name_length_mapping = {}
+
   # If this function should convert .json data to binary, that conversion will be done with "flatc",
   # so we need to specify the path to the directory that contains that FlatBuffers tool. See
   # https://google.github.io/flatbuffers/flatbuffers_guide_using_schema_compiler.html for additional
@@ -204,6 +218,8 @@ def unpack_tarball(tar_file, file_types=[], put_in_subdir=False, add_metadata=Fa
       json_files = [tar_info.name for tar_info in tar_members if tar_info.name.endswith(".json")]
       json_files = map(lambda x: os.path.join(dest_dir, x), json_files)
       if json_files:
+        for json_file in json_files:
+          anim_name_length_mapping.update(validate_anim_data.get_anim_name_and_length(json_file))
         if add_metadata:
           for json_file in json_files:
             insert_source_rev_data_into_json(tar_file, tar_file_rev, json_file)
@@ -214,6 +230,8 @@ def unpack_tarball(tar_file, file_types=[], put_in_subdir=False, add_metadata=Fa
     #print("Unpacking %s (version %s) (all files)" % (tar_file, tar_file_rev))
     tar.extractall(dest_dir)
     tar.close()
+
+  return anim_name_length_mapping
 
 
 def get_svn_file_rev(file_from_svn, cred=''):
@@ -290,21 +308,23 @@ def svn_package(svn_dict):
     cred = SVN_CRED % (user, password)
     stale_warning = "WARNING: If this build succeeds, it may contain stale external data"
 
-    if not is_up(root_url):
+    have_internet = is_up(root_url)
+    if not have_internet:
         print "{0} is not available.  Please check your internet connection.".format(root_url)
         print(stale_warning)
-        return
+        # Continue anyway in case manifest file needs to be regenerated
 
     for repo in repos:
         r_rev = repos[repo].get("version", "head")
         pk_name = repos[repo].get("package_name", "STUB")
         branch = repos[repo].get("branch", "trunk")
-        export_dirname = repos[repo].get("export_dirname",repo)
+        export_dirname = repos[repo].get("export_dirname", repo)
         loc = os.path.join(DEPENDENCY_LOCATION, export_dirname)
         url = os.path.join(root_url, repo, branch)
         subdirs = repos[repo].get("subdirs", [])
         subdirs = map(lambda x: os.path.join(loc,x), subdirs)
         allow_extra_files = bool(repos[repo].get("allow_extra_files", False))
+        additional_files = repos[repo].get("additional_files", [])
         extract_types = repos[repo].get("extract_types_from_tar", [])
         package = os.path.join(loc, pk_name)
         checkout = [tool, 'checkout', '-r', '{0}'.format(r_rev)] + cred.split() + [url, loc]
@@ -319,7 +339,7 @@ def svn_package(svn_dict):
         if l_rev != 0 and os.path.isdir(loc):
             l_rev = get_svn_file_rev(loc, cred)
             #print("The version of [%s] is [%s]" % (loc, l_rev))
-            if l_rev is None:
+            if have_internet and l_rev is None:
                 l_rev = 0
                 msg = "Clearing out [%s] directory before getting a fresh copy."
                 if subdirs:
@@ -338,30 +358,42 @@ def svn_package(svn_dict):
         except ValueError:
             pass
 
-        if r_rev == "head" or l_rev != r_rev:
-            print("Checking out '{0}'".format(repo))
-            err = svn_checkout(checkout, cleanup, unpack, package, allow_extra_files)
-            if err:
-                print("Error in checking out {0}: {1}".format(repo, err.strip()))
-                if DIFF_BRANCH_MSG in err:
-                    print("Clearing out [%s] directory to replace it with a fresh copy" % loc)
-                    shutil.rmtree(loc)
-                    print("Checking out '{0}' again".format(repo))
-                    err = svn_checkout(checkout, cleanup, unpack, package, allow_extra_files)
-                    if err:
-                        print("Error in checking out {0}: {1}".format(repo, err.strip()))
+
+        # Do dependencies need to be checked out?
+        need_to_checkout = have_internet and (r_rev == "head" or l_rev != r_rev)
+
+        # Check if manifest file exists
+        manifest_file_path = os.path.join(loc, MANIFEST_FILE_NAME)
+        manifest_file_exists = os.path.exists(manifest_file_path)
+
+        if need_to_checkout or not manifest_file_exists:
+            if need_to_checkout:
+                print("Checking out '{0}'".format(repo))
+                err = svn_checkout(checkout, cleanup, unpack, package, allow_extra_files)
+                if err:
+                    print("Error in checking out {0}: {1}".format(repo, err.strip()))
+                    if DIFF_BRANCH_MSG in err:
+                        print("Clearing out [%s] directory to replace it with a fresh copy" % loc)
+                        shutil.rmtree(loc)
+                        print("Checking out '{0}' again".format(repo))
+                        err = svn_checkout(checkout, cleanup, unpack, package, allow_extra_files)
+                        if err:
+                            print("Error in checking out {0}: {1}".format(repo, err.strip()))
+                            print(stale_warning)
+                    else:
                         print(stale_warning)
-                else:
-                    print(stale_warning)
             if extract_types:
                 for subdir in subdirs:
                     put_in_subdir = os.path.basename(subdir) in UNPACK_INTO_SUBDIR
                     try:
-                        _extract_files_from_tar(subdir, extract_types, put_in_subdir)
+                        anim_name_length_mapping = extract_files_from_tar(subdir, extract_types, put_in_subdir)
                     except EnvironmentError, e:
+                        anim_name_length_mapping = {}
                         print("Failed to unpack one or more tar files in [%s] because: %s" % (subdir, e))
                         print(stale_warning)
                     file_stats = get_file_stats(subdir)
+                    if anim_name_length_mapping:
+                        write_animation_manifest(loc, anim_name_length_mapping, additional_files)
                     print("After unpacking tar files, '%s' contains the following files: %s"
                           % (os.path.basename(subdir), file_stats))
 
@@ -369,10 +401,70 @@ def svn_package(svn_dict):
             print "{0} does not need to be updated.  Current {1} revision at {2} ".format(repo, tool, l_rev)
 
 
+def write_animation_manifest(dest_dir, anim_name_length_mapping, additional_files=None, output_json_file=MANIFEST_FILE_NAME):
+    if additional_files:
+        additional_files = map(os.path.expandvars, additional_files)
+        additional_files = map(os.path.abspath, additional_files)
+        for additional_file in additional_files:
+            if os.path.isfile(additional_file) and additional_file.endswith(".json"):
+                print("Using this additional file for the animation manifest: %s" % additional_file)
+                anim_name_length_mapping.update(validate_anim_data.get_anim_name_and_length(additional_file))
+            elif os.path.isdir(additional_file):
+                json_files = glob.glob(os.path.join(additional_file, '*.json'))
+                for json_file in json_files:
+                    print("Using this additional file for the animation manifest: %s" % json_file)
+                    anim_name_length_mapping.update(validate_anim_data.get_anim_name_and_length(json_file))
+            else:
+                print("WARNING %s is an invalid path in 'additional_files'" % additional_file)
+
+    all_anims = []
+    for name, length in anim_name_length_mapping.iteritems():
+        manifest_entry = {}
+        manifest_entry[MANIFEST_NAME_KEY] = name
+        manifest_entry[MANIFEST_LENGTH_KEY] = length
+        all_anims.append(manifest_entry)
+
+    output_data = json.dumps(all_anims, sort_keys=False, indent=2, separators=(',', ': '))
+    output_file = os.path.join(dest_dir, output_json_file)
+    if os.path.isfile(output_file):
+        os.remove(output_file)
+    elif not os.path.exists(dest_dir):
+        os.makedirs(dest_dir)
+    with open(output_file, 'w') as fh:
+        fh.write(output_data)
+    print("The animation manifest file (with %s entries) = %s" % (len(all_anims), output_file))
+
+
 def git_package(git_dict):
     # WIP.  Should this function raise a NotImplementedError exception until it is completed?
     print("The git_package() function has NOT been implemented yet")
 
+def files_package(files):
+    tool = "curl"
+    assert is_tool(tool)
+    assert isinstance(files, dict)
+    for file in files:
+        url = files[file].get("url", "undefined")
+
+        outfile = os.path.join(DEPENDENCY_LOCATION, file)
+        if not is_up(url):
+            print "WARNING File {0} is not available. Please check your internet connection.".format(url)
+            return
+
+        pull_file = [tool, '-s', url]
+        pipe = subprocess.Popen(pull_file, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = pipe.communicate()
+        status = pipe.poll()
+        if status != 0:
+            print "Curl exited with non-zero status: {0}".format(stderr)
+            return
+        stdout = stdout.strip()
+        if (not os.path.exists(outfile)) or open(outfile).read() != stdout:
+            with open(outfile, 'w') as output:
+                output.write(stdout)
+                print "Updated {0} from {1}".format(file, url)
+        else:
+            print "File {0} does not need to be updated".format(file)
 
 def teamcity_package(tc_dict):
     tool = "curl"
@@ -466,7 +558,7 @@ def teamcity_package(tc_dict):
                 print err
 
 
-def extract_dependencies(version_file, location=RELATIVE_EXTERNALS_DIR, validate_assets=True):
+def extract_dependencies(version_file, location=EXTERNALS_DIR, validate_assets=True):
     """
     Entry point to starting the dependency extraction.
 
@@ -514,8 +606,11 @@ def json_parser(version_file):
                 svn_package(djson["svn"])
             if "git" in djson:
                 git_package(djson["git"])
+            if "files" in djson:
+                files_package(djson["files"])
     else:
         sys.exit("ERROR: %s does not exist" % version_file)
+
 
 def update_teamcity_version(version_file, teamcity_builds):
     """
@@ -549,25 +644,25 @@ def update_teamcity_version(version_file, teamcity_builds):
 # ENTRY POINT #
 ###############
 
-import argparse
-
 def parse_args(argv=[]):
   parser = argparse.ArgumentParser(description='fetch external build deps')
   parser.add_argument('--verbose', dest='verbose', action='store_true',                             
                       help='prints extra output')
   parser.add_argument('--deps-file',
                       action='store',
-                      default=RELATIVE_DEPS_FILE,
+                      default=DEPS_FILE,
                       help='path to DEPS file')
   parser.add_argument('--externals-dir',
                       action='store',
-                      default=RELATIVE_EXTERNALS_DIR,
+                      default=EXTERNALS_DIR,
                       help='path to EXTERNALS dir')                           
                                                                                                     
   (options, args) = parser.parse_known_args(argv)                                             
   return options
 
+
 def main(argv):
+    os.environ['PROJECT_ROOT_DIR'] = PROJECT_ROOT_DIR
     options = parse_args(argv[1:])
     deps_file = os.path.abspath(options.deps_file)
     externals_dir = os.path.abspath(options.externals_dir)
@@ -575,6 +670,7 @@ def main(argv):
         print("    deps-file: {}".format(deps_file))
         print("externals-dir: {}".format(externals_dir))
     extract_dependencies(deps_file, externals_dir)
+
 
 if __name__ == '__main__':
     main(sys.argv)

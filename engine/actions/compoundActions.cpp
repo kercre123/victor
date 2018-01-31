@@ -21,7 +21,7 @@
 #include "engine/components/movementComponent.h"
 #include "engine/robot.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "util/helpers/templateHelpers.h"
 
 
@@ -494,8 +494,10 @@ namespace Anki {
       for(auto currentAction = _actions.begin(); currentAction != _actions.end();)
       {
         assert((*currentAction) != nullptr); // should not have been allowed in by constructor
-        (*currentAction)->SetRobot(&GetRobot());
-        
+        if (!(*currentAction)->HasRobot()) {
+          (*currentAction)->SetRobot(&GetRobot());
+        }
+          
         // If the compound action is suppressing track locking then the constituent actions should too
         (*currentAction)->ShouldSuppressTrackLocking(IsSuppressingTrackLocking());
 

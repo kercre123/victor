@@ -18,7 +18,7 @@
 #include "engine/actionableObject.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/compoundActions.h"
-#include "anki/vision/MarkerCodeDefinitions.h"
+#include "coretech/vision/shared/MarkerCodeDefinitions.h"
 #include "clad/types/dockingSignals.h"
 #include "clad/types/animationTrigger.h"
 

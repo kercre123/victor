@@ -13,7 +13,7 @@
 #ifndef COZMO_BEHAVIOR_SYSTEM_MANAGER_H
 #define COZMO_BEHAVIOR_SYSTEM_MANAGER_H
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 
 #include "engine/aiComponent/behaviorComponent/asyncMessageGateComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
@@ -35,7 +35,9 @@ class Robot;
 
 struct BehaviorRunningInfo;
 
-class BehaviorSystemManager : public IBehaviorRunner, private Util::noncopyable
+class BehaviorSystemManager : public IDependencyManagedComponent<BCComponentID>, 
+                              public IBehaviorRunner, 
+                              private Util::noncopyable
 {
 public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -44,7 +46,23 @@ public:
   
   BehaviorSystemManager();
   virtual ~BehaviorSystemManager();
-  
+
+  //////
+  // IDependencyManagedComponent functions
+  //////
+  virtual void InitDependent(Robot* robot, const BCCompMap& dependentComponents) override;
+  virtual void UpdateDependent(const BCCompMap& dependentComponents) override {};
+  virtual void GetInitDependencies(BCCompIDSet& dependencies) const override 
+  {
+    dependencies.insert(BCComponentID::BaseBehaviorWrapper);
+    dependencies.insert(BCComponentID::BehaviorExternalInterface);
+    dependencies.insert(BCComponentID::AsyncMessageComponent);
+  }
+  virtual void GetUpdateDependencies(BCCompIDSet& dependencies) const override {};
+  //////
+  // end IDependencyManagedComponent functions
+  //////
+
   // initialize this behavior manager from the given Json config
   Result InitConfiguration(Robot& robot,
                            IBehavior* baseBehavior,

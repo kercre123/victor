@@ -18,8 +18,8 @@
 #include "engine/voiceCommands/phraseData.h"
 #include "engine/voiceCommands/voiceCommandTuning.h"
 
-#include "anki/common/basestation/utils/data/dataPlatform.h"
-#include "anki/common/types.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "coretech/common/shared/types.h"
 
 #include "util/logging/logging.h"
 
@@ -28,7 +28,6 @@
 #include <functional>
 
 #define LOG_CHANNEL "VoiceCommands"
-#define LOG_INFO(...) PRINT_CH_INFO(LOG_CHANNEL, ##__VA_ARGS__)
 
 extern Anki::Cozmo::CozmoContext* cozmoContext;
 

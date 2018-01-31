@@ -75,21 +75,11 @@ namespace Cozmo {
       // TODO: Include timestamp too?
       char sendBuf[Comms::MsgPacket::MAX_SIZE];
       int sendBufLen = 0;
-      
-#if(USE_UDP_UI_COMMS)
+
       assert(p.dataLen < sizeof(sendBuf));
       memcpy(sendBuf, p.data, p.dataLen);
       sendBufLen = p.dataLen;
-#else
-      memcpy(sendBuf, RADIO_PACKET_HEADER, sizeof(RADIO_PACKET_HEADER));
-      sendBufLen += sizeof(RADIO_PACKET_HEADER);
-      sendBuf[sendBufLen++] = p.dataLen;
-      sendBuf[sendBufLen++] = p.dataLen >> 8;
-      sendBuf[sendBufLen++] = 0;
-      sendBuf[sendBufLen++] = 0;
-      memcpy(sendBuf + sendBufLen, p.data, p.dataLen);
-      sendBufLen += p.dataLen;
-#endif
+
       /*
       printf("SENDBUF (hex): ");
       PrintBytesHex(sendBuf, sendBufLen);
@@ -135,18 +125,10 @@ namespace Cozmo {
         return;
       }
     }
-    
-#if(USE_UDP_UI_COMMS)
+
     if (!server_.HasClient()) {
       AdvertiseToService();
     }
-#else
-    if (!server_.HasClient()) {
-      if (!server_.Accept()) {
-        AdvertiseToService();
-      }
-    }
-#endif
     
     // Read all messages from all connected robots
     ReadAllMsgPackets();
@@ -167,9 +149,6 @@ namespace Cozmo {
   { 
     // Read from all connected clients.
     // Enqueue complete messages.
-#if(!USE_UDP_UI_COMMS)
-  #error non-UDP is no longer supported
-#endif
     
     // Process all datagrams
     while( (recvDataSize = server_.Recv((char*)(_recvBuf), MAX_RECV_BUF_SIZE)) > 0)
@@ -186,10 +165,6 @@ namespace Cozmo {
       server_.DisconnectClient();
     }
   }
-  
-  
-  
-  
   
   // Returns true if a MsgPacket was successfully gotten
   bool GameComms::GetNextMsgPacket(std::vector<uint8_t>& buf)

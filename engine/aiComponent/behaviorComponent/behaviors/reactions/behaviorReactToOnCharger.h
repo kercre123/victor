@@ -26,19 +26,20 @@ private:
   BehaviorReactToOnCharger(const Json::Value& config);
   
 public:
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual bool CarryingObjectHandledInternally() const override {return true;}
-  virtual bool ShouldRunWhileOnCharger() const override { return true;}
-
-  // true so that we can handle edge cases where the robot is on the charger and not on his treads
-  virtual bool ShouldRunWhileOffTreads() const override { return true;}
-  
+  virtual bool WantsToBeActivatedBehavior() const override;
 protected:
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenCarryingObject = true;
+    modifiers.wantsToBeActivatedWhenOffTreads = true;
+    modifiers.wantsToBeActivatedWhenOnCharger = true;
+    modifiers.behaviorAlwaysDelegates = false;
+  }
+
+  virtual void OnBehaviorActivated() override;
+  virtual void BehaviorUpdate() override;
   
-  virtual void HandleWhileActivated(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void HandleWhileActivated(const GameToEngineEvent& event) override;
+  virtual void OnBehaviorDeactivated() override;
   
 private:
   bool _onChargerCanceled;

@@ -1,0 +1,13 @@
+{
+  "behaviorID" : "ObservingOnCharger",
+  "behaviorClass" : "DispatcherStrictPriorityWithCooldown",
+
+  "interruptActiveBehavior": false,
+
+  "behaviors": [    
+    {
+      "behavior": "ObservingOnChargerIdle",
+      "cooldown_s": 0.0
+    }
+  ]
+}

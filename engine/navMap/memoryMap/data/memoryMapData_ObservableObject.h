@@ -14,9 +14,9 @@
 
 #include "memoryMapData.h"
 
-#include "anki/common/basestation/math/point.h"
-#include "anki/common/basestation/math/polygon.h"
-#include "anki/vision/basestation/observableObject.h"
+#include "coretech/common/engine/math/point.h"
+#include "coretech/common/engine/math/polygon.h"
+#include "engine/cozmoObservableObject.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -28,7 +28,7 @@ class MemoryMapData_ObservableObject : public MemoryMapData
 {
 public:
   // constructor
-  MemoryMapData_ObservableObject(MemoryMapTypes::EContentType type, const ObjectID& id, const Poly2f& p, TimeStamp_t t);
+  MemoryMapData_ObservableObject(const ObservableObject& o, const Poly2f& p, TimeStamp_t t);
   
   // create a copy of self (of appropriate subclass) and return it
   MemoryMapData* Clone() const override;
@@ -44,7 +44,7 @@ public:
   const Poly2f boundingPoly; 
   
 protected: 
-  MemoryMapData_ObservableObject() : MemoryMapData(MemoryMapTypes::EContentType::ObstacleCube, 0, true), id(), boundingPoly() {}
+  MemoryMapData_ObservableObject() : MemoryMapData(MemoryMapTypes::EContentType::ObstacleObservable, 0, true), id(), boundingPoly() {}
 };
  
 } // namespace

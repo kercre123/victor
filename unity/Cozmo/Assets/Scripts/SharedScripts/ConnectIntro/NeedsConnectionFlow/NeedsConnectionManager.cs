@@ -204,7 +204,8 @@ namespace Cozmo.ConnectionFlow {
             _ConnectionFlowInstance.ConnectionFlowComplete += HandleConnectionFlowComplete;
             _ConnectionFlowInstance.ConnectionFlowQuit += HandleConnectionFlowQuit;
 #if UNITY_EDITOR
-            if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.UseConnectFlowInMock) {
+            if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.UseConnectFlowInMock
+                && RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Mock) {
               ConnectionFlowController.sManualProgress = true;
             }
 #endif
@@ -330,12 +331,13 @@ namespace Cozmo.ConnectionFlow {
       if (robot != null) {
         robot.ActivateHighLevelActivity(Anki.Cozmo.HighLevelActivity.Selection);
         robot.PlayNeedsGetOutAnimIfNeeded(OpenModal);
-      } else {
+      }
+      else {
         OpenModal();
       }
     }
 
-    private void OpenModal(bool unused = false){
+    private void OpenModal(bool unused = false) {
       var sdkModalPriorityData = new Cozmo.UI.ModalPriorityData(Cozmo.UI.ModalPriorityLayer.VeryHigh, 0,
                                                   Cozmo.UI.LowPriorityModalAction.Queue,
                                                   Cozmo.UI.HighPriorityModalAction.ForceCloseOthersAndOpen);

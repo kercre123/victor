@@ -2,80 +2,76 @@
 namespace CozmoAnim;
 
 table LiftHeight {
-  triggerTime_ms:float;
-  durationTime_ms:float;
-  height_mm:float;
-  heightVariability_mm:int;
+  triggerTime_ms:uint;
+  durationTime_ms:uint;
+  height_mm:ubyte;
+  heightVariability_mm:ubyte = 0;
 }
 
 table ProceduralFace {
-  triggerTime_ms:float;
-  durationTime_ms:float;
-  faceAngle:float;
-  faceCenterX:float;
-  faceCenterY:float;
-  faceScaleX:float;
-  faceScaleY:float;
+  triggerTime_ms:uint;
+  faceAngle:float = 0.0;
+  faceCenterX:float = 0.0;
+  faceCenterY:float = 0.0;
+  faceScaleX:float = 1.0;
+  faceScaleY:float = 1.0;
   leftEye:[float];
   rightEye:[float];
 }
 
 table HeadAngle {
-  triggerTime_ms:float;
-  durationTime_ms:float;
-  angle_deg:float;
-  angleVariability_deg:int;
+  triggerTime_ms:uint;
+  durationTime_ms:uint;
+  angle_deg:byte;
+  angleVariability_deg:ubyte = 0;
 }
 
 table RobotAudio {
-  triggerTime_ms:float;
-  audioName:[string];
-  audioEventId:[long];
+  triggerTime_ms:uint;
+  audioEventId:[long] (required);
   volume:float = 1.0;
   probability:[float];
   hasAlts:bool = true;
 }
 
 table BackpackLights {
-  triggerTime_ms:float;
-  durationTime_ms:float;
-  Left:[float];
-  Right:[float];
+  triggerTime_ms:uint;
+  durationTime_ms:uint;
   Front:[float];
   Middle:[float];
   Back:[float];
 }
 
 table FaceAnimation {
-  triggerTime_ms:float;
-  animName:string;
+  triggerTime_ms:uint;
+  animName:string (required);
 }
 
 table Event {
-  triggerTime_ms:float;
-  event_id:string;
+  triggerTime_ms:uint;
+  event_id:string (required);
 }
 
 table BodyMotion {
-  triggerTime_ms:float;
-  durationTime_ms:float;
-  radius_mm:string;
-  speed:float;
+  triggerTime_ms:uint;
+  durationTime_ms:uint;
+  radius_mm:string (required);
+  speed:short;
 }
 
 table RecordHeading {
-  triggerTime_ms:float;
+  triggerTime_ms:uint;
 }
 
 table TurnToRecordedHeading {
-  triggerTime_ms:float;
-  offset_deg:float = 0.0;
-  durationTime_ms:float;
-  speed_degPerSec:float;
-  accel_degPerSec2:float = 1000.0;
-  decel_degPerSec2:float = 1000.0;
-  tolerance_deg:float = 2.0;
-  numHalfRevs:int = 0;
+  triggerTime_ms:uint;
+  durationTime_ms:uint;
+  offset_deg:short = 0;
+  speed_degPerSec:short;
+  accel_degPerSec2:short = 1000;
+  decel_degPerSec2:short = 1000;
+  tolerance_deg:ushort = 2;
+  numHalfRevs:ushort = 0;
   useShortestDir:bool = false;
 }
 

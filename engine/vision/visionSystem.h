@@ -21,8 +21,8 @@
 #  define ANKI_COZMO_USE_MATLAB_VISION 0
 #endif
 
-#include "anki/common/basestation/math/polygon.h"
-#include "anki/common/types.h"
+#include "coretech/common/engine/math/polygon.h"
+#include "coretech/common/shared/types.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
@@ -35,15 +35,15 @@
 #include "engine/vision/visionPoseData.h"
 #include "engine/vision/cameraCalibrator.h"
 
-#include "anki/common/basestation/matlabInterface.h"
+#include "coretech/common/engine/matlabInterface.h"
 
-#include "anki/vision/basestation/camera.h"
-#include "anki/vision/basestation/cameraCalibration.h"
-#include "anki/vision/basestation/image.h"
-#include "anki/vision/basestation/profiler.h"
-#include "anki/vision/basestation/trackedFace.h"
-#include "anki/vision/basestation/trackedPet.h"
-#include "anki/vision/basestation/visionMarker.h"
+#include "coretech/vision/engine/camera.h"
+#include "coretech/vision/engine/cameraCalibration.h"
+#include "coretech/vision/engine/image.h"
+#include "coretech/vision/engine/profiler.h"
+#include "coretech/vision/engine/trackedFace.h"
+#include "coretech/vision/engine/trackedPet.h"
+#include "coretech/vision/engine/visionMarker.h"
 
 #include "clad/vizInterface/messageViz.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -62,6 +62,7 @@
 namespace Anki {
  
 namespace Vision {
+  class Benchmark;
   class FaceTracker;
   class ImageCache;
   class ImagingPipeline;
@@ -208,6 +209,14 @@ namespace Cozmo {
     // Just specify what the current values are (don't actually change the robot's camera)
     Result SetNextCameraParams(s32 exposure_ms, f32 gain);
     
+    // When SavingImages mode is enabled:
+    //  saveMode: SingleShot=save one image and wait for this call again
+    //            Stream=save according to the mode schedule
+    //            Off=no saving until this is called again with one of the above
+    //  path: Where to save images (relative to <Cache>/camera/images)
+    //  quality: -1=PNG, 0-100=JPEG quality
+    void SetSaveParameters(const ImageSendMode saveMode, const std::string& path, const int8_t quality);
+
     s32 GetCurrentCameraExposureTime_ms() const;
     f32 GetCurrentCameraGain() const;
   
@@ -277,6 +286,10 @@ namespace Cozmo {
     bool _calibrateFromToolCode = false;
     
     s32 _frameNumber = 0;
+
+    ImageSendMode  _imageSaveMode = ImageSendMode::Off;
+    s8             _imageSaveQuality = -1;
+    std::string    _imageSavePath;
     
     // Snapshots of robot state
     bool _wasCalledOnce    = false;
@@ -301,6 +314,8 @@ namespace Cozmo {
     std::unique_ptr<OverheadMap>            _overheadMap;
     std::unique_ptr<GroundPlaneClassifier>  _groundPlaneClassifier;
 
+    std::unique_ptr<Vision::Benchmark>      _benchmark;
+    
     // Tool code stuff
     TimeStamp_t                   _firstReadToolCodeTime_ms = 0;
     const TimeStamp_t             kToolCodeMotionTimeout_ms = 1000;
@@ -311,6 +326,7 @@ namespace Cozmo {
     Radians GetCurrentHeadAngle();
     Radians GetPreviousHeadAngle();
     
+    // NOTE: CLAHE is NOT used when MarkerDetector is in LightOnDark mode
     enum class MarkerDetectionCLAHE : u8 {
       Off         = 0, // Do detection in original image only
       On          = 1, // Do detection in CLAHE image only
@@ -320,9 +336,9 @@ namespace Cozmo {
       Count
     };
     
-    Result ApplyCLAHE(const Vision::Image& inputImageGray, const MarkerDetectionCLAHE useCLAHE, Vision::Image& claheImage);
+    Result ApplyCLAHE(Vision::ImageCache& imageCache, const MarkerDetectionCLAHE useCLAHE, Vision::Image& claheImage);
     
-    Result DetectMarkersWithCLAHE(const Vision::Image& inputImageGray,
+    Result DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
                                   const Vision::Image& claheImage,
                                   std::vector<Anki::Rectangle<s32>>& detectionRects,
                                   MarkerDetectionCLAHE useCLAHE);

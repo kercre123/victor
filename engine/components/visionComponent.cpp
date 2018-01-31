@@ -16,6 +16,7 @@
 #include "androidHAL/androidHAL.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/components/animationComponent.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/navMap/mapComponent.h"
@@ -29,19 +30,19 @@
 #include "engine/vision/visionSystem.h"
 #include "engine/viz/vizManager.h"
 
-#include "anki/vision/basestation/camera.h"
-#include "anki/vision/basestation/image_impl.h"
-#include "anki/vision/basestation/trackedFace.h"
-#include "anki/vision/basestation/observableObjectLibrary_impl.h"
-#include "anki/vision/basestation/visionMarker.h"
-#include "anki/vision/MarkerCodeDefinitions.h"
+#include "coretech/vision/engine/camera.h"
+#include "coretech/vision/engine/image_impl.h"
+#include "coretech/vision/engine/trackedFace.h"
+#include "coretech/vision/engine/observableObjectLibrary_impl.h"
+#include "coretech/vision/engine/visionMarker.h"
+#include "coretech/vision/shared/MarkerCodeDefinitions.h"
 
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/math/quad_impl.h"
-#include "anki/common/basestation/utils/data/dataPlatform.h"
-#include "anki/common/basestation/utils/timer.h"
-#include "anki/common/robot/config.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "coretech/common/engine/utils/timer.h"
+#include "coretech/common/robot/config.h"
 
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
@@ -49,6 +50,7 @@
 #include "util/helpers/boundedWhile.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
+#include "util/threading/threadPriority.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -65,7 +67,11 @@ namespace Cozmo {
   CONSOLE_VAR(u8,  kNumImuDataToLookBack,          "WasRotatingTooFast.Face.NumToLookBack", 5);
   
   CONSOLE_VAR(bool, kDisplayProcessedImagesOnly, "Vision.General", true);
-  CONSOLE_VAR(s32,  kDebugImageCompressQuality,  "Vision.General", 50); // Set to 0 to display "locally" with img.Display()
+  
+  // Quality of images sent to game/viz
+  // Set to -1 to display "locally" with img.Display()
+  // Set to 0 to disable sending altogether (to save bandwidth) -- disables camera feed AND debug images
+  CONSOLE_VAR(s32,  kImageCompressQuality,  "Vision.General", 50);
   
   // Whether or not to do rolling shutter correction for physical robots
   CONSOLE_VAR(bool, kRollingShutterCorrectionEnabled, "Vision.PreProcessing", true);
@@ -106,19 +112,25 @@ namespace Cozmo {
     u16 kInitialExposureTime_ms = 16;
   }
   
-  VisionComponent::VisionComponent(Robot& robot, const CozmoContext* context)
-  : _robot(robot)
-  , _context(context)
-  , _vizManager(context->GetVizManager())
-  , _camera(robot.GetID())
+  VisionComponent::VisionComponent()
+  : IDependencyManagedComponent<RobotComponentID>(RobotComponentID::Vision)
+  {    
+  } // VisionSystem()
+
+
+  void VisionComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
   {
+    _robot = robot;
+    _context = _robot->GetContext();
+    _vizManager = _context->GetVizManager();
+    _camera = std::make_unique<Vision::Camera>(_robot->GetID());
     _visionSystem = new VisionSystem(_context);
     
     // Set up event handlers
-    if(nullptr != context && nullptr != context->GetExternalInterface())
+    if(nullptr != _context && nullptr != _context->GetExternalInterface())
     {
       using namespace ExternalInterface;
-      auto helper = MakeAnkiEventUtil(*context->GetExternalInterface(), *this, _signalHandles);
+      auto helper = MakeAnkiEventUtil(*_context->GetExternalInterface(), *this, _signalHandles);
       
       // In alphabetical order:
       helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableColorImages>();
@@ -139,8 +151,7 @@ namespace Cozmo {
     
     // "Special" viz identifier for the main camera feed
     _vizDisplayIndexMap["camera"] = 0;
-    
-  } // VisionSystem()
+  }
 
   
   Result VisionComponent::Init(const Json::Value& config)
@@ -204,9 +215,17 @@ namespace Cozmo {
   
   void VisionComponent::SetCameraCalibration(std::shared_ptr<Vision::CameraCalibration> camCalib)
   {
-    const bool calibChanged = _camera.SetCalibration(camCalib);
+    const bool calibChanged = _camera->SetCalibration(camCalib);
     if(calibChanged)
     {
+      // Stop the visionSystem before updating calibration
+      // New calibration causes MarkerDetector's embedded memory to be reset
+      // which could happen while it is running so we need to stop it first
+      if(!_isSynchronous)
+      {
+        Stop();
+      }
+      
       Lock();
       _visionSystem->UpdateCameraCalibration(camCalib);
       Unlock();
@@ -220,12 +239,12 @@ namespace Cozmo {
       PopulateGroundPlaneHomographyLUT();
       
       // Fine-tune calibration using tool code dots
-      //_robot.GetActionList().QueueActionNext(new ReadToolCodeAction(_robot));
+      //_robot->GetActionList().QueueActionNext(new ReadToolCodeAction(_robot));
     }
     
     if(kRollingShutterCorrectionEnabled)
     {
-      _visionSystem->ShouldDoRollingShutterCorrection(_robot.IsPhysical());
+      _visionSystem->ShouldDoRollingShutterCorrection(_robot->IsPhysical());
     }
     else
     {
@@ -412,7 +431,7 @@ namespace Cozmo {
         
         // Compress to jpeg and send to game and viz
         // Do this before setting next image since it swaps the image and invalidates it
-        Result lastResult = CompressAndSendImage(_bufferedImg, 50, "camera");
+        Result lastResult = CompressAndSendImage(_bufferedImg, kImageCompressQuality, "camera");
         DEV_ASSERT(RESULT_OK == lastResult, "VisionComponent.CompressAndSendImage.Failed");
         
         // Track how fast we are receiving frames
@@ -443,7 +462,7 @@ namespace Cozmo {
     {
       // Have an image buffered, so now try to get the corresponding historical state
       
-      const bool imageOlderThanOldestState = (_bufferedImg.GetTimestamp() < _robot.GetStateHistory()->GetOldestTimeStamp());
+      const bool imageOlderThanOldestState = (_bufferedImg.GetTimestamp() < _robot->GetStateHistory()->GetOldestTimeStamp());
       if(imageOlderThanOldestState)
       {
         // Special case: we're trying to process an image with a timestamp older than the oldest thing in
@@ -451,7 +470,7 @@ namespace Cozmo {
         // history. Just drop this image.
         PRINT_CH_DEBUG("VisionComponent", "VisionComponent.Update.DroppingImageOlderThanStateHistory",
                        "ImageTime=%d OldestState=%d",
-                       _bufferedImg.GetTimestamp(), _robot.GetStateHistory()->GetOldestTimeStamp());
+                       _bufferedImg.GetTimestamp(), _robot->GetStateHistory()->GetOldestTimeStamp());
         
         _bufferedImg.Clear();
         
@@ -462,23 +481,72 @@ namespace Cozmo {
       // If so, go ahead and use the buffered image to set the "next" image to be processed.
       // If not, wait until next Update(), when we'll still have this _bufferedImg
       //  and will recheck to see if we've got the correspondind robot state info in history yet.
-      const bool haveHistStateAtLeastAsNewAsImage = (_robot.GetStateHistory()->GetNewestTimeStamp() >= _bufferedImg.GetTimestamp());
+      const bool haveHistStateAtLeastAsNewAsImage = (_robot->GetStateHistory()->GetNewestTimeStamp() >= _bufferedImg.GetTimestamp());
       if(haveHistStateAtLeastAsNewAsImage)
       {
+        
+        // "Mirror mode": draw images we process to the robot's screen
+        if(_drawImagesToScreen)
+        {
+          // TODO: Add this as a lambda you can register with VisionComponent for things you want to 
+          //       do with image when captured?
+          
+          // Send as face display animation
+          auto & animComponent = _robot->GetAnimationComponent();
+          if (animComponent.GetAnimState_NumProcAnimFaceKeyframes() < 5) // Don't get too far ahead
+          {
+            static Vision::ImageRGB screenImg(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
+            _bufferedImg.Resize(screenImg, Vision::ResizeMethod::NearestNeighbor);
+
+            // Flip image around the y axis (before we draw anything on it)
+            cv::flip(screenImg.get_CvMat_(), screenImg.get_CvMat_(), 1);
+
+            for(auto & modFcn : _screenImageModFuncs)
+            {
+              modFcn(screenImg);
+            }
+            _screenImageModFuncs.clear();
+
+            static Vision::ImageRGB565 img565(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
+            
+            // Use gamma to make it easier to see
+            static std::array<u8,256> gammaLUT{};
+            if(gammaLUT.back() == 0) {
+              const f32 gamma = 1.f / 2.2f;
+              const f32 divisor = 1.f / 255.f;
+              for(s32 value=0; value<256; ++value) 
+              {
+                gammaLUT[value] = std::round(255.f * std::powf((f32)value * divisor, gamma));
+              }
+            }
+
+            img565.SetFromImageRGB(screenImg, gammaLUT);
+          
+            animComponent.DisplayFaceImage(img565, ANIM_TIME_STEP_MS, false);
+          }
+        }
+
         SetNextImage(_bufferedImg);
         _bufferedImg.Clear();
       }
       else
       {
-        PRINT_CH_DEBUG("VisionComponent", "VisionComponent.Update.WaitingForState",
-                       "CapturedImageTime:%d NewestStateInHistory:%d",
-                       _bufferedImg.GetTimestamp(), _robot.GetStateHistory()->GetNewestTimeStamp());
+        // These messages are too spammy for factory test
+        if(!FACTORY_TEST)
+        {
+          PRINT_CH_DEBUG("VisionComponent", "VisionComponent.Update.WaitingForState",
+                         "CapturedImageTime:%d NewestStateInHistory:%d",
+                         _bufferedImg.GetTimestamp(), _robot->GetStateHistory()->GetNewestTimeStamp());
+        }
       }
     }
     else
     {
-      PRINT_CH_DEBUG("VisionComponent", "VisionComponent.Update.WaitingForBufferedImage", "Tick:%zu",
-                     BaseStationTimer::getInstance()->GetTickCount());
+      if(!FACTORY_TEST)
+      {
+        PRINT_CH_DEBUG("VisionComponent", "VisionComponent.Update.WaitingForBufferedImage", "Tick:%zu",
+                       BaseStationTimer::getInstance()->GetTickCount());
+      }
     }
     
     return RESULT_OK;
@@ -491,7 +559,7 @@ namespace Cozmo {
     HistRobotState imageHistState;
     TimeStamp_t imageHistTimeStamp;
     
-    Result lastResult = GetImageHistState(_robot, image.GetTimestamp(), imageHistState, imageHistTimeStamp);
+    Result lastResult = GetImageHistState(*_robot, image.GetTimestamp(), imageHistState, imageHistTimeStamp);
     
     if(lastResult == RESULT_FAIL_ORIGIN_MISMATCH)
     {
@@ -506,21 +574,21 @@ namespace Cozmo {
       PRINT_NAMED_WARNING("VisionComponent.SetNextImage.StateHistoryFail",
                           "Unable to get computed pose at image timestamp of %u. (rawStates: have %zu from %u:%u) (visionStates: have %zu from %u:%u)",
                           image.GetTimestamp(),
-                          _robot.GetStateHistory()->GetNumRawStates(),
-                          _robot.GetStateHistory()->GetOldestTimeStamp(),
-                          _robot.GetStateHistory()->GetNewestTimeStamp(),
-                          _robot.GetStateHistory()->GetNumVisionStates(),
-                          _robot.GetStateHistory()->GetOldestVisionOnlyTimeStamp(),
-                          _robot.GetStateHistory()->GetNewestVisionOnlyTimeStamp());
+                          _robot->GetStateHistory()->GetNumRawStates(),
+                          _robot->GetStateHistory()->GetOldestTimeStamp(),
+                          _robot->GetStateHistory()->GetNewestTimeStamp(),
+                          _robot->GetStateHistory()->GetNumVisionStates(),
+                          _robot->GetStateHistory()->GetOldestVisionOnlyTimeStamp(),
+                          _robot->GetStateHistory()->GetNewestVisionOnlyTimeStamp());
       return lastResult;
     }
     
     // Get most recent pose data in history
     Anki::Cozmo::HistRobotState lastHistState;
-    _robot.GetStateHistory()->GetLastStateWithFrameID(_robot.GetPoseFrameID(), lastHistState);
+    _robot->GetStateHistory()->GetLastStateWithFrameID(_robot->GetPoseFrameID(), lastHistState);
     
     {
-      const Pose3d& cameraPose = _robot.GetHistoricalCameraPose(imageHistState, imageHistTimeStamp);
+      const Pose3d& cameraPose = _robot->GetHistoricalCameraPose(imageHistState, imageHistTimeStamp);
       Matrix_3x3f groundPlaneHomography;
       const bool groundPlaneVisible = LookupGroundPlaneHomography(imageHistState.GetHeadAngle_rad(),
                                                                   groundPlaneHomography);
@@ -573,7 +641,7 @@ namespace Cozmo {
           if(RESULT_OK != dotResult) {
             PRINT_NAMED_WARNING("VisionComponent.SetNextImage.FactoryDotTestFailed", "");
           }
-          _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+          _robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
           
         } // if(_doFactoryDotTest)
         
@@ -602,7 +670,7 @@ namespace Cozmo {
         Lock();
         
         const bool isDroppingFrame = !_nextImg.IsEmpty() || (kSimulateDroppedFrameFraction > 0.f &&
-                                                             _robot.GetContext()->GetRandom()->RandDbl() < kSimulateDroppedFrameFraction);
+                                                             _robot->GetContext()->GetRandom()->RandDbl() < kSimulateDroppedFrameFraction);
         if(isDroppingFrame)
         {
           PRINT_CH_DEBUG("VisionComponent",
@@ -629,11 +697,11 @@ namespace Cozmo {
   
   void VisionComponent::PopulateGroundPlaneHomographyLUT(f32 angleResolution_rad)
   {
-    const Pose3d& robotPose = _robot.GetPose();
+    const Pose3d& robotPose = _robot->GetPose();
     
-    DEV_ASSERT(_camera.IsCalibrated(), "VisionComponent.PopulateGroundPlaneHomographyLUT.CameraNotCalibrated");
+    DEV_ASSERT(_camera->IsCalibrated(), "VisionComponent.PopulateGroundPlaneHomographyLUT.CameraNotCalibrated");
     
-    const auto calibration = _camera.GetCalibration();
+    const auto calibration = _camera->GetCalibration();
     const Matrix_3x3f K = calibration->GetCalibrationMatrix();
     
     GroundPlaneROI groundPlaneROI;
@@ -645,7 +713,7 @@ namespace Cozmo {
     {
       // Get the robot origin w.r.t. the camera position with the camera at
       // the current head angle
-      const Pose3d& cameraPose = _robot.GetCameraPose(headAngle_rad); // need to store the camera pose so it can be parent
+      const Pose3d& cameraPose = _robot->GetCameraPose(headAngle_rad); // need to store the camera pose so it can be parent
       Pose3d robotPoseWrtCamera;
       const bool result = robotPose.GetWithRespectTo(cameraPose, robotPoseWrtCamera);
       // this really shouldn't fail! camera has to be in the robot's pose tree
@@ -662,8 +730,8 @@ namespace Cozmo {
       Quad2f imgQuad;
       groundPlaneROI.GetImageQuad(H, calibration->GetNcols(), calibration->GetNrows(), imgQuad);
       
-      if(_camera.IsWithinFieldOfView(imgQuad[Quad::CornerName::TopLeft]) ||
-         _camera.IsWithinFieldOfView(imgQuad[Quad::CornerName::BottomLeft]))
+      if(_camera->IsWithinFieldOfView(imgQuad[Quad::CornerName::TopLeft]) ||
+         _camera->IsWithinFieldOfView(imgQuad[Quad::CornerName::BottomLeft]))
       {
         // Only store this homography if the ROI still projects into the image
         _groundPlaneHomographyLUT[headAngle_rad] = H;
@@ -742,13 +810,7 @@ namespace Cozmo {
     DEV_ASSERT(_visionSystem != nullptr && _visionSystem->IsInitialized(),
                "VisionComponent.Processor.VisionSystemNotReady");
     
-    
-    const char* threadName = "VisionSystem";
-    #if defined(LINUX) || defined(ANDROID)
-    pthread_setname_np(pthread_self(), threadName);
-    #else
-    pthread_setname_np(threadName);
-    #endif
+    Anki::Util::SetThreadName(pthread_self(), "VisionSystem");
     
     while (_running) {
       
@@ -768,17 +830,15 @@ namespace Cozmo {
         Lock();
         // Clear it when done.
         _currentImg.Clear();
-        _nextImg.Clear();
         Unlock();
-        
-        // Sleep to alleviate pressure on main thread
-        std::this_thread::sleep_for(std::chrono::milliseconds(kVision_MinSleepTime_ms));
       }
-      else if(!_nextImg.IsEmpty())
+      
+      if(!_nextImg.IsEmpty())
       {
         ANKI_CPU_PROFILE("SwapInNewImage");
         // We have an image waiting to be processed: swap it in (avoid copy)
         Lock();
+        AndroidHAL::getInstance()->CameraSwapLocks();
         std::swap(_currentImg, _nextImg);
         std::swap(_currentPoseData, _nextPoseData);
         _nextImg.Clear();
@@ -832,7 +892,7 @@ namespace Cozmo {
                               "Could not estimate pose of marker. Not visualizing.");
         } else {
           if(markerPose.GetWithRespectTo(marker.GetSeenBy().GetPose().FindRoot(), markerPose) == true) {
-            _robot.GetContext()->GetVizManager()->DrawGenericQuad(quadID++, blockMarker->Get3dCorners(markerPose), NamedColors::OBSERVED_QUAD);
+            _robot->GetContext()->GetVizManager()->DrawGenericQuad(quadID++, blockMarker->Get3dCorners(markerPose), NamedColors::OBSERVED_QUAD);
           } else {
             PRINT_NAMED_WARNING("VisionComponent.VisualizeObservedMarkerIn3D.MarkerOriginNotCameraOrigin",
                                 "Cannot visualize a marker whose pose origin is not the camera's origin that saw it.");
@@ -843,7 +903,7 @@ namespace Cozmo {
       return true;
     });
     
-    _robot.GetBlockWorld().FindLocatedMatchingObject(filter);
+    _robot->GetBlockWorld().FindLocatedMatchingObject(filter);
     
   } // VisualizeObservedMarkerIn3D()
   
@@ -860,7 +920,7 @@ namespace Cozmo {
       
       while(true == _visionSystem->CheckMailbox(result))
       {
-        if(IsDisplayingProcessedImagesOnly())
+        if(IsDisplayingProcessedImagesOnly() && (kImageCompressQuality > 0))
         {
           // The assumption is that all the chunks of this encoded image have already been sent to
           // the viz manager (e.g. forwarded by the robot message handler)
@@ -907,23 +967,27 @@ namespace Cozmo {
         // Display any debug images left by the vision system
         if(ANKI_DEV_CHEATS)
         {
-          if(kDebugImageCompressQuality > 0)
+          if(kImageCompressQuality > 0)
           {
             // Send any images in the debug image lists to Viz for display
+            // Resize to fit display, but don't if it would make the image larger (to save bandwidth)
+            const bool kOnlyResizeIfSmaller = true;
+            const s32  kDisplayNumRows = 360; // TODO: Get these from VizManager perhaps?
+            const s32  kDisplayNumCols = 640; //   "
             for(auto & debugGray : result.debugImages) {
               debugGray.second.SetTimestamp(result.timestamp); // Ensure debug image has timestamp matching result
-              // This is the size currently used by Webots
-              debugGray.second.ResizeKeepAspectRatio(360, 640);
-              CompressAndSendImage(debugGray.second, kDebugImageCompressQuality, debugGray.first);
+              debugGray.second.ResizeKeepAspectRatio(kDisplayNumRows, kDisplayNumCols,
+                                                     Vision::ResizeMethod::Linear, kOnlyResizeIfSmaller);
+              CompressAndSendImage(debugGray.second, kImageCompressQuality, debugGray.first);
             }
             for(auto & debugRGB : result.debugImageRGBs) {
               debugRGB.second.SetTimestamp(result.timestamp); // Ensure debug image has timestamp matching result
-              // This is the size currently used by Webots
-              debugRGB.second.ResizeKeepAspectRatio(360, 640);
-              CompressAndSendImage(debugRGB.second, kDebugImageCompressQuality, debugRGB.first);
+              debugRGB.second.ResizeKeepAspectRatio(kDisplayNumRows, kDisplayNumCols,
+                                                    Vision::ResizeMethod::Linear, kOnlyResizeIfSmaller);
+              CompressAndSendImage(debugRGB.second, kImageCompressQuality, debugRGB.first);
             }
           }
-          else
+          else if(kImageCompressQuality == -1)
           {
             // Display debug images locally
             for(auto & debugGray : result.debugImages) {
@@ -981,7 +1045,7 @@ namespace Cozmo {
             imageMean = result.imageMean;
           }
           
-          _robot.Broadcast(MessageEngineToGame(RobotProcessedImage(result.timestamp,
+          _robot->Broadcast(MessageEngineToGame(RobotProcessedImage(result.timestamp,
                                                                    std::move(visionModesList),
                                                                    imageMean)));
         }
@@ -1011,7 +1075,7 @@ namespace Cozmo {
       HistRobotState* histStatePtr = nullptr;
       HistStateKey histStateKey;
       
-      lastResult = _robot.GetStateHistory()->ComputeAndInsertStateAt(procResult.timestamp, t, &histStatePtr, &histStateKey, true);
+      lastResult = _robot->GetStateHistory()->ComputeAndInsertStateAt(procResult.timestamp, t, &histStatePtr, &histStateKey, true);
 
       if(RESULT_FAIL_ORIGIN_MISMATCH == lastResult)
       {
@@ -1025,16 +1089,16 @@ namespace Cozmo {
         PRINT_CH_INFO("VisionComponent", "VisionComponent.UpdateVisionMarkers.HistoricalPoseNotFound",
                       "Time: %u, hist: %u to %u",
                       procResult.timestamp,
-                      _robot.GetStateHistory()->GetOldestTimeStamp(),
-                      _robot.GetStateHistory()->GetNewestTimeStamp());
+                      _robot->GetStateHistory()->GetOldestTimeStamp(),
+                      _robot->GetStateHistory()->GetNewestTimeStamp());
         return RESULT_OK;
       }
       
-      if(!_robot.IsPoseInWorldOrigin(histStatePtr->GetPose())) {
+      if(!_robot->IsPoseInWorldOrigin(histStatePtr->GetPose())) {
         PRINT_CH_INFO("VisionComponent", "VisionComponent.UpdateVisionMarkers.OldOrigin",
                       "Ignoring observed marker from origin %s (robot origin is %s)",
                       histStatePtr->GetPose().FindRoot().GetName().c_str(),
-                      _robot.GetWorldOrigin().GetName().c_str());
+                      _robot->GetWorldOrigin().GetName().c_str());
         return RESULT_OK;
       }
       
@@ -1050,7 +1114,7 @@ namespace Cozmo {
         return RESULT_OK;
       }
       
-      Vision::Camera histCamera = _robot.GetHistoricalCamera(*histStatePtr, procResult.timestamp);
+      Vision::Camera histCamera = _robot->GetHistoricalCamera(*histStatePtr, procResult.timestamp);
       
       // Note: we deliberately make a copy of the vision markers in observedMarkers
       // as we loop over them here, because procResult is const but we want to modify
@@ -1069,7 +1133,7 @@ namespace Cozmo {
         // This shouldn't happen! If it does, robotStateMsgs may be buffering up somewhere.
         // Increasing history time window would fix this, but it's not really a solution.
         if ((visionMarker.GetSeenBy().GetID() == GetCamera().GetID()) &&
-            !_robot.GetStateHistory()->IsValidKey(histStateKey))
+            !_robot->GetStateHistory()->IsValidKey(histStateKey))
         {
           PRINT_NAMED_WARNING("VisionComponent.Update.InvalidHistStateKey", "key=%d", histStateKey);
           continue;
@@ -1102,7 +1166,7 @@ namespace Cozmo {
       }
     } // if(!procResult.observedMarkers.empty())
 
-    lastResult = _robot.GetBlockWorld().UpdateObservedMarkers(observedMarkers);
+    lastResult = _robot->GetBlockWorld().UpdateObservedMarkers(observedMarkers);
     if(RESULT_OK != lastResult)
     {
       PRINT_NAMED_WARNING("VisionComponent.UpdateVisionResults.BlockWorldUpdateFailed", "");
@@ -1111,7 +1175,7 @@ namespace Cozmo {
     // If we have observed a marker, attempt to update the docking error signal
     if(!observedMarkers.empty())
     {
-      _robot.GetDockingComponent().UpdateDockingErrorSignal(procResult.timestamp);
+      _robot->GetDockingComponent().UpdateDockingErrorSignal(procResult.timestamp);
     }
     
     return lastResult;
@@ -1124,7 +1188,7 @@ namespace Cozmo {
 
     for(auto & updatedID : procResult.updatedFaceIDs)
     {
-      _robot.GetFaceWorld().ChangeFaceID(updatedID);
+      _robot->GetFaceWorld().ChangeFaceID(updatedID);
     }
     
     for(auto & faceDetection : procResult.faces)
@@ -1149,11 +1213,11 @@ namespace Cozmo {
         PRINT_NAMED_DEBUG("VisionComponent.UpdateFaces.ReachedEnrollmentCount",
                           "Count=%d", faceDetection.GetNumEnrollments());
         
-        _robot.GetFaceWorld().SetFaceEnrollmentComplete(true);
+        _robot->GetFaceWorld().SetFaceEnrollmentComplete(true);
       }
     }
     
-    lastResult = _robot.GetFaceWorld().Update(procResult.faces);
+    lastResult = _robot->GetFaceWorld().Update(procResult.faces);
     if(RESULT_OK != lastResult)
     {
       PRINT_NAMED_WARNING("VisionComponent.UpdateFaces.FaceWorldUpdateFailed", "");
@@ -1164,7 +1228,7 @@ namespace Cozmo {
   
   Result VisionComponent::UpdatePets(const VisionProcessingResult& procResult)
   {
-    Result lastResult = _robot.GetPetWorld().Update(procResult.pets);
+    Result lastResult = _robot->GetPetWorld().Update(procResult.pets);
     return lastResult;
   }
   
@@ -1172,7 +1236,7 @@ namespace Cozmo {
   {
     for(auto motionCentroid : procResult.observedMotions) // deliberate copy
     {
-      _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(motionCentroid)));
+      _robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(motionCentroid)));
     }
 
     return RESULT_OK;
@@ -1182,7 +1246,7 @@ namespace Cozmo {
   {
     for(auto & edgeFrame : procResult.visualObstacles)
     {
-      _robot.GetMapComponent().AddDetectedObstacles(edgeFrame);
+      _robot->GetMapComponent().AddDetectedObstacles(edgeFrame);
     }
     
     return RESULT_OK;
@@ -1192,7 +1256,7 @@ namespace Cozmo {
   {
     for(auto laserPoint : procResult.laserPoints) // deliberate copy: we move this to the message
     {
-      _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(laserPoint)));
+      _robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(laserPoint)));
     }
     
     return RESULT_OK;
@@ -1202,7 +1266,7 @@ namespace Cozmo {
   {
     for(auto & edgeFrame : procResult.overheadEdges)
     {
-      _robot.GetMapComponent().ProcessVisionOverheadEdges(edgeFrame);
+      _robot->GetMapComponent().ProcessVisionOverheadEdges(edgeFrame);
     }
     
     return RESULT_OK;
@@ -1214,7 +1278,7 @@ namespace Cozmo {
     {
       ExternalInterface::RobotReadToolCode msg;
       msg.info = info;
-      _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+      _robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
     }
 
     return RESULT_OK;
@@ -1243,7 +1307,7 @@ namespace Cozmo {
       
       std::copy(calib.GetDistortionCoeffs().begin(), calib.GetDistortionCoeffs().end(), msg.distCoeffs.begin());
       
-      _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+      _robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
     }
     
     return RESULT_OK;
@@ -1251,7 +1315,7 @@ namespace Cozmo {
   
   Result VisionComponent::UpdateImageQuality(const VisionProcessingResult& procResult)
   {
-    if(!_robot.IsPhysical() || procResult.imageQuality == ImageQuality::Unchecked)
+    if(!_robot->IsPhysical() || procResult.imageQuality == ImageQuality::Unchecked)
     {
       // Nothing to do
       return RESULT_OK;
@@ -1308,7 +1372,7 @@ namespace Cozmo {
                        _waitForNextAlert_ms, EnumToString(errorCode));
         
         using namespace ExternalInterface;
-        _robot.Broadcast(MessageEngineToGame(EngineErrorCodeMessage(errorCode)));
+        _robot->Broadcast(MessageEngineToGame(EngineErrorCodeMessage(errorCode)));
         _lastBroadcastImageQuality = _lastImageQuality;
         
         // Reset start time just to avoid spamming if this is a "bad" quality, which
@@ -1403,7 +1467,7 @@ namespace Cozmo {
     // TODO: More precise check for position of lift in FOV given head angle
     HistRobotState histState;
     TimeStamp_t t;
-    Result result = _robot.GetStateHistory()->GetRawStateAt(t_request, t, histState, false);
+    Result result = _robot->GetStateHistory()->GetRawStateAt(t_request, t, histState, false);
     
     if(RESULT_FAIL_ORIGIN_MISMATCH == result)
     {
@@ -1420,24 +1484,37 @@ namespace Cozmo {
       return;
     }
     
-    const Transform3d& liftPoseWrtCamera = _robot.GetLiftTransformWrtCamera(histState.GetLiftAngle_rad(),
+    const Transform3d& liftPoseWrtCamera = _robot->GetLiftTransformWrtCamera(histState.GetLiftAngle_rad(),
                                                                             histState.GetHeadAngle_rad());
     
     std::vector<Point3f> liftCrossBar;
     liftPoseWrtCamera.ApplyTo(_liftCrossBarSource, liftCrossBar);
     
     std::vector<Point2f> liftCrossBarProj;
-    _camera.Project3dPoints(liftCrossBar, liftCrossBarProj);
+    _camera->Project3dPoints(liftCrossBar, liftCrossBarProj);
 
-    _camera.AddOccluder(liftCrossBarProj, liftPoseWrtCamera.GetTranslation().Length());
+    _camera->AddOccluder(liftCrossBarProj, liftPoseWrtCamera.GetTranslation().Length());
   }
   
   template<class PixelType>
   Result VisionComponent::CompressAndSendImage(const Vision::ImageBase<PixelType>& img, s32 quality, const std::string& identifier)
   {
-    if(!_robot.HasExternalInterface()) {
+    if(quality == 0 || !_robot->GetContext()->GetVizManager()->IsConnected())
+    {
+      // Don't send anything
+      return RESULT_OK;
+    }
+    
+    if(!_robot->HasExternalInterface()) {
       PRINT_NAMED_ERROR("VisionComponent.CompressAndSendImage.NoExternalInterface", "");
       return RESULT_FAIL;
+    }
+
+    static cv::Mat_<PixelType> sMat(img.GetNumRows(), img.GetNumCols());
+    if(sMat.rows != img.GetNumRows() || sMat.cols != img.GetNumCols())
+    {
+      sMat.release();
+      sMat.create(img.GetNumRows(), img.GetNumCols());
     }
     
     ImageChunk m;
@@ -1448,12 +1525,11 @@ namespace Cozmo {
       CV_IMWRITE_JPEG_QUALITY, quality
     };
     
-    if(img.GetNumChannels() == 3) {
-      cv::cvtColor(img.get_CvMat_(), img.get_CvMat_(), CV_BGR2RGB);
-    }
+    // Convert to BGR so that imencode works
+    img.ConvertToShowableFormat(sMat);
     
     std::vector<u8> compressedBuffer;
-    cv::imencode(".jpg",  img.get_CvMat_(), compressedBuffer, compressionParams);
+    cv::imencode(".jpg",  sMat, compressedBuffer, compressionParams);
     
     const u32 kMaxChunkSize = static_cast<u32>(ImageConstants::IMAGE_CHUNK_SIZE);
     u32 bytesRemainingToSend = static_cast<u32>(compressedBuffer.size());
@@ -1491,13 +1567,13 @@ namespace Cozmo {
       auto endIt = startIt + chunkSize;
       m.data = std::vector<u8>(startIt, endIt);
       
-      if (_robot.GetImageSendMode() != ImageSendMode::Off) {
-        _robot.Broadcast(ExternalInterface::MessageEngineToGame(ImageChunk(m)));
+      if (_robot->GetImageSendMode() != ImageSendMode::Off) {
+        _robot->Broadcast(ExternalInterface::MessageEngineToGame(ImageChunk(m)));
       }
       
       // Forward the image chunks to Viz as well (Note that this does nothing if
       // sending images is disabled in VizManager)
-      _robot.GetContext()->GetVizManager()->SendImageChunk(_robot.GetID(), m);
+      _robot->GetContext()->GetVizManager()->SendImageChunk(_robot->GetID(), m);
       
       bytesRemainingToSend -= chunkSize;
       ++m.chunkId;
@@ -1584,6 +1660,14 @@ namespace Cozmo {
       std::vector<u8> imgVec;
       cv::imencode(".jpg", img.get_CvMat_(), imgVec, std::vector<int>({CV_IMWRITE_JPEG_QUALITY, 50}));
       
+      Vision::Image imgUndistorted(img.GetNumRows(),img.GetNumCols());
+      cv::undistort(img.get_CvMat_(), imgUndistorted.get_CvMat_(),
+                    _camera->GetCalibration()->GetCalibrationMatrix().get_CvMatx_(),
+                    _camera->GetCalibration()->GetDistortionCoeffs());
+      
+      std::vector<u8> imgVecUndistort;
+      cv::imencode(".jpg", imgUndistorted.get_CvMat_(), imgVecUndistort, std::vector<int>({CV_IMWRITE_JPEG_QUALITY, 50}));
+
       /*
       std::string imgFilename = "savedImg_" + std::to_string(imgIdx) + ".jpg";
       FILE* fp = fopen(imgFilename.c_str(), "w");
@@ -1592,6 +1676,7 @@ namespace Cozmo {
       */
       
       rawJpegData.emplace_back(std::move(imgVec));
+      rawJpegData.emplace_back(std::move(imgVecUndistort));
       
       ++imgIdx;
     }
@@ -1619,7 +1704,7 @@ namespace Cozmo {
     
     // Compute pose of target's center w.r.t. the camera
     Pose3d targetWrtCamera;
-    Result result = _camera.ComputeObjectPose(obsQuad, targetQuad, targetWrtCamera);
+    Result result = _camera->ComputeObjectPose(obsQuad, targetQuad, targetWrtCamera);
     if(RESULT_OK != result) {
       PRINT_NAMED_WARNING("VisionComponent.FindFactorTestDotCentroids.ComputePoseFailed", "");
       return result;
@@ -1714,7 +1799,7 @@ namespace Cozmo {
       msg.dotCenY_pix[iDot] = stats[bestComp].centroid.y() + roiRect.GetY();
     }
 
-    if(_camera.IsCalibrated())
+    if(_camera->IsCalibrated())
     {
       // Go ahead and compute the camera pose using the dots if the camera is already calibrated
       
@@ -1740,7 +1825,7 @@ namespace Cozmo {
       }
     }
     
-    msg.headAngle = _robot.GetHeadAngle();
+    msg.headAngle = _robot->GetHeadAngle();
     msg.success = true;
     
     if(kDrawDebugDisplay)
@@ -1837,7 +1922,7 @@ namespace Cozmo {
       return lastResult;
     }
     
-    const u32 maxAlbumSize = _robot.GetNVStorageComponent().GetMaxSizeForEntryTag(NVStorage::NVEntryTag::NVEntry_FaceAlbumData);
+    const u32 maxAlbumSize = _robot->GetNVStorageComponent().GetMaxSizeForEntryTag(NVStorage::NVEntryTag::NVEntry_FaceAlbumData);
     if(_albumData.size() >= maxAlbumSize)
     {
       PRINT_NAMED_ERROR("VisionComponent.SaveFaceAlbumToRobot.AlbumDataTooLarge",
@@ -1847,7 +1932,7 @@ namespace Cozmo {
       return RESULT_FAIL_INVALID_SIZE;
     }
     
-    const u32 maxEnrollSize = _robot.GetNVStorageComponent().GetMaxSizeForEntryTag(NVStorage::NVEntryTag::NVEntry_FaceEnrollData);
+    const u32 maxEnrollSize = _robot->GetNVStorageComponent().GetMaxSizeForEntryTag(NVStorage::NVEntryTag::NVEntry_FaceEnrollData);
     if(_enrollData.size() >= maxEnrollSize)
     {
       PRINT_NAMED_ERROR("VisionComponent.SaveFaceAlbumToRobot.EnrollDataTooLarge",
@@ -1866,7 +1951,7 @@ namespace Cozmo {
         PRINT_NAMED_WARNING("VisionComponent.SaveFaceAlbumToRobot.AlbumFailure",
                             "Failed saving album data to robot: %s",
                             EnumToString(result));
-        _robot.BroadcastEngineErrorCode(EngineErrorCode::WriteFacesToRobot);
+        _robot->BroadcastEngineErrorCode(EngineErrorCode::WriteFacesToRobot);
       }
       
       if(nullptr != albumCallback) {
@@ -1882,7 +1967,7 @@ namespace Cozmo {
         PRINT_NAMED_WARNING("VisionComponent.SaveFaceAlbumToRobot.EnrollFailure",
                             "Failed saving enroll data to robot: %s",
                             EnumToString(result));
-        _robot.BroadcastEngineErrorCode(EngineErrorCode::WriteFacesToRobot);
+        _robot->BroadcastEngineErrorCode(EngineErrorCode::WriteFacesToRobot);
       }
       
       if(nullptr != enrollCallback) {
@@ -1894,12 +1979,12 @@ namespace Cozmo {
     if(_albumData.empty() && _enrollData.empty()) {
       PRINT_NAMED_INFO("VisionComponent.SaveFaceAlbumToRobot.EmptyAlbumData", "Will erase robot album data");
       // Special case: no face data, so erase what's on the robot so it matches
-      bool sendSucceeded = _robot.GetNVStorageComponent().Erase(NVStorage::NVEntryTag::NVEntry_FaceAlbumData, saveAlbumCallback);
+      bool sendSucceeded = _robot->GetNVStorageComponent().Erase(NVStorage::NVEntryTag::NVEntry_FaceAlbumData, saveAlbumCallback);
       if(!sendSucceeded) {
         PRINT_NAMED_WARNING("VisionComponent.SaveFaceAlbumToRobot.SendEraseAlbumDataFail", "");
         lastResult = RESULT_FAIL;
       } else {
-        sendSucceeded = _robot.GetNVStorageComponent().Erase(NVStorage::NVEntryTag::NVEntry_FaceEnrollData, saveEnrollCallback);
+        sendSucceeded = _robot->GetNVStorageComponent().Erase(NVStorage::NVEntryTag::NVEntry_FaceEnrollData, saveEnrollCallback);
         if(!sendSucceeded) {
           PRINT_NAMED_WARNING("VisionComponent.SaveFaceAlbumToRobot.SendEraseEnrollDataFail", "");
         }
@@ -1916,13 +2001,13 @@ namespace Cozmo {
     DEV_ASSERT(!_albumData.empty() && !_enrollData.empty(), "VisionComponent.SaveFaceAlbumToRobot.BadAlbumOrEnrollData");
     
     // Use NVStorage to save it
-    bool sendSucceeded = _robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_FaceAlbumData,
+    bool sendSucceeded = _robot->GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_FaceAlbumData,
                                                               _albumData.data(), _albumData.size(), saveAlbumCallback);
     if(!sendSucceeded) {
       PRINT_NAMED_WARNING("VisionComponent.SaveFaceAlbumToRobot.SendWriteAlbumDataFail", "");
       lastResult = RESULT_FAIL;
     } else {
-      sendSucceeded = _robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_FaceEnrollData,
+      sendSucceeded = _robot->GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_FaceEnrollData,
                                                          _enrollData.data(), _enrollData.size(), saveEnrollCallback);
       if(!sendSucceeded) {
         PRINT_NAMED_WARNING("VisionComponent.SaveFaceAlbumToRobot.SendWriteEnrollDataFail", "");
@@ -1988,14 +2073,14 @@ namespace Cozmo {
     _enrollData.clear();
     
     // NOTE: We don't run the callback until both data items have been read
-    bool sendSucceeded = _robot.GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_FaceAlbumData,
+    bool sendSucceeded = _robot->GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_FaceAlbumData,
                                                              {}, &_albumData, false);
     
     if(!sendSucceeded) {
       PRINT_NAMED_WARNING("VisionComponent.LoadFaceAlbumFromRobot.ReadFaceAlbumDataFail", "");
       lastResult = RESULT_FAIL;
     } else {
-      sendSucceeded = _robot.GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_FaceEnrollData,
+      sendSucceeded = _robot->GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_FaceEnrollData,
                                                           readCallback, &_enrollData, false);
       if(!sendSucceeded) {
         PRINT_NAMED_WARNING("VisionComponent.LoadFaceAlbumFromRobot.ReadFaceEnrollDataFail", "");
@@ -2079,7 +2164,7 @@ namespace Cozmo {
       ExternalInterface::RobotErasedEnrolledFace msg;
       msg.faceID  = faceID;
       msg.name    = "";
-      _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+      _robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
       return RESULT_OK;
     } else {
       return RESULT_FAIL;
@@ -2092,7 +2177,7 @@ namespace Cozmo {
     _visionSystem->EraseAllFaces();
     Unlock();
     SaveFaceAlbumToRobot();
-    _robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotErasedAllEnrolledFaces()));
+    _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotErasedAllEnrolledFaces()));
   }
   
   Result VisionComponent::RenameFace(Vision::FaceID_t faceID, const std::string& oldName, const std::string& newName)
@@ -2105,7 +2190,7 @@ namespace Cozmo {
     if(RESULT_OK == result)
     {
       SaveFaceAlbumToRobot();
-      _robot.Broadcast(ExternalInterface::MessageEngineToGame( std::move(renamedFace) ));
+      _robot->Broadcast(ExternalInterface::MessageEngineToGame( std::move(renamedFace) ));
     }
     
     return result;
@@ -2117,14 +2202,14 @@ namespace Cozmo {
     // for the names if they don't already exist, so we've already got them
     // when we want to say them at some point later.
     using namespace ExternalInterface;
-    _robot.Broadcast(MessageEngineToGame(RobotErasedAllEnrolledFaces()));
+    _robot->Broadcast(MessageEngineToGame(RobotErasedAllEnrolledFaces()));
     for(auto & loadedFace : loadedFaces)
     {
       
       PRINT_CH_INFO("VisionComponent", "VisionComponent.BroadcastLoadedNamesAndIDs", "broadcasting loaded face id: %d",
                     loadedFace.faceID);
       
-      _robot.Broadcast(MessageEngineToGame( Vision::LoadedKnownFace(loadedFace) ));
+      _robot->Broadcast(MessageEngineToGame( Vision::LoadedKnownFace(loadedFace) ));
     }
   }
   
@@ -2173,14 +2258,14 @@ namespace Cozmo {
     // SetCameraParams params(gain,
     //                        exposure_ms_u16,
     //                        false);
-    // _robot.SendMessage(RobotInterface::EngineToRobot(std::move(params)));
+    // _robot->SendMessage(RobotInterface::EngineToRobot(std::move(params)));
     PRINT_NAMED_WARNING("VisionComponent.SetCameraSettings.NotYetImplemented", "");
 
     _vizManager->SendCameraInfo(exposure_ms_u16, gain);
     
     _visionSystem->SetNextCameraParams(exposure_ms, gain);
 
-    _robot.Broadcast(ExternalInterface::MessageEngineToGame(
+    _robot->Broadcast(ExternalInterface::MessageEngineToGame(
                         ExternalInterface::CurrentCameraParams(gain, exposure_ms_u16, _enableAutoExposure) ));
   }
   
@@ -2233,31 +2318,13 @@ namespace Cozmo {
     {
       // Create ImageRGB object from image buffer
       image_out = Vision::ImageRGB(numRows, numCols, buffer);
-      
-      if (_imageSaveMode != ImageSendMode::Off)
-      {
-        const std::string path = _robot.GetContext()->GetDataPlatform()->pathToResource(Util::Data::Scope::Cache, "camera");
-        const std::string fullFilename = Util::FileUtils::FullFilePath({path, "images", std::to_string(imageId) + ".png"});
-
-        PRINT_CH_DEBUG("VisionComponent",
-                       "VisionComponent.CaptureImage.SavingImage",
-                       "Saving %s to %s",
-                       (_imageSaveMode == ImageSendMode::SingleShot ? "single image" : "image stream"),
-                       fullFilename.c_str());
-         
-        image_out.Save(fullFilename);
-        if (_imageSaveMode == ImageSendMode::SingleShot)
-        {
-          _imageSaveMode = ImageSendMode::Off;
-        }
-      }
 
       if(kDisplayUndistortedImages)
       {
         Vision::ImageRGB imgUndistorted(numRows,numCols);
         cv::undistort(image_out.get_CvMat_(), imgUndistorted.get_CvMat_(),
-                      _camera.GetCalibration()->GetCalibrationMatrix().get_CvMatx_(),
-                      _camera.GetCalibration()->GetDistortionCoeffs());
+                      _camera->GetCalibration()->GetCalibrationMatrix().get_CvMatx_(),
+                      _camera->GetCalibration()->GetDistortionCoeffs());
         imgUndistorted.Display("UndistortedImage");
       }
       
@@ -2380,15 +2447,34 @@ namespace Cozmo {
     }
   }
   
+  void VisionComponent::SetSaveImageParameters(const ImageSendMode saveMode,
+                                               const std::string& path,
+                                               const int8_t onRobotQuality)
+  {
+    if(nullptr != _visionSystem)
+    {
+      const std::string cachePath = _robot->GetContext()->GetDataPlatform()->pathToResource(Util::Data::Scope::Cache, "camera");
+
+      const std::string fullPath = Util::FileUtils::FullFilePath({cachePath, "images", path});
+      _visionSystem->SetSaveParameters(saveMode, 
+                                       fullPath, 
+                                       onRobotQuality);
+
+      if(saveMode != ImageSendMode::Off)
+      {
+        EnableMode(VisionMode::SavingImages, true);  
+      }
+
+      PRINT_CH_DEBUG("VisionComponent", "VisionComponent.HandleMessage.SaveImages",
+                     "Setting image save mode to %s. Saving to: %s",
+                     EnumToString(saveMode), fullPath.c_str());
+    }
+  }
+  
   template<>
   void VisionComponent::HandleMessage(const ExternalInterface::SaveImages& payload)
   {
-
-    _imageSaveMode = payload.mode;
-    PRINT_CH_DEBUG("VisionComponent", "VisionComponent.HandleMessage.SaveImages",
-                   "Setting image save mode to %s",
-                   EnumToString(payload.mode));
-
+    SetSaveImageParameters(payload.mode, payload.path, payload.qualityOnRobot);
   }
 
   template<>
@@ -2438,7 +2524,7 @@ namespace Cozmo {
 
             // Compute FOV from focal length and send
             CameraFOVInfo msg(calib->ComputeHorizontalFOV().ToFloat(), calib->ComputeVerticalFOV().ToFloat());
-            if (_robot.SendMessage(RobotInterface::EngineToRobot(std::move(msg))) != RESULT_OK) {
+            if (_robot->SendMessage(RobotInterface::EngineToRobot(std::move(msg))) != RESULT_OK) {
               PRINT_NAMED_WARNING("VisionComponent.ReadCameraCalibration.SendCameraFOVFailed", "");
             }
             
@@ -2467,7 +2553,7 @@ namespace Cozmo {
           
           // Compute FOV from focal length and send
           CameraFOVInfo msg(calib->ComputeHorizontalFOV().ToFloat(), calib->ComputeVerticalFOV().ToFloat());
-          if (_robot.SendMessage(RobotInterface::EngineToRobot(std::move(msg))) != RESULT_OK) {
+          if (_robot->SendMessage(RobotInterface::EngineToRobot(std::move(msg))) != RESULT_OK) {
             PRINT_NAMED_WARNING("VisionComponent.ReadCameraCalibration.SendCameraFOVFailed", "");
           }
 
@@ -2476,7 +2562,7 @@ namespace Cozmo {
         Enable(true);
       };
       
-      _robot.GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_CameraCalib, readCamCalibCallback);
+      _robot->GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_CameraCalib, readCamCalibCallback);
       
     }
   }

@@ -14,7 +14,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorRamIntoBlock_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "anki/common/basestation/objectIDs.h"
+#include "coretech/common/engine/objectIDs.h"
 #include <vector>
 
 namespace Anki {
@@ -34,21 +34,23 @@ private:
 
 
 public:
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual bool CarryingObjectHandledInternally() const override { return true;}
-  
+  virtual bool WantsToBeActivatedBehavior() const override;  
   void SetBlockToRam(s32 targetID){_targetID = targetID;}
 
 protected:
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenCarryingObject = true;
+  }
+
+  virtual void OnBehaviorActivated() override;
+  virtual void OnBehaviorDeactivated() override;
 
 private:
   s32 _targetID;
   
-  void TransitionToPuttingDownBlock(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToTurningToBlock(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToRammingIntoBlock(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToPuttingDownBlock();
+  void TransitionToTurningToBlock();
+  void TransitionToRammingIntoBlock();
 
   
 }; // class BehaviorRamIntoBlock

@@ -20,7 +20,7 @@
 #include "engine/needsSystem/needsManager.h"
 #include "engine/needsSystem/needsState.h"
 
-#include "anki/common/basestation/jsonTools.h"
+#include "coretech/common/engine/jsonTools.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -49,30 +49,30 @@ BehaviorPlayAnimOnNeedsChange::~BehaviorPlayAnimOnNeedsChange()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorPlayAnimOnNeedsChange::WantsToBeActivatedAnimSeqInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorPlayAnimOnNeedsChange::WantsToBeActivatedAnimSeqInternal() const
 {
-  return ShouldGetInBePlayed(behaviorExternalInterface);
+  return ShouldGetInBePlayed();
 }
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPlayAnimOnNeedsChange::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPlayAnimOnNeedsChange::OnBehaviorDeactivated()
 {
-  if(ShouldGetInBePlayed(behaviorExternalInterface)){
-    behaviorExternalInterface.GetAIComponent().GetSevereNeedsComponent().SetSevereNeedExpression(_params._need);
+  if(ShouldGetInBePlayed()){
+    GetBEI().GetAIComponent().GetSevereNeedsComponent().SetSevereNeedExpression(_params._need);
   }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorPlayAnimOnNeedsChange::ShouldGetInBePlayed(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorPlayAnimOnNeedsChange::ShouldGetInBePlayed() const
 {
-  const SevereNeedsComponent& severeNeedsComponent = behaviorExternalInterface.GetAIComponent().GetNonConstSevereNeedsComponent();
+  const SevereNeedsComponent& severeNeedsComponent = GetBEI().GetAIComponent().GetNonConstSevereNeedsComponent();
   const bool isSevereExpressed = (_params._need == severeNeedsComponent.GetSevereNeedExpression());
   
   bool shouldSevereNeedBeExpressed = false;
-  if(behaviorExternalInterface.HasNeedsManager()){
-    auto& needsManager = behaviorExternalInterface.GetNeedsManager();
+  if(GetBEI().HasNeedsManager()){
+    auto& needsManager = GetBEI().GetNeedsManager();
     NeedsState& currNeedState = needsManager.GetCurNeedsStateMutable();
     shouldSevereNeedBeExpressed =
             currNeedState.IsNeedAtBracket(_params._need, NeedBracketId::Critical);

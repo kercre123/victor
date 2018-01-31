@@ -12,8 +12,8 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherStrictPriorityWithCooldown.h"
 
-#include "coretech/common/include/anki/common/basestation/jsonTools.h"
-#include "coretech/common/include/anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 
 namespace Anki {
@@ -34,8 +34,7 @@ BehaviorDispatcherStrictPriorityWithCooldown::BehaviorDispatcherStrictPriorityWi
         "behavior",
         "BehaviorDispatcherStrictPriorityWithCooldown.BehaviorGroup.NoBehaviorID");
       
-      const BehaviorID behaviorID = BehaviorTypesWrapper::BehaviorIDFromString(behaviorIDStr);
-      IBehaviorDispatcher::AddPossibleDispatch(behaviorID);
+      IBehaviorDispatcher::AddPossibleDispatch(behaviorIDStr);
 
       _cooldownInfo.emplace_back( BehaviorCooldownInfo{behaviorDefinitionGroup} );
     }
@@ -46,8 +45,7 @@ BehaviorDispatcherStrictPriorityWithCooldown::BehaviorDispatcherStrictPriorityWi
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehaviorPtr BehaviorDispatcherStrictPriorityWithCooldown::GetDesiredBehavior(
-  BehaviorExternalInterface& behaviorExternalInterface)
+ICozmoBehaviorPtr BehaviorDispatcherStrictPriorityWithCooldown::GetDesiredBehavior()
 {
   DEV_ASSERT_MSG( _cooldownInfo.size() == IBehaviorDispatcher::GetAllPossibleDispatches().size(),
                   "BehaviorDispatcherStrictPriorityWithCooldown.SizeMismatch",
@@ -63,7 +61,7 @@ ICozmoBehaviorPtr BehaviorDispatcherStrictPriorityWithCooldown::GetDesiredBehavi
 
     if( !cooldownInfo.OnCooldown() &&
         ( behavior->IsActivated() ||
-          behavior->WantsToBeActivated(behaviorExternalInterface) ) ) {
+          behavior->WantsToBeActivated() ) ) {
       _lastDesiredBehaviorIdx = idx;
       return behavior;
     }
@@ -74,7 +72,7 @@ ICozmoBehaviorPtr BehaviorDispatcherStrictPriorityWithCooldown::GetDesiredBehavi
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDispatcherStrictPriorityWithCooldown::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDispatcherStrictPriorityWithCooldown::DispatcherUpdate()
 {
   if( IsActivated() &&
       _lastDesiredBehaviorIdx < _cooldownInfo.size() &&
@@ -87,23 +85,19 @@ void BehaviorDispatcherStrictPriorityWithCooldown::BehaviorUpdate(BehaviorExtern
                   IBehaviorDispatcher::GetAllPossibleDispatches()[_lastDesiredBehaviorIdx]->GetIDStr().c_str());
     _cooldownInfo[ _lastDesiredBehaviorIdx ].StartCooldown(GetRNG());
     _lastDesiredBehaviorIdx = _cooldownInfo.size();
-  }
-  
-  BaseClass::BehaviorUpdate(behaviorExternalInterface);
+  }  
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDispatcherStrictPriorityWithCooldown::BehaviorDispatcher_OnActivated(
-  BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDispatcherStrictPriorityWithCooldown::BehaviorDispatcher_OnActivated()
 {
   // reset last dispatched behavior
   _lastDesiredBehaviorIdx = _cooldownInfo.size();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDispatcherStrictPriorityWithCooldown::BehaviorDispatcher_OnDeactivated(
-  BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDispatcherStrictPriorityWithCooldown::BehaviorDispatcher_OnDeactivated()
 {
   // if we are stopped while a behavior was active, put it on cooldown
   if( _lastDesiredBehaviorIdx < _cooldownInfo.size() ) {

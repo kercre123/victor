@@ -1,13 +1,27 @@
+"""
+IMPORTANT: This version of binary_conversion.py is now specific to Victor,
+so it should NOT be used for the original Cozmo because, for example, this
+version strips out the Left and Right backpack light data.
+"""
 
 BODY_MOTION_TRACK = "BodyMotionKeyFrame"
-
 ROBOT_AUDIO_TRACK = "RobotAudioKeyFrame"
+BACKPACK_LIGHT_TRACK = "BackpackLightsKeyFrame"
+PROCEDURAL_FACE_TRACK = "ProceduralFaceKeyFrame"
 
-ALL_TRACKS = ["LiftHeightKeyFrame", "HeadAngleKeyFrame", "ProceduralFaceKeyFrame",
-              "BackpackLightsKeyFrame", "FaceAnimationKeyFrame", "EventKeyFrame",
+ALL_TRACKS = ["LiftHeightKeyFrame", "HeadAngleKeyFrame", PROCEDURAL_FACE_TRACK,
+              BACKPACK_LIGHT_TRACK, "FaceAnimationKeyFrame", "EventKeyFrame",
               ROBOT_AUDIO_TRACK, BODY_MOTION_TRACK, "RecordHeadingKeyFrame", "TurnToRecordedHeadingKeyFrame"]
 
 BODY_RADIUS_ATTR = "radius_mm"
+
+BODY_SPEED_ATTR = "speed"
+
+LIFT_HEIGHT_ATTR = "height_mm"
+
+HEAD_ANGLE_ATTR = "angle_deg"
+
+AUDIO_NAME_ATTR = "audioName"
 
 PROBABILITY_ATTR = "probability"
 
@@ -21,11 +35,15 @@ ANIM_NAME_ATTR = "Name"
 
 KEYFRAMES_ATTR = "keyframes"
 
+INTEGER_ATTRS = [TRIGGER_TIME_ATTR, DURATION_TIME_ATTR, BODY_SPEED_ATTR, HEAD_ANGLE_ATTR, LIFT_HEIGHT_ATTR]
+
 CLIPS_ATTR = "clips"
 
 BIN_FILE_EXT = ".bin"
 
 OLD_ANIM_TOOL_ATTRS = ["$type", "pathFromRoot"]
+
+OLD_BACKPACK_LIGHT_ATTRS = ["Left", "Right"]
 
 
 import sys
@@ -118,6 +136,15 @@ def prep_json_for_binary_conversion(anim_name, keyframes):
             except KeyError:
                 pass
 
+        if track == BACKPACK_LIGHT_TRACK:
+            # Many old anim files will have "Left" and "Right" backpack lights,
+            # but we need to strip those out for Victor
+            for old_attr in OLD_BACKPACK_LIGHT_ATTRS:
+                try:
+                    keyframe.pop(old_attr)
+                except KeyError:
+                    pass
+
         if track == ROBOT_AUDIO_TRACK:
             # Some old anim files have an "durationTime_ms" attribute for audio keyframes, but those
             # aren't used anymore and thus not defined in the schema, so they are removed here.
@@ -132,6 +159,19 @@ def prep_json_for_binary_conversion(anim_name, keyframes):
                     keyframe[PROBABILITY_ATTR] = [keyframe[PROBABILITY_ATTR]]
             except KeyError:
                 pass
+            # Remove the "audioName" data since the event IDs are what we really need
+            # and "audioName" has been removed from the schema for binary data.
+            try:
+                keyframe.pop(AUDIO_NAME_ATTR)
+            except KeyError:
+                pass
+
+        if track == PROCEDURAL_FACE_TRACK:
+            # The engine doesn't use "durationTime_ms" for ProceduralFaceKeyFrame
+            try:
+                keyframe.pop(DURATION_TIME_ATTR)
+            except KeyError:
+                pass
 
         # Since the 'radius_mm' attribute of 'BodyMotionKeyFrame' can be set to "TURN_IN_PLACE"
         # or "STRAIGHT", that attribute is always stored as a string for FlatBuffers. When the
@@ -139,6 +179,19 @@ def prep_json_for_binary_conversion(anim_name, keyframes):
         if track == BODY_MOTION_TRACK:
             if not isinstance(keyframe[BODY_RADIUS_ATTR], basestring):
                 keyframe[BODY_RADIUS_ATTR] = str(keyframe[BODY_RADIUS_ATTR])
+
+        # Some attributes (including times in ms, speed in mm/s or deg/s, head angle in deg
+        # and lift height in mm) are expected to be integers in the engine. However, until
+        # December 2017, the animation exporter was not doing a good job of forcing those
+        # values to be integers, so we explicitly convert those values to integers here.
+        for int_attr in INTEGER_ATTRS:
+            try:
+                orig_val = keyframe[int_attr]
+            except KeyError:
+                pass
+            else:
+                int_val = int(round(orig_val))
+                keyframe[int_attr] = int_val
 
         anim_dict[KEYFRAMES_ATTR][track].append(keyframe)
 
@@ -185,6 +238,7 @@ def convert_json_to_binary(file_path, flatc_dir, schema_file, bin_file_ext):
     if not os.path.isfile(output_file) or exit_status != 0:
         raise ValueError("Unable to successfully generate binary file %s (exit status "
                          "of external process = %s)" % (output_file, exit_status))
+    #print("Converted %s to %s" % (file_path, output_file))
     return output_file
 
 

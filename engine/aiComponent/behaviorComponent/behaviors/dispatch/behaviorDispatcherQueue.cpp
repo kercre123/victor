@@ -31,20 +31,19 @@ BehaviorDispatcherQueue::BehaviorDispatcherQueue(const Json::Value& config)
                  "No Behaviors key found");
   if(!behaviorArray.isNull()) {
     for(const auto& behaviorIDStr: behaviorArray) {
-      const BehaviorID& behaviorID = BehaviorTypesWrapper::BehaviorIDFromString(behaviorIDStr.asString());
-      IBehaviorDispatcher::AddPossibleDispatch(behaviorID);
+      IBehaviorDispatcher::AddPossibleDispatch(behaviorIDStr.asString());
     }
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDispatcherQueue::BehaviorDispatcher_OnActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDispatcherQueue::BehaviorDispatcher_OnActivated()
 {
   _currIdx = 0;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDispatcherQueue::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDispatcherQueue::DispatcherUpdate()
 {
   if( IsActivated() &&
       !IsControlDelegated() &&
@@ -55,8 +54,7 @@ void BehaviorDispatcherQueue::BehaviorUpdate(BehaviorExternalInterface& behavior
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehaviorPtr BehaviorDispatcherQueue::GetDesiredBehavior(
-  BehaviorExternalInterface& behaviorExternalInterface)
+ICozmoBehaviorPtr BehaviorDispatcherQueue::GetDesiredBehavior()
 {
   // This should only be callable when the behavior isn't running anymore
   DEV_ASSERT( !IsControlDelegated(), "BehaviorDispatcherQueue.GetDesiredBehavior.ControlNotDelegated" );
@@ -65,7 +63,7 @@ ICozmoBehaviorPtr BehaviorDispatcherQueue::GetDesiredBehavior(
 
   // iterate until we find a behavior that wants to be activated
   BOUNDED_WHILE( 1000, _currIdx < dispatches.size() ) {
-    if( dispatches[_currIdx]->WantsToBeActivated(behaviorExternalInterface) ) {
+    if( dispatches[_currIdx]->WantsToBeActivated() ) {
       PRINT_CH_INFO("Behaviors", "BehaviorDispatcherQueue.SelectBehavior",
                     "Selecting behavior %zu '%s'",
                     _currIdx,

@@ -20,7 +20,7 @@
 #include "engine/drivingAnimationHandler.h"
 #include "engine/moodSystem/moodManager.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "clad/externalInterface/messageGameToEngine.h"
 
@@ -47,9 +47,9 @@ BehaviorDriveOffCharger::BehaviorDriveOffCharger(const Json::Value& config)
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorDriveOffCharger::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorDriveOffCharger::WantsToBeActivatedBehavior() const
 {
-  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  const auto& robotInfo = GetBEI().GetRobotInfo();
   // assumes it's not possible to be OnCharger without being OnChargerPlatform
   DEV_ASSERT(robotInfo.IsOnChargerPlatform() || !robotInfo.IsOnCharger(),
              "BehaviorDriveOffCharger.WantsToBeActivatedBehavior.InconsistentChargerFlags");
@@ -66,12 +66,12 @@ bool BehaviorDriveOffCharger::WantsToBeActivatedBehavior(BehaviorExternalInterfa
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorDriveOffCharger::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDriveOffCharger::OnBehaviorActivated()
 {
   
   _pushedIdleAnimation = false;
-  if(NeedId::Count == behaviorExternalInterface.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression()){
-    auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  if(NeedId::Count == GetBEI().GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression()){
+    auto& robotInfo = GetBEI().GetRobotInfo();
     robotInfo.GetDrivingAnimationHandler().PushDrivingAnimations(
            {AnimationTrigger::DriveStartLaunch,
             AnimationTrigger::DriveLoopLaunch,
@@ -80,33 +80,37 @@ Result BehaviorDriveOffCharger::OnBehaviorActivated(BehaviorExternalInterface& b
     _pushedIdleAnimation = true;
   }
 
-  const bool onTreads = behaviorExternalInterface.GetOffTreadsState() == OffTreadsState::OnTreads;
+  const bool onTreads = GetBEI().GetOffTreadsState() == OffTreadsState::OnTreads;
   if( onTreads ) {
-    TransitionToDrivingForward(behaviorExternalInterface);
+    TransitionToDrivingForward();
   }
   else {
     // otherwise we'll just wait in Update until we are on the treads (or removed from the charger)
     DEBUG_SET_STATE(WaitForOnTreads);
   }
   
-  return Result::RESULT_OK;
+  
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDriveOffCharger::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDriveOffCharger::OnBehaviorDeactivated()
 {
   if(_pushedIdleAnimation){
-    auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+    auto& robotInfo = GetBEI().GetRobotInfo();
     robotInfo.GetDrivingAnimationHandler().RemoveDrivingAnimations(GetIDStr());
   }
 }
     
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorDriveOffCharger::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDriveOffCharger::BehaviorUpdate()
 {
-  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  if(!IsActivated()){
+    return;
+  }
+
+  const auto& robotInfo = GetBEI().GetRobotInfo();
   if( robotInfo.IsOnChargerPlatform() ) {
-    const bool onTreads = behaviorExternalInterface.GetOffTreadsState() == OffTreadsState::OnTreads;
+    const bool onTreads = GetBEI().GetOffTreadsState() == OffTreadsState::OnTreads;
     if( !onTreads ) {
       // if we aren't on the treads anymore, but we are on the charger, then the user must be holding us
       // inside the charger.... so just sit in this behavior doing nothing until we get put back down
@@ -116,41 +120,35 @@ ICozmoBehavior::Status BehaviorDriveOffCharger::UpdateInternal_WhileRunning(Beha
     }
     else if( ! IsControlDelegated() ) {
       // if we finished the last action, but are still on the charger, queue another one
-      TransitionToDrivingForward(behaviorExternalInterface);
+      TransitionToDrivingForward();
     }
     
-    return Status::Running;
+    return;
   }
 
-  if( IsControlDelegated() ) {
-    // let the action finish
-    return Status::Running;
-  }
-  else {  
+  if( !IsControlDelegated() ) {
     // store in whiteboard our success
     const float curTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    behaviorExternalInterface.GetAIComponent().GetWhiteboard().GotOffChargerAtTime( curTime );
-
-    return Status::Complete;
+    GetBEI().GetAIComponent().GetWhiteboard().GotOffChargerAtTime( curTime );
   }
 }
   
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDriveOffCharger::TransitionToDrivingForward(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDriveOffCharger::TransitionToDrivingForward()
 {
-  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  auto& robotInfo = GetBEI().GetRobotInfo();
   DEBUG_SET_STATE(DrivingForward);
   if( robotInfo.IsOnChargerPlatform() )
   {
     // probably interrupted by getting off the charger platform
     DriveStraightAction* action = new DriveStraightAction(_distToDrive_mm);
-    DelegateIfInControl(action,[this, &behaviorExternalInterface](ActionResult res){
+    DelegateIfInControl(action,[this](ActionResult res){
       if(res == ActionResult::SUCCESS){
         BehaviorObjectiveAchieved(BehaviorObjective::DroveAsIntended);
         
-        if(behaviorExternalInterface.HasMoodManager()){
-          auto& moodManager = behaviorExternalInterface.GetMoodManager();
+        if(GetBEI().HasMoodManager()){
+          auto& moodManager = GetBEI().GetMoodManager();
           moodManager.TriggerEmotionEvent("DriveOffCharger",
                                           MoodManager::GetCurrentTimeInSeconds());
         }

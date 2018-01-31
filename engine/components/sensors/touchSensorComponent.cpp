@@ -61,8 +61,8 @@ namespace {
   const float kBaselineMaxAllowStdevFactorForLowMean = 1.5f;
 } // end anonymous namespace
 
-TouchSensorComponent::TouchSensorComponent(Robot& robot) 
-: ISensorComponent(robot, kLogDirectory)
+TouchSensorComponent::TouchSensorComponent() 
+: ISensorComponent(kLogDirectory, RobotComponentID::TouchSensor)
 , _debouncer(kDebounceLimitPressLow, 
              kDebounceLimitPressHi)
 , _gestureClassifier(kGestureMinTimeForHeld_s,
@@ -85,10 +85,17 @@ TouchSensorComponent::TouchSensorComponent(Robot& robot)
 
 void TouchSensorComponent::UpdateInternal(const RobotState& msg)
 {
+  if(FACTORY_TEST &&_dataToRecord != nullptr)
+  {
+    _dataToRecord->data.push_back(msg.backpackTouchSensorRaw);
+  }
+
   // sometimes spurious values that are absurdly high come through the sensor
   if(msg.backpackTouchSensorRaw > kMaxTouchIntensityInvalid) {
     return;
   }
+
+  _lastRawTouchValue = msg.backpackTouchSensorRaw;
 
   const bool isPickedUp = (msg.status & (uint32_t)RobotStatusFlag::IS_PICKED_UP) != 0;
 
@@ -105,7 +112,7 @@ void TouchSensorComponent::UpdateInternal(const RobotState& msg)
                             (_touchDetectStdevFactor*_baselineCalib.GetFilteredTouchStdev());
     if( _debouncer.ProcessRawPress(isTouched) ) {
       const bool debouncedButtonState = _debouncer.GetDebouncedPress();
-      _robot.Broadcast(ExternalInterface::MessageEngineToGame(
+      _robot->Broadcast(ExternalInterface::MessageEngineToGame(
                         ExternalInterface::TouchButtonEvent(debouncedButtonState)));
       if( debouncedButtonState ) {
         _gestureClassifier.AddTouchPressed();
@@ -130,11 +137,15 @@ void TouchSensorComponent::UpdateInternal(const RobotState& msg)
 
   if (curGesture != _touchGesture) {
     _touchGesture = curGesture;
-    _robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::TouchGestureEvent(_touchGesture)));
+    _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::TouchGestureEvent(_touchGesture)));
   }  
 
 }
 
+bool TouchSensorComponent::IsTouched() const
+{
+  return _debouncer.GetDebouncedPress();
+}
 
 std::string TouchSensorComponent::GetLogHeader()
 {
@@ -149,6 +160,10 @@ std::string TouchSensorComponent::GetLogRow()
   return str;
 }
 
+void TouchSensorComponent::StartRecordingData(TouchSensorValues* data)
+{
+  _dataToRecord = data;
+}
   
 } // Cozmo namespace
 } // Anki namespace

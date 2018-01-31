@@ -15,9 +15,9 @@
 
 #include "cozmoAnim/animation/trackLayerManagers/iTrackLayerManager.h"
 
-#include "anki/common/types.h"
-#include "cozmoAnim/animation/animation.h"
-#include "cozmoAnim/animation/track.h"
+#include "coretech/common/shared/types.h"
+#include "cannedAnimLib/animation.h"
+#include "cannedAnimLib/track.h"
 
 namespace Anki {
 namespace Cozmo {

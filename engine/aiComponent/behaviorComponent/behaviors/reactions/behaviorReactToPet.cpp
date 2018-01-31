@@ -13,7 +13,7 @@
 #include "engine/actions/trackPetFaceAction.h"
 #include "engine/aiComponent/behaviorComponent/behaviorListenerInterfaces/iReactToPetListener.h"
 #include "engine/petWorld.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "util/console/consoleInterface.h"
 
 namespace Anki {
@@ -59,7 +59,7 @@ BehaviorReactToPet::BehaviorReactToPet(const Json::Value& config)
 // Called at the start of each tick. Return true if behavior can run.
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorReactToPet::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorReactToPet::WantsToBeActivatedBehavior() const
 {
   if (AlreadyReacting()) {
     PRINT_TRACE("ReactToPet.WantsToBeActivatedBehavior.AlreadyReacting", "Already reacting to a pet");
@@ -79,19 +79,22 @@ bool BehaviorReactToPet::WantsToBeActivatedBehavior(BehaviorExternalInterface& b
 // Called each time behavior becomes active.
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorReactToPet::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToPet::OnBehaviorActivated()
 {
   PRINT_INFO("ReactToPet.Init.BeginIteration", "Begin iteration");
-  BeginIteration(behaviorExternalInterface);
-  return RESULT_OK;
+  BeginIteration();
 }
   
 //
 // Called each tick while behavior is active.
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorReactToPet::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToPet::BehaviorUpdate()
 {
+  if(!IsActivated()){
+    return;
+  }
+
   //
   // If target disappears during iteration, end iteration immediately.
   // This can happen if (e.g.) pet disappears during transition from previous
@@ -99,8 +102,9 @@ ICozmoBehavior::Status BehaviorReactToPet::UpdateInternal_WhileRunning(BehaviorE
   //
   if (_target == UnknownFaceID) {
     PRINT_TRACE("ReactToPet.Update.MissingTarget", "Missing target during update");
-    EndIteration(behaviorExternalInterface);
-    return Status::Complete;
+    EndIteration();
+    CancelSelf();
+    return;
   }
   
   //
@@ -111,12 +115,12 @@ ICozmoBehavior::Status BehaviorReactToPet::UpdateInternal_WhileRunning(BehaviorE
     const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     if (_endReactionTime_s < currTime_s) {
       PRINT_TRACE("ReactToPet.Update.ReactionTimeExpired", "Reaction time has expired");
-      EndIteration(behaviorExternalInterface);
-      return Status::Complete;
+      EndIteration();
+      CancelSelf();
+      return;
     }
   }
   PRINT_TRACE("ReactToPet.Update.Running", "Behavior is running");
-  return Status::Running;
 }
 
 //
@@ -124,7 +128,7 @@ ICozmoBehavior::Status BehaviorReactToPet::UpdateInternal_WhileRunning(BehaviorE
 // This can happen if behavior is preempted during iteration.
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToPet::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToPet::OnBehaviorDeactivated()
 {
   PRINT_TRACE("ReactToPet.Stop", "Stop behavior");
   
@@ -167,7 +171,7 @@ AnimationTrigger BehaviorReactToPet::GetAnimationTrigger(Vision::PetType petType
 // Called by ReactToPet.Init to start reaction cycle
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToPet::BeginIteration(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToPet::BeginIteration()
 {
   // Trigger should always provide targets
   DEV_ASSERT(!_targets.empty(), "BehaviorReactToPet.BeginIteration.NoTargets");
@@ -175,7 +179,7 @@ void BehaviorReactToPet::BeginIteration(BehaviorExternalInterface& behaviorExter
   _target = Vision::UnknownFaceID;
   
   // React to the first valid target.  Don't worry about choosing "best".
-  const auto & petWorld = behaviorExternalInterface.GetPetWorld();
+  const auto & petWorld = GetBEI().GetPetWorld();
   const Vision::TrackedPet * pet = nullptr;
   
   for (auto petID : _targets) {
@@ -200,9 +204,9 @@ void BehaviorReactToPet::BeginIteration(BehaviorExternalInterface& behaviorExter
   AnimationTrigger trigger = GetAnimationTrigger(petType);
   
   // Tracking animations do not end by themselves.
-  // Choose a random duration and rely on UpdateInternal_WhileRunning() to end the action.
+  // Choose a random duration and rely on BehaviorUpdate() to end the action.
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  const float randTime_s = Util::numeric_cast<float>(behaviorExternalInterface.GetRNG().RandDblInRange(kReactToPetMinTime_s, kReactToPetMaxTime_s));
+  const float randTime_s = Util::numeric_cast<float>(GetBEI().GetRNG().RandDblInRange(kReactToPetMinTime_s, kReactToPetMaxTime_s));
   const float endTime_s = currTime_s + randTime_s;
 
   PRINT_INFO("ReactToPet.BeginIteration", "Reacting to petID %d type %d from t=%f to t=%f",
@@ -246,7 +250,7 @@ void BehaviorReactToPet::BeginIteration(BehaviorExternalInterface& behaviorExter
 // Could also be called by tracking action if action reaches end.
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToPet::EndIteration(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToPet::EndIteration()
 {
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   

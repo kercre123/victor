@@ -16,6 +16,7 @@
 #include "util/logging/logging.h"
 #include <assert.h>
 #include <pthread.h>
+#include <string.h>
 
 
 namespace Anki {
@@ -118,6 +119,36 @@ void SetThreadPriority(std::thread& inThread, ThreadPriority threadPriority)
   SetThreadPriority(inThread.native_handle(), threadPriority);
 }
 
+// Set thread name
+// on osx/ios it only sets the name if it is called from the target thread
+// on linux/android it works as implied
+// on success returns true
+bool SetThreadName(std::thread::native_handle_type inThread, const char* threadName)
+{
+  if (threadName == nullptr) {
+    return false;
+  }
+  
+  // The thread name length is restricted to 16 characters,including the terminating null byte ('\0').
+  // A C string is as long as the number of characters between the beginning of the string and the terminating null
+  // character (without including the terminating null character itself).
+  ASSERT_NAMED(strlen(threadName) < 16, "SetThreadPriority.NameTooLong");
+  
+  // RETURN VALUE - On success, these functions return 0; on error, they return a nonzero  error number.
+  int returnValue = 0;
+#if defined(LINUX) || defined(ANDROID)
+  returnValue = pthread_setname_np(inThread, threadName);
+#else
+  // Mac OS X: must be set from within the thread (can't specify thread ID)
+  // int pthread_setname_np(const char*);
+  // verify that we are on the target thread.. if not exit with error
+  if (ANKI_VERIFY(pthread_self() == inThread, "SetThreadPriority.NotCalledFromTargetThread",
+                  "Must be called from target thread on osx")) {
+      returnValue = pthread_setname_np(threadName);
+  }  else returnValue = 1;
+#endif
+  return returnValue == 0;
+}
 
 }
 }

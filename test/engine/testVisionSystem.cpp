@@ -12,10 +12,10 @@
  **/
 
 
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/utils/data/dataPlatform.h"
-#include "anki/common/types.h"
-#include "anki/common/basestation/math/rotation.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "coretech/common/shared/types.h"
+#include "coretech/common/engine/math/rotation.h"
 
 #include "engine/cozmoContext.h"
 #include "engine/robotDataLoader.h"
@@ -23,8 +23,8 @@
 #include "engine/vision/laserPointDetector.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 
-#include "anki/vision/basestation/imageCache.h"
-#include "anki/vision/MarkerCodeDefinitions.h"
+#include "coretech/vision/engine/imageCache.h"
+#include "coretech/vision/shared/MarkerCodeDefinitions.h"
 
 #include "util/console/consoleSystem.h"
 #include "util/logging/logging.h"
@@ -36,7 +36,7 @@
 #include "opencv2/calib3d/calib3d.hpp"
 #include "opencv2/highgui.hpp"
 
-#include "anki/common/basestation/colorRGBA.h"
+#include "coretech/common/engine/colorRGBA.h"
 
 
 extern Anki::Cozmo::CozmoContext* cozmoContext;
@@ -261,12 +261,15 @@ TEST(VisionSystem, MarkerDetectionTests)
 # define DISABLED        0
 # define ENABLED         1
 # define ENABLE_AND_SAVE 2
+# define ENABLE_ON_FAIL  3
 
 # define DEBUG_DISPLAY DISABLED
 
   using namespace Anki;
 
   // Construct a vision system
+  // NOTE: We don't just use a MarkerDetector here because the VisionSystem also does CLAHE preprocessing which
+  //       is part of this test (e.g. for low light performance)
   Cozmo::VisionSystem visionSystem(cozmoContext);
   cozmoContext->GetDataLoader()->LoadRobotConfigs();
   Result result = visionSystem.Init(cozmoContext->GetDataLoader()->GetRobotVisionConfig());
@@ -297,38 +300,78 @@ TEST(VisionSystem, MarkerDetectionTests)
   {
     std::string subDir;
     f32         expectedFailureRate;
-    std::function<bool(size_t numMarkers)> didSucceedFcn;
+    bool        isDarkOnLight;
+    std::function<bool(const std::list<Vision::ObservedMarker>&, const std::string& filename)> didSucceedFcn;
   };
 
+  // Helper to check success by verifying exactly one marker was detected and its name matches the filename
+  // (ignoring trailing number)
+  auto matchFilenameFcn = [](const std::list<Vision::ObservedMarker>& markers, const std::string& filename) -> bool
+  {
+    if(markers.size() != 1)
+    {
+      return false;
+    }
+    
+    const char* codeName = markers.front().GetCodeName();
+    return (strncmp(codeName, filename.c_str(), strlen(codeName)) == 0);
+  };
+  
   const std::vector<TestDefinition> testDefinitions = {
 
     TestDefinition{
       .subDir = "BacklitStack",
       .expectedFailureRate = 0.f,
-      .didSucceedFcn = [](size_t numMarkers) -> bool
+      .isDarkOnLight = true,
+      .didSucceedFcn = [](const std::list<Vision::ObservedMarker>& markers, const std::string&) -> bool
       {
-        return numMarkers >= 2;
+        return markers.size() >= 2;
       }
     },
 
     TestDefinition{
       .subDir = "LowLight",
       .expectedFailureRate = .02f,
-      .didSucceedFcn = [](size_t numMarkers) -> bool
+      .isDarkOnLight = true,
+      .didSucceedFcn = [](const std::list<Vision::ObservedMarker>& markers, const std::string&) -> bool
       {
-        return numMarkers > 0;
+        return !markers.empty();
       }
     },
 
     TestDefinition{
       .subDir = "NoMarkers",
       .expectedFailureRate = 0.f,
-      .didSucceedFcn = [](size_t numMarkers) -> bool
+      .isDarkOnLight = true,
+      .didSucceedFcn = [](const std::list<Vision::ObservedMarker>& markers, const std::string&) -> bool
       {
-        return numMarkers == 0;
+        return markers.empty();
       }
     },
 
+    TestDefinition{
+      .subDir = "LightOnDark_Circle",
+      .expectedFailureRate = 0.f,
+      .isDarkOnLight = false,
+      .didSucceedFcn = matchFilenameFcn,
+    },
+
+    TestDefinition{
+      .subDir = "LightOnDark_Square",
+      .expectedFailureRate = 0.f,
+      .isDarkOnLight = false,
+      .didSucceedFcn = matchFilenameFcn,
+    },
+
+    TestDefinition{
+      .subDir = "LightOnDark_Charger",
+      .expectedFailureRate = 0.f,
+      .isDarkOnLight = false,
+      .didSucceedFcn = [](const std::list<Vision::ObservedMarker>& markers, const std::string& filename) -> bool
+      {
+        return (markers.size() == 1) && (strncmp("MARKER_CHARGER_HOME", markers.front().GetCodeName(), 19) == 0);
+      }
+    },
   };
 
 
@@ -338,8 +381,12 @@ TEST(VisionSystem, MarkerDetectionTests)
   {
     const std::string& subDir = testDefinition.subDir;
 
-    const std::vector<std::string> testFiles = Util::FileUtils::FilesInDirectory(Util::FileUtils::FullFilePath({testImageDir, subDir}), false, ".jpg");
+    std::vector<std::string> testFiles = Util::FileUtils::FilesInDirectory(Util::FileUtils::FullFilePath({testImageDir, subDir}), false, ".jpg");
+    const std::vector<std::string> testFiles_png = Util::FileUtils::FilesInDirectory(Util::FileUtils::FullFilePath({testImageDir, subDir}), false, ".png");
+    std::copy(testFiles_png.begin(), testFiles_png.end(), std::back_inserter(testFiles));
 
+    NativeAnkiUtilConsoleSetValueWithString("MarkerDetector_DarkOnLight", (testDefinition.isDarkOnLight ? "1" : "0"));
+    
     u32 numFailures = 0;
     for(auto & filename : testFiles)
     {
@@ -361,12 +408,13 @@ TEST(VisionSystem, MarkerDetectionTests)
       // For now, the measure of "success" for an image is if we detected at least
       // one marker in it. We are not checking whether the marker's type or position
       // is correct.
-      if(!testDefinition.didSucceedFcn(processingResult.observedMarkers.size()))
+      const bool success = testDefinition.didSucceedFcn(processingResult.observedMarkers, filename);
+      if(!success)
       {
         ++numFailures;
       }
 
-      if(DEBUG_DISPLAY != DISABLED)
+      if(DEBUG_DISPLAY != DISABLED && ((DEBUG_DISPLAY != ENABLE_ON_FAIL) || !success))
       {
         for(auto const& debugImg : processingResult.debugImageRGBs)
         {

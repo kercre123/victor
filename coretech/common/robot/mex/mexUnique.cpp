@@ -1,10 +1,10 @@
 #include "mex.h"
 
-#include "anki/common/robot/matlabInterface.h"
+#include "coretech/common/robot/matlabInterface.h"
 
-#include "anki/common/matlab/mexWrappers.h"
-#include "anki/common/matlab/mexUtilities.h"
-#include "anki/common/shared/utilities_shared.h"
+#include "coretech/common/matlab/mexWrappers.h"
+#include "coretech/common/matlab/mexUtilities.h"
+#include "coretech/common/shared/utilities_shared.h"
 
 #include <string.h>
 #include <vector>

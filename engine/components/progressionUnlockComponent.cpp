@@ -12,8 +12,8 @@
 
 #include "engine/components/progressionUnlockComponent.h"
 
-#include "anki/common/basestation/utils/timer.h"
-#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "coretech/common/engine/utils/timer.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/components/nvStorageComponent.h"
 #include "engine/cozmoContext.h"
@@ -34,16 +34,24 @@ static const char* kFreeplayOverridesKey = "freeplayOverrides";
 
 CONSOLE_VAR(u32, kNumAttemptsToWrite, "ProgressionUnlockComponent", 5);
 
-ProgressionUnlockComponent::ProgressionUnlockComponent(Robot& robot)
-  : _robot(robot)
+ProgressionUnlockComponent::ProgressionUnlockComponent()
+: IDependencyManagedComponent<RobotComponentID>(RobotComponentID::ProgressionUnlock)
 {
 }
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ProgressionUnlockComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+{
+  _robot = robot;
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ProgressionUnlockComponent::Init()
 {
   Json::Value config;
-  InitConfig(_robot.GetContext(), config);
+  InitConfig(_robot->GetContext(), config);
 
   _freeplayOverrides.clear();
 
@@ -73,8 +81,8 @@ void ProgressionUnlockComponent::Init()
   ReadCurrentUnlocksFromRobot();
   
   // register to get unlock requests
-  if( _robot.HasExternalInterface() ) {
-    auto helper = MakeAnkiEventUtil(*_robot.GetExternalInterface(), *this, _signalHandles);
+  if( _robot->HasExternalInterface() ) {
+    auto helper = MakeAnkiEventUtil(*_robot->GetExternalInterface(), *this, _signalHandles);
     using namespace ExternalInterface;
     helper.SubscribeGameToEngine< MessageGameToEngineTag::RequestSetUnlock >();
   }
@@ -152,9 +160,9 @@ bool ProgressionUnlockComponent::IsUnlockIdValid(UnlockId id)
 void ProgressionUnlockComponent::NotifyGameDefaultUnlocksSet()
 {
   // Let unity know what the default unlocks were.
-  if (_robot.HasExternalInterface()) {
+  if (_robot->HasExternalInterface()) {
     using namespace ExternalInterface;
-    _robot.GetExternalInterface()->Broadcast(MessageEngineToGame(UnlockedDefaults(std::vector<UnlockId>(_defaultUnlocks.begin(), _defaultUnlocks.end()))));
+    _robot->GetExternalInterface()->Broadcast(MessageEngineToGame(UnlockedDefaults(std::vector<UnlockId>(_defaultUnlocks.begin(), _defaultUnlocks.end()))));
   }
 }
 
@@ -241,7 +249,7 @@ bool ProgressionUnlockComponent::IsUnlocked(UnlockId unlock, bool forFreeplay) c
   // Hack for Victor: everything is always unlocked
   return true;
   
-  if (_robot.GetContext()->IsInSdkMode())
+  if (_robot->GetContext()->IsInSdkMode())
   {
     // Progression is irrelevant in sdk mode - just force everything unlocked
     return true;
@@ -264,7 +272,7 @@ bool ProgressionUnlockComponent::IsUnlocked(UnlockId unlock, bool forFreeplay) c
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ProgressionUnlockComponent::SendUnlockStatus() const
 {
-  if( ! _robot.HasExternalInterface() ) {
+  if( ! _robot->HasExternalInterface() ) {
     return;
   }
 
@@ -274,7 +282,7 @@ void ProgressionUnlockComponent::SendUnlockStatus() const
                 _currentUnlocks.size());
   
   // now send
-  _robot.GetExternalInterface()->Broadcast( ExternalInterface::MessageEngineToGame(
+  _robot->GetExternalInterface()->Broadcast( ExternalInterface::MessageEngineToGame(
                                               ExternalInterface::UnlockStatus(
                                                 std::vector<UnlockId>(_currentUnlocks.begin(), _currentUnlocks.end()), false)));
 }
@@ -300,7 +308,7 @@ void ProgressionUnlockComponent::WriteCurrentUnlocksToRobot(UnlockId id, bool un
   u8 buf[unlockedIds.Size()];
   size_t numBytes = unlockedIds.Pack(buf, sizeof(buf));
   
-  if(!_robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_GameUnlocks, buf, numBytes,
+  if(!_robot->GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_GameUnlocks, buf, numBytes,
                                           [this, id, unlocked](NVStorage::NVResult res)
                                           {
                                             if (res < NVStorage::NVResult::NV_OKAY)
@@ -312,14 +320,14 @@ void ProgressionUnlockComponent::WriteCurrentUnlocksToRobot(UnlockId id, bool un
                                             else
                                             {
                                               // The write was successful so broadcast the unlock result
-                                              if(_robot.HasExternalInterface())
+                                              if(_robot->HasExternalInterface())
                                               {
                                                 PRINT_CH_INFO("UnlockComponent",
                                                               "WriteCurrentUnlocksToRobot",
                                                               "Broadcasting SetUnlockResult for %s : %s",
                                                               EnumToString(id),
                                                               (unlocked ? "unlocked" : "locked"));
-                                                _robot.GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RequestSetUnlockResult(id, unlocked)));
+                                                _robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RequestSetUnlockResult(id, unlocked)));
                                               }
                                             }
                                           }))
@@ -332,7 +340,7 @@ void ProgressionUnlockComponent::WriteCurrentUnlocksToRobot(UnlockId id, bool un
 
 void ProgressionUnlockComponent::ReadCurrentUnlocksFromRobot()
 {
-  if(!_robot.GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_GameUnlocks,
+  if(!_robot->GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_GameUnlocks,
                                           [this](u8* data, size_t size, NVStorage::NVResult res)
                                           {
                                             if(res < NVStorage::NVResult::NV_OKAY)

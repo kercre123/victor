@@ -13,6 +13,7 @@ function usage() {
     echo "  -v                      print verbose output"
     echo "  -c [CONFIGURATION]      build configuration {Debug,Release}"
     echo "  -p [PLATFORM]           build target platform {android,mac}"
+    echo "  -a                      append cmake platform argument {arg}"
     echo "  -g [CMAKE_GENERATOR]    CMake generator {Ninja,Xcode}"
     echo "  -f                      force-run filelist updates and cmake configure before building, and force-copy assets"
     echo "  -d                      DEBUG: generate file lists and exit"
@@ -22,6 +23,8 @@ function usage() {
     echo "  -T                      list all cmake targets"
     echo "  -t [target]             build specified cmake target"
     echo "  -e                      export compile commands"
+    echo "  -I                      ignore external dependencies"
+    echo "  -S                      build static libraries"
 }
 
 #
@@ -33,15 +36,18 @@ GEN_SRC_ONLY=0
 RM_BUILD_ASSETS=0
 RUN_BUILD=1
 CMAKE_TARGET=""
-CMAKE_EXE="${HOME}/.anki/cmake/dist/3.8.1/CMake.app/Contents/bin/cmake"
+CMAKE_EXE="${HOME}/.anki/cmake/dist/3.9.6/CMake.app/Contents/bin/cmake"
 EXPORT_COMPILE_COMMANDS=0
+IGNORE_EXTERNAL_DEPENDENCIES=0
+BUILD_SHARED_LIBS=1
 
 CONFIGURATION=Debug
 PLATFORM=android
 CMAKE_GENERATOR=Ninja
 FEATURES=""
+ADDITIONAL_PLATFORM_ARGS=()
 
-while getopts ":x:c:p:t:g:F:hvfdCTe" opt; do
+while getopts ":x:c:p:a:t:g:F:hvfdCTeIS" opt; do
     case $opt in
         h)
             usage
@@ -77,6 +83,9 @@ while getopts ":x:c:p:t:g:F:hvfdCTe" opt; do
         p)
             PLATFORM="${OPTARG}"
             ;;
+        a)
+            ADDITIONAL_PLATFORM_ARGS+=("${OPTARG}")
+            ;;
         g)
             CMAKE_GENERATOR="${OPTARG}"
             ;;
@@ -88,6 +97,12 @@ while getopts ":x:c:p:t:g:F:hvfdCTe" opt; do
             ;;
         e)
             EXPORT_COMPILE_COMMANDS=1
+            ;;
+        I)
+            IGNORE_EXTERNAL_DEPENDENCIES=1
+            ;;
+        S)
+            BUILD_SHARED_LIBS=0
             ;;
         :)
             echo "Option -${OPTARG} required an argument." >&2
@@ -104,11 +119,11 @@ shift $(($OPTIND - 1))
 # settings
 #
 
-
-if [ ! -d "${TOPLEVEL}/generated" ] || [ ! -d "${TOPLEVEL}/EXTERNALS" ]; then
-    echo "Missing ${TOPLEVEL}/generated or ${TOPLEVEL}/EXTERNALS"
-    echo "Attempting to run fetch-build-deps.sh"
-    ${TOPLEVEL}/project/victor/scripts/fetch-build-deps.sh
+if [ $IGNORE_EXTERNAL_DEPENDENCIES -eq 0 ]; then
+  echo "Attempting to run fetch-build-deps.sh"
+  ${TOPLEVEL}/project/victor/scripts/fetch-build-deps.sh
+else
+  echo "Ignore external dependencies"
 fi
 
 PLATFORM=`echo $PLATFORM | tr "[:upper:]" "[:lower:]"`
@@ -133,7 +148,7 @@ esac
 #
 # Enable feature flags
 #
-FEATURE_FLAGS=""
+FEATURE_FLAGS="-DFACTORY_TEST=0"
 
 for feature in ${FEATURES} ; do
   case $feature in
@@ -228,26 +243,14 @@ if [ $CONFIGURE -eq 1 ]; then
     else
         METABUILD_VERBOSE=""
     fi
-    ${BUILD_TOOLS}/metabuild/metabuild.py $METABUILD_VERBOSE -o ${GEN_SRC_DIR} \
-        androidHAL/BUILD.in \
-        animProcess/BUILD.in \
-        clad/BUILD.in \
-        coretech/common/BUILD.in \
-        coretech/common/clad/BUILD.in \
-        coretech/vision/BUILD.in \
-        coretech/vision/clad/BUILD.in \
-        coretech/planning/BUILD.in \
-        coretech/messaging/BUILD.in \
-        engine/BUILD.in \
-        engine/tools/BUILD.in \
-        lib/util/source/anki/util/BUILD.in \
-        lib/util/source/anki/utilUnitTest/BUILD.in \
-        resources/BUILD.in \
-        robot/BUILD.in \
-        robot/clad/BUILD.in \
-        robot2/BUILD.in \
-        simulator/BUILD.in \
-        test/BUILD.in
+
+    # Scan for BUILD.in files
+    METABUILD_INPUTS=`find . -name BUILD.in`
+
+    # Process BUILD.in files
+    ${BUILD_TOOLS}/metabuild/metabuild.py $METABUILD_VERBOSE \
+        -o ${GEN_SRC_DIR} \
+        ${METABUILD_INPUTS} 
 
     if [ $GEN_SRC_ONLY -eq 1 ]; then
         exit 0
@@ -295,11 +298,14 @@ if [ $CONFIGURE -eq 1 ]; then
         exit 1
     fi
 
+    # Append additional platrom args
+    PLATFORM_ARGS+=(${ADDITIONAL_PLATFORM_ARGS[@]})
+
     $CMAKE_EXE ${TOPLEVEL} \
         ${VERBOSE_ARG} \
         -G${CMAKE_GENERATOR} \
         -DCMAKE_BUILD_TYPE=${CONFIGURATION} \
-        -DBUILD_SHARED_LIBS=1 \
+        -DBUILD_SHARED_LIBS=${BUILD_SHARED_LIBS} \
         ${EXPORT_FLAGS} \
         ${FEATURE_FLAGS} \
         "${PLATFORM_ARGS[@]}"

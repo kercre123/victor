@@ -13,11 +13,11 @@
 #include "engine/viz/vizManager.h"
 #include "engine/robot.h"
 
-#include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/math/quad_impl.h"
-#include "anki/common/basestation/math/polygon_impl.h"
+#include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/engine/math/polygon_impl.h"
 
-#include "anki/messaging/basestation/IComms.h"
+#include "coretech/messaging/engine/IComms.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
 
@@ -49,12 +49,10 @@ constexpr uint8_t kQuadTreeMaxRootDepth = 8;
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-QuadTree::QuadTree(VizManager* vizManager, Robot* robot, MemoryMapData rootData)
+QuadTree::QuadTree(VizManager* vizManager, MemoryMapData rootData)
 : _gfxDirty(true)
 , _processor(vizManager)
 , _root({0,0,1}, kQuadTreeInitialRootSideLength, kQuadTreeInitialMaxDepth, QuadTreeTypes::EQuadrant::Root, nullptr, rootData)  // Note the root is created at z=1
-, _vizManager(vizManager)
-, _robot(robot)
 {
   _processor.SetRoot( &_root );
 }
@@ -69,26 +67,9 @@ QuadTree::~QuadTree()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTree::DrawDebugProcessorInfo(size_t mapIdxHint) const
-{
-  // draw the processor information
-  if ( mapIdxHint == 0 ) {
-    _processor.Draw();
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void QuadTree::ClearDraw() const
-{
-  ANKI_CPU_PROFILE("QuadTree::ClearDraw");
-  
-  std::stringstream instanceId;
-  instanceId << "New_QuadTree_" << this;
-  _vizManager->EraseQuadVector(instanceId.str());
-  
+{ 
   _gfxDirty = true;
-  
-  // also clear processor information
   _processor.ClearDraw();
 }
 
@@ -264,125 +245,23 @@ void QuadTree::Expand(const Poly2f& polyToCover, int shiftAllowedCount)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTree::Broadcast(uint32_t originID) const
+void QuadTree::GetBroadcastInfo(MemoryMapTypes::MapBroadcastData& info) const
 {
-  ANKI_CPU_PROFILE("QuadTree::Broadcast");
-  
-  using namespace ExternalInterface;
-  
-  // Create and send the start (header) message
-  const Point3f& rootCenter = _root.GetCenter();
-  MemoryMapMessageBegin msgBegin(originID, _root.GetLevel(), _root.GetSideLen(), rootCenter.x(), rootCenter.y());
-  _robot->Broadcast(MessageEngineToGame(std::move(msgBegin)));
+  std::stringstream instanceId;
+  instanceId << "QuadTree_" << this;
 
-  // Ask root to add quad info to be sent (do a DFS of entire tree)
-  QuadTreeNode::QuadInfoVector quadInfoVector;
-  _root.AddQuadsToSend(quadInfoVector);
+  info.mapInfo = ExternalInterface::MemoryMapInfo(
+    _root.GetLevel(),
+    _root.GetSideLen(),
+    _root.GetCenter().x(),
+    _root.GetCenter().y(),
+    _root.GetCenter().z(),
+    instanceId.str());
 
-  // Now send these packets in clad message(s), respecting the clad message size limit
-  const size_t kReservedBytes = 1 + 2; // Message overhead for:  Tag, and vector size
-  const size_t kMaxBufferSize = Anki::Comms::MsgPacket::MAX_SIZE;
-  const size_t kMaxBufferForQuads = kMaxBufferSize - kReservedBytes;
-  size_t quadsPerMessage = kMaxBufferForQuads / sizeof(QuadTreeNode::QuadInfoVector::value_type);
-  size_t remainingQuads = quadInfoVector.size();
-  
-  DEV_ASSERT(quadsPerMessage > 0, "QuadTree.Broadcast.InvalidQuadsPerMessage");
-  
-  // We can't initialize messages with a range of vectors, so we have to create copies
-  QuadTreeNode::QuadInfoVector partQuadInfos;
-  partQuadInfos.reserve( quadsPerMessage );
-  
-  // while we have quads to send
-  while ( remainingQuads > 0 )
-  {
-    // how many are we sending in this message?
-    quadsPerMessage = Anki::Util::Min(quadsPerMessage, remainingQuads);
-    
-    // clear the destination vector and insert as many as we are sending, from where we left off
-    partQuadInfos.clear();
-    partQuadInfos.insert( partQuadInfos.end(), quadInfoVector.end() - remainingQuads, quadInfoVector.end() - remainingQuads + quadsPerMessage );
-    
-    remainingQuads -= quadsPerMessage;
-    
-    // send message
-    _robot->Broadcast(MessageEngineToGame(MemoryMapMessage(partQuadInfos)));
-  }
-  
-  // Send the end message
-  _robot->Broadcast(MessageEngineToGame(MemoryMapMessageEnd()));
-}
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTree::BroadcastMemoryMapDraw(uint32_t originID, size_t mapIdxHint) const
-{
-  if ( _gfxDirty && kRenderQuadTree )
-  {
-    ANKI_CPU_PROFILE("QuadTree::BroadcastMemoryMapDraw");
-    
-    _gfxDirty = false;
-    
-    using namespace ExternalInterface;
-    using namespace VizInterface;
-    
-    // Create and send the start (header) message
-    const Point3f& rootCenter = _root.GetCenter();
-    float adjustedZ = rootCenter.z();
-    // The mapIdx hint reveals that we are not the current active map, but an old memory. Apply some offset
-    // so that we don't render on top of any other map
-    if (mapIdxHint > 0)
-    {
-      const float offSetPerIdx = -250.0f;
-      adjustedZ += (mapIdxHint * offSetPerIdx);
-    }
-    else
-    {
-      // small offset to not clip with floor
-      adjustedZ += 10.0f;
-    }
-    
-    std::stringstream instanceId;
-    instanceId << "New_QuadTree_" << this;
-    ExternalInterface::MemoryMapInfo info(_root.GetLevel(), _root.GetSideLen(), rootCenter.x(), rootCenter.y(), adjustedZ, instanceId.str());
-    MemoryMapMessageDebugVizBegin msgBegin(originID, info);
-    _robot->Broadcast(MessageViz(std::move(msgBegin)));
-    
-    // Ask root to add quad info to be sent (do a DFS of entire tree)
-    QuadTreeNode::QuadInfoDebugVizVector quadInfoVector;
-    _root.AddQuadsToSendDebugViz(quadInfoVector);
-    
-    // Now send these packets in clad message(s), respecting the clad message size limit
-    const size_t kReservedBytes = 1 + 2; // Message overhead for:  Tag, and vector size
-    const size_t kMaxBufferSize = Anki::Comms::MsgPacket::MAX_SIZE;
-    const size_t kMaxBufferForQuads = kMaxBufferSize - kReservedBytes;
-    size_t quadsPerMessage = kMaxBufferForQuads / sizeof(QuadTreeNode::QuadInfoVector::value_type);
-    size_t remainingQuads = quadInfoVector.size();
-    
-    DEV_ASSERT(quadsPerMessage > 0, "QuadTree.BroadcastMemoryMapDraw.InvalidQuadsPerMessage");
-    
-    // We can't initialize messages with a range of vectors, so we have to create copies
-    QuadTreeNode::QuadInfoDebugVizVector partQuadInfos;
-    partQuadInfos.reserve(quadsPerMessage);
-    
-    u32 seqNum = 0;
-    // while we have quads to send
-    while (remainingQuads > 0)
-    {
-      // how many are we sending in this message?
-      quadsPerMessage = Anki::Util::Min(quadsPerMessage, remainingQuads);
-      
-      // clear the destination vector and insert as many as we are sending, from where we left off
-      partQuadInfos.clear();
-      partQuadInfos.insert( partQuadInfos.end(), quadInfoVector.end() - remainingQuads, quadInfoVector.end() - remainingQuads + quadsPerMessage );
-      
-      remainingQuads -= quadsPerMessage;
-      
-      // send message
-      _robot->Broadcast(MessageViz(MemoryMapMessageDebugViz(originID, seqNum++, partQuadInfos)));
-    }
-    
-    // Send the end message
-    _robot->Broadcast(MessageViz(MemoryMapMessageDebugVizEnd(originID)));
-  }
+  _root.AddQuadsToSend(info.quadInfo);
+  info.isDirty = _gfxDirty;
+
+  _gfxDirty = false;
 }
   
 

@@ -12,10 +12,10 @@
 #ifdef COZMO_RECORDING_PLAYBACK
 
 #include "commsPlayback.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 //#include "basestation/utils/debug.h"
 #include "engine/utils/exceptions.h"
-#include "anki/common/basestation/utils/logging/logging.h"
+#include "coretech/common/engine/utils/logging/logging.h"
 
 //using namespace AnkiUtil;
 

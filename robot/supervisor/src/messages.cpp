@@ -9,7 +9,6 @@
 #include <string.h>
 
 #include "backpackLightController.h"
-#include "blockLightController.h"
 #include "dockingController.h"
 #include "headController.h"
 #include "imuFilter.h"
@@ -39,6 +38,7 @@ namespace Anki {
         constexpr auto IS_MOVING = EnumToUnderlyingType(RobotStatusFlag::IS_MOVING);
         constexpr auto IS_CARRYING_BLOCK = EnumToUnderlyingType(RobotStatusFlag::IS_CARRYING_BLOCK);
         constexpr auto IS_PICKING_OR_PLACING = EnumToUnderlyingType(RobotStatusFlag::IS_PICKING_OR_PLACING);
+        constexpr auto IS_BUTTON_PRESSED = EnumToUnderlyingType(RobotStatusFlag::IS_BUTTON_PRESSED);
         constexpr auto IS_PICKED_UP = EnumToUnderlyingType(RobotStatusFlag::IS_PICKED_UP);
         constexpr auto IS_FALLING = EnumToUnderlyingType(RobotStatusFlag::IS_FALLING);
         constexpr auto IS_PATHING = EnumToUnderlyingType(RobotStatusFlag::IS_PATHING);
@@ -71,9 +71,6 @@ namespace Anki {
 
 #ifdef SIMULATOR
         bool isForcedDelocalizing_ = false;
-        uint32_t cubeID_;
-        u8 rotationPeriod_;
-        bool cubIDSet_ = false;
 #endif
       } // private namespace
 
@@ -165,6 +162,7 @@ namespace Anki {
         robotState_.status |= (PickAndPlaceController::IsCarryingBlock() ? IS_CARRYING_BLOCK : 0);
         robotState_.status |= (PickAndPlaceController::IsBusy() ? IS_PICKING_OR_PLACING : 0);
         robotState_.status |= (IMUFilter::IsPickedUp() ? IS_PICKED_UP : 0);
+        robotState_.status |= (HAL::GetButtonState(HAL::BUTTON_POWER) > 0 ? IS_BUTTON_PRESSED : 0 );
         robotState_.status |= (PathFollower::IsTraversingPath() ? IS_PATHING : 0);
         robotState_.status |= (LiftController::IsInPosition() ? LIFT_IN_POS : 0);
         robotState_.status |= (HeadController::IsInPosition() ? HEAD_IN_POS : 0);
@@ -211,7 +209,6 @@ namespace Anki {
 
         AnkiEvent( "watchdog_reset_count", "%d", HAL::GetWatchdogResetCounter());
       } // ProcessRobotInit()
-
 
       void Process_absLocalizationUpdate(const RobotInterface::AbsoluteLocalizationUpdate& msg)
       {
@@ -415,6 +412,13 @@ namespace Anki {
         HeadController::SetAngularVelocity(msg.speed_rad_per_sec, MAX_HEAD_ACCEL_RAD_PER_S2);
       }
 
+      // Send ack of head motor action
+      void AckMotorCommand(u8 actionID) {
+        RobotInterface::MotorActionAck ack;
+        ack.actionID = actionID;
+        RobotInterface::SendMessage(ack);
+      }
+      
       void Process_liftHeight(const RobotInterface::SetLiftHeight& msg) {
         //AnkiInfo( "Messages.Process_liftHeight.Recvd", "height %f, maxSpeed %f, duration %f", msg.height_mm, msg.max_speed_rad_per_sec, msg.duration_sec);
         if (msg.duration_sec > 0) {
@@ -422,6 +426,7 @@ namespace Anki {
         } else {
           LiftController::SetDesiredHeight(msg.height_mm, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
         }
+        AckMotorCommand(msg.actionID);
       }
 
       void Process_headAngle(const RobotInterface::SetHeadAngle& msg) {
@@ -431,6 +436,7 @@ namespace Anki {
         } else {
           HeadController::SetDesiredAngle(msg.angle_rad, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
         }
+        AckMotorCommand(msg.actionID);
       }
 
       void Process_headAngleUpdate(const RobotInterface::HeadAngleUpdate& msg) {
@@ -445,6 +451,7 @@ namespace Anki {
                                              msg.angle_tolerance,
                                              msg.use_shortest_direction,
                                              msg.num_half_revolutions);
+        AckMotorCommand(msg.actionID);
       }
 
       void Process_setCarryState(const CarryStateUpdate& update)
@@ -627,40 +634,7 @@ namespace Anki {
       {
         BackpackLightController::SetParams(msg);
       }
-
-      void Process_setPropSlot(const SetPropSlot& msg)
-      {
-        HAL::AssignSlot(msg.slot, msg.factory_id);
-      }
-      void Process_setCubeGamma(const SetCubeGamma& msg)
-      {
-        // Nothing to do here
-      }
-      void Process_setCubeID(const CubeID& msg)
-      {
-        #ifdef SIMULATOR
-        cubeID_ = msg.objectID;
-        rotationPeriod_ = msg.rotationPeriod_frames;
-        cubIDSet_ = true;
-        #endif
-      }
-
-      void Process_streamObjectAccel(const StreamObjectAccel& msg)
-      {
-        HAL::StreamObjectAccel(msg.objectID, msg.enable);
-      }
-
-      void Process_setCubeLights(const CubeLights& msg)
-      {
-        #ifdef SIMULATOR
-        if(!cubIDSet_)
-        {
-          return;
-        }
-        BlockLightController::SetLights(cubeID_, msg.lights, rotationPeriod_);
-        cubIDSet_ = false;
-        #endif
-      }
+      
 
       void Process_getMfgInfo(const RobotInterface::GetManufacturingInfo& msg)
       {

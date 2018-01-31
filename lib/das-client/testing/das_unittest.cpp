@@ -90,3 +90,7 @@ TEST(DAS, SetGlobalGameId) {
 
   _DAS_ClearGlobals();
 }
+
+TEST(DAS, TearDown) {
+  DASClose();
+}

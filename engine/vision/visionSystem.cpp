@@ -12,12 +12,12 @@
 
 #include "visionSystem.h"
 
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/math/quad_impl.h"
-#include "anki/common/basestation/math/rect_impl.h"
-#include "anki/common/basestation/math/linearAlgebra_impl.h"
-#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/engine/math/rect_impl.h"
+#include "coretech/common/engine/math/linearAlgebra_impl.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
 
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
@@ -29,12 +29,13 @@
 #include "engine/vision/visionModesHelpers.h"
 #include "engine/utils/cozmoFeatureGate.h"
 
-#include "anki/vision/basestation/cameraImagingPipeline.h"
-#include "anki/vision/basestation/faceTracker.h"
-#include "anki/vision/basestation/image_impl.h"
-#include "anki/vision/basestation/imageCache.h"
-#include "anki/vision/basestation/markerDetector.h"
-#include "anki/vision/basestation/petTracker.h"
+#include "coretech/vision/engine/benchmark.h"
+#include "coretech/vision/engine/cameraImagingPipeline.h"
+#include "coretech/vision/engine/faceTracker.h"
+#include "coretech/vision/engine/image_impl.h"
+#include "coretech/vision/engine/imageCache.h"
+#include "coretech/vision/engine/markerDetector.h"
+#include "coretech/vision/engine/petTracker.h"
 
 #include "clad/vizInterface/messageViz.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -67,6 +68,7 @@ namespace Cozmo {
   CONSOLE_VAR(s32, kClaheTileSize,          "Vision.PreProcessing", 4);
   CONSOLE_VAR(u8,  kClaheWhenDarkThreshold, "Vision.PreProcessing", 80); // In MarkerDetectionCLAHE::WhenDark mode, only use CLAHE when img avg < this
   CONSOLE_VAR(s32, kPostClaheSmooth,        "Vision.PreProcessing", -3); // 0: off, +ve: Gaussian sigma, -ve (& odd): Box filter size
+  CONSOLE_VAR(s32, kMarkerDetector_ScaleMultiplier, "Vision.MarkerDetection", 1);
   
   CONSOLE_VAR(f32, kEdgeThreshold,  "Vision.OverheadEdges", 50.f);
   CONSOLE_VAR(u32, kMinChainLength, "Vision.OverheadEdges", 3); // in number of edge pixels
@@ -93,6 +95,9 @@ namespace Cozmo {
   
   CONSOLE_VAR(u32, kCalibTargetType, "Vision.Calibration", (u32)CameraCalibrator::CalibTargetType::CHECKERBOARD);
   
+  // If non-zero, toggles the corresponding VisionMode and sets back to 0
+  CONSOLE_VAR(u32, kToggleVisionMode, "Vision.General", 0);
+  
   namespace {
     // These are initialized from Json config:
     u8 kTooDarkValue   = 15;
@@ -117,6 +122,7 @@ namespace Cozmo {
   , _laserPointDetector(new LaserPointDetector(_vizManager))
   , _overheadEdgeDetector(new OverheadEdgesDetector(_camera, _vizManager, *this))
   , _cameraCalibrator(new CameraCalibrator(*this))
+  , _benchmark(new Vision::Benchmark())
   , _clahe(cv::createCLAHE())
   {
     DEV_ASSERT(_context != nullptr, "VisionSystem.Constructor.NullContext");
@@ -352,7 +358,14 @@ namespace Cozmo {
     
     return RESULT_OK;
   }
-  
+
+  void VisionSystem::SetSaveParameters(const ImageSendMode saveMode, const std::string& path, const int8_t quality)
+  {
+    _imageSaveMode = saveMode;
+    _imageSavePath = path;
+    _imageSaveQuality = std::min(int8_t(100), quality);
+  }
+
   Result VisionSystem::EnableMode(VisionMode whichMode, bool enabled)
   {
     switch(whichMode)
@@ -967,10 +980,14 @@ namespace Cozmo {
     return RESULT_OK;
   }
 
-  Result VisionSystem::ApplyCLAHE(const Vision::Image& inputImageGray,
+  Result VisionSystem::ApplyCLAHE(Vision::ImageCache& imageCache,
                                   const MarkerDetectionCLAHE useCLAHE,
                                   Vision::Image& claheImage)
   {
+    const Vision::ImageCache::Size whichSize = imageCache.GetSize(kMarkerDetector_ScaleMultiplier,
+                                                                  Vision::ResizeMethod::Linear);
+    const Vision::Image& inputImageGray = imageCache.GetGray(whichSize);
+    
     switch(useCLAHE)
     {
       case MarkerDetectionCLAHE::Off:
@@ -1073,7 +1090,7 @@ namespace Cozmo {
   } // ApplyCLAHE()
   
   
-  Result VisionSystem::DetectMarkersWithCLAHE(const Vision::Image& inputImageGray,
+  Result VisionSystem::DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
                                               const Vision::Image& claheImage,
                                               std::vector<Anki::Rectangle<s32>>& detectionRects,
                                               MarkerDetectionCLAHE useCLAHE)
@@ -1083,11 +1100,13 @@ namespace Cozmo {
     // Currently assuming we detect markers first, so we won't make use of anything already detected
     DEV_ASSERT(detectionRects.empty(), "VisionSystem.DetectMarkersWithCLAHE.ExpectingEmptyDetectionRects");
     
+    const auto whichSize = imageCache.GetSize(kMarkerDetector_ScaleMultiplier, Vision::ResizeMethod::Linear);
+    
     switch(useCLAHE)
     {
       case MarkerDetectionCLAHE::Off:
       {
-        lastResult = _markerDetector->Detect(inputImageGray, _currentResult.observedMarkers);
+        lastResult = _markerDetector->Detect(imageCache.GetGray(whichSize), _currentResult.observedMarkers);
         break;
       }
         
@@ -1105,7 +1124,7 @@ namespace Cozmo {
         DEV_ASSERT(!claheImage.IsEmpty(), "VisionSystem.DetectMarkersWithCLAHE.useBoth.ImageIsEmpty");
         
         // First run will put quads into detectionRects
-        lastResult = _markerDetector->Detect(inputImageGray, _currentResult.observedMarkers);
+        lastResult = _markerDetector->Detect(imageCache.GetGray(whichSize), _currentResult.observedMarkers);
         
         if(RESULT_OK == lastResult)
         {
@@ -1119,13 +1138,13 @@ namespace Cozmo {
         
       case MarkerDetectionCLAHE::Alternating:
       {
-        const Vision::Image* whichImg = &inputImageGray;
         if(_currentUseCLAHE) {
           DEV_ASSERT(!claheImage.IsEmpty(), "VisionSystem.DetectMarkersWithCLAHE.useAlternating.ImageIsEmpty");
-          whichImg = &claheImage;
+          lastResult = _markerDetector->Detect(claheImage, _currentResult.observedMarkers);
         }
-        
-        lastResult = _markerDetector->Detect(*whichImg, _currentResult.observedMarkers);
+        else {
+          lastResult = _markerDetector->Detect(imageCache.GetGray(whichSize), _currentResult.observedMarkers);
+        }
         
         break;
       }
@@ -1134,14 +1153,14 @@ namespace Cozmo {
       {
         // NOTE: _currentUseCLAHE should have been set based on image brightness already
         
-        const Vision::Image* whichImg = &inputImageGray;
         if(_currentUseCLAHE)
         {
           DEV_ASSERT(!claheImage.IsEmpty(), "VisionSystem.DetectMarkersWithCLAHE.useWhenDark.ImageIsEmpty");
-          whichImg = &claheImage;
+          lastResult = _markerDetector->Detect(claheImage, _currentResult.observedMarkers);
         }
-        
-        lastResult = _markerDetector->Detect(*whichImg, _currentResult.observedMarkers);
+        else {
+          lastResult = _markerDetector->Detect(imageCache.GetGray(whichSize), _currentResult.observedMarkers);
+        }
         
         break;
       }
@@ -1151,21 +1170,38 @@ namespace Cozmo {
         break;
     }
     
-    for(auto & marker : _currentResult.observedMarkers)
+    auto markerIter = _currentResult.observedMarkers.begin();
+    while(markerIter != _currentResult.observedMarkers.end())
     {
+      auto & marker = *markerIter;
+      
       // Add the bounding rect of the (unwarped) marker to the detection rectangles
-      detectionRects.emplace_back(marker.GetImageCorners());
+      Quad2f scaledCorners(marker.GetImageCorners());
+      if(kMarkerDetector_ScaleMultiplier != 1)
+      {
+        for(auto & corner : scaledCorners)
+        {
+          corner *= kMarkerDetector_ScaleMultiplier;
+        }
+        
+        marker.SetImageCorners(scaledCorners);
+      }
+      
+      // Note that the scaled corners might get changed slightly by rolling shutter warping
+      // below, making the detection rect slightly inaccurate, but these rectangles don't need
+      // to be super accurate. And we'd rather still report something being detected here
+      // even if the warping pushes a corner OOB, thereby removing the marker from the
+      // actual reported list.
+      detectionRects.emplace_back(scaledCorners);
       
       // Instead of correcting the entire image only correct the quads
       // Apply the appropriate shift to each of the corners of the quad to get a shifted quad
-      bool allCornersInBounds = true;
       if(_doRollingShutterCorrection)
       {
-        Quad2f warpedCorners(marker.GetImageCorners());
-        
-        for(auto & corner : warpedCorners)
+        bool allCornersInBounds = true;
+        for(auto & corner : scaledCorners)
         {
-          const int warpIndex = std::floor(corner.y() / (inputImageGray.GetNumRows() / _rollingShutterCorrector.GetNumDivisions()));
+          const int warpIndex = std::floor(corner.y() / (imageCache.GetOrigNumRows() / _rollingShutterCorrector.GetNumDivisions()));
           DEV_ASSERT_MSG(warpIndex >= 0 && warpIndex < _rollingShutterCorrector.GetPixelShifts().size(),
                          "VisionSystem.DetectMarkersWithCLAHE.WarpIndexOOB", "Index:%d Corner y:%f",
                          warpIndex, corner.y());
@@ -1175,8 +1211,8 @@ namespace Cozmo {
 
           if(Util::IsFltLTZero(corner.x()) ||
              Util::IsFltLTZero(corner.y()) ||
-             Util::IsFltGE(corner.x(), (f32)inputImageGray.GetNumCols()) ||
-             Util::IsFltGE(corner.y(), (f32)inputImageGray.GetNumRows()))
+             Util::IsFltGE(corner.x(), (f32)imageCache.GetOrigNumCols()) ||
+             Util::IsFltGE(corner.y(), (f32)imageCache.GetOrigNumRows()))
           {
             // Warped corner is outside image bounds. Just drop this entire marker. Technically, we could still
             // probably estimate its pose just fine, but other things later may expect all corners to be in bounds
@@ -1186,16 +1222,19 @@ namespace Cozmo {
           }
         }
         
-        if(allCornersInBounds)
+        if(!allCornersInBounds)
         {
-          Vision::ObservedMarker warpedMarker(marker.GetTimeStamp(),
-                                              marker.GetCode(),
-                                              warpedCorners,
-                                              marker.GetSeenBy());
-          
-          std::swap(marker, warpedMarker);
+          // Remove this OOB marker from the list entirely
+          PRINT_CH_DEBUG(kLogChannelName, "VisionSystem.DetectMarkersWithCLAHE.RemovingMarkerOOB", 
+                         "%s", Vision::MarkerTypeStrings[marker.GetCode()]);
+          markerIter = _currentResult.observedMarkers.erase(markerIter);
+          continue;
         }
+        
+        marker.SetImageCorners(scaledCorners); // "scaled" corners are now the warped corners
       }
+      
+      ++markerIter;
     }
     
     return lastResult;
@@ -1222,6 +1261,22 @@ namespace Cozmo {
       PRINT_NAMED_WARNING("VisionSystem.Update.NotReady",
                           "Must be initialized and have calibrated camera to Update");
       return RESULT_FAIL;
+    }
+    
+    // Make it possible to toggle vision modes using console vars:
+    if(kToggleVisionMode > 0)
+    {
+      const VisionMode mode = static_cast<VisionMode>(kToggleVisionMode);
+      bool enable = true;
+      if(_mode.IsBitFlagSet(mode))
+      {
+        enable = false;
+      }
+      
+      PRINT_CH_INFO(kLogChannelName, "VisionSystem.Update.TogglingVisionModeByConsoleVar",
+                    "%s mode %s", (enable ? "Enabling" : "Disabling"), EnumToString(mode));
+      EnableMode(mode, enable);
+      kToggleVisionMode = 0;
     }
     
     _frameNumber++;
@@ -1282,20 +1337,23 @@ namespace Cozmo {
       cameraParamsRequested = false;
     }
     
+    MarkerDetectionCLAHE useCLAHE = MarkerDetectionCLAHE::Off;
     Vision::Image claheImage;
-    
-    // Apply CLAHE if enabled:
-    DEV_ASSERT(kUseCLAHE_u8 < Util::EnumToUnderlying(MarkerDetectionCLAHE::Count),
-               "VisionSystem.ApplyCLAHE.BadUseClaheVal");
-    
-    MarkerDetectionCLAHE kUseCLAHE = static_cast<MarkerDetectionCLAHE>(kUseCLAHE_u8);
-    
-    // Note: this will do nothing and leave claheImage empty if CLAHE is disabled
-    // entirely or for this frame.
-    lastResult = ApplyCLAHE(inputImageGray, kUseCLAHE, claheImage);
-    if(RESULT_OK != lastResult) {
-      PRINT_NAMED_WARNING("VisionSystem.Update.FailedCLAHE", "");
-      return lastResult;
+    if(_markerDetector->IsDarkOnLight())
+    {
+      // Apply CLAHE if enabled:
+      DEV_ASSERT(kUseCLAHE_u8 < Util::EnumToUnderlying(MarkerDetectionCLAHE::Count),
+                 "VisionSystem.ApplyCLAHE.BadUseClaheVal");
+      
+      useCLAHE = static_cast<MarkerDetectionCLAHE>(kUseCLAHE_u8);
+      
+      // Note: this will do nothing and leave claheImage empty if CLAHE is disabled
+      // entirely or for this frame.
+      lastResult = ApplyCLAHE(imageCache, useCLAHE, claheImage);
+      if(RESULT_OK != lastResult) {
+        PRINT_NAMED_WARNING("VisionSystem.Update.FailedCLAHE", "");
+        return lastResult;
+      }
     }
     
     // Rolling shutter correction
@@ -1319,7 +1377,7 @@ namespace Cozmo {
     if(ShouldProcessVisionMode(VisionMode::DetectingMarkers)) {
       Tic("TotalDetectingMarkers");
 
-      lastResult = DetectMarkersWithCLAHE(inputImageGray, claheImage, detectionRects, kUseCLAHE);
+      lastResult = DetectMarkersWithCLAHE(imageCache, claheImage, detectionRects, useCLAHE);
       if(RESULT_OK != lastResult) {
         PRINT_NAMED_ERROR("VisionSystem.Update.DetectMarkersFailed", "");
         return lastResult;
@@ -1474,6 +1532,54 @@ namespace Cozmo {
       visionModesProcessed.SetBitFlag(VisionMode::CheckingQuality, true);
     }
     
+    if(ShouldProcessVisionMode(VisionMode::Benchmarking))
+    {
+      Tic("Benchmarking");
+      const Result benchMarkResult = _benchmark->Update(imageCache);
+      Toc("BenchMarking");
+      
+      if(RESULT_OK != benchMarkResult) {
+        PRINT_NAMED_ERROR("VisionSystem.Update.BenchmarkFailed", "");
+        // Continue processing, since this should be independent of other modes
+      }
+      else {
+        visionModesProcessed.SetBitFlag(VisionMode::Benchmarking, true);
+      }
+    }
+    
+    if(ShouldProcessVisionMode(VisionMode::SavingImages) && (ImageSendMode::Off != _imageSaveMode))
+    {
+      Tic("SavingImages");
+
+      // Zero-padded frame number as filename:
+      char filename[32];
+      snprintf(filename, sizeof(filename)-1, "%08d.%s", 
+               _frameNumber, (_imageSaveQuality < 0 ? "png" : "jpg"));
+
+      const std::string fullFilename = Util::FileUtils::FullFilePath({_imageSavePath, filename});
+      
+      PRINT_CH_DEBUG(kLogChannelName, "VisionSystem.Update.SavingImage", "Saving to %s",
+                     fullFilename.c_str());
+         
+      const Result saveResult = imageCache.GetRGB().Save(fullFilename, _imageSaveQuality);
+
+      if(ImageSendMode::SingleShot == _imageSaveMode)
+      {
+        _imageSaveMode = ImageSendMode::Off;
+      }
+
+      Toc("SavingImages");
+
+      if(RESULT_OK != saveResult)
+      {
+        PRINT_NAMED_ERROR("VisionSystem.Update.SavingImagesFailed", "");
+        // Continue processing, since this should be independent of other modes
+      }
+      else {
+        visionModesProcessed.SetBitFlag(VisionMode::SavingImages, true);
+      }
+    }
+
     // We've computed everything from this image that we're gonna compute.
     // Push it onto the queue of results all together.
     _mutex.lock();

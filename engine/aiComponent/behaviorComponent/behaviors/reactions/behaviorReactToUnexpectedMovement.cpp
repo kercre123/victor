@@ -35,17 +35,17 @@ BehaviorReactToUnexpectedMovement::BehaviorReactToUnexpectedMovement(const Json:
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorReactToUnexpectedMovement::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorReactToUnexpectedMovement::WantsToBeActivatedBehavior() const
 {
   return true;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorReactToUnexpectedMovement::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToUnexpectedMovement::OnBehaviorActivated()
 {
-  if(behaviorExternalInterface.HasMoodManager()){
-    auto& moodManager = behaviorExternalInterface.GetMoodManager();
+  if(GetBEI().HasMoodManager()){
+    auto& moodManager = GetBEI().GetMoodManager();
     // Make Cozmo more frustrated if he keeps running into things/being turned
     moodManager.TriggerEmotionEvent("ReactToUnexpectedMovement",
                                     MoodManager::GetCurrentTimeInSeconds());
@@ -62,7 +62,7 @@ Result BehaviorReactToUnexpectedMovement::OnBehaviorActivated(BehaviorExternalIn
   
   AnimationTrigger reactionAnimation = AnimationTrigger::ReactToUnexpectedMovement;
   
-  NeedId expressedNeed = behaviorExternalInterface.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression();
+  NeedId expressedNeed = GetBEI().GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression();
   if(expressedNeed == NeedId::Energy){
     reactionAnimation = AnimationTrigger::ReactToUnexpectedMovement_Severe_Energy;
   }else if(expressedNeed == NeedId::Repair){
@@ -73,14 +73,12 @@ Result BehaviorReactToUnexpectedMovement::OnBehaviorActivated(BehaviorExternalIn
                                                  kNumLoops, kInterruptRunning, tracksToLock), [this]()
   {
     BehaviorObjectiveAchieved(BehaviorObjective::ReactedToUnexpectedMovement);
-  });
-  
-  return RESULT_OK;
+  });  
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToUnexpectedMovement::AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToUnexpectedMovement::AlwaysHandleInScope(const EngineToGameEvent& event)
 {
   _unexpectedMovementSide = event.GetData().Get_UnexpectedMovement().movementSide;
 }

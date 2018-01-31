@@ -33,12 +33,15 @@ protected:
   BehaviorBouncer(const Json::Value& config);
   
   // ICozmoBehavior interface
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual bool CarryingObjectHandledInternally() const override { return false; }
+  virtual bool WantsToBeActivatedBehavior() const override;
   
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual BehaviorStatus UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.behaviorAlwaysDelegates = false;
+  }
+
+  virtual void OnBehaviorActivated() override;
+  virtual void BehaviorUpdate() override;
+  virtual void OnBehaviorDeactivated() override;
   
 private:
 
@@ -93,8 +96,8 @@ private:
   // Update helpers
   void UpdatePaddle(const Vision::TrackedFace * face);
   void UpdateBall();
-  void UpdateSound(BehaviorExternalInterface& behaviorExternalInterface);
-  void UpdateDisplay(BehaviorExternalInterface& behaviorExternalInterface);
+  void UpdateSound();
+  void UpdateDisplay();
   
   // Draw helpers
   void DrawPaddle(Vision::Image& image);
@@ -102,8 +105,8 @@ private:
   void DrawScore(Vision::Image& image);
   
   // Action helpers
-  void StartAnimation(BehaviorExternalInterface& behaviorExternalInterface, const AnimationTrigger& animationTrigger);
-  void StartAnimation(BehaviorExternalInterface& behaviorExternalInterface, const AnimationTrigger& animationTrigger, const BouncerState& nextState);
+  void StartAnimation(const AnimationTrigger& animationTrigger);
+  void StartAnimation(const AnimationTrigger& animationTrigger, const BouncerState& nextState);
 };
   
 

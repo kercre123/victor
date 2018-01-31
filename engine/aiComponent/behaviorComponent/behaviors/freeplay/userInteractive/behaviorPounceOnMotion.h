@@ -28,16 +28,19 @@ private:
   BehaviorPounceOnMotion(const Json::Value& config);
   
 public:
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual bool CarryingObjectHandledInternally() const override {return false;}
+  virtual bool WantsToBeActivatedBehavior() const override;
 
 protected:
-  virtual void AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void HandleWhileInScopeButNotActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void AlwaysHandleInScope(const EngineToGameEvent& event) override;
+  virtual void HandleWhileActivated(const EngineToGameEvent& event) override;
+  virtual void HandleWhileInScopeButNotActivated(const EngineToGameEvent& event) override;
 
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.visionModesForActiveScope->push_back({ VisionMode::DetectingMotion, EVisionUpdateFrequency::Standard });
+  }
+
+  virtual void OnBehaviorActivated() override;
+  virtual void OnBehaviorDeactivated() override;
 
   float _maxPounceDist = 120.0f;
   float _minGroundAreaForPounce = 0.01f;
@@ -109,28 +112,28 @@ private:
   
   // modeled off of DelegateIfInControl callbacks
   template<typename T>
-  void PounceOnMotionWithCallback(BehaviorExternalInterface& behaviorExternalInterface, void(T::*callback)(BehaviorExternalInterface&), IActionRunner* intermittentAction = nullptr);
+  void PounceOnMotionWithCallback(void(T::*callback)(), IActionRunner* intermittentAction = nullptr);
 
   // reset everything for when the behavior is finished
-  void Cleanup(BehaviorExternalInterface& behaviorExternalInterface);
+  void Cleanup();
   
   void SetState_internal(State state, const std::string& stateName);
-  void TransitionToInitialPounce(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToInitialReaction(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToInitialSearch(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToBringingHeadDown(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToRotateToWatchingNewArea(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToWaitForMotion(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionFromWaitForMotion(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToTurnToMotion(BehaviorExternalInterface& behaviorExternalInterface, int16_t motion_img_x, int16_t motion_img_y);
-  void TransitionToCreepForward(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToPounce(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToResultAnim(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToBackUp(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToGetOutBored(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToInitialPounce();
+  void TransitionToInitialReaction();
+  void TransitionToInitialSearch();
+  void TransitionToBringingHeadDown();
+  void TransitionToRotateToWatchingNewArea();
+  void TransitionToWaitForMotion();
+  void TransitionFromWaitForMotion();
+  void TransitionToTurnToMotion(int16_t motion_img_x, int16_t motion_img_y);
+  void TransitionToCreepForward();
+  void TransitionToPounce();
+  void TransitionToResultAnim();
+  void TransitionToBackUp();
+  void TransitionToGetOutBored();
   
-  void InitHelper(BehaviorExternalInterface& behaviorExternalInterface);
-  bool IsFingerCaught(BehaviorExternalInterface& behaviorExternalInterface);
+  void InitHelper();
+  bool IsFingerCaught();
   
 };
 

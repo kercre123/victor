@@ -9,10 +9,13 @@
 #ifndef __Anki_Cozmo_RobotStateHistory_H__
 #define __Anki_Cozmo_RobotStateHistory_H__
 
-#include "anki/common/types.h"
-#include "anki/common/basestation/math/pose.h"
-#include "anki/vision/basestation/camera.h"
+#include "coretech/common/shared/types.h"
+#include "coretech/common/engine/math/pose.h"
+#include "coretech/vision/engine/camera.h"
 #include "clad/types/robotStatusAndActions.h"
+
+#include "engine/dependencyManagedComponent.h"
+#include "engine/robotComponents_fwd.h"
 #include "util/helpers/templateHelpers.h"
 
 namespace Anki {
@@ -88,12 +91,27 @@ namespace Anki {
      * Can also be used to check robot state (e.g. whether carrying an object) at a historical time.  
      *
      */
-    class RobotStateHistory
+    class RobotStateHistory : public IDependencyManagedComponent<RobotComponentID>
     {
     public:
       
       RobotStateHistory();
-    
+
+      //////
+      // IDependencyManagedComponent functions
+      //////
+      virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override {};
+      // Maintain the chain of initializations currently in robot - it might be possible to
+      // change the order of initialization down the line, but be sure to check for ripple effects
+      // when changing this function
+      virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
+        dependencies.insert(RobotComponentID::Animation);
+      };
+      virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
+      //////
+      // end IDependencyManagedComponent functions
+      //////
+        
       // Clear all history
       void Clear();
       

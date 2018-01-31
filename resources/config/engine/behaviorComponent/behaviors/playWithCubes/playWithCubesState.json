@@ -1,0 +1,11 @@
+{
+  "behaviorID" : "PlayWithCubesState",
+  "behaviorClass" : "DispatcherQueue",
+
+  "behaviors" : [
+    "DriveOffCharger",
+    "ShortLookAroundForFaceAndCube",
+    "PlayWithCubes",
+    "PutDownBlock"
+  ]
+}

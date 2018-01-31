@@ -25,7 +25,7 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "util/math/math.h"
 
@@ -544,14 +544,12 @@ ActionResult ITrackAction::CheckIfDone()
                            distance_mm, RAD_TO_DEG(relPanAngle), rotSpeed_radPerSec, accel);
           }
           
-          RobotInterface::SetBodyAngle setBodyAngle(turnAngle.ToFloat(),      // angle_rad
-                                                    rotSpeed_radPerSec,       // max_speed_rad_per_sec
-                                                    accel,                    // accel_rad_per_sec2
-                                                    _panTolerance.ToFloat(),  // angle_tolerance
-                                                    0,                        // num_half_revolutions
-                                                    true);                    // use_shortest_direction
-          
-          if(RESULT_OK != GetRobot().SendRobotMessage<RobotInterface::SetBodyAngle>(std::move(setBodyAngle))) {
+          if(RESULT_OK != GetRobot().GetMoveComponent().TurnInPlace(turnAngle.ToFloat(),      // angle_rad
+                                                                 rotSpeed_radPerSec,       // max_speed_rad_per_sec
+                                                                 accel,                    // accel_rad_per_sec2
+                                                                 _panTolerance.ToFloat(),  // angle_tolerance
+                                                                 0,                        // num_half_revolutions
+                                                                 true)) {                  // use_shortest_direction
             return CheckIfDoneReturnHelper(ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED, false);
           }
         }

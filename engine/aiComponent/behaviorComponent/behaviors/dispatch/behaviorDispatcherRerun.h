@@ -29,23 +29,25 @@ public:
   
   static Json::Value CreateConfig(BehaviorID newConfigID, BehaviorID delegateID, const int numRuns);  
 
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override{return true;}
-  virtual bool CarryingObjectHandledInternally() const override{ return true;}
-  virtual bool ShouldRunWhileOffTreads() const override{return true;}
-  virtual bool ShouldRunWhileOnCharger() const override { return true;}
+  virtual bool WantsToBeActivatedBehavior() const override{return true;}
   
 protected:
   // Construction has to go through BehvaiorContainer
   friend class BehaviorContainer;
   BehaviorDispatcherRerun(const Json::Value& config);
 
-  virtual void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
-                                             override { return Status::Running;}
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenCarryingObject = true;
+    modifiers.wantsToBeActivatedWhenOffTreads = true;
+    modifiers.wantsToBeActivatedWhenOnCharger = true;
+    modifiers.behaviorAlwaysDelegates = false;
+  }
 
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void InitBehavior() override;
+
+  virtual void OnBehaviorActivated() override;
+  virtual void BehaviorUpdate() override;
+  virtual void OnBehaviorDeactivated() override;
 
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
 
@@ -58,7 +60,7 @@ private:
   int _numRunsRemaining;
   ICozmoBehaviorPtr _delegatePtr;
 
-  void CheckRerunState(BehaviorExternalInterface& behaviorExternalInterface);
+  void CheckRerunState();
 };
 
 }

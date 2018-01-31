@@ -16,7 +16,7 @@
 #include "clad/types/emotionTypes.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 #include "engine/events/ankiEventMgr.h"
-#include "anki/vision/basestation/image.h"
+#include "coretech/vision/engine/image.h"
 #include "engine/encodedImage.h"
 #include "util/container/circularBuffer.h"
 #include <webots/Supervisor.hpp>
@@ -51,6 +51,7 @@ enum class VizTextLabelType : unsigned int
   TEXT_LABEL_SPEEDS,
   TEXT_LABEL_BATTERY,
   TEXT_LABEL_ANIM,
+  TEXT_LABEL_ANIM_TRACK_LOCKS,
   TEXT_LABEL_VID_RATE,
   TEXT_LABEL_STATUS_FLAG,
   TEXT_LABEL_STATUS_FLAG_2,
@@ -92,6 +93,7 @@ private:
   void ProcessVizImageChunkMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizTrackerQuadMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizRobotStateMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
+  void ProcessVizCurrentAnimation(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessCameraInfo(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessObjectConnectionState(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessObjectMovingState(const AnkiEvent<VizInterface::MessageViz>& msg);
@@ -227,6 +229,9 @@ private:
   std::map<u32, ActiveObjectInfo> _activeObjectInfoMap;
   
   void UpdateActiveObjectInfoText(u32 activeID);
+
+  std::string _currAnimName = "";
+  u8          _currAnimTag = 0;
 };
 
 } // end namespace Cozmo

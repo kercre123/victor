@@ -26,15 +26,15 @@
 #include "engine/cozmoContext.h"
 #include "engine/drivingAnimationHandler.h"
 
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "clad/externalInterface/messageGameToEngine.h"
 
 #include "util/logging/logging.h"
 #include "util/math/math.h"
 
-#define SET_STATE(s,bEI) SetState_internal(State::s, #s,bEI)
+#define SET_STATE(s) SetState_internal(State::s, #s)
 
 namespace Anki {
 namespace Cozmo {
@@ -66,7 +66,7 @@ BehaviorOnboardingShowCube::BehaviorOnboardingShowCube(const Json::Value& config
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorOnboardingShowCube::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorOnboardingShowCube::WantsToBeActivatedBehavior() const
 {
   // behavior will be killed by unity, the only thing that can start it...
   return true;
@@ -74,9 +74,9 @@ bool BehaviorOnboardingShowCube::WantsToBeActivatedBehavior(BehaviorExternalInte
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorOnboardingShowCube::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorOnboardingShowCube::OnBehaviorActivated()
 {
-  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  auto& robotInfo = GetBEI().GetRobotInfo();
   
   robotInfo.GetDrivingAnimationHandler().PushDrivingAnimations(
    {AnimationTrigger::OnboardingDriveStart,
@@ -92,7 +92,7 @@ Result BehaviorOnboardingShowCube::OnBehaviorActivated(BehaviorExternalInterface
     _numErrors = 0;
     _numErrorsPickup = 0;
     _timesPickedUpCube = 0;
-    SET_STATE(WaitForShowCube,behaviorExternalInterface);
+    SET_STATE(WaitForShowCube);
   }
   
   // can only be in this state if they moved the robot while it was picking up the cube and am coming back from an error
@@ -103,35 +103,35 @@ Result BehaviorOnboardingShowCube::OnBehaviorActivated(BehaviorExternalInterface
     DelegateIfInControl(new PlaceObjectOnGroundAction());
   }
   
-  return Result::RESULT_OK;
+  
 }
  
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorOnboardingShowCube::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorOnboardingShowCube::OnBehaviorDeactivated()
 {
-  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  auto& robotInfo = GetBEI().GetRobotInfo();
 
   robotInfo.GetDrivingAnimationHandler().RemoveDrivingAnimations(GetIDStr());
-  behaviorExternalInterface.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::Onboarding);
+  GetBEI().GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::Onboarding);
   PRINT_CH_INFO("Behaviors","BehaviorOnboardingShowCube::StopInternal", " %hhu ",_state);
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorOnboardingShowCube::AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorOnboardingShowCube::AlwaysHandleInScope(const EngineToGameEvent& event)
 {
 
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorOnboardingShowCube::HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorOnboardingShowCube::HandleWhileActivated(const EngineToGameEvent& event)
 {
   switch (event.GetData().GetTag())
   {
     case MessageEngineToGameTag::RobotObservedObject:
     {
-      HandleObjectObserved(behaviorExternalInterface, event.GetData().Get_RobotObservedObject());
+      HandleObjectObserved(event.GetData().Get_RobotObservedObject());
       break;
     }
     default: {
@@ -144,13 +144,13 @@ void BehaviorOnboardingShowCube::HandleWhileActivated(const EngineToGameEvent& e
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorOnboardingShowCube::HandleWhileActivated(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorOnboardingShowCube::HandleWhileActivated(const GameToEngineEvent& event)
 {
   switch (event.GetData().GetTag())
   {
     case MessageGameToEngineTag::TransitionToNextOnboardingState: {
       // No parameters: Context sensitive...
-      TransitionToNextState(behaviorExternalInterface);
+      TransitionToNextState();
       break;
     }
       
@@ -164,27 +164,30 @@ void BehaviorOnboardingShowCube::HandleWhileActivated(const GameToEngineEvent& e
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // This behavior is killed by unity switching to none
-ICozmoBehavior::Status BehaviorOnboardingShowCube::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorOnboardingShowCube::BehaviorUpdate()
 {
+  if(!IsActivated()){
+    return;
+  }
+
   if( !IsControlDelegated() && !IsSequenceComplete() )
   {
     float timeRunning = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - GetTimeActivated_s();
     if( timeRunning > _maxTimeBeforeTimeout_Sec )
     {
-      SET_STATE(ErrorFinal,behaviorExternalInterface);
+      SET_STATE(ErrorFinal);
     }
   }
-  return Status::Running;
 }
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorOnboardingShowCube::SetState_internal(State state, const std::string& stateName,BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorOnboardingShowCube::SetState_internal(State state, const std::string& stateName)
 {
   _state = state;
   SetDebugStateName(stateName);
   
-  /**auto robotExternalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
+  /**auto robotExternalInterface = GetBEI().GetRobotExternalInterface().lock();
   if(robotExternalInterface != nullptr){
     // because this is called from some places where Robot is const, uses const safe version rather than just robot.Broadcast
     robotExternalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::OnboardingState(_state)));
@@ -193,7 +196,7 @@ void BehaviorOnboardingShowCube::SetState_internal(State state, const std::strin
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorOnboardingShowCube::TransitionToErrorState(State state, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorOnboardingShowCube::TransitionToErrorState(State state)
 {
   // Something might be wrong with the robot and they're stuck. By design let them continue.
   if( _numErrors < _maxErrorsTotal )
@@ -201,37 +204,37 @@ void BehaviorOnboardingShowCube::TransitionToErrorState(State state, BehaviorExt
     // Debug macros :(
     if( state == State::ErrorCozmo)
     {
-      SET_STATE(ErrorCozmo,behaviorExternalInterface);
+      SET_STATE(ErrorCozmo);
     }
     else if( state == State::ErrorCubeMoved)
     {
-      SET_STATE(ErrorCubeMoved,behaviorExternalInterface);
+      SET_STATE(ErrorCubeMoved);
     }
   }
   else
   {
-    SET_STATE(ErrorFinal,behaviorExternalInterface);
+    SET_STATE(ErrorFinal);
   }
   ++_numErrors;
 }
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorOnboardingShowCube::TransitionToNextState(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorOnboardingShowCube::TransitionToNextState()
 {
   switch (_state)
   {
     case State::WaitForOKCubeDiscovered:
     {
-      TimeStamp_t startWaitTime = behaviorExternalInterface.GetRobotInfo().GetLastImageTimeStamp();
+      TimeStamp_t startWaitTime = GetBEI().GetRobotInfo().GetLastImageTimeStamp();
       const int kNumFramesWaitForImages = 3;
       DelegateIfInControl(new WaitForImagesAction(kNumFramesWaitForImages, VisionMode::DetectingMarkers),
-                  [this, &behaviorExternalInterface, startWaitTime](ActionResult result) {
+                  [this, startWaitTime](ActionResult result) {
                     bool blockError = true;
                     bool lightsError = false;
                     if( _targetBlock.IsSet() )
                     {
-                      ObservableObject* block = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_targetBlock);
+                      ObservableObject* block = GetBEI().GetBlockWorld().GetLocatedObjectByID(_targetBlock);
                       // Block is still visible if we saw it last processed frame.
                       if( block != nullptr && startWaitTime < block->GetLastObservedTime() )
                       {
@@ -245,38 +248,38 @@ void BehaviorOnboardingShowCube::TransitionToNextState(BehaviorExternalInterface
                     }
                     if( blockError )
                     {
-                      TransitionToErrorState(State::ErrorCubeMoved,behaviorExternalInterface);
+                      TransitionToErrorState(State::ErrorCubeMoved);
                     }
                     else if( lightsError )
                     {
                       // Lights don't count towards cummulative max errors because they don't indicate a robot failure.
                       // so just set the state to change the UI.
-                      SET_STATE(ErrorCubeWrongSideUp,behaviorExternalInterface);
+                      SET_STATE(ErrorCubeWrongSideUp);
                     }
                     else
                     {
-                      TransitionToWaitToInspectCube(behaviorExternalInterface);
+                      TransitionToWaitToInspectCube();
                     }
                   } );
     }
     break;
     case State::WaitForFinalContinue:
     case State::ErrorFinal:
-      SET_STATE(Inactive,behaviorExternalInterface);
+      SET_STATE(Inactive);
     break;
     case State::ErrorCozmo:
       if( _timesPickedUpCube > 0 )
       {
-        SET_STATE(WaitForFinalContinue,behaviorExternalInterface);
+        SET_STATE(WaitForFinalContinue);
       }
       else
       {
-        SET_STATE(WaitForShowCube,behaviorExternalInterface);
+        SET_STATE(WaitForShowCube);
       }
       break;
     case State::ErrorCubeMoved:
     case State::ErrorCubeWrongSideUp:
-      TransitionToWaitToInspectCube(behaviorExternalInterface);
+      TransitionToWaitToInspectCube();
     break;
     default:
       break;
@@ -285,9 +288,9 @@ void BehaviorOnboardingShowCube::TransitionToNextState(BehaviorExternalInterface
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorOnboardingShowCube::TransitionToWaitToInspectCube(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorOnboardingShowCube::TransitionToWaitToInspectCube()
 {
-  SET_STATE(WaitForInspectCube,behaviorExternalInterface);
+  SET_STATE(WaitForInspectCube);
   // AnimationTrigger.OnboardingReactToCube
   // DriveToAndPickupBlock
   //  on error: AnimationTrigger.RollBlockRealign, retry
@@ -297,39 +300,39 @@ void BehaviorOnboardingShowCube::TransitionToWaitToInspectCube(BehaviorExternalI
   // AnimationTrigger.OnboardingReactToCubePutDown
 
   DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::OnboardingReactToCube),
-              [this, &behaviorExternalInterface](const ActionResult& result){
+              [this](const ActionResult& result){
                 if(result == ActionResult::SUCCESS)
                 {
-                  StartSubStatePickUpBlock(behaviorExternalInterface);
+                  StartSubStatePickUpBlock();
                 }
               });
 }
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorOnboardingShowCube::StartSubStatePickUpBlock(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorOnboardingShowCube::StartSubStatePickUpBlock()
 {
   // Manually set lights to Interacting (green) lights
-  behaviorExternalInterface.GetCubeLightComponent().PlayLightAnim(_targetBlock, CubeAnimationTrigger::Onboarding);
+  GetBEI().GetCubeLightComponent().PlayLightAnim(_targetBlock, CubeAnimationTrigger::Onboarding);
   
-  auto onPickupSuccess = [this](BehaviorExternalInterface& behaviorExternalInterface)
+  auto onPickupSuccess = [this]()
   {
-    StartSubStateCelebratePickup(behaviorExternalInterface);
+    StartSubStateCelebratePickup();
   };
   
-  auto onPickupFailure = [this](BehaviorExternalInterface& behaviorExternalInterface)
+  auto onPickupFailure = [this]()
   {
     _numErrorsPickup++;
     BlockWorldFilter filter;
     filter.OnlyConsiderLatestUpdate(true);
     filter.AddAllowedFamily(Anki::Cozmo::ObjectFamily::LightCube);
-    const ObservableObject* lastSeenObject = behaviorExternalInterface.GetBlockWorld().FindLocatedMatchingObject(filter);
+    const ObservableObject* lastSeenObject = GetBEI().GetBlockWorld().FindLocatedMatchingObject(filter);
     // couldn't pick up this block. If we have another, try that. Otherwise, fail
     if( _numErrorsPickup <= _maxErrorsPickup && lastSeenObject != nullptr )
     {
       if( _targetBlock != lastSeenObject->GetID() )
       {
-        behaviorExternalInterface.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::Onboarding);
+        GetBEI().GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::Onboarding);
         _targetBlock = lastSeenObject->GetID();
       }
       DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::OnboardingCubeDockFail),
@@ -339,22 +342,22 @@ void BehaviorOnboardingShowCube::StartSubStatePickUpBlock(BehaviorExternalInterf
     {
       // We've either unsuccessfully retried pickup _maxErrorsPickup times or
       // pickup failed with a non-abort or retry failure. In both cases, something went really wrong.
-      SET_STATE(ErrorFinal,behaviorExternalInterface);
+      SET_STATE(ErrorFinal);
     }
   };
   
-  auto& helperComp = behaviorExternalInterface.GetAIComponent().GetBehaviorHelperComponent();
+  auto& helperComp = GetBEI().GetAIComponent().GetBehaviorHelperComponent();
   
   auto& factory = helperComp.GetBehaviorHelperFactory();
   PickupBlockParamaters params;
   params.allowedToRetryFromDifferentPose = true;
-  HelperHandle pickupHelper = factory.CreatePickupBlockHelper(behaviorExternalInterface, *this, _targetBlock, params);
-  SmartDelegateToHelper(behaviorExternalInterface, pickupHelper,onPickupSuccess,onPickupFailure);
+  HelperHandle pickupHelper = factory.CreatePickupBlockHelper(*this, _targetBlock, params);
+  SmartDelegateToHelper(pickupHelper,onPickupSuccess,onPickupFailure);
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorOnboardingShowCube::StartSubStateCelebratePickup(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorOnboardingShowCube::StartSubStateCelebratePickup()
 {
   CompoundActionSequential* action = new CompoundActionSequential(
   {
@@ -373,11 +376,11 @@ void BehaviorOnboardingShowCube::StartSubStateCelebratePickup(BehaviorExternalIn
   action->AddAction(new TriggerAnimationAction(AnimationTrigger::OnboardingReactToCubePutDown));
   
   DelegateIfInControl(action,
-              [this, &behaviorExternalInterface](const ExternalInterface::RobotCompletedAction& msg)
+              [this](const ExternalInterface::RobotCompletedAction& msg)
               {
                 _timesPickedUpCube++;
-                behaviorExternalInterface.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::Onboarding);
-                SET_STATE(WaitForFinalContinue,behaviorExternalInterface);
+                GetBEI().GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::Onboarding);
+                SET_STATE(WaitForFinalContinue);
               });
 }
 
@@ -394,9 +397,9 @@ bool IsBlockFacingUp(const ObservableObject* block)
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorOnboardingShowCube::HandleObjectObserved(BehaviorExternalInterface& behaviorExternalInterface, const ExternalInterface::RobotObservedObject& msg)
+void BehaviorOnboardingShowCube::HandleObjectObserved(const ExternalInterface::RobotObservedObject& msg)
 {
-  const ObservableObject* block = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(msg.objectID);
+  const ObservableObject* block = GetBEI().GetBlockWorld().GetLocatedObjectByID(msg.objectID);
 
   if(nullptr == block)
   {
@@ -405,7 +408,7 @@ void BehaviorOnboardingShowCube::HandleObjectObserved(BehaviorExternalInterface&
     return;
   }
   
-  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  const auto& robotInfo = GetBEI().GetRobotInfo();
 
   // In this state it's okay to change blocks. After this Cozmo will be trying to drive too it so it's too late.
   // after generic fails we loop back to this state so they can try again.
@@ -416,24 +419,24 @@ void BehaviorOnboardingShowCube::HandleObjectObserved(BehaviorExternalInterface&
     _targetBlock = msg.objectID;
     if( _state == State::WaitForShowCube)
     {
-      SET_STATE(WaitForOKCubeDiscovered,behaviorExternalInterface);
+      SET_STATE(WaitForOKCubeDiscovered);
     }
     else if( _state == State::ErrorCubeMoved )
     {
       if(IsBlockFacingUp(block))
       {
-        TransitionToNextState(behaviorExternalInterface);
+        TransitionToNextState();
       }
       else
       {
-        SET_STATE(ErrorCubeWrongSideUp,behaviorExternalInterface);
+        SET_STATE(ErrorCubeWrongSideUp);
       }
     }
     else if( _state == State::ErrorCubeWrongSideUp)
     {
       if(IsBlockFacingUp(block))
       {
-        TransitionToNextState(behaviorExternalInterface);
+        TransitionToNextState();
       }
     }
   }

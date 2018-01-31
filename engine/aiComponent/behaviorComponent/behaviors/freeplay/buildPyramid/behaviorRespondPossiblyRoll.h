@@ -15,7 +15,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorRespondPossiblyRoll_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "anki/common/basestation/objectIDs.h"
+#include "coretech/common/engine/objectIDs.h"
 
 #include "clad/types/animationTrigger.h"
 
@@ -55,7 +55,7 @@ protected:
   void SetPlayedOnSideAnim() { _playedOnSide = true;}
   void SetReachedPreDockRoll() { _reachedPreDockRoll = true;}
   void SetPoseUpAxisWillBeChecked() { _poseUpAxisAccurate = true;}
-
+  
 private:
   enum class DebugState {
     RespondingNegatively,
@@ -85,31 +85,33 @@ private:
 
 public:
   virtual ~BehaviorRespondPossiblyRoll();
-  virtual bool CarryingObjectHandledInternally() const override { return false;}
   
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual bool WantsToBeActivatedBehavior() const override;
   
   // Behavior can be queried to find out where it is in its process
   const RespondPossiblyRollMetadata& GetResponseMetadata() const { return _metadata;}
   void SetRespondPossiblyRollMetadata(const RespondPossiblyRollMetadata& metadata){_metadata = metadata;}
 
 protected:
-  void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
+
+  void InitBehavior() override;
   
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
-  
+  virtual void OnBehaviorActivated() override;
+  virtual void BehaviorUpdate() override;
+  virtual void AlwaysHandleInScope(const EngineToGameEvent& event) override;
+
 private:
   RespondPossiblyRollMetadata _metadata;
   
   std::map<ObjectID, UpAxis> _upAxisChangedIDs;
   u32 _lastActionTag = ActionConstants::INVALID_TAG;
   
-  void DetermineNextResponse(BehaviorExternalInterface& behaviorExternalInterface);
-  void TurnAndRespondPositively(BehaviorExternalInterface& behaviorExternalInterface);
-  void TurnAndRespondNegatively(BehaviorExternalInterface& behaviorExternalInterface);
-  void DelegateToRollHelper(BehaviorExternalInterface& behaviorExternalInterface);
-  void RollBlock(BehaviorExternalInterface& behaviorExternalInterface);
+  void DetermineNextResponse();
+  void TurnAndRespondPositively();
+  void TurnAndRespondNegatively();
+  void DelegateToRollHelper();
+  void RollBlock();
 
 };
   

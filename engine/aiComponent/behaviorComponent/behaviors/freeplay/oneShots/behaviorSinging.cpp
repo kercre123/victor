@@ -26,8 +26,8 @@
 #include "engine/needsSystem/needsManager.h"
 #include "engine/needsSystem/needsState.h"
 
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "clad/audio/audioEventTypes.h"
 
@@ -125,14 +125,14 @@ BehaviorSinging::~BehaviorSinging()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorSinging::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorSinging::WantsToBeActivatedBehavior() const
 {
   // Always activatable, the higher level Singing goal/activity is responsible
   // for deciding when Cozmo should sing
   // Except if the needs system has unlocked a song, we want that to be the
   // next song played
-  if(behaviorExternalInterface.HasNeedsManager()){
-    auto& needsManager = behaviorExternalInterface.GetNeedsManager();
+  if(GetBEI().HasNeedsManager()){
+    auto& needsManager = GetBEI().GetNeedsManager();
     
     const NeedsState& currNeedState = needsManager.GetCurNeedsState();
     const auto& forcedSong = currNeedState._forceNextSong;
@@ -151,13 +151,13 @@ bool BehaviorSinging::WantsToBeActivatedBehavior(BehaviorExternalInterface& beha
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorSinging::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorSinging::OnBehaviorActivated()
 {
-  if(ANKI_VERIFY(behaviorExternalInterface.HasRobotAudioClient(), 
+  if(ANKI_VERIFY(GetBEI().HasRobotAudioClient(), 
                  "BehaviorSinging.OnBehaviorActivated.MissingAudioClient","")){
     // Tell Wwise to switch to the specific SwitchGroup (80/100/120bpm)
     // and a specific switch in the group (song)
-    behaviorExternalInterface.GetRobotAudioClient().PostSwitchState(_audioSwitchGroup,
+    GetBEI().GetRobotAudioClient().PostSwitchState(_audioSwitchGroup,
                                                                      _audioSwitch,
                                                                      AudioMetaData::GameObjectType::Default /* FIXME: Not correct game object */);
   }
@@ -173,7 +173,7 @@ Result BehaviorSinging::OnBehaviorActivated(BehaviorExternalInterface& behaviorE
   
   // Get all connected light cubes
   std::vector<const ActiveObject*> connectedObjects;
-  behaviorExternalInterface.GetBlockWorld().FindConnectedActiveMatchingObjects(filter, connectedObjects);
+  GetBEI().GetBlockWorld().FindConnectedActiveMatchingObjects(filter, connectedObjects);
   
   // For each of the connected light cubes
   for(const ActiveObject* object : connectedObjects)
@@ -191,7 +191,7 @@ Result BehaviorSinging::OnBehaviorActivated(BehaviorExternalInterface& behaviorE
     // when shaking is detected
     std::shared_ptr<CubeAccelListeners::ICubeAccelListener> listener;
     listener.reset(new CubeAccelListeners::ShakeListener(0.5, 2.5, 3.9, shakeDetected));
-    behaviorExternalInterface.GetCubeAccelComponent().AddListener(objectID, listener);
+    GetBEI().GetCubeAccelComponent().AddListener(objectID, listener);
     
     // Store the listener so we can remove it when the behavior ends
     // TODO Add SmartAddCubeAccelListener/SmartRemoveCubeAccelListener to base class
@@ -210,14 +210,16 @@ Result BehaviorSinging::OnBehaviorActivated(BehaviorExternalInterface& behaviorE
       NeedActionCompleted(NeedsActionId::CozmoSings);
     }
   });
-  
-  return RESULT_OK;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStatus BehaviorSinging::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorSinging::BehaviorUpdate()
 {
+  if(!IsActivated()){
+    return;
+  }
+
   // Figure out which object was, on average, shaken the most this tick
   float mostShakenObjectAverage = 0;
   for(auto& objectShakeAverage : _objectShakeAverages)
@@ -241,8 +243,8 @@ BehaviorStatus BehaviorSinging::UpdateInternal_WhileRunning(BehaviorExternalInte
   _vibratoScaleFilt = vibratoScale * kVibratoLowPassCoeff +
                       _vibratoScaleFilt * (1.f-kVibratoLowPassCoeff);
 
-  if(behaviorExternalInterface.HasRobotAudioClient()){
-    auto& audioClient = behaviorExternalInterface.GetRobotAudioClient();
+  if(GetBEI().HasRobotAudioClient()){
+    auto& audioClient = GetBEI().GetRobotAudioClient();
     // Post the filtered vibrato scale to wwise
     audioClient.PostParameter(kVibratoParam,
                               _vibratoScaleFilt,
@@ -281,17 +283,15 @@ BehaviorStatus BehaviorSinging::UpdateInternal_WhileRunning(BehaviorExternalInte
     }
 
     _cubeShakingStartTime_ms = 0;
-  }
-  
-  return (IsControlDelegated() ? BehaviorStatus::Running : BehaviorStatus::Complete);
+  }  
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorSinging::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorSinging::OnBehaviorDeactivated()
 {
-  if(behaviorExternalInterface.HasRobotAudioClient()){
-    auto& audioClient = behaviorExternalInterface.GetRobotAudioClient();
+  if(GetBEI().HasRobotAudioClient()){
+    auto& audioClient = GetBEI().GetRobotAudioClient();
     audioClient.PostParameter(kVibratoParam,
                               0,
                               AudioMetaData::GameObjectType::Default /* FIXME: Not correct game object */);
@@ -300,7 +300,7 @@ void BehaviorSinging::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorE
   // Remove all our listeners
   for(auto iter = _cubeAccelListeners.begin(); iter != _cubeAccelListeners.end();)
   {
-    const bool wasRemoved = behaviorExternalInterface.GetCubeAccelComponent().RemoveListener(iter->first, iter->second);
+    const bool wasRemoved = GetBEI().GetCubeAccelComponent().RemoveListener(iter->first, iter->second);
     DEV_ASSERT(wasRemoved, "BehaviorSinging.StopInternal.RemoveListenerFailed");
     
     // We should be the only thing that has a shared_ptr pointing to our CubeAccelListeners

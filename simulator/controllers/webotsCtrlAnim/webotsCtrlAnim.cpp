@@ -9,28 +9,27 @@
 #include "cozmoAnim/cozmoAnim.h"
 
 #include "../shared/ctrlCommonInitialization.h"
-#include "util/logging/logging.h"
-#include "util/logging/channelFilter.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "coretech/common/engine/jsonTools.h"
+
+#include "osState/osState.h"
+
 #include "json/json.h"
-#include "anki/common/basestation/utils/data/dataPlatform.h"
-#include "anki/common/basestation/jsonTools.h"
+
 #include "util/console/consoleInterface.h"
-//#include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 #include "util/console/consoleSystem.h"
-#include "util/logging/printfLoggerProvider.h"
-#include "util/logging/multiFormattedLoggerProvider.h"
 #include "util/global/globalDefinitions.h"
+#include "util/logging/channelFilter.h"
+#include "util/logging/printfLoggerProvider.h"
+#include "util/logging/logging.h"
+#include "util/logging/multiFormattedLoggerProvider.h"
 
 #include <fstream>
 
 #include <webots/Supervisor.hpp>
 
-
-
-#define ROBOT_ADVERTISING_HOST_IP "127.0.0.1"
-#define SDK_ADVERTISING_HOST_IP   "127.0.0.1"
-#define VIZ_HOST_IP               "127.0.0.1"
+#define LOG_CHANNEL    "webotsCtrlAnim"
 
 namespace Anki {
   namespace Cozmo {
@@ -57,9 +56,12 @@ int main(int argc, char **argv)
   //const Anki::Util::Data::DataPlatform& dataPlatform = WebotsCtrlShared::CreateDataPlatformBS(argv[0]);
   Util::Data::DataPlatform dataPlatform = WebotsCtrlShared::CreateDataPlatformBS(argv[0], "webotsCtrlAnim");
   
-  
+  // Set Webots supervisor
+  OSState::SetSupervisor(&animSupervisor);
+
   // - create and set logger
-  Util::IFormattedLoggerProvider* printfLoggerProvider = new Util::PrintfLoggerProvider(Anki::Util::ILoggerProvider::LOG_LEVEL_WARN);
+  Util::IFormattedLoggerProvider* printfLoggerProvider = new Util::PrintfLoggerProvider(Anki::Util::ILoggerProvider::LOG_LEVEL_WARN,
+                                                                                        params.colorizeStderrOutput);
   Util::MultiFormattedLoggerProvider loggerProvider({
     printfLoggerProvider
   });
@@ -78,7 +80,7 @@ int main(int argc, char **argv)
     const std::string& consoleFilterConfigPath = "config/engine/console_filter_config.json";
     if (!dataPlatform.readAsJson(Util::Data::Scope::Resources, consoleFilterConfigPath, consoleFilterConfig))
     {
-      PRINT_NAMED_ERROR("webotsCtrlAnim.main.loadConsoleConfig", "Failed to parse Json file '%s'", consoleFilterConfigPath.c_str());
+      LOG_ERROR("webotsCtrlAnim.main.loadConsoleConfig", "Failed to parse Json file '%s'", consoleFilterConfigPath.c_str());
     }
     
     // initialize console filter for this platform
@@ -96,7 +98,7 @@ int main(int argc, char **argv)
   }
   else
   {
-    PRINT_NAMED_INFO("webotsCtrlAnim.main.noFilter", "Console will not be filtered due to program args");
+    LOG_INFO("webotsCtrlAnim.main.noFilter", "Console will not be filtered due to program args");
   }
 
   // Start with a step so that we can attach to the process here for debugging
@@ -110,7 +112,7 @@ int main(int argc, char **argv)
   CozmoAnimEngine cozmoAnim(&dataPlatform);
   cozmoAnim.Init();
 
-  PRINT_NAMED_INFO("webotsCtrlAnim.main", "CozmoAnim created and initialized.");
+  LOG_INFO("webotsCtrlAnim.main", "CozmoAnim created and initialized.");
 
   //
   // Main Execution loop: step the world forward forever

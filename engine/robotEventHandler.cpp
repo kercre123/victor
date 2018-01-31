@@ -46,7 +46,7 @@
 #include "engine/components/animationComponent.h"
 #include "engine/components/visionComponent.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
-#include "anki/common/basestation/math/point_impl.h"
+#include "coretech/common/engine/math/point_impl.h"
 #include "engine/pathPlanner.h"
 #include "engine/latticePlanner.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -1072,7 +1072,6 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestUnlockDataFromBackup>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::RollActionParams>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SaveCalibrationImage>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::SendAvailableObjects>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetMotionModelParams>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetRobotCarryingObject>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::StopRobotForSdk>();
@@ -1309,24 +1308,6 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::ForceDelocalizeRo
     PRINT_NAMED_WARNING("RobotEventHandler.HandleForceDelocalizeRobot.PhysicalRobot",
                         "Refusing to force delocalize physical robot.");
   }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template<>
-void RobotEventHandler::HandleMessage(const ExternalInterface::SendAvailableObjects& msg)
-{
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
-  
-  // We need a robot
-  if (nullptr == robot)
-  {
-    PRINT_NAMED_WARNING("RobotEventHandler.HandleSendAvailableObjects.InvalidRobotID", "Failed to find robot. Missing 'first' robot.");
-  }
-  else
-  {
-    robot->BroadcastAvailableObjects(msg.enable);
-  }
-  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

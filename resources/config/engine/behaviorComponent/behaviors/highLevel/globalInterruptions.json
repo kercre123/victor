@@ -1,0 +1,12 @@
+{
+  "behaviorID" : "GlobalInterruptions",
+  "behaviorClass" : "DispatcherStrictPriority",
+
+  "interruptActiveBehavior": true,
+
+  "behaviors": [
+    "VictorCloudDemoTriggerDetected",
+    "FistBumpVoiceCommand",
+    "HighLevelAI"
+  ]
+}

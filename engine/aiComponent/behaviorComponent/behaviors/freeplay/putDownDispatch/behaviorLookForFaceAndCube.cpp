@@ -12,8 +12,8 @@
  **/
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/putDownDispatch/behaviorLookForFaceAndCube.h"
 
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
@@ -59,7 +59,7 @@ BehaviorLookForFaceAndCube::~BehaviorLookForFaceAndCube()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorLookForFaceAndCube::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorLookForFaceAndCube::WantsToBeActivatedBehavior() const
 {
   // can run as long as it's not carrying a cube (potentially it could, but may look weird), which is handled in base
   return true;
@@ -105,11 +105,11 @@ void BehaviorLookForFaceAndCube::LoadConfig(const Json::Value& config)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorLookForFaceAndCube::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorLookForFaceAndCube::OnBehaviorActivated()
 {
   PRINT_CH_INFO("Behaviors", (GetIDStr() + ".InitInternal").c_str(), "Starting to look for face at center");
 
-  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  auto& robotInfo = GetBEI().GetRobotInfo();
   _startingBodyFacing_rad = robotInfo.GetPose().GetWithRespectToRoot().GetRotationAngle<'Z'>();
   _currentSidePicksDone = 0;
   _currentState = State::S0FaceOnCenter;
@@ -126,7 +126,7 @@ Result BehaviorLookForFaceAndCube::OnBehaviorActivated(BehaviorExternalInterface
   
   // create head move action
   {
-    IAction* centerLookForFace = CreateBodyAndHeadTurnAction(behaviorExternalInterface,
+    IAction* centerLookForFace = CreateBodyAndHeadTurnAction(
       0, // no min body change
       0, // no max body change
       _startingBodyFacing_rad,
@@ -140,11 +140,11 @@ Result BehaviorLookForFaceAndCube::OnBehaviorActivated(BehaviorExternalInterface
   // look here
   DelegateIfInControl( initialActions, &BehaviorLookForFaceAndCube::TransitionToS1_FaceOnLeft );
   
-  return Result::RESULT_OK;
+  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-/**Result BehaviorLookForFaceAndCube::ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface)
+/**void BehaviorLookForFaceAndCube::ResumeInternal()
 {
   // reset side picks done because we always switch to next state
   _currentSidePicksDone = 0;
@@ -155,39 +155,39 @@ Result BehaviorLookForFaceAndCube::OnBehaviorActivated(BehaviorExternalInterface
     return RESULT_FAIL;
   }
   
-  ResumeCurrentState(behaviorExternalInterface);
+  ResumeCurrentState();
 
   return RESULT_OK;
 }**/
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorLookForFaceAndCube::ResumeCurrentState(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorLookForFaceAndCube::ResumeCurrentState()
 {
   switch(_currentState)
   {
     case State::S0FaceOnCenter:
     {
-      TransitionToS1_FaceOnLeft(behaviorExternalInterface);
+      TransitionToS1_FaceOnLeft();
       break;
     }
     case State::S1FaceOnLeft:
     {
-      TransitionToS2_FaceOnRight(behaviorExternalInterface);
+      TransitionToS2_FaceOnRight();
       break;
     }
     case State::S2FaceOnRight:
     {
-      TransitionToS3_CubeOnRight(behaviorExternalInterface);
+      TransitionToS3_CubeOnRight();
       break;
     }
     case State::S3CubeOnRight:
     {
-      TransitionToS4_CubeOnLeft(behaviorExternalInterface);
+      TransitionToS4_CubeOnLeft();
       break;
     }
     case State::S4CubeOnLeft:
     {
-      TransitionToS5_Center(behaviorExternalInterface);
+      TransitionToS5_Center();
       break;
     }
     case State::S5Center:
@@ -204,12 +204,12 @@ void BehaviorLookForFaceAndCube::ResumeCurrentState(BehaviorExternalInterface& b
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorLookForFaceAndCube::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorLookForFaceAndCube::OnBehaviorDeactivated()
 {
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorLookForFaceAndCube::HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorLookForFaceAndCube::HandleWhileActivated(const EngineToGameEvent& event)
 {
   if( event.GetData().GetTag() == EngineToGameTag::RobotObservedFace) {
 
@@ -233,19 +233,19 @@ void BehaviorLookForFaceAndCube::HandleWhileActivated(const EngineToGameEvent& e
           // if we have a tracking only face, we always want to turn to it so we can verify it and get a real id
           // out of it (hopefully). Otherwise, turn towards it if we haven't already. After verifying, we'll
           // stop the behavior if we need to
-          CancelActionAndVerifyFace(behaviorExternalInterface, msg.faceID);
+          CancelActionAndVerifyFace(msg.faceID);
         }
       }
     }
     else {
       // since we aren't verifying, stop the behavior now, if needed
-      StopBehaviorOnFaceIfNeeded(behaviorExternalInterface, msg.faceID);
+      StopBehaviorOnFaceIfNeeded(msg.faceID);
     }
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorLookForFaceAndCube::StopBehaviorOnFaceIfNeeded(BehaviorExternalInterface& behaviorExternalInterface, FaceID_t observedID)
+void BehaviorLookForFaceAndCube::StopBehaviorOnFaceIfNeeded(FaceID_t observedID)
 {
   const bool trackingOnlyFace = ( observedID < 0 );
 
@@ -261,13 +261,13 @@ void BehaviorLookForFaceAndCube::StopBehaviorOnFaceIfNeeded(BehaviorExternalInte
         
       const bool allowCallbacks = false;
       CancelDelegates(allowCallbacks);
-      TransitionToS6_Done(behaviorExternalInterface);
+      TransitionToS6_Done();
     }
     else if ( _configParams.stopBehaviorOnNamedFace )
     {
       // we need to check if the face has a name
       
-      auto* facePtr = behaviorExternalInterface.GetFaceWorld().GetFace(observedID);
+      auto* facePtr = GetBEI().GetFaceWorld().GetFace(observedID);
       if( ANKI_VERIFY(facePtr != nullptr,
                       "BehaviorLookForFaceAndCube.NullObservedFace",
                       "Face '%d' observed but faceworld returns null",
@@ -280,7 +280,7 @@ void BehaviorLookForFaceAndCube::StopBehaviorOnFaceIfNeeded(BehaviorExternalInte
         
           const bool allowCallbacks = false;
           CancelDelegates(allowCallbacks);
-          TransitionToS6_Done(behaviorExternalInterface);
+          TransitionToS6_Done();
         }
       }
     }
@@ -288,7 +288,7 @@ void BehaviorLookForFaceAndCube::StopBehaviorOnFaceIfNeeded(BehaviorExternalInte
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorLookForFaceAndCube::CancelActionAndVerifyFace(BehaviorExternalInterface& behaviorExternalInterface, FaceID_t observedFace)
+void BehaviorLookForFaceAndCube::CancelActionAndVerifyFace(FaceID_t observedFace)
 {
   PRINT_CH_INFO("Behaviors", (GetIDStr() + ".VerifyFace").c_str(),
                 "Stopping current action to verify face %d",
@@ -297,7 +297,7 @@ void BehaviorLookForFaceAndCube::CancelActionAndVerifyFace(BehaviorExternalInter
   const bool allowCallbacks = false;
   CancelDelegates(allowCallbacks);
   
-  SmartFaceID smartID = behaviorExternalInterface.GetFaceWorld().GetSmartFaceID(observedFace);
+  SmartFaceID smartID = GetBEI().GetFaceWorld().GetSmartFaceID(observedFace);
   CompoundActionSequential* action = new CompoundActionSequential();
   action->AddAction( new TurnTowardsFaceAction(smartID, M_PI_F) );
 
@@ -310,7 +310,7 @@ void BehaviorLookForFaceAndCube::CancelActionAndVerifyFace(BehaviorExternalInter
     // don't bother waiting for any frames if we already have a name. Otherwise, give it a few frames to give
     // it a chance to realize that this may be a named person. Note: it would be better to do this logic
     // _after_ the turn to action completes, because we may collect data while turning, but I'm lazy
-    auto* facePtr = behaviorExternalInterface.GetFaceWorld().GetFace(observedFace);
+    auto* facePtr = GetBEI().GetFaceWorld().GetFace(observedFace);
     if( facePtr && !facePtr->HasName() ) {
       action->AddAction( new WaitForImagesAction(kNumFramesToWaitForUnNamedFace) );
     }
@@ -318,7 +318,7 @@ void BehaviorLookForFaceAndCube::CancelActionAndVerifyFace(BehaviorExternalInter
 
   _isVerifyingFace = true;
   
-  DelegateIfInControl(action, [this, observedFace](ActionResult res, BehaviorExternalInterface& behaviorExternalInterface) {
+  DelegateIfInControl(action, [this, observedFace](ActionResult res) {
       const bool isTrackingOnly = observedFace < 0;
       if( !isTrackingOnly && res == ActionResult::SUCCESS ) {
         _verifiedFaces.insert(observedFace);
@@ -327,15 +327,15 @@ void BehaviorLookForFaceAndCube::CancelActionAndVerifyFace(BehaviorExternalInter
       _isVerifyingFace = false;
                                                  
       // we might want to stop now that we've seen a face
-      StopBehaviorOnFaceIfNeeded(behaviorExternalInterface, observedFace);
+      StopBehaviorOnFaceIfNeeded(observedFace);
 
       // resume the state machine
-      ResumeCurrentState(behaviorExternalInterface);
+      ResumeCurrentState();
     });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorLookForFaceAndCube::TransitionToS1_FaceOnLeft(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorLookForFaceAndCube::TransitionToS1_FaceOnLeft()
 {
   _currentState = State::S1FaceOnLeft;
   ++_currentSidePicksDone;
@@ -343,7 +343,7 @@ void BehaviorLookForFaceAndCube::TransitionToS1_FaceOnLeft(BehaviorExternalInter
     "Looking for face to my left (%u out of %u)", _currentSidePicksDone, _configParams.face_sidePicks);
   
   // create head move action
-  IAction* leftLookForFace = CreateBodyAndHeadTurnAction(behaviorExternalInterface,
+  IAction* leftLookForFace = CreateBodyAndHeadTurnAction(
     _configParams.face_bodyAngleRelRangeMin_rad,
     _configParams.face_bodyAngleRelRangeMax_rad,
     _startingBodyFacing_rad,
@@ -362,7 +362,7 @@ void BehaviorLookForFaceAndCube::TransitionToS1_FaceOnLeft(BehaviorExternalInter
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorLookForFaceAndCube::TransitionToS2_FaceOnRight(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorLookForFaceAndCube::TransitionToS2_FaceOnRight()
 {
   _currentState = State::S2FaceOnRight;
   ++_currentSidePicksDone;
@@ -370,7 +370,7 @@ void BehaviorLookForFaceAndCube::TransitionToS2_FaceOnRight(BehaviorExternalInte
     "Looking for face to my right (%u out of %u)", _currentSidePicksDone, _configParams.face_sidePicks);
   
   // create head move action
-  IAction* rightLookForFace = CreateBodyAndHeadTurnAction(behaviorExternalInterface,
+  IAction* rightLookForFace = CreateBodyAndHeadTurnAction(
     -1.0f*_configParams.face_bodyAngleRelRangeMin_rad,
     -1.0f*_configParams.face_bodyAngleRelRangeMax_rad,
     _startingBodyFacing_rad,
@@ -388,7 +388,7 @@ void BehaviorLookForFaceAndCube::TransitionToS2_FaceOnRight(BehaviorExternalInte
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorLookForFaceAndCube::TransitionToS3_CubeOnRight(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorLookForFaceAndCube::TransitionToS3_CubeOnRight()
 {
   _currentState = State::S3CubeOnRight;
   ++_currentSidePicksDone;
@@ -396,7 +396,7 @@ void BehaviorLookForFaceAndCube::TransitionToS3_CubeOnRight(BehaviorExternalInte
     "Looking for cube to my right (%u out of %u)", _currentSidePicksDone, _configParams.cube_sidePicks);
 
   // create head move action
-  IAction* rightLookForCube = CreateBodyAndHeadTurnAction(behaviorExternalInterface,
+  IAction* rightLookForCube = CreateBodyAndHeadTurnAction(
     _configParams.cube_bodyAngleRelRangeMin_rad,
     _configParams.cube_bodyAngleRelRangeMax_rad,
     _startingBodyFacing_rad,
@@ -415,7 +415,7 @@ void BehaviorLookForFaceAndCube::TransitionToS3_CubeOnRight(BehaviorExternalInte
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorLookForFaceAndCube::TransitionToS4_CubeOnLeft(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorLookForFaceAndCube::TransitionToS4_CubeOnLeft()
 {
   _currentState = State::S4CubeOnLeft;
   ++_currentSidePicksDone;
@@ -423,7 +423,7 @@ void BehaviorLookForFaceAndCube::TransitionToS4_CubeOnLeft(BehaviorExternalInter
     "Looking for cube to my left (%u out of %u)", _currentSidePicksDone, _configParams.cube_sidePicks);
 
   // create head move action
-  IAction* leftLookForCube = CreateBodyAndHeadTurnAction(behaviorExternalInterface,
+  IAction* leftLookForCube = CreateBodyAndHeadTurnAction(
     -1.0f*_configParams.cube_bodyAngleRelRangeMin_rad,
     -1.0f*_configParams.cube_bodyAngleRelRangeMax_rad,
     _startingBodyFacing_rad,
@@ -443,7 +443,7 @@ void BehaviorLookForFaceAndCube::TransitionToS4_CubeOnLeft(BehaviorExternalInter
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorLookForFaceAndCube::TransitionToS5_Center(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorLookForFaceAndCube::TransitionToS5_Center()
 {
   _currentState = State::S5Center;
   ++_currentSidePicksDone;
@@ -451,7 +451,7 @@ void BehaviorLookForFaceAndCube::TransitionToS5_Center(BehaviorExternalInterface
     "Looking for cube to my left (%u out of %u)", _currentSidePicksDone, _configParams.cube_sidePicks);
 
   // create head move action
-  IAction* centerLookForCube = CreateBodyAndHeadTurnAction(behaviorExternalInterface,
+  IAction* centerLookForCube = CreateBodyAndHeadTurnAction(
     0,
     0,
     _startingBodyFacing_rad,
@@ -466,7 +466,7 @@ void BehaviorLookForFaceAndCube::TransitionToS5_Center(BehaviorExternalInterface
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorLookForFaceAndCube::TransitionToS6_Done(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorLookForFaceAndCube::TransitionToS6_Done()
 {
   _currentState = State::Done;
   // Note that this is specific to the PutDownDispatch activity. If this behavior needs to be generic for other activities, it
@@ -478,7 +478,7 @@ void BehaviorLookForFaceAndCube::TransitionToS6_Done(BehaviorExternalInterface& 
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IAction* BehaviorLookForFaceAndCube::CreateBodyAndHeadTurnAction(BehaviorExternalInterface& behaviorExternalInterface,
+IAction* BehaviorLookForFaceAndCube::CreateBodyAndHeadTurnAction(
   const Radians& bodyRelativeMin_rad, const Radians& bodyRelativeMax_rad,
   const Radians& bodyAbsoluteTargetAngle_rad,
   const Radians& headAbsoluteMin_rad, const Radians& headAbsoluteMax_rad,

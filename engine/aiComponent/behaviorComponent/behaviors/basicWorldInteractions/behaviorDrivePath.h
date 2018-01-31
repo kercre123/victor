@@ -14,9 +14,9 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorDrivePath_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorDrivePath_H__
 
-#include "anki/common/basestation/math/pose.h"
+#include "coretech/common/engine/math/pose.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "anki/planning/shared/path.h"
+#include "coretech/planning/shared/path.h"
 
 namespace Anki {
 //forward declaration
@@ -32,14 +32,13 @@ protected:
   friend class BehaviorContainer;
   BehaviorDrivePath(const Json::Value& config);
   
-public:
-  
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual bool CarryingObjectHandledInternally() const override {return false;}
+public:  
+  virtual bool WantsToBeActivatedBehavior() const override;
 
 protected:
-  
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
+
+  virtual void OnBehaviorActivated() override;
   
   enum class DebugState {
     FollowingPath,
@@ -56,7 +55,7 @@ protected:
   
   
 private:
-  void TransitionToFollowingPath(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToFollowingPath();
   
 }; //class BehaviorDrivePath
 

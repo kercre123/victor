@@ -11,7 +11,9 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
+
 #include "engine/actions/actionInterface.h"
 #include "engine/actions/dockActions.h"
 #include "engine/actions/driveToActions.h"
@@ -27,12 +29,14 @@
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/aiComponent/severeNeedsComponent.h"
-#include "engine/aiComponent/stateConceptStrategies/stateConceptStrategyFactory.h"
-#include "engine/aiComponent/stateConceptStrategies/strategyCloudIntentPending.h"
+#include "engine/aiComponent/beiConditions/beiConditionFactory.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionCloudIntentPending.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/cubeLightComponent.h"
 #include "engine/components/movementComponent.h"
+#include "engine/components/pathComponent.h"
 #include "engine/components/progressionUnlockComponent.h"
+#include "engine/components/visionScheduleMediator/visionScheduleMediator.h"
 #include "engine/cozmoContext.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -41,7 +45,6 @@
 #include "engine/robotInterface/messageHandler.h"
 #include "engine/robotManager.h"
 
-
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/behaviorComponent/cloudIntents.h"
@@ -49,8 +52,8 @@
 #include "util/enums/stringToEnumMapper.hpp"
 #include "util/fileUtils/fileUtils.h"
 #include "util/math/numericCast.h"
-#include "engine/components/pathComponent.h"
 
+#define LOG_CHANNEL    "Behaviors"
 
 namespace Anki {
 namespace Cozmo {
@@ -67,7 +70,7 @@ static const char* kRequiredDriveOffChargerKey       = "requiredRecentDriveOffCh
 static const char* kRequiredParentSwitchKey          = "requiredRecentSwitchToParent_sec";
 static const char* kExecutableBehaviorTypeKey        = "executableBehaviorType";
 static const char* kAlwaysStreamlineKey              = "alwaysStreamline";
-static const char* kWantsToRunStrategyConfigKey      = "wantsToRunStrategyConfig";
+static const char* kWantsToBeActivatedCondConfigKey  = "wantsToBeActivatedCondition";
 static const char* kRespondToCloudIntentKey          = "respondToCloudIntent";
 static const std::string kIdleLockPrefix             = "Behavior_";
 
@@ -199,9 +202,10 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
     
     // this is probably the only place where we need this, otherwise please refactor to proper header
     const UnlockId requiredUnlock = UnlockIdFromString(requiredUnlockJson.asString());
-    if ( requiredUnlock != UnlockId::Count ) {
-      PRINT_NAMED_INFO("ICozmoBehavior.ReadFromJson.RequiredUnlock", "Behavior '%s' requires unlock '%s'",
-                        GetIDStr().c_str(), requiredUnlockJson.asString().c_str() );
+    if (requiredUnlock != UnlockId::Count) {
+      PRINT_CH_DEBUG(LOG_CHANNEL, "ICozmoBehavior.ReadFromJson.RequiredUnlock",
+                     "Behavior '%s' requires unlock '%s'",
+                     GetIDStr().c_str(), requiredUnlockJson.asString().c_str());
       _requiredUnlockId = requiredUnlock;
     } else {
       PRINT_NAMED_ERROR("ICozmoBehavior.ReadFromJson.InvalidUnlockId", "Could not convert string to unlock id '%s'",
@@ -251,8 +255,9 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
   
   JsonTools::GetValueOptional(config, kAlwaysStreamlineKey, _alwaysStreamline);
   
-  if(config.isMember(kWantsToRunStrategyConfigKey)){
-    _wantsToRunConfig = config[kWantsToRunStrategyConfigKey];
+  if(config.isMember(kWantsToBeActivatedCondConfigKey)){
+    _wantsToBeActivatedConditions.push_back(
+      BEIConditionFactory::CreateBEICondition( config[kWantsToBeActivatedCondConfigKey] ) );
   }
 
   if(config.isMember(kAnonymousBehaviorMapKey)){
@@ -274,39 +279,26 @@ ICozmoBehavior::~ICozmoBehavior()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehavior::InitInternal(BehaviorExternalInterface& behaviorExternalInterface)
+void ICozmoBehavior::InitInternal()
 {
-  
-  // Assumes there's only one external interface being passed in from AIComponent
-  _behaviorExternalInterface = &behaviorExternalInterface;
-  assert(_behaviorExternalInterface);
-  
+  _initHasBeenCalled = true;
+
   {
-    auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
-    auto externalInterface = robotInfo.HasExternalInterface() ? robotInfo.GetExternalInterface() : nullptr;
-    
-    if(_wantsToRunConfig.size() > 0){
-      IStateConceptStrategyPtr strategy(StateConceptStrategyFactory::CreateStateConceptStrategy(
-                                                  behaviorExternalInterface,
-                                                  externalInterface,
-                                                  _wantsToRunConfig));
-      _stateConceptStrategies.push_back(std::move(strategy));
-      _wantsToRunConfig.clear();
+    for( auto& strategy : _wantsToBeActivatedConditions ) {
+      strategy->Init(GetBEI());
     }
 
     if(_respondToCloudIntent != CloudIntent::Count){
-      Json::Value config = StrategyCloudIntentPending::GenerateCloudIntentPendingConfig(_respondToCloudIntent);
-      IStateConceptStrategyPtr strategy(StateConceptStrategyFactory::CreateStateConceptStrategy(
-                                                  behaviorExternalInterface,
-                                                  externalInterface,
-                                                  config));
-      _stateConceptStrategies.push_back(std::move(strategy));
+      Json::Value config = ConditionCloudIntentPending::GenerateCloudIntentPendingConfig(_respondToCloudIntent);
+      IBEIConditionPtr strategy(BEIConditionFactory::CreateBEICondition(config));
+      strategy->Init(GetBEI());
+      _wantsToBeActivatedConditions.push_back(strategy);
     }
 
   }
 
   if(!_anonymousBehaviorMapConfig.empty()){
-    AnonymousBehaviorFactory factory(behaviorExternalInterface.GetBehaviorContainer()); 
+    AnonymousBehaviorFactory factory(GetBEI().GetBehaviorContainer()); 
     for(auto& entry: _anonymousBehaviorMapConfig){
       const std::string debugStr = "ICozmoBehavior.ReadFromJson.";
       
@@ -330,7 +322,8 @@ void ICozmoBehavior::InitInternal(BehaviorExternalInterface& behaviorExternalInt
                        GetIDStr().c_str());
 
         // we need to initlaize the anon behaviors as well
-        resultPair.first->second->Init(behaviorExternalInterface);
+        resultPair.first->second->Init(GetBEI());
+        resultPair.first->second->InitBehaviorOperationModifiers();
       }
       else
       {
@@ -345,79 +338,75 @@ void ICozmoBehavior::InitInternal(BehaviorExternalInterface& behaviorExternalInt
 
   // Allow internal init to happen before subscribing to tags in case additional
   // tags are added
-  InitBehavior(behaviorExternalInterface);
+  InitBehavior();
 
   ///////
   //// Subscribe to tags
   ///////
   
-  for(auto& pair : _gameToEngineCallbackMap) {
-    SubscribeToTag(pair.first, pair.second);
+  for(auto tag : _gameToEngineTags) {
+    GetBEI().GetBehaviorEventComponent().SubscribeToTags(this, {tag});
   }
   
-  for(auto& pair : _engineToGameCallbackMap) {
-    SubscribeToTag(pair.first, pair.second);
+  for(auto tag : _engineToGameTags) {
+    GetBEI().GetBehaviorEventComponent().SubscribeToTags(this, {tag});
   }
   
   for(auto tag: _robotToEngineTags) {
-    behaviorExternalInterface.GetStateChangeComponent().SubscribeToTags(this,
-    {
-      tag
-    });
+    GetBEI().GetBehaviorEventComponent().SubscribeToTags(this,{tag});
   }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::InitBehaviorOperationModifiers()
+{
+  // N.B. this can't happen in Init because some behaviors actually rely on other behaviors having been
+  // initialized to properly handler GetBehaviorOperationModifiers
   
+  GetBehaviorOperationModifiers(_operationModifiers);
 }
-
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehavior::SubscribeToTag(GameToEngineTag  tag,
-                                    std::function<void(const GameToEngineEvent&)> messageHandler)
+void ICozmoBehavior::SetRespondToCloudIntent(CloudIntent intent)
 {
-  if(ANKI_VERIFY(_behaviorExternalInterface != nullptr,
-                 "ICozmoBehavior.SubscribeToTag.MissingExternalInterface",
-                 "")){
-    _behaviorExternalInterface->GetStateChangeComponent().SubscribeToTags(this, {tag});
+  if( ANKI_VERIFY( !_initHasBeenCalled,
+                   "ICozmoBehavior.SetRespondToCloudIntent.AfterInit",
+                   "behavior '%s' trying to set cloud intent to '%s' after init has already been called",
+                   GetIDStr().c_str(),
+                   CloudIntentToString(intent)) ) {
+    if( _respondToCloudIntent != CloudIntent::Count ) {
+      PRINT_NAMED_WARNING("ICozmoBehavior.SetRespondToCloudIntent.ReplaceIntent",
+                          "behavior '%s' setting cloud intent to '%s', but it was previously '%s'",
+                          GetIDStr().c_str(),
+                          CloudIntentToString(intent),
+                          CloudIntentToString(_respondToCloudIntent));
+    }
+
+    _respondToCloudIntent = intent;
   }
 }
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehavior::SubscribeToTag(EngineToGameTag  tag,
-                                    std::function<void(const EngineToGameEvent&)> messageHandler)
-{
-  if(ANKI_VERIFY(_behaviorExternalInterface != nullptr,
-                 "ICozmoBehavior.SubscribeToTag.MissingExternalInterface",
-                 "")){
-    _behaviorExternalInterface->GetStateChangeComponent().SubscribeToTags(this, {tag});
-  }
-}
-
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::SubscribeToTags(std::set<GameToEngineTag> &&tags)
 {
-  for(auto& tag: tags){
-    _gameToEngineCallbackMap.insert(std::make_pair(tag, nullptr));
-  }
+  _gameToEngineTags.insert(tags.begin(), tags.end());
 }
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::SubscribeToTags(std::set<EngineToGameTag> &&tags)
 {
-  for(auto& tag: tags){
-    _engineToGameCallbackMap.insert(std::make_pair(tag, nullptr));
-  }
+  _engineToGameTags.insert(tags.begin(), tags.end());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::SubscribeToTags(std::set<RobotInterface::RobotToEngineTag> &&tags)
 {
-  _robotToEngineTags = std::move(tags);
+  _robotToEngineTags.insert(tags.begin(), tags.end());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ICozmoBehavior::OnActivatedInternal_Legacy(BehaviorExternalInterface& behaviorExternalInterface)
+void ICozmoBehavior::OnActivatedInternal()
 {
   PRINT_CH_INFO("Behaviors", (GetIDStr() + ".Init").c_str(), "Starting...");
   
@@ -459,30 +448,41 @@ Result ICozmoBehavior::OnActivatedInternal_Legacy(BehaviorExternalInterface& beh
   _behaviorDelegateCallback = nullptr;
   _activatedTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _hasSetIdle = false;
-  Result initResult = OnBehaviorActivated(behaviorExternalInterface);
-  if ( initResult != RESULT_OK ) {
-    _isActivated = false;
-  }
-  else {
-    _startCount++;
-  }
+  _startCount++;
   
   // Clear cloud intent if responding to it
   if(_respondToCloudIntent != CloudIntent::Count){
-    behaviorExternalInterface.GetAIComponent().GetBehaviorComponent().
+    GetBEI().GetAIComponent().GetBehaviorComponent().
                  GetCloudReceiver().ClearIntentIfPending(_respondToCloudIntent);
   }
 
-  return initResult;
+  // Handle Vision Mode Subscriptions
+  if(!_operationModifiers.visionModesForActiveScope->empty()){
+    GetBEI().GetVisionScheduleMediator().SetVisionModeSubscriptions(this, 
+      *_operationModifiers.visionModesForActiveScope);
+  }
+
+  OnBehaviorActivated();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::OnEnteredActivatableScopeInternal()
 {
   if ( _requiredProcess != AIInformationAnalysis::EProcess::Invalid ){
-    auto& infoProcessor = _behaviorExternalInterface->GetAIComponent().GetAIInformationAnalyzer();
+    auto& infoProcessor = GetBEI().GetAIComponent().GetAIInformationAnalyzer();
     infoProcessor.AddEnableRequest(_requiredProcess, GetIDStr().c_str());
   }
+
+  for( auto& strategy : _wantsToBeActivatedConditions ) {
+    strategy->Reset(GetBEI());
+  }
+
+  // Handle Vision Mode Subscriptions
+  if(!_operationModifiers.visionModesForActivatableScope->empty()){
+    GetBEI().GetVisionScheduleMediator().SetVisionModeSubscriptions(this, 
+      *_operationModifiers.visionModesForActivatableScope);
+  }
+
 }
 
 
@@ -490,97 +490,16 @@ void ICozmoBehavior::OnEnteredActivatableScopeInternal()
 void ICozmoBehavior::OnLeftActivatableScopeInternal()
 {
   if ( _requiredProcess != AIInformationAnalysis::EProcess::Invalid ){
-    auto& infoProcessor = _behaviorExternalInterface->GetAIComponent().GetAIInformationAnalyzer();
+    auto& infoProcessor = GetBEI().GetAIComponent().GetAIInformationAnalyzer();
     infoProcessor.RemoveEnableRequest(_requiredProcess, GetIDStr().c_str());
   }
+
+  GetBEI().GetVisionScheduleMediator().ReleaseAllVisionModeSubscriptions(this);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status ICozmoBehavior::BehaviorUpdate_Legacy(BehaviorExternalInterface& behaviorExternalInterface)
-{
-  //// Event handling
-  // Call message handling convenience functions
-  //////
-  
-  const auto& stateChangeComp = behaviorExternalInterface.GetStateChangeComponent();
-  const auto& actionsCompleted = stateChangeComp.GetActionsCompletedThisTick();
-  for(auto& entry: actionsCompleted){
-    if(entry.idTag == _lastActionTag){
-      HandleActionComplete(entry);
-    }
-  }
-  
-  for(const auto& event: stateChangeComp.GetGameToEngineEvents()){
-    // Handle specific callbacks
-    auto pairIter = _gameToEngineCallbackMap.find(event.GetData().GetTag());
-    if(pairIter != _gameToEngineCallbackMap.end()){
-      if(pairIter->second != nullptr){
-        pairIter->second(event);
-      }
-      AlwaysHandle(event, behaviorExternalInterface);
-      if(IsActivated()){
-        HandleWhileActivated(event, behaviorExternalInterface);
-      }else{
-        HandleWhileInScopeButNotActivated(event, behaviorExternalInterface);
-      }
-    }
-  }
-  
-  for(const auto& event: stateChangeComp.GetEngineToGameEvents()){
-    // Handle specific callbacks
-    auto pairIter = _engineToGameCallbackMap.find(event.GetData().GetTag());
-    if(pairIter != _engineToGameCallbackMap.end()){
-      if(pairIter->second != nullptr){
-        pairIter->second(event);
-      }
-      
-      AlwaysHandle(event, behaviorExternalInterface);
-      if(IsActivated()){
-        HandleWhileActivated(event, behaviorExternalInterface);
-      }else{
-        HandleWhileInScopeButNotActivated(event, behaviorExternalInterface);
-      }
-    }
-  }
-  
-  for(const auto& event: stateChangeComp.GetRobotToEngineEvents()){
-    AlwaysHandle(event, behaviorExternalInterface);
-    if(IsActivated()){
-      HandleWhileActivated(event, behaviorExternalInterface);
-    }else{
-      HandleWhileInScopeButNotActivated(event, behaviorExternalInterface);
-    }
-  }
-  
-  //////
-  //// end Event handling
-  //////
-  ICozmoBehavior::Status status = Status::Complete;
-  BehaviorUpdate(behaviorExternalInterface);
-
-  if(IsActivated()){
-    status = UpdateInternal_WhileRunning(behaviorExternalInterface);
-      if(!IsControlDelegated() && status != ICozmoBehavior::Status::Running){
-      if(behaviorExternalInterface.HasDelegationComponent()){
-        auto& delegationComponent = behaviorExternalInterface.GetDelegationComponent();
-        delegationComponent.CancelSelf(this);
-      }
-    }
-    if(!IsActing()){
-      if(_stopRequestedAfterAction) {
-        // we've been asked to stop, don't bother ticking update
-        return Status::Complete;
-      }
-    }
-  }
-  
-  return status;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehavior::OnDeactivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)
+void ICozmoBehavior::OnDeactivatedInternal()
 {
   PRINT_CH_INFO("Behaviors", (GetIDStr() + ".Stop").c_str(), "Stopping...");
 
@@ -590,14 +509,20 @@ void ICozmoBehavior::OnDeactivatedInternal(BehaviorExternalInterface& behaviorEx
   }
   
   _isActivated = false;
-  OnBehaviorDeactivated(behaviorExternalInterface);
+  OnBehaviorDeactivated();
   _lastRunTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   CancelDelegates(false);
   
   if(_hasSetIdle){
-    SmartRemoveIdleAnimation(*_behaviorExternalInterface);
+    SmartRemoveIdleAnimation();
   }
-  
+
+  // Set Mode Subscriptions back to ActivatableScope values. OnLeftActivatableScopeInternal handles final unsubscribe
+  if(!_operationModifiers.visionModesForActivatableScope->empty()){
+    GetBEI().GetVisionScheduleMediator().SetVisionModeSubscriptions(this, 
+      *_operationModifiers.visionModesForActivatableScope);
+  }
+
   // clear the path component motion profile if it was set by the behavior
   if( _hasSetMotionProfile ) {
     SmartClearMotionProfile();
@@ -605,7 +530,7 @@ void ICozmoBehavior::OnDeactivatedInternal(BehaviorExternalInterface& behaviorEx
 
   // Unlock any tracks which the behavior hasn't had a chance to unlock
   for(const auto& entry: _lockingNameToTracksMap){
-    behaviorExternalInterface.GetRobotInfo().GetMoveComponent().UnlockTracks(entry.second, entry.first);
+    GetBEI().GetRobotInfo().GetMoveComponent().UnlockTracks(entry.second, entry.first);
   }
   
   
@@ -613,8 +538,6 @@ void ICozmoBehavior::OnDeactivatedInternal(BehaviorExternalInterface& behaviorEx
   _customLightObjects.clear();
   
   DEV_ASSERT(_smartLockIDs.empty(), "ICozmoBehavior.Stop.DisabledReactionsNotEmpty");
-
-  OnCozmoBehaviorDeactivated(behaviorExternalInterface);
 }
   
   
@@ -634,10 +557,10 @@ void ICozmoBehavior::StopOnNextActionComplete()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ICozmoBehavior::WantsToBeActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool ICozmoBehavior::WantsToBeActivatedInternal() const
 {
-  if(WantsToBeActivatedBase(behaviorExternalInterface)){
-    return WantsToBeActivatedBehavior(behaviorExternalInterface);
+  if(WantsToBeActivatedBase()){
+    return WantsToBeActivatedBehavior();
   }
   
   return false;
@@ -645,19 +568,24 @@ bool ICozmoBehavior::WantsToBeActivatedInternal(BehaviorExternalInterface& behav
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ICozmoBehavior::WantsToBeActivatedBase(BehaviorExternalInterface& behaviorExternalInterface) const
+bool ICozmoBehavior::WantsToBeActivatedBase() const
 {
+  // Factory test does not need to check behavior runnability
+  if(FACTORY_TEST){
+    return true;
+  }
+
   // Some reaction trigger strategies allow behaviors to interrupt themselves.
   DEV_ASSERT(!IsActivated(), "ICozmoBehavior.WantsToBeActivatedCalledOnRunningBehavior");
   if (IsActivated()) {
     PRINT_CH_DEBUG("Behaviors", "ICozmoBehavior.WantsToBeActivatedBase", "Behavior %s is already running", GetIDStr().c_str());
     return true;
   }
-  
+
   // check if required processes are running
   if ( _requiredProcess != AIInformationAnalysis::EProcess::Invalid )
   {
-    const bool isProcessOn = behaviorExternalInterface.GetAIComponent().GetAIInformationAnalyzer().IsProcessRunning(_requiredProcess);
+    const bool isProcessOn = GetBEI().GetAIComponent().GetAIInformationAnalyzer().IsProcessRunning(_requiredProcess);
     if ( !isProcessOn ) {
       PRINT_NAMED_ERROR("ICozmoBehavior.WantsToBeActivated.RequiredProcessNotFound",
         "Required process '%s' is not enabled for '%s'",
@@ -669,7 +597,7 @@ bool ICozmoBehavior::WantsToBeActivatedBase(BehaviorExternalInterface& behaviorE
 
   // check if a severe needs state is required
   if( _requiredSevereNeed != NeedId::Count &&
-      _requiredSevereNeed != behaviorExternalInterface.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression() ) {
+      _requiredSevereNeed != GetBEI().GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression() ) {
     // not in the correct state
     return false;
   }
@@ -678,12 +606,12 @@ bool ICozmoBehavior::WantsToBeActivatedBase(BehaviorExternalInterface& behaviorE
   // first check the unlock
   if ( _requiredUnlockId != UnlockId::Count )
   {
-    if(_behaviorExternalInterface->HasProgressionUnlockComponent()){
+    if(GetBEI().HasProgressionUnlockComponent()){
       // ask progression component if the unlockId is currently unlocked
-      auto& progressionUnlockComp = behaviorExternalInterface.GetProgressionUnlockComponent();
+      auto& progressionUnlockComp = GetBEI().GetProgressionUnlockComponent();
       const bool forFreeplay = true;
       const bool isUnlocked = progressionUnlockComp.IsUnlocked(_requiredUnlockId,
-                                                               forFreeplay );
+                                                                forFreeplay );
       if ( !isUnlocked ) {
         return false;
       }
@@ -694,7 +622,7 @@ bool ICozmoBehavior::WantsToBeActivatedBase(BehaviorExternalInterface& behaviorE
   const bool requiresRecentDriveOff = FLT_GE(_requiredRecentDriveOffCharger_sec, 0.0f);
   if ( requiresRecentDriveOff )
   {
-    const float lastDriveOff = behaviorExternalInterface.GetAIComponent().GetWhiteboard().GetTimeAtWhichRobotGotOffCharger();
+    const float lastDriveOff = GetBEI().GetAIComponent().GetWhiteboard().GetTimeAtWhichRobotGotOffCharger();
     const bool hasDrivenOff = FLT_GE(lastDriveOff, 0.0f);
     if ( !hasDrivenOff ) {
       // never driven off the charger, can't run
@@ -720,25 +648,25 @@ bool ICozmoBehavior::WantsToBeActivatedBase(BehaviorExternalInterface& behaviorE
   }
   
   //check if the behavior runs while in the air
-  if(behaviorExternalInterface.GetOffTreadsState() != OffTreadsState::OnTreads
-     && !ShouldRunWhileOffTreads()){
+  if(GetBEI().GetOffTreadsState() != OffTreadsState::OnTreads
+      && !_operationModifiers.wantsToBeActivatedWhenOffTreads){
     return false;
   }
 
-  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  const auto& robotInfo = GetBEI().GetRobotInfo();
   //check if the behavior can run from the charger platform (don't want most to run because they could damage
   //the robot by moving too much, and also will generally look dumb if they try to turn)
-  if(robotInfo.IsOnChargerPlatform() && !ShouldRunWhileOnCharger()) {
+  if(robotInfo.IsOnChargerPlatform() && !_operationModifiers.wantsToBeActivatedWhenOnCharger){
     return false;
   }
   
   //check if the behavior can handle holding a block
-  if(robotInfo.GetCarryingComponent().IsCarryingObject() && !CarryingObjectHandledInternally()){
+  if(robotInfo.GetCarryingComponent().IsCarryingObject() && !_operationModifiers.wantsToBeActivatedWhenCarryingObject){
     return false;
   }
-  
-  for(auto& strategy: _stateConceptStrategies){
-    if(!strategy->AreStateConditionsMet(behaviorExternalInterface)){
+
+  for(auto& strategy: _wantsToBeActivatedConditions){
+    if(!strategy->AreConditionsMet(GetBEI())){
       return false;
     }
   }
@@ -749,12 +677,12 @@ bool ICozmoBehavior::WantsToBeActivatedBase(BehaviorExternalInterface& behaviorE
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Util::RandomGenerator& ICozmoBehavior::GetRNG() const {
-  return _behaviorExternalInterface->GetRNG();
+  return GetBEI().GetRNG();
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehavior::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+void ICozmoBehavior::UpdateInternal()
 {
   // fist call the behavior delegation callback if there is one
   if( IsActivated() &&
@@ -764,24 +692,90 @@ void ICozmoBehavior::UpdateInternal(BehaviorExternalInterface& behaviorExternalI
     // make local copy to avoid any issues with the callback delegating to another behavior
     auto callback = _behaviorDelegateCallback;
     _behaviorDelegateCallback = nullptr;
-    callback(behaviorExternalInterface);
+    callback();
+  }
+
+  //// Event handling
+  // Call message handling convenience functions
+  UpdateMessageHandlingHelpers();
+
+  // Handle stop after requested action finishes
+  if(IsActivated()){
+    if(!IsActing()){
+      if(_stopRequestedAfterAction) {
+        // we've been asked to stop, so do that
+        if(GetBEI().HasDelegationComponent()){
+          auto& delegationComponent = GetBEI().GetDelegationComponent();
+          delegationComponent.CancelSelf(this);
+        }
+      }
+    }
+  }
+
+  // Tick behavior update
+  BehaviorUpdate();
+
+  // Check whether we should cancel the behavior if control is no longer delegated
+  if(IsActivated()){
+    if(_operationModifiers.behaviorAlwaysDelegates && !IsControlDelegated()){
+      if(GetBEI().HasDelegationComponent()){
+        auto& delegationComponent = GetBEI().GetDelegationComponent();
+        delegationComponent.CancelSelf(this);
+      }
+    }
   }
   
-  BehaviorUpdate_Legacy(behaviorExternalInterface);
 }
-
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status ICozmoBehavior::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void ICozmoBehavior::UpdateMessageHandlingHelpers()
 {
-  if( IsControlDelegated() ) {  
-    return Status::Running;
+  const auto& stateChangeComp = GetBEI().GetBehaviorEventComponent();
+  const auto& actionsCompleted = stateChangeComp.GetActionsCompletedThisTick();
+  for(auto& entry: actionsCompleted){
+    if(entry.idTag == _lastActionTag){
+      HandleActionComplete(entry);
+    }
   }
-
-  return Status::Complete;
+  
+  for(const auto& event: stateChangeComp.GetGameToEngineEvents()){
+    // Handle specific callbacks
+    auto iter = _gameToEngineTags.find(event.GetData().GetTag());
+    if(iter != _gameToEngineTags.end()){
+      AlwaysHandleInScope(event);
+      if(IsActivated()){
+        HandleWhileActivated(event);
+      }else{
+        HandleWhileInScopeButNotActivated(event);
+      }
+    }
+  }
+  
+  for(const auto& event: stateChangeComp.GetEngineToGameEvents()){
+    // Handle specific callbacks
+    auto iter = _engineToGameTags.find(event.GetData().GetTag());
+    if(iter != _engineToGameTags.end()){      
+      AlwaysHandleInScope(event);
+      if(IsActivated()){
+        HandleWhileActivated(event);
+      }else{
+        HandleWhileInScopeButNotActivated(event);
+      }
+    }
+  }
+  
+  for(const auto& event: stateChangeComp.GetRobotToEngineEvents()){
+    AlwaysHandleInScope(event);
+    if(IsActivated()){
+      HandleWhileActivated(event);
+    }else{
+      HandleWhileInScopeButNotActivated(event);
+    }
+  }
 }
-  
-  
+
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 float ICozmoBehavior::GetActivatedDuration() const
 {  
@@ -798,8 +792,8 @@ float ICozmoBehavior::GetActivatedDuration() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ICozmoBehavior::IsControlDelegated() const
 {
-  if(_behaviorExternalInterface->HasDelegationComponent()){
-    auto& delegationComponent = _behaviorExternalInterface->GetDelegationComponent();
+  if(GetBEI().HasDelegationComponent()){
+    auto& delegationComponent = GetBEI().GetDelegationComponent();
     return delegationComponent.IsControlDelegated(this);
   }
   
@@ -809,8 +803,8 @@ bool ICozmoBehavior::IsControlDelegated() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ICozmoBehavior::IsActing() const
 {
-  if(_behaviorExternalInterface->HasDelegationComponent()){
-    auto& delegationComponent = _behaviorExternalInterface->GetDelegationComponent();
+  if(GetBEI().HasDelegationComponent()){
+    auto& delegationComponent = GetBEI().GetDelegationComponent();
     return delegationComponent.IsActing(this);
   }
   
@@ -822,7 +816,7 @@ bool ICozmoBehavior::IsActing() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ICozmoBehavior::DelegateIfInControl(IActionRunner* action, RobotCompletedActionCallback callback)
 {
-  if(!_behaviorExternalInterface->HasDelegationComponent()) {
+  if(!GetBEI().HasDelegationComponent()) {
     PRINT_NAMED_ERROR("ICozmoBehavior.DelegateIfInControl.NoDelegationComponent",
                       "Behavior %s attempted to start action while it did not have control of delegation",
                       GetIDStr().c_str());
@@ -830,7 +824,7 @@ bool ICozmoBehavior::DelegateIfInControl(IActionRunner* action, RobotCompletedAc
     return false;
   }
   
-  auto& delegationComponent = _behaviorExternalInterface->GetDelegationComponent();
+  auto& delegationComponent = GetBEI().GetDelegationComponent();
   if(!delegationComponent.HasDelegator(this)){
     PRINT_NAMED_ERROR("ICozmoBehavior.DelegateIfInControl.NoDelegator",
                       "Behavior %s attempted to start action while it did not have control of delegation",
@@ -873,15 +867,6 @@ bool ICozmoBehavior::DelegateIfInControl(IActionRunner* action, RobotCompletedAc
                                   action);
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ICozmoBehavior::DelegateIfInControl(IActionRunner* action, BehaviorRobotCompletedActionWithExternalInterfaceCallback callback)
-{
-  return DelegateIfInControl(action,
-                     [this, callback = std::move(callback)](const ExternalInterface::RobotCompletedAction& msg) {
-                       callback(msg, *_behaviorExternalInterface);
-                     });
-}
-
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ICozmoBehavior::DelegateIfInControl(IActionRunner* action, ActionResultCallback callback)
@@ -894,35 +879,18 @@ bool ICozmoBehavior::DelegateIfInControl(IActionRunner* action, ActionResultCall
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ICozmoBehavior::DelegateIfInControl(IActionRunner* action, ActionResultWithRobotCallback callback)
-{
-  return DelegateIfInControl(action,
-                     [this, callback = std::move(callback)](const ExternalInterface::RobotCompletedAction& msg) {
-                       callback(msg.result, *_behaviorExternalInterface);
-                     });
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ICozmoBehavior::DelegateIfInControl(IActionRunner* action, SimpleCallback callback)
 {
   return DelegateIfInControl(action, [callback = std::move(callback)](ActionResult ret){ callback(); });
 }
 
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ICozmoBehavior::DelegateIfInControl(IActionRunner* action, SimpleCallbackWithRobot callback)
-{
-  return DelegateIfInControl(action, [this, callback = std::move(callback)](ActionResult ret){ callback(*_behaviorExternalInterface); });
-}
-
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ICozmoBehavior::DelegateIfInControl(BehaviorExternalInterface& behaviorExternalInterface, IBehavior* delegate)
+bool ICozmoBehavior::DelegateIfInControl(IBehavior* delegate)
 {
-  if((_behaviorExternalInterface->HasDelegationComponent()) &&
-     !behaviorExternalInterface.GetDelegationComponent().IsControlDelegated(this)) {
-    auto& delegationComponent = behaviorExternalInterface.GetDelegationComponent();
+  if((GetBEI().HasDelegationComponent()) &&
+     !GetBEI().GetDelegationComponent().IsControlDelegated(this)) {
+    auto& delegationComponent = GetBEI().GetDelegationComponent();
     
     if( delegationComponent.HasDelegator(this)) {
       delegationComponent.GetDelegator(this).Delegate(this, delegate);
@@ -935,13 +903,12 @@ bool ICozmoBehavior::DelegateIfInControl(BehaviorExternalInterface& behaviorExte
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ICozmoBehavior::DelegateIfInControl(BehaviorExternalInterface& behaviorExternalInterface,
-                                         IBehavior* delegate,
-                                         BehaviorSimpleCallbackWithExternalInterface callback)
+bool ICozmoBehavior::DelegateIfInControl(IBehavior* delegate,
+                                         BehaviorSimpleCallback callback)
 {
   // TODO:(bn) unit test this!!!
 
-  if( DelegateIfInControl(behaviorExternalInterface, delegate) ) {
+  if( DelegateIfInControl(delegate) ) {
     _behaviorDelegateCallback = callback;
     return true;
   }
@@ -952,10 +919,10 @@ bool ICozmoBehavior::DelegateIfInControl(BehaviorExternalInterface& behaviorExte
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ICozmoBehavior::DelegateNow(BehaviorExternalInterface& behaviorExternalInterface, IBehavior* delegate)
+bool ICozmoBehavior::DelegateNow(IBehavior* delegate)
 {
-  if(_behaviorExternalInterface->HasDelegationComponent()) {
-    auto& delegationComponent = behaviorExternalInterface.GetDelegationComponent();
+  if(GetBEI().HasDelegationComponent()) {
+    auto& delegationComponent = GetBEI().GetDelegationComponent();
     if( delegationComponent.IsControlDelegated(this) ) {
       delegationComponent.CancelDelegates(this);
     }
@@ -1019,8 +986,8 @@ bool ICozmoBehavior::CancelDelegates(bool allowCallback, bool allowHelperToConti
       _actionCallback = nullptr;
       _behaviorDelegateCallback = nullptr;
     }
-    if(_behaviorExternalInterface->HasDelegationComponent()){
-      _behaviorExternalInterface->GetDelegationComponent().CancelDelegates(this);
+    if(GetBEI().HasDelegationComponent()){
+      GetBEI().GetDelegationComponent().CancelDelegates(this);
       return true;
     }
   }
@@ -1031,8 +998,8 @@ bool ICozmoBehavior::CancelDelegates(bool allowCallback, bool allowHelperToConti
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ICozmoBehavior::CancelSelf()
 {
-  if(_behaviorExternalInterface->HasDelegationComponent()){
-    auto& delegationComponent = _behaviorExternalInterface->GetDelegationComponent();
+  if(GetBEI().HasDelegationComponent()){
+    auto& delegationComponent = GetBEI().GetDelegationComponent();
     delegationComponent.CancelSelf(this);
     return true;
   }
@@ -1042,7 +1009,7 @@ bool ICozmoBehavior::CancelSelf()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::BehaviorObjectiveAchieved(BehaviorObjective objectiveAchieved, bool broadcastToGame) const
 {
-  /**auto robotExternalInterface = _behaviorExternalInterface->GetRobotExternalInterface().lock();
+  /**auto robotExternalInterface = GetBEI().GetRobotExternalInterface().lock();
   if(broadcastToGame && (robotExternalInterface != nullptr)){
     robotExternalInterface->BroadcastToGame<ExternalInterface::BehaviorObjectiveAchieved>(objectiveAchieved);
   }**/
@@ -1059,15 +1026,15 @@ void ICozmoBehavior::NeedActionCompleted(NeedsActionId needsActionId)
     needsActionId = _needsActionID;
   }
   
-  if(_behaviorExternalInterface->HasNeedsManager()){
-    auto& needsManager = _behaviorExternalInterface->GetNeedsManager();
+  if(GetBEI().HasNeedsManager()){
+    auto& needsManager = GetBEI().GetNeedsManager();
     needsManager.RegisterNeedsActionCompleted(needsActionId);
   }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehavior::SmartPushIdleAnimation(BehaviorExternalInterface& behaviorExternalInterface, AnimationTrigger animation)
+void ICozmoBehavior::SmartPushIdleAnimation(AnimationTrigger animation)
 {
   if(ANKI_VERIFY(!_hasSetIdle,
                  "ICozmoBehavior.SmartPushIdleAnimation.IdleAlreadySet",
@@ -1081,7 +1048,7 @@ void ICozmoBehavior::SmartPushIdleAnimation(BehaviorExternalInterface& behaviorE
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehavior::SmartRemoveIdleAnimation(BehaviorExternalInterface& behaviorExternalInterface)
+void ICozmoBehavior::SmartRemoveIdleAnimation()
 {
   if(ANKI_VERIFY(_hasSetIdle,
                  "ICozmoBehavior.SmartRemoveIdleAnimation.NoIdleSet",
@@ -1101,7 +1068,7 @@ void ICozmoBehavior::SmartSetMotionProfile(const PathMotionProfile& motionProfil
               "ICozmoBehavior.SmartSetMotionProfile.AlreadySet",
               "a profile was already set and not cleared");
   
-  _behaviorExternalInterface->GetRobotInfo().GetPathComponent().SetCustomMotionProfile(motionProfile);
+  GetBEI().GetRobotInfo().GetPathComponent().SetCustomMotionProfile(motionProfile);
   _hasSetMotionProfile = true;
 }
 
@@ -1111,7 +1078,7 @@ void ICozmoBehavior::SmartClearMotionProfile()
   ANKI_VERIFY(_hasSetMotionProfile,
               "ICozmoBehavior.SmartClearMotionProfile.NotSet",
               "a profile was not set, so can't be cleared");
-  _behaviorExternalInterface->GetRobotInfo().GetPathComponent().ClearCustomMotionProfile();
+  GetBEI().GetRobotInfo().GetPathComponent().ClearCustomMotionProfile();
   _hasSetMotionProfile = false;
 }
 
@@ -1121,7 +1088,7 @@ bool ICozmoBehavior::SmartLockTracks(u8 animationTracks, const std::string& who,
   // Only lock the tracks if we haven't already locked them with that key
   const bool insertionSuccessfull = _lockingNameToTracksMap.insert(std::make_pair(who, animationTracks)).second;
   if(insertionSuccessfull){
-    _behaviorExternalInterface->GetRobotInfo().GetMoveComponent().LockTracks(animationTracks, who, debugName);
+    GetBEI().GetRobotInfo().GetMoveComponent().LockTracks(animationTracks, who, debugName);
     return true;
   }else{
     PRINT_NAMED_WARNING("ICozmoBehavior.SmartLockTracks.AttemptingToLockTwice", "Attempted to lock tracks with key named %s but key already exists", who.c_str());
@@ -1138,7 +1105,7 @@ bool ICozmoBehavior::SmartUnLockTracks(const std::string& who)
     PRINT_NAMED_WARNING("ICozmoBehavior.SmartUnlockTracks.InvalidUnlock", "Attempted to unlock tracks with key named %s but key not found", who.c_str());
     return false;
   }else{
-    _behaviorExternalInterface->GetRobotInfo().GetMoveComponent().UnlockTracks(mapIter->second, who);
+    GetBEI().GetRobotInfo().GetMoveComponent().UnlockTracks(mapIter->second, who);
     mapIter = _lockingNameToTracksMap.erase(mapIter);
     return true;
   }
@@ -1150,7 +1117,7 @@ bool ICozmoBehavior::SmartSetCustomLightPattern(const ObjectID& objectID,
                                            const ObjectLights& modifier)
 {
   if(std::find(_customLightObjects.begin(), _customLightObjects.end(), objectID) == _customLightObjects.end()){
-    _behaviorExternalInterface->GetCubeLightComponent().PlayLightAnim(objectID, anim, nullptr, true, modifier);
+    GetBEI().GetCubeLightComponent().PlayLightAnim(objectID, anim, nullptr, true, modifier);
     _customLightObjects.push_back(objectID);
     return true;
   }else{
@@ -1169,7 +1136,7 @@ bool ICozmoBehavior::SmartRemoveCustomLightPattern(const ObjectID& objectID,
   if(objectIter != _customLightObjects.end()){
     for(const auto& anim : anims)
     {
-      _behaviorExternalInterface->GetCubeLightComponent().StopLightAnimAndResumePrevious(anim, objectID);
+      GetBEI().GetCubeLightComponent().StopLightAnimAndResumePrevious(anim, objectID);
     }
     _customLightObjects.erase(objectIter);
     return true;
@@ -1182,10 +1149,9 @@ bool ICozmoBehavior::SmartRemoveCustomLightPattern(const ObjectID& objectID,
  
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ICozmoBehavior::SmartDelegateToHelper(BehaviorExternalInterface& behaviorExternalInterface,
-                                      HelperHandle handleToRun,
-                                      SimpleCallbackWithRobot successCallback,
-                                      SimpleCallbackWithRobot failureCallback)
+bool ICozmoBehavior::SmartDelegateToHelper(HelperHandle handleToRun,
+                                           SimpleCallback successCallback,
+                                           SimpleCallback failureCallback)
 {
   PRINT_CH_INFO("Behaviors", (GetIDStr() + ".SmartDelegateToHelper").c_str(),
                 "Behavior requesting to delegate to helper %s", handleToRun->GetName().c_str());
@@ -1196,14 +1162,14 @@ bool ICozmoBehavior::SmartDelegateToHelper(BehaviorExternalInterface& behaviorEx
    StopHelperWithoutCallback();
   }
   
-  if(!_behaviorExternalInterface->HasDelegationComponent()){
+  if(!GetBEI().HasDelegationComponent()){
     PRINT_NAMED_ERROR("ICozmoBehavior.SmartDelegateToHelper.NotInControlOfDelegationComponent",
                       "Behavior %s attempted to delegate while not in control",
                       GetIDStr().c_str());
     return false;
   }
   
-  auto& delegationComponent = _behaviorExternalInterface->GetDelegationComponent();
+  auto& delegationComponent = GetBEI().GetDelegationComponent();
 
   
   if(!delegationComponent.HasDelegator(this)){
@@ -1222,12 +1188,11 @@ bool ICozmoBehavior::SmartDelegateToHelper(BehaviorExternalInterface& behaviorEx
   // helpers to queue actions - but if the delegation fails this tmp handle will fall
   // out of scope as soon as this function ends so that _currentHelperHandle becomes
   // invalid again
-  HelperHandle tmpHandle = behaviorExternalInterface.GetAIComponent().GetBehaviorHelperComponent().
-                                        GetBehaviorHelperFactory().CreatePlaceBlockHelper(*_behaviorExternalInterface, *this);
+  HelperHandle tmpHandle = GetBEI().GetAIComponent().GetBehaviorHelperComponent().
+                                        GetBehaviorHelperFactory().CreatePlaceBlockHelper(*this);
   _currentHelperHandle = tmpHandle;
   
   const bool delegateSuccess = delegateWrapper.Delegate(this,
-                                                        behaviorExternalInterface,
                                                         handleToRun,
                                                         successCallback,
                                                         failureCallback);
@@ -1247,7 +1212,7 @@ bool ICozmoBehavior::SmartDelegateToHelper(BehaviorExternalInterface& behaviorEx
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorHelperFactory& ICozmoBehavior::GetBehaviorHelperFactory()
 {
-  return _behaviorExternalInterface->GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
+  return GetBEI().GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
 }
 
 
@@ -1259,8 +1224,8 @@ bool ICozmoBehavior::StopHelperWithoutCallback()
   if( handle ) {
     PRINT_CH_INFO("Behaviors", (GetIDStr() + ".SmartStopHelper").c_str(),
                   "Behavior stopping its helper");
-    if(_behaviorExternalInterface->HasDelegationComponent()){
-      auto& delegationComponent = _behaviorExternalInterface->GetDelegationComponent();
+    if(GetBEI().HasDelegationComponent()){
+      auto& delegationComponent = GetBEI().GetDelegationComponent();
       delegationComponent.CancelDelegates(this);
       handleStopped = true;
     }
@@ -1281,7 +1246,7 @@ ActionResult ICozmoBehavior::UseSecondClosestPreActionPose(DriveToObjectAction* 
     return result;
   }
 
-  auto& robotPose = _behaviorExternalInterface->GetRobotInfo().GetPose();
+  auto& robotPose = GetBEI().GetRobotInfo().GetPose();
   if( possiblePoses.size() > 1 && IDockAction::RemoveMatchingPredockPose(robotPose, possiblePoses ) ) {
     alreadyInPosition = false;
   }

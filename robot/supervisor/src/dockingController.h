@@ -17,7 +17,7 @@
 #ifndef COZMO_DOCKING_CONTROLLER_H_
 #define COZMO_DOCKING_CONTROLLER_H_
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 #include "clad/types/dockingSignals.h"
 #include "localization_geometry.h"
 // Distance between the robot origin and the distance along the robot's x-axis

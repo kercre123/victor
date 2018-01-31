@@ -14,13 +14,17 @@
  #ifndef __Anki_Cozmo_MapComponent_H__
  #define __Anki_Cozmo_MapComponent_H__
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 
+#include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
 #include "engine/ankiEventUtil.h"
+#include "engine/dependencyManagedComponent.h"
 #include "engine/overheadEdge.h"
 #include "engine/navMap/iNavMap.h"
+#include "engine/robotComponents_fwd.h"
 
-#include "anki/vision/basestation/observableObjectLibrary.h"
+#include "coretech/vision/engine/observableObjectLibrary.h"
+
 #include "util/helpers/noncopyable.h"
 
 #include <assert.h>
@@ -34,12 +38,26 @@ namespace Cozmo {
 class Robot;
 class ObservableObject;
   
-class MapComponent : private Util::noncopyable
+class MapComponent : public IDependencyManagedComponent<RobotComponentID>, private Util::noncopyable
 {
-public:
-  
-  explicit MapComponent(Robot* robot);
+public: 
+  explicit MapComponent();
   ~MapComponent();
+
+  //////
+  // IDependencyManagedComponent functions
+  //////
+  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
+  // Maintain the chain of initializations currently in robot - it might be possible to
+  // change the order of initialization down the line, but be sure to check for ripple effects
+  // when changing this function
+  virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
+    dependencies.insert(RobotComponentID::Vision);
+  };
+  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
+  //////
+  // end IDependencyManagedComponent functions
+  //////
   
   ////////////////////////////////////////////////////////////////////////////////
   // Update and init
@@ -57,8 +75,6 @@ public:
   Result ProcessVisionOverheadEdges(const OverheadEdgeFrame& frameInfo);
   
   // add obstacles detected from the driving classifier to navMap
-  void AddDetectedObstacles(const std::list<Poly2f>& polys);
-  
   void AddDetectedObstacles(const OverheadEdgeFrame& edgeObstacle);
 
   ////////////////////////////////////////////////////////////////////////////////

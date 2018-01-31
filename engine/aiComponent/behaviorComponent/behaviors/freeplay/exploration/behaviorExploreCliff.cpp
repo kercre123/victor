@@ -75,7 +75,7 @@
 //}
 //
 //// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//bool BehaviorExploreCliff::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+//bool BehaviorExploreCliff::WantsToBeActivatedBehavior() const
 //{
 //  const INavMemoryMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
 //  if ( nullptr == memoryMap ) {
@@ -87,7 +87,7 @@
 //}
 //  
 //// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//Result BehaviorExploreCliff::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+//void BehaviorExploreCliff::OnBehaviorActivated()
 //{
 //  // select borders we want to visit
 //  BorderScoreVector borderGoals;
@@ -131,34 +131,35 @@
 //  _currentActionTag = driveToPoseAction->GetTag();
 //  robot.GetActionList().QueueActionNow(driveToPoseAction);
 //
-//  return Result::RESULT_OK;
+//  
 //}
 //
 //
 //// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//BehaviorExploreCliff::Status BehaviorExploreCliff::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+//void BehaviorExploreCliff::BehaviorUpdate()
 //{
+//  if(!IsActivated()){
+//    return;
+//  }
 //  // while we are moving towards a vantage point, wait patiently
 //  if ( _currentActionTag != ActionConstants::INVALID_TAG )
 //  {
 //    // PRINT_NAMED_INFO("RSAM", "Waiting for the move to action to finish");
-//    return Status::Running;
+//    return;
 //  }
 //  
-//  // done
-//  Status retval = Status::Complete;
-//  return retval;
+//  CancelSelf();
 //}
 //
 //// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//void BehaviorExploreCliff::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+//void BehaviorExploreCliff::OnBehaviorDeactivated()
 //{
 //  _currentActionTag = ActionConstants::INVALID_TAG;
 //  robot.GetContext()->GetVizManager()->EraseSegments("BehaviorExploreCliff::InitInternal");
 //}
 //
 //// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//void BehaviorExploreCliff::AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+//void BehaviorExploreCliff::AlwaysHandleInScope(const EngineToGameEvent& event)
 //{
 //  switch(event.GetData().GetTag())
 //  {

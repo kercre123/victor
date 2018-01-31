@@ -15,13 +15,13 @@
 #ifndef __Cozmo_Basestation_robotDataBackupManager_H__
 #define __Cozmo_Basestation_robotDataBackupManager_H__
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
-#include "clad/types/nvStorage.h"
+#include "clad/types/nvStorageTypes.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include <vector>
 #include <unordered_map>

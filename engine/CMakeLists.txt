@@ -8,7 +8,6 @@ include(flatbuffers)
 include(archive)
 include(routing_http_server)
 include(android_strip)
-
 include(anki_build_cxx)
 
 anki_build_cxx_library(cozmo_engine ${ANKI_SRCLIST_DIR})
@@ -50,6 +49,7 @@ target_link_libraries(cozmo_engine
   # anki libs
   clad
   util
+  civetweb
   cti_common
   cti_messaging
   robot_interface
@@ -61,10 +61,12 @@ target_link_libraries(cozmo_engine
   ble_cozmo
   DAS 
   androidHAL
+  canned_anim_lib_engine
   # cti
-  cti_common
   cti_vision
   cti_planning
+  cubeBleClient
+  osState
   # vendor
   ${FLATBUFFERS_LIBS}
   ${LIBARCHIVE_LIBS}
@@ -84,7 +86,7 @@ android_strip(TARGET cozmo_engine)
 
 target_compile_definitions(cozmo_engine
   PRIVATE
-  CORETECH_BASESTATION
+  CORETECH_ENGINE
   USE_DAS=${USE_DAS}
   "${PLATFORM_COMPILE_DEFS}"
 )

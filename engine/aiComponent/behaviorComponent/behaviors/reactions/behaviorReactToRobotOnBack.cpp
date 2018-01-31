@@ -15,7 +15,7 @@
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -37,31 +37,30 @@ BehaviorReactToRobotOnBack::BehaviorReactToRobotOnBack(const Json::Value& config
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorReactToRobotOnBack::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorReactToRobotOnBack::WantsToBeActivatedBehavior() const
 {
   return true;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorReactToRobotOnBack::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToRobotOnBack::OnBehaviorActivated()
 {
-  FlipDownIfNeeded(behaviorExternalInterface);
-  return Result::RESULT_OK;
+  FlipDownIfNeeded(); 
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToRobotOnBack::FlipDownIfNeeded(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToRobotOnBack::FlipDownIfNeeded()
 {
-  if( behaviorExternalInterface.GetOffTreadsState() == OffTreadsState::OnBack ) {
-    const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  if( GetBEI().GetOffTreadsState() == OffTreadsState::OnBack ) {
+    const auto& robotInfo = GetBEI().GetRobotInfo();
     // Check if cliff detected
     // If not, then calibrate head because we're not likely to be on back if no cliff detected.
     if (robotInfo.GetCliffSensorComponent().IsCliffDetected()) {
       AnimationTrigger anim = AnimationTrigger::FlipDownFromBack;
       
-      if(behaviorExternalInterface.GetAIComponent().GetWhiteboard().HasHiccups())
+      if(GetBEI().GetAIComponent().GetWhiteboard().HasHiccups())
       {
         anim = AnimationTrigger::HiccupRobotOnBack;
       }
@@ -82,9 +81,9 @@ void BehaviorReactToRobotOnBack::FlipDownIfNeeded(BehaviorExternalInterface& beh
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToRobotOnBack::DelayThenFlipDown(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToRobotOnBack::DelayThenFlipDown()
 {
-  if( behaviorExternalInterface.GetOffTreadsState() == OffTreadsState::OnBack ) {
+  if( GetBEI().GetOffTreadsState() == OffTreadsState::OnBack ) {
     DelegateIfInControl(new WaitAction(kWaitTimeBeforeRepeatAnim_s),
                 &BehaviorReactToRobotOnBack::FlipDownIfNeeded);
   }
@@ -95,7 +94,7 @@ void BehaviorReactToRobotOnBack::DelayThenFlipDown(BehaviorExternalInterface& be
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToRobotOnBack::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToRobotOnBack::OnBehaviorDeactivated()
 {
 }
 

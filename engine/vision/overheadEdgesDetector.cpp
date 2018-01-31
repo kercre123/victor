@@ -11,7 +11,7 @@
  **/
 
 #include "overheadEdgesDetector.h"
-#include "coretech/vision/include/anki/vision/basestation/imageCache.h"
+#include "coretech/vision/engine/imageCache.h"
 #include "engine/robot.h"
 
 namespace Anki {

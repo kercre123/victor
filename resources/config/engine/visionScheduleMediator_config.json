@@ -1,0 +1,97 @@
+{
+  "VisionModeSettings" :
+  [
+    // Settings indicate update period in frames for each mode e.g. "1" runs every frame "2" every second etc.
+    {
+      "mode"     : "DetectingMarkers",
+      "low"      : 3,
+      "med"      : 2,
+      "high"     : 1,
+      "standard" : 2
+    },
+    {
+      "mode"     : "DetectingFaces",
+      "low"      : 3,
+      "med"      : 2,
+      "high"     : 1,
+      "standard" : 2
+    },
+    {
+      "mode"     : "DetectingPets",
+      "low"      : 3,
+      "med"      : 2,
+      "high"     : 1,
+      "standard" : 2
+    },
+    {
+      "mode"     : "DetectingMotion",
+      "low"      : 3,
+      "med"      : 2,
+      "high"     : 1,
+      "standard" : 2
+    },
+    {
+      "mode"     : "DetectingOverheadEdges",
+      "low"      : 3,
+      "med"      : 2,
+      "high"     : 1,
+      "standard" : 2
+    },
+    {
+      "mode"     : "CheckingQuality",
+      "low"      : 3,
+      "med"      : 2,
+      "high"     : 1,
+      "standard" : 2
+    },
+    {
+      "mode"     : "EstimatingFacialExpression",
+      "low"      : 3,
+      "med"      : 2,
+      "high"     : 1,
+      "standard" : 2
+    },
+    {
+      "mode"     : "DetectingSmileAmount",
+      "low"      : 3,
+      "med"      : 2,
+      "high"     : 1,
+      "standard" : 2
+    },
+    {
+      "mode"     : "DetectingGaze",
+      "low"      : 3,
+      "med"      : 2,
+      "high"     : 1,
+      "standard" : 2
+    },
+    {
+      "mode"     : "DetectingBlinkAmount",
+      "low"      : 3,
+      "med"      : 2,
+      "high"     : 1,
+      "standard" : 2
+    },
+    {
+      "mode"     : "DetectingLaserPoints",
+      "low"      : 3,
+      "med"      : 2,
+      "high"     : 1,
+      "standard" : 2
+    },
+    {
+      "mode"     : "ComputingStatistics",
+      "low"      : 3,
+      "med"      : 2,
+      "high"     : 1,
+      "standard" : 2
+    },
+    {
+      "mode"     : "BuildingOverheadMap",
+      "low"      : 3,
+      "med"      : 2,
+      "high"     : 1,
+      "standard" : 2
+    }
+  ]
+}

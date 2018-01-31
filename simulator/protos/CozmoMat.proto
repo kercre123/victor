@@ -2,7 +2,7 @@
 
 PROTO CozmoMat [
   field SFColor Color 1.0000 1.0000 1.0000
-  field SFBool showMarkers TRUE
+  field SFBool showMarkers FALSE
   field SFFloat xSize 1.000
   field SFFloat ySize 1.000
   field SFFloat wallHeight 0.0

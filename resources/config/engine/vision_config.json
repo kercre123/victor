@@ -2,7 +2,7 @@
   "InitialVisionModes" :
   {
     // If a vision mode is not listed, it will be left in its default state
-    "DetectingMarkers"           : true,
+    "DetectingMarkers"           : false,
     "DetectingFaces"             : false,
     "DetectingPets"              : false,
     "DetectingMotion"            : false,
@@ -64,7 +64,7 @@
   {
     "DropStatsWindowLength_sec"         : 30,  // How long to average dropped image stats
     "TimeBetweenProfilerInfoPrints_sec" : 60,  // How often to print Profiler info messages to the logs
-    "TimeBetweenProfilerDasLogs_sec"    : 120  // How often to log Profiler DAS events
+    "TimeBetweenProfilerDasLogs_sec"    : 600  // How often to log Profiler DAS events
   },
   
   "PetTracker" :
@@ -93,5 +93,16 @@
   {
     "NumRows"          : 1000,    // Size of the overhead map. Bigger sizes do not impact computation, only memory
     "NumCols"          : 1000
+  },
+
+  "GroundPlaneClassifier" :
+  {
+    "MaxsDepth"           : 7,
+    "MinSampleCount"      : 10,
+    "TruncatePrunedTree"  : true,
+    "Use1SERule"          : true,
+    "PositiveWeight"      : 1.0,
+    "OnTheFlyTrain"       : false,
+    "FileOrDirName"       : "config/engine/vision/groundClassifier/reflectiveMazeClassifier.json"
   }
 }

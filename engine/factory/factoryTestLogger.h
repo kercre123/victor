@@ -12,8 +12,8 @@
 #ifndef __Basestation_Factory_FactoryTestLogger_H_
 #define __Basestation_Factory_FactoryTestLogger_H_
 
-#include "anki/common/basestation/math/point.h"
-#include "anki/common/basestation/math/pose.h"
+#include "coretech/common/engine/math/point.h"
+#include "coretech/common/engine/math/pose.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -55,12 +55,22 @@ public:
   bool Append(const ToolCodeInfo& data);
   bool Append(const BirthCertificate& data);
   bool Append(const IMUInfo& data);
+  bool Append(const IMUTempDuration& data);
   bool Append(const CalibMetaInfo& data);
   bool AppendCliffValueOnDrop(const CliffSensorValue& data);
   bool AppendCliffValueOnGround(const CliffSensorValue& data);
+  bool AppendCliffValuesOnFrontDrop(const CliffSensorValues& data);
+  bool AppendCliffValuesOnBackDrop(const CliffSensorValues& data);
+  bool AppendCliffValuesOnGround(const CliffSensorValues& data);
   bool AppendCalibPose(const PoseData& data);
   bool AppendObservedCubePose(const PoseData& data);
   bool Append(const ExternalInterface::RobotCompletedFactoryDotTest& msg);
+  bool Append(const std::map<std::string, std::vector<FactoryTestResultCode>>& results);
+  bool Append(const std::string& dataTypeName, const TouchSensorValues& data);
+  
+  // DistanceSensorData is added to an json array of data called "name". Separate data entries are
+  // labelled as "seq_*". Call with an existing name to add to that array
+  bool Append(const std::string& name, const DistanceSensorData& data);
   
   // Adds a file with the given contents to the log folder
   bool AddFile(const std::string& filename, const std::vector<uint8_t>& data);
@@ -81,11 +91,16 @@ public:
   
 private:
   
+  std::string ChooseNextFileName(const std::string& dir, const std::string& name);
+
   bool AppendCliffSensorValue(const std::string& readingName, const CliffSensorValue& data);
+  bool AppendCliffSensorValues(const std::string& readingName, const CliffSensorValues& data);
   bool AppendPoseData(const std::string& poseName, const PoseData& data);
   bool AppendToFile(const std::string& data);
 
   bool ArchiveAndDelete(const std::string& archiveName, const std::string& logBaseDir);
+  
+  void ParseIMUTempDuration(const IMUTempDuration& data, Json::Value* json, std::stringstream& ss);
   
   std::string GetCurrDateTime() const;
   

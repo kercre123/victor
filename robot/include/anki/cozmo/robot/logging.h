@@ -17,7 +17,6 @@
 #define __ANKI_COZMO_ROBOT_LOGGING_H_
 
 #include "anki/cozmo/robot/buildTypes.h"
-#include "clad/types/robotLogging.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -45,7 +44,7 @@
 #error ANKI_DEBUG_EVENTS not defined
 #endif
 #ifndef ANKI_DEBUG_INFO
-#error ANKI_DEBUG_EVENTS not defined
+#error ANKI_DEBUG_INFO not defined
 #endif
 #ifndef ANKI_DEBUG_LEVEL
 #error ANKI_DEBUG_LEVEL not defined

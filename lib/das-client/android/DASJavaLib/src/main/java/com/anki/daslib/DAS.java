@@ -33,13 +33,16 @@ import java.io.IOException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.io.StringReader;
 import java.lang.SecurityException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -48,6 +51,10 @@ import javax.net.ssl.HttpsURLConnection;
 
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.NameValuePair;
+
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+import org.xmlpull.v1.XmlPullParserFactory;
 
 public class DAS {
 
@@ -95,8 +102,9 @@ public class DAS {
         }
     }
 
-    public static boolean postToServer(String url, String postBody) {
+    public static boolean postToServer(String url, String postBody, ByteBuffer out_response5k) {
         HttpURLConnection conn = null;
+        boolean success = true;
         try {
             URL serverUrl = new URL(url);
             if (url.startsWith("https")) {
@@ -130,10 +138,48 @@ public class DAS {
             writer.flush();
             writer.close();
             os.close();
+            InputStreamReader responseReader;
             int responseCode = conn.getResponseCode();
             if (responseCode < 200 || responseCode > 299) {
                 Log.v(TAG, "Warning! Upload to DAS server returned a response code of " + responseCode);
+                responseReader = new InputStreamReader(conn.getErrorStream());
             }
+            else
+            {
+                responseReader = new InputStreamReader(conn.getInputStream());
+            }
+            int maxCharacters = 5 * 1024 - 1;
+            char[] responseRaw = new char[maxCharacters];
+            int length = responseReader.read(responseRaw, 0, maxCharacters);
+            responseReader.close();
+
+            String responseString = new String(responseRaw, 0, length);
+
+            Boolean responseContainsError = false;
+            try {
+                XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
+                factory.setNamespaceAware(true);
+                XmlPullParser xpp = factory.newPullParser();
+                xpp.setInput(new StringReader(responseString));
+                int eventType = xpp.getEventType();
+                while (eventType != XmlPullParser.END_DOCUMENT) {
+                    if(eventType == XmlPullParser.START_TAG && xpp.getName() == "ErrorResponse") {
+                        responseContainsError = true;
+                        break;
+                    }
+                    eventType = xpp.next();
+                }
+            } catch (org.xmlpull.v1.XmlPullParserException e) {
+                responseContainsError = true;
+            }
+
+            out_response5k.put(responseString.getBytes(), 0, length);
+            out_response5k.put((byte)'\0');
+
+            if (responseString.isEmpty() || responseContainsError || responseCode < 200 || responseCode > 299) {
+                success = false;
+            }
+
         } catch (java.io.IOException e) {
             Log.v(TAG, "Error! Unable to upload DAS events: ", e);
             return false;
@@ -143,7 +189,7 @@ public class DAS {
             }
         }
 
-        return true;
+        return success;
     }
 
     private static String getQuery(List<NameValuePair> params) throws UnsupportedEncodingException

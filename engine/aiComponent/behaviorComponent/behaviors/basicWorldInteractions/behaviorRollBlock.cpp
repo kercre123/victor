@@ -13,7 +13,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorRollBlock.h"
 
 #include "engine/actions/animActions.h"
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorEventAnimResponseDirector.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
@@ -23,7 +23,7 @@
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/moodSystem/moodManager.h"
-#include "anki/vision/basestation/observableObject.h"
+#include "coretech/vision/engine/observableObject.h"
 #include "util/console/consoleInterface.h"
 
 
@@ -56,33 +56,35 @@ BehaviorRollBlock::BehaviorRollBlock(const Json::Value& config)
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorRollBlock::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorRollBlock::WantsToBeActivatedBehavior() const
 {
-  UpdateTargetBlock(behaviorExternalInterface);
+  UpdateTargetBlock();
   
   return _targetID.IsSet() || IsControlDelegated();
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorRollBlock::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRollBlock::OnBehaviorActivated()
 {
   _didCozmoAttemptDock = false;
-  const ObservableObject* object = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_targetID);
+  const ObservableObject* object = GetBEI().GetBlockWorld().GetLocatedObjectByID(_targetID);
   if(object != nullptr){
-    UpdateTargetsUpAxis(behaviorExternalInterface);
-    TransitionToPerformingAction(behaviorExternalInterface);
-    return Result::RESULT_OK;
+    UpdateTargetsUpAxis();
+    TransitionToPerformingAction();
+    
   }
-  
-  return Result::RESULT_FAIL;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorRollBlock::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRollBlock::BehaviorUpdate()
 {
-  const ObservableObject* object = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_targetID);
+  if(!IsActivated()){
+    return;
+  }
+
+  const ObservableObject* object = GetBEI().GetBlockWorld().GetLocatedObjectByID(_targetID);
   if(object != nullptr && _behaviorState == State::RollingBlock){
     const AxisName currentUpAxis = object->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>();
     if(currentUpAxis != _upAxisOnBehaviorStart){
@@ -90,52 +92,50 @@ ICozmoBehavior::Status BehaviorRollBlock::UpdateInternal_WhileRunning(BehaviorEx
       // so check distance between Cozmo and the cube to see whether he is still
       // rolling the cube himself or it was put upright by the user
       f32 distBetween = 0;
-      if(ComputeDistanceSQBetween(behaviorExternalInterface.GetRobotInfo().GetPose(), 
+      if(ComputeDistanceSQBetween(GetBEI().GetRobotInfo().GetPose(), 
                                   object->GetPose(), distBetween) &&
          (distBetween > (kMaxDistCozmoIsRollingCube_mm * kMaxDistCozmoIsRollingCube_mm))){
         
-        UpdateTargetsUpAxis(behaviorExternalInterface);
+        UpdateTargetsUpAxis();
         CancelDelegates(false, false);
         
         if(_didCozmoAttemptDock){
-          TransitionToRollSuccess(behaviorExternalInterface);
+          TransitionToRollSuccess();
         }else{
-          UpdateTargetBlock(behaviorExternalInterface);
+          UpdateTargetBlock();
           if(_targetID.IsSet()){
-            TransitionToPerformingAction(behaviorExternalInterface);
+            TransitionToPerformingAction();
           }else{
-            return ICozmoBehavior::Status::Complete;
+            CancelSelf();
           }
         }
       }
     }
   }
-  
-  return base::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRollBlock::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRollBlock::OnBehaviorDeactivated()
 {
-  ResetBehavior(behaviorExternalInterface);
+  ResetBehavior();
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRollBlock::UpdateTargetBlock(BehaviorExternalInterface& behaviorExternalInterface) const
+void BehaviorRollBlock::UpdateTargetBlock() const
 {
   using Intent = ObjectInteractionIntention;
   const Intent intent = (_isBlockRotationImportant ?
                          Intent::RollObjectWithDelegateAxisCheck :
                          Intent::RollObjectWithDelegateNoAxisCheck);
-  auto& objInfoCache = behaviorExternalInterface.GetAIComponent().GetObjectInteractionInfoCache();
+  auto& objInfoCache = GetBEI().GetAIComponent().GetObjectInteractionInfoCache();
   _targetID = objInfoCache.GetBestObjectForIntention(intent);
 }
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRollBlock::TransitionToPerformingAction(BehaviorExternalInterface& behaviorExternalInterface, bool isRetry)
+void BehaviorRollBlock::TransitionToPerformingAction(bool isRetry)
 {
   SET_STATE(RollingBlock);
   
@@ -155,16 +155,16 @@ void BehaviorRollBlock::TransitionToPerformingAction(BehaviorExternalInterface& 
     _didCozmoAttemptDock = true;
   };
   
-  auto delegateSuccess = [this](BehaviorExternalInterface& behaviorExternalInterface) {
-    TransitionToRollSuccess(behaviorExternalInterface);
+  auto delegateSuccess = [this]() {
+    TransitionToRollSuccess();
   };
   
-  auto delegateFailure = [this](BehaviorExternalInterface& behaviorExternalInterface) {
+  auto delegateFailure = [this]() {
     PRINT_NAMED_INFO("BehaviorRollBlock.FailedAbort", "Failed to verify roll");
     
-    const ObservableObject* failedObject = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_targetID);
+    const ObservableObject* failedObject = GetBEI().GetBlockWorld().GetLocatedObjectByID(_targetID);
     if(failedObject){
-      behaviorExternalInterface.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectActionFailure::RollOrPopAWheelie);
+      GetBEI().GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectActionFailure::RollOrPopAWheelie);
     }
   };
   
@@ -173,29 +173,28 @@ void BehaviorRollBlock::TransitionToPerformingAction(BehaviorExternalInterface& 
   params.preDockCallback = preDockCallback;
   params.sayNameAnimationTrigger = AnimationTrigger::RollBlockPreActionNamedFace;
   params.noNameAnimationTrigger = AnimationTrigger::RollBlockPreActionUnnamedFace;
-  auto& factory = behaviorExternalInterface.GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
-  HelperHandle rollHandle = factory.CreateRollBlockHelper(behaviorExternalInterface,
-                                                          *this,
+  auto& factory = GetBEI().GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
+  HelperHandle rollHandle = factory.CreateRollBlockHelper(*this,
                                                           _targetID,
                                                           upright,
                                                           params);
   
-  SmartDelegateToHelper(behaviorExternalInterface, rollHandle, delegateSuccess, delegateFailure);
+  SmartDelegateToHelper(rollHandle, delegateSuccess, delegateFailure);
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRollBlock::TransitionToRollSuccess(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRollBlock::TransitionToRollSuccess()
 {
   SET_STATE(CelebratingRoll);
   // The mood manager listens for actions to succeed to modify mood, but we may have just canceled the
   // action, so manually send the mood event here
-  if(behaviorExternalInterface.HasMoodManager()){
-    auto& moodManager = behaviorExternalInterface.GetMoodManager();
+  if(GetBEI().HasMoodManager()){
+    auto& moodManager = GetBEI().GetMoodManager();
     moodManager.TriggerEmotionEvent("RollSucceeded",
                                     MoodManager::GetCurrentTimeInSeconds());
   }
-  UpdateTargetsUpAxis(behaviorExternalInterface);
+  UpdateTargetsUpAxis();
 
   if(!ShouldStreamline()){
     DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::RollBlockSuccess));
@@ -206,16 +205,16 @@ void BehaviorRollBlock::TransitionToRollSuccess(BehaviorExternalInterface& behav
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRollBlock::ResetBehavior(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRollBlock::ResetBehavior()
 {
   _targetID.UnSet();
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRollBlock::UpdateTargetsUpAxis(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorRollBlock::UpdateTargetsUpAxis()
 {
-  const ObservableObject* object = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_targetID);
+  const ObservableObject* object = GetBEI().GetBlockWorld().GetLocatedObjectByID(_targetID);
   if(object != nullptr){
     _upAxisOnBehaviorStart = object->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>();
   }

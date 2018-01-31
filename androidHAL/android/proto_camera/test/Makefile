@@ -6,6 +6,7 @@ ANDROID_ARM_TOOLS_BIN:=$(ANDROID_ARM_TOOLS_ROOT)/bin
 CC := $(ANDROID_ARM_TOOLS_BIN)/arm-linux-androideabi-gcc
 CPP := $(ANDROID_ARM_TOOLS_BIN)/arm-linux-androideabi-g++
 AR := $(ANDROID_ARM_TOOLS_BIN)/arm-linux-androideabi-ar
+HOST_CC := /usr/bin/clang
 # Compiler flags
 # Specify all the flags below which you want to use for your compilation, For this simple example, we only need to specify the include directory path
 CFLAGS          := -I..
@@ -30,6 +31,9 @@ $(ANDROID_ARM_TOOLS_ROOT):
 
 $(APP):   $(OBJ)
 	$(CC) -pie -llog $(OBJ) -o $(APP)
+
+bayer2rgb: bayer2rgb.c
+	$(HOST_CC) -std=c99 -O2 -o bayer2rgb bayer2rgb.c
 
 clean:
 	rm -f $(APP) *.o *.d

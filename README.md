@@ -11,6 +11,8 @@ If you need to work on Cozmo, you should look in [cozmo-one].
 
 [cozmo-one]: https://github.com/anki/cozmo-one
 
+For more information about the system architecture, components, organization at a high level, check out the [Victor System Architecture](docs/architecture/README.md) page.
+
 ## Getting Started
 
 If you are new to Anki please also see the [New Hire Onboarding](https://ankiinc.atlassian.net/wiki/pages/viewpage.action?pageId=72614010) page.
@@ -102,7 +104,14 @@ See [build-instructions](docs/development/build-instructions.md) for a more thor
 
 ### ADB setup
 
-Since the Android SDK and NDK are automatically downloaded with `./configure.py` you should be using `adb` from there. Make sure you do not have android-sdk installed from `brew` by running. 
+You can get the android SDK and NDK by running the following commands:
+
+```
+./tools/build/tools/ankibuild/android.py --install-sdk
+./tools/build/tools/ankibuild/android.py --install-ndk
+```
+
+Make sure you do not have android-sdk installed from `brew` by running. 
 
 `brew uninstall android-sdk`
 
@@ -169,11 +178,9 @@ You can view output from all processes by running `victor_log`.
 
 1. Make sure you have built for mac by running `./project/victor/build-victor.sh -p mac` on the same branch as the binaries on the physical robot.
 
-1. Open the world `cozmo2Viz.wbt` in a text editor, and set the fields `forcedRobotIP` and `engineIP` to match your robot's IP address. 
+1. Open the world `cozmo2Viz.wbt` in a text editor, and set the field `engineIP` to match your robot's IP address. 
 
 1. Run the world to connect to the robot. The processes must be fully up and running before connecting with webots. If in doubt, stop the world and run `victor_restart` first.
-
-1. Ad-hoc connections to a robot are not yet supported. If you disconnect Webots and you want to connect again, you will first need to restart the engine, animation, and robot processes by running `victor_restart`.
 
 ## Running Victor in Webots (simulated robot)
 
@@ -183,8 +190,12 @@ See [simulator/README.md](simulator/README.md).
 
 Most developers shouldn't have to do this. Better to ask someone in hardware or Al or Kevin Y.
 
-1. To build syscon, run `vmake.sh` in `robot2/`. 
+1. To build syscon, run `vmake.sh` in `robot/`. 
 
 1. If the robot has previously run the robot process since last boot then you'll need to first reboot the robot. 
 
-1. Run `dfu.sh` in `robot2/`. There should be a bunch of messages indicating transfer of data. Might need to run twice.
+1. Run `dfu.sh` in `robot/`. There should be a bunch of messages indicating transfer of data. Might need to run twice.
+
+## Having trouble?
+
+Check out the [Frequently Asked Questions](docs/FAQ.md) page. When you get new questions answered, consider adding them to the list to help others!

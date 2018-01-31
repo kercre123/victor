@@ -14,7 +14,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherRerun.h"
 
-#include "anki/common/basestation/jsonTools.h"
+#include "coretech/common/engine/jsonTools.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
@@ -63,42 +63,39 @@ BehaviorDispatcherRerun::~BehaviorDispatcherRerun()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDispatcherRerun::InitBehavior(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDispatcherRerun::InitBehavior()
 {
-  _delegatePtr = behaviorExternalInterface.GetBehaviorContainer().FindBehaviorByID(_params._delegateID);
+  _delegatePtr = GetBEI().GetBehaviorContainer().FindBehaviorByID(_params._delegateID);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorDispatcherRerun::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDispatcherRerun::OnBehaviorActivated()
 {
   _numRunsRemaining = _params._numRuns;
   if(_delegatePtr != nullptr){
-    CheckRerunState(behaviorExternalInterface);
-    return RESULT_OK;
+    CheckRerunState();
   }
-
-  return RESULT_FAIL;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDispatcherRerun::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDispatcherRerun::BehaviorUpdate()
 {    
-  CheckRerunState(behaviorExternalInterface);
+  CheckRerunState();
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDispatcherRerun::CheckRerunState(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDispatcherRerun::CheckRerunState()
 {
-  if(ANKI_VERIFY(behaviorExternalInterface.HasDelegationComponent(),
+  if(ANKI_VERIFY(GetBEI().HasDelegationComponent(),
                  "BehaviorDispatcherRerun.CheckRerunState.MissingDelegationComponent",
                  "")){
-    auto& delegationComp = behaviorExternalInterface.GetDelegationComponent();
+    auto& delegationComp = GetBEI().GetDelegationComponent();
     if(!delegationComp.IsControlDelegated(this)){
       if(_numRunsRemaining != 0 &&
-         _delegatePtr->WantsToBeActivated(behaviorExternalInterface) &&
+         _delegatePtr->WantsToBeActivated() &&
          ANKI_VERIFY(delegationComp.HasDelegator(this),
                      "BehaviorDispatcherRerun.CheckRerunState.MissingDelegator",
                      ""))
@@ -116,7 +113,7 @@ void BehaviorDispatcherRerun::CheckRerunState(BehaviorExternalInterface& behavio
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDispatcherRerun::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDispatcherRerun::OnBehaviorDeactivated()
 {  
 }
 

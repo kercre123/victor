@@ -12,7 +12,7 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_BehaviorListenerInterfaces_IReactToFaceListener_H__
 #define __Cozmo_Basestation_BehaviorSystem_BehaviorListenerInterfaces_IReactToFaceListener_H__
 
-#include "anki/vision/basestation/faceIdTypes.h"
+#include "coretech/vision/engine/faceIdTypes.h"
 
 
 namespace Anki {
@@ -22,7 +22,7 @@ class SmartFaceID;
 
 class IReactToFaceListener{
 public:
-  virtual void FinishedReactingToFace(BehaviorExternalInterface& behaviorExternalInterface, SmartFaceID faceID) = 0;
+  virtual void FinishedReactingToFace(SmartFaceID faceID) = 0;
   virtual void ClearDesiredTargets() = 0;
 };
 

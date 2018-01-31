@@ -34,17 +34,18 @@ protected:
   // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
   BehaviorDriveInDesperation(const Json::Value& config);
-  virtual void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) override;
 
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenOffTreads = true;
+  }
 
-  // Do nothing while in the air, just idle
-  virtual bool ShouldRunWhileOffTreads() const override { return true; } 
+  virtual void InitBehavior() override;
+
+  virtual void OnBehaviorActivated() override;
+  virtual void OnBehaviorDeactivated() override;
+  virtual void BehaviorUpdate() override;
   
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual bool CarryingObjectHandledInternally() const override {return false;}
+  virtual bool WantsToBeActivatedBehavior() const override;
 
 private:
   using super = ICozmoBehavior;
@@ -73,22 +74,22 @@ private:
 
   bool _wasPickedUp = false;
   
-  void TransitionToIdle(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToDriveRandom(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToRequest(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToIdle();
+  void TransitionToDriveRandom();
+  void TransitionToRequest();
 
   // states only used with cubes
-  void TransitionToSearchForCube(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToDriveToCube(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToLookAtCube(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToSearchForCube();
+  void TransitionToDriveToCube();
+  void TransitionToLookAtCube();
 
   // Figure out which state to go to after idle is complete
-  void TransitionFromIdle(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionFromIdle();
 
-  void TransitionFromIdle_WithCubes(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionFromIdle_NoCubes(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionFromIdle_WithCubes();
+  void TransitionFromIdle_NoCubes();
 
-  void GetRandomDrivingPose(const BehaviorExternalInterface& behaviorExternalInterface, Pose3d& outPose);
+  void GetRandomDrivingPose(Pose3d& outPose);
 
   void RandomizeNumDrivingRounds();
 

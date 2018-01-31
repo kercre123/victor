@@ -19,6 +19,7 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "clad/robotInterface/messageEngineToRobot.h"
+#include "util/console/consoleInterface.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -27,25 +28,40 @@ namespace {
   const std::string kLogDirName = "proxSensor";
 
   const Vec3f kProxSensorPositionVec_mm{kProxSensorPosition_mm[0], kProxSensorPosition_mm[1], kProxSensorPosition_mm[2]};
-
-  const f32 kObsPadding_mm       = 0.0; // extra padding to add to prox obstacle
-  const u16 kMinObsThreshold_mm  = 30;  // Minimum distance for registering an object detected as an obstacle
-  const u16 kMaxObsThreshold_mm  = 400; // Maximum distance for registering an object detected as an obstacle  
-  const f32 kMinQualityThreshold = .15; // Minimum sensor reading strength before trying to use sensor data
 } // end anonymous namespace
 
+// enable/disable prox sensor data
+CONSOLE_VAR(bool, kProxSensorEnabled, "ProxSensorComponent", true);
+
+// extra padding to add to prox obstacle
+CONSOLE_VAR(float, kObsPadding_mm, "ProxSensorComponent", 0.05f);
+
+// distance range for registering an object detected as an obstacle
+CONSOLE_VAR(u16, kMinObsThreshold_mm, "ProxSensorComponent", 30);
+CONSOLE_VAR(u16, kMaxObsThreshold_mm, "ProxSensorComponent", 400);
+
+// max forward tilt of the robot to still consider a valid reading
+CONSOLE_VAR(float, kMaxForwardTilt_rad, "ProxSensorComponent", -.08);
+
+// Minimum sensor reading strength before trying to use sensor data
+CONSOLE_VAR(float, kMinQualityThreshold, "ProxSensorComponent", 0.05f);
+
   
-ProxSensorComponent::ProxSensorComponent(Robot& robot) : ISensorComponent(robot, kLogDirName)
+ProxSensorComponent::ProxSensorComponent() 
+: ISensorComponent(kLogDirName, RobotComponentID::ProxSensor)
 {
 }
   
   
 void ProxSensorComponent::UpdateInternal(const RobotState& msg)
 {
-  _lastMsgTimestamp = msg.timestamp;
-  _latestData = msg.proxData;
-  
-  UpdateNavMap();
+  if (kProxSensorEnabled)
+  {
+    _lastMsgTimestamp = msg.timestamp;
+    _latestData = msg.proxData;
+    
+    UpdateNavMap();
+  }
 }
 
 
@@ -75,7 +91,7 @@ Pose3d ProxSensorComponent::GetPose() const
   Pose3d sensorPose;
   sensorPose.SetTranslation(kProxSensorPositionVec_mm);
   sensorPose.SetRotation(-kProxSensorTiltAngle_rad, Y_AXIS_3D()); // negative since tilt angle is upward
-  sensorPose.SetParent(_robot.GetPose());
+  sensorPose.SetParent(_robot->GetPose());
   return sensorPose;
 }
 
@@ -118,13 +134,13 @@ Result ProxSensorComponent::IsLiftInFOV(bool& isInFOV) const
   // Verify with physical robots that this is accurate.
   
   isInFOV = false;
-  if (!_robot.IsLiftCalibrated()) {
+  if (!_robot->IsLiftCalibrated()) {
     PRINT_NAMED_WARNING("ProxSensorComponent.IsLiftInFOV.LiftNotCalibrated",
                         "Lift is not calibrated! Considering it not in FOV.");
     return Result::RESULT_FAIL;
   }
 
-  const float liftHeight = _robot.GetLiftHeight();
+  const float liftHeight = _robot->GetLiftHeight();
   
   // Note: this is the approximate x distance from the sensor to the lift crossbar
   // when the lift is in front of the sensor. All distances here in mm.
@@ -140,6 +156,33 @@ Result ProxSensorComponent::IsLiftInFOV(bool& isInFOV) const
   return Result::RESULT_OK;
 }
 
+
+bool ProxSensorComponent::IsSensorReadingValid()
+{
+  const u16 proxDist_mm = GetLatestDistance_mm();
+  bool liftBlocking;
+  IsLiftInFOV(liftBlocking);
+  const bool sensorInRangeAndValid = (proxDist_mm > kMinObsThreshold_mm) &&
+                                      (proxDist_mm < kMaxObsThreshold_mm) &&
+                                      !liftBlocking;
+  return sensorInRangeAndValid;
+}
+
+
+bool ProxSensorComponent::CalculateSensedObjectPose(Pose3d& sensedObjectPose)
+{
+  const bool sensorIsValid = IsSensorReadingValid();
+  if(sensorIsValid){
+    const Pose3d proxPose = GetPose();
+    const u16 proxDist_mm = GetLatestDistance_mm();
+    Transform3d transformToSensed(Rotation3d(0.f, Z_AXIS_3D()), {0.f, proxDist_mm, 0.f});
+    // Since prox pose is destroyed when it falls out of scope, don't want parent invalidated
+    sensedObjectPose = Pose3d(transformToSensed, proxPose).GetWithRespectToRoot();
+  }
+  return sensorIsValid;
+}
+
+
 void ProxSensorComponent::UpdateNavMap()
 {
   if (_latestData.spadCount == 0)
@@ -153,20 +196,21 @@ void ProxSensorComponent::UpdateNavMap()
   const bool noObject       = quality <= kMinQualityThreshold;                      // sensor is pointed at free space
   const bool objectDetected = (quality >= kMinQualityThreshold &&                   // sensor is getting some reading
                                _latestData.distance_mm >= kMinObsThreshold_mm);     // the sensor is not seeing the lift
-  
-  if (objectDetected || noObject)
+  const bool tiltedForward  = _robot->GetPitchAngle() < kMaxForwardTilt_rad;        // if the robot is titled too far forward (- rad) 
+
+  if ((objectDetected || noObject) && !tiltedForward)
   {  
     // Clear out any obstacles between the robot and ray if we have good signal strength 
-    TimeStamp_t lastTimestamp = _robot.GetLastMsgTimestamp();
+    TimeStamp_t lastTimestamp = _robot->GetLastMsgTimestamp();
 
     // build line for ray cast by getting the robot pose, casting forward by sensor reading
     const Vec3f offsetx_mm( (noObject) ? kMaxObsThreshold_mm 
                                        : fmin(_latestData.distance_mm, kMaxObsThreshold_mm), 0, 0);   
 
-    const Pose3d  objectPos = _robot.GetPose() * Pose3d(0, Z_AXIS_3D(), offsetx_mm);    
+    const Pose3d  objectPos = _robot->GetPose() * Pose3d(0, Z_AXIS_3D(), offsetx_mm);    
     
     // clear out known free space
-    INavMap* currentNavMemoryMap = _robot.GetMapComponent().GetCurrentMemoryMap();
+    INavMap* currentNavMemoryMap = _robot->GetMapComponent().GetCurrentMemoryMap();
     if ( currentNavMemoryMap ) {
       Vec3f rayOffset1(-kObsPadding_mm,  -kObsPadding_mm, 0);   
       Vec3f rayOffset2(-kObsPadding_mm,   kObsPadding_mm, 0);
@@ -175,15 +219,15 @@ void ProxSensorComponent::UpdateNavMap()
       const Point2f t1 = (objectPos.GetTransform() * Transform3d(rot, rayOffset1)).GetTranslation();
       const Point2f t2 = (objectPos.GetTransform() * Transform3d(rot, rayOffset2)).GetTranslation(); 
 
-      Triangle2f tri(t1, t2, _robot.GetPose().GetTranslation());
+      Triangle2f tri(t1, t2, _robot->GetPose().GetTranslation());
       MemoryMapData clearRegion(INavMap::EContentType::ClearOfObstacle, lastTimestamp);
 
-      // currentNavMemoryMap->AddLine(_robot.GetPose().GetTranslation(), objectPos.GetTranslation(), clearRegion);
+      // currentNavMemoryMap->AddLine(_robot->GetPose().GetTranslation(), objectPos.GetTranslation(), clearRegion);
       currentNavMemoryMap->AddTriangle(tri, clearRegion);
 
       // Add proxObstacle if detected and close to robot 
-      if (_latestData.distance_mm <= kMaxObsThreshold_mm) { 
-        const float obstacleHalfWidth_mm = ROBOT_BOUNDING_Y * .1 + kObsPadding_mm;
+      if (_latestData.distance_mm <= kMaxObsThreshold_mm && !noObject) { 
+        const float obstacleHalfWidth_mm = ROBOT_BOUNDING_Y * .5 + kObsPadding_mm;
         Vec3f offset1(-kObsPadding_mm,  -obstacleHalfWidth_mm, 0);   
         Vec3f offset2(-kObsPadding_mm,   obstacleHalfWidth_mm, 0);
         Vec3f offset3(kObsPadding_mm * 2, 0, 0);
@@ -194,7 +238,7 @@ void ProxSensorComponent::UpdateNavMap()
         const Point2f p4 = (objectPos.GetTransform() * Transform3d(rot, offset2 + offset3)).GetTranslation();
 
         const Quad2f quad(p1, p2, p3, p4);
-        const Vec3f rotatedFwdVector = _robot.GetPose().GetWithRespectToRoot().GetRotation() * X_AXIS_3D();
+        const Vec3f rotatedFwdVector = _robot->GetPose().GetWithRespectToRoot().GetRotation() * X_AXIS_3D();
         
         MemoryMapData_ProxObstacle proxData(Vec2f{rotatedFwdVector.x(), rotatedFwdVector.y()}, lastTimestamp);      
         currentNavMemoryMap->AddQuad(quad, proxData);

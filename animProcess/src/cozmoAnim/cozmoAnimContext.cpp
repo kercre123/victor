@@ -6,7 +6,9 @@
 #include "cozmoAnim/micDataProcessor.h"
 #include "cozmoAnim/robotDataLoader.h"
 
-#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "engine/util/webService/webService.h"
+
+#include "coretech/common/engine/utils/data/dataPlatform.h"
 
 #include "util/cpuProfiler/cpuThreadId.h"
 #include "util/environment/locale.h"
@@ -29,6 +31,7 @@ CozmoAnimContext::CozmoAnimContext(Util::Data::DataPlatform* dataPlatform)
   , _locale(new Anki::Util::Locale(Anki::Util::Locale::GetNativeLocale()))  
   , _random(new Anki::Util::RandomGenerator())
   , _dataLoader(new RobotDataLoader(this))
+  , _webService(new WebService::WebService())
   , _threadIdHolder(new ThreadIDInternal)
 {
   if (dataPlatform != nullptr)

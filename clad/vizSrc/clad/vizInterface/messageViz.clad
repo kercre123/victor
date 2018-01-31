@@ -3,6 +3,7 @@
 // Author: Daniel Casner
 // Copyright: Anki Inc (c) 2015
 
+#include "clad/robotInterface/messageFromAnimProcess.clad"
 #include "clad/types/robotStatusAndActions.clad"
 #include "clad/types/imageTypes.clad"
 #include "clad/types/objectTypes.clad"
@@ -20,13 +21,17 @@ message RobotStateMessage
   RobotState state,
   float_32 imuTemperature_degC,
   uint_32  numProcAnimFaceKeyframes,
-  uint_32  animId,
   uint_16  cliffThresholds[4],
   uint_8   videoFrameRateHz,
   uint_8   imageProcFrameRateHz,
   uint_8   lockedAnimTracks,
   uint_8   animTracksInUse,
-  uint_8   animTag,
+}
+
+message CurrentAnimation
+{
+  uint_8 tag,
+  string animName
 }
 
 // VizObject
@@ -106,20 +111,20 @@ message SimpleQuadVectorMessageEnd
 }
 
 // Memory map data scheme for internal use (webots viz, and app debug viz)
-message MemoryMapMessageDebugVizBegin
+message MemoryMapMessageVizBegin
 {
   uint_32  originId,
   ExternalInterface::MemoryMapInfo info
 }
 
-message MemoryMapMessageDebugViz
+message MemoryMapMessageViz
 {
   uint_32  originId,
   uint_32  seqNum,
-  ExternalInterface::MemoryMapQuadInfoDebugViz quadInfos[uint_16]
+  ExternalInterface::MemoryMapQuadInfo quadInfos[uint_16]
 }
 
-message MemoryMapMessageDebugVizEnd
+message MemoryMapMessageVizEnd
 {
   uint_32  originId,
 }

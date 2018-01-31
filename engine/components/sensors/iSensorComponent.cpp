@@ -15,8 +15,8 @@
 
 #include "engine/robot.h"
 
-#include "anki/common/basestation/utils/data/dataPlatform.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "util/logging/rollingFileLogger.h"
 
@@ -28,17 +28,23 @@ namespace {
 }
 
   
-ISensorComponent::ISensorComponent(Robot& robot, const std::string& logDirName)
-  : _robot(robot)
-  , _rawDataLogger(nullptr)
-  , _logDirectory(kLogDirectoryBase + "/" + logDirName)
+ISensorComponent::ISensorComponent(const std::string& logDirName, RobotComponentID componentID)
+: IDependencyManagedComponent<RobotComponentID>(componentID)
+, _rawDataLogger(nullptr)
+, _logDirectory(kLogDirectoryBase + "/" + logDirName)
 {
 }
 
 
 ISensorComponent::~ISensorComponent() = default;
   
-  
+
+void ISensorComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+{
+  _robot = robot;
+}
+
+
 void ISensorComponent::Update(const RobotState& msg)
 {
   // Update the derived class
@@ -63,7 +69,7 @@ void ISensorComponent::StartLogging(const uint32_t duration_ms)
                      "Starting raw data logging, duration %d ms%s. Log will appear in '%s'",
                      duration_ms,
                      _logRawDataUntil_s == 0.f ? " (indefinitely)" : "",
-                     _robot.GetContextDataPlatform()->pathToResource(Util::Data::Scope::Cache, _logDirectory).c_str());
+                     _robot->GetContextDataPlatform()->pathToResource(Util::Data::Scope::Cache, _logDirectory).c_str());
   } else {
     PRINT_NAMED_WARNING("ISensorComponent.StartLogging.AlreadyLogging", "Already logging raw data!");
   }
@@ -99,7 +105,7 @@ void ISensorComponent::Log()
   
   // Create a logger if it doesn't exist already
   if (_rawDataLogger == nullptr) {
-    _rawDataLogger = std::make_unique<Util::RollingFileLogger>(nullptr, _robot.GetContextDataPlatform()->pathToResource(Util::Data::Scope::Cache, _logDirectory));
+    _rawDataLogger = std::make_unique<Util::RollingFileLogger>(nullptr, _robot->GetContextDataPlatform()->pathToResource(Util::Data::Scope::Cache, _logDirectory));
     auto header = GetLogHeader();
     DEV_ASSERT((header.find('\n') == std::string::npos) && (header.find('\r') == std::string::npos), "ISensorComponent.Log.LinebreakInHeaderNotAllowed");
     header += "\n";

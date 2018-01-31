@@ -15,6 +15,7 @@
 #define __Cozmo_Basestation_BehaviorSystem_VoiceCommandUtils_DoATrickSelector_H__
 
 #include "clad/types/unlockTypes.h"
+#include "engine/entity.h"
 
 #include "util/helpers/noncopyable.h"
 
@@ -29,7 +30,7 @@ namespace Cozmo {
 class ICozmoBehavior;
 class BehaviorExternalInterface;
   
-class DoATrickSelector : private Util::noncopyable{
+class DoATrickSelector : public ManageableComponent, private Util::noncopyable{
 public:
   DoATrickSelector(const Json::Value& trickWeightsConfig);
 

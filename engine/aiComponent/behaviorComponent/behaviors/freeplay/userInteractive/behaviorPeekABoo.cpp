@@ -12,20 +12,21 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorPeekABoo.h"
 
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/retryWrapperAction.h"
 #include "engine/actions/trackFaceAction.h"
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/aiComponent/faceSelectionComponent.h"
 #include "engine/components/animTrackHelpers.h"
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
 #include "engine/utils/cozmoFeatureGate.h"
-#include "anki/vision/basestation/faceTracker.h"
+#include "coretech/vision/engine/faceTracker.h"
 
 #include "clad/types/animationTrigger.h"
 
@@ -88,7 +89,7 @@ BehaviorPeekABoo::BehaviorPeekABoo(const Json::Value& config)
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorPeekABoo::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorPeekABoo::WantsToBeActivatedBehavior() const
 {
   const float currentTime_Sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   // for COZMO-8914 - no way to play spark get out if no face is found during spark search
@@ -103,51 +104,53 @@ bool BehaviorPeekABoo::WantsToBeActivatedBehavior(BehaviorExternalInterface& beh
   // The sparked version of this behavior is grouped with look for faces behavior in case no faces were seen recently.
   _cachedFace.Reset();
 
-  const auto context = behaviorExternalInterface.GetRobotInfo().GetContext();
+  const auto context = GetBEI().GetRobotInfo().GetContext();
   return (_nextTimeWantsToBeActivated_Sec < currentTime_Sec) &&
-         (GetInteractionFace(behaviorExternalInterface).IsValid()) &&
+         (GetInteractionFace().IsValid()) &&
          context->GetFeatureGate()->IsFeatureEnabled(Anki::Cozmo::FeatureType::PeekABoo);
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorPeekABoo::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPeekABoo::OnBehaviorActivated()
 {
   // for COZMO-8914
   if(ShouldStreamline() &&
      (_timeSparkAboutToEnd_Sec == kSparkShouldPlaySparkFailFlag)){
     _timeSparkAboutToEnd_Sec = 0.0f;
     DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::SparkFailure));
-    return RESULT_OK;
   }
   
   _hasMadeFollowUpRequest = false;
   _turnToFaceRetryCount = 0;
   _timestampEyeNotVisibleMap.clear();
   
-  _numPeeksTotal = _numPeeksRemaining = behaviorExternalInterface.GetRNG().RandIntInRange(_params.minPeeks, _params.maxPeeks);
+  _numPeeksTotal = _numPeeksRemaining = GetBEI().GetRNG().RandIntInRange(_params.minPeeks, _params.maxPeeks);
   // Disable idle so it doesn't move the head down
-  SmartPushIdleAnimation(behaviorExternalInterface, AnimationTrigger::Count);
+  SmartPushIdleAnimation(AnimationTrigger::Count);
   
   
   if( _params.playGetIn )
   {
-    TransitionToIntroAnim(behaviorExternalInterface);
+    TransitionToIntroAnim();
   }
   else
   {
-    TransitionTurnToFace(behaviorExternalInterface);
+    TransitionTurnToFace();
   }
-  return RESULT_OK;
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorPeekABoo::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPeekABoo::BehaviorUpdate()
 {
-  UpdateTimestampSets(behaviorExternalInterface);
-  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
-  const bool seeingEyes = !WasFaceHiddenAfterTimestamp(behaviorExternalInterface, robotInfo.GetLastImageTimeStamp());
+  if(!IsActivated()){
+    return;
+  }
+
+  UpdateTimestampSets();
+  const auto& robotInfo = GetBEI().GetRobotInfo();
+  const bool seeingEyes = !WasFaceHiddenAfterTimestamp(robotInfo.GetLastImageTimeStamp());
   
   // Check to see if a face has appeared/disappeared every tick
   // these functions are their own callback, so allowing the callback
@@ -155,28 +158,26 @@ ICozmoBehavior::Status BehaviorPeekABoo::UpdateInternal_WhileRunning(BehaviorExt
   if(_currentState == State::WaitingToHideFace){
     if( !seeingEyes ) {
       CancelDelegates(false);
-      TransitionWaitToSeeFace(behaviorExternalInterface);
+      TransitionWaitToSeeFace();
     }
   }else if(_currentState == State::WaitingToSeeFace){
     if(seeingEyes){
       CancelDelegates(false);
-      TransitionSeeFaceAfterHiding(behaviorExternalInterface);
+      TransitionSeeFaceAfterHiding();
     }
-  }
-  
-  return super::UpdateInternal_WhileRunning(behaviorExternalInterface);
+  }  
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPeekABoo::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPeekABoo::OnBehaviorDeactivated()
 {
   _nextTimeWantsToBeActivated_Sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + _params.minCoolDown_Sec;
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPeekABoo::TransitionToIntroAnim(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPeekABoo::TransitionToIntroAnim()
 {
   SET_STATE(DoingInitialReaction);
   DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::PeekABooGetIn),&BehaviorPeekABoo::TransitionTurnToFace);
@@ -184,17 +185,17 @@ void BehaviorPeekABoo::TransitionToIntroAnim(BehaviorExternalInterface& behavior
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPeekABoo::TransitionTurnToFace(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPeekABoo::TransitionTurnToFace()
 {
   SET_STATE(TurningToFace);
-  TurnTowardsFaceAction* action = new TurnTowardsFaceAction(GetInteractionFace(behaviorExternalInterface), M_PI_F, false);
+  TurnTowardsFaceAction* action = new TurnTowardsFaceAction(GetInteractionFace(), M_PI_F, false);
   action->SetRequireFaceConfirmation(_params.requireFaceConfirmBeforeRequest);
-  DelegateIfInControl(action, [this, &behaviorExternalInterface](ActionResult ret )
+  DelegateIfInControl(action, [this](ActionResult ret )
   {
     if( ret == ActionResult::SUCCESS )
     {
       _turnToFaceRetryCount = 0;
-      TransitionPlayPeekABooAnim(behaviorExternalInterface);
+      TransitionPlayPeekABooAnim();
     }
     else
     {
@@ -202,24 +203,24 @@ void BehaviorPeekABoo::TransitionTurnToFace(BehaviorExternalInterface& behaviorE
       // otherwise, retry if appropriate, ro try to select a new face to turn to
       ++_turnToFaceRetryCount;
       if(_turnToFaceRetryCount >= kMaxTurnToFaceRetryCount){
-        TransitionExit(behaviorExternalInterface);
+        TransitionExit();
         return;
       }
       
       const ActionResultCategory resCat = IActionRunner::GetActionResultCategory(ret);
       if(resCat == ActionResultCategory::RETRY){
-        TransitionTurnToFace(behaviorExternalInterface);
+        TransitionTurnToFace();
       }else{
         // Failed because target face wasn't there, but maybe another one is
-        if(GetInteractionFace(behaviorExternalInterface).IsValid())
+        if(GetInteractionFace().IsValid())
         {
           // Try to look for the next best face
-          TransitionTurnToFace(behaviorExternalInterface);
+          TransitionTurnToFace();
         }
         else
         {
           // Failed because no faces were found
-          TransitionExit(behaviorExternalInterface);
+          TransitionExit();
         }
       }
     }
@@ -228,7 +229,7 @@ void BehaviorPeekABoo::TransitionTurnToFace(BehaviorExternalInterface& behaviorE
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPeekABoo::TransitionPlayPeekABooAnim(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPeekABoo::TransitionPlayPeekABooAnim()
 {
   SET_STATE(RequestPeekaBooAnim);
   _lastRequestTime_Sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -239,37 +240,37 @@ void BehaviorPeekABoo::TransitionPlayPeekABooAnim(BehaviorExternalInterface& beh
   // accuracy since we get a few frames for free at the end of the anim
   action->AddAction(new TriggerLiftSafeAnimationAction(GetPeekABooAnimation()));
   if(kCenterFaceAfterPeekABoo){
-    action->AddAction(new TurnTowardsFaceAction(GetInteractionFace(behaviorExternalInterface)));
+    action->AddAction(new TurnTowardsFaceAction(GetInteractionFace()));
   }
   
-  DelegateIfInControl(action,[this](BehaviorExternalInterface& behaviorExternalInterface) {
+  DelegateIfInControl(action,[this]() {
     // If we saw a face in the frame buffer, assume that they haven't tried to peekaboo yet
     // if we didn't see a face, assume their face is hidden and they are about to finish the peekaboo
-    const TimeStamp_t timestampHeadSteady = behaviorExternalInterface.GetRobotInfo().GetLastImageTimeStamp();
-    if(WasFaceHiddenAfterTimestamp(behaviorExternalInterface, timestampHeadSteady)) {
+    const TimeStamp_t timestampHeadSteady = GetBEI().GetRobotInfo().GetLastImageTimeStamp();
+    if(WasFaceHiddenAfterTimestamp(timestampHeadSteady)) {
       _stillSawFaceAfterRequest = false;
-      TransitionWaitToSeeFace(behaviorExternalInterface);
+      TransitionWaitToSeeFace();
     }
     else {
       _stillSawFaceAfterRequest = true;
-      TransitionWaitToHideFace(behaviorExternalInterface);
+      TransitionWaitToHideFace();
     }
   });
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPeekABoo::TransitionWaitToHideFace(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPeekABoo::TransitionWaitToHideFace()
 {
   SET_STATE(WaitingToHideFace);
   // first turn towards the face so the head angle is set (needed for GetIdleAndReRequestAction)
-  DelegateIfInControl(new TurnTowardsFaceAction(GetInteractionFace(behaviorExternalInterface)), [this](BehaviorExternalInterface& behaviorExternalInterface) {
+  DelegateIfInControl(new TurnTowardsFaceAction(GetInteractionFace()), [this]() {
     // now track the face and set up the idles
     CompoundActionParallel* trackAndIdleAction = new CompoundActionParallel();
 
     {
-      TrackFaceAction* trackFaceAction = new TrackFaceAction(GetInteractionFace(behaviorExternalInterface));
-      IActionRunner* idleAction = GetIdleAndReRequestAction(behaviorExternalInterface, false);
+      TrackFaceAction* trackFaceAction = new TrackFaceAction(GetInteractionFace());
+      IActionRunner* idleAction = GetIdleAndReRequestAction(false);
 
       // tracking should stop when the idles finish (to handle timeouts)
       trackFaceAction->StopTrackingWhenOtherActionCompleted( idleAction->GetTag() );
@@ -280,30 +281,30 @@ void BehaviorPeekABoo::TransitionWaitToHideFace(BehaviorExternalInterface& behav
 
     // Idle until the timeout. this transition will be aborted if the face gets hidden, so this is just for
     // the no user interaction timeout
-    DelegateIfInControl(trackAndIdleAction, [this](BehaviorExternalInterface& behaviorExternalInterface) {
+    DelegateIfInControl(trackAndIdleAction, [this]() {
         LOG_EVENT("robot.peekaboo_face_never_hidden","%u", _numPeeksRemaining);
-        TransitionToNoUserInteraction(behaviorExternalInterface);
+        TransitionToNoUserInteraction();
     });
   });
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPeekABoo::TransitionWaitToSeeFace(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPeekABoo::TransitionWaitToSeeFace()
 {
   SET_STATE(WaitingToSeeFace);
   // first turn towards the face so the head angle is set (needed for GetIdleAndReRequestAction)
-  DelegateIfInControl(new TurnTowardsFaceAction(GetInteractionFace(behaviorExternalInterface)), [this](BehaviorExternalInterface& behaviorExternalInterface) {
+  DelegateIfInControl(new TurnTowardsFaceAction(GetInteractionFace()), [this]() {
       // Idle until the timeout. This transition will be aborted if the face is seen, so this just handles no
       // user interaction timeout
-      DelegateIfInControl( GetIdleAndReRequestAction(behaviorExternalInterface, true), [this](BehaviorExternalInterface& behaviorExternalInterface) {
+      DelegateIfInControl( GetIdleAndReRequestAction(true), [this]() {
           LOG_EVENT("robot.peekaboo_face_never_came_back","%u", _numPeeksRemaining);
-          TransitionToNoUserInteraction(behaviorExternalInterface);
+          TransitionToNoUserInteraction();
       });
   });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IActionRunner* BehaviorPeekABoo::GetIdleAndReRequestAction(BehaviorExternalInterface& behaviorExternalInterface, bool lockHeadTrack) const
+IActionRunner* BehaviorPeekABoo::GetIdleAndReRequestAction(bool lockHeadTrack) const
 {
   // create action which alternated between idle and re-request for the desired number of times, and then
   // loops idle the desired number of times until the timeout.
@@ -314,7 +315,7 @@ IActionRunner* BehaviorPeekABoo::GetIdleAndReRequestAction(BehaviorExternalInter
   // In cases where the head isn't already in use, lock it here so that it doesn't move
   const u8 headLock = lockHeadTrack ? (u8)AnimTrackFlag::HEAD_TRACK : (u8)AnimTrackFlag::NO_TRACKS;
 
-  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  auto& robotInfo = GetBEI().GetRobotInfo();
   // If the face is too low, then the "PeekABooShort" anim will actually cause the lift to block the camera,
   // which looses track of the face (and then thinks the user peeked when they didn't). If the robots head is
   // below a certain angle, _also_ lock the lift to avoid this case
@@ -363,7 +364,7 @@ IActionRunner* BehaviorPeekABoo::GetIdleAndReRequestAction(BehaviorExternalInter
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPeekABoo::TransitionSeeFaceAfterHiding(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPeekABoo::TransitionSeeFaceAfterHiding()
 {
   SET_STATE(ReactingToPeekABooReturned);
   _numPeeksRemaining--;
@@ -379,7 +380,7 @@ void BehaviorPeekABoo::TransitionSeeFaceAfterHiding(BehaviorExternalInterface& b
   }
   
   if(_numPeeksRemaining == 0) {
-    TransitionExit(behaviorExternalInterface);
+    TransitionExit();
   }else{
     DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::PeekABooSurprised),
                 &BehaviorPeekABoo::TransitionTurnToFace);
@@ -388,7 +389,7 @@ void BehaviorPeekABoo::TransitionSeeFaceAfterHiding(BehaviorExternalInterface& b
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPeekABoo::TransitionToNoUserInteraction(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPeekABoo::TransitionToNoUserInteraction()
 {
   SET_STATE(ReactingToNoUserInteraction);
 
@@ -399,13 +400,13 @@ void BehaviorPeekABoo::TransitionToNoUserInteraction(BehaviorExternalInterface& 
     IActionRunner* failAnim = new TriggerAnimationAction(AnimationTrigger::PeekABooNoUserInteraction);
     DelegateIfInControl(failAnim, &BehaviorPeekABoo::TransitionTurnToFace);
   }else{
-    TransitionExit(behaviorExternalInterface);
+    TransitionExit();
   }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPeekABoo::TransitionExit(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPeekABoo::TransitionExit()
 {
   SET_STATE(DoingFinalReaction);
   
@@ -424,14 +425,14 @@ void BehaviorPeekABoo::TransitionExit(BehaviorExternalInterface& behaviorExterna
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPeekABoo::UpdateTimestampSets(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPeekABoo::UpdateTimestampSets()
 {
   // Prune list so it doesn't expand infinitely in size
   while(_timestampEyeNotVisibleMap.size() > kMaxCountTrackingEyesEntries){
     _timestampEyeNotVisibleMap.erase(_timestampEyeNotVisibleMap.begin());
   }
   
-  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  const auto& robotInfo = GetBEI().GetRobotInfo();
   // If no robot images have been received, don't bother updating
   if(!(_timestampEyeNotVisibleMap.size() == 0) &&
      (robotInfo.GetLastImageTimeStamp() == _timestampEyeNotVisibleMap.rbegin()->first)){
@@ -440,7 +441,7 @@ void BehaviorPeekABoo::UpdateTimestampSets(BehaviorExternalInterface& behaviorEx
   
   
   const bool kRecognizableFacesOnly = true;
-  std::set< Vision::FaceID_t > faceIDs = behaviorExternalInterface.GetFaceWorld().GetFaceIDsObservedSince(
+  std::set< Vision::FaceID_t > faceIDs = GetBEI().GetFaceWorld().GetFaceIDsObservedSince(
                                            robotInfo.GetLastImageTimeStamp(), kRecognizableFacesOnly);
   // We originally kept a "Target face' to know where to initially turn, however
   // when they're constantly covering up their eyes it's likely our face ID is changing a lot. So just allow multiple faces
@@ -451,7 +452,7 @@ void BehaviorPeekABoo::UpdateTimestampSets(BehaviorExternalInterface& behaviorEx
   {
     for(const auto& faceID : faceIDs)
     {
-      const Vision::TrackedFace* face = behaviorExternalInterface.GetFaceWorld().GetFace(faceID);
+      const Vision::TrackedFace* face = GetBEI().GetFaceWorld().GetFace(faceID);
       if(face != nullptr )
       {
         // If we've seen any eyes go for it...
@@ -479,12 +480,12 @@ void BehaviorPeekABoo::UpdateTimestampSets(BehaviorExternalInterface& behaviorEx
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorPeekABoo::WasFaceHiddenAfterTimestamp(BehaviorExternalInterface& behaviorExternalInterface, TimeStamp_t timestamp)
+bool BehaviorPeekABoo::WasFaceHiddenAfterTimestamp(TimeStamp_t timestamp)
 {
-  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  const auto& robotInfo = GetBEI().GetRobotInfo();
   // make sure the list is up to date
   if(_timestampEyeNotVisibleMap.rbegin()->first != robotInfo.GetLastImageTimeStamp()){
-    UpdateTimestampSets(behaviorExternalInterface);
+    UpdateTimestampSets();
   }
   
   bool anyCountOverThreshold = false;
@@ -503,23 +504,26 @@ bool BehaviorPeekABoo::WasFaceHiddenAfterTimestamp(BehaviorExternalInterface& be
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-SmartFaceID BehaviorPeekABoo::GetInteractionFace(const BehaviorExternalInterface& behaviorExternalInterface) const
+SmartFaceID BehaviorPeekABoo::GetInteractionFace() const
 {
-  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  const auto& robotInfo = GetBEI().GetRobotInfo();
   const bool kUseRecognizableOnly = false;
-  std::set< Vision::FaceID_t > faces = behaviorExternalInterface.GetFaceWorld().GetFaceIDsObservedSince(
+  std::set< Vision::FaceID_t > faces = GetBEI().GetFaceWorld().GetFaceIDsObservedSince(
                     robotInfo.GetLastImageTimeStamp() - _params.oldestFaceToConsider_MS, kUseRecognizableOnly);
 
   std::set<SmartFaceID> smartFaces;
   for(auto& entry: faces){
-    smartFaces.insert(behaviorExternalInterface.GetFaceWorld().GetSmartFaceID(entry));
+    smartFaces.insert(GetBEI().GetFaceWorld().GetSmartFaceID(entry));
   }
 
-  const Vision::TrackedFace* facePtr = behaviorExternalInterface.GetFaceWorld().GetFace(_cachedFace);
+  const Vision::TrackedFace* facePtr = GetBEI().GetFaceWorld().GetFace(_cachedFace);
   if((facePtr != nullptr) &&
      (faces.find(facePtr->GetID()) == faces.end())){
-    const AIWhiteboard& whiteboard = behaviorExternalInterface.GetAIComponent().GetWhiteboard();
-    _cachedFace = whiteboard.GetBestFaceToTrack(smartFaces, false);
+    const auto& faceSelection = GetBEI().GetAIComponent().GetFaceSelectionComponent();
+    FaceSelectionComponent::FaceSelectionFactorMap criteriaMap;
+    criteriaMap.insert(std::make_pair(FaceSelectionComponent::FaceSelectionPenaltyMultiplier::RelativeHeadAngleRadians, 1));
+    criteriaMap.insert(std::make_pair(FaceSelectionComponent::FaceSelectionPenaltyMultiplier::RelativeBodyAngleRadians, 3));
+    _cachedFace = faceSelection.GetBestFaceToUse(criteriaMap, smartFaces);
   }
 
   return _cachedFace;

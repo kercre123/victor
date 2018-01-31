@@ -32,7 +32,7 @@
 #include "engine/robotInterface/messageHandler.h"
 #include "engine/robotManager.h"
 
-#include "anki/common/basestation/utils/timer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "util/console/consoleInterface.h"
 #include "util/math/math.h"
@@ -72,15 +72,15 @@ BehaviorFeedingEat::BehaviorFeedingEat(const Json::Value& config)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorFeedingEat::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorFeedingEat::WantsToBeActivatedBehavior() const
 {
   if(_targetID.IsSet()){
-    if( IsCubeBad(behaviorExternalInterface, _targetID ) ) {
+    if( IsCubeBad( _targetID ) ) {
       _targetID.SetToUnknown();
       return false;
     }
     
-    const ObservableObject* obj = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_targetID);
+    const ObservableObject* obj = GetBEI().GetBlockWorld().GetLocatedObjectByID(_targetID);
 
     // require a known object so we don't drive to and try to eat a moved cube
     const bool canRun = (obj != nullptr) && obj->IsPoseStateKnown();
@@ -101,28 +101,28 @@ bool BehaviorFeedingEat::RemoveListeners(IFeedingListener* listener)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorFeedingEat::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorFeedingEat::OnBehaviorActivated()
 {
-  if(behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_targetID) == nullptr){
-    return Result::RESULT_FAIL;
+  if(GetBEI().GetBlockWorld().GetLocatedObjectByID(_targetID) == nullptr){
+    return;
   }
   
   _timeCubeIsSuccessfullyDrained_sec = FLT_MAX;
   _hasRegisteredActionComplete = false;
 
   // generic lambda closure for cube accel listeners
-  auto movementDetectedCallback = [this, &behaviorExternalInterface] (const float movementScore) {
-    CubeMovementHandler(behaviorExternalInterface, movementScore);
+  auto movementDetectedCallback = [this] (const float movementScore) {
+    CubeMovementHandler(movementScore);
   };
   
-  if(behaviorExternalInterface.HasCubeAccelComponent()){
+  if(GetBEI().HasCubeAccelComponent()){
     auto listener = std::make_shared<CubeAccelListeners::MovementListener>(kHighPassFiltCoef,
                                                                           kMaxMovementScoreToAdd,
                                                                           kMovementScoreDecay,
                                                                           kFeedingMovementScoreMax, // max allowed movement score
                                                                           movementDetectedCallback);
                                                                         
-    behaviorExternalInterface.GetCubeAccelComponent().AddListener(_targetID, listener);
+    GetBEI().GetCubeAccelComponent().AddListener(_targetID, listener);
     DEV_ASSERT(_cubeMovementListener == nullptr,
              "BehaviorFeedingEat.InitInternal.PreviousListenerAlreadySetup");
     // keep a pointer to this listener around so that we can remove it later:
@@ -131,14 +131,18 @@ Result BehaviorFeedingEat::OnBehaviorActivated(BehaviorExternalInterface& behavi
 
 
   
-  TransitionToDrivingToFood(behaviorExternalInterface);
-  return Result::RESULT_OK;
+  TransitionToDrivingToFood();
+  
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehavior::Status BehaviorFeedingEat::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorFeedingEat::BehaviorUpdate()
 {
+  if(!IsActivated()){
+    return;
+  }
+
   // Feeding should be considered "complete" so long as the animation has reached
   // the point where all light has been drained from the cube.  If the behavior
   // is interrupted after that point in the animation or the animation completes
@@ -149,34 +153,32 @@ ICozmoBehavior::Status BehaviorFeedingEat::UpdateInternal_WhileRunning(BehaviorE
   if(!_hasRegisteredActionComplete &&
      (currentTime_s > _timeCubeIsSuccessfullyDrained_sec)){
     _hasRegisteredActionComplete = true;
-    if(behaviorExternalInterface.HasNeedsManager()){
-      auto& needsManager = behaviorExternalInterface.GetNeedsManager();
+    if(GetBEI().HasNeedsManager()){
+      auto& needsManager = GetBEI().GetNeedsManager();
       needsManager.RegisterNeedsActionCompleted(NeedsActionId::Feed);
     }
     for(auto& listener: _feedingListeners){
-      listener->EatingComplete(behaviorExternalInterface);
+      listener->EatingComplete();
     }
   }
 
   
   if((_currentState != State::ReactingToInterruption) &&
-     (behaviorExternalInterface.GetOffTreadsState() != OffTreadsState::OnTreads) &&
+     (GetBEI().GetOffTreadsState() != OffTreadsState::OnTreads) &&
      !_hasRegisteredActionComplete){
-    TransitionToReactingToInterruption(behaviorExternalInterface);
-  }
-  
-  return base::UpdateInternal_WhileRunning(behaviorExternalInterface);
+    TransitionToReactingToInterruption();
+  }  
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorFeedingEat::CubeMovementHandler(BehaviorExternalInterface& behaviorExternalInterface, const float movementScore)
+void BehaviorFeedingEat::CubeMovementHandler(const float movementScore)
 {
   // Logic for determining whether the player has "stolen" cozmo's cube while he's
   // eating.  We only want to respond if the player pulls the cube away while
   // Cozmo is actively in the "eating" stage and has not drained the cube yet
 
-  if(behaviorExternalInterface.GetRobotInfo().IsPhysical()){
+  if(GetBEI().GetRobotInfo().IsPhysical()){
     if(movementScore > kCubeMovedTooFastInterrupt){
       const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       const bool currentlyEating = (_currentState == State::Eating) &&
@@ -185,7 +187,7 @@ void BehaviorFeedingEat::CubeMovementHandler(BehaviorExternalInterface& behavior
       if(currentlyEating ||
          (_currentState == State::PlacingLiftOnCube)){
         CancelDelegates(false);
-        TransitionToReactingToInterruption(behaviorExternalInterface);
+        TransitionToReactingToInterruption();
       }else if(_currentState == State::DrivingToFood){
         CancelDelegates(false);
       }
@@ -196,22 +198,22 @@ void BehaviorFeedingEat::CubeMovementHandler(BehaviorExternalInterface& behavior
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorFeedingEat::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorFeedingEat::OnBehaviorDeactivated()
 {
   // If the behavior is being stopped while feeding is still ongoing notify
   // listeners that feeding is being interrupted
   if(!_hasRegisteredActionComplete &&
      (_currentState >= State::PlacingLiftOnCube)){
     for(auto& listener: _feedingListeners){
-      listener->EatingInterrupted(behaviorExternalInterface);
+      listener->EatingInterrupted();
     }
   }
 
 
-  behaviorExternalInterface.GetRobotInfo().EnableStopOnCliff(true);
+  GetBEI().GetRobotInfo().EnableStopOnCliff(true);
   
-  const bool removeSuccessfull = behaviorExternalInterface.HasCubeAccelComponent() &&
-    behaviorExternalInterface.GetCubeAccelComponent().RemoveListener(_targetID, _cubeMovementListener);
+  const bool removeSuccessfull = GetBEI().HasCubeAccelComponent() &&
+    GetBEI().GetCubeAccelComponent().RemoveListener(_targetID, _cubeMovementListener);
   ANKI_VERIFY(removeSuccessfull,
              "BehaviorFeedingEat.StopInternal.FailedToRemoveAccellComponent",
               "");
@@ -221,10 +223,10 @@ void BehaviorFeedingEat::OnBehaviorDeactivated(BehaviorExternalInterface& behavi
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorFeedingEat::TransitionToDrivingToFood(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorFeedingEat::TransitionToDrivingToFood()
 {
   SET_STATE(DrivingToFood);
-  const ObservableObject* obj = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_targetID);
+  const ObservableObject* obj = GetBEI().GetBlockWorld().GetLocatedObjectByID(_targetID);
   if(obj == nullptr){
     return;
   }
@@ -233,38 +235,38 @@ void BehaviorFeedingEat::TransitionToDrivingToFood(BehaviorExternalInterface& be
                                                                           kDistanceFromMarker_mm);
   action->SetPreActionPoseAngleTolerance(DEG_TO_RAD(kFeedingPreActionAngleTol_deg));
   
-  DelegateIfInControl(action, [this, &behaviorExternalInterface](ActionResult result){
+  DelegateIfInControl(action, [this](ActionResult result){
     if( result == ActionResult::SUCCESS ){
-      TransitionToPlacingLiftOnCube(behaviorExternalInterface);
+      TransitionToPlacingLiftOnCube();
     }
     else if( result == ActionResult::VISUAL_OBSERVATION_FAILED ) {
       // can't see the cube, maybe it's obstructed? give up on the cube until we see it again. Let the
       // behavior end (it may get re-selected with a different cube)
-      MarkCubeAsBad(behaviorExternalInterface);
+      MarkCubeAsBad();
     } else if( result == ActionResult::NO_PREACTION_POSES){
-      behaviorExternalInterface.GetAIComponent().GetWhiteboard().SetNoPreDockPosesOnObject(_targetID);
+      GetBEI().GetAIComponent().GetWhiteboard().SetNoPreDockPosesOnObject(_targetID);
     } else {
       const ActionResultCategory resCat = IActionRunner::GetActionResultCategory(result);
 
       if( resCat == ActionResultCategory::RETRY ) {
-        TransitionToDrivingToFood(behaviorExternalInterface);
+        TransitionToDrivingToFood();
       }
       else {
         // something else is wrong. Make this cube invalid, let the behavior end
-        MarkCubeAsBad(behaviorExternalInterface);
+        MarkCubeAsBad();
       }
     }
     });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorFeedingEat::TransitionToPlacingLiftOnCube(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorFeedingEat::TransitionToPlacingLiftOnCube()
 {
   SET_STATE(PlacingLiftOnCube);
   
   bool isNeedSevere = false;
-  if(behaviorExternalInterface.HasNeedsManager()){
-    auto& needsManager = behaviorExternalInterface.GetNeedsManager();
+  if(GetBEI().HasNeedsManager()){
+    auto& needsManager = GetBEI().GetNeedsManager();
     
     NeedsState& currNeedState = needsManager.GetCurNeedsStateMutable();
     isNeedSevere = currNeedState.IsNeedAtBracket(NeedId::Energy,
@@ -281,34 +283,30 @@ void BehaviorFeedingEat::TransitionToPlacingLiftOnCube(BehaviorExternalInterface
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorFeedingEat::TransitionToEating(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorFeedingEat::TransitionToEating()
 {
   SET_STATE(Eating);
-  behaviorExternalInterface.GetRobotInfo().EnableStopOnCliff(false);
+  GetBEI().GetRobotInfo().EnableStopOnCliff(false);
   
-  AnimationTrigger eatingAnim = CheckNeedsStateAndCalculateAnimation(behaviorExternalInterface);
+  AnimationTrigger eatingAnim = CheckNeedsStateAndCalculateAnimation();
   
   uint32_t timeDrainCube_s = 0;
-  RobotManager* robot_mgr = behaviorExternalInterface.GetRobotInfo().GetContext()->GetRobotManager();
+  RobotManager* robot_mgr = GetBEI().GetRobotInfo().GetContext()->GetRobotManager();
   if( robot_mgr->HasAnimationForTrigger(eatingAnim) )
   {
-    // TODO: We do not have direct access to the CannedAnimationContainer and the raw animation data in this process (VIC-368)
-    /*
     // Extract the length of time that the animation will be playing for so that
     // it can be passed through to listeners
-    const auto& animComponent = behaviorExternalInterface.GetAnimationComponent();
-    const auto& cannedAnims = behaviorExternalInterface.GetRobotInfo().GetContext()->GetRobotManager()->GetCannedAnimations();
-    
+    const auto& animComponent = GetBEI().GetAnimationComponent();
     const auto& animGroupName = robot_mgr->GetAnimationForTrigger(eatingAnim);
-    const auto& animName = animComponent.GetAnimationNameFromGroup(animGroupName, robot);
-    const Animation* eatingAnimRawPointer = cannedAnims.GetAnimation(animName);
-    const auto& track = eatingAnimRawPointer->GetTrack<EventKeyFrame>();
-    if(!track.IsEmpty()){
-      // assumes only one keyframe per eating anim
-      timeDrainCube_s = Util::MilliSecToSec((f32)track.GetLastKeyFrame()->GetTriggerTime());
+    const auto& animName = animComponent.GetAnimationNameFromGroup(animGroupName);
+
+    AnimationComponent::AnimationMetaInfo metaInfo;
+    if (animComponent.GetAnimationMetaInfo(animName, metaInfo) == RESULT_OK) {
+      timeDrainCube_s = Util::MilliSecToSec((float)metaInfo.length_ms);
+    } else {
+      PRINT_NAMED_WARNING("BehaviorFeedingEat.TransitionToEating.AnimationLengthNotFound", "Anim: %s", animName.c_str());
+      timeDrainCube_s = 2.f;
     }
-    */
-    timeDrainCube_s = 2.f; // HACK until VIC-368 is done
   }
   
   
@@ -316,7 +314,7 @@ void BehaviorFeedingEat::TransitionToEating(BehaviorExternalInterface& behaviorE
     if(ANKI_VERIFY(listener != nullptr,
                    "BehaviorFeedingEat.TransitionToEating.ListenerIsNull",
                    "")) {
-      listener->StartedEating(behaviorExternalInterface, timeDrainCube_s);
+      listener->StartedEating(timeDrainCube_s);
     }
   }
   
@@ -329,7 +327,7 @@ void BehaviorFeedingEat::TransitionToEating(BehaviorExternalInterface& behaviorE
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorFeedingEat::TransitionToReactingToInterruption(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorFeedingEat::TransitionToReactingToInterruption()
 {
   const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   const bool currentlyEating = (_currentState == State::Eating) &&
@@ -338,7 +336,7 @@ void BehaviorFeedingEat::TransitionToReactingToInterruption(BehaviorExternalInte
   if(currentlyEating ||
      (_currentState == State::PlacingLiftOnCube)){
     for(auto& listener: _feedingListeners){
-      listener->EatingInterrupted(behaviorExternalInterface);
+      listener->EatingInterrupted();
     }
   }
   
@@ -348,7 +346,7 @@ void BehaviorFeedingEat::TransitionToReactingToInterruption(BehaviorExternalInte
   CancelDelegates(false);
   AnimationTrigger trigger = AnimationTrigger::FeedingInterrupted;
   
-  if(NeedId::Energy == behaviorExternalInterface.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression()){
+  if(NeedId::Energy == GetBEI().GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression()){
     trigger = AnimationTrigger::FeedingInterrupted_Severe;
   }
   {
@@ -358,7 +356,7 @@ void BehaviorFeedingEat::TransitionToReactingToInterruption(BehaviorExternalInte
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AnimationTrigger BehaviorFeedingEat::CheckNeedsStateAndCalculateAnimation(BehaviorExternalInterface& behaviorExternalInterface)
+AnimationTrigger BehaviorFeedingEat::CheckNeedsStateAndCalculateAnimation()
 {
   bool isSeverePreFeeding  = false;
   bool isWarningPreFeeding = false;
@@ -367,8 +365,8 @@ AnimationTrigger BehaviorFeedingEat::CheckNeedsStateAndCalculateAnimation(Behavi
   bool isFullPostFeeding = false;
   // Eating animation is dependent on both the current and post feeding energy level
   // Use PredictNeedsActionResult to estimate the ending needs bracket
-  if(behaviorExternalInterface.HasNeedsManager()){
-    auto& needsManager = behaviorExternalInterface.GetNeedsManager();
+  if(GetBEI().HasNeedsManager()){
+    auto& needsManager = GetBEI().GetNeedsManager();
     NeedsState& currNeedState = needsManager.GetCurNeedsStateMutable();
     
     isSeverePreFeeding = currNeedState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Critical);
@@ -406,7 +404,7 @@ AnimationTrigger BehaviorFeedingEat::CheckNeedsStateAndCalculateAnimation(Behavi
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorFeedingEat::MarkCubeAsBad(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorFeedingEat::MarkCubeAsBad()
 {
   if( ! ANKI_VERIFY(_targetID.IsSet(), "BehaviorFeedingEat.MarkCubeAsBad.NoTargetID",
                     "Behavior %s trying to mark target cube as bad, but target is unset",
@@ -414,14 +412,14 @@ void BehaviorFeedingEat::MarkCubeAsBad(BehaviorExternalInterface& behaviorExtern
     return;
   }
 
-  const TimeStamp_t lastPoseUpdateTime_ms = behaviorExternalInterface.GetObjectPoseConfirmer().GetLastPoseUpdatedTime(_targetID);
+  const TimeStamp_t lastPoseUpdateTime_ms = GetBEI().GetObjectPoseConfirmer().GetLastPoseUpdatedTime(_targetID);
   _badCubesMap[_targetID] = lastPoseUpdateTime_ms;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorFeedingEat::IsCubeBad(BehaviorExternalInterface& behaviorExternalInterface, const ObjectID& objectID) const
+bool BehaviorFeedingEat::IsCubeBad(const ObjectID& objectID) const
 { 
-  const TimeStamp_t lastPoseUpdateTime_ms = behaviorExternalInterface.GetObjectPoseConfirmer().GetLastPoseUpdatedTime(objectID);
+  const TimeStamp_t lastPoseUpdateTime_ms = GetBEI().GetObjectPoseConfirmer().GetLastPoseUpdatedTime(objectID);
 
   auto iter = _badCubesMap.find( objectID );
   if( iter != _badCubesMap.end() ) {

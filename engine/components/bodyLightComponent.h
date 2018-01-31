@@ -14,9 +14,15 @@
 #ifndef __Anki_Cozmo_Basestation_Components_BodyLightComponent_H__
 #define __Anki_Cozmo_Basestation_Components_BodyLightComponent_H__
 
-#include "anki/common/types.h"
+#include "coretech/common/shared/types.h"
 #include "engine/components/bodyLightComponentTypes.h"
 #include "clad/types/ledTypes.h"
+
+#include "engine/robotComponents_fwd.h"
+#include "engine/components/bodyLightComponentTypes.h"
+#include "engine/dependencyManagedComponent.h"
+#include "engine/robotComponents_fwd.h"
+
 #include "json/json.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
@@ -46,10 +52,25 @@ class Robot;
 class CozmoContext;
 class BackpackLightAnimationContainer;
 
-class BodyLightComponent : private Util::noncopyable
+class BodyLightComponent : public IDependencyManagedComponent<RobotComponentID>, private Util::noncopyable
 {
 public:
-  BodyLightComponent(Robot& robot, const CozmoContext* context);
+  BodyLightComponent();
+
+  //////
+  // IDependencyManagedComponent functions
+  //////
+  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
+  // Maintain the chain of initializations currently in robot - it might be possible to
+  // change the order of initialization down the line, but be sure to check for ripple effects
+  // when changing this function
+  virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
+    dependencies.insert(RobotComponentID::CubeLights);
+  };
+  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
+  //////
+  // end IDependencyManagedComponent functions
+  //////
   
   void Update();
   
@@ -74,7 +95,14 @@ public:
   
 private:
   
-  Robot&                          _robot;
+  Robot*                          _robot = nullptr;
+  // Reference to the container of backpack light animations
+  struct BackpackLightWrapper{
+    BackpackLightWrapper(BackpackLightAnimationContainer& container)
+    : _container(container){}
+    BackpackLightAnimationContainer& _container;
+  };
+  std::unique_ptr<BackpackLightWrapper> _backpackLightAnimations;
   
   std::list<Signal::SmartHandle>  _eventHandles;
 
@@ -87,8 +115,7 @@ private:
   // Locator handle for the shared light configuration associated with SetBackpackLights above
   BackpackLightDataLocator        _sharedLightConfig{};
   
-  // Reference to the container of backpack light animations
-  BackpackLightAnimationContainer& _backpackLightAnimations;
+
   
   enum class BackpackLightsState {
     OffCharger,
