@@ -9,6 +9,7 @@
 
 #include "coretech/messaging/shared/LocalUdpServer.h"
 #include "coretech/messaging/shared/SocketUtils.h"
+#include "coretech/common/shared/logging.h"
 
 #include <iostream>
 
@@ -20,25 +21,25 @@
 #define UDP_SERVER_SNDBUFSZ (256*1024)
 #define UDP_SERVER_RCVBUFSZ (256*1024)
 
-//
-// This code is shared with robot so we don't have PRINT_NAMED macros available.
-//
-#define DEBUG_UDP_SERVER
+// Define this to enable logs
+#define LOG_CHANNEL                    "LocalUdpServer"
 
-#if defined(DEBUG_UDP_SERVER)
-#define LOG_ERROR(__expr__) (std::cerr << "[Error] " << __expr__ << std::endl)
-#define LOG_DEBUG(__expr__) (std::cout << "[Debug] " << __expr__ << std::endl)
+#ifdef  LOG_CHANNEL
+#define LOG_ERROR(name, format, ...)   CORETECH_LOG_ERROR(name, format, ##__VA_ARGS__)
+#define LOG_WARNING(name, format, ...) CORETECH_LOG_WARNING(name, format, ##__VA_ARGS__)
+#define LOG_INFO(name, format, ...)    CORETECH_LOG_INFO(LOG_CHANNEL, name, format, ##__VA_ARGS__)
+#define LOG_DEBUG(name, format, ...)   CORETECH_LOG_DEBUG(LOG_CHANNEL, name, format, ##__VA_ARGS__)
 #else
-#define LOG_ERROR(__expr__) (std::cerr << "[Error] " << __expr__ << std::endl)
-#define LOG_DEBUG(__expr__) {}
+#define LOG_ERROR(name, format, ...)   {}
+#define LOG_WARNING(name, format, ...) {}
+#define LOG_INFO(name, format, ...)    {}
+#define LOG_DEBUG(name, format, ...)   {}
 #endif
 
-#if defined(DEBUG_UDP_SERVER)
-static std::string string(const struct sockaddr_un & saddr, socklen_t saddrlen)
+static std::string to_string(const struct sockaddr_un & saddr, socklen_t saddrlen)
 {
   return std::string(saddr.sun_path, saddrlen - (sizeof(saddr) - sizeof(saddr.sun_path)));
 }
-#endif
 
 LocalUdpServer::LocalUdpServer()
 {
@@ -55,13 +56,13 @@ LocalUdpServer::~LocalUdpServer()
 bool LocalUdpServer::StartListening(const std::string & sockname)
 {
   if (_socketfd >= 0) {
-    LOG_ERROR("LocalUdpServer.StartListening: Server is already listening");
+    LOG_ERROR("LocalUdpServer.StartListening", "Server is already listening");
     return false;
   }
 
   _sockname = sockname;
 
-  LOG_DEBUG("LocalUdpServer.StartListening: Creating a socket at " << _sockname);
+  LOG_DEBUG("LocalUdpServer.StartListening", "Creating a socket at %s", _sockname.c_str());
 
   // Use PF_LOCAL for UNIX domain socket
   // Use SOCK_STREAM for TCP or SOCK_DGRAM for UDP
@@ -70,27 +71,27 @@ bool LocalUdpServer::StartListening(const std::string & sockname)
 
   _socketfd = socket(sock_family, sock_type, 0);
   if (_socketfd == -1) {
-    LOG_ERROR("LocalUdpServer.StartListening: Unable to create socket at " << _sockname << "(" << strerror(errno) << ")");
+    LOG_ERROR("LocalUdpServer.StartListening", "Unable to create socket at %s (%s)", _sockname.c_str(), strerror(errno));
     return false;
   }
 
   if (!Anki::Messaging::SetNonBlocking(_socketfd, 1)) {
-    LOG_ERROR("LocalUdpServer.StartListening: Unable to set nonblocking (" << strerror(errno) << ")");
+    LOG_ERROR("LocalUdpServer.StartListening", "Unable to set nonblocking (%s)", strerror(errno));
     return false;
   }
 
   if (!Anki::Messaging::SetReuseAddress(_socketfd, 1)) {
-    LOG_ERROR("LocalUdpServer.StartListening: Unable to set reuseaddress (" << strerror(errno) << ")");
+    LOG_ERROR("LocalUdpServer.StartListening", "Unable to set reuseaddress (%s)", strerror(errno));
     return false;
   }
 
   if (!Anki::Messaging::SetSendBufferSize(_socketfd, UDP_SERVER_SNDBUFSZ)) {
-    LOG_ERROR("LocalUdpServer.StartListening: Unable to set send buffer size (" << strerror(errno) << ")");
+    LOG_ERROR("LocalUdpServer.StartListening", "Unable to set send buffer size (%s)", strerror(errno));
     return false;
   }
 
   if (!Anki::Messaging::SetRecvBufferSize(_socketfd, UDP_SERVER_RCVBUFSZ)) {
-    LOG_ERROR("LocalUdpServer.StartListening: Unable to set recv buffer size (" << strerror(errno) << ")");
+    LOG_ERROR("LocalUdpServer.StartListening", "Unable to set recv buffer size (%s)", strerror(errno));
     return false;
   }
 
@@ -105,12 +106,12 @@ bool LocalUdpServer::StartListening(const std::string & sockname)
 
   const int status = bind(_socketfd, (const struct sockaddr*) &saddr, socklen);
   if (status == -1) {
-    LOG_ERROR("LocalUdpServer.StartListening: Unable to bind at " << _sockname << "(" << strerror(errno) << ")");
-    LOG_ERROR("LocalUdpServer.StartListening: You might have orphaned processes running");
+    LOG_ERROR("LocalUdpServer.StartListening", "Unable to bind at %s (%s)", _sockname.c_str(), strerror(errno));
+    LOG_ERROR("LocalUdpServer.StartListening", "You might have orphaned processes running");
     return false;
   }
 
-  LOG_DEBUG("LocalUdpServer.StartListening: Socket is bound at " << _sockname);
+  LOG_DEBUG("LocalUdpServer.StartListening", "Socket is bound at %s", _sockname.c_str());
 
   return true;
 
@@ -119,18 +120,18 @@ bool LocalUdpServer::StartListening(const std::string & sockname)
 void LocalUdpServer::StopListening()
 {
   if (_socketfd < 0) {
-    LOG_DEBUG("LocalUdpServer.StopListening: Server already stopped");
+    LOG_DEBUG("LocalUdpServer.StopListening", "Server already stopped");
     return;
   }
 
-  LOG_DEBUG("LocalUdpServer.StopListening: Stopping server listening on socket " << _socketfd);
+  LOG_DEBUG("LocalUdpServer.StopListening", "Stopping server listening on socket %d", _socketfd);
 
   if (HasClient()) {
     Disconnect();
   }
 
   if (close(_socketfd) < 0) {
-    LOG_ERROR("LocalUdpServer.StopListening: Error closing socket (" << strerror(errno) << ")");
+    LOG_ERROR("LocalUdpServer.StopListening", "Error closing socket (%s)", strerror(errno));
   }
   _socketfd = -1;
 }
@@ -143,20 +144,19 @@ ssize_t LocalUdpServer::Send(const char* data, int size)
   }
 
   if (!HasClient()) {
-    LOG_DEBUG("LocalUdpServer.Send: no client");
+    LOG_DEBUG("LocalUdpServer.Send", "No client");
     return -1;
   }
 
-  //LOG_DEBUG("LocalUdpServer.Send: Sending " << size << " bytes to " << _peername);
+  //LOG_DEBUG("LocalUdpServer.Send", "Sending %d bytes to %s", size, _peername.c_str());
 
   const ssize_t bytes_sent = send(_socketfd, data, size, 0);
   if (bytes_sent != size) {
     // If send fails, log it and report it to caller.  It is caller's responsibility to retry at
     // some appropriate interval.
-    LOG_ERROR("LocalUdpServer.Send: sent " << bytes_sent << " bytes instead of " << size << " (" << strerror(errno) << ")");
+    LOG_ERROR("LocalUdpServer.Send", "Sent %zd bytes instead of %d (%s)", bytes_sent, size, strerror(errno));
   }
 
-  //LOG_DEBUG("LocalUdpServer.Send: " << bytes_sent << " bytes sent");
   return bytes_sent;
 
 }
@@ -170,15 +170,15 @@ ssize_t LocalUdpServer::Recv(char* data, int maxSize)
   
   if (bytes_received <= 0) {
     if (errno == EWOULDBLOCK) {
-      //LOG_DEBUG("LocalUdpServer.Recv: No data available");
+      //LOG_DEBUG("LocalUdpServer.Recv", "No data available");
       return 0;
     } else {
-      LOG_ERROR("LocalUdpServer.Recv: Receive error " << strerror(errno));
+      LOG_ERROR("LocalUdpServer.Recv", "Receive error (%s)", strerror(errno));
       return -1;
     }
   }
 
-  // LOG_DEBUG("LocalUdpServer.Recv: received " << bytes_received << " bytes from " << string(saddr, saddrlen));
+  //LOG_DEBUG("LocalUdpServer.Recv", "Received %zd bytes from %s", bytes_received, to_string(saddr, saddrlen).c_str());
 
   // Connect to new client?
   if (!HasClient()) {
@@ -195,12 +195,12 @@ ssize_t LocalUdpServer::Recv(char* data, int maxSize)
 
 bool LocalUdpServer::AddClient(const struct sockaddr_un &saddr, socklen_t saddrlen)
 {
-  std::string peername = string(saddr, saddrlen);
+  const std::string & peername = to_string(saddr, saddrlen);
 
-  LOG_DEBUG("LocalUdpServer.AddClient: Adding client " << peername);
+  LOG_DEBUG("LocalUdpServer.AddClient", "Adding client %s", peername.c_str());
 
   if (connect(_socketfd, (struct sockaddr *) &saddr, saddrlen) != 0) {
-    LOG_ERROR("LocalUdpServer.AddClient: Unable to connect to " << peername << " (" << strerror(errno) << ")");
+    LOG_ERROR("LocalUdpServer.AddClient", "Unable to connect to %s (%s)", peername.c_str(), strerror(errno));
     return false;
   }
   _peername = peername;
@@ -215,7 +215,7 @@ void LocalUdpServer::Disconnect()
     return;
   }
 
-  LOG_DEBUG("LocalUdpServer.Disconnect: Disconnect from peer " << _peername);
+  LOG_DEBUG("LocalUdpServer.Disconnect", "Disconnect from peer %s", _peername.c_str());
 
   // Undo effects of connect() by resetting peer to an unspecified address
   struct sockaddr saddr;
@@ -223,7 +223,7 @@ void LocalUdpServer::Disconnect()
   if (connect(_socketfd, &saddr, sizeof(saddr)) != 0) {
     // MacOS returns ENOENT but operation has desired effect regardless.
     if (errno != ENOENT) {
-      LOG_ERROR("LocalUdpServer.Disconnect: Failed to disconnect (" << strerror(errno) << ")");
+      LOG_ERROR("LocalUdpServer.Disconnect", "Failed to disconnect (%s)", strerror(errno));
     }
   }
 

@@ -30,21 +30,21 @@ BehaviorReactToPlacedOnSlope::BehaviorReactToPlacedOnSlope(const Json::Value& co
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorReactToPlacedOnSlope::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorReactToPlacedOnSlope::WantsToBeActivatedBehavior() const
 {
   return true;
 }
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToPlacedOnSlope::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToPlacedOnSlope::OnBehaviorActivated()
 {
   const double now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   const bool hasBehaviorRunRecently = (now - _lastBehaviorTime < 10.0);
   
   // Double check that we should play the animation or recalibrate:
   if (hasBehaviorRunRecently && _endedOnInclineLastTime) {
-    const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+    const auto& robotInfo = GetBEI().GetRobotInfo();
     // Don't run the animation. Instead, run a motor cal since his head may be out of calibration.
     LOG_EVENT("BehaviorReactToPlacedOnSlope.CalibratingHead", "%f", robotInfo.GetPitchAngle().getDegrees());
     DelegateIfInControl(new CalibrateMotorAction(true, false));
@@ -55,7 +55,7 @@ void BehaviorReactToPlacedOnSlope::OnBehaviorActivated(BehaviorExternalInterface
     AnimationTrigger reactionAnim = AnimationTrigger::ReactToPerchedOnBlock;
     
     // special animations for maintaining eye shape in severe need states
-    const NeedId severeNeedExpressed = behaviorExternalInterface.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression();
+    const NeedId severeNeedExpressed = GetBEI().GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression();
     if(NeedId::Energy == severeNeedExpressed){
       reactionAnim = AnimationTrigger::NeedsSevereLowEnergySlopeReact;
     }else if(NeedId::Repair == severeNeedExpressed){
@@ -63,7 +63,7 @@ void BehaviorReactToPlacedOnSlope::OnBehaviorActivated(BehaviorExternalInterface
     }
     
     DelegateIfInControl(new TriggerAnimationAction(reactionAnim),
-                &BehaviorReactToPlacedOnSlope::CheckPitch);
+                        &BehaviorReactToPlacedOnSlope::CheckPitch);
   }
 
   _lastBehaviorTime = now;
@@ -72,9 +72,9 @@ void BehaviorReactToPlacedOnSlope::OnBehaviorActivated(BehaviorExternalInterface
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToPlacedOnSlope::CheckPitch(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToPlacedOnSlope::CheckPitch()
 {
-  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  const auto& robotInfo = GetBEI().GetRobotInfo();
   // Was the robot on an inclined surface or was the lift simply perched on something?
   _endedOnInclineLastTime = (robotInfo.GetPitchAngle().getDegrees() > 10.0f);
 }

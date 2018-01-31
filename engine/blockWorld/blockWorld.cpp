@@ -24,7 +24,7 @@
 #include "coretech/common/shared/utilities_shared.h"
 #include "engine/activeCube.h"
 #include "engine/activeObjectHelpers.h"
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/block.h"
 #include "engine/blockWorld/blockConfigurationManager.h"
@@ -98,16 +98,24 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
 CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10.0f);
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  BlockWorld::BlockWorld(Robot* robot)
-  : _robot(robot)
+  BlockWorld::BlockWorld()
+  : UnreliableComponent<BCComponentID>(BCComponentID::BlockWorld)
+  , IDependencyManagedComponent<RobotComponentID>(RobotComponentID::BlockWorld)
   , _lastPlayAreaSizeEventSec(0)
   , _playAreaSizeEventIntervalSec(60)
   , _didObjectsChange(false)
   , _robotMsgTimeStampAtChange(0)
   , _trackPoseChanges(false)
-  , _blockConfigurationManager(new BlockConfigurations::BlockConfigurationManager(*robot))
   {
+  } // BlockWorld() Constructor
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::InitDependent(Robot* robot, const RobotCompMap& dependentComponents)
+  {
+    _robot = robot;
     DEV_ASSERT(_robot != nullptr, "BlockWorld.Constructor.InvalidRobot");
+    _blockConfigurationManager = std::make_unique<BlockConfigurations::BlockConfigurationManager>(*robot);
+    
     
     // TODO: Create each known block / matpiece from a configuration/definitions file
     
@@ -205,8 +213,8 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
     {
       SetupEventHandlers(*_robot->GetExternalInterface());
     }
-          
-  } // BlockWorld() Constructor
+  }
+
 
   void BlockWorld::SetupEventHandlers(IExternalInterface& externalInterface)
   {
@@ -1234,8 +1242,12 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
                                                                                 wasRobotMoving,
                                                                                 distToObjSeen);
         if ( !isConfirmingObservation ) {
+          // Don't print this during the factory test because it spams when seeing the 
+          // calibration target
+          #if !FACTORY_TEST
           PRINT_CH_INFO("BlockWorld", "BlockWorld.AddAndUpdateObjects.NonConfirmingObservation",
-            "Added non-confirming visual observation for %d", objSeen->GetID().GetValue() );
+                        "Added non-confirming visual observation for %d", objSeen->GetID().GetValue() );
+          #endif
           
           // TODO should we broadcast RobotObservedPossibleObject here?
           continue;
@@ -1791,43 +1803,6 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
 
     AddLocatedObject(markerlessObject);
     _didObjectsChange = true;
-    
-    // add cliffs to memory map, or other objects if feature is enabled
-    switch (type) {
-      case ObjectType::CliffDetection:
-      {
-        // cliffs currently have extra data (for directionality and position)
-        Pose3d cliffPose = obsPose.GetWithRespectToRoot();
-        MemoryMapData_Cliff cliffData(cliffPose, lastTimestamp);
-        
-        // calculate cliff quad where it's being placed (wrt origin since memory map is 2d wrt current origin)
-        const Quad2f& cliffQuad = markerlessObject->GetBoundingQuadXY( cliffPose );
-      
-        INavMap* currentNavMemoryMap = _robot->GetMapComponent().GetCurrentMemoryMap();
-        DEV_ASSERT(currentNavMemoryMap, "BlockWorld.AddMarkerlessObject.NoMemoryMap");
-        currentNavMemoryMap->AddQuad(cliffQuad, cliffData);
-        break;
-      }
-      case ObjectType::ProxObstacle:
-      {
-        const Vec3f rotatedFwdVector = _robot->GetPose().GetWithRespectToRoot().GetRotation() * X_AXIS_3D();
-        MemoryMapData_ProxObstacle proxData(Vec2f{rotatedFwdVector.x(), rotatedFwdVector.y()}, lastTimestamp);
-        
-        const Quad2f& proxQuad = markerlessObject->GetBoundingQuadXY( p.GetWithRespectToRoot() );
-        
-        INavMap* currentNavMemoryMap = _robot->GetMapComponent().GetCurrentMemoryMap();
-        DEV_ASSERT(currentNavMemoryMap, "BlockWorld.AddMarkerlessObject.NoMemoryMap");
-        
-        currentNavMemoryMap->AddQuad(proxQuad, proxData);
-        break;
-      }
-      default:
-      {
-        // Don't do anything for object types that don't need to be added to memory map
-        break;
-      }
-    }
-
     _robotMsgTimeStampAtChange = fmax(lastTimestamp, _robot->GetMapComponent().GetCurrentMemoryMap()->GetLastChangedTimeStamp());
     
     return RESULT_OK;
@@ -3506,6 +3481,5 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
     FindLocatedObjectHelper(filter, visualizeHelper, false);
     
   } // DrawAllObjects()
-    
 } // namespace Cozmo
 } // namespace Anki

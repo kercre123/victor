@@ -15,7 +15,8 @@
 #define __Engine_Components_ISensorComponent_H__
 
 #include "coretech/common/shared/types.h"
-
+#include "engine/robotComponents_fwd.h"
+#include "engine/dependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
 
 #include <memory>
@@ -30,13 +31,22 @@ namespace Cozmo {
 class Robot;
 struct RobotState;
 
-class ISensorComponent : private Util::noncopyable
+class ISensorComponent : public IDependencyManagedComponent<RobotComponentID>, private Util::noncopyable
 {
 public:
   // logDirName: Subdirectory where log files will live. Log files for the
   // derived sensor will appear in "cache/sensorData/<logDirName>"
-  ISensorComponent(Robot& robot, const std::string& logDirName);
+  ISensorComponent(const std::string& logDirName, RobotComponentID componentID);
   virtual ~ISensorComponent();
+
+  //////
+  // IDependencyManagedComponent functions
+  //////
+  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override final;
+  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
+  //////
+  // end IDependencyManagedComponent functions
+  //////
 
   void Update(const RobotState& msg);
   
@@ -55,7 +65,7 @@ protected:
   // GetLogRow() should return a comma-separated row of data for logging, with columns corresponding to the header
   virtual std::string GetLogRow() = 0;
   
-  Robot& _robot;
+  Robot* _robot = nullptr;
   
 private:
   

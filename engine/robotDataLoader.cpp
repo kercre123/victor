@@ -12,6 +12,8 @@
 
 #include "engine/robotDataLoader.h"
 
+#include "cannedAnimLib/cannedAnimationContainer.h"
+#include "cannedAnimLib/cannedAnimationLoader.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/sayTextAction.h"
@@ -20,7 +22,6 @@
 #include "engine/animations/animationGroup/animationGroupContainer.h"
 #include "engine/animations/animationTransfer.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/components/cubeLightComponent.h"
 #include "engine/components/bodyLightComponent.h"
 #include "engine/components/cubeLightComponent.h"
 #include "engine/cozmoContext.h"
@@ -43,10 +44,6 @@
 #include <sys/stat.h>
 
 #define LOG_CHANNEL    "RobotDataLoader"
-#define LOG_ERROR      PRINT_NAMED_ERROR
-#define LOG_WARNING    PRINT_NAMED_WARNING
-#define LOG_INFO(...)  PRINT_CH_INFO(LOG_CHANNEL, ##__VA_ARGS__)
-#define LOG_DEBUG(...) PRINT_CH_INFO(LOG_CHANNEL, ##__VA_ARGS__)
 
 namespace {
 
@@ -98,29 +95,38 @@ void RobotDataLoader::LoadNonConfigData()
     REMOTE_CONSOLE_ENABLED_ONLY( stressTester.Start() );
   }
   
+  // Don't load these if this is the factory test
+  if(!FACTORY_TEST)
   {
-    ANKI_CPU_PROFILE("RobotDataLoader::CollectFiles");
-    CollectAnimFiles();
-  }
+    {
+      ANKI_CPU_PROFILE("RobotDataLoader::CollectFiles");
+      CollectAnimFiles();
+    }
 
-  {
-    ANKI_CPU_PROFILE("RobotDataLoader::LoadAnimationGroups");
-    LoadAnimationGroups();
-  }
-  
-  {
-    ANKI_CPU_PROFILE("RobotDataLoader::LoadCubeLightAnimations");
-    LoadCubeLightAnimations();
-  }
-  
-  {
-    ANKI_CPU_PROFILE("RobotDataLoader::LoadBackpackLightAnimations");
-    LoadBackpackLightAnimations();
-  }
+    {
+      ANKI_CPU_PROFILE("RobotDataLoader::LoadAnimationGroups");
+      LoadAnimationGroups();
+    }
+    
+    {
+      ANKI_CPU_PROFILE("RobotDataLoader::LoadCubeLightAnimations");
+      LoadCubeLightAnimations();
+    }
+    
+    {
+      ANKI_CPU_PROFILE("RobotDataLoader::LoadBackpackLightAnimations");
+      LoadBackpackLightAnimations();
+    }
 
-  {
-    ANKI_CPU_PROFILE("RobotDataLoader::LoadEmotionEvents");
-    LoadEmotionEvents();
+    {
+      ANKI_CPU_PROFILE("RobotDataLoader::LoadEmotionEvents");
+      LoadEmotionEvents();
+    }
+
+    {
+      ANKI_CPU_PROFILE("RobotDataLoader::LoadCubeAnimationTriggerResponses");
+      LoadCubeAnimationTriggerResponses();
+    }
   }
 
   {
@@ -134,14 +140,16 @@ void RobotDataLoader::LoadNonConfigData()
   }
   
   {
-    ANKI_CPU_PROFILE("RobotDataLoader::LoadCubeAnimationTriggerResponses");
-    LoadCubeAnimationTriggerResponses();
-  }
-  
-  {
     // Load SayText Action Intent Config
     ANKI_CPU_PROFILE("RobotDataLoader::LoadSayTextActionIntentConfigs");
     SayTextAction::LoadMetadata(*_context->GetDataPlatform());
+  }
+
+  {
+    // Load animations into engine - disabled for the time being to save the 30 MB hit
+    // of loading animations into engine in addition to anim process
+    //CannedAnimationLoader animLoader(_platform, _loadingCompleteRatio, _abortLoad);
+    //_cannedAnimations.reset(animLoader.LoadAnimations());
   }
 
   // this map doesn't need to be persistent
@@ -506,6 +514,18 @@ void RobotDataLoader::LoadRobotConfigs()
     {
       LOG_ERROR("RobotDataLoader.VisionConfigJsonNotFound",
                 "Vision Json config file %s not found or failed to parse",
+                jsonFilename.c_str());
+    }
+  }
+
+  // visionScheduleMediator config
+  {
+    static const std::string jsonFilename = "config/engine/visionScheduleMediator_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _visionScheduleMediatorConfig);
+    if(!success)
+    {
+      LOG_ERROR("RobotDataLoader.VisionScheduleMediatorConfigNotFound",
+                "VisionScheduleMediator Json config file %s not found or failed to parse",
                 jsonFilename.c_str());
     }
   }

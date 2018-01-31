@@ -35,43 +35,42 @@ BehaviorSearchForFace::BehaviorSearchForFace(const Json::Value& config)
  
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorSearchForFace::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorSearchForFace::WantsToBeActivatedBehavior() const
 {
   // For the time being this behavior is designed under the assumption that
   // no faces are known and we're searching for a new face
-  return !behaviorExternalInterface.GetFaceWorld().HasAnyFaces();
+  return !GetBEI().GetFaceWorld().HasAnyFaces();
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorSearchForFace::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorSearchForFace::OnBehaviorActivated()
 {
-  if(behaviorExternalInterface.GetFaceWorld().HasAnyFaces()){
+  if(GetBEI().GetFaceWorld().HasAnyFaces()){
     return;
   }
   
-  TransitionToSearchingAnimation(behaviorExternalInterface);
-  
+  TransitionToSearchingAnimation();
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorSearchForFace::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorSearchForFace::BehaviorUpdate()
 {
   if(!IsActivated()){
     return;
   }
 
   if((_behaviorState == State::SearchingForFace) &&
-     (behaviorExternalInterface.GetFaceWorld().HasAnyFaces())){
+     (GetBEI().GetFaceWorld().HasAnyFaces())){
     CancelDelegates(false);
-    TransitionToFoundFace(behaviorExternalInterface);
+    TransitionToFoundFace();
   }  
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorSearchForFace::TransitionToSearchingAnimation(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorSearchForFace::TransitionToSearchingAnimation()
 {
   SET_STATE(SearchingForFace);
   DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::ComeHere_SearchForFace));
@@ -79,7 +78,7 @@ void BehaviorSearchForFace::TransitionToSearchingAnimation(BehaviorExternalInter
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorSearchForFace::TransitionToFoundFace(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorSearchForFace::TransitionToFoundFace()
 {
   SET_STATE(FoundFace);
   DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::ComeHere_SearchForFace_FoundFace));

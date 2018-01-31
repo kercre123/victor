@@ -147,9 +147,6 @@ namespace Anki {
         bool dockPoseAngleInitialized_;
 #endif
 
-        // Whether or not docking path should be traversed with manually controlled speed
-        bool useManualSpeed_ = false;
-
 #if(RESET_LOC_ON_BLOCK_UPDATE)
         // Since the physical robot currently does not localize,
         // we need to store the transform from docking pose
@@ -884,7 +881,7 @@ namespace Anki {
                                                          HM_ACCEL_MMPS2,
                                                          HM_ACCEL_MMPS2);
                     
-                    createdValidPath_ = PathFollower::StartPathTraversal(0, useManualSpeed_);
+                    createdValidPath_ = PathFollower::StartPathTraversal(0);
                     failureMode_ = HANNS_MANEUVER;
                   }
                   // Special case for aligning and docking to high block -
@@ -1377,7 +1374,7 @@ namespace Anki {
         }
 
         // Start following path
-        createdValidPath_ = PathFollower::StartPathTraversal(0, useManualSpeed_);
+        createdValidPath_ = PathFollower::StartPathTraversal(0);
 
         // Debug
         if (!createdValidPath_) {
@@ -1387,8 +1384,7 @@ namespace Anki {
 
       }
 
-      void StartDocking_internal(const f32 speed_mmps, const f32 accel_mmps, const f32 decel_mmps,
-                                 const bool useManualSpeed)
+      void StartDocking_internal(const f32 speed_mmps, const f32 accel_mmps, const f32 decel_mmps)
       {
         dockingStarted = true;
         dockingResult_ = DockingResult::DOCK_UNKNOWN;
@@ -1396,7 +1392,6 @@ namespace Anki {
         dockSpeed_mmps_ = speed_mmps;
         dockAccel_mmps2_ = accel_mmps;
         dockDecel_mmps2_ = decel_mmps;
-        useManualSpeed_ = useManualSpeed;
         mode_ = LOOKING_FOR_BLOCK;
         lastDockingErrorSignalRecvdTime_ = HAL::GetTimeStamp();
         numErrSigToAcquireNewSignal_ = 0;
@@ -1410,11 +1405,10 @@ namespace Anki {
 
       void StartDocking(const f32 speed_mmps, const f32 accel_mmps, const f32 decel_mmps,
                         const f32 dockOffsetDistX, const f32 dockOffsetDistY, const f32 dockOffsetAngle,
-                        const bool useManualSpeed,
                         const u32 pointOfNoReturnDistMM,
                         const bool useFirstErrSignalOnly)
       {
-        StartDocking_internal(speed_mmps, accel_mmps, decel_mmps, useManualSpeed);
+        StartDocking_internal(speed_mmps, accel_mmps, decel_mmps);
         
         dockOffsetDistX_ = dockOffsetDistX;
         pointOfNoReturnDistMM_ = pointOfNoReturnDistMM;
@@ -1429,10 +1423,9 @@ namespace Anki {
       }
 
       void StartDockingToRelPose(const f32 speed_mmps, const f32 accel_mmps, const f32 decel_mmps,
-                                 const f32 rel_x, const f32 rel_y, const f32 rel_angle,
-                                 const bool useManualSpeed)
+                                 const f32 rel_x, const f32 rel_y, const f32 rel_angle)
       {
-        StartDocking_internal(speed_mmps, accel_mmps, decel_mmps, useManualSpeed);
+        StartDocking_internal(speed_mmps, accel_mmps, decel_mmps);
 
         markerlessDocking_ = true;
 

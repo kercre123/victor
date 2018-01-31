@@ -19,8 +19,13 @@
 #include "coretech/common/shared/types.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/animationTypes.h"
-#include "util/signals/simpleSignal_fwd.h"
 #include "clad/types/animationTrigger.h"
+
+#include "engine/dependencyManagedComponent.h"
+#include "engine/robotComponents_fwd.h"
+
+#include "util/signals/simpleSignal_fwd.h"
+
 #include <vector>
 
 namespace Anki {
@@ -28,12 +33,27 @@ namespace Anki {
   
     class Robot;
     
-    class DrivingAnimationHandler
+    class DrivingAnimationHandler : public IDependencyManagedComponent<RobotComponentID>
     {
       public:
       
         // Subscribes to ActionCompleted and SetDrivingAnimations messages
-        DrivingAnimationHandler(Robot& robot);
+        DrivingAnimationHandler();
+
+        //////
+        // IDependencyManagedComponent functions
+        //////
+        virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
+        // Maintain the chain of initializations currently in robot - it might be possible to
+        // change the order of initialization down the line, but be sure to check for ripple effects
+        // when changing this function
+        virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
+          dependencies.insert(RobotComponentID::PathPlanning);
+        };
+        virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
+        //////
+        // end IDependencyManagedComponent functions
+        //////
       
         // Container for the various driving animations
         struct DrivingAnimations
@@ -96,7 +116,7 @@ namespace Anki {
         // Start in ActionDestroyed so that Init() needs to be called
         AnimState _state = AnimState::ActionDestroyed;
       
-        Robot& _robot;
+        Robot* _robot = nullptr;
       
         std::vector<std::pair<DrivingAnimations, std::string>> _drivingAnimationStack;
         DrivingAnimations _currDrivingAnimations;

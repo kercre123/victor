@@ -20,7 +20,7 @@
 
 // Debugging Defines
 #define REALTIME_CONSOLE_OUTPUT 0 //Print status to console
-#define MOTOR_OF_INTEREST MOTOR_LIFT  //print status of this motor
+#define MOTOR_OF_INTEREST MOTOR_RIGHT_WHEEL  //print status of this motor
 #define STR(s)  #s
 #define DEFNAME(s) STR(s)
 
@@ -175,15 +175,18 @@ void PrintConsoleOutput(void)
 {
 #if REALTIME_CONSOLE_OUTPUT > 0
   {
-    printf("FC = %d ", bodyData_->framecounter);
-    printf("%s: ", DEFNAME(MOTOR_OF_INTEREST));
-    printf("raw = %d ", bodyData_->motor[MOTOR_OF_INTEREST].position);
-    printf("pos = %f ", HAL::MotorGetPosition(MotorID::MOTOR_OF_INTEREST));
-    printf("spd = %f ", HAL::MotorGetSpeed(MotorID::MOTOR_OF_INTEREST));
-    printf("pow = %f ", internalData_.motorPower[MOTOR_OF_INTEREST]);
-    printf("cliff = %d %d% d% d ",bodyData_->cliffSense[0],bodyData_->cliffSense[1],bodyData_->cliffSense[2],bodyData_->cliffSense[3]);
-    printf("prox = %d %d ",bodyData_->proximity.rangeStatus, bodyData_->proximity.rangeMM);
-    printf("\r");
+    printf("FC:%d ", bodyData_->framecounter);
+    // printf("%s: ", DEFNAME(MOTOR_OF_INTEREST));
+    printf("Pos: %d %d %d %d", bodyData_->motor[(int)MotorID::MOTOR_HEAD].position,
+                               bodyData_->motor[(int)MotorID::MOTOR_LIFT].position,
+                               bodyData_->motor[(int)MotorID::MOTOR_LEFT_WHEEL].position,
+                               bodyData_->motor[(int)MotorID::MOTOR_RIGHT_WHEEL].position);
+    // printf("pos = %f ", HAL::MotorGetPosition(MotorID::MOTOR_OF_INTEREST));
+    // printf("spd = %f ", HAL::MotorGetSpeed(MotorID::MOTOR_OF_INTEREST));
+    // printf("pow = %f ", internalData_.motorPower[(int)MotorID::MOTOR_OF_INTEREST]);
+    // printf("cliff = %d %d% d% d ",bodyData_->cliffSense[0],bodyData_->cliffSense[1],bodyData_->cliffSense[2],bodyData_->cliffSense[3]);
+    // printf("prox = %d %d ",bodyData_->proximity.rangeStatus, bodyData_->proximity.rangeMM);
+    printf("\n");
   }
 #endif
 }

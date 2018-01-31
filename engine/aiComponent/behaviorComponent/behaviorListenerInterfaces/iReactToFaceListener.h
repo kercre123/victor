@@ -22,7 +22,7 @@ class SmartFaceID;
 
 class IReactToFaceListener{
 public:
-  virtual void FinishedReactingToFace(BehaviorExternalInterface& behaviorExternalInterface, SmartFaceID faceID) = 0;
+  virtual void FinishedReactingToFace(SmartFaceID faceID) = 0;
   virtual void ClearDesiredTargets() = 0;
 };
 

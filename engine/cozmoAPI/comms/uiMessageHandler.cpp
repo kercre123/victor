@@ -96,7 +96,7 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
     
     CONSOLE_VAR(bool, kAcceptMessagesFromUI,  "UiComms", true);
     CONSOLE_VAR(bool, kAcceptMessagesFromSDK, "UiComms", true);
-    CONSOLE_VAR(uint32_t, kPingSendFreq, "UiComms", 20); // 0 = never
+    CONSOLE_VAR(double, kPingSendFreq_ms, "UiComms", 1000.0); // 0 = never
     CONSOLE_VAR(uint32_t, kSdkStatusSendFreq, "UiComms", 1); // 0 = never
     
     
@@ -447,7 +447,6 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
         case GameToEngineTag::IMURequest:                       return true;
         case GameToEngineTag::StartControllerTestMode:          return true;
         case GameToEngineTag::RawPWM:                           return true;
-        case GameToEngineTag::ReliableTransportRunMode:         return true;
         case GameToEngineTag::RequestFeatureToggles:            return true;
         case GameToEngineTag::SetFeatureToggle:                 return true;
         case GameToEngineTag::UpdateFirmware:                   return true;
@@ -715,11 +714,13 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
     Result UiMessageHandler::Update()
     {
       ANKI_CPU_PROFILE("UiMH::Update");
+
+      ++_updateCount;
       
       // Update all the comms
       
-      const bool sendPingThisTick = (kPingSendFreq > 0) && ((_updateCount % kPingSendFreq) == 0);
-      ++_updateCount;
+      const double currTime_ms = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
+      const bool sendPingThisTick = (kPingSendFreq_ms > 0.0) && (currTime_ms - _lastPingTime_ms > kPingSendFreq_ms);
       
       for (UiConnectionType i=UiConnectionType(0); i < UiConnectionType::Count; ++i)
       {
@@ -734,10 +735,10 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
             
             ANKI_CPU_PROFILE("UiMH::Update::SendPing");
             
-            ExternalInterface::Ping outPing( socketComms->NextPingCounter(),
-                                            Util::Time::UniversalTime::GetCurrentTimeInMilliseconds(), false );
+            ExternalInterface::Ping outPing(socketComms->NextPingCounter(), currTime_ms, false);
             ExternalInterface::MessageEngineToGame message(std::move(outPing));
             DeliverToGame(message, (DestinationId)i);
+            _lastPingTime_ms = currTime_ms;
           }
         }
       }

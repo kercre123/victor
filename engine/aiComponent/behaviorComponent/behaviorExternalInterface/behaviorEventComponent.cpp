@@ -13,6 +13,8 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 
+#include "engine/aiComponent/aiComponent.h"
+#include "engine/robot.h"
 #include "util/logging/logging.h"
 
 namespace Anki {
@@ -25,8 +27,17 @@ namespace{
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorEventComponent::BehaviorEventComponent()
+: IDependencyManagedComponent(BCComponentID::BehaviorEventComponent)
+, _messageSubscriber(nullptr)
 {
 
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorEventComponent::InitDependent(Robot* robot, const BCCompMap& dependentComponents)
+{
+  Init(robot->GetAIComponent().GetBehaviorComponent());
 }
 
 

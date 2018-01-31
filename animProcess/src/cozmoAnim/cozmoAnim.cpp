@@ -11,7 +11,7 @@
  */
 
 #include "cozmoAnim/cozmoAnim.h"
-#include "cozmoAnim/engineMessages.h"
+#include "cozmoAnim/animProcessMessages.h"
 #include "cozmoAnim/cozmoAnimContext.h"
 #include "cozmoAnim/audio/engineRobotAudioInput.h"
 #include "cozmoAnim/animation/animationStreamer.h"
@@ -21,6 +21,9 @@
 #include "coretech/common/engine/utils/timer.h"
 #include "audioEngine/multiplexer/audioMultiplexer.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
+
+// TODO HACK this is temporary until we get a webserver >process<
+#include "engine/util/webService/webService.h"
 
 #include "osState/osState.h"
 
@@ -39,10 +42,6 @@
 #endif
 
 #define LOG_CHANNEL    "CozmoAnim"
-#define LOG_ERROR      PRINT_NAMED_ERROR
-#define LOG_WARNING    PRINT_NAMED_WARNING
-#define LOG_INFO(...)  PRINT_CH_INFO(LOG_CHANNEL, ##__VA_ARGS__)
-#define LOG_DEBUG(...) PRINT_CH_DEBUG(LOG_CHANNEL, ##__VA_ARGS__)
 
 #if ANKI_PROFILING_ENABLED && !defined(SIMULATOR)
   #define ENABLE_CE_SLEEP_TIME_DIAGNOSTICS 0
@@ -92,24 +91,23 @@ Result CozmoAnimEngine::Init() {
   // animation streamer must be initialized after loading non config data (otherwise there are no animations loaded)
   _animationStreamer->Init();
   
-  // Create and seetup EngineRobotAudioInput to receive Engine->Robot messages and broadcast Robot->Engine
+  // Create and set up EngineRobotAudioInput to receive Engine->Robot messages and broadcast Robot->Engine
   auto* audioMux = _context->GetAudioMultiplexer();
   auto regId = audioMux->RegisterInput( new Audio::EngineRobotAudioInput() );
   
-  // Setup Engine Message
-  Messages::Init( _animationStreamer.get(),
-                  static_cast<Audio::EngineRobotAudioInput*>(audioMux->GetInput( regId )),
-                  _context.get() );
-  
-  
-  
+  // Set up message handler
+  auto * audioInput = static_cast<Audio::EngineRobotAudioInput*>(audioMux->GetInput(regId));
+  AnimProcessMessages::Init( _animationStreamer.get(), audioInput, _context.get());
+
+  _context->GetWebService()->Start(_context->GetDataPlatform(), "8889");
+
   LOG_INFO("CozmoAnimEngine.Init.Success","Success");
   _isInitialized = true;
 
   return RESULT_OK;
 }
 
-Result CozmoAnimEngine::Update(const BaseStationTime_t currTime_nanosec)
+Result CozmoAnimEngine::Update(BaseStationTime_t currTime_nanosec)
 {
   //ANKI_CPU_PROFILE("CozmoAnimEngine::Update");
   
@@ -142,7 +140,10 @@ Result CozmoAnimEngine::Update(const BaseStationTime_t currTime_nanosec)
 #endif // ENABLE_CE_SLEEP_TIME_DIAGNOSTICS
   
   BaseStationTimer::getInstance()->UpdateTime(currTime_nanosec);
-  Messages::Update();
+  
+  _context->GetWebService()->Update();
+
+  AnimProcessMessages::Update(currTime_nanosec);
   
   OSState::getInstance()->Update();
   _animationStreamer->Update();

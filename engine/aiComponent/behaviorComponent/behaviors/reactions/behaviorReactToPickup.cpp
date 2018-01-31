@@ -19,7 +19,7 @@
 #include "engine/components/carryingComponent.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/faceWorld.h"
@@ -44,14 +44,14 @@ BehaviorReactToPickup::BehaviorReactToPickup(const Json::Value& config)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorReactToPickup::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorReactToPickup::WantsToBeActivatedBehavior() const
 {
   return true;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToPickup::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToPickup::OnBehaviorActivated()
 {
   _repeatAnimatingMultiplier = 1;
   
@@ -65,9 +65,9 @@ void BehaviorReactToPickup::OnBehaviorActivated(BehaviorExternalInterface& behav
  
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToPickup::StartAnim(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToPickup::StartAnim()
 {
-  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  auto& robotInfo = GetBEI().GetRobotInfo();
   // If we're carrying anything, the animation will likely cause us to throw it, so unattach
   // and set as unknown pose
   if(robotInfo.GetCarryingComponent().IsCarryingObject())
@@ -83,7 +83,7 @@ void BehaviorReactToPickup::StartAnim(BehaviorExternalInterface& behaviorExterna
   const TimeStamp_t kObsFaceTimeWindow_ms = 500;
   const TimeStamp_t obsTimeCutoff = (lastImageTimeStamp > kObsFaceTimeWindow_ms ? lastImageTimeStamp - kObsFaceTimeWindow_ms : 0);
 
-  auto faceIDsObserved = behaviorExternalInterface.GetFaceWorld().GetFaceIDsObservedSince(obsTimeCutoff);
+  auto faceIDsObserved = GetBEI().GetFaceWorld().GetFaceIDsObservedSince(obsTimeCutoff);
   
   auto const kTracksToLock = Util::EnumToUnderlying(AnimTrackFlag::BODY_TRACK);
   if(!faceIDsObserved.empty() && !isHardSpark)
@@ -92,7 +92,7 @@ void BehaviorReactToPickup::StartAnim(BehaviorExternalInterface& behaviorExterna
     std::string name;
     for(auto faceID : faceIDsObserved)
     {
-      const Vision::TrackedFace* face = behaviorExternalInterface.GetFaceWorld().GetFace(faceID);
+      const Vision::TrackedFace* face = GetBEI().GetFaceWorld().GetFace(faceID);
       if(face != nullptr && face->HasName())
       {
         name = face->GetName();
@@ -116,7 +116,7 @@ void BehaviorReactToPickup::StartAnim(BehaviorExternalInterface& behaviorExterna
   }
   else
   {
-    auto currentPets = behaviorExternalInterface.GetPetWorld().GetAllKnownPets();
+    auto currentPets = GetBEI().GetPetWorld().GetAllKnownPets();
     if(!currentPets.empty() && !isHardSpark)
     {
       AnimationTrigger animTrigger = AnimationTrigger::PetDetectionShort_Dog;
@@ -132,7 +132,7 @@ void BehaviorReactToPickup::StartAnim(BehaviorExternalInterface& behaviorExterna
     {
       AnimationTrigger anim = AnimationTrigger::ReactToPickup;
       
-      if(behaviorExternalInterface.GetAIComponent().GetWhiteboard().HasHiccups())
+      if(GetBEI().GetAIComponent().GetWhiteboard().HasHiccups())
       {
         anim = AnimationTrigger::HiccupRobotPickedUp;
       }
@@ -149,19 +149,19 @@ void BehaviorReactToPickup::StartAnim(BehaviorExternalInterface& behaviorExterna
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToPickup::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToPickup::BehaviorUpdate()
 {
   if(!IsActivated()){
     return;
   }
 
   const bool isControlDelegated = IsControlDelegated();
-  if( !isControlDelegated && behaviorExternalInterface.GetOffTreadsState() != OffTreadsState::InAir ) {
+  if( !isControlDelegated && GetBEI().GetOffTreadsState() != OffTreadsState::InAir ) {
     CancelSelf();
     return;
   }
 
-  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  auto& robotInfo = GetBEI().GetRobotInfo();
   if( robotInfo.IsOnCharger() && !isControlDelegated ) {
     PRINT_NAMED_INFO("BehaviorReactToPickup.OnCharger", "Stopping behavior because we are on the charger");
     CancelSelf();
@@ -174,7 +174,7 @@ void BehaviorReactToPickup::BehaviorUpdate(BehaviorExternalInterface& behaviorEx
     if (currentTime > _nextRepeatAnimationTime)
     {
       if (robotInfo.GetCliffSensorComponent().IsCliffDetected()) {
-        StartAnim(behaviorExternalInterface);
+        StartAnim();
       } else {
         const auto cliffs = robotInfo.GetCliffSensorComponent().GetCliffDataRaw();
         LOG_EVENT("BehaviorReactToPickup.CalibratingHead", "%d %d %d %d", cliffs[0], cliffs[1], cliffs[2], cliffs[3]);
@@ -186,7 +186,7 @@ void BehaviorReactToPickup::BehaviorUpdate(BehaviorExternalInterface& behaviorEx
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToPickup::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToPickup::OnBehaviorDeactivated()
 {
 }
 

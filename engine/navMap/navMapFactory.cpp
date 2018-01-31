@@ -17,9 +17,9 @@ namespace Cozmo {
 namespace NavMapFactory {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-INavMap* CreateMemoryMap(VizManager* vizManager)
+INavMap* CreateMemoryMap()
 {
-  return new MemoryMap(vizManager);
+  return new MemoryMap();
 }
 
 } // namespace

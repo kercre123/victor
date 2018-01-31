@@ -1,11 +1,22 @@
 {
-  "behaviorClass" : "DispatcherStrictPriority",
+  "behaviorClass" : "DispatcherStrictPriorityWithCooldown",
   "behaviorID" : "FindAndGoToHome",
 
   "interruptActiveBehavior" : true,
 
   "behaviors" : [
-    "GoHome",
-    "SparksLookInPlace"
+    {
+      "behavior" : "AcknowledgeCharger",
+      "cooldown_s" : 60.0,
+      "cooldown_random_factor" : 0.0
+    },
+    {
+      "behavior" : "GoHome",
+      "cooldown_s" : 0.0
+    },
+    {
+      "behavior" : "SparksLookInPlace",
+      "cooldown_s" : 0.0
+    }
   ]
 }

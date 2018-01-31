@@ -68,15 +68,15 @@ BehaviorBuildPyramidBase::BehaviorBuildPyramidBase(const Json::Value& config)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorBuildPyramidBase::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorBuildPyramidBase::WantsToBeActivatedBehavior() const
 {
-  UpdatePyramidTargets(behaviorExternalInterface);
+  UpdatePyramidTargets();
   
   bool allSet = _staticBlockID.IsSet() && _baseBlockID.IsSet() && !_topBlockID.IsSet();
   if(allSet){
     // Ensure a base does not already exist in the world
     using namespace BlockConfigurations;
-    auto pyramidBases = behaviorExternalInterface.GetBlockWorld().GetBlockConfigurationManager().GetPyramidBaseCache().GetBases();
+    auto pyramidBases = GetBEI().GetBlockWorld().GetBlockConfigurationManager().GetPyramidBaseCache().GetBases();
     return pyramidBases.empty();
   }
   
@@ -84,15 +84,15 @@ bool BehaviorBuildPyramidBase::WantsToBeActivatedBehavior(BehaviorExternalInterf
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorBuildPyramidBase::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorBuildPyramidBase::OnBehaviorActivated()
 {
   ResetMemberVars();
-  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  const auto& robotInfo = GetBEI().GetRobotInfo();
   
   if(!robotInfo.GetCarryingComponent().IsCarryingObject()){
-    TransitionToDrivingToBaseBlock(behaviorExternalInterface);
+    TransitionToDrivingToBaseBlock();
   }else{
-    TransitionToPlacingBaseBlock(behaviorExternalInterface);
+    TransitionToPlacingBaseBlock();
   }
   
   
@@ -100,15 +100,15 @@ void BehaviorBuildPyramidBase::OnBehaviorActivated(BehaviorExternalInterface& be
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorBuildPyramidBase::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorBuildPyramidBase::BehaviorUpdate()
 {
   if(!IsActivated()){
     return;
   }
 
   using namespace BlockConfigurations;
-  const auto& pyramidBases = behaviorExternalInterface.GetBlockWorld().GetBlockConfigurationManager().GetPyramidBaseCache().GetBases();
-  const auto& pyramids = behaviorExternalInterface.GetBlockWorld().GetBlockConfigurationManager().GetPyramidCache().GetPyramids();
+  const auto& pyramidBases = GetBEI().GetBlockWorld().GetBlockConfigurationManager().GetPyramidBaseCache().GetBases();
+  const auto& pyramids = GetBEI().GetBlockWorld().GetBlockConfigurationManager().GetPyramidCache().GetPyramids();
   
   // We need a slight delay from when a configuration is made and we respond to it
   if((_lastBasesCount == 0) && !pyramidBases.empty()){
@@ -151,30 +151,29 @@ void BehaviorBuildPyramidBase::BehaviorUpdate(BehaviorExternalInterface& behavio
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorBuildPyramidBase::TransitionToDrivingToBaseBlock(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorBuildPyramidBase::TransitionToDrivingToBaseBlock()
 {
   SET_STATE(DrivingToBaseBlock);
   
-  auto success = [this](BehaviorExternalInterface& behaviorExternalInterface){
-    TransitionToPlacingBaseBlock(behaviorExternalInterface);
+  auto success = [this](){
+    TransitionToPlacingBaseBlock();
   };
 
-  auto& factory = behaviorExternalInterface.GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
+  auto& factory = GetBEI().GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
   PickupBlockParamaters params;
   params.animBeforeDock = AnimationTrigger::BuildPyramidSecondBlockUpright;
   
-  HelperHandle pickupHelper = factory.CreatePickupBlockHelper(behaviorExternalInterface, *this,
-                                                              _baseBlockID, params);
-  SmartDelegateToHelper(behaviorExternalInterface, pickupHelper, success);
+  HelperHandle pickupHelper = factory.CreatePickupBlockHelper(*this, _baseBlockID, params);
+  SmartDelegateToHelper(pickupHelper, success);
   
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorBuildPyramidBase::TransitionToPlacingBaseBlock(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorBuildPyramidBase::TransitionToPlacingBaseBlock()
 {
   SET_STATE(PlacingBaseBlock);
   
-  const ObservableObject* object = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_staticBlockID);
+  const ObservableObject* object = GetBEI().GetBlockWorld().GetLocatedObjectByID(_staticBlockID);
   if(nullptr == object)
   {
     PRINT_NAMED_WARNING("BehaviorBuildPyramidBase.TransitionToPlacingBaseBlock.NullObject",
@@ -185,26 +184,25 @@ void BehaviorBuildPyramidBase::TransitionToPlacingBaseBlock(BehaviorExternalInte
   
   const bool relativeCurrentMarker = false;
   
-  auto success = [this](BehaviorExternalInterface& behaviorExternalInterface){
-    TransitionToObservingBase(behaviorExternalInterface);
+  auto success = [this](){
+    TransitionToObservingBase();
   };
   
-  auto& factory = behaviorExternalInterface.GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
+  auto& factory = GetBEI().GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
   PlaceRelObjectParameters params;
   
-  UpdateBlockPlacementOffsets(behaviorExternalInterface,
-                              params.placementOffsetX_mm,
+  UpdateBlockPlacementOffsets(params.placementOffsetX_mm,
                               params.placementOffsetY_mm);
   params.relativeCurrentMarker = relativeCurrentMarker;
   
-  HelperHandle placeRelHelper = factory.CreatePlaceRelObjectHelper(behaviorExternalInterface, *this,
+  HelperHandle placeRelHelper = factory.CreatePlaceRelObjectHelper(*this,
                                                                    _staticBlockID,
                                                                    true, params);
-  SmartDelegateToHelper(behaviorExternalInterface, placeRelHelper, success);
+  SmartDelegateToHelper(placeRelHelper, success);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorBuildPyramidBase::TransitionToObservingBase(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorBuildPyramidBase::TransitionToObservingBase()
 {
   SET_STATE(ObservingBase);
   
@@ -213,9 +211,9 @@ void BehaviorBuildPyramidBase::TransitionToObservingBase(BehaviorExternalInterfa
   action->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::BuildPyramidReactToBase));
 
   DelegateIfInControl(action,
-              [this, &behaviorExternalInterface]{
+              [this]{
                 if(_continuePastBaseCallback != nullptr){
-                  _continuePastBaseCallback(behaviorExternalInterface);
+                  _continuePastBaseCallback();
                 }
               });
 }
@@ -253,10 +251,9 @@ bool BehaviorBuildPyramidBase::GetTopBlockID(ObjectID& id) const
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorBuildPyramidBase::UpdateBlockPlacementOffsets(BehaviorExternalInterface& behaviorExternalInterface,
-                                                           f32& xOffset, f32& yOffset) const
+void BehaviorBuildPyramidBase::UpdateBlockPlacementOffsets(f32& xOffset, f32& yOffset) const
 {
-  const ObservableObject* object = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_staticBlockID);
+  const ObservableObject* object = GetBEI().GetBlockWorld().GetLocatedObjectByID(_staticBlockID);
   if(nullptr == object)
   {
     PRINT_NAMED_WARNING("BehaviorBuildPyramidBase.UpdateBlockPlacementOffset.NullObject",
@@ -282,14 +279,14 @@ void BehaviorBuildPyramidBase::UpdateBlockPlacementOffsets(BehaviorExternalInter
   yOffset = offsetList[0].second;
 
   for(const auto& entry: offsetList){
-    if(CheckBaseBlockPoseIsFree(behaviorExternalInterface, entry.first, entry.second)){
+    if(CheckBaseBlockPoseIsFree(entry.first, entry.second)){
       Pose3d zRotatedPose = object->GetZRotatedPointAboveObjectCenter(0.f);
       Pose3d potentialPose(0, Z_AXIS_3D(),
                            {entry.first, entry.second, -blockSize.z()},
                            zRotatedPose);
       f32 newDistSquared;
 
-      const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+      const auto& robotInfo = GetBEI().GetRobotInfo();
       ComputeDistanceSQBetween(robotInfo.GetPose(), potentialPose, newDistSquared);
       
       if(newDistSquared < nearestDistanceSQ){
@@ -302,11 +299,10 @@ void BehaviorBuildPyramidBase::UpdateBlockPlacementOffsets(BehaviorExternalInter
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorBuildPyramidBase::CheckBaseBlockPoseIsFree(BehaviorExternalInterface& behaviorExternalInterface,
-                                                        f32 xOffset, f32 yOffset) const
+bool BehaviorBuildPyramidBase::CheckBaseBlockPoseIsFree(f32 xOffset, f32 yOffset) const
 {
-  const ObservableObject* object = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_staticBlockID);
-  const ObservableObject* placingObject = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_baseBlockID);
+  const ObservableObject* object = GetBEI().GetBlockWorld().GetLocatedObjectByID(_staticBlockID);
+  const ObservableObject* placingObject = GetBEI().GetBlockWorld().GetLocatedObjectByID(_baseBlockID);
   if(nullptr == object || nullptr == placingObject)
   {
     PRINT_NAMED_WARNING("BehaviorBuildPyramidBase.CHeckBaseBlockPoseIsFree.NullObject",
@@ -326,16 +322,16 @@ bool BehaviorBuildPyramidBase::CheckBaseBlockPoseIsFree(BehaviorExternalInterfac
   const Pose3d placePose(0, Z_AXIS_3D(), {rotatedSize.x(), rotatedSize.y(), 0}, zRotatedPose);
   
   const ObservableObject* closestObject =
-    behaviorExternalInterface.GetBlockWorld().FindLocatedObjectClosestTo(placePose.GetWithRespectToRoot(), rotatedSize, filter);
+    GetBEI().GetBlockWorld().FindLocatedObjectClosestTo(placePose.GetWithRespectToRoot(), rotatedSize, filter);
   return (closestObject == nullptr);
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorBuildPyramidBase::UpdatePyramidTargets(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorBuildPyramidBase::UpdatePyramidTargets() const
 {
   using Intention = ObjectInteractionIntention;
-  auto& objInfoCache = behaviorExternalInterface.GetAIComponent().GetObjectInteractionInfoCache();
+  auto& objInfoCache = GetBEI().GetAIComponent().GetObjectInteractionInfoCache();
   auto bestBase   = objInfoCache.GetBestObjectForIntention(Intention::PyramidBaseObject);
   auto bestStatic = objInfoCache.GetBestObjectForIntention(Intention::PyramidStaticObject);
   auto bestTop    = objInfoCache.GetBestObjectForIntention(Intention::PyramidTopObject);

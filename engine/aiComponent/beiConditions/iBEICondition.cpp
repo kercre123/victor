@@ -23,7 +23,7 @@ namespace Cozmo {
 
 namespace {
 using namespace ExternalInterface;
-const char* kStrategyTypeKey = "strategyType";
+const char* kConditionTypeKey = "conditionType";
 }
 
   
@@ -31,7 +31,7 @@ const char* kStrategyTypeKey = "strategyType";
 Json::Value IBEICondition::GenerateBaseConditionConfig(BEIConditionType type)
 {
   Json::Value config;
-  config[kStrategyTypeKey] = BEIConditionTypeToString(type);
+  config[kConditionTypeKey] = BEIConditionTypeToString(type);
   return config;
 }
 
@@ -40,7 +40,7 @@ Json::Value IBEICondition::GenerateBaseConditionConfig(BEIConditionType type)
 BEIConditionType IBEICondition::ExtractConditionType(const Json::Value& config)
 {
   std::string strategyType = JsonTools::ParseString(config,
-                                                    kStrategyTypeKey,
+                                                    kConditionTypeKey,
                                                     "IBEICondition.ExtractConditionType.NoTypeSpecified");
   return BEIConditionTypeFromString(strategyType);
 }

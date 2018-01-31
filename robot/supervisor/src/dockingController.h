@@ -92,7 +92,6 @@ namespace Anki {
       // dockOffsetAngle: Docking offset angle. +ve means block is facing robot's right side.
       void StartDocking(const f32 speed_mmps, const f32 accel_mmps, const f32 decel_mmps,
                         const f32 dockOffsetDistX, const f32 dockOffsetDistY = 0, const f32 dockOffsetAngle = 0,
-                        const bool useManualSpeed = false,
                         const u32 pointOfNoReturnDistMM = 0,
                         const bool useFirstErrSignalOnly = false);
 
@@ -101,8 +100,7 @@ namespace Anki {
       // relative to the pose of the robot at the time "docking" started.
       // No vision markers are required as this is a "blind docking" maneuver.
       void StartDockingToRelPose(const f32 speed_mmps, const f32 accel_mmps, const f32 decel_mmps,
-                                 const f32 rel_x, const f32 rel_y, const f32 rel_angle,
-                                 const bool useManualSpeed = false);
+                                 const f32 rel_x, const f32 rel_y, const f32 rel_angle);
 
 
       // Returns the last computed pose of the marker based on docking error signal

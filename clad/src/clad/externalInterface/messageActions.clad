@@ -33,7 +33,6 @@ message AlignWithObject {
     float_32 approachAngle_rad,
     bool useApproachAngle,
     bool usePreDockPose,
-    bool useManualSpeed,
     AlignmentType alignmentType
 }
 
@@ -69,7 +68,6 @@ message GotoObject {
   int_32 objectID,
   PathMotionProfile motionProf,
   float_32 distanceFromObjectOrigin_mm,
-  bool useManualSpeed,
   bool usePreDockPose = 0
 }
 
@@ -80,7 +78,6 @@ message GotoPose {
   float_32 rad,
   PathMotionProfile motionProf,
   uint_8 level,
-  bool useManualSpeed
 }
 
 // MountCharger
@@ -88,7 +85,6 @@ message MountCharger {
   int_32 objectID,
   PathMotionProfile motionProf,
   bool useCliffSensorCorrection,
-  bool useManualSpeed
 }
 
 // PanAndTilt
@@ -109,7 +105,6 @@ message PickupObject {
     float_32           approachAngle_rad,
     bool               useApproachAngle,
     bool               usePreDockPose,
-    bool               useManualSpeed,
     bool               checkForObjectOnTop = 1, // Fail if object on top
 }
 
@@ -123,7 +118,6 @@ message PlaceObjectOnGround {
     float_32 qz,
     PathMotionProfile motionProf,
     uint_8 level,
-    bool useManualSpeed,
     bool useExactRotation,    // If true, then tries to place object at the exact rotation specified by the quaternion
                              // otherwise it chooses the closest preActionPose such the object is aligned with the quaternion rotation.
     bool checkDestinationFree, // if true the action will check whether the destination is still free of obstacles along the way
@@ -147,7 +141,6 @@ message PlaceOnObject {
     float_32 approachAngle_rad,
     bool   useApproachAngle,
     bool usePreDockPose,
-    bool useManualSpeed,
     bool checkForObjectOnTop = 1
 }
 
@@ -165,7 +158,6 @@ message PlaceRelObject {
     float_32 approachAngle_rad,
     bool   useApproachAngle,
     bool usePreDockPose,
-    bool useManualSpeed,
 }
 
 // PlayAnimation
@@ -187,12 +179,6 @@ message PlayAnimationTrigger {
   bool    ignoreLiftTrack
 }
 
-// PlayAnimation -- TEMP CODE!! Iterating animation code
-message PlayAnimation_DEV {
-  uint_32 numLoops,
-  string animationName
-}
-
 // PlayCubeAnimationTrigger
 message PlayCubeAnimationTrigger {
   uint_32 objectID,
@@ -208,8 +194,7 @@ message PopAWheelie {
   PathMotionProfile motionProf,
   float_32 approachAngle_rad,
   bool useApproachAngle,
-  bool usePreDockPose,
-  bool useManualSpeed
+  bool usePreDockPose
 }
 
 // FacePlant
@@ -218,8 +203,7 @@ message FacePlant {
   PathMotionProfile motionProf,
   float_32 approachAngle_rad,
   bool useApproachAngle,
-  bool usePreDockPose,
-  bool useManualSpeed
+  bool usePreDockPose
 }
 
 // ReadToolCode
@@ -242,7 +226,6 @@ message RollObject {
   bool doDeepRoll,
   bool useApproachAngle,
   bool usePreDockPose,
-  bool useManualSpeed,
   bool checkForObjectOnTop = 1, // fail if object on top
   bool rollWithoutDocking = 0
 }
@@ -329,8 +312,7 @@ message TrackToPet {
 // TraverseObject
 message TraverseObject {
   PathMotionProfile motionProf,
-  bool usePreDockPose,
-  bool useManualSpeed
+  bool usePreDockPose
 }
 
 // TurnInPlace

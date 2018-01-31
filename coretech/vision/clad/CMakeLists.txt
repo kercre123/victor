@@ -8,7 +8,7 @@ set(CLAD_INCLUDES
   "${CMAKE_CURRENT_SOURCE_DIR}/src/"
 )
 
-set(OUTPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../generated/clad/vision")
+set(OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/coretech/vision")
 
 generate_clad_cpp(LIBRARY "cti_vision_clad" 
   STATIC

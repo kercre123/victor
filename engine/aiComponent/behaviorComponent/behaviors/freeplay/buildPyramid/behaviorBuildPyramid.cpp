@@ -17,7 +17,7 @@
 #include "engine/actions/dockActions.h"
 #include "engine/actions/driveToActions.h"
 #include "engine/actions/retryWrapperAction.h"
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
@@ -56,15 +56,15 @@ static const float kHeadBottomCheckTopBlock_rad = DEG_TO_RAD(15);
 BehaviorBuildPyramid::BehaviorBuildPyramid(const Json::Value& config)
 : BehaviorBuildPyramidBase(config)
 {
-  _continuePastBaseCallback =  std::bind(&BehaviorBuildPyramid::TransitionToDrivingToTopBlock, (this), std::placeholders::_1);
+  _continuePastBaseCallback =  std::bind(&BehaviorBuildPyramid::TransitionToDrivingToTopBlock, (this));
   
 }
     
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorBuildPyramid::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorBuildPyramid::WantsToBeActivatedBehavior() const
 {
-  UpdatePyramidTargets(behaviorExternalInterface);
+  UpdatePyramidTargets();
 
   bool allSet = _staticBlockID.IsSet() && _baseBlockID.IsSet() && _topBlockID.IsSet();  
   return allSet;
@@ -72,35 +72,35 @@ bool BehaviorBuildPyramid::WantsToBeActivatedBehavior(BehaviorExternalInterface&
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorBuildPyramid::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorBuildPyramid::OnBehaviorActivated()
 {
   using namespace BlockConfigurations;
   ResetMemberVars();
   
   // check to see if a pyramid was built but failed to visually verify
-  auto& pyramids = behaviorExternalInterface.GetBlockWorld().GetBlockConfigurationManager().GetPyramidCache().GetPyramids();
+  auto& pyramids = GetBEI().GetBlockWorld().GetBlockConfigurationManager().GetPyramidCache().GetPyramids();
   if(_checkForFullPyramidVisualVerifyFailure && !pyramids.empty()){
     _checkForFullPyramidVisualVerifyFailure = false;
-    TransitionToReactingToPyramid(behaviorExternalInterface);
+    TransitionToReactingToPyramid();
     
   }else{
     _checkForFullPyramidVisualVerifyFailure = false;
   }
     
-  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
-  const auto& pyramidBases = behaviorExternalInterface.GetBlockWorld().GetBlockConfigurationManager().GetPyramidBaseCache().GetBases();
+  const auto& robotInfo = GetBEI().GetRobotInfo();
+  const auto& pyramidBases = GetBEI().GetBlockWorld().GetBlockConfigurationManager().GetPyramidBaseCache().GetBases();
   if(!pyramidBases.empty() || !pyramids.empty()){
     
     if(!robotInfo.GetCarryingComponent().IsCarryingObject()){
-      TransitionToDrivingToTopBlock(behaviorExternalInterface);
+      TransitionToDrivingToTopBlock();
     }else{
-      TransitionToPlacingTopBlock(behaviorExternalInterface);
+      TransitionToPlacingTopBlock();
     }
   }else{
     if(!robotInfo.GetCarryingComponent().IsCarryingObject()){
-      TransitionToDrivingToBaseBlock(behaviorExternalInterface);
+      TransitionToDrivingToBaseBlock();
     }else{
-      TransitionToPlacingBaseBlock(behaviorExternalInterface);
+      TransitionToPlacingBaseBlock();
     }
   }
   
@@ -109,30 +109,29 @@ void BehaviorBuildPyramid::OnBehaviorActivated(BehaviorExternalInterface& behavi
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorBuildPyramid::TransitionToDrivingToTopBlock(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorBuildPyramid::TransitionToDrivingToTopBlock()
 {
   SET_STATE(DrivingToTopBlock);
   
-  auto success = [this](BehaviorExternalInterface& behaviorExternalInterface){
-    TransitionToPlacingTopBlock(behaviorExternalInterface);
+  auto success = [this](){
+    TransitionToPlacingTopBlock();
   };
   
-  auto& factory = behaviorExternalInterface.GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
+  auto& factory = GetBEI().GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
   PickupBlockParamaters params;
   params.animBeforeDock = AnimationTrigger::BuildPyramidThirdBlockUpright;
-  HelperHandle pickupHelper = factory.CreatePickupBlockHelper(behaviorExternalInterface, *this,
-                                _topBlockID, params);
-  SmartDelegateToHelper(behaviorExternalInterface, pickupHelper, success);
+  HelperHandle pickupHelper = factory.CreatePickupBlockHelper(*this, _topBlockID, params);
+  SmartDelegateToHelper(pickupHelper, success);
 }
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorBuildPyramid::TransitionToPlacingTopBlock(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorBuildPyramid::TransitionToPlacingTopBlock()
 {
   SET_STATE(PlacingTopBlock);
     
-  const ObservableObject* staticBlock = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_staticBlockID);
-  const ObservableObject* baseBlock = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_baseBlockID);
+  const ObservableObject* staticBlock = GetBEI().GetBlockWorld().GetLocatedObjectByID(_staticBlockID);
+  const ObservableObject* baseBlock = GetBEI().GetBlockWorld().GetLocatedObjectByID(_baseBlockID);
 
   if(staticBlock  == nullptr || baseBlock == nullptr)
   {
@@ -144,14 +143,14 @@ void BehaviorBuildPyramid::TransitionToPlacingTopBlock(BehaviorExternalInterface
   
   // Figure out the pyramid base block offset to place the top block appropriately
   using namespace BlockConfigurations;
-  auto pyramidBases = behaviorExternalInterface.GetBlockWorld().GetBlockConfigurationManager().GetPyramidBaseCache().GetBases();
+  auto pyramidBases = GetBEI().GetBlockWorld().GetBlockConfigurationManager().GetPyramidBaseCache().GetBases();
 
   for(const auto& basePtr: pyramidBases){
     if(basePtr->ContainsBlock(_baseBlockID) && basePtr->ContainsBlock(_staticBlockID)){
       
       using namespace BlockConfigurations;
       Pose3d idealTopPlacementWRTWorld;
-      auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+      auto& robotInfo = GetBEI().GetRobotInfo();
       
       if(!PyramidBase::GetBaseInteriorMidpoint(robotInfo.GetPose(), robotInfo.GetWorldOrigin(),
                                                staticBlock, baseBlock, idealTopPlacementWRTWorld)){
@@ -167,8 +166,8 @@ void BehaviorBuildPyramid::TransitionToPlacingTopBlock(BehaviorExternalInterface
       // if we've already tried to place the block, see if we can visually verify it now
       const bool relativeCurrentMarker = false;
       
-      auto removeSoonFailure = [this](BehaviorExternalInterface& behaviorExternalInterface){
-        const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+      auto removeSoonFailure = [this](){
+        const auto& robotInfo = GetBEI().GetRobotInfo();
         
         if(!robotInfo.GetCarryingComponent().IsCarryingObject()){
           _checkForFullPyramidVisualVerifyFailure = true;
@@ -188,27 +187,26 @@ void BehaviorBuildPyramid::TransitionToPlacingTopBlock(BehaviorExternalInterface
         }
       };
       
-      auto success = [this](BehaviorExternalInterface& behaviorExternalInterface){
-        TransitionToReactingToPyramid(behaviorExternalInterface);
+      auto success = [this](){
+        TransitionToReactingToPyramid();
       };
       
-      auto& factory = behaviorExternalInterface.GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
+      auto& factory = GetBEI().GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
       PlaceRelObjectParameters params;
       params.placementOffsetX_mm = idealPlacementWRTUnrotatedStatic.GetTranslation().x();
       params.placementOffsetY_mm = idealPlacementWRTUnrotatedStatic.GetTranslation().y();
       params.relativeCurrentMarker = relativeCurrentMarker;
       
       
-      HelperHandle placeRelHelper = factory.CreatePlaceRelObjectHelper(
-                                        behaviorExternalInterface, *this, _staticBlockID, false, params);
-      SmartDelegateToHelper(behaviorExternalInterface, placeRelHelper, success, removeSoonFailure);
+      HelperHandle placeRelHelper = factory.CreatePlaceRelObjectHelper(*this, _staticBlockID, false, params);
+      SmartDelegateToHelper(placeRelHelper, success, removeSoonFailure);
     }
   }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorBuildPyramid::TransitionToReactingToPyramid(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorBuildPyramid::TransitionToReactingToPyramid()
 {
   SET_STATE(ReactingToPyramid);
   BehaviorObjectiveAchieved(BehaviorObjective::BuiltPyramid);

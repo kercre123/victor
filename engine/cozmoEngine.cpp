@@ -29,6 +29,7 @@
 #include "engine/robotDataLoader.h"
 #include "engine/robotManager.h"
 #include "engine/util/transferQueue/transferQueueMgr.h"
+#include "engine/util/webService/webService.h"
 #include "engine/utils/cozmoExperiments.h"
 #include "engine/utils/cozmoFeatureGate.h"
 #include "engine/factory/factoryTestLogger.h"
@@ -221,6 +222,8 @@ Result CozmoEngine::Init(const Json::Value& config) {
 
   SetEngineState(EngineState::LoadingData);
 
+  _context->GetWebService()->Start(_context->GetDataPlatform(), "8888");
+
   // DAS Event: "cozmo_engine.init.build_configuration"
   // s_val: Build configuration
   // data: Unused
@@ -326,6 +329,8 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
   _context->GetVizManager()->ResetMessageCount();
   
   _context->GetVoiceCommandComponent()->Update();
+
+  _context->GetWebService()->Update();
   
   // Handle UI
   if (!_uiWasConnected && _uiMsgHandler->HasDesiredNumUiDevices()) {

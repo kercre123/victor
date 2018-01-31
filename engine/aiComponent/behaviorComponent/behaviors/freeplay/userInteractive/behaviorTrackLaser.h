@@ -28,19 +28,19 @@ private:
   friend class BehaviorContainer;
   BehaviorTrackLaser(const Json::Value& config);
   
-public:
-  
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual bool CarryingObjectHandledInternally() const override {return false;}
+public:  
+  virtual bool WantsToBeActivatedBehavior() const override;
 
 protected:
   
-  virtual void AlwaysHandleInScope(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void AlwaysHandleInScope(const EngineToGameEvent& event) override;
 
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual bool ShouldCancelWhenInControl() const override { return false;}
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.behaviorAlwaysDelegates = false;
+  }
+  virtual void OnBehaviorActivated() override;
+  virtual void BehaviorUpdate() override;
+  virtual void OnBehaviorDeactivated() override;
 
 private:
 
@@ -164,29 +164,29 @@ private:
   } _originalCameraSettings;
   
   // reset everything for when the behavior is finished
-  void Cleanup(BehaviorExternalInterface& behaviorExternalInterface);
+  void Cleanup();
   
   // check if it's been too long since we saw a laser or we've been running too long
   // if so, return true and transition to GetOutBored state
-  bool CheckForTimeout(BehaviorExternalInterface& behaviorExternalInterface);
+  bool CheckForTimeout();
   
   void SetState_internal(State state, const std::string& stateName);
 
-  void TransitionToInitialSearch(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToBringingHeadDown(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToRotateToWatchingNewArea(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToWaitForExposureChange(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToWaitForLaser(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToRespondToLaser(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToTrackLaser(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToPounce(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToGetOutBored(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToInitialSearch();
+  void TransitionToBringingHeadDown();
+  void TransitionToRotateToWatchingNewArea();
+  void TransitionToWaitForExposureChange();
+  void TransitionToWaitForLaser();
+  void TransitionToRespondToLaser();
+  void TransitionToTrackLaser();
+  void TransitionToPounce();
+  void TransitionToGetOutBored();
   
-  void InitHelper(BehaviorExternalInterface& behaviorExternalInterface);
+  void InitHelper();
   
   void SetParamsFromConfig(const Json::Value& config);
   
-  void SetLastLaserObservation(const BehaviorExternalInterface& behaviorExternalInterface, const EngineToGameEvent& event);
+  void SetLastLaserObservation(const EngineToGameEvent& event);
   
 };
 

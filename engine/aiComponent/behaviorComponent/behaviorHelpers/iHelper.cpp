@@ -49,19 +49,18 @@ void IHelper::DelegateProperties::ClearDelegateProperties()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IHelper::DelegateProperties::SucceedImmediatelyOnDelegateFailure()
 {
-  SetOnSuccessFunction( [](BehaviorExternalInterface& behaviorExternalInterface) { return IHelper::HelperStatus::Complete; } );
+  SetOnSuccessFunction( []() { return IHelper::HelperStatus::Complete; } );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IHelper::DelegateProperties::FailImmediatelyOnDelegateFailure()
 {
-  SetOnFailureFunction( [](BehaviorExternalInterface& behaviorExternalInterface) { return IHelper::HelperStatus::Failure; } );
+  SetOnFailureFunction( []() { return IHelper::HelperStatus::Failure; } );
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IHelper::IHelper(const std::string& name,
-                 BehaviorExternalInterface& behaviorExternalInterface,
                  ICozmoBehavior& behavior,
                  BehaviorHelperFactory& helperFactory)
 : IBehavior(name)
@@ -78,7 +77,7 @@ IHelper::IHelper(const std::string& name,
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IHelper::HelperStatus IHelper::UpdateWhileActive(BehaviorExternalInterface& behaviorExternalInterface, HelperHandle& delegateToSet)
+IHelper::HelperStatus IHelper::UpdateWhileActive(HelperHandle& delegateToSet)
 {
   
   bool tickUpdate = true;
@@ -88,7 +87,7 @@ IHelper::HelperStatus IHelper::UpdateWhileActive(BehaviorExternalInterface& beha
 
     _hasStarted = true;
     _timeStarted_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    _status = InitBehaviorHelper(behaviorExternalInterface);
+    _status = InitBehaviorHelper();
     // If a delegate has been set, don't tick update while active
     if(_status != IHelper::HelperStatus::Running ||
        _delegateAfterUpdate.GetDelegateToSet() != nullptr){
@@ -97,7 +96,7 @@ IHelper::HelperStatus IHelper::UpdateWhileActive(BehaviorExternalInterface& beha
   }
 
   if( tickUpdate ) {
-    _status = UpdateWhileActiveInternal(behaviorExternalInterface);
+    _status = UpdateWhileActiveInternal();
   }
   
   if(_delegateAfterUpdate.GetDelegateToSet() != nullptr){
@@ -112,7 +111,7 @@ IHelper::HelperStatus IHelper::UpdateWhileActive(BehaviorExternalInterface& beha
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IHelper::InitInternal(BehaviorExternalInterface& behaviorExternalInterface)
+void IHelper::InitInternal()
 {
   // purposefully blank - only called to maintain iBehavior state info
 }
@@ -120,13 +119,13 @@ void IHelper::InitInternal(BehaviorExternalInterface& behaviorExternalInterface)
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IHelper::OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)
+void IHelper::OnActivatedInternal()
 {
   _status = IHelper::HelperStatus::Running;
   _hasStarted = false;
   _onSuccessFunction = nullptr;
   _onFailureFunction = nullptr;
-  OnActivatedHelper(behaviorExternalInterface);
+  OnActivatedHelper();
 }
 
 
@@ -215,13 +214,13 @@ void IHelper::LogStopEvent(bool isActive)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IHelper::HelperStatus IHelper::OnDelegateSuccess(BehaviorExternalInterface& behaviorExternalInterface)
+IHelper::HelperStatus IHelper::OnDelegateSuccess()
 {
   PRINT_CH_DEBUG("BehaviorHelpers", "IHelper.OnDelegateSuccess", "%s",
                  GetName().c_str());
 
   if(_onSuccessFunction != nullptr){
-    _status = _onSuccessFunction(behaviorExternalInterface);
+    _status = _onSuccessFunction();
   }
 
   // callbacks only happen once per delegate, so clear it after we call it
@@ -232,13 +231,13 @@ IHelper::HelperStatus IHelper::OnDelegateSuccess(BehaviorExternalInterface& beha
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IHelper::HelperStatus IHelper::OnDelegateFailure(BehaviorExternalInterface& behaviorExternalInterface)
+IHelper::HelperStatus IHelper::OnDelegateFailure()
 {
   PRINT_CH_INFO("BehaviorHelpers", "IHelper.OnDelegateFailure", "%s",
                 GetName().c_str());
 
   if(_onFailureFunction != nullptr) {
-    _status = _onFailureFunction(behaviorExternalInterface);
+    _status = _onFailureFunction();
   }
 
   // callbacks only happen once per delegate, so clear it after we call it
@@ -248,13 +247,13 @@ IHelper::HelperStatus IHelper::OnDelegateFailure(BehaviorExternalInterface& beha
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IHelper::DelegateIfInControl(IActionRunner* action, ICozmoBehavior::ActionResultWithRobotCallback callback)
+bool IHelper::DelegateIfInControl(IActionRunner* action, BehaviorActionResultCallback callback)
 {
   return _behaviorToCallActionsOn.DelegateIfInControl(action, callback);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IHelper::DelegateIfInControl(IActionRunner* action, BehaviorRobotCompletedActionWithExternalInterfaceCallback callback)
+bool IHelper::DelegateIfInControl(IActionRunner* action, BehaviorRobotCompletedActionCallback callback)
 {
   return _behaviorToCallActionsOn.DelegateIfInControl(action, callback);
 }
@@ -268,61 +267,57 @@ bool IHelper::CancelDelegates(bool allowCallback)
   
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-HelperHandle IHelper::CreatePickupBlockHelper(BehaviorExternalInterface& behaviorExternalInterface, const ObjectID& targetID, const PickupBlockParamaters& parameters)
+HelperHandle IHelper::CreatePickupBlockHelper(const ObjectID& targetID, const PickupBlockParamaters& parameters)
 {
-  return _helperFactory.CreatePickupBlockHelper(behaviorExternalInterface, _behaviorToCallActionsOn, targetID, parameters);
+  return _helperFactory.CreatePickupBlockHelper(_behaviorToCallActionsOn, targetID, parameters);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-HelperHandle IHelper::CreatePlaceBlockHelper(BehaviorExternalInterface& behaviorExternalInterface)
+HelperHandle IHelper::CreatePlaceBlockHelper()
 {
-  return _helperFactory.CreatePlaceBlockHelper(behaviorExternalInterface, _behaviorToCallActionsOn);
+  return _helperFactory.CreatePlaceBlockHelper(_behaviorToCallActionsOn);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-HelperHandle IHelper::CreateRollBlockHelper(BehaviorExternalInterface& behaviorExternalInterface, const ObjectID& targetID, bool rollToUpright, const RollBlockParameters& parameters)
+HelperHandle IHelper::CreateRollBlockHelper(const ObjectID& targetID, bool rollToUpright, const RollBlockParameters& parameters)
 {
-  return _helperFactory.CreateRollBlockHelper(behaviorExternalInterface, _behaviorToCallActionsOn, targetID, rollToUpright, parameters);
+  return _helperFactory.CreateRollBlockHelper(_behaviorToCallActionsOn, targetID, rollToUpright, parameters);
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-HelperHandle IHelper::CreateDriveToHelper(BehaviorExternalInterface& behaviorExternalInterface,
-                                          const ObjectID& targetID,
+HelperHandle IHelper::CreateDriveToHelper(const ObjectID& targetID,
                                           const DriveToParameters& parameters)
 {
-  return _helperFactory.CreateDriveToHelper(behaviorExternalInterface, _behaviorToCallActionsOn, targetID, parameters);
+  return _helperFactory.CreateDriveToHelper(_behaviorToCallActionsOn, targetID, parameters);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-HelperHandle IHelper::CreatePlaceRelObjectHelper(BehaviorExternalInterface& behaviorExternalInterface,
-                                                 const ObjectID& targetID,
+HelperHandle IHelper::CreatePlaceRelObjectHelper(const ObjectID& targetID,
                                                  const bool placingOnGround,
                                                  const PlaceRelObjectParameters& parameters)
 {
-  return _helperFactory.CreatePlaceRelObjectHelper(behaviorExternalInterface, _behaviorToCallActionsOn,
+  return _helperFactory.CreatePlaceRelObjectHelper(_behaviorToCallActionsOn,
                                                    targetID, placingOnGround,
                                                    parameters);
 }
   
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-HelperHandle IHelper::CreateSearchForBlockHelper(BehaviorExternalInterface& behaviorExternalInterface,
-                                                 const SearchParameters& params)
+HelperHandle IHelper::CreateSearchForBlockHelper(const SearchParameters& params)
 {
-  return _helperFactory.CreateSearchForBlockHelper(behaviorExternalInterface, _behaviorToCallActionsOn, params);
+  return _helperFactory.CreateSearchForBlockHelper(_behaviorToCallActionsOn, params);
 }
  
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ActionResult IHelper::IsAtPreActionPoseWithVisualVerification(BehaviorExternalInterface& behaviorExternalInterface,
-                                                              const ObjectID& targetID,
+ActionResult IHelper::IsAtPreActionPoseWithVisualVerification(const ObjectID& targetID,
                                                               PreActionPose::ActionType actionType,
                                                               const f32 offsetX_mm,
                                                               const f32 offsetY_mm)
 {
   const ActionableObject* object = dynamic_cast<const ActionableObject*>(
-                                behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(targetID));
+                                GetBEI().GetBlockWorld().GetLocatedObjectByID(targetID));
   if(object == nullptr){
     return ActionResult::BAD_OBJECT;
   }
@@ -341,7 +336,7 @@ ActionResult IHelper::IsAtPreActionPoseWithVisualVerification(BehaviorExternalIn
   
   if(actionType == PreActionPose::ActionType::PLACE_RELATIVE)
   {
-    auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+    auto& robotInfo = GetBEI().GetRobotInfo();
     std::vector<Pose3d> possiblePoses_unused;
     PlaceRelObjectAction::ComputePlaceRelObjectOffsetPoses(object,
                                                            offsetX_mm,
@@ -349,8 +344,8 @@ ActionResult IHelper::IsAtPreActionPoseWithVisualVerification(BehaviorExternalIn
                                                            robotInfo.GetPose(),
                                                            robotInfo.GetWorldOrigin(),
                                                            robotInfo.GetCarryingComponent(),
-                                                           behaviorExternalInterface.GetBlockWorld(),
-                                                           behaviorExternalInterface.GetVisionComponent(),
+                                                           GetBEI().GetBlockWorld(),
+                                                           GetBEI().GetVisionComponent(),
                                                            possiblePoses_unused,
                                                            alreadyInPosition);
   }
@@ -366,10 +361,10 @@ ActionResult IHelper::IsAtPreActionPoseWithVisualVerification(BehaviorExternalIn
     
     IDockAction::PreActionPoseOutput preActionPoseOutput;
     
-    auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+    auto& robotInfo = GetBEI().GetRobotInfo();
     IDockAction::GetPreActionPoses(robotInfo.GetPose(),
                                    robotInfo.GetCarryingComponent(),
-                                   behaviorExternalInterface.GetBlockWorld(),
+                                   GetBEI().GetBlockWorld(),
                                    preActionPoseInput, preActionPoseOutput);
     
     if(preActionPoseOutput.actionResult != ActionResult::SUCCESS)
@@ -392,7 +387,7 @@ ActionResult IHelper::IsAtPreActionPoseWithVisualVerification(BehaviorExternalIn
 
 template<typename T>
 void IHelper::RespondToActionWithAnim(const T& res, ActionResult actionResult,
-                                      BehaviorExternalInterface& behaviorExternalInterface, std::function<void(const T&, BehaviorExternalInterface&)>& callback)
+                                      std::function<void(const T&)>& callback)
 {
   PRINT_CH_INFO("BehaviorHelpers",
                 "IHelper.RespondToResultWithAnim.ActionResult",
@@ -404,16 +399,16 @@ void IHelper::RespondToActionWithAnim(const T& res, ActionResult actionResult,
     UserFacingActionResult userResult = _actionResultMapFunc(actionResult);
     if(userResult != UserFacingActionResult::Count)
     {
-      AnimationTrigger responseAnim = AnimationResponseToActionResult(behaviorExternalInterface, userResult);
+      AnimationTrigger responseAnim = AnimationResponseToActionResult(userResult);
       if(responseAnim != AnimationTrigger::Count)
       {
         DelegateIfInControl(new TriggerAnimationAction(responseAnim),
-                    [res, &callback](ActionResult animPlayed, BehaviorExternalInterface& behaviorExternalInterface){
+                    [res, &callback](ActionResult animPlayed){
                       // Pass through the true action result, not the played animation result
                       auto tmpCallback = callback;
                       callback = nullptr;
                       if(tmpCallback != nullptr){
-                        tmpCallback(res, behaviorExternalInterface);
+                        tmpCallback(res);
                       }
                     });
         
@@ -427,29 +422,29 @@ void IHelper::RespondToActionWithAnim(const T& res, ActionResult actionResult,
   callback = nullptr;
   _actionResultMapFunc = nullptr;
   if(tmpCallback != nullptr){
-    tmpCallback(res, behaviorExternalInterface);
+    tmpCallback(res);
   }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IHelper::RespondToResultWithAnim(ActionResult result, BehaviorExternalInterface& behaviorExternalInterface)
+void IHelper::RespondToResultWithAnim(ActionResult result)
 {
-  RespondToActionWithAnim(result, result, behaviorExternalInterface, _callbackAfterResponseAnim);
+  RespondToActionWithAnim(result, result, _callbackAfterResponseAnim);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IHelper::RespondToRCAWithAnim(const ExternalInterface::RobotCompletedAction& rca, BehaviorExternalInterface& behaviorExternalInterface)
+void IHelper::RespondToRCAWithAnim(const ExternalInterface::RobotCompletedAction& rca)
 {
-  RespondToActionWithAnim(rca, rca.result, behaviorExternalInterface, _callbackAfterResponseAnimUsingRCA);
+  RespondToActionWithAnim(rca, rca.result, _callbackAfterResponseAnimUsingRCA);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AnimationTrigger IHelper::AnimationResponseToActionResult(BehaviorExternalInterface& behaviorExternalInterface, UserFacingActionResult result)
+AnimationTrigger IHelper::AnimationResponseToActionResult(UserFacingActionResult result)
 {
-  return behaviorExternalInterface.GetAIComponent().GetBehaviorComponent().
+  return GetBEI().GetAIComponent().GetBehaviorComponent().
               GetBehaviorEventAnimResponseDirector().GetAnimationToPlayForActionResult(result);
 }
 

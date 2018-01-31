@@ -22,6 +22,7 @@
 
 #include "coretech/common/robot/array2d.h"
 
+#include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 
 #include <list>
@@ -31,20 +32,19 @@
 namespace Anki {
 namespace Vision {
 
+// Default to false (and remove?) for VIC-945, when we've switched to dark cubes/charger
+CONSOLE_VAR(bool, kMarkerDetector_DarkOnLight, "Vision.MarkerDetection", true);
+  
 struct MarkerDetector::Parameters : public Embedded::FiducialDetectionParameters
 {
-  enum class Appearance : u8 {
-    BLACK_ON_WHITE = 0,
-    WHITE_ON_BLACK,
-    BOTH
-  };
-
   s32         maxMarkers;
   f32         component_numPixelsFraction;
   f32         minSideLengthFraction;
   f32         maxSideLengthFraction;
-  Appearance  markerAppearance;
   bool        isInitialized;
+  
+  // selected when (kMarkerDetector_DarkOnLight==false)
+  s32 scaleImage_thresholdMultiplier_lightOnDark = static_cast<s32>(65536.f * 0.9f);
   
   Parameters();
   void Initialize(); // TODO: Initialize from Json config
@@ -84,7 +84,7 @@ Result MarkerDetector::Memory::ResetBuffers(s32 numRows, s32 numCols, s32 maxMar
   //  _ccmBuffer.resize(CCM_BUFFER_MULTIPLIER * numPixels);
 
   static const s32 OFFCHIP_BUFFER_SIZE = 4000000;
-  static const s32 ONCHIP_BUFFER_SIZE  = 1300000;
+  static const s32 ONCHIP_BUFFER_SIZE  = 1600000;
   static const s32 CCM_BUFFER_SIZE     = 200000;
 
   _offchipBuffer.resize(OFFCHIP_BUFFER_SIZE);
@@ -105,6 +105,12 @@ Result MarkerDetector::Memory::ResetBuffers(s32 numRows, s32 numCols, s32 maxMar
   return RESULT_OK;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool MarkerDetector::IsDarkOnLight()
+{
+  return kMarkerDetector_DarkOnLight;
+}
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 MarkerDetector::MarkerDetector(const Camera& camera)
 : _camera(camera)
@@ -178,129 +184,62 @@ Result MarkerDetector::Detect(const Image& inputImageGray, std::list<ObservedMar
                                      _memory->_onchipScratch,
                                      Embedded::Flags::Buffer(false,false,false));
   
-  std::list<bool> imageInversions;
-  switch(_params->markerAppearance)
-  {
-    case Parameters::Appearance::BLACK_ON_WHITE:
-      // "Normal" appearance
-      imageInversions.push_back(false);
-      break;
-      
-    case Parameters::Appearance::WHITE_ON_BLACK:
-      // Use same code as for black-on-white, but invert the image first
-      imageInversions.push_back(true);
-      break;
-      
-    case Parameters::Appearance::BOTH:
-      // Will run detection twice, with and without inversion
-      imageInversions.push_back(false);
-      imageInversions.push_back(true);
-      break;
+  GetImageHelper(inputImageGray, grayscaleImage);
+  
+  Embedded::FixedLengthList<Embedded::VisionMarker>& markers = _memory->_markers;
+  const s32 maxMarkers = markers.get_maximumSize();
+  
+  markers.set_size(maxMarkers);
+  for(s32 i=0; i<maxMarkers; i++) {
+    Embedded::Array<f32> newArray(3, 3, _memory->_ccmScratch);
+    markers[i].homography = newArray;
   }
   
-  std::vector<Rectangle<s32>> detectionRects;
-  for(auto invertImage : imageInversions)
+  DEV_ASSERT(Util::IsFltGTZero(_params->fiducialThicknessFraction.x) &&
+             Util::IsFltGTZero(_params->fiducialThicknessFraction.y),
+             "MarkerDetector.Detect.FiducialThicknessFractionParameterNotInitialized");
+  
+  _params->SetComputeComponentMinNumPixels(inputImageGray.GetNumRows(), inputImageGray.GetNumCols());
+  _params->SetComputeComponentMaxNumPixels(inputImageGray.GetNumRows(), inputImageGray.GetNumCols());
+  
+  if(!kMarkerDetector_DarkOnLight)
   {
-    Image currentImage;
-    if(!detectionRects.empty())
-    {
-      // White out already-detected markers so we don't find them again
-      inputImageGray.CopyTo(currentImage);
-      
-      for(auto & quad : detectionRects)
-      {
-        Anki::Rectangle<s32> rect(quad);
-        Vision::Image roi = currentImage.GetROI(rect);
-        roi.FillWith(255);
-      }
-    }
-    else
-    {
-      currentImage = inputImageGray;
-    }
-    
-    if(invertImage) {
-      GetImageHelper(currentImage.GetNegative(), grayscaleImage);
-    } else {
-      GetImageHelper(currentImage, grayscaleImage);
-    }
-    
-    Embedded::FixedLengthList<Embedded::VisionMarker>& markers = _memory->_markers;
-    const s32 maxMarkers = markers.get_maximumSize();
-    
-    markers.set_size(maxMarkers);
-    for(s32 i=0; i<maxMarkers; i++) {
-      Embedded::Array<f32> newArray(3, 3, _memory->_ccmScratch);
-      markers[i].homography = newArray;
-    }
-    
-    // TODO: Re-enable DebugStream for Basestation
-    //MatlabVisualization::ResetFiducialDetection(grayscaleImage);
-    
-#   if USE_MATLAB_DETECTOR
-    const Result result = MatlabVisionProcessor::DetectMarkers(grayscaleImage, markers, homographies, ccmScratch);
-#   else
-    
-    DEV_ASSERT(Util::IsFltGTZero(_params->fiducialThicknessFraction.x) &&
-               Util::IsFltGTZero(_params->fiducialThicknessFraction.y),
-               "MarkerDetector.Detect.FiducialThicknessFractionParameterNotInitialized");
-    
-    _params->SetComputeComponentMinNumPixels(inputImageGray.GetNumRows(), inputImageGray.GetNumCols());
-    _params->SetComputeComponentMaxNumPixels(inputImageGray.GetNumRows(), inputImageGray.GetNumCols());
+    _params->scaleImage_thresholdMultiplier = _params->scaleImage_thresholdMultiplier_lightOnDark;
+  }
+  
+  const Result result = DetectFiducialMarkers(grayscaleImage,
+                                              markers,
+                                              *_params,
+                                              kMarkerDetector_DarkOnLight,
+                                              _memory->_ccmScratch,
+                                              _memory->_onchipScratch,
+                                              _memory->_offchipScratch);
+  
+  if(result != RESULT_OK) {
+    return result;
+  }
+  
+  const s32 numMarkers = _memory->_markers.get_size();
 
-    const Result result = DetectFiducialMarkers(grayscaleImage,
-                                                markers,
-                                                *_params,
-                                                _memory->_ccmScratch,
-                                                _memory->_onchipScratch,
-                                                _memory->_offchipScratch);
-#   endif // USE_MATLAB_DETECTOR
+  for(s32 i_marker = 0; i_marker < numMarkers; ++i_marker)
+  {
+    const Embedded::VisionMarker& crntMarker = _memory->_markers[i_marker];
     
-    if(result != RESULT_OK) {
-      return result;
-    }
+    // Construct a basestation quad from an embedded one:
+    Quad2f quad({crntMarker.corners[Embedded::Quadrilateral<f32>::TopLeft].x,
+                 crntMarker.corners[Embedded::Quadrilateral<f32>::TopLeft].y},
+                {crntMarker.corners[Embedded::Quadrilateral<f32>::BottomLeft].x,
+                  crntMarker.corners[Embedded::Quadrilateral<f32>::BottomLeft].y},
+                {crntMarker.corners[Embedded::Quadrilateral<f32>::TopRight].x,
+                  crntMarker.corners[Embedded::Quadrilateral<f32>::TopRight].y},
+                {crntMarker.corners[Embedded::Quadrilateral<f32>::BottomRight].x,
+                  crntMarker.corners[Embedded::Quadrilateral<f32>::BottomRight].y});
     
-    // TODO: Re-enable DebugStream for Basestation
-    /*
-     DebugStream::SendFiducialDetection(grayscaleImage, markers, ccmScratch, onchipScratch, offchipScratch);
-     
-     for(s32 i_marker = 0; i_marker < markers.get_size(); ++i_marker) {
-     const VisionMarker crntMarker = markers[i_marker];
-     
-     MatlabVisualization::SendFiducialDetection(crntMarker.corners, crntMarker.markerType);
-     }
-     
-     MatlabVisualization::SendDrawNow();
-     */
-    
-    const s32 numMarkers = _memory->_markers.get_size();
-    detectionRects.reserve(detectionRects.size() + numMarkers);
-    
-    for(s32 i_marker = 0; i_marker < numMarkers; ++i_marker)
-    {
-      const Embedded::VisionMarker& crntMarker = _memory->_markers[i_marker];
-      
-      // Construct a basestation quad from an embedded one:
-      Quad2f quad({crntMarker.corners[Embedded::Quadrilateral<f32>::TopLeft].x,
-                   crntMarker.corners[Embedded::Quadrilateral<f32>::TopLeft].y},
-                  {crntMarker.corners[Embedded::Quadrilateral<f32>::BottomLeft].x,
-                    crntMarker.corners[Embedded::Quadrilateral<f32>::BottomLeft].y},
-                  {crntMarker.corners[Embedded::Quadrilateral<f32>::TopRight].x,
-                    crntMarker.corners[Embedded::Quadrilateral<f32>::TopRight].y},
-                  {crntMarker.corners[Embedded::Quadrilateral<f32>::BottomRight].x,
-                    crntMarker.corners[Embedded::Quadrilateral<f32>::BottomRight].y});
-      
-      if(imageInversions.size() > 1)
-      {
-        // Store the rectangle if we're about to run detection again
-        detectionRects.emplace_back(quad);
-      }
-      
-      observedMarkers.emplace_back(inputImageGray.GetTimestamp(),
-                                   crntMarker.markerType,
-                                   quad, _camera);
-    } // for(each marker)
-  } // for(invertImage)
+    observedMarkers.emplace_back(inputImageGray.GetTimestamp(),
+                                 crntMarker.markerType,
+                                 quad, _camera);
+  } // for(each marker)
+
   
   return RESULT_OK;
 }
@@ -399,8 +338,6 @@ void MarkerDetector::Parameters::Initialize()
   //
   
   maxMarkers = 100;
-  
-  markerAppearance = Appearance::BLACK_ON_WHITE;
   
   minSideLengthFraction = 0.03f;
   maxSideLengthFraction = 0.97f;

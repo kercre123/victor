@@ -85,7 +85,7 @@ s32 CST_IntroducedObstacleAvoidance::UpdateSimInternal()
       // rather it will be relative to where it starts. That is, if cozmo starts at x=-200mm and the
       // translation in the pose is x=+500mm, he will travel to a ground truth position of +300mm
       // (500-200), and his robot estimated pose will be +500mm.
-      SendExecutePathToPose(kRobotDestination, _defaultTestMotionProfile, false);
+      SendExecutePathToPose(kRobotDestination, _defaultTestMotionProfile);
       SET_TEST_STATE(IntroduceObstacle);
       break;
     }

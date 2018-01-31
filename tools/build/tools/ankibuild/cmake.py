@@ -220,7 +220,7 @@ def parseArgs(scriptArgs):
                         action='store',
                         dest='required_version',
                         nargs='?',
-                        default="3.8.1")
+                        default="3.9.6")
     (options, args) = parser.parse_known_args(scriptArgs)
     return options
 

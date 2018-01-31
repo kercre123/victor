@@ -21,6 +21,9 @@
 
 #include "clad/types/robotStatusAndActions.h"
 
+#include "engine/dependencyManagedComponent.h"
+#include "engine/robotComponents_fwd.h"
+
 #include "util/helpers/noncopyable.h"
 
 namespace Anki {
@@ -29,16 +32,30 @@ namespace Cozmo {
 class ObservableObject;
 class Robot;
 
-class CarryingComponent : private Util::noncopyable
+class CarryingComponent : public IDependencyManagedComponent<RobotComponentID>, private Util::noncopyable
 {
 public:
-  
-  CarryingComponent(Robot& robot);
+  CarryingComponent();
+
+  //////
+  // IDependencyManagedComponent functions
+  //////
+  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
+  // Maintain the chain of initializations currently in robot - it might be possible to
+  // change the order of initialization down the line, but be sure to check for ripple effects
+  // when changing this function
+  virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
+    dependencies.insert(RobotComponentID::Docking);
+  };
+  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
+  //////
+  // end IDependencyManagedComponent functions
+  //////
   
   // Send a message to the robot to place whatever it is carrying on the
   // ground right where it is. Returns RESULT_FAIL if robot is not carrying
   // anything.
-  Result PlaceObjectOnGround(const bool useManualSpeed = false);
+  Result PlaceObjectOnGround();
   
   Result SendSetCarryState(CarryState state) const;
   
@@ -75,7 +92,7 @@ private:
   Result SetObjectAsAttachedToLift(const ObjectID& objectID,
                                    const Vision::KnownMarker::Code atMarkerCode);
   
-  Robot& _robot;
+  Robot* _robot = nullptr;
   
   ObjectID                  _carryingObjectID;
   Vision::KnownMarker::Code _carryingMarkerCode = Vision::MARKER_INVALID;

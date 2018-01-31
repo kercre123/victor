@@ -16,7 +16,7 @@
 #include "engine/actions/basicActions.h"
 #include "engine/actions/dockActions.h"
 #include "engine/actions/driveToActions.h"
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
@@ -46,21 +46,21 @@ BehaviorPopAWheelie::BehaviorPopAWheelie(const Json::Value& config)
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorPopAWheelie::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorPopAWheelie::WantsToBeActivatedBehavior() const
 {
-  UpdateTargetBlock(behaviorExternalInterface);
+  UpdateTargetBlock();
   
   return _targetBlock.IsSet();
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPopAWheelie::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPopAWheelie::OnBehaviorActivated()
 {
   if(!ShouldStreamline() && _lastBlockReactedTo != _targetBlock){
-    TransitionToReactingToBlock(behaviorExternalInterface);
+    TransitionToReactingToBlock();
   }else{
-    TransitionToPerformingAction(behaviorExternalInterface);
+    TransitionToPerformingAction();
   }
   
   
@@ -68,22 +68,22 @@ void BehaviorPopAWheelie::OnBehaviorActivated(BehaviorExternalInterface& behavio
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPopAWheelie::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPopAWheelie::OnBehaviorDeactivated()
 {
-  ResetBehavior(behaviorExternalInterface);
+  ResetBehavior();
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPopAWheelie::UpdateTargetBlock(BehaviorExternalInterface& behaviorExternalInterface) const
+void BehaviorPopAWheelie::UpdateTargetBlock() const
 {
-  _targetBlock = behaviorExternalInterface.GetAIComponent().GetObjectInteractionInfoCache().
+  _targetBlock = GetBEI().GetAIComponent().GetObjectInteractionInfoCache().
        GetBestObjectForIntention(ObjectInteractionIntention::PopAWheelieOnObject);
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPopAWheelie::TransitionToReactingToBlock(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPopAWheelie::TransitionToReactingToBlock()
 {
   DEBUG_SET_STATE(ReactingToBlock);
 
@@ -92,26 +92,26 @@ void BehaviorPopAWheelie::TransitionToReactingToBlock(BehaviorExternalInterface&
       new TurnTowardsObjectAction(_targetBlock),
       new TriggerLiftSafeAnimationAction(AnimationTrigger::PopAWheelieInitial),
     }),
-    [this, &behaviorExternalInterface](const ActionResult& res){
+    [this](const ActionResult& res){
       if(res == ActionResult::SUCCESS)
       {
         _lastBlockReactedTo = _targetBlock;
       }
-      TransitionToPerformingAction(behaviorExternalInterface);
+      TransitionToPerformingAction();
     });
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPopAWheelie::TransitionToPerformingAction(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPopAWheelie::TransitionToPerformingAction()
 {
   DEBUG_SET_STATE(PerformingAction);
-  TransitionToPerformingAction(behaviorExternalInterface,false);
+  TransitionToPerformingAction(false);
 }
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPopAWheelie::TransitionToPerformingAction(BehaviorExternalInterface& behaviorExternalInterface, bool isRetry)
+void BehaviorPopAWheelie::TransitionToPerformingAction(bool isRetry)
 {
   if( ! _targetBlock.IsSet() ) {
     PRINT_NAMED_WARNING("BehaviorPopAWheelie.NoBlockID",
@@ -134,7 +134,6 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(BehaviorExternalInterface
   DriveToPopAWheelieAction* goPopAWheelie = new DriveToPopAWheelieAction(_targetBlock,
                                                                          false,
                                                                          0,
-                                                                         false,
                                                                          maxTurnToFaceAngle);
   goPopAWheelie->SetSayNameAnimationTrigger(AnimationTrigger::PopAWheeliePreActionNamedFace);
   goPopAWheelie->SetNoNameAnimationTrigger(AnimationTrigger::PopAWheeliePreActionUnnamedFace);
@@ -165,7 +164,7 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(BehaviorExternalInterface
                   {
                     if(_numPopAWheelieActionRetries < kBPW_MaxRetries)
                     {
-                      SetupRetryAction(behaviorExternalInterface, msg);
+                      SetupRetryAction(msg);
                       break;
                     }
                     
@@ -180,9 +179,9 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(BehaviorExternalInterface
                                      EnumToString(msg.result));
                     
                     // mark the block as inaccessible
-                    const ObservableObject* failedObject = failedObject = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_targetBlock);
+                    const ObservableObject* failedObject = failedObject = GetBEI().GetBlockWorld().GetLocatedObjectByID(_targetBlock);
                     if(failedObject){
-                      behaviorExternalInterface.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectActionFailure::RollOrPopAWheelie);
+                      GetBEI().GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectActionFailure::RollOrPopAWheelie);
                     }
                     break;
                   }
@@ -201,10 +200,10 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(BehaviorExternalInterface
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPopAWheelie::SetupRetryAction(BehaviorExternalInterface& behaviorExternalInterface, const ExternalInterface::RobotCompletedAction& msg)
+void BehaviorPopAWheelie::SetupRetryAction(const ExternalInterface::RobotCompletedAction& msg)
 {
   //Ensure that the closest block is selected
-  UpdateTargetBlock(behaviorExternalInterface);
+  UpdateTargetBlock();
   
   // Pick which retry animation, if any, to play. Then try performing the action again,
   // with "isRetry" set to true.
@@ -225,25 +224,25 @@ void BehaviorPopAWheelie::SetupRetryAction(BehaviorExternalInterface& behaviorEx
   }
   
   if( nullptr != animAction ) {
-    DelegateIfInControl(animAction, [this,&behaviorExternalInterface]() {
-      this->TransitionToPerformingAction(behaviorExternalInterface, true);
+    DelegateIfInControl(animAction, [this]() {
+      this->TransitionToPerformingAction(true);
     });
   }
   else {
-    TransitionToPerformingAction(behaviorExternalInterface, true);
+    TransitionToPerformingAction(true);
   }
   
 }
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPopAWheelie::ResetBehavior(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPopAWheelie::ResetBehavior()
 {
   _targetBlock.UnSet();
 
   if( _hasDisabledcliff ) {
     _hasDisabledcliff = false;
-    auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+    auto& robotInfo = GetBEI().GetRobotInfo();
     // NOTE: assumes that we want the cliff to be re-enabled when we leave this behavior. If it was disabled
     // before this behavior started, it will be enabled anyway. If this becomes a problem, then we need to
     // count / track the requests to enable and disable like we do with track locking or reactionary behaviors

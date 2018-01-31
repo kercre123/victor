@@ -30,11 +30,17 @@ const float kBiasMaxRange_rad_per_sec = DEG_TO_RAD(0.05f); // maximum allowed di
 } // anonymous namespace
   
 
-RobotGyroDriftDetector::RobotGyroDriftDetector(const Robot& robot)
-  : _robot(robot)
+RobotGyroDriftDetector::RobotGyroDriftDetector()
+: IDependencyManagedComponent(RobotComponentID::GyroDriftDetector)
 {
 
 }
+
+void RobotGyroDriftDetector::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+{
+  _robot = robot;
+}
+
 
 // 'Legacy' drift detection based on robot estimated pose angle
 void RobotGyroDriftDetector::DetectGyroDrift(const RobotState& msg)
@@ -49,14 +55,14 @@ void RobotGyroDriftDetector::DetectGyroDrift(const RobotState& msg)
     // 3) Cliff is detected
     // 4) Head isn't calibrated
     // 5) Drift detector started but the raw gyro reading deviated too much from starting values, indicating motion.
-    if (_robot.GetMoveComponent().IsMoving() ||
+    if (_robot->GetMoveComponent().IsMoving() ||
         (std::fabsf(gyroZ) > kDriftCheckMaxRate_rad_per_sec) ||
-        _robot.GetCliffSensorComponent().IsCliffDetected() ||
-        !_robot.IsHeadCalibrated() ||
+        _robot->GetCliffSensorComponent().IsCliffDetected() ||
+        !_robot->IsHeadCalibrated() ||
         
         ((_startTime_ms != 0) &&
          ((std::fabsf(_startGyroZ_rad_per_sec - gyroZ) > kDriftCheckGyroZMotionThresh_rad_per_sec) ||
-          (_startPoseFrameId != _robot.GetPoseFrameID())))
+          (_startPoseFrameId != _robot->GetPoseFrameID())))
         
         ) {
       _startTime_ms = 0;
@@ -64,8 +70,8 @@ void RobotGyroDriftDetector::DetectGyroDrift(const RobotState& msg)
     
     // Robot's not moving. Initialize drift detection.
     else if (_startTime_ms == 0) {
-      _startPoseFrameId        = _robot.GetPoseFrameID();
-      _startAngle_rad          = _robot.GetPose().GetRotation().GetAngleAroundZaxis();
+      _startPoseFrameId        = _robot->GetPoseFrameID();
+      _startAngle_rad          = _robot->GetPose().GetRotation().GetAngleAroundZaxis();
       _startGyroZ_rad_per_sec  = gyroZ;
       _startTime_ms            = msg.timestamp;
       _cumSumGyroZ_rad_per_sec = gyroZ;
@@ -78,7 +84,7 @@ void RobotGyroDriftDetector::DetectGyroDrift(const RobotState& msg)
     else if (msg.timestamp - _startTime_ms > kDriftCheckPeriod_ms) {
       
       // ...check if there was a sufficient change in heading angle or pitch. Otherwise, reset detector.
-      const f32 headingAngleChange = std::fabsf((_startAngle_rad - _robot.GetPose().GetRotation().GetAngleAroundZaxis()).ToFloat());
+      const f32 headingAngleChange = std::fabsf((_startAngle_rad - _robot->GetPose().GetRotation().GetAngleAroundZaxis()).ToFloat());
       const f32 angleChangeThresh = kDriftCheckMaxAngleChangeRate_rad_per_sec * Util::MilliSecToSec(kDriftCheckPeriod_ms);
       
       if (headingAngleChange > angleChangeThresh) {
@@ -122,7 +128,7 @@ void RobotGyroDriftDetector::DetectBias(const RobotState& msg)
   // High pass filter the accelerometer readings to make sure
   // the robot is definitely not moving
   const float kFiltAccel = 0.8;
-  const float currAccelMag = _robot.GetHeadAccelMagnitude();
+  const float currAccelMag = _robot->GetHeadAccelMagnitude();
   _hpFiltAccelMag = kFiltAccel * (currAccelMag - _accelMagPrev + _hpFiltAccelMag);
   _accelMagPrev = currAccelMag;
   

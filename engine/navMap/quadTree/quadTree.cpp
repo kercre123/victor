@@ -49,9 +49,8 @@ constexpr uint8_t kQuadTreeMaxRootDepth = 8;
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-QuadTree::QuadTree(VizManager* vizManager, MemoryMapData rootData)
-: _gfxDirty(true)
-, _processor(vizManager)
+QuadTree::QuadTree(MemoryMapData rootData)
+: _processor()
 , _root({0,0,1}, kQuadTreeInitialRootSideLength, kQuadTreeInitialMaxDepth, QuadTreeTypes::EQuadrant::Root, nullptr, rootData)  // Note the root is created at z=1
 {
   _processor.SetRoot( &_root );
@@ -61,16 +60,7 @@ QuadTree::QuadTree(VizManager* vizManager, MemoryMapData rootData)
 QuadTree::~QuadTree()
 {
   // we are destroyed, stop our rendering
-  ClearDraw();
-  
   _processor.SetRoot(nullptr);
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTree::ClearDraw() const
-{ 
-  _gfxDirty = true;
-  _processor.ClearDraw();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -82,7 +72,7 @@ float QuadTree::GetContentPrecisionMM() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTree::Insert(const FastPolygon& poly, const MemoryMapData& data, int shiftAllowedCount)
+bool QuadTree::Insert(const FastPolygon& poly, const MemoryMapData& data, int shiftAllowedCount)
 {
   ANKI_CPU_PROFILE("QuadTree::Insert");
   
@@ -99,7 +89,7 @@ void QuadTree::Insert(const FastPolygon& poly, const MemoryMapData& data, int sh
       PRINT_NAMED_ERROR("QuadTree.Insert.NaNPoly",
         "Poly is not valid, at least one coordinate is NaN.");
       Util::sDumpCallstack("QuadTree::Insert");
-      return;
+      return false;
     }
   }
   
@@ -122,11 +112,11 @@ void QuadTree::Insert(const FastPolygon& poly, const MemoryMapData& data, int sh
   }
 
   const bool changed = _root.Insert(poly, data, _processor);
-  _gfxDirty |= changed;
+  return changed;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTree::Merge(const QuadTree& other, const Pose3d& transform)
+bool QuadTree::Merge(const QuadTree& other, const Pose3d& transform)
 {
   // TODO rsam for the future, when we merge with transform, poses or directions stored as extra info are invalid
   // since they were wrt a previous origin!
@@ -158,6 +148,7 @@ void QuadTree::Merge(const QuadTree& other, const Pose3d& transform)
   const int maxNumberOfShifts = std::ceil( centerDistance / halfRootSize );
   
   // iterate all those leaf nodes, adding them to this tree
+  bool changed = false;
   for( const auto& nodeInOther : leafNodes ) {
   
     // if the leaf node is unkown then we don't need to add it
@@ -185,13 +176,14 @@ void QuadTree::Merge(const QuadTree& other, const Pose3d& transform)
       transformedPoly.ImportQuad2d(transformedQuad2d);
       
 //      AddQuad(transformedQuad2d, *copyOfData, maxNumberOfShifts);
-        Insert(transformedPoly, *copyOfData, maxNumberOfShifts);
+      changed |= Insert(transformedPoly, *copyOfData, maxNumberOfShifts);
     }
   }
+  return changed;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTree::Expand(const Poly2f& polyToCover, int shiftAllowedCount)
+bool QuadTree::Expand(const Poly2f& polyToCover, int shiftAllowedCount)
 {
   ANKI_CPU_PROFILE("QuadTree::Expand");
   
@@ -241,7 +233,7 @@ void QuadTree::Expand(const Poly2f& polyToCover, int shiftAllowedCount)
   }
   
   // always flag as dirty since we have modified the root (potentially)
-  _gfxDirty = true;
+  return true;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -259,9 +251,6 @@ void QuadTree::GetBroadcastInfo(MemoryMapTypes::MapBroadcastData& info) const
     instanceId.str());
 
   _root.AddQuadsToSend(info.quadInfo);
-  info.isDirty = _gfxDirty;
-
-  _gfxDirty = false;
 }
   
 

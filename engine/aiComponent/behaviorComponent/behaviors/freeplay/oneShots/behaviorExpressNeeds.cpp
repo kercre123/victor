@@ -17,7 +17,7 @@
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/needsSystem/needsManager.h"
@@ -112,16 +112,16 @@ BehaviorExpressNeeds::BehaviorExpressNeeds(const Json::Value& config)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorExpressNeeds::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorExpressNeeds::WantsToBeActivatedBehavior() const
 {
   if(_caresAboutExpressedState &&
      (_requiredBracket == NeedBracketId::Critical)){
-    if(_need != behaviorExternalInterface.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression()){
+    if(_need != GetBEI().GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression()){
       return false;
     }
   }else{
-    if(behaviorExternalInterface.HasNeedsManager()){
-      auto& needsManager = behaviorExternalInterface.GetNeedsManager();
+    if(GetBEI().HasNeedsManager()){
+      auto& needsManager = GetBEI().GetNeedsManager();
       // first check if we are in the right needs bracket
       NeedsState& currNeedState = needsManager.GetCurNeedsStateMutable();
       if( !currNeedState.IsNeedAtBracket(_need, _requiredBracket) ) {
@@ -132,7 +132,7 @@ bool BehaviorExpressNeeds::WantsToBeActivatedBehavior(BehaviorExternalInterface&
 
   // now check if we're on cooldown
   
-  const float cooldown_s = GetCooldownSec(behaviorExternalInterface);
+  const float cooldown_s = GetCooldownSec();
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
   const bool onCooldown = _lastTimeExpressed + cooldown_s >= currTime_s;
@@ -142,11 +142,11 @@ bool BehaviorExpressNeeds::WantsToBeActivatedBehavior(BehaviorExternalInterface&
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorExpressNeeds::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorExpressNeeds::OnBehaviorActivated()
 {  
   CompoundActionSequential* action = new CompoundActionSequential();
 
-  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  auto& robotInfo = GetBEI().GetRobotInfo();
 
   if( !robotInfo.IsOnChargerPlatform() ) {
     // only turn towards the last face if we aren't on the charger
@@ -159,7 +159,7 @@ void BehaviorExpressNeeds::OnBehaviorActivated(BehaviorExternalInterface& behavi
   for( const auto& trigger : _animTriggers ) {
     const u32 numLoops = 1;
     const bool interruptRunning = true;
-    const u8 tracksToLock = GetTracksToLock(behaviorExternalInterface);
+    const u8 tracksToLock = GetTracksToLock();
     IAction* playAnim = new TriggerLiftSafeAnimationAction(trigger,
                                                            numLoops,
                                                            interruptRunning,
@@ -181,20 +181,20 @@ void BehaviorExpressNeeds::OnBehaviorActivated(BehaviorExternalInterface& behavi
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorExpressNeeds::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorExpressNeeds::OnBehaviorDeactivated()
 {
   if(_shouldClearExpressedState){
-    behaviorExternalInterface.GetAIComponent().GetSevereNeedsComponent().ClearSevereNeedExpression();
+    GetBEI().GetAIComponent().GetSevereNeedsComponent().ClearSevereNeedExpression();
   }
 
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-float BehaviorExpressNeeds::GetCooldownSec(BehaviorExternalInterface& behaviorExternalInterface) const
+float BehaviorExpressNeeds::GetCooldownSec() const
 {
-  if(behaviorExternalInterface.HasNeedsManager()){
-    auto& needsManager = behaviorExternalInterface.GetNeedsManager();
+  if(GetBEI().HasNeedsManager()){
+    auto& needsManager = GetBEI().GetNeedsManager();
     const NeedsState& currNeedState = needsManager.GetCurNeedsState();
     const float level = currNeedState.GetNeedLevel(_need);
 
@@ -210,10 +210,10 @@ float BehaviorExpressNeeds::GetCooldownSec(BehaviorExternalInterface& behaviorEx
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-u8 BehaviorExpressNeeds::GetTracksToLock(BehaviorExternalInterface& behaviorExternalInterface) const
+u8 BehaviorExpressNeeds::GetTracksToLock() const
 {
   if( _supportCharger ) {
-    auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+    auto& robotInfo = GetBEI().GetRobotInfo();
     if( robotInfo.IsOnChargerPlatform() ) {
       // we are supporting the charger and are on it, so lock out the body
       return (u8)AnimTrackFlag::BODY_TRACK;

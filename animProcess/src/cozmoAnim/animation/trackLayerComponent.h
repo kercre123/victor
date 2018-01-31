@@ -19,7 +19,7 @@
 
 #include "coretech/common/shared/types.h"
 
-#include "cozmoAnim/animation/animation.h"
+#include "cannedAnimLib/animation.h"
 
 #include "clad/types/liveIdleAnimationParameters.h"
 

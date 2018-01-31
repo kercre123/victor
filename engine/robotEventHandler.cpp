@@ -90,7 +90,6 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlaceObjec
   Pose3d targetPose(rot, Vec3f(msg.x_mm, msg.y_mm, 22.f), robot.GetWorldOrigin());
   return new PlaceObjectOnGroundAtPoseAction(targetPose,
                                              msg.useExactRotation,
-                                             msg.useManualSpeed,
                                              msg.checkDestinationFree);
 }
 
@@ -150,8 +149,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::GotoPose& 
   const bool driveWithHeadDown = false;
   
   DriveToPoseAction* action = new DriveToPoseAction(targetPose,
-                                                    driveWithHeadDown,
-                                                    msg.useManualSpeed);
+                                                    driveWithHeadDown);
   
   if(msg.motionProf.isCustom)
   {
@@ -203,8 +201,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PickupObje
   {
     DriveToPickupObjectAction* action = new DriveToPickupObjectAction(selectedObjectID,
                                                                       msg.useApproachAngle,
-                                                                      msg.approachAngle_rad,
-                                                                      msg.useManualSpeed);
+                                                                      msg.approachAngle_rad);
     if(msg.motionProf.isCustom)
     {
       robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
@@ -215,7 +212,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PickupObje
   }
   else
   {
-    PickupObjectAction* action = new PickupObjectAction(selectedObjectID, msg.useManualSpeed);
+    PickupObjectAction* action = new PickupObjectAction(selectedObjectID);
     if(msg.motionProf.isCustom)
     {
       robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
@@ -245,8 +242,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlaceRelOb
                                                                           msg.placementOffsetX_mm,
                                                                           0,
                                                                           msg.useApproachAngle,
-                                                                          msg.approachAngle_rad,
-                                                                          msg.useManualSpeed);
+                                                                          msg.approachAngle_rad);
     if(msg.motionProf.isCustom)
     {
       robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
@@ -256,8 +252,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlaceRelOb
     PlaceRelObjectAction* action = new PlaceRelObjectAction(selectedObjectID,
                                                             true,
                                                             msg.placementOffsetX_mm,
-                                                            0,
-                                                            msg.useManualSpeed);
+                                                            0);
     action->SetDoNearPredockPoseCheck(false);
     // We don't care about a specific marker just that we are docking with the correct object
     action->SetShouldVisuallyVerifyObjectOnly(true);
@@ -280,8 +275,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlaceOnObj
     
     DriveToPlaceOnObjectAction* action = new DriveToPlaceOnObjectAction(selectedObjectID,
                                                                         msg.useApproachAngle,
-                                                                        msg.approachAngle_rad,
-                                                                        msg.useManualSpeed);
+                                                                        msg.approachAngle_rad);
     if(msg.motionProf.isCustom)
     {
       robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
@@ -292,8 +286,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlaceOnObj
     PlaceRelObjectAction* action = new PlaceRelObjectAction(selectedObjectID,
                                                             false,
                                                             0,
-                                                            0,
-                                                            msg.useManualSpeed);
+                                                            0);
     action->SetDoNearPredockPoseCheck(false);
     // We don't care about a specific marker just that we are docking with the correct object
     action->SetShouldVisuallyVerifyObjectOnly(true);
@@ -320,8 +313,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::GotoObject
                                      PreActionPose::ActionType::DOCKING);
   } else {
     action = new DriveToObjectAction(selectedObjectID,
-                                     msg.distanceFromObjectOrigin_mm,
-                                     msg.useManualSpeed);
+                                     msg.distanceFromObjectOrigin_mm);
   }
   
   if(msg.motionProf.isCustom)
@@ -348,8 +340,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::AlignWithO
                                                                             msg.distanceFromMarker_mm,
                                                                             msg.useApproachAngle,
                                                                             msg.approachAngle_rad,
-                                                                            msg.alignmentType,
-                                                                            msg.useManualSpeed);
+                                                                            msg.alignmentType);
     if(msg.motionProf.isCustom)
     {
       robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
@@ -359,8 +350,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::AlignWithO
   } else {
     AlignWithObjectAction* action = new AlignWithObjectAction(selectedObjectID,
                                                               msg.distanceFromMarker_mm,
-                                                              msg.alignmentType,
-                                                              msg.useManualSpeed);
+                                                              msg.alignmentType);
     if(msg.motionProf.isCustom)
     {
       robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
@@ -409,8 +399,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::RollObject
   if(static_cast<bool>(msg.usePreDockPose)) {
     DriveToRollObjectAction* action = new DriveToRollObjectAction(selectedObjectID,
                                                                   msg.useApproachAngle,
-                                                                  msg.approachAngle_rad,
-                                                                  msg.useManualSpeed);
+                                                                  msg.approachAngle_rad);
     action->EnableDeepRoll(msg.doDeepRoll);
     if(msg.motionProf.isCustom)
     {
@@ -419,7 +408,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::RollObject
     action->SetShouldCheckForObjectOnTopOf(msg.checkForObjectOnTop);
     return action;
   } else {
-    RollObjectAction* action = new RollObjectAction(selectedObjectID, msg.useManualSpeed);
+    RollObjectAction* action = new RollObjectAction(selectedObjectID);
     if(msg.motionProf.isCustom)
     {
       robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
@@ -448,8 +437,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PopAWheeli
   if(static_cast<bool>(msg.usePreDockPose)) {
     DriveToPopAWheelieAction* action = new DriveToPopAWheelieAction(selectedObjectID,
                                                                     msg.useApproachAngle,
-                                                                    msg.approachAngle_rad,
-                                                                    msg.useManualSpeed);
+                                                                    msg.approachAngle_rad);
     if(msg.motionProf.isCustom)
     {
       robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
@@ -457,7 +445,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PopAWheeli
     
     return action;
   } else {
-    PopAWheelieAction* action = new PopAWheelieAction(selectedObjectID, msg.useManualSpeed);
+    PopAWheelieAction* action = new PopAWheelieAction(selectedObjectID);
     if(msg.motionProf.isCustom)
     {
       robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
@@ -483,8 +471,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::FacePlant&
   if(static_cast<bool>(msg.usePreDockPose)) {
     DriveToFacePlantAction* action = new DriveToFacePlantAction(selectedObjectID,
                                                                 msg.useApproachAngle,
-                                                                msg.approachAngle_rad,
-                                                                msg.useManualSpeed);
+                                                                msg.approachAngle_rad);
     if(msg.motionProf.isCustom)
     {
       robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
@@ -492,7 +479,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::FacePlant&
     
     return action;
   } else {
-    FacePlantAction* action = new FacePlantAction(selectedObjectID, msg.useManualSpeed);
+    FacePlantAction* action = new FacePlantAction(selectedObjectID);
     if(msg.motionProf.isCustom)
     {
       robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
@@ -511,15 +498,14 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TraverseOb
   ObjectID selectedObjectID = robot.GetBlockWorld().GetSelectedObject();
   
   if(static_cast<bool>(msg.usePreDockPose)) {
-    DriveToAndTraverseObjectAction* action = new DriveToAndTraverseObjectAction(selectedObjectID,
-                                                                                msg.useManualSpeed);
+    DriveToAndTraverseObjectAction* action = new DriveToAndTraverseObjectAction(selectedObjectID);
     if(msg.motionProf.isCustom)
     {
       robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
     }
     return action;
   } else {
-    TraverseObjectAction* traverseAction = new TraverseObjectAction(selectedObjectID, msg.useManualSpeed);
+    TraverseObjectAction* traverseAction = new TraverseObjectAction(selectedObjectID);
     if(msg.motionProf.isCustom)
     {
       robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, traverseAction);
@@ -540,8 +526,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::MountCharg
   }
   
   auto action =  new DriveToAndMountChargerAction(selectedObjectID,
-                                                  msg.useCliffSensorCorrection,
-                                                  msg.useManualSpeed);
+                                                  msg.useCliffSensorCorrection);
   if(msg.motionProf.isCustom)
   {
     robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);

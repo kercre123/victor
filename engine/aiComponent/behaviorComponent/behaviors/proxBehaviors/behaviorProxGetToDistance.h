@@ -30,21 +30,24 @@ private:
 
 
 public:
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual bool CarryingObjectHandledInternally() const override { return true;}
+  virtual bool WantsToBeActivatedBehavior() const override;
 
 protected:
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenCarryingObject = true;
+    modifiers.behaviorAlwaysDelegates = false;
+  }
+
+  virtual void OnBehaviorActivated() override;
+  virtual void OnBehaviorDeactivated() override;
   
   // allows the reaction to interrupt itself
-  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual bool ShouldCancelWhenInControl() const override { return false;}
+  virtual void BehaviorUpdate() override;
   
-  bool ShouldRecalculateDrive(BehaviorExternalInterface& behaviorExternalInterface);
-  bool IsWithinGoalTolerence(BehaviorExternalInterface& behaviorExternalInterface) const;
+  bool ShouldRecalculateDrive();
+  bool IsWithinGoalTolerence() const;
 
-  float CalculateDistanceToDrive(BehaviorExternalInterface& behaviorExternalInterface) const;
+  float CalculateDistanceToDrive() const;
   const Util::GraphEvaluator2d::Node* GetNodeClosestToDistance(const u16 distance, bool floor) const;
   
 private:

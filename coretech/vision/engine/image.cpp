@@ -249,15 +249,16 @@ namespace Vision {
   
   template<typename T>
   void ImageBase<T>::DrawText(const Point2f& position, const std::string& str,
-                              const ColorRGBA& color, f32 scale, bool dropShadow)
+                              const ColorRGBA& color, f32 scale, bool dropShadow,
+                              int thickness)
   {
     if(dropShadow) {
       cv::Point shadowPos(position.get_CvPoint_());
       shadowPos.x += 1;
       shadowPos.y += 1;
-      cv::putText(this->get_CvMat_(), str, shadowPos, CV_FONT_NORMAL, scale, GetCvColor(NamedColors::BLACK));
+      cv::putText(this->get_CvMat_(), str, shadowPos, CV_FONT_NORMAL, scale, GetCvColor(NamedColors::BLACK), thickness);
     }
-    cv::putText(this->get_CvMat_(), str, position.get_CvPoint_(), CV_FONT_NORMAL, scale, GetCvColor(color));
+    cv::putText(this->get_CvMat_(), str, position.get_CvPoint_(), CV_FONT_NORMAL, scale, GetCvColor(color), thickness);
   }
   
   template<typename T>
@@ -589,7 +590,55 @@ namespace Vision {
   void ImageRGB::FillGray(Image& grayImage) const
   {
     grayImage.SetTimestamp(GetTimestamp()); // Make sure timestamp gets transferred!
-    cv::cvtColor(this->get_CvMat_(), grayImage.get_CvMat_(), CV_RGB2GRAY);
+    
+    grayImage.Allocate(GetNumRows(), GetNumCols());
+
+    u32 numRows = GetNumRows();
+    u32 numCols = GetNumCols();
+
+    if(IsContinuous() && grayImage.IsContinuous())
+    {
+      numCols *= numRows;
+      numRows = 1;
+    }
+
+    for(u32 i = 0; i < numRows; i++)
+    {
+      const u8* imagePtr = reinterpret_cast<const u8*>(GetRow(i));
+      u8* grayPtr = reinterpret_cast<u8*>(grayImage.GetRow(i));
+
+      u32 j = 0;
+
+#ifdef ANDROID
+      const u32 kNumElementsProcessedPerLoop = 8;
+      const u32 kSizeOfRGBElement = 3;
+      const u32 kNumIterations = numCols - (kNumElementsProcessedPerLoop - 1);
+
+      for(; j < kNumIterations; j += kNumElementsProcessedPerLoop)
+      {
+        uint8x8x3_t rgb = vld3_u8(imagePtr);
+        imagePtr += kNumElementsProcessedPerLoop*kSizeOfRGBElement;
+
+        uint16x8_t out = vaddl_u8(rgb.val[0], rgb.val[1]);
+        out = vaddw_u8(out, rgb.val[1]);
+        out = vaddw_u8(out, rgb.val[2]);
+        uint8x8_t avg = vshrn_n_u16(out, 2); // Narrowing shift right (divide by 4 and convert to u8)
+
+        vst1_u8(grayPtr, avg);
+        grayPtr += kNumElementsProcessedPerLoop;
+      }
+#endif
+
+      const Vision::PixelRGB* imageRGBPtr = reinterpret_cast<const Vision::PixelRGB*>(imagePtr);
+
+      for(; j < numCols; j++)
+      {
+        *grayPtr = (((u16)imageRGBPtr->r() + (((u16)imageRGBPtr->g()) << 1) + (u16)imageRGBPtr->b()) >> 2);
+        
+        imageRGBPtr++;
+        grayPtr++;
+      }
+    }
   }
   
   Image ImageRGB::Threshold(u8 value, bool anyChannel) const

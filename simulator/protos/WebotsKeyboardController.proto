@@ -48,7 +48,8 @@ PROTO WebotsKeyboardController [
   field SFString consoleVarValue ""
 
   field SFBool filterLogs FALSE
-  field SFString controllerArgs ""
+  field SFBool colorizeStderrOutput FALSE
+  
   field SFVec3f translation 0 0 0.08
   field SFRotation rotation 0 0 1 0
 
@@ -163,12 +164,6 @@ PROTO WebotsKeyboardController [
   field SFFloat steerDistOffsetCap_mm 20
   field SFFloat steerAngOffsetCap_rad 0.5
 
-  # Camera calibration
-  field SFFloat focalLength_x 290
-  field SFFloat focalLength_y 290
-  field SFFloat imageCenter_x 160
-  field SFFloat imageCenter_y 120
-
   # Camera display params
   # Note that camera display is OFF by default.
   # Width and height must be > 0 to enable.
@@ -196,8 +191,6 @@ PROTO WebotsKeyboardController [
   field SFInt32 headTest_powerPercent 0             # 0-100: If 0 then cycles through increasing power levels
 
   field SFInt32 nvTag 100
-  field SFInt32 nvNumBlobs 1
-  field SFInt32 nvBlobDataLength 1024
 
   field SFString drivingStartAnim ""
   field SFString drivingLoopAnim ""
@@ -286,13 +279,16 @@ Supervisor {
   name IS name
   controller "webotsCtrlKeyboard"
 
-  # append filter command line parameter if filter is set to TRUE
+  # append optional command line parameters
+  %{ ctrlArgs="" }%
   %{ if fields.filterLogs.value then }%
-    %{ autoArgs=fields.controllerArgs.value .. "--applyLogFilter"}%
-  %{ else }%
-    %{ autoArgs=fields.controllerArgs.value}%
+    %{ ctrlArgs = ctrlArgs .. " --applyLogFilter"}%
   %{ end }%
-  controllerArgs "%{=autoArgs}%"
+  %{ if fields.colorizeStderrOutput.value then }%
+    %{ ctrlArgs = ctrlArgs .. " --colorizeStderrOutput"}%
+  %{ end }%
+
+  controllerArgs "%{=ctrlArgs}%"
 
 } # Supervisor definition
 } # PROTO definition

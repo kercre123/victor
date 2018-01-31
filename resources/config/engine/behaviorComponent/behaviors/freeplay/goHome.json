@@ -1,5 +1,16 @@
 {
   "behaviorClass": "GoHome",
   "behaviorID": "GoHome",
-  "displayNameKey":"behavior.GoHome"
+  "displayNameKey":"behavior.GoHome",
+  
+  "params" : {
+    "useCliffSensorCorrection" : true,
+    "leftTurnAnimTrigger"    : "ChargerDockingLeftTurn",
+    "rightTurnAnimTrigger"   : "ChargerDockingRightTurn",
+    "backupStartAnimTrigger" : "ChargerDockingBackupDriveStart",
+    "backupEndAnimTrigger"   : "ChargerDockingBackupDriveEnd",
+    "backupLoopAnimTrigger"  : "ChargerDockingBackupDriveLoop",
+    "raiseLiftAnimTrigger"   : "ChargerDockingRaiseLift",
+    "nuzzleAnimTrigger"      : "ChargerDockingSettle"
+  }
 }

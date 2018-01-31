@@ -1,0 +1,24 @@
+{
+  "behaviorID" : "FistBumpVoiceCommand",
+  "behaviorClass" : "DispatcherQueue",
+
+  "respondToCloudIntent": "AnyTrick",
+
+  "behaviors": [
+    "DriveOffCharger",
+    "FistBumpInternal"
+  ],
+
+  "anonymousBehaviors" :[
+    {
+      "behaviorClass": "FistBump",
+      "behaviorName": "FistBumpInternal",
+      "params": {
+        // TODO:(bn) see if we can remove this requirement to put everything in "params", so that it's easier
+        // to just copy-paste from a behavior without modifying the structure of the json
+        "abortIfNoFaceFound": false
+      }
+    }
+  ]
+}
+

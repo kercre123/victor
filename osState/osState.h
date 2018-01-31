@@ -18,6 +18,8 @@
 #include "coretech/common/shared/types.h"
 #include "util/singleton/dynamicSingleton.h"
 
+#include <string>
+
 // Forward declaration
 namespace webots {
   class Supervisor;
@@ -64,11 +66,46 @@ public:
   // Asserts if update rate is 0
   uint32_t GetTemperature_mC() const;
 
+  // Returns our ip address
+  const std::string& GetIPAddress()
+  {
+    if(_ipAddress.empty())
+    {
+      _ipAddress = GetIPAddressInternal();
+    }
+
+    return _ipAddress;
+  }
+
+  u32 GetSerialNumber()
+  {
+    const std::string& serialNum = GetSerialNumberAsString();
+    if(!serialNum.empty())
+    {
+      return static_cast<u32>(std::stoul(serialNum, nullptr, 16));
+    }
+
+    return 0;
+  }
+
+  const std::string& GetSerialNumberAsString();
+
+  u32 GetOSBuildNumber();
+
 private:
   // private ctor
   OSState();
+
+  std::string GetIPAddressInternal();
+
+  // Executes the provided command and returns the output as a string
+  std::string ExecCommand(const char* cmd);
   
   uint32_t kNominalCPUFreq_kHz = 800000;
+
+  std::string _ipAddress       = "";
+  std::string _serialNumString = "";
+  u32         _osBuildNum      = 0;
 
 }; // class OSState
   

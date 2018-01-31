@@ -46,6 +46,46 @@ BehaviorExternalInterface::~BehaviorExternalInterface()
 
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorExternalInterface::InitDependent(Robot* robot, const BCCompMap& dependentComponents)
+{
+  auto& aiComponent            = dependentComponents.find(BCComponentID::AIComponent)->second.GetValue<AIComponent>();
+  auto& behaviorContainer      = dependentComponents.find(BCComponentID::BehaviorContainer)->second.GetValue<BehaviorContainer>();
+  auto& behaviorEventComponent = dependentComponents.find(BCComponentID::BehaviorEventComponent)->second.GetValue<BehaviorEventComponent>();
+  auto& blockWorld             = dependentComponents.find(BCComponentID::BlockWorld)->second.GetValue<BlockWorld>();
+  auto& delegationComponent    = dependentComponents.find(BCComponentID::DelegationComponent)->second.GetValue<DelegationComponent>();
+  auto& faceWorld              = dependentComponents.find(BCComponentID::FaceWorld)->second.GetValue<FaceWorld>();
+  auto& robotInfo              = dependentComponents.find(BCComponentID::RobotInfo)->second.GetValue<BEIRobotInfo>();
+
+
+  Init(&aiComponent,
+       &robot->GetAnimationComponent(),
+       &behaviorContainer,
+       &behaviorEventComponent,
+       &blockWorld,
+       &robot->GetBodyLightComponent(),
+       &robot->GetCubeAccelComponent(), 
+       &robot->GetCubeLightComponent(),
+       &delegationComponent,
+       &faceWorld,
+       &robot->GetMapComponent(),
+       &robot->GetMicDirectionHistory(),
+       &robot->GetMoodManager(),
+       robot->GetContext()->GetNeedsManager(),
+       &robot->GetObjectPoseConfirmer(),
+       &robot->GetPetWorld(),
+       &robot->GetProgressionUnlockComponent(),
+       &robot->GetProxSensorComponent(),
+       &robot->GetPublicStateBroadcaster(),
+       robot->GetAudioClient(),
+       &robotInfo,
+       &robot->GetTouchSensorComponent(),
+       &robot->GetVisionComponent(),
+       &robot->GetVisionScheduleMediator());
+}
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExternalInterface::Init(AIComponent*                   aiComponent,
                                      AnimationComponent*            animationComponent,
@@ -69,7 +109,8 @@ void BehaviorExternalInterface::Init(AIComponent*                   aiComponent,
                                      Audio::EngineRobotAudioClient* robotAudioClient,
                                      BEIRobotInfo*                  robotInfo,
                                      TouchSensorComponent*          touchSensorComponent,
-                                     VisionComponent*               visionComponent)
+                                     VisionComponent*               visionComponent,
+                                     VisionScheduleMediator*        visionScheduleMediator)
 {
   _arrayWrapper = std::make_unique<CompArrayWrapper>(aiComponent,
                                                      animationComponent,
@@ -93,7 +134,8 @@ void BehaviorExternalInterface::Init(AIComponent*                   aiComponent,
                                                      robotAudioClient,
                                                      robotInfo,
                                                      touchSensorComponent,
-                                                     visionComponent);
+                                                     visionComponent,
+                                                     visionScheduleMediator);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -131,7 +173,8 @@ BehaviorExternalInterface::CompArrayWrapper::CompArrayWrapper(AIComponent*      
                                                               Audio::EngineRobotAudioClient* robotAudioClient,
                                                               BEIRobotInfo*                  robotInfo,
                                                               TouchSensorComponent*          touchSensorComponent,
-                                                              VisionComponent*               visionComponent)
+                                                              VisionComponent*               visionComponent,
+                                                              VisionScheduleMediator* visionScheduleMediator)
 : _array({
     {BEIComponentID::AIComponent,            BEIComponentWrapper(aiComponent)},
     {BEIComponentID::Animation,              BEIComponentWrapper(animationComponent)},
@@ -155,7 +198,8 @@ BehaviorExternalInterface::CompArrayWrapper::CompArrayWrapper(AIComponent*      
     {BEIComponentID::RobotAudioClient,       BEIComponentWrapper(robotAudioClient)},
     {BEIComponentID::RobotInfo,              BEIComponentWrapper(robotInfo)},
     {BEIComponentID::TouchSensor,            BEIComponentWrapper(touchSensorComponent)},
-    {BEIComponentID::Vision,                 BEIComponentWrapper(visionComponent)}
+    {BEIComponentID::Vision,                 BEIComponentWrapper(visionComponent)},
+    {BEIComponentID::VisionScheduleMediator, BEIComponentWrapper(visionScheduleMediator)}
 }){}
   
 } // namespace Cozmo

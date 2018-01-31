@@ -46,7 +46,7 @@ namespace ExternalInterface {
 // DO NOT CHANGE THIS MESSAGE - it must be compatible across all versions so we can reliably handshake with SDK
 //                            - (and by definition this message implies a version mismatch)
 message UiDeviceConnectionWrongVersion {
-  uint_8  reserved, // future-proofing (we can increase tag size to a uint_16 and still retain binary compatability)
+  uint_8  reserved, // future-proofing (we can increase tag size to a uint_16 and still retain binary compatibility)
   UiConnectionType  connectionType,
   uint_32 deviceID,
   string  buildVersion,
@@ -74,10 +74,6 @@ message ConnectToUiDevice {
 message DisconnectFromUiDevice {
     UiConnectionType  connectionType,
     uint_8 deviceID
-}
-
-message ReliableTransportRunMode {
-  bool isSync
 }
 
 // Request feature toggles from engine
@@ -610,7 +606,7 @@ message NotifyCozmoWakeup{
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// Blockworld
+// BlockWorld
 ///////////////////////////////////////////////////////////////////////////////
 
 // request currently located instances of objects in the current origin
@@ -671,11 +667,6 @@ message EraseQuad {
 ///////////////////////////////////////////////////////////////////////////////
 // Animation Commands
 ///////////////////////////////////////////////////////////////////////////////
-
-// ReplayLastAnimation
-message ReplayLastAnimation {
-    uint_32 numLoops
-}
 
 // PushIdleAnimation
 //  Switches the idle animation (the one played in a continuous loop while no other
@@ -1082,7 +1073,7 @@ message BlockPoolEnabledMessage {
   bool enabled
 }
 
-// Query for E2Gmessage: InitBlockPoolMessage
+// Query for E2GMessage: InitBlockPoolMessage
 message GetBlockPoolMessage {
 }
 
@@ -1233,7 +1224,7 @@ message RequestRobotSettings {
 
 // explicit autounion - this will force the values given, and then add every other messages in this file
 // if you do not want to include messages in this union, use the keyword "structure" instead of "message"
-// DO NOT CHANGE ANY EXPLICITELY DECLARED VALUES - they must be compatible across all versions so we can reliably
+// DO NOT CHANGE ANY EXPLICITLY DECLARED VALUES - they must be compatible across all versions so we can reliably
 // handshake between and App and SDK version combination
 autounion MessageGameToEngine
 {

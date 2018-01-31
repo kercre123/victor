@@ -14,13 +14,13 @@
  * limitations under the License.
  */
  
-#include "SimpleTest.h"
-#include "ExplicitUnion.h"
-#include "UnionOfUnion.h"
 #include "DefaultValues.h"
-#include "aligned/AutoUnionTest.h"
-#include "TestEnum.h"
+#include "ExplicitUnion.h"
 #include "JsonSerialization.h"
+#include "SimpleTest.h"
+#include "TestEnum.h"
+#include "UnionOfUnion.h"
+#include "aligned/AutoUnionTest.h"
 #include "json/json.h"
 
 
@@ -74,7 +74,7 @@ TEST AnkiEnum_NoClass()
 
   ASSERT_EQ((int)AnkiTypes::AnkiEnumNumEntries, 7);
   ASSERT_EQ((int)AnkiTypes::AnkiNoClassEnumNumEntries, 7);
-  
+
   PASS();
 }
 
@@ -781,6 +781,52 @@ TEST JsonSerialization_Unions() {
   PASS();
 }
 
+TEST JsonSerialization_Enums() {
+
+  JsonSerialization::testEnum e = JsonSerialization::testEnum::Five;
+  const std::string& str = JsonSerialization::testEnumToString(e);
+  ASSERT_EQ(str, "Five");
+
+  const bool ret1 = JsonSerialization::EnumFromString("One", e);
+  ASSERT(ret1);
+  ASSERT_EQ(e, JsonSerialization::testEnum::One);
+
+  const bool ret2 = JsonSerialization::testEnumFromString("Two", e);
+  ASSERT(ret2);
+  ASSERT_EQ(e, JsonSerialization::testEnum::Two);
+
+  const bool ret3 = JsonSerialization::testEnumFromString("asdf", e);
+  ASSERT(!ret3);
+
+  std::string json = R"json(
+{
+  "enumVal": "Two"
+}
+)json";
+  
+  // Load Json from string into jsoncpp Json::Value
+  Json::Reader reader;
+  Json::Value root;
+  ASSERT(reader.parse(json, root));
+
+  // testStruct is the CLAD generated class that we want to serialize into.
+  JsonSerialization::testStructure_Enums testStruct;
+  ASSERT(testStruct.SetFromJSON(root));
+
+  ASSERT_EQ(testStruct.enumVal, JsonSerialization::testEnum::Two);
+
+  ASSERT_EQ((int)JsonSerialization::testEnum::Two, 2);
+  ASSERT_EQ((int)testStruct.enumVal, 2);
+
+  // Ensure that GetJSON is producing equivalent results as loading from the file.
+  JsonSerialization::testStructure_Enums testStructReserialized;
+  testStructReserialized.SetFromJSON(testStruct.GetJSON());
+  ASSERT(testStruct == testStructReserialized);
+
+  PASS();
+}
+  
+
 TEST JsonSerialization_PartialJson() {
   std::string json = R"json(
 {
@@ -1017,6 +1063,7 @@ SUITE(CPP_Emitter) {
   RUN_TEST(JsonSerialization_List);
   RUN_TEST(JsonSerialization_Nested);
   RUN_TEST(JsonSerialization_Unions);
+  RUN_TEST(JsonSerialization_Enums);
   RUN_TEST(JsonSerialization_PartialJson);
 
   // Enum Concept

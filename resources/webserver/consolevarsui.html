@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+
+<!-- page preamble -->
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Console Vars and Functions</title>
+    <link rel="stylesheet" href="jquery-ui.css">
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+    div {
+        display: inline-block;
+        color: #000000;
+        vertical-align: top;
+    }
+/* -- generated style -- */
+    </style>
+
+    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+    <script>
+    $(function() {
+        $("#console").resizable().draggable();
+    });
+
+    $(function() {
+        $("#main").accordion({
+            heightStyle: "content"
+        });
+    });
+
+    $(function() {
+        $("#tt").tooltip();
+    });
+
+    $(function() {
+        $('input:text').each(function(index){
+            console.log($(this));
+        });
+    });
+
+    $( function() {
+        $( ".widget input[type=submit], .widget a, .widget button" ).button();
+        $( "button, input, a" ).click( function( event ) {
+            var func = this.value;
+            $.post("consolefunccall", {func: func}, function(result){});
+            // event.preventDefault();
+        });
+    });
+
+    function onCheckboxClickHandler(element){
+        $.post("consolevarset", {key: element.id, value: element.checked}, function(result){});
+    }
+    
+    $(function() {
+        $(".slider").each(function() {
+            var scale = $(this).data("scale"),
+                value = $(this).data("value"),
+                begin = $(this).data("begin"),
+                end = $(this).data("end");
+            $(this).slider({
+                value: value*scale,
+                min: begin*scale,
+                max: end*scale,
+                slide: function(event, ui) {
+                    // when slider changes, update text box
+                    var selector = ("#" + $(this).attr("id") + "_amount"),
+                        scale = $(this).data("scale"),
+                        value = ui.value/scale;
+                    $(selector).val(value);
+                    $.post("consolevarset", {key: $(this).attr("id"), value: value}, function(result){});
+                }
+            })
+            //initialise text box quantity
+            var slideramount = ("#" + $(this).attr("id") + "_amount");
+            //$(slideramount).val($(this).slider("value"));
+            $(slideramount).val(value);
+        })
+        // when text box is changed, update slider
+        $(".amount").change(function() {
+            var selector = $("#" + this.id.split('_amount')[0]),
+                scale = selector.data("scale"),
+                value = this.value;
+            selector.slider("value", value*scale);
+            $.post("consolevarset", {key: selector.attr("id"), value: value}, function(result){});
+        })
+        // when function call button is clicked, get arguments from text box, and call function
+        $(".function").click(function() {
+            var func = this.id.split('_function')[0];
+            var argsId = func + "_args";
+            var selector = ("#" + argsId);
+            var args = $(selector).val();
+            $.post("consolefunccall", {func: func, args: args}, function(result){});
+        })
+    });
+// -- generated script --
+    </script>
+
+</head>
+
+<!-- page content -->
+
+<body class="ui-widget-content" style="border:0;">
+    <div id="console" class="ui-widget-content" style="padding: 0.5em;">
+        <h3 class="ui-widget-header" style="text-align: center; margin: 0;">Console Vars and Functions</h3>
+        <div id="main">
+<!-- generated html -->
+        </div>
+    </div>
+</body>
+
+<!-- page postamble -->
+
+</html>

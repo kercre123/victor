@@ -18,6 +18,7 @@
 
 #include <array>
 #include <cstdint>
+#include <fstream>
 
 namespace Anki {
 namespace AudioUtil {
@@ -118,10 +119,29 @@ const std::array<uint8_t, 4> WaveFileHeaderData::_format{ {'W', 'A', 'V', 'E'} }
 const std::array<uint8_t, 4> WaveFileHeaderData::_subchunk1ID{ {'f', 'm', 't', ' '} };
 const std::array<uint8_t, 4> WaveFileHeaderData::_subchunk2ID{ {'d', 'a', 't', 'a'} };
 
-  bool WaveFile::SaveFile(const std::string& filename,
-                          const AudioChunkList& chunkList,
-                          uint16_t numChannels,
-                          uint32_t sampleRate_hz)
+
+static bool WriteToFile(const std::string &fileName, const uint8_t* dataBegin, size_t numBytes, bool append)
+{
+  bool success = false;
+  std::ofstream fileOut;
+  std::ios_base::openmode mode = std::ios::out | std::ofstream::binary;
+  if( append ) {
+    mode |= std::ios::app;
+  }
+  fileOut.open(fileName,mode);
+  if( fileOut.is_open() ) {
+    std::copy(dataBegin, dataBegin + numBytes, std::ostreambuf_iterator<char>(fileOut));
+    fileOut.flush();
+    fileOut.close();
+    success = true;
+  }
+  return success;
+}
+
+bool WaveFile::SaveFile(const std::string& filename,
+                        const AudioChunkList& chunkList,
+                        uint16_t numChannels,
+                        uint32_t sampleRate_hz)
 {
   if (numChannels == 0)
   {
@@ -136,34 +156,41 @@ const std::array<uint8_t, 4> WaveFileHeaderData::_subchunk2ID{ {'d', 'a', 't', '
     numSamples = Util::numeric_cast<uint32_t>(numSamples + chunk.size());
   }
   numSamples /= numChannels;
-  std::vector<uint8_t> dataToWrite = WaveFileHeaderData::GetHeaderData(numSamples, numChannels, sampleRate_hz);
+  std::vector<uint8_t> headerData = WaveFileHeaderData::GetHeaderData(numSamples, numChannels, sampleRate_hz);
   
-  // Put a max here in case we have a *lot* of data we're saving, so that we write it out in pieces rather than use up more memory
-  constexpr uint32_t kByteBufferMaxSize = 1024 * 512;
+  // Put a max here in case we have a *lot* of data we're saving, so that we write it out in pieces rather than
+  // use up more memory. Note this buffer needs to at least be large enough to hold the header or the largest size 
+  // of an audio chunk, whichever is greater.
+  constexpr uint32_t kByteBufferMaxSize = 1024 * 128;
+  uint8_t dataToWrite[kByteBufferMaxSize];
+  std::copy(headerData.begin(), headerData.end(), dataToWrite);
+  size_t bytesReady = headerData.size();
+
   bool isFirstWrite = true;
   for (const auto& chunk : chunkList)
   {
     auto nextChunkByteSize = chunk.size() * sizeof(AudioSample);
-    if (dataToWrite.size() > 0 &&
-        dataToWrite.size() + nextChunkByteSize > kByteBufferMaxSize)
+    if (bytesReady > 0 &&
+        bytesReady + nextChunkByteSize > kByteBufferMaxSize)
     {
       bool shouldAppend = !isFirstWrite;
-      if (!Util::FileUtils::WriteFile(filename, dataToWrite, shouldAppend))
+      if (!WriteToFile(filename, dataToWrite, bytesReady, shouldAppend))
       {
         return false;
       }
       
       isFirstWrite = false;
-      dataToWrite.clear();
+      bytesReady = 0;
     }
     const auto* castedChunkBegin = reinterpret_cast<const uint8_t *>(&*chunk.begin());
     const auto* castedChunkEnd = reinterpret_cast<const uint8_t *>(&*chunk.end());
-    
-    dataToWrite.insert(dataToWrite.end(), castedChunkBegin, castedChunkEnd);
+
+    std::copy(castedChunkBegin, castedChunkEnd, dataToWrite + bytesReady);
+    bytesReady += nextChunkByteSize;
   }
   
   bool shouldAppend = !isFirstWrite;
-  return Util::FileUtils::WriteFile(filename, dataToWrite, shouldAppend);
+  return WriteToFile(filename, dataToWrite, bytesReady, shouldAppend);
 }
 
 AudioChunkList WaveFile::ReadFile(const std::string& filename, std::size_t desiredSamplesPerChunk)

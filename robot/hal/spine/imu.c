@@ -337,8 +337,9 @@ int imu_manage(struct IMURawData* data)
 
 void imu_update_temperature(void)
 {
-  uint8_t temp_buf[4];
-  if (spi_read_n(TEMPERATURE_0, temp_buf, 2) != 2) {
+  uint8_t temp_buf[3];
+  if (spi_read_n(TEMPERATURE_0, temp_buf, 2) < 0) {
+    printf("IMU: Failed to read temp\n");
     return; // TODO Handle error
   }
   m_latest_temperature = temp_buf[1] | (temp_buf[2] << 8);

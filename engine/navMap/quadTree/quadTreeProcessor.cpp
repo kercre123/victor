@@ -44,13 +44,11 @@ if ( kDebugFindBorders ) {                                                      
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-QuadTreeProcessor::QuadTreeProcessor(VizManager* vizManager)
+QuadTreeProcessor::QuadTreeProcessor()
 : _currentBorderCombination(nullptr)
 , _root(nullptr)
-, _borderGfxDirty(false)
 , _totalExploredArea_m2(0.0)
 , _totalInterestingEdgeArea_m2(0.0)
-, _vizManager(vizManager)
 {
 
 }
@@ -188,13 +186,6 @@ bool QuadTreeProcessor::HasBorders(EContentType innerType, EContentTypePackedTyp
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void QuadTreeProcessor::GetBorders(EContentType innerType, EContentTypePackedType outerTypes, BorderRegionVector& outBorders)
 {
-  #if ANKI_DEV_CHEATS
-  // container for debug quads
-  VizManager::SimpleQuadVector allRegionQuads;
-  static size_t curColorIdx = 0;
-  curColorIdx=0; // reset so that regions have same color as previous calculation (useful when I call this per frame)
-  #endif
-
   // grab the border combination info
   const BorderCombination& borderCombination = RefreshBorderCombination(innerType, outerTypes);
 
@@ -300,30 +291,8 @@ void QuadTreeProcessor::GetBorders(EContentType innerType, EContentTypePackedTyp
           const float side_m = MM_TO_M(nodeInBorder->GetSideLen());
           const float area_m2 = side_m*side_m;
           totalArea_m2 += area_m2;
-          
-          #if ANKI_DEV_CHEATS
-          {
-            if ( kRenderBorderRegions ) {
-              // colors per region (to change colors and see them better)
-              constexpr size_t colorCount = 9;
-              ColorRGBA regionColors[colorCount] =
-              { NamedColors::RED, NamedColors::GREEN, NamedColors::BLUE,
-                NamedColors::YELLOW, NamedColors::CYAN, NamedColors::ORANGE,
-                NamedColors::MAGENTA, NamedColors::WHITE, NamedColors::BLACK };
-              // add quad
-              const ColorRGBA& regionColor = regionColors[curColorIdx%colorCount];
-              Vec3f center = nodeInBorder->GetCenter();
-              center.z() += 50.f; // z offset to render
-              allRegionQuads.emplace_back(VizManager::MakeSimpleQuad(regionColor, center, nodeInBorder->GetSideLen()));
-            }
-          }
-          #endif
         }
-        
-        #if ANKI_DEV_CHEATS
-        ++curColorIdx;
-        #endif
-        
+
         // clear nodes since we'll start a new region
         nodesInCurrentRegion.clear();
         
@@ -344,33 +313,6 @@ void QuadTreeProcessor::GetBorders(EContentType innerType, EContentTypePackedTyp
     } while ( idx < count );
     
   } // has waypoints
-  
-  // debug render all quads
-  #if ANKI_DEV_CHEATS
-  {
-    // debug render of lines returned to systems quering for borders
-    if ( kRenderBorder3DLines )
-    {
-      _vizManager->EraseSegments("QuadTreeProcessorBorderSegments");
-      for ( const auto& region : outBorders )
-      {
-        for( const auto& segment : region.segments )
-        {
-          Vec3f centerLine = (segment.from + segment.to)*0.5f;
-          _vizManager->DrawSegment("QuadTreeProcessorBorderSegments",
-            segment.from, segment.to, Anki::NamedColors::YELLOW, false, 10.0f);
-          _vizManager->DrawSegment("QuadTreeProcessorBorderSegments",
-            centerLine, centerLine+segment.normal*5.0f, Anki::NamedColors::BLUE, false, 10.0f);
-        }
-      }
-    }
-    
-    if ( kRenderBorderRegions ) {
-      _vizManager->DrawQuadVector("QuadTreeProcessorBorderSegments", allRegionQuads);
-    }
-  }
-  #endif
-  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -429,7 +371,7 @@ bool QuadTreeProcessor::HasCollisionRayWithTypes(const QuadTreeNode* node, const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeProcessor::FillBorder(EContentType filledType, EContentTypePackedType fillingTypeFlags, const MemoryMapData& data)
+bool QuadTreeProcessor::FillBorder(EContentType filledType, EContentTypePackedType fillingTypeFlags, const MemoryMapData& data)
 {
   ANKI_CPU_PROFILE("QuadTreeProcessor.FillBorder");
 
@@ -468,22 +410,25 @@ void QuadTreeProcessor::FillBorder(EContentType filledType, EContentTypePackedTy
   }
   
   // add flooded centers to the tree (not this does not cause flood filling)
+  bool changed = false;
   for( const auto& center : floodedQuadCenters ) {
-    _root->Insert(Poly2f({center}), data, *this);
+    changed |= _root->Insert(Poly2f({center}), data, *this);
   }
   
   timer.Toc("QuadTreeProcessor.FillBorder");
+  return changed;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeProcessor::Transform(NodeTransformFunction transform)
+bool QuadTreeProcessor::Transform(NodeTransformFunction transform)
 {
   // TODO: use cached data in the processor to access all data directly, since we don't have constraints on locality
   if (_root) {
     Poly2f p;
     p.ImportQuad2d(_root->MakeQuadXY());
-    _root->Transform(FastPolygon(p), transform, *this);
+    return _root->Transform(FastPolygon(p), transform, *this);
   }
+  return false;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -510,121 +455,15 @@ bool QuadTreeProcessor::HasContentType(EContentType nodeType) const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeProcessor::Draw() const
-{
-  // borders
-  if ( _borderGfxDirty && (kRenderBordersFrom || kRenderBordersToDot || kRenderBordersToQuad) )
-  {
-
-    VizManager::SimpleQuadVector quadVector;
-
-    // add quads from borders
-    for ( const auto& comboIt : _bordersPerContentCombination )
-    {
-      // if a border combination is dirty it means the quads that formed the borders have been modified
-      // and hence we can't use them
-      if ( comboIt.second.dirty ) {
-        continue;
-      }
-    
-      for ( const auto& it : comboIt.second.waypoints )
-      {
-        // from quad
-        if ( kRenderBordersFrom || (kRenderSeeds && it.isSeed) )
-        {
-          Anki::ColorRGBA fromColor = GetDebugColor( it.from->GetData()->type );
-          fromColor.SetAlpha(0.6f);
-          const float fromSideLen = it.from->GetSideLen();
-          Point3f from3D = it.from->GetCenter();
-          from3D.z() += (kRenderZOffset + .1f);
-          quadVector.emplace_back(VizManager::MakeSimpleQuad(fromColor, from3D, fromSideLen));
-        }
-      
-        // to quad
-        if ( kRenderBordersToQuad )
-        {
-          Anki::ColorRGBA toColor = GetDebugColor( it.to->GetData()->type );
-          if ( kRenderSeeds && it.isSeed ) { toColor = Anki::NamedColors::YELLOW; }
-          const float alpha = comboIt.second.dirty ? 0.2f : 0.8f;
-          toColor.SetAlpha(alpha);
-          const float toSideLen = it.to->GetSideLen();
-          Point3f to3D = it.to->GetCenter();
-          const float renderOffset = comboIt.second.dirty ? (kRenderZOffset*0.5f) : kRenderZOffset;
-          to3D.z() += (renderOffset + .1f);
-          if ( kRenderSeeds && it.isSeed) { to3D.z() += 1.0f; };
-          quadVector.emplace_back(VizManager::MakeSimpleQuad(toColor, to3D, toSideLen));
-        }
-
-        // to dot
-        if ( kRenderBordersToDot )
-        {
-          Anki::ColorRGBA toColor = GetDebugColor( it.to->GetData()->type );
-          if ( kRenderBordersToQuad ) { toColor = Anki::NamedColors::WHITE; }
-          if ( kRenderSeeds && it.isSeed ) { toColor = Anki::NamedColors::YELLOW; }
-          if ( it.isEnd ) { toColor = Anki::NamedColors::MAGENTA; }
-          if ( kRenderSeeds && it.isSeed && it.isEnd ) { toColor = Anki::NamedColors::ORANGE; }
-          const float alpha = comboIt.second.dirty ? 0.2f : 0.8f;
-          toColor.SetAlpha(alpha);
-          const float toSideLen = 5.0f;
-          Point3f border3D = CalculateBorderWaypointCenter( it );
-          const float renderOffset = comboIt.second.dirty ? (kRenderZOffset*0.5f) : kRenderZOffset;
-          border3D.z() += (renderOffset + .5f);
-          if ( kRenderSeeds && it.isSeed) { border3D.z() += 1.0f; };
-          quadVector.emplace_back(VizManager::MakeSimpleQuad(toColor, border3D, toSideLen));
-        }
-
-      }
-    }
-  
-    _vizManager->DrawQuadVector("QuadTreeProcessorBorders", quadVector);
-    _borderGfxDirty = false;
-  }
-
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeProcessor::ClearDraw() const
-{
-  // clear content and borders
-  _vizManager->EraseQuadVector("QuadTreeProcessorContent");
-  _vizManager->EraseQuadVector("QuadTreeProcessorBorders");
-  
-  // flag as dirty for next draw
-  _borderGfxDirty = true;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool QuadTreeProcessor::IsCached(EContentType contentType)
 {
-  const bool isCached = (contentType == EContentType::ObstacleCube         ) ||
+  const bool isCached = (contentType == EContentType::ObstacleObservable   ) ||
                         (contentType == EContentType::ObstacleProx         ) ||
                         (contentType == EContentType::ObstacleUnrecognized ) ||
                         (contentType == EContentType::InterestingEdge      ) ||
                         (contentType == EContentType::NotInterestingEdge   ) ||
                         (contentType == EContentType::Cliff );
   return isCached;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ColorRGBA QuadTreeProcessor::GetDebugColor(MemoryMapTypes::EContentType contentType)
-{
-  ColorRGBA ret = Anki::NamedColors::BLACK;
-  switch (contentType) {
-    case EContentType::ClearOfObstacle:       { ret = ColorRGBA(0.0f, 1.0f, 0.0f, 0.3f); break; };
-    case EContentType::ClearOfCliff:          { ret = ColorRGBA(0.0f, 0.5f, 0.0f, 0.3f); break; };
-    case EContentType::Unknown:               { ret = ColorRGBA(0.2f, 0.2f, 0.6f, 0.3f); break; };
-    case EContentType::ObstacleCube:          { ret = ColorRGBA(1.0f, 0.0f, 0.0f, 0.3f); break; };
-    case EContentType::ObstacleCubeRemoved:   { ret = ColorRGBA(1.0f, 0.0f, 0.0f, 1.0f); break; };
-    case EContentType::ObstacleCharger:       { ret = ColorRGBA(1.0f, 1.0f, 0.0f, 0.3f); break; };
-    case EContentType::ObstacleChargerRemoved:{ ret = ColorRGBA(1.0f, 1.0f, 0.0f, 1.0f); break; };
-    case EContentType::ObstacleProx:          { ret = ColorRGBA(0.0f, 0.5f, 0.5f, 0.3f); break; };
-    case EContentType::ObstacleUnrecognized:  { ret = ColorRGBA(0.5f, 0.0f, 0.0f, 0.3f); break; };
-    case EContentType::Cliff:                 { ret = ColorRGBA(0.0f, 0.0f, 0.0f, 0.3f); break; };
-    case EContentType::InterestingEdge:       { ret = ColorRGBA(0.0f, 0.0f, 0.5f, 0.3f); break; };
-    case EContentType::NotInterestingEdge:    { ret = ColorRGBA(0.0f, 0.5f, 0.5f, 0.3f); break; };
-    case EContentType::_Count:                { DEV_ASSERT(false, "QuadTreeProcessor._Count.NotSupported"); break; };
-  }
-  return ret;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -884,7 +723,6 @@ void QuadTreeProcessor::FindBorders(EContentType innerType, EContentTypePackedTy
   const NodeSet& innerSet = _nodeSets[innerType];
 
   _currentBorderCombination->waypoints.clear();
-  _borderGfxDirty = true;
   
   // map with what is visited for every inner node
   std::unordered_map<const QuadTreeNode*, CheckedInfo> checkedNodes;

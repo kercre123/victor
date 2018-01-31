@@ -248,15 +248,6 @@ namespace Anki {
       }
       
       {
-        // Set reliable transport to synchronous
-        ExternalInterface::ReliableTransportRunMode m1;
-        m1.isSync = true;
-        ExternalInterface::MessageGameToEngine message;
-        message.Set_ReliableTransportRunMode(m1);
-        SendMessage(message);
-      }
-      
-      {
         // Set planner to synchronous
         ExternalInterface::PlannerRunMode mode;
         mode.isSync = true;

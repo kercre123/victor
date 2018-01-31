@@ -24,6 +24,18 @@ union testUnionStructures {
   testStruct3 testStruct3,
 }
 
+enum uint_8 testEnum {
+  Zero = 0,
+  One = 1,
+  Two,
+  Five = 5
+}
+
+structure testStructure_Enums
+{
+  testEnum enumVal
+}
+
 structure testNestedStructure {
   float_64 testDouble,
   uint_64 testUint64,

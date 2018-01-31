@@ -44,6 +44,10 @@ IConsoleVariable::IConsoleVariable(const char* id, const char* category) :
   Anki::Util::ConsoleSystem::Instance().Register(id_, this);
 }
 
+IConsoleVariable::~IConsoleVariable() {
+  Anki::Util::ConsoleSystem::Instance().Unregister(id_);
+}
+
 
 //==============================================================================================================================
 // Template Specializations

@@ -17,9 +17,28 @@
 namespace Anki {
 namespace Cozmo {
 namespace CozmoAnimComms {
-  
+
+  // Initialize robot comms
+  Result InitRobotComms();
+
+  // Initialize engine comms
+  Result InitEngineComms();
+
+  // Initialize robot + engine comms
   Result InitComms();
   
+  // Connected to robot?
+  bool IsConnectedToRobot();
+
+  // Connected to engine?
+  bool IsConnectedToEngine();
+
+  // Disconnect from robot
+  void DisconnectRobot();
+
+  // Disconnect from engine
+  void DisconnectEngine();
+
   // Gets the next packet from the engine socket
   u32 GetNextPacketFromEngine(u8* buffer, u32 max_length);
 
@@ -31,14 +50,6 @@ namespace CozmoAnimComms {
   
   // Send a packet to robot
   bool SendPacketToRobot(const void *buffer, const u32 length);
-
-  void DisconnectEngine();
-  void DisconnectRobot();
-  
-  // TODO: Is this necessary?
-  void UpdateEngineCommsState(u8 wifi);
-  
-  bool EngineIsConnected();
   
 } // namespace CozmoAnimComms
 } // namespace Cozmo

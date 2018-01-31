@@ -1,0 +1,12 @@
+{
+  "behaviorID" : "ObservingState",
+  "behaviorClass" : "DispatcherStrictPriority",
+
+  "interruptActiveBehavior": true,
+
+  "behaviors": [
+    "DriveOffCharger",
+    "Observing"
+  ]
+}
+

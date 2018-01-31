@@ -12,7 +12,6 @@
 
 #include "memoryMapTypes.h"
 #include "engine/robot.h"
-#include "engine/viz/vizManager.h"
 
 #include "coretech/common/engine/math/pose.h"
 #include "coretech/common/engine/math/quad.h"
@@ -55,22 +54,22 @@ EContentTypePackedType ConvertContentArrayToFlags(const MemoryMapTypes::FullCont
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // MemoryMap
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-MemoryMap::MemoryMap(VizManager* vizManager)
-: _quadTree(vizManager, MemoryMapData(EContentType::Unknown, 0.f))
+MemoryMap::MemoryMap()
+: _quadTree(MemoryMapData(EContentType::Unknown, 0.f))
 {
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MemoryMap::Merge(const INavMap* other, const Pose3d& transform)
+bool MemoryMap::Merge(const INavMap* other, const Pose3d& transform)
 {
   DEV_ASSERT(other != nullptr, "MemoryMap.Merge.NullMap");
   DEV_ASSERT(dynamic_cast<const MemoryMap*>(other), "MemoryMap.Merge.UnsupportedClass");
   const MemoryMap* otherMap = static_cast<const MemoryMap*>(other);
-  _quadTree.Merge( otherMap->_quadTree, transform );
+  return _quadTree.Merge( otherMap->_quadTree, transform );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MemoryMap::FillBorderInternal(EContentType typeToReplace, const FullContentArray& neighborsToFillFrom, EContentType newTypeSet, TimeStamp_t timeMeasured)
+bool MemoryMap::FillBorder(EContentType typeToReplace, const FullContentArray& neighborsToFillFrom, EContentType newTypeSet, TimeStamp_t timeMeasured)
 {
   // convert into node types and emtpy (no extra info) node content
   using namespace QuadTreeTypes;
@@ -78,18 +77,17 @@ void MemoryMap::FillBorderInternal(EContentType typeToReplace, const FullContent
   MemoryMapData data(newTypeSet, timeMeasured);
 
   // ask the processor to do it
-  _quadTree.GetProcessor().FillBorder(typeToReplace, nodeNeighborsToFillFrom, data);
-  _quadTree.ForceRedraw();
+  return _quadTree.GetProcessor().FillBorder(typeToReplace, nodeNeighborsToFillFrom, data);
 }
 
-void MemoryMap::TransformContent(NodeTransformFunction transform)
+bool MemoryMap::TransformContent(NodeTransformFunction transform)
 {
-  _quadTree.GetProcessor().Transform(transform);
+  return _quadTree.GetProcessor().Transform(transform);
 }
 
-void MemoryMap::TransformContent(const Poly2f& poly, NodeTransformFunction transform)
+bool MemoryMap::TransformContent(const Poly2f& poly, NodeTransformFunction transform)
 {
-  _quadTree.Transform(poly, transform);
+  return _quadTree.Transform(poly, transform);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -162,21 +160,9 @@ bool MemoryMap::HasContentType(EContentType type) const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MemoryMap::DrawDebugProcessorInfo() const
+bool MemoryMap::Insert(const Poly2f& poly, const MemoryMapData& data)
 {
-  _quadTree.GetProcessor().Draw();
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MemoryMap::ClearDraw() const
-{
-  _quadTree.ClearDraw();
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MemoryMap::Insert(const Poly2f& poly, const MemoryMapData& data)
-{
-  _quadTree.Insert(poly, data, numberOfAllowedShiftsToIncludeContent);
+  return _quadTree.Insert(poly, data, numberOfAllowedShiftsToIncludeContent);
 }
 
 } // namespace Cozmo

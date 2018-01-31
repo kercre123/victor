@@ -427,6 +427,8 @@ namespace Anki {
 
       uint32_t GetMessageCountViz() const { return _messageCountViz; }
       void     ResetMessageCount() { _messageCountViz = 0; }
+
+      inline bool IsConnected() const { return _isConnected; }
       
     protected:
       

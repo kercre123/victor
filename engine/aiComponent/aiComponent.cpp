@@ -13,7 +13,7 @@
 #include "engine/aiComponent/aiComponent.h"
 
 #include "coretech/common/engine/utils/timer.h"
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/aiInformationAnalysis/aiInformationAnalyzer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
@@ -80,26 +80,33 @@ AIComponentComponents::AIComponentComponents(Robot&                      robot,
   {AIComponentID::Workout,                    ComponentWrapper(workoutComponent, true)}
 }){}
 
+AIComponentComponents::~AIComponentComponents()
+{
+  
+}
 
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AIComponent::AIComponent()
-: _suddenObstacleDetected(false)
+: UnreliableComponent<BCComponentID>(BCComponentID::AIComponent)
+, IDependencyManagedComponent<RobotComponentID>(RobotComponentID::AIComponent)
+, _suddenObstacleDetected(false)
 {
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AIComponent::~AIComponent()
 {
-
+  _aiComponents.reset();
 }
 
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result AIComponent::Init(Robot& robot, BehaviorComponent*& customBehaviorComponent)
+Result AIComponent::Init(Robot* robot, BehaviorComponent*& customBehaviorComponent)
 {
-  const CozmoContext* context = robot.GetContext();
+  const CozmoContext* context = robot->GetContext();
 
   if(context == nullptr ) {
     PRINT_NAMED_WARNING("AIComponent.Init.NoContext", "wont be able to load some componenets. May be OK in unit tests");
@@ -107,28 +114,36 @@ Result AIComponent::Init(Robot& robot, BehaviorComponent*& customBehaviorCompone
 
   {
     BehaviorComponent* behaviorComponent = nullptr;
+    bool behaviorCompInitRequired = false;
     if(customBehaviorComponent != nullptr) {
       behaviorComponent = customBehaviorComponent;
       customBehaviorComponent = nullptr;
     }else{
       behaviorComponent = new BehaviorComponent();
-      behaviorComponent->Init(BehaviorComponent::GenerateComponents(robot));
+      behaviorCompInitRequired = true;
     }
 
-    _aiComponents.reset(new ComponentWrappers::AIComponentComponents(robot, 
-                                                                     behaviorComponent,
-                                                                     new DoATrickSelector(robot.GetContext()->GetDataLoader()->GetDoATrickWeightsConfig()),
-                                                                     new FaceSelectionComponent(robot, robot.GetFaceWorld(), robot.GetMicDirectionHistory()),
-                                                                     new FeedingSoundEffectManager(),
-                                                                     new FreeplayDataTracker(),
-                                                                     new AIInformationAnalyzer(),
-                                                                     new ObjectInteractionInfoCache(robot),
-                                                                     new PuzzleComponent(robot),
-                                                                     new RequestGameComponent(robot.HasExternalInterface() ? robot.GetExternalInterface() : nullptr,
-                                                                                              robot.GetContext()->GetDataLoader()->GetGameRequestWeightsConfig()),
-                                                                     new SevereNeedsComponent(robot),
-                                                                     new AIWhiteboard(robot),
-                                                                     new WorkoutComponent(robot)));
+    _aiComponents = std::make_unique<ComponentWrappers::AIComponentComponents>(
+          *robot,
+          behaviorComponent,
+          new DoATrickSelector(robot->GetContext()->GetDataLoader()->GetDoATrickWeightsConfig()),
+          new FaceSelectionComponent(*robot, robot->GetFaceWorld(), robot->GetMicDirectionHistory()),
+          new FeedingSoundEffectManager(),
+          new FreeplayDataTracker(),
+          new AIInformationAnalyzer(),
+          new ObjectInteractionInfoCache(*robot),
+          new PuzzleComponent(*robot),
+          new RequestGameComponent(robot->HasExternalInterface() ? robot->GetExternalInterface() : nullptr,
+                                  robot->GetContext()->GetDataLoader()->GetGameRequestWeightsConfig()),
+          new SevereNeedsComponent(*robot),
+          new AIWhiteboard(*robot),
+          new WorkoutComponent(*robot)
+    );
+
+    if(behaviorCompInitRequired){
+      auto& behaviorComp = GetComponent<BehaviorComponent>(AIComponentID::BehaviorComponent);
+      behaviorComp.Init(robot, BehaviorComponent::GenerateManagedComponents(*robot, *this, nullptr));
+    }
   }
   
   
@@ -149,7 +164,7 @@ Result AIComponent::Init(Robot& robot, BehaviorComponent*& customBehaviorCompone
   
   RobotDataLoader* dataLoader = nullptr;
   if(context){
-    dataLoader = robot.GetContext()->GetDataLoader();
+    dataLoader = robot->GetContext()->GetDataLoader();
   }
   
 
@@ -205,7 +220,7 @@ Result AIComponent::Update(Robot& robot, std::string& currentActivityName,
   }
   
   CheckForSuddenObstacle(robot);
-   
+
   return RESULT_OK;
 }
 

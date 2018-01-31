@@ -1,0 +1,11 @@
+{
+  "behaviorID" : "Socialize",
+  "behaviorClass" : "DispatcherQueue",
+
+  "behaviors" : [
+    "DriveOffCharger",
+    "ShortLookAroundForFaceAndCube",
+    "InteractWithFaces",
+    "SocializeGame"
+  ]
+}

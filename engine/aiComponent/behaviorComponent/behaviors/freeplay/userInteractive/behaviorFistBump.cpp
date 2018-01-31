@@ -73,17 +73,17 @@ BehaviorFistBump::BehaviorFistBump(const Json::Value& config)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorFistBump::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorFistBump::WantsToBeActivatedBehavior() const
 {
   return true;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorFistBump::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorFistBump::OnBehaviorActivated()
 {
   // Disable idle animation
-  SmartPushIdleAnimation(behaviorExternalInterface, AnimationTrigger::Count);
+  SmartPushIdleAnimation(AnimationTrigger::Count);
   
   _fistBumpRequestCnt = 0;
   _startLookingForFaceTime_s = 0.f;
@@ -91,7 +91,7 @@ void BehaviorFistBump::OnBehaviorActivated(BehaviorExternalInterface& behaviorEx
   _nextGazeChangeIndex = 0;
   _lastTimeOffTreads_s = 0.f;
   
-  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  const auto& robotInfo = GetBEI().GetRobotInfo();
   if (robotInfo.GetCarryingComponent().IsCarryingObject()) {
     _state = State::PutdownObject;
   } else {
@@ -103,7 +103,7 @@ void BehaviorFistBump::OnBehaviorActivated(BehaviorExternalInterface& behaviorEx
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorFistBump::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorFistBump::BehaviorUpdate()
 {
   if(!IsActivated()){
     return;
@@ -112,7 +112,7 @@ void BehaviorFistBump::BehaviorUpdate(BehaviorExternalInterface& behaviorExterna
   f32 now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
   // Check if should exit because of pickup
-  if (behaviorExternalInterface.GetOffTreadsState() != OffTreadsState::OnTreads) {
+  if (GetBEI().GetOffTreadsState() != OffTreadsState::OnTreads) {
     if (_lastTimeOffTreads_s == 0) {
       _lastTimeOffTreads_s = now;
     } else if (now > _lastTimeOffTreads_s + kMaxPickedupDurationBeforeExit_s) {
@@ -175,10 +175,10 @@ void BehaviorFistBump::BehaviorUpdate(BehaviorExternalInterface& behaviorExterna
         break;
       }
 
-      auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+      auto& robotInfo = GetBEI().GetRobotInfo();
       // Check if face observed very recently
       Pose3d facePose;
-      TimeStamp_t lastObservedFaceTime = behaviorExternalInterface.GetFaceWorld().GetLastObservedFace(facePose);
+      TimeStamp_t lastObservedFaceTime = GetBEI().GetFaceWorld().GetLastObservedFace(facePose);
       if (lastObservedFaceTime > 0 && (robotInfo.GetLastMsgTimestamp() - lastObservedFaceTime < kMaxTimeInPastToHaveObservedFace_ms)) {
         DelegateIfInControl(new TurnTowardsLastFacePoseAction());
         _state = State::RequestInitialFistBump;
@@ -207,7 +207,7 @@ void BehaviorFistBump::BehaviorUpdate(BehaviorExternalInterface& behaviorExterna
     }
     case State::RequestingFistBump:
     {
-      auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+      auto& robotInfo = GetBEI().GetRobotInfo();
       _waitStartTime_s = now;
       robotInfo.GetMoveComponent().EnableLiftPower(false);
       robotInfo.GetMoveComponent().EnableHeadPower(false);
@@ -220,7 +220,7 @@ void BehaviorFistBump::BehaviorUpdate(BehaviorExternalInterface& behaviorExterna
     }
     case State::WaitingForMotorsToSettle:
     {
-      auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+      auto& robotInfo = GetBEI().GetRobotInfo();
       if (!robotInfo.GetMoveComponent().IsLiftMoving() &&
           !robotInfo.GetMoveComponent().IsHeadMoving()) {
         _liftWaitingAngle_rad = robotInfo.GetLiftAngle();
@@ -234,7 +234,7 @@ void BehaviorFistBump::BehaviorUpdate(BehaviorExternalInterface& behaviorExterna
     }
     case State::WaitingForBump:
     {
-      auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+      auto& robotInfo = GetBEI().GetRobotInfo();
       if (CheckForBump(robotInfo)) {
         CancelDelegates();  // Stop the idle anim
         robotInfo.GetMoveComponent().EnableLiftPower(true);
@@ -283,9 +283,9 @@ void BehaviorFistBump::BehaviorUpdate(BehaviorExternalInterface& behaviorExterna
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorFistBump::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorFistBump::OnBehaviorDeactivated()
 {
-  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  auto& robotInfo = GetBEI().GetRobotInfo();
   robotInfo.GetMoveComponent().EnableLiftPower(true);
   robotInfo.GetMoveComponent().EnableHeadPower(true);
   

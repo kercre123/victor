@@ -23,7 +23,7 @@
 #include <cstdint>
 
 // if set to 1, use strings to avoid triggering massive rebuilds when clad changes
-// otherwise, use the enums to gauarantee compile-time errors for invalid ids
+// otherwise, use the enums to guarantee compile-time errors for invalid ids
 #define BEHAVIOR_ID_DEV_MODE ANKI_DEVELOPER_CODE
 
 #if BEHAVIOR_ID_DEV_MODE
@@ -52,6 +52,8 @@ namespace Cozmo {
 namespace BehaviorTypesWrapper {
 
 BehaviorID BehaviorIDFromString(const std::string& name);
+bool BehaviorIDFromString(const std::string& name, BehaviorID& id);
+bool IsValidBehaviorID(const std::string& name);
 BehaviorClass BehaviorClassFromString(const std::string& name);
 ExecutableBehaviorType ExecutableBehaviorTypeFromString(const std::string& name);
 

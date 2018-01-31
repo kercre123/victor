@@ -1,7 +1,7 @@
 cxx_project(
     name = 'victor_anim',
     srcs = cxx_src_glob(['src/cozmoAnim',
-                         'src/signalEssence'],
+                         '../engine/util/webService'],
                         excludes = ['*_android.*',
                                     'android/**/*',
                                     '*_mac.*',

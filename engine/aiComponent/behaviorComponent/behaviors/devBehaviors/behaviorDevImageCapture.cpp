@@ -12,6 +12,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevImageCapture.h"
 
+#include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/imageTypes.h"
 
 #include "coretech/common/engine/utils/data/dataPlatform.h"
@@ -25,6 +26,7 @@
 #include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
+#include "engine/externalInterface/externalInterface.h"
 
 #include "util/fileUtils/fileUtils.h"
 
@@ -94,36 +96,53 @@ BehaviorDevImageCapture::~BehaviorDevImageCapture()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDevImageCapture::OnBehaviorActivated(BehaviorExternalInterface& bei)
+static inline void EnableDebugFaceDrawButton(BehaviorExternalInterface& bei, bool enable)
+{
+  // Gross way to make sure the FaceDebugDraw doesn't hijack the button, using console interface to talk to
+  // animation process
+  using namespace ExternalInterface;
+  const char* enableStr = (enable ? "1" : "0");
+  bei.GetRobotInfo().GetExternalInterface()->Broadcast(MessageGameToEngine(SetAnimDebugConsoleVarMessage("DebugFaceDraw_CycleWithButton",
+                                                                                                         enableStr)));
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDevImageCapture::OnBehaviorActivated()
 {
   _touchStartedTime_s = -1.0f;
   _isStreaming = false;
   _timeToBlink = -1.0f;
   _blinkOn = false;
 
-  auto& visionComponent = bei.GetComponentWrapper(BEIComponentID::Vision).GetValue<VisionComponent>();
+  auto& visionComponent = GetBEI().GetComponentWrapper(BEIComponentID::Vision).GetValue<VisionComponent>();
   visionComponent.EnableDrawImagesToScreen(true);
 
   const bool kUseDefaultsForUnspecified = false;
-  bei.GetVisionComponent().PushNextModeSchedule(AllVisionModesSchedule({
+  GetBEI().GetVisionComponent().PushNextModeSchedule(AllVisionModesSchedule({
     {VisionMode::SavingImages, VisionModeSchedule(true)},
   }, kUseDefaultsForUnspecified));
   
-  auto& robotInfo = bei.GetRobotInfo();
+  auto& robotInfo = GetBEI().GetRobotInfo();
   // wait for the lift to relax 
   robotInfo.GetMoveComponent().EnableLiftPower(false);
+
+  // Hijack the backpack button
+  EnableDebugFaceDrawButton(GetBEI(), false);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDevImageCapture::OnBehaviorDeactivated(BehaviorExternalInterface& bei)
+void BehaviorDevImageCapture::OnBehaviorDeactivated()
 {
-  auto& robotInfo = bei.GetRobotInfo();
+  auto& robotInfo = GetBEI().GetRobotInfo();
   // wait for the lift to relax 
   robotInfo.GetMoveComponent().EnableLiftPower(true);
 
-  auto& visionComponent = bei.GetComponentWrapper(BEIComponentID::Vision).GetValue<VisionComponent>();
+  auto& visionComponent = GetBEI().GetComponentWrapper(BEIComponentID::Vision).GetValue<VisionComponent>();
   visionComponent.EnableDrawImagesToScreen(false);
   visionComponent.PopCurrentModeSchedule();
+
+  // Relinquish the button
+  EnableDebugFaceDrawButton(GetBEI(), true);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -151,7 +170,7 @@ std::string BehaviorDevImageCapture::GetSavePath() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDevImageCapture::BehaviorUpdate(BehaviorExternalInterface& bei)
+void BehaviorDevImageCapture::BehaviorUpdate()
 {
   if(!IsActivated())
   {
@@ -159,17 +178,17 @@ void BehaviorDevImageCapture::BehaviorUpdate(BehaviorExternalInterface& bei)
   }
   
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  auto& visionComponent = bei.GetComponentWrapper(BEIComponentID::Vision).GetValue<VisionComponent>();
+  auto& visionComponent = GetBEI().GetComponentWrapper(BEIComponentID::Vision).GetValue<VisionComponent>();
 
   // update light blinking if needed
   if( _timeToBlink > 0.0f ) {
     if( currTime_s >= _timeToBlink ) {
-      BlinkLight(bei);
+      BlinkLight();
     }
   }
 
   // Switch classes when lift is lowered
-  const bool isLiftUp = (bei.GetRobotInfo().GetLiftHeight() > LIFT_HEIGHT_HIGHDOCK);
+  const bool isLiftUp = (GetBEI().GetRobotInfo().GetLiftHeight() > LIFT_HEIGHT_HIGHDOCK);
   if(_wasLiftUp && !isLiftUp)
   {
     SwitchToNextClass();    
@@ -181,7 +200,7 @@ void BehaviorDevImageCapture::BehaviorUpdate(BehaviorExternalInterface& bei)
     // Note this root path is simply copied from what vision component uses. Ideally we'd share it
     // rather than assuming this is where the images go, but hey, this is a dev behavior, so good
     // enough for now.
-    static const std::string rootPath = bei.GetRobotInfo().GetContext()->GetDataPlatform()->pathToResource(Util::Data::Scope::Cache, "camera/images");
+    static const std::string rootPath = GetBEI().GetRobotInfo().GetContext()->GetDataPlatform()->pathToResource(Util::Data::Scope::Cache, "camera/images");
     
     using namespace Util;
     const size_t numFiles = FileUtils::FilesInDirectory(FileUtils::FullFilePath({rootPath, GetSavePath()})).size();
@@ -196,8 +215,8 @@ void BehaviorDevImageCapture::BehaviorUpdate(BehaviorExternalInterface& bei)
   const bool wasTouched = (_touchStartedTime_s >= 0.0f);
 
   const bool isTouched = (_useCapTouch ? 
-                          bei.GetTouchSensorComponent().IsTouched() :
-                          bei.GetRobotInfo().IsPowerButtonPressed());
+                          GetBEI().GetTouchSensorComponent().IsTouched() :
+                          GetBEI().GetRobotInfo().IsPowerButtonPressed());
 
   if( wasTouched && !isTouched ) {
     // just "released", see if it's been long enough to count as a "hold"
@@ -213,7 +232,7 @@ void BehaviorDevImageCapture::BehaviorUpdate(BehaviorExternalInterface& bei)
                                              _imageSaveQuality);
       
       if( _isStreaming ) {
-        BlinkLight(bei);
+        BlinkLight();
       }
     }
     else {
@@ -223,7 +242,7 @@ void BehaviorDevImageCapture::BehaviorUpdate(BehaviorExternalInterface& bei)
                                              GetSavePath(),
                                              _imageSaveQuality);
 
-      BlinkLight(bei);
+      BlinkLight();
     }
   }
   else if( !wasTouched && isTouched ) {
@@ -246,11 +265,11 @@ void BehaviorDevImageCapture::BehaviorUpdate(BehaviorExternalInterface& bei)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDevImageCapture::BlinkLight(BehaviorExternalInterface& bei)
+void BehaviorDevImageCapture::BlinkLight()
 {
   _blinkOn = !_blinkOn;
 
-  bei.GetBodyLightComponent().SetBackpackLights( _blinkOn ? kLightsOn : kLightsOff );
+  GetBEI().GetBodyLightComponent().SetBackpackLights( _blinkOn ? kLightsOn : kLightsOff );
   
   // always blink if we are streaming, and set up another blink for single photo if we need to turn off the
   // light

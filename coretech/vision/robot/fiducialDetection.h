@@ -61,6 +61,7 @@ namespace Anki
       const Array<u8> &image,
       FixedLengthList<VisionMarker> &markers,
       const FiducialDetectionParameters& params,
+      const bool isDarkOnLight,
       MemoryStack scratchCcm,
       MemoryStack scratchOnchip,
       MemoryStack scratchOffChip);
@@ -75,6 +76,7 @@ namespace Anki
       const s32 scaleImage_thresholdMultiplier,
       const s16 component1d_minComponentWidth,
       const s16 component1d_maxSkipDistance,
+      const bool isDarkOnLight,
       ConnectedComponents &components,
       MemoryStack fastScratch,
       MemoryStack slowerScratch,
