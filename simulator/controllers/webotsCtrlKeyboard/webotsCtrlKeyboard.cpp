@@ -2183,6 +2183,12 @@ namespace Cozmo {
     _throttleDir = 0.f;
     _pressBackpackButton = false;
     
+    _commandedLiftSpeed = 0.f;
+    _commandedHeadSpeed = 0.f;
+    
+    _movingHead = false;
+    _movingLift = false;
+    
     root_ = GetSupervisor()->getSelf();
     
     static bool keyboardRestart = false;
