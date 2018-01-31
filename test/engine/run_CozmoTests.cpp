@@ -8,7 +8,7 @@
 #include "coretech/common/robot/matlabInterface.h"
 #include "coretech/common/shared/types.h"
 
-#include "androidHAL/androidHAL.h"
+#include "camera/cameraService.h"
 #include "osState/osState.h"
 #include "cubeBleClient/cubeBleClient.h"
 
@@ -2414,7 +2414,7 @@ int main(int argc, char ** argv)
   Anki::Util::_errBreakOnError = false;
 
   // Initialize AndroidHAL singleton without supervisor
-  AndroidHAL::SetSupervisor(nullptr);
+  CameraService::SetSupervisor(nullptr);
   
   // Initialize OSState singleton without supervisor
   OSState::SetSupervisor(nullptr);

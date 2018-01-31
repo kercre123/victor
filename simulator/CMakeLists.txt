@@ -242,9 +242,9 @@ anki_build_cxx_executable(webotsCtrlGameEngine2 ${ANKI_SRCLIST_DIR})
 
 target_link_libraries(webotsCtrlGameEngine2
   PRIVATE
-  androidHAL
   util
   kazmath
+  cameraService
   cti_common
   cti_common_robot
   cti_vision
