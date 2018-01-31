@@ -6,7 +6,7 @@
 
 alias GET_GIT_ROOT='export GIT_PROJ_ROOT=`git rev-parse --show-toplevel`'
 
-alias victor_restart='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/watcher.sh stop && ${GIT_PROJ_ROOT}/project/victor/scripts/cozmoctl.sh restart && ${GIT_PROJ_ROOT}/project/victor/scripts/robotctl.sh restart && ${GIT_PROJ_ROOT}/project/victor/scripts/animctl.sh restart && ${GIT_PROJ_ROOT}/project/victor/scripts/cloudctl.sh restart && ${GIT_PROJ_ROOT}/project/victor/scripts/watcher.sh start'
+alias victor_restart='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/watcher.sh stop && ${GIT_PROJ_ROOT}/project/victor/scripts/robotctl.sh restart && ${GIT_PROJ_ROOT}/project/victor/scripts/animctl.sh restart && sleep 2 && ${GIT_PROJ_ROOT}/project/victor/scripts/cozmoctl.sh restart && ${GIT_PROJ_ROOT}/project/victor/scripts/cloudctl.sh restart && ${GIT_PROJ_ROOT}/project/victor/scripts/watcher.sh start'
 alias victor_stop='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/watcher.sh stop && ${GIT_PROJ_ROOT}/project/victor/scripts/cozmoctl.sh stop && ${GIT_PROJ_ROOT}/project/victor/scripts/robotctl.sh stop && ${GIT_PROJ_ROOT}/project/victor/scripts/animctl.sh stop && ${GIT_PROJ_ROOT}/project/victor/scripts/cloudctl.sh stop'
 
 alias victor_build='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/build-victor.sh -c Release'
