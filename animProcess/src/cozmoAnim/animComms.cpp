@@ -178,6 +178,6 @@ u32 GetNextPacketFromRobot(u8* buffer, u32 max_length)
   return (u32) dataLen;
 }
 
-} // namespace CozmoAnimComms
+} // namespace AnimComms
 } // namespace Cozmo
 } // namespace Anki

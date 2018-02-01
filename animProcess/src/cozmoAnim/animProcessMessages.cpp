@@ -393,10 +393,11 @@ Result AnimProcessMessages::MonitorConnectionState(void)
 
 }
 
-void AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
+Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
 {
   if (!AnimComms::IsConnectedToRobot()) {
-    AnimComms::InitRobotComms();
+    LOG_WARNING("AnimProcessMessages.Update", "No connection to robot");
+    return RESULT_FAIL_IO_CONNECTION_CLOSED;
   }
 
   MonitorConnectionState();
@@ -450,6 +451,7 @@ void AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
     FaceDisplay::GetDebugDraw()->SetShouldDrawFAC(!haveBC);
   }
   #endif
+  return RESULT_OK;
 }
 
 bool AnimProcessMessages::SendAnimToRobot(const RobotInterface::EngineToRobot& msg)

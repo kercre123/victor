@@ -4,8 +4,8 @@
  * Author: Kevin Yoon
  * Created: 6/30/2017
  *
- * Description: Shuttles messages between engine and robot processes. 
- *              Responds to engine messages pertaining to animations 
+ * Description: Shuttles messages between engine and robot processes.
+ *              Responds to engine messages pertaining to animations
  *              and inserts messages as appropriate into robot-bound stream.
  *
  * Copyright: Anki, Inc. 2017
@@ -21,7 +21,7 @@
 
 namespace Anki {
 namespace Cozmo {
-  
+
 // Forward declarations
 class AnimationStreamer;
 class AnimContext;
@@ -39,7 +39,7 @@ public:
                      const AnimContext* context);
 
   // Process message traffic
-  static void Update(BaseStationTime_t currTime_nanosec);
+  static Result Update(BaseStationTime_t currTime_nanosec);
 
   // Send message to engine
   // Returns true on success, false on error
@@ -61,7 +61,7 @@ private:
 
 
 };
-  
+
 } // namespace Cozmo
 } // namespace Anki
 

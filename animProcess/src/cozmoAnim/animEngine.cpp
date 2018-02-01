@@ -113,7 +113,7 @@ Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
   //ANKI_CPU_PROFILE("AnimEngine::Update");
   
   if (!_isInitialized) {
-    LOG_ERROR("AnimEngine.Update", "Cannot update CozmoEngine before it is initialized.");
+    LOG_ERROR("AnimEngine.Update", "Cannot update AnimEngine before it is initialized.");
     return RESULT_FAIL;
   }
 
@@ -144,7 +144,11 @@ Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
   
   _context->GetWebService()->Update();
 
-  AnimProcessMessages::Update(currTime_nanosec);
+  Result result = AnimProcessMessages::Update(currTime_nanosec);
+  if (RESULT_OK != result) {
+    LOG_WARNING("AnimEngine.Update", "Unable to process messages (result %d)", result);
+    return result;
+  }
   
   OSState::getInstance()->Update();
   _animationStreamer->Update();
