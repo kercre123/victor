@@ -56,15 +56,9 @@ namespace { // "Private members"
   // so we cache the last non-0xFFFF value and return this as the latest touch sensor reading
   u16 lastValidTouchIntensity_;
 
-  
   struct spine_ctx spine_;
   uint8_t frameBuffer_[SPINE_B2H_FRAME_LEN];
   uint8_t readBuffer_[4096];
-  TimeStamp_t nextSleepTimeMs_ = 1000;
-  bool processedPartialFrame_ = false;
-  bool processedIMU_ = false;
-  uint32_t lastFrameCounter_ = 0;
-  Result lastResult_;
 
   bool chargingEnabled_ = false;
   
@@ -175,8 +169,9 @@ Result HAL::Init()
 
     spine_set_mode(&spine_, RobotMode_RUN);
 
+    // Do we need to check for errors here?
     AnkiDebug("HAL.Init.WaitingForDataFrame", "");
-    Result result = spine_wait_for_first_frame(&spine_);
+    (void) spine_wait_for_first_frame(&spine_);
   }
 #else
   bodyData_ = &dummyBodyData_;
@@ -209,7 +204,6 @@ void ForwardMicData(void)
 Result spine_get_frame() {
   Result result = RESULT_FAIL_IO_TIMEOUT;
   uint8_t frame_buffer[SPINE_B2H_FRAME_LEN];
-  bool processedFrame = false;
 
   ssize_t r = 0;
   do {
@@ -220,7 +214,6 @@ Result spine_get_frame() {
     } else if (r > 0) {
       const struct SpineMessageHeader* hdr = (const struct SpineMessageHeader*)frame_buffer;
       if (hdr->payload_type == PAYLOAD_DATA_FRAME) {
-        const struct spine_frame_b2h* frame = (const struct spine_frame_b2h*)frame_buffer;
         memcpy(frameBuffer_, frame_buffer, sizeof(frameBuffer_));
         bodyData_ = (BodyToHead*)(frameBuffer_ + sizeof(struct SpineMessageHeader));
         
