@@ -29,9 +29,10 @@ namespace Cozmo {
   CONSOLE_VAR(bool,       kProcFace_RenderInnerOuterGlow,     CONSOLE_GROUP, false); // Render glow
   CONSOLE_VAR(bool,       kProcFace_ApplyGlowFilter,          CONSOLE_GROUP, false); // Gausssian or boxfilter for glow
   CONSOLE_VAR(bool,       kProcFace_UseAntialiasing,          CONSOLE_GROUP, false); // Gausssian or boxfilter for antialiasing
+  CONSOLE_VAR(bool,       kProcFace_VictorRenderer,           CONSOLE_GROUP, false);
 
   #undef CONSOLE_GROUP
-  
+
   // Initialize static vars
   Vision::Image ProceduralFaceDrawer::_glowImg;
   Vision::Image ProceduralFaceDrawer::_eyeShape;
@@ -541,9 +542,14 @@ namespace Cozmo {
     faceImg.FillWith(Vision::PixelRGB(0,0,0));
     
     Rectangle<f32> leftBBox, rightBBox;
+    if(kProcFace_VictorRenderer) {
+      kProcFace_RenderInnerOuterGlow = kProcFace_ApplyGlowFilter = kProcFace_UseAntialiasing = true;
+    } else {
+      kProcFace_VictorRenderer = kProcFace_RenderInnerOuterGlow && kProcFace_ApplyGlowFilter && kProcFace_UseAntialiasing;
+    }
     DrawEye(faceData, WhichEye::Left,  rng, faceImg, leftBBox);
     DrawEye(faceData, WhichEye::Right, rng, faceImg, rightBBox);
-    
+
     s32 rowMin = ProceduralFace::HEIGHT-1, rowMax = 0;
     s32 colMin = leftBBox.GetX(), colMax = rightBBox.GetXmax();
 

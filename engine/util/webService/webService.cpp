@@ -197,7 +197,10 @@ ProcessRequest(struct mg_connection *conn, Anki::Cozmo::WebService::WebService::
 static int
 ConsoleVarsUI(struct mg_connection *conn, void *cbdata)
 {
-  const int returnCode = ProcessRequest(conn, Anki::Cozmo::WebService::WebService::RequestType::RT_ConsoleVarsUI, "", "");
+  const mg_request_info* info = mg_get_request_info(conn);
+  std::string category = ((info->query_string) ? info->query_string : "");
+
+  const int returnCode = ProcessRequest(conn, Anki::Cozmo::WebService::WebService::RequestType::RT_ConsoleVarsUI, category, "");
 
   return returnCode;
 }
@@ -222,14 +225,27 @@ ConsoleVarsSet(struct mg_connection *conn, void *cbdata)
 
   int returnCode = 1;
 
-  if (key.substr(0, 4) =="key=") {
-    size_t amp = key.find('&');
-    if (amp != std::string::npos) {
-      value = key.substr(amp+7);
-      key = key.substr(4, amp-4);
-    }
+  while (!key.empty()) {
+    if (key.substr(0, 4) == "key=") {
+      std::string remainder;
 
-    returnCode = ProcessRequest(conn, Anki::Cozmo::WebService::WebService::RequestType::RT_ConsoleVarSet, key, value);
+      size_t amp = key.find('&');
+      if (amp != std::string::npos) {
+        value = key.substr(amp+7);
+        key = key.substr(4, amp-4);
+        size_t amp = value.find('&');
+        if (amp != std::string::npos) {
+          remainder = value.substr(amp+1);
+          value = value.substr(0, amp);
+        }
+      }
+
+      returnCode = ProcessRequest(conn, Anki::Cozmo::WebService::WebService::RequestType::RT_ConsoleVarSet, key, value);
+
+      key = remainder;
+    } else {
+      break;
+    }
   }
   return returnCode;
 }
@@ -670,7 +686,7 @@ void WebService::Update()
       {
         case RT_ConsoleVarsUI:
           {
-            GenerateConsoleVarsUI(requestPtr->_result);
+            GenerateConsoleVarsUI(requestPtr->_result, requestPtr->_param1);
           }
           break;
         case RT_ConsoleVarGet:
@@ -782,7 +798,7 @@ void WebService::AddRequest(Request* requestPtr)
 }
 
 
-void WebService::GenerateConsoleVarsUI(std::string& page)
+void WebService::GenerateConsoleVarsUI(std::string& page, const std::string& category)
 {
   std::string style;
   std::string script;
@@ -799,6 +815,11 @@ void WebService::GenerateConsoleVarsUI(std::string& page)
        ++it) {
     std::string label = it->second->GetID();
     std::string cat = it->second->GetCategory();
+
+    if (!category.empty() && category != cat) {
+      continue;
+    }
+
     size_t dot = cat.find(".");
     if (dot != std::string::npos) {
       cat = cat.substr(0, dot);
@@ -874,6 +895,11 @@ void WebService::GenerateConsoleVarsUI(std::string& page)
        ++it) {
     std::string label = it->second->GetID();
     std::string cat = it->second->GetCategory();
+
+    if (!category.empty() && category != cat) {
+      continue;
+    }
+
     std::string sig = it->second->GetSignature();
     size_t dot = cat.find(".");
     if (dot != std::string::npos) {

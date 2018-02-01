@@ -50,7 +50,19 @@
 namespace Anki {
 namespace Cozmo {
 
-  CONSOLE_VAR(bool, kProcFace_UseNoise, "ProceduralFace", false); // Victor vs Cozmo effect, no noise = lazy updates
+  CONSOLE_VAR(bool, kProcFace_OverrideEyeParams,        "ProceduralFace", false); // Override procedural face with ConsoleVars edited version
+  CONSOLE_VAR(bool, kProcFace_OverrideRightEyeParams,   "ProceduralFace", false); // Make left and right eyes override in unison
+  CONSOLE_VAR(bool, kProcFace_OverrideReset,            "ProceduralFace", false); // Reset overriden parameters to current canned animation
+  CONSOLE_VAR(bool, kProcFace_UseNoise,                 "ProceduralFace", false); // Victor vs Cozmo effect, no noise = lazy updates
+
+  CONSOLE_VAR_RANGED(float, kProcFace_Angle_deg,               "ProceduralFace", 0.0f, -90.0f, 90.0f);
+  CONSOLE_VAR_RANGED(float, kProcFace_ScaleX,                  "ProceduralFace", 1.0f, 0.0f, 10.0f);
+  CONSOLE_VAR_RANGED(float, kProcFace_ScaleY,                  "ProceduralFace", 1.0f, 0.0f, 10.0f);
+  CONSOLE_VAR_RANGED(float, kProcFace_CenterX,                 "ProceduralFace", 0.0f, -100.0f, 100.0f);
+  CONSOLE_VAR_RANGED(float, kProcFace_CenterY,                 "ProceduralFace", 0.0f, -100.0f, 100.0f);
+  CONSOLE_VAR_RANGED(float, kProcFace_ScanlineOpacity,         "ProceduralFace", 0.7f, 0.0f, 1.0f);
+
+  ProceduralFace s_faceDataOverride;
 
   namespace{
     
@@ -528,7 +540,35 @@ namespace Cozmo {
 
       DEV_ASSERT(_context != nullptr, "AnimationStreamer.BufferFaceToSend.NoContext");
       DEV_ASSERT(_context->GetRandom() != nullptr, "AnimationStreamer.BufferFaceToSend.NoRNGinContext");
-      ProceduralFaceDrawer::DrawFace(procFace, *_context->GetRandom(), _procFaceImg);
+
+      if(kProcFace_OverrideEyeParams) {
+        static bool overrideInit = false;
+        if (!overrideInit) {
+          s_faceDataOverride.RegisterFaceWithConsoleVars();
+          kProcFace_OverrideReset = true;
+          overrideInit = true;
+        }
+
+        if(kProcFace_OverrideReset) {
+          s_faceDataOverride = procFace;
+          kProcFace_OverrideReset = false;
+        } else {
+          if(kProcFace_OverrideRightEyeParams) {
+            s_faceDataOverride.SetParameters(ProceduralFace::WhichEye::Right,
+                                             s_faceDataOverride.GetParameters(ProceduralFace::WhichEye::Left));
+          }
+        }
+
+        s_faceDataOverride.SetFaceAngle(kProcFace_Angle_deg);
+        s_faceDataOverride.SetFaceScale({kProcFace_ScaleX, kProcFace_ScaleY});
+        s_faceDataOverride.SetFacePosition({kProcFace_CenterX, kProcFace_CenterY});
+        s_faceDataOverride.SetScanlineOpacity(kProcFace_ScanlineOpacity);
+
+        ProceduralFaceDrawer::DrawFace(s_faceDataOverride, *_context->GetRandom(), _procFaceImg);
+      } else {
+        ProceduralFaceDrawer::DrawFace(procFace, *_context->GetRandom(), _procFaceImg);
+      }
+
       _faceDrawBuf.SetFromImageRGB(_procFaceImg);
     }
     
