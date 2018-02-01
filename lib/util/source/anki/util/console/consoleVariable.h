@@ -29,7 +29,7 @@ namespace Anki{ namespace Util {
 class IConsoleVariable
 {
 public:
-  IConsoleVariable( const char* id, const char* category );
+  IConsoleVariable( const char* id, const char* category, bool unregisterInDestructor );
   virtual ~IConsoleVariable();
 
   const std::string& GetID() const { return id_; }
@@ -63,7 +63,8 @@ public:
 protected:
   std::string id_;
   std::string category_;
-  
+  bool unregisterInDestructor_;
+
   IConsoleVariable();
   IConsoleVariable( const IConsoleVariable& );
 };
@@ -75,16 +76,16 @@ template <typename T>
 class ConsoleVar : public IConsoleVariable
 {
 public:
-  ConsoleVar( T& value, const char* id, const char* category )
-    : IConsoleVariable( id, category )
+  ConsoleVar( T& value, const char* id, const char* category, bool unregisterInDestructor )
+    : IConsoleVariable( id, category, unregisterInDestructor )
     , _value( value )
     , _minValue(std::numeric_limits<T>::lowest())
     , _maxValue(std::numeric_limits<T>::max())
     , _defaultValue( value )
   { }
   
-  ConsoleVar( T& value, const char* id, const char* category, const T& minValue, const T& maxValue )
-    : IConsoleVariable( id, category )
+  ConsoleVar( T& value, const char* id, const char* category, const T& minValue, const T& maxValue, bool unregisterInDestructor )
+    : IConsoleVariable( id, category, unregisterInDestructor )
     , _value( value )
     , _minValue( minValue )
     , _maxValue( maxValue )

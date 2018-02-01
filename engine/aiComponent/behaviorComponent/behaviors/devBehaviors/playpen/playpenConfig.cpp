@@ -18,8 +18,8 @@ namespace Util {
   
 // ConsoleVar specialization for BodyColor
 template<>
-ConsoleVar<Cozmo::BodyColor>::ConsoleVar(Cozmo::BodyColor& value, const char* id, const char* category)
-: IConsoleVariable( id, category )
+ConsoleVar<Cozmo::BodyColor>::ConsoleVar(Cozmo::BodyColor& value, const char* id, const char* category, bool unregisterInDestructor)
+: IConsoleVariable( id, category, unregisterInDestructor )
 , _value( value )
 , _minValue( Cozmo::BodyColor::UNKNOWN )
 , _maxValue( Cozmo::BodyColor::COUNT )
@@ -67,8 +67,8 @@ template<> void ConsoleVar<Cozmo::BodyColor>::ToggleValue() { _value = (Cozmo::B
 
 // ConsoleVar specialization for CustomObjectMarker
 template<>
-ConsoleVar<Cozmo::CustomObjectMarker>::ConsoleVar(Cozmo::CustomObjectMarker& value, const char* id, const char* category)
-: IConsoleVariable( id, category )
+ConsoleVar<Cozmo::CustomObjectMarker>::ConsoleVar(Cozmo::CustomObjectMarker& value, const char* id, const char* category, bool unregisterInDestructor )
+: IConsoleVariable( id, category, unregisterInDestructor )
 , _value( value )
 , _minValue( Cozmo::CustomObjectMarker(0) )
 , _maxValue( Cozmo::CustomObjectMarker::Count )
