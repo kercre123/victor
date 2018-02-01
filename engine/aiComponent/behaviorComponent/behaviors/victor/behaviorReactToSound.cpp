@@ -16,6 +16,7 @@
 #include "engine/actions/basicActions.h"
 #include "engine/actions/animActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "clad/types/animationTrigger.h"
 
 #include "coretech/common/engine/jsonTools.h"
 
@@ -193,7 +194,7 @@ BehaviorReactToSound::BehaviorReactToSound( const Json::Value& config ) :
 void BehaviorReactToSound::GetBehaviorOperationModifiers( BehaviorOperationModifiers& modifiers ) const
 {
   modifiers.wantsToBeActivatedWhenCarryingObject  = true;
-  modifiers.behaviorAlwaysDelegates               = false; // behavior never ends currently :)
+  modifiers.behaviorAlwaysDelegates               = false;
   modifiers.wantsToBeActivatedWhenOnCharger       = true;
 }
 
@@ -285,6 +286,8 @@ MicDirectionHistory::DirectionNode BehaviorReactToSound::GetLatestMicDirectionDa
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToSound::DirectionTrigger BehaviorReactToSound::GetTriggerData( MicDirectionHistory::DirectionIndex index ) const
 {
+  using DirectionTriggerList = const DirectionTrigger*;
+
   ASSERT_NAMED_EVENT( index >= 0, "BehaviorReactToSound.GetTriggerData", "Invalid index [%d]", index );
   ASSERT_NAMED_EVENT( index < MicDirectionHistory::kNumDirections, "BehaviorReactToSound.GetTriggerData", "Invalid index [%d]", index );
 
@@ -305,10 +308,12 @@ BehaviorReactToSound::DirectionTrigger BehaviorReactToSound::GetTriggerData( Mic
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToSound::DirectionResponse BehaviorReactToSound::GetResponseData( MicDirectionHistory::DirectionIndex index ) const
 {
+  using DirectionResponseList = const DirectionResponse*;
+
   ASSERT_NAMED_EVENT( index >= 0, "BehaviorReactToSound.GetResponseData", "Invalid index [%d]", index );
   ASSERT_NAMED_EVENT( index < MicDirectionHistory::kNumDirections, "BehaviorReactToSound.GetResponseData", "Invalid index [%d]", index );
 
-  static DirectionResponseList kAllSoundResponses[BehaviorReactToSound::EChargerStatus_Num][BehaviorReactToSound::EObservationStatus_Num] =
+  static DirectionResponseList kAllSoundResponses[EChargerStatus_Num][EObservationStatus_Num] =
   {
     /*  OnCharger */ { kSoundResponses_AsleepOnCharger, kSoundResponses_AwakeOnCharger },
     /* OffCharger */ { kSoundResponses_AsleepOffCharger, kSoundResponses_AwakeOffCharger }

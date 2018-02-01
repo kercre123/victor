@@ -15,7 +15,6 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/micDirectionHistory.h"
-#include "clad/types/animationTrigger.h"
 
 #include <vector>
 
@@ -31,25 +30,8 @@ class BehaviorReactToSound : public ICozmoBehavior
   BehaviorReactToSound( const Json::Value& config );
 
 
-public:
-
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Data Structure Definitions ...
-
-  struct DirectionTrigger
-  {
-    MicDirectionHistory::DirectionConfidence  threshold;
-  };
-
-  using DirectionTriggerList   = const DirectionTrigger*;
-
-  struct DirectionResponse
-  {
-    AnimationTrigger                          animation;
-    Radians                                   facing; // note: temp until we get anims
-  };
-
-  using DirectionResponseList   = const DirectionResponse*;
+  // Internal Data Structure Definitions ...
 
   enum EChargerStatus
   {
@@ -63,6 +45,22 @@ public:
     EObservationStatus_Asleep,
     EObservationStatus_Awake,
     EObservationStatus_Num
+  };
+
+
+public:
+
+  // data corresponding to what sounds will trigger a reaction
+  struct DirectionTrigger
+  {
+    MicDirectionHistory::DirectionConfidence  threshold;
+  };
+
+  // data corresponding to our response to a valid trigger
+  struct DirectionResponse
+  {
+    AnimationTrigger                          animation;
+    Radians                                   facing; // note: temp until we get anims
   };
 
 
