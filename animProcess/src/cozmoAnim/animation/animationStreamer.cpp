@@ -24,8 +24,8 @@
 #include "cozmoAnim/animation/trackLayerComponent.h"
 #include "cozmoAnim/audio/animationAudioClient.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
+#include "cozmoAnim/animContext.h"
 #include "cozmoAnim/animProcessMessages.h"
-#include "cozmoAnim/cozmoAnimContext.h"
 #include "cozmoAnim/robotDataLoader.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "clad/types/animationTypes.h"
@@ -74,7 +74,7 @@ namespace Cozmo {
     
   } // namespace
   
-  AnimationStreamer::AnimationStreamer(const CozmoAnimContext* context)
+  AnimationStreamer::AnimationStreamer(const AnimContext* context)
   : _context(context)
   , _trackLayerComponent(new TrackLayerComponent(context))
   , _lockedTracks(0)

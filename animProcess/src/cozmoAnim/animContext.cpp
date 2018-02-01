@@ -1,5 +1,5 @@
 
-#include "cozmoAnim/cozmoAnimContext.h"
+#include "cozmoAnim/animContext.h"
 
 #include "audioEngine/multiplexer/audioMultiplexer.h"
 #include "cozmoAnim/audio/cozmoAudioController.h"
@@ -26,7 +26,7 @@ public:
 };
 
   
-CozmoAnimContext::CozmoAnimContext(Util::Data::DataPlatform* dataPlatform)
+AnimContext::AnimContext(Util::Data::DataPlatform* dataPlatform)
   : _dataPlatform(dataPlatform)
   , _locale(new Anki::Util::Locale(Anki::Util::Locale::GetNativeLocale()))  
   , _random(new Anki::Util::RandomGenerator())
@@ -44,18 +44,18 @@ CozmoAnimContext::CozmoAnimContext(Util::Data::DataPlatform* dataPlatform)
 }
 
 
-CozmoAnimContext::CozmoAnimContext() : CozmoAnimContext(nullptr)
+AnimContext::AnimContext() : AnimContext(nullptr)
 {
 
 }
 
-CozmoAnimContext::~CozmoAnimContext()
+AnimContext::~AnimContext()
 {
 
 }
 
 
-Audio::CozmoAudioController* CozmoAnimContext::GetAudioController() const
+Audio::CozmoAudioController* AnimContext::GetAudioController() const
 {
   if (_audioMux.get() != nullptr) {
     return dynamic_cast<Audio::CozmoAudioController*>( _audioMux->GetAudioController() );
@@ -63,25 +63,25 @@ Audio::CozmoAudioController* CozmoAnimContext::GetAudioController() const
   return nullptr;
 }
 
-void CozmoAnimContext::SetRandomSeed(uint32_t seed)
+void AnimContext::SetRandomSeed(uint32_t seed)
 {
-  _random->SetSeed("CozmoAnimContext", seed);
+  _random->SetSeed("AnimContext", seed);
 }
   
 
-void CozmoAnimContext::SetMainThread()
+void AnimContext::SetMainThread()
 {
   _threadIdHolder->_id = Util::GetCurrentThreadId();
 }
 
 
-bool CozmoAnimContext::IsMainThread() const
+bool AnimContext::IsMainThread() const
 {
   return Util::AreCpuThreadIdsEqual( _threadIdHolder->_id, Util::GetCurrentThreadId() );
 }
 
 
-void CozmoAnimContext::InitAudio(Util::Data::DataPlatform* dataPlatform)
+void AnimContext::InitAudio(Util::Data::DataPlatform* dataPlatform)
 {
   // Only set up the audio server if we have a real dataPlatform
   if (nullptr == dataPlatform) {

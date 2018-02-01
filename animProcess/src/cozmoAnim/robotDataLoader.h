@@ -33,12 +33,12 @@ class DataPlatform;
 namespace Cozmo {
 
 class CannedAnimationContainer;
-class CozmoAnimContext;
+class AnimContext;
 
 class RobotDataLoader : private Util::noncopyable
 {
 public:
-  RobotDataLoader(const CozmoAnimContext* context);
+  RobotDataLoader(const AnimContext* context);
   ~RobotDataLoader();
 
   // Loads all static configuration data.
@@ -58,7 +58,7 @@ public:
   CannedAnimationContainer* GetCannedAnimations() const { assert(_cannedAnimations); return _cannedAnimations.get(); }
   
 private:
-  const CozmoAnimContext* const _context;
+  const AnimContext* const _context;
   const Util::Data::DataPlatform* _platform;
 
   // animation data

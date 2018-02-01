@@ -36,7 +36,7 @@ namespace Cozmo {
 
 // forward declaration
 class CannedAnimationContainer;
-class CozmoAnimContext;
+class AnimContext;
 
 class CannedAnimationLoader : private Util::noncopyable
 {

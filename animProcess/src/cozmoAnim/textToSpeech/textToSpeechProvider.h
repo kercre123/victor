@@ -20,7 +20,7 @@
 // Forward declarations
 namespace Anki {
   namespace Cozmo {
-    class CozmoAnimContext;
+    class AnimContext;
     namespace TextToSpeech {
       class TextToSpeechProviderImpl;
     }
@@ -84,7 +84,7 @@ public:
   static constexpr const char * kSpeedKey = "speed";
   static constexpr const char * kShapingKey = "shaping";
   
-  TextToSpeechProvider(const CozmoAnimContext* ctx, const Json::Value& tts_config);
+  TextToSpeechProvider(const AnimContext* ctx, const Json::Value& tts_config);
   ~TextToSpeechProvider();
   
   Result CreateAudioData(const std::string& text, float durationScalar, TextToSpeechProviderData& data);

@@ -17,7 +17,7 @@
 #include "textToSpeechComponent.h"
 #include "textToSpeechProvider.h"
 
-#include "cozmoAnim/cozmoAnimContext.h"
+#include "cozmoAnim/animContext.h"
 #include "cozmoAnim/robotDataLoader.h"
 
 #include "coretech/common/engine/utils/data/dataPlatform.h"
@@ -40,7 +40,7 @@ namespace Anki {
 namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TextToSpeechComponent::TextToSpeechComponent(const CozmoAnimContext* context)
+TextToSpeechComponent::TextToSpeechComponent(const AnimContext* context)
 : _dispatchQueue(Util::Dispatch::Create("TtSpeechComponent"))
 {
   const Json::Value& tts_config = context->GetDataLoader()->GetTextToSpeechConfig();

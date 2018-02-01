@@ -1,5 +1,5 @@
 /**
- * File: cozmoAnimComms.h
+ * File: cozmoAnim/animComms.h
  *
  * Author: Kevin Yoon
  * Created: 7/30/2017
@@ -16,7 +16,7 @@
 
 namespace Anki {
 namespace Cozmo {
-namespace CozmoAnimComms {
+namespace AnimComms {
 
   // Initialize robot comms
   Result InitRobotComms();
@@ -51,7 +51,7 @@ namespace CozmoAnimComms {
   // Send a packet to robot
   bool SendPacketToRobot(const void *buffer, const u32 length);
   
-} // namespace CozmoAnimComms
+} // namespace AnimComms
 } // namespace Cozmo
 } // namespace Anki
 

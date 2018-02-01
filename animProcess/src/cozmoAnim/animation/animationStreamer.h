@@ -31,7 +31,7 @@ namespace Cozmo {
   // Forward declaration
   class ProceduralFace;
   class CannedAnimationContainer;
-  class CozmoAnimContext;
+  class AnimContext;
   class TrackLayerComponent;
   
   namespace Audio {
@@ -49,7 +49,7 @@ namespace Cozmo {
     // TODO: This could be removed in favor of just referring to ::Anki::Cozmo, but avoiding touching too much code now.
     static const Tag kNotAnimatingTag = ::Anki::Cozmo::kNotAnimatingTag;
     
-    AnimationStreamer(const CozmoAnimContext* context);
+    AnimationStreamer(const AnimContext* context);
     
     ~AnimationStreamer();
     
@@ -155,7 +155,7 @@ namespace Cozmo {
       StopTracks(_tracksInUse);
     }
     
-    const CozmoAnimContext* _context = nullptr;
+    const AnimContext* _context = nullptr;
     
     // Container for all known "canned" animations (i.e. non-live)
     CannedAnimationContainer* _animationContainer = nullptr;

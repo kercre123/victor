@@ -1,5 +1,5 @@
 /*
- * File:          cozmoAnim.h
+ * File:          cozmoAnim/animEngine.h
  * Date:          6/26/2017
  * Author:        Kevin Yoon
  *
@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef ANKI_COZMO_ANIM_H
-#define ANKI_COZMO_ANIM_H
+#ifndef ANKI_COZMO_ANIM_ENGINE_H
+#define ANKI_COZMO_ANIM_ENGINE_H
 
 #include "json/json.h"
 
@@ -27,16 +27,16 @@ namespace Data {
 namespace Cozmo {
   
 // Forward declarations
-class CozmoAnimContext;
+class AnimContext;
 class AnimationStreamer;
 class TextToSpeechComponent;
   
-class CozmoAnimEngine
+class AnimEngine
 {
 public:
 
-  CozmoAnimEngine(Util::Data::DataPlatform* dataPlatform);
-  ~CozmoAnimEngine();
+  AnimEngine(Util::Data::DataPlatform* dataPlatform);
+  ~AnimEngine();
 
   Result Init();
 
@@ -47,14 +47,14 @@ protected:
   
   bool               _isInitialized = false;
   
-  std::unique_ptr<CozmoAnimContext>      _context;
+  std::unique_ptr<AnimContext>      _context;
   std::unique_ptr<AnimationStreamer>     _animationStreamer;
   std::unique_ptr<TextToSpeechComponent> _ttsComponent;
   
-}; // class CozmoAnimEngine
+}; // class AnimEngine
   
 
 } // namespace Cozmo
 } // namespace Anki
 
-#endif // ANKI_COZMO_ANIM_H
+#endif // ANKI_COZMO_ANIM_ENGINE_H

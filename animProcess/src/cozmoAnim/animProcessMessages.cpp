@@ -12,11 +12,11 @@
  **/
 
 #include "cozmoAnim/animProcessMessages.h"
-#include "cozmoAnim/cozmoAnimComms.h"
+#include "cozmoAnim/animComms.h"
 
 #include "cozmoAnim/animation/animationStreamer.h"
 #include "cozmoAnim/audio/engineRobotAudioInput.h"
-#include "cozmoAnim/cozmoAnimContext.h"
+#include "cozmoAnim/animContext.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "cozmoAnim/faceDisplay/faceDebugDraw.h"
 #include "cozmoAnim/micDataProcessor.h"
@@ -54,7 +54,7 @@ namespace {
 
   Anki::Cozmo::AnimationStreamer*            _animStreamer = nullptr;
   Anki::Cozmo::Audio::EngineRobotAudioInput* _audioInput = nullptr;
-  const Anki::Cozmo::CozmoAnimContext*       _context = nullptr;
+  const Anki::Cozmo::AnimContext*       _context = nullptr;
 
   #ifndef SIMULATOR
   const u8 kNumTicksToCheckForBC = 60; // ~2seconds
@@ -229,7 +229,7 @@ void AnimProcessMessages::ProcessMessageFromEngine(const RobotInterface::EngineT
 
   if (forwardToRobot) {
     // Send message along to robot if it wasn't handled here
-    CozmoAnimComms::SendPacketToRobot((char*)msg.GetBuffer(), msg.Size());
+    AnimComms::SendPacketToRobot((char*)msg.GetBuffer(), msg.Size());
   }
 
 } // ProcessMessageFromEngine()
@@ -318,10 +318,10 @@ void AnimProcessMessages::ProcessMessageFromRobot(const RobotInterface::RobotToE
 
 Result AnimProcessMessages::Init(AnimationStreamer* animStreamer,
                                  Audio::EngineRobotAudioInput* audioInput,
-                                 const CozmoAnimContext* context)
+                                 const AnimContext* context)
 {
   // Setup robot and engine sockets
-  CozmoAnimComms::InitComms();
+  AnimComms::InitComms();
 
   _animStreamer = animStreamer;
   _audioInput   = audioInput;
@@ -347,7 +347,7 @@ Result AnimProcessMessages::MonitorConnectionState(void)
 {
   // Send block connection state when engine connects
   static bool wasConnected = false;
-  if (!wasConnected && CozmoAnimComms::IsConnectedToEngine()) {
+  if (!wasConnected && AnimComms::IsConnectedToEngine()) {
     LOG_INFO("AnimProcessMessages.MonitorConnectionState", "Robot now available");
     RobotInterface::RobotAvailable idMsg;
     idMsg.hwRevision = 0;
@@ -370,7 +370,7 @@ Result AnimProcessMessages::MonitorConnectionState(void)
 
     wasConnected = true;
   }
-  else if (wasConnected && !CozmoAnimComms::IsConnectedToEngine()) {
+  else if (wasConnected && !AnimComms::IsConnectedToEngine()) {
     wasConnected = false;
   }
 
@@ -380,8 +380,8 @@ Result AnimProcessMessages::MonitorConnectionState(void)
 
 void AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
 {
-  if (!CozmoAnimComms::IsConnectedToRobot()) {
-    CozmoAnimComms::InitRobotComms();
+  if (!AnimComms::IsConnectedToRobot()) {
+    AnimComms::InitRobotComms();
   }
 
   MonitorConnectionState();
@@ -392,7 +392,7 @@ void AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
   u32 dataLen;
 
   // Process messages from engine
-  while((dataLen = CozmoAnimComms::GetNextPacketFromEngine(pktBuffer_, MAX_PACKET_BUFFER_SIZE)) > 0)
+  while((dataLen = AnimComms::GetNextPacketFromEngine(pktBuffer_, MAX_PACKET_BUFFER_SIZE)) > 0)
   {
     Anki::Cozmo::RobotInterface::EngineToRobot msg;
     memcpy(msg.GetBuffer(), pktBuffer_, dataLen);
@@ -410,7 +410,7 @@ void AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
   }
 
   // Process messages from robot
-  while ((dataLen = CozmoAnimComms::GetNextPacketFromRobot(pktBuffer_, MAX_PACKET_BUFFER_SIZE)) > 0)
+  while ((dataLen = AnimComms::GetNextPacketFromRobot(pktBuffer_, MAX_PACKET_BUFFER_SIZE)) > 0)
   {
     Anki::Cozmo::RobotInterface::RobotToEngine msg;
     memcpy(msg.GetBuffer(), pktBuffer_, dataLen);
@@ -440,13 +440,13 @@ void AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
 bool AnimProcessMessages::SendAnimToRobot(const RobotInterface::EngineToRobot& msg)
 {
   LOG_TRACE("AnimProcessMessages.SendAnimToRobot", "Send tag %d size %u", msg.tag, msg.Size());
-  return CozmoAnimComms::SendPacketToRobot(msg.GetBuffer(), msg.Size());
+  return AnimComms::SendPacketToRobot(msg.GetBuffer(), msg.Size());
 }
   
 bool AnimProcessMessages::SendAnimToEngine(const RobotInterface::RobotToEngine & msg)
 {
   LOG_TRACE("AnimProcessMessages.SendAnimToEngine", "Send tag %d size %u", msg.tag, msg.Size());
-  return CozmoAnimComms::SendPacketToEngine(msg.GetBuffer(), msg.Size());
+  return AnimComms::SendPacketToEngine(msg.GetBuffer(), msg.Size());
 }
 
 } // namespace Cozmo

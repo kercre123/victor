@@ -38,7 +38,7 @@ namespace Anki {
     }
   }
   namespace Cozmo {
-    class CozmoAnimContext;
+    class AnimContext;
     namespace TextToSpeech {
       class TextToSpeechProvider;
     }
@@ -60,7 +60,7 @@ public:
   };
   
   
-  TextToSpeechComponent(const CozmoAnimContext* context);
+  TextToSpeechComponent(const AnimContext* context);
   ~TextToSpeechComponent();
 
   using OperationId = uint8_t;

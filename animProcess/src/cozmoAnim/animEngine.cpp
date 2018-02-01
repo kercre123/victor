@@ -1,5 +1,5 @@
 /*
- * File:          cozmoAnim.cpp
+ * File:          cozmoAnim/animEngine.cpp
  * Date:          6/26/2017
  *
  * Description:   A platform-independent container for spinning up all the pieces
@@ -10,9 +10,10 @@
  * Modifications:
  */
 
-#include "cozmoAnim/cozmoAnim.h"
+#include "cozmoAnim/animEngine.h"
+#include "cozmoAnim/animContext.h"
 #include "cozmoAnim/animProcessMessages.h"
-#include "cozmoAnim/cozmoAnimContext.h"
+
 #include "cozmoAnim/audio/engineRobotAudioInput.h"
 #include "cozmoAnim/animation/animationStreamer.h"
 #include "cozmoAnim/robotDataLoader.h"
@@ -41,7 +42,7 @@
 #include <DAS/DASPlatform.h>
 #endif
 
-#define LOG_CHANNEL    "CozmoAnim"
+#define LOG_CHANNEL    "AnimEngine"
 
 #if ANKI_PROFILING_ENABLED && !defined(SIMULATOR)
   #define ENABLE_CE_SLEEP_TIME_DIAGNOSTICS 0
@@ -54,9 +55,9 @@
 namespace Anki {
 namespace Cozmo {
 
-CozmoAnimEngine::CozmoAnimEngine(Util::Data::DataPlatform* dataPlatform)
+AnimEngine::AnimEngine(Util::Data::DataPlatform* dataPlatform)
   : _isInitialized(false)
-  , _context(std::make_unique<CozmoAnimContext>(dataPlatform))
+  , _context(std::make_unique<AnimContext>(dataPlatform))
   , _animationStreamer(std::make_unique<AnimationStreamer>(_context.get()))
 {
   
@@ -66,7 +67,7 @@ CozmoAnimEngine::CozmoAnimEngine(Util::Data::DataPlatform* dataPlatform)
   
 }
 
-CozmoAnimEngine::~CozmoAnimEngine()
+AnimEngine::~AnimEngine()
 {
   if (Anki::Util::gTickTimeProvider == BaseStationTimer::getInstance()) {
     Anki::Util::gTickTimeProvider = nullptr;
@@ -74,10 +75,10 @@ CozmoAnimEngine::~CozmoAnimEngine()
   BaseStationTimer::removeInstance();
 }
 
-Result CozmoAnimEngine::Init() {
+Result AnimEngine::Init() {
 
   if (_isInitialized) {
-    LOG_INFO("CozmoEngine.Init.ReInit", "Reinitializing already-initialized CozmoEngineImpl with new config.");
+    LOG_INFO("AnimEngine.Init.ReInit", "Reinitializing already-initialized CozmoEngineImpl with new config.");
   }
 
   OSState::getInstance()->SetUpdatePeriod(1000);
@@ -101,18 +102,18 @@ Result CozmoAnimEngine::Init() {
 
   _context->GetWebService()->Start(_context->GetDataPlatform(), "8889");
 
-  LOG_INFO("CozmoAnimEngine.Init.Success","Success");
+  LOG_INFO("AnimEngine.Init.Success","Success");
   _isInitialized = true;
 
   return RESULT_OK;
 }
 
-Result CozmoAnimEngine::Update(BaseStationTime_t currTime_nanosec)
+Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
 {
-  //ANKI_CPU_PROFILE("CozmoAnimEngine::Update");
+  //ANKI_CPU_PROFILE("AnimEngine::Update");
   
   if (!_isInitialized) {
-    LOG_ERROR("CozmoAnimEngine.Update", "Cannot update CozmoEngine before it is initialized.");
+    LOG_ERROR("AnimEngine.Update", "Cannot update CozmoEngine before it is initialized.");
     return RESULT_FAIL;
   }
 
