@@ -583,7 +583,7 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform, const char* por
   rewrite += "/daslog=" + std::string(DASGetLogDir());
 #endif
 
-  const std::string& passwordFile = platform->pathToResource(Util::Data::Scope::Resources, "webserver/htpasswd");
+//  const std::string& passwordFile = platform->pathToResource(Util::Data::Scope::Resources, "webserver/htpasswd");
 
   const char *options[] = {
     "document_root",
@@ -594,16 +594,16 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform, const char* por
     "4",
     "url_rewrite_patterns",
     rewrite.c_str(),
-    "put_delete_auth_file",
-    passwordFile.c_str(),
-    "authentication_domain",
-    "anki.com",
+//    "put_delete_auth_file",
+//    passwordFile.c_str(),
+//    "authentication_domain",
+//    "anki.com",
     "websocket_timeout_ms",
     "3600000", // 1 hour
-#if defined(SHIPPING)
-    "global_auth_file",
-    passwordFile.c_str(),
-#endif
+//#if defined(SHIPPING)
+//    "global_auth_file",
+//    passwordFile.c_str(),
+//#endif
     0
   };
 
