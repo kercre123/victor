@@ -188,9 +188,9 @@ endif()
 #
 if (ANDROID)
 
-  anki_build_cxx_executable(robot_supervisor ${ANKI_SRCLIST_DIR})
+  anki_build_cxx_executable(vic-robot ${ANKI_SRCLIST_DIR})
 
-  target_compile_definitions(robot_supervisor
+  target_compile_definitions(vic-robot
     PRIVATE
     COZMO_ROBOT
     CORETECH_ROBOT
@@ -199,7 +199,7 @@ if (ANDROID)
     #USING_ANDROID_PHONE # Uncomment if deploying on non-Cozmo android device
   )
 
-  target_include_directories(robot_supervisor
+  target_include_directories(vic-robot
     PRIVATE
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot/hal>
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot/hal/include>
@@ -207,7 +207,7 @@ if (ANDROID)
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/generated/clad/robot>
   )
 
-  target_link_libraries(robot_supervisor
+  target_link_libraries(vic-robot
     PRIVATE
     robot_hal
     supervisor
@@ -220,6 +220,6 @@ if (ANDROID)
     ${PLATFORM_LIBS}
   )
 
-  android_strip(TARGET robot_supervisor)
+  android_strip(TARGET vic-robot)
 
 endif()

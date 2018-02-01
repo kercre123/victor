@@ -118,6 +118,7 @@ namespace Vision {
   ImageBase<T>& ImageBase<T>::operator= (const ImageBase<T> &other)
   {
     SetTimestamp(other.GetTimestamp());
+    SetImageId(other.GetImageId());
     Array2d<T>::operator=(other);
     return *this;
   }
@@ -289,6 +290,7 @@ namespace Vision {
       cv::resize(this->get_CvMat_(), resizedImage.get_CvMat_(), desiredSize, 0, 0,
                  GetOpenCvInterpMethod(method));
       resizedImage.SetTimestamp(this->GetTimestamp());
+      resizedImage.SetImageId(this->GetImageId());
     }
   }
 
@@ -315,6 +317,7 @@ namespace Vision {
     const s32 desiredRows = resizedImage.GetNumRows();
     ResizeKeepAspectRatioHelper(this->get_CvMat_(), resizedImage.get_CvMat_(), desiredCols, desiredRows, GetOpenCvInterpMethod(method), false);
     resizedImage.SetTimestamp(this->GetTimestamp());
+    resizedImage.SetImageId(this->GetImageId());
   }
 
   template<typename T>
@@ -322,6 +325,7 @@ namespace Vision {
   {
     Array2d<T>::CopyTo(otherImage);
     otherImage.SetTimestamp(GetTimestamp()); // Make sure timestamp gets copied too
+    otherImage.SetImageId(GetImageId());
   }
   
   // Explicit instantation for each image type:
@@ -485,6 +489,7 @@ namespace Vision {
     }
     
     SetTimestamp(imageRGB.GetTimestamp());
+    SetImageId(imageRGB.GetImageId());
   }
   
   Image ImageRGBA::ToGray() const
@@ -497,6 +502,7 @@ namespace Vision {
   void ImageRGBA::FillGray(Image& grayImage) const
   {
     grayImage.SetTimestamp(GetTimestamp()); // Make sure timestamp gets transferred!
+    grayImage.SetImageId(GetImageId());
     cv::cvtColor(this->get_CvMat_(), grayImage.get_CvMat_(), CV_RGBA2GRAY);
   }
 
@@ -551,6 +557,7 @@ namespace Vision {
       dataRGB[i].b() = dataRGBA[i].b();
     }
     SetTimestamp(imageRGBA.GetTimestamp());
+    SetImageId(imageRGBA.GetImageId());
   }
   
   ImageRGB::ImageRGB(const ImageRGB565& rgb565)
@@ -569,6 +576,7 @@ namespace Vision {
   {
     cv::cvtColor(imageGray.get_CvMat_(), this->get_CvMat_(), CV_GRAY2RGB);
     SetTimestamp(imageGray.GetTimestamp());
+    SetImageId(imageGray.GetImageId());
     return *this;
   }
   
@@ -590,7 +598,56 @@ namespace Vision {
   void ImageRGB::FillGray(Image& grayImage) const
   {
     grayImage.SetTimestamp(GetTimestamp()); // Make sure timestamp gets transferred!
-    cv::cvtColor(this->get_CvMat_(), grayImage.get_CvMat_(), CV_RGB2GRAY);
+    grayImage.SetImageId(GetImageId());
+
+    grayImage.Allocate(GetNumRows(), GetNumCols());
+
+    u32 numRows = GetNumRows();
+    u32 numCols = GetNumCols();
+
+    if(IsContinuous() && grayImage.IsContinuous())
+    {
+      numCols *= numRows;
+      numRows = 1;
+    }
+
+    for(u32 i = 0; i < numRows; i++)
+    {
+      const u8* imagePtr = reinterpret_cast<const u8*>(GetRow(i));
+      u8* grayPtr = reinterpret_cast<u8*>(grayImage.GetRow(i));
+
+      u32 j = 0;
+
+#ifdef ANDROID
+      const u32 kNumElementsProcessedPerLoop = 8;
+      const u32 kSizeOfRGBElement = 3;
+      const u32 kNumIterations = numCols - (kNumElementsProcessedPerLoop - 1);
+
+      for(; j < kNumIterations; j += kNumElementsProcessedPerLoop)
+      {
+        uint8x8x3_t rgb = vld3_u8(imagePtr);
+        imagePtr += kNumElementsProcessedPerLoop*kSizeOfRGBElement;
+
+        uint16x8_t out = vaddl_u8(rgb.val[0], rgb.val[1]);
+        out = vaddw_u8(out, rgb.val[1]);
+        out = vaddw_u8(out, rgb.val[2]);
+        uint8x8_t avg = vshrn_n_u16(out, 2); // Narrowing shift right (divide by 4 and convert to u8)
+
+        vst1_u8(grayPtr, avg);
+        grayPtr += kNumElementsProcessedPerLoop;
+      }
+#endif
+
+      const Vision::PixelRGB* imageRGBPtr = reinterpret_cast<const Vision::PixelRGB*>(imagePtr);
+
+      for(; j < numCols; j++)
+      {
+        *grayPtr = (((u16)imageRGBPtr->r() + (((u16)imageRGBPtr->g()) << 1) + (u16)imageRGBPtr->b()) >> 2);
+        
+        imageRGBPtr++;
+        grayPtr++;
+      }
+    }
   }
   
   Image ImageRGB::Threshold(u8 value, bool anyChannel) const

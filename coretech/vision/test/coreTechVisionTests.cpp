@@ -541,8 +541,8 @@ GTEST_TEST(ImageCache, ImageCacheGray)
   ASSERT_EQ(nrows, newGray.GetNumRows());
   ASSERT_EQ(ncols, newGray.GetNumCols());
   
-  // Gray value should be weighted average of the RGB values
-  ASSERT_EQ(colorPixel.weightedGray(), newGray(0,0));
+  // Gray value should be (R+2G+B)
+  ASSERT_EQ(colorPixel.gray(), newGray(0,0));
   
   // ReleaseMemory should clear out the cache and thus a request for an image should fail
   cache.ReleaseMemory();

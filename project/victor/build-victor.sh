@@ -229,23 +229,40 @@ if [ $RM_BUILD_ASSETS -eq 1 ]; then
 fi
 
 #
+# grab Go dependencies ahead of generating source lists
+#
+# needed for metabuild if we have to run it
+if [ $IGNORE_EXTERNAL_DEPENDENCIES -eq 0 ] || [ $CONFIGURE -eq 1 ] ; then
+    GEN_SRC_DIR="${TOPLEVEL}/generated/cmake"
+    mkdir -p "${GEN_SRC_DIR}"
+
+    # Scan for BUILD.in files
+    METABUILD_INPUTS=`find . -name BUILD.in`
+fi
+
+if [ $IGNORE_EXTERNAL_DEPENDENCIES -eq 0 ]; then
+  echo "Getting Go dependencies"
+  # Process BUILD.in files (creates list of Go projects to fetch)
+  ${BUILD_TOOLS}/metabuild/metabuild.py --go-output \
+      -o ${GEN_SRC_DIR} \
+      ${METABUILD_INPUTS} 
+  time ${TOPLEVEL}/project/victor/scripts/run-go-get.sh -d ${GEN_SRC_DIR}
+else
+  echo "Ignore Go dependencies"
+fi
+
+#
 # generate source file lists
 #
 
 if [ $CONFIGURE -eq 1 ]; then
     mkdir -p ${BUILD_DIR}
 
-    GEN_SRC_DIR="${TOPLEVEL}/generated/cmake"
-    mkdir -p "${GEN_SRC_DIR}"
-
     if [ $VERBOSE -eq 1 ]; then
         METABUILD_VERBOSE="-v"
     else
         METABUILD_VERBOSE=""
     fi
-
-    # Scan for BUILD.in files
-    METABUILD_INPUTS=`find . -name BUILD.in`
 
     # Process BUILD.in files
     ${BUILD_TOOLS}/metabuild/metabuild.py $METABUILD_VERBOSE \

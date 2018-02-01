@@ -1967,6 +1967,20 @@ namespace Anki {
       return _lastObservedFaceID;
     }
     
+    void UiGameController::PressBackpackButton(bool pressed)
+    {
+      if (_backpackButtonPressedField == nullptr) {
+        if (_robotNode == nullptr) {
+          PRINT_NAMED_ERROR("UiGameController.PressBackpackButton.NullRobotNoe", "");
+          return;
+        } else {
+          _backpackButtonPressedField = _robotNode->getField("backpackButtonPressed");
+        }
+      }
+      _backpackButtonPressedField->setSFBool(pressed);
+    }
+    
+    
     void UiGameController::SetActualRobotPose(const Pose3d& newPose)
     {      
       SetNodePose(_robotNode, newPose);

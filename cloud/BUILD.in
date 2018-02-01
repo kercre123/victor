@@ -23,7 +23,7 @@ go_project(
 )
 
 go_project(
-    name = 'cloud_process',
+    name = 'vic-cloud',
     gopath = 'go',
     dir = 'process'
 )

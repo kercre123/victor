@@ -8,7 +8,7 @@ If you have a question that you get answered (e.g. in a Slack channel) which mig
   - Hold down `ALT` to send either of the above to the animation process to set console vars/functions there.
 
 * How do I access the Victor embedded web server, from which I can set console vars?
-  - [Run the Victor web server](/docs/web-server.md) 
+  - [Run the Victor web server](/docs/development/web-server.md) 
   
 * `victor_stop`/`victor_restart` hangs with `stopping <number>...` when trying to kill one of the processes
   - Manually kill the process with `adb shell kill -9 <number>`

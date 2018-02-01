@@ -132,6 +132,27 @@ uint32_t OSState::GetTemperature_mC() const
   return _cpuTemp_mC;
 }
 
+const std::string& OSState::GetSerialNumberAsString()
+{
+  if(_serialNumString == "")
+  {
+    _serialNumString = ExecCommand("getprop ro.serialno");
+  }
+  
+  return _serialNumString;
+}
+
+u32 OSState::GetOSBuildNumber()
+{
+  if(_osBuildNum == 0)
+  {
+    std::string osBuildNum = ExecCommand("getprop ro.anki.os_build_number");
+    _osBuildNum = static_cast<u32>(std::stoi(osBuildNum));
+  }
+  
+  return _osBuildNum;
+}
+  
 std::string OSState::GetIPAddressInternal()
 {
   // Open a socket to figure out the ip adress of the wlan0 (wifi) interface

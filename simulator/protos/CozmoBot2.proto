@@ -35,6 +35,9 @@ PROTO CozmoBot2 [
 
   # Used for animation tests, specify animation to test
   field SFString animationTestName ""
+
+  # Press backpack button
+  field SFBool backpackButtonPressed FALSE
 ]
 {
 

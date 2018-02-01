@@ -88,26 +88,9 @@ public:
     return 0;
   }
 
-  const std::string& GetSerialNumberAsString()
-  {
-    if(_serialNumString == "")
-    {
-      _serialNumString = ExecCommand("getprop ro.serialno");
-    }
+  const std::string& GetSerialNumberAsString();
 
-    return _serialNumString;
-  }
-
-  u32 GetOSBuildNumber()
-  {
-    if(_osBuildNum == 0)
-    {
-      std::string osBuildNum = ExecCommand("getprop ro.anki.os_build_number");
-      _osBuildNum = static_cast<u32>(std::stoi(osBuildNum));
-    }
-
-    return _osBuildNum;
-  }
+  u32 GetOSBuildNumber();
 
 private:
   // private ctor
