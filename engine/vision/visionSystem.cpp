@@ -139,9 +139,11 @@ namespace Cozmo {
     _isReadingToolCode = false;
     
     std::string dataPath("");
+    std::string cachePath("");
     if(_context->GetDataPlatform() != nullptr) {
       dataPath = _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
                                                              Util::FileUtils::FullFilePath({"config", "engine", "vision"}));
+      cachePath = _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Cache, "vision");
     } else {
       PRINT_NAMED_WARNING("VisionSystem.Init.NullDataPlatform",
                           "Initializing VisionSystem with no data platform.");
@@ -237,7 +239,9 @@ namespace Cozmo {
       if(Util::FileUtils::DirectoryExists(modelPath)) // TODO: Remove once DNN models are checked in somewhere (VIC-1071)
       {
         const Json::Value& objDetectorConfig = config["ObjectDetector"];
-        Result objDetectorResult = _generalObjectDetector->Init(modelPath, objDetectorConfig);
+        Result objDetectorResult = _generalObjectDetector->Init(modelPath,
+                                                                Util::FileUtils::FullFilePath({cachePath, "object_detector"}),
+                                                                objDetectorConfig);
         if(RESULT_OK != objDetectorResult)
         {
           PRINT_NAMED_ERROR("VisionSystem.Init.ObjectDetectorInitFailed", "");

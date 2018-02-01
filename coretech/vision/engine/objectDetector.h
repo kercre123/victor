@@ -47,7 +47,7 @@ public:
   //    the detector attempts to interpret the graph entirely from the frozen ".pb" file.
   //  - Otherwise, the model is assumed to be Caffe and both <graph>.prototxt and <graph>.caffemodel are
   //    assumed to exist and used to read the model.
-  Result Init(const std::string& modelPath, const Json::Value& config);
+  Result Init(const std::string& modelPath, const std::string& cachePath, const Json::Value& config);
   
   struct DetectedObject
   {
@@ -85,9 +85,10 @@ private:
   // We process asynchronsously, so need a copy of the image data
   Vision::ImageRGB _imgBeingProcessed;
   
-  bool    _isInitialized = false;
-  f32     _widthScale = 1.f;
-  f32     _heightScale = 1.f;
+  std::string _cachePath = "";
+  bool        _isInitialized = false;
+  f32         _widthScale = 1.f;
+  f32         _heightScale = 1.f;
   
 }; // class ObjectDetector
   

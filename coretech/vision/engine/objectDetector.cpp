@@ -16,7 +16,9 @@
 
 #include "coretech/common/engine/array2d_impl.h"
 #include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
 
+#include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/quoteMacro.h"
 
@@ -43,6 +45,10 @@ namespace Vision {
  
 // Log channel name currently expected to be defined by one of the objectDetectorModel cpp files...
 // static const char * const kLogChannelName = "VisionSystem";
+ 
+namespace {
+  CONSOLE_VAR(bool, kUseTensorFlowProcess, "Vision.ObjectDetector", true);
+}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ObjectDetector::ObjectDetector()
@@ -59,7 +65,7 @@ ObjectDetector::~ObjectDetector()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ObjectDetector::Init(const std::string& modelPath, const Json::Value& config)
+Result ObjectDetector::Init(const std::string& modelPath, const std::string& cachePath, const Json::Value& config)
 {
   _profiler.Tic("LoadModel");
   const Result result = _model->LoadModel(modelPath, config);
@@ -77,10 +83,13 @@ Result ObjectDetector::Init(const std::string& modelPath, const Json::Value& con
   _profiler.SetPrintFrequency(config.get("ProfilingPrintFrequency_ms", 10000).asUInt());
   _profiler.SetDasLogFrequency(config.get("ProfilingEventLogFrequency_ms", 10000).asUInt());
 
+  _cachePath = cachePath;
+  
   _isInitialized = true;
   return result;
 }
 
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ObjectDetector::StartProcessingIfIdle(ImageCache& imageCache)
 {
@@ -101,7 +110,7 @@ bool ObjectDetector::StartProcessingIfIdle(ImageCache& imageCache)
       // in the params.
       // TODO: resize here instead of the Model, to copy less data
       // TODO: avoid copying data entirely somehow? (but maybe who cares b/c it's tiny and fwd inference time likely dwarfs the copy)
-      const ImageCache::Size kImageSize = ImageCache::Size::Full;
+      const ImageCache::Size kImageSize = ImageCache::Size::Quarter_AverageArea;
       
       // Grab a copy of the image
       imageCache.GetRGB(kImageSize).CopyTo(_imgBeingProcessed);
@@ -115,13 +124,81 @@ bool ObjectDetector::StartProcessingIfIdle(ImageCache& imageCache)
       
       _future = std::async(std::launch::async, [this]() {
         std::list<DetectedObject> objects;
-        _profiler.Tic("Inference");
-        Result result = _model->Run(_imgBeingProcessed, objects);
-        _profiler.Toc("Inference");
-
-        if(RESULT_OK != result)
+        if(kUseTensorFlowProcess)
         {
-          PRINT_NAMED_WARNING("ObjectDetector.Detect.AsyncLambda.ModelRunFailed", "");
+          // Write image to a temporary file
+          const std::string tempFilename = Util::FileUtils::FullFilePath({_cachePath, "temp.png"});
+          _imgBeingProcessed.Save(tempFilename);
+          
+          // Rename to what TF process expects once the data is fully written
+          const std::string imageFilename = Util::FileUtils::FullFilePath({_cachePath, "objectDetectionImage.png"});
+          const std::string cmd = "mv " + tempFilename + " " + imageFilename;
+          system(cmd.c_str());
+          
+          const u32 kPollPeriod_ms = 10;
+          const f32 timeoutDuration_sec = 10.f;
+          const f32 starttTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+          f32 currentTime_sec = starttTime_sec;
+          
+          // Wait for result JSON to appear
+          const std::string resultFilename = Util::FileUtils::FullFilePath({_cachePath, "objectDetectionResults.json"});
+          bool resultAvailable = false;
+          while( !resultAvailable && (currentTime_sec - starttTime_sec < timeoutDuration_sec) )
+          {
+            std::this_thread::sleep_for(std::chrono::milliseconds(kPollPeriod_ms));
+            resultAvailable = Util::FileUtils::FileExists(resultFilename);
+          }
+          
+          // Delete image file (whether or not we got the result or timed out)
+          Util::FileUtils::DeleteFile(imageFilename);
+          
+          if(resultAvailable)
+          {
+            PRINT_CH_DEBUG(kLogChannelName, "ObjectDetector.Model.FoundDetectionResultsJSON", "");
+            
+            Json::Reader reader;
+            Json::Value detectionResult;
+            std::ifstream file(resultFilename);
+            const bool success = reader.parse(file, detectionResult);
+            if(!success)
+            {
+              PRINT_NAMED_ERROR("ObjectDetector.Model.FailedToReadJSON", "%s", resultFilename.c_str());
+            }
+            else
+            {
+              const Json::Value& detectedObjects = detectionResult["objects"];
+              if(detectedObjects.isArray())
+              {
+                for(auto const& object : detectedObjects)
+                {
+                  const int xmin = std::round(object["xmin"].asFloat() * _imgBeingProcessed.GetNumCols());
+                  const int ymin = std::round(object["ymin"].asFloat() * _imgBeingProcessed.GetNumRows());
+                  const int xmax = std::round(object["xmax"].asFloat() * _imgBeingProcessed.GetNumCols());
+                  const int ymax = std::round(object["ymax"].asFloat() * _imgBeingProcessed.GetNumRows());
+                  
+                  objects.emplace_back(DetectedObject{
+                    .timestamp = object["timestamp"].asUInt(),
+                    .score = object["score"].asFloat(),
+                    .name = object["name"].asString(),
+                    .rect = Rectangle<s32>(xmin, ymin, xmax-xmin, ymax-ymin)
+                  });
+                }
+              }
+            }
+            file.close();
+            Util::FileUtils::DeleteFile(resultFilename);
+          }
+          
+        }
+        else
+        {
+          _profiler.Tic("Inference");
+          Result result = _model->Run(_imgBeingProcessed, objects);
+          _profiler.Toc("Inference");
+          if(RESULT_OK != result)
+          {
+            PRINT_NAMED_WARNING("ObjectDetector.Detect.AsyncLambda.ModelRunFailed", "");
+          }
         }
         return objects;
       });
