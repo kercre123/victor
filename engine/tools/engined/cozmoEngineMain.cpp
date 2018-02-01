@@ -35,6 +35,8 @@
 #include <limits.h>
 #include <unistd.h>
 
+#define LOG_CHANNEL "CozmoEngineMain"
+
 const char* ROBOT_ADVERTISING_HOST_IP = "127.0.0.1";
 const char* LOGNAME = "engine";
                                                                                                     
@@ -43,13 +45,13 @@ Anki::Util::Data::DataPlatform* gDataPlatform = nullptr;
 
 void configure_engine(Json::Value& config)
 {
-  if(!config.isMember(AnkiUtil::kP_ADVERTISING_HOST_IP)) {
+  if (!config.isMember(AnkiUtil::kP_ADVERTISING_HOST_IP)) {
     config[AnkiUtil::kP_ADVERTISING_HOST_IP] = ROBOT_ADVERTISING_HOST_IP;
   }
-  if(!config.isMember(AnkiUtil::kP_UI_ADVERTISING_PORT)) {
+  if (!config.isMember(AnkiUtil::kP_UI_ADVERTISING_PORT)) {
     config[AnkiUtil::kP_UI_ADVERTISING_PORT] = Anki::Cozmo::UI_ADVERTISING_PORT;
   }
-  if(!config.isMember(AnkiUtil::kP_SDK_ON_DEVICE_TCP_PORT)) {
+  if (!config.isMember(AnkiUtil::kP_SDK_ON_DEVICE_TCP_PORT)) {
     config[AnkiUtil::kP_SDK_ON_DEVICE_TCP_PORT] = Anki::Cozmo::SDK_ON_DEVICE_TCP_PORT;
   }
   
@@ -98,7 +100,7 @@ int cozmo_start(const Json::Value& configuration)
   int result = 0;
   
   if (gEngineAPI != nullptr) {
-      PRINT_STREAM_ERROR("cozmo_startup", "Game already initialized.");
+      LOG_ERROR("cozmo_start", "Game already initialized");
       return 1;
   }
 
@@ -194,10 +196,10 @@ int cozmo_start(const Json::Value& configuration)
     // loggerProvider->SetFilter(filterPtr);
   }
   
-  PRINT_NAMED_INFO("cozmo_startup", "Creating engine");
-  PRINT_NAMED_INFO("cozmo_startup",
-                    "Initialized data platform with filesPath = %s, cachePath = %s, externalPath = %s, resourcesPath = %s",
-                    filesPath.c_str(), cachePath.c_str(), externalPath.c_str(), resourcesPath.c_str());
+  LOG_INFO("cozmo_start", "Creating engine");
+  LOG_INFO("cozmo_start",
+            "Initialized data platform with filesPath = %s, cachePath = %s, externalPath = %s, resourcesPath = %s",
+            filesPath.c_str(), cachePath.c_str(), externalPath.c_str(), resourcesPath.c_str());
 
   configure_engine(config);
   
@@ -208,7 +210,7 @@ int cozmo_start(const Json::Value& configuration)
   Anki::Cozmo::CozmoAPI* engineInstance = new Anki::Cozmo::CozmoAPI();
 
   bool engineResult = engineInstance->StartRun(gDataPlatform, config);
-  if (! engineResult) {
+  if (!engineResult) {
     delete engineInstance;
     return (int)engineResult;
   }
@@ -218,9 +220,17 @@ int cozmo_start(const Json::Value& configuration)
   return result;
 }
 
+bool cozmo_is_running()
+{
+  if (gEngineAPI) {
+    return gEngineAPI->IsRunning();
+  }
+  return false;
+}
+
 int cozmo_stop()
 {
-  int result = (int)0;
+  int result = 0;
     
   Anki::Util::SafeDelete(gEngineAPI);
   Anki::Util::gEventProvider = nullptr;
@@ -334,15 +344,22 @@ int main(int argc, char* argv[])
 
     int res = cozmo_start(config);
     if (0 != res) {
-        printf("failed to start cozmoengine\n");
+        printf("failed to start engine\n");
         exit(res);
     }
 
-    printf("cozmoengine started\n");
+    LOG_INFO("CozmoEngineMain.main", "Engine started");
     
-    while(true) {
-        usleep(2000);
+    while (true) {
+      if (!cozmo_is_running()) {
+        LOG_INFO("CozmoEngineMain.main", "Engine has stopped");
+        break;
+      }
+      usleep(2000);
     }
+
+    LOG_INFO("CozmoEngineMain.main", "Stopping engine");
+    cozmo_stop();
 
     return res;
 }

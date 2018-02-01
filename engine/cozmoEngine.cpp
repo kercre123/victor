@@ -65,6 +65,8 @@
 
 #include "engine/animations/animationTransfer.h"
 
+#define LOG_CHANNEL "CozmoEngine"
+
 #if ANKI_PROFILING_ENABLED
   #define ENABLE_CE_SLEEP_TIME_DIAGNOSTICS 0
   #define ENABLE_CE_RUN_TIME_DIAGNOSTICS 1
@@ -147,8 +149,8 @@ CozmoEngine::~CozmoEngine()
 
 Result CozmoEngine::Init(const Json::Value& config) {
 
-  if(_isInitialized) {
-    PRINT_NAMED_INFO("CozmoEngine.Init.ReInit", "Reinitializing already-initialized CozmoEngineImpl with new config.");
+  if (_isInitialized) {
+    LOG_INFO("CozmoEngine.Init.ReInit", "Reinitializing already-initialized CozmoEngineImpl with new config.");
   }
   
   _isInitialized = false;
@@ -218,7 +220,7 @@ Result CozmoEngine::Init(const Json::Value& config) {
 
   _context->GetPerfMetric()->Init();
 
-  PRINT_NAMED_INFO("CozmoEngine.Init.Version", "2");
+  LOG_INFO("CozmoEngine.Init.Version", "2");
 
   SetEngineState(EngineState::LoadingData);
 
@@ -334,7 +336,7 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
   
   // Handle UI
   if (!_uiWasConnected && _uiMsgHandler->HasDesiredNumUiDevices()) {
-    PRINT_NAMED_INFO("CozmoEngine.Update.UIConnected", "");
+    LOG_INFO("CozmoEngine.Update.UIConnected", "UI has connected");
     SendSupportInfo();
 
     if (_engineState == EngineState::Running) {
@@ -343,7 +345,7 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
 
     _uiWasConnected = true;
   } else if (_uiWasConnected && !_uiMsgHandler->HasDesiredNumUiDevices()) {
-    PRINT_NAMED_INFO("CozmoEngine.Update.UIDisconnected", "");
+    LOG_INFO("CozmoEngine.Update.UIDisconnected", "UI has disconnected");
     _uiWasConnected = false;
   }
 
@@ -365,11 +367,22 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
       float currentLoadingDone = 0.0f;
       if (_context->GetDataLoader()->DoNonConfigDataLoading(currentLoadingDone))
       {
-        ConnectToRobotProcess();
-        SetEngineState(EngineState::Running);
+        SetEngineState(EngineState::ConnectingToRobot);
       }
-      PRINT_NAMED_INFO("LoadingRatio", "%f", currentLoadingDone);
+      LOG_INFO("CozmoEngine.Update.LoadingRatio", "%f", currentLoadingDone);
       _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::EngineLoadingDataStatus>(currentLoadingDone);
+      break;
+    }
+    case EngineState::ConnectingToRobot:
+    {
+      // Wait for robot process to start up and become ready
+      Result result = ConnectToRobotProcess();
+      if (RESULT_OK != result) {
+        LOG_WARNING("CozmoEngine.Update.ConnectingToRobot", "Unable to connect to robot (result %d)", result);
+        break;
+      }
+      LOG_INFO("CozmoEngine.Update.ConnectingToRobot", "Now connected to robot");
+      SetEngineState(EngineState::Running);
       break;
     }
     case EngineState::UpdatingFirmware:
@@ -389,7 +402,11 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
       // Update OSState
       OSState::getInstance()->Update();
 
-      _context->GetRobotManager()->UpdateRobotConnection();
+      Result result = _context->GetRobotManager()->UpdateRobotConnection();
+      if (RESULT_OK != result) {
+        LOG_ERROR("CozmoEngine.Update.Running", "Unable to update robot connection (result %d)", result);
+        return result;
+      }
       
       const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       _context->GetNeedsManager()->Update(currentTime_s);
@@ -560,40 +577,24 @@ Result CozmoEngine::InitInternal()
 Result CozmoEngine::ConnectToRobotProcess()
 {
   const RobotID_t robotID = OSState::getInstance()->GetRobotID();
-  if (HasRobotWithID(robotID)) {
-    PRINT_NAMED_INFO("CozmoEngine.HandleMessage.ConnectToRobotProcess.AlreadyConnected", "Robot already connected");
-    return RESULT_OK;
+
+  auto * robotManager = _context->GetRobotManager();
+  if (!robotManager->DoesRobotExist(robotID)) {
+    robotManager->AddRobot(robotID);
   }
 
-  _context->GetRobotManager()->GetMsgHandler()->AddRobotConnection(robotID);
-
-  // Another exception for hosts: have to tell the basestation to add the robot as well
-  if(AddRobot(robotID) == RESULT_OK) {
-    PRINT_NAMED_INFO("CozmoEngine.ConnectToRobotProcess.Success", "Connected to robot!!!");
-  } else {
-    PRINT_NAMED_ERROR("CozmoEngine.ConnectToRobotProcess.Fail", "Failed to connect to robot!!!");
-    return RESULT_FAIL;
+  auto * msgHandler = robotManager->GetMsgHandler();
+  if (!msgHandler->IsConnected(robotID)) {
+    Result result = msgHandler->AddRobotConnection(robotID);
+    if (RESULT_OK != result) {
+      LOG_WARNING("CozmoEngine.ConnectToRobotProcess", "Unable to connect to robot %d (result %d)", robotID, result);
+      return result;
+    }
   }
 
   _context->GetNeedsManager()->InitAfterConnection();
 
   return RESULT_OK;
-}
-
-Result CozmoEngine::AddRobot(RobotID_t robotID)
-{
-  Result lastResult = RESULT_OK;
-  
-  _context->GetRobotManager()->AddRobot(robotID);
-  Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
-  if(nullptr == robot) {
-    PRINT_NAMED_ERROR("CozmoEngine.AddRobot", "Failed to add robot ID=%d (nullptr returned).", robotID);
-    lastResult = RESULT_FAIL;
-  } else {
-    PRINT_NAMED_INFO("CozmoEngine.AddRobot", "Sending init to the robot %d.", robotID);
-  }
-  
-  return lastResult;
 }
   
 Robot* CozmoEngine::GetFirstRobot() {
@@ -608,11 +609,6 @@ int CozmoEngine::GetNumRobots() const {
   
 Robot* CozmoEngine::GetRobotByID(const RobotID_t robotID) {
   return _context->GetRobotManager()->GetRobotByID(robotID);
-}
-
-bool  CozmoEngine::HasRobotWithID(const RobotID_t robotID) const
-{
-  return _context->GetRobotManager()->DoesRobotExist(robotID);
 }
 
 std::vector<RobotID_t> const& CozmoEngine::GetRobotIDList() const {

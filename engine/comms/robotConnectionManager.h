@@ -37,7 +37,7 @@ public:
 
   void DisconnectCurrent();
   
-  void Update();
+  Result Update();
 
   void ProcessArrivedMessages();
   
@@ -50,6 +50,8 @@ public:
   const Anki::Util::Stats::StatsAccumulator& GetQueuedTimes_ms() const;
 
   Result Connect(RobotID_t robotID);
+
+  bool IsConnected(RobotID_t robotID) const;
 
 private:
   void SendAndResetQueueStats();
@@ -70,6 +72,7 @@ private:
   // track how large the incoming message queue gets in bytes
   Util::Stats::StatsAccumulator _queueSizeAccumulator;
 
+  RobotID_t      _robotID = -1;
   LocalUdpClient _udpClient;
 };
 

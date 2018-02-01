@@ -54,7 +54,7 @@ public:
 
   virtual void Init(const Json::Value& config, RobotManager* robotMgr, const CozmoContext* context);
 
-  virtual void ProcessMessages();
+  virtual Result ProcessMessages();
 
   virtual Result SendMessage(const RobotID_t robotId, const RobotInterface::EngineToRobot& msg, bool reliable = true, bool hot = false);
 
@@ -65,8 +65,12 @@ public:
   // Handle various event message types
   template<typename T>
   void HandleMessage(const T& msg);
-  
+
+  // Are we connected to this robot?
+  bool IsConnected(RobotID_t robotID);
+
   Result AddRobotConnection(RobotID_t robotId);
+
   Result RemoveRobotConnection(const uint32_t robotId);
   
   void Disconnect();

@@ -271,10 +271,10 @@ void RobotManager::UpdateAllRobots()
   
 }
 
-void RobotManager::UpdateRobotConnection()
+Result RobotManager::UpdateRobotConnection()
 {
   ANKI_CPU_PROFILE("RobotManager::UpdateRobotConnection");
-  _robotMessageHandler->ProcessMessages();
+  return _robotMessageHandler->ProcessMessages();
 }
 
 void RobotManager::BroadcastAvailableAnimationGroups()
