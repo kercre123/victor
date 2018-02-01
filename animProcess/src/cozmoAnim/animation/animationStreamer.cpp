@@ -811,22 +811,23 @@ namespace Cozmo {
       
       // Non-procedural faces (raw pixel data/images) take precedence over procedural faces (parameterized faces
       // like idles, keep alive, or normal animated faces)
-      if(faceAnimTrack.HasFramesLeft() && !IsTrackLocked((u8)AnimTrackFlag::FACE_IMAGE_TRACK)) {
+      const bool shouldPlayFaceAnim = !IsTrackLocked((u8)AnimTrackFlag::FACE_IMAGE_TRACK) &&
+                                      faceAnimTrack.HasFramesLeft() &&
+                                      faceAnimTrack.GetCurrentKeyFrame().IsTimeToPlay(_streamingTime_ms - _startTime_ms);
+      if(shouldPlayFaceAnim)
+      {
         auto & faceKeyFrame = faceAnimTrack.GetCurrentKeyFrame();
-        if(faceKeyFrame.IsTimeToPlay(_streamingTime_ms - _startTime_ms))
-        {
-          const bool gotImage = faceKeyFrame.GetFaceImage(_faceDrawBuf);
-          if (gotImage) {
-            DEBUG_STREAM_KEYFRAME_MESSAGE("FaceAnimation");
-            BufferFaceToSend(_faceDrawBuf, false);  // Don't overwrite FaceAnimationKeyFrame images
-          }
-          
-          if(faceKeyFrame.IsDone()) {
-            faceAnimTrack.MoveToNextKeyFrame();
-          }
+        const bool gotImage = faceKeyFrame.GetFaceImage(_faceDrawBuf);
+        if (gotImage) {
+          DEBUG_STREAM_KEYFRAME_MESSAGE("FaceAnimation");
+          BufferFaceToSend(_faceDrawBuf, false);  // Don't overwrite FaceAnimationKeyFrame images
+        }
+        
+        if(faceKeyFrame.IsDone()) {
+          faceAnimTrack.MoveToNextKeyFrame();
         }
       }
-      else if(!faceAnimTrack.HasFramesLeft() && layeredKeyFrames.haveFaceKeyFrame)
+      else if(layeredKeyFrames.haveFaceKeyFrame)
       {
         BufferFaceToSend(layeredKeyFrames.faceKeyFrame.GetFace());
       }
