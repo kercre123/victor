@@ -53,6 +53,9 @@ function onConnect(peripheral) {
             let CRYPTO_PING = 1;
             let CRYPTO_ACCEPTED = 4;
 
+            console.log("cipher:");
+            console.log(ctext);
+
             let cipher = new Uint8Array(ctext);
             let nonce = new Uint8Array(decryptNonce);
 
@@ -71,12 +74,13 @@ function onConnect(peripheral) {
                 } else if(data[0] == CRYPTO_ACCEPTED) {
                     printConnectionMessage("Secure connection has been established...", "\x1b[32m");
 
-                    let wifiCred = Buffer.concat([Buffer.from([5]), Buffer.from([12]), Buffer.from("vic-home-wifi"), Buffer.from([8]), Buffer.from("password")]);
+                    let wifiCred = Buffer.concat([Buffer.from([5]), Buffer.from([13]), Buffer.from("vic-home-wifi"), Buffer.from([8]), Buffer.from("password")]);
 
                     console.log(wifiCred);
                     sendMessage(wifiCred, true);
                 }
             } catch(err) {
+                console.log("Failed to decrypt");
                 console.log(err);
             }
 

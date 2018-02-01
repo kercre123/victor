@@ -28,9 +28,10 @@
 /* Begin PBXFileReference section */
 		DA27A59A20193A6A00359EE0 /* SecurePairingMessages.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SecurePairingMessages.cpp; sourceTree = "<group>"; };
 		DA27A59B20193A6A00359EE0 /* SecurePairingMessages.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SecurePairingMessages.h; sourceTree = "<group>"; };
-		DA27A59D201BAD0300359EE0 /* EndianHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EndianHelper.h; sourceTree = "<group>"; };
 		DA27A5A2201C083900359EE0 /* ios-server.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "ios-server.entitlements"; sourceTree = "<group>"; };
 		DA27A5A5201D0AE800359EE0 /* NetworkExtension.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = NetworkExtension.framework; path = System/Library/Frameworks/NetworkExtension.framework; sourceTree = SDKROOT; };
+		DA27A63420224F1100359EE0 /* libev.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = libev.h; sourceTree = "<group>"; };
+		DA27A63920229DD600359EE0 /* log.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = log.h; sourceTree = "<group>"; };
 		DA5EC9E520084554003ABD16 /* libsodium.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libsodium.a; path = "ios-server/sodium/libsodium.a"; sourceTree = "<group>"; };
 		DA8141B7201173A700AC8A73 /* signalHolder.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = signalHolder.h; sourceTree = "<group>"; };
 		DA8141B8201173D900AC8A73 /* simpleSignal.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = simpleSignal.hpp; sourceTree = "<group>"; };
@@ -98,8 +99,9 @@
 				DAB7E3A2200EB8A600D57664 /* SecurePairing.cpp */,
 				DAB7E3A5200EB8F800D57664 /* KeyExchange.h */,
 				DAB7E3AF200ED2ED00D57664 /* KeyExchange.cpp */,
+				DA27A63920229DD600359EE0 /* log.h */,
 				DAB7E3A6200EB92300D57664 /* BLEPairingController.h */,
-				DA27A59D201BAD0300359EE0 /* EndianHelper.h */,
+				DA27A63420224F1100359EE0 /* libev.h */,
 			);
 			path = networking;
 			sourceTree = "<group>";

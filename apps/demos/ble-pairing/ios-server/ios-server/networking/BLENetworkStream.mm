@@ -11,7 +11,6 @@
 void Anki::Networking::BLENetworkStream::SendPlainText(uint8_t* bytes, int length) {
   NSData* data = [NSData dataWithBytes:bytes length:length];
   bool couldSend = [_peripheralManager updateValue:data forCharacteristic:_writeCharacteristic onSubscribedCentrals:nil];
-  NSLog(@"BLE: sending: %@", data);
 }
 
 void Anki::Networking::BLENetworkStream::SendEncrypted(uint8_t* bytes, int length) {
@@ -20,17 +19,10 @@ void Anki::Networking::BLENetworkStream::SendEncrypted(uint8_t* bytes, int lengt
   uint64_t encryptedLength = 0;
   
   Encrypt(bytes, length, bytesWithExtension, &encryptedLength);
-  
+
   NSData* data = [NSData dataWithBytes:bytesWithExtension length:encryptedLength];
-  
-  printf("Print encrypted bytes\n");
-  for(int i = 0; i < length + crypto_aead_xchacha20poly1305_ietf_ABYTES; i++) {
-    printf("%x ", bytesWithExtension[i]);
-  }
-  printf("\n");
   
   free(bytesWithExtension);
   
   bool couldSend = [_peripheralManager updateValue:data forCharacteristic:_encryptedWriteCharacteristic onSubscribedCentrals:nil];
-  NSLog(@"BLE: sending encrypted");
 }

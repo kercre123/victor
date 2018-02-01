@@ -1,0 +1,314 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 48;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		DA27A5B4201FD23200359EE0 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = DA27A5B3201FD23200359EE0 /* main.mm */; };
+		DA27A5BC201FD25B00359EE0 /* createFile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DA27A5BA201FD25B00359EE0 /* createFile.cpp */; };
+		DA27A5CF201FD9C400359EE0 /* libsodium.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DA27A5CE201FD9C400359EE0 /* libsodium.a */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		DA27A5AE201FD23200359EE0 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		DA27A5B0201FD23200359EE0 /* sodium-video */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "sodium-video"; sourceTree = BUILT_PRODUCTS_DIR; };
+		DA27A5B3201FD23200359EE0 /* main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
+		DA27A5BA201FD25B00359EE0 /* createFile.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = createFile.cpp; sourceTree = "<group>"; };
+		DA27A5BB201FD25B00359EE0 /* createFile.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = createFile.h; sourceTree = "<group>"; };
+		DA27A5BF201FD7DC00359EE0 /* sodium */ = {isa = PBXFileReference; lastKnownFileType = folder; name = sodium; path = "../../../../../../../../Downloads/libsodium-stable/libsodium-osx/include/sodium"; sourceTree = "<group>"; };
+		DA27A5C0201FD7DC00359EE0 /* sodium.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = sodium.h; path = "../../../../../../../../Downloads/libsodium-stable/libsodium-osx/include/sodium.h"; sourceTree = "<group>"; };
+		DA27A5CE201FD9C400359EE0 /* libsodium.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libsodium.a; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		DA27A5AD201FD23200359EE0 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DA27A5CF201FD9C400359EE0 /* libsodium.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		DA27A5A7201FD23100359EE0 = {
+			isa = PBXGroup;
+			children = (
+				DA27A5B2201FD23200359EE0 /* sodium-video */,
+				DA27A5B1201FD23200359EE0 /* Products */,
+				DA27A5C7201FD83E00359EE0 /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		DA27A5B1201FD23200359EE0 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				DA27A5B0201FD23200359EE0 /* sodium-video */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		DA27A5B2201FD23200359EE0 /* sodium-video */ = {
+			isa = PBXGroup;
+			children = (
+				DA27A5BE201FD7CD00359EE0 /* sodium */,
+				DA27A5B3201FD23200359EE0 /* main.mm */,
+				DA27A5BA201FD25B00359EE0 /* createFile.cpp */,
+				DA27A5BB201FD25B00359EE0 /* createFile.h */,
+			);
+			path = "sodium-video";
+			sourceTree = "<group>";
+		};
+		DA27A5BE201FD7CD00359EE0 /* sodium */ = {
+			isa = PBXGroup;
+			children = (
+				DA27A5BF201FD7DC00359EE0 /* sodium */,
+				DA27A5C0201FD7DC00359EE0 /* sodium.h */,
+			);
+			path = sodium;
+			sourceTree = "<group>";
+		};
+		DA27A5C7201FD83E00359EE0 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				DA27A5CE201FD9C400359EE0 /* libsodium.a */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		DA27A5AF201FD23200359EE0 /* sodium-video */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DA27A5B7201FD23200359EE0 /* Build configuration list for PBXNativeTarget "sodium-video" */;
+			buildPhases = (
+				DA27A5AC201FD23200359EE0 /* Sources */,
+				DA27A5AD201FD23200359EE0 /* Frameworks */,
+				DA27A5AE201FD23200359EE0 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "sodium-video";
+			productName = "sodium-video";
+			productReference = DA27A5B0201FD23200359EE0 /* sodium-video */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		DA27A5A8201FD23100359EE0 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0920;
+				ORGANIZATIONNAME = "Paul Aluri";
+				TargetAttributes = {
+					DA27A5AF201FD23200359EE0 = {
+						CreatedOnToolsVersion = 9.2;
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = DA27A5AB201FD23100359EE0 /* Build configuration list for PBXProject "sodium-video" */;
+			compatibilityVersion = "Xcode 8.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = DA27A5A7201FD23100359EE0;
+			productRefGroup = DA27A5B1201FD23200359EE0 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				DA27A5AF201FD23200359EE0 /* sodium-video */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		DA27A5AC201FD23200359EE0 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DA27A5B4201FD23200359EE0 /* main.mm in Sources */,
+				DA27A5BC201FD25B00359EE0 /* createFile.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		DA27A5B5201FD23200359EE0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.12;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		DA27A5B6201FD23200359EE0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.12;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		DA27A5B8201FD23200359EE0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LIBRARY = "libc++";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 6N4JN4E7V7;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		DA27A5B9201FD23200359EE0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LIBRARY = "libc++";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 6N4JN4E7V7;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		DA27A5AB201FD23100359EE0 /* Build configuration list for PBXProject "sodium-video" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DA27A5B5201FD23200359EE0 /* Debug */,
+				DA27A5B6201FD23200359EE0 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		DA27A5B7201FD23200359EE0 /* Build configuration list for PBXNativeTarget "sodium-video" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DA27A5B8201FD23200359EE0 /* Debug */,
+				DA27A5B9201FD23200359EE0 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = DA27A5A8201FD23100359EE0 /* Project object */;
+}

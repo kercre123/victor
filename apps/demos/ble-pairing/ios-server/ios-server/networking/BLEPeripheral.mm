@@ -144,12 +144,10 @@
     if(requests[i].characteristic.UUID.UUIDString == CH_READ.UUID.UUIDString) {
       // We are receiving input to read stream
       ((Anki::Networking::INetworkStream*)_BLEStream)->ReceivePlainText((uint8_t*)requests[i].value.bytes, (int)requests[i].value.length);
-      NSLog(@"BLE: receiving");
       [peripheral respondToRequest:requests[i] withResult:CBATTErrorSuccess];
     } else if(requests[i].characteristic.UUID.UUIDString == CH_SECURE_READ.UUID.UUIDString) {
       // We are receiving input to read stream
       ((Anki::Networking::INetworkStream*)_BLEStream)->ReceiveEncrypted((uint8_t*)requests[i].value.bytes, (int)requests[i].value.length);
-      NSLog(@"BLE: receiving encrypted");
       [peripheral respondToRequest:requests[i] withResult:CBATTErrorSuccess];
     }
   }

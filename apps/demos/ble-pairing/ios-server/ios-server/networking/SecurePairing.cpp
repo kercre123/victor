@@ -9,7 +9,7 @@
 #include "SecurePairing.h"
 #include "SecurePairingMessages.h"
 
-Anki::Networking::SecurePairing::SecurePairing(INetworkStream* stream) {  
+Anki::Networking::SecurePairing::SecurePairing(INetworkStream* stream) {
   _Stream = stream;
   
   _Stream->OnReceivedPlainTextEvent().SubscribeForever(
@@ -28,12 +28,21 @@ Anki::Networking::SecurePairing::SecurePairing(INetworkStream* stream) {
   
   // Initialize object
   Init();
+  
+  Log::Write("Service initialized.");
+}
+
+Anki::Networking::SecurePairing::~SecurePairing() {
+  delete _KeyExchange;
+  
+  Log::Write("Destroying SecurePairing object.");
 }
 
 void Anki::Networking::SecurePairing::BeginPairing() {
   // Send public key
-  printf("Sending public key...\n");
   SendPublicKey();
+  
+  Log::Write("Sending public key to client.");
 }
 
 void Anki::Networking::SecurePairing::SendPublicKey() {
@@ -90,6 +99,8 @@ void Anki::Networking::SecurePairing::Reset() {
   
   // Put us back in initial state
   Init();
+  
+  Log::Write("Service reset.");
 }
 
 void Anki::Networking::SecurePairing::HandleInitialPair(uint8_t* publicKey, uint32_t publicKeyLength) {
@@ -105,8 +116,9 @@ void Anki::Networking::SecurePairing::HandleInitialPair(uint8_t* publicKey, uint
     _KeyExchange->GetDecryptKey());
   
   // Send nonce
-  printf("Receiving public key/ Sending nonce...\n");
   SendNonce();
+  
+  Log::Write("Received initial pair request, sending nonce.");
 }
 
 void Anki::Networking::SecurePairing::SendNonce() {
@@ -133,6 +145,9 @@ void Anki::Networking::SecurePairing::SendNonce() {
 }
 
 void Anki::Networking::SecurePairing::SendChallenge() {
+  // Tell the stream that we can now send over encrypted channel
+  _Stream->SetEncryptedChannelEstablished(true);
+  
   // Create random challenge value
   randombytes_buf(&_PingChallenge, sizeof(uint32_t));
   
@@ -168,19 +183,29 @@ void Anki::Networking::SecurePairing::SendCancelPairing() {
   
   // Send challenge and update state
   _Stream->SendPlainText(cancelBuffer, sizeof(uint16_t));
+  
+  Log::Write("Canceling pairing.");
 }
 
 void Anki::Networking::SecurePairing::HandleRestoreConnection() {
   // todo: implement
+  Reset();
 }
 
 void Anki::Networking::SecurePairing::HandleDecryptionFailed() {
   // todo: implement
+  Reset();
 }
 
 void Anki::Networking::SecurePairing::HandleNonceAck() {
   // Send challenge to user
   SendChallenge();
+  
+  Log::Write("Client acked nonce, sending challenge.");
+}
+
+inline bool isChallengeSuccess(uint32_t challenge, uint32_t answer) {
+  return answer == challenge + 1;
 }
 
 void Anki::Networking::SecurePairing::HandlePingResponse(uint8_t* pingChallengeAnswer, uint32_t length) {
@@ -190,23 +215,25 @@ void Anki::Networking::SecurePairing::HandlePingResponse(uint8_t* pingChallengeA
     success = false;
   } else {
     uint32_t answer = *((uint32_t*)pingChallengeAnswer);
-    success = (answer == _PingChallenge + 1);
+    success = isChallengeSuccess(_PingChallenge, answer);
   }
   
   if(success) {
     // Inform client that we are good to go and
     // update our state
     SendChallengeSuccess();
+    Log::Write("Challenge answer was accepted. Encrypted channel established.");
   } else {
     // Increment our abnormality and attack counter, and
     // if at or above max attempts reset.
     IncrementAbnormalityCount();
     IncrementChallengeCount();
+    Log::Write("Received faulty challenge response.");
   }
 }
 
 void Anki::Networking::SecurePairing::HandleMessageReceived(uint8_t* bytes, uint32_t length) {
-  if(length < 2) {
+  if(length < MIN_MSG_LENGTH) {
     return;
   }
   
@@ -221,7 +248,13 @@ void Anki::Networking::SecurePairing::HandleMessageReceived(uint8_t* bytes, uint
       } else {
         // ignore msg
         IncrementAbnormalityCount();
+        Log::Write("Received initial pair request in wrong state.");
       }
+      break;
+    }
+    case Anki::Networking::SetupMessage::MSG_REQUEST_RENEW: {
+      SendNonce();
+      Log::Write("Received renew connection request.");
       break;
     }
     case Anki::Networking::SetupMessage::MSG_ACK:
@@ -232,6 +265,7 @@ void Anki::Networking::SecurePairing::HandleMessageReceived(uint8_t* bytes, uint
         } else {
           // ignore msg
           IncrementAbnormalityCount();
+          Log::Write("Received nonce ack in wrong state.");
         }
       }
       
@@ -239,11 +273,16 @@ void Anki::Networking::SecurePairing::HandleMessageReceived(uint8_t* bytes, uint
     }
     default:
       IncrementAbnormalityCount();
+      Log::Write("Unknown plain text message type.");
       break;
   }
 }
 
 void Anki::Networking::SecurePairing::HandleEncryptedMessageReceived(uint8_t* bytes, uint32_t length) {
+  if(length < MIN_MSG_LENGTH) {
+    return;
+  }
+  
   // first byte has type
   Anki::Networking::SecureMessage messageType = (Anki::Networking::SecureMessage)bytes[0];
   
@@ -254,6 +293,7 @@ void Anki::Networking::SecurePairing::HandleEncryptedMessageReceived(uint8_t* by
       } else {
         // ignore msg
         IncrementAbnormalityCount();
+        Log::Write("Received challenge response in wrong state.");
       }
       break;
     case Anki::Networking::SecureMessage::CRYPTO_WIFI_CRED:
@@ -263,9 +303,12 @@ void Anki::Networking::SecurePairing::HandleEncryptedMessageReceived(uint8_t* by
         std::string pw(ssidPtr + bytes[1] + 1, bytes[2 + bytes[1]]);
 
         _ReceivedWifiCredentialSignal.emit(ssid, pw);
+      } else {
+        Log::Write("Received wifi credentials in wrong state.");
       }
     default:
       IncrementAbnormalityCount();
+      Log::Write("Unknown encrypted message type.");
       break;
   }
 }
@@ -277,6 +320,8 @@ void Anki::Networking::SecurePairing::IncrementChallengeCount() {
   if(_ChallengeAttempts >= MAX_MATCH_ATTEMPTS) {
     Reset();
   }
+  
+  Log::Write("Client answered challenge.");
 }
 
 void Anki::Networking::SecurePairing::IncrementAbnormalityCount() {
@@ -286,4 +331,6 @@ void Anki::Networking::SecurePairing::IncrementAbnormalityCount() {
   if(_AbnormalityCount >= MAX_ABNORMALITY_COUNT) {
     Reset();
   }
+  
+  Log::Write("Abnormality recorded.");
 }

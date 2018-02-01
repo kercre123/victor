@@ -29,6 +29,7 @@ namespace Anki {
       CRYPTO_RECEIVE            = 3,
       CRYPTO_ACCEPTED           = 4,
       CRYPTO_WIFI_CRED          = 5,
+      CRYPTO_WIFI_RESULT        = 6,
     };
   }
 }

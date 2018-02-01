@@ -1,0 +1,23 @@
+//
+//  log.h
+//  ios-server
+//
+//  Created by Paul Aluri on 1/31/18.
+//  Copyright © 2018 Paul Aluri. All rights reserved.
+//
+
+#ifndef log_h
+#define log_h
+
+#define debug_logging
+
+class Log {
+  public:
+  static void Write(const char* message) {
+#ifdef debug_logging
+    printf("anki_network: %s\n", message);
+#endif
+  }
+};
+
+#endif /* log_h */

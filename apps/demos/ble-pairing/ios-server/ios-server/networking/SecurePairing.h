@@ -14,10 +14,12 @@
 #include <math.h>
 #include "INetworkStream.h"
 #include "KeyExchange.h"
+#include "log.h"
 
 namespace Anki {
   namespace Networking {
     #define NUM_PIN_DIGITS 6
+    #define MIN_MSG_LENGTH 2
     
     enum PairingState {
       Initial,
@@ -61,9 +63,9 @@ namespace Anki {
     class SecurePairing {
     public:
       SecurePairing(INetworkStream* stream);
+      ~SecurePairing();
       
       void BeginPairing();
-      void StopPairing();
       
       uint8_t* GetPin() { return _Pin; }
       
