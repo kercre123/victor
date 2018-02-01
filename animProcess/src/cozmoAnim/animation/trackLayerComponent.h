@@ -21,7 +21,7 @@
 
 #include "cannedAnimLib/animation.h"
 
-#include "clad/types/liveIdleAnimationParameters.h"
+#include "clad/types/keepFaceAliveParameters.h"
 
 #include <memory>
 
@@ -70,11 +70,15 @@ public:
   
   // Keep Cozmo's face alive using the params specified
   // (call each tick while the face should be kept alive)
-  void KeepFaceAlive(const std::map<LiveIdleAnimationParameter, f32>& params);
+  void KeepFaceAlive(const std::map<KeepFaceAliveParameter, f32>& params);
   
   // Removes the live face after duration_ms has passed
   // Note: Will not cancel/remove a blink that is in progress
-  void RemoveKeepFaceAlive(s32 duration_ms);
+  void RemoveKeepFaceAlive(u32 duration_ms);
+  
+  // Resets timers for keeping face alive.
+  // Call this when KeepFaceAlive timing parameters have changed.
+  void ResetKeepFaceAliveTimers();
   
   // Make Cozmo blink
   void AddBlink();
@@ -84,7 +88,7 @@ public:
   AnimationTag AddSquint(const std::string& name, f32 squintScaleX, f32 squintScaleY, f32 upperLidAngle);
 
   // Removes specified squint after duration_ms has passed
-  void RemoveSquint(AnimationTag tag, s32 duration_ms = 0);
+  void RemoveSquint(AnimationTag tag, u32 duration_ms = 0);
   
   // Either start an eye shift or update an already existing eye shift with new params
   // If tag == NotAnimationTag then start a new shift, tag will be updated to reference
@@ -103,7 +107,7 @@ public:
                            f32 outerEyeScaleIncrease = 0.1f);
   
   // Removes the specified eye shift after duration_ms has passed
-  void RemoveEyeShift(AnimationTag tag, s32 duration_ms = 0);
+  void RemoveEyeShift(AnimationTag tag, u32 duration_ms = 0);
   
   // Make Cozmo glitch
   void AddGlitch(f32 glitchDegree);

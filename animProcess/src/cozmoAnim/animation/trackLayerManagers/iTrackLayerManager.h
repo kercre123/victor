@@ -56,7 +56,7 @@ public:
   void AddToPersistentLayer(AnimationTag tag, FRAME_TYPE& keyFrame);
   
   // Removes a persitent layer after duration_ms has passed
-  void RemovePersistentLayer(AnimationTag tag, s32 duration_ms = 0);
+  void RemovePersistentLayer(AnimationTag tag, u32 duration_ms = 0);
   
   // Returns true if there are any layers
   bool HaveLayersToSend() const;

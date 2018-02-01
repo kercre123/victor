@@ -116,6 +116,21 @@ void Process_displayFaceImageRGBChunk(const Anki::Cozmo::RobotInterface::Display
   _animStreamer->Process_displayFaceImageChunk(msg);
 }
 
+void Process_enableKeepFaceAlive(const Anki::Cozmo::RobotInterface::EnableKeepFaceAlive& msg)
+{
+  _animStreamer->EnableKeepFaceAlive(msg.enable, msg.disableTimeout_ms);
+}
+
+void Process_setDefaultKeepFaceAliveParameters(const Anki::Cozmo::RobotInterface::SetDefaultKeepFaceAliveParameters& msg)
+{
+  _animStreamer->SetDefaultKeepFaceAliveParams();
+}
+
+void Process_setKeepFaceAliveParameter(const Anki::Cozmo::RobotInterface::SetKeepFaceAliveParameter& msg)
+{
+  _animStreamer->SetParam(msg.param, msg.value);
+}
+
 void Process_postAudioEvent(const Anki::AudioEngine::Multiplexer::PostAudioEvent& msg)
 {
   _audioInput->HandleMessage(msg);

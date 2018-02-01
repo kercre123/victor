@@ -191,7 +191,7 @@ void ITrackLayerManager<FRAME_TYPE>::AddToPersistentLayer(AnimationTag tag, FRAM
 }
 
 template<class FRAME_TYPE>
-void ITrackLayerManager<FRAME_TYPE>::RemovePersistentLayer(AnimationTag tag, s32 duration_ms)
+void ITrackLayerManager<FRAME_TYPE>::RemovePersistentLayer(AnimationTag tag, u32 duration_ms)
 {
   auto layerIter = _layers.find(tag);
   if (layerIter != _layers.end())

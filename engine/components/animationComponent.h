@@ -22,6 +22,7 @@
 #include "engine/events/ankiEvent.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
+#include "clad/types/keepFaceAliveParameters.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/signalHolder.h"
 
@@ -106,6 +107,14 @@ public:
   Result DisplayFaceImageBinary(const Vision::Image& img, u32 duration_ms, bool interruptRunning = false);
   Result DisplayFaceImage(const Vision::ImageRGB& img, u32 duration_ms, bool interruptRunning = false);
   Result DisplayFaceImage(const Vision::ImageRGB565& imgRGB565, u32 duration_ms, bool interruptRunning = false);
+
+  // Enable/Disable KeepFaceAlive
+  // If enable == false, disableTimeout_ms is the duration over which the face should 
+  // return to no adjustments
+  Result EnableKeepFaceAlive(bool enable, u32 disableTimeout_ms = 0) const;
+
+  Result SetDefaultKeepFaceAliveParameters() const;
+  Result SetKeepFaceAliveParameter(KeepFaceAliveParameter param, f32 value) const;
 
   // Enables only the specified tracks. 
   // Status of other tracks remain unchanged.

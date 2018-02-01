@@ -204,14 +204,19 @@ void TrackLayerComponent::ApplyFaceLayersToAnim(Animation* anim,
 }
 
 
-void TrackLayerComponent::KeepFaceAlive(const std::map<LiveIdleAnimationParameter, f32>& params)
+void TrackLayerComponent::KeepFaceAlive(const std::map<KeepFaceAliveParameter, f32>& params)
 {
   _faceLayerManager->KeepFaceAlive(params);
 }
 
-void TrackLayerComponent::RemoveKeepFaceAlive(s32 duration_ms)
+void TrackLayerComponent::RemoveKeepFaceAlive(u32 duration_ms)
 {
   _faceLayerManager->RemoveKeepFaceAlive(duration_ms);
+}
+  
+void TrackLayerComponent::ResetKeepFaceAliveTimers()
+{
+  _faceLayerManager->ResetKeepFaceAliveTimers();
 }
 
 void TrackLayerComponent::AddBlink()
@@ -228,7 +233,7 @@ AnimationTag TrackLayerComponent::AddSquint(const std::string& name, f32 squintS
   return _faceLayerManager->AddPersistentLayer(name, faceTrack);
 }
 
-void TrackLayerComponent::RemoveSquint(AnimationTag tag, s32 duration_ms)
+void TrackLayerComponent::RemoveSquint(AnimationTag tag, u32 duration_ms)
 {
   _faceLayerManager->RemovePersistentLayer(tag, duration_ms);
 }
@@ -270,7 +275,7 @@ void TrackLayerComponent::AddOrUpdateEyeShift(AnimationTag& tag,
   }
 }
 
-void TrackLayerComponent::RemoveEyeShift(AnimationTag tag, s32 duration_ms)
+void TrackLayerComponent::RemoveEyeShift(AnimationTag tag, u32 duration_ms)
 {
   _faceLayerManager->RemovePersistentLayer(tag, duration_ms);
 }

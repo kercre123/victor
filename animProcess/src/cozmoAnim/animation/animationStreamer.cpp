@@ -106,7 +106,7 @@ namespace Cozmo {
     DEV_ASSERT(nullptr != _context->GetDataLoader()->GetCannedAnimations(), "AnimationStreamer.Init.NullCannedAnimationsContainer");
     _animationContainer = _context->GetDataLoader()->GetCannedAnimations();
     
-    SetDefaultParams();
+    SetDefaultKeepFaceAliveParams();
     
     // TODO: Restore ability to subscribe to messages here?
     //       It's currently hard to do with CPPlite messages.
@@ -487,21 +487,41 @@ namespace Cozmo {
     return res;
   }
   
-  void AnimationStreamer::SetParam(LiveIdleAnimationParameter whichParam, float newValue)
+  void AnimationStreamer::SetParam(KeepFaceAliveParameter whichParam, float newValue)
   {
-    if(LiveIdleAnimationParameter::BlinkSpacingMaxTime_ms == whichParam)
-    {
-      const auto maxSpacing_ms = _trackLayerComponent->GetMaxBlinkSpacingTimeForScreenProtection_ms();
-      if( newValue > maxSpacing_ms)
+    switch(whichParam) {
+      case KeepFaceAliveParameter::BlinkSpacingMaxTime_ms:
       {
-        PRINT_NAMED_WARNING("AnimationStreamer.SetParam.MaxBlinkSpacingTooLong",
-                            "Clamping max blink spacing to %dms to avoid screen burn-in",
-                            maxSpacing_ms);
-        
-        newValue = maxSpacing_ms;
+        const auto maxSpacing_ms = _trackLayerComponent->GetMaxBlinkSpacingTimeForScreenProtection_ms();
+        if( newValue > maxSpacing_ms)
+        {
+          PRINT_NAMED_WARNING("AnimationStreamer.SetParam.MaxBlinkSpacingTooLong",
+                              "Clamping max blink spacing to %dms to avoid screen burn-in",
+                              maxSpacing_ms);
+          
+          newValue = maxSpacing_ms;
+        }
+        // intentional fall through
       }
+      case KeepFaceAliveParameter::BlinkSpacingMinTime_ms:
+      case KeepFaceAliveParameter::EyeDartMinDuration_ms:
+      case KeepFaceAliveParameter::EyeDartMaxDuration_ms:
+      case KeepFaceAliveParameter::EyeDartSpacingMinTime_ms:
+      case KeepFaceAliveParameter::EyeDartSpacingMaxTime_ms:
+      {
+        if (_keepFaceAliveParams[whichParam] != newValue) {
+          _trackLayerComponent->ResetKeepFaceAliveTimers();
+        }
+        break;
+      }
+      default:
+        break;
     }
-    _liveAnimParams[whichParam] = newValue;
+
+    _keepFaceAliveParams[whichParam] = newValue;
+    PRINT_CH_INFO(kLogChannelName,
+                  "AnimationStreamer.SetParam", "%s : %f", 
+                  EnumToString(whichParam), newValue);
   }
   
   
@@ -971,9 +991,9 @@ namespace Cozmo {
         _wasAnimationInterruptedWithNothing = false;
       }
       
-      if(!FACTORY_TEST)
+      if(_enableKeepFaceAlive && !FACTORY_TEST)
       {
-        _trackLayerComponent->KeepFaceAlive(_liveAnimParams);
+        _trackLayerComponent->KeepFaceAlive(_keepFaceAliveParams);
       }
     }
     
@@ -1049,39 +1069,27 @@ namespace Cozmo {
     return lastResult;
   } // AnimationStreamer::Update()
   
+  void AnimationStreamer::EnableKeepFaceAlive(bool enable, u32 disableTimeout_ms)
+  {
+    if (_enableKeepFaceAlive && !enable) {
+      _trackLayerComponent->RemoveKeepFaceAlive(disableTimeout_ms);
+    }
+    _enableKeepFaceAlive = enable;
+  }
   
-  
-  void AnimationStreamer::SetDefaultParams()
+  void AnimationStreamer::SetDefaultKeepFaceAliveParams()
   {
 
 #   define SET_DEFAULT(__NAME__, __VALUE__) \
-    SetParam(LiveIdleAnimationParameter::__NAME__,  static_cast<f32>(__VALUE__))
-    
+    SetParam(KeepFaceAliveParameter::__NAME__,  static_cast<f32>(__VALUE__))
+
+    PRINT_CH_INFO(kLogChannelName, "AnimationStreamer.SetDefaultKeepFaceAliveParams", "");
+
     SET_DEFAULT(BlinkSpacingMinTime_ms, 3000);
     SET_DEFAULT(BlinkSpacingMaxTime_ms, 4000);
-    SET_DEFAULT(TimeBeforeWiggleMotions_ms, 1000);
-    SET_DEFAULT(BodyMovementSpacingMin_ms, 100);
-    SET_DEFAULT(BodyMovementSpacingMax_ms, 1000);
-    SET_DEFAULT(BodyMovementDurationMin_ms, 250);
-    SET_DEFAULT(BodyMovementDurationMax_ms, 1500);
-    SET_DEFAULT(BodyMovementSpeedMinMax_mmps, 10);
-    SET_DEFAULT(BodyMovementStraightFraction, 0.5f);
-    SET_DEFAULT(LiftMovementDurationMin_ms, 50);
-    SET_DEFAULT(LiftMovementDurationMax_ms, 500);
-    SET_DEFAULT(LiftMovementSpacingMin_ms,  250);
-    SET_DEFAULT(LiftMovementSpacingMax_ms, 2000);
-    SET_DEFAULT(LiftHeightMean_mm, 35);
-    SET_DEFAULT(LiftHeightVariability_mm, 8);
-    SET_DEFAULT(HeadMovementDurationMin_ms, 50);
-    SET_DEFAULT(HeadMovementDurationMax_ms, 500);
-    SET_DEFAULT(HeadMovementSpacingMin_ms, 250);
-    SET_DEFAULT(HeadMovementSpacingMax_ms, 1000);
-    SET_DEFAULT(HeadAngleVariability_deg, 6);
     SET_DEFAULT(EyeDartSpacingMinTime_ms, 250);
     SET_DEFAULT(EyeDartSpacingMaxTime_ms, 1000);
     SET_DEFAULT(EyeDartMaxDistance_pix, 6);
-    SET_DEFAULT(EyeDartMinScale, 0.92f);
-    SET_DEFAULT(EyeDartMaxScale, 1.08f);
     SET_DEFAULT(EyeDartMinDuration_ms, 50);
     SET_DEFAULT(EyeDartMaxDuration_ms, 200);
     SET_DEFAULT(EyeDartOuterEyeScaleIncrease, 0.1f);
@@ -1090,7 +1098,7 @@ namespace Cozmo {
     
 #   undef SET_DEFAULT
 
-  } // SetDefaultParams()
+  } // SetDefaultKeepFaceAliveParams()
   
   const std::string AnimationStreamer::GetStreamingAnimationName() const
   {

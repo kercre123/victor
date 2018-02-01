@@ -72,6 +72,9 @@ void AnimationComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& 
       helper.SubscribeGameToEngine<MessageGameToEngineTag::DisplayProceduralFace>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::SetFaceHue>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::DisplayFaceImageBinaryChunk>();
+      helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableKeepFaceAlive>();
+      helper.SubscribeGameToEngine<MessageGameToEngineTag::SetKeepFaceAliveParameters>();
+
     }
   }
   
@@ -427,6 +430,20 @@ Result AnimationComponent::DisplayFaceImage(const Vision::ImageRGB& img, u32 dur
   return DisplayFaceImage(img565, duration_ms, interruptRunning);
 }
 
+Result AnimationComponent::EnableKeepFaceAlive(bool enable, u32 disableTimeout_ms) const
+{
+  return _robot->SendRobotMessage<RobotInterface::EnableKeepFaceAlive>(disableTimeout_ms, enable);
+}
+
+Result AnimationComponent::SetDefaultKeepFaceAliveParameters() const
+{
+  return _robot->SendRobotMessage<RobotInterface::SetDefaultKeepFaceAliveParameters>();
+}
+
+Result AnimationComponent::SetKeepFaceAliveParameter(KeepFaceAliveParameter param, f32 value) const
+{
+  return _robot->SendRobotMessage<RobotInterface::SetKeepFaceAliveParameter>(value, param);
+}
 
 
 // ================ Game message handlers ======================
@@ -485,6 +502,28 @@ void AnimationComponent::HandleMessage(const ExternalInterface::DisplayFaceImage
   // Convert ExternalInterface version of DisplayFaceImage to RobotInterface version and send
   _robot->SendRobotMessage<RobotInterface::DisplayFaceImageBinaryChunk>(msg.duration_ms, msg.faceData, msg.imageId, msg.chunkIndex);
 }
+
+template<>
+void AnimationComponent::HandleMessage(const ExternalInterface::EnableKeepFaceAlive& msg)
+{
+  EnableKeepFaceAlive(msg.enable, msg.disableTimeout_ms);
+}
+
+template<>
+void AnimationComponent::HandleMessage(const ExternalInterface::SetKeepFaceAliveParameters& msg)
+{
+  if (msg.setUnspecifiedToDefault) {
+    SetDefaultKeepFaceAliveParameters();
+  }
+  
+  if(ANKI_VERIFY(msg.paramNames.size() == msg.paramValues.size(), "AnimationComponent.HandleSetKeepFaceAliveParameters.NameValuePairMismatch", ""))
+  {
+    for (int i=0; i<msg.paramNames.size(); ++i) {
+      SetKeepFaceAliveParameter( msg.paramNames.at(i), msg.paramValues.at(i) );
+    }
+  }
+}
+
 
 // ================ Robot message handlers ======================
 

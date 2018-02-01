@@ -6,19 +6,19 @@
  */
 
 #include "clad/audio/audioMessage.clad"
-#include "clad/types/robotStatusAndActions.clad"
-#include "clad/types/ledTypes.clad"
+#include "clad/robotInterface/otaMessages.clad"
 #include "clad/types/animationTypes.clad"
-#include "clad/types/robotTestModes.clad"
+#include "clad/types/cameraFOVInfo.clad"
+#include "clad/types/controllerChannels.clad"
 #include "clad/types/dockingSignals.clad"
 #include "clad/types/imu.clad"
-#include "clad/types/controllerChannels.clad"
+#include "clad/types/keepFaceAliveParameters.clad"
+#include "clad/types/ledTypes.clad"
+#include "clad/types/motorTypes.clad"
 #include "clad/types/proceduralFaceTypes.clad"
 #include "clad/types/proxMessages.clad"
-#include "clad/robotInterface/otaMessages.clad"
-#include "clad/types/cameraFOVInfo.clad"
-#include "clad/types/motorTypes.clad"
-
+#include "clad/types/robotStatusAndActions.clad"
+#include "clad/types/robotTestModes.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -271,6 +271,22 @@ message AbortAnimation
 {
 }
 
+message EnableKeepFaceAlive
+{
+  uint_32 disableTimeout_ms,  // If enable == false, the amount of time to wait before actually disabling
+  bool    enable
+}
+
+message SetDefaultKeepFaceAliveParameters
+{
+}
+
+message SetKeepFaceAliveParameter 
+{
+  float_32               value,
+  KeepFaceAliveParameter param,
+}
+
 message LockAnimTracks
 {
   uint_8 whichTracks    // See AnimTrackFlags
@@ -473,6 +489,10 @@ union EngineToRobot
   SetFaceHue                    setFaceHue                  = 0x57,
   DisplayFaceImageBinaryChunk   displayFaceImageBinaryChunk = 0x58,
   DisplayFaceImageRGBChunk      displayFaceImageRGBChunk    = 0x59,
+
+  SetDefaultKeepFaceAliveParameters setDefaultKeepFaceAliveParameters = 0x5A,
+  SetKeepFaceAliveParameter     setKeepFaceAliveParameter   = 0x5B,
+  EnableKeepFaceAlive           enableKeepFaceAlive         = 0x5C,
 
   AudioEngine::Multiplexer::PostAudioEvent        postAudioEvent       = 0x70,
   AudioEngine::Multiplexer::StopAllAudioEvents    stopAllAudioEvents   = 0x71,

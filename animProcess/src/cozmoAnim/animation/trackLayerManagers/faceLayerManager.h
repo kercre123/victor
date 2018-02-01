@@ -17,7 +17,7 @@
 
 #include "cozmoAnim/animation/trackLayerManagers/iTrackLayerManager.h"
 
-#include "clad/types/liveIdleAnimationParameters.h"
+#include "clad/types/keepFaceAliveParameters.h"
 
 #include <map>
 
@@ -43,10 +43,14 @@ public:
                             bool shouldReplace);
   
   // Generates and adds keyframes to various layers to keep the face "alive"
-  void KeepFaceAlive(const std::map<LiveIdleAnimationParameter,f32>& params);
+  void KeepFaceAlive(const std::map<KeepFaceAliveParameter,f32>& params);
   
   // Remove all keep face alive layers
-  void RemoveKeepFaceAlive(s32 duration_ms);
+  void RemoveKeepFaceAlive(u32 duration_ms);
+  
+  // Resets nextEyeDart_ms and nextBlink_ms so that they are computed anew
+  // on the next KeepFaceAlive() call.
+  void ResetKeepFaceAliveTimers();
   
   // Generates a single keyframe with shifted eyes according to the arguments
   void GenerateEyeShift(f32 xPix, f32 yPix,
@@ -58,7 +62,7 @@ public:
                         ProceduralFaceKeyFrame& frame) const;
   
   // Generates a single keyframe with shifted eyes according to the passed in params
-  void GenerateEyeShift(const std::map<LiveIdleAnimationParameter,f32>& params,
+  void GenerateEyeShift(const std::map<KeepFaceAliveParameter,f32>& params,
                         ProceduralFaceKeyFrame& frame) const;
   
   // Generates a track of all keyframes necessary to make the eyes blink

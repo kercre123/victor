@@ -117,7 +117,7 @@ bool FaceLayerManager::GetFaceHelper(Animations::Track<ProceduralFaceKeyFrame>& 
 } // GetFaceHelper()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void FaceLayerManager::RemoveKeepFaceAlive(s32 duration_ms)
+void FaceLayerManager::RemoveKeepFaceAlive(u32 duration_ms)
 {
   if(kNotAnimatingTag != _eyeDartTag) {
     RemovePersistentLayer(_eyeDartTag, duration_ms);
@@ -127,7 +127,7 @@ void FaceLayerManager::RemoveKeepFaceAlive(s32 duration_ms)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<typename T>
-static inline T GetParam(const std::map<LiveIdleAnimationParameter,f32>& params, LiveIdleAnimationParameter name) {
+static inline T GetParam(const std::map<KeepFaceAliveParameter,f32>& params, KeepFaceAliveParameter name) {
   return static_cast<T>(params.at(name));
 }
 
@@ -151,10 +151,10 @@ void FaceLayerManager::GenerateEyeShift(f32 xPix, f32 yPix,
   frame = std::move(keyframe);
 }
 
-void FaceLayerManager::GenerateEyeShift(const std::map<LiveIdleAnimationParameter,f32>& params,
+void FaceLayerManager::GenerateEyeShift(const std::map<KeepFaceAliveParameter,f32>& params,
                                          ProceduralFaceKeyFrame& frame) const
 {
-  using Param = LiveIdleAnimationParameter;
+  using Param = KeepFaceAliveParameter;
   
   const f32 MaxDist = GetParam<f32>(params, Param::EyeDartMaxDistance_pix);
   const f32 xDart = GetRNG().RandIntInRange(-MaxDist, MaxDist);
@@ -190,9 +190,9 @@ void FaceLayerManager::GenerateBlink(Animations::Track<ProceduralFaceKeyFrame>& 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void FaceLayerManager::KeepFaceAlive(const std::map<LiveIdleAnimationParameter,f32>& params)
+void FaceLayerManager::KeepFaceAlive(const std::map<KeepFaceAliveParameter,f32>& params)
 {
-  using Param = LiveIdleAnimationParameter;
+  using Param = KeepFaceAliveParameter;
   
   _nextBlink_ms   -= ANIM_TIME_STEP_MS;
   _nextEyeDart_ms -= ANIM_TIME_STEP_MS;
@@ -279,6 +279,13 @@ void FaceLayerManager::KeepFaceAlive(const std::map<LiveIdleAnimationParameter,f
 } // KeepFaceAlive()
 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void FaceLayerManager::ResetKeepFaceAliveTimers()
+{
+  _nextBlink_ms = 0;
+  _nextEyeDart_ms = 0;
+}
+    
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 u32 FaceLayerManager::GenerateFaceDistortion(float distortionDegree,
                                                Animations::Track<ProceduralFaceKeyFrame>& track) const

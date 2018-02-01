@@ -63,6 +63,7 @@ protected:
   
   void PickOrPlaceObject();
   void MountSelectedCharger();
+  void FlipSelectedBlock();
   
   void PopAWheelie();
   void RollObject();
@@ -90,8 +91,10 @@ protected:
   
   void ToggleImageStreaming();
   void ToggleEyeRendering();
-
-  void FlipSelectedBlock();
+  
+  void ToggleKeepFaceAliveEnable();
+  void SetDefaultKeepFaceAliveParams();
+  void SetKeepFaceAliveParams();
   
   void RequestSingleImageToGame();
   void ToggleImageStreamingToGame();

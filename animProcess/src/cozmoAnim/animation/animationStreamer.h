@@ -20,7 +20,7 @@
 #include "coretech/vision/engine/image.h"
 #include "cannedAnimLib/animation.h"
 #include "cannedAnimLib/track.h"
-#include "clad/types/liveIdleAnimationParameters.h"
+#include "clad/types/keepFaceAliveParameters.h"
 
 #include <list>
 #include <memory>
@@ -89,10 +89,11 @@ namespace Cozmo {
     const Animation* GetCannedAnimation(const std::string& name) const;
     const CannedAnimationContainer& GetCannedAnimationContainer() const { return *_animationContainer; }
 
-    void SetDefaultParams();
+    void EnableKeepFaceAlive(bool enable, u32 disableTimeout_ms);
     
-    // Overload of SetParam from base class. Mostly just calls base class method.
-    void SetParam(LiveIdleAnimationParameter whichParam, float newValue);
+    void SetDefaultKeepFaceAliveParams();
+    
+    void SetParam(KeepFaceAliveParameter whichParam, float newValue);
     
     // Set/Reset the amount of time to wait before forcing KeepFaceAlive() after the last stream has stopped
     void SetKeepFaceAliveLastStreamTimeout(const f32 time_s)
@@ -223,23 +224,14 @@ namespace Cozmo {
     // Which tracks are currently playing
     u8 _tracksInUse;
     
-    
-    // For live animation
-    std::map<LiveIdleAnimationParameter, f32> _liveAnimParams;
+    // For keep face alive animations
+    std::map<KeepFaceAliveParameter, f32> _keepFaceAliveParams;
+    bool _enableKeepFaceAlive = true;
 
-    s32            _bodyMoveDuration_ms  = 0;
-    s32            _liftMoveDuration_ms  = 0;
-    s32            _headMoveDuration_ms  = 0;
-    s32            _bodyMoveSpacing_ms   = 0;
-    s32            _liftMoveSpacing_ms   = 0;
-    s32            _headMoveSpacing_ms   = 0;
-    
     std::unique_ptr<Audio::AnimationAudioClient> _audioClient;
     
     // Time to wait before forcing KeepFaceAlive() after the latest stream has stopped
     f32 _longEnoughSinceLastStreamTimeout_s;
-    
-    AnimationTag _liveIdleTurnEyeShiftTag = kNotAnimatingTag;
 
     // Image buffer that is fed directly to face display (in RGB565 format)
     Vision::ImageRGB565 _faceDrawBuf;
