@@ -19,12 +19,13 @@ echo release version \'$version\'
 
 #clean
 safefile=fixture.safe
-manifest=$(printf fixture%03d $version).manifest
+manifest=manifest
 safefileVxx=$(printf fixture%03d $version).safe
 zipfileVxx=$(printf firmware%03d $version).zip
+buildlog=build.log
 echo cleaning
 rm -rf build
-rm -f $safefile $safefileVxx $zipfileVxx $manifest
+rm -f $safefile $safefileVxx $zipfileVxx $manifest $buildlog
 
 #clear debug flag for release build
 echo clear debug flag
@@ -34,7 +35,7 @@ sleep 1 #delay for file system changes to clear cache
 #keil command line opts: http://www.keil.com/support/man/docs/uv4/uv4_commandline.htm
 echo building project
 Tstart=$(($(date +%s%N)/1000000))
-timeout 90.0s $keil -b $project -j0
+timeout 90.0s $keil -b $project -j0 -o $buildlog
 builderr=$?
 Tend=$(($(date +%s%N)/1000000))
 
@@ -49,14 +50,15 @@ echo $(printf "build-time-ms:%d" $(($Tend-$Tstart))) >> $manifest
 echo $(printf build-err:%d $builderr) >> $manifest
 
 #package for shipment
-if [ $builderr = 0 ]; then 
+if [ $builderr = 0 -o $builderr = 1 ]; then #Note: keil return 1=warnings-only
   echo build: "("$builderr")" succeess in $(($Tend-$Tstart))ms
   cp $safefile $safefileVxx
   #XXX: bootloader tools need update to support 'fixture###.safe' filenames
   #zip -9T $zipfileVxx $safefileVxx $manifest
-  zip -9T $zipfileVxx $safefile $manifest
+  zip -9T $zipfileVxx $safefile $manifest $buildlog
 else
   echo build: "("$builderr")" ---FAILED--- in $(($Tend-$Tstart))ms
+  rm -f $safefile #Don't leave a dirty safe laying around
 fi
 
 echo done
