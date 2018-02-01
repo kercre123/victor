@@ -5,6 +5,7 @@
 
 namespace Opto {
   void init(void);
+  void stop(void);
   void tick(void);
   void transmit(BodyToHead *payload);
 }

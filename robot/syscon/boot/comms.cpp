@@ -5,6 +5,7 @@
 #include "flash.h"
 #include "common.h"
 #include "hardware.h"
+#include "power.h"
 
 #include "stm32f0xx.h"
 
@@ -162,6 +163,10 @@ extern "C" void USART1_IRQHandler(void) {
   }
 
   switch (inbound.header.payload_type) {
+  case PAYLOAD_SHUT_DOWN:
+    Power::setMode(POWER_STOP);
+    break ;
+
   case PAYLOAD_ERASE:
     Flash::eraseApplication();
     break ;

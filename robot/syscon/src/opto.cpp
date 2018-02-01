@@ -11,8 +11,6 @@
 
 //#define DISABLE_TOF
 
-extern "C" void SystemIdle();
-
 enum I2C_Op {
   I2C_DONE,
   I2C_HOLD,
@@ -193,7 +191,7 @@ static bool multiOp(I2C_Op func, uint8_t channel, uint8_t slave, uint8_t reg, in
     };
     i2c_op = opTable;
     kickOff();
-    while (i2c_op != i2c_hold) SystemIdle();
+    while (i2c_op != i2c_hold) __wfi();
   } while (total_bytes < size);
 
   return false;
@@ -728,6 +726,10 @@ void Opto::init(void) {
   NVIC_EnableIRQ(I2C2_IRQn);
 
   initHardware();
+}
+
+void Opto::stop(void) {
+  // TODO
 }
 
 void Opto::tick(void) {

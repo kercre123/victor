@@ -190,13 +190,16 @@ void Analog::tick(void) {
     } else if (hold_count >= POWER_DOWN_TIME) {
       disableVMain();
       Lights::disable();
+    } else {
+      Power::setMode(POWER_ACTIVE);
+      enableVMain();
     }
   } else {
     if (hold_count >= POWER_WIPE_TIME) {
       // Switch back to transmission mode
       BODY_TX::mode(MODE_ALTERNATE);
     } else if (hold_count >= POWER_DOWN_TIME) {
-      Power::stop();
+      Power::setMode(POWER_STOP);
     }
 
     hold_count = 0;

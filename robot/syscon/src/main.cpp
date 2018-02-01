@@ -13,11 +13,6 @@
 #include "mics.h"
 #include "touch.h"
 
-extern "C" void SystemIdle() {
-  __asm("WFI");
-  Power::eject();
-}
-
 void Main_Execution(void) {
   // Kick watch dog when we enter our service routine
   IWDG->KR = 0xAAAA;
@@ -26,7 +21,7 @@ void Main_Execution(void) {
   Comms::tick();
   Motors::tick();
   Contacts::tick();
-  Opto::tick();
+  if (Power::sensorsValid()) Opto::tick();
   Analog::tick();
   Lights::tick();
   Touch::tick();
@@ -45,18 +40,14 @@ int main (void) {
   Timer::init();
   Comms::init();
   Motors::init();
-  Encoders::init();
   Lights::init();
   Touch::init();
 
   __enable_irq(); // Start firing interrupts
 
-  // This is all driven by IRQ logic
-  Opto::init();
-
   // Clear boot code lights
   Lights::boot(0);
 
   // Low priority interrupts are now our main execution
-  for (;;) SystemIdle();
+  for (;;) Power::tick();
 }

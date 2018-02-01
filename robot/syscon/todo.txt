@@ -1,7 +1,13 @@
 DVT2
-* Write /96 decimator
+x wake from 'off state' on charger with button
+x Always transmit mic data
+x add message for head to turn off cozmo power (head and body)
+x add "sensors valid" flag
+
+* report up opto sensors for self test
+* turn off encoders / TOF / cliff sensors when drop exchange has timed out
+* Add temperature to ADC output
+* 3.3v auto power off
+
 * Add cube encryption
 * Put Accelerometer to sleep on boot
-
-DVT3
-* Finalize cube application

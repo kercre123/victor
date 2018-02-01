@@ -42,6 +42,10 @@ enum {
 };
 typedef uint32_t RobotMotor;
 
+enum {
+  RUNNING_FLAGS_SENSORS_VALID = 1
+};
+
 // ENUM DropSensor
 enum {
   DROP_SENSOR_FRONT_LEFT  = 0,
@@ -62,7 +66,8 @@ enum {
   PAYLOAD_ERASE       = 0x7878,
   PAYLOAD_VALIDATE    = 0x7374,
   PAYLOAD_DFU_PACKET  = 0x6675,
-  PAYLOAD_TYPE_COUNT  = 8,
+  PAYLOAD_SHUT_DOWN   = 0x6473,
+  PAYLOAD_TYPE_COUNT  = 9,
 };
 typedef uint16_t PayloadId;
 
@@ -192,7 +197,7 @@ struct SpineMessageFooter
 struct BodyToHead
 {
   uint32_t framecounter;
-  PowerState powerState;
+  uint32_t flags;
   struct MotorState motor[4];
   uint16_t cliffSense[4];
   struct BatteryState battery;

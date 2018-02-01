@@ -5,6 +5,8 @@
 #include "vectors.h"
 #include "flash.h"
 #include "motors.h"
+#include "encoders.h"
+#include "opto.h"
 
 #include "contacts.h"
 
@@ -30,39 +32,39 @@ static const uint32_t APB2_CLOCKS = 0
               | RCC_APB2ENR_ADC1EN
               ;
 
-static volatile bool eraseSystem = false;
-static volatile bool ejectSystem = false;
+static PowerMode currentState = POWER_UNINIT;
+static PowerMode desiredState = POWER_CALM;
+static bool optoActive = false;
+
+static void updatePowerState(void) {
+  switch (currentState) {
+    case POWER_STOP:
+      POWER_EN::pull(PULL_NONE);
+      POWER_EN::reset();
+      POWER_EN::mode(MODE_OUTPUT);
+      break ;
+    default:
+      POWER_EN::pull(PULL_UP);
+      POWER_EN::mode(MODE_INPUT);
+      break ;
+  }
+}
 
 void Power::init(void) {
   RCC->APB1ENR |= APB1_CLOCKS;
   RCC->APB2ENR |= APB2_CLOCKS;
 
-  nVDDs_EN::reset();
-  nVDDs_EN::mode(MODE_OUTPUT);
+  updatePowerState();
 }
 
-void Power::stop(void) {
-  nVDDs_EN::set();
-  POWER_EN::pull(PULL_NONE);
-  POWER_EN::reset();
-  POWER_EN::mode(MODE_OUTPUT);
-}
-
-void Power::softReset(bool erase) {
-  eraseSystem = erase;
-  ejectSystem = true;
-}
-
-void Power::eject(void) {
-  if (!ejectSystem) return ;
-
-  if (eraseSystem) {
-    // Mark the flash application space for deletion
-    for (int i = 0; i < MAX_FAULT_COUNT; i++) {
-      Flash::writeFaultReason(FAULT_USER_WIPE);
-    }
+static void markForErase(void) {
+  // Mark the flash application space for deletion
+  for (int i = 0; i < MAX_FAULT_COUNT; i++) {
+    Flash::writeFaultReason(FAULT_USER_WIPE);
   }
+}
 
+static void enterBootloader(void) {
   __disable_irq();
 
   NVIC->ICER[0]  = ~0;  // Disable all interrupts
@@ -71,7 +73,7 @@ void Power::eject(void) {
   Motors::stop();
 
   // Power down accessessories
-  nVDDs_EN::set();
+  nVENC_EN::set();
 
   // Disable our DMA channels
   DMA1_Channel1->CCR = 0;
@@ -132,4 +134,44 @@ void Power::eject(void) {
 
   // Pass control back to the reset handler
   SoftReset(*(uint32_t*)0x08000004);
+}
+
+bool Power::sensorsValid() {
+  return optoActive;
+}
+
+void Power::setMode(PowerMode set) {
+  desiredState = set;
+}
+
+void Power::tick(void) {
+  PowerMode desired = desiredState;
+
+  if (currentState != desired) {
+    switch (desired) {
+    case POWER_ACTIVE:
+      Encoders::init();
+      Opto::init();
+      optoActive = true;
+      break ;
+    case POWER_CALM:
+      optoActive = false;
+      Opto::stop();
+      Encoders::stop();
+      break ;
+    case POWER_UNINIT:
+    case POWER_ERASE:
+      markForErase();
+      enterBootloader();
+      break ;
+    case POWER_STOP:
+      Opto::stop();
+      Encoders::stop();
+      break ;
+    }
+    currentState = desired;
+    updatePowerState();
+  }
+
+  __asm("WFI");
 }
