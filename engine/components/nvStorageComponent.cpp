@@ -57,7 +57,7 @@
 #include "util/logging/logging.h"
 
 #ifdef SIMULATOR
-#include "androidHAL/androidHAL.h"
+#include "camera/cameraService.h"
 #include "clad/types/imageTypes.h"
 #endif // ifdef SIMULATOR
 
@@ -684,7 +684,7 @@ bool NVStorageComponent::HasPendingRequests()
 void NVStorageComponent::LoadSimData()
 {
   // Store simulated camera calibration data
-  const CameraCalibration* camCalib = AndroidHAL::getInstance()->GetHeadCamInfo();
+  const CameraCalibration* camCalib = CameraService::getInstance()->GetHeadCamInfo();
   
   _tagDataMap[static_cast<u32>(NVEntryTag::NVEntry_CameraCalib)].assign(reinterpret_cast<const u8*>(camCalib), reinterpret_cast<const u8*>(camCalib) + sizeof(*camCalib));
 }

@@ -153,7 +153,7 @@ def subdir_glob(glob_specs, excludes=None, prefix=None, build_env=None, search_b
 class FindSrc(object):
     """Encapsulate state and processes associated with find source files."""
 
-    ANKI_BUILD_PLATFORMS = ('android', 'ios', 'mac', 'linux', 'windows')
+    ANKI_BUILD_PLATFORMS = ('android', 'ios', 'mac', 'linux', 'vicos', 'windows')
     ANKI_CXX_SRC_EXTS = ( '.c', '.cpp', '.cc' )
     ANKI_GO_SRC_EXTS = ( '.go', )
     ANKI_CXX_INCLUDE_EXTS = ( '.h', '.hpp', '.inl', '.def' )
@@ -342,8 +342,18 @@ def go_project(name,
 
     file_map = {
         name + ".srcs.lst" : srcs + deps,
-        name + ".godir.lst" : [dir],
-        name + ".gopath.lst" : [gopath],
+    }
+
+    return file_map
+
+def go_pathfiles(name,
+                 search_base,
+                 gopath,
+                 dir):
+
+    file_map = {
+        name + ".godir.lst" : [search_base + '/' + dir],
+        name + ".gopath.lst" : [search_base + '/' + gopath],
     }
 
     return file_map
@@ -381,6 +391,12 @@ class BuildProcessor(object):
         filemap = go_project(name, self.build_env.dirname, gopath, dir)
         self.projects[name] = filemap
 
+    def _go_pathfiles(self, name,
+                gopath,
+                dir):
+        filemap = go_pathfiles(name, self.build_env.dirname, gopath, dir)
+        self.projects[name] = filemap
+
     def _cxx_src_glob(self, include_paths, includes=[], excludes=[], platform=None):
         return cxx_src_glob(self.build_env.dirname, include_paths, includes, excludes, platform)
 
@@ -398,11 +414,24 @@ class BuildProcessor(object):
     def _include_defs(self, name):
         pass
 
-    def process_build_file(self, path):
-        with open(path, 'r') as f:
-            contents = f.read()
+    def _nofunc_stub(self, *args, **kwargs):
+        return []
 
-        default_globals = {
+    def process_go_file(self, path):
+        go_globals = {
+            'include_defs': self._nofunc_stub,
+            'cxx_src_glob': self._nofunc_stub,
+            'cxx_header_glob': self._nofunc_stub,
+            'cxx_project': self._nofunc_stub,
+            'go_project': self._go_pathfiles,
+            'asset_project': self._nofunc_stub,
+            'glob': self._nofunc_stub,
+            'subdir_glob': self._nofunc_stub,
+        }
+        return self._process_file_internal(path, go_globals)
+
+    def process_build_file(self, path):
+        normal_globals = {
             'include_defs': self._include_defs,
             'cxx_src_glob': self._cxx_src_glob,
             'cxx_header_glob': self._cxx_header_glob,
@@ -412,6 +441,11 @@ class BuildProcessor(object):
             'glob': self._glob,
             'subdir_glob': self._subdir_glob,
         }
+        return self._process_file_internal(path, normal_globals)
+
+    def _process_file_internal(self, path, default_globals):
+        with open(path, 'r') as f:
+            contents = f.read()
 
         self.build_env.dirname = os.path.dirname(path)
 
@@ -447,11 +481,19 @@ if __name__ == '__main__':
                         nargs='+',
                         help="List of BUILD.in files to process")
 
+    parser.add_argument('--go-output', '-g',
+                        action='store_true',
+                        default=False,
+                        help="Output Go files exclusively (otherwise no Go output)")
+
     options = parser.parse_args()
 
     processor = BuildProcessor()
     for build_file in options.filelist:
-        mod = processor.process_build_file(build_file)
+        if not options.go_output:
+            mod = processor.process_build_file(build_file)
+        else:
+            mod = processor.process_go_file(build_file)
 
     output_dir = options.output
     ankibuild.util.File.mkdir_p(output_dir)

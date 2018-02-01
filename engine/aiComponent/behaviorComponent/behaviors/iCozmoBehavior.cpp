@@ -513,6 +513,10 @@ void ICozmoBehavior::OnDeactivatedInternal()
   _lastRunTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   CancelDelegates(false);
   
+  // Clear callbacks
+  _actionCallback = nullptr;
+  _behaviorDelegateCallback = nullptr;
+  
   if(_hasSetIdle){
     SmartRemoveIdleAnimation();
   }
@@ -684,7 +688,7 @@ Util::RandomGenerator& ICozmoBehavior::GetRNG() const {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::UpdateInternal()
 {
-  // fist call the behavior delegation callback if there is one
+  // first call the behavior delegation callback if there is one
   if( IsActivated() &&
       !IsControlDelegated() &&
       _behaviorDelegateCallback != nullptr ) {

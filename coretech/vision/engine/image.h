@@ -64,6 +64,9 @@ namespace Vision {
     
     void SetTimestamp(TimeStamp_t ts);
     TimeStamp_t GetTimestamp() const;
+
+    void SetImageId(u32 imageId);
+    u32 GetImageId() const;
     
     void Display(const char *windowName, s32 pauseTime_ms = 5) const;
     
@@ -146,6 +149,7 @@ namespace Vision {
 
   private:
     TimeStamp_t     _timeStamp;
+    u32             _imageId;
     
   }; // class ImageBase
   
@@ -369,6 +373,18 @@ namespace Vision {
   inline TimeStamp_t ImageBase<T>::GetTimestamp() const
   {
     return _timeStamp;
+  }
+
+  template<typename T>
+  inline void ImageBase<T>::SetImageId(u32 imageId)
+  {
+    _imageId = imageId;
+  }
+  
+  template<typename T>
+  inline u32 ImageBase<T>::GetImageId() const
+  {
+    return _imageId;
   }
   
   template<typename T>

@@ -277,8 +277,8 @@ namespace Cozmo {
                                                              eyeCenter.y());
 
     const Value glowFraction = kProcFace_GlowSizeMultiplier * faceData.GetParameter(whichEye, Parameter::GlowSize);
-    DEV_ASSERT(Util::IsFltGEZero(glowFraction), "ProceduralFaceDrawer.DrawEye.InvalidGlow");
-    
+    DEV_ASSERT(Util::InRange(glowFraction, -1.f, 1.0f), "ProceduralFaceDrawer.DrawEye.InvalidGlow");
+
     const SmallMatrix<2, 3, f32> W_glow = GetTransformationMatrix(faceData.GetParameter(whichEye, Parameter::EyeAngle),
                                                                   (1+glowFraction) * faceData.GetParameter(whichEye, Parameter::EyeScaleX),
                                                                   (1+glowFraction) * faceData.GetParameter(whichEye, Parameter::EyeScaleY),
@@ -458,11 +458,11 @@ namespace Cozmo {
       const u8 drawHue = std::round(255.f*hueFactor);
       
       const f32 satFactor = faceData.GetParameter(whichEye, Parameter::Saturation);
-      DEV_ASSERT(Util::InRange(satFactor, 0.f, 1.f), "ProceduralFaceDrawer.DrawEye.InvalidSaturation");
+      DEV_ASSERT(Util::InRange(satFactor, -1.f, 1.f), "ProceduralFaceDrawer.DrawEye.InvalidSaturation");
       const u8 drawSat = std::round(255.f * satFactor);
       
       const f32 eyeLightness = faceData.GetParameter(whichEye, Parameter::Lightness);
-      DEV_ASSERT(Util::InRange(eyeLightness, 0.f, 1.f), "ProceduralFaceDrawer.DrawEye.InvalidLightness");
+      DEV_ASSERT(Util::InRange(eyeLightness, -1.f, 1.f), "ProceduralFaceDrawer.DrawEye.InvalidLightness");
     
       const f32 scanlineOpacity = faceData.GetScanlineOpacity();
       DEV_ASSERT(Util::InRange(scanlineOpacity, 0.f, 1.f), "ProceduralFaceDrawer.DrawEye.InvalidScanlineOpacity");
