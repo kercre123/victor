@@ -2,7 +2,7 @@
 
 One of the main goals for Victor is to have _one_ build system and to put everything into it.
 Right now, the main build system is CMake. There are some key helper scripts, but they adhere to
-rules such that the build system is always the soure of truth about when output will be generated
+rules such that the build system is always the source of truth about when output will be generated
 from input. This document outlines the flow of information through the build. My hope is that after
 reading this, anyone will be able to add new components to the build system.
 
@@ -37,7 +37,7 @@ This script performs 3 main functions, in order:
     
     Primarily these function
     to provide a clear definition of what files will be included in each build target and to
-    limit adhoc glob specifications. They strictly enforce the contraint that files assigned to a build target
+    limit ad hoc glob specifications. They strictly enforce the constraint that files assigned to a build target
     must reside under the root of the target directory (the folder containing `CMakeLists.txt` and `BUILD.in`).
     This strategy prevents "out-of-tree" references to source files that results in hidden cross-target
     dependencies, which are the root of all evil from the perspective of the build system.
@@ -95,7 +95,7 @@ functions or macros that provide a declarative interface.
 
 The core unit of organization is a build target, typically a `library` or `executable`. Each target
 can then be assigned PUBLIC or PRIVATE properties such as link dependencies, include dependencies,
-compiler options, precompiler definitions. PRIVATE properties are only visible to the target, whereas
+compiler options, and preprocessor definitions. PRIVATE properties are only visible to the target, whereas
 PUBLIC properties are inherited by targets that depend on the current target. In this way, it is fairly
 straightforward to define the graph of dependencies.
 
@@ -103,7 +103,7 @@ straightforward to define the graph of dependencies.
 ## Helper scripts
 
 The main purpose of the build system (CMake in this case) is to determine when steps should be run or generate
-rules for an uderlying build system to determine when steps should be run. Because of this, it is important
+rules for an underlying build system to determine when steps should be run. Because of this, it is important
 that any programs invoked by the build do not include hidden logic that controls when something runs.
 In practice, this means that programs run by the build system should typically follow the
 [compiler pattern](http://www.catb.org/esr/writings/taoup/html/ch11s06.html#id2958199). Programs should
@@ -155,7 +155,7 @@ generated/cmake/
 ```
 
 The corresponding `CMakeLists.txt` file uses this definition to create a `library` target and then
-configures the library to define link and include deps, compiler options and precompiler definitions.
+configures the library to define link and include deps, compiler options and preprocessor definitions.
 
 from [`animProcess/CMakeLists.txt`](/animProcess/CMakeLists.txt)
 
@@ -192,7 +192,7 @@ PRIVATE
 # Add a post build step on Android to strip the library if necessary
 android_strip(TARGET victor_anim)
 
-# Define the precompiler definitions for victor_anim
+# Define the preprocessor definitions for victor_anim
 target_compile_definitions(victor_anim
 PRIVATE
   ANKICORETECH_USE_OPENCV=1

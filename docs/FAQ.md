@@ -2,6 +2,22 @@
 
 If you have a question that you get answered (e.g. in a Slack channel) which might plague others, consider creating an entry here for it.
 
+* How do I set my Android NDK?
+  - Follow the setup instructions for `adb` in [README.md](/README.md) to get the default Android NDK.
+  - Don't try to override the default NDK unless you know what you are doing!
+
+* How do I override the default NDK?
+  - If you set `${ANDROID_NDK}` in your environment, the build script ([`build-victor.sh`](/project/victor/build-victor.sh)) will use it.
+  - If you have `ndk.dir` set in your top-level `local.properties`, the environment script ([`envsetup.sh`](/project/victor/envsetup.sh)) will use it.
+  - If you have an NDK installed by Android Studio, the android locator script ([`android.py`](/tools/build/tools/ankibuild/android.py)) will use it.
+  - If you have an NDK set in your top-level `.buckconfig`, the android locator script ([`android.py`](/tools/build/tools/ankibuild/android.py)) will use it.
+
+* How do I fix my Android NDK?
+  - Check for each of the overrides listed above.
+  - Figure out which one is wrong.
+  - Fix it or remove it.
+  - If you change your NDK settings, you must force a full rebuild by removing your top-level `_build/android`.
+
 * How do I set a console var from Webots?
   - Set the `consoleVarName` and `consoleVarValue` strings under the WebotsKeyboardController in the scene tree at left. Press `]` (closing square bracket) to send the message to the engine to set the console var. 
   - Using `}` (closing curly brace) instead will use the name and value strings as a console _function_ and its arguments instead.

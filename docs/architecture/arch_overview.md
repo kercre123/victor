@@ -5,7 +5,7 @@
 * 3 main processes
   * Engine
      * Actions and behaviors
-     * Cube lights and accel (via BLE)
+     * Cube lights and accelerometer (via BLE)
      * Localization
      * Mapping
      * Path planning
