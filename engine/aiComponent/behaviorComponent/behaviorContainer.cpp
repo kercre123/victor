@@ -23,6 +23,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorDriveOffCharger.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorDrivePath.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorFindFaces.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorFindHome.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorGoHome.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorInteractWithFaces.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorKnockOverCubes.h"
@@ -434,6 +435,11 @@ ICozmoBehaviorPtr BehaviorContainer::CreateBehaviorBase(BehaviorClass behaviorTy
     case BehaviorClass::DriveOffCharger:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorDriveOffCharger(config));
+      break;
+    }
+    case BehaviorClass::FindHome:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorFindHome(config));
       break;
     }
     case BehaviorClass::GoHome:

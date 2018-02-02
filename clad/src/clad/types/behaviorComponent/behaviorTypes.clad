@@ -37,6 +37,7 @@ enum uint_8 BehaviorClass {
   FeedingEat,
   FeedingSearchForCube,
   FindFaces,
+  FindHome,
   FistBump,
   GoHome,
   GuardDog,
@@ -183,6 +184,8 @@ enum uint_8 BehaviorID {
 
   FindFaces_socialize,
   FindAndGoToHome,
+  FindAndRequestHome,
+  FindHome,
   FistBump,
   GoHome,
   GuardDog,
