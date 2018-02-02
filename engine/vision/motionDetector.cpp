@@ -870,7 +870,7 @@ bool MotionDetector::DetectPeripheralMotionHelper(Vision::Image &ratioImage,
   // The image has several disjoint components, try to join them
   {
     const int kernelSize = int(kMotionDetection_MorphologicalSize_pix / scaleMultiplier);
-    cv::Mat structuringElement = cv::getStructuringElement(cv::MORPH_ELLIPSE,
+    cv::Mat structuringElement = cv::getStructuringElement(cv::MORPH_RECT,
                                                            cv::Size(kernelSize, kernelSize));
     cv::Mat &cvRatioImage = ratioImage.get_CvMat_();
     // TODO morphologyEx might be slow. See VIC-1026
