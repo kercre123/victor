@@ -8,6 +8,7 @@
 #include "messages.h"
 #include "lights.h"
 #include "flash.h"
+#include "comms.h"
 
 //#define DISABLE_TOF
 
@@ -47,6 +48,9 @@ struct SequenceStepTimeouts
 };
 
 #define TARGET(value) sizeof(value), (void*)&value
+
+static bool aborted_setup = false;
+static BootFail failure;
 
 // Readback values
 static uint16_t cliffSense[4];
@@ -178,10 +182,16 @@ extern "C" void I2C2_IRQHandler(void) {
 }
 
 static bool multiOp(I2C_Op func, uint8_t channel, uint8_t slave, uint8_t reg, int size, void* data) {
+  if (aborted_setup) {
+    return true;
+  }
+
   int max_retries = 15;
   do {
     // Welp, something went wrong, we should just give up
     if (max_retries-- == 0) {
+      Comms::enqueue(PAYLOAD_BOOT_FAIL, &failure, sizeof(failure));
+      aborted_setup = true;
       return true;
     }
 
@@ -448,9 +458,11 @@ static uint32_t getMeasurementTimingBudget(void)
 }
 
 static void initHardware() {
+  aborted_setup = false;
+
   // Turn on and configure the drop sensors
   for (int i = 0; i < 4; i++) {
-    Lights::boot(i+1);
+    failure.code = BOOT_FAIL_CLIFF1 + i;
     writeReg(i, DROP_SENSOR_ADDRESS, MAIN_CTRL, 0x01);
     writeReg(i, DROP_SENSOR_ADDRESS, PS_LED, 6 | (5 << 4));
     writeReg(i, DROP_SENSOR_ADDRESS, PS_PULSES, 8);
@@ -459,9 +471,8 @@ static void initHardware() {
     writeReg(i, DROP_SENSOR_ADDRESS, PS_CAN_1, 0);
   }
 
-  Lights::boot(5);
-
   #ifndef DISABLE_TOF
+  failure.code = BOOT_FAIL_TOF;
   // Turn on TOF sensor
   // "Set I2C standard mode"
   writeReg(0, TOF_SENSOR_ADDRESS, 0x88, 0x00);
@@ -681,8 +692,6 @@ static void initHardware() {
 
   // Return the i2c bus to the main execution loop
   i2c_op = NULL;
-
-  Lights::boot(6);
 }
 
 void Opto::init(void) {

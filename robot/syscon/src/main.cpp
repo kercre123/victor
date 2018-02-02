@@ -45,9 +45,6 @@ int main (void) {
 
   __enable_irq(); // Start firing interrupts
 
-  // Clear boot code lights
-  Lights::boot(0);
-
   // Low priority interrupts are now our main execution
   for (;;) Power::tick();
 }

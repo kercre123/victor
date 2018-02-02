@@ -67,7 +67,8 @@ enum {
   PAYLOAD_VALIDATE    = 0x7374,
   PAYLOAD_DFU_PACKET  = 0x6675,
   PAYLOAD_SHUT_DOWN   = 0x6473,
-  PAYLOAD_TYPE_COUNT  = 9,
+  PAYLOAD_BOOT_FAIL   = 0x6662,
+  PAYLOAD_TYPE_COUNT  = 10,
 };
 typedef uint16_t PayloadId;
 
@@ -130,6 +131,15 @@ enum {
 typedef uint32_t LedIndexes;
 #define LED_CHANEL_CT 3  //RGB
 
+enum {
+  BOOT_FAIL_CLIFF1 = 0xFF000000,
+  BOOT_FAIL_CLIFF2 = 0xFF000001,
+  BOOT_FAIL_CLIFF3 = 0xFF000002,
+  BOOT_FAIL_CLIFF4 = 0xFF000003,
+  BOOT_FAIL_TOF    = 0xFF000004
+};
+typedef uint32_t FailureCode;
+
 struct MotorPower
 {
   int16_t leftWheel;
@@ -162,6 +172,10 @@ struct RangeData
   uint16_t spadCount;
   uint16_t spare2;
   uint32_t calibrationResult;
+};
+
+struct BootFail {
+  FailureCode code;
 };
 
 struct ProcessorStatus

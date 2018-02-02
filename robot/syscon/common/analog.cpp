@@ -15,6 +15,7 @@ static const int SELECTED_CHANNELS = 0
   | ADC_CHSELR_CHSEL2
   | ADC_CHSELR_CHSEL4
   | ADC_CHSELR_CHSEL6
+  | ADC_CHSELR_CHSEL16
   | ADC_CHSELR_CHSEL17
   ;
 
@@ -76,7 +77,9 @@ void Analog::init(void) {
   ADC1->IER = ADC_IER_AWDIE;
   ADC1->TR = FALLING_EDGE;
 
-  ADC->CCR = ADC_CCR_VREFEN;
+  ADC->CCR = 0
+           | ADC_CCR_TSEN
+           | ADC_CCR_VREFEN;
 
   // Enable ADC
   ADC1->ISR = ADC_ISR_ADRDY;
@@ -128,6 +131,7 @@ void Analog::stop(void) {
 void Analog::transmit(BodyToHead* data) {
   data->battery.battery = values[ADC_VMAIN];
   data->battery.charger = values[ADC_VEXT];
+  data->battery.temperature = values[ADC_TEMP];
   data->touchLevel[1] = button_pressed ? 0xFFFF : 0x0000;
 }
 

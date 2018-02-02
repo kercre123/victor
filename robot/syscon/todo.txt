@@ -3,11 +3,11 @@ x wake from 'off state' on charger with button
 x Always transmit mic data
 x add message for head to turn off cozmo power (head and body)
 x add "sensors valid" flag
+x Add temperature to ADC output
+x report up opto sensors for self test
+x turn off encoders / TOF / cliff sensors when drop exchange has timed out
 
-* report up opto sensors for self test
-* turn off encoders / TOF / cliff sensors when drop exchange has timed out
-* Add temperature to ADC output
+* Put opto sensors to sleep when asked
 * 3.3v auto power off
-
 * Add cube encryption
 * Put Accelerometer to sleep on boot
