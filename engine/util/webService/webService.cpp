@@ -908,7 +908,7 @@ void WebService::GenerateConsoleVarsUI(std::string& page, const std::string& cat
 
     if (sig.empty()) {
       category_html[cat] += "                <div>\n";
-      category_html[cat] += "                  <input type=\"submit\" value=\""+label+"\">\n";
+      category_html[cat] += "                  <input type=\"submit\" value=\""+label+"\" class=\"function\">\n";
       category_html[cat] += "                </div><br>\n";
     }
     else {
