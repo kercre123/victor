@@ -21,6 +21,7 @@ If you have a question that you get answered (e.g. in a Slack channel) which mig
   
 * How do I do performance analysis/benchmarking on robot?
   - Use simpleperf to generate list of highest overhead functions in a process by running [`project/victor/simpleperf/HOW-simpleperf.sh`](/project/victor/simpleperf/HOW-simpleperf.sh)
+  - If the script fails with the error: `[native_lib_dir] "./project/victor/simpleperf/symbol_cache" is not a dir`, cd into `./project/victor/simpleperf/` and run `make_symbol_cache.sh`
   - Use inferno to generate a flame graph of call hierarchies by running [`project/victor/simpleperf/HOW-inferno.sh`](/project/victor/simpleperf/HOW-inferno.sh)
   - By default both scripts run on the engine process, `cozmoengined`. Change this by prepending `ANKI_PROFILE_PROCNAME="<name_of_process>"` to the command to run the script. The other two process names are `victor_animator` and `robot_supervisor`
   - To see overall cpu load per process run `top -m 10`
