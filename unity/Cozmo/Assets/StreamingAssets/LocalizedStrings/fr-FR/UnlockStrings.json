@@ -168,18 +168,6 @@
   "unlockable.PickupCube.SparkedStateDescription" : {
     "translation" : "Regarde Cozmo prendre un cube."
   },
-  "unlockable.GatherCubes.Title" : {
-    "translation" : "Gather Cubes Title <placeholder>"
-  },
-  "unlockable.GatherCubes.Description" : {
-    "translation" : "Gather Cubes Description <placeholder>"
-  },
-  "unlockable.GatherCubes.SparkButtonDescription" : {
-    "translation" : "Gather Cubes Spark Button <placeholder>"
-  },
-  "unlockable.GatherCubes.SparkedStateDescription" : {
-    "translation" : "Gather Cubes Spark State <placeholder>"
-  },
   "unlockable.ComingSoon.Title" : {
     "translation" : "Compétence verrouillée"
   },
