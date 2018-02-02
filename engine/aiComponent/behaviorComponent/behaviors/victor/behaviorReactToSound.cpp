@@ -13,8 +13,8 @@
 
 // #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorReactToSound.h"
 #include "behaviorReactToSound.h"
-#include "engine/actions/basicActions.h"
 #include "engine/actions/animActions.h"
+#include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "clad/types/animationTrigger.h"
 
@@ -183,18 +183,15 @@ BehaviorReactToSound::BehaviorReactToSound( const Json::Value& config ) :
 {
   // whether or not we're responding from the asleep or awake/observing state will be determined via json config.
   // this allows us to have different state "tree/graphs" for when victor is in the sleep or awake behavior state.
-  bool isSleeping = false;
-  if ( JsonTools::GetValueOptional( config, "FromSleep", isSleeping ) )
-  {
-    _observationStatus = ( isSleeping ? EObservationStatus::EObservationStatus_Asleep : EObservationStatus::EObservationStatus_Awake );
-  }
+  const bool isSleeping = JsonTools::ParseBool( config, "FromSleep", "BehaviorReactToSound.Params.ObservationStatus" );
+  _observationStatus = ( isSleeping ? EObservationStatus::EObservationStatus_Asleep : EObservationStatus::EObservationStatus_Awake );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToSound::GetBehaviorOperationModifiers( BehaviorOperationModifiers& modifiers ) const
 {
   modifiers.wantsToBeActivatedWhenCarryingObject  = true;
-  modifiers.behaviorAlwaysDelegates               = false;
+  modifiers.behaviorAlwaysDelegates               = true;
   modifiers.wantsToBeActivatedWhenOnCharger       = true;
 }
 
@@ -228,14 +225,7 @@ void BehaviorReactToSound::BehaviorUpdate()
 {
   // if we're active, it means we're responding to sound
   // if we're not active, it means we're listing for sound in order to activate us
-  if ( IsActivated() )
-  {
-    if ( _triggeredDirection == kInvalidDirectionIndex )
-    {
-      CancelSelf();
-    }
-  }
-  else
+  if ( !IsActivated() )
   {
     // make sure we're not on cooldown, or other reason we shouldn't react
     if ( CanReactToSound() )
@@ -251,7 +241,7 @@ void BehaviorReactToSound::BehaviorUpdate()
 
   #if REMOTE_CONSOLE_ENABLED
   {
-    // this is const when consoe vars are disabled
+    // this is const when console vars are disabled
     kSoundReaction_FakeDirection = kInvalidDirectionIndex;
   }
   #endif
@@ -292,7 +282,7 @@ BehaviorReactToSound::DirectionTrigger BehaviorReactToSound::GetTriggerData( Mic
   ASSERT_NAMED_EVENT( index < MicDirectionHistory::kNumDirections, "BehaviorReactToSound.GetTriggerData", "Invalid index [%d]", index );
 
   const bool isAwake = ( _observationStatus == EObservationStatus::EObservationStatus_Awake );
-  DirectionTriggerList triggerList = ( isAwake ? kTriggerThreshold_Awake : kTriggerThreshold_Asleep );
+  const DirectionTriggerList triggerList = ( isAwake ? kTriggerThreshold_Awake : kTriggerThreshold_Asleep );
 
   DirectionTrigger trigger = triggerList[index];
 
@@ -313,7 +303,7 @@ BehaviorReactToSound::DirectionResponse BehaviorReactToSound::GetResponseData( M
   ASSERT_NAMED_EVENT( index >= 0, "BehaviorReactToSound.GetResponseData", "Invalid index [%d]", index );
   ASSERT_NAMED_EVENT( index < MicDirectionHistory::kNumDirections, "BehaviorReactToSound.GetResponseData", "Invalid index [%d]", index );
 
-  static DirectionResponseList kAllSoundResponses[EChargerStatus_Num][EObservationStatus_Num] =
+  static const DirectionResponseList kAllSoundResponses[EChargerStatus_Num][EObservationStatus_Num] =
   {
     /*  OnCharger */ { kSoundResponses_AsleepOnCharger, kSoundResponses_AwakeOnCharger },
     /* OffCharger */ { kSoundResponses_AsleepOffCharger, kSoundResponses_AwakeOffCharger }
@@ -338,7 +328,10 @@ bool BehaviorReactToSound::CanReactToSound() const
   const TimeStamp_t cooldownBeginTime = GetCooldownBeginTime();
   const TimeStamp_t cooldownEndTime = GetCooldownEndTime();
 
-  return ( ( currentTime < cooldownBeginTime ) || ( currentTime >= cooldownEndTime ) );
+  const bool notOnCooldown = ( ( currentTime < cooldownBeginTime ) || ( currentTime >= cooldownEndTime ) );
+  const bool enoughTimeHasPassed = ( currentTime > kSoundReaction_MaxReactionTime );
+
+  return ( notOnCooldown && enoughTimeHasPassed );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -357,21 +350,14 @@ void BehaviorReactToSound::RespondToSound()
       _reactionTriggeredTime = GetCurrentTime();
     }
 
+    // in our special tuning mode, disable turning so that we can observe the debug face display
     if ( !kSoundReaction_TuningMode )
     {
       const DirectionResponse& response = GetResponseData( _triggeredDirection );
       const Radians turnAngle = response.facing;
       TurnInPlaceAction* action = new TurnInPlaceAction( turnAngle.ToFloat(), false );
 
-      DelegateIfInControl( action, [this]()
-      {
-        OnResponseComplete();
-      });
-    }
-    else
-    {
-      // in our special tuning mode, disable turning so that we can observe the debug face display
-      OnResponseComplete();
+      DelegateIfInControl( action );
     }
   }
 }
@@ -394,7 +380,7 @@ bool BehaviorReactToSound::HeardValidSound( MicDirectionHistory::DirectionIndex&
     const DirectionTrigger triggerData = GetTriggerData( currentDirectionNode.directionIndex );
 
     const TimeStamp_t currentTime = GetCurrentTime();
-    const TimeStamp_t reactionWindowTime = ( currentTime - static_cast<TimeStamp_t>(kSoundReaction_MaxReactionTime * 1000.0f) );
+    const TimeStamp_t reactionWindowTime = ( currentTime - static_cast<TimeStamp_t>(Util::SecToMilliSec(kSoundReaction_MaxReactionTime)) );
 
     #if DEBUG_MIC_OBSERVING_VERBOSE
     {
@@ -443,7 +429,7 @@ TimeStamp_t BehaviorReactToSound::GetCurrentTime() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TimeStamp_t BehaviorReactToSound::GetCooldownBeginTime() const
 {
-  const TimeStamp_t reactiveWindowDuration = static_cast<TimeStamp_t>(kSoundReaction_ReactiveWindowDuration * 1000.0f);
+  const TimeStamp_t reactiveWindowDuration = static_cast<TimeStamp_t>(Util::SecToMilliSec(kSoundReaction_ReactiveWindowDuration));
   return ( _reactionTriggeredTime + reactiveWindowDuration );
 }
 
@@ -451,7 +437,7 @@ TimeStamp_t BehaviorReactToSound::GetCooldownBeginTime() const
 TimeStamp_t BehaviorReactToSound::GetCooldownEndTime() const
 {
   const TimeStamp_t reactiveWindowEndTime = GetCooldownBeginTime();
-  const TimeStamp_t cooldownDuration = static_cast<TimeStamp_t>(kSoundReaction_Cooldown * 1000.0f);
+  const TimeStamp_t cooldownDuration = static_cast<TimeStamp_t>(Util::SecToMilliSec(kSoundReaction_Cooldown));
   return ( reactiveWindowEndTime + cooldownDuration );
 }
 

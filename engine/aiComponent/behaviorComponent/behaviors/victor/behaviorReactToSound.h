@@ -30,24 +30,6 @@ class BehaviorReactToSound : public ICozmoBehavior
   BehaviorReactToSound( const Json::Value& config );
 
 
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Internal Data Structure Definitions ...
-
-  enum EChargerStatus
-  {
-    EChargerStatus_OnCharger,
-    EChargerStatus_OffCharger,
-    EChargerStatus_Num
-  };
-
-  enum EObservationStatus
-  {
-    EObservationStatus_Asleep,
-    EObservationStatus_Awake,
-    EObservationStatus_Num
-  };
-
-
 public:
 
   // data corresponding to what sounds will trigger a reaction
@@ -119,7 +101,26 @@ private:
 
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Internal Data Structure Definitions ...
+
+  enum EChargerStatus
+  {
+    EChargerStatus_OnCharger,
+    EChargerStatus_OffCharger,
+    EChargerStatus_Num
+  };
+
+  enum EObservationStatus
+  {
+    EObservationStatus_Asleep,
+    EObservationStatus_Awake,
+    EObservationStatus_Num
+  };
+
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Member Data
+
 
   static const MicDirectionHistory::DirectionIndex kInvalidDirectionIndex;
 
