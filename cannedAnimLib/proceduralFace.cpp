@@ -661,7 +661,8 @@ void ProceduralFace::RegisterFaceWithConsoleVars() {
                                                                                  param.c_str(),
                                                                                  "ProceduralFace",
                                                                                  kEyeParamInfoLUT[iParam].Value().clipLimits.min,
-                                                                                 kEyeParamInfoLUT[iParam].Value().clipLimits.max));
+                                                                                 kEyeParamInfoLUT[iParam].Value().clipLimits.max,
+                                                                                 true));
     }
   }
 }
