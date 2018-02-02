@@ -280,6 +280,10 @@ inline void dbgBtnHandler(void)
     if( g_fixmode == FIXMODE_BACKPACK1 && edge > 0 && x == Board::BTN_4 )
       g_forceStart = 1;
     
+    //XXX: hack to manually start head programming
+    if( g_fixmode == FIXMODE_HEAD1 && edge > 0 && x == Board::BTN_4 )
+      g_forceStart = 1;
+    
     /*/DEBUG: the ol' btn toggles an LED trick
     if( edge > 0 ) { 
       switch( (Board::btn_e)x ) {
