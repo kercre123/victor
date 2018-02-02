@@ -193,12 +193,16 @@ static void ShortCircuitTest(void)
 //led test array
 typedef struct { char* name; uint16_t bits; int duty; int i_meas; int i_nominal; int i_variance; } led_test_t;
 led_test_t ledtest[] = {
-  {(char*)"All.RED",  0x1111, 12, 0, 15, 4}, {(char*)"All.GRN",  0x2222, 12, 0, 15, 4}, {(char*)"All.BLU",  0x4444, 12, 0, 15, 4},
-  {(char*)"D1.RED",   0x0001,  1, 0, 43, 6}, {(char*)"D1.GRN",   0x0002,  1, 0, 43, 6}, {(char*)"D1.BLU",   0x0004,  1, 0, 43, 6},
-  {(char*)"D2.RED",   0x0010,  1, 0, 43, 6}, {(char*)"D2.GRN",   0x0020,  1, 0, 43, 6}, {(char*)"D2.BLU",   0x0040,  1, 0, 43, 6},
-  {(char*)"D3.RED",   0x0100,  1, 0, 43, 6}, {(char*)"D3.GRN",   0x0200,  1, 0, 43, 6}, {(char*)"D3.BLU",   0x0400,  1, 0, 43, 6},
-  {(char*)"D4.RED",   0x1000,  1, 0, 43, 6}, {(char*)"D4.GRN",   0x2000,  1, 0, 43, 6}, {(char*)"D4.BLU",   0x4000,  1, 0, 43, 6}
+  {(char*)"All.RED",  0x1111, 12, 0, 15, 5}, {(char*)"All.GRN",  0x2222, 12, 0, 15, 5}, {(char*)"All.BLU",  0x4444, 12, 0, 15, 5},
+  {(char*)"D1.RED",   0x0001,  1, 0, 43, 8}, {(char*)"D1.GRN",   0x0002,  1, 0, 43, 8}, {(char*)"D1.BLU",   0x0004,  1, 0, 43, 8},
+  {(char*)"D2.RED",   0x0010,  1, 0, 43, 8}, {(char*)"D2.GRN",   0x0020,  1, 0, 43, 8}, {(char*)"D2.BLU",   0x0040,  1, 0, 43, 8},
+  {(char*)"D3.RED",   0x0100,  1, 0, 43, 8}, {(char*)"D3.GRN",   0x0200,  1, 0, 43, 8}, {(char*)"D3.BLU",   0x0400,  1, 0, 43, 8},
+  {(char*)"D4.RED",   0x1000,  1, 0, 43, 8}, {(char*)"D4.GRN",   0x2000,  1, 0, 43, 8}, {(char*)"D4.BLU",   0x4000,  1, 0, 43, 8}
 };
+
+static inline bool ledtest_pass(led_test_t *ptest, int i_test) {
+  return ( i_test >= ptest->i_nominal - ptest->i_variance && i_test <= ptest->i_nominal + ptest->i_variance );
+}
 
 static void CubeTest(void)
 {
@@ -223,7 +227,11 @@ static void CubeTest(void)
   {
     cmdSend(CMD_IO_DUT_UART, snformat(b,bz,"leds 0x%x %s", ledtest[n].bits, (ledtest[n].duty <= 1 ? "static" : "") ));
     Timer::delayMs(20);
-    ledtest[n].i_meas = Meter::getCurrentMa(PWR_CUBEBAT,8);
+    
+    int oversample = 5;
+    do {
+      ledtest[n].i_meas = Meter::getCurrentMa(PWR_CUBEBAT, oversample++);
+    } while( oversample <= 8 && !ledtest_pass( &ledtest[n], ledtest[n].i_meas - i_base ) );
     
     //DbgCubeIMeasLoop( snformat(b,bz,"led %i current", n) );
   }
@@ -235,9 +243,9 @@ static void CubeTest(void)
   ConsolePrintf("base current %imA\n", i_base);
   for(int n=0; n < sizeof(ledtest)/sizeof(led_test_t); n++)
   {
-    int i = ledtest[n].i_meas - i_base;
-    bool pass = (ledtest[n].i_nominal - ledtest[n].i_variance) <= i && i <= (ledtest[n].i_nominal + ledtest[n].i_variance);
-    ConsolePrintf("%s current %imA %s\n", ledtest[n].name, i, pass ? "ok" : "--FAIL--");
+    int i_test = ledtest[n].i_meas - i_base;
+    bool pass = ledtest_pass( &ledtest[n], i_test );
+    ConsolePrintf("%s current %imA %s\n", ledtest[n].name, i_test, pass ? "ok" : "--FAIL--");
     if( !pass )
       e = ERROR_CUBE_LED;
   }
