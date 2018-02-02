@@ -120,15 +120,6 @@
     "codeLabFeaturedProject.ComplimentGenerator.youre_the_most_": {
         "translation": "You're the most "
     },
-    "codeLabFeaturedProject.Constellations.angle_in_degrees": {
-        "translation": "angle in degrees"
-    },
-    "codeLabFeaturedProject.Constellations.angle_in_radians": {
-        "translation": "angle in radians"
-    },
-    "codeLabFeaturedProject.Constellations.anki": {
-        "translation": "anki"
-    },
     "codeLabFeaturedProject.Constellations.cassiopeia_": {
         "translation": "Cassiopeia "
     },
@@ -141,23 +132,38 @@
     "codeLabFeaturedProject.Constellations.count": {
         "translation": "count"
     },
-    "codeLabFeaturedProject.Constellations.cozmo": {
-        "translation": "cozmo"
+    "codeLabFeaturedProject.Constellations.cozmo_says_the_name_of_the_constellation": {
+        "translation": "Cozmo says the name of the constellation."
     },
     "codeLabFeaturedProject.Constellations.distance_multiplier": {
         "translation": "distance multiplier"
     },
+    "codeLabFeaturedProject.Constellations.draw_dot": {
+        "translation": "draw dot"
+    },
+    "codeLabFeaturedProject.Constellations.draw_line": {
+        "translation": "draw line"
+    },
+    "codeLabFeaturedProject.Constellations.draw_the_stars_of_the_constellation_on_cozmos_face": {
+        "translation": "Draw the stars of the constellation on Cozmos face."
+    },
     "codeLabFeaturedProject.Constellations.drive_distance": {
         "translation": "drive distance"
+    },
+    "codeLabFeaturedProject.Constellations.gemini": {
+        "translation": "Gemini"
+    },
+    "codeLabFeaturedProject.Constellations.get_the_distance_between_two_coordinates": {
+        "translation": "Get the distance between two coordinates."
     },
     "codeLabFeaturedProject.Constellations.hi": {
         "translation": "Hi"
     },
-    "codeLabFeaturedProject.Constellations.last_position_x": {
-        "translation": "last position x"
+    "codeLabFeaturedProject.Constellations.instructions": {
+        "translation": "instructions"
     },
-    "codeLabFeaturedProject.Constellations.last_position_y": {
-        "translation": "last position y"
+    "codeLabFeaturedProject.Constellations.instructions_count": {
+        "translation": "instructions count"
     },
     "codeLabFeaturedProject.Constellations.leo": {
         "translation": "Leo"
@@ -174,6 +180,12 @@
     "codeLabFeaturedProject.Constellations.pi": {
         "translation": "Pi"
     },
+    "codeLabFeaturedProject.Constellations.set_variables_and_choose_a_constellation": {
+        "translation": "Set variables and choose a constellation."
+    },
+    "codeLabFeaturedProject.Constellations.set_x_and_y_coordinates_for_the_next_point_in_the_constellation": {
+        "translation": "Set x and y coordinates for the next point in the constellation."
+    },
     "codeLabFeaturedProject.Constellations.slope1": {
         "translation": "slope1"
     },
@@ -183,8 +195,11 @@
     "codeLabFeaturedProject.Constellations.turn_angle": {
         "translation": "turn angle"
     },
-    "codeLabFeaturedProject.Constellations.use_the_pythagorean_theorem_to_get_the_distace_between_two_points": {
-        "translation": "Use the Pythagorean Theorem to get the distace between two points."
+    "codeLabFeaturedProject.Constellations.use_a_set_of_three_coordinates_to_drive_and_draw_lines_in_the_constellation": {
+        "translation": "Use a set of three coordinates to drive and draw lines in the constellation."
+    },
+    "codeLabFeaturedProject.Constellations.use_the_constellation_instructions_variable_to_determine_whether_to_draw_a_dot_a_line_both_or_none": {
+        "translation": "Use the constellation instructions variable to determine whether to draw a dot, a line, both, or none."
     },
     "codeLabFeaturedProject.Constellations.use_the_slopes_of_two_intersecting_lines_to_get_turn_degrees_for_cozmo": {
         "translation": "Use the slopes of two intersecting lines to get turn degrees for Cozmo."
@@ -201,9 +216,6 @@
     "codeLabFeaturedProject.Constellations.x_coordinates": {
         "translation": "x coordinates"
     },
-    "codeLabFeaturedProject.Constellations.x_segment": {
-        "translation": "x segment"
-    },
     "codeLabFeaturedProject.Constellations.y1": {
         "translation": "y1"
     },
@@ -215,9 +227,6 @@
     },
     "codeLabFeaturedProject.Constellations.y_coordinates": {
         "translation": "y coordinates"
-    },
-    "codeLabFeaturedProject.Constellations.y_segment": {
-        "translation": "y segment"
     },
     "codeLabFeaturedProject.CozmoFlies.cozmo_asks_to_be_picked_up_and_waits": {
         "translation": "Cozmo asks to be picked up and waits."

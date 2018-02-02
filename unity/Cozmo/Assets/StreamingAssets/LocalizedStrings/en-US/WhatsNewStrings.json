@@ -113,5 +113,11 @@
   },
   "whatsNew.CodeLab_PaddleBall.description": {
     "translation": "Challenge Cozmo to a match. Be sure to use your head!"
+  },
+  "whatsNew.CodeLab_Constellations.title": {
+    "translation": "Constellations"
+  },
+  "whatsNew.CodeLab_Constellations.description": {
+    "translation": "Celebrate Astronomy Day with cosmic constellations."
   }
 }
