@@ -76,12 +76,13 @@ int cmd_process(char* s)
   
   //==========================
   //Set LEDs
-  //>>leds [bitfield<n>]
+  //>>leds [bitfield<n>] [static]
   //<<leds [status]
   //==========================
   if( !strcmp(cmd, "leds") )
   {
-    if( console_num_args(s) < 2 )
+    int nargs = console_num_args(s);
+    if( nargs < 2 )
       return respond_(cmd, STATUS_ARG_NA, "missing-args");
     
     //command bitfield separates RGB leds by nibble
@@ -94,7 +95,18 @@ int cmd_process(char* s)
     
     //'leds' API uses packed bitfield
     int ledbf = ((bf&0x7000)>>3) | ((bf&0x0700)>>2) | ((bf&0x0070)>>1) | ((bf&0x0007)>>0);
-    leds_set( ledbf & LED_BF_ALL );
+    
+    //'static' specifier uses hal layer, no duty cycling, only 1 led on at a time
+    if( ledbf > 0 && nargs >= 3 && !strcmp(console_getargl(s,2), "static") ) {
+      leds_set(0); //disable duty-cycled timer
+      uint16_t n = 0;
+      while( (ledbf & (1<<n)) == 0 ) { n++; }
+      //writes_( snformat(b,bz,"bf %04x -> %04x -> hal_led_on(%i)\n", bf, ledbf, n) );
+      hal_led_on( n );
+    } else {
+      hal_led_off();
+      leds_set( ledbf & LED_BF_ALL );
+    }
     
     return respond_(cmd, STATUS_OK, snformat(b,bz, "0x%x", ledbf & LED_BF_ALL) );
   }//-*/
