@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-CORETECH_PATH=/Users/andrew/Code/victor/coretech
-TENSORFLOW_PATH=/Users/andrew/Code/tensorflow
 VICTOR_REPO_PATH=/Users/andrew/Code/victor
+CORETECH_PATH=${VICTOR_REPO_PATH}/coretech
+TENSORFLOW_PATH=/Users/andrew/Code/tensorflow
 FRAMEWORK_PATH=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.13.sdk/System/Library/Frameworks
 
 CC=g++
@@ -25,4 +25,4 @@ ${CC} --std=c++11 \
   -F${FRAMEWORK_PATH} -framework OpenCL -framework Accelerate \
   -lstdc++ -lm \
   -L${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen/protobuf/lib -lprotobuf -pthread \
-  -o standaloneTensorFlowInference_mac
+  -o ${VICTOR_REPO_PATH}/_build/mac/Debug/standaloneTensorFlowInference
