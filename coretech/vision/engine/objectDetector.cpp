@@ -84,6 +84,12 @@ Result ObjectDetector::Init(const std::string& modelPath, const std::string& cac
   _profiler.SetDasLogFrequency(config.get("ProfilingEventLogFrequency_ms", 10000).asUInt());
 
   _cachePath = cachePath;
+  if(kUseTensorFlowProcess)
+  {
+    // Clear the cache on startup
+    Util::FileUtils::RemoveDirectory(_cachePath);
+    Util::FileUtils::CreateDirectory(_cachePath);
+  }
   
   _isInitialized = true;
   return result;
@@ -171,10 +177,18 @@ bool ObjectDetector::StartProcessingIfIdle(ImageCache& imageCache)
               {
                 for(auto const& object : detectedObjects)
                 {
+                  DEV_ASSERT(object.isMember("xmin") && object.isMember("xmax") &&
+                             object.isMember("ymin") && object.isMember("ymax"),
+                             "ObjectDetector.Model.MissingJsonFieldsXY");
+                  
                   const int xmin = std::round(object["xmin"].asFloat() * _imgBeingProcessed.GetNumCols());
                   const int ymin = std::round(object["ymin"].asFloat() * _imgBeingProcessed.GetNumRows());
                   const int xmax = std::round(object["xmax"].asFloat() * _imgBeingProcessed.GetNumCols());
                   const int ymax = std::round(object["ymax"].asFloat() * _imgBeingProcessed.GetNumRows());
+                  
+                  DEV_ASSERT(object.isMember("timestamp"), "ObjectDetector.Model.MissingJsonFieldTimestamp");
+                  DEV_ASSERT(object.isMember("score"),     "ObjectDetector.Model.MissingJsonFieldScore");
+                  DEV_ASSERT(object.isMember("name"),      "ObjectDetector.Model.MissingJsonFieldName");
                   
                   objects.emplace_back(DetectedObject{
                     .timestamp = object["timestamp"].asUInt(),

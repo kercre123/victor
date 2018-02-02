@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
 
-CORETECH_PATH=/Users/andrew/Code/victor/coretech
+VICTOR_REPO_PATH=/Users/andrew/Code/victor
+CORETECH_PATH=${VICTOR_REPO_PATH}/coretech
 TENSORFLOW_PATH=/Users/andrew/Code/tensorflow
 NDK_ROOT=/Users/andrew/.anki/android/ndk-repository/android-ndk-r14b
-VICTOR_REPO_PATH=/Users/andrew/Code/victor
 
 CC=${NDK_ROOT}/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-g++
 
 # TensorFlow uses a factory pattern that requires we forcibly include 
 # everything from the the tensorflow-core library. Thus the --whole-archive flags
 
-${CC} --std=c++11 \
+${CC} --std=c++11 -fPIE -mfloat-abi=softfp -mfpu=neon -pie -v \
   --sysroot ${NDK_ROOT}/platforms/android-21/arch-arm \
   -I${NDK_ROOT}/sources/android/support/include \
   -I${NDK_ROOT}/sources/cxx-stl/gnu-libstdc++/4.9/include \
@@ -31,4 +31,5 @@ ${CC} --std=c++11 \
   -L${VICTOR_REPO_PATH}/EXTERNALS/coretech_external/build/opencv-3.4.0/android/sdk/native/libs/armeabi-v7a -lopencv_imgproc -lopencv_core -lopencv_imgcodecs \
   -lgnustl_static -llog -lz -lm -ldl -latomic \
   -L${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen/protobuf_android/armeabi-v7a/lib -lprotobuf -pthread \
-  -o standaloneTensorFlowInference_android
+  -o ${VICTOR_REPO_PATH}/_build/android/Release/bin/standaloneTensorFlowInference
+
