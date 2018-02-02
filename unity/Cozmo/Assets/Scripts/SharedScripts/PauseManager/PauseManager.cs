@@ -486,6 +486,10 @@ namespace Cozmo {
       _EngineTriggeredSleep = false;
       CloseGoToSleepDialog();
       CloseConfirmSleepDialog();
+
+      if (OnCozmoSleepCancelled != null) {
+        OnCozmoSleepCancelled();
+      }
     }
   }
 }
