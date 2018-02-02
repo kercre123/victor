@@ -442,9 +442,47 @@ Result AnimationComponent::SetDefaultKeepFaceAliveParameters() const
 
 Result AnimationComponent::SetKeepFaceAliveParameter(KeepFaceAliveParameter param, f32 value) const
 {
-  return _robot->SendRobotMessage<RobotInterface::SetKeepFaceAliveParameter>(value, param);
+  return _robot->SendRobotMessage<RobotInterface::SetKeepFaceAliveParameter>(value, param, false);
+}
+  
+Result AnimationComponent::SetKeepFaceAliveParameterToDefault(KeepFaceAliveParameter param) const
+{
+  return _robot->SendRobotMessage<RobotInterface::SetKeepFaceAliveParameter>(0.f, param, true);
 }
 
+Result AnimationComponent::AddOrUpdateEyeShift(const std::string& name, 
+                                               f32 xPix,
+                                               f32 yPix,
+                                               TimeStamp_t duration_ms,
+                                               f32 xMax,
+                                               f32 yMax,
+                                               f32 lookUpMaxScale,
+                                               f32 lookDownMinScale,
+                                               f32 outerEyeScaleIncrease)
+{
+  Result res = _robot->SendRobotMessage<RobotInterface::AddOrUpdateEyeShift>(xPix,
+                                                                             yPix,
+                                                                             duration_ms,
+                                                                             xMax,
+                                                                             yMax,
+                                                                             lookUpMaxScale,
+                                                                             lookDownMinScale,
+                                                                             outerEyeScaleIncrease,
+                                                                             name);
+  if (res == RESULT_OK) {
+    _activeEyeShiftLayers.insert(name);
+  }
+  return res;
+}
+  
+Result AnimationComponent::RemoveEyeShift(const std::string& name, u32 disableTimeout_ms)
+{
+  Result res = _robot->SendRobotMessage<RobotInterface::RemoveEyeShift>(disableTimeout_ms, name);
+  if (res == RESULT_OK) {
+    _activeEyeShiftLayers.erase(name);
+  }
+  return res;
+}
 
 // ================ Game message handlers ======================
 template<>

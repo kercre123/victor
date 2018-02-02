@@ -285,6 +285,26 @@ message SetKeepFaceAliveParameter
 {
   float_32               value,
   KeepFaceAliveParameter param,
+  bool                   setToDefault = 0, // If true, value is ignored
+}
+
+message AddOrUpdateEyeShift
+{
+  float_32 xPix,
+  float_32 yPix,
+  uint_32 duration_ms,
+  float_32 xMax,
+  float_32 yMax,
+  float_32 lookUpMaxScale,
+  float_32 lookDownMinScale,
+  float_32 outerEyeScaleIncrease,
+  string name,
+}
+
+message RemoveEyeShift
+{
+  uint_32 disableTimeout_ms,
+  string name,
 }
 
 message LockAnimTracks
@@ -493,6 +513,8 @@ union EngineToRobot
   SetDefaultKeepFaceAliveParameters setDefaultKeepFaceAliveParameters = 0x5A,
   SetKeepFaceAliveParameter     setKeepFaceAliveParameter   = 0x5B,
   EnableKeepFaceAlive           enableKeepFaceAlive         = 0x5C,
+  AddOrUpdateEyeShift           addOrUpdateEyeShift         = 0x5D,
+  RemoveEyeShift                removeEyeShift              = 0x5E,
 
   AudioEngine::Multiplexer::PostAudioEvent        postAudioEvent       = 0x70,
   AudioEngine::Multiplexer::StopAllAudioEvents    stopAllAudioEvents   = 0x71,

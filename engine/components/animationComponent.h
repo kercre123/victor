@@ -27,6 +27,7 @@
 #include "util/signals/signalHolder.h"
 
 #include <unordered_map>
+#include <unordered_set>
 
 namespace Anki {
 namespace Cozmo {
@@ -113,9 +114,31 @@ public:
   // return to no adjustments
   Result EnableKeepFaceAlive(bool enable, u32 disableTimeout_ms = 0) const;
 
+  // Restore all KeepFaceAlive parameters to defaults
   Result SetDefaultKeepFaceAliveParameters() const;
+  
+  // Set KeepFaceAliveParameterToDefault
+  Result SetKeepFaceAliveParameterToDefault(KeepFaceAliveParameter param) const;
+  
+  // Set KeepFaceAlive parameter to specified value
   Result SetKeepFaceAliveParameter(KeepFaceAliveParameter param, f32 value) const;
 
+  // Either start an eye shift or update an already existing eye shift with new params
+  // Note: Eye shift will continue until removed so if eye shift with the same name
+  // was already added without being removed, this will just update it
+  Result AddOrUpdateEyeShift(const std::string& name, 
+                             f32 xPix,
+                             f32 yPix,
+                             TimeStamp_t duration_ms,
+                             f32 xMax = FACE_DISPLAY_HEIGHT,
+                             f32 yMax = FACE_DISPLAY_WIDTH,
+                             f32 lookUpMaxScale = 1.1f,
+                             f32 lookDownMinScale = 0.85f,
+                             f32 outerEyeScaleIncrease = 0.1f);
+  
+  Result RemoveEyeShift(const std::string& name, u32 disableTimeout_ms = 0);
+  bool IsEyeShifting(const std::string& name) const { return _activeEyeShiftLayers.count(name) > 0; }
+  
   // Enables only the specified tracks. 
   // Status of other tracks remain unchanged.
   void UnlockTracks(u8 tracks);
@@ -176,6 +199,8 @@ private:
   
   std::string _currPlayingAnim;
 
+  std::unordered_set<std::string> _activeEyeShiftLayers;
+  
   u8 _lockedTracks;
 
   // For tracking whether or not an animation is playing based on

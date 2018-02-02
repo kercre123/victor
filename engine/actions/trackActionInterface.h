@@ -164,11 +164,11 @@ private:
   Radians  _maxHeadAngle  = MAX_HEAD_ANGLE;
   u32      _stopOnOtherActionTag = ActionConstants::INVALID_TAG;
   
-  AnimationTag _eyeShiftTag = kNotAnimatingTag;
   bool         _moveEyes    = false;
-  f32          _originalEyeDartDist;
   
   bool     _shouldPlayDrivingAnimation = false;
+
+  const std::string _kEyeShiftLayerName = "ITrackActionEyeShiftLayer";
   
   // When driving animations are used, we have to wait until the End animation is complete
   // before returning whatever actual final result for the action we wanted. In the mean time

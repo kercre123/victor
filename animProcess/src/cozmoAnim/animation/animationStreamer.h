@@ -92,7 +92,7 @@ namespace Cozmo {
     void EnableKeepFaceAlive(bool enable, u32 disableTimeout_ms);
     
     void SetDefaultKeepFaceAliveParams();
-    
+    void SetParamToDefault(KeepFaceAliveParameter whichParam);
     void SetParam(KeepFaceAliveParameter whichParam, float newValue);
     
     // Set/Reset the amount of time to wait before forcing KeepFaceAlive() after the last stream has stopped

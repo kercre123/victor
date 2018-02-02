@@ -15,6 +15,7 @@
 #include "cozmoAnim/animComms.h"
 
 #include "cozmoAnim/animation/animationStreamer.h"
+#include "cozmoAnim/animation/trackLayerComponent.h"
 #include "cozmoAnim/audio/engineRobotAudioInput.h"
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
@@ -128,9 +129,33 @@ void Process_setDefaultKeepFaceAliveParameters(const Anki::Cozmo::RobotInterface
 
 void Process_setKeepFaceAliveParameter(const Anki::Cozmo::RobotInterface::SetKeepFaceAliveParameter& msg)
 {
-  _animStreamer->SetParam(msg.param, msg.value);
+  if (msg.setToDefault) {
+    _animStreamer->SetParamToDefault(msg.param);
+  } else {
+    _animStreamer->SetParam(msg.param, msg.value);
+  }
 }
 
+void Process_addOrUpdateEyeShift(const Anki::Cozmo::RobotInterface::AddOrUpdateEyeShift& msg)
+{
+  const std::string layerName(msg.name, msg.name_length);  
+  _animStreamer->GetTrackLayerComponent()->AddOrUpdateEyeShift(layerName,
+                                                               msg.xPix,
+                                                               msg.yPix,
+                                                               msg.duration_ms,
+                                                               msg.xMax,
+                                                               msg.yMax,
+                                                               msg.lookUpMaxScale,
+                                                               msg.lookDownMinScale,
+                                                               msg.outerEyeScaleIncrease);
+}
+
+void Process_removeEyeShift(const Anki::Cozmo::RobotInterface::RemoveEyeShift& msg)
+{
+  const std::string layerName(msg.name, msg.name_length);
+  _animStreamer->GetTrackLayerComponent()->RemoveEyeShift(layerName, msg.disableTimeout_ms);
+}
+  
 void Process_postAudioEvent(const Anki::AudioEngine::Multiplexer::PostAudioEvent& msg)
 {
   _audioInput->HandleMessage(msg);

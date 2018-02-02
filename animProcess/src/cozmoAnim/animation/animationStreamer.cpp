@@ -73,6 +73,22 @@ namespace Cozmo {
 
   // Default time to wait before forcing KeepFaceAlive() after the latest stream has stopped
   const f32 kDefaultLongEnoughSinceLastStreamTimeout_s = 0.5f;
+
+  // Default KeepFaceAliveParams
+  #define SET_DEFAULT(param, value) {KeepFaceAliveParameter::param, static_cast<f32>(value)}
+  const std::unordered_map<KeepFaceAliveParameter, f32> _kDefaultKeepFaceAliveParams = {
+    SET_DEFAULT(BlinkSpacingMinTime_ms, 3000),
+    SET_DEFAULT(BlinkSpacingMaxTime_ms, 4000),
+    SET_DEFAULT(EyeDartSpacingMinTime_ms, 250),
+    SET_DEFAULT(EyeDartSpacingMaxTime_ms, 1000),
+    SET_DEFAULT(EyeDartMaxDistance_pix, 6),
+    SET_DEFAULT(EyeDartMinDuration_ms, 50),
+    SET_DEFAULT(EyeDartMaxDuration_ms, 200),
+    SET_DEFAULT(EyeDartOuterEyeScaleIncrease, 0.1f),
+    SET_DEFAULT(EyeDartUpMaxScale, 1.1f),
+    SET_DEFAULT(EyeDartDownMinScale, 0.85f)
+  };
+  #undef SET_DEFAULT
   
   CONSOLE_VAR(bool, kFullAnimationAbortOnAudioTimeout, "AnimationStreamer", false);
   CONSOLE_VAR(u32, kAnimationAudioAllowedBufferTime_ms, "AnimationStreamer", 250);
@@ -1079,26 +1095,18 @@ namespace Cozmo {
   
   void AnimationStreamer::SetDefaultKeepFaceAliveParams()
   {
-
-#   define SET_DEFAULT(__NAME__, __VALUE__) \
-    SetParam(KeepFaceAliveParameter::__NAME__,  static_cast<f32>(__VALUE__))
-
     PRINT_CH_INFO(kLogChannelName, "AnimationStreamer.SetDefaultKeepFaceAliveParams", "");
-
-    SET_DEFAULT(BlinkSpacingMinTime_ms, 3000);
-    SET_DEFAULT(BlinkSpacingMaxTime_ms, 4000);
-    SET_DEFAULT(EyeDartSpacingMinTime_ms, 250);
-    SET_DEFAULT(EyeDartSpacingMaxTime_ms, 1000);
-    SET_DEFAULT(EyeDartMaxDistance_pix, 6);
-    SET_DEFAULT(EyeDartMinDuration_ms, 50);
-    SET_DEFAULT(EyeDartMaxDuration_ms, 200);
-    SET_DEFAULT(EyeDartOuterEyeScaleIncrease, 0.1f);
-    SET_DEFAULT(EyeDartUpMaxScale, 1.1f);
-    SET_DEFAULT(EyeDartDownMinScale, 0.85f);
     
-#   undef SET_DEFAULT
-
+    for(auto param = Util::EnumToUnderlying(KeepFaceAliveParameter::BlinkSpacingMinTime_ms);
+        param != Util::EnumToUnderlying(KeepFaceAliveParameter::NumParameters); ++param) {
+      SetParamToDefault(static_cast<KeepFaceAliveParameter>(param));
+    }
   } // SetDefaultKeepFaceAliveParams()
+
+  void AnimationStreamer::SetParamToDefault(KeepFaceAliveParameter whichParam)
+  {
+    SetParam(whichParam, _kDefaultKeepFaceAliveParams.at(whichParam));
+  }
   
   const std::string AnimationStreamer::GetStreamingAnimationName() const
   {

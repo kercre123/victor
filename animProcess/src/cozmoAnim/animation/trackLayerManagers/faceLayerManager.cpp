@@ -30,6 +30,10 @@ namespace Anki {
     
 namespace {
   CONSOLE_VAR(f32, kMaxBlinkSpacingTimeForScreenProtection_ms, CONSOLE_GROUP_NAME, 30000);
+  
+  const std::string kEyeDartLayerName  = "KeepAliveEyeDart";
+  const std::string kBlinkLayerName    = "KeepAliveBlink";
+  const std::string kEyeNoiseLayerName = "KeepAliveEyeNoise";
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -119,9 +123,8 @@ bool FaceLayerManager::GetFaceHelper(Animations::Track<ProceduralFaceKeyFrame>& 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void FaceLayerManager::RemoveKeepFaceAlive(u32 duration_ms)
 {
-  if(kNotAnimatingTag != _eyeDartTag) {
-    RemovePersistentLayer(_eyeDartTag, duration_ms);
-    _eyeDartTag = kNotAnimatingTag;
+  if(HasLayer(kEyeDartLayerName)) {
+    RemovePersistentLayer(kEyeDartLayerName, duration_ms);
   }
 }
 
@@ -205,7 +208,7 @@ void FaceLayerManager::KeepFaceAlive(const std::map<KeepFaceAliveParameter,f32>&
   {
     const size_t numLayers = GetNumLayers();
     const bool noOtherFaceLayers = (numLayers == 0 ||
-                                    (numLayers == 1 && HasLayerWithTag(_eyeDartTag)));
+                                    (numLayers == 1 && HasLayer(kEyeDartLayerName)));
     
     // If there's no other face layer active right now, do the dart. Otherwise,
     // skip it
@@ -214,15 +217,15 @@ void FaceLayerManager::KeepFaceAlive(const std::map<KeepFaceAliveParameter,f32>&
       ProceduralFaceKeyFrame frame;
       GenerateEyeShift(params, frame);
       
-      if(_eyeDartTag == kNotAnimatingTag)
+      if(!HasLayer(kEyeDartLayerName))
       {
         FaceTrack faceTrack;
         faceTrack.AddKeyFrameToBack(frame);
-        _eyeDartTag = AddPersistentLayer("KeepAliveEyeDart", faceTrack);
+        AddPersistentLayer(kEyeDartLayerName, faceTrack);
       }
       else
       {
-        AddToPersistentLayer(_eyeDartTag, frame);
+        AddToPersistentLayer(kEyeDartLayerName, frame);
       }
 
       _nextEyeDart_ms = GetRNG().RandIntInRange(GetParam<s32>(params, Param::EyeDartSpacingMinTime_ms),
@@ -241,16 +244,16 @@ void FaceLayerManager::KeepFaceAlive(const std::map<KeepFaceAliveParameter,f32>&
     if(DEBUG_FACE_LAYERING)
     {
       // Sanity check: we should never command two blinks at the same time
-      bool alreadyBlinking = HasLayerWithName("Blink");
+      bool alreadyBlinking = HasLayer(kBlinkLayerName);
       
       if(!alreadyBlinking)
       {
-        AddLayer("Blink", track);
+        AddLayer(kBlinkLayerName, track);
       }
     }
     else
     {
-      AddLayer("Blink", track);
+      AddLayer(kBlinkLayerName, track);
     }
     
     s32 blinkSpaceMin_ms = GetParam<s32>(params, Param::BlinkSpacingMinTime_ms);
@@ -273,7 +276,7 @@ void FaceLayerManager::KeepFaceAlive(const std::map<KeepFaceAliveParameter,f32>&
     ProceduralFaceKeyFrame frame;
     FaceTrack faceTrack;
     faceTrack.AddKeyFrameToBack(frame);
-    AddLayer("EyeNoise", faceTrack);
+    AddLayer(kEyeNoiseLayerName, faceTrack);
   }
   
 } // KeepFaceAlive()

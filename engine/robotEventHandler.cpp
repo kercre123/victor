@@ -672,6 +672,7 @@ template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TrackToFace& trackFace)
 {
   TrackFaceAction* action = new TrackFaceAction(trackFace.faceID);
+  action->SetMoveEyes(true);
   
   // TODO: Support body-only mode
   if(trackFace.headOnly) {

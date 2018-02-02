@@ -82,6 +82,7 @@ namespace Cozmo {
       const f32 _kDefaultSpeed        = MAX_BODY_ROTATION_SPEED_RAD_PER_SEC;
       const f32 _kDefaultAccel        = 10.f;
       const f32 _kMaxRelativeTurnRevs = 25.f; // Maximum number of revolutions allowed for a relative turn.
+      const std::string _kEyeShiftLayerName = "TurnInPlaceEyeShiftLayer";
       
       bool       _inPosition = false;
       bool       _turnStarted = false;
@@ -104,7 +105,6 @@ namespace Cozmo {
       u32 _relocalizedCnt = 0;
       
       bool    _moveEyes = true;
-      AnimationTag _eyeShiftTag = kNotAnimatingTag;
       
       bool _isInitialized = false;
       
@@ -319,6 +319,8 @@ namespace Cozmo {
     
       static f32 GetPresetHeadAngle(Preset preset);
       static const char* GetPresetName(Preset preset);
+
+      const std::string _kEyeShiftLayerName = "MoveHeadToAngleEyeShiftLayer";
       
       bool IsHeadInPosition() const;
       
@@ -332,8 +334,6 @@ namespace Cozmo {
       bool        _moveEyes = true;
       bool        _holdEyes = false;
       Radians     _halfAngle;
-      
-      AnimationTag _eyeShiftTag = kNotAnimatingTag;
 
       MovementComponent::MotorActionID _actionID = 0;
       bool        _motionCommanded = false;
