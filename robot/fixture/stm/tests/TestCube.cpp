@@ -121,6 +121,40 @@ static void da14580_load_program_(const uint8_t *bin, int size, const char* name
 }
 
 //-----------------------------------------------------------------------------
+//                  Debug
+//-----------------------------------------------------------------------------
+
+void DbgCubeIMeasLoop(char *title)
+{
+  DUT_UART::deinit();
+  
+  int icube = -1, cnt = 0;
+  while( ConsoleReadChar() > -1 ) {}
+  if(title)
+    ConsolePrintf("%s:\n", title);
+  
+  while(1)
+  {
+    int i = Meter::getCurrentMa(PWR_CUBEBAT,8);
+    if( icube != i ) {
+      icube = i;
+      ConsolePrintf("%03i,", icube);
+      if(++cnt >= 10) {
+        cnt = 0;
+        ConsolePrintf("\n");
+      }
+    }
+    
+    if( ConsoleReadChar() > -1 ) {
+      ConsolePrintf("\n");
+      break;
+    }
+  }
+  
+  DUT_UART::init(57600);
+}
+
+//-----------------------------------------------------------------------------
 //                  Cube Tests
 //-----------------------------------------------------------------------------
 
@@ -157,13 +191,13 @@ static void ShortCircuitTest(void)
 }
 
 //led test array
-typedef struct { char* name; uint16_t bits; int i_meas; int i_nominal; int i_variance; } led_test_t;
+typedef struct { char* name; uint16_t bits; int duty; int i_meas; int i_nominal; int i_variance; } led_test_t;
 led_test_t ledtest[] = {
-  {(char*)"All.RED",  0x1111, 0, 15, 4}, {(char*)"All.GRN",  0x2222, 0, 15, 4}, {(char*)"All.BLU",  0x4444, 0, 15, 4},
-  {(char*)"D1.RED",   0x0001, 0, 4 , 2}, {(char*)"D1.GRN",   0x0002, 0, 4 , 2}, {(char*)"D1.BLU",   0x0004, 0, 4 , 2},
-  {(char*)"D2.RED",   0x0010, 0, 4 , 2}, {(char*)"D2.GRN",   0x0020, 0, 4 , 2}, {(char*)"D2.BLU",   0x0040, 0, 4 , 2},
-  {(char*)"D3.RED",   0x0100, 0, 4 , 2}, {(char*)"D3.GRN",   0x0200, 0, 4 , 2}, {(char*)"D3.BLU",   0x0400, 0, 4 , 2},
-  {(char*)"D4.RED",   0x1000, 0, 4 , 2}, {(char*)"D4.GRN",   0x2000, 0, 4 , 2}, {(char*)"D4.BLU",   0x4000, 0, 4 , 2}
+  {(char*)"All.RED",  0x1111, 12, 0, 15, 4}, {(char*)"All.GRN",  0x2222, 12, 0, 15, 4}, {(char*)"All.BLU",  0x4444, 12, 0, 15, 4},
+  {(char*)"D1.RED",   0x0001,  1, 0, 43, 6}, {(char*)"D1.GRN",   0x0002,  1, 0, 43, 6}, {(char*)"D1.BLU",   0x0004,  1, 0, 43, 6},
+  {(char*)"D2.RED",   0x0010,  1, 0, 43, 6}, {(char*)"D2.GRN",   0x0020,  1, 0, 43, 6}, {(char*)"D2.BLU",   0x0040,  1, 0, 43, 6},
+  {(char*)"D3.RED",   0x0100,  1, 0, 43, 6}, {(char*)"D3.GRN",   0x0200,  1, 0, 43, 6}, {(char*)"D3.BLU",   0x0400,  1, 0, 43, 6},
+  {(char*)"D4.RED",   0x1000,  1, 0, 43, 6}, {(char*)"D4.GRN",   0x2000,  1, 0, 43, 6}, {(char*)"D4.BLU",   0x4000,  1, 0, 43, 6}
 };
 
 static void CubeTest(void)
@@ -182,11 +216,16 @@ static void CubeTest(void)
   cmdSend(CMD_IO_DUT_UART, "vled 1");
   Timer::delayMs(50); //wait for VLED boost reg to stabilize
   int i_base = Meter::getCurrentMa(PWR_CUBEBAT,10);
+  
+  //DbgCubeIMeasLoop((char*)"base current");
+  
   for(int n=0; n < sizeof(ledtest)/sizeof(led_test_t); n++)
   {
-    cmdSend(CMD_IO_DUT_UART, snformat(b,bz,"leds 0x%x", ledtest[n].bits));
+    cmdSend(CMD_IO_DUT_UART, snformat(b,bz,"leds 0x%x %s", ledtest[n].bits, (ledtest[n].duty <= 1 ? "static" : "") ));
     Timer::delayMs(20);
     ledtest[n].i_meas = Meter::getCurrentMa(PWR_CUBEBAT,8);
+    
+    //DbgCubeIMeasLoop( snformat(b,bz,"led %i current", n) );
   }
   cmdSend(CMD_IO_DUT_UART, "leds 0");
   cmdSend(CMD_IO_DUT_UART, "vled 0");
