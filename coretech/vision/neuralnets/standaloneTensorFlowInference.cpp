@@ -90,7 +90,7 @@ Result ObjectDetector::Model::LoadModel(const std::string& modelPath, const Json
   GetFromConfig(min_score);
   
   if(!ANKI_VERIFY(Util::IsFltGEZero(_params.min_score) && Util::IsFltLE(_params.min_score, 1.f),
-                  "ObjectDetector.Model.LoadModel.BadMinScore",
+                  "ObjectDetector.Model.LoadModel.Badmin_score",
                   "%f not in range [0.0,1.0]", _params.min_score))
   {
     return RESULT_FAIL;
@@ -338,20 +338,23 @@ tensorflow::Status ObjectDetector::Model::CreateTensorFromImage(const cv::Mat& i
 
 #include <cmath>
 #include <fstream>
+#include <list>
 #include <sstream>
 #include <string>
 #include <thread>
 
-namespace std {
-  template <typename T>
-  std::string to_string(T value)
-  {
-      std::ostringstream os ;
-      os << value ;
-      return os.str() ;
-  }
-}
+#define QUOTE_HELPER(__ARG__) #__ARG__
+#define QUOTE(__ARG__) QUOTE_HELPER(__ARG__)
 
+// TODO: Use coretech shared types.h? Or replicate full enum here?
+using Result = int;
+const Result RESULT_OK = 0;
+const Result RESULT_FAIL = 1;
+
+using TimeStamp_t = uint32_t;
+
+// Define local versions of FulLFilePath and FileExists to avoid needing to include 
+// all of Anki::Util
 static inline std::string FullFilePath(const std::string& path, const std::string& filename)
 {
   return path + "/" + filename;
@@ -364,14 +367,217 @@ static inline bool FileExists(const std::string& filename)
   return (statResult == 0);
 }
 
+static void PRINT_NAMED_ERROR(const char* eventName, const char* format, ...)
+{
+  const size_t kMaxStringBufferSize = 1024;
+
+  // parse string
+  va_list args;
+  char logString[kMaxStringBufferSize]{0};
+  va_start(args, format);
+  vsnprintf(logString, kMaxStringBufferSize, format, args);
+  va_end(args);
+
+  // TODO: log it
+  //LogError(eventName, keyValues, logString);
+}
+
+class ObjectDetector
+{
+public:
+  ObjectDetector() : _params{} 
+  {
+
+  }
+
+  Result LoadModel(const std::string& modelPath, const Json::Value& config);
+
+  struct DetectedObject
+  {
+    TimeStamp_t     timestamp;
+    float           score;
+    std::string     name;
+    float           xmin, ymin, xmax, ymax;
+  };
+
+  Result Detect(cv::Mat& img, std::list<DetectedObject>& objects);
+
+  bool IsVerbose() const { return _params.verbose; }
+
+private:
+
+  static Result ReadLabelsFile(const std::string& fileName, std::vector<std::string>& labels_out);
+
+  void GetClassification(const tensorflow::Tensor& output_tensor, TimeStamp_t timestamp, 
+                         std::list<DetectedObject>& objects);
+
+  void GetDetectedObjects(const std::vector<tensorflow::Tensor>& output_tensors, TimeStamp_t timestamp,
+                          std::list<DetectedObject>& objects);
+
+  struct 
+  {
+    std::string   graph; // = "tensorflow/examples/label_image/data/inception_v3_2016_08_28_frozen.pb";
+    std::string   architecture; // "classification" or "detection"
+    std::string   labels; // = "tensorflow/examples/label_image/data/imagenet_slim_labels.txt";
+    
+    int32_t       input_width; // = 299;
+    int32_t       input_height; // = 299;
+    uint8_t       input_mean_R; // = 0;
+    uint8_t       input_mean_G; // = 0;
+    uint8_t       input_mean_B; // = 0;
+    int32_t       input_std; // = 255;
+    
+    int32_t       top_K; // = 1;
+    float         min_score; // in [0,1]
+    
+    bool          verbose;
+  } _params;
+
+  std::string                          _input_layer;
+  std::vector<std::string>             _output_layers;
+  bool                                 _useFloatInput = false;
+
+  std::unique_ptr<tensorflow::Session> _session;
+  std::vector<std::string>             _labels;
+  
+}; // class ObjectDetector
+
+static inline void SetFromConfigHelper(const Json::Value& json, int32_t& value) {
+  value = json.asInt();
+}
+
+static inline void SetFromConfigHelper(const Json::Value& json, float& value) {
+  value = json.asFloat();
+}
+
+static inline void SetFromConfigHelper(const Json::Value& json, bool& value) {
+  value = json.asBool();
+}
+
+static inline void SetFromConfigHelper(const Json::Value& json, std::string& value) {
+  value = json.asString();
+}
+
+static inline void SetFromConfigHelper(const Json::Value& json, uint8_t& value) {
+  value = json.asUInt();
+}
+
+Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value& config)
+{
+ 
+# define GetFromConfig(keyName) \
+  if(!config.isMember(QUOTE(keyName))) \
+  { \
+    PRINT_NAMED_ERROR("ObjectDetector.Model.LoadModel.MissingConfig", QUOTE(keyName)); \
+    return RESULT_FAIL; \
+  } \
+  else \
+  { \
+    SetFromConfigHelper(config[QUOTE(keyName)], _params.keyName); \
+  }
+
+  GetFromConfig(verbose);
+  GetFromConfig(labels);
+  GetFromConfig(top_K);
+  GetFromConfig(min_score);
+  
+  // if(!ANKI_VERIFY(Util::IsFltGEZero(_params.min_score) && Util::IsFltLE(_params.min_score, 1.f),
+  //                 "ObjectDetector.Model.LoadModel.Badmin_score",
+  //                 "%f not in range [0.0,1.0]", _params.min_score))
+  // {
+  //   return RESULT_FAIL;
+  // }
+  
+  GetFromConfig(graph);
+  GetFromConfig(input_height);
+  GetFromConfig(input_width);
+  GetFromConfig(architecture);
+
+  if("ssd_mobilenet" == _params.architecture)
+  {
+    _input_layer = "image_tensor";
+    _output_layers = {"detection_scores", "detection_classes", "detection_boxes", "num_detections"};
+    _useFloatInput = false;
+  }
+  else if("mobilenet" == _params.architecture)
+  { 
+    _input_layer = "input";
+    _output_layers = {"MobilenetV1/Predictions/Softmax"};
+    _useFloatInput = true;
+  }
+  else
+  {
+    PRINT_NAMED_ERROR("ObjectDetector.LoadModel.UnrecognizedArchitecture", "%s", 
+                      _params.architecture.c_str());
+    return RESULT_FAIL;
+  }
+
+  if(_params.verbose)
+  {
+    std::cout << "Input: " << _input_layer << ", Outputs: ";
+    for(auto const& output_layer : _output_layers)
+    {
+      std::cout << output_layer << " ";
+    }
+    std::cout << std::endl;
+  }
+
+  if ("mobilenet" == _params.architecture)
+  {
+    // Only required in classification mode
+    GetFromConfig(input_mean_R);
+    GetFromConfig(input_mean_G);
+    GetFromConfig(input_mean_B);
+    GetFromConfig(input_std);
+  }
+  
+  const std::string graph_file_name = FullFilePath(modelPath, _params.graph);
+  
+  if (!FileExists(graph_file_name))
+                  
+  {
+    PRINT_NAMED_ERROR("ObjectDetector.Model.LoadGraph.GraphFileDoesNotExist", "%s",
+                      graph_file_name.c_str());
+    return RESULT_FAIL;
+  }
+  
+  tensorflow::GraphDef graph_def;
+  tensorflow::Status load_graph_status = tensorflow::ReadBinaryProto(tensorflow::Env::Default(), graph_file_name, &graph_def);
+  if (!load_graph_status.ok())
+  {
+    PRINT_NAMED_ERROR("ObjectDetector.Model.LoadGraph.ReadBinaryProtoFailed",
+                      "Status: %s", load_graph_status.ToString().c_str());
+    return RESULT_FAIL;
+  }
+  
+  std::cout << "ObjectDetector.Model.LoadGraph.ModelLoadSuccess " << graph_file_name << std::endl;
+  
+  _session.reset(tensorflow::NewSession(tensorflow::SessionOptions()));
+  tensorflow::Status session_create_status = _session->Create(graph_def);
+  if (!session_create_status.ok())
+  {
+    PRINT_NAMED_ERROR("ObjectDetector.Model.LoadGraph.CreateSessionFailed",
+                      "Status: %s", session_create_status.ToString().c_str());
+    return RESULT_FAIL;
+  }
+  
+  const std::string labels_file_name = FullFilePath(modelPath, _params.labels);
+  Result readLabelsResult = ReadLabelsFile(labels_file_name, _labels);
+  if (RESULT_OK == readLabelsResult)
+  {
+    std::cout << "ObjectDetector.Model.LoadGraph.ReadLabelFileSuccess " << labels_file_name.c_str() << std::endl;
+  }
+  return readLabelsResult;
+}
+
 // returns true on success, false on failure
-bool ReadLabelsFile(const std::string& fileName, std::vector<std::string>& labels_out)
+Result ObjectDetector::ReadLabelsFile(const std::string& fileName, std::vector<std::string>& labels_out)
 {
   std::ifstream file(fileName);
   if (!file)
   {
-    std::cerr << "ObjectDetector.ReadLabelsFile.LabelsFileNotFound: " << fileName << std::endl;
-    return false;
+    PRINT_NAMED_ERROR("ObjectDetector.ReadLabelsFile.LabelsFileNotFound: ", "%s", fileName.c_str());
+    return RESULT_FAIL;
   }
   
   labels_out.clear();
@@ -382,90 +588,218 @@ bool ReadLabelsFile(const std::string& fileName, std::vector<std::string>& label
   
   std::cout << "ReadLabelsFile read " << labels_out.size() << " labels" << std::endl;
 
-  return true;
+  return RESULT_OK;
+}
+
+void ObjectDetector::GetClassification(const tensorflow::Tensor& output_tensor, TimeStamp_t timestamp, 
+                                       std::list<DetectedObject>& objects)
+{
+  const float* output_data = output_tensor.tensor<float, 2>().data();
+        
+  float maxScore = _params.min_score;
+  int labelIndex = -1;
+  for(int i=0; i<_labels.size(); ++i)
+  {
+    if(output_data[i] > maxScore)
+    {
+      maxScore = output_data[i];
+      labelIndex = i;
+    }
+  }
+  
+  if(labelIndex >= 0)
+  {    
+    DetectedObject object{
+      .timestamp = timestamp,
+      .score = maxScore,
+      .name = (labelIndex < _labels.size() ? _labels.at((size_t)labelIndex) : "<UNKNOWN>"),
+      .xmin = 0, .ymin = 0, .xmax = 1, .ymax = 1,
+    };
+    
+    if(_params.verbose)
+    {
+      std::cout << "Found " << object.name << "[" << labelIndex << "] with score=" << object.score << std::endl;
+    }
+
+    objects.push_back(std::move(object));
+  }
+  else if(_params.verbose)
+  {
+    std::cout << "Nothing found above min_score=" << _params.min_score << std::endl;
+  }
+}
+
+void ObjectDetector::GetDetectedObjects(const std::vector<tensorflow::Tensor>& output_tensors, TimeStamp_t timestamp,
+                                        std::list<DetectedObject>& objects)
+{
+  assert(output_tensors.size() == 4);
+
+  const int numDetections = (int)output_tensors[3].tensor<float,1>().data()[0];
+
+  if(_params.verbose)
+  {
+    std::cout << "Got " << numDetections << " raw detections" << std::endl;
+  }
+
+  if(numDetections > 0)
+  {
+    const float* scores  = output_tensors[0].tensor<float, 2>().data();
+    const float* classes = output_tensors[1].tensor<float, 2>().data();
+    
+    auto const& boxesTensor = output_tensors[2].tensor<float, 3>();
+    
+    const float* boxes = boxesTensor.data();
+    
+    for(int i=0; i<numDetections; ++i)
+    {
+      if(scores[i] >= _params.min_score)
+      {
+        const float* box = boxes + (4*i);
+        
+        const size_t labelIndex = (size_t)(classes[i]);
+
+        objects.emplace_back(DetectedObject{
+          .timestamp = 0, // TODO: Fill in timestamp!  img.GetTimestamp(),
+          .score     = scores[i],
+          .name      = (labelIndex < _labels.size() ? _labels[labelIndex] : "<UNKNOWN>"),
+          .xmin = box[0], .ymin = box[1], .xmax = box[2], .ymax = box[3],
+        });
+      }
+    }
+
+    if(_params.verbose)
+    {
+      std::cout << "Returning " << objects.size() << " detections with score above " << _params.min_score << ":";
+      for(auto const& object : objects)
+      {
+        std::cout << object.name << " ";
+      }
+      std::cout << std::endl;
+    }
+  } 
+}
+
+Result ObjectDetector::Detect(cv::Mat& img, std::list<DetectedObject>& objects)
+{
+  // TODO: specify size on command line or get from graph?
+  cv::resize(img, img, cv::Size(224,224), 0, 0, CV_INTER_AREA);
+
+  tensorflow::Tensor image_tensor;
+
+  if(_useFloatInput)
+  {
+    if(_params.verbose)
+    {
+      std::cout << "Copying in FLOAT " << img.rows << "x" << img.cols << " image data" << std::endl;
+    }
+
+    image_tensor = tensorflow::Tensor(tensorflow::DT_FLOAT, {
+      1, img.rows, img.cols, img.channels()
+    });
+
+    img.convertTo(img, CV_32FC3, 1.f/255.f);
+    memcpy(image_tensor.tensor<float, 4>().data(), img.data, img.rows*img.cols*img.channels()*sizeof(float));
+
+    // float* tensor_data = image_tensor.tensor<float,4>().data();
+    // for(int i=0; i<img.rows; ++i)
+    // {
+    //   const uint8_t* img_i = img.ptr<uint8_t>(i);
+    //   for(int j=0; j<img.cols*img.channels(); ++j)
+    //   {
+    //     tensor_data[j] = (float)(img_i[j]) / 255.f;
+    //     ++tensor_data;
+    //   }
+    // }
+  
+  }
+  else 
+  {
+    if(_params.verbose)
+    {
+      std::cout << "Copying in UINT8 " << img.rows << "x" << img.cols << " image data" << std::endl;
+    }
+
+    image_tensor = tensorflow::Tensor(tensorflow::DT_UINT8, {
+      1, img.rows, img.cols, img.channels()
+    });
+
+    assert(img.isContinuous());
+    
+    // TODO: Avoid copying the data (just "point" the tensor at the image's data pointer?)
+    memcpy(image_tensor.tensor<uint8_t, 4>().data(), img.data, img.rows*img.cols*img.channels());
+  }
+    
+  if(_params.verbose)
+  {
+    std::cout << "Running session with input dtype=" << image_tensor.dtype() << " and " << _output_layers.size() << " outputs" << std::endl;
+  }
+
+  std::vector<tensorflow::Tensor> output_tensors;
+  tensorflow::Status run_status = _session->Run({{_input_layer, image_tensor}}, _output_layers, {}, &output_tensors);
+
+  if (!run_status.ok()) {
+    PRINT_NAMED_ERROR("ObjectDetector.Model.Run.DetectionSessionRunFail", "%s", run_status.ToString().c_str());
+    return RESULT_FAIL;
+  }
+
+  // TODO: Get timestamp somehow
+  const TimeStamp_t t = 0;
+
+  if(output_tensors.size() == 1)
+  {
+    GetClassification(output_tensors[0], t, objects);
+  }
+  else
+  {
+    GetDetectedObjects(output_tensors, t, objects);  
+  }
+
+  if(_params.verbose)
+  {
+    std::cout << "Session complete" << std::endl;
+  }
+
+  return RESULT_OK;
 }
 
 int main(int argc, char **argv)
 {
-  if(argc < 6)
+  if(argc < 4)
   {
-    std::cout << "Usage: " << argv[0] << " modelFile labelFile cachePath minScore detectionMode={mobilenet,ssd_mobilenet} <verbose=0>" << std::endl;
+    //std::cout << "Usage: " << argv[0] << " modelPath cachePath min_score detectionMode={mobilenet,ssd_mobilenet} <verbose=0>" << std::endl;
+    std::cout << "Usage: " << argv[0] << " configFile.json modelPath cachePath <verbose>" << std::endl;
     return -1;
   }
-
-  const std::string modelFile(argv[1]);
-  const std::string labelsFile(argv[2]);
+  
+  const std::string configFilename(argv[1]);
+  const std::string modelPath(argv[2]);
   const std::string cachePath(argv[3]);
-  const float minScore = atof(argv[4]);
-  const std::string architecture(argv[5]);
 
-  bool verbose = false;
-  if(argc > 6 && atoi(argv[6])>0)
+  // Read config file
+  Json::Value config;
   {
-    std::cout << "Using verbose mode" << std::endl;
-    verbose = true;
-  }
-
-  std::string input_layer("");
-  std::vector<std::string> output_layers;
-  bool useFloatInput = false;
-  if("ssd_mobilenet" == architecture)
-  {
-    input_layer = "image_tensor";
-    output_layers = {"detection_scores", "detection_classes", "detection_boxes", "num_detections"};
-  }
-  else if("mobilenet" == architecture)
-  { 
-    input_layer = "input";
-    output_layers = {"MobilenetV1/Predictions/Softmax"};
-    useFloatInput = true;
-  }
-  else
-  {
-    std::cerr << "Unrecognized architecture: " << architecture << std::endl;
-    return -1;
-  }
-
-  if(verbose)
-  {
-    std::cout << "Input: " << input_layer << ", Outputs: ";
-    for(auto const& output_layer : output_layers)
+    Json::Reader reader;
+    std::ifstream file(configFilename);
+    const bool success = reader.parse(file, config);
+    if(!success)
     {
-      std::cout << output_layer << " ";
+      PRINT_NAMED_ERROR(argv[0], "Could not read config file: %s", configFilename.c_str());
+      return -1;
     }
-    std::cout << std::endl;
   }
 
-  tensorflow::GraphDef graph_def;
-  tensorflow::Status load_graph_status = tensorflow::ReadBinaryProto(tensorflow::Env::Default(), modelFile, &graph_def);
-  if (!load_graph_status.ok())
-  {
-    std::cerr << "ObjectDetector.Model.LoadGraph.ReadBinaryProtoFailed: " << load_graph_status.ToString() << std::endl;
-    return -1;
-  }
-
-  std::cout << "Loaded model: " << modelFile << std::endl;
-
-  std::vector<std::string> labels;
-  const bool readLabelSuccess = ReadLabelsFile(labelsFile, labels);
-  if( !readLabelSuccess )
-  {
-    std::cerr << "ReadLabelsFile failed" << std::endl;
-    return -1;
-  }
- 
   const std::string imageFilename = FullFilePath(cachePath, "objectDetectionImage.png");
   const int kPollFrequency_ms = 10;
 
-  std::unique_ptr<tensorflow::Session> session(tensorflow::NewSession(tensorflow::SessionOptions()));
-  tensorflow::Status session_create_status = session->Create(graph_def);
-  if (!session_create_status.ok())
+  // Initialize the detector
+  ObjectDetector detector;
+  Result initResult = detector.LoadModel(modelPath, config);
+  if(RESULT_OK != initResult)
   {
-    std::cerr << "ObjectDetector.Model.LoadGraph.CreateSessionFailed: " << session_create_status.ToString() << std::endl;
+    PRINT_NAMED_ERROR(argv[0], "Failed to load model from path: %s", modelPath.c_str());
     return -1;
   }
-
-  std::cout << "Created session, waiting for images" << std::endl;
+  std::cout << "Loaded model, waiting for images" << std::endl;
 
   while(true)
   {
@@ -474,230 +808,42 @@ int main(int argc, char **argv)
 
     if(isImageAvailable)
     {
-      if(verbose)
+      if(detector.IsVerbose())
       {
         std::cout << "Found image" << std::endl;
       }
 
-      using namespace ::tensorflow::ops;
-
+      // Get the image
       cv::Mat img = cv::imread(imageFilename);
 
-      // TODO: specify size on command line or get from graph?
-      cv::resize(img, img, cv::Size(224,224), 0, 0, CV_INTER_AREA);
+      // Detect what's in it
+      std::list<ObjectDetector::DetectedObject> objects;
+      Result result = detector.Detect(img, objects);
 
-      tensorflow::Tensor image_tensor;
-
-      if(useFloatInput)
-      {
-        if(verbose)
-        {
-          std::cout << "Copying in FLOAT " << img.rows << "x" << img.cols << " image data" << std::endl;
-        }
-
-        image_tensor = tensorflow::Tensor(tensorflow::DT_FLOAT, {
-          1, img.rows, img.cols, img.channels()
-        });
-
-        img.convertTo(img, CV_32FC3, 1.f/255.f);
-        memcpy(image_tensor.tensor<float, 4>().data(), img.data, img.rows*img.cols*img.channels()*sizeof(float));
-
-        // float* tensor_data = image_tensor.tensor<float,4>().data();
-        // for(int i=0; i<img.rows; ++i)
-        // {
-        //   const uint8_t* img_i = img.ptr<uint8_t>(i);
-        //   for(int j=0; j<img.cols*img.channels(); ++j)
-        //   {
-        //     tensor_data[j] = (float)(img_i[j]) / 255.f;
-        //     ++tensor_data;
-        //   }
-        // }
+      Json::Value detectionResults;
       
-      }
-      else 
+      // Convert the results to JSON
       {
-        if(verbose)
+        Json::Value& objectsJSON = detectionResults["objects"];
+        for(auto const& object : objects)
         {
-          std::cout << "Copying in UINT8 " << img.rows << "x" << img.cols << " image data" << std::endl;
-        }
-
-        image_tensor = tensorflow::Tensor(tensorflow::DT_UINT8, {
-          1, img.rows, img.cols, img.channels()
-        });
-
-        if(img.isContinuous())
-        {
-          // TODO: Avoid copying the data (just "point" the tensor at the image's data pointer?)
-          memcpy(image_tensor.tensor<uint8_t, 4>().data(), img.data, img.rows*img.cols*img.channels());
-        }
-        else
-        {
-          uint8_t* tensor_data = image_tensor.tensor<uint8_t,4>().data();
-          for(int i=0; i<img.rows; ++i)
-          {
-            const int rowLength = img.channels() * img.cols;
-            const uint8_t* img_i = img.ptr<uint8_t>(i);
-            memcpy(tensor_data, img_i, rowLength);
-            tensor_data += rowLength;
-          }
-        } 
-      }
-        
-      if(verbose)
-      {
-        std::cout << "Running session with input dtype=" << image_tensor.dtype() << " and " << output_layers.size() << " outputs" << std::endl;
-      }
-
-      std::vector<tensorflow::Tensor> output_tensors;
-      tensorflow::Status run_status = session->Run({{input_layer, image_tensor}}, output_layers, {}, &output_tensors);
-
-      if (!run_status.ok()) {
-        std::cerr << "ObjectDetector.Model.Run.DetectionSessionRunFail: " << run_status.ToString() << std::endl;
-        return -1;
-      }
-    
-      if(verbose)
-      {
-        std::cout << "Session complete" << std::endl;
-      }
-
-      Json::Value detectionResult;
-      Json::Value& objects = detectionResult["objects"];
-
-      if(output_tensors.size() == 1)
-      {
-        const float* output_data = output_tensors[0].tensor<float, 2>().data();
-        
-        float maxScore = minScore;
-        int labelIndex = -1;
-        for(int i=0; i<labels.size(); ++i)
-        {
-          if(output_data[i] > maxScore)
-          {
-            maxScore = output_data[i];
-            labelIndex = i;
-          }
-        }
-        
-        if(labelIndex >= 0)
-        {
-          Json::Value& object = objects[0];
-          object["timestamp"] = 0;
-          object["score"] = maxScore;
-          if(labelIndex >= 0 && labelIndex < labels.size())
-          {
-            object["name"] = labels[(size_t)labelIndex];
-          }
-          else 
-          {
-            std::cerr << "Invalid label labelIndex=" << labelIndex << " (have " << labels.size() << " labels)" << std::endl;
-            object["name"] = "<UNKNOWN>";
-          }
-          object["xmin"] = 0;
-          object["ymin"] = 0;
-          object["xmax"] = img.cols;
-          object["ymax"] = img.rows;
-
-          if(verbose)
-          {
-            std::cout << "Found " << object["name"].asString() << "[" << labelIndex << "] with score=" << object["score"].asFloat() << std::endl;
-          }
-        }
-        else if(verbose)
-        {
-          std::cout << "Nothing found above minScore=" << minScore << std::endl;
-        }
-      }
-      else
-      {
-        assert(output_tensors.size() == 4);
-
-        const int numDetections = (int)output_tensors[3].tensor<float,1>().data()[0];
-
-        if(verbose)
-        {
-          std::cout << "Got " << numDetections << " raw detections" << std::endl;
-        }
-
-        if(numDetections > 0)
-        {
-          const float* scores  = output_tensors[0].tensor<float, 2>().data();
-          const float* classes = output_tensors[1].tensor<float, 2>().data();
+          Json::Value json;
+          json["timestamp"] = object.timestamp;
+          json["score"]     = object.score;
+          json["name"]      = object.name;
+          json["xmin"]      = object.xmin;
+          json["ymin"]      = object.ymin;
+          json["xmax"]      = object.xmax;
+          json["ymax"]      = object.ymax;
           
-          auto const& boxesTensor = output_tensors[2].tensor<float, 3>();
-          
-          // DEV_ASSERT_MSG(boxesTensor.dimension(0) == 1 &&
-          //                boxesTensor.dimension(1) == numDetections &&
-          //                boxesTensor.dimension(2) == 4,
-          //                "ObjectDetector.Model.Run.UnexpectedOutputBoxesSize",
-          //                "%dx%dx%d instead of 1x%dx4",
-          //                (int)boxesTensor.dimension(0), (int)boxesTensor.dimension(1), (int)boxesTensor.dimension(2),
-          //                numDetections);
-          
-          const float* boxes = boxesTensor.data();
-          
-          int numReturned = 0;
-          for(int i=0; i<numDetections; ++i)
-          {
-            if(scores[i] >= minScore)
-            {
-              const float* box = boxes + (4*i);
-              
-              //(xmax > xmin, "ObjectDetector.Model.Run.InvalidDetectionBoxWidth",
-              //               "xmin=%d xmax=%d", xmin, xmax);
-              //DEV_ASSERT_MSG(ymax > ymin, "ObjectDetector.Model.Run.InvalidDetectionBoxHeight",
-              //               "ymin=%d ymax=%d", ymin, ymax);
-              
-              // DetectedObject object{
-              //   .timestamp = 0, // TODO: Fill in timestamp!  img.GetTimestamp(),
-              //   .score     = scores[i],
-              //   .name      = _labels[(size_t)classes[i]],
-              //   .rect      = Anki::Rectangle<s32>(xmin, ymin, xmax-xmin, ymax-ymin),
-              // };
-
-              const int labelIndex = (int)classes[i];
-
-              Json::Value& object = objects[numReturned++];
-              object["timestamp"] = 0;
-              object["score"] = scores[i];
-              if(labelIndex >= 0 && labelIndex < labels.size())
-              {
-                object["name"] = labels[(size_t)classes[i]];
-              }
-              else 
-              {
-                std::cerr << "Invalid label labelIndex=" << labelIndex << " (have " << labels.size() << " labels)" << std::endl;
-                object["name"] = "<UNKNOWN>";
-              }
-              object["xmin"] = box[0];
-              object["ymin"] = box[1];
-              object["xmax"] = box[2];
-              object["ymax"] = box[3];
-              
-
-              //std::cout << "ObjectDetector.Model.Run.ObjectDetected: Name:" << object.name << " Score:" << object.score << " Box:[" << 
-              //               object.rect.GetX() << " " << object.rect.GetY() << " " << object.rect.GetWidth()<< " " << object.rect.GetHeight() << std::endl;
-              
-              //objects.push_back(std::move(object));
-            }
-          }
-
-          if(verbose)
-          {
-            std::cout << "Returning " << numReturned << " detections with score above " << minScore << ":";
-            for(auto const& object : objects)
-            {
-              std::cout << object["name"].asString() << " ";
-            }
-            std::cout << std::endl;
-          }
-        }        
+          objectsJSON.append(json);
+        }          
       }
 
       // Write out the Json
       {
         const std::string jsonFilename = FullFilePath(cachePath, "objectDetectionResults.json");
-        if(verbose)
+        if(detector.IsVerbose())
         {
           std::cout << "Writing results to JSON: " << jsonFilename << std::endl;
         }
@@ -709,12 +855,12 @@ int main(int argc, char **argv)
           std::cerr << "Failed to open output file: " << jsonFilename << std::endl;
           return -1;
         }
-        writer.write(fs, detectionResult);
+        writer.write(fs, detectionResults);
         fs.close();
       }
 
       // Remove the image file we were working with
-      if(verbose)
+      if(detector.IsVerbose())
       {
         std::cout << "Deleting image file: " << imageFilename << std::endl;
       }
@@ -722,7 +868,7 @@ int main(int argc, char **argv)
     }
     else 
     {
-      if(verbose)
+      if(detector.IsVerbose())
       {
         const int kVerbosePrintFreq_ms = 1000;
         static int count = 0;
