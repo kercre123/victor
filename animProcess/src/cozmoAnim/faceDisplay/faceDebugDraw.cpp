@@ -287,6 +287,9 @@ void FaceDebugDraw::DrawConfidenceClock(
     {(int) (bufferFullPercent * (float) buffFullBarWidth_px), FACE_DISPLAY_HEIGHT - endOfBarHeight_px + buffFullBarHeight_px / 2}
     }, 
     NamedColors::RED);
+    
+  const std::string confidenceString = std::to_string(micData.confidence);
+  drawImg.DrawText( {0.0f, 10.0f}, confidenceString, NamedColors::WHITE, 0.5f );
 
   // Also draw the delay time in milliseconds
   // Copied from kRawAudioPerBuffer_ms in micDataProcessor.h

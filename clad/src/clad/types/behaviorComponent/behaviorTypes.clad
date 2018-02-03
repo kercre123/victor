@@ -130,6 +130,7 @@ enum uint_8 BehaviorClass {
   HighLevelAI,
   ObservingLookAtFaces,
   ObservingOnCharger,
+  ReactToSound,
   Sleeping
   
 }
@@ -386,6 +387,8 @@ enum uint_8 BehaviorID {
   Sleeping,
   SleepingWakeUp,
   ObservingFailedToFindCharger,
+  ReactToSoundAsleep,
+  ReactToSoundAwake,
 
   Needs_SevereLowEnergyRequest,
   ObservingOnChargerIdle,
