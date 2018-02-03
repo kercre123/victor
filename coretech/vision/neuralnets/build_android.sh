@@ -10,7 +10,7 @@ CC=${NDK_ROOT}/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/a
 # TensorFlow uses a factory pattern that requires we forcibly include 
 # everything from the the tensorflow-core library. Thus the --whole-archive flags
 
-${CC} --std=c++11 -fPIE -mfloat-abi=softfp -mfpu=neon -pie -v \
+${CC} --std=c++11 -fPIE -mfloat-abi=softfp -mfpu=neon -pie \
   --sysroot ${NDK_ROOT}/platforms/android-21/arch-arm \
   -I${NDK_ROOT}/sources/android/support/include \
   -I${NDK_ROOT}/sources/cxx-stl/gnu-libstdc++/4.9/include \
