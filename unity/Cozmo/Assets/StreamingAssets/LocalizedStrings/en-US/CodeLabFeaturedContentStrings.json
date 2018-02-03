@@ -357,6 +357,9 @@
     "codeLabFeaturedProject.DrivingInCircles.get_the_circle_radius_and_wheel_speeds_by_measuring_the_distance_between_cozmo_and_the_cube_center": {
         "translation": "Get the circle radius and wheel speeds by measuring the distance between Cozmo and the Cube center."
     },
+    "codeLabFeaturedProject.DrivingInCircles.heheeh": {
+        "translation": "Heheeh!"
+    },
     "codeLabFeaturedProject.DrivingInCircles.inner_wheel_speed": {
         "translation": "inner wheel speed"
     },
@@ -716,6 +719,9 @@
     },
     "codeLabFeaturedProject.PaddleBall.pick_a_random_saying_for_cozmo_when_player_scores": {
         "translation": "Pick a random saying for Cozmo when player scores."
+    },
+    "codeLabFeaturedProject.PaddleBall.play_again": {
+        "translation": "Play again?"
     },
     "codeLabFeaturedProject.PaddleBall.player": {
         "translation": "player"
