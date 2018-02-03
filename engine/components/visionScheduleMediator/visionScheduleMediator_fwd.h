@@ -30,6 +30,9 @@ namespace Cozmo {
   {
     VisionMode mode;
     EVisionUpdateFrequency frequency;
+
+    // Define comparison to enable storage in std::set
+    bool operator<(const VisionModeRequest& rhs) const { return this->mode < rhs.mode; }
   };
       
 } // namespace Cozmo

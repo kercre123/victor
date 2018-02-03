@@ -135,6 +135,7 @@ namespace Cozmo {
       void SetSearchWaitTime(f32 minWaitTime_s, f32 maxWaitTime_s);
 
     protected:
+      virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const override;
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
       virtual void OnRobotSet() override final;
@@ -175,7 +176,7 @@ namespace Cozmo {
       virtual bool SetMotionProfile(const PathMotionProfile& motionProfile) override;
       
     protected:
-      
+      virtual void GetRequiredVisionModes(std::set<VisionModeRequest>&requests) const override; 
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
       
@@ -507,6 +508,9 @@ namespace Cozmo {
       
     protected:
       
+      // This action will automatically subscribe to whatever VisionMode it is asked to wait on
+      virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const override;
+
       virtual ActionResult Init() override;
       
       virtual ActionResult CheckIfDone() override;
@@ -555,7 +559,7 @@ namespace Cozmo {
       void SetRefinedTurnAngleTol(const f32 tol) { _refinedTurnAngleTol_rad = tol; }
       
     protected:
-      
+      virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const override;
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
 
@@ -617,7 +621,7 @@ namespace Cozmo {
       void HandleMessage(const T& msg);
       
     protected:
-
+      virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const override;
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
       

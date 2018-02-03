@@ -29,7 +29,9 @@ public:
   TrackMotionAction() : ITrackAction("TrackMotion", RobotActionType::TRACK_MOTION) { }
   
 protected:
-  
+
+  virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const override;
+
   virtual ActionResult InitInternal() override;
   
   // Required by ITrackAction:

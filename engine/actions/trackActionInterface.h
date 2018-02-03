@@ -128,6 +128,9 @@ protected:
   ITrackAction(const std::string name, const RobotActionType type);
   virtual ~ITrackAction();
   
+  // Anything which inherits from track action needs to have appropriate VisionModes enabled.
+  virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const override = 0;
+
   // Note that derived classes should override InitInternal, which is called by Init
   virtual ActionResult Init() override final;
   virtual ActionResult InitInternal() = 0;

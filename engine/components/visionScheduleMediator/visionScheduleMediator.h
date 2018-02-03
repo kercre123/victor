@@ -58,7 +58,7 @@ public:
 
   // Subscribe at defined update frequencies to a vector of VisionModes. This call REPLACES existing subscriptions for
   // the pertinent subscriber 
-  void SetVisionModeSubscriptions(IVisionModeSubscriber* subscriber, const std::vector<VisionModeRequest>& requests);
+  void SetVisionModeSubscriptions(IVisionModeSubscriber* subscriber, const std::set<VisionModeRequest>& requests);
 
   // Remove all existing subscriptions for the pertinent subscriber
   void ReleaseAllVisionModeSubscriptions(IVisionModeSubscriber* subscriber);

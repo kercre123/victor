@@ -487,6 +487,11 @@ namespace Anki {
       return removed;
     }
 
+    void IDockAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const 
+    {
+      requests.insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::High });
+    }
+
     ActionResult IDockAction::Init()
     {
       _waitToVerifyTimeSecs = -1.f;

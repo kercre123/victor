@@ -467,6 +467,11 @@ namespace Anki {
       _maxWaitTime_s = maxWaitTime_s;
     }
 
+    void SearchForNearbyObjectAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const
+    {
+      requests.insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::High });
+    }
+
     ActionResult SearchForNearbyObjectAction::Init()
     {
       // Incase we are re-running this action
@@ -624,6 +629,11 @@ namespace Anki {
 
         GetRobot().GetDrivingAnimationHandler().ActionIsBeingDestroyed();
       }
+    }
+
+    void DriveStraightAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const
+    {
+      requests.insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::High });
     }
 
     void DriveStraightAction::SetAccel(f32 accel_mmps2)
@@ -1407,6 +1417,11 @@ namespace Anki {
       }
     }
 
+    void TurnTowardsObjectAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const
+    {
+      requests.insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::High });
+    }
+
     void TurnTowardsObjectAction::UseCustomObject(ObservableObject* objectPtr)
     {
       if( _objectID.IsSet() ) {
@@ -1961,6 +1976,11 @@ namespace Anki {
       _noNameTriggerCallback = callback;
     }      
 
+    void TurnTowardsFaceAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const
+    {
+      requests.insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::High });
+    }
+
     ActionResult TurnTowardsFaceAction::Init()
     {
       // If we have a last observed face set, use its pose. Otherwise pose will not be set
@@ -2286,6 +2306,11 @@ namespace Anki {
     
     }
     
+    void WaitForImagesAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const 
+    {
+      requests.insert({ _visionMode, EVisionUpdateFrequency::High });
+    }
+
     ActionResult WaitForImagesAction::Init()
     {
       _numModeFramesSeen = 0;
@@ -2351,6 +2376,10 @@ namespace Anki {
     
     ActionResult ReadToolCodeAction::Init()
     {
+      PRINT_NAMED_ERROR("ReadToolCodeAction.Deprecated", 
+                        "ReadToolCode functionality deprecated 1/31/18. See JIRA VIC-1189");
+      return ActionResult::ABORT;
+
       // Put the head and lift down for read
       _headAndLiftDownAction.AddAction(new MoveHeadToAngleAction(MIN_HEAD_ANGLE));
       _headAndLiftDownAction.AddAction(new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK, READ_TOOL_CODE_LIFT_HEIGHT_TOL_MM));
@@ -2373,12 +2402,18 @@ namespace Anki {
     {
       _headAndLiftDownAction.PrepForCompletion();
       if(HasRobot()){
-        GetRobot().GetVisionComponent().EnableMode(VisionMode::ReadingToolCode, false);        
+        // NOTE::STR 1/31/18 Removing call to (now) private VisionComponent scheduling fuctions
+        // See jira VIC-1189 for details on current plans for ToolCode functionality
+        // GetRobot().GetVisionComponent().EnableMode(VisionMode::ReadingToolCode, false);        
       }
     }
     
     ActionResult ReadToolCodeAction::CheckIfDone()
     {
+      PRINT_NAMED_ERROR("ReadToolCodeAction.Deprecated", 
+                        "ReadToolCode functionality deprecated 1/31/18. See JIRA VIC-1189");
+      return ActionResult::ABORT;
+
       ActionResult result = ActionResult::RUNNING;
       
       switch(_state)
@@ -2398,7 +2433,9 @@ namespace Anki {
             } else {
               // Tell the VisionSystem thread to check the tool code in the next image it gets.
               // It will disable this mode when it completes.
-              GetRobot().GetVisionComponent().EnableMode(VisionMode::ReadingToolCode, true);
+
+              // NOTE::STR 1/31/18 Removing call to (now) private VisionComponent scheduling fuctions
+              // GetRobot().GetVisionComponent().EnableMode(VisionMode::ReadingToolCode, true);
               _state = State::WaitingForRead;
             }
           }

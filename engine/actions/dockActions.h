@@ -193,6 +193,10 @@ namespace Anki {
       
     protected:
       
+      // IDockAction derived classes nearly universally require the same VisionModes. Special cases should
+      // override this function.
+      virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const override;
+
       // IDockAction implements these two required methods from IAction for its
       // derived classes
       virtual ActionResult Init() override final;

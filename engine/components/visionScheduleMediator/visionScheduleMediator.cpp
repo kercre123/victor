@@ -64,19 +64,19 @@ void VisionScheduleMediator::InitDependent(Cozmo::Robot* robot, const RobotCompM
 }
 
 void VisionScheduleMediator::SetVisionModeSubscriptions(IVisionModeSubscriber* const subscriber,
-                                                             const std::set<VisionMode>& desiredModes)
+                                                        const std::set<VisionMode>& desiredModes)
 {
   // Convert to requests for "standard" update frequencies
-  std::vector<VisionModeRequest> requests;
+  std::set<VisionModeRequest> requests;
   for(auto& mode : desiredModes){
-    requests.push_back({ mode, EVisionUpdateFrequency::Standard });
+    requests.insert({ mode, EVisionUpdateFrequency::Standard });
   }
 
   SetVisionModeSubscriptions(subscriber, requests);
 }
 
-void VisionScheduleMediator::SetVisionModeSubscriptions(IVisionModeSubscriber* const subscriber, 
-                                                             const std::vector<VisionModeRequest>& requests)
+void VisionScheduleMediator::SetVisionModeSubscriptions(IVisionModeSubscriber* const subscriber,
+                                                        const std::set<VisionModeRequest>& requests)
 {
   // Remove any existing subscriptions from this subscriber
   for(auto& modeDataPair : _modeDataMap){
@@ -150,7 +150,7 @@ void VisionScheduleMediator::UpdateVisionSchedule()
 }
 
 int VisionScheduleMediator::GetUpdatePeriodFromEnum(const VisionMode& mode, 
-                                                             const EVisionUpdateFrequency& frequencySetting) const
+                                                    const EVisionUpdateFrequency& frequencySetting) const
 {
   const VisionModeData& modeData = _modeDataMap.at(mode);
   switch(frequencySetting)

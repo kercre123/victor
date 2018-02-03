@@ -75,8 +75,8 @@ struct BehaviorObjectiveAchieved;
 // operates
 struct BehaviorOperationModifiers{
   BehaviorOperationModifiers(){
-    visionModesForActivatableScope = std::make_unique<std::vector<VisionModeRequest>>();
-    visionModesForActiveScope = std::make_unique<std::vector<VisionModeRequest>>();
+    visionModesForActivatableScope = std::make_unique<std::set<VisionModeRequest>>();
+    visionModesForActiveScope = std::make_unique<std::set<VisionModeRequest>>();
   }
 
   // WantsToBeActivated modifiers
@@ -95,8 +95,8 @@ struct BehaviorOperationModifiers{
 
   // Behaviors which require vision processing can add requests to these vectors to have the base class
   // manage subscriptions to those VisionModes. Default is none.
-  std::unique_ptr<std::vector<VisionModeRequest>> visionModesForActivatableScope;
-  std::unique_ptr<std::vector<VisionModeRequest>> visionModesForActiveScope;
+  std::unique_ptr<std::set<VisionModeRequest>> visionModesForActivatableScope;
+  std::unique_ptr<std::set<VisionModeRequest>> visionModesForActiveScope;
 };
 
 // Base Behavior Interface specification

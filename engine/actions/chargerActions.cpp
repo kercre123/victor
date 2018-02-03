@@ -196,7 +196,12 @@ TurnToAlignWithChargerAction::TurnToAlignWithChargerAction(ObjectID chargerID,
   , _rightTurnAnimTrigger(rightTurnAnimTrigger)
 {
 }
-  
+
+void TurnToAlignWithChargerAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const
+{
+  requests.insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::High });
+}
+
 ActionResult TurnToAlignWithChargerAction::Init()
 {
   _compoundAction.reset(new CompoundActionParallel());
