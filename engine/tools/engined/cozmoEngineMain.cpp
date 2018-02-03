@@ -35,11 +35,20 @@
 #include <limits.h>
 #include <unistd.h>
 
-#define LOG_CHANNEL "CozmoEngineMain"
 
-const char* ROBOT_ADVERTISING_HOST_IP = "127.0.0.1";
-const char* LOGNAME = "engine";
-                                                                                                    
+// What IP do we use for advertisement?
+constexpr const char * ROBOT_ADVERTISING_HOST_IP = "127.0.0.1";
+
+// What process name do we use for logging?
+constexpr const char * LOG_PROCNAME = "engine";
+
+// What channel name do we use for logging?
+constexpr const char * LOG_CHANNEL = "CozmoEngineMain";
+
+// How often do we check for engine stop?
+constexpr const int SLEEP_DELAY_US = (10*1000);         
+
+// Global singletons
 Anki::Cozmo::CozmoAPI* gEngineAPI = nullptr;
 Anki::Util::Data::DataPlatform* gDataPlatform = nullptr;
 
@@ -57,7 +66,7 @@ void configure_engine(Json::Value& config)
   
 }
 
-Anki::Util::Data::DataPlatform* createPlatform(const std::string& filesPath,
+static Anki::Util::Data::DataPlatform* createPlatform(const std::string& filesPath,
                                          const std::string& cachePath,
                                          const std::string& externalPath,
                                          const std::string& resourcesPath)
@@ -70,7 +79,7 @@ Anki::Util::Data::DataPlatform* createPlatform(const std::string& filesPath,
     return new Anki::Util::Data::DataPlatform(filesPath, cachePath, externalPath, resourcesPath);
 }
 
-std::string createResourcesPath(const std::string& resourcesBasePath)
+static std::string createResourcesPath(const std::string& resourcesBasePath)
 {
   std::string resourcesRefPath = resourcesBasePath + "/current";
   std::string resourcesRef = Anki::Util::FileUtils::ReadFile(resourcesRefPath);
@@ -82,7 +91,7 @@ std::string createResourcesPath(const std::string& resourcesBasePath)
   return resourcesBasePath + "/" + resourcesRef + "/cozmo_resources";
 }
 
-void getAndroidPlatformPaths(std::string& filesPath,
+static void getAndroidPlatformPaths(std::string& filesPath,
                              std::string& cachePath,
                              std::string& externalPath,
                              std::string& resourcesPath,
@@ -95,7 +104,7 @@ void getAndroidPlatformPaths(std::string& filesPath,
   resourcesPath = createResourcesPath(resourcesBasePath);
 }
 
-int cozmo_start(const Json::Value& configuration)
+static int cozmo_start(const Json::Value& configuration)
 {
   int result = 0;
   
@@ -107,7 +116,7 @@ int cozmo_start(const Json::Value& configuration)
   // Build up a list of enabled log providers
   std::vector<Anki::Util::ILoggerProvider*> loggers;
 
-  Anki::Util::AndroidLogPrintLogger * logPrintLogger = new Anki::Util::AndroidLogPrintLogger(LOGNAME);
+  Anki::Util::AndroidLogPrintLogger * logPrintLogger = new Anki::Util::AndroidLogPrintLogger(LOG_PROCNAME);
   loggers.push_back(logPrintLogger);
 
   std::string filesPath;
@@ -155,13 +164,13 @@ int cozmo_start(const Json::Value& configuration)
 
   gDataPlatform = createPlatform(filesPath, cachePath, externalPath, resourcesPath);
 
-  logPrintLogger->PrintLogD(LOGNAME, "CozmoStart.ResourcesPath", {}, resourcesPath.c_str());
+  logPrintLogger->PrintLogD(LOG_PROCNAME, "CozmoStart.ResourcesPath", {}, resourcesPath.c_str());
 
   // Initialize logging
   #if DEV_LOGGER_ENABLED
     using DevLoggingSystem = Anki::Cozmo::DevLoggingSystem;
     const std::string& appRunId = Anki::Util::GetUUIDString();
-    const std::string& devlogPath = gDataPlatform->pathToResource(Anki::Util::Data::Scope::CurrentGameLog, LOGNAME);
+    const std::string& devlogPath = gDataPlatform->pathToResource(Anki::Util::Data::Scope::CurrentGameLog, LOG_PROCNAME);
     DevLoggingSystem::CreateInstance(devlogPath, appRunId);
     loggers.push_back(DevLoggingSystem::GetInstancePrintProvider());
   #endif
@@ -220,7 +229,7 @@ int cozmo_start(const Json::Value& configuration)
   return result;
 }
 
-bool cozmo_is_running()
+static bool cozmo_is_running()
 {
   if (gEngineAPI) {
     return gEngineAPI->IsRunning();
@@ -228,7 +237,7 @@ bool cozmo_is_running()
   return false;
 }
 
-int cozmo_stop()
+static int cozmo_stop()
 {
   int result = 0;
     
@@ -355,7 +364,7 @@ int main(int argc, char* argv[])
         LOG_INFO("CozmoEngineMain.main", "Engine has stopped");
         break;
       }
-      usleep(2000);
+      usleep(SLEEP_DELAY_US);
     }
 
     LOG_INFO("CozmoEngineMain.main", "Stopping engine");
