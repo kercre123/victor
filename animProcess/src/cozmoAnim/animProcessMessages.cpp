@@ -155,6 +155,18 @@ void Process_removeEyeShift(const Anki::Cozmo::RobotInterface::RemoveEyeShift& m
   const std::string layerName(msg.name, msg.name_length);
   _animStreamer->GetTrackLayerComponent()->RemoveEyeShift(layerName, msg.disableTimeout_ms);
 }
+ 
+void Process_addSquint(const Anki::Cozmo::RobotInterface::AddSquint& msg)
+{
+  const std::string layerName(msg.name, msg.name_length);
+  _animStreamer->GetTrackLayerComponent()->AddSquint(layerName, msg.squintScaleX, msg.squintScaleY, msg.upperLidAngle);
+}
+
+void Process_removeSquint(const Anki::Cozmo::RobotInterface::RemoveSquint& msg)
+{
+  const std::string layerName(msg.name, msg.name_length);
+  _animStreamer->GetTrackLayerComponent()->RemoveSquint(layerName, msg.disableTimeout_ms);
+}
   
 void Process_postAudioEvent(const Anki::AudioEngine::Multiplexer::PostAudioEvent& msg)
 {

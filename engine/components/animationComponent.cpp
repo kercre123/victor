@@ -477,11 +477,35 @@ Result AnimationComponent::AddOrUpdateEyeShift(const std::string& name,
   
 Result AnimationComponent::RemoveEyeShift(const std::string& name, u32 disableTimeout_ms)
 {
-  Result res = _robot->SendRobotMessage<RobotInterface::RemoveEyeShift>(disableTimeout_ms, name);
+  if (IsEyeShifting(name)) {
+    Result res = _robot->SendRobotMessage<RobotInterface::RemoveEyeShift>(disableTimeout_ms, name);
+    if (res == RESULT_OK) {
+      _activeEyeShiftLayers.erase(name);
+    }
+    return res;
+  }
+  return RESULT_OK;
+}
+  
+Result AnimationComponent::AddSquint(const std::string& name, f32 squintScaleX, f32 squintScaleY, f32 upperLidAngle)
+{
+  Result res = _robot->SendRobotMessage<RobotInterface::AddSquint>(squintScaleX, squintScaleY, upperLidAngle, name);
   if (res == RESULT_OK) {
-    _activeEyeShiftLayers.erase(name);
+    _activeEyeSquintLayers.insert(name);
   }
   return res;
+}
+
+Result AnimationComponent::RemoveSquint(const std::string& name, u32 disableTimeout_ms)
+{
+  if (IsEyeSquinting(name)) {
+    Result res = _robot->SendRobotMessage<RobotInterface::RemoveSquint>(disableTimeout_ms, name);
+    if (res == RESULT_OK) {
+      _activeEyeSquintLayers.erase(name);
+    }
+    return res;
+  }
+  return RESULT_OK;
 }
 
 // ================ Game message handlers ======================

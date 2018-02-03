@@ -136,8 +136,22 @@ public:
                              f32 lookDownMinScale = 0.85f,
                              f32 outerEyeScaleIncrease = 0.1f);
   
+  // Removes eye shift layer by name
+  // Does nothing if no such layer exists
   Result RemoveEyeShift(const std::string& name, u32 disableTimeout_ms = 0);
+
+  // Returns true if an eye shift layer of the given name is currently applied
   bool IsEyeShifting(const std::string& name) const { return _activeEyeShiftLayers.count(name) > 0; }
+  
+  // Adds eye squinting layer with the given name
+  Result AddSquint(const std::string& name, f32 squintScaleX, f32 squintScaleY, f32 upperLidAngle);
+
+  // Removes eye squinting layer by name
+  // Does nothing if no such layer exists
+  Result RemoveSquint(const std::string& name, u32 disableTimeout_ms = 0);
+
+  // Returns true if an eye squint layer of the given name is currently applied
+  bool IsEyeSquinting(const std::string& name) const { return _activeEyeSquintLayers.count(name) > 0; }
   
   // Enables only the specified tracks. 
   // Status of other tracks remain unchanged.
@@ -200,6 +214,7 @@ private:
   std::string _currPlayingAnim;
 
   std::unordered_set<std::string> _activeEyeShiftLayers;
+  std::unordered_set<std::string> _activeEyeSquintLayers;  
   
   u8 _lockedTracks;
 

@@ -137,8 +137,7 @@ namespace Anki {
         GetRobot().GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::Interacting, _dockObjectID);
       }
       // Stop squinting
-      // TODO: Restore squinting (add message to AnimationComponent to send to AnimationStreamer) (VIC-362)
-      //GetRobot().GetAnimationStreamer().GetTrackLayerComponent()->RemoveSquint(_squintLayerTag, 250);
+      GetRobot().GetAnimationComponent().RemoveSquint(_kEyeSquintLayerName, 250);
 
       if(_dockingComponentPtr != nullptr){
         if(_dockingComponentPtr->IsPickingOrPlacing()) {
@@ -658,14 +657,8 @@ namespace Anki {
         _lightsSet = true;
       }
       
-      // If this is a reset clear the _squintLayerTag
-      // TODO: Restore squinting  (VIC-362)
-      /*
-      if(_squintLayerTag != AnimationStreamer::kNotAnimatingTag){
-        GetRobot().GetAnimationStreamer().GetTrackLayerComponent()->RemoveSquint(_squintLayerTag, 250);
-        _squintLayerTag = AnimationStreamer::kNotAnimatingTag;
-      }
-       */
+      // If this is a reset clear the squinting
+      GetRobot().GetAnimationComponent().RemoveSquint(_kEyeSquintLayerName, 250);
       
       // Allow actions the opportunity to check or set any properties they need to
       // this allows actions that are part of driveTo or wrappers a chance to check data
@@ -750,17 +743,14 @@ namespace Anki {
         _wasPickingOrPlacing = _dockingComponentPtr->IsPickingOrPlacing();
         
         if(_wasPickingOrPlacing && ShouldApplyDockingSquint()) {
-          // TODO: Restore squinting  (VIC-362)
-          /*
           // Apply continuous eye squint if we have just now started picking and placing
           const f32 DockSquintScaleX = 1.05f;
           const f32 DockSquintScaleY = 0.35f;
           const f32 DockSquintUpperLidAngle = -10.f;
-          _squintLayerTag = GetRobot().GetAnimationStreamer().GetTrackLayerComponent()->AddSquint("DockSquint",
-                                                                                              DockSquintScaleX,
-                                                                                              DockSquintScaleY,
-                                                                                              DockSquintUpperLidAngle);
-           */
+          GetRobot().GetAnimationComponent().AddSquint(_kEyeSquintLayerName,
+                                                       DockSquintScaleX,
+                                                       DockSquintScaleY,
+                                                       DockSquintUpperLidAngle);
         }
       }
       else if (VerifyDockingComponentValid() &&

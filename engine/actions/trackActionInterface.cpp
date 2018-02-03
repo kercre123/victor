@@ -48,10 +48,9 @@ ITrackAction::ITrackAction(const std::string name, const RobotActionType type)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ITrackAction::~ITrackAction()
 {
-  if(_moveEyes) {
-    // Make sure eye shift gets removed
-    GetRobot().GetAnimationComponent().RemoveEyeShift(_kEyeShiftLayerName);
-  }
+  // Make sure eye shift gets removed
+  GetRobot().GetAnimationComponent().RemoveEyeShift(_kEyeShiftLayerName);
+  
 
   // Set default eye dart distance
   // NOTE: It may not have been at default before, but it doesn't seem worth
@@ -672,9 +671,8 @@ ActionResult ITrackAction::CheckIfDone()
       }
       
       // Remove eye shift once "locked on" target
-      if (GetRobot().GetAnimationComponent().IsEyeShifting(_kEyeShiftLayerName)) {
-        GetRobot().GetAnimationComponent().RemoveEyeShift(_kEyeShiftLayerName, BS_TIME_STEP);
-      }
+      GetRobot().GetAnimationComponent().RemoveEyeShift(_kEyeShiftLayerName, BS_TIME_STEP);
+
       break;
     }
       

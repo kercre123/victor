@@ -282,11 +282,11 @@ namespace Anki {
       // Name of animation to play when moving lift post-dock
       AnimationTrigger           _liftMovingAnimation = AnimationTrigger::Count;
       
-      AnimationTag               _squintLayerTag = kNotAnimatingTag;
-      
       bool _shouldSetCubeLights      = false;
       bool _lightsSet                = false;
       bool _visuallyVerifyObjectOnly = false;
+      
+      const std::string _kEyeSquintLayerName = "IDockActionEyeSquintLayer";
       
     }; // class IDockAction
     

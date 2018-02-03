@@ -307,6 +307,21 @@ message RemoveEyeShift
   string name,
 }
 
+message AddSquint
+{
+  float_32 squintScaleX, 
+  float_32 squintScaleY, 
+  float_32 upperLidAngle,
+  string name,
+}
+
+message RemoveSquint
+{
+  uint_32 disableTimeout_ms,
+  string name,
+}
+
+
 message LockAnimTracks
 {
   uint_8 whichTracks    // See AnimTrackFlags
@@ -515,6 +530,8 @@ union EngineToRobot
   EnableKeepFaceAlive           enableKeepFaceAlive         = 0x5C,
   AddOrUpdateEyeShift           addOrUpdateEyeShift         = 0x5D,
   RemoveEyeShift                removeEyeShift              = 0x5E,
+  AddSquint                     addSquint                   = 0x5F,
+  RemoveSquint                  removeSquint                = 0x60,
 
   AudioEngine::Multiplexer::PostAudioEvent        postAudioEvent       = 0x70,
   AudioEngine::Multiplexer::StopAllAudioEvents    stopAllAudioEvents   = 0x71,

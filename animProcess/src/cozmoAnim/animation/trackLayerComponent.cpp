@@ -233,7 +233,7 @@ void TrackLayerComponent::AddSquint(const std::string& name, f32 squintScaleX, f
   _faceLayerManager->AddPersistentLayer(name, faceTrack);
 }
 
-  void TrackLayerComponent::RemoveSquint(const std::string& name, u32 duration_ms)
+void TrackLayerComponent::RemoveSquint(const std::string& name, u32 duration_ms)
 {
   _faceLayerManager->RemovePersistentLayer(name, duration_ms);
 }
