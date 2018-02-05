@@ -9,6 +9,9 @@
 /* Begin PBXBuildFile section */
 		DA27A59C20193A6A00359EE0 /* SecurePairingMessages.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DA27A59A20193A6A00359EE0 /* SecurePairingMessages.cpp */; };
 		DA27A5A6201D0AE800359EE0 /* NetworkExtension.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA27A5A5201D0AE800359EE0 /* NetworkExtension.framework */; };
+		DA27A6552023E86200359EE0 /* libev.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DA27A6532023E52400359EE0 /* libev.a */; };
+		DA27A65920252F2F00359EE0 /* WiFiNetworkStream.mm in Sources */ = {isa = PBXBuildFile; fileRef = DA27A65720252F2F00359EE0 /* WiFiNetworkStream.mm */; };
+		DA27A65C20252F5C00359EE0 /* WiFiConnection.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DA27A65A20252F5C00359EE0 /* WiFiConnection.cpp */; };
 		DA5EC9E620084554003ABD16 /* libsodium.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DA5EC9E520084554003ABD16 /* libsodium.a */; };
 		DAB7E39D200EB76600D57664 /* BLENetworkStream.mm in Sources */ = {isa = PBXBuildFile; fileRef = DAB7E39C200EB76600D57664 /* BLENetworkStream.mm */; };
 		DAB7E3A1200EB84F00D57664 /* BLEPeripheral.mm in Sources */ = {isa = PBXBuildFile; fileRef = DAB7E3A0200EB84F00D57664 /* BLEPeripheral.mm */; };
@@ -32,6 +35,15 @@
 		DA27A5A5201D0AE800359EE0 /* NetworkExtension.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = NetworkExtension.framework; path = System/Library/Frameworks/NetworkExtension.framework; sourceTree = SDKROOT; };
 		DA27A63420224F1100359EE0 /* libev.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = libev.h; sourceTree = "<group>"; };
 		DA27A63920229DD600359EE0 /* log.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = log.h; sourceTree = "<group>"; };
+		DA27A63F2023DFFC00359EE0 /* ev++.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "ev++.h"; sourceTree = "<group>"; };
+		DA27A6402023DFFC00359EE0 /* ev.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ev.h; sourceTree = "<group>"; };
+		DA27A6412023DFFC00359EE0 /* event.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = event.h; sourceTree = "<group>"; };
+		DA27A6532023E52400359EE0 /* libev.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libev.a; sourceTree = "<group>"; };
+		DA27A6562024F1A000359EE0 /* IPAddress.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IPAddress.h; sourceTree = "<group>"; };
+		DA27A65720252F2F00359EE0 /* WiFiNetworkStream.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = WiFiNetworkStream.mm; sourceTree = "<group>"; };
+		DA27A65820252F2F00359EE0 /* WiFiNetworkStream.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WiFiNetworkStream.h; sourceTree = "<group>"; };
+		DA27A65A20252F5C00359EE0 /* WiFiConnection.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = WiFiConnection.cpp; sourceTree = "<group>"; };
+		DA27A65B20252F5C00359EE0 /* WiFiConnection.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WiFiConnection.h; sourceTree = "<group>"; };
 		DA5EC9E520084554003ABD16 /* libsodium.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libsodium.a; path = "ios-server/sodium/libsodium.a"; sourceTree = "<group>"; };
 		DA8141B7201173A700AC8A73 /* signalHolder.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = signalHolder.h; sourceTree = "<group>"; };
 		DA8141B8201173D900AC8A73 /* simpleSignal.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = simpleSignal.hpp; sourceTree = "<group>"; };
@@ -69,12 +81,24 @@
 				DA5EC9E620084554003ABD16 /* libsodium.a in Frameworks */,
 				DA27A5A6201D0AE800359EE0 /* NetworkExtension.framework in Frameworks */,
 				DACEF0662005994B00894864 /* CoreBluetooth.framework in Frameworks */,
+				DA27A6552023E86200359EE0 /* libev.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		DA27A63A2023DE1500359EE0 /* libev */ = {
+			isa = PBXGroup;
+			children = (
+				DA27A6532023E52400359EE0 /* libev.a */,
+				DA27A6402023DFFC00359EE0 /* ev.h */,
+				DA27A63F2023DFFC00359EE0 /* ev++.h */,
+				DA27A6412023DFFC00359EE0 /* event.h */,
+			);
+			path = libev;
+			sourceTree = "<group>";
+		};
 		DA8141B62011738800AC8A73 /* signals */ = {
 			isa = PBXGroup;
 			children = (
@@ -91,6 +115,8 @@
 				DAB7E39B200EB59B00D57664 /* INetworkStream.h */,
 				DA27A59B20193A6A00359EE0 /* SecurePairingMessages.h */,
 				DA27A59A20193A6A00359EE0 /* SecurePairingMessages.cpp */,
+				DA27A65820252F2F00359EE0 /* WiFiNetworkStream.h */,
+				DA27A65720252F2F00359EE0 /* WiFiNetworkStream.mm */,
 				DAB7E39E200EB77700D57664 /* BLENetworkStream.h */,
 				DAB7E39C200EB76600D57664 /* BLENetworkStream.mm */,
 				DAB7E39F200EB84200D57664 /* BLEPeripheral.h */,
@@ -101,6 +127,9 @@
 				DAB7E3AF200ED2ED00D57664 /* KeyExchange.cpp */,
 				DA27A63920229DD600359EE0 /* log.h */,
 				DAB7E3A6200EB92300D57664 /* BLEPairingController.h */,
+				DA27A65B20252F5C00359EE0 /* WiFiConnection.h */,
+				DA27A65A20252F5C00359EE0 /* WiFiConnection.cpp */,
+				DA27A6562024F1A000359EE0 /* IPAddress.h */,
 				DA27A63420224F1100359EE0 /* libev.h */,
 			);
 			path = networking;
@@ -126,6 +155,7 @@
 		DACEF044200598FF00894864 /* ios-server */ = {
 			isa = PBXGroup;
 			children = (
+				DA27A63A2023DE1500359EE0 /* libev */,
 				DA27A5A2201C083900359EE0 /* ios-server.entitlements */,
 				DAE4FC2720084519007D04BB /* sodium */,
 				DA8141B62011738800AC8A73 /* signals */,
@@ -243,9 +273,11 @@
 				DACEF04A200598FF00894864 /* ViewController.mm in Sources */,
 				DAB7E39D200EB76600D57664 /* BLENetworkStream.mm in Sources */,
 				DAB7E3A1200EB84F00D57664 /* BLEPeripheral.mm in Sources */,
+				DA27A65C20252F5C00359EE0 /* WiFiConnection.cpp in Sources */,
 				DACEF058200598FF00894864 /* main.m in Sources */,
 				DAB7E3A3200EB8A600D57664 /* SecurePairing.cpp in Sources */,
 				DACEF047200598FF00894864 /* AppDelegate.m in Sources */,
+				DA27A65920252F2F00359EE0 /* WiFiNetworkStream.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -383,6 +415,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = BEJF9NAYCL;
+				ENABLE_BITCODE = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)",
@@ -393,6 +426,7 @@
 					"$(inherited)",
 					/usr/local/Cellar/openssl/1.0.2n/lib,
 					"$(PROJECT_DIR)/ios-server/sodium",
+					"$(PROJECT_DIR)/ios-server/libev",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.anki.paul.iosserver;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -410,6 +444,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = BEJF9NAYCL;
+				ENABLE_BITCODE = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)",
@@ -420,6 +455,7 @@
 					"$(inherited)",
 					/usr/local/Cellar/openssl/1.0.2n/lib,
 					"$(PROJECT_DIR)/ios-server/sodium",
+					"$(PROJECT_DIR)/ios-server/libev",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.anki.paul.iosserver;
 				PRODUCT_NAME = "$(TARGET_NAME)";

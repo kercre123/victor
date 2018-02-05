@@ -15,6 +15,8 @@
 #include "INetworkStream.h"
 #include "KeyExchange.h"
 #include "log.h"
+#include "../libev/ev.h"
+#include "../libev/ev++.h"
 
 namespace Anki {
   namespace Networking {
@@ -67,13 +69,19 @@ namespace Anki {
       
       void BeginPairing();
       
-      uint8_t* GetPin() { return _Pin; }
+      std::string GetPin() { return _Pin; }
       
       using ReceivedWifiCredentialsSignal = Signal::Signal<void (std::string, std::string)>;
+      using UpdatedPinSignal = Signal::Signal<void (std::string)>;
       
       // WiFi Receive Event
       ReceivedWifiCredentialsSignal& OnReceivedWifiCredentialsEvent() {
         return _ReceivedWifiCredentialSignal;
+      }
+      
+      // PIN Update Event
+      UpdatedPinSignal& OnUpdatedPinEvent() {
+        return _UpdatedPinSignal;
       }
       
     private:
@@ -87,6 +95,7 @@ namespace Anki {
       void HandleRestoreConnection();
       void HandleCancelSetup();
       void HandleNonceAck();
+      void HandleTimeout();
       void HandlePingResponse(uint8_t* bytes, uint32_t length);
       
       void SendPublicKey();
@@ -95,14 +104,19 @@ namespace Anki {
       void SendCancelPairing();
       void SendChallengeSuccess();
       
+      std::string GeneratePin();
+      
       void IncrementAbnormalityCount();
       void IncrementChallengeCount();
       
       const uint8_t MAX_MATCH_ATTEMPTS = 5;
-      const uint32_t MAX_ABNORMALITY_COUNT = 20;
+      const uint8_t MAX_PAIRING_ATTEMPTS = 3;
+      const uint32_t MAX_ABNORMALITY_COUNT = 5;
+      const uint16_t PAIRING_TIMEOUT_SECONDS = 10;
       
-      uint8_t _Pin[NUM_PIN_DIGITS];
+      std::string _Pin;
       uint8_t _ChallengeAttempts = 0;
+      uint8_t _TotalPairingAttempts;
       uint8_t _NumPinDigits;
       uint32_t _PingChallenge;
       uint32_t _AbnormalityCount = 0;
@@ -110,6 +124,27 @@ namespace Anki {
       INetworkStream* _Stream;
       KeyExchange* _KeyExchange;
       PairingState _State = PairingState::Initial;
+      
+      //
+      //
+      //
+      using PairingTimeoutSignal = Signal::Signal<void ()>;
+      PairingTimeoutSignal _PairingTimeoutSignal;
+      
+      struct ev_loop* _Loop;
+      ev_timer _Timer;
+      static void sEvTimerHandler(struct ev_loop* loop, struct ev_timer* w, int revents);
+      
+      struct ev_TimerStruct {
+        ev_timer timer;
+        PairingTimeoutSignal* signal;
+      };
+      ev_TimerStruct _HandleTimeoutTimer;
+      //
+      //
+      //
+      
+      UpdatedPinSignal _UpdatedPinSignal;
       ReceivedWifiCredentialsSignal _ReceivedWifiCredentialSignal;
     };
   }

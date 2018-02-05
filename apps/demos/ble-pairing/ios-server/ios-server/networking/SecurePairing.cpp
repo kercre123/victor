@@ -6,12 +6,18 @@
 //  Copyright © 2018 Paul Aluri. All rights reserved.
 //
 
+#include <random>
 #include "SecurePairing.h"
 #include "SecurePairingMessages.h"
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Constructors
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Anki::Networking::SecurePairing::SecurePairing(INetworkStream* stream) {
   _Stream = stream;
+  _TotalPairingAttempts = 0;
   
+  // Register with stream events
   _Stream->OnReceivedPlainTextEvent().SubscribeForever(
     std::bind(&SecurePairing::HandleMessageReceived,
               this, std::placeholders::_1, std::placeholders::_2));
@@ -23,13 +29,13 @@ Anki::Networking::SecurePairing::SecurePairing(INetworkStream* stream) {
   _Stream->OnFailedDecryptionEvent().SubscribeForever(
     std::bind(&SecurePairing::HandleDecryptionFailed, this));
   
+  // Register with private events
+  _PairingTimeoutSignal.SubscribeForever(std::bind(&SecurePairing::HandleTimeout, this));
+  
   // Initialize the key exchange object
   _KeyExchange = new KeyExchange(NUM_PIN_DIGITS);
   
-  // Initialize object
-  Init();
-  
-  Log::Write("Service initialized.");
+  Log::Write("SecurePairing starting up.");
 }
 
 Anki::Networking::SecurePairing::~SecurePairing() {
@@ -38,11 +44,28 @@ Anki::Networking::SecurePairing::~SecurePairing() {
   Log::Write("Destroying SecurePairing object.");
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Instance methods
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Anki::Networking::SecurePairing::BeginPairing() {
-  // Send public key
-  SendPublicKey();
+  Log::Write("Beginning secure pairing process.");
   
-  Log::Write("Sending public key to client.");
+  // Initialize object
+  Init();
+  
+  _HandleTimeoutTimer.signal = &_PairingTimeoutSignal;
+  
+  ev_timer_init(&_HandleTimeoutTimer.timer, &SecurePairing::sEvTimerHandler, PAIRING_TIMEOUT_SECONDS, PAIRING_TIMEOUT_SECONDS);
+  _Loop = ev_default_loop(0);
+  ev_timer_start(_Loop, &_HandleTimeoutTimer.timer);
+  ev_loop(_Loop, 0);
+}
+
+void Anki::Networking::SecurePairing::HandleTimeout() {
+  if(_State != PairingState::ConfirmedSharedSecret) {
+    Log::Write("Pairing timeout. Client took too long.");
+    Reset();
+  }
 }
 
 void Anki::Networking::SecurePairing::SendPublicKey() {
@@ -70,37 +93,55 @@ void Anki::Networking::SecurePairing::Init() {
   _AbnormalityCount = 0;
   
   // Generate a random number with NUM_PIN_DIGITS digits
-  //
-  // if pin is 6 digits, mult is a number like '100000'
-  // to form the pin, mult is multiplied by 9 and then
-  // added to (mult-1). (100000 * 9) + 99999 = 999999
-  //
-  const uint8_t NUM_BASE = 10;
-  uint32_t mult = pow(NUM_BASE, NUM_PIN_DIGITS-1);
-  uint32_t pinNum = arc4random() % ((NUM_BASE-1) * mult) + (1 * mult);
-  
-  // Convert pin to string
-  std::string pinString = std::to_string(pinNum).c_str();
-  std::strcpy((char*)_Pin, pinString.c_str());
+  _Pin = GeneratePin();
+  _UpdatedPinSignal.emit(_Pin);
   
   // Update our state
   _State = PairingState::Initial;
+  
+  // Send public key
+  Log::Write("Sending public key to client.");
+  SendPublicKey();
+}
+
+std::string Anki::Networking::SecurePairing::GeneratePin() {
+  // @seichert
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  
+  std::string pinStr;
+  
+  // The first digit cannot be 0, must be between 1 and 9
+  std::uniform_int_distribution<> dis('1', '9');
+  pinStr.push_back((char) dis(gen));
+  
+  // Subsequent digits can be between 0 and 9
+  dis.param(std::uniform_int_distribution<>::param_type('0','9'));
+  for (int i = 1 ; i < NUM_PIN_DIGITS; i++) {
+    pinStr.push_back((char) dis(gen));
+  }
+  return pinStr;
 }
 
 void Anki::Networking::SecurePairing::Reset() {
-  // Clear pin
-  memset(_Pin, 0, NUM_PIN_DIGITS);
-  
   // Tell key exchange to reset
   _KeyExchange->Reset();
+  
+  // Clear pin
+  _Pin = "000000";
   
   // Send cancel message
   SendCancelPairing();
   
   // Put us back in initial state
-  Init();
-  
-  Log::Write("Service reset.");
+  if(++_TotalPairingAttempts < MAX_PAIRING_ATTEMPTS) {
+    Init();
+    Log::Write("SecurePairing restarting.");
+  } else {
+    Log::Write("SecurePairing ending due to multiple failures. Requires external restart.");
+    ev_timer_stop(_Loop, &_HandleTimeoutTimer.timer);
+    ev_unloop(_Loop, EVBREAK_ALL);
+  }
 }
 
 void Anki::Networking::SecurePairing::HandleInitialPair(uint8_t* publicKey, uint32_t publicKeyLength) {
@@ -108,7 +149,7 @@ void Anki::Networking::SecurePairing::HandleInitialPair(uint8_t* publicKey, uint
   
   // Input client's public key and calculate shared keys
   _KeyExchange->SetRemotePublicKey(publicKey);
-  _KeyExchange->CalculateSharedKeys(_Pin);
+  _KeyExchange->CalculateSharedKeys((unsigned char*)_Pin.c_str());
   
   // Give our shared keys to the network stream
   _Stream->SetCryptoKeys(
@@ -296,12 +337,12 @@ void Anki::Networking::SecurePairing::HandleEncryptedMessageReceived(uint8_t* by
         Log::Write("Received challenge response in wrong state.");
       }
       break;
-    case Anki::Networking::SecureMessage::CRYPTO_WIFI_CRED:
+    case Anki::Networking::SecureMessage::CRYPTO_WIFI_CREDENTIALS:
       if(_State == PairingState::ConfirmedSharedSecret) {
         char* ssidPtr = (char*)bytes + 2;
         std::string ssid(ssidPtr, bytes[1]);
         std::string pw(ssidPtr + bytes[1] + 1, bytes[2 + bytes[1]]);
-
+        
         _ReceivedWifiCredentialSignal.emit(ssid, pw);
       } else {
         Log::Write("Received wifi credentials in wrong state.");
@@ -333,4 +374,13 @@ void Anki::Networking::SecurePairing::IncrementAbnormalityCount() {
   }
   
   Log::Write("Abnormality recorded.");
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Static methods
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void Anki::Networking::SecurePairing::sEvTimerHandler(struct ev_loop* loop, struct ev_timer* w, int revents)
+{
+  struct ev_TimerStruct *wData = (struct ev_TimerStruct*)w;
+  wData->signal->emit();
 }
