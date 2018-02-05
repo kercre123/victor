@@ -24,7 +24,7 @@ if [ $# -eq 0 ]
     echo " "
     echo "Please specify the project to scan"
     read PROJECT_NAME
-    python3 $DIR/localize_featured_projects.py -s -p $PROJECT_NAME --streaming_assets_path $STREAMING_ASSETS --project_config_file $PROJECT_MANIFEST --project_folder $PROJECT_FOLDER --scan_output_path $DIR
+    python3 $DIR/localize_featured_projects.py -s -p $PROJECT_NAME --streaming_assets_path $STREAMING_ASSETS --project_config_file $PROJECT_MANIFEST --project_folder $PROJECT_FOLDER --scan_output_path $DIR --exclude_project_agnostic_strings
   else
-    python3 $DIR/localize_featured_projects.py -s -p $1 --streaming_assets_path $STREAMING_ASSETS --project_config_file $PROJECT_MANIFEST --project_folder $PROJECT_FOLDER --scan_output_path $DIR
+    python3 $DIR/localize_featured_projects.py -s -p $1 --streaming_assets_path $STREAMING_ASSETS --project_config_file $PROJECT_MANIFEST --project_folder $PROJECT_FOLDER --scan_output_path $DIR --exclude_project_agnostic_strings
 fi

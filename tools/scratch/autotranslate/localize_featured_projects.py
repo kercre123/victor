@@ -72,6 +72,12 @@ def parse_command_args():
                             const=True,
                             help='lists all projects matching the filter')
 
+    arg_parser.add_argument('--exclude_project_agnostic_strings',
+                            dest='exclude_project_agnostic_strings',
+                            default=False,
+                            action='store_const',
+                            const=True,
+                            help='Avoid exporing project agnostic strings during scan')
     arg_parser.add_argument('-a', '--all',
                             dest='all_projects',
                             default=False,
@@ -323,7 +329,7 @@ def execute_translations_on_project(project, source_language, loc_table):
 #                                          Loc String Scanning Code
 # --------------------------------------------------------------------------------------------------------
 
-def scan_project(project, source_language, target_folder):
+def scan_project(project, source_language, target_folder, exclude_project_agnostic_strings):
     source_project_file = get_file_path(project['base_file_name'], source_language)
 
     json_out = {}
@@ -343,16 +349,20 @@ def scan_project(project, source_language, target_folder):
         simplified_content = re.sub('[^a-z^0-9^_]+', '', content.lower().replace(' ', '_'))
         if simplified_content != '':
             if simplified_content in PROJECT_AGNOSTIC_KEYS:
-                key = 'codeLabFeaturedProject.' + simplified_content
+                if not exclude_project_agnostic_strings:
+                    key = 'codeLabFeaturedProject.' + simplified_content
+                    json_out[key] = { 'translation': content }
             else:
                 key = 'codeLabFeaturedProject.' + project['project_name'] + '.' + simplified_content
-            json_out[key] = { 'translation': content }
+                json_out[key] = { 'translation': content }
 
     if target_folder is not None:
         export_filename = os.path.join(target_folder, os.path.basename(project['project_name']) + '_loc_strings.json')
 
+        sorted_output = collections.OrderedDict(sorted(json_out.items(), key=lambda t: t[0]))
+
         with open(export_filename, 'w', encoding='utf8') as output_file:
-            json.dump(json_out, output_file, indent=4, sort_keys=True)
+            json.dump(sorted_output, output_file, indent=4, sort_keys=True)
             output_file.write('\n')
 
         print('scanning ' + project['project_name'] + ' and found ' + str(len(output_list)) + ' strings -> ' + export_filename)
@@ -489,7 +499,7 @@ def main():
 
         generated_json = {}
         for project_entry in project_list:
-            generated_json.update( scan_project(project_entry, command_args.source_language, command_args.scan_output_path) )
+            generated_json.update( scan_project(project_entry, command_args.source_language, command_args.scan_output_path, command_args.exclude_project_agnostic_strings) )
         print(str(len(project_list)) + ' project(s) scanned')
 
         if command_args.scan_loc_target:
