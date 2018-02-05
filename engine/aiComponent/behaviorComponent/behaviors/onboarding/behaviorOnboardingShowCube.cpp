@@ -82,7 +82,7 @@ void BehaviorOnboardingShowCube::OnBehaviorActivated()
    {AnimationTrigger::OnboardingDriveStart,
     AnimationTrigger::OnboardingDriveLoop,
     AnimationTrigger::OnboardingDriveEnd},
-      GetIDStr());
+      GetDebugLabel());
   
   // Some reactionary behaviors don't trigger resume like cliff react followed by "react to on back"
   // So just handle init doesn't always reset to "inactive"
@@ -112,7 +112,7 @@ void BehaviorOnboardingShowCube::OnBehaviorDeactivated()
 {
   auto& robotInfo = GetBEI().GetRobotInfo();
 
-  robotInfo.GetDrivingAnimationHandler().RemoveDrivingAnimations(GetIDStr());
+  robotInfo.GetDrivingAnimationHandler().RemoveDrivingAnimations(GetDebugLabel());
   GetBEI().GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::Onboarding);
   PRINT_CH_INFO("Behaviors","BehaviorOnboardingShowCube::StopInternal", " %hhu ",_state);
 }

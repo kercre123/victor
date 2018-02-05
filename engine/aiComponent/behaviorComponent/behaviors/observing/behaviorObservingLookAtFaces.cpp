@@ -116,7 +116,7 @@ void BehaviorObservingLookAtFaces::TransitionToFindFaces()
   else {
     PRINT_NAMED_WARNING("BehaviorObservingLookAtFaces.FindFaces.DoesntWantToActivate",
                         "Behavior %s doesn't want to activate, so face interaction will end",
-                        _searchBehavior->GetIDStr().c_str());
+                        _searchBehavior->GetDebugLabel().c_str());
   }
 }
 

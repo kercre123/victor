@@ -163,11 +163,9 @@ public:
   bool WantsToBeActivatedInternal() const override final;
 
   BehaviorID         GetID()      const { return _id; }
-  const std::string& GetIDStr()   const { return _idString; }
 
   void SetNeedsActionID(NeedsActionId needsActionID) { _needsActionID = needsActionID; }
 
-  const std::string& GetDisplayNameKey() const { return _displayNameKey; }
   const std::string& GetDebugStateName() const { return _debugStateName;}
   ExecutableBehaviorType GetExecutableType() const { return _executableType; }
   const BehaviorClass GetClass() const { return _behaviorClassID; }
@@ -227,7 +225,7 @@ protected:
 
   inline void SetDebugStateName(const std::string& inName) {
     PRINT_CH_INFO("Behaviors", "Behavior.TransitionToState", "Behavior:%s, FromState:%s ToState:%s",
-                  GetIDStr().c_str(), _debugStateName.c_str(), inName.c_str());
+                  GetDebugLabel().c_str(), _debugStateName.c_str(), inName.c_str());
     _debugStateName = inName;
   }
 
@@ -448,6 +446,7 @@ protected:
 private:
   
   NeedsActionId ExtractNeedsActionIDFromConfig(const Json::Value& config);
+  std::string ExtractDebugLabelForBaseFromConfig(const Json::Value& config);
 
   float _lastRunTime_s;
   float _activatedTime_s;
@@ -471,9 +470,7 @@ private:
   
   // The ID and a convenience cast of the ID to a string
   const BehaviorID  _id;
-  const std::string _idString;
   
-  std::string _displayNameKey = "";
   std::string _debugStateName = "";
   BehaviorClass _behaviorClassID;
   NeedsActionId _needsActionID;

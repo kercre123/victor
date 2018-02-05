@@ -78,7 +78,7 @@ BehaviorPeekABoo::BehaviorPeekABoo(const Json::Value& config)
   if( ! ANKI_VERIFY(_params.noUserInteractionTimeout_numIdles > _params.numReRequestsPerTimeout,
                     "BehaviorPeekABoo.Config.InvalidTimeouts",
                     "Behavior '%s' specified invalid values. timeout in %d idles, but re-request %d times",
-                    GetIDStr().c_str(),
+                    GetDebugLabel().c_str(),
                     _params.noUserInteractionTimeout_numIdles,
                     _params.numReRequestsPerTimeout) ) {
     // in prod, just update to hardcoded reasonable values
@@ -324,7 +324,7 @@ IActionRunner* BehaviorPeekABoo::GetIdleAndReRequestAction(bool lockHeadTrack) c
 
   const u8 lockTracks = headLock | liftLock;
 
-  PRINT_CH_INFO("Behaviors", (GetIDStr() + ".BuildAnims").c_str(),
+  PRINT_CH_INFO("Behaviors", (GetDebugLabel() + ".BuildAnims").c_str(),
                 "Playing idle with %d re-requests. Head angle = %fdeg Locking: %s",
                 _params.numReRequestsPerTimeout,
                 RAD_TO_DEG(robotInfo.GetHeadAngle()),

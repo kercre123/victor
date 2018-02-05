@@ -82,7 +82,7 @@ void BehaviorDispatcherStrictPriorityWithCooldown::DispatcherUpdate()
                   "BehaviorDispatcherStrictPriorityWithCooldown.LastBehaviorStopped.StartCooldown",
                   "Behavior idx %zu '%s' seems to have stopped, start cooldown",
                   _lastDesiredBehaviorIdx,
-                  IBehaviorDispatcher::GetAllPossibleDispatches()[_lastDesiredBehaviorIdx]->GetIDStr().c_str());
+                  IBehaviorDispatcher::GetAllPossibleDispatches()[_lastDesiredBehaviorIdx]->GetDebugLabel().c_str());
     _cooldownInfo[ _lastDesiredBehaviorIdx ].StartCooldown(GetRNG());
     _lastDesiredBehaviorIdx = _cooldownInfo.size();
   }  

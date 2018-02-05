@@ -66,7 +66,7 @@ bool Delegator::Delegate(IBehavior* delegatingBehavior,
   if (RESULT_OK != result) {
     PRINT_NAMED_WARNING("ICozmoBehavior.Delegate.Failure.NotQueued",
                         "Behavior '%s' can't queue action '%s' (error %d)",
-                        delegatingBehavior->GetPrintableID().c_str(),
+                        delegatingBehavior->GetDebugLabel().c_str(),
                         action->GetName().c_str(), result);
     delete action;
     return false;

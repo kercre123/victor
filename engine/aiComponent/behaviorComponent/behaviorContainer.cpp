@@ -918,7 +918,7 @@ ICozmoBehaviorPtr BehaviorContainer::AddToContainer(ICozmoBehaviorPtr newBehavio
     DEV_ASSERT_MSG(false,
                    "BehaviorContainer.AddToContainer.DuplicateID",
                    "Attempted to create a second behavior with id %s",
-                   newBehavior->GetIDStr().c_str());
+                   newBehavior->GetDebugLabel().c_str());
   }
   
   return newBehavior;
@@ -964,13 +964,6 @@ void BehaviorContainer::HandleMessage(const ExternalInterface::RequestAllBehavio
 BehaviorClass BehaviorContainer::GetBehaviorClass(ICozmoBehaviorPtr behavior) const
 {
   return behavior->GetClass();
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::string BehaviorContainer::GetIDString(BehaviorID behaviorID) const
-{
-  return BehaviorIDToString(behaviorID);
 }
 
 

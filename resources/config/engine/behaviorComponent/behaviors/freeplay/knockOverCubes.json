@@ -2,7 +2,6 @@
   "behaviorClass": "KnockOverCubes",
   "behaviorID": "KnockOverCubes",
   "needsActionID": "KnockDownCubes",
-  "displayNameKey":"behavior.KnockOverCubes",
   "requiredUnlockId": "KnockOverThreeCubeStack",
   "minimumStackHeight": 3,
   "reachForBlockTrigger" : "KnockOverGrabAttempt",

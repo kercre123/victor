@@ -59,7 +59,7 @@ BehaviorExpressNeeds::BehaviorExpressNeeds(const Json::Value& config)
     ANKI_VERIFY(_need != NeedId::Count,
                 "BehaviorExpressNeeds.Constructor.InvalidNeed",
                 "Need should not be count for behavior %s",
-                GetIDStr().c_str());
+                GetDebugLabel().c_str());
 
   }
 
@@ -75,13 +75,13 @@ BehaviorExpressNeeds::BehaviorExpressNeeds(const Json::Value& config)
     if( ANKI_VERIFY( !cooldownEvaluatorConfig.isNull(),
                      "BehaviorExpressNeeds.ConfigError.NoCooldownConfig",
                      "Behavior %s did not specify a cooldown config",
-                     GetIDStr().c_str())) {
+                     GetDebugLabel().c_str())) {
       const bool result = _cooldownEvaluator->ReadFromJson(cooldownEvaluatorConfig);
 
       if( !result ) {
         PRINT_NAMED_ERROR("BehaviorExpressNeeds.ConfigError.CooldownParsingFailed",
                           "Behavior '%s' failed to parse cooldown graph evaluator",
-                          GetIDStr().c_str() );
+                          GetDebugLabel().c_str() );
       }
     }
   }
@@ -107,7 +107,7 @@ BehaviorExpressNeeds::BehaviorExpressNeeds(const Json::Value& config)
   }
   // make sure we loaded at least one trigger
   DEV_ASSERT_MSG(!_animTriggers.empty(), "BehaviorExpressNeeds.NoTriggers",
-                 "Behavior '%s'", GetIDStr().c_str());  
+                 "Behavior '%s'", GetDebugLabel().c_str());
 }
 
 
@@ -201,7 +201,7 @@ float BehaviorExpressNeeds::GetCooldownSec() const
     if( ANKI_VERIFY( _cooldownEvaluator != nullptr,
                      "BehaviorExpressNeeds.GetCooldown.NullEvaluator",
                      "%s: Cooldown graph evaluator was null, must be a config error",
-                     GetIDStr().c_str()) ) {
+                     GetDebugLabel().c_str()) ) {
       const float cooldown = _cooldownEvaluator->EvaluateY( level );
       return cooldown;
     }

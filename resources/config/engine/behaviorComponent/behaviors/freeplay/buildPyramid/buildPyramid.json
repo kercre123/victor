@@ -1,7 +1,6 @@
 {
   "behaviorClass": "BuildPyramid",
   "behaviorID": "BuildPyramid",
-  "requiredUnlockId": "BuildPyramid",
-  "displayNameKey":"behavior.BuildPyramid"
+  "requiredUnlockId": "BuildPyramid"
 
 }

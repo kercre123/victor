@@ -131,7 +131,7 @@ void BehaviorFindHome::GetRandomDrivingPose(Pose3d& outPose)
 
 void BehaviorFindHome::LoadConfig(const Json::Value& config)
 {
-  const std::string& debugName = "Behavior" + GetIDStr() + ".LoadConfig";
+  const std::string& debugName = "Behavior" + GetDebugLabel() + ".LoadConfig";
   
   _params.searchAnimTrigger  = JsonTools::ParseAnimationTrigger(config, kSearchAnimKey, debugName);
   _params.numSearches        = JsonTools::ParseUint8(config, kNumSearchesKey, debugName);

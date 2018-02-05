@@ -62,7 +62,6 @@ namespace {
 static const char* kBehaviorClassKey                 = "behaviorClass";
 static const char* kBehaviorIDConfigKey              = "behaviorID";
 static const char* kNeedsActionIDKey                 = "needsActionID";
-static const char* kDisplayNameKey                   = "displayNameKey";
 
 static const char* kRequiredUnlockKey                = "requiredUnlockId";
 static const char* kRequiredSevereNeedsStateKey      = "requiredSevereNeedsState";
@@ -78,6 +77,8 @@ static const std::string kIdleLockPrefix             = "Behavior_";
 static const char* kAnonymousBehaviorMapKey          = "anonymousBehaviors";
 static const char* kAnonymousBehaviorName            = "behaviorName";
 static const char* kAnonymousBehaviorParams          = "params";
+  
+static const char* kBehaviorDebugLabel               = "_debugLabel";
 }
 
   
@@ -160,16 +161,26 @@ NeedsActionId ICozmoBehavior::ExtractNeedsActionIDFromConfig(const Json::Value& 
   return NeedsActionIdFromString(needsActionIDString);
 }
 
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::string ICozmoBehavior::ExtractDebugLabelForBaseFromConfig(const Json::Value& config)
+{
+  std::string ret;
+  if( config.isMember(kBehaviorDebugLabel) ) {
+    ret = config[kBehaviorDebugLabel].asString();
+  } else {
+    const BehaviorID behaviorID = ExtractBehaviorIDFromConfig( config );
+    ret = BehaviorTypesWrapper::BehaviorIDToString( behaviorID );
+  }
+  return ret;
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ICozmoBehavior::ICozmoBehavior(const Json::Value& config)
-: IBehavior(BehaviorTypesWrapper::BehaviorIDToString(ExtractBehaviorIDFromConfig(config)))
+: IBehavior( ExtractDebugLabelForBaseFromConfig( config ) )
 , _requiredProcess( AIInformationAnalysis::EProcess::Invalid )
 , _lastRunTime_s(0.0f)
 , _activatedTime_s(0.0f)
 , _id(ExtractBehaviorIDFromConfig(config))
-, _idString(BehaviorTypesWrapper::BehaviorIDToString(_id))
 , _behaviorClassID(ExtractBehaviorClassFromConfig(config))
 , _needsActionID(ExtractNeedsActionIDFromConfig(config))
 , _executableType(BehaviorTypesWrapper::GetDefaultExecutableBehaviorType())
@@ -190,8 +201,6 @@ ICozmoBehavior::ICozmoBehavior(const Json::Value& config)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
 {
-  JsonTools::GetValueOptional(config, kDisplayNameKey, _displayNameKey);
-
   // - - - - - - - - - -
   // Required unlock
   // - - - - - - - - - -
@@ -205,7 +214,7 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
     if (requiredUnlock != UnlockId::Count) {
       PRINT_CH_DEBUG(LOG_CHANNEL, "ICozmoBehavior.ReadFromJson.RequiredUnlock",
                      "Behavior '%s' requires unlock '%s'",
-                     GetIDStr().c_str(), requiredUnlockJson.asString().c_str());
+                     GetDebugLabel().c_str(), requiredUnlockJson.asString().c_str());
       _requiredUnlockId = requiredUnlock;
     } else {
       PRINT_NAMED_ERROR("ICozmoBehavior.ReadFromJson.InvalidUnlockId", "Could not convert string to unlock id '%s'",
@@ -224,7 +233,7 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
     ANKI_VERIFY(_requiredSevereNeed != NeedId::Count,
                 "ICozmoBehavior.ReadFromJson.ConfigError.InvalidRequiredSevereNeed",
                 "%s: Required severe need '%s' converted to Count. This field is optional",
-                GetIDStr().c_str(),
+                GetDebugLabel().c_str(),
                 requiredSevereNeedJson.asCString());
   }
   
@@ -308,7 +317,7 @@ void ICozmoBehavior::InitInternal()
       ANKI_VERIFY(!isBehaviorID,
                   "ICozmoBehavior.InitInternal.AnonymousNameIsABehaviorID",
                   "behavior '%s' declares an anonymous behavior named '%s', but that matches an existing behavior ID",
-                  GetIDStr().c_str(),
+                  GetDebugLabel().c_str(),
                   behaviorName.c_str());
       
       const BehaviorClass behaviorClass = BehaviorTypesWrapper::BehaviorClassFromString(
@@ -316,6 +325,16 @@ void ICozmoBehavior::InitInternal()
       Json::Value params;
       if(entry.isMember(kAnonymousBehaviorParams)){
         params = entry[kAnonymousBehaviorParams];
+      }
+      
+      if( !entry.isMember( kBehaviorDebugLabel ) ) {
+        params[kBehaviorDebugLabel] = "@" + behaviorName;
+      } else {
+        PRINT_NAMED_ERROR("ICozmoBehavior.InitInternal.AnonymousParamIsReserved",
+                          "anon behavior '%s' %s contains the reserved field '%s'",
+                          GetDebugLabel().c_str(),
+                          kAnonymousBehaviorParams,
+                          kBehaviorDebugLabel );
       }
 
       // check for duplicate behavior names since maps require a unique key
@@ -327,7 +346,7 @@ void ICozmoBehavior::InitInternal()
         DEV_ASSERT_MSG(resultPair.first->second != nullptr, "ICozmoBehavior.InitInternal.FailedToAllocateAnonymousBehavior",
                        "Failed to allocate new anonymous behavior (%s) within behavior %s",
                        behaviorName.c_str(),
-                       GetIDStr().c_str());
+                       GetDebugLabel().c_str());
 
         // we need to initlaize the anon behaviors as well
         resultPair.first->second->Init(GetBEI());
@@ -338,7 +357,7 @@ void ICozmoBehavior::InitInternal()
         PRINT_NAMED_ERROR("ICozmoBehavior.InitInternal.DuplicateAnonymousBehaviorName",
                           "Duplicate anonymous behavior name (%s) found for behavior '%s'",
                           behaviorName.c_str(),
-                          GetIDStr().c_str());
+                          GetDebugLabel().c_str());
       }
     }
   }
@@ -380,12 +399,12 @@ void ICozmoBehavior::SetRespondToCloudIntent(CloudIntent intent)
   if( ANKI_VERIFY( !_initHasBeenCalled,
                    "ICozmoBehavior.SetRespondToCloudIntent.AfterInit",
                    "behavior '%s' trying to set cloud intent to '%s' after init has already been called",
-                   GetIDStr().c_str(),
+                   GetDebugLabel().c_str(),
                    CloudIntentToString(intent)) ) {
     if( _respondToCloudIntent != CloudIntent::Count ) {
       PRINT_NAMED_WARNING("ICozmoBehavior.SetRespondToCloudIntent.ReplaceIntent",
                           "behavior '%s' setting cloud intent to '%s', but it was previously '%s'",
-                          GetIDStr().c_str(),
+                          GetDebugLabel().c_str(),
                           CloudIntentToString(intent),
                           CloudIntentToString(_respondToCloudIntent));
     }
@@ -416,7 +435,7 @@ void ICozmoBehavior::SubscribeToTags(std::set<RobotInterface::RobotToEngineTag> 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::OnActivatedInternal()
 {
-  PRINT_CH_INFO("Behaviors", (GetIDStr() + ".Init").c_str(), "Starting...");
+  PRINT_CH_INFO("Behaviors", (GetDebugLabel() + ".Init").c_str(), "Starting...");
   
   // Check if there are any engine-generated actions in the action list, because there shouldn't be!
   // If there is, a behavior probably didn't use DelegateIfInControl() where it should have.
@@ -447,7 +466,7 @@ void ICozmoBehavior::OnActivatedInternal()
   if (engineActionStillRunning) {
     PRINT_NAMED_WARNING("ICozmoBehavior.Init.ActionsInQueue",
                         "Initializing %s: %zu actions already in queue",
-                        GetIDStr().c_str(), robot.GetActionList().GetQueueLength(0));
+                        GetDebugLabel().c_str(), robot.GetActionList().GetQueueLength(0));
   }**/
   
   _isActivated = true;
@@ -478,7 +497,7 @@ void ICozmoBehavior::OnEnteredActivatableScopeInternal()
 {
   if ( _requiredProcess != AIInformationAnalysis::EProcess::Invalid ){
     auto& infoProcessor = GetBEI().GetAIComponent().GetAIInformationAnalyzer();
-    infoProcessor.AddEnableRequest(_requiredProcess, GetIDStr().c_str());
+    infoProcessor.AddEnableRequest(_requiredProcess, GetDebugLabel().c_str());
   }
 
   for( auto& strategy : _wantsToBeActivatedConditions ) {
@@ -499,7 +518,7 @@ void ICozmoBehavior::OnLeftActivatableScopeInternal()
 {
   if ( _requiredProcess != AIInformationAnalysis::EProcess::Invalid ){
     auto& infoProcessor = GetBEI().GetAIComponent().GetAIInformationAnalyzer();
-    infoProcessor.RemoveEnableRequest(_requiredProcess, GetIDStr().c_str());
+    infoProcessor.RemoveEnableRequest(_requiredProcess, GetDebugLabel().c_str());
   }
 
   GetBEI().GetVisionScheduleMediator().ReleaseAllVisionModeSubscriptions(this);
@@ -509,7 +528,7 @@ void ICozmoBehavior::OnLeftActivatableScopeInternal()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::OnDeactivatedInternal()
 {
-  PRINT_CH_INFO("Behaviors", (GetIDStr() + ".Stop").c_str(), "Stopping...");
+  PRINT_CH_INFO("Behaviors", (GetDebugLabel() + ".Stop").c_str(), "Stopping...");
 
   // If the behavior delegated off to a helper, stop that first
   if(!_currentHelperHandle.expired()){
@@ -557,7 +576,7 @@ void ICozmoBehavior::OnDeactivatedInternal()
 void ICozmoBehavior::StopOnNextActionComplete()
 {
   if( !_stopRequestedAfterAction ) {
-    PRINT_CH_INFO("Behaviors", (GetIDStr() + ".StopOnNextActionComplete").c_str(),
+    PRINT_CH_INFO("Behaviors", (GetDebugLabel() + ".StopOnNextActionComplete").c_str(),
                   "Behavior has been asked to stop on the next complete action");
   }
   
@@ -590,7 +609,7 @@ bool ICozmoBehavior::WantsToBeActivatedBase() const
   // Some reaction trigger strategies allow behaviors to interrupt themselves.
   DEV_ASSERT(!IsActivated(), "ICozmoBehavior.WantsToBeActivatedCalledOnRunningBehavior");
   if (IsActivated()) {
-    PRINT_CH_DEBUG("Behaviors", "ICozmoBehavior.WantsToBeActivatedBase", "Behavior %s is already running", GetIDStr().c_str());
+    PRINT_CH_DEBUG("Behaviors", "ICozmoBehavior.WantsToBeActivatedBase", "Behavior %s is already running", GetDebugLabel().c_str());
     return true;
   }
 
@@ -602,7 +621,7 @@ bool ICozmoBehavior::WantsToBeActivatedBase() const
       PRINT_NAMED_ERROR("ICozmoBehavior.WantsToBeActivated.RequiredProcessNotFound",
         "Required process '%s' is not enabled for '%s'",
         AIInformationAnalysis::StringFromEProcess(_requiredProcess),
-        GetIDStr().c_str());
+        GetDebugLabel().c_str());
       return false;
     }
   }
@@ -831,7 +850,7 @@ bool ICozmoBehavior::DelegateIfInControl(IActionRunner* action, RobotCompletedAc
   if(!GetBEI().HasDelegationComponent()) {
     PRINT_NAMED_ERROR("ICozmoBehavior.DelegateIfInControl.NoDelegationComponent",
                       "Behavior %s attempted to start action while it did not have control of delegation",
-                      GetIDStr().c_str());
+                      GetDebugLabel().c_str());
     delete action;
     return false;
   }
@@ -840,7 +859,7 @@ bool ICozmoBehavior::DelegateIfInControl(IActionRunner* action, RobotCompletedAc
   if(!delegationComponent.HasDelegator(this)){
     PRINT_NAMED_ERROR("ICozmoBehavior.DelegateIfInControl.NoDelegator",
                       "Behavior %s attempted to start action while it did not have control of delegation",
-                      GetIDStr().c_str());
+                      GetDebugLabel().c_str());
     delete action;
     return false;
   }
@@ -858,7 +877,7 @@ bool ICozmoBehavior::DelegateIfInControl(IActionRunner* action, RobotCompletedAc
   if( !IsActivated() ) {
     PRINT_NAMED_WARNING("ICozmoBehavior.DelegateIfInControl.Failure.NotRunning",
                         "Behavior '%s' can't start %s action because it is not running",
-                        GetIDStr().c_str(), action->GetName().c_str());
+                        GetDebugLabel().c_str(), action->GetName().c_str());
     delete action;
     return false;
   }
@@ -866,7 +885,7 @@ bool ICozmoBehavior::DelegateIfInControl(IActionRunner* action, RobotCompletedAc
   if( IsActing() ) {
     PRINT_NAMED_WARNING("ICozmoBehavior.DelegateIfInControl.Failure.AlreadyActing",
                         "Behavior '%s' can't start %s action because it is already running an action in state %s",
-                        GetIDStr().c_str(), action->GetName().c_str(),
+                        GetDebugLabel().c_str(), action->GetName().c_str(),
                         GetDebugStateName().c_str());
     delete action;
     return false;
@@ -987,7 +1006,7 @@ bool ICozmoBehavior::CancelDelegates(bool allowCallback, bool allowHelperToConti
     // stop the helper first. This is generally what we want, because if someone else is stopping an action,
     // the helper likely won't know how to respond. Note that helpers can't call StopActing
     if( !_currentHelperHandle.expired() ) {
-      PRINT_CH_INFO("Behaviors", (GetIDStr() + ".StopActing.WithoutCallback.StopHelper").c_str(),
+      PRINT_CH_INFO("Behaviors", (GetDebugLabel() + ".StopActing.WithoutCallback.StopHelper").c_str(),
                     "Stopping behavior helper because action stopped without callback");
     }
     StopHelperWithoutCallback();
@@ -1025,9 +1044,9 @@ void ICozmoBehavior::BehaviorObjectiveAchieved(BehaviorObjective objectiveAchiev
   if(broadcastToGame && (robotExternalInterface != nullptr)){
     robotExternalInterface->BroadcastToGame<ExternalInterface::BehaviorObjectiveAchieved>(objectiveAchieved);
   }**/
-  PRINT_CH_INFO("Behaviors", "ICozmoBehavior.BehaviorObjectiveAchieved", "Behavior:%s, Objective:%s", GetIDStr().c_str(), EnumToString(objectiveAchieved));
+  PRINT_CH_INFO("Behaviors", "ICozmoBehavior.BehaviorObjectiveAchieved", "Behavior:%s, Objective:%s", GetDebugLabel().c_str(), EnumToString(objectiveAchieved));
   // send das event
-  Util::sEventF("robot.freeplay_objective_achieved", {{DDATA, EnumToString(objectiveAchieved)}}, "%s", GetIDStr().c_str());
+  Util::sEventF("robot.freeplay_objective_achieved", {{DDATA, EnumToString(objectiveAchieved)}}, "%s", GetDebugLabel().c_str());
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1051,9 +1070,9 @@ void ICozmoBehavior::SmartPushIdleAnimation(AnimationTrigger animation)
   if(ANKI_VERIFY(!_hasSetIdle,
                  "ICozmoBehavior.SmartPushIdleAnimation.IdleAlreadySet",
                  "Behavior %s has already set an idle animation",
-                 GetIDStr().c_str())){
+                 GetDebugLabel().c_str())){
     // TODO: Restore idle animations (VIC-366)
-    //robot.GetAnimationStreamer().PushIdleAnimation(animation, kIdleLockPrefix + GetIDStr());
+    //robot.GetAnimationStreamer().PushIdleAnimation(animation, kIdleLockPrefix + GetDebugLabel());
     _hasSetIdle = true;
   }
 }
@@ -1065,9 +1084,9 @@ void ICozmoBehavior::SmartRemoveIdleAnimation()
   if(ANKI_VERIFY(_hasSetIdle,
                  "ICozmoBehavior.SmartRemoveIdleAnimation.NoIdleSet",
                  "Behavior %s is trying to remove an idle, but none is currently set",
-                 GetIDStr().c_str())){
+                 GetDebugLabel().c_str())){
     // TODO: Restore idle animations (VIC-366)
-    //robot.GetAnimationStreamer().RemoveIdleAnimation(kIdleLockPrefix + GetIDStr());
+    //robot.GetAnimationStreamer().RemoveIdleAnimation(kIdleLockPrefix + GetDebugLabel());
     _hasSetIdle = false;
   }
 }
@@ -1165,7 +1184,7 @@ bool ICozmoBehavior::SmartDelegateToHelper(HelperHandle handleToRun,
                                            SimpleCallback successCallback,
                                            SimpleCallback failureCallback)
 {
-  PRINT_CH_INFO("Behaviors", (GetIDStr() + ".SmartDelegateToHelper").c_str(),
+  PRINT_CH_INFO("Behaviors", (GetDebugLabel() + ".SmartDelegateToHelper").c_str(),
                 "Behavior requesting to delegate to helper %s", handleToRun->GetName().c_str());
 
   if(!_currentHelperHandle.expired()){
@@ -1177,7 +1196,7 @@ bool ICozmoBehavior::SmartDelegateToHelper(HelperHandle handleToRun,
   if(!GetBEI().HasDelegationComponent()){
     PRINT_NAMED_ERROR("ICozmoBehavior.SmartDelegateToHelper.NotInControlOfDelegationComponent",
                       "Behavior %s attempted to delegate while not in control",
-                      GetIDStr().c_str());
+                      GetDebugLabel().c_str());
     return false;
   }
   
@@ -1187,7 +1206,7 @@ bool ICozmoBehavior::SmartDelegateToHelper(HelperHandle handleToRun,
   if(!delegationComponent.HasDelegator(this)){
     PRINT_NAMED_ERROR("ICozmoBehavior.SmartDelegateToHelper.NotInControlOfDelegator",
                       "Behavior %s attempted to delegate while not in control",
-                      GetIDStr().c_str());
+                      GetDebugLabel().c_str());
     return false;
   }
   auto& delegateWrapper = delegationComponent.GetDelegator(this);
@@ -1213,7 +1232,7 @@ bool ICozmoBehavior::SmartDelegateToHelper(HelperHandle handleToRun,
     _currentHelperHandle = handleToRun;
   }
   else {
-    PRINT_CH_INFO("Behaviors", (GetIDStr() + "SmartDelegateToHelper.Failed").c_str(),
+    PRINT_CH_INFO("Behaviors", (GetDebugLabel() + "SmartDelegateToHelper.Failed").c_str(),
                   "Failed to delegate to helper");
   }
   
@@ -1234,7 +1253,7 @@ bool ICozmoBehavior::StopHelperWithoutCallback()
   bool handleStopped = false;
   auto handle = _currentHelperHandle.lock();
   if( handle ) {
-    PRINT_CH_INFO("Behaviors", (GetIDStr() + ".SmartStopHelper").c_str(),
+    PRINT_CH_INFO("Behaviors", (GetDebugLabel() + ".SmartStopHelper").c_str(),
                   "Behavior stopping its helper");
     if(GetBEI().HasDelegationComponent()){
       auto& delegationComponent = GetBEI().GetDelegationComponent();

@@ -2,7 +2,6 @@
   "behaviorClass": "ExpressNeeds",
   
   "behaviorID": "Needs_MildLowEnergyRequest",
-  "displayNameKey":"behavior.Needs_MildLowEnergyRequest",
   "animTriggers": ["NeedsMildLowEnergyRequest"],
   "need": "Energy",
   "needBracket": "Warning",

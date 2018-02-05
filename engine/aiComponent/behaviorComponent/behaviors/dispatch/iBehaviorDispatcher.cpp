@@ -47,7 +47,7 @@ IBehaviorDispatcher::IBehaviorDispatcher(const Json::Value& config, bool shouldI
   ANKI_VERIFY(config.get(kInterruptBehaviorKey, shouldInterruptActiveBehavior).asBool() == shouldInterruptActiveBehavior,
               "IBehaviorDispatcher.ConfigMismatch",
               "Behavior '%s' specified a '%s' value of %s, but behaviors of this type will ignore this flag",
-              GetIDStr().c_str(),
+              GetDebugLabel().c_str(),
               kInterruptBehaviorKey,
               config.get(kInterruptBehaviorKey, false).asBool() ? "true" : "false");
 }
@@ -190,7 +190,7 @@ void IBehaviorDispatcher::BehaviorUpdate()
       const bool delegated = DelegateNow(desiredBehavior.get());
       DEV_ASSERT_MSG(delegated, "IBehaviorDispatcher.BehaviorUpdate.DelegateFailed",
                      "Failed to delegate to behavior '%s'",
-                     desiredBehavior->GetIDStr().c_str());
+                     desiredBehavior->GetDebugLabel().c_str());
     }
   }
 }

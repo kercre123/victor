@@ -3,6 +3,5 @@
 // your new parameters will not be used.
 {
   "behaviorClass": "RespondPossiblyRoll",
-  "behaviorID": "PyramidRespondPossiblyRoll",
-  "displayNameKey":"behavior.PrepareCubes"
+  "behaviorID": "PyramidRespondPossiblyRoll"
 }

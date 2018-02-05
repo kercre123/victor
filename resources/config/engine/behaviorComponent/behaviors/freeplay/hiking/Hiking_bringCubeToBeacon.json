@@ -9,7 +9,6 @@
   "behaviorClass": "BringCubeToBeacon",
   "behaviorID": "Hiking_BringCubeToBeacon",
 
-  "displayNameKey":"behavior.BringCubeToBeacon",
   "params":
   {
     "recentFailureCooldown_sec": 45.0

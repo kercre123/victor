@@ -200,7 +200,7 @@ void BehaviorStack::DebugPrintStack(const std::string& debugStr) const
     PRINT_CH_DEBUG("BehaviorSystem", ("BehaviorSystemManager.Stack." + debugStr).c_str(),
                    "%zu: %s",
                    i,
-                   _behaviorStack[i]->GetPrintableID().c_str());
+                   _behaviorStack[i]->GetDebugLabel().c_str());
   }
 }
 
@@ -210,7 +210,7 @@ void BehaviorStack::SendDebugVizMessages(BehaviorExternalInterface& behaviorExte
   VizInterface::BehaviorStackDebug data;
 
   for( const auto& behavior : _behaviorStack ) {
-    data.debugStrings.push_back( behavior->GetPrintableID() );
+    data.debugStrings.push_back( behavior->GetDebugLabel() );
   }  
   
   auto context = behaviorExternalInterface.GetRobotInfo().GetContext();

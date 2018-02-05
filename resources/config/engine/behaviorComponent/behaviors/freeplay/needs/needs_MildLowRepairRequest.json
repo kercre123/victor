@@ -2,7 +2,6 @@
   "behaviorClass": "ExpressNeeds",
   
   "behaviorID": "Needs_MildLowRepairRequest",
-  "displayNameKey":"behavior.Needs_MildLowRepairRequest",
   "animTriggers": ["NeedsMildLowRepairRequest"],
   "need": "Repair",
   "needBracket": "Warning",

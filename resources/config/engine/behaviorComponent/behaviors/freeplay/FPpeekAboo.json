@@ -3,7 +3,6 @@
   "behaviorClass": "PeekABoo",
   "behaviorID": "FPPeekABoo",
   "needsActionID": "PeekAboo",
-  "displayNameKey":"behavior.PeekAboo",
   "requiredUnlockId": "PeekABoo",
 
   "minTimesPeekBeforeQuit" : 1,
