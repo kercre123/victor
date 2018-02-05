@@ -38,9 +38,17 @@ public:
   bool IsValidCloudIntent(const std::string& cloudIntent) const;
   bool IsValidUserIntent(const std::string& userIntent) const;
 
+  // return the type of extra data associated with the cloud intent, or "" if none
+  const std::string& GetCloudIntentExtraData(const std::string& cloudIntent) const;
+
 private:
 
-  std::map<std::string, std::string> _cloudToUserMap;
+  struct IntentInfo {
+    std::string userIntent;
+    std::string extraData;
+  };
+  
+  std::map<std::string, IntentInfo> _cloudToUserMap;
 
   // TODO:(bn) better data structure to avoid double-storage
   std::set<std::string> _userIntents;

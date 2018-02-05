@@ -14,6 +14,8 @@
 
 #include "engine/aiComponent/userIntentComponent.h"
 
+#include "clad/types/userIntents.h"
+
 #include "coretech/common/engine/utils/timer.h"
 
 #include <json/json.h>
@@ -36,6 +38,16 @@ const std::string& testMapConfig = R"json(
     {
       "cloud_intent": "cloud_intent_2",
       "user_intent": "user_intent_2"
+    },
+    {
+      "cloud_intent": "cloud_time_intent",
+      "user_intent": "user_time_intent",
+      "extra_data": "timeInSeconds"
+    },
+    {
+      "cloud_intent": "cloud_name_intent",
+      "user_intent": "user_name_intent",
+      "extra_data": "name"
     }
   ],
 
@@ -261,4 +273,53 @@ TEST(UserIntentMap, JsonIntent)
   })json"));
   EXPECT_TRUE(comp->IsAnyUserIntentPending());
   EXPECT_TRUE(comp->IsUserIntentPending("user_intent_2"));
+}
+
+TEST(UserIntentMap, ExtraData)
+{
+  std::unique_ptr<UserIntentComponent> comp;
+  CreateComponent(testMapConfig, comp);
+
+  UserIntentData data;
+  
+  EXPECT_TRUE(comp->SetCloudIntentFromJSON(R"json(
+  {
+     "intent": "cloud_time_intent",
+     "time_s": 42  
+  })json"));
+  EXPECT_TRUE(comp->IsAnyUserIntentPending());
+  data.Set_none({});
+  EXPECT_TRUE(comp->IsUserIntentPending("user_time_intent", data));
+  EXPECT_EQ(data.GetTag(), UserIntentDataTag::timeInSeconds);
+  EXPECT_EQ(data.Get_timeInSeconds().time_s, 42);
+
+  comp->ClearUserIntent("user_time_intent");
+  EXPECT_FALSE(comp->IsUserIntentPending("user_time_intent", data));
+
+  EXPECT_TRUE(comp->SetCloudIntentFromJSON(R"json(
+  {
+     "intent": "cloud_time_intent",
+     "time_s": 9001
+  })json"));
+  EXPECT_TRUE(comp->IsAnyUserIntentPending());
+  data.Set_none({});
+  EXPECT_TRUE(comp->IsUserIntentPending("user_time_intent", data));
+  EXPECT_EQ(data.GetTag(), UserIntentDataTag::timeInSeconds);
+  EXPECT_EQ(data.Get_timeInSeconds().time_s, 9001);
+
+  comp->ClearUserIntent("user_time_intent");
+  EXPECT_FALSE(comp->IsUserIntentPending("user_time_intent"));
+  
+  EXPECT_TRUE(comp->SetCloudIntentFromJSON(R"json(
+  {
+     "intent": "cloud_name_intent",
+     "name": "Victor"
+  })json"));
+  EXPECT_TRUE(comp->IsAnyUserIntentPending());
+  data.Set_none({});
+  EXPECT_FALSE(comp->IsUserIntentPending("user_time_intent", data));
+  EXPECT_TRUE(comp->IsUserIntentPending("user_name_intent", data));
+  EXPECT_EQ(data.GetTag(), UserIntentDataTag::name);
+  EXPECT_EQ(data.Get_name().name, "Victor");
+
 }

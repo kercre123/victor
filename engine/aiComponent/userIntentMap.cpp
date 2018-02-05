@@ -25,6 +25,7 @@ const char* kUserIntentMapKey = "user_intent_map";
 const char* kCloudIntentKey = "cloud_intent";
 const char* kUserIntentKey = "user_intent";
 const char* kUnmatchedKey = "unmatched_intent";
+const char* kExtraDataKey = "extra_data";
 
 const char* kDebugName = "UserIntentMap";
 }
@@ -39,7 +40,13 @@ UserIntentMap::UserIntentMap(const Json::Value& config)
   for( const auto& mapping : config[kUserIntentMapKey] ) {
     const std::string& cloudIntent = JsonTools::ParseString(mapping, kCloudIntentKey, kDebugName);
     const std::string& userIntent = JsonTools::ParseString(mapping, kUserIntentKey, kDebugName);
-    _cloudToUserMap.emplace(cloudIntent, userIntent);
+    const std::string& extraData = mapping.get(kExtraDataKey, "").asString();
+
+    // TODO:(bn) we need a way to verify that extraData is correct and maps to a union tag. Unfortunately,
+    // CLAD doesn't provide a way to do that right now. Ideally we'd enable EnumFromString on the enum data
+    // tags, then we can check the return type there to verify        
+    
+    _cloudToUserMap.emplace(cloudIntent, IntentInfo{userIntent, extraData});
     _userIntents.emplace(userIntent);
   }
 
@@ -50,7 +57,7 @@ const std::string& UserIntentMap::GetUserIntentFromCloudIntent(const std::string
 {
   auto it = _cloudToUserMap.find(cloudIntent);
   if( it != _cloudToUserMap.end() ) {
-    return it->second;
+    return it->second.userIntent;
   }
   else {
     PRINT_NAMED_WARNING("UserIntentMap.NoCloudIntentMatch",
@@ -72,6 +79,18 @@ bool UserIntentMap::IsValidUserIntent(const std::string& userIntent) const
   const bool foundInMap = ( _userIntents.find(userIntent) != _userIntents.end() );
   const bool isDefault = userIntent == _unmatchedUserIntent;
   return foundInMap || isDefault;
+}
+
+const std::string& UserIntentMap::GetCloudIntentExtraData(const std::string& cloudIntent) const
+{
+  const auto it = _cloudToUserMap.find(cloudIntent);
+  if( it != _cloudToUserMap.end() ) {
+    return it->second.extraData;
+  }
+  else {
+    static const std::string kEmptyVal;
+    return kEmptyVal;
+  }  
 }
 
 }

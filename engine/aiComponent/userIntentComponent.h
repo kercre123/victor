@@ -22,6 +22,7 @@
 namespace Anki {
 namespace Cozmo {
 
+class UserIntentData;
 class UserIntentMap;
 
 class UserIntentComponent : public IManageableComponent, private Util::noncopyable
@@ -71,6 +72,10 @@ public:
   // Returns true if the specific user intent is pending
   bool IsUserIntentPending(const std::string& userIntent) const;
 
+  // Same as above, but also set extra data
+  bool IsUserIntentPending(const std::string& userIntent, UserIntentData& extraData) const;
+  
+
   // Clear the passed in user intent. If this is the current pending one, the pending intent will be cleared
   // until a new intent comes in. If not (e.g. another more-recent intent came in), this call will have no
   // effect (other than printing a warning)
@@ -93,6 +98,8 @@ private:
 
   bool _pendingTrigger = false;
   std::string _pendingIntent;
+
+  std::unique_ptr<UserIntentData> _pendingExtraData;
 
   // for debugging -- intents should be processed within one tick so track the ticks here
   size_t _pendingTriggerTick = 0;
