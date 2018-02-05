@@ -44,7 +44,7 @@ Solid {
       markerImg_front %{=markers[i+1]}%
       markerImg_left %{=markers[i+2]}%
       width 0.020
-      markerWidth 0.015
+      markerWidth 0.014
     }
 
     %{ 

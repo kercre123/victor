@@ -306,7 +306,7 @@ void FaceDebugDraw::DrawStateInfo(const RobotState& state)
 
     if(FACTORY_TEST)
     {
-      text.push_back("V2");
+      text.push_back("V3");
     }
 
     DrawTextOnScreen(text, 

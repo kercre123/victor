@@ -112,6 +112,9 @@ static f32 kVisualDistanceToDistanceSensorObjectThresh_mm = 30;
 // distance sensor behavior json file
 static f32 kDistanceSensorReadingThresh_mm = 20;
 
+// Bias adjustment for raw distance sensor reading when comparing to visual distance
+static f32 kDistanceSensorBiasAdjustment_mm = 30;
+
 // ----------Camera Calibration----------
 // Exposure setting for playpen
 static u16 kExposure_ms                               = 3;
@@ -144,7 +147,7 @@ static u32 kTimeoutForComputingCalibration_ms         = 5000;
 static u32 kPlaypenCalibTarget                        = 2; // 1 = INVERTED_BOX 2 = QBERT (I don't feel like including cameraCalibrator.h here)
 
 // How big the calibration target's markers are
-static f32 kCalibMarkerSize_mm                        = 15;
+static f32 kCalibMarkerSize_mm                        = 14;
 
 // How big the calibration target's entire marker faces are
 static f32 kCalibMarkerCubeSize_mm                    = 20;
@@ -164,7 +167,7 @@ static f32 kDistanceToTriggerBackCliffs_mm  = 80;
 static f32 kDistanceToDriveOverCliff_mm     = 50;
 
 // Speed at which to drive forwards towards cliff
-static f32 kCliffSpeed_mmps                 = 80;
+static f32 kCliffSpeed_mmps                 = 60;
 
 // Time to wait for a cliff event after getting a robot stopped event
 static f32 kTimeToWaitForCliffEvent_ms      = CLIFF_EVENT_DELAY_MS + 100;

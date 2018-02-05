@@ -9,5 +9,3 @@ static const char *TAG = "spine";
 
 
 #endif//PLATFORM_LOGGING_H
-
-

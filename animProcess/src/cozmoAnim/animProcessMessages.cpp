@@ -36,6 +36,10 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
+#if FACTORY_TEST
+#include "anki/cozmo/shared/factory/emrHelper.h"
+#endif
+
 #include "osState/osState.h"
 
 #include "util/console/consoleInterface.h"
@@ -56,11 +60,6 @@ namespace {
   Anki::Cozmo::AnimationStreamer*            _animStreamer = nullptr;
   Anki::Cozmo::Audio::EngineRobotAudioInput* _audioInput = nullptr;
   const Anki::Cozmo::CozmoAnimContext*       _context = nullptr;
-
-  #ifndef SIMULATOR
-  const u8 kNumTicksToCheckForBC = 60; // ~2seconds
-  u8 _bcCheckCount = 0;
-  #endif
 
   CONSOLE_VAR(bool, kDebugFaceDraw_CycleWithButton, "DebugFaceDraw", true);   
 
@@ -335,14 +334,6 @@ Result AnimProcessMessages::Init(AnimationStreamer* animStreamer,
   DEV_ASSERT(_audioInput != nullptr, "AnimProcessMessages.Init.NullAudioInput");
   DEV_ASSERT(_context != nullptr, "AnimProcessMessages.Init.NullContext");
 
-  #ifdef SIMULATOR
-  const bool haveBC = true;
-  #else
-  const bool haveBC = Util::FileUtils::FileExists("/data/persist/factory/80000000.nvdata");
-  #endif
-
-  FaceDisplay::GetDebugDraw()->SetShouldDrawFAC(!haveBC);
-
   return RESULT_OK;
 }
 
@@ -434,14 +425,12 @@ void AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
     ProcessMessageFromRobot(msgBuf);
   }
 
-  #ifndef SIMULATOR
-  if(++_bcCheckCount >= kNumTicksToCheckForBC)
-  {
-    _bcCheckCount = 0;
-    const bool haveBC = Util::FileUtils::FileExists("/data/persist/factory/80000000.nvdata");
-    FaceDisplay::GetDebugDraw()->SetShouldDrawFAC(!haveBC);
-  }
-  #endif
+// TODO(Al): Remove the !FACTORY_TEST condition once all robots have EMRs
+#if defined(SIMULATOR) || !FACTORY_TEST
+  FaceDisplay::GetDebugDraw()->SetShouldDrawFAC(false);
+#else
+  FaceDisplay::GetDebugDraw()->SetShouldDrawFAC(!Factory::GetEMR()->PACKED_OUT);
+#endif
 }
 
 bool AnimProcessMessages::SendAnimToRobot(const RobotInterface::EngineToRobot& msg)
