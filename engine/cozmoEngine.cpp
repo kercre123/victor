@@ -29,12 +29,12 @@
 #include "engine/robotDataLoader.h"
 #include "engine/robotManager.h"
 #include "engine/util/transferQueue/transferQueueMgr.h"
-#include "engine/util/webService/webService.h"
 #include "engine/utils/cozmoExperiments.h"
 #include "engine/utils/cozmoFeatureGate.h"
 #include "engine/factory/factoryTestLogger.h"
 #include "engine/voiceCommands/voiceCommandComponent.h"
 #include "engine/cozmoAPI/comms/uiMessageHandler.h"
+#include "webServerProcess/src/webService.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
@@ -333,7 +333,7 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
   _context->GetVoiceCommandComponent()->Update();
 
   _context->GetWebService()->Update();
-  
+
   // Handle UI
   if (!_uiWasConnected && _uiMsgHandler->HasDesiredNumUiDevices()) {
     LOG_INFO("CozmoEngine.Update.UIConnected", "UI has connected");

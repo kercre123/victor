@@ -1,17 +1,17 @@
 cmake_minimum_required(VERSION 3.6)
 
-project(cozmo_anim)
+project(cozmo_webserver)
 
 include(anki_build_cxx)
 
-anki_build_cxx_library(victor_anim ${ANKI_SRCLIST_DIR} STATIC)
+anki_build_cxx_library(victor_web_library ${ANKI_SRCLIST_DIR} STATIC)
 
 include(flatbuffers)
 include(opencv)
 include(speexdsp)
 include(text2speech)
 include(sensory)
-include(robot_core)
+# include(robot_core)
 
 if (NOT DEFINED USE_DAS)
   set(USE_DAS 0)
@@ -35,64 +35,44 @@ elseif (MACOSX)
     set(PLATFORM_COMPILE_DEFS "-DSIMULATOR")
 endif()
 
-target_link_libraries(victor_anim
+target_link_libraries(victor_web_library
   PRIVATE
   util
-  util_audio
-  canned_anim_lib_anim
-  # cti
-  cti_common_robot
   cti_vision
-  cti_messaging_robot
-  robot_clad_cpplite
-  robot_transport
-  audio_engine
-  audio_multiplexer_robot
-  osState
   # vendor
-  ${OPENCV_LIBS}
-  ${FLATBUFFERS_LIBS} 
-  signal_essence
-  ${SPEEXDSP_LIBS}
-  ${TEXT2SPEECH_LIBS}
-  ${SENSORY_LIBS}
   civetweb
-  # platform
-  ${PLATFORM_LIBS}
   PUBLIC
-  victor_web_library
   robot_interface  # Needs to be public for cozmoConfig.h
 )
 
-android_strip(TARGET victor_anim)
+android_strip(TARGET victor_web_library)
 
-target_compile_definitions(victor_anim
+target_compile_definitions(victor_web_library
   PRIVATE
   USE_DAS=${USE_DAS}
   ${PLATFORM_COMPILE_DEFS}
 )
 
-target_include_directories(victor_anim 
+target_include_directories(victor_web_library 
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src> # allow "android/" prefix
   ${PLATFORM_INCLUDES}
 )
 
-# victor_animator binary only builds on Android now
-# mac implementation uses (webotsCtrlAnim)
+# victor_web_server binary only builds on Android now
+# mac implementation uses (webotsCtrlWebServer)
 if (ANDROID)
 
-  anki_build_cxx_executable(victor_animator ${ANKI_SRCLIST_DIR})
+  anki_build_cxx_executable(victor_web_server ${ANKI_SRCLIST_DIR})
 
-  target_link_libraries(victor_animator
+  target_link_libraries(victor_web_server
     PRIVATE
-    victor_anim
+    victor_web_library
     cti_common_robot
     util
-    jsoncpp
     ${PLATFORM_LIBS}
   )
 
-  android_strip(TARGET victor_animator)
+  android_strip(TARGET victor_web_server)
     
 endif()

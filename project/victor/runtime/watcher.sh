@@ -6,6 +6,7 @@ function kill_all()
   kill ${ANIM_PID}
   kill ${ENGINE_PID}
   kill ${CLOUD_PID}
+  kill ${WEBSERVER_PID}
 
   sleep 1
 
@@ -40,6 +41,8 @@ function start()
   ENGINE_NAME="$(/data/data/com.anki.cozmoengine/cozmoctl.sh get_name)"
   CLOUD_PID="$(/data/data/com.anki.cozmoengine/cloudctl.sh get_pid)"
   CLOUD_NAME="$(/data/data/com.anki.cozmoengine/cloudctl.sh get_name)"
+  WEBSERVER_PID="$(/data/data/com.anki.cozmoengine/webserverctl.sh get_pid)"
+  WEBSERVER_NAME="$(/data/data/com.anki.cozmoengine/webserverctl.sh get_name)"
 
   while true; do
 
@@ -55,7 +58,10 @@ function start()
     kill -0 ${CLOUD_PID} > /dev/null 2>&1
     CLOUD_RUNNING=$?
 
-    if [ "${ROBOT_RUNNING}" -ne "0" ] && [ "${ENGINE_RUNNING}" -ne "0" ] && [ "${ANIM_RUNNING}" -ne "0" ] && [ "${CLOUD_RUNNING}" -ne "0" ]; then
+    kill -0 ${WEBSERVER_PID} > /dev/null 2>&1
+    WEBSERVER_RUNNING=$?
+
+    if [ "${ROBOT_RUNNING}" -ne "0" ] && [ "${ENGINE_RUNNING}" -ne "0" ] && [ "${ANIM_RUNNING}" -ne "0" ] && [ "${CLOUD_RUNNING}" -ne "0" ] && [ "${WEBSERVER_RUNNING}" -ne "0" ]; then
       exit 0
     fi
 
@@ -73,6 +79,10 @@ function start()
 
     if [ "${CLOUD_RUNNING}" -ne "0" ]; then
       kill_all ${CLOUD_NAME}
+    fi
+
+    if [ "${WEBSERVER_RUNNING}" -ne "0" ]; then
+      kill_all ${WEBSERVER_NAME}
     fi
 
     sleep 5

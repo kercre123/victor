@@ -23,8 +23,7 @@
 #include "audioEngine/multiplexer/audioMultiplexer.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 
-// TODO HACK this is temporary until we get a webserver >process<
-#include "engine/util/webService/webService.h"
+#include "webServerProcess/src/webService.h"
 
 #include "osState/osState.h"
 
@@ -141,9 +140,9 @@ Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
 #endif // ENABLE_CE_SLEEP_TIME_DIAGNOSTICS
   
   BaseStationTimer::getInstance()->UpdateTime(currTime_nanosec);
-  
-  _context->GetWebService()->Update();
 
+  _context->GetWebService()->Update();
+  
   Result result = AnimProcessMessages::Update(currTime_nanosec);
   if (RESULT_OK != result) {
     LOG_WARNING("AnimEngine.Update", "Unable to process messages (result %d)", result);

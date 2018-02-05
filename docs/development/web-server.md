@@ -7,15 +7,16 @@ with more features.  It can be used with a real robot and/or with Webots.
 ## To access from a browser
 
 When running on a real robot, in a browser, enter the IP address of the robot
-and port 8888, e.g. 192.168.40.221:8888
+and port 8887, 8888 or 8889, e.g. 192.168.40.221:8888
 
 If you've set up your robot's IP in hosts file and named it victor you can also
 use victor:8888
 
 When running webots, use 127.0.0.1:8888 (or localhost:8888)
 
-Note:  To access anim process console vars, use port 8889.  This is a hack that
-will soon go away when the web server runs in its own process.
+- Port 8887: The web server that runs in its own process
+- Port 8888: The web server that runs as part of the engine process, and can be used to access the engine's console vars and funcs
+- Port 8889: The web server that runs as part of the anim process, and can be used to access the anim process's console vars and funcs
 
 ## Username/password
 

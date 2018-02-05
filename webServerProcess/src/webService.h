@@ -10,8 +10,8 @@
  * Copyright: Anki, Inc. 2017-2018
  *
  **/
-#ifndef __driveEngine_webService_webService_H__
-#define __driveEngine_webService_webService_H__
+#ifndef WEB_SERVICE_H
+#define WEB_SERVICE_H
 
 #include <string>
 #include <vector>
@@ -129,4 +129,4 @@ private:
 } // namespace Cozmo
 } // namespace Anki
 
-#endif // defined(__driveEngine_webService_webService_H__)
+#endif // defined(WEB_SERVICE_H)

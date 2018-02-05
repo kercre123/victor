@@ -557,6 +557,9 @@ WebService::~WebService()
   Stop();
 }
 
+// TODO:  Instead of passing in a 'port number' we'll pass in a 'config', which will
+// contain port number, and other stuff like text indicating to user which webserver
+// is running, etc.
 void WebService::Start(Anki::Util::Data::DataPlatform* platform, const char* portNumStr)
 {
   if (platform == nullptr) {
@@ -650,7 +653,7 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform, const char* por
 }
 
 
-// This is called from the main engine thread
+// This is called from the main thread
 void WebService::Update()
 {
   std::lock_guard<std::mutex> lock(_requestMutex);

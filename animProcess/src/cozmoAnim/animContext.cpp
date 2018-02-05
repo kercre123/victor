@@ -6,7 +6,7 @@
 #include "cozmoAnim/micDataProcessor.h"
 #include "cozmoAnim/robotDataLoader.h"
 
-#include "engine/util/webService/webService.h"
+#include "webServerProcess/src/webService.h"
 
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 

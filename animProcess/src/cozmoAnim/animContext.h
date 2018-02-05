@@ -54,7 +54,6 @@ namespace WebService {
 class WebService;
 }
 
-
 } // namespace Cozmo
 } // namespace Anki
 
@@ -83,7 +82,7 @@ public:
   AudioMultiplexer*                     GetAudioMultiplexer() const { return _audioMux.get(); }
   MicData::MicDataProcessor*            GetMicDataProcessor() const { return _micDataProcessor.get(); }
   WebService::WebService*               GetWebService() const { return _webService.get(); }
-  
+
   void SetRandomSeed(uint32_t seed);
 
   // Tell the context that this is the main thread
