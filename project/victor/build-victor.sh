@@ -249,7 +249,7 @@ if [ $IGNORE_EXTERNAL_DEPENDENCIES -eq 0 ]; then
   # Run go get to pull dependencies
   ${TOPLEVEL}/project/victor/scripts/run-go-get.sh -d ${GEN_SRC_DIR}
   # Check out specified revisions of repositories we've versioned
-  (cd ${TOPLEVEL}; GOPATH=$(pwd)/cloud/go ./godeps.js execute)
+  (cd ${TOPLEVEL}; GOPATH=$(pwd)/cloud/go ./godeps.js execute ${GEN_SRC_DIR})
 else
   echo "Ignore Go dependencies"
 fi
