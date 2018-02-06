@@ -122,7 +122,12 @@ void RobotDataLoader::LoadNonConfigData()
       ANKI_CPU_PROFILE("RobotDataLoader::LoadEmotionEvents");
       LoadEmotionEvents();
     }
-
+    
+    {
+      ANKI_CPU_PROFILE("RobotDataLoader::LoadFacePNGPaths");
+      LoadFacePNGPaths();
+    }
+    
     {
       ANKI_CPU_PROFILE("RobotDataLoader::LoadCubeAnimationTriggerResponses");
       LoadCubeAnimationTriggerResponses();
@@ -402,6 +407,19 @@ void RobotDataLoader::LoadBehaviors()
     {
       LOG_WARNING("RobotDataLoader.Behavior", "Failed to read '%s'", filename.c_str());
     }
+  }
+}
+
+ 
+void RobotDataLoader::LoadFacePNGPaths()
+{
+  const std::string facePNGFolder = _platform->pathToResource(Util::Data::Scope::Resources, "config/facePNGs/");
+  auto pngs = Util::FileUtils::FilesInDirectory(facePNGFolder, true, ".png", true);
+  for (const std::string& fullPath : pngs) {
+    std::string fileName = Util::FileUtils::GetFileName(fullPath);
+    auto dotIndex = fileName.find_last_of(".");
+    std::string strippedName = (dotIndex == std::string::npos) ? fileName : fileName.substr(0, dotIndex);
+    _facePNGPaths.emplace(std::piecewise_construct, std::forward_as_tuple(strippedName), std::forward_as_tuple(std::move(fullPath)));
   }
 }
 

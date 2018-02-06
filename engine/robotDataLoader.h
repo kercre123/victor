@@ -64,6 +64,7 @@ public:
   void LoadVoiceCommandConfigs();
 
   using FileJsonMap       = std::unordered_map<std::string, const Json::Value>;
+  using ImagePathMap      = std::unordered_map<std::string, std::string>;
   using BehaviorIDJsonMap = std::unordered_map<BehaviorID,  const Json::Value>;
 
   const FileJsonMap& GetEmotionEventJsons()   const { return _emotionEvents; }
@@ -96,6 +97,9 @@ public:
   const Json::Value& GetGameRequestWeightsConfig() const { return _gameRequestWeights; }
   const Json::Value& GetDoATrickWeightsConfig() const { return _doATrickWeights; }
 
+  // images are stored as a map of stripped file name (no file extension) to full path
+  const ImagePathMap& GetFacePNGPaths()       const { return _facePNGPaths; }
+
   bool IsCustomAnimLoadEnabled() const;
   
 private:
@@ -122,6 +126,9 @@ private:
   void LoadEmotionEvents();
   void LoadBehaviors();
   
+  void LoadFacePNGPaths();
+
+
   const CozmoContext* const _context;
   const Util::Data::DataPlatform* _platform;
 
@@ -171,6 +178,8 @@ private:
   Json::Value _gameRequestWeights;
   Json::Value _doATrickWeights;
   
+  ImagePathMap _facePNGPaths;
+
   bool                  _isNonConfigDataLoaded = false;
   std::mutex            _parallelLoadingMutex;
   std::atomic<float>    _loadingCompleteRatio{0};
