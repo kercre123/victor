@@ -15,12 +15,7 @@
 #include "tensorflow/core/platform/types.h"
 #include "tensorflow/core/public/session.h"
 #include "tensorflow/core/util/command_line_flags.h"
-
-#define USE_MEMORY_MAPPED_GRAPH 1
-
-#if USE_MEMORY_MAPPED_GRAPH
-  #include "tensorflow/core/util/memmapped_file_system.h"
-#endif
+#include "tensorflow/core/util/memmapped_file_system.h"
 
 #include <cmath>
 #include <fstream>
@@ -76,19 +71,12 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
 
   GetFromConfig(verbose);
   GetFromConfig(labels);
-  GetFromConfig(min_score);
-  
-  // if(!ANKI_VERIFY(Util::IsFltGEZero(_params.min_score) && Util::IsFltLE(_params.min_score, 1.f),
-  //                 "ObjectDetector.Model.LoadModel.Badmin_score",
-  //                 "%f not in range [0.0,1.0]", _params.min_score))
-  // {
-  //   return RESULT_FAIL;
-  // }
-  
+  GetFromConfig(min_score);  
   GetFromConfig(graph);
   GetFromConfig(input_height);
   GetFromConfig(input_width);
   GetFromConfig(architecture);
+  GetFromConfig(memoryMapGraph);
 
   if("ssd_mobilenet" == _params.architecture)
   {
@@ -140,7 +128,7 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
 
   tensorflow::GraphDef graph_def;
   
-  #if USE_MEMORY_MAPPED_GRAPH
+  if(_params.memoryMapGraph)
   {
     // See also: https://www.tensorflow.org/mobile/optimizing
 
@@ -177,7 +165,7 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
 
     _session.reset(session_pointer);
   }
-  #else
+  else
   {
     tensorflow::Status load_graph_status = tensorflow::ReadBinaryProto(tensorflow::Env::Default(), 
                                                                        graph_file_name, &graph_def);
@@ -190,7 +178,6 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
 
     _session.reset(tensorflow::NewSession(tensorflow::SessionOptions()));
   } 
-  #endif
 
   std::cout << "ObjectDetector.Model.LoadGraph.ModelLoadSuccess " << graph_file_name << std::endl;
   
