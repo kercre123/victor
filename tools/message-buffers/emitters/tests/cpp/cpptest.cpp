@@ -652,6 +652,44 @@ TEST JsonSerialization_BasicTypes() {
   PASS();
 }
 
+TEST JsonSerialization_ListOfEnums() {
+  std::string json = R"json(
+{
+	"vals": ["Zero", "One", "Two", "Five", "One"]
+}
+)json";
+
+  using namespace JsonSerialization;
+  
+  // Load Json from string into jsoncpp Json::Value
+  Json::Reader reader;
+  Json::Value root;
+  ASSERT(reader.parse(json, root));
+
+  // testStruct is the CLAD generated class that we want to serialize into.
+  testStructure_ListOfEnums testStruct;
+  ASSERT(testStruct.SetFromJSON(root));
+
+  // Ensure data in objects matches data from the json string.
+  ASSERT_EQ(testStruct.vals.size(), 5);
+
+  ASSERT_EQ(testStruct.vals[0], testEnum::Zero);
+  ASSERT_EQ(testStruct.vals[1], testEnum::One);
+  ASSERT_EQ(testStruct.vals[2], testEnum::Two);
+  ASSERT_EQ(testStruct.vals[3], testEnum::Five);
+  ASSERT_EQ(testStruct.vals[4], testEnum::One);
+
+  // GetJSON() will serialize a CLAD generated structure into a Json::Value, the
+  // opposite of what we're doing above.
+  // This reloads the output of GetJSON() back into a Json::Value and then back into
+  // another CLAD object, they should then contain the same data.
+  testStructure_ListOfEnums testStructReserialized;
+  testStructReserialized.SetFromJSON(testStruct.GetJSON());
+  ASSERT(testStruct == testStructReserialized);
+
+  PASS();
+}
+
 TEST JsonSerialization_List() {
   std::string json = R"json(
 {
@@ -1061,6 +1099,7 @@ SUITE(CPP_Emitter) {
   // Json Serialization
   RUN_TEST(JsonSerialization_BasicTypes);
   RUN_TEST(JsonSerialization_List);
+  RUN_TEST(JsonSerialization_ListOfEnums);
   RUN_TEST(JsonSerialization_Nested);
   RUN_TEST(JsonSerialization_Unions);
   RUN_TEST(JsonSerialization_Enums);

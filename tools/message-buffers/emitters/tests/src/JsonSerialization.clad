@@ -57,6 +57,11 @@ structure testStructure_Lists
   uint_16 testList[uint_8],
 }
 
+structure testStructure_ListOfEnums
+{
+  testEnum vals[uint_8],
+}
+
 structure testStructure_Nested {
   testNestedStructure testNestedStructure,
 }
