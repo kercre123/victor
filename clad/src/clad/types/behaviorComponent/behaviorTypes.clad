@@ -12,6 +12,7 @@ namespace Cozmo {
 enum uint_8 BehaviorClass {
 
   // Basic behavior functionality
+  ProceduralClock,
   ProxGetToDistance,
   ReactToSound,
   Turn,
@@ -300,7 +301,8 @@ enum uint_8 BehaviorID {
   ExampleGlobalReactions,
   ExampleObjectMoved,
   ExampleObjectPositionUpdated,
-  ExamplePetInitialDetection
+  ExamplePetInitialDetection,
+  ExampleProceduralClock
 
 }
 

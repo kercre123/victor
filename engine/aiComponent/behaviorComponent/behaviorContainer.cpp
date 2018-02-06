@@ -103,6 +103,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToRobotShaken.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToUnexpectedMovement.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToVoiceCommand.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorProceduralClock.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/sleeping/behaviorSleeping.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorComeHere.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorReactToSound.h"
@@ -596,7 +597,12 @@ ICozmoBehaviorPtr BehaviorContainer::CreateBehaviorBase(BehaviorClass behaviorTy
       newBehavior = ICozmoBehaviorPtr(new BehaviorProxGetToDistance(config));
       break;
     }
-
+    case BehaviorClass::ProceduralClock:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorProceduralClock(config));
+      break;
+    }
+    
     // Dispatch Behvaiors
     case BehaviorClass::BehaviorDispatcherRerun:
     {
