@@ -17,6 +17,7 @@ table ProceduralFace {
   faceScaleY:float = 1.0;
   leftEye:[float];
   rightEye:[float];
+  scanlineOpacity:float = 0.7;
 }
 
 table HeadAngle {
