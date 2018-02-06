@@ -744,11 +744,26 @@ class CPPStructEmitter(HStructEmitter):
 
         for member in node.members():
             if isinstance(member.type, (ast.VariableArrayType, ast.FixedArrayType)) and not isinstance(member.type, ast.PascalStringType):
-                self.output.write(textwrap.dedent('''\
-                    \tfor(auto& value : {member_name}) {{
-                        root["{json_name}"].append({json_value});
-                    \t}}
-                ''').format(json_name=member.name.lstrip('_'), member_name=member.name, json_value=toJsonValue("value", member.type.member_type)))
+                with self.output.indent(1):
+
+                    # vector<bool> is not a container in C++, so we need some special logic because we can't use
+                    # ranged-for with references
+                    if isinstance(member.type.member_type, ast.BuiltinType) and member.type.member_type.name == 'bool':
+                        range_type = 'auto'
+                        cast_prefix = '(bool)'
+                    else:
+                        range_type = 'const auto&'
+                        cast_prefix = ''
+
+                    self.output.write(textwrap.dedent('''\
+                        for({range_type} value : {member_name}) {{
+                          root["{json_name}"].append({cast_prefix}{json_value});
+                        }}
+                        ''').format(json_name=member.name.lstrip('_'),
+                                    member_name=member.name,
+                                    json_value=toJsonValue("value", member.type.member_type),
+                                    range_type=range_type,
+                                    cast_prefix=cast_prefix))
             else:
                 self.output.write('\troot["{json_name}"] = {json_value};\n'.format(json_name=member.name.lstrip('_'), member_name=member.name, json_value=toJsonValue(member.name, member.type)))
 
