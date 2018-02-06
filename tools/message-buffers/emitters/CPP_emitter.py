@@ -802,10 +802,10 @@ class CPPStructEmitter(HStructEmitter):
                             elif isinstance(member.type.member_type, ast.DefinedType):
                                 with self.output.indent(1):
                                     self.output.write(textwrap.dedent('''\
-                                    if (!EnumFromString(json_array[i].asString(), {member_name}[i])) {{
+                                    if (!{enum_name}FromString(json_array[i].asString(), {member_name}[i])) {{
                                       return false;
                                     }}
-                                    ''').format(member_name=member.name))
+                                    ''').format(enum_name=member.type.member_type.name, member_name=member.name))
                             else:
                                 with self.output.indent(1):
                                     self.output.write(textwrap.dedent('''\
@@ -818,10 +818,10 @@ class CPPStructEmitter(HStructEmitter):
                     elif isinstance(member.type, ast.DefinedType):
                         with self.output.indent(1):
                             self.output.write(textwrap.dedent('''\
-                            if (!EnumFromString(root["{json_name}"].asString(), {member_name})) {{
+                            if (!{enum_name}FromString(root["{json_name}"].asString(), {member_name})) {{
                               return false;
                             }}
-                            ''').format(json_name=json_name, member_name=member.name))
+                            ''').format(enum_name=member.type.name, json_name=json_name, member_name=member.name))
                     else:
                         with self.output.indent(1):
                             self.output.write(textwrap.dedent('''\
