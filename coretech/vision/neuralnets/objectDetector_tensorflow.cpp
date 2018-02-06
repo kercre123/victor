@@ -16,6 +16,12 @@
 #include "tensorflow/core/public/session.h"
 #include "tensorflow/core/util/command_line_flags.h"
 
+#define USE_MEMORY_MAPPED_GRAPH 1
+
+#if USE_MEMORY_MAPPED_GRAPH
+  #include "tensorflow/core/util/memmapped_file_system.h"
+#endif
+
 #include <cmath>
 #include <fstream>
 
@@ -131,19 +137,63 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
                       graph_file_name.c_str());
     return RESULT_FAIL;
   }
-  
+
   tensorflow::GraphDef graph_def;
-  tensorflow::Status load_graph_status = tensorflow::ReadBinaryProto(tensorflow::Env::Default(), graph_file_name, &graph_def);
-  if (!load_graph_status.ok())
-  {
-    PRINT_NAMED_ERROR("ObjectDetector.Model.LoadGraph.ReadBinaryProtoFailed",
-                      "Status: %s", load_graph_status.ToString().c_str());
-    return RESULT_FAIL;
-  }
   
+  #if USE_MEMORY_MAPPED_GRAPH
+  {
+    // See also: https://www.tensorflow.org/mobile/optimizing
+
+    std::unique_ptr<tensorflow::MemmappedEnv> memmapped_env(new tensorflow::MemmappedEnv(tensorflow::Env::Default()));
+    tensorflow::Status mmap_status = memmapped_env->InitializeFromFile(graph_file_name);
+    
+    tensorflow::Status load_graph_status = ReadBinaryProto(memmapped_env.get(),
+        tensorflow::MemmappedFileSystem::kMemmappedPackageDefaultGraphDef,
+        &graph_def);
+
+    if (!load_graph_status.ok())
+    {
+      PRINT_NAMED_ERROR("ObjectDetector.Model.LoadGraph.MemoryMapBinaryProtoFailed",
+                        "Status: %s", load_graph_status.ToString().c_str());
+      return RESULT_FAIL;
+    }
+
+    tensorflow::SessionOptions options;
+    options.config.mutable_graph_options()
+        ->mutable_optimizer_options()
+        ->set_opt_level(::tensorflow::OptimizerOptions::L0);
+    options.env = memmapped_env.get();
+
+    tensorflow::Session* session_pointer = nullptr;
+    tensorflow::Status session_status =
+        tensorflow::NewSession(options, &session_pointer);
+
+    if (!session_status.ok())
+    {
+      PRINT_NAMED_ERROR("ObjectDetector.Model.LoadGraph.NewMemoryMappedSessionFailed", 
+                        "Status: %s", session_status.ToString().c_str());
+      return RESULT_FAIL;
+    }
+
+    _session.reset(session_pointer);
+  }
+  #else
+  {
+    tensorflow::Status load_graph_status = tensorflow::ReadBinaryProto(tensorflow::Env::Default(), 
+                                                                       graph_file_name, &graph_def);
+    if (!load_graph_status.ok())
+    {
+      PRINT_NAMED_ERROR("ObjectDetector.Model.LoadGraph.ReadBinaryProtoFailed",
+                        "Status: %s", load_graph_status.ToString().c_str());
+      return RESULT_FAIL;
+    }
+
+    _session.reset(tensorflow::NewSession(tensorflow::SessionOptions()));
+  } 
+  #endif
+
   std::cout << "ObjectDetector.Model.LoadGraph.ModelLoadSuccess " << graph_file_name << std::endl;
   
-  _session.reset(tensorflow::NewSession(tensorflow::SessionOptions()));
   tensorflow::Status session_create_status = _session->Create(graph_def);
   if (!session_create_status.ok())
   {
@@ -151,7 +201,7 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
                       "Status: %s", session_create_status.ToString().c_str());
     return RESULT_FAIL;
   }
-  
+
   const std::string labels_file_name = FullFilePath(modelPath, _params.labels);
   Result readLabelsResult = ReadLabelsFile(labels_file_name, _labels);
   if (RESULT_OK == readLabelsResult)
