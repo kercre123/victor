@@ -25,6 +25,7 @@ endif()
 
 add_custom_target(${TARGET_NAME} ALL
     COMMAND ${BUILD_CMD}
+    SOURCES standaloneTensorFlowInference.cpp objectDetector_tensorflow.h objectDetector_tensorflow.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     COMMENT "Building standalone TensorFlow process")
 
