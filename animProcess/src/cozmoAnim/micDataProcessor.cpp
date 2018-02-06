@@ -12,8 +12,11 @@
 */
 
 
+// Signal Essence Includes
 #include "mmif.h"
+#include "policy_actions.h"
 #include "se_diag.h"
+
 #include "speex/speex_resampler.h"
 
 #include "coretech/messaging/shared/LocalUdpServer.h"
@@ -257,7 +260,9 @@ MicDataProcessor::~MicDataProcessor()
 }
 
 bool MicDataProcessor::ProcessResampledAudio(TimeStamp_t timestamp,
-                                             const AudioUtil::AudioSample* audioChunk)
+                                             const AudioUtil::AudioSample* audioChunk,
+                                             uint32_t robotStatus,
+                                             float robotAngle)
 {
   {
     ANKI_CPU_PROFILE("UninterleaveAudioForSE");
@@ -281,7 +286,9 @@ bool MicDataProcessor::ProcessResampledAudio(TimeStamp_t timestamp,
     nextSample.timestamp = timestamp;
     MicDirectionData directionResult = ProcessMicrophonesSE(
       _inProcessAudioBlock.data(),
-      nextSample.audioBlock.data());
+      nextSample.audioBlock.data(),
+      robotStatus,
+      robotAngle);
 
     // Store off this most recent result in our immedate direction tracking
     _micImmediateDirection->AddDirectionSample(directionResult);
@@ -311,16 +318,44 @@ bool MicDataProcessor::ProcessResampledAudio(TimeStamp_t timestamp,
 }
 
 MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSample* audioChunk,
-                                                        AudioUtil::AudioSample* bufferOut) const
+                                                        AudioUtil::AudioSample* bufferOut,
+                                                        uint32_t robotStatus,
+                                                        float robotAngle)
 {
+  PolicySetAbsoluteOrientation(robotAngle);
+  // Note that currently we are only monitoring the moving flag. We _could_ also discard mic data when the robot
+  // is picked up, but that is being evaluated with design before implementation, see VIC-1219
+  const bool robotIsMoving = static_cast<bool>(robotStatus & (uint16_t)RobotStatusFlag::IS_MOVING);
+  const bool robotStoppedMoving = !robotIsMoving && _robotWasMoving;
+  _robotWasMoving = robotIsMoving;
+  if (robotStoppedMoving)
+  {
+    // When the robot has stopped moving (and the gears are no longer making noise) we reset the mic direciton
+    // confidence values to be based on non-noisy data
+    MMIfResetLocationSearch();
+  }
+
   // We only care about checking one channel, and since the channel data is uninterleaved when passed in here,
   // we simply give the start of the buffer as the input to run the vad detection on
   int activityFlag = 0;
   {
     ANKI_CPU_PROFILE("ProcessVAD");
-    activityFlag = DoSVad(_sVadObject.get(),      // object
-                          1.0f,                   // confidence it is okay to measure noise floor, i.e. no known activity like gear noise
-                          (int16_t*)audioChunk);  // pointer to input data
+
+    // Note while we _can_ pass a confidence value here adjusted while the robot is moving, we'd rather err on the side
+    // of always thinking we hear a voice when the robot moves, so we maximize our chances of hearing any triggers
+    // over the noise. So when the robot is moving, don't even bother running the VAD, and instead just set activity
+    // to true.
+    if (robotIsMoving)
+    {
+      activityFlag = 1;
+    }
+    else
+    {
+      const float vadConfidence = 1.0f;
+      activityFlag = DoSVad(_sVadObject.get(),           // object
+                            vadConfidence,               // confidence it is okay to measure noise floor, i.e. no known activity like gear noise
+                            (int16_t*)audioChunk);       // pointer to input data
+    }
   }
 
   static const std::array<AudioUtil::AudioSample, kSamplesPerBlock * kNumInputChannels> dummySpeakerOut{};
@@ -330,20 +365,25 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
     MMIfProcessMicrophones(dummySpeakerOut.data(), audioChunk, bufferOut);
   }
 
-  const auto latestDirection = SEDiagGetUInt16(_bestSearchBeamIndex);
-  const auto latestConf = SEDiagGetInt16(_bestSearchBeamConfidence);
-  const auto* searchConfState = SEDiagGet(_searchConfidenceState);
+  MicDirectionData result{};
+  result.activeState = activityFlag;
 
-  MicDirectionData result = 
+  if (robotIsMoving)
   {
-    .activeState = activityFlag,
-    .winningDirection = latestDirection,
-    .winningConfidence = latestConf
-  };
-  const auto* confListSrc = reinterpret_cast<const float*>(searchConfState->u.vp);
-  // NOTE currently SE only calculates the 12 main directions (not "unknown" or directly above the mics)
-  // so we only copy the 12 main directions
-  std::copy(confListSrc, confListSrc + kLastValidIndex + 1, result.confidenceList.begin());
+    result.winningDirection = kDirectionUnknown;
+  }
+  else
+  {
+    const auto latestDirection = SEDiagGetUInt16(_bestSearchBeamIndex);
+    const auto latestConf = SEDiagGetInt16(_bestSearchBeamConfidence);
+    const auto* searchConfState = SEDiagGet(_searchConfidenceState);
+    result.winningDirection = latestDirection;
+    result.winningConfidence = latestConf;
+    const auto* confListSrc = reinterpret_cast<const float*>(searchConfState->u.vp);
+    // NOTE currently SE only calculates the 12 main directions (not "unknown" or directly above the mics)
+    // so we only copy the 12 main directions
+    std::copy(confListSrc, confListSrc + kLastValidIndex + 1, result.confidenceList.begin());
+  }
   return result;
 }
 
@@ -388,10 +428,11 @@ void MicDataProcessor::ProcessLoop()
     auto& rawAudioToProcess = _rawAudioBuffers[_rawAudioProcessingIndex];
     while (rawAudioToProcess.size() > 0)
     {
-      ANKI_CPU_TICK("MicDataProcessor::ProcessLoop", maxProcessingTimePerDrop_ms, Util::CpuThreadProfiler::kLogFrequencyNever);
+      ANKI_CPU_TICK("MicDataProcessor", maxProcessingTimePerDrop_ms, Util::CpuThreadProfiler::kLogFrequencyNever);
+      ANKI_CPU_PROFILE("ProcessLoop");
 
       const auto& nextData = rawAudioToProcess.front();
-      const auto& audioChunk = nextData.audioChunk;
+      const auto* audioChunk = nextData.data;
       
       // Steal the current set of jobs we have for recording audio, so the list can be added to while processing
       // continues
@@ -405,7 +446,7 @@ void MicDataProcessor::ProcessLoop()
       // Collect the raw audio if desired
       for (auto& job : stolenJobs)
       {
-        job->CollectRawAudio(audioChunk.data(), audioChunk.size());
+        job->CollectRawAudio(audioChunk, kRawAudioChunkSize);
       }
       
       // Factory test doesn't need to do any mic processing, it just uses raw data
@@ -413,14 +454,18 @@ void MicDataProcessor::ProcessLoop()
       {
         // Resample the audio, then collect it if desired
         std::array<AudioUtil::AudioSample, kResampledAudioChunkSize> resampledAudioChunk;
-        ResampleAudioChunk(audioChunk.data(), resampledAudioChunk.data());
+        ResampleAudioChunk(audioChunk, resampledAudioChunk.data());
         for (auto& job : stolenJobs)
         {
           job->CollectResampledAudio(resampledAudioChunk.data(), resampledAudioChunk.size());
         }
         
         // Process the audio into a single channel, and collect it if desired
-        bool audioBlockReady = ProcessResampledAudio(nextData.timestamp, resampledAudioChunk.data());
+        bool audioBlockReady = ProcessResampledAudio(
+          nextData.timestamp,
+          resampledAudioChunk.data(),
+          nextData.robotStatusFlags,
+          nextData.robotRotationAngle);
         if (audioBlockReady)
         {
           const auto& processedAudio = _immediateAudioBuffer.back().audioBlock;
@@ -488,26 +533,12 @@ void MicDataProcessor::ProcessLoop()
   
 void MicDataProcessor::ProcessMicDataPayload(const RobotInterface::MicData& payload)
 {
-  static uint32_t sLatestSequenceID = 0;
-  // Since mic data is sent unreliably, make sure the sequence id increases appropriately
-  if (payload.sequenceID < sLatestSequenceID &&
-      (sLatestSequenceID - payload.sequenceID) <= (UINT32_MAX / 2)) // To handle rollover case
-  {
-    return;
-  }
-  sLatestSequenceID = payload.sequenceID;
-  
-  const RawAudioChunk& audioChunk = payload.data;
   // Store off this next job
-  {
-    std::lock_guard<std::mutex> lock(_resampleMutex);
-    // Use whichever buffer is currently _not_ being processed
-    auto& bufferToUse = (_rawAudioProcessingIndex == 1) ? _rawAudioBuffers[0] : _rawAudioBuffers[1];
-    TimedRawMicData& nextJob = bufferToUse.push_back();
-    nextJob.timestamp = payload.timestamp;
-    const auto size = sizeof(audioChunk) / sizeof(audioChunk[0]);
-    std::copy(audioChunk, audioChunk + size, nextJob.audioChunk.data());
-  }
+  std::lock_guard<std::mutex> lock(_resampleMutex);
+  // Use whichever buffer is currently _not_ being processed
+  auto& bufferToUse = (_rawAudioProcessingIndex == 1) ? _rawAudioBuffers[0] : _rawAudioBuffers[1];
+  RobotInterface::MicData& nextJob = bufferToUse.push_back();
+  nextJob = payload;
 }
 
 void MicDataProcessor::RecordRawAudio(uint32_t duration_ms, const std::string& path, bool runFFT)

@@ -20,8 +20,6 @@
 
 #include "schema/messages.h"
 #include "clad/types/proxMessages.h"
-#include "clad/robotInterface/messageRobotToEngine.h"
-#include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 
 #include <errno.h>
 
@@ -187,20 +185,6 @@ Result HAL::Init()
   return RESULT_OK;
 }  // Init()
 
-void ForwardMicData(void)
-{
-  static_assert(MICDATA_SAMPLES_COUNT == 
-                (sizeof(RobotInterface::MicData::data) / sizeof(RobotInterface::MicData::data[0])),
-                "bad mic data sample count define");
-  RobotInterface::MicData micData;
-  micData.sequenceID = bodyData_->framecounter;
-  micData.timestamp = HAL::GetTimeStamp();
-#if MICDATA_ENABLED
-  std::copy(bodyData_->audio, bodyData_->audio + MICDATA_SAMPLES_COUNT, micData.data);
-  RobotInterface::SendMessage(micData);
-#endif
-}
-
 Result spine_get_frame() {
   Result result = RESULT_FAIL_IO_TIMEOUT;
   uint8_t frame_buffer[SPINE_B2H_FRAME_LEN];
@@ -216,9 +200,6 @@ Result spine_get_frame() {
       if (hdr->payload_type == PAYLOAD_DATA_FRAME) {
         memcpy(frameBuffer_, frame_buffer, sizeof(frameBuffer_));
         bodyData_ = (BodyToHead*)(frameBuffer_ + sizeof(struct SpineMessageHeader));
-        
-        // BRC: Should accumulate all of the audio data and send it in one shot
-        ForwardMicData();
         result = RESULT_OK;
         continue;
       }
@@ -352,6 +333,16 @@ u16 HAL::GetCliffOffLevel(const CliffID cliff_id)
 {
   // This is not supported by V2 hardware
   return 0;
+}
+
+bool HAL::HandleLatestMicData(SendDataFunction sendDataFunc)
+{
+  #if MICDATA_ENABLED
+  {
+    sendDataFunc(bodyData_->audio, MICDATA_SAMPLES_COUNT);
+  }
+  #endif
+  return false;
 }
 
 f32 HAL::BatteryGetVoltage()

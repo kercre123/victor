@@ -129,8 +129,9 @@ void FaceDebugDraw::DrawConfidenceClock(
   constexpr int barWidthB_px = (int) (angleFactorB * (float)barWidth_px * 0.5f); // 0
   constexpr int halfBarWidth_px = (int) ((float)barWidth_px * 0.5f);
 
-  // Multiplying factors (cos/sin) for the clock directions
-  static const std::array<Point2f, 12> barLenFactor = 
+  // Multiplying factors (cos/sin) for the clock directions.
+  // NOTE: Needs to have the 13th value so the unknown direction dot can display properly
+  static const std::array<Point2f, 13> barLenFactor = 
   {{
     {0.f, 1.f}, // 12 o'clock - in front of robot so point down
     {-angleFactorB, angleFactorA}, // 1 o'clock
@@ -143,7 +144,8 @@ void FaceDebugDraw::DrawConfidenceClock(
     {angleFactorA, -angleFactorB}, // 8 o'clock
     {1.f, 0.f}, // 9 o'clock
     {angleFactorA, angleFactorB}, // 10 o'clock
-    {angleFactorB, angleFactorA} // 11 o'clock
+    {angleFactorB, angleFactorA}, // 11 o'clock
+    {0.f, 0.f} // Unknown direction
   }};
 
   // Precalculated offsets for the center of the base of each of the direction bars,

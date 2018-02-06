@@ -84,8 +84,9 @@ message MotorActionAck
 message MicData
 {
   int_16  data[480], // 120 samples of audio 4 channels
-  uint_32 sequenceID,
-  uint_32 timestamp
+  uint_32 timestamp,
+  uint_32 robotStatusFlags, // RobotStatusFlag packs as a uint_32
+  float_32 robotRotationAngle,
 }
 
 message AudioFFTResult

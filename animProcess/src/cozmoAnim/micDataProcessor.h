@@ -21,6 +21,8 @@
 #include "util/container/fixedCircularBuffer.h"
 #include "util/global/globalDefinitions.h"
 
+#include "clad/robotInterface/messageRobotToEngine.h"
+
 #include <array>
 #include <cstdint>
 #include <memory>
@@ -91,22 +93,18 @@ private:
   bool _forceRecordClip = false;
 #endif
 
-  // Members for managing the incoming raw audio jobs
-  struct TimedRawMicData {
-    std::array<AudioUtil::AudioSample, kRawAudioChunkSize> audioChunk;
-    TimeStamp_t timestamp;
-  };
   static constexpr uint32_t kRawAudioPerBuffer_ms = 2000;
   static constexpr uint32_t kRawAudioBufferSize = kRawAudioPerBuffer_ms / kTimePerChunk_ms;
   float _rawAudioBufferFullness[2] = { 0.f, 0.f };
   // We have 2 fixed buffers for incoming raw audio that we alternate between, so that the processing thread can work
   // on one set of data while the main thread can copy new data into the other set.
-  Util::FixedCircularBuffer<TimedRawMicData, kRawAudioBufferSize> _rawAudioBuffers[2];
+  Util::FixedCircularBuffer<RobotInterface::MicData, kRawAudioBufferSize> _rawAudioBuffers[2];
   // Index of the buffer that is currently being used by the processing thread
   uint32_t _rawAudioProcessingIndex = 0;
   std::thread _processThread;
   std::mutex _resampleMutex;
   bool _processThreadStop = false;
+  bool _robotWasMoving = false;
   
   // Members for managing the results of async FFT processing
   std::deque<std::vector<uint32_t>> _fftResultList;
@@ -126,10 +124,15 @@ private:
 
   void InitVAD();
   void TriggerWordDetectCallback(const char* resultFound, float score);
-  bool ProcessResampledAudio(TimeStamp_t timestamp, const AudioUtil::AudioSample* audioChunk);
+  bool ProcessResampledAudio(TimeStamp_t timestamp,
+                             const AudioUtil::AudioSample* audioChunk,
+                             uint32_t robotStatus,
+                             float robotAngle);
 
   MicDirectionData ProcessMicrophonesSE(const AudioUtil::AudioSample* audioChunk,
-                                     AudioUtil::AudioSample* bufferOut) const;
+                                        AudioUtil::AudioSample* bufferOut,
+                                        uint32_t robotStatus,
+                                        float robotAngle);
 
   void ResampleAudioChunk(const AudioUtil::AudioSample* audioChunk, AudioUtil::AudioSample* bufferOut);
 
