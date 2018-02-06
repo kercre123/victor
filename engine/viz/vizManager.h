@@ -416,6 +416,7 @@ namespace Anki {
       void SendSaveImages(ImageSendMode mode, std::string path = "");
       void SendSaveState(bool enabled, std::string path = "");
       void SendBehaviorStackDebug(VizInterface::BehaviorStackDebug&& behaviorStackDebug);
+      void SendVisionModeDebug(VizInterface::VisionModeDebug&& visionModeDebug);
       void SendVizMessage(VizInterface::MessageViz&& event);
 
       

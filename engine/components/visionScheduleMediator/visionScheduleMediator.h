@@ -31,6 +31,7 @@ namespace Anki{
 namespace Cozmo{
 
 // Forward declaration:
+class CozmoContext;
 class VisionComponent;
 class IVisionModeSubscriber;
 
@@ -63,20 +64,20 @@ public:
   // Remove all existing subscriptions for the pertinent subscriber
   void ReleaseAllVisionModeSubscriptions(IVisionModeSubscriber* subscriber);
 
+  // in debug builds, send viz messages to webots
+  void SendDebugVizMessages();
+
 private:
 
-  // Internal call to parse the subscription record and send the emergent config to the VisionComponent
-  void UpdateVisionSchedule();
-  int GetUpdatePeriodFromEnum(const VisionMode& mode, const EVisionUpdateFrequency& frequencySetting) const;
-
-  using RequestRecord = std::pair<IVisionModeSubscriber*, EVisionUpdateFrequency>;
-  
   struct VisionModeData
   {
     uint8_t low;
     uint8_t med;
     uint8_t high;
     uint8_t standard;
+    bool    enabled;
+    bool    dirty;
+    uint8_t updatePeriod;
     std::unordered_map<IVisionModeSubscriber*, int> requestMap;
     using record = std::pair<IVisionModeSubscriber*, int>;
     static bool CompareRecords(record i, record j) { return i.second < j.second; }
@@ -86,6 +87,18 @@ private:
     }
   };
 
+  // Internal call to parse the subscription record and send the emergent config to the VisionComponent if it changed
+  void UpdateVisionSchedule();
+
+  // Returns true if the update period for this mode changed as a result of subscription changes
+  bool UpdateModePeriodIfNecessary(VisionModeData& mode) const;
+
+  // Helper method to convert between enums and settings in (frames between updates)
+  int GetUpdatePeriodFromEnum(const VisionMode& mode, const EVisionUpdateFrequency& frequencySetting) const;
+
+  using RequestRecord = std::pair<IVisionModeSubscriber*, EVisionUpdateFrequency>;
+
+  const CozmoContext* _context;
   VisionComponent* _visionComponent;
   std::unordered_map<VisionMode, VisionModeData> _modeDataMap;
 
