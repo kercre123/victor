@@ -77,5 +77,35 @@
   },
   "whatsNew.CodeLab_RemoteControlRacer.description" : {
     "translation" : "Brumm, brumm! Fahre mit Cozmo mit Höchstgeschwindigkeit."
+  },
+  "whatsNew.CodeLab_ComplimentGenerator.title" : {
+    "translation" : "Kompliment-Generator"
+  },
+  "whatsNew.CodeLab_ComplimentGenerator.description" : {
+    "translation" : "Cozmo will dir etwas Nettes sagen."
+  },
+  "whatsNew.CodeLab_PotOGoldDetector.title" : {
+    "translation" : "Goldschatz-Detektor"
+  },
+  "whatsNew.CodeLab_PotOGoldDetector.description" : {
+    "translation" : "Die ultimative Schatzsuche für St. Patrick's Day"
+  },
+  "whatsNew.CodeLab_DrivingInCircles.title" : {
+    "translation" : "Im Kreis fahren"
+  },
+  "whatsNew.CodeLab_DrivingInCircles.description" : {
+    "translation" : "Rundum bereit für Pi-Tag."
+  },
+  "whatsNew.CodeLab_PaddleBall.title" : {
+    "translation" : "Beachball"
+  },
+  "whatsNew.CodeLab_PaddleBall.description" : {
+    "translation" : "Fordere Cozmo zu einem Match auf. Hier ist Köpfchen gefragt!"
+  },
+  "whatsNew.CodeLab_Constellations.title" : {
+    "translation" : "Constellations"
+  },
+  "whatsNew.CodeLab_Constellations.description" : {
+    "translation" : "Celebrate Astronomy Day with cosmic constellations."
   }
 }

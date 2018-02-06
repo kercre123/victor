@@ -1412,5 +1412,50 @@
   },
   "codeLabSampleProject_ScrollingText.projectName" : {
     "translation" : "Texte défilant"
+  },
+  "codeLabFeaturedConstellations.projectName" : {
+    "translation" : "Constellations"
+  },
+  "codeLabFeaturedConstellations.projectDescription" : {
+    "translation" : "Fête le jour de l'astronomie avec des constellations cosmiques."
+  },
+  "codeLabFeaturedConstellations.projectInstructions" : {
+    "translation" : "1. Touche le drapeau de départ et observe les étoiles qui se connectent pour former une constellation.\u000a\u000a2. Rejoue pour les voir toutes !"
+  },
+  "codeLabFeaturedDrivingInCircles.projectName" : {
+    "translation" : "Conduis en cercles"
+  },
+  "codeLabFeaturedDrivingInCircles.projectDescription" : {
+    "translation" : "Fais des cercles pour la journée de Pi !"
+  },
+  "codeLabFeaturedDrivingInCircles.projectInstructions" : {
+    "translation" : "1. Le 14 mars est la journée nationale de Pi !\u000a\u000aPlace l'un des cubes de Cozmo à un endroit où il peut le voir.\u000a\u000a3. Lorsque tu appuies sur le drapeau de départ, Cozmo utilise Pi et des calculs mathématiques pour faire des cercles autour de ses cubes."
+  },
+  "codeLabFeaturedComplimentGenerator.projectName" : {
+    "translation" : "Générateur de compliment"
+  },
+  "codeLabFeaturedComplimentGenerator.projectDescription" : {
+    "translation" : "Cozmo a quelque chose d'agréable à dire !"
+  },
+  "codeLabFeaturedComplimentGenerator.projectInstructions" : {
+    "translation" : "1. Place Cozmo en face de toi ou d'un ami qui a besoin d'être réconforté.\u000a\u000aSois heureux."
+  },
+  "codeLabFeaturedPaddleBall.projectName" : {
+    "translation" : "Bolo"
+  },
+  "codeLabFeaturedPaddleBall.projectDescription" : {
+    "translation" : "Défie Cozmo dans un match. Utilise ta tête !"
+  },
+  "codeLabFeaturedPaddleBall.projectInstructions" : {
+    "translation" : "1. Once you tap the start flag, move your head up and down to control the paddle.\u000a\u000a2. Score points by bouncing the ball past Cozmo’s paddle. Try not to let Cozmo score by bouncing the ball past yours.\u000a\u000a3. Your paddle is on the left, and Cozmo's paddle is on the right.\u000a\u000a4. The first to earn 3 points wins!"
+  },
+  "codeLabFeaturedPotOGoldDetector.projectName" : {
+    "translation" : "Détecteur de trésor"
+  },
+  "codeLabFeaturedPotOGoldDetector.projectDescription" : {
+    "translation" : "La chasse au trésor ultime !"
+  },
+  "codeLabFeaturedPotOGoldDetector.projectInstructions" : {
+    "translation" : "1. Lorsque tu appuies sur le drapeau de départ, un trésor apparaît à un emplacement secret près de Cozmo.\u000a\u000a2. À toi d'utiliser ton appareil pour déplacer Cozmo vers le trésor caché.\u000a\u000a3. Pour déplacer Cozmo, incline ton écran vers le haut et le bas ainsi que vers la gauche et la droite.\u000a\u000a4. Écoute les bips du détecteur de trésor de Cozmo qui s'accélèrent au fur et à mesure qu'il s'approche du trésor."
   }
 }

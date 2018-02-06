@@ -31,7 +31,7 @@
     "translation" : "COZMOをゆさぶってあなたの運勢を占ってもらいましょう！"
   },
   "whatsNew.CodeLab_HotPotato.title" : {
-    "translation" : "ホットポテト！"
+    "translation" : "パスゲーム！"
   },
   "whatsNew.CodeLab_HotPotato.description" : {
     "translation" : "音楽が止まったとき、ホットポテトを持っていないようにしましょう!"
@@ -43,7 +43,7 @@
     "translation" : "チックタック！COZMOがタイマーだったらもっと楽しい！"
   },
   "whatsNew.CodeLab_CubeWhack.title" : {
-    "translation" : "キューブを引っぱたけ！"
+    "translation" : "キューブタップ！"
   },
   "whatsNew.CodeLab_CubeWhack.description" : {
     "translation" : "キューブを引っぱたけ！あなたのハイスコアは？"
@@ -77,5 +77,35 @@
   },
   "whatsNew.CodeLab_RemoteControlRacer.description" : {
     "translation" : "ブルンブルン！　COZMOを全速力で走らせよう！"
+  },
+  "whatsNew.CodeLab_ComplimentGenerator.title" : {
+    "translation" : "ほめ言葉ジェネレーター"
+  },
+  "whatsNew.CodeLab_ComplimentGenerator.description" : {
+    "translation" : "COZMOから素敵なメッセージがあります！"
+  },
+  "whatsNew.CodeLab_PotOGoldDetector.title" : {
+    "translation" : "宝物を発見"
+  },
+  "whatsNew.CodeLab_PotOGoldDetector.description" : {
+    "translation" : "「聖パトリックの祝日」の究極の宝探し！"
+  },
+  "whatsNew.CodeLab_DrivingInCircles.title" : {
+    "translation" : "円を描いてドライブ"
+  },
+  "whatsNew.CodeLab_DrivingInCircles.description" : {
+    "translation" : "「円周率の日」のために集合！"
+  },
+  "whatsNew.CodeLab_PaddleBall.title" : {
+    "translation" : "パドルボール"
+  },
+  "whatsNew.CodeLab_PaddleBall.description" : {
+    "translation" : "COZMOと対戦しましょう。使うのはあなたの頭！"
+  },
+  "whatsNew.CodeLab_Constellations.title" : {
+    "translation" : "Constellations"
+  },
+  "whatsNew.CodeLab_Constellations.description" : {
+    "translation" : "Celebrate Astronomy Day with cosmic constellations."
   }
 }

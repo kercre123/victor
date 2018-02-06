@@ -337,16 +337,16 @@
     "translation" : "41 - puh"
   },
   "codeLabVertical.ANIM_HICCUP" : {
-    "translation" : "42 - hiccup"
+    "translation" : "42 – Schluckauf"
   },
   "codeLabVertical.ANIM_HELIUM" : {
-    "translation" : "43 - helium"
+    "translation" : "43 – Helium"
   },
   "codeLabVertical.ANIM_YUCK" : {
-    "translation" : "44 - yuck"
+    "translation" : "44 – Igitt"
   },
   "codeLabVertical.ANIM_ENERGETIC_EATING" : {
-    "translation" : "45 - eating"
+    "translation" : "45 – Essen"
   },
   "codeLabVertical.WHEELS" : {
     "translation" : "Räder"
@@ -484,46 +484,46 @@
     "translation" : "38 - lustige Musik (Schleife)"
   },
   "codeLabVertical.SOUND_BLIP_1" : {
-    "translation" : "39 - blip #1"
+    "translation" : "39 – Signal 1"
   },
   "codeLabVertical.SOUND_BLIP_2" : {
-    "translation" : "40 - blip #2"
+    "translation" : "40 – Signal 2"
   },
   "codeLabVertical.SOUND_BLIP_3" : {
-    "translation" : "41 - blip #3"
+    "translation" : "41 – Signal 3"
   },
   "codeLabVertical.SOUND_BOUNCE" : {
-    "translation" : "42 - bounce"
+    "translation" : "42 – Hüpfen"
   },
   "codeLabVertical.SOUND_TWINKLE" : {
-    "translation" : "43 - twinkle"
+    "translation" : "43 – Blinken"
   },
   "codeLabVertical.SOUND_MORSE_CODE_DOT" : {
-    "translation" : "44 - morse code dot"
+    "translation" : "44 – Morsecode Punkt"
   },
   "codeLabVertical.SOUND_MORSE_CODE_DASH" : {
-    "translation" : "45 - morse code dash"
+    "translation" : "45 – Morsecode Strich"
   },
   "codeLabVertical.SOUND_MORSE_CODE_SPACE" : {
-    "translation" : "46 - morse code space"
+    "translation" : "46 – Morsecode Leerzeichen"
   },
   "codeLabVertical.SOUND_UFO" : {
-    "translation" : "47 - ufo"
+    "translation" : "47 – Ufo"
   },
   "codeLabVertical.SOUND_BASH" : {
-    "translation" : "48 - bash"
+    "translation" : "48 – Schlag"
   },
   "codeLabVertical.SOUND_EGG_CRACK" : {
-    "translation" : "49 - egg crack"
+    "translation" : "49 – Ei aufschlagen"
   },
   "codeLabVertical.SOUND_FLAPPING" : {
-    "translation" : "50 - flapping"
+    "translation" : "50 – Flattern"
   },
   "codeLabVertical.SOUND_WIND_UP" : {
-    "translation" : "51 - wind up"
+    "translation" : "51 – Aufwickeln"
   },
   "codeLabVertical.SOUND_SPIN" : {
-    "translation" : "52 - spin"
+    "translation" : "52 – Drehen"
   },
   "codeLabVertical.ANY" : {
     "translation" : "Alles"

@@ -1412,5 +1412,50 @@
   },
   "codeLabSampleProject_ScrollingText.projectName" : {
     "translation" : "Lauftext"
+  },
+  "codeLabFeaturedConstellations.projectName" : {
+    "translation" : "Sternbilder"
+  },
+  "codeLabFeaturedConstellations.projectDescription" : {
+    "translation" : "Feiere den Astronomietag mit kosmischen Sternbildern."
+  },
+  "codeLabFeaturedConstellations.projectInstructions" : {
+    "translation" : "1. Tipp die Startflagge an und sieh zu, wie sich die Sterne zu einem Sternbild verbinden.\u000a\u000a2. Wiederhole das Ganze, um alle zu sehen."
+  },
+  "codeLabFeaturedDrivingInCircles.projectName" : {
+    "translation" : "Im Kreis fahren"
+  },
+  "codeLabFeaturedDrivingInCircles.projectDescription" : {
+    "translation" : "Rundum bereit für Pi-Tag."
+  },
+  "codeLabFeaturedDrivingInCircles.projectInstructions" : {
+    "translation" : "1. Am 14. März ist Pi-Tag!\u000a\u000a2. Leg einen von Cozmos Cubes so ab, dass er ihn sehen kann.\u000a\u000a3. Wenn du die Startflagge angetippt hast, fährt Cozmo mithilfe der Zahl Pi und etwas Mathematik in Kreisen um seine Cubes."
+  },
+  "codeLabFeaturedComplimentGenerator.projectName" : {
+    "translation" : "Kompliment-Generator"
+  },
+  "codeLabFeaturedComplimentGenerator.projectDescription" : {
+    "translation" : "Cozmo will dir etwas Nettes sagen."
+  },
+  "codeLabFeaturedComplimentGenerator.projectInstructions" : {
+    "translation" : "1. Stell Cozmo so hin, dass er dich oder einen Freund, der etwas Aufmunterung gebrauchen kann, sehen kann.\u000a\u000a2. Freu dich!"
+  },
+  "codeLabFeaturedPaddleBall.projectName" : {
+    "translation" : "Beachball"
+  },
+  "codeLabFeaturedPaddleBall.projectDescription" : {
+    "translation" : "Fordere Cozmo zu einem Match auf. Hier ist Köpfchen gefragt."
+  },
+  "codeLabFeaturedPaddleBall.projectInstructions" : {
+    "translation" : "1. Once you tap the start flag, move your head up and down to control the paddle.\u000a\u000a2. Score points by bouncing the ball past Cozmo’s paddle. Try not to let Cozmo score by bouncing the ball past yours.\u000a\u000a3. Your paddle is on the left, and Cozmo's paddle is on the right.\u000a\u000a4. The first to earn 3 points wins!"
+  },
+  "codeLabFeaturedPotOGoldDetector.projectName" : {
+    "translation" : "Goldschatz-Detektor"
+  },
+  "codeLabFeaturedPotOGoldDetector.projectDescription" : {
+    "translation" : "Die ultimative Schatzsuche für St. Patrick's Day"
+  },
+  "codeLabFeaturedPotOGoldDetector.projectInstructions" : {
+    "translation" : "1. Wenn du die Startflagge angetippt hast, taucht an einem geheimen Ort in der Nähe von Cozmo ein Schatz auf.\u000a\u000a2. Du kannst dann mit deinem Gerät Cozmo zum versteckten Schatz führen.\u000a\u000a3. Kippe den Bildschirm nach oben und unten und nach links und rechts, um Cozmo zu bewegen.\u000a\u000a4. Die Signale von Cozmos Schatzdetektor werden umso schneller, je näher er dem Schatz kommt."
   }
 }

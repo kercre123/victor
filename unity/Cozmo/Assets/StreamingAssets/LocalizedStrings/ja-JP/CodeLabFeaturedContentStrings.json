@@ -3,338 +3,230 @@
     "translate_paths" : ["*/translation"],
     "variants_enabled" : true,
     "translate_mode" : "custom",
-    "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "[$]\\{[^\\}\\{]+?\\}", "__[^_]+?__", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
+    "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "__[^_]+?__", "[$]\\{[^\\}\\{]+?\\}", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
     "source_key_paths" : ["/{*}"]
   },
-  "codeLabFeaturedProject.HotPotato.place_cube_under_my_lift" : {
-    "translation" : "キューブをリフトの下においてね。"
+  "codeLabFeaturedProject.ComplimentGenerator._are_you" : {
+    "translation" : " あなたは……？"
   },
-  "codeLabFeaturedProject.HotPotato.cozmos_cube" : {
-    "translation" : "COZMOのキューブ"
+  "codeLabFeaturedProject.ComplimentGenerator._people_like_you" : {
+    "translation" : " あなたのような人々。"
   },
-  "codeLabFeaturedProject.HotPotato.waiting_for_cozmos_cube_to_be_moved" : {
-    "translation" : "COZMOが動かすキューブを待っています"
+  "codeLabFeaturedProject.ComplimentGenerator._person_in_the_world" : {
+    "translation" : " 世界の人。"
   },
-  "codeLabFeaturedProject.HotPotato.cube_put_under_lift" : {
-    "translation" : "リフトの下にキューブをセット"
+  "codeLabFeaturedProject.ComplimentGenerator._you_are" : {
+    "translation" : " あなたは"
   },
-  "codeLabFeaturedProject.HotPotato.resets_game_state" : {
-    "translation" : "ゲームをリセットします。"
+  "codeLabFeaturedProject.ComplimentGenerator.adjective" : {
+    "translation" : "形容詞"
   },
-  "codeLabFeaturedProject.HotPotato.cozmo_asks_for_cube_and_waits" : {
-    "translation" : "COZMOはキューブが欲しいようです。"
+  "codeLabFeaturedProject.ComplimentGenerator.adorable_" : {
+    "translation" : "かわいい "
   },
-  "codeLabFeaturedProject.HotPotato.which_cube_is_the_potato" : {
-    "translation" : "どのキューブがポテトでしょう"
+  "codeLabFeaturedProject.ComplimentGenerator.anyone_can_see_youre_super_" : {
+    "translation" : "あなたが特別であることは誰でもわかる "
   },
-  "codeLabFeaturedProject.HotPotato.which_cube_is_about_to_be_the_potato" : {
-    "translation" : "どのキューブがポテトになるでしょう"
+  "codeLabFeaturedProject.ComplimentGenerator.awesome_" : {
+    "translation" : "最高 "
   },
-  "codeLabFeaturedProject.HotPotato.how_long_to_heat_potato" : {
-    "translation" : "ポテトを温める時間"
+  "codeLabFeaturedProject.ComplimentGenerator.beautiful_" : {
+    "translation" : "美しい "
   },
-  "codeLabFeaturedProject.HotPotato.players_ready_set" : {
-    "translation" : "じゅんびはいい？"
+  "codeLabFeaturedProject.ComplimentGenerator.brave_" : {
+    "translation" : "勇敢 "
   },
-  "codeLabFeaturedProject.HotPotato.go" : {
-    "translation" : "スタート！"
+  "codeLabFeaturedProject.ComplimentGenerator.brilliant_" : {
+    "translation" : "華麗 "
   },
-  "codeLabFeaturedProject.HotPotato.end_of_game_timer" : {
-    "translation" : "ゲーム終了"
+  "codeLabFeaturedProject.ComplimentGenerator.charming_" : {
+    "translation" : "魅力的 "
   },
-  "codeLabFeaturedProject.HotPotato.not_set" : {
-    "translation" : "まだだよ"
+  "codeLabFeaturedProject.ComplimentGenerator.choose_a_sentence" : {
+    "translation" : "文章を選んでください。"
   },
-  "codeLabFeaturedProject.HotPotato.checks_if_player_has_moved_a_cube_for_cozmo" : {
-    "translation" : "プレーヤーがCOZMOのところにキューブを動かしたか、"
+  "codeLabFeaturedProject.ComplimentGenerator.choose_an_adjective" : {
+    "translation" : "形容詞を選んでください。"
   },
-  "codeLabFeaturedProject.HotPotato.or_if_the_move_read_as_a_tap" : {
-    "translation" : "または、タップして動かし終わったかチェックします。"
+  "codeLabFeaturedProject.ComplimentGenerator.choose_an_animation" : {
+    "translation" : "アニメーションを選んでください。"
   },
-  "codeLabFeaturedProject.HotPotato.starts_game_makes_game_get_faster_triggers_end_timer" : {
-    "translation" : "ゲームを開始しスピードを上げ、終了時にタイマーを鳴らします。"
+  "codeLabFeaturedProject.ComplimentGenerator.clever_" : {
+    "translation" : "賢い "
   },
-  "codeLabFeaturedProject.HotPotato.lights_up_potato_and_waits_for_tap" : {
-    "translation" : "ポテトが光って、タップを待ちます。"
+  "codeLabFeaturedProject.ComplimentGenerator.cool_" : {
+    "translation" : "クール "
   },
-  "codeLabFeaturedProject.HotPotato.cozmo_taps_if_he_has_the_potato" : {
-    "translation" : "COZMOがポテトを持っていると、COZMOがタップしてくれます。"
+  "codeLabFeaturedProject.ComplimentGenerator.fantastic_" : {
+    "translation" : "奇抜 "
   },
-  "codeLabFeaturedProject.HotPotato.end_of_game_timer_and_ending_sequence" : {
-    "translation" : "ゲーム終了タイマーが鳴り、ゲームが終了します。"
+  "codeLabFeaturedProject.ComplimentGenerator.friendly_" : {
+    "translation" : "フレンドリー "
   },
-  "codeLabFeaturedProject.HotPotato.cozmos_reaction_to_winning_or_losing" : {
-    "translation" : "COZMOが勝ち、負けに応じて反応します。"
+  "codeLabFeaturedProject.ComplimentGenerator.funny_" : {
+    "translation" : "楽しい "
   },
-  "codeLabFeaturedProject.HotPotato.picks_different_cube_as_new_potato" : {
-    "translation" : "別のキューブをポテトに選びます。"
+  "codeLabFeaturedProject.ComplimentGenerator.generate_a_compliment" : {
+    "translation" : "ほめ言葉を作成してください。"
   },
-  "codeLabFeaturedProject.HotPotato.and_then_assigns_that_cube_number_as_cozmos_cube" : {
-    "translation" : "そして、選んだキューブの番号がCOZMOのキューブになります。"
+  "codeLabFeaturedProject.ComplimentGenerator.hi" : {
+    "translation" : "こんにちは"
   },
-  "codeLabFeaturedProject.HotPotato.lights_up_each_players_cube" : {
-    "translation" : "プレーヤーのキューブがそれぞれ光ります。"
+  "codeLabFeaturedProject.ComplimentGenerator.how_" : {
+    "translation" : "なんて "
   },
-  "codeLabFeaturedProject.HotPotato.cozmo_taps_the_cube_he_thinks_he_has_been_given" : {
-    "translation" : "COZMOが自分のキューブだと思うキューブをタップします。"
+  "codeLabFeaturedProject.ComplimentGenerator.i_love_" : {
+    "translation" : "私が大好きなのは "
   },
-  "codeLabFeaturedProject.HotPotato.or_cozmo_does_a_cube_tap_to_see_if_there_is_a_cube" : {
-    "translation" : "または、キューブタップをしてそこにキューブがあるか確かめます。"
+  "codeLabFeaturedProject.ComplimentGenerator.inspiring_" : {
+    "translation" : "刺激的 "
   },
-  "codeLabFeaturedProject.TinyOrchestra.cube_3_taps" : {
-    "translation" : "キューブ3をタップ"
+  "codeLabFeaturedProject.ComplimentGenerator.kind_" : {
+    "translation" : "親切 "
   },
-  "codeLabFeaturedProject.TinyOrchestra.cube_2_taps" : {
-    "translation" : "キューブ2をタップ"
+  "codeLabFeaturedProject.ComplimentGenerator.random" : {
+    "translation" : "あてずっぽう"
   },
-  "codeLabFeaturedProject.TinyOrchestra.cube_1_taps" : {
-    "translation" : "キューブ1をタップ"
+  "codeLabFeaturedProject.ComplimentGenerator.smart_" : {
+    "translation" : "お利口 "
   },
-  "codeLabFeaturedProject.TinyOrchestra.tapping_cube_2_changes_instrument_2" : {
-    "translation" : "キューブ2をタップすると楽器2が変わります。"
+  "codeLabFeaturedProject.ComplimentGenerator.strong_" : {
+    "translation" : "強い "
   },
-  "codeLabFeaturedProject.TinyOrchestra.tapping_cube_3_changes_instrument_3" : {
-    "translation" : "キューブ3をタップすると楽器3が変わります。"
+  "codeLabFeaturedProject.ComplimentGenerator.stylish_" : {
+    "translation" : "おしゃれ "
   },
-  "codeLabFeaturedProject.TinyOrchestra.plays_beginning_animation_and_lights" : {
-    "translation" : "開始のアニメーションが流れ、光ります。"
+  "codeLabFeaturedProject.ComplimentGenerator.thoughtful" : {
+    "translation" : "思いやり"
   },
-  "codeLabFeaturedProject.TinyOrchestra.plays_animation_if_music_is_playing" : {
-    "translation" : "音楽が鳴っていると、アニメーションが流れます。"
+  "codeLabFeaturedProject.ComplimentGenerator.wonderful_" : {
+    "translation" : "驚き "
   },
-  "codeLabFeaturedProject.TinyOrchestra.tapping_cube_1_changes_instrument_1" : {
-    "translation" : "キューブ1をタップすると、楽器1が変わります。"
+  "codeLabFeaturedProject.ComplimentGenerator.you_are_so_" : {
+    "translation" : "あなたはとても "
   },
-  "codeLabFeaturedProject.MagicFortuneTeller.question_mark" : {
-    "translation" : "？"
+  "codeLabFeaturedProject.ComplimentGenerator.youre_the_most_" : {
+    "translation" : "あなたはいちばん "
   },
-  "codeLabFeaturedProject.MagicFortuneTeller.fortune" : {
-    "translation" : "運勢"
+  "codeLabFeaturedProject.Constellations.cassiopeia_" : {
+    "translation" : "カシオペア座 "
   },
-  "codeLabFeaturedProject.MagicFortuneTeller.yes" : {
-    "translation" : "はい"
+  "codeLabFeaturedProject.Constellations.constellation_name" : {
+    "translation" : "星座名"
   },
-  "codeLabFeaturedProject.MagicFortuneTeller.absolutely" : {
-    "translation" : "さいこう"
+  "codeLabFeaturedProject.Constellations.constellation_number" : {
+    "translation" : "星座の数"
   },
-  "codeLabFeaturedProject.MagicFortuneTeller.definitely" : {
-    "translation" : "いいね"
+  "codeLabFeaturedProject.Constellations.count" : {
+    "translation" : "数"
   },
-  "codeLabFeaturedProject.MagicFortuneTeller.for_sure" : {
-    "translation" : "だいじょうぶ"
+  "codeLabFeaturedProject.Constellations.cozmo_says_the_name_of_the_constellation" : {
+    "translation" : "Cozmo says the name of the constellation."
   },
-  "codeLabFeaturedProject.MagicFortuneTeller.maybe" : {
-    "translation" : "たぶんだいじょうぶ"
+  "codeLabFeaturedProject.Constellations.distance_multiplier" : {
+    "translation" : "距離の倍率"
   },
-  "codeLabFeaturedProject.MagicFortuneTeller.unsure" : {
-    "translation" : "どうかな"
+  "codeLabFeaturedProject.Constellations.draw_dot" : {
+    "translation" : "draw dot"
   },
-  "codeLabFeaturedProject.MagicFortuneTeller.possibly" : {
-    "translation" : "ダメかも"
+  "codeLabFeaturedProject.Constellations.draw_line" : {
+    "translation" : "draw line"
   },
-  "codeLabFeaturedProject.MagicFortuneTeller.no_way" : {
-    "translation" : "ダメだね"
+  "codeLabFeaturedProject.Constellations.draw_the_stars_of_the_constellation_on_cozmos_face" : {
+    "translation" : "Draw the stars of the constellation on Cozmos face."
   },
-  "codeLabFeaturedProject.MagicFortuneTeller.no_chance" : {
-    "translation" : "ざんねん"
+  "codeLabFeaturedProject.Constellations.drive_distance" : {
+    "translation" : "走行距離"
   },
-  "codeLabFeaturedProject.MagicFortuneTeller.forget_it" : {
-    "translation" : "あきらめよう"
+  "codeLabFeaturedProject.Constellations.gemini" : {
+    "translation" : "Gemini"
   },
-  "codeLabFeaturedProject.MagicFortuneTeller.starts_the_program" : {
-    "translation" : "プログラムを開始します。"
+  "codeLabFeaturedProject.Constellations.get_the_distance_between_two_coordinates" : {
+    "translation" : "Get the distance between two coordinates."
   },
-  "codeLabFeaturedProject.MagicFortuneTeller.cozmo_asks_for_a_question" : {
-    "translation" : "COZMOに質問をしてあげましょう。"
+  "codeLabFeaturedProject.Constellations.hi" : {
+    "translation" : "こんにちは"
   },
-  "codeLabFeaturedProject.MagicFortuneTeller.randomly_selects_a_fortune" : {
-    "translation" : "ランダムに運勢を選びます。"
+  "codeLabFeaturedProject.Constellations.instructions" : {
+    "translation" : "instructions"
   },
-  "codeLabFeaturedProject.MagicFortuneTeller.displays_fortune_on_cozmos_face" : {
-    "translation" : "マジカルな音楽を流して、LEDライトを光らせながら、"
+  "codeLabFeaturedProject.Constellations.instructions_count" : {
+    "translation" : "instructions count"
   },
-  "codeLabFeaturedProject.MagicFortuneTeller.while_making_a_magic_sound_and_lighting_his_backpack" : {
-    "translation" : "COZMOの顔に運勢を表示します。"
+  "codeLabFeaturedProject.Constellations.leo" : {
+    "translation" : "しし座"
   },
-  "codeLabFeaturedProject.CubeWhack.timer_in_sec" : {
-    "translation" : "タイマー（秒）"
+  "codeLabFeaturedProject.Constellations.line_distance" : {
+    "translation" : "線の距離"
   },
-  "codeLabFeaturedProject.CubeWhack.game_length" : {
-    "translation" : "ゲーム時間"
+  "codeLabFeaturedProject.Constellations.ordered_pair_x" : {
+    "translation" : "並んだペアx"
   },
-  "codeLabFeaturedProject.CubeWhack.random" : {
-    "translation" : "ランダム"
+  "codeLabFeaturedProject.Constellations.ordered_pair_y" : {
+    "translation" : "並んだペアy"
   },
-  "codeLabFeaturedProject.CubeWhack.cube_1_color" : {
-    "translation" : "キューブ1の色"
+  "codeLabFeaturedProject.Constellations.pi" : {
+    "translation" : "円周率"
   },
-  "codeLabFeaturedProject.CubeWhack.blue" : {
-    "translation" : "青"
+  "codeLabFeaturedProject.Constellations.set_variables_and_choose_a_constellation" : {
+    "translation" : "Set variables and choose a constellation."
   },
-  "codeLabFeaturedProject.CubeWhack.good_tap" : {
-    "translation" : "良いタップ"
+  "codeLabFeaturedProject.Constellations.set_x_and_y_coordinates_for_the_next_point_in_the_constellation" : {
+    "translation" : "Set x and y coordinates for the next point in the constellation."
   },
-  "codeLabFeaturedProject.CubeWhack.bad_tap" : {
-    "translation" : "悪いタップ"
+  "codeLabFeaturedProject.Constellations.slope1" : {
+    "translation" : "傾き1"
   },
-  "codeLabFeaturedProject.CubeWhack.x" : {
-    "translation" : "X"
+  "codeLabFeaturedProject.Constellations.slope2" : {
+    "translation" : "傾き2"
   },
-  "codeLabFeaturedProject.CubeWhack.point" : {
-    "translation" : "ポイント"
+  "codeLabFeaturedProject.Constellations.turn_angle" : {
+    "translation" : "回転角"
   },
-  "codeLabFeaturedProject.CubeWhack.points" : {
-    "translation" : "ポイント"
+  "codeLabFeaturedProject.Constellations.use_a_set_of_three_coordinates_to_drive_and_draw_lines_in_the_constellation" : {
+    "translation" : "Use a set of three coordinates to drive and draw lines in the constellation."
   },
-  "codeLabFeaturedProject.CubeWhack.better_luck_next_time" : {
-    "translation" : "つぎはがんばってね"
+  "codeLabFeaturedProject.Constellations.use_the_constellation_instructions_variable_to_determine_whether_to_draw_a_dot_a_line_both_or_none" : {
+    "translation" : "Use the constellation instructions variable to determine whether to draw a dot, a line, both, or none."
   },
-  "codeLabFeaturedProject.CubeWhack.you_won" : {
-    "translation" : "あなたのかち"
+  "codeLabFeaturedProject.Constellations.use_the_slopes_of_two_intersecting_lines_to_get_turn_degrees_for_cozmo" : {
+    "translation" : "交差する2つの線の傾きからCOZMOの回転角度を計算します。"
   },
-  "codeLabFeaturedProject.CubeWhack.cube_1_bad" : {
-    "translation" : "キューブ1不良"
+  "codeLabFeaturedProject.Constellations.x1" : {
+    "translation" : "x1"
   },
-  "codeLabFeaturedProject.CubeWhack.white" : {
-    "translation" : "白"
+  "codeLabFeaturedProject.Constellations.x2" : {
+    "translation" : "x2"
   },
-  "codeLabFeaturedProject.CubeWhack.cube_locked" : {
-    "translation" : "キューブがロックされました"
+  "codeLabFeaturedProject.Constellations.x3" : {
+    "translation" : "x3"
   },
-  "codeLabFeaturedProject.CubeWhack.cube_2_bad" : {
-    "translation" : "キューブ2不良"
+  "codeLabFeaturedProject.Constellations.x_coordinates" : {
+    "translation" : "x座標"
   },
-  "codeLabFeaturedProject.CubeWhack.cube_3_bad" : {
-    "translation" : "キューブ3不良"
+  "codeLabFeaturedProject.Constellations.y1" : {
+    "translation" : "y1"
   },
-  "codeLabFeaturedProject.CubeWhack.cozmo" : {
-    "translation" : "COZMO"
+  "codeLabFeaturedProject.Constellations.y2" : {
+    "translation" : "y2"
   },
-  "codeLabFeaturedProject.CubeWhack.yellow" : {
-    "translation" : "黄色"
+  "codeLabFeaturedProject.Constellations.y3" : {
+    "translation" : "y3"
   },
-  "codeLabFeaturedProject.CubeWhack.purple" : {
-    "translation" : "紫"
+  "codeLabFeaturedProject.Constellations.y_coordinates" : {
+    "translation" : "y座標"
   },
-  "codeLabFeaturedProject.CubeWhack.ready" : {
-    "translation" : "じゅんびはいい？"
-  },
-  "codeLabFeaturedProject.CubeWhack.pack_random" : {
-    "translation" : "ランダムなLED"
-  },
-  "codeLabFeaturedProject.CubeWhack.pack_color" : {
-    "translation" : "LEDの色"
-  },
-  "codeLabFeaturedProject.CubeWhack.orange" : {
-    "translation" : "オレンジ"
-  },
-  "codeLabFeaturedProject.CubeWhack.cube_2_color" : {
-    "translation" : "キューブ2の色"
-  },
-  "codeLabFeaturedProject.CubeWhack.cube_3_color" : {
-    "translation" : "キューブ3の色"
-  },
-  "codeLabFeaturedProject.CubeWhack.white_" : {
-    "translation" : "白 "
-  },
-  "codeLabFeaturedProject.FiretruckAlarm.length_of_timer_in_seconds" : {
-    "translation" : "時間（秒）"
-  },
-  "codeLabFeaturedProject.FiretruckAlarm.these_blocks_display_seconds_left_on_cozmos_face" : {
-    "translation" : "このブロックでCOZMOの顔に残りの時間を表示します。"
-  },
-  "codeLabFeaturedProject.FiretruckAlarm.these_blocks_control_the_timer" : {
-    "translation" : "このブロックでタイマーを操作します。"
-  },
-  "codeLabFeaturedProject.LightShow.these_blocks_control_music" : {
-    "translation" : "このブロックで音楽を操作します。"
-  },
-  "codeLabFeaturedProject.LightShow.these_blocks_control_cozmo_dancing" : {
-    "translation" : "このブロックでCOZMOのダンスを操作します。"
-  },
-  "codeLabFeaturedProject.LightShow.these_blocks_control_cube_lights" : {
-    "translation" : "このブロックでキューブのライトを操作します。"
-  },
-  "codeLabFeaturedProject.LightShow.selected_music" : {
-    "translation" : "選択した音楽"
-  },
-  "codeLabFeaturedProject.PuttPutt.cozmo_face_pixel_x" : {
-    "translation" : "COZMOの顔のピクセルx"
-  },
-  "codeLabFeaturedProject.PuttPutt.cozmo_face_pixel_y" : {
-    "translation" : "COZMOの顔のピクセルy"
-  },
-  "codeLabFeaturedProject.PuttPutt.hole_position_x" : {
-    "translation" : "ホールのポジションx"
-  },
-  "codeLabFeaturedProject.PuttPutt.hole_position_y" : {
-    "translation" : "ホールのポジションy"
-  },
-  "codeLabFeaturedProject.PuttPutt.hole_size" : {
-    "translation" : "ホールのサイズ"
-  },
-  "codeLabFeaturedProject.PuttPutt.current_hole" : {
-    "translation" : "現在のホール"
-  },
-  "codeLabFeaturedProject.PuttPutt.max_hole" : {
-    "translation" : "最大のホール"
-  },
-  "codeLabFeaturedProject.PuttPutt._hold_me_facing_the_ceiling" : {
-    "translation" : " てんじょうをむかせたままつかんで。"
-  },
-  "codeLabFeaturedProject.PuttPutt.to_play_tilt_me_to_get_the_ball_in_the_hole" : {
-    "translation" : "プレイするには、COZMOをかたむけてあなのなかにボールをいれます。"
-  },
-  "codeLabFeaturedProject.PuttPutt.great_game" : {
-    "translation" : "すばらしいゲームでした"
-  },
-  "codeLabFeaturedProject.PuttPutt.main_game_loop" : {
-    "translation" : "メインゲームをループします。"
-  },
-  "codeLabFeaturedProject.PuttPutt.called_each_round_to_set_hole_size_and_position" : {
-    "translation" : "各ラウンドをコールしてホールのサイズと位置をセットします。"
-  },
-  "codeLabFeaturedProject.PuttPutt.text" : {
-    "translation" : "テキスト"
-  },
-  "codeLabFeaturedProject.PuttPutt.hole_" : {
-    "translation" : "ホール "
-  },
-  "codeLabFeaturedProject.PuttPutt.cozmo" : {
-    "translation" : "COZMO"
-  },
-  "codeLabFeaturedProject.PuttPutt.anki" : {
-    "translation" : "Anki"
-  },
-  "codeLabFeaturedProject.PuttPutt._of_" : {
-    "translation" : " / "
-  },
-  "codeLabFeaturedProject.PuttPutt.please_put_me_down_on_a_flat_surface" : {
-    "translation" : "たいらなめんにおろしてください。"
-  },
-  "codeLabFeaturedProject.PuttPutt.timer" : {
-    "translation" : "タイマー"
-  },
-  "codeLabFeaturedProject.PuttPutt.great_game_you_finished_in" : {
-    "translation" : "ナイスゲーム！あなたは"
-  },
-  "codeLabFeaturedProject.PuttPutt._seconds" : {
-    "translation" : " びょう！"
-  },
-  "codeLabFeaturedProject.PuttPutt.start_and_keep_track_of_the_game_timer" : {
-    "translation" : "ゲームタイマーをスタートして記録をつけましょう。"
-  },
-  "codeLabFeaturedProject.PuttPutt.sets_up_the_default_values" : {
-    "translation" : "デフォルト値を設定します。"
-  },
-  "codeLabFeaturedProject.PuttPutt.finished_in" : {
-    "translation" : "タイム"
+  "codeLabFeaturedProject.CozmoFlies.cozmo_asks_to_be_picked_up_and_waits" : {
+    "translation" : "COZMOは持ち上げてもらいたいようです。"
   },
   "codeLabFeaturedProject.CozmoFlies.cozmo_pitch_a" : {
     "translation" : "COZMOの傾きA"
   },
   "codeLabFeaturedProject.CozmoFlies.cozmo_pitch_b" : {
     "translation" : "COZMOの傾きB"
+  },
+  "codeLabFeaturedProject.CozmoFlies.cozmo_reacts_to_position_changes_while_in_the_air" : {
+    "translation" : "COZMOは飛行中、ポジションを変えると反応します。"
   },
   "codeLabFeaturedProject.CozmoFlies.cozmo_roll_a" : {
     "translation" : "COZMOの回転A"
@@ -348,137 +240,857 @@
   "codeLabFeaturedProject.CozmoFlies.cozmo_yaw_b" : {
     "translation" : "COZMOの向きB"
   },
-  "codeLabFeaturedProject.CozmoFlies.cozmo_reacts_to_position_changes_while_in_the_air" : {
-    "translation" : "COZMOは飛行中、ポジションを変えると反応します。"
+  "codeLabFeaturedProject.CubeWhack.anki" : {
+    "translation" : "Anki"
   },
-  "codeLabFeaturedProject.CozmoFlies.cozmo_asks_to_be_picked_up_and_waits" : {
-    "translation" : "COZMOは持ち上げてもらいたいようです。"
+  "codeLabFeaturedProject.CubeWhack.bad_tap" : {
+    "translation" : "悪いタップ"
   },
-  "codeLabFeaturedProject.RemoteControlRacer.modified_device_tip_forward_or_back" : {
-    "translation" : "デバイスの傾きを前方または後方に変更"
+  "codeLabFeaturedProject.CubeWhack.better_luck_next_time" : {
+    "translation" : "つぎはがんばってね"
   },
-  "codeLabFeaturedProject.RemoteControlRacer.modified_device_tilt_left_or_right" : {
-    "translation" : "デバイスの傾きを右または左に変更"
+  "codeLabFeaturedProject.CubeWhack.blue" : {
+    "translation" : "青"
   },
-  "codeLabFeaturedProject.RemoteControlRacer.right_wheel_speed" : {
-    "translation" : "右の車輪速度"
+  "codeLabFeaturedProject.CubeWhack.cozmo" : {
+    "translation" : "COZMO"
   },
-  "codeLabFeaturedProject.RemoteControlRacer.left_wheel_speed" : {
-    "translation" : "左の車輪速度"
+  "codeLabFeaturedProject.CubeWhack.cube_1_color" : {
+    "translation" : "キューブ1の色"
+  },
+  "codeLabFeaturedProject.CubeWhack.cube_2_color" : {
+    "translation" : "キューブ2の色"
+  },
+  "codeLabFeaturedProject.CubeWhack.cube_3_color" : {
+    "translation" : "キューブ3の色"
+  },
+  "codeLabFeaturedProject.CubeWhack.cube_locked" : {
+    "translation" : "キューブがロックされました"
+  },
+  "codeLabFeaturedProject.CubeWhack.game_length" : {
+    "translation" : "ゲーム時間"
+  },
+  "codeLabFeaturedProject.CubeWhack.good_tap" : {
+    "translation" : "良いタップ"
+  },
+  "codeLabFeaturedProject.CubeWhack.orange" : {
+    "translation" : "オレンジ"
+  },
+  "codeLabFeaturedProject.CubeWhack.pack_color" : {
+    "translation" : "LEDの色"
+  },
+  "codeLabFeaturedProject.CubeWhack.pack_random" : {
+    "translation" : "ランダムなLED"
+  },
+  "codeLabFeaturedProject.CubeWhack.point" : {
+    "translation" : "ポイント"
+  },
+  "codeLabFeaturedProject.CubeWhack.points" : {
+    "translation" : "ポイント"
+  },
+  "codeLabFeaturedProject.CubeWhack.purple" : {
+    "translation" : "紫"
+  },
+  "codeLabFeaturedProject.CubeWhack.random" : {
+    "translation" : "ランダム"
+  },
+  "codeLabFeaturedProject.CubeWhack.ready" : {
+    "translation" : "じゅんびはいい？"
+  },
+  "codeLabFeaturedProject.CubeWhack.text" : {
+    "translation" : "テキスト"
+  },
+  "codeLabFeaturedProject.CubeWhack.timer_in_sec" : {
+    "translation" : "タイマー（秒）"
+  },
+  "codeLabFeaturedProject.CubeWhack.white" : {
+    "translation" : "白"
+  },
+  "codeLabFeaturedProject.CubeWhack.white_" : {
+    "translation" : "白 "
+  },
+  "codeLabFeaturedProject.CubeWhack.x" : {
+    "translation" : "X"
+  },
+  "codeLabFeaturedProject.CubeWhack.yellow" : {
+    "translation" : "黄色"
+  },
+  "codeLabFeaturedProject.CubeWhack.you_won" : {
+    "translation" : "あなたのかち"
+  },
+  "codeLabFeaturedProject.DrivingInCircles.center_x" : {
+    "translation" : "中心x"
+  },
+  "codeLabFeaturedProject.DrivingInCircles.center_y" : {
+    "translation" : "中心y"
+  },
+  "codeLabFeaturedProject.DrivingInCircles.cozmo_asks_to_be_shown_a_cube" : {
+    "translation" : "COZMOはキューブを見たいようです。"
+  },
+  "codeLabFeaturedProject.DrivingInCircles.cozmo_axle_width" : {
+    "translation" : "COZMOの車軸幅"
+  },
+  "codeLabFeaturedProject.DrivingInCircles.cozmo_looks_for_his_cubes" : {
+    "translation" : "COZMOはキューブを探しています。"
+  },
+  "codeLabFeaturedProject.DrivingInCircles.current_angle" : {
+    "translation" : "現在の角度"
+  },
+  "codeLabFeaturedProject.DrivingInCircles.current_radius" : {
+    "translation" : "現在のラジアン"
+  },
+  "codeLabFeaturedProject.DrivingInCircles.for_each_segment_of_the_circle_get_its_length_and_drive_cozmo_along_the_segment_arc" : {
+    "translation" : "円の各線分で長さを求め、線分の弧に沿ってCOZMOを走らせます。"
+  },
+  "codeLabFeaturedProject.DrivingInCircles.get_the_circle_radius_and_wheel_speeds_by_measuring_the_distance_between_cozmo_and_the_cube_center" : {
+    "translation" : "COZMOとキューブの中心の距離を測定し、円の半径と車輪の速度を計算します。"
+  },
+  "codeLabFeaturedProject.DrivingInCircles.heheeh" : {
+    "translation" : "Heheeh!"
+  },
+  "codeLabFeaturedProject.DrivingInCircles.inner_wheel_speed" : {
+    "translation" : "内車輪の速度"
+  },
+  "codeLabFeaturedProject.DrivingInCircles.number_of_segments" : {
+    "translation" : "線分の数"
+  },
+  "codeLabFeaturedProject.DrivingInCircles.outer_wheel_speed" : {
+    "translation" : "外車輪の速度"
+  },
+  "codeLabFeaturedProject.DrivingInCircles.pi" : {
+    "translation" : "円周率"
+  },
+  "codeLabFeaturedProject.DrivingInCircles.radians" : {
+    "translation" : "ラジアン"
+  },
+  "codeLabFeaturedProject.DrivingInCircles.radius_pair_x" : {
+    "translation" : "半径ペアx"
+  },
+  "codeLabFeaturedProject.DrivingInCircles.radius_pair_y" : {
+    "translation" : "半径ペアy"
+  },
+  "codeLabFeaturedProject.DrivingInCircles.segment_angle" : {
+    "translation" : "線分の角度"
+  },
+  "codeLabFeaturedProject.DrivingInCircles.segment_length" : {
+    "translation" : "線分の長さ"
+  },
+  "codeLabFeaturedProject.DrivingInCircles.segment_pair_x" : {
+    "translation" : "線分のペアx"
+  },
+  "codeLabFeaturedProject.DrivingInCircles.segment_pair_y" : {
+    "translation" : "線分のペアy"
+  },
+  "codeLabFeaturedProject.DrivingInCircles.segment_time" : {
+    "translation" : "線分の時間"
+  },
+  "codeLabFeaturedProject.DrivingInCircles.set_adjustable_variables" : {
+    "translation" : "調整可能な変数を設定します。"
+  },
+  "codeLabFeaturedProject.DrivingInCircles.set_the_center_x_and_y_variables_to_the_location_of_cube_1" : {
+    "translation" : "中心xとyの変数をキューブ1の位置に設定します。"
+  },
+  "codeLabFeaturedProject.DrivingInCircles.set_the_center_x_and_y_variables_to_the_location_of_cube_2" : {
+    "translation" : "中心xとyの変数をキューブ2の位置に設定します。"
+  },
+  "codeLabFeaturedProject.DrivingInCircles.set_the_center_x_and_y_variables_to_the_location_of_cube_3" : {
+    "translation" : "中心xとyの変数をキューブ3の位置に設定します。"
+  },
+  "codeLabFeaturedProject.DrivingInCircles.show_me_a_cube" : {
+    "translation" : "キューブをみせて"
+  },
+  "codeLabFeaturedProject.DrivingInCircles.speed_multiplier" : {
+    "translation" : "速度乗数"
+  },
+  "codeLabFeaturedProject.DrivingInCircles.x1" : {
+    "translation" : "x1"
+  },
+  "codeLabFeaturedProject.DrivingInCircles.x2" : {
+    "translation" : "x2"
+  },
+  "codeLabFeaturedProject.DrivingInCircles.y1" : {
+    "translation" : "y1"
+  },
+  "codeLabFeaturedProject.DrivingInCircles.y2" : {
+    "translation" : "y2"
+  },
+  "codeLabFeaturedProject.FiretruckAlarm.length_of_timer_in_seconds" : {
+    "translation" : "時間（秒）"
+  },
+  "codeLabFeaturedProject.FiretruckAlarm.these_blocks_control_the_timer" : {
+    "translation" : "このブロックでタイマーを操作します。"
+  },
+  "codeLabFeaturedProject.FiretruckAlarm.these_blocks_display_seconds_left_on_cozmos_face" : {
+    "translation" : "このブロックでCOZMOの顔に残りの時間を表示します。"
+  },
+  "codeLabFeaturedProject.HotPotato.and_then_assigns_that_cube_number_as_cozmos_cube" : {
+    "translation" : "そして、選んだキューブの番号がCOZMOのキューブになります。"
+  },
+  "codeLabFeaturedProject.HotPotato.checks_if_player_has_moved_a_cube_for_cozmo" : {
+    "translation" : "プレーヤーがCOZMOのところにキューブを動かしたか、"
+  },
+  "codeLabFeaturedProject.HotPotato.cozmo_asks_for_cube_and_waits" : {
+    "translation" : "COZMOはキューブが欲しいようです。"
+  },
+  "codeLabFeaturedProject.HotPotato.cozmo_taps_if_he_has_the_potato" : {
+    "translation" : "COZMOがポテトを持っていると、COZMOがタップしてくれます。"
+  },
+  "codeLabFeaturedProject.HotPotato.cozmo_taps_the_cube_he_thinks_he_has_been_given" : {
+    "translation" : "COZMOが自分のキューブだと思うキューブをタップします。"
+  },
+  "codeLabFeaturedProject.HotPotato.cozmos_cube" : {
+    "translation" : "COZMOのキューブ"
+  },
+  "codeLabFeaturedProject.HotPotato.cozmos_reaction_to_winning_or_losing" : {
+    "translation" : "COZMOが勝ち、負けに応じて反応します。"
+  },
+  "codeLabFeaturedProject.HotPotato.cube_put_under_lift" : {
+    "translation" : "リフトの下にキューブをセット"
+  },
+  "codeLabFeaturedProject.HotPotato.end_of_game_timer" : {
+    "translation" : "ゲーム終了"
+  },
+  "codeLabFeaturedProject.HotPotato.end_of_game_timer_and_ending_sequence" : {
+    "translation" : "ゲーム終了タイマーが鳴り、ゲームが終了します。"
+  },
+  "codeLabFeaturedProject.HotPotato.go" : {
+    "translation" : "スタート！"
+  },
+  "codeLabFeaturedProject.HotPotato.how_long_to_heat_potato" : {
+    "translation" : "ポテトを温める時間"
+  },
+  "codeLabFeaturedProject.HotPotato.lights_up_each_players_cube" : {
+    "translation" : "プレーヤーのキューブがそれぞれ光ります。"
+  },
+  "codeLabFeaturedProject.HotPotato.lights_up_potato_and_waits_for_tap" : {
+    "translation" : "ポテトが光って、タップを待ちます。"
+  },
+  "codeLabFeaturedProject.HotPotato.not_set" : {
+    "translation" : "まだだよ"
+  },
+  "codeLabFeaturedProject.HotPotato.or_cozmo_does_a_cube_tap_to_see_if_there_is_a_cube" : {
+    "translation" : "または、キューブタップをしてそこにキューブがあるか確かめます。"
+  },
+  "codeLabFeaturedProject.HotPotato.or_if_the_move_read_as_a_tap" : {
+    "translation" : "または、タップして動かし終わったかチェックします。"
+  },
+  "codeLabFeaturedProject.HotPotato.picks_different_cube_as_new_potato" : {
+    "translation" : "別のキューブをポテトに選びます。"
+  },
+  "codeLabFeaturedProject.HotPotato.place_cube_under_my_lift" : {
+    "translation" : "キューブをリフトの下においてね。"
+  },
+  "codeLabFeaturedProject.HotPotato.players_ready_set" : {
+    "translation" : "じゅんびはいい？"
+  },
+  "codeLabFeaturedProject.HotPotato.resets_game_state" : {
+    "translation" : "ゲームをリセットします。"
+  },
+  "codeLabFeaturedProject.HotPotato.starts_game_makes_game_get_faster_triggers_end_timer" : {
+    "translation" : "ゲームを開始しスピードを上げ、終了時にタイマーを鳴らします。"
+  },
+  "codeLabFeaturedProject.HotPotato.waiting_for_cozmos_cube_to_be_moved" : {
+    "translation" : "COZMOが動かすキューブを待っています"
+  },
+  "codeLabFeaturedProject.HotPotato.which_cube_is_about_to_be_the_potato" : {
+    "translation" : "どのキューブがポテトになるでしょう"
+  },
+  "codeLabFeaturedProject.HotPotato.which_cube_is_the_potato" : {
+    "translation" : "どのキューブがポテトでしょう"
+  },
+  "codeLabFeaturedProject.LaserSmile.emoji_expression" : {
+    "translation" : "絵文字の表情"
+  },
+  "codeLabFeaturedProject.LaserSmile.frown" : {
+    "translation" : "しかめっ面"
+  },
+  "codeLabFeaturedProject.LaserSmile.frown_location_x" : {
+    "translation" : "しかめっ面・位置x"
+  },
+  "codeLabFeaturedProject.LaserSmile.frown_location_y" : {
+    "translation" : "しかめっ面・位置y"
+  },
+  "codeLabFeaturedProject.LaserSmile.frown_radius" : {
+    "translation" : "しかめっ面・半径"
+  },
+  "codeLabFeaturedProject.LaserSmile.laser_fired" : {
+    "translation" : "レーザーを発射"
+  },
+  "codeLabFeaturedProject.LaserSmile.laser_location_x" : {
+    "translation" : "レーザーの位置x"
+  },
+  "codeLabFeaturedProject.LaserSmile.laser_successful" : {
+    "translation" : "レーザーは成功しました"
+  },
+  "codeLabFeaturedProject.LaserSmile.pause_face_display_updating" : {
+    "translation" : "顔のディスプレイの更新を一時停止"
+  },
+  "codeLabFeaturedProject.LaserSmile.points" : {
+    "translation" : "ポイント："
+  },
+  "codeLabFeaturedProject.LaserSmile.smile" : {
+    "translation" : "笑顔"
+  },
+  "codeLabFeaturedProject.LaserSmile.smile_to_shoot_your_laser_move_your_head_to_aim" : {
+    "translation" : "微笑んでレーザーを発射！顔を動かし狙いを定めてください。"
+  },
+  "codeLabFeaturedProject.LaserSmile.the_goal_is_to_turn_that_frown_upside_down" : {
+    "translation" : "目標はそのしかめっ面をひっくり返すことです！"
+  },
+  "codeLabFeaturedProject.LaserSmile.x" : {
+    "translation" : "X"
+  },
+  "codeLabFeaturedProject.LightShow.selected_music" : {
+    "translation" : "選択した音楽"
+  },
+  "codeLabFeaturedProject.LightShow.these_blocks_control_cozmo_dancing" : {
+    "translation" : "このブロックでCOZMOのダンスを操作します。"
+  },
+  "codeLabFeaturedProject.LightShow.these_blocks_control_cube_lights" : {
+    "translation" : "このブロックでキューブのライトを操作します。"
+  },
+  "codeLabFeaturedProject.LightShow.these_blocks_control_music" : {
+    "translation" : "このブロックで音楽を操作します。"
+  },
+  "codeLabFeaturedProject.MagicFortuneTeller.absolutely" : {
+    "translation" : "さいこう"
+  },
+  "codeLabFeaturedProject.MagicFortuneTeller.cozmo_asks_for_a_question" : {
+    "translation" : "COZMOに質問をしてあげましょう。"
+  },
+  "codeLabFeaturedProject.MagicFortuneTeller.definitely" : {
+    "translation" : "いいね"
+  },
+  "codeLabFeaturedProject.MagicFortuneTeller.displays_fortune_on_cozmos_face" : {
+    "translation" : "マジカルな音楽を流して、LEDライトを光らせながら、"
+  },
+  "codeLabFeaturedProject.MagicFortuneTeller.for_sure" : {
+    "translation" : "だいじょうぶ"
+  },
+  "codeLabFeaturedProject.MagicFortuneTeller.forget_it" : {
+    "translation" : "あきらめよう"
+  },
+  "codeLabFeaturedProject.MagicFortuneTeller.fortune" : {
+    "translation" : "運勢"
+  },
+  "codeLabFeaturedProject.MagicFortuneTeller.maybe" : {
+    "translation" : "たぶんだいじょうぶ"
+  },
+  "codeLabFeaturedProject.MagicFortuneTeller.no_chance" : {
+    "translation" : "ざんねん"
+  },
+  "codeLabFeaturedProject.MagicFortuneTeller.no_way" : {
+    "translation" : "ダメだね"
+  },
+  "codeLabFeaturedProject.MagicFortuneTeller.possibly" : {
+    "translation" : "ダメかも"
+  },
+  "codeLabFeaturedProject.MagicFortuneTeller.question_mark" : {
+    "translation" : "？"
+  },
+  "codeLabFeaturedProject.MagicFortuneTeller.randomly_selects_a_fortune" : {
+    "translation" : "ランダムに運勢を選びます。"
+  },
+  "codeLabFeaturedProject.MagicFortuneTeller.starts_the_program" : {
+    "translation" : "プログラムを開始します。"
+  },
+  "codeLabFeaturedProject.MagicFortuneTeller.unsure" : {
+    "translation" : "どうかな"
+  },
+  "codeLabFeaturedProject.MagicFortuneTeller.while_making_a_magic_sound_and_lighting_his_backpack" : {
+    "translation" : "COZMOの顔に運勢を表示します。"
+  },
+  "codeLabFeaturedProject.MagicFortuneTeller.yes" : {
+    "translation" : "はい"
+  },
+  "codeLabFeaturedProject.PaddleBall.ball_position_x" : {
+    "translation" : "ボールの位置x"
+  },
+  "codeLabFeaturedProject.PaddleBall.ball_position_y" : {
+    "translation" : "ボールの位置y"
+  },
+  "codeLabFeaturedProject.PaddleBall.ball_radius" : {
+    "translation" : "ボールの半径"
+  },
+  "codeLabFeaturedProject.PaddleBall.ball_speed_x" : {
+    "translation" : "ボールの速度x"
+  },
+  "codeLabFeaturedProject.PaddleBall.ball_speed_y" : {
+    "translation" : "ボールの速度y"
+  },
+  "codeLabFeaturedProject.PaddleBall.check_whether_the_ball_has_hit_a_wall_paddle_or_scored" : {
+    "translation" : "ボールが壁かパドルにあたったか、または得点したかを確認します。"
+  },
+  "codeLabFeaturedProject.PaddleBall.cozmo_paddle_acceleration" : {
+    "translation" : "COZMOのパドルの加速"
+  },
+  "codeLabFeaturedProject.PaddleBall.cozmo_paddle_max_speed" : {
+    "translation" : "COZMOのパドルの最大速度"
+  },
+  "codeLabFeaturedProject.PaddleBall.cozmo_paddle_position_y" : {
+    "translation" : "COZMOのパドルの位置y"
+  },
+  "codeLabFeaturedProject.PaddleBall.cozmo_paddle_speed" : {
+    "translation" : "COZMOのパドルの速度"
+  },
+  "codeLabFeaturedProject.PaddleBall.cozmo_paddle_width" : {
+    "translation" : "COZMOのパドルの幅"
+  },
+  "codeLabFeaturedProject.PaddleBall.cozmo_response" : {
+    "translation" : "COZMOの反応"
+  },
+  "codeLabFeaturedProject.PaddleBall.cozmo_score" : {
+    "translation" : "COZMOの\u000aスコア"
+  },
+  "codeLabFeaturedProject.PaddleBall.cozmo_scores_a_point" : {
+    "translation" : "COZMOが1ポイント獲得しました。"
+  },
+  "codeLabFeaturedProject.PaddleBall.cozmo_skill_level" : {
+    "translation" : "COZMOのスキルレベル"
+  },
+  "codeLabFeaturedProject.PaddleBall.decide_whether_to_end_the_game_or_start_a_new_round__cozmo_acts_accordingly" : {
+    "translation" : "ゲームを終了するか、新しいゲームを開始するかを選んでください。COZMOはそれに応じて動きます。"
+  },
+  "codeLabFeaturedProject.PaddleBall.decrease_paddle_height_by" : {
+    "translation" : "パドルの高さを下げる"
+  },
+  "codeLabFeaturedProject.PaddleBall.draw_rate" : {
+    "translation" : "描画レート"
+  },
+  "codeLabFeaturedProject.PaddleBall.game_is_over" : {
+    "translation" : "ゲームオーバーです"
+  },
+  "codeLabFeaturedProject.PaddleBall.game_winner" : {
+    "translation" : "ゲームの勝者"
+  },
+  "codeLabFeaturedProject.PaddleBall.half_of_cozmo_paddle_height" : {
+    "translation" : "COZMOのパドルの高さの半分"
+  },
+  "codeLabFeaturedProject.PaddleBall.half_of_player_paddle_height" : {
+    "translation" : "プレイヤーのパドルの高さの半分"
+  },
+  "codeLabFeaturedProject.PaddleBall.hi" : {
+    "translation" : "こんにちは"
+  },
+  "codeLabFeaturedProject.PaddleBall.hole_in_your_paddle" : {
+    "translation" : "パドルに穴がありますか？"
+  },
+  "codeLabFeaturedProject.PaddleBall.i_win" : {
+    "translation" : "勝った！"
+  },
+  "codeLabFeaturedProject.PaddleBall.im_the_best" : {
+    "translation" : "私が一番！"
+  },
+  "codeLabFeaturedProject.PaddleBall.loop_rate" : {
+    "translation" : "ループレート"
+  },
+  "codeLabFeaturedProject.PaddleBall.my_paddle_slipped" : {
+    "translation" : "パドルがすべった"
+  },
+  "codeLabFeaturedProject.PaddleBall.nice_shot" : {
+    "translation" : "ナイスショット！"
+  },
+  "codeLabFeaturedProject.PaddleBall.none" : {
+    "translation" : "なし"
+  },
+  "codeLabFeaturedProject.PaddleBall.once_either_cozmo_or_the_player_score_decide_what_to_do_next" : {
+    "translation" : "COZMOかプレイヤーが得点すると次の行動が決まります"
+  },
+  "codeLabFeaturedProject.PaddleBall.paddle" : {
+    "translation" : "パドル！"
+  },
+  "codeLabFeaturedProject.PaddleBall.paddle_width" : {
+    "translation" : "パドルの幅"
+  },
+  "codeLabFeaturedProject.PaddleBall.pick_a_random_saying_for_cozmo_when_he_scores" : {
+    "translation" : "COZMOが得点したときのCOZMOのランダムなセリフを選びます。"
+  },
+  "codeLabFeaturedProject.PaddleBall.pick_a_random_saying_for_cozmo_when_player_scores" : {
+    "translation" : "プレイヤーが得点したときのCOZMOのランダムなセリフを選びます。"
+  },
+  "codeLabFeaturedProject.PaddleBall.play_again" : {
+    "translation" : "もう一度プレイ?"
+  },
+  "codeLabFeaturedProject.PaddleBall.player" : {
+    "translation" : "プレイヤー"
+  },
+  "codeLabFeaturedProject.PaddleBall.player_paddle_position_y" : {
+    "translation" : "プレイヤーのパドルの位置y"
+  },
+  "codeLabFeaturedProject.PaddleBall.player_paddle_width" : {
+    "translation" : "プレイヤーのパドルの幅"
+  },
+  "codeLabFeaturedProject.PaddleBall.player_score" : {
+    "translation" : "プレイヤーの\u000aスコア"
+  },
+  "codeLabFeaturedProject.PaddleBall.points_to_win" : {
+    "translation" : "勝つために必要な得点"
+  },
+  "codeLabFeaturedProject.PaddleBall.random_response_number" : {
+    "translation" : "ランダムな応答数"
+  },
+  "codeLabFeaturedProject.PaddleBall.ready" : {
+    "translation" : "準備はいい？"
+  },
+  "codeLabFeaturedProject.PaddleBall.round_is_over" : {
+    "translation" : "試合終了です"
+  },
+  "codeLabFeaturedProject.PaddleBall.round_winner" : {
+    "translation" : "試合の勝者"
+  },
+  "codeLabFeaturedProject.PaddleBall.set" : {
+    "translation" : "セット"
+  },
+  "codeLabFeaturedProject.PaddleBall.set_adjustable_game_settings" : {
+    "translation" : "調整可能なゲーム設定をセットします。"
+  },
+  "codeLabFeaturedProject.PaddleBall.set_gameplay_variables" : {
+    "translation" : "ゲームプレイの変数をセットします。"
+  },
+  "codeLabFeaturedProject.PaddleBall.set_where_cozmo_thinks_the_ball_is_based_on_his_skill_level" : {
+    "translation" : "COZMOが考えるとき、ボールが彼のスキルレベルに基づくようにセットします。"
+  },
+  "codeLabFeaturedProject.PaddleBall.start_a_new_round_of_gameplay" : {
+    "translation" : "ゲームで新しいラウンドを開始します。"
+  },
+  "codeLabFeaturedProject.PaddleBall.start_the_game" : {
+    "translation" : "ゲームを開始します。"
+  },
+  "codeLabFeaturedProject.PaddleBall.the_player_scores_a_point" : {
+    "translation" : "プレイヤーが1ポイント獲得しました。"
+  },
+  "codeLabFeaturedProject.PaddleBall.true_" : {
+    "translation" : "正 "
+  },
+  "codeLabFeaturedProject.PaddleBall.when_the_ball_is_on_cozmos_side_move_his_paddle_towards_it" : {
+    "translation" : "ボールがCOZMO側にあるとき、彼のパドルをボールに向って動かします。"
+  },
+  "codeLabFeaturedProject.PaddleBall.where_cozmo_thinks_the_ball_is" : {
+    "translation" : "COZMOがボールは……と考えるとき"
+  },
+  "codeLabFeaturedProject.PaddleBall.while_gameplay_is_active_update_cozmos_paddle_position_with_its_current_speed" : {
+    "translation" : "ゲームをしている間、COZMOのパドル位置を現在の速度で更新します。"
+  },
+  "codeLabFeaturedProject.PaddleBall.while_gameplay_is_active_update_the_players_paddle_position_relative_to_their_face_in_the_camera" : {
+    "translation" : "ゲームをしている間、プレイヤーのパドル位置をカメラに映ったプレイヤーの顔に基づいて更新します。"
+  },
+  "codeLabFeaturedProject.PaddleBall.while_gameplay_is_active_update_the_position_of_the_ball" : {
+    "translation" : "ゲームをしている間、ボールの位置を更新します。"
+  },
+  "codeLabFeaturedProject.PaddleBall.while_gameplay_is_active_use_data_to_draw_everything_on_cozmos_face" : {
+    "translation" : "ゲームをしている間、データを使ってCOZMOの顔にすべてを描画します。"
+  },
+  "codeLabFeaturedProject.PaddleBall.whoops" : {
+    "translation" : "おっと！"
+  },
+  "codeLabFeaturedProject.PaddleBall.yes" : {
+    "translation" : "やった！"
+  },
+  "codeLabFeaturedProject.PaddleBall.you_win" : {
+    "translation" : "あなたの勝ち！"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.animate_a_radar_on_cozmos_face" : {
+    "translation" : "COZMOの顔にレーダーを描画します。"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.arc_angle" : {
+    "translation" : "弧の角度"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.arc_angle_end" : {
+    "translation" : "弧の角度の端"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.arc_center_x" : {
+    "translation" : "弧の中心x"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.arc_center_y" : {
+    "translation" : "弧の中心y"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.arc_major_radius" : {
+    "translation" : "弧の長半径"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.arc_minor_radius" : {
+    "translation" : "弧の短半径"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.arc_x" : {
+    "translation" : "弧x"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.arc_y" : {
+    "translation" : "弧y"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.blip_rate" : {
+    "translation" : "センサー音の速度"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.blip_type" : {
+    "translation" : "センサー音の種類"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.calculate_the_distance_between_cozmo_and_the_treasure" : {
+    "translation" : "COZMOと宝物との距離を測定します。"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.check_proximity_to_the_treasure_coordinates_and_adjust_indicators_accordingly" : {
+    "translation" : "宝物の座標との近さを確認し、それに応じて表示を調節します。"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.cozmo_celebrates_and_chooses_a_randomized_treasure_to_display" : {
+    "translation" : "COZMOは喜び、宝物をランダム化された選んで表示します。"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.cozmo_chooses_the_randomized_treasure_coordinates" : {
+    "translation" : "COZMOはランダム化された宝物の座標を選びます。"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.default_yaw_zero" : {
+    "translation" : "デフォルトのヨーはゼロ"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.detect_mode" : {
+    "translation" : "検知モード"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.device_pitch_forward" : {
+    "translation" : "デバイスピッチ前進"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.device_pitch_reverse" : {
+    "translation" : "デバイスピッチ後進"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.device_yaw_radius" : {
+    "translation" : "デバイスヨー半径"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.distance_from_treasure" : {
+    "translation" : "宝物からの距離"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.draw_a_horizontal_ellipse" : {
+    "translation" : "横向きの楕円を描いてください。"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.draw_a_rainbow_on_cozmos_face" : {
+    "translation" : "COZMOの顔に虹を描いてください。"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.draw_a_shamrock_on_cozmos_face" : {
+    "translation" : "COZMOの顔にシャムロックを描いてください。"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.draw_a_top_hat_on_cozmos_face" : {
+    "translation" : "COZMOの顔にトップハットを描いてください。"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.drive_cozmo_backwards" : {
+    "translation" : "COZMOを後退させてください。"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.drive_cozmo_forward" : {
+    "translation" : "COZMOを前進させてください。"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.drive_distance" : {
+    "translation" : "運転の距離"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.drive_speed" : {
+    "translation" : "運転の速度"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.lets_find_it" : {
+    "translation" : "みつけよう"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.max_x" : {
+    "translation" : "最大x"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.max_y" : {
+    "translation" : "最大y"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.ordered_pair_x" : {
+    "translation" : "ならんだペア x"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.ordered_pair_y" : {
+    "translation" : "ならんだペア y"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.play_the_radar_blip_sound_at_the_current_rate" : {
+    "translation" : "現在の速度でレーダーのセンサー音を鳴らします。"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.proximity_0" : {
+    "translation" : "近さ0"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.proximity_1" : {
+    "translation" : "近さ1"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.proximity_2" : {
+    "translation" : "近さ2"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.radar_angle" : {
+    "translation" : "レーダーの角度"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.radar_radius" : {
+    "translation" : "レーダーのラジアン"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.radar_x" : {
+    "translation" : "レーダーx"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.radar_y" : {
+    "translation" : "レーダーy"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.random_treasure_number" : {
+    "translation" : "ランダムな宝物の数"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.set_all_adjustable_variables" : {
+    "translation" : "設定可能な変数をすべて設定します。"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.spin_the_lights_on_cozmos_cubes_in_a_rainbow_sequence" : {
+    "translation" : "COZMOのキューブのライトを虹色のシーケンスで回転させます。"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.theres_a_treasure_nearby" : {
+    "translation" : "宝物が近くにある！"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.treasure_x" : {
+    "translation" : "宝物x"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.treasure_y" : {
+    "translation" : "宝物y"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.turn_cozmo_to_the_left" : {
+    "translation" : "COZMOを左折させてください。"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.turn_cozmo_to_the_right" : {
+    "translation" : "COZMOを右折させてください。"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.turn_radius" : {
+    "translation" : "回転ラジアン"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.turn_speed" : {
+    "translation" : "回転速度"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.use_the_device_to_drive_cozmo" : {
+    "translation" : "デバイスを使ってCOZMOを走らせます。"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.use_your_device_to_drive_me" : {
+    "translation" : "デバイスを使ってぼくを走らせて！"
+  },
+  "codeLabFeaturedProject.PotOGoldDetector.we_found_the_treasure" : {
+    "translation" : "宝物をみつけました！"
+  },
+  "codeLabFeaturedProject.PuttPutt._hold_me_facing_the_ceiling" : {
+    "translation" : " てんじょうをむかせたままつかんで。"
+  },
+  "codeLabFeaturedProject.PuttPutt._of_" : {
+    "translation" : " / "
+  },
+  "codeLabFeaturedProject.PuttPutt._seconds" : {
+    "translation" : " びょう！"
+  },
+  "codeLabFeaturedProject.PuttPutt.anki" : {
+    "translation" : "Anki"
+  },
+  "codeLabFeaturedProject.PuttPutt.called_each_round_to_set_hole_size_and_position" : {
+    "translation" : "各ラウンドをコールしてホールのサイズと位置をセットします。"
+  },
+  "codeLabFeaturedProject.PuttPutt.cozmo" : {
+    "translation" : "COZMO"
+  },
+  "codeLabFeaturedProject.PuttPutt.cozmo_face_pixel_x" : {
+    "translation" : "COZMOの顔のピクセルx"
+  },
+  "codeLabFeaturedProject.PuttPutt.cozmo_face_pixel_y" : {
+    "translation" : "COZMOの顔のピクセルy"
+  },
+  "codeLabFeaturedProject.PuttPutt.current_hole" : {
+    "translation" : "現在のホール"
+  },
+  "codeLabFeaturedProject.PuttPutt.finished_in" : {
+    "translation" : "タイム"
+  },
+  "codeLabFeaturedProject.PuttPutt.great_game" : {
+    "translation" : "すばらしいゲームでした"
+  },
+  "codeLabFeaturedProject.PuttPutt.great_game_you_finished_in" : {
+    "translation" : "ナイスゲーム！あなたは"
+  },
+  "codeLabFeaturedProject.PuttPutt.hole_" : {
+    "translation" : "ホール "
+  },
+  "codeLabFeaturedProject.PuttPutt.hole_position_x" : {
+    "translation" : "ホールのポジションx"
+  },
+  "codeLabFeaturedProject.PuttPutt.hole_position_y" : {
+    "translation" : "ホールのポジションy"
+  },
+  "codeLabFeaturedProject.PuttPutt.hole_size" : {
+    "translation" : "ホールのサイズ"
+  },
+  "codeLabFeaturedProject.PuttPutt.main_game_loop" : {
+    "translation" : "メインゲームをループします。"
+  },
+  "codeLabFeaturedProject.PuttPutt.max_hole" : {
+    "translation" : "最大のホール"
+  },
+  "codeLabFeaturedProject.PuttPutt.please_put_me_down_on_a_flat_surface" : {
+    "translation" : "たいらなめんにおろしてください。"
+  },
+  "codeLabFeaturedProject.PuttPutt.sets_up_the_default_values" : {
+    "translation" : "デフォルト値を設定します。"
+  },
+  "codeLabFeaturedProject.PuttPutt.start_and_keep_track_of_the_game_timer" : {
+    "translation" : "ゲームタイマーをスタートして記録をつけましょう。"
+  },
+  "codeLabFeaturedProject.PuttPutt.text" : {
+    "translation" : "テキスト"
+  },
+  "codeLabFeaturedProject.PuttPutt.timer" : {
+    "translation" : "タイマー"
+  },
+  "codeLabFeaturedProject.PuttPutt.to_play_tilt_me_to_get_the_ball_in_the_hole" : {
+    "translation" : "プレイするには、COZMOをかたむけてあなのなかにボールをいれます。"
   },
   "codeLabFeaturedProject.RemoteControlRacer.base_device_tip_forward_or_back" : {
     "translation" : "ベースのデバイスを前方または後方に傾ける"
   },
-  "codeLabFeaturedProject.RemoteControlRacer.speed_multiplier" : {
-    "translation" : "速度乗数"
-  },
-  "codeLabFeaturedProject.RemoteControlRacer.turn_multiplier" : {
-    "translation" : "回転乗数"
+  "codeLabFeaturedProject.RemoteControlRacer.device_flat" : {
+    "translation" : "デバイスを水平に"
   },
   "codeLabFeaturedProject.RemoteControlRacer.device_movement_dead_zone" : {
     "translation" : "デバイス動作のデッドゾーン"
   },
-  "codeLabFeaturedProject.RemoteControlRacer.device_flat" : {
-    "translation" : "デバイスを水平に"
+  "codeLabFeaturedProject.RemoteControlRacer.left_wheel_speed" : {
+    "translation" : "左の車輪速度"
   },
-  "codeLabFeaturedProject.RemoteControlRacer.threshold_to_drive_or_turn" : {
-    "translation" : "ドライブまたはターンの基準値"
+  "codeLabFeaturedProject.RemoteControlRacer.modified_device_tilt_left_or_right" : {
+    "translation" : "デバイスの傾きを右または左に変更"
+  },
+  "codeLabFeaturedProject.RemoteControlRacer.modified_device_tip_forward_or_back" : {
+    "translation" : "デバイスの傾きを前方または後方に変更"
   },
   "codeLabFeaturedProject.RemoteControlRacer.program_loop_to_control_cozmo_with_device" : {
     "translation" : "デバイスでCOZMOをループ制御するようプログラムする。"
   },
+  "codeLabFeaturedProject.RemoteControlRacer.right_wheel_speed" : {
+    "translation" : "右の車輪速度"
+  },
   "codeLabFeaturedProject.RemoteControlRacer.sets_up_default_values" : {
     "translation" : "デフォルトの値を設定します。"
+  },
+  "codeLabFeaturedProject.RemoteControlRacer.speed_multiplier" : {
+    "translation" : "速度乗数"
+  },
+  "codeLabFeaturedProject.RemoteControlRacer.threshold_to_drive_or_turn" : {
+    "translation" : "ドライブまたはターンの基準値"
   },
   "codeLabFeaturedProject.RemoteControlRacer.tilt_your_device_to_drive" : {
     "translation" : "デバイスをドライブにかたむけてください！"
   },
-  "codeLabFeaturedProject.ShakeIt.shake_cozmo": {
-      "translation": "COZMOをふる"
+  "codeLabFeaturedProject.RemoteControlRacer.turn_multiplier" : {
+    "translation" : "回転乗数"
   },
-  "codeLabFeaturedProject.ShakeIt.game_length" : {
-    "translation" : "ゲーム時間"
-  },
-  "codeLabFeaturedProject.ShakeIt.get_ready_to_shake_" : {
-    "translation" : "ふるじゅんびはいい？ "
-  },
-  "codeLabFeaturedProject.ShakeIt.correct_color" : {
-    "translation" : "正解の色"
-  },
-  "codeLabFeaturedProject.ShakeIt.red" : {
-    "translation" : "あか"
-  },
-  "codeLabFeaturedProject.ShakeIt.game_round" : {
-    "translation" : "ゲームラウンド"
-  },
-  "codeLabFeaturedProject.ShakeIt.points" : {
-    "translation" : "ポイント"
+  "codeLabFeaturedProject.ShakeIt._points" : {
+    "translation" : " / 10"
   },
   "codeLabFeaturedProject.ShakeIt.better_luck_next_time" : {
     "translation" : "つぎはがんばってね"
   },
-  "codeLabFeaturedProject.ShakeIt.you_won" : {
-    "translation" : "あなたのかち"
-  },
-  "codeLabFeaturedProject.ShakeIt.cube_locked" : {
-    "translation" : "キューブがロックされました"
-  },
-  "codeLabFeaturedProject.ShakeIt.correct_action" : {
-    "translation" : "正しいアクション"
-  },
-  "codeLabFeaturedProject.ShakeIt.shake_action" : {
-    "translation" : "振るアクション"
-  },
-  "codeLabFeaturedProject.ShakeIt.yellow" : {
-    "translation" : "きいろ"
-  },
   "codeLabFeaturedProject.ShakeIt.blue" : {
     "translation" : "あお"
   },
-  "codeLabFeaturedProject.ShakeIt.none" : {
-    "translation" : "なし"
+  "codeLabFeaturedProject.ShakeIt.called_at_game_end" : {
+    "translation" : "ゲーム終了時にコールしました。"
   },
-  "codeLabFeaturedProject.ShakeIt.you_got" : {
-    "translation" : "あなたは"
-  },
-  "codeLabFeaturedProject.ShakeIt.cozmo" : {
-    "translation" : "COZMO"
-  },
-  "codeLabFeaturedProject.ShakeIt.round_time" : {
-    "translation" : "ラウンド時間"
-  },
-  "codeLabFeaturedProject.ShakeIt.me" : {
-    "translation" : "わたし"
-  },
-  "codeLabFeaturedProject.ShakeIt.orange" : {
-    "translation" : "オレンジ"
-  },
-  "codeLabFeaturedProject.ShakeIt.green" : {
-    "translation" : "みどり"
-  },
-  "codeLabFeaturedProject.ShakeIt.purple" : {
-    "translation" : "むらさき"
-  },
-  "codeLabFeaturedProject.ShakeIt.multicolor" : {
-    "translation" : "マルチカラー"
-  },
-  "codeLabFeaturedProject.ShakeIt.cube_1_shaken" : {
-    "translation" : "Cube 1を振りました"
-  },
-  "codeLabFeaturedProject.ShakeIt.cube_2_shaken" : {
-    "translation" : "Cube 2を振りました"
-  },
-  "codeLabFeaturedProject.ShakeIt.cube_3_shaken" : {
-    "translation" : "Cube 3を振りました"
-  },
-  "codeLabFeaturedProject.ShakeIt.game_start_and_main_loop" : {
-    "translation" : "ゲームスタート、メインループ。"
+  "codeLabFeaturedProject.ShakeIt.called_each_round_to_randomly_choose_the_correct_action" : {
+    "translation" : "ラウンドをランダムにコールして正解のアクションを選択します。"
   },
   "codeLabFeaturedProject.ShakeIt.called_each_round_to_reset_the_variables" : {
     "translation" : "ラウンドをコールして変数をリセットします。"
   },
-  "codeLabFeaturedProject.ShakeIt.called_at_game_end" : {
-    "translation" : "ゲーム終了時にコールしました。"
+  "codeLabFeaturedProject.ShakeIt.called_for_a_correct_action" : {
+    "translation" : "正解のアクションをコールします。"
+  },
+  "codeLabFeaturedProject.ShakeIt.called_for_an_incorrect_action" : {
+    "translation" : "不正解のアクションをコールします。"
+  },
+  "codeLabFeaturedProject.ShakeIt.check_if_cozmo_has_been_shaken" : {
+    "translation" : "COZMOが振られたかどうかチェックします。"
   },
   "codeLabFeaturedProject.ShakeIt.check_if_shaking_cube_1_is_the_correct_action" : {
     "translation" : "Cube 1を振ることが正解のアクションかどうかチェックします。"
@@ -489,29 +1101,83 @@
   "codeLabFeaturedProject.ShakeIt.check_if_shaking_cube_3_is_the_correct_action" : {
     "translation" : "Cube 3を振ることが正解のアクションかどうかチェックします。"
   },
-  "codeLabFeaturedProject.ShakeIt.check_if_cozmo_has_been_shaken" : {
-    "translation" : "COZMOが振られたかどうかチェックします。"
-  },
   "codeLabFeaturedProject.ShakeIt.check_if_the_multicolor_cube_shake_is_correct" : {
     "translation" : "マルチカラーのCubeを振ることが正解かどうかチェックします。"
   },
-  "codeLabFeaturedProject.ShakeIt.called_each_round_to_randomly_choose_the_correct_action" : {
-    "translation" : "ラウンドをランダムにコールして正解のアクションを選択します。"
+  "codeLabFeaturedProject.ShakeIt.correct_action" : {
+    "translation" : "正しいアクション"
   },
-  "codeLabFeaturedProject.ShakeIt.called_for_a_correct_action" : {
-    "translation" : "正解のアクションをコールします。"
+  "codeLabFeaturedProject.ShakeIt.correct_color" : {
+    "translation" : "正解の色"
   },
-  "codeLabFeaturedProject.ShakeIt.called_for_an_incorrect_action" : {
-    "translation" : "不正解のアクションをコールします。"
+  "codeLabFeaturedProject.ShakeIt.cozmo" : {
+    "translation" : "COZMO"
+  },
+  "codeLabFeaturedProject.ShakeIt.cube_1_shaken" : {
+    "translation" : "Cube 1を振りました"
+  },
+  "codeLabFeaturedProject.ShakeIt.cube_2_shaken" : {
+    "translation" : "Cube 2を振りました"
+  },
+  "codeLabFeaturedProject.ShakeIt.cube_3_shaken" : {
+    "translation" : "Cube 3を振りました"
+  },
+  "codeLabFeaturedProject.ShakeIt.cube_locked" : {
+    "translation" : "キューブがロックされました"
+  },
+  "codeLabFeaturedProject.ShakeIt.game_length" : {
+    "translation" : "ゲーム時間"
+  },
+  "codeLabFeaturedProject.ShakeIt.game_round" : {
+    "translation" : "ゲームラウンド"
+  },
+  "codeLabFeaturedProject.ShakeIt.game_start_and_main_loop" : {
+    "translation" : "ゲームスタート、メインループ。"
+  },
+  "codeLabFeaturedProject.ShakeIt.get_ready_to_shake_" : {
+    "translation" : "ふるじゅんびはいい？ "
+  },
+  "codeLabFeaturedProject.ShakeIt.green" : {
+    "translation" : "みどり"
+  },
+  "codeLabFeaturedProject.ShakeIt.me" : {
+    "translation" : "わたし"
+  },
+  "codeLabFeaturedProject.ShakeIt.multicolor" : {
+    "translation" : "マルチカラー"
+  },
+  "codeLabFeaturedProject.ShakeIt.none" : {
+    "translation" : "なし"
+  },
+  "codeLabFeaturedProject.ShakeIt.orange" : {
+    "translation" : "オレンジ"
+  },
+  "codeLabFeaturedProject.ShakeIt.out_of_10" : {
+    "translation" : "ポイント!"
+  },
+  "codeLabFeaturedProject.ShakeIt.points" : {
+    "translation" : "ポイント"
+  },
+  "codeLabFeaturedProject.ShakeIt.points_out_of_10" : {
+    "translation" : "てんかくとく！"
+  },
+  "codeLabFeaturedProject.ShakeIt.purple" : {
+    "translation" : "むらさき"
+  },
+  "codeLabFeaturedProject.ShakeIt.red" : {
+    "translation" : "あか"
+  },
+  "codeLabFeaturedProject.ShakeIt.round_time" : {
+    "translation" : "ラウンド時間"
   },
   "codeLabFeaturedProject.ShakeIt.sets_up_the_cube_colors" : {
     "translation" : "Cubeのカラーを設定します。"
   },
-  "codeLabFeaturedProject.ShakeIt._points" : {
-    "translation" : " / 10"
+  "codeLabFeaturedProject.ShakeIt.shake_action" : {
+    "translation" : "振るアクション"
   },
-  "codeLabFeaturedProject.ShakeIt.try_to_get_all_10_points" : {
-    "translation" : "ぜん10ポイントのかくとくをめざそう！"
+  "codeLabFeaturedProject.ShakeIt.shake_cozmo" : {
+    "translation" : "COZMOを振る"
   },
   "codeLabFeaturedProject.ShakeIt.times_cube_1_moved" : {
     "translation" : "Cube 1が動いた回数"
@@ -522,110 +1188,74 @@
   "codeLabFeaturedProject.ShakeIt.times_cube_3_moved" : {
     "translation" : "Cube 3が動いた回数"
   },
-  "codeLabFeaturedProject.ShakeIt.out_of_10" : {
-    "translation" : "ポイント!"
+  "codeLabFeaturedProject.ShakeIt.try_to_get_all_10_points" : {
+    "translation" : "ぜん10ポイントのかくとくをめざそう！"
   },
-  "codeLabFeaturedProject.ShakeIt.points_out_of_10" : {
-    "translation" : "てんかくとく！"
+  "codeLabFeaturedProject.ShakeIt.yellow" : {
+    "translation" : "きいろ"
   },
-  "codeLabFeaturedProject.ValentinesCozmogram.name" : {
-    "translation" : "名前"
+  "codeLabFeaturedProject.ShakeIt.you_got" : {
+    "translation" : "あなたは"
   },
-  "codeLabFeaturedProject.ValentinesCozmogram.hi" : {
-    "translation" : "こんにちは"
+  "codeLabFeaturedProject.ShakeIt.you_won" : {
+    "translation" : "あなたのかち"
   },
-  "codeLabFeaturedProject.ValentinesCozmogram.roses_" : {
-    "translation" : "バラ "
+  "codeLabFeaturedProject.TinyOrchestra.cube_1_taps" : {
+    "translation" : "キューブ1をタップ"
   },
-  "codeLabFeaturedProject.ValentinesCozmogram.are_red" : {
-    "translation" : "はあかいろ"
+  "codeLabFeaturedProject.TinyOrchestra.cube_2_taps" : {
+    "translation" : "キューブ2をタップ"
   },
-  "codeLabFeaturedProject.ValentinesCozmogram.violets_" : {
-    "translation" : "スミレ "
+  "codeLabFeaturedProject.TinyOrchestra.cube_3_taps" : {
+    "translation" : "キューブ3をタップ"
   },
-  "codeLabFeaturedProject.ValentinesCozmogram.are_blue" : {
-    "translation" : "はあおいろ"
+  "codeLabFeaturedProject.TinyOrchestra.plays_animation_if_music_is_playing" : {
+    "translation" : "音楽が鳴っていると、アニメーションが流れます。"
   },
-  "codeLabFeaturedProject.ValentinesCozmogram.happy_valentines_dear_" : {
-    "translation" : "ハッピーバレンタイン "
+  "codeLabFeaturedProject.TinyOrchestra.plays_beginning_animation_and_lights" : {
+    "translation" : "開始のアニメーションが流れ、光ります。"
+  },
+  "codeLabFeaturedProject.TinyOrchestra.tapping_cube_1_changes_instrument_1" : {
+    "translation" : "キューブ1をタップすると、楽器1が変わります。"
+  },
+  "codeLabFeaturedProject.TinyOrchestra.tapping_cube_2_changes_instrument_2" : {
+    "translation" : "キューブ2をタップすると楽器2が変わります。"
+  },
+  "codeLabFeaturedProject.TinyOrchestra.tapping_cube_3_changes_instrument_3" : {
+    "translation" : "キューブ3をタップすると楽器3が変わります。"
   },
   "codeLabFeaturedProject.ValentinesCozmogram._because_cozmo_loves_you" : {
     "translation" : " Cozmoはあなたがだいすきだから"
   },
-  "codeLabFeaturedProject.ValentinesCozmogram.red_random" : {
-    "translation" : "赤いものランダム"
+  "codeLabFeaturedProject.ValentinesCozmogram.apples_" : {
+    "translation" : "リンゴ "
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.are_blue" : {
+    "translation" : "はあおいろ"
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.are_red" : {
+    "translation" : "はあかいろ"
   },
   "codeLabFeaturedProject.ValentinesCozmogram.blue_random" : {
     "translation" : "青いものランダム"
   },
-  "codeLabFeaturedProject.ValentinesCozmogram.red_thing" : {
-    "translation" : "赤いもの"
-  },
-  "codeLabFeaturedProject.ValentinesCozmogram.apples_" : {
-    "translation" : "リンゴ "
-  },
-  "codeLabFeaturedProject.ValentinesCozmogram.ladybugs_" : {
-    "translation" : "テントウムシ "
-  },
   "codeLabFeaturedProject.ValentinesCozmogram.blue_thing" : {
     "translation" : "青いもの"
-  },
-  "codeLabFeaturedProject.ValentinesCozmogram.my_eyes_" : {
-    "translation" : "わたしのめ "
-  },
-  "codeLabFeaturedProject.ValentinesCozmogram.skies_" : {
-    "translation" : "空 "
-  },
-  "codeLabFeaturedProject.ValentinesCozmogram.strawberries_" : {
-    "translation" : "イチゴ "
-  },
-  "codeLabFeaturedProject.ValentinesCozmogram.raspberries_" : {
-    "translation" : "ラズベリー "
-  },
-  "codeLabFeaturedProject.ValentinesCozmogram.tomatoes_" : {
-    "translation" : "トマト "
-  },
-  "codeLabFeaturedProject.ValentinesCozmogram.fire_trucks_" : {
-    "translation" : "しょうぼうしゃ "
-  },
-  "codeLabFeaturedProject.ValentinesCozmogram.cherries_" : {
-    "translation" : "サクランボ "
-  },
-  "codeLabFeaturedProject.ValentinesCozmogram.stop_signs_" : {
-    "translation" : "ていしサイン "
-  },
-  "codeLabFeaturedProject.ValentinesCozmogram.oceans_" : {
-    "translation" : "うみ "
-  },
-  "codeLabFeaturedProject.ValentinesCozmogram.rivers_" : {
-    "translation" : "かわ "
-  },
-  "codeLabFeaturedProject.ValentinesCozmogram.lakes_" : {
-    "translation" : "みずうみ "
   },
   "codeLabFeaturedProject.ValentinesCozmogram.blueberries_" : {
     "translation" : "ブルーベリー "
   },
-  "codeLabFeaturedProject.ValentinesCozmogram.jeans_" : {
-    "translation" : "ジーンズ "
+  "codeLabFeaturedProject.ValentinesCozmogram.cherries_" : {
+    "translation" : "サクランボ "
   },
-  "codeLabFeaturedProject.ValentinesCozmogram.friend" : {
-    "translation" : "ともだち"
+  "codeLabFeaturedProject.ValentinesCozmogram.choose_a_blue_thing_for_the_valentines" : {
+    "translation" : "バレンタイン向けの青いものを選んでください。"
   },
-  "codeLabFeaturedProject.ValentinesCozmogram.heart_width" : {
-    "translation" : "ハートの幅"
+  "codeLabFeaturedProject.ValentinesCozmogram.choose_a_red_thing_for_valentines" : {
+    "translation" : "バレンタイン向けの赤いものを選んでください。"
   },
-  "codeLabFeaturedProject.ValentinesCozmogram.widest_y" : {
-    "translation" : "最も広い y"
-  },
-  "codeLabFeaturedProject.ValentinesCozmogram.heart_beat" : {
-    "translation" : "ハートの鼓動"
-  },
-  "codeLabFeaturedProject.ValentinesCozmogram.heart_size" : {
-    "translation" : "ハートのサイズ"
-  },
-  "codeLabFeaturedProject.ValentinesCozmogram.half_heart_width" : {
-    "translation" : "半分の幅のハート"
+  "codeLabFeaturedProject.ValentinesCozmogram.choose_the_name_to_use" : {
+    "translation" : "使用する名前を選んでください。"
   },
   "codeLabFeaturedProject.ValentinesCozmogram.cozmo_face_pixel_y" : {
     "translation" : "COZMOの顔のピクセルy"
@@ -633,16 +1263,91 @@
   "codeLabFeaturedProject.ValentinesCozmogram.deliver_a_valentine" : {
     "translation" : "バレンタインを届けます。"
   },
-  "codeLabFeaturedProject.ValentinesCozmogram.choose_the_name_to_use" : {
-    "translation" : "使用する名前を選んでください。"
-  },
-  "codeLabFeaturedProject.ValentinesCozmogram.choose_a_red_thing_for_valentines" : {
-    "translation" : "バレンタイン向けの赤いものを選んでください。"
-  },
-  "codeLabFeaturedProject.ValentinesCozmogram.choose_a_blue_thing_for_the_valentines" : {
-    "translation" : "バレンタイン向けの青いものを選んでください。"
-  },
   "codeLabFeaturedProject.ValentinesCozmogram.draw_a_valentine_envelope_on_cozmos_face" : {
     "translation" : "COZMOの顔にバレンタイン用の封筒を描いてください。"
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.fire_trucks_" : {
+    "translation" : "しょうぼうしゃ "
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.friend" : {
+    "translation" : "ともだち"
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.half_heart_width" : {
+    "translation" : "半分の幅のハート"
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.happy_valentines_dear_" : {
+    "translation" : "ハッピーバレンタイン "
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.heart_beat" : {
+    "translation" : "ハートの鼓動"
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.heart_size" : {
+    "translation" : "ハートのサイズ"
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.heart_width" : {
+    "translation" : "ハートの幅"
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.hi" : {
+    "translation" : "こんにちは"
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.jeans_" : {
+    "translation" : "ジーンズ "
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.ladybugs_" : {
+    "translation" : "テントウムシ "
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.lakes_" : {
+    "translation" : "みずうみ "
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.my_eyes_" : {
+    "translation" : "わたしのめ "
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.name" : {
+    "translation" : "名前"
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.oceans_" : {
+    "translation" : "うみ "
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.raspberries_" : {
+    "translation" : "ラズベリー "
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.red_random" : {
+    "translation" : "赤いものランダム"
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.red_thing" : {
+    "translation" : "赤いもの"
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.rivers_" : {
+    "translation" : "かわ "
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.roses_" : {
+    "translation" : "バラ "
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.skies_" : {
+    "translation" : "そら "
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.stop_signs_" : {
+    "translation" : "ていしサイン "
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.strawberries_" : {
+    "translation" : "イチゴ "
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.tomatoes_" : {
+    "translation" : "トマト "
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.violets_" : {
+    "translation" : "スミレ "
+  },
+  "codeLabFeaturedProject.ValentinesCozmogram.widest_y" : {
+    "translation" : "最も広い y"
+  },
+  "codeLabFeaturedProject.anki" : {
+    "translation" : "Anki"
+  },
+  "codeLabFeaturedProject.cozmo" : {
+    "translation" : "COZMO"
+  },
+  "codeLabFeaturedProject.text" : {
+    "translation" : "テキスト"
   }
 }

@@ -46,7 +46,7 @@
     "translation" : "Cozmo ne fournit pas de connexion Internet."
   },
   "wifiStrings.Instructions.Slide3.5altCopy" : {
-    "translation" : "Appuie sur OK pour rester connecté au Wi-Fi de Cozmo."
+    "translation" : "Si un tel avertissement apparaît, touche OK pour rester sur le wi-fi de Cozmo."
   },
   "wifiStrings.Instructions.Slide4" : {
     "translation" : "Quitte les paramètres et reviens à l'application Cozmo."

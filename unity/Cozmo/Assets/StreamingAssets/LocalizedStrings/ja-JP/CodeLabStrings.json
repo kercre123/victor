@@ -499,7 +499,7 @@
     "translation" : "時計"
   },
   "codeLabFeaturedProject_HotPotato.projectName" : {
-    "translation" : "ホットポテト"
+    "translation" : "パスゲーム"
   },
   "codeLabFeaturedProject_HotPotato.projectDescription" : {
     "translation" : "音楽が止まったとき、ホットポテトを持っていないようにしましょう!"
@@ -526,7 +526,7 @@
     "translation" : "1．「スタート」をタップして、COZMOの顔に「?」が表示されたら、COZMOに占ってほしいことを聞いてみましょう。\u000a\u000a2. COZMOを振ると、気ままに答えてくれます!"
   },
   "codeLabFeaturedProject_CubeWhack.projectName" : {
-    "translation" : "キューブを引っぱたけ"
+    "translation" : "キューブタップ"
   },
   "codeLabFeaturedProject_CubeWhack.projectDescription" : {
     "translation" : "キューブを引っぱたけ！あなたのハイスコアは？"
@@ -1412,5 +1412,50 @@
   },
   "codeLabSampleProject_ScrollingText.projectName" : {
     "translation" : "テキストをスクロール"
+  },
+  "codeLabFeaturedConstellations.projectName" : {
+    "translation" : "星座"
+  },
+  "codeLabFeaturedConstellations.projectDescription" : {
+    "translation" : "「天文学の日」を天空の星座でお祝いしましょう。"
+  },
+  "codeLabFeaturedConstellations.projectInstructions" : {
+    "translation" : "1. スタートフラグをタップしたら、星と星がつながって星座を作る様子を眺めましょう。2. リプレイすると最初からみることができます！"
+  },
+  "codeLabFeaturedDrivingInCircles.projectName" : {
+    "translation" : "円を描いてドライブ"
+  },
+  "codeLabFeaturedDrivingInCircles.projectDescription" : {
+    "translation" : "「円周率の日」のために集合！"
+  },
+  "codeLabFeaturedDrivingInCircles.projectInstructions" : {
+    "translation" : "1. 5月14日は「全米円周率の日」です！\u000a\u000a2. キューブを、COZMOからみえる場所に1つ置いてください。\u000a\u000a3. スタートフラグをタップすると、COZMOが円周率と算数を使ってキューブの周りを円を描いて走ります。"
+  },
+  "codeLabFeaturedComplimentGenerator.projectName" : {
+    "translation" : "ほめ言葉ジェネレーター"
+  },
+  "codeLabFeaturedComplimentGenerator.projectDescription" : {
+    "translation" : "COZMOから素敵なメッセージがあります！"
+  },
+  "codeLabFeaturedComplimentGenerator.projectInstructions" : {
+    "translation" : "1. COZMOを自分の顔の前に、または励ましを必要としているおともだちの顔の前においてください。\u000a\u000a2. さあハッピーになりましょう。"
+  },
+  "codeLabFeaturedPaddleBall.projectName" : {
+    "translation" : "パドルボール"
+  },
+  "codeLabFeaturedPaddleBall.projectDescription" : {
+    "translation" : "COZMOと対戦しましょう。使うのはあなたの頭！"
+  },
+  "codeLabFeaturedPaddleBall.projectInstructions" : {
+    "translation" : "1. Once you tap the start flag, move your head up and down to control the paddle.\u000a\u000a2. Score points by bouncing the ball past Cozmo’s paddle. Try not to let Cozmo score by bouncing the ball past yours.\u000a\u000a3. Your paddle is on the left, and Cozmo's paddle is on the right.\u000a\u000a4. The first to earn 3 points wins!"
+  },
+  "codeLabFeaturedPotOGoldDetector.projectName" : {
+    "translation" : "宝物を発見"
+  },
+  "codeLabFeaturedPotOGoldDetector.projectDescription" : {
+    "translation" : "「聖パトリックの祝日」の究極の宝探し！"
+  },
+  "codeLabFeaturedPotOGoldDetector.projectInstructions" : {
+    "translation" : "1. スタートフラグをタップすると、COZMOの近くの秘密の場所に宝物が現れます。\u000a\u000a2. あなたのデバイスでCOZMOを動かし、隠れた宝物を探し当てましょう。\u000a\u000a3. デバイスの画面を上下左右に傾けると、COZMOが動きます。\u000a\u000a4. 宝物に近づくと、COZMOの「宝物探知機」のセンサー音が速くなるので、よく聞いてください。"
   }
 }
