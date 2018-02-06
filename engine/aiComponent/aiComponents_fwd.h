@@ -41,6 +41,9 @@ enum class AIComponentID{
   RequestGame,
   // component for tracking severe needs states
   SevereNeeds,
+  // component that caches templated images and only swaps out quadrants that have
+  // changed between requests
+  TemplatedImageCache,
   // whiteboard for behaviors to share information, or to store information only useful to behaviors
   Whiteboard,
   // component for tracking cozmo's work-out behaviors

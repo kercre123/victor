@@ -26,6 +26,7 @@
 #include "engine/aiComponent/puzzleComponent.h"
 #include "engine/aiComponent/requestGameComponent.h"
 #include "engine/aiComponent/severeNeedsComponent.h"
+#include "engine/aiComponent/templatedImageCache.h"
 #include "engine/aiComponent/workoutComponent.h"
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/publicStateBroadcaster.h"
@@ -64,6 +65,7 @@ AIComponentComponents::AIComponentComponents(Robot&                      robot,
                                              PuzzleComponent*            puzzleComponent,
                                              RequestGameComponent*       requestGameComponent,
                                              SevereNeedsComponent*       severeNeedsComponent,
+                                             TemplatedImageCache*        templatedImageCache,
                                              AIWhiteboard*               aiWhiteboard,
                                              WorkoutComponent*           workoutComponent)
 :_robot(robot)
@@ -79,6 +81,7 @@ AIComponentComponents::AIComponentComponents(Robot&                      robot,
   {AIComponentID::Puzzle,                     ComponentWrapper(puzzleComponent, true)},
   {AIComponentID::RequestGame,                ComponentWrapper(requestGameComponent, true)},
   {AIComponentID::SevereNeeds,                ComponentWrapper(severeNeedsComponent, true)},
+  {AIComponentID::TemplatedImageCache,        ComponentWrapper(templatedImageCache, true)},
   {AIComponentID::Whiteboard,                 ComponentWrapper(aiWhiteboard, true)},
   {AIComponentID::Workout,                    ComponentWrapper(workoutComponent, true)}
 }){}
@@ -140,6 +143,7 @@ Result AIComponent::Init(Robot* robot, BehaviorComponent*& customBehaviorCompone
           new RequestGameComponent(robot->HasExternalInterface() ? robot->GetExternalInterface() : nullptr,
                                   robot->GetContext()->GetDataLoader()->GetGameRequestWeightsConfig()),
           new SevereNeedsComponent(*robot),
+          new TemplatedImageCache(robot->GetContext()->GetDataLoader()->GetFacePNGPaths()),
           new AIWhiteboard(*robot),
           new WorkoutComponent(*robot)
     );

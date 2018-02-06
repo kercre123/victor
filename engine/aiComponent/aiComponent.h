@@ -45,6 +45,7 @@ class PuzzleComponent;
 class RequestGameComponent;
 class Robot;
 class SevereNeedsComponent;
+class TemplatedImageCache;
 class WorkoutComponent;
 
 namespace ComponentWrappers{
@@ -62,6 +63,7 @@ public:
                         PuzzleComponent*            puzzleComponent,
                         RequestGameComponent*       requestGameComponent,
                         SevereNeedsComponent*       severeNeedsComponent,
+                        TemplatedImageCache*        templatedImageCache,
                         AIWhiteboard*               aiWhiteboard,
                         WorkoutComponent*           workoutComponent);
   virtual ~AIComponentComponents();
