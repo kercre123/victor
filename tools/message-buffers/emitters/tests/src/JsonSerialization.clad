@@ -104,11 +104,13 @@ structure testStructure_WithLists
   float_32 floatVal,
   uint_16 intVal,
   testEnum enumVal,
-
+  testUnionStructures unionVal,
+  
   bool boolValList[uint_8],
   float_32 floatValList[uint_8],
   uint_16 intValList[uint_8],
   testEnum enumValList[uint_8],
+  testUnionStructures unionValList[uint_8],
 }
 
 }

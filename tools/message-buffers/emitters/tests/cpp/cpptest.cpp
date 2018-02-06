@@ -909,11 +909,16 @@ TEST JsonSerialization_ReturnVal()
   "floatVal": 3.14,
   "intVal": 7,
   "enumVal": "Five",
+  "unionVal": {
+    "type": "testStruct1",
+    "test": false
+  },
 
   "boolValList": [],
   "floatValList": [],
   "intValList": [],
-  "enumValList": []
+  "enumValList": [],
+  "unionValList": []
 })json",
    true},
 
@@ -922,12 +927,36 @@ TEST JsonSerialization_ReturnVal()
   "boolVal": true,
   "floatVal": 3.14,
   "intVal": 7,
-  "enumVal": "asdf",
+  "enumVal": "Five",
+  "unionVal": {
+    "type": "asdf",
+    "test": false
+  },
 
   "boolValList": [],
   "floatValList": [],
   "intValList": [],
-  "enumValList": []
+  "enumValList": [],
+  "unionValList": []
+})json",
+   false},
+    
+    {R"json(
+{
+  "boolVal": true,
+  "floatVal": 3.14,
+  "intVal": 7,
+  "enumVal": "asdf",
+  "unionVal": {
+    "type": "testStruct1",
+    "test": false
+  },
+
+  "boolValList": [],
+  "floatValList": [],
+  "intValList": [],
+  "enumValList": [],
+  "unionValList": []
 })json",
    false},
 
@@ -937,11 +966,29 @@ TEST JsonSerialization_ReturnVal()
   "floatVal": 3.14,
   "intVal": 7,
   "enumVal": "Five",
+  "unionVal": {
+    "type": "testStruct1",
+    "test": false
+  },
 
   "boolValList": [true, false, false],
   "floatValList": [1.05, 2, -99.999, 0.01],
   "intValList": [1, 2, 3],
-  "enumValList": ["One", "Two", "Five"]
+  "enumValList": ["One", "Two", "Five"],
+  "unionValList": [
+    {
+      "type": "testStruct1",
+      "test": true
+    },
+    {
+      "type": "testStruct2",
+      "test": 33
+    },
+    {
+      "type": "testStruct3",
+      "test": "strVal"
+    }
+  ]
 })json",
    true},
 
@@ -951,11 +998,48 @@ TEST JsonSerialization_ReturnVal()
   "floatVal": 3.14,
   "intVal": 7,
   "enumVal": "Five",
+  "unionVal": {
+    "type": "testStruct1",
+    "test": false
+  },
 
   "boolValList": [true, false, false],
   "floatValList": [1.05, 2, -99.999, 0.01],
   "intValList": [1, 2, 3],
-  "enumValList": ["One", "Two", "Five", "not_a_val"]
+  "enumValList": ["One", "Two", "Five"],
+  "unionValList": [
+    {
+      "type": "testStruct1",
+      "test": true
+    },
+    {
+      "type": "testStruct2_invalid",
+      "test": 33
+    },
+    {
+      "type": "testStruct3",
+      "test": "strVal"
+    }
+  ]
+})json",
+   false},    
+
+    {R"json(
+{
+  "boolVal": true,
+  "floatVal": 3.14,
+  "intVal": 7,
+  "enumVal": "Five",
+  "unionVal": {
+    "type": "testStruct1",
+    "test": false
+  },
+
+  "boolValList": [true, false, false],
+  "floatValList": [1.05, 2, -99.999, 0.01],
+  "intValList": [1, 2, 3],
+  "enumValList": ["One", "Two", "Five", "not_a_val"],
+  "unionValList": []
 })json",
    false},
     

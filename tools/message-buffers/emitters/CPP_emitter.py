@@ -803,7 +803,12 @@ class CPPStructEmitter(HStructEmitter):
                                 }}
                                 ''').format(member_name=member.name))
                         else:
-                            self.output.write('\t{member_name}[i].SetFromJSON(json_array[i]);\n'.format(member_name=member.name))
+                            with self.output.indent(1):
+                                self.output.write(textwrap.dedent('''\
+                                if (!{member_name}[i].SetFromJSON(json_array[i])) {{
+                                  return false;
+                                }}
+                                ''').format(member_name=member.name))
 
                     self.output.write('\t}\n')
                 elif isinstance(member.type, ast.DefinedType):
@@ -814,7 +819,12 @@ class CPPStructEmitter(HStructEmitter):
                         }}
                         ''').format(json_name=json_name, member_name=member.name))
                 else:
-                    self.output.write('\t{member_name}.SetFromJSON(root["{json_name}"]);\n'.format(json_name=json_name, member_name=member.name))
+                    with self.output.indent(1):
+                        self.output.write(textwrap.dedent('''\
+                        if (!{member_name}.SetFromJSON(root["{json_name}"])) {{
+                          return false;
+                        }}
+                        ''').format(json_name=json_name, member_name=member.name))
             self.output.write('\t}\n')
 
         self.output.write(textwrap.dedent('''
@@ -1537,7 +1547,11 @@ class CPPUnionEmitter(BaseEmitter):
                     self.output.write('new(&(this->{private_name})) {member_type};\n'.format(private_name=private_name, member_type=cpp_value_type(member.type)))
                     if jsoncpp_as_method(member.type) is None:
                         if isinstance(member.type.type_decl, ast.MessageDecl) and member.type.type_decl.object_type() == "structure":
-                            self.output.write('this->{private_name}.SetFromJSON(json);\n'.format(private_name=private_name))
+                            self.output.write(textwrap.dedent('''\
+                            if (!this->{private_name}.SetFromJSON(json)) {{
+                              return false;
+                            }}
+                            ''').format(private_name=private_name))
                         else:
                             self.output.write('// {member_name} is not a structure, is not serializable.\n'.format(member_name=member.name))
                     else:
@@ -1547,9 +1561,15 @@ class CPPUnionEmitter(BaseEmitter):
                 self.output.write('}\n')
 
         self.output.write(textwrap.dedent('''\
-            \t}
+                else {
+                  return false;
+                }
 
-            \treturn true;
+                return true;
+              }
+              else {
+                return false;
+              }
             }
 
         '''))
