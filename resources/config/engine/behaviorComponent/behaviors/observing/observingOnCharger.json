@@ -1,34 +1,27 @@
 {
-  "behaviorID" : "Observing",
+  "behaviorID" : "ObservingOnCharger",
   "behaviorClass" : "DispatcherStrictPriority",
 
   "interruptActiveBehavior": true,
 
   "behaviors": [
-    "DriveOffCharger",
-    "ObservingInternal"
+    "ObservingOnChargerInternal"
   ],
 
   "anonymousBehaviors" : [
     {
-      "behaviorName" : "ObservingInternal",
+      "behaviorName" : "ObservingOnChargerInternal",
       "behaviorClass" : "DispatcherStrictPriorityWithCooldown",
-    
+
       "interruptActiveBehavior": false,
-    
+  
       "behaviors": [    
         {
-          "behavior": "ObservingLookAtFaces",
-          "cooldown_s": 30.0,
-          "cooldown_random_factor": 0.5
-        },
-        {
-          "behavior": "NothingToDo_Idle",
+          "behavior": "ObservingOnChargerIdle",
           "cooldown_s": 0.0
         }
       ]
     }
-    
   ]
 }
 

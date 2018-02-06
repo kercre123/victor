@@ -1,4 +1,16 @@
 {
   "behaviorID" : "Sleeping",
-  "behaviorClass" : "Sleeping"
+  "behaviorClass" : "DispatcherQueue",
+
+  "behaviors": [
+    "GoToSleep",
+    "SleepingInternal"
+  ],
+
+  "anonymousBehaviors" : [
+    {
+      "behaviorName" : "SleepingInternal",
+      "behaviorClass" : "Sleeping"
+    }
+  ]
 }
