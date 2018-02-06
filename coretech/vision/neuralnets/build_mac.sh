@@ -33,7 +33,7 @@ ${CC} --std=c++11 \
   -Wl,-force_load ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen/lib/libtensorflow-core.a \
   -L${TENSORFLOW_PATH}/tensorflow/contrib/makefile/downloads/nsync/builds/default.macos.c++11 -lnsync \
   -L${CORETECH_EXTERNAL_DIR}/build/opencv-3.4.0/mac/lib/Release   -lopencv_imgproc -lopencv_imgcodecs -lopencv_core \
-  -L${CORETECH_EXTERNAL_DIR}/build/opencv-3.4.0/mac/3rdparty/lib/Release -lippicv -lippiw -llibpng -llibjpeg -llibtiff -lzlib -littnotify \
+  -L${CORETECH_EXTERNAL_DIR}/build/opencv-3.4.0/mac/3rdparty/lib/Release -lippicv -lippiw -llibpng -llibjpeg -llibtiff -lzlib -littnotify -llibjasper -lIlmImf \
   -F${FRAMEWORK_PATH} -framework OpenCL -framework Accelerate \
   -lstdc++ -lm \
   -L${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen/protobuf/lib -lprotobuf -pthread \
