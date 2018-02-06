@@ -191,9 +191,6 @@ public:
 
   // returns the need id of the severe need state that must be expressed (see AIWhiteboard), or Count if none
   NeedId GetRequiredSevereNeedExpression() const { return _requiredSevereNeed; }
-
-  // Force a behavior to update its target blocks but only if it is in a state where it can
-  void UpdateTargetBlocks() const { UpdateTargetBlocksInternal(); }
   
   // Get the ObjectUseIntentions this behavior uses
   virtual std::set<ObjectInteractionIntention>
@@ -430,8 +427,6 @@ protected:
 
   // Stop a helper delegated with SmartDelegateToHelper
   bool StopHelperWithoutCallback();
-
-  virtual void UpdateTargetBlocksInternal() const {};
   
   // Convenience Method for accessing the behavior helper factory
   BehaviorHelperFactory& GetBehaviorHelperFactory();
