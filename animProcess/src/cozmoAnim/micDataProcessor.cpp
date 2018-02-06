@@ -99,112 +99,6 @@ static_assert(
   "Expecting length of RobotInterface::MicDirection::confidenceList to match MicDirectionData::confidenceList");
 
 
-// TODO: VIC-752 Remove this code copied from robotProcess for reading configure data when victor mics aren't broken
-// ------------------------ Begin Stolen HAL Config Loading functionality from hal_config.cpp/h --------------------
-//forward Declarations
-namespace HALConfig {
-  typedef enum {
-    INVALID,
-    FLOAT,
-    DOUBLE,
-    //Add more types here
-  } ValueType;
-  
-  typedef struct {
-    const char* key;
-    ValueType type;
-    void* address;
-  } Item;
-
-  Result ReadConfigFile(const char* path, const HALConfig::Item config[]);
-  void ParseValue(const char* valstr, const char* end, const HALConfig::Item* item);
-  void ParseConfigLine(const char* line, int sz, const HALConfig::Item config[]);
-}
-
-namespace {
-  static const char CONFIG_SEPARATOR = ':';
-}
-  
-void HALConfig::ParseValue(const char* valstr, const char* end, const HALConfig::Item* item)
-{
-  char* endconv = NULL;
-  assert(strlen(valstr) <= end-valstr);
-  double val = strtod(valstr, &endconv);
-  if (endconv > valstr) //valid conversion of at least some chars. 
-    //Open Question: do we reject partially valid entries like "2.0pi", which would get scanned as 2.0?
-  {
-    switch (item->type)
-    {
-    case HALConfig::DOUBLE:
-      *(double*)(item->address) = val;
-      break;
-    case HALConfig::FLOAT:
-      *(float*)(item->address) = val;
-      break;
-    default:
-      assert(!"Invalid Conversion Type");
-      break;
-    }
-  }
-}
-
-void HALConfig::ParseConfigLine(const char* line, int sz, const HALConfig::Item config[])
-{
-  int i;
-  const char* end = line+sz;
-  if (sz <1 ) { return; }
-  while (isspace(*line) ) {if (++line>= end) { return; } } //find first non-whitespace
-  const char* sep = line;
-  while (*sep != CONFIG_SEPARATOR) { if (++sep >= end) { return;} } //find end of key.
-  for (i=0;config[i].address != NULL;i++) {
-    if (strncmp(line, config[i].key, sep-line) == 0) { //match
-      ParseValue(sep+1, end, &config[i]);
-      break;
-    }
-  }
-  return;
-}
-
-Result HALConfig::ReadConfigFile(const char* path, const HALConfig::Item config[] )
-{
-  FILE* fp = fopen(path, "r");
-  if (!fp) {
-    PRINT_NAMED_WARNING("HALConfig::ReadConfigFile","Can't open %s", path);
-    return RESULT_FAIL_FILE_OPEN;
-  }
-  else {
-    while (1) {
-      char* line = NULL;
-      size_t bufsz = 0;
-      ssize_t nread = getline(&line, &bufsz, fp);
-      if (nread > 0) {
-        ParseConfigLine(line, (int) nread, config);
-      }
-      else {
-        break; //EOF;
-      }
-      free(line);
-    }
-  }
-  fclose(fp);
-  return RESULT_OK;
-}
-
-static f32 HAL_SOME_MICS_BROKEN = 0.0f;
-#ifdef SIMULATOR
-static const char* HAL_INI_PATH = "hal.conf";
-#else
-static const char* HAL_INI_PATH = "/data/persist/hal.conf";
-#endif
-const HALConfig::Item  configitems_[]  = {
-  {"Some Mics Broken",     HALConfig::FLOAT, &HAL_SOME_MICS_BROKEN},
-  {0} //Need zeros as end-of-list marker
-};
-// ------------------------ End Stolen HAL Config Loading functionality from hal_config.cpp/h --------------------
-
-
-
-
 MicDataProcessor::MicDataProcessor(const std::string& writeLocation, const std::string& triggerWordDataDir)
 : _writeLocationDir(writeLocation)
 , _recognizer(new SpeechRecognizerTHF())
@@ -215,8 +109,6 @@ MicDataProcessor::MicDataProcessor(const std::string& writeLocation, const std::
   {
     Util::FileUtils::CreateDirectory(_writeLocationDir);
   }
-
-  HALConfig::ReadConfigFile(HAL_INI_PATH, configitems_);
 
   const std::string& pronunciationFileToUse = "";
   (void) _recognizer->Init(pronunciationFileToUse);
@@ -387,37 +279,9 @@ bool MicDataProcessor::ProcessResampledAudio(TimeStamp_t timestamp,
   {
     TimedMicData& nextSample = _immediateAudioBuffer.push_back();
     nextSample.timestamp = timestamp;
-    const bool kAverageValues = (HAL_SOME_MICS_BROKEN != 0.0f);
-    MicDirectionData directionResult{};
-    // TODO: VIC-752 Remove this code for averaging mic data when victor mics aren't broken
-    if (kAverageValues)
-    {
-      std::array<AudioUtil::AudioSample, kSamplesPerBlock * kNumInputChannels> averagedAudioChunk;
-      {
-        ANKI_CPU_PROFILE("AverageMicDataAcrossChannels");
-        // Average the 4 channels and store into our temp array
-        for (uint32_t sampleIdx = 0; sampleIdx < kSamplesPerBlock; ++sampleIdx)
-        {
-          int32_t sumValue = _inProcessAudioBlock[sampleIdx + (0 * kSamplesPerBlock)];
-          sumValue +=        _inProcessAudioBlock[sampleIdx + (1 * kSamplesPerBlock)];
-          sumValue +=        _inProcessAudioBlock[sampleIdx + (2 * kSamplesPerBlock)];
-          sumValue +=        _inProcessAudioBlock[sampleIdx + (3 * kSamplesPerBlock)];
-          
-          const auto averagedValue = static_cast<AudioUtil::AudioSample>(sumValue / 4);
-          averagedAudioChunk[sampleIdx + (kSamplesPerBlock * 0)] = averagedValue;
-          averagedAudioChunk[sampleIdx + (kSamplesPerBlock * 1)] = averagedValue;
-          averagedAudioChunk[sampleIdx + (kSamplesPerBlock * 2)] = averagedValue;
-          averagedAudioChunk[sampleIdx + (kSamplesPerBlock * 3)] = averagedValue;
-        }
-      }
-      directionResult = ProcessMicrophonesSE(averagedAudioChunk.data(), nextSample.audioBlock.data());
-      // When we've averaged the values force set the first direction
-      directionResult.winningDirection = kFirstIndex;
-    }
-    else
-    {
-      directionResult = ProcessMicrophonesSE(_inProcessAudioBlock.data(), nextSample.audioBlock.data());
-    }
+    MicDirectionData directionResult = ProcessMicrophonesSE(
+      _inProcessAudioBlock.data(),
+      nextSample.audioBlock.data());
 
     // Store off this most recent result in our immedate direction tracking
     _micImmediateDirection->AddDirectionSample(directionResult);
