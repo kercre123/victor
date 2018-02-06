@@ -63,7 +63,6 @@ namespace { // "Private members"
 } // "private" namespace
 
 // Forward Declarations
-Result InitMotor();
 Result InitRadio();
 void InitIMU();
 void ProcessIMUEvents();
@@ -137,8 +136,6 @@ Result HAL::Init()
 {
   // Set ID
   robotID_ = Anki::Cozmo::DEFAULT_ROBOT_ID;
-
-  InitMotor();
 
 //#if IMU_WORKING
   InitIMU();
