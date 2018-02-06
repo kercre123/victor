@@ -97,7 +97,7 @@ Result AnimEngine::Init() {
   
   // Set up message handler
   auto * audioInput = static_cast<Audio::EngineRobotAudioInput*>(audioMux->GetInput(regId));
-  AnimProcessMessages::Init( _animationStreamer.get(), audioInput, _context.get());
+  AnimProcessMessages::Init(this, _animationStreamer.get(), audioInput, _context.get());
 
   _context->GetWebService()->Start(_context->GetDataPlatform(), "8889");
 
@@ -167,6 +167,16 @@ Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
 #endif // ENABLE_CE_RUN_TIME_DIAGNOSTICS
 
   return RESULT_OK;
+}
+
+void AnimEngine::HandleMessage(const RobotInterface::TextToSpeechStart & msg)
+{
+  _ttsComponent->HandleMessage(msg);
+}
+
+void AnimEngine::HandleMessage(const RobotInterface::TextToSpeechStop & msg)
+{
+  _ttsComponent->HandleMessage(msg);
 }
 
 

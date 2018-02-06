@@ -160,6 +160,8 @@ union RobotToEngine {
   // Messages relating to trigger word detection
   TriggerWordDetected        triggerWordDetected    = 0xD9,
   MicDirection               micDirection           = 0xDA,
+  
+  TextToSpeechEvent          textToSpeechEvent      = 0xDB,
 
   // Audio
   AudioEngine::Multiplexer::AudioCallbackDuration audioCallbackDuration = 0xE0,

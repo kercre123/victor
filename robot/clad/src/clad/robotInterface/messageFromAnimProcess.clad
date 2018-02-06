@@ -2,6 +2,7 @@
  */
 
 #include "clad/types/animationEvents.clad"
+#include "clad/types/textToSpeechTypes.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -39,6 +40,12 @@ message AnimationEvent
   uint_32   timestamp,
   uint_8    tag,
   AnimEvent event_id
+}
+
+message TextToSpeechEvent
+{
+  uint_8 ttsID,
+  TextToSpeechState ttsState
 }
 
 

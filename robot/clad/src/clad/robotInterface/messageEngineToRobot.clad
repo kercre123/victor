@@ -427,6 +427,24 @@ message RunDebugConsoleFuncMessage {
   uint_8 funcArgs[64]   //   "
 }
 
+//
+// Sent from engine to robot (anim process) to initiate TTS
+//
+// TODO VIC-610: Additional TTS params
+//
+message TextToSpeechStart {
+  
+  uint_8 ttsID, // ID of utterance
+  string text   // Text to be pronounced
+}
+
+//
+// Sent from robot (anim process) to engine to cancel TTS
+//
+message TextToSpeechStop {
+  uint_8 ttsID  // ID of utterance
+}
+
 // ====================================================
 
 enum uint_32 ToRobotAddressSpace
@@ -546,11 +564,13 @@ union EngineToRobot
 
   SetDebugConsoleVarMessage     setDebugConsoleVarMessage   = 0x90,
   RunDebugConsoleFuncMessage    runDebugConsoleFuncMessage  = 0x91,
+  TextToSpeechStart             textToSpeechStart           = 0x92,
+  TextToSpeechStop              textToSpeechStop            = 0x93,
 
   // 0xB0 to 0xFE: To engine, see messageRobotToEngine.clad
 }
 
 
-} // namespace Robot Interface
+} // namespace RobotInterface
 } // namespace Cozmo
 } // namespace Anki

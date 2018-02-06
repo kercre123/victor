@@ -19,6 +19,7 @@
 #include "cozmoAnim/animation/trackLayerComponent.h"
 #include "cozmoAnim/audio/engineRobotAudioInput.h"
 #include "cozmoAnim/animContext.h"
+#include "cozmoAnim/animEngine.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "cozmoAnim/faceDisplay/faceDebugDraw.h"
 #include "cozmoAnim/micDataProcessor.h"
@@ -44,7 +45,7 @@
 #define LOG_CHANNEL    "AnimProcessMessages"
 
 // Trace options
-// #define LOG_TRACE(name, format, ...) PRINT_CH_DEBUG(LOG_CHANNEL, name, format, ##__VA_ARGS__)
+// #define LOG_TRACE(name, format, ...) LOG_DEBUG(name, format, ##__VA_ARGS__)
 #define LOG_TRACE(name, format, ...) {}
 
 // Anonymous namespace for private declarations
@@ -54,6 +55,7 @@ namespace {
   constexpr int MAX_PACKET_BUFFER_SIZE = 2048;
   u8 pktBuffer_[MAX_PACKET_BUFFER_SIZE];
 
+  Anki::Cozmo::AnimEngine*                   _animEngine = nullptr;
   Anki::Cozmo::AnimationStreamer*            _animStreamer = nullptr;
   Anki::Cozmo::Audio::EngineRobotAudioInput* _audioInput = nullptr;
   const Anki::Cozmo::AnimContext*       _context = nullptr;
@@ -276,6 +278,17 @@ void Process_runDebugConsoleFuncMessage(const Anki::Cozmo::RobotInterface::RunDe
   }
 }
 
+void Process_textToSpeechStart(const RobotInterface::TextToSpeechStart& msg)
+{
+  _animEngine->HandleMessage(msg);
+}
+
+void Process_textToSpeechStop(const RobotInterface::TextToSpeechStop& msg)
+{
+  _animEngine->HandleMessage(msg);
+}
+
+
 void AnimProcessMessages::ProcessMessageFromEngine(const RobotInterface::EngineToRobot& msg)
 {
   //LOG_WARNING("AnimProcessMessages.ProcessMessageFromEngine", "%d", msg.tag);
@@ -379,20 +392,24 @@ void AnimProcessMessages::ProcessMessageFromRobot(const RobotInterface::RobotToE
 // ========== START OF CLASS METHODS ==========
 // #pragma mark "Class methods"
 
-Result AnimProcessMessages::Init(AnimationStreamer* animStreamer,
+Result AnimProcessMessages::Init(AnimEngine* animEngine,
+                                 AnimationStreamer* animStreamer,
                                  Audio::EngineRobotAudioInput* audioInput,
                                  const AnimContext* context)
 {
+  // Preconditions
+  DEV_ASSERT(nullptr != animEngine, "AnimProcessMessages.Init.InvalidAnimEngine");
+  DEV_ASSERT(nullptr != animStreamer, "AnimProcessMessages.Init.InvalidAnimStreamer");
+  DEV_ASSERT(nullptr != audioInput, "AnimProcessMessages.Init.InvalidAudioInput");
+  DEV_ASSERT(nullptr != context, "AnimProcessMessages.Init.InvalidAnimContext");
+
   // Setup robot and engine sockets
   AnimComms::InitComms();
 
+  _animEngine   = animEngine;
   _animStreamer = animStreamer;
   _audioInput   = audioInput;
   _context      = context;
-
-  DEV_ASSERT(_animStreamer != nullptr, "AnimProcessMessages.Init.NullAnimStreamer");
-  DEV_ASSERT(_audioInput != nullptr, "AnimProcessMessages.Init.NullAudioInput");
-  DEV_ASSERT(_context != nullptr, "AnimProcessMessages.Init.NullContext");
 
   #ifdef SIMULATOR
   const bool haveBC = true;

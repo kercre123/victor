@@ -15,21 +15,32 @@
 
 #include "coretech/common/shared/types.h"
 
-namespace Anki {
-  
-// Forward declaration:
-namespace Util {
-namespace Data {
-  class DataPlatform;
-}
-}
-  
-namespace Cozmo {
-  
 // Forward declarations
-class AnimContext;
-class AnimationStreamer;
-class TextToSpeechComponent;
+namespace Anki {
+  namespace Cozmo {
+    class AnimContext;
+    class AnimationStreamer;
+    class TextToSpeechComponent;
+  }
+}
+namespace Anki {
+  namespace Cozmo {
+    namespace RobotInterface {
+      struct TextToSpeechStart;
+      struct TextToSpeechStop;
+    }
+  }
+}
+namespace Anki {
+  namespace Util {
+    namespace Data {
+      class DataPlatform;
+    }
+  }
+}
+
+namespace Anki {
+namespace Cozmo {
   
 class AnimEngine
 {
@@ -42,6 +53,10 @@ public:
 
   // Hook this up to whatever is ticking the game "heartbeat"
   Result Update(BaseStationTime_t currTime_nanosec);
+
+  // Message handlers
+  void HandleMessage(const RobotInterface::TextToSpeechStart& msg);
+  void HandleMessage(const RobotInterface::TextToSpeechStop& msg);
 
 protected:
   

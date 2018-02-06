@@ -25,6 +25,8 @@ namespace Cozmo {
 // Forward declarations
 class AnimationStreamer;
 class AnimContext;
+class AnimEngine;
+
 namespace Audio {
 class EngineRobotAudioInput;
 }
@@ -33,8 +35,10 @@ class AnimProcessMessages
 {
 public:
 
-  // Initialize message handlers
-  static Result Init(AnimationStreamer* animStreamer,
+  // Initialize message handlers.
+  // Arguments may not be null.
+  static Result Init(AnimEngine* animEngine,
+                     AnimationStreamer* animStreamer,
                      Audio::EngineRobotAudioInput* audioInput,
                      const AnimContext* context);
 

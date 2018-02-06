@@ -18,15 +18,22 @@
 #include "engine/audio/engineRobotAudioClient.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
+#include "engine/robotInterface/messageHandler.h"
 #include "engine/robotManager.h"
 
+#include "clad/robotInterface/messageEngineToRobot.h"
+#include "clad/robotInterface/messageRobotToEngine.h"
+
 #include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "util/fileUtils/fileUtils.h"
 #include "util/math/math.h"
 #include "util/random/randomGenerator.h"
 
 using SayTextVoiceStyle = Anki::Cozmo::SayTextVoiceStyle;
+
+#define LOG_CHANNEL "TextToSpeech"
 
 #define DEBUG_SAYTEXT_ACTION 0
 
@@ -49,37 +56,47 @@ static bool IsValidVoiceStyle(SayTextVoiceStyle style) {
 }
 #endif
 
+// Return a serial number 1-255.
+// 0 is reserved for "invalid".
+static uint8_t GetNextID()
+{
+  static uint8_t ttsID = 0;
+  uint8_t id = ++ttsID;
+  if (id == 0) {
+    id = ++ttsID;
+  }
+  return id;
+}
+
 namespace Anki {
 namespace Cozmo {
-
-const char* kLocalLogChannel = "Actions";
 
 // Static Method
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool SayTextAction::LoadMetadata(Util::Data::DataPlatform& dataPlatform)
 {
   if (!_intentConfigs.empty()) {
-    PRINT_NAMED_WARNING("SayTextAction.LoadMetadata.AttemptToReloadStaticData", "_intentConfigs");
+    LOG_WARNING("SayTextAction.LoadMetadata.AttemptToReloadStaticData", "_intentConfigs");
     return false;
   }
   
   // Check for file
   static const std::string filePath = "config/engine/sayTextintentConfig.json";
-  if(!Util::FileUtils::FileExists(dataPlatform.pathToResource(Util::Data::Scope::Resources, filePath))) {
-    PRINT_NAMED_ERROR("SayTextAction.LoadMetadata.FileNotFound", "sayTextintentConfig.json");
+  if (!Util::FileUtils::FileExists(dataPlatform.pathToResource(Util::Data::Scope::Resources, filePath))) {
+    LOG_ERROR("SayTextAction.LoadMetadata.FileNotFound", "sayTextintentConfig.json");
     return false;
   }
   
   // Read file
   Json::Value json;
-  if(!dataPlatform.readAsJson(Util::Data::Scope::Resources, filePath, json)) {
-    PRINT_NAMED_ERROR("SayTextAction.LoadMetadata.CanNotRead", "sayTextintentConfig.json");
+  if (!dataPlatform.readAsJson(Util::Data::Scope::Resources, filePath, json)) {
+    LOG_ERROR("SayTextAction.LoadMetadata.CanNotRead", "sayTextintentConfig.json");
     return false;
   }
   
   // Load Intent Config
   if (json.isNull() || !json.isObject()) {
-    PRINT_NAMED_ERROR("SayTextAction.LoadMetadata.json.IsNull", "or.NotIsObject");
+    LOG_ERROR("SayTextAction.LoadMetadata.json.IsNull", "or.NotIsObject");
     return false;
   }
   
@@ -117,26 +134,17 @@ bool SayTextAction::LoadMetadata(Util::Data::DataPlatform& dataPlatform)
 SayTextAction::SayTextAction(const std::string& text,
                              const SayTextVoiceStyle style,
                              const float durationScalar,
-                             const float voicePitch)
+                             const float pitchScalar)
 : IAction("SayText",
           RobotActionType::SAY_TEXT,
           (u8)AnimTrackFlag::NO_TRACKS)
 , _text(text)
 , _style(style)
 , _durationScalar(durationScalar)
-, _voicePitch(voicePitch)
-//, _ttsOperationId(TextToSpeechComponent::kInvalidOperationId)
+, _pitchScalar(pitchScalar)
 //, _animation("SayTextAnimation") // TODO: SayTextAction is broken (VIC-360)
 {
-  PRINT_CH_INFO(kLocalLogChannel,
-                "SayTextAction.InitWithStyle",
-                "Text '%s' Style '%s' DurScalar %f Pitch %f",
-                Util::HidePersonallyIdentifiableInfo(_text.c_str()),
-                EnumToString(_style),
-                _durationScalar,
-                _voicePitch);
-  
-  GenerateTtsAudio();
+
 } // SayTextAction()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -146,7 +154,6 @@ SayTextAction::SayTextAction(const std::string& text, const SayTextIntent intent
           (u8)AnimTrackFlag::NO_TRACKS)
 , _text(text)
 , _intent(intent)
-//, _ttsOperationId(TextToSpeechComponent::kInvalidOperationId)
 // , _animation("SayTextAnimation") // TODO: SayTextAction is broken (VIC-360)
 {
 
@@ -183,22 +190,20 @@ void SayTextAction::OnRobotSet()
     
     // Get Pitch val
     const SayTextIntentConfig::ConfigTrait& pitchTrait = config.FindPitchTraitTextLength(Util::numeric_cast<uint>(_text.length()));
-    _voicePitch = pitchTrait.GetDuration( GetRobot().GetRNG() );
+    _pitchScalar = pitchTrait.GetDuration( GetRobot().GetRNG() );
   }
   else {
-    PRINT_NAMED_ERROR("SayTextAction.RobotSet.CanNotFind.SayTextIntentConfig", "%s", EnumToString(_intent));
+    LOG_ERROR("SayTextAction.RobotSet.CanNotFind.SayTextIntentConfig", "%s", EnumToString(_intent));
   }
   
-  PRINT_CH_INFO(kLocalLogChannel,
-                "SayTextAction.RobotSet",
-                "Text '%s' Intent '%s' Style '%s' DurScalar %f Pitch %f",
-                Util::HidePersonallyIdentifiableInfo(_text.c_str()),
-                EnumToString(_intent),
-                EnumToString(_style),
-                _durationScalar,
-                _voicePitch);
-  
-  GenerateTtsAudio();
+  LOG_INFO("SayTextAction.RobotSet",
+           "Text '%s' Intent '%s' Style '%s' DurScalar %f Pitch %f",
+           Util::HidePersonallyIdentifiableInfo(_text.c_str()),
+           EnumToString(_intent),
+           EnumToString(_style),
+           _durationScalar,
+           _pitchScalar);
+
 }
 
 
@@ -212,7 +217,55 @@ void SayTextAction::SetAnimationTrigger(AnimationTrigger trigger, u8 ignoreTrack
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ActionResult SayTextAction::Init()
 {
-  PRINT_NAMED_WARNING("SayTextAction.Init.Disabled", "TTS disabled");
+  using RobotToEngine = Anki::Cozmo::RobotInterface::RobotToEngine;
+  using RobotToEngineTag = Anki::Cozmo::RobotInterface::RobotToEngineTag;
+  using TextToSpeechStart = Anki::Cozmo::RobotInterface::TextToSpeechStart;
+
+  // Assign a unique ID for this utterance. The ttsID is used to track lifetime
+  // of data associated with each utterance. 
+
+  _ttsID = GetNextID();
+
+  // When does this action expire?
+  _expiration_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + _timeout_sec;
+
+  LOG_INFO("SayTextAction.Init", "ttsID %d text %s", _ttsID, _text.c_str());
+
+ // Set up a callback to process TTS events.  When we receive a terminal event,
+ // the ttsState is updated to match.    
+  auto callback = [this](const AnkiEvent<RobotToEngine>& event)
+  {
+    const auto & ttsEvent = event.GetData().Get_textToSpeechEvent();
+    const auto ttsID = ttsEvent.ttsID;
+    const auto ttsState = ttsEvent.ttsState;
+    
+    // If this is our ID, update state to match
+    if (ttsID == _ttsID) {
+      LOG_DEBUG("SayTextAction.callback", "ttsID %hhu state was %hhu now %hhu", _ttsID, _ttsState, ttsState);
+      _ttsState = ttsState;
+    }
+
+  };
+      
+  // Subscribe to TTS events
+  auto & robot = GetRobot();
+  auto * messageHandler = robot.GetRobotMessageHandler();
+  _signalHandle = messageHandler->Subscribe(robot.GetID(), RobotToEngineTag::textToSpeechEvent, callback);
+   
+  // Compose a TTS request
+  TextToSpeechStart msg;
+  msg.ttsID = _ttsID;
+  msg.text = _text;
+
+  // Send request to animation process
+  const Result result = robot.SendMessage(RobotInterface::EngineToRobot(std::move(msg)));
+  if (RESULT_OK != result) {
+    LOG_ERROR("SayTextAction.Init", "Unable to send robot message (result %d)", result);
+    _ttsState = TextToSpeechState::Done;
+    return ActionResult::ABORT;
+  }
+
+  return ActionResult::SUCCESS;
 
   #ifdef notdef
   using namespace AudioMetaData;
@@ -350,21 +403,24 @@ ActionResult SayTextAction::Init()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ActionResult SayTextAction::CheckIfDone()
 {
-  PRINT_NAMED_WARNING("SayTextAction.CheckIfDone.Disabled", "TTS disabled");
-
-  #ifdef notdef
-  DEV_ASSERT(_isAudioReady, "SayTextAction.CheckIfDone.TextToSpeechNotReady");
-  
-  if (DEBUG_SAYTEXT_ACTION) {
-    PRINT_CH_INFO(kLocalLogChannel, "SayTextAction.CheckIfDone.UpdatingAnimation", "");
+  // Is TTS still in progress?
+  if (_ttsState == TextToSpeechState::Done) {
+    LOG_DEBUG("SayTextAction.CheckIfDone", "ttsID %d is done", _ttsID);
+    return ActionResult::SUCCESS;
   }
-  
-  return _playAnimationAction->Update();
-  #endif
 
-  return ActionResult::SUCCESS;
+  // Has this action expired?
+  const float now_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  if (_expiration_sec < now_sec) {
+    LOG_DEBUG("SayTextAction.CheckIfDone", "ttsID %d has expired", _ttsID);
+    return ActionResult::TIMEOUT;
+  }
+
+  // None of the above
+  return ActionResult::RUNNING;
+
 } // CheckIfDone()
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SayTextAction::GenerateTtsAudio()
 {
@@ -492,7 +548,7 @@ SayTextAction::SayTextIntentConfig::SayTextIntentConfig(const std::string& inten
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const SayTextAction::SayTextIntentConfig::ConfigTrait& SayTextAction::SayTextIntentConfig::FindDurationTraitTextLength(uint textLength) const
 {
-  for ( const auto& aTrait : durationTraits ) {
+  for (const auto& aTrait : durationTraits) {
     if (aTrait.textLengthMin <= textLength && aTrait.textLengthMax >= textLength) {
       return aTrait;
     }
@@ -503,7 +559,7 @@ const SayTextAction::SayTextIntentConfig::ConfigTrait& SayTextAction::SayTextInt
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const SayTextAction::SayTextIntentConfig::ConfigTrait& SayTextAction::SayTextIntentConfig::FindPitchTraitTextLength(uint textLength) const
 {
-  for ( const auto& aTrait : pitchTraits ) {
+  for (const auto& aTrait : pitchTraits) {
     if (aTrait.textLengthMin <= textLength && aTrait.textLengthMax >= textLength) {
       return aTrait;
     }
