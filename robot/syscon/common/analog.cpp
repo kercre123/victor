@@ -34,12 +34,12 @@ static bool chargeAllowed;
 static bool is_charging;
 static int vext_debounce;
 static bool last_vext = false;
-static bool bouncy_button;
-static int bouncy_count;
-static int hold_count;
+static bool bouncy_button = false;
+static int bouncy_count = 0;
+static int hold_count = 0;
 
 uint16_t volatile Analog::values[ADC_CHANNELS];
-bool Analog::button_pressed;
+bool Analog::button_pressed = false;
 
 
 static void disableVMain(void) {
@@ -153,6 +153,10 @@ bool Analog::delayCharge() {
 }
 
 void Analog::tick(void) {
+  static const int MINIMUM_RELEASE_UNSTUCK = 10;
+  static int total_release = 0;
+  
+
   // On-charger delay
   bool vext_now = Analog::values[ADC_VEXT] >= TRANSITION_POINT;
 
@@ -175,6 +179,16 @@ void Analog::tick(void) {
   // Button logic
   bool new_button = (values[ADC_BUTTON] >= BUTTON_THRESHOLD);
 
+  // Trap stuck down button
+  if (total_release < MINIMUM_RELEASE_UNSTUCK) {
+    if (!new_button) {
+      total_release++;
+    } else {
+      total_release = 0;
+    }
+  }
+
+  // Debounce the button
   if (bouncy_button != new_button) {
     bouncy_button = new_button;
     bouncy_count = 0;
@@ -199,10 +213,7 @@ void Analog::tick(void) {
       enableVMain();
     }
   } else {
-    if (hold_count >= POWER_WIPE_TIME) {
-      // Switch back to transmission mode
-      BODY_TX::mode(MODE_ALTERNATE);
-    } else if (hold_count >= POWER_DOWN_TIME) {
+    if (hold_count >= POWER_DOWN_TIME && hold_count < POWER_WIPE_TIME) {
       Power::setMode(POWER_STOP);
     }
 

@@ -205,6 +205,7 @@ void Comms::tick(void) {
   Opto::transmit(&outboundPacket.sync.payload);
 #if MICDATA_ENABLED
   Mics::transmit(outboundPacket.sync.payload.audio);
+  Mics::errorCode(outboundPacket.sync.payload.micError);
 #endif
   Touch::transmit(outboundPacket.sync.payload.touchLevel);
   outboundPacket.sync.payload.flags =
@@ -260,6 +261,9 @@ static void ProcessMessage(InboundPacket& packet) {
 
   // Process our packet
   if (foundCRC == footer->checksum) {
+    // Emergency eject in case of recovery mode
+    BODY_TX::mode(MODE_ALTERNATE);
+
     switch (packet.header.payload_type) {
       case PAYLOAD_SHUT_DOWN:
         Power::setMode(POWER_STOP);

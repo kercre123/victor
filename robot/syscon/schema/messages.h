@@ -217,7 +217,8 @@ struct BodyToHead
   struct BatteryState battery;
   struct RangeData proximity;
   uint16_t touchLevel[2];
-  uint8_t _unused[32];  // Future expansion
+  uint16_t micError[2]; // Raw bits from a segment of mic data (stuck bit detect)
+  uint8_t _unused[28];  // Future expansion
 #if MICDATA_ENABLED
   int16_t audio[MICDATA_SAMPLES_COUNT];
 #endif

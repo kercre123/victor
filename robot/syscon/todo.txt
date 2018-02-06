@@ -6,7 +6,12 @@ x add "sensors valid" flag
 x Add temperature to ADC output
 x report up opto sensors for self test
 x turn off encoders / TOF / cliff sensors when drop exchange has timed out
+x Mic "failure" detect
+x Hold recovery (Tx) low until valid packet received
+x do not auto boot if HW watchdog flag is set
+x Have a "ignore on" state for stuck button
 
+* Microdrop for the bootloader (button state)
 * Put opto sensors to sleep when asked
 * 3.3v auto power off
 * Add cube encryption

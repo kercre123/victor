@@ -32,8 +32,6 @@ bool validate(void) {
 }
 
 static bool boot_test(void) {
-  BODY_TX::mode(MODE_OUTPUT);
-
   // Failure count reached max
   if (APP->faultCounter[MAX_FAULT_COUNT - 1] != FAULT_NONE) {
     BODY_TX::reset();
@@ -42,11 +40,10 @@ static bool boot_test(void) {
 
   // Evil flag not set
   if (APP->fingerPrint != COZMO_APPLICATION_FINGERPRINT) {
-    BODY_TX::reset();
     return false;
   }
 
-  BODY_TX::set();
+  // Check certificate
   return validate();
 }
 
@@ -96,6 +93,9 @@ int main(void) {
     Flash::eraseApplication();
 
     // Wait for firmware
+    Comms::run();
+  } else if (RCC->CSR & RCC_CSR_IWDGRSTF) {
+    // Hardware watchdog trap
     Comms::run();
   }
 

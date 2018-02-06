@@ -162,6 +162,9 @@ extern "C" void USART1_IRQHandler(void) {
     return ;
   }
 
+  // Emergency eject in case of recovery mode
+  BODY_TX::mode(MODE_ALTERNATE);
+
   switch (inbound.header.payload_type) {
   case PAYLOAD_SHUT_DOWN:
     Power::setMode(POWER_STOP);

@@ -99,6 +99,11 @@ void Mics::init(void) {
   start_mic_spi(TIM_CR1_CEN, MIC_SPI_CR1, (void*)&TIM15->CR1);
 }
 
+void Mics::errorCode(uint16_t* data) {
+  data[0] = *(uint16_t*)&pdm_data[0][0];
+  data[0] = *(uint16_t*)&pdm_data[1][0];
+}
+
 void Mics::transmit(int16_t* payload) {
   memcpy(payload, audio_data[sample_index < IRQS_PER_FRAME ? 1 : 0], sizeof(audio_data[0]));
 }
