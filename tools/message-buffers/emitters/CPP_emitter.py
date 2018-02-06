@@ -796,13 +796,23 @@ class CPPStructEmitter(HStructEmitter):
                         if jsoncpp_as_method(member.type.member_type) is not None:
                             self.output.write('\t{member_name}[i] = json_array[i].{as_method};\n'.format(member_name=member.name, as_method=jsoncpp_as_method(member.type.member_type)))
                         elif isinstance(member.type.member_type, ast.DefinedType):
-                            self.output.write('\t{member_name}[i] = {member_type}FromString(json_array[i].asString());\n'.format(member_type=cpp_value_type(member.type.member_type), member_name=member.name))
+                            with self.output.indent(1):
+                                self.output.write(textwrap.dedent('''\
+                                if (!EnumFromString(json_array[i].asString(), {member_name}[i])) {{
+                                  return false;
+                                }}
+                                ''').format(member_name=member.name))
                         else:
                             self.output.write('\t{member_name}[i].SetFromJSON(json_array[i]);\n'.format(member_name=member.name))
 
                     self.output.write('\t}\n')
                 elif isinstance(member.type, ast.DefinedType):
-                    self.output.write('\t{member_name} = {member_type}FromString(root["{json_name}"].asString());\n'.format(member_type=cpp_value_type(member.type), json_name=json_name, member_name=member.name))
+                    with self.output.indent(1):
+                        self.output.write(textwrap.dedent('''\
+                        if (!EnumFromString(root["{json_name}"].asString(), {member_name})) {{
+                          return false;
+                        }}
+                        ''').format(json_name=json_name, member_name=member.name))
                 else:
                     self.output.write('\t{member_name}.SetFromJSON(root["{json_name}"]);\n'.format(json_name=json_name, member_name=member.name))
             self.output.write('\t}\n')

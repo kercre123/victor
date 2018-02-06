@@ -98,4 +98,17 @@ union testUnion_NestedNoDefault
   testStruct3 t3
 }
 
+structure testStructure_WithLists
+{
+  bool boolVal,
+  float_32 floatVal,
+  uint_16 intVal,
+  testEnum enumVal,
+
+  bool boolValList[uint_8],
+  float_32 floatValList[uint_8],
+  uint_16 intValList[uint_8],
+  testEnum enumValList[uint_8],
+}
+
 }

@@ -897,6 +897,83 @@ TEST JsonSerialization_PartialJson() {
   PASS();
 }
 
+TEST JsonSerialization_ReturnVal()
+{
+  // a list of pairs of json values (as string) and a bool. SetFromJSON should return the same value as the
+  // bool
+
+  std::vector<std::pair<std::string, bool>> jsonMap = {{
+    {R"json(
+{
+  "boolVal": true,
+  "floatVal": 3.14,
+  "intVal": 7,
+  "enumVal": "Five",
+
+  "boolValList": [],
+  "floatValList": [],
+  "intValList": [],
+  "enumValList": []
+})json",
+   true},
+
+    {R"json(
+{
+  "boolVal": true,
+  "floatVal": 3.14,
+  "intVal": 7,
+  "enumVal": "asdf",
+
+  "boolValList": [],
+  "floatValList": [],
+  "intValList": [],
+  "enumValList": []
+})json",
+   false},
+
+    {R"json(
+{
+  "boolVal": true,
+  "floatVal": 3.14,
+  "intVal": 7,
+  "enumVal": "Five",
+
+  "boolValList": [true, false, false],
+  "floatValList": [1.05, 2, -99.999, 0.01],
+  "intValList": [1, 2, 3],
+  "enumValList": ["One", "Two", "Five"]
+})json",
+   true},
+
+    {R"json(
+{
+  "boolVal": true,
+  "floatVal": 3.14,
+  "intVal": 7,
+  "enumVal": "Five",
+
+  "boolValList": [true, false, false],
+  "floatValList": [1.05, 2, -99.999, 0.01],
+  "intValList": [1, 2, 3],
+  "enumValList": ["One", "Two", "Five", "not_a_val"]
+})json",
+   false},
+    
+    }};
+
+  Json::Reader reader;
+  
+  for( const auto& stringPair : jsonMap ) {
+    Json::Value root;
+    ASSERT(reader.parse(stringPair.first, root));
+
+    JsonSerialization::testStructure_WithLists test;
+    ASSERT_EQ(test.SetFromJSON(root), stringPair.second);
+  }
+  
+  PASS();
+}
+
 TEST Enum_Complex() {
   ASSERT_EQ(FooEnum::foo1, 0);
   ASSERT_EQ(FooEnum::foo2, 8);
@@ -1104,6 +1181,7 @@ SUITE(CPP_Emitter) {
   RUN_TEST(JsonSerialization_Unions);
   RUN_TEST(JsonSerialization_Enums);
   RUN_TEST(JsonSerialization_PartialJson);
+  RUN_TEST(JsonSerialization_ReturnVal);
 
   // Enum Concept
   RUN_TEST(EnumConcept);
