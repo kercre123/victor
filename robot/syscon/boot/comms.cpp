@@ -6,6 +6,7 @@
 #include "common.h"
 #include "hardware.h"
 #include "power.h"
+#include "analog.h"
 
 #include "stm32f0xx.h"
 
@@ -15,7 +16,10 @@ extern bool validate(void);
 
 static struct {
   SpineMessageHeader header;
-  AckMessage payload;
+  union {
+    AckMessage ack;
+    MicroBodyToHead sync;
+  };
   SpineMessageFooter footer;
 } outbound;
 
@@ -47,8 +51,13 @@ static uint32_t crc(const void* ptr, int bytes) {
 
 static void sendAck(Ack c) {
   // Frame a dummy packet
-  outbound.payload.status = c;
-  outbound.footer.checksum = crc(&outbound.payload, sizeof(outbound.payload));
+  outbound.header.payload_type = PAYLOAD_ACK;
+  outbound.header.bytes_to_follow = sizeof(outbound.ack);
+  outbound.ack.status = c;
+  outbound.footer.checksum = crc(&outbound.ack, sizeof(outbound.ack));
+
+  // Cancel any existing transfer
+  DMA1_Channel2->CCR &= ~DMA_CCR_EN;
 
   // Fire out ourbound data
   DMA1_Channel2->CCR = DMA_CCR_MINC
@@ -85,8 +94,6 @@ void Comms::run(void) {
 
   // Setup our constants for outbound data
   outbound.header.sync_bytes = SYNC_BODY_TO_HEAD;
-  outbound.header.payload_type = PAYLOAD_ACK;
-  outbound.header.bytes_to_follow = sizeof(outbound.payload);
 
   // Configure our interrupts
   NVIC_SetPriority(USART1_IRQn, 2);
@@ -97,6 +104,26 @@ void Comms::run(void) {
   while (!g_exitRuntime) __asm("WFI");
 
   NVIC_DisableIRQ(USART1_IRQn);
+}
+
+void Comms::tick() {
+  // Frame a dummy packet
+  outbound.header.payload_type = PAYLOAD_BOOT_FRAME;
+  outbound.header.bytes_to_follow = sizeof(outbound.sync);
+  outbound.sync.buttonPressed = Analog::button_pressed ? 1 : 0;
+  outbound.footer.checksum = crc(&outbound.sync, sizeof(outbound.sync));
+
+  // Cancel any existing transfer
+  DMA1_Channel2->CCR &= ~DMA_CCR_EN;
+
+  // Fire out ourbound data
+  DMA1_Channel2->CCR = DMA_CCR_MINC
+                     | DMA_CCR_DIR;
+  DMA1_Channel2->CPAR = (uint32_t)&USART1->TDR;
+  DMA1_Channel2->CMAR = (uint32_t)&outbound;
+  DMA1_Channel2->CNDTR = sizeof(outbound);
+
+  DMA1_Channel2->CCR |= DMA_CCR_EN;
 }
 
 extern "C" void USART1_IRQHandler(void) {

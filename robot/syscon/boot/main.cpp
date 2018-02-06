@@ -78,6 +78,7 @@ extern "C" void TIM14_IRQHandler(void) {
   #endif
   TIM14->SR = 0;
   Analog::tick();
+  Comms::tick();
 }
 
 int main(void) {

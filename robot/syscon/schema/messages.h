@@ -68,7 +68,8 @@ enum {
   PAYLOAD_DFU_PACKET  = 0x6675,
   PAYLOAD_SHUT_DOWN   = 0x6473,
   PAYLOAD_BOOT_FAIL   = 0x6662,
-  PAYLOAD_TYPE_COUNT  = 10,
+  PAYLOAD_BOOT_FRAME  = 0x6266,
+  PAYLOAD_TYPE_COUNT  = 11,
 };
 typedef uint16_t PayloadId;
 
@@ -236,6 +237,13 @@ struct HeadToBody
   int16_t motorPower[4];
   uint8_t ledColors[16];
   uint8_t _unused[32];  // Future expansion
+};
+
+// Must be same size as ack message
+struct MicroBodyToHead
+{
+  uint8_t buttonPressed;
+  uint8_t _unused[3];
 };
 
 struct AckMessage
