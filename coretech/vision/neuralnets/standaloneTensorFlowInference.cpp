@@ -69,7 +69,8 @@ int main(int argc, char **argv)
     PRINT_NAMED_ERROR(argv[0], "Failed to load model from path: %s", modelPath.c_str());
     return -1;
   }
-  std::cout << "Loaded model, waiting for images" << std::endl;
+  
+  std::cout << "Detector initialized, waiting for images" << std::endl;
 
   while(true)
   {
