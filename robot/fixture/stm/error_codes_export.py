@@ -1,7 +1,7 @@
 #!python
 #export error code list from source header to a CSV file
 
-infile = "fixture.h"
+infile = "app/fixture.h"
 outfile = "error_codes.csv"
 parsed_lines = 0
 num_ecodes = 0
