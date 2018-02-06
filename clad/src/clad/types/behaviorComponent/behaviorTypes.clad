@@ -36,6 +36,7 @@ enum uint_8 BehaviorClass {
   GoHome,
   GuardDog,
   InteractWithFaces,
+  InternalStatesBehavior,
   KnockOverCubes,
   LiftLoadTest,
   LookAround,
