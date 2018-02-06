@@ -186,10 +186,10 @@ static int dequeue(void* out, int size) {
 }
 
 void Comms::tick(void) {
-  // Soft-watchdog (This is lame)
+  // Soft-watchdog (Disable power to sensors when robot process is idle)
   if (missed_frames < MAX_MISSED_FRAMES) {
     missed_frames++;
-  } else if (Power::sensorsValid) {
+  } else if (Power::sensorsValid()) {
     Power::setMode(POWER_CALM);
   }
 
