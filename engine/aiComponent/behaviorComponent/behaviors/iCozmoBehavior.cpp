@@ -76,9 +76,8 @@ static const std::string kIdleLockPrefix             = "Behavior_";
 // Keys for loading in anonymous behaviors
 static const char* kAnonymousBehaviorMapKey          = "anonymousBehaviors";
 static const char* kAnonymousBehaviorName            = "behaviorName";
-static const char* kAnonymousBehaviorParams          = "params";
   
-static const char* kBehaviorDebugLabel               = "_debugLabel";
+static const char* kBehaviorDebugLabel               = "debugLabel";
 }
 
   
@@ -320,28 +319,25 @@ void ICozmoBehavior::InitInternal()
                   GetDebugLabel().c_str(),
                   behaviorName.c_str());
       
-      const BehaviorClass behaviorClass = BehaviorTypesWrapper::BehaviorClassFromString(
-        JsonTools::ParseString(entry, kBehaviorClassKey, debugStr + "BehaviorClassMissing"));
-      Json::Value params;
-      if(entry.isMember(kAnonymousBehaviorParams)){
-        params = entry[kAnonymousBehaviorParams];
-      }
-      
       if( !entry.isMember( kBehaviorDebugLabel ) ) {
-        params[kBehaviorDebugLabel] = "@" + behaviorName;
+        entry[kBehaviorDebugLabel] = "@" + behaviorName;
       } else {
         PRINT_NAMED_ERROR("ICozmoBehavior.InitInternal.AnonymousParamIsReserved",
-                          "anon behavior '%s' %s contains the reserved field '%s'",
+                          "anon behavior '%s' contains the reserved field '%s'",
                           GetDebugLabel().c_str(),
-                          kAnonymousBehaviorParams,
                           kBehaviorDebugLabel );
       }
 
       // check for duplicate behavior names since maps require a unique key
       auto it = _anonymousBehaviorMap.find(behaviorName);
       if(it == _anonymousBehaviorMap.end()){
+        std::string classStr = JsonTools::ParseString(entry, kBehaviorClassKey, debugStr + "BehaviorClassMissing");
+        const BehaviorClass behaviorClass = BehaviorTypesWrapper::BehaviorClassFromString(classStr);
+        // Remove the class from the JSON entry to avoid anonymous factory warning - this will break if we enter a world
+        // where Init can be called twice
+        entry.removeMember(kBehaviorClassKey);
         auto resultPair = _anonymousBehaviorMap.insert(std::make_pair(behaviorName,
-                                                       factory.CreateBehavior(behaviorClass, params)));
+                                                       factory.CreateBehavior(behaviorClass, entry)));
 
         DEV_ASSERT_MSG(resultPair.first->second != nullptr, "ICozmoBehavior.InitInternal.FailedToAllocateAnonymousBehavior",
                        "Failed to allocate new anonymous behavior (%s) within behavior %s",
@@ -361,6 +357,8 @@ void ICozmoBehavior::InitInternal()
       }
     }
   }
+  // Don't need the map anymore, plus map is altered as part of iteration so it's no longer valid
+  _anonymousBehaviorMapConfig.clear();
 
 
   // Allow internal init to happen before subscribing to tags in case additional
