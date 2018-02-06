@@ -114,7 +114,6 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort
   
   using namespace ExternalInterface;
   helper.SubscribeGameToEngine<MessageGameToEngineTag::ImageRequest>();
-  helper.SubscribeGameToEngine<MessageGameToEngineTag::ReadAnimationFile>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::ReadFaceAnimationDir>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::RedirectViz>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::ResetFirmware>();
@@ -613,14 +612,6 @@ Robot* CozmoEngine::GetRobotByID(const RobotID_t robotID) {
 
 std::vector<RobotID_t> const& CozmoEngine::GetRobotIDList() const {
   return _context->GetRobotManager()->GetRobotIDList();
-}
-
-template<>
-void CozmoEngine::HandleMessage(const ExternalInterface::ReadAnimationFile& msg)
-{
-  // TODO: Tell animation process to read the anim dir?
-  PRINT_NAMED_WARNING("CozmoEngine.HandleMessage.ReadAnimationFile.NotHookedUp", "");
-  //_context->GetRobotManager()->ReadAnimationDir();
 }
 
 template<>

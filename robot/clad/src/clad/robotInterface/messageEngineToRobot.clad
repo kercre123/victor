@@ -327,6 +327,11 @@ message LockAnimTracks
   uint_8 whichTracks    // See AnimTrackFlags
 }
 
+message AddAnim
+{
+  string animPath
+}
+
 message RecordHeading
 {
 }
@@ -514,7 +519,7 @@ union EngineToRobot
   // 0x50 to 0xAF: To Anim Process
   PlayAnim                      playAnim                    = 0x50,
   LockAnimTracks                lockAnimTracks              = 0x51,
-  //      FREE SLOT                                         = 0x52,
+  AddAnim                       addAnim                     = 0x52,
   AbortAnimation                abortAnimation              = 0x53,
 
   StartRecordingMics            startRecordingMics          = 0x54,

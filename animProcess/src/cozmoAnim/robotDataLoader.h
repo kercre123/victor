@@ -33,6 +33,7 @@ class DataPlatform;
 namespace Cozmo {
 
 class CannedAnimationContainer;
+class Animation;
 class AnimContext;
 
 class RobotDataLoader : private Util::noncopyable
@@ -48,6 +49,7 @@ public:
   // Loads all data excluding configs, using DispatchWorker to parallelize.
   // Blocks until the data is loaded.
   void LoadNonConfigData();
+  void LoadAnimationFile(const std::string& path);
   
   // Starts a thread to handle loading non-config data if it hasn't been done yet.
   // Can be repeatedly called to get an updated loading complete ratio. Returns
@@ -55,9 +57,11 @@ public:
   bool DoNonConfigDataLoading(float& loadingCompleteRatio_out);
 
   const Json::Value & GetTextToSpeechConfig() const { return _tts_config; }
-  CannedAnimationContainer* GetCannedAnimations() const { assert(_cannedAnimations); return _cannedAnimations.get(); }
+  Animation* GetCannedAnimation(const std::string& name);
   
 private:
+  void NotifyAnimAdded(const std::string& animName, uint32_t animLength);
+
   const AnimContext* const _context;
   const Util::Data::DataPlatform* _platform;
 

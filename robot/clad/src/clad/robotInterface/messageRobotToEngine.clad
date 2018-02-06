@@ -146,9 +146,10 @@ union RobotToEngine {
   ManufacturingID            mfgId                  = 0xCB,
   FirmwareVersion            firmwareVersion        = 0xCC,  
 
-  // FREE SLOTS 0xCD to 0xD3
+  // FREE SLOTS 0xCD to 0xD2
 
   // Messages from animation process to engine
+  AnimationAdded             animAdded              = 0xD3,
   RobotAvailable             robotAvailable         = 0xD4,
   AnimationEvent             animEvent              = 0xD5,
   AnimationStarted           animStarted            = 0xD6,

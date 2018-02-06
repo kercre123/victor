@@ -178,6 +178,7 @@ public:
   void HandleMessage(const T& msg);
   
   // Robot message handlers
+  void HandleAnimAdded(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   void HandleAnimStarted(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   void HandleAnimEnded(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   void HandleAnimationEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message);

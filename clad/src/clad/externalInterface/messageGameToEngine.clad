@@ -689,6 +689,7 @@ message ReadFaceAnimationDir {
 
 // ReadAnimationFile
 message ReadAnimationFile {
+  string full_path
 }
 
 // RequestAvailableAnimations

@@ -117,21 +117,17 @@ namespace Cozmo {
   
   Result AnimationStreamer::Init()
   {
-    DEV_ASSERT(nullptr != _context, "AnimationStreamer.Init.NullContext");
-    DEV_ASSERT(nullptr != _context->GetDataLoader(), "AnimationStreamer.Init.NullRobotDataLoader");
-    DEV_ASSERT(nullptr != _context->GetDataLoader()->GetCannedAnimations(), "AnimationStreamer.Init.NullCannedAnimationsContainer");
-    _animationContainer = _context->GetDataLoader()->GetCannedAnimations();
-    
     SetDefaultKeepFaceAliveParams();
     
     // TODO: Restore ability to subscribe to messages here?
     //       It's currently hard to do with CPPlite messages.
     // SetupHandlers(_context->GetExternalInterface());
-    
 
     // Set neutral face
+    DEV_ASSERT(nullptr != _context, "AnimationStreamer.Init.NullContext");
+    DEV_ASSERT(nullptr != _context->GetDataLoader(), "AnimationStreamer.Init.NullRobotDataLoader");
     const std::string neutralFaceAnimName = "anim_neutral_eyes_01";
-    _neutralFaceAnimation = _animationContainer->GetAnimation(neutralFaceAnimName);
+    _neutralFaceAnimation = _context->GetDataLoader()->GetCannedAnimation(neutralFaceAnimName);
     if (nullptr != _neutralFaceAnimation)
     {
       auto frame = _neutralFaceAnimation->GetTrack<ProceduralFaceKeyFrame>().GetFirstKeyFrame();
@@ -167,12 +163,6 @@ namespace Cozmo {
     return RESULT_OK;
   }
   
-  
-  const Animation* AnimationStreamer::GetCannedAnimation(const std::string& name) const
-  {
-    return _animationContainer->GetAnimation(name);
-  }
-  
   AnimationStreamer::~AnimationStreamer()
   {
     Util::SafeDelete(_proceduralAnimation);
@@ -193,8 +183,7 @@ namespace Cozmo {
       Abort();
       return RESULT_OK;
     }
-    
-    return SetStreamingAnimation(_animationContainer->GetAnimation(name), tag, numLoops, interruptRunning, false);
+    return SetStreamingAnimation(_context->GetDataLoader()->GetCannedAnimation(name), tag, numLoops, interruptRunning, false);
   }
   
   Result AnimationStreamer::SetStreamingAnimation(Animation* anim, Tag tag, u32 numLoops, bool interruptRunning, bool isInternalAnim)

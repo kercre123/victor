@@ -408,7 +408,7 @@ const Animation* GetAnimation(const AnimationTrigger& animTrigger, Robot& robot)
       const std::string& animName = group->GetAnimationName(robot.GetMoodManager(),
                                                             robot.GetContext()->GetRobotManager()->GetAnimationGroups(),
                                                             robot.GetHeadAngle());
-      anim = robot.GetContext()->GetRobotManager()->GetCannedAnimations().GetAnimation(animName);
+      anim = robot.GetContext()->GetRobotManager()->GetCannedAnimation(animName);
     }
   }
   else {

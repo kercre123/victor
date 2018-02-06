@@ -74,6 +74,7 @@ void AnimationComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& 
       helper.SubscribeGameToEngine<MessageGameToEngineTag::DisplayFaceImageBinaryChunk>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableKeepFaceAlive>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::SetKeepFaceAliveParameters>();
+      helper.SubscribeGameToEngine<MessageGameToEngineTag::ReadAnimationFile>();
 
     }
   }
@@ -91,6 +92,7 @@ void AnimationComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& 
   };
   
   // bind to specific handlers
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::animAdded,             &AnimationComponent::HandleAnimAdded);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::animStarted,           &AnimationComponent::HandleAnimStarted);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::animEnded,             &AnimationComponent::HandleAnimEnded);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::animEvent,             &AnimationComponent::HandleAnimationEvent);
@@ -219,7 +221,7 @@ Result AnimationComponent::PlayAnimByName(const std::string& animName,
     PRINT_NAMED_WARNING("AnimationComponent.PlayAnimByName.Uninitialized", "");
     return RESULT_FAIL;
   }
-  
+
   // Check that animName is valid
   auto it = _availableAnims.find(animName);
   if (it == _availableAnims.end()) {
@@ -241,7 +243,7 @@ Result AnimationComponent::PlayAnimByName(const std::string& animName,
     PRINT_NAMED_WARNING("AnimationComponent.PlayAnimByName.WontInterruptCurrentAnim", "");
     return RESULT_FAIL;
   }
-  
+
   const Tag currTag = GetNextTag();
   if (_robot->SendRobotMessage<RobotInterface::PlayAnim>(numLoops, currTag, animName) == RESULT_OK) {
     // Check if tag already exists in callback map.
@@ -586,8 +588,20 @@ void AnimationComponent::HandleMessage(const ExternalInterface::SetKeepFaceAlive
   }
 }
 
+template<>
+void AnimationComponent::HandleMessage(const ExternalInterface::ReadAnimationFile& msg)
+{
+  _robot->SendRobotMessage<RobotInterface::AddAnim>(msg.full_path);
+}
 
 // ================ Robot message handlers ======================
+
+void AnimationComponent::HandleAnimAdded(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+{
+  const auto & payload = message.GetData().Get_animAdded();
+  PRINT_CH_INFO("AnimationComponent", "HandleAnimAdded", "name=%s length=%d", payload.animName.c_str(), payload.animLength);
+  _availableAnims[payload.animName].length_ms = payload.animLength;
+}
 
 void AnimationComponent::HandleAnimStarted(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {

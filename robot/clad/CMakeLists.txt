@@ -23,6 +23,7 @@ set(ROBOT_CLAD ${CMAKE_SOURCE_DIR}/robot/clad)
 set(CLAD_CPPLITE_FLAGS "--max-message-size 1400")
 
 set(OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/clad/robot")
+# set(PY_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/cladPython")
 
 file(STRINGS "${ANKI_SRCLIST_DIR}/robot_clad_embedded.srcs.lst" ROBOT_SRCS)
 
@@ -32,6 +33,13 @@ generate_clad_cpplite(
     OUTPUT_DIR "${OUTPUT_DIR}"
     OUTPUT_SRCS CLAD_CPP_GEN_ROBOT_SRCS
 )
+
+# generate_clad_py(
+#     SRCS ${ROBOT_SRCS}
+#     RELATIVE_SRC_DIR "src"
+#     OUTPUT_DIR "${PY_OUTPUT_DIR}"
+#     OUTPUT_SRCS CLAD_PY_GEN_ROBOT_SRCS
+# )
 
 #
 # Accumulate sources from running special emitters on union clad files
@@ -198,6 +206,7 @@ list(APPEND CLAD_UNION_EMITTER_SRCS ${CLAD_A2E_HELPER_GEN_ROBOT_SRCS})
 
 add_library(robot_clad_cpplite STATIC
     ${CLAD_CPP_GEN_ROBOT_SRCS}
+    # ${CLAD_PY_GEN_ROBOT_SRCS}
     ${CLAD_UNION_EMITTER_SRCS}
 )
 

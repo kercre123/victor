@@ -85,9 +85,6 @@ namespace Cozmo {
     
     const std::string GetStreamingAnimationName() const;
     const Animation* GetStreamingAnimation() const { return _streamingAnimation; }
-    
-    const Animation* GetCannedAnimation(const std::string& name) const;
-    const CannedAnimationContainer& GetCannedAnimationContainer() const { return *_animationContainer; }
 
     void EnableKeepFaceAlive(bool enable, u32 disableTimeout_ms);
     
@@ -157,9 +154,6 @@ namespace Cozmo {
     }
     
     const AnimContext* _context = nullptr;
-    
-    // Container for all known "canned" animations (i.e. non-live)
-    CannedAnimationContainer* _animationContainer = nullptr;
     
     Animation*  _streamingAnimation = nullptr;
     Animation*  _neutralFaceAnimation = nullptr;

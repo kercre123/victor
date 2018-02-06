@@ -13,6 +13,7 @@
 
 #include "cozmoAnim/animProcessMessages.h"
 #include "cozmoAnim/animComms.h"
+#include "cozmoAnim/robotDataLoader.h"
 
 #include "cozmoAnim/animation/animationStreamer.h"
 #include "cozmoAnim/animation/trackLayerComponent.h"
@@ -76,6 +77,16 @@ void Process_lockAnimTracks(const Anki::Cozmo::RobotInterface::LockAnimTracks& m
 {
   //LOG_DEBUG("AnimProcessMessages.Process_lockAnimTracks", "0x%x", msg.whichTracks);
   _animStreamer->SetLockedTracks(msg.whichTracks);
+}
+
+void Process_addAnim(const Anki::Cozmo::RobotInterface::AddAnim& msg)
+{
+  const std::string path(msg.animPath, msg.animPath_length);
+
+  LOG_INFO("AnimProcessMessages.Process_playAnim",
+           "Animation File: %s", path.c_str());
+
+  _context->GetDataLoader()->LoadAnimationFile(path);
 }
     
 void Process_playAnim(const Anki::Cozmo::RobotInterface::PlayAnim& msg)
