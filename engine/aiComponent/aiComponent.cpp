@@ -27,6 +27,7 @@
 #include "engine/aiComponent/requestGameComponent.h"
 #include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/aiComponent/templatedImageCache.h"
+#include "engine/aiComponent/timerUtility.h"
 #include "engine/aiComponent/workoutComponent.h"
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/publicStateBroadcaster.h"
@@ -66,6 +67,7 @@ AIComponentComponents::AIComponentComponents(Robot&                      robot,
                                              RequestGameComponent*       requestGameComponent,
                                              SevereNeedsComponent*       severeNeedsComponent,
                                              TemplatedImageCache*        templatedImageCache,
+                                             TimerUtility*               timerUtility,
                                              AIWhiteboard*               aiWhiteboard,
                                              WorkoutComponent*           workoutComponent)
 :_robot(robot)
@@ -82,6 +84,7 @@ AIComponentComponents::AIComponentComponents(Robot&                      robot,
   {AIComponentID::RequestGame,                ComponentWrapper(requestGameComponent, true)},
   {AIComponentID::SevereNeeds,                ComponentWrapper(severeNeedsComponent, true)},
   {AIComponentID::TemplatedImageCache,        ComponentWrapper(templatedImageCache, true)},
+  {AIComponentID::TimerUtility,               ComponentWrapper(timerUtility, true)},
   {AIComponentID::Whiteboard,                 ComponentWrapper(aiWhiteboard, true)},
   {AIComponentID::Workout,                    ComponentWrapper(workoutComponent, true)}
 }){}
@@ -144,6 +147,7 @@ Result AIComponent::Init(Robot* robot, BehaviorComponent*& customBehaviorCompone
                                   robot->GetContext()->GetDataLoader()->GetGameRequestWeightsConfig()),
           new SevereNeedsComponent(*robot),
           new TemplatedImageCache(robot->GetContext()->GetDataLoader()->GetFacePNGPaths()),
+          new TimerUtility(),
           new AIWhiteboard(*robot),
           new WorkoutComponent(*robot)
     );

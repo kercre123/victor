@@ -44,6 +44,8 @@ enum class AIComponentID{
   // component that caches templated images and only swaps out quadrants that have
   // changed between requests
   TemplatedImageCache,
+  // component that maintains persistant information about the timer utility
+  TimerUtility,
   // whiteboard for behaviors to share information, or to store information only useful to behaviors
   Whiteboard,
   // component for tracking cozmo's work-out behaviors
