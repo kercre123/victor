@@ -161,6 +161,10 @@
       "AnimName": "ag_chargerdocking_rightturn"
     },
     {
+      "CladEvent": "ChargerDockingSearch",
+      "AnimName": "ag_chargerdocking_searchforcharger"
+    },
+    {
       "CladEvent": "ChargerDockingSettle",
       "AnimName": "ag_chargerdocking_settle"
     },
@@ -1565,6 +1569,18 @@
       "AnimName": "ag_pounceonmotionsuccess"
     },
     {
+      "CladEvent": "PounceWProxForward",
+      "AnimName": "ag_quick_pounce_forward"
+    },
+    {
+      "CladEvent": "PounceWProxLeft",
+      "AnimName": "ag_quick_pounce_left"
+    },
+    {
+      "CladEvent": "PounceWProxRight",
+      "AnimName": "ag_quick_pounce_right"
+    },
+    {
       "CladEvent": "PutDownBlockKeepAlive",
       "AnimName": "ag_lookatface_keepalive"
     },
@@ -2239,6 +2255,86 @@
     {
       "CladEvent": "ListeningOnCharger",
       "AnimName": "ag_reacttocharger"
+    },
+    {
+      "CladEvent": "ReactToSoundOffChargerAsleepAmbient",
+      "AnimName": "ag_rtsound_offcharger_asleep_ambient"
+    },
+    {
+      "CladEvent": "ReactToSoundOffChargerAsleepFront",
+      "AnimName": "ag_rtsound_offcharger_asleep_front"
+    },
+    {
+      "CladEvent": "ReactToSoundOffChargerAsleepLeft",
+      "AnimName": "ag_rtsound_offcharger_asleep_left"
+    },
+    {
+      "CladEvent": "ReactToSoundOffChargerAsleepRight",
+      "AnimName": "ag_rtsound_offcharger_asleep_right"
+    },
+    {
+      "CladEvent": "ReactToSoundOffChargerAsleepBehind",
+      "AnimName": "ag_rtsound_offcharger_asleep_behind"
+    },
+    {
+      "CladEvent": "ReactToSoundOffChargerObserveAmbient",
+      "AnimName": "ag_rtsound_offcharger_observe_ambient"
+    },
+    {
+      "CladEvent": "ReactToSoundOffChargerObserveFront",
+      "AnimName": "ag_rtsound_offcharger_observe_front"
+    },
+    {
+      "CladEvent": "ReactToSoundOffChargerObserveLeft",
+      "AnimName": "ag_rtsound_offcharger_observe_left"
+    },
+    {
+      "CladEvent": "ReactToSoundOffChargerObserveRight",
+      "AnimName": "ag_rtsound_offcharger_observe_right"
+    },
+    {
+      "CladEvent": "ReactToSoundOffChargerObserveBehind",
+      "AnimName": "ag_rtsound_offcharger_observe_behind"
+    },
+    {
+      "CladEvent": "ReactToSoundOnChargerAsleepAmbient",
+      "AnimName": "ag_rtsound_oncharger_asleep_ambient"
+    },
+    {
+      "CladEvent": "ReactToSoundOnChargerAsleepFront",
+      "AnimName": "ag_rtsound_oncharger_asleep_front"
+    },
+    {
+      "CladEvent": "ReactToSoundOnChargerAsleepLeft",
+      "AnimName": "ag_rtsound_oncharger_asleep_left"
+    },
+    {
+      "CladEvent": "ReactToSoundOnChargerAsleepRight",
+      "AnimName": "ag_rtsound_oncharger_asleep_right"
+    },
+    {
+      "CladEvent": "ReactToSoundOnChargerAsleepBehind",
+      "AnimName": "ag_rtsound_oncharger_asleep_behind"
+    },
+    {
+      "CladEvent": "ReactToSoundOnChargerObserveAmbient",
+      "AnimName": "ag_rtsound_oncharger_observe_ambient"
+    },
+    {
+      "CladEvent": "ReactToSoundOnChargerObserveFront",
+      "AnimName": "ag_rtsound_oncharger_observe_front"
+    },
+    {
+      "CladEvent": "ReactToSoundOnChargerObserveLeft",
+      "AnimName": "ag_rtsound_oncharger_observe_left"
+    },
+    {
+      "CladEvent": "ReactToSoundOnChargerObserveRight",
+      "AnimName": "ag_rtsound_oncharger_observe_right"
+    },
+    {
+      "CladEvent": "ReactToSoundOnChargerObserveBehind",
+      "AnimName": "ag_rtsound_oncharger_observe_behind"
     }
     
   ]

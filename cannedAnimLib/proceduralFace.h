@@ -95,7 +95,8 @@ public:
   void  SetParameter(WhichEye whichEye, Parameter param, Value value);
   Value GetParameter(WhichEye whichEye, Parameter param) const;
   const EyeParamArray& GetParameters(WhichEye whichEye) const;
-  
+  void SetParameters(WhichEye whichEye, const EyeParamArray& params);
+
   // Set the same value to a parameter for both eyes:
   void SetParameterBothEyes(Parameter param, Value value);
   
@@ -164,7 +165,9 @@ public:
   // size and position, without taking into account the current FacePosition (a.k.a.
   // face center) or face angle.
   void GetEyeBoundingBox(Value& xmin, Value& xmax, Value& ymin, Value& ymax);
-  
+
+  void RegisterFaceWithConsoleVars();
+
 private:
   
   std::array<EyeParamArray, 2> _eyeParams{{}};
@@ -203,6 +206,10 @@ inline ProceduralFace::Value ProceduralFace::GetParameter(WhichEye whichEye, Par
 inline const ProceduralFace::EyeParamArray& ProceduralFace::GetParameters(WhichEye whichEye) const
 {
   return _eyeParams[whichEye];
+}
+
+inline void ProceduralFace::SetParameters(WhichEye eye, const EyeParamArray& params) {
+  _eyeParams[eye] = params;
 }
 
 inline void ProceduralFace::SetParameterBothEyes(Parameter param, Value value)

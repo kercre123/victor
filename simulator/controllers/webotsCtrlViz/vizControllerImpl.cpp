@@ -113,6 +113,8 @@ void VizControllerImpl::Init()
     std::bind(&VizControllerImpl::ProcessObjectAccelState, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::BehaviorStackDebug,
     std::bind(&VizControllerImpl::ProcessBehaviorStackDebug, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::VisionModeDebug,
+    std::bind(&VizControllerImpl::ProcessVisionModeDebug, this, std::placeholders::_1));
 
 
   // Get display devices
@@ -121,6 +123,7 @@ void VizControllerImpl::Init()
   _moodDisp = _vizSupervisor.getDisplay("cozmo_mood_display");
   _behaviorDisp = _vizSupervisor.getDisplay("cozmo_behavior_display");
   _bsmStackDisp = _vizSupervisor.getDisplay("victor_behavior_stack_display");
+  _visionModeDisp = _vizSupervisor.getDisplay("victor_vision_mode_display");
   _activeObjectDisp = _vizSupervisor.getDisplay("cozmo_active_object_display");
   _cubeAccelDisp = _vizSupervisor.getDisplay("cozmo_cube_accel_display");
 
@@ -165,6 +168,7 @@ void VizControllerImpl::Init()
   _moodDisp->setFont("Lucida Console", 8, true);
   _activeObjectDisp->setFont("Lucida Console", 8, true);
   _bsmStackDisp->setFont("Lucida Console", 8, true);
+  _visionModeDisp->setFont("Lucida Console", 8, true);
 
   DrawText(_activeObjectDisp, 0, (u32)Anki::NamedColors::WHITE, "Slot | Moving | UpAxis");
   
@@ -1506,6 +1510,23 @@ void VizControllerImpl::ProcessBehaviorStackDebug(const AnkiEvent<VizInterface::
   }
 }
 
+void VizControllerImpl::ProcessVisionModeDebug(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  if( _visionModeDisp == nullptr ) {
+    return;
+  }
+
+  // Clear the space
+  _visionModeDisp->setColor(0x0);
+  _visionModeDisp->fillRectangle(0, 0, _bsmStackDisp->getWidth(), _bsmStackDisp->getHeight());
+
+  const VizInterface::VisionModeDebug& debugData = msg.GetData().Get_VisionModeDebug();
+
+  for( size_t i=0; i < debugData.debugStrings.size(); ++i ) {
+    DrawText(_visionModeDisp, (u32)i, (u32)Anki::NamedColors::GREEN, debugData.debugStrings[i].c_str());
+  }
+
+}
 
 // ========== Start/End of Robot Updates ==========
   

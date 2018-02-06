@@ -44,6 +44,7 @@ namespace Cozmo {
     Result SanityCheck(Result lastResult, Animation* animation, std::string& animationName);
     
     Result AddAnimation(const std::string& name);
+    Result AddAnimation(Animation* animation);
     
     Animation* GetAnimation(const std::string& name);
     const Animation* GetAnimation(const std::string& name) const;

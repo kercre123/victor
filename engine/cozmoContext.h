@@ -55,6 +55,7 @@ class PerfMetric;
 namespace WebService {
   class WebService;
 }
+
 namespace VoiceCommand {
   class VoiceCommandComponent;
 }

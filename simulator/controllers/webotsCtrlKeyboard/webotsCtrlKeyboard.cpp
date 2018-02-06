@@ -849,6 +849,65 @@ namespace Cozmo {
     }
   }
   
+  void WebotsKeyboardController::ToggleKeepFaceAliveEnable()
+  {
+    static bool enable = false;
+    PRINT_NAMED_INFO("WebotsKeyboardController.ToggleKeepFaceAliveEnable", "Enable: %d", enable);
+    
+    ExternalInterface::EnableKeepFaceAlive msg;
+    msg.enable = enable;
+    msg.disableTimeout_ms = 3*ANIM_TIME_STEP_MS;
+    enable = !enable;
+    
+    ExternalInterface::MessageGameToEngine msgWrapper;
+    msgWrapper.Set_EnableKeepFaceAlive(msg);
+    SendMessage(msgWrapper);
+  }
+  
+  void WebotsKeyboardController::SetDefaultKeepFaceAliveParams()
+  {
+    PRINT_NAMED_INFO("WebotsKeyboardController.SetDefaultKeepFaceAliveParams", "");
+    
+    ExternalInterface::SetKeepFaceAliveParameters msg;
+    msg.setUnspecifiedToDefault = true;
+
+    ExternalInterface::MessageGameToEngine msgWrapper;
+    msgWrapper.Set_SetKeepFaceAliveParameters(msg);
+    SendMessage(msgWrapper);    
+  }
+
+  void WebotsKeyboardController::SetKeepFaceAliveParams()
+  {
+    PRINT_NAMED_INFO("WebotsKeyboardController.SetKeepFaceAliveParams", "");
+    
+    // Get values from fields
+    #define SET_KFA_PARAM(param) { \
+      const auto* paramField = root_->getField(#param); \
+      DEV_ASSERT(paramField != nullptr, "WebotsKeyboardController.SetKeepFaceAliveParams.paramNotFound"); \
+      msg.paramNames.push_back(KeepFaceAliveParameter::param); \
+      msg.paramValues.push_back(paramField->getSFFloat()); \
+    }
+
+    ExternalInterface::SetKeepFaceAliveParameters msg;
+    SET_KFA_PARAM(BlinkSpacingMinTime_ms);
+    SET_KFA_PARAM(BlinkSpacingMaxTime_ms);
+    SET_KFA_PARAM(EyeDartSpacingMinTime_ms);
+    SET_KFA_PARAM(EyeDartSpacingMaxTime_ms);
+    SET_KFA_PARAM(EyeDartMaxDistance_pix);
+    SET_KFA_PARAM(EyeDartMinDuration_ms);
+    SET_KFA_PARAM(EyeDartMaxDuration_ms);
+    SET_KFA_PARAM(EyeDartOuterEyeScaleIncrease);
+    SET_KFA_PARAM(EyeDartUpMaxScale);
+    SET_KFA_PARAM(EyeDartDownMinScale);
+    msg.setUnspecifiedToDefault = false;
+
+    #undef SET_KFA_PARAM
+
+    ExternalInterface::MessageGameToEngine msgWrapper;
+    msgWrapper.Set_SetKeepFaceAliveParameters(msg);
+    SendMessage(msgWrapper);
+  }
+
   void WebotsKeyboardController::ToggleVisionWhileMoving()
   {
     static bool visionWhileMovingEnabled = false;
@@ -1838,16 +1897,18 @@ namespace Cozmo {
   
   // ===== End of key press functions ====
 
-  
+  // Register key press and modifier to a function
   #define REGISTER_KEY_FCN(key, modifier, fcn, help_msg) \
   if (!RegisterKeyFcn(key, modifier, std::bind(&WebotsKeyboardController::fcn, this), help_msg)) { \
     PRINT_NAMED_ERROR("WebotsKeyboardController.RegisterKeyFcn.DuplicateRegistration", "Key: '%c' (0x%x), Modifier: 0x%x, Fcn: %s", key, key, modifier, #fcn); \
-  } \
+  }
 
+  // Register key press and modifier to a function with a special display_string
+  // for keys that don't print nicely in ASCII (e.g. 'PageUp')
   #define REGISTER_KEY_FCN_WITH_SPECIAL_DISPLAY_CHAR(key, modifier, fcn, help_msg, display_string) \
   if (!RegisterKeyFcn(key, modifier, std::bind(&WebotsKeyboardController::fcn, this), help_msg, display_string)) { \
     PRINT_NAMED_ERROR("WebotsKeyboardController.RegisterKeyFcn.DuplicateRegistration", "Key: '%c' (0x%x), Modifier: 0x%x, Fcn: %s", key, key, modifier, #fcn); \
-  } \
+  }
   
   // Register key that already requires shift to be pressed.
   // Only MOD_NONE and MOD_ALT are valid modifiers since MOD_SHIFT is already implied.
@@ -1856,7 +1917,7 @@ namespace Cozmo {
     PRINT_NAMED_ERROR("WebotsKeyboardController.RegisterKeyFcn.InvalidModifier", "Can't use shift modifier because it's already implied in key '%c' (0x%x)", key, key); \
   } else if (!RegisterKeyFcn(key, modifier | MOD_SHIFT, std::bind(&WebotsKeyboardController::fcn, this), help_msg)) { \
     PRINT_NAMED_ERROR("WebotsKeyboardController.RegisterKeyFcn.DuplicateRegistration", "Key: '%c' (0x%x), Modifier: 0x%x, Fcn: %s", key, key, modifier, #fcn); \
-  } \
+  }
 
   WebotsKeyboardController::WebotsKeyboardController(s32 step_time_ms) :
   UiGameController(step_time_ms)
@@ -2067,13 +2128,13 @@ namespace Cozmo {
     
     REGISTER_KEY_FCN('R', MOD_NONE,      MountSelectedCharger, "Dock to charger using cliff sensor correction");
     REGISTER_KEY_FCN('R', MOD_SHIFT,     MountSelectedCharger, "Dock to charger without using cliff sensor correction");
-//      REGISTER_KEY_FCN('R', MOD_ALT,       , "");
+    REGISTER_KEY_FCN('R', MOD_ALT,       FlipSelectedBlock,    "Flips the selected cube");
 //      REGISTER_KEY_FCN('R', MOD_ALT_SHIFT, , "");
     
     REGISTER_KEY_FCN('S', MOD_NONE,      MoveHeadUp, "Move head up");
     REGISTER_KEY_FCN('S', MOD_SHIFT,     MoveHeadUp, "Move head up (half speed)");
-//      REGISTER_KEY_FCN('S', MOD_ALT,       , "");
-//      REGISTER_KEY_FCN('S', MOD_ALT_SHIFT, , "");
+//    REGISTER_KEY_FCN('S', MOD_ALT,       , "");
+//    REGISTER_KEY_FCN('S', MOD_ALT_SHIFT, , "");
     
     REGISTER_KEY_FCN('T', MOD_NONE,      ExecuteTestPlan,     "Execute test plan");
     REGISTER_KEY_FCN('T', MOD_ALT,       ToggleTrackToFace,   "Track to face");
@@ -2100,10 +2161,10 @@ namespace Cozmo {
 //      REGISTER_KEY_FCN('X', MOD_ALT,       , "");
     REGISTER_KEY_FCN('X', MOD_ALT_SHIFT, QuitKeyboardController, "Quit keyboard controller");
     
-    REGISTER_KEY_FCN('Y', MOD_NONE,      FlipSelectedBlock, "Flips the selected cube");
-//      REGISTER_KEY_FCN('Y', MOD_SHIFT,     , "");
-//      REGISTER_KEY_FCN('Y', MOD_ALT,       , "");
-//      REGISTER_KEY_FCN('Y', MOD_ALT_SHIFT, , "");
+    REGISTER_KEY_FCN('Y', MOD_NONE,      ToggleKeepFaceAliveEnable,     "Toggle keep face alive enable");
+    REGISTER_KEY_FCN('Y', MOD_SHIFT,     SetDefaultKeepFaceAliveParams, "Sets default KeepFaceAlive parameters");
+    REGISTER_KEY_FCN('Y', MOD_ALT,       SetKeepFaceAliveParams,        "Sets KeepFaceAlive parameters from keyboard node's params (starting at 'BlinkSpacingMinTime_ms'");
+//    REGISTER_KEY_FCN('Y', MOD_ALT_SHIFT, , "");
     
     REGISTER_KEY_FCN('Z', MOD_NONE,      MoveLiftDown,    "Move lift down");
     REGISTER_KEY_FCN('Z', MOD_SHIFT,     MoveLiftDown,    "Move lift down (half speed)");

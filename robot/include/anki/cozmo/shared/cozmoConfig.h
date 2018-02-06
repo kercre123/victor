@@ -237,10 +237,16 @@ namespace Cozmo {
   const u32 CLIFF_EVENT_DELAY_MS = 500;
   
   // Anim process timing consts
-  const u32 ANIM_TIME_STEP_MS = 33; //ms
+  const u32 ANIM_TIME_STEP_MS = 33;
   const u32 ANIM_TIME_STEP_US = ANIM_TIME_STEP_MS * 1000;
   const s32 ANIM_OVERTIME_WARNING_THRESH_MS = 5;
   const s32 ANIM_OVERTIME_WARNING_THRESH_US = ANIM_OVERTIME_WARNING_THRESH_MS * 1000;
+  
+  // Web server process timing consts; much more lax
+  const u32 WEB_SERVER_TIME_STEP_MS = 100;
+  const u32 WEB_SERVER_TIME_STEP_US = WEB_SERVER_TIME_STEP_MS * 1000;
+  const s32 WEB_SERVER_OVERTIME_WARNING_THRESH_MS = 500;
+  const s32 WEB_SERVER_OVERTIME_WARNING_THRESH_US = WEB_SERVER_OVERTIME_WARNING_THRESH_MS * 1000;
   
   /***************************************************************************
    *

@@ -1,7 +1,6 @@
 {
   "behaviorClass": "AcknowledgeFace",
   "behaviorID": "AcknowledgeFace",
-  "displayNameKey":"behavior.AcknowledgeFace",
   "ReactionAnimGroup": "ReactToNewBlockSmall"
 
   // "SamePoseDistThresh_mm": 300,

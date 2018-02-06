@@ -67,7 +67,7 @@ ICozmoBehaviorPtr BehaviorDispatcherQueue::GetDesiredBehavior()
       PRINT_CH_INFO("Behaviors", "BehaviorDispatcherQueue.SelectBehavior",
                     "Selecting behavior %zu '%s'",
                     _currIdx,
-                    dispatches[_currIdx]->GetIDStr().c_str());
+                    dispatches[_currIdx]->GetDebugLabel().c_str());
 
       // return this behavior and increment for next time
       return dispatches[_currIdx++];
@@ -77,7 +77,7 @@ ICozmoBehaviorPtr BehaviorDispatcherQueue::GetDesiredBehavior()
       PRINT_CH_INFO("Behaviors", "BehaviorDispatcherQueue.SkipBehavior",
                     "Skipping behavior %zu '%s' because it doesn't want to run",
                     _currIdx,
-                    dispatches[_currIdx]->GetIDStr().c_str());
+                    dispatches[_currIdx]->GetDebugLabel().c_str());
 
       _currIdx++;
     }

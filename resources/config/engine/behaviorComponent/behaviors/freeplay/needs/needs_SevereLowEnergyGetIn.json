@@ -1,7 +1,0 @@
-{
-  "behaviorClass": "PlayAnimOnNeedsChange",
-  "behaviorID": "Needs_SevereLowEnergyGetIn",
-  "displayNameKey":"behavior.Needs_SevereLowEnergyGetIn",
-  "animTriggers": ["NeedsSevereLowEnergyGetIn"],
-  "need": "Energy"
-}

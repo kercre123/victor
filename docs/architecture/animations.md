@@ -76,3 +76,16 @@ Animations are exported by the Maya Game Exporter, segments on the Maya time lin
 Exported animation files are pulled into the repo by [`project/victor/build-victor.sh`](/project/victor/build-victor.sh) that issues svn commands to update from the animation repo.
 
 During deployment only the .bin files are copied onto the robot.
+
+# Webots
+
+Shift + I : Toggle eye rendering between Victor and Cozmo style
+
+# Webservice
+
+For webots navigate to: http://127.0.0.1:8889/consolevars?ProceduralFace
+For actual hardware navigate to: http://<ip of device>:8889/consolevars?ProceduralFace
+
+Put a check against ProcFace_OverrideEyeParams to allow the sliders take control of the individual eyes.
+ProcFace_OverrideRightEyeParams will force the eyes to be the same, based on the left eye.
+ProcFace_OverrideReset will reset both eyes from a bad state to the current canned animation state.

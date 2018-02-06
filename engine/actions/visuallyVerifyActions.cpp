@@ -100,6 +100,11 @@ VisuallyVerifyObjectAction::~VisuallyVerifyObjectAction()
 
 }
 
+void VisuallyVerifyObjectAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const
+{
+  requests.insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::High });
+}
+
 ActionResult VisuallyVerifyObjectAction::InitInternal()
 {
   using namespace ExternalInterface;
@@ -199,6 +204,11 @@ VisuallyVerifyFaceAction::~VisuallyVerifyFaceAction()
   
 }
 
+void VisuallyVerifyFaceAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const
+{
+  requests.insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::High });
+}
+
 ActionResult VisuallyVerifyFaceAction::InitInternal()
 {
   using namespace ExternalInterface;
@@ -273,6 +283,11 @@ VisuallyVerifyNoObjectAtPoseAction::~VisuallyVerifyNoObjectAtPoseAction()
   {
     _waitForImagesAction->PrepForCompletion();
   }
+}
+
+void VisuallyVerifyNoObjectAtPoseAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const
+{
+  requests.insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::High });
 }
 
 ActionResult VisuallyVerifyNoObjectAtPoseAction::Init()

@@ -69,7 +69,7 @@ void IBehaviorPlaypen::OnBehaviorActivated()
   AddTimer(PlaypenConfig::kDefaultTimeout_ms, [this](){
     PRINT_NAMED_WARNING("IBehaviorPlaypen.Timeout",
                         "Behavior %s has timed out and we are %signoring failures",
-                        GetIDStr().c_str(),
+                        GetDebugLabel().c_str(),
                         (ShouldIgnoreFailures() ? "" : "NOT "));
     
     if(!ShouldIgnoreFailures())
@@ -262,7 +262,7 @@ bool IBehaviorPlaypen::DelegateIfInControl(IActionRunner* action, ActionResultCa
     if(result != ActionResult::SUCCESS)
     {
       PRINT_NAMED_WARNING("IBehaviorPlaypen.ActionFailed", "Behavior %s had an action fail with result %s",
-                          GetIDStr().c_str(),
+                          GetDebugLabel().c_str(),
                           EnumToString(result));
     }
     
@@ -279,7 +279,7 @@ bool IBehaviorPlaypen::DelegateIfInControl(IActionRunner* action, RobotCompleted
     if(rca.result != ActionResult::SUCCESS)
     {
       PRINT_NAMED_WARNING("IBehaviorPlaypen.ActionFailed", "Behavior %s had an action fail with result %s",
-                          GetIDStr().c_str(),
+                          GetDebugLabel().c_str(),
                           EnumToString(rca.result));
     }
     
@@ -321,7 +321,7 @@ void IBehaviorPlaypen::SetResult(FactoryTestResultCode result)
 
 void IBehaviorPlaypen::AddToResultList(FactoryTestResultCode result)
 {
-  results[GetIDStr()].push_back(result);
+  results[GetDebugLabel()].push_back(result);
 }
 
 const std::map<std::string, std::vector<FactoryTestResultCode>>& IBehaviorPlaypen::GetAllPlaypenResults()

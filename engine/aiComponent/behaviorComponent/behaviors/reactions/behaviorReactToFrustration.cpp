@@ -60,7 +60,7 @@ void BehaviorReactToFrustration::OnBehaviorActivated()
   auto& robotInfo = GetBEI().GetRobotInfo();
 
   // push driving animations in case we decide to drive
-  robotInfo.GetDrivingAnimationHandler().PushDrivingAnimations(kFrustratedDrivingAnims, GetIDStr());
+  robotInfo.GetDrivingAnimationHandler().PushDrivingAnimations(kFrustratedDrivingAnims, GetDebugLabel());
   
   if(_animToPlay != AnimationTrigger::Count) {
     TransitionToReaction();
@@ -77,7 +77,7 @@ void BehaviorReactToFrustration::OnBehaviorActivated()
 void BehaviorReactToFrustration::OnBehaviorDeactivated()
 {
   auto& robotInfo = GetBEI().GetRobotInfo();
-  robotInfo.GetDrivingAnimationHandler().RemoveDrivingAnimations(GetIDStr());
+  robotInfo.GetDrivingAnimationHandler().RemoveDrivingAnimations(GetDebugLabel());
 }
 
 

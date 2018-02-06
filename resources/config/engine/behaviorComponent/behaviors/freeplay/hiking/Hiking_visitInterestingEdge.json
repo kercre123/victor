@@ -9,8 +9,6 @@
   "behaviorClass": "VisitInterestingEdge",
   "behaviorID": "Hiking_VisitInterestingEdge",
 
-  "displayNameKey":"behavior.VisitInterestingEdge",
-
   "params": {
   
     // anim for observing

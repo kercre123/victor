@@ -1,6 +1,7 @@
 package cloudproc
 
 import (
+	"anki/chipper"
 	"anki/ipc"
 	"anki/util"
 	"fmt"
@@ -8,14 +9,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/anki/sai-chipper-voice/client/chipper"
-	api "github.com/anki/sai-go-util/http/apiclient"
 	"github.com/google/uuid"
 )
 
 const (
 	// ChipperURL is the location of the Chipper service
-	ChipperURL = "https://chipper-dev.api.anki.com"
+	ChipperURL = "chipper-dev.api.anki.com:443"
 )
 
 var (
@@ -51,7 +50,7 @@ func socketReader(s ipc.Conn, ch chan<- socketMsg, kill <-chan struct{}) {
 }
 
 type voiceContext struct {
-	client      *chipper.ChipperClient
+	client      *chipper.Client
 	samples     []byte
 	audioStream chan []byte
 	once        sync.Once
@@ -68,7 +67,11 @@ func (ctx *voiceContext) addSamples(samples []byte) {
 	}
 }
 
-func newVoiceContext(client *chipper.ChipperClient, cloudChan chan<- string) *voiceContext {
+func (ctx *voiceContext) close() error {
+	return ctx.client.Close()
+}
+
+func newVoiceContext(client *chipper.Client, cloudChan chan<- string) *voiceContext {
 	audioStream := make(chan []byte, 10)
 	ctx := &voiceContext{
 		client:      client,
@@ -98,7 +101,7 @@ func stream(ctx *voiceContext, samples []byte, cloudChan chan<- string) {
 	// set up response routine if this is the first stream
 	ctx.once.Do(func() {
 		go func() {
-			resp, err := ctx.client.WaitForIntent(nil)
+			resp, err := ctx.client.WaitForIntent()
 			if err != nil {
 				fmt.Println("CCE error:", err)
 				cloudChan <- ""
@@ -155,6 +158,18 @@ func RunProcess(micSock ipc.Conn, aiSock ipc.Conn, testChan chan []byte, stop <-
 
 	cloudChan := make(chan string)
 
+	var chipperConn *chipper.Conn
+	var err error
+	connTime := util.TimeFuncMs(func() {
+		chipperConn, err = chipper.NewConn(ChipperURL, ChipperSecret, "device-id")
+	})
+	if err != nil {
+		fmt.Println("Error getting chipper connection:", err)
+		return
+	}
+	logVerbose("Created Chipper connection in", connTime, "ms")
+	defer chipperConn.Close()
+
 	var ctx *voiceContext
 procloop:
 	for {
@@ -166,15 +181,21 @@ procloop:
 				if ctx != nil {
 					fmt.Println("Got hotword event while already streaming, weird...")
 				}
-				client, err := chipper.NewClient("", ChipperSecret, "device-id",
-					uuid.New().String()[:16],
-					api.WithServerURL(ChipperURL))
+				var err error
+				var client *chipper.Client
+
+				ctxTime := util.TimeFuncMs(func() {
+					client, err = chipperConn.NewClient(uuid.New().String()[:16])
+				})
+
 				if err != nil {
 					fmt.Println("Error creating Chipper:", err)
 					continue
 				}
-				logVerbose("Received hotword event")
+
 				ctx = newVoiceContext(client, cloudChan)
+
+				logVerbose("Received hotword event, created context in", ctxTime, "ms")
 			} else if ctx != nil {
 				logVerbose("Received", len(msg.buf), "bytes from mic")
 				ctx.addSamples(msg.buf)
@@ -197,8 +218,10 @@ procloop:
 			}
 			// stop streaming until we get another hotword event
 			close(ctx.audioStream)
+			ctx.close()
 			ctx = nil
 		case <-stop:
+			logVerbose("Received stop notification")
 			break procloop
 		}
 	}

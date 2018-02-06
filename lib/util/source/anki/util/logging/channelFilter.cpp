@@ -34,7 +34,7 @@ ChannelFilter::~ChannelFilter()
 void ChannelFilter::Initialize(const Json::Value& config)
 {
   // always register the default channel enabled by default (this can be overridden by config passed in)
-  RegisterChannel(DEFAULT_CHANNEL_NAME, true);
+  RegisterChannel(DEFAULT_CHANNEL_NAME, true, true);
 
   // parse config
   if (!config.isNull()) {
@@ -49,7 +49,7 @@ void ChannelFilter::Initialize(const Json::Value& config)
       const bool channelEnabled = channel[kChannelEnabledKey].asBool();
       
       // Register channel
-      RegisterChannel(channelName, channelEnabled);
+      RegisterChannel(channelName, channelEnabled, true);
     }
   }
   
@@ -116,7 +116,7 @@ void ChannelFilter::DisableChannel(const std::string& channelName)
   }
 }
 
-void ChannelFilter::RegisterChannel(const std::string& channelName, bool defaultEnableStatus)
+void ChannelFilter::RegisterChannel(const std::string& channelName, bool defaultEnableStatus, bool unregisterInDestructor)
 {
   if(IsInitialized()) {
     PRINT_NAMED_ERROR("ChannelFilter.RegisterChannel", "ChannelFilter already initialized, don't register %s after.", channelName.c_str());
@@ -129,7 +129,7 @@ void ChannelFilter::RegisterChannel(const std::string& channelName, bool default
   
   auto it = _channelEnableList.find(channelNameLowerCase);
   if(it == _channelEnableList.end()) {
-    _channelEnableList.emplace(channelNameLowerCase, new ChannelVar(channelNameLowerCase, defaultEnableStatus));
+    _channelEnableList.emplace(channelNameLowerCase, new ChannelVar(channelNameLowerCase, defaultEnableStatus, unregisterInDestructor));
   } else {
     // override
 // Will surely show up every time we run. Do not spam

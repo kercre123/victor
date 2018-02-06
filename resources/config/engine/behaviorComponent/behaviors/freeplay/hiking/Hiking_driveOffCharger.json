@@ -9,6 +9,5 @@
   "behaviorClass": "DriveOffCharger",
   "behaviorID": "Hiking_DriveOffCharger",
 
-  "displayNameKey":"behavior.DriveOffCharger",
   "extraDistanceToDrive_mm": 45.0
 }

@@ -104,7 +104,7 @@ public:
   Robot* GetFirstRobot();
   int    GetNumRobots() const;
   Robot* GetRobotByID(const RobotID_t robotID); // returns nullptr for invalid ID
-  bool   HasRobotWithID(const RobotID_t robotID) const;
+
   std::vector<RobotID_t> const& GetRobotIDList() const;
 
   void ExecuteBackgroundTransfers();

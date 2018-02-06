@@ -72,6 +72,7 @@ public:
                                AnimationTrigger rightTurnAnimTrigger = AnimationTrigger::Count);
   
 protected:
+  virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const override;
   virtual ActionResult Init() override;
   virtual ActionResult CheckIfDone() override;
   

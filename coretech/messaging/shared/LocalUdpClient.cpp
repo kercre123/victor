@@ -66,21 +66,29 @@ bool LocalUdpClient::Connect(const std::string& sockname, const std::string & pe
 
   if (!Anki::Messaging::SetReuseAddress(_socketfd, 1)) {
     LOG_ERROR("LocalUdpClient.Connect", "Unable to set reuseaddress (%s)", strerror(errno));
+    close(_socketfd);
+    _socketfd = -1;
     return false;
   }
 
   if (!Anki::Messaging::SetNonBlocking(_socketfd, 1)) {
     LOG_ERROR("LocalUdpClient.Connect", "Unable to set nonblocking (%s)", strerror(errno));
+    close(_socketfd);
+    _socketfd = -1;
     return false;
   }
 
   if (!Anki::Messaging::SetSendBufferSize(_socketfd, UDP_CLIENT_SNDBUFSZ)) {
     LOG_ERROR("LocalUdpClient.Connect", "Unable to set send buffer size (%s)", strerror(errno));
+    close(_socketfd);
+    _socketfd = -1;
     return false;
   }
 
   if (!Anki::Messaging::SetRecvBufferSize(_socketfd, UDP_CLIENT_RCVBUFSZ)) {
     LOG_ERROR("LocalUdpClient.Connect", "Unable to set recv buffer size (%s)", strerror(errno));
+    close(_socketfd);
+    _socketfd = -1;
     return false;
   }
 
@@ -98,6 +106,8 @@ bool LocalUdpClient::Connect(const std::string& sockname, const std::string & pe
 
   if (bind(_socketfd, (struct sockaddr *) &_sockaddr, _sockaddr_len) != 0) {
     LOG_ERROR("LocalUdpClient.Connect", "Unable to bind socket (%s)", strerror(errno));
+    close(_socketfd);
+    _socketfd = -1;
     return false;
   }
 
@@ -109,6 +119,8 @@ bool LocalUdpClient::Connect(const std::string& sockname, const std::string & pe
 
   if (connect(_socketfd, (struct sockaddr *) &_peeraddr, _peeraddr_len) != 0) {
     LOG_ERROR("LocalUdpClient.Connect", "Unable to connect to %s (%s)", peername.c_str(),  strerror(errno));
+    close(_socketfd);
+    _socketfd = -1;
     return false;
   }
 

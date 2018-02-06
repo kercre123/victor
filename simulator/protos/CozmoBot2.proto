@@ -255,6 +255,12 @@ Supervisor {
                   colorizeStderrOutput IS colorizeStderrOutput
                 }
                 
+                # Web server process:
+                CozmoWebServer {
+                  filterLogs IS filterLogs
+                  colorizeStderrOutput IS colorizeStderrOutput
+                }
+                
                 # Engine process:
                 CozmoEngine2 {
                   robotID IS robotID

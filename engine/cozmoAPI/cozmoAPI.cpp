@@ -58,6 +58,14 @@ bool CozmoAPI::StartRun(Util::Data::DataPlatform* dataPlatform, const Json::Valu
   return gameInitResult;
 }
 
+bool CozmoAPI::IsRunning() const
+{
+  if (_cozmoRunner) {
+    return _cozmoRunner->IsRunning();
+  }
+  return false;
+}
+
 bool CozmoAPI::Start(Util::Data::DataPlatform* dataPlatform, const Json::Value& config)
 {
   // If we have a joinable thread already, we can't start

@@ -408,7 +408,7 @@ void BehaviorFeedingEat::MarkCubeAsBad()
 {
   if( ! ANKI_VERIFY(_targetID.IsSet(), "BehaviorFeedingEat.MarkCubeAsBad.NoTargetID",
                     "Behavior %s trying to mark target cube as bad, but target is unset",
-                    GetIDStr().c_str()) ) {
+                    GetDebugLabel().c_str()) ) {
     return;
   }
 

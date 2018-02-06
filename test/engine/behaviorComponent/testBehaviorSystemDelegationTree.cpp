@@ -146,7 +146,7 @@ TEST(DelegationTree, DumpBehaviorTransitionsToFile)
     behavior->GetAllDelegates( delegates );
     for( const auto* delegate : delegates ) {
       
-      const std::string& outId = delegate->GetPrintableID();
+      const std::string& outId = delegate->GetDebugLabel();
       ss << id << " " << outId << std::endl;
       
     }

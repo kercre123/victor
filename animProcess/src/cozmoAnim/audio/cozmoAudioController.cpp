@@ -13,11 +13,11 @@
  **/
 
 #include "cozmoAnim/audio/cozmoAudioController.h"
+#include "cozmoAnim/animContext.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "audioEngine/audioScene.h"
 #include "audioEngine/soundbankLoader.h"
 #include "clad/audio/audioGameObjectTypes.h"
-#include "cozmoAnim/cozmoAnimContext.h"
 #include "util/console/consoleInterface.h"
 #include "util/environment/locale.h"
 #include "util/fileUtils/fileUtils.h"
@@ -91,11 +91,11 @@ CONSOLE_FUNC( SetWriteAudioOutputCapture, "CozmoAudioController", bool writeOutp
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // CozmoAudioController
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-CozmoAudioController::CozmoAudioController( const CozmoAnimContext* context )
+CozmoAudioController::CozmoAudioController( const AnimContext* context )
 {
 #if USE_AUDIO_ENGINE
   {
-    DEV_ASSERT(nullptr != context, "CozmoAudioController.CozmoAudioController.CozmoAnimContext.IsNull");
+    DEV_ASSERT(nullptr != context, "CozmoAudioController.CozmoAudioController.AnimContext.IsNull");
 
     const Util::Data::DataPlatform* dataPlatform = context->GetDataPlatform();
     const std::string assetPath = dataPlatform->pathToResource(Util::Data::Scope::Resources, "sound" );

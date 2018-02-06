@@ -72,6 +72,8 @@ namespace Anki {
       
       Result SendMotorAutoEnabledMsg(MotorID motor, bool calibStarted);
 
+      Result SendMicDataMsgs();
+
       // Returns whether or not init message was received from basestation
       bool ReceivedInit();
 

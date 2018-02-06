@@ -42,9 +42,7 @@ protected:
   virtual void OnBehaviorDeactivated() override;
 
   virtual bool WantsToBeActivatedBehavior() const override;
-  
-  virtual void UpdateTargetBlocksInternal() const override { UpdateTargetBlock(); }
-  
+    
   virtual std::set<ObjectInteractionIntention>
         GetBehaviorObjectInteractionIntentions() const override {
           return {(_isBlockRotationImportant ?

@@ -64,7 +64,6 @@ namespace Anki {
       (void)socket;
 
       if (server.HasClient()) {
-
         const ssize_t bytesSent = server.Send((char*)buffer, length);
         if (bytesSent < (ssize_t) length) {
           AnkiError("HAL.RadioSendPacket.FailedToSend", "Failed to send msg contents (%zd/%zd sent)", bytesSent, length);

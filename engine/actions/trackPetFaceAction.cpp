@@ -51,6 +51,12 @@ TrackPetFaceAction::TrackPetFaceAction(Vision::PetType petType)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void TrackPetFaceAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const
+{
+  requests.insert({ VisionMode::DetectingPets, EVisionUpdateFrequency::High });
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ActionResult TrackPetFaceAction::InitInternal()
 {
   _lastFaceUpdate = 0;

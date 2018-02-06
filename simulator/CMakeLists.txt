@@ -216,6 +216,31 @@ symlink_target(
   DST ${CONTROLLERS_DIR}/webotsCtrlAnim/resources
 )
 
+anki_build_cxx_executable(webotsCtrlWebServer ${ANKI_SRCLIST_DIR})
+
+target_link_libraries(webotsCtrlWebServer
+  PRIVATE
+  #util
+  webotsCtrlCommon
+  victor_web_library
+)
+
+target_compile_definitions(webotsCtrlWebServer
+  PRIVATE
+  SIMULATOR
+)
+
+symlink_target(
+  TARGET webotsCtrlWebServer
+  DST "${CONTROLLERS_DIR}/webotsCtrlWebServer/"
+)
+
+symlink_target(
+  TARGET webotsCtrlWebServer
+  SRC ${BUILT_RESOURCES_DIR}
+  DST ${CONTROLLERS_DIR}/webotsCtrlWebServer/resources
+)
+
 anki_build_cxx_executable(webotsCtrlGameEngine2 ${ANKI_SRCLIST_DIR})
 
 target_link_libraries(webotsCtrlGameEngine2

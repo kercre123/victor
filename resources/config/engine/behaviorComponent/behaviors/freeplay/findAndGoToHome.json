@@ -15,7 +15,7 @@
       "cooldown_s" : 0.0
     },
     {
-      "behavior" : "SparksLookInPlace",
+      "behavior" : "FindAndRequestHome",
       "cooldown_s" : 0.0
     }
   ]

@@ -9,7 +9,7 @@
 * Copyright: Anki, inc. 2017
 *
 */
-#include "cozmoAnim/cozmoAnim.h"
+#include "cozmoAnim/animEngine.h"
 
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
@@ -28,15 +28,15 @@ using namespace Anki;
 using namespace Anki::Cozmo;
 
 namespace {
-CozmoAnimEngine* cozmoAnim = nullptr;
+AnimEngine* animEngine = nullptr;
 }
 
 void Cleanup(int signum)
 {
-  if(cozmoAnim != nullptr)
+  if (animEngine != nullptr)
   {
-    delete cozmoAnim;
-    cozmoAnim = nullptr;
+    delete animEngine;
+    animEngine = nullptr;
   }
   
   exit(signum);
@@ -94,10 +94,10 @@ int main(void)
   
   Util::Data::DataPlatform* dataPlatform = new Util::Data::DataPlatform(filesPath, cachePath, externalPath, resourcesPath);
   
-  // Create and init CozmoAnim
-  cozmoAnim = new CozmoAnimEngine(dataPlatform);
+  // Create and init AnimEngine
+  animEngine = new AnimEngine(dataPlatform);
   
-  cozmoAnim->Init();
+  animEngine->Init();
   
   using namespace std::chrono;
   using TimeClock = steady_clock;
@@ -114,7 +114,7 @@ int main(void)
     const duration<double> curTime_s = tickStart - runStart;
     const BaseStationTime_t curTime_ns = Util::numeric_cast<BaseStationTime_t>(Util::SecToNanoSec(curTime_s.count()));
 
-    if (cozmoAnim->Update(curTime_ns) != RESULT_OK) {
+    if (animEngine->Update(curTime_ns) != RESULT_OK) {
       PRINT_NAMED_WARNING("CozmoAnimMain.Update.Failed", "Exiting...");
       break;
     }

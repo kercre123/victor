@@ -49,7 +49,6 @@ target_link_libraries(cozmo_engine
   # anki libs
   clad
   util
-  civetweb
   cti_common
   cti_messaging
   robot_interface
@@ -62,6 +61,7 @@ target_link_libraries(cozmo_engine
   DAS 
   androidHAL
   canned_anim_lib_engine
+  victor_web_library
   # cti
   cti_vision
   cti_planning
@@ -71,6 +71,7 @@ target_link_libraries(cozmo_engine
   ${FLATBUFFERS_LIBS}
   ${LIBARCHIVE_LIBS}
   ${BREAKPAD_LIBS}
+  civetweb
   # system
   z
   # platform

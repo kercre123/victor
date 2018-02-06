@@ -23,7 +23,7 @@
 namespace Anki {
 namespace Cozmo {
   
-  const std::string AnimationTransfer::kCacheAnimFileName("TestAnim.json");
+  const std::string AnimationTransfer::kCacheAnimFileName("NewAnim.json");
   const std::string AnimationTransfer::kCacheFaceAnimsDir(Anki::Util::FileUtils::FullFilePath({"assets", "faceAnimations"}));
   
   AnimationTransfer::AnimationTransfer(Anki::Cozmo::IExternalInterface* externalInterface, Anki::Util::Data::DataPlatform* dataPlatform)
@@ -45,7 +45,7 @@ namespace Cozmo {
   void AnimationTransfer::CleanUp(bool removeFaceImgDir)
   {
     std::string full_path = _dataPlatform->pathToResource(Anki::Util::Data::Scope::Cache, kCacheAnimFileName);
-    if( Util::FileUtils::FileExists(full_path))
+    if( Util::FileUtils::FileExists(full_path) )
     {
       Util::FileUtils::DeleteFile(full_path);
     }
@@ -105,6 +105,13 @@ namespace Cozmo {
         // Write out the files
         // Tell animation system to read in files again ( including cache )
         std::string full_path = _dataPlatform->pathToResource(Util::Data::Scope::Cache, kCacheAnimFileName);
+        // Clear the old file if this is the first chunk
+        if( msg.filePart == 0)
+        {
+          CleanUp();
+          _expectedNextChunk = 1;
+        }
+
         //Append so not keeping all chunks in memory.
         Util::FileUtils::WriteFile(full_path, msg.fileBytes,true);
         // This was the last chunk, refresh the animations.
@@ -112,10 +119,9 @@ namespace Cozmo {
         {
           ExternalInterface::MessageGameToEngine read_msg;
           ExternalInterface::ReadAnimationFile m;
+          m.full_path = full_path;
           read_msg.Set_ReadAnimationFile(m);
           _externalInterface->Broadcast(std::move(read_msg));
-          // now that it's in memory can remove it.
-          CleanUp();
         }
       }
       else if( msg.fileType == ExternalInterface::FileType::FaceImg)

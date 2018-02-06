@@ -34,24 +34,24 @@
   #define CONSOLE_VAR( type, name, path, default ) \
     type name = default; \
     namespace { \
-      static Anki::Util::ConsoleVar<type> cvar_##name( name, #name, path ); \
+      static Anki::Util::ConsoleVar<type> cvar_##name( name, #name, path, false ); \
     }
 
   #define WRAP_CONSOLE_VAR( type, name, path ) \
     namespace { \
-      static Anki::Util::ConsoleVar<type> cvar_##name( name, #name, path ); \
+      static Anki::Util::ConsoleVar<type> cvar_##name( name, #name, path, false ); \
     }
 
   #define WRAP_EXTERN_CONSOLE_VAR( type, name, path ) \
     extern type name; \
     namespace { \
-      static Anki::Util::ConsoleVar<type> cvar_##name( name, #name, path ); \
+      static Anki::Util::ConsoleVar<type> cvar_##name( name, #name, path, false ); \
     }
 
   #define CONSOLE_VAR_RANGED( type, name, path, default, minVal, maxVal ) \
     type name = default; \
     namespace { \
-      static Anki::Util::ConsoleVar<type> cvar_##name( name, #name, path, minVal, maxVal ); \
+      static Anki::Util::ConsoleVar<type> cvar_##name( name, #name, path, minVal, maxVal, false ); \
     }
 
   #define CONSOLE_FUNC( name, path, args... ) \

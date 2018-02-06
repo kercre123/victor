@@ -11,6 +11,7 @@ set(CLAD_HASH "${CLAD_EMITTER_DIR}/ASTHash_emitter.py")
 set(CLAD_CPP_FLAGS "--output-json" "--output-properties")
 
 set(OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/clad/util")
+set(PY_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/cladPython")
 
 set(UTIL_SRCS
     util/ankiLab/ankiLabDef.clad
@@ -24,8 +25,17 @@ generate_clad_cpp(
     OUTPUT_SRCS CLAD_CPP_GEN_UTIL_SRCS
 )
 
+generate_clad_py(
+    TARGET "util_clad_python"
+    SRCS ${UTIL_SRCS}
+    RELATIVE_SRC_DIR "."
+    OUTPUT_DIR "${PY_OUTPUT_DIR}"
+    OUTPUT_SRCS CLAD_PY_GEN_UTIL_SRCS
+)
+
 add_library(util_clad STATIC
     ${CLAD_CPP_GEN_UTIL_SRCS}
+    ${CLAD_PY_GEN_UTIL_SRCS}
 )
 
 target_include_directories(util_clad
@@ -36,3 +46,4 @@ target_include_directories(util_clad
 target_link_libraries(util_clad
     clad
 )
+

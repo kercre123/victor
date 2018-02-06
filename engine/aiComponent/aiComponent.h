@@ -34,6 +34,7 @@ class BEIRobotInfo;
 class BehaviorComponent;
 class BehaviorContainer;
 class BehaviorHelperComponent;
+class ContinuityComponent;
 class DoATrickSelector;
 class FaceSelectionComponent;
 class FeedingSoundEffectManager;
@@ -50,6 +51,7 @@ class AIComponentComponents{
 public:
   AIComponentComponents(Robot&                      robot,
                         BehaviorComponent*&         behaviorComponent,
+                        ContinuityComponent*        continuityComponent,
                         DoATrickSelector*           doATrickSelector,
                         FaceSelectionComponent*     faceSelectionComponent,
                         FeedingSoundEffectManager*  feedingSoundEFfectManager,

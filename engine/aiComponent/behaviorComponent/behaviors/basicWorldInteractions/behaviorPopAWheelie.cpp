@@ -116,7 +116,7 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(bool isRetry)
   if( ! _targetBlock.IsSet() ) {
     PRINT_NAMED_WARNING("BehaviorPopAWheelie.NoBlockID",
                         "%s: Transitioning to action state, but we don't have a valid block ID",
-                        GetIDStr().c_str());
+                        GetDebugLabel().c_str());
     return;
   }
   

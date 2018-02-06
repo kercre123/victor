@@ -9,7 +9,6 @@
   "behaviorClass": "ThinkAboutBeacons",
   "behaviorID": "Hiking_ThinkAboutBeacons",
   
-  "displayNameKey":"behavior.ThinkAboutBeacons",
   "params": {
     "newAreaAnimTrigger" : "HikingReactToNewArea",
     "beaconRadius_mm" : 175

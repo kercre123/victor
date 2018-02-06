@@ -301,8 +301,6 @@ public class Robot : IRobot {
 
   public BehaviorID CurrentBehaviorID { get; set; }
 
-  public string CurrentBehaviorDisplayNameKey { get; set; }
-
   public string CurrentDebugAnimationString { get; set; }
 
   public uint FirmwareVersion { get; set; }
@@ -487,7 +485,6 @@ public class Robot : IRobot {
   private void HandleBehaviorTransition(Anki.Cozmo.ExternalInterface.BehaviorTransition message) {
     CurrentBehaviorClass = message.newBehaviorClass;
     CurrentBehaviorID = message.newBehaviorID;
-    CurrentBehaviorDisplayNameKey = message.newBehaviorDisplayKey;
   }
 
   private void HandleReactionTriggerTransition(ReactionTriggerTransition message) {
@@ -676,7 +673,6 @@ public class Robot : IRobot {
     CurrentReactionTrigger = ReactionTrigger.NoneTrigger;
     // usually this is unique
     CurrentBehaviorID = BehaviorID.Wait;
-    CurrentBehaviorDisplayNameKey = "";
     HasHiccups = false;
 
     for (int i = 0; i < BackpackLights.Length; ++i) {

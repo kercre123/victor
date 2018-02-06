@@ -17,18 +17,18 @@
 #include "cozmoAnim/animation/trackLayerManagers/backpackLayerManager.h"
 #include "cozmoAnim/animation/trackLayerManagers/faceLayerManager.h"
 //#include "anki/cozmo/basestation/components/desiredFaceDistortionComponent.h"
-#include "cozmoAnim/cozmoAnimContext.h"
+#include "cozmoAnim/animContext.h"
 
 #include "util/console/consoleInterface.h"
 
 namespace Anki {
 namespace Cozmo {
-
+  
 // TODO: Restore audio glitch
 //CONSOLE_VAR(bool, kGenerateGlitchAudio, "ProceduralAnims", false);
 bool kGenerateGlitchAudio = false;
 
-TrackLayerComponent::TrackLayerComponent(const CozmoAnimContext* context)
+TrackLayerComponent::TrackLayerComponent(const AnimContext* context)
 : _audioLayerManager(new AudioLayerManager(*context->GetRandom()))
 , _backpackLayerManager(new BackpackLayerManager(*context->GetRandom()))
 , _faceLayerManager(new FaceLayerManager(*context->GetRandom()))
@@ -204,14 +204,19 @@ void TrackLayerComponent::ApplyFaceLayersToAnim(Animation* anim,
 }
 
 
-void TrackLayerComponent::KeepFaceAlive(const std::map<LiveIdleAnimationParameter, f32>& params)
+void TrackLayerComponent::KeepFaceAlive(const std::map<KeepFaceAliveParameter, f32>& params)
 {
   _faceLayerManager->KeepFaceAlive(params);
 }
 
-void TrackLayerComponent::RemoveKeepFaceAlive(s32 duration_ms)
+void TrackLayerComponent::RemoveKeepFaceAlive(u32 duration_ms)
 {
   _faceLayerManager->RemoveKeepFaceAlive(duration_ms);
+}
+  
+void TrackLayerComponent::ResetKeepFaceAliveTimers()
+{
+  _faceLayerManager->ResetKeepFaceAliveTimers();
 }
 
 void TrackLayerComponent::AddBlink()
@@ -221,20 +226,19 @@ void TrackLayerComponent::AddBlink()
   _faceLayerManager->AddLayer("Blink", faceTrack);
 }
 
-AnimationTag TrackLayerComponent::AddSquint(const std::string& name, f32 squintScaleX, f32 squintScaleY, f32 upperLidAngle)
+void TrackLayerComponent::AddSquint(const std::string& name, f32 squintScaleX, f32 squintScaleY, f32 upperLidAngle)
 {
   Animations::Track<ProceduralFaceKeyFrame> faceTrack;
   _faceLayerManager->GenerateSquint(squintScaleX, squintScaleY, upperLidAngle, faceTrack);
-  return _faceLayerManager->AddPersistentLayer(name, faceTrack);
+  _faceLayerManager->AddPersistentLayer(name, faceTrack);
 }
 
-void TrackLayerComponent::RemoveSquint(AnimationTag tag, s32 duration_ms)
+void TrackLayerComponent::RemoveSquint(const std::string& name, u32 duration_ms)
 {
-  _faceLayerManager->RemovePersistentLayer(tag, duration_ms);
+  _faceLayerManager->RemovePersistentLayer(name, duration_ms);
 }
 
-void TrackLayerComponent::AddOrUpdateEyeShift(AnimationTag& tag,
-                                              const std::string& name,
+void TrackLayerComponent::AddOrUpdateEyeShift(const std::string& name,
                                               f32 xPix,
                                               f32 yPix,
                                               TimeStamp_t duration_ms,
@@ -252,7 +256,7 @@ void TrackLayerComponent::AddOrUpdateEyeShift(AnimationTag& tag,
                                       outerEyeScaleIncrease,
                                       duration_ms, eyeShift);
   
-  if(AnimationStreamer::kNotAnimatingTag == tag)
+  if(!_faceLayerManager->HasLayer(name))
   {
     AnimationStreamer::FaceTrack faceTrack;
     if(duration_ms > 0)
@@ -262,17 +266,17 @@ void TrackLayerComponent::AddOrUpdateEyeShift(AnimationTag& tag,
       faceTrack.AddKeyFrameToBack(ProceduralFaceKeyFrame());
     }
     faceTrack.AddKeyFrameToBack(std::move(eyeShift));
-    tag = _faceLayerManager->AddPersistentLayer(name, faceTrack);
+    _faceLayerManager->AddPersistentLayer(name, faceTrack);
   }
   else
   {
-    _faceLayerManager->AddToPersistentLayer(tag, eyeShift);
+    _faceLayerManager->AddToPersistentLayer(name, eyeShift);
   }
 }
 
-void TrackLayerComponent::RemoveEyeShift(AnimationTag tag, s32 duration_ms)
+void TrackLayerComponent::RemoveEyeShift(const std::string& name, u32 duration_ms)
 {
-  _faceLayerManager->RemovePersistentLayer(tag, duration_ms);
+  _faceLayerManager->RemovePersistentLayer(name, duration_ms);
 }
 
 void TrackLayerComponent::AddGlitch(f32 glitchDegree)
