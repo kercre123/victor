@@ -1043,6 +1043,120 @@ TEST JsonSerialization_ReturnVal()
 })json",
    false},
     
+    {R"json(
+{
+  "boolVal": "notABool",
+  "floatVal": 3.14,
+  "intVal": 7,
+  "enumVal": "Five",
+  "unionVal": {
+    "type": "testStruct1",
+    "test": false
+  },
+
+  "boolValList": [],
+  "floatValList": [],
+  "intValList": [],
+  "enumValList": [],
+  "unionValList": []
+})json",
+   false},
+
+    {R"json(
+{
+  "boolVal": true,
+  "floatVal": "notAFloat",
+  "intVal": 7,
+  "enumVal": "Five",
+  "unionVal": {
+    "type": "testStruct1",
+    "test": false
+  },
+
+  "boolValList": [],
+  "floatValList": [],
+  "intValList": [],
+  "enumValList": [],
+  "unionValList": []
+})json",
+   false},
+
+    {R"json(
+{
+  "boolVal": true,
+  "floatVal": 3.14,
+  "intVal": "notAnInt",
+  "enumVal": "Five",
+  "unionVal": {
+    "type": "testStruct1",
+    "test": false
+  },
+
+  "boolValList": [],
+  "floatValList": [],
+  "intValList": [],
+  "enumValList": [],
+  "unionValList": []
+})json",
+   false},
+
+    {R"json(
+{
+  "boolVal": true,
+  "floatVal": 3.14,
+  "intVal": 7,
+  "enumVal": "Five",
+  "unionVal": {
+    "type": "testStruct1",
+    "test": false
+  },
+
+  "boolValList": ["notAbool"],
+  "floatValList": [],
+  "intValList": [],
+  "enumValList": [],
+  "unionValList": []
+})json",
+   false},
+
+    {R"json(
+{
+  "boolVal": true,
+  "floatVal": 3.14,
+  "intVal": 7,
+  "enumVal": "Five",
+  "unionVal": {
+    "type": "testStruct1",
+    "test": false
+  },
+
+  "boolValList": [],
+  "floatValList": [3.1, "notAFloat"],
+  "intValList": [],
+  "enumValList": [],
+  "unionValList": []
+})json",
+   false},
+
+    {R"json(
+{
+  "boolVal": true,
+  "floatVal": 3.14,
+  "intVal": 7,
+  "enumVal": "Five",
+  "unionVal": {
+    "type": "testStruct1",
+    "test": false
+  },
+
+  "boolValList": [],
+  "floatValList": [],
+  "intValList": ["notAnInt", 4],
+  "enumValList": [],
+  "unionValList": []
+})json",
+   false},
+
     }};
 
   Json::Reader reader;
