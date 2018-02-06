@@ -17,6 +17,7 @@
 #include "engine/aiComponent/aiInformationAnalysis/aiInformationAnalyzer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/aiComponent/continuityComponent.h"
 #include "engine/aiComponent/doATrickSelector.h"
 #include "engine/aiComponent/faceSelectionComponent.h"
 #include "engine/aiComponent/feedingSoundEffectManager.h"
@@ -53,6 +54,7 @@ namespace Cozmo {
 namespace ComponentWrappers{
 AIComponentComponents::AIComponentComponents(Robot&                      robot,
                                              BehaviorComponent*&         behaviorComponent,
+                                             ContinuityComponent*        continuityComponent,
                                              DoATrickSelector*           doATrickSelector,
                                              FaceSelectionComponent*     faceSelectionComponent,
                                              FeedingSoundEffectManager*  feedingSoundEFfectManager,
@@ -67,6 +69,7 @@ AIComponentComponents::AIComponentComponents(Robot&                      robot,
 :_robot(robot)
 ,_components({
   {AIComponentID::BehaviorComponent,          ComponentWrapper(behaviorComponent, true)},
+  {AIComponentID::ContinuityComponent,        ComponentWrapper(continuityComponent, true)},
   {AIComponentID::DoATrick,                   ComponentWrapper(doATrickSelector, true)},
   {AIComponentID::FaceSelection,              ComponentWrapper(faceSelectionComponent, true)},
   {AIComponentID::FeedingSoundEffect,         ComponentWrapper(feedingSoundEFfectManager, true)},
@@ -126,6 +129,7 @@ Result AIComponent::Init(Robot* robot, BehaviorComponent*& customBehaviorCompone
     _aiComponents = std::make_unique<ComponentWrappers::AIComponentComponents>(
           *robot,
           behaviorComponent,
+          new ContinuityComponent(*robot),
           new DoATrickSelector(robot->GetContext()->GetDataLoader()->GetDoATrickWeightsConfig()),
           new FaceSelectionComponent(*robot, robot->GetFaceWorld(), robot->GetMicDirectionHistory()),
           new FeedingSoundEffectManager(),
@@ -207,6 +211,13 @@ Result AIComponent::Update(Robot& robot, std::string& currentActivityName,
   {
     auto& severeNeedsComp = GetComponent<SevereNeedsComponent>(AIComponentID::SevereNeeds);
     severeNeedsComp.Update();
+  }
+  
+  // Update continuity component before behavior component to ensure behaviors don't
+  // re-gain control when an action is pending
+  {
+    auto& contComponent = GetComponent<ContinuityComponent>(AIComponentID::ContinuityComponent);
+    contComponent.Update();
   }
   
   {

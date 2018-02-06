@@ -427,6 +427,9 @@ protected:
 
   // Stop a helper delegated with SmartDelegateToHelper
   bool StopHelperWithoutCallback();
+
+  // Helper function to play an emergency get out through the continuity component
+  void PlayEmergencyGetOut(AnimationTrigger anim);
   
   // Convenience Method for accessing the behavior helper factory
   BehaviorHelperFactory& GetBehaviorHelperFactory();

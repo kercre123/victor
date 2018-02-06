@@ -28,6 +28,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
+#include "engine/aiComponent/continuityComponent.h"
 #include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionCloudIntentPending.h"
@@ -1261,6 +1262,14 @@ bool ICozmoBehavior::StopHelperWithoutCallback()
   }
   
   return handleStopped;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::PlayEmergencyGetOut(AnimationTrigger anim)
+{
+  auto& contComp = GetBEI().GetAIComponent().GetComponent<ContinuityComponent>(AIComponentID::ContinuityComponent);
+  contComp.PlayEmergencyGetOut(anim);
 }
 
 
