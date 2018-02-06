@@ -146,6 +146,8 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
       return RESULT_FAIL;
     }
 
+    std::cout << "ObjectDetector.Model.LoadGraph.MemMappedModelLoadSuccess " << graph_file_name << std::endl;
+
     tensorflow::SessionOptions options;
     options.config.mutable_graph_options()
         ->mutable_optimizer_options()
@@ -176,18 +178,21 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
       return RESULT_FAIL;
     }
 
+    std::cout << "ObjectDetector.Model.LoadGraph.ModelLoadSuccess " << graph_file_name << std::endl;
+
     _session.reset(tensorflow::NewSession(tensorflow::SessionOptions()));
+
+    tensorflow::Status session_create_status = _session->Create(graph_def);
+
+    if (!session_create_status.ok())
+    {
+      PRINT_NAMED_ERROR("ObjectDetector.Model.LoadGraph.CreateSessionFailed",
+                        "Status: %s", session_create_status.ToString().c_str());
+      return RESULT_FAIL;
+    }
   } 
 
-  std::cout << "ObjectDetector.Model.LoadGraph.ModelLoadSuccess " << graph_file_name << std::endl;
-  
-  tensorflow::Status session_create_status = _session->Create(graph_def);
-  if (!session_create_status.ok())
-  {
-    PRINT_NAMED_ERROR("ObjectDetector.Model.LoadGraph.CreateSessionFailed",
-                      "Status: %s", session_create_status.ToString().c_str());
-    return RESULT_FAIL;
-  }
+  std::cout << "ObjectDetector.Model.LoadGraph.SessionCreated" << std::endl;
 
   const std::string labels_file_name = FullFilePath(modelPath, _params.labels);
   Result readLabelsResult = ReadLabelsFile(labels_file_name, _labels);
