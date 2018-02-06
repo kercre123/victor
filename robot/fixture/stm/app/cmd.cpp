@@ -252,6 +252,22 @@ int cmdParseInt32(char *s)
   return INT_MIN; //parse error
 }
 
+uint32_t cmdParseHex32(char* s)
+{
+  if(s)
+  {
+    errno = 0;
+    char *endptr;
+    long val = strtol(s, &endptr, 16); //enforce hex
+
+    //check conversion errs, limit numerical range, and verify entire arg was parsed (stops at whitespace, invalid chars...)
+    if( errno == 0 && val <= UINT_MAX && endptr > s && *endptr == '\0' )
+      return val;
+  }
+  errno = -1;
+  return 0; //parse error
+}
+
 char* cmdGetArg(char *s, int n, char* out_buf, int buflen)
 {
   const int bufsize_ = 51;
@@ -346,5 +362,159 @@ void cmdDbgParseTestbench(void)
   }
   DBG_PRINTF("\n");
 #endif
+}
+
+//-----------------------------------------------------------------------------
+//                  Robot (Charge Contacts)
+//-----------------------------------------------------------------------------
+
+#include "emrf.h"
+
+static struct { //result of most recent command
+  error_t ccr_err;
+  int handler_cnt;
+  int sr_cnt;
+  union {
+    ccr_esn_t esn;
+    ccr_bsv_t bsv;
+    ccr_sr_t  sr;
+  }rsp;
+} m_dat;
+
+void esn_handler_(char* s) {
+  m_dat.handler_cnt++;
+  m_dat.rsp.esn.esn = cmdParseHex32(cmdGetArg(s,0));
+  if( errno != 0 )
+    m_dat.ccr_err = ERROR_TESTPORT_RSP_BAD_ARG;
+}
+
+ccr_esn_t* cmdRobotEsn()
+{
+  memset( &m_dat, 0, sizeof(m_dat) );
+  const char *cmd = "esn 00 00 00 00 00 00";
+  cmdSend(CMD_IO_CONTACTS, cmd, 150, CMD_OPTS_DEFAULT, esn_handler_);
+  
+  ConsolePrintf("esn=%08x\n", m_dat.rsp.esn.esn);
+  
+  if( m_dat.handler_cnt != 1 || m_dat.ccr_err != ERROR_OK ) {
+    ConsolePrintf("ESN ERROR %i, handler cnt %i\n", m_dat.ccr_err, m_dat.handler_cnt);
+    //throw m_dat.ccr_err;
+    return 0;
+  }
+  return &m_dat.rsp.esn;
+}
+
+void bsv_handler_(char* s)
+{
+  uint32_t *dat = (uint32_t*)&m_dat.rsp.bsv;
+  if( m_dat.handler_cnt <= 8 )
+  {
+    dat[m_dat.handler_cnt+0] = cmdParseHex32(cmdGetArg(s,0));
+    if( errno != 0 )
+      m_dat.ccr_err = ERROR_TESTPORT_RSP_BAD_ARG;
+    
+    dat[m_dat.handler_cnt+1] = cmdParseHex32(cmdGetArg(s,1));
+    if( errno != 0 )
+      m_dat.ccr_err = ERROR_TESTPORT_RSP_BAD_ARG;
+  }
+  m_dat.handler_cnt += 2;
+}
+
+ccr_bsv_t* cmdRobotBsv()
+{
+  memset( &m_dat, 0, sizeof(m_dat) );
+  cmdSend(CMD_IO_CONTACTS, "bsv 00 00 00 00 00 00", 200, CMD_OPTS_DEFAULT, bsv_handler_);
+  
+  ConsolePrintf("bsv hw.rev,model %u %u\n", m_dat.rsp.bsv.hw_rev, m_dat.rsp.bsv.hw_model );
+  ConsolePrintf("bsv ein %08x %08x %08x %08x\n", m_dat.rsp.bsv.ein[0], m_dat.rsp.bsv.ein[1], m_dat.rsp.bsv.ein[2], m_dat.rsp.bsv.ein[3] );
+  ConsolePrintf("bsv app vers %08x %08x %08x %08x\n", m_dat.rsp.bsv.app_version[0], m_dat.rsp.bsv.app_version[1], m_dat.rsp.bsv.app_version[2], m_dat.rsp.bsv.app_version[3] );
+  
+  if( m_dat.handler_cnt != 10 || m_dat.ccr_err != ERROR_OK ) {
+    ConsolePrintf("BSV ERROR %i, handler cnt %i\n", m_dat.ccr_err, m_dat.handler_cnt);
+    //throw m_dat.ccr_err;
+    return 0;
+  }
+  return &m_dat.rsp.bsv;
+}
+
+void sensor_handler_(char* s)
+{
+  m_dat.handler_cnt++;
+  //m_dat.ccr_err = ERROR_OK; //we only care about the final reading
+  
+  for(int x=0; x < m_dat.sr_cnt; x++) {
+    uint32_t dat = cmdParseHex32(cmdGetArg(s,x));
+    m_dat.rsp.sr.val[x] = dat;
+    if( dat > 0xffff || errno != 0 )
+      m_dat.ccr_err = ERROR_TESTPORT_RSP_BAD_ARG;
+  }
+}
+
+static ccr_sr_t* cmdRobot_MotGet_(uint8_t NN, uint8_t sensor, int8_t treadL, int8_t treadR, int8_t lift, int8_t head, const char* cmd)
+{
+  memset( &m_dat, 0, sizeof(m_dat) );
+  char b[22]; const int bz = sizeof(b);
+  snformat(b,bz,"%s %02x %02x %02x %02x %02x %02x", cmd, NN, sensor, (uint8_t)treadL, (uint8_t)treadR, (uint8_t)lift, (uint8_t)head);
+
+  m_dat.sr_cnt = sensor > 8 ? 0 : ccr_sr_cnt[sensor]; //expected number of sensor values per drop/line
+  cmdSend(CMD_IO_CONTACTS, b, 150 + (int)NN*6, CMD_OPTS_DEFAULT, sensor_handler_);
+  
+  ConsolePrintf("sr vals %04x %04x %04x %04x\n", m_dat.rsp.sr.val[0], m_dat.rsp.sr.val[1], m_dat.rsp.sr.val[2], m_dat.rsp.sr.val[3] );
+  
+  if( m_dat.handler_cnt != NN || m_dat.ccr_err != ERROR_OK ) {
+    ConsolePrintf("SR ERROR %i, handler cnt %i/%i\n", m_dat.ccr_err, m_dat.handler_cnt, NN);
+    //throw m_dat.ccr_err;
+    return 0;
+  }
+  return &m_dat.rsp.sr;
+}
+ccr_sr_t* cmdRobotMot(uint8_t NN, uint8_t sensor, int8_t treadL, int8_t treadR, int8_t lift, int8_t head) {
+  return cmdRobot_MotGet_(NN, sensor, treadL, treadR, lift, head, "mot");
+}
+ccr_sr_t* cmdRobotGet(uint8_t NN, uint8_t sensor) {
+  return cmdRobot_MotGet_(NN, sensor, 0, 0, 0, 0, "get");
+}
+
+void cmdRobotFcc(uint8_t mode, uint8_t cn) {
+  char b[22]; const int bz = sizeof(b);
+  cmdSend(CMD_IO_CONTACTS, snformat(b,bz,"fcc %02x %02x 00 00 00 00", mode, cn), 150);
+}
+
+void cmdRobotRlg(uint8_t idx) {
+  ConsolePrintf("XXX: rlg not implemented\n");
+  throw ERROR_EMPTY_COMMAND;
+}
+
+void cmdRobot_IdxVal32_(uint8_t idx, uint32_t val, const char* cmd) {
+  char b[22]; const int bz = sizeof(b);
+  snformat(b,bz,"%s %02x %02x %02x %02x %02x 00", cmd, idx, (val>>0)&0xFF, (val>>8)&0xFF, (val>>16)&0xFF, (val>>24)&0xFF );
+  cmdSend(CMD_IO_CONTACTS, b, 150);
+}
+void cmdRobotEng(uint8_t idx, uint32_t val) { cmdRobot_IdxVal32_(idx, val, "eng"); }
+void cmdRobotLfe(uint8_t idx, uint32_t val) { cmdRobot_IdxVal32_(idx, val, "lfe"); }
+void cmdRobotSmr(uint8_t idx, uint32_t val) { cmdRobot_IdxVal32_(idx, val, "smr"); }
+
+void gmr_handler_(char* s) {
+  m_dat.handler_cnt++;
+  m_dat.rsp.esn.esn = cmdParseHex32(cmdGetArg(s,0));
+  if( errno != 0 )
+    m_dat.ccr_err = ERROR_TESTPORT_RSP_BAD_ARG;
+}
+
+////#define EMR_FIELD_OFS(fieldname)    offsetof((fieldname),Anki::Cozmo::Factory::EMR)
+uint32_t cmdRobotGmr(uint8_t idx)
+{
+  memset( &m_dat, 0, sizeof(m_dat) );
+  char b[22]; const int bz = sizeof(b);
+  cmdSend(CMD_IO_CONTACTS, snformat(b,bz,"gmr %02x 00 00 00 00 00", idx), 150, CMD_OPTS_DEFAULT, gmr_handler_);
+  
+  ConsolePrintf("gmr=%08x\n", m_dat.rsp.esn.esn);
+  
+  if( m_dat.handler_cnt != 1 || m_dat.ccr_err != ERROR_OK ) {
+    ConsolePrintf("GMR ERROR %i, handler cnt %i\n", m_dat.ccr_err, m_dat.handler_cnt);
+    //throw m_dat.ccr_err;
+    return 0;
+  }
+  return m_dat.rsp.esn.esn;
 }
 

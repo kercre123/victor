@@ -11,7 +11,7 @@
 //parameterized command/response delimiters (added/removed internally)
 #define CMD_PREFIX        ">>"
 #define RSP_PREFIX        "<<"
-#define ASYNC_PREFIX      "!!"
+#define ASYNC_PREFIX      ":"
 #define LOG_CMD_PREFIX    ">"
 #define LOG_RSP_PREFIX    "<"
 
@@ -53,6 +53,9 @@ uint32_t cmdTimeMs(); //time it took for most recent cmdSend() to finish
 //@return parsed integer value of s. INT_MIN on parse err.
 int cmdParseInt32(char *s);
 
+//@return u32 value of input hex string (e.g. 'a235dc01'). 0 on parse error + errno set to -1
+uint32_t cmdParseHex32(char* s);
+
 //@return n-th argument (mutable static copy, \0-terminated). NULL if !exist.
 //n=0 is command. strings enclosed by "" are treated as a single arg.
 char* cmdGetArg(char *s, int n, char* out_buf=0, int buflen=0); //overload out_buf/buflen to provide user buffer to hold the argument
@@ -63,6 +66,54 @@ int cmdNumArgs(char *s);
 //DEBUG: run some parsing tests
 void cmdDbgParseTestbench(void);
 
+//-----------------------------------------------------------------------------
+//                  Robot (Charge Contacts)
+//-----------------------------------------------------------------------------
+//cmdSend() to robot over charge contacts - parse reply into data struct.
+
+//sensor index for 'mot' + 'get' cmds
+#define CCC_SENSOR_NONE       0
+#define CCC_SENSOR_BATTERY    1
+#define CCC_SENSOR_CLIFF      2
+#define CCC_SENSOR_ENCODERS   3
+#define CCC_SENSOR_SPEED      4
+#define CCC_SENSOR_PROX_TOF   5
+#define CCC_SENSOR_BTN_TOUCH  6
+#define CCC_SENSOR_RSSI       7
+#define CCC_SENSOR_RX_PKT     8
+const int ccr_sr_cnt[9] = {0,1,4,4,4,1,2,1,1}; //number of sensor fields for each type
+
+//FCC test modes
+#define CCC_FCC_MODE_TX_CARRIER   0
+#define CCC_FCC_MODE_TX_PACKETS   1
+#define CCC_FCC_MODE_RX_POWER     2
+#define CCC_FCC_MODE_RX_PACKETS   3
+
+typedef struct {
+  uint32_t esn;
+} ccr_esn_t;
+
+typedef struct {
+  uint32_t hw_rev;
+  uint32_t hw_model;
+  uint32_t ein[4];
+  uint32_t app_version[4];
+} ccr_bsv_t;
+
+typedef struct {
+  uint16_t val[4];
+} ccr_sr_t;
+
+ccr_esn_t* cmdRobotEsn(); //read robot (head) ESN
+ccr_bsv_t* cmdRobotBsv(); //read body serial+version info
+ccr_sr_t*  cmdRobotMot(uint8_t NN, uint8_t sensor, int8_t treadL, int8_t treadR, int8_t lift, int8_t head);
+ccr_sr_t*  cmdRobotGet(uint8_t NN, uint8_t sensor);
+void       cmdRobotFcc(uint8_t mode, uint8_t cn); //CCC_FCC_MODE_, {0..39}
+//void       cmdRobotRlg(uint8_t idx);
+void       cmdRobotEng(uint8_t idx, uint32_t val);
+void       cmdRobotLfe(uint8_t idx, uint32_t val);
+void       cmdRobotSmr(uint8_t idx, uint32_t val);
+uint32_t   cmdRobotGmr(uint8_t idx);
 
 #endif //CMD_H
 
