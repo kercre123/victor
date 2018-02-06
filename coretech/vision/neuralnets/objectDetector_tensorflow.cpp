@@ -80,14 +80,14 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
 
   if("ssd_mobilenet" == _params.architecture)
   {
-    _input_layer = "image_tensor";
-    _output_layers = {"detection_scores", "detection_classes", "detection_boxes", "num_detections"};
+    _inputLayerName = "image_tensor";
+    _outputLayerNames = {"detection_scores", "detection_classes", "detection_boxes", "num_detections"};
     _useFloatInput = false;
   }
   else if("mobilenet" == _params.architecture)
   { 
-    _input_layer = "input";
-    _output_layers = {"MobilenetV1/Predictions/Softmax"};
+    _inputLayerName = "input";
+    _outputLayerNames = {"MobilenetV1/Predictions/Softmax"};
     _useFloatInput = true;
   }
   else
@@ -99,10 +99,10 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
 
   if(_params.verbose)
   {
-    std::cout << "Input: " << _input_layer << ", Outputs: ";
-    for(auto const& output_layer : _output_layers)
+    std::cout << "Input: " << _inputLayerName << ", Outputs: ";
+    for(auto const& outputLayerName : _outputLayerNames)
     {
-      std::cout << output_layer << " ";
+      std::cout << outputLayerName << " ";
     }
     std::cout << std::endl;
   }
@@ -367,11 +367,11 @@ Result ObjectDetector::Detect(cv::Mat& img, std::list<DetectedObject>& objects)
     
   if(_params.verbose)
   {
-    std::cout << "Running session with input dtype=" << image_tensor.dtype() << " and " << _output_layers.size() << " outputs" << std::endl;
+    std::cout << "Running session with input dtype=" << image_tensor.dtype() << " and " << _outputLayerNames.size() << " outputs" << std::endl;
   }
 
   std::vector<tensorflow::Tensor> output_tensors;
-  tensorflow::Status run_status = _session->Run({{_input_layer, image_tensor}}, _output_layers, {}, &output_tensors);
+  tensorflow::Status run_status = _session->Run({{_inputLayerName, image_tensor}}, _outputLayerNames, {}, &output_tensors);
 
   if (!run_status.ok()) {
     PRINT_NAMED_ERROR("ObjectDetector.Model.Run.DetectionSessionRunFail", "%s", run_status.ToString().c_str());

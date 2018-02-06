@@ -70,14 +70,15 @@ private:
     bool          verbose;
 
     bool          memoryMapGraph;
-    
+
   } _params;
 
-  std::string                          _input_layer;
-  std::vector<std::string>             _output_layers;
+  std::string                          _inputLayerName;
+  std::vector<std::string>             _outputLayerNames;
   bool                                 _useFloatInput = false;
 
   std::unique_ptr<tensorflow::Session> _session;
+  std::unique_ptr<tensorflow::Session> _imageReadSession;
   std::vector<std::string>             _labels;
   
 }; // class ObjectDetector
