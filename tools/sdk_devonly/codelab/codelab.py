@@ -1225,7 +1225,7 @@ class CodeLabInterface():
             if project_json_data is not None:
                 path_name = os.path.join(project_directory, PROJECTJSON_CONTENTS_FILENAME)
                 with open(path_name, 'w') as out_file:
-                    json.dump(project_json_data, out_file, indent=4)
+                    json.dump(project_json_data, out_file, indent=4, sort_keys=True)
 
                 if command_args.debug_project_json_contents:
                     log_text("ProjectJSON =\n" + json.dumps(project_json_data, indent=4) + "\n")

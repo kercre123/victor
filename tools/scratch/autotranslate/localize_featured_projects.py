@@ -257,7 +257,7 @@ def walk_json_tree_and_perform_transformations(node, filters, context, transform
 def translate_project(project, sourceLanguageTable, destinationLanguageTable):
     resultList = []
 
-    projectJson = json.loads(project['ProjectJSON'])
+    projectJson = load_project_json(project['ProjectJSON'])
 
     #with open('testIn.txt', 'w') as output_file:
     #    json.dump(projectJson, output_file, indent=4)
@@ -274,7 +274,7 @@ def translate_project(project, sourceLanguageTable, destinationLanguageTable):
 
     newProject = {}
     newProject['ProjectUUID'] = project['ProjectUUID']
-    newProject['ProjectJSON'] = json.dumps(projectJson)
+    newProject['ProjectJSON'] = projectJson
     #with open('testOut.txt', 'w') as output_file:
     #    json.dump(projectJson, output_file, indent=4)
 
@@ -296,27 +296,28 @@ def get_file_path(base_file_name, language):
     return base_file_name + '_' + language.lower() + '.json'
 
 def run_translation_target(target, loc_table):
-    with open(target['source_file_name'], encoding='utf8') as input_file:
-        project = json.load(input_file)
-        translated = translate_project(project, loc_table[target['source_language']], loc_table[target['target_language']])
-        with open(target['target_file_name'], 'w', encoding='utf8') as output_file:
-            json.dump(translated, output_file, indent=4)
-            output_file.write('\n')
+    translated = translate_project(target['source_json'], loc_table[target['source_language']], loc_table[target['target_language']])
+    with open(target['target_file_name'], 'w', encoding='utf8') as output_file:
+        json.dump(translated, output_file, indent=4, sort_keys=True)
+        output_file.write('\n')
 
     return True
 
 def execute_translations_on_project(project, source_language, loc_table):
+    project_json = {}
     source_project_file = get_file_path(project['base_file_name'], source_language)
+    with open(source_project_file, encoding='utf8') as input_file:
+        project_json = json.load(input_file)
+
     targets = []
     for language in loc_table:
-        if language != source_language:
-            target_project_file = get_file_path(project['base_file_name'], language)
-            target_entry = {}
-            target_entry['source_language'] = source_language
-            target_entry['target_language'] = language
-            target_entry['source_file_name'] = source_project_file
-            target_entry['target_file_name'] = target_project_file
-            targets.append(target_entry)
+        target_project_file = get_file_path(project['base_file_name'], language)
+        target_entry = {}
+        target_entry['source_language'] = source_language
+        target_entry['source_json'] = project_json
+        target_entry['target_language'] = language
+        target_entry['target_file_name'] = target_project_file
+        targets.append(target_entry)
 
     for target in targets:
         print('translating ' + project['project_name'] + ' ' + source_project_file + ' -> ' + target['target_file_name'])
@@ -329,6 +330,12 @@ def execute_translations_on_project(project, source_language, loc_table):
 #                                          Loc String Scanning Code
 # --------------------------------------------------------------------------------------------------------
 
+def load_project_json(json_in):
+    if isinstance( json_in, str ):
+        return json.loads(json_in)
+    else:
+        return json_in
+
 def scan_project(project, source_language, target_folder, exclude_project_agnostic_strings):
     source_project_file = get_file_path(project['base_file_name'], source_language)
 
@@ -340,8 +347,8 @@ def scan_project(project, source_language, target_folder, exclude_project_agnost
         json_contents = json.load(input_file)
         if 'ProjectJSON' in json_contents:
             extraction_context = { 'outputList' : output_list, 'scope': ['none'] }
-            encoded_project_json = json.loads(json_contents['ProjectJSON'])
-            walk_json_tree_and_perform_transformations(encoded_project_json, allFilters, extraction_context, pull_string)
+            internal_json = load_project_json(json_contents['ProjectJSON'])
+            walk_json_tree_and_perform_transformations(internal_json, allFilters, extraction_context, pull_string)
         else:
             print("ERROR: could not find ProjectJSON field in source file %s" % source_project_file)
 

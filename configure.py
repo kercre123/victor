@@ -779,6 +779,20 @@ class GamePlatformConfiguration(object):
                          ankibuild.util.File.mkdir_p(os.path.dirname(copy_destFile))
                          ankibuild.util.File.cp(copy_srcFile, copy_destFile)
 
+        # Scans through all of the human readable featured codelab project json files and collapses them into a single
+        # file for each language.  The resulting file will store each project as an encoded string rather than pretty
+        # printed json.  This single file will improve loadtimes, while the version controlled source files will be
+        # far easier to diff.
+        #
+        # This script operates only on codelab featured projects.
+        print_status('Collapsing codelab featured projects...')
+        collapse_tool_dir = os.path.join(GAME_ROOT, 'tools', 'scratch')
+        streaming_assets_path = os.path.join(GAME_ROOT, 'unity', 'Cozmo', 'Assets', 'StreamingAssets')
+        collapse_codelab_args = [os.path.join(collapse_tool_dir, 'collapse_featured_projects.py')]
+        collapse_codelab_args += ['--streaming_assets_path', streaming_assets_path]
+        ankibuild.util.File.execute(collapse_codelab_args)
+
+
     def build(self):
         if self.options.command == 'clean':
             buildaction = 'clean'

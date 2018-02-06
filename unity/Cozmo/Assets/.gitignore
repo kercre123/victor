@@ -24,6 +24,8 @@ StreamingAssets/cozmo_resources/*
 StreamingAssets/cozmo_resources.meta
 StreamingAssets/resources.txt
 StreamingAssets/resources.txt.meta
+StreamingAssets/Scratch/encodedFeaturedProjects/*
+StreamingAssets/Scratch/encodedFeaturedProjects.meta
 
 # Compiled Android libs
 Plugins/Android/libs/generated
