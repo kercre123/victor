@@ -429,7 +429,7 @@ void AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
 #if defined(SIMULATOR) || !FACTORY_TEST
   FaceDisplay::GetDebugDraw()->SetShouldDrawFAC(false);
 #else
-  FaceDisplay::GetDebugDraw()->SetShouldDrawFAC(!Factory::GetEMR()->PACKED_OUT);
+  FaceDisplay::GetDebugDraw()->SetShouldDrawFAC(!Factory::GetEMR()->PACKED_OUT_FLAG);
 #endif
 }
 
