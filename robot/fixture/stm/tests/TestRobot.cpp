@@ -67,7 +67,7 @@ void TestRobotInfo(void)
   Contacts::setModeRx();
   
   //test all DVT2 supported commands - make sure they return a valid response
-  if( g_fixmode > FIXMODE_ROBOT0 ) //skip this in debug mode
+  if( g_fixmode > FIXMODE_ROBOT0 && g_fixmode <= FIXMODE_ROBOT3 ) //skip this in debug mode
   {
     int opts = CMD_OPTS_DEFAULT; //& ~CMD_OPTS_EXCEPTION_EN; //~(CMD_OPTS_LOG_ERRORS | CMD_OPTS_EXCEPTION_EN));
     cmdSend_DBG_(CMD_IO_CONTACTS, "esn",   100, opts);
@@ -158,14 +158,14 @@ static inline int charge1_(uint16_t timeout_s, uint16_t i_done_ma, bool dbgPrint
     
     //test for robot removal
     offContactCnt = current_ma < PRESENT_CURRENT_MA ? offContactCnt + 1 : 0;
-    if ( offContactCnt > 10) {
+    if ( offContactCnt > 10 && Timer::elapsedUs(Tstart) > 3*1000*1000 ) {
       status = RECHARGE_STATUS_OFF_CONTACT;
       break;
     }
     
     //charge complete? (current threshold)
     iDoneCnt = i_done_ma > 0 && current_ma < i_done_ma ? iDoneCnt + 1 : 0;
-    if( iDoneCnt > 10 ) {
+    if( iDoneCnt > 10 && Timer::elapsedUs(Tstart) > 3*1000*1000 ) {
       status = RECHARGE_STATUS_OK;
       break;
     }
@@ -406,7 +406,7 @@ TestFunction* TestRobotLifetestGetTests(void)
 TestFunction* TestRobotRecharge0GetTests(void)
 {
   static TestFunction m_tests[] = {
-    //TestRobotInfo,
+    TestRobotInfo,
     Recharge,
     NULL
   };
