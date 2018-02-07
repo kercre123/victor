@@ -23,8 +23,8 @@ void Main_Execution(void) {
   Contacts::tick();
   if (Power::sensorsValid()) Opto::tick();
   Analog::tick();
-  Lights::tick();
-  Touch::tick();
+  //Lights::tick();
+  //Touch::tick();
 }
 
 int main (void) {
@@ -40,8 +40,8 @@ int main (void) {
   Timer::init();
   Comms::init();
   Motors::init();
-  Lights::init();
-  Touch::init();
+  //Lights::init();
+  //Touch::init();
 
   __enable_irq(); // Start firing interrupts
 
