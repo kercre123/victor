@@ -16,7 +16,7 @@
 
 
 #include "coretech/common/engine/objectIDs.h"
-#include "engine/entity.h"
+#include "util/entityComponent/iManageableComponent.h"
 
 
 namespace Anki {
@@ -26,7 +26,7 @@ namespace Cozmo {
 // forward declarations
 class IExternalInterface;
   
-class FeedingSoundEffectManager : public ManageableComponent{
+class FeedingSoundEffectManager : public IManageableComponent{
 public:
   // As defined in messageEngineToGame.clad
   enum class ChargeStateChange{

@@ -15,7 +15,7 @@
 
 #include "clad/types/unlockTypes.h"
 
-#include "engine/dependencyManagedComponent.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 #include "engine/robotComponents_fwd.h"
 
 #include "json/json-forwards.h"

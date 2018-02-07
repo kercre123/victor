@@ -40,7 +40,7 @@ namespace Anki {
 namespace Cozmo {
 
 BlockTapFilterComponent::BlockTapFilterComponent()
-: IDependencyManagedComponent(RobotComponentID::BlockTapFilter)
+: IDependencyManagedComponent(this, RobotComponentID::BlockTapFilter)
 , _enabled(true)
 , _waitToTime(0)
 {

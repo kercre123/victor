@@ -13,7 +13,7 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_Behavior_Components_fwd_H__
 #define __Cozmo_Basestation_BehaviorSystem_Behavior_Components_fwd_H__
 
-#include "engine/dependencyManagedComponent.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -39,8 +39,8 @@ enum class BCComponentID{
 };
 
 
-using BCComp =  DependencyManagedComponentWrapper<BCComponentID>;
-using BCCompMap = std::map<BCComponentID, BCComp>;
+using BCComp =  IDependencyManagedComponent<BCComponentID>;
+using BCCompMap = DependencyManagedEntity<BCComponentID>;
 using BCCompIDSet = std::set<BCComponentID>;
 
 } // namespace Cozmo

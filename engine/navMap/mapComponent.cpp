@@ -144,7 +144,7 @@ using namespace MemoryMapTypes;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 MapComponent::MapComponent()
-: IDependencyManagedComponent(RobotComponentID::Map)
+: IDependencyManagedComponent(this, RobotComponentID::Map)
 , _currentMapOriginID(PoseOriginList::UnknownOriginID)
 , _vizMessageDirty(true)
 , _gameMessageDirty(true)

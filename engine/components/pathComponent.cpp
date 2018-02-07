@@ -59,7 +59,7 @@ void PlanParameters::Reset() {
 }
 
 PathComponent::PathComponent()
-: IDependencyManagedComponent<RobotComponentID>(RobotComponentID::PathPlanning)
+: IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::PathPlanning)
 , _shortPathPlanner(new FaceAndApproachPlanner)
 , _shortMinAnglePathPlanner(new MinimalAnglePlanner)
 , _pathMotionProfile(new PathMotionProfile(DEFAULT_PATH_MOTION_PROFILE))

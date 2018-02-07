@@ -133,7 +133,7 @@ void Delegator::HandleActionComplete(u32 actionTag)
 ///////////////////////
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 DelegationComponent::DelegationComponent()
-: IDependencyManagedComponent(BCComponentID::DelegationComponent)
+: IDependencyManagedComponent(this, BCComponentID::DelegationComponent)
 {
 }
 
@@ -141,8 +141,8 @@ DelegationComponent::DelegationComponent()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void DelegationComponent::InitDependent(Robot* robot, const BCCompMap& dependentComponents)
 {
-  auto& bsm = dependentComponents.find(BCComponentID::BehaviorSystemManager)->second.GetValue<BehaviorSystemManager>();
-  Init(*robot, &bsm, &robot->GetAIComponent().GetComponent<ContinuityComponent>(AIComponentID::ContinuityComponent));
+  auto* bsm = dependentComponents.GetBasePtr<BehaviorSystemManager>(BCComponentID::BehaviorSystemManager);
+  Init(*robot, bsm, &robot->GetAIComponent().GetComponent<ContinuityComponent>(AIComponentID::ContinuityComponent));
 }
 
 

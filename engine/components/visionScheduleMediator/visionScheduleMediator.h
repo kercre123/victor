@@ -18,10 +18,10 @@
 #include "visionScheduleMediator_fwd.h"
 
 #include "clad/types/visionModes.h"
-#include "engine/dependencyManagedComponent.h"
 #include "engine/robotComponents_fwd.h"
 #include "json/json-forwards.h"
 #include "util/helpers/noncopyable.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 
 #include <set>
 #include <unordered_map>

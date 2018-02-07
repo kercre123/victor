@@ -17,7 +17,7 @@
 #include "coretech/common/engine/objectIDs.h"
 #include "coretech/vision/engine/trackedFace.h"
 #include "engine/components/animationComponent.h"
-#include "engine/entity.h"
+#include "util/entityComponent/entity.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include <list>

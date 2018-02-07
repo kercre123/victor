@@ -44,7 +44,7 @@ struct BackpackLightData
 };
 
 BodyLightComponent::BodyLightComponent()
-: IDependencyManagedComponent(RobotComponentID::BodyLights)
+: IDependencyManagedComponent(this, RobotComponentID::BodyLights)
 {  
   static_assert((int)LEDId::NUM_BACKPACK_LEDS == 3, "BodyLightComponent.WrongNumBackpackLights");
 }

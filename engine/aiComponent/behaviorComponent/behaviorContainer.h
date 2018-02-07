@@ -18,7 +18,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
-#include "engine/dependencyManagedComponent.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/global/globalDefinitions.h"
 #include "util/helpers/noncopyable.h"
 #include "util/logging/logging.h"

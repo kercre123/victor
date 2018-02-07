@@ -80,7 +80,7 @@ bool ObjectLights::operator==(const ObjectLights& other) const
   
 
 CubeLightComponent::CubeLightComponent()
-: IDependencyManagedComponent(RobotComponentID::CubeLights)
+: IDependencyManagedComponent(this, RobotComponentID::CubeLights)
 {
   static_assert(AnimLayerEnum::User < AnimLayerEnum::Engine &&
                 AnimLayerEnum::Engine < AnimLayerEnum::State,

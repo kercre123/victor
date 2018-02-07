@@ -49,11 +49,12 @@ CONSOLE_VAR(float, kMinQualityThreshold, "ProxSensorComponent", 0.05f);
 
   
 ProxSensorComponent::ProxSensorComponent() 
-: ISensorComponent(kLogDirName, RobotComponentID::ProxSensor)
+: ISensorComponent(kLogDirName)
+, IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::ProxSensor)
 {
 }
-  
-  
+
+
 void ProxSensorComponent::UpdateInternal(const RobotState& msg)
 {
   if (kProxSensorEnabled)

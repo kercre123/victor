@@ -42,7 +42,7 @@ const int kArbitrarilyLargeCancelBound = 1000000;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorSystemManager::BehaviorSystemManager()
-: IDependencyManagedComponent(BCComponentID::BehaviorSystemManager)
+: IDependencyManagedComponent(this, BCComponentID::BehaviorSystemManager)
 , _initializationStage(InitializationStage::SystemNotInitialized)
 {
   _behaviorStack.reset();
@@ -56,11 +56,12 @@ BehaviorSystemManager::~BehaviorSystemManager()
 }
 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorSystemManager::InitDependent(Robot* robot, const BCCompMap& dependentComponents)
 {
-  auto& baseBehaviorWrapper = dependentComponents.find(BCComponentID::BaseBehaviorWrapper)->second.GetValue<BaseBehaviorWrapper>();
-  auto& bei = dependentComponents.find(BCComponentID::BehaviorExternalInterface)->second.GetValue<BehaviorExternalInterface>();
-  auto& async = dependentComponents.find(BCComponentID::AsyncMessageComponent)->second.GetValue<AsyncMessageGateComponent>();
+  auto& baseBehaviorWrapper = dependentComponents.GetValue<BaseBehaviorWrapper>(BCComponentID::BaseBehaviorWrapper);
+  auto& bei = dependentComponents.GetValue<BehaviorExternalInterface>(BCComponentID::BehaviorExternalInterface);
+  auto& async = dependentComponents.GetValue<AsyncMessageGateComponent>(BCComponentID::AsyncMessageComponent);
 
   InitConfiguration(*robot,
                     baseBehaviorWrapper._baseBehavior,
