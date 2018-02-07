@@ -38,7 +38,7 @@ sleep 1 #delay for file system changes to clear cache
 
 #keil command line opts: http://www.keil.com/support/man/docs/uv4/uv4_commandline.htm
 echo building project
-timeout 5.0s python error_codes_export.py #export error codes
+timeout 5.0s python error_codes_export.py $version #export error codes
 Tstart=$(($(date +%s%N)/1000000))
 timeout 90.0s $keil -b $project -j0 -o $buildlog
 builderr=$?

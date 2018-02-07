@@ -1,5 +1,7 @@
 #!python
 #export error code list from source header to a CSV file
+import sys
+import datetime
 
 infile = "app/fixture.h"
 outfile = "error_codes.csv"
@@ -30,6 +32,10 @@ def parse_line(line, fout):
 export = 0
 with open(infile, 'r+') as fin:
   with open(outfile, "w") as fout:
+    fwver=0
+    if len(sys.argv) > 1: #check if argument was given
+      fwver=sys.argv[1] #print( "arg: " + sys.argv[1] )
+    fout.write("firmware v{} export {}\n".format( fwver, datetime.datetime.now() ) )
     for line in fin:
       if line.startswith("//<export start>"):
         export = 1
@@ -38,5 +44,5 @@ with open(infile, 'r+') as fin:
       elif export == 1: #only parse lines in the error-code region (easier)
         parse_line( line.rstrip(), fout )
 
-print( "found {} error codes. parsed {} lines from {}".format(num_ecodes, parsed_lines, infile) )
+print( "parsed {} lines into {} error codes from {}".format(parsed_lines, num_ecodes, infile) )
 exit()
