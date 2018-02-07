@@ -17,6 +17,7 @@
 #include "log.h"
 #include "../libev/ev.h"
 #include "../libev/ev++.h"
+#include "PairingMessages.h"
 
 namespace Anki {
   namespace Networking {
@@ -64,10 +65,11 @@ namespace Anki {
     
     class SecurePairing {
     public:
-      SecurePairing(INetworkStream* stream);
+      SecurePairing(INetworkStream* stream, struct ev_loop* evloop);
       ~SecurePairing();
       
       void BeginPairing();
+      void StopPairing();
       
       std::string GetPin() { return _Pin; }
       
@@ -87,6 +89,11 @@ namespace Anki {
     private:
       void Init();
       void Reset();
+      
+      template <class T>
+      void SendPlainText(Anki::Networking::Message message);
+      template <class T>
+      void SendEncrypted(Anki::Networking::Message message);
       
       void HandleMessageReceived(uint8_t* bytes, uint32_t length);
       void HandleEncryptedMessageReceived(uint8_t* bytes, uint32_t length);
@@ -112,7 +119,7 @@ namespace Anki {
       const uint8_t MAX_MATCH_ATTEMPTS = 5;
       const uint8_t MAX_PAIRING_ATTEMPTS = 3;
       const uint32_t MAX_ABNORMALITY_COUNT = 5;
-      const uint16_t PAIRING_TIMEOUT_SECONDS = 10;
+      const uint16_t PAIRING_TIMEOUT_SECONDS = 30;
       
       std::string _Pin;
       uint8_t _ChallengeAttempts = 0;
@@ -122,11 +129,16 @@ namespace Anki {
       uint32_t _AbnormalityCount = 0;
       
       INetworkStream* _Stream;
-      KeyExchange* _KeyExchange;
+      //KeyExchange* _KeyExchange;
+      std::unique_ptr<KeyExchange> _KeyExchange;
       PairingState _State = PairingState::Initial;
       
       //
       //
+      //
+      Signal::SmartHandle _OnReceivePlainTextHandle;
+      Signal::SmartHandle _OnReceiveEncryptedHandle;
+      Signal::SmartHandle _OnFailedDecryptionHandle;
       //
       using PairingTimeoutSignal = Signal::Signal<void ()>;
       PairingTimeoutSignal _PairingTimeoutSignal;

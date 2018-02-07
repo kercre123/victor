@@ -8,38 +8,45 @@
 
 #include <random>
 #include "SecurePairing.h"
-#include "SecurePairingMessages.h"
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Constructors
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Anki::Networking::SecurePairing::SecurePairing(INetworkStream* stream) {
+Anki::Networking::SecurePairing::SecurePairing(INetworkStream* stream, struct ev_loop* evloop) {
   _Stream = stream;
+  _Loop = evloop;
   _TotalPairingAttempts = 0;
   
   // Register with stream events
-  _Stream->OnReceivedPlainTextEvent().SubscribeForever(
+  _OnReceivePlainTextHandle = _Stream->OnReceivedPlainTextEvent().ScopedSubscribe(
     std::bind(&SecurePairing::HandleMessageReceived,
               this, std::placeholders::_1, std::placeholders::_2));
   
-  _Stream->OnReceivedEncryptedEvent().SubscribeForever(
+  _OnReceiveEncryptedHandle = _Stream->OnReceivedEncryptedEvent().ScopedSubscribe(
     std::bind(&SecurePairing::HandleEncryptedMessageReceived,
               this, std::placeholders::_1, std::placeholders::_2));
   
-  _Stream->OnFailedDecryptionEvent().SubscribeForever(
+  _OnFailedDecryptionHandle = _Stream->OnFailedDecryptionEvent().ScopedSubscribe(
     std::bind(&SecurePairing::HandleDecryptionFailed, this));
   
   // Register with private events
   _PairingTimeoutSignal.SubscribeForever(std::bind(&SecurePairing::HandleTimeout, this));
   
   // Initialize the key exchange object
-  _KeyExchange = new KeyExchange(NUM_PIN_DIGITS);
+  _KeyExchange = std::unique_ptr<KeyExchange>(new KeyExchange(NUM_PIN_DIGITS)); //new KeyExchange(NUM_PIN_DIGITS);
+  
+  // Initialize ev timer
+  ev_timer_init(&_HandleTimeoutTimer.timer, &SecurePairing::sEvTimerHandler, PAIRING_TIMEOUT_SECONDS, PAIRING_TIMEOUT_SECONDS);
+  _HandleTimeoutTimer.signal = &_PairingTimeoutSignal;
+  //
   
   Log::Write("SecurePairing starting up.");
 }
 
 Anki::Networking::SecurePairing::~SecurePairing() {
-  delete _KeyExchange;
+  _OnReceivePlainTextHandle = nullptr;
+  _OnReceiveEncryptedHandle = nullptr;
+  _OnFailedDecryptionHandle = nullptr;
   
   Log::Write("Destroying SecurePairing object.");
 }
@@ -53,12 +60,17 @@ void Anki::Networking::SecurePairing::BeginPairing() {
   // Initialize object
   Init();
   
-  _HandleTimeoutTimer.signal = &_PairingTimeoutSignal;
-  
-  ev_timer_init(&_HandleTimeoutTimer.timer, &SecurePairing::sEvTimerHandler, PAIRING_TIMEOUT_SECONDS, PAIRING_TIMEOUT_SECONDS);
-  _Loop = ev_default_loop(0);
   ev_timer_start(_Loop, &_HandleTimeoutTimer.timer);
-  ev_loop(_Loop, 0);
+}
+
+void Anki::Networking::SecurePairing::StopPairing() {
+  _OnReceivePlainTextHandle = nullptr;
+  _OnReceiveEncryptedHandle = nullptr;
+  _OnFailedDecryptionHandle = nullptr;
+  
+  _TotalPairingAttempts = MAX_PAIRING_ATTEMPTS;
+  
+  Reset();
 }
 
 void Anki::Networking::SecurePairing::HandleTimeout() {
@@ -69,22 +81,13 @@ void Anki::Networking::SecurePairing::HandleTimeout() {
 }
 
 void Anki::Networking::SecurePairing::SendPublicKey() {
-  const uint8_t KEY_BYTES = crypto_kx_PUBLICKEYBYTES;
-  
   // Generate public, private key
   uint8_t* publicKey = (uint8_t*)_KeyExchange->GenerateKeys();
   
-  // Initialize buffer for public key, set type byte and fill buffer
-  uint8_t* keyBuffer = (uint8_t*)malloc(KEY_BYTES + 1);
-  keyBuffer[0] = SetupMessage::MSG_PUBLIC_KEY;
-  memcpy(keyBuffer+1, publicKey, KEY_BYTES);
-  
   // Send message and update our state
-  _Stream->SendPlainText(keyBuffer, KEY_BYTES + 1);
+  SendPlainText<PublicKeyMessage>(PublicKeyMessage((char*)publicKey));
+
   _State = PairingState::AwaitingPublicKey;
-  
-  // Release the key buffer
-  free(keyBuffer);
 }
 
 void Anki::Networking::SecurePairing::Init() {
@@ -140,7 +143,7 @@ void Anki::Networking::SecurePairing::Reset() {
   } else {
     Log::Write("SecurePairing ending due to multiple failures. Requires external restart.");
     ev_timer_stop(_Loop, &_HandleTimeoutTimer.timer);
-    ev_unloop(_Loop, EVBREAK_ALL);
+    ev_unloop(_Loop, EVUNLOOP_ALL);
   }
 }
 
@@ -169,20 +172,12 @@ void Anki::Networking::SecurePairing::SendNonce() {
   // Generate a nonce
   randombytes_buf(_KeyExchange->GetNonce(), NONCE_BYTES);
   
-  // Copy nonce bytes into message buffer
-  uint8_t* nonceBuffer = (uint8_t*)malloc(NONCE_BYTES + 1);
-  nonceBuffer[0] = SetupMessage::MSG_NONCE;
-  memcpy(nonceBuffer+1, _KeyExchange->GetNonce(), NONCE_BYTES);
-  
   // Give our nonce to the network stream
   _Stream->SetNonce(_KeyExchange->GetNonce());
   
   // Send nonce (in the clear) to client, update our state
-  _Stream->SendPlainText(nonceBuffer, NONCE_BYTES + 1);
+  SendPlainText<NonceMessage>(NonceMessage((char*)_KeyExchange->GetNonce()));
   _State = PairingState::AwaitingNonceAck;
-  
-  // Free message buffer
-  free(nonceBuffer);
 }
 
 void Anki::Networking::SecurePairing::SendChallenge() {
@@ -192,39 +187,22 @@ void Anki::Networking::SecurePairing::SendChallenge() {
   // Create random challenge value
   randombytes_buf(&_PingChallenge, sizeof(uint32_t));
   
-  // Send challenge to client
-  uint8_t* challengeBuffer = (uint8_t*)malloc(sizeof(uint32_t) + 1);
-  challengeBuffer[0] = SecureMessage::CRYPTO_PING;
-  memcpy(challengeBuffer+1, &_PingChallenge, sizeof(uint32_t));
-  
   // Send challenge and update state
-  _Stream->SendEncrypted(challengeBuffer, sizeof(uint32_t) + 1);
-  _State = PairingState::AwaitingChallengeResponse;
+  ChallengeMessage_crypto msg = ChallengeMessage_crypto(_PingChallenge);
+  SendEncrypted<ChallengeMessage_crypto>(msg);
   
-  // Free message buffer
-  free(challengeBuffer);
+  _State = PairingState::AwaitingChallengeResponse;
 }
 
 void Anki::Networking::SecurePairing::SendChallengeSuccess() {
-  // Send challenge success to client
-  uint16_t buffer = 0;
-  uint8_t* challengeBuffer = (uint8_t*)&buffer;
-  challengeBuffer[0] = SecureMessage::CRYPTO_ACCEPTED;
-  
   // Send challenge and update state
-  _Stream->SendEncrypted(challengeBuffer, sizeof(uint16_t));
+  SendEncrypted<ChallengeMessage_crypto>(ChallengeAcceptedMessage_crypto());
   _State = PairingState::ConfirmedSharedSecret;
 }
 
 void Anki::Networking::SecurePairing::SendCancelPairing() {
-  // Send challenge success to client
-  uint16_t buffer = 0;
-  uint8_t* cancelBuffer = (uint8_t*)&buffer;
-  cancelBuffer[0] = SetupMessage::MSG_CANCEL_SETUP;
-  
   // Send challenge and update state
-  _Stream->SendPlainText(cancelBuffer, sizeof(uint16_t));
-  
+  SendPlainText<CancelMessage>(CancelMessage());
   Log::Write("Canceling pairing.");
 }
 
@@ -328,7 +306,7 @@ void Anki::Networking::SecurePairing::HandleEncryptedMessageReceived(uint8_t* by
   Anki::Networking::SecureMessage messageType = (Anki::Networking::SecureMessage)bytes[0];
   
   switch(messageType) {
-    case Anki::Networking::SecureMessage::CRYPTO_PING:
+    case Anki::Networking::SecureMessage::CRYPTO_CHALLENGE_RESPONSE:
       if(_State == PairingState::AwaitingChallengeResponse) {
         HandlePingResponse(bytes+1, length-1);
       } else {
@@ -374,6 +352,25 @@ void Anki::Networking::SecurePairing::IncrementAbnormalityCount() {
   }
   
   Log::Write("Abnormality recorded.");
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Send messages methods
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<class T>
+void Anki::Networking::SecurePairing::SendPlainText(Anki::Networking::Message message) {
+  uint32_t length;
+  uint8_t* buffer = (uint8_t*)Anki::Networking::Message::CastToBuffer<T>((T*)&message, &length);
+  
+  _Stream->SendPlainText(buffer, length);
+}
+
+template<class T>
+void Anki::Networking::SecurePairing::SendEncrypted(Anki::Networking::Message message) {
+  uint32_t length;
+  uint8_t* buffer = (uint8_t*)Anki::Networking::Message::CastToBuffer<T>((T*)&message, &length);
+  
+  _Stream->SendEncrypted(buffer, length);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

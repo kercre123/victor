@@ -88,6 +88,10 @@
   _ConnectedSignal = connectedSignal;
 }
 
+-(void) setDisconnectedSignal: (Signal::Signal<void (Anki::Networking::BLENetworkStream*)> *)disconnectedSignal {
+  _DisconnectedSignal = disconnectedSignal;
+}
+
 -(void) advertiseWithService: (const char*)name withService:(const char*)service {
   _LocalName = [NSString stringWithUTF8String:name];
   _ServiceUUID = [NSString stringWithUTF8String:service];
@@ -121,6 +125,20 @@
   }
 }
 
+- (void)peripheralManager:(CBPeripheralManager *)peripheral
+                  central:(CBCentral *)central
+didUnsubscribeFromCharacteristic:(CBCharacteristic *)characteristic {
+  if(characteristic.UUID.UUIDString == CH_PING.UUID.UUIDString) {
+    _SubscribedPing = false;
+    _SubscribedRead = false;
+    _SubscribedWrite = false;
+    _SubscribedSecureRead = false;
+    _SubscribedSecureWrite = false;
+    
+    _DisconnectedSignal->emit(_BLEStream);
+  }
+}
+
 - (void)peripheralManagerDidUpdateState:(nonnull CBPeripheralManager *)peripheral {
   if(peripheral.state == CBManagerStatePoweredOn) {
     NSDictionary* adData = [[NSMutableDictionary alloc] init];
@@ -139,7 +157,7 @@
 
 - (void)peripheralManager:(CBPeripheralManager *)peripheral
   didReceiveWriteRequests:(NSArray<CBATTRequest *> *)requests {
-  
+  NSLog(@"Receiving a msg");
   for(int i = 0; i < requests.count; i++) {
     if(requests[i].characteristic.UUID.UUIDString == CH_READ.UUID.UUIDString) {
       // We are receiving input to read stream

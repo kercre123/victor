@@ -11,7 +11,6 @@
 #include <iostream>
 #include <NetworkExtension/NetworkExtension.h>
 #include "networking/BLEPairingController.h"
-#include "networking/SecurePairing.h"
 #include "networking/BLENetworkStream.h"
 
 @interface ViewController () {
@@ -31,38 +30,56 @@
   // Create six digit pin
   pairingController = new BLEPairingController();
   
+  pairingQueue = dispatch_queue_create("pairingQueue", NULL);
+  
   void (^connectionHandler)(Anki::Networking::BLENetworkStream*) = ^(Anki::Networking::BLENetworkStream* stream) {
     dispatch_async(dispatch_get_main_queue(), ^() {
       [self onConnected:(Anki::Networking::INetworkStream*)stream];
     });
   };
   
+  void (^disconnectionHandler)(Anki::Networking::BLENetworkStream*) = ^(Anki::Networking::BLENetworkStream* stream) {
+    dispatch_async(dispatch_get_main_queue(), ^() {
+      [self onDisconnected:(Anki::Networking::INetworkStream*)stream];
+    });
+  };
+  
   pairingController->OnBLEConnectedEvent().SubscribeForever(connectionHandler);
+  pairingController->OnBLEDisconnectedEvent().SubscribeForever(disconnectionHandler);
   pairingController->StartAdvertising();
+}
+
+- (void) onDisconnected: (Anki::Networking::INetworkStream*)stream {
+  pinHandle = nullptr;
+  wifiHandle = nullptr;
+  
+  securePairing->StopPairing();
 }
 
 - (void) onConnected: (Anki::Networking::INetworkStream*)stream {
   NSLog(@"Connected to BLE central!");
+  if(securePairing == nullptr) {
+    NSLog(@"Creating a new pairing object");
+    securePairing = std::unique_ptr<Anki::Networking::SecurePairing>(new Anki::Networking::SecurePairing(stream, ev_default_loop(0)));
+  }
   
-  dispatch_queue_t pairingQueue = dispatch_queue_create("pairingQueue", NULL);
-  
+  NSLog(@"A");
   dispatch_async(pairingQueue, ^(void) {
-    Anki::Networking::SecurePairing* securePairing = new Anki::Networking::SecurePairing(stream);
-    
     void (^wifiHandler)(std::string, std::string) = ^(std::string ssid, std::string pw) {
       NEHotspotConfiguration* wifi = [[NEHotspotConfiguration alloc] initWithSSID:[NSString stringWithUTF8String:ssid.c_str()] passphrase:[NSString stringWithUTF8String:pw.c_str()] isWEP:false];
       NSLog(@"Connecting to : [%s], [%s]", ssid.c_str(), pw.c_str());
       [[NEHotspotConfigurationManager sharedManager] applyConfiguration:wifi completionHandler:nullptr];
     };
-    
+
     void (^pinHandler)(std::string) = ^(std::string pin) {
       dispatch_async(dispatch_get_main_queue(), ^{
+        NSLog(@"Updating pin label");
         _pinLabel.text = [NSString stringWithUTF8String:pin.c_str()];
       });
     };
-    
-    securePairing->OnUpdatedPinEvent().SubscribeForever(pinHandler);
-    securePairing->OnReceivedWifiCredentialsEvent().SubscribeForever(wifiHandler);
+
+    pinHandle = securePairing->OnUpdatedPinEvent().ScopedSubscribe(pinHandler);
+    wifiHandle = securePairing->OnReceivedWifiCredentialsEvent().ScopedSubscribe(wifiHandler);
     
     // Initiate pairing process
     securePairing->BeginPairing();

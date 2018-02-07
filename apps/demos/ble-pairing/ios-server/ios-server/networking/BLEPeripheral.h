@@ -44,6 +44,7 @@
   Anki::Networking::BLENetworkStream* _BLEStream;
   
   Signal::Signal<void (Anki::Networking::BLENetworkStream*)>* _ConnectedSignal;
+  Signal::Signal<void (Anki::Networking::BLENetworkStream*)>* _DisconnectedSignal;
   
   bool _SubscribedPing;
   bool _SubscribedRead;
@@ -53,6 +54,7 @@
 }
 
 -(void) setConnectedSignal: (Signal::Signal<void (Anki::Networking::BLENetworkStream*)> *)connectedSignal;
+-(void) setDisconnectedSignal: (Signal::Signal<void (Anki::Networking::BLENetworkStream*)> *)disconnectedSignal;
 
 -(void) advertiseWithService: (const char*)name withService:(const char*)service;
 

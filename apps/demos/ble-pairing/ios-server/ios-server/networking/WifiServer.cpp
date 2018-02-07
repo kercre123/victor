@@ -1,19 +1,24 @@
 //
-//  WiFiConnection.cpp
+//  WifiServer.cpp
 //  ios-server
 //
 //  Created by Paul Aluri on 2/2/18.
 //  Copyright © 2018 Paul Aluri. All rights reserved.
 //
 
-#include "WiFiConnection.h"
+#include "WifiServer.h"
 
-void Anki::Networking::WifiConnection::StartServer() {
+Anki::Networking::WifiServer::WifiServer(struct ev_loop* loop, int port) {
+  _Loop = loop;
+  _Port = port;
+}
+
+void Anki::Networking::WifiServer::StartServer() {
   struct ev_loop* defaultLoop = ev_default_loop(0);
   struct sockaddr_in6 addr;
   struct ev_io w_accept;
   
-  uint32_t socket_fd = 0;
+  int socket_fd = 0;
   uint32_t addr_len = sizeof(addr);
   
   if((socket_fd = socket(AF_INET6, SOCK_STREAM, 0)) < 0) {
@@ -25,20 +30,19 @@ void Anki::Networking::WifiConnection::StartServer() {
   
   bzero(&addr, sizeof(addr));
   addr.sin6_family = AF_INET6;
-  addr.sin6_port = htons(SB_PORT);
+  addr.sin6_port = htons(_Port);
   addr.sin6_addr = in6addr_any;
   
-  bind(socket_fd, (sockaddr*)&addr, sizeof(addr));
+  bind(socket_fd, (sockaddr*)&addr, addr_len);
   listen(socket_fd, 0);
   
-  //auto f = std::bind(&WifiConnection::AcceptCallback, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
   ev_io_init(&w_accept, &AcceptCallback, socket_fd, EV_READ);
   ev_io_start(defaultLoop, &w_accept);
   
   ev_loop(defaultLoop, 0);
 }
 
-void Anki::Networking::WifiConnection::AcceptCallback(struct ev_loop *loop, struct ev_io *watcher, int revents) {
+void Anki::Networking::WifiServer::AcceptCallback(struct ev_loop *loop, struct ev_io *watcher, int revents) {
   struct sockaddr_in client_addr;
   socklen_t client_len = sizeof(client_addr);
   int client_fd;

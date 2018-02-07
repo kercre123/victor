@@ -18,26 +18,31 @@
 #include "../libev/ev++.h"
 #include "WiFiNetworkStream.h"
 
-#define SB_PORT 5031
 #define SB_BUFFER_SIZE 1024
 
 namespace Anki {
   namespace Networking {
     
-    class WifiConnection {
-      using WiFiConnectedSignal = Signal::Signal<void (Anki::Networking::WiFiNetworkStream*)>;
+    class WifiServer {
+      using ClientConnectedSignal = Signal::Signal<void (Anki::Networking::WiFiNetworkStream*)>;
+      using AcceptedSocketSignal = Signal::Signal<void (struct sockaddr* client_address, int size)>;
       
     public:
+      WifiServer(struct ev_loop* loop, int port);
+      
       // Handle WiFi Client Connected
-      WiFiConnectedSignal& OnWiFiClientConnectedEvent() {
+      ClientConnectedSignal& OnWifiClientConnectedEvent() {
         return _wifiClientConnectedSignal;
       }
       
       void StartServer();
       
     private:
-      WiFiConnectedSignal _wifiClientConnectedSignal;
+      ClientConnectedSignal _wifiClientConnectedSignal;
       uint16_t _numberConnectedClients = 0;
+      
+      struct ev_loop* _Loop;
+      int _Port = 0;
       
       static void AcceptCallback(struct ev_loop *loop, struct ev_io *watcher, int revents);
     };
