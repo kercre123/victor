@@ -1,4 +1,1822 @@
 {
-    "ProjectUUID": "608a3e7f-493c-41f0-ae83-2e4be14751d0",
-    "ProjectJSON": "{\"targets\": [{\"id\": \"?k-3hB{(el)GTvHffAnN\", \"name\": \"Stage\", \"isStage\": true, \"x\": 0, \"y\": 0, \"size\": 100, \"direction\": 90, \"draggable\": false, \"currentCostume\": 0, \"costumeCount\": 0, \"visible\": true, \"rotationStyle\": \"all around\", \"blocks\": {}, \"variables\": {\"Ddb6wQ^]+fEUt5~w2#5d\": {\"id\": \"Ddb6wQ^]+fEUt5~w2#5d\", \"name\": \"Cozmo bittet den Spieler, ihn hochzuheben, und wartet dann.\", \"value\": 0}, \"W7+N(f)(7a;jZ#Txc5Z)\": {\"id\": \"W7+N(f)(7a;jZ#Txc5Z)\", \"name\": \"W\\u00e4hrend Cozmo in der Luft ist, reagiert er auf Positions\\u00e4nderungen.\", \"value\": 0}, \"g)4zFtLT|-4]I@?,6ami\": {\"id\": \"g)4zFtLT|-4]I@?,6ami\", \"name\": \"Cozmo-Drehung A (Vertikalachse)\", \"value\": -85.07265}, \"2sa5)2!0M{ap3xd40c=v\": {\"id\": \"2sa5)2!0M{ap3xd40c=v\", \"name\": \"Cozmo-Drehung B (Vertikalachse)\", \"value\": -87.77735}, \"YXt$1#CE?+OXbQz+?k@i\": {\"id\": \"YXt$1#CE?+OXbQz+?k@i\", \"name\": \"Cozmo-Drehung A (L\\u00e4ngsachse)\", \"value\": 7.2555}, \"eo.L=V-kX|A;BY/?Fy``\": {\"id\": \"eo.L=V-kX|A;BY/?Fy``\", \"name\": \"Cozmo-Drehung B (L\\u00e4ngsachse)\", \"value\": 11.6020393}, \"Er84_DrFQeHe{|I8oCJ^\": {\"id\": \"Er84_DrFQeHe{|I8oCJ^\", \"name\": \"Cozmo-Drehung A (Querachse)\", \"value\": 2.61435652}, \"k)COYIY]1eLbNNbb=7_y\": {\"id\": \"k)COYIY]1eLbNNbb=7_y\", \"name\": \"Cozmo-Drehung B (Querachse)\", \"value\": 3.5808897}}, \"lists\": {}, \"costumes\": [], \"sounds\": []}, {\"id\": \"pTdf{K]*92@Q=t/){L9T\", \"name\": \"Sprite1\", \"isStage\": false, \"x\": 0, \"y\": 0, \"size\": 100, \"direction\": 90, \"draggable\": false, \"currentCostume\": 0, \"costumeCount\": 0, \"visible\": true, \"rotationStyle\": \"all around\", \"blocks\": {\"RqohItYC/XpjZ2]xiar5\": {\"id\": \"RqohItYC/XpjZ2]xiar5\", \"opcode\": \"event_whenflagclicked\", \"inputs\": {}, \"fields\": {}, \"next\": \"v28QNTinx2vS^xCOpB1X\", \"topLevel\": true, \"parent\": null, \"shadow\": false, \"x\": 144, \"y\": 249}, \"(H])rF|rf)?*0~+:=DTX\": {\"id\": \"(H])rF|rf)?*0~+:=DTX\", \"opcode\": \"data_variable\", \"inputs\": {}, \"fields\": {\"VARIABLE\": {\"name\": \"VARIABLE\", \"id\": \"Ddb6wQ^]+fEUt5~w2#5d\", \"value\": \"Cozmo bittet den Spieler, ihn hochzuheben, und wartet dann.\"}}, \"next\": null, \"topLevel\": true, \"parent\": null, \"shadow\": false, \"x\": 140, \"y\": 136}, \"v28QNTinx2vS^xCOpB1X\": {\"id\": \"v28QNTinx2vS^xCOpB1X\", \"opcode\": \"cozmo_sound_stop\", \"inputs\": {\"SOUND_MENU\": {\"name\": \"SOUND_MENU\", \"block\": \"R)uRT4!MO[X#]V,Tm`$;\", \"shadow\": \"R)uRT4!MO[X#]V,Tm`$;\"}}, \"fields\": {}, \"next\": \".RxOJ8q5Ge4yO};fqwb@\", \"topLevel\": false, \"parent\": \"RqohItYC/XpjZ2]xiar5\", \"shadow\": false, \"x\": \"7\", \"y\": \"481\"}, \"R)uRT4!MO[X#]V,Tm`$;\": {\"id\": \"R)uRT4!MO[X#]V,Tm`$;\", \"opcode\": \"cozmo_sound_sounds_menu\", \"inputs\": {}, \"fields\": {\"SOUND_MENU\": {\"name\": \"SOUND_MENU\", \"value\": \"36\"}}, \"next\": null, \"topLevel\": false, \"parent\": \"v28QNTinx2vS^xCOpB1X\", \"shadow\": true}, \".RxOJ8q5Ge4yO};fqwb@\": {\"id\": \".RxOJ8q5Ge4yO};fqwb@\", \"opcode\": \"control_forever\", \"inputs\": {\"SUBSTACK\": {\"name\": \"SUBSTACK\", \"block\": \"SBj5gHm85Py2Iv.sN4cw\", \"shadow\": null}}, \"fields\": {}, \"next\": null, \"topLevel\": false, \"parent\": \"v28QNTinx2vS^xCOpB1X\", \"shadow\": false, \"x\": \"7\", \"y\": \"307\"}, \"SBj5gHm85Py2Iv.sN4cw\": {\"id\": \"SBj5gHm85Py2Iv.sN4cw\", \"opcode\": \"cozmo_play_animation_from_dropdown\", \"inputs\": {\"ANIMATION\": {\"name\": \"ANIMATION\", \"block\": \"#Mwm@OS=)f4]+|8N-s+k\", \"shadow\": \"#Mwm@OS=)f4]+|8N-s+k\"}}, \"fields\": {}, \"next\": \"+c)EDw4)0v6#TL$AH!x8\", \"topLevel\": false, \"parent\": \".RxOJ8q5Ge4yO};fqwb@\", \"shadow\": false, \"x\": \"96\", \"y\": \"119\"}, \"#Mwm@OS=)f4]+|8N-s+k\": {\"id\": \"#Mwm@OS=)f4]+|8N-s+k\", \"opcode\": \"cozmo_animation_select_menu\", \"inputs\": {}, \"fields\": {\"ANIMATION_SELECT\": {\"name\": \"ANIMATION_SELECT\", \"value\": \"19\"}}, \"next\": null, \"topLevel\": false, \"parent\": \"SBj5gHm85Py2Iv.sN4cw\", \"shadow\": true}, \"+c)EDw4)0v6#TL$AH!x8\": {\"id\": \"+c)EDw4)0v6#TL$AH!x8\", \"opcode\": \"control_wait_until\", \"inputs\": {\"CONDITION\": {\"name\": \"CONDITION\", \"block\": \"#FEYwY.L`A03Pr;%(bJd\", \"shadow\": null}}, \"fields\": {}, \"next\": \")#@9|$iD|Vn*gFr!3zI7\", \"topLevel\": false, \"parent\": \"SBj5gHm85Py2Iv.sN4cw\", \"shadow\": false, \"x\": \"96\", \"y\": \"745\"}, \"*wCcOqq:g0BvmbWL+.J8\": {\"id\": \"*wCcOqq:g0BvmbWL+.J8\", \"opcode\": \"cozmo_vert_get_is_picked_up\", \"inputs\": {}, \"fields\": {}, \"next\": null, \"topLevel\": false, \"parent\": \"#FEYwY.L`A03Pr;%(bJd\", \"shadow\": false, \"x\": 306.7598809199793, \"y\": 1026.488845882353}, \")#@9|$iD|Vn*gFr!3zI7\": {\"id\": \")#@9|$iD|Vn*gFr!3zI7\", \"opcode\": \"cozmo_sound_play\", \"inputs\": {\"SOUND_MENU\": {\"name\": \"SOUND_MENU\", \"block\": \"qYpBzj/]}P)GuWJSg`.p\", \"shadow\": \"qYpBzj/]}P)GuWJSg`.p\"}}, \"fields\": {}, \"next\": \"a/{Wm!pC[gh~V]VdXQ49\", \"topLevel\": false, \"parent\": \"+c)EDw4)0v6#TL$AH!x8\", \"shadow\": false, \"x\": \"7\", \"y\": \"349\"}, \"qYpBzj/]}P)GuWJSg`.p\": {\"id\": \"qYpBzj/]}P)GuWJSg`.p\", \"opcode\": \"cozmo_sound_sounds_menu\", \"inputs\": {}, \"fields\": {\"SOUND_MENU\": {\"name\": \"SOUND_MENU\", \"value\": \"38\"}}, \"next\": null, \"topLevel\": false, \"parent\": \")#@9|$iD|Vn*gFr!3zI7\", \"shadow\": true}, \"/,Ghy#nq8Dx?uqUYl8kT\": {\"id\": \"/,Ghy#nq8Dx?uqUYl8kT\", \"opcode\": \"cozmo_vert_disable_animation_track\", \"inputs\": {}, \"fields\": {\"ANIMATION_TRACK\": {\"name\": \"ANIMATION_TRACK\", \"value\": \"wheels\"}}, \"next\": \"~cP1Aq+:e0A*:xeB|BE3\", \"topLevel\": false, \"parent\": \"a/{Wm!pC[gh~V]VdXQ49\", \"shadow\": false, \"x\": \"7\", \"y\": \"243\"}, \"~cP1Aq+:e0A*:xeB|BE3\": {\"id\": \"~cP1Aq+:e0A*:xeB|BE3\", \"opcode\": \"cozmo_vert_disable_animation_track\", \"inputs\": {}, \"fields\": {\"ANIMATION_TRACK\": {\"name\": \"ANIMATION_TRACK\", \"value\": \"lift\"}}, \"next\": \"f!IZMP3%_VVw/e^,p$3t\", \"topLevel\": false, \"parent\": \"/,Ghy#nq8Dx?uqUYl8kT\", \"shadow\": false, \"x\": \"7\", \"y\": \"243\"}, \"z{rlZw8M=s;v%;zAX)58\": {\"id\": \"z{rlZw8M=s;v%;zAX)58\", \"opcode\": \"event_broadcastandwait\", \"inputs\": {\"BROADCAST_OPTION\": {\"name\": \"BROADCAST_OPTION\", \"block\": \"h)zp}SNuyP6#pd7(?PG[\", \"shadow\": \"h)zp}SNuyP6#pd7(?PG[\"}}, \"fields\": {}, \"next\": null, \"topLevel\": false, \"parent\": \"f!IZMP3%_VVw/e^,p$3t\", \"shadow\": false, \"x\": 151.88235294117646, \"y\": 786.9411764705883}, \"h)zp}SNuyP6#pd7(?PG[\": {\"id\": \"h)zp}SNuyP6#pd7(?PG[\", \"opcode\": \"event_broadcast_menu\", \"inputs\": {}, \"fields\": {\"BROADCAST_OPTION\": {\"name\": \"BROADCAST_OPTION\", \"value\": \"message1\"}}, \"next\": null, \"topLevel\": false, \"parent\": \"z{rlZw8M=s;v%;zAX)58\", \"shadow\": true}, \"N,c@C_-i!l{NW?P*I)CW\": {\"id\": \"N,c@C_-i!l{NW?P*I)CW\", \"opcode\": \"data_variable\", \"inputs\": {}, \"fields\": {\"VARIABLE\": {\"name\": \"VARIABLE\", \"id\": \"W7+N(f)(7a;jZ#Txc5Z)\", \"value\": \"W\\u00e4hrend Cozmo in der Luft ist, reagiert er auf Positions\\u00e4nderungen.\"}}, \"next\": null, \"topLevel\": true, \"parent\": null, \"shadow\": false, \"x\": 998, \"y\": 134}, \"K$dQ0G-FykBP$;{`5!7g\": {\"id\": \"K$dQ0G-FykBP$;{`5!7g\", \"opcode\": \"event_whenbroadcastreceived\", \"inputs\": {}, \"fields\": {\"BROADCAST_OPTION\": {\"name\": \"BROADCAST_OPTION\", \"value\": \"message1\"}}, \"next\": \"CfpqJsGslvX18i+jyaDQ\", \"topLevel\": true, \"parent\": null, \"shadow\": false, \"x\": 995, \"y\": 239}, \"CfpqJsGslvX18i+jyaDQ\": {\"id\": \"CfpqJsGslvX18i+jyaDQ\", \"opcode\": \"control_repeat_until\", \"inputs\": {\"CONDITION\": {\"name\": \"CONDITION\", \"block\": \"qJJ7rJIZ|`G+Se9x`iM`\", \"shadow\": null}, \"SUBSTACK\": {\"name\": \"SUBSTACK\", \"block\": \",V[n2h!5VdihG|_fK/po\", \"shadow\": null}}, \"fields\": {}, \"next\": \"JmjqjaivfmLBFVJRH)!g\", \"topLevel\": false, \"parent\": \"K$dQ0G-FykBP$;{`5!7g\", \"shadow\": false, \"x\": 1036.683788235294, \"y\": 520.6823294117648}, \"+{o5u|k?!$=u3I~Yl;Eu\": {\"id\": \"+{o5u|k?!$=u3I~Yl;Eu\", \"opcode\": \"cozmo_vert_get_is_picked_up\", \"inputs\": {}, \"fields\": {}, \"next\": null, \"topLevel\": false, \"parent\": \"qJJ7rJIZ|`G+Se9x`iM`\", \"shadow\": false, \"x\": 1612.1224716538015, \"y\": 505.7384247058826}, \"{oT$o{G{_m?Lxu!G3}F1\": {\"id\": \"{oT$o{G{_m?Lxu!G3}F1\", \"opcode\": \"data_variable\", \"inputs\": {}, \"fields\": {\"VARIABLE\": {\"name\": \"VARIABLE\", \"id\": \"YXt$1#CE?+OXbQz+?k@i\", \"value\": \"Cozmo-Drehung A (L\\u00e4ngsachse)\"}}, \"next\": null, \"topLevel\": false, \"parent\": \"|5p]S%}vo6/f*c]?b,}c\", \"shadow\": false, \"x\": 789.5294117647063, \"y\": 704.4117647058825}, \"@Jj5Ev/l^op|bGp5NJf6\": {\"id\": \"@Jj5Ev/l^op|bGp5NJf6\", \"opcode\": \"data_variable\", \"inputs\": {}, \"fields\": {\"VARIABLE\": {\"name\": \"VARIABLE\", \"id\": \"Er84_DrFQeHe{|I8oCJ^\", \"value\": \"Cozmo-Drehung A (Querachse)\"}}, \"next\": null, \"topLevel\": false, \"parent\": \"1yc;XtC8z7L}/Da]sK|M\", \"shadow\": false, \"x\": 1245.7847038156847, \"y\": 739.2352941176472}, \"18M16h|2W,lDS*@VpqQx\": {\"id\": \"18M16h|2W,lDS*@VpqQx\", \"opcode\": \"data_variable\", \"inputs\": {}, \"fields\": {\"VARIABLE\": {\"name\": \"VARIABLE\", \"id\": \"k)COYIY]1eLbNNbb=7_y\", \"value\": \"Cozmo-Drehung B (Querachse)\"}}, \"next\": null, \"topLevel\": false, \"parent\": \"1yc;XtC8z7L}/Da]sK|M\", \"shadow\": false, \"x\": 788.352941176471, \"y\": 643.7058823529414}, \"LCrSZ~nM+#$p}hlFZ~t4\": {\"id\": \"LCrSZ~nM+#$p}hlFZ~t4\", \"opcode\": \"data_variable\", \"inputs\": {}, \"fields\": {\"VARIABLE\": {\"name\": \"VARIABLE\", \"id\": \"eo.L=V-kX|A;BY/?Fy``\", \"value\": \"Cozmo-Drehung B (L\\u00e4ngsachse)\"}}, \"next\": null, \"topLevel\": false, \"parent\": \"|5p]S%}vo6/f*c]?b,}c\", \"shadow\": false, \"x\": 786.0000000000005, \"y\": 755.9411764705884}, \"Jn*iqByqDZfqN-dwW%VZ\": {\"id\": \"Jn*iqByqDZfqN-dwW%VZ\", \"opcode\": \"data_variable\", \"inputs\": {}, \"fields\": {\"VARIABLE\": {\"name\": \"VARIABLE\", \"id\": \"g)4zFtLT|-4]I@?,6ami\", \"value\": \"Cozmo-Drehung A (Vertikalachse)\"}}, \"next\": null, \"topLevel\": false, \"parent\": \"mfC2Tf!iJ1);Y[Pb%1}:\", \"shadow\": false, \"x\": 1245.7847038156847, \"y\": 995.2352941176472}, \"DAoEV=n)haO*`bP5AVGc\": {\"id\": \"DAoEV=n)haO*`bP5AVGc\", \"opcode\": \"data_variable\", \"inputs\": {}, \"fields\": {\"VARIABLE\": {\"name\": \"VARIABLE\", \"id\": \"2sa5)2!0M{ap3xd40c=v\", \"value\": \"Cozmo-Drehung B (Vertikalachse)\"}}, \"next\": null, \"topLevel\": false, \"parent\": \"mfC2Tf!iJ1);Y[Pb%1}:\", \"shadow\": false, \"x\": 783.6470588235297, \"y\": 920.1764705882355}, \",V[n2h!5VdihG|_fK/po\": {\"id\": \",V[n2h!5VdihG|_fK/po\", \"opcode\": \"data_setvariableto\", \"inputs\": {\"VALUE\": {\"name\": \"VALUE\", \"block\": \"}H.I}@aDTTG=~GGE]T8R\", \"shadow\": \"hf4@Hlqxt3w$yE+8`FG`\"}}, \"fields\": {\"VARIABLE\": {\"name\": \"VARIABLE\", \"id\": \"Er84_DrFQeHe{|I8oCJ^\", \"value\": \"Cozmo-Drehung A (Querachse)\"}}, \"next\": \"ap7=f3*M{Q(:5*Xdm[Kd\", \"topLevel\": false, \"parent\": \"CfpqJsGslvX18i+jyaDQ\", \"shadow\": false, \"x\": \"645\", \"y\": \"441\"}, \"hf4@Hlqxt3w$yE+8`FG`\": {\"id\": \"hf4@Hlqxt3w$yE+8`FG`\", \"opcode\": \"text\", \"inputs\": {}, \"fields\": {\"TEXT\": {\"name\": \"TEXT\", \"value\": \"0\"}}, \"next\": null, \"topLevel\": true, \"parent\": null, \"shadow\": true, \"x\": 1240.1347041971537, \"y\": 351.2352941176472}, \"ap7=f3*M{Q(:5*Xdm[Kd\": {\"id\": \"ap7=f3*M{Q(:5*Xdm[Kd\", \"opcode\": \"data_setvariableto\", \"inputs\": {\"VALUE\": {\"name\": \"VALUE\", \"block\": \"D:hxJhA[@3M4lQxFYt3}\", \"shadow\": \"e-d:J/{g1YIa3JYe{+Xh\"}}, \"fields\": {\"VARIABLE\": {\"name\": \"VARIABLE\", \"id\": \"YXt$1#CE?+OXbQz+?k@i\", \"value\": \"Cozmo-Drehung A (L\\u00e4ngsachse)\"}}, \"next\": \":NWzE|KMG-Dr-#-`X1Hb\", \"topLevel\": false, \"parent\": \",V[n2h!5VdihG|_fK/po\", \"shadow\": false, \"x\": \"645\", \"y\": \"442\"}, \"e-d:J/{g1YIa3JYe{+Xh\": {\"id\": \"e-d:J/{g1YIa3JYe{+Xh\", \"opcode\": \"text\", \"inputs\": {}, \"fields\": {\"TEXT\": {\"name\": \"TEXT\", \"value\": \"0\"}}, \"next\": null, \"topLevel\": true, \"parent\": null, \"shadow\": true, \"x\": 1227.301772678599, \"y\": 399.2352941176472}, \":NWzE|KMG-Dr-#-`X1Hb\": {\"id\": \":NWzE|KMG-Dr-#-`X1Hb\", \"opcode\": \"data_setvariableto\", \"inputs\": {\"VALUE\": {\"name\": \"VALUE\", \"block\": \")AO4sW^u7c6Ha*)U5gm0\", \"shadow\": \"_@S02X7O,Lt,YDC/iWQ%\"}}, \"fields\": {\"VARIABLE\": {\"name\": \"VARIABLE\", \"id\": \"g)4zFtLT|-4]I@?,6ami\", \"value\": \"Cozmo-Drehung A (Vertikalachse)\"}}, \"next\": \"{?ULuH@^qL|ejV~lV(#$\", \"topLevel\": false, \"parent\": \"ap7=f3*M{Q(:5*Xdm[Kd\", \"shadow\": false, \"x\": \"645\", \"y\": \"442\"}, \"_@S02X7O,Lt,YDC/iWQ%\": {\"id\": \"_@S02X7O,Lt,YDC/iWQ%\", \"opcode\": \"text\", \"inputs\": {}, \"fields\": {\"TEXT\": {\"name\": \"TEXT\", \"value\": \"0\"}}, \"next\": null, \"topLevel\": true, \"parent\": null, \"shadow\": true, \"x\": 1232.4952922708846, \"y\": 447.2352941176473}, \";PJIL-/BKjv1VD3CDy+S\": {\"id\": \";PJIL-/BKjv1VD3CDy+S\", \"opcode\": \"data_setvariableto\", \"inputs\": {\"VALUE\": {\"name\": \"VALUE\", \"block\": \"I,88pDN`f~dZg4fLk+=+\", \"shadow\": \"*OxE|3=RjoP}iPgQS|}a\"}}, \"fields\": {\"VARIABLE\": {\"name\": \"VARIABLE\", \"id\": \"k)COYIY]1eLbNNbb=7_y\", \"value\": \"Cozmo-Drehung B (Querachse)\"}}, \"next\": \"TX79WfSnp^eGXSqu|F9F\", \"topLevel\": false, \"parent\": \"{?ULuH@^qL|ejV~lV(#$\", \"shadow\": false, \"x\": \"645\", \"y\": \"442\"}, \"*OxE|3=RjoP}iPgQS|}a\": {\"id\": \"*OxE|3=RjoP}iPgQS|}a\", \"opcode\": \"text\", \"inputs\": {}, \"fields\": {\"TEXT\": {\"name\": \"TEXT\", \"value\": \"0\"}}, \"next\": null, \"topLevel\": true, \"parent\": null, \"shadow\": true, \"x\": 1239.0388179666857, \"y\": 543.2352941176473}, \"TX79WfSnp^eGXSqu|F9F\": {\"id\": \"TX79WfSnp^eGXSqu|F9F\", \"opcode\": \"data_setvariableto\", \"inputs\": {\"VALUE\": {\"name\": \"VALUE\", \"block\": \"D7EziRlVW51*z5I=8zV1\", \"shadow\": \"%#?:Z^CS/^tQRJH*vZU(\"}}, \"fields\": {\"VARIABLE\": {\"name\": \"VARIABLE\", \"id\": \"eo.L=V-kX|A;BY/?Fy``\", \"value\": \"Cozmo-Drehung B (L\\u00e4ngsachse)\"}}, \"next\": \"B5|L0PDlefm=5WbWU[kp\", \"topLevel\": false, \"parent\": \";PJIL-/BKjv1VD3CDy+S\", \"shadow\": false, \"x\": \"645\", \"y\": \"442\"}, \"%#?:Z^CS/^tQRJH*vZU(\": {\"id\": \"%#?:Z^CS/^tQRJH*vZU(\", \"opcode\": \"text\", \"inputs\": {}, \"fields\": {\"TEXT\": {\"name\": \"TEXT\", \"value\": \"0\"}}, \"next\": null, \"topLevel\": true, \"parent\": null, \"shadow\": true, \"x\": 1226.2058864481307, \"y\": 591.235294117647}, \"B5|L0PDlefm=5WbWU[kp\": {\"id\": \"B5|L0PDlefm=5WbWU[kp\", \"opcode\": \"data_setvariableto\", \"inputs\": {\"VALUE\": {\"name\": \"VALUE\", \"block\": \"n!EC#a%9O.|E{$~wvhL=\", \"shadow\": \"^]p0{;a|`jELbB4]XNbt\"}}, \"fields\": {\"VARIABLE\": {\"name\": \"VARIABLE\", \"id\": \"2sa5)2!0M{ap3xd40c=v\", \"value\": \"Cozmo-Drehung B (Vertikalachse)\"}}, \"next\": \"=aj]$_dS]eyp4XoYw,y/\", \"topLevel\": false, \"parent\": \"TX79WfSnp^eGXSqu|F9F\", \"shadow\": false, \"x\": \"645\", \"y\": \"442\"}, \"^]p0{;a|`jELbB4]XNbt\": {\"id\": \"^]p0{;a|`jELbB4]XNbt\", \"opcode\": \"text\", \"inputs\": {}, \"fields\": {\"TEXT\": {\"name\": \"TEXT\", \"value\": \"0\"}}, \"next\": null, \"topLevel\": true, \"parent\": null, \"shadow\": true, \"x\": 1231.3994060404161, \"y\": 639.2352941176471}, \"{?ULuH@^qL|ejV~lV(#$\": {\"id\": \"{?ULuH@^qL|ejV~lV(#$\", \"opcode\": \"control_wait\", \"inputs\": {\"DURATION\": {\"name\": \"DURATION\", \"block\": \"/saG9|JEQFjJ^6#AR0?/\", \"shadow\": \"/saG9|JEQFjJ^6#AR0?/\"}}, \"fields\": {}, \"next\": \";PJIL-/BKjv1VD3CDy+S\", \"topLevel\": false, \"parent\": \":NWzE|KMG-Dr-#-`X1Hb\", \"shadow\": false, \"x\": \"782\", \"y\": \"6\"}, \"/saG9|JEQFjJ^6#AR0?/\": {\"id\": \"/saG9|JEQFjJ^6#AR0?/\", \"opcode\": \"math_positive_number\", \"inputs\": {}, \"fields\": {\"NUM\": {\"name\": \"NUM\", \"value\": \".3\"}}, \"next\": null, \"topLevel\": false, \"parent\": \"{?ULuH@^qL|ejV~lV(#$\", \"shadow\": true}, \"}H.I}@aDTTG=~GGE]T8R\": {\"id\": \"}H.I}@aDTTG=~GGE]T8R\", \"opcode\": \"cozmo_vert_get_pitch\", \"inputs\": {}, \"fields\": {}, \"next\": null, \"topLevel\": false, \"parent\": \",V[n2h!5VdihG|_fK/po\", \"shadow\": false, \"x\": \"847\", \"y\": \"153\"}, \"D:hxJhA[@3M4lQxFYt3}\": {\"id\": \"D:hxJhA[@3M4lQxFYt3}\", \"opcode\": \"cozmo_vert_get_roll\", \"inputs\": {}, \"fields\": {}, \"next\": null, \"topLevel\": false, \"parent\": \"ap7=f3*M{Q(:5*Xdm[Kd\", \"shadow\": false, \"x\": \"847\", \"y\": \"200\"}, \")AO4sW^u7c6Ha*)U5gm0\": {\"id\": \")AO4sW^u7c6Ha*)U5gm0\", \"opcode\": \"cozmo_vert_get_yaw\", \"inputs\": {}, \"fields\": {}, \"next\": null, \"topLevel\": false, \"parent\": \":NWzE|KMG-Dr-#-`X1Hb\", \"shadow\": false, \"x\": \"847\", \"y\": \"246\"}, \"I,88pDN`f~dZg4fLk+=+\": {\"id\": \"I,88pDN`f~dZg4fLk+=+\", \"opcode\": \"cozmo_vert_get_pitch\", \"inputs\": {}, \"fields\": {}, \"next\": null, \"topLevel\": false, \"parent\": \";PJIL-/BKjv1VD3CDy+S\", \"shadow\": false, \"x\": \"847\", \"y\": \"154\"}, \"D7EziRlVW51*z5I=8zV1\": {\"id\": \"D7EziRlVW51*z5I=8zV1\", \"opcode\": \"cozmo_vert_get_roll\", \"inputs\": {}, \"fields\": {}, \"next\": null, \"topLevel\": false, \"parent\": \"TX79WfSnp^eGXSqu|F9F\", \"shadow\": false, \"x\": \"847\", \"y\": \"200\"}, \"n!EC#a%9O.|E{$~wvhL=\": {\"id\": \"n!EC#a%9O.|E{$~wvhL=\", \"opcode\": \"cozmo_vert_get_yaw\", \"inputs\": {}, \"fields\": {}, \"next\": null, \"topLevel\": false, \"parent\": \"B5|L0PDlefm=5WbWU[kp\", \"shadow\": false, \"x\": \"847\", \"y\": \"246\"}, \"=aj]$_dS]eyp4XoYw,y/\": {\"id\": \"=aj]$_dS]eyp4XoYw,y/\", \"opcode\": \"control_if\", \"inputs\": {\"CONDITION\": {\"name\": \"CONDITION\", \"block\": \"$A1hcX[}XevtAK!`,:EF\", \"shadow\": null}, \"SUBSTACK\": {\"name\": \"SUBSTACK\", \"block\": \"pRMURTbASYsEmT1Hj7{m\", \"shadow\": null}}, \"fields\": {}, \"next\": \"`ux}RyDvGAHG{7=VcS,B\", \"topLevel\": false, \"parent\": \"B5|L0PDlefm=5WbWU[kp\", \"shadow\": false, \"x\": \"842\", \"y\": \"613\"}, \"`ux}RyDvGAHG{7=VcS,B\": {\"id\": \"`ux}RyDvGAHG{7=VcS,B\", \"opcode\": \"control_if\", \"inputs\": {\"CONDITION\": {\"name\": \"CONDITION\", \"block\": \"}IS/Bt;;YDkW!ITaZPA,\", \"shadow\": null}, \"SUBSTACK\": {\"name\": \"SUBSTACK\", \"block\": \"w!t**Ed0:E@PllCjw27I\", \"shadow\": null}}, \"fields\": {}, \"next\": \"4gbVR0_`(ECe@WsGwa+_\", \"topLevel\": false, \"parent\": \"=aj]$_dS]eyp4XoYw,y/\", \"shadow\": false, \"x\": \"843\", \"y\": \"613\"}, \"4gbVR0_`(ECe@WsGwa+_\": {\"id\": \"4gbVR0_`(ECe@WsGwa+_\", \"opcode\": \"control_if\", \"inputs\": {\"CONDITION\": {\"name\": \"CONDITION\", \"block\": \"TX!P/T-kFCN.209J_VNG\", \"shadow\": null}, \"SUBSTACK\": {\"name\": \"SUBSTACK\", \"block\": \"xaU|+[Tol_F0~e47-i5o\", \"shadow\": null}}, \"fields\": {}, \"next\": \"@=]qNgU*p1-vSRWQ)TY+\", \"topLevel\": false, \"parent\": \"`ux}RyDvGAHG{7=VcS,B\", \"shadow\": false, \"x\": \"843\", \"y\": \"613\"}, \"@=]qNgU*p1-vSRWQ)TY+\": {\"id\": \"@=]qNgU*p1-vSRWQ)TY+\", \"opcode\": \"cozmo_vert_wait_for_actions\", \"inputs\": {}, \"fields\": {\"ACTION_SELECT\": {\"name\": \"ACTION_SELECT\", \"value\": \"anim\"}}, \"next\": null, \"topLevel\": false, \"parent\": \"4gbVR0_`(ECe@WsGwa+_\", \"shadow\": false, \"x\": \"843\", \"y\": \"866\"}, \"$A1hcX[}XevtAK!`,:EF\": {\"id\": \"$A1hcX[}XevtAK!`,:EF\", \"opcode\": \"operator_gt\", \"inputs\": {\"OPERAND1\": {\"name\": \"OPERAND1\", \"block\": \"KU9UWT1*WoGD@Bby:UWW\", \"shadow\": \"o$cuH5WKv@e$y})f-LGY\"}, \"OPERAND2\": {\"name\": \"OPERAND2\", \"block\": \"yzms.4/e6nE(}M;yH[@p\", \"shadow\": \"yzms.4/e6nE(}M;yH[@p\"}}, \"fields\": {}, \"next\": null, \"topLevel\": false, \"parent\": \"=aj]$_dS]eyp4XoYw,y/\", \"shadow\": false, \"x\": \"794\", \"y\": \"679\"}, \"o$cuH5WKv@e$y})f-LGY\": {\"id\": \"o$cuH5WKv@e$y})f-LGY\", \"opcode\": \"text\", \"inputs\": {}, \"fields\": {\"TEXT\": {\"name\": \"TEXT\", \"value\": \"\"}}, \"next\": null, \"topLevel\": true, \"parent\": null, \"shadow\": true, \"x\": 1079.4117647058824, \"y\": 687.2352941176472}, \"yzms.4/e6nE(}M;yH[@p\": {\"id\": \"yzms.4/e6nE(}M;yH[@p\", \"opcode\": \"text\", \"inputs\": {}, \"fields\": {\"TEXT\": {\"name\": \"TEXT\", \"value\": \"50\"}}, \"next\": null, \"topLevel\": false, \"parent\": \"$A1hcX[}XevtAK!`,:EF\", \"shadow\": true}, \"}IS/Bt;;YDkW!ITaZPA,\": {\"id\": \"}IS/Bt;;YDkW!ITaZPA,\", \"opcode\": \"operator_gt\", \"inputs\": {\"OPERAND1\": {\"name\": \"OPERAND1\", \"block\": \":;X]4_dnuI2P|;iN3-5r\", \"shadow\": \"c3z|df~16G}^rnq{B}%P\"}, \"OPERAND2\": {\"name\": \"OPERAND2\", \"block\": \";CuR_fxN;76DWjlLss7o\", \"shadow\": \";CuR_fxN;76DWjlLss7o\"}}, \"fields\": {}, \"next\": null, \"topLevel\": false, \"parent\": \"`ux}RyDvGAHG{7=VcS,B\", \"shadow\": false, \"x\": 1059, \"y\": 835}, \"c3z|df~16G}^rnq{B}%P\": {\"id\": \"c3z|df~16G}^rnq{B}%P\", \"opcode\": \"text\", \"inputs\": {}, \"fields\": {\"TEXT\": {\"name\": \"TEXT\", \"value\": \"\"}}, \"next\": null, \"topLevel\": true, \"parent\": null, \"shadow\": true, \"x\": 1079.4117647058824, \"y\": 799.2352941176472}, \";CuR_fxN;76DWjlLss7o\": {\"id\": \";CuR_fxN;76DWjlLss7o\", \"opcode\": \"text\", \"inputs\": {}, \"fields\": {\"TEXT\": {\"name\": \"TEXT\", \"value\": \"50\"}}, \"next\": null, \"topLevel\": false, \"parent\": \"}IS/Bt;;YDkW!ITaZPA,\", \"shadow\": true}, \"TX!P/T-kFCN.209J_VNG\": {\"id\": \"TX!P/T-kFCN.209J_VNG\", \"opcode\": \"operator_gt\", \"inputs\": {\"OPERAND1\": {\"name\": \"OPERAND1\", \"block\": \"nHe0WaL,-5%V{,0xwOp_\", \"shadow\": \"+xizYn$59ge^0fnyHOsn\"}, \"OPERAND2\": {\"name\": \"OPERAND2\", \"block\": \"ukn?(q!O]d,aLlp;Cycb\", \"shadow\": \"ukn?(q!O]d,aLlp;Cycb\"}}, \"fields\": {}, \"next\": null, \"topLevel\": false, \"parent\": \"4gbVR0_`(ECe@WsGwa+_\", \"shadow\": false, \"x\": \"794\", \"y\": \"679\"}, \"+xizYn$59ge^0fnyHOsn\": {\"id\": \"+xizYn$59ge^0fnyHOsn\", \"opcode\": \"text\", \"inputs\": {}, \"fields\": {\"TEXT\": {\"name\": \"TEXT\", \"value\": \"\"}}, \"next\": null, \"topLevel\": true, \"parent\": null, \"shadow\": true, \"x\": 1079.4117647058824, \"y\": 911.2352941176472}, \"ukn?(q!O]d,aLlp;Cycb\": {\"id\": \"ukn?(q!O]d,aLlp;Cycb\", \"opcode\": \"text\", \"inputs\": {}, \"fields\": {\"TEXT\": {\"name\": \"TEXT\", \"value\": \"50\"}}, \"next\": null, \"topLevel\": false, \"parent\": \"TX!P/T-kFCN.209J_VNG\", \"shadow\": true}, \"1yc;XtC8z7L}/Da]sK|M\": {\"id\": \"1yc;XtC8z7L}/Da]sK|M\", \"opcode\": \"operator_subtract\", \"inputs\": {\"NUM1\": {\"name\": \"NUM1\", \"block\": \"@Jj5Ev/l^op|bGp5NJf6\", \"shadow\": \"N.m`]?7BGK1,XKNrRy@F\"}, \"NUM2\": {\"name\": \"NUM2\", \"block\": \"18M16h|2W,lDS*@VpqQx\", \"shadow\": \"go6*}x$/u{PoU8G)`+Er\"}}, \"fields\": {}, \"next\": null, \"topLevel\": false, \"parent\": \"KU9UWT1*WoGD@Bby:UWW\", \"shadow\": false, \"x\": 1245.7847038156847, \"y\": 739.2352941176472}, \"N.m`]?7BGK1,XKNrRy@F\": {\"id\": \"N.m`]?7BGK1,XKNrRy@F\", \"opcode\": \"math_number\", \"inputs\": {}, \"fields\": {\"NUM\": {\"name\": \"NUM\", \"value\": \"\"}}, \"next\": null, \"topLevel\": true, \"parent\": null, \"shadow\": true, \"x\": 1201.7847038156851, \"y\": 695.2352941176468}, \"go6*}x$/u{PoU8G)`+Er\": {\"id\": \"go6*}x$/u{PoU8G)`+Er\", \"opcode\": \"math_number\", \"inputs\": {}, \"fields\": {\"NUM\": {\"name\": \"NUM\", \"value\": \"\"}}, \"next\": null, \"topLevel\": true, \"parent\": null, \"shadow\": true, \"x\": 1364.6764670259818, \"y\": 699.2352941176468}, \"|5p]S%}vo6/f*c]?b,}c\": {\"id\": \"|5p]S%}vo6/f*c]?b,}c\", \"opcode\": \"operator_subtract\", \"inputs\": {\"NUM1\": {\"name\": \"NUM1\", \"block\": \"{oT$o{G{_m?Lxu!G3}F1\", \"shadow\": \"QX^!O;$sXBaBoCJ3t26m\"}, \"NUM2\": {\"name\": \"NUM2\", \"block\": \"LCrSZ~nM+#$p}hlFZ~t4\", \"shadow\": \"IpGW%4Om;;b+N^8A)lF+\"}}, \"fields\": {}, \"next\": null, \"topLevel\": false, \"parent\": \":;X]4_dnuI2P|;iN3-5r\", \"shadow\": false, \"x\": 1412.8235294117649, \"y\": 835.9411764705884}, \"QX^!O;$sXBaBoCJ3t26m\": {\"id\": \"QX^!O;$sXBaBoCJ3t26m\", \"opcode\": \"math_number\", \"inputs\": {}, \"fields\": {\"NUM\": {\"name\": \"NUM\", \"value\": \"\"}}, \"next\": null, \"topLevel\": true, \"parent\": null, \"shadow\": true, \"x\": 1201.7847038156847, \"y\": 823.235294117647}, \"IpGW%4Om;;b+N^8A)lF+\": {\"id\": \"IpGW%4Om;;b+N^8A)lF+\", \"opcode\": \"math_number\", \"inputs\": {}, \"fields\": {\"NUM\": {\"name\": \"NUM\", \"value\": \"\"}}, \"next\": null, \"topLevel\": true, \"parent\": null, \"shadow\": true, \"x\": 1351.8435355074266, \"y\": 827.235294117647}, \"mfC2Tf!iJ1);Y[Pb%1}:\": {\"id\": \"mfC2Tf!iJ1);Y[Pb%1}:\", \"opcode\": \"operator_subtract\", \"inputs\": {\"NUM1\": {\"name\": \"NUM1\", \"block\": \"Jn*iqByqDZfqN-dwW%VZ\", \"shadow\": \"ggXglE4^aE8F!i0(hX#`\"}, \"NUM2\": {\"name\": \"NUM2\", \"block\": \"DAoEV=n)haO*`bP5AVGc\", \"shadow\": \"PYpaf;BDZ=r}u$Y[@Evm\"}}, \"fields\": {}, \"next\": null, \"topLevel\": false, \"parent\": \"nHe0WaL,-5%V{,0xwOp_\", \"shadow\": false, \"x\": 1245.7847038156847, \"y\": 995.2352941176472}, \"ggXglE4^aE8F!i0(hX#`\": {\"id\": \"ggXglE4^aE8F!i0(hX#`\", \"opcode\": \"math_number\", \"inputs\": {}, \"fields\": {\"NUM\": {\"name\": \"NUM\", \"value\": \"\"}}, \"next\": null, \"topLevel\": true, \"parent\": null, \"shadow\": true, \"x\": 1201.7847038156847, \"y\": 951.235294117647}, \"PYpaf;BDZ=r}u$Y[@Evm\": {\"id\": \"PYpaf;BDZ=r}u$Y[@Evm\", \"opcode\": \"math_number\", \"inputs\": {}, \"fields\": {\"NUM\": {\"name\": \"NUM\", \"value\": \"\"}}, \"next\": null, \"topLevel\": true, \"parent\": null, \"shadow\": true, \"x\": 1357.0370550997118, \"y\": 955.235294117647}, \"KU9UWT1*WoGD@Bby:UWW\": {\"id\": \"KU9UWT1*WoGD@Bby:UWW\", \"opcode\": \"operator_mathop\", \"inputs\": {\"NUM\": {\"name\": \"NUM\", \"block\": \"1yc;XtC8z7L}/Da]sK|M\", \"shadow\": \"kU7oSg@C9xt,x^+#U*Gz\"}}, \"fields\": {\"OPERATOR\": {\"name\": \"OPERATOR\", \"value\": \"abs\"}}, \"next\": null, \"topLevel\": false, \"parent\": \"$A1hcX[}XevtAK!`,:EF\", \"shadow\": false, \"x\": \"757\", \"y\": \"1042\"}, \"kU7oSg@C9xt,x^+#U*Gz\": {\"id\": \"kU7oSg@C9xt,x^+#U*Gz\", \"opcode\": \"math_number\", \"inputs\": {}, \"fields\": {\"NUM\": {\"name\": \"NUM\", \"value\": \"\"}}, \"next\": null, \"topLevel\": true, \"parent\": null, \"shadow\": true, \"x\": 1193.784703815685, \"y\": 691.2352941176471}, \":;X]4_dnuI2P|;iN3-5r\": {\"id\": \":;X]4_dnuI2P|;iN3-5r\", \"opcode\": \"operator_mathop\", \"inputs\": {\"NUM\": {\"name\": \"NUM\", \"block\": \"|5p]S%}vo6/f*c]?b,}c\", \"shadow\": \",0o}}:VJJN)9^`$%-~[A\"}}, \"fields\": {\"OPERATOR\": {\"name\": \"OPERATOR\", \"value\": \"abs\"}}, \"next\": null, \"topLevel\": false, \"parent\": \"}IS/Bt;;YDkW!ITaZPA,\", \"shadow\": false, \"x\": \"757\", \"y\": \"1042\"}, \",0o}}:VJJN)9^`$%-~[A\": {\"id\": \",0o}}:VJJN)9^`$%-~[A\", \"opcode\": \"math_number\", \"inputs\": {}, \"fields\": {\"NUM\": {\"name\": \"NUM\", \"value\": \"\"}}, \"next\": null, \"topLevel\": true, \"parent\": null, \"shadow\": true, \"x\": 1193.7847038156847, \"y\": 811.235294117647}, \"nHe0WaL,-5%V{,0xwOp_\": {\"id\": \"nHe0WaL,-5%V{,0xwOp_\", \"opcode\": \"operator_mathop\", \"inputs\": {\"NUM\": {\"name\": \"NUM\", \"block\": \"mfC2Tf!iJ1);Y[Pb%1}:\", \"shadow\": \"qjr?gqE7k`}uo:^L@7QU\"}}, \"fields\": {\"OPERATOR\": {\"name\": \"OPERATOR\", \"value\": \"abs\"}}, \"next\": null, \"topLevel\": false, \"parent\": \"TX!P/T-kFCN.209J_VNG\", \"shadow\": false, \"x\": \"757\", \"y\": \"1042\"}, \"qjr?gqE7k`}uo:^L@7QU\": {\"id\": \"qjr?gqE7k`}uo:^L@7QU\", \"opcode\": \"math_number\", \"inputs\": {}, \"fields\": {\"NUM\": {\"name\": \"NUM\", \"value\": \"\"}}, \"next\": null, \"topLevel\": true, \"parent\": null, \"shadow\": true, \"x\": 1193.7847038156847, \"y\": 931.2352941176471}, \"JmjqjaivfmLBFVJRH)!g\": {\"id\": \"JmjqjaivfmLBFVJRH)!g\", \"opcode\": \"cozmo_sound_stop\", \"inputs\": {\"SOUND_MENU\": {\"name\": \"SOUND_MENU\", \"block\": \"U2)peI]4%:m/8h22!LX4\", \"shadow\": \"U2)peI]4%:m/8h22!LX4\"}}, \"fields\": {}, \"next\": \",6lq~o3?!+K=z?~uDSj8\", \"topLevel\": false, \"parent\": \"CfpqJsGslvX18i+jyaDQ\", \"shadow\": false, \"x\": 841.2941176470589, \"y\": 875.2352941176473}, \"U2)peI]4%:m/8h22!LX4\": {\"id\": \"U2)peI]4%:m/8h22!LX4\", \"opcode\": \"cozmo_sound_sounds_menu\", \"inputs\": {}, \"fields\": {\"SOUND_MENU\": {\"name\": \"SOUND_MENU\", \"value\": \"38\"}}, \"next\": null, \"topLevel\": false, \"parent\": \"JmjqjaivfmLBFVJRH)!g\", \"shadow\": true}, \",6lq~o3?!+K=z?~uDSj8\": {\"id\": \",6lq~o3?!+K=z?~uDSj8\", \"opcode\": \"cozmo_vert_enable_animation_track\", \"inputs\": {}, \"fields\": {\"ANIMATION_TRACK\": {\"name\": \"ANIMATION_TRACK\", \"value\": \"lift\"}}, \"next\": \"utguUu]@8BNJ+C1V1gy/\", \"topLevel\": false, \"parent\": \"JmjqjaivfmLBFVJRH)!g\", \"shadow\": false, \"x\": \"767\", \"y\": \"808\"}, \"utguUu]@8BNJ+C1V1gy/\": {\"id\": \"utguUu]@8BNJ+C1V1gy/\", \"opcode\": \"cozmo_vert_enable_animation_track\", \"inputs\": {}, \"fields\": {\"ANIMATION_TRACK\": {\"name\": \"ANIMATION_TRACK\", \"value\": \"wheels\"}}, \"next\": \"MlpjAXi0$1!/5Kz35_d%\", \"topLevel\": false, \"parent\": \",6lq~o3?!+K=z?~uDSj8\", \"shadow\": false, \"x\": \"767\", \"y\": \"808\"}, \"#FEYwY.L`A03Pr;%(bJd\": {\"id\": \"#FEYwY.L`A03Pr;%(bJd\", \"opcode\": \"operator_equals\", \"inputs\": {\"OPERAND1\": {\"name\": \"OPERAND1\", \"block\": \"*wCcOqq:g0BvmbWL+.J8\", \"shadow\": \"xEM~_L_q8NylRiT9yGOD\"}, \"OPERAND2\": {\"name\": \"OPERAND2\", \"block\": \"^`^O)s1}t6t{$sKKf;;-\", \"shadow\": \"^`^O)s1}t6t{$sKKf;;-\"}}, \"fields\": {}, \"next\": null, \"topLevel\": false, \"parent\": \"+c)EDw4)0v6#TL$AH!x8\", \"shadow\": false, \"x\": \"-256\", \"y\": \"670\"}, \"xEM~_L_q8NylRiT9yGOD\": {\"id\": \"xEM~_L_q8NylRiT9yGOD\", \"opcode\": \"text\", \"inputs\": {}, \"fields\": {\"TEXT\": {\"name\": \"TEXT\", \"value\": \"\"}}, \"next\": null, \"topLevel\": true, \"parent\": null, \"shadow\": true, \"x\": 262.15000915527344, \"y\": 449}, \"^`^O)s1}t6t{$sKKf;;-\": {\"id\": \"^`^O)s1}t6t{$sKKf;;-\", \"opcode\": \"text\", \"inputs\": {}, \"fields\": {\"TEXT\": {\"name\": \"TEXT\", \"value\": \"True\"}}, \"next\": null, \"topLevel\": false, \"parent\": \"#FEYwY.L`A03Pr;%(bJd\", \"shadow\": true}, \"qJJ7rJIZ|`G+Se9x`iM`\": {\"id\": \"qJJ7rJIZ|`G+Se9x`iM`\", \"opcode\": \"operator_equals\", \"inputs\": {\"OPERAND1\": {\"name\": \"OPERAND1\", \"block\": \"+{o5u|k?!$=u3I~Yl;Eu\", \"shadow\": \"+:1n)c_CBdp3=+@Oo:A4\"}, \"OPERAND2\": {\"name\": \"OPERAND2\", \"block\": \"G.3W3d?HI6sE-H.(}u;h\", \"shadow\": \"G.3W3d?HI6sE-H.(}u;h\"}}, \"fields\": {}, \"next\": null, \"topLevel\": false, \"parent\": \"CfpqJsGslvX18i+jyaDQ\", \"shadow\": false, \"x\": \"355\", \"y\": \"593\"}, \"+:1n)c_CBdp3=+@Oo:A4\": {\"id\": \"+:1n)c_CBdp3=+@Oo:A4\", \"opcode\": \"text\", \"inputs\": {}, \"fields\": {\"TEXT\": {\"name\": \"TEXT\", \"value\": \"\"}}, \"next\": null, \"topLevel\": true, \"parent\": null, \"shadow\": true, \"x\": 1115.1911760218004, \"y\": 295.2352941176472}, \"G.3W3d?HI6sE-H.(}u;h\": {\"id\": \"G.3W3d?HI6sE-H.(}u;h\", \"opcode\": \"text\", \"inputs\": {}, \"fields\": {\"TEXT\": {\"name\": \"TEXT\", \"value\": \"False\"}}, \"next\": null, \"topLevel\": false, \"parent\": \"qJJ7rJIZ|`G+Se9x`iM`\", \"shadow\": true}, \"MlpjAXi0$1!/5Kz35_d%\": {\"id\": \"MlpjAXi0$1!/5Kz35_d%\", \"opcode\": \"cozmo_vert_set_liftheight\", \"inputs\": {\"HEIGHT_RATIO\": {\"name\": \"HEIGHT_RATIO\", \"block\": \"4)($4)*mn_]F7wS!TC@4\", \"shadow\": \"4)($4)*mn_]F7wS!TC@4\"}, \"SPEED\": {\"name\": \"SPEED\", \"block\": \"$`Zb:/7~4QVc)QqyIduf\", \"shadow\": \"$`Zb:/7~4QVc)QqyIduf\"}}, \"fields\": {}, \"next\": null, \"topLevel\": false, \"parent\": \"utguUu]@8BNJ+C1V1gy/\", \"shadow\": false, \"x\": \"136\", \"y\": \"568\"}, \"4)($4)*mn_]F7wS!TC@4\": {\"id\": \"4)($4)*mn_]F7wS!TC@4\", \"opcode\": \"math_number\", \"inputs\": {}, \"fields\": {\"NUM\": {\"name\": \"NUM\", \"value\": \"0\"}}, \"next\": null, \"topLevel\": false, \"parent\": \"MlpjAXi0$1!/5Kz35_d%\", \"shadow\": true}, \"$`Zb:/7~4QVc)QqyIduf\": {\"id\": \"$`Zb:/7~4QVc)QqyIduf\", \"opcode\": \"math_number\", \"inputs\": {}, \"fields\": {\"NUM\": {\"name\": \"NUM\", \"value\": \"200\"}}, \"next\": null, \"topLevel\": false, \"parent\": \"MlpjAXi0$1!/5Kz35_d%\", \"shadow\": true}, \"a/{Wm!pC[gh~V]VdXQ49\": {\"id\": \"a/{Wm!pC[gh~V]VdXQ49\", \"opcode\": \"cozmo_vert_set_liftheight\", \"inputs\": {\"HEIGHT_RATIO\": {\"name\": \"HEIGHT_RATIO\", \"block\": \"Aox2Rq!qEy3+K$|aGzRZ\", \"shadow\": \"Aox2Rq!qEy3+K$|aGzRZ\"}, \"SPEED\": {\"name\": \"SPEED\", \"block\": \"3jE]*}L~kdFd,%H^4J[N\", \"shadow\": \"3jE]*}L~kdFd,%H^4J[N\"}}, \"fields\": {}, \"next\": \"/,Ghy#nq8Dx?uqUYl8kT\", \"topLevel\": false, \"parent\": \")#@9|$iD|Vn*gFr!3zI7\", \"shadow\": false, \"x\": 995, \"y\": 287}, \"Aox2Rq!qEy3+K$|aGzRZ\": {\"id\": \"Aox2Rq!qEy3+K$|aGzRZ\", \"opcode\": \"math_number\", \"inputs\": {}, \"fields\": {\"NUM\": {\"name\": \"NUM\", \"value\": \"100\"}}, \"next\": null, \"topLevel\": false, \"parent\": \"a/{Wm!pC[gh~V]VdXQ49\", \"shadow\": true}, \"3jE]*}L~kdFd,%H^4J[N\": {\"id\": \"3jE]*}L~kdFd,%H^4J[N\", \"opcode\": \"math_number\", \"inputs\": {}, \"fields\": {\"NUM\": {\"name\": \"NUM\", \"value\": \"200\"}}, \"next\": null, \"topLevel\": false, \"parent\": \"a/{Wm!pC[gh~V]VdXQ49\", \"shadow\": true}, \"f!IZMP3%_VVw/e^,p$3t\": {\"id\": \"f!IZMP3%_VVw/e^,p$3t\", \"opcode\": \"cozmo_play_animation_from_dropdown\", \"inputs\": {\"ANIMATION\": {\"name\": \"ANIMATION\", \"block\": \"e.Yv9^E3iso+?ty+@`~a\", \"shadow\": \"e.Yv9^E3iso+?ty+@`~a\"}}, \"fields\": {}, \"next\": \"z{rlZw8M=s;v%;zAX)58\", \"topLevel\": false, \"parent\": \"~cP1Aq+:e0A*:xeB|BE3\", \"shadow\": false, \"x\": 151.88235294117646, \"y\": 738.9411764705883}, \"e.Yv9^E3iso+?ty+@`~a\": {\"id\": \"e.Yv9^E3iso+?ty+@`~a\", \"opcode\": \"cozmo_animation_select_menu\", \"inputs\": {}, \"fields\": {\"ANIMATION_SELECT\": {\"name\": \"ANIMATION_SELECT\", \"value\": \"40\"}}, \"next\": null, \"topLevel\": false, \"parent\": \"f!IZMP3%_VVw/e^,p$3t\", \"shadow\": true}, \"pRMURTbASYsEmT1Hj7{m\": {\"id\": \"pRMURTbASYsEmT1Hj7{m\", \"opcode\": \"cozmo_play_animation_from_dropdown\", \"inputs\": {\"ANIMATION\": {\"name\": \"ANIMATION\", \"block\": \"E6sMs.cfSu{F7eq]6+qb\", \"shadow\": \"E6sMs.cfSu{F7eq]6+qb\"}}, \"fields\": {}, \"next\": null, \"topLevel\": false, \"parent\": \"=aj]$_dS]eyp4XoYw,y/\", \"shadow\": false, \"x\": \"840\", \"y\": \"614\"}, \"E6sMs.cfSu{F7eq]6+qb\": {\"id\": \"E6sMs.cfSu{F7eq]6+qb\", \"opcode\": \"cozmo_animation_select_menu\", \"inputs\": {}, \"fields\": {\"ANIMATION_SELECT\": {\"name\": \"ANIMATION_SELECT\", \"value\": \"36\"}}, \"next\": null, \"topLevel\": false, \"parent\": \"pRMURTbASYsEmT1Hj7{m\", \"shadow\": true}, \"w!t**Ed0:E@PllCjw27I\": {\"id\": \"w!t**Ed0:E@PllCjw27I\", \"opcode\": \"cozmo_play_animation_from_dropdown\", \"inputs\": {\"ANIMATION\": {\"name\": \"ANIMATION\", \"block\": \".7?$rC#q78HElDF(NcQP\", \"shadow\": \".7?$rC#q78HElDF(NcQP\"}}, \"fields\": {}, \"next\": null, \"topLevel\": false, \"parent\": \"`ux}RyDvGAHG{7=VcS,B\", \"shadow\": false, \"x\": \"840\", \"y\": \"614\"}, \".7?$rC#q78HElDF(NcQP\": {\"id\": \".7?$rC#q78HElDF(NcQP\", \"opcode\": \"cozmo_animation_select_menu\", \"inputs\": {}, \"fields\": {\"ANIMATION_SELECT\": {\"name\": \"ANIMATION_SELECT\", \"value\": \"37\"}}, \"next\": null, \"topLevel\": false, \"parent\": \"w!t**Ed0:E@PllCjw27I\", \"shadow\": true}, \"xaU|+[Tol_F0~e47-i5o\": {\"id\": \"xaU|+[Tol_F0~e47-i5o\", \"opcode\": \"cozmo_play_animation_from_dropdown\", \"inputs\": {\"ANIMATION\": {\"name\": \"ANIMATION\", \"block\": \"B%BTt,sB{,2*y?y]P64O\", \"shadow\": \"B%BTt,sB{,2*y?y]P64O\"}}, \"fields\": {}, \"next\": null, \"topLevel\": false, \"parent\": \"4gbVR0_`(ECe@WsGwa+_\", \"shadow\": false, \"x\": \"840\", \"y\": \"614\"}, \"B%BTt,sB{,2*y?y]P64O\": {\"id\": \"B%BTt,sB{,2*y?y]P64O\", \"opcode\": \"cozmo_animation_select_menu\", \"inputs\": {}, \"fields\": {\"ANIMATION_SELECT\": {\"name\": \"ANIMATION_SELECT\", \"value\": \"38\"}}, \"next\": null, \"topLevel\": false, \"parent\": \"xaU|+[Tol_F0~e47-i5o\", \"shadow\": true}}, \"variables\": {}, \"lists\": {}, \"costumes\": [], \"sounds\": []}], \"meta\": {\"semver\": \"3.0.0\", \"vm\": \"0.1.0\", \"agent\": \"Mozilla/5.0 (iPad; CPU OS 10_3_3 like Mac OS X) AppleWebKit/603.3.8 (KHTML, like Gecko) Mobile/14G60\"}}"
+    "ProjectJSON": {
+        "meta": {
+            "agent": "Mozilla/5.0 (iPad; CPU OS 10_3_3 like Mac OS X) AppleWebKit/603.3.8 (KHTML, like Gecko) Mobile/14G60",
+            "semver": "3.0.0",
+            "vm": "0.1.0"
+        },
+        "targets": [
+            {
+                "blocks": {},
+                "costumeCount": 0,
+                "costumes": [],
+                "currentCostume": 0,
+                "direction": 90,
+                "draggable": false,
+                "id": "?k-3hB{(el)GTvHffAnN",
+                "isStage": true,
+                "lists": {},
+                "name": "Stage",
+                "rotationStyle": "all around",
+                "size": 100,
+                "sounds": [],
+                "variables": {
+                    "2sa5)2!0M{ap3xd40c=v": {
+                        "id": "2sa5)2!0M{ap3xd40c=v",
+                        "name": "Cozmo-Drehung B (Vertikalachse)",
+                        "value": -87.77735
+                    },
+                    "Ddb6wQ^]+fEUt5~w2#5d": {
+                        "id": "Ddb6wQ^]+fEUt5~w2#5d",
+                        "name": "Cozmo bittet den Spieler, ihn hochzuheben, und wartet dann.",
+                        "value": 0
+                    },
+                    "Er84_DrFQeHe{|I8oCJ^": {
+                        "id": "Er84_DrFQeHe{|I8oCJ^",
+                        "name": "Cozmo-Drehung A (Querachse)",
+                        "value": 2.61435652
+                    },
+                    "W7+N(f)(7a;jZ#Txc5Z)": {
+                        "id": "W7+N(f)(7a;jZ#Txc5Z)",
+                        "name": "W\u00e4hrend Cozmo in der Luft ist, reagiert er auf Positions\u00e4nderungen.",
+                        "value": 0
+                    },
+                    "YXt$1#CE?+OXbQz+?k@i": {
+                        "id": "YXt$1#CE?+OXbQz+?k@i",
+                        "name": "Cozmo-Drehung A (L\u00e4ngsachse)",
+                        "value": 7.2555
+                    },
+                    "eo.L=V-kX|A;BY/?Fy``": {
+                        "id": "eo.L=V-kX|A;BY/?Fy``",
+                        "name": "Cozmo-Drehung B (L\u00e4ngsachse)",
+                        "value": 11.6020393
+                    },
+                    "g)4zFtLT|-4]I@?,6ami": {
+                        "id": "g)4zFtLT|-4]I@?,6ami",
+                        "name": "Cozmo-Drehung A (Vertikalachse)",
+                        "value": -85.07265
+                    },
+                    "k)COYIY]1eLbNNbb=7_y": {
+                        "id": "k)COYIY]1eLbNNbb=7_y",
+                        "name": "Cozmo-Drehung B (Querachse)",
+                        "value": 3.5808897
+                    }
+                },
+                "visible": true,
+                "x": 0,
+                "y": 0
+            },
+            {
+                "blocks": {
+                    "#FEYwY.L`A03Pr;%(bJd": {
+                        "fields": {},
+                        "id": "#FEYwY.L`A03Pr;%(bJd",
+                        "inputs": {
+                            "OPERAND1": {
+                                "block": "*wCcOqq:g0BvmbWL+.J8",
+                                "name": "OPERAND1",
+                                "shadow": "xEM~_L_q8NylRiT9yGOD"
+                            },
+                            "OPERAND2": {
+                                "block": "^`^O)s1}t6t{$sKKf;;-",
+                                "name": "OPERAND2",
+                                "shadow": "^`^O)s1}t6t{$sKKf;;-"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_equals",
+                        "parent": "+c)EDw4)0v6#TL$AH!x8",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-256",
+                        "y": "670"
+                    },
+                    "#Mwm@OS=)f4]+|8N-s+k": {
+                        "fields": {
+                            "ANIMATION_SELECT": {
+                                "name": "ANIMATION_SELECT",
+                                "value": "19"
+                            }
+                        },
+                        "id": "#Mwm@OS=)f4]+|8N-s+k",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "cozmo_animation_select_menu",
+                        "parent": "SBj5gHm85Py2Iv.sN4cw",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "$A1hcX[}XevtAK!`,:EF": {
+                        "fields": {},
+                        "id": "$A1hcX[}XevtAK!`,:EF",
+                        "inputs": {
+                            "OPERAND1": {
+                                "block": "KU9UWT1*WoGD@Bby:UWW",
+                                "name": "OPERAND1",
+                                "shadow": "o$cuH5WKv@e$y})f-LGY"
+                            },
+                            "OPERAND2": {
+                                "block": "yzms.4/e6nE(}M;yH[@p",
+                                "name": "OPERAND2",
+                                "shadow": "yzms.4/e6nE(}M;yH[@p"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_gt",
+                        "parent": "=aj]$_dS]eyp4XoYw,y/",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "794",
+                        "y": "679"
+                    },
+                    "$`Zb:/7~4QVc)QqyIduf": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": "200"
+                            }
+                        },
+                        "id": "$`Zb:/7~4QVc)QqyIduf",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": "MlpjAXi0$1!/5Kz35_d%",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "%#?:Z^CS/^tQRJH*vZU(": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "0"
+                            }
+                        },
+                        "id": "%#?:Z^CS/^tQRJH*vZU(",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 1226.2058864481307,
+                        "y": 591.235294117647
+                    },
+                    "(H])rF|rf)?*0~+:=DTX": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "Ddb6wQ^]+fEUt5~w2#5d",
+                                "name": "VARIABLE",
+                                "value": "Cozmo bittet den Spieler, ihn hochzuheben, und wartet dann."
+                            }
+                        },
+                        "id": "(H])rF|rf)?*0~+:=DTX",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": null,
+                        "shadow": false,
+                        "topLevel": true,
+                        "x": 140,
+                        "y": 136
+                    },
+                    ")#@9|$iD|Vn*gFr!3zI7": {
+                        "fields": {},
+                        "id": ")#@9|$iD|Vn*gFr!3zI7",
+                        "inputs": {
+                            "SOUND_MENU": {
+                                "block": "qYpBzj/]}P)GuWJSg`.p",
+                                "name": "SOUND_MENU",
+                                "shadow": "qYpBzj/]}P)GuWJSg`.p"
+                            }
+                        },
+                        "next": "a/{Wm!pC[gh~V]VdXQ49",
+                        "opcode": "cozmo_sound_play",
+                        "parent": "+c)EDw4)0v6#TL$AH!x8",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "7",
+                        "y": "349"
+                    },
+                    ")AO4sW^u7c6Ha*)U5gm0": {
+                        "fields": {},
+                        "id": ")AO4sW^u7c6Ha*)U5gm0",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "cozmo_vert_get_yaw",
+                        "parent": ":NWzE|KMG-Dr-#-`X1Hb",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "847",
+                        "y": "246"
+                    },
+                    "*OxE|3=RjoP}iPgQS|}a": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "0"
+                            }
+                        },
+                        "id": "*OxE|3=RjoP}iPgQS|}a",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 1239.0388179666857,
+                        "y": 543.2352941176473
+                    },
+                    "*wCcOqq:g0BvmbWL+.J8": {
+                        "fields": {},
+                        "id": "*wCcOqq:g0BvmbWL+.J8",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "cozmo_vert_get_is_picked_up",
+                        "parent": "#FEYwY.L`A03Pr;%(bJd",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": 306.7598809199793,
+                        "y": 1026.488845882353
+                    },
+                    "+:1n)c_CBdp3=+@Oo:A4": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": ""
+                            }
+                        },
+                        "id": "+:1n)c_CBdp3=+@Oo:A4",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 1115.1911760218004,
+                        "y": 295.2352941176472
+                    },
+                    "+c)EDw4)0v6#TL$AH!x8": {
+                        "fields": {},
+                        "id": "+c)EDw4)0v6#TL$AH!x8",
+                        "inputs": {
+                            "CONDITION": {
+                                "block": "#FEYwY.L`A03Pr;%(bJd",
+                                "name": "CONDITION",
+                                "shadow": null
+                            }
+                        },
+                        "next": ")#@9|$iD|Vn*gFr!3zI7",
+                        "opcode": "control_wait_until",
+                        "parent": "SBj5gHm85Py2Iv.sN4cw",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "96",
+                        "y": "745"
+                    },
+                    "+xizYn$59ge^0fnyHOsn": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": ""
+                            }
+                        },
+                        "id": "+xizYn$59ge^0fnyHOsn",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 1079.4117647058824,
+                        "y": 911.2352941176472
+                    },
+                    "+{o5u|k?!$=u3I~Yl;Eu": {
+                        "fields": {},
+                        "id": "+{o5u|k?!$=u3I~Yl;Eu",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "cozmo_vert_get_is_picked_up",
+                        "parent": "qJJ7rJIZ|`G+Se9x`iM`",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": 1612.1224716538015,
+                        "y": 505.7384247058826
+                    },
+                    ",0o}}:VJJN)9^`$%-~[A": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": ""
+                            }
+                        },
+                        "id": ",0o}}:VJJN)9^`$%-~[A",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 1193.7847038156847,
+                        "y": 811.235294117647
+                    },
+                    ",6lq~o3?!+K=z?~uDSj8": {
+                        "fields": {
+                            "ANIMATION_TRACK": {
+                                "name": "ANIMATION_TRACK",
+                                "value": "lift"
+                            }
+                        },
+                        "id": ",6lq~o3?!+K=z?~uDSj8",
+                        "inputs": {},
+                        "next": "utguUu]@8BNJ+C1V1gy/",
+                        "opcode": "cozmo_vert_enable_animation_track",
+                        "parent": "JmjqjaivfmLBFVJRH)!g",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "767",
+                        "y": "808"
+                    },
+                    ",V[n2h!5VdihG|_fK/po": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "Er84_DrFQeHe{|I8oCJ^",
+                                "name": "VARIABLE",
+                                "value": "Cozmo-Drehung A (Querachse)"
+                            }
+                        },
+                        "id": ",V[n2h!5VdihG|_fK/po",
+                        "inputs": {
+                            "VALUE": {
+                                "block": "}H.I}@aDTTG=~GGE]T8R",
+                                "name": "VALUE",
+                                "shadow": "hf4@Hlqxt3w$yE+8`FG`"
+                            }
+                        },
+                        "next": "ap7=f3*M{Q(:5*Xdm[Kd",
+                        "opcode": "data_setvariableto",
+                        "parent": "CfpqJsGslvX18i+jyaDQ",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "645",
+                        "y": "441"
+                    },
+                    ".7?$rC#q78HElDF(NcQP": {
+                        "fields": {
+                            "ANIMATION_SELECT": {
+                                "name": "ANIMATION_SELECT",
+                                "value": "37"
+                            }
+                        },
+                        "id": ".7?$rC#q78HElDF(NcQP",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "cozmo_animation_select_menu",
+                        "parent": "w!t**Ed0:E@PllCjw27I",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    ".RxOJ8q5Ge4yO};fqwb@": {
+                        "fields": {},
+                        "id": ".RxOJ8q5Ge4yO};fqwb@",
+                        "inputs": {
+                            "SUBSTACK": {
+                                "block": "SBj5gHm85Py2Iv.sN4cw",
+                                "name": "SUBSTACK",
+                                "shadow": null
+                            }
+                        },
+                        "next": null,
+                        "opcode": "control_forever",
+                        "parent": "v28QNTinx2vS^xCOpB1X",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "7",
+                        "y": "307"
+                    },
+                    "/,Ghy#nq8Dx?uqUYl8kT": {
+                        "fields": {
+                            "ANIMATION_TRACK": {
+                                "name": "ANIMATION_TRACK",
+                                "value": "wheels"
+                            }
+                        },
+                        "id": "/,Ghy#nq8Dx?uqUYl8kT",
+                        "inputs": {},
+                        "next": "~cP1Aq+:e0A*:xeB|BE3",
+                        "opcode": "cozmo_vert_disable_animation_track",
+                        "parent": "a/{Wm!pC[gh~V]VdXQ49",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "7",
+                        "y": "243"
+                    },
+                    "/saG9|JEQFjJ^6#AR0?/": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": ".3"
+                            }
+                        },
+                        "id": "/saG9|JEQFjJ^6#AR0?/",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_positive_number",
+                        "parent": "{?ULuH@^qL|ejV~lV(#$",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "18M16h|2W,lDS*@VpqQx": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "k)COYIY]1eLbNNbb=7_y",
+                                "name": "VARIABLE",
+                                "value": "Cozmo-Drehung B (Querachse)"
+                            }
+                        },
+                        "id": "18M16h|2W,lDS*@VpqQx",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": "1yc;XtC8z7L}/Da]sK|M",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": 788.352941176471,
+                        "y": 643.7058823529414
+                    },
+                    "1yc;XtC8z7L}/Da]sK|M": {
+                        "fields": {},
+                        "id": "1yc;XtC8z7L}/Da]sK|M",
+                        "inputs": {
+                            "NUM1": {
+                                "block": "@Jj5Ev/l^op|bGp5NJf6",
+                                "name": "NUM1",
+                                "shadow": "N.m`]?7BGK1,XKNrRy@F"
+                            },
+                            "NUM2": {
+                                "block": "18M16h|2W,lDS*@VpqQx",
+                                "name": "NUM2",
+                                "shadow": "go6*}x$/u{PoU8G)`+Er"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_subtract",
+                        "parent": "KU9UWT1*WoGD@Bby:UWW",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": 1245.7847038156847,
+                        "y": 739.2352941176472
+                    },
+                    "3jE]*}L~kdFd,%H^4J[N": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": "200"
+                            }
+                        },
+                        "id": "3jE]*}L~kdFd,%H^4J[N",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": "a/{Wm!pC[gh~V]VdXQ49",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "4)($4)*mn_]F7wS!TC@4": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": "0"
+                            }
+                        },
+                        "id": "4)($4)*mn_]F7wS!TC@4",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": "MlpjAXi0$1!/5Kz35_d%",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "4gbVR0_`(ECe@WsGwa+_": {
+                        "fields": {},
+                        "id": "4gbVR0_`(ECe@WsGwa+_",
+                        "inputs": {
+                            "CONDITION": {
+                                "block": "TX!P/T-kFCN.209J_VNG",
+                                "name": "CONDITION",
+                                "shadow": null
+                            },
+                            "SUBSTACK": {
+                                "block": "xaU|+[Tol_F0~e47-i5o",
+                                "name": "SUBSTACK",
+                                "shadow": null
+                            }
+                        },
+                        "next": "@=]qNgU*p1-vSRWQ)TY+",
+                        "opcode": "control_if",
+                        "parent": "`ux}RyDvGAHG{7=VcS,B",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "843",
+                        "y": "613"
+                    },
+                    ":;X]4_dnuI2P|;iN3-5r": {
+                        "fields": {
+                            "OPERATOR": {
+                                "name": "OPERATOR",
+                                "value": "abs"
+                            }
+                        },
+                        "id": ":;X]4_dnuI2P|;iN3-5r",
+                        "inputs": {
+                            "NUM": {
+                                "block": "|5p]S%}vo6/f*c]?b,}c",
+                                "name": "NUM",
+                                "shadow": ",0o}}:VJJN)9^`$%-~[A"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_mathop",
+                        "parent": "}IS/Bt;;YDkW!ITaZPA,",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "757",
+                        "y": "1042"
+                    },
+                    ":NWzE|KMG-Dr-#-`X1Hb": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "g)4zFtLT|-4]I@?,6ami",
+                                "name": "VARIABLE",
+                                "value": "Cozmo-Drehung A (Vertikalachse)"
+                            }
+                        },
+                        "id": ":NWzE|KMG-Dr-#-`X1Hb",
+                        "inputs": {
+                            "VALUE": {
+                                "block": ")AO4sW^u7c6Ha*)U5gm0",
+                                "name": "VALUE",
+                                "shadow": "_@S02X7O,Lt,YDC/iWQ%"
+                            }
+                        },
+                        "next": "{?ULuH@^qL|ejV~lV(#$",
+                        "opcode": "data_setvariableto",
+                        "parent": "ap7=f3*M{Q(:5*Xdm[Kd",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "645",
+                        "y": "442"
+                    },
+                    ";CuR_fxN;76DWjlLss7o": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "50"
+                            }
+                        },
+                        "id": ";CuR_fxN;76DWjlLss7o",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": "}IS/Bt;;YDkW!ITaZPA,",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    ";PJIL-/BKjv1VD3CDy+S": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "k)COYIY]1eLbNNbb=7_y",
+                                "name": "VARIABLE",
+                                "value": "Cozmo-Drehung B (Querachse)"
+                            }
+                        },
+                        "id": ";PJIL-/BKjv1VD3CDy+S",
+                        "inputs": {
+                            "VALUE": {
+                                "block": "I,88pDN`f~dZg4fLk+=+",
+                                "name": "VALUE",
+                                "shadow": "*OxE|3=RjoP}iPgQS|}a"
+                            }
+                        },
+                        "next": "TX79WfSnp^eGXSqu|F9F",
+                        "opcode": "data_setvariableto",
+                        "parent": "{?ULuH@^qL|ejV~lV(#$",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "645",
+                        "y": "442"
+                    },
+                    "=aj]$_dS]eyp4XoYw,y/": {
+                        "fields": {},
+                        "id": "=aj]$_dS]eyp4XoYw,y/",
+                        "inputs": {
+                            "CONDITION": {
+                                "block": "$A1hcX[}XevtAK!`,:EF",
+                                "name": "CONDITION",
+                                "shadow": null
+                            },
+                            "SUBSTACK": {
+                                "block": "pRMURTbASYsEmT1Hj7{m",
+                                "name": "SUBSTACK",
+                                "shadow": null
+                            }
+                        },
+                        "next": "`ux}RyDvGAHG{7=VcS,B",
+                        "opcode": "control_if",
+                        "parent": "B5|L0PDlefm=5WbWU[kp",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "842",
+                        "y": "613"
+                    },
+                    "@=]qNgU*p1-vSRWQ)TY+": {
+                        "fields": {
+                            "ACTION_SELECT": {
+                                "name": "ACTION_SELECT",
+                                "value": "anim"
+                            }
+                        },
+                        "id": "@=]qNgU*p1-vSRWQ)TY+",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "cozmo_vert_wait_for_actions",
+                        "parent": "4gbVR0_`(ECe@WsGwa+_",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "843",
+                        "y": "866"
+                    },
+                    "@Jj5Ev/l^op|bGp5NJf6": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "Er84_DrFQeHe{|I8oCJ^",
+                                "name": "VARIABLE",
+                                "value": "Cozmo-Drehung A (Querachse)"
+                            }
+                        },
+                        "id": "@Jj5Ev/l^op|bGp5NJf6",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": "1yc;XtC8z7L}/Da]sK|M",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": 1245.7847038156847,
+                        "y": 739.2352941176472
+                    },
+                    "Aox2Rq!qEy3+K$|aGzRZ": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": "100"
+                            }
+                        },
+                        "id": "Aox2Rq!qEy3+K$|aGzRZ",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": "a/{Wm!pC[gh~V]VdXQ49",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "B%BTt,sB{,2*y?y]P64O": {
+                        "fields": {
+                            "ANIMATION_SELECT": {
+                                "name": "ANIMATION_SELECT",
+                                "value": "38"
+                            }
+                        },
+                        "id": "B%BTt,sB{,2*y?y]P64O",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "cozmo_animation_select_menu",
+                        "parent": "xaU|+[Tol_F0~e47-i5o",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "B5|L0PDlefm=5WbWU[kp": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "2sa5)2!0M{ap3xd40c=v",
+                                "name": "VARIABLE",
+                                "value": "Cozmo-Drehung B (Vertikalachse)"
+                            }
+                        },
+                        "id": "B5|L0PDlefm=5WbWU[kp",
+                        "inputs": {
+                            "VALUE": {
+                                "block": "n!EC#a%9O.|E{$~wvhL=",
+                                "name": "VALUE",
+                                "shadow": "^]p0{;a|`jELbB4]XNbt"
+                            }
+                        },
+                        "next": "=aj]$_dS]eyp4XoYw,y/",
+                        "opcode": "data_setvariableto",
+                        "parent": "TX79WfSnp^eGXSqu|F9F",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "645",
+                        "y": "442"
+                    },
+                    "CfpqJsGslvX18i+jyaDQ": {
+                        "fields": {},
+                        "id": "CfpqJsGslvX18i+jyaDQ",
+                        "inputs": {
+                            "CONDITION": {
+                                "block": "qJJ7rJIZ|`G+Se9x`iM`",
+                                "name": "CONDITION",
+                                "shadow": null
+                            },
+                            "SUBSTACK": {
+                                "block": ",V[n2h!5VdihG|_fK/po",
+                                "name": "SUBSTACK",
+                                "shadow": null
+                            }
+                        },
+                        "next": "JmjqjaivfmLBFVJRH)!g",
+                        "opcode": "control_repeat_until",
+                        "parent": "K$dQ0G-FykBP$;{`5!7g",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": 1036.683788235294,
+                        "y": 520.6823294117648
+                    },
+                    "D7EziRlVW51*z5I=8zV1": {
+                        "fields": {},
+                        "id": "D7EziRlVW51*z5I=8zV1",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "cozmo_vert_get_roll",
+                        "parent": "TX79WfSnp^eGXSqu|F9F",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "847",
+                        "y": "200"
+                    },
+                    "D:hxJhA[@3M4lQxFYt3}": {
+                        "fields": {},
+                        "id": "D:hxJhA[@3M4lQxFYt3}",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "cozmo_vert_get_roll",
+                        "parent": "ap7=f3*M{Q(:5*Xdm[Kd",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "847",
+                        "y": "200"
+                    },
+                    "DAoEV=n)haO*`bP5AVGc": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "2sa5)2!0M{ap3xd40c=v",
+                                "name": "VARIABLE",
+                                "value": "Cozmo-Drehung B (Vertikalachse)"
+                            }
+                        },
+                        "id": "DAoEV=n)haO*`bP5AVGc",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": "mfC2Tf!iJ1);Y[Pb%1}:",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": 783.6470588235297,
+                        "y": 920.1764705882355
+                    },
+                    "E6sMs.cfSu{F7eq]6+qb": {
+                        "fields": {
+                            "ANIMATION_SELECT": {
+                                "name": "ANIMATION_SELECT",
+                                "value": "36"
+                            }
+                        },
+                        "id": "E6sMs.cfSu{F7eq]6+qb",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "cozmo_animation_select_menu",
+                        "parent": "pRMURTbASYsEmT1Hj7{m",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "G.3W3d?HI6sE-H.(}u;h": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "False"
+                            }
+                        },
+                        "id": "G.3W3d?HI6sE-H.(}u;h",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": "qJJ7rJIZ|`G+Se9x`iM`",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "I,88pDN`f~dZg4fLk+=+": {
+                        "fields": {},
+                        "id": "I,88pDN`f~dZg4fLk+=+",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "cozmo_vert_get_pitch",
+                        "parent": ";PJIL-/BKjv1VD3CDy+S",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "847",
+                        "y": "154"
+                    },
+                    "IpGW%4Om;;b+N^8A)lF+": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": ""
+                            }
+                        },
+                        "id": "IpGW%4Om;;b+N^8A)lF+",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 1351.8435355074266,
+                        "y": 827.235294117647
+                    },
+                    "JmjqjaivfmLBFVJRH)!g": {
+                        "fields": {},
+                        "id": "JmjqjaivfmLBFVJRH)!g",
+                        "inputs": {
+                            "SOUND_MENU": {
+                                "block": "U2)peI]4%:m/8h22!LX4",
+                                "name": "SOUND_MENU",
+                                "shadow": "U2)peI]4%:m/8h22!LX4"
+                            }
+                        },
+                        "next": ",6lq~o3?!+K=z?~uDSj8",
+                        "opcode": "cozmo_sound_stop",
+                        "parent": "CfpqJsGslvX18i+jyaDQ",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": 841.2941176470589,
+                        "y": 875.2352941176473
+                    },
+                    "Jn*iqByqDZfqN-dwW%VZ": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "g)4zFtLT|-4]I@?,6ami",
+                                "name": "VARIABLE",
+                                "value": "Cozmo-Drehung A (Vertikalachse)"
+                            }
+                        },
+                        "id": "Jn*iqByqDZfqN-dwW%VZ",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": "mfC2Tf!iJ1);Y[Pb%1}:",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": 1245.7847038156847,
+                        "y": 995.2352941176472
+                    },
+                    "K$dQ0G-FykBP$;{`5!7g": {
+                        "fields": {
+                            "BROADCAST_OPTION": {
+                                "name": "BROADCAST_OPTION",
+                                "value": "message1"
+                            }
+                        },
+                        "id": "K$dQ0G-FykBP$;{`5!7g",
+                        "inputs": {},
+                        "next": "CfpqJsGslvX18i+jyaDQ",
+                        "opcode": "event_whenbroadcastreceived",
+                        "parent": null,
+                        "shadow": false,
+                        "topLevel": true,
+                        "x": 995,
+                        "y": 239
+                    },
+                    "KU9UWT1*WoGD@Bby:UWW": {
+                        "fields": {
+                            "OPERATOR": {
+                                "name": "OPERATOR",
+                                "value": "abs"
+                            }
+                        },
+                        "id": "KU9UWT1*WoGD@Bby:UWW",
+                        "inputs": {
+                            "NUM": {
+                                "block": "1yc;XtC8z7L}/Da]sK|M",
+                                "name": "NUM",
+                                "shadow": "kU7oSg@C9xt,x^+#U*Gz"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_mathop",
+                        "parent": "$A1hcX[}XevtAK!`,:EF",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "757",
+                        "y": "1042"
+                    },
+                    "LCrSZ~nM+#$p}hlFZ~t4": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "eo.L=V-kX|A;BY/?Fy``",
+                                "name": "VARIABLE",
+                                "value": "Cozmo-Drehung B (L\u00e4ngsachse)"
+                            }
+                        },
+                        "id": "LCrSZ~nM+#$p}hlFZ~t4",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": "|5p]S%}vo6/f*c]?b,}c",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": 786.0000000000005,
+                        "y": 755.9411764705884
+                    },
+                    "MlpjAXi0$1!/5Kz35_d%": {
+                        "fields": {},
+                        "id": "MlpjAXi0$1!/5Kz35_d%",
+                        "inputs": {
+                            "HEIGHT_RATIO": {
+                                "block": "4)($4)*mn_]F7wS!TC@4",
+                                "name": "HEIGHT_RATIO",
+                                "shadow": "4)($4)*mn_]F7wS!TC@4"
+                            },
+                            "SPEED": {
+                                "block": "$`Zb:/7~4QVc)QqyIduf",
+                                "name": "SPEED",
+                                "shadow": "$`Zb:/7~4QVc)QqyIduf"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "cozmo_vert_set_liftheight",
+                        "parent": "utguUu]@8BNJ+C1V1gy/",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "136",
+                        "y": "568"
+                    },
+                    "N,c@C_-i!l{NW?P*I)CW": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "W7+N(f)(7a;jZ#Txc5Z)",
+                                "name": "VARIABLE",
+                                "value": "W\u00e4hrend Cozmo in der Luft ist, reagiert er auf Positions\u00e4nderungen."
+                            }
+                        },
+                        "id": "N,c@C_-i!l{NW?P*I)CW",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": null,
+                        "shadow": false,
+                        "topLevel": true,
+                        "x": 998,
+                        "y": 134
+                    },
+                    "N.m`]?7BGK1,XKNrRy@F": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": ""
+                            }
+                        },
+                        "id": "N.m`]?7BGK1,XKNrRy@F",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 1201.7847038156851,
+                        "y": 695.2352941176468
+                    },
+                    "PYpaf;BDZ=r}u$Y[@Evm": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": ""
+                            }
+                        },
+                        "id": "PYpaf;BDZ=r}u$Y[@Evm",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 1357.0370550997118,
+                        "y": 955.235294117647
+                    },
+                    "QX^!O;$sXBaBoCJ3t26m": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": ""
+                            }
+                        },
+                        "id": "QX^!O;$sXBaBoCJ3t26m",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 1201.7847038156847,
+                        "y": 823.235294117647
+                    },
+                    "R)uRT4!MO[X#]V,Tm`$;": {
+                        "fields": {
+                            "SOUND_MENU": {
+                                "name": "SOUND_MENU",
+                                "value": "36"
+                            }
+                        },
+                        "id": "R)uRT4!MO[X#]V,Tm`$;",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "cozmo_sound_sounds_menu",
+                        "parent": "v28QNTinx2vS^xCOpB1X",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "RqohItYC/XpjZ2]xiar5": {
+                        "fields": {},
+                        "id": "RqohItYC/XpjZ2]xiar5",
+                        "inputs": {},
+                        "next": "v28QNTinx2vS^xCOpB1X",
+                        "opcode": "event_whenflagclicked",
+                        "parent": null,
+                        "shadow": false,
+                        "topLevel": true,
+                        "x": 144,
+                        "y": 249
+                    },
+                    "SBj5gHm85Py2Iv.sN4cw": {
+                        "fields": {},
+                        "id": "SBj5gHm85Py2Iv.sN4cw",
+                        "inputs": {
+                            "ANIMATION": {
+                                "block": "#Mwm@OS=)f4]+|8N-s+k",
+                                "name": "ANIMATION",
+                                "shadow": "#Mwm@OS=)f4]+|8N-s+k"
+                            }
+                        },
+                        "next": "+c)EDw4)0v6#TL$AH!x8",
+                        "opcode": "cozmo_play_animation_from_dropdown",
+                        "parent": ".RxOJ8q5Ge4yO};fqwb@",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "96",
+                        "y": "119"
+                    },
+                    "TX!P/T-kFCN.209J_VNG": {
+                        "fields": {},
+                        "id": "TX!P/T-kFCN.209J_VNG",
+                        "inputs": {
+                            "OPERAND1": {
+                                "block": "nHe0WaL,-5%V{,0xwOp_",
+                                "name": "OPERAND1",
+                                "shadow": "+xizYn$59ge^0fnyHOsn"
+                            },
+                            "OPERAND2": {
+                                "block": "ukn?(q!O]d,aLlp;Cycb",
+                                "name": "OPERAND2",
+                                "shadow": "ukn?(q!O]d,aLlp;Cycb"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_gt",
+                        "parent": "4gbVR0_`(ECe@WsGwa+_",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "794",
+                        "y": "679"
+                    },
+                    "TX79WfSnp^eGXSqu|F9F": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "eo.L=V-kX|A;BY/?Fy``",
+                                "name": "VARIABLE",
+                                "value": "Cozmo-Drehung B (L\u00e4ngsachse)"
+                            }
+                        },
+                        "id": "TX79WfSnp^eGXSqu|F9F",
+                        "inputs": {
+                            "VALUE": {
+                                "block": "D7EziRlVW51*z5I=8zV1",
+                                "name": "VALUE",
+                                "shadow": "%#?:Z^CS/^tQRJH*vZU("
+                            }
+                        },
+                        "next": "B5|L0PDlefm=5WbWU[kp",
+                        "opcode": "data_setvariableto",
+                        "parent": ";PJIL-/BKjv1VD3CDy+S",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "645",
+                        "y": "442"
+                    },
+                    "U2)peI]4%:m/8h22!LX4": {
+                        "fields": {
+                            "SOUND_MENU": {
+                                "name": "SOUND_MENU",
+                                "value": "38"
+                            }
+                        },
+                        "id": "U2)peI]4%:m/8h22!LX4",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "cozmo_sound_sounds_menu",
+                        "parent": "JmjqjaivfmLBFVJRH)!g",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "^]p0{;a|`jELbB4]XNbt": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "0"
+                            }
+                        },
+                        "id": "^]p0{;a|`jELbB4]XNbt",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 1231.3994060404161,
+                        "y": 639.2352941176471
+                    },
+                    "^`^O)s1}t6t{$sKKf;;-": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "True"
+                            }
+                        },
+                        "id": "^`^O)s1}t6t{$sKKf;;-",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": "#FEYwY.L`A03Pr;%(bJd",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "_@S02X7O,Lt,YDC/iWQ%": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "0"
+                            }
+                        },
+                        "id": "_@S02X7O,Lt,YDC/iWQ%",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 1232.4952922708846,
+                        "y": 447.2352941176473
+                    },
+                    "`ux}RyDvGAHG{7=VcS,B": {
+                        "fields": {},
+                        "id": "`ux}RyDvGAHG{7=VcS,B",
+                        "inputs": {
+                            "CONDITION": {
+                                "block": "}IS/Bt;;YDkW!ITaZPA,",
+                                "name": "CONDITION",
+                                "shadow": null
+                            },
+                            "SUBSTACK": {
+                                "block": "w!t**Ed0:E@PllCjw27I",
+                                "name": "SUBSTACK",
+                                "shadow": null
+                            }
+                        },
+                        "next": "4gbVR0_`(ECe@WsGwa+_",
+                        "opcode": "control_if",
+                        "parent": "=aj]$_dS]eyp4XoYw,y/",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "843",
+                        "y": "613"
+                    },
+                    "a/{Wm!pC[gh~V]VdXQ49": {
+                        "fields": {},
+                        "id": "a/{Wm!pC[gh~V]VdXQ49",
+                        "inputs": {
+                            "HEIGHT_RATIO": {
+                                "block": "Aox2Rq!qEy3+K$|aGzRZ",
+                                "name": "HEIGHT_RATIO",
+                                "shadow": "Aox2Rq!qEy3+K$|aGzRZ"
+                            },
+                            "SPEED": {
+                                "block": "3jE]*}L~kdFd,%H^4J[N",
+                                "name": "SPEED",
+                                "shadow": "3jE]*}L~kdFd,%H^4J[N"
+                            }
+                        },
+                        "next": "/,Ghy#nq8Dx?uqUYl8kT",
+                        "opcode": "cozmo_vert_set_liftheight",
+                        "parent": ")#@9|$iD|Vn*gFr!3zI7",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": 995,
+                        "y": 287
+                    },
+                    "ap7=f3*M{Q(:5*Xdm[Kd": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "YXt$1#CE?+OXbQz+?k@i",
+                                "name": "VARIABLE",
+                                "value": "Cozmo-Drehung A (L\u00e4ngsachse)"
+                            }
+                        },
+                        "id": "ap7=f3*M{Q(:5*Xdm[Kd",
+                        "inputs": {
+                            "VALUE": {
+                                "block": "D:hxJhA[@3M4lQxFYt3}",
+                                "name": "VALUE",
+                                "shadow": "e-d:J/{g1YIa3JYe{+Xh"
+                            }
+                        },
+                        "next": ":NWzE|KMG-Dr-#-`X1Hb",
+                        "opcode": "data_setvariableto",
+                        "parent": ",V[n2h!5VdihG|_fK/po",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "645",
+                        "y": "442"
+                    },
+                    "c3z|df~16G}^rnq{B}%P": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": ""
+                            }
+                        },
+                        "id": "c3z|df~16G}^rnq{B}%P",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 1079.4117647058824,
+                        "y": 799.2352941176472
+                    },
+                    "e-d:J/{g1YIa3JYe{+Xh": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "0"
+                            }
+                        },
+                        "id": "e-d:J/{g1YIa3JYe{+Xh",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 1227.301772678599,
+                        "y": 399.2352941176472
+                    },
+                    "e.Yv9^E3iso+?ty+@`~a": {
+                        "fields": {
+                            "ANIMATION_SELECT": {
+                                "name": "ANIMATION_SELECT",
+                                "value": "40"
+                            }
+                        },
+                        "id": "e.Yv9^E3iso+?ty+@`~a",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "cozmo_animation_select_menu",
+                        "parent": "f!IZMP3%_VVw/e^,p$3t",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "f!IZMP3%_VVw/e^,p$3t": {
+                        "fields": {},
+                        "id": "f!IZMP3%_VVw/e^,p$3t",
+                        "inputs": {
+                            "ANIMATION": {
+                                "block": "e.Yv9^E3iso+?ty+@`~a",
+                                "name": "ANIMATION",
+                                "shadow": "e.Yv9^E3iso+?ty+@`~a"
+                            }
+                        },
+                        "next": "z{rlZw8M=s;v%;zAX)58",
+                        "opcode": "cozmo_play_animation_from_dropdown",
+                        "parent": "~cP1Aq+:e0A*:xeB|BE3",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": 151.88235294117646,
+                        "y": 738.9411764705883
+                    },
+                    "ggXglE4^aE8F!i0(hX#`": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": ""
+                            }
+                        },
+                        "id": "ggXglE4^aE8F!i0(hX#`",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 1201.7847038156847,
+                        "y": 951.235294117647
+                    },
+                    "go6*}x$/u{PoU8G)`+Er": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": ""
+                            }
+                        },
+                        "id": "go6*}x$/u{PoU8G)`+Er",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 1364.6764670259818,
+                        "y": 699.2352941176468
+                    },
+                    "h)zp}SNuyP6#pd7(?PG[": {
+                        "fields": {
+                            "BROADCAST_OPTION": {
+                                "name": "BROADCAST_OPTION",
+                                "value": "message1"
+                            }
+                        },
+                        "id": "h)zp}SNuyP6#pd7(?PG[",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "event_broadcast_menu",
+                        "parent": "z{rlZw8M=s;v%;zAX)58",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "hf4@Hlqxt3w$yE+8`FG`": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "0"
+                            }
+                        },
+                        "id": "hf4@Hlqxt3w$yE+8`FG`",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 1240.1347041971537,
+                        "y": 351.2352941176472
+                    },
+                    "kU7oSg@C9xt,x^+#U*Gz": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": ""
+                            }
+                        },
+                        "id": "kU7oSg@C9xt,x^+#U*Gz",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 1193.784703815685,
+                        "y": 691.2352941176471
+                    },
+                    "mfC2Tf!iJ1);Y[Pb%1}:": {
+                        "fields": {},
+                        "id": "mfC2Tf!iJ1);Y[Pb%1}:",
+                        "inputs": {
+                            "NUM1": {
+                                "block": "Jn*iqByqDZfqN-dwW%VZ",
+                                "name": "NUM1",
+                                "shadow": "ggXglE4^aE8F!i0(hX#`"
+                            },
+                            "NUM2": {
+                                "block": "DAoEV=n)haO*`bP5AVGc",
+                                "name": "NUM2",
+                                "shadow": "PYpaf;BDZ=r}u$Y[@Evm"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_subtract",
+                        "parent": "nHe0WaL,-5%V{,0xwOp_",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": 1245.7847038156847,
+                        "y": 995.2352941176472
+                    },
+                    "n!EC#a%9O.|E{$~wvhL=": {
+                        "fields": {},
+                        "id": "n!EC#a%9O.|E{$~wvhL=",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "cozmo_vert_get_yaw",
+                        "parent": "B5|L0PDlefm=5WbWU[kp",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "847",
+                        "y": "246"
+                    },
+                    "nHe0WaL,-5%V{,0xwOp_": {
+                        "fields": {
+                            "OPERATOR": {
+                                "name": "OPERATOR",
+                                "value": "abs"
+                            }
+                        },
+                        "id": "nHe0WaL,-5%V{,0xwOp_",
+                        "inputs": {
+                            "NUM": {
+                                "block": "mfC2Tf!iJ1);Y[Pb%1}:",
+                                "name": "NUM",
+                                "shadow": "qjr?gqE7k`}uo:^L@7QU"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_mathop",
+                        "parent": "TX!P/T-kFCN.209J_VNG",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "757",
+                        "y": "1042"
+                    },
+                    "o$cuH5WKv@e$y})f-LGY": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": ""
+                            }
+                        },
+                        "id": "o$cuH5WKv@e$y})f-LGY",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 1079.4117647058824,
+                        "y": 687.2352941176472
+                    },
+                    "pRMURTbASYsEmT1Hj7{m": {
+                        "fields": {},
+                        "id": "pRMURTbASYsEmT1Hj7{m",
+                        "inputs": {
+                            "ANIMATION": {
+                                "block": "E6sMs.cfSu{F7eq]6+qb",
+                                "name": "ANIMATION",
+                                "shadow": "E6sMs.cfSu{F7eq]6+qb"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "cozmo_play_animation_from_dropdown",
+                        "parent": "=aj]$_dS]eyp4XoYw,y/",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "840",
+                        "y": "614"
+                    },
+                    "qJJ7rJIZ|`G+Se9x`iM`": {
+                        "fields": {},
+                        "id": "qJJ7rJIZ|`G+Se9x`iM`",
+                        "inputs": {
+                            "OPERAND1": {
+                                "block": "+{o5u|k?!$=u3I~Yl;Eu",
+                                "name": "OPERAND1",
+                                "shadow": "+:1n)c_CBdp3=+@Oo:A4"
+                            },
+                            "OPERAND2": {
+                                "block": "G.3W3d?HI6sE-H.(}u;h",
+                                "name": "OPERAND2",
+                                "shadow": "G.3W3d?HI6sE-H.(}u;h"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_equals",
+                        "parent": "CfpqJsGslvX18i+jyaDQ",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "355",
+                        "y": "593"
+                    },
+                    "qYpBzj/]}P)GuWJSg`.p": {
+                        "fields": {
+                            "SOUND_MENU": {
+                                "name": "SOUND_MENU",
+                                "value": "38"
+                            }
+                        },
+                        "id": "qYpBzj/]}P)GuWJSg`.p",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "cozmo_sound_sounds_menu",
+                        "parent": ")#@9|$iD|Vn*gFr!3zI7",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "qjr?gqE7k`}uo:^L@7QU": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": ""
+                            }
+                        },
+                        "id": "qjr?gqE7k`}uo:^L@7QU",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 1193.7847038156847,
+                        "y": 931.2352941176471
+                    },
+                    "ukn?(q!O]d,aLlp;Cycb": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "50"
+                            }
+                        },
+                        "id": "ukn?(q!O]d,aLlp;Cycb",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": "TX!P/T-kFCN.209J_VNG",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "utguUu]@8BNJ+C1V1gy/": {
+                        "fields": {
+                            "ANIMATION_TRACK": {
+                                "name": "ANIMATION_TRACK",
+                                "value": "wheels"
+                            }
+                        },
+                        "id": "utguUu]@8BNJ+C1V1gy/",
+                        "inputs": {},
+                        "next": "MlpjAXi0$1!/5Kz35_d%",
+                        "opcode": "cozmo_vert_enable_animation_track",
+                        "parent": ",6lq~o3?!+K=z?~uDSj8",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "767",
+                        "y": "808"
+                    },
+                    "v28QNTinx2vS^xCOpB1X": {
+                        "fields": {},
+                        "id": "v28QNTinx2vS^xCOpB1X",
+                        "inputs": {
+                            "SOUND_MENU": {
+                                "block": "R)uRT4!MO[X#]V,Tm`$;",
+                                "name": "SOUND_MENU",
+                                "shadow": "R)uRT4!MO[X#]V,Tm`$;"
+                            }
+                        },
+                        "next": ".RxOJ8q5Ge4yO};fqwb@",
+                        "opcode": "cozmo_sound_stop",
+                        "parent": "RqohItYC/XpjZ2]xiar5",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "7",
+                        "y": "481"
+                    },
+                    "w!t**Ed0:E@PllCjw27I": {
+                        "fields": {},
+                        "id": "w!t**Ed0:E@PllCjw27I",
+                        "inputs": {
+                            "ANIMATION": {
+                                "block": ".7?$rC#q78HElDF(NcQP",
+                                "name": "ANIMATION",
+                                "shadow": ".7?$rC#q78HElDF(NcQP"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "cozmo_play_animation_from_dropdown",
+                        "parent": "`ux}RyDvGAHG{7=VcS,B",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "840",
+                        "y": "614"
+                    },
+                    "xEM~_L_q8NylRiT9yGOD": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": ""
+                            }
+                        },
+                        "id": "xEM~_L_q8NylRiT9yGOD",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 262.15000915527344,
+                        "y": 449
+                    },
+                    "xaU|+[Tol_F0~e47-i5o": {
+                        "fields": {},
+                        "id": "xaU|+[Tol_F0~e47-i5o",
+                        "inputs": {
+                            "ANIMATION": {
+                                "block": "B%BTt,sB{,2*y?y]P64O",
+                                "name": "ANIMATION",
+                                "shadow": "B%BTt,sB{,2*y?y]P64O"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "cozmo_play_animation_from_dropdown",
+                        "parent": "4gbVR0_`(ECe@WsGwa+_",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "840",
+                        "y": "614"
+                    },
+                    "yzms.4/e6nE(}M;yH[@p": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "50"
+                            }
+                        },
+                        "id": "yzms.4/e6nE(}M;yH[@p",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": "$A1hcX[}XevtAK!`,:EF",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "z{rlZw8M=s;v%;zAX)58": {
+                        "fields": {},
+                        "id": "z{rlZw8M=s;v%;zAX)58",
+                        "inputs": {
+                            "BROADCAST_OPTION": {
+                                "block": "h)zp}SNuyP6#pd7(?PG[",
+                                "name": "BROADCAST_OPTION",
+                                "shadow": "h)zp}SNuyP6#pd7(?PG["
+                            }
+                        },
+                        "next": null,
+                        "opcode": "event_broadcastandwait",
+                        "parent": "f!IZMP3%_VVw/e^,p$3t",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": 151.88235294117646,
+                        "y": 786.9411764705883
+                    },
+                    "{?ULuH@^qL|ejV~lV(#$": {
+                        "fields": {},
+                        "id": "{?ULuH@^qL|ejV~lV(#$",
+                        "inputs": {
+                            "DURATION": {
+                                "block": "/saG9|JEQFjJ^6#AR0?/",
+                                "name": "DURATION",
+                                "shadow": "/saG9|JEQFjJ^6#AR0?/"
+                            }
+                        },
+                        "next": ";PJIL-/BKjv1VD3CDy+S",
+                        "opcode": "control_wait",
+                        "parent": ":NWzE|KMG-Dr-#-`X1Hb",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "782",
+                        "y": "6"
+                    },
+                    "{oT$o{G{_m?Lxu!G3}F1": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "YXt$1#CE?+OXbQz+?k@i",
+                                "name": "VARIABLE",
+                                "value": "Cozmo-Drehung A (L\u00e4ngsachse)"
+                            }
+                        },
+                        "id": "{oT$o{G{_m?Lxu!G3}F1",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": "|5p]S%}vo6/f*c]?b,}c",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": 789.5294117647063,
+                        "y": 704.4117647058825
+                    },
+                    "|5p]S%}vo6/f*c]?b,}c": {
+                        "fields": {},
+                        "id": "|5p]S%}vo6/f*c]?b,}c",
+                        "inputs": {
+                            "NUM1": {
+                                "block": "{oT$o{G{_m?Lxu!G3}F1",
+                                "name": "NUM1",
+                                "shadow": "QX^!O;$sXBaBoCJ3t26m"
+                            },
+                            "NUM2": {
+                                "block": "LCrSZ~nM+#$p}hlFZ~t4",
+                                "name": "NUM2",
+                                "shadow": "IpGW%4Om;;b+N^8A)lF+"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_subtract",
+                        "parent": ":;X]4_dnuI2P|;iN3-5r",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": 1412.8235294117649,
+                        "y": 835.9411764705884
+                    },
+                    "}H.I}@aDTTG=~GGE]T8R": {
+                        "fields": {},
+                        "id": "}H.I}@aDTTG=~GGE]T8R",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "cozmo_vert_get_pitch",
+                        "parent": ",V[n2h!5VdihG|_fK/po",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "847",
+                        "y": "153"
+                    },
+                    "}IS/Bt;;YDkW!ITaZPA,": {
+                        "fields": {},
+                        "id": "}IS/Bt;;YDkW!ITaZPA,",
+                        "inputs": {
+                            "OPERAND1": {
+                                "block": ":;X]4_dnuI2P|;iN3-5r",
+                                "name": "OPERAND1",
+                                "shadow": "c3z|df~16G}^rnq{B}%P"
+                            },
+                            "OPERAND2": {
+                                "block": ";CuR_fxN;76DWjlLss7o",
+                                "name": "OPERAND2",
+                                "shadow": ";CuR_fxN;76DWjlLss7o"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_gt",
+                        "parent": "`ux}RyDvGAHG{7=VcS,B",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": 1059,
+                        "y": 835
+                    },
+                    "~cP1Aq+:e0A*:xeB|BE3": {
+                        "fields": {
+                            "ANIMATION_TRACK": {
+                                "name": "ANIMATION_TRACK",
+                                "value": "lift"
+                            }
+                        },
+                        "id": "~cP1Aq+:e0A*:xeB|BE3",
+                        "inputs": {},
+                        "next": "f!IZMP3%_VVw/e^,p$3t",
+                        "opcode": "cozmo_vert_disable_animation_track",
+                        "parent": "/,Ghy#nq8Dx?uqUYl8kT",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "7",
+                        "y": "243"
+                    }
+                },
+                "costumeCount": 0,
+                "costumes": [],
+                "currentCostume": 0,
+                "direction": 90,
+                "draggable": false,
+                "id": "pTdf{K]*92@Q=t/){L9T",
+                "isStage": false,
+                "lists": {},
+                "name": "Sprite1",
+                "rotationStyle": "all around",
+                "size": 100,
+                "sounds": [],
+                "variables": {},
+                "visible": true,
+                "x": 0,
+                "y": 0
+            }
+        ]
+    },
+    "ProjectUUID": "608a3e7f-493c-41f0-ae83-2e4be14751d0"
 }

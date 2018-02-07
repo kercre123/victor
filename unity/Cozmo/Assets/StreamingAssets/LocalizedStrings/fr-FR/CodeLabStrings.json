@@ -1429,7 +1429,7 @@
     "translation" : "Fais des cercles pour la journée de Pi !"
   },
   "codeLabFeaturedDrivingInCircles.projectInstructions" : {
-    "translation" : "1. Le 14 mars est la journée nationale de Pi !\u000a\u000aPlace l'un des cubes de Cozmo à un endroit où il peut le voir.\u000a\u000a3. Lorsque tu appuies sur le drapeau de départ, Cozmo utilise Pi et des calculs mathématiques pour faire des cercles autour de ses cubes."
+    "translation" : "1. Le 14 mars est la journée mondiale de Pi !\u000a\u000a2. Place l'un des cubes de Cozmo à un endroit où il peut le voir.\u000a\u000a3. Lorsque tu appuies sur le drapeau de départ, Cozmo utilise Pi et des calculs mathématiques pour faire des cercles autour de ses cubes."
   },
   "codeLabFeaturedComplimentGenerator.projectName" : {
     "translation" : "Générateur de compliment"
@@ -1438,16 +1438,16 @@
     "translation" : "Cozmo a quelque chose d'agréable à dire !"
   },
   "codeLabFeaturedComplimentGenerator.projectInstructions" : {
-    "translation" : "1. Place Cozmo en face de toi ou d'un ami qui a besoin d'être réconforté.\u000a\u000aSois heureux."
+    "translation" : "1. Place Cozmo en face de toi ou d'un ami qui a besoin d'être réconforté.\u000a\u000a2. Sois heureux."
   },
   "codeLabFeaturedPaddleBall.projectName" : {
-    "translation" : "Bolo"
+    "translation" : "Pong"
   },
   "codeLabFeaturedPaddleBall.projectDescription" : {
     "translation" : "Défie Cozmo dans un match. Utilise ta tête !"
   },
   "codeLabFeaturedPaddleBall.projectInstructions" : {
-    "translation" : "1. Once you tap the start flag, move your head up and down to control the paddle.\u000a\u000a2. Score points by bouncing the ball past Cozmo’s paddle. Try not to let Cozmo score by bouncing the ball past yours.\u000a\u000a3. Your paddle is on the left, and Cozmo's paddle is on the right.\u000a\u000a4. The first to earn 3 points wins!"
+    "translation" : "1. Après avoir appuyé sur le drapeau de départ, déplace ta tête vers le haut et le bas pour contrôler la raquette.\u000a\u000a2. Pour marquer des points, fais rebondir la balle au-delà de la raquette de Cozmo. Essaye d'empêcher Cozmo de marquer des points en faisant rebondir la balle au-delà de la tienne.\u000a\u000a3. Ta raquette est à gauche et celle de Cozmo à droite.\u000a\u000a4. Le premier qui marque 3 points gagne !"
   },
   "codeLabFeaturedPotOGoldDetector.projectName" : {
     "translation" : "Détecteur de trésor"

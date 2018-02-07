@@ -10,13 +10,13 @@
     "translation" : " あなたは……？"
   },
   "codeLabFeaturedProject.ComplimentGenerator._people_like_you" : {
-    "translation" : " あなたのような人々。"
+    "translation" : " ひとがだいすきです。"
   },
   "codeLabFeaturedProject.ComplimentGenerator._person_in_the_world" : {
-    "translation" : " 世界の人。"
+    "translation" : " というのはだれでもしっている。"
   },
   "codeLabFeaturedProject.ComplimentGenerator._you_are" : {
-    "translation" : " あなたは"
+    "translation" : " のだろう。"
   },
   "codeLabFeaturedProject.ComplimentGenerator.adjective" : {
     "translation" : "形容詞"
@@ -25,22 +25,22 @@
     "translation" : "かわいい "
   },
   "codeLabFeaturedProject.ComplimentGenerator.anyone_can_see_youre_super_" : {
-    "translation" : "あなたが特別であることは誰でもわかる "
+    "translation" : "あなたはせかいいち "
   },
   "codeLabFeaturedProject.ComplimentGenerator.awesome_" : {
-    "translation" : "最高 "
+    "translation" : "さいこう "
   },
   "codeLabFeaturedProject.ComplimentGenerator.beautiful_" : {
-    "translation" : "美しい "
+    "translation" : "うつくしい "
   },
   "codeLabFeaturedProject.ComplimentGenerator.brave_" : {
-    "translation" : "勇敢 "
+    "translation" : "ゆうかん "
   },
   "codeLabFeaturedProject.ComplimentGenerator.brilliant_" : {
-    "translation" : "華麗 "
+    "translation" : "はなやか "
   },
   "codeLabFeaturedProject.ComplimentGenerator.charming_" : {
-    "translation" : "魅力的 "
+    "translation" : "みりょくてき "
   },
   "codeLabFeaturedProject.ComplimentGenerator.choose_a_sentence" : {
     "translation" : "文章を選んでください。"
@@ -52,19 +52,19 @@
     "translation" : "アニメーションを選んでください。"
   },
   "codeLabFeaturedProject.ComplimentGenerator.clever_" : {
-    "translation" : "賢い "
+    "translation" : "かしこい "
   },
   "codeLabFeaturedProject.ComplimentGenerator.cool_" : {
     "translation" : "クール "
   },
   "codeLabFeaturedProject.ComplimentGenerator.fantastic_" : {
-    "translation" : "奇抜 "
+    "translation" : "すばらしい "
   },
   "codeLabFeaturedProject.ComplimentGenerator.friendly_" : {
     "translation" : "フレンドリー "
   },
   "codeLabFeaturedProject.ComplimentGenerator.funny_" : {
-    "translation" : "楽しい "
+    "translation" : "たのしい "
   },
   "codeLabFeaturedProject.ComplimentGenerator.generate_a_compliment" : {
     "translation" : "ほめ言葉を作成してください。"
@@ -73,43 +73,43 @@
     "translation" : "こんにちは"
   },
   "codeLabFeaturedProject.ComplimentGenerator.how_" : {
-    "translation" : "なんて "
+    "translation" : "なんてあなたは "
   },
   "codeLabFeaturedProject.ComplimentGenerator.i_love_" : {
-    "translation" : "私が大好きなのは "
+    "translation" : "あなたのような "
   },
   "codeLabFeaturedProject.ComplimentGenerator.inspiring_" : {
-    "translation" : "刺激的 "
+    "translation" : "しげきてき "
   },
   "codeLabFeaturedProject.ComplimentGenerator.kind_" : {
-    "translation" : "親切 "
+    "translation" : "やさしい "
   },
   "codeLabFeaturedProject.ComplimentGenerator.random" : {
     "translation" : "あてずっぽう"
   },
   "codeLabFeaturedProject.ComplimentGenerator.smart_" : {
-    "translation" : "お利口 "
+    "translation" : "おりこう "
   },
   "codeLabFeaturedProject.ComplimentGenerator.strong_" : {
-    "translation" : "強い "
+    "translation" : "つよい "
   },
   "codeLabFeaturedProject.ComplimentGenerator.stylish_" : {
     "translation" : "おしゃれ "
   },
   "codeLabFeaturedProject.ComplimentGenerator.thoughtful" : {
-    "translation" : "思いやり"
+    "translation" : "しんせつ"
   },
   "codeLabFeaturedProject.ComplimentGenerator.wonderful_" : {
-    "translation" : "驚き "
+    "translation" : "すごい "
   },
   "codeLabFeaturedProject.ComplimentGenerator.you_are_so_" : {
     "translation" : "あなたはとても "
   },
   "codeLabFeaturedProject.ComplimentGenerator.youre_the_most_" : {
-    "translation" : "あなたはいちばん "
+    "translation" : "あなたがさいこうに "
   },
   "codeLabFeaturedProject.Constellations.cassiopeia_" : {
-    "translation" : "カシオペア座 "
+    "translation" : "カシオペアざ "
   },
   "codeLabFeaturedProject.Constellations.constellation_name" : {
     "translation" : "星座名"
@@ -154,7 +154,7 @@
     "translation" : "instructions count"
   },
   "codeLabFeaturedProject.Constellations.leo" : {
-    "translation" : "しし座"
+    "translation" : "ししざ"
   },
   "codeLabFeaturedProject.Constellations.line_distance" : {
     "translation" : "線の距離"
@@ -345,9 +345,6 @@
   "codeLabFeaturedProject.DrivingInCircles.get_the_circle_radius_and_wheel_speeds_by_measuring_the_distance_between_cozmo_and_the_cube_center" : {
     "translation" : "COZMOとキューブの中心の距離を測定し、円の半径と車輪の速度を計算します。"
   },
-  "codeLabFeaturedProject.DrivingInCircles.heheeh" : {
-    "translation" : "Heheeh!"
-  },
   "codeLabFeaturedProject.DrivingInCircles.inner_wheel_speed" : {
     "translation" : "内車輪の速度"
   },
@@ -502,7 +499,7 @@
     "translation" : "絵文字の表情"
   },
   "codeLabFeaturedProject.LaserSmile.frown" : {
-    "translation" : "しかめっ面"
+    "translation" : "しかめっつら"
   },
   "codeLabFeaturedProject.LaserSmile.frown_location_x" : {
     "translation" : "しかめっ面・位置x"
@@ -673,13 +670,13 @@
     "translation" : "こんにちは"
   },
   "codeLabFeaturedProject.PaddleBall.hole_in_your_paddle" : {
-    "translation" : "パドルに穴がありますか？"
+    "translation" : "パドルにあながありますか？"
   },
   "codeLabFeaturedProject.PaddleBall.i_win" : {
     "translation" : "勝った！"
   },
   "codeLabFeaturedProject.PaddleBall.im_the_best" : {
-    "translation" : "私が一番！"
+    "translation" : "わたしがいちばん！"
   },
   "codeLabFeaturedProject.PaddleBall.loop_rate" : {
     "translation" : "ループレート"
@@ -949,7 +946,7 @@
     "translation" : "デバイスを使ってCOZMOを走らせます。"
   },
   "codeLabFeaturedProject.PotOGoldDetector.use_your_device_to_drive_me" : {
-    "translation" : "デバイスを使ってぼくを走らせて！"
+    "translation" : "デバイスをつかってぼくをはしらせて！"
   },
   "codeLabFeaturedProject.PotOGoldDetector.we_found_the_treasure" : {
     "translation" : "宝物をみつけました！"
@@ -1060,7 +1057,7 @@
     "translation" : "ドライブまたはターンの基準値"
   },
   "codeLabFeaturedProject.RemoteControlRacer.tilt_your_device_to_drive" : {
-    "translation" : "デバイスをドライブにかたむけてください！"
+    "translation" : "デバイスをぜんごさゆうにかたむけて\u000aください！"
   },
   "codeLabFeaturedProject.RemoteControlRacer.turn_multiplier" : {
     "translation" : "回転乗数"

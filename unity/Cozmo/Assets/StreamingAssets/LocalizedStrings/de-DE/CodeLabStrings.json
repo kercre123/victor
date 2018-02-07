@@ -1447,7 +1447,7 @@
     "translation" : "Fordere Cozmo zu einem Match auf. Hier ist Köpfchen gefragt."
   },
   "codeLabFeaturedPaddleBall.projectInstructions" : {
-    "translation" : "1. Once you tap the start flag, move your head up and down to control the paddle.\u000a\u000a2. Score points by bouncing the ball past Cozmo’s paddle. Try not to let Cozmo score by bouncing the ball past yours.\u000a\u000a3. Your paddle is on the left, and Cozmo's paddle is on the right.\u000a\u000a4. The first to earn 3 points wins!"
+    "translation" : "1. Wenn du die Startflagge angetippt hast, beweg deinen Kopf nach oben oder unten, um den Schläger zu steuern.\u000a\u000a2. Wenn du Punkte erzielen möchtest, muss der Ball hinter Cozmos Schläger fliegen. Versuch zu verhindern, dass Cozmos Bälle hinter deinem Schläger landen und er einen Punkt erzielt.\u000a\u000a3. Dein Schläger ist links, der von Cozmo rechts.\u000a\u000a4. Wer als erster 3 Punkte erzielt, hat gewonnen."
   },
   "codeLabFeaturedPotOGoldDetector.projectName" : {
     "translation" : "Goldschatz-Detektor"

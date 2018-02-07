@@ -10,13 +10,13 @@
     "translation" : " Es-tu"
   },
   "codeLabFeaturedProject.ComplimentGenerator._people_like_you" : {
-    "translation" : " Des gens comme toi."
+    "translation" : " comme toi."
   },
   "codeLabFeaturedProject.ComplimentGenerator._person_in_the_world" : {
-    "translation" : " Personne dans le monde."
+    "translation" : " au monde."
   },
   "codeLabFeaturedProject.ComplimentGenerator._you_are" : {
-    "translation" : " Tu es"
+    "translation" : " ."
   },
   "codeLabFeaturedProject.ComplimentGenerator.adjective" : {
     "translation" : "adjectif"
@@ -43,13 +43,13 @@
     "translation" : "Charmant "
   },
   "codeLabFeaturedProject.ComplimentGenerator.choose_a_sentence" : {
-    "translation" : "Choisis une phrase."
+    "translation" : "Choix d'une phrase."
   },
   "codeLabFeaturedProject.ComplimentGenerator.choose_an_adjective" : {
-    "translation" : "Choisis un adjectif."
+    "translation" : "Choix d'un adjectif."
   },
   "codeLabFeaturedProject.ComplimentGenerator.choose_an_animation" : {
-    "translation" : "Choisis une animation."
+    "translation" : "Choix d'une animation."
   },
   "codeLabFeaturedProject.ComplimentGenerator.clever_" : {
     "translation" : "Intelligent "
@@ -67,19 +67,19 @@
     "translation" : "Amusant "
   },
   "codeLabFeaturedProject.ComplimentGenerator.generate_a_compliment" : {
-    "translation" : "Fais un compliment."
+    "translation" : "Choix d'un compliment."
   },
   "codeLabFeaturedProject.ComplimentGenerator.hi" : {
     "translation" : "Bonjour"
   },
   "codeLabFeaturedProject.ComplimentGenerator.how_" : {
-    "translation" : "Comment "
+    "translation" : "Je te trouves très "
   },
   "codeLabFeaturedProject.ComplimentGenerator.i_love_" : {
-    "translation" : "J'aime "
+    "translation" : "J'aime les gens qui sont "
   },
   "codeLabFeaturedProject.ComplimentGenerator.inspiring_" : {
-    "translation" : "Enthousiasmant "
+    "translation" : "Inspirant "
   },
   "codeLabFeaturedProject.ComplimentGenerator.kind_" : {
     "translation" : "Gentil "
@@ -106,7 +106,7 @@
     "translation" : "Tu es tellement "
   },
   "codeLabFeaturedProject.ComplimentGenerator.youre_the_most_" : {
-    "translation" : "Tu es le plus "
+    "translation" : "Tu es l'être le plus "
   },
   "codeLabFeaturedProject.Constellations.cassiopeia_" : {
     "translation" : "Cassiopée "
@@ -344,9 +344,6 @@
   },
   "codeLabFeaturedProject.DrivingInCircles.get_the_circle_radius_and_wheel_speeds_by_measuring_the_distance_between_cozmo_and_the_cube_center" : {
     "translation" : "Calcule l'angle du cercle et la vitesse des roues en mesurant la distance entre Cozmo et le centre du cube."
-  },
-  "codeLabFeaturedProject.DrivingInCircles.heheeh" : {
-    "translation" : "Heheeh!"
   },
   "codeLabFeaturedProject.DrivingInCircles.inner_wheel_speed" : {
     "translation" : "vitesse des roues intérieures"
@@ -655,7 +652,7 @@
     "translation" : "diminuer la hauteur de la raquette de"
   },
   "codeLabFeaturedProject.PaddleBall.draw_rate" : {
-    "translation" : "pourcentage de matchs nuls"
+    "translation" : "Vitesse de dessin"
   },
   "codeLabFeaturedProject.PaddleBall.game_is_over" : {
     "translation" : "fin de la partie"
@@ -682,7 +679,7 @@
     "translation" : "Je suis le meilleur !"
   },
   "codeLabFeaturedProject.PaddleBall.loop_rate" : {
-    "translation" : "taux de boucle"
+    "translation" : "Vitesse de boucle"
   },
   "codeLabFeaturedProject.PaddleBall.my_paddle_slipped" : {
     "translation" : "Ma raquette a glissé."
@@ -730,7 +727,7 @@
     "translation" : "nombre de réponses aléatoires"
   },
   "codeLabFeaturedProject.PaddleBall.ready" : {
-    "translation" : "Prêt"
+    "translation" : "À vos marques"
   },
   "codeLabFeaturedProject.PaddleBall.round_is_over" : {
     "translation" : "fin de la manche"
@@ -739,7 +736,7 @@
     "translation" : "vainqueur de la manche"
   },
   "codeLabFeaturedProject.PaddleBall.set" : {
-    "translation" : "définir"
+    "translation" : "prêt"
   },
   "codeLabFeaturedProject.PaddleBall.set_adjustable_game_settings" : {
     "translation" : "Définis les paramètres de jeu réglables."

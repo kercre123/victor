@@ -10,7 +10,7 @@
     "translation" : " Bist du"
   },
   "codeLabFeaturedProject.ComplimentGenerator._people_like_you" : {
-    "translation" : " Leute wie du"
+    "translation" : " sind wie du"
   },
   "codeLabFeaturedProject.ComplimentGenerator._person_in_the_world" : {
     "translation" : " Person auf der Welt"
@@ -76,7 +76,7 @@
     "translation" : "Wie "
   },
   "codeLabFeaturedProject.ComplimentGenerator.i_love_" : {
-    "translation" : "Ich liebe "
+    "translation" : "Ich liebe Leute, die so "
   },
   "codeLabFeaturedProject.ComplimentGenerator.inspiring_" : {
     "translation" : "Inspirierend "
@@ -344,9 +344,6 @@
   },
   "codeLabFeaturedProject.DrivingInCircles.get_the_circle_radius_and_wheel_speeds_by_measuring_the_distance_between_cozmo_and_the_cube_center" : {
     "translation" : "Ermittle den Kreisradius und die Radgeschwindigkeiten, indem du die Entfernung zwischen Cozmo und der Mitte des Cubes misst."
-  },
-  "codeLabFeaturedProject.DrivingInCircles.heheeh" : {
-    "translation" : "Heheeh!"
   },
   "codeLabFeaturedProject.DrivingInCircles.inner_wheel_speed" : {
     "translation" : "Geschwindigkeit des inneren Rads"

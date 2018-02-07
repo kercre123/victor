@@ -1345,7 +1345,7 @@
     "translation" : "しかめっ面をひっくり返そう！"
   },
   "codeLabFeaturedProject_LaserSmile.projectInstructions" : {
-    "translation" : "1. スタートフラグをタップすると、COZMOの顔にしかめっ面の絵文字が表示されます。\u000a\u000a2. COZMOからあなたの顔が見えるようにしてください。顔を動かしてしかめっ面の絵文字に狙いを定めてください。\u000a\u000a3. レーザースマイルを発射！"
+    "translation" : "1. スタートフラグをタップすると、COZMOの顔にしかめっ面の絵文字が表示されます。\u000a\u000a2. COZMOからあなたの顔が見えるようにしてください。顔を動かしてしかめっ面の絵文字に狙いを定めてください。\u000a\u000a3. ＣＯＺＭＯに向かって笑顔をみせて\u000aください。　狙いがヒットすると\u000aＣＯＺＭＯが笑顔を返します。"
   },
   "codeLabSampleProject_LaserSmile.variableInstruction1" : {
     "translation" : "目標はそのしかめっ面をひっくり返すことです！"
@@ -1378,7 +1378,7 @@
     "translation" : "ブルンブルン！　COZMOを全速力で走らせよう。"
   },
   "codeLabFeaturedProject_RemoteControlRacer.projectInstructions" : {
-    "translation" : "1. スタートフラグをタップすると、お使いのスマートフォンまたはタブレットがリモコンに変わります。\u000a\u000a2. デバイスを上下左右に傾けるとCOZMOが全速力で走ります！"
+    "translation" : "1. ＣＯＺＭＯが机から落下したり\u000aしないよう、じゅうぶんに広い場所で\u000a遊んでください。\u000a\u000a2. スタートフラグをタップすると、お\u000a使いのスマートフォンまたはタブレッ\u000aトがリモコンに変わります。\u000a\u000a3. デバイスを前後左右に傾けると\u000aＣＯＺＭＯが全速力で走ります！"
   },
   "codeLabFeaturedProject_PuttPutt.projectName" : {
     "translation" : "パット・パット"
@@ -1387,7 +1387,7 @@
     "translation" : "ホールインワンを決められるかな？"
   },
   "codeLabFeaturedProject_PuttPutt.projectInstructions" : {
-    "translation" : "1.スタートフラグをタップしたら、COZMOを持ち上げて顔をまっすぐ前に向けます。\u000a\u000a2. COZMOの顔にボールとホールが表示されます。COZMOを傾けてボールをホールへ転がします。"
+    "translation" : "1.スタートフラグをタップしたら、\u000aＣＯＺＭＯを持ち上げて、顔が天井を\u000a向くように傾けてください。\u000a\u000a2. ＣＯＺＭＯの顔にボールとホールが\u000a表示されます。ＣＯＺＭＯを傾けてボール\u000aをホールへ転がします。\u000a\u000a3. 全ホールを何秒でクリアー\u000aできるかな？COZMOを傾けてボールをホールへ転がします。"
   },
   "codeLabFeaturedProject_ValentinesCozmogram.projectName" : {
     "translation" : "バレンタインのコズモグラム"
@@ -1405,7 +1405,7 @@
     "translation" : "新しいゲームで振りまくろう。"
   },
   "codeLabFeaturedProject_ShakeIt.projectInstructions" : {
-    "translation" : "1.スタートフラグをタップすると、COZMOがあなたにいろいろなものを振るよう指示します。\u000a\u000a2. COZMOの指示をよく聞いてください。\u000a\u000a「レッド」 = 赤色のキューブを振ります\u000a「イエロー」 = 黄色のキューブを振ります\u000a「ブルー」 = 青色のキューブを振ります\u000a「オレンジ」 = 赤色と黄色のキューブを振ります\u000a「グリーン」 = 黄色と青色のキューブを振ります\u000a「パープル」 = 青色と赤色のキューブを振ります\u000a「わたし」 = COZMOを振って！\u000a\u000a3. タイムリミットまでにいくつ正しく振れたかな？"
+    "translation" : "1.スタートフラグをタップすると、COZMOがあなたにいろいろなものを振るよう指示します。\u000a\u000a2. COZMOの指示をよく聞いてください。\u000a\u000a「あか」＝赤色のキューブを振ります。\u000a「きいろ」＝黄色いキューブを振ります。　\u000a「あお」＝青色のキューブを振ります。\u000a「オレンジ」＝赤色と黄色のキューブを振ります。\u000a「みどり」＝黄色と青色のキューブを振ります。\u000a「むらさき」＝青色と赤色のキューブを振ります。\u000a\u000a3. タイムリミットまでにいくつ正しく振れたかな？"
   },
   "codeLabSampleProject_ScrollingWaveText.projectName" : {
     "translation" : "波状のテキストをスクロール"
@@ -1429,7 +1429,7 @@
     "translation" : "「円周率の日」のために集合！"
   },
   "codeLabFeaturedDrivingInCircles.projectInstructions" : {
-    "translation" : "1. 5月14日は「全米円周率の日」です！\u000a\u000a2. キューブを、COZMOからみえる場所に1つ置いてください。\u000a\u000a3. スタートフラグをタップすると、COZMOが円周率と算数を使ってキューブの周りを円を描いて走ります。"
+    "translation" : "1. 3月14日は「円周率の日」です！2. キューブを、COZMOからみえる場所に1つ置いてください。3. スタートフラグをタップすると、COZMOが円周率と算数を使ってキューブの周りを円を描いて走ります。"
   },
   "codeLabFeaturedComplimentGenerator.projectName" : {
     "translation" : "ほめ言葉ジェネレーター"
@@ -1438,7 +1438,7 @@
     "translation" : "COZMOから素敵なメッセージがあります！"
   },
   "codeLabFeaturedComplimentGenerator.projectInstructions" : {
-    "translation" : "1. COZMOを自分の顔の前に、または励ましを必要としているおともだちの顔の前においてください。\u000a\u000a2. さあハッピーになりましょう。"
+    "translation" : "1. COZMOを自分の顔の前、または励ましたいお友達の顔の前においてください。\u000a\u000a2. さあハッピーになりましょう。"
   },
   "codeLabFeaturedPaddleBall.projectName" : {
     "translation" : "パドルボール"
@@ -1447,7 +1447,7 @@
     "translation" : "COZMOと対戦しましょう。使うのはあなたの頭！"
   },
   "codeLabFeaturedPaddleBall.projectInstructions" : {
-    "translation" : "1. Once you tap the start flag, move your head up and down to control the paddle.\u000a\u000a2. Score points by bouncing the ball past Cozmo’s paddle. Try not to let Cozmo score by bouncing the ball past yours.\u000a\u000a3. Your paddle is on the left, and Cozmo's paddle is on the right.\u000a\u000a4. The first to earn 3 points wins!"
+    "translation" : "1. スタートフラグをタップしたら、頭を上下に動かしてパドルをコントロールしてください。\u000a\u000a2. ボールがCOZMOのパドルを越えてバウンドすると点が入ります。ボールがあなたのパドルを越えてバウンドするとCOZMOに点が入りますので、気をつけてください。\u000a\u000a3.あなたのパドルは左側、COZMOのパドルは右側です。\u000a\u000a4. 最初に3ポイント得点した方が勝ち！"
   },
   "codeLabFeaturedPotOGoldDetector.projectName" : {
     "translation" : "宝物を発見"
