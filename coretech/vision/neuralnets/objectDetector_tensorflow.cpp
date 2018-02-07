@@ -126,6 +126,11 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
     return RESULT_FAIL;
   }
 
+  if(_params.verbose)
+  {
+    std::cout << "Found graph file: " << graph_file_name << std::endl;
+  }
+
   tensorflow::GraphDef graph_def;
   
   if(_params.memoryMapGraph)
@@ -155,8 +160,7 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
     options.env = memmapped_env.get();
 
     tensorflow::Session* session_pointer = nullptr;
-    tensorflow::Status session_status =
-        tensorflow::NewSession(options, &session_pointer);
+    tensorflow::Status session_status = tensorflow::NewSession(options, &session_pointer);
 
     if (!session_status.ok())
     {
@@ -181,16 +185,16 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
     std::cout << "ObjectDetector.Model.LoadGraph.ModelLoadSuccess " << graph_file_name << std::endl;
 
     _session.reset(tensorflow::NewSession(tensorflow::SessionOptions()));
-
-    tensorflow::Status session_create_status = _session->Create(graph_def);
-
-    if (!session_create_status.ok())
-    {
-      PRINT_NAMED_ERROR("ObjectDetector.Model.LoadGraph.CreateSessionFailed",
-                        "Status: %s", session_create_status.ToString().c_str());
-      return RESULT_FAIL;
-    }
   } 
+
+  tensorflow::Status session_create_status = _session->Create(graph_def);
+
+  if (!session_create_status.ok())
+  {
+    PRINT_NAMED_ERROR("ObjectDetector.Model.LoadGraph.CreateSessionFailed",
+                      "Status: %s", session_create_status.ToString().c_str());
+    return RESULT_FAIL;
+  }
 
   std::cout << "ObjectDetector.Model.LoadGraph.SessionCreated" << std::endl;
 
