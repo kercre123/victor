@@ -85,8 +85,18 @@ std::string ProxSensorComponent::GetLogRow()
 
   return ss.str();
 }
-  
-  
+
+
+bool ProxSensorComponent::GetLatestDistance_mm(u16& distance_mm) const
+{
+  const bool readingValid = IsSensorReadingValid(_latestData);
+  if (readingValid) {
+    distance_mm = _latestData.distance_mm;
+  }
+  return readingValid;
+}
+
+
 Pose3d ProxSensorComponent::GetPose() const
 {
   Pose3d sensorPose;
@@ -129,53 +139,55 @@ Result ProxSensorComponent::IsInFOV(const Pose3d& inPose, bool& isInFOV) const
 }
   
 
-Result ProxSensorComponent::IsLiftInFOV(bool& isInFOV) const
+bool ProxSensorComponent::IsLiftInFOV() const
 {
-  // TODO: This may require a tolerance due to motor backlash, etc.
-  // Verify with physical robots that this is accurate.
+  // TODO: Verify with physical robots that this is accurate.
   
-  isInFOV = false;
-  if (!_robot->IsLiftCalibrated()) {
+  bool isInFOV = false;
+  if (_robot->IsLiftCalibrated()) {
+    // If the current lift height is between LIFT_HEIGHT_OCCLUDING_PROX_SENSOR_MIN,
+    // and LIFT_HEIGHT_OCCLUDING_PROX_SENSOR_MAX then at least part of the lift is
+    // within view of the sensor.
+    isInFOV = Util::InRange(_robot->GetLiftHeight(),
+                            LIFT_HEIGHT_OCCLUDING_PROX_SENSOR_MIN,
+                            LIFT_HEIGHT_OCCLUDING_PROX_SENSOR_MAX);
+  } else {
     PRINT_NAMED_WARNING("ProxSensorComponent.IsLiftInFOV.LiftNotCalibrated",
                         "Lift is not calibrated! Considering it not in FOV.");
-    return Result::RESULT_FAIL;
   }
-
-  const float liftHeight = _robot->GetLiftHeight();
   
-  // Note: this is the approximate x distance from the sensor to the lift crossbar
-  // when the lift is in front of the sensor. All distances here in mm.
-  const float sensorToLiftDist = (LIFT_BASE_POSITION[0] + LIFT_ARM_LENGTH) - kProxSensorPosition_mm[0];
-  const float beamRadiusAtLift = sensorToLiftDist * std::tan(kProxSensorFullFOV_rad / 2.f);
-  
-  // If the current lift height is within this tolerance of LIFT_HEIGHT_OCCLUDING_PROX_SENSOR,
-  // then at least part of the lift is within view of the sensor.
-  const float withinViewTol = beamRadiusAtLift + (LIFT_XBAR_HEIGHT / 2.f);
-  
-  isInFOV = Util::IsNear(liftHeight, LIFT_HEIGHT_OCCLUDING_PROX_SENSOR, withinViewTol);
-  
-  return Result::RESULT_OK;
+  return isInFOV;
 }
 
 
-bool ProxSensorComponent::IsSensorReadingValid()
+bool ProxSensorComponent::IsSensorReadingValid(const ProxSensorData& proxData) const
 {
-  const u16 proxDist_mm = GetLatestDistance_mm();
-  bool liftBlocking;
-  IsLiftInFOV(liftBlocking);
-  const bool sensorInRangeAndValid = (proxDist_mm > kMinObsThreshold_mm) &&
-                                      (proxDist_mm < kMaxObsThreshold_mm) &&
-                                      !liftBlocking;
-  return sensorInRangeAndValid;
+  // Check if the reading is within the valid range
+  const u16 proxDist_mm = proxData.distance_mm;
+  const bool inValidRange = Util::InRange(proxDist_mm,
+                                          kMinObsThreshold_mm,
+                                          kMaxObsThreshold_mm);
+  
+  // Check if the lift is in the field of view of the sensor
+  const bool liftBlocking = IsLiftInFOV();
+  
+  // Check that the signal strength is high enough
+  const float quality = GetSignalQuality(proxData);
+  const bool sigQualityOk = quality > kMinQualityThreshold;
+  
+  const bool sensorReadingValid = inValidRange &&
+                                  !liftBlocking &&
+                                  sigQualityOk;
+  return sensorReadingValid;
 }
 
 
-bool ProxSensorComponent::CalculateSensedObjectPose(Pose3d& sensedObjectPose)
+bool ProxSensorComponent::CalculateSensedObjectPose(Pose3d& sensedObjectPose) const
 {
-  const bool sensorIsValid = IsSensorReadingValid();
+  u16 proxDist_mm = 0;
+  const bool sensorIsValid = GetLatestDistance_mm(proxDist_mm);
   if(sensorIsValid){
     const Pose3d proxPose = GetPose();
-    const u16 proxDist_mm = GetLatestDistance_mm();
     Transform3d transformToSensed(Rotation3d(0.f, Z_AXIS_3D()), {0.f, proxDist_mm, 0.f});
     // Since prox pose is destroyed when it falls out of scope, don't want parent invalidated
     sensedObjectPose = Pose3d(transformToSensed, proxPose).GetWithRespectToRoot();
@@ -192,7 +204,7 @@ void ProxSensorComponent::UpdateNavMap()
     return;
   }
 
-  const float quality = _latestData.signalIntensity / _latestData.spadCount;
+  const float quality = GetSignalQuality(_latestData);
 
   const bool noObject       = quality <= kMinQualityThreshold;                      // sensor is pointed at free space
   const bool objectDetected = (quality >= kMinQualityThreshold &&                   // sensor is getting some reading
