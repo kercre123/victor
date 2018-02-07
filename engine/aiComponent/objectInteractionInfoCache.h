@@ -16,7 +16,7 @@
 #define __Cozmo_Basestation_BehaviorSystem_ObjectInteractionInfoCache_H__
 
 #include "engine/blockWorld/blockWorldFilter.h"
-#include "engine/entity.h"
+#include "util/entityComponent/iManageableComponent.h"
 
 #include "coretech/common/engine/objectIDs.h"
 
@@ -61,7 +61,7 @@ enum class ObjectInteractionIntention {
 // ObjectInteractionCache - Maintains a map of ObjectInteractionIntentions
 // to the Cache entrys that wrap information about the best objects to use
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class  ObjectInteractionInfoCache : public ManageableComponent, private Util::noncopyable  {
+class  ObjectInteractionInfoCache : public IManageableComponent, private Util::noncopyable  {
 public:
   ObjectInteractionInfoCache(const Robot& robot);
   using BestObjectFunction = std::function<ObjectID(const std::set<ObjectID>& validObjects)>;

@@ -111,7 +111,7 @@ TestBehaviorFramework::~TestBehaviorFramework()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseBehavior,
-                                         std::function<void(const BehaviorComponent::UniqueComponents&)> initializeBehavior,
+                                         std::function<void(const BehaviorComponent::CompononentPtr&)> initializeBehavior,
                                          bool shouldCallInitOnBase)
 {
   BehaviorContainer* empty = nullptr;
@@ -122,7 +122,7 @@ void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseB
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseBehavior,
-                                                                std::function<void(const BehaviorComponent::UniqueComponents&)> initializeBehavior,
+                                                                std::function<void(const BehaviorComponent::CompononentPtr&)> initializeBehavior,
                                                                 bool shouldCallInitOnBase,
                                                                 BehaviorContainer*& customContainer)
 {
@@ -137,6 +137,8 @@ void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseB
   // stack is unused - put an arbitrary behavior on it
   if(baseBehavior == nullptr){
     baseBehavior = _behaviorContainer->FindBehaviorByID(BEHAVIOR_ID(Wait)).get();
+    DEV_ASSERT(baseBehavior != nullptr,
+               "TestBehaviorFramework.InitializeStandardBehaviorComponent.NoDefaultBehaviorInContainer");
     shouldCallInitOnBase = false;
   }
   
@@ -144,21 +146,23 @@ void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseB
   {
     {
       auto aiComp = new AIComponent();
-      _robot->DevReplaceAIComponent(aiComp);
+      _robot->DevReplaceAIComponent(aiComp, true);
     }
-    BehaviorComponent::UniqueComponents subComponents = BehaviorComponent::GenerateManagedComponents(*_robot,
-                                                                                                     _robot->GetAIComponent(),
-                                                                                                     baseBehavior,
-                                                                                                     nullptr,
-                                                                                                     nullptr,
-                                                                                                     _behaviorContainer.get());
     
+    auto entity = std::make_unique<BehaviorComponent::EntityType>();
 
+    entity->AddDependentComponent(BCComponentID::AIComponent, 
+      _robot->GetComponentPtr<AIComponent>(RobotComponentID::AIComponent), false);
+    auto wrapper = new BaseBehaviorWrapper(baseBehavior);
+    entity->AddDependentComponent(BCComponentID::BaseBehaviorWrapper, wrapper);
+    entity->AddDependentComponent(BCComponentID::BehaviorContainer, _behaviorContainer.get(), false);
+
+    BehaviorComponent::GenerateManagedComponents(*_robot, entity);
 
     BehaviorComponent* bc = new BehaviorComponent();
     _robot->GetAIComponent().Init(_robot.get(), bc);
     _behaviorComponent = &_robot->GetAIComponent().GetBehaviorComponent();
-    _behaviorComponent->Init(_robot.get(), std::move(subComponents));
+    _behaviorComponent->Init(_robot.get(), std::move(entity));
   }
   
   if(shouldCallInitOnBase){
@@ -171,7 +175,7 @@ void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseB
     }
   }
   if(initializeBehavior != nullptr){
-    initializeBehavior(_behaviorComponent->_components);
+    initializeBehavior(_behaviorComponent->_comps);
   }
   
   std::string empty;

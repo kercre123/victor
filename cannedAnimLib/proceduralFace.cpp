@@ -245,9 +245,9 @@ void ProceduralFace::SetFromFlatBuf(const CozmoAnim::ProceduralFace* procFaceKey
   const f32 fbFaceScaleX = procFaceKeyframe->faceScaleX();
   const f32 fbFaceScaleY = procFaceKeyframe->faceScaleY();
   SetFaceScale({fbFaceScaleX, fbFaceScaleY});
-  
-  // TODO: Set scanline opacity from procFaceKeyFrame once implemented
-  SetScanlineOpacity(kProcFace_DefaultScanlineOpacity);
+
+  const f32 fbScanlineOpacity = procFaceKeyframe->scanlineOpacity();
+  SetScanlineOpacity(fbScanlineOpacity);
 }
 
 void ProceduralFace::SetFromJson(const Json::Value &jsonRoot)

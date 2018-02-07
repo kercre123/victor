@@ -65,11 +65,12 @@ namespace Cozmo {
   // issue with moving the lift when it is at a limit. The lift arm
   // flies off of the robot and comes back! So for now, we just don't
   // drive the lift down that far. We also skip calibration in sim.
-  const f32 LIFT_HEIGHT_LOWDOCK               = 32.f; // For interfacing with a cube that is on the ground.
-  const f32 LIFT_HEIGHT_OCCLUDING_PROX_SENSOR = 41.f; // At this lift height, the lift crossbar is directly occluding the prox sensor's beam.
-  const f32 LIFT_HEIGHT_HIGHDOCK              = 76.f; // For interfacing with a cube that is stacked on top of another cube.
-  const f32 LIFT_HEIGHT_CARRY                 = 92.f; // Cube carrying height.
-  const f32 LIFT_HEIGHT_LOW_ROLL              = 68.f; // For rolling a cube that is on the ground.
+  const f32 LIFT_HEIGHT_LOWDOCK                   = 32.f; // For interfacing with a cube that is on the ground.
+  const f32 LIFT_HEIGHT_OCCLUDING_PROX_SENSOR_MIN = 36.f; // Between these min/max lift heights, the lift interferes with the prox sensor's beam.
+  const f32 LIFT_HEIGHT_OCCLUDING_PROX_SENSOR_MAX = 50.f; // (see above)
+  const f32 LIFT_HEIGHT_HIGHDOCK                  = 76.f; // For interfacing with a cube that is stacked on top of another cube.
+  const f32 LIFT_HEIGHT_CARRY                     = 92.f; // Cube carrying height.
+  const f32 LIFT_HEIGHT_LOW_ROLL                  = 68.f; // For rolling a cube that is on the ground.
   
   // Distance between the lift shoulder joint and the lift "wrist" joint where arm attaches to fork assembly
   const f32 LIFT_ARM_LENGTH = 66.f;

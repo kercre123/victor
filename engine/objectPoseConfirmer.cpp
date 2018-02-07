@@ -54,7 +54,7 @@ CONSOLE_VAR(bool, kDisableStillMovingCheck, "PoseConfirmation", true);
 }
   
 ObjectPoseConfirmer::ObjectPoseConfirmer()
-: IDependencyManagedComponent(RobotComponentID::ObjectPoseConfirmer)
+: IDependencyManagedComponent(this, RobotComponentID::ObjectPoseConfirmer)
 {
   
 }

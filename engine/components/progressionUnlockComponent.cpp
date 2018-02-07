@@ -35,7 +35,7 @@ static const char* kFreeplayOverridesKey = "freeplayOverrides";
 CONSOLE_VAR(u32, kNumAttemptsToWrite, "ProgressionUnlockComponent", 5);
 
 ProgressionUnlockComponent::ProgressionUnlockComponent()
-: IDependencyManagedComponent<RobotComponentID>(RobotComponentID::ProgressionUnlock)
+: IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::ProgressionUnlock)
 {
 }
 

@@ -62,7 +62,8 @@ namespace {
 } // end anonymous namespace
 
 TouchSensorComponent::TouchSensorComponent() 
-: ISensorComponent(kLogDirectory, RobotComponentID::TouchSensor)
+: ISensorComponent(kLogDirectory)
+, IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::TouchSensor)
 , _debouncer(kDebounceLimitPressLow, 
              kDebounceLimitPressHi)
 , _gestureClassifier(kGestureMinTimeForHeld_s,

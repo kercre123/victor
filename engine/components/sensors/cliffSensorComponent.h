@@ -27,7 +27,7 @@ namespace Anki {
 class Pose3d;
 namespace Cozmo {
 
-class CliffSensorComponent : public ISensorComponent
+class CliffSensorComponent : public ISensorComponent, public IDependencyManagedComponent<RobotComponentID>
 {
 public:
 
@@ -49,6 +49,9 @@ public:
   // when changing this function
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::Carrying);
+  };
+  virtual void InitDependent(Robot* robot, const RobotCompMap& dependentComponents) override {
+    InitBase(robot);
   };
   //////
   // end IDependencyManagedComponent functions

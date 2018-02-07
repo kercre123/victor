@@ -17,7 +17,7 @@
 #include "clad/types/animationTrigger.h"
 #include "engine/actions/actionInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
-#include "engine/entity.h"
+#include "util/entityComponent/iManageableComponent.h"
 #include "util/helpers/noncopyable.h"
 
 namespace Anki {
@@ -25,7 +25,7 @@ namespace Cozmo {
 
 class Robot;
 
-class ContinuityComponent : public ManageableComponent, private Util::noncopyable{
+class ContinuityComponent : public IManageableComponent, private Util::noncopyable{
 public:
   ContinuityComponent(Robot& robot);
   

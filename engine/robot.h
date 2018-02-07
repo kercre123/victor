@@ -24,9 +24,9 @@
 #include "coretech/common/shared/types.h"
 #include "anki/cozmo/shared/animationTag.h"
 #include "engine/encodedImage.h"
-#include "engine/entity.h"
+#include "util/entityComponent/entity.h"
 #include "engine/events/ankiEvent.h"
-#include "engine/dependencyManagedEntity.h"
+#include "util/entityComponent/dependencyManagedEntity.h"
 #include "engine/ramp.h"
 #include "engine/robotComponents_fwd.h"
 #include "coretech/vision/engine/camera.h"
@@ -163,15 +163,17 @@ public:
   // =========== Components ===========
 
   bool HasComponent(RobotComponentID componentID) const {
-    return (_components != nullptr) && (_components->_array.GetComponent(componentID).IsValueValid());
+    return (_components != nullptr) && (_components->GetComponent(componentID).IsValueValid());
   }
   
   template<typename T>
-  T& GetComponent(RobotComponentID componentID) const {return _components->_array.GetComponent(componentID).GetValue<T>();}
+  T& GetComponent(RobotComponentID componentID) const {return _components->GetValue<T>(componentID);}
 
   template<typename T>
-  T& GetComponent(RobotComponentID componentID) {return _components->_array.GetComponent(componentID).GetValue<T>();}
+  T& GetComponent(RobotComponentID componentID) {return _components->GetValue<T>(componentID);}
 
+  template<typename T>
+  T* GetComponentPtr(RobotComponentID componentID) {return _components->GetBasePtr<T>(componentID);}
   
   inline BlockWorld&       GetBlockWorld()       {return GetComponent<BlockWorld>(RobotComponentID::BlockWorld);}
   inline const BlockWorld& GetBlockWorld() const {return GetComponent<BlockWorld>(RobotComponentID::BlockWorld);}
@@ -277,9 +279,11 @@ public:
   class ContextWrapper:  public IDependencyManagedComponent<RobotComponentID> {
   public:
     ContextWrapper(const CozmoContext* context)
-    : IDependencyManagedComponent(RobotComponentID::CozmoContext)
+    : IDependencyManagedComponent(this, RobotComponentID::CozmoContext)
     , context(context){}
     const CozmoContext* context;
+    
+    virtual ~ContextWrapper(){}
 
     virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override {};
     virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {};
@@ -619,13 +623,10 @@ protected:
   const Pose3d     _liftBasePose; // around which the base rotates/lifts
   Pose3d           _liftPose;     // current, w.r.t. liftBasePose
   
-  struct RobotComponentWrapper{
-    // pass in a fully enumerated entity
-    RobotComponentWrapper(DependencyManagedEntity<RobotComponentID, RobotComponentID::Count>&& entity);
-    using RequiredComponents = DependencyManagedEntityFullEnumeration<RobotComponentID, RobotComponentID::Count>;
-    RequiredComponents _array;
-  };
-  std::unique_ptr<RobotComponentWrapper> _components;
+  using EntityType = DependencyManagedEntity<RobotComponentID>;
+  using CompononentPtr = std::unique_ptr<EntityType>;
+  
+  CompononentPtr _components;
   
   RobotWorldOriginChangedSignal _robotWorldOriginChangedSignal;
   // The robot's identifier
@@ -776,7 +777,7 @@ protected:
   // for something like unit tests - theoretically this should be handled by having a non
   // fully enumerated constructor option, but for the time being use this for dev/testing purposes
   // only since caching etc could blow it all to shreds
-  void DevReplaceAIComponent(AIComponent*& aiComponent);
+  void DevReplaceAIComponent(AIComponent* aiComponent, bool shouldManage = false);
   
 }; // class Robot
 

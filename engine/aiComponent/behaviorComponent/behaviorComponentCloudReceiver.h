@@ -16,7 +16,7 @@
 #include "clad/types/behaviorComponent/cloudIntents.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponentCloudServer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
-#include "engine/dependencyManagedComponent.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 
 #include "util/signals/simpleSignal_fwd.h"
 

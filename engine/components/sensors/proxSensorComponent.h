@@ -18,13 +18,13 @@
 #include "clad/types/proxMessages.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
-#include "engine/entity.h"
+#include "util/entityComponent/entity.h"
 
 namespace Anki {
 class Pose3d;
 namespace Cozmo {
 
-class ProxSensorComponent :public ISensorComponent
+class ProxSensorComponent :public ISensorComponent, public IDependencyManagedComponent<RobotComponentID>
 {
 public:
   ProxSensorComponent();
@@ -39,6 +39,10 @@ public:
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::CliffSensor);
   };
+  virtual void InitDependent(Robot* robot, const RobotCompMap& dependentComponents) override {
+    InitBase(robot);
+  };
+
   //////
   // end IDependencyManagedComponent functions
   //////
@@ -50,10 +54,15 @@ protected:
   virtual std::string GetLogRow() override;
   
 public:
-  u16 GetLatestDistance_mm() const { return _latestData.distance_mm; }
+  // Returns true and populates distance_mm with the latest distance value if the
+  // sensor reading is considered valid (see IsSensorReadingValid()). If the sensor
+  // reading is not valid, this returns false and distance_mm is untouched.
+  bool GetLatestDistance_mm(u16& distance_mm) const;
   
+  // Note: If you just need distance data, prefer to use GetLatestDistance_mm() and
+  // check its return value rather than calling this method.
   const ProxSensorData& GetLatestProxData() const { return _latestData; }
-
+  
   // Returns the current pose of the prox sensor w.r.t. robot. Computed on-the-fly
   // since it depends on the robot's pose.
   Pose3d GetPose() const;
@@ -61,22 +70,29 @@ public:
   // Outputs true if the given pose falls within the sensor's field of view
   Result IsInFOV(const Pose3d&, bool& isInFOV) const;
   
-  // Outputs true if any part of the lift falls within the sensor's field of view
-  Result IsLiftInFOV(bool& isInFOV) const;
-  
-  // Indicates when the sensor reading is both 
-  //   1) Within a reliable obstacle detection range
-  //   2) Is not being obstructed by the lift
-  bool IsSensorReadingValid();
+  // Returns true if any part of the lift falls within the sensor's field of view
+  bool IsLiftInFOV() const;
 
   // calculate the pose directly in front of the robot where the prox sensor is indicating an object
   // returns false if sensor reading isn't valid
-  bool CalculateSensedObjectPose(Pose3d& sensedObjectPose);
-
+  bool CalculateSensedObjectPose(Pose3d& sensedObjectPose) const;
 
 private:
 
   void UpdateNavMap();
+  
+  // Indicates when the sensor reading...
+  //   1) Is within a reliable obstacle detection range
+  //   2) Is not being obstructed by the lift
+  //   3) Has a reasonable signal quality
+  bool IsSensorReadingValid(const ProxSensorData&) const;
+  
+  // Returns a unitless metric of "signal quality", which is computed as the
+  // signal intensity (which is the total signal intensity of the reading)
+  // divided by the number of active SPADs (which are the actual imaging sensors)
+  static float GetSignalQuality(const ProxSensorData& proxData) {
+    return proxData.signalIntensity / proxData.spadCount;
+  }
   
   ProxSensorData _latestData;
   

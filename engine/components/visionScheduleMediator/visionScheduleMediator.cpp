@@ -23,7 +23,7 @@ namespace Anki{
 namespace Cozmo{
 
 VisionScheduleMediator::VisionScheduleMediator()
-: IDependencyManagedComponent<RobotComponentID>(RobotComponentID::VisionScheduleMediator)
+: IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::VisionScheduleMediator)
 {
 }
 

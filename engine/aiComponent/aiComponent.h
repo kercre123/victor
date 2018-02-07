@@ -17,8 +17,9 @@
 #include "engine/aiComponent/aiComponents_fwd.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
 #include "engine/robotComponents_fwd.h"
-#include "engine/entity.h"
-#include "engine/dependencyManagedComponent.h"
+#include "util/entityComponent/componentWrapper.h"
+#include "util/entityComponent/entity.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
 
 #include <assert.h>

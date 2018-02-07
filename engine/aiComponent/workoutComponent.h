@@ -15,7 +15,7 @@
 #define __Cozmo_Basestation_BehaviorSystem_WorkoutComponent_H__
 
 #include "coretech/common/shared/types.h"
-#include "engine/entity.h"
+#include "util/entityComponent/iManageableComponent.h"
 #include "engine/moodSystem/moodScorer.h"
 #include "clad/types/animationTrigger.h"
 #include "clad/types/behaviorComponent/behaviorObjectives.h"
@@ -74,7 +74,7 @@ private:
 };
 
 
-class WorkoutComponent : public ManageableComponent, private Util::noncopyable
+class WorkoutComponent : public IManageableComponent, private Util::noncopyable
 {
 public:
 

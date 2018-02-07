@@ -19,7 +19,7 @@
 
 #include "engine/ankiEventUtil.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
-#include "engine/dependencyManagedComponent.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 #include "engine/robotComponents_fwd.h"
 #include "engine/smartFaceId.h"
 #include "engine/viz/vizManager.h"

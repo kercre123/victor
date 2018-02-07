@@ -38,8 +38,8 @@ TEST(DelegationComponent, TestDelegationVariants)
 {
   std::unique_ptr<TestSuperPoweredBehavior> baseBehavior = std::make_unique<TestSuperPoweredBehavior>();
   TestBehaviorFramework testFramework;
-  auto initializeBehavior = [&baseBehavior](const BehaviorComponent::UniqueComponents& comps){
-    baseBehavior->SetBehaviorContainer(comps->_array.GetComponent(BCComponentID::BehaviorContainer).GetValue<BehaviorContainer>());
+  auto initializeBehavior = [&baseBehavior](const BehaviorComponent::CompononentPtr& comps){
+    baseBehavior->SetBehaviorContainer(comps->GetComponent(BCComponentID::BehaviorContainer).GetValue<BehaviorContainer>());
   };
   testFramework.InitializeStandardBehaviorComponent(baseBehavior.get(),initializeBehavior);
   

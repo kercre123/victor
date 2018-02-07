@@ -91,7 +91,9 @@ void BehaviorPounceWithProx::BehaviorUpdate()
   }
 
   auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetValue<ProxSensorComponent>();
-  if(proxSensor.IsSensorReadingValid()){
+  u16 dummyDistance_mm = 0;
+  const bool isSensorReadingValid = proxSensor.GetLatestDistance_mm(dummyDistance_mm);
+  if(isSensorReadingValid){
     // Transition conditions
     switch(_lifetimeParams.pounceState){
       case PounceState::WaitForMotion:
@@ -133,9 +135,7 @@ void BehaviorPounceWithProx::BehaviorUpdate()
     }
   }else{
     // Sensor reading not valid - check if lift is in way
-    auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetValue<ProxSensorComponent>();
-    bool liftBlocking = false;
-    proxSensor.IsLiftInFOV(liftBlocking);
+    const bool liftBlocking = proxSensor.IsLiftInFOV();
     if(!IsControlDelegated()){
       if(liftBlocking){
         DelegateIfInControl(new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::CARRY));

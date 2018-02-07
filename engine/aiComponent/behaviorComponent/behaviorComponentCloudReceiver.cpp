@@ -45,7 +45,7 @@ const FullCloudIntentArray cloudStringMap{
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorComponentCloudReceiver::BehaviorComponentCloudReceiver(Robot& robot)
-: IDependencyManagedComponent(BCComponentID::BehaviorComponentCloudReceiver)
+: IDependencyManagedComponent(this, BCComponentID::BehaviorComponentCloudReceiver)
 , _server(std::bind(&BehaviorComponentCloudReceiver::AddPendingIntent, this, std::placeholders::_1),
                     "ai_sock" + (robot.GetID() == 0 ? "" : std::to_string(robot.GetID())))  // Offset port by robotID so that we can run sims with multiple robots
 {

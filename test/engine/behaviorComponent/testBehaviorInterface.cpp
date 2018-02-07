@@ -12,6 +12,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
@@ -36,9 +37,11 @@ TEST(BehaviorInterface, Create)
   CozmoContext context{};
   TestBehaviorFramework testBehaviorFramework(1, &context);
   RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
+  Json::Value emptyConfig = ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait , BehaviorID::Anonymous);
+  TestBehavior emptyBase(emptyConfig);
   {
     BehaviorContainer* container = new BehaviorContainer(emptyBehaviorMap);
-    testBehaviorFramework.InitializeStandardBehaviorComponent(nullptr, nullptr, true, container);
+    testBehaviorFramework.InitializeStandardBehaviorComponent(&emptyBase, nullptr, true, container);
   }
   
   BehaviorExternalInterface& behaviorExternalInterface = testBehaviorFramework.GetBehaviorExternalInterface();
@@ -62,9 +65,11 @@ TEST(BehaviorInterface, Init)
   CozmoContext context{};
   TestBehaviorFramework testBehaviorFramework(1, &context);
   RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
+  Json::Value emptyConfig = ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait , BehaviorID::Anonymous);
+  TestBehavior emptyBase(emptyConfig);
   {
     BehaviorContainer* bc = new BehaviorContainer(emptyBehaviorMap);
-    testBehaviorFramework.InitializeStandardBehaviorComponent(nullptr, nullptr, true, bc);
+    testBehaviorFramework.InitializeStandardBehaviorComponent(&emptyBase, nullptr, true, bc);
   }
   
   BehaviorExternalInterface& behaviorExternalInterface = testBehaviorFramework.GetBehaviorExternalInterface();
@@ -90,9 +95,11 @@ TEST(BehaviorInterface, InitWithInterface)
   CozmoContext context(nullptr, &handler);
   TestBehaviorFramework testBehaviorFramework(1, &context);
   RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
+  Json::Value emptyConfig = ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait , BehaviorID::Anonymous);
+  TestBehavior emptyBase(emptyConfig);
   {
     BehaviorContainer* container = new BehaviorContainer(emptyBehaviorMap);
-    testBehaviorFramework.InitializeStandardBehaviorComponent(nullptr, nullptr, true, container);
+    testBehaviorFramework.InitializeStandardBehaviorComponent(&emptyBase, nullptr, true, container);
   }
   
   BehaviorExternalInterface& behaviorExternalInterface = testBehaviorFramework.GetBehaviorExternalInterface();
@@ -118,9 +125,11 @@ TEST(BehaviorInterface, Run)
   CozmoContext context{};
   TestBehaviorFramework testBehaviorFramework(1, &context);
   RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
+  Json::Value emptyConfig = ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait , BehaviorID::Anonymous);
+  TestBehavior emptyBase(emptyConfig);
   {
     BehaviorContainer* bc = new BehaviorContainer(emptyBehaviorMap);
-    testBehaviorFramework.InitializeStandardBehaviorComponent(nullptr, nullptr, true, bc);
+    testBehaviorFramework.InitializeStandardBehaviorComponent(&emptyBase, nullptr, true, bc);
   }
   
   BehaviorExternalInterface& behaviorExternalInterface = testBehaviorFramework.GetBehaviorExternalInterface();
@@ -230,9 +239,11 @@ TEST(BehaviorInterface, OutsideAction)
   CozmoContext context(nullptr, &handler);
   TestBehaviorFramework testBehaviorFramework(1, &context);
   RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
+  Json::Value emptyConfig = ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait , BehaviorID::Anonymous);
+  TestBehavior emptyBase(emptyConfig);
   {
     BehaviorContainer* container = new BehaviorContainer(emptyBehaviorMap);
-    testBehaviorFramework.InitializeStandardBehaviorComponent(nullptr, nullptr, true, container);
+    testBehaviorFramework.InitializeStandardBehaviorComponent(&emptyBase, nullptr, true, container);
   }
   
   BehaviorExternalInterface& behaviorExternalInterface = testBehaviorFramework.GetBehaviorExternalInterface();

@@ -78,7 +78,10 @@ void BehaviorProxGetToDistance::BehaviorUpdate()
   }
 
   auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetValue<ProxSensorComponent>();
-  if(!proxSensor.IsSensorReadingValid()){
+
+  u16 proxDist_mm = 0;
+  const bool isReadingValid = proxSensor.GetLatestDistance_mm(proxDist_mm);
+  if(!isReadingValid){
     CancelSelf();
     return;
   }
@@ -95,10 +98,10 @@ void BehaviorProxGetToDistance::BehaviorUpdate()
   }
 
   if(!IsControlDelegated()){
-    const u16 proxDist_mm = proxSensor.GetLatestDistance_mm();
     const float speed_mm_s = _params.distMMToSpeedMMGraph.EvaluateY(proxDist_mm);
     DelegateIfInControl(new DriveStraightAction(CalculateDistanceToDrive(), speed_mm_s));
-    proxSensor.CalculateSensedObjectPose(_previousProxObjectPose);
+    const bool isSensorReadingValid = proxSensor.CalculateSensedObjectPose(_previousProxObjectPose);
+    DEV_ASSERT(isSensorReadingValid, "BehaviorProxGetToDistance.BehaviorUpdate.SensorReadingInvalid");
   }
 
   return;
@@ -109,7 +112,16 @@ void BehaviorProxGetToDistance::BehaviorUpdate()
 float BehaviorProxGetToDistance::CalculateDistanceToDrive() const
 {
   auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetValue<ProxSensorComponent>();
-  const u16 proxDist_mm = proxSensor.GetLatestDistance_mm();
+  
+  u16 proxDist_mm = 0;
+  const bool isReadingValid = proxSensor.GetLatestDistance_mm(proxDist_mm);
+  
+  if (!isReadingValid) {
+    PRINT_NAMED_WARNING("BehaviorProxGetToDistance.CalculateDistanceToDrive.InvalidReading",
+                        "Invalid distance sensor reading received");
+    return 0.f;
+  }
+  
   float distanceToDrive = proxDist_mm - _params.goalDistance_mm;
   
   // See if there's a distance at which we want to change speed that occurs before we
@@ -173,10 +185,10 @@ bool BehaviorProxGetToDistance::ShouldRecalculateDrive()
 bool BehaviorProxGetToDistance::IsWithinGoalTolerence() const
 {
   auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetValue<ProxSensorComponent>();
-  if(proxSensor.IsSensorReadingValid()){
-    const u16 proxDist_mm = proxSensor.GetLatestDistance_mm();
-    return (proxDist_mm < (_params.goalDistance_mm + _params.tolarance_mm)) &&
-           (proxDist_mm > (_params.goalDistance_mm - _params.tolarance_mm));
+  u16 proxDist_mm = 0;
+  const bool isReadingValid = proxSensor.GetLatestDistance_mm(proxDist_mm);
+  if(isReadingValid){
+    return Util::IsNear(proxDist_mm, _params.goalDistance_mm, _params.tolarance_mm);
   }
   return false;
 }

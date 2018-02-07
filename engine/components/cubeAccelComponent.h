@@ -20,7 +20,7 @@
 #include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/shared/types.h"
 #include "engine/components/cubeAccelComponentListeners.h"
-#include "engine/dependencyManagedComponent.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/robotComponents_fwd.h"
 #include "engine/robotInterface/messageHandler.h"

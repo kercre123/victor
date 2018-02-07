@@ -41,7 +41,7 @@ namespace {
   
   
 AnimationComponent::AnimationComponent()
-: IDependencyManagedComponent(RobotComponentID::Animation)
+: IDependencyManagedComponent(this, RobotComponentID::Animation)
 , _isInitialized(false)
 , _tagCtr(0)
 , _isDolingAnims(false)

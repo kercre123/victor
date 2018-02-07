@@ -32,7 +32,7 @@ static const BehaviorID kBehaviorIDForDevMessage = BEHAVIOR_ID(DevExecuteBehavio
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 DevBehaviorComponentMessageHandler::DevBehaviorComponentMessageHandler(Robot& robot)
-: IDependencyManagedComponent<BCComponentID>(BCComponentID::DevBehaviorComponentMessageHandler)
+: IDependencyManagedComponent<BCComponentID>(this, BCComponentID::DevBehaviorComponentMessageHandler)
 , _robot(robot)
 {
 
@@ -57,9 +57,9 @@ void DevBehaviorComponentMessageHandler::GetInitDependencies(BCCompIDSet& depend
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void DevBehaviorComponentMessageHandler::InitDependent(Robot* robot, const BCCompMap& dependentComponents) 
 {
-  auto& bContainer = dependentComponents.find(BCComponentID::BehaviorContainer)->second.GetValue<BehaviorContainer>();
-  auto& bsm = dependentComponents.find(BCComponentID::BehaviorSystemManager)->second.GetValue<BehaviorSystemManager>();
-  auto& bei = dependentComponents.find(BCComponentID::BehaviorExternalInterface)->second.GetValue<BehaviorExternalInterface>();
+  auto& bContainer = dependentComponents.GetValue<BehaviorContainer>(BCComponentID::BehaviorContainer);
+  auto& bsm = dependentComponents.GetValue<BehaviorSystemManager>(BCComponentID::BehaviorSystemManager);
+  auto& bei = dependentComponents.GetValue<BehaviorExternalInterface>(BCComponentID::BehaviorExternalInterface);
 
   if(_robot.HasExternalInterface()){
     auto handlerCallback = [this, &bContainer, &bsm, &bei](const GameToEngineEvent& event) {

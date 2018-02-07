@@ -93,8 +93,8 @@ AIComponentComponents::~AIComponentComponents()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AIComponent::AIComponent()
-: UnreliableComponent<BCComponentID>(BCComponentID::AIComponent)
-, IDependencyManagedComponent<RobotComponentID>(RobotComponentID::AIComponent)
+: UnreliableComponent<BCComponentID>(this, BCComponentID::AIComponent)
+, IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::AIComponent)
 , _suddenObstacleDetected(false)
 {
 }
@@ -146,7 +146,10 @@ Result AIComponent::Init(Robot* robot, BehaviorComponent*& customBehaviorCompone
 
     if(behaviorCompInitRequired){
       auto& behaviorComp = GetComponent<BehaviorComponent>(AIComponentID::BehaviorComponent);
-      behaviorComp.Init(robot, BehaviorComponent::GenerateManagedComponents(*robot, *this, nullptr));
+      auto entity = std::make_unique<BehaviorComponent::EntityType>();
+      entity->AddDependentComponent(BCComponentID::AIComponent, this, false);
+      BehaviorComponent::GenerateManagedComponents(*robot, entity);
+      behaviorComp.Init(robot, std::move(entity));
     }
   }
   
@@ -285,13 +288,15 @@ void AIComponent::CheckForSuddenObstacle(Robot& robot)
   
   varRotation_radsq = fabs(varRotation_radsq - (avgRotation_rad * avgRotation_rad));
 
-  const u16 latestDistance_mm = robot.GetProxSensorComponent().GetLatestDistance_mm();
+  u16 latestDistance_mm = 0;
+  const bool readingIsValid = robot.GetProxSensorComponent().GetLatestDistance_mm(latestDistance_mm);
+  
   f32 avgObjectSpeed_mmps = 2 * fabs(avgProxValue_mm - latestDistance_mm) / kObsSampleWindow_ms;
-
   
   // only trigger if sensor is changing faster than the robot speed, robot is
   // not turning, and sensor is not being changed by noise
-  _suddenObstacleDetected = (avgObjectSpeed_mmps >= kObsTriggerSensitivity * avgRobotSpeed_mmps) &&
+  _suddenObstacleDetected = readingIsValid &&
+                            (avgObjectSpeed_mmps >= kObsTriggerSensitivity * avgRobotSpeed_mmps) &&
                             (varRotation_radsq   <= kObsMaxRotationVariance_rad2) &&
                             (avgObjectSpeed_mmps >= kObsMinObjectSpeed_mmps) &&
                             (avgProxValue_mm     <= kObsMaxObjectDistance_mm);                   

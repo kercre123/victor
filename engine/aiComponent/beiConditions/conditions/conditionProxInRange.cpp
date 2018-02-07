@@ -19,6 +19,8 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/components/sensors/proxSensorComponent.h"
 
+#include "util/math/math.h"
+
 namespace Anki {
 namespace Cozmo {
 
@@ -50,17 +52,13 @@ bool ConditionProxInRange::AreConditionsMetInternal(BehaviorExternalInterface& b
 {
   auto& proxSensor = bei.GetComponentWrapper(BEIComponentID::ProxSensor).GetValue<ProxSensorComponent>();
 
-  const bool isValid = proxSensor.IsSensorReadingValid();
+  u16 proxDist_mm = 0;
+  const bool isValid = proxSensor.GetLatestDistance_mm(proxDist_mm);
   if(!isValid){
     return _params.invalidSensorReturn;
   }
 
-  const u16 proxDist_mm = proxSensor.GetLatestDistance_mm();
-
-  const bool isInRange = (_params.minDist_mm <= proxDist_mm) && 
-                         (proxDist_mm < _params.maxDist_mm);
-
-  return isInRange;
+  return Util::InRange((float) proxDist_mm, _params.minDist_mm, _params.maxDist_mm);
 }
 
 }

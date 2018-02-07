@@ -14,7 +14,7 @@
 #define __Cozmo_Basestation_NVStorageComponent_H__
 
 
-#include "engine/dependencyManagedComponent.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 #include "engine/robotComponents_fwd.h"
 
 

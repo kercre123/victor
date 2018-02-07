@@ -46,7 +46,7 @@ using namespace ExternalInterface;
 
 
 MovementComponent::MovementComponent()
-: IDependencyManagedComponent<RobotComponentID>(RobotComponentID::Movement)
+: IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::Movement)
 {
 
 }

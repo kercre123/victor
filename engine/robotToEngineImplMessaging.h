@@ -9,7 +9,7 @@
 #ifndef __Anki_Cozmo_Basestation_RobotToEngineImplMessaging_H__
 #define __Anki_Cozmo_Basestation_RobotToEngineImplMessaging_H__
 
-#include "engine/dependencyManagedComponent.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 #include "engine/robotComponents_fwd.h"
 #include "engine/robotInterface/messageHandler.h"
 #include "clad/robotInterface/messageRobotToEngine_hash.h"

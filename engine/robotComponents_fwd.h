@@ -13,7 +13,7 @@
 #ifndef __Engine_RobotComponentsFWD_H__
 #define __Engine_RobotComponentsFWD_H__
 
-#include "engine/dependencyManagedComponent.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -57,8 +57,8 @@ enum class RobotComponentID{
   Count
 };
 
-using RobotComp =  DependencyManagedComponentWrapper<RobotComponentID>;
-using RobotCompMap = std::map<RobotComponentID, RobotComp>;
+using RobotComp =  IDependencyManagedComponent<RobotComponentID>;
+using RobotCompMap = DependencyManagedEntity<RobotComponentID>;
 using RobotCompIDSet = std::set<RobotComponentID>;
 } // namespace Cozmo
 } // namespace Anki

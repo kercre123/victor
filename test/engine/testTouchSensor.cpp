@@ -31,6 +31,7 @@
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/cozmoAPI/comms/uiMessageHandler.h"
+#include "engine/robotComponents_fwd.h"
 
 // test infra
 #include "coretech/common/engine/utils/data/dataPlatform.h"
@@ -250,7 +251,7 @@ TEST_F(TouchSensorTest, CalibrateAndClassifyMultirobotTests)
     // - the number of detected touches matches for soft-strokes (within reason)
     
     TouchSensorComponent testTouchSensorComponent;
-    std::map<RobotComponentID, RobotComp> empty;
+    RobotCompMap empty;
     testTouchSensorComponent.InitDependent(_robot, empty);
     auto feedAndTestHelper = [&](std::pair<size_t,size_t> interval,
                                  const std::function<void(void)>& testBody)

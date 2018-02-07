@@ -15,6 +15,7 @@
 
 #include "gtest/gtest.h"
 
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/activeObject.h"
 #include "engine/activeObjectHelpers.h"
@@ -178,9 +179,11 @@ TEST(StackBlocksBehavior, InitBehavior)
   
   TestBehaviorFramework testBehaviorFramework(1, &context);
   RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
+  Json::Value emptyConfig = ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait , BehaviorID::Anonymous);
+  TestBehavior emptyBase(emptyConfig);
   {
     BehaviorContainer* bc = new BehaviorContainer(emptyBehaviorMap);
-    testBehaviorFramework.InitializeStandardBehaviorComponent(nullptr, nullptr, true, bc);
+    testBehaviorFramework.InitializeStandardBehaviorComponent(&emptyBase, nullptr, true, bc);
   }
   
   Robot& robot = testBehaviorFramework.GetRobot();
@@ -199,9 +202,11 @@ TEST(StackBlocksBehavior, DeleteCubeCrash)
   CozmoContext context(nullptr, &handler);
   TestBehaviorFramework testBehaviorFramework(1, &context);
   RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
+  Json::Value emptyConfig = ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait , BehaviorID::Anonymous);
+  TestBehavior emptyBase(emptyConfig);
   {
     BehaviorContainer* bc = new BehaviorContainer(emptyBehaviorMap);
-    testBehaviorFramework.InitializeStandardBehaviorComponent(nullptr, nullptr, true, bc);
+    testBehaviorFramework.InitializeStandardBehaviorComponent(&emptyBase, nullptr, true, bc);
   }
   
   Robot& robot = testBehaviorFramework.GetRobot();

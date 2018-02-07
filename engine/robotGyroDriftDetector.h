@@ -13,7 +13,7 @@
 #include "coretech/common/shared/types.h"
 
 #include "engine/robotComponents_fwd.h"
-#include "engine/dependencyManagedComponent.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 
 #include "util/helpers/noncopyable.h"
 

@@ -14,7 +14,7 @@
 #define __Engine_MicDirectionHistory_H_
 
 #include "coretech/common/shared/types.h"
-#include "engine/dependencyManagedComponent.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 #include "engine/robotComponents_fwd.h"
 
 #include <array>
@@ -28,7 +28,7 @@ class MicDirectionHistory : public IDependencyManagedComponent<RobotComponentID>
 {
 public:
   MicDirectionHistory()
-  : IDependencyManagedComponent<RobotComponentID>(RobotComponentID::MicDirectionHistory){}
+  : IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::MicDirectionHistory){}
 
   //////
   // IDependencyManagedComponent functions
