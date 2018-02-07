@@ -154,6 +154,7 @@ static void decimate(const uint8_t* input, int32_t* accumulator,  int16_t* outpu
     int32_t acc_l = 0;
     int32_t acc_r = 0;
 
+    /*
     STAGE2( 8);
     STAGE2( 9);
     STAGE2(10);
@@ -166,6 +167,7 @@ static void decimate(const uint8_t* input, int32_t* accumulator,  int16_t* outpu
     STAGE3( 5);
     STAGE3( 6);
     STAGE3_A();
+    */
 
     output += 4;
   }
@@ -180,13 +182,13 @@ extern "C" void DMA1_Channel2_3_IRQHandler(void) {
 
   // Note: if this falls behind, it will drop a bunch of samples
   if (isr & DMA_ISR_HTIF2) {
-    //decimate(pdm_data[0][0], accumulator[0], &index[0]);
-    //decimate(pdm_data[1][0], accumulator[1], &index[2]);
+    decimate(pdm_data[0][0], accumulator[0], &index[0]);
+    decimate(pdm_data[1][0], accumulator[1], &index[2]);
     index += SAMPLES_PER_IRQ * 4;
     sample_index++;
   } else {
-    //decimate(pdm_data[0][1], accumulator[0], &index[0]);
-    //decimate(pdm_data[1][1], accumulator[1], &index[2]);
+    decimate(pdm_data[0][1], accumulator[0], &index[0]);
+    decimate(pdm_data[1][1], accumulator[1], &index[2]);
     index += SAMPLES_PER_IRQ * 4;
     sample_index++;
   }

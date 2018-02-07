@@ -169,5 +169,5 @@ void Power::tick(void) {
     updatePowerState();
   }
 
-  __asm("WFI");
+  //__asm("WFI");
 }
