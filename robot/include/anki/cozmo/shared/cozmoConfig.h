@@ -31,8 +31,8 @@ namespace Cozmo {
   const f32 HEAD_ANGLE_TOL       = DEG_TO_RAD(2.f);
   const f32 LIFT_ANGLE_TOL       = DEG_TO_RAD(1.5f);
   
-  const f32 MIN_HEAD_ANGLE = DEG_TO_RAD(-23.f);  // V2 range: -23 to +44.5 according to McVicar
-  const f32 MAX_HEAD_ANGLE = DEG_TO_RAD( 44.5f);
+  const f32 MIN_HEAD_ANGLE = DEG_TO_RAD(-22.f);
+  const f32 MAX_HEAD_ANGLE = DEG_TO_RAD( 45.f);
   
   const f32 kIdealViewBlockHeadAngle = DEG_TO_RAD(-17.5f);
   const f32 kIdealViewBlockLiftUpHeadAngle = DEG_TO_RAD(-22.5f);
