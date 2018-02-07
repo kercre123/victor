@@ -67,6 +67,30 @@ macro(__anki_build_go_fake_target target_name)
                                                            INCLUDE_DIRECTORIES "")
 endmacro()
 
+#
+# Helper macro to strip an object file (exe or lib) and store debug symbols
+# into a ".full" file.  This macro assumes that CMAKE_STRIP and CMAKE_OBJCOPY 
+# are set appropriately for the current toolchain.
+#
+# The symbol file depends on the object file, so it will be rebuilt
+# after any change to the object file.
+#
+# These commands duplicate logic in android_strip.cmake, but they are
+# repackaged to work with custom go targets.
+# 
+
+macro(anki_build_go_android_strip output output_full)
+  add_custom_command(
+    OUTPUT ${output_full}
+    DEPENDS ${output}
+    COMMAND ${CMAKE_COMMAND} -E copy ${output} ${output_full}
+    COMMAND ${CMAKE_STRIP} --strip-unneeded ${output}
+    COMMAND ${CMAKE_OBJCOPY} --add-gnu-debuglink ${output_full} ${output}
+    COMMENT strip ${output} to create ${output_full}
+    VERBATIM
+  )
+endmacro()
+
 # build a go library that can be linked in with C code later
 # gensrc_var is a variable name where the generated header (that defines exported functions
 # from the library) location will be stored
@@ -107,13 +131,28 @@ endmacro()
 
 # build a go executable
 # usage: anki_build_go_executable(mytarget "path/to/source/directory" "path/to/GOPATH/directory" ${ANKI_SRCLIST_DIR})
+
 macro(anki_build_go_executable target_name srclist_dir)
   anki_build_absolute_source_list(${target_name} ${srclist_dir})
 
   set(__gobuild_out "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${target_name}")
-  add_custom_target(${target_name} DEPENDS ${__gobuild_out})
+  set(__gobuild_out_full "")
+
+  #
+  # On android, generate additional commands to strip executable.
+  # Debug symbols are stored in a ".full" file. The build target
+  # depends on both exe and exe.full so they will be created together.
+  #
+  if (ANDROID)
+    set(__gobuild_out_full "${__gobuild_out}.full")
+    anki_build_go_android_strip(${__gobuild_out} ${__gobuild_out_full})
+  endif()
+
+  add_custom_target(${target_name} DEPENDS ${__gobuild_out} ${__gobuild_out_full})
 
   __anki_build_go_fake_target(${target_name})
+
+
   set_target_properties(${target_name} PROPERTIES GO_CLINK_FOLDERS ""
                                                   ANKI_OUT_PATH ${__gobuild_out}
                                                   EXCLUDE_FROM_ALL FALSE)
@@ -121,7 +160,9 @@ macro(anki_build_go_executable target_name srclist_dir)
   __anki_setup_go_environment(${_ab_GO_DIR} ${_ab_GO_PATH})
   __anki_run_go_build(${target_name})
 
+
 endmacro()
+
 
 # specify that a go project should link against another C library
 macro(anki_go_add_c_library target_name c_target)
