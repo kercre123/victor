@@ -86,8 +86,8 @@ public:
   std::string _behaviorName;
   ICozmoBehaviorPtr _behavior;
 
-  float _lastTimeStarted_s = -1.0f;
-  float _lastTimeEnded_s = -1.0f;
+  float _lastTimeStarted_s = -std::numeric_limits<float>::min();
+  float _lastTimeEnded_s = -std::numeric_limits<float>::min();
 
   // Transitions are evaluated in order, and if the function returns true, we will transition to the given
   // state id.
@@ -557,11 +557,11 @@ void InternalStatesBehavior::State::OnDeactivated()
   _lastTimeEnded_s = currTime_s;
 }
 
-bool InternalStatesBehavior::StateExitCooldownExpired(StateID state, float timeout) const
+bool InternalStatesBehavior::StateExitCooldownExpired(StateID state, float timeout, bool valueIfNeverRun) const
 {
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  if( _states->at(state)._lastTimeEnded_s < 0.0f ||
-      _states->at(state)._lastTimeEnded_s + timeout <= currTime_s ) {
+  const bool neverRun = valueIfNeverRun && (_states->at(state)._lastTimeEnded_s < 0.0f);
+  if( neverRun || (_states->at(state)._lastTimeEnded_s + timeout <= currTime_s) ) {
     return true;
   }
   else {

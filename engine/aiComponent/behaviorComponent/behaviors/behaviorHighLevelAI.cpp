@@ -25,6 +25,8 @@ namespace Cozmo {
 namespace {
 
 constexpr const float kSocializeKnownFaceCooldown_s = 60.0f * 10;
+constexpr const float kPlayWithCubeCooldown_s = 60.0f * 1;
+constexpr const float kPlayWithCubeOnChargerCooldown_s = 60.0f * 10;
 constexpr const float kGoToSleepTimeout_s = 60.0f * 4;
 constexpr const u32 kMinFaceAgeToAllowSleep_ms = 5000;
 constexpr const u32 kNeedsToChargeTime_ms = 1000 * 60 * 5;
@@ -127,6 +129,45 @@ InternalStatesBehavior::PreDefinedStrategiesMap BehaviorHighLevelAI::CreatePreDe
           return timeSinceNotCharging >= kNeedsToChargeTime_ms;
         }
         return false;
+      }
+    },
+    {
+      "NeedsToLeaveChargerForPlay",
+      [this](BehaviorExternalInterface& behaviorExternalInterface) {
+        // this keeps two separate timers, one for driving off the charger into play, and one for playing.
+        // the latter is useful when seeing cubes when in the observing state, and is used by the
+        // CloseCubeForPlaying strategy. The former decides whether the robot should leave the
+        // charger to play. In case the robot finds no cube after leaving the charger, placing it
+        // back on the charger won't cause it to immediately drive off in search of play.
+        // Similarly, if a long time has elapsed since the robot last successfully drove off the charger
+        // for playing, but it recently played with a cube, then it shouldn't try to drive off the charger
+        // again.
+        const bool valueIfNeverRun = false;
+        const bool hasntDrivenOffChargerForPlay = StateExitCooldownExpired(GetStateID("DriveOffChargerIntoPlay"),
+                                                                           kPlayWithCubeOnChargerCooldown_s,
+                                                                           valueIfNeverRun);
+        const bool hasntPlayed = StateExitCooldownExpired(GetStateID("PlayingWithCube"),
+                                                          kPlayWithCubeCooldown_s,
+                                                          valueIfNeverRun);
+        return hasntDrivenOffChargerForPlay && hasntPlayed;
+      }
+    },
+    {
+      "CloseCubeForPlaying",
+      [this](BehaviorExternalInterface& behaviorExternalInterface) {
+
+        if( !StateExitCooldownExpired(GetStateID("PlayingWithCube"), kPlayWithCubeCooldown_s) ) {
+          // still on cooldown
+          return false;
+        }
+
+        BlockWorldFilter filter;
+        filter.SetFilterFcn( [](const ObservableObject* obj) {
+            return IsValidLightCube(obj->GetType(), false) && obj->IsPoseStateKnown();
+          });
+        const auto& blockWorld = behaviorExternalInterface.GetBlockWorld();
+        const auto* block = blockWorld.FindLocatedMatchingObject(filter);
+        return block != nullptr;
       }
     }
   };

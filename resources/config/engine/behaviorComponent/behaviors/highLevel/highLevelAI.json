@@ -27,6 +27,11 @@
       "behavior": "DriveOffCharger"
     },
     {
+      "name": "DriveOffChargerIntoPlay",
+      "behavior": "DriveOffChargerIntoPlay",
+      "visionModes": [ "DetectingMarkers" ]
+    },
+    {
       "name": "Observing",
       "behavior": "Observing",
       "visionModes": [ "DetectingFaces", "DetectingMarkers" ],
@@ -37,6 +42,12 @@
       "behavior": "Socialize",
       "visionModes": [ "DetectingFaces" ],
       "debugColor": "MAGENTA"
+    },
+    {
+      "name": "PlayingWithCube",
+      "behavior": "PlayWithCube",
+      "visionModes": [ "DetectingMarkers" ],
+      "debugColor": "DARKGREEN"
     },
     {
       "name": "Napping",
@@ -89,6 +100,10 @@
           }
         },
         {
+          "to": "DriveOffChargerIntoPlay",
+          "preDefinedStrategyName": "NeedsToLeaveChargerForPlay"
+        },
+        {
           "to": "Napping",
           "preDefinedStrategyName": "WantsToSleep"
         }
@@ -132,6 +147,10 @@
         {
           "to": "Socializing",
           "preDefinedStrategyName": "CloseFaceForSocializing"
+        },
+        {
+          "to": "PlayingWithCube",
+          "preDefinedStrategyName": "CloseCubeForPlaying"
         }
       ],
       "nonInterruptingTransitions": [
@@ -163,6 +182,26 @@
     },
 
     {
+      "from": "PlayingWithCube",
+      "interruptingTransitions": [
+        {
+          "to": "ObservingOnChargerRecentlyPlaced",
+          "condition": {
+            "conditionType": "OnCharger"
+          }
+        }
+      ],
+      "exitTransitions": [
+        {
+          "to": "Observing",
+          "condition": {
+            "conditionType": "TrueCondition" 
+          }
+        }
+      ]
+    },
+
+    {
       "from": "DriveOffChargerIntoObserving",
       "exitTransitions": [
         {
@@ -170,7 +209,24 @@
           "preDefinedStrategyName": "CloseFaceForSocializing"
         },
         {
-          // fall back to observing if can't eat after driving off the charger
+          // fall back to observing if can't find a face after driving off the charger
+          "to": "Observing",
+          "condition": {
+            "conditionType": "TrueCondition"
+          }
+        }
+      ]
+    },
+
+    {
+      "from": "DriveOffChargerIntoPlay",
+      "exitTransitions": [
+        {
+          "to": "PlayingWithCube",
+          "preDefinedStrategyName": "CloseCubeForPlaying"
+        },
+        {
+          // fall back to observing if can't find a cube after driving off the charger
           "to": "Observing",
           "condition": {
             "conditionType": "TrueCondition"
