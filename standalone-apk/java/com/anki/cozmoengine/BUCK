@@ -10,7 +10,3 @@ android_library(
     '//:cozmoengine_standalone_app',
   ],
 )
-
-project_config(
-  src_target = ':lib',
-)

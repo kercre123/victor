@@ -51,7 +51,7 @@ public class AnimationPane : MonoBehaviour {
           RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(robotGroupNames[index]);
         }
       });
-      animationButton.transform.FindChild("Text").GetComponent<Text>().text = robotGroupNames[i].ToString();
+      animationButton.transform.Find("Text").GetComponent<Text>().text = robotGroupNames[i].ToString();
       animationButton.transform.SetParent(_ScrollViewContent, false);
 
       ButtonList.Add(new SearchableButton(animationButton, robotGroupNames[i].ToString()));

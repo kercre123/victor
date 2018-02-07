@@ -68,10 +68,10 @@ namespace Xcode {
           proj.RemoveFolder("UnityBuild"));
 
         DoWithTimer("Add Classes", ref step, totalSteps, () =>
-          proj.AddFolder("../ios", "../ios/UnityBuild/Classes", "UnityBuild/Classes", new Regex(".*/Native(/.*)?")));
+          proj.AddFolder("../ios", "../ios/UnityBuild/Classes", "UnityBuild/Classes"));
 
         DoWithTimer("Add Libraries", ref step, totalSteps, () =>
-          proj.AddFolder("../ios", "../ios/UnityBuild/Libraries", "UnityBuild/Libraries", new Regex(".*/libil2cpp(/.*)?")));
+          proj.AddFolder("../ios", "../ios/UnityBuild/Libraries", "UnityBuild/Libraries"));
         DoWithTimer("Add Unity-iPhone", ref step, totalSteps, () =>
           proj.AddFolder("../ios", "../ios/UnityBuild/Unity-iPhone", "UnityBuild/Unity-iPhone"));
 

@@ -110,7 +110,7 @@ public static class HierarchyExpansionUtility {
 
     // Expand children first, because they will open us up
     for (int i = 0; i < status.Children.Count; i++) {
-      var child = obj.transform.FindChild(status.Children[i].Name);
+      var child = obj.transform.Find(status.Children[i].Name);
       if (child != null) {
         SetCurrentStatusForGameObject(child.gameObject, status.Children[i]);
       }

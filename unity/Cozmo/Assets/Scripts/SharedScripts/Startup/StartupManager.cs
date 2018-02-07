@@ -670,7 +670,7 @@ public class StartupManager : MonoBehaviour {
     }
 
     // Clear the unity cache so Unity doesn't confuse old and new versions of the asset bundles
-    Caching.CleanCache();
+    Caching.ClearCache();
 
     // Delete and create target extraction folder
     try {

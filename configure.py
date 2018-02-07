@@ -595,6 +595,7 @@ class GamePlatformConfiguration(object):
                 'ANKI_BUILD_TARGET={0}'.format(self.platform),
                 '// ANKI_BUILD_USE_PREBUILT_UNITY=1',
                 'ANKI_BUILD_APP_PATH={0}'.format(self.artifact_dir),
+                'OTHER_CFLAGS = $(inherited) -DINIT_SCRIPTING_BACKEND=1 -fno-strict-overflow -DRUNTIME_IL2CPP=1;',
                 'ANKI_BUILD_APP_PKG={0}'.format(self.artifact_path)]
 
             if self.other_cs_flags is not None:

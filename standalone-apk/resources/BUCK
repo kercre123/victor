@@ -7,7 +7,3 @@ android_resource(
     '//standalone-apk/java/com/anki/cozmoengine:lib',
   ],
 )
-
-project_config(
-  src_target = ':res'
-)

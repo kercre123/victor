@@ -154,6 +154,11 @@
 			baseConfigurationReference = 709871571ED4E43700CE71C6 /* ios.xcconfig */;
 			buildSettings = {
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				OTHER_CFLAGS = (
+					"-DRUNTIME_IL2CPP=1",
+					"-DINIT_SCRIPTING_BACKEND=1",
+					"-fno-strict-overflow",
+				);
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -249,6 +254,11 @@
 			buildSettings = {
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = (
+					"-DRUNTIME_IL2CPP=1",
+					"-DINIT_SCRIPTING_BACKEND=1",
+					"-fno-strict-overflow",
+				);
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -261,6 +271,11 @@
 			baseConfigurationReference = 709871571ED4E43700CE71C6 /* ios.xcconfig */;
 			buildSettings = {
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				OTHER_CFLAGS = (
+					"-DRUNTIME_IL2CPP=1",
+					"-DINIT_SCRIPTING_BACKEND=1",
+					"-fno-strict-overflow",
+				);
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;

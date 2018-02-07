@@ -48,7 +48,7 @@ public class MediaPlayerCtrl : MonoBehaviour {
 
 
 
-#if UNITY_ANDROID && !UNITY_EDITOR && UNITY_5
+  #if UNITY_ANDROID && !UNITY_EDITOR && UNITY_5_3_OR_NEWER
 	[DllImport ("BlueDoveMediaRender")]
 	private static extern void InitNDK();
 
@@ -63,7 +63,7 @@ public class MediaPlayerCtrl : MonoBehaviour {
 
 
   // DHC: Added to fix warnings
-  #if UNITY_ANDROID && !UNITY_EDITOR && UNITY_5
+  #if UNITY_ANDROID && !UNITY_EDITOR && UNITY_5_3_OR_NEWER
 	private int m_iAndroidMgrID;
   #endif
 	private bool m_bIsFirstFrameReady;
@@ -177,7 +177,7 @@ public class MediaPlayerCtrl : MonoBehaviour {
 		
 		#if UNITY_ANDROID && !UNITY_EDITOR 
 		
-		#if UNITY_5
+    #if UNITY_5_3_OR_NEWER
 		if( SystemInfo.graphicsMultiThreaded == true)
 			InitNDK();
 		#endif
@@ -762,7 +762,7 @@ public class MediaPlayerCtrl : MonoBehaviour {
 
 
     // DHC: Added to fix warnings
-    #if UNITY_ANDROID && !UNITY_EDITOR && UNITY_5
+    #if UNITY_ANDROID && !UNITY_EDITOR && UNITY_5_3_OR_NEWER
 		m_bIsFirstFrameReady = false;
     #endif
 
@@ -903,7 +903,7 @@ public class MediaPlayerCtrl : MonoBehaviour {
 	
 	private void Call_Destroy()
 	{
-		#if UNITY_5
+  #if UNITY_5_3_OR_NEWER
 		if( SystemInfo.graphicsMultiThreaded == true)
 		{
 // DHC: Changed to fix warnings
@@ -929,7 +929,7 @@ public class MediaPlayerCtrl : MonoBehaviour {
 	
 	private void Call_UnLoad()
 	{
-		#if UNITY_5
+  #if UNITY_5_3_OR_NEWER
 		if( SystemInfo.graphicsMultiThreaded == true)
 		{
 
@@ -955,7 +955,7 @@ public class MediaPlayerCtrl : MonoBehaviour {
 	
 	private bool Call_Load(string strFileName, int iSeek)
 	{
-		#if UNITY_5
+  #if UNITY_5_3_OR_NEWER
 		if( SystemInfo.graphicsMultiThreaded == true)
 		{
 			GetJavaObject().Call("NDK_SetFileName", strFileName);
@@ -1041,7 +1041,7 @@ public class MediaPlayerCtrl : MonoBehaviour {
 		}
 
 		
-		#if UNITY_5
+  #if UNITY_5_3_OR_NEWER
 		if( SystemInfo.graphicsMultiThreaded == true)
 		{
       // DHC: Changed to fix warnings
@@ -1141,7 +1141,7 @@ public class MediaPlayerCtrl : MonoBehaviour {
 	private void Call_SetWindowSize()
 	{
 		
-		#if UNITY_5
+  #if UNITY_5_3_OR_NEWER
 		if( SystemInfo.graphicsMultiThreaded == true)
 		{
 
@@ -1206,7 +1206,7 @@ public class MediaPlayerCtrl : MonoBehaviour {
 		AndroidJavaObject jo = jc.GetStatic<AndroidJavaObject>("currentActivity");
 		GetJavaObject().Call("SetUnityActivity", jo);
 		
-		#if UNITY_5
+  #if UNITY_5_3_OR_NEWER
 		if( SystemInfo.graphicsMultiThreaded == true)
 		{
       // DHC: Changed to fix warnings

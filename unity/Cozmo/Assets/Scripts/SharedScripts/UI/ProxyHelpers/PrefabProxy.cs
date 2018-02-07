@@ -86,11 +86,11 @@ public class PrefabProxy : MonoBehaviour {
       else {
         // if we hit a dead end, check if its caused by an
         // unexpanded prefab proxy
-        var next = t.FindChild(curr);
+        var next = t.Find(curr);
         if (next == null) {
           var proxy = t.GetComponent<PrefabProxy>();
           if (proxy != null) {
-            next = proxy.Expand().transform.FindChild(curr);
+            next = proxy.Expand().transform.Find(curr);
           }
         }
         return GetGameObjectInternal(next, path, index + 1);

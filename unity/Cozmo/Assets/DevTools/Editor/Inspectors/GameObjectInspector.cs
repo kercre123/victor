@@ -406,7 +406,7 @@ namespace UnityEditor {
       var node = GameObject.Find(path[1]).transform;
 
       for (int i = 2; i < path.Length; i++) {
-        node = node.FindChild(path[i]);
+        node = node.Find(path[i]);
         while (node.GetComponent<PrefabProxy>()) {
           node = node.GetChild(0);
         }
@@ -704,7 +704,7 @@ namespace UnityEditor {
         GenerateReferenceMappingsRecursive(root,
           node.GetChild(i),
           nextPrefab,
-          nextPrefabNode != null ? nextPrefabNode : (prefabNode != null ? prefabNode.FindChild(child.name) : null),
+          nextPrefabNode != null ? nextPrefabNode : (prefabNode != null ? prefabNode.Find(child.name) : null),
           localReferences,
           globalReferences,
           values);
@@ -932,20 +932,20 @@ namespace UnityEditor {
       float num2 = num * 3.8f;
       Quaternion quaternion = Quaternion.Euler(-this.previewDir.y, -this.previewDir.x, 0);
       Vector3 position = bounds.center - quaternion * (Vector3.forward * num2);
-      this.m_PreviewUtility.m_Camera.transform.position = position;
-      this.m_PreviewUtility.m_Camera.transform.rotation = quaternion;
-      this.m_PreviewUtility.m_Camera.nearClipPlane = num2 - num * 1.1f;
-      this.m_PreviewUtility.m_Camera.farClipPlane = num2 + num * 1.1f;
-      this.m_PreviewUtility.m_Light[0].intensity = 0.7f;
-      this.m_PreviewUtility.m_Light[0].transform.rotation = quaternion * Quaternion.Euler(40, 40, 0);
-      this.m_PreviewUtility.m_Light[1].intensity = 0.7f;
-      this.m_PreviewUtility.m_Light[1].transform.rotation = quaternion * Quaternion.Euler(340, 218, 177);
+      this.m_PreviewUtility.camera.transform.position = position;
+      this.m_PreviewUtility.camera.transform.rotation = quaternion;
+      this.m_PreviewUtility.camera.nearClipPlane = num2 - num * 1.1f;
+      this.m_PreviewUtility.camera.farClipPlane = num2 + num * 1.1f;
+      this.m_PreviewUtility.lights[0].intensity = 0.7f;
+      this.m_PreviewUtility.lights[0].transform.rotation = quaternion * Quaternion.Euler(40, 40, 0);
+      this.m_PreviewUtility.lights[1].intensity = 0.7f;
+      this.m_PreviewUtility.lights[1].transform.rotation = quaternion * Quaternion.Euler(340, 218, 177);
       Color ambient = new Color(0.1f, 0.1f, 0.1f, 0);
-      InternalEditorUtility.SetCustomLighting(this.m_PreviewUtility.m_Light, ambient);
+      InternalEditorUtility.SetCustomLighting(this.m_PreviewUtility.lights, ambient);
       bool fog = RenderSettings.fog;
       Unsupported.SetRenderSettingsUseFogNoDirty(false);
       GameObjectInspector.SetEnabledRecursive(gameObject, true);
-      this.m_PreviewUtility.m_Camera.Render();
+      this.m_PreviewUtility.camera.Render();
       GameObjectInspector.SetEnabledRecursive(gameObject, false);
       Unsupported.SetRenderSettingsUseFogNoDirty(fog);
       InternalEditorUtility.RemoveCustomLighting();
@@ -1268,8 +1268,8 @@ namespace UnityEditor {
     private void InitPreview() {
       if (this.m_PreviewUtility == null) {
         this.m_PreviewUtility = new PreviewRenderUtility(true);
-        this.m_PreviewUtility.m_CameraFieldOfView = 30;
-        this.m_PreviewUtility.m_Camera.cullingMask = 1 << Camera_PreviewCullingLayer;
+        this.m_PreviewUtility.cameraFieldOfView = 30;
+        this.m_PreviewUtility.camera.cullingMask = 1 << Camera_PreviewCullingLayer;
         this.CreatePreviewInstances();
       }
     }

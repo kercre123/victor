@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.6)
 project(unitygenerated-il2cpp)
 
-set(CXX_FLAGS "-fobjc-arc -Os -std=c++11 -stdlib=libc++")
+set(CXX_FLAGS "-fobjc-arc -Os -std=c++11 -stdlib=libc++ -DINIT_SCRIPTING_BACKEND=1 -DRUNTIME_IL2CPP=1 -fno-strict-overflow")
 set(CXX_FLAGS_IL2CPP "-Wno-return-type -Wno-extern-initializer")
 
 if(DEFINED ENV{IPHONEOS_DEPLOYMENT_TARGET})
