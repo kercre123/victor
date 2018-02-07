@@ -19,13 +19,13 @@
 #include "timer.h"
 #include "uart.h"
 
-#include "app_release_ver.h"
-u8 g_fixtureReleaseVersion = APP_RELEASE_VERSION;
-#define BUILD_INFO "Victor DVT2"
-
 //Set this flag to modify display info - indicates a debug/test build
 #include "app_build_flags.h"
 const bool g_isReleaseBuild = !NOT_FOR_FACTORY;
+
+#include "app_release_ver.h"
+u8 g_fixtureReleaseVersion = (NOT_FOR_FACTORY) ? 0 : (APP_RELEASE_VERSION);
+#define BUILD_INFO "Victor DVT2"
 
 #define APP_CMD_OPTS    ((CMD_OPTS_DEFAULT & ~CMD_OPTS_EXCEPTION_EN) | CMD_OPTS_DBG_PRINT_RSP_TIME)
 #define LCD_CMD_TIMEOUT 150 /*ms*/
@@ -109,11 +109,7 @@ void SetFixtureText(void)
     #endif
   
     //show build info and version
-    #if NOT_FOR_FACTORY
-      HelperLcdSetLine(8, snformat(b,bz,"%-15s v---", BUILD_INFO) );
-    #else
-      HelperLcdSetLine(8, snformat(b,bz,"%-15s v%03u", BUILD_INFO, g_fixtureReleaseVersion) );
-    #endif
+    HelperLcdSetLine(8, snformat(b,bz,"%-15s v%03u", BUILD_INFO, g_fixtureReleaseVersion) );
   }
   
   HelperLcdShow(0,0,'b', (char*)fixtureName());
@@ -189,6 +185,12 @@ void WaitForDeviceOff(bool error, int debounce_ms)
   SetFixtureText();
 }
 
+static void printFixtureInfo() {
+  ConsolePrintf("fixture,hw,%i,%s,serial,%i,%04x\n", Board::revision(), Board::revString(), FIXTURE_SERIAL, FIXTURE_SERIAL);
+  ConsolePrintf("fixture,build,%s,%s %s\n", BUILD_INFO, __DATE__, __TIME__);
+  ConsolePrintf("fixture,fw,%03d,%s,mode,%i,%s\n", g_fixtureReleaseVersion, (NOT_FOR_FACTORY > 0 ? "debug" : "release"), g_fixmode, fixtureName() );
+}
+
 // Walk through tests one by one - logging to the PC and to the Device flash
 int g_stepNumber;
 static void RunTests()
@@ -199,9 +201,7 @@ static void RunTests()
   cmdSend(CMD_IO_HELPER, "logstart", CMD_DEFAULT_TIMEOUT, APP_CMD_OPTS );
   
   ConsolePrintf("[TEST:START]\n");
-  ConsolePrintf("fixtureSerial,%i\n", FIXTURE_SERIAL);
-  ConsolePrintf("fixtureVersion,%i\n", FIXTURE_VERSION);
-  ConsolePrintf("fixtureRev,%s,v%d,%s\n", Board::revString(), g_fixtureReleaseVersion, NOT_FOR_FACTORY > 0 ? "debug" : "release");
+  printFixtureInfo();
   
   error_t error = ERROR_OK;
   try {
@@ -422,13 +422,8 @@ int main(void)
 
   Board::ledOn(Board::LED_RED);
   
-  ConsolePrintf("\n----- Victor Test Fixture: %s v%d -----\n", BUILD_INFO, ((NOT_FOR_FACTORY > 0) ? 0 : g_fixtureReleaseVersion) );
-  ConsolePrintf("Build date-time: %s %s\n", __DATE__, __TIME__);
-  ConsolePrintf("Serial: %d (0x%04x)\n", FIXTURE_SERIAL, FIXTURE_SERIAL);
-  ConsolePrintf("ConsoleMode=%u\n", g_app_reset.valid && g_app_reset.console.isInConsoleMode );
-  ConsolePrintf("Fixure Rev: %s\n", Board::revString() );
-  ConsolePrintf("Mode: %s (%i)\n", fixtureName(), g_fixmode );
-  
+  ConsolePrintf("\n----- Victor Test Fixture: -----\n");
+  printFixtureInfo();
   SetFixtureText();
   
   //DEBUG: runtime validation of the fixmode array
