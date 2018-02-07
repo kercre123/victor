@@ -131,6 +131,10 @@ CozmoAudioController::CozmoAudioController( const AnimContext* context )
     config.enableGameSyncPreparation  = true;
     config.enableStreamCache          = true;
 
+    // Set output for Victor Robot
+#ifdef VICOS
+    config.mainOutputSharesetName = "ALSA_SINK";
+#endif
 
     // Start your Engines!!!
     InitializeAudioEngine( config );
