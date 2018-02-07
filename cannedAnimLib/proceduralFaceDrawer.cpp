@@ -497,12 +497,11 @@ namespace Cozmo {
               f32 newValue = static_cast<f32>(std::max(glowValue,eyeValue));
               newValue *= noiseImg_i[j] * eyeLightness;
               
-              // Darken scanlines in pairs (thus the division by 2 before modding by 2).
               // Don't do scanlines in the glow region.
               const bool isPartOfEye = (eyeValue >= glowValue); // (and not part of glow)
               if(isPartOfEye)
               {
-                if((i/2) % 2)
+                if(ShouldApplyScanlineToRow(i))
                 {
                   newValue *= scanlineOpacity;
                 }
@@ -724,6 +723,24 @@ namespace Cozmo {
     }
     
   } // GetNextBlinkFrame()
-
+  
+  void ProceduralFaceDrawer::ApplyScanlines(Vision::ImageRGB& imageHsv, const float opacity)
+  {
+    DEV_ASSERT(Util::InRange(opacity, 0.f, 1.f), "ProceduralFaceDrawer.ApplyCurrentFaceHue.InvalidOpacity");
+    
+    const auto nRows = imageHsv.GetNumRows();
+    const auto nCols = imageHsv.GetNumCols();
+    
+    for (int i=0 ; i < nRows ; i++) {
+      if (ShouldApplyScanlineToRow(i)) {
+        auto* thisRow = imageHsv.GetRow(i);
+        for (int j=0 ; j < nCols ; j++) {
+          // the 'blue' channel in an HSV image is the value
+          thisRow[j].b() *= opacity;
+        }
+      }
+    }
+  }
+  
 } // namespace Cozmo
 } // namespace Anki

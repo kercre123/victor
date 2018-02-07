@@ -361,7 +361,7 @@ namespace Cozmo {
     auto& faceAnimTrack = _proceduralAnimation->GetTrack<FaceAnimationKeyFrame>();
     bool hasFaceAnimKeyFrame = !faceAnimTrack.IsEmpty();
 
-    // Clear FaceAnimationMAnager if not already playing
+    // Clear FaceAnimationManager if not already playing
     if (!hasFaceAnimKeyFrame) {
       faceAnimMgr->ClearAnimation(FaceAnimationManager::ProceduralAnimName);
     }
@@ -882,13 +882,49 @@ namespace Cozmo {
       if(shouldPlayFaceAnim)
       {
         auto & faceKeyFrame = faceAnimTrack.GetCurrentKeyFrame();
-        const bool gotImage = faceKeyFrame.GetFaceImage(_faceDrawBuf);
+        const bool isGrayscale = faceKeyFrame.IsGrayscale();
+        bool gotImage = false;
+        if (isGrayscale) {
+          Vision::Image faceGray;
+          gotImage = faceKeyFrame.GetFaceImage(faceGray);
+          if (gotImage) {
+            const float scanlineOpacity = faceKeyFrame.GetScanlineOpacity();
+            const bool applyScanlines = !Util::IsNear(scanlineOpacity, 1.f);
+            
+            // Create an HSV image from the gray image, replacing the 'hue'
+            // channel with the current face hue
+            const std::vector<cv::Mat> channels {
+              ProceduralFace::GetHueImage().get_CvMat_(),
+              ProceduralFace::GetSaturationImage().get_CvMat_(),
+              faceGray.get_CvMat_()
+            };
+            static Vision::ImageRGB faceHSV;
+            cv::merge(channels, faceHSV.get_CvMat_());
+            
+            if (applyScanlines) {
+              ProceduralFaceDrawer::ApplyScanlines(faceHSV, scanlineOpacity);
+            }
+              
+            // convert HSV -> RGB
+            cv::cvtColor(faceHSV.get_CvMat_(), faceHSV.get_CvMat_(), CV_HSV2RGB);
+            // convert RGB -> RGB565
+            _faceDrawBuf.SetFromImageRGB(faceHSV);
+          }
+        } else {
+          // Display the ImageRGB565 directly to the face, without modification
+          gotImage = faceKeyFrame.GetFaceImage(_faceDrawBuf);
+        }
+        
         if (gotImage) {
           DEBUG_STREAM_KEYFRAME_MESSAGE("FaceAnimation");
           BufferFaceToSend(_faceDrawBuf, false);  // Don't overwrite FaceAnimationKeyFrame images
+        } else {
+          PRINT_NAMED_ERROR("AnimationStreamer.UpdateStream", "%s: Failed retrieving face image.",
+                            anim->GetName().c_str());
         }
-        
+
         if(faceKeyFrame.IsDone()) {
+          faceKeyFrame.Reset();
           faceAnimTrack.MoveToNextKeyFrame();
         }
       }
