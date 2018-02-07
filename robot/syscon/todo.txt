@@ -1,10 +1,7 @@
 DVT2
 x Always transmit mic data
 x add message for head to turn off cozmo power (head and body)
-x add "sensors valid" flag
-x Add temperature to ADC output
-x report up opto sensors for self test
-x turn off encoders / TOF / cliff sensors when drop exchange has timed out
+x report i2c error to head
 x Mic "failure" detect
 x Hold recovery (Tx) low until valid packet received
 x Microdrop for the bootloader (button state)

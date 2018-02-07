@@ -101,7 +101,7 @@ void Mics::init(void) {
 
 void Mics::errorCode(uint16_t* data) {
   data[0] = *(uint16_t*)&pdm_data[0][0];
-  data[0] = *(uint16_t*)&pdm_data[1][0];
+  data[1] = *(uint16_t*)&pdm_data[1][0];
 }
 
 void Mics::transmit(int16_t* payload) {
