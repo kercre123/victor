@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+if [ "$#" -ne 2 ]; then
+  echo Usage: $0 VICTOR_REPO_PATH OUTPUT_BINARY
+  exit 1
+fi
+
 VICTOR_REPO_PATH=$1
 OUTPUT_BINARY=$2
 CORETECH_EXTERNAL_DIR=${VICTOR_REPO_PATH}/EXTERNALS/coretech_external

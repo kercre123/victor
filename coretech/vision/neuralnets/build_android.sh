@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+if [ "$#" -ne 3 ]; then
+  echo Usage: $0 VICTOR_REPO_PATH NDK_ROOT OUTPUT_BINARY
+  exit 1
+fi
+
 VICTOR_REPO_PATH=$1
 NDK_ROOT=$2
 OUTPUT_BINARY=$3
