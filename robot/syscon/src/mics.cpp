@@ -96,7 +96,7 @@ void Mics::init(void) {
   NVIC_EnableIRQ(DMA1_Channel2_3_IRQn);
   NVIC_SetPriority(DMA1_Channel2_3_IRQn, PRIORITY_MICS);
 
-  start_mic_spi(TIM_CR1_CEN, MIC_SPI_CR1, (void*)&TIM15->CR1);
+  //start_mic_spi(TIM_CR1_CEN, MIC_SPI_CR1, (void*)&TIM15->CR1);
 }
 
 void Mics::errorCode(uint16_t* data) {

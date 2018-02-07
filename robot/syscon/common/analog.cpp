@@ -28,6 +28,7 @@ static const int MINIMUM_VEXT_TIME = 20; // 0.1s
 
 static const int BUTTON_THRESHOLD = ADC_VOLTS(6.5);
 static const int BOUNCE_LENGTH = 3;
+static const int MINIMUM_RELEASE_UNSTUCK = 20;
 
 static volatile bool onBatPower;
 static bool chargeAllowed;
@@ -37,6 +38,7 @@ static bool last_vext = false;
 static bool bouncy_button = false;
 static int bouncy_count = 0;
 static int hold_count = 0;
+static int total_release = 0;
 
 uint16_t volatile Analog::values[ADC_CHANNELS];
 bool Analog::button_pressed = false;
@@ -114,6 +116,8 @@ void Analog::init(void) {
 
   Analog::allowCharge(true);
   #endif
+
+  total_release = 0;
 }
 
 void Analog::stop(void) {
@@ -153,10 +157,6 @@ bool Analog::delayCharge() {
 }
 
 void Analog::tick(void) {
-  static const int MINIMUM_RELEASE_UNSTUCK = 10;
-  static int total_release = 0;
-  
-
   // On-charger delay
   bool vext_now = Analog::values[ADC_VEXT] >= TRANSITION_POINT;
 
@@ -186,6 +186,8 @@ void Analog::tick(void) {
     } else {
       total_release = 0;
     }
+
+    return ;
   }
 
   // Debounce the button
