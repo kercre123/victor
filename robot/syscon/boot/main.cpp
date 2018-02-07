@@ -12,7 +12,7 @@
 #include "common.h"
 #include "hardware.h"
 
-#define DISABLE_WDOG
+//#define DISABLE_WDOG
 
 extern "C" void StartApplication(const uint32_t* stack, VectorPtr reset);
 
@@ -97,7 +97,7 @@ int main(void) {
     Comms::run();
   } else if (~RCC->CSR & RCC_CSR_PINRSTF) {
     // Hardware watchdog trap
-    //Comms::run();
+    Comms::run();
   }
   
   // Clear reset pin flag (for reset detect)
