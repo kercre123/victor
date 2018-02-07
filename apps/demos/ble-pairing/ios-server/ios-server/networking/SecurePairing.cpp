@@ -85,7 +85,7 @@ void Anki::Networking::SecurePairing::SendPublicKey() {
   uint8_t* publicKey = (uint8_t*)_KeyExchange->GenerateKeys();
   
   // Send message and update our state
-  SendPlainText<PublicKeyMessage>(PublicKeyMessage((char*)publicKey));
+  SendPlainText(PublicKeyMessage((char*)publicKey));
 
   _State = PairingState::AwaitingPublicKey;
 }
@@ -176,7 +176,7 @@ void Anki::Networking::SecurePairing::SendNonce() {
   _Stream->SetNonce(_KeyExchange->GetNonce());
   
   // Send nonce (in the clear) to client, update our state
-  SendPlainText<NonceMessage>(NonceMessage((char*)_KeyExchange->GetNonce()));
+  SendPlainText(NonceMessage((char*)_KeyExchange->GetNonce()));
   _State = PairingState::AwaitingNonceAck;
 }
 
@@ -188,21 +188,20 @@ void Anki::Networking::SecurePairing::SendChallenge() {
   randombytes_buf(&_PingChallenge, sizeof(uint32_t));
   
   // Send challenge and update state
-  ChallengeMessage_crypto msg = ChallengeMessage_crypto(_PingChallenge);
-  SendEncrypted<ChallengeMessage_crypto>(msg);
+  SendEncrypted(ChallengeMessage_crypto(_PingChallenge));
   
   _State = PairingState::AwaitingChallengeResponse;
 }
 
 void Anki::Networking::SecurePairing::SendChallengeSuccess() {
   // Send challenge and update state
-  SendEncrypted<ChallengeMessage_crypto>(ChallengeAcceptedMessage_crypto());
+  SendEncrypted(ChallengeAcceptedMessage_crypto());
   _State = PairingState::ConfirmedSharedSecret;
 }
 
 void Anki::Networking::SecurePairing::SendCancelPairing() {
   // Send challenge and update state
-  SendPlainText<CancelMessage>(CancelMessage());
+  SendPlainText(CancelMessage());
   Log::Write("Canceling pairing.");
 }
 
@@ -357,8 +356,10 @@ void Anki::Networking::SecurePairing::IncrementAbnormalityCount() {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Send messages methods
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 template<class T>
-void Anki::Networking::SecurePairing::SendPlainText(const Anki::Networking::Message& message) {
+typename std::enable_if<std::is_base_of<Anki::Networking::Message, T>::value, void>::type
+Anki::Networking::SecurePairing::SendPlainText(const T& message) {
   uint32_t length;
   uint8_t* buffer = (uint8_t*)Anki::Networking::Message::CastToBuffer<T>((T*)&message, &length);
   
@@ -366,7 +367,8 @@ void Anki::Networking::SecurePairing::SendPlainText(const Anki::Networking::Mess
 }
 
 template<class T>
-void Anki::Networking::SecurePairing::SendEncrypted(const Anki::Networking::Message& message) {
+typename std::enable_if<std::is_base_of<Anki::Networking::Message, T>::value, void>::type
+Anki::Networking::SecurePairing::SendEncrypted(const T& message) {
   uint32_t length;
   uint8_t* buffer = (uint8_t*)Anki::Networking::Message::CastToBuffer<T>((T*)&message, &length);
   
@@ -376,8 +378,13 @@ void Anki::Networking::SecurePairing::SendEncrypted(const Anki::Networking::Mess
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Static methods
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 void Anki::Networking::SecurePairing::sEvTimerHandler(struct ev_loop* loop, struct ev_timer* w, int revents)
 {
   struct ev_TimerStruct *wData = (struct ev_TimerStruct*)w;
   wData->signal->emit();
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// EOF
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -91,9 +91,12 @@ namespace Anki {
       void Reset();
       
       template <class T>
-      void SendPlainText(const Anki::Networking::Message& message);
+      typename std::enable_if<std::is_base_of<Anki::Networking::Message, T>::value, void>::type
+      SendPlainText(const T& message);
+      
       template <class T>
-      void SendEncrypted(const Anki::Networking::Message& message);
+      typename std::enable_if<std::is_base_of<Anki::Networking::Message, T>::value, void>::type
+      SendEncrypted(const T& message);
       
       void HandleMessageReceived(uint8_t* bytes, uint32_t length);
       void HandleEncryptedMessageReceived(uint8_t* bytes, uint32_t length);
