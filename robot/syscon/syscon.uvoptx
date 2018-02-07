@@ -185,7 +185,7 @@
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>\vmware-host\Shared Folders\github\victor\robot\syscon\src\power.cpp</Filename>
+          <Filename>\\vmware-host\Shared Folders\vmware-host\Shared Folders\github\victor\robot\syscon\src\power.cpp</Filename>
           <ExecCommand></ExecCommand>
           <Expression>\\syscon\src/power.cpp\151</Expression>
         </Bp>
@@ -201,7 +201,7 @@
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>\vmware-host\Shared Folders\github\victor\robot\syscon\src\main.cpp</Filename>
+          <Filename>\\vmware-host\Shared Folders\vmware-host\Shared Folders\github\victor\robot\syscon\src\main.cpp</Filename>
           <ExecCommand></ExecCommand>
           <Expression>\\syscon\src/main.cpp\36</Expression>
         </Bp>

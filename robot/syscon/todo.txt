@@ -7,10 +7,8 @@ x report up opto sensors for self test
 x turn off encoders / TOF / cliff sensors when drop exchange has timed out
 x Mic "failure" detect
 x Hold recovery (Tx) low until valid packet received
-x Have a "ignore on" state for stuck button
 x Microdrop for the bootloader (button state)
 
-* Speed up /96 decimator (too slow currently)
 * 3.3v auto power off
 * Put opto sensors to sleep when asked
 * Reenterant gpio alteration

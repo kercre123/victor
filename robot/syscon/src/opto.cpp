@@ -50,7 +50,8 @@ struct SequenceStepTimeouts
 #define TARGET(value) sizeof(value), (void*)&value
 
 static bool aborted_setup = false;
-static BootFail failure;
+FailureCode Opto::failure = BOOT_FAIL_NONE;
+static FailureCode runLevel = BOOT_FAIL_NONE;
 
 // Readback values
 static uint16_t cliffSense[4];
@@ -190,7 +191,7 @@ static bool multiOp(I2C_Op func, uint8_t channel, uint8_t slave, uint8_t reg, in
   do {
     // Welp, something went wrong, we should just give up
     if (max_retries-- == 0) {
-      Comms::enqueue(PAYLOAD_BOOT_FAIL, &failure, sizeof(failure));
+      Opto::failure = runLevel;
       aborted_setup = true;
       return true;
     }
@@ -462,7 +463,7 @@ static void initHardware() {
 
   // Turn on and configure the drop sensors
   for (int i = 0; i < 4; i++) {
-    failure.code = BOOT_FAIL_CLIFF1 + i;
+    runLevel = BOOT_FAIL_CLIFF1 + i;
     writeReg(i, DROP_SENSOR_ADDRESS, MAIN_CTRL, 0x01);
     writeReg(i, DROP_SENSOR_ADDRESS, PS_LED, 6 | (5 << 4));
     writeReg(i, DROP_SENSOR_ADDRESS, PS_PULSES, 8);
@@ -472,7 +473,7 @@ static void initHardware() {
   }
 
   #ifndef DISABLE_TOF
-  failure.code = BOOT_FAIL_TOF;
+  runLevel = BOOT_FAIL_TOF;
   // Turn on TOF sensor
   // "Set I2C standard mode"
   writeReg(0, TOF_SENSOR_ADDRESS, 0x88, 0x00);

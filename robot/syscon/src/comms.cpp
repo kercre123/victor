@@ -203,6 +203,7 @@ void Comms::tick(void) {
   Analog::transmit(&outboundPacket.sync.payload);
   Motors::transmit(&outboundPacket.sync.payload);
   Opto::transmit(&outboundPacket.sync.payload);
+  outboundPacket.sync.payload.failureCode = Opto::failure;
 #if MICDATA_ENABLED
   Mics::transmit(outboundPacket.sync.payload.audio);
   Mics::errorCode(outboundPacket.sync.payload.micError);

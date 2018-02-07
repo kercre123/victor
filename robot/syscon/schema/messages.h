@@ -67,9 +67,8 @@ enum {
   PAYLOAD_VALIDATE    = 0x7374,
   PAYLOAD_DFU_PACKET  = 0x6675,
   PAYLOAD_SHUT_DOWN   = 0x6473,
-  PAYLOAD_BOOT_FAIL   = 0x6662,
-  PAYLOAD_BOOT_FRAME  = 0x6266,
-  PAYLOAD_TYPE_COUNT  = 11,
+  PAYLOAD_BOOT_FRAME  = 0x6662,
+  PAYLOAD_TYPE_COUNT  = 10,
 };
 typedef uint16_t PayloadId;
 
@@ -95,7 +94,7 @@ enum {
   isOnCharger = 0x2,
   chargerOOS  = 0x4,
 };
-typedef uint32_t BatteryFlags;
+typedef uint16_t BatteryFlags;
 
 // ENUM PowerState
 enum {
@@ -133,13 +132,14 @@ typedef uint32_t LedIndexes;
 #define LED_CHANEL_CT 3  //RGB
 
 enum {
-  BOOT_FAIL_CLIFF1 = 0xFF000000,
-  BOOT_FAIL_CLIFF2 = 0xFF000001,
-  BOOT_FAIL_CLIFF3 = 0xFF000002,
-  BOOT_FAIL_CLIFF4 = 0xFF000003,
-  BOOT_FAIL_TOF    = 0xFF000004
+  BOOT_FAIL_NONE   = 0x00,
+  BOOT_FAIL_CLIFF1 = 0x00,
+  BOOT_FAIL_CLIFF2 = 0x01,
+  BOOT_FAIL_CLIFF3 = 0x02,
+  BOOT_FAIL_CLIFF4 = 0x03,
+  BOOT_FAIL_TOF    = 0x04,
 };
-typedef uint32_t FailureCode;
+typedef uint8_t FailureCode;
 
 struct MotorPower
 {
@@ -154,7 +154,6 @@ struct BatteryState
   int16_t battery;
   int16_t charger;
   int16_t temperature;
-  int16_t _unused;
   BatteryFlags flags;
 };
 
@@ -173,10 +172,6 @@ struct RangeData
   uint16_t spadCount;
   uint16_t spare2;
   uint32_t calibrationResult;
-};
-
-struct BootFail {
-  FailureCode code;
 };
 
 struct ProcessorStatus
@@ -212,10 +207,13 @@ struct SpineMessageFooter
 struct BodyToHead
 {
   uint32_t framecounter;
-  uint32_t flags;
+  uint8_t flags;
+  FailureCode failureCode;
+  uint16_t _unused0;
   struct MotorState motor[4];
   uint16_t cliffSense[4];
   struct BatteryState battery;
+  uint32_t _unused1;
   struct RangeData proximity;
   uint16_t touchLevel[2];
   uint16_t micError[2]; // Raw bits from a segment of mic data (stuck bit detect)

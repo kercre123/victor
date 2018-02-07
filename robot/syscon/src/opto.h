@@ -4,6 +4,8 @@
 #include "messages.h"
 
 namespace Opto {
+  extern FailureCode failure;
+
   void init(void);
   void stop(void);
   void tick(void);
