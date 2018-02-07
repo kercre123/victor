@@ -154,7 +154,6 @@ static void decimate(const uint8_t* input, int32_t* accumulator,  int16_t* outpu
     int32_t acc_l = 0;
     int32_t acc_r = 0;
 
-    /*
     STAGE2( 8);
     STAGE2( 9);
     STAGE2(10);
@@ -167,7 +166,6 @@ static void decimate(const uint8_t* input, int32_t* accumulator,  int16_t* outpu
     STAGE3( 5);
     STAGE3( 6);
     STAGE3_A();
-    */
 
     output += 4;
   }
@@ -176,7 +174,7 @@ static void decimate(const uint8_t* input, int32_t* accumulator,  int16_t* outpu
 extern "C" void DMA1_Channel2_3_IRQHandler(void) {
   static int16_t *index = audio_data[0];
   uint32_t isr = DMA1->ISR;
-  DMA1->IFCR = isr;
+  DMA1->IFCR = DMA_ISR_GIF2;
 
   static int32_t accumulator[2][4]; // 2 data lines, 2 channels, 2 accumulators
 

@@ -116,8 +116,6 @@ void Analog::init(void) {
 
   Analog::allowCharge(true);
   #endif
-
-  total_release = 0;
 }
 
 void Analog::stop(void) {
