@@ -136,6 +136,9 @@ namespace Vision {
     // (BGR in general)
     virtual void ConvertToShowableFormat(cv::Mat& showImg) const = 0;
 
+    // Runs a boxFilter of the given size on this image outputing filtered
+    virtual void BoxFilter(ImageBase<T>& filtered, u32 size) const;
+
   protected:
     template<typename DerivedType>
     DerivedType GetROI(Rectangle<s32>& roiRect);
@@ -212,6 +215,8 @@ namespace Vision {
     virtual s32 GetNumChannels() const override { return 1; }
 
     virtual void ConvertToShowableFormat(cv::Mat& showImg) const override;
+
+    void BoxFilter(ImageBase<u8>& filtered, u32 size) const override;
 
   protected:
     virtual cv::Scalar GetCvColor(const ColorRGBA& color) const override;

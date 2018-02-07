@@ -1063,8 +1063,9 @@ namespace Cozmo {
     }
     else if(kPostClaheSmooth < 0)
     {
-      cv::boxFilter(claheImage.get_CvMat_(), claheImage.get_CvMat_(), -1,
-                    cv::Size(-kPostClaheSmooth, -kPostClaheSmooth));
+      static Vision::Image temp(claheImage.GetNumRows(), claheImage.GetNumCols());
+      claheImage.BoxFilter(temp, -kPostClaheSmooth);
+      std::swap(claheImage, temp);
     }
     Toc("CLAHE");
     
@@ -1251,7 +1252,7 @@ namespace Cozmo {
                           "Must be initialized and have calibrated camera to Update");
       return RESULT_FAIL;
     }
-    
+
     // Make it possible to toggle vision modes using console vars:
     if(kToggleVisionMode > 0)
     {
