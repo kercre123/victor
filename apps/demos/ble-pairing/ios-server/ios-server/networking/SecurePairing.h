@@ -91,9 +91,9 @@ namespace Anki {
       void Reset();
       
       template <class T>
-      void SendPlainText(Anki::Networking::Message message);
+      void SendPlainText(const Anki::Networking::Message& message);
       template <class T>
-      void SendEncrypted(Anki::Networking::Message message);
+      void SendEncrypted(const Anki::Networking::Message& message);
       
       void HandleMessageReceived(uint8_t* bytes, uint32_t length);
       void HandleEncryptedMessageReceived(uint8_t* bytes, uint32_t length);

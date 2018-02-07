@@ -125,10 +125,7 @@ function onConnect(peripheral) {
             } else if(data[0] == MSG_NONCE) { 
                 decryptNonce = Buffer.from(data.slice(1));
                 encryptNonce = Buffer.from(data.slice(1));
-
-                console.log("ENCRYPT_NONCE");
-                console.log(encryptNonce);
-
+                
                 if(enteredPin) {
                     sendMessage(Buffer.from([1, MSG_NONCE]), false);
                 }

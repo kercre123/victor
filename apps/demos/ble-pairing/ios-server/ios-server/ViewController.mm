@@ -63,7 +63,6 @@
     securePairing = std::unique_ptr<Anki::Networking::SecurePairing>(new Anki::Networking::SecurePairing(stream, ev_default_loop(0)));
   }
   
-  NSLog(@"A");
   dispatch_async(pairingQueue, ^(void) {
     void (^wifiHandler)(std::string, std::string) = ^(std::string ssid, std::string pw) {
       NEHotspotConfiguration* wifi = [[NEHotspotConfiguration alloc] initWithSSID:[NSString stringWithUTF8String:ssid.c_str()] passphrase:[NSString stringWithUTF8String:pw.c_str()] isWEP:false];

@@ -358,7 +358,7 @@ void Anki::Networking::SecurePairing::IncrementAbnormalityCount() {
 // Send messages methods
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<class T>
-void Anki::Networking::SecurePairing::SendPlainText(Anki::Networking::Message message) {
+void Anki::Networking::SecurePairing::SendPlainText(const Anki::Networking::Message& message) {
   uint32_t length;
   uint8_t* buffer = (uint8_t*)Anki::Networking::Message::CastToBuffer<T>((T*)&message, &length);
   
@@ -366,7 +366,7 @@ void Anki::Networking::SecurePairing::SendPlainText(Anki::Networking::Message me
 }
 
 template<class T>
-void Anki::Networking::SecurePairing::SendEncrypted(Anki::Networking::Message message) {
+void Anki::Networking::SecurePairing::SendEncrypted(const Anki::Networking::Message& message) {
   uint32_t length;
   uint8_t* buffer = (uint8_t*)Anki::Networking::Message::CastToBuffer<T>((T*)&message, &length);
   

@@ -157,7 +157,6 @@ didUnsubscribeFromCharacteristic:(CBCharacteristic *)characteristic {
 
 - (void)peripheralManager:(CBPeripheralManager *)peripheral
   didReceiveWriteRequests:(NSArray<CBATTRequest *> *)requests {
-  NSLog(@"Receiving a msg");
   for(int i = 0; i < requests.count; i++) {
     if(requests[i].characteristic.UUID.UUIDString == CH_READ.UUID.UUIDString) {
       // We are receiving input to read stream
