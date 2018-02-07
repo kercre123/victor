@@ -41,8 +41,9 @@ func CreateProcess() (*Harness, error) {
 	fmt.Println("Got harness connections")
 
 	kill := make(chan struct{})
+	micPipe := cloudproc.NewIpcPipe(micClient, nil, kill)
 
-	go cloudproc.RunProcess(micClient, aiClient, nil, kill)
+	go cloudproc.RunProcess(micPipe, aiClient, kill)
 
 	return &Harness{
 		Mic:   micConn,

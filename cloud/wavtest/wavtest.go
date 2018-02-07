@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sync"
 	"time"
 
 	"anki/cloudproc"
@@ -67,8 +68,17 @@ func main() {
 			fmt.Println("Couldn't create test cloud process:", err)
 			return
 		}
-		conn = harness.Mic
 		defer harness.Close()
+
+		conn = harness.Mic
+		wg := sync.WaitGroup{}
+		go func() {
+			wg.Add(1)
+			defer wg.Done()
+			buf := harness.AI.ReadBlock()
+			fmt.Println("Got AI response:", string(buf))
+		}()
+		defer wg.Wait()
 	} else {
 		conn, err = ipc.NewUnixgramClient(ipc.GetSocketPath("cp_test"), "wavtester")
 		if err != nil {

@@ -57,5 +57,6 @@ func main() {
 	flag.BoolVar(&verbose, "verbose", false, "enable verbose logging")
 	flag.Parse()
 	cloudproc.SetVerbose(verbose)
-	cloudproc.RunProcess(micSock, aiSock, testChan, nil)
+	micPipe := cloudproc.NewIpcPipe(micSock, testChan, nil)
+	cloudproc.RunProcess(micPipe, aiSock, nil)
 }
