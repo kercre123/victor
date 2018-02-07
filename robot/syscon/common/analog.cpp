@@ -19,6 +19,7 @@ static const int SELECTED_CHANNELS = 0
   | ADC_CHSELR_CHSEL17
   ;
 
+static const uint16_t LOW_BAT_POINT = ADC_VOLTS(3.3);
 static const uint16_t TRANSITION_POINT = ADC_VOLTS(4.5);
 static const uint32_t FALLING_EDGE = ADC_WINDOW(TRANSITION_POINT, ~0);
 
@@ -157,6 +158,11 @@ bool Analog::delayCharge() {
 void Analog::tick(void) {
   // On-charger delay
   bool vext_now = Analog::values[ADC_VEXT] >= TRANSITION_POINT;
+
+  // Emergency trap (V3.3)
+  if (!is_charging && Analog::values[ADC_VMAIN] < LOW_BAT_POINT) {
+    Power::setMode(POWER_STOP);
+  }
 
   // Debounced VEXT line
   if (vext_now && last_vext) {
