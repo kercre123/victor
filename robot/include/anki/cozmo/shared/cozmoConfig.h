@@ -65,11 +65,12 @@ namespace Cozmo {
   // issue with moving the lift when it is at a limit. The lift arm
   // flies off of the robot and comes back! So for now, we just don't
   // drive the lift down that far. We also skip calibration in sim.
-  const f32 LIFT_HEIGHT_LOWDOCK               = 32.f; // For interfacing with a cube that is on the ground.
-  const f32 LIFT_HEIGHT_OCCLUDING_PROX_SENSOR = 41.f; // At this lift height, the lift crossbar is directly occluding the prox sensor's beam.
-  const f32 LIFT_HEIGHT_HIGHDOCK              = 76.f; // For interfacing with a cube that is stacked on top of another cube.
-  const f32 LIFT_HEIGHT_CARRY                 = 92.f; // Cube carrying height.
-  const f32 LIFT_HEIGHT_LOW_ROLL              = 68.f; // For rolling a cube that is on the ground.
+  const f32 LIFT_HEIGHT_LOWDOCK                   = 32.f; // For interfacing with a cube that is on the ground.
+  const f32 LIFT_HEIGHT_OCCLUDING_PROX_SENSOR_MIN = 36.f; // Between these min/max lift heights, the lift interferes with the prox sensor's beam.
+  const f32 LIFT_HEIGHT_OCCLUDING_PROX_SENSOR_MAX = 50.f; // (see above)
+  const f32 LIFT_HEIGHT_HIGHDOCK                  = 76.f; // For interfacing with a cube that is stacked on top of another cube.
+  const f32 LIFT_HEIGHT_CARRY                     = 92.f; // Cube carrying height.
+  const f32 LIFT_HEIGHT_LOW_ROLL                  = 68.f; // For rolling a cube that is on the ground.
   
   // Distance between the lift shoulder joint and the lift "wrist" joint where arm attaches to fork assembly
   const f32 LIFT_ARM_LENGTH = 66.f;
@@ -237,10 +238,16 @@ namespace Cozmo {
   const u32 CLIFF_EVENT_DELAY_MS = 500;
   
   // Anim process timing consts
-  const u32 ANIM_TIME_STEP_MS = 33; //ms
+  const u32 ANIM_TIME_STEP_MS = 33;
   const u32 ANIM_TIME_STEP_US = ANIM_TIME_STEP_MS * 1000;
   const s32 ANIM_OVERTIME_WARNING_THRESH_MS = 5;
   const s32 ANIM_OVERTIME_WARNING_THRESH_US = ANIM_OVERTIME_WARNING_THRESH_MS * 1000;
+  
+  // Web server process timing consts; much more lax
+  const u32 WEB_SERVER_TIME_STEP_MS = 100;
+  const u32 WEB_SERVER_TIME_STEP_US = WEB_SERVER_TIME_STEP_MS * 1000;
+  const s32 WEB_SERVER_OVERTIME_WARNING_THRESH_MS = 500;
+  const s32 WEB_SERVER_OVERTIME_WARNING_THRESH_US = WEB_SERVER_OVERTIME_WARNING_THRESH_MS * 1000;
   
   /***************************************************************************
    *

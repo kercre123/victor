@@ -37,7 +37,7 @@ BehaviorFindFaces::BehaviorFindFaces(const Json::Value& config)
 {
   JsonTools::GetValueOptional(config, "maxFaceAgeToLook_ms", _maxFaceAgeToLook_ms);
   
-  const std::string& debugName = "Behavior" + GetIDStr() + ".LoadConfig";
+  const std::string& debugName = "Behavior" + GetDebugLabel() + ".LoadConfig";
 
   const auto& conditionStr = JsonTools::ParseString(config, "stoppingCondition", debugName);
   _stoppingCondition = StoppingConditionFromString(conditionStr);

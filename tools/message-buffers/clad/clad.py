@@ -101,7 +101,7 @@ class CLADParser(PLYParser):
         lineno = 1
         for line in lines:
             self._lines_to_coords.append(Coord(filename, directory, lineno))
-            m = re.match(self._include_directive_re, line);
+            m = re.match(self._include_directive_re, line)
             if m:
                 include_file_path = m.group(1)
                 for input_directory in self._input_directories:
@@ -111,7 +111,7 @@ class CLADParser(PLYParser):
                         break
                 else:
                     raise ParseError(self._lines_to_coords[-1],
-                                     'Could not find file "{0}"\nInclude directories seached:\n\t{1}\n'.format(
+                                     'Could not find file "{0}"\nInclude directories searched:\n\t{1}\n'.format(
                                         include_file_path, '\n\t'.join(self._input_directories)))
                 processed_text.append("// " + line)
                 try:
@@ -185,16 +185,16 @@ class CLADParser(PLYParser):
                 if member.initializer:
                     str_value = None
                     value = member.initializer.value
-                    
+                  
                     if member.initializer.type == "hex":
                         value = hex(value)
                         isHex = True
-                    
+
                     # if the enum value is initialized with a string then set str_value and reset value
                     if type(value) is str:
                         str_value = value
                         value = 0
-                
+
                 if type(value) is not str and not (enum.storage_type.min <= value <= enum.storage_type.max):
                     raise ParseError(
                         member.coord,
@@ -202,7 +202,7 @@ class CLADParser(PLYParser):
                         enum.fully_qualified_name(),
                         member.name,
                         enum.storage_type.name))
-                
+
                 # if the enum value is a string add " + <incrementing value>" to the end of the string so the actual generated value
                 # is incrementing
                 if str_value is not None:
@@ -303,7 +303,7 @@ class CLADParser(PLYParser):
                 value += 1
 
     def _postprocess_enum_concepts(self):
-        # For every enum concept check that 
+        # For every enum concept check that
         # 1) It is using a valid Enum
         # 2) There is a 1 - 1 mapping for all entries in both the EnumConcept and the Enum it is working on
         for enum_concept in self._enum_concepts:
@@ -407,7 +407,7 @@ class CLADParser(PLYParser):
         return t
 
     def _get_type_or_namespace(self, m_typename):
-        namespace = self._get_current_namespace();
+        namespace = self._get_current_namespace()
         while True:
             typename = m_typename
             if namespace is not None:
@@ -416,9 +416,9 @@ class CLADParser(PLYParser):
             if t is not None:
                 return t
             if namespace is None:
-                break;
+                break
             namespace = namespace.namespace
-        return None;
+        return None
 
     def _add_namespace(self, new_namespace):
         namespace_name = new_namespace.fully_qualified_name()

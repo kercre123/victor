@@ -193,6 +193,10 @@ namespace Anki {
       
     protected:
       
+      // IDockAction derived classes nearly universally require the same VisionModes. Special cases should
+      // override this function.
+      virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const override;
+
       // IDockAction implements these two required methods from IAction for its
       // derived classes
       virtual ActionResult Init() override final;
@@ -278,11 +282,11 @@ namespace Anki {
       // Name of animation to play when moving lift post-dock
       AnimationTrigger           _liftMovingAnimation = AnimationTrigger::Count;
       
-      AnimationTag               _squintLayerTag = kNotAnimatingTag;
-      
       bool _shouldSetCubeLights      = false;
       bool _lightsSet                = false;
       bool _visuallyVerifyObjectOnly = false;
+      
+      const std::string _kEyeSquintLayerName = "IDockActionEyeSquintLayer";
       
     }; // class IDockAction
     

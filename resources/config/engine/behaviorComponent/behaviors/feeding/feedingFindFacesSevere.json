@@ -1,7 +1,6 @@
 {
   "behaviorClass": "FindFaces",
   "behaviorID": "FeedingFindFacesSevere",
-  "displayNameKey":"behavior.LookingForFaces",
   
   "maxFaceAgeToLook_ms": 180000,
 

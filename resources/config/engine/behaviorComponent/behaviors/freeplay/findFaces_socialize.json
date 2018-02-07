@@ -3,7 +3,6 @@
   "behaviorClass": "FindFaces",
   "behaviorID": "FindFaces_socialize",
   "executableBehaviorType": "FindFaces",
-  "displayNameKey":"behavior.LookingForFaces",
   
   "maxFaceAgeToLook_ms": 180000,
 

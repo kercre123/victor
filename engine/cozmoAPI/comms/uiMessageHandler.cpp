@@ -65,7 +65,7 @@ static const u32 kPingTimeoutForDisconnect_ms = 5000;
 namespace Anki {
   namespace Cozmo {
     
-    
+
 #if (defined(ANKI_PLATFORM_IOS) || defined(ANKI_PLATFORM_ANDROID))
   #define ANKI_ENABLE_SDK_OVER_UDP  0
   #if defined(SHIPPING)
@@ -73,7 +73,9 @@ namespace Anki {
   #else
     CONSOLE_VAR(bool, kEnableSdkCommsInInternalSdk, "Sdk", true);
   #endif
-  CONSOLE_VAR(bool, kEnableSdkCommsAlways,  "Sdk", false);
+  // TODO: This variable may not make sense in a world where all 
+  // communication is through an SDK interface.
+  CONSOLE_VAR(bool, kEnableSdkCommsAlways,  "Sdk", true);
 #else
   #define ANKI_ENABLE_SDK_OVER_UDP  0
   CONSOLE_VAR(bool, kEnableSdkCommsAlways,  "Sdk", true);

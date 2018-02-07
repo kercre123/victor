@@ -75,8 +75,8 @@ struct BehaviorObjectiveAchieved;
 // operates
 struct BehaviorOperationModifiers{
   BehaviorOperationModifiers(){
-    visionModesForActivatableScope = std::make_unique<std::vector<VisionModeRequest>>();
-    visionModesForActiveScope = std::make_unique<std::vector<VisionModeRequest>>();
+    visionModesForActivatableScope = std::make_unique<std::set<VisionModeRequest>>();
+    visionModesForActiveScope = std::make_unique<std::set<VisionModeRequest>>();
   }
 
   // WantsToBeActivated modifiers
@@ -95,8 +95,8 @@ struct BehaviorOperationModifiers{
 
   // Behaviors which require vision processing can add requests to these vectors to have the base class
   // manage subscriptions to those VisionModes. Default is none.
-  std::unique_ptr<std::vector<VisionModeRequest>> visionModesForActivatableScope;
-  std::unique_ptr<std::vector<VisionModeRequest>> visionModesForActiveScope;
+  std::unique_ptr<std::set<VisionModeRequest>> visionModesForActivatableScope;
+  std::unique_ptr<std::set<VisionModeRequest>> visionModesForActiveScope;
 };
 
 // Base Behavior Interface specification
@@ -163,11 +163,9 @@ public:
   bool WantsToBeActivatedInternal() const override final;
 
   BehaviorID         GetID()      const { return _id; }
-  const std::string& GetIDStr()   const { return _idString; }
 
   void SetNeedsActionID(NeedsActionId needsActionID) { _needsActionID = needsActionID; }
 
-  const std::string& GetDisplayNameKey() const { return _displayNameKey; }
   const std::string& GetDebugStateName() const { return _debugStateName;}
   ExecutableBehaviorType GetExecutableType() const { return _executableType; }
   const BehaviorClass GetClass() const { return _behaviorClassID; }
@@ -193,9 +191,6 @@ public:
 
   // returns the need id of the severe need state that must be expressed (see AIWhiteboard), or Count if none
   NeedId GetRequiredSevereNeedExpression() const { return _requiredSevereNeed; }
-
-  // Force a behavior to update its target blocks but only if it is in a state where it can
-  void UpdateTargetBlocks() const { UpdateTargetBlocksInternal(); }
   
   // Get the ObjectUseIntentions this behavior uses
   virtual std::set<ObjectInteractionIntention>
@@ -227,7 +222,7 @@ protected:
 
   inline void SetDebugStateName(const std::string& inName) {
     PRINT_CH_INFO("Behaviors", "Behavior.TransitionToState", "Behavior:%s, FromState:%s ToState:%s",
-                  GetIDStr().c_str(), _debugStateName.c_str(), inName.c_str());
+                  GetDebugLabel().c_str(), _debugStateName.c_str(), inName.c_str());
     _debugStateName = inName;
   }
 
@@ -433,7 +428,8 @@ protected:
   // Stop a helper delegated with SmartDelegateToHelper
   bool StopHelperWithoutCallback();
 
-  virtual void UpdateTargetBlocksInternal() const {};
+  // Helper function to play an emergency get out through the continuity component
+  void PlayEmergencyGetOut(AnimationTrigger anim);
   
   // Convenience Method for accessing the behavior helper factory
   BehaviorHelperFactory& GetBehaviorHelperFactory();
@@ -448,6 +444,7 @@ protected:
 private:
   
   NeedsActionId ExtractNeedsActionIDFromConfig(const Json::Value& config);
+  std::string ExtractDebugLabelForBaseFromConfig(const Json::Value& config);
 
   float _lastRunTime_s;
   float _activatedTime_s;
@@ -471,9 +468,7 @@ private:
   
   // The ID and a convenience cast of the ID to a string
   const BehaviorID  _id;
-  const std::string _idString;
   
-  std::string _displayNameKey = "";
   std::string _debugStateName = "";
   BehaviorClass _behaviorClassID;
   NeedsActionId _needsActionID;

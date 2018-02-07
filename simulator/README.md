@@ -42,6 +42,7 @@ Webots runs concurrent processes for each active simulation object via "controll
 * `webotsCtrlViz` Visualization overlays and display windows
 * `webotsCtrlKeyboard` Keyboard interface for communicating with engine in place of the Unity app. Useful for quick headless (i.e. no Unity UI/Game) development.
 * `webotsCtrlDevLog` For visualizing logs recorded from an application run. (Only used in `devLogViz.wbt`)
+* `webotsCtrlWebServer` Victor web server process
 * `webotsCtrlBuildServerTest` For Webots-based tests (that are executed on the build server with every PR and master build, as well as in nightly tests)
 
 ## Troubleshooting

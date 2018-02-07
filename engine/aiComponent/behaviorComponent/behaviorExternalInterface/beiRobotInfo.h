@@ -17,7 +17,7 @@
 #include "coretech/common/shared/types.h"
 #include "coretech/common/engine/math/pose.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
-#include "engine/dependencyManagedComponent.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 #include "clad/types/offTreadsStates.h"
 
 // forward declaration
@@ -55,7 +55,7 @@ struct GyroData;
 class BEIRobotInfo : public IDependencyManagedComponent<BCComponentID> {
 public:
   BEIRobotInfo(Robot& robot)
-  : IDependencyManagedComponent(BCComponentID::RobotInfo)
+  : IDependencyManagedComponent(this, BCComponentID::RobotInfo)
   , _robot(robot){};
   virtual ~BEIRobotInfo();
 

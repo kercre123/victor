@@ -91,7 +91,8 @@ struct ProceduralFace FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_FACESCALEX = 12,
     VT_FACESCALEY = 14,
     VT_LEFTEYE = 16,
-    VT_RIGHTEYE = 18
+    VT_RIGHTEYE = 18,
+    VT_SCANLINEOPACITY = 20
   };
   uint32_t triggerTime_ms() const { return GetField<uint32_t>(VT_TRIGGERTIME_MS, 0); }
   float faceAngle() const { return GetField<float>(VT_FACEANGLE, 0.0f); }
@@ -101,6 +102,7 @@ struct ProceduralFace FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   float faceScaleY() const { return GetField<float>(VT_FACESCALEY, 1.0f); }
   const flatbuffers::Vector<float> *leftEye() const { return GetPointer<const flatbuffers::Vector<float> *>(VT_LEFTEYE); }
   const flatbuffers::Vector<float> *rightEye() const { return GetPointer<const flatbuffers::Vector<float> *>(VT_RIGHTEYE); }
+  float scanlineOpacity() const { return GetField<float>(VT_SCANLINEOPACITY, 0.7f); }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint32_t>(verifier, VT_TRIGGERTIME_MS) &&
@@ -113,6 +115,7 @@ struct ProceduralFace FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            verifier.Verify(leftEye()) &&
            VerifyField<flatbuffers::uoffset_t>(verifier, VT_RIGHTEYE) &&
            verifier.Verify(rightEye()) &&
+           VerifyField<float>(verifier, VT_SCANLINEOPACITY) &&
            verifier.EndTable();
   }
 };
@@ -128,10 +131,11 @@ struct ProceduralFaceBuilder {
   void add_faceScaleY(float faceScaleY) { fbb_.AddElement<float>(ProceduralFace::VT_FACESCALEY, faceScaleY, 1.0f); }
   void add_leftEye(flatbuffers::Offset<flatbuffers::Vector<float>> leftEye) { fbb_.AddOffset(ProceduralFace::VT_LEFTEYE, leftEye); }
   void add_rightEye(flatbuffers::Offset<flatbuffers::Vector<float>> rightEye) { fbb_.AddOffset(ProceduralFace::VT_RIGHTEYE, rightEye); }
+  void add_scanlineOpacity(float scanlineOpacity) { fbb_.AddElement<float>(ProceduralFace::VT_SCANLINEOPACITY, scanlineOpacity, 0.7f); }
   ProceduralFaceBuilder(flatbuffers::FlatBufferBuilder &_fbb) : fbb_(_fbb) { start_ = fbb_.StartTable(); }
   ProceduralFaceBuilder &operator=(const ProceduralFaceBuilder &);
   flatbuffers::Offset<ProceduralFace> Finish() {
-    auto o = flatbuffers::Offset<ProceduralFace>(fbb_.EndTable(start_, 8));
+    auto o = flatbuffers::Offset<ProceduralFace>(fbb_.EndTable(start_, 9));
     return o;
   }
 };
@@ -144,8 +148,10 @@ inline flatbuffers::Offset<ProceduralFace> CreateProceduralFace(flatbuffers::Fla
     float faceScaleX = 1.0f,
     float faceScaleY = 1.0f,
     flatbuffers::Offset<flatbuffers::Vector<float>> leftEye = 0,
-    flatbuffers::Offset<flatbuffers::Vector<float>> rightEye = 0) {
+    flatbuffers::Offset<flatbuffers::Vector<float>> rightEye = 0,
+    float scanlineOpacity = 0.7f) {
   ProceduralFaceBuilder builder_(_fbb);
+  builder_.add_scanlineOpacity(scanlineOpacity);
   builder_.add_rightEye(rightEye);
   builder_.add_leftEye(leftEye);
   builder_.add_faceScaleY(faceScaleY);
@@ -165,8 +171,9 @@ inline flatbuffers::Offset<ProceduralFace> CreateProceduralFaceDirect(flatbuffer
     float faceScaleX = 1.0f,
     float faceScaleY = 1.0f,
     const std::vector<float> *leftEye = nullptr,
-    const std::vector<float> *rightEye = nullptr) {
-  return CreateProceduralFace(_fbb, triggerTime_ms, faceAngle, faceCenterX, faceCenterY, faceScaleX, faceScaleY, leftEye ? _fbb.CreateVector<float>(*leftEye) : 0, rightEye ? _fbb.CreateVector<float>(*rightEye) : 0);
+    const std::vector<float> *rightEye = nullptr,
+    float scanlineOpacity = 0.7f) {
+  return CreateProceduralFace(_fbb, triggerTime_ms, faceAngle, faceCenterX, faceCenterY, faceScaleX, faceScaleY, leftEye ? _fbb.CreateVector<float>(*leftEye) : 0, rightEye ? _fbb.CreateVector<float>(*rightEye) : 0, scanlineOpacity);
 }
 
 struct HeadAngle FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {

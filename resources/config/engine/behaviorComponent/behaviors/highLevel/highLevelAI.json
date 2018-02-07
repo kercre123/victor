@@ -7,13 +7,13 @@
   "states": [
     {
       "name": "ObservingOnCharger",
-      "behavior": "ObservingOnChargerState",
+      "behavior": "ObservingOnCharger",
       "visionModes": [ "DetectingMarkers", "DetectingFaces" ],
       "debugColor": "ORANGE"
     },
     {
       "name": "ObservingOnChargerRecentlyPlaced",
-      "behavior": "ObservingOnChargerState",
+      "behavior": "ObservingOnCharger",
       "visionModes": [ "DetectingMarkers" ],
       "debugColor": "RED"
     },
@@ -28,7 +28,7 @@
     },
     {
       "name": "Observing",
-      "behavior": "ObservingState",
+      "behavior": "Observing",
       "visionModes": [ "DetectingFaces", "DetectingMarkers" ],
       "debugColor": "BLUE"
     },
@@ -40,7 +40,7 @@
     },
     {
       "name": "Napping",
-      "behavior": "SleepingState",
+      "behavior": "Sleeping",
       "debugColor": "GREEN"
     },
     {

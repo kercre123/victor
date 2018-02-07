@@ -29,12 +29,12 @@ namespace Anki {
       TurnRight,
       PanAndTilt,
       FacePose,
-      FaceObject,
       VisuallyVerifyNoObjectAtPose,
       VisuallyVerifyObjectAtPose,
       TurnLeftRelative_540,
+      FaceObject,
       TurnRightRelative_540,
-      TurnAbsolute_180,
+      TurnAbsolute_90,
       TurnAbsolute_0,
       TestDone
     };
@@ -242,11 +242,11 @@ namespace Anki {
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);
-            SET_TEST_STATE(FaceObject);
+            SET_TEST_STATE(VisuallyVerifyNoObjectAtPose);
           }
           break;
         }
-        case TestState::FaceObject:
+        case TestState::VisuallyVerifyNoObjectAtPose:
         {
           // Verify robot is facing pose
           IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
@@ -254,33 +254,6 @@ namespace Anki {
                                                 !IsRobotStatus(RobotStatusFlag::IS_MOVING),
                                                 NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), -90, 20),
                                                 NEAR(GetRobotHeadAngle_rad(), DEG_TO_RAD(4.f), HEAD_ANGLE_TOL))
-          {
-            StartingAction(RobotActionType::TURN_TOWARDS_OBJECT);
-            
-            ExternalInterface::QueueSingleAction m;
-            m.position = QueueActionPosition::NOW;
-            m.idTag = 8;
-            
-            // Face first matching light cube
-            std::vector<s32> lightCubeIDs = GetAllObjectIDsByFamily(ObjectFamily::LightCube);
-            if (!lightCubeIDs.empty()) {
-              m.action.Set_turnTowardsObject(ExternalInterface::TurnTowardsObject(lightCubeIDs[0], M_PI_F, 0, 0, 0, 0, 0, 0, true, false));
-              ExternalInterface::MessageGameToEngine message;
-              message.Set_QueueSingleAction(m);
-              SendMessage(message);
-              SET_TEST_STATE(VisuallyVerifyNoObjectAtPose);
-            }
-          }
-          break;
-        }
-        case TestState::VisuallyVerifyNoObjectAtPose:
-        {
-          // Verify robot is facing the object
-          IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
-                                                _lastActionResult == ActionResult::SUCCESS,
-                                                !IsRobotStatus(RobotStatusFlag::IS_MOVING),
-                                                NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 0, 10),
-                                                NEAR(GetRobotPose().GetTranslation().x(), 0, 30))
           {
             StartingAction(RobotActionType::VISUALLY_VERIFY_NO_OBJECT_AT_POSE);
             
@@ -331,11 +304,11 @@ namespace Anki {
             _angularDistTraversed_deg = 0.f;
             StartingAction(RobotActionType::TURN_IN_PLACE);
             SendTurnInPlace(DEG_TO_RAD(540.f), DEG_TO_RAD(150), 0);
-            SET_TEST_STATE(TurnRightRelative_540);
+            SET_TEST_STATE(FaceObject);
           }
           break;
         }
-        case TestState::TurnRightRelative_540:
+        case TestState::FaceObject:
         {
           // Verify robot turned through 540 degress to a heading of 180 degrees
           const Radians currAngle = GetRobotPoseActual().GetRotation().GetAngleAroundZaxis();
@@ -347,15 +320,46 @@ namespace Anki {
                                                 !IsRobotStatus(RobotStatusFlag::IS_MOVING),
                                                 NEAR(_angularDistTraversed_deg, 540.f, 10.f))
           {
+            StartingAction(RobotActionType::TURN_TOWARDS_OBJECT);
+            
+            ExternalInterface::QueueSingleAction m;
+            m.position = QueueActionPosition::NOW;
+            m.idTag = 8;
+            
+            // Face first matching light cube
+            std::vector<s32> lightCubeIDs = GetAllObjectIDsByFamily(ObjectFamily::LightCube);
+            if (!lightCubeIDs.empty()) {
+              m.action.Set_turnTowardsObject(ExternalInterface::TurnTowardsObject(lightCubeIDs[0], M_PI_F, 0, 0, 0, 0, 0, 0, true, false));
+              ExternalInterface::MessageGameToEngine message;
+              message.Set_QueueSingleAction(m);
+              SendMessage(message);
+              SET_TEST_STATE(TurnRightRelative_540);
+            } else {
+              PRINT_NAMED_ERROR("CST_BasicActions.FaceObjectHasNoTargets",
+                                "lightCubeIDs is empty, FaceObject test will fail on timeout");
+            }
+
+          }
+          break;
+        }
+        case TestState::TurnRightRelative_540:
+        {
+          // Verify robot is facing the object
+          IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
+                                                _lastActionResult == ActionResult::SUCCESS,
+                                                !IsRobotStatus(RobotStatusFlag::IS_MOVING),
+                                                NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 0, 10),
+                                                NEAR(GetRobotPose().GetTranslation().x(), 0, 30))
+          {
             _prevAngle = GetRobotPoseActual().GetRotation().GetAngleAroundZaxis();
             _angularDistTraversed_deg = 0.f;
             StartingAction(RobotActionType::TURN_IN_PLACE);
             SendTurnInPlace(DEG_TO_RAD(-540.f), DEG_TO_RAD(150), 0);
-            SET_TEST_STATE(TurnAbsolute_180);
+            SET_TEST_STATE(TurnAbsolute_90);
           }
           break;
         }
-        case TestState::TurnAbsolute_180:
+        case TestState::TurnAbsolute_90:
         {
           // Verify robot turned through -540 degress to a heading of 0 degrees
           const Radians currAngle = GetRobotPoseActual().GetRotation().GetAngleAroundZaxis();
@@ -368,18 +372,18 @@ namespace Anki {
                                                 NEAR(_angularDistTraversed_deg, -540.f, 10.f))
           {
             StartingAction(RobotActionType::TURN_IN_PLACE);
-            SendTurnInPlace(DEG_TO_RAD(180.f), DEG_TO_RAD(150), 0, POINT_TURN_ANGLE_TOL, true);
+            SendTurnInPlace(DEG_TO_RAD(90.f), DEG_TO_RAD(150), 0, POINT_TURN_ANGLE_TOL, true);
             SET_TEST_STATE(TurnAbsolute_0);
           }
           break;
         }
         case TestState::TurnAbsolute_0:
         {
-          // Verify robot turned to a heading of 180 degrees
+          // Verify robot turned to a heading of 90 degrees
           IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
                                                 _lastActionResult == ActionResult::SUCCESS,
                                                 !IsRobotStatus(RobotStatusFlag::IS_MOVING),
-                                                GetRobotPose().GetRotation().GetAngleAroundZaxis().IsNear(DEG_TO_RAD(180.f), DEG_TO_RAD(10.f)))
+                                                GetRobotPose().GetRotation().GetAngleAroundZaxis().IsNear(DEG_TO_RAD(90.f), DEG_TO_RAD(10.f)))
           {
             StartingAction(RobotActionType::TURN_IN_PLACE);
             SendTurnInPlace(0.f, DEG_TO_RAD(150), 0, POINT_TURN_ANGLE_TOL, true);

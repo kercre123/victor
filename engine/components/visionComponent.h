@@ -20,7 +20,7 @@
 #include "coretech/vision/engine/visionMarker.h"
 #include "coretech/vision/engine/faceTracker.h"
 #include "engine/components/nvStorageComponent.h"
-#include "engine/entity.h"
+#include "util/entityComponent/entity.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robotStateHistory.h"
 #include "engine/rollingShutterCorrector.h"

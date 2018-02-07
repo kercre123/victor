@@ -9,8 +9,6 @@
   "behaviorClass": "ExploreLookAroundInPlace",
   "behaviorID": "Hiking_LookInPlace360",
 
-  "displayNameKey":"behavior.ExploreLookAroundInPlace",
-  
   "params":
   {
     "behavior_ShouldResetTurnDirection": true,

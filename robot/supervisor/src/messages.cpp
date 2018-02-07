@@ -692,6 +692,25 @@ namespace Anki {
         return RobotInterface::SendMessage(m) ? RESULT_OK : RESULT_FAIL;
       }
 
+      Result SendMicDataFunction(const s16* latestMicData, uint32_t numSamples)
+      {
+        RobotInterface::MicData micData{};
+        micData.timestamp = HAL::GetTimeStamp();
+        micData.robotStatusFlags = robotState_.status;
+        micData.robotRotationAngle = robotState_.pose.angle;
+        std::copy(latestMicData, latestMicData + numSamples, micData.data);
+        return RobotInterface::SendMessage(micData) ? RESULT_OK : RESULT_FAIL;
+      }
+
+      Result SendMicDataMsgs()
+      {
+        while (HAL::HandleLatestMicData(&SendMicDataFunction))
+        {
+          // Keep calling HandleLatestMicData until it returns false
+        }
+        return RESULT_OK;
+      }
+
       bool ReceivedInit()
       {
         return initReceived_;

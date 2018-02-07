@@ -36,7 +36,6 @@ songBehaviorConfigFile = open(singingBehaviorConfigsPath + behaviorName + ".json
 songBehaviorConfigFile.write("{\n")
 songBehaviorConfigFile.write("  \"behaviorClass\":\"Singing\",\n")
 songBehaviorConfigFile.write("  \"behaviorID\":" + behaviorNameWithQuotes + ",\n")
-songBehaviorConfigFile.write("  \"displayNameKey\":\"behavior.singing." + options.song_name + "\",\n")
 songBehaviorConfigFile.write("  \"requiredUnlockId\":" + behaviorNameWithQuotes + ",\n")
 songBehaviorConfigFile.write("  \"audioSwitchGroup\":" + "\"Cozmo_Sings_" + options.song_bpm + "Bpm\",\n")
 songBehaviorConfigFile.write("  \"audioSwitch\":" + "\"" + options.audio_switch_name + "\"\n")

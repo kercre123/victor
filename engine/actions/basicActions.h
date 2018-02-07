@@ -82,6 +82,7 @@ namespace Cozmo {
       const f32 _kDefaultSpeed        = MAX_BODY_ROTATION_SPEED_RAD_PER_SEC;
       const f32 _kDefaultAccel        = 10.f;
       const f32 _kMaxRelativeTurnRevs = 25.f; // Maximum number of revolutions allowed for a relative turn.
+      const std::string _kEyeShiftLayerName = "TurnInPlaceEyeShiftLayer";
       
       bool       _inPosition = false;
       bool       _turnStarted = false;
@@ -104,7 +105,6 @@ namespace Cozmo {
       u32 _relocalizedCnt = 0;
       
       bool    _moveEyes = true;
-      AnimationTag _eyeShiftTag = kNotAnimatingTag;
       
       bool _isInitialized = false;
       
@@ -135,6 +135,7 @@ namespace Cozmo {
       void SetSearchWaitTime(f32 minWaitTime_s, f32 maxWaitTime_s);
 
     protected:
+      virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const override;
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
       virtual void OnRobotSet() override final;
@@ -175,7 +176,7 @@ namespace Cozmo {
       virtual bool SetMotionProfile(const PathMotionProfile& motionProfile) override;
       
     protected:
-      
+      virtual void GetRequiredVisionModes(std::set<VisionModeRequest>&requests) const override; 
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
       
@@ -319,6 +320,8 @@ namespace Cozmo {
     
       static f32 GetPresetHeadAngle(Preset preset);
       static const char* GetPresetName(Preset preset);
+
+      const std::string _kEyeShiftLayerName = "MoveHeadToAngleEyeShiftLayer";
       
       bool IsHeadInPosition() const;
       
@@ -332,8 +335,6 @@ namespace Cozmo {
       bool        _moveEyes = true;
       bool        _holdEyes = false;
       Radians     _halfAngle;
-      
-      AnimationTag _eyeShiftTag = kNotAnimatingTag;
 
       MovementComponent::MotorActionID _actionID = 0;
       bool        _motionCommanded = false;
@@ -507,6 +508,9 @@ namespace Cozmo {
       
     protected:
       
+      // This action will automatically subscribe to whatever VisionMode it is asked to wait on
+      virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const override;
+
       virtual ActionResult Init() override;
       
       virtual ActionResult CheckIfDone() override;
@@ -555,7 +559,7 @@ namespace Cozmo {
       void SetRefinedTurnAngleTol(const f32 tol) { _refinedTurnAngleTol_rad = tol; }
       
     protected:
-      
+      virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const override;
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
 
@@ -617,7 +621,7 @@ namespace Cozmo {
       void HandleMessage(const T& msg);
       
     protected:
-
+      virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const override;
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
       

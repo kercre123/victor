@@ -32,7 +32,7 @@ namespace Cozmo {
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorHelperComponent::BehaviorHelperComponent()
-: IDependencyManagedComponent<BCComponentID>(BCComponentID::BehaviorHelperComponent)
+: IDependencyManagedComponent<BCComponentID>(this, BCComponentID::BehaviorHelperComponent)
 , _helperFactory(new BehaviorHelperFactory(*this))
 {
 }
@@ -40,7 +40,7 @@ BehaviorHelperComponent::BehaviorHelperComponent()
 void BehaviorHelperComponent::InitDependent(Robot* robot, const BCCompMap& dependentComponents) 
 {
   _beiWrapper = std::make_unique<BEIWrapper>(
-    dependentComponents.find(BCComponentID::BehaviorExternalInterface)->second.GetValue<BehaviorExternalInterface>()
+    dependentComponents.GetValue<BehaviorExternalInterface>(BCComponentID::BehaviorExternalInterface)
   );
 }
 

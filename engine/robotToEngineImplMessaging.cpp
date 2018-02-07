@@ -76,7 +76,7 @@ namespace Cozmo {
 using GameToEngineEvent = AnkiEvent<ExternalInterface::MessageGameToEngine>;
 
 RobotToEngineImplMessaging::RobotToEngineImplMessaging() 
-: IDependencyManagedComponent(RobotComponentID::RobotToEngineImplMessaging)
+: IDependencyManagedComponent(this, RobotComponentID::RobotToEngineImplMessaging)
 , _hasMismatchedEngineToRobotCLAD(false)
 , _hasMismatchedRobotToEngineCLAD(false)
 {

@@ -99,8 +99,8 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   BlockWorld::BlockWorld()
-  : UnreliableComponent<BCComponentID>(BCComponentID::BlockWorld)
-  , IDependencyManagedComponent<RobotComponentID>(RobotComponentID::BlockWorld)
+  : UnreliableComponent<BCComponentID>(this, BCComponentID::BlockWorld)
+  , IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::BlockWorld)
   , _lastPlayAreaSizeEventSec(0)
   , _playAreaSizeEventIntervalSec(60)
   , _didObjectsChange(false)

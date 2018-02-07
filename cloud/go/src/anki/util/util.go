@@ -2,6 +2,7 @@ package util
 
 import (
 	"sync"
+	"time"
 )
 
 // DoOnce wraps a sync.Once object, taking a function at initialization time
@@ -33,4 +34,11 @@ func CanSelect(ch <-chan struct{}) bool {
 	default:
 		return false
 	}
+}
+
+// TimeFuncMs returns the time, in milliseconds, required to run the given function
+func TimeFuncMs(function func()) float64 {
+	callStart := time.Now()
+	function()
+	return float64(time.Now().Sub(callStart).Nanoseconds()) / float64(time.Millisecond/time.Nanosecond)
 }

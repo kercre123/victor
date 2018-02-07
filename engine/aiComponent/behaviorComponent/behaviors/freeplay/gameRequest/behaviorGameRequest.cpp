@@ -98,7 +98,7 @@ bool ICozmoBehaviorRequestGame::WantsToBeActivatedBehavior() const
   if( DEBUG_BEHAVIOR_GAME_REQUEST_ACTIVATABLE ) {
     PRINT_NAMED_DEBUG("ICozmoBehaviorRequestGame.WantsToBeActivated",
                       "'%s': hasFace?%d (numBlocks=%d)",
-                      GetIDStr().c_str(),
+                      GetDebugLabel().c_str(),
                       hasFace,
                       GetNumBlocks());
   }

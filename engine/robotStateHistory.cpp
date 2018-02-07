@@ -143,7 +143,7 @@ namespace Anki {
     HistStateKey RobotStateHistory::currHistStateKey_ = 0;
     
     RobotStateHistory::RobotStateHistory()
-    : IDependencyManagedComponent(RobotComponentID::StateHistory)
+    : IDependencyManagedComponent(this, RobotComponentID::StateHistory)
     , _windowSize_ms(3000)
     {
 

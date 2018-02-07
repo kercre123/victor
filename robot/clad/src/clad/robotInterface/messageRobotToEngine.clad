@@ -84,8 +84,9 @@ message MotorActionAck
 message MicData
 {
   int_16  data[480], // 120 samples of audio 4 channels
-  uint_32 sequenceID,
-  uint_32 timestamp
+  uint_32 timestamp,
+  uint_32 robotStatusFlags, // RobotStatusFlag packs as a uint_32
+  float_32 robotRotationAngle,
 }
 
 message AudioFFTResult
@@ -145,9 +146,10 @@ union RobotToEngine {
   ManufacturingID            mfgId                  = 0xCB,
   FirmwareVersion            firmwareVersion        = 0xCC,  
 
-  // FREE SLOTS 0xCD to 0xD3
+  // FREE SLOTS 0xCD to 0xD2
 
   // Messages from animation process to engine
+  AnimationAdded             animAdded              = 0xD3,
   RobotAvailable             robotAvailable         = 0xD4,
   AnimationEvent             animEvent              = 0xD5,
   AnimationStarted           animStarted            = 0xD6,
@@ -158,6 +160,8 @@ union RobotToEngine {
   // Messages relating to trigger word detection
   TriggerWordDetected        triggerWordDetected    = 0xD9,
   MicDirection               micDirection           = 0xDA,
+  
+  TextToSpeechEvent          textToSpeechEvent      = 0xDB,
 
   // Audio
   AudioEngine::Multiplexer::AudioCallbackDuration audioCallbackDuration = 0xE0,

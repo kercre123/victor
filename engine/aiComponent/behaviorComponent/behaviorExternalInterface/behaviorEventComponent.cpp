@@ -27,7 +27,7 @@ namespace{
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorEventComponent::BehaviorEventComponent()
-: IDependencyManagedComponent(BCComponentID::BehaviorEventComponent)
+: IDependencyManagedComponent(this, BCComponentID::BehaviorEventComponent)
 , _messageSubscriber(nullptr)
 {
 

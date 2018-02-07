@@ -24,8 +24,8 @@
 #include "cozmoAnim/animation/trackLayerComponent.h"
 #include "cozmoAnim/audio/animationAudioClient.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
+#include "cozmoAnim/animContext.h"
 #include "cozmoAnim/animProcessMessages.h"
-#include "cozmoAnim/cozmoAnimContext.h"
 #include "cozmoAnim/robotDataLoader.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "clad/types/animationTypes.h"
@@ -50,7 +50,19 @@
 namespace Anki {
 namespace Cozmo {
 
-  CONSOLE_VAR(bool, kProcFace_UseNoise, "ProceduralFace", false); // Victor vs Cozmo effect, no noise = lazy updates
+  CONSOLE_VAR(bool, kProcFace_OverrideEyeParams,        "ProceduralFace", false); // Override procedural face with ConsoleVars edited version
+  CONSOLE_VAR(bool, kProcFace_OverrideRightEyeParams,   "ProceduralFace", false); // Make left and right eyes override in unison
+  CONSOLE_VAR(bool, kProcFace_OverrideReset,            "ProceduralFace", false); // Reset overriden parameters to current canned animation
+  CONSOLE_VAR(bool, kProcFace_UseNoise,                 "ProceduralFace", false); // Victor vs Cozmo effect, no noise = lazy updates
+
+  CONSOLE_VAR_RANGED(float, kProcFace_Angle_deg,               "ProceduralFace", 0.0f, -90.0f, 90.0f);
+  CONSOLE_VAR_RANGED(float, kProcFace_ScaleX,                  "ProceduralFace", 1.0f, 0.0f, 10.0f);
+  CONSOLE_VAR_RANGED(float, kProcFace_ScaleY,                  "ProceduralFace", 1.0f, 0.0f, 10.0f);
+  CONSOLE_VAR_RANGED(float, kProcFace_CenterX,                 "ProceduralFace", 0.0f, -100.0f, 100.0f);
+  CONSOLE_VAR_RANGED(float, kProcFace_CenterY,                 "ProceduralFace", 0.0f, -100.0f, 100.0f);
+  CONSOLE_VAR_RANGED(float, kProcFace_ScanlineOpacity,         "ProceduralFace", 0.7f, 0.0f, 1.0f);
+
+  ProceduralFace s_faceDataOverride;
 
   namespace{
     
@@ -61,6 +73,22 @@ namespace Cozmo {
 
   // Default time to wait before forcing KeepFaceAlive() after the latest stream has stopped
   const f32 kDefaultLongEnoughSinceLastStreamTimeout_s = 0.5f;
+
+  // Default KeepFaceAliveParams
+  #define SET_DEFAULT(param, value) {KeepFaceAliveParameter::param, static_cast<f32>(value)}
+  const std::unordered_map<KeepFaceAliveParameter, f32> _kDefaultKeepFaceAliveParams = {
+    SET_DEFAULT(BlinkSpacingMinTime_ms, 3000),
+    SET_DEFAULT(BlinkSpacingMaxTime_ms, 4000),
+    SET_DEFAULT(EyeDartSpacingMinTime_ms, 250),
+    SET_DEFAULT(EyeDartSpacingMaxTime_ms, 1000),
+    SET_DEFAULT(EyeDartMaxDistance_pix, 6),
+    SET_DEFAULT(EyeDartMinDuration_ms, 50),
+    SET_DEFAULT(EyeDartMaxDuration_ms, 200),
+    SET_DEFAULT(EyeDartOuterEyeScaleIncrease, 0.1f),
+    SET_DEFAULT(EyeDartUpMaxScale, 1.1f),
+    SET_DEFAULT(EyeDartDownMinScale, 0.85f)
+  };
+  #undef SET_DEFAULT
   
   CONSOLE_VAR(bool, kFullAnimationAbortOnAudioTimeout, "AnimationStreamer", false);
   CONSOLE_VAR(u32, kAnimationAudioAllowedBufferTime_ms, "AnimationStreamer", 250);
@@ -74,7 +102,7 @@ namespace Cozmo {
     
   } // namespace
   
-  AnimationStreamer::AnimationStreamer(const CozmoAnimContext* context)
+  AnimationStreamer::AnimationStreamer(const AnimContext* context)
   : _context(context)
   , _trackLayerComponent(new TrackLayerComponent(context))
   , _lockedTracks(0)
@@ -89,21 +117,17 @@ namespace Cozmo {
   
   Result AnimationStreamer::Init()
   {
-    DEV_ASSERT(nullptr != _context, "AnimationStreamer.Init.NullContext");
-    DEV_ASSERT(nullptr != _context->GetDataLoader(), "AnimationStreamer.Init.NullRobotDataLoader");
-    DEV_ASSERT(nullptr != _context->GetDataLoader()->GetCannedAnimations(), "AnimationStreamer.Init.NullCannedAnimationsContainer");
-    _animationContainer = _context->GetDataLoader()->GetCannedAnimations();
-    
-    SetDefaultParams();
+    SetDefaultKeepFaceAliveParams();
     
     // TODO: Restore ability to subscribe to messages here?
     //       It's currently hard to do with CPPlite messages.
     // SetupHandlers(_context->GetExternalInterface());
-    
 
     // Set neutral face
+    DEV_ASSERT(nullptr != _context, "AnimationStreamer.Init.NullContext");
+    DEV_ASSERT(nullptr != _context->GetDataLoader(), "AnimationStreamer.Init.NullRobotDataLoader");
     const std::string neutralFaceAnimName = "anim_neutral_eyes_01";
-    _neutralFaceAnimation = _animationContainer->GetAnimation(neutralFaceAnimName);
+    _neutralFaceAnimation = _context->GetDataLoader()->GetCannedAnimation(neutralFaceAnimName);
     if (nullptr != _neutralFaceAnimation)
     {
       auto frame = _neutralFaceAnimation->GetTrack<ProceduralFaceKeyFrame>().GetFirstKeyFrame();
@@ -139,12 +163,6 @@ namespace Cozmo {
     return RESULT_OK;
   }
   
-  
-  const Animation* AnimationStreamer::GetCannedAnimation(const std::string& name) const
-  {
-    return _animationContainer->GetAnimation(name);
-  }
-  
   AnimationStreamer::~AnimationStreamer()
   {
     Util::SafeDelete(_proceduralAnimation);
@@ -165,8 +183,7 @@ namespace Cozmo {
       Abort();
       return RESULT_OK;
     }
-    
-    return SetStreamingAnimation(_animationContainer->GetAnimation(name), tag, numLoops, interruptRunning, false);
+    return SetStreamingAnimation(_context->GetDataLoader()->GetCannedAnimation(name), tag, numLoops, interruptRunning, false);
   }
   
   Result AnimationStreamer::SetStreamingAnimation(Animation* anim, Tag tag, u32 numLoops, bool interruptRunning, bool isInternalAnim)
@@ -475,21 +492,41 @@ namespace Cozmo {
     return res;
   }
   
-  void AnimationStreamer::SetParam(LiveIdleAnimationParameter whichParam, float newValue)
+  void AnimationStreamer::SetParam(KeepFaceAliveParameter whichParam, float newValue)
   {
-    if(LiveIdleAnimationParameter::BlinkSpacingMaxTime_ms == whichParam)
-    {
-      const auto maxSpacing_ms = _trackLayerComponent->GetMaxBlinkSpacingTimeForScreenProtection_ms();
-      if( newValue > maxSpacing_ms)
+    switch(whichParam) {
+      case KeepFaceAliveParameter::BlinkSpacingMaxTime_ms:
       {
-        PRINT_NAMED_WARNING("AnimationStreamer.SetParam.MaxBlinkSpacingTooLong",
-                            "Clamping max blink spacing to %dms to avoid screen burn-in",
-                            maxSpacing_ms);
-        
-        newValue = maxSpacing_ms;
+        const auto maxSpacing_ms = _trackLayerComponent->GetMaxBlinkSpacingTimeForScreenProtection_ms();
+        if( newValue > maxSpacing_ms)
+        {
+          PRINT_NAMED_WARNING("AnimationStreamer.SetParam.MaxBlinkSpacingTooLong",
+                              "Clamping max blink spacing to %dms to avoid screen burn-in",
+                              maxSpacing_ms);
+          
+          newValue = maxSpacing_ms;
+        }
+        // intentional fall through
       }
+      case KeepFaceAliveParameter::BlinkSpacingMinTime_ms:
+      case KeepFaceAliveParameter::EyeDartMinDuration_ms:
+      case KeepFaceAliveParameter::EyeDartMaxDuration_ms:
+      case KeepFaceAliveParameter::EyeDartSpacingMinTime_ms:
+      case KeepFaceAliveParameter::EyeDartSpacingMaxTime_ms:
+      {
+        if (_keepFaceAliveParams[whichParam] != newValue) {
+          _trackLayerComponent->ResetKeepFaceAliveTimers();
+        }
+        break;
+      }
+      default:
+        break;
     }
-    _liveAnimParams[whichParam] = newValue;
+
+    _keepFaceAliveParams[whichParam] = newValue;
+    PRINT_CH_INFO(kLogChannelName,
+                  "AnimationStreamer.SetParam", "%s : %f", 
+                  EnumToString(whichParam), newValue);
   }
   
   
@@ -528,7 +565,35 @@ namespace Cozmo {
 
       DEV_ASSERT(_context != nullptr, "AnimationStreamer.BufferFaceToSend.NoContext");
       DEV_ASSERT(_context->GetRandom() != nullptr, "AnimationStreamer.BufferFaceToSend.NoRNGinContext");
-      ProceduralFaceDrawer::DrawFace(procFace, *_context->GetRandom(), _procFaceImg);
+
+      if(kProcFace_OverrideEyeParams) {
+        static bool overrideInit = false;
+        if (!overrideInit) {
+          s_faceDataOverride.RegisterFaceWithConsoleVars();
+          kProcFace_OverrideReset = true;
+          overrideInit = true;
+        }
+
+        if(kProcFace_OverrideReset) {
+          s_faceDataOverride = procFace;
+          kProcFace_OverrideReset = false;
+        } else {
+          if(kProcFace_OverrideRightEyeParams) {
+            s_faceDataOverride.SetParameters(ProceduralFace::WhichEye::Right,
+                                             s_faceDataOverride.GetParameters(ProceduralFace::WhichEye::Left));
+          }
+        }
+
+        s_faceDataOverride.SetFaceAngle(kProcFace_Angle_deg);
+        s_faceDataOverride.SetFaceScale({kProcFace_ScaleX, kProcFace_ScaleY});
+        s_faceDataOverride.SetFacePosition({kProcFace_CenterX, kProcFace_CenterY});
+        s_faceDataOverride.SetScanlineOpacity(kProcFace_ScanlineOpacity);
+
+        ProceduralFaceDrawer::DrawFace(s_faceDataOverride, *_context->GetRandom(), _procFaceImg);
+      } else {
+        ProceduralFaceDrawer::DrawFace(procFace, *_context->GetRandom(), _procFaceImg);
+      }
+
       _faceDrawBuf.SetFromImageRGB(_procFaceImg);
     }
     
@@ -811,22 +876,23 @@ namespace Cozmo {
       
       // Non-procedural faces (raw pixel data/images) take precedence over procedural faces (parameterized faces
       // like idles, keep alive, or normal animated faces)
-      if(faceAnimTrack.HasFramesLeft() && !IsTrackLocked((u8)AnimTrackFlag::FACE_IMAGE_TRACK)) {
+      const bool shouldPlayFaceAnim = !IsTrackLocked((u8)AnimTrackFlag::FACE_IMAGE_TRACK) &&
+                                      faceAnimTrack.HasFramesLeft() &&
+                                      faceAnimTrack.GetCurrentKeyFrame().IsTimeToPlay(_streamingTime_ms - _startTime_ms);
+      if(shouldPlayFaceAnim)
+      {
         auto & faceKeyFrame = faceAnimTrack.GetCurrentKeyFrame();
-        if(faceKeyFrame.IsTimeToPlay(_streamingTime_ms - _startTime_ms))
-        {
-          const bool gotImage = faceKeyFrame.GetFaceImage(_faceDrawBuf);
-          if (gotImage) {
-            DEBUG_STREAM_KEYFRAME_MESSAGE("FaceAnimation");
-            BufferFaceToSend(_faceDrawBuf, false);  // Don't overwrite FaceAnimationKeyFrame images
-          }
-          
-          if(faceKeyFrame.IsDone()) {
-            faceAnimTrack.MoveToNextKeyFrame();
-          }
+        const bool gotImage = faceKeyFrame.GetFaceImage(_faceDrawBuf);
+        if (gotImage) {
+          DEBUG_STREAM_KEYFRAME_MESSAGE("FaceAnimation");
+          BufferFaceToSend(_faceDrawBuf, false);  // Don't overwrite FaceAnimationKeyFrame images
+        }
+        
+        if(faceKeyFrame.IsDone()) {
+          faceAnimTrack.MoveToNextKeyFrame();
         }
       }
-      else if(!faceAnimTrack.HasFramesLeft() && layeredKeyFrames.haveFaceKeyFrame)
+      else if(layeredKeyFrames.haveFaceKeyFrame)
       {
         BufferFaceToSend(layeredKeyFrames.faceKeyFrame.GetFace());
       }
@@ -930,9 +996,9 @@ namespace Cozmo {
         _wasAnimationInterruptedWithNothing = false;
       }
       
-      if(!FACTORY_TEST)
+      if(_enableKeepFaceAlive && !FACTORY_TEST)
       {
-        _trackLayerComponent->KeepFaceAlive(_liveAnimParams);
+        _trackLayerComponent->KeepFaceAlive(_keepFaceAliveParams);
       }
     }
     
@@ -1008,48 +1074,28 @@ namespace Cozmo {
     return lastResult;
   } // AnimationStreamer::Update()
   
-  
-  
-  void AnimationStreamer::SetDefaultParams()
+  void AnimationStreamer::EnableKeepFaceAlive(bool enable, u32 disableTimeout_ms)
   {
-
-#   define SET_DEFAULT(__NAME__, __VALUE__) \
-    SetParam(LiveIdleAnimationParameter::__NAME__,  static_cast<f32>(__VALUE__))
+    if (_enableKeepFaceAlive && !enable) {
+      _trackLayerComponent->RemoveKeepFaceAlive(disableTimeout_ms);
+    }
+    _enableKeepFaceAlive = enable;
+  }
+  
+  void AnimationStreamer::SetDefaultKeepFaceAliveParams()
+  {
+    PRINT_CH_INFO(kLogChannelName, "AnimationStreamer.SetDefaultKeepFaceAliveParams", "");
     
-    SET_DEFAULT(BlinkSpacingMinTime_ms, 3000);
-    SET_DEFAULT(BlinkSpacingMaxTime_ms, 4000);
-    SET_DEFAULT(TimeBeforeWiggleMotions_ms, 1000);
-    SET_DEFAULT(BodyMovementSpacingMin_ms, 100);
-    SET_DEFAULT(BodyMovementSpacingMax_ms, 1000);
-    SET_DEFAULT(BodyMovementDurationMin_ms, 250);
-    SET_DEFAULT(BodyMovementDurationMax_ms, 1500);
-    SET_DEFAULT(BodyMovementSpeedMinMax_mmps, 10);
-    SET_DEFAULT(BodyMovementStraightFraction, 0.5f);
-    SET_DEFAULT(LiftMovementDurationMin_ms, 50);
-    SET_DEFAULT(LiftMovementDurationMax_ms, 500);
-    SET_DEFAULT(LiftMovementSpacingMin_ms,  250);
-    SET_DEFAULT(LiftMovementSpacingMax_ms, 2000);
-    SET_DEFAULT(LiftHeightMean_mm, 35);
-    SET_DEFAULT(LiftHeightVariability_mm, 8);
-    SET_DEFAULT(HeadMovementDurationMin_ms, 50);
-    SET_DEFAULT(HeadMovementDurationMax_ms, 500);
-    SET_DEFAULT(HeadMovementSpacingMin_ms, 250);
-    SET_DEFAULT(HeadMovementSpacingMax_ms, 1000);
-    SET_DEFAULT(HeadAngleVariability_deg, 6);
-    SET_DEFAULT(EyeDartSpacingMinTime_ms, 250);
-    SET_DEFAULT(EyeDartSpacingMaxTime_ms, 1000);
-    SET_DEFAULT(EyeDartMaxDistance_pix, 6);
-    SET_DEFAULT(EyeDartMinScale, 0.92f);
-    SET_DEFAULT(EyeDartMaxScale, 1.08f);
-    SET_DEFAULT(EyeDartMinDuration_ms, 50);
-    SET_DEFAULT(EyeDartMaxDuration_ms, 200);
-    SET_DEFAULT(EyeDartOuterEyeScaleIncrease, 0.1f);
-    SET_DEFAULT(EyeDartUpMaxScale, 1.1f);
-    SET_DEFAULT(EyeDartDownMinScale, 0.85f);
-    
-#   undef SET_DEFAULT
+    for(auto param = Util::EnumToUnderlying(KeepFaceAliveParameter::BlinkSpacingMinTime_ms);
+        param != Util::EnumToUnderlying(KeepFaceAliveParameter::NumParameters); ++param) {
+      SetParamToDefault(static_cast<KeepFaceAliveParameter>(param));
+    }
+  } // SetDefaultKeepFaceAliveParams()
 
-  } // SetDefaultParams()
+  void AnimationStreamer::SetParamToDefault(KeepFaceAliveParameter whichParam)
+  {
+    SetParam(whichParam, _kDefaultKeepFaceAliveParams.at(whichParam));
+  }
   
   const std::string AnimationStreamer::GetStreamingAnimationName() const
   {

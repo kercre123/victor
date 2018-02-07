@@ -134,7 +134,7 @@ void BehaviorGoHome::TransitionToOnChargerCheck()
   
 void BehaviorGoHome::LoadConfig(const Json::Value& config)
 {
-  const std::string& debugName = "Behavior" + GetIDStr() + ".LoadConfig";
+  const std::string& debugName = "Behavior" + GetDebugLabel() + ".LoadConfig";
   
   _params.useCliffSensorCorrection = JsonTools::ParseBool(config, kUseCliffSensorsKey, debugName);
   _params.leftTurnAnimTrigger      = JsonTools::ParseAnimationTrigger(config, kLeftTurnAnimKey, debugName);
@@ -156,7 +156,7 @@ void BehaviorGoHome::PushDrivingAnims()
     drivingAnimHandler.PushDrivingAnimations({_params.backupStartAnimTrigger,
                                               _params.backupLoopAnimTrigger,
                                               _params.backupEndAnimTrigger},
-                                             GetIDStr());
+                                             GetDebugLabel());
     _drivingAnimsPushed = true;
   }
 }
@@ -166,7 +166,7 @@ void BehaviorGoHome::PopDrivingAnims()
 {
   if (_drivingAnimsPushed) {
     auto& drivingAnimHandler = GetBEI().GetRobotInfo().GetDrivingAnimationHandler();
-    drivingAnimHandler.RemoveDrivingAnimations(GetIDStr());
+    drivingAnimHandler.RemoveDrivingAnimations(GetDebugLabel());
     _drivingAnimsPushed = false;
   }
 }

@@ -113,7 +113,7 @@ namespace Cozmo {
   }
   
   VisionComponent::VisionComponent()
-  : IDependencyManagedComponent<RobotComponentID>(RobotComponentID::Vision)
+  : IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::Vision)
   {    
   } // VisionSystem()
 

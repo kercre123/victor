@@ -161,47 +161,6 @@ const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({
   0,      -0.9976f, -0.0698f,
 });
 
-Robot::RobotComponentWrapper::RobotComponentWrapper(DependencyManagedEntity<RobotComponentID, RobotComponentID::Count>&& entity)
-: _array({
-  {RobotComponentID::CozmoContext,                entity.GetComponent(RobotComponentID::CozmoContext)},
-  {RobotComponentID::BlockWorld,                  entity.GetComponent(RobotComponentID::BlockWorld)},
-  {RobotComponentID::FaceWorld,                   entity.GetComponent(RobotComponentID::FaceWorld)},
-  {RobotComponentID::PetWorld,                    entity.GetComponent(RobotComponentID::PetWorld)},
-  {RobotComponentID::PublicStateBroadcaster,      entity.GetComponent(RobotComponentID::PublicStateBroadcaster)},
-  {RobotComponentID::EngineAudioClient,           entity.GetComponent(RobotComponentID::EngineAudioClient)},
-  {RobotComponentID::PathPlanning,                entity.GetComponent(RobotComponentID::PathPlanning)},
-  {RobotComponentID::DrivingAnimationHandler,     entity.GetComponent(RobotComponentID::DrivingAnimationHandler)},
-  {RobotComponentID::ActionList,                  entity.GetComponent(RobotComponentID::ActionList)},
-  {RobotComponentID::Movement,                    entity.GetComponent(RobotComponentID::Movement)},
-  {RobotComponentID::Vision,                      entity.GetComponent(RobotComponentID::Vision)},
-  {RobotComponentID::VisionScheduleMediator,      entity.GetComponent(RobotComponentID::VisionScheduleMediator)},
-  {RobotComponentID::Map,                         entity.GetComponent(RobotComponentID::Map)},
-  {RobotComponentID::NVStorage,                   entity.GetComponent(RobotComponentID::NVStorage)},
-  {RobotComponentID::AIComponent,                 entity.GetComponent(RobotComponentID::AIComponent)},
-  {RobotComponentID::ObjectPoseConfirmer,         entity.GetComponent(RobotComponentID::ObjectPoseConfirmer)},
-  {RobotComponentID::CubeLights,                  entity.GetComponent(RobotComponentID::CubeLights)},
-  {RobotComponentID::BodyLights,                  entity.GetComponent(RobotComponentID::BodyLights)},
-  {RobotComponentID::CubeAccel,                   entity.GetComponent(RobotComponentID::CubeAccel)},
-  {RobotComponentID::CubeComms,                   entity.GetComponent(RobotComponentID::CubeComms)},
-  {RobotComponentID::GyroDriftDetector,           entity.GetComponent(RobotComponentID::GyroDriftDetector)},
-  {RobotComponentID::Docking,                     entity.GetComponent(RobotComponentID::Docking)},
-  {RobotComponentID::Carrying,                    entity.GetComponent(RobotComponentID::Carrying)},
-  {RobotComponentID::CliffSensor,                 entity.GetComponent(RobotComponentID::CliffSensor)},
-  {RobotComponentID::ProxSensor,                  entity.GetComponent(RobotComponentID::ProxSensor)},
-  {RobotComponentID::TouchSensor,                 entity.GetComponent(RobotComponentID::TouchSensor)},
-  {RobotComponentID::Animation,                   entity.GetComponent(RobotComponentID::Animation)},
-  {RobotComponentID::StateHistory,                entity.GetComponent(RobotComponentID::StateHistory)},
-  {RobotComponentID::MoodManager,                 entity.GetComponent(RobotComponentID::MoodManager)},
-  {RobotComponentID::Inventory,                   entity.GetComponent(RobotComponentID::Inventory)},
-  {RobotComponentID::ProgressionUnlock,           entity.GetComponent(RobotComponentID::ProgressionUnlock)},
-  {RobotComponentID::BlockTapFilter,              entity.GetComponent(RobotComponentID::BlockTapFilter)},
-  {RobotComponentID::RobotToEngineImplMessaging,  entity.GetComponent(RobotComponentID::RobotToEngineImplMessaging)},
-  {RobotComponentID::RobotIdleTimeout,            entity.GetComponent(RobotComponentID::RobotIdleTimeout)},
-  {RobotComponentID::MicDirectionHistory,         entity.GetComponent(RobotComponentID::MicDirectionHistory)},
-
-}){};
-
-
 Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
 : _poseOrigins(new PoseOriginList())
 , _neckPose(0.f,Y_AXIS_3D(),
@@ -224,44 +183,43 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
 
   // create all components
   {
-    DependencyManagedEntity<RobotComponentID, RobotComponentID::Count> entity;
-    entity.AddDependentComponent(RobotComponentID::CozmoContext,                RobotComp(new ContextWrapper(context), true));
-    entity.AddDependentComponent(RobotComponentID::BlockWorld,                  RobotComp(new BlockWorld(), true));
-    entity.AddDependentComponent(RobotComponentID::FaceWorld,                   RobotComp(new FaceWorld(), true));
-    entity.AddDependentComponent(RobotComponentID::PetWorld,                    RobotComp(new PetWorld(), true));
-    entity.AddDependentComponent(RobotComponentID::PublicStateBroadcaster,      RobotComp(new PublicStateBroadcaster(), true));
-    entity.AddDependentComponent(RobotComponentID::EngineAudioClient,           RobotComp(new Audio::EngineRobotAudioClient(), true));
-    entity.AddDependentComponent(RobotComponentID::PathPlanning,                RobotComp(new PathComponent(), true));
-    entity.AddDependentComponent(RobotComponentID::DrivingAnimationHandler,     RobotComp(new DrivingAnimationHandler(), true));
-    entity.AddDependentComponent(RobotComponentID::ActionList,                  RobotComp(new ActionList(), true));
-    entity.AddDependentComponent(RobotComponentID::Movement,                    RobotComp(new MovementComponent(), true));
-    entity.AddDependentComponent(RobotComponentID::Vision,                      RobotComp(new VisionComponent(), true));
-    entity.AddDependentComponent(RobotComponentID::VisionScheduleMediator,      RobotComp(new VisionScheduleMediator(), true));
-    entity.AddDependentComponent(RobotComponentID::Map,                         RobotComp(new MapComponent(), true));
-    entity.AddDependentComponent(RobotComponentID::NVStorage,                   RobotComp(new NVStorageComponent(), true));
-    entity.AddDependentComponent(RobotComponentID::AIComponent,                 RobotComp(new AIComponent(), true));
-    entity.AddDependentComponent(RobotComponentID::ObjectPoseConfirmer,         RobotComp(new ObjectPoseConfirmer(), true));
-    entity.AddDependentComponent(RobotComponentID::CubeLights,                  RobotComp(new CubeLightComponent(), true));
-    entity.AddDependentComponent(RobotComponentID::BodyLights,                  RobotComp(new BodyLightComponent(), true));
-    entity.AddDependentComponent(RobotComponentID::CubeAccel,                   RobotComp(new CubeAccelComponent(), true));
-    entity.AddDependentComponent(RobotComponentID::CubeComms,                   RobotComp(new CubeCommsComponent(), true));
-    entity.AddDependentComponent(RobotComponentID::GyroDriftDetector,           RobotComp(new RobotGyroDriftDetector(), true));
-    entity.AddDependentComponent(RobotComponentID::Docking,                     RobotComp(new DockingComponent(), true));
-    entity.AddDependentComponent(RobotComponentID::Carrying,                    RobotComp(new CarryingComponent(), true));
-    entity.AddDependentComponent(RobotComponentID::CliffSensor,                 RobotComp(new CliffSensorComponent(), true));
-    entity.AddDependentComponent(RobotComponentID::ProxSensor,                  RobotComp(new ProxSensorComponent(), true));
-    entity.AddDependentComponent(RobotComponentID::TouchSensor,                 RobotComp(new TouchSensorComponent(), true));
-    entity.AddDependentComponent(RobotComponentID::Animation,                   RobotComp(new AnimationComponent(), true));
-    entity.AddDependentComponent(RobotComponentID::StateHistory,                RobotComp(new RobotStateHistory(), true));
-    entity.AddDependentComponent(RobotComponentID::MoodManager,                 RobotComp(new MoodManager(), true));
-    entity.AddDependentComponent(RobotComponentID::Inventory,                   RobotComp(new InventoryComponent(), true));
-    entity.AddDependentComponent(RobotComponentID::ProgressionUnlock,           RobotComp(new ProgressionUnlockComponent(), true));
-    entity.AddDependentComponent(RobotComponentID::BlockTapFilter,              RobotComp(new BlockTapFilterComponent(), true));
-    entity.AddDependentComponent(RobotComponentID::RobotToEngineImplMessaging,  RobotComp(new RobotToEngineImplMessaging(), true));
-    entity.AddDependentComponent(RobotComponentID::RobotIdleTimeout,            RobotComp(new RobotIdleTimeoutComponent(), true));
-    entity.AddDependentComponent(RobotComponentID::MicDirectionHistory,         RobotComp(new MicDirectionHistory(), true));
-    _components = std::make_unique<RobotComponentWrapper>(std::move(entity));
-    _components->_array.InitComponents(this);
+    _components = std::make_unique<EntityType>();
+    _components->AddDependentComponent(RobotComponentID::CozmoContext,               new ContextWrapper(context));
+    _components->AddDependentComponent(RobotComponentID::BlockWorld,                 new BlockWorld());
+    _components->AddDependentComponent(RobotComponentID::FaceWorld,                  new FaceWorld());
+    _components->AddDependentComponent(RobotComponentID::PetWorld,                   new PetWorld());
+    _components->AddDependentComponent(RobotComponentID::PublicStateBroadcaster,     new PublicStateBroadcaster());
+    _components->AddDependentComponent(RobotComponentID::EngineAudioClient,          new Audio::EngineRobotAudioClient());
+    _components->AddDependentComponent(RobotComponentID::PathPlanning,               new PathComponent());
+    _components->AddDependentComponent(RobotComponentID::DrivingAnimationHandler,    new DrivingAnimationHandler());
+    _components->AddDependentComponent(RobotComponentID::ActionList,                 new ActionList());
+    _components->AddDependentComponent(RobotComponentID::Movement,                   new MovementComponent());
+    _components->AddDependentComponent(RobotComponentID::Vision,                     new VisionComponent());
+    _components->AddDependentComponent(RobotComponentID::VisionScheduleMediator,     new VisionScheduleMediator());
+    _components->AddDependentComponent(RobotComponentID::Map,                        new MapComponent());
+    _components->AddDependentComponent(RobotComponentID::NVStorage,                  new NVStorageComponent());
+    _components->AddDependentComponent(RobotComponentID::AIComponent,                new AIComponent());
+    _components->AddDependentComponent(RobotComponentID::ObjectPoseConfirmer,        new ObjectPoseConfirmer());
+    _components->AddDependentComponent(RobotComponentID::CubeLights,                 new CubeLightComponent());
+    _components->AddDependentComponent(RobotComponentID::BodyLights,                 new BodyLightComponent());
+    _components->AddDependentComponent(RobotComponentID::CubeAccel,                  new CubeAccelComponent());
+    _components->AddDependentComponent(RobotComponentID::CubeComms,                  new CubeCommsComponent());
+    _components->AddDependentComponent(RobotComponentID::GyroDriftDetector,          new RobotGyroDriftDetector());
+    _components->AddDependentComponent(RobotComponentID::Docking,                    new DockingComponent());
+    _components->AddDependentComponent(RobotComponentID::Carrying,                   new CarryingComponent());
+    _components->AddDependentComponent(RobotComponentID::CliffSensor,                new CliffSensorComponent());
+    _components->AddDependentComponent(RobotComponentID::ProxSensor,                 new ProxSensorComponent());
+    _components->AddDependentComponent(RobotComponentID::TouchSensor,                new TouchSensorComponent());
+    _components->AddDependentComponent(RobotComponentID::Animation,                  new AnimationComponent());
+    _components->AddDependentComponent(RobotComponentID::StateHistory,               new RobotStateHistory());
+    _components->AddDependentComponent(RobotComponentID::MoodManager,                new MoodManager());
+    _components->AddDependentComponent(RobotComponentID::Inventory,                  new InventoryComponent());
+    _components->AddDependentComponent(RobotComponentID::ProgressionUnlock,          new ProgressionUnlockComponent());
+    _components->AddDependentComponent(RobotComponentID::BlockTapFilter,             new BlockTapFilterComponent());
+    _components->AddDependentComponent(RobotComponentID::RobotToEngineImplMessaging, new RobotToEngineImplMessaging());
+    _components->AddDependentComponent(RobotComponentID::RobotIdleTimeout,           new RobotIdleTimeoutComponent());
+    _components->AddDependentComponent(RobotComponentID::MicDirectionHistory,        new MicDirectionHistory());
+    _components->InitComponents(this);
   }
       
   _pose.SetName("Robot_" + std::to_string(_ID));
@@ -2826,7 +2784,7 @@ RobotState Robot::GetDefaultRobotState()
 
 RobotInterface::MessageHandler* Robot::GetRobotMessageHandler()
 {
-  if ((!_components->_array.GetComponent(RobotComponentID::CozmoContext).IsValueValid()) ||
+  if ((!_components->GetComponent(RobotComponentID::CozmoContext).IsValueValid()) ||
       (GetContext()->GetRobotManager() == nullptr))
   {
     DEV_ASSERT(false, "Robot.GetRobotMessageHandler.nullptr");
@@ -2956,10 +2914,12 @@ void Robot::SetBodyColor(const s32 color)
   _bodyColor = bodyColor;
 }
 
-void Robot::DevReplaceAIComponent(AIComponent*& aiComponent)
+void Robot::DevReplaceAIComponent(AIComponent* aiComponent, bool shouldManage)
 {
-  _components->_array.DevReplaceDependentComponent(RobotComponentID::AIComponent, RobotComp(aiComponent, true));
-  aiComponent = nullptr;
+  IDependencyManagedComponent<Anki::Cozmo::RobotComponentID>* explicitUpcast = aiComponent;
+  _components->DevReplaceDependentComponent(RobotComponentID::AIComponent, 
+                                            explicitUpcast, 
+                                            shouldManage);
 }
 
   

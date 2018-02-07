@@ -18,7 +18,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
 #include "engine/ankiEventUtil.h"
-#include "engine/dependencyManagedComponent.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 #include "engine/overheadEdge.h"
 #include "engine/navMap/iNavMap.h"
 #include "engine/robotComponents_fwd.h"

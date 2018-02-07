@@ -28,22 +28,14 @@ namespace {
 }
 
   
-ISensorComponent::ISensorComponent(const std::string& logDirName, RobotComponentID componentID)
-: IDependencyManagedComponent<RobotComponentID>(componentID)
-, _rawDataLogger(nullptr)
+ISensorComponent::ISensorComponent(const std::string& logDirName)
+: _rawDataLogger(nullptr)
 , _logDirectory(kLogDirectoryBase + "/" + logDirName)
 {
 }
 
 
 ISensorComponent::~ISensorComponent() = default;
-  
-
-void ISensorComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
-{
-  _robot = robot;
-}
-
 
 void ISensorComponent::Update(const RobotState& msg)
 {

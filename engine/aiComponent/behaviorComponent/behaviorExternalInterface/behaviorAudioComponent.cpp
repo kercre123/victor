@@ -102,7 +102,7 @@ const std::array<AudioMetaData::SwitchState::Gameplay_Round, 11> kGameplayRoundM
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorAudioComponent::BehaviorAudioComponent(Audio::EngineRobotAudioClient* robotAudioClient)
 //: _robotAudioClient(robotAudioClient)
-: IDependencyManagedComponent(BCComponentID::BehaviorAudioComponent)
+: IDependencyManagedComponent(this, BCComponentID::BehaviorAudioComponent)
 , _activeBehaviorStage(BehaviorStageTag::Count)
 //, _prevGuardDogStage(GuardDogStage::Count)
 //, _prevFeedingStage(FeedingStage::MildEnergy)
@@ -113,7 +113,7 @@ BehaviorAudioComponent::BehaviorAudioComponent(Audio::EngineRobotAudioClient* ro
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAudioComponent::InitDependent(Cozmo::Robot* robot, const BCCompMap& dependentComponents)
 {
-  auto& bei = dependentComponents.find(BCComponentID::BehaviorExternalInterface)->second.GetValue<BehaviorExternalInterface>();
+  auto& bei = dependentComponents.GetValue<BehaviorExternalInterface>(BCComponentID::BehaviorExternalInterface);
   Init(bei);
 }
 

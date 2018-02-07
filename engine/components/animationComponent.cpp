@@ -41,7 +41,7 @@ namespace {
   
   
 AnimationComponent::AnimationComponent()
-: IDependencyManagedComponent(RobotComponentID::Animation)
+: IDependencyManagedComponent(this, RobotComponentID::Animation)
 , _isInitialized(false)
 , _tagCtr(0)
 , _isDolingAnims(false)
@@ -72,6 +72,10 @@ void AnimationComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& 
       helper.SubscribeGameToEngine<MessageGameToEngineTag::DisplayProceduralFace>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::SetFaceHue>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::DisplayFaceImageBinaryChunk>();
+      helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableKeepFaceAlive>();
+      helper.SubscribeGameToEngine<MessageGameToEngineTag::SetKeepFaceAliveParameters>();
+      helper.SubscribeGameToEngine<MessageGameToEngineTag::ReadAnimationFile>();
+
     }
   }
   
@@ -88,6 +92,7 @@ void AnimationComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& 
   };
   
   // bind to specific handlers
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::animAdded,             &AnimationComponent::HandleAnimAdded);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::animStarted,           &AnimationComponent::HandleAnimStarted);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::animEnded,             &AnimationComponent::HandleAnimEnded);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::animEvent,             &AnimationComponent::HandleAnimationEvent);
@@ -216,7 +221,7 @@ Result AnimationComponent::PlayAnimByName(const std::string& animName,
     PRINT_NAMED_WARNING("AnimationComponent.PlayAnimByName.Uninitialized", "");
     return RESULT_FAIL;
   }
-  
+
   // Check that animName is valid
   auto it = _availableAnims.find(animName);
   if (it == _availableAnims.end()) {
@@ -238,7 +243,7 @@ Result AnimationComponent::PlayAnimByName(const std::string& animName,
     PRINT_NAMED_WARNING("AnimationComponent.PlayAnimByName.WontInterruptCurrentAnim", "");
     return RESULT_FAIL;
   }
-  
+
   const Tag currTag = GetNextTag();
   if (_robot->SendRobotMessage<RobotInterface::PlayAnim>(numLoops, currTag, animName) == RESULT_OK) {
     // Check if tag already exists in callback map.
@@ -427,7 +432,83 @@ Result AnimationComponent::DisplayFaceImage(const Vision::ImageRGB& img, u32 dur
   return DisplayFaceImage(img565, duration_ms, interruptRunning);
 }
 
+Result AnimationComponent::EnableKeepFaceAlive(bool enable, u32 disableTimeout_ms) const
+{
+  return _robot->SendRobotMessage<RobotInterface::EnableKeepFaceAlive>(disableTimeout_ms, enable);
+}
 
+Result AnimationComponent::SetDefaultKeepFaceAliveParameters() const
+{
+  return _robot->SendRobotMessage<RobotInterface::SetDefaultKeepFaceAliveParameters>();
+}
+
+Result AnimationComponent::SetKeepFaceAliveParameter(KeepFaceAliveParameter param, f32 value) const
+{
+  return _robot->SendRobotMessage<RobotInterface::SetKeepFaceAliveParameter>(value, param, false);
+}
+  
+Result AnimationComponent::SetKeepFaceAliveParameterToDefault(KeepFaceAliveParameter param) const
+{
+  return _robot->SendRobotMessage<RobotInterface::SetKeepFaceAliveParameter>(0.f, param, true);
+}
+
+Result AnimationComponent::AddOrUpdateEyeShift(const std::string& name, 
+                                               f32 xPix,
+                                               f32 yPix,
+                                               TimeStamp_t duration_ms,
+                                               f32 xMax,
+                                               f32 yMax,
+                                               f32 lookUpMaxScale,
+                                               f32 lookDownMinScale,
+                                               f32 outerEyeScaleIncrease)
+{
+  Result res = _robot->SendRobotMessage<RobotInterface::AddOrUpdateEyeShift>(xPix,
+                                                                             yPix,
+                                                                             duration_ms,
+                                                                             xMax,
+                                                                             yMax,
+                                                                             lookUpMaxScale,
+                                                                             lookDownMinScale,
+                                                                             outerEyeScaleIncrease,
+                                                                             name);
+  if (res == RESULT_OK) {
+    _activeEyeShiftLayers.insert(name);
+  }
+  return res;
+}
+  
+Result AnimationComponent::RemoveEyeShift(const std::string& name, u32 disableTimeout_ms)
+{
+  if (IsEyeShifting(name)) {
+    Result res = _robot->SendRobotMessage<RobotInterface::RemoveEyeShift>(disableTimeout_ms, name);
+    if (res == RESULT_OK) {
+      _activeEyeShiftLayers.erase(name);
+    }
+    return res;
+  }
+  return RESULT_OK;
+}
+  
+Result AnimationComponent::AddSquint(const std::string& name, f32 squintScaleX, f32 squintScaleY, f32 upperLidAngle)
+{
+  Result res = _robot->SendRobotMessage<RobotInterface::AddSquint>(squintScaleX, squintScaleY, upperLidAngle, name);
+  if (res == RESULT_OK) {
+    _activeEyeSquintLayers.insert(name);
+  }
+  return res;
+}
+
+Result AnimationComponent::RemoveSquint(const std::string& name, u32 disableTimeout_ms)
+{
+  if (IsEyeSquinting(name)) {
+    Result res = _robot->SendRobotMessage<RobotInterface::RemoveSquint>(disableTimeout_ms, name);
+    if (res == RESULT_OK) {
+      _activeEyeSquintLayers.erase(name);
+    }
+    return res;
+  }
+  return RESULT_OK;
+}
 
 // ================ Game message handlers ======================
 template<>
@@ -486,7 +567,41 @@ void AnimationComponent::HandleMessage(const ExternalInterface::DisplayFaceImage
   _robot->SendRobotMessage<RobotInterface::DisplayFaceImageBinaryChunk>(msg.duration_ms, msg.faceData, msg.imageId, msg.chunkIndex);
 }
 
+template<>
+void AnimationComponent::HandleMessage(const ExternalInterface::EnableKeepFaceAlive& msg)
+{
+  EnableKeepFaceAlive(msg.enable, msg.disableTimeout_ms);
+}
+
+template<>
+void AnimationComponent::HandleMessage(const ExternalInterface::SetKeepFaceAliveParameters& msg)
+{
+  if (msg.setUnspecifiedToDefault) {
+    SetDefaultKeepFaceAliveParameters();
+  }
+  
+  if(ANKI_VERIFY(msg.paramNames.size() == msg.paramValues.size(), "AnimationComponent.HandleSetKeepFaceAliveParameters.NameValuePairMismatch", ""))
+  {
+    for (int i=0; i<msg.paramNames.size(); ++i) {
+      SetKeepFaceAliveParameter( msg.paramNames.at(i), msg.paramValues.at(i) );
+    }
+  }
+}
+
+template<>
+void AnimationComponent::HandleMessage(const ExternalInterface::ReadAnimationFile& msg)
+{
+  _robot->SendRobotMessage<RobotInterface::AddAnim>(msg.full_path);
+}
+
 // ================ Robot message handlers ======================
+
+void AnimationComponent::HandleAnimAdded(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+{
+  const auto & payload = message.GetData().Get_animAdded();
+  PRINT_CH_INFO("AnimationComponent", "HandleAnimAdded", "name=%s length=%d", payload.animName.c_str(), payload.animLength);
+  _availableAnims[payload.animName].length_ms = payload.animLength;
+}
 
 void AnimationComponent::HandleAnimStarted(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {

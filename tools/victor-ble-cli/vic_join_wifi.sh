@@ -31,6 +31,9 @@ elif [ "J" = "$1" ]; then
 elif [ "K" = "$1" ]; then
     robotname="VICTOR_2ecbdf7d"
     robotip="192.168.40.203"
+elif [ "241" = "$1" ]; then
+  robotname="VICTOR_1dd99b42"
+  robotip="192.168.40.241"
 fi
 
 

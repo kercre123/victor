@@ -83,15 +83,15 @@ ICozmoBehaviorPtr BehaviorDispatcherRandom::GetDesiredBehavior()
 
       PRINT_CH_DEBUG("Behaviors", "BehaviorDispatcherRandom.ConsiderBehavior",
                      "%s: considering '%s' with weight %f",
-                     GetIDStr().c_str(),
-                     behavior->GetIDStr().c_str(),
+                     GetDebugLabel().c_str(),
+                     behavior->GetDebugLabel().c_str(),
                      _weights[idx]);
     }
     else {
       PRINT_CH_DEBUG("Behaviors", "BehaviorDispatcherRandom.IgnoreBehavior",
                      "%s: skipping '%s'",
-                     GetIDStr().c_str(),
-                     behavior->GetIDStr().c_str());
+                     GetDebugLabel().c_str(),
+                     behavior->GetDebugLabel().c_str());
     }
   }
 
@@ -123,8 +123,8 @@ ICozmoBehaviorPtr BehaviorDispatcherRandom::GetDesiredBehavior()
       PRINT_CH_INFO("Behaviors",
                     "BehaviorDispatcherRandom.AllOnCooldown",
                     "%s: all behaviors on cooldown, so selecting '%s' which is closest to being off cooldown (%f secs)",
-                    GetIDStr().c_str(),
-                    bestBehavior->GetIDStr().c_str(),
+                    GetDebugLabel().c_str(),
+                    bestBehavior->GetDebugLabel().c_str(),
                     minCooldownRemaining);
     }
 

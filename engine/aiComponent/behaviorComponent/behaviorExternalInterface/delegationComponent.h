@@ -29,13 +29,16 @@ namespace Cozmo {
 // Forward Declaration
 class BehaviorManager;
 class BehaviorSystemManager;
+class ContinuityComponent;
 class IActionRunner;
 class IBehavior;
 class Robot;
 
 class Delegator : private Util::noncopyable{
 public:
-  Delegator(Robot& robot, BehaviorSystemManager& bsm);
+  Delegator(Robot& robot, 
+            BehaviorSystemManager& bsm, 
+            ContinuityComponent& continuityComp);
   virtual ~Delegator(){};
   
   bool Delegate(IBehavior* delegatingBehavior, IActionRunner* action);
@@ -60,7 +63,8 @@ private:
   // Naive tracking for helper delegation
   IBehavior* _behaviorThatDelegatedHelper;
   WeakHelperHandle _delegateHelperHandle;
-  BehaviorSystemManager* _bsm;
+  BehaviorSystemManager& _bsm;
+  ContinuityComponent& _continuityComp;
 
   void EnsureHandleIsUpdated();
 };
@@ -85,7 +89,7 @@ public:
   // end IDependencyManagedComponent functions
   //////
   
-  void Init(Robot& robot, BehaviorSystemManager& bsm);
+  void Init(Robot& robot, BehaviorSystemManager* bsm, ContinuityComponent* continuityComp);
   
   bool IsControlDelegated(const IBehavior* delegatingBehavior);
   void CancelDelegates(IBehavior* delegatingBehavior);
@@ -106,7 +110,8 @@ private:
   std::unique_ptr<Delegator>   _delegator;
   std::vector<::Signal::SmartHandle> _eventHandles;
     
-  BehaviorSystemManager* _bsm;
+  BehaviorSystemManager* _bsm = nullptr;
+  ContinuityComponent* _continuityComp = nullptr;
   
   // For supporting legacy code
   friend class ICozmoBehavior;

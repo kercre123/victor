@@ -36,7 +36,7 @@ namespace Cozmo {
 
 // forward declaration
 class CannedAnimationContainer;
-class CozmoAnimContext;
+class AnimContext;
 
 class CannedAnimationLoader : private Util::noncopyable
 {
@@ -48,7 +48,8 @@ public:
   , _loadingCompleteRatio(loadingCompleteRatio)
   , _abortLoad(abortLoad){}
 
-  CannedAnimationContainer* LoadAnimations(); 
+  CannedAnimationContainer* LoadAnimations();
+  CannedAnimationContainer* LoadAnimationsFromFile(const std::string& path);
 private:
   using TimestampMap = std::unordered_map<std::string, time_t>;
   
@@ -77,7 +78,6 @@ private:
                         const std::function<void(const std::string& filePath)>& walkFunc);
 
   void LoadFaceAnimations();
-
 
   void CollectAnimFiles();
 

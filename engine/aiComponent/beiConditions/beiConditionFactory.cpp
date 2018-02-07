@@ -17,6 +17,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionFacePositionUpdated.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionFrustration.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionInNeedsBracket.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionMotionDetected.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionNegate.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectInitialDetection.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectMoved.h"
@@ -25,9 +26,11 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionOffTreadsState.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionOnCharger.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionPetInitialDetection.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionProxInRange.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotPlacedOnSlope.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotShaken.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotTouchGesture.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionTimedDedup.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionTimerInRange.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionTrue.h"
 
@@ -83,6 +86,11 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
       strategy = std::make_shared<ConditionInNeedsBracket>(config);
       break;
     }
+    case BEIConditionType::MotionDetected:
+    {
+      strategy = std::make_shared<ConditionMotionDetected>(config);
+      break;
+    }
     case BEIConditionType::ObjectInitialDetection:
     {
       strategy = std::make_shared<ConditionObjectInitialDetection>(config);
@@ -108,6 +116,11 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
       strategy = std::make_shared<ConditionPetInitialDetection>(config);
       break;
     }
+    case BEIConditionType::ProxInRange:
+    {
+      strategy = std::make_shared<ConditionProxInRange>(config);
+      break;
+    }
     case BEIConditionType::RobotPlacedOnSlope:
     {
       strategy = std::make_shared<ConditionRobotPlacedOnSlope>(config);
@@ -126,6 +139,11 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
     case BEIConditionType::TimerInRange:
     {
       strategy = std::make_shared<ConditionTimerInRange>(config);
+      break;
+    }
+    case BEIConditionType::TimedDedup:
+    {
+      strategy = std::make_shared<ConditionTimedDedup>(config);
       break;
     }
     case BEIConditionType::Negate:

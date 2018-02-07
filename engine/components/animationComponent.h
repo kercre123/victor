@@ -22,10 +22,12 @@
 #include "engine/events/ankiEvent.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
+#include "clad/types/keepFaceAliveParameters.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/signalHolder.h"
 
 #include <unordered_map>
+#include <unordered_set>
 
 namespace Anki {
 namespace Cozmo {
@@ -107,6 +109,50 @@ public:
   Result DisplayFaceImage(const Vision::ImageRGB& img, u32 duration_ms, bool interruptRunning = false);
   Result DisplayFaceImage(const Vision::ImageRGB565& imgRGB565, u32 duration_ms, bool interruptRunning = false);
 
+  // Enable/Disable KeepFaceAlive
+  // If enable == false, disableTimeout_ms is the duration over which the face should 
+  // return to no adjustments
+  Result EnableKeepFaceAlive(bool enable, u32 disableTimeout_ms = 0) const;
+
+  // Restore all KeepFaceAlive parameters to defaults
+  Result SetDefaultKeepFaceAliveParameters() const;
+  
+  // Set KeepFaceAliveParameterToDefault
+  Result SetKeepFaceAliveParameterToDefault(KeepFaceAliveParameter param) const;
+  
+  // Set KeepFaceAlive parameter to specified value
+  Result SetKeepFaceAliveParameter(KeepFaceAliveParameter param, f32 value) const;
+
+  // Either start an eye shift or update an already existing eye shift with new params
+  // Note: Eye shift will continue until removed so if eye shift with the same name
+  // was already added without being removed, this will just update it
+  Result AddOrUpdateEyeShift(const std::string& name, 
+                             f32 xPix,
+                             f32 yPix,
+                             TimeStamp_t duration_ms,
+                             f32 xMax = FACE_DISPLAY_HEIGHT,
+                             f32 yMax = FACE_DISPLAY_WIDTH,
+                             f32 lookUpMaxScale = 1.1f,
+                             f32 lookDownMinScale = 0.85f,
+                             f32 outerEyeScaleIncrease = 0.1f);
+  
+  // Removes eye shift layer by name
+  // Does nothing if no such layer exists
+  Result RemoveEyeShift(const std::string& name, u32 disableTimeout_ms = 0);
+
+  // Returns true if an eye shift layer of the given name is currently applied
+  bool IsEyeShifting(const std::string& name) const { return _activeEyeShiftLayers.count(name) > 0; }
+  
+  // Adds eye squinting layer with the given name
+  Result AddSquint(const std::string& name, f32 squintScaleX, f32 squintScaleY, f32 upperLidAngle);
+
+  // Removes eye squinting layer by name
+  // Does nothing if no such layer exists
+  Result RemoveSquint(const std::string& name, u32 disableTimeout_ms = 0);
+
+  // Returns true if an eye squint layer of the given name is currently applied
+  bool IsEyeSquinting(const std::string& name) const { return _activeEyeSquintLayers.count(name) > 0; }
+  
   // Enables only the specified tracks. 
   // Status of other tracks remain unchanged.
   void UnlockTracks(u8 tracks);
@@ -132,6 +178,7 @@ public:
   void HandleMessage(const T& msg);
   
   // Robot message handlers
+  void HandleAnimAdded(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   void HandleAnimStarted(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   void HandleAnimEnded(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   void HandleAnimationEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message);
@@ -167,6 +214,9 @@ private:
   
   std::string _currPlayingAnim;
 
+  std::unordered_set<std::string> _activeEyeShiftLayers;
+  std::unordered_set<std::string> _activeEyeSquintLayers;  
+  
   u8 _lockedTracks;
 
   // For tracking whether or not an animation is playing based on

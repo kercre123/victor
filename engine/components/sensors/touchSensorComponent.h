@@ -16,7 +16,7 @@
 #include "engine/components/sensors/iSensorComponent.h"
 #include "engine/components/sensors/touchSensorHelpers.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
-#include "engine/entity.h"
+#include "util/entityComponent/entity.h"
 #include "clad/types/touchGestureTypes.h"
 #include "clad/types/factoryTestTypes.h"
 
@@ -25,7 +25,7 @@ namespace Cozmo {
 
 class IBehaviorPlaypen;
 
-class TouchSensorComponent : public ISensorComponent
+class TouchSensorComponent : public ISensorComponent, public IDependencyManagedComponent<RobotComponentID>
 {
 public:
 
@@ -41,6 +41,9 @@ public:
   // when changing this function
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::ProxSensor);
+  };
+  virtual void InitDependent(Robot* robot, const RobotCompMap& dependentComponents) override {
+    InitBase(robot);
   };
   //////
   // end IDependencyManagedComponent functions

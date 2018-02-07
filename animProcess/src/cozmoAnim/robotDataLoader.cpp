@@ -16,13 +16,15 @@
 #include "coretech/common/engine/utils/timer.h"
 
 
+#include "cannedAnimLib/animation.h"
 #include "cannedAnimLib/cannedAnimationContainer.h"
 #include "cannedAnimLib/cannedAnimationLoader.h"
 #include "cannedAnimLib/cozmo_anim_generated.h"
 #include "cannedAnimLib/faceAnimationManager.h"
 #include "cannedAnimLib/proceduralFace.h"
 //#include "anki/cozmo/basestation/animations/animationTransfer.h"
-#include "cozmoAnim/cozmoAnimContext.h"
+#include "cozmoAnim/animContext.h"
+#include "cozmoAnim/animProcessMessages.h"
 
 #include "util/console/consoleInterface.h"
 #include "util/dispatchWorker/dispatchWorker.h"
@@ -40,10 +42,10 @@
 namespace Anki {
 namespace Cozmo {
 
-RobotDataLoader::RobotDataLoader(const CozmoAnimContext* context)
+RobotDataLoader::RobotDataLoader(const AnimContext* context)
 : _context(context)
 , _platform(_context->GetDataPlatform())
-, _cannedAnimations(new CannedAnimationContainer())
+, _cannedAnimations(nullptr)
 {
 }
 
@@ -79,6 +81,38 @@ void RobotDataLoader::LoadNonConfigData()
   _cannedAnimations.reset(animLoader.LoadAnimations());
 }
 
+void RobotDataLoader::LoadAnimationFile(const std::string& path)
+{
+  if (_platform == nullptr) {
+    return;
+  }
+  CannedAnimationLoader animLoader(_platform, _loadingCompleteRatio, _abortLoad);
+  const auto& animsContainer = animLoader.LoadAnimationsFromFile(path);
+  for (const auto& name : animsContainer->GetAnimationNames())
+  {
+    auto* anim = animsContainer->GetAnimation(name);
+    _cannedAnimations->AddAnimation(anim);
+
+    NotifyAnimAdded(name, anim->GetLastKeyFrameEndTime_ms());
+  }
+  animsContainer->Clear();
+  delete animsContainer;
+}
+
+Animation* RobotDataLoader::GetCannedAnimation(const std::string& name)
+{
+  assert(_cannedAnimations);
+  return _cannedAnimations->GetAnimation(name);
+}
+
+void RobotDataLoader::NotifyAnimAdded(const std::string& animName, uint32_t animLength)
+{
+  AnimationAdded msg;
+  memcpy(msg.animName, animName.c_str(), animName.length());
+  msg.animName_length = animName.length();
+  msg.animLength = animLength;
+  AnimProcessMessages::SendAnimToEngine(msg);
+}
 
 bool RobotDataLoader::DoNonConfigDataLoading(float& loadingCompleteRatio_out)
 {

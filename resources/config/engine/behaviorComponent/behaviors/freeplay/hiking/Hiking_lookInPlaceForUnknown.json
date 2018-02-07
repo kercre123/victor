@@ -9,7 +9,6 @@
   "behaviorClass": "LookInPlaceMemoryMap",
   "behaviorID": "Hiking_LookInPlaceForUnknown",
 
-  "displayNameKey":"behavior.LookInPlaceMemoryMap",
   "params":
   {
     "bodyTurnSpeed_degPerSec": 180,

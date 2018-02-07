@@ -17,6 +17,7 @@
 #include "engine/aiComponent/aiInformationAnalysis/aiInformationAnalyzer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/aiComponent/continuityComponent.h"
 #include "engine/aiComponent/doATrickSelector.h"
 #include "engine/aiComponent/faceSelectionComponent.h"
 #include "engine/aiComponent/feedingSoundEffectManager.h"
@@ -53,6 +54,7 @@ namespace Cozmo {
 namespace ComponentWrappers{
 AIComponentComponents::AIComponentComponents(Robot&                      robot,
                                              BehaviorComponent*&         behaviorComponent,
+                                             ContinuityComponent*        continuityComponent,
                                              DoATrickSelector*           doATrickSelector,
                                              FaceSelectionComponent*     faceSelectionComponent,
                                              FeedingSoundEffectManager*  feedingSoundEFfectManager,
@@ -67,6 +69,7 @@ AIComponentComponents::AIComponentComponents(Robot&                      robot,
 :_robot(robot)
 ,_components({
   {AIComponentID::BehaviorComponent,          ComponentWrapper(behaviorComponent, true)},
+  {AIComponentID::ContinuityComponent,        ComponentWrapper(continuityComponent, true)},
   {AIComponentID::DoATrick,                   ComponentWrapper(doATrickSelector, true)},
   {AIComponentID::FaceSelection,              ComponentWrapper(faceSelectionComponent, true)},
   {AIComponentID::FeedingSoundEffect,         ComponentWrapper(feedingSoundEFfectManager, true)},
@@ -90,8 +93,8 @@ AIComponentComponents::~AIComponentComponents()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AIComponent::AIComponent()
-: UnreliableComponent<BCComponentID>(BCComponentID::AIComponent)
-, IDependencyManagedComponent<RobotComponentID>(RobotComponentID::AIComponent)
+: UnreliableComponent<BCComponentID>(this, BCComponentID::AIComponent)
+, IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::AIComponent)
 , _suddenObstacleDetected(false)
 {
 }
@@ -126,6 +129,7 @@ Result AIComponent::Init(Robot* robot, BehaviorComponent*& customBehaviorCompone
     _aiComponents = std::make_unique<ComponentWrappers::AIComponentComponents>(
           *robot,
           behaviorComponent,
+          new ContinuityComponent(*robot),
           new DoATrickSelector(robot->GetContext()->GetDataLoader()->GetDoATrickWeightsConfig()),
           new FaceSelectionComponent(*robot, robot->GetFaceWorld(), robot->GetMicDirectionHistory()),
           new FeedingSoundEffectManager(),
@@ -142,7 +146,10 @@ Result AIComponent::Init(Robot* robot, BehaviorComponent*& customBehaviorCompone
 
     if(behaviorCompInitRequired){
       auto& behaviorComp = GetComponent<BehaviorComponent>(AIComponentID::BehaviorComponent);
-      behaviorComp.Init(robot, BehaviorComponent::GenerateManagedComponents(*robot, *this, nullptr));
+      auto entity = std::make_unique<BehaviorComponent::EntityType>();
+      entity->AddDependentComponent(BCComponentID::AIComponent, this, false);
+      BehaviorComponent::GenerateManagedComponents(*robot, entity);
+      behaviorComp.Init(robot, std::move(entity));
     }
   }
   
@@ -207,6 +214,13 @@ Result AIComponent::Update(Robot& robot, std::string& currentActivityName,
   {
     auto& severeNeedsComp = GetComponent<SevereNeedsComponent>(AIComponentID::SevereNeeds);
     severeNeedsComp.Update();
+  }
+  
+  // Update continuity component before behavior component to ensure behaviors don't
+  // re-gain control when an action is pending
+  {
+    auto& contComponent = GetComponent<ContinuityComponent>(AIComponentID::ContinuityComponent);
+    contComponent.Update();
   }
   
   {
@@ -274,13 +288,15 @@ void AIComponent::CheckForSuddenObstacle(Robot& robot)
   
   varRotation_radsq = fabs(varRotation_radsq - (avgRotation_rad * avgRotation_rad));
 
-  const u16 latestDistance_mm = robot.GetProxSensorComponent().GetLatestDistance_mm();
+  u16 latestDistance_mm = 0;
+  const bool readingIsValid = robot.GetProxSensorComponent().GetLatestDistance_mm(latestDistance_mm);
+  
   f32 avgObjectSpeed_mmps = 2 * fabs(avgProxValue_mm - latestDistance_mm) / kObsSampleWindow_ms;
-
   
   // only trigger if sensor is changing faster than the robot speed, robot is
   // not turning, and sensor is not being changed by noise
-  _suddenObstacleDetected = (avgObjectSpeed_mmps >= kObsTriggerSensitivity * avgRobotSpeed_mmps) &&
+  _suddenObstacleDetected = readingIsValid &&
+                            (avgObjectSpeed_mmps >= kObsTriggerSensitivity * avgRobotSpeed_mmps) &&
                             (varRotation_radsq   <= kObsMaxRotationVariance_rad2) &&
                             (avgObjectSpeed_mmps >= kObsMinObjectSpeed_mmps) &&
                             (avgProxValue_mm     <= kObsMaxObjectDistance_mm);                   

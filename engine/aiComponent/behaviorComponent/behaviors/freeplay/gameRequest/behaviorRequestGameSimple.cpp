@@ -139,7 +139,7 @@ BehaviorRequestGameSimple::BehaviorRequestGameSimple(const Json::Value& config)
           PRINT_NAMED_WARNING("BehaviorRequestGameSimple.InvalidKey",
                               "Behavior '%s' specifies that it should not use block, but specifies key '%s' "
                               "which will be ignored",
-                              GetIDStr().c_str(),
+                              GetDebugLabel().c_str(),
                               blockKey);
         }
       }
@@ -147,7 +147,7 @@ BehaviorRequestGameSimple::BehaviorRequestGameSimple(const Json::Value& config)
       if( ! FLT_NEAR( _zeroBlockConfig.scoreFactor, 1.0f ) ) {
         PRINT_NAMED_WARNING("BehaviorRequestGameSimple.PossibleScoreError",
                             "Behavior '%s' is not using blocks, but the zero block config discounts score by %f",
-                            GetIDStr().c_str(),
+                            GetDebugLabel().c_str(),
                             _zeroBlockConfig.scoreFactor);
       }
     }
@@ -364,7 +364,7 @@ void BehaviorRequestGameSimple::TransitionToDrivingToFace()
   if( ! _hasFaceInteractionPose ) {
     PRINT_NAMED_INFO("BehaviorRequestGameSimple.TransitionToDrivingToFace.NoPose",
                      "%s: No interaction pose set to drive to face!",
-                     GetIDStr().c_str());
+                     GetDebugLabel().c_str());
     return;
   }
   else {

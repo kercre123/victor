@@ -45,6 +45,8 @@ public:
   void EnablePredictionWhenLost(bool enableX, bool enableY, TimeStamp_t duration_ms);
   
 protected:
+
+  virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const override;
   
   virtual ActionResult InitInternal() override;
   
@@ -59,7 +61,6 @@ private:
     Point2f     groundPoint;
   };
   
-  VisionMode _visionMode = VisionMode::Count;
   ExternalInterface::MessageEngineToGameTag _salientTag;
   std::function<PointObservation(const ExternalInterface::MessageEngineToGame&)> _getObservedPointFromEvent = nullptr;
   

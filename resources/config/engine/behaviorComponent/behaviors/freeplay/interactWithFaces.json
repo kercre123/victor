@@ -2,7 +2,6 @@
 {
   "behaviorClass": "InteractWithFaces",
   "behaviorID": "InteractWithFaces",
-  "displayNameKey":"behavior.InteractWithFaces",
 
   "params": {
     "minTimeToTrackFace_s": 8.0,

@@ -17,7 +17,8 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiComponents_fwd.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
-#include "engine/entity.h"
+#include "util/entityComponent/componentWrapper.h"
+#include "util/entityComponent/entity.h"
 
 #include "clad/types/offTreadsStates.h"
 
@@ -87,7 +88,7 @@ class BEIComponentWrapper : public ComponentWrapper {
 class BehaviorExternalInterface : public IDependencyManagedComponent<BCComponentID>, private Util::noncopyable{
 public:
   BehaviorExternalInterface()
-  :IDependencyManagedComponent(BCComponentID::BehaviorExternalInterface) {}
+  :IDependencyManagedComponent(this, BCComponentID::BehaviorExternalInterface) {}
   
   //////
   // IDependencyManagedComponent functions

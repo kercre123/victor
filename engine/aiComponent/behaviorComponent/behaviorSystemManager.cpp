@@ -42,7 +42,7 @@ const int kArbitrarilyLargeCancelBound = 1000000;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorSystemManager::BehaviorSystemManager()
-: IDependencyManagedComponent(BCComponentID::BehaviorSystemManager)
+: IDependencyManagedComponent(this, BCComponentID::BehaviorSystemManager)
 , _initializationStage(InitializationStage::SystemNotInitialized)
 {
   _behaviorStack.reset();
@@ -56,11 +56,12 @@ BehaviorSystemManager::~BehaviorSystemManager()
 }
 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorSystemManager::InitDependent(Robot* robot, const BCCompMap& dependentComponents)
 {
-  auto& baseBehaviorWrapper = dependentComponents.find(BCComponentID::BaseBehaviorWrapper)->second.GetValue<BaseBehaviorWrapper>();
-  auto& bei = dependentComponents.find(BCComponentID::BehaviorExternalInterface)->second.GetValue<BehaviorExternalInterface>();
-  auto& async = dependentComponents.find(BCComponentID::AsyncMessageComponent)->second.GetValue<AsyncMessageGateComponent>();
+  auto& baseBehaviorWrapper = dependentComponents.GetValue<BaseBehaviorWrapper>(BCComponentID::BaseBehaviorWrapper);
+  auto& bei = dependentComponents.GetValue<BehaviorExternalInterface>(BCComponentID::BehaviorExternalInterface);
+  auto& async = dependentComponents.GetValue<AsyncMessageGateComponent>(BCComponentID::AsyncMessageComponent);
 
   InitConfiguration(*robot,
                     baseBehaviorWrapper._baseBehavior,
@@ -241,16 +242,16 @@ bool BehaviorSystemManager::Delegate(IBehavior* delegator, IBehavior* delegated)
                     (iter->second.find(delegated) != iter->second.end()),
                    "BehaviorSystemManager.Delegate.DelegateNotInAvailableDelegateMap",
                    "Delegator %s asked to delegate to %s which is not in available delegates map",
-                   delegator->GetPrintableID().c_str(),
-                   delegated->GetPrintableID().c_str())){
+                   delegator->GetDebugLabel().c_str(),
+                   delegated->GetDebugLabel().c_str())){
       return false;
     }
   }
   
   PRINT_CH_INFO("BehaviorSystem", "BehaviorSystemManager.Delegate.ToBehavior",
                 "'%s' will delegate to '%s'",
-                delegator != nullptr ? delegator->GetPrintableID().c_str() : "Empty Stack",
-                delegated->GetPrintableID().c_str());
+                delegator != nullptr ? delegator->GetDebugLabel().c_str() : "Empty Stack",
+                delegated->GetDebugLabel().c_str());
 
   // Activate the new behavior and add it to the top of the stack
   _behaviorStack->PushOntoStack(delegated);
@@ -273,7 +274,7 @@ void BehaviorSystemManager::CancelDelegates(IBehavior* delegator)
 
   PRINT_CH_INFO("BehaviorSystem", "BehaviorSystemManager.CancelDelegates",
                 "'%s' canceled its delegates",
-                delegator->GetPrintableID().c_str());
+                delegator->GetDebugLabel().c_str());
 
   _behaviorStack->DebugPrintStack("AfterCancelDelgates");
 }
@@ -286,7 +287,7 @@ void BehaviorSystemManager::CancelSelf(IBehavior* delegator)
   if(!ANKI_VERIFY(_behaviorStack->IsInStack(delegator),
                   "BehaviorSystemManager.CancelSelf.NotINStack",
                   "%s is not in stack",
-                  delegator->GetPrintableID().c_str())){
+                  delegator->GetDebugLabel().c_str())){
     return;
   }
   
@@ -300,7 +301,7 @@ void BehaviorSystemManager::CancelSelf(IBehavior* delegator)
 
   PRINT_CH_INFO("BehaviorSystem", "BehaviorSystemManager.CancelSelf",
                 "'%s' canceled itself",
-                delegator->GetPrintableID().c_str());
+                delegator->GetDebugLabel().c_str());
 
   _behaviorStack->DebugPrintStack("AfterCancelSelf");
 }

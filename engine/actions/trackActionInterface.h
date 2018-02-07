@@ -128,6 +128,9 @@ protected:
   ITrackAction(const std::string name, const RobotActionType type);
   virtual ~ITrackAction();
   
+  // Anything which inherits from track action needs to have appropriate VisionModes enabled.
+  virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const override = 0;
+
   // Note that derived classes should override InitInternal, which is called by Init
   virtual ActionResult Init() override final;
   virtual ActionResult InitInternal() = 0;
@@ -164,11 +167,11 @@ private:
   Radians  _maxHeadAngle  = MAX_HEAD_ANGLE;
   u32      _stopOnOtherActionTag = ActionConstants::INVALID_TAG;
   
-  AnimationTag _eyeShiftTag = kNotAnimatingTag;
   bool         _moveEyes    = false;
-  f32          _originalEyeDartDist;
   
   bool     _shouldPlayDrivingAnimation = false;
+
+  const std::string _kEyeShiftLayerName = "ITrackActionEyeShiftLayer";
   
   // When driving animations are used, we have to wait until the End animation is complete
   // before returning whatever actual final result for the action we wanted. In the mean time

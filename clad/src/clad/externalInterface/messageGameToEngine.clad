@@ -19,7 +19,7 @@
 #include "clad/types/imu.clad"
 #include "clad/types/inventoryTypes.clad"
 #include "clad/types/ledTypes.clad"
-#include "clad/types/liveIdleAnimationParameters.clad"
+#include "clad/types/keepFaceAliveParameters.clad"
 #include "clad/types/needsSystemTypes.clad"
 #include "clad/types/objectTypes.clad"
 #include "clad/types/nvStorageTypes.clad"
@@ -689,6 +689,7 @@ message ReadFaceAnimationDir {
 
 // ReadAnimationFile
 message ReadAnimationFile {
+  string full_path
 }
 
 // RequestAvailableAnimations
@@ -701,8 +702,13 @@ message RequestAvailableAnimationGroups{
   
 }
 
-message SetLiveIdleAnimationParameters {
-  LiveIdleAnimationParameter   paramNames[uint_8],
+message EnableKeepFaceAlive {
+  uint_32 disableTimeout_ms,  // If enable == false, the amount of time to wait before actually disabling
+  bool    enable
+}
+
+message SetKeepFaceAliveParameters {
+  KeepFaceAliveParameter       paramNames[uint_8],
   float_32                     paramValues[uint_8], // must be same length as paramNames
   bool                         setUnspecifiedToDefault = 0
 }

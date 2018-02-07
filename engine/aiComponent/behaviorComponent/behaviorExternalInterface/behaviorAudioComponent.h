@@ -19,7 +19,7 @@
 #define __Basestation_Audio_BehaviorAudioComponent_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
-#include "engine/dependencyManagedComponent.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 #include "engine/events/ankiEventMgr.h"
 
 #include "clad/audio/audioStateTypes.h"
