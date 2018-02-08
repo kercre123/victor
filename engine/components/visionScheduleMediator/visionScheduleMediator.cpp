@@ -57,6 +57,11 @@ void VisionScheduleMediator::InitDependent(Cozmo::Robot* robot, const RobotCompM
     _modeDataMap.insert(std::pair<VisionMode, VisionModeData>(visionMode, newModeData));
   }
 
+  // Set up baseline subscriptions to manage VisionMode defaults via the VSM
+  std::set<VisionModeRequest> baselineSubscriptions;
+  GetInternalSubscriptions(baselineSubscriptions);
+  SetVisionModeSubscriptions(this, baselineSubscriptions);
+
   return;
 }
 
@@ -75,6 +80,12 @@ void VisionScheduleMediator::SetVisionModeSubscriptions(IVisionModeSubscriber* c
 void VisionScheduleMediator::SetVisionModeSubscriptions(IVisionModeSubscriber* const subscriber,
                                                         const std::set<VisionModeRequest>& requests)
 {
+  // Prevent subscriptions using nullptr
+  DEV_ASSERT(nullptr != subscriber, "VisionScheduleMediator.NullVisionModeSubscriber");
+  if(nullptr == subscriber){
+    return;
+  }
+
   // Remove any existing subscriptions from this subscriber
   for(auto& modeDataPair : _modeDataMap){
     if(modeDataPair.second.requestMap.erase(subscriber)){
@@ -103,6 +114,12 @@ void VisionScheduleMediator::SetVisionModeSubscriptions(IVisionModeSubscriber* c
 
 void VisionScheduleMediator::ReleaseAllVisionModeSubscriptions(IVisionModeSubscriber* subscriber)
 {
+  // Prevent subscription releases using nullptr
+  DEV_ASSERT(nullptr != subscriber, "VisionScheduleMediator.NullVisionModeSubscriber");
+  if(nullptr == subscriber){
+    return;
+  }
+
   for(auto& modeDataPair : _modeDataMap){
     if(modeDataPair.second.requestMap.erase(subscriber)){
       modeDataPair.second.dirty = true;
