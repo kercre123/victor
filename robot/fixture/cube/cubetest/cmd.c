@@ -60,8 +60,7 @@ int cmd_process(char* s)
   //<<getvers [status] [0xversion]
   //================
   if( !strcmp(cmd, "getvers") ) {
-    writes_("project = cubetest\n");
-    writes_(__DATE__ " " __TIME__ "\n");
+    writes_("cubetest build " __DATE__ " " __TIME__ "\n");
     return respond_(cmd, STATUS_OK, snformat(b,bz,"hw=%s",HWVERS) );
   }//-*/
   
@@ -184,9 +183,12 @@ int cmd_process(char* s)
   //==========================
   if( !strcmp(cmd, "accel") )
   {
-    extern void AccelInit(void);
-    AccelInit(); //hal_spi_init();
-    return respond_(cmd, STATUS_OK, 0);
+    //extern void AccelInit(void);
+    //AccelInit(); //hal_spi_init();
+    //return respond_(cmd, STATUS_OK, 0);
+    
+    writes_("XXX: missing accel driver\n");
+    return respond_(cmd, 404, "not-implemented");
   }//-*/
   
   //==========================

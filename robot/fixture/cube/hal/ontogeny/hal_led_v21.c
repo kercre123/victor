@@ -24,9 +24,9 @@ void hal_led_init(void)
 void hal_led_power(bool on)
 {
   if( on )
-    GPIO_SET(BOOST_EN);
+    GPIO_SET(BOOST);
   else
-    GPIO_CLR(BOOST_EN);
+    GPIO_CLR(BOOST);
 }
 
 static uint8_t m_hal_led_is_off = 0;

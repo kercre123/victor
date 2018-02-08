@@ -71,7 +71,7 @@
 void anki_led_on( uint16_t led_bf )
 {
   board_init();
-  GPIO_CLR(BOOST_EN); //disable VLED
+  GPIO_CLR(BOOST); //disable VLED
   
   //turn on specified leds
   if( led_bf & LED_D1_RED ) { GPIO_CLR(D2); }
@@ -89,7 +89,7 @@ void anki_led_on( uint16_t led_bf )
   
   //enable VLED
   if( led_bf > 0 ) {
-    GPIO_SET(BOOST_EN);
+    GPIO_SET(BOOST);
   }
 }
 

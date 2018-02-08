@@ -50,7 +50,7 @@ bdaddr_t* str2bdaddr(char* str, bdaddr_t *out_bdaddr)
   
   if( out_bdaddr && str && strlen(str) >= BDADDR_STR_SIZE )
   {
-    uint8_t* write = (uint8_t*)out_bdaddr;
+    uint8_t* write = &out_bdaddr->addr[0];
     char* next = str;
     
     while( next < (str+BDADDR_STR_SIZE) && ((int)write-(int)out_bdaddr) < BDADDR_SIZE )

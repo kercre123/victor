@@ -16,10 +16,12 @@ static const uint32_t SYSTEM_CLOCK = 16*1000000;
 static const uint32_t COMMS_BAUDRATE = 57600;
 
 //hardware version string
-#if defined(HWVER21)
-  #define HWVERS "v2.1"
+#if defined(HWVERDVT3B)
+  #define HWVERS "DVT3-B"
+#elif defined(HWVER21)
+  #define HWVERS "v2.1" //~DVT2
 #elif defined(HWVER20)
-  #define HWVERS "v2.0"
+  #define HWVERS "v2.0" //~DVT1
 #else
   #define HWVERS "v?.?"
 #endif
@@ -43,8 +45,8 @@ char* snformat(char *s, size_t n, const char *format, ...);
   static const GPIO_PIN   NAME##_PIN = (GPIO_PIN)(PIN);
 
 GPIO_DEFINE(GPIO_PORT_0, 0 ,ACC_CS);
-GPIO_DEFINE(GPIO_PORT_0, 1 ,CAPI);
-GPIO_DEFINE(GPIO_PORT_0, 2 ,CAPO);
+GPIO_DEFINE(GPIO_PORT_0, 1 ,NC_P01);
+GPIO_DEFINE(GPIO_PORT_0, 2 ,ACC_PWR);
 GPIO_DEFINE(GPIO_PORT_0, 3 ,ACC_SCK);
 GPIO_DEFINE(GPIO_PORT_0, 4 ,UTX);
 GPIO_DEFINE(GPIO_PORT_0, 5 ,URX);
@@ -58,8 +60,7 @@ GPIO_DEFINE(GPIO_PORT_1, 3 ,NC_P13);
 GPIO_DEFINE(GPIO_PORT_1, 4 ,SWCLK); //reset PD
 GPIO_DEFINE(GPIO_PORT_1, 5 ,SWDIO); //reset PU
 
-GPIO_DEFINE(GPIO_PORT_2, 0 ,BOOST_EN);
-GPIO_DEFINE(GPIO_PORT_2, 0 ,BOOST); //P0.0 alias; backwards compat for v2.0 hw
+GPIO_DEFINE(GPIO_PORT_2, 0 ,BOOST);
 GPIO_DEFINE(GPIO_PORT_2, 1 ,D0);
 GPIO_DEFINE(GPIO_PORT_2, 2 ,D2);
 GPIO_DEFINE(GPIO_PORT_2, 3 ,D11);

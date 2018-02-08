@@ -26,11 +26,14 @@ static inline void board_init_optimized_(void)
   while (!(GetWord16(SYS_STAT_REG) & PER_IS_UP));
   
   //Init boost regulator control (NOTE: 1V-BAT logic level)
-  GPIO_INIT_PIN(BOOST_EN, OUTPUT, PID_GPIO, 0, GPIO_POWER_RAIL_1V );
+  GPIO_INIT_PIN(BOOST, OUTPUT, PID_GPIO, 0, GPIO_POWER_RAIL_1V );
   
   //UART
   GPIO_INIT_PIN(UTX, INPUT_PULLUP, PID_GPIO, 0, GPIO_POWER_RAIL_3V );
   GPIO_INIT_PIN(URX, INPUT_PULLUP, PID_GPIO, 0, GPIO_POWER_RAIL_3V );
+  
+  //Accel power down
+  GPIO_INIT_PIN(ACC_PWR, OUTPUT, PID_GPIO, 0, GPIO_POWER_RAIL_3V );
 }
 
 //------------------------------------------------  
