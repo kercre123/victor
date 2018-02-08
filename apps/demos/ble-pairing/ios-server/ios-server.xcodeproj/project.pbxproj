@@ -11,7 +11,7 @@
 		DA27A6552023E86200359EE0 /* libev.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DA27A6532023E52400359EE0 /* libev.a */; };
 		DA27A65920252F2F00359EE0 /* WiFiNetworkStream.mm in Sources */ = {isa = PBXBuildFile; fileRef = DA27A65720252F2F00359EE0 /* WiFiNetworkStream.mm */; };
 		DA27A65C20252F5C00359EE0 /* WifiServer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DA27A65A20252F5C00359EE0 /* WifiServer.cpp */; };
-		DA27A65F2029472700359EE0 /* Switchboard.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DA27A65D2029472700359EE0 /* Switchboard.cpp */; };
+		DA27A65F2029472700359EE0 /* Switchboard.mm in Sources */ = {isa = PBXBuildFile; fileRef = DA27A65D2029472700359EE0 /* Switchboard.mm */; };
 		DA5EC9E620084554003ABD16 /* libsodium.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DA5EC9E520084554003ABD16 /* libsodium.a */; };
 		DAB7E39D200EB76600D57664 /* BLENetworkStream.mm in Sources */ = {isa = PBXBuildFile; fileRef = DAB7E39C200EB76600D57664 /* BLENetworkStream.mm */; };
 		DAB7E3A1200EB84F00D57664 /* BLEPeripheral.mm in Sources */ = {isa = PBXBuildFile; fileRef = DAB7E3A0200EB84F00D57664 /* BLEPeripheral.mm */; };
@@ -43,7 +43,7 @@
 		DA27A65820252F2F00359EE0 /* WiFiNetworkStream.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WiFiNetworkStream.h; sourceTree = "<group>"; };
 		DA27A65A20252F5C00359EE0 /* WifiServer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = WifiServer.cpp; sourceTree = "<group>"; };
 		DA27A65B20252F5C00359EE0 /* WifiServer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WifiServer.h; sourceTree = "<group>"; };
-		DA27A65D2029472700359EE0 /* Switchboard.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Switchboard.cpp; sourceTree = "<group>"; };
+		DA27A65D2029472700359EE0 /* Switchboard.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Switchboard.mm; sourceTree = "<group>"; };
 		DA27A65E2029472700359EE0 /* Switchboard.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Switchboard.h; sourceTree = "<group>"; };
 		DA5EC9E520084554003ABD16 /* libsodium.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libsodium.a; path = "ios-server/sodium/libsodium.a"; sourceTree = "<group>"; };
 		DA8141B7201173A700AC8A73 /* signalHolder.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = signalHolder.h; sourceTree = "<group>"; };
@@ -124,7 +124,7 @@
 				DAB7E3A5200EB8F800D57664 /* KeyExchange.h */,
 				DAB7E3AF200ED2ED00D57664 /* KeyExchange.cpp */,
 				DA27A65E2029472700359EE0 /* Switchboard.h */,
-				DA27A65D2029472700359EE0 /* Switchboard.cpp */,
+				DA27A65D2029472700359EE0 /* Switchboard.mm */,
 				DA27A63920229DD600359EE0 /* log.h */,
 				DAB7E39F200EB84200D57664 /* BLEPeripheral.h */,
 				DAB7E3A0200EB84F00D57664 /* BLEPeripheral.mm */,
@@ -278,7 +278,7 @@
 				DACEF058200598FF00894864 /* main.m in Sources */,
 				DAB7E3A3200EB8A600D57664 /* SecurePairing.cpp in Sources */,
 				DACEF047200598FF00894864 /* AppDelegate.m in Sources */,
-				DA27A65F2029472700359EE0 /* Switchboard.cpp in Sources */,
+				DA27A65F2029472700359EE0 /* Switchboard.mm in Sources */,
 				DA27A65920252F2F00359EE0 /* WiFiNetworkStream.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

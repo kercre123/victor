@@ -122,7 +122,7 @@ namespace Anki {
       const uint8_t MAX_MATCH_ATTEMPTS = 5;
       const uint8_t MAX_PAIRING_ATTEMPTS = 3;
       const uint32_t MAX_ABNORMALITY_COUNT = 5;
-      const uint16_t PAIRING_TIMEOUT_SECONDS = 30;
+      const uint16_t PAIRING_TIMEOUT_SECONDS = 10;
       
       std::string _Pin;
       uint8_t _ChallengeAttempts = 0;
