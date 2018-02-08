@@ -109,50 +109,30 @@ void Mics::transmit(int16_t* payload) {
 }
 
 #define STAGE2(t_a) \
-  ptr = &DECIMATION_TABLE[t_a][*(samples++)]; \
-  accumulator[0] += *ptr; \
-  ptr += 0xC00; accumulator[1] += *ptr; \
-  ptr = &DECIMATION_TABLE[t_a][*(samples++)]; \
-  accumulator[2] += *ptr; \
-  ptr += 0xC00; accumulator[3] += *ptr
+  ptr = &DECIMATION_TABLE[t_a][*samples]; samples+=2;  \
+  acc_0 += *ptr; \
+  ptr += 0xC00; acc_2 += *ptr; \
 
 #define STAGE3(t_a) \
-  ptr = &DECIMATION_TABLE[t_a][*(samples++)]; \
-  acc_l += *ptr; \
-  ptr += 0xC00; accumulator[0] += *ptr;  \
-  ptr += 0xC00; accumulator[1] += *ptr; \
-  ptr = &DECIMATION_TABLE[t_a][*(samples++)]; \
-  acc_r += *ptr; \
-  ptr += 0xC00; accumulator[2] += *ptr; \
-  ptr += 0xC00; accumulator[3] += *ptr
+  ptr = &DECIMATION_TABLE[t_a][*samples]; samples+=2; \
+  acc_2 += *ptr; \
+  ptr += 0xC00; acc_0 += *ptr;  \
+  ptr += 0xC00; acc_1 += *ptr; \
 
 #define STAGE3_A() \
-  ptr = &DECIMATION_TABLE[31][*(samples++)]; \
-  output[0] = (int16_t)((accumulator[1] + *ptr) >> 16); \
-  ptr -= 0xC00; accumulator[1] = accumulator[0] + *ptr; \
-  ptr -= 0xC00; accumulator[0] = acc_l + *ptr; \
-  ptr = &DECIMATION_TABLE[31][*(samples++)]; \
-  output[1] = (int16_t)((accumulator[3] + *ptr) >> 16); \
-  ptr -= 0xC00; accumulator[3] = accumulator[2] + *ptr; \
-  ptr -= 0xC00; accumulator[2] = acc_r + *ptr;
+  ptr = &DECIMATION_TABLE[31][*samples]; samples+=2; \
+  output[0] = (int16_t)((acc_2 + *ptr) >> 16); \
+  ptr -= 0xC00; acc_1 = acc_0 + *ptr; \
+  ptr -= 0xC00; acc_0 = acc_2 + *ptr; \
+  output += 4;
 
-static void decimate(const uint8_t* input, int32_t* accumulator,  int16_t* output) {
-  static uint8_t deinter[sizeof(uint16_t) * 12 * SAMPLES_PER_IRQ];
-  uint16_t* target = (uint16_t*)&deinter;
+static void dec_loop(int32_t* acc, uint8_t* samples, int16_t* output) {
+  int32_t acc_0 = acc[0];
+  int32_t acc_1 = acc[1];
 
-  // Deinterlace the channel data
-  for (int i = 0; i < 12 * SAMPLES_PER_IRQ; i++) {
-    uint8_t b_a = *(input++);
-    uint8_t b_b = *(input++);
-
-    *(target++) = DEINTERLACE_TABLE[0][b_a] | DEINTERLACE_TABLE[1][b_b];
-  }
-
-  uint8_t* samples = deinter;
+  const int32_t *ptr;
   for (int i = 0; i < SAMPLES_PER_IRQ; i++) {
-    const int32_t *ptr;
-    int32_t acc_l = 0;
-    int32_t acc_r = 0;
+    int32_t acc_2 = 0;
 
     STAGE2( 8);
     STAGE2( 9);
@@ -166,27 +146,45 @@ static void decimate(const uint8_t* input, int32_t* accumulator,  int16_t* outpu
     STAGE3( 5);
     STAGE3( 6);
     STAGE3_A();
-
-    output += 4;
   }
+
+  acc[0] = acc_0;
+  acc[1] = acc_1;
+}
+
+static uint8_t deinter[sizeof(uint16_t) * 12 * SAMPLES_PER_IRQ];
+
+static void decimate(const uint8_t* input, int32_t* acc,  int16_t* output) {
+  uint16_t* target = (uint16_t*)&deinter;
+
+  // Deinterlace the channel data
+  for (int i = 0; i < 12 * SAMPLES_PER_IRQ; i++) {
+    *(target++) = DEINTERLACE_TABLE[0][input[0]] | DEINTERLACE_TABLE[1][input[1]];
+    input += 2;
+  }
+
+  dec_loop(&acc[0], &deinter[0], &output[0]);
+  dec_loop(&acc[2], &deinter[1], &output[1]);
 }
 
 extern "C" void DMA1_Channel2_3_IRQHandler(void) {
   static int16_t *index = audio_data[0];
   uint32_t isr = DMA1->ISR;
-  DMA1->IFCR = DMA_ISR_GIF2;
+  DMA1->IFCR = DMA_IFCR_CGIF2;
 
   static int32_t accumulator[2][4]; // 2 data lines, 2 channels, 2 accumulators
-
+ 
   // Note: if this falls behind, it will drop a bunch of samples
   if (isr & DMA_ISR_HTIF2) {
-    decimate(pdm_data[0][0], accumulator[0], &index[0]);
-    decimate(pdm_data[1][0], accumulator[1], &index[2]);
+    //decimate(pdm_data[0][0], accumulator[0], &index[0]);
+    //decimate(pdm_data[1][0], accumulator[1], &index[2]);
     index += SAMPLES_PER_IRQ * 4;
     sample_index++;
-  } else {
-    decimate(pdm_data[0][1], accumulator[0], &index[0]);
-    decimate(pdm_data[1][1], accumulator[1], &index[2]);
+  }
+
+  if (isr & DMA_ISR_TCIF2) {
+    //decimate(pdm_data[0][1], accumulator[0], &index[0]);
+    //decimate(pdm_data[1][1], accumulator[1], &index[2]);
     index += SAMPLES_PER_IRQ * 4;
     sample_index++;
   }

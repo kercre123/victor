@@ -46,7 +46,8 @@ int main (void) {
   __enable_irq(); // Start firing interrupts
 
   // Low priority interrupts are now our main execution
-  for (;;) {
+  for (;;) {   
     Power::tick();
+    __wfi();
   }
 }

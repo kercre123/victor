@@ -36,13 +36,9 @@ static PowerMode currentState = POWER_UNINIT;
 static PowerMode desiredState = POWER_CALM;
 static bool optoActive = false;
 
-static void updatePowerState();
-
 void Power::init(void) {
   RCC->APB1ENR |= APB1_CLOCKS;
   RCC->APB2ENR |= APB2_CLOCKS;
-
-  updatePowerState();
 }
 
 static void markForErase(void) {
@@ -132,7 +128,24 @@ void Power::setMode(PowerMode set) {
   desiredState = set;
 }
 
-static void updatePowerState(void) {
+void Power::tick(void) {
+  PowerMode desired = desiredState;
+
+  if (currentState != desired) {
+    // Disable optical sensors
+    if (currentState == POWER_ACTIVE) {
+      optoActive = false;
+      Opto::stop();
+      Encoders::stop();
+    } else if (desired == POWER_ACTIVE) {
+      Encoders::init();
+      Opto::init();
+      optoActive = true;
+    }
+
+    currentState = desired;
+  }
+
   switch (currentState) {
     case POWER_ERASE:
       markForErase();
@@ -148,26 +161,4 @@ static void updatePowerState(void) {
       POWER_EN::mode(MODE_INPUT);
       break ;
   }
-}
-
-void Power::tick(void) {
-  PowerMode desired = desiredState;
-
-  if (currentState != desired) {
-    // Disable optical sensors
-    if (currentState == POWER_ACTIVE) {
-      optoActive = false;
-      Opto::stop();
-      Encoders::stop();
-    } else if (desired == POWER_ACTIVE) {
-      Encoders::init();
-      Opto::init();
-      optoActive = true;
-    }
-    
-    currentState = desired;
-    updatePowerState();
-  }
-
-  //__asm("WFI");
 }

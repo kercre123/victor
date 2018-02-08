@@ -170,6 +170,7 @@ void Analog::tick(void) {
   } else {
     vext_debounce = 0;
   }
+
   last_vext = vext_now;
 
   // Charge logic
