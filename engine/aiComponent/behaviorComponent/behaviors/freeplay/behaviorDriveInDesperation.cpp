@@ -181,7 +181,7 @@ void BehaviorDriveInDesperation::TransitionToIdle()
   // decide how long to idle
   const float timeToIdle = GetRNG().RandDblInRange(_params->_minTimeToIdle, _params->_maxTimeToIdle);
   PRINT_CH_INFO("Behaviors",
-                (GetIDStr() + ".Idle").c_str(),
+                (GetDebugLabel() + ".Idle").c_str(),
                 "idling for %f sec",
                 timeToIdle);
 
@@ -215,7 +215,7 @@ void BehaviorDriveInDesperation::RandomizeNumDrivingRounds()
   // finished driving, first figure out how many times to drive next time
   _numTimesToDriveBeforeRequest = GetRNG().RandIntInRange(kMinTimesToDrive, kMaxTimesToDrive);
   PRINT_CH_INFO("Behaviors",
-                (GetIDStr() + ".Drive").c_str(),
+                (GetDebugLabel() + ".Drive").c_str(),
                 "driving to %d random points next time we drive",
                 _numTimesToDriveBeforeRequest);  
 }
@@ -273,7 +273,7 @@ void BehaviorDriveInDesperation::TransitionToDriveToCube()
     else {
       PRINT_NAMED_WARNING("BehaviorDriveInDesperation.DriveToCube.NoCube",
                           "%s: Trying to drive to cube, but no target set and no recent cube seen",
-                          GetIDStr().c_str());
+                          GetDebugLabel().c_str());
       TransitionToIdle();
       return;
     }
@@ -291,7 +291,7 @@ void BehaviorDriveInDesperation::TransitionToDriveToCube()
   if( !ANKI_VERIFY( obj != nullptr,
                     "BehaviorDriveInDesperation.TransitionToDriveToCube.NullCube",
                     "%s: Have a set cube id of %d, but that cube isn't located by blockworld, or isn't actionable",
-                    GetIDStr().c_str(),
+                    GetDebugLabel().c_str(),
                     _targetCube.GetValue()) ) {
     _targetCube.UnSet();
     TransitionToIdle();
@@ -462,7 +462,7 @@ void BehaviorDriveInDesperation::GetRandomDrivingPose(Pose3d& outPose)
 
   PRINT_CH_DEBUG("Behaviors", "BehaviorDriveInDesperation.GetRandomDrivingPose",
                  "%s: angle=%fdeg, dist=%fmm, currPose = (%f, %f, %f) R=%fdeg newPose = (%f, %f, %f) R=%fdeg",
-                 GetIDStr().c_str(),
+                 GetDebugLabel().c_str(),
                  RAD_TO_DEG(turnAngle),
                  distance_mm,
                  robotInfo.GetPose().GetTranslation().x(),

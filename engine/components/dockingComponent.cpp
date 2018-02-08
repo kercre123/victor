@@ -27,7 +27,7 @@ namespace Cozmo {
 CONSOLE_VAR(f32, kDockingRotatingTooFastThresh_degPerSec, "WasRotatingTooFast.Dock.Body_deg/s", RAD_TO_DEG(0.4f));
 
 DockingComponent::DockingComponent()
-: IDependencyManagedComponent(RobotComponentID::Docking)
+: IDependencyManagedComponent(this, RobotComponentID::Docking)
 {
   
 }

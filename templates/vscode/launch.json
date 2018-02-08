@@ -92,6 +92,12 @@
             "program": "${workspaceRoot}/simulator/controllers/webotsCtrlAnim/webotsCtrlAnim"
         },
         {
+            "name": "webotsCtrlWebServer:attach",
+            "type": "lldb",
+            "request": "attach",
+            "program": "${workspaceRoot}/simulator/controllers/webotsCtrlWebServer/webotsCtrlWebServer"
+        },
+        {
             "name": "webotsCtrlBuildServerTest:attach",
             "type": "lldb",
             "request": "attach",

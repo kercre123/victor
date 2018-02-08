@@ -36,6 +36,7 @@ vlog "Check homebrew dependencies"
     libsndfile \
     go \
     graphviz \
+    node \
     --pip2 graphviz \
     --pip3 graphviz
 

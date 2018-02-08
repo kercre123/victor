@@ -40,9 +40,7 @@ protected:
   virtual void BehaviorUpdate() override;
 
   virtual bool WantsToBeActivatedBehavior() const override;
-  
-  virtual void UpdateTargetBlocksInternal() const override { BehaviorStackBlocks::UpdateTargetBlocks(); }
-  
+    
   virtual std::set<ObjectInteractionIntention>
         GetBehaviorObjectInteractionIntentions() const override {
           return {(_stackInAnyOrientation ?

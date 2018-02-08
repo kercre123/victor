@@ -8,54 +8,104 @@ namespace Cozmo {
 
 // BehaviorClass identifies the ICozmoBehavior child class
 // which the behavior is an instance of
-// PLEASE KEEP ALPHABETIZED
+// PLEASE PLACE BEHAVIORS IN APPROPRIATE SEGMENT
 enum uint_8 BehaviorClass {
-  // Behaviors based on scores
-  Bouncer,
-  BringCubeToBeacon,
-  BuildPyramid,
-  BuildPyramidBase,
-  CantHandleTallStack,
-  CheckForStackAtInterval,
-  ComeHere,
+
+  // Basic behavior functionality
+  ProxGetToDistance,
+  ReactToSound,
+  Turn,
+  Wait,
+
+  // Dispatch behaviors which exist only to delegate to other behaviors
+  BehaviorDispatcherRerun,
+  DispatchAfterShake,
+  DispatcherQueue,
+  DispatcherRandom,
+  DispatcherScoring,
+  DispatcherStrictPriority,
+  DispatcherStrictPriorityWithCooldown,
+
+  // Base class that helps with data driven state transitions
+  InternalStatesBehavior,
+
+  // Interact with blocks
   CubeLiftWorkout,
-  Dance,
-  DevImageCapture,
-  DevPettingTestSimple,
-  DevTurnInPlaceTest,
-  DockingTestSimple,
-  DriveInDesperation,
-  DriveOffCharger,
-  DrivePath,
-  DriveToFace,
-  EarnedSparks,
-  EnrollFace,
-  ExploreLookAroundInPlace,
-  ExploreVisitPossibleMarker,
-  ExpressNeeds,
-  FactoryCentroidExtractor,
-  FeedingEat,
-  FeedingSearchForCube,
-  FindFaces,
-  FistBump,
-  GoHome,
-  GuardDog,
-  InteractWithFaces,
   KnockOverCubes,
-  LiftLoadTest,
-  LookAround,
-  LookForFaceAndCube,
-  LookInPlaceMemoryMap,
-  OnConfigSeen,
-  OnboardingShowCube,
-  PeekABoo,
   PickUpAndPutDownCube,
   PickUpCube,
+  PopAWheelie,
+  PutDownBlock,
+  RollBlock,
+  StackBlocks,
+
+  // Interact with user
+  Bouncer,
+  Dance,
+  FistBump,
+  GuardDog,
+  PeekABoo,
+  PounceOnMotion,
+  PounceWithProx,
+  PuzzleMaze,
+  RequestGameSimple,
+  RequestToGoHome,
+  Singing,
+  TrackLaser,
+
+  // Behaviors related to going to a place
+  ComeHere,
+  DriveInDesperation,
+  DriveOffCharger,
+  DriveToFace,
+  GoHome,
+  TurnToFace,
+  VisitInterestingEdge,
+
+  // Beacon related behaviors
+  BringCubeToBeacon,
+  ThinkAboutBeacons,
+
+  // Face enrollment behaviors
+  EnrollFace,
+  RespondToRenameFace,
+
+  // Behaviors related to playing animations 
   PlayAnim,
-  PlayAnimOnNeedsChange,
   PlayAnimWithFace,
   PlayAnimWithObject,
 
+  // Behaviors related to searching
+  ExploreLookAroundInPlace,
+  LookForFaceAndCube,
+  LookInPlaceMemoryMap,
+  LookAround,
+
+  // Faces
+  FindFaces,
+  FindHome,
+  SearchForFace,
+
+  // Cubes
+  FeedingSearchForCube,
+
+  // "Designed" Behaviors - most likely only one instance within the behavior system
+  // don't provide generalized functionality
+  ExploreVisitPossibleMarker,
+  FeedingEat,
+  HighLevelAI,
+  InteractWithFaces,
+  ObservingLookAtFaces,
+  ObservingOnCharger,
+  Sleeping,
+
+  // Dev Behaviors
+  DevImageCapture,
+  DevPettingTestSimple,
+  DevTurnInPlaceTest,
+  LiftLoadTest,
+
+  // Factory test behaviors
   PlaypenCameraCalibration,
   PlaypenDistanceSensor,
   PlaypenDriftCheck,
@@ -68,66 +118,25 @@ enum uint_8 BehaviorClass {
   PlaypenSoundCheck,
   PlaypenTest,
   PlaypenWaitToStart,
+  DockingTestSimple,
+  FactoryCentroidExtractor,
 
-  PopAWheelie,
-  PounceOnMotion,
-  PounceWithProx,
-  ProxGetToDistance,
-  PutDownBlock,
-  PuzzleMaze,
-  PyramidThankYou,
-  RequestGameSimple,
-  RequestToGoHome,
-  RespondPossiblyRoll,
-  RespondToRenameFace,
-  RollBlock,
-  SearchForFace,
-  Singing,
-  StackBlocks,
-  ThinkAboutBeacons,
-  TrackLaser,
-  TurnToFace,
-  VisitInterestingEdge,
-  Wait,
-
-  // Behaviors mapped to reaction triggers
+  // Legacy behaviors - Utility TBD
   AcknowledgeFace,
   AcknowledgeObject,
-  RamIntoBlock,
   ReactToCliff,
   ReactToCubeMoved,
   ReactToFrustration,
   ReactToMotorCalibration,
-  ReactToOnCharger,
   ReactToPet,
-  ReactToPickup,
   ReactToPlacedOnSlope,
-  ReactToPyramid,
   ReactToReturnedToTreads,
   ReactToRobotOnBack,
   ReactToRobotOnFace,
   ReactToRobotOnSide,
   ReactToRobotShaken,
-  ReactToSparked,
-  ReactToStackOfCubes,
   ReactToUnexpectedMovement,
-  ReactToVoiceCommand,
-
-  // Dispatch behaviors which exist only to delegate to other behaviors
-  BehaviorDispatcherRerun,
-  DispatcherStrictPriority,
-  DispatcherStrictPriorityWithCooldown,
-  DispatcherQueue,
-  DispatcherRandom,
-  DispatcherScoring,
-  
-  DispatchAfterShake,
-
-  HighLevelAI,
-  ObservingLookAtFaces,
-  ObservingOnCharger,
-  Sleeping
-  
+  ReactToVoiceCommand
 }
 
 
@@ -140,9 +149,6 @@ enum uint_8 BehaviorID {
   AcknowledgeObject,
   Anonymous,
   Bouncer,
-  BuildPyramid,
-  BuildPyramidBase,
-  CantHandleTallStack,
   CubeLiftWorkout,
 
   DevExecuteBehaviorRerun,
@@ -150,7 +156,6 @@ enum uint_8 BehaviorID {
   DevTurnInPlaceTest,
   DockingTestSimple,
   DriveOffCharger,
-  EarnedSparks,
   EnrollFace,
 
   // Example Behaviors
@@ -180,6 +185,8 @@ enum uint_8 BehaviorID {
 
   FindFaces_socialize,
   FindAndGoToHome,
+  FindAndRequestHome,
+  FindHome,
   FistBump,
   GoHome,
   GuardDog,
@@ -203,22 +210,8 @@ enum uint_8 BehaviorID {
   MeetCozmo_FindFaces_Socialize,
   MeetCozmo_InteractWithFaces,
 
-  Needs_SevereLowEnergyForcedGetOut,
-  Needs_SevereLowEnergyGetIn,
-  Needs_SevereLowEnergyState,
-  Needs_SevereLowRepairGetIn,
-  Needs_SevereLowRepairState,
-  Needs_SevereLowPlayBored,
-  Needs_SevereLowPlayGetIn,
-  Needs_SevereLowPlayRequest,
-  Needs_MildLowEnergyRequest,
-  Needs_MildLowPlayRequest,
-  Needs_MildLowRepairRequest,
-  Needs_Wait,
-
   NothingToDo_BoredAnim,
   NothingToDo_Idle,
-  OnboardingShowCube,
   PlayArbitraryAnim,
 
   PlaypenCameraCalibration,
@@ -240,16 +233,18 @@ enum uint_8 BehaviorID {
   
   PounceOnMotion_Socialize,
   PounceOnMotion_VoiceCommand,
-  PounceWithProx,
+
+  // Prox pounce behaviors
+  PounceDispatcher,
   PounceApproachWithProx,
-  PounceBackupWithProx,
+  PounceWithProx,
+  PounceQuickLeft,
+  PounceQuickRight,
+
 
   PutDownBlock,
   PutDownBlockNothingToDo,
   PutDownDispatch_LookForFaceAndCube,
-  PyramidPutDownBlock,
-  PyramidRespondPossiblyRoll,
-  PyramidThankYou,
   RamIntoBlock,
 
   ReactToCliff,
@@ -260,16 +255,12 @@ enum uint_8 BehaviorID {
   ReactToObstacle,
   ReactToOnCharger,
   ReactToPet,
-  ReactToPickup,
   ReactToPlacedOnSlope,
-  ReactToPyramid,
   ReactToReturnedToTreads,
   ReactToRobotOnBack,
   ReactToRobotOnFace,
   ReactToRobotOnSide,
   ReactToRobotShaken,
-  ReactToSparked,
-  ReactToStackOfCubes,
   ReactToUnexpectedMovement,
   ReactToVoiceCommand,
   ReactToVoiceCommand_Wakeup,
@@ -278,7 +269,6 @@ enum uint_8 BehaviorID {
   RequestMemoryMatch,
   RequestSpeedTap,
   RequestToGoHome,
-  RespondToPyramidBase,
   RespondToRenameFace,
   RollBlockOnSide,
   RollBlockOnSideLowScore,
@@ -324,7 +314,6 @@ enum uint_8 BehaviorID {
   Singing_YellowRose,
 
   SparksBringCubeToBeacon,
-  SparksCheckForStackAtInterval,
   SparksCubeLiftWorkout,
   SparksFindFaces,
   SparksFistBump,
@@ -359,22 +348,22 @@ enum uint_8 BehaviorID {
 
   FistBumpVoiceCommand,
 
-  ObservingState,
   Observing,
   ObservingLookAtFaces,
   ObservingFindFaces,
-  ObservingOnChargerState,
   ObservingOnCharger,
   DriveOffChargerIntoObserving,
+  DriveOffChargerIntoPlay,
   Socialize,
   SocializeGame,
-  PlayWithCubesState,
-  PlayWithCubes,
+  PlayWithCube,
+  PlayRollBlock,
   GoToSleep,
-  SleepingState,
   Sleeping,
   SleepingWakeUp,
   ObservingFailedToFindCharger,
+  ReactToSoundAsleep,
+  ReactToSoundAwake,
 
   Needs_SevereLowEnergyRequest,
   ObservingOnChargerIdle,

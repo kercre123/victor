@@ -1,8 +1,0 @@
-//
-// EarnedSparks
-// This behavior triggers when Cozmo has earned sparks
-//
-{
-  "behaviorClass": "EarnedSparks",
-  "behaviorID": "EarnedSparks"
-}

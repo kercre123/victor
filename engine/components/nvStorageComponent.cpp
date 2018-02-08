@@ -135,7 +135,7 @@ std::map<NVEntryTag, u32> NVStorageComponent::_maxFactoryEntrySizeTable = {
 
   
 NVStorageComponent::NVStorageComponent()
-: IDependencyManagedComponent<RobotComponentID>(RobotComponentID::NVStorage)
+: IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::NVStorage)
 {
 }
 

@@ -22,7 +22,7 @@
 #include "clad/types/dockingSignals.h"
 #include "clad/types/robotStatusAndActions.h"
 
-#include "engine/dependencyManagedComponent.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 #include "engine/robotComponents_fwd.h"
 
 #include "util/helpers/noncopyable.h"

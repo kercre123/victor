@@ -19,7 +19,6 @@
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "cannedAnimLib/cozmo_anim_generated.h"
-#include "cannedAnimLib/faceAnimationManager.h"
 #include "cannedAnimLib/keyframe.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -258,6 +257,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     Result FaceAnimationKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug)
     {
       GET_MEMBER_FROM_JSON(jsonRoot, animName);
+      JsonTools::GetValueOptional(jsonRoot, "scanlineOpacity", _scanlineOpacity);
 
       return Process(animNameDebug);
     }
@@ -273,6 +273,14 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
                             _animName.c_str());
         _animName = _animName.substr(lastSlash+1, std::string::npos);
       }
+      
+      // Verify that the scanline opacity is between 0 and 1
+      DEV_ASSERT_MSG(Util::InRange(_scanlineOpacity, 0.f, 1.f),
+                     "FaceAnimationKeyFrame.Process.InvalidScanlineOpacity",
+                     "%s: Invalid scanline opacity of %f",
+                     animNameDebug.c_str(),
+                     _scanlineOpacity);
+      _scanlineOpacity = Util::Clamp(_scanlineOpacity, 0.f, 1.f);
 
       _curFrame = 0;
 
@@ -283,7 +291,6 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     {
       DEV_ASSERT(faceAnimKeyframe != nullptr, "FaceAnimationKeyFrame.DefineFromFlatBuf.NullAnim");
       SafeNumericCast(faceAnimKeyframe->triggerTime_ms(), _triggerTime_ms, animNameDebug.c_str());
-      _triggerTime_ms = (uint) faceAnimKeyframe->triggerTime_ms();
       Result lastResult = SetMembersFromFlatBuf(faceAnimKeyframe, animNameDebug);
       return lastResult;
     }
@@ -291,6 +298,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     Result FaceAnimationKeyFrame::SetMembersFromFlatBuf(const CozmoAnim::FaceAnimation* faceAnimKeyframe, const std::string& animNameDebug)
     {
       this->_animName = faceAnimKeyframe->animName()->str();
+      SafeNumericCast(faceAnimKeyframe->scanlineOpacity(), _scanlineOpacity, animNameDebug.c_str());
 
       return Process(animNameDebug);
     }
@@ -309,15 +317,30 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       return (_curFrame >= FaceAnimationManager::getInstance()->GetNumFrames(_animName));
     }
     
-    bool FaceAnimationKeyFrame::GetFaceImage(Vision::ImageRGB565& imgRGB565)
+    bool FaceAnimationKeyFrame::IsGrayscale() const
     {
-      if(IsDone())
-      {
+      return FaceAnimationManager::getInstance()->IsGrayscale(_animName);
+    }
+    
+    bool FaceAnimationKeyFrame::GetFaceImage(Vision::Image& img)
+    {
+      return GetFaceImageHelper(img);
+    }
+    
+    bool FaceAnimationKeyFrame::GetFaceImage(Vision::ImageRGB565& img)
+    {
+      return GetFaceImageHelper(img);
+    }
+    
+    template <typename ImageType>
+    bool FaceAnimationKeyFrame::GetFaceImageHelper(ImageType& img)
+    {
+      if(IsDone()) {
         _curFrame = 0;
         return false;
       }
       
-      const bool gotFrame = FaceAnimationManager::getInstance()->GetFrame(_animName, _curFrame, imgRGB565);
+      const bool gotFrame = FaceAnimationManager::getInstance()->GetFrame(_animName, _curFrame, img);
       ++_curFrame;
       
       return gotFrame;

@@ -54,10 +54,11 @@ target_link_libraries(victor_anim
   signal_essence
   ${TEXT2SPEECH_LIBS}
   ${SENSORY_LIBS}
+  civetweb
   # platform
   ${PLATFORM_LIBS}
   PUBLIC
-  civetweb  # Temporary until standalone web server
+  victor_web_library
   robot_interface  # Needs to be public for cozmoConfig.h
 )
 

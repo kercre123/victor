@@ -27,6 +27,7 @@
 // Maximum size of one message
 #define MAX_PACKET_BUFFER_SIZE 2048
 
+
 namespace Anki {
 namespace Cozmo {
 
@@ -50,7 +51,7 @@ void RobotConnectionManager::Init()
 {
 }
   
-void RobotConnectionManager::Update()
+Result RobotConnectionManager::Update()
 {
   ANKI_CPU_PROFILE("RobotConnectionManager::Update");
 
@@ -60,7 +61,14 @@ void RobotConnectionManager::Update()
     SendAndResetQueueStats();
   }  
 
+  // If we lose connection to robot, report connection closed
+  if (!_udpClient.IsConnected()) {
+    return RESULT_FAIL_IO_CONNECTION_CLOSED;
+  }
+
   ProcessArrivedMessages();
+
+  return RESULT_OK;
 }
 
 void RobotConnectionManager::SendAndResetQueueStats()
@@ -78,6 +86,14 @@ void RobotConnectionManager::SendAndResetQueueStats()
   _queueSizeAccumulator.Clear();
 }
 
+bool RobotConnectionManager::IsConnected(RobotID_t robotID) const
+{
+  if (_robotID == robotID && _udpClient.IsConnected()) {
+    return true;
+  }
+  return false;
+}
+  
 Result RobotConnectionManager::Connect(RobotID_t robotID)
 {
   LOG_INFO("RobotConnectionManager.Connect", "Connect to robot %d", robotID);
@@ -99,6 +115,7 @@ Result RobotConnectionManager::Connect(RobotID_t robotID)
     return RESULT_FAIL_IO;
   }
 
+  _robotID = robotID;
   _currentConnectionData->SetState(RobotConnectionData::State::Connected);
 
   return RESULT_OK;
@@ -109,6 +126,7 @@ void RobotConnectionManager::DisconnectCurrent()
   LOG_DEBUG("RobotConnectionManager.DisconnectCurrent", "Disconnect");
   if (_udpClient.IsConnected()) {
     _udpClient.Disconnect();
+    _robotID = -1;
   }
 
   _currentConnectionData->SetState(RobotConnectionData::State::Disconnected);
@@ -131,6 +149,7 @@ bool RobotConnectionManager::SendData(const uint8_t* buffer, unsigned int size)
   const ssize_t sent = _udpClient.Send((const char *) buffer, size);
   if (sent != size) {
     LOG_ERROR("RobotConnectionManager.SendData.Error", "Sent %zd/%d bytes to robot", sent, size);
+    DisconnectCurrent();
     return false;
   }
   

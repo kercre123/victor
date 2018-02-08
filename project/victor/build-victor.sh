@@ -79,7 +79,7 @@ while getopts ":x:c:p:a:t:g:F:hvfdCTeIS" opt; do
             ;;
         c)
             CONFIGURATION="${OPTARG}"
-            ;; 
+            ;;
         p)
             PLATFORM="${OPTARG}"
             ;;
@@ -215,7 +215,7 @@ fi
 
 #
 # Remove assets in build directory if requested. This will force the
-# build to re-copy them from the source tree into the build directory. 
+# build to re-copy them from the source tree into the build directory.
 #
 
 if [ $RM_BUILD_ASSETS -eq 1 ]; then
@@ -245,8 +245,11 @@ if [ $IGNORE_EXTERNAL_DEPENDENCIES -eq 0 ]; then
   # Process BUILD.in files (creates list of Go projects to fetch)
   ${BUILD_TOOLS}/metabuild/metabuild.py --go-output \
       -o ${GEN_SRC_DIR} \
-      ${METABUILD_INPUTS} 
-  time ${TOPLEVEL}/project/victor/scripts/run-go-get.sh -d ${GEN_SRC_DIR}
+      ${METABUILD_INPUTS}
+  # Run go get to pull dependencies
+  ${TOPLEVEL}/project/victor/scripts/run-go-get.sh -d ${GEN_SRC_DIR}
+  # Check out specified revisions of repositories we've versioned
+  (cd ${TOPLEVEL}; GOPATH=$(pwd)/cloud/go ./godeps.js execute ${GEN_SRC_DIR})
 else
   echo "Ignore Go dependencies"
 fi
@@ -267,7 +270,7 @@ if [ $CONFIGURE -eq 1 ]; then
     # Process BUILD.in files
     ${BUILD_TOOLS}/metabuild/metabuild.py $METABUILD_VERBOSE \
         -o ${GEN_SRC_DIR} \
-        ${METABUILD_INPUTS} 
+        ${METABUILD_INPUTS}
 
     if [ $GEN_SRC_ONLY -eq 1 ]; then
         exit 0
@@ -326,7 +329,7 @@ if [ $CONFIGURE -eq 1 ]; then
         ${EXPORT_FLAGS} \
         ${FEATURE_FLAGS} \
         "${PLATFORM_ARGS[@]}"
-        
+
 fi
 
 if [ $RUN_BUILD -ne 1 ]; then

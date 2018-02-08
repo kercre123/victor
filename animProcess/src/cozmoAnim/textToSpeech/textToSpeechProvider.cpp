@@ -20,7 +20,7 @@
 #error "No text-to-speech provider implemented for this platform"
 #endif
 
-#include "cozmoAnim/cozmoAnimContext.h"
+#include "cozmoAnim/animContext.h"
 
 #include "json/json.h"
 
@@ -28,7 +28,7 @@ namespace Anki {
 namespace Cozmo {
 namespace TextToSpeech {
       
-TextToSpeechProvider::TextToSpeechProvider(const CozmoAnimContext * ctx, const Json::Value& tts_config)
+TextToSpeechProvider::TextToSpeechProvider(const AnimContext * ctx, const Json::Value& tts_config)
 {
   // Get configuration struct for this platform
 #if defined(ANKI_PLATFORM_OSX)

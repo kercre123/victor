@@ -40,7 +40,7 @@ namespace {
 
   
 CubeCommsComponent::CubeCommsComponent()
-: IDependencyManagedComponent(RobotComponentID::CubeComms)
+: IDependencyManagedComponent(this, RobotComponentID::CubeComms)
 , _cubeBleClient(CubeBleClient::GetInstance())
 {
   // Register callbacks for messages from CubeBleClient

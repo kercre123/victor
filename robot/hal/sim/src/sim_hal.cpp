@@ -29,6 +29,7 @@
 
 
 // System Includes
+#include <array>
 #include <cassert>
 #include <cmath>
 #include <cstdlib>
@@ -40,6 +41,7 @@
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "audioUtil/audioCaptureSystem.h"
+#include "util/container/fixedCircularBuffer.h"
 #include "util/logging/logging.h"
 #include "util/math/numericCast.h"
 #include "messages.h"
@@ -155,19 +157,20 @@ namespace Anki {
       constexpr uint32_t kSamplesPerChunk = 80;
       constexpr uint32_t kSampleRate_hz = 16000;
       AudioUtil::AudioCaptureSystem audioCaptureSystem_(kSamplesPerChunk, kSampleRate_hz);
-      
-      uint32_t audioInputSequenceID_ = 0;
-      std::deque<Anki::Cozmo::RobotInterface::MicData> micData_{};
-      std::mutex micDataMutex_;
 
       // Limit the number of messages that can be sent per robot tic
       // and toss the rest. Since audio data is generated in 
       // real-time vs. robot time, if Webots processes slow down or 
       // are paused (debugger) then we'll end up flooding the send buffer.
-      const int kMicSendWindow_tics = 6;   // Roughly equivalent to every anim process tic
-      const int kMaxNumMicMsgsAllowedPerSendWindow = 100;
+      constexpr uint32_t kMicSendWindow_tics = 6;   // Roughly equivalent to every anim process tic
+      constexpr uint32_t kMaxNumMicMsgsAllowedPerSendWindow = 100;
       int _numMicMsgsSent      = 0;        // Num of mic msgs sent in the current window
       int _micSendWindowTicIdx = 0;        // Which tic of the current window we're in
+      
+      constexpr uint32_t kInterleavedSamplesPerChunk = kSamplesPerChunk * 4;
+      using RawChunkArray = std::array<int16_t, kInterleavedSamplesPerChunk>;
+      Util::FixedCircularBuffer<RawChunkArray, kMicSendWindow_tics * kMaxNumMicMsgsAllowedPerSendWindow> micData_;
+      std::mutex micDataMutex_;
 
 #pragma mark --- Simulated Hardware Interface "Private Methods" ---
       // Localization
@@ -227,14 +230,14 @@ namespace Anki {
       void AudioInputCallback(const AudioUtil::AudioSample* data, uint32_t numSamples)
       {
         std::lock_guard<std::mutex> lock(micDataMutex_);
-        micData_.resize(micData_.size() + 1);
-        auto& newData = micData_.back();
+        micData_.push_back();
+        auto* newData = micData_.back().data();
         
         // Duplicate our mono channel input across 4 interleaved channels to simulate 4 mics
         constexpr int kNumChannels = 4;
         for (int j=0; j<kSamplesPerChunk; j++)
         {
-          auto* sampleStart = newData.data + (j * kNumChannels);
+          auto* sampleStart = newData + (j * kNumChannels);
           const auto sample = data[j];
           
           for(int i=0; i<kNumChannels; ++i)
@@ -242,36 +245,10 @@ namespace Anki {
             sampleStart[i] = sample;
           }
         }
-        newData.sequenceID = audioInputSequenceID_++;
-        newData.timestamp = HAL::GetTimeStamp();
       }
       
       void AudioInputUpdate()
       {
-        // Check if our sim mic thread has delivered more audio for us to send out
-        while(micDataMutex_.try_lock())
-        {
-          if (micData_.empty())
-          {
-            micDataMutex_.unlock();
-            break;
-          }
-
-          if (_numMicMsgsSent < kMaxNumMicMsgsAllowedPerSendWindow) {
-            SendMessage(micData_.front());
-            ++_numMicMsgsSent;
-          }
-
-          micData_.pop_front();
-          if (micData_.empty())
-          {
-            micDataMutex_.unlock();
-            break;
-          }
-          
-          micDataMutex_.unlock();
-        }
-
         // Reset send counter for next send window
         if (++_micSendWindowTicIdx >= kMicSendWindow_tics) {
           _micSendWindowTicIdx = 0;
@@ -815,6 +792,35 @@ namespace Anki {
     u16 HAL::GetCliffOffLevel(const CliffID cliff_id)
     {
       return 0;
+    }
+    
+    bool HAL::HandleLatestMicData(SendDataFunction sendDataFunc)
+    {
+      // Check if our sim mic thread has delivered more audio for us to send out
+      if(micDataMutex_.try_lock())
+      {
+        if (micData_.empty())
+        {
+          micDataMutex_.unlock();
+          return false;
+        }
+
+        if (_numMicMsgsSent < kMaxNumMicMsgsAllowedPerSendWindow) {
+          sendDataFunc(micData_.front().data(), kInterleavedSamplesPerChunk);
+          ++_numMicMsgsSent;
+        }
+
+        micData_.pop_front();
+        if (micData_.empty())
+        {
+          micDataMutex_.unlock();
+          return false;
+        }
+        
+        micDataMutex_.unlock();
+        return true;
+      }
+      return false;
     }
     
     f32 HAL::BatteryGetVoltage()

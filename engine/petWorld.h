@@ -18,7 +18,7 @@
 #include "coretech/vision/engine/trackedPet.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
-#include "engine/entity.h"
+#include "util/entityComponent/entity.h"
 
 #include <list>
 #include <map>

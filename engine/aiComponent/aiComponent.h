@@ -17,8 +17,9 @@
 #include "engine/aiComponent/aiComponents_fwd.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
 #include "engine/robotComponents_fwd.h"
-#include "engine/entity.h"
-#include "engine/dependencyManagedComponent.h"
+#include "util/entityComponent/componentWrapper.h"
+#include "util/entityComponent/entity.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
 
 #include <assert.h>
@@ -34,6 +35,7 @@ class BEIRobotInfo;
 class BehaviorComponent;
 class BehaviorContainer;
 class BehaviorHelperComponent;
+class ContinuityComponent;
 class DoATrickSelector;
 class FaceSelectionComponent;
 class FeedingSoundEffectManager;
@@ -50,6 +52,7 @@ class AIComponentComponents{
 public:
   AIComponentComponents(Robot&                      robot,
                         BehaviorComponent*&         behaviorComponent,
+                        ContinuityComponent*        continuityComponent,
                         DoATrickSelector*           doATrickSelector,
                         FaceSelectionComponent*     faceSelectionComponent,
                         FeedingSoundEffectManager*  feedingSoundEFfectManager,

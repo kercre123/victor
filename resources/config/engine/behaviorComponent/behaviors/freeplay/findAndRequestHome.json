@@ -1,0 +1,9 @@
+{
+  "behaviorClass" : "DispatcherQueue",
+  "behaviorID" : "FindAndRequestHome",
+
+  "behaviors": [
+    "FindHome",
+    "RequestToGoHome"
+  ]
+}

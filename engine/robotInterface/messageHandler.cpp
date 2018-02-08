@@ -60,13 +60,17 @@ void MessageHandler::Init(const Json::Value& config, RobotManager* robotMgr, con
   }
 }
 
-void MessageHandler::ProcessMessages()
+Result MessageHandler::ProcessMessages()
 {
   ANKI_CPU_PROFILE("MessageHandler::ProcessMessages");
   
-  if(_isInitialized)
+  if (_isInitialized)
   {
-    _robotConnectionManager->Update();
+    Result result = _robotConnectionManager->Update();
+    if (RESULT_OK != result) {
+      LOG_ERROR("MessageHandler.ProcessMessages", "Unable to update robot connection (result %d)", result);
+      return result;
+    }
     
     std::vector<uint8_t> nextData;
     while (_robotConnectionManager->PopData(nextData))
@@ -112,6 +116,7 @@ void MessageHandler::ProcessMessages()
       Broadcast(robotId, std::move(message));      
     }
   }
+  return RESULT_OK;
 }
 
 Result MessageHandler::SendMessage(const RobotID_t robotId, const RobotInterface::EngineToRobot& msg, bool reliable, bool hot)
@@ -168,7 +173,12 @@ void MessageHandler::Broadcast(const uint32_t robotId, RobotInterface::RobotToEn
   u32 type = static_cast<u32>(message.GetTag());
   _eventMgr.Broadcast(robotId, AnkiEvent<RobotInterface::RobotToEngine>(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(), type, std::move(message)));
 }
-  
+
+bool MessageHandler::IsConnected(RobotID_t robotID)
+{
+  return _robotConnectionManager->IsConnected(robotID);
+}
+
 Result MessageHandler::AddRobotConnection(RobotID_t robotId)
 {
   return _robotConnectionManager->Connect(robotId);

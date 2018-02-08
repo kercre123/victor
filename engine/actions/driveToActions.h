@@ -73,7 +73,7 @@ namespace Anki {
                       const Radians& angleThreshold = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD);
 
     protected:
-      
+      virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const override;
       virtual f32 GetTimeoutInSeconds() const override;
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;

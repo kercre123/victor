@@ -19,6 +19,9 @@ namespace Cozmo {
 enum class AIComponentID{
   // component which manages all aspects of the AI system that relate to behaviors
   BehaviorComponent,
+  // component which sits between the behavior system and action list/animation streamer
+  // to ensure smooth transitions between actions
+  ContinuityComponent,
   // component which behaviors can delegate to for selecting a random Trick / Spark
   DoATrick,
   // provide a simple interface for selecting the best face to interact with

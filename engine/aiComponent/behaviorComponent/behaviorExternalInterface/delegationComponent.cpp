@@ -23,6 +23,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
 #include "engine/aiComponent/behaviorComponent/iBehavior.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
+#include "engine/aiComponent/continuityComponent.h"
 #include "engine/externalInterface/externalInterface.h"
 
 #include "engine/robot.h"
@@ -38,12 +39,14 @@ namespace{
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Delegator::Delegator(Robot& robot,
-                                 BehaviorSystemManager& bsm)
+                     BehaviorSystemManager& bsm,
+                     ContinuityComponent& continuityComp)
 : _robot(robot)
 , _behaviorThatDelegatedAction(nullptr)
 , _lastActionTag(ActionConstants::INVALID_TAG)
 , _behaviorThatDelegatedHelper(nullptr)
-, _bsm(&bsm)
+, _bsm(bsm)
+, _continuityComp(continuityComp)
 {
 }
 
@@ -61,20 +64,18 @@ bool Delegator::Delegate(IBehavior* delegatingBehavior,
                  "Queued Helper address %p, Queued Action address: %p",
                  _behaviorThatDelegatedHelper, _behaviorThatDelegatedAction);
   
-  
-  Result result = _robot.GetActionList().QueueAction(QueueActionPosition::NOW, action);
-  if (RESULT_OK != result) {
-    PRINT_NAMED_WARNING("ICozmoBehavior.Delegate.Failure.NotQueued",
-                        "Behavior '%s' can't queue action '%s' (error %d)",
-                        delegatingBehavior->GetPrintableID().c_str(),
-                        action->GetName().c_str(), result);
-    delete action;
-    return false;
+  const bool getInSuccess = _continuityComp.GetIntoAction(action);
+  if (getInSuccess) {
+    _behaviorThatDelegatedAction = delegatingBehavior;
+    _lastActionTag = action->GetTag();
+  }else{
+    PRINT_NAMED_WARNING("ICozmoBehavior.Delegate.Failure.ActionNotSet",
+                        "Behavior '%s' failed to set action '%s'",
+                        delegatingBehavior->GetDebugLabel().c_str(),
+                        action->GetName().c_str());
   }
   
-  _behaviorThatDelegatedAction = delegatingBehavior;
-  _lastActionTag = action->GetTag();
-  return true;
+  return getInSuccess;
 }
 
 
@@ -83,7 +84,7 @@ bool Delegator::Delegate(IBehavior* delegatingBehavior, IBehavior* delegated)
 {
   DEV_ASSERT(dynamic_cast<IHelper*>(delegated) == nullptr,
               "Delegator.Delegate.WrongDelegationFunction.UseIHelperFunction");
-  return _bsm->Delegate(delegatingBehavior, delegated);
+  return _bsm.Delegate(delegatingBehavior, delegated);
 }
 
 
@@ -132,7 +133,7 @@ void Delegator::HandleActionComplete(u32 actionTag)
 ///////////////////////
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 DelegationComponent::DelegationComponent()
-: IDependencyManagedComponent(BCComponentID::DelegationComponent)
+: IDependencyManagedComponent(this, BCComponentID::DelegationComponent)
 {
 }
 
@@ -140,16 +141,17 @@ DelegationComponent::DelegationComponent()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void DelegationComponent::InitDependent(Robot* robot, const BCCompMap& dependentComponents)
 {
-  auto& bsm = dependentComponents.find(BCComponentID::BehaviorSystemManager)->second.GetValue<BehaviorSystemManager>();
-  Init(*robot, bsm);
+  auto* bsm = dependentComponents.GetBasePtr<BehaviorSystemManager>(BCComponentID::BehaviorSystemManager);
+  Init(*robot, bsm, &robot->GetAIComponent().GetComponent<ContinuityComponent>(AIComponentID::ContinuityComponent));
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void DelegationComponent::Init(Robot& robot, BehaviorSystemManager& bsm)
+void DelegationComponent::Init(Robot& robot, BehaviorSystemManager* bsm, ContinuityComponent* continuityComp)
 {
-  _delegator = std::make_unique<Delegator>(robot, bsm);
-  _bsm = &bsm;
+  _delegator = std::make_unique<Delegator>(robot, *bsm, *continuityComp);
+  _bsm = bsm;
+  _continuityComp = continuityComp;
 }
 
 
@@ -209,7 +211,7 @@ void DelegationComponent::CancelActionIfRunning(IBehavior* delegatingBehavior)
     if(_delegator->_behaviorThatDelegatedAction == delegatingBehavior ||
        delegatingBehavior == nullptr){
       _delegator->_behaviorThatDelegatedAction = nullptr; // TEMP:  // TODO:(bn) redundant checks now
-      ret = _delegator->_robot.GetActionList().Cancel(tagToCancel);
+      ret = _continuityComp->GetOutOfAction(tagToCancel);
     }
     // note that the callback, if there was one (and it was allowed to run), should have already been called
     // at this point, so it's safe to clear the tag. Also, if the cancel itself failed, that is probably a

@@ -76,7 +76,7 @@ void BehaviorDriveOffCharger::OnBehaviorActivated()
            {AnimationTrigger::DriveStartLaunch,
             AnimationTrigger::DriveLoopLaunch,
             AnimationTrigger::DriveEndLaunch},
-           GetIDStr());
+           GetDebugLabel());
     _pushedIdleAnimation = true;
   }
 
@@ -97,7 +97,7 @@ void BehaviorDriveOffCharger::OnBehaviorDeactivated()
 {
   if(_pushedIdleAnimation){
     auto& robotInfo = GetBEI().GetRobotInfo();
-    robotInfo.GetDrivingAnimationHandler().RemoveDrivingAnimations(GetIDStr());
+    robotInfo.GetDrivingAnimationHandler().RemoveDrivingAnimations(GetDebugLabel());
   }
 }
     

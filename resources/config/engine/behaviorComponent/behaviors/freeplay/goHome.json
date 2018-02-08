@@ -1,7 +1,6 @@
 {
   "behaviorClass": "GoHome",
   "behaviorID": "GoHome",
-  "displayNameKey":"behavior.GoHome",
   
   "params" : {
     "useCliffSensorCorrection" : true,

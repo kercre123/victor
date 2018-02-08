@@ -124,7 +124,7 @@ void BehaviorCubeLiftWorkout::BehaviorUpdate()
 
   const auto& robotInfo = GetBEI().GetRobotInfo();
   if( _shouldBeCarrying && ! robotInfo.GetCarryingComponent().IsCarryingObject() ) {
-    PRINT_CH_INFO("Behaviors", (GetIDStr() + ".Update.NotCarryingWhenShould").c_str(),
+    PRINT_CH_INFO("Behaviors", (GetDebugLabel() + ".Update.NotCarryingWhenShould").c_str(),
                   "behavior thinks we should be carrying an object but we aren't, so it must have been detected on "
                   "the ground. Exit the behavior");
     // let the current animation finish, but then don't continue with the behavior
@@ -190,7 +190,7 @@ void BehaviorCubeLiftWorkout::TransitionToPostLiftAnim()
 void BehaviorCubeLiftWorkout::TransitionToStrongLifts()
 {
   PRINT_CH_INFO("Behaviors", "BehaviorCubeLiftWorkout.TransitionToStrongLifts", "%s: %d strong lifts remain",
-                GetIDStr().c_str(),
+                GetDebugLabel().c_str(),
                 _numStrongLiftsToDo);
   
   if( _numStrongLiftsToDo == 0 ) {
@@ -222,7 +222,7 @@ void BehaviorCubeLiftWorkout::TransitionToWeakPose()
 void BehaviorCubeLiftWorkout::TransitionToWeakLifts()
 {
   PRINT_CH_INFO("Behaviors", "BehaviorCubeLiftWorkout.TransitionToWeakLifts", "%s: %d weak lifts remain",
-                GetIDStr().c_str(),
+                GetDebugLabel().c_str(),
                 _numWeakLiftsToDo);
 
   if( _numWeakLiftsToDo == 0 ) {
@@ -261,7 +261,7 @@ void BehaviorCubeLiftWorkout::TransitionToCheckPutDown()
   // if we still think we are carrying the object, see if we can find it
   if( GetBEI().GetRobotInfo().GetCarryingComponent().IsCarryingObject() ) {
 
-    PRINT_CH_INFO("Behaviors", (GetIDStr() + ".StillCarryingCheck").c_str(),
+    PRINT_CH_INFO("Behaviors", (GetDebugLabel() + ".StillCarryingCheck").c_str(),
                   "Robot still thinks it's carrying object, do a quick search for it");
 
     CompoundActionSequential* action = new CompoundActionSequential();
@@ -285,7 +285,7 @@ void BehaviorCubeLiftWorkout::TransitionToManualPutDown()
   auto& robotInfo = GetBEI().GetRobotInfo();
   // in case the put down didn't work, do it manually
   if( robotInfo.GetCarryingComponent().IsCarryingObject() ) {
-    PRINT_CH_INFO("Behaviors", (GetIDStr() + ".ManualPutDown").c_str(),
+    PRINT_CH_INFO("Behaviors", (GetDebugLabel() + ".ManualPutDown").c_str(),
                   "Manually putting down object because animation (may have) failed to do it");
     DelegateIfInControl(new PlaceObjectOnGroundAction(), &BehaviorCubeLiftWorkout::EndIteration);
   }

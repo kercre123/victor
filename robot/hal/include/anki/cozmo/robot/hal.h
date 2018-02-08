@@ -49,8 +49,6 @@ namespace HAL {
 static const int TICKS_PER_SECOND = 200;
 /// Scale value for maximum motor power in HAL
 static const f32 MOTOR_MAX_POWER = 1.0f;
-/// Number of bytes of audio data fetche each time step
-//static const size_t AUDIO_DATA_PER_TICK = 2560;
 /// Maximum number of object advertisements reported in a time step
 //static const size_t MAX_ADVERTISEMENTS_PER_TICK = 16;
 
@@ -170,10 +168,13 @@ u16 GetCliffOffLevel(const CliffID cliff_id);
  * \section Microphones
  */
 
-/** Decompresses microphone data from this tick into buffer.
- * @param[out] A buffer with space for AUDIO_DATA_PER_TICK to receive audio data.
+using SendDataFunction = Result (*)(const s16* latestMicData, uint32_t numSamples);
+
+/** Grants access to microphone data from this tick.
+ * @param[in] Provides a function pointer for actually sending out the message using the mic data
+ * @return true if more data needs to be sent (and this should be called again) false otherwise
  */ 
-void GetMicrophoneData(u8* buffer);
+bool HandleLatestMicData(SendDataFunction sendDataFunc);
 
 /************************************************************************
  * \section Buttons

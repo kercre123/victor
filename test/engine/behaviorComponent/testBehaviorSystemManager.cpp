@@ -39,8 +39,8 @@ TEST(BehaviorSystemManager, TestDelegationVariants)
 {
   std::unique_ptr<TestSuperPoweredBehavior> baseBehavior = std::make_unique<TestSuperPoweredBehavior>();
   TestBehaviorFramework testFramework;
-  auto initializeBehavior = [&baseBehavior](const BehaviorComponent::UniqueComponents& comps){
-    baseBehavior->SetBehaviorContainer(comps->_array.GetComponent(BCComponentID::BehaviorContainer).GetValue<BehaviorContainer>());
+  auto initializeBehavior = [&baseBehavior](const BehaviorComponent::CompononentPtr& comps){
+    baseBehavior->SetBehaviorContainer(comps->GetComponent(BCComponentID::BehaviorContainer).GetValue<BehaviorContainer>());
   };
   testFramework.InitializeStandardBehaviorComponent(baseBehavior.get(),initializeBehavior);
   
@@ -101,8 +101,8 @@ TEST(BehaviorSystemManager, TestCancelingDelegation)
   // TODO: Ensure that canceling delegates operates as expected
   std::unique_ptr<TestSuperPoweredBehavior> baseBehavior = std::make_unique<TestSuperPoweredBehavior>();
   TestBehaviorFramework testFramework;
-  auto initializeBehavior = [&baseBehavior](const BehaviorComponent::UniqueComponents& comps){
-    baseBehavior->SetBehaviorContainer(comps->_array.GetComponent(BCComponentID::BehaviorContainer).GetValue<BehaviorContainer>());
+  auto initializeBehavior = [&baseBehavior](const BehaviorComponent::CompononentPtr& comps){
+    baseBehavior->SetBehaviorContainer(comps->GetComponent(BCComponentID::BehaviorContainer).GetValue<BehaviorContainer>());
   };
   testFramework.InitializeStandardBehaviorComponent(baseBehavior.get(),initializeBehavior);
   

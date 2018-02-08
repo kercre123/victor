@@ -21,7 +21,7 @@
 #include "engine/ankiEventUtil.h"
 #include "engine/block.h"
 #include "engine/blockWorld/blockWorldFilter.h"
-#include "engine/dependencyManagedComponent.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 #include "engine/robotComponents_fwd.h"
 #include "engine/mat.h"
 #include "engine/namedColors/namedColors.h"

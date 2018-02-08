@@ -57,7 +57,7 @@ BehaviorPlayAnimSequence::BehaviorPlayAnimSequence(const Json::Value& config, bo
     const bool onlyNamesSet    =  _animTriggers.empty() && !_animationNames.empty();
     // make sure we loaded at least one trigger or animation by name
     DEV_ASSERT_MSG(!triggerRequired || onlyTriggersSet || onlyNamesSet,
-                   "BehaviorPlayAnimSequence.NoTriggers", "Behavior '%s'", GetIDStr().c_str());
+                   "BehaviorPlayAnimSequence.NoTriggers", "Behavior '%s'", GetDebugLabel().c_str());
   }
 
   // load loop count

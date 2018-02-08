@@ -10,7 +10,6 @@
 #include "engine/util/transferQueue/dasTransferTask.h"
 #include "engine/util/transferQueue/gameLogTransferTask.h"
 #include "engine/util/transferQueue/transferQueueMgr.h"
-#include "engine/util/webService/webService.h"
 #include "engine/utils/cozmoExperiments.h"
 #include "engine/utils/cozmoFeatureGate.h"
 #include "engine/viz/vizManager.h"
@@ -20,6 +19,7 @@
 #include "util/environment/locale.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/random/randomGenerator.h"
+#include "webServerProcess/src/webService.h"
 
 
 namespace Anki {

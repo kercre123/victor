@@ -15,7 +15,7 @@
 #define __Cozmo_Basestation_BehaviorSystem_SevereNeedsComponent_H__
 
 #include "clad/types/needsSystemTypes.h"
-#include "engine/entity.h"
+#include "util/entityComponent/iManageableComponent.h"
 
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
@@ -28,7 +28,7 @@ class Robot;
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // SevereNeedsComponent
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class SevereNeedsComponent : public ManageableComponent , private Util::noncopyable
+class SevereNeedsComponent : public IManageableComponent , private Util::noncopyable
 {
 public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

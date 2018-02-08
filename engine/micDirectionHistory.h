@@ -14,7 +14,7 @@
 #define __Engine_MicDirectionHistory_H_
 
 #include "coretech/common/shared/types.h"
-#include "engine/dependencyManagedComponent.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 #include "engine/robotComponents_fwd.h"
 
 #include <array>
@@ -28,7 +28,7 @@ class MicDirectionHistory : public IDependencyManagedComponent<RobotComponentID>
 {
 public:
   MicDirectionHistory()
-  : IDependencyManagedComponent<RobotComponentID>(RobotComponentID::MicDirectionHistory){}
+  : IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::MicDirectionHistory){}
 
   //////
   // IDependencyManagedComponent functions
@@ -50,7 +50,8 @@ public:
   static constexpr uint32_t kMicDirectionHistoryLen = kMicDirectionHistory_ms / kTimePerDirectionUpdate_ms;
   
   static constexpr DirectionIndex kFirstIndex = 0;
-  static constexpr DirectionIndex kDirectionUnknown = 12;
+  static constexpr DirectionIndex kNumDirections = 12;
+  static constexpr DirectionIndex kDirectionUnknown = kNumDirections; // 12 directions + 1 unknown direction
   static constexpr DirectionIndex kLastIndex = kDirectionUnknown;
 
   void AddDirectionSample(TimeStamp_t timestamp, DirectionIndex newIndex, DirectionConfidence newConf);

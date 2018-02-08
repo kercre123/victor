@@ -323,6 +323,13 @@ namespace Vision {
     Array2d<T>::CopyTo(otherImage);
     otherImage.SetTimestamp(GetTimestamp()); // Make sure timestamp gets copied too
   }
+
+  template<typename T>
+  void ImageBase<T>::BoxFilter(ImageBase<T>& filtered, u32 size) const
+  {
+    DEV_ASSERT(size%2==0, "ImageBase.BoxFilter.SizeNotMultipleOf2");
+    cv::boxFilter(this->get_CvMat_(), filtered.get_CvMat_(), -1, cv::Size(size, size));
+  }
   
   // Explicit instantation for each image type:
   template class ImageBase<u8>;
@@ -444,6 +451,208 @@ namespace Vision {
   void Image::SetFromShowableFormat(const cv::Mat& showImg) {
     DEV_ASSERT(showImg.channels() == 1, "Image.SetFromShowableFormat.UnexpectedNumChannels");
     showImg.copyTo(this->get_CvMat_());
+  }
+
+  void Image::BoxFilter(ImageBase<u8>& filtered, u32 size) const
+  {
+    #if defined(MAC)
+    #define IS_MAC 1
+    #else
+    #define IS_MAC 0
+    #endif
+
+    // Use base class's BoxFilter if the size is not 3 or this is mac
+    // (will just use OpenCV's boxFilter)
+    if(size != 3 || IS_MAC)
+    {
+      ImageBase<u8>::BoxFilter(filtered, size);
+      return;
+    }
+      
+    filtered.Allocate(GetNumRows(), GetNumCols());
+
+    #ifdef __ARM_NEON__
+
+      const uint16x8_t  kZeros = vdupq_n_u8(0);
+      const float32x4_t kNorm  = vdupq_n_f32(1.f / 9.f);
+
+      // Define neon implementation to filter a row of an image with a 3x3 box filter
+      // All parameters are u8*
+      #define FILTER_ROW_NEON(row1Ptr, row2Ptr, row3Ptr, outputPtr) \
+        for(; c < ((GetNumCols()-1) - (6-1)); c += 6)               \
+        {                                                           \
+          uint8x8_t row1 = vld1_u8(row1Ptr);                        \
+          row1Ptr += 6;                                             \
+                                                                    \
+          uint8x8_t row2 = vld1_u8(row2Ptr);                        \
+          row2Ptr += 6;                                             \
+                                                                    \
+          uint8x8_t row3 = vld1_u8(row3Ptr);                        \
+          row3Ptr += 6;                                             \
+                                                                    \
+          /* Sum the three rows vertically */                       \
+          uint16x8_t sum = vaddl_u8(row1, row2);                    \
+          sum = vaddw_u8(sum, row3);                                \
+                                                                    \
+          /* Shift the summed rows left once and then twice */      \
+          /* and add in order to sum horizonatally */               \
+          uint16x8_t shifted = vextq_u16(sum, kZeros, 1);           \
+          uint16x8_t shifted2 = vextq_u16(sum, kZeros,  2);         \
+          sum = vaddq_u16(sum, shifted);                            \
+          sum = vaddq_u16(sum, shifted2);                           \
+                                                                    \
+          /* Expand and convert to float */                         \
+          uint16x4_t sum16x4_1 = vget_low_u16(sum);                 \
+          uint16x4_t sum16x4_2 = vget_high_u16(sum);                \
+          uint32x4_t sum32x4_1 = vmovl_u16(sum16x4_1);              \
+          uint32x4_t sum32x4_2 = vmovl_u16(sum16x4_2);              \
+                                                                    \
+          float32x4_t sumf_1 = vcvtq_f32_u32(sum32x4_1);            \
+          float32x4_t sumf_2 = vcvtq_f32_u32(sum32x4_2);            \
+                                                                    \
+          /* Multiply by 1/9 and saturate convert back to u8*/      \
+          sumf_1 = vmulq_f32(sumf_1, kNorm);                        \
+          sumf_2 = vmulq_f32(sumf_2, kNorm);                        \
+                                                                    \
+          sum32x4_1 = vcvtq_u32_f32(sumf_1);                        \
+          sum32x4_2 = vcvtq_u32_f32(sumf_2);                        \
+                                                                    \
+          sum16x4_1 = vqmovn_u32(sum32x4_1);                        \
+          sum16x4_2 = vqmovn_u32(sum32x4_2);                        \
+                                                                    \
+          sum = vcombine_u16(sum16x4_1, sum16x4_2);                 \
+                                                                    \
+          uint8x8_t out = vqmovn_u16(sum);                          \
+          vst1_u8(outputPtr, out);                                  \
+          outputPtr += 6;                                           \
+        }
+
+    #else
+
+      // Neon not available so increment row pointers to setup 
+      // element by element filtering
+      #define FILTER_ROW_NEON(row1Ptr, row2Ptr, row3Ptr, outputPtr) \
+        row1Ptr++; \
+        row2Ptr++; \
+        row3Ptr++;
+    
+    #endif // #ifdef __ARM_NEON__
+
+    // Macro to run a 3x3 box filter on a row of an image
+    // Will use neon if on android
+    // All arguments are u8*
+    #define FILTER_ROW(row1Ptr, row2Ptr, row3Ptr, outputPtr)    \
+      {                                                         \
+        u32 c = 1;                                              \
+        FILTER_ROW_NEON(row1Ptr, row2Ptr, row3Ptr, outputPtr);  \
+                                                                \
+        for(; c < GetNumCols()-1; c++)                          \
+        {                                                       \
+          /* Increment rowPtrs first due to how the neon */     \
+          /* section works, starts at row[0] and writes to */   \
+          /* output[1] so increment rowPtrs so this section */  \
+          /* is starting at row[n] and writing to output[n] */  \
+          row1Ptr++;                                            \
+          row2Ptr++;                                            \
+          row3Ptr++;                                            \
+                                                                \
+          *outputPtr = (u8)(((f32)*(row1Ptr-1) +                \
+                             (f32)*(row1Ptr) +                  \
+                             (f32)*(row1Ptr+1) +                \
+                             (f32)*(row2Ptr-1) +                \
+                             (f32)*(row2Ptr) +                  \
+                             (f32)*(row2Ptr+1) +                \
+                             (f32)*(row3Ptr-1) +                \
+                             (f32)*(row3Ptr) +                  \
+                             (f32)*(row3Ptr+1)) * (1/9.f));     \
+                                                                \
+          outputPtr++;                                          \
+        }                                                       \
+      }
+
+    // Filter the first row using mirroring
+    const u8* imageRow1 = GetRow(1);
+    const u8* imageRow2 = GetRow(0);
+    const u8* imageRow3 = GetRow(1);
+    u8* output = filtered.GetRow(0) + 1;
+    FILTER_ROW(imageRow1, imageRow2, imageRow3, output);
+
+    // Filter the rest of the rows stopping before the last row
+    u32 r = 1;
+    for(; r < GetNumRows()-1; r++)
+    {
+      imageRow1 = GetRow(r-1);
+      imageRow2 = GetRow(r);
+      imageRow3 = GetRow(r+1);
+      output = filtered.GetRow(r) + 1;
+
+      FILTER_ROW(imageRow1, imageRow2, imageRow3, output);
+    }
+
+    // Filter the last row using mirroring
+    const u32 kNumRows = GetNumRows();
+    imageRow1 = GetRow(kNumRows - 2);
+    imageRow2 = GetRow(kNumRows - 1);
+    imageRow3 = GetRow(kNumRows - 2);
+    output = filtered.GetRow(kNumRows - 1) + 1;
+    FILTER_ROW(imageRow1, imageRow2, imageRow3, output);
+
+    // Filter the left and right edge of the image using mirroring
+    {
+      const u8* prevRow = GetRow(0);
+      const u8* curRow = GetRow(0);
+      const u8* nextRow = GetRow(1);
+      u8* filteredRow = filtered.GetRow(0);
+
+      filteredRow[0] = (u8)(((f32)(curRow[0]) + 
+                             (f32)(curRow[1]*2) + 
+                             (f32)(nextRow[0]*2) + 
+                             (f32)(nextRow[1]*4)) * (1/9.f));
+
+      const u32 lastCols = GetNumCols() - 1;
+      filteredRow[lastCols] = (u8)(((f32)(curRow[lastCols]) + 
+                                    (f32)(curRow[lastCols-1]*2) + 
+                                    (f32)(nextRow[lastCols]*2) + 
+                                    (f32)(nextRow[lastCols-1]*4)) * (1/9.f));
+
+      r = 1;
+      for(; r < GetNumRows() - 1; r++)
+      {
+        prevRow = GetRow(r-1);
+        curRow = GetRow(r);
+        nextRow = GetRow(r+1);
+        filteredRow = filtered.GetRow(r);
+
+        filteredRow[0] = (u8)(((f32)(curRow[0]) + 
+                               (f32)(prevRow[0]) + 
+                               (f32)(nextRow[0]) + 
+                               (f32)(curRow[1]*2) + 
+                               (f32)(prevRow[1]*2) + 
+                               (f32)(nextRow[1]*2)) * (1/9.f));
+
+        filteredRow[lastCols] = (u8)(((f32)(curRow[lastCols]) + 
+                                      (f32)(prevRow[lastCols]) + 
+                                      (f32)(nextRow[lastCols]) + 
+                                      (f32)(curRow[lastCols-1]*2) + 
+                                      (f32)(prevRow[lastCols-1]*2) + 
+                                      (f32)(nextRow[lastCols-1]*2)) * (1/9.f));
+      }
+
+      prevRow = GetRow(r - 1);
+      curRow = GetRow(r);
+      nextRow = GetRow(r);
+      filteredRow = filtered.GetRow(r);
+
+      filteredRow[0] = (u8)(((f32)(curRow[0]) + 
+                             (f32)(curRow[1]*2) + 
+                             (f32)(prevRow[0]*2) + 
+                             (f32)(prevRow[1]*4)) * (1/9.f));
+
+      filteredRow[lastCols] = (u8)(((f32)(curRow[lastCols]) + 
+                                    (f32)(curRow[lastCols-1]*2) + 
+                                    (f32)(prevRow[lastCols]*2) + 
+                                    (f32)(prevRow[lastCols-1]*4)) * (1/9.f));
+    }
   }
 
 

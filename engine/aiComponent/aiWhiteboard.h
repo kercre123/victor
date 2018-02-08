@@ -19,7 +19,7 @@
 #include "coretech/common/engine/math/pose.h"
 #include "coretech/common/engine/objectIDs.h"
 #include "coretech/vision/engine/faceIdTypes.h"
-#include "engine/entity.h"
+#include "util/entityComponent/iManageableComponent.h"
 #include "clad/types/needsSystemTypes.h"
 #include "clad/types/objectFamilies.h"
 #include "clad/types/objectTypes.h"
@@ -49,7 +49,7 @@ constexpr static const float kObjectInvalidAfterFailureRadius_mm = 60.f;
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // AIWhiteboard
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class AIWhiteboard : public ManageableComponent, private Util::noncopyable
+class AIWhiteboard : public IManageableComponent, private Util::noncopyable
 {
 public:
   

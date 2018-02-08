@@ -17,12 +17,13 @@
 
 #include "engine/actions/actionInterface.h"
 #include "engine/actions/animActions.h"
-#include "clad/types/sayTextStyles.h"
 #include "clad/types/animationTrigger.h"
+#include "clad/types/sayTextStyles.h"
+#include "clad/types/textToSpeechTypes.h"
 #include "util/helpers/templateHelpers.h"
-#include <limits>
+#include "util/signals/simpleSignal_fwd.h"
 
-// TODO: JIRA VIC-23 - Migrate Text to Speech component to Victor
+#include <limits>
 
 namespace Anki {
 namespace Util {
@@ -84,10 +85,16 @@ private:
   SayTextIntent                  _intent;
   SayTextVoiceStyle              _style;
   float                          _durationScalar       = 0.f;
-  float                          _voicePitch           = 0.f; // Adjust Cozmo voice processing pitch [-1.0, 1.0]
-  
-  // TODO: SayTextAction is broken (VIC-360)
-  //uint8_t                        _ttsOperationId       = 0;   // This is set while the action is managing the audio data
+  float                          _pitchScalar          = 0.f; // Adjust Cozmo voice processing pitch [-1.0, 1.0]
+
+  // Tracks lifetime of TTS utterance for this action
+  // ID 0 is reserved for "invalid".
+  uint8_t                        _ttsID                = 0; 
+
+  // State of this TTS utterance, as reported by animation process
+  // ID 0 is reserved for "invalid".
+  TextToSpeechState              _ttsState             = TextToSpeechState::Invalid;
+
   //bool                           _isAudioReady         = false;
   //Animation                      _animation;
   AnimationTrigger               _animationTrigger     = AnimationTrigger::Count; // Count == use built-in animation
@@ -95,6 +102,8 @@ private:
   std::unique_ptr<IActionRunner> _playAnimationAction  = nullptr;
   bool                           _fitToDuration        = false;
   f32                            _timeout_sec          = 30.f;
+  f32                            _expiration_sec       = 0.f;
+  Signal::SmartHandle            _signalHandle;
   
   // Call to start processing text to speech
   void GenerateTtsAudio();

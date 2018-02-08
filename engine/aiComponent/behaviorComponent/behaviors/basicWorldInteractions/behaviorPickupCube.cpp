@@ -68,7 +68,7 @@ bool BehaviorPickUpCube::WantsToBeActivatedBehavior() const
 {
   // check even if we haven't seen a block so that we can pickup blocks we know of
   // that are outside FOV  
-  UpdateTargetBlocksInternal();
+  UpdateTargetBlocks();
   return _targetBlockID.IsSet();
 }
 
@@ -105,7 +105,7 @@ void BehaviorPickUpCube::BehaviorUpdate()
  
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPickUpCube::UpdateTargetBlocksInternal() const
+void BehaviorPickUpCube::UpdateTargetBlocks() const
 {
   _targetBlockID.UnSet();
   

@@ -657,7 +657,12 @@ namespace Anki {
       _useObjectPose = true;
       return SetGoals(poses, distThreshold, angleThreshold);
     }
-        
+
+    void DriveToPoseAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const
+    {
+      requests.insert({ VisionMode::DetectingMarkers , EVisionUpdateFrequency::High });
+    }
+
     f32 DriveToPoseAction::GetTimeoutInSeconds() const { return kDriveToPoseTimeout; }  
 
     ActionResult DriveToPoseAction::Init()

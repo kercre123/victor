@@ -77,21 +77,29 @@ bool LocalUdpServer::StartListening(const std::string & sockname)
 
   if (!Anki::Messaging::SetNonBlocking(_socketfd, 1)) {
     LOG_ERROR("LocalUdpServer.StartListening", "Unable to set nonblocking (%s)", strerror(errno));
+    close(_socketfd);
+    _socketfd = -1;
     return false;
   }
 
   if (!Anki::Messaging::SetReuseAddress(_socketfd, 1)) {
     LOG_ERROR("LocalUdpServer.StartListening", "Unable to set reuseaddress (%s)", strerror(errno));
+    close(_socketfd);
+    _socketfd = -1;
     return false;
   }
 
   if (!Anki::Messaging::SetSendBufferSize(_socketfd, UDP_SERVER_SNDBUFSZ)) {
     LOG_ERROR("LocalUdpServer.StartListening", "Unable to set send buffer size (%s)", strerror(errno));
+    close(_socketfd);
+    _socketfd = -1;
     return false;
   }
 
   if (!Anki::Messaging::SetRecvBufferSize(_socketfd, UDP_SERVER_RCVBUFSZ)) {
     LOG_ERROR("LocalUdpServer.StartListening", "Unable to set recv buffer size (%s)", strerror(errno));
+    close(_socketfd);
+    _socketfd = -1;
     return false;
   }
 
@@ -108,6 +116,8 @@ bool LocalUdpServer::StartListening(const std::string & sockname)
   if (status == -1) {
     LOG_ERROR("LocalUdpServer.StartListening", "Unable to bind at %s (%s)", _sockname.c_str(), strerror(errno));
     LOG_ERROR("LocalUdpServer.StartListening", "You might have orphaned processes running");
+    close(_socketfd);
+    _socketfd = -1;
     return false;
   }
 

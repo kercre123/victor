@@ -2,6 +2,7 @@
  */
 
 #include "clad/types/animationEvents.clad"
+#include "clad/types/textToSpeechTypes.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -12,6 +13,12 @@ message AnimationState
   uint_32 numProcAnimFaceKeyframes,
   uint_8  lockedTracks,
   uint_8  tracksInUse,
+}
+
+message AnimationAdded
+{
+  uint_32 animLength,
+  string animName,
 }
 
 // These two messages bookend animations as they are played on the robot
@@ -33,6 +40,12 @@ message AnimationEvent
   uint_32   timestamp,
   uint_8    tag,
   AnimEvent event_id
+}
+
+message TextToSpeechEvent
+{
+  uint_8 ttsID,
+  TextToSpeechState ttsState
 }
 
 

@@ -17,7 +17,7 @@
 #include "coretech/planning/shared/goalDefs.h"
 #include "coretech/planning/shared/path.h"
 
-#include "engine/dependencyManagedComponent.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 #include "engine/robotComponents_fwd.h"
 
 #include "util/helpers/noncopyable.h"

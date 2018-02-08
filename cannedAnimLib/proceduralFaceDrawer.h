@@ -32,6 +32,11 @@ namespace Cozmo {
     // Actually draw the face with the current parameters
     static void DrawFace(const ProceduralFace& faceData, const Util::RandomGenerator& rng, Vision::ImageRGB& faceImg);
     
+    // Applies scanlines to the input image.
+    // Although the type of the input image is ImageRGB, it should be an HSV image, i.e.
+    // the 'red' channel is hue, 'green' channel is saturation, and 'blue' channel is value
+    static void ApplyScanlines(Vision::ImageRGB& imageHsv, const float opacity);
+    
   private:
     
     using Parameter = ProceduralEyeParameter;
@@ -52,6 +57,10 @@ namespace Cozmo {
     static Vision::Image _eyeShape;
     
     static const Array2d<f32>& GetNoiseImage(const Util::RandomGenerator& rng);
+    
+    // Returns true if scanline should be applied to the given row. Only
+    // apply scanlines in alternating pairs of rows (i.e. 00110011)
+    static bool ShouldApplyScanlineToRow(const u32 rowNum) { return (rowNum & 2) != 0; }
     
   }; // class ProceduralFaceπ
   

@@ -12,11 +12,14 @@
  **/
 
 #include "cozmoAnim/animProcessMessages.h"
-#include "cozmoAnim/cozmoAnimComms.h"
+#include "cozmoAnim/animComms.h"
+#include "cozmoAnim/robotDataLoader.h"
 
 #include "cozmoAnim/animation/animationStreamer.h"
+#include "cozmoAnim/animation/trackLayerComponent.h"
 #include "cozmoAnim/audio/engineRobotAudioInput.h"
-#include "cozmoAnim/cozmoAnimContext.h"
+#include "cozmoAnim/animContext.h"
+#include "cozmoAnim/animEngine.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "cozmoAnim/faceDisplay/faceDebugDraw.h"
 #include "cozmoAnim/micDataProcessor.h"
@@ -42,7 +45,7 @@
 #define LOG_CHANNEL    "AnimProcessMessages"
 
 // Trace options
-// #define LOG_TRACE(name, format, ...) PRINT_CH_DEBUG(LOG_CHANNEL, name, format, ##__VA_ARGS__)
+// #define LOG_TRACE(name, format, ...) LOG_DEBUG(name, format, ##__VA_ARGS__)
 #define LOG_TRACE(name, format, ...) {}
 
 // Anonymous namespace for private declarations
@@ -52,9 +55,10 @@ namespace {
   constexpr int MAX_PACKET_BUFFER_SIZE = 2048;
   u8 pktBuffer_[MAX_PACKET_BUFFER_SIZE];
 
+  Anki::Cozmo::AnimEngine*                   _animEngine = nullptr;
   Anki::Cozmo::AnimationStreamer*            _animStreamer = nullptr;
   Anki::Cozmo::Audio::EngineRobotAudioInput* _audioInput = nullptr;
-  const Anki::Cozmo::CozmoAnimContext*       _context = nullptr;
+  const Anki::Cozmo::AnimContext*       _context = nullptr;
 
   #ifndef SIMULATOR
   const u8 kNumTicksToCheckForBC = 60; // ~2seconds
@@ -75,6 +79,16 @@ void Process_lockAnimTracks(const Anki::Cozmo::RobotInterface::LockAnimTracks& m
 {
   //LOG_DEBUG("AnimProcessMessages.Process_lockAnimTracks", "0x%x", msg.whichTracks);
   _animStreamer->SetLockedTracks(msg.whichTracks);
+}
+
+void Process_addAnim(const Anki::Cozmo::RobotInterface::AddAnim& msg)
+{
+  const std::string path(msg.animPath, msg.animPath_length);
+
+  LOG_INFO("AnimProcessMessages.Process_playAnim",
+           "Animation File: %s", path.c_str());
+
+  _context->GetDataLoader()->LoadAnimationFile(path);
 }
     
 void Process_playAnim(const Anki::Cozmo::RobotInterface::PlayAnim& msg)
@@ -116,6 +130,57 @@ void Process_displayFaceImageRGBChunk(const Anki::Cozmo::RobotInterface::Display
   _animStreamer->Process_displayFaceImageChunk(msg);
 }
 
+void Process_enableKeepFaceAlive(const Anki::Cozmo::RobotInterface::EnableKeepFaceAlive& msg)
+{
+  _animStreamer->EnableKeepFaceAlive(msg.enable, msg.disableTimeout_ms);
+}
+
+void Process_setDefaultKeepFaceAliveParameters(const Anki::Cozmo::RobotInterface::SetDefaultKeepFaceAliveParameters& msg)
+{
+  _animStreamer->SetDefaultKeepFaceAliveParams();
+}
+
+void Process_setKeepFaceAliveParameter(const Anki::Cozmo::RobotInterface::SetKeepFaceAliveParameter& msg)
+{
+  if (msg.setToDefault) {
+    _animStreamer->SetParamToDefault(msg.param);
+  } else {
+    _animStreamer->SetParam(msg.param, msg.value);
+  }
+}
+
+void Process_addOrUpdateEyeShift(const Anki::Cozmo::RobotInterface::AddOrUpdateEyeShift& msg)
+{
+  const std::string layerName(msg.name, msg.name_length);  
+  _animStreamer->GetTrackLayerComponent()->AddOrUpdateEyeShift(layerName,
+                                                               msg.xPix,
+                                                               msg.yPix,
+                                                               msg.duration_ms,
+                                                               msg.xMax,
+                                                               msg.yMax,
+                                                               msg.lookUpMaxScale,
+                                                               msg.lookDownMinScale,
+                                                               msg.outerEyeScaleIncrease);
+}
+
+void Process_removeEyeShift(const Anki::Cozmo::RobotInterface::RemoveEyeShift& msg)
+{
+  const std::string layerName(msg.name, msg.name_length);
+  _animStreamer->GetTrackLayerComponent()->RemoveEyeShift(layerName, msg.disableTimeout_ms);
+}
+ 
+void Process_addSquint(const Anki::Cozmo::RobotInterface::AddSquint& msg)
+{
+  const std::string layerName(msg.name, msg.name_length);
+  _animStreamer->GetTrackLayerComponent()->AddSquint(layerName, msg.squintScaleX, msg.squintScaleY, msg.upperLidAngle);
+}
+
+void Process_removeSquint(const Anki::Cozmo::RobotInterface::RemoveSquint& msg)
+{
+  const std::string layerName(msg.name, msg.name_length);
+  _animStreamer->GetTrackLayerComponent()->RemoveSquint(layerName, msg.disableTimeout_ms);
+}
+  
 void Process_postAudioEvent(const Anki::AudioEngine::Multiplexer::PostAudioEvent& msg)
 {
   _audioInput->HandleMessage(msg);
@@ -213,6 +278,17 @@ void Process_runDebugConsoleFuncMessage(const Anki::Cozmo::RobotInterface::RunDe
   }
 }
 
+void Process_textToSpeechStart(const RobotInterface::TextToSpeechStart& msg)
+{
+  _animEngine->HandleMessage(msg);
+}
+
+void Process_textToSpeechStop(const RobotInterface::TextToSpeechStop& msg)
+{
+  _animEngine->HandleMessage(msg);
+}
+
+
 void AnimProcessMessages::ProcessMessageFromEngine(const RobotInterface::EngineToRobot& msg)
 {
   //LOG_WARNING("AnimProcessMessages.ProcessMessageFromEngine", "%d", msg.tag);
@@ -229,7 +305,7 @@ void AnimProcessMessages::ProcessMessageFromEngine(const RobotInterface::EngineT
 
   if (forwardToRobot) {
     // Send message along to robot if it wasn't handled here
-    CozmoAnimComms::SendPacketToRobot((char*)msg.GetBuffer(), msg.Size());
+    AnimComms::SendPacketToRobot((char*)msg.GetBuffer(), msg.Size());
   }
 
 } // ProcessMessageFromEngine()
@@ -316,20 +392,24 @@ void AnimProcessMessages::ProcessMessageFromRobot(const RobotInterface::RobotToE
 // ========== START OF CLASS METHODS ==========
 // #pragma mark "Class methods"
 
-Result AnimProcessMessages::Init(AnimationStreamer* animStreamer,
+Result AnimProcessMessages::Init(AnimEngine* animEngine,
+                                 AnimationStreamer* animStreamer,
                                  Audio::EngineRobotAudioInput* audioInput,
-                                 const CozmoAnimContext* context)
+                                 const AnimContext* context)
 {
-  // Setup robot and engine sockets
-  CozmoAnimComms::InitComms();
+  // Preconditions
+  DEV_ASSERT(nullptr != animEngine, "AnimProcessMessages.Init.InvalidAnimEngine");
+  DEV_ASSERT(nullptr != animStreamer, "AnimProcessMessages.Init.InvalidAnimStreamer");
+  DEV_ASSERT(nullptr != audioInput, "AnimProcessMessages.Init.InvalidAudioInput");
+  DEV_ASSERT(nullptr != context, "AnimProcessMessages.Init.InvalidAnimContext");
 
+  // Setup robot and engine sockets
+  AnimComms::InitComms();
+
+  _animEngine   = animEngine;
   _animStreamer = animStreamer;
   _audioInput   = audioInput;
   _context      = context;
-
-  DEV_ASSERT(_animStreamer != nullptr, "AnimProcessMessages.Init.NullAnimStreamer");
-  DEV_ASSERT(_audioInput != nullptr, "AnimProcessMessages.Init.NullAudioInput");
-  DEV_ASSERT(_context != nullptr, "AnimProcessMessages.Init.NullContext");
 
   #ifdef SIMULATOR
   const bool haveBC = true;
@@ -347,7 +427,7 @@ Result AnimProcessMessages::MonitorConnectionState(void)
 {
   // Send block connection state when engine connects
   static bool wasConnected = false;
-  if (!wasConnected && CozmoAnimComms::IsConnectedToEngine()) {
+  if (!wasConnected && AnimComms::IsConnectedToEngine()) {
     LOG_INFO("AnimProcessMessages.MonitorConnectionState", "Robot now available");
     RobotInterface::RobotAvailable idMsg;
     idMsg.hwRevision = 0;
@@ -370,7 +450,7 @@ Result AnimProcessMessages::MonitorConnectionState(void)
 
     wasConnected = true;
   }
-  else if (wasConnected && !CozmoAnimComms::IsConnectedToEngine()) {
+  else if (wasConnected && !AnimComms::IsConnectedToEngine()) {
     wasConnected = false;
   }
 
@@ -378,10 +458,11 @@ Result AnimProcessMessages::MonitorConnectionState(void)
 
 }
 
-void AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
+Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
 {
-  if (!CozmoAnimComms::IsConnectedToRobot()) {
-    CozmoAnimComms::InitRobotComms();
+  if (!AnimComms::IsConnectedToRobot()) {
+    LOG_WARNING("AnimProcessMessages.Update", "No connection to robot");
+    return RESULT_FAIL_IO_CONNECTION_CLOSED;
   }
 
   MonitorConnectionState();
@@ -392,7 +473,7 @@ void AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
   u32 dataLen;
 
   // Process messages from engine
-  while((dataLen = CozmoAnimComms::GetNextPacketFromEngine(pktBuffer_, MAX_PACKET_BUFFER_SIZE)) > 0)
+  while((dataLen = AnimComms::GetNextPacketFromEngine(pktBuffer_, MAX_PACKET_BUFFER_SIZE)) > 0)
   {
     Anki::Cozmo::RobotInterface::EngineToRobot msg;
     memcpy(msg.GetBuffer(), pktBuffer_, dataLen);
@@ -410,7 +491,7 @@ void AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
   }
 
   // Process messages from robot
-  while ((dataLen = CozmoAnimComms::GetNextPacketFromRobot(pktBuffer_, MAX_PACKET_BUFFER_SIZE)) > 0)
+  while ((dataLen = AnimComms::GetNextPacketFromRobot(pktBuffer_, MAX_PACKET_BUFFER_SIZE)) > 0)
   {
     Anki::Cozmo::RobotInterface::RobotToEngine msg;
     memcpy(msg.GetBuffer(), pktBuffer_, dataLen);
@@ -435,18 +516,19 @@ void AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
     FaceDisplay::GetDebugDraw()->SetShouldDrawFAC(!haveBC);
   }
   #endif
+  return RESULT_OK;
 }
 
 bool AnimProcessMessages::SendAnimToRobot(const RobotInterface::EngineToRobot& msg)
 {
   LOG_TRACE("AnimProcessMessages.SendAnimToRobot", "Send tag %d size %u", msg.tag, msg.Size());
-  return CozmoAnimComms::SendPacketToRobot(msg.GetBuffer(), msg.Size());
+  return AnimComms::SendPacketToRobot(msg.GetBuffer(), msg.Size());
 }
   
 bool AnimProcessMessages::SendAnimToEngine(const RobotInterface::RobotToEngine & msg)
 {
   LOG_TRACE("AnimProcessMessages.SendAnimToEngine", "Send tag %d size %u", msg.tag, msg.Size());
-  return CozmoAnimComms::SendPacketToEngine(msg.GetBuffer(), msg.Size());
+  return AnimComms::SendPacketToEngine(msg.GetBuffer(), msg.Size());
 }
 
 } // namespace Cozmo

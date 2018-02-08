@@ -864,6 +864,12 @@ namespace Anki {
       SendMessage(VizInterface::MessageViz(std::move(behaviorStackDebug)));
     }
 
+    void VizManager::SendVisionModeDebug(VizInterface::VisionModeDebug&& visionModeDebug)
+    {
+      ANKI_CPU_PROFILE("VizManager::SendVisionModeDebug");
+      SendMessage(VizInterface::MessageViz(std::move(visionModeDebug)));
+    }
+
     void VizManager::SendRobotBehaviorSelectData(VizInterface::RobotBehaviorSelectData&& robotBehaviorSelectData)
     {
       if (kSendBehaviorScoresToViz)

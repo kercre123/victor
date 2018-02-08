@@ -141,7 +141,7 @@ template <typename T>
 inline void ConsoleSystem::Register( T& value, const std::string& keystring, const std::string& category )
 {
   // The IConsoleVariable will register itself within its constructor.
-  IConsoleVariable* var = new ConsoleVar<T>( value, keystring.c_str(), category.c_str() );
+  IConsoleVariable* var = new ConsoleVar<T>( value, keystring.c_str(), category.c_str(), false );
   allocatedVariables_.push_back( var );
 }
 

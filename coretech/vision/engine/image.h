@@ -120,6 +120,8 @@ namespace Vision {
                   f32 scale = 1.f, 
                   bool dropShadow = false, 
                   int thickness = 1);
+
+    // DrawSubImage also exists - see derived class for implemetation
     
     using Array2d<T>::GetDataPointer;
     using Array2d<T>::IsEmpty;
@@ -127,10 +129,15 @@ namespace Vision {
     using Array2d<T>::GetNumCols;
     
     virtual s32 GetNumChannels() const = 0;
+
+    Rectangle<s32> GetBoundingRect(){return Rectangle<s32>(0, 0, GetNumCols(), GetNumRows());}
     
     // Converts image to a format that is usable by imshow and imwrite
     // (BGR in general)
     virtual void ConvertToShowableFormat(cv::Mat& showImg) const = 0;
+
+    // Runs a boxFilter of the given size on this image outputing filtered
+    virtual void BoxFilter(ImageBase<T>& filtered, u32 size) const;
 
   protected:
     template<typename DerivedType>
@@ -138,6 +145,9 @@ namespace Vision {
     
     template<typename DerivedType>
     const DerivedType GetROI(Rectangle<s32>& roiRect) const;
+
+    template<typename DerivedType>
+    void DrawSubImage(DerivedType& subImage, const Point2f& topLeftCorner);
 
     virtual cv::Scalar GetCvColor(const ColorRGBA& color) const;
 
@@ -174,6 +184,9 @@ namespace Vision {
     using Array2d<u8>::get_CvMat_;
 #   endif
 
+    void DrawSubImage(Image& subImage, const Point2f& topLeftCorner) { 
+      return ImageBase<u8>::DrawSubImage<Image>(subImage, topLeftCorner); 
+    }
     Image GetROI(Rectangle<s32>& roiRect) { return ImageBase<u8>::GetROI<Image>(roiRect); }
     const Image GetROI(Rectangle<s32>& roiRect) const { return ImageBase<u8>::GetROI<Image>(roiRect); }
     
@@ -202,6 +215,8 @@ namespace Vision {
     virtual s32 GetNumChannels() const override { return 1; }
 
     virtual void ConvertToShowableFormat(cv::Mat& showImg) const override;
+
+    void BoxFilter(ImageBase<u8>& filtered, u32 size) const override;
 
   protected:
     virtual cv::Scalar GetCvColor(const ColorRGBA& color) const override;
@@ -235,6 +250,9 @@ namespace Vision {
     
     ImageRGB(const ImageRGB565& imgRGB565);
     
+    void DrawSubImage(ImageRGB& subImage, const Point2f& topLeftCorner) { 
+      return ImageBase<PixelRGB>::DrawSubImage<ImageRGB>(subImage, topLeftCorner); 
+    }
     ImageRGB GetROI(Rectangle<s32>& roiRect) { return ImageBase<PixelRGB>::GetROI<ImageRGB>(roiRect); }
     const ImageRGB GetROI(Rectangle<s32>& roiRect) const { return ImageBase<PixelRGB>::GetROI<ImageRGB>(roiRect); }
     
@@ -282,6 +300,9 @@ namespace Vision {
     // Reference counting assignment (does not copy):
     ImageRGB565& operator= (const ImageBase<PixelRGB565> &other);
 
+    void DrawSubImage(ImageRGB565& subImage, const Point2f& topLeftCorner) { 
+      return ImageBase<PixelRGB565>::DrawSubImage<ImageRGB565>(subImage, topLeftCorner); 
+    }
     ImageRGB565 GetROI(Rectangle<s32>& roiRect) { return ImageBase<PixelRGB565>::GetROI<ImageRGB565>(roiRect); }
     const ImageRGB565 GetROI(Rectangle<s32>& roiRect) const { return ImageBase<PixelRGB565>::GetROI<ImageRGB565>(roiRect); }
 
@@ -332,6 +353,9 @@ namespace Vision {
     Image ToGray() const;
     void FillGray(Image& grayOut) const;
     
+    void DrawSubImage(ImageRGBA& subImage, const Point2f& topLeftCorner) { 
+      return ImageBase<PixelRGBA>::DrawSubImage<ImageRGBA>(subImage, topLeftCorner); 
+    }
     ImageRGBA GetROI(Rectangle<s32>& roiRect) {
       return ImageBase<PixelRGBA>::GetROI<ImageRGBA>(roiRect);
     }
@@ -370,6 +394,8 @@ namespace Vision {
   {
     return _timeStamp;
   }
+
+
   
   template<typename T>
   template<typename DerivedType>

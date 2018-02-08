@@ -142,7 +142,7 @@ void BehaviorRollBlock::TransitionToPerformingAction(bool isRetry)
   if( ! _targetID.IsSet() ) {
     PRINT_NAMED_WARNING("BehaviorRollBlock.NoBlockID",
                         "%s: Transitioning to action state, but we don't have a valid block ID",
-                        GetIDStr().c_str());
+                        GetDebugLabel().c_str());
     return;
   }
 

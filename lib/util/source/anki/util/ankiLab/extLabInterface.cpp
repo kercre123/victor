@@ -44,8 +44,8 @@ static void EnableAnkiLab(const bool enable) {
 class DisableABTestingConsoleVar : public Anki::Util::ConsoleVar<bool>
 {
 public:
-  DisableABTestingConsoleVar( bool& value, const char* id, const char* category )
-  : ConsoleVar<bool>(value, id, category) { }
+  DisableABTestingConsoleVar( bool& value, const char* id, const char* category, bool unregisterInDestructor )
+  : ConsoleVar<bool>(value, id, category, unregisterInDestructor) { }
   void ToggleValue() override
   {
     _value = !((bool)_value);
@@ -59,7 +59,8 @@ bool kForceDisableABTesting = (ANKI_DEVELOPER_CODE == 1);
 namespace {
   static DisableABTestingConsoleVar cvar__kForceDisableABTesting(kForceDisableABTesting,
                                                                  "kForceDisableABTesting",
-                                                                 "A/B Testing");
+                                                                 "A/B Testing",
+                                                                 false);
 
   void ForceAssignExperiment( ConsoleFunctionContextRef context )
   {

@@ -15,7 +15,7 @@
 #define __Anki_Cozmo_Basestation_RobotIdleTimeoutComponent_H_
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
-#include "engine/entity.h"
+#include "util/entityComponent/entity.h"
 #include "util/signals/signalHolder.h"
 
 namespace Anki {

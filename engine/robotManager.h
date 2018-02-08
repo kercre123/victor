@@ -84,7 +84,7 @@ public:
   void UpdateAllRobots();
   
   // Update robot connection state
-  void UpdateRobotConnection();
+  Result UpdateRobotConnection();
   
   // Return a
   // Return the number of availale robots

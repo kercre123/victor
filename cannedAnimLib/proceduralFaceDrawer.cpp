@@ -29,9 +29,10 @@ namespace Cozmo {
   CONSOLE_VAR(bool,       kProcFace_RenderInnerOuterGlow,     CONSOLE_GROUP, false); // Render glow
   CONSOLE_VAR(bool,       kProcFace_ApplyGlowFilter,          CONSOLE_GROUP, false); // Gausssian or boxfilter for glow
   CONSOLE_VAR(bool,       kProcFace_UseAntialiasing,          CONSOLE_GROUP, false); // Gausssian or boxfilter for antialiasing
+  CONSOLE_VAR(bool,       kProcFace_VictorRenderer,           CONSOLE_GROUP, false);
 
   #undef CONSOLE_GROUP
-  
+
   // Initialize static vars
   Vision::Image ProceduralFaceDrawer::_glowImg;
   Vision::Image ProceduralFaceDrawer::_eyeShape;
@@ -496,12 +497,11 @@ namespace Cozmo {
               f32 newValue = static_cast<f32>(std::max(glowValue,eyeValue));
               newValue *= noiseImg_i[j] * eyeLightness;
               
-              // Darken scanlines in pairs (thus the division by 2 before modding by 2).
               // Don't do scanlines in the glow region.
               const bool isPartOfEye = (eyeValue >= glowValue); // (and not part of glow)
               if(isPartOfEye)
               {
-                if((i/2) % 2)
+                if(ShouldApplyScanlineToRow(i))
                 {
                   newValue *= scanlineOpacity;
                 }
@@ -541,9 +541,14 @@ namespace Cozmo {
     faceImg.FillWith(Vision::PixelRGB(0,0,0));
     
     Rectangle<f32> leftBBox, rightBBox;
+    if(kProcFace_VictorRenderer) {
+      kProcFace_RenderInnerOuterGlow = kProcFace_ApplyGlowFilter = kProcFace_UseAntialiasing = true;
+    } else {
+      kProcFace_VictorRenderer = kProcFace_RenderInnerOuterGlow && kProcFace_ApplyGlowFilter && kProcFace_UseAntialiasing;
+    }
     DrawEye(faceData, WhichEye::Left,  rng, faceImg, leftBBox);
     DrawEye(faceData, WhichEye::Right, rng, faceImg, rightBBox);
-    
+
     s32 rowMin = ProceduralFace::HEIGHT-1, rowMax = 0;
     s32 colMin = leftBBox.GetX(), colMax = rightBBox.GetXmax();
 
@@ -718,6 +723,24 @@ namespace Cozmo {
     }
     
   } // GetNextBlinkFrame()
-
+  
+  void ProceduralFaceDrawer::ApplyScanlines(Vision::ImageRGB& imageHsv, const float opacity)
+  {
+    DEV_ASSERT(Util::InRange(opacity, 0.f, 1.f), "ProceduralFaceDrawer.ApplyCurrentFaceHue.InvalidOpacity");
+    
+    const auto nRows = imageHsv.GetNumRows();
+    const auto nCols = imageHsv.GetNumCols();
+    
+    for (int i=0 ; i < nRows ; i++) {
+      if (ShouldApplyScanlineToRow(i)) {
+        auto* thisRow = imageHsv.GetRow(i);
+        for (int j=0 ; j < nCols ; j++) {
+          // the 'blue' channel in an HSV image is the value
+          thisRow[j].b() *= opacity;
+        }
+      }
+    }
+  }
+  
 } // namespace Cozmo
 } // namespace Anki

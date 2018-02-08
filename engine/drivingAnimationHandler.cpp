@@ -34,7 +34,7 @@ namespace Anki {
     CONSOLE_VAR(bool, kEnableDrivingAnimations, "DrivingAnimationHandler", true);
     
     DrivingAnimationHandler::DrivingAnimationHandler()
-    : IDependencyManagedComponent(RobotComponentID::DrivingAnimationHandler)
+    : IDependencyManagedComponent(this, RobotComponentID::DrivingAnimationHandler)
     , kDefaultDrivingAnimations({AnimationTrigger::DriveStartDefault,
                                  AnimationTrigger::DriveLoopDefault,
                                  AnimationTrigger::DriveEndDefault})

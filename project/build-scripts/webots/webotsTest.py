@@ -251,6 +251,7 @@ def sign_webot_executables(build_type, password):
 
   executables = [
     'webotsCtrlBuildServerTest',
+    'webotsCtrlWebServer',
     'webotsCtrlGameEngine',
     'webotsCtrlRobot',
     'webotsCtrlGameEngine2',

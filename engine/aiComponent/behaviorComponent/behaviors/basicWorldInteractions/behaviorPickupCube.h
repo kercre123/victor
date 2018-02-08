@@ -50,7 +50,7 @@ protected:
 
   virtual bool WantsToBeActivatedBehavior() const override;
   
-  virtual void UpdateTargetBlocksInternal() const override;
+  void UpdateTargetBlocks() const;
   
   virtual std::set<ObjectInteractionIntention>
         GetBehaviorObjectInteractionIntentions() const override {

@@ -63,30 +63,30 @@ namespace {
   
   constexpr static const Util::FullEnumToValueArrayChecker::FullEnumToValueArray<ProceduralFace::Parameter, EyeParamInfo,
   ProceduralFace::Parameter::NumParameters> kEyeParamInfoLUT {
-    {ProceduralFace::Parameter::EyeCenterX,        {false, false,  0.f,  0.f, EyeParamCombineMethod::Add,      {-FACE_DISPLAY_WIDTH/2, FACE_DISPLAY_WIDTH/2 }    }     },
-    {ProceduralFace::Parameter::EyeCenterY,        {false, false,  0.f,  0.f, EyeParamCombineMethod::Add,      {-FACE_DISPLAY_HEIGHT/2,FACE_DISPLAY_HEIGHT/2}    }     },
-    {ProceduralFace::Parameter::EyeScaleX,         {false, false,  1.f,  0.f, EyeParamCombineMethod::Multiply, {0.f, INF}    }     },
-    {ProceduralFace::Parameter::EyeScaleY,         {false, false,  1.f,  0.f, EyeParamCombineMethod::Multiply, {0.f, INF}    }     },
-    {ProceduralFace::Parameter::EyeAngle,          {true,  false,  0.f,  0.f, EyeParamCombineMethod::Add,      {-90,  90}    }     },
-    {ProceduralFace::Parameter::LowerInnerRadiusX, {false, false,  0.f,  0.f, EyeParamCombineMethod::None,     {0.f, 1.f}    }     },
-    {ProceduralFace::Parameter::LowerInnerRadiusY, {false, false,  0.f,  0.f, EyeParamCombineMethod::None,     {0.f, 1.f}    }     },
-    {ProceduralFace::Parameter::UpperInnerRadiusX, {false, false,  0.f,  0.f, EyeParamCombineMethod::None,     {0.f, 1.f}    }     },
-    {ProceduralFace::Parameter::UpperInnerRadiusY, {false, false,  0.f,  0.f, EyeParamCombineMethod::None,     {0.f, 1.f}    }     },
-    {ProceduralFace::Parameter::UpperOuterRadiusX, {false, false,  0.f,  0.f, EyeParamCombineMethod::None,     {0.f, 1.f}    }     },
-    {ProceduralFace::Parameter::UpperOuterRadiusY, {false, false,  0.f,  0.f, EyeParamCombineMethod::None,     {0.f, 1.f}    }     },
-    {ProceduralFace::Parameter::LowerOuterRadiusX, {false, false,  0.f,  0.f, EyeParamCombineMethod::None,     {0.f, 1.f}    }     },
-    {ProceduralFace::Parameter::LowerOuterRadiusY, {false, false,  0.f,  0.f, EyeParamCombineMethod::None,     {0.f, 1.f}    }     },
-    {ProceduralFace::Parameter::UpperLidY,         {false, false,  0.f,  0.f, EyeParamCombineMethod::None,     {0.f, 1.f}    }     },
-    {ProceduralFace::Parameter::UpperLidAngle,     {true,  false,  0.f,  0.f, EyeParamCombineMethod::Add,      {-45,  45}    }     },
-    {ProceduralFace::Parameter::UpperLidBend,      {false, false,  0.f,  0.f, EyeParamCombineMethod::None,     {0.f, 1.f}    }     },
-    {ProceduralFace::Parameter::LowerLidY,         {false, false,  0.f,  0.f, EyeParamCombineMethod::None,     {0.f, 1.f}    }     },
-    {ProceduralFace::Parameter::LowerLidAngle,     {true,  false,  0.f,  0.f, EyeParamCombineMethod::Add,      {-45,  45}    }     },
-    {ProceduralFace::Parameter::LowerLidBend,      {false, false,  0.f,  0.f, EyeParamCombineMethod::None,     {0.f, 1.f}    }     },
-    {ProceduralFace::Parameter::Saturation,        {false, true,  -1.f,  1.f, EyeParamCombineMethod::None,     {-1.f, 1.f}   }     },
-    {ProceduralFace::Parameter::Lightness,         {false, true,  -1.f,  1.f, EyeParamCombineMethod::None,     {-1.f, 1.f}   }     },
-    {ProceduralFace::Parameter::GlowSize,          {false, true,  -1.f, 0.5f, EyeParamCombineMethod::None,     {-1.f, 1.f}   }     },
-    {ProceduralFace::Parameter::HotSpotCenterX,    {false, true,   0.f, 0.0f, EyeParamCombineMethod::AverageIfBothUnset,     {-1.f, 1.f}   }     },
-    {ProceduralFace::Parameter::HotSpotCenterY,    {false, true,   0.f, 0.0f, EyeParamCombineMethod::AverageIfBothUnset,     {-1.f, 1.f}   }     },
+    {ProceduralFace::Parameter::EyeCenterX,        { false, false,  0.f,  0.f, EyeParamCombineMethod::Add,      {-FACE_DISPLAY_WIDTH/2, FACE_DISPLAY_WIDTH/2 }    }     },
+    {ProceduralFace::Parameter::EyeCenterY,        { false, false,  0.f,  0.f, EyeParamCombineMethod::Add,      {-FACE_DISPLAY_HEIGHT/2,FACE_DISPLAY_HEIGHT/2}    }     },
+    {ProceduralFace::Parameter::EyeScaleX,         { false, false,  1.f,  0.f, EyeParamCombineMethod::Multiply, {0.f, INF}    }     },
+    {ProceduralFace::Parameter::EyeScaleY,         { false, false,  1.f,  0.f, EyeParamCombineMethod::Multiply, {0.f, INF}    }     },
+    {ProceduralFace::Parameter::EyeAngle,          { true,  false,  0.f,  0.f, EyeParamCombineMethod::Add,      {-90,  90}    }     },
+    {ProceduralFace::Parameter::LowerInnerRadiusX, { false, false,  0.f,  0.f, EyeParamCombineMethod::None,     {0.f, 1.f}    }     },
+    {ProceduralFace::Parameter::LowerInnerRadiusY, { false, false,  0.f,  0.f, EyeParamCombineMethod::None,     {0.f, 1.f}    }     },
+    {ProceduralFace::Parameter::UpperInnerRadiusX, { false, false,  0.f,  0.f, EyeParamCombineMethod::None,     {0.f, 1.f}    }     },
+    {ProceduralFace::Parameter::UpperInnerRadiusY, { false, false,  0.f,  0.f, EyeParamCombineMethod::None,     {0.f, 1.f}    }     },
+    {ProceduralFace::Parameter::UpperOuterRadiusX, { false, false,  0.f,  0.f, EyeParamCombineMethod::None,     {0.f, 1.f}    }     },
+    {ProceduralFace::Parameter::UpperOuterRadiusY, { false, false,  0.f,  0.f, EyeParamCombineMethod::None,     {0.f, 1.f}    }     },
+    {ProceduralFace::Parameter::LowerOuterRadiusX, { false, false,  0.f,  0.f, EyeParamCombineMethod::None,     {0.f, 1.f}    }     },
+    {ProceduralFace::Parameter::LowerOuterRadiusY, { false, false,  0.f,  0.f, EyeParamCombineMethod::None,     {0.f, 1.f}    }     },
+    {ProceduralFace::Parameter::UpperLidY,         { false, false,  0.f,  0.f, EyeParamCombineMethod::None,     {0.f, 1.f}    }     },
+    {ProceduralFace::Parameter::UpperLidAngle,     { true,  false,  0.f,  0.f, EyeParamCombineMethod::Add,      {-45,  45}    }     },
+    {ProceduralFace::Parameter::UpperLidBend,      { false, false,  0.f,  0.f, EyeParamCombineMethod::None,     {0.f, 1.f}    }     },
+    {ProceduralFace::Parameter::LowerLidY,         { false, false,  0.f,  0.f, EyeParamCombineMethod::None,     {0.f, 1.f}    }     },
+    {ProceduralFace::Parameter::LowerLidAngle,     { true,  false,  0.f,  0.f, EyeParamCombineMethod::Add,      {-45,  45}    }     },
+    {ProceduralFace::Parameter::LowerLidBend,      { false, false,  0.f,  0.f, EyeParamCombineMethod::None,     {0.f, 1.f}    }     },
+    {ProceduralFace::Parameter::Saturation,        { false, true,  -1.f,  1.f, EyeParamCombineMethod::None,     {-1.f, 1.f}   }     },
+    {ProceduralFace::Parameter::Lightness,         { false, true,  -1.f,  1.f, EyeParamCombineMethod::None,     {-1.f, 1.f}   }     },
+    {ProceduralFace::Parameter::GlowSize,          { false, true,  -1.f, 0.5f, EyeParamCombineMethod::None,     {-1.f, 1.f}   }     },
+    {ProceduralFace::Parameter::HotSpotCenterX,    { false, true,   0.f, 0.0f, EyeParamCombineMethod::AverageIfBothUnset,     {-1.f, 1.f}   }     },
+    {ProceduralFace::Parameter::HotSpotCenterY,    { false, true,   0.f, 0.0f, EyeParamCombineMethod::AverageIfBothUnset,     {-1.f, 1.f}   }     },
   };
   
   static_assert( Util::FullEnumToValueArrayChecker::IsSequentialArray(kEyeParamInfoLUT),
@@ -245,9 +245,9 @@ void ProceduralFace::SetFromFlatBuf(const CozmoAnim::ProceduralFace* procFaceKey
   const f32 fbFaceScaleX = procFaceKeyframe->faceScaleX();
   const f32 fbFaceScaleY = procFaceKeyframe->faceScaleY();
   SetFaceScale({fbFaceScaleX, fbFaceScaleY});
-  
-  // TODO: Set scanline opacity from procFaceKeyFrame once implemented
-  SetScanlineOpacity(kProcFace_DefaultScanlineOpacity);
+
+  const f32 fbScanlineOpacity = procFaceKeyframe->scanlineOpacity();
+  SetScanlineOpacity(fbScanlineOpacity);
 }
 
 void ProceduralFace::SetFromJson(const Json::Value &jsonRoot)
@@ -650,6 +650,22 @@ void ProceduralFace::RemoveScanlineDistorter()
 {
   _scanlineDistorter.reset();
 }
-  
+
+void ProceduralFace::RegisterFaceWithConsoleVars() {
+  for(auto whichEye : {WhichEye::Left, WhichEye::Right}) {
+    for (std::underlying_type<Parameter>::type iParam=0; iParam < Util::EnumToUnderlying(Parameter::NumParameters); ++iParam) {
+      std::string eyeName = (whichEye == 0 ? "Left" : "Right");
+      std::string param = eyeName+"."+EnumToString(kEyeParamInfoLUT[iParam].EnumValue());
+      Util::ConsoleSystem::Instance().Register(param,
+                                                     new Util::ConsoleVar<float>(_eyeParams[whichEye][iParam],
+                                                                                 param.c_str(),
+                                                                                 "ProceduralFace",
+                                                                                 kEyeParamInfoLUT[iParam].Value().clipLimits.min,
+                                                                                 kEyeParamInfoLUT[iParam].Value().clipLimits.max,
+                                                                                 true));
+    }
+  }
+}
+
 } // namespace Cozmo
 } // namespace Anki

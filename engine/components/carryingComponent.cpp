@@ -23,7 +23,7 @@ namespace Anki {
 namespace Cozmo {
 
 CarryingComponent::CarryingComponent()
-: IDependencyManagedComponent(RobotComponentID::Carrying)
+: IDependencyManagedComponent(this, RobotComponentID::Carrying)
 {
   
 }
