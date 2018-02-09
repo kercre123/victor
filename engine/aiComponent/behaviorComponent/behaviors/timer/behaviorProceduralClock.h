@@ -20,6 +20,20 @@ namespace Cozmo {
 
 class BehaviorProceduralClock : public ICozmoBehavior
 {
+public:
+  // digits of display - numbered left to right
+  enum class DigitID{
+    DigitOne = 0,
+    DigitTwo,
+    DigitThree,
+    DigitFour,
+    Count
+  };
+
+
+  // Specify how each digit on the face should be calculated - must set all 4 values in map
+  void SetDigitFunctions(std::map<DigitID, std::function<int()>>&& functions);
+
 protected:
   // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;  
@@ -29,6 +43,7 @@ protected:
   }
 
   virtual void OnBehaviorActivated() override;
+  virtual void InitBehavior() override;
   virtual void BehaviorUpdate() override;
   virtual bool WantsToBeActivatedBehavior() const override { return true;}
 
@@ -37,16 +52,6 @@ protected:
   void TransitionToGetOut();
 
 private:
-
-  // digits of display - numbered left to right
-  enum class DigitID{
-    DigitOne,
-    DigitTwo,
-    DigitThree,
-    DigitFour,
-    Count
-  };
-
   enum class BehaviorState{
     GetIn,
     ShowClock,
@@ -57,7 +62,9 @@ private:
   struct InstanceParams{
     Json::Value templateJSON;
     std::map<std::string, std::string> staticElements;
+    // TODO: transition these maps to fullyEnumeratedArrays
     std::map<DigitID, std::string> digitToTemplateMap;
+    std::map<DigitID, std::function<int()>> getDigitFunctions; 
     std::map<int, std::string> intsToImages;
     AnimationTrigger getInAnim;
     AnimationTrigger getOutAnim;

@@ -21,8 +21,6 @@
 #include "engine/aiComponent/timerUtility.h"
 
 #include "coretech/common/engine/jsonTools.h"
-#include "coretech/common/engine/utils/timer.h"
-
 
 namespace Anki {
 namespace Cozmo {
@@ -83,6 +81,53 @@ BehaviorProceduralClock::BehaviorProceduralClock(const Json::Value& config)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorProceduralClock::InitBehavior()
+{
+  if(_instanceParams.getDigitFunctions.size() == 0){
+    // TODO: find a way to load this in from data - for now init the clock as one that counts up based on time
+    // and allow behaviors to re-set functionality in code only
+    auto& timerUtility = GetBEI().GetAIComponent().GetComponent<TimerUtility>(AIComponentID::TimerUtility);
+    
+    std::map<DigitID, std::function<int()>> countUpFuncs;
+    // Ten Mins Digit
+    {
+      auto tenMinsFunc = [&timerUtility](){
+        const int currentTime_s = timerUtility.GetSystemTime_s();
+        return TimerHandle::SecondsToDisplayMinutes(currentTime_s)/10;
+      };
+      countUpFuncs.emplace(std::make_pair(DigitID::DigitOne, tenMinsFunc));
+    }
+    // One Mins Digit
+    {
+      auto oneMinsFunc = [&timerUtility](){
+        const int currentTime_s = timerUtility.GetSystemTime_s();
+        return TimerHandle::SecondsToDisplayMinutes(currentTime_s) % 10;
+      };
+      countUpFuncs.emplace(std::make_pair(DigitID::DigitTwo, oneMinsFunc));
+    }
+    // Ten seconds digit
+    {
+      auto tenSecsFunc = [&timerUtility](){
+        const int currentTime_s = timerUtility.GetSystemTime_s();
+        return TimerHandle::SecondsToDisplaySeconds(currentTime_s)/10;
+      };
+      countUpFuncs.emplace(std::make_pair(DigitID::DigitThree, tenSecsFunc));
+    }
+    // One seconds digit
+    {
+      auto oneSecsFunc = [&timerUtility](){
+        const int currentTime_s = timerUtility.GetSystemTime_s();
+        return TimerHandle::SecondsToDisplaySeconds(currentTime_s) % 10;
+      };
+      countUpFuncs.emplace(std::make_pair(DigitID::DigitFour, oneSecsFunc));
+    }
+    
+    SetDigitFunctions(std::move(countUpFuncs));
+  }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorProceduralClock::OnBehaviorActivated() 
 {
   _lifetimeParams = LifetimeParams();
@@ -102,11 +147,10 @@ void BehaviorProceduralClock::TransitionToGetIn()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorProceduralClock::TransitionToShowClock()
 {
-  auto& timerUtility = GetBEI().GetAIComponent().GetComponent<TimerUtility>(AIComponentID::TimerUtility);
-  timerUtility.StartTimer(365);
-
   _lifetimeParams.currentState = BehaviorState::ShowClock;
-  _lifetimeParams.timeShowClockStarted = static_cast<int>(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds());
+  
+  auto& timerUtility = GetBEI().GetAIComponent().GetComponent<TimerUtility>(AIComponentID::TimerUtility);
+  _lifetimeParams.timeShowClockStarted = timerUtility.GetSystemTime_s();
   // displaying time on face handled in update loop
 }
 
@@ -128,7 +172,8 @@ void BehaviorProceduralClock::BehaviorUpdate()
   }
 
   if(_lifetimeParams.currentState == BehaviorState::ShowClock){
-    const int currentTime_s = static_cast<int>(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds());
+    auto& timerUtility = GetBEI().GetAIComponent().GetComponent<TimerUtility>(AIComponentID::TimerUtility);
+    const int currentTime_s = timerUtility.GetSystemTime_s();
 
     if(currentTime_s >= (_lifetimeParams.timeShowClockStarted + _instanceParams.totalTimeDisplayClock)){
       TransitionToGetOut();
@@ -160,22 +205,18 @@ auto BehaviorProceduralClock::StringToDigitID(const std::string& str) -> DigitID
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorProceduralClock::BuildAndDisplayTimer(std::map<std::string, std::string>& quadrantMap)
 {
-  auto& timerUtility = GetBEI().GetAIComponent().GetComponent<TimerUtility>(AIComponentID::TimerUtility);
-  auto handle = timerUtility.GetActiveTimer();
- 
   // set static quadrants
   for(auto& entry : _instanceParams.staticElements){
     quadrantMap[entry.first] = entry.second;
   }
-  
-  // set clock digit quadrants
-  auto minRemain = handle->GetDisplayMinutesRemaining();
-  auto secRemain = handle->GetDisplaySecondsRemaining();
-  quadrantMap[_instanceParams.digitToTemplateMap[DigitID::DigitOne]]   = _instanceParams.intsToImages[minRemain/10];
-  quadrantMap[_instanceParams.digitToTemplateMap[DigitID::DigitTwo]]   = _instanceParams.intsToImages[minRemain % 10];
-  quadrantMap[_instanceParams.digitToTemplateMap[DigitID::DigitThree]] = _instanceParams.intsToImages[secRemain/10];
-  quadrantMap[_instanceParams.digitToTemplateMap[DigitID::DigitFour]]  = _instanceParams.intsToImages[secRemain % 10];
-  
+
+  // set digits
+  for(int enumIdx = 0; enumIdx < Util::EnumToUnderlying(DigitID::Count); enumIdx++){
+    const DigitID enumVal = DigitID(enumIdx);
+    const int digitToDisplay = _instanceParams.getDigitFunctions[enumVal]();
+    quadrantMap[_instanceParams.digitToTemplateMap[enumVal]] = _instanceParams.intsToImages[digitToDisplay];
+  }
+
   // build the full image
   auto& imageCache = GetBEI().GetAIComponent().GetComponent<TemplatedImageCache>(AIComponentID::TemplatedImageCache);
   const auto& image = imageCache.BuildImage(GetDebugLabel(), 
@@ -183,6 +224,23 @@ void BehaviorProceduralClock::BuildAndDisplayTimer(std::map<std::string, std::st
                                             _instanceParams.templateJSON, quadrantMap);
   // draw it to the face
   GetBEI().GetAnimationComponent().DisplayFaceImage(image, 1000.0f, true);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorProceduralClock::SetDigitFunctions(std::map<DigitID, std::function<int()>>&& functions)
+{
+  _instanceParams.getDigitFunctions = functions;
+  if(ANKI_DEV_CHEATS){
+    std::set<DigitID> digits;
+    for(auto& entry: _instanceParams.getDigitFunctions){
+      digits.insert(entry.first);
+    }
+    ANKI_VERIFY(Util::EnumToUnderlying(DigitID::Count) == digits.size(),
+                "BehaviorProceduralClock.SetDigitFunctions.ImproperNumberOfFunctions",
+                "Expected %d functions, received %zu",
+                Util::EnumToUnderlying(DigitID::Count), digits.size());
+  }
 }
 
 
