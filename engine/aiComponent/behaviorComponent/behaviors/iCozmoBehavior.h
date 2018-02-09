@@ -33,6 +33,7 @@
 #include "clad/types/needsSystemTypes.h"
 #include "clad/types/needsSystemTypes.h"
 #include "clad/types/unlockTypes.h"
+#include "util/console/consoleVariable.h"
 #include "util/logging/logging.h"
 
 //Transforms enum into string
@@ -441,6 +442,15 @@ protected:
   
   bool ShouldStreamline() const { return (_alwaysStreamline); }
   
+  // make a member variable a console var that is only around as long as its class instance is
+  #if ANKI_DEV_CHEATS
+    template <typename T>
+    void MakeMemberTunable(T& param, const std::string& name);
+  #else // no op
+    template <typename T>
+    void MakeMemberTunable(T& param, const std::string& name) {  }
+  #endif
+  
 private:
   
   NeedsActionId ExtractNeedsActionIDFromConfig(const Json::Value& config);
@@ -547,6 +557,11 @@ private:
   // anonymous behavior factory
   Json::Value _anonymousBehaviorMapConfig;  
   std::map<std::string,ICozmoBehaviorPtr> _anonymousBehaviorMap;
+  
+  // list of member vars in this behavior that have been marked as tunable. upon class
+  // desctruction, each console var will be unregistered.
+  std::vector< std::unique_ptr<Anki::Util::IConsoleVariable> > _tunableParams;
+  
 }; // class ICozmoBehavior
 
   
@@ -620,6 +635,27 @@ bool ICozmoBehavior::FindAnonymousBehaviorByNameAndDowncast(const std::string& b
   
   return false;
 }
+  
+#if ANKI_DEV_CHEATS
+template <typename T>
+void ICozmoBehavior::MakeMemberTunable(T& param, const std::string& name)
+{
+  const std::string uniqueName = GetDebugLabel() + "_" + name;
+  const bool unregisterOnDestruction = true;
+  const char* category = "BehaviorInstanceParams";
+  // ensure this param isnt already registered
+  for( const auto& var : _tunableParams ) {
+    if( !ANKI_VERIFY( var->GetID() != uniqueName,
+                      "ICozmoBehavior.MakeMemberTunable.AlreadyExists",
+                      "Per-instance console var '%s' already exists",
+                      uniqueName.c_str() ) )
+    {
+      return;
+    }
+  }
+  _tunableParams.emplace_back( new Util::ConsoleVar<T>( param, uniqueName.c_str(), category, unregisterOnDestruction ) );
+}
+#endif
 
 } // namespace Cozmo
 } // namespace Anki

@@ -13,6 +13,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/behaviorHighLevelAI.h"
 
+#include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/blockWorld/blockWorld.h"
@@ -24,14 +25,8 @@ namespace Cozmo {
 
 namespace {
 
-constexpr const float kSocializeKnownFaceCooldown_s = 60.0f * 10;
-constexpr const float kPlayWithCubeCooldown_s = 60.0f * 1;
-constexpr const float kPlayWithCubeOnChargerCooldown_s = 60.0f * 10;
-constexpr const float kGoToSleepTimeout_s = 60.0f * 4;
-constexpr const u32 kMinFaceAgeToAllowSleep_ms = 5000;
-constexpr const u32 kNeedsToChargeTime_ms = 1000 * 60 * 5;
-constexpr const float kMaxFaceDistanceToSocialize_mm = 1000.0f;
-
+constexpr const char* kDebugName = "BehaviorHighLevelAI";
+  
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -39,7 +34,17 @@ constexpr const float kMaxFaceDistanceToSocialize_mm = 1000.0f;
 BehaviorHighLevelAI::BehaviorHighLevelAI(const Json::Value& config)
   : InternalStatesBehavior( config, CreatePreDefinedStrategies() )
 {
+  _params.socializeKnownFaceCooldown_s = JsonTools::ParseFloat(config, "socializeKnownFaceCooldown_s", kDebugName);
+  _params.playWithCubeCooldown_s = JsonTools::ParseFloat(config, "playWithCubeCooldown_s", kDebugName);
+  _params.playWithCubeOnChargerCooldown_s = JsonTools::ParseFloat(config, "playWithCubeOnChargerCooldown_s", kDebugName);
+  _params.goToSleepTimeout_s = JsonTools::ParseFloat(config, "goToSleepTimeout_s", kDebugName);
+  _params.minFaceAgeToAllowSleep_ms = JsonTools::ParseUInt32(config, "minFaceAgeToAllowSleep_ms", kDebugName);
+  _params.needsToChargeTime_ms = JsonTools::ParseUInt32(config, "needsToChargeTime_ms", kDebugName);
+  _params.maxFaceDistanceToSocialize_mm = JsonTools::ParseFloat(config, "maxFaceDistanceToSocialize_mm", kDebugName);
   
+  MakeMemberTunable( _params.socializeKnownFaceCooldown_s, "socializeKnownFaceCooldown_s" );
+  MakeMemberTunable( _params.playWithCubeOnChargerCooldown_s, "playWithCubeOnChargerCooldown_s" );
+  MakeMemberTunable( _params.playWithCubeCooldown_s, "playWithCubeCooldown_s" );
 }
   
 BehaviorHighLevelAI::~BehaviorHighLevelAI()
@@ -54,7 +59,7 @@ InternalStatesBehavior::PreDefinedStrategiesMap BehaviorHighLevelAI::CreatePreDe
     {
       "CloseFaceForSocializing",
       [this](BehaviorExternalInterface& behaviorExternalInterface) {
-        if( !StateExitCooldownExpired(GetStateID("Socializing"), kSocializeKnownFaceCooldown_s) ) {
+        if( !StateExitCooldownExpired(GetStateID("Socializing"), _params.socializeKnownFaceCooldown_s) ) {
           // still on cooldown
           return false;
         }
@@ -69,7 +74,7 @@ InternalStatesBehavior::PreDefinedStrategiesMap BehaviorHighLevelAI::CreatePreDe
             if( ComputeDistanceSQBetween( behaviorExternalInterface.GetRobotInfo().GetPose(),
                                           facePose,
                                           distanceToFace ) &&
-                distanceToFace < Util::Square(kMaxFaceDistanceToSocialize_mm) ) {
+                distanceToFace < Util::Square(_params.maxFaceDistanceToSocialize_mm) ) {
               return true;
             }
           }
@@ -87,7 +92,7 @@ InternalStatesBehavior::PreDefinedStrategiesMap BehaviorHighLevelAI::CreatePreDe
         }
         
         const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-        if( GetLastTimeStarted( GetStateID("ObservingOnCharger") ) + kGoToSleepTimeout_s <= currTime_s ) {
+        if( GetLastTimeStarted( GetStateID("ObservingOnCharger") ) + _params.goToSleepTimeout_s <= currTime_s ) {
 
           // only go to sleep if we haven't recently seen a face
           auto& faceWorld = behaviorExternalInterface.GetFaceWorld();
@@ -96,7 +101,7 @@ InternalStatesBehavior::PreDefinedStrategiesMap BehaviorHighLevelAI::CreatePreDe
           const TimeStamp_t lastFaceTime = faceWorld.GetLastObservedFace(waste, inRobotOriginOnly);
           const TimeStamp_t lastImgTime = behaviorExternalInterface.GetRobotInfo().GetLastImageTimeStamp();
           if( lastFaceTime < lastImgTime &&
-              lastImgTime - lastFaceTime > kMinFaceAgeToAllowSleep_ms ) {
+              lastImgTime - lastFaceTime > _params.minFaceAgeToAllowSleep_ms ) {
             return true;
           }
         }
@@ -117,7 +122,7 @@ InternalStatesBehavior::PreDefinedStrategiesMap BehaviorHighLevelAI::CreatePreDe
     },
     {
       "NeedsToCharge",
-      [](BehaviorExternalInterface& behaviorExternalInterface) {
+      [this](BehaviorExternalInterface& behaviorExternalInterface) {
         const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
         if( !robotInfo.IsCharging() ) {
           const TimeStamp_t lastChargeTime = robotInfo.GetLastChargingStateChangeTimestamp();
@@ -126,7 +131,7 @@ InternalStatesBehavior::PreDefinedStrategiesMap BehaviorHighLevelAI::CreatePreDe
             robotInfo.GetLastMsgTimestamp() - lastChargeTime :
             0;
 
-          return timeSinceNotCharging >= kNeedsToChargeTime_ms;
+          return timeSinceNotCharging >= _params.needsToChargeTime_ms;
         }
         return false;
       }
@@ -144,10 +149,10 @@ InternalStatesBehavior::PreDefinedStrategiesMap BehaviorHighLevelAI::CreatePreDe
         // again.
         const bool valueIfNeverRun = false;
         const bool hasntDrivenOffChargerForPlay = StateExitCooldownExpired(GetStateID("DriveOffChargerIntoPlay"),
-                                                                           kPlayWithCubeOnChargerCooldown_s,
+                                                                           _params.playWithCubeOnChargerCooldown_s,
                                                                            valueIfNeverRun);
         const bool hasntPlayed = StateExitCooldownExpired(GetStateID("PlayingWithCube"),
-                                                          kPlayWithCubeCooldown_s,
+                                                          _params.playWithCubeCooldown_s,
                                                           valueIfNeverRun);
         return hasntDrivenOffChargerForPlay && hasntPlayed;
       }
@@ -156,7 +161,7 @@ InternalStatesBehavior::PreDefinedStrategiesMap BehaviorHighLevelAI::CreatePreDe
       "CloseCubeForPlaying",
       [this](BehaviorExternalInterface& behaviorExternalInterface) {
 
-        if( !StateExitCooldownExpired(GetStateID("PlayingWithCube"), kPlayWithCubeCooldown_s) ) {
+        if( !StateExitCooldownExpired(GetStateID("PlayingWithCube"), _params.playWithCubeCooldown_s) ) {
           // still on cooldown
           return false;
         }

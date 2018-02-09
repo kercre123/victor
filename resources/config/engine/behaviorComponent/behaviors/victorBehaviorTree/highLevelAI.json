@@ -2,6 +2,15 @@
   "behaviorID" : "HighLevelAI",
   "behaviorClass" : "HighLevelAI",
 
+  
+  "socializeKnownFaceCooldown_s": 600.0,
+  "playWithCubeCooldown_s": 60.0,
+  "playWithCubeOnChargerCooldown_s": 600.0,
+  "goToSleepTimeout_s": 240.0,
+  "minFaceAgeToAllowSleep_ms": 5000,
+  "needsToChargeTime_ms": 300000,
+  "maxFaceDistanceToSocialize_mm": 1000.0,
+
   "initialState": "ObservingOnCharger",
 
   "states": [

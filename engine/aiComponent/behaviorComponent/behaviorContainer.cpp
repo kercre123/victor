@@ -282,6 +282,9 @@ ICozmoBehaviorPtr BehaviorContainer::CreateBehaviorAndAddToContainer(BehaviorCla
 ICozmoBehaviorPtr BehaviorContainer::CreateAnonymousBehavior(BehaviorClass behaviorType, const Json::Value& config) const
 {
   ICozmoBehaviorPtr newBehavior = CreateBehaviorBase(behaviorType, config);
+  if( newBehavior != nullptr ) {
+    MakeDebugLabelUnique( newBehavior );
+  }
   return newBehavior;  
 }
 
@@ -769,6 +772,8 @@ ICozmoBehaviorPtr BehaviorContainer::CreateBehaviorBase(BehaviorClass behaviorTy
   if (newBehavior == nullptr){
     PRINT_NAMED_ERROR("BehaviorContainer.CreateBehavior.Failed",
                       "Failed to create Behavior of type '%s'", BehaviorClassToString(behaviorType));
+  } else {
+    MakeDebugLabelUnique( newBehavior );
   }
   
   return newBehavior;
@@ -849,6 +854,18 @@ BehaviorClass BehaviorContainer::GetBehaviorClass(ICozmoBehaviorPtr behavior) co
 std::string BehaviorContainer::GetClassString(BehaviorClass behaviorClass) const
 {
   return BehaviorClassToString(behaviorClass);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorContainer::MakeDebugLabelUnique(ICozmoBehaviorPtr behavior) const
+{
+  // make sure the debug label is unique by appending the count of instances with the same debug
+  // label, if the index is positive
+  const auto& debugLabel = behavior->GetDebugLabel();
+  const unsigned int labelIndex = _debugLabelCounters[debugLabel]++; // and post increment
+  if( labelIndex > 0 ) {
+    behavior->SetDebugLabel( behavior->GetDebugLabel() + std::to_string(labelIndex) );
+  }
 }
 
   

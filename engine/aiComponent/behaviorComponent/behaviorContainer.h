@@ -111,18 +111,24 @@ private:
   
   bool RemoveBehaviorFromMap(ICozmoBehaviorPtr behavior);
   
+  // helper to avoid including ICozmoBehavior.h here
+  BehaviorClass GetBehaviorClass(ICozmoBehaviorPtr behavior) const;
+  
+  // hide behaviorTypes.h file in .cpp
+  std::string GetClassString(BehaviorClass behaviorClass) const;
+  
+  // The base function used to create behaviors - should only be called internally
+  ICozmoBehaviorPtr CreateBehaviorBase(BehaviorClass behaviorType, const Json::Value& config) const;
+  
+  void MakeDebugLabelUnique(ICozmoBehaviorPtr behavior) const;
+  
   // ============================== Private Member Vars ==============================
   BehaviorIDToBehaviorMap _idToBehaviorMap;
   std::vector<Signal::SmartHandle> _signalHandles;
   
-  // helper to avoid including ICozmoBehavior.h here
-  BehaviorClass GetBehaviorClass(ICozmoBehaviorPtr behavior) const;
-
-  // hide behaviorTypes.h file in .cpp
-  std::string GetClassString(BehaviorClass behaviorClass) const;
-
-  // The base function used to create behaviors - should only be called internally
-  ICozmoBehaviorPtr CreateBehaviorBase(BehaviorClass behaviorType, const Json::Value& config) const;  
+  mutable std::unordered_map<std::string, unsigned int> _debugLabelCounters;
+  
+  
   
 };
 
