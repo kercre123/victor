@@ -11,13 +11,13 @@
 		DA27A6552023E86200359EE0 /* libev.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DA27A6532023E52400359EE0 /* libev.a */; };
 		DA27A65920252F2F00359EE0 /* WiFiNetworkStream.mm in Sources */ = {isa = PBXBuildFile; fileRef = DA27A65720252F2F00359EE0 /* WiFiNetworkStream.mm */; };
 		DA27A65C20252F5C00359EE0 /* WifiServer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DA27A65A20252F5C00359EE0 /* WifiServer.cpp */; };
-		DA27A65F2029472700359EE0 /* Switchboard.mm in Sources */ = {isa = PBXBuildFile; fileRef = DA27A65D2029472700359EE0 /* Switchboard.mm */; };
+		DA27A65F2029472700359EE0 /* switchboard.mm in Sources */ = {isa = PBXBuildFile; fileRef = DA27A65D2029472700359EE0 /* switchboard.mm */; };
 		DA5EC9E620084554003ABD16 /* libsodium.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DA5EC9E520084554003ABD16 /* libsodium.a */; };
 		DAACE279202E389000153C28 /* taskExecutor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DAACE277202E389000153C28 /* taskExecutor.cpp */; };
 		DAB7E39D200EB76600D57664 /* BLENetworkStream.mm in Sources */ = {isa = PBXBuildFile; fileRef = DAB7E39C200EB76600D57664 /* BLENetworkStream.mm */; };
 		DAB7E3A1200EB84F00D57664 /* BLEPeripheral.mm in Sources */ = {isa = PBXBuildFile; fileRef = DAB7E3A0200EB84F00D57664 /* BLEPeripheral.mm */; };
-		DAB7E3A3200EB8A600D57664 /* SecurePairing.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DAB7E3A2200EB8A600D57664 /* SecurePairing.cpp */; };
-		DAB7E3B0200ED2ED00D57664 /* KeyExchange.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DAB7E3AF200ED2ED00D57664 /* KeyExchange.cpp */; };
+		DAB7E3A3200EB8A600D57664 /* securePairing.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DAB7E3A2200EB8A600D57664 /* securePairing.cpp */; };
+		DAB7E3B0200ED2ED00D57664 /* keyExchange.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DAB7E3AF200ED2ED00D57664 /* keyExchange.cpp */; };
 		DACEF047200598FF00894864 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = DACEF046200598FF00894864 /* AppDelegate.m */; };
 		DACEF04A200598FF00894864 /* ViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = DACEF049200598FF00894864 /* ViewController.mm */; };
 		DACEF04D200598FF00894864 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = DACEF04B200598FF00894864 /* Main.storyboard */; };
@@ -30,7 +30,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		DA27A59B20193A6A00359EE0 /* PairingMessages.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PairingMessages.h; sourceTree = "<group>"; };
+		DA27A59B20193A6A00359EE0 /* pairingMessages.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = pairingMessages.h; sourceTree = "<group>"; };
 		DA27A5A2201C083900359EE0 /* ios-server.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "ios-server.entitlements"; sourceTree = "<group>"; };
 		DA27A5A5201D0AE800359EE0 /* NetworkExtension.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = NetworkExtension.framework; path = System/Library/Frameworks/NetworkExtension.framework; sourceTree = SDKROOT; };
 		DA27A63420224F1100359EE0 /* libev.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = libev.h; sourceTree = "<group>"; };
@@ -44,8 +44,8 @@
 		DA27A65820252F2F00359EE0 /* WiFiNetworkStream.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WiFiNetworkStream.h; sourceTree = "<group>"; };
 		DA27A65A20252F5C00359EE0 /* WifiServer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = WifiServer.cpp; sourceTree = "<group>"; };
 		DA27A65B20252F5C00359EE0 /* WifiServer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WifiServer.h; sourceTree = "<group>"; };
-		DA27A65D2029472700359EE0 /* Switchboard.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Switchboard.mm; sourceTree = "<group>"; };
-		DA27A65E2029472700359EE0 /* Switchboard.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Switchboard.h; sourceTree = "<group>"; };
+		DA27A65D2029472700359EE0 /* switchboard.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = switchboard.mm; sourceTree = "<group>"; };
+		DA27A65E2029472700359EE0 /* switchboard.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = switchboard.h; sourceTree = "<group>"; };
 		DA5EC9E520084554003ABD16 /* libsodium.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libsodium.a; path = "ios-server/sodium/libsodium.a"; sourceTree = "<group>"; };
 		DA8141B7201173A700AC8A73 /* signalHolder.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = signalHolder.h; sourceTree = "<group>"; };
 		DA8141B8201173D900AC8A73 /* simpleSignal.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = simpleSignal.hpp; sourceTree = "<group>"; };
@@ -57,11 +57,11 @@
 		DAB7E39E200EB77700D57664 /* BLENetworkStream.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BLENetworkStream.h; sourceTree = "<group>"; };
 		DAB7E39F200EB84200D57664 /* BLEPeripheral.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BLEPeripheral.h; sourceTree = "<group>"; };
 		DAB7E3A0200EB84F00D57664 /* BLEPeripheral.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = BLEPeripheral.mm; sourceTree = "<group>"; };
-		DAB7E3A2200EB8A600D57664 /* SecurePairing.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SecurePairing.cpp; sourceTree = "<group>"; };
-		DAB7E3A4200EB8C000D57664 /* SecurePairing.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SecurePairing.h; sourceTree = "<group>"; };
-		DAB7E3A5200EB8F800D57664 /* KeyExchange.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = KeyExchange.h; sourceTree = "<group>"; };
+		DAB7E3A2200EB8A600D57664 /* securePairing.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = securePairing.cpp; sourceTree = "<group>"; };
+		DAB7E3A4200EB8C000D57664 /* securePairing.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = securePairing.h; sourceTree = "<group>"; };
+		DAB7E3A5200EB8F800D57664 /* keyExchange.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = keyExchange.h; sourceTree = "<group>"; };
 		DAB7E3A6200EB92300D57664 /* BLEPairingController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BLEPairingController.h; sourceTree = "<group>"; };
-		DAB7E3AF200ED2ED00D57664 /* KeyExchange.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = KeyExchange.cpp; sourceTree = "<group>"; };
+		DAB7E3AF200ED2ED00D57664 /* keyExchange.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = keyExchange.cpp; sourceTree = "<group>"; };
 		DACEF042200598FF00894864 /* ios-server.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "ios-server.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		DACEF045200598FF00894864 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		DACEF046200598FF00894864 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -117,27 +117,27 @@
 			isa = PBXGroup;
 			children = (
 				DAB7E39B200EB59B00D57664 /* INetworkStream.h */,
-				DA27A59B20193A6A00359EE0 /* PairingMessages.h */,
-				DA27A65820252F2F00359EE0 /* WiFiNetworkStream.h */,
-				DA27A65720252F2F00359EE0 /* WiFiNetworkStream.mm */,
+				DA27A59B20193A6A00359EE0 /* pairingMessages.h */,
 				DAB7E39E200EB77700D57664 /* BLENetworkStream.h */,
 				DAB7E39C200EB76600D57664 /* BLENetworkStream.mm */,
-				DAB7E3A4200EB8C000D57664 /* SecurePairing.h */,
-				DAB7E3A2200EB8A600D57664 /* SecurePairing.cpp */,
-				DAB7E3A5200EB8F800D57664 /* KeyExchange.h */,
-				DAB7E3AF200ED2ED00D57664 /* KeyExchange.cpp */,
-				DA27A65E2029472700359EE0 /* Switchboard.h */,
-				DA27A65D2029472700359EE0 /* Switchboard.mm */,
+				DAB7E3A4200EB8C000D57664 /* securePairing.h */,
+				DAB7E3A2200EB8A600D57664 /* securePairing.cpp */,
+				DAB7E3A5200EB8F800D57664 /* keyExchange.h */,
+				DAB7E3AF200ED2ED00D57664 /* keyExchange.cpp */,
+				DA27A65E2029472700359EE0 /* switchboard.h */,
+				DA27A65D2029472700359EE0 /* switchboard.mm */,
 				DA27A63920229DD600359EE0 /* log.h */,
-				DAB7E39F200EB84200D57664 /* BLEPeripheral.h */,
-				DAB7E3A0200EB84F00D57664 /* BLEPeripheral.mm */,
-				DAB7E3A6200EB92300D57664 /* BLEPairingController.h */,
-				DA27A65B20252F5C00359EE0 /* WifiServer.h */,
-				DA27A65A20252F5C00359EE0 /* WifiServer.cpp */,
-				DA27A6562024F1A000359EE0 /* IPAddress.h */,
 				DA27A63420224F1100359EE0 /* libev.h */,
 				DAACE277202E389000153C28 /* taskExecutor.cpp */,
 				DAACE278202E389000153C28 /* taskExecutor.h */,
+				DAB7E39F200EB84200D57664 /* BLEPeripheral.h */,
+				DAB7E3A0200EB84F00D57664 /* BLEPeripheral.mm */,
+				DAB7E3A6200EB92300D57664 /* BLEPairingController.h */,
+				DA27A65820252F2F00359EE0 /* WiFiNetworkStream.h */,
+				DA27A65720252F2F00359EE0 /* WiFiNetworkStream.mm */,
+				DA27A65B20252F5C00359EE0 /* WifiServer.h */,
+				DA27A65A20252F5C00359EE0 /* WifiServer.cpp */,
+				DA27A6562024F1A000359EE0 /* IPAddress.h */,
 			);
 			path = networking;
 			sourceTree = "<group>";
@@ -275,16 +275,16 @@
 			buildActionMask = 2147483647;
 			files = (
 				DACEF050200598FF00894864 /* ios_server.xcdatamodeld in Sources */,
-				DAB7E3B0200ED2ED00D57664 /* KeyExchange.cpp in Sources */,
+				DAB7E3B0200ED2ED00D57664 /* keyExchange.cpp in Sources */,
 				DACEF04A200598FF00894864 /* ViewController.mm in Sources */,
 				DAACE279202E389000153C28 /* taskExecutor.cpp in Sources */,
 				DAB7E39D200EB76600D57664 /* BLENetworkStream.mm in Sources */,
 				DAB7E3A1200EB84F00D57664 /* BLEPeripheral.mm in Sources */,
 				DA27A65C20252F5C00359EE0 /* WifiServer.cpp in Sources */,
 				DACEF058200598FF00894864 /* main.m in Sources */,
-				DAB7E3A3200EB8A600D57664 /* SecurePairing.cpp in Sources */,
+				DAB7E3A3200EB8A600D57664 /* securePairing.cpp in Sources */,
 				DACEF047200598FF00894864 /* AppDelegate.m in Sources */,
-				DA27A65F2029472700359EE0 /* Switchboard.mm in Sources */,
+				DA27A65F2029472700359EE0 /* switchboard.mm in Sources */,
 				DA27A65920252F2F00359EE0 /* WiFiNetworkStream.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -7,7 +7,7 @@
 //  Copyright © 2018 Anki, Inc. All rights reserved.
 //
 
-#include "Switchboard.h"
+#include "switchboard.h"
 
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // DEBUG DEFINE FOR TESTING ON iOS !!
@@ -135,7 +135,7 @@ void Anki::Switchboard::OnConnected(Anki::Networking::INetworkStream* stream) {
   });
 }
 
-# if IOS_MAIN
+# if !IOS_MAIN
 int main() {
   Anki::Switchboard::Start();
 }

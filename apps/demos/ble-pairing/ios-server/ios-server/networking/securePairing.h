@@ -13,11 +13,11 @@
 #include <stdio.h>
 #include <math.h>
 #include "INetworkStream.h"
-#include "KeyExchange.h"
+#include "keyExchange.h"
 #include "log.h"
 #include "../libev/ev.h"
 #include "../libev/ev++.h"
-#include "PairingMessages.h"
+#include "pairingMessages.h"
 
 namespace Anki {
   namespace Networking {

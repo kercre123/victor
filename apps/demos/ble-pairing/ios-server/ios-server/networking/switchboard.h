@@ -15,7 +15,7 @@
 #include <CoreBluetooth/CoreBluetooth.h>
 #include "simpleSignal.hpp"
 #include "libev.h"
-#include "SecurePairing.h"
+#include "securePairing.h"
 #include "BLEPairingController.h"
 #include "taskExecutor.h"
 

@@ -7,7 +7,7 @@
 //
 
 #include <random>
-#include "SecurePairing.h"
+#include "securePairing.h"
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Constructors

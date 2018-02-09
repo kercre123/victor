@@ -6,7 +6,7 @@
 //  Copyright © 2018 Paul Aluri. All rights reserved.
 //
 
-#include "KeyExchange.h"
+#include "keyExchange.h"
 
 uint8_t* Anki::Networking::KeyExchange::GenerateKeys() {
   crypto_kx_keypair(_PublicKey, _SecretKey);
@@ -22,12 +22,12 @@ void Anki::Networking::KeyExchange::Reset() {
   memset(_PublicKey, 0, crypto_kx_PUBLICKEYBYTES);
 }
 
-void Anki::Networking::KeyExchange::SetRemotePublicKey(uint8_t* pubKey) {
+void Anki::Networking::KeyExchange::SetRemotePublicKey(const uint8_t* pubKey) {
   // Copy in public key
   memcpy(_RemotePublicKey, pubKey, crypto_kx_PUBLICKEYBYTES);
 }
 
-bool Anki::Networking::KeyExchange::CalculateSharedKeys(uint8_t* pin) {
+bool Anki::Networking::KeyExchange::CalculateSharedKeys(const uint8_t* pin) {
   //
   // Messages from the robot will be encrypted with a hash that incorporates
   // a random pin

@@ -16,14 +16,10 @@ namespace Anki {
   namespace Networking {
     class KeyExchange {
     public:
-      KeyExchange(uint8_t numPinDigits) {
-        _NumPinDigits = numPinDigits;
+      KeyExchange(uint8_t numPinDigits) :
+      _NumPinDigits(numPinDigits)
+      {
       }
-      
-      void Reset();
-      uint8_t* GenerateKeys();
-      void SetRemotePublicKey(uint8_t* pubKey);
-      bool CalculateSharedKeys(uint8_t* pin);
       
       uint8_t* GetEncryptKey() {
         return _EncryptKey;
@@ -34,7 +30,6 @@ namespace Anki {
       }
       
       uint8_t* GetPublicKey() {
-        // Return public key
         return _PublicKey;
       }
       
@@ -52,6 +47,11 @@ namespace Anki {
         
         return _HashedKey;
       }
+      
+      uint8_t* GenerateKeys();
+      void Reset();
+      void SetRemotePublicKey(const uint8_t* pubKey);
+      bool CalculateSharedKeys(const uint8_t* pin);
       
     private:
       uint8_t _SecretKey [crypto_kx_SECRETKEYBYTES];   // our secret key
