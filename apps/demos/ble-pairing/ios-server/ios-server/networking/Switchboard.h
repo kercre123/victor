@@ -45,6 +45,8 @@ namespace Anki {
     
     static void OnConnected(Anki::Networking::INetworkStream* stream);
     static void OnDisconnected(Anki::Networking::INetworkStream* stream);
+    static void OnPinUpdated(std::string pin);
+    static void OnReceiveWifiCredentials(std::string ssid, std::string pw);
     static void sEvTimerHandler(struct ev_loop* loop, struct ev_timer* w, int revents);
     
     static PinUpdatedSignal _PinUpdatedSignal;

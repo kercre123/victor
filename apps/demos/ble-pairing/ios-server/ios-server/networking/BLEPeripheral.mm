@@ -160,10 +160,12 @@ didUnsubscribeFromCharacteristic:(CBCharacteristic *)characteristic {
   for(int i = 0; i < requests.count; i++) {
     if(requests[i].characteristic.UUID.UUIDString == CH_READ.UUID.UUIDString) {
       // We are receiving input to read stream
+      Log::Write("------> [plain text] Receiving incoming writee to BLE characteristic");
       ((Anki::Networking::INetworkStream*)_BLEStream)->ReceivePlainText((uint8_t*)requests[i].value.bytes, (int)requests[i].value.length);
       [peripheral respondToRequest:requests[i] withResult:CBATTErrorSuccess];
     } else if(requests[i].characteristic.UUID.UUIDString == CH_SECURE_READ.UUID.UUIDString) {
       // We are receiving input to read stream
+      Log::Write("------> [##encrypted##] Receiving incoming writee to BLE characteristic");
       ((Anki::Networking::INetworkStream*)_BLEStream)->ReceiveEncrypted((uint8_t*)requests[i].value.bytes, (int)requests[i].value.length);
       [peripheral respondToRequest:requests[i] withResult:CBATTErrorSuccess];
     }

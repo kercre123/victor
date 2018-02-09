@@ -12,10 +12,13 @@
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Constructors
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+long long Anki::Networking::SecurePairing::_TimeStarted;
+
 Anki::Networking::SecurePairing::SecurePairing(INetworkStream* stream, struct ev_loop* evloop) {
   _Stream = stream;
   _Loop = evloop;
   _TotalPairingAttempts = 0;
+  _TimeStarted = std::time(0);
   
   // Register with stream events
   _OnReceivePlainTextHandle = _Stream->OnReceivedPlainTextEvent().ScopedSubscribe(
@@ -36,6 +39,7 @@ Anki::Networking::SecurePairing::SecurePairing(INetworkStream* stream, struct ev
   _KeyExchange = std::unique_ptr<KeyExchange>(new KeyExchange(NUM_PIN_DIGITS)); //new KeyExchange(NUM_PIN_DIGITS);
   
   // Initialize ev timer
+  Log::Write("[timer] init");
   ev_timer_init(&_HandleTimeoutTimer.timer, &SecurePairing::sEvTimerHandler, PAIRING_TIMEOUT_SECONDS, PAIRING_TIMEOUT_SECONDS);
   _HandleTimeoutTimer.signal = &_PairingTimeoutSignal;
   //
@@ -60,17 +64,15 @@ void Anki::Networking::SecurePairing::BeginPairing() {
   // Initialize object
   Init();
   
+  Log::Write("[timer] again");
+  //ev_timer_again(_Loop, &_HandleTimeoutTimer.timer);
   ev_timer_start(_Loop, &_HandleTimeoutTimer.timer);
 }
 
 void Anki::Networking::SecurePairing::StopPairing() {
-  _OnReceivePlainTextHandle = nullptr;
-  _OnReceiveEncryptedHandle = nullptr;
-  _OnFailedDecryptionHandle = nullptr;
-  
   _TotalPairingAttempts = MAX_PAIRING_ATTEMPTS;
   
-  Reset();
+  Reset(true);
 }
 
 void Anki::Networking::SecurePairing::HandleTimeout() {
@@ -126,7 +128,7 @@ std::string Anki::Networking::SecurePairing::GeneratePin() {
   return pinStr;
 }
 
-void Anki::Networking::SecurePairing::Reset() {
+void Anki::Networking::SecurePairing::Reset(bool forced) {
   // Tell key exchange to reset
   _KeyExchange->Reset();
   
@@ -137,13 +139,17 @@ void Anki::Networking::SecurePairing::Reset() {
   SendCancelPairing();
   
   // Put us back in initial state
-  if(++_TotalPairingAttempts < MAX_PAIRING_ATTEMPTS) {
+  if(forced) {
+    Log::Write("Client disconnected. Stopping pairing.");
+    ev_timer_stop(_Loop, &_HandleTimeoutTimer.timer);
+  } else if(++_TotalPairingAttempts < MAX_PAIRING_ATTEMPTS) {
     Init();
     Log::Write("SecurePairing restarting.");
   } else {
     Log::Write("SecurePairing ending due to multiple failures. Requires external restart.");
+    
+    Log::Write("[timer] stop");
     ev_timer_stop(_Loop, &_HandleTimeoutTimer.timer);
-    ev_unloop(_Loop, EVUNLOOP_ALL);
   }
 }
 
@@ -170,13 +176,14 @@ void Anki::Networking::SecurePairing::SendNonce() {
   const uint8_t NONCE_BYTES = crypto_aead_xchacha20poly1305_ietf_NPUBBYTES;
   
   // Generate a nonce
-  randombytes_buf(_KeyExchange->GetNonce(), NONCE_BYTES);
+  uint8_t* nonce = _KeyExchange->GetNonce();
+  randombytes_buf(nonce, NONCE_BYTES);
   
   // Give our nonce to the network stream
-  _Stream->SetNonce(_KeyExchange->GetNonce());
+  _Stream->SetNonce(nonce);
   
   // Send nonce (in the clear) to client, update our state
-  SendPlainText(NonceMessage((char*)_KeyExchange->GetNonce()));
+  SendPlainText(NonceMessage((char*)nonce));
   _State = PairingState::AwaitingNonceAck;
 }
 
@@ -251,6 +258,7 @@ void Anki::Networking::SecurePairing::HandlePingResponse(uint8_t* pingChallengeA
 }
 
 void Anki::Networking::SecurePairing::HandleMessageReceived(uint8_t* bytes, uint32_t length) {
+  Log::Write("Handling plain text message received.");
   if(length < MIN_MSG_LENGTH) {
     return;
   }
@@ -381,6 +389,8 @@ Anki::Networking::SecurePairing::SendEncrypted(const T& message) {
 
 void Anki::Networking::SecurePairing::sEvTimerHandler(struct ev_loop* loop, struct ev_timer* w, int revents)
 {
+  printf("t [%d]\n", (time(0) - _TimeStarted));
+  Log::Write("[timer] tick");
   struct ev_TimerStruct *wData = (struct ev_TimerStruct*)w;
   wData->signal->emit();
 }

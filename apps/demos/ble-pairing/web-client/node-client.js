@@ -53,9 +53,6 @@ function onConnect(peripheral) {
             let CRYPTO_PING = 1;
             let CRYPTO_ACCEPTED = 4;
 
-            console.log("cipher:");
-            console.log(ctext);
-
             let cipher = new Uint8Array(ctext);
             let nonce = new Uint8Array(decryptNonce);
 
@@ -125,7 +122,7 @@ function onConnect(peripheral) {
             } else if(data[0] == MSG_NONCE) { 
                 decryptNonce = Buffer.from(data.slice(1));
                 encryptNonce = Buffer.from(data.slice(1));
-                
+
                 if(enteredPin) {
                     sendMessage(Buffer.from([1, MSG_NONCE]), false);
                 }

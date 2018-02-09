@@ -73,12 +73,14 @@ void Anki::Switchboard::Start() {
   ev_timer timer;
   ev_timer_init(&timer, sEvTimerHandler, SB_LOOP_TIME, SB_LOOP_TIME);
   ev_timer_start(sLoop, &timer);
+  Log::Write("Initialized . . .");
   ev_loop(sLoop, 0);
+  Log::Write(". . . Terminated");
 }
 
 void Anki::Switchboard::sEvTimerHandler(struct ev_loop* loop, struct ev_timer* w, int revents)
 {
-  
+  Log::Write("[timer] Outer tick.");
 }
 
 void Anki::Switchboard::StartBleComms() {
@@ -101,29 +103,28 @@ void Anki::Switchboard::HandleStartPairing() {
 
 void Anki::Switchboard::OnDisconnected(Anki::Networking::INetworkStream* stream) {
   Log::Write("Disconnected from BLE central");
-  pinHandle = nullptr;
-  wifiHandle = nullptr;
+  
   securePairing->StopPairing();
+}
+
+void Anki::Switchboard::OnPinUpdated(std::string pin) {
+  _PinUpdatedSignal.emit(pin);
+}
+
+void Anki::Switchboard::OnReceiveWifiCredentials(std::string ssid, std::string pw) {
+  NEHotspotConfiguration* wifi = [[NEHotspotConfiguration alloc] initWithSSID:[NSString stringWithUTF8String:ssid.c_str()] passphrase:[NSString stringWithUTF8String:pw.c_str()] isWEP:false];
+  NSLog(@"Connecting to : [%s], [%s]", ssid.c_str(), pw.c_str());
+  [[NEHotspotConfigurationManager sharedManager] applyConfiguration:wifi completionHandler:nullptr];
 }
 
 void Anki::Switchboard::OnConnected(Anki::Networking::INetworkStream* stream) {
   Log::Write("Connected to a BLE central.");
+  
   if(securePairing == nullptr) {
     securePairing = new Anki::Networking::SecurePairing(stream, ev_default_loop(0));
+    pinHandle = securePairing->OnUpdatedPinEvent().ScopedSubscribe(OnPinUpdated);
+    wifiHandle = securePairing->OnReceivedWifiCredentialsEvent().ScopedSubscribe(OnReceiveWifiCredentials);
   }
-  
-  void (^wifiHandler)(std::string, std::string) = ^(std::string ssid, std::string pw) {
-    NEHotspotConfiguration* wifi = [[NEHotspotConfiguration alloc] initWithSSID:[NSString stringWithUTF8String:ssid.c_str()] passphrase:[NSString stringWithUTF8String:pw.c_str()] isWEP:false];
-    NSLog(@"Connecting to : [%s], [%s]", ssid.c_str(), pw.c_str());
-    [[NEHotspotConfigurationManager sharedManager] applyConfiguration:wifi completionHandler:nullptr];
-  };
-  
-  void (^pinHandler)(std::string) = ^(std::string pin) {
-    _PinUpdatedSignal.emit(pin);
-  };
-  
-  pinHandle = securePairing->OnUpdatedPinEvent().ScopedSubscribe(pinHandler);
-  wifiHandle = securePairing->OnReceivedWifiCredentialsEvent().ScopedSubscribe(wifiHandler);
   
   // Initiate pairing process
   securePairing->BeginPairing();

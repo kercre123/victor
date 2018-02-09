@@ -38,6 +38,10 @@ namespace Anki {
         return _PublicKey;
       }
       
+      uint8_t* GetPinLengthPtr() {
+        return &_NumPinDigits;
+      }
+      
       uint8_t* GetNonce() {
         // Return nonce
         return _InitialNonce;
@@ -56,7 +60,7 @@ namespace Anki {
       uint8_t _RemotePublicKey [crypto_kx_PUBLICKEYBYTES];  // partner's public key
       uint8_t _PublicKey [crypto_kx_PUBLICKEYBYTES];   // our public key
       uint8_t _HashedKey [crypto_kx_SESSIONKEYBYTES];  // size of code
-      uint8_t _InitialNonce [crypto_aead_chacha20poly1305_ietf_NPUBBYTES];
+      uint8_t _InitialNonce [crypto_aead_xchacha20poly1305_ietf_NPUBBYTES];
       uint8_t _NumPinDigits = 6;
     };
   }

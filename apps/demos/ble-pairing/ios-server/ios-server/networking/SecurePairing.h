@@ -88,7 +88,7 @@ namespace Anki {
       
     private:
       void Init();
-      void Reset();
+      void Reset(bool forced=false);
       
       template <class T>
       typename std::enable_if<std::is_base_of<Anki::Networking::Message, T>::value, void>::type
@@ -146,6 +146,7 @@ namespace Anki {
       using PairingTimeoutSignal = Signal::Signal<void ()>;
       PairingTimeoutSignal _PairingTimeoutSignal;
       
+      static long long _TimeStarted;
       struct ev_loop* _Loop;
       ev_timer _Timer;
       static void sEvTimerHandler(struct ev_loop* loop, struct ev_timer* w, int revents);
