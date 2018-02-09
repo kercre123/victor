@@ -53,5 +53,5 @@ do
 	GOPATH=${TOPLEVEL}/$(cat $DIR/$(basename $GODIR .godir.lst).gopath.lst)
 	# GODIR must be relative; switch to TOPLEVEL to execute
 	# GOPATH must be absolute
-	(cd $TOPLEVEL; GOPATH=$GOPATH CGO_ENABLED=1 go get -d -v $(cat $GODIR) )
+	(cd $TOPLEVEL; GOPATH=$GOPATH CGO_ENABLED=1 $GOROOT/bin/go get -d -v $(cat $GODIR) )
 done

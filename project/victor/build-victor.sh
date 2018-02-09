@@ -213,6 +213,21 @@ if [ ! -f ${CMAKE_EXE} ]; then
   exit 1
 fi
 
+if [ -z "${GOROOT+x}" ]; then
+    GO_EXE=`tools/build/tools/ankibuild/go.py`
+    export GOROOT=$(dirname $(dirname $GO_EXE))
+else
+    GO_EXE=$GOROOT/bin/go
+fi
+
+if [ ! -f ${GO_EXE} ]; then
+  echo "Missing Go executable: ${GO_EXE}"
+  echo "Fetch the required Go version by running ${TOPLEVEL}/tools/build/tools/ankibuild/go.py"
+  exit 1
+fi
+
+tools/build/tools/ankibuild/go.py --check-version $GO_EXE
+
 #
 # Remove assets in build directory if requested. This will force the
 # build to re-copy them from the source tree into the build directory.
