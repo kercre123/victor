@@ -34,6 +34,7 @@
 #include "coretech/vision/engine/image_impl.h"
 #include "coretech/vision/engine/imageCache.h"
 #include "coretech/vision/engine/markerDetector.h"
+#include "coretech/vision/engine/objectDetector.h"
 #include "coretech/vision/engine/petTracker.h"
 
 #include "clad/vizInterface/messageViz.h"
@@ -122,6 +123,7 @@ namespace Cozmo {
   , _overheadEdgeDetector(new OverheadEdgesDetector(_camera, _vizManager, *this))
   , _cameraCalibrator(new CameraCalibrator(*this))
   , _benchmark(new Vision::Benchmark())
+  , _generalObjectDetector(new Vision::ObjectDetector())
   , _clahe(cv::createCLAHE())
   {
     DEV_ASSERT(_context != nullptr, "VisionSystem.Constructor.NullContext");
@@ -216,6 +218,26 @@ namespace Cozmo {
     if(RESULT_OK != petTrackerInitResult) {
       PRINT_NAMED_ERROR("VisionSystem.Init.PetTrackerInitFailed", "");
       return petTrackerInitResult;
+    }
+    
+    {
+      if(!config.isMember("ObjectDetector"))
+      {
+        PRINT_NAMED_ERROR("VisionSystem.Init.MissingObjectDetectorConfigField", "");
+        return RESULT_FAIL;
+      }
+      
+      
+      const std::string modelPath = Util::FileUtils::FullFilePath({dataPath, "dnn_models"});
+      if(Util::FileUtils::DirectoryExists(modelPath)) // TODO: Remove once DNN models are checked in somewhere (VIC-1071)
+      {
+        const Json::Value& objDetectorConfig = config["ObjectDetector"];
+        Result objDetectorResult = _generalObjectDetector->Init(modelPath, objDetectorConfig);
+        if(RESULT_OK != objDetectorResult)
+        {
+          PRINT_NAMED_ERROR("VisionSystem.Init.ObjectDetectorInitFailed", "");
+        }
+      }
     }
     
     // Default processing modes should are set in vision_config.json
@@ -918,9 +940,6 @@ namespace Cozmo {
     return result;
   }
   
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-
 #if 0
 #pragma mark --- Public VisionSystem API Implementations ---
 #endif
@@ -1231,6 +1250,29 @@ namespace Cozmo {
     
   } // DetectMarkersWithCLAHE()
   
+  void VisionSystem::CheckForGeneralObjectDetections()
+  {
+    std::list<Vision::ObjectDetector::DetectedObject> objects;
+    const bool resultReady = _generalObjectDetector->GetObjects(objects);
+    if(resultReady)
+    {
+      VisionProcessingResult detectionResult;
+      detectionResult.timestamp = _generalObjectDetectionTimestamp;
+      detectionResult.modesProcessed.SetBitFlag(VisionMode::DetectingGeneralObjects, true);
+      
+      // Convert returned Vision::DetectedObject list to our (Cozmo) ExternalInterface message
+      for(const auto& object : objects)
+      {
+        detectionResult.generalObjects.emplace_back(CladRect(object.rect.GetX(), object.rect.GetY(),
+                                                             object.rect.GetWidth(), object.rect.GetHeight()),
+                                                    object.name, object.timestamp, object.score);
+      }
+      
+      _mutex.lock();
+      _results.emplace(std::move(detectionResult));
+      _mutex.unlock();
+    }
+  }
   
   Result VisionSystem::Update(const VisionPoseData&   poseData,
                               const Vision::ImageRGB& image)
@@ -1496,6 +1538,21 @@ namespace Cozmo {
       }
     }
 
+    // Check for any objects from the detector. It runs asynchronously, so these objects
+    // will be from a different image than the one in the cache and will use their own
+    // VisionProcessingResult.
+    CheckForGeneralObjectDetections();
+    
+    if(ShouldProcessVisionMode(VisionMode::DetectingGeneralObjects))
+    {
+      const bool started = _generalObjectDetector->StartProcessingIfIdle(imageCache);
+      if(started)
+      {
+        // Remember the timestamp of the image used to do object detection
+        _generalObjectDetectionTimestamp = imageCache.GetTimeStamp();
+      }
+    }
+    
     // NOTE: This should come after any detectors that add things to "detectionRects"
     //       since it meters exposure based on those.
     if(ShouldProcessVisionMode(VisionMode::CheckingQuality))

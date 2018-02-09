@@ -26,6 +26,7 @@ namespace Cozmo {
     BuildingOverheadMap,
     Benchmarking,
     SavingImages,
+    DetectingGeneralObjects, // I.e. via Deep CNN / TensorFlow
     Count
   }
       

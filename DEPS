@@ -37,7 +37,7 @@
                 "build_type_id": "Cte_Master",
                 "extension": "tar.gz",
                 "package_name": "Cte",
-                "version": "178"
+                "version": "179"
             }
         },
         "default_usr": "puller_cozmo",

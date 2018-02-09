@@ -151,6 +151,7 @@ struct DockingErrorSignal;
     Result UpdateToolCode(const VisionProcessingResult& result);
     Result UpdateComputedCalibration(const VisionProcessingResult& result);
     Result UpdateImageQuality(const VisionProcessingResult& procResult);
+    Result UpdateDetectedObjects(const VisionProcessingResult& result);
 
     const Vision::Camera& GetCamera(void) const;
     Vision::Camera& GetCamera(void);
@@ -314,6 +315,7 @@ struct DockingErrorSignal;
     VisionSystem* _visionSystem = nullptr;
     VizManager*   _vizManager = nullptr;
     std::map<std::string, s32> _vizDisplayIndexMap;
+    std::list<std::pair<TimeStamp_t, ExternalInterface::RobotObservedGenericObject>> _detectedObjectsToDraw;
     
     // Robot stores the calibration, camera just gets a reference to it
     // This is so we can share the same calibration data across multiple
