@@ -1,5 +1,0 @@
-{
-  "behaviorClass": "PlayAnim",
-  "behaviorID": "ReactToVoiceCommand_Wakeup",
-  "animTriggers": ["VC_StartledWakeup"]
-}

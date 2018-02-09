@@ -1,9 +1,0 @@
-{
-  "behaviorClass": "FindFaces",
-  "behaviorID": "FeedingFindFacesSevere",
-  
-  "maxFaceAgeToLook_ms": 180000,
-
-  "stoppingCondition": "None",
-  "searchBehavior": "LookInPlaceHeadUp"
-}

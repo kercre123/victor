@@ -1,6 +1,0 @@
-{
-  "behaviorClass": "PlayAnim",
-  "behaviorID": "VictorCloudDemoHello",
-  "respondToCloudIntent": "Hello",
-  "animNames": ["anim_peekaboo_success_01"]  
-}
