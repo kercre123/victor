@@ -68,7 +68,7 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Helper Functions
 
-  MicDirectionHistory::DirectionNode GetLatestMicDirectionData() const;
+  MicDirectionHistory::NodeList GetLatestMicDirectionData() const;
   DirectionTrigger GetTriggerData( MicDirectionHistory::DirectionIndex index ) const;
   DirectionResponse GetResponseData( MicDirectionHistory::DirectionIndex index ) const;
 
@@ -79,10 +79,11 @@ private:
 
   bool CanReactToSound() const;
 
-  TimeStamp_t GetCurrentTime() const;
+  TimeStamp_t GetCurrentTimeMS() const;
   TimeStamp_t GetCooldownBeginTime() const;
   TimeStamp_t GetCooldownEndTime() const;
-
+  // the earliest timestamp that we'll respond to a sound
+  TimeStamp_t GetReactionWindowBeginTime() const;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Scoring Functions (not currently active)
@@ -128,6 +129,7 @@ private:
   MicDirectionHistory::DirectionIndex   _triggeredDirection       = kInvalidDirectionIndex;
 
   TimeStamp_t                           _reactionTriggeredTime    = 0;
+  TimeStamp_t                           _reactionEndedTime        = 0;
 };
 
 }
