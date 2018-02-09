@@ -30,7 +30,7 @@ def parse_command_args():
     arg_parser.add_argument('-s', '--streaming_assets_path',
                             dest='streaming_assets_path',
                             type=str,
-                            default='../../../unity/Cozmo/Assets/StreamingAssets/',
+                            default='../../unity/Cozmo/Assets/StreamingAssets/',
                             action='store',
                             help='Specify the root path of the StreamingAssets')
 
