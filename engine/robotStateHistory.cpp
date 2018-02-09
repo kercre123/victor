@@ -17,6 +17,8 @@
 #include "util/math/math.h"
 #include "util/transport/reliableConnection.h"
 
+#define LOG_CHANNEL "RobotStateHistory"
+
 #define DEBUG_ROBOT_POSE_HISTORY 0
 
 namespace Anki {
@@ -151,7 +153,7 @@ namespace Anki {
 
     void RobotStateHistory::Clear()
     {
-      PRINT_NAMED_INFO("RobotStateHistory.Clear", "Clearing history");
+      LOG_INFO("RobotStateHistory.Clear", "Clearing history");
     
       _states.clear();
       _visStates.clear();
@@ -171,11 +173,12 @@ namespace Anki {
     Result RobotStateHistory::AddRawOdomState(const TimeStamp_t t,
                                              const HistRobotState& state)
     {
-      if(!_states.empty())
+      if (!_states.empty())
       {
         TimeStamp_t newestTime = _states.rbegin()->first;
         if (newestTime > _windowSize_ms && t < newestTime - _windowSize_ms) {
-          PRINT_NAMED_WARNING("RobotStateHistory.AddRawOdomState.TimeTooOld", "newestTime %u, oldestAllowedTime %u, t %u", newestTime, newestTime - _windowSize_ms, t);
+          LOG_WARNING("RobotStateHistory.AddRawOdomState.TimeTooOld", "newestTime %u, oldestAllowedTime %u, t %u",
+                      newestTime, newestTime - _windowSize_ms, t);
           return RESULT_FAIL;
         }
         
@@ -186,16 +189,16 @@ namespace Anki {
         const u32 kMaxTimeDiffBetweenStates_ms = Embedded::saturate_cast<u32>(Util::ReliableConnection::GetConnectionTimeoutInMS());
         const bool timeDeltaTooLarge = ABS(t - newestTime) > kMaxTimeDiffBetweenStates_ms;
         static u8 numConsecLargeDeltas = 0;
-        if(timeDeltaTooLarge)
+        if (timeDeltaTooLarge)
         {
           // Only print an error for the first state message that has a large timestamp delta
           // This is to prevent it from spamming should we get multiple state messages
           // in a row that have large delta timestamps
-          if(numConsecLargeDeltas == 0)
+          if (numConsecLargeDeltas == 0)
           {
-            PRINT_NAMED_ERROR("RobotStateHistory.AddRawOdomState.TimestampDeltaTooLarge",
-                              "State with t:%u is too different from last state with t:%u, allowed delta:%u",
-                              t, newestTime, kMaxTimeDiffBetweenStates_ms);
+            LOG_ERROR("RobotStateHistory.AddRawOdomState.TimestampDeltaTooLarge",
+                      "State with t:%u is too different from last state with t:%u, allowed delta:%u",
+                      t, newestTime, kMaxTimeDiffBetweenStates_ms);
           }
           
           ++numConsecLargeDeltas;
@@ -203,14 +206,14 @@ namespace Anki {
           constexpr u8 kMaxNumConsecLargeTimestampDeltas = 5;
           // If we get a number of consecutive state messages that have large timestamp deltas then
           // trust the robot and clear history since it is at least kMaxTimeDiffBetweenStates_ms old
-          if(numConsecLargeDeltas > kMaxNumConsecLargeTimestampDeltas)
+          if (numConsecLargeDeltas > kMaxNumConsecLargeTimestampDeltas)
           {
             numConsecLargeDeltas = 0;
-            PRINT_NAMED_WARNING("RobotStateHistory.AddRawOdomState.TooManyConsecLargeDeltas",
-                                "Clearing state history after receiving %u consecutive state messages \
-                                 with timestamps deltas greater than %u",
-                                 kMaxNumConsecLargeTimestampDeltas,
-                                 kMaxTimeDiffBetweenStates_ms);
+            LOG_WARNING("RobotStateHistory.AddRawOdomState.TooManyConsecLargeDeltas",
+                        "Clearing state history after receiving %u consecutive state messages \
+                        with timestamp deltas greater than %u",
+                        kMaxNumConsecLargeTimestampDeltas,
+                        kMaxTimeDiffBetweenStates_ms);
             _states.clear();
           }
           return RESULT_FAIL;
@@ -221,10 +224,10 @@ namespace Anki {
         }
       }
     
-      if(state.GetPose().HasParent() && !state.GetPose().GetParent().IsRoot()) {
-        PRINT_NAMED_ERROR("RobotStateHistory.AddRawOdomState.NonFlattenedPose",
-                          "Pose object inside pose stamp should be flattened (%s)",
-                          state.GetPose().GetNamedPathToRoot(false).c_str());
+      if (state.GetPose().HasParent() && !state.GetPose().GetParent().IsRoot()) {
+        LOG_ERROR("RobotStateHistory.AddRawOdomState.NonFlattenedPose",
+                  "Pose object inside pose stamp should be flattened (%s)",
+                  state.GetPose().GetNamedPathToRoot(false).c_str());
         return RESULT_FAIL;
       }
       
@@ -232,7 +235,7 @@ namespace Anki {
       res = _states.emplace(t, state);
 
       if (!res.second) {
-        PRINT_NAMED_WARNING("RobotStateHistory.AddRawOdomState.AddFailed", "Time: %u", t);
+        LOG_WARNING("RobotStateHistory.AddRawOdomState.AddFailed", "Time: %u", t);
         return RESULT_FAIL;
       }
 
@@ -244,10 +247,10 @@ namespace Anki {
     Result RobotStateHistory::AddVisionOnlyState(const TimeStamp_t t,
                                                 const HistRobotState& state)
     {
-      if(state.GetPose().HasParent() && !state.GetPose().GetParent().IsRoot()) {
-        PRINT_NAMED_ERROR("RobotStateHistory.AddVisionOnlyState.NonFlattenedPose",
-                          "Pose object inside pose stamp should be flattened (%s)",
-                          state.GetPose().GetNamedPathToRoot(false).c_str());
+      if (state.GetPose().HasParent() && !state.GetPose().GetParent().IsRoot()) {
+        LOG_ERROR("RobotStateHistory.AddVisionOnlyState.NonFlattenedPose",
+                  "Pose object inside pose stamp should be flattened (%s)",
+                  state.GetPose().GetNamedPathToRoot(false).c_str());
         return RESULT_FAIL;
       }
 
@@ -255,9 +258,9 @@ namespace Anki {
       if (!_states.empty()) {
         TimeStamp_t newestTime = _states.rbegin()->first;
         if (newestTime > _windowSize_ms && t < newestTime - _windowSize_ms) {
-          PRINT_NAMED_ERROR("RobotStateHistory.AddVisionOnlyState.TooOld",
-                            "Pose at t=%d too old to add. Newest time=%d, windowSize=%d",
-                            t, newestTime, _windowSize_ms);
+          LOG_ERROR("RobotStateHistory.AddVisionOnlyState.TooOld",
+                    "Pose at t=%d too old to add. Newest time=%d, windowSize=%d",
+                    t, newestTime, _windowSize_ms);
           return RESULT_FAIL;
         }
       }
@@ -269,7 +272,7 @@ namespace Anki {
         
         it->second = state;
         
-        if(ANKI_DEV_CHEATS)
+        if (ANKI_DEV_CHEATS)
         {
           const u32 curId = state.GetFrameId();
           u32 prevId = 0;
@@ -281,7 +284,7 @@ namespace Anki {
           ss << " New id:" << curId;
           ss << " t:" << it->first;
           
-          if(it != _visStates.begin())
+          if (it != _visStates.begin())
           {
             --it;
             prevId = it->second.GetFrameId();
@@ -291,7 +294,7 @@ namespace Anki {
           }
           
           ++it;
-          if(it != _visStates.end())
+          if (it != _visStates.end())
           {
             nextId = it->second.GetFrameId();
             ss << " Next entry id:" << nextId;
@@ -299,9 +302,7 @@ namespace Anki {
           }
           --it;
           
-          PRINT_CH_INFO("RobotStateHistory",
-                        "RobotStateHistory.AddVisionOnlyState.Overwriting",
-                        "%s", ss.str().c_str());
+          LOG_INFO("RobotStateHistory.AddVisionOnlyState.Overwriting", "%s", ss.str().c_str());
           
           DEV_ASSERT((prevId <= curId) && (curId <= nextId),
                      "RobotStateHistory.AddVisionOnlyState.FrameIDsOutOfOrder");
@@ -312,9 +313,9 @@ namespace Anki {
         res = _visStates.emplace(t, state);
       
         if (!res.second) {
-          PRINT_NAMED_ERROR("RobotStateHistory.AddVisionOnlyState.EmplaceFailed",
-                            "Emplace of pose with t=%d, frameID=%d failed",
-                            t, state.GetFrameId());
+          LOG_ERROR("RobotStateHistory.AddVisionOnlyState.EmplaceFailed",
+                    "Emplace of pose with t=%d, frameID=%d failed",
+                    t, state.GetFrameId());
           return RESULT_FAIL;
         }
         
@@ -386,13 +387,13 @@ namespace Anki {
 
         // Check for same frameId
         // (Shouldn't interpolate between poses from different frameIDs)
-        if(it->second.GetFrameId() != prev_it->second.GetFrameId())
+        if (it->second.GetFrameId() != prev_it->second.GetFrameId())
         {
-          PRINT_NAMED_INFO("RobotStateHistory.GetRawStateAt.MisMatchedFrameIds",
-                           "Cannot interpolate at t=%u as requested because the two frame IDs don't match: prev=%d vs next=%d",
-                           t_request,
-                           prev_it->second.GetFrameId(),
-                           it->second.GetFrameId());
+          LOG_INFO("RobotStateHistory.GetRawStateAt.MisMatchedFrameIds",
+                   "Cannot interpolate at t=%u as requested because the two frame IDs don't match: prev=%d vs next=%d",
+                    t_request,
+                    prev_it->second.GetFrameId(),
+                   it->second.GetFrameId());
           
           // they asked us for a t_request that is between two frame IDs, which for all intents and purposes is just
           // as bad as trying to choose between two poses with mismatched origins (like above).
@@ -400,7 +401,7 @@ namespace Anki {
         }
 
         bool inSameOrigin;
-        if(withInterpolation)
+        if (withInterpolation)
         {
           // Get the pose transform between the two poses.
           // We don't need to check return value (bool) here because we've effectively
@@ -435,13 +436,13 @@ namespace Anki {
           }
         }
 
-        if(!inSameOrigin)
+        if (!inSameOrigin)
         {
-          PRINT_NAMED_INFO("RobotStateHistory.GetRawStateAt.MisMatchedOrigins",
-                           "Cannot interpolate at t=%u as requested because the two poses don't share the same origin: prev=%s vs next=%s",
-                           t_request,
-                           prev_it->second.GetPose().FindRoot().GetName().c_str(),
-                           it->second.GetPose().FindRoot().GetName().c_str());
+          LOG_INFO("RobotStateHistory.GetRawStateAt.MisMatchedOrigins",
+                   "Cannot interpolate at t=%u as requested because the two poses don't share the same origin: prev=%s vs next=%s",
+                   t_request,
+                   prev_it->second.GetPose().FindRoot().GetName().c_str(),
+                   it->second.GetPose().FindRoot().GetName().c_str());
 
           // they asked us for a t_request that is between two origins. We can't interpolate or decide which origin is
           // "right" for you, so, we are going to fail
@@ -494,7 +495,7 @@ namespace Anki {
         }
       } else if (git->first != t) {
         // If this is the first vision-based pose then return the raw pose that we got
-        if(git == _visStates.begin()) {
+        if (git == _visStates.begin()) {
           state = state1;
           return RESULT_OK;
         } else {
@@ -514,7 +515,7 @@ namespace Anki {
         return RESULT_OK;
       }
       
-      #if(DEBUG_ROBOT_POSE_HISTORY)
+      #if (DEBUG_ROBOT_POSE_HISTORY)
       static bool printDbg = false;
       if(printDbg) {
         printf("gt: %d\n", git->first);
@@ -526,7 +527,7 @@ namespace Anki {
       // Now get the pose in _states that immediately follows the vision-based pose's time.
       const_StateMapIter_t p0_it = _states.lower_bound(git->first);
 
-      #if(DEBUG_ROBOT_POSE_HISTORY)
+      #if (DEBUG_ROBOT_POSE_HISTORY)
       if (printDbg) {
         printf("p0_it: t: %d  frame: %d\n", p0_it->first, p0_it->second.GetFrameId());
         p0_it->second.GetPose().Print();
@@ -540,7 +541,7 @@ namespace Anki {
       // corresponding to p0, forward to p1. We will be applying this transformation
       // to whatever is stored in the vision-only pose below.
       Pose3d pTransform;
-      if(p0_it->second.GetFrameId() == state1.GetFrameId())
+      if (p0_it->second.GetFrameId() == state1.GetFrameId())
       {
         // Special case: no intermediate frames to chain through. The total transformation
         // is just going from p0 to p1.
@@ -582,7 +583,7 @@ namespace Anki {
             pMidTransform *= pMid0->second.GetPose().GetInverse();
             
             // Fold the transformation from pMid0 to pMid1 into the total transformation thus far
-            //  pTranform = pMidTransofrm * pTransform
+            //  pTranform = pMidTransform * pTransform
             pTransform.PreComposeWith(pMidTransform);
             
             // Move both pointers to start of next pose frame to begin process again
@@ -598,7 +599,7 @@ namespace Anki {
         }
       }
 
-      #if(DEBUG_ROBOT_POSE_HISTORY)
+      #if (DEBUG_ROBOT_POSE_HISTORY)
       if (printDbg) {
         printf("pTrans: %d\n", t);
         pTransform.Print();
@@ -678,7 +679,7 @@ namespace Anki {
         if (key){
           const_KeyByTimestampMapIter_t kIt = _keyByTsMap.find(it->first);
           if (kIt == _keyByTsMap.end()) {
-            PRINT_NAMED_WARNING("RobotStateHistory.GetComputedStateAt.KeyNotFound","");
+            LOG_WARNING("RobotStateHistory.GetComputedStateAt.KeyNotFound","");
             return RESULT_FAIL;
           }
           *key = kIt->second;
@@ -717,9 +718,9 @@ namespace Anki {
     {
       // Start from end and work backward until we find a pose stamp with the
       // specified ID. Fail if we get back to the beginning without finding it.
-      if(_states.empty()) {
-        PRINT_NAMED_ERROR("RobotStateHistory.GetLastStateWithFrameID.EmptyHistory",
-                          "Looking for last pose with frame ID=%d, but pose history is empty.", frameID);
+      if (_states.empty()) {
+        LOG_ERROR("RobotStateHistory.GetLastStateWithFrameID.EmptyHistory",
+                  "Looking for last pose with frame ID=%d, but pose history is empty.", frameID);
         return RESULT_FAIL;
       }
       
@@ -728,10 +729,10 @@ namespace Anki {
       // because they are ordered
       bool found = false;
       auto poseIter = _states.rend();
-      for(poseIter = _states.rbegin();
+      for (poseIter = _states.rbegin();
           poseIter != _states.rend() && poseIter->second.GetFrameId() >= frameID; ++poseIter )
       {
-        if(poseIter->second.GetFrameId() == frameID) {
+        if (poseIter->second.GetFrameId() == frameID) {
           found = true; // break out of the loop without incrementing poseIter
           break;
         }
@@ -739,18 +740,18 @@ namespace Anki {
       
       // NOTE: this second loop over vision poses will only occur if found is still false,
       // meaning we didn't find a pose already in the first loop.
-      if(!found) {
-        for(poseIter = _visStates.rbegin();
+      if (!found) {
+        for (poseIter = _visStates.rbegin();
             poseIter != _visStates.rend() && poseIter->second.GetFrameId() >= frameID; ++poseIter)
         {
-          if(poseIter->second.GetFrameId() == frameID) {
+          if (poseIter->second.GetFrameId() == frameID) {
             found = true;
             break;
           }
         }
       }
       
-      if(found) {
+      if (found) {
         // Success!
         DEV_ASSERT(poseIter != _states.rend(),
                    "RobotStateHistory.GetLastStateWithFrameID.InvalidIter");
@@ -758,19 +759,19 @@ namespace Anki {
         return RESULT_OK;
         
       } else {
-        PRINT_NAMED_ERROR("RobotStateHistory.GetLastStateWithFrameID.FrameIdNotFound",
-                          "Could not find frame ID=%d in pose history. "
-                          "(First frameID in pose history is %d (t:%u), last is %d (t:%u). "
-                          "First frameID in vis pose history is %d (t:%u), last is %d (t:%u).)",
-                          frameID,
-                          _states.begin()->second.GetFrameId(),
-                          _states.begin()->first,
-                          _states.rbegin()->second.GetFrameId(),
-                          _states.rbegin()->first,
-                          (_visStates.empty() ? -1 : _visStates.begin()->second.GetFrameId()),
-                          (_visStates.empty() ? 0 : _visStates.begin()->first),
-                          (_visStates.empty() ? -1 : _visStates.rbegin()->second.GetFrameId()),
-                          (_visStates.empty() ? 0 : _visStates.rbegin()->first));
+        LOG_ERROR("RobotStateHistory.GetLastStateWithFrameID.FrameIdNotFound",
+                  "Could not find frame ID=%d in pose history. "
+                  "(First frameID in pose history is %d (t:%u), last is %d (t:%u). "
+                  "First frameID in vis pose history is %d (t:%u), last is %d (t:%u).)",
+                  frameID,
+                  _states.begin()->second.GetFrameId(),
+                  _states.begin()->first,
+                  _states.rbegin()->second.GetFrameId(),
+                  _states.rbegin()->first,
+                  (_visStates.empty() ? -1 : _visStates.begin()->second.GetFrameId()),
+                  (_visStates.empty() ? 0 : _visStates.begin()->first),
+                  (_visStates.empty() ? -1 : _visStates.rbegin()->second.GetFrameId()),
+                  (_visStates.empty() ? 0 : _visStates.rbegin()->first));
         return RESULT_FAIL;
 
       }
@@ -800,23 +801,21 @@ namespace Anki {
         if (!_states.empty() && it != _states.begin()) {
           _states.erase(_states.begin(), it);
           
-          if(_states.empty())
+          if (_states.empty())
           {
-            PRINT_CH_DEBUG("RobotStateHistory",
-                           "RobotStateHistory.CullToWindowSize.StatesEmpty",
-                           "_states is empty after culling to window size %u",
-                           _windowSize_ms);
+            LOG_DEBUG("RobotStateHistory.CullToWindowSize.StatesEmpty",
+                      "_states is empty after culling to window size %u",
+                      _windowSize_ms);
           }
         }
         if (!_visStates.empty() &&  git != _visStates.begin()) {
           _visStates.erase(_visStates.begin(), git);
           
-          if(_visStates.empty())
+          if (_visStates.empty())
           {
-            PRINT_CH_DEBUG("RobotStateHistory",
-                           "RobotStateHistory.CullToWindowSize.VisStatesEmpty",
-                           "_visStates is empty after culling to window size %u",
-                           _windowSize_ms);
+            LOG_DEBUG("RobotStateHistory.CullToWindowSize.VisStatesEmpty",
+                      "_visStates is empty after culling to window size %u",
+                      _windowSize_ms);
           }
         }
         if (!_computedStates.empty() && cit != _computedStates.begin()) {
@@ -829,9 +828,9 @@ namespace Anki {
             if (tsByKey_it != _tsByKeyMap.end()) {
               _tsByKeyMap.erase(_tsByKeyMap.begin(), tsByKey_it);
             } else {
-              PRINT_NAMED_ERROR("RobotStateHistory.CullToWindowSize.MapsOutOfSync",
-                                "keyByTsMap size: %zu, tsByKeyMap size: %zu",
-                                _keyByTsMap.size(), _tsByKeyMap.size());
+              LOG_ERROR("RobotStateHistory.CullToWindowSize.MapsOutOfSync",
+                        "keyByTsMap size: %zu, tsByKeyMap size: %zu",
+                        _keyByTsMap.size(), _tsByKeyMap.size());
             }
           }
           _keyByTsMap.erase(_keyByTsMap.begin(), keyByTs_it);
@@ -872,19 +871,19 @@ namespace Anki {
       std::multimap<TimeStamp_t, std::pair<std::string, const_StateMapIter_t> >::iterator mergedIt;
       const_StateMapIter_t pit;
       
-      for(pit = _states.begin(); pit != _states.end(); ++pit) {
+      for (pit = _states.begin(); pit != _states.end(); ++pit) {
         mergedPoses.emplace(std::piecewise_construct,
                             std::forward_as_tuple(pit->first),
                             std::forward_as_tuple("  ", pit));
       }
 
-      for(pit = _visStates.begin(); pit != _visStates.end(); ++pit) {
+      for (pit = _visStates.begin(); pit != _visStates.end(); ++pit) {
         mergedPoses.emplace(std::piecewise_construct,
                             std::forward_as_tuple(pit->first),
                             std::forward_as_tuple("v ", pit));
       }
 
-      for(pit = _computedStates.begin(); pit != _computedStates.end(); ++pit) {
+      for (pit = _computedStates.begin(); pit != _computedStates.end(); ++pit) {
         mergedPoses.emplace(std::piecewise_construct,
                             std::forward_as_tuple(pit->first),
                             std::forward_as_tuple("c ", pit));
@@ -893,7 +892,7 @@ namespace Anki {
       
       printf("\nRobotStateHistory\n");
       printf("================\n");
-      for(mergedIt = mergedPoses.begin(); mergedIt != mergedPoses.end(); ++mergedIt) {
+      for (mergedIt = mergedPoses.begin(); mergedIt != mergedPoses.end(); ++mergedIt) {
         printf("%s%d: ", mergedIt->second.first.c_str(), mergedIt->first);
         mergedIt->second.second->second.Print();
       }

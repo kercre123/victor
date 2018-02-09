@@ -41,6 +41,8 @@
 #include <DAS/DAS.h>
 #endif
 
+#define LOG_CHANNEL "RobotState"
+
 namespace Anki {
 namespace Cozmo {
 
@@ -68,7 +70,7 @@ RobotManager::RobotManager(const CozmoContext* context)
 
   MessageGameToEngineTag tagGroups = MessageGameToEngineTag::RequestAvailableAnimationGroups;
     
-  if (externalInterface != nullptr){
+  if (externalInterface != nullptr) {
     _signalHandles.push_back( externalInterface->Subscribe(tagGroups, broadcastAvailableAnimationGroupsCallback) );
   }
 }
@@ -101,10 +103,10 @@ void RobotManager::Init(const Json::Value& config, const Json::Value& dasEventCo
     constexpr auto maxInitTime_millis = 3000;
     if (timeSpent_millis > maxInitTime_millis)
     {
-      PRINT_NAMED_WARNING("RobotManager.Init.TimeSpent",
-                          "%lld milliseconds spent initializing, expected %d",
-                          timeSpent_millis,
-                          maxInitTime_millis);
+      LOG_WARNING("RobotManager.Init.TimeSpent",
+                  "%lld milliseconds spent initializing, expected %d",
+                  timeSpent_millis,
+                  maxInitTime_millis);
     }
   }
   
@@ -124,22 +126,22 @@ void RobotManager::LoadDasBlacklistedAnimationTriggers(const Json::Value& dasEve
 void RobotManager::AddRobot(const RobotID_t withID)
 {
   if (_robots.find(withID) == _robots.end()) {
-    PRINT_STREAM_INFO("RobotManager.AddRobot", "Adding robot with ID=" << withID);
+    LOG_INFO("RobotManager.AddRobot", "Adding robot with ID=%d", withID);
     _robots[withID] = new Robot(withID, _context);
     _IDs.push_back(withID);
     _initialConnections.emplace(std::piecewise_construct,
       std::forward_as_tuple(withID),
       std::forward_as_tuple(withID, _robotMessageHandler.get(), _context->GetExternalInterface()));
   } else {
-    PRINT_STREAM_WARNING("RobotManager.AddRobot.AlreadyAdded", "Robot with ID " << withID << " already exists. Ignoring.");
+    LOG_WARNING("RobotManager.AddRobot.AlreadyAdded", "Robot with ID %d already exists. Ignoring.", withID);
   }  
 }
 
 void RobotManager::RemoveRobot(const RobotID_t withID, bool robotRejectedConnection)
 {
   auto iter = _robots.find(withID);
-  if(iter != _robots.end()) {
-    PRINT_NAMED_INFO("RobotManager.RemoveRobot", "Removing robot with ID=%d", withID);
+  if (iter != _robots.end()) {
+    LOG_INFO("RobotManager.RemoveRobot", "Removing robot with ID=%d", withID);
     
     // ask initial connection tracker if it's handling this
     bool handledDisconnect = false;
@@ -166,8 +168,8 @@ void RobotManager::RemoveRobot(const RobotID_t withID, bool robotRejectedConnect
     iter = _robots.erase(iter);
     
     // Find the ID. This is inefficient, but this isn't a long list
-    for(auto idIter = _IDs.begin(); idIter != _IDs.end(); ++idIter) {
-      if(*idIter == withID) {
+    for (auto idIter = _IDs.begin(); idIter != _IDs.end(); ++idIter) {
+      if (*idIter == withID) {
         _IDs.erase(idIter);
         break;
       }
@@ -178,7 +180,7 @@ void RobotManager::RemoveRobot(const RobotID_t withID, bool robotRejectedConnect
     Anki::Util::sSetGlobal(DPHYS, nullptr);
     Anki::Util::sSetGlobal(DGROUP, nullptr);
   } else {
-    PRINT_NAMED_WARNING("RobotManager.RemoveRobot", "Robot %d does not exist. Ignoring.", withID);
+    LOG_WARNING("RobotManager.RemoveRobot", "Robot %d does not exist. Ignoring.", withID);
   }
 }
 
@@ -212,7 +214,7 @@ Robot* RobotManager::GetRobotByID(const RobotID_t robotID)
     return it->second;
   }
   
-  PRINT_NAMED_WARNING("RobotManager.GetRobotByID.InvalidID", "No robot with ID=%d", robotID);
+  LOG_WARNING("RobotManager.GetRobotByID.InvalidID", "No robot with ID=%d", robotID);
   
   return nullptr;
 }
@@ -233,17 +235,17 @@ void RobotManager::UpdateAllRobots()
   ANKI_CPU_PROFILE("RobotManager::UpdateAllRobots");
 
   //for (auto &r : _robots) {
-  for(auto r = _robots.begin(); r != _robots.end(); ) {
+  for (auto r = _robots.begin(); r != _robots.end(); ) {
     // Call update
     const RobotID_t robotId = r->first; // have to cache this prior to any ++r calls...
     Robot* robot = r->second;
     Result result = robot->Update();
     
-    switch(result)
+    switch (result)
     {
       case RESULT_FAIL_IO_TIMEOUT:
       {
-        PRINT_NAMED_WARNING("RobotManager.UpdateAllRobots.FailIOTimeout", "Signaling robot disconnect");
+        LOG_WARNING("RobotManager.UpdateAllRobots.FailIOTimeout", "Signaling robot disconnect");
         const RobotID_t robotIdToRemove = r->first;
         ++r;
         const bool robotRejectedConnection = false;
@@ -260,12 +262,11 @@ void RobotManager::UpdateAllRobots()
         break;
     }
 
-    if(robot->HasReceivedRobotState()) {
+    if (robot->HasReceivedRobotState()) {
       _context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(robot->GetRobotState()));
     }
     else {
-      PRINT_PERIODIC_CH_INFO(10, "Unnamed", "RobotManager.UpdateAllRobots",
-                              "Not sending robot %d state (none available).",robotId);
+      LOG_PERIODIC_INFO(10, "RobotManager.UpdateAllRobots", "Not sending robot %d state (none available).", robotId);
     }
   } // End loop on _robots
   
