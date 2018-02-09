@@ -205,9 +205,11 @@ void handle_payload_data(const uint8_t frame_buffer[]) {
   if (ccc_commander_is_active()) {
     ccc_payload_process(bodyData_);
   }
-
+  else {
   // BRC: Should accumulate all of the audio data and send it in one shot
   ForwardMicData();
+  }
+
 }
 
 
@@ -224,13 +226,14 @@ Result spine_get_frame() {
       continue;
     } else if (r > 0) {
       const struct SpineMessageHeader* hdr = (const struct SpineMessageHeader*)frame_buffer;
-      LOGD("Handling payload type %x\n", hdr->payload_type);
+      //      LOGD("Handling payload type %x\n", hdr->payload_type);
       if (hdr->payload_type == PAYLOAD_DATA_FRAME) {
         handle_payload_data(frame_buffer);  //payload starts immediately after header
         result = RESULT_OK;
         continue;
       }
       else if (hdr->payload_type == PAYLOAD_CONT_DATA) {
+         LOGD("Handling payload type %x\n", hdr->payload_type);
         ccc_data_process( (ContactData*)(hdr+1) );
         result = RESULT_OK;
         continue;
@@ -260,8 +263,7 @@ Result HAL::Step(void)
   //check if the charge contact commander is active,
   //if so, override normal operation
   bool commander_is_active = ccc_commander_is_active();
-  //  struct HeadToBody* h2bp = (commander_is_active) ? ccc_data_get_response() : &headData_;
-  struct HeadToBody* h2bp =  &headData_;
+  struct HeadToBody* h2bp = (commander_is_active) ? ccc_data_get_response() : &headData_;
 
 
   // Send zero motor power when charging is enabled
@@ -287,7 +289,8 @@ Result HAL::Step(void)
 
   PrintConsoleOutput();
 
-  return result;
+  //return a fail code if commander is active to prevent robotics from getting confused
+  return (commander_is_active) ? RESULT_FAIL_IO_UNSYNCHRONIZED : result;
 }
 
 void ProcessTouchLevel(void)
@@ -432,6 +435,8 @@ u8 HAL::GetWatchdogResetCounter()
   // not (yet) implemented in HAL in V2
   return 0;//bodyData_->status.watchdogCount;
 }
+
+
 
 } // namespace Cozmo
 } // namespace Anki

@@ -6,6 +6,13 @@
 #include <fcntl.h>
 
 
+enum {
+  ERR_OK,
+  ERR_PENDING, //does not return right away
+  ERR_UNKNOWN,
+  ERR_SYNTAX,
+  ERR_SYSTEM,
+};
 
 #ifdef STANDALONE_UTILITY
 #include "core/common.h"
@@ -19,7 +26,7 @@
 
 #define ccc_debug(fmt, args...)  (LOGD( fmt, ##args))
 
-#define EXTENDED_CCC_DEBUG 0
+#define EXTENDED_CCC_DEBUG 1
 #if EXTENDED_CCC_DEBUG
 #define ccc_debug_x ccc_debug
 #else
@@ -27,16 +34,38 @@
 #endif
 
 
+//fixed command line is NAM A0 A1 A2 A3 A4 A5
+//total 3 length chars for name + 6*3 chars for space+arg
+#define FIXED_NAME_LEN 3
+#define FIXED_ARG_LEN 2
+#define FIXED_ARG_COUNT 6
+#define FIXED_LINE_LEN FIXED_NAME_LEN+(FIXED_ARG_LEN+1)*FIXED_ARG_COUNT
+
+#define SLUG_PAD_CHAR 0xFF
+#define SLUG_PAD_SIZE 4
+
+
+#define MAX_KNOWN_LOG  10
+#define RESPONSE_CHUNK_SZ  (sizeof(struct ContactData)-SLUG_PAD_SIZE)
+
+#define FACTORY_FILENAME_TEMPLATE "/factory/log%.2d.json"
+#define MAX_FACTORY_FILENAME_LEN  sizeof(FACTORY_FILENAME_TEMPLATE)
+
+
+typedef void (*ShutdownFunction)(int);
+
+
 const struct SpineMessageHeader* hal_read_frame();
 void start_overrride(int count);
 
 enum {
+  show_BAT,
+  show_CLIFF,
   show_ENCODER,
   show_SPEED,
-  show_CLIFF,
-  show_BAT,
   show_PROX,
   show_TOUCH,
+  show_RSSI,
   SHOW_LAST
 };
 
@@ -156,6 +185,50 @@ idx_t contact_text_buffer_get(struct ContactData* data) {
   return 0;
 }
 
+/***** logging interface  **************************/
+
+int ReadLogN(uint8_t n) {
+  if (n>=MAX_KNOWN_LOG) {
+    return ERR_SYSTEM;
+  }
+  char logline[RESPONSE_CHUNK_SZ];
+  char filename[MAX_FACTORY_FILENAME_LEN];
+  sprintf(filename, FACTORY_FILENAME_TEMPLATE, n);
+  int fd = open(filename, O_RDONLY);
+  if (!fd) { return ERR_SYSTEM; }
+  while (1) {
+    int nchars = read(fd, logline, RESPONSE_CHUNK_SZ);
+    if (nchars <= 0) {
+      break;
+    }
+    print_response("%.32s", logline); //THIS MUST BE SIZEOF(ContactData)-SLUG_PAD_SIZE
+  }
+  close(fd);
+  return ERR_OK;
+
+}
+
+
+/******* EMR interface  **************************/
+
+int SetMedicalRecord(uint8_t index, uint32_t value)
+{
+  print_response("EMR %d := %d\n", index, value);
+//  EMR[index]=value;
+  return ERR_OK;
+}
+
+int GetMedicalRecord(uint8_t index)
+{
+  uint32_t value = 0;//EMR[index];
+  print_response("EMR %d == %d\n", index, value);
+  return ERR_OK;
+}
+
+
+int SendEngineCommand(uint8_t index, uint8_t v0, uint8_t v1, uint8_t v2, uint8_t v3){
+  return ERR_OK;
+}
 
 /***** pending commands  **************************/
 CozmoCommand gPending = {0};
@@ -178,7 +251,7 @@ void AddMotorCommand(RobotMotor motor, float power) {
   if (power < -1.0) { power = -1.0;}
   gPending.motorValues[motor] = 0x7FFF * power;
 }
-void SubmitCommand(bool cmd_rcvd, const char* text, int len) {
+void SubmitCommand(bool cmd_rcvd) {
   ccc_debug_x("CCC submitting command");
   if (!gPending.repeat_count) { gPending.repeat_count=1;}
   show_command(&gPending);
@@ -186,119 +259,81 @@ void SubmitCommand(bool cmd_rcvd, const char* text, int len) {
   PrepCommand(); //make sure it is cleared
 }
 
+
+
 /********* command parsing **************/
 
-const char* skip_ws(const char* text, int len)
-{
-  const char* next = text;
-  while ( (next < text+len) && isspace(*next)) { next++;}
-  return next;
-}
 
-const char* handle_repeat_command(const char* text, int len)
-{
-  char* end;
-  long nrepeats = strtol(text, &end, 10);
-  if (end!=text && end<=text+len) //converted some chars
-  {
-    SetRepeats(nrepeats);
+
+void AddSensorCommand(uint8_t sensorId) {
+  if (sensorId < SHOW_LAST) {
+    AddPrintFlag(1<<sensorId);
   }
-  return end;
 }
 
-const char* handle_motor(const char* text, int len, RobotMotor motor)
-{
-  char* end;
-  double power = strtof(text, &end);
-  if (end!=text && end <= text+len) //converted some chars
-  {
-    AddMotorCommand(motor, power);
-  }
-  return end;
-}
 
-const char* handle_head_command(const char* text, int len)
-{
-  return handle_motor(text, len, MOTOR_HEAD);
-}
-const char* handle_lift_command(const char* text, int len)
-{
-  return handle_motor(text, len, MOTOR_LIFT);
-}
-const char* handle_left_command(const char* text, int len)
-{
-  return handle_motor(text, len, MOTOR_LEFT);
-}
-const char* handle_right_command(const char* text, int len)
-{
-  return handle_motor(text, len, MOTOR_RIGHT);
-}
-
-const char* handle_enc_command(const char* text, int len)
-{
-  AddPrintFlag(1<<show_ENCODER);
-  return text;
-}
-
-const char* handle_prox_command(const char* text, int len)
-{
-  AddPrintFlag(1<<show_PROX);
-  return text;
-}
-
-const char* handle_touch_command(const char* text, int len)
-{
-  AddPrintFlag(1<<show_TOUCH);
-  return text;
-}
-
-const char* handle_speed_command(const char* text, int len)
-{
-  AddPrintFlag(1<<show_SPEED);
-  return text;
-}
-
-const char* handle_bat_command(const char* text, int len)
-{
-  AddPrintFlag(1<<show_BAT);
-  return text;
-}
-
-const char* handle_cliff_command(const char* text, int len)
-{
-  AddPrintFlag(1<<show_CLIFF);
-  return text;
-}
-
-const char* handle_getserial_command(const char* text, int len)
+uint8_t handle_esn_command(const uint8_t args[])
 {
   char esn_text[MAX_SERIAL_LEN];
   if ( get_esn(esn_text, sizeof(esn_text)) ) {
     print_response("ESN = %s\n", esn_text);
+    return ERR_OK;
   }
-  else {
-    print_response("ESN : READ_ERR\n");
-  }
-
-  return text;
+  return ERR_SYSTEM;
 }
 
-const char* handle_mode_command(const char* text, int len)
+uint8_t handle_bsv_command(const uint8_t args[])
 {
-  hal_set_mode(RobotMode_RUN);
-  return text;
+  print_response("BSV UNIMPLEMENTED");
+  return ERR_OK;
 }
 
-const char* handle_override_command(const char* text, int len)
+
+uint8_t handle_mot_command(const uint8_t args[])
 {
-  char* end;
-  long enable_count = strtol(text, &end, 10);
-  if (end!=text && end<=text+len) //converted some chars
-  {
-    start_overrride(enable_count);
-  }
-  return end;
+  ccc_debug_x("Handling mot command: %d %d ...\n", args[0], args[1]);
+  SetRepeats(args[0]);
+  AddSensorCommand(args[1]);
+  AddMotorCommand(MOTOR_LEFT, args[2]);
+  AddMotorCommand(MOTOR_RIGHT, args[3]);
+  AddMotorCommand(MOTOR_LIFT, args[4]);
+  AddMotorCommand(MOTOR_HEAD, args[5]);
+  return ERR_OK;
 }
+
+uint8_t handle_get_command(const uint8_t args[])
+{
+  return handle_mot_command(args);
+}
+
+
+uint8_t handle_fcc_command(const uint8_t args[])
+{
+//  RunFccScript(args[0],args[1]);
+  return ERR_PENDING;
+}
+
+uint8_t handle_rlg_command(const uint8_t args[])
+{
+  return ReadLogN(args[0]);
+}
+
+uint8_t handle_eng_command(const uint8_t args[])
+{
+  return SendEngineCommand(args[0], args[1], args[2], args[3], args[4]);
+}
+
+uint8_t handle_smr_command(const uint8_t args[]) {
+  uint32_t value = args[1] << 24|
+    (args[2] << 16) |
+    (args[3] << 8)|
+    (args[4] << 0);
+  return SetMedicalRecord(args[0], value);
+}
+uint8_t handle_gmr_command(const uint8_t args[]) {
+  return GetMedicalRecord(args[0]);
+}
+
 
 
 int gQuit = 0;
@@ -325,89 +360,64 @@ void safe_quit(int n)
 
 #endif
 
-#define REGISTER_COMMAND(s) {#s, sizeof(#s)-1, handle_##s##_command}
+#define REGISTER_COMMAND(s) {#s, handle_##s##_command}
 
 
-typedef const char* (*CommandParser)(const char*, int);
+typedef uint8_t (*CommandParser)(const uint8_t[]);
 
 typedef struct CommandHandler_t {
   const char* name;
-  const int len;
   const CommandParser handler;
 } CommandHandler;
 
 
 static const CommandHandler handlers[] = {
-  REGISTER_COMMAND(repeat),
-  {"r",1,handle_repeat_command}, //shortcut for repeat
-  REGISTER_COMMAND(head),
-  REGISTER_COMMAND(lift),
-  REGISTER_COMMAND(left),
-  REGISTER_COMMAND(right),
-  REGISTER_COMMAND(enc),
-  REGISTER_COMMAND(bat),
-  REGISTER_COMMAND(speed),
-  REGISTER_COMMAND(cliff),
-  REGISTER_COMMAND(prox),
-  REGISTER_COMMAND(touch),
-  REGISTER_COMMAND(getserial),
-  {"esn",3,handle_getserial_command}, //shortcut for repeat
-  REGISTER_COMMAND(mode),
-  REGISTER_COMMAND(override),
-  REGISTER_COMMAND(quit),
+  REGISTER_COMMAND(esn),
+  REGISTER_COMMAND(bsv),
+  REGISTER_COMMAND(mot),
+  REGISTER_COMMAND(get),
+  REGISTER_COMMAND(fcc),
+  REGISTER_COMMAND(rlg),
+  REGISTER_COMMAND(eng),
+//  REGISTER_COMMAND(lfe),
+  REGISTER_COMMAND(smr),
+  REGISTER_COMMAND(gmr),
  /* ^^ insert new commands here ^^ */
-  {0}
+  {0}  /* MUST BE 0 TERMINATED */
 };
 
 
-//returns true if at least one valid command
-bool parse_command_text(const char* command, int len)
-{
-  bool cmd_rcvd = false;
-//  const char *orig_cmd = command;
-  PrepCommand();
-  while (len > 0)  {
-    const char* next_word = NULL;
-    const CommandHandler* candidate = &handlers[0];
 
-    ccc_debug("CCC HANDLING [ %.*s ] ...", len, command);
-
-    while (candidate->name) {
-      if (len >= candidate->len &&
-          strncmp(command, candidate->name, candidate->len)==0)
-      {
-        ccc_debug("CCC MATCH %s [ %.*s ] \n", candidate->name, len-candidate->len, command+candidate->len);
-        if (!cmd_rcvd) {
-          snprintf(gPending.reply, sizeof(gPending.reply), "<<%.*s 0 ",
-                   candidate->len, candidate->name);
-          cmd_rcvd = true;
+uint8_t parse_command_text(char* cmd, int len) {
+   if (len < FIXED_LINE_LEN) {
+      return ERR_SYNTAX;
+   }
+   const CommandHandler* candidate = &handlers[0];
+   while (candidate->name) {
+      if (strncmp(cmd, candidate->name, FIXED_NAME_LEN)==0) {
+        ccc_debug_x("matched %s\n", candidate->name);
+        char* argstr = cmd+FIXED_NAME_LEN+1;
+        uint8_t args[FIXED_ARG_COUNT];
+        int i;
+        for (i=0;i<FIXED_ARG_COUNT;i++)
+        {
+          char* end = argstr+FIXED_ARG_LEN;
+          *end = '\0';
+          long arg = strtol(argstr, &end, 16);
+          if (end!=argstr+FIXED_ARG_LEN) { //did not convert expected chars
+            return ERR_SYNTAX;
+          }
+          args[i]=arg;
+          argstr+=FIXED_ARG_LEN+1;
         }
-        next_word =  candidate->handler(command+candidate->len, len-candidate->len);
-        break;
+        uint8_t result = candidate->handler(args);
+        return result;
       }
       candidate++;
-    }
-    //not recognized, echo back invalid command with error code
-    if(!candidate->name) {
-      ccc_debug("UNKNOWN command: %.*s\n", len, command);
-      next_word = memchr(command, ' ', len);
-      int n = (next_word)?  next_word-command : len;
-      print_response("<<%.*s -1\n", n, command);
-    }
-    if (next_word) {
-      len -= next_word-command;
-      command = skip_ws(next_word, len);
-      len -= command-next_word;
-    }
-    else {
-      len = 0;
-    }
-  }
-  if (cmd_rcvd) {
-    SubmitCommand(cmd_rcvd, command,len);
-  }
-  return cmd_rcvd;
+   }
+   return ERR_UNKNOWN;
 }
+
 
 #define LINEBUFSZ 512
 
@@ -459,17 +469,25 @@ bool gather_contact_text(const char* contactData, int len)
 {
   static int linelen = 0;
   static char linebuf[LINEBUFSZ+1];
-  bool cmd_rcvd = false;
+  bool cmd_detected = false;
   while (*contactData && len-->0) {
     char c = *contactData++;
 
 
-    printf(".%c",c);
+    print_response("%c",c);
     if (c=='\n' || c=='\r') {
       linebuf[linelen]='\0';
       ccc_debug("CCC Line recieved [ %.*s ]", linelen, linebuf);
       if (linebuf[0]=='>' && linebuf[1]=='>') {
-        cmd_rcvd = cmd_rcvd || parse_command_text(linebuf+2, linelen-2);
+        ccc_debug_x("good prefix\n");
+        int status = parse_command_text(linebuf+2, linelen-2);
+        ccc_debug_x("replying <<%.3s %d\n",linebuf+2, status);
+        snprintf(gPending.reply, sizeof(gPending.reply), "<<%.3s %d\n",linebuf+2, status);
+        cmd_detected = true ;
+        SubmitCommand( (status==0) );
+      }
+      else {
+        ccc_debug_x("non-command line\n");
       }
       linelen = 0;
     }
@@ -483,7 +501,7 @@ bool gather_contact_text(const char* contactData, int len)
       linelen = 0;
     }
   }
-  return cmd_rcvd;
+  return cmd_detected;
 }
 
 
@@ -521,8 +539,6 @@ void populate_outgoing_frame(void) {
 #define print_response printf
 #else
 
-#define SLUG_PAD_CHAR 0xFF
-#define SLUG_PAD_SIZE 4
 int print_response(const char* format, ...) {
   struct ContactData response = {{0}};
   va_list argptr;
@@ -542,7 +558,7 @@ int print_response(const char* format, ...) {
    if (remainder > 0)  { //print not truncated, free space at end of packet
      memset(response.data+SLUG_PAD_SIZE+nchars, 0, remainder); //pad it
    }
-   ccc_debug_x("CCC preparing response [ %s ]", response.data);
+   ccc_debug_x("CCC preparing response [ %s ]", response.data+SLUG_PAD_SIZE);
    contact_text_buffer_put(&response);
    if (remainder < 0) { // the string was truncated
      return nchars + print_response("...");
@@ -556,15 +572,15 @@ int print_response(const char* format, ...) {
 
 
 uint16_t show_legend(uint16_t mask) {
-  print_response("frame ");
+  print_response("framect ");
   if (mask & (1<<show_ENCODER)) {
-    print_response("left_enc right_enc lift_enc head_enc ");
+    print_response("encs:left right lift head");
   }
   if (mask & (1<<show_SPEED)) {
-    print_response("left_spd right_spd lift_spd head_spd ");
+    print_response("speed:left right lift head");
   }
   if (mask & (1<<show_CLIFF)) {
-    print_response("fl_cliff fr_cliff br_cliff bl_cliff ");
+    print_response("cliff:fl fr br bl");
   }
   if (mask & (1<<show_BAT)) {
     print_response("bat ");
@@ -588,10 +604,7 @@ void process_incoming_frame(struct BodyToHead* bodyData)
       oldmask = show_legend(gActiveState.printmask);
     }
 
-    if (gActiveState.repeat_count == 1) {
-      print_response("%s", gActiveState.reply);
-    }
-    else {
+    if (gActiveState.printmask) {
       print_response("%d ", bodyData->framecounter);
     }
 
@@ -609,7 +622,7 @@ void process_incoming_frame(struct BodyToHead* bodyData)
         speeds[i]= bodyData->motor[i].time ?
           ((float)bodyData->motor[i].delta / bodyData->motor[i].time) : 0;
       }
-      print_response("%f %f %f %f ",
+      print_response("%.2f %.2f %.2f %.2f ",
              speeds[0],
              speeds[1],
              speeds[2],
@@ -639,6 +652,7 @@ void process_incoming_frame(struct BodyToHead* bodyData)
 
     if (--gActiveState.repeat_count == 0) {
       //clear print request at end
+      print_response("%s", gActiveState.reply);
       gActiveState.printmask = 0;
     }
 
@@ -752,9 +766,9 @@ bool ccc_commander_is_active(void) {
 void ccc_data_process(const struct ContactData* data)
 {
   ccc_debug_x("CCC data frame rcvd\n");
-  start_overrride( CCC_COOLDOWN_TIME);
   if (gather_contact_text((const char*)data->data,
                           sizeof(data->data))) {
+    start_overrride( CCC_COOLDOWN_TIME);
   }
 }
 
@@ -787,5 +801,24 @@ struct ContactData* ccc_text_response(void) {
   /* } */
   return NULL;
 }
+
+
+void ccc_parse_command_line(int argc, const char* argv[])
+{
+  start_overrride( CCC_COOLDOWN_TIME );
+  while (argc-->0) {
+    gather_contact_text(*argv, strlen(*argv));
+    gather_contact_text(" ",1);
+    argv++;
+  }
+  gather_contact_text("\n",1); //newline to force execution
+}
+
+ShutdownFunction gShutdownFp;
+void ccc_set_shutdown_function(ShutdownFunction fp) {
+  gShutdownFp = fp;
+  //TODO: actually use this to shut down at end
+}
+
 
 #endif
