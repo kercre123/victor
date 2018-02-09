@@ -1,76 +1,135 @@
 #include <stdint.h>
 #include "board.h"
-#include "hal_spi.h"
-#include "hal_timer.h"
-#include "bma222.h"
 
-#define READ_BIT  0x80
+//------------------------------------------------  
+//    SPI
+//------------------------------------------------
 
-static char* bma222e_reg_name(uint8_t addr)
-{
-  static char buf[5];
-  switch(addr) {
-    case BGW_SOFTRESET: return "BGW_SOFTRESET";
-    case PMU_LOW_POWER: return "PMU_LOW_POWER";
-    case PMU_LPW:       return "PMU_LPW";
-    case BGW_SPI3_WDT:  return "BGW_SPI3_WDT";
-    case PMU_RANGE:     return "PMU_RANGE";
-    case PMU_BW:        return "PMU_BW";
-    case FIFO_CONFIG_1: return "FIFO_CONFIG_1";
-    case BGW_CHIPID:    return "BGW_CHIPID";
+static uint16_t* const SPI_PIN_READ = (uint16_t*)(GPIO_BASE + (GPIO_PORT_0 << 5));
+static uint16_t* const SPI_PIN_SET = (uint16_t*)(GPIO_BASE + (GPIO_PORT_0 << 5) + 2);
+static uint16_t* const SPI_PIN_RESET = (uint16_t*)(GPIO_BASE + (GPIO_PORT_0 << 5) + 4);
+
+static uint16_t BIT_ACC_CS = 1 << ACC_CS_PIN;
+static uint16_t BIT_ACC_PWR = 1 << ACC_PWR_PIN;
+static uint16_t BIT_ACC_SCK = 1 << ACC_SCK_PIN;
+static uint16_t BIT_ACC_SDA = 1 << ACC_SDA_PIN;
+
+static void spi_write8(uint8_t value) {
+  for (int i = 0x80; i; i >>= 1) {
+    *SPI_PIN_RESET = BIT_ACC_SCK;
+    *((value & i) ? SPI_PIN_SET : SPI_PIN_RESET) = BIT_ACC_SDA;
+    *SPI_PIN_SET = BIT_ACC_SCK;
   }
-  sprintf(buf, "0x%02x", addr);
-  buf[4] = '\0';
-  return buf;
 }
 
-uint8_t DataRead(uint8_t addr) {
-  hal_spi_clr_cs();
-  hal_spi_write( READ_BIT | addr );
-  uint8_t dat = hal_spi_read();
-  hal_spi_set_cs();
-  hal_uart_printf("  %s (0x%02x) <- 0x%02x\n", bma222e_reg_name(addr), addr, dat);
+static uint8_t spi_read8() {
+  uint8_t value = 0;
+  for (int i = 0x80; i; i >>= 1) {
+    *SPI_PIN_RESET = BIT_ACC_SCK;
+    __nop(); __nop();
+    *SPI_PIN_SET = BIT_ACC_SCK;
+    if (*SPI_PIN_READ & BIT_ACC_SDA) value |= i;
+  }
+  return value;
+}
+
+static void spi_write(uint8_t address, int length, const uint8_t* data) {
+  *SPI_PIN_RESET = BIT_ACC_CS;
+  spi_write8(address);
+  while (length-- > 0) spi_write8(*(data++));
+  *SPI_PIN_SET = BIT_ACC_CS;
+}
+static inline void spi_write1(uint8_t address, uint8_t dat) {
+  spi_write(address, 1, &dat);
+}
+
+static void spi_read(uint8_t address, int length, uint8_t* data) {
+  *SPI_PIN_RESET = BIT_ACC_CS;
+  spi_write8(address | 0x80);
+  GPIO_PIN_FUNC(ACC_SDA, INPUT, PID_GPIO);
+  while (length-- > 0) *(data++) = spi_read8();
+  GPIO_PIN_FUNC(ACC_SDA, OUTPUT, PID_GPIO);
+  *SPI_PIN_SET = BIT_ACC_CS;
+}
+static inline uint8_t spi_read1(uint8_t address) {
+  uint8_t dat;
+  spi_read(address, 1, &dat);
   return dat;
 }
 
-void DataWrite(uint8_t addr, uint8_t dat) {
-  hal_uart_printf("  %s (0x%02x) -> 0x%02x\n", bma222e_reg_name(addr), addr, dat);
-  hal_spi_clr_cs();
-  hal_spi_write( addr & ~(READ_BIT) );
-  hal_spi_write( dat );
-  hal_spi_set_cs();
+//------------------------------------------------  
+//    Accel
+//------------------------------------------------
+
+#include "accel.h"
+#include "bma2x2.h" //from bosch bma253 'driver' (ignoring the obvious: bma2x2 != bma253)
+
+#define ACCEL_DEBUG 1
+
+#if ACCEL_DEBUG > 0
+#include "hal_timer.h"
+#include "hal_uart.h"
+#define dbgprintf(...)   { hal_uart_printf(__VA_ARGS__); }
+#else
+#define dbgprintf(...)   {}
+#endif
+
+void accel_power_on(void) {
+  *SPI_PIN_RESET = BIT_ACC_SDA;
+  *SPI_PIN_SET = BIT_ACC_PWR;
+  *SPI_PIN_SET = BIT_ACC_CS;
+  *SPI_PIN_SET = BIT_ACC_SCK;
+  hal_timer_wait(100);
 }
 
-void AccelInit()
+void accel_power_off(void) {
+  *SPI_PIN_RESET = BIT_ACC_SDA;
+  *SPI_PIN_RESET = BIT_ACC_SCK;
+  *SPI_PIN_RESET = BIT_ACC_CS;
+  *SPI_PIN_RESET = BIT_ACC_PWR;
+  hal_timer_wait(20);
+}
+
+bool inline accel_power_is_on(void) { return (*SPI_PIN_READ & BIT_ACC_PWR); }
+
+bool accel_chipinit(void)
 {
-  hal_spi_init();
-  hal_uart_printf("AccelInit()\n");
+  dbgprintf("accel_chipinit():");
+  /*if( !accel_power_is_on() ) {
+    dbgprintf("  FAIL not powered\n");
+    return 0;
+  }*/
   
-  DataWrite(BGW_SOFTRESET, BGW_SOFTRESET_MAGIC); //Exit SUSPEND mode
+  spi_write1(BMA2x2_RST_ADDR, 0xB6); //softreset
   hal_timer_wait(1800); // Must wait 1.8ms after each reset
   
-  // Enter STANDBY mode
-  DataWrite(PMU_LOW_POWER, PMU_LOWPOWER_MODE); // 0x12 first
-  DataWrite(PMU_LPW, PMU_SUSPEND);             // Then 0x11
-  
-  DataWrite(BGW_SPI3_WDT, 1); // 3 wire mode
-  DataWrite(PMU_RANGE, RANGE_4G);
-  DataWrite(PMU_BW, BW_500);
-  
-  // Throw out old FIFO data, reset errors, XYZ mode
-  DataWrite(FIFO_CONFIG_1, FIFO_STREAM|FIFO_WORKAROUND); // Undocumented FIFO_WORKAROUND
-  
-  // From Bosch MIS-AN003: FIFO bug workarounds
-  DataWrite(0x35, 0xCA);  // Undocumented sequence to turn off temperature sensor
-  DataWrite(0x35, 0xCA);
-  DataWrite(0x4F, 0x00);
-  DataWrite(0x35, 0x0A);
-
-  // Enter NORMAL mode
-  DataWrite(PMU_LPW, PMU_NORMAL);
+  spi_write1(BMA2x2_SERIAL_CTRL_ADDR, 0x01); // 3 wire mode
+  spi_write1(BMA2x2_RANGE_SELECT_ADDR, BMA2x2_RANGE_4G);
+  spi_write1(BMA2x2_BW_SELECT_ADDR, BMA2x2_BW_500HZ);
   
   // Read Chip ID
-  int chipid = DataRead(BGW_CHIPID);
-  hal_uart_printf("  chipid = 0x%02x %s\n", chipid, chipid == CHIPID ? "(match)" : "(--MISMATCH--)" );
+  #define CHIP_ID_BMA253  0xFA /*b'1111'1010*/
+  uint8_t chipid = spi_read1(BMA2x2_CHIP_ID_ADDR);
+  dbgprintf("  chipid = 0x%02x %s\n", chipid, chipid == CHIP_ID_BMA253 ? "(match)" : "(--MISMATCH--)" );
+  
+  //lowpower mode, sleep phase duration 0.5ms
+  //spi_write1(BMA2x2_MODE_CTRL_ADDR, 0x40);
+  //spi_write1(BMA2x2_LOW_POWER_MODE_REG, 0x40);
+  
+  //pull power on init failure (SPI funcs leave clk/cs driving high)
+  if( chipid != CHIP_ID_BMA253 )
+    accel_power_off();
+  
+  return chipid == CHIP_ID_BMA253;
+}
+
+int accel_read(void)
+{
+  if( accel_power_is_on() )
+  {
+    //XXX: read something
+    return 1;
+  }
+  return -1;
 }
 
