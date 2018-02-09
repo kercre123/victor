@@ -33,36 +33,6 @@ namespace Anki {
       ConfirmedSharedSecret
     };
     
-    enum PairingMessageType : uint8_t {
-      Nop = 0,
-      Ack = 1,
-      PublicKey = 2,
-      HashedKey = 3,
-      Verified = 4,
-      Nonce = 5,
-    };
-    
-    struct PairingMessage {
-      uint32_t bufferSize;
-      PairingMessageType type;
-      uint8_t* buffer;
-      
-    public:
-      uint8_t* GetBuffer() {
-        uint8_t* bufferCpy = (uint8_t*)malloc(sizeof(uint32_t) + sizeof(PairingMessageType) + bufferSize);
-        
-        memcpy(bufferCpy, &bufferSize, sizeof(uint32_t));
-        memcpy(bufferCpy + sizeof(uint32_t), &type, sizeof(PairingMessageType));
-        memcpy(bufferCpy + sizeof(uint32_t) + sizeof(PairingMessageType), buffer, bufferSize);
-        
-        return bufferCpy;
-      }
-      
-      uint32_t GetSize() {
-        return sizeof(uint32_t) + sizeof(PairingMessageType) + bufferSize;
-      }
-    };
-    
     class SecurePairing {
     public:
       SecurePairing(INetworkStream* stream, struct ev_loop* evloop);

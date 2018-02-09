@@ -389,7 +389,7 @@ Anki::Networking::SecurePairing::SendEncrypted(const T& message) {
 
 void Anki::Networking::SecurePairing::sEvTimerHandler(struct ev_loop* loop, struct ev_timer* w, int revents)
 {
-  printf("t [%d]\n", (time(0) - _TimeStarted));
+  printf("[timer] [%d]\n", (time(0) - _TimeStarted));
   Log::Write("[timer] tick");
   struct ev_TimerStruct *wData = (struct ev_TimerStruct*)w;
   wData->signal->emit();

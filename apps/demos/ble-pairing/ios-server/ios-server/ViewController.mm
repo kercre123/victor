@@ -26,9 +26,15 @@
 - (void)viewDidLoad {
   [super viewDidLoad];
   
+  Log::Write("ViewController");
+  
   pairingQueue = dispatch_queue_create("pairingQueue", NULL);
+  Anki::Switchboard::SetQueue(pairingQueue);
   
   dispatch_async(pairingQueue, ^(){
+    Log::Write("PairingQueue");
+    
+    
     Anki::Switchboard::OnPinUpdatedEvent().SubscribeForever(^(std::string pin) {
       dispatch_async(dispatch_get_main_queue(), ^() {
         _pinLabel.text = [NSString stringWithUTF8String:pin.c_str()];

@@ -17,6 +17,7 @@
 #include "libev.h"
 #include "SecurePairing.h"
 #include "BLEPairingController.h"
+#include "taskExecutor.h"
 
 #define SB_WIFI_PORT 3291
 #define SB_LOOP_TIME 30
@@ -32,11 +33,17 @@ namespace Anki {
       return _PinUpdatedSignal;
     }
     
+    static void SetQueue(dispatch_queue_t q) {
+      switchboardQueue = q;
+    }
+    
   private:
     static struct ev_loop* sLoop;
     static Anki::Networking::SecurePairing* securePairing;
     static Signal::SmartHandle pinHandle;
     static Signal::SmartHandle wifiHandle;
+    static dispatch_queue_t switchboardQueue;
+    static Anki::TaskExecutor* _sTaskExecutor;
     
     static void HandleStartPairing();
     
