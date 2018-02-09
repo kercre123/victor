@@ -382,16 +382,16 @@
     "translation" : "durée du segment"
   },
   "codeLabFeaturedProject.DrivingInCircles.set_adjustable_variables" : {
-    "translation" : "Définis les variables réglables."
+    "translation" : "Définit les variables réglables."
   },
   "codeLabFeaturedProject.DrivingInCircles.set_the_center_x_and_y_variables_to_the_location_of_cube_1" : {
-    "translation" : "Définis les variables centrées x et y selon l'emplacement du cube 1."
+    "translation" : "Définit les variables centrées x et y selon l'emplacement du cube 1."
   },
   "codeLabFeaturedProject.DrivingInCircles.set_the_center_x_and_y_variables_to_the_location_of_cube_2" : {
-    "translation" : "Définis les variables centrées x et y selon l'emplacement du cube 2."
+    "translation" : "Définit les variables centrées x et y selon l'emplacement du cube 2."
   },
   "codeLabFeaturedProject.DrivingInCircles.set_the_center_x_and_y_variables_to_the_location_of_cube_3" : {
-    "translation" : "Définis les variables centrées x et y selon l'emplacement du cube 3."
+    "translation" : "Définit les variables centrées x et y selon l'emplacement du cube 3."
   },
   "codeLabFeaturedProject.DrivingInCircles.show_me_a_cube" : {
     "translation" : "Montre-moi un cube."
@@ -418,7 +418,7 @@
     "translation" : "Ces blocs commandent le minuteur."
   },
   "codeLabFeaturedProject.FiretruckAlarm.these_blocks_display_seconds_left_on_cozmos_face" : {
-    "translation" : "Ces blocs affichent les secondes restantes sur la tête de Cozmo."
+    "translation" : "Ces blocs affichent les secondes restantes sur le visage de Cozmo."
   },
   "codeLabFeaturedProject.HotPotato.and_then_assigns_that_cube_number_as_cozmos_cube" : {
     "translation" : "... et définit ensuite son numéro comme cube de Cozmo."
@@ -559,7 +559,7 @@
     "translation" : "assurément"
   },
   "codeLabFeaturedProject.MagicFortuneTeller.displays_fortune_on_cozmos_face" : {
-    "translation" : "Affiche une réponse sur la tête de Cozmo..."
+    "translation" : "Affiche une réponse sur le visage de Cozmo..."
   },
   "codeLabFeaturedProject.MagicFortuneTeller.for_sure" : {
     "translation" : "sans aucun doute"
@@ -739,13 +739,13 @@
     "translation" : "prêt"
   },
   "codeLabFeaturedProject.PaddleBall.set_adjustable_game_settings" : {
-    "translation" : "Définis les paramètres de jeu réglables."
+    "translation" : "Définit les paramètres de jeu réglables."
   },
   "codeLabFeaturedProject.PaddleBall.set_gameplay_variables" : {
-    "translation" : "Définis les variables de gameplay."
+    "translation" : "Définit les variables de gameplay."
   },
   "codeLabFeaturedProject.PaddleBall.set_where_cozmo_thinks_the_ball_is_based_on_his_skill_level" : {
-    "translation" : "Définis où Cozmo pense que la balle se trouve selon son niveau de compétence."
+    "translation" : "Définit où Cozmo pense que la balle se trouve selon son niveau de compétence."
   },
   "codeLabFeaturedProject.PaddleBall.start_a_new_round_of_gameplay" : {
     "translation" : "Commence une nouvelle manche."
@@ -775,7 +775,7 @@
     "translation" : "En cours de jeu, mets à jour la position de la balle."
   },
   "codeLabFeaturedProject.PaddleBall.while_gameplay_is_active_use_data_to_draw_everything_on_cozmos_face" : {
-    "translation" : "En cours de jeu, utilise les données pour dessiner tout ce que tu veux sur la tête de Cozmo."
+    "translation" : "En cours de jeu, utilise les données pour dessiner tout ce que tu veux sur le visage de Cozmo."
   },
   "codeLabFeaturedProject.PaddleBall.whoops" : {
     "translation" : "Oups !"
@@ -787,7 +787,7 @@
     "translation" : "Tu as gagné !"
   },
   "codeLabFeaturedProject.PotOGoldDetector.animate_a_radar_on_cozmos_face" : {
-    "translation" : "Anime un radar sur la tête de Cozmo."
+    "translation" : "Anime un radar sur le visage de Cozmo."
   },
   "codeLabFeaturedProject.PotOGoldDetector.arc_angle" : {
     "translation" : "angle de l'arc"
@@ -826,13 +826,13 @@
     "translation" : "Vérifie la proximité avec les coordonnées du trésor et ajuste les indicateurs en conséquence."
   },
   "codeLabFeaturedProject.PotOGoldDetector.cozmo_celebrates_and_chooses_a_randomized_treasure_to_display" : {
-    "translation" : "Cozmo fête la découverte du trésor et en affiche un au hasard."
+    "translation" : "Cozmo se réjouit et affiche un trésor au hasard."
   },
   "codeLabFeaturedProject.PotOGoldDetector.cozmo_chooses_the_randomized_treasure_coordinates" : {
     "translation" : "Cozmo choisit les coordonnées du trésor au hasard."
   },
   "codeLabFeaturedProject.PotOGoldDetector.default_yaw_zero" : {
-    "translation" : "direction par défaut à zéro"
+    "translation" : "Position zéro par défaut"
   },
   "codeLabFeaturedProject.PotOGoldDetector.detect_mode" : {
     "translation" : "mode de détection"
@@ -853,19 +853,19 @@
     "translation" : "Dessine une ellipse horizontale."
   },
   "codeLabFeaturedProject.PotOGoldDetector.draw_a_rainbow_on_cozmos_face" : {
-    "translation" : "Dessine un arc-en-ciel sur la tête de Cozmo."
+    "translation" : "Dessine un arc-en-ciel sur le visage de Cozmo."
   },
   "codeLabFeaturedProject.PotOGoldDetector.draw_a_shamrock_on_cozmos_face" : {
-    "translation" : "Dessine un trèfle sur la tête de Cozmo."
+    "translation" : "Dessine un trèfle sur le visage de Cozmo."
   },
   "codeLabFeaturedProject.PotOGoldDetector.draw_a_top_hat_on_cozmos_face" : {
-    "translation" : "Dessine un haut-de-forme sur la tête de Cozmo."
+    "translation" : "Dessine un haut-de-forme sur le visage de Cozmo."
   },
   "codeLabFeaturedProject.PotOGoldDetector.drive_cozmo_backwards" : {
-    "translation" : "Fais reculer Cozmo."
+    "translation" : "Fait reculer Cozmo."
   },
   "codeLabFeaturedProject.PotOGoldDetector.drive_cozmo_forward" : {
-    "translation" : "Fais avancer Cozmo."
+    "translation" : "Fait avancer Cozmo."
   },
   "codeLabFeaturedProject.PotOGoldDetector.drive_distance" : {
     "translation" : "distance à parcourir"
@@ -913,10 +913,10 @@
     "translation" : "radar y"
   },
   "codeLabFeaturedProject.PotOGoldDetector.random_treasure_number" : {
-    "translation" : "nombre de trésors aléatoires"
+    "translation" : "numéro aléatoire du trésor"
   },
   "codeLabFeaturedProject.PotOGoldDetector.set_all_adjustable_variables" : {
-    "translation" : "Définis toutes les variables réglables."
+    "translation" : "Définit toutes les variables réglables."
   },
   "codeLabFeaturedProject.PotOGoldDetector.spin_the_lights_on_cozmos_cubes_in_a_rainbow_sequence" : {
     "translation" : "Active les lumières des cubes dans l'ordre des couleurs de l'arc-en-ciel."
@@ -931,10 +931,10 @@
     "translation" : "trésor y"
   },
   "codeLabFeaturedProject.PotOGoldDetector.turn_cozmo_to_the_left" : {
-    "translation" : "Fais tourner Cozmo à gauche."
+    "translation" : "Fait tourner Cozmo à gauche."
   },
   "codeLabFeaturedProject.PotOGoldDetector.turn_cozmo_to_the_right" : {
-    "translation" : "Fais tourner Cozmo à droite."
+    "translation" : "Fait tourner Cozmo à droite."
   },
   "codeLabFeaturedProject.PotOGoldDetector.turn_radius" : {
     "translation" : "rayon de braquage"

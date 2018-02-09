@@ -23,12 +23,12 @@
                 "variables": {
                     "!H*}dG0uz%bRYuMyWKh[": {
                         "id": "!H*}dG0uz%bRYuMyWKh[",
-                        "name": "En cours de jeu, mets \u00e0 jour la position de la raquette du joueur par rapport \u00e0 son visages dans la cam\u00e9ra.",
+                        "name": "w\u00e4hrend das spiel l\u00e4uft, kannst du die position des schl\u00e4gers des spielers im verh\u00e4ltnis zu seinem gesicht in der kamera aktualisieren.",
                         "value": 0
                     },
                     "!Sb]Gp+PUmF:.t,X0m#%": {
                         "id": "!Sb]Gp+PUmF:.t,X0m#%",
-                        "name": "vainqueur de la manche",
+                        "name": "sieger der runde",
                         "value": "player"
                     },
                     "#8;LiTNtYf+1r,Bb_r[h": {
@@ -38,7 +38,7 @@
                     },
                     ")ha4N6oKo,{?o045fvj6": {
                         "id": ")ha4N6oKo,{?o045fvj6",
-                        "name": "Lance la partie.",
+                        "name": "starte das spiel.",
                         "value": 0
                     },
                     "+Z/_)K(?X%_1eP=48m]C": {
@@ -48,167 +48,167 @@
                     },
                     ",gL.n,lR;UiKpQ@X5|,^": {
                         "id": ",gL.n,lR;UiKpQ@X5|,^",
-                        "name": "En cours de jeu, mets \u00e0 jour la position de la balle.",
+                        "name": "w\u00e4hrend das spiel l\u00e4uft, kannst du die position des balls aktualisieren.",
                         "value": 0
                     },
                     "-:HBy)n6c:cBxM.p#0UN": {
                         "id": "-:HBy)n6c:cBxM.p#0UN",
-                        "name": "Vitesse de boucle",
+                        "name": "schleifenrate",
                         "value": "0.04"
                     },
                     "/7TEh-hWb.#E$|%zpl}w": {
                         "id": "/7TEh-hWb.#E$|%zpl}w",
-                        "name": "V\u00e9rifie si la balle a heurt\u00e9 un mur, une raquette ou bien a marqu\u00e9 un point.",
+                        "name": "sieh nach, ob der ball gegen eine wand geflogen ist, von einem schl\u00e4ger getroffen wurde oder jemand einen punkt erzielt hat.",
                         "value": 0
                     },
                     "2R7G,w^iNhDzuM8oL4=^": {
                         "id": "2R7G,w^iNhDzuM8oL4=^",
-                        "name": "points pour gagner",
+                        "name": "punkte f\u00fcr den sieg",
                         "value": "3"
                     },
                     "5*NstnK2k!}anQPVm$$j": {
                         "id": "5*NstnK2k!}anQPVm$$j",
-                        "name": "la moiti\u00e9 de la hauteur de la raquette du joueur",
+                        "name": "h\u00e4lfte der h\u00f6he des schl\u00e4gers des spielers",
                         "value": "9"
                     },
                     "8P(48np~@_zeR}t8mdV+": {
                         "id": "8P(48np~@_zeR}t8mdV+",
-                        "name": "Lorsque la balle se trouve du c\u00f4t\u00e9 de Cozmo, d\u00e9place sa raquette vers elle.",
+                        "name": "wenn sich der ball auf cozmos seite befindet, beweg seinen schl\u00e4ger zum ball.",
                         "value": 0
                     },
                     "9;(o1uYjmNamlG^@?P$M": {
                         "id": "9;(o1uYjmNamlG^@?P$M",
-                        "name": "Choisis une phrase al\u00e9atoire que Cozmo prononcera quand il marque un point.",
+                        "name": "w\u00e4hle aus, was cozmo sagt, wenn er einen punkt erzielt.",
                         "value": 0
                     },
                     ";+)ef@A}n,M/_h$Jg[tz": {
                         "id": ";+)ef@A}n,M/_h$Jg[tz",
-                        "name": "vitesse de la raquette de Cozmo",
+                        "name": "schl\u00e4ger von cozmo: geschwindigkeit",
                         "value": "0"
                     },
                     ";,8.KO+3@42(n/VrGfz_": {
                         "id": ";,8.KO+3@42(n/VrGfz_",
-                        "name": "vitesse x de la balle",
+                        "name": "ballgeschwindigkeit\u00a0x",
                         "value": "2"
                     },
                     "?*oqc,T2@4qLX3GFc~ln": {
                         "id": "?*oqc,T2@4qLX3GFc~ln",
-                        "name": "vitesse y de la balle",
+                        "name": "ballgeschwindigkeit\u00a0y",
                         "value": -2
                     },
                     "AXGh4s/e^J6+(u)*+d%Y": {
                         "id": "AXGh4s/e^J6+(u)*+d%Y",
-                        "name": "o\u00f9 Cozmo pense que la balle se trouve",
+                        "name": "wo f\u00fcr cozmo der ball ist",
                         "value": -11
                     },
                     "C98$ucj/(Z0/_I;Wqgv1": {
                         "id": "C98$ucj/(Z0/_I;Wqgv1",
-                        "name": "D\u00e9finis o\u00f9 Cozmo pense que la balle se trouve selon son niveau de comp\u00e9tence.",
+                        "name": "leg fest, wo f\u00fcr cozmo der ball ist (auf basis seines skill-levels).",
                         "value": 0
                     },
                     "Emsk)D`uo07V(p/5@]yX": {
                         "id": "Emsk)D`uo07V(p/5@]yX",
-                        "name": "Commence une nouvelle manche.",
+                        "name": "starte eine neue spielrunde.",
                         "value": 0
                     },
                     "Fb0:eMS4J@ZNADdV{R1(": {
                         "id": "Fb0:eMS4J@ZNADdV{R1(",
-                        "name": "Choisis une phrase al\u00e9atoire que Cozmo prononcera quand son adversaire marque un point.",
+                        "name": "w\u00e4hle aus, was cozmo sagt, wenn der spieler einen punkt erzielt.",
                         "value": 0
                     },
                     "Kw-SJM-|Vl%6(jyrVv)}": {
                         "id": "Kw-SJM-|Vl%6(jyrVv)}",
-                        "name": "En cours de jeu, mets \u00e0 jour la position de la raquette de Cozmo en tenant compte de sa vitesse actuelle.",
+                        "name": "w\u00e4hrend das spiel l\u00e4uft, kannst du die position von cozmos schl\u00e4ger mit seiner aktuellen geschwindigkeit aktualisieren.",
                         "value": 0
                     },
                     "M504z[*WEEV(/[Xj)b1L": {
                         "id": "M504z[*WEEV(/[Xj)b1L",
-                        "name": "largeur de la raquette du joueur",
+                        "name": "schl\u00e4ger des spielers: breite",
                         "value": "4"
                     },
                     "N;1W$..-rhJ8tGc4UOzl": {
                         "id": "N;1W$..-rhJ8tGc4UOzl",
-                        "name": "r\u00e9ponse de Cozmo",
+                        "name": "cozmo-antwort",
                         "value": "Nice shot!"
                     },
                     "NluXerqXX#!qwYcUn{7M": {
                         "id": "NluXerqXX#!qwYcUn{7M",
-                        "name": "position y de la raquette de Cozmo",
+                        "name": "schl\u00e4ger von cozmo: position\u00a0y",
                         "value": -2
                     },
                     "TzYn~ZBLT$$?-sp3EP{0": {
                         "id": "TzYn~ZBLT$$?-sp3EP{0",
-                        "name": "rayon de la balle",
+                        "name": "ballradius",
                         "value": "3"
                     },
                     "Un(M(aYayhUWSn{cE(+V": {
                         "id": "Un(M(aYayhUWSn{cE(+V",
-                        "name": "position y de la balle",
+                        "name": "ballposition\u00a0y",
                         "value": 7
                     },
                     "Uo$b[8m_V;*[p-4+wR)t": {
                         "id": "Uo$b[8m_V;*[p-4+wR)t",
-                        "name": "acc\u00e9l\u00e9ration de la raquette de Cozmo",
+                        "name": "schl\u00e4ger von cozmo: beschleunigung",
                         "value": "2"
                     },
                     "WaJW5)%7n{*Z[jtseU~S": {
                         "id": "WaJW5)%7n{*Z[jtseU~S",
-                        "name": "D\u00e9cide quoi faire lorsque Cozmo ou le joueur marque un point.",
+                        "name": "sobald cozmo oder der spieler einen punkt erzielt, entscheidest du, was als n\u00e4chstes passiert.",
                         "value": 0
                     },
                     "Z6V]#gYg;:N`E#%K(URF": {
                         "id": "Z6V]#gYg;:N`E#%K(URF",
-                        "name": "Score du joueur",
+                        "name": "punktzahl des spielers",
                         "value": 3
                     },
                     "[fopL9zl_$hRfJ#B-!fs": {
                         "id": "[fopL9zl_$hRfJ#B-!fs",
-                        "name": "Aucun",
+                        "name": "keine",
                         "value": "none"
                     },
                     "]l881I{MJE$~lyf|{/!q": {
                         "id": "]l881I{MJE$~lyf|{/!q",
-                        "name": "position y de la raquette du joueur",
+                        "name": "schl\u00e4ger des spielers: position\u00a0y",
                         "value": 30.133333333333333
                     },
                     "^?sVp,)oRlk+32@TW9h`": {
                         "id": "^?sVp,)oRlk+32@TW9h`",
-                        "name": "largeur de la raquette de Cozmo",
+                        "name": "schl\u00e4ger von cozmo: breite",
                         "value": "3"
                     },
                     "_]j6]O|`Mh|l7F1N@Nw:": {
                         "id": "_]j6]O|`Mh|l7F1N@Nw:",
-                        "name": "vainqueur de la partie",
+                        "name": "sieger des spiels",
                         "value": "none"
                     },
                     "`z$NRf|9{SJ#s$]*Sm]A": {
                         "id": "`z$NRf|9{SJ#s$]*Sm]A",
-                        "name": "fin de la partie",
+                        "name": "spiel ist beendet",
                         "value": "1"
                     },
                     "aAYf`TvFRMSaVtD7vA/H": {
                         "id": "aAYf`TvFRMSaVtD7vA/H",
-                        "name": "Le joueur a marqu\u00e9 un point.",
+                        "name": "der spieler erzielt einen punkt.",
                         "value": 0
                     },
                     "a^6RLZL5jeV5(TF$V,oX": {
                         "id": "a^6RLZL5jeV5(TF$V,oX",
-                        "name": "Cozmo a marqu\u00e9 un point.",
+                        "name": "cozmo erzielt einen punkt.",
                         "value": 0
                     },
                     "f6%30XG_*pN#W%_oKaYL": {
                         "id": "f6%30XG_*pN#W%_oKaYL",
-                        "name": "nombre de r\u00e9ponses al\u00e9atoires",
+                        "name": "nummer der zufallsantwort",
                         "value": 1
                     },
                     "iHn2k[px%O2BD@yR;Ofu": {
                         "id": "iHn2k[px%O2BD@yR;Ofu",
-                        "name": "Joueur",
+                        "name": "spieler",
                         "value": "player"
                     },
                     "o)|8?w5spmx%f_.GJs;9": {
                         "id": "o)|8?w5spmx%f_.GJs;9",
-                        "name": "fin de la manche",
+                        "name": "runde ist vorbei",
                         "value": "1"
                     },
                     "ps1IW!=TN(Y~R0P[IS~X": {
@@ -218,52 +218,52 @@
                     },
                     "rFoU9C%RL!225]YFH{a+": {
                         "id": "rFoU9C%RL!225]YFH{a+",
-                        "name": "Vitesse de dessin",
+                        "name": "zeichenrate",
                         "value": "0.08"
                     },
                     "uZ~o/V1iQu2,8E+%@!-b": {
                         "id": "uZ~o/V1iQu2,8E+%@!-b",
-                        "name": "vitesse max. de la raquette de Cozmo",
+                        "name": "schl\u00e4ger von cozmo: max. geschwindigkeit",
                         "value": "6"
                     },
                     "vZ|-q)^ord6=6iMj%NNg": {
                         "id": "vZ|-q)^ord6=6iMj%NNg",
-                        "name": "Niveau de comp\u00e9tence de Cozmo",
+                        "name": "cozmo-skill-level",
                         "value": "3"
                     },
                     "vc)o#04i]t]|_wDkV*z/": {
                         "id": "vc)o#04i]t]|_wDkV*z/",
-                        "name": "D\u00e9finis les param\u00e8tres de jeu r\u00e9glables.",
+                        "name": "leg die spieleinstellungen fest.",
                         "value": 0
                     },
                     "xtus709,csCGWPUXkK7Z": {
                         "id": "xtus709,csCGWPUXkK7Z",
-                        "name": "En cours de jeu, utilise les donn\u00e9es pour dessiner tout ce que tu veux sur la t\u00eate de Cozmo.",
+                        "name": "w\u00e4hrend das spiel l\u00e4uft, kannst du anhand von daten alles auf cozmos gesicht zeichnen.",
                         "value": 0
                     },
                     "{YHsXwAt+asRXa)nnh+f": {
                         "id": "{YHsXwAt+asRXa)nnh+f",
-                        "name": "position x de la balle",
+                        "name": "ballposition\u00a0x",
                         "value": 151
                     },
                     "|Z-{pQ3;E{+2^LU~Empv": {
                         "id": "|Z-{pQ3;E{+2^LU~Empv",
-                        "name": "la moiti\u00e9 de la hauteur de la raquette de Cozmo",
+                        "name": "h\u00e4lfte der h\u00f6he des schl\u00e4gers von cozmo",
                         "value": "9"
                     },
                     "}]gOzGcQ@O^6pncdwy8z": {
                         "id": "}]gOzGcQ@O^6pncdwy8z",
-                        "name": "Score de Cozmo",
+                        "name": "punktzahl von cozmo",
                         "value": 1
                     },
                     "~+xe2@l-w0oAG18*)N}I": {
                         "id": "~+xe2@l-w0oAG18*)N}I",
-                        "name": "diminuer la hauteur de la raquette de",
+                        "name": "schl\u00e4gerh\u00f6he verringern um",
                         "value": "2"
                     },
                     "~j3j3@|P{=IzQ5PMcSN*": {
                         "id": "~j3j3@|P{=IzQ5PMcSN*",
-                        "name": "D\u00e9finis les variables de gameplay.",
+                        "name": "leg die variablen f\u00fcrs spiel fest.",
                         "value": 0
                     }
                 },
@@ -342,7 +342,7 @@
                             "VARIABLE": {
                                 "id": "]l881I{MJE$~lyf|{/!q",
                                 "name": "VARIABLE",
-                                "value": "position y de la raquette du joueur"
+                                "value": "schl\u00e4ger des spielers: position\u00a0y"
                             }
                         },
                         "id": "!MUA4(S404AwAk2`]o9)",
@@ -359,7 +359,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Rejouer\u00a0?"
+                                "value": "erneut spielen?"
                             }
                         },
                         "id": "!])#0o8)A=SM|JzuyOEi",
@@ -444,7 +444,7 @@
                             "VARIABLE": {
                                 "id": "rFoU9C%RL!225]YFH{a+",
                                 "name": "VARIABLE",
-                                "value": "Vitesse de dessin"
+                                "value": "zeichenrate"
                             }
                         },
                         "id": "#/A+iq)HPZIC5}w~v=Q6",
@@ -506,7 +506,7 @@
                             "VARIABLE": {
                                 "id": "uZ~o/V1iQu2,8E+%@!-b",
                                 "name": "VARIABLE",
-                                "value": "vitesse max. de la raquette de Cozmo"
+                                "value": "schl\u00e4ger von cozmo: max. geschwindigkeit"
                             }
                         },
                         "id": "#HF*Ve-zym*H1P.#K_qv",
@@ -539,7 +539,7 @@
                             "VARIABLE": {
                                 "id": "5*NstnK2k!}anQPVm$$j",
                                 "name": "VARIABLE",
-                                "value": "la moiti\u00e9 de la hauteur de la raquette du joueur"
+                                "value": "h\u00e4lfte der h\u00f6he des schl\u00e4gers des spielers"
                             }
                         },
                         "id": "#MaIV$l{iUML1_Z)U@7;",
@@ -572,7 +572,7 @@
                             "VARIABLE": {
                                 "id": "TzYn~ZBLT$$?-sp3EP{0",
                                 "name": "VARIABLE",
-                                "value": "rayon de la balle"
+                                "value": "ballradius"
                             }
                         },
                         "id": "#tng%${S$MVK7amJs5{c",
@@ -662,7 +662,7 @@
                             "VARIABLE": {
                                 "id": "-:HBy)n6c:cBxM.p#0UN",
                                 "name": "VARIABLE",
-                                "value": "Vitesse de boucle"
+                                "value": "schleifenrate"
                             }
                         },
                         "id": "$KlGCOib6R@3b@BsN6-G",
@@ -782,7 +782,7 @@
                             "VARIABLE": {
                                 "id": ";,8.KO+3@42(n/VrGfz_",
                                 "name": "VARIABLE",
-                                "value": "vitesse x de la balle"
+                                "value": "ballgeschwindigkeit\u00a0x"
                             }
                         },
                         "id": "%PCL2:A|nbYaHq+BEej+",
@@ -843,7 +843,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Aucun"
+                                "value": "keine"
                             }
                         },
                         "id": "%WdOCfHG(#!{?e$GG,y{",
@@ -859,7 +859,7 @@
                             "VARIABLE": {
                                 "id": "iHn2k[px%O2BD@yR;Ofu",
                                 "name": "VARIABLE",
-                                "value": "Joueur"
+                                "value": "spieler"
                             }
                         },
                         "id": "%X%QNr4=2$IOgwmVWb8M",
@@ -997,7 +997,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Tu as gagn\u00e9\u00a0!"
+                                "value": "du\ngewinnst!"
                             }
                         },
                         "id": "(dpSc+VI71H;^5CY]f7a",
@@ -1073,7 +1073,7 @@
                             "VARIABLE": {
                                 "id": "|Z-{pQ3;E{+2^LU~Empv",
                                 "name": "VARIABLE",
-                                "value": "la moiti\u00e9 de la hauteur de la raquette de Cozmo"
+                                "value": "h\u00e4lfte der h\u00f6he des schl\u00e4gers von cozmo"
                             }
                         },
                         "id": ")+8,R5VFEJg$GjgjT2Mp",
@@ -1108,7 +1108,7 @@
                             "VARIABLE": {
                                 "id": "^?sVp,)oRlk+32@TW9h`",
                                 "name": "VARIABLE",
-                                "value": "largeur de la raquette"
+                                "value": "schl\u00e4gerbreite"
                             }
                         },
                         "id": ").yxI./BvF?p}TJj3;|L",
@@ -1126,7 +1126,7 @@
                             "VARIABLE": {
                                 "id": "Un(M(aYayhUWSn{cE(+V",
                                 "name": "VARIABLE",
-                                "value": "position y de la balle"
+                                "value": "ballposition\u00a0y"
                             }
                         },
                         "id": ")6RC^mAl9oeeA^H[X!l6",
@@ -1202,7 +1202,7 @@
                             "VARIABLE": {
                                 "id": "o)|8?w5spmx%f_.GJs;9",
                                 "name": "VARIABLE",
-                                "value": "fin de la manche"
+                                "value": "runde ist vorbei"
                             }
                         },
                         "id": ")`%btEy%tC_*wtJdG0?Z",
@@ -1242,7 +1242,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Raquette\u00a0!"
+                                "value": "schl\u00e4ger!"
                             }
                         },
                         "id": ")fp!YFZC`8[0ncvA^FO5",
@@ -1356,7 +1356,7 @@
                             "VARIABLE": {
                                 "id": "vZ|-q)^ord6=6iMj%NNg",
                                 "name": "VARIABLE",
-                                "value": "Niveau de comp\u00e9tence de Cozmo"
+                                "value": "cozmo-skill-level"
                             }
                         },
                         "id": "*rpfI.)Sdu8i+ia9u5C{",
@@ -1498,7 +1498,7 @@
                             "VARIABLE": {
                                 "id": "/7TEh-hWb.#E$|%zpl}w",
                                 "name": "VARIABLE",
-                                "value": "V\u00e9rifie si la balle a heurt\u00e9 un mur, une raquette ou bien a marqu\u00e9 un point."
+                                "value": "sieh nach, ob der ball gegen eine wand geflogen ist, von einem schl\u00e4ger getroffen wurde oder jemand einen punkt erzielt hat."
                             }
                         },
                         "id": "+tWPO-fc({uUdWY5$V~T",
@@ -1554,7 +1554,7 @@
                             "VARIABLE": {
                                 "id": "N;1W$..-rhJ8tGc4UOzl",
                                 "name": "VARIABLE",
-                                "value": "r\u00e9ponse de Cozmo"
+                                "value": "cozmo-antwort"
                             }
                         },
                         "id": "+yDZ@-SHBCHZU|[+3SN|",
@@ -1595,7 +1595,7 @@
                             "VARIABLE": {
                                 "id": "Un(M(aYayhUWSn{cE(+V",
                                 "name": "VARIABLE",
-                                "value": "position y de la balle"
+                                "value": "ballposition\u00a0y"
                             }
                         },
                         "id": ",.@|!o$KRI+ie+]r{KFJ",
@@ -1619,7 +1619,7 @@
                             "VARIABLE": {
                                 "id": "[fopL9zl_$hRfJ#B-!fs",
                                 "name": "VARIABLE",
-                                "value": "Aucun"
+                                "value": "keine"
                             }
                         },
                         "id": ",B-+Bt%Od2+IL3YC]IS*",
@@ -1702,7 +1702,7 @@
                             "VARIABLE": {
                                 "id": "Un(M(aYayhUWSn{cE(+V",
                                 "name": "VARIABLE",
-                                "value": "position y de la balle"
+                                "value": "ballposition\u00a0y"
                             }
                         },
                         "id": "-/IpIXeDtlNS-lLW|mwo",
@@ -1841,7 +1841,7 @@
                             "VARIABLE": {
                                 "id": "Kw-SJM-|Vl%6(jyrVv)}",
                                 "name": "VARIABLE",
-                                "value": "En cours de jeu, mets \u00e0 jour la position de la raquette de Cozmo en tenant compte de sa vitesse actuelle."
+                                "value": "w\u00e4hrend das spiel l\u00e4uft, kannst du die position von cozmos schl\u00e4ger mit seiner aktuellen geschwindigkeit aktualisieren."
                             }
                         },
                         "id": "-g3vydjo?}3i..;rH,y%",
@@ -1859,7 +1859,7 @@
                             "VARIABLE": {
                                 "id": "NluXerqXX#!qwYcUn{7M",
                                 "name": "VARIABLE",
-                                "value": "position y de la raquette de Cozmo"
+                                "value": "schl\u00e4ger von cozmo: position\u00a0y"
                             }
                         },
                         "id": "-rVaGNHosQnJBVL~J=@K",
@@ -1966,7 +1966,7 @@
                             "VARIABLE": {
                                 "id": "N;1W$..-rhJ8tGc4UOzl",
                                 "name": "VARIABLE",
-                                "value": "r\u00e9ponse de Cozmo"
+                                "value": "cozmo-antwort"
                             }
                         },
                         "id": ".?+ll2]^5xwj7(uXhArG",
@@ -2053,7 +2053,7 @@
                             "VARIABLE": {
                                 "id": "{YHsXwAt+asRXa)nnh+f",
                                 "name": "VARIABLE",
-                                "value": "position x de la balle"
+                                "value": "ballposition\u00a0x"
                             }
                         },
                         "id": ".g-|lf`Cf5{v*o2Q7VOT",
@@ -2094,7 +2094,7 @@
                             "VARIABLE": {
                                 "id": "~+xe2@l-w0oAG18*)N}I",
                                 "name": "VARIABLE",
-                                "value": "diminuer la hauteur de la raquette de"
+                                "value": "schl\u00e4gerh\u00f6he verringern um"
                             }
                         },
                         "id": "/!t_nS)A{;{Fnd1ZROG%",
@@ -2167,7 +2167,7 @@
                             "VARIABLE": {
                                 "id": "uZ~o/V1iQu2,8E+%@!-b",
                                 "name": "VARIABLE",
-                                "value": "vitesse max. de la raquette de Cozmo"
+                                "value": "schl\u00e4ger von cozmo: max. geschwindigkeit"
                             }
                         },
                         "id": "06FgafR_)8Oh-U=t/W~6",
@@ -2208,7 +2208,7 @@
                             "VARIABLE": {
                                 "id": "TzYn~ZBLT$$?-sp3EP{0",
                                 "name": "VARIABLE",
-                                "value": "rayon de la balle"
+                                "value": "ballradius"
                             }
                         },
                         "id": "0S#Mx,#qTC9(P$8wJYW-",
@@ -2347,7 +2347,7 @@
                             "VARIABLE": {
                                 "id": "!Sb]Gp+PUmF:.t,X0m#%",
                                 "name": "VARIABLE",
-                                "value": "vainqueur de la manche"
+                                "value": "sieger der runde"
                             }
                         },
                         "id": "1]Gabz)cOSvGyMg:R!vg",
@@ -2576,7 +2576,7 @@
                             "VARIABLE": {
                                 "id": "5*NstnK2k!}anQPVm$$j",
                                 "name": "VARIABLE",
-                                "value": "la moiti\u00e9 de la hauteur de la raquette du joueur"
+                                "value": "h\u00e4lfte der h\u00f6he des schl\u00e4gers des spielers"
                             }
                         },
                         "id": "3AvppF|QTt~DS@7^QT.9",
@@ -2594,7 +2594,7 @@
                             "VARIABLE": {
                                 "id": "|Z-{pQ3;E{+2^LU~Empv",
                                 "name": "VARIABLE",
-                                "value": "la moiti\u00e9 de la hauteur de la raquette de Cozmo"
+                                "value": "h\u00e4lfte der h\u00f6he des schl\u00e4gers von cozmo"
                             }
                         },
                         "id": "3E^pY)qTK|t1a+A|RQVG",
@@ -2699,7 +2699,7 @@
                             "VARIABLE": {
                                 "id": "?*oqc,T2@4qLX3GFc~ln",
                                 "name": "VARIABLE",
-                                "value": "vitesse y de la balle"
+                                "value": "ballgeschwindigkeit\u00a0y"
                             }
                         },
                         "id": "49y$6.7;!LvM:yQSD_j+",
@@ -2791,7 +2791,7 @@
                             "VARIABLE": {
                                 "id": "C98$ucj/(Z0/_I;Wqgv1",
                                 "name": "VARIABLE",
-                                "value": "D\u00e9finis o\u00f9 Cozmo pense que la balle se trouve selon son niveau de comp\u00e9tence."
+                                "value": "leg fest, wo f\u00fcr cozmo der ball ist (auf basis seines skill-levels)."
                             }
                         },
                         "id": "4Sz$lk9_iLFUQ1Q*+7i2",
@@ -2852,7 +2852,7 @@
                             "VARIABLE": {
                                 "id": "f6%30XG_*pN#W%_oKaYL",
                                 "name": "VARIABLE",
-                                "value": "nombre de r\u00e9ponses al\u00e9atoires"
+                                "value": "nummer der zufallsantwort"
                             }
                         },
                         "id": "4o`pDy9dW@s$F{MF+X*`",
@@ -2982,7 +2982,7 @@
                             "VARIABLE": {
                                 "id": "o)|8?w5spmx%f_.GJs;9",
                                 "name": "VARIABLE",
-                                "value": "fin de la manche"
+                                "value": "runde ist vorbei"
                             }
                         },
                         "id": "5ojt*-qK5K@5TH0`R/?r",
@@ -3000,7 +3000,7 @@
                             "VARIABLE": {
                                 "id": "TzYn~ZBLT$$?-sp3EP{0",
                                 "name": "VARIABLE",
-                                "value": "rayon de la balle"
+                                "value": "ballradius"
                             }
                         },
                         "id": "6$X0bnOZ#{wYLW|eB^6e",
@@ -3034,7 +3034,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Bonjour"
+                                "value": "hallo"
                             }
                         },
                         "id": "62`+2}_B!:tW4vR6*;o|",
@@ -3120,7 +3120,7 @@
                             "VARIABLE": {
                                 "id": "AXGh4s/e^J6+(u)*+d%Y",
                                 "name": "VARIABLE",
-                                "value": "o\u00f9 Cozmo pense que la balle se trouve"
+                                "value": "wo f\u00fcr cozmo der ball ist"
                             }
                         },
                         "id": "6E?;/cY#A50.wwj{D!GU",
@@ -3161,7 +3161,7 @@
                             "VARIABLE": {
                                 "id": "|Z-{pQ3;E{+2^LU~Empv",
                                 "name": "VARIABLE",
-                                "value": "la moiti\u00e9 de la hauteur de la raquette de Cozmo"
+                                "value": "h\u00e4lfte der h\u00f6he des schl\u00e4gers von cozmo"
                             }
                         },
                         "id": "6J(?t5eD/Xxr{:-qXpHw",
@@ -3244,7 +3244,7 @@
                             "VARIABLE": {
                                 "id": "?*oqc,T2@4qLX3GFc~ln",
                                 "name": "VARIABLE",
-                                "value": "vitesse y de la balle"
+                                "value": "ballgeschwindigkeit\u00a0y"
                             }
                         },
                         "id": "6g/_qW~~QkH?49$oh7n8",
@@ -3309,7 +3309,7 @@
                             "VARIABLE": {
                                 "id": "TzYn~ZBLT$$?-sp3EP{0",
                                 "name": "VARIABLE",
-                                "value": "rayon de la balle"
+                                "value": "ballradius"
                             }
                         },
                         "id": "6yG1VQb0YAd8~l1B^6T5",
@@ -3342,7 +3342,7 @@
                             "VARIABLE": {
                                 "id": "f6%30XG_*pN#W%_oKaYL",
                                 "name": "VARIABLE",
-                                "value": "nombre de r\u00e9ponses al\u00e9atoires"
+                                "value": "nummer der zufallsantwort"
                             }
                         },
                         "id": "7+VM%3}MypRocMH*f91(",
@@ -3377,7 +3377,7 @@
                             "VARIABLE": {
                                 "id": "uZ~o/V1iQu2,8E+%@!-b",
                                 "name": "VARIABLE",
-                                "value": "vitesse max. de la raquette de Cozmo"
+                                "value": "schl\u00e4ger von cozmo: max. geschwindigkeit"
                             }
                         },
                         "id": "7-k^~o:3z@sa{k(~GY-S",
@@ -3395,7 +3395,7 @@
                             "VARIABLE": {
                                 "id": "o)|8?w5spmx%f_.GJs;9",
                                 "name": "VARIABLE",
-                                "value": "fin de la manche"
+                                "value": "runde ist vorbei"
                             }
                         },
                         "id": "7@=5h;@n5$C|F/1Z@4x%",
@@ -3434,7 +3434,7 @@
                             "VARIABLE": {
                                 "id": "|Z-{pQ3;E{+2^LU~Empv",
                                 "name": "VARIABLE",
-                                "value": "la moiti\u00e9 de la hauteur de la raquette de Cozmo"
+                                "value": "h\u00e4lfte der h\u00f6he des schl\u00e4gers von cozmo"
                             }
                         },
                         "id": "7mmKw/iQzakI9^F:xNJz",
@@ -3519,7 +3519,7 @@
                             "VARIABLE": {
                                 "id": "NluXerqXX#!qwYcUn{7M",
                                 "name": "VARIABLE",
-                                "value": "position y de la raquette de Cozmo"
+                                "value": "schl\u00e4ger von cozmo: position\u00a0y"
                             }
                         },
                         "id": "8,uxBKd(ZJ2%)vWDlRfZ",
@@ -3543,7 +3543,7 @@
                             "VARIABLE": {
                                 "id": "Uo$b[8m_V;*[p-4+wR)t",
                                 "name": "VARIABLE",
-                                "value": "acc\u00e9l\u00e9ration de la raquette de Cozmo"
+                                "value": "schl\u00e4ger von cozmo: beschleunigung"
                             }
                         },
                         "id": "8C%PHqQ_o_S~H^s:}C)I",
@@ -3665,7 +3665,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Ta raquette a un trou\u00a0?"
+                                "value": "ist ein loch in deinem schl\u00e4ger?"
                             }
                         },
                         "id": "8iA;M1v(}FI8PGo{#UD0",
@@ -3848,7 +3848,7 @@
                             "VARIABLE": {
                                 "id": "Un(M(aYayhUWSn{cE(+V",
                                 "name": "VARIABLE",
-                                "value": "position y de la balle"
+                                "value": "ballposition\u00a0y"
                             }
                         },
                         "id": "9Ob(#9tL-l5[{l5Lx4R9",
@@ -3896,7 +3896,7 @@
                             "VARIABLE": {
                                 "id": "`z$NRf|9{SJ#s$]*Sm]A",
                                 "name": "VARIABLE",
-                                "value": "fin de la partie"
+                                "value": "spiel ist beendet"
                             }
                         },
                         "id": "9tt(Jf/VlrAZ^=WO5zoY",
@@ -3955,7 +3955,7 @@
                             "VARIABLE": {
                                 "id": "TzYn~ZBLT$$?-sp3EP{0",
                                 "name": "VARIABLE",
-                                "value": "rayon de la balle"
+                                "value": "ballradius"
                             }
                         },
                         "id": ":jfpf]k@i*!ze#WfOvJH",
@@ -4008,7 +4008,7 @@
                             "VARIABLE": {
                                 "id": "^?sVp,)oRlk+32@TW9h`",
                                 "name": "VARIABLE",
-                                "value": "largeur de la raquette"
+                                "value": "schl\u00e4gerbreite"
                             }
                         },
                         "id": ";9rRUR;9e=f:H9SG`6J0",
@@ -4104,7 +4104,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "vrai "
+                                "value": "wahr "
                             }
                         },
                         "id": ";llmE[;~CK89mfBRN%FH",
@@ -4139,7 +4139,7 @@
                             "VARIABLE": {
                                 "id": "~j3j3@|P{=IzQ5PMcSN*",
                                 "name": "VARIABLE",
-                                "value": "D\u00e9finis les variables de gameplay."
+                                "value": "leg die variablen f\u00fcrs spiel fest."
                             }
                         },
                         "id": "=9^xmqt_-r7d)Q7yL^j#",
@@ -4203,7 +4203,7 @@
                             "VARIABLE": {
                                 "id": "TzYn~ZBLT$$?-sp3EP{0",
                                 "name": "VARIABLE",
-                                "value": "rayon de la balle"
+                                "value": "ballradius"
                             }
                         },
                         "id": "=aq%b#lx95zr|LA22UjU",
@@ -4267,7 +4267,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "pr\u00eat"
+                                "value": "festlegen"
                             }
                         },
                         "id": "?(o*`Hverd;eP1WFTy!V",
@@ -4356,7 +4356,7 @@
                             "VARIABLE": {
                                 "id": "-:HBy)n6c:cBxM.p#0UN",
                                 "name": "VARIABLE",
-                                "value": "Vitesse de boucle"
+                                "value": "schleifenrate"
                             }
                         },
                         "id": "?btv^WjG{]?.q_6e/Nvi",
@@ -4449,7 +4449,7 @@
                             "VARIABLE": {
                                 "id": ";+)ef@A}n,M/_h$Jg[tz",
                                 "name": "VARIABLE",
-                                "value": "vitesse de la raquette de Cozmo"
+                                "value": "schl\u00e4ger von cozmo: geschwindigkeit"
                             }
                         },
                         "id": "@/j0ZS#(QfqOgeZk1wdl",
@@ -4467,7 +4467,7 @@
                             "VARIABLE": {
                                 "id": "?*oqc,T2@4qLX3GFc~ln",
                                 "name": "VARIABLE",
-                                "value": "vitesse y de la balle"
+                                "value": "ballgeschwindigkeit\u00a0y"
                             }
                         },
                         "id": "@8kEc%z3IvPSymp_U.S_",
@@ -4564,7 +4564,7 @@
                             "VARIABLE": {
                                 "id": "uZ~o/V1iQu2,8E+%@!-b",
                                 "name": "VARIABLE",
-                                "value": "vitesse max. de la raquette de Cozmo"
+                                "value": "schl\u00e4ger von cozmo: max. geschwindigkeit"
                             }
                         },
                         "id": "@wS+vDg/O6mcU8y^gx9v",
@@ -4582,7 +4582,7 @@
                             "VARIABLE": {
                                 "id": ";,8.KO+3@42(n/VrGfz_",
                                 "name": "VARIABLE",
-                                "value": "vitesse x de la balle"
+                                "value": "ballgeschwindigkeit\u00a0x"
                             }
                         },
                         "id": "@y0Zt62Tuu(6y^vl3U|k",
@@ -4703,7 +4703,7 @@
                             "VARIABLE": {
                                 "id": "|Z-{pQ3;E{+2^LU~Empv",
                                 "name": "VARIABLE",
-                                "value": "la moiti\u00e9 de la hauteur de la raquette de Cozmo"
+                                "value": "h\u00e4lfte der h\u00f6he des schl\u00e4gers von cozmo"
                             }
                         },
                         "id": "A^qg^PXObv?0UQzMxt`Q",
@@ -4850,7 +4850,7 @@
                             "VARIABLE": {
                                 "id": "{YHsXwAt+asRXa)nnh+f",
                                 "name": "VARIABLE",
-                                "value": "position x de la balle"
+                                "value": "ballposition\u00a0x"
                             }
                         },
                         "id": "Bz~`-U1QGdFSG`spLTu*",
@@ -4868,7 +4868,7 @@
                             "VARIABLE": {
                                 "id": "N;1W$..-rhJ8tGc4UOzl",
                                 "name": "VARIABLE",
-                                "value": "r\u00e9ponse de Cozmo"
+                                "value": "cozmo-antwort"
                             }
                         },
                         "id": "C(o7D/.Rv92$g6r!Jo?4",
@@ -4993,7 +4993,7 @@
                             "VARIABLE": {
                                 "id": "?*oqc,T2@4qLX3GFc~ln",
                                 "name": "VARIABLE",
-                                "value": "vitesse y de la balle"
+                                "value": "ballgeschwindigkeit\u00a0y"
                             }
                         },
                         "id": "CVGqL8Nh`@-_S,u9Tnz4",
@@ -5072,7 +5072,7 @@
                             "VARIABLE": {
                                 "id": "[fopL9zl_$hRfJ#B-!fs",
                                 "name": "VARIABLE",
-                                "value": "Aucun"
+                                "value": "keine"
                             }
                         },
                         "id": "CuW|6fRT^d]0WJK%~PeV",
@@ -5108,7 +5108,7 @@
                             "VARIABLE": {
                                 "id": "o)|8?w5spmx%f_.GJs;9",
                                 "name": "VARIABLE",
-                                "value": "fin de la manche"
+                                "value": "runde ist vorbei"
                             }
                         },
                         "id": "D)Gp1:NFrs%nEp4,I.:3",
@@ -5143,7 +5143,7 @@
                             "VARIABLE": {
                                 "id": "^?sVp,)oRlk+32@TW9h`",
                                 "name": "VARIABLE",
-                                "value": "largeur de la raquette"
+                                "value": "schl\u00e4gerbreite"
                             }
                         },
                         "id": "DNNbW$O8p]?Ez/0fe]G+",
@@ -5161,7 +5161,7 @@
                             "VARIABLE": {
                                 "id": "!Sb]Gp+PUmF:.t,X0m#%",
                                 "name": "VARIABLE",
-                                "value": "vainqueur de la manche"
+                                "value": "sieger der runde"
                             }
                         },
                         "id": "DNiio6?lu60tE+|/I40*",
@@ -5213,7 +5213,7 @@
                             "VARIABLE": {
                                 "id": "|Z-{pQ3;E{+2^LU~Empv",
                                 "name": "VARIABLE",
-                                "value": "la moiti\u00e9 de la hauteur de la raquette de Cozmo"
+                                "value": "h\u00e4lfte der h\u00f6he des schl\u00e4gers von cozmo"
                             }
                         },
                         "id": "DVom1GciY9!Jm(DbUO[R",
@@ -5276,7 +5276,7 @@
                             "VARIABLE": {
                                 "id": "M504z[*WEEV(/[Xj)b1L",
                                 "name": "VARIABLE",
-                                "value": "largeur de la raquette du joueur"
+                                "value": "schl\u00e4ger des spielers: breite"
                             }
                         },
                         "id": "Dm]5KtX.{p)jR594%THs",
@@ -5315,7 +5315,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Joli coup\u00a0!"
+                                "value": "guter schlag!"
                             }
                         },
                         "id": "E$L9}FogMXXtqrp.P2EO",
@@ -5330,7 +5330,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Joueur"
+                                "value": "spieler"
                             }
                         },
                         "id": "E)Q2Bi3SotsH3,@}Jal+",
@@ -5378,7 +5378,7 @@
                             "VARIABLE": {
                                 "id": "M504z[*WEEV(/[Xj)b1L",
                                 "name": "VARIABLE",
-                                "value": "largeur de la raquette du joueur"
+                                "value": "schl\u00e4ger des spielers: breite"
                             }
                         },
                         "id": "E8/UZj91C}Lbh{h$M[jo",
@@ -5396,7 +5396,7 @@
                             "VARIABLE": {
                                 "id": "N;1W$..-rhJ8tGc4UOzl",
                                 "name": "VARIABLE",
-                                "value": "r\u00e9ponse de Cozmo"
+                                "value": "cozmo-antwort"
                             }
                         },
                         "id": "ESnv43=7|th/$kO(su9+",
@@ -5420,7 +5420,7 @@
                             "VARIABLE": {
                                 "id": "TzYn~ZBLT$$?-sp3EP{0",
                                 "name": "VARIABLE",
-                                "value": "rayon de la balle"
+                                "value": "ballradius"
                             }
                         },
                         "id": "EgF@/C6D?qOpF963f7xQ",
@@ -5438,7 +5438,7 @@
                             "VARIABLE": {
                                 "id": "Un(M(aYayhUWSn{cE(+V",
                                 "name": "VARIABLE",
-                                "value": "position y de la balle"
+                                "value": "ballposition\u00a0y"
                             }
                         },
                         "id": "EgqmW8fBUa^[OfBtE:9`",
@@ -5644,7 +5644,7 @@
                             "VARIABLE": {
                                 "id": "?*oqc,T2@4qLX3GFc~ln",
                                 "name": "VARIABLE",
-                                "value": "vitesse y de la balle"
+                                "value": "ballgeschwindigkeit\u00a0y"
                             }
                         },
                         "id": "FbR)y*y/qphTIcW-rn8$",
@@ -5686,7 +5686,7 @@
                             "VARIABLE": {
                                 "id": "TzYn~ZBLT$$?-sp3EP{0",
                                 "name": "VARIABLE",
-                                "value": "rayon de la balle"
+                                "value": "ballradius"
                             }
                         },
                         "id": "F}tHh;qv!/YKwOuvrtx8",
@@ -5704,7 +5704,7 @@
                             "VARIABLE": {
                                 "id": "{YHsXwAt+asRXa)nnh+f",
                                 "name": "VARIABLE",
-                                "value": "position x de la balle"
+                                "value": "ballposition\u00a0x"
                             }
                         },
                         "id": "G):pu).[Wq)#gB4WF}`g",
@@ -5722,7 +5722,7 @@
                             "VARIABLE": {
                                 "id": "o)|8?w5spmx%f_.GJs;9",
                                 "name": "VARIABLE",
-                                "value": "fin de la manche"
+                                "value": "runde ist vorbei"
                             }
                         },
                         "id": "G*b@@8s}4NVBhafT}}ft",
@@ -5757,7 +5757,7 @@
                             "VARIABLE": {
                                 "id": "Un(M(aYayhUWSn{cE(+V",
                                 "name": "VARIABLE",
-                                "value": "position y de la balle"
+                                "value": "ballposition\u00a0y"
                             }
                         },
                         "id": "G@uX:e0QFZ]6s^y-J@S0",
@@ -5863,7 +5863,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Ma raquette a gliss\u00e9."
+                                "value": "ich habe meinen schl\u00e4ger verloren"
                             }
                         },
                         "id": "Hs-v6J:yAw/#92qV5kbl",
@@ -5896,7 +5896,7 @@
                             "VARIABLE": {
                                 "id": "aAYf`TvFRMSaVtD7vA/H",
                                 "name": "VARIABLE",
-                                "value": "Le joueur a marqu\u00e9 un point."
+                                "value": "der spieler erzielt einen punkt."
                             }
                         },
                         "id": "I)mCBo.Ts8g@j?.p!TfG",
@@ -5914,7 +5914,7 @@
                             "VARIABLE": {
                                 "id": "vZ|-q)^ord6=6iMj%NNg",
                                 "name": "VARIABLE",
-                                "value": "Niveau de comp\u00e9tence de Cozmo"
+                                "value": "cozmo-skill-level"
                             }
                         },
                         "id": "I,2451?=JpU%w*~#@d0,",
@@ -6152,7 +6152,7 @@
                             "VARIABLE": {
                                 "id": "!Sb]Gp+PUmF:.t,X0m#%",
                                 "name": "VARIABLE",
-                                "value": "vainqueur de la manche"
+                                "value": "sieger der runde"
                             }
                         },
                         "id": "JBdt4i/b./4A7U%S9TDy",
@@ -6186,7 +6186,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Je suis le meilleur\u00a0!"
+                                "value": "ich bin der beste!"
                             }
                         },
                         "id": "JUl%Sz+_bh4$^?PF%;[9",
@@ -6248,7 +6248,7 @@
                             "VARIABLE": {
                                 "id": "NluXerqXX#!qwYcUn{7M",
                                 "name": "VARIABLE",
-                                "value": "position y de la raquette de Cozmo"
+                                "value": "schl\u00e4ger von cozmo: position\u00a0y"
                             }
                         },
                         "id": "Jj|h9-=M,_%C7me-!Q06",
@@ -6356,7 +6356,7 @@
                             "VARIABLE": {
                                 "id": "|Z-{pQ3;E{+2^LU~Empv",
                                 "name": "VARIABLE",
-                                "value": "la moiti\u00e9 de la hauteur de la raquette de Cozmo"
+                                "value": "h\u00e4lfte der h\u00f6he des schl\u00e4gers von cozmo"
                             }
                         },
                         "id": "KHH[KGPhEmYS9]D($A}J",
@@ -6567,7 +6567,7 @@
                             "VARIABLE": {
                                 "id": "!Sb]Gp+PUmF:.t,X0m#%",
                                 "name": "VARIABLE",
-                                "value": "vainqueur de la manche"
+                                "value": "sieger der runde"
                             }
                         },
                         "id": "M(Y6G`poVu#Ey{/rT:YA",
@@ -6679,7 +6679,7 @@
                             "VARIABLE": {
                                 "id": "NluXerqXX#!qwYcUn{7M",
                                 "name": "VARIABLE",
-                                "value": "position y de la raquette de Cozmo"
+                                "value": "schl\u00e4ger von cozmo: position\u00a0y"
                             }
                         },
                         "id": "MH]?%Y}a##^joP9vy),_",
@@ -6712,7 +6712,7 @@
                             "VARIABLE": {
                                 "id": "TzYn~ZBLT$$?-sp3EP{0",
                                 "name": "VARIABLE",
-                                "value": "rayon de la balle"
+                                "value": "ballradius"
                             }
                         },
                         "id": "Mm9PJq7%=^It1-8+Ba#3",
@@ -6817,7 +6817,7 @@
                             "VARIABLE": {
                                 "id": "^?sVp,)oRlk+32@TW9h`",
                                 "name": "VARIABLE",
-                                "value": "largeur de la raquette"
+                                "value": "schl\u00e4gerbreite"
                             }
                         },
                         "id": "N]vl$$;#VZ8}N$mxnN#Z",
@@ -6894,7 +6894,7 @@
                             "VARIABLE": {
                                 "id": "5*NstnK2k!}anQPVm$$j",
                                 "name": "VARIABLE",
-                                "value": "la moiti\u00e9 de la hauteur de la raquette du joueur"
+                                "value": "h\u00e4lfte der h\u00f6he des schl\u00e4gers des spielers"
                             }
                         },
                         "id": "Nu+?lNS|FRHiSL@X@y:(",
@@ -6961,7 +6961,7 @@
                             "VARIABLE": {
                                 "id": "9;(o1uYjmNamlG^@?P$M",
                                 "name": "VARIABLE",
-                                "value": "Choisis une phrase al\u00e9atoire que Cozmo prononcera quand il marque un point."
+                                "value": "w\u00e4hle aus, was cozmo sagt, wenn er einen punkt erzielt."
                             }
                         },
                         "id": "OUA=sxnx1h_BxK$a={[y",
@@ -7158,7 +7158,7 @@
                             "VARIABLE": {
                                 "id": "Un(M(aYayhUWSn{cE(+V",
                                 "name": "VARIABLE",
-                                "value": "position y de la balle"
+                                "value": "ballposition\u00a0y"
                             }
                         },
                         "id": "P}ehYvq.lmLiKPsA7v;d",
@@ -7208,7 +7208,7 @@
                             "VARIABLE": {
                                 "id": "NluXerqXX#!qwYcUn{7M",
                                 "name": "VARIABLE",
-                                "value": "position y de la raquette de Cozmo"
+                                "value": "schl\u00e4ger von cozmo: position\u00a0y"
                             }
                         },
                         "id": "Q=)uf2gg4TU#;0.XO%Ox",
@@ -7226,7 +7226,7 @@
                             "VARIABLE": {
                                 "id": "}]gOzGcQ@O^6pncdwy8z",
                                 "name": "VARIABLE",
-                                "value": "Score de Cozmo"
+                                "value": "punktzahl von cozmo"
                             }
                         },
                         "id": "QA0kKbTo)L_S+}|ml@H;",
@@ -7242,7 +7242,7 @@
                             "VARIABLE": {
                                 "id": "?*oqc,T2@4qLX3GFc~ln",
                                 "name": "VARIABLE",
-                                "value": "vitesse y de la balle"
+                                "value": "ballgeschwindigkeit\u00a0y"
                             }
                         },
                         "id": "QECo*n!1*+=_k?Pf#0]M",
@@ -7292,7 +7292,7 @@
                             "VARIABLE": {
                                 "id": "Z6V]#gYg;:N`E#%K(URF",
                                 "name": "VARIABLE",
-                                "value": "Score du joueur"
+                                "value": "punktzahl des spielers"
                             }
                         },
                         "id": "QVdU|c@YQ9TXymMxnljY",
@@ -7457,7 +7457,7 @@
                             "VARIABLE": {
                                 "id": "]l881I{MJE$~lyf|{/!q",
                                 "name": "VARIABLE",
-                                "value": "position y de la raquette du joueur"
+                                "value": "schl\u00e4ger des spielers: position\u00a0y"
                             }
                         },
                         "id": "R2^@snIbz#!Am52@x:av",
@@ -7481,7 +7481,7 @@
                             "VARIABLE": {
                                 "id": ";,8.KO+3@42(n/VrGfz_",
                                 "name": "VARIABLE",
-                                "value": "vitesse x de la balle"
+                                "value": "ballgeschwindigkeit\u00a0x"
                             }
                         },
                         "id": "R;,Uqd$np`wXMgK^Mlea",
@@ -7705,7 +7705,7 @@
                             "VARIABLE": {
                                 "id": "TzYn~ZBLT$$?-sp3EP{0",
                                 "name": "VARIABLE",
-                                "value": "rayon de la balle"
+                                "value": "ballradius"
                             }
                         },
                         "id": "S?(Avxb|]iBAUIY+)aT2",
@@ -7729,7 +7729,7 @@
                             "VARIABLE": {
                                 "id": "M504z[*WEEV(/[Xj)b1L",
                                 "name": "VARIABLE",
-                                "value": "largeur de la raquette du joueur"
+                                "value": "schl\u00e4ger des spielers: breite"
                             }
                         },
                         "id": "SOe%Xnj5$q2R59~%9RZd",
@@ -7747,7 +7747,7 @@
                             "VARIABLE": {
                                 "id": "a^6RLZL5jeV5(TF$V,oX",
                                 "name": "VARIABLE",
-                                "value": "Cozmo a marqu\u00e9 un point."
+                                "value": "cozmo erzielt einen punkt."
                             }
                         },
                         "id": "S_,G0g$k$#;n0K/(!X$^",
@@ -7765,7 +7765,7 @@
                             "VARIABLE": {
                                 "id": "f6%30XG_*pN#W%_oKaYL",
                                 "name": "VARIABLE",
-                                "value": "nombre de r\u00e9ponses al\u00e9atoires"
+                                "value": "nummer der zufallsantwort"
                             }
                         },
                         "id": "S_a{d|73^m}d;*4T*USy",
@@ -7782,7 +7782,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Bonjour"
+                                "value": "hallo"
                             }
                         },
                         "id": "Sb$nsE,,6ph!3|Z0i;*d",
@@ -7800,7 +7800,7 @@
                             "VARIABLE": {
                                 "id": ";+)ef@A}n,M/_h$Jg[tz",
                                 "name": "VARIABLE",
-                                "value": "vitesse de la raquette de Cozmo"
+                                "value": "schl\u00e4ger von cozmo: geschwindigkeit"
                             }
                         },
                         "id": "SjB1EAjVs;`-QItuQ634",
@@ -7847,7 +7847,7 @@
                             "VARIABLE": {
                                 "id": "Z6V]#gYg;:N`E#%K(URF",
                                 "name": "VARIABLE",
-                                "value": "Score du joueur"
+                                "value": "punktzahl des spielers"
                             }
                         },
                         "id": "S}.k~Tc_rl#n6k]])pK(",
@@ -7865,7 +7865,7 @@
                             "VARIABLE": {
                                 "id": "N;1W$..-rhJ8tGc4UOzl",
                                 "name": "VARIABLE",
-                                "value": "r\u00e9ponse de Cozmo"
+                                "value": "cozmo-antwort"
                             }
                         },
                         "id": "T)?lAzC}RiS+}VUjp!H5",
@@ -7912,7 +7912,7 @@
                             "VARIABLE": {
                                 "id": "[fopL9zl_$hRfJ#B-!fs",
                                 "name": "VARIABLE",
-                                "value": "Aucun"
+                                "value": "keine"
                             }
                         },
                         "id": "T{K[W{Q]sp%MfHymxzO0",
@@ -7976,7 +7976,7 @@
                             "VARIABLE": {
                                 "id": "Un(M(aYayhUWSn{cE(+V",
                                 "name": "VARIABLE",
-                                "value": "position y de la balle"
+                                "value": "ballposition\u00a0y"
                             }
                         },
                         "id": "U)X9[$pZx5#NxsfZ9J:K",
@@ -8011,7 +8011,7 @@
                             "VARIABLE": {
                                 "id": ";+)ef@A}n,M/_h$Jg[tz",
                                 "name": "VARIABLE",
-                                "value": "vitesse de la raquette de Cozmo"
+                                "value": "schl\u00e4ger von cozmo: geschwindigkeit"
                             }
                         },
                         "id": "UBs]0RG;nt:R7N3f14gi",
@@ -8050,7 +8050,7 @@
                             "VARIABLE": {
                                 "id": "vZ|-q)^ord6=6iMj%NNg",
                                 "name": "VARIABLE",
-                                "value": "Niveau de comp\u00e9tence de Cozmo"
+                                "value": "cozmo-skill-level"
                             }
                         },
                         "id": "UXjuf=]4Q[@9pu6QG2S5",
@@ -8083,7 +8083,7 @@
                             "VARIABLE": {
                                 "id": "f6%30XG_*pN#W%_oKaYL",
                                 "name": "VARIABLE",
-                                "value": "nombre de r\u00e9ponses al\u00e9atoires"
+                                "value": "nummer der zufallsantwort"
                             }
                         },
                         "id": "Ulum3EzUx-fdyiIEK`AB",
@@ -8258,7 +8258,7 @@
                             "VARIABLE": {
                                 "id": "_]j6]O|`Mh|l7F1N@Nw:",
                                 "name": "VARIABLE",
-                                "value": "vainqueur de la partie"
+                                "value": "sieger des spiels"
                             }
                         },
                         "id": "VTKpQJE2//X=1W!VwS?V",
@@ -8334,7 +8334,7 @@
                             "VARIABLE": {
                                 "id": "-:HBy)n6c:cBxM.p#0UN",
                                 "name": "VARIABLE",
-                                "value": "Vitesse de boucle"
+                                "value": "schleifenrate"
                             }
                         },
                         "id": "WG8_!nL,`Bv_Rc1MgY@~",
@@ -8366,7 +8366,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Oups\u00a0!"
+                                "value": "hoppla!"
                             }
                         },
                         "id": "WHWJdkpt%yY`TZV?ZgUC",
@@ -8439,7 +8439,7 @@
                             "VARIABLE": {
                                 "id": "|Z-{pQ3;E{+2^LU~Empv",
                                 "name": "VARIABLE",
-                                "value": "la moiti\u00e9 de la hauteur de la raquette de Cozmo"
+                                "value": "h\u00e4lfte der h\u00f6he des schl\u00e4gers von cozmo"
                             }
                         },
                         "id": "W{jPiq[~zpA;jJn~)Ua]",
@@ -8472,7 +8472,7 @@
                             "VARIABLE": {
                                 "id": ",gL.n,lR;UiKpQ@X5|,^",
                                 "name": "VARIABLE",
-                                "value": "En cours de jeu, mets \u00e0 jour la position de la balle."
+                                "value": "w\u00e4hrend das spiel l\u00e4uft, kannst du die position des balls aktualisieren."
                             }
                         },
                         "id": "XiJfux.%XG6(]Lhkvfqr",
@@ -8513,7 +8513,7 @@
                             "VARIABLE": {
                                 "id": "[fopL9zl_$hRfJ#B-!fs",
                                 "name": "VARIABLE",
-                                "value": "Aucun"
+                                "value": "keine"
                             }
                         },
                         "id": "Y8E8olo|S[J1d)Lqwk4g",
@@ -8586,7 +8586,7 @@
                             "VARIABLE": {
                                 "id": "!Sb]Gp+PUmF:.t,X0m#%",
                                 "name": "VARIABLE",
-                                "value": "vainqueur de la manche"
+                                "value": "sieger der runde"
                             }
                         },
                         "id": "Ye0,cop^:%|fj-X*qKEN",
@@ -8695,7 +8695,7 @@
                             "VARIABLE": {
                                 "id": "[fopL9zl_$hRfJ#B-!fs",
                                 "name": "VARIABLE",
-                                "value": "Aucun"
+                                "value": "keine"
                             }
                         },
                         "id": "ZdJ~8z!b$K1@`cMy?LP~",
@@ -8759,7 +8759,7 @@
                             "VARIABLE": {
                                 "id": "`z$NRf|9{SJ#s$]*Sm]A",
                                 "name": "VARIABLE",
-                                "value": "fin de la partie"
+                                "value": "spiel ist beendet"
                             }
                         },
                         "id": "[9uOmpkMI(4(SxUxo2kh",
@@ -8811,7 +8811,7 @@
                             "VARIABLE": {
                                 "id": "xtus709,csCGWPUXkK7Z",
                                 "name": "VARIABLE",
-                                "value": "En cours de jeu, utilise les donn\u00e9es pour dessiner tout ce que tu veux sur la t\u00eate de Cozmo."
+                                "value": "w\u00e4hrend das spiel l\u00e4uft, kannst du anhand von daten alles auf cozmos gesicht zeichnen."
                             }
                         },
                         "id": "[B/)S|5?4aiyfoO]cLLl",
@@ -8939,7 +8939,7 @@
                             "VARIABLE": {
                                 "id": "Un(M(aYayhUWSn{cE(+V",
                                 "name": "VARIABLE",
-                                "value": "position y de la balle"
+                                "value": "ballposition\u00a0y"
                             }
                         },
                         "id": "]*],Y)%k(;5zRY1ww4;9",
@@ -8957,7 +8957,7 @@
                             "VARIABLE": {
                                 "id": "Z6V]#gYg;:N`E#%K(URF",
                                 "name": "VARIABLE",
-                                "value": "Score du joueur"
+                                "value": "punktzahl des spielers"
                             }
                         },
                         "id": "]AKh[CxO[+^V78s`tiM@",
@@ -8973,7 +8973,7 @@
                             "VARIABLE": {
                                 "id": "|Z-{pQ3;E{+2^LU~Empv",
                                 "name": "VARIABLE",
-                                "value": "la moiti\u00e9 de la hauteur de la raquette de Cozmo"
+                                "value": "h\u00e4lfte der h\u00f6he des schl\u00e4gers von cozmo"
                             }
                         },
                         "id": "]LO!.6~o-4^N,Ac/GS/D",
@@ -9014,7 +9014,7 @@
                             "VARIABLE": {
                                 "id": ";+)ef@A}n,M/_h$Jg[tz",
                                 "name": "VARIABLE",
-                                "value": "vitesse de la raquette de Cozmo"
+                                "value": "schl\u00e4ger von cozmo: geschwindigkeit"
                             }
                         },
                         "id": "]SEXM.)$tB|({DCr,)[;",
@@ -9226,7 +9226,7 @@
                             "VARIABLE": {
                                 "id": "vZ|-q)^ord6=6iMj%NNg",
                                 "name": "VARIABLE",
-                                "value": "Niveau de comp\u00e9tence de Cozmo"
+                                "value": "cozmo-skill-level"
                             }
                         },
                         "id": "^Kb|,a{(7O^N:-j`?Zru",
@@ -9277,7 +9277,7 @@
                             "VARIABLE": {
                                 "id": ";+)ef@A}n,M/_h$Jg[tz",
                                 "name": "VARIABLE",
-                                "value": "vitesse de la raquette de Cozmo"
+                                "value": "schl\u00e4ger von cozmo: geschwindigkeit"
                             }
                         },
                         "id": "^z^DPonJ}F`J.3Fo1e)~",
@@ -9434,7 +9434,7 @@
                             "VARIABLE": {
                                 "id": "N;1W$..-rhJ8tGc4UOzl",
                                 "name": "VARIABLE",
-                                "value": "r\u00e9ponse de Cozmo"
+                                "value": "cozmo-antwort"
                             }
                         },
                         "id": "_Q$F_V`Rn9__%$0X9x_q",
@@ -9493,7 +9493,7 @@
                             "VARIABLE": {
                                 "id": "}]gOzGcQ@O^6pncdwy8z",
                                 "name": "VARIABLE",
-                                "value": "Score de Cozmo"
+                                "value": "punktzahl von cozmo"
                             }
                         },
                         "id": "_leL$ofd3{)=s}s!:{h!",
@@ -9566,7 +9566,7 @@
                             "VARIABLE": {
                                 "id": "AXGh4s/e^J6+(u)*+d%Y",
                                 "name": "VARIABLE",
-                                "value": "o\u00f9 Cozmo pense que la balle se trouve"
+                                "value": "wo f\u00fcr cozmo der ball ist"
                             }
                         },
                         "id": "`6y#F?Es[@p])8{v3?~(",
@@ -9590,7 +9590,7 @@
                             "VARIABLE": {
                                 "id": "vZ|-q)^ord6=6iMj%NNg",
                                 "name": "VARIABLE",
-                                "value": "Niveau de comp\u00e9tence de Cozmo"
+                                "value": "cozmo-skill-level"
                             }
                         },
                         "id": "`8(D{_QUwO0ufh]n|],v",
@@ -9631,7 +9631,7 @@
                             "VARIABLE": {
                                 "id": "uZ~o/V1iQu2,8E+%@!-b",
                                 "name": "VARIABLE",
-                                "value": "vitesse max. de la raquette de Cozmo"
+                                "value": "schl\u00e4ger von cozmo: max. geschwindigkeit"
                             }
                         },
                         "id": "`Su9T$x)a:$xM=y%$736",
@@ -9678,7 +9678,7 @@
                             "VARIABLE": {
                                 "id": "AXGh4s/e^J6+(u)*+d%Y",
                                 "name": "VARIABLE",
-                                "value": "o\u00f9 Cozmo pense que la balle se trouve"
+                                "value": "wo f\u00fcr cozmo der ball ist"
                             }
                         },
                         "id": "`^ZiFr3hO{S14UOr!`kf",
@@ -9696,7 +9696,7 @@
                             "VARIABLE": {
                                 "id": "f6%30XG_*pN#W%_oKaYL",
                                 "name": "VARIABLE",
-                                "value": "nombre de r\u00e9ponses al\u00e9atoires"
+                                "value": "nummer der zufallsantwort"
                             }
                         },
                         "id": "`_?I_XJA#jb9?VMigJ$}",
@@ -9748,7 +9748,7 @@
                             "VARIABLE": {
                                 "id": "NluXerqXX#!qwYcUn{7M",
                                 "name": "VARIABLE",
-                                "value": "position y de la raquette de Cozmo"
+                                "value": "schl\u00e4ger von cozmo: position\u00a0y"
                             }
                         },
                         "id": "a+6tLAfVm02tTuoQvQ)[",
@@ -9813,7 +9813,7 @@
                             "VARIABLE": {
                                 "id": "-:HBy)n6c:cBxM.p#0UN",
                                 "name": "VARIABLE",
-                                "value": "Vitesse de boucle"
+                                "value": "schleifenrate"
                             }
                         },
                         "id": "aGU#e,nxck=fVu/S(fXQ",
@@ -9889,7 +9889,7 @@
                             "VARIABLE": {
                                 "id": "AXGh4s/e^J6+(u)*+d%Y",
                                 "name": "VARIABLE",
-                                "value": "o\u00f9 Cozmo pense que la balle se trouve"
+                                "value": "wo f\u00fcr cozmo der ball ist"
                             }
                         },
                         "id": "b02]g]7C1(L!RtdK@m!y",
@@ -9936,7 +9936,7 @@
                             "VARIABLE": {
                                 "id": "AXGh4s/e^J6+(u)*+d%Y",
                                 "name": "VARIABLE",
-                                "value": "o\u00f9 Cozmo pense que la balle se trouve"
+                                "value": "wo f\u00fcr cozmo der ball ist"
                             }
                         },
                         "id": "b?;.=Zt=07;^0w%(Az(i",
@@ -9960,7 +9960,7 @@
                             "VARIABLE": {
                                 "id": ";,8.KO+3@42(n/VrGfz_",
                                 "name": "VARIABLE",
-                                "value": "vitesse x de la balle"
+                                "value": "ballgeschwindigkeit\u00a0x"
                             }
                         },
                         "id": "b@PRJu,)!ZxmC)bpZ^H0",
@@ -9978,7 +9978,7 @@
                             "VARIABLE": {
                                 "id": "{YHsXwAt+asRXa)nnh+f",
                                 "name": "VARIABLE",
-                                "value": "position x de la balle"
+                                "value": "ballposition\u00a0x"
                             }
                         },
                         "id": "bFfS_[E`fY{.rvF~5r/V",
@@ -10136,7 +10136,7 @@
                             "VARIABLE": {
                                 "id": "5*NstnK2k!}anQPVm$$j",
                                 "name": "VARIABLE",
-                                "value": "la moiti\u00e9 de la hauteur de la raquette du joueur"
+                                "value": "h\u00e4lfte der h\u00f6he des schl\u00e4gers des spielers"
                             }
                         },
                         "id": "cSrQ^r8(sWGOg`@J{P#8",
@@ -10206,7 +10206,7 @@
                             "VARIABLE": {
                                 "id": ";,8.KO+3@42(n/VrGfz_",
                                 "name": "VARIABLE",
-                                "value": "vitesse x de la balle"
+                                "value": "ballgeschwindigkeit\u00a0x"
                             }
                         },
                         "id": "cxKb=)Ad27`~}E?O[Ujt",
@@ -10230,7 +10230,7 @@
                             "VARIABLE": {
                                 "id": "o)|8?w5spmx%f_.GJs;9",
                                 "name": "VARIABLE",
-                                "value": "fin de la manche"
+                                "value": "runde ist vorbei"
                             }
                         },
                         "id": "d0XU*NHaL8~Dr_7=f9hl",
@@ -10248,7 +10248,7 @@
                             "VARIABLE": {
                                 "id": "M504z[*WEEV(/[Xj)b1L",
                                 "name": "VARIABLE",
-                                "value": "largeur de la raquette du joueur"
+                                "value": "schl\u00e4ger des spielers: breite"
                             }
                         },
                         "id": "d7?4|a$pEHsW7TJ~0F}X",
@@ -10298,7 +10298,7 @@
                             "VARIABLE": {
                                 "id": "-:HBy)n6c:cBxM.p#0UN",
                                 "name": "VARIABLE",
-                                "value": "Vitesse de boucle"
+                                "value": "schleifenrate"
                             }
                         },
                         "id": "dt4v~_Y4chpW7z^IfH?6",
@@ -10333,7 +10333,7 @@
                             "VARIABLE": {
                                 "id": "f6%30XG_*pN#W%_oKaYL",
                                 "name": "VARIABLE",
-                                "value": "nombre de r\u00e9ponses al\u00e9atoires"
+                                "value": "nummer der zufallsantwort"
                             }
                         },
                         "id": "e!s7:d~#4LA0C6Gxo;.F",
@@ -10357,7 +10357,7 @@
                             "VARIABLE": {
                                 "id": "!H*}dG0uz%bRYuMyWKh[",
                                 "name": "VARIABLE",
-                                "value": "En cours de jeu, mets \u00e0 jour la position de la raquette du joueur par rapport \u00e0 son visages dans la cam\u00e9ra."
+                                "value": "w\u00e4hrend das spiel l\u00e4uft, kannst du die position des schl\u00e4gers des spielers im verh\u00e4ltnis zu seinem gesicht in der kamera aktualisieren."
                             }
                         },
                         "id": "e$N|:[D!4g~ARcu9$2x:",
@@ -10545,7 +10545,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "vrai "
+                                "value": "wahr "
                             }
                         },
                         "id": "f/]~18(FxT-[%Y_]G}%_",
@@ -10561,7 +10561,7 @@
                             "VARIABLE": {
                                 "id": "|Z-{pQ3;E{+2^LU~Empv",
                                 "name": "VARIABLE",
-                                "value": "la moiti\u00e9 de la hauteur de la raquette de Cozmo"
+                                "value": "h\u00e4lfte der h\u00f6he des schl\u00e4gers von cozmo"
                             }
                         },
                         "id": "f?n3HzY%ql~W,KsvTcX,",
@@ -10579,7 +10579,7 @@
                             "VARIABLE": {
                                 "id": "{YHsXwAt+asRXa)nnh+f",
                                 "name": "VARIABLE",
-                                "value": "position x de la balle"
+                                "value": "ballposition\u00a0x"
                             }
                         },
                         "id": "fP#+):zA3?`gXj.~:,eI",
@@ -10597,7 +10597,7 @@
                             "VARIABLE": {
                                 "id": "Emsk)D`uo07V(p/5@]yX",
                                 "name": "VARIABLE",
-                                "value": "Commence une nouvelle manche."
+                                "value": "starte eine neue spielrunde."
                             }
                         },
                         "id": "fP}yq,3DL!-V2Of,vvV@",
@@ -10630,7 +10630,7 @@
                             "VARIABLE": {
                                 "id": "}]gOzGcQ@O^6pncdwy8z",
                                 "name": "VARIABLE",
-                                "value": "Score de Cozmo"
+                                "value": "punktzahl von cozmo"
                             }
                         },
                         "id": "feQE4rOw;qs/~kb(c]g5",
@@ -10977,7 +10977,7 @@
                             "VARIABLE": {
                                 "id": "NluXerqXX#!qwYcUn{7M",
                                 "name": "VARIABLE",
-                                "value": "position y de la raquette de Cozmo"
+                                "value": "schl\u00e4ger von cozmo: position\u00a0y"
                             }
                         },
                         "id": "hl8IjnMCB*p#JNHY]IGs",
@@ -10995,7 +10995,7 @@
                             "VARIABLE": {
                                 "id": "NluXerqXX#!qwYcUn{7M",
                                 "name": "VARIABLE",
-                                "value": "position y de la raquette de Cozmo"
+                                "value": "schl\u00e4ger von cozmo: position\u00a0y"
                             }
                         },
                         "id": "hrVa2q+q2npBvJeij:;n",
@@ -11013,7 +11013,7 @@
                             "VARIABLE": {
                                 "id": "f6%30XG_*pN#W%_oKaYL",
                                 "name": "VARIABLE",
-                                "value": "nombre de r\u00e9ponses al\u00e9atoires"
+                                "value": "nummer der zufallsantwort"
                             }
                         },
                         "id": "i%nqHzeQWSP}-Ih,KH0B",
@@ -11063,7 +11063,7 @@
                             "VARIABLE": {
                                 "id": "NluXerqXX#!qwYcUn{7M",
                                 "name": "VARIABLE",
-                                "value": "position y de la raquette de Cozmo"
+                                "value": "schl\u00e4ger von cozmo: position\u00a0y"
                             }
                         },
                         "id": "izOaF9tFg]BIA`C1K4IU",
@@ -11313,7 +11313,7 @@
                             "VARIABLE": {
                                 "id": "o)|8?w5spmx%f_.GJs;9",
                                 "name": "VARIABLE",
-                                "value": "fin de la manche"
+                                "value": "runde ist vorbei"
                             }
                         },
                         "id": "kN/}@eYW|j]/[,Xp65Il",
@@ -11371,7 +11371,7 @@
                             "VARIABLE": {
                                 "id": ")ha4N6oKo,{?o045fvj6",
                                 "name": "VARIABLE",
-                                "value": "Lance la partie."
+                                "value": "starte das spiel."
                             }
                         },
                         "id": "kqEvg[I{~Gt$_)P|(ojz",
@@ -11407,7 +11407,7 @@
                             "VARIABLE": {
                                 "id": "f6%30XG_*pN#W%_oKaYL",
                                 "name": "VARIABLE",
-                                "value": "nombre de r\u00e9ponses al\u00e9atoires"
+                                "value": "nummer der zufallsantwort"
                             }
                         },
                         "id": "l$dV%n5S)?j(Zh{?{@Rx",
@@ -11601,7 +11601,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "\u00c0 vos marques"
+                                "value": "bereit"
                             }
                         },
                         "id": "mCbI:ro?7Mw.AkcTp~Q|",
@@ -11617,7 +11617,7 @@
                             "VARIABLE": {
                                 "id": "!Sb]Gp+PUmF:.t,X0m#%",
                                 "name": "VARIABLE",
-                                "value": "vainqueur de la manche"
+                                "value": "sieger der runde"
                             }
                         },
                         "id": "mF}v]?RFI7NiUh4MV}=f",
@@ -11764,7 +11764,7 @@
                             "VARIABLE": {
                                 "id": "Un(M(aYayhUWSn{cE(+V",
                                 "name": "VARIABLE",
-                                "value": "position y de la balle"
+                                "value": "ballposition\u00a0y"
                             }
                         },
                         "id": "mvR$+~1BoH6eRG80*;=o",
@@ -11814,7 +11814,7 @@
                             "VARIABLE": {
                                 "id": "N;1W$..-rhJ8tGc4UOzl",
                                 "name": "VARIABLE",
-                                "value": "r\u00e9ponse de Cozmo"
+                                "value": "cozmo-antwort"
                             }
                         },
                         "id": "nWZ.b_T+zMqhX@^q_Gaz",
@@ -11885,7 +11885,7 @@
                             "VARIABLE": {
                                 "id": "iHn2k[px%O2BD@yR;Ofu",
                                 "name": "VARIABLE",
-                                "value": "Joueur"
+                                "value": "spieler"
                             }
                         },
                         "id": "n^?]yxPo.Ob8B|.7yK93",
@@ -11923,7 +11923,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "J'ai gagn\u00e9\u00a0!"
+                                "value": "ich gewinne!"
                             }
                         },
                         "id": "nso?,z1E|n7kXYr898(}",
@@ -11939,7 +11939,7 @@
                             "VARIABLE": {
                                 "id": "NluXerqXX#!qwYcUn{7M",
                                 "name": "VARIABLE",
-                                "value": "position y de la raquette de Cozmo"
+                                "value": "schl\u00e4ger von cozmo: position\u00a0y"
                             }
                         },
                         "id": "nuJyil0Da?Ip;C*|DU|X",
@@ -11980,7 +11980,7 @@
                             "VARIABLE": {
                                 "id": ";+)ef@A}n,M/_h$Jg[tz",
                                 "name": "VARIABLE",
-                                "value": "vitesse de la raquette de Cozmo"
+                                "value": "schl\u00e4ger von cozmo: geschwindigkeit"
                             }
                         },
                         "id": "n~8y=T9t!@].F;e~[hWB",
@@ -12004,7 +12004,7 @@
                             "VARIABLE": {
                                 "id": "?*oqc,T2@4qLX3GFc~ln",
                                 "name": "VARIABLE",
-                                "value": "vitesse y de la balle"
+                                "value": "ballgeschwindigkeit\u00a0y"
                             }
                         },
                         "id": "o*L7DUhxrZqX?u+Md=A7",
@@ -12045,7 +12045,7 @@
                             "VARIABLE": {
                                 "id": "2R7G,w^iNhDzuM8oL4=^",
                                 "name": "VARIABLE",
-                                "value": "points pour gagner"
+                                "value": "punkte f\u00fcr den sieg"
                             }
                         },
                         "id": "oNm]65iA:2/;$OBp|D;J",
@@ -12097,7 +12097,7 @@
                             "VARIABLE": {
                                 "id": "iHn2k[px%O2BD@yR;Ofu",
                                 "name": "VARIABLE",
-                                "value": "Joueur"
+                                "value": "spieler"
                             }
                         },
                         "id": "oWSxcA}Y?/@W^Z2W*|(.",
@@ -12115,7 +12115,7 @@
                             "VARIABLE": {
                                 "id": "]l881I{MJE$~lyf|{/!q",
                                 "name": "VARIABLE",
-                                "value": "position y de la raquette du joueur"
+                                "value": "schl\u00e4ger des spielers: position\u00a0y"
                             }
                         },
                         "id": "o[@=M0Sa}/KgrVJ-fN{T",
@@ -12156,7 +12156,7 @@
                             "VARIABLE": {
                                 "id": "o)|8?w5spmx%f_.GJs;9",
                                 "name": "VARIABLE",
-                                "value": "fin de la manche"
+                                "value": "runde ist vorbei"
                             }
                         },
                         "id": "odQc#`yP0t*8)6uJ-!L!",
@@ -12192,7 +12192,7 @@
                             "VARIABLE": {
                                 "id": "!Sb]Gp+PUmF:.t,X0m#%",
                                 "name": "VARIABLE",
-                                "value": "vainqueur de la manche"
+                                "value": "sieger der runde"
                             }
                         },
                         "id": "opA,4vbRlb}rAKkPxN+u",
@@ -12210,7 +12210,7 @@
                             "VARIABLE": {
                                 "id": "?*oqc,T2@4qLX3GFc~ln",
                                 "name": "VARIABLE",
-                                "value": "vitesse y de la balle"
+                                "value": "ballgeschwindigkeit\u00a0y"
                             }
                         },
                         "id": "ot)$Um%ex/Cz%KsE~ZcZ",
@@ -12266,7 +12266,7 @@
                             "VARIABLE": {
                                 "id": "Un(M(aYayhUWSn{cE(+V",
                                 "name": "VARIABLE",
-                                "value": "position y de la balle"
+                                "value": "ballposition\u00a0y"
                             }
                         },
                         "id": "p/!o]pITO.SW9Ei]k=E3",
@@ -12284,7 +12284,7 @@
                             "VARIABLE": {
                                 "id": "vZ|-q)^ord6=6iMj%NNg",
                                 "name": "VARIABLE",
-                                "value": "Niveau de comp\u00e9tence de Cozmo"
+                                "value": "cozmo-skill-level"
                             }
                         },
                         "id": "p9P0H66jxiQaq~CJP!U3",
@@ -12317,7 +12317,7 @@
                             "VARIABLE": {
                                 "id": "`z$NRf|9{SJ#s$]*Sm]A",
                                 "name": "VARIABLE",
-                                "value": "fin de la partie"
+                                "value": "spiel ist beendet"
                             }
                         },
                         "id": "pWNbTbv)86S8}5]tm?wx",
@@ -12339,7 +12339,7 @@
                             "VARIABLE": {
                                 "id": "Un(M(aYayhUWSn{cE(+V",
                                 "name": "VARIABLE",
-                                "value": "position y de la balle"
+                                "value": "ballposition\u00a0y"
                             }
                         },
                         "id": "p_=Wr|//A6vg_(TW2,zV",
@@ -12431,7 +12431,7 @@
                             "VARIABLE": {
                                 "id": "TzYn~ZBLT$$?-sp3EP{0",
                                 "name": "VARIABLE",
-                                "value": "rayon de la balle"
+                                "value": "ballradius"
                             }
                         },
                         "id": "q$l-1^F09l@h#s-cQrDt",
@@ -12464,7 +12464,7 @@
                             "VARIABLE": {
                                 "id": "TzYn~ZBLT$$?-sp3EP{0",
                                 "name": "VARIABLE",
-                                "value": "rayon de la balle"
+                                "value": "ballradius"
                             }
                         },
                         "id": "qI|`onHTfM/?10sR`AR/",
@@ -12498,7 +12498,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Oui\u00a0!"
+                                "value": "ja!"
                             }
                         },
                         "id": "qf_n5C!II4m*)_ROClHJ",
@@ -12514,7 +12514,7 @@
                             "VARIABLE": {
                                 "id": "8P(48np~@_zeR}t8mdV+",
                                 "name": "VARIABLE",
-                                "value": "Lorsque la balle se trouve du c\u00f4t\u00e9 de Cozmo, d\u00e9place sa raquette vers elle."
+                                "value": "wenn sich der ball auf cozmos seite befindet, beweg seinen schl\u00e4ger zum ball."
                             }
                         },
                         "id": "qfq_:6[NdnbKiK4E@.=M",
@@ -12532,7 +12532,7 @@
                             "VARIABLE": {
                                 "id": "o)|8?w5spmx%f_.GJs;9",
                                 "name": "VARIABLE",
-                                "value": "fin de la manche"
+                                "value": "runde ist vorbei"
                             }
                         },
                         "id": "qhz|Nwh`3{;NvUbOdxkk",
@@ -12579,7 +12579,7 @@
                             "VARIABLE": {
                                 "id": "rFoU9C%RL!225]YFH{a+",
                                 "name": "VARIABLE",
-                                "value": "Vitesse de dessin"
+                                "value": "zeichenrate"
                             }
                         },
                         "id": "qvi*]-RYw2S2]zI*%kQv",
@@ -12625,7 +12625,7 @@
                             "VARIABLE": {
                                 "id": "NluXerqXX#!qwYcUn{7M",
                                 "name": "VARIABLE",
-                                "value": "position y de la raquette de Cozmo"
+                                "value": "schl\u00e4ger von cozmo: position\u00a0y"
                             }
                         },
                         "id": "rA!lzpG.5DosR/y@c~:^",
@@ -12737,7 +12737,7 @@
                             "VARIABLE": {
                                 "id": ";,8.KO+3@42(n/VrGfz_",
                                 "name": "VARIABLE",
-                                "value": "vitesse x de la balle"
+                                "value": "ballgeschwindigkeit\u00a0x"
                             }
                         },
                         "id": "rtPY4k}+fL95%X,8AgPN",
@@ -12770,7 +12770,7 @@
                             "VARIABLE": {
                                 "id": "]l881I{MJE$~lyf|{/!q",
                                 "name": "VARIABLE",
-                                "value": "position y de la raquette du joueur"
+                                "value": "schl\u00e4ger des spielers: position\u00a0y"
                             }
                         },
                         "id": "r{n3B-aZujiK2v{e?zER",
@@ -12788,7 +12788,7 @@
                             "VARIABLE": {
                                 "id": "AXGh4s/e^J6+(u)*+d%Y",
                                 "name": "VARIABLE",
-                                "value": "o\u00f9 Cozmo pense que la balle se trouve"
+                                "value": "wo f\u00fcr cozmo der ball ist"
                             }
                         },
                         "id": "r}%?`,ZpM33jAx12;7kl",
@@ -12812,7 +12812,7 @@
                             "VARIABLE": {
                                 "id": "`z$NRf|9{SJ#s$]*Sm]A",
                                 "name": "VARIABLE",
-                                "value": "fin de la partie"
+                                "value": "spiel ist beendet"
                             }
                         },
                         "id": "s%WTbK^%A{pcTc#M*FRs",
@@ -12937,7 +12937,7 @@
                             "VARIABLE": {
                                 "id": "5*NstnK2k!}anQPVm$$j",
                                 "name": "VARIABLE",
-                                "value": "la moiti\u00e9 de la hauteur de la raquette du joueur"
+                                "value": "h\u00e4lfte der h\u00f6he des schl\u00e4gers des spielers"
                             }
                         },
                         "id": "smp-PbFY!(T:X5ySJr)^",
@@ -13051,7 +13051,7 @@
                             "VARIABLE": {
                                 "id": "NluXerqXX#!qwYcUn{7M",
                                 "name": "VARIABLE",
-                                "value": "position y de la raquette de Cozmo"
+                                "value": "schl\u00e4ger von cozmo: position\u00a0y"
                             }
                         },
                         "id": "tV4R?myqHh/SQIRkz43n",
@@ -13069,7 +13069,7 @@
                             "VARIABLE": {
                                 "id": "}]gOzGcQ@O^6pncdwy8z",
                                 "name": "VARIABLE",
-                                "value": "Score de Cozmo"
+                                "value": "punktzahl von cozmo"
                             }
                         },
                         "id": "tW9`$rv-KLBka?Qa!R-(",
@@ -13171,7 +13171,7 @@
                             "VARIABLE": {
                                 "id": "Z6V]#gYg;:N`E#%K(URF",
                                 "name": "VARIABLE",
-                                "value": "Score du joueur"
+                                "value": "punktzahl des spielers"
                             }
                         },
                         "id": "tuU}8f@LG}y6lZ|;SHgr",
@@ -13213,7 +13213,7 @@
                             "VARIABLE": {
                                 "id": "NluXerqXX#!qwYcUn{7M",
                                 "name": "VARIABLE",
-                                "value": "position y de la raquette de Cozmo"
+                                "value": "schl\u00e4ger von cozmo: position\u00a0y"
                             }
                         },
                         "id": "u5L@;*FIXhjlT`%,j}t/",
@@ -13350,7 +13350,7 @@
                             "VARIABLE": {
                                 "id": "Un(M(aYayhUWSn{cE(+V",
                                 "name": "VARIABLE",
-                                "value": "position y de la balle"
+                                "value": "ballposition\u00a0y"
                             }
                         },
                         "id": "uwaNkR%i;JH~No])je|y",
@@ -13385,7 +13385,7 @@
                             "VARIABLE": {
                                 "id": "o)|8?w5spmx%f_.GJs;9",
                                 "name": "VARIABLE",
-                                "value": "fin de la manche"
+                                "value": "runde ist vorbei"
                             }
                         },
                         "id": "v2%:/:CA|D(@U)8[`quZ",
@@ -13447,7 +13447,7 @@
                             "VARIABLE": {
                                 "id": "-:HBy)n6c:cBxM.p#0UN",
                                 "name": "VARIABLE",
-                                "value": "Vitesse de boucle"
+                                "value": "schleifenrate"
                             }
                         },
                         "id": "wBQmV*O00M3|LbE^vr7o",
@@ -13758,7 +13758,7 @@
                             "VARIABLE": {
                                 "id": "Un(M(aYayhUWSn{cE(+V",
                                 "name": "VARIABLE",
-                                "value": "position y de la balle"
+                                "value": "ballposition\u00a0y"
                             }
                         },
                         "id": "xf3Nz|m{Tch8a?|.8G+@",
@@ -13776,7 +13776,7 @@
                             "VARIABLE": {
                                 "id": ";+)ef@A}n,M/_h$Jg[tz",
                                 "name": "VARIABLE",
-                                "value": "vitesse de la raquette de Cozmo"
+                                "value": "schl\u00e4ger von cozmo: geschwindigkeit"
                             }
                         },
                         "id": "y#|/)6:K8M6pCt,2bc-s",
@@ -13794,7 +13794,7 @@
                             "VARIABLE": {
                                 "id": "AXGh4s/e^J6+(u)*+d%Y",
                                 "name": "VARIABLE",
-                                "value": "o\u00f9 Cozmo pense que la balle se trouve"
+                                "value": "wo f\u00fcr cozmo der ball ist"
                             }
                         },
                         "id": "y%1x^,XoQr$:i8WYP;TH",
@@ -13818,7 +13818,7 @@
                             "VARIABLE": {
                                 "id": "{YHsXwAt+asRXa)nnh+f",
                                 "name": "VARIABLE",
-                                "value": "position x de la balle"
+                                "value": "ballposition\u00a0x"
                             }
                         },
                         "id": "y.k]vQT)ZOVl}Z-Rm}Od",
@@ -13927,7 +13927,7 @@
                             "VARIABLE": {
                                 "id": "|Z-{pQ3;E{+2^LU~Empv",
                                 "name": "VARIABLE",
-                                "value": "la moiti\u00e9 de la hauteur de la raquette de Cozmo"
+                                "value": "h\u00e4lfte der h\u00f6he des schl\u00e4gers von cozmo"
                             }
                         },
                         "id": "z)[cYDq?|?|YXIqX400{",
@@ -13963,7 +13963,7 @@
                             "VARIABLE": {
                                 "id": "vc)o#04i]t]|_wDkV*z/",
                                 "name": "VARIABLE",
-                                "value": "D\u00e9finis les param\u00e8tres de jeu r\u00e9glables."
+                                "value": "leg die spieleinstellungen fest."
                             }
                         },
                         "id": "z1AwU152#US5d9vr$A}D",
@@ -13999,7 +13999,7 @@
                             "VARIABLE": {
                                 "id": "]l881I{MJE$~lyf|{/!q",
                                 "name": "VARIABLE",
-                                "value": "position y de la raquette du joueur"
+                                "value": "schl\u00e4ger des spielers: position\u00a0y"
                             }
                         },
                         "id": "zO$zMfe`GaX.15%f/NIK",
@@ -14057,7 +14057,7 @@
                             "VARIABLE": {
                                 "id": "-:HBy)n6c:cBxM.p#0UN",
                                 "name": "VARIABLE",
-                                "value": "Vitesse de boucle"
+                                "value": "schleifenrate"
                             }
                         },
                         "id": "zg@p=7_(5d@{EXY99;U2",
@@ -14075,7 +14075,7 @@
                             "VARIABLE": {
                                 "id": "2R7G,w^iNhDzuM8oL4=^",
                                 "name": "VARIABLE",
-                                "value": "points pour gagner"
+                                "value": "punkte f\u00fcr den sieg"
                             }
                         },
                         "id": "zj+9Jb[sW/hc@cO#]C%B",
@@ -14116,7 +14116,7 @@
                             "VARIABLE": {
                                 "id": "]l881I{MJE$~lyf|{/!q",
                                 "name": "VARIABLE",
-                                "value": "position y de la raquette du joueur"
+                                "value": "schl\u00e4ger des spielers: position\u00a0y"
                             }
                         },
                         "id": "{8CqeD0fdCCx!gMp[)dS",
@@ -14152,7 +14152,7 @@
                             "VARIABLE": {
                                 "id": "WaJW5)%7n{*Z[jtseU~S",
                                 "name": "VARIABLE",
-                                "value": "D\u00e9cide quoi faire lorsque Cozmo ou le joueur marque un point."
+                                "value": "sobald cozmo oder der spieler einen punkt erzielt, entscheidest du, was als n\u00e4chstes passiert."
                             }
                         },
                         "id": "{D3,M*%R06xGZuXZ;?ZS",
@@ -14210,7 +14210,7 @@
                             "VARIABLE": {
                                 "id": "Fb0:eMS4J@ZNADdV{R1(",
                                 "name": "VARIABLE",
-                                "value": "Choisis une phrase al\u00e9atoire que Cozmo prononcera quand son adversaire marque un point."
+                                "value": "w\u00e4hle aus, was cozmo sagt, wenn der spieler einen punkt erzielt."
                             }
                         },
                         "id": "{QOYuj`jVL}P`hO4109g",
@@ -14228,7 +14228,7 @@
                             "VARIABLE": {
                                 "id": "Uo$b[8m_V;*[p-4+wR)t",
                                 "name": "VARIABLE",
-                                "value": "acc\u00e9l\u00e9ration de la raquette de Cozmo"
+                                "value": "schl\u00e4ger von cozmo: beschleunigung"
                             }
                         },
                         "id": "{Tw`6o0[ITML(DaJ%Tc8",
@@ -14261,7 +14261,7 @@
                             "VARIABLE": {
                                 "id": ";,8.KO+3@42(n/VrGfz_",
                                 "name": "VARIABLE",
-                                "value": "vitesse x de la balle"
+                                "value": "ballgeschwindigkeit\u00a0x"
                             }
                         },
                         "id": "{b#4O)W-?81~fY.^yx9;",
@@ -14285,7 +14285,7 @@
                             "VARIABLE": {
                                 "id": "Un(M(aYayhUWSn{cE(+V",
                                 "name": "VARIABLE",
-                                "value": "position y de la balle"
+                                "value": "ballposition\u00a0y"
                             }
                         },
                         "id": "{nPvBFf^/KRh6_b!X0G4",
@@ -14341,7 +14341,7 @@
                             "VARIABLE": {
                                 "id": "{YHsXwAt+asRXa)nnh+f",
                                 "name": "VARIABLE",
-                                "value": "position x de la balle"
+                                "value": "ballposition\u00a0x"
                             }
                         },
                         "id": "|-;o%6sM*Hug0Y-m2jjJ",
@@ -14364,7 +14364,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Bonjour"
+                                "value": "hallo"
                             }
                         },
                         "id": "|46#mS|:2bG6CbQr=EQ7",
@@ -14397,7 +14397,7 @@
                             "VARIABLE": {
                                 "id": "2R7G,w^iNhDzuM8oL4=^",
                                 "name": "VARIABLE",
-                                "value": "points pour gagner"
+                                "value": "punkte f\u00fcr den sieg"
                             }
                         },
                         "id": "|D@hP[0%[umWEAVfLut6",
@@ -14507,7 +14507,7 @@
                             "VARIABLE": {
                                 "id": ";+)ef@A}n,M/_h$Jg[tz",
                                 "name": "VARIABLE",
-                                "value": "vitesse de la raquette de Cozmo"
+                                "value": "schl\u00e4ger von cozmo: geschwindigkeit"
                             }
                         },
                         "id": "}73s#.L~][YRx`v2]i=_",
@@ -14523,7 +14523,7 @@
                             "VARIABLE": {
                                 "id": "Uo$b[8m_V;*[p-4+wR)t",
                                 "name": "VARIABLE",
-                                "value": "acc\u00e9l\u00e9ration de la raquette de Cozmo"
+                                "value": "schl\u00e4ger von cozmo: beschleunigung"
                             }
                         },
                         "id": "}:#PRjSCIfen.dCx4XwW",
@@ -14670,7 +14670,7 @@
                             "VARIABLE": {
                                 "id": ";+)ef@A}n,M/_h$Jg[tz",
                                 "name": "VARIABLE",
-                                "value": "vitesse de la raquette de Cozmo"
+                                "value": "schl\u00e4ger von cozmo: geschwindigkeit"
                             }
                         },
                         "id": "}f].tTLw(Z=UaJHg4q|0",
@@ -14836,7 +14836,7 @@
                             "VARIABLE": {
                                 "id": "NluXerqXX#!qwYcUn{7M",
                                 "name": "VARIABLE",
-                                "value": "position y de la raquette de Cozmo"
+                                "value": "schl\u00e4ger von cozmo: position\u00a0y"
                             }
                         },
                         "id": "~*OvNKhdjx3-x~r1P(E3",
@@ -14920,7 +14920,7 @@
                             "VARIABLE": {
                                 "id": "N;1W$..-rhJ8tGc4UOzl",
                                 "name": "VARIABLE",
-                                "value": "r\u00e9ponse de Cozmo"
+                                "value": "cozmo-antwort"
                             }
                         },
                         "id": "~U,t*lu~@^x:%/=9$/jk",

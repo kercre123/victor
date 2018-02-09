@@ -23,57 +23,57 @@
                 "variables": {
                     "%CU5pQ8O,KT!)uq$|f)y": {
                         "id": "%CU5pQ8O,KT!)uq$|f)y",
-                        "name": "\u30ec\u30fc\u30b6\u30fc\u306f\u6210\u529f\u3057\u307e\u3057\u305f",
+                        "name": "laser erfolgreich",
                         "value": "true"
                     },
                     ".LgIt_p}ix^s0d:~!jY1": {
                         "id": ".LgIt_p}ix^s0d:~!jY1",
-                        "name": "\u3057\u304b\u3081\u3063\u9762\u30fb\u534a\u5f84",
+                        "name": "stirnrunzeln radius",
                         "value": "14"
                     },
                     "4#N9a:e?vF)ccWQvrBmJ": {
                         "id": "4#N9a:e?vF)ccWQvrBmJ",
-                        "name": "\u30ec\u30fc\u30b6\u30fc\u3092\u767a\u5c04",
+                        "name": "laser abgefeuert",
                         "value": "false"
                     },
                     "@Fb2pZ5}h{.HS=`Gium7": {
                         "id": "@Fb2pZ5}h{.HS=`Gium7",
-                        "name": "\u30dd\u30a4\u30f3\u30c8",
+                        "name": "punkte",
                         "value": 2
                     },
                     "NZ[R}*KbBtaHQ}%uTfDa": {
                         "id": "NZ[R}*KbBtaHQ}%uTfDa",
-                        "name": "\u7d75\u6587\u5b57\u306e\u8868\u60c5",
+                        "name": "emoji-ausdruck",
                         "value": "frown"
                     },
                     "VsTt}Y$GN@;^s5A/XOYE": {
                         "id": "VsTt}Y$GN@;^s5A/XOYE",
-                        "name": "\u3057\u304b\u3081\u3063\u9762\u30fb\u4f4d\u7f6ey",
+                        "name": "stirnrunzeln position\u00a0y",
                         "value": "31"
                     },
                     "`.R`x1/qjQi[KBb1CkSL": {
                         "id": "`.R`x1/qjQi[KBb1CkSL",
-                        "name": "\u30ec\u30fc\u30b6\u30fc\u306e\u4f4d\u7f6ex",
+                        "name": "laserposition\u00a0x",
                         "value": 41
                     },
                     "eecO|j?*G-y.JKIBmkX-": {
                         "id": "eecO|j?*G-y.JKIBmkX-",
-                        "name": "\u9854\u306e\u30c7\u30a3\u30b9\u30d7\u30ec\u30a4\u306e\u66f4\u65b0\u3092\u4e00\u6642\u505c\u6b62",
+                        "name": "pause: gesichtsanzeige wird aktualisiert",
                         "value": "false"
                     },
                     "m([%81AZ}KhKy=00Xf6Q": {
                         "id": "m([%81AZ}KhKy=00Xf6Q",
-                        "name": "\u76ee\u6a19\u306f\u305d\u306e\u3057\u304b\u3081\u3063\u9762\u3092\u3072\u3063\u304f\u308a\u8fd4\u3059\u3053\u3068\u3067\u3059\uff01",
+                        "name": "hier kannst du mit einem l\u00e4cheln gewinnen!",
                         "value": 0
                     },
                     "mJ0f;r20{!X9{BWnx(]p": {
                         "id": "mJ0f;r20{!X9{BWnx(]p",
-                        "name": "\u5fae\u7b11\u3093\u3067\u30ec\u30fc\u30b6\u30fc\u3092\u767a\u5c04\uff01 \u9854\u3092\u52d5\u304b\u3057\u72d9\u3044\u3092\u5b9a\u3081\u3066\u304f\u3060\u3055\u3044\u3002",
+                        "name": "l\u00e4chle, um mit laserstrahlen zu schie\u00dfen! bewege deinen kopf, um zu zielen.",
                         "value": 0
                     },
                     "vtT=Sm*2EP[T1!uvRH#a": {
                         "id": "vtT=Sm*2EP[T1!uvRH#a",
-                        "name": "\u3057\u304b\u3081\u3063\u9762\u30fb\u4f4d\u7f6ex",
+                        "name": "stirnrunzeln position\u00a0x",
                         "value": 105
                     }
                 },
@@ -131,7 +131,7 @@
                             "VARIABLE": {
                                 "id": "NZ[R}*KbBtaHQ}%uTfDa",
                                 "name": "VARIABLE",
-                                "value": "\u7d75\u6587\u5b57\u306e\u8868\u60c5"
+                                "value": "emoji-ausdruck"
                             }
                         },
                         "id": "!u{f$m`=9{]*`r#2l9`6",
@@ -154,7 +154,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "\u7b11\u9854"
+                                "value": "l\u00e4cheln"
                             }
                         },
                         "id": "#1qGjyqs($%rC!9:@@/F",
@@ -170,7 +170,7 @@
                             "VARIABLE": {
                                 "id": "%CU5pQ8O,KT!)uq$|f)y",
                                 "name": "VARIABLE",
-                                "value": "\u30ec\u30fc\u30b6\u30fc\u306f\u6210\u529f\u3057\u307e\u3057\u305f"
+                                "value": "laser erfolgreich"
                             }
                         },
                         "id": "#4b;x?iU@0k!^i1{W%Os",
@@ -221,7 +221,7 @@
                             "VARIABLE": {
                                 "id": "eecO|j?*G-y.JKIBmkX-",
                                 "name": "VARIABLE",
-                                "value": "\u9854\u306e\u30c7\u30a3\u30b9\u30d7\u30ec\u30a4\u306e\u66f4\u65b0\u3092\u4e00\u6642\u505c\u6b62"
+                                "value": "pause: gesichtsanzeige wird aktualisiert"
                             }
                         },
                         "id": "#jIZwZws^;ZAXO^@?G2e",
@@ -294,7 +294,7 @@
                             "VARIABLE": {
                                 "id": "`.R`x1/qjQi[KBb1CkSL",
                                 "name": "VARIABLE",
-                                "value": "\u30ec\u30fc\u30b6\u30fc\u306e\u4f4d\u7f6ex"
+                                "value": "laserposition\u00a0x"
                             }
                         },
                         "id": "$wqHPkRd;=;o|8)11cfW",
@@ -369,7 +369,7 @@
                             "VARIABLE": {
                                 "id": "`.R`x1/qjQi[KBb1CkSL",
                                 "name": "VARIABLE",
-                                "value": "\u30ec\u30fc\u30b6\u30fc\u306e\u4f4d\u7f6ex"
+                                "value": "laserposition\u00a0x"
                             }
                         },
                         "id": "%Wj8o/Ty+Ngm5EUN{q3r",
@@ -387,7 +387,7 @@
                             "VARIABLE": {
                                 "id": ".LgIt_p}ix^s0d:~!jY1",
                                 "name": "VARIABLE",
-                                "value": "\u3057\u304b\u3081\u3063\u9762\u30fb\u534a\u5f84"
+                                "value": "stirnrunzeln radius"
                             }
                         },
                         "id": "(A-M?bjh||RH#;#$CuJ~",
@@ -444,7 +444,7 @@
                             "VARIABLE": {
                                 "id": "mJ0f;r20{!X9{BWnx(]p",
                                 "name": "VARIABLE",
-                                "value": "\u5fae\u7b11\u3093\u3067\u30ec\u30fc\u30b6\u30fc\u3092\u767a\u5c04\uff01 \u9854\u3092\u52d5\u304b\u3057\u72d9\u3044\u3092\u5b9a\u3081\u3066\u304f\u3060\u3055\u3044\u3002"
+                                "value": "l\u00e4chle, um mit laserstrahlen zu schie\u00dfen! bewege deinen kopf, um zu zielen."
                             }
                         },
                         "id": "(q#ryIDp6DKd6K(w=#Hj",
@@ -528,7 +528,7 @@
                             "VARIABLE": {
                                 "id": "VsTt}Y$GN@;^s5A/XOYE",
                                 "name": "VARIABLE",
-                                "value": "\u3057\u304b\u3081\u3063\u9762\u30fb\u4f4d\u7f6ey"
+                                "value": "stirnrunzeln position\u00a0y"
                             }
                         },
                         "id": ")a1MLpoJzt#9l]PtRM^B",
@@ -546,7 +546,7 @@
                             "VARIABLE": {
                                 "id": "eecO|j?*G-y.JKIBmkX-",
                                 "name": "VARIABLE",
-                                "value": "\u9854\u306e\u30c7\u30a3\u30b9\u30d7\u30ec\u30a4\u306e\u66f4\u65b0\u3092\u4e00\u6642\u505c\u6b62"
+                                "value": "pause: gesichtsanzeige wird aktualisiert"
                             }
                         },
                         "id": "*C=jBeM)_}Hk$35spj7A",
@@ -593,7 +593,7 @@
                             "VARIABLE": {
                                 "id": "vtT=Sm*2EP[T1!uvRH#a",
                                 "name": "VARIABLE",
-                                "value": "\u3057\u304b\u3081\u3063\u9762\u30fb\u4f4d\u7f6ex"
+                                "value": "stirnrunzeln position\u00a0x"
                             }
                         },
                         "id": "*vF`33u66{R7mhPoE8j!",
@@ -688,7 +688,7 @@
                             "VARIABLE": {
                                 "id": "4#N9a:e?vF)ccWQvrBmJ",
                                 "name": "VARIABLE",
-                                "value": "\u30ec\u30fc\u30b6\u30fc\u3092\u767a\u5c04"
+                                "value": "laser abgefeuert"
                             }
                         },
                         "id": ",@W}GUP[%hD_#0uQ![@G",
@@ -823,7 +823,7 @@
                             "VARIABLE": {
                                 "id": "vtT=Sm*2EP[T1!uvRH#a",
                                 "name": "VARIABLE",
-                                "value": "\u3057\u304b\u3081\u3063\u9762\u30fb\u4f4d\u7f6ex"
+                                "value": "stirnrunzeln position\u00a0x"
                             }
                         },
                         "id": ".GvqB7EUkr!gY#@-}Kk#",
@@ -994,7 +994,7 @@
                             "VARIABLE": {
                                 "id": "`.R`x1/qjQi[KBb1CkSL",
                                 "name": "VARIABLE",
-                                "value": "\u30ec\u30fc\u30b6\u30fc\u306e\u4f4d\u7f6ex"
+                                "value": "laserposition\u00a0x"
                             }
                         },
                         "id": "3Z1?bCnuVMt|,P.`-SeE",
@@ -1143,7 +1143,7 @@
                             "VARIABLE": {
                                 "id": "`.R`x1/qjQi[KBb1CkSL",
                                 "name": "VARIABLE",
-                                "value": "\u30ec\u30fc\u30b6\u30fc\u306e\u4f4d\u7f6ex"
+                                "value": "laserposition\u00a0x"
                             }
                         },
                         "id": "8wg]7,|.fK@MVmP*0bGY",
@@ -1194,7 +1194,7 @@
                             "VARIABLE": {
                                 "id": "eecO|j?*G-y.JKIBmkX-",
                                 "name": "VARIABLE",
-                                "value": "\u9854\u306e\u30c7\u30a3\u30b9\u30d7\u30ec\u30a4\u306e\u66f4\u65b0\u3092\u4e00\u6642\u505c\u6b62"
+                                "value": "pause: gesichtsanzeige wird aktualisiert"
                             }
                         },
                         "id": "9c=3mGQ-+!$^CcntENmZ",
@@ -1250,7 +1250,7 @@
                             "VARIABLE": {
                                 "id": "VsTt}Y$GN@;^s5A/XOYE",
                                 "name": "VARIABLE",
-                                "value": "\u3057\u304b\u3081\u3063\u9762\u30fb\u4f4d\u7f6ey"
+                                "value": "stirnrunzeln position\u00a0y"
                             }
                         },
                         "id": ";(T2kyprXh2u#5OW_ELU",
@@ -1268,7 +1268,7 @@
                             "VARIABLE": {
                                 "id": "vtT=Sm*2EP[T1!uvRH#a",
                                 "name": "VARIABLE",
-                                "value": "\u3057\u304b\u3081\u3063\u9762\u30fb\u4f4d\u7f6ex"
+                                "value": "stirnrunzeln position\u00a0x"
                             }
                         },
                         "id": ";75gHiVY/_DP8LE8L/zp",
@@ -1435,7 +1435,7 @@
                             "VARIABLE": {
                                 "id": "eecO|j?*G-y.JKIBmkX-",
                                 "name": "VARIABLE",
-                                "value": "\u9854\u306e\u30c7\u30a3\u30b9\u30d7\u30ec\u30a4\u306e\u66f4\u65b0\u3092\u4e00\u6642\u505c\u6b62"
+                                "value": "pause: gesichtsanzeige wird aktualisiert"
                             }
                         },
                         "id": "@hn5q{*rn?83=R+sl={@",
@@ -1453,7 +1453,7 @@
                             "VARIABLE": {
                                 "id": "VsTt}Y$GN@;^s5A/XOYE",
                                 "name": "VARIABLE",
-                                "value": "\u3057\u304b\u3081\u3063\u9762\u30fb\u4f4d\u7f6ey"
+                                "value": "stirnrunzeln position\u00a0y"
                             }
                         },
                         "id": "@lk{+.S]dK780_-c}p0~",
@@ -1471,7 +1471,7 @@
                             "VARIABLE": {
                                 "id": "`.R`x1/qjQi[KBb1CkSL",
                                 "name": "VARIABLE",
-                                "value": "\u30ec\u30fc\u30b6\u30fc\u306e\u4f4d\u7f6ex"
+                                "value": "laserposition\u00a0x"
                             }
                         },
                         "id": "A4?XjGGd(G-z~YJ:,qx*",
@@ -1552,7 +1552,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "\u30c6\u30ad\u30b9\u30c8"
+                                "value": "texte"
                             }
                         },
                         "id": "C;U]_yD:I@.(:jm6^^Z;",
@@ -1570,7 +1570,7 @@
                             "VARIABLE": {
                                 "id": "NZ[R}*KbBtaHQ}%uTfDa",
                                 "name": "VARIABLE",
-                                "value": "\u7d75\u6587\u5b57\u306e\u8868\u60c5"
+                                "value": "emoji-ausdruck"
                             }
                         },
                         "id": "C^.sOa]^i(QIq]5:Qck}",
@@ -1624,7 +1624,7 @@
                             "VARIABLE": {
                                 "id": "VsTt}Y$GN@;^s5A/XOYE",
                                 "name": "VARIABLE",
-                                "value": "\u3057\u304b\u3081\u3063\u9762\u30fb\u4f4d\u7f6ey"
+                                "value": "stirnrunzeln position\u00a0y"
                             }
                         },
                         "id": "CzeyY+@Xdt.=skZIe;)}",
@@ -1805,7 +1805,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "\u3057\u304b\u3081\u3063\u3064\u3089"
+                                "value": "stirnrunzeln"
                             }
                         },
                         "id": "Ikz[T:C1Pl2e-*bY!~e4",
@@ -1854,7 +1854,7 @@
                             "VARIABLE": {
                                 "id": "@Fb2pZ5}h{.HS=`Gium7",
                                 "name": "VARIABLE",
-                                "value": "\u30dd\u30a4\u30f3\u30c8"
+                                "value": "punkte"
                             }
                         },
                         "id": "M4h-I^;{oo1XEp9WZA3n",
@@ -1893,7 +1893,7 @@
                             "VARIABLE": {
                                 "id": ".LgIt_p}ix^s0d:~!jY1",
                                 "name": "VARIABLE",
-                                "value": "\u3057\u304b\u3081\u3063\u9762\u30fb\u534a\u5f84"
+                                "value": "stirnrunzeln radius"
                             }
                         },
                         "id": "Mhg_jZp#;uB%lzE5??n,",
@@ -1926,7 +1926,7 @@
                             "VARIABLE": {
                                 "id": "VsTt}Y$GN@;^s5A/XOYE",
                                 "name": "VARIABLE",
-                                "value": "\u3057\u304b\u3081\u3063\u9762\u30fb\u4f4d\u7f6ey"
+                                "value": "stirnrunzeln position\u00a0y"
                             }
                         },
                         "id": "NzRJVqbc(=`z=v!Jx{%3",
@@ -1944,7 +1944,7 @@
                             "VARIABLE": {
                                 "id": "4#N9a:e?vF)ccWQvrBmJ",
                                 "name": "VARIABLE",
-                                "value": "\u30ec\u30fc\u30b6\u30fc\u3092\u767a\u5c04"
+                                "value": "laser abgefeuert"
                             }
                         },
                         "id": "O4N-{J8LLg.mNeJhvY^3",
@@ -1968,7 +1968,7 @@
                             "VARIABLE": {
                                 "id": "@Fb2pZ5}h{.HS=`Gium7",
                                 "name": "VARIABLE",
-                                "value": "\u30dd\u30a4\u30f3\u30c8"
+                                "value": "punkte"
                             }
                         },
                         "id": "O_G:4d}f$@W1Ew(7AK%X",
@@ -2197,7 +2197,7 @@
                             "VARIABLE": {
                                 "id": "@Fb2pZ5}h{.HS=`Gium7",
                                 "name": "VARIABLE",
-                                "value": "\u30dd\u30a4\u30f3\u30c8"
+                                "value": "punkte"
                             }
                         },
                         "id": "S1WQfY@E[7vfS`}:YnX9",
@@ -2230,7 +2230,7 @@
                             "VARIABLE": {
                                 "id": "vtT=Sm*2EP[T1!uvRH#a",
                                 "name": "VARIABLE",
-                                "value": "\u3057\u304b\u3081\u3063\u9762\u30fb\u4f4d\u7f6ex"
+                                "value": "stirnrunzeln position\u00a0x"
                             }
                         },
                         "id": "SV$]4il{@rk%vE7Oa39D",
@@ -2325,7 +2325,7 @@
                             "VARIABLE": {
                                 "id": "`.R`x1/qjQi[KBb1CkSL",
                                 "name": "VARIABLE",
-                                "value": "\u30ec\u30fc\u30b6\u30fc\u306e\u4f4d\u7f6ex"
+                                "value": "laserposition\u00a0x"
                             }
                         },
                         "id": "W;I.gqlf[)[Me`Q5``V.",
@@ -2381,7 +2381,7 @@
                             "VARIABLE": {
                                 "id": "eecO|j?*G-y.JKIBmkX-",
                                 "name": "VARIABLE",
-                                "value": "\u9854\u306e\u30c7\u30a3\u30b9\u30d7\u30ec\u30a4\u306e\u66f4\u65b0\u3092\u4e00\u6642\u505c\u6b62"
+                                "value": "pause: gesichtsanzeige wird aktualisiert"
                             }
                         },
                         "id": "X=Kh7[p!3W;-I=Vp=Z68",
@@ -2554,7 +2554,7 @@
                             "VARIABLE": {
                                 "id": "`.R`x1/qjQi[KBb1CkSL",
                                 "name": "VARIABLE",
-                                "value": "\u30ec\u30fc\u30b6\u30fc\u306e\u4f4d\u7f6ex"
+                                "value": "laserposition\u00a0x"
                             }
                         },
                         "id": "[p%kEHa4b[|TjXy|$g*6",
@@ -2590,7 +2590,7 @@
                             "VARIABLE": {
                                 "id": "vtT=Sm*2EP[T1!uvRH#a",
                                 "name": "VARIABLE",
-                                "value": "\u3057\u304b\u3081\u3063\u9762\u30fb\u4f4d\u7f6ex"
+                                "value": "stirnrunzeln position\u00a0x"
                             }
                         },
                         "id": "]Er[^oW:@9l:NW!-3JQx",
@@ -2820,7 +2820,7 @@
                             "VARIABLE": {
                                 "id": "m([%81AZ}KhKy=00Xf6Q",
                                 "name": "VARIABLE",
-                                "value": "\u76ee\u6a19\u306f\u305d\u306e\u3057\u304b\u3081\u3063\u9762\u3092\u3072\u3063\u304f\u308a\u8fd4\u3059\u3053\u3068\u3067\u3059\uff01"
+                                "value": "hier kannst du mit einem l\u00e4cheln gewinnen!"
                             }
                         },
                         "id": "a%~=9nt=LDvf_ZX?fTnc",
@@ -2934,7 +2934,7 @@
                             "VARIABLE": {
                                 "id": "vtT=Sm*2EP[T1!uvRH#a",
                                 "name": "VARIABLE",
-                                "value": "\u3057\u304b\u3081\u3063\u9762\u30fb\u4f4d\u7f6ex"
+                                "value": "stirnrunzeln position\u00a0x"
                             }
                         },
                         "id": "c5;t:aVLC=Q9).bldOdB",
@@ -2974,7 +2974,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "\u3057\u304b\u3081\u3063\u3064\u3089"
+                                "value": "stirnrunzeln"
                             }
                         },
                         "id": "cUu?vZ2:cvT~(PFsTJ$t",
@@ -3020,7 +3020,7 @@
                             "VARIABLE": {
                                 "id": "vtT=Sm*2EP[T1!uvRH#a",
                                 "name": "VARIABLE",
-                                "value": "\u3057\u304b\u3081\u3063\u9762\u30fb\u4f4d\u7f6ex"
+                                "value": "stirnrunzeln position\u00a0x"
                             }
                         },
                         "id": "eNzYF6:e:KSd?7,uH3,[",
@@ -3127,7 +3127,7 @@
                             "VARIABLE": {
                                 "id": "`.R`x1/qjQi[KBb1CkSL",
                                 "name": "VARIABLE",
-                                "value": "\u30ec\u30fc\u30b6\u30fc\u306e\u4f4d\u7f6ex"
+                                "value": "laserposition\u00a0x"
                             }
                         },
                         "id": "ggk+m[xx#wX;6IGNI~Ir",
@@ -3213,7 +3213,7 @@
                             "VARIABLE": {
                                 "id": "VsTt}Y$GN@;^s5A/XOYE",
                                 "name": "VARIABLE",
-                                "value": "\u3057\u304b\u3081\u3063\u9762\u30fb\u4f4d\u7f6ey"
+                                "value": "stirnrunzeln position\u00a0y"
                             }
                         },
                         "id": "j9^lmF/;0JgFZ)X:N.^(",
@@ -3284,7 +3284,7 @@
                             "VARIABLE": {
                                 "id": "NZ[R}*KbBtaHQ}%uTfDa",
                                 "name": "VARIABLE",
-                                "value": "\u7d75\u6587\u5b57\u306e\u8868\u60c5"
+                                "value": "emoji-ausdruck"
                             }
                         },
                         "id": "j}cCUHHYxLw+j5d9-jc2",
@@ -3332,7 +3332,7 @@
                             "VARIABLE": {
                                 "id": ".LgIt_p}ix^s0d:~!jY1",
                                 "name": "VARIABLE",
-                                "value": "\u3057\u304b\u3081\u3063\u9762\u30fb\u534a\u5f84"
+                                "value": "stirnrunzeln radius"
                             }
                         },
                         "id": "k_,jBb1vyvQ]A6.9#OS{",
@@ -3390,7 +3390,7 @@
                             "VARIABLE": {
                                 "id": "`.R`x1/qjQi[KBb1CkSL",
                                 "name": "VARIABLE",
-                                "value": "\u30ec\u30fc\u30b6\u30fc\u306e\u4f4d\u7f6ex"
+                                "value": "laserposition\u00a0x"
                             }
                         },
                         "id": "lH}:dgG/+IAZ%twnc?{0",
@@ -3447,7 +3447,7 @@
                             "VARIABLE": {
                                 "id": "4#N9a:e?vF)ccWQvrBmJ",
                                 "name": "VARIABLE",
-                                "value": "\u30ec\u30fc\u30b6\u30fc\u3092\u767a\u5c04"
+                                "value": "laser abgefeuert"
                             }
                         },
                         "id": "mhh`H^TD.9?0aWddQ~HD",
@@ -3734,7 +3734,7 @@
                             "VARIABLE": {
                                 "id": "NZ[R}*KbBtaHQ}%uTfDa",
                                 "name": "VARIABLE",
-                                "value": "\u7d75\u6587\u5b57\u306e\u8868\u60c5"
+                                "value": "emoji-ausdruck"
                             }
                         },
                         "id": "r|D%IB7,(M:v...666PD",
@@ -3826,7 +3826,7 @@
                             "VARIABLE": {
                                 "id": "VsTt}Y$GN@;^s5A/XOYE",
                                 "name": "VARIABLE",
-                                "value": "\u3057\u304b\u3081\u3063\u9762\u30fb\u4f4d\u7f6ey"
+                                "value": "stirnrunzeln position\u00a0y"
                             }
                         },
                         "id": "uTNs1%zG[T:I,x5bb(k,",
@@ -3876,7 +3876,7 @@
                             "VARIABLE": {
                                 "id": "VsTt}Y$GN@;^s5A/XOYE",
                                 "name": "VARIABLE",
-                                "value": "\u3057\u304b\u3081\u3063\u9762\u30fb\u4f4d\u7f6ey"
+                                "value": "stirnrunzeln position\u00a0y"
                             }
                         },
                         "id": "u{(jGG(N-v%t:y?(obtW",
@@ -3915,7 +3915,7 @@
                             "VARIABLE": {
                                 "id": "eecO|j?*G-y.JKIBmkX-",
                                 "name": "VARIABLE",
-                                "value": "\u9854\u306e\u30c7\u30a3\u30b9\u30d7\u30ec\u30a4\u306e\u66f4\u65b0\u3092\u4e00\u6642\u505c\u6b62"
+                                "value": "pause: gesichtsanzeige wird aktualisiert"
                             }
                         },
                         "id": "vV460~Nj6Xi=U=#Fu{lj",
@@ -3938,7 +3938,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "\u3057\u304b\u3081\u3063\u3064\u3089"
+                                "value": "stirnrunzeln"
                             }
                         },
                         "id": "vXogSqPq2}XeYk2TRD6R",
@@ -3984,7 +3984,7 @@
                             "VARIABLE": {
                                 "id": "4#N9a:e?vF)ccWQvrBmJ",
                                 "name": "VARIABLE",
-                                "value": "\u30ec\u30fc\u30b6\u30fc\u3092\u767a\u5c04"
+                                "value": "laser abgefeuert"
                             }
                         },
                         "id": "wD;B,=tRUR?%]9t!Sb,,",
@@ -4019,7 +4019,7 @@
                             "VARIABLE": {
                                 "id": "eecO|j?*G-y.JKIBmkX-",
                                 "name": "VARIABLE",
-                                "value": "\u9854\u306e\u30c7\u30a3\u30b9\u30d7\u30ec\u30a4\u306e\u66f4\u65b0\u3092\u4e00\u6642\u505c\u6b62"
+                                "value": "pause: gesichtsanzeige wird aktualisiert"
                             }
                         },
                         "id": "x*(tK-cj{8ZAu~/4aQ3^",
@@ -4058,7 +4058,7 @@
                             "VARIABLE": {
                                 "id": "%CU5pQ8O,KT!)uq$|f)y",
                                 "name": "VARIABLE",
-                                "value": "\u30ec\u30fc\u30b6\u30fc\u306f\u6210\u529f\u3057\u307e\u3057\u305f"
+                                "value": "laser erfolgreich"
                             }
                         },
                         "id": "x;NGa/FdZ1H__!B6v#jG",
@@ -4097,7 +4097,7 @@
                             "VARIABLE": {
                                 "id": "`.R`x1/qjQi[KBb1CkSL",
                                 "name": "VARIABLE",
-                                "value": "\u30ec\u30fc\u30b6\u30fc\u306e\u4f4d\u7f6ex"
+                                "value": "laserposition\u00a0x"
                             }
                         },
                         "id": "xLi`I!qU]l=]s*I/T;y[",
@@ -4115,7 +4115,7 @@
                             "VARIABLE": {
                                 "id": "vtT=Sm*2EP[T1!uvRH#a",
                                 "name": "VARIABLE",
-                                "value": "\u3057\u304b\u3081\u3063\u9762\u30fb\u4f4d\u7f6ex"
+                                "value": "stirnrunzeln position\u00a0x"
                             }
                         },
                         "id": "xZc!r8psEI-BvA?!3bj;",
@@ -4155,7 +4155,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "\u30dd\u30a4\u30f3\u30c8\uff1a"
+                                "value": "punkte:"
                             }
                         },
                         "id": "x{8q-0j3s[bbHm[1lS!B",
@@ -4226,7 +4226,7 @@
                             "VARIABLE": {
                                 "id": "vtT=Sm*2EP[T1!uvRH#a",
                                 "name": "VARIABLE",
-                                "value": "\u3057\u304b\u3081\u3063\u9762\u30fb\u4f4d\u7f6ex"
+                                "value": "stirnrunzeln position\u00a0x"
                             }
                         },
                         "id": "yvjaq~d$+Pp3YF$KT9fF",
@@ -4244,7 +4244,7 @@
                             "VARIABLE": {
                                 "id": "`.R`x1/qjQi[KBb1CkSL",
                                 "name": "VARIABLE",
-                                "value": "\u30ec\u30fc\u30b6\u30fc\u306e\u4f4d\u7f6ex"
+                                "value": "laserposition\u00a0x"
                             }
                         },
                         "id": "z,@0?L9J|~IT|7csPHF/",
@@ -4400,7 +4400,7 @@
                             "VARIABLE": {
                                 "id": "`.R`x1/qjQi[KBb1CkSL",
                                 "name": "VARIABLE",
-                                "value": "\u30ec\u30fc\u30b6\u30fc\u306e\u4f4d\u7f6ex"
+                                "value": "laserposition\u00a0x"
                             }
                         },
                         "id": "|99NPchq#D|bWE0%gKwF",
@@ -4479,7 +4479,7 @@
                             "VARIABLE": {
                                 "id": "vtT=Sm*2EP[T1!uvRH#a",
                                 "name": "VARIABLE",
-                                "value": "\u3057\u304b\u3081\u3063\u9762\u30fb\u4f4d\u7f6ex"
+                                "value": "stirnrunzeln position\u00a0x"
                             }
                         },
                         "id": "~$#N?sSN]6L/E=o3]2R%",

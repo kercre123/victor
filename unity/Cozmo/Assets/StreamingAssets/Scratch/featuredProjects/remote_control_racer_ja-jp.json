@@ -23,63 +23,63 @@
                 "variables": {
                     "%S|4i{Hl-Xwn78N?Bz,h": {
                         "id": "%S|4i{Hl-Xwn78N?Bz,h",
-                        "name": "\u30c7\u30d0\u30a4\u30b9\u52d5\u4f5c\u306e\u30c7\u30c3\u30c9\u30be\u30fc\u30f3",
+                        "name": "nullpunkt der ger\u00e4tebewegung",
                         "value": "3"
                     },
                     "%nKLL!S])nNUTSnaXIX1": {
                         "id": "%nKLL!S])nNUTSnaXIX1",
-                        "name": "\u5de6\u306e\u8eca\u8f2a\u901f\u5ea6",
+                        "name": "geschwindigkeit des linken rads",
                         "value": 553.372078
                     },
                     "4b)l@Exh)G+LfP|61i+J": {
                         "id": "4b)l@Exh)G+LfP|61i+J",
                         "isCloud": false,
-                        "name": "\u30c7\u30d0\u30a4\u30b9\u3092\u6c34\u5e73\u306b",
+                        "name": "ger\u00e4t eben",
                         "value": 0
                     },
                     "8Azgt7ccwNcBP`*`9G/3": {
                         "id": "8Azgt7ccwNcBP`*`9G/3",
-                        "name": "\u901f\u5ea6\u4e57\u6570",
+                        "name": "geschwindigkeits-multiplikator",
                         "value": "10"
                     },
                     "@50S8z@4gjW9WR_ka06X": {
                         "id": "@50S8z@4gjW9WR_ka06X",
-                        "name": "\u53f3\u306e\u8eca\u8f2a\u901f\u5ea6",
+                        "name": "geschwindigkeit des rechten rads",
                         "value": 553.372078
                     },
                     "A!;F7U9cWWdu}:cTig4u": {
                         "id": "A!;F7U9cWWdu}:cTig4u",
-                        "name": "\u30c7\u30d0\u30a4\u30b9\u3067COZMO\u3092\u30eb\u30fc\u30d7\u5236\u5fa1\u3059\u308b\u3088\u3046\u30d7\u30ed\u30b0\u30e9\u30e0\u3059\u308b\u3002",
+                        "name": "programmschleife zum steuern von cozmo mit einem ger\u00e4t.",
                         "value": 0
                     },
                     "FxVO]/3WDewZn!4X@3op": {
                         "id": "FxVO]/3WDewZn!4X@3op",
-                        "name": "\u30d9\u30fc\u30b9\u306e\u30c7\u30d0\u30a4\u30b9\u3092\u524d\u65b9\u307e\u305f\u306f\u5f8c\u65b9\u306b\u50be\u3051\u308b",
+                        "name": "ausgangsneigung des ger\u00e4ts (nach vorn/hinten)",
                         "value": 58.3372078
                     },
                     "GYi8j_tTE3hCvXmat:!q": {
                         "id": "GYi8j_tTE3hCvXmat:!q",
-                        "name": "\u30c9\u30e9\u30a4\u30d6\u307e\u305f\u306f\u30bf\u30fc\u30f3\u306e\u57fa\u6e96\u5024",
+                        "name": "grenzwert zum fahren oder drehen",
                         "value": "75"
                     },
                     "[98N^0M=Fn`bPA0E*#yj": {
                         "id": "[98N^0M=Fn`bPA0E*#yj",
-                        "name": "\u56de\u8ee2\u4e57\u6570",
+                        "name": "drehungs-multiplikator",
                         "value": "3.5"
                     },
                     "[]*x#hDxQ0SXfJ}#+n8a": {
                         "id": "[]*x#hDxQ0SXfJ}#+n8a",
-                        "name": "\u30c7\u30d5\u30a9\u30eb\u30c8\u306e\u5024\u3092\u8a2d\u5b9a\u3057\u307e\u3059\u3002",
+                        "name": "richtet die standardwerte ein.",
                         "value": 0
                     },
                     "j#mt=VkEvh`9{vqZ)CAb": {
                         "id": "j#mt=VkEvh`9{vqZ)CAb",
-                        "name": "\u30c7\u30d0\u30a4\u30b9\u306e\u50be\u304d\u3092\u524d\u65b9\u307e\u305f\u306f\u5f8c\u65b9\u306b\u5909\u66f4",
+                        "name": "neigung des ger\u00e4ts ge\u00e4ndert (nach vorn/hinten)",
                         "value": 553.372078
                     },
                     "y(#7~Y/j(*(7vy8jiq~W": {
                         "id": "y(#7~Y/j(*(7vy8jiq~W",
-                        "name": "\u30c7\u30d0\u30a4\u30b9\u306e\u50be\u304d\u3092\u53f3\u307e\u305f\u306f\u5de6\u306b\u5909\u66f4",
+                        "name": "neigung des ger\u00e4ts ge\u00e4ndert (nach links/rechts)",
                         "value": "0"
                     }
                 },
@@ -220,7 +220,7 @@
                             "VARIABLE": {
                                 "id": "4b)l@Exh)G+LfP|61i+J",
                                 "name": "VARIABLE",
-                                "value": "\u30c7\u30d0\u30a4\u30b9\u3092\u6c34\u5e73\u306b"
+                                "value": "ger\u00e4t eben"
                             }
                         },
                         "id": "%q28v=T?S}N1o{0[jiw+",
@@ -271,7 +271,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "\u30c7\u30d0\u30a4\u30b9\u3092\u305c\u3093\u3054\u3055\u3086\u3046\u306b\u304b\u305f\u3080\u3051\u3066\n\u304f\u3060\u3055\u3044\uff01"
+                                "value": "neige das ger\u00e4t, um zu fahren!"
                             }
                         },
                         "id": "(Mh,8C1N3l)He,bex%$w",
@@ -287,7 +287,7 @@
                             "VARIABLE": {
                                 "id": "y(#7~Y/j(*(7vy8jiq~W",
                                 "name": "VARIABLE",
-                                "value": "\u30c7\u30d0\u30a4\u30b9\u306e\u50be\u304d\u3092\u53f3\u307e\u305f\u306f\u5de6\u306b\u5909\u66f4"
+                                "value": "neigung des ger\u00e4ts ge\u00e4ndert (nach links/rechts)"
                             }
                         },
                         "id": "*Xs73][3fv3sD+,5CfKp",
@@ -380,7 +380,7 @@
                             "VARIABLE": {
                                 "id": "[98N^0M=Fn`bPA0E*#yj",
                                 "name": "VARIABLE",
-                                "value": "\u56de\u8ee2\u4e57\u6570"
+                                "value": "drehungs-multiplikator"
                             }
                         },
                         "id": ".q*=0(n.i}lfmc{kW/Lu",
@@ -415,7 +415,7 @@
                             "VARIABLE": {
                                 "id": "GYi8j_tTE3hCvXmat:!q",
                                 "name": "VARIABLE",
-                                "value": "\u30c9\u30e9\u30a4\u30d6\u307e\u305f\u306f\u30bf\u30fc\u30f3\u306e\u57fa\u6e96\u5024"
+                                "value": "grenzwert zum fahren oder drehen"
                             }
                         },
                         "id": "0pG+2vL~1yS)6Dj?@(1N",
@@ -439,7 +439,7 @@
                             "VARIABLE": {
                                 "id": "FxVO]/3WDewZn!4X@3op",
                                 "name": "VARIABLE",
-                                "value": "\u30d9\u30fc\u30b9\u306e\u30c7\u30d0\u30a4\u30b9\u3092\u524d\u65b9\u307e\u305f\u306f\u5f8c\u65b9\u306b\u50be\u3051\u308b"
+                                "value": "ausgangsneigung des ger\u00e4ts (nach vorn/hinten)"
                             }
                         },
                         "id": "0{$`x_@;r;ulNB3{A](X",
@@ -474,7 +474,7 @@
                             "VARIABLE": {
                                 "id": "y(#7~Y/j(*(7vy8jiq~W",
                                 "name": "VARIABLE",
-                                "value": "\u30c7\u30d0\u30a4\u30b9\u306e\u50be\u304d\u3092\u53f3\u307e\u305f\u306f\u5de6\u306b\u5909\u66f4"
+                                "value": "neigung des ger\u00e4ts ge\u00e4ndert (nach links/rechts)"
                             }
                         },
                         "id": "3!L`G=B.Xh7.IJG9uxky",
@@ -492,7 +492,7 @@
                             "VARIABLE": {
                                 "id": "%nKLL!S])nNUTSnaXIX1",
                                 "name": "VARIABLE",
-                                "value": "\u5de6\u306e\u8eca\u8f2a\u901f\u5ea6"
+                                "value": "geschwindigkeit des linken rads"
                             }
                         },
                         "id": "6aw6#c#Oe.NM+T.~63=]",
@@ -565,7 +565,7 @@
                             "VARIABLE": {
                                 "id": "%nKLL!S])nNUTSnaXIX1",
                                 "name": "VARIABLE",
-                                "value": "\u5de6\u306e\u8eca\u8f2a\u901f\u5ea6"
+                                "value": "geschwindigkeit des linken rads"
                             }
                         },
                         "id": "8Mr+}54jr2hm.)IoL(A]",
@@ -641,7 +641,7 @@
                             "VARIABLE": {
                                 "id": "%S|4i{Hl-Xwn78N?Bz,h",
                                 "name": "VARIABLE",
-                                "value": "\u30c7\u30d0\u30a4\u30b9\u52d5\u4f5c\u306e\u30c7\u30c3\u30c9\u30be\u30fc\u30f3"
+                                "value": "nullpunkt der ger\u00e4tebewegung"
                             }
                         },
                         "id": ":3tq*wg~7Pe_xiZ^QNK2",
@@ -829,7 +829,7 @@
                             "VARIABLE": {
                                 "id": "j#mt=VkEvh`9{vqZ)CAb",
                                 "name": "VARIABLE",
-                                "value": "\u30c7\u30d0\u30a4\u30b9\u306e\u50be\u304d\u3092\u524d\u65b9\u307e\u305f\u306f\u5f8c\u65b9\u306b\u5909\u66f4"
+                                "value": "neigung des ger\u00e4ts ge\u00e4ndert (nach vorn/hinten)"
                             }
                         },
                         "id": "C369+~i=Zn[vf,`s~Aq`",
@@ -916,7 +916,7 @@
                             "VARIABLE": {
                                 "id": "y(#7~Y/j(*(7vy8jiq~W",
                                 "name": "VARIABLE",
-                                "value": "\u30c7\u30d0\u30a4\u30b9\u306e\u50be\u304d\u3092\u53f3\u307e\u305f\u306f\u5de6\u306b\u5909\u66f4"
+                                "value": "neigung des ger\u00e4ts ge\u00e4ndert (nach links/rechts)"
                             }
                         },
                         "id": "D7%c%2%ftd)-vPgt+DA4",
@@ -997,7 +997,7 @@
                             "VARIABLE": {
                                 "id": "@50S8z@4gjW9WR_ka06X",
                                 "name": "VARIABLE",
-                                "value": "\u53f3\u306e\u8eca\u8f2a\u901f\u5ea6"
+                                "value": "geschwindigkeit des rechten rads"
                             }
                         },
                         "id": "Gll(pC}bz.(y7aVM~(ij",
@@ -1033,7 +1033,7 @@
                             "VARIABLE": {
                                 "id": "[98N^0M=Fn`bPA0E*#yj",
                                 "name": "VARIABLE",
-                                "value": "\u56de\u8ee2\u4e57\u6570"
+                                "value": "drehungs-multiplikator"
                             }
                         },
                         "id": "Ix({ujwR=Kj!;.VSL`F+",
@@ -1057,7 +1057,7 @@
                             "VARIABLE": {
                                 "id": "j#mt=VkEvh`9{vqZ)CAb",
                                 "name": "VARIABLE",
-                                "value": "\u30c7\u30d0\u30a4\u30b9\u306e\u50be\u304d\u3092\u524d\u65b9\u307e\u305f\u306f\u5f8c\u65b9\u306b\u5909\u66f4"
+                                "value": "neigung des ger\u00e4ts ge\u00e4ndert (nach vorn/hinten)"
                             }
                         },
                         "id": "K=]bAN-C?SgM.!Q_T2r[",
@@ -1132,7 +1132,7 @@
                             "VARIABLE": {
                                 "id": "y(#7~Y/j(*(7vy8jiq~W",
                                 "name": "VARIABLE",
-                                "value": "\u30c7\u30d0\u30a4\u30b9\u306e\u50be\u304d\u3092\u53f3\u307e\u305f\u306f\u5de6\u306b\u5909\u66f4"
+                                "value": "neigung des ger\u00e4ts ge\u00e4ndert (nach links/rechts)"
                             }
                         },
                         "id": "PiPU(dr{KqHT~T[:]Lcr",
@@ -1188,7 +1188,7 @@
                             "VARIABLE": {
                                 "id": "FxVO]/3WDewZn!4X@3op",
                                 "name": "VARIABLE",
-                                "value": "\u30d9\u30fc\u30b9\u306e\u30c7\u30d0\u30a4\u30b9\u3092\u524d\u65b9\u307e\u305f\u306f\u5f8c\u65b9\u306b\u50be\u3051\u308b"
+                                "value": "ausgangsneigung des ger\u00e4ts (nach vorn/hinten)"
                             }
                         },
                         "id": "QhFNA,Df69-Qa`0Z|`40",
@@ -1212,7 +1212,7 @@
                             "VARIABLE": {
                                 "id": "FxVO]/3WDewZn!4X@3op",
                                 "name": "VARIABLE",
-                                "value": "\u30d9\u30fc\u30b9\u306e\u30c7\u30d0\u30a4\u30b9\u3092\u524d\u65b9\u307e\u305f\u306f\u5f8c\u65b9\u306b\u50be\u3051\u308b"
+                                "value": "ausgangsneigung des ger\u00e4ts (nach vorn/hinten)"
                             }
                         },
                         "id": "Q{!2]~5hPjDKHfE5%Q7q",
@@ -1291,7 +1291,7 @@
                             "VARIABLE": {
                                 "id": "FxVO]/3WDewZn!4X@3op",
                                 "name": "VARIABLE",
-                                "value": "\u30d9\u30fc\u30b9\u306e\u30c7\u30d0\u30a4\u30b9\u3092\u524d\u65b9\u307e\u305f\u306f\u5f8c\u65b9\u306b\u50be\u3051\u308b"
+                                "value": "ausgangsneigung des ger\u00e4ts (nach vorn/hinten)"
                             }
                         },
                         "id": "SYHaZ~9YQj)`.Z~X~P=h",
@@ -1343,7 +1343,7 @@
                             "VARIABLE": {
                                 "id": "j#mt=VkEvh`9{vqZ)CAb",
                                 "name": "VARIABLE",
-                                "value": "\u30c7\u30d0\u30a4\u30b9\u306e\u50be\u304d\u3092\u524d\u65b9\u307e\u305f\u306f\u5f8c\u65b9\u306b\u5909\u66f4"
+                                "value": "neigung des ger\u00e4ts ge\u00e4ndert (nach vorn/hinten)"
                             }
                         },
                         "id": "UD-IU#X9|}/0oa};{_|(",
@@ -1384,7 +1384,7 @@
                             "VARIABLE": {
                                 "id": "y(#7~Y/j(*(7vy8jiq~W",
                                 "name": "VARIABLE",
-                                "value": "\u30c7\u30d0\u30a4\u30b9\u306e\u50be\u304d\u3092\u53f3\u307e\u305f\u306f\u5de6\u306b\u5909\u66f4"
+                                "value": "neigung des ger\u00e4ts ge\u00e4ndert (nach links/rechts)"
                             }
                         },
                         "id": "V4+:3u-KmqT/QRSLR$V}",
@@ -1402,7 +1402,7 @@
                             "VARIABLE": {
                                 "id": "y(#7~Y/j(*(7vy8jiq~W",
                                 "name": "VARIABLE",
-                                "value": "\u30c7\u30d0\u30a4\u30b9\u306e\u50be\u304d\u3092\u53f3\u307e\u305f\u306f\u5de6\u306b\u5909\u66f4"
+                                "value": "neigung des ger\u00e4ts ge\u00e4ndert (nach links/rechts)"
                             }
                         },
                         "id": "]Tu{%/?TQbjp?.|V(:3Z",
@@ -1516,7 +1516,7 @@
                             "VARIABLE": {
                                 "id": "y(#7~Y/j(*(7vy8jiq~W",
                                 "name": "VARIABLE",
-                                "value": "\u30c7\u30d0\u30a4\u30b9\u306e\u50be\u304d\u3092\u53f3\u307e\u305f\u306f\u5de6\u306b\u5909\u66f4"
+                                "value": "neigung des ger\u00e4ts ge\u00e4ndert (nach links/rechts)"
                             }
                         },
                         "id": "`GQJCl[e,o*22e=AUp`/",
@@ -1686,7 +1686,7 @@
                             "VARIABLE": {
                                 "id": "FxVO]/3WDewZn!4X@3op",
                                 "name": "VARIABLE",
-                                "value": "\u30d9\u30fc\u30b9\u306e\u30c7\u30d0\u30a4\u30b9\u3092\u524d\u65b9\u307e\u305f\u306f\u5f8c\u65b9\u306b\u50be\u3051\u308b"
+                                "value": "ausgangsneigung des ger\u00e4ts (nach vorn/hinten)"
                             }
                         },
                         "id": "j|V*.Rsfkz(o_NXd]4Ij",
@@ -1761,7 +1761,7 @@
                             "VARIABLE": {
                                 "id": "%S|4i{Hl-Xwn78N?Bz,h",
                                 "name": "VARIABLE",
-                                "value": "\u30c7\u30d0\u30a4\u30b9\u52d5\u4f5c\u306e\u30c7\u30c3\u30c9\u30be\u30fc\u30f3"
+                                "value": "nullpunkt der ger\u00e4tebewegung"
                             }
                         },
                         "id": "l/#-@cN;w7{FWB,2F-]=",
@@ -1800,7 +1800,7 @@
                             "VARIABLE": {
                                 "id": "@50S8z@4gjW9WR_ka06X",
                                 "name": "VARIABLE",
-                                "value": "\u53f3\u306e\u8eca\u8f2a\u901f\u5ea6"
+                                "value": "geschwindigkeit des rechten rads"
                             }
                         },
                         "id": "m7L[:(^ARA7-cbmYeXAk",
@@ -1847,7 +1847,7 @@
                             "VARIABLE": {
                                 "id": "j#mt=VkEvh`9{vqZ)CAb",
                                 "name": "VARIABLE",
-                                "value": "\u30c7\u30d0\u30a4\u30b9\u306e\u50be\u304d\u3092\u524d\u65b9\u307e\u305f\u306f\u5f8c\u65b9\u306b\u5909\u66f4"
+                                "value": "neigung des ger\u00e4ts ge\u00e4ndert (nach vorn/hinten)"
                             }
                         },
                         "id": "mgxH|K9`WvPg${$eWq+g",
@@ -1865,7 +1865,7 @@
                             "VARIABLE": {
                                 "id": "[]*x#hDxQ0SXfJ}#+n8a",
                                 "name": "VARIABLE",
-                                "value": "\u30c7\u30d5\u30a9\u30eb\u30c8\u306e\u5024\u3092\u8a2d\u5b9a\u3057\u307e\u3059\u3002"
+                                "value": "richtet die standardwerte ein."
                             }
                         },
                         "id": "n2eKPx*7fSq#uAXQ|%hR",
@@ -1936,7 +1936,7 @@
                             "VARIABLE": {
                                 "id": "A!;F7U9cWWdu}:cTig4u",
                                 "name": "VARIABLE",
-                                "value": "\u30c7\u30d0\u30a4\u30b9\u3067COZMO\u3092\u30eb\u30fc\u30d7\u5236\u5fa1\u3059\u308b\u3088\u3046\u30d7\u30ed\u30b0\u30e9\u30e0\u3059\u308b\u3002"
+                                "value": "programmschleife zum steuern von cozmo mit einem ger\u00e4t."
                             }
                         },
                         "id": "q3kjd@2y!4z4O*3qpZj!",
@@ -2041,7 +2041,7 @@
                             "VARIABLE": {
                                 "id": "GYi8j_tTE3hCvXmat:!q",
                                 "name": "VARIABLE",
-                                "value": "\u30c9\u30e9\u30a4\u30d6\u307e\u305f\u306f\u30bf\u30fc\u30f3\u306e\u57fa\u6e96\u5024"
+                                "value": "grenzwert zum fahren oder drehen"
                             }
                         },
                         "id": "u0LxU_]d#xnm%`D+K/^Z",
@@ -2059,7 +2059,7 @@
                             "VARIABLE": {
                                 "id": "j#mt=VkEvh`9{vqZ)CAb",
                                 "name": "VARIABLE",
-                                "value": "\u30c7\u30d0\u30a4\u30b9\u306e\u50be\u304d\u3092\u524d\u65b9\u307e\u305f\u306f\u5f8c\u65b9\u306b\u5909\u66f4"
+                                "value": "neigung des ger\u00e4ts ge\u00e4ndert (nach vorn/hinten)"
                             }
                         },
                         "id": "uQMnlI7-Lk3+z-:-GsR,",
@@ -2083,7 +2083,7 @@
                             "VARIABLE": {
                                 "id": "%S|4i{Hl-Xwn78N?Bz,h",
                                 "name": "VARIABLE",
-                                "value": "\u30c7\u30d0\u30a4\u30b9\u52d5\u4f5c\u306e\u30c7\u30c3\u30c9\u30be\u30fc\u30f3"
+                                "value": "nullpunkt der ger\u00e4tebewegung"
                             }
                         },
                         "id": "urkIdd8dskx^`Saxk-Yh",
@@ -2233,7 +2233,7 @@
                             "VARIABLE": {
                                 "id": "8Azgt7ccwNcBP`*`9G/3",
                                 "name": "VARIABLE",
-                                "value": "\u901f\u5ea6\u4e57\u6570"
+                                "value": "geschwindigkeits-multiplikator"
                             }
                         },
                         "id": "xj#%7}L/p1Guz]MtO#|)",
@@ -2326,7 +2326,7 @@
                             "VARIABLE": {
                                 "id": "j#mt=VkEvh`9{vqZ)CAb",
                                 "name": "VARIABLE",
-                                "value": "\u30c7\u30d0\u30a4\u30b9\u306e\u50be\u304d\u3092\u524d\u65b9\u307e\u305f\u306f\u5f8c\u65b9\u306b\u5909\u66f4"
+                                "value": "neigung des ger\u00e4ts ge\u00e4ndert (nach vorn/hinten)"
                             }
                         },
                         "id": "|xbIX3xr~M=+=uB6A)+Q",
@@ -2379,7 +2379,7 @@
                             "VARIABLE": {
                                 "id": "8Azgt7ccwNcBP`*`9G/3",
                                 "name": "VARIABLE",
-                                "value": "\u901f\u5ea6\u4e57\u6570"
+                                "value": "geschwindigkeits-multiplikator"
                             }
                         },
                         "id": "~4%RY?JKYSxA`vX8:x6%",
@@ -2397,7 +2397,7 @@
                             "VARIABLE": {
                                 "id": "j#mt=VkEvh`9{vqZ)CAb",
                                 "name": "VARIABLE",
-                                "value": "\u30c7\u30d0\u30a4\u30b9\u306e\u50be\u304d\u3092\u524d\u65b9\u307e\u305f\u306f\u5f8c\u65b9\u306b\u5909\u66f4"
+                                "value": "neigung des ger\u00e4ts ge\u00e4ndert (nach vorn/hinten)"
                             }
                         },
                         "id": "~;1I=FuI)MSi!DUyIm{B",

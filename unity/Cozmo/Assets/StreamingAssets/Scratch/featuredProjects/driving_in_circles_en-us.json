@@ -23,7 +23,7 @@
                 "variables": {
                     "(Jd8.{c]GPC/SQsd#nO^": {
                         "id": "(Jd8.{c]GPC/SQsd#nO^",
-                        "name": "segment angle",
+                        "name": "segmentwinkel",
                         "value": 45
                     },
                     "*6GW4|nqeL$5-99|U0M}": {
@@ -33,22 +33,22 @@
                     },
                     "++rA:#fLUk8h1FaHC6V#": {
                         "id": "++rA:#fLUk8h1FaHC6V#",
-                        "name": "center x",
+                        "name": "mitte\u00a0x",
                         "value": 95.45928
                     },
                     "0x0WRyPu$rf[KdmpTgTO": {
                         "id": "0x0WRyPu$rf[KdmpTgTO",
-                        "name": "Set adjustable variables.",
+                        "name": "leg anpassbare variablen fest.",
                         "value": 0
                     },
                     "5g2?U]O24mKX5Pg`|dgA": {
                         "id": "5g2?U]O24mKX5Pg`|dgA",
-                        "name": "radians",
+                        "name": "bogenma\u00dfe",
                         "value": 0.7853981633975
                     },
                     ";p`e)cn$ds{9dX`)f^;Y": {
                         "id": ";p`e)cn$ds{9dX`)f^;Y",
-                        "name": "radius pair x",
+                        "name": "radiuspaar\u00a0x",
                         "value": -105.8119707
                     },
                     "=#29#(Hnk$|WIN!)xIr(": {
@@ -58,7 +58,7 @@
                     },
                     "=oTt@I7]P;hjGM9C8/4D": {
                         "id": "=oTt@I7]P;hjGM9C8/4D",
-                        "name": "Set the center x and y variables to the location of Cube 3.",
+                        "name": "leg die position von cube\u00a03 als werte f\u00fcr die variablen mitte\u00a0x und y fest.",
                         "value": 0
                     },
                     "E`Q`z[4dXjFr%01eZjh6": {
@@ -68,22 +68,22 @@
                     },
                     "HU(7qG6%~*UGrb7{wk4,": {
                         "id": "HU(7qG6%~*UGrb7{wk4,",
-                        "name": "segment time",
+                        "name": "segmentzeit",
                         "value": 1.071944894255002
                     },
                     "K_la3#]0:N4/wZh;kv?N": {
                         "id": "K_la3#]0:N4/wZh;kv?N",
-                        "name": "segment length",
+                        "name": "segmentl\u00e4nge",
                         "value": 42.74283545440067
                     },
                     "Sw1c(k`1LGaM*zS;Zn()": {
                         "id": "Sw1c(k`1LGaM*zS;Zn()",
-                        "name": "outer wheel speed",
+                        "name": "geschwindigkeit des \u00e4u\u00dferen rads",
                         "value": 79.20442483505848
                     },
                     "V,MEBwtMplSEHX%v,=?w": {
                         "id": "V,MEBwtMplSEHX%v,=?w",
-                        "name": "inner wheel speed",
+                        "name": "geschwindigkeit des inneren rads",
                         "value": 43.86150748217097
                     },
                     "V?se9N-6!LP:uN45yn%S": {
@@ -93,57 +93,57 @@
                     },
                     "Vo7meBx7CC`3@UysSo_E": {
                         "id": "Vo7meBx7CC`3@UysSo_E",
-                        "name": "Set the center x and y variables to the location of Cube 1.",
+                        "name": "leg die position von cube\u00a01 als werte f\u00fcr die variablen mitte\u00a0x und y fest.",
                         "value": 0
                     },
                     "XR9IORB51=Sp3O]$%TRd": {
                         "id": "XR9IORB51=Sp3O]$%TRd",
-                        "name": "number of segments",
+                        "name": "anzahl der segmente",
                         "value": "8"
                     },
                     "`5hz)P!j_B8yWp$*=:MP": {
                         "id": "`5hz)P!j_B8yWp$*=:MP",
-                        "name": "For each segment of the circle, get its length and drive Cozmo along the segment arc.",
+                        "name": "ermittle die l\u00e4nge von jedem kreissegment und lass cozmo den kreisbogen entlangfahren.",
                         "value": 0
                     },
                     "f46=2f^D=gJQI::sbAE|": {
                         "id": "f46=2f^D=gJQI::sbAE|",
-                        "name": "Cozmo looks for his Cubes.",
+                        "name": "cozmo sucht seine cubes.",
                         "value": 0
                     },
                     "ifsD,`UA3[87cH}=Z]Y@": {
                         "id": "ifsD,`UA3[87cH}=Z]Y@",
-                        "name": "center y",
+                        "name": "mitte\u00a0y",
                         "value": 13.6699848
                     },
                     "otAuP/{7D;Vn/d1oO-~D": {
                         "id": "otAuP/{7D;Vn/d1oO-~D",
-                        "name": "segment pair x",
+                        "name": "segmentpaar\u00a0x",
                         "value": 39.489230838194175
                     },
                     "qnKFr3gGyyhK}5jau=;q": {
                         "id": "qnKFr3gGyyhK}5jau=;q",
-                        "name": "segment pair y",
+                        "name": "segmentpaar\u00a0y",
                         "value": 16.35697497979944
                     },
                     "v)B(t:wxgJ%=qyS8lKFM": {
                         "id": "v)B(t:wxgJ%=qyS8lKFM",
-                        "name": "Cozmo asks to be shown a Cube.",
+                        "name": "cozmo m\u00f6chte einen cube sehen.",
                         "value": 0
                     },
                     "w7./O`Nf//zCJMpryX9@": {
                         "id": "w7./O`Nf//zCJMpryX9@",
-                        "name": "radius pair y",
+                        "name": "radiuspaar\u00a0y",
                         "value": -35.7634125
                     },
                     "wl,|C]CE+pLx|9^n/[:i": {
                         "id": "wl,|C]CE+pLx|9^n/[:i",
-                        "name": "current angle",
+                        "name": "aktueller winkel",
                         "value": 315
                     },
                     "x(EazF3qBD3a3!@25yGR": {
                         "id": "x(EazF3qBD3a3!@25yGR",
-                        "name": "speed multiplier",
+                        "name": "geschwindigkeits-multiplikator",
                         "value": "2"
                     },
                     "{xXO([Y-~leOv9QDx8_v": {
@@ -153,22 +153,22 @@
                     },
                     "|!Y[MKRe(2HzB1ogV2]g": {
                         "id": "|!Y[MKRe(2HzB1ogV2]g",
-                        "name": "Get the circle radius and wheel speeds by measuring the distance between Cozmo and the Cube center.",
+                        "name": "ermittle den kreisradius und die radgeschwindigkeiten, indem du die entfernung zwischen cozmo und der mitte des cubes misst.",
                         "value": 0
                     },
                     "|{Bp_~NADpmuYHFgIB1L": {
                         "id": "|{Bp_~NADpmuYHFgIB1L",
-                        "name": "current radius",
+                        "name": "aktueller radius",
                         "value": 55.84620581799362
                     },
                     "}#yIO.a0Ll1sGLt0Cy+S": {
                         "id": "}#yIO.a0Ll1sGLt0Cy+S",
-                        "name": "Set the center x and y variables to the location of Cube 2.",
+                        "name": "leg die position von cube\u00a02 als werte f\u00fcr die variablen mitte\u00a0x und y fest.",
                         "value": 0
                     },
                     "~|z9f9Pg8h=VIo]c}xO9": {
                         "id": "~|z9f9Pg8h=VIo]c}xO9",
-                        "name": "Cozmo axle width",
+                        "name": "cozmo-achsenbreite",
                         "value": "45"
                     }
                 },
@@ -298,7 +298,7 @@
                             "VARIABLE": {
                                 "id": "x(EazF3qBD3a3!@25yGR",
                                 "name": "VARIABLE",
-                                "value": "speed multiplier"
+                                "value": "geschwindigkeits-multiplikator"
                             }
                         },
                         "id": "#0|x/h{ntc]a[wQ`ovlz",
@@ -333,7 +333,7 @@
                             "VARIABLE": {
                                 "id": "++rA:#fLUk8h1FaHC6V#",
                                 "name": "VARIABLE",
-                                "value": "center x"
+                                "value": "mitte\u00a0x"
                             }
                         },
                         "id": "#LlX1(nWi.B4rnU/kBdn",
@@ -497,7 +497,7 @@
                             "VARIABLE": {
                                 "id": "|{Bp_~NADpmuYHFgIB1L",
                                 "name": "VARIABLE",
-                                "value": "current radius"
+                                "value": "aktueller radius"
                             }
                         },
                         "id": "%B!8Cn!y#Z.Hy+blAa+5",
@@ -555,7 +555,7 @@
                             "VARIABLE": {
                                 "id": "5g2?U]O24mKX5Pg`|dgA",
                                 "name": "VARIABLE",
-                                "value": "radians"
+                                "value": "bogenma\u00dfe"
                             }
                         },
                         "id": "%PMf;;IjL`P~,_wu@Hei",
@@ -616,7 +616,7 @@
                             "VARIABLE": {
                                 "id": "5g2?U]O24mKX5Pg`|dgA",
                                 "name": "VARIABLE",
-                                "value": "radians"
+                                "value": "bogenma\u00dfe"
                             }
                         },
                         "id": "(C6vrlJ[!IA+`tYsfg=a",
@@ -640,7 +640,7 @@
                             "VARIABLE": {
                                 "id": ";p`e)cn$ds{9dX`)f^;Y",
                                 "name": "VARIABLE",
-                                "value": "radius pair x"
+                                "value": "radiuspaar\u00a0x"
                             }
                         },
                         "id": "(DE9:-M1bKe/LLjzb7^m",
@@ -673,7 +673,7 @@
                             "VARIABLE": {
                                 "id": "`5hz)P!j_B8yWp$*=:MP",
                                 "name": "VARIABLE",
-                                "value": "For each segment of the circle, get its length and drive Cozmo along the segment arc."
+                                "value": "ermittle die l\u00e4nge von jedem kreissegment und lass cozmo den kreisbogen entlangfahren."
                             }
                         },
                         "id": "(NU,g[n)63N-?t4k#YH/",
@@ -738,7 +738,7 @@
                             "VARIABLE": {
                                 "id": "|{Bp_~NADpmuYHFgIB1L",
                                 "name": "VARIABLE",
-                                "value": "current radius"
+                                "value": "aktueller radius"
                             }
                         },
                         "id": ")+JmaGrigH0K/1))C{8%",
@@ -818,7 +818,7 @@
                             "VARIABLE": {
                                 "id": "++rA:#fLUk8h1FaHC6V#",
                                 "name": "VARIABLE",
-                                "value": "center x"
+                                "value": "mitte\u00a0x"
                             }
                         },
                         "id": ")gHGu[Z7uF1ePmLyu1Oq",
@@ -842,7 +842,7 @@
                             "VARIABLE": {
                                 "id": "otAuP/{7D;Vn/d1oO-~D",
                                 "name": "VARIABLE",
-                                "value": "segment pair x"
+                                "value": "segmentpaar\u00a0x"
                             }
                         },
                         "id": ")we8`:pGn[?N6m0h09_4",
@@ -929,7 +929,7 @@
                             "VARIABLE": {
                                 "id": "ifsD,`UA3[87cH}=Z]Y@",
                                 "name": "VARIABLE",
-                                "value": "center y"
+                                "value": "mitte\u00a0y"
                             }
                         },
                         "id": "*2Twe^dXxo*gRH*)fc2g",
@@ -1019,7 +1019,7 @@
                             "VARIABLE": {
                                 "id": "++rA:#fLUk8h1FaHC6V#",
                                 "name": "VARIABLE",
-                                "value": "center x"
+                                "value": "mitte\u00a0x"
                             }
                         },
                         "id": "*z9oOb)~Y7g86Ff?BoX6",
@@ -1077,7 +1077,7 @@
                             "VARIABLE": {
                                 "id": "ifsD,`UA3[87cH}=Z]Y@",
                                 "name": "VARIABLE",
-                                "value": "center y"
+                                "value": "mitte\u00a0y"
                             }
                         },
                         "id": "+kqzBS}+uObFDu{aO(2Y",
@@ -1095,7 +1095,7 @@
                             "VARIABLE": {
                                 "id": "wl,|C]CE+pLx|9^n/[:i",
                                 "name": "VARIABLE",
-                                "value": "current angle"
+                                "value": "aktueller winkel"
                             }
                         },
                         "id": ",BX2{.jQzZzVbOlu66;]",
@@ -1246,7 +1246,7 @@
                             "VARIABLE": {
                                 "id": "~|z9f9Pg8h=VIo]c}xO9",
                                 "name": "VARIABLE",
-                                "value": "Cozmo axle width"
+                                "value": "cozmo-achsenbreite"
                             }
                         },
                         "id": "-QWJ;5{[LzIJ0Q4=TD@p",
@@ -1264,7 +1264,7 @@
                             "VARIABLE": {
                                 "id": "++rA:#fLUk8h1FaHC6V#",
                                 "name": "VARIABLE",
-                                "value": "center x"
+                                "value": "mitte\u00a0x"
                             }
                         },
                         "id": "-UMD=PgRq+B74lr$B4{w",
@@ -1360,7 +1360,7 @@
                             "VARIABLE": {
                                 "id": "Vo7meBx7CC`3@UysSo_E",
                                 "name": "VARIABLE",
-                                "value": "Set the center x and y variables to the location of Cube 1."
+                                "value": "leg die position von cube\u00a01 als werte f\u00fcr die variablen mitte\u00a0x und y fest."
                             }
                         },
                         "id": ".e.~0;ruJ83e^9SO~mBu",
@@ -1599,7 +1599,7 @@
                             "VARIABLE": {
                                 "id": "ifsD,`UA3[87cH}=Z]Y@",
                                 "name": "VARIABLE",
-                                "value": "center y"
+                                "value": "mitte\u00a0y"
                             }
                         },
                         "id": "1TQZ:K[C(o!qqyQP=3Bp",
@@ -1634,7 +1634,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Show me a cube"
+                                "value": "zeig mir einen cube."
                             }
                         },
                         "id": "1t?BIs2bR4QB9SmfdSaS",
@@ -1857,7 +1857,7 @@
                             "VARIABLE": {
                                 "id": "w7./O`Nf//zCJMpryX9@",
                                 "name": "VARIABLE",
-                                "value": "radius pair y"
+                                "value": "radiuspaar\u00a0y"
                             }
                         },
                         "id": "4VR^=j;WD,::{}sAfr,)",
@@ -1927,7 +1927,7 @@
                             "VARIABLE": {
                                 "id": "wl,|C]CE+pLx|9^n/[:i",
                                 "name": "VARIABLE",
-                                "value": "current angle"
+                                "value": "aktueller winkel"
                             }
                         },
                         "id": "5i9~}g~|w4p)N#,In^T8",
@@ -2072,7 +2072,7 @@
                             "VARIABLE": {
                                 "id": "x(EazF3qBD3a3!@25yGR",
                                 "name": "VARIABLE",
-                                "value": "speed multiplier"
+                                "value": "geschwindigkeits-multiplikator"
                             }
                         },
                         "id": "6dr]7Xh{3+p]s2G[xL58",
@@ -2123,7 +2123,7 @@
                             "VARIABLE": {
                                 "id": "ifsD,`UA3[87cH}=Z]Y@",
                                 "name": "VARIABLE",
-                                "value": "center y"
+                                "value": "mitte\u00a0y"
                             }
                         },
                         "id": "8#;O)`}EM8wmaw}{nxkC",
@@ -2165,7 +2165,7 @@
                             "VARIABLE": {
                                 "id": "f46=2f^D=gJQI::sbAE|",
                                 "name": "VARIABLE",
-                                "value": "Cozmo looks for his Cubes."
+                                "value": "cozmo sucht seine cubes."
                             }
                         },
                         "id": "8YV.HX=Y#2$Y0Ujp*7Q`",
@@ -2215,7 +2215,7 @@
                             "VARIABLE": {
                                 "id": "ifsD,`UA3[87cH}=Z]Y@",
                                 "name": "VARIABLE",
-                                "value": "center y"
+                                "value": "mitte\u00a0y"
                             }
                         },
                         "id": "91m=A?+Pz|H+FaW;i#5n",
@@ -2239,7 +2239,7 @@
                             "VARIABLE": {
                                 "id": "wl,|C]CE+pLx|9^n/[:i",
                                 "name": "VARIABLE",
-                                "value": "current angle"
+                                "value": "aktueller winkel"
                             }
                         },
                         "id": "9f9A@^LHr#)#+D^H4lE1",
@@ -2274,7 +2274,7 @@
                             "VARIABLE": {
                                 "id": ";p`e)cn$ds{9dX`)f^;Y",
                                 "name": "VARIABLE",
-                                "value": "radius pair x"
+                                "value": "radiuspaar\u00a0x"
                             }
                         },
                         "id": ":KBt8lcg0Uxa?ms.S8Td",
@@ -2315,7 +2315,7 @@
                             "VARIABLE": {
                                 "id": "XR9IORB51=Sp3O]$%TRd",
                                 "name": "VARIABLE",
-                                "value": "number of segments"
+                                "value": "anzahl der segmente"
                             }
                         },
                         "id": ";+Tb+!J/4vS*y;tFa)jj",
@@ -2383,7 +2383,7 @@
                             "VARIABLE": {
                                 "id": "V,MEBwtMplSEHX%v,=?w",
                                 "name": "VARIABLE",
-                                "value": "inner wheel speed"
+                                "value": "geschwindigkeit des inneren rads"
                             }
                         },
                         "id": "=u#Jwo~9|8~pn3QLX$Tc",
@@ -2401,7 +2401,7 @@
                             "VARIABLE": {
                                 "id": "(Jd8.{c]GPC/SQsd#nO^",
                                 "name": "VARIABLE",
-                                "value": "segment angle"
+                                "value": "segmentwinkel"
                             }
                         },
                         "id": "?4DkDf:Xdjr-aw9tc2,y",
@@ -2658,7 +2658,7 @@
                             "VARIABLE": {
                                 "id": "V,MEBwtMplSEHX%v,=?w",
                                 "name": "VARIABLE",
-                                "value": "inner wheel speed"
+                                "value": "geschwindigkeit des inneren rads"
                             }
                         },
                         "id": "Ai9p+mT!5o$]nZV2l86z",
@@ -2710,7 +2710,7 @@
                             "VARIABLE": {
                                 "id": "K_la3#]0:N4/wZh;kv?N",
                                 "name": "VARIABLE",
-                                "value": "segment length"
+                                "value": "segmentl\u00e4nge"
                             }
                         },
                         "id": "C!E/^}hiL.,`6e-4zXbY",
@@ -2745,7 +2745,7 @@
                             "VARIABLE": {
                                 "id": "wl,|C]CE+pLx|9^n/[:i",
                                 "name": "VARIABLE",
-                                "value": "current angle"
+                                "value": "aktueller winkel"
                             }
                         },
                         "id": "C0/RA}0azQ2fV4Cn2-{U",
@@ -2820,7 +2820,7 @@
                             "VARIABLE": {
                                 "id": "=oTt@I7]P;hjGM9C8/4D",
                                 "name": "VARIABLE",
-                                "value": "Set the center x and y variables to the location of Cube 3."
+                                "value": "leg die position von cube\u00a03 als werte f\u00fcr die variablen mitte\u00a0x und y fest."
                             }
                         },
                         "id": "DJRUI=YFZ@LmPUY/J`a^",
@@ -2866,7 +2866,7 @@
                             "VARIABLE": {
                                 "id": "Sw1c(k`1LGaM*zS;Zn()",
                                 "name": "VARIABLE",
-                                "value": "outer wheel speed"
+                                "value": "geschwindigkeit des \u00e4u\u00dferen rads"
                             }
                         },
                         "id": "Dmtg(1Vb_IA:Wp;wNz{h",
@@ -2890,7 +2890,7 @@
                             "VARIABLE": {
                                 "id": "ifsD,`UA3[87cH}=Z]Y@",
                                 "name": "VARIABLE",
-                                "value": "center y"
+                                "value": "mitte\u00a0y"
                             }
                         },
                         "id": "Dw;rw+SX77tb!MXI@_Yh",
@@ -2954,7 +2954,7 @@
                             "VARIABLE": {
                                 "id": "wl,|C]CE+pLx|9^n/[:i",
                                 "name": "VARIABLE",
-                                "value": "current angle"
+                                "value": "aktueller winkel"
                             }
                         },
                         "id": "ERPI5osxrvux{4LR(e(N",
@@ -3029,7 +3029,7 @@
                             "VARIABLE": {
                                 "id": "|!Y[MKRe(2HzB1ogV2]g",
                                 "name": "VARIABLE",
-                                "value": "Get the circle radius and wheel speeds by measuring the distance between Cozmo and the Cube center."
+                                "value": "ermittle den kreisradius und die radgeschwindigkeiten, indem du die entfernung zwischen cozmo und der mitte des cubes misst."
                             }
                         },
                         "id": "GikJ@G(`xYG1]CxX(Ia^",
@@ -3047,7 +3047,7 @@
                             "VARIABLE": {
                                 "id": "otAuP/{7D;Vn/d1oO-~D",
                                 "name": "VARIABLE",
-                                "value": "segment pair x"
+                                "value": "segmentpaar\u00a0x"
                             }
                         },
                         "id": "Gz~,vRrR(s.B4MRhuG8V",
@@ -3161,7 +3161,7 @@
                             "VARIABLE": {
                                 "id": "(Jd8.{c]GPC/SQsd#nO^",
                                 "name": "VARIABLE",
-                                "value": "segment angle"
+                                "value": "segmentwinkel"
                             }
                         },
                         "id": "H{V_sg)X5w$B5103Z_yj",
@@ -3349,7 +3349,7 @@
                             "VARIABLE": {
                                 "id": "(Jd8.{c]GPC/SQsd#nO^",
                                 "name": "VARIABLE",
-                                "value": "segment angle"
+                                "value": "segmentwinkel"
                             }
                         },
                         "id": "K,tS7LBQw.[B(V`6_D1=",
@@ -3367,7 +3367,7 @@
                             "VARIABLE": {
                                 "id": "w7./O`Nf//zCJMpryX9@",
                                 "name": "VARIABLE",
-                                "value": "radius pair y"
+                                "value": "radiuspaar\u00a0y"
                             }
                         },
                         "id": "K9uh_ZpKktlHNB=Uw;r}",
@@ -3385,7 +3385,7 @@
                             "VARIABLE": {
                                 "id": "|{Bp_~NADpmuYHFgIB1L",
                                 "name": "VARIABLE",
-                                "value": "current radius"
+                                "value": "aktueller radius"
                             }
                         },
                         "id": "K;SQDD]w(l7SRYF-y-n;",
@@ -3523,7 +3523,7 @@
                             "VARIABLE": {
                                 "id": "|{Bp_~NADpmuYHFgIB1L",
                                 "name": "VARIABLE",
-                                "value": "current radius"
+                                "value": "aktueller radius"
                             }
                         },
                         "id": "N3{/e52UlMmfOl]k;vqi",
@@ -3579,7 +3579,7 @@
                             "VARIABLE": {
                                 "id": "wl,|C]CE+pLx|9^n/[:i",
                                 "name": "VARIABLE",
-                                "value": "current angle"
+                                "value": "aktueller winkel"
                             }
                         },
                         "id": "N}L58nQ1e*CJN-xX4`yt",
@@ -3652,7 +3652,7 @@
                             "VARIABLE": {
                                 "id": "XR9IORB51=Sp3O]$%TRd",
                                 "name": "VARIABLE",
-                                "value": "number of segments"
+                                "value": "anzahl der segmente"
                             }
                         },
                         "id": "O^Jr.L?E/zKI1R]hC$cN",
@@ -3709,7 +3709,7 @@
                             "VARIABLE": {
                                 "id": "qnKFr3gGyyhK}5jau=;q",
                                 "name": "VARIABLE",
-                                "value": "segment pair y"
+                                "value": "segmentpaar\u00a0y"
                             }
                         },
                         "id": "PVscv)I%db-C(tV;)UGI",
@@ -3811,7 +3811,7 @@
                             "VARIABLE": {
                                 "id": "qnKFr3gGyyhK}5jau=;q",
                                 "name": "VARIABLE",
-                                "value": "segment pair y"
+                                "value": "segmentpaar\u00a0y"
                             }
                         },
                         "id": "QE/W`5Yj{2sJj)CT|?za",
@@ -3829,7 +3829,7 @@
                             "VARIABLE": {
                                 "id": ";p`e)cn$ds{9dX`)f^;Y",
                                 "name": "VARIABLE",
-                                "value": "radius pair x"
+                                "value": "radiuspaar\u00a0x"
                             }
                         },
                         "id": "QP,ro;]BO^uWEEH,w}7F",
@@ -3868,7 +3868,7 @@
                             "VARIABLE": {
                                 "id": "wl,|C]CE+pLx|9^n/[:i",
                                 "name": "VARIABLE",
-                                "value": "current angle"
+                                "value": "aktueller winkel"
                             }
                         },
                         "id": "RSdzKvBK2l@7:wZ)T$/l",
@@ -3979,7 +3979,7 @@
                             "VARIABLE": {
                                 "id": "|{Bp_~NADpmuYHFgIB1L",
                                 "name": "VARIABLE",
-                                "value": "current radius"
+                                "value": "aktueller radius"
                             }
                         },
                         "id": "T.{u]]#d7h(j/N3k/N|D",
@@ -4400,7 +4400,7 @@
                             "VARIABLE": {
                                 "id": "|{Bp_~NADpmuYHFgIB1L",
                                 "name": "VARIABLE",
-                                "value": "current radius"
+                                "value": "aktueller radius"
                             }
                         },
                         "id": "[21[|@?k6$@102Y`dtP:",
@@ -4792,7 +4792,7 @@
                             "VARIABLE": {
                                 "id": "x(EazF3qBD3a3!@25yGR",
                                 "name": "VARIABLE",
-                                "value": "speed multiplier"
+                                "value": "geschwindigkeits-multiplikator"
                             }
                         },
                         "id": "aCcsEWn-7,sV:yB5:)%P",
@@ -4933,7 +4933,7 @@
                             "VARIABLE": {
                                 "id": "qnKFr3gGyyhK}5jau=;q",
                                 "name": "VARIABLE",
-                                "value": "segment pair y"
+                                "value": "segmentpaar\u00a0y"
                             }
                         },
                         "id": "c:q5#zdx712%4IIv~/C.",
@@ -4957,7 +4957,7 @@
                             "VARIABLE": {
                                 "id": "otAuP/{7D;Vn/d1oO-~D",
                                 "name": "VARIABLE",
-                                "value": "segment pair x"
+                                "value": "segmentpaar\u00a0x"
                             }
                         },
                         "id": "c=Puv+:+rY5aif}o#x@t",
@@ -5234,7 +5234,7 @@
                             "VARIABLE": {
                                 "id": "|{Bp_~NADpmuYHFgIB1L",
                                 "name": "VARIABLE",
-                                "value": "current radius"
+                                "value": "aktueller radius"
                             }
                         },
                         "id": "eMlqdw[,04+JLlA)w13=",
@@ -5317,7 +5317,7 @@
                             "VARIABLE": {
                                 "id": "0x0WRyPu$rf[KdmpTgTO",
                                 "name": "VARIABLE",
-                                "value": "Set adjustable variables."
+                                "value": "leg anpassbare variablen fest."
                             }
                         },
                         "id": "gL+#!d4n!clcI|BNr0mx",
@@ -5415,7 +5415,7 @@
                             "VARIABLE": {
                                 "id": "HU(7qG6%~*UGrb7{wk4,",
                                 "name": "VARIABLE",
-                                "value": "segment time"
+                                "value": "segmentzeit"
                             }
                         },
                         "id": "h?`QXQ[sMH|/#pW?u%b)",
@@ -5526,7 +5526,7 @@
                             "VARIABLE": {
                                 "id": "Sw1c(k`1LGaM*zS;Zn()",
                                 "name": "VARIABLE",
-                                "value": "outer wheel speed"
+                                "value": "geschwindigkeit des \u00e4u\u00dferen rads"
                             }
                         },
                         "id": "i6#)koy%Xxc1Mv{cECKn",
@@ -5765,7 +5765,7 @@
                             "VARIABLE": {
                                 "id": "|{Bp_~NADpmuYHFgIB1L",
                                 "name": "VARIABLE",
-                                "value": "current radius"
+                                "value": "aktueller radius"
                             }
                         },
                         "id": "l6lL?Zfv_J#JJjz][)2Z",
@@ -5889,7 +5889,7 @@
                             "VARIABLE": {
                                 "id": "++rA:#fLUk8h1FaHC6V#",
                                 "name": "VARIABLE",
-                                "value": "center x"
+                                "value": "mitte\u00a0x"
                             }
                         },
                         "id": "n3zg+-2Oxdfi|-6-lgjo",
@@ -5991,7 +5991,7 @@
                             "VARIABLE": {
                                 "id": "|{Bp_~NADpmuYHFgIB1L",
                                 "name": "VARIABLE",
-                                "value": "current radius"
+                                "value": "aktueller radius"
                             }
                         },
                         "id": "oOV_9DiYPlj~yZ,=XD@V",
@@ -6039,7 +6039,7 @@
                             "VARIABLE": {
                                 "id": "++rA:#fLUk8h1FaHC6V#",
                                 "name": "VARIABLE",
-                                "value": "center x"
+                                "value": "mitte\u00a0x"
                             }
                         },
                         "id": "p3@A+Jg^0${HRI~l:p`p",
@@ -6193,7 +6193,7 @@
                             "VARIABLE": {
                                 "id": "w7./O`Nf//zCJMpryX9@",
                                 "name": "VARIABLE",
-                                "value": "radius pair y"
+                                "value": "radiuspaar\u00a0y"
                             }
                         },
                         "id": "s(447%@_QiDxW^LbE)E`",
@@ -6457,7 +6457,7 @@
                             "VARIABLE": {
                                 "id": "~|z9f9Pg8h=VIo]c}xO9",
                                 "name": "VARIABLE",
-                                "value": "Cozmo axle width"
+                                "value": "cozmo-achsenbreite"
                             }
                         },
                         "id": "x/;9^d,Y.ytXbpaZ1[q-",
@@ -6481,7 +6481,7 @@
                             "VARIABLE": {
                                 "id": "V,MEBwtMplSEHX%v,=?w",
                                 "name": "VARIABLE",
-                                "value": "inner wheel speed"
+                                "value": "geschwindigkeit des inneren rads"
                             }
                         },
                         "id": "xB9)a^P`G[,gRy]ZPjJj",
@@ -6505,7 +6505,7 @@
                             "VARIABLE": {
                                 "id": "(Jd8.{c]GPC/SQsd#nO^",
                                 "name": "VARIABLE",
-                                "value": "segment angle"
+                                "value": "segmentwinkel"
                             }
                         },
                         "id": "xB[bq0g2S]W}L9}Lnqvt",
@@ -6523,7 +6523,7 @@
                             "VARIABLE": {
                                 "id": "HU(7qG6%~*UGrb7{wk4,",
                                 "name": "VARIABLE",
-                                "value": "segment time"
+                                "value": "segmentzeit"
                             }
                         },
                         "id": "xY/)/lEc$W;hl,(t-/vd",
@@ -6612,7 +6612,7 @@
                             "VARIABLE": {
                                 "id": "|{Bp_~NADpmuYHFgIB1L",
                                 "name": "VARIABLE",
-                                "value": "current radius"
+                                "value": "aktueller radius"
                             }
                         },
                         "id": "yM..Ag[3;~2I$DHi?ej5",
@@ -6769,7 +6769,7 @@
                             "VARIABLE": {
                                 "id": "K_la3#]0:N4/wZh;kv?N",
                                 "name": "VARIABLE",
-                                "value": "segment length"
+                                "value": "segmentl\u00e4nge"
                             }
                         },
                         "id": "{14F$Xh$^Lk$MFKM}Ulq",
@@ -6866,7 +6866,7 @@
                             "VARIABLE": {
                                 "id": "|{Bp_~NADpmuYHFgIB1L",
                                 "name": "VARIABLE",
-                                "value": "current radius"
+                                "value": "aktueller radius"
                             }
                         },
                         "id": "|04+8!VdhvUj7;0116rb",
@@ -6941,7 +6941,7 @@
                             "VARIABLE": {
                                 "id": "}#yIO.a0Ll1sGLt0Cy+S",
                                 "name": "VARIABLE",
-                                "value": "Set the center x and y variables to the location of Cube 2."
+                                "value": "leg die position von cube\u00a02 als werte f\u00fcr die variablen mitte\u00a0x und y fest."
                             }
                         },
                         "id": "|ta^]!nqd]t@l.4UHCa:",
@@ -6976,7 +6976,7 @@
                             "VARIABLE": {
                                 "id": "v)B(t:wxgJ%=qyS8lKFM",
                                 "name": "VARIABLE",
-                                "value": "Cozmo asks to be shown a Cube."
+                                "value": "cozmo m\u00f6chte einen cube sehen."
                             }
                         },
                         "id": "|}1E3XyQ[|i*aTJ52{!a",
@@ -6994,7 +6994,7 @@
                             "VARIABLE": {
                                 "id": "|{Bp_~NADpmuYHFgIB1L",
                                 "name": "VARIABLE",
-                                "value": "current radius"
+                                "value": "aktueller radius"
                             }
                         },
                         "id": "}(jDbjl~u):nb5mm0oij",
@@ -7029,7 +7029,7 @@
                             "VARIABLE": {
                                 "id": "5g2?U]O24mKX5Pg`|dgA",
                                 "name": "VARIABLE",
-                                "value": "radians"
+                                "value": "bogenma\u00dfe"
                             }
                         },
                         "id": "~R3%KViZlEv`1@X]Dt)E",

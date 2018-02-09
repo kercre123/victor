@@ -23,62 +23,62 @@
                 "variables": {
                     "!WMV/Gl^YeiYK[#k):40": {
                         "id": "!WMV/Gl^YeiYK[#k):40",
-                        "name": "demi-largeur du c\u0153ur",
+                        "name": "halbe breite des herzes",
                         "value": 0.08513196953600044
                     },
                     ".Q[ES.}M:uY$0bXv}xak": {
                         "id": ".Q[ES.}M:uY$0bXv}xak",
-                        "name": "rouge al\u00e9atoire",
+                        "name": "rot (zuf\u00e4llig)",
                         "value": 5
                     },
                     "1}[BavmJy8Ic32)Y/Dm@": {
                         "id": "1}[BavmJy8Ic32)Y/Dm@",
-                        "name": "battement du c\u0153ur",
+                        "name": "herzschlag",
                         "value": 66
                     },
                     "?jusn*.f?E@N{E-dp)Xs": {
                         "id": "?jusn*.f?E@N{E-dp)Xs",
-                        "name": "y le plus large",
+                        "name": "breiteste stelle (y)",
                         "value": "21"
                     },
                     "@tvy`pAwT.Hr%)6Gc9::": {
                         "id": "@tvy`pAwT.Hr%)6Gc9::",
-                        "name": "taille du c\u0153ur",
+                        "name": "gr\u00f6\u00dfe des herzes",
                         "value": -5.69144671744
                     },
                     "CY^fTSY6vz~/j0W!5vuP": {
                         "id": "CY^fTSY6vz~/j0W!5vuP",
-                        "name": "Pixel du visage de Cozmo y",
+                        "name": "cozmo-gesichtspixel (y)",
                         "value": 33.292565984768004
                     },
                     "M5`k};SkS{y4n!MLU]Rd": {
                         "id": "M5`k};SkS{y4n!MLU]Rd",
-                        "name": "largeur du c\u0153ur",
+                        "name": "breite des herzes",
                         "value": "35"
                     },
                     "RD$IW]BcP?41=wgcq=jJ": {
                         "id": "RD$IW]BcP?41=wgcq=jJ",
-                        "name": "nom",
+                        "name": "vorname",
                         "value": "Friend"
                     },
                     "V!jF?S;:|F$nbAr$=edz": {
                         "id": "V!jF?S;:|F$nbAr$=edz",
-                        "name": "objet rouge",
+                        "name": "rotes objekt",
                         "value": "Raspberries "
                     },
                     "bwci@y@cm?Cac}8:%Q)c": {
                         "id": "bwci@y@cm?Cac}8:%Q)c",
-                        "name": "objet bleu",
+                        "name": "blaues objekt",
                         "value": "Lakes "
                     },
                     "jFjtGMXaFD2;duLHUWBA": {
                         "id": "jFjtGMXaFD2;duLHUWBA",
-                        "name": "bleu al\u00e9atoire",
+                        "name": "blau (zuf\u00e4llig)",
                         "value": 6
                     },
                     "wG6qrxe.k9[e{ndChgWt": {
                         "id": "wG6qrxe.k9[e{ndChgWt",
-                        "name": "Choisis le nom \u00e0 utiliser.",
+                        "name": "w\u00e4hle den zu verwendenden namen aus.",
                         "value": 0
                     }
                 },
@@ -155,7 +155,7 @@
                             "VARIABLE": {
                                 "id": "V!jF?S;:|F$nbAr$=edz",
                                 "name": "VARIABLE",
-                                "value": "objet rouge"
+                                "value": "rotes objekt"
                             }
                         },
                         "id": "!}|iPlOl^6YAFv]4S!)g",
@@ -202,7 +202,7 @@
                             "VARIABLE": {
                                 "id": "bwci@y@cm?Cac}8:%Q)c",
                                 "name": "VARIABLE",
-                                "value": "objet bleu"
+                                "value": "blaues objekt"
                             }
                         },
                         "id": "$^eR~,N9%duF*P**eell",
@@ -272,7 +272,7 @@
                             "VARIABLE": {
                                 "id": "V!jF?S;:|F$nbAr$=edz",
                                 "name": "VARIABLE",
-                                "value": "objet rouge"
+                                "value": "rotes objekt"
                             }
                         },
                         "id": "%4a--`T0q*4o:D:xZO5Z",
@@ -455,7 +455,7 @@
                             "VARIABLE": {
                                 "id": "jFjtGMXaFD2;duLHUWBA",
                                 "name": "VARIABLE",
-                                "value": "bleu al\u00e9atoire"
+                                "value": "blau (zuf\u00e4llig)"
                             }
                         },
                         "id": ")lC6MI:utlx:tmO%9zwU",
@@ -587,7 +587,7 @@
                             "VARIABLE": {
                                 "id": "!WMV/Gl^YeiYK[#k):40",
                                 "name": "VARIABLE",
-                                "value": "demi-largeur du c\u0153ur"
+                                "value": "halbe breite des herzes"
                             }
                         },
                         "id": ",TI*GYz6C]KGdPX~mPx?",
@@ -697,7 +697,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Les roses "
+                                "value": "rosen "
                             }
                         },
                         "id": ".RjU*I~^FYI30mXpWuL;",
@@ -737,7 +737,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Sont rouges"
+                                "value": "sind rot"
                             }
                         },
                         "id": "/J;VW5(~7wN@4ljQizQi",
@@ -826,7 +826,7 @@
                             "VARIABLE": {
                                 "id": "!WMV/Gl^YeiYK[#k):40",
                                 "name": "VARIABLE",
-                                "value": "demi-largeur du c\u0153ur"
+                                "value": "halbe breite des herzes"
                             }
                         },
                         "id": "0Q!|%uWPX,fck_|XCNdZ",
@@ -859,7 +859,7 @@
                             "VARIABLE": {
                                 "id": "!WMV/Gl^YeiYK[#k):40",
                                 "name": "VARIABLE",
-                                "value": "demi-largeur du c\u0153ur"
+                                "value": "halbe breite des herzes"
                             }
                         },
                         "id": "1%SWLF1/x)`,Ap[I(~it",
@@ -938,7 +938,7 @@
                             "VARIABLE": {
                                 "id": "!WMV/Gl^YeiYK[#k):40",
                                 "name": "VARIABLE",
-                                "value": "demi-largeur du c\u0153ur"
+                                "value": "halbe breite des herzes"
                             }
                         },
                         "id": "1}:m?0-ona5R%HoAMN{4",
@@ -956,7 +956,7 @@
                             "VARIABLE": {
                                 "id": ".Q[ES.}M:uY$0bXv}xak",
                                 "name": "VARIABLE",
-                                "value": "rouge al\u00e9atoire"
+                                "value": "rot (zuf\u00e4llig)"
                             }
                         },
                         "id": "2-MTX2NKbwcdq[Pgt13t",
@@ -1012,7 +1012,7 @@
                             "VARIABLE": {
                                 "id": "CY^fTSY6vz~/j0W!5vuP",
                                 "name": "VARIABLE",
-                                "value": "Pixel du visage de Cozmo y"
+                                "value": "cozmo-gesichtspixel (y)"
                             }
                         },
                         "id": "2Z#U;n~KHiDw$QQ;DI~N",
@@ -1060,7 +1060,7 @@
                             "VARIABLE": {
                                 "id": "~_{XV27#lQ]s@=y9(!$y",
                                 "name": "VARIABLE",
-                                "value": "Offrir un cadeau de Saint-Valentin."
+                                "value": "\u00fcberbringe einen gru\u00df zum valentinstag."
                             }
                         },
                         "id": "37y#|:G@OGJG.g6p=Vbs",
@@ -1095,7 +1095,7 @@
                             "VARIABLE": {
                                 "id": "jFjtGMXaFD2;duLHUWBA",
                                 "name": "VARIABLE",
-                                "value": "bleu al\u00e9atoire"
+                                "value": "blau (zuf\u00e4llig)"
                             }
                         },
                         "id": "3h(k#{}dRYZ(LU#z}ZIk",
@@ -1184,7 +1184,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Les violettes "
+                                "value": "veilchen "
                             }
                         },
                         "id": "6!1DIu]c3*LsWyu/~$ij",
@@ -1202,7 +1202,7 @@
                             "VARIABLE": {
                                 "id": "jFjtGMXaFD2;duLHUWBA",
                                 "name": "VARIABLE",
-                                "value": "bleu al\u00e9atoire"
+                                "value": "blau (zuf\u00e4llig)"
                             }
                         },
                         "id": "6PltFWt0/1wmA+s0`VTJ",
@@ -1219,7 +1219,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Bonjour"
+                                "value": "hallo"
                             }
                         },
                         "id": "6fZ:@##2_}J#ll%Dh8VH",
@@ -1236,7 +1236,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Mes yeux "
+                                "value": "meine augen "
                             }
                         },
                         "id": "7!.U{|-*LLoKuny_z3bG",
@@ -1304,7 +1304,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Les coccinelles "
+                                "value": "marienk\u00e4fer "
                             }
                         },
                         "id": "87sbP_3D{JFU4Dn^s@jZ",
@@ -1386,7 +1386,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Les rivi\u00e8res "
+                                "value": "fl\u00fcsse "
                             }
                         },
                         "id": "9|T=SThA`z)WB6p*Q;pj",
@@ -1485,7 +1485,7 @@
                             "VARIABLE": {
                                 "id": "RD$IW]BcP?41=wgcq=jJ",
                                 "name": "VARIABLE",
-                                "value": "nom"
+                                "value": "vorname"
                             }
                         },
                         "id": ";{|hg07W:F^uEUyv8V#H",
@@ -1532,7 +1532,7 @@
                             "VARIABLE": {
                                 "id": "@tvy`pAwT.Hr%)6Gc9::",
                                 "name": "VARIABLE",
-                                "value": "taille du c\u0153ur"
+                                "value": "gr\u00f6\u00dfe des herzes"
                             }
                         },
                         "id": "=l=q(DXBA~sfZoz-]wvt",
@@ -1666,7 +1666,7 @@
                             "VARIABLE": {
                                 "id": ".Q[ES.}M:uY$0bXv}xak",
                                 "name": "VARIABLE",
-                                "value": "rouge al\u00e9atoire"
+                                "value": "rot (zuf\u00e4llig)"
                             }
                         },
                         "id": "@;)EJsD_k{77|/pzoU0k",
@@ -1702,7 +1702,7 @@
                             "VARIABLE": {
                                 "id": "RD$IW]BcP?41=wgcq=jJ",
                                 "name": "VARIABLE",
-                                "value": "nom"
+                                "value": "vorname"
                             }
                         },
                         "id": "@Ic~OKV(Tx}3zg=1OwP4",
@@ -1720,7 +1720,7 @@
                             "VARIABLE": {
                                 "id": "1}[BavmJy8Ic32)Y/Dm@",
                                 "name": "VARIABLE",
-                                "value": "battement du c\u0153ur"
+                                "value": "herzschlag"
                             }
                         },
                         "id": "@M%[H=0d,3In%jC5xNee",
@@ -1822,7 +1822,7 @@
                             "VARIABLE": {
                                 "id": "bwci@y@cm?Cac}8:%Q)c",
                                 "name": "VARIABLE",
-                                "value": "objet bleu"
+                                "value": "blaues objekt"
                             }
                         },
                         "id": "ABcUnhnVjL1a`iF{-@!.",
@@ -1863,7 +1863,7 @@
                             "VARIABLE": {
                                 "id": "V!jF?S;:|F$nbAr$=edz",
                                 "name": "VARIABLE",
-                                "value": "objet rouge"
+                                "value": "rotes objekt"
                             }
                         },
                         "id": "A]}zs;|1)aROu`{T{$(Z",
@@ -1887,7 +1887,7 @@
                             "VARIABLE": {
                                 "id": "RD$IW]BcP?41=wgcq=jJ",
                                 "name": "VARIABLE",
-                                "value": "nom"
+                                "value": "vorname"
                             }
                         },
                         "id": "Acu|U-LaVeKn[bCuSQZ_",
@@ -1910,7 +1910,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Les lacs "
+                                "value": "seen "
                             }
                         },
                         "id": "Aop.2C1!)1d6wp4{sR0f",
@@ -2042,7 +2042,7 @@
                             "VARIABLE": {
                                 "id": "@tvy`pAwT.Hr%)6Gc9::",
                                 "name": "VARIABLE",
-                                "value": "taille du c\u0153ur"
+                                "value": "gr\u00f6\u00dfe des herzes"
                             }
                         },
                         "id": "D0]iYzSP[31cweI,B6r}",
@@ -2124,7 +2124,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Les myrtilles "
+                                "value": "heidelbeeren "
                             }
                         },
                         "id": "FGDbf.!pIR:^qmxs3dyk",
@@ -2157,7 +2157,7 @@
                             "VARIABLE": {
                                 "id": ".Q[ES.}M:uY$0bXv}xak",
                                 "name": "VARIABLE",
-                                "value": "rouge al\u00e9atoire"
+                                "value": "rot (zuf\u00e4llig)"
                             }
                         },
                         "id": "FxO,Jto{21sv[8C~_k:E",
@@ -2228,7 +2228,7 @@
                             "VARIABLE": {
                                 "id": "jFjtGMXaFD2;duLHUWBA",
                                 "name": "VARIABLE",
-                                "value": "bleu al\u00e9atoire"
+                                "value": "blau (zuf\u00e4llig)"
                             }
                         },
                         "id": "GFH,RW}W4YSR.S@pwY)l",
@@ -2403,7 +2403,7 @@
                             "VARIABLE": {
                                 "id": "V!jF?S;:|F$nbAr$=edz",
                                 "name": "VARIABLE",
-                                "value": "objet rouge"
+                                "value": "rotes objekt"
                             }
                         },
                         "id": "H~oy,;W3b,#ICAq!|SV7",
@@ -2597,7 +2597,7 @@
                             "VARIABLE": {
                                 "id": "V!jF?S;:|F$nbAr$=edz",
                                 "name": "VARIABLE",
-                                "value": "objet rouge"
+                                "value": "rotes objekt"
                             }
                         },
                         "id": "K4D+pf9U$(bX(4G*oBou",
@@ -2737,7 +2737,7 @@
                             "VARIABLE": {
                                 "id": ".Q[ES.}M:uY$0bXv}xak",
                                 "name": "VARIABLE",
-                                "value": "rouge al\u00e9atoire"
+                                "value": "rot (zuf\u00e4llig)"
                             }
                         },
                         "id": "LMGh@ax_9j7{?34~kI3T",
@@ -2820,7 +2820,7 @@
                             "VARIABLE": {
                                 "id": "bwci@y@cm?Cac}8:%Q)c",
                                 "name": "VARIABLE",
-                                "value": "objet bleu"
+                                "value": "blaues objekt"
                             }
                         },
                         "id": "M?SA[84P.|d#M0.9^]?:",
@@ -2878,7 +2878,7 @@
                             "VARIABLE": {
                                 "id": "@tvy`pAwT.Hr%)6Gc9::",
                                 "name": "VARIABLE",
-                                "value": "taille du c\u0153ur"
+                                "value": "gr\u00f6\u00dfe des herzes"
                             }
                         },
                         "id": "MxH:w=!um$S3a;c[Z.vu",
@@ -2902,7 +2902,7 @@
                             "VARIABLE": {
                                 "id": "CY^fTSY6vz~/j0W!5vuP",
                                 "name": "VARIABLE",
-                                "value": "Pixel du visage de Cozmo y"
+                                "value": "cozmo-gesichtspixel (y)"
                             }
                         },
                         "id": "M}9-PHFW?Q{l/66l{jfc",
@@ -2926,7 +2926,7 @@
                             "VARIABLE": {
                                 "id": ".Q[ES.}M:uY$0bXv}xak",
                                 "name": "VARIABLE",
-                                "value": "rouge al\u00e9atoire"
+                                "value": "rot (zuf\u00e4llig)"
                             }
                         },
                         "id": "M}qp8ZgV9Ns4]n6Y3UI!",
@@ -2944,7 +2944,7 @@
                             "VARIABLE": {
                                 "id": "jFjtGMXaFD2;duLHUWBA",
                                 "name": "VARIABLE",
-                                "value": "bleu al\u00e9atoire"
+                                "value": "blau (zuf\u00e4llig)"
                             }
                         },
                         "id": "NL8wiHCq]`a#iPPBTY:J",
@@ -3025,7 +3025,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Les violettes "
+                                "value": "veilchen "
                             }
                         },
                         "id": "Oe!GiOI4/_3qh7nmFj[I",
@@ -3056,7 +3056,7 @@
                             "VARIABLE": {
                                 "id": "bwci@y@cm?Cac}8:%Q)c",
                                 "name": "VARIABLE",
-                                "value": "objet bleu"
+                                "value": "blaues objekt"
                             }
                         },
                         "id": "PgMp9;8r2uE1sMy#qt34",
@@ -3114,7 +3114,7 @@
                             "VARIABLE": {
                                 "id": "?jusn*.f?E@N{E-dp)Xs",
                                 "name": "VARIABLE",
-                                "value": "y le plus large"
+                                "value": "breiteste stelle (y)"
                             }
                         },
                         "id": "QE@:kB]QWH))J@jqEOtl",
@@ -3137,7 +3137,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "les framboises "
+                                "value": "himbeeren "
                             }
                         },
                         "id": "Qfy=SVAG=f@Z;TpB:LRa",
@@ -3152,7 +3152,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Ami"
+                                "value": "freund"
                             }
                         },
                         "id": "R)g=y}pL_2A1CZI;Ai5E",
@@ -3226,7 +3226,7 @@
                             "VARIABLE": {
                                 "id": "jFjtGMXaFD2;duLHUWBA",
                                 "name": "VARIABLE",
-                                "value": "bleu al\u00e9atoire"
+                                "value": "blau (zuf\u00e4llig)"
                             }
                         },
                         "id": "RjX!=1]M3H2nY|nta{{h",
@@ -3288,7 +3288,7 @@
                             "VARIABLE": {
                                 "id": ".Q[ES.}M:uY$0bXv}xak",
                                 "name": "VARIABLE",
-                                "value": "rouge al\u00e9atoire"
+                                "value": "rot (zuf\u00e4llig)"
                             }
                         },
                         "id": "T#CZyMr5TZ_hE6+6S4Xq",
@@ -3306,7 +3306,7 @@
                             "VARIABLE": {
                                 "id": "V!jF?S;:|F$nbAr$=edz",
                                 "name": "VARIABLE",
-                                "value": "objet rouge"
+                                "value": "rotes objekt"
                             }
                         },
                         "id": "Te6_ykho**3iAbLeI;dY",
@@ -3425,7 +3425,7 @@
                             "VARIABLE": {
                                 "id": "@tvy`pAwT.Hr%)6Gc9::",
                                 "name": "VARIABLE",
-                                "value": "taille du c\u0153ur"
+                                "value": "gr\u00f6\u00dfe des herzes"
                             }
                         },
                         "id": "W5WpJwx(Dy,NNO8Ij$~Z",
@@ -3465,7 +3465,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Les cerises "
+                                "value": "kirschen "
                             }
                         },
                         "id": "XJId#S/|jL,Nx^*FzT6]",
@@ -3513,7 +3513,7 @@
                             "VARIABLE": {
                                 "id": "1}[BavmJy8Ic32)Y/Dm@",
                                 "name": "VARIABLE",
-                                "value": "battement du c\u0153ur"
+                                "value": "herzschlag"
                             }
                         },
                         "id": "YBwi=/[%V#:]Q/;fs+W2",
@@ -3530,7 +3530,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Les oc\u00e9ans "
+                                "value": "ozeane "
                             }
                         },
                         "id": "YNoNrYYeC78iPFv#O90*",
@@ -3561,7 +3561,7 @@
                             "VARIABLE": {
                                 "id": "V!jF?S;:|F$nbAr$=edz",
                                 "name": "VARIABLE",
-                                "value": "objet rouge"
+                                "value": "rotes objekt"
                             }
                         },
                         "id": "Z0.Q|10dzSlar?B(UnIY",
@@ -3585,7 +3585,7 @@
                             "VARIABLE": {
                                 "id": "!WMV/Gl^YeiYK[#k):40",
                                 "name": "VARIABLE",
-                                "value": "demi-largeur du c\u0153ur"
+                                "value": "halbe breite des herzes"
                             }
                         },
                         "id": "ZraycA75_K@$vlQZLSl_",
@@ -3671,7 +3671,7 @@
                             "VARIABLE": {
                                 "id": "xj*,)ksFGCE)2m9p0lvV",
                                 "name": "VARIABLE",
-                                "value": "Dessiner une enveloppe de Saint-Valentin sur le visage de Cozmo."
+                                "value": "zeichne einen umschlag f\u00fcr den valentinstagsgru\u00df auf cozmos gesicht."
                             }
                         },
                         "id": "]Dx`(n1cYcT8Z3SG9}zF",
@@ -3762,7 +3762,7 @@
                             "VARIABLE": {
                                 "id": "bwci@y@cm?Cac}8:%Q)c",
                                 "name": "VARIABLE",
-                                "value": "objet bleu"
+                                "value": "blaues objekt"
                             }
                         },
                         "id": "^i)pEiMu1:lq^w%m2%J@",
@@ -3786,7 +3786,7 @@
                             "VARIABLE": {
                                 "id": "?jusn*.f?E@N{E-dp)Xs",
                                 "name": "VARIABLE",
-                                "value": "y le plus large"
+                                "value": "breiteste stelle (y)"
                             }
                         },
                         "id": "_J|^ngjMc)A/9n(EC]q8",
@@ -3804,7 +3804,7 @@
                             "VARIABLE": {
                                 "id": ".Q[ES.}M:uY$0bXv}xak",
                                 "name": "VARIABLE",
-                                "value": "rouge al\u00e9atoire"
+                                "value": "rot (zuf\u00e4llig)"
                             }
                         },
                         "id": "_^zYEPe14~}_^WfsfbI7",
@@ -3860,7 +3860,7 @@
                             "VARIABLE": {
                                 "id": "bwci@y@cm?Cac}8:%Q)c",
                                 "name": "VARIABLE",
-                                "value": "objet bleu"
+                                "value": "blaues objekt"
                             }
                         },
                         "id": "`*jxAL}T!g]A)W8j3?zb",
@@ -3898,7 +3898,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Les cieux "
+                                "value": "himmel "
                             }
                         },
                         "id": "`Km3q%EM*3T8-I]sAr6w",
@@ -3961,7 +3961,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Bonjour"
+                                "value": "hallo"
                             }
                         },
                         "id": "aAKYSrYjM?depFk=k@/]",
@@ -4019,7 +4019,7 @@
                             "VARIABLE": {
                                 "id": "V!jF?S;:|F$nbAr$=edz",
                                 "name": "VARIABLE",
-                                "value": "objet rouge"
+                                "value": "rotes objekt"
                             }
                         },
                         "id": "b-bp|J3Ij[S%yKhgLR8~",
@@ -4060,7 +4060,7 @@
                             "VARIABLE": {
                                 "id": "@tvy`pAwT.Hr%)6Gc9::",
                                 "name": "VARIABLE",
-                                "value": "taille du c\u0153ur"
+                                "value": "gr\u00f6\u00dfe des herzes"
                             }
                         },
                         "id": "bCn9.JzzRC9?Yd3MnS~O",
@@ -4092,7 +4092,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Sont bleues"
+                                "value": "sind blau"
                             }
                         },
                         "id": "cwzQ:^2+d7BP/iE7[sIW",
@@ -4140,7 +4140,7 @@
                             "VARIABLE": {
                                 "id": "jFjtGMXaFD2;duLHUWBA",
                                 "name": "VARIABLE",
-                                "value": "bleu al\u00e9atoire"
+                                "value": "blau (zuf\u00e4llig)"
                             }
                         },
                         "id": "dr)TYfARjd]Wv]!7M__/",
@@ -4181,7 +4181,7 @@
                             "VARIABLE": {
                                 "id": "6af;p?^euLc|dYD53bBW",
                                 "name": "VARIABLE",
-                                "value": "Choisir un objet bleu pour la Saint-Valentin."
+                                "value": "w\u00e4hle ein blaues objekt f\u00fcr den gru\u00df zum valentinstag aus."
                             }
                         },
                         "id": "eIhWQKPN4Zf*rQ/Az{B^",
@@ -4198,7 +4198,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Les tomates "
+                                "value": "tomaten "
                             }
                         },
                         "id": "eOD+sT(m:nV9ZbmojTHy",
@@ -4236,7 +4236,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": " Car Cozmo t'aime"
+                                "value": " weil cozmo dich gern hat"
                             }
                         },
                         "id": "fG@YT_v.{p[}i4zb4xLk",
@@ -4252,7 +4252,7 @@
                             "VARIABLE": {
                                 "id": "bwci@y@cm?Cac}8:%Q)c",
                                 "name": "VARIABLE",
-                                "value": "objet bleu"
+                                "value": "blaues objekt"
                             }
                         },
                         "id": "fPDu7iG|=lWX3^R|:o^k",
@@ -4276,7 +4276,7 @@
                             "VARIABLE": {
                                 "id": ".Q[ES.}M:uY$0bXv}xak",
                                 "name": "VARIABLE",
-                                "value": "rouge al\u00e9atoire"
+                                "value": "rot (zuf\u00e4llig)"
                             }
                         },
                         "id": "fyl!3vG,XP+}Ke@o_Fp(",
@@ -4333,7 +4333,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Bonjour"
+                                "value": "hallo"
                             }
                         },
                         "id": "gSUpC.yDb=5s)heT16Jt",
@@ -4431,7 +4431,7 @@
                             "VARIABLE": {
                                 "id": "bwci@y@cm?Cac}8:%Q)c",
                                 "name": "VARIABLE",
-                                "value": "objet bleu"
+                                "value": "blaues objekt"
                             }
                         },
                         "id": "i.hVVxUe,CBdjoy,bV:z",
@@ -4455,7 +4455,7 @@
                             "VARIABLE": {
                                 "id": "M5`k};SkS{y4n!MLU]Rd",
                                 "name": "VARIABLE",
-                                "value": "largeur du c\u0153ur"
+                                "value": "breite des herzes"
                             }
                         },
                         "id": "i;AwFv3`kcJx(6(ZSgi?",
@@ -4540,7 +4540,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Les pommes "
+                                "value": "\u00e4pfel "
                             }
                         },
                         "id": "j~AOXT9RkPH8X!6ur=l,",
@@ -4593,7 +4593,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Bonne Saint-Valentin, tr\u00e8s cher(e) "
+                                "value": "frohen valentinstag "
                             }
                         },
                         "id": "kzNNy!23OST63xrhaDb:",
@@ -4609,7 +4609,7 @@
                             "VARIABLE": {
                                 "id": "bwci@y@cm?Cac}8:%Q)c",
                                 "name": "VARIABLE",
-                                "value": "objet bleu"
+                                "value": "blaues objekt"
                             }
                         },
                         "id": "k{VBtXs^iDFbH*G7PgO7",
@@ -4632,7 +4632,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Les camions de pompiers "
+                                "value": "feuerwehrautos "
                             }
                         },
                         "id": "loMQOz$aURuci7_/wHs!",
@@ -4664,7 +4664,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Les panneaux Stop "
+                                "value": "stoppschilder "
                             }
                         },
                         "id": "m_D@fU9d:0{a41-sQfU$",
@@ -4679,7 +4679,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Les roses "
+                                "value": "rosen "
                             }
                         },
                         "id": "nNq!hXq8~=-5M/gfPPPN",
@@ -4805,7 +4805,7 @@
                             "VARIABLE": {
                                 "id": "o`cZm~*f[!9BQ*w)!cuy",
                                 "name": "VARIABLE",
-                                "value": "Choisir un objet rouge pour la Saint-Valentin."
+                                "value": "w\u00e4hle ein rotes objekt f\u00fcr den gru\u00df zum valentinstag aus."
                             }
                         },
                         "id": "r/{R70ZcP^RoKiCNQ:KR",
@@ -4855,7 +4855,7 @@
                             "VARIABLE": {
                                 "id": "CY^fTSY6vz~/j0W!5vuP",
                                 "name": "VARIABLE",
-                                "value": "Pixel du visage de Cozmo y"
+                                "value": "cozmo-gesichtspixel (y)"
                             }
                         },
                         "id": "r^Ruyc{Cz!hBs@V[-S7B",
@@ -4917,7 +4917,7 @@
                             "VARIABLE": {
                                 "id": "V!jF?S;:|F$nbAr$=edz",
                                 "name": "VARIABLE",
-                                "value": "objet rouge"
+                                "value": "rotes objekt"
                             }
                         },
                         "id": "r~[k3w:UC-p(=w%+fOI9",
@@ -5040,7 +5040,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Les fraises "
+                                "value": "erdbeeren "
                             }
                         },
                         "id": "t::(u_hvvC4:wr}CT6r5",
@@ -5056,7 +5056,7 @@
                             "VARIABLE": {
                                 "id": "RD$IW]BcP?41=wgcq=jJ",
                                 "name": "VARIABLE",
-                                "value": "nom"
+                                "value": "vorname"
                             }
                         },
                         "id": "tG[{1y*gwhTPwhTt?JrP",
@@ -5080,7 +5080,7 @@
                             "VARIABLE": {
                                 "id": ".Q[ES.}M:uY$0bXv}xak",
                                 "name": "VARIABLE",
-                                "value": "rouge al\u00e9atoire"
+                                "value": "rot (zuf\u00e4llig)"
                             }
                         },
                         "id": "tUa]qY+rgczv5jTHZVoS",
@@ -5098,7 +5098,7 @@
                             "VARIABLE": {
                                 "id": "1}[BavmJy8Ic32)Y/Dm@",
                                 "name": "VARIABLE",
-                                "value": "battement du c\u0153ur"
+                                "value": "herzschlag"
                             }
                         },
                         "id": "tX#htpaYoVv[nzEIe/1j",
@@ -5303,7 +5303,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Ami"
+                                "value": "freund"
                             }
                         },
                         "id": "y+aCLE-/LsLY6aI)+17T",
@@ -5351,7 +5351,7 @@
                             "VARIABLE": {
                                 "id": "CY^fTSY6vz~/j0W!5vuP",
                                 "name": "VARIABLE",
-                                "value": "Pixel du visage de Cozmo y"
+                                "value": "cozmo-gesichtspixel (y)"
                             }
                         },
                         "id": "zVegd]H4/,W;gAI@fKu)",
@@ -5407,7 +5407,7 @@
                             "VARIABLE": {
                                 "id": "jFjtGMXaFD2;duLHUWBA",
                                 "name": "VARIABLE",
-                                "value": "bleu al\u00e9atoire"
+                                "value": "blau (zuf\u00e4llig)"
                             }
                         },
                         "id": "{@sXZ)rokkhGX*[N[Z@J",
@@ -5463,7 +5463,7 @@
                             "VARIABLE": {
                                 "id": "M5`k};SkS{y4n!MLU]Rd",
                                 "name": "VARIABLE",
-                                "value": "largeur du c\u0153ur"
+                                "value": "breite des herzes"
                             }
                         },
                         "id": "{wEL;Ia[znsJ*lEtE#}=",
@@ -5487,7 +5487,7 @@
                             "VARIABLE": {
                                 "id": ".Q[ES.}M:uY$0bXv}xak",
                                 "name": "VARIABLE",
-                                "value": "rouge al\u00e9atoire"
+                                "value": "rot (zuf\u00e4llig)"
                             }
                         },
                         "id": "|VcxF77=jnZ0{vzi09~f",
@@ -5505,7 +5505,7 @@
                             "VARIABLE": {
                                 "id": "wG6qrxe.k9[e{ndChgWt",
                                 "name": "VARIABLE",
-                                "value": "Choisis le nom \u00e0 utiliser."
+                                "value": "w\u00e4hle den zu verwendenden namen aus."
                             }
                         },
                         "id": "|Y2g(:zT.T)t`f}kieA^",
@@ -5523,7 +5523,7 @@
                             "VARIABLE": {
                                 "id": "V!jF?S;:|F$nbAr$=edz",
                                 "name": "VARIABLE",
-                                "value": "objet rouge"
+                                "value": "rotes objekt"
                             }
                         },
                         "id": "|s`J)qM|w*8k@c4]BuF`",
@@ -5642,7 +5642,7 @@
                             "VARIABLE": {
                                 "id": "jFjtGMXaFD2;duLHUWBA",
                                 "name": "VARIABLE",
-                                "value": "bleu al\u00e9atoire"
+                                "value": "blau (zuf\u00e4llig)"
                             }
                         },
                         "id": "}~;fxw/O#vw?~j:/ufww",

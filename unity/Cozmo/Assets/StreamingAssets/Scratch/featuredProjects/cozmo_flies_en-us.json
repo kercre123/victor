@@ -23,42 +23,42 @@
                 "variables": {
                     "2sa5)2!0M{ap3xd40c=v": {
                         "id": "2sa5)2!0M{ap3xd40c=v",
-                        "name": "Cozmo yaw B",
+                        "name": "cozmo-drehung b (vertikalachse)",
                         "value": -87.77735
                     },
                     "Ddb6wQ^]+fEUt5~w2#5d": {
                         "id": "Ddb6wQ^]+fEUt5~w2#5d",
-                        "name": "Cozmo asks to be picked up and waits.",
+                        "name": "cozmo bittet den spieler, ihn hochzuheben, und wartet dann.",
                         "value": 0
                     },
                     "Er84_DrFQeHe{|I8oCJ^": {
                         "id": "Er84_DrFQeHe{|I8oCJ^",
-                        "name": "Cozmo pitch A",
+                        "name": "cozmo-drehung a (querachse)",
                         "value": 2.61435652
                     },
                     "W7+N(f)(7a;jZ#Txc5Z)": {
                         "id": "W7+N(f)(7a;jZ#Txc5Z)",
-                        "name": "Cozmo reacts to position changes while in the air.",
+                        "name": "w\u00e4hrend cozmo in der luft ist, reagiert er auf positions\u00e4nderungen.",
                         "value": 0
                     },
                     "YXt$1#CE?+OXbQz+?k@i": {
                         "id": "YXt$1#CE?+OXbQz+?k@i",
-                        "name": "Cozmo roll A",
+                        "name": "cozmo-drehung a (l\u00e4ngsachse)",
                         "value": 7.2555
                     },
                     "eo.L=V-kX|A;BY/?Fy``": {
                         "id": "eo.L=V-kX|A;BY/?Fy``",
-                        "name": "Cozmo roll B",
+                        "name": "cozmo-drehung b (l\u00e4ngsachse)",
                         "value": 11.6020393
                     },
                     "g)4zFtLT|-4]I@?,6ami": {
                         "id": "g)4zFtLT|-4]I@?,6ami",
-                        "name": "Cozmo yaw A",
+                        "name": "cozmo-drehung a (vertikalachse)",
                         "value": -85.07265
                     },
                     "k)COYIY]1eLbNNbb=7_y": {
                         "id": "k)COYIY]1eLbNNbb=7_y",
-                        "name": "Cozmo pitch B",
+                        "name": "cozmo-drehung b (querachse)",
                         "value": 3.5808897
                     }
                 },
@@ -166,7 +166,7 @@
                             "VARIABLE": {
                                 "id": "Ddb6wQ^]+fEUt5~w2#5d",
                                 "name": "VARIABLE",
-                                "value": "Cozmo asks to be picked up and waits."
+                                "value": "cozmo bittet den spieler, ihn hochzuheben, und wartet dann."
                             }
                         },
                         "id": "(H])rF|rf)?*0~+:=DTX",
@@ -341,7 +341,7 @@
                             "VARIABLE": {
                                 "id": "Er84_DrFQeHe{|I8oCJ^",
                                 "name": "VARIABLE",
-                                "value": "Cozmo pitch A"
+                                "value": "cozmo-drehung a (querachse)"
                             }
                         },
                         "id": ",V[n2h!5VdihG|_fK/po",
@@ -430,7 +430,7 @@
                             "VARIABLE": {
                                 "id": "k)COYIY]1eLbNNbb=7_y",
                                 "name": "VARIABLE",
-                                "value": "Cozmo pitch B"
+                                "value": "cozmo-drehung b (querachse)"
                             }
                         },
                         "id": "18M16h|2W,lDS*@VpqQx",
@@ -547,7 +547,7 @@
                             "VARIABLE": {
                                 "id": "g)4zFtLT|-4]I@?,6ami",
                                 "name": "VARIABLE",
-                                "value": "Cozmo yaw A"
+                                "value": "cozmo-drehung a (vertikalachse)"
                             }
                         },
                         "id": ":NWzE|KMG-Dr-#-`X1Hb",
@@ -586,7 +586,7 @@
                             "VARIABLE": {
                                 "id": "k)COYIY]1eLbNNbb=7_y",
                                 "name": "VARIABLE",
-                                "value": "Cozmo pitch B"
+                                "value": "cozmo-drehung b (querachse)"
                             }
                         },
                         "id": ";PJIL-/BKjv1VD3CDy+S",
@@ -650,7 +650,7 @@
                             "VARIABLE": {
                                 "id": "Er84_DrFQeHe{|I8oCJ^",
                                 "name": "VARIABLE",
-                                "value": "Cozmo pitch A"
+                                "value": "cozmo-drehung a (querachse)"
                             }
                         },
                         "id": "@Jj5Ev/l^op|bGp5NJf6",
@@ -698,7 +698,7 @@
                             "VARIABLE": {
                                 "id": "2sa5)2!0M{ap3xd40c=v",
                                 "name": "VARIABLE",
-                                "value": "Cozmo yaw B"
+                                "value": "cozmo-drehung b (vertikalachse)"
                             }
                         },
                         "id": "B5|L0PDlefm=5WbWU[kp",
@@ -769,7 +769,7 @@
                             "VARIABLE": {
                                 "id": "2sa5)2!0M{ap3xd40c=v",
                                 "name": "VARIABLE",
-                                "value": "Cozmo yaw B"
+                                "value": "cozmo-drehung b (vertikalachse)"
                             }
                         },
                         "id": "DAoEV=n)haO*`bP5AVGc",
@@ -864,7 +864,7 @@
                             "VARIABLE": {
                                 "id": "g)4zFtLT|-4]I@?,6ami",
                                 "name": "VARIABLE",
-                                "value": "Cozmo yaw A"
+                                "value": "cozmo-drehung a (vertikalachse)"
                             }
                         },
                         "id": "Jn*iqByqDZfqN-dwW%VZ",
@@ -922,7 +922,7 @@
                             "VARIABLE": {
                                 "id": "eo.L=V-kX|A;BY/?Fy``",
                                 "name": "VARIABLE",
-                                "value": "Cozmo roll B"
+                                "value": "cozmo-drehung b (l\u00e4ngsachse)"
                             }
                         },
                         "id": "LCrSZ~nM+#$p}hlFZ~t4",
@@ -963,7 +963,7 @@
                             "VARIABLE": {
                                 "id": "W7+N(f)(7a;jZ#Txc5Z)",
                                 "name": "VARIABLE",
-                                "value": "Cozmo reacts to position changes while in the air."
+                                "value": "w\u00e4hrend cozmo in der luft ist, reagiert er auf positions\u00e4nderungen."
                             }
                         },
                         "id": "N,c@C_-i!l{NW?P*I)CW",
@@ -1100,7 +1100,7 @@
                             "VARIABLE": {
                                 "id": "eo.L=V-kX|A;BY/?Fy``",
                                 "name": "VARIABLE",
-                                "value": "Cozmo roll B"
+                                "value": "cozmo-drehung b (l\u00e4ngsachse)"
                             }
                         },
                         "id": "TX79WfSnp^eGXSqu|F9F",
@@ -1234,7 +1234,7 @@
                             "VARIABLE": {
                                 "id": "YXt$1#CE?+OXbQz+?k@i",
                                 "name": "VARIABLE",
-                                "value": "Cozmo roll A"
+                                "value": "cozmo-drehung a (l\u00e4ngsachse)"
                             }
                         },
                         "id": "ap7=f3*M{Q(:5*Xdm[Kd",
@@ -1710,7 +1710,7 @@
                             "VARIABLE": {
                                 "id": "YXt$1#CE?+OXbQz+?k@i",
                                 "name": "VARIABLE",
-                                "value": "Cozmo roll A"
+                                "value": "cozmo-drehung a (l\u00e4ngsachse)"
                             }
                         },
                         "id": "{oT$o{G{_m?Lxu!G3}F1",
