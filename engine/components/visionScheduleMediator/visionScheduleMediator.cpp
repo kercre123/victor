@@ -65,6 +65,23 @@ void VisionScheduleMediator::InitDependent(Cozmo::Robot* robot, const RobotCompM
   return;
 }
 
+void VisionScheduleMediator::Update()
+{
+  // Update the VisionSchedule, if necessary
+  if(subscriptionRecordIsDirty){
+    UpdateVisionSchedule();
+  }
+
+  // Update the visualization tools
+  if(ANKI_DEV_CHEATS){
+    // Send every 50 frames to update corner cases for the vizManager e.g. after init
+    if(framesSinceSendingDebugViz++ >= 50){
+      SendDebugVizMessages();
+      framesSinceSendingDebugViz = 0;
+    }
+  } 
+}
+
 void VisionScheduleMediator::SetVisionModeSubscriptions(IVisionModeSubscriber* const subscriber,
                                                         const std::set<VisionMode>& desiredModes)
 {
@@ -109,7 +126,7 @@ void VisionScheduleMediator::SetVisionModeSubscriptions(IVisionModeSubscriber* c
     }
   }
 
-  UpdateVisionSchedule();
+  subscriptionRecordIsDirty = true;
 }
 
 void VisionScheduleMediator::ReleaseAllVisionModeSubscriptions(IVisionModeSubscriber* subscriber)
@@ -126,7 +143,7 @@ void VisionScheduleMediator::ReleaseAllVisionModeSubscriptions(IVisionModeSubscr
     }
   }
 
-  UpdateVisionSchedule();
+  subscriptionRecordIsDirty = true;
 }
 
 void VisionScheduleMediator::UpdateVisionSchedule()
@@ -189,9 +206,12 @@ void VisionScheduleMediator::UpdateVisionSchedule()
     _visionComponent->PushNextModeSchedule(std::move(schedule));
   }
 
-  if( ANKI_DEV_CHEATS && (scheduleDirty || activeModesDirty)){
+  // On any occasion where we made updates, update the debug viz
+  if(ANKI_DEV_CHEATS && (scheduleDirty || activeModesDirty)){
     SendDebugVizMessages();
   }
+
+  subscriptionRecordIsDirty = false;
 }
 
 bool VisionScheduleMediator::UpdateModePeriodIfNecessary(VisionModeData& modeData) const

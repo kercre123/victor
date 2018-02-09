@@ -1290,6 +1290,10 @@ Result Robot::Update()
   //////////// Android HAL Update ////////////
   AndroidHAL::getInstance()->Update();
 
+  //////////// VisionScheduleMediator ////////////
+  // Applies the scheduling consequences of the last frame's subscriptions before ticking VisionComponent
+  GetVisionScheduleMediator().Update();
+
   //////////// VisionComponent //////////  
   if(GetVisionComponent().GetCamera().IsCalibrated())
   {

@@ -56,6 +56,9 @@ public:
   // IDependencyManagedComponent
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+  // Update called from Robot for the time being. May shift to UpdateDependent later
+  void Update();
+
   // Set up baseline subscriptions to manage VisionMode defaults via the VSM
   void GetInternalSubscriptions(std::set<VisionModeRequest>& baselineSubscriptions) const {
     baselineSubscriptions.insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::High });
@@ -109,6 +112,8 @@ private:
   const CozmoContext* _context;
   VisionComponent* _visionComponent;
   std::unordered_map<VisionMode, VisionModeData> _modeDataMap;
+  bool subscriptionRecordIsDirty = false;
+  uint8_t framesSinceSendingDebugViz = 0;
 
 }; // class VisionScheduleMediator
 
