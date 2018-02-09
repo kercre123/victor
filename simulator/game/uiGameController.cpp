@@ -1532,20 +1532,39 @@ namespace Anki {
       }
     }
     
-    void UiGameController::SendAnimationGroup(const char* animName, bool throttleMessages)
+    void UiGameController::SendAnimationGroup(const char* animGroupName, u32 numLoops, bool throttleMessages)
     {
       static double lastSendTime_sec = -1e6;
       // Don't send repeated animation commands within a half second
       if(!throttleMessages || _supervisor.getTime() > lastSendTime_sec + 0.5f)
       {
-        PRINT_NAMED_INFO("SendAnimationGroup", "sending %s", animName);
-        ExternalInterface::PlayAnimationTrigger m(1,AnimationTriggerFromString(animName),false,false,false,false);
+        PRINT_NAMED_INFO("SendAnimationGroup", "sending %s", animGroupName);
+        ExternalInterface::PlayAnimationGroup m;
+        m.animationGroupName = animGroupName;
+        m.numLoops = numLoops;
+        ExternalInterface::MessageGameToEngine message;
+        message.Set_PlayAnimationGroup(m);
+        SendMessage(message);
+        lastSendTime_sec = _supervisor.getTime();
+      } else {
+        PRINT_NAMED_INFO("SendAnimationGroup", "Ignoring duplicate SendAnimation keystroke.");
+      }
+    }
+    
+    void UiGameController::SendAnimationTrigger(const char* animTriggerName, u32 numLoops, bool throttleMessages)
+    {
+      static double lastSendTime_sec = -1e6;
+      // Don't send repeated animation commands within a half second
+      if(!throttleMessages || _supervisor.getTime() > lastSendTime_sec + 0.5f)
+      {
+        PRINT_NAMED_INFO("SendAnimationTrigger", "sending %s", animTriggerName);
+        ExternalInterface::PlayAnimationTrigger m(numLoops,AnimationTriggerFromString(animTriggerName),false,false,false,false);
         ExternalInterface::MessageGameToEngine message;
         message.Set_PlayAnimationTrigger(m);
         SendMessage(message);
         lastSendTime_sec = _supervisor.getTime();
       } else {
-        PRINT_NAMED_INFO("SendAnimationGroup", "Ignoring duplicate SendAnimation keystroke.");
+        PRINT_NAMED_INFO("SendAnimationTrigger", "Ignoring duplicate SendAnimation keystroke.");
       }
     }
 

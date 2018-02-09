@@ -1519,6 +1519,29 @@ namespace Cozmo {
     SendAnimation(animToSendName.c_str(), animNumLoops, true);
   }
 
+  void WebotsKeyboardController::PlayAnimationTrigger()
+  {
+    // Send whatever animation is specified in the animationToSendName field
+    webots::Field* animToSendNameField = root_->getField("animationToSendName");
+    if (animToSendNameField == nullptr) {
+      printf("ERROR: No animationToSendName field found in WebotsKeyboardController.proto\n");
+      return;
+    }
+    std::string animTriggerName = animToSendNameField->getSFString();
+    if (animTriggerName.empty()) {
+      printf("ERROR: animationToSendName field is empty\n");
+      return;
+    }
+    
+    webots::Field* animNumLoopsField = root_->getField("animationNumLoops");
+    u32 animNumLoops = 1;
+    if (animNumLoopsField && (animNumLoopsField->getSFInt32() > 0)) {
+      animNumLoops = (u32) animNumLoopsField->getSFInt32();
+    }
+    
+    SendAnimationTrigger(animTriggerName.c_str(), animNumLoops, true);
+  }
+  
   void WebotsKeyboardController::PlayAnimationGroup()
   {
     // Send whatever animation is specified in the animationToSendName field
@@ -1527,12 +1550,19 @@ namespace Cozmo {
       printf("ERROR: No animationToSendName field found in WebotsKeyboardController.proto\n");
       return;
     }
-    std::string animToSendName = animToSendNameField->getSFString();
-    if (animToSendName.empty()) {
+    std::string animGroupName = animToSendNameField->getSFString();
+    if (animGroupName.empty()) {
       printf("ERROR: animationToSendName field is empty\n");
       return;
     }
-    SendAnimationGroup(animToSendName.c_str(), true);
+    
+    webots::Field* animNumLoopsField = root_->getField("animationNumLoops");
+    u32 animNumLoops = 1;
+    if (animNumLoopsField && (animNumLoopsField->getSFInt32() > 0)) {
+      animNumLoops = (u32) animNumLoopsField->getSFInt32();
+    }
+    
+    SendAnimationGroup(animGroupName.c_str(), animNumLoops, true);
   }
 
   void WebotsKeyboardController::RunDebugConsoleFunc()
@@ -1998,8 +2028,8 @@ namespace Cozmo {
 //      REGISTER_KEY_FCN('/', MOD_NONE,      , "");
 //      REGISTER_KEY_FCN('/', MOD_ALT,       , "");
     
-    REGISTER_SHIFTED_KEY_FCN('~', MOD_NONE, PlayAnimationGroup,                "Play animation group specified in 'animationToSendName'");
-//      REGISTER_SHIFTED_KEY_FCN('~', MOD_ALT, , "");
+    REGISTER_SHIFTED_KEY_FCN('~', MOD_NONE, PlayAnimationTrigger,              "Play animation trigger specified in 'animationToSendName'");
+    REGISTER_SHIFTED_KEY_FCN('~', MOD_ALT,  PlayAnimationGroup,                "Play animation group specified in 'animationToSendName'");
 //      REGISTER_SHIFTED_KEY_FCN('!', MOD_NONE, , "");
 //      REGISTER_SHIFTED_KEY_FCN('!', MOD_ALT, , "");
     REGISTER_SHIFTED_KEY_FCN('@', MOD_NONE, ToggleSendAvailableObjects,        "Toggle sending of available objects");

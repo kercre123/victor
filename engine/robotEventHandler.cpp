@@ -124,6 +124,16 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlayAnimat
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlayAnimationGroup& msg)
+{
+  AnimTrackFlagType ignoreTracks = GetIgnoreTracks(msg.ignoreBodyTrack, msg.ignoreHeadTrack, msg.ignoreLiftTrack);
+  const bool kInterruptRunning = true; // TODO: expose this option in CLAD?
+  const auto& animName = robot.GetAnimationComponent().GetAnimationNameFromGroup(msg.animationGroupName);
+  return new PlayAnimationAction(animName, msg.numLoops, kInterruptRunning, ignoreTracks);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Helper function that is friended by TriggerCubeAnimationAction so we can call its private constructor
 IActionRunner* GetPlayCubeAnimationHelper(Robot& robot, const ExternalInterface::PlayCubeAnimationTrigger& msg)
 {
@@ -984,6 +994,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       DEFINE_HANDLER(placeOnObject,            PlaceOnObject,            1),
       DEFINE_HANDLER(placeRelObject,           PlaceRelObject,           1),
       DEFINE_HANDLER(playAnimation,            PlayAnimation,            0),
+      DEFINE_HANDLER(playAnimationGroup,       PlayAnimationGroup,       0),
       DEFINE_HANDLER(playAnimationTrigger,     PlayAnimationTrigger,     0),
       DEFINE_HANDLER(playCubeAnimationTrigger, PlayCubeAnimationTrigger, 0),
       DEFINE_HANDLER(playNeedsGetOutAnimIfNeeded, PlayNeedsGetOutAnimIfNeeded, 0),

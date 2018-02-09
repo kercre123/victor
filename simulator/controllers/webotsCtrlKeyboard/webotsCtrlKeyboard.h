@@ -118,6 +118,7 @@ protected:
   void PushIdleAnimation();
   void PlayAnimation();
   void PlayAnimationGroup();
+  void PlayAnimationTrigger();
   
   void RunDebugConsoleFunc();
   void SetDebugConsoleVar();

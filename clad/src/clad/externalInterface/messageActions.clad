@@ -169,6 +169,15 @@ message PlayAnimation {
     bool    ignoreLiftTrack=0
 }
 
+// PlayAnimationGroup
+message PlayAnimationGroup {
+    uint_32 numLoops,
+    string animationGroupName,
+    bool    ignoreBodyTrack=0,
+    bool    ignoreHeadTrack=0,
+    bool    ignoreLiftTrack=0
+}
+
 // PlayAnimationTrigger
 message PlayAnimationTrigger {
   uint_32 numLoops,
@@ -496,6 +505,7 @@ union RobotActionUnion {
   PlaceOnObject                 placeOnObject,
   PlaceRelObject                placeRelObject,
   PlayAnimation                 playAnimation,
+  PlayAnimationGroup            playAnimationGroup,
   PlayAnimationTrigger          playAnimationTrigger,
   PlayCubeAnimationTrigger      playCubeAnimationTrigger,
   PlayNeedsGetOutAnimIfNeeded   playNeedsGetOutAnimIfNeeded,
