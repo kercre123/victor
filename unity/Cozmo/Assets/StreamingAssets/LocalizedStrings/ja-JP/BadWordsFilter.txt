@@ -203,7 +203,6 @@ yiffy#
 セックス#
 せっくす#Sex
 ソドミー#
-ださい#Unfashionable, lame, not cool
 ちくしょう#Oh shit! Oh blast! Oh hell!
 ちび#Shorty, runt, undersized person
 ちゃんころ#Chink
@@ -227,7 +226,6 @@ yiffy#
 トップレス#
 どもり#Speech impediment
 とろい#Slow to catch on, doesn't "get it".
-なめ#
 ニガー#
 にぐろ#Negro
 にんぴにん#Brute
@@ -237,7 +235,7 @@ yiffy#
 ハードコア#
 パイパン#
 バイブレーター#
-ばかIdiot! Fool!#
+ばか#Idiot! Fool!
 ばかやろう#Idiot! Fool!
 バック・スタイル#
 パンティー#

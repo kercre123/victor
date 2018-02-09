@@ -38,6 +38,7 @@ public class BadWordsFilterManager : MonoBehaviour {
   public bool Contains(string testString) {
     foreach (Regex badwordRegex in _BadWordMatches) {
       if (badwordRegex.IsMatch(testString)) {
+        DAS.Info("BadWordsFilterManager", "Matched bad word: " + testString + " with regex: " + badwordRegex + " in locale: " + Localization.GetCultureInfo());
         return true;
       }
     }
