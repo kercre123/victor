@@ -16,6 +16,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 
+#include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimStatesGetInLoop.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorPlayAnimSequence.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorPlayAnimSequenceWithFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorPlayAnimSequenceWithObject.h"
@@ -328,6 +329,12 @@ ICozmoBehaviorPtr BehaviorContainer::CreateBehaviorBase(BehaviorClass behaviorTy
       newBehavior = ICozmoBehaviorPtr(new BehaviorPlayAnimSequenceWithObject(config));
       break;
     }
+    case BehaviorClass::PlayAnimStatesGetInLoop:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorAnimStatesGetInLoop(config));
+      break;
+    }
+
     case BehaviorClass::PounceOnMotion:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorPounceOnMotion(config));

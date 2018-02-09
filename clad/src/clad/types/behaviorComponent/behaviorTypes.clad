@@ -69,6 +69,7 @@ enum uint_8 BehaviorClass {
   PlayAnim,
   PlayAnimWithFace,
   PlayAnimWithObject,
+  PlayAnimStatesGetInLoop,
 
   // Behaviors related to searching
   ExploreLookAroundInPlace,
@@ -289,6 +290,7 @@ enum uint_8 BehaviorID {
   LiftLoadTest,
 
   // Example Behaviors
+  ExampleAnimStateGetInLoop,
   ExampleAnonymousBehaviors,
   ExampleDispatcherScoring,
   ExampleFacePositionUpdated,
