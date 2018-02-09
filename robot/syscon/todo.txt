@@ -7,6 +7,8 @@ x Hold recovery (Tx) low until valid packet received
 x Microdrop for the bootloader (button state)
 x 3.3v auto power off
 
+* Figure out why low battery charging does not work
+* Populate battery flags
 * Put opto sensors to sleep when asked
 * Reenterant gpio alteration
 * Add cube encryption

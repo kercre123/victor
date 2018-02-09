@@ -29,10 +29,13 @@ static int16_t MIC_SPI_CR1 = 0
            | SPI_CR1_SPE
            ;
 
+static const int BUFFER_WORDS = sizeof(pdm_data[0]) / sizeof(uint16_t);
+
 static void configurePerf(SPI_TypeDef* spi, DMA_Channel_TypeDef* ch, int perf) {
+  ch->CCR = 0;
   ch->CPAR = (uint32_t) &spi->DR;
   ch->CMAR = (uint32_t) &pdm_data[perf];
-  ch->CNDTR = sizeof(pdm_data[0]) / sizeof(uint16_t);
+  ch->CNDTR = BUFFER_WORDS;
   ch->CCR = 0
           | DMA_CCR_MINC      // Memory is incrementing
           | DMA_CCR_PSIZE_0   // 16-bit mode
@@ -173,18 +176,18 @@ extern "C" void DMA1_Channel2_3_IRQHandler(void) {
   DMA1->IFCR = DMA_IFCR_CGIF2;
 
   static int32_t accumulator[2][4]; // 2 data lines, 2 channels, 2 accumulators
- 
+
   // Note: if this falls behind, it will drop a bunch of samples
   if (isr & DMA_ISR_HTIF2) {
-    //decimate(pdm_data[0][0], accumulator[0], &index[0]);
-    //decimate(pdm_data[1][0], accumulator[1], &index[2]);
+    decimate(pdm_data[0][0], accumulator[0], &index[0]);
+    decimate(pdm_data[1][0], accumulator[1], &index[2]);
     index += SAMPLES_PER_IRQ * 4;
     sample_index++;
   }
 
   if (isr & DMA_ISR_TCIF2) {
-    //decimate(pdm_data[0][1], accumulator[0], &index[0]);
-    //decimate(pdm_data[1][1], accumulator[1], &index[2]);
+    decimate(pdm_data[0][1], accumulator[0], &index[0]);
+    decimate(pdm_data[1][1], accumulator[1], &index[2]);
     index += SAMPLES_PER_IRQ * 4;
     sample_index++;
   }

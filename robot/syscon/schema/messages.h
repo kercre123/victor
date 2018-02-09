@@ -90,9 +90,9 @@ typedef int32_t Ack;
 
 // ENUM BatteryFlags
 enum {
-  isCharging  = 0x1,
-  isOnCharger = 0x2,
-  chargerOOS  = 0x4,
+  isCharging    = 0x1,
+  isOnCharger   = 0x2,
+  isBatteryLow  = 0x4
 };
 typedef uint16_t BatteryFlags;
 

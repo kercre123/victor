@@ -43,7 +43,7 @@ static int total_release = 0;
 
 uint16_t volatile Analog::values[ADC_CHANNELS];
 bool Analog::button_pressed = false;
-
+uint16_t Analog::battery_voltage = 0;
 
 static void disableVMain(void) {
   MAIN_EN::mode(MODE_OUTPUT);
@@ -160,8 +160,11 @@ void Analog::tick(void) {
   bool vext_now = Analog::values[ADC_VEXT] >= TRANSITION_POINT;
 
   // Emergency trap (V3.3)
-  if (!is_charging && Analog::values[ADC_VMAIN] < LOW_BAT_POINT) {
-    Power::setMode(POWER_STOP);
+  if (!is_charging) {
+    battery_voltage = Analog::values[ADC_VMAIN];
+    if (Analog::values[ADC_VMAIN] < LOW_BAT_POINT) {
+      Power::setMode(POWER_STOP);
+    }
   }
 
   // Debounced VEXT line
