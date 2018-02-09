@@ -34,6 +34,7 @@
 #ifndef EXCLUDE_ANKI_AUDIO_LIBS
 
 #define USE_AUDIO_ENGINE 1
+#include "audioEngine/plugins/ankiPluginInterface.h"
 #include "audioEngine/plugins/hijackAudioPlugIn.h"
 #include "audioEngine/plugins/wavePortalPlugIn.h"
 #else
@@ -110,13 +111,13 @@ CozmoAudioController::CozmoAudioController( const AnimContext* context )
     }
     // Create sound bank loader
     _soundbankLoader.reset(new SoundbankLoader(*this, assetPath));
-    
+
     // Config Engine
     SetupConfig config{};
     // Read/Write Asset path
     config.assetFilePath = assetPath;
     config.writeFilePath = writePath;
-    
+
     // Cozmo uses default audio locale regardless of current context.
     // Locale-specific adjustments are made by setting GameState::External_Language
     // below.
@@ -144,21 +145,24 @@ CozmoAudioController::CozmoAudioController( const AnimContext* context )
   {
     // Setup Engine Logging callback
     SetLogOutput( ErrorLevel::All, &AudioEngineLogCallback );
-    
+
+    InitializePluginInterface();
+    GetPluginInterface()->SetupWavePortalPlugIn();
+
     // Load audio sound bank metadata
     // NOTE: This will slightly change when we implement RAMS
     if (_soundbankLoader.get() != nullptr) {
       _soundbankLoader->LoadDefaultSoundbanks();
     }
 
-    // Use Console vars to controll profiling settings
+    // Use Console vars to control profiling settings
     if ( kWriteAudioProfilerCapture ) {
       WriteProfilerCapture( true );
     }
     if ( kWriteAudioOutputCapture ) {
       WriteAudioOutputCapture( true );
     }
-    
+
     RegisterCladGameObjectsWithAudioController();
   }
   if (sThis == nullptr) {

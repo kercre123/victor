@@ -9,7 +9,6 @@ anki_build_cxx_library(victor_web_library ${ANKI_SRCLIST_DIR} STATIC)
 include(flatbuffers)
 include(opencv)
 include(speexdsp)
-include(text2speech)
 include(sensory)
 # include(robot_core)
 
