@@ -3,6 +3,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include "app.h"
+#include "accel.h"
 #include "board.h"
 #include "cmd.h"
 #include "console.h"
@@ -183,12 +184,21 @@ int cmd_process(char* s)
   //==========================
   if( !strcmp(cmd, "accel") )
   {
-    //extern void AccelInit(void);
-    //AccelInit(); //hal_spi_init();
-    //return respond_(cmd, STATUS_OK, 0);
+    accel_power_off();
+    if( accel_chipinit() ) { //this should fail!
+      accel_power_off();
+      return respond_(cmd, STATUS_ACCEL_PWR_CTRL, "pwr_ctrl");
+    }
     
-    writes_("XXX: missing accel driver\n");
-    return respond_(cmd, 404, "not-implemented");
+    accel_power_on();
+    if( !accel_chipinit() ) { //this should pass
+      return respond_(cmd, STATUS_ACCEL_CHIPINIT, "chipinit");
+    }
+    
+    //XXX: read some data & ?sanity check
+    
+    accel_power_off();
+    return respond_(cmd, STATUS_OK, 0);
   }//-*/
   
   //==========================

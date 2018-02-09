@@ -492,11 +492,6 @@
               <FileName>hal_spi.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\hal\ontogeny\hal_spi.c</FilePath>
-            </File>
-            <File>
-              <FileName>accel.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\hal\ontogeny\accel.c</FilePath>
               <FileOption>
                 <CommonProperty>
                   <UseCPPCompiler>2</UseCPPCompiler>
@@ -546,6 +541,11 @@
                   </Cads>
                 </FileArmAds>
               </FileOption>
+            </File>
+            <File>
+              <FileName>accel.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\hal\ontogeny\accel.c</FilePath>
             </File>
             <File>
               <FileName>hal_led_v21.c</FileName>

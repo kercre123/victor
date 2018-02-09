@@ -22,6 +22,9 @@
 #define STATUS_ARG_NA         2   //missing an expected argument/param
 #define STATUS_ARG_PARSE      3   //error parsing one of the arguments. check formatting
 
+#define STATUS_ACCEL_PWR_CTRL   10  //can't control accel power (stuck on?)
+#define STATUS_ACCEL_CHIPINIT   11  //failed chip initialization
+
 //-----------------------------------------------------------
 //        Interface
 //-----------------------------------------------------------
