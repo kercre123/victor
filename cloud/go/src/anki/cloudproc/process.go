@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"sync"
-	"time"
 
 	"github.com/google/uuid"
 )
@@ -35,7 +34,7 @@ const (
 )
 
 type voiceContext struct {
-	client      *chipper.Client
+	stream      *chipper.Stream
 	samples     []byte
 	audioStream chan []byte
 	once        sync.Once
@@ -54,41 +53,41 @@ func (ctx *voiceContext) addSamples(samples []byte) {
 
 func (ctx *voiceContext) close() error {
 	var err util.Errors
-	err.Append(ctx.client.Close())
+	err.Append(ctx.stream.Close())
 	return err.Error()
 }
 
-func newVoiceContext(client *chipper.Client, cloudChan chan<- string) *voiceContext {
+func newVoiceContext(stream *chipper.Stream, cloudChan chan<- string) *voiceContext {
 	audioStream := make(chan []byte, 10)
 	ctx := &voiceContext{
-		client:      client,
+		stream:      stream,
 		samples:     make([]byte, 0, StreamSize*2),
 		audioStream: audioStream}
 
 	go func() {
 		for data := range ctx.audioStream {
-			stream(ctx, data, cloudChan)
+			sendAudio(ctx, data, cloudChan)
 		}
 	}()
 
 	return ctx
 }
 
-func stream(ctx *voiceContext, samples []byte, cloudChan chan<- string) {
-	callStart := time.Now()
-	err := ctx.client.SendAudio(samples)
+func sendAudio(ctx *voiceContext, samples []byte, cloudChan chan<- string) {
+	var err error
+	sendTime := util.TimeFuncMs(func() {
+		err = ctx.stream.SendAudio(samples)
+	})
 	if err != nil {
 		fmt.Println("Cloud error:", err)
 		return
 	}
-	logVerbose("Sent", len(samples), "bytes to Chipper (call took",
-		time.Now().Sub(callStart).Nanoseconds()/int64(time.Millisecond/time.Nanosecond),
-		"ms)")
+	logVerbose("Sent", len(samples), "bytes to Chipper (call took", int(sendTime), "ms)")
 
 	// set up response routine if this is the first stream
 	ctx.once.Do(func() {
 		go func() {
-			resp, err := ctx.client.WaitForIntent()
+			resp, err := ctx.stream.WaitForIntent()
 			if err != nil {
 				fmt.Println("CCE error:", err)
 				cloudChan <- ""
@@ -112,8 +111,6 @@ func RunProcess(micPipe MicPipe, aiSock io.Writer, stop <-chan struct{}) {
 	if verbose {
 		fmt.Println("Verbose logging enabled")
 	}
-	killreader := make(chan struct{})
-	defer close(killreader)
 
 	cloudChan := make(chan string)
 
@@ -126,7 +123,7 @@ procloop:
 			if ctx != nil {
 				fmt.Println("Got hotword event while already streaming, weird...")
 			}
-			var client *chipper.Client
+			var stream *chipper.Stream
 			var chipperConn *chipper.Conn
 			var err error
 			ctxTime := util.TimeFuncMs(func() {
@@ -135,16 +132,18 @@ procloop:
 					fmt.Println("Error getting chipper connection:", err)
 					return
 				}
-				client, err = chipperConn.NewClient(uuid.New().String()[:16])
+				stream, err = chipperConn.NewStream(chipper.StreamOpts{
+					SessionId: uuid.New().String()[:16],
+					FullFile:  false})
 			})
 			if err != nil {
 				fmt.Println("Error creating Chipper:", err)
 				continue
 			}
 
-			ctx = newVoiceContext(client, cloudChan)
+			ctx = newVoiceContext(stream, cloudChan)
 
-			logVerbose("Received hotword event, created context in", ctxTime, "ms")
+			logVerbose("Received hotword event, created context in", int(ctxTime), "ms")
 
 		case msg := <-micPipe.Audio():
 			// add samples to our buffer
@@ -158,7 +157,7 @@ procloop:
 		case intent := <-cloudChan:
 			logVerbose("Received intent from cloud:", intent)
 			// we got an answer from the cloud, tell mic to stop...
-			n, err := micPipe.WriteMic([]byte{0, 0})
+			n, err := micPipe.writeMic([]byte{0, 0})
 			if n != 2 || err != nil {
 				fmt.Println("Mic write error:", n, err)
 			}

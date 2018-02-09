@@ -3,13 +3,14 @@ package cloudproc
 import (
 	"anki/ipc"
 	"anki/util"
+	"io"
 	"strings"
 )
 
 type MicPipe interface {
 	Hotword() chan struct{}
 	Audio() chan socketMsg
-	WriteMic(buf []byte) (int, error)
+	writeMic(buf []byte) (int, error)
 }
 
 // bufToGoString converts byte buffers that may be null-terminated if created in C
@@ -43,7 +44,7 @@ func socketReader(s ipc.Conn, hotword chan struct{}, audio chan socketMsg, kill 
 type ipcPipe struct {
 	hotword chan struct{}
 	audio   chan socketMsg
-	conn    ipc.Conn
+	conn    io.Writer
 }
 
 func (p *ipcPipe) Hotword() chan struct{} {
@@ -54,7 +55,7 @@ func (p *ipcPipe) Audio() chan socketMsg {
 	return p.audio
 }
 
-func (p *ipcPipe) WriteMic(buf []byte) (int, error) {
+func (p *ipcPipe) writeMic(buf []byte) (int, error) {
 	return p.conn.Write(buf)
 }
 
