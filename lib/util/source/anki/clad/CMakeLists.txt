@@ -1,4 +1,5 @@
 include(generate_clad)
+include(android_strip)
 
 set(CLAD_BASE_DIR "${CMAKE_SOURCE_DIR}/tools/message-buffers")
 set(CLAD_EMITTER_DIR "${CLAD_BASE_DIR}/emitters")
@@ -46,4 +47,6 @@ target_include_directories(util_clad
 target_link_libraries(util_clad
     clad
 )
+
+android_strip(TARGET util_clad)
 

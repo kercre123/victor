@@ -24,7 +24,7 @@ import sys
 from simpleperf_report_lib import *
 
 
-def report_sample(record_file, symfs_dir, kallsyms_file=None):
+def report_sample(record_file, symfs_dir, kallsyms_file=None, tids=None):
     """ read record_file, and print each sample"""
     lib = ReportLib()
 
@@ -36,11 +36,17 @@ def report_sample(record_file, symfs_dir, kallsyms_file=None):
     if kallsyms_file is not None:
         lib.SetKallsymsFile(kallsyms_file)
 
+    # Anki, take list of thread ids to include
+    if tids:
+        tids = [int(item) for sublist in tids for item in sublist]
+
     while True:
         sample = lib.GetNextSample()
         if sample is None:
             lib.Close()
             break
+        if tids and sample.tid not in tids:
+            continue
         event = lib.GetEventOfCurrentSample()
         symbol = lib.GetSymbolOfCurrentSample()
         callchain = lib.GetCallChainOfCurrentSample()
@@ -64,5 +70,7 @@ if __name__ == '__main__':
     parser.add_argument('--kallsyms', help='Set the path to find kernel symbols.')
     parser.add_argument('record_file', nargs='?', default='perf.data',
                         help='Default is perf.data.')
+    parser.add_argument('--tids', nargs='+', action='append',
+                        help='Use samples only in threads with selected thread ids.')
     args = parser.parse_args()
-    report_sample(args.record_file, args.symfs, args.kallsyms)
+    report_sample(args.record_file, args.symfs, args.kallsyms, args.tids)

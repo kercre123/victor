@@ -13,17 +13,30 @@ SCRIPTDIR=$(dirname $([ -L $0 ] && echo "$(dirname $0)/$(readlink -n $0)" || ech
 # How often do we sample? (in usec)
 : ${ANKI_PROFILE_FREQUENCY:="4000"}
 
-# Where is symbol cache?
+# Where is the symbol cache?
 : ${ANKI_PROFILE_SYMBOLCACHE:="${SCRIPTDIR}/${ANKI_PROFILE_PROCNAME}/symbol_cache"}
 
 # Where is the binary cache?
 : ${ANKI_PROFILE_BINARYCACHE:="${SCRIPTDIR}/${ANKI_PROFILE_PROCNAME}/binary_cache"}
+
+# Where is perf.data?
+: ${ANKI_PROFILE_PERFDATA:="${SCRIPTDIR}/${ANKI_PROFILE_PROCNAME}/perf.data"}
+
+# Where are the annotated files?
+: ${ANKI_PROFILE_ANNOTATEDDIR:="${SCRIPTDIR}/${ANKI_PROFILE_PROCNAME}/annotated_files"}
 
 # Where is top level?
 : ${TOPLEVEL:="`git rev-parse --show-toplevel`"}
 
 # Where is simpleperf?
 : ${SIMPLEPERF:="${TOPLEVEL}/lib/util/tools/simpleperf"}
+
+#
+# If ANDROID_NDK is set, use it, else provide default location
+#
+if [ -z "${ANDROID_NDK+x}" ]; then
+  ANDROID_NDK=`${TOPLEVEL}/tools/build/tools/ankibuild/android.py`
+fi
 
 #
 # Create symbol cache
@@ -41,19 +54,23 @@ fi
 # Use '-np' and '-r' to set collection parameters.
 # Use '-lib' to fetch symbols from cache.
 #
-PROFILER=${SIMPLEPERF}/app_profiler.py
-
-python ${PROFILER} -nc \
-  -np ${ANKI_PROFILE_PROCNAME} \
-  -r "-e cpu-cycles:u -f ${ANKI_PROFILE_FREQUENCY} --duration ${ANKI_PROFILE_DURATION} --call-graph fp" \
-  -lib ${ANKI_PROFILE_SYMBOLCACHE} \
-  -bin ${ANKI_PROFILE_BINARYCACHE}
-
+#PROFILER=${SIMPLEPERF}/app_profiler.py
+#
+#python ${PROFILER} -nc -nb \
+#  -np ${ANKI_PROFILE_PROCNAME} \
+#  -r "-e cpu-cycles:u -f ${ANKI_PROFILE_FREQUENCY} --duration ${ANKI_PROFILE_DURATION} --call-graph fp" \
+#  -lib ${ANKI_PROFILE_SYMBOLCACHE} \
+#  -bin ${ANKI_PROFILE_BINARYCACHE} \
+#  -o ${ANKI_PROFILE_PERFDATA}
+#
 #
 # To view perf.data, run 
 #  simpleperf report --symfs symbol_cache
 # which will print performance stuff to console. 
 #
-
-export PATH=${SIMPLEPERF}/bin/darwin/x86_64:${PATH}
-simpleperf report --symfs ${ANKI_PROFILE_SYMBOLCACHE} $@
+python ${SIMPLEPERF}/annotate.py \
+  -o ${ANKI_PROFILE_ANNOTATEDDIR} \
+  -i ${ANKI_PROFILE_PERFDATA} \
+  -s ${TOPLEVEL} \
+  --symfs ${ANKI_PROFILE_SYMBOLCACHE} \
+  --addr2line ${ANDROID_NDK}/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-addr2line \

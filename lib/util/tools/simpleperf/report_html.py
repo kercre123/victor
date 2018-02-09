@@ -335,14 +335,16 @@ class RecordData(object):
                 }
     """
 
-    def __init__(self, record_file, min_func_percent, min_callchain_percent):
-        self._load_record_file(record_file)
+    # Anki, allow symbol_cache to be overridden
+    def __init__(self, record_file, symfs, min_func_percent, min_callchain_percent):
+        self._load_record_file(record_file, symfs)
         self._limit_percents(min_func_percent, min_callchain_percent)
 
-    def _load_record_file(self, record_file):
+    def _load_record_file(self, record_file, symfs):
         lib = ReportLib()
         lib.ShowIpForUnknownSymbol()
         lib.SetRecordFile(record_file)
+        lib.SetSymfs(symfs)
         self.meta_info = lib.MetaInfo()
         self.cmdline = lib.GetRecordCmd()
         self.arch = lib.GetArch()
@@ -442,7 +444,7 @@ class RecordData(object):
         return thread_names
 
     def _modify_name_for_html(self, name):
-        return name.replace('>', '&gt;').replace('<', '&lt;')
+        return name # Anki, not required .replace('>', '&gt;').replace('<', '&lt;')
 
     def _gen_lib_list(self):
         ret = sorted(self.libs.libs.keys(), key=lambda k: self.libs.libs[k])
@@ -516,12 +518,12 @@ class ReportGenerator(object):
         self.hw.close()
 
 
-def gen_flamegraph(record_file):
+def gen_flamegraph(record_file, symfs):
     fd, flamegraph_path = tempfile.mkstemp()
     os.close(fd)
     inferno_script_path = os.path.join(get_script_dir(), 'inferno', 'inferno.py')
     subprocess.check_call([sys.executable, inferno_script_path, '-sc', '-o', flamegraph_path,
-                           '--record_file', record_file, '--embedded_flamegraph', '--no_browser'])
+                           '--record_file', record_file, '--symfs', symfs, '--embedded_flamegraph', '--no_browser'])
     with open(flamegraph_path, 'r') as fh:
         data = fh.read()
     remove(flamegraph_path)
@@ -530,6 +532,9 @@ def gen_flamegraph(record_file):
 
 def main():
     parser = argparse.ArgumentParser(description='report profiling data')
+    # Anki, optionally take symbol_cache directory from the command-line
+    parser.add_argument('--symfs', help="""Set the path to find binaries with symbols and debug
+                        info.""")
     parser.add_argument('-i', '--record_file', default='perf.data', help="""
                         Set profiling data file to report.""")
     parser.add_argument('-o', '--report_path', default='report.html', help="""
@@ -546,13 +551,13 @@ def main():
     parser.add_argument('--no_browser', action='store_true', help="Don't open report in browser.")
     args = parser.parse_args()
 
-    record_data = RecordData(args.record_file, args.min_func_percent, args.min_callchain_percent)
+    record_data = RecordData(args.record_file, args.symfs, args.min_func_percent, args.min_callchain_percent)
 
     report_generator = ReportGenerator(args.report_path)
     report_generator.write_content_div()
     report_generator.write_record_data(record_data.gen_record_info())
     report_generator.write_script()
-    flamegraph = gen_flamegraph(args.record_file)
+    flamegraph = gen_flamegraph(args.record_file, args.symfs)
     report_generator.write_flamegraph(flamegraph)
     report_generator.finish()
 

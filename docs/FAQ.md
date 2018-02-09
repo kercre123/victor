@@ -112,3 +112,6 @@ CMake Error at CMakeLists.txt:9 (project):
   - First turn the robot on with the backpack button and all the lights should turn on as normal
   - Quickly place the robot on the charger. It should stay on at this point and begin charging
   - Leave the robot on the charger for ~30 minutes
+
+* When profiling I see "...doesn't contain symbol table"
+  - This is just a warning, there are no symbol tables for the .so files on the device, instead we use symbols from the symbol cache

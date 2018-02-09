@@ -168,7 +168,7 @@ Run `victor_deploy` and `victor_assets` to deploy the binaries and asset files t
 If you want to deploy the release build, run
 
 ```
-ANKI_BUILD_TYPES=Release ./project/victor/scripts/deploy.sh
+ANKI_BUILD_TYPE=Release ./project/victor/scripts/deploy.sh
 ```
 
 ## Running Victor
