@@ -8,6 +8,7 @@
     "TriggerWordDetected",
     "FistBumpVoiceCommand",
     "DevPettingTestSimple",
+    "TimerUtilityCoordinator",
     "HighLevelAI"
   ]
 }
