@@ -16,6 +16,7 @@
 #include <string>
 #include <vector>
 #include <mutex>
+#include <unordered_set>
 
 #include "util/export/export.h"
 
@@ -49,12 +50,12 @@ public:
   void Update();
   void Stop();
   
-  // send data to any client subscribed to service
-  void SendToWebSockets(const std::string& service, const Json::Value& data);
-
+  // send data to any client subscribed to moduleName
+  void SendToWebSockets(const std::string& moduleName, const Json::Value& data) const;
+  
+  inline void SendToWebViz(const std::string& moduleName, const Json::Value& data) const { SendToWebSockets(moduleName, data); }
+  
   const std::string& getConsoleVarsTemplate();
-  const std::string& getLuaTemplate();
-  const std::string& getMetaGameJsonTemplate();
 
   enum RequestType
   {
@@ -85,11 +86,8 @@ private:
 
   struct WebSocketConnectionData {
     struct mg_connection* conn = nullptr;
-    std::string serviceName;
-    bool subscribed = false;
+    std::unordered_set<std::string> subscribedModules;
   };
-  
-  void SendWebSocketError(struct mg_connection* conn, const std::string& str) const;
   
   // called by civetweb
   static void HandleWebSocketsReady(struct mg_connection* conn, void* cbparams);
@@ -104,13 +102,6 @@ private:
   
   static void SendToWebSocket(struct mg_connection* conn, const Json::Value& data);
   
-  // lua handlers
-  void HandleLuaGet(struct mg_connection* conn, const Json::Value& data);
-  void HandleLuaSet(struct mg_connection* conn, const Json::Value& data);
-  void HandleLuaRevert(struct mg_connection* conn, const Json::Value& data);
-  void HandleLuaPlay(struct mg_connection* conn, const Json::Value& data);
-  void HandleLuaStop(struct mg_connection* conn, const Json::Value& data);
-  
   // todo: OTA update somehow?
 
   struct mg_context* _ctx;
@@ -118,8 +109,6 @@ private:
   std::vector<WebSocketConnectionData> _webSocketConnections;
 
   std::string _consoleVarsUIHTMLTemplate;
-  std::string _metaGameJsonHTMLTemplate;
-  std::string _luaHTMLTemplate;
 
   std::vector<Request*> _requests;
 };
