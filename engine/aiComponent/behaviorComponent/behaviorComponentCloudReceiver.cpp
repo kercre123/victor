@@ -39,6 +39,7 @@ const FullCloudIntentArray cloudStringMap{
   {CloudIntent::HowAreYou,       "intent_status_feeling"},
   {CloudIntent::ReturnToCharger, "intent_system_charger"},
   {CloudIntent::Sleep,           "intent_system_sleep"},
+  {CloudIntent::SetATimer,       "intent_clock_settimer"},
   {CloudIntent::TriggerDetected, "TriggerDetected"},
   {CloudIntent::WakeUp,          "intent_system_wake"}
 };

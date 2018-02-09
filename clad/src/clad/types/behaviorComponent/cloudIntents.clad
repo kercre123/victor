@@ -17,6 +17,7 @@ enum uint_8 CloudIntent {
   HowAreYou,
   ReturnToCharger,
   Sleep,
+  SetATimer,
   TriggerDetected,
   WakeUp,
 
