@@ -23,7 +23,7 @@
                 "variables": {
                     "#wFc.bjgMO*s`1n?ftNk": {
                         "id": "#wFc.bjgMO*s`1n?ftNk",
-                        "name": "coordonn\u00e9es x",
+                        "name": "x-koordinaten",
                         "value": "057049041037049043038034033038047050068071056047049065074086081076065"
                     },
                     "$*;Den.ycc@:o6KpfFpN": {
@@ -33,12 +33,12 @@
                     },
                     "(9s+8@uMl;YhHf]c0hWJ": {
                         "id": "(9s+8@uMl;YhHf]c0hWJ",
-                        "name": "coordonn\u00e9es y",
+                        "name": "y-koordinaten",
                         "value": "005014011011014020023029020023033045052042035033014024033024027027024"
                     },
                     "+d9qfF5EFf[jiIG-9:kq": {
                         "id": "+d9qfF5EFf[jiIG-9:kq",
-                        "name": "Instructions",
+                        "name": "anleitung",
                         "value": "0003000210002013002001"
                     },
                     "-0|U^gmUG[#-dlLK/Fm7": {
@@ -58,12 +58,12 @@
                     },
                     "4QLFytuZDHnkb#PN@dW3": {
                         "id": "4QLFytuZDHnkb#PN@dW3",
-                        "name": "couple y",
+                        "name": "geordnetes paar\u00a0y",
                         "value": 9
                     },
                     "5#(L|SNfbtQdn2`o+6QZ": {
                         "id": "5#(L|SNfbtQdn2`o+6QZ",
-                        "name": "distance \u00e0 parcourir",
+                        "name": "fahrdistanz",
                         "value": 68.41052550594827
                     },
                     "5$D/BZ+3H/rR6?.q6Kg@": {
@@ -78,7 +78,7 @@
                     },
                     ":)-}5b~W7c[2r|7`~8D9": {
                         "id": ":)-}5b~W7c[2r|7`~8D9",
-                        "name": "distance entre les lignes",
+                        "name": "abstand der linien",
                         "value": 11.40175425099138
                     },
                     ";.=V3hiwMkypR+C{=-m#": {
@@ -88,7 +88,7 @@
                     },
                     "A5)2K.MXLdMOVm{5Y%T6": {
                         "id": "A5)2K.MXLdMOVm{5Y%T6",
-                        "name": "multiplicateur de distance",
+                        "name": "entfernungs-multiplikator",
                         "value": "6"
                     },
                     "AIqOh:-zi4GZZm1EML%W": {
@@ -98,7 +98,7 @@
                     },
                     "DsV}sC/ANZ)%a4*a0*KV": {
                         "id": "DsV}sC/ANZ)%a4*a0*KV",
-                        "name": "nombre de constellations",
+                        "name": "nummer des sternbilds",
                         "value": 3
                     },
                     "E41u?9^ra,+.c8dD(p)V": {
@@ -108,12 +108,12 @@
                     },
                     "F%vt`m_2mx#?!)W|L$b-": {
                         "id": "F%vt`m_2mx#?!)W|L$b-",
-                        "name": "Utilise les pentes de deux lignes d'intersection pour obtenir les degr\u00e9s de braquage de Cozmo.",
+                        "name": "ermittle anhand der steigungen zweier sich schneidender linien den einschlagswinkel f\u00fcr cozmo.",
                         "value": 0
                     },
                     "F2H/xkFy_.^ecaD;jVB:": {
                         "id": "F2H/xkFy_.^ecaD;jVB:",
-                        "name": "nom de la constellation",
+                        "name": "name des sternbilds",
                         "value": "Gemini"
                     },
                     "H1Kn^s]lj3+J19HVV-OF": {
@@ -123,7 +123,7 @@
                     },
                     "I*s4.?gZ,~/OGo^jM[[?": {
                         "id": "I*s4.?gZ,~/OGo^jM[[?",
-                        "name": "couple x",
+                        "name": "geordnetes paar\u00a0x",
                         "value": 121
                     },
                     "N97YR8z2oB@oe9F1k+/e": {
@@ -138,7 +138,7 @@
                     },
                     "V4vPJt{_Xg9*K7K*7M6~": {
                         "id": "V4vPJt{_Xg9*K7K*7M6~",
-                        "name": "pente2",
+                        "name": "steigung2",
                         "value": 0.2727272727272727
                     },
                     "WB/@P=g:=..O|+r3A{k=": {
@@ -148,12 +148,12 @@
                     },
                     "]-Z+yTvmV*WIy%o))-Dr": {
                         "id": "]-Z+yTvmV*WIy%o))-Dr",
-                        "name": "pente1",
+                        "name": "steigung1",
                         "value": 0
                     },
                     "_e]d1Jogq=8~MSv](8s[": {
                         "id": "_e]d1Jogq=8~MSv](8s[",
-                        "name": "total",
+                        "name": "anzahl",
                         "value": "1"
                     },
                     "bx_Zcv?gAz^Ywucz+X!,": {
@@ -163,7 +163,7 @@
                     },
                     "cnAqHU0=mi57d[Pz1;4w": {
                         "id": "cnAqHU0=mi57d[Pz1;4w",
-                        "name": "angle de braquage",
+                        "name": "einschlagswinkel",
                         "value": 15.255118703057775
                     },
                     "h[K*.^6R_onKY/w3r7ra": {
@@ -408,7 +408,7 @@
                             "VARIABLE": {
                                 "id": "DsV}sC/ANZ)%a4*a0*KV",
                                 "name": "VARIABLE",
-                                "value": "nombre de constellations"
+                                "value": "nummer des sternbilds"
                             }
                         },
                         "id": "#!$ZF4gBW(wM(~^yr$H.",
@@ -568,7 +568,7 @@
                             "VARIABLE": {
                                 "id": "#wFc.bjgMO*s`1n?ftNk",
                                 "name": "VARIABLE",
-                                "value": "coordonn\u00e9es x"
+                                "value": "x-koordinaten"
                             }
                         },
                         "id": "#Wxs7AniOTa*,det%{3~",
@@ -898,7 +898,7 @@
                             "VARIABLE": {
                                 "id": "A5)2K.MXLdMOVm{5Y%T6",
                                 "name": "VARIABLE",
-                                "value": "multiplicateur de distance"
+                                "value": "entfernungs-multiplikator"
                             }
                         },
                         "id": "(i#[EWH4|1Ku2y*@y+vg",
@@ -916,7 +916,7 @@
                             "VARIABLE": {
                                 "id": ":)-}5b~W7c[2r|7`~8D9",
                                 "name": "VARIABLE",
-                                "value": "distance entre les lignes"
+                                "value": "abstand der linien"
                             }
                         },
                         "id": ")IX1`3S!mX9~!VTOMLWn",
@@ -1248,7 +1248,7 @@
                             "VARIABLE": {
                                 "id": "#wFc.bjgMO*s`1n?ftNk",
                                 "name": "VARIABLE",
-                                "value": "coordonn\u00e9es x"
+                                "value": "x-koordinaten"
                             }
                         },
                         "id": ",gyKaxMjk6o,8PV]?iHg",
@@ -1371,7 +1371,7 @@
                             "VARIABLE": {
                                 "id": "(9s+8@uMl;YhHf]c0hWJ",
                                 "name": "VARIABLE",
-                                "value": "coordonn\u00e9es y"
+                                "value": "y-koordinaten"
                             }
                         },
                         "id": "-7oDi]olfM_Xs`4,PUD!",
@@ -1423,7 +1423,7 @@
                             "VARIABLE": {
                                 "id": "#wFc.bjgMO*s`1n?ftNk",
                                 "name": "VARIABLE",
-                                "value": "coordonn\u00e9es x"
+                                "value": "x-koordinaten"
                             }
                         },
                         "id": "-qg~T.!2k`Bx+pQB):}J",
@@ -1528,7 +1528,7 @@
                             "VARIABLE": {
                                 "id": "#wFc.bjgMO*s`1n?ftNk",
                                 "name": "VARIABLE",
-                                "value": "coordonn\u00e9es x"
+                                "value": "x-koordinaten"
                             }
                         },
                         "id": ".^g=?1#oi7|^ySo;9RmA",
@@ -1683,7 +1683,7 @@
                             "VARIABLE": {
                                 "id": "(9s+8@uMl;YhHf]c0hWJ",
                                 "name": "VARIABLE",
-                                "value": "coordonn\u00e9es y"
+                                "value": "y-koordinaten"
                             }
                         },
                         "id": "/f~,kBRL;OO+~+M[2mHQ",
@@ -1725,7 +1725,7 @@
                             "VARIABLE": {
                                 "id": "#wFc.bjgMO*s`1n?ftNk",
                                 "name": "VARIABLE",
-                                "value": "coordonn\u00e9es x"
+                                "value": "x-koordinaten"
                             }
                         },
                         "id": "0Lr*yHUqTiV`Hx#xCO)Z",
@@ -1802,7 +1802,7 @@
                             "VARIABLE": {
                                 "id": "+d9qfF5EFf[jiIG-9:kq",
                                 "name": "VARIABLE",
-                                "value": "Instructions"
+                                "value": "anleitung"
                             }
                         },
                         "id": "1.!Rn`H)qnoLH7r,%6Pl",
@@ -2035,7 +2035,7 @@
                             "VARIABLE": {
                                 "id": "F2H/xkFy_.^ecaD;jVB:",
                                 "name": "VARIABLE",
-                                "value": "nom de la constellation"
+                                "value": "name des sternbilds"
                             }
                         },
                         "id": "4AiKpv%=+/9(-|Awnd?V",
@@ -2143,7 +2143,7 @@
                             "VARIABLE": {
                                 "id": "#wFc.bjgMO*s`1n?ftNk",
                                 "name": "VARIABLE",
-                                "value": "coordonn\u00e9es x"
+                                "value": "x-koordinaten"
                             }
                         },
                         "id": "5Rvr}`B5uO;n4gAA8r8^",
@@ -2184,7 +2184,7 @@
                             "VARIABLE": {
                                 "id": "+d9qfF5EFf[jiIG-9:kq",
                                 "name": "VARIABLE",
-                                "value": "Instructions"
+                                "value": "anleitung"
                             }
                         },
                         "id": "5l4G1D:RW]1-HfY`4`lM",
@@ -2202,7 +2202,7 @@
                             "VARIABLE": {
                                 "id": "_e]d1Jogq=8~MSv](8s[",
                                 "name": "VARIABLE",
-                                "value": "total"
+                                "value": "anzahl"
                             }
                         },
                         "id": "62yAfLpnFSq;kWzAz#q:",
@@ -2491,7 +2491,7 @@
                             "VARIABLE": {
                                 "id": "DsV}sC/ANZ)%a4*a0*KV",
                                 "name": "VARIABLE",
-                                "value": "nombre de constellations"
+                                "value": "nummer des sternbilds"
                             }
                         },
                         "id": "9UO9.f._oqSxN-!fqpFC",
@@ -2588,7 +2588,7 @@
                             "VARIABLE": {
                                 "id": "]-Z+yTvmV*WIy%o))-Dr",
                                 "name": "VARIABLE",
-                                "value": "pente1"
+                                "value": "steigung1"
                             }
                         },
                         "id": ":V=8=3]#,m!,ezzgA8Q(",
@@ -2774,7 +2774,7 @@
                             "VARIABLE": {
                                 "id": "I*s4.?gZ,~/OGo^jM[[?",
                                 "name": "VARIABLE",
-                                "value": "couple x"
+                                "value": "geordnetes paar\u00a0x"
                             }
                         },
                         "id": "=1M15Zg6_c]wXhh2%fd|",
@@ -2919,7 +2919,7 @@
                             "VARIABLE": {
                                 "id": "(9s+8@uMl;YhHf]c0hWJ",
                                 "name": "VARIABLE",
-                                "value": "coordonn\u00e9es y"
+                                "value": "y-koordinaten"
                             }
                         },
                         "id": "=wRyG=Ga4.qsIU|RgU}=",
@@ -3102,7 +3102,7 @@
                             "VARIABLE": {
                                 "id": "+d9qfF5EFf[jiIG-9:kq",
                                 "name": "VARIABLE",
-                                "value": "Instructions"
+                                "value": "anleitung"
                             }
                         },
                         "id": "ANM=MbD2j%;~HhVGU-~=",
@@ -3176,7 +3176,7 @@
                             "VARIABLE": {
                                 "id": "_e]d1Jogq=8~MSv](8s[",
                                 "name": "VARIABLE",
-                                "value": "total"
+                                "value": "anzahl"
                             }
                         },
                         "id": "AjL}WAO]Ze9XRnH[M{cf",
@@ -3288,7 +3288,7 @@
                             "VARIABLE": {
                                 "id": "+d9qfF5EFf[jiIG-9:kq",
                                 "name": "VARIABLE",
-                                "value": "Instructions"
+                                "value": "anleitung"
                             }
                         },
                         "id": "Bwz#,G%8u=T~@ZPv:z!s",
@@ -3564,7 +3564,7 @@
                             "VARIABLE": {
                                 "id": "cnAqHU0=mi57d[Pz1;4w",
                                 "name": "VARIABLE",
-                                "value": "angle de braquage"
+                                "value": "einschlagswinkel"
                             }
                         },
                         "id": "EdOC_jr!]}raBa2`l/Wa",
@@ -3605,7 +3605,7 @@
                             "VARIABLE": {
                                 "id": "4QLFytuZDHnkb#PN@dW3",
                                 "name": "VARIABLE",
-                                "value": "couple y"
+                                "value": "geordnetes paar\u00a0y"
                             }
                         },
                         "id": "F=H^ni##(QcUF2A^~/{N",
@@ -3967,7 +3967,7 @@
                             "VARIABLE": {
                                 "id": "_e]d1Jogq=8~MSv](8s[",
                                 "name": "VARIABLE",
-                                "value": "total"
+                                "value": "anzahl"
                             }
                         },
                         "id": "I=nU_5F|{gsJRu?_FM%t",
@@ -3990,7 +3990,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Bonjour"
+                                "value": "hallo"
                             }
                         },
                         "id": "IK[8}MFC2?z]PB.;Cl(@",
@@ -4079,7 +4079,7 @@
                             "VARIABLE": {
                                 "id": "(9s+8@uMl;YhHf]c0hWJ",
                                 "name": "VARIABLE",
-                                "value": "coordonn\u00e9es y"
+                                "value": "y-koordinaten"
                             }
                         },
                         "id": "J3yE/5TdmW16*O_:15_D",
@@ -4182,7 +4182,7 @@
                             "VARIABLE": {
                                 "id": "_e]d1Jogq=8~MSv](8s[",
                                 "name": "VARIABLE",
-                                "value": "total"
+                                "value": "anzahl"
                             }
                         },
                         "id": "Jhzs)Gyb93b0mJcp#QzF",
@@ -4206,7 +4206,7 @@
                             "VARIABLE": {
                                 "id": ":)-}5b~W7c[2r|7`~8D9",
                                 "name": "VARIABLE",
-                                "value": "distance entre les lignes"
+                                "value": "abstand der linien"
                             }
                         },
                         "id": "J|/P6jU:d},wloLR*bGq",
@@ -4239,7 +4239,7 @@
                             "VARIABLE": {
                                 "id": "+d9qfF5EFf[jiIG-9:kq",
                                 "name": "VARIABLE",
-                                "value": "Instructions"
+                                "value": "anleitung"
                             }
                         },
                         "id": "K:ZDlA0R0^1Be~khdLO5",
@@ -4262,7 +4262,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Lion"
+                                "value": "l\u00f6we"
                             }
                         },
                         "id": "KB.fd0yqI*fCw9m2C?V)",
@@ -4356,7 +4356,7 @@
                             "VARIABLE": {
                                 "id": "#wFc.bjgMO*s`1n?ftNk",
                                 "name": "VARIABLE",
-                                "value": "coordonn\u00e9es x"
+                                "value": "x-koordinaten"
                             }
                         },
                         "id": "Khvlrxlq6UhG`hKNp%yz",
@@ -4415,7 +4415,7 @@
                             "VARIABLE": {
                                 "id": "+d9qfF5EFf[jiIG-9:kq",
                                 "name": "VARIABLE",
-                                "value": "Instructions"
+                                "value": "anleitung"
                             }
                         },
                         "id": "L0~nY#@kLrklcf#hYfgA",
@@ -4494,7 +4494,7 @@
                             "VARIABLE": {
                                 "id": "+d9qfF5EFf[jiIG-9:kq",
                                 "name": "VARIABLE",
-                                "value": "Instructions"
+                                "value": "anleitung"
                             }
                         },
                         "id": "M)(:M0MIcV#nM_k+Spi,",
@@ -4682,7 +4682,7 @@
                             "VARIABLE": {
                                 "id": "_e]d1Jogq=8~MSv](8s[",
                                 "name": "VARIABLE",
-                                "value": "total"
+                                "value": "anzahl"
                             }
                         },
                         "id": "NUQ)kTMEF+ZSSCHtbl3T",
@@ -4827,7 +4827,7 @@
                             "VARIABLE": {
                                 "id": "#wFc.bjgMO*s`1n?ftNk",
                                 "name": "VARIABLE",
-                                "value": "coordonn\u00e9es x"
+                                "value": "x-koordinaten"
                             }
                         },
                         "id": "P11uOdC-(Do^WW[df73W",
@@ -5030,7 +5030,7 @@
                             "VARIABLE": {
                                 "id": "F%vt`m_2mx#?!)W|L$b-",
                                 "name": "VARIABLE",
-                                "value": "Utilise les pentes de deux lignes d'intersection pour obtenir les degr\u00e9s de braquage de Cozmo."
+                                "value": "ermittle anhand der steigungen zweier sich schneidender linien den einschlagswinkel f\u00fcr cozmo."
                             }
                         },
                         "id": "R!FZ@Lpj=xHo0O?2il$d",
@@ -5048,7 +5048,7 @@
                             "VARIABLE": {
                                 "id": "_e]d1Jogq=8~MSv](8s[",
                                 "name": "VARIABLE",
-                                "value": "total"
+                                "value": "anzahl"
                             }
                         },
                         "id": "R%USo%L*Co.OBi3l4R`f",
@@ -5129,7 +5129,7 @@
                             "VARIABLE": {
                                 "id": "_e]d1Jogq=8~MSv](8s[",
                                 "name": "VARIABLE",
-                                "value": "total"
+                                "value": "anzahl"
                             }
                         },
                         "id": "RWSb()W^f3:yR%-`33q-",
@@ -5395,7 +5395,7 @@
                             "VARIABLE": {
                                 "id": "_e]d1Jogq=8~MSv](8s[",
                                 "name": "VARIABLE",
-                                "value": "total"
+                                "value": "anzahl"
                             }
                         },
                         "id": "UY2G!~e+vlKSy1xYmWF|",
@@ -5437,7 +5437,7 @@
                             "VARIABLE": {
                                 "id": "#wFc.bjgMO*s`1n?ftNk",
                                 "name": "VARIABLE",
-                                "value": "coordonn\u00e9es x"
+                                "value": "x-koordinaten"
                             }
                         },
                         "id": "Up_;S:V;GS}*@9S**X5b",
@@ -5581,7 +5581,7 @@
                             "VARIABLE": {
                                 "id": "5#(L|SNfbtQdn2`o+6QZ",
                                 "name": "VARIABLE",
-                                "value": "distance \u00e0 parcourir"
+                                "value": "fahrdistanz"
                             }
                         },
                         "id": "WF?5j@9Br)!T=+N;V_HQ",
@@ -5632,7 +5632,7 @@
                             "VARIABLE": {
                                 "id": "_e]d1Jogq=8~MSv](8s[",
                                 "name": "VARIABLE",
-                                "value": "total"
+                                "value": "anzahl"
                             }
                         },
                         "id": "Wmz*$mkud2?QF/dBw4W@",
@@ -5887,7 +5887,7 @@
                             "VARIABLE": {
                                 "id": "V4vPJt{_Xg9*K7K*7M6~",
                                 "name": "VARIABLE",
-                                "value": "pente2"
+                                "value": "steigung2"
                             }
                         },
                         "id": "Yxke@MfT-|5_jpVj4im%",
@@ -5911,7 +5911,7 @@
                             "VARIABLE": {
                                 "id": "DsV}sC/ANZ)%a4*a0*KV",
                                 "name": "VARIABLE",
-                                "value": "nombre de constellations"
+                                "value": "nummer des sternbilds"
                             }
                         },
                         "id": "Z#3GSt}wDK(},o8av|K$",
@@ -6036,7 +6036,7 @@
                             "VARIABLE": {
                                 "id": "]-Z+yTvmV*WIy%o))-Dr",
                                 "name": "VARIABLE",
-                                "value": "pente1"
+                                "value": "steigung1"
                             }
                         },
                         "id": "ZNy]h#;;W6;a^YswO5sk",
@@ -6207,7 +6207,7 @@
                             "VARIABLE": {
                                 "id": "_e]d1Jogq=8~MSv](8s[",
                                 "name": "VARIABLE",
-                                "value": "total"
+                                "value": "anzahl"
                             }
                         },
                         "id": "[{*T${b76hG))G8$Yb20",
@@ -6290,7 +6290,7 @@
                             "VARIABLE": {
                                 "id": "_e]d1Jogq=8~MSv](8s[",
                                 "name": "VARIABLE",
-                                "value": "total"
+                                "value": "anzahl"
                             }
                         },
                         "id": "]EXUCn[|P?Pb$,a[I%H_",
@@ -6435,7 +6435,7 @@
                             "VARIABLE": {
                                 "id": "cnAqHU0=mi57d[Pz1;4w",
                                 "name": "VARIABLE",
-                                "value": "angle de braquage"
+                                "value": "einschlagswinkel"
                             }
                         },
                         "id": "^fQz.b,bPgDtNKY$,?*6",
@@ -6905,7 +6905,7 @@
                             "VARIABLE": {
                                 "id": "F2H/xkFy_.^ecaD;jVB:",
                                 "name": "VARIABLE",
-                                "value": "nom de la constellation"
+                                "value": "name des sternbilds"
                             }
                         },
                         "id": "aTI#Fiavtz+`3sM)3(Bi",
@@ -6957,7 +6957,7 @@
                             "VARIABLE": {
                                 "id": "V4vPJt{_Xg9*K7K*7M6~",
                                 "name": "VARIABLE",
-                                "value": "pente2"
+                                "value": "steigung2"
                             }
                         },
                         "id": "aomdxUzkj,#{!Roiw.CQ",
@@ -7031,7 +7031,7 @@
                             "VARIABLE": {
                                 "id": "A5)2K.MXLdMOVm{5Y%T6",
                                 "name": "VARIABLE",
-                                "value": "multiplicateur de distance"
+                                "value": "entfernungs-multiplikator"
                             }
                         },
                         "id": "cPkB6T[qd/o.cC~el?/`",
@@ -7291,7 +7291,7 @@
                             "VARIABLE": {
                                 "id": "DsV}sC/ANZ)%a4*a0*KV",
                                 "name": "VARIABLE",
-                                "value": "nombre de constellations"
+                                "value": "nummer des sternbilds"
                             }
                         },
                         "id": "eN%(?IuTjv%t9y}@RrH0",
@@ -7379,7 +7379,7 @@
                             "VARIABLE": {
                                 "id": "5#(L|SNfbtQdn2`o+6QZ",
                                 "name": "VARIABLE",
-                                "value": "distance \u00e0 parcourir"
+                                "value": "fahrdistanz"
                             }
                         },
                         "id": "f2K%vn!,51/fdM.?cn5i",
@@ -7716,7 +7716,7 @@
                             "VARIABLE": {
                                 "id": "_e]d1Jogq=8~MSv](8s[",
                                 "name": "VARIABLE",
-                                "value": "total"
+                                "value": "anzahl"
                             }
                         },
                         "id": "k*w0hDbfmh!nOzP~lIwW",
@@ -7840,7 +7840,7 @@
                             "VARIABLE": {
                                 "id": "(9s+8@uMl;YhHf]c0hWJ",
                                 "name": "VARIABLE",
-                                "value": "coordonn\u00e9es y"
+                                "value": "y-koordinaten"
                             }
                         },
                         "id": "lt!huDzc3|hA`VdjW%}L",
@@ -8088,7 +8088,7 @@
                             "VARIABLE": {
                                 "id": "F2H/xkFy_.^ecaD;jVB:",
                                 "name": "VARIABLE",
-                                "value": "nom de la constellation"
+                                "value": "name des sternbilds"
                             }
                         },
                         "id": "n7|ra/Rz4cUM7KY.2I@A",
@@ -8252,7 +8252,7 @@
                             "VARIABLE": {
                                 "id": "I*s4.?gZ,~/OGo^jM[[?",
                                 "name": "VARIABLE",
-                                "value": "couple x"
+                                "value": "geordnetes paar\u00a0x"
                             }
                         },
                         "id": "q6/loBrF0lE5xqj++zV~",
@@ -8325,7 +8325,7 @@
                             "VARIABLE": {
                                 "id": "4QLFytuZDHnkb#PN@dW3",
                                 "name": "VARIABLE",
-                                "value": "couple y"
+                                "value": "geordnetes paar\u00a0y"
                             }
                         },
                         "id": "qW#18rx%T)tKKLc#1tlh",
@@ -8417,7 +8417,7 @@
                             "VARIABLE": {
                                 "id": "_e]d1Jogq=8~MSv](8s[",
                                 "name": "VARIABLE",
-                                "value": "total"
+                                "value": "anzahl"
                             }
                         },
                         "id": "r`;`!oXT|,,KTX7B{D~p",
@@ -8556,7 +8556,7 @@
                             "VARIABLE": {
                                 "id": "_e]d1Jogq=8~MSv](8s[",
                                 "name": "VARIABLE",
-                                "value": "total"
+                                "value": "anzahl"
                             }
                         },
                         "id": "sxi/=Lg0|(erTVdn8O~]",
@@ -8922,7 +8922,7 @@
                             "VARIABLE": {
                                 "id": "F2H/xkFy_.^ecaD;jVB:",
                                 "name": "VARIABLE",
-                                "value": "nom de la constellation"
+                                "value": "name des sternbilds"
                             }
                         },
                         "id": "v`3u(GkLHyb({OH{5TC2",
@@ -8946,7 +8946,7 @@
                             "VARIABLE": {
                                 "id": "(9s+8@uMl;YhHf]c0hWJ",
                                 "name": "VARIABLE",
-                                "value": "coordonn\u00e9es y"
+                                "value": "y-koordinaten"
                             }
                         },
                         "id": "v`mS=S)FCxJ4sQyCJ?6I",
@@ -9049,7 +9049,7 @@
                             "VARIABLE": {
                                 "id": "5#(L|SNfbtQdn2`o+6QZ",
                                 "name": "VARIABLE",
-                                "value": "distance \u00e0 parcourir"
+                                "value": "fahrdistanz"
                             }
                         },
                         "id": "x{x^a~nV5L`8O:bu[UyP",
@@ -9096,7 +9096,7 @@
                             "VARIABLE": {
                                 "id": "_e]d1Jogq=8~MSv](8s[",
                                 "name": "VARIABLE",
-                                "value": "total"
+                                "value": "anzahl"
                             }
                         },
                         "id": "y8QU7DG|X?jjPEt3|jDn",

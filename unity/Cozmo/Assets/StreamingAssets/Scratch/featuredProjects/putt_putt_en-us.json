@@ -23,62 +23,62 @@
                 "variables": {
                     "%_G#H9BnSuuHof7Fg_!H": {
                         "id": "%_G#H9BnSuuHof7Fg_!H",
-                        "name": "Main game loop.",
+                        "name": "hauptspielschleife.",
                         "value": 0
                     },
                     "(]:u!;,MXlFZ{E(:P#ey": {
                         "id": "(]:u!;,MXlFZ{E(:P#ey",
-                        "name": "max hole",
+                        "name": "maximale lochgr\u00f6\u00dfe",
                         "value": "9"
                     },
                     ")OAkG#Z4-28]Q#Z$eYF.": {
                         "id": ")OAkG#Z4-28]Q#Z$eYF.",
-                        "name": "Sets up the default values.",
+                        "name": "legt die standardwerte fest.",
                         "value": 0
                     },
                     "3p|BXS]!Z3@-OOXTUFrd": {
                         "id": "3p|BXS]!Z3@-OOXTUFrd",
-                        "name": "Called each round to set hole size and position.",
+                        "name": "wird in jeder runde aufgerufen, um gr\u00f6\u00dfe und position des lochs festzulegen.",
                         "value": 0
                     },
                     "@::gc9hB/hJ@+Ew@r]Yd": {
                         "id": "@::gc9hB/hJ@+Ew@r]Yd",
-                        "name": "hole position y",
+                        "name": "lochposition (y)",
                         "value": 31
                     },
                     "Ea){ml~[tegkiWca7btH": {
                         "id": "Ea){ml~[tegkiWca7btH",
-                        "name": "Cozmo face pixel x",
+                        "name": "cozmo-gesichtspixel (x)",
                         "value": 53.11892562
                     },
                     "Z/Iri5s9G=p_yjHpVh,:": {
                         "id": "Z/Iri5s9G=p_yjHpVh,:",
-                        "name": "timer",
+                        "name": "den timer",
                         "value": 84
                     },
                     "b$HM+w9Y8`~`(r]=%[~(": {
                         "id": "b$HM+w9Y8`~`(r]=%[~(",
-                        "name": "current hole",
+                        "name": "aktuelles loch",
                         "value": 9
                     },
                     "hC|^9-|BV-xP=YbD=B^w": {
                         "id": "hC|^9-|BV-xP=YbD=B^w",
-                        "name": "hole position x",
+                        "name": "lochposition (x)",
                         "value": 36
                     },
                     "nF!W:igu%S,v:7Bp$xlt": {
                         "id": "nF!W:igu%S,v:7Bp$xlt",
-                        "name": "Cozmo face pixel y",
+                        "name": "cozmo-gesichtspixel (y)",
                         "value": 23.344261000000003
                     },
                     "vYMeZB}PoZ5-_)VmX/Gf": {
                         "id": "vYMeZB}PoZ5-_)VmX/Gf",
-                        "name": "Start and keep track of the game timer.",
+                        "name": "beginne und behalte den spiel-timer im auge.",
                         "value": 0
                     },
                     "yQNxm5sWAWL}9amxAXFf": {
                         "id": "yQNxm5sWAWL}9amxAXFf",
-                        "name": "hole size",
+                        "name": "lochgr\u00f6\u00dfe",
                         "value": 13
                     }
                 },
@@ -455,7 +455,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Great game"
+                                "value": "tolles spiel!"
                             }
                         },
                         "id": "+R*G|^oBcwo]V?}GDwhQ",
@@ -530,7 +530,7 @@
                             "VARIABLE": {
                                 "id": "b$HM+w9Y8`~`(r]=%[~(",
                                 "name": "VARIABLE",
-                                "value": "current hole"
+                                "value": "aktuelles loch"
                             }
                         },
                         "id": "-e%/2(^k)i(sBU1{%-8b",
@@ -565,7 +565,7 @@
                             "VARIABLE": {
                                 "id": "yQNxm5sWAWL}9amxAXFf",
                                 "name": "VARIABLE",
-                                "value": "hole size"
+                                "value": "lochgr\u00f6\u00dfe"
                             }
                         },
                         "id": "-j_C,0VVe|V:-;FZYY!{",
@@ -677,7 +677,7 @@
                             "VARIABLE": {
                                 "id": "b$HM+w9Y8`~`(r]=%[~(",
                                 "name": "VARIABLE",
-                                "value": "current hole"
+                                "value": "aktuelles loch"
                             }
                         },
                         "id": "/bMxbqJg+i9=*3I+y8*x",
@@ -862,7 +862,7 @@
                             "VARIABLE": {
                                 "id": "(]:u!;,MXlFZ{E(:P#ey",
                                 "name": "VARIABLE",
-                                "value": "max hole"
+                                "value": "maximale lochgr\u00f6\u00dfe"
                             }
                         },
                         "id": "4|ksS*w-NVThW`F`AJkR",
@@ -935,7 +935,7 @@
                             "VARIABLE": {
                                 "id": "vYMeZB}PoZ5-_)VmX/Gf",
                                 "name": "VARIABLE",
-                                "value": "Start and keep track of the game timer."
+                                "value": "beginne und behalte den spiel-timer im auge."
                             }
                         },
                         "id": "7$gj%]nz1$u2WKpK7#Dl",
@@ -980,7 +980,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": " seconds"
+                                "value": " sekunden"
                             }
                         },
                         "id": "7kf[Kzs5Q(ED`Yk=`=.l",
@@ -1011,7 +1011,7 @@
                             "VARIABLE": {
                                 "id": "yQNxm5sWAWL}9amxAXFf",
                                 "name": "VARIABLE",
-                                "value": "hole size"
+                                "value": "lochgr\u00f6\u00dfe"
                             }
                         },
                         "id": "8DGSR2R`i1u,8.mO^]eu",
@@ -1061,7 +1061,7 @@
                             "VARIABLE": {
                                 "id": "(]:u!;,MXlFZ{E(:P#ey",
                                 "name": "VARIABLE",
-                                "value": "max hole"
+                                "value": "maximale lochgr\u00f6\u00dfe"
                             }
                         },
                         "id": "9,D)~Nk/?|4HlG9B@,)R",
@@ -1078,7 +1078,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Great game! You finished in"
+                                "value": "tolles spiel! deine zeit:"
                             }
                         },
                         "id": "939RooC6W6q`3)b,Eml=",
@@ -1141,7 +1141,7 @@
                             "VARIABLE": {
                                 "id": ")OAkG#Z4-28]Q#Z$eYF.",
                                 "name": "VARIABLE",
-                                "value": "Sets up the default values."
+                                "value": "legt die standardwerte fest."
                             }
                         },
                         "id": ";~CeOu)zoMW7YfMU_GqA",
@@ -1209,7 +1209,7 @@
                             "VARIABLE": {
                                 "id": "(]:u!;,MXlFZ{E(:P#ey",
                                 "name": "VARIABLE",
-                                "value": "max hole"
+                                "value": "maximale lochgr\u00f6\u00dfe"
                             }
                         },
                         "id": "BG0{q0-hL7Hy=f8o=f[v",
@@ -1285,7 +1285,7 @@
                             "VARIABLE": {
                                 "id": "Ea){ml~[tegkiWca7btH",
                                 "name": "VARIABLE",
-                                "value": "Cozmo face pixel x"
+                                "value": "cozmo-gesichtspixel (x)"
                             }
                         },
                         "id": "DR28B5.!Z7OdbCnHD1ve",
@@ -1393,7 +1393,7 @@
                             "VARIABLE": {
                                 "id": "@::gc9hB/hJ@+Ew@r]Yd",
                                 "name": "VARIABLE",
-                                "value": "hole position y"
+                                "value": "lochposition (y)"
                             }
                         },
                         "id": "H)=tmnveJGS2#Z)1R342",
@@ -1410,7 +1410,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Hole "
+                                "value": "loch "
                             }
                         },
                         "id": "HC)*vL(CEcDT6,tBDvtl",
@@ -1500,7 +1500,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "To play, tilt me to get the ball in the hole."
+                                "value": "zum spielen kannst du mich einfach neigen, um den ball in das loch zu bringen."
                             }
                         },
                         "id": "Hr2VD)a:t_Lf=`4Qlf+E",
@@ -1665,7 +1665,7 @@
                             "VARIABLE": {
                                 "id": "nF!W:igu%S,v:7Bp$xlt",
                                 "name": "VARIABLE",
-                                "value": "Cozmo face pixel y"
+                                "value": "cozmo-gesichtspixel (y)"
                             }
                         },
                         "id": "LP7jh~V0/t{T;12xpDhM",
@@ -1705,7 +1705,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": " of "
+                                "value": " von "
                             }
                         },
                         "id": "N:Wi7!bM+~-@hC=BJnO-",
@@ -1736,7 +1736,7 @@
                             "VARIABLE": {
                                 "id": "b$HM+w9Y8`~`(r]=%[~(",
                                 "name": "VARIABLE",
-                                "value": "current hole"
+                                "value": "aktuelles loch"
                             }
                         },
                         "id": "Njh/?An*XjO=EAon_]CB",
@@ -1754,7 +1754,7 @@
                             "VARIABLE": {
                                 "id": "nF!W:igu%S,v:7Bp$xlt",
                                 "name": "VARIABLE",
-                                "value": "Cozmo face pixel y"
+                                "value": "cozmo-gesichtspixel (y)"
                             }
                         },
                         "id": "O7xB:0+?4HvW|?zZ2G!-",
@@ -1771,7 +1771,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": " Hold me facing the ceiling."
+                                "value": " halte mich so, dass ich zur decke sehe."
                             }
                         },
                         "id": "PKaRWTH^$+R*^-;S})o1",
@@ -1787,7 +1787,7 @@
                             "VARIABLE": {
                                 "id": "yQNxm5sWAWL}9amxAXFf",
                                 "name": "VARIABLE",
-                                "value": "hole size"
+                                "value": "lochgr\u00f6\u00dfe"
                             }
                         },
                         "id": "Q*R{-l~J:f:hoc~gb:xy",
@@ -1899,7 +1899,7 @@
                             "VARIABLE": {
                                 "id": "nF!W:igu%S,v:7Bp$xlt",
                                 "name": "VARIABLE",
-                                "value": "Cozmo face pixel y"
+                                "value": "cozmo-gesichtspixel (y)"
                             }
                         },
                         "id": "Rty/F~R(G:o:SX:g8;62",
@@ -1984,7 +1984,7 @@
                             "VARIABLE": {
                                 "id": "Z/Iri5s9G=p_yjHpVh,:",
                                 "name": "VARIABLE",
-                                "value": "timer"
+                                "value": "den timer"
                             }
                         },
                         "id": "TjqcG_Mf4Ihh0~t5H.Q6",
@@ -2002,7 +2002,7 @@
                             "VARIABLE": {
                                 "id": "b$HM+w9Y8`~`(r]=%[~(",
                                 "name": "VARIABLE",
-                                "value": "current hole"
+                                "value": "aktuelles loch"
                             }
                         },
                         "id": "Tx^C(=4@92UfL4BNgg;z",
@@ -2076,7 +2076,7 @@
                             "VARIABLE": {
                                 "id": "3p|BXS]!Z3@-OOXTUFrd",
                                 "name": "VARIABLE",
-                                "value": "Called each round to set hole size and position."
+                                "value": "wird in jeder runde aufgerufen, um gr\u00f6\u00dfe und position des lochs festzulegen."
                             }
                         },
                         "id": "UgGdd?nahDvCxUtGF5ER",
@@ -2140,7 +2140,7 @@
                             "VARIABLE": {
                                 "id": "Z/Iri5s9G=p_yjHpVh,:",
                                 "name": "VARIABLE",
-                                "value": "timer"
+                                "value": "den timer"
                             }
                         },
                         "id": "V?+K:1@4J|b-?fbz}.Wo",
@@ -2164,7 +2164,7 @@
                             "VARIABLE": {
                                 "id": "hC|^9-|BV-xP=YbD=B^w",
                                 "name": "VARIABLE",
-                                "value": "hole position x"
+                                "value": "lochposition (x)"
                             }
                         },
                         "id": "Vo]u|%3})H*xidA%U$`K",
@@ -2266,7 +2266,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": " seconds"
+                                "value": " sekunden"
                             }
                         },
                         "id": "XY6zS$m=}x%S.,TFpAr%",
@@ -2422,7 +2422,7 @@
                             "VARIABLE": {
                                 "id": "Ea){ml~[tegkiWca7btH",
                                 "name": "VARIABLE",
-                                "value": "Cozmo face pixel x"
+                                "value": "cozmo-gesichtspixel (x)"
                             }
                         },
                         "id": "]W|aE6Lk+AK`Ne[m8.dG",
@@ -2535,7 +2535,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Finished in"
+                                "value": "zeit:"
                             }
                         },
                         "id": "`/~/`n[zw=SuhH*}bfkx",
@@ -2551,7 +2551,7 @@
                             "VARIABLE": {
                                 "id": "nF!W:igu%S,v:7Bp$xlt",
                                 "name": "VARIABLE",
-                                "value": "Cozmo face pixel y"
+                                "value": "cozmo-gesichtspixel (y)"
                             }
                         },
                         "id": "`4b|ibnFfb5.)m@0HPAe",
@@ -2631,7 +2631,7 @@
                             "VARIABLE": {
                                 "id": "yQNxm5sWAWL}9amxAXFf",
                                 "name": "VARIABLE",
-                                "value": "hole size"
+                                "value": "lochgr\u00f6\u00dfe"
                             }
                         },
                         "id": "b9)@,Z)R+-SXe36fJv%x",
@@ -2732,7 +2732,7 @@
                             "VARIABLE": {
                                 "id": "(]:u!;,MXlFZ{E(:P#ey",
                                 "name": "VARIABLE",
-                                "value": "max hole"
+                                "value": "maximale lochgr\u00f6\u00dfe"
                             }
                         },
                         "id": "e2vc=lMysI1-`SM@bz.6",
@@ -2750,7 +2750,7 @@
                             "VARIABLE": {
                                 "id": "b$HM+w9Y8`~`(r]=%[~(",
                                 "name": "VARIABLE",
-                                "value": "current hole"
+                                "value": "aktuelles loch"
                             }
                         },
                         "id": "e8pH9eE~[Gm_QeQXL4B;",
@@ -2877,7 +2877,7 @@
                             "VARIABLE": {
                                 "id": "hC|^9-|BV-xP=YbD=B^w",
                                 "name": "VARIABLE",
-                                "value": "hole position x"
+                                "value": "lochposition (x)"
                             }
                         },
                         "id": "ehitZeFZUjc2{j)so[B0",
@@ -3154,7 +3154,7 @@
                             "VARIABLE": {
                                 "id": "Ea){ml~[tegkiWca7btH",
                                 "name": "VARIABLE",
-                                "value": "Cozmo face pixel x"
+                                "value": "cozmo-gesichtspixel (x)"
                             }
                         },
                         "id": "jlPg(JOG4Tbz2fqEwAsM",
@@ -3172,7 +3172,7 @@
                             "VARIABLE": {
                                 "id": "Z/Iri5s9G=p_yjHpVh,:",
                                 "name": "VARIABLE",
-                                "value": "timer"
+                                "value": "den timer"
                             }
                         },
                         "id": "k)t)0]q7(E]wmfXC^nqk",
@@ -3465,7 +3465,7 @@
                             "VARIABLE": {
                                 "id": "yQNxm5sWAWL}9amxAXFf",
                                 "name": "VARIABLE",
-                                "value": "hole size"
+                                "value": "lochgr\u00f6\u00dfe"
                             }
                         },
                         "id": "n#J:Z#WZo;#2C=B?vMFt",
@@ -3556,7 +3556,7 @@
                             "VARIABLE": {
                                 "id": "%_G#H9BnSuuHof7Fg_!H",
                                 "name": "VARIABLE",
-                                "value": "Main game loop."
+                                "value": "hauptspielschleife."
                             }
                         },
                         "id": "pPrV#5Fz/Vyt3#}@4s6f",
@@ -3612,7 +3612,7 @@
                             "VARIABLE": {
                                 "id": "Ea){ml~[tegkiWca7btH",
                                 "name": "VARIABLE",
-                                "value": "Cozmo face pixel x"
+                                "value": "cozmo-gesichtspixel (x)"
                             }
                         },
                         "id": "q/Q@[x+/xh[JQH~Lb4bp",
@@ -3630,7 +3630,7 @@
                             "VARIABLE": {
                                 "id": "yQNxm5sWAWL}9amxAXFf",
                                 "name": "VARIABLE",
-                                "value": "hole size"
+                                "value": "lochgr\u00f6\u00dfe"
                             }
                         },
                         "id": "q:jgv^Ec25i09l7a1z0}",
@@ -3723,7 +3723,7 @@
                             "VARIABLE": {
                                 "id": "b$HM+w9Y8`~`(r]=%[~(",
                                 "name": "VARIABLE",
-                                "value": "current hole"
+                                "value": "aktuelles loch"
                             }
                         },
                         "id": "tOT!vQz!=`=yXy1Zax0,",
@@ -3764,7 +3764,7 @@
                             "VARIABLE": {
                                 "id": "Z/Iri5s9G=p_yjHpVh,:",
                                 "name": "VARIABLE",
-                                "value": "timer"
+                                "value": "den timer"
                             }
                         },
                         "id": "tq(jEaiu5q9=2Xrw{_e9",
@@ -3788,7 +3788,7 @@
                             "VARIABLE": {
                                 "id": "b$HM+w9Y8`~`(r]=%[~(",
                                 "name": "VARIABLE",
-                                "value": "current hole"
+                                "value": "aktuelles loch"
                             }
                         },
                         "id": "ujdSNMdRt,ovdbAan5aD",
@@ -3864,7 +3864,7 @@
                             "VARIABLE": {
                                 "id": "@::gc9hB/hJ@+Ew@r]Yd",
                                 "name": "VARIABLE",
-                                "value": "hole position y"
+                                "value": "lochposition (y)"
                             }
                         },
                         "id": "x6*TzxlM`Js}1+DZ4GqL",
@@ -3882,7 +3882,7 @@
                             "VARIABLE": {
                                 "id": "yQNxm5sWAWL}9amxAXFf",
                                 "name": "VARIABLE",
-                                "value": "hole size"
+                                "value": "lochgr\u00f6\u00dfe"
                             }
                         },
                         "id": "xMq`xE~dEKqu|iB)^H#!",
@@ -3921,7 +3921,7 @@
                             "VARIABLE": {
                                 "id": "@::gc9hB/hJ@+Ew@r]Yd",
                                 "name": "VARIABLE",
-                                "value": "hole position y"
+                                "value": "lochposition (y)"
                             }
                         },
                         "id": "zG),3P1G/Cu|J7bh4^Ne",
@@ -3967,7 +3967,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Please put me down on a flat surface."
+                                "value": "bitte setze mich auf eine ebene oberfl\u00e4che."
                             }
                         },
                         "id": "zQ|r2,!6+!%_Fb{q``g6",
@@ -4092,7 +4092,7 @@
                             "VARIABLE": {
                                 "id": "hC|^9-|BV-xP=YbD=B^w",
                                 "name": "VARIABLE",
-                                "value": "hole position x"
+                                "value": "lochposition (x)"
                             }
                         },
                         "id": "}~tsd=-5x|IPZDk~t/Tl",
