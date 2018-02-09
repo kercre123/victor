@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 // Screen to wait on until we successfully scan a Cozmo to try to connect to
 public class AndroidFindNetworks : AndroidConnectionFlowStage {
@@ -37,7 +37,7 @@ public class AndroidFindNetworks : AndroidConnectionFlowStage {
   // while this screen is active
   private System.Collections.IEnumerator UpdateNetworks() {
     while (true) {
-      AndroidConnectionFlow.CallJava<bool>("requestScan");
+      CozmoBinding.CallWifiJava<bool>("requestScan");
       yield return new WaitForSeconds(3.0f);
     }
   }

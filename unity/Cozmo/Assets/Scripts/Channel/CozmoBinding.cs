@@ -32,13 +32,15 @@ public static class CozmoBinding {
 
   public static Guid AppRunId = GetAppRunId();
 
-  #if UNITY_IOS || UNITY_STANDALONE
+  private const int _kAndroidOreoSdkVersion = 26;
+  
+#if UNITY_IOS || UNITY_STANDALONE
   private const string _DllName = "__Internal";
-  #elif UNITY_ANDROID
+#elif UNITY_ANDROID
   private const string _DllName = "cozmoEngine";
-  #endif
+#endif
 
-  #if UNITY_IOS || UNITY_STANDALONE || UNITY_ANDROID
+#if UNITY_IOS || UNITY_STANDALONE || UNITY_ANDROID
 
   [DllImport(_DllName)]
   private static extern int cozmo_startup(string configuration_data);
@@ -70,9 +72,9 @@ public static class CozmoBinding {
                                                          System.IntPtr responseBuffer,
                                                          System.UIntPtr responseBufferLen);
 
-  #endif
+#endif
 
-  #if UNITY_ANDROID
+#if UNITY_ANDROID
 
   [DllImport("cozmoEngine")]
   public static extern void cozmo_install_google_breakpad(string path);
@@ -83,7 +85,7 @@ public static class CozmoBinding {
   [DllImport("cozmoEngine")]
   private static extern string cozmo_get_device_id_file_path(string persistentDataPath);
 
-  #endif
+#endif
 
   public static void Startup(JSONObject configurationData) {
     if (initialized) {
@@ -94,16 +96,16 @@ public static class CozmoBinding {
     configurationData.AddField("appRunId", AppRunId.ToString());
 
     AnkiResult result = AnkiResult.RESULT_OK;
-    #if !UNITY_EDITOR && !UNITY_STANDALONE
-    Profiler.BeginSample ("CozmoBinding.cozmo_startup");
-    result = (AnkiResult)CozmoBinding.cozmo_startup (configurationData.ToString());
-    Profiler.EndSample ();
-    #if UNITY_ANDROID
+#if !UNITY_EDITOR && !UNITY_STANDALONE
+    Profiler.BeginSample("CozmoBinding.cozmo_startup");
+    result = (AnkiResult)CozmoBinding.cozmo_startup(configurationData.ToString());
+    Profiler.EndSample();
+#if UNITY_ANDROID
     var activity = GetCurrentActivity();
     new AndroidJavaClass("com.anki.cozmo.CozmoJava").CallStatic("init", activity, activity.Call<AndroidJavaObject>("getDispatcher"));
-    #endif
-    #endif
-    
+#endif
+#endif
+
     if (result != AnkiResult.RESULT_OK) {
       sDAS.Error("CozmoBinding.Startup [cozmo_startup]: error code " + result.ToString());
     }
@@ -115,13 +117,13 @@ public static class CozmoBinding {
   public static void Shutdown() {
     if (initialized) {
       initialized = false;
-      
+
       AnkiResult result = AnkiResult.RESULT_OK;
-      #if !UNITY_EDITOR && !UNITY_STANDALONE
+#if !UNITY_EDITOR && !UNITY_STANDALONE
       Profiler.BeginSample("CozmoBinding.cozmo_shutdown");
       result = (AnkiResult)CozmoBinding.cozmo_shutdown();
       Profiler.EndSample();
-      #endif
+#endif
 
       if (result != AnkiResult.RESULT_OK) {
         sDAS.Error("CozmoBinding.Shutdown [cozmo_shutdown]: error code " + result.ToString());
@@ -132,11 +134,11 @@ public static class CozmoBinding {
   public static void WifiSetup(string wifiSSID, string wifiPasskey) {
     if (initialized) {
       AnkiResult result = AnkiResult.RESULT_OK;
-      #if !UNITY_EDITOR && !UNITY_STANDALONE
+#if !UNITY_EDITOR && !UNITY_STANDALONE
       Profiler.BeginSample("CozmoBinding.cozmo_wifi_setup");
       result = (AnkiResult)CozmoBinding.cozmo_wifi_setup(wifiSSID, wifiPasskey);
       Profiler.EndSample();
-      #endif
+#endif
 
       if (result != AnkiResult.RESULT_OK) {
         sDAS.Error("CozmoBinding.WifiSetup [cozmo_wifi_setup]: error code " + result.ToString());
@@ -146,16 +148,15 @@ public static class CozmoBinding {
 
   public static void SendToClipboard(string log) {
     if (initialized) {
-      #if !UNITY_EDITOR && !UNITY_STANDALONE
+#if !UNITY_EDITOR && !UNITY_STANDALONE
       cozmo_send_to_clipboard(log);
-      #endif
+#endif
     }
 
   }
 
   public static Anki.Util.AnkiLab.AssignmentStatus
-    AnkiLabActivateExperiment(string experimentKey, out string variationKey)
-  {
+    AnkiLabActivateExperiment(string experimentKey, out string variationKey) {
     var robot = RobotEngineManager.Instance.CurrentRobot;
     string robotId = robot != null ? robot.SerialNumber.ToString() : "";
 
@@ -207,7 +208,7 @@ public static class CozmoBinding {
     return variationKey;
   }
 
-  #if (UNITY_ANDROID && !UNITY_EDITOR)
+#if (UNITY_ANDROID && !UNITY_EDITOR)
   // Return absolute path to uniqueDeviceID.dat located in persistent data storage.
   // Android only.
   public static string GetDeviceIDFilePath(string persistentDataPath) {
@@ -238,17 +239,48 @@ public static class CozmoBinding {
     }
     return _LocationUtil;
   }
-  #else
+#else
   public static AndroidJavaObject GetCurrentActivity() {
     return null;
   }
-  #endif
+#endif
 
   private static Guid GetAppRunId() {
-    #if UNITY_ANDROID && !UNITY_EDITOR
+#if UNITY_ANDROID && !UNITY_EDITOR
     return new Guid(GetCurrentActivity().GetStatic<string>("APP_RUN_ID"));
-    #else
+#else
     return Guid.NewGuid();
-    #endif
+#endif
+  }
+
+  public static ReturnType CallWifiJava<ReturnType>(string method, params object[] parameters) {
+#if UNITY_ANDROID && !UNITY_EDITOR
+    return CozmoBinding.GetWifiUtilClass().CallStatic<ReturnType>(method, parameters);
+#else
+    return default(ReturnType);
+#endif
+  }
+  public static ReturnType CallLocationJava<ReturnType>(string method, params object[] parameters) {
+#if UNITY_ANDROID && !UNITY_EDITOR
+    return CozmoBinding.GetLocationUtilClass().CallStatic<ReturnType>(method, parameters);
+#else
+    return default(ReturnType);
+#endif
+  }
+  public static void CallWifiJava(string method, params object[] parameters) {
+#if UNITY_ANDROID && !UNITY_EDITOR
+    CozmoBinding.GetWifiUtilClass().CallStatic(method, parameters);
+#endif
+  }
+
+  public static void CallLocationJava(string method, params object[] parameters) {
+#if UNITY_ANDROID && !UNITY_EDITOR
+    CozmoBinding.GetLocationUtilClass().CallStatic(method, parameters);
+#endif
+  }
+
+  public static bool IsOreoOrNewer()
+  {
+    return CozmoBinding.GetCurrentActivity().Call<int>("getSDKVersion") >= _kAndroidOreoSdkVersion;
   }
 }

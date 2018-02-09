@@ -38,7 +38,7 @@ public class AndroidGetPermissions : AndroidConnectionFlowStage {
 
   private void CheckWifiEnabled() {
     Action nextStage = CheckLocationPermission;
-    bool changeNeeded = !AndroidConnectionFlow.CallJava<bool>("isWifiEnabled");
+    bool changeNeeded = !CozmoBinding.CallWifiJava<bool>("isWifiEnabled");
 #if UNITY_EDITOR
     changeNeeded = false;
 #endif
@@ -48,14 +48,14 @@ public class AndroidGetPermissions : AndroidConnectionFlowStage {
     }
 
     InitStage(LocalizationKeys.kWifiEnableWifi, () => {
-      AndroidConnectionFlow.CallJava("enableWifi");
+      CozmoBinding.CallWifiJava("enableWifi");
       nextStage();
     });
   }
 
   private void CheckLocationPermission() {
     Action<bool> nextStage = CheckLocationEnabled;
-    bool changeNeeded = !AndroidConnectionFlow.CallJava<bool>("hasLocationPermission");
+    bool changeNeeded = !CozmoBinding.CallWifiJava<bool>("hasLocationPermission");
 #if UNITY_EDITOR
     changeNeeded = false;
 #endif
@@ -70,7 +70,7 @@ public class AndroidGetPermissions : AndroidConnectionFlowStage {
       SetWaitingLabel();
       RegisterJavaListener(AndroidConnectionFlow.Instance.GetMessageReceiver(), "permissionResult",
         args => ParseJavaResult(args, successAction, () => HandlePermissionRejected(successAction)));
-      AndroidConnectionFlow.CallJava("requestLocationPermission");
+      CozmoBinding.CallWifiJava("requestLocationPermission");
     });
   }
 
@@ -89,7 +89,7 @@ public class AndroidGetPermissions : AndroidConnectionFlowStage {
       SetWaitingLabel();
       RegisterJavaListener(AndroidConnectionFlow.Instance.GetMessageReceiver(), "permissionResult",
         args => ParseJavaResult(args, successAction, OnCatastrophicFailure));
-      AndroidConnectionFlow.CallJava("requestLocationPermission");
+      CozmoBinding.CallWifiJava("requestLocationPermission");
     });
   }
 
@@ -99,7 +99,7 @@ public class AndroidGetPermissions : AndroidConnectionFlowStage {
 
   private void CheckLocationEnabled(bool didGetPermissions) {
     Action nextStage = () => OnStageComplete();
-    bool changeNeeded = AndroidConnectionFlow.CallJava<bool>("needLocationService");
+    bool changeNeeded = CozmoBinding.CallWifiJava<bool>("needLocationService");
 #if UNITY_EDITOR
     changeNeeded = false;
 #endif
@@ -141,7 +141,7 @@ public class AndroidGetPermissions : AndroidConnectionFlowStage {
 
   private void RequestEnableLocation() {
     var activity = CozmoBinding.GetCurrentActivity();
-    AndroidConnectionFlow.CallLocationJava("requestEnableLocation", activity, activity.Call<AndroidJavaObject>("getDispatcher"));
+    CozmoBinding.CallLocationJava("requestEnableLocation", activity, activity.Call<AndroidJavaObject>("getDispatcher"));
   }
 
   private void OnCatastrophicFailure() {

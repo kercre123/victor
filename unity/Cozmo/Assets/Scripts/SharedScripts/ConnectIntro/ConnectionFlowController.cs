@@ -1,12 +1,9 @@
-﻿using Anki.Cozmo;
+using Anki.Cozmo;
 using UnityEngine;
 using System;
-using System.Collections;
-using System.Linq;
 using Cozmo.UI;
 
 public class ConnectionFlowController : MonoBehaviour {
-
   public System.Action ConnectionFlowComplete;
   public System.Action ConnectionFlowQuit;
 
@@ -59,25 +56,23 @@ public class ConnectionFlowController : MonoBehaviour {
   [SerializeField]
   private PingStatus _PingStatus;
 
-  private const int kRobotID = 1;
+  private const int _kRobotId = 1;
 
   private string _CurrentRobotIP;
 
-  private bool _scanLoopPlaying = false;
+  private bool _ScanLoopPlaying = false;
 
   // ConnectionFlow will get destroyed as you cycle back to the main title, and we want 
   // these vars to persist between instances - but not between appruns
-  private static String _ConnectionRejectedSSID;
-
-  // For Oreo and above, we're reverting to the old Android connection flow due to the
-  // OS being a bit overzealous about wanting to be on an Internet-connected WiFi network (which Cozmo is not)
-  private const int _kAndroidOreoSdkVersion = 26;
+  private static String _sConnectionRejectedSsid;
 
 #if UNITY_EDITOR
   public static bool sManualProgress;
+
   public static bool ManualSuccess() {
     return Input.GetKeyDown(KeyCode.S);
   }
+
   public static bool ManualFailure() {
     return Input.GetKeyDown(KeyCode.F);
   }
@@ -86,12 +81,14 @@ public class ConnectionFlowController : MonoBehaviour {
   private void Awake() {
     Cozmo.PauseManager.Instance.gameObject.SetActive(false);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(Disconnected);
-    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotConnectionResponse>(RobotConnectionResponse);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotConnectionResponse>(
+      RobotConnectionResponse);
   }
 
   private void OnDestroy() {
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(Disconnected);
-    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotConnectionResponse>(RobotConnectionResponse);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotConnectionResponse>(
+      RobotConnectionResponse);
 
     Cleanup();
 
@@ -134,8 +131,10 @@ public class ConnectionFlowController : MonoBehaviour {
       if (robot != null && robot.Status(RobotStatusFlag.IS_ON_CHARGER)) {
         wakeUpTrigger = AnimationTrigger.OnboardingWakeUpDriveOffCharger;
       }
+
       return wakeUpTrigger;
     }
+
     Cozmo.Needs.NeedsStateManager nsm = Cozmo.Needs.NeedsStateManager.Instance;
     if (nsm != null) {
       if (nsm.GetCurrentDisplayValue(NeedId.Repair).Bracket.Equals(NeedBracketId.Critical)) {
@@ -145,6 +144,7 @@ public class ConnectionFlowController : MonoBehaviour {
         return AnimationTrigger.ConnectWakeUp_SevereEnergy;
       }
     }
+
     return AnimationTrigger.ConnectWakeUp;
   }
 
@@ -156,7 +156,8 @@ public class ConnectionFlowController : MonoBehaviour {
 
     // If we're coming back from background, and we're still connected to the same network we were rejected from, DON'T
     // bother pinging Cozmo
-    if (!bPause && (!String.IsNullOrEmpty(_ConnectionRejectedSSID) && AndroidConnectionFlow.GetCurrentSSID() != _ConnectionRejectedSSID)) {
+    if (!bPause && (!String.IsNullOrEmpty(_sConnectionRejectedSsid) &&
+                    AndroidConnectionFlow.GetCurrentSSID() != _sConnectionRejectedSsid)) {
       // If we're on the Android flow screen, attempt to start that ping
       if (_AndroidConnectionFlowInstance != null) {
         _AndroidConnectionFlowInstance.SafeStartPingTest();
@@ -172,6 +173,7 @@ public class ConnectionFlowController : MonoBehaviour {
       _AndroidConnectionFlowInstance.Disable();
       GameObject.Destroy(_AndroidConnectionFlowInstance.gameObject);
     }
+
     _AndroidConnectionFlowInstance = null;
   }
 
@@ -204,9 +206,11 @@ public class ConnectionFlowController : MonoBehaviour {
     else {
       _CurrentRobotIP = RobotEngineManager.kRobotIP;
     }
+
     if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.UseFastConnectivityFlow) {
       ConnectionFlowDelay = 0.1f;
     }
+
     InitConnectionFlow();
   }
 
@@ -225,6 +229,7 @@ public class ConnectionFlowController : MonoBehaviour {
     else {
       QuitConnectionFlow();
     }
+
     // Always Stop Loop sounds when leaving view
     PlayScanLoopAudio(false);
   }
@@ -245,10 +250,15 @@ public class ConnectionFlowController : MonoBehaviour {
   private bool StartAndroidFlowIfApplicable() {
     bool useAndroidFlow = false;
 #if UNITY_ANDROID && !UNITY_EDITOR
-    // To get around the Unity ping not working on Android 8, we'll just always use the Android flow - which uses
-    // a native ping internally
-    int deviceSDKVersion = CozmoBinding.GetCurrentActivity().Call<int>("getSDKVersion");
-    useAndroidFlow = AndroidConnectionFlow.IsAvailable() && (deviceSDKVersion < _kAndroidOreoSdkVersion);
+    // COZMO-16331
+    // On Android 8, we use the old flow (starting in 'ShowSearchForCozmo()') visually, but internally the
+    // native Android ping is used instead of the Ping provided by Unity. This forces the ping to go over Wifi, solving
+    // a problem when Android 8 users are connected to both Cozmo Wifi & LTE
+    
+    // NB: We're using the old flow for Android 8 because the OS is much more aggressive about moving off of
+    // Wifi networks that don't provide Internet access (like Cozmo's). The connection is much more reliable when the
+    // user selects it manually, and ideally they choose the 'remain on this network' option when it's offered.
+    useAndroidFlow = AndroidConnectionFlow.IsAvailable() && !CozmoBinding.IsOreoOrNewer(); 
 #endif
 #if UNITY_EDITOR
     useAndroidFlow = DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.UseAndroidFlowInMock;
@@ -257,6 +267,7 @@ public class ConnectionFlowController : MonoBehaviour {
       ShowSearchForCozmoAndroid();
       return true;
     }
+
     return false;
   }
 
@@ -265,6 +276,7 @@ public class ConnectionFlowController : MonoBehaviour {
     if (StartAndroidFlowIfApplicable()) {
       return;
     }
+
     // fall-thru from not selecting android flow
     CreateConnectionFlowBackground();
   }
@@ -282,17 +294,17 @@ public class ConnectionFlowController : MonoBehaviour {
     UIManager.OpenModal(_ConnectionFlowBackgroundModalPrefab, new ModalPriorityData(), creationSuccessCallback);
   }
 
-  private void HandleConnectionFlowBackgroundCreationFinished(BaseModal newConnectionFlowBackground, Action launchAction) {
-    _ConnectionFlowBackgroundModalInstance = (ConnectionFlowBackgroundModal)newConnectionFlowBackground;
+  private void HandleConnectionFlowBackgroundCreationFinished(BaseModal newConnectionFlowBackground,
+    Action launchAction) {
+    _ConnectionFlowBackgroundModalInstance = (ConnectionFlowBackgroundModal) newConnectionFlowBackground;
     launchAction();
   }
 
   private void ShowSearchForCozmoAndroid() {
     DestroyBackgroundModal();
-
     DAS.Info("ConnectionFlow.ShowAndroid", "Instantiating android flow");
-    _AndroidConnectionFlowInstance = GameObject.Instantiate(_AndroidConnectionFlowPrefab.gameObject).GetComponent<AndroidConnectionFlow>();
-
+    _AndroidConnectionFlowInstance = GameObject.Instantiate(_AndroidConnectionFlowPrefab.gameObject)
+      .GetComponent<AndroidConnectionFlow>();
     // Set up event handlers for things the Android flow might tell us:
     // - if we want to start the flow over again
     _AndroidConnectionFlowInstance.OnRestartFlow += () => {
@@ -333,7 +345,8 @@ public class ConnectionFlowController : MonoBehaviour {
       };
 
       // We were rejected AND we're still on the same WiFi, we don't want to keep checking for a connection
-      if (!String.IsNullOrEmpty(_ConnectionRejectedSSID) && AndroidConnectionFlow.GetCurrentSSID() == _ConnectionRejectedSSID) {
+      if (!String.IsNullOrEmpty(_sConnectionRejectedSsid) &&
+          AndroidConnectionFlow.GetCurrentSSID() == _sConnectionRejectedSsid) {
         _PingStatus.PausePing();
       }
 
@@ -348,7 +361,7 @@ public class ConnectionFlowController : MonoBehaviour {
 
     // Initialize only after we've set up all the handlers
     // A null/empty string means the connection was NOT rejected - therefore, start the ping test
-    _AndroidConnectionFlowInstance.Initialize(String.IsNullOrEmpty(_ConnectionRejectedSSID));
+    _AndroidConnectionFlowInstance.Initialize(String.IsNullOrEmpty(_sConnectionRejectedSsid));
   }
 
   private void ShowSearchForCozmo() {
@@ -359,9 +372,10 @@ public class ConnectionFlowController : MonoBehaviour {
       return;
     }
 
-    var screenInstance = UIManager.CreateUIElement(_SearchForCozmoScreenPrefab.gameObject, _ConnectionFlowBackgroundModalInstance.transform).GetComponent<SearchForCozmoScreen>();
+    var screenInstance = UIManager
+      .CreateUIElement(_SearchForCozmoScreenPrefab.gameObject, _ConnectionFlowBackgroundModalInstance.transform)
+      .GetComponent<SearchForCozmoScreen>();
     bool androidFlowActive = _AndroidConnectionFlowInstance != null;
-
     PingStatus pingStatusForSearch = _PingStatus;
 #if UNITY_EDITOR
     if (sManualProgress) {
@@ -371,6 +385,7 @@ public class ConnectionFlowController : MonoBehaviour {
     if (androidFlowActive) {
       pingStatusForSearch = null;
     }
+
     screenInstance.Initialize(pingStatusForSearch);
     screenInstance.OnScreenComplete += HandleSearchForCozmoScreenDone;
     _SearchForCozmoScreenInstance = screenInstance.gameObject;
@@ -380,14 +395,14 @@ public class ConnectionFlowController : MonoBehaviour {
 
   private void HandleSearchForCozmoScreenDone(bool success) {
     GameObject.Destroy(_SearchForCozmoScreenInstance);
-
     if (success || RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Sim) {
       _ConnectionFlowBackgroundModalInstance.SetStateComplete(0);
       ShowConnectingToCozmoScreen();
     }
     else {
       // spawn detached so it doesn't inherit this screen's alpha (COZMO-13402)
-      _SearchForCozmoFailedScreenInstance = UIManager.CreateUIElement(_SearchForCozmoFailedScreenPrefab.gameObject).GetComponent<SearchForCozmoFailedScreen>();
+      _SearchForCozmoFailedScreenInstance = UIManager.CreateUIElement(_SearchForCozmoFailedScreenPrefab.gameObject)
+        .GetComponent<SearchForCozmoFailedScreen>();
       _SearchForCozmoFailedScreenInstance.OnEndpointFound += HandleEndpointFound;
       _SearchForCozmoFailedScreenInstance.OnQuitFlow += HandleOnQuitFlowFromFailedSearch;
       _SearchForCozmoFailedScreenInstance.Initialize(_PingStatus);
@@ -411,16 +426,20 @@ public class ConnectionFlowController : MonoBehaviour {
       _SearchForCozmoFailedScreenInstance.OnQuitFlow -= HandleOnQuitFlowFromFailedSearch;
       GameObject.Destroy(_SearchForCozmoFailedScreenInstance.gameObject);
     }
+
     if (_ConnectionFlowBackgroundModalInstance != null) {
       _ConnectionFlowBackgroundModalInstance.SetStateComplete(0);
     }
+
     ShowConnectingToCozmoScreen();
     // Restart Scan loop sound
     PlayScanLoopAudio(true);
   }
 
   private void ShowConnectingToCozmoScreen() {
-    _ConnectingToCozmoScreenInstance = UIManager.CreateUIElement(_ConnectingToCozmoScreenPrefab.gameObject, _ConnectionFlowBackgroundModalInstance.transform).GetComponent<ConnectingToCozmoScreen>();
+    _ConnectingToCozmoScreenInstance = UIManager
+      .CreateUIElement(_ConnectingToCozmoScreenPrefab.gameObject, _ConnectionFlowBackgroundModalInstance.transform)
+      .GetComponent<ConnectingToCozmoScreen>();
     _ConnectingToCozmoScreenInstance.ConnectionScreenComplete += HandleConnectingToCozmoScreenDone;
     _ConnectionFlowBackgroundModalInstance.SetStateInProgress(1);
 
@@ -431,6 +450,7 @@ public class ConnectionFlowController : MonoBehaviour {
     if (_ConnectingToCozmoScreenInstance != null) {
       GameObject.Destroy(_ConnectingToCozmoScreenInstance.gameObject);
     }
+
     _ConnectionFlowBackgroundModalInstance.SetStateComplete(1);
     ShowSecuringConnectionScreen();
   }
@@ -439,7 +459,10 @@ public class ConnectionFlowController : MonoBehaviour {
     if (_ConnectingToCozmoScreenInstance != null) {
       GameObject.Destroy(_ConnectingToCozmoScreenInstance.gameObject);
     }
-    _UpdateFirmwareScreenInstance = UIManager.CreateUIElement(_UpdateFirmwareScreenPrefab.gameObject, _ConnectionFlowBackgroundModalInstance.transform).GetComponent<UpdateFirmwareScreen>();
+
+    _UpdateFirmwareScreenInstance = UIManager
+      .CreateUIElement(_UpdateFirmwareScreenPrefab.gameObject, _ConnectionFlowBackgroundModalInstance.transform)
+      .GetComponent<UpdateFirmwareScreen>();
     _UpdateFirmwareScreenInstance.FirmwareUpdateDone += FirmwareUpdated;
   }
 
@@ -460,17 +483,20 @@ public class ConnectionFlowController : MonoBehaviour {
 
   private void ShowSecuringConnectionScreen() {
     _ConnectionFlowBackgroundModalInstance.SetStateInProgress(2);
-    _SecuringConnectionScreenInstance = UIManager.CreateUIElement(_SecuringConnectionScreenPrefab.gameObject, _ConnectionFlowBackgroundModalInstance.transform).GetComponent<SecuringConnectionScreen>();
+    _SecuringConnectionScreenInstance = UIManager
+      .CreateUIElement(_SecuringConnectionScreenPrefab.gameObject, _ConnectionFlowBackgroundModalInstance.transform)
+      .GetComponent<SecuringConnectionScreen>();
     _SecuringConnectionScreenInstance.OnScreenComplete += HandleSecuringConnectionScreenDone;
   }
 
   private void UpdateAppScreen() {
-    ModalPriorityData updateAppModalPrefab = ModalPriorityData.CreateSlightlyHigherData(_ConnectionFlowBackgroundModalInstance.PriorityData);
+    ModalPriorityData updateAppModalPrefab =
+      ModalPriorityData.CreateSlightlyHigherData(_ConnectionFlowBackgroundModalInstance.PriorityData);
     UIManager.OpenModal(_UpdateAppModalPrefab, updateAppModalPrefab, HandleUpdateAppViewCreated);
   }
 
   private void HandleUpdateAppViewCreated(BaseModal newUpdateAppModal) {
-    _UpdateAppModalInstance = (UpdateAppModal)newUpdateAppModal;
+    _UpdateAppModalInstance = (UpdateAppModal) newUpdateAppModal;
     _UpdateAppModalInstance.ModalClosedWithCloseButtonOrOutside += ReturnToTitle;
   }
 
@@ -498,7 +524,8 @@ public class ConnectionFlowController : MonoBehaviour {
   }
 
   private void CheckForRestoreRobotFlow() {
-    OnboardingManager.Instance.FirstTime = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeUserFlow;
+    OnboardingManager.Instance.FirstTime =
+      DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeUserFlow;
     IRobot robot = RobotEngineManager.Instance.CurrentRobot;
     if (robot != null) {
       // we've never connected before so still have setup
@@ -539,30 +566,34 @@ public class ConnectionFlowController : MonoBehaviour {
   }
 
   private void WakeupSequence() {
-
     //Disable some reactionary behaviors during wakeup
-    RobotEngineManager.Instance.CurrentRobot.DisableReactionsWithLock(ReactionaryBehaviorEnableGroups.kWakeupId, ReactionaryBehaviorEnableGroups.kWakeupTriggers);
+    RobotEngineManager.Instance.CurrentRobot.DisableReactionsWithLock(ReactionaryBehaviorEnableGroups.kWakeupId,
+      ReactionaryBehaviorEnableGroups.kWakeupTriggers);
 
-    _WakingUpCozmoScreenInstance = UIManager.CreateUIElement(_WakingUpCozmoScreenPrefab, _ConnectionFlowBackgroundModalInstance.transform);
+    _WakingUpCozmoScreenInstance =
+      UIManager.CreateUIElement(_WakingUpCozmoScreenPrefab, _ConnectionFlowBackgroundModalInstance.transform);
     if (DataPersistence.DataPersistenceManager.Instance.Data.DeviceSettings.IsSDKEnabled) {
       // just a quick animation to kick the eyes on in SDK mode, but not hold for seconds
-      RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(AnimationTrigger.NeutralFace, HandleWakeAnimationComplete);
+      RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(AnimationTrigger.NeutralFace,
+        HandleWakeAnimationComplete);
     }
     else if (RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Sim) {
       HandleWakeAnimationComplete(true);
     }
     else {
-      RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(GetAnimationForWakeUp(), HandleWakeAnimationComplete);
-      RobotEngineManager.Instance.Message.NotifyCozmoWakeup = Singleton<Anki.Cozmo.ExternalInterface.NotifyCozmoWakeup>.Instance;
+      RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(GetAnimationForWakeUp(),
+        HandleWakeAnimationComplete);
+      RobotEngineManager.Instance.Message.NotifyCozmoWakeup =
+        Singleton<Anki.Cozmo.ExternalInterface.NotifyCozmoWakeup>.Instance;
       RobotEngineManager.Instance.SendMessage();
     }
-
   }
 
   private void HandleWakeAnimationComplete(bool success) {
     if (_WakingUpCozmoScreenInstance != null) {
       GameObject.Destroy(_WakingUpCozmoScreenInstance);
     }
+
     DAS.Debug("ConnectionFlow.HandleWakeAnimationComplete", "wake up animation: " + success);
     FinishConnectionFlow();
   }
@@ -571,7 +602,8 @@ public class ConnectionFlowController : MonoBehaviour {
     if (_SecuringConnectionScreenInstance != null) {
       GameObject.Destroy(_SecuringConnectionScreenInstance.gameObject);
       _SecuringConnectionScreenInstance = null;
-      ModalPriorityData pullCubePriorityData = ModalPriorityData.CreateSlightlyHigherData(_ConnectionFlowBackgroundModalInstance.PriorityData);
+      ModalPriorityData pullCubePriorityData =
+        ModalPriorityData.CreateSlightlyHigherData(_ConnectionFlowBackgroundModalInstance.PriorityData);
       DestroyBackgroundModal();
       UIManager.OpenModal(_PullCubeTabModalPrefab, pullCubePriorityData, HandlePullCubeTabViewCreated);
     }
@@ -581,7 +613,7 @@ public class ConnectionFlowController : MonoBehaviour {
   }
 
   private void HandlePullCubeTabViewCreated(BaseModal newPullCubeTabModal) {
-    _PullCubeTabModalInstance = (PullCubeTabModal)newPullCubeTabModal;
+    _PullCubeTabModalInstance = (PullCubeTabModal) newPullCubeTabModal;
     _PullCubeTabModalInstance.DialogClosed += HandlePullCubeTabsCompleted;
   }
 
@@ -606,7 +638,7 @@ public class ConnectionFlowController : MonoBehaviour {
 
   private void ConnectToRobot() {
     DAS.Info("ConnectionFlow.ConnectToRobot", "Trying to connect to robot " + _CurrentRobotIP);
-    RobotEngineManager.Instance.ConnectToRobot(kRobotID, _CurrentRobotIP);
+    RobotEngineManager.Instance.ConnectToRobot(_kRobotId, _CurrentRobotIP);
   }
 
   private void Disconnected(Anki.Cozmo.ExternalInterface.RobotDisconnected message) {
@@ -615,7 +647,8 @@ public class ConnectionFlowController : MonoBehaviour {
 
   private void RobotConnectionResponse(Anki.Cozmo.ExternalInterface.RobotConnectionResponse message) {
     // Set initial Robot Volume when connecting
-    Anki.Cozmo.Audio.GameAudioClient.SetPersistenceVolumeValues(new Anki.Cozmo.Audio.VolumeParameters.VolumeType[] { Anki.Cozmo.Audio.VolumeParameters.VolumeType.Robot });
+    Anki.Cozmo.Audio.GameAudioClient.SetPersistenceVolumeValues(
+      new Anki.Cozmo.Audio.VolumeParameters.VolumeType[] {Anki.Cozmo.Audio.VolumeParameters.VolumeType.Robot});
     DAS.Info("ConnectionFlow.RobotConnectionResponse", message.result.ToString());
 
     HandleRobotConnectResponse(message.result);
@@ -624,62 +657,66 @@ public class ConnectionFlowController : MonoBehaviour {
   private void HandleRobotConnectResponse(RobotConnectionResult response) {
     DAS.Info("ConnectionFlow.HandleRobotConnectResponse", "response: " + response);
     switch (response) {
-    case RobotConnectionResult.Success:
-      // Audio Note: Let scaning loop continue to play
-      RobotConnectResponseSuccess();
-      break;
+      case RobotConnectionResult.Success:
+        // Audio Note: Let scaning loop continue to play
+        RobotConnectResponseSuccess();
+        break;
 
-    case RobotConnectionResult.ConnectionFailure:
-      if (_ConnectingToCozmoScreenInstance != null) {
-        GameObject.Destroy(_ConnectingToCozmoScreenInstance.gameObject);
-      }
-      // Audio Note: Let scaning loop continue to play
-      ReturnToSearch();
-      break;
+      case RobotConnectionResult.ConnectionFailure:
+        if (_ConnectingToCozmoScreenInstance != null) {
+          GameObject.Destroy(_ConnectingToCozmoScreenInstance.gameObject);
+        }
 
-    case RobotConnectionResult.OutdatedApp:
-      PlayScanLoopAudio(false);
-      UpdateAppScreen();
-      break;
+        // Audio Note: Let scaning loop continue to play
+        ReturnToSearch();
+        break;
 
-    case RobotConnectionResult.OutdatedFirmware:
-      PlayScanLoopAudio(false);
-      UpdateFirmware();
-      break;
+      case RobotConnectionResult.OutdatedApp:
+        PlayScanLoopAudio(false);
+        UpdateAppScreen();
+        break;
 
-    case RobotConnectionResult.NeedsPin:
-      // No longer used
-      break;
+      case RobotConnectionResult.OutdatedFirmware:
+        PlayScanLoopAudio(false);
+        UpdateFirmware();
+        break;
 
-    case RobotConnectionResult.InvalidPin:
-      // No longer used
-      break;
+      case RobotConnectionResult.NeedsPin:
+        // No longer used
+        break;
 
-    case RobotConnectionResult.PinMaxAttemptsReached:
-      // No longer used
-      break;
+      case RobotConnectionResult.InvalidPin:
+        // No longer used
+        break;
 
-    case RobotConnectionResult.ConnectionRejected:
-      if (_ConnectingToCozmoScreenInstance != null) {
-        GameObject.Destroy(_ConnectingToCozmoScreenInstance.gameObject);
-      }
-      PlayScanLoopAudio(false);
-      ConnectionRejected();
-      break;
+      case RobotConnectionResult.PinMaxAttemptsReached:
+        // No longer used
+        break;
+
+      case RobotConnectionResult.ConnectionRejected:
+        if (_ConnectingToCozmoScreenInstance != null) {
+          GameObject.Destroy(_ConnectingToCozmoScreenInstance.gameObject);
+        }
+
+        PlayScanLoopAudio(false);
+        ConnectionRejected();
+        break;
     }
   }
 
   private void ConnectionRejected() {
-    _ConnectionRejectedSSID = AndroidConnectionFlow.GetCurrentSSID();
+    _sConnectionRejectedSsid = AndroidConnectionFlow.GetCurrentSSID();
 
     _ConnectionFlowBackgroundModalInstance.SetStateFailed(1);
-    _ConnectionRejectedScreenInstance = UIManager.CreateUIElement(_ConnectionRejectedScreenPrefab.gameObject, _ConnectionFlowBackgroundModalInstance.transform).GetComponent<ConnectionRejectedScreen>();
+    _ConnectionRejectedScreenInstance = UIManager
+      .CreateUIElement(_ConnectionRejectedScreenPrefab.gameObject, _ConnectionFlowBackgroundModalInstance.transform)
+      .GetComponent<ConnectionRejectedScreen>();
     _ConnectionRejectedScreenInstance.OnCancelButton += () => {
       if (_ConnectionRejectedScreenInstance != null) {
         GameObject.Destroy(_ConnectionRejectedScreenInstance.gameObject);
       }
 #if !UNITY_EDITOR && UNITY_ANDROID
-      AndroidConnectionFlow.CallJava("disconnect");
+      CozmoBinding.CallWifiJava("disconnect");
 #endif
       ReturnToTitle();
     };
@@ -687,6 +724,7 @@ public class ConnectionFlowController : MonoBehaviour {
       if (_ConnectionRejectedScreenInstance != null) {
         GameObject.Destroy(_ConnectionRejectedScreenInstance.gameObject);
       }
+
       ReturnToSearch();
     };
   }
@@ -700,15 +738,17 @@ public class ConnectionFlowController : MonoBehaviour {
     if (DataPersistence.DataPersistenceManager.Instance.IsNewSessionNeeded) {
       DataPersistence.DataPersistenceManager.Instance.StartNewSession();
     }
+
     DataPersistence.DataPersistenceManager.Instance.SetHasConnectedWithCozmo();
     // Successfully connected, reset state
-    _ConnectionRejectedSSID = null;
+    _sConnectionRejectedSsid = null;
 
     // When we are in the first time user flow, we enable the block pool when we get to the Pull Cube Tab screen
     if (!DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeUserFlow) {
       // Enable the automatic block pool
 #if ANKI_DEV_CHEATS
-      RobotEngineManager.Instance.BlockPoolTracker.EnableBlockPool(DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.EnableAutoBlockPoolOnStart);
+      RobotEngineManager.Instance.BlockPoolTracker.EnableBlockPool(DataPersistence.DataPersistenceManager.Instance.Data
+        .DebugPrefs.EnableAutoBlockPoolOnStart);
 #else
       RobotEngineManager.Instance.BlockPoolTracker.EnableBlockPool(true);
 #endif
@@ -743,12 +783,15 @@ public class ConnectionFlowController : MonoBehaviour {
 
   // Debounce Audio Loop events
   private void PlayScanLoopAudio(bool play) {
-    if (_scanLoopPlaying == play) {
+    if (_ScanLoopPlaying == play) {
       // Do Nothing
       return;
     }
-    _scanLoopPlaying = play;
-    Anki.AudioMetaData.GameEvent.Ui evt = _scanLoopPlaying ? Anki.AudioMetaData.GameEvent.Ui.Cozmo_Connect_Scan_Loop : Anki.AudioMetaData.GameEvent.Ui.Cozmo_Connect_Scan_Loop_Stop;
+
+    _ScanLoopPlaying = play;
+    Anki.AudioMetaData.GameEvent.Ui evt = _ScanLoopPlaying
+      ? Anki.AudioMetaData.GameEvent.Ui.Cozmo_Connect_Scan_Loop
+      : Anki.AudioMetaData.GameEvent.Ui.Cozmo_Connect_Scan_Loop_Stop;
     Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(evt);
   }
 }

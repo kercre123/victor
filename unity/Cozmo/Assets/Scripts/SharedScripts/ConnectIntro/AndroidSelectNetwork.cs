@@ -1,4 +1,3 @@
-﻿using Anki.UI;
 using Cozmo.UI;
 using System.Collections.Generic;
 using System.Linq;
@@ -112,7 +111,7 @@ public class AndroidSelectNetwork : AndroidConnectionFlowStage {
 
   private System.Collections.IEnumerator UpdateNetworks() {
     while (true) {
-      AndroidConnectionFlow.CallJava<bool>("requestScan");
+      CozmoBinding.CallWifiJava<bool>("requestScan");
       yield return new WaitForSeconds(3.0f);
     }
   }

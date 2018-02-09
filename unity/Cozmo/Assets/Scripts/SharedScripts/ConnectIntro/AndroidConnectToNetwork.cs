@@ -47,7 +47,7 @@ public class AndroidConnectToNetwork : AndroidConnectionFlowStage {
     }
 
     try {
-      UpdateStatusLabels(AndroidConnectionFlow.CallJava<string>("getCurrentSSID"), AndroidConnectionFlow.CallJava<string>("getCurrentStatus"));
+      UpdateStatusLabels(CozmoBinding.CallWifiJava<string>("getCurrentSSID"), CozmoBinding.CallWifiJava<string>("getCurrentStatus"));
     }
     catch (Exception ex) {
       DAS.Error("AndroidConnectToNetwork.Start.UpdateStatusLabels", ex.ToString());
@@ -69,7 +69,7 @@ public class AndroidConnectToNetwork : AndroidConnectionFlowStage {
       // depending on whether password was the problem, either kick back to password screen
       // or try reconnecting
       // after a long enough time and enough failed attempts, give up
-      if (AndroidConnectionFlow.CallJava<bool>("didPasswordFail")) {
+      if (CozmoBinding.CallWifiJava<bool>("didPasswordFail")) {
         AndroidConnectionFlow.Instance.HandleWrongPassword();
       }
       else {
@@ -82,7 +82,7 @@ public class AndroidConnectToNetwork : AndroidConnectionFlowStage {
         }
         else {
           _ConnectCount++;
-          bool result = AndroidConnectionFlow.CallJava<bool>("reconnect", AndroidConnectionFlow.kTimeoutMs);
+          bool result = CozmoBinding.CallWifiJava<bool>("reconnect", AndroidConnectionFlow.kTimeoutMs);
           DAS.Event(result ? "android_connect.retry" : "android_connect.retry_failed", _ConnectCount.ToString());
         }
       }

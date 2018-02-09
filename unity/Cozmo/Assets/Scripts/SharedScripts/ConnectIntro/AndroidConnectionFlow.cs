@@ -207,15 +207,19 @@ public class AndroidConnectionFlow : JavaMessageReceiver.JavaBehaviour {
   }
 
   public static void StartPingTest() {
-    CallJava("beginPingTest", RobotEngineManager.kRobotIP, kPingTimeoutMs, kPingRetryDelayMs);
+    CozmoBinding.CallWifiJava("beginPingTest", RobotEngineManager.kRobotIP, kPingTimeoutMs, kPingRetryDelayMs);
   }
 
-  private static void StopPingTest() {
-    CallJava("endPingTest");
+  public static void StopPingTest() {
+    CozmoBinding.CallWifiJava("endPingTest");
   }
 
   public static String GetCurrentSSID() {
-    return CallJava<String>("getCurrentSSID");
+    return CozmoBinding.CallWifiJava<String>("getCurrentSSID");
+  }
+
+  public static bool IsPingSuccessful() {
+    return CozmoBinding.CallWifiJava<Boolean>("isPingSuccessful");
   }
 
   private void DestroyStage() {
@@ -267,7 +271,7 @@ public class AndroidConnectionFlow : JavaMessageReceiver.JavaBehaviour {
 
   private System.Collections.IEnumerator CheckConnectivity() {
     while (true) {
-      if (CallJava<bool>("isPingSuccessful")) {
+      if (CozmoBinding.CallWifiJava<bool>("isPingSuccessful")) {
         DAS.Info("AndroidConnectionFlow.CheckConnectivity", "ping succeeded, exiting");
         OnScreenComplete(true);
         yield break;
@@ -279,8 +283,8 @@ public class AndroidConnectionFlow : JavaMessageReceiver.JavaBehaviour {
 
   private bool SkipPermissions() {
     // if we haven't yet determined that we need permission, skip
-    bool permissionIssue = AndroidConnectionFlow.CallJava<bool>("isPermissionIssue");
-    bool wifiEnabled = AndroidConnectionFlow.CallJava<bool>("isWifiEnabled");
+    bool permissionIssue = CozmoBinding.CallWifiJava<bool>("isPermissionIssue");
+    bool wifiEnabled = CozmoBinding.CallWifiJava<bool>("isWifiEnabled");
 
     bool noProblemsDetected = wifiEnabled && !permissionIssue;
     bool notDirectedHere = _PermissionIssueCount == 0;
@@ -309,7 +313,7 @@ public class AndroidConnectionFlow : JavaMessageReceiver.JavaBehaviour {
   }
 
   private bool SkipPassword() {
-    bool shouldSkip = CallJava<bool>("isExistingConfigurationForNetwork", SelectedSSID);
+    bool shouldSkip = CozmoBinding.CallWifiJava<bool>("isExistingConfigurationForNetwork", SelectedSSID);
     if (shouldSkip) {
       // initiate connection
       bool result = ConnectExisting(SelectedSSID);
@@ -334,40 +338,16 @@ public class AndroidConnectionFlow : JavaMessageReceiver.JavaBehaviour {
   //Returns true if permissions are available or have not yet been asked for.
   public static bool IsAvailable() {
     return AnkiPrefs.GetInt(AnkiPrefs.Prefs.AndroidAutoConnectDisabled) == 0 ||
-                    (AndroidConnectionFlow.CallJava<bool>("isWifiEnabled") &&
-                     AndroidConnectionFlow.CallJava<bool>("hasLocationPermission"));
+                   (CozmoBinding.CallWifiJava<bool>("isWifiEnabled") &&
+                    CozmoBinding.CallWifiJava<bool>("hasLocationPermission"));
   }
 
   #region Shared utility functions for flow/stages
 
-  public static ReturnType CallJava<ReturnType>(string method, params object[] parameters) {
-#if UNITY_ANDROID && !UNITY_EDITOR
-    return CozmoBinding.GetWifiUtilClass().CallStatic<ReturnType>(method, parameters);
-#else
-    return default(ReturnType);
-#endif
-  }
-  public static ReturnType CallLocationJava<ReturnType>(string method, params object[] parameters) {
-#if UNITY_ANDROID && !UNITY_EDITOR
-    return CozmoBinding.GetLocationUtilClass().CallStatic<ReturnType>(method, parameters);
-#else
-    return default(ReturnType);
-#endif
-  }
-  public static void CallJava(string method, params object[] parameters) {
-#if UNITY_ANDROID && !UNITY_EDITOR
-    CozmoBinding.GetWifiUtilClass().CallStatic(method, parameters);
-#endif
-  }
-  public static void CallLocationJava(string method, params object[] parameters) {
-#if UNITY_ANDROID && !UNITY_EDITOR
-    CozmoBinding.GetLocationUtilClass().CallStatic(method, parameters);
-#endif
+  public static string[] GetCozmoSSIDs() {
+    return GetCozmoSSIDs(CozmoBinding.CallWifiJava<string[]>("getSSIDs"));
   }
 
-  public static string[] GetCozmoSSIDs() {
-    return GetCozmoSSIDs(CallJava<string[]>("getSSIDs"));
-  }
   public static string[] GetCozmoSSIDs(string[] allSSIDs) {
 #if UNITY_EDITOR
     return new string[] { "Cozmo_123456", "Cozmo_234567", "Cozmo_345667" };
@@ -379,7 +359,7 @@ public class AndroidConnectionFlow : JavaMessageReceiver.JavaBehaviour {
   public bool Connect(string SSID, string password) {
     SafeStartPingTest();
 
-    bool result = CallJava<bool>("connect", SSID, password, kTimeoutMs);
+    bool result = CozmoBinding.CallWifiJava<bool>("connect", SSID, password, kTimeoutMs);
     OnStartConnect();
     return result;
   }
@@ -387,7 +367,7 @@ public class AndroidConnectionFlow : JavaMessageReceiver.JavaBehaviour {
   public bool ConnectExisting(string SSID) {
     SafeStartPingTest();
 
-    bool result = CallJava<bool>("connectExisting", SelectedSSID, kTimeoutMs);
+    bool result = CozmoBinding.CallWifiJava<bool>("connectExisting", SelectedSSID, kTimeoutMs);
     OnStartConnect();
     return result;
   }
