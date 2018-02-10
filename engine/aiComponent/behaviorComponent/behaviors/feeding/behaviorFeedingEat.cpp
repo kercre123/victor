@@ -17,7 +17,6 @@
 #include "engine/actions/basicActions.h"
 #include "engine/actions/driveToActions.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorListenerInterfaces/iFeedingListener.h"
@@ -346,9 +345,6 @@ void BehaviorFeedingEat::TransitionToReactingToInterruption()
   CancelDelegates(false);
   AnimationTrigger trigger = AnimationTrigger::FeedingInterrupted;
   
-  if(NeedId::Energy == GetBEI().GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression()){
-    trigger = AnimationTrigger::FeedingInterrupted_Severe;
-  }
   {
     DelegateIfInControl(new TriggerLiftSafeAnimationAction(trigger));
   }

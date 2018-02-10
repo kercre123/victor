@@ -15,7 +15,6 @@
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
-#include "engine/aiComponent/severeNeedsComponent.h"
 
 #include "coretech/common/engine/utils/timer.h"
 
@@ -53,14 +52,6 @@ void BehaviorReactToPlacedOnSlope::OnBehaviorActivated()
     // Play the animation then check if we're still on a slope or if we were perched on something:
     
     AnimationTrigger reactionAnim = AnimationTrigger::ReactToPerchedOnBlock;
-    
-    // special animations for maintaining eye shape in severe need states
-    const NeedId severeNeedExpressed = GetBEI().GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression();
-    if(NeedId::Energy == severeNeedExpressed){
-      reactionAnim = AnimationTrigger::NeedsSevereLowEnergySlopeReact;
-    }else if(NeedId::Repair == severeNeedExpressed){
-      reactionAnim = AnimationTrigger::NeedsSevereLowRepairSlopeReact;
-    }
     
     DelegateIfInControl(new TriggerAnimationAction(reactionAnim),
                         &BehaviorReactToPlacedOnSlope::CheckPitch);

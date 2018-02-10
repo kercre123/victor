@@ -16,7 +16,6 @@
 #include "engine/actions/dockActions.h"
 #include "engine/actions/driveToActions.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/audio/engineRobotAudioClient.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/components/carryingComponent.h"
@@ -260,90 +259,6 @@ namespace Anki {
     ActionResult TriggerCubeAnimationAction::CheckIfDone()
     {
       return (_animEnded ? ActionResult::SUCCESS : ActionResult::RUNNING);
-    }
-
-    PlayNeedsGetOutAnimIfNeeded::PlayNeedsGetOutAnimIfNeeded()
-      : Base(AnimationTrigger::Count)
-    {
-      SetName("PlayNeedsGetOut");
-    }
-    
-    PlayNeedsGetOutAnimIfNeeded::~PlayNeedsGetOutAnimIfNeeded()
-    {
-      if(HasRobot()){
-        auto& severeNeedsComponent = GetRobot().GetAIComponent().GetSevereNeedsComponent();
-        if(severeNeedsComponent.HasSevereNeedExpression() && !_hasClearedExpression){
-          severeNeedsComponent.ClearSevereNeedExpression();
-        }
-      }
-    }
-
-    ActionResult PlayNeedsGetOutAnimIfNeeded::Init()
-    {
-
-      if(GetRobot().GetAIComponent().GetSevereNeedsComponent().HasSevereNeedExpression()) {
-        const auto& severeNeedsComponent = GetRobot().GetAIComponent().GetSevereNeedsComponent();
-        
-        AnimationTrigger animTrigger = AnimationTrigger::Count;        
-
-        switch( severeNeedsComponent.GetSevereNeedExpression() ) {
-          case NeedId::Repair: {
-            animTrigger = AnimationTrigger::NeedsSevereLowRepairForceGetOut;
-            break;
-          }
-          case NeedId::Energy: {
-            animTrigger = AnimationTrigger::NeedsSevereLowEnergyForceGetOut;
-            break;
-          }
-          case NeedId::Play: {
-            animTrigger = AnimationTrigger::NeedsSevereLowPlayForceGetOut;
-            break;
-          }
-          case NeedId::Count:
-            PRINT_NAMED_ERROR("PlayNeedsGetOutAnimIfNeeded.InconsistentState",
-                              "AIWhiteboard said we had a severe needs state, but now says its equal to Count");
-            break;
-        }
-
-        if( animTrigger != AnimationTrigger::Count ) {
-          Base::SetAnimGroupFromTrigger(animTrigger);
-          return Base::Init();
-        }
-        else {
-          // we decided not to play something, so this action will immediately success
-          return ActionResult::SUCCESS;
-        }
-        
-      }
-      else {
-        // behavior will succeed automatically in the first CheckIfDone
-        PRINT_CH_INFO("Actions", "PlayNeedsGetOutAnimIfNeeded.NoTransitionNeeded",
-                      "[%d] %s: no transition animation needed",
-                      GetTag(),
-                      GetName().c_str());
-
-        return ActionResult::SUCCESS;
-      }
-    }
-
-    ActionResult PlayNeedsGetOutAnimIfNeeded::CheckIfDone()
-    {      
-      if( ! HasAnimTrigger() ) {
-        // if no animation was required, succeed now
-        return ActionResult::SUCCESS;
-      }
-      else {
-          
-        const ActionResult result = Base::CheckIfDone();
-        if (result == ActionResult::SUCCESS) {
-          // No eye popping of momentary severe needs should happen since there is
-          // wait timer before idle anims play from AnimationComponent.
-          auto& severeNeedsComponent = GetRobot().GetAIComponent().GetSevereNeedsComponent();
-          severeNeedsComponent.ClearSevereNeedExpression();
-          _hasClearedExpression = true;
-        }
-        return result;
-      }
     }
   
   }

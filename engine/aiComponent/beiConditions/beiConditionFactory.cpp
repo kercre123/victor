@@ -13,7 +13,6 @@
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 
 #include "engine/aiComponent/beiConditions/conditions/conditionCloudIntentPending.h"
-#include "engine/aiComponent/beiConditions/conditions/conditionExpressNeedsTransition.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionFacePositionUpdated.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionFrustration.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionInNeedsBracket.h"
@@ -64,11 +63,6 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
     case BEIConditionType::CloudIntentPending:
     {
       strategy = std::make_shared<ConditionCloudIntentPending>(config);
-      break;
-    }
-    case BEIConditionType::ExpressNeedsTransition:
-    {
-      strategy = std::make_shared<ConditionExpressNeedsTransition>(config);
       break;
     }
     case BEIConditionType::FacePositionUpdated:

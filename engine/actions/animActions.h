@@ -143,26 +143,6 @@ namespace Anki {
       CubeAnimationTrigger _trigger = CubeAnimationTrigger::Count;
       bool _animEnded = false;
     };
-
-    // if Cozmo is expressing a severe need, this action will automatically play the correct get-out
-    // animation, and clear that need expression. Otherwise, it will succeed immediately
-    class PlayNeedsGetOutAnimIfNeeded : public TriggerAnimationAction
-    {
-      using Base = TriggerAnimationAction;
-    public:
-      PlayNeedsGetOutAnimIfNeeded();
-      
-      virtual ~PlayNeedsGetOutAnimIfNeeded();
-      
-    protected:
-      virtual ActionResult Init() override;
-      virtual ActionResult CheckIfDone() override;
-
-    private:
-      bool _hasClearedExpression = false;
-    };
-      
-  
   }
 }
 

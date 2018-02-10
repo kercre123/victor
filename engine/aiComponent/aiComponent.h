@@ -44,7 +44,6 @@ class ObjectInteractionInfoCache;
 class PuzzleComponent;
 class RequestGameComponent;
 class Robot;
-class SevereNeedsComponent;
 class TemplatedImageCache;
 class TimerUtility;
 
@@ -62,7 +61,6 @@ public:
                         ObjectInteractionInfoCache* objectInteractionInfoCache,
                         PuzzleComponent*            puzzleComponent,
                         RequestGameComponent*       requestGameComponent,
-                        SevereNeedsComponent*       severeNeedsComponent,
                         TemplatedImageCache*        templatedImageCache,
                         TimerUtility*               timerUtility,
                         AIWhiteboard*               aiWhiteboard);
@@ -144,11 +142,6 @@ public:
   inline DoATrickSelector& GetDoATrickSelector()  {  return GetComponent<DoATrickSelector>(AIComponentID::DoATrick); }
 
   inline FreeplayDataTracker& GetFreeplayDataTracker()  {  return GetComponent<FreeplayDataTracker>(AIComponentID::FreeplayDataTracker); }  
-  
-  inline const SevereNeedsComponent& GetSevereNeedsComponent() const   {  return GetComponent<SevereNeedsComponent>(AIComponentID::SevereNeeds); }
-  inline SevereNeedsComponent& GetSevereNeedsComponent()               {  return GetComponent<SevereNeedsComponent>(AIComponentID::SevereNeeds); }
-  inline SevereNeedsComponent& GetNonConstSevereNeedsComponent() const {  return GetComponent<SevereNeedsComponent>(AIComponentID::SevereNeeds); }
-
   
   ////////////////////////////////////////////////////////////////////////////////
   // Update and init

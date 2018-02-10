@@ -403,15 +403,7 @@ namespace Cozmo {
     printf("Pose marker mode: %d\n", poseMarkerMode_);
     poseMarkerDiffuseColor_->setSFColor(poseMarkerColor_[poseMarkerMode_]);
     SendErasePoseMarker();
-  }
-  
-  void WebotsKeyboardController::PlayNeedsGetOutAnimIfNeeded()
-  {
-    ExternalInterface::QueueSingleAction msg;
-    msg.action.Set_playNeedsGetOutAnimIfNeeded(ExternalInterface::PlayNeedsGetOutAnimIfNeeded{});
-    SendAction(msg);
-  }
-  
+  }  
   
   void WebotsKeyboardController::GotoPoseMarker()
   {
@@ -2103,7 +2095,7 @@ namespace Cozmo {
     
     REGISTER_KEY_FCN('G', MOD_NONE,      GotoPoseMarker,              "Goto/place object at pose marker");
     REGISTER_KEY_FCN('G', MOD_SHIFT,     TogglePoseMarkerMode,        "Toggle pose marker mode");
-    REGISTER_KEY_FCN('G', MOD_ALT,       PlayNeedsGetOutAnimIfNeeded, "Play needs get out anim if needed");  // Remove?
+//      REGISTER_KEY_FCN('G', MOD_ALT,       , "");
 //      REGISTER_KEY_FCN('G', MOD_ALT_SHIFT, , "");
 
     REGISTER_KEY_FCN('H', MOD_NONE,      FakeCloudIntent, "Fake clound intent with contents of 'cloudIntent'");

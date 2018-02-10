@@ -837,12 +837,6 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlayAnimat
   return newAction;
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template<>
-IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlayNeedsGetOutAnimIfNeeded& msg)
-{
-  return new PlayNeedsGetOutAnimIfNeeded();
-}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
@@ -997,7 +991,6 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       DEFINE_HANDLER(playAnimationGroup,       PlayAnimationGroup,       0),
       DEFINE_HANDLER(playAnimationTrigger,     PlayAnimationTrigger,     0),
       DEFINE_HANDLER(playCubeAnimationTrigger, PlayCubeAnimationTrigger, 0),
-      DEFINE_HANDLER(playNeedsGetOutAnimIfNeeded, PlayNeedsGetOutAnimIfNeeded, 0),
       DEFINE_HANDLER(popAWheelie,              PopAWheelie,              1),
       DEFINE_HANDLER(readToolCode,             ReadToolCode,             0),
       DEFINE_HANDLER(realignWithObject,        RealignWithObject,        1),

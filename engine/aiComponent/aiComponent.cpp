@@ -25,7 +25,6 @@
 #include "engine/aiComponent/objectInteractionInfoCache.h"
 #include "engine/aiComponent/puzzleComponent.h"
 #include "engine/aiComponent/requestGameComponent.h"
-#include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/aiComponent/templatedImageCache.h"
 #include "engine/aiComponent/timerUtility.h"
 #include "engine/components/sensors/proxSensorComponent.h"
@@ -64,7 +63,6 @@ AIComponentComponents::AIComponentComponents(Robot&                      robot,
                                              ObjectInteractionInfoCache* objectInteractionInfoCache,
                                              PuzzleComponent*            puzzleComponent,
                                              RequestGameComponent*       requestGameComponent,
-                                             SevereNeedsComponent*       severeNeedsComponent,
                                              TemplatedImageCache*        templatedImageCache,
                                              TimerUtility*               timerUtility,
                                              AIWhiteboard*               aiWhiteboard)
@@ -80,7 +78,6 @@ AIComponentComponents::AIComponentComponents(Robot&                      robot,
   {AIComponentID::ObjectInteractionInfoCache, ComponentWrapper(objectInteractionInfoCache, true)},
   {AIComponentID::Puzzle,                     ComponentWrapper(puzzleComponent, true)},
   {AIComponentID::RequestGame,                ComponentWrapper(requestGameComponent, true)},
-  {AIComponentID::SevereNeeds,                ComponentWrapper(severeNeedsComponent, true)},
   {AIComponentID::TemplatedImageCache,        ComponentWrapper(templatedImageCache, true)},
   {AIComponentID::TimerUtility,               ComponentWrapper(timerUtility, true)},
   {AIComponentID::Whiteboard,                 ComponentWrapper(aiWhiteboard, true)}
@@ -142,7 +139,6 @@ Result AIComponent::Init(Robot* robot, BehaviorComponent*& customBehaviorCompone
           new PuzzleComponent(*robot),
           new RequestGameComponent(robot->HasExternalInterface() ? robot->GetExternalInterface() : nullptr,
                                   robot->GetContext()->GetDataLoader()->GetGameRequestWeightsConfig()),
-          new SevereNeedsComponent(*robot),
           new TemplatedImageCache(robot->GetContext()->GetDataLoader()->GetFacePNGPaths()),
           new TimerUtility(),
           new AIWhiteboard(*robot)
@@ -170,9 +166,6 @@ Result AIComponent::Init(Robot* robot, BehaviorComponent*& customBehaviorCompone
   auto& whiteBoard = GetComponent<AIWhiteboard>(AIComponentID::Whiteboard);
   whiteBoard.Init();
   
-  auto& severeNeedsComp = GetComponent<SevereNeedsComponent>(AIComponentID::SevereNeeds);
-  severeNeedsComp.Init();
-  
   RobotDataLoader* dataLoader = nullptr;
   if(context){
     dataLoader = robot->GetContext()->GetDataLoader();
@@ -195,11 +188,6 @@ Result AIComponent::Update(Robot& robot, std::string& currentActivityName,
   {
     auto& whiteboard = GetComponent<AIWhiteboard>(AIComponentID::Whiteboard);
     whiteboard.Update();
-  }
-
-  {
-    auto& severeNeedsComp = GetComponent<SevereNeedsComponent>(AIComponentID::SevereNeeds);
-    severeNeedsComp.Update();
   }
   
   // Update continuity component before behavior component to ensure behaviors don't

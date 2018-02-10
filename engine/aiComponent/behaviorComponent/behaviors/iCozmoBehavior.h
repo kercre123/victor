@@ -189,9 +189,6 @@ public:
   
   // returns the required unlockID for the behavior
   const UnlockId GetRequiredUnlockID() const {  return _requiredUnlockId;}
-
-  // returns the need id of the severe need state that must be expressed (see AIWhiteboard), or Count if none
-  NeedId GetRequiredSevereNeedExpression() const { return _requiredSevereNeed; }
   
   // Get the ObjectUseIntentions this behavior uses
   virtual std::set<ObjectInteractionIntention>
@@ -493,9 +490,6 @@ private:
 
   // if an unlockId is set, the behavior won't be activatable unless the unlockId is unlocked in the progression component
   UnlockId _requiredUnlockId;
-
-  // required severe needs expression to run this activity
-  NeedId _requiredSevereNeed;
   
   // if _requiredRecentDriveOffCharger_sec is greater than 0, this behavior is only activatable if last time the robot got off the charger by
   // itself was less than this time ago. Eg, a value of 1 means if we got off the charger less than 1 second ago

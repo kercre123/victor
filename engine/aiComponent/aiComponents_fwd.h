@@ -39,8 +39,6 @@ enum class AIComponentID{
   Puzzle,
   // component for keeping track of what game cozmo should request next
   RequestGame,
-  // component for tracking severe needs states
-  SevereNeeds,
   // component that caches templated images and only swaps out quadrants that have
   // changed between requests
   TemplatedImageCache,

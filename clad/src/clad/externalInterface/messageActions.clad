@@ -194,8 +194,6 @@ message PlayCubeAnimationTrigger {
   CubeAnimationTrigger trigger,
 }
 
-message PlayNeedsGetOutAnimIfNeeded {
-}
 
 // PopAWheelie
 message PopAWheelie {
@@ -508,7 +506,6 @@ union RobotActionUnion {
   PlayAnimationGroup            playAnimationGroup,
   PlayAnimationTrigger          playAnimationTrigger,
   PlayCubeAnimationTrigger      playCubeAnimationTrigger,
-  PlayNeedsGetOutAnimIfNeeded   playNeedsGetOutAnimIfNeeded,
   PopAWheelie                   popAWheelie,
   ReadToolCode                  readToolCode,
   RealignWithObject             realignWithObject,
