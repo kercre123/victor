@@ -24,9 +24,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/objectInteractionInfoCache.h"
-#include "engine/blockWorld/blockConfigTypeHelpers.h"
-#include "engine/blockWorld/blockConfiguration.h"
-#include "engine/blockWorld/blockConfigurationManager.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
@@ -37,7 +34,6 @@ namespace Anki {
 namespace Cozmo {
 
 namespace{
-static const char* kBlockConfigsToIgnoreKey = "ignoreCubesInBlockConfigTypes";
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -47,19 +43,6 @@ BehaviorPickUpCube::BehaviorPickUpCube(const Json::Value& config)
   SubscribeToTags({
     EngineToGameTag::RobotObservedObject,
   });
-  
-  // Pull from the config any block configuration types
-  // that blocks should not be picked up out of
-  const Json::Value& configsToIgnore  = config[kBlockConfigsToIgnoreKey];
-  if(!configsToIgnore.isNull()){
-    Json::Value::const_iterator configNameIt = configsToIgnore.begin();
-    const Json::Value::const_iterator configNameEnd = configsToIgnore.end();
-    
-    for(; configNameIt != configNameEnd; ++configNameIt){
-      _configurationsToIgnore.push_back(
-          BlockConfigurations::BlockConfigurationFromString(configNameIt->asCString()));
-    }
-  }
 }
 
   
@@ -91,16 +74,6 @@ void BehaviorPickUpCube::BehaviorUpdate()
   if(!IsActivated()){
     return;
   }
-
-  // If the block we're going to pickup ever becomes part of an illegal configuration
-  // immediately stop the behavior
-  for(auto configType: _configurationsToIgnore) {
-    if(GetBEI().GetBlockWorld().GetBlockConfigurationManager()
-                  .IsObjectPartOfConfigurationType(configType, _targetBlockID)){
-      CancelSelf();
-      return;
-    }
-  }  
 }
  
   
@@ -112,49 +85,8 @@ void BehaviorPickUpCube::UpdateTargetBlocks() const
   auto& objInfoCache = GetBEI().GetAIComponent().GetObjectInteractionInfoCache();
   const ObjectInteractionIntention intent = ObjectInteractionIntention::PickUpObjectNoAxisCheck;
   const ObjectID& possiblyBestObjID = objInfoCache.GetBestObjectForIntention(intent);
-  
-  if(_configurationsToIgnore.empty())
-  {
-    _targetBlockID = possiblyBestObjID;
-  }else{
-    // Filter out blocks that are part of an ignore configuration
-    const BlockWorldFilter& defaultFilter = objInfoCache.GetDefaultFilterForIntention( intent );
-    
-    BlockWorldFilter filter(defaultFilter);
-    filter.AddFilterFcn(
-      [this](const ObservableObject* object)
-      {
-        bool isPartOfIllegalConfiguration = false;
-        for(auto configType: _configurationsToIgnore){
-          const BlockWorld& blockWorld = GetBEI().GetBlockWorld();
-          if(blockWorld.GetBlockConfigurationManager()
-                  .GetCacheByType(configType).AnyConfigContainsObject(object->GetID())){
-            isPartOfIllegalConfiguration = true;
-            break;
-          }
-        }
 
-        return !isPartOfIllegalConfiguration;
-      });
-    
-    // If the "best" object is valid, use that one - this allows tapped objects
-    // to be given preference when valid
-    std::vector<const ObservableObject *> validObjs;
-    GetBEI().GetBlockWorld().FindLocatedMatchingObjects(filter, validObjs);
-    
-    const ObservableObject* possiblyBestObj = GetBEI().GetBlockWorld().GetLocatedObjectByID(possiblyBestObjID);
-    if(std::find(validObjs.begin(), validObjs.end(), possiblyBestObj) != validObjs.end()){
-      _targetBlockID = possiblyBestObjID;
-    }else{
-      const ObservableObject* closestObject = GetBEI().GetBlockWorld().
-              FindLocatedObjectClosestTo(GetBEI().GetRobotInfo().GetPose(), filter);
-      
-      if(closestObject != nullptr)
-      {
-        _targetBlockID = closestObject->GetID();
-      }
-    }
-  }
+  _targetBlockID = possiblyBestObjID;
 }
   
   

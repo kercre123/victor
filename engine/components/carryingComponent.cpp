@@ -13,7 +13,6 @@
 #include "engine/components/carryingComponent.h"
 
 #include "engine/blockWorld/blockWorld.h"
-#include "engine/blockWorld/blockConfigurationManager.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/robot.h"
 
@@ -382,10 +381,6 @@ Result CarryingComponent::SetObjectAsAttachedToLift(const ObjectID& objectID,
   }
   
   SetCarryingObject(objectID, atMarkerCode); // also marks the object as carried
-  
-  // Robot may have just destroyed a configuration
-  // update the configuration manager
-  _robot->GetBlockWorld().GetBlockConfigurationManager().FlagForRebuild();
   
   // Don't actually change the object's pose until we've checked for objects on top
   Result poseResult = _robot->GetObjectPoseConfirmer().AddLiftRelativeObservation(object, objectPoseWrtLiftPose);

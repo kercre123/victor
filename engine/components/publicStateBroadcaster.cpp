@@ -15,10 +15,7 @@
 #include "engine/components/publicStateBroadcaster.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/blockWorld/blockConfigurationManager.h"
-#include "engine/blockWorld/blockConfigurationStack.h"
 #include "engine/blockWorld/blockWorld.h"
-#include "engine/blockWorld/stackConfigurationContainer.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/needsSystem/needsManager.h"
@@ -161,23 +158,6 @@ void PublicStateBroadcaster::UpdateRequestingGame(bool isRequesting)
 {
   _currentState->isRequestingGame = isRequesting;
   SendUpdatedState();
-}
- 
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void PublicStateBroadcaster::NotifyBroadcasterOfConfigurationManagerUpdate(const Robot& robot)
-{
-  const auto& tallestStack = robot.GetBlockWorld().GetBlockConfigurationManager().GetStackCache().GetTallestStack().lock();
-  const bool stackDisappeared = ((tallestStack == nullptr) &&
-                                 (_currentState->tallestStackHeight != 0));
-  const bool stackHeightChanged = (tallestStack != nullptr &&
-                                   (_currentState->tallestStackHeight != tallestStack->GetStackHeight()));
-  
-  if(stackDisappeared || stackHeightChanged){
-    _currentState->tallestStackHeight = (tallestStack != nullptr) ?
-                                           tallestStack->GetStackHeight() : 0;
-    SendUpdatedState();
-  }
 }
 
 

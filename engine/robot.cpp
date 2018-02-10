@@ -25,7 +25,6 @@
 #include "engine/ankiEventUtil.h"
 #include "engine/audio/engineRobotAudioClient.h"
 #include "engine/block.h"
-#include "engine/blockWorld/blockConfigurationManager.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/charger.h"
 #include "engine/components/animationComponent.h"

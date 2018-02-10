@@ -66,7 +66,6 @@ private:
   };
   
   mutable ObjectID    _targetBlockID;
-  std::vector<BlockConfigurations::ConfigurationType> _configurationsToIgnore;
   
   void TransitionToDoingInitialReaction();
   void TransitionToPickingUpCube();

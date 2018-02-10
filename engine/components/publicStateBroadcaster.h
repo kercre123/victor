@@ -61,7 +61,6 @@ public:
   void UpdateBroadcastBehaviorStage(BehaviorStageTag stageType, uint8_t stage);
   
   void UpdateRequestingGame(bool isRequesting);
-  void NotifyBroadcasterOfConfigurationManagerUpdate(const Robot& robot);
   
 private:
   std::unique_ptr<RobotPublicState> _currentState;

@@ -27,7 +27,6 @@
 #include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/block.h"
-#include "engine/blockWorld/blockConfigurationManager.h"
 #include "engine/bridge.h"
 #include "engine/charger.h"
 #include "engine/components/carryingComponent.h"
@@ -114,7 +113,6 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
   {
     _robot = robot;
     DEV_ASSERT(_robot != nullptr, "BlockWorld.Constructor.InvalidRobot");
-    _blockConfigurationManager = std::make_unique<BlockConfigurations::BlockConfigurationManager>(*robot);
     
     
     // TODO: Create each known block / matpiece from a configuration/definitions file
@@ -1137,11 +1135,6 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
     // we added any based on rejiggering (not observation). Include unconnected
     // ones as well.
     BroadcastLocatedObjectStates();
-    
-    
-    // Since object origins have changed we need to force a configuration
-    // update during the configuration manager's update
-    _blockConfigurationManager->FlagForRebuild();
     
     return result;
   }
@@ -2277,9 +2270,6 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
         }
       }
     }
-    
-    // notify the block configuration manager
-    _blockConfigurationManager->SetObjectPoseChanged(objectID, object.GetPoseState());
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -2570,10 +2560,6 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
       
       ModifyLocatedObjects(markAsDirty, unobservedCollidingObjectFilter);
     }
-    
-    //Update  block configurations now that all block poses have been updated
-    _blockConfigurationManager->Update(*_robot);
-    
     
     Result lastResult = UpdateMarkerlessObjects(_robot->GetLastImageTimeStamp());
     

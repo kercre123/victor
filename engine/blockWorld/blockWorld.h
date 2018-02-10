@@ -48,10 +48,6 @@ namespace Anki
     class INavMap;
     class MapComponent;
     
-    namespace BlockConfigurations{
-    class BlockConfigurationManager;
-    }
-    
     // BlockWorld is updated at the robot component level, same as BehaviorComponent
     // Therefore BCComponents (which are managed by BehaviorComponent) can't declare dependencies on BlockWorld 
     // since when it's Init/Update relative to BehaviorComponent must be declared by BehaviorComponent explicitly, 
@@ -388,10 +384,7 @@ namespace Anki
       // template for all events we subscribe to
       template<typename T>
       void HandleMessage(const T& msg);
-      
-      BlockConfigurations::BlockConfigurationManager& GetBlockConfigurationManager() { assert(_blockConfigurationManager); return *_blockConfigurationManager;}
-      const BlockConfigurations::BlockConfigurationManager& GetBlockConfigurationManager() const { assert(_blockConfigurationManager); return *_blockConfigurationManager;}
-      
+
     private:
 
       // active objects
@@ -572,7 +565,6 @@ namespace Anki
       std::vector<Signal::SmartHandle> _eventHandles;
             
       TimeStamp_t _currentObservedMarkerTimestamp = 0;
-      std::unique_ptr<BlockConfigurations::BlockConfigurationManager> _blockConfigurationManager;    
     }; // class BlockWorld
 
 
