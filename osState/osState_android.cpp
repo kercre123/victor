@@ -147,7 +147,10 @@ u32 OSState::GetOSBuildNumber()
   if(_osBuildNum == 0)
   {
     std::string osBuildNum = ExecCommand("getprop ro.anki.os_build_number");
-    _osBuildNum = static_cast<u32>(std::stoi(osBuildNum));
+    if (!osBuildNum.empty())
+    {
+      _osBuildNum = static_cast<u32>(std::stoi(osBuildNum));
+    }
   }
   
   return _osBuildNum;
