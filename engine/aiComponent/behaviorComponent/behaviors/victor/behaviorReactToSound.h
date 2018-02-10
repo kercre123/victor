@@ -84,22 +84,7 @@ private:
   TimeStamp_t GetCooldownEndTime() const;
   // the earliest timestamp that we'll respond to a sound
   TimeStamp_t GetReactionWindowBeginTime() const;
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Scoring Functions (not currently active)
-
-//  struct DirectionScore
-//  {
-//    MicDirectionHistory::DirectionIndex       direction;
-//    float                                     score;
-//
-//    MicDirectionHistory::DirectionConfidence  scoreConfidence;
-//    TimeStamp_t                               scoreDuration;
-//    TimeStamp_t                               scoreRecent;
-//  };
-//
-//  std::vector<DirectionScore> GetDirectionScores() const;
-
+  
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Internal Data Structure Definitions ...
