@@ -28,7 +28,6 @@
 #include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/aiComponent/templatedImageCache.h"
 #include "engine/aiComponent/timerUtility.h"
-#include "engine/aiComponent/workoutComponent.h"
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/publicStateBroadcaster.h"
 #include "engine/components/progressionUnlockComponent.h"
@@ -68,8 +67,7 @@ AIComponentComponents::AIComponentComponents(Robot&                      robot,
                                              SevereNeedsComponent*       severeNeedsComponent,
                                              TemplatedImageCache*        templatedImageCache,
                                              TimerUtility*               timerUtility,
-                                             AIWhiteboard*               aiWhiteboard,
-                                             WorkoutComponent*           workoutComponent)
+                                             AIWhiteboard*               aiWhiteboard)
 :_robot(robot)
 ,_components({
   {AIComponentID::BehaviorComponent,          ComponentWrapper(behaviorComponent, true)},
@@ -85,8 +83,7 @@ AIComponentComponents::AIComponentComponents(Robot&                      robot,
   {AIComponentID::SevereNeeds,                ComponentWrapper(severeNeedsComponent, true)},
   {AIComponentID::TemplatedImageCache,        ComponentWrapper(templatedImageCache, true)},
   {AIComponentID::TimerUtility,               ComponentWrapper(timerUtility, true)},
-  {AIComponentID::Whiteboard,                 ComponentWrapper(aiWhiteboard, true)},
-  {AIComponentID::Workout,                    ComponentWrapper(workoutComponent, true)}
+  {AIComponentID::Whiteboard,                 ComponentWrapper(aiWhiteboard, true)}
 }){}
 
 AIComponentComponents::~AIComponentComponents()
@@ -148,8 +145,7 @@ Result AIComponent::Init(Robot* robot, BehaviorComponent*& customBehaviorCompone
           new SevereNeedsComponent(*robot),
           new TemplatedImageCache(robot->GetContext()->GetDataLoader()->GetFacePNGPaths()),
           new TimerUtility(),
-          new AIWhiteboard(*robot),
-          new WorkoutComponent(*robot)
+          new AIWhiteboard(*robot)
     );
 
     if(behaviorCompInitRequired){
@@ -180,24 +176,6 @@ Result AIComponent::Init(Robot* robot, BehaviorComponent*& customBehaviorCompone
   RobotDataLoader* dataLoader = nullptr;
   if(context){
     dataLoader = robot->GetContext()->GetDataLoader();
-  }
-  
-
-  // initialize workout component
-  if(dataLoader != nullptr){
-    auto& puzzleComponent = GetComponent<PuzzleComponent>(AIComponentID::Puzzle);
-
-    puzzleComponent.InitConfigs();
-    
-    auto& workoutComp = GetComponent<WorkoutComponent>(AIComponentID::Workout);
-    const Json::Value& workoutConfig = dataLoader->GetRobotWorkoutConfig();
-
-    const Result res = workoutComp.InitConfiguration(workoutConfig);
-    if( res != RESULT_OK ) {
-      PRINT_NAMED_ERROR("AIComponent.Init.FailedToInitWorkoutComponent",
-                        "Couldn't init workout component, deleting");
-      return res;      
-    }
   }
   
   return RESULT_OK;

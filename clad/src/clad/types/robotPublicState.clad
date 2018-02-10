@@ -15,7 +15,6 @@ enum uint_8 BehaviorStageTag{
   Feeding,
   GuardDog,
   PyramidConstruction,
-  Workout,
   Count
 }
 
@@ -25,8 +24,7 @@ structure BehaviorStageStruct{
   BehaviorStageTag behaviorStageTag,
   FeedingStage currentFeedingStage,
   GuardDogStage currentGuardDogStage,
-  PyramidConstructionStage currentPyramidConstructionStage,
-  WorkoutStage currentWorkoutStage
+  PyramidConstructionStage currentPyramidConstructionStage
 }
 
 structure NeedsLevels{

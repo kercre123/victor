@@ -47,7 +47,6 @@ class Robot;
 class SevereNeedsComponent;
 class TemplatedImageCache;
 class TimerUtility;
-class WorkoutComponent;
 
 namespace ComponentWrappers{
 class AIComponentComponents{
@@ -66,8 +65,7 @@ public:
                         SevereNeedsComponent*       severeNeedsComponent,
                         TemplatedImageCache*        templatedImageCache,
                         TimerUtility*               timerUtility,
-                        AIWhiteboard*               aiWhiteboard,
-                        WorkoutComponent*           workoutComponent);
+                        AIWhiteboard*               aiWhiteboard);
   virtual ~AIComponentComponents();
   
   Robot& _robot;
@@ -137,9 +135,6 @@ public:
   inline PuzzleComponent&       GetPuzzleComponent()       { return GetComponent<PuzzleComponent>(AIComponentID::Puzzle);}
 
   inline const FaceSelectionComponent& GetFaceSelectionComponent() const {return GetComponent<FaceSelectionComponent>(AIComponentID::FaceSelection);}
-
-  inline const WorkoutComponent& GetWorkoutComponent() const {  return GetComponent<WorkoutComponent>(AIComponentID::Workout); }
-  inline WorkoutComponent&       GetWorkoutComponent()       {  return GetComponent<WorkoutComponent>(AIComponentID::Workout); }
   
   inline RequestGameComponent& GetRequestGameComponent()               {  return GetComponent<RequestGameComponent>(AIComponentID::RequestGame);}
   inline RequestGameComponent& GetNonConstRequestGameComponent() const {  return GetComponent<RequestGameComponent>(AIComponentID::RequestGame);}

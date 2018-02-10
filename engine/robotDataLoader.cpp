@@ -529,19 +529,6 @@ void RobotDataLoader::LoadRobotConfigs()
     }
   }
 
-  // Workout config
-  {
-    static const std::string jsonFilename = "config/engine/behaviorComponent/workout_config.json";
-    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _robotWorkoutConfig);
-    if (!success)
-    {
-      LOG_ERROR("RobotDataLoader.WorkoutConfigJsonFailed",
-                "Workout Json config file %s not found or failed to parse",
-                jsonFilename.c_str());
-      _robotWorkoutConfig.clear();
-    }
-  }
-
   // vision config
   {
     static const std::string jsonFilename = "config/engine/vision_config.json";

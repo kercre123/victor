@@ -19,7 +19,6 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
-#include "engine/aiComponent/workoutComponent.h"
 #include "engine/audio/engineRobotAudioClient.h"
 #include "engine/components/publicStateBroadcaster.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -92,9 +91,7 @@ const std::array<AudioMetaData::SwitchState::Gameplay_Round, 11> kGameplayRoundM
   { BehaviorStageTag::Feeding, BehaviorID::Activity_Feeding},
   { BehaviorStageTag::GuardDog, BehaviorID::Activity_PlayAlone},
   { BehaviorStageTag::PyramidConstruction, BehaviorID::Activity_BuildPyramid},
-  { BehaviorStageTag::PyramidConstruction, BehaviorID::Activity_SparksBuildPyramid},
-  { BehaviorStageTag::Workout, BehaviorID::Activity_PlayAlone},
-  { BehaviorStageTag::Workout, BehaviorID::Activity_SparksWorkout},
+  { BehaviorStageTag::PyramidConstruction, BehaviorID::Activity_SparksBuildPyramid}
 };**/
   
 } // end anonymous namespace

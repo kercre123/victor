@@ -144,11 +144,6 @@ void PublicStateBroadcaster::UpdateBroadcastBehaviorStage(BehaviorStageTag stage
       newStruct.currentPyramidConstructionStage = static_cast<PyramidConstructionStage>(stage);
       break;
     }
-    case BehaviorStageTag::Workout:
-    {
-      newStruct.currentWorkoutStage = static_cast<WorkoutStage>(stage);
-      break;
-    }
     case BehaviorStageTag::Count:
     {
       break;
@@ -209,10 +204,6 @@ int PublicStateBroadcaster::GetStageForBehaviorStageType(BehaviorStageTag stageT
     case BehaviorStageTag::PyramidConstruction:
     {
       return Util::EnumToUnderlying(stageStruct.currentPyramidConstructionStage);
-    }
-    case BehaviorStageTag::Workout:
-    {
-      return Util::EnumToUnderlying(stageStruct.currentWorkoutStage);
     }
     case BehaviorStageTag::Count:
     {
