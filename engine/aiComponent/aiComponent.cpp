@@ -20,7 +20,6 @@
 #include "engine/aiComponent/continuityComponent.h"
 #include "engine/aiComponent/doATrickSelector.h"
 #include "engine/aiComponent/faceSelectionComponent.h"
-#include "engine/aiComponent/feedingSoundEffectManager.h"
 #include "engine/aiComponent/freeplayDataTracker.h"
 #include "engine/aiComponent/objectInteractionInfoCache.h"
 #include "engine/aiComponent/puzzleComponent.h"
@@ -57,7 +56,6 @@ AIComponentComponents::AIComponentComponents(Robot&                      robot,
                                              ContinuityComponent*        continuityComponent,
                                              DoATrickSelector*           doATrickSelector,
                                              FaceSelectionComponent*     faceSelectionComponent,
-                                             FeedingSoundEffectManager*  feedingSoundEFfectManager,
                                              FreeplayDataTracker*        freeplayDataTracker,
                                              AIInformationAnalyzer*      infoAnalyzer,
                                              ObjectInteractionInfoCache* objectInteractionInfoCache,
@@ -72,7 +70,6 @@ AIComponentComponents::AIComponentComponents(Robot&                      robot,
   {AIComponentID::ContinuityComponent,        ComponentWrapper(continuityComponent, true)},
   {AIComponentID::DoATrick,                   ComponentWrapper(doATrickSelector, true)},
   {AIComponentID::FaceSelection,              ComponentWrapper(faceSelectionComponent, true)},
-  {AIComponentID::FeedingSoundEffect,         ComponentWrapper(feedingSoundEFfectManager, true)},
   {AIComponentID::FreeplayDataTracker,        ComponentWrapper(freeplayDataTracker, true)},
   {AIComponentID::InformationAnalyzer,        ComponentWrapper(infoAnalyzer, true)},
   {AIComponentID::ObjectInteractionInfoCache, ComponentWrapper(objectInteractionInfoCache, true)},
@@ -132,7 +129,6 @@ Result AIComponent::Init(Robot* robot, BehaviorComponent*& customBehaviorCompone
           new ContinuityComponent(*robot),
           new DoATrickSelector(robot->GetContext()->GetDataLoader()->GetDoATrickWeightsConfig()),
           new FaceSelectionComponent(*robot, robot->GetFaceWorld(), robot->GetMicDirectionHistory()),
-          new FeedingSoundEffectManager(),
           new FreeplayDataTracker(),
           new AIInformationAnalyzer(),
           new ObjectInteractionInfoCache(*robot),

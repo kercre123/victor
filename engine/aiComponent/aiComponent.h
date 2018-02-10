@@ -38,7 +38,6 @@ class BehaviorHelperComponent;
 class ContinuityComponent;
 class DoATrickSelector;
 class FaceSelectionComponent;
-class FeedingSoundEffectManager;
 class FreeplayDataTracker;
 class ObjectInteractionInfoCache;
 class PuzzleComponent;
@@ -55,7 +54,6 @@ public:
                         ContinuityComponent*        continuityComponent,
                         DoATrickSelector*           doATrickSelector,
                         FaceSelectionComponent*     faceSelectionComponent,
-                        FeedingSoundEffectManager*  feedingSoundEFfectManager,
                         FreeplayDataTracker*        freeplayDataTracker,
                         AIInformationAnalyzer*      infoAnalyzer,
                         ObjectInteractionInfoCache* objectInteractionInfoCache,
@@ -136,8 +134,6 @@ public:
   
   inline RequestGameComponent& GetRequestGameComponent()               {  return GetComponent<RequestGameComponent>(AIComponentID::RequestGame);}
   inline RequestGameComponent& GetNonConstRequestGameComponent() const {  return GetComponent<RequestGameComponent>(AIComponentID::RequestGame);}
-
-  inline FeedingSoundEffectManager& GetFeedingSoundEffectManager() {  return GetComponent<FeedingSoundEffectManager>(AIComponentID::FeedingSoundEffect); };
   
   inline DoATrickSelector& GetDoATrickSelector()  {  return GetComponent<DoATrickSelector>(AIComponentID::DoATrick); }
 

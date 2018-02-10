@@ -26,8 +26,6 @@ enum class AIComponentID{
   DoATrick,
   // provide a simple interface for selecting the best face to interact with
   FaceSelection,
-  // Coordinates sound effect events across various feeding cubes/activities etc
-  FeedingSoundEffect,
   // component for tracking freeplay DAS data
   FreeplayDataTracker,
   // module to analyze information for the AI in processes common to more than one behavior, for example
