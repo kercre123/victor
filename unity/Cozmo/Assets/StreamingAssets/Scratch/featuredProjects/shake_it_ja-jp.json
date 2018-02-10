@@ -23,142 +23,142 @@
                 "variables": {
                     "!/drFP.FFya:.JV$v)IC": {
                         "id": "!/drFP.FFya:.JV$v)IC",
-                        "name": "cube gesperrt",
+                        "name": "\u30ad\u30e5\u30fc\u30d6\u304c\u30ed\u30c3\u30af\u3055\u308c\u307e\u3057\u305f",
                         "value": "False"
                     },
                     "+h@M7h+duf2THti]qx;#": {
                         "id": "+h@M7h+duf2THti]qx;#",
-                        "name": "spieldauer",
+                        "name": "\u30b2\u30fc\u30e0\u6642\u9593",
                         "value": "10"
                     },
                     "/]6.Oolb|cN~pkr$KGbU": {
                         "id": "/]6.Oolb|cN~pkr$KGbU",
-                        "name": "wird in jeder runde aufgerufen, um die variablen zur\u00fcckzusetzen.",
+                        "name": "\u30e9\u30a6\u30f3\u30c9\u3092\u30b3\u30fc\u30eb\u3057\u3066\u5909\u6570\u3092\u30ea\u30bb\u30c3\u30c8\u3057\u307e\u3059\u3002",
                         "value": 0
                     },
                     "2?;|34c){X(Hp?YQp~;o": {
                         "id": "2?;|34c){X(Hp?YQp~;o",
-                        "name": "wie oft cube 3 bewegt wurde",
+                        "name": "Cube 3\u304c\u52d5\u3044\u305f\u56de\u6570",
                         "value": "0"
                     },
                     "6-kPRkTJGZi]3}W_=fAM": {
                         "id": "6-kPRkTJGZi]3}W_=fAM",
-                        "name": "mehrfarbig",
+                        "name": "\u30de\u30eb\u30c1\u30ab\u30e9\u30fc",
                         "value": "False"
                     },
                     "8Zn[)~;D`#P!2aTk5xIA": {
                         "id": "8Zn[)~;D`#P!2aTk5xIA",
-                        "name": "\u00fcberpr\u00fcfe, ob das sch\u00fctteln von cube 1 die richtige aktion ist.",
+                        "name": "Cube 1\u3092\u632f\u308b\u3053\u3068\u304c\u6b63\u89e3\u306e\u30a2\u30af\u30b7\u30e7\u30f3\u304b\u3069\u3046\u304b\u30c1\u30a7\u30c3\u30af\u3057\u307e\u3059\u3002",
                         "value": 0
                     },
                     ":qP`rzCF*(Qy;[ApLFo%": {
                         "id": ":qP`rzCF*(Qy;[ApLFo%",
-                        "name": "richtige farbe",
+                        "name": "\u6b63\u89e3\u306e\u8272",
                         "value": "None"
                     },
                     "=|V#~o``9@yD`xALHZ7M": {
                         "id": "=|V#~o``9@yD`xALHZ7M",
-                        "name": "richtige aktion",
+                        "name": "\u6b63\u3057\u3044\u30a2\u30af\u30b7\u30e7\u30f3",
                         "value": "False"
                     },
                     "A;w~KO,Xus-ZR!I#dAD{": {
                         "id": "A;w~KO,Xus-ZR!I#dAD{",
-                        "name": "richtet die cube-farben ein.",
+                        "name": "Cube\u306e\u30ab\u30e9\u30fc\u3092\u8a2d\u5b9a\u3057\u307e\u3059\u3002",
                         "value": 0
                     },
                     "GLt7qWD*s~%hVf6Z7A,o": {
                         "id": "GLt7qWD*s~%hVf6Z7A,o",
-                        "name": "wie oft cube 1 bewegt wurde",
+                        "name": "Cube 1\u304c\u52d5\u3044\u305f\u56de\u6570",
                         "value": "0"
                     },
                     "I$$^q3s=`9PDC+SB+rFK": {
                         "id": "I$$^q3s=`9PDC+SB+rFK",
-                        "name": "wird f\u00fcr eine falsche aktion aufgerufen.",
+                        "name": "\u4e0d\u6b63\u89e3\u306e\u30a2\u30af\u30b7\u30e7\u30f3\u3092\u30b3\u30fc\u30eb\u3057\u307e\u3059\u3002",
                         "value": 0
                     },
                     "KvM{nzIg3%s4+8!MoR^z": {
                         "id": "KvM{nzIg3%s4+8!MoR^z",
-                        "name": "spielrunde",
+                        "name": "\u30b2\u30fc\u30e0\u30e9\u30a6\u30f3\u30c9",
                         "value": 10
                     },
                     "S1qyf}9z+wFqz^WTzmE!": {
                         "id": "S1qyf}9z+wFqz^WTzmE!",
-                        "name": "wird in jeder runde aufgerufen, um die richtige aktion zuf\u00e4llig auszuw\u00e4hlen.",
+                        "name": "\u30e9\u30a6\u30f3\u30c9\u3092\u30e9\u30f3\u30c0\u30e0\u306b\u30b3\u30fc\u30eb\u3057\u3066\u6b63\u89e3\u306e\u30a2\u30af\u30b7\u30e7\u30f3\u3092\u9078\u629e\u3057\u307e\u3059\u3002",
                         "value": "0"
                     },
                     "TPl5^IZic5JY8sXlP],E": {
                         "id": "TPl5^IZic5JY8sXlP],E",
-                        "name": "rundenzeit",
+                        "name": "\u30e9\u30a6\u30f3\u30c9\u6642\u9593",
                         "value": "3"
                     },
                     "TS4qixQofnmR,*J[%iz{": {
                         "id": "TS4qixQofnmR,*J[%iz{",
-                        "name": "\u00fcberpr\u00fcfe, ob der mehrfarbige cube richtig gesch\u00fcttelt wurde.",
+                        "name": "\u30de\u30eb\u30c1\u30ab\u30e9\u30fc\u306eCube\u3092\u632f\u308b\u3053\u3068\u304c\u6b63\u89e3\u304b\u3069\u3046\u304b\u30c1\u30a7\u30c3\u30af\u3057\u307e\u3059\u3002",
                         "value": 0
                     },
                     "T{wV(7[#!)?(8YqCnk0f": {
                         "id": "T{wV(7[#!)?(8YqCnk0f",
-                        "name": "cube 2 gesch\u00fcttelt",
+                        "name": "Cube 2\u3092\u632f\u308a\u307e\u3057\u305f",
                         "value": "False"
                     },
                     "W2LaBgUtfNOVg]wD5X3V": {
                         "id": "W2LaBgUtfNOVg]wD5X3V",
-                        "name": "cube 3 gesch\u00fcttelt",
+                        "name": "Cube 3\u3092\u632f\u308a\u307e\u3057\u305f",
                         "value": "False"
                     },
                     "]kz%pTDjS*X)InFVXN0/": {
                         "id": "]kz%pTDjS*X)InFVXN0/",
-                        "name": "wie oft cube 2 bewegt wurde",
+                        "name": "Cube 2\u304c\u52d5\u3044\u305f\u56de\u6570",
                         "value": "0"
                     },
                     "`I~mo+lwTq]AAC._V;ze": {
                         "id": "`I~mo+lwTq]AAC._V;ze",
-                        "name": "\u00fcberpr\u00fcfe, ob cozmo gesch\u00fcttelt wurde.",
+                        "name": "COZMO\u304c\u632f\u3089\u308c\u305f\u304b\u3069\u3046\u304b\u30c1\u30a7\u30c3\u30af\u3057\u307e\u3059\u3002",
                         "value": 0
                     },
                     "arik8Ty*D,K,:EO~B-u1": {
                         "id": "arik8Ty*D,K,:EO~B-u1",
-                        "name": "cube 1 gesch\u00fcttelt",
+                        "name": "Cube 1\u3092\u632f\u308a\u307e\u3057\u305f",
                         "value": "False"
                     },
                     "cwcF%q.$:z8v)cmaVPF/": {
                         "id": "cwcF%q.$:z8v)cmaVPF/",
-                        "name": "spielbeginn und hauptschleife.",
+                        "name": "\u30b2\u30fc\u30e0\u30b9\u30bf\u30fc\u30c8\u3001\u30e1\u30a4\u30f3\u30eb\u30fc\u30d7\u3002",
                         "value": 0
                     },
                     "d`SMcaN/W$yvh`n9gr@W": {
                         "id": "d`SMcaN/W$yvh`n9gr@W",
-                        "name": "cozmo sch\u00fctteln",
+                        "name": "COZMO\u3092\u632f\u308b",
                         "value": "False"
                     },
                     "k0xv);7w7d9G:^#Vf4GK": {
                         "id": "k0xv);7w7d9G:^#Vf4GK",
-                        "name": "sch\u00fctteln",
+                        "name": "\u632f\u308b\u30a2\u30af\u30b7\u30e7\u30f3",
                         "value": 8
                     },
                     "q~HrzS9h$d`kMgh6^PDq": {
                         "id": "q~HrzS9h$d`kMgh6^PDq",
-                        "name": "\u00fcberpr\u00fcfe, ob das sch\u00fctteln von cube 3 die richtige aktion ist.",
+                        "name": "Cube 3\u3092\u632f\u308b\u3053\u3068\u304c\u6b63\u89e3\u306e\u30a2\u30af\u30b7\u30e7\u30f3\u304b\u3069\u3046\u304b\u30c1\u30a7\u30c3\u30af\u3057\u307e\u3059\u3002",
                         "value": 0
                     },
                     "vMcG7F^pj^fVitR/T}iK": {
                         "id": "vMcG7F^pj^fVitR/T}iK",
-                        "name": "wird f\u00fcr eine richtige aktion aufgerufen.",
+                        "name": "\u6b63\u89e3\u306e\u30a2\u30af\u30b7\u30e7\u30f3\u3092\u30b3\u30fc\u30eb\u3057\u307e\u3059\u3002",
                         "value": 0
                     },
                     "zOW2?FKKT]Zac+K^X!7D": {
                         "id": "zOW2?FKKT]Zac+K^X!7D",
-                        "name": "\u00fcberpr\u00fcfe, ob das sch\u00fctteln von cube 2 die richtige aktion ist.",
+                        "name": "Cube 2\u3092\u632f\u308b\u3053\u3068\u304c\u6b63\u89e3\u306e\u30a2\u30af\u30b7\u30e7\u30f3\u304b\u3069\u3046\u304b\u30c1\u30a7\u30c3\u30af\u3057\u307e\u3059\u3002",
                         "value": 0
                     },
                     "z_U4VX~kq{[{V/p.$dL9": {
                         "id": "z_U4VX~kq{[{V/p.$dL9",
-                        "name": "punkte",
+                        "name": "\u30dd\u30a4\u30f3\u30c8",
                         "value": 9
                     },
                     "}s#5?FW8/|~u=:~Guf4]": {
                         "id": "}s#5?FW8/|~u=:~Guf4]",
-                        "name": "wird am ende des spiels aufgerufen.",
+                        "name": "\u30b2\u30fc\u30e0\u7d42\u4e86\u6642\u306b\u30b3\u30fc\u30eb\u3057\u307e\u3057\u305f\u3002",
                         "value": 3
                     }
                 },
@@ -342,7 +342,7 @@
                             "VARIABLE": {
                                 "id": "T{wV(7[#!)?(8YqCnk0f",
                                 "name": "VARIABLE",
-                                "value": "cube 2 gesch\u00fcttelt"
+                                "value": "Cube 2\u3092\u632f\u308a\u307e\u3057\u305f"
                             }
                         },
                         "id": "#JURxkG~:KC.o7Q^=t=0",
@@ -360,7 +360,7 @@
                             "VARIABLE": {
                                 "id": "S1qyf}9z+wFqz^WTzmE!",
                                 "name": "VARIABLE",
-                                "value": "wird in jeder runde aufgerufen, um die richtige aktion zuf\u00e4llig auszuw\u00e4hlen."
+                                "value": "\u30e9\u30a6\u30f3\u30c9\u3092\u30e9\u30f3\u30c0\u30e0\u306b\u30b3\u30fc\u30eb\u3057\u3066\u6b63\u89e3\u306e\u30a2\u30af\u30b7\u30e7\u30f3\u3092\u9078\u629e\u3057\u307e\u3059\u3002"
                             }
                         },
                         "id": "#]l:%L_k!KM`q-|_mEmi",
@@ -401,7 +401,7 @@
                             "VARIABLE": {
                                 "id": ":qP`rzCF*(Qy;[ApLFo%",
                                 "name": "VARIABLE",
-                                "value": "richtige farbe"
+                                "value": "\u6b63\u89e3\u306e\u8272"
                             }
                         },
                         "id": "#qYj]=)wVehe9TFU4T93",
@@ -695,7 +695,7 @@
                             "VARIABLE": {
                                 "id": ":qP`rzCF*(Qy;[ApLFo%",
                                 "name": "VARIABLE",
-                                "value": "richtige farbe"
+                                "value": "\u6b63\u89e3\u306e\u8272"
                             }
                         },
                         "id": "%nux8NPGT.4oyJ{]P.SI",
@@ -730,7 +730,7 @@
                             "VARIABLE": {
                                 "id": "2?;|34c){X(Hp?YQp~;o",
                                 "name": "VARIABLE",
-                                "value": "wie oft cube 3 bewegt wurde"
+                                "value": "Cube 3\u304c\u52d5\u3044\u305f\u56de\u6570"
                             }
                         },
                         "id": "(VjWj6,[ggjN=e@ia:dW",
@@ -754,7 +754,7 @@
                             "VARIABLE": {
                                 "id": "A;w~KO,Xus-ZR!I#dAD{",
                                 "name": "VARIABLE",
-                                "value": "richtet die cube-farben ein."
+                                "value": "Cube\u306e\u30ab\u30e9\u30fc\u3092\u8a2d\u5b9a\u3057\u307e\u3059\u3002"
                             }
                         },
                         "id": "(^0+U3O#M)w?zyk9776d",
@@ -918,7 +918,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "gr\u00fcn"
+                                "value": "\u307f\u3069\u308a"
                             }
                         },
                         "id": "*c,rWuJj$j[I2W7JVvNK",
@@ -957,7 +957,7 @@
                             "VARIABLE": {
                                 "id": "6-kPRkTJGZi]3}W_=fAM",
                                 "name": "VARIABLE",
-                                "value": "mehrfarbig"
+                                "value": "\u30de\u30eb\u30c1\u30ab\u30e9\u30fc"
                             }
                         },
                         "id": "*r;Q.{$FIH0;fBHK2Kq!",
@@ -1061,7 +1061,7 @@
                             "VARIABLE": {
                                 "id": "z_U4VX~kq{[{V/p.$dL9",
                                 "name": "VARIABLE",
-                                "value": "punkte"
+                                "value": "\u30dd\u30a4\u30f3\u30c8"
                             }
                         },
                         "id": "+Y/Z~o#FWket:_!v=d92",
@@ -1280,7 +1280,7 @@
                             "VARIABLE": {
                                 "id": "=|V#~o``9@yD`xALHZ7M",
                                 "name": "VARIABLE",
-                                "value": "richtige aktion"
+                                "value": "\u6b63\u3057\u3044\u30a2\u30af\u30b7\u30e7\u30f3"
                             }
                         },
                         "id": ".RfF+gX`qU?zLddw7Ap|",
@@ -1304,7 +1304,7 @@
                             "VARIABLE": {
                                 "id": "TS4qixQofnmR,*J[%iz{",
                                 "name": "VARIABLE",
-                                "value": "\u00fcberpr\u00fcfe, ob der mehrfarbige cube richtig gesch\u00fcttelt wurde."
+                                "value": "\u30de\u30eb\u30c1\u30ab\u30e9\u30fc\u306eCube\u3092\u632f\u308b\u3053\u3068\u304c\u6b63\u89e3\u304b\u3069\u3046\u304b\u30c1\u30a7\u30c3\u30af\u3057\u307e\u3059\u3002"
                             }
                         },
                         "id": ".Ufz+e}!#PE@fM!Fik~_",
@@ -1334,7 +1334,7 @@
                             "VARIABLE": {
                                 "id": ":qP`rzCF*(Qy;[ApLFo%",
                                 "name": "VARIABLE",
-                                "value": "richtige farbe"
+                                "value": "\u6b63\u89e3\u306e\u8272"
                             }
                         },
                         "id": ".rk2Pmv|?s:NwOjL`K.L",
@@ -1389,7 +1389,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "du hast"
+                                "value": "\u3042\u306a\u305f\u306f"
                             }
                         },
                         "id": "/d92zNj(yYX%os{~K~dl",
@@ -1405,7 +1405,7 @@
                             "VARIABLE": {
                                 "id": "d`SMcaN/W$yvh`n9gr@W",
                                 "name": "VARIABLE",
-                                "value": "cozmo sch\u00fctteln"
+                                "value": "COZMO\u3092\u632f\u308b"
                             }
                         },
                         "id": "/h#aoK0!:RPq@KDEeyAK",
@@ -1496,7 +1496,7 @@
                             "VARIABLE": {
                                 "id": "!/drFP.FFya:.JV$v)IC",
                                 "name": "VARIABLE",
-                                "value": "cube gesperrt"
+                                "value": "\u30ad\u30e5\u30fc\u30d6\u304c\u30ed\u30c3\u30af\u3055\u308c\u307e\u3057\u305f"
                             }
                         },
                         "id": "0:T9ZuEO~+ESG?3;-dx^",
@@ -1698,7 +1698,7 @@
                             "VARIABLE": {
                                 "id": "6-kPRkTJGZi]3}W_=fAM",
                                 "name": "VARIABLE",
-                                "value": "mehrfarbig"
+                                "value": "\u30de\u30eb\u30c1\u30ab\u30e9\u30fc"
                             }
                         },
                         "id": "0{$aEe193^uZn/AL5Yjs",
@@ -1789,7 +1789,7 @@
                             "VARIABLE": {
                                 "id": ":qP`rzCF*(Qy;[ApLFo%",
                                 "name": "VARIABLE",
-                                "value": "richtige farbe"
+                                "value": "\u6b63\u89e3\u306e\u8272"
                             }
                         },
                         "id": "1XVv+yWREP9wJq[iSp23",
@@ -1921,7 +1921,7 @@
                             "VARIABLE": {
                                 "id": "q~HrzS9h$d`kMgh6^PDq",
                                 "name": "VARIABLE",
-                                "value": "\u00fcberpr\u00fcfe, ob das sch\u00fctteln von cube 3 die richtige aktion ist."
+                                "value": "Cube 3\u3092\u632f\u308b\u3053\u3068\u304c\u6b63\u89e3\u306e\u30a2\u30af\u30b7\u30e7\u30f3\u304b\u3069\u3046\u304b\u30c1\u30a7\u30c3\u30af\u3057\u307e\u3059\u3002"
                             }
                         },
                         "id": "2HD+fE(xDT~R%:H$6-(p",
@@ -1939,7 +1939,7 @@
                             "VARIABLE": {
                                 "id": "2?;|34c){X(Hp?YQp~;o",
                                 "name": "VARIABLE",
-                                "value": "wie oft cube 3 bewegt wurde"
+                                "value": "Cube 3\u304c\u52d5\u3044\u305f\u56de\u6570"
                             }
                         },
                         "id": "2IqL]tL8#mF+RD*u^t]#",
@@ -2009,7 +2009,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "texte"
+                                "value": "\u30c6\u30ad\u30b9\u30c8"
                             }
                         },
                         "id": "2rhk!BVBK]mB8%7_^(^`",
@@ -2101,7 +2101,7 @@
                             "VARIABLE": {
                                 "id": "d`SMcaN/W$yvh`n9gr@W",
                                 "name": "VARIABLE",
-                                "value": "cozmo sch\u00fctteln"
+                                "value": "COZMO\u3092\u632f\u308b"
                             }
                         },
                         "id": "3~Bi]j$C4LUKSa~z+HZ-",
@@ -2189,7 +2189,7 @@
                             "VARIABLE": {
                                 "id": "TPl5^IZic5JY8sXlP],E",
                                 "name": "VARIABLE",
-                                "value": "rundenzeit"
+                                "value": "\u30e9\u30a6\u30f3\u30c9\u6642\u9593"
                             }
                         },
                         "id": "4r_s+V`S!{i$*}@z5I|W",
@@ -2262,7 +2262,7 @@
                             "VARIABLE": {
                                 "id": "!/drFP.FFya:.JV$v)IC",
                                 "name": "VARIABLE",
-                                "value": "cube gesperrt"
+                                "value": "\u30ad\u30e5\u30fc\u30d6\u304c\u30ed\u30c3\u30af\u3055\u308c\u307e\u3057\u305f"
                             }
                         },
                         "id": "5G_GBSLL_4FN{e[O24SN",
@@ -2365,7 +2365,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "gr\u00fcn"
+                                "value": "\u307f\u3069\u308a"
                             }
                         },
                         "id": "5mODHl:p4ZDw#;aM^aq_",
@@ -2381,7 +2381,7 @@
                             "VARIABLE": {
                                 "id": "=|V#~o``9@yD`xALHZ7M",
                                 "name": "VARIABLE",
-                                "value": "richtige aktion"
+                                "value": "\u6b63\u3057\u3044\u30a2\u30af\u30b7\u30e7\u30f3"
                             }
                         },
                         "id": "5u.0?Voet$`wX%gUae`7",
@@ -2419,7 +2419,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "lila"
+                                "value": "\u3080\u3089\u3055\u304d"
                             }
                         },
                         "id": "6aw_eKz.Zu:6okF$uaRc",
@@ -2435,7 +2435,7 @@
                             "VARIABLE": {
                                 "id": "!/drFP.FFya:.JV$v)IC",
                                 "name": "VARIABLE",
-                                "value": "cube gesperrt"
+                                "value": "\u30ad\u30e5\u30fc\u30d6\u304c\u30ed\u30c3\u30af\u3055\u308c\u307e\u3057\u305f"
                             }
                         },
                         "id": "6p=~uphwo)h3kFWvpRg%",
@@ -2468,7 +2468,7 @@
                             "VARIABLE": {
                                 "id": "=|V#~o``9@yD`xALHZ7M",
                                 "name": "VARIABLE",
-                                "value": "richtige aktion"
+                                "value": "\u6b63\u3057\u3044\u30a2\u30af\u30b7\u30e7\u30f3"
                             }
                         },
                         "id": "7?|+?e}6u_]$yx~m~p_6",
@@ -2539,7 +2539,7 @@
                             "VARIABLE": {
                                 "id": "!/drFP.FFya:.JV$v)IC",
                                 "name": "VARIABLE",
-                                "value": "cube gesperrt"
+                                "value": "\u30ad\u30e5\u30fc\u30d6\u304c\u30ed\u30c3\u30af\u3055\u308c\u307e\u3057\u305f"
                             }
                         },
                         "id": "8G?.]]C$Q7[K6g1b1wPp",
@@ -2562,7 +2562,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "mehr gl\u00fcck beim n\u00e4chsten mal"
+                                "value": "\u3064\u304e\u306f\u304c\u3093\u3070\u3063\u3066\u306d"
                             }
                         },
                         "id": "8Wj54jDq:D,gr9DafIA(",
@@ -2578,7 +2578,7 @@
                             "VARIABLE": {
                                 "id": "`I~mo+lwTq]AAC._V;ze",
                                 "name": "VARIABLE",
-                                "value": "\u00fcberpr\u00fcfe, ob cozmo gesch\u00fcttelt wurde."
+                                "value": "COZMO\u304c\u632f\u3089\u308c\u305f\u304b\u3069\u3046\u304b\u30c1\u30a7\u30c3\u30af\u3057\u307e\u3059\u3002"
                             }
                         },
                         "id": "8]#po/XHzm:Eo+Jy;EYK",
@@ -2619,7 +2619,7 @@
                             "VARIABLE": {
                                 "id": "!/drFP.FFya:.JV$v)IC",
                                 "name": "VARIABLE",
-                                "value": "cube gesperrt"
+                                "value": "\u30ad\u30e5\u30fc\u30d6\u304c\u30ed\u30c3\u30af\u3055\u308c\u307e\u3057\u305f"
                             }
                         },
                         "id": "8b]_0Z46,.^J{Lr|5|LF",
@@ -2764,7 +2764,7 @@
                             "VARIABLE": {
                                 "id": "GLt7qWD*s~%hVf6Z7A,o",
                                 "name": "VARIABLE",
-                                "value": "wie oft cube 1 bewegt wurde"
+                                "value": "Cube 1\u304c\u52d5\u3044\u305f\u56de\u6570"
                             }
                         },
                         "id": "9/9QG*dhEewUKYzOoYEK",
@@ -2788,7 +2788,7 @@
                             "VARIABLE": {
                                 "id": "]kz%pTDjS*X)InFVXN0/",
                                 "name": "VARIABLE",
-                                "value": "wie oft cube 2 bewegt wurde"
+                                "value": "Cube 2\u304c\u52d5\u3044\u305f\u56de\u6570"
                             }
                         },
                         "id": "95?L+Q2pl,Jf78/Oz!-@",
@@ -2806,7 +2806,7 @@
                             "VARIABLE": {
                                 "id": "z_U4VX~kq{[{V/p.$dL9",
                                 "name": "VARIABLE",
-                                "value": "punkte"
+                                "value": "\u30dd\u30a4\u30f3\u30c8"
                             }
                         },
                         "id": "9TLR(7nVu%GJ,D%}_r:m",
@@ -2854,7 +2854,7 @@
                             "VARIABLE": {
                                 "id": "GLt7qWD*s~%hVf6Z7A,o",
                                 "name": "VARIABLE",
-                                "value": "wie oft cube 1 bewegt wurde"
+                                "value": "Cube 1\u304c\u52d5\u3044\u305f\u56de\u6570"
                             }
                         },
                         "id": ":?EO.}XcPT80vuSZIg5t",
@@ -2893,7 +2893,7 @@
                             "VARIABLE": {
                                 "id": ":qP`rzCF*(Qy;[ApLFo%",
                                 "name": "VARIABLE",
-                                "value": "richtige farbe"
+                                "value": "\u6b63\u89e3\u306e\u8272"
                             }
                         },
                         "id": ":]h:Q3}SMohdHqMn|k7|",
@@ -2947,7 +2947,7 @@
                             "VARIABLE": {
                                 "id": "!/drFP.FFya:.JV$v)IC",
                                 "name": "VARIABLE",
-                                "value": "cube gesperrt"
+                                "value": "\u30ad\u30e5\u30fc\u30d6\u304c\u30ed\u30c3\u30af\u3055\u308c\u307e\u3057\u305f"
                             }
                         },
                         "id": ";Jsn/(obW;IyBzd^$0#,",
@@ -3029,7 +3029,7 @@
                             "VARIABLE": {
                                 "id": "arik8Ty*D,K,:EO~B-u1",
                                 "name": "VARIABLE",
-                                "value": "cube 1 gesch\u00fcttelt"
+                                "value": "Cube 1\u3092\u632f\u308a\u307e\u3057\u305f"
                             }
                         },
                         "id": ";nr)rO0^La-.B#!i|hI@",
@@ -3087,7 +3087,7 @@
                             "VARIABLE": {
                                 "id": "!/drFP.FFya:.JV$v)IC",
                                 "name": "VARIABLE",
-                                "value": "cube gesperrt"
+                                "value": "\u30ad\u30e5\u30fc\u30d6\u304c\u30ed\u30c3\u30af\u3055\u308c\u307e\u3057\u305f"
                             }
                         },
                         "id": "=(hNlD7tD,6JZM/^GJU5",
@@ -3175,7 +3175,7 @@
                             "VARIABLE": {
                                 "id": "!/drFP.FFya:.JV$v)IC",
                                 "name": "VARIABLE",
-                                "value": "cube gesperrt"
+                                "value": "\u30ad\u30e5\u30fc\u30d6\u304c\u30ed\u30c3\u30af\u3055\u308c\u307e\u3057\u305f"
                             }
                         },
                         "id": "=q_3}+);kjaf(NkQf3=p",
@@ -3231,7 +3231,7 @@
                             "VARIABLE": {
                                 "id": "arik8Ty*D,K,:EO~B-u1",
                                 "name": "VARIABLE",
-                                "value": "cube 1 gesch\u00fcttelt"
+                                "value": "Cube 1\u3092\u632f\u308a\u307e\u3057\u305f"
                             }
                         },
                         "id": "?MR!2P=qrdNr|00qCk_Z",
@@ -3379,7 +3379,7 @@
                             "VARIABLE": {
                                 "id": "KvM{nzIg3%s4+8!MoR^z",
                                 "name": "VARIABLE",
-                                "value": "spielrunde"
+                                "value": "\u30b2\u30fc\u30e0\u30e9\u30a6\u30f3\u30c9"
                             }
                         },
                         "id": "?{8#T)6jTiCDiYhWHa-s",
@@ -3465,7 +3465,7 @@
                             "VARIABLE": {
                                 "id": "k0xv);7w7d9G:^#Vf4GK",
                                 "name": "VARIABLE",
-                                "value": "sch\u00fctteln"
+                                "value": "\u632f\u308b\u30a2\u30af\u30b7\u30e7\u30f3"
                             }
                         },
                         "id": "AnUgY{0[Ep|KQTMrPg@B",
@@ -3526,7 +3526,7 @@
                             "VARIABLE": {
                                 "id": "6-kPRkTJGZi]3}W_=fAM",
                                 "name": "VARIABLE",
-                                "value": "mehrfarbig"
+                                "value": "\u30de\u30eb\u30c1\u30ab\u30e9\u30fc"
                             }
                         },
                         "id": "BA)eYI35D@us*z;Kui_=",
@@ -3596,7 +3596,7 @@
                             "VARIABLE": {
                                 "id": ":qP`rzCF*(Qy;[ApLFo%",
                                 "name": "VARIABLE",
-                                "value": "richtige farbe"
+                                "value": "\u6b63\u89e3\u306e\u8272"
                             }
                         },
                         "id": "Bf}JaQYQR+8f^b;/R=^}",
@@ -3614,7 +3614,7 @@
                             "VARIABLE": {
                                 "id": "TPl5^IZic5JY8sXlP],E",
                                 "name": "VARIABLE",
-                                "value": "rundenzeit"
+                                "value": "\u30e9\u30a6\u30f3\u30c9\u6642\u9593"
                             }
                         },
                         "id": "Bly(]cYT-2F_u/6~R+^#",
@@ -3652,7 +3652,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "rot"
+                                "value": "\u3042\u304b"
                             }
                         },
                         "id": "C~0]IeZXnVI{~/^26UYP",
@@ -3802,7 +3802,7 @@
                             "VARIABLE": {
                                 "id": "arik8Ty*D,K,:EO~B-u1",
                                 "name": "VARIABLE",
-                                "value": "cube 1 gesch\u00fcttelt"
+                                "value": "Cube 1\u3092\u632f\u308a\u307e\u3057\u305f"
                             }
                         },
                         "id": "D}CV;3iza~K;5=0FuwKe",
@@ -3825,7 +3825,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "von 10"
+                                "value": "\u30dd\u30a4\u30f3\u30c8!"
                             }
                         },
                         "id": "E*MVB.2BLBg3MTEobs@n",
@@ -3904,7 +3904,7 @@
                             "VARIABLE": {
                                 "id": "k0xv);7w7d9G:^#Vf4GK",
                                 "name": "VARIABLE",
-                                "value": "sch\u00fctteln"
+                                "value": "\u632f\u308b\u30a2\u30af\u30b7\u30e7\u30f3"
                             }
                         },
                         "id": "EM4]IW.g?mDej+dd[Cr1",
@@ -3922,7 +3922,7 @@
                             "VARIABLE": {
                                 "id": "GLt7qWD*s~%hVf6Z7A,o",
                                 "name": "VARIABLE",
-                                "value": "wie oft cube 1 bewegt wurde"
+                                "value": "Cube 1\u304c\u52d5\u3044\u305f\u56de\u6570"
                             }
                         },
                         "id": "EwE~%?=WzZupnN(N}G6`",
@@ -3939,7 +3939,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "ich"
+                                "value": "\u308f\u305f\u3057"
                             }
                         },
                         "id": "F!`cOkA8Pw8Fx7%?WC?y",
@@ -3955,7 +3955,7 @@
                             "VARIABLE": {
                                 "id": "=|V#~o``9@yD`xALHZ7M",
                                 "name": "VARIABLE",
-                                "value": "richtige aktion"
+                                "value": "\u6b63\u3057\u3044\u30a2\u30af\u30b7\u30e7\u30f3"
                             }
                         },
                         "id": "F#iJ(?6W?}E}PgV{Q[.Z",
@@ -3999,7 +3999,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "ich"
+                                "value": "\u308f\u305f\u3057"
                             }
                         },
                         "id": "F3s3NI0GrSyImc{*Z(d(",
@@ -4047,7 +4047,7 @@
                             "VARIABLE": {
                                 "id": "+h@M7h+duf2THti]qx;#",
                                 "name": "VARIABLE",
-                                "value": "spieldauer"
+                                "value": "\u30b2\u30fc\u30e0\u6642\u9593"
                             }
                         },
                         "id": "FY[r=c=,4|HnWNI2n?hA",
@@ -4199,7 +4199,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "von 10 punkten!"
+                                "value": "\u3066\u3093\u304b\u304f\u3068\u304f\uff01"
                             }
                         },
                         "id": "G|}55xw/TS[H44xvWg1o",
@@ -4253,7 +4253,7 @@
                             "VARIABLE": {
                                 "id": "k0xv);7w7d9G:^#Vf4GK",
                                 "name": "VARIABLE",
-                                "value": "sch\u00fctteln"
+                                "value": "\u632f\u308b\u30a2\u30af\u30b7\u30e7\u30f3"
                             }
                         },
                         "id": "Hl?pjgDcm*%C!#8Coubb",
@@ -4309,7 +4309,7 @@
                             "VARIABLE": {
                                 "id": "z_U4VX~kq{[{V/p.$dL9",
                                 "name": "VARIABLE",
-                                "value": "punkte"
+                                "value": "\u30dd\u30a4\u30f3\u30c8"
                             }
                         },
                         "id": "I/^Wr7EB.tvmTOgjF2$_",
@@ -4348,7 +4348,7 @@
                             "VARIABLE": {
                                 "id": "!/drFP.FFya:.JV$v)IC",
                                 "name": "VARIABLE",
-                                "value": "cube gesperrt"
+                                "value": "\u30ad\u30e5\u30fc\u30d6\u304c\u30ed\u30c3\u30af\u3055\u308c\u307e\u3057\u305f"
                             }
                         },
                         "id": "I?h*AXe9R5{]]rFWYIx@",
@@ -4418,7 +4418,7 @@
                             "VARIABLE": {
                                 "id": "W2LaBgUtfNOVg]wD5X3V",
                                 "name": "VARIABLE",
-                                "value": "cube 3 gesch\u00fcttelt"
+                                "value": "Cube 3\u3092\u632f\u308a\u307e\u3057\u305f"
                             }
                         },
                         "id": "IfA8o/J!0p/s^fb!!0jY",
@@ -4512,7 +4512,7 @@
                             "VARIABLE": {
                                 "id": "vMcG7F^pj^fVitR/T}iK",
                                 "name": "VARIABLE",
-                                "value": "wird f\u00fcr eine richtige aktion aufgerufen."
+                                "value": "\u6b63\u89e3\u306e\u30a2\u30af\u30b7\u30e7\u30f3\u3092\u30b3\u30fc\u30eb\u3057\u307e\u3059\u3002"
                             }
                         },
                         "id": "J6Y9_Iot(!@`$)z}%h${",
@@ -4593,7 +4593,7 @@
                             "VARIABLE": {
                                 "id": "=|V#~o``9@yD`xALHZ7M",
                                 "name": "VARIABLE",
-                                "value": "richtige aktion"
+                                "value": "\u6b63\u3057\u3044\u30a2\u30af\u30b7\u30e7\u30f3"
                             }
                         },
                         "id": "J_H(W%m;KkZoM`T_?-1y",
@@ -4670,7 +4670,7 @@
                             "VARIABLE": {
                                 "id": ":qP`rzCF*(Qy;[ApLFo%",
                                 "name": "VARIABLE",
-                                "value": "richtige farbe"
+                                "value": "\u6b63\u89e3\u306e\u8272"
                             }
                         },
                         "id": "K=e[X!TJL,=|p=c3d=`~",
@@ -4733,7 +4733,7 @@
                             "VARIABLE": {
                                 "id": "d`SMcaN/W$yvh`n9gr@W",
                                 "name": "VARIABLE",
-                                "value": "cozmo sch\u00fctteln"
+                                "value": "COZMO\u3092\u632f\u308b"
                             }
                         },
                         "id": "KK$L*W9n-?N|e!0Zb6}=",
@@ -4751,7 +4751,7 @@
                             "VARIABLE": {
                                 "id": ":qP`rzCF*(Qy;[ApLFo%",
                                 "name": "VARIABLE",
-                                "value": "richtige farbe"
+                                "value": "\u6b63\u89e3\u306e\u8272"
                             }
                         },
                         "id": "KdkV!qk4O5xW!)1NnmjF",
@@ -4790,7 +4790,7 @@
                             "VARIABLE": {
                                 "id": "W2LaBgUtfNOVg]wD5X3V",
                                 "name": "VARIABLE",
-                                "value": "cube 3 gesch\u00fcttelt"
+                                "value": "Cube 3\u3092\u632f\u308a\u307e\u3057\u305f"
                             }
                         },
                         "id": "L6ln|5jb#]k~gUD8m=7@",
@@ -4808,7 +4808,7 @@
                             "VARIABLE": {
                                 "id": "2?;|34c){X(Hp?YQp~;o",
                                 "name": "VARIABLE",
-                                "value": "wie oft cube 3 bewegt wurde"
+                                "value": "Cube 3\u304c\u52d5\u3044\u305f\u56de\u6570"
                             }
                         },
                         "id": "Lh6f_ebQWn/]:?rCV=]j",
@@ -5067,7 +5067,7 @@
                             "VARIABLE": {
                                 "id": "T{wV(7[#!)?(8YqCnk0f",
                                 "name": "VARIABLE",
-                                "value": "cube 2 gesch\u00fcttelt"
+                                "value": "Cube 2\u3092\u632f\u308a\u307e\u3057\u305f"
                             }
                         },
                         "id": "N!+D(|FHBwmOdRT(0oYj",
@@ -5103,7 +5103,7 @@
                             "VARIABLE": {
                                 "id": "!/drFP.FFya:.JV$v)IC",
                                 "name": "VARIABLE",
-                                "value": "cube gesperrt"
+                                "value": "\u30ad\u30e5\u30fc\u30d6\u304c\u30ed\u30c3\u30af\u3055\u308c\u307e\u3057\u305f"
                             }
                         },
                         "id": "NI4DYuliR6!Oqfj:)wyg",
@@ -5126,7 +5126,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "rot"
+                                "value": "\u3042\u304b"
                             }
                         },
                         "id": "NOoWCq~TnCB{0|P`%!K9",
@@ -5227,7 +5227,7 @@
                             "VARIABLE": {
                                 "id": "=|V#~o``9@yD`xALHZ7M",
                                 "name": "VARIABLE",
-                                "value": "richtige aktion"
+                                "value": "\u6b63\u3057\u3044\u30a2\u30af\u30b7\u30e7\u30f3"
                             }
                         },
                         "id": "OG61Rpqelq`@300am?%k",
@@ -5316,7 +5316,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": " punkte"
+                                "value": " / 10"
                             }
                         },
                         "id": "O{(Zf]WKWmWMbTvz8E}5",
@@ -5349,7 +5349,7 @@
                             "VARIABLE": {
                                 "id": "]kz%pTDjS*X)InFVXN0/",
                                 "name": "VARIABLE",
-                                "value": "wie oft cube 2 bewegt wurde"
+                                "value": "Cube 2\u304c\u52d5\u3044\u305f\u56de\u6570"
                             }
                         },
                         "id": "P.jhx%]VSxq7l]?+t@UX",
@@ -5373,7 +5373,7 @@
                             "VARIABLE": {
                                 "id": "=|V#~o``9@yD`xALHZ7M",
                                 "name": "VARIABLE",
-                                "value": "richtige aktion"
+                                "value": "\u6b63\u3057\u3044\u30a2\u30af\u30b7\u30e7\u30f3"
                             }
                         },
                         "id": "P67BBEn1E.4T0}+K8}s|",
@@ -5427,7 +5427,7 @@
                             "VARIABLE": {
                                 "id": ":qP`rzCF*(Qy;[ApLFo%",
                                 "name": "VARIABLE",
-                                "value": "richtige farbe"
+                                "value": "\u6b63\u89e3\u306e\u8272"
                             }
                         },
                         "id": "PNIaM/6Bun7-U|gxHz[;",
@@ -5511,7 +5511,7 @@
                             "VARIABLE": {
                                 "id": "6-kPRkTJGZi]3}W_=fAM",
                                 "name": "VARIABLE",
-                                "value": "mehrfarbig"
+                                "value": "\u30de\u30eb\u30c1\u30ab\u30e9\u30fc"
                             }
                         },
                         "id": "Q3?|-Z1Y7$RFiETHT`zw",
@@ -5684,7 +5684,7 @@
                             "VARIABLE": {
                                 "id": "!/drFP.FFya:.JV$v)IC",
                                 "name": "VARIABLE",
-                                "value": "cube gesperrt"
+                                "value": "\u30ad\u30e5\u30fc\u30d6\u304c\u30ed\u30c3\u30af\u3055\u308c\u307e\u3057\u305f"
                             }
                         },
                         "id": "RZ+b*z;-HI+_8:?Wx,JQ",
@@ -5720,7 +5720,7 @@
                             "VARIABLE": {
                                 "id": "=|V#~o``9@yD`xALHZ7M",
                                 "name": "VARIABLE",
-                                "value": "richtige aktion"
+                                "value": "\u6b63\u3057\u3044\u30a2\u30af\u30b7\u30e7\u30f3"
                             }
                         },
                         "id": "RpYn1Ly=!f!1f!J*eN]{",
@@ -5767,7 +5767,7 @@
                             "VARIABLE": {
                                 "id": "!/drFP.FFya:.JV$v)IC",
                                 "name": "VARIABLE",
-                                "value": "cube gesperrt"
+                                "value": "\u30ad\u30e5\u30fc\u30d6\u304c\u30ed\u30c3\u30af\u3055\u308c\u307e\u3057\u305f"
                             }
                         },
                         "id": "Rw-HF].1Al+8Rf0gJI$K",
@@ -5883,7 +5883,7 @@
                             "VARIABLE": {
                                 "id": "!/drFP.FFya:.JV$v)IC",
                                 "name": "VARIABLE",
-                                "value": "cube gesperrt"
+                                "value": "\u30ad\u30e5\u30fc\u30d6\u304c\u30ed\u30c3\u30af\u3055\u308c\u307e\u3057\u305f"
                             }
                         },
                         "id": "S_:A3*{KXxi+#{0.m)Mo",
@@ -5901,7 +5901,7 @@
                             "VARIABLE": {
                                 "id": ":qP`rzCF*(Qy;[ApLFo%",
                                 "name": "VARIABLE",
-                                "value": "richtige farbe"
+                                "value": "\u6b63\u89e3\u306e\u8272"
                             }
                         },
                         "id": "SmgFhn,_s9VQlN70UZz;",
@@ -5925,7 +5925,7 @@
                             "VARIABLE": {
                                 "id": "d`SMcaN/W$yvh`n9gr@W",
                                 "name": "VARIABLE",
-                                "value": "cozmo sch\u00fctteln"
+                                "value": "COZMO\u3092\u632f\u308b"
                             }
                         },
                         "id": "S{ghyajjP=V-RJ]*e~ce",
@@ -6105,7 +6105,7 @@
                             "VARIABLE": {
                                 "id": "6-kPRkTJGZi]3}W_=fAM",
                                 "name": "VARIABLE",
-                                "value": "mehrfarbig"
+                                "value": "\u30de\u30eb\u30c1\u30ab\u30e9\u30fc"
                             }
                         },
                         "id": "UM:k!,pY+38056X7ZI[h",
@@ -6197,7 +6197,7 @@
                             "VARIABLE": {
                                 "id": "!/drFP.FFya:.JV$v)IC",
                                 "name": "VARIABLE",
-                                "value": "cube gesperrt"
+                                "value": "\u30ad\u30e5\u30fc\u30d6\u304c\u30ed\u30c3\u30af\u3055\u308c\u307e\u3057\u305f"
                             }
                         },
                         "id": "V:UIi3hty%S?Y3e3eHX*",
@@ -6333,7 +6333,7 @@
                             "VARIABLE": {
                                 "id": ":qP`rzCF*(Qy;[ApLFo%",
                                 "name": "VARIABLE",
-                                "value": "richtige farbe"
+                                "value": "\u6b63\u89e3\u306e\u8272"
                             }
                         },
                         "id": "WaSa+w,s7F)s.az=.oIi",
@@ -6365,7 +6365,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "lila"
+                                "value": "\u3080\u3089\u3055\u304d"
                             }
                         },
                         "id": "Wnl/]R1g0+[tWr62We1Y",
@@ -6417,7 +6417,7 @@
                             "VARIABLE": {
                                 "id": "}s#5?FW8/|~u=:~Guf4]",
                                 "name": "VARIABLE",
-                                "value": "wird am ende des spiels aufgerufen."
+                                "value": "\u30b2\u30fc\u30e0\u7d42\u4e86\u6642\u306b\u30b3\u30fc\u30eb\u3057\u307e\u3057\u305f\u3002"
                             }
                         },
                         "id": "X$v51pA#}Fm-Od6;:q}4",
@@ -6434,7 +6434,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "blau"
+                                "value": "\u3042\u304a"
                             }
                         },
                         "id": "Xo_=$aeK~`VT4BcbxO2[",
@@ -6469,7 +6469,7 @@
                             "VARIABLE": {
                                 "id": "6-kPRkTJGZi]3}W_=fAM",
                                 "name": "VARIABLE",
-                                "value": "mehrfarbig"
+                                "value": "\u30de\u30eb\u30c1\u30ab\u30e9\u30fc"
                             }
                         },
                         "id": "Xte3h]b|PtVmpm8]hbYS",
@@ -6507,7 +6507,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "du hast gewonnen"
+                                "value": "\u3042\u306a\u305f\u306e\u304b\u3061"
                             }
                         },
                         "id": "Y99XSRAy2?i|Y8pp0$U[",
@@ -6556,7 +6556,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "lila"
+                                "value": "\u3080\u3089\u3055\u304d"
                             }
                         },
                         "id": "Yz#La5tc.$)cz(cB*lKu",
@@ -6572,7 +6572,7 @@
                             "VARIABLE": {
                                 "id": "k0xv);7w7d9G:^#Vf4GK",
                                 "name": "VARIABLE",
-                                "value": "sch\u00fctteln"
+                                "value": "\u632f\u308b\u30a2\u30af\u30b7\u30e7\u30f3"
                             }
                         },
                         "id": "Z!q`bSlEt;bo:v17[+kh",
@@ -6627,7 +6627,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "mache dich zum sch\u00fctteln bereit! "
+                                "value": "\u3075\u308b\u3058\u3085\u3093\u3073\u306f\u3044\u3044\uff1f "
                             }
                         },
                         "id": "ZGRXr}kF9m}(z`i$O)ON",
@@ -6788,7 +6788,7 @@
                             "VARIABLE": {
                                 "id": "I$$^q3s=`9PDC+SB+rFK",
                                 "name": "VARIABLE",
-                                "value": "wird f\u00fcr eine falsche aktion aufgerufen."
+                                "value": "\u4e0d\u6b63\u89e3\u306e\u30a2\u30af\u30b7\u30e7\u30f3\u3092\u30b3\u30fc\u30eb\u3057\u307e\u3059\u3002"
                             }
                         },
                         "id": "[am/a8z9$!qkHEPTyGH+",
@@ -6824,7 +6824,7 @@
                             "VARIABLE": {
                                 "id": "]kz%pTDjS*X)InFVXN0/",
                                 "name": "VARIABLE",
-                                "value": "wie oft cube 2 bewegt wurde"
+                                "value": "Cube 2\u304c\u52d5\u3044\u305f\u56de\u6570"
                             }
                         },
                         "id": "];?Z^P7AFt6m[uBk77zq",
@@ -6847,7 +6847,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "gr\u00fcn"
+                                "value": "\u307f\u3069\u308a"
                             }
                         },
                         "id": "]C#4%j!~)}T4(n:/Mc~8",
@@ -6863,7 +6863,7 @@
                             "VARIABLE": {
                                 "id": "+h@M7h+duf2THti]qx;#",
                                 "name": "VARIABLE",
-                                "value": "spieldauer"
+                                "value": "\u30b2\u30fc\u30e0\u6642\u9593"
                             }
                         },
                         "id": "]Py1.h[+7A?-3,s3ghI2",
@@ -6927,7 +6927,7 @@
                             "VARIABLE": {
                                 "id": ":qP`rzCF*(Qy;[ApLFo%",
                                 "name": "VARIABLE",
-                                "value": "richtige farbe"
+                                "value": "\u6b63\u89e3\u306e\u8272"
                             }
                         },
                         "id": "]zv@#xIQTvpc(aI+aY#n",
@@ -7002,7 +7002,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "blau"
+                                "value": "\u3042\u304a"
                             }
                         },
                         "id": "^tF`B(TrOunbfDQL5)iN",
@@ -7033,7 +7033,7 @@
                             "VARIABLE": {
                                 "id": "=|V#~o``9@yD`xALHZ7M",
                                 "name": "VARIABLE",
-                                "value": "richtige aktion"
+                                "value": "\u6b63\u3057\u3044\u30a2\u30af\u30b7\u30e7\u30f3"
                             }
                         },
                         "id": "_KV~hd}FT[B:2BYpB$$h",
@@ -7057,7 +7057,7 @@
                             "VARIABLE": {
                                 "id": "6-kPRkTJGZi]3}W_=fAM",
                                 "name": "VARIABLE",
-                                "value": "mehrfarbig"
+                                "value": "\u30de\u30eb\u30c1\u30ab\u30e9\u30fc"
                             }
                         },
                         "id": "__*p1L3YbA[,Bs/Oz.(M",
@@ -7159,7 +7159,7 @@
                             "VARIABLE": {
                                 "id": "k0xv);7w7d9G:^#Vf4GK",
                                 "name": "VARIABLE",
-                                "value": "sch\u00fctteln"
+                                "value": "\u632f\u308b\u30a2\u30af\u30b7\u30e7\u30f3"
                             }
                         },
                         "id": "`DGJJ~l,dE~Q_{=t8s$3",
@@ -7177,7 +7177,7 @@
                             "VARIABLE": {
                                 "id": "=|V#~o``9@yD`xALHZ7M",
                                 "name": "VARIABLE",
-                                "value": "richtige aktion"
+                                "value": "\u6b63\u3057\u3044\u30a2\u30af\u30b7\u30e7\u30f3"
                             }
                         },
                         "id": "`Ha#Z_qt+0*scA+V%@Vk",
@@ -7201,7 +7201,7 @@
                             "VARIABLE": {
                                 "id": "z_U4VX~kq{[{V/p.$dL9",
                                 "name": "VARIABLE",
-                                "value": "punkte"
+                                "value": "\u30dd\u30a4\u30f3\u30c8"
                             }
                         },
                         "id": "`wTE5W0Ygc`1yz,12Yv:",
@@ -7344,7 +7344,7 @@
                             "VARIABLE": {
                                 "id": "k0xv);7w7d9G:^#Vf4GK",
                                 "name": "VARIABLE",
-                                "value": "sch\u00fctteln"
+                                "value": "\u632f\u308b\u30a2\u30af\u30b7\u30e7\u30f3"
                             }
                         },
                         "id": "aY__-O,Z7U-hOT1Vj7s;",
@@ -7394,7 +7394,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "blau"
+                                "value": "\u3042\u304a"
                             }
                         },
                         "id": "b8gI#v]#933qSuZ+YT-O",
@@ -7448,7 +7448,7 @@
                             "VARIABLE": {
                                 "id": "2?;|34c){X(Hp?YQp~;o",
                                 "name": "VARIABLE",
-                                "value": "wie oft cube 3 bewegt wurde"
+                                "value": "Cube 3\u304c\u52d5\u3044\u305f\u56de\u6570"
                             }
                         },
                         "id": "bnc=JSgSQ2sK1-4yhpc+",
@@ -7498,7 +7498,7 @@
                             "VARIABLE": {
                                 "id": "]kz%pTDjS*X)InFVXN0/",
                                 "name": "VARIABLE",
-                                "value": "wie oft cube 2 bewegt wurde"
+                                "value": "Cube 2\u304c\u52d5\u3044\u305f\u56de\u6570"
                             }
                         },
                         "id": "bz*^^?8*$8jN;h/5-u8`",
@@ -7549,7 +7549,7 @@
                             "VARIABLE": {
                                 "id": "!/drFP.FFya:.JV$v)IC",
                                 "name": "VARIABLE",
-                                "value": "cube gesperrt"
+                                "value": "\u30ad\u30e5\u30fc\u30d6\u304c\u30ed\u30c3\u30af\u3055\u308c\u307e\u3057\u305f"
                             }
                         },
                         "id": "cCmRHmS4VJjlTy(.szEc",
@@ -7567,7 +7567,7 @@
                             "VARIABLE": {
                                 "id": "=|V#~o``9@yD`xALHZ7M",
                                 "name": "VARIABLE",
-                                "value": "richtige aktion"
+                                "value": "\u6b63\u3057\u3044\u30a2\u30af\u30b7\u30e7\u30f3"
                             }
                         },
                         "id": "cVM0@iNh-g6tlWat*H99",
@@ -7591,7 +7591,7 @@
                             "VARIABLE": {
                                 "id": "k0xv);7w7d9G:^#Vf4GK",
                                 "name": "VARIABLE",
-                                "value": "sch\u00fctteln"
+                                "value": "\u632f\u308b\u30a2\u30af\u30b7\u30e7\u30f3"
                             }
                         },
                         "id": "c_^HrKEijEY%]kwaxw!S",
@@ -7636,7 +7636,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "gelb"
+                                "value": "\u304d\u3044\u308d"
                             }
                         },
                         "id": "copIa[L$;df9bW#vHds~",
@@ -7652,7 +7652,7 @@
                             "VARIABLE": {
                                 "id": "z_U4VX~kq{[{V/p.$dL9",
                                 "name": "VARIABLE",
-                                "value": "punkte"
+                                "value": "\u30dd\u30a4\u30f3\u30c8"
                             }
                         },
                         "id": "d*5_cu,3B2wCHo?gu%P)",
@@ -7704,7 +7704,7 @@
                             "VARIABLE": {
                                 "id": "/]6.Oolb|cN~pkr$KGbU",
                                 "name": "VARIABLE",
-                                "value": "wird in jeder runde aufgerufen, um die variablen zur\u00fcckzusetzen."
+                                "value": "\u30e9\u30a6\u30f3\u30c9\u3092\u30b3\u30fc\u30eb\u3057\u3066\u5909\u6570\u3092\u30ea\u30bb\u30c3\u30c8\u3057\u307e\u3059\u3002"
                             }
                         },
                         "id": "d5w,NNln@;Rendn,!Ty|",
@@ -7811,7 +7811,7 @@
                             "VARIABLE": {
                                 "id": "6-kPRkTJGZi]3}W_=fAM",
                                 "name": "VARIABLE",
-                                "value": "mehrfarbig"
+                                "value": "\u30de\u30eb\u30c1\u30ab\u30e9\u30fc"
                             }
                         },
                         "id": "dASc}qLG,l;#C2Dl1lGb",
@@ -7860,7 +7860,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "hol dir alle 10 punkte!"
+                                "value": "\u305c\u309310\u30dd\u30a4\u30f3\u30c8\u306e\u304b\u304f\u3068\u304f\u3092\u3081\u3056\u305d\u3046\uff01"
                             }
                         },
                         "id": "dR};;aq`fTB-GsOK;14#",
@@ -7934,7 +7934,7 @@
                             "VARIABLE": {
                                 "id": "W2LaBgUtfNOVg]wD5X3V",
                                 "name": "VARIABLE",
-                                "value": "cube 3 gesch\u00fcttelt"
+                                "value": "Cube 3\u3092\u632f\u308a\u307e\u3057\u305f"
                             }
                         },
                         "id": "e%.py,8,~}qAsWtb-!Bd",
@@ -8034,7 +8034,7 @@
                             "VARIABLE": {
                                 "id": "k0xv);7w7d9G:^#Vf4GK",
                                 "name": "VARIABLE",
-                                "value": "sch\u00fctteln"
+                                "value": "\u632f\u308b\u30a2\u30af\u30b7\u30e7\u30f3"
                             }
                         },
                         "id": "eL|;w9PvP1M6fU-#2;[f",
@@ -8121,7 +8121,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "gelb"
+                                "value": "\u304d\u3044\u308d"
                             }
                         },
                         "id": "f,oqUfqI9-1av|vv0F:T",
@@ -8139,7 +8139,7 @@
                             "VARIABLE": {
                                 "id": "!/drFP.FFya:.JV$v)IC",
                                 "name": "VARIABLE",
-                                "value": "cube gesperrt"
+                                "value": "\u30ad\u30e5\u30fc\u30d6\u304c\u30ed\u30c3\u30af\u3055\u308c\u307e\u3057\u305f"
                             }
                         },
                         "id": "fS/tJDpGxdp7-i:8s2yy",
@@ -8202,7 +8202,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "rot"
+                                "value": "\u3042\u304b"
                             }
                         },
                         "id": "g$PDE$yTAG$S/@qQ--pj",
@@ -8218,7 +8218,7 @@
                             "VARIABLE": {
                                 "id": "GLt7qWD*s~%hVf6Z7A,o",
                                 "name": "VARIABLE",
-                                "value": "wie oft cube 1 bewegt wurde"
+                                "value": "Cube 1\u304c\u52d5\u3044\u305f\u56de\u6570"
                             }
                         },
                         "id": "g.f5GiWE^|J)xxAk%:[`",
@@ -8235,7 +8235,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "gelb"
+                                "value": "\u304d\u3044\u308d"
                             }
                         },
                         "id": "g6`(*vkC[D0_I9f3Ck`q",
@@ -8353,7 +8353,7 @@
                             "VARIABLE": {
                                 "id": "KvM{nzIg3%s4+8!MoR^z",
                                 "name": "VARIABLE",
-                                "value": "spielrunde"
+                                "value": "\u30b2\u30fc\u30e0\u30e9\u30a6\u30f3\u30c9"
                             }
                         },
                         "id": "gn8Xz;-mH{`]-KB6d$pN",
@@ -8377,7 +8377,7 @@
                             "VARIABLE": {
                                 "id": "k0xv);7w7d9G:^#Vf4GK",
                                 "name": "VARIABLE",
-                                "value": "sch\u00fctteln"
+                                "value": "\u632f\u308b\u30a2\u30af\u30b7\u30e7\u30f3"
                             }
                         },
                         "id": "h#IcZ~*C7wjml4?X2g#e",
@@ -8395,7 +8395,7 @@
                             "VARIABLE": {
                                 "id": "]kz%pTDjS*X)InFVXN0/",
                                 "name": "VARIABLE",
-                                "value": "wie oft cube 2 bewegt wurde"
+                                "value": "Cube 2\u304c\u52d5\u3044\u305f\u56de\u6570"
                             }
                         },
                         "id": "h%~$Hl$m_bN?g~5*ISYV",
@@ -8413,7 +8413,7 @@
                             "VARIABLE": {
                                 "id": "2?;|34c){X(Hp?YQp~;o",
                                 "name": "VARIABLE",
-                                "value": "wie oft cube 3 bewegt wurde"
+                                "value": "Cube 3\u304c\u52d5\u3044\u305f\u56de\u6570"
                             }
                         },
                         "id": "h6*zKP)s%L#^/x9R.++w",
@@ -8474,7 +8474,7 @@
                             "VARIABLE": {
                                 "id": "zOW2?FKKT]Zac+K^X!7D",
                                 "name": "VARIABLE",
-                                "value": "\u00fcberpr\u00fcfe, ob das sch\u00fctteln von cube 2 die richtige aktion ist."
+                                "value": "Cube 2\u3092\u632f\u308b\u3053\u3068\u304c\u6b63\u89e3\u306e\u30a2\u30af\u30b7\u30e7\u30f3\u304b\u3069\u3046\u304b\u30c1\u30a7\u30c3\u30af\u3057\u307e\u3059\u3002"
                             }
                         },
                         "id": "hb*2kh8H8O5CLHXR1$^v",
@@ -8507,7 +8507,7 @@
                             "VARIABLE": {
                                 "id": "d`SMcaN/W$yvh`n9gr@W",
                                 "name": "VARIABLE",
-                                "value": "cozmo sch\u00fctteln"
+                                "value": "COZMO\u3092\u632f\u308b"
                             }
                         },
                         "id": "ho}_Zp`*7.k4]6o4pJ5a",
@@ -8610,7 +8610,7 @@
                             "VARIABLE": {
                                 "id": "GLt7qWD*s~%hVf6Z7A,o",
                                 "name": "VARIABLE",
-                                "value": "wie oft cube 1 bewegt wurde"
+                                "value": "Cube 1\u304c\u52d5\u3044\u305f\u56de\u6570"
                             }
                         },
                         "id": "i_(.Wam28g$O|}KO^~K9",
@@ -8658,7 +8658,7 @@
                             "VARIABLE": {
                                 "id": "k0xv);7w7d9G:^#Vf4GK",
                                 "name": "VARIABLE",
-                                "value": "sch\u00fctteln"
+                                "value": "\u632f\u308b\u30a2\u30af\u30b7\u30e7\u30f3"
                             }
                         },
                         "id": "jAyClmNMUSGerKH#[=23",
@@ -8789,7 +8789,7 @@
                             "VARIABLE": {
                                 "id": ":qP`rzCF*(Qy;[ApLFo%",
                                 "name": "VARIABLE",
-                                "value": "richtige farbe"
+                                "value": "\u6b63\u89e3\u306e\u8272"
                             }
                         },
                         "id": "kRk~^gm?!-Qs#p!zro+^",
@@ -8896,7 +8896,7 @@
                             "VARIABLE": {
                                 "id": "arik8Ty*D,K,:EO~B-u1",
                                 "name": "VARIABLE",
-                                "value": "cube 1 gesch\u00fcttelt"
+                                "value": "Cube 1\u3092\u632f\u308a\u307e\u3057\u305f"
                             }
                         },
                         "id": "lLubT8$@w:Ni2{cbW^7F",
@@ -9038,7 +9038,7 @@
                             "VARIABLE": {
                                 "id": "!/drFP.FFya:.JV$v)IC",
                                 "name": "VARIABLE",
-                                "value": "cube gesperrt"
+                                "value": "\u30ad\u30e5\u30fc\u30d6\u304c\u30ed\u30c3\u30af\u3055\u308c\u307e\u3057\u305f"
                             }
                         },
                         "id": "nWiy.%|1ehV@PcN.^pPa",
@@ -9199,7 +9199,7 @@
                             "VARIABLE": {
                                 "id": "k0xv);7w7d9G:^#Vf4GK",
                                 "name": "VARIABLE",
-                                "value": "sch\u00fctteln"
+                                "value": "\u632f\u308b\u30a2\u30af\u30b7\u30e7\u30f3"
                             }
                         },
                         "id": "omQL-QuQW{6dOS(2m5+G",
@@ -9313,7 +9313,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "gr\u00fcn"
+                                "value": "\u307f\u3069\u308a"
                             }
                         },
                         "id": "q:Y*VjWWRVgQZ-wm=l7^",
@@ -9352,7 +9352,7 @@
                             "VARIABLE": {
                                 "id": "=|V#~o``9@yD`xALHZ7M",
                                 "name": "VARIABLE",
-                                "value": "richtige aktion"
+                                "value": "\u6b63\u3057\u3044\u30a2\u30af\u30b7\u30e7\u30f3"
                             }
                         },
                         "id": "q_qKd(@/DE,pSbL1c#ap",
@@ -9376,7 +9376,7 @@
                             "VARIABLE": {
                                 "id": "arik8Ty*D,K,:EO~B-u1",
                                 "name": "VARIABLE",
-                                "value": "cube 1 gesch\u00fcttelt"
+                                "value": "Cube 1\u3092\u632f\u308a\u307e\u3057\u305f"
                             }
                         },
                         "id": "qpz}iFIj;NTSTN~+/zab",
@@ -9393,7 +9393,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "blau"
+                                "value": "\u3042\u304a"
                             }
                         },
                         "id": "r-7%weMslgnBJA_=0:Pb",
@@ -9432,7 +9432,7 @@
                             "VARIABLE": {
                                 "id": "=|V#~o``9@yD`xALHZ7M",
                                 "name": "VARIABLE",
-                                "value": "richtige aktion"
+                                "value": "\u6b63\u3057\u3044\u30a2\u30af\u30b7\u30e7\u30f3"
                             }
                         },
                         "id": "rED;!QjvAoqY7;Y:;}7H",
@@ -9494,7 +9494,7 @@
                             "VARIABLE": {
                                 "id": "=|V#~o``9@yD`xALHZ7M",
                                 "name": "VARIABLE",
-                                "value": "richtige aktion"
+                                "value": "\u6b63\u3057\u3044\u30a2\u30af\u30b7\u30e7\u30f3"
                             }
                         },
                         "id": "rz{t_h[~26%IUs|B4^_K",
@@ -9518,7 +9518,7 @@
                             "VARIABLE": {
                                 "id": "=|V#~o``9@yD`xALHZ7M",
                                 "name": "VARIABLE",
-                                "value": "richtige aktion"
+                                "value": "\u6b63\u3057\u3044\u30a2\u30af\u30b7\u30e7\u30f3"
                             }
                         },
                         "id": "r}A}Q*Ee]]4TeE31xAZ%",
@@ -9613,7 +9613,7 @@
                             "VARIABLE": {
                                 "id": "k0xv);7w7d9G:^#Vf4GK",
                                 "name": "VARIABLE",
-                                "value": "sch\u00fctteln"
+                                "value": "\u632f\u308b\u30a2\u30af\u30b7\u30e7\u30f3"
                             }
                         },
                         "id": "s9jYwQm^#mbtfUf`eQ.F",
@@ -9674,7 +9674,7 @@
                             "VARIABLE": {
                                 "id": "T{wV(7[#!)?(8YqCnk0f",
                                 "name": "VARIABLE",
-                                "value": "cube 2 gesch\u00fcttelt"
+                                "value": "Cube 2\u3092\u632f\u308a\u307e\u3057\u305f"
                             }
                         },
                         "id": "t@#W[`iGI2`NV6ni1C+o",
@@ -9891,7 +9891,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "keine"
+                                "value": "\u306a\u3057"
                             }
                         },
                         "id": "w;%|^{JVtbtvpG`lWgb!",
@@ -9907,7 +9907,7 @@
                             "VARIABLE": {
                                 "id": "KvM{nzIg3%s4+8!MoR^z",
                                 "name": "VARIABLE",
-                                "value": "spielrunde"
+                                "value": "\u30b2\u30fc\u30e0\u30e9\u30a6\u30f3\u30c9"
                             }
                         },
                         "id": "w?/;(,^;U8rXYPxm@4l2",
@@ -9939,7 +9939,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "lila"
+                                "value": "\u3080\u3089\u3055\u304d"
                             }
                         },
                         "id": "w]h~1^JxirRCMIPil*$-",
@@ -10002,7 +10002,7 @@
                             "VARIABLE": {
                                 "id": "d`SMcaN/W$yvh`n9gr@W",
                                 "name": "VARIABLE",
-                                "value": "cozmo sch\u00fctteln"
+                                "value": "COZMO\u3092\u632f\u308b"
                             }
                         },
                         "id": "xGx9okuSJ63%_3cgPA%Q",
@@ -10146,7 +10146,7 @@
                             "VARIABLE": {
                                 "id": "T{wV(7[#!)?(8YqCnk0f",
                                 "name": "VARIABLE",
-                                "value": "cube 2 gesch\u00fcttelt"
+                                "value": "Cube 2\u3092\u632f\u308a\u307e\u3057\u305f"
                             }
                         },
                         "id": "yIpJfrrIZ,_2W#u=h*(y",
@@ -10186,7 +10186,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "rot"
+                                "value": "\u3042\u304b"
                             }
                         },
                         "id": "yfg}$)I,VulA]TW@Ed@L",
@@ -10220,7 +10220,7 @@
                             "VARIABLE": {
                                 "id": "8Zn[)~;D`#P!2aTk5xIA",
                                 "name": "VARIABLE",
-                                "value": "\u00fcberpr\u00fcfe, ob das sch\u00fctteln von cube 1 die richtige aktion ist."
+                                "value": "Cube 1\u3092\u632f\u308b\u3053\u3068\u304c\u6b63\u89e3\u306e\u30a2\u30af\u30b7\u30e7\u30f3\u304b\u3069\u3046\u304b\u30c1\u30a7\u30c3\u30af\u3057\u307e\u3059\u3002"
                             }
                         },
                         "id": "z@-5OP4Ql6(]9oM$*tc,",
@@ -10253,7 +10253,7 @@
                             "VARIABLE": {
                                 "id": "W2LaBgUtfNOVg]wD5X3V",
                                 "name": "VARIABLE",
-                                "value": "cube 3 gesch\u00fcttelt"
+                                "value": "Cube 3\u3092\u632f\u308a\u307e\u3057\u305f"
                             }
                         },
                         "id": "zGG)ji,ny[A+CEQW-b:.",
@@ -10333,7 +10333,7 @@
                             "VARIABLE": {
                                 "id": "KvM{nzIg3%s4+8!MoR^z",
                                 "name": "VARIABLE",
-                                "value": "spielrunde"
+                                "value": "\u30b2\u30fc\u30e0\u30e9\u30a6\u30f3\u30c9"
                             }
                         },
                         "id": "{4D7QP}987XLG#FnV75g",
@@ -10372,7 +10372,7 @@
                             "VARIABLE": {
                                 "id": "!/drFP.FFya:.JV$v)IC",
                                 "name": "VARIABLE",
-                                "value": "cube gesperrt"
+                                "value": "\u30ad\u30e5\u30fc\u30d6\u304c\u30ed\u30c3\u30af\u3055\u308c\u307e\u3057\u305f"
                             }
                         },
                         "id": "{9~v04^dHP.o-L9a#EY6",
@@ -10396,7 +10396,7 @@
                             "VARIABLE": {
                                 "id": "cwcF%q.$:z8v)cmaVPF/",
                                 "name": "VARIABLE",
-                                "value": "spielbeginn und hauptschleife."
+                                "value": "\u30b2\u30fc\u30e0\u30b9\u30bf\u30fc\u30c8\u3001\u30e1\u30a4\u30f3\u30eb\u30fc\u30d7\u3002"
                             }
                         },
                         "id": "{=Muu[:{Q@YC#)gBLjf3",
@@ -10437,7 +10437,7 @@
                             "VARIABLE": {
                                 "id": "=|V#~o``9@yD`xALHZ7M",
                                 "name": "VARIABLE",
-                                "value": "richtige aktion"
+                                "value": "\u6b63\u3057\u3044\u30a2\u30af\u30b7\u30e7\u30f3"
                             }
                         },
                         "id": "{I{6(Ici_Z`C.jn}#x{G",
@@ -10461,7 +10461,7 @@
                             "VARIABLE": {
                                 "id": "=|V#~o``9@yD`xALHZ7M",
                                 "name": "VARIABLE",
-                                "value": "richtige aktion"
+                                "value": "\u6b63\u3057\u3044\u30a2\u30af\u30b7\u30e7\u30f3"
                             }
                         },
                         "id": "{W|L5pOV-yowu|MZZ!kr",
@@ -10631,7 +10631,7 @@
                             "VARIABLE": {
                                 "id": "W2LaBgUtfNOVg]wD5X3V",
                                 "name": "VARIABLE",
-                                "value": "cube 3 gesch\u00fcttelt"
+                                "value": "Cube 3\u3092\u632f\u308a\u307e\u3057\u305f"
                             }
                         },
                         "id": "|f57hk[hm|@.mToX@$Mb",
@@ -10691,7 +10691,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "gelb"
+                                "value": "\u304d\u3044\u308d"
                             }
                         },
                         "id": "}9W466+Chz8OPxbPGqb0",
@@ -10737,7 +10737,7 @@
                             "VARIABLE": {
                                 "id": "T{wV(7[#!)?(8YqCnk0f",
                                 "name": "VARIABLE",
-                                "value": "cube 2 gesch\u00fcttelt"
+                                "value": "Cube 2\u3092\u632f\u308a\u307e\u3057\u305f"
                             }
                         },
                         "id": "}R/hGJ4yb7h9vO[V4E~k",
@@ -10791,7 +10791,7 @@
                             "VARIABLE": {
                                 "id": "=|V#~o``9@yD`xALHZ7M",
                                 "name": "VARIABLE",
-                                "value": "richtige aktion"
+                                "value": "\u6b63\u3057\u3044\u30a2\u30af\u30b7\u30e7\u30f3"
                             }
                         },
                         "id": "}q:Uz6PcCFAU9KOY(}d8",
@@ -10848,7 +10848,7 @@
                             "VARIABLE": {
                                 "id": "=|V#~o``9@yD`xALHZ7M",
                                 "name": "VARIABLE",
-                                "value": "richtige aktion"
+                                "value": "\u6b63\u3057\u3044\u30a2\u30af\u30b7\u30e7\u30f3"
                             }
                         },
                         "id": "~QVUodAg)eK{0!K12$`A",

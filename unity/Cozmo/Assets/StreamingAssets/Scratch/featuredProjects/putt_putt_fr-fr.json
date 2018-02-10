@@ -23,62 +23,62 @@
                 "variables": {
                     "%_G#H9BnSuuHof7Fg_!H": {
                         "id": "%_G#H9BnSuuHof7Fg_!H",
-                        "name": "hauptspielschleife.",
+                        "name": "Boucle principale du jeu.",
                         "value": 0
                     },
                     "(]:u!;,MXlFZ{E(:P#ey": {
                         "id": "(]:u!;,MXlFZ{E(:P#ey",
-                        "name": "maximale lochgr\u00f6\u00dfe",
+                        "name": "trou maximal",
                         "value": "9"
                     },
                     ")OAkG#Z4-28]Q#Z$eYF.": {
                         "id": ")OAkG#Z4-28]Q#Z$eYF.",
-                        "name": "legt die standardwerte fest.",
+                        "name": "D\u00e9finit les valeurs par d\u00e9faut.",
                         "value": 0
                     },
                     "3p|BXS]!Z3@-OOXTUFrd": {
                         "id": "3p|BXS]!Z3@-OOXTUFrd",
-                        "name": "wird in jeder runde aufgerufen, um gr\u00f6\u00dfe und position des lochs festzulegen.",
+                        "name": "Appel\u00e9 \u00e0 chaque partie pour d\u00e9finir la position et la taille du trou.",
                         "value": 0
                     },
                     "@::gc9hB/hJ@+Ew@r]Yd": {
                         "id": "@::gc9hB/hJ@+Ew@r]Yd",
-                        "name": "lochposition (y)",
+                        "name": "position du trou y",
                         "value": 31
                     },
                     "Ea){ml~[tegkiWca7btH": {
                         "id": "Ea){ml~[tegkiWca7btH",
-                        "name": "cozmo-gesichtspixel (x)",
+                        "name": "Pixel du visage de Cozmo x",
                         "value": 53.11892562
                     },
                     "Z/Iri5s9G=p_yjHpVh,:": {
                         "id": "Z/Iri5s9G=p_yjHpVh,:",
-                        "name": "den timer",
+                        "name": "minuterie",
                         "value": 84
                     },
                     "b$HM+w9Y8`~`(r]=%[~(": {
                         "id": "b$HM+w9Y8`~`(r]=%[~(",
-                        "name": "aktuelles loch",
+                        "name": "trou actuel",
                         "value": 9
                     },
                     "hC|^9-|BV-xP=YbD=B^w": {
                         "id": "hC|^9-|BV-xP=YbD=B^w",
-                        "name": "lochposition (x)",
+                        "name": "position du trou x",
                         "value": 36
                     },
                     "nF!W:igu%S,v:7Bp$xlt": {
                         "id": "nF!W:igu%S,v:7Bp$xlt",
-                        "name": "cozmo-gesichtspixel (y)",
+                        "name": "Pixel du visage de Cozmo y",
                         "value": 23.344261000000003
                     },
                     "vYMeZB}PoZ5-_)VmX/Gf": {
                         "id": "vYMeZB}PoZ5-_)VmX/Gf",
-                        "name": "beginne und behalte den spiel-timer im auge.",
+                        "name": "D\u00e9marre et garde trace de la minuterie de jeu.",
                         "value": 0
                     },
                     "yQNxm5sWAWL}9amxAXFf": {
                         "id": "yQNxm5sWAWL}9amxAXFf",
-                        "name": "lochgr\u00f6\u00dfe",
+                        "name": "taille du trou",
                         "value": 13
                     }
                 },
@@ -455,7 +455,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "tolles spiel!"
+                                "value": "Bien jou\u00e9"
                             }
                         },
                         "id": "+R*G|^oBcwo]V?}GDwhQ",
@@ -530,7 +530,7 @@
                             "VARIABLE": {
                                 "id": "b$HM+w9Y8`~`(r]=%[~(",
                                 "name": "VARIABLE",
-                                "value": "aktuelles loch"
+                                "value": "trou actuel"
                             }
                         },
                         "id": "-e%/2(^k)i(sBU1{%-8b",
@@ -565,7 +565,7 @@
                             "VARIABLE": {
                                 "id": "yQNxm5sWAWL}9amxAXFf",
                                 "name": "VARIABLE",
-                                "value": "lochgr\u00f6\u00dfe"
+                                "value": "taille du trou"
                             }
                         },
                         "id": "-j_C,0VVe|V:-;FZYY!{",
@@ -677,7 +677,7 @@
                             "VARIABLE": {
                                 "id": "b$HM+w9Y8`~`(r]=%[~(",
                                 "name": "VARIABLE",
-                                "value": "aktuelles loch"
+                                "value": "trou actuel"
                             }
                         },
                         "id": "/bMxbqJg+i9=*3I+y8*x",
@@ -862,7 +862,7 @@
                             "VARIABLE": {
                                 "id": "(]:u!;,MXlFZ{E(:P#ey",
                                 "name": "VARIABLE",
-                                "value": "maximale lochgr\u00f6\u00dfe"
+                                "value": "trou maximal"
                             }
                         },
                         "id": "4|ksS*w-NVThW`F`AJkR",
@@ -935,7 +935,7 @@
                             "VARIABLE": {
                                 "id": "vYMeZB}PoZ5-_)VmX/Gf",
                                 "name": "VARIABLE",
-                                "value": "beginne und behalte den spiel-timer im auge."
+                                "value": "D\u00e9marre et garde trace de la minuterie de jeu."
                             }
                         },
                         "id": "7$gj%]nz1$u2WKpK7#Dl",
@@ -980,7 +980,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": " sekunden"
+                                "value": " secondes"
                             }
                         },
                         "id": "7kf[Kzs5Q(ED`Yk=`=.l",
@@ -1011,7 +1011,7 @@
                             "VARIABLE": {
                                 "id": "yQNxm5sWAWL}9amxAXFf",
                                 "name": "VARIABLE",
-                                "value": "lochgr\u00f6\u00dfe"
+                                "value": "taille du trou"
                             }
                         },
                         "id": "8DGSR2R`i1u,8.mO^]eu",
@@ -1061,7 +1061,7 @@
                             "VARIABLE": {
                                 "id": "(]:u!;,MXlFZ{E(:P#ey",
                                 "name": "VARIABLE",
-                                "value": "maximale lochgr\u00f6\u00dfe"
+                                "value": "trou maximal"
                             }
                         },
                         "id": "9,D)~Nk/?|4HlG9B@,)R",
@@ -1078,7 +1078,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "tolles spiel! deine zeit:"
+                                "value": "Bien jou\u00e9\u00a0! Tu as termin\u00e9 en"
                             }
                         },
                         "id": "939RooC6W6q`3)b,Eml=",
@@ -1141,7 +1141,7 @@
                             "VARIABLE": {
                                 "id": ")OAkG#Z4-28]Q#Z$eYF.",
                                 "name": "VARIABLE",
-                                "value": "legt die standardwerte fest."
+                                "value": "D\u00e9finit les valeurs par d\u00e9faut."
                             }
                         },
                         "id": ";~CeOu)zoMW7YfMU_GqA",
@@ -1209,7 +1209,7 @@
                             "VARIABLE": {
                                 "id": "(]:u!;,MXlFZ{E(:P#ey",
                                 "name": "VARIABLE",
-                                "value": "maximale lochgr\u00f6\u00dfe"
+                                "value": "trou maximal"
                             }
                         },
                         "id": "BG0{q0-hL7Hy=f8o=f[v",
@@ -1285,7 +1285,7 @@
                             "VARIABLE": {
                                 "id": "Ea){ml~[tegkiWca7btH",
                                 "name": "VARIABLE",
-                                "value": "cozmo-gesichtspixel (x)"
+                                "value": "Pixel du visage de Cozmo x"
                             }
                         },
                         "id": "DR28B5.!Z7OdbCnHD1ve",
@@ -1393,7 +1393,7 @@
                             "VARIABLE": {
                                 "id": "@::gc9hB/hJ@+Ew@r]Yd",
                                 "name": "VARIABLE",
-                                "value": "lochposition (y)"
+                                "value": "position du trou y"
                             }
                         },
                         "id": "H)=tmnveJGS2#Z)1R342",
@@ -1410,7 +1410,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "loch "
+                                "value": "Trou "
                             }
                         },
                         "id": "HC)*vL(CEcDT6,tBDvtl",
@@ -1500,7 +1500,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "zum spielen kannst du mich einfach neigen, um den ball in das loch zu bringen."
+                                "value": "Pour jouer, incline-moi pour envoyer la balle dans le trou."
                             }
                         },
                         "id": "Hr2VD)a:t_Lf=`4Qlf+E",
@@ -1665,7 +1665,7 @@
                             "VARIABLE": {
                                 "id": "nF!W:igu%S,v:7Bp$xlt",
                                 "name": "VARIABLE",
-                                "value": "cozmo-gesichtspixel (y)"
+                                "value": "Pixel du visage de Cozmo y"
                             }
                         },
                         "id": "LP7jh~V0/t{T;12xpDhM",
@@ -1705,7 +1705,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": " von "
+                                "value": " sur "
                             }
                         },
                         "id": "N:Wi7!bM+~-@hC=BJnO-",
@@ -1736,7 +1736,7 @@
                             "VARIABLE": {
                                 "id": "b$HM+w9Y8`~`(r]=%[~(",
                                 "name": "VARIABLE",
-                                "value": "aktuelles loch"
+                                "value": "trou actuel"
                             }
                         },
                         "id": "Njh/?An*XjO=EAon_]CB",
@@ -1754,7 +1754,7 @@
                             "VARIABLE": {
                                 "id": "nF!W:igu%S,v:7Bp$xlt",
                                 "name": "VARIABLE",
-                                "value": "cozmo-gesichtspixel (y)"
+                                "value": "Pixel du visage de Cozmo y"
                             }
                         },
                         "id": "O7xB:0+?4HvW|?zZ2G!-",
@@ -1771,7 +1771,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": " halte mich so, dass ich zur decke sehe."
+                                "value": " Tiens-moi face au plafond."
                             }
                         },
                         "id": "PKaRWTH^$+R*^-;S})o1",
@@ -1787,7 +1787,7 @@
                             "VARIABLE": {
                                 "id": "yQNxm5sWAWL}9amxAXFf",
                                 "name": "VARIABLE",
-                                "value": "lochgr\u00f6\u00dfe"
+                                "value": "taille du trou"
                             }
                         },
                         "id": "Q*R{-l~J:f:hoc~gb:xy",
@@ -1899,7 +1899,7 @@
                             "VARIABLE": {
                                 "id": "nF!W:igu%S,v:7Bp$xlt",
                                 "name": "VARIABLE",
-                                "value": "cozmo-gesichtspixel (y)"
+                                "value": "Pixel du visage de Cozmo y"
                             }
                         },
                         "id": "Rty/F~R(G:o:SX:g8;62",
@@ -1984,7 +1984,7 @@
                             "VARIABLE": {
                                 "id": "Z/Iri5s9G=p_yjHpVh,:",
                                 "name": "VARIABLE",
-                                "value": "den timer"
+                                "value": "minuterie"
                             }
                         },
                         "id": "TjqcG_Mf4Ihh0~t5H.Q6",
@@ -2002,7 +2002,7 @@
                             "VARIABLE": {
                                 "id": "b$HM+w9Y8`~`(r]=%[~(",
                                 "name": "VARIABLE",
-                                "value": "aktuelles loch"
+                                "value": "trou actuel"
                             }
                         },
                         "id": "Tx^C(=4@92UfL4BNgg;z",
@@ -2076,7 +2076,7 @@
                             "VARIABLE": {
                                 "id": "3p|BXS]!Z3@-OOXTUFrd",
                                 "name": "VARIABLE",
-                                "value": "wird in jeder runde aufgerufen, um gr\u00f6\u00dfe und position des lochs festzulegen."
+                                "value": "Appel\u00e9 \u00e0 chaque partie pour d\u00e9finir la position et la taille du trou."
                             }
                         },
                         "id": "UgGdd?nahDvCxUtGF5ER",
@@ -2140,7 +2140,7 @@
                             "VARIABLE": {
                                 "id": "Z/Iri5s9G=p_yjHpVh,:",
                                 "name": "VARIABLE",
-                                "value": "den timer"
+                                "value": "minuterie"
                             }
                         },
                         "id": "V?+K:1@4J|b-?fbz}.Wo",
@@ -2164,7 +2164,7 @@
                             "VARIABLE": {
                                 "id": "hC|^9-|BV-xP=YbD=B^w",
                                 "name": "VARIABLE",
-                                "value": "lochposition (x)"
+                                "value": "position du trou x"
                             }
                         },
                         "id": "Vo]u|%3})H*xidA%U$`K",
@@ -2266,7 +2266,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": " sekunden"
+                                "value": " secondes"
                             }
                         },
                         "id": "XY6zS$m=}x%S.,TFpAr%",
@@ -2422,7 +2422,7 @@
                             "VARIABLE": {
                                 "id": "Ea){ml~[tegkiWca7btH",
                                 "name": "VARIABLE",
-                                "value": "cozmo-gesichtspixel (x)"
+                                "value": "Pixel du visage de Cozmo x"
                             }
                         },
                         "id": "]W|aE6Lk+AK`Ne[m8.dG",
@@ -2535,7 +2535,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "zeit:"
+                                "value": "Termin\u00e9 en"
                             }
                         },
                         "id": "`/~/`n[zw=SuhH*}bfkx",
@@ -2551,7 +2551,7 @@
                             "VARIABLE": {
                                 "id": "nF!W:igu%S,v:7Bp$xlt",
                                 "name": "VARIABLE",
-                                "value": "cozmo-gesichtspixel (y)"
+                                "value": "Pixel du visage de Cozmo y"
                             }
                         },
                         "id": "`4b|ibnFfb5.)m@0HPAe",
@@ -2631,7 +2631,7 @@
                             "VARIABLE": {
                                 "id": "yQNxm5sWAWL}9amxAXFf",
                                 "name": "VARIABLE",
-                                "value": "lochgr\u00f6\u00dfe"
+                                "value": "taille du trou"
                             }
                         },
                         "id": "b9)@,Z)R+-SXe36fJv%x",
@@ -2732,7 +2732,7 @@
                             "VARIABLE": {
                                 "id": "(]:u!;,MXlFZ{E(:P#ey",
                                 "name": "VARIABLE",
-                                "value": "maximale lochgr\u00f6\u00dfe"
+                                "value": "trou maximal"
                             }
                         },
                         "id": "e2vc=lMysI1-`SM@bz.6",
@@ -2750,7 +2750,7 @@
                             "VARIABLE": {
                                 "id": "b$HM+w9Y8`~`(r]=%[~(",
                                 "name": "VARIABLE",
-                                "value": "aktuelles loch"
+                                "value": "trou actuel"
                             }
                         },
                         "id": "e8pH9eE~[Gm_QeQXL4B;",
@@ -2877,7 +2877,7 @@
                             "VARIABLE": {
                                 "id": "hC|^9-|BV-xP=YbD=B^w",
                                 "name": "VARIABLE",
-                                "value": "lochposition (x)"
+                                "value": "position du trou x"
                             }
                         },
                         "id": "ehitZeFZUjc2{j)so[B0",
@@ -3154,7 +3154,7 @@
                             "VARIABLE": {
                                 "id": "Ea){ml~[tegkiWca7btH",
                                 "name": "VARIABLE",
-                                "value": "cozmo-gesichtspixel (x)"
+                                "value": "Pixel du visage de Cozmo x"
                             }
                         },
                         "id": "jlPg(JOG4Tbz2fqEwAsM",
@@ -3172,7 +3172,7 @@
                             "VARIABLE": {
                                 "id": "Z/Iri5s9G=p_yjHpVh,:",
                                 "name": "VARIABLE",
-                                "value": "den timer"
+                                "value": "minuterie"
                             }
                         },
                         "id": "k)t)0]q7(E]wmfXC^nqk",
@@ -3465,7 +3465,7 @@
                             "VARIABLE": {
                                 "id": "yQNxm5sWAWL}9amxAXFf",
                                 "name": "VARIABLE",
-                                "value": "lochgr\u00f6\u00dfe"
+                                "value": "taille du trou"
                             }
                         },
                         "id": "n#J:Z#WZo;#2C=B?vMFt",
@@ -3556,7 +3556,7 @@
                             "VARIABLE": {
                                 "id": "%_G#H9BnSuuHof7Fg_!H",
                                 "name": "VARIABLE",
-                                "value": "hauptspielschleife."
+                                "value": "Boucle principale du jeu."
                             }
                         },
                         "id": "pPrV#5Fz/Vyt3#}@4s6f",
@@ -3612,7 +3612,7 @@
                             "VARIABLE": {
                                 "id": "Ea){ml~[tegkiWca7btH",
                                 "name": "VARIABLE",
-                                "value": "cozmo-gesichtspixel (x)"
+                                "value": "Pixel du visage de Cozmo x"
                             }
                         },
                         "id": "q/Q@[x+/xh[JQH~Lb4bp",
@@ -3630,7 +3630,7 @@
                             "VARIABLE": {
                                 "id": "yQNxm5sWAWL}9amxAXFf",
                                 "name": "VARIABLE",
-                                "value": "lochgr\u00f6\u00dfe"
+                                "value": "taille du trou"
                             }
                         },
                         "id": "q:jgv^Ec25i09l7a1z0}",
@@ -3723,7 +3723,7 @@
                             "VARIABLE": {
                                 "id": "b$HM+w9Y8`~`(r]=%[~(",
                                 "name": "VARIABLE",
-                                "value": "aktuelles loch"
+                                "value": "trou actuel"
                             }
                         },
                         "id": "tOT!vQz!=`=yXy1Zax0,",
@@ -3764,7 +3764,7 @@
                             "VARIABLE": {
                                 "id": "Z/Iri5s9G=p_yjHpVh,:",
                                 "name": "VARIABLE",
-                                "value": "den timer"
+                                "value": "minuterie"
                             }
                         },
                         "id": "tq(jEaiu5q9=2Xrw{_e9",
@@ -3788,7 +3788,7 @@
                             "VARIABLE": {
                                 "id": "b$HM+w9Y8`~`(r]=%[~(",
                                 "name": "VARIABLE",
-                                "value": "aktuelles loch"
+                                "value": "trou actuel"
                             }
                         },
                         "id": "ujdSNMdRt,ovdbAan5aD",
@@ -3864,7 +3864,7 @@
                             "VARIABLE": {
                                 "id": "@::gc9hB/hJ@+Ew@r]Yd",
                                 "name": "VARIABLE",
-                                "value": "lochposition (y)"
+                                "value": "position du trou y"
                             }
                         },
                         "id": "x6*TzxlM`Js}1+DZ4GqL",
@@ -3882,7 +3882,7 @@
                             "VARIABLE": {
                                 "id": "yQNxm5sWAWL}9amxAXFf",
                                 "name": "VARIABLE",
-                                "value": "lochgr\u00f6\u00dfe"
+                                "value": "taille du trou"
                             }
                         },
                         "id": "xMq`xE~dEKqu|iB)^H#!",
@@ -3921,7 +3921,7 @@
                             "VARIABLE": {
                                 "id": "@::gc9hB/hJ@+Ew@r]Yd",
                                 "name": "VARIABLE",
-                                "value": "lochposition (y)"
+                                "value": "position du trou y"
                             }
                         },
                         "id": "zG),3P1G/Cu|J7bh4^Ne",
@@ -3967,7 +3967,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "bitte setze mich auf eine ebene oberfl\u00e4che."
+                                "value": "Pose-moi sur une surface plane."
                             }
                         },
                         "id": "zQ|r2,!6+!%_Fb{q``g6",
@@ -4092,7 +4092,7 @@
                             "VARIABLE": {
                                 "id": "hC|^9-|BV-xP=YbD=B^w",
                                 "name": "VARIABLE",
-                                "value": "lochposition (x)"
+                                "value": "position du trou x"
                             }
                         },
                         "id": "}~tsd=-5x|IPZDk~t/Tl",

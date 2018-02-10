@@ -23,32 +23,32 @@
                 "variables": {
                     "!z#!A:M)WJP/54}?-5b6": {
                         "id": "!z#!A:M)WJP/54}?-5b6",
-                        "name": "w\u00e4hle eine eigenschaft aus.",
+                        "name": "Choix d'un adjectif.",
                         "value": 0
                     },
                     "3Qj)Hd$^1Cg|EUzL4/=(": {
                         "id": "3Qj)Hd$^1Cg|EUzL4/=(",
-                        "name": "zuf\u00e4llig",
+                        "name": "au hasard",
                         "value": 1
                     },
                     "J]@:CT;^8QCvfj=gEZns": {
                         "id": "J]@:CT;^8QCvfj=gEZns",
-                        "name": "w\u00e4hle eine animation aus.",
+                        "name": "Choix d'une animation.",
                         "value": 0
                     },
                     "c]M!0sG=axly$j3hkz-7": {
                         "id": "c]M!0sG=axly$j3hkz-7",
-                        "name": "adjektiv",
+                        "name": "adjectif",
                         "value": "Cool "
                     },
                     "o4Y/RNg@C#eu[I4!s8p%": {
                         "id": "o4Y/RNg@C#eu[I4!s8p%",
-                        "name": "w\u00e4hle einen satz aus.",
+                        "name": "Choix d'une phrase.",
                         "value": 0
                     },
                     "ve/p?Jh0BsrrY,Po}tEh": {
                         "id": "ve/p?Jh0BsrrY,Po}tEh",
-                        "name": "generiere ein kompliment.",
+                        "name": "Choix d'un compliment.",
                         "value": 0
                     }
                 },
@@ -63,7 +63,7 @@
                             "VARIABLE": {
                                 "id": "c]M!0sG=axly$j3hkz-7",
                                 "name": "VARIABLE",
-                                "value": "adjektiv"
+                                "value": "adjectif"
                             }
                         },
                         "id": "!}|iPlOl^6YAFv]4S!)g",
@@ -206,7 +206,7 @@
                             "VARIABLE": {
                                 "id": "c]M!0sG=axly$j3hkz-7",
                                 "name": "VARIABLE",
-                                "value": "adjektiv"
+                                "value": "adjectif"
                             }
                         },
                         "id": "$^eR~,N9%duF*P**eell",
@@ -230,7 +230,7 @@
                             "VARIABLE": {
                                 "id": "c]M!0sG=axly$j3hkz-7",
                                 "name": "VARIABLE",
-                                "value": "adjektiv"
+                                "value": "adjectif"
                             }
                         },
                         "id": "%4a--`T0q*4o:D:xZO5Z",
@@ -286,7 +286,7 @@
                             "VARIABLE": {
                                 "id": "3Qj)Hd$^1Cg|EUzL4/=(",
                                 "name": "VARIABLE",
-                                "value": "zuf\u00e4llig"
+                                "value": "au hasard"
                             }
                         },
                         "id": "%c%f[p#:r*4Fh(5[2vH`",
@@ -465,7 +465,7 @@
                             "VARIABLE": {
                                 "id": "c]M!0sG=axly$j3hkz-7",
                                 "name": "VARIABLE",
-                                "value": "adjektiv"
+                                "value": "adjectif"
                             }
                         },
                         "id": "+a78q^v9Lj333t`igbhG",
@@ -587,7 +587,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": " person auf der welt"
+                                "value": " au monde."
                             }
                         },
                         "id": ".+*g1R`?hBGd|rl0HCY`",
@@ -621,7 +621,7 @@
                             "VARIABLE": {
                                 "id": "3Qj)Hd$^1Cg|EUzL4/=(",
                                 "name": "VARIABLE",
-                                "value": "zuf\u00e4llig"
+                                "value": "au hasard"
                             }
                         },
                         "id": ".U8XM)8N6#E@(-Gg*i?p",
@@ -661,7 +661,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "nett "
+                                "value": "Gentil "
                             }
                         },
                         "id": "/Yud*c^yq#:6a)8S~q,/",
@@ -700,7 +700,7 @@
                             "VARIABLE": {
                                 "id": "3Qj)Hd$^1Cg|EUzL4/=(",
                                 "name": "VARIABLE",
-                                "value": "zuf\u00e4llig"
+                                "value": "au hasard"
                             }
                         },
                         "id": "0[auGspatd.jp@[/N8)F",
@@ -756,7 +756,7 @@
                             "VARIABLE": {
                                 "id": "!z#!A:M)WJP/54}?-5b6",
                                 "name": "VARIABLE",
-                                "value": "w\u00e4hle eine eigenschaft aus."
+                                "value": "Choix d'un adjectif."
                             }
                         },
                         "id": "1?O=8lYurY|+FyPL`5}v",
@@ -774,7 +774,7 @@
                             "VARIABLE": {
                                 "id": "3Qj)Hd$^1Cg|EUzL4/=(",
                                 "name": "VARIABLE",
-                                "value": "zuf\u00e4llig"
+                                "value": "au hasard"
                             }
                         },
                         "id": "1A]SbAY8paeq.7bH0A5[",
@@ -832,7 +832,7 @@
                             "VARIABLE": {
                                 "id": "3Qj)Hd$^1Cg|EUzL4/=(",
                                 "name": "VARIABLE",
-                                "value": "zuf\u00e4llig"
+                                "value": "au hasard"
                             }
                         },
                         "id": "21F/Y2T3!QERuy}I4ION",
@@ -850,7 +850,7 @@
                             "VARIABLE": {
                                 "id": "c]M!0sG=axly$j3hkz-7",
                                 "name": "VARIABLE",
-                                "value": "adjektiv"
+                                "value": "adjectif"
                             }
                         },
                         "id": "2Qkw]dfjbJit|]Gw,l?.",
@@ -977,7 +977,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "wundersch\u00f6n "
+                                "value": "Beau "
                             }
                         },
                         "id": "7!.U{|-*LLoKuny_z3bG",
@@ -1076,7 +1076,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "witzig "
+                                "value": "Amusant "
                             }
                         },
                         "id": "87sbP_3D{JFU4Dn^s@jZ",
@@ -1109,7 +1109,7 @@
                             "VARIABLE": {
                                 "id": "3Qj)Hd$^1Cg|EUzL4/=(",
                                 "name": "VARIABLE",
-                                "value": "zuf\u00e4llig"
+                                "value": "au hasard"
                             }
                         },
                         "id": "8iPsvqR1{:DWI8ifzM;?",
@@ -1183,7 +1183,7 @@
                             "VARIABLE": {
                                 "id": "3Qj)Hd$^1Cg|EUzL4/=(",
                                 "name": "VARIABLE",
-                                "value": "zuf\u00e4llig"
+                                "value": "au hasard"
                             }
                         },
                         "id": "9n)mmk{)#Q;#8057ZNaB",
@@ -1200,7 +1200,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "hallo"
+                                "value": "Bonjour"
                             }
                         },
                         "id": "9s/J^aoJ:VoBkTG3-W--",
@@ -1234,7 +1234,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "charmant "
+                                "value": "Charmant "
                             }
                         },
                         "id": "9|T=SThA`z)WB6p*Q;pj",
@@ -1365,7 +1365,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": " sind wie du"
+                                "value": " comme toi."
                             }
                         },
                         "id": "=(5[|SDRlN?%YqB[iq*`",
@@ -1381,7 +1381,7 @@
                             "VARIABLE": {
                                 "id": "3Qj)Hd$^1Cg|EUzL4/=(",
                                 "name": "VARIABLE",
-                                "value": "zuf\u00e4llig"
+                                "value": "au hasard"
                             }
                         },
                         "id": "=Adf1{LiKX~l6!uY-Cw}",
@@ -1421,7 +1421,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "jeder wei\u00df es: du bist total "
+                                "value": "Tout le monde peut voir que tu es super "
                             }
                         },
                         "id": "?C+JI?f@x@hQWgNzJyF;",
@@ -1581,7 +1581,7 @@
                             "VARIABLE": {
                                 "id": "c]M!0sG=axly$j3hkz-7",
                                 "name": "VARIABLE",
-                                "value": "adjektiv"
+                                "value": "adjectif"
                             }
                         },
                         "id": "ABcUnhnVjL1a`iF{-@!.",
@@ -1605,7 +1605,7 @@
                             "VARIABLE": {
                                 "id": "c]M!0sG=axly$j3hkz-7",
                                 "name": "VARIABLE",
-                                "value": "adjektiv"
+                                "value": "adjectif"
                             }
                         },
                         "id": "A]}zs;|1)aROu`{T{$(Z",
@@ -1628,7 +1628,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "wundervoll "
+                                "value": "Merveilleux "
                             }
                         },
                         "id": "Aop.2C1!)1d6wp4{sR0f",
@@ -1644,7 +1644,7 @@
                             "VARIABLE": {
                                 "id": "J]@:CT;^8QCvfj=gEZns",
                                 "name": "VARIABLE",
-                                "value": "w\u00e4hle eine animation aus."
+                                "value": "Choix d'une animation."
                             }
                         },
                         "id": "B0fU9Xm[Qn;2zBlGXlRY",
@@ -1662,7 +1662,7 @@
                             "VARIABLE": {
                                 "id": "3Qj)Hd$^1Cg|EUzL4/=(",
                                 "name": "VARIABLE",
-                                "value": "zuf\u00e4llig"
+                                "value": "au hasard"
                             }
                         },
                         "id": "BF;:-7*]`Lqf_Wo-{k$1",
@@ -1709,7 +1709,7 @@
                             "VARIABLE": {
                                 "id": "3Qj)Hd$^1Cg|EUzL4/=(",
                                 "name": "VARIABLE",
-                                "value": "zuf\u00e4llig"
+                                "value": "au hasard"
                             }
                         },
                         "id": "B~|F[H$5VcN-a7,~-|.=",
@@ -1813,7 +1813,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "total nett "
+                                "value": "Adorable "
                             }
                         },
                         "id": "FGDbf.!pIR:^qmxs3dyk",
@@ -1962,7 +1962,7 @@
                             "VARIABLE": {
                                 "id": "3Qj)Hd$^1Cg|EUzL4/=(",
                                 "name": "VARIABLE",
-                                "value": "zuf\u00e4llig"
+                                "value": "au hasard"
                             }
                         },
                         "id": "HUm9jLTne7p`bCvYm+$c",
@@ -1980,7 +1980,7 @@
                             "VARIABLE": {
                                 "id": "c]M!0sG=axly$j3hkz-7",
                                 "name": "VARIABLE",
-                                "value": "adjektiv"
+                                "value": "adjectif"
                             }
                         },
                         "id": "H~oy,;W3b,#ICAq!|SV7",
@@ -2004,7 +2004,7 @@
                             "VARIABLE": {
                                 "id": "3Qj)Hd$^1Cg|EUzL4/=(",
                                 "name": "VARIABLE",
-                                "value": "zuf\u00e4llig"
+                                "value": "au hasard"
                             }
                         },
                         "id": "I$l.BbU,~qF-!KJl;P?h",
@@ -2144,7 +2144,7 @@
                             "VARIABLE": {
                                 "id": "3Qj)Hd$^1Cg|EUzL4/=(",
                                 "name": "VARIABLE",
-                                "value": "zuf\u00e4llig"
+                                "value": "au hasard"
                             }
                         },
                         "id": "JV;5rZ[UI{_!pn+c=Ghg",
@@ -2215,7 +2215,7 @@
                             "VARIABLE": {
                                 "id": "ve/p?Jh0BsrrY,Po}tEh",
                                 "name": "VARIABLE",
-                                "value": "generiere ein kompliment."
+                                "value": "Choix d'un compliment."
                             }
                         },
                         "id": "K2_5!yC64[vmNT]io~FO",
@@ -2233,7 +2233,7 @@
                             "VARIABLE": {
                                 "id": "c]M!0sG=axly$j3hkz-7",
                                 "name": "VARIABLE",
-                                "value": "adjektiv"
+                                "value": "adjectif"
                             }
                         },
                         "id": "K4D+pf9U$(bX(4G*oBou",
@@ -2365,7 +2365,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "nachdenklich"
+                                "value": "Attentionn\u00e9"
                             }
                         },
                         "id": "M4{*bJbJ%.x}EpEq.*O9",
@@ -2381,7 +2381,7 @@
                             "VARIABLE": {
                                 "id": "c]M!0sG=axly$j3hkz-7",
                                 "name": "VARIABLE",
-                                "value": "adjektiv"
+                                "value": "adjectif"
                             }
                         },
                         "id": "M?SA[84P.|d#M0.9^]?:",
@@ -2436,7 +2436,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "stark "
+                                "value": "Fort "
                             }
                         },
                         "id": "Oe!GiOI4/_3qh7nmFj[I",
@@ -2452,7 +2452,7 @@
                             "VARIABLE": {
                                 "id": "c]M!0sG=axly$j3hkz-7",
                                 "name": "VARIABLE",
-                                "value": "adjektiv"
+                                "value": "adjectif"
                             }
                         },
                         "id": "O{cJ{9A6AL}uk~hl+#*+",
@@ -2484,7 +2484,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "hallo"
+                                "value": "Bonjour"
                             }
                         },
                         "id": "PT-mA2n{~koF}P}|}{Em",
@@ -2547,7 +2547,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "brillant "
+                                "value": "Brillant "
                             }
                         },
                         "id": "Qfy=SVAG=f@Z;TpB:LRa",
@@ -2628,7 +2628,7 @@
                             "VARIABLE": {
                                 "id": "3Qj)Hd$^1Cg|EUzL4/=(",
                                 "name": "VARIABLE",
-                                "value": "zuf\u00e4llig"
+                                "value": "au hasard"
                             }
                         },
                         "id": "S=rsh:iMl#AP$nbQM~jB",
@@ -2745,7 +2745,7 @@
                             "VARIABLE": {
                                 "id": "3Qj)Hd$^1Cg|EUzL4/=(",
                                 "name": "VARIABLE",
-                                "value": "zuf\u00e4llig"
+                                "value": "au hasard"
                             }
                         },
                         "id": "WHoieJ|4Q0wEbYX2FYnc",
@@ -2832,7 +2832,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "schlau "
+                                "value": "Fut\u00e9 "
                             }
                         },
                         "id": "XJId#S/|jL,Nx^*FzT6]",
@@ -2881,7 +2881,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "mutig "
+                                "value": "Courageux "
                             }
                         },
                         "id": "YNoNrYYeC78iPFv#O90*",
@@ -2897,7 +2897,7 @@
                             "VARIABLE": {
                                 "id": "c]M!0sG=axly$j3hkz-7",
                                 "name": "VARIABLE",
-                                "value": "adjektiv"
+                                "value": "adjectif"
                             }
                         },
                         "id": "Z0.Q|10dzSlar?B(UnIY",
@@ -3047,7 +3047,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "hallo"
+                                "value": "Bonjour"
                             }
                         },
                         "id": "^3!Fi^;u33GN%De82T$)",
@@ -3065,7 +3065,7 @@
                             "VARIABLE": {
                                 "id": "3Qj)Hd$^1Cg|EUzL4/=(",
                                 "name": "VARIABLE",
-                                "value": "zuf\u00e4llig"
+                                "value": "au hasard"
                             }
                         },
                         "id": "^H`u[+P5R?dQnZgVvh,k",
@@ -3083,7 +3083,7 @@
                             "VARIABLE": {
                                 "id": "c]M!0sG=axly$j3hkz-7",
                                 "name": "VARIABLE",
-                                "value": "adjektiv"
+                                "value": "adjectif"
                             }
                         },
                         "id": "^i)pEiMu1:lq^w%m2%J@",
@@ -3107,7 +3107,7 @@
                             "VARIABLE": {
                                 "id": "3Qj)Hd$^1Cg|EUzL4/=(",
                                 "name": "VARIABLE",
-                                "value": "zuf\u00e4llig"
+                                "value": "au hasard"
                             }
                         },
                         "id": "_^zYEPe14~}_^WfsfbI7",
@@ -3131,7 +3131,7 @@
                             "VARIABLE": {
                                 "id": "3Qj)Hd$^1Cg|EUzL4/=(",
                                 "name": "VARIABLE",
-                                "value": "zuf\u00e4llig"
+                                "value": "au hasard"
                             }
                         },
                         "id": "_fee6^I$6paimCkCqhEt",
@@ -3216,7 +3216,7 @@
                             "VARIABLE": {
                                 "id": "c]M!0sG=axly$j3hkz-7",
                                 "name": "VARIABLE",
-                                "value": "adjektiv"
+                                "value": "adjectif"
                             }
                         },
                         "id": "`*jxAL}T!g]A)W8j3?zb",
@@ -3254,7 +3254,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "stylisch "
+                                "value": "Classe "
                             }
                         },
                         "id": "`Km3q%EM*3T8-I]sAr6w",
@@ -3285,7 +3285,7 @@
                             "VARIABLE": {
                                 "id": "c]M!0sG=axly$j3hkz-7",
                                 "name": "VARIABLE",
-                                "value": "adjektiv"
+                                "value": "adjectif"
                             }
                         },
                         "id": "`jIc$pre:/MDO=L5^~Gf",
@@ -3303,7 +3303,7 @@
                             "VARIABLE": {
                                 "id": "3Qj)Hd$^1Cg|EUzL4/=(",
                                 "name": "VARIABLE",
-                                "value": "zuf\u00e4llig"
+                                "value": "au hasard"
                             }
                         },
                         "id": "a3-]GL4{;pn1c8njDuNH",
@@ -3320,7 +3320,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "hallo"
+                                "value": "Bonjour"
                             }
                         },
                         "id": "aAKYSrYjM?depFk=k@/]",
@@ -3361,7 +3361,7 @@
                             "VARIABLE": {
                                 "id": "c]M!0sG=axly$j3hkz-7",
                                 "name": "VARIABLE",
-                                "value": "adjektiv"
+                                "value": "adjectif"
                             }
                         },
                         "id": "b-bp|J3Ij[S%yKhgLR8~",
@@ -3424,7 +3424,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "ich liebe leute, die so "
+                                "value": "J'aime les gens qui sont "
                             }
                         },
                         "id": "c*g574p^FpHiVLvSJWg7",
@@ -3457,7 +3457,7 @@
                             "VARIABLE": {
                                 "id": "3Qj)Hd$^1Cg|EUzL4/=(",
                                 "name": "VARIABLE",
-                                "value": "zuf\u00e4llig"
+                                "value": "au hasard"
                             }
                         },
                         "id": "cN1k`,^TNIO$]HGMkuUT",
@@ -3507,7 +3507,7 @@
                             "VARIABLE": {
                                 "id": "3Qj)Hd$^1Cg|EUzL4/=(",
                                 "name": "VARIABLE",
-                                "value": "zuf\u00e4llig"
+                                "value": "au hasard"
                             }
                         },
                         "id": "e9!W6HMqSeq$O}a%X4y6",
@@ -3525,7 +3525,7 @@
                             "VARIABLE": {
                                 "id": "3Qj)Hd$^1Cg|EUzL4/=(",
                                 "name": "VARIABLE",
-                                "value": "zuf\u00e4llig"
+                                "value": "au hasard"
                             }
                         },
                         "id": "eMLnH31pR64zejTnhpr;",
@@ -3542,7 +3542,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "fantastisch "
+                                "value": "Fantastique "
                             }
                         },
                         "id": "eOD+sT(m:nV9ZbmojTHy",
@@ -3604,7 +3604,7 @@
                             "VARIABLE": {
                                 "id": "c]M!0sG=axly$j3hkz-7",
                                 "name": "VARIABLE",
-                                "value": "adjektiv"
+                                "value": "adjectif"
                             }
                         },
                         "id": "fPDu7iG|=lWX3^R|:o^k",
@@ -3628,7 +3628,7 @@
                             "VARIABLE": {
                                 "id": "3Qj)Hd$^1Cg|EUzL4/=(",
                                 "name": "VARIABLE",
-                                "value": "zuf\u00e4llig"
+                                "value": "au hasard"
                             }
                         },
                         "id": "fc1{{op`b2~F8:YmOiw)",
@@ -3669,7 +3669,7 @@
                             "VARIABLE": {
                                 "id": "3Qj)Hd$^1Cg|EUzL4/=(",
                                 "name": "VARIABLE",
-                                "value": "zuf\u00e4llig"
+                                "value": "au hasard"
                             }
                         },
                         "id": "gUn^+PH{q(,GGivQC@5~",
@@ -3687,7 +3687,7 @@
                             "VARIABLE": {
                                 "id": "3Qj)Hd$^1Cg|EUzL4/=(",
                                 "name": "VARIABLE",
-                                "value": "zuf\u00e4llig"
+                                "value": "au hasard"
                             }
                         },
                         "id": "g]%kNhd0wHZ6ezBTdC$b",
@@ -3763,7 +3763,7 @@
                             "VARIABLE": {
                                 "id": "c]M!0sG=axly$j3hkz-7",
                                 "name": "VARIABLE",
-                                "value": "adjektiv"
+                                "value": "adjectif"
                             }
                         },
                         "id": "h7]1o)0r1%(#hWAObGk3",
@@ -3870,7 +3870,7 @@
                             "VARIABLE": {
                                 "id": "c]M!0sG=axly$j3hkz-7",
                                 "name": "VARIABLE",
-                                "value": "adjektiv"
+                                "value": "adjectif"
                             }
                         },
                         "id": "i.hVVxUe,CBdjoy,bV:z",
@@ -3894,7 +3894,7 @@
                             "VARIABLE": {
                                 "id": "3Qj)Hd$^1Cg|EUzL4/=(",
                                 "name": "VARIABLE",
-                                "value": "zuf\u00e4llig"
+                                "value": "au hasard"
                             }
                         },
                         "id": "i@=)).3p!0j([G!sx,4w",
@@ -3912,7 +3912,7 @@
                             "VARIABLE": {
                                 "id": "3Qj)Hd$^1Cg|EUzL4/=(",
                                 "name": "VARIABLE",
-                                "value": "zuf\u00e4llig"
+                                "value": "au hasard"
                             }
                         },
                         "id": "iQ~[-(pysaHHW}=d/C2)",
@@ -3930,7 +3930,7 @@
                             "VARIABLE": {
                                 "id": "c]M!0sG=axly$j3hkz-7",
                                 "name": "VARIABLE",
-                                "value": "adjektiv"
+                                "value": "adjectif"
                             }
                         },
                         "id": "j$jcT1/~J[H~Xso)K/iD",
@@ -3947,7 +3947,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "du bist der/die "
+                                "value": "Tu es l'\u00eatre le plus "
                             }
                         },
                         "id": "jDY[(eUXQ#=NkfHI%A-A",
@@ -3995,7 +3995,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "inspirierend "
+                                "value": "Inspirant "
                             }
                         },
                         "id": "j~AOXT9RkPH8X!6ur=l,",
@@ -4049,7 +4049,7 @@
                             "VARIABLE": {
                                 "id": "c]M!0sG=axly$j3hkz-7",
                                 "name": "VARIABLE",
-                                "value": "adjektiv"
+                                "value": "adjectif"
                             }
                         },
                         "id": "k{VBtXs^iDFbH*G7PgO7",
@@ -4117,7 +4117,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "gro\u00dfartig "
+                                "value": "G\u00e9nial "
                             }
                         },
                         "id": "m_D@fU9d:0{a41-sQfU$",
@@ -4180,7 +4180,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "du bist so "
+                                "value": "Tu es tellement "
                             }
                         },
                         "id": "nsvb]#)P+%5mAydC`r5_",
@@ -4227,7 +4227,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "hallo"
+                                "value": "Bonjour"
                             }
                         },
                         "id": "o_frOURwic2]7,}SC!hB",
@@ -4262,7 +4262,7 @@
                             "VARIABLE": {
                                 "id": "3Qj)Hd$^1Cg|EUzL4/=(",
                                 "name": "VARIABLE",
-                                "value": "zuf\u00e4llig"
+                                "value": "au hasard"
                             }
                         },
                         "id": "qZVX7wcbey(9c%Y7-MYD",
@@ -4338,7 +4338,7 @@
                             "VARIABLE": {
                                 "id": "3Qj)Hd$^1Cg|EUzL4/=(",
                                 "name": "VARIABLE",
-                                "value": "zuf\u00e4llig"
+                                "value": "au hasard"
                             }
                         },
                         "id": "rG8ZK$XfEmUN5.Aw2=Mz",
@@ -4355,7 +4355,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "wie "
+                                "value": "Je te trouves tr\u00e8s "
                             }
                         },
                         "id": "rGCF-O[4~ndsjxpBj775",
@@ -4409,7 +4409,7 @@
                             "VARIABLE": {
                                 "id": "c]M!0sG=axly$j3hkz-7",
                                 "name": "VARIABLE",
-                                "value": "adjektiv"
+                                "value": "adjectif"
                             }
                         },
                         "id": "r~[k3w:UC-p(=w%+fOI9",
@@ -4490,7 +4490,7 @@
                             "VARIABLE": {
                                 "id": "3Qj)Hd$^1Cg|EUzL4/=(",
                                 "name": "VARIABLE",
-                                "value": "zuf\u00e4llig"
+                                "value": "au hasard"
                             }
                         },
                         "id": "sYxm/^!GyVTXbMz0s1_]",
@@ -4530,7 +4530,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "freundlich "
+                                "value": "Sympathique "
                             }
                         },
                         "id": "t::(u_hvvC4:wr}CT6r5",
@@ -4708,7 +4708,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": " du bist"
+                                "value": " ."
                             }
                         },
                         "id": "vAmtZ`c*+*4=7_$EQ[TX",
@@ -4804,7 +4804,7 @@
                             "VARIABLE": {
                                 "id": "o4Y/RNg@C#eu[I4!s8p%",
                                 "name": "VARIABLE",
-                                "value": "w\u00e4hle einen satz aus."
+                                "value": "Choix d'une phrase."
                             }
                         },
                         "id": "zRT~JbEScC8|aABm$_jL",
@@ -4953,7 +4953,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": " bist du"
+                                "value": " Es-tu"
                             }
                         },
                         "id": "|MWL[Q7fXpc%J#t@?j:6",
@@ -4971,7 +4971,7 @@
                             "VARIABLE": {
                                 "id": "c]M!0sG=axly$j3hkz-7",
                                 "name": "VARIABLE",
-                                "value": "adjektiv"
+                                "value": "adjectif"
                             }
                         },
                         "id": "|s`J)qM|w*8k@c4]BuF`",
@@ -5018,7 +5018,7 @@
                             "VARIABLE": {
                                 "id": "3Qj)Hd$^1Cg|EUzL4/=(",
                                 "name": "VARIABLE",
-                                "value": "zuf\u00e4llig"
+                                "value": "au hasard"
                             }
                         },
                         "id": "}G3k0jh8l|mDVG*D{set",

@@ -23,252 +23,252 @@
                 "variables": {
                     "!f(-(nd{1)Ql~wW@@A[B": {
                         "id": "!f(-(nd{1)Ql~wW@@A[B",
-                        "name": "bogenradius gro\u00df",
+                        "name": "arc major radius",
                         "value": "50"
                     },
                     "!o:V|pLLF:~4tKy+/[UG": {
                         "id": "!o:V|pLLF:~4tKy+/[UG",
-                        "name": "bogenwinkel",
+                        "name": "arc angle",
                         "value": -20
                     },
                     "!tdh,vn[L0wz,;|h0Qi3": {
                         "id": "!tdh,vn[L0wz,;|h0Qi3",
-                        "name": "radar\u00a0y",
+                        "name": "radar y",
                         "value": -68.3372810285
                     },
                     "#SMQABj,Gv3P_q)5:zAP": {
                         "id": "#SMQABj,Gv3P_q)5:zAP",
-                        "name": "bogenmitte\u00a0y",
+                        "name": "arc center y",
                         "value": "68"
                     },
                     "$ZW`KnF@/`ulm)-@fKwB": {
                         "id": "$ZW`KnF@/`ulm)-@fKwB",
-                        "name": "standarddrehung (vertikalachse) null",
+                        "name": "default yaw zero",
                         "value": 2.892032
                     },
                     "(TC/Yq/]zMSK-lEuw$M1": {
                         "id": "(TC/Yq/]zMSK-lEuw$M1",
-                        "name": "ger\u00e4tedrehung (querachse) nach vorne",
+                        "name": "device pitch forward",
                         "value": "85"
                     },
                     "(n0k//*K^$6:%1`9T3a~": {
                         "id": "(n0k//*K^$6:%1`9T3a~",
-                        "name": "ger\u00e4tedrehung (vertikalachse) radius",
+                        "name": "device yaw radius",
                         "value": "20"
                     },
                     ")vI`Qk|,#$Fh!N3DsvJ/": {
                         "id": ")vI`Qk|,#$Fh!N3DsvJ/",
-                        "name": "entfernung\u00a00",
+                        "name": "proximity 0",
                         "value": "0.1"
                     },
                     "*3S#5zLqo.4t!$1Tp05U": {
                         "id": "*3S#5zLqo.4t!$1Tp05U",
-                        "name": "leg alle anpassbaren variablen fest.",
+                        "name": "Set all adjustable variables.",
                         "value": 0
                     },
                     ",48Jlq|s[01_Y`)UH_o~": {
                         "id": ",48Jlq|s[01_Y`)UH_o~",
-                        "name": "max.\u00a0x",
+                        "name": "max x",
                         "value": "400"
                     },
                     ",^6M)c%Ll-+N[hD=pLf~": {
                         "id": ",^6M)c%Ll-+N[hD=pLf~",
-                        "name": "zeichne einen zylinder auf cozmos gesicht.",
+                        "name": "Draw a top hat on Cozmos face.",
                         "value": 0
                     },
                     "-[=@}^j;3L?UoMy`@(x(": {
                         "id": "-[=@}^j;3L?UoMy`@(x(",
-                        "name": "zeichne einen regenbogen auf cozmos gesicht.",
+                        "name": "Draw a rainbow on Cozmos face.",
                         "value": 0
                     },
                     ".ga`scq50Tx9}|[!gnGM": {
                         "id": ".ga`scq50Tx9}|[!gnGM",
-                        "name": "ger\u00e4tedrehung (querachse) nach hinten",
+                        "name": "device pitch reverse",
                         "value": "45"
                     },
                     "/%Dc.rcaXNEF|Ln18B3T": {
                         "id": "/%Dc.rcaXNEF|Ln18B3T",
-                        "name": "geordnetes paar\u00a0y",
+                        "name": "ordered pair y",
                         "value": 5865.8626667664
                     },
                     "0C4/;D!tA+^0pg0tyuqv": {
                         "id": "0C4/;D!tA+^0pg0tyuqv",
-                        "name": "cozmo w\u00e4hlt nach dem zufallsprinzip die koordinaten des schatzes aus.",
+                        "name": "Cozmo chooses the randomized treasure coordinates.",
                         "value": 0
                     },
                     "0D1j?,:zBAXY0%D+,5_*": {
                         "id": "0D1j?,:zBAXY0%D+,5_*",
-                        "name": "pr\u00fcfe die entfernung zu den koordinaten des schatzes und passe die indikatoren entsprechend an.",
+                        "name": "Check proximity to the treasure coordinates and adjust indicators accordingly.",
                         "value": 0
                     },
                     "3/WnzF/u2TOKx#rpT-).": {
                         "id": "3/WnzF/u2TOKx#rpT-).",
-                        "name": "spiel den signalton des radars mit der aktuellen rate ab.",
+                        "name": "Play the radar blip sound at the current rate.",
                         "value": 0
                     },
                     "6jbH*Ge`ZK:ZomCBNB|2": {
                         "id": "6jbH*Ge`ZK:ZomCBNB|2",
-                        "name": "berechne, wie weit cozmo vom schatz entfernt ist.",
+                        "name": "Calculate the distance between Cozmo and the treasure.",
                         "value": 0
                     },
                     "6lq9ftrQ(L7%cp,cX/}U": {
                         "id": "6lq9ftrQ(L7%cp,cX/}U",
-                        "name": "lenke cozmo nach rechts.",
+                        "name": "Turn Cozmo to the right.",
                         "value": 0
                     },
                     ":97,u(1$h|G:(Qz=]!)b": {
                         "id": ":97,u(1$h|G:(Qz=]!)b",
-                        "name": "mit dem ger\u00e4t kannst du cozmo fahren.",
+                        "name": "Use the device to drive Cozmo.",
                         "value": 0
                     },
                     ":Lnz5v]bFIR~#Li~9;2N": {
                         "id": ":Lnz5v]bFIR~#Li~9;2N",
-                        "name": "nummer des zufallsschatzes",
+                        "name": "random treasure number",
                         "value": 2
                     },
                     ";1RKqnv?SNY{(b=Hn{%f": {
                         "id": ";1RKqnv?SNY{(b=Hn{%f",
-                        "name": "lenke cozmo nach links.",
+                        "name": "Turn Cozmo to the left.",
                         "value": 0
                     },
                     "=~n.9#n%@H3Pfra7`X,F": {
                         "id": "=~n.9#n%@H3Pfra7`X,F",
-                        "name": "signaltyp",
+                        "name": "blip type",
                         "value": "3"
                     },
                     "AF(:KH=af#LO6HAZARCy": {
                         "id": "AF(:KH=af#LO6HAZARCy",
-                        "name": "bogenradius klein",
+                        "name": "arc minor radius",
                         "value": "50"
                     },
                     "Bh?oj/3j_|#JdoI/c/6M": {
                         "id": "Bh?oj/3j_|#JdoI/c/6M",
-                        "name": "bogen\u00a0x",
+                        "name": "arc x",
                         "value": 61.677272880000004
                     },
                     "CU9:ksc]XZ(dQJwkV0Um": {
                         "id": "CU9:ksc]XZ(dQJwkV0Um",
-                        "name": "radarwinkel",
+                        "name": "radar angle",
                         "value": 316
                     },
                     "EV1W0x+u2=q8hUHEf*PV": {
                         "id": "EV1W0x+u2=q8hUHEf*PV",
-                        "name": "signalrate",
+                        "name": "blip rate",
                         "value": "0.5"
                     },
                     "Ev*;{pSK0_E:Jwxuu6!.": {
                         "id": "Ev*;{pSK0_E:Jwxuu6!.",
-                        "name": "schatz\u00a0x",
+                        "name": "treasure x",
                         "value": 64
                     },
                     "U.#/XM/|jN)9||GKEHAx": {
                         "id": "U.#/XM/|jN)9||GKEHAx",
-                        "name": "radar\u00a0x",
+                        "name": "radar x",
                         "value": 88.22161305350001
                     },
                     "V?O1?M07gk+59d6:?KRW": {
                         "id": "V?O1?M07gk+59d6:?KRW",
-                        "name": "zeichne eine horizontale ellipse.",
+                        "name": "Draw a horizontal ellipse.",
                         "value": 0
                     },
                     "V~cP{13{Kjta+J?%,SZy": {
                         "id": "V~cP{13{Kjta+J?%,SZy",
-                        "name": "bogenmitte\u00a0x",
+                        "name": "arc center x",
                         "value": "16"
                     },
                     "WU6?4b#@|uE^APcW+eF/": {
                         "id": "WU6?4b#@|uE^APcW+eF/",
-                        "name": "entfernung\u00a01",
+                        "name": "proximity 1",
                         "value": "0.2"
                     },
                     "[{7suEbBzexe0xr)pDh`": {
                         "id": "[{7suEbBzexe0xr)pDh`",
-                        "name": "zeichne ein kleeblatt auf cozmos gesicht.",
+                        "name": "Draw a shamrock on Cozmos face.",
                         "value": 0
                     },
                     "]Q2t1h`{U.6w;HJcO,qd": {
                         "id": "]Q2t1h`{U.6w;HJcO,qd",
-                        "name": "fahrgeschwindigkeit",
+                        "name": "drive speed",
                         "value": "80"
                     },
                     "^.,uR0qho2SY::}FUAU*": {
                         "id": "^.,uR0qho2SY::}FUAU*",
-                        "name": "lass cozmo vorw\u00e4rts fahren.",
+                        "name": "Drive Cozmo forward.",
                         "value": 0
                     },
                     "c.OITwyo^+m8-w6o6Uf|": {
                         "id": "c.OITwyo^+m8-w6o6Uf|",
-                        "name": "radar auf cozmos gesicht animieren",
+                        "name": "Animate a radar on Cozmos face.",
                         "value": "0"
                     },
                     "dd.+]JF7EXbmf7qK#~zP": {
                         "id": "dd.+]JF7EXbmf7qK#~zP",
-                        "name": "cozmo feiert und w\u00e4hlt irgendeinen schatz aus, der angezeigt wird.",
+                        "name": "Cozmo celebrates and chooses a randomized treasure to display.",
                         "value": 0
                     },
                     "euA-c$4iLtZ!$j6R!Wa;": {
                         "id": "euA-c$4iLtZ!$j6R!Wa;",
-                        "name": "ende des bogenwinkels",
+                        "name": "arc angle end",
                         "value": "-20"
                     },
                     "h!fBR}%lW}K7GRhVQ:]9": {
                         "id": "h!fBR}%lW}K7GRhVQ:]9",
-                        "name": "lenkradius",
+                        "name": "turn radius",
                         "value": "60"
                     },
                     "j3Fmz+/(/h/Nh#K7-Idm": {
                         "id": "j3Fmz+/(/h/Nh#K7-Idm",
-                        "name": "erkennungsmodus",
+                        "name": "detect mode",
                         "value": "false"
                     },
                     "lQ_jEez9$?b%U|oxFCmP": {
                         "id": "lQ_jEez9$?b%U|oxFCmP",
-                        "name": "entfernung vom schatz",
+                        "name": "distance from treasure",
                         "value": 76.76747404935765
                     },
                     "m5ROiVYicTs@Kr7e`]G?": {
                         "id": "m5ROiVYicTs@Kr7e`]G?",
-                        "name": "schatz\u00a0y",
+                        "name": "treasure y",
                         "value": -20
                     },
                     "o0[T-5Wa9pXn`.Z[^#?s": {
                         "id": "o0[T-5Wa9pXn`.Z[^#?s",
-                        "name": "entfernung\u00a02",
+                        "name": "proximity 2",
                         "value": "0.5"
                     },
                     "oaA?c`6p4o[E-$+At!`j": {
                         "id": "oaA?c`6p4o[E-$+At!`j",
-                        "name": "lenkgeschwindigkeit",
+                        "name": "turn speed",
                         "value": "60"
                     },
                     "sd([_2k0c?)j9_{]=D=u": {
                         "id": "sd([_2k0c?)j9_{]=D=u",
-                        "name": "bogen\u00a0y",
+                        "name": "arc y",
                         "value": 47.663167845000004
                     },
                     "tGCC|1aEB|VJfYB0fC|l": {
                         "id": "tGCC|1aEB|VJfYB0fC|l",
-                        "name": "versetze die lichter auf den cubes von cozmo in eine regenbogensequenz.",
+                        "name": "Spin the lights on Cozmos Cubes in a rainbow sequence.",
                         "value": 0
                     },
                     "tS^h3l+B,5fFeo=Ng7cO": {
                         "id": "tS^h3l+B,5fFeo=Ng7cO",
-                        "name": "max.\u00a0y",
+                        "name": "max y",
                         "value": "400"
                     },
                     "u0M(W}lEjGi`lA$0Xk/m": {
                         "id": "u0M(W}lEjGi`lA$0Xk/m",
-                        "name": "lass cozmo r\u00fcckw\u00e4rts fahren.",
+                        "name": "Drive Cozmo backwards.",
                         "value": 0
                     },
                     "xJYCT}?LriQ%e)$?ejU~": {
                         "id": "xJYCT}?LriQ%e)$?ejU~",
-                        "name": "geordnetes paar\u00a0x",
+                        "name": "ordered pair x",
                         "value": 27.38240515240004
                     },
                     "x{1gEOQLrrk=#m?6[}Xz": {
                         "id": "x{1gEOQLrrk=#m?6[}Xz",
-                        "name": "radarradius",
+                        "name": "radar radius",
                         "value": "64"
                     }
                 },
@@ -403,7 +403,7 @@
                             "VARIABLE": {
                                 "id": ",48Jlq|s[01_Y`)UH_o~",
                                 "name": "VARIABLE",
-                                "value": "max.\u00a0x"
+                                "value": "max x"
                             }
                         },
                         "id": "#MqUsZZAwzwDzEId9o[T",
@@ -495,7 +495,7 @@
                             "VARIABLE": {
                                 "id": "x{1gEOQLrrk=#m?6[}Xz",
                                 "name": "VARIABLE",
-                                "value": "radarradius"
+                                "value": "radar radius"
                             }
                         },
                         "id": "#}Bnmz@Vx*KWBixPtbkl",
@@ -577,7 +577,7 @@
                             "VARIABLE": {
                                 "id": "CU9:ksc]XZ(dQJwkV0Um",
                                 "name": "VARIABLE",
-                                "value": "radarwinkel"
+                                "value": "radar angle"
                             }
                         },
                         "id": "$:qU#hm|4vb*I!tH6+6l",
@@ -711,7 +711,7 @@
                             "VARIABLE": {
                                 "id": "!o:V|pLLF:~4tKy+/[UG",
                                 "name": "VARIABLE",
-                                "value": "bogenwinkel"
+                                "value": "arc angle"
                             }
                         },
                         "id": "$t;RvlHX%cw,CJUNRd^|",
@@ -767,7 +767,7 @@
                             "VARIABLE": {
                                 "id": "tS^h3l+B,5fFeo=Ng7cO",
                                 "name": "VARIABLE",
-                                "value": "max.\u00a0y"
+                                "value": "max y"
                             }
                         },
                         "id": "%:p~{H1-M?Pr4S^#5+PJ",
@@ -911,7 +911,7 @@
                             "VARIABLE": {
                                 "id": "tS^h3l+B,5fFeo=Ng7cO",
                                 "name": "VARIABLE",
-                                "value": "max.\u00a0y"
+                                "value": "max y"
                             }
                         },
                         "id": "%y@]U-ICne-jRd=[!=je",
@@ -1246,7 +1246,7 @@
                             "VARIABLE": {
                                 "id": "!o:V|pLLF:~4tKy+/[UG",
                                 "name": "VARIABLE",
-                                "value": "bogenwinkel"
+                                "value": "arc angle"
                             }
                         },
                         "id": ")}1,th.yN___N!IMhY|,",
@@ -1302,7 +1302,7 @@
                             "VARIABLE": {
                                 "id": "[{7suEbBzexe0xr)pDh`",
                                 "name": "VARIABLE",
-                                "value": "zeichne ein kleeblatt auf cozmos gesicht."
+                                "value": "Draw a shamrock on Cozmos face."
                             }
                         },
                         "id": "*Ca,AlRi5YiAiFm+h(^e",
@@ -1453,7 +1453,7 @@
                             "VARIABLE": {
                                 "id": ",48Jlq|s[01_Y`)UH_o~",
                                 "name": "VARIABLE",
-                                "value": "max.\u00a0x"
+                                "value": "max x"
                             }
                         },
                         "id": "+FZJg@UtQ{*k06m1t+R{",
@@ -1494,7 +1494,7 @@
                             "VARIABLE": {
                                 "id": "CU9:ksc]XZ(dQJwkV0Um",
                                 "name": "VARIABLE",
-                                "value": "radarwinkel"
+                                "value": "radar angle"
                             }
                         },
                         "id": "+Mp||@q8?:Yf(g+|]o}]",
@@ -1533,7 +1533,7 @@
                             "VARIABLE": {
                                 "id": "m5ROiVYicTs@Kr7e`]G?",
                                 "name": "VARIABLE",
-                                "value": "schatz\u00a0y"
+                                "value": "treasure y"
                             }
                         },
                         "id": "+sxZ*%/e%~Gs6$|d#Xqh",
@@ -1707,7 +1707,7 @@
                             "VARIABLE": {
                                 "id": "#SMQABj,Gv3P_q)5:zAP",
                                 "name": "VARIABLE",
-                                "value": "bogenmitte\u00a0y"
+                                "value": "arc center y"
                             }
                         },
                         "id": "-4i!DQR;],lYpX_;Cdad",
@@ -1769,7 +1769,7 @@
                             "VARIABLE": {
                                 "id": "#SMQABj,Gv3P_q)5:zAP",
                                 "name": "VARIABLE",
-                                "value": "bogenmitte\u00a0y"
+                                "value": "arc center y"
                             }
                         },
                         "id": "-NZ$Qr{d!vDaydxTlW(k",
@@ -2039,7 +2039,7 @@
                             "VARIABLE": {
                                 "id": "AF(:KH=af#LO6HAZARCy",
                                 "name": "VARIABLE",
-                                "value": "bogenradius klein"
+                                "value": "arc minor radius"
                             }
                         },
                         "id": "/,AQx];2QLWDf1*13FTn",
@@ -2063,7 +2063,7 @@
                             "VARIABLE": {
                                 "id": "EV1W0x+u2=q8hUHEf*PV",
                                 "name": "VARIABLE",
-                                "value": "signalrate"
+                                "value": "blip rate"
                             }
                         },
                         "id": "/,^c0swS93=!oOS}tjOJ",
@@ -2117,7 +2117,7 @@
                             "VARIABLE": {
                                 "id": "V~cP{13{Kjta+J?%,SZy",
                                 "name": "VARIABLE",
-                                "value": "bogenmitte\u00a0x"
+                                "value": "arc center x"
                             }
                         },
                         "id": "/Q24AdE@B`:!Q|14PNJB",
@@ -2294,7 +2294,7 @@
                             "VARIABLE": {
                                 "id": "!f(-(nd{1)Ql~wW@@A[B",
                                 "name": "VARIABLE",
-                                "value": "bogenradius gro\u00df"
+                                "value": "arc major radius"
                             }
                         },
                         "id": "0(/4VjaKE2A5R$t|-j;{",
@@ -2350,7 +2350,7 @@
                             "VARIABLE": {
                                 "id": "/%Dc.rcaXNEF|Ln18B3T",
                                 "name": "VARIABLE",
-                                "value": "geordnetes paar\u00a0y"
+                                "value": "ordered pair y"
                             }
                         },
                         "id": "05[Sn:T}x1A6GtXM1=K*",
@@ -2368,7 +2368,7 @@
                             "VARIABLE": {
                                 "id": "!f(-(nd{1)Ql~wW@@A[B",
                                 "name": "VARIABLE",
-                                "value": "bogenradius gro\u00df"
+                                "value": "arc major radius"
                             }
                         },
                         "id": "0B3%ZiwCfC+I4ob3_]Cf",
@@ -2453,7 +2453,7 @@
                             "VARIABLE": {
                                 "id": "U.#/XM/|jN)9||GKEHAx",
                                 "name": "VARIABLE",
-                                "value": "radar\u00a0x"
+                                "value": "radar x"
                             }
                         },
                         "id": "0a2f?knrtMw%@H7@4Xw2",
@@ -2517,7 +2517,7 @@
                             "VARIABLE": {
                                 "id": "!o:V|pLLF:~4tKy+/[UG",
                                 "name": "VARIABLE",
-                                "value": "bogenwinkel"
+                                "value": "arc angle"
                             }
                         },
                         "id": "0vNnutRO;kW-*3kW{rf`",
@@ -2658,7 +2658,7 @@
                             "VARIABLE": {
                                 "id": "!f(-(nd{1)Ql~wW@@A[B",
                                 "name": "VARIABLE",
-                                "value": "bogenradius gro\u00df"
+                                "value": "arc major radius"
                             }
                         },
                         "id": "1f6EApk4fH{{2ze*ELS`",
@@ -2898,7 +2898,7 @@
                             "VARIABLE": {
                                 "id": "V?O1?M07gk+59d6:?KRW",
                                 "name": "VARIABLE",
-                                "value": "zeichne eine horizontale ellipse."
+                                "value": "Draw a horizontal ellipse."
                             }
                         },
                         "id": "2ph;oll:2|=Q],8PYiWJ",
@@ -3147,7 +3147,7 @@
                             "VARIABLE": {
                                 "id": ";1RKqnv?SNY{(b=Hn{%f",
                                 "name": "VARIABLE",
-                                "value": "lenke cozmo nach links."
+                                "value": "Turn Cozmo to the left."
                             }
                         },
                         "id": "3h1JK6f#)2Em?`y;m=Y~",
@@ -3277,7 +3277,7 @@
                             "VARIABLE": {
                                 "id": "(TC/Yq/]zMSK-lEuw$M1",
                                 "name": "VARIABLE",
-                                "value": "ger\u00e4tedrehung (querachse) nach vorne"
+                                "value": "device pitch forward"
                             }
                         },
                         "id": "4V=Z7TA$t`?j=[wlPwHM",
@@ -3617,7 +3617,7 @@
                             "VARIABLE": {
                                 "id": "V~cP{13{Kjta+J?%,SZy",
                                 "name": "VARIABLE",
-                                "value": "bogenmitte\u00a0x"
+                                "value": "arc center x"
                             }
                         },
                         "id": "6FCdo@fQ}pCVZ[:^hLW~",
@@ -3678,7 +3678,7 @@
                             "VARIABLE": {
                                 "id": "lQ_jEez9$?b%U|oxFCmP",
                                 "name": "VARIABLE",
-                                "value": "entfernung vom schatz"
+                                "value": "distance from treasure"
                             }
                         },
                         "id": "6qH_?*@qVI^qE0HSp2Z[",
@@ -3713,7 +3713,7 @@
                             "VARIABLE": {
                                 "id": "lQ_jEez9$?b%U|oxFCmP",
                                 "name": "VARIABLE",
-                                "value": "entfernung vom schatz"
+                                "value": "distance from treasure"
                             }
                         },
                         "id": "77JdJgys];lmHD@^GKAr",
@@ -3786,7 +3786,7 @@
                             "VARIABLE": {
                                 "id": "!o:V|pLLF:~4tKy+/[UG",
                                 "name": "VARIABLE",
-                                "value": "bogenwinkel"
+                                "value": "arc angle"
                             }
                         },
                         "id": "7h)UV:S~2hZJ~y{aH9D9",
@@ -3840,7 +3840,7 @@
                             "VARIABLE": {
                                 "id": "Bh?oj/3j_|#JdoI/c/6M",
                                 "name": "VARIABLE",
-                                "value": "bogen\u00a0x"
+                                "value": "arc x"
                             }
                         },
                         "id": "8!dbRcDWKSsKum,abt/0",
@@ -3864,7 +3864,7 @@
                             "VARIABLE": {
                                 "id": "euA-c$4iLtZ!$j6R!Wa;",
                                 "name": "VARIABLE",
-                                "value": "ende des bogenwinkels"
+                                "value": "arc angle end"
                             }
                         },
                         "id": "8$4[$VW3+.!ynIRVE6=I",
@@ -4021,7 +4021,7 @@
                             "VARIABLE": {
                                 "id": "]Q2t1h`{U.6w;HJcO,qd",
                                 "name": "VARIABLE",
-                                "value": "fahrgeschwindigkeit"
+                                "value": "drive speed"
                             }
                         },
                         "id": "8_g{_FThl+Ln:`og`x`,",
@@ -4086,7 +4086,7 @@
                             "VARIABLE": {
                                 "id": ":Lnz5v]bFIR~#Li~9;2N",
                                 "name": "VARIABLE",
-                                "value": "nummer des zufallsschatzes"
+                                "value": "random treasure number"
                             }
                         },
                         "id": "8x4a[{5iUj(g$,Z{Ua*s",
@@ -4171,7 +4171,7 @@
                             "VARIABLE": {
                                 "id": "x{1gEOQLrrk=#m?6[}Xz",
                                 "name": "VARIABLE",
-                                "value": "radarradius"
+                                "value": "radar radius"
                             }
                         },
                         "id": "917T76%NM]|bfv.z;h=r",
@@ -4425,7 +4425,7 @@
                             "VARIABLE": {
                                 "id": "!f(-(nd{1)Ql~wW@@A[B",
                                 "name": "VARIABLE",
-                                "value": "bogenradius gro\u00df"
+                                "value": "arc major radius"
                             }
                         },
                         "id": ":(TF0~]k}|-6CmB/J`oC",
@@ -4464,7 +4464,7 @@
                             "VARIABLE": {
                                 "id": "lQ_jEez9$?b%U|oxFCmP",
                                 "name": "VARIABLE",
-                                "value": "entfernung vom schatz"
+                                "value": "distance from treasure"
                             }
                         },
                         "id": ":Myvp[fMr~cT;f7rD!%R",
@@ -4500,7 +4500,7 @@
                             "VARIABLE": {
                                 "id": "oaA?c`6p4o[E-$+At!`j",
                                 "name": "VARIABLE",
-                                "value": "lenkgeschwindigkeit"
+                                "value": "turn speed"
                             }
                         },
                         "id": ":[`EFsGn]?zy^3%HJDy-",
@@ -4518,7 +4518,7 @@
                             "VARIABLE": {
                                 "id": "euA-c$4iLtZ!$j6R!Wa;",
                                 "name": "VARIABLE",
-                                "value": "ende des bogenwinkels"
+                                "value": "arc angle end"
                             }
                         },
                         "id": ":cmj8JKpwvhhv=khD_=#",
@@ -4598,7 +4598,7 @@
                             "VARIABLE": {
                                 "id": "m5ROiVYicTs@Kr7e`]G?",
                                 "name": "VARIABLE",
-                                "value": "schatz\u00a0y"
+                                "value": "treasure y"
                             }
                         },
                         "id": ";1]`Hj5rn#p1)1qI{}We",
@@ -4695,7 +4695,7 @@
                             "VARIABLE": {
                                 "id": "sd([_2k0c?)j9_{]=D=u",
                                 "name": "VARIABLE",
-                                "value": "bogen\u00a0y"
+                                "value": "arc y"
                             }
                         },
                         "id": ";bg.Ti?%@M9AMd~H?FY^",
@@ -4767,7 +4767,7 @@
                             "VARIABLE": {
                                 "id": "euA-c$4iLtZ!$j6R!Wa;",
                                 "name": "VARIABLE",
-                                "value": "ende des bogenwinkels"
+                                "value": "arc angle end"
                             }
                         },
                         "id": "=*#~au@;8:k^i=/t}30|",
@@ -4902,7 +4902,7 @@
                             "VARIABLE": {
                                 "id": "AF(:KH=af#LO6HAZARCy",
                                 "name": "VARIABLE",
-                                "value": "bogenradius klein"
+                                "value": "arc minor radius"
                             }
                         },
                         "id": "=Xtx$uh~YAUj.Onn1*QW",
@@ -4958,7 +4958,7 @@
                             "VARIABLE": {
                                 "id": "lQ_jEez9$?b%U|oxFCmP",
                                 "name": "VARIABLE",
-                                "value": "entfernung vom schatz"
+                                "value": "distance from treasure"
                             }
                         },
                         "id": "?.7-*]J_7)hLG4Z|]96^",
@@ -4982,7 +4982,7 @@
                             "VARIABLE": {
                                 "id": "Ev*;{pSK0_E:Jwxuu6!.",
                                 "name": "VARIABLE",
-                                "value": "schatz\u00a0x"
+                                "value": "treasure x"
                             }
                         },
                         "id": "?.d*eCM*:][QE/k_(O~e",
@@ -5036,7 +5036,7 @@
                             "VARIABLE": {
                                 "id": "!f(-(nd{1)Ql~wW@@A[B",
                                 "name": "VARIABLE",
-                                "value": "bogenradius gro\u00df"
+                                "value": "arc major radius"
                             }
                         },
                         "id": "?291]%CAjuDh~)YSPm5d",
@@ -5100,7 +5100,7 @@
                             "VARIABLE": {
                                 "id": "#SMQABj,Gv3P_q)5:zAP",
                                 "name": "VARIABLE",
-                                "value": "bogenmitte\u00a0y"
+                                "value": "arc center y"
                             }
                         },
                         "id": "?_*=g{h^:;`F+4e]LNY(",
@@ -5192,7 +5192,7 @@
                             "VARIABLE": {
                                 "id": "o0[T-5Wa9pXn`.Z[^#?s",
                                 "name": "VARIABLE",
-                                "value": "entfernung\u00a02"
+                                "value": "proximity 2"
                             }
                         },
                         "id": "@2;M+mvN)!Mg;B$TT7X7",
@@ -5364,7 +5364,7 @@
                             "VARIABLE": {
                                 "id": ":Lnz5v]bFIR~#Li~9;2N",
                                 "name": "VARIABLE",
-                                "value": "nummer des zufallsschatzes"
+                                "value": "random treasure number"
                             }
                         },
                         "id": "@[%C*80JT(u[:NMNO7jr",
@@ -5397,7 +5397,7 @@
                             "VARIABLE": {
                                 "id": "euA-c$4iLtZ!$j6R!Wa;",
                                 "name": "VARIABLE",
-                                "value": "ende des bogenwinkels"
+                                "value": "arc angle end"
                             }
                         },
                         "id": "@yOu(jQe*5JVC^Rl*_m~",
@@ -5580,7 +5580,7 @@
                             "VARIABLE": {
                                 "id": "!o:V|pLLF:~4tKy+/[UG",
                                 "name": "VARIABLE",
-                                "value": "bogenwinkel"
+                                "value": "arc angle"
                             }
                         },
                         "id": "ArsW:s*L:O8JYDq|3a[c",
@@ -5675,7 +5675,7 @@
                             "VARIABLE": {
                                 "id": "=~n.9#n%@H3Pfra7`X,F",
                                 "name": "VARIABLE",
-                                "value": "signaltyp"
+                                "value": "blip type"
                             }
                         },
                         "id": "BFP71Gx:450e6ZW$~[z2",
@@ -5755,7 +5755,7 @@
                             "VARIABLE": {
                                 "id": "Ev*;{pSK0_E:Jwxuu6!.",
                                 "name": "VARIABLE",
-                                "value": "schatz\u00a0x"
+                                "value": "treasure x"
                             }
                         },
                         "id": "BfMbsNK4{/V(#6Zc~8n#",
@@ -5788,7 +5788,7 @@
                             "VARIABLE": {
                                 "id": ")vI`Qk|,#$Fh!N3DsvJ/",
                                 "name": "VARIABLE",
-                                "value": "entfernung\u00a00"
+                                "value": "proximity 0"
                             }
                         },
                         "id": "C#RJ_Bsr#=U9V)e:J[q=",
@@ -5821,7 +5821,7 @@
                             "VARIABLE": {
                                 "id": "euA-c$4iLtZ!$j6R!Wa;",
                                 "name": "VARIABLE",
-                                "value": "ende des bogenwinkels"
+                                "value": "arc angle end"
                             }
                         },
                         "id": "C/=e}aLvZ33)r]Z-dM^J",
@@ -5922,7 +5922,7 @@
                             "VARIABLE": {
                                 "id": "(TC/Yq/]zMSK-lEuw$M1",
                                 "name": "VARIABLE",
-                                "value": "ger\u00e4tedrehung (querachse) nach vorne"
+                                "value": "device pitch forward"
                             }
                         },
                         "id": "CeYMH5;]!gyIi2ZRxS%1",
@@ -6046,7 +6046,7 @@
                             "VARIABLE": {
                                 "id": "CU9:ksc]XZ(dQJwkV0Um",
                                 "name": "VARIABLE",
-                                "value": "radarwinkel"
+                                "value": "radar angle"
                             }
                         },
                         "id": "DW{Nb{G=dBrp9C[i2)j#",
@@ -6064,7 +6064,7 @@
                             "VARIABLE": {
                                 "id": "!o:V|pLLF:~4tKy+/[UG",
                                 "name": "VARIABLE",
-                                "value": "bogenwinkel"
+                                "value": "arc angle"
                             }
                         },
                         "id": "D_F/IKco`*wGNUoY^XoM",
@@ -6088,7 +6088,7 @@
                             "VARIABLE": {
                                 "id": "j3Fmz+/(/h/Nh#K7-Idm",
                                 "name": "VARIABLE",
-                                "value": "erkennungsmodus"
+                                "value": "detect mode"
                             }
                         },
                         "id": "Da1P(?^.N@dr)m38e{FP",
@@ -6169,7 +6169,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "gehen wir auf die suche"
+                                "value": "Let's find it"
                             }
                         },
                         "id": "EC)/dv(;z0xZ%Z$}/-cm",
@@ -6249,7 +6249,7 @@
                             "VARIABLE": {
                                 "id": "tS^h3l+B,5fFeo=Ng7cO",
                                 "name": "VARIABLE",
-                                "value": "max.\u00a0y"
+                                "value": "max y"
                             }
                         },
                         "id": "Em6mfB3rRW@MxUP@Zr|O",
@@ -6297,7 +6297,7 @@
                             "VARIABLE": {
                                 "id": "CU9:ksc]XZ(dQJwkV0Um",
                                 "name": "VARIABLE",
-                                "value": "radarwinkel"
+                                "value": "radar angle"
                             }
                         },
                         "id": "F/^}cB,:z|Iv^V:w:UnL",
@@ -6506,7 +6506,7 @@
                             "VARIABLE": {
                                 "id": "=~n.9#n%@H3Pfra7`X,F",
                                 "name": "VARIABLE",
-                                "value": "signaltyp"
+                                "value": "blip type"
                             }
                         },
                         "id": "G$n0F6GP#-DUDRIDNnr]",
@@ -6524,7 +6524,7 @@
                             "VARIABLE": {
                                 "id": "h!fBR}%lW}K7GRhVQ:]9",
                                 "name": "VARIABLE",
-                                "value": "lenkradius"
+                                "value": "turn radius"
                             }
                         },
                         "id": "G/~{]$-qNrtTTHcx{,*{",
@@ -6574,7 +6574,7 @@
                             "VARIABLE": {
                                 "id": "]Q2t1h`{U.6w;HJcO,qd",
                                 "name": "VARIABLE",
-                                "value": "fahrgeschwindigkeit"
+                                "value": "drive speed"
                             }
                         },
                         "id": "GBB]4s1Vf%0J7l(b5w*)",
@@ -6639,7 +6639,7 @@
                             "VARIABLE": {
                                 "id": ",^6M)c%Ll-+N[hD=pLf~",
                                 "name": "VARIABLE",
-                                "value": "zeichne einen zylinder auf cozmos gesicht."
+                                "value": "Draw a top hat on Cozmos face."
                             }
                         },
                         "id": "GQ}DT#H17l$@l8J*6Fe^",
@@ -6672,7 +6672,7 @@
                             "VARIABLE": {
                                 "id": "!o:V|pLLF:~4tKy+/[UG",
                                 "name": "VARIABLE",
-                                "value": "bogenwinkel"
+                                "value": "arc angle"
                             }
                         },
                         "id": "GvzOb-]UM1t`.pOa|xgn",
@@ -6801,7 +6801,7 @@
                             "VARIABLE": {
                                 "id": ",48Jlq|s[01_Y`)UH_o~",
                                 "name": "VARIABLE",
-                                "value": "max.\u00a0x"
+                                "value": "max x"
                             }
                         },
                         "id": "H_vq)aZLJ!rdB2l/B3Rd",
@@ -6819,7 +6819,7 @@
                             "VARIABLE": {
                                 "id": "AF(:KH=af#LO6HAZARCy",
                                 "name": "VARIABLE",
-                                "value": "bogenradius klein"
+                                "value": "arc minor radius"
                             }
                         },
                         "id": "He|wfL~PX*@bc^sXB$8;",
@@ -6904,7 +6904,7 @@
                             "VARIABLE": {
                                 "id": "^.,uR0qho2SY::}FUAU*",
                                 "name": "VARIABLE",
-                                "value": "lass cozmo vorw\u00e4rts fahren."
+                                "value": "Drive Cozmo forward."
                             }
                         },
                         "id": "I3S]1?E{=iGlLyh#PKX*",
@@ -7002,7 +7002,7 @@
                             "VARIABLE": {
                                 "id": "j3Fmz+/(/h/Nh#K7-Idm",
                                 "name": "VARIABLE",
-                                "value": "erkennungsmodus"
+                                "value": "detect mode"
                             }
                         },
                         "id": "IjuVnjs4a5U/gDc;E5Z6",
@@ -7044,7 +7044,7 @@
                             "VARIABLE": {
                                 "id": "h!fBR}%lW}K7GRhVQ:]9",
                                 "name": "VARIABLE",
-                                "value": "lenkradius"
+                                "value": "turn radius"
                             }
                         },
                         "id": "Il;}eo,w^+tvgqw?npr4",
@@ -7083,7 +7083,7 @@
                             "VARIABLE": {
                                 "id": "j3Fmz+/(/h/Nh#K7-Idm",
                                 "name": "VARIABLE",
-                                "value": "erkennungsmodus"
+                                "value": "detect mode"
                             }
                         },
                         "id": "J;is}r?KBH2m~AZ#Tta2",
@@ -7275,7 +7275,7 @@
                             "VARIABLE": {
                                 "id": "EV1W0x+u2=q8hUHEf*PV",
                                 "name": "VARIABLE",
-                                "value": "signalrate"
+                                "value": "blip rate"
                             }
                         },
                         "id": "K;rqOv7Og{/Ah,:SVzH}",
@@ -7425,7 +7425,7 @@
                             "VARIABLE": {
                                 "id": "!tdh,vn[L0wz,;|h0Qi3",
                                 "name": "VARIABLE",
-                                "value": "radar\u00a0y"
+                                "value": "radar y"
                             }
                         },
                         "id": "KhH@:`$M/8+liQJ/gYZZ",
@@ -7582,7 +7582,7 @@
                             "VARIABLE": {
                                 "id": ",48Jlq|s[01_Y`)UH_o~",
                                 "name": "VARIABLE",
-                                "value": "max.\u00a0x"
+                                "value": "max x"
                             }
                         },
                         "id": "M+6kMkmQvJSc[{E@GBX4",
@@ -7615,7 +7615,7 @@
                             "VARIABLE": {
                                 "id": ")vI`Qk|,#$Fh!N3DsvJ/",
                                 "name": "VARIABLE",
-                                "value": "entfernung\u00a00"
+                                "value": "proximity 0"
                             }
                         },
                         "id": "M=yhr%:OxgUU(+~#m^*m",
@@ -7633,7 +7633,7 @@
                             "VARIABLE": {
                                 "id": "$ZW`KnF@/`ulm)-@fKwB",
                                 "name": "VARIABLE",
-                                "value": "standarddrehung (vertikalachse) null"
+                                "value": "default yaw zero"
                             }
                         },
                         "id": "MAJ%nX:,ZWo=wwe*w6_1",
@@ -7657,7 +7657,7 @@
                             "VARIABLE": {
                                 "id": "j3Fmz+/(/h/Nh#K7-Idm",
                                 "name": "VARIABLE",
-                                "value": "erkennungsmodus"
+                                "value": "detect mode"
                             }
                         },
                         "id": "MBRr%Em]rTFxG9,2=9.M",
@@ -7681,7 +7681,7 @@
                             "VARIABLE": {
                                 "id": "!f(-(nd{1)Ql~wW@@A[B",
                                 "name": "VARIABLE",
-                                "value": "bogenradius gro\u00df"
+                                "value": "arc major radius"
                             }
                         },
                         "id": "MMC(f^}.vyt*(@g6zjBI",
@@ -7781,7 +7781,7 @@
                             "VARIABLE": {
                                 "id": "3/WnzF/u2TOKx#rpT-).",
                                 "name": "VARIABLE",
-                                "value": "spiel den signalton des radars mit der aktuellen rate ab."
+                                "value": "Play the radar blip sound at the current rate."
                             }
                         },
                         "id": "N!BW|VZJ}.DxSif?QrET",
@@ -8046,7 +8046,7 @@
                             "VARIABLE": {
                                 "id": "!o:V|pLLF:~4tKy+/[UG",
                                 "name": "VARIABLE",
-                                "value": "bogenwinkel"
+                                "value": "arc angle"
                             }
                         },
                         "id": "Ok9%v7H$UqPlR)DgzRc%",
@@ -8093,7 +8093,7 @@
                             "VARIABLE": {
                                 "id": ")vI`Qk|,#$Fh!N3DsvJ/",
                                 "name": "VARIABLE",
-                                "value": "entfernung\u00a00"
+                                "value": "proximity 0"
                             }
                         },
                         "id": "On}.@aB_UImjPt%{~;}a",
@@ -8151,7 +8151,7 @@
                             "VARIABLE": {
                                 "id": "x{1gEOQLrrk=#m?6[}Xz",
                                 "name": "VARIABLE",
-                                "value": "radarradius"
+                                "value": "radar radius"
                             }
                         },
                         "id": "P/g0):_aBuDMKOO@(w$z",
@@ -8169,7 +8169,7 @@
                             "VARIABLE": {
                                 "id": "]Q2t1h`{U.6w;HJcO,qd",
                                 "name": "VARIABLE",
-                                "value": "fahrgeschwindigkeit"
+                                "value": "drive speed"
                             }
                         },
                         "id": "P2ZqeZD-O_#H?;qj4)bj",
@@ -8219,7 +8219,7 @@
                             "VARIABLE": {
                                 "id": "=~n.9#n%@H3Pfra7`X,F",
                                 "name": "VARIABLE",
-                                "value": "signaltyp"
+                                "value": "blip type"
                             }
                         },
                         "id": "PHP/X*25YEU]ThWUbLx!",
@@ -8316,7 +8316,7 @@
                             "VARIABLE": {
                                 "id": "j3Fmz+/(/h/Nh#K7-Idm",
                                 "name": "VARIABLE",
-                                "value": "erkennungsmodus"
+                                "value": "detect mode"
                             }
                         },
                         "id": "PYe*UZzo-li)K.oZ$G[o",
@@ -8613,7 +8613,7 @@
                             "VARIABLE": {
                                 "id": "!o:V|pLLF:~4tKy+/[UG",
                                 "name": "VARIABLE",
-                                "value": "bogenwinkel"
+                                "value": "arc angle"
                             }
                         },
                         "id": "Qlbid{5:_g4xN}z,F,cv",
@@ -8655,7 +8655,7 @@
                             "VARIABLE": {
                                 "id": "j3Fmz+/(/h/Nh#K7-Idm",
                                 "name": "VARIABLE",
-                                "value": "erkennungsmodus"
+                                "value": "detect mode"
                             }
                         },
                         "id": "Q|FD8NTSTYB$y40A*H)f",
@@ -8673,7 +8673,7 @@
                             "VARIABLE": {
                                 "id": "=~n.9#n%@H3Pfra7`X,F",
                                 "name": "VARIABLE",
-                                "value": "signaltyp"
+                                "value": "blip type"
                             }
                         },
                         "id": "Q|I[URnbO}cp)L*lM^V%",
@@ -8697,7 +8697,7 @@
                             "VARIABLE": {
                                 "id": "!o:V|pLLF:~4tKy+/[UG",
                                 "name": "VARIABLE",
-                                "value": "bogenwinkel"
+                                "value": "arc angle"
                             }
                         },
                         "id": "R,noF.D5#%|$aM7n{D=r",
@@ -8759,7 +8759,7 @@
                             "VARIABLE": {
                                 "id": "*3S#5zLqo.4t!$1Tp05U",
                                 "name": "VARIABLE",
-                                "value": "leg alle anpassbaren variablen fest."
+                                "value": "Set all adjustable variables."
                             }
                         },
                         "id": "R_oS8K(eFFAjE*.SA?Kg",
@@ -8842,7 +8842,7 @@
                             "VARIABLE": {
                                 "id": "lQ_jEez9$?b%U|oxFCmP",
                                 "name": "VARIABLE",
-                                "value": "entfernung vom schatz"
+                                "value": "distance from treasure"
                             }
                         },
                         "id": "RyY6vu^Rl%ZUiqlGcu;$",
@@ -8922,7 +8922,7 @@
                             "VARIABLE": {
                                 "id": "x{1gEOQLrrk=#m?6[}Xz",
                                 "name": "VARIABLE",
-                                "value": "radarradius"
+                                "value": "radar radius"
                             }
                         },
                         "id": "SO=sYp^A9MCr@5=zYQ{p",
@@ -8972,7 +8972,7 @@
                             "VARIABLE": {
                                 "id": "/%Dc.rcaXNEF|Ln18B3T",
                                 "name": "VARIABLE",
-                                "value": "geordnetes paar\u00a0y"
+                                "value": "ordered pair y"
                             }
                         },
                         "id": "SXK@^hjD+$nj(%F7.b38",
@@ -9103,7 +9103,7 @@
                             "VARIABLE": {
                                 "id": "lQ_jEez9$?b%U|oxFCmP",
                                 "name": "VARIABLE",
-                                "value": "entfernung vom schatz"
+                                "value": "distance from treasure"
                             }
                         },
                         "id": "TSTinQ$OU+%HZ%q:AqU(",
@@ -9121,7 +9121,7 @@
                             "VARIABLE": {
                                 "id": "!f(-(nd{1)Ql~wW@@A[B",
                                 "name": "VARIABLE",
-                                "value": "bogenradius gro\u00df"
+                                "value": "arc major radius"
                             }
                         },
                         "id": "TWB:PACWi7`W~?lrRBB9",
@@ -9145,7 +9145,7 @@
                             "VARIABLE": {
                                 "id": "U.#/XM/|jN)9||GKEHAx",
                                 "name": "VARIABLE",
-                                "value": "radar\u00a0x"
+                                "value": "radar x"
                             }
                         },
                         "id": "TbMl/JsW1T^?pZMIl5`u",
@@ -9169,7 +9169,7 @@
                             "VARIABLE": {
                                 "id": ",48Jlq|s[01_Y`)UH_o~",
                                 "name": "VARIABLE",
-                                "value": "max.\u00a0x"
+                                "value": "max x"
                             }
                         },
                         "id": "TefT(lZ~;FD#tyu9iXp:",
@@ -9217,7 +9217,7 @@
                             "VARIABLE": {
                                 "id": "#SMQABj,Gv3P_q)5:zAP",
                                 "name": "VARIABLE",
-                                "value": "bogenmitte\u00a0y"
+                                "value": "arc center y"
                             }
                         },
                         "id": "U%N2r|WGIEdXslxe@dc/",
@@ -9336,7 +9336,7 @@
                             "VARIABLE": {
                                 "id": "#SMQABj,Gv3P_q)5:zAP",
                                 "name": "VARIABLE",
-                                "value": "bogenmitte\u00a0y"
+                                "value": "arc center y"
                             }
                         },
                         "id": "UKrrlRGlOJnzGOKmaJ%N",
@@ -9407,7 +9407,7 @@
                             "VARIABLE": {
                                 "id": "0D1j?,:zBAXY0%D+,5_*",
                                 "name": "VARIABLE",
-                                "value": "pr\u00fcfe die entfernung zu den koordinaten des schatzes und passe die indikatoren entsprechend an."
+                                "value": "Check proximity to the treasure coordinates and adjust indicators accordingly."
                             }
                         },
                         "id": "UedUw+*c6B%+!rBVaH*S",
@@ -9425,7 +9425,7 @@
                             "VARIABLE": {
                                 "id": "euA-c$4iLtZ!$j6R!Wa;",
                                 "name": "VARIABLE",
-                                "value": "ende des bogenwinkels"
+                                "value": "arc angle end"
                             }
                         },
                         "id": "Up*2r8rx7-^T}JVgsPeP",
@@ -9449,7 +9449,7 @@
                             "VARIABLE": {
                                 "id": ":Lnz5v]bFIR~#Li~9;2N",
                                 "name": "VARIABLE",
-                                "value": "nummer des zufallsschatzes"
+                                "value": "random treasure number"
                             }
                         },
                         "id": "Uv41.fOQ;4W$r;3,oTAZ",
@@ -9484,7 +9484,7 @@
                             "VARIABLE": {
                                 "id": "euA-c$4iLtZ!$j6R!Wa;",
                                 "name": "VARIABLE",
-                                "value": "ende des bogenwinkels"
+                                "value": "arc angle end"
                             }
                         },
                         "id": "U}1R[r#b2;ZhHSA/FP!Y",
@@ -9516,7 +9516,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "in der n\u00e4he ist ein schatz."
+                                "value": "There's a treasure nearby!"
                             }
                         },
                         "id": "V-_lF54dGyn)XSaHS?[y",
@@ -9555,7 +9555,7 @@
                             "VARIABLE": {
                                 "id": "lQ_jEez9$?b%U|oxFCmP",
                                 "name": "VARIABLE",
-                                "value": "entfernung vom schatz"
+                                "value": "distance from treasure"
                             }
                         },
                         "id": "V9LVg+wvan[*:J,:m}v1",
@@ -9573,7 +9573,7 @@
                             "VARIABLE": {
                                 "id": "!o:V|pLLF:~4tKy+/[UG",
                                 "name": "VARIABLE",
-                                "value": "bogenwinkel"
+                                "value": "arc angle"
                             }
                         },
                         "id": "V;^:Dh+yz^[FCf/aij[?",
@@ -9634,7 +9634,7 @@
                             "VARIABLE": {
                                 "id": "EV1W0x+u2=q8hUHEf*PV",
                                 "name": "VARIABLE",
-                                "value": "signalrate"
+                                "value": "blip rate"
                             }
                         },
                         "id": "V^kZu^%@-5zJINRCp)HC",
@@ -9696,7 +9696,7 @@
                             "VARIABLE": {
                                 "id": "CU9:ksc]XZ(dQJwkV0Um",
                                 "name": "VARIABLE",
-                                "value": "radarwinkel"
+                                "value": "radar angle"
                             }
                         },
                         "id": "VvxXAkoFU[t#.)NC:p%$",
@@ -9729,7 +9729,7 @@
                             "VARIABLE": {
                                 "id": "AF(:KH=af#LO6HAZARCy",
                                 "name": "VARIABLE",
-                                "value": "bogenradius klein"
+                                "value": "arc minor radius"
                             }
                         },
                         "id": "W*rE@aCM.h#{ZiA0J%X+",
@@ -9881,7 +9881,7 @@
                             "VARIABLE": {
                                 "id": "EV1W0x+u2=q8hUHEf*PV",
                                 "name": "VARIABLE",
-                                "value": "signalrate"
+                                "value": "blip rate"
                             }
                         },
                         "id": "X/$ZbW[QDfQap6e_$6AJ",
@@ -10015,7 +10015,7 @@
                             "VARIABLE": {
                                 "id": "$ZW`KnF@/`ulm)-@fKwB",
                                 "name": "VARIABLE",
-                                "value": "standarddrehung (vertikalachse) null"
+                                "value": "default yaw zero"
                             }
                         },
                         "id": "X`%tlNBsT^EJ}{jkLAHm",
@@ -10120,7 +10120,7 @@
                             "VARIABLE": {
                                 "id": "WU6?4b#@|uE^APcW+eF/",
                                 "name": "VARIABLE",
-                                "value": "entfernung\u00a01"
+                                "value": "proximity 1"
                             }
                         },
                         "id": "YF`WS.Zh:2!lSy;g!VOm",
@@ -10277,7 +10277,7 @@
                             "VARIABLE": {
                                 "id": "!f(-(nd{1)Ql~wW@@A[B",
                                 "name": "VARIABLE",
-                                "value": "bogenradius gro\u00df"
+                                "value": "arc major radius"
                             }
                         },
                         "id": "ZU4Du+;];X_aXXdHK{na",
@@ -10301,7 +10301,7 @@
                             "VARIABLE": {
                                 "id": "tGCC|1aEB|VJfYB0fC|l",
                                 "name": "VARIABLE",
-                                "value": "versetze die lichter auf den cubes von cozmo in eine regenbogensequenz."
+                                "value": "Spin the lights on Cozmos Cubes in a rainbow sequence."
                             }
                         },
                         "id": "Z[)Ef%avGMYiJo,R{6:u",
@@ -10624,7 +10624,7 @@
                             "VARIABLE": {
                                 "id": "!o:V|pLLF:~4tKy+/[UG",
                                 "name": "VARIABLE",
-                                "value": "bogenwinkel"
+                                "value": "arc angle"
                             }
                         },
                         "id": "]pZ?[AhS!]*Z1NY*rgc%",
@@ -10681,7 +10681,7 @@
                             "VARIABLE": {
                                 "id": "#SMQABj,Gv3P_q)5:zAP",
                                 "name": "VARIABLE",
-                                "value": "bogenmitte\u00a0y"
+                                "value": "arc center y"
                             }
                         },
                         "id": "^(23^h#cc~`?y#%i.o2z",
@@ -10705,7 +10705,7 @@
                             "VARIABLE": {
                                 "id": "EV1W0x+u2=q8hUHEf*PV",
                                 "name": "VARIABLE",
-                                "value": "signalrate"
+                                "value": "blip rate"
                             }
                         },
                         "id": "^+{xf7y*`mC/x@e!4$CA",
@@ -10740,7 +10740,7 @@
                             "VARIABLE": {
                                 "id": "]Q2t1h`{U.6w;HJcO,qd",
                                 "name": "VARIABLE",
-                                "value": "fahrgeschwindigkeit"
+                                "value": "drive speed"
                             }
                         },
                         "id": "^R[j5SEPLDwXW}bFgqx[",
@@ -10939,7 +10939,7 @@
                             "VARIABLE": {
                                 "id": "WU6?4b#@|uE^APcW+eF/",
                                 "name": "VARIABLE",
-                                "value": "entfernung\u00a01"
+                                "value": "proximity 1"
                             }
                         },
                         "id": "_WK[[9ow*80*4%n%R~%E",
@@ -11012,7 +11012,7 @@
                             "VARIABLE": {
                                 "id": "AF(:KH=af#LO6HAZARCy",
                                 "name": "VARIABLE",
-                                "value": "bogenradius klein"
+                                "value": "arc minor radius"
                             }
                         },
                         "id": "_nMra2ewLsJWWh2C?8fh",
@@ -11082,7 +11082,7 @@
                             "VARIABLE": {
                                 "id": "(n0k//*K^$6:%1`9T3a~",
                                 "name": "VARIABLE",
-                                "value": "ger\u00e4tedrehung (vertikalachse) radius"
+                                "value": "device yaw radius"
                             }
                         },
                         "id": "`5p0GG(YF[PrfU|a}(;@",
@@ -11129,7 +11129,7 @@
                             "VARIABLE": {
                                 "id": ",48Jlq|s[01_Y`)UH_o~",
                                 "name": "VARIABLE",
-                                "value": "max.\u00a0x"
+                                "value": "max x"
                             }
                         },
                         "id": "`LrTWeIfM(H0=0`{Zj9k",
@@ -11196,7 +11196,7 @@
                             "VARIABLE": {
                                 "id": ",48Jlq|s[01_Y`)UH_o~",
                                 "name": "VARIABLE",
-                                "value": "max.\u00a0x"
+                                "value": "max x"
                             }
                         },
                         "id": "`tbbOg32)PWjiA*.Pd83",
@@ -11214,7 +11214,7 @@
                             "VARIABLE": {
                                 "id": "V~cP{13{Kjta+J?%,SZy",
                                 "name": "VARIABLE",
-                                "value": "bogenmitte\u00a0x"
+                                "value": "arc center x"
                             }
                         },
                         "id": "a($a~FW/oK~#.yg!WDMN",
@@ -11238,7 +11238,7 @@
                             "VARIABLE": {
                                 "id": "euA-c$4iLtZ!$j6R!Wa;",
                                 "name": "VARIABLE",
-                                "value": "ende des bogenwinkels"
+                                "value": "arc angle end"
                             }
                         },
                         "id": "aIBH@pQRd(?ZILs9rb]f",
@@ -11262,7 +11262,7 @@
                             "VARIABLE": {
                                 "id": "m5ROiVYicTs@Kr7e`]G?",
                                 "name": "VARIABLE",
-                                "value": "schatz\u00a0y"
+                                "value": "treasure y"
                             }
                         },
                         "id": "aJh{kR^ByuG*~Rl_d?bx",
@@ -11360,7 +11360,7 @@
                             "VARIABLE": {
                                 "id": "AF(:KH=af#LO6HAZARCy",
                                 "name": "VARIABLE",
-                                "value": "bogenradius klein"
+                                "value": "arc minor radius"
                             }
                         },
                         "id": "ak90O0Yg2/fPpw9izl+x",
@@ -11414,7 +11414,7 @@
                             "VARIABLE": {
                                 "id": "AF(:KH=af#LO6HAZARCy",
                                 "name": "VARIABLE",
-                                "value": "bogenradius klein"
+                                "value": "arc minor radius"
                             }
                         },
                         "id": "b9]^2ax@oiYCNfYQ%=g6",
@@ -11498,7 +11498,7 @@
                             "VARIABLE": {
                                 "id": "AF(:KH=af#LO6HAZARCy",
                                 "name": "VARIABLE",
-                                "value": "bogenradius klein"
+                                "value": "arc minor radius"
                             }
                         },
                         "id": "b`6=BrM9._7P+XQ`P;C)",
@@ -11537,7 +11537,7 @@
                             "VARIABLE": {
                                 "id": "WU6?4b#@|uE^APcW+eF/",
                                 "name": "VARIABLE",
-                                "value": "entfernung\u00a01"
+                                "value": "proximity 1"
                             }
                         },
                         "id": "bkQ$|N?*2hhqFLQ{R=H[",
@@ -11682,7 +11682,7 @@
                             "VARIABLE": {
                                 "id": ",48Jlq|s[01_Y`)UH_o~",
                                 "name": "VARIABLE",
-                                "value": "max.\u00a0x"
+                                "value": "max x"
                             }
                         },
                         "id": "ca#V~R8Q@!Ab3+9d3AC0",
@@ -11736,7 +11736,7 @@
                             "VARIABLE": {
                                 "id": "=~n.9#n%@H3Pfra7`X,F",
                                 "name": "VARIABLE",
-                                "value": "signaltyp"
+                                "value": "blip type"
                             }
                         },
                         "id": "c|,$m|_zyU3CEzrfvaen",
@@ -12115,7 +12115,7 @@
                             "VARIABLE": {
                                 "id": "u0M(W}lEjGi`lA$0Xk/m",
                                 "name": "VARIABLE",
-                                "value": "lass cozmo r\u00fcckw\u00e4rts fahren."
+                                "value": "Drive Cozmo backwards."
                             }
                         },
                         "id": "esaD]7_YC*AtxeE4G^lV",
@@ -12133,7 +12133,7 @@
                             "VARIABLE": {
                                 "id": "6lq9ftrQ(L7%cp,cX/}U",
                                 "name": "VARIABLE",
-                                "value": "lenke cozmo nach rechts."
+                                "value": "Turn Cozmo to the right."
                             }
                         },
                         "id": "ey@v7+?:1l[DXA`Zl1r1",
@@ -12151,7 +12151,7 @@
                             "VARIABLE": {
                                 "id": "AF(:KH=af#LO6HAZARCy",
                                 "name": "VARIABLE",
-                                "value": "bogenradius klein"
+                                "value": "arc minor radius"
                             }
                         },
                         "id": "e}QdD_`m{tJw)Y0OS?P#",
@@ -12203,7 +12203,7 @@
                             "VARIABLE": {
                                 "id": "!o:V|pLLF:~4tKy+/[UG",
                                 "name": "VARIABLE",
-                                "value": "bogenwinkel"
+                                "value": "arc angle"
                             }
                         },
                         "id": "f*cs-vh@#WtQ#TgA*h]#",
@@ -12378,7 +12378,7 @@
                             "VARIABLE": {
                                 "id": "6jbH*Ge`ZK:ZomCBNB|2",
                                 "name": "VARIABLE",
-                                "value": "berechne, wie weit cozmo vom schatz entfernt ist."
+                                "value": "Calculate the distance between Cozmo and the treasure."
                             }
                         },
                         "id": "gVZkxN`f4@I:4-;0?i7,",
@@ -12582,7 +12582,7 @@
                             "VARIABLE": {
                                 "id": "c.OITwyo^+m8-w6o6Uf|",
                                 "name": "VARIABLE",
-                                "value": "radar auf cozmos gesicht animieren"
+                                "value": "Animate a radar on Cozmos face."
                             }
                         },
                         "id": "h[*+EjIymH^@*BpRz|Fs",
@@ -12615,7 +12615,7 @@
                             "VARIABLE": {
                                 "id": ",48Jlq|s[01_Y`)UH_o~",
                                 "name": "VARIABLE",
-                                "value": "max.\u00a0x"
+                                "value": "max x"
                             }
                         },
                         "id": "hoc4=g,(D6JV(OXn5Wt~",
@@ -12633,7 +12633,7 @@
                             "VARIABLE": {
                                 "id": "lQ_jEez9$?b%U|oxFCmP",
                                 "name": "VARIABLE",
-                                "value": "entfernung vom schatz"
+                                "value": "distance from treasure"
                             }
                         },
                         "id": "hpdK(l]~^;2#tqEiHQU|",
@@ -12651,7 +12651,7 @@
                             "VARIABLE": {
                                 "id": ".ga`scq50Tx9}|[!gnGM",
                                 "name": "VARIABLE",
-                                "value": "ger\u00e4tedrehung (querachse) nach hinten"
+                                "value": "device pitch reverse"
                             }
                         },
                         "id": "hxm$tL;0,f}ACQLpSc|3",
@@ -13134,7 +13134,7 @@
                             "VARIABLE": {
                                 "id": "j3Fmz+/(/h/Nh#K7-Idm",
                                 "name": "VARIABLE",
-                                "value": "erkennungsmodus"
+                                "value": "detect mode"
                             }
                         },
                         "id": "kNO?^+U|90!rPr.%[r#7",
@@ -13508,7 +13508,7 @@
                             "VARIABLE": {
                                 "id": ".ga`scq50Tx9}|[!gnGM",
                                 "name": "VARIABLE",
-                                "value": "ger\u00e4tedrehung (querachse) nach hinten"
+                                "value": "device pitch reverse"
                             }
                         },
                         "id": "mqv^UEUtbl3q[H22`XK}",
@@ -13779,7 +13779,7 @@
                             "VARIABLE": {
                                 "id": "dd.+]JF7EXbmf7qK#~zP",
                                 "name": "VARIABLE",
-                                "value": "cozmo feiert und w\u00e4hlt irgendeinen schatz aus, der angezeigt wird."
+                                "value": "Cozmo celebrates and chooses a randomized treasure to display."
                             }
                         },
                         "id": "oF18!,qJY!=,Rn}+{sm=",
@@ -13888,7 +13888,7 @@
                             "VARIABLE": {
                                 "id": "xJYCT}?LriQ%e)$?ejU~",
                                 "name": "VARIABLE",
-                                "value": "geordnetes paar\u00a0x"
+                                "value": "ordered pair x"
                             }
                         },
                         "id": "o^dN^6Cw7p#E3;^},|jX",
@@ -13970,7 +13970,7 @@
                             "VARIABLE": {
                                 "id": "$ZW`KnF@/`ulm)-@fKwB",
                                 "name": "VARIABLE",
-                                "value": "standarddrehung (vertikalachse) null"
+                                "value": "default yaw zero"
                             }
                         },
                         "id": "pV#~Kj-$~BsnL,]Zt[mF",
@@ -14011,7 +14011,7 @@
                             "VARIABLE": {
                                 "id": ")vI`Qk|,#$Fh!N3DsvJ/",
                                 "name": "VARIABLE",
-                                "value": "entfernung\u00a00"
+                                "value": "proximity 0"
                             }
                         },
                         "id": "pYFB[s}2)QF^S,_Uc`jr",
@@ -14029,7 +14029,7 @@
                             "VARIABLE": {
                                 "id": "!o:V|pLLF:~4tKy+/[UG",
                                 "name": "VARIABLE",
-                                "value": "bogenwinkel"
+                                "value": "arc angle"
                             }
                         },
                         "id": "p]J(324M9,8UtR]Id]K8",
@@ -14164,7 +14164,7 @@
                             "VARIABLE": {
                                 "id": "0C4/;D!tA+^0pg0tyuqv",
                                 "name": "VARIABLE",
-                                "value": "cozmo w\u00e4hlt nach dem zufallsprinzip die koordinaten des schatzes aus."
+                                "value": "Cozmo chooses the randomized treasure coordinates."
                             }
                         },
                         "id": "q?LrH=c-]WSBiYB_=FDQ",
@@ -14182,7 +14182,7 @@
                             "VARIABLE": {
                                 "id": "!o:V|pLLF:~4tKy+/[UG",
                                 "name": "VARIABLE",
-                                "value": "bogenwinkel"
+                                "value": "arc angle"
                             }
                         },
                         "id": "qBp4V2%VzM,?h.e~*Fd^",
@@ -14200,7 +14200,7 @@
                             "VARIABLE": {
                                 "id": "oaA?c`6p4o[E-$+At!`j",
                                 "name": "VARIABLE",
-                                "value": "lenkgeschwindigkeit"
+                                "value": "turn speed"
                             }
                         },
                         "id": "qC0[u2|oB%H6at;kBH/S",
@@ -14299,7 +14299,7 @@
                             "VARIABLE": {
                                 "id": ",48Jlq|s[01_Y`)UH_o~",
                                 "name": "VARIABLE",
-                                "value": "max.\u00a0x"
+                                "value": "max x"
                             }
                         },
                         "id": "qgD*F)~_:ESOmmaiK$?K",
@@ -14347,7 +14347,7 @@
                             "VARIABLE": {
                                 "id": "xJYCT}?LriQ%e)$?ejU~",
                                 "name": "VARIABLE",
-                                "value": "geordnetes paar\u00a0x"
+                                "value": "ordered pair x"
                             }
                         },
                         "id": "r41F.]1+oUIN49DQ)]*y",
@@ -14428,7 +14428,7 @@
                             "VARIABLE": {
                                 "id": "oaA?c`6p4o[E-$+At!`j",
                                 "name": "VARIABLE",
-                                "value": "lenkgeschwindigkeit"
+                                "value": "turn speed"
                             }
                         },
                         "id": "rb|kf7VbC|C=q:4|udU.",
@@ -14508,7 +14508,7 @@
                             "VARIABLE": {
                                 "id": ".ga`scq50Tx9}|[!gnGM",
                                 "name": "VARIABLE",
-                                "value": "ger\u00e4tedrehung (querachse) nach hinten"
+                                "value": "device pitch reverse"
                             }
                         },
                         "id": "s(Mr%;-uox4Y@LL54TEU",
@@ -14556,7 +14556,7 @@
                             "VARIABLE": {
                                 "id": "j3Fmz+/(/h/Nh#K7-Idm",
                                 "name": "VARIABLE",
-                                "value": "erkennungsmodus"
+                                "value": "detect mode"
                             }
                         },
                         "id": "s/Z0#]]|nMZ@%fUO-O+m",
@@ -14674,7 +14674,7 @@
                             "VARIABLE": {
                                 "id": "(n0k//*K^$6:%1`9T3a~",
                                 "name": "VARIABLE",
-                                "value": "ger\u00e4tedrehung (vertikalachse) radius"
+                                "value": "device yaw radius"
                             }
                         },
                         "id": "sx7^rQ{OKnT(`$Py$]*#",
@@ -14740,7 +14740,7 @@
                             "VARIABLE": {
                                 "id": "AF(:KH=af#LO6HAZARCy",
                                 "name": "VARIABLE",
-                                "value": "bogenradius klein"
+                                "value": "arc minor radius"
                             }
                         },
                         "id": "t6h{w1uvo5:6%s=@Dy-T",
@@ -14866,7 +14866,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "mit deinem ger\u00e4t kannst du mich fahren."
+                                "value": "Use your device to drive me!"
                             }
                         },
                         "id": "tL-ox]?+@EpMW5@llP:)",
@@ -14956,7 +14956,7 @@
                             "VARIABLE": {
                                 "id": "Bh?oj/3j_|#JdoI/c/6M",
                                 "name": "VARIABLE",
-                                "value": "bogen\u00a0x"
+                                "value": "arc x"
                             }
                         },
                         "id": "t}v;FTPDmU{Sch$HGlO/",
@@ -15061,7 +15061,7 @@
                             "VARIABLE": {
                                 "id": "#SMQABj,Gv3P_q)5:zAP",
                                 "name": "VARIABLE",
-                                "value": "bogenmitte\u00a0y"
+                                "value": "arc center y"
                             }
                         },
                         "id": "uGEf9;hrXH#sLv{`igzN",
@@ -15079,7 +15079,7 @@
                             "VARIABLE": {
                                 "id": "]Q2t1h`{U.6w;HJcO,qd",
                                 "name": "VARIABLE",
-                                "value": "fahrgeschwindigkeit"
+                                "value": "drive speed"
                             }
                         },
                         "id": "uYPg/%as=FP5V+BbkMT2",
@@ -15150,7 +15150,7 @@
                             "VARIABLE": {
                                 "id": "!f(-(nd{1)Ql~wW@@A[B",
                                 "name": "VARIABLE",
-                                "value": "bogenradius gro\u00df"
+                                "value": "arc major radius"
                             }
                         },
                         "id": "uv1qv*ykr|SoB1.[8Z3T",
@@ -15281,7 +15281,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "wir haben den schatz gefunden!"
+                                "value": "We found the treasure!"
                             }
                         },
                         "id": "vZ#`Jk7.k:77ioR1G,ka",
@@ -15314,7 +15314,7 @@
                             "VARIABLE": {
                                 "id": "x{1gEOQLrrk=#m?6[}Xz",
                                 "name": "VARIABLE",
-                                "value": "radarradius"
+                                "value": "radar radius"
                             }
                         },
                         "id": "vdGc4OFpFY;/;dK9Nq;y",
@@ -15378,7 +15378,7 @@
                             "VARIABLE": {
                                 "id": "euA-c$4iLtZ!$j6R!Wa;",
                                 "name": "VARIABLE",
-                                "value": "ende des bogenwinkels"
+                                "value": "arc angle end"
                             }
                         },
                         "id": "vm%+2bq;K1USX[IY~6{{",
@@ -15474,7 +15474,7 @@
                             "VARIABLE": {
                                 "id": "AF(:KH=af#LO6HAZARCy",
                                 "name": "VARIABLE",
-                                "value": "bogenradius klein"
+                                "value": "arc minor radius"
                             }
                         },
                         "id": "wGi?V4ojvQt#d90BA+,$",
@@ -15521,7 +15521,7 @@
                             "VARIABLE": {
                                 "id": "-[=@}^j;3L?UoMy`@(x(",
                                 "name": "VARIABLE",
-                                "value": "zeichne einen regenbogen auf cozmos gesicht."
+                                "value": "Draw a rainbow on Cozmos face."
                             }
                         },
                         "id": "wV=LGZL,k@_L`=ckaIvL",
@@ -15551,7 +15551,7 @@
                             "VARIABLE": {
                                 "id": "=~n.9#n%@H3Pfra7`X,F",
                                 "name": "VARIABLE",
-                                "value": "signaltyp"
+                                "value": "blip type"
                             }
                         },
                         "id": "wf7HZ8f~9=VO:bG?7Duu",
@@ -15619,7 +15619,7 @@
                             "VARIABLE": {
                                 "id": "!o:V|pLLF:~4tKy+/[UG",
                                 "name": "VARIABLE",
-                                "value": "bogenwinkel"
+                                "value": "arc angle"
                             }
                         },
                         "id": "wwn_bz/C5Bx){+vct3{S",
@@ -15643,7 +15643,7 @@
                             "VARIABLE": {
                                 "id": "!f(-(nd{1)Ql~wW@@A[B",
                                 "name": "VARIABLE",
-                                "value": "bogenradius gro\u00df"
+                                "value": "arc major radius"
                             }
                         },
                         "id": "w}DXC9ZG+{1*(bZ4eD-f",
@@ -15740,7 +15740,7 @@
                             "VARIABLE": {
                                 "id": "h!fBR}%lW}K7GRhVQ:]9",
                                 "name": "VARIABLE",
-                                "value": "lenkradius"
+                                "value": "turn radius"
                             }
                         },
                         "id": "x?+ry{i6c:[-8H]%Vj_p",
@@ -15805,7 +15805,7 @@
                             "VARIABLE": {
                                 "id": "Ev*;{pSK0_E:Jwxuu6!.",
                                 "name": "VARIABLE",
-                                "value": "schatz\u00a0x"
+                                "value": "treasure x"
                             }
                         },
                         "id": "x[Q[w!2Ibi~0AHH$jGV0",
@@ -15870,7 +15870,7 @@
                             "VARIABLE": {
                                 "id": "(TC/Yq/]zMSK-lEuw$M1",
                                 "name": "VARIABLE",
-                                "value": "ger\u00e4tedrehung (querachse) nach vorne"
+                                "value": "device pitch forward"
                             }
                         },
                         "id": "y8BMVOd,)g/Uxjf:F:t,",
@@ -15927,7 +15927,7 @@
                             "VARIABLE": {
                                 "id": ":97,u(1$h|G:(Qz=]!)b",
                                 "name": "VARIABLE",
-                                "value": "mit dem ger\u00e4t kannst du cozmo fahren."
+                                "value": "Use the device to drive Cozmo."
                             }
                         },
                         "id": "y~%X|~a~i#6P`rZ!$C-^",
@@ -15945,7 +15945,7 @@
                             "VARIABLE": {
                                 "id": "V~cP{13{Kjta+J?%,SZy",
                                 "name": "VARIABLE",
-                                "value": "bogenmitte\u00a0x"
+                                "value": "arc center x"
                             }
                         },
                         "id": "z(RZMG:~O(aCsd7+_4t)",
@@ -16001,7 +16001,7 @@
                             "VARIABLE": {
                                 "id": "sd([_2k0c?)j9_{]=D=u",
                                 "name": "VARIABLE",
-                                "value": "bogen\u00a0y"
+                                "value": "arc y"
                             }
                         },
                         "id": "zI5F_kKm~hy^D-Rzw4/]",
@@ -16118,7 +16118,7 @@
                             "VARIABLE": {
                                 "id": "x{1gEOQLrrk=#m?6[}Xz",
                                 "name": "VARIABLE",
-                                "value": "radarradius"
+                                "value": "radar radius"
                             }
                         },
                         "id": "{HrXTY@P4or#Xx]hPGuq",
@@ -16136,7 +16136,7 @@
                             "VARIABLE": {
                                 "id": "CU9:ksc]XZ(dQJwkV0Um",
                                 "name": "VARIABLE",
-                                "value": "radarwinkel"
+                                "value": "radar angle"
                             }
                         },
                         "id": "{a6:,Z;#gABKQELvn!WW",
@@ -16386,7 +16386,7 @@
                             "VARIABLE": {
                                 "id": "o0[T-5Wa9pXn`.Z[^#?s",
                                 "name": "VARIABLE",
-                                "value": "entfernung\u00a02"
+                                "value": "proximity 2"
                             }
                         },
                         "id": "|jHz5ng78qAp+OK[W%yi",
@@ -16548,7 +16548,7 @@
                             "VARIABLE": {
                                 "id": "!tdh,vn[L0wz,;|h0Qi3",
                                 "name": "VARIABLE",
-                                "value": "radar\u00a0y"
+                                "value": "radar y"
                             }
                         },
                         "id": "~-Cb.zq]=Vm45Mg@L.6,",
@@ -16566,7 +16566,7 @@
                             "VARIABLE": {
                                 "id": "o0[T-5Wa9pXn`.Z[^#?s",
                                 "name": "VARIABLE",
-                                "value": "entfernung\u00a02"
+                                "value": "proximity 2"
                             }
                         },
                         "id": "~-}58|!CTn=1au7{$E2]",
@@ -16662,7 +16662,7 @@
                             "VARIABLE": {
                                 "id": ":Lnz5v]bFIR~#Li~9;2N",
                                 "name": "VARIABLE",
-                                "value": "nummer des zufallsschatzes"
+                                "value": "random treasure number"
                             }
                         },
                         "id": "~T{o7lA2!xX,Vx/6$;!B",
@@ -16703,7 +16703,7 @@
                             "VARIABLE": {
                                 "id": "#SMQABj,Gv3P_q)5:zAP",
                                 "name": "VARIABLE",
-                                "value": "bogenmitte\u00a0y"
+                                "value": "arc center y"
                             }
                         },
                         "id": "~c:=rUZ^8V:b8LMui^)T",
@@ -16744,7 +16744,7 @@
                             "VARIABLE": {
                                 "id": "(n0k//*K^$6:%1`9T3a~",
                                 "name": "VARIABLE",
-                                "value": "ger\u00e4tedrehung (vertikalachse) radius"
+                                "value": "device yaw radius"
                             }
                         },
                         "id": "~sV|Rk1XF~NwO=iWN#yb",

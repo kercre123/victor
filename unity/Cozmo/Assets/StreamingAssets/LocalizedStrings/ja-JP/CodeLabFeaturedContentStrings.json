@@ -337,7 +337,7 @@
     "translation" : "現在の角度"
   },
   "codeLabFeaturedProject.DrivingInCircles.current_radius" : {
-    "translation" : "現在の半径"
+    "translation" : "現在のラジアン"
   },
   "codeLabFeaturedProject.DrivingInCircles.for_each_segment_of_the_circle_get_its_length_and_drive_cozmo_along_the_segment_arc" : {
     "translation" : "円の各線分で長さを求め、線分の弧に沿ってCOZMOを走らせます。"
@@ -526,7 +526,7 @@
     "translation" : "ポイント："
   },
   "codeLabFeaturedProject.LaserSmile.smile" : {
-    "translation" : "えがお"
+    "translation" : "笑顔"
   },
   "codeLabFeaturedProject.LaserSmile.smile_to_shoot_your_laser_move_your_head_to_aim" : {
     "translation" : "微笑んでレーザーを発射！顔を動かし狙いを定めてください。"
@@ -637,7 +637,7 @@
     "translation" : "COZMOの反応"
   },
   "codeLabFeaturedProject.PaddleBall.cozmo_score" : {
-    "translation" : "COZMOのスコア"
+    "translation" : "COZMOの\u000aスコア"
   },
   "codeLabFeaturedProject.PaddleBall.cozmo_scores_a_point" : {
     "translation" : "COZMOが1ポイント獲得しました。"
@@ -673,7 +673,7 @@
     "translation" : "パドルにあながありますか？"
   },
   "codeLabFeaturedProject.PaddleBall.i_win" : {
-    "translation" : "かった！"
+    "translation" : "勝った！"
   },
   "codeLabFeaturedProject.PaddleBall.im_the_best" : {
     "translation" : "わたしがいちばん！"
@@ -718,7 +718,7 @@
     "translation" : "プレイヤーのパドルの幅"
   },
   "codeLabFeaturedProject.PaddleBall.player_score" : {
-    "translation" : "プレイヤーのスコア"
+    "translation" : "プレイヤーの\u000aスコア"
   },
   "codeLabFeaturedProject.PaddleBall.points_to_win" : {
     "translation" : "勝つために必要な得点"
@@ -727,7 +727,7 @@
     "translation" : "ランダムな応答数"
   },
   "codeLabFeaturedProject.PaddleBall.ready" : {
-    "translation" : "じゅんびはいい？"
+    "translation" : "準備はいい？"
   },
   "codeLabFeaturedProject.PaddleBall.round_is_over" : {
     "translation" : "試合終了です"
@@ -748,7 +748,7 @@
     "translation" : "COZMOが考えるとき、ボールが彼のスキルレベルに基づくようにセットします。"
   },
   "codeLabFeaturedProject.PaddleBall.start_a_new_round_of_gameplay" : {
-    "translation" : "新しいゲームラウンドを開始します。"
+    "translation" : "ゲームで新しいラウンドを開始します。"
   },
   "codeLabFeaturedProject.PaddleBall.start_the_game" : {
     "translation" : "ゲームを開始します。"
@@ -757,7 +757,7 @@
     "translation" : "プレイヤーが1ポイント獲得しました。"
   },
   "codeLabFeaturedProject.PaddleBall.true_" : {
-    "translation" : "せい "
+    "translation" : "正 "
   },
   "codeLabFeaturedProject.PaddleBall.when_the_ball_is_on_cozmos_side_move_his_paddle_towards_it" : {
     "translation" : "ボールがCOZMO側にあるとき、彼のパドルをボールに向って動かします。"
@@ -784,7 +784,7 @@
     "translation" : "やった！"
   },
   "codeLabFeaturedProject.PaddleBall.you_win" : {
-    "translation" : "あなたのかち！"
+    "translation" : "あなたの勝ち！"
   },
   "codeLabFeaturedProject.PotOGoldDetector.animate_a_radar_on_cozmos_face" : {
     "translation" : "COZMOの顔にレーダーを描画します。"
@@ -823,13 +823,13 @@
     "translation" : "COZMOと宝物との距離を測定します。"
   },
   "codeLabFeaturedProject.PotOGoldDetector.check_proximity_to_the_treasure_coordinates_and_adjust_indicators_accordingly" : {
-    "translation" : "宝物までの距離座標を確認し、それによって方向表示を調節します。"
+    "translation" : "宝物の座標との近さを確認し、それに応じて表示を調節します。"
   },
   "codeLabFeaturedProject.PotOGoldDetector.cozmo_celebrates_and_chooses_a_randomized_treasure_to_display" : {
-    "translation" : "COZMOはお祝いし、表示する宝物をランダムに選びます。"
+    "translation" : "COZMOは喜び、宝物をランダム化された選んで表示します。"
   },
   "codeLabFeaturedProject.PotOGoldDetector.cozmo_chooses_the_randomized_treasure_coordinates" : {
-    "translation" : "COZMOはランダムに宝物の座標を選びます。"
+    "translation" : "COZMOはランダム化された宝物の座標を選びます。"
   },
   "codeLabFeaturedProject.PotOGoldDetector.default_yaw_zero" : {
     "translation" : "デフォルトのヨーはゼロ"
@@ -856,10 +856,10 @@
     "translation" : "COZMOの顔に虹を描いてください。"
   },
   "codeLabFeaturedProject.PotOGoldDetector.draw_a_shamrock_on_cozmos_face" : {
-    "translation" : "COZMOの顔に三つ葉のクローバーを描いてください。"
+    "translation" : "COZMOの顔にシャムロックを描いてください。"
   },
   "codeLabFeaturedProject.PotOGoldDetector.draw_a_top_hat_on_cozmos_face" : {
-    "translation" : "COZMOの顔にシルクハットを描いてください。"
+    "translation" : "COZMOの顔にトップハットを描いてください。"
   },
   "codeLabFeaturedProject.PotOGoldDetector.drive_cozmo_backwards" : {
     "translation" : "COZMOを後退させてください。"
@@ -904,7 +904,7 @@
     "translation" : "レーダーの角度"
   },
   "codeLabFeaturedProject.PotOGoldDetector.radar_radius" : {
-    "translation" : "レーダーの半径"
+    "translation" : "レーダーのラジアン"
   },
   "codeLabFeaturedProject.PotOGoldDetector.radar_x" : {
     "translation" : "レーダーx"
@@ -919,10 +919,10 @@
     "translation" : "設定可能な変数をすべて設定します。"
   },
   "codeLabFeaturedProject.PotOGoldDetector.spin_the_lights_on_cozmos_cubes_in_a_rainbow_sequence" : {
-    "translation" : "COZMOのキューブのライトを虹色の順番で点灯し回転させます。"
+    "translation" : "COZMOのキューブのライトを虹色のシーケンスで回転させます。"
   },
   "codeLabFeaturedProject.PotOGoldDetector.theres_a_treasure_nearby" : {
-    "translation" : "たからものがちかくにある！"
+    "translation" : "宝物が近くにある！"
   },
   "codeLabFeaturedProject.PotOGoldDetector.treasure_x" : {
     "translation" : "宝物x"
@@ -937,7 +937,7 @@
     "translation" : "COZMOを右折させてください。"
   },
   "codeLabFeaturedProject.PotOGoldDetector.turn_radius" : {
-    "translation" : "現在の半径"
+    "translation" : "回転ラジアン"
   },
   "codeLabFeaturedProject.PotOGoldDetector.turn_speed" : {
     "translation" : "回転速度"
@@ -949,7 +949,7 @@
     "translation" : "デバイスをつかってぼくをはしらせて！"
   },
   "codeLabFeaturedProject.PotOGoldDetector.we_found_the_treasure" : {
-    "translation" : "たからものをみつけました！"
+    "translation" : "宝物をみつけました！"
   },
   "codeLabFeaturedProject.PuttPutt._hold_me_facing_the_ceiling" : {
     "translation" : " てんじょうをむかせたままつかんで。"

@@ -23,12 +23,12 @@
                 "variables": {
                     "!H*}dG0uz%bRYuMyWKh[": {
                         "id": "!H*}dG0uz%bRYuMyWKh[",
-                        "name": "w\u00e4hrend das spiel l\u00e4uft, kannst du die position des schl\u00e4gers des spielers im verh\u00e4ltnis zu seinem gesicht in der kamera aktualisieren.",
+                        "name": "\u30b2\u30fc\u30e0\u3092\u3057\u3066\u3044\u308b\u9593\u3001\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u30d1\u30c9\u30eb\u4f4d\u7f6e\u3092\u30ab\u30e1\u30e9\u306b\u6620\u3063\u305f\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u9854\u306b\u57fa\u3065\u3044\u3066\u66f4\u65b0\u3057\u307e\u3059\u3002",
                         "value": 0
                     },
                     "!Sb]Gp+PUmF:.t,X0m#%": {
                         "id": "!Sb]Gp+PUmF:.t,X0m#%",
-                        "name": "sieger der runde",
+                        "name": "\u8a66\u5408\u306e\u52dd\u8005",
                         "value": "player"
                     },
                     "#8;LiTNtYf+1r,Bb_r[h": {
@@ -38,7 +38,7 @@
                     },
                     ")ha4N6oKo,{?o045fvj6": {
                         "id": ")ha4N6oKo,{?o045fvj6",
-                        "name": "starte das spiel.",
+                        "name": "\u30b2\u30fc\u30e0\u3092\u958b\u59cb\u3057\u307e\u3059\u3002",
                         "value": 0
                     },
                     "+Z/_)K(?X%_1eP=48m]C": {
@@ -48,167 +48,167 @@
                     },
                     ",gL.n,lR;UiKpQ@X5|,^": {
                         "id": ",gL.n,lR;UiKpQ@X5|,^",
-                        "name": "w\u00e4hrend das spiel l\u00e4uft, kannst du die position des balls aktualisieren.",
+                        "name": "\u30b2\u30fc\u30e0\u3092\u3057\u3066\u3044\u308b\u9593\u3001\u30dc\u30fc\u30eb\u306e\u4f4d\u7f6e\u3092\u66f4\u65b0\u3057\u307e\u3059\u3002",
                         "value": 0
                     },
                     "-:HBy)n6c:cBxM.p#0UN": {
                         "id": "-:HBy)n6c:cBxM.p#0UN",
-                        "name": "schleifenrate",
+                        "name": "\u30eb\u30fc\u30d7\u30ec\u30fc\u30c8",
                         "value": "0.04"
                     },
                     "/7TEh-hWb.#E$|%zpl}w": {
                         "id": "/7TEh-hWb.#E$|%zpl}w",
-                        "name": "sieh nach, ob der ball gegen eine wand geflogen ist, von einem schl\u00e4ger getroffen wurde oder jemand einen punkt erzielt hat.",
+                        "name": "\u30dc\u30fc\u30eb\u304c\u58c1\u304b\u30d1\u30c9\u30eb\u306b\u3042\u305f\u3063\u305f\u304b\u3001\u307e\u305f\u306f\u5f97\u70b9\u3057\u305f\u304b\u3092\u78ba\u8a8d\u3057\u307e\u3059\u3002",
                         "value": 0
                     },
                     "2R7G,w^iNhDzuM8oL4=^": {
                         "id": "2R7G,w^iNhDzuM8oL4=^",
-                        "name": "punkte f\u00fcr den sieg",
+                        "name": "\u52dd\u3064\u305f\u3081\u306b\u5fc5\u8981\u306a\u5f97\u70b9",
                         "value": "3"
                     },
                     "5*NstnK2k!}anQPVm$$j": {
                         "id": "5*NstnK2k!}anQPVm$$j",
-                        "name": "h\u00e4lfte der h\u00f6he des schl\u00e4gers des spielers",
+                        "name": "\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u30d1\u30c9\u30eb\u306e\u9ad8\u3055\u306e\u534a\u5206",
                         "value": "9"
                     },
                     "8P(48np~@_zeR}t8mdV+": {
                         "id": "8P(48np~@_zeR}t8mdV+",
-                        "name": "wenn sich der ball auf cozmos seite befindet, beweg seinen schl\u00e4ger zum ball.",
+                        "name": "\u30dc\u30fc\u30eb\u304cCOZMO\u5074\u306b\u3042\u308b\u3068\u304d\u3001\u5f7c\u306e\u30d1\u30c9\u30eb\u3092\u30dc\u30fc\u30eb\u306b\u5411\u3063\u3066\u52d5\u304b\u3057\u307e\u3059\u3002",
                         "value": 0
                     },
                     "9;(o1uYjmNamlG^@?P$M": {
                         "id": "9;(o1uYjmNamlG^@?P$M",
-                        "name": "w\u00e4hle aus, was cozmo sagt, wenn er einen punkt erzielt.",
+                        "name": "COZMO\u304c\u5f97\u70b9\u3057\u305f\u3068\u304d\u306eCOZMO\u306e\u30e9\u30f3\u30c0\u30e0\u306a\u30bb\u30ea\u30d5\u3092\u9078\u3073\u307e\u3059\u3002",
                         "value": 0
                     },
                     ";+)ef@A}n,M/_h$Jg[tz": {
                         "id": ";+)ef@A}n,M/_h$Jg[tz",
-                        "name": "schl\u00e4ger von cozmo: geschwindigkeit",
+                        "name": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u901f\u5ea6",
                         "value": "0"
                     },
                     ";,8.KO+3@42(n/VrGfz_": {
                         "id": ";,8.KO+3@42(n/VrGfz_",
-                        "name": "ballgeschwindigkeit\u00a0x",
+                        "name": "\u30dc\u30fc\u30eb\u306e\u901f\u5ea6x",
                         "value": "2"
                     },
                     "?*oqc,T2@4qLX3GFc~ln": {
                         "id": "?*oqc,T2@4qLX3GFc~ln",
-                        "name": "ballgeschwindigkeit\u00a0y",
+                        "name": "\u30dc\u30fc\u30eb\u306e\u901f\u5ea6y",
                         "value": -2
                     },
                     "AXGh4s/e^J6+(u)*+d%Y": {
                         "id": "AXGh4s/e^J6+(u)*+d%Y",
-                        "name": "wo f\u00fcr cozmo der ball ist",
+                        "name": "COZMO\u304c\u30dc\u30fc\u30eb\u306f\u2026\u2026\u3068\u8003\u3048\u308b\u3068\u304d",
                         "value": -11
                     },
                     "C98$ucj/(Z0/_I;Wqgv1": {
                         "id": "C98$ucj/(Z0/_I;Wqgv1",
-                        "name": "leg fest, wo f\u00fcr cozmo der ball ist (auf basis seines skill-levels).",
+                        "name": "COZMO\u304c\u8003\u3048\u308b\u3068\u304d\u3001\u30dc\u30fc\u30eb\u304c\u5f7c\u306e\u30b9\u30ad\u30eb\u30ec\u30d9\u30eb\u306b\u57fa\u3065\u304f\u3088\u3046\u306b\u30bb\u30c3\u30c8\u3057\u307e\u3059\u3002",
                         "value": 0
                     },
                     "Emsk)D`uo07V(p/5@]yX": {
                         "id": "Emsk)D`uo07V(p/5@]yX",
-                        "name": "starte eine neue spielrunde.",
+                        "name": "\u30b2\u30fc\u30e0\u3067\u65b0\u3057\u3044\u30e9\u30a6\u30f3\u30c9\u3092\u958b\u59cb\u3057\u307e\u3059\u3002",
                         "value": 0
                     },
                     "Fb0:eMS4J@ZNADdV{R1(": {
                         "id": "Fb0:eMS4J@ZNADdV{R1(",
-                        "name": "w\u00e4hle aus, was cozmo sagt, wenn der spieler einen punkt erzielt.",
+                        "name": "\u30d7\u30ec\u30a4\u30e4\u30fc\u304c\u5f97\u70b9\u3057\u305f\u3068\u304d\u306eCOZMO\u306e\u30e9\u30f3\u30c0\u30e0\u306a\u30bb\u30ea\u30d5\u3092\u9078\u3073\u307e\u3059\u3002",
                         "value": 0
                     },
                     "Kw-SJM-|Vl%6(jyrVv)}": {
                         "id": "Kw-SJM-|Vl%6(jyrVv)}",
-                        "name": "w\u00e4hrend das spiel l\u00e4uft, kannst du die position von cozmos schl\u00e4ger mit seiner aktuellen geschwindigkeit aktualisieren.",
+                        "name": "\u30b2\u30fc\u30e0\u3092\u3057\u3066\u3044\u308b\u9593\u3001COZMO\u306e\u30d1\u30c9\u30eb\u4f4d\u7f6e\u3092\u73fe\u5728\u306e\u901f\u5ea6\u3067\u66f4\u65b0\u3057\u307e\u3059\u3002",
                         "value": 0
                     },
                     "M504z[*WEEV(/[Xj)b1L": {
                         "id": "M504z[*WEEV(/[Xj)b1L",
-                        "name": "schl\u00e4ger des spielers: breite",
+                        "name": "\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u30d1\u30c9\u30eb\u306e\u5e45",
                         "value": "4"
                     },
                     "N;1W$..-rhJ8tGc4UOzl": {
                         "id": "N;1W$..-rhJ8tGc4UOzl",
-                        "name": "cozmo-antwort",
+                        "name": "COZMO\u306e\u53cd\u5fdc",
                         "value": "Nice shot!"
                     },
                     "NluXerqXX#!qwYcUn{7M": {
                         "id": "NluXerqXX#!qwYcUn{7M",
-                        "name": "schl\u00e4ger von cozmo: position\u00a0y",
+                        "name": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u4f4d\u7f6ey",
                         "value": -2
                     },
                     "TzYn~ZBLT$$?-sp3EP{0": {
                         "id": "TzYn~ZBLT$$?-sp3EP{0",
-                        "name": "ballradius",
+                        "name": "\u30dc\u30fc\u30eb\u306e\u534a\u5f84",
                         "value": "3"
                     },
                     "Un(M(aYayhUWSn{cE(+V": {
                         "id": "Un(M(aYayhUWSn{cE(+V",
-                        "name": "ballposition\u00a0y",
+                        "name": "\u30dc\u30fc\u30eb\u306e\u4f4d\u7f6ey",
                         "value": 7
                     },
                     "Uo$b[8m_V;*[p-4+wR)t": {
                         "id": "Uo$b[8m_V;*[p-4+wR)t",
-                        "name": "schl\u00e4ger von cozmo: beschleunigung",
+                        "name": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u52a0\u901f",
                         "value": "2"
                     },
                     "WaJW5)%7n{*Z[jtseU~S": {
                         "id": "WaJW5)%7n{*Z[jtseU~S",
-                        "name": "sobald cozmo oder der spieler einen punkt erzielt, entscheidest du, was als n\u00e4chstes passiert.",
+                        "name": "COZMO\u304b\u30d7\u30ec\u30a4\u30e4\u30fc\u304c\u5f97\u70b9\u3059\u308b\u3068\u6b21\u306e\u884c\u52d5\u304c\u6c7a\u307e\u308a\u307e\u3059",
                         "value": 0
                     },
                     "Z6V]#gYg;:N`E#%K(URF": {
                         "id": "Z6V]#gYg;:N`E#%K(URF",
-                        "name": "punktzahl des spielers",
+                        "name": "\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\n\u30b9\u30b3\u30a2",
                         "value": 3
                     },
                     "[fopL9zl_$hRfJ#B-!fs": {
                         "id": "[fopL9zl_$hRfJ#B-!fs",
-                        "name": "keine",
+                        "name": "\u306a\u3057",
                         "value": "none"
                     },
                     "]l881I{MJE$~lyf|{/!q": {
                         "id": "]l881I{MJE$~lyf|{/!q",
-                        "name": "schl\u00e4ger des spielers: position\u00a0y",
+                        "name": "\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u30d1\u30c9\u30eb\u306e\u4f4d\u7f6ey",
                         "value": 30.133333333333333
                     },
                     "^?sVp,)oRlk+32@TW9h`": {
                         "id": "^?sVp,)oRlk+32@TW9h`",
-                        "name": "schl\u00e4ger von cozmo: breite",
+                        "name": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u5e45",
                         "value": "3"
                     },
                     "_]j6]O|`Mh|l7F1N@Nw:": {
                         "id": "_]j6]O|`Mh|l7F1N@Nw:",
-                        "name": "sieger des spiels",
+                        "name": "\u30b2\u30fc\u30e0\u306e\u52dd\u8005",
                         "value": "none"
                     },
                     "`z$NRf|9{SJ#s$]*Sm]A": {
                         "id": "`z$NRf|9{SJ#s$]*Sm]A",
-                        "name": "spiel ist beendet",
+                        "name": "\u30b2\u30fc\u30e0\u30aa\u30fc\u30d0\u30fc\u3067\u3059",
                         "value": "1"
                     },
                     "aAYf`TvFRMSaVtD7vA/H": {
                         "id": "aAYf`TvFRMSaVtD7vA/H",
-                        "name": "der spieler erzielt einen punkt.",
+                        "name": "\u30d7\u30ec\u30a4\u30e4\u30fc\u304c1\u30dd\u30a4\u30f3\u30c8\u7372\u5f97\u3057\u307e\u3057\u305f\u3002",
                         "value": 0
                     },
                     "a^6RLZL5jeV5(TF$V,oX": {
                         "id": "a^6RLZL5jeV5(TF$V,oX",
-                        "name": "cozmo erzielt einen punkt.",
+                        "name": "COZMO\u304c1\u30dd\u30a4\u30f3\u30c8\u7372\u5f97\u3057\u307e\u3057\u305f\u3002",
                         "value": 0
                     },
                     "f6%30XG_*pN#W%_oKaYL": {
                         "id": "f6%30XG_*pN#W%_oKaYL",
-                        "name": "nummer der zufallsantwort",
+                        "name": "\u30e9\u30f3\u30c0\u30e0\u306a\u5fdc\u7b54\u6570",
                         "value": 1
                     },
                     "iHn2k[px%O2BD@yR;Ofu": {
                         "id": "iHn2k[px%O2BD@yR;Ofu",
-                        "name": "spieler",
+                        "name": "\u30d7\u30ec\u30a4\u30e4\u30fc",
                         "value": "player"
                     },
                     "o)|8?w5spmx%f_.GJs;9": {
                         "id": "o)|8?w5spmx%f_.GJs;9",
-                        "name": "runde ist vorbei",
+                        "name": "\u8a66\u5408\u7d42\u4e86\u3067\u3059",
                         "value": "1"
                     },
                     "ps1IW!=TN(Y~R0P[IS~X": {
@@ -218,52 +218,52 @@
                     },
                     "rFoU9C%RL!225]YFH{a+": {
                         "id": "rFoU9C%RL!225]YFH{a+",
-                        "name": "zeichenrate",
+                        "name": "\u63cf\u753b\u30ec\u30fc\u30c8",
                         "value": "0.08"
                     },
                     "uZ~o/V1iQu2,8E+%@!-b": {
                         "id": "uZ~o/V1iQu2,8E+%@!-b",
-                        "name": "schl\u00e4ger von cozmo: max. geschwindigkeit",
+                        "name": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u6700\u5927\u901f\u5ea6",
                         "value": "6"
                     },
                     "vZ|-q)^ord6=6iMj%NNg": {
                         "id": "vZ|-q)^ord6=6iMj%NNg",
-                        "name": "cozmo-skill-level",
+                        "name": "COZMO\u306e\u30b9\u30ad\u30eb\u30ec\u30d9\u30eb",
                         "value": "3"
                     },
                     "vc)o#04i]t]|_wDkV*z/": {
                         "id": "vc)o#04i]t]|_wDkV*z/",
-                        "name": "leg die spieleinstellungen fest.",
+                        "name": "\u8abf\u6574\u53ef\u80fd\u306a\u30b2\u30fc\u30e0\u8a2d\u5b9a\u3092\u30bb\u30c3\u30c8\u3057\u307e\u3059\u3002",
                         "value": 0
                     },
                     "xtus709,csCGWPUXkK7Z": {
                         "id": "xtus709,csCGWPUXkK7Z",
-                        "name": "w\u00e4hrend das spiel l\u00e4uft, kannst du anhand von daten alles auf cozmos gesicht zeichnen.",
+                        "name": "\u30b2\u30fc\u30e0\u3092\u3057\u3066\u3044\u308b\u9593\u3001\u30c7\u30fc\u30bf\u3092\u4f7f\u3063\u3066COZMO\u306e\u9854\u306b\u3059\u3079\u3066\u3092\u63cf\u753b\u3057\u307e\u3059\u3002",
                         "value": 0
                     },
                     "{YHsXwAt+asRXa)nnh+f": {
                         "id": "{YHsXwAt+asRXa)nnh+f",
-                        "name": "ballposition\u00a0x",
+                        "name": "\u30dc\u30fc\u30eb\u306e\u4f4d\u7f6ex",
                         "value": 151
                     },
                     "|Z-{pQ3;E{+2^LU~Empv": {
                         "id": "|Z-{pQ3;E{+2^LU~Empv",
-                        "name": "h\u00e4lfte der h\u00f6he des schl\u00e4gers von cozmo",
+                        "name": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u9ad8\u3055\u306e\u534a\u5206",
                         "value": "9"
                     },
                     "}]gOzGcQ@O^6pncdwy8z": {
                         "id": "}]gOzGcQ@O^6pncdwy8z",
-                        "name": "punktzahl von cozmo",
+                        "name": "COZMO\u306e\n\u30b9\u30b3\u30a2",
                         "value": 1
                     },
                     "~+xe2@l-w0oAG18*)N}I": {
                         "id": "~+xe2@l-w0oAG18*)N}I",
-                        "name": "schl\u00e4gerh\u00f6he verringern um",
+                        "name": "\u30d1\u30c9\u30eb\u306e\u9ad8\u3055\u3092\u4e0b\u3052\u308b",
                         "value": "2"
                     },
                     "~j3j3@|P{=IzQ5PMcSN*": {
                         "id": "~j3j3@|P{=IzQ5PMcSN*",
-                        "name": "leg die variablen f\u00fcrs spiel fest.",
+                        "name": "\u30b2\u30fc\u30e0\u30d7\u30ec\u30a4\u306e\u5909\u6570\u3092\u30bb\u30c3\u30c8\u3057\u307e\u3059\u3002",
                         "value": 0
                     }
                 },
@@ -342,7 +342,7 @@
                             "VARIABLE": {
                                 "id": "]l881I{MJE$~lyf|{/!q",
                                 "name": "VARIABLE",
-                                "value": "schl\u00e4ger des spielers: position\u00a0y"
+                                "value": "\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u30d1\u30c9\u30eb\u306e\u4f4d\u7f6ey"
                             }
                         },
                         "id": "!MUA4(S404AwAk2`]o9)",
@@ -359,7 +359,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "erneut spielen?"
+                                "value": "\u3082\u3046\u4e00\u5ea6\u30d7\u30ec\u30a4?"
                             }
                         },
                         "id": "!])#0o8)A=SM|JzuyOEi",
@@ -444,7 +444,7 @@
                             "VARIABLE": {
                                 "id": "rFoU9C%RL!225]YFH{a+",
                                 "name": "VARIABLE",
-                                "value": "zeichenrate"
+                                "value": "\u63cf\u753b\u30ec\u30fc\u30c8"
                             }
                         },
                         "id": "#/A+iq)HPZIC5}w~v=Q6",
@@ -506,7 +506,7 @@
                             "VARIABLE": {
                                 "id": "uZ~o/V1iQu2,8E+%@!-b",
                                 "name": "VARIABLE",
-                                "value": "schl\u00e4ger von cozmo: max. geschwindigkeit"
+                                "value": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u6700\u5927\u901f\u5ea6"
                             }
                         },
                         "id": "#HF*Ve-zym*H1P.#K_qv",
@@ -539,7 +539,7 @@
                             "VARIABLE": {
                                 "id": "5*NstnK2k!}anQPVm$$j",
                                 "name": "VARIABLE",
-                                "value": "h\u00e4lfte der h\u00f6he des schl\u00e4gers des spielers"
+                                "value": "\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u30d1\u30c9\u30eb\u306e\u9ad8\u3055\u306e\u534a\u5206"
                             }
                         },
                         "id": "#MaIV$l{iUML1_Z)U@7;",
@@ -572,7 +572,7 @@
                             "VARIABLE": {
                                 "id": "TzYn~ZBLT$$?-sp3EP{0",
                                 "name": "VARIABLE",
-                                "value": "ballradius"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u534a\u5f84"
                             }
                         },
                         "id": "#tng%${S$MVK7amJs5{c",
@@ -662,7 +662,7 @@
                             "VARIABLE": {
                                 "id": "-:HBy)n6c:cBxM.p#0UN",
                                 "name": "VARIABLE",
-                                "value": "schleifenrate"
+                                "value": "\u30eb\u30fc\u30d7\u30ec\u30fc\u30c8"
                             }
                         },
                         "id": "$KlGCOib6R@3b@BsN6-G",
@@ -782,7 +782,7 @@
                             "VARIABLE": {
                                 "id": ";,8.KO+3@42(n/VrGfz_",
                                 "name": "VARIABLE",
-                                "value": "ballgeschwindigkeit\u00a0x"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u901f\u5ea6x"
                             }
                         },
                         "id": "%PCL2:A|nbYaHq+BEej+",
@@ -843,7 +843,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "keine"
+                                "value": "\u306a\u3057"
                             }
                         },
                         "id": "%WdOCfHG(#!{?e$GG,y{",
@@ -859,7 +859,7 @@
                             "VARIABLE": {
                                 "id": "iHn2k[px%O2BD@yR;Ofu",
                                 "name": "VARIABLE",
-                                "value": "spieler"
+                                "value": "\u30d7\u30ec\u30a4\u30e4\u30fc"
                             }
                         },
                         "id": "%X%QNr4=2$IOgwmVWb8M",
@@ -997,7 +997,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "du\ngewinnst!"
+                                "value": "\u3042\u306a\u305f\u306e\u52dd\u3061\uff01"
                             }
                         },
                         "id": "(dpSc+VI71H;^5CY]f7a",
@@ -1073,7 +1073,7 @@
                             "VARIABLE": {
                                 "id": "|Z-{pQ3;E{+2^LU~Empv",
                                 "name": "VARIABLE",
-                                "value": "h\u00e4lfte der h\u00f6he des schl\u00e4gers von cozmo"
+                                "value": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u9ad8\u3055\u306e\u534a\u5206"
                             }
                         },
                         "id": ")+8,R5VFEJg$GjgjT2Mp",
@@ -1108,7 +1108,7 @@
                             "VARIABLE": {
                                 "id": "^?sVp,)oRlk+32@TW9h`",
                                 "name": "VARIABLE",
-                                "value": "schl\u00e4gerbreite"
+                                "value": "\u30d1\u30c9\u30eb\u306e\u5e45"
                             }
                         },
                         "id": ").yxI./BvF?p}TJj3;|L",
@@ -1126,7 +1126,7 @@
                             "VARIABLE": {
                                 "id": "Un(M(aYayhUWSn{cE(+V",
                                 "name": "VARIABLE",
-                                "value": "ballposition\u00a0y"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u4f4d\u7f6ey"
                             }
                         },
                         "id": ")6RC^mAl9oeeA^H[X!l6",
@@ -1202,7 +1202,7 @@
                             "VARIABLE": {
                                 "id": "o)|8?w5spmx%f_.GJs;9",
                                 "name": "VARIABLE",
-                                "value": "runde ist vorbei"
+                                "value": "\u8a66\u5408\u7d42\u4e86\u3067\u3059"
                             }
                         },
                         "id": ")`%btEy%tC_*wtJdG0?Z",
@@ -1242,7 +1242,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "schl\u00e4ger!"
+                                "value": "\u30d1\u30c9\u30eb\uff01"
                             }
                         },
                         "id": ")fp!YFZC`8[0ncvA^FO5",
@@ -1356,7 +1356,7 @@
                             "VARIABLE": {
                                 "id": "vZ|-q)^ord6=6iMj%NNg",
                                 "name": "VARIABLE",
-                                "value": "cozmo-skill-level"
+                                "value": "COZMO\u306e\u30b9\u30ad\u30eb\u30ec\u30d9\u30eb"
                             }
                         },
                         "id": "*rpfI.)Sdu8i+ia9u5C{",
@@ -1498,7 +1498,7 @@
                             "VARIABLE": {
                                 "id": "/7TEh-hWb.#E$|%zpl}w",
                                 "name": "VARIABLE",
-                                "value": "sieh nach, ob der ball gegen eine wand geflogen ist, von einem schl\u00e4ger getroffen wurde oder jemand einen punkt erzielt hat."
+                                "value": "\u30dc\u30fc\u30eb\u304c\u58c1\u304b\u30d1\u30c9\u30eb\u306b\u3042\u305f\u3063\u305f\u304b\u3001\u307e\u305f\u306f\u5f97\u70b9\u3057\u305f\u304b\u3092\u78ba\u8a8d\u3057\u307e\u3059\u3002"
                             }
                         },
                         "id": "+tWPO-fc({uUdWY5$V~T",
@@ -1554,7 +1554,7 @@
                             "VARIABLE": {
                                 "id": "N;1W$..-rhJ8tGc4UOzl",
                                 "name": "VARIABLE",
-                                "value": "cozmo-antwort"
+                                "value": "COZMO\u306e\u53cd\u5fdc"
                             }
                         },
                         "id": "+yDZ@-SHBCHZU|[+3SN|",
@@ -1595,7 +1595,7 @@
                             "VARIABLE": {
                                 "id": "Un(M(aYayhUWSn{cE(+V",
                                 "name": "VARIABLE",
-                                "value": "ballposition\u00a0y"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u4f4d\u7f6ey"
                             }
                         },
                         "id": ",.@|!o$KRI+ie+]r{KFJ",
@@ -1619,7 +1619,7 @@
                             "VARIABLE": {
                                 "id": "[fopL9zl_$hRfJ#B-!fs",
                                 "name": "VARIABLE",
-                                "value": "keine"
+                                "value": "\u306a\u3057"
                             }
                         },
                         "id": ",B-+Bt%Od2+IL3YC]IS*",
@@ -1702,7 +1702,7 @@
                             "VARIABLE": {
                                 "id": "Un(M(aYayhUWSn{cE(+V",
                                 "name": "VARIABLE",
-                                "value": "ballposition\u00a0y"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u4f4d\u7f6ey"
                             }
                         },
                         "id": "-/IpIXeDtlNS-lLW|mwo",
@@ -1841,7 +1841,7 @@
                             "VARIABLE": {
                                 "id": "Kw-SJM-|Vl%6(jyrVv)}",
                                 "name": "VARIABLE",
-                                "value": "w\u00e4hrend das spiel l\u00e4uft, kannst du die position von cozmos schl\u00e4ger mit seiner aktuellen geschwindigkeit aktualisieren."
+                                "value": "\u30b2\u30fc\u30e0\u3092\u3057\u3066\u3044\u308b\u9593\u3001COZMO\u306e\u30d1\u30c9\u30eb\u4f4d\u7f6e\u3092\u73fe\u5728\u306e\u901f\u5ea6\u3067\u66f4\u65b0\u3057\u307e\u3059\u3002"
                             }
                         },
                         "id": "-g3vydjo?}3i..;rH,y%",
@@ -1859,7 +1859,7 @@
                             "VARIABLE": {
                                 "id": "NluXerqXX#!qwYcUn{7M",
                                 "name": "VARIABLE",
-                                "value": "schl\u00e4ger von cozmo: position\u00a0y"
+                                "value": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u4f4d\u7f6ey"
                             }
                         },
                         "id": "-rVaGNHosQnJBVL~J=@K",
@@ -1966,7 +1966,7 @@
                             "VARIABLE": {
                                 "id": "N;1W$..-rhJ8tGc4UOzl",
                                 "name": "VARIABLE",
-                                "value": "cozmo-antwort"
+                                "value": "COZMO\u306e\u53cd\u5fdc"
                             }
                         },
                         "id": ".?+ll2]^5xwj7(uXhArG",
@@ -2053,7 +2053,7 @@
                             "VARIABLE": {
                                 "id": "{YHsXwAt+asRXa)nnh+f",
                                 "name": "VARIABLE",
-                                "value": "ballposition\u00a0x"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u4f4d\u7f6ex"
                             }
                         },
                         "id": ".g-|lf`Cf5{v*o2Q7VOT",
@@ -2094,7 +2094,7 @@
                             "VARIABLE": {
                                 "id": "~+xe2@l-w0oAG18*)N}I",
                                 "name": "VARIABLE",
-                                "value": "schl\u00e4gerh\u00f6he verringern um"
+                                "value": "\u30d1\u30c9\u30eb\u306e\u9ad8\u3055\u3092\u4e0b\u3052\u308b"
                             }
                         },
                         "id": "/!t_nS)A{;{Fnd1ZROG%",
@@ -2167,7 +2167,7 @@
                             "VARIABLE": {
                                 "id": "uZ~o/V1iQu2,8E+%@!-b",
                                 "name": "VARIABLE",
-                                "value": "schl\u00e4ger von cozmo: max. geschwindigkeit"
+                                "value": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u6700\u5927\u901f\u5ea6"
                             }
                         },
                         "id": "06FgafR_)8Oh-U=t/W~6",
@@ -2208,7 +2208,7 @@
                             "VARIABLE": {
                                 "id": "TzYn~ZBLT$$?-sp3EP{0",
                                 "name": "VARIABLE",
-                                "value": "ballradius"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u534a\u5f84"
                             }
                         },
                         "id": "0S#Mx,#qTC9(P$8wJYW-",
@@ -2347,7 +2347,7 @@
                             "VARIABLE": {
                                 "id": "!Sb]Gp+PUmF:.t,X0m#%",
                                 "name": "VARIABLE",
-                                "value": "sieger der runde"
+                                "value": "\u8a66\u5408\u306e\u52dd\u8005"
                             }
                         },
                         "id": "1]Gabz)cOSvGyMg:R!vg",
@@ -2576,7 +2576,7 @@
                             "VARIABLE": {
                                 "id": "5*NstnK2k!}anQPVm$$j",
                                 "name": "VARIABLE",
-                                "value": "h\u00e4lfte der h\u00f6he des schl\u00e4gers des spielers"
+                                "value": "\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u30d1\u30c9\u30eb\u306e\u9ad8\u3055\u306e\u534a\u5206"
                             }
                         },
                         "id": "3AvppF|QTt~DS@7^QT.9",
@@ -2594,7 +2594,7 @@
                             "VARIABLE": {
                                 "id": "|Z-{pQ3;E{+2^LU~Empv",
                                 "name": "VARIABLE",
-                                "value": "h\u00e4lfte der h\u00f6he des schl\u00e4gers von cozmo"
+                                "value": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u9ad8\u3055\u306e\u534a\u5206"
                             }
                         },
                         "id": "3E^pY)qTK|t1a+A|RQVG",
@@ -2699,7 +2699,7 @@
                             "VARIABLE": {
                                 "id": "?*oqc,T2@4qLX3GFc~ln",
                                 "name": "VARIABLE",
-                                "value": "ballgeschwindigkeit\u00a0y"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u901f\u5ea6y"
                             }
                         },
                         "id": "49y$6.7;!LvM:yQSD_j+",
@@ -2791,7 +2791,7 @@
                             "VARIABLE": {
                                 "id": "C98$ucj/(Z0/_I;Wqgv1",
                                 "name": "VARIABLE",
-                                "value": "leg fest, wo f\u00fcr cozmo der ball ist (auf basis seines skill-levels)."
+                                "value": "COZMO\u304c\u8003\u3048\u308b\u3068\u304d\u3001\u30dc\u30fc\u30eb\u304c\u5f7c\u306e\u30b9\u30ad\u30eb\u30ec\u30d9\u30eb\u306b\u57fa\u3065\u304f\u3088\u3046\u306b\u30bb\u30c3\u30c8\u3057\u307e\u3059\u3002"
                             }
                         },
                         "id": "4Sz$lk9_iLFUQ1Q*+7i2",
@@ -2852,7 +2852,7 @@
                             "VARIABLE": {
                                 "id": "f6%30XG_*pN#W%_oKaYL",
                                 "name": "VARIABLE",
-                                "value": "nummer der zufallsantwort"
+                                "value": "\u30e9\u30f3\u30c0\u30e0\u306a\u5fdc\u7b54\u6570"
                             }
                         },
                         "id": "4o`pDy9dW@s$F{MF+X*`",
@@ -2982,7 +2982,7 @@
                             "VARIABLE": {
                                 "id": "o)|8?w5spmx%f_.GJs;9",
                                 "name": "VARIABLE",
-                                "value": "runde ist vorbei"
+                                "value": "\u8a66\u5408\u7d42\u4e86\u3067\u3059"
                             }
                         },
                         "id": "5ojt*-qK5K@5TH0`R/?r",
@@ -3000,7 +3000,7 @@
                             "VARIABLE": {
                                 "id": "TzYn~ZBLT$$?-sp3EP{0",
                                 "name": "VARIABLE",
-                                "value": "ballradius"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u534a\u5f84"
                             }
                         },
                         "id": "6$X0bnOZ#{wYLW|eB^6e",
@@ -3034,7 +3034,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "hallo"
+                                "value": "\u3053\u3093\u306b\u3061\u306f"
                             }
                         },
                         "id": "62`+2}_B!:tW4vR6*;o|",
@@ -3120,7 +3120,7 @@
                             "VARIABLE": {
                                 "id": "AXGh4s/e^J6+(u)*+d%Y",
                                 "name": "VARIABLE",
-                                "value": "wo f\u00fcr cozmo der ball ist"
+                                "value": "COZMO\u304c\u30dc\u30fc\u30eb\u306f\u2026\u2026\u3068\u8003\u3048\u308b\u3068\u304d"
                             }
                         },
                         "id": "6E?;/cY#A50.wwj{D!GU",
@@ -3161,7 +3161,7 @@
                             "VARIABLE": {
                                 "id": "|Z-{pQ3;E{+2^LU~Empv",
                                 "name": "VARIABLE",
-                                "value": "h\u00e4lfte der h\u00f6he des schl\u00e4gers von cozmo"
+                                "value": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u9ad8\u3055\u306e\u534a\u5206"
                             }
                         },
                         "id": "6J(?t5eD/Xxr{:-qXpHw",
@@ -3244,7 +3244,7 @@
                             "VARIABLE": {
                                 "id": "?*oqc,T2@4qLX3GFc~ln",
                                 "name": "VARIABLE",
-                                "value": "ballgeschwindigkeit\u00a0y"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u901f\u5ea6y"
                             }
                         },
                         "id": "6g/_qW~~QkH?49$oh7n8",
@@ -3309,7 +3309,7 @@
                             "VARIABLE": {
                                 "id": "TzYn~ZBLT$$?-sp3EP{0",
                                 "name": "VARIABLE",
-                                "value": "ballradius"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u534a\u5f84"
                             }
                         },
                         "id": "6yG1VQb0YAd8~l1B^6T5",
@@ -3342,7 +3342,7 @@
                             "VARIABLE": {
                                 "id": "f6%30XG_*pN#W%_oKaYL",
                                 "name": "VARIABLE",
-                                "value": "nummer der zufallsantwort"
+                                "value": "\u30e9\u30f3\u30c0\u30e0\u306a\u5fdc\u7b54\u6570"
                             }
                         },
                         "id": "7+VM%3}MypRocMH*f91(",
@@ -3377,7 +3377,7 @@
                             "VARIABLE": {
                                 "id": "uZ~o/V1iQu2,8E+%@!-b",
                                 "name": "VARIABLE",
-                                "value": "schl\u00e4ger von cozmo: max. geschwindigkeit"
+                                "value": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u6700\u5927\u901f\u5ea6"
                             }
                         },
                         "id": "7-k^~o:3z@sa{k(~GY-S",
@@ -3395,7 +3395,7 @@
                             "VARIABLE": {
                                 "id": "o)|8?w5spmx%f_.GJs;9",
                                 "name": "VARIABLE",
-                                "value": "runde ist vorbei"
+                                "value": "\u8a66\u5408\u7d42\u4e86\u3067\u3059"
                             }
                         },
                         "id": "7@=5h;@n5$C|F/1Z@4x%",
@@ -3434,7 +3434,7 @@
                             "VARIABLE": {
                                 "id": "|Z-{pQ3;E{+2^LU~Empv",
                                 "name": "VARIABLE",
-                                "value": "h\u00e4lfte der h\u00f6he des schl\u00e4gers von cozmo"
+                                "value": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u9ad8\u3055\u306e\u534a\u5206"
                             }
                         },
                         "id": "7mmKw/iQzakI9^F:xNJz",
@@ -3519,7 +3519,7 @@
                             "VARIABLE": {
                                 "id": "NluXerqXX#!qwYcUn{7M",
                                 "name": "VARIABLE",
-                                "value": "schl\u00e4ger von cozmo: position\u00a0y"
+                                "value": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u4f4d\u7f6ey"
                             }
                         },
                         "id": "8,uxBKd(ZJ2%)vWDlRfZ",
@@ -3543,7 +3543,7 @@
                             "VARIABLE": {
                                 "id": "Uo$b[8m_V;*[p-4+wR)t",
                                 "name": "VARIABLE",
-                                "value": "schl\u00e4ger von cozmo: beschleunigung"
+                                "value": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u52a0\u901f"
                             }
                         },
                         "id": "8C%PHqQ_o_S~H^s:}C)I",
@@ -3665,7 +3665,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "ist ein loch in deinem schl\u00e4ger?"
+                                "value": "\u30d1\u30c9\u30eb\u306b\u3042\u306a\u304c\u3042\u308a\u307e\u3059\u304b\uff1f"
                             }
                         },
                         "id": "8iA;M1v(}FI8PGo{#UD0",
@@ -3848,7 +3848,7 @@
                             "VARIABLE": {
                                 "id": "Un(M(aYayhUWSn{cE(+V",
                                 "name": "VARIABLE",
-                                "value": "ballposition\u00a0y"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u4f4d\u7f6ey"
                             }
                         },
                         "id": "9Ob(#9tL-l5[{l5Lx4R9",
@@ -3896,7 +3896,7 @@
                             "VARIABLE": {
                                 "id": "`z$NRf|9{SJ#s$]*Sm]A",
                                 "name": "VARIABLE",
-                                "value": "spiel ist beendet"
+                                "value": "\u30b2\u30fc\u30e0\u30aa\u30fc\u30d0\u30fc\u3067\u3059"
                             }
                         },
                         "id": "9tt(Jf/VlrAZ^=WO5zoY",
@@ -3955,7 +3955,7 @@
                             "VARIABLE": {
                                 "id": "TzYn~ZBLT$$?-sp3EP{0",
                                 "name": "VARIABLE",
-                                "value": "ballradius"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u534a\u5f84"
                             }
                         },
                         "id": ":jfpf]k@i*!ze#WfOvJH",
@@ -4008,7 +4008,7 @@
                             "VARIABLE": {
                                 "id": "^?sVp,)oRlk+32@TW9h`",
                                 "name": "VARIABLE",
-                                "value": "schl\u00e4gerbreite"
+                                "value": "\u30d1\u30c9\u30eb\u306e\u5e45"
                             }
                         },
                         "id": ";9rRUR;9e=f:H9SG`6J0",
@@ -4104,7 +4104,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "wahr "
+                                "value": "\u6b63 "
                             }
                         },
                         "id": ";llmE[;~CK89mfBRN%FH",
@@ -4139,7 +4139,7 @@
                             "VARIABLE": {
                                 "id": "~j3j3@|P{=IzQ5PMcSN*",
                                 "name": "VARIABLE",
-                                "value": "leg die variablen f\u00fcrs spiel fest."
+                                "value": "\u30b2\u30fc\u30e0\u30d7\u30ec\u30a4\u306e\u5909\u6570\u3092\u30bb\u30c3\u30c8\u3057\u307e\u3059\u3002"
                             }
                         },
                         "id": "=9^xmqt_-r7d)Q7yL^j#",
@@ -4203,7 +4203,7 @@
                             "VARIABLE": {
                                 "id": "TzYn~ZBLT$$?-sp3EP{0",
                                 "name": "VARIABLE",
-                                "value": "ballradius"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u534a\u5f84"
                             }
                         },
                         "id": "=aq%b#lx95zr|LA22UjU",
@@ -4267,7 +4267,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "festlegen"
+                                "value": "\u30bb\u30c3\u30c8"
                             }
                         },
                         "id": "?(o*`Hverd;eP1WFTy!V",
@@ -4356,7 +4356,7 @@
                             "VARIABLE": {
                                 "id": "-:HBy)n6c:cBxM.p#0UN",
                                 "name": "VARIABLE",
-                                "value": "schleifenrate"
+                                "value": "\u30eb\u30fc\u30d7\u30ec\u30fc\u30c8"
                             }
                         },
                         "id": "?btv^WjG{]?.q_6e/Nvi",
@@ -4449,7 +4449,7 @@
                             "VARIABLE": {
                                 "id": ";+)ef@A}n,M/_h$Jg[tz",
                                 "name": "VARIABLE",
-                                "value": "schl\u00e4ger von cozmo: geschwindigkeit"
+                                "value": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u901f\u5ea6"
                             }
                         },
                         "id": "@/j0ZS#(QfqOgeZk1wdl",
@@ -4467,7 +4467,7 @@
                             "VARIABLE": {
                                 "id": "?*oqc,T2@4qLX3GFc~ln",
                                 "name": "VARIABLE",
-                                "value": "ballgeschwindigkeit\u00a0y"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u901f\u5ea6y"
                             }
                         },
                         "id": "@8kEc%z3IvPSymp_U.S_",
@@ -4564,7 +4564,7 @@
                             "VARIABLE": {
                                 "id": "uZ~o/V1iQu2,8E+%@!-b",
                                 "name": "VARIABLE",
-                                "value": "schl\u00e4ger von cozmo: max. geschwindigkeit"
+                                "value": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u6700\u5927\u901f\u5ea6"
                             }
                         },
                         "id": "@wS+vDg/O6mcU8y^gx9v",
@@ -4582,7 +4582,7 @@
                             "VARIABLE": {
                                 "id": ";,8.KO+3@42(n/VrGfz_",
                                 "name": "VARIABLE",
-                                "value": "ballgeschwindigkeit\u00a0x"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u901f\u5ea6x"
                             }
                         },
                         "id": "@y0Zt62Tuu(6y^vl3U|k",
@@ -4703,7 +4703,7 @@
                             "VARIABLE": {
                                 "id": "|Z-{pQ3;E{+2^LU~Empv",
                                 "name": "VARIABLE",
-                                "value": "h\u00e4lfte der h\u00f6he des schl\u00e4gers von cozmo"
+                                "value": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u9ad8\u3055\u306e\u534a\u5206"
                             }
                         },
                         "id": "A^qg^PXObv?0UQzMxt`Q",
@@ -4768,7 +4768,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "texte"
+                                "value": "\u30c6\u30ad\u30b9\u30c8"
                             }
                         },
                         "id": "BQM2J#94Y|K]ralFHl#h",
@@ -4850,7 +4850,7 @@
                             "VARIABLE": {
                                 "id": "{YHsXwAt+asRXa)nnh+f",
                                 "name": "VARIABLE",
-                                "value": "ballposition\u00a0x"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u4f4d\u7f6ex"
                             }
                         },
                         "id": "Bz~`-U1QGdFSG`spLTu*",
@@ -4868,7 +4868,7 @@
                             "VARIABLE": {
                                 "id": "N;1W$..-rhJ8tGc4UOzl",
                                 "name": "VARIABLE",
-                                "value": "cozmo-antwort"
+                                "value": "COZMO\u306e\u53cd\u5fdc"
                             }
                         },
                         "id": "C(o7D/.Rv92$g6r!Jo?4",
@@ -4993,7 +4993,7 @@
                             "VARIABLE": {
                                 "id": "?*oqc,T2@4qLX3GFc~ln",
                                 "name": "VARIABLE",
-                                "value": "ballgeschwindigkeit\u00a0y"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u901f\u5ea6y"
                             }
                         },
                         "id": "CVGqL8Nh`@-_S,u9Tnz4",
@@ -5072,7 +5072,7 @@
                             "VARIABLE": {
                                 "id": "[fopL9zl_$hRfJ#B-!fs",
                                 "name": "VARIABLE",
-                                "value": "keine"
+                                "value": "\u306a\u3057"
                             }
                         },
                         "id": "CuW|6fRT^d]0WJK%~PeV",
@@ -5108,7 +5108,7 @@
                             "VARIABLE": {
                                 "id": "o)|8?w5spmx%f_.GJs;9",
                                 "name": "VARIABLE",
-                                "value": "runde ist vorbei"
+                                "value": "\u8a66\u5408\u7d42\u4e86\u3067\u3059"
                             }
                         },
                         "id": "D)Gp1:NFrs%nEp4,I.:3",
@@ -5143,7 +5143,7 @@
                             "VARIABLE": {
                                 "id": "^?sVp,)oRlk+32@TW9h`",
                                 "name": "VARIABLE",
-                                "value": "schl\u00e4gerbreite"
+                                "value": "\u30d1\u30c9\u30eb\u306e\u5e45"
                             }
                         },
                         "id": "DNNbW$O8p]?Ez/0fe]G+",
@@ -5161,7 +5161,7 @@
                             "VARIABLE": {
                                 "id": "!Sb]Gp+PUmF:.t,X0m#%",
                                 "name": "VARIABLE",
-                                "value": "sieger der runde"
+                                "value": "\u8a66\u5408\u306e\u52dd\u8005"
                             }
                         },
                         "id": "DNiio6?lu60tE+|/I40*",
@@ -5213,7 +5213,7 @@
                             "VARIABLE": {
                                 "id": "|Z-{pQ3;E{+2^LU~Empv",
                                 "name": "VARIABLE",
-                                "value": "h\u00e4lfte der h\u00f6he des schl\u00e4gers von cozmo"
+                                "value": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u9ad8\u3055\u306e\u534a\u5206"
                             }
                         },
                         "id": "DVom1GciY9!Jm(DbUO[R",
@@ -5276,7 +5276,7 @@
                             "VARIABLE": {
                                 "id": "M504z[*WEEV(/[Xj)b1L",
                                 "name": "VARIABLE",
-                                "value": "schl\u00e4ger des spielers: breite"
+                                "value": "\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u30d1\u30c9\u30eb\u306e\u5e45"
                             }
                         },
                         "id": "Dm]5KtX.{p)jR594%THs",
@@ -5315,7 +5315,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "guter schlag!"
+                                "value": "\u30ca\u30a4\u30b9\u30b7\u30e7\u30c3\u30c8\uff01"
                             }
                         },
                         "id": "E$L9}FogMXXtqrp.P2EO",
@@ -5330,7 +5330,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "spieler"
+                                "value": "\u30d7\u30ec\u30a4\u30e4\u30fc"
                             }
                         },
                         "id": "E)Q2Bi3SotsH3,@}Jal+",
@@ -5378,7 +5378,7 @@
                             "VARIABLE": {
                                 "id": "M504z[*WEEV(/[Xj)b1L",
                                 "name": "VARIABLE",
-                                "value": "schl\u00e4ger des spielers: breite"
+                                "value": "\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u30d1\u30c9\u30eb\u306e\u5e45"
                             }
                         },
                         "id": "E8/UZj91C}Lbh{h$M[jo",
@@ -5396,7 +5396,7 @@
                             "VARIABLE": {
                                 "id": "N;1W$..-rhJ8tGc4UOzl",
                                 "name": "VARIABLE",
-                                "value": "cozmo-antwort"
+                                "value": "COZMO\u306e\u53cd\u5fdc"
                             }
                         },
                         "id": "ESnv43=7|th/$kO(su9+",
@@ -5420,7 +5420,7 @@
                             "VARIABLE": {
                                 "id": "TzYn~ZBLT$$?-sp3EP{0",
                                 "name": "VARIABLE",
-                                "value": "ballradius"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u534a\u5f84"
                             }
                         },
                         "id": "EgF@/C6D?qOpF963f7xQ",
@@ -5438,7 +5438,7 @@
                             "VARIABLE": {
                                 "id": "Un(M(aYayhUWSn{cE(+V",
                                 "name": "VARIABLE",
-                                "value": "ballposition\u00a0y"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u4f4d\u7f6ey"
                             }
                         },
                         "id": "EgqmW8fBUa^[OfBtE:9`",
@@ -5644,7 +5644,7 @@
                             "VARIABLE": {
                                 "id": "?*oqc,T2@4qLX3GFc~ln",
                                 "name": "VARIABLE",
-                                "value": "ballgeschwindigkeit\u00a0y"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u901f\u5ea6y"
                             }
                         },
                         "id": "FbR)y*y/qphTIcW-rn8$",
@@ -5686,7 +5686,7 @@
                             "VARIABLE": {
                                 "id": "TzYn~ZBLT$$?-sp3EP{0",
                                 "name": "VARIABLE",
-                                "value": "ballradius"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u534a\u5f84"
                             }
                         },
                         "id": "F}tHh;qv!/YKwOuvrtx8",
@@ -5704,7 +5704,7 @@
                             "VARIABLE": {
                                 "id": "{YHsXwAt+asRXa)nnh+f",
                                 "name": "VARIABLE",
-                                "value": "ballposition\u00a0x"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u4f4d\u7f6ex"
                             }
                         },
                         "id": "G):pu).[Wq)#gB4WF}`g",
@@ -5722,7 +5722,7 @@
                             "VARIABLE": {
                                 "id": "o)|8?w5spmx%f_.GJs;9",
                                 "name": "VARIABLE",
-                                "value": "runde ist vorbei"
+                                "value": "\u8a66\u5408\u7d42\u4e86\u3067\u3059"
                             }
                         },
                         "id": "G*b@@8s}4NVBhafT}}ft",
@@ -5757,7 +5757,7 @@
                             "VARIABLE": {
                                 "id": "Un(M(aYayhUWSn{cE(+V",
                                 "name": "VARIABLE",
-                                "value": "ballposition\u00a0y"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u4f4d\u7f6ey"
                             }
                         },
                         "id": "G@uX:e0QFZ]6s^y-J@S0",
@@ -5863,7 +5863,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "ich habe meinen schl\u00e4ger verloren"
+                                "value": "\u30d1\u30c9\u30eb\u304c\u3059\u3079\u3063\u305f"
                             }
                         },
                         "id": "Hs-v6J:yAw/#92qV5kbl",
@@ -5896,7 +5896,7 @@
                             "VARIABLE": {
                                 "id": "aAYf`TvFRMSaVtD7vA/H",
                                 "name": "VARIABLE",
-                                "value": "der spieler erzielt einen punkt."
+                                "value": "\u30d7\u30ec\u30a4\u30e4\u30fc\u304c1\u30dd\u30a4\u30f3\u30c8\u7372\u5f97\u3057\u307e\u3057\u305f\u3002"
                             }
                         },
                         "id": "I)mCBo.Ts8g@j?.p!TfG",
@@ -5914,7 +5914,7 @@
                             "VARIABLE": {
                                 "id": "vZ|-q)^ord6=6iMj%NNg",
                                 "name": "VARIABLE",
-                                "value": "cozmo-skill-level"
+                                "value": "COZMO\u306e\u30b9\u30ad\u30eb\u30ec\u30d9\u30eb"
                             }
                         },
                         "id": "I,2451?=JpU%w*~#@d0,",
@@ -6152,7 +6152,7 @@
                             "VARIABLE": {
                                 "id": "!Sb]Gp+PUmF:.t,X0m#%",
                                 "name": "VARIABLE",
-                                "value": "sieger der runde"
+                                "value": "\u8a66\u5408\u306e\u52dd\u8005"
                             }
                         },
                         "id": "JBdt4i/b./4A7U%S9TDy",
@@ -6186,7 +6186,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "ich bin der beste!"
+                                "value": "\u308f\u305f\u3057\u304c\u3044\u3061\u3070\u3093\uff01"
                             }
                         },
                         "id": "JUl%Sz+_bh4$^?PF%;[9",
@@ -6248,7 +6248,7 @@
                             "VARIABLE": {
                                 "id": "NluXerqXX#!qwYcUn{7M",
                                 "name": "VARIABLE",
-                                "value": "schl\u00e4ger von cozmo: position\u00a0y"
+                                "value": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u4f4d\u7f6ey"
                             }
                         },
                         "id": "Jj|h9-=M,_%C7me-!Q06",
@@ -6356,7 +6356,7 @@
                             "VARIABLE": {
                                 "id": "|Z-{pQ3;E{+2^LU~Empv",
                                 "name": "VARIABLE",
-                                "value": "h\u00e4lfte der h\u00f6he des schl\u00e4gers von cozmo"
+                                "value": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u9ad8\u3055\u306e\u534a\u5206"
                             }
                         },
                         "id": "KHH[KGPhEmYS9]D($A}J",
@@ -6567,7 +6567,7 @@
                             "VARIABLE": {
                                 "id": "!Sb]Gp+PUmF:.t,X0m#%",
                                 "name": "VARIABLE",
-                                "value": "sieger der runde"
+                                "value": "\u8a66\u5408\u306e\u52dd\u8005"
                             }
                         },
                         "id": "M(Y6G`poVu#Ey{/rT:YA",
@@ -6679,7 +6679,7 @@
                             "VARIABLE": {
                                 "id": "NluXerqXX#!qwYcUn{7M",
                                 "name": "VARIABLE",
-                                "value": "schl\u00e4ger von cozmo: position\u00a0y"
+                                "value": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u4f4d\u7f6ey"
                             }
                         },
                         "id": "MH]?%Y}a##^joP9vy),_",
@@ -6712,7 +6712,7 @@
                             "VARIABLE": {
                                 "id": "TzYn~ZBLT$$?-sp3EP{0",
                                 "name": "VARIABLE",
-                                "value": "ballradius"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u534a\u5f84"
                             }
                         },
                         "id": "Mm9PJq7%=^It1-8+Ba#3",
@@ -6817,7 +6817,7 @@
                             "VARIABLE": {
                                 "id": "^?sVp,)oRlk+32@TW9h`",
                                 "name": "VARIABLE",
-                                "value": "schl\u00e4gerbreite"
+                                "value": "\u30d1\u30c9\u30eb\u306e\u5e45"
                             }
                         },
                         "id": "N]vl$$;#VZ8}N$mxnN#Z",
@@ -6894,7 +6894,7 @@
                             "VARIABLE": {
                                 "id": "5*NstnK2k!}anQPVm$$j",
                                 "name": "VARIABLE",
-                                "value": "h\u00e4lfte der h\u00f6he des schl\u00e4gers des spielers"
+                                "value": "\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u30d1\u30c9\u30eb\u306e\u9ad8\u3055\u306e\u534a\u5206"
                             }
                         },
                         "id": "Nu+?lNS|FRHiSL@X@y:(",
@@ -6961,7 +6961,7 @@
                             "VARIABLE": {
                                 "id": "9;(o1uYjmNamlG^@?P$M",
                                 "name": "VARIABLE",
-                                "value": "w\u00e4hle aus, was cozmo sagt, wenn er einen punkt erzielt."
+                                "value": "COZMO\u304c\u5f97\u70b9\u3057\u305f\u3068\u304d\u306eCOZMO\u306e\u30e9\u30f3\u30c0\u30e0\u306a\u30bb\u30ea\u30d5\u3092\u9078\u3073\u307e\u3059\u3002"
                             }
                         },
                         "id": "OUA=sxnx1h_BxK$a={[y",
@@ -7158,7 +7158,7 @@
                             "VARIABLE": {
                                 "id": "Un(M(aYayhUWSn{cE(+V",
                                 "name": "VARIABLE",
-                                "value": "ballposition\u00a0y"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u4f4d\u7f6ey"
                             }
                         },
                         "id": "P}ehYvq.lmLiKPsA7v;d",
@@ -7208,7 +7208,7 @@
                             "VARIABLE": {
                                 "id": "NluXerqXX#!qwYcUn{7M",
                                 "name": "VARIABLE",
-                                "value": "schl\u00e4ger von cozmo: position\u00a0y"
+                                "value": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u4f4d\u7f6ey"
                             }
                         },
                         "id": "Q=)uf2gg4TU#;0.XO%Ox",
@@ -7226,7 +7226,7 @@
                             "VARIABLE": {
                                 "id": "}]gOzGcQ@O^6pncdwy8z",
                                 "name": "VARIABLE",
-                                "value": "punktzahl von cozmo"
+                                "value": "COZMO\u306e\n\u30b9\u30b3\u30a2"
                             }
                         },
                         "id": "QA0kKbTo)L_S+}|ml@H;",
@@ -7242,7 +7242,7 @@
                             "VARIABLE": {
                                 "id": "?*oqc,T2@4qLX3GFc~ln",
                                 "name": "VARIABLE",
-                                "value": "ballgeschwindigkeit\u00a0y"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u901f\u5ea6y"
                             }
                         },
                         "id": "QECo*n!1*+=_k?Pf#0]M",
@@ -7292,7 +7292,7 @@
                             "VARIABLE": {
                                 "id": "Z6V]#gYg;:N`E#%K(URF",
                                 "name": "VARIABLE",
-                                "value": "punktzahl des spielers"
+                                "value": "\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\n\u30b9\u30b3\u30a2"
                             }
                         },
                         "id": "QVdU|c@YQ9TXymMxnljY",
@@ -7457,7 +7457,7 @@
                             "VARIABLE": {
                                 "id": "]l881I{MJE$~lyf|{/!q",
                                 "name": "VARIABLE",
-                                "value": "schl\u00e4ger des spielers: position\u00a0y"
+                                "value": "\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u30d1\u30c9\u30eb\u306e\u4f4d\u7f6ey"
                             }
                         },
                         "id": "R2^@snIbz#!Am52@x:av",
@@ -7481,7 +7481,7 @@
                             "VARIABLE": {
                                 "id": ";,8.KO+3@42(n/VrGfz_",
                                 "name": "VARIABLE",
-                                "value": "ballgeschwindigkeit\u00a0x"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u901f\u5ea6x"
                             }
                         },
                         "id": "R;,Uqd$np`wXMgK^Mlea",
@@ -7705,7 +7705,7 @@
                             "VARIABLE": {
                                 "id": "TzYn~ZBLT$$?-sp3EP{0",
                                 "name": "VARIABLE",
-                                "value": "ballradius"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u534a\u5f84"
                             }
                         },
                         "id": "S?(Avxb|]iBAUIY+)aT2",
@@ -7729,7 +7729,7 @@
                             "VARIABLE": {
                                 "id": "M504z[*WEEV(/[Xj)b1L",
                                 "name": "VARIABLE",
-                                "value": "schl\u00e4ger des spielers: breite"
+                                "value": "\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u30d1\u30c9\u30eb\u306e\u5e45"
                             }
                         },
                         "id": "SOe%Xnj5$q2R59~%9RZd",
@@ -7747,7 +7747,7 @@
                             "VARIABLE": {
                                 "id": "a^6RLZL5jeV5(TF$V,oX",
                                 "name": "VARIABLE",
-                                "value": "cozmo erzielt einen punkt."
+                                "value": "COZMO\u304c1\u30dd\u30a4\u30f3\u30c8\u7372\u5f97\u3057\u307e\u3057\u305f\u3002"
                             }
                         },
                         "id": "S_,G0g$k$#;n0K/(!X$^",
@@ -7765,7 +7765,7 @@
                             "VARIABLE": {
                                 "id": "f6%30XG_*pN#W%_oKaYL",
                                 "name": "VARIABLE",
-                                "value": "nummer der zufallsantwort"
+                                "value": "\u30e9\u30f3\u30c0\u30e0\u306a\u5fdc\u7b54\u6570"
                             }
                         },
                         "id": "S_a{d|73^m}d;*4T*USy",
@@ -7782,7 +7782,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "hallo"
+                                "value": "\u3053\u3093\u306b\u3061\u306f"
                             }
                         },
                         "id": "Sb$nsE,,6ph!3|Z0i;*d",
@@ -7800,7 +7800,7 @@
                             "VARIABLE": {
                                 "id": ";+)ef@A}n,M/_h$Jg[tz",
                                 "name": "VARIABLE",
-                                "value": "schl\u00e4ger von cozmo: geschwindigkeit"
+                                "value": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u901f\u5ea6"
                             }
                         },
                         "id": "SjB1EAjVs;`-QItuQ634",
@@ -7847,7 +7847,7 @@
                             "VARIABLE": {
                                 "id": "Z6V]#gYg;:N`E#%K(URF",
                                 "name": "VARIABLE",
-                                "value": "punktzahl des spielers"
+                                "value": "\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\n\u30b9\u30b3\u30a2"
                             }
                         },
                         "id": "S}.k~Tc_rl#n6k]])pK(",
@@ -7865,7 +7865,7 @@
                             "VARIABLE": {
                                 "id": "N;1W$..-rhJ8tGc4UOzl",
                                 "name": "VARIABLE",
-                                "value": "cozmo-antwort"
+                                "value": "COZMO\u306e\u53cd\u5fdc"
                             }
                         },
                         "id": "T)?lAzC}RiS+}VUjp!H5",
@@ -7912,7 +7912,7 @@
                             "VARIABLE": {
                                 "id": "[fopL9zl_$hRfJ#B-!fs",
                                 "name": "VARIABLE",
-                                "value": "keine"
+                                "value": "\u306a\u3057"
                             }
                         },
                         "id": "T{K[W{Q]sp%MfHymxzO0",
@@ -7976,7 +7976,7 @@
                             "VARIABLE": {
                                 "id": "Un(M(aYayhUWSn{cE(+V",
                                 "name": "VARIABLE",
-                                "value": "ballposition\u00a0y"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u4f4d\u7f6ey"
                             }
                         },
                         "id": "U)X9[$pZx5#NxsfZ9J:K",
@@ -8011,7 +8011,7 @@
                             "VARIABLE": {
                                 "id": ";+)ef@A}n,M/_h$Jg[tz",
                                 "name": "VARIABLE",
-                                "value": "schl\u00e4ger von cozmo: geschwindigkeit"
+                                "value": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u901f\u5ea6"
                             }
                         },
                         "id": "UBs]0RG;nt:R7N3f14gi",
@@ -8050,7 +8050,7 @@
                             "VARIABLE": {
                                 "id": "vZ|-q)^ord6=6iMj%NNg",
                                 "name": "VARIABLE",
-                                "value": "cozmo-skill-level"
+                                "value": "COZMO\u306e\u30b9\u30ad\u30eb\u30ec\u30d9\u30eb"
                             }
                         },
                         "id": "UXjuf=]4Q[@9pu6QG2S5",
@@ -8083,7 +8083,7 @@
                             "VARIABLE": {
                                 "id": "f6%30XG_*pN#W%_oKaYL",
                                 "name": "VARIABLE",
-                                "value": "nummer der zufallsantwort"
+                                "value": "\u30e9\u30f3\u30c0\u30e0\u306a\u5fdc\u7b54\u6570"
                             }
                         },
                         "id": "Ulum3EzUx-fdyiIEK`AB",
@@ -8258,7 +8258,7 @@
                             "VARIABLE": {
                                 "id": "_]j6]O|`Mh|l7F1N@Nw:",
                                 "name": "VARIABLE",
-                                "value": "sieger des spiels"
+                                "value": "\u30b2\u30fc\u30e0\u306e\u52dd\u8005"
                             }
                         },
                         "id": "VTKpQJE2//X=1W!VwS?V",
@@ -8334,7 +8334,7 @@
                             "VARIABLE": {
                                 "id": "-:HBy)n6c:cBxM.p#0UN",
                                 "name": "VARIABLE",
-                                "value": "schleifenrate"
+                                "value": "\u30eb\u30fc\u30d7\u30ec\u30fc\u30c8"
                             }
                         },
                         "id": "WG8_!nL,`Bv_Rc1MgY@~",
@@ -8366,7 +8366,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "hoppla!"
+                                "value": "\u304a\u3063\u3068\uff01"
                             }
                         },
                         "id": "WHWJdkpt%yY`TZV?ZgUC",
@@ -8439,7 +8439,7 @@
                             "VARIABLE": {
                                 "id": "|Z-{pQ3;E{+2^LU~Empv",
                                 "name": "VARIABLE",
-                                "value": "h\u00e4lfte der h\u00f6he des schl\u00e4gers von cozmo"
+                                "value": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u9ad8\u3055\u306e\u534a\u5206"
                             }
                         },
                         "id": "W{jPiq[~zpA;jJn~)Ua]",
@@ -8472,7 +8472,7 @@
                             "VARIABLE": {
                                 "id": ",gL.n,lR;UiKpQ@X5|,^",
                                 "name": "VARIABLE",
-                                "value": "w\u00e4hrend das spiel l\u00e4uft, kannst du die position des balls aktualisieren."
+                                "value": "\u30b2\u30fc\u30e0\u3092\u3057\u3066\u3044\u308b\u9593\u3001\u30dc\u30fc\u30eb\u306e\u4f4d\u7f6e\u3092\u66f4\u65b0\u3057\u307e\u3059\u3002"
                             }
                         },
                         "id": "XiJfux.%XG6(]Lhkvfqr",
@@ -8513,7 +8513,7 @@
                             "VARIABLE": {
                                 "id": "[fopL9zl_$hRfJ#B-!fs",
                                 "name": "VARIABLE",
-                                "value": "keine"
+                                "value": "\u306a\u3057"
                             }
                         },
                         "id": "Y8E8olo|S[J1d)Lqwk4g",
@@ -8586,7 +8586,7 @@
                             "VARIABLE": {
                                 "id": "!Sb]Gp+PUmF:.t,X0m#%",
                                 "name": "VARIABLE",
-                                "value": "sieger der runde"
+                                "value": "\u8a66\u5408\u306e\u52dd\u8005"
                             }
                         },
                         "id": "Ye0,cop^:%|fj-X*qKEN",
@@ -8695,7 +8695,7 @@
                             "VARIABLE": {
                                 "id": "[fopL9zl_$hRfJ#B-!fs",
                                 "name": "VARIABLE",
-                                "value": "keine"
+                                "value": "\u306a\u3057"
                             }
                         },
                         "id": "ZdJ~8z!b$K1@`cMy?LP~",
@@ -8759,7 +8759,7 @@
                             "VARIABLE": {
                                 "id": "`z$NRf|9{SJ#s$]*Sm]A",
                                 "name": "VARIABLE",
-                                "value": "spiel ist beendet"
+                                "value": "\u30b2\u30fc\u30e0\u30aa\u30fc\u30d0\u30fc\u3067\u3059"
                             }
                         },
                         "id": "[9uOmpkMI(4(SxUxo2kh",
@@ -8811,7 +8811,7 @@
                             "VARIABLE": {
                                 "id": "xtus709,csCGWPUXkK7Z",
                                 "name": "VARIABLE",
-                                "value": "w\u00e4hrend das spiel l\u00e4uft, kannst du anhand von daten alles auf cozmos gesicht zeichnen."
+                                "value": "\u30b2\u30fc\u30e0\u3092\u3057\u3066\u3044\u308b\u9593\u3001\u30c7\u30fc\u30bf\u3092\u4f7f\u3063\u3066COZMO\u306e\u9854\u306b\u3059\u3079\u3066\u3092\u63cf\u753b\u3057\u307e\u3059\u3002"
                             }
                         },
                         "id": "[B/)S|5?4aiyfoO]cLLl",
@@ -8939,7 +8939,7 @@
                             "VARIABLE": {
                                 "id": "Un(M(aYayhUWSn{cE(+V",
                                 "name": "VARIABLE",
-                                "value": "ballposition\u00a0y"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u4f4d\u7f6ey"
                             }
                         },
                         "id": "]*],Y)%k(;5zRY1ww4;9",
@@ -8957,7 +8957,7 @@
                             "VARIABLE": {
                                 "id": "Z6V]#gYg;:N`E#%K(URF",
                                 "name": "VARIABLE",
-                                "value": "punktzahl des spielers"
+                                "value": "\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\n\u30b9\u30b3\u30a2"
                             }
                         },
                         "id": "]AKh[CxO[+^V78s`tiM@",
@@ -8973,7 +8973,7 @@
                             "VARIABLE": {
                                 "id": "|Z-{pQ3;E{+2^LU~Empv",
                                 "name": "VARIABLE",
-                                "value": "h\u00e4lfte der h\u00f6he des schl\u00e4gers von cozmo"
+                                "value": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u9ad8\u3055\u306e\u534a\u5206"
                             }
                         },
                         "id": "]LO!.6~o-4^N,Ac/GS/D",
@@ -9014,7 +9014,7 @@
                             "VARIABLE": {
                                 "id": ";+)ef@A}n,M/_h$Jg[tz",
                                 "name": "VARIABLE",
-                                "value": "schl\u00e4ger von cozmo: geschwindigkeit"
+                                "value": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u901f\u5ea6"
                             }
                         },
                         "id": "]SEXM.)$tB|({DCr,)[;",
@@ -9226,7 +9226,7 @@
                             "VARIABLE": {
                                 "id": "vZ|-q)^ord6=6iMj%NNg",
                                 "name": "VARIABLE",
-                                "value": "cozmo-skill-level"
+                                "value": "COZMO\u306e\u30b9\u30ad\u30eb\u30ec\u30d9\u30eb"
                             }
                         },
                         "id": "^Kb|,a{(7O^N:-j`?Zru",
@@ -9277,7 +9277,7 @@
                             "VARIABLE": {
                                 "id": ";+)ef@A}n,M/_h$Jg[tz",
                                 "name": "VARIABLE",
-                                "value": "schl\u00e4ger von cozmo: geschwindigkeit"
+                                "value": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u901f\u5ea6"
                             }
                         },
                         "id": "^z^DPonJ}F`J.3Fo1e)~",
@@ -9434,7 +9434,7 @@
                             "VARIABLE": {
                                 "id": "N;1W$..-rhJ8tGc4UOzl",
                                 "name": "VARIABLE",
-                                "value": "cozmo-antwort"
+                                "value": "COZMO\u306e\u53cd\u5fdc"
                             }
                         },
                         "id": "_Q$F_V`Rn9__%$0X9x_q",
@@ -9493,7 +9493,7 @@
                             "VARIABLE": {
                                 "id": "}]gOzGcQ@O^6pncdwy8z",
                                 "name": "VARIABLE",
-                                "value": "punktzahl von cozmo"
+                                "value": "COZMO\u306e\n\u30b9\u30b3\u30a2"
                             }
                         },
                         "id": "_leL$ofd3{)=s}s!:{h!",
@@ -9566,7 +9566,7 @@
                             "VARIABLE": {
                                 "id": "AXGh4s/e^J6+(u)*+d%Y",
                                 "name": "VARIABLE",
-                                "value": "wo f\u00fcr cozmo der ball ist"
+                                "value": "COZMO\u304c\u30dc\u30fc\u30eb\u306f\u2026\u2026\u3068\u8003\u3048\u308b\u3068\u304d"
                             }
                         },
                         "id": "`6y#F?Es[@p])8{v3?~(",
@@ -9590,7 +9590,7 @@
                             "VARIABLE": {
                                 "id": "vZ|-q)^ord6=6iMj%NNg",
                                 "name": "VARIABLE",
-                                "value": "cozmo-skill-level"
+                                "value": "COZMO\u306e\u30b9\u30ad\u30eb\u30ec\u30d9\u30eb"
                             }
                         },
                         "id": "`8(D{_QUwO0ufh]n|],v",
@@ -9631,7 +9631,7 @@
                             "VARIABLE": {
                                 "id": "uZ~o/V1iQu2,8E+%@!-b",
                                 "name": "VARIABLE",
-                                "value": "schl\u00e4ger von cozmo: max. geschwindigkeit"
+                                "value": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u6700\u5927\u901f\u5ea6"
                             }
                         },
                         "id": "`Su9T$x)a:$xM=y%$736",
@@ -9678,7 +9678,7 @@
                             "VARIABLE": {
                                 "id": "AXGh4s/e^J6+(u)*+d%Y",
                                 "name": "VARIABLE",
-                                "value": "wo f\u00fcr cozmo der ball ist"
+                                "value": "COZMO\u304c\u30dc\u30fc\u30eb\u306f\u2026\u2026\u3068\u8003\u3048\u308b\u3068\u304d"
                             }
                         },
                         "id": "`^ZiFr3hO{S14UOr!`kf",
@@ -9696,7 +9696,7 @@
                             "VARIABLE": {
                                 "id": "f6%30XG_*pN#W%_oKaYL",
                                 "name": "VARIABLE",
-                                "value": "nummer der zufallsantwort"
+                                "value": "\u30e9\u30f3\u30c0\u30e0\u306a\u5fdc\u7b54\u6570"
                             }
                         },
                         "id": "`_?I_XJA#jb9?VMigJ$}",
@@ -9748,7 +9748,7 @@
                             "VARIABLE": {
                                 "id": "NluXerqXX#!qwYcUn{7M",
                                 "name": "VARIABLE",
-                                "value": "schl\u00e4ger von cozmo: position\u00a0y"
+                                "value": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u4f4d\u7f6ey"
                             }
                         },
                         "id": "a+6tLAfVm02tTuoQvQ)[",
@@ -9813,7 +9813,7 @@
                             "VARIABLE": {
                                 "id": "-:HBy)n6c:cBxM.p#0UN",
                                 "name": "VARIABLE",
-                                "value": "schleifenrate"
+                                "value": "\u30eb\u30fc\u30d7\u30ec\u30fc\u30c8"
                             }
                         },
                         "id": "aGU#e,nxck=fVu/S(fXQ",
@@ -9889,7 +9889,7 @@
                             "VARIABLE": {
                                 "id": "AXGh4s/e^J6+(u)*+d%Y",
                                 "name": "VARIABLE",
-                                "value": "wo f\u00fcr cozmo der ball ist"
+                                "value": "COZMO\u304c\u30dc\u30fc\u30eb\u306f\u2026\u2026\u3068\u8003\u3048\u308b\u3068\u304d"
                             }
                         },
                         "id": "b02]g]7C1(L!RtdK@m!y",
@@ -9936,7 +9936,7 @@
                             "VARIABLE": {
                                 "id": "AXGh4s/e^J6+(u)*+d%Y",
                                 "name": "VARIABLE",
-                                "value": "wo f\u00fcr cozmo der ball ist"
+                                "value": "COZMO\u304c\u30dc\u30fc\u30eb\u306f\u2026\u2026\u3068\u8003\u3048\u308b\u3068\u304d"
                             }
                         },
                         "id": "b?;.=Zt=07;^0w%(Az(i",
@@ -9960,7 +9960,7 @@
                             "VARIABLE": {
                                 "id": ";,8.KO+3@42(n/VrGfz_",
                                 "name": "VARIABLE",
-                                "value": "ballgeschwindigkeit\u00a0x"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u901f\u5ea6x"
                             }
                         },
                         "id": "b@PRJu,)!ZxmC)bpZ^H0",
@@ -9978,7 +9978,7 @@
                             "VARIABLE": {
                                 "id": "{YHsXwAt+asRXa)nnh+f",
                                 "name": "VARIABLE",
-                                "value": "ballposition\u00a0x"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u4f4d\u7f6ex"
                             }
                         },
                         "id": "bFfS_[E`fY{.rvF~5r/V",
@@ -10136,7 +10136,7 @@
                             "VARIABLE": {
                                 "id": "5*NstnK2k!}anQPVm$$j",
                                 "name": "VARIABLE",
-                                "value": "h\u00e4lfte der h\u00f6he des schl\u00e4gers des spielers"
+                                "value": "\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u30d1\u30c9\u30eb\u306e\u9ad8\u3055\u306e\u534a\u5206"
                             }
                         },
                         "id": "cSrQ^r8(sWGOg`@J{P#8",
@@ -10206,7 +10206,7 @@
                             "VARIABLE": {
                                 "id": ";,8.KO+3@42(n/VrGfz_",
                                 "name": "VARIABLE",
-                                "value": "ballgeschwindigkeit\u00a0x"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u901f\u5ea6x"
                             }
                         },
                         "id": "cxKb=)Ad27`~}E?O[Ujt",
@@ -10230,7 +10230,7 @@
                             "VARIABLE": {
                                 "id": "o)|8?w5spmx%f_.GJs;9",
                                 "name": "VARIABLE",
-                                "value": "runde ist vorbei"
+                                "value": "\u8a66\u5408\u7d42\u4e86\u3067\u3059"
                             }
                         },
                         "id": "d0XU*NHaL8~Dr_7=f9hl",
@@ -10248,7 +10248,7 @@
                             "VARIABLE": {
                                 "id": "M504z[*WEEV(/[Xj)b1L",
                                 "name": "VARIABLE",
-                                "value": "schl\u00e4ger des spielers: breite"
+                                "value": "\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u30d1\u30c9\u30eb\u306e\u5e45"
                             }
                         },
                         "id": "d7?4|a$pEHsW7TJ~0F}X",
@@ -10298,7 +10298,7 @@
                             "VARIABLE": {
                                 "id": "-:HBy)n6c:cBxM.p#0UN",
                                 "name": "VARIABLE",
-                                "value": "schleifenrate"
+                                "value": "\u30eb\u30fc\u30d7\u30ec\u30fc\u30c8"
                             }
                         },
                         "id": "dt4v~_Y4chpW7z^IfH?6",
@@ -10333,7 +10333,7 @@
                             "VARIABLE": {
                                 "id": "f6%30XG_*pN#W%_oKaYL",
                                 "name": "VARIABLE",
-                                "value": "nummer der zufallsantwort"
+                                "value": "\u30e9\u30f3\u30c0\u30e0\u306a\u5fdc\u7b54\u6570"
                             }
                         },
                         "id": "e!s7:d~#4LA0C6Gxo;.F",
@@ -10357,7 +10357,7 @@
                             "VARIABLE": {
                                 "id": "!H*}dG0uz%bRYuMyWKh[",
                                 "name": "VARIABLE",
-                                "value": "w\u00e4hrend das spiel l\u00e4uft, kannst du die position des schl\u00e4gers des spielers im verh\u00e4ltnis zu seinem gesicht in der kamera aktualisieren."
+                                "value": "\u30b2\u30fc\u30e0\u3092\u3057\u3066\u3044\u308b\u9593\u3001\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u30d1\u30c9\u30eb\u4f4d\u7f6e\u3092\u30ab\u30e1\u30e9\u306b\u6620\u3063\u305f\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u9854\u306b\u57fa\u3065\u3044\u3066\u66f4\u65b0\u3057\u307e\u3059\u3002"
                             }
                         },
                         "id": "e$N|:[D!4g~ARcu9$2x:",
@@ -10545,7 +10545,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "wahr "
+                                "value": "\u6b63 "
                             }
                         },
                         "id": "f/]~18(FxT-[%Y_]G}%_",
@@ -10561,7 +10561,7 @@
                             "VARIABLE": {
                                 "id": "|Z-{pQ3;E{+2^LU~Empv",
                                 "name": "VARIABLE",
-                                "value": "h\u00e4lfte der h\u00f6he des schl\u00e4gers von cozmo"
+                                "value": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u9ad8\u3055\u306e\u534a\u5206"
                             }
                         },
                         "id": "f?n3HzY%ql~W,KsvTcX,",
@@ -10579,7 +10579,7 @@
                             "VARIABLE": {
                                 "id": "{YHsXwAt+asRXa)nnh+f",
                                 "name": "VARIABLE",
-                                "value": "ballposition\u00a0x"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u4f4d\u7f6ex"
                             }
                         },
                         "id": "fP#+):zA3?`gXj.~:,eI",
@@ -10597,7 +10597,7 @@
                             "VARIABLE": {
                                 "id": "Emsk)D`uo07V(p/5@]yX",
                                 "name": "VARIABLE",
-                                "value": "starte eine neue spielrunde."
+                                "value": "\u30b2\u30fc\u30e0\u3067\u65b0\u3057\u3044\u30e9\u30a6\u30f3\u30c9\u3092\u958b\u59cb\u3057\u307e\u3059\u3002"
                             }
                         },
                         "id": "fP}yq,3DL!-V2Of,vvV@",
@@ -10630,7 +10630,7 @@
                             "VARIABLE": {
                                 "id": "}]gOzGcQ@O^6pncdwy8z",
                                 "name": "VARIABLE",
-                                "value": "punktzahl von cozmo"
+                                "value": "COZMO\u306e\n\u30b9\u30b3\u30a2"
                             }
                         },
                         "id": "feQE4rOw;qs/~kb(c]g5",
@@ -10977,7 +10977,7 @@
                             "VARIABLE": {
                                 "id": "NluXerqXX#!qwYcUn{7M",
                                 "name": "VARIABLE",
-                                "value": "schl\u00e4ger von cozmo: position\u00a0y"
+                                "value": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u4f4d\u7f6ey"
                             }
                         },
                         "id": "hl8IjnMCB*p#JNHY]IGs",
@@ -10995,7 +10995,7 @@
                             "VARIABLE": {
                                 "id": "NluXerqXX#!qwYcUn{7M",
                                 "name": "VARIABLE",
-                                "value": "schl\u00e4ger von cozmo: position\u00a0y"
+                                "value": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u4f4d\u7f6ey"
                             }
                         },
                         "id": "hrVa2q+q2npBvJeij:;n",
@@ -11013,7 +11013,7 @@
                             "VARIABLE": {
                                 "id": "f6%30XG_*pN#W%_oKaYL",
                                 "name": "VARIABLE",
-                                "value": "nummer der zufallsantwort"
+                                "value": "\u30e9\u30f3\u30c0\u30e0\u306a\u5fdc\u7b54\u6570"
                             }
                         },
                         "id": "i%nqHzeQWSP}-Ih,KH0B",
@@ -11063,7 +11063,7 @@
                             "VARIABLE": {
                                 "id": "NluXerqXX#!qwYcUn{7M",
                                 "name": "VARIABLE",
-                                "value": "schl\u00e4ger von cozmo: position\u00a0y"
+                                "value": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u4f4d\u7f6ey"
                             }
                         },
                         "id": "izOaF9tFg]BIA`C1K4IU",
@@ -11313,7 +11313,7 @@
                             "VARIABLE": {
                                 "id": "o)|8?w5spmx%f_.GJs;9",
                                 "name": "VARIABLE",
-                                "value": "runde ist vorbei"
+                                "value": "\u8a66\u5408\u7d42\u4e86\u3067\u3059"
                             }
                         },
                         "id": "kN/}@eYW|j]/[,Xp65Il",
@@ -11371,7 +11371,7 @@
                             "VARIABLE": {
                                 "id": ")ha4N6oKo,{?o045fvj6",
                                 "name": "VARIABLE",
-                                "value": "starte das spiel."
+                                "value": "\u30b2\u30fc\u30e0\u3092\u958b\u59cb\u3057\u307e\u3059\u3002"
                             }
                         },
                         "id": "kqEvg[I{~Gt$_)P|(ojz",
@@ -11407,7 +11407,7 @@
                             "VARIABLE": {
                                 "id": "f6%30XG_*pN#W%_oKaYL",
                                 "name": "VARIABLE",
-                                "value": "nummer der zufallsantwort"
+                                "value": "\u30e9\u30f3\u30c0\u30e0\u306a\u5fdc\u7b54\u6570"
                             }
                         },
                         "id": "l$dV%n5S)?j(Zh{?{@Rx",
@@ -11601,7 +11601,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "bereit"
+                                "value": "\u6e96\u5099\u306f\u3044\u3044\uff1f"
                             }
                         },
                         "id": "mCbI:ro?7Mw.AkcTp~Q|",
@@ -11617,7 +11617,7 @@
                             "VARIABLE": {
                                 "id": "!Sb]Gp+PUmF:.t,X0m#%",
                                 "name": "VARIABLE",
-                                "value": "sieger der runde"
+                                "value": "\u8a66\u5408\u306e\u52dd\u8005"
                             }
                         },
                         "id": "mF}v]?RFI7NiUh4MV}=f",
@@ -11764,7 +11764,7 @@
                             "VARIABLE": {
                                 "id": "Un(M(aYayhUWSn{cE(+V",
                                 "name": "VARIABLE",
-                                "value": "ballposition\u00a0y"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u4f4d\u7f6ey"
                             }
                         },
                         "id": "mvR$+~1BoH6eRG80*;=o",
@@ -11814,7 +11814,7 @@
                             "VARIABLE": {
                                 "id": "N;1W$..-rhJ8tGc4UOzl",
                                 "name": "VARIABLE",
-                                "value": "cozmo-antwort"
+                                "value": "COZMO\u306e\u53cd\u5fdc"
                             }
                         },
                         "id": "nWZ.b_T+zMqhX@^q_Gaz",
@@ -11885,7 +11885,7 @@
                             "VARIABLE": {
                                 "id": "iHn2k[px%O2BD@yR;Ofu",
                                 "name": "VARIABLE",
-                                "value": "spieler"
+                                "value": "\u30d7\u30ec\u30a4\u30e4\u30fc"
                             }
                         },
                         "id": "n^?]yxPo.Ob8B|.7yK93",
@@ -11923,7 +11923,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "ich gewinne!"
+                                "value": "\u52dd\u3063\u305f\uff01"
                             }
                         },
                         "id": "nso?,z1E|n7kXYr898(}",
@@ -11939,7 +11939,7 @@
                             "VARIABLE": {
                                 "id": "NluXerqXX#!qwYcUn{7M",
                                 "name": "VARIABLE",
-                                "value": "schl\u00e4ger von cozmo: position\u00a0y"
+                                "value": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u4f4d\u7f6ey"
                             }
                         },
                         "id": "nuJyil0Da?Ip;C*|DU|X",
@@ -11980,7 +11980,7 @@
                             "VARIABLE": {
                                 "id": ";+)ef@A}n,M/_h$Jg[tz",
                                 "name": "VARIABLE",
-                                "value": "schl\u00e4ger von cozmo: geschwindigkeit"
+                                "value": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u901f\u5ea6"
                             }
                         },
                         "id": "n~8y=T9t!@].F;e~[hWB",
@@ -12004,7 +12004,7 @@
                             "VARIABLE": {
                                 "id": "?*oqc,T2@4qLX3GFc~ln",
                                 "name": "VARIABLE",
-                                "value": "ballgeschwindigkeit\u00a0y"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u901f\u5ea6y"
                             }
                         },
                         "id": "o*L7DUhxrZqX?u+Md=A7",
@@ -12045,7 +12045,7 @@
                             "VARIABLE": {
                                 "id": "2R7G,w^iNhDzuM8oL4=^",
                                 "name": "VARIABLE",
-                                "value": "punkte f\u00fcr den sieg"
+                                "value": "\u52dd\u3064\u305f\u3081\u306b\u5fc5\u8981\u306a\u5f97\u70b9"
                             }
                         },
                         "id": "oNm]65iA:2/;$OBp|D;J",
@@ -12097,7 +12097,7 @@
                             "VARIABLE": {
                                 "id": "iHn2k[px%O2BD@yR;Ofu",
                                 "name": "VARIABLE",
-                                "value": "spieler"
+                                "value": "\u30d7\u30ec\u30a4\u30e4\u30fc"
                             }
                         },
                         "id": "oWSxcA}Y?/@W^Z2W*|(.",
@@ -12115,7 +12115,7 @@
                             "VARIABLE": {
                                 "id": "]l881I{MJE$~lyf|{/!q",
                                 "name": "VARIABLE",
-                                "value": "schl\u00e4ger des spielers: position\u00a0y"
+                                "value": "\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u30d1\u30c9\u30eb\u306e\u4f4d\u7f6ey"
                             }
                         },
                         "id": "o[@=M0Sa}/KgrVJ-fN{T",
@@ -12156,7 +12156,7 @@
                             "VARIABLE": {
                                 "id": "o)|8?w5spmx%f_.GJs;9",
                                 "name": "VARIABLE",
-                                "value": "runde ist vorbei"
+                                "value": "\u8a66\u5408\u7d42\u4e86\u3067\u3059"
                             }
                         },
                         "id": "odQc#`yP0t*8)6uJ-!L!",
@@ -12192,7 +12192,7 @@
                             "VARIABLE": {
                                 "id": "!Sb]Gp+PUmF:.t,X0m#%",
                                 "name": "VARIABLE",
-                                "value": "sieger der runde"
+                                "value": "\u8a66\u5408\u306e\u52dd\u8005"
                             }
                         },
                         "id": "opA,4vbRlb}rAKkPxN+u",
@@ -12210,7 +12210,7 @@
                             "VARIABLE": {
                                 "id": "?*oqc,T2@4qLX3GFc~ln",
                                 "name": "VARIABLE",
-                                "value": "ballgeschwindigkeit\u00a0y"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u901f\u5ea6y"
                             }
                         },
                         "id": "ot)$Um%ex/Cz%KsE~ZcZ",
@@ -12266,7 +12266,7 @@
                             "VARIABLE": {
                                 "id": "Un(M(aYayhUWSn{cE(+V",
                                 "name": "VARIABLE",
-                                "value": "ballposition\u00a0y"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u4f4d\u7f6ey"
                             }
                         },
                         "id": "p/!o]pITO.SW9Ei]k=E3",
@@ -12284,7 +12284,7 @@
                             "VARIABLE": {
                                 "id": "vZ|-q)^ord6=6iMj%NNg",
                                 "name": "VARIABLE",
-                                "value": "cozmo-skill-level"
+                                "value": "COZMO\u306e\u30b9\u30ad\u30eb\u30ec\u30d9\u30eb"
                             }
                         },
                         "id": "p9P0H66jxiQaq~CJP!U3",
@@ -12317,7 +12317,7 @@
                             "VARIABLE": {
                                 "id": "`z$NRf|9{SJ#s$]*Sm]A",
                                 "name": "VARIABLE",
-                                "value": "spiel ist beendet"
+                                "value": "\u30b2\u30fc\u30e0\u30aa\u30fc\u30d0\u30fc\u3067\u3059"
                             }
                         },
                         "id": "pWNbTbv)86S8}5]tm?wx",
@@ -12339,7 +12339,7 @@
                             "VARIABLE": {
                                 "id": "Un(M(aYayhUWSn{cE(+V",
                                 "name": "VARIABLE",
-                                "value": "ballposition\u00a0y"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u4f4d\u7f6ey"
                             }
                         },
                         "id": "p_=Wr|//A6vg_(TW2,zV",
@@ -12431,7 +12431,7 @@
                             "VARIABLE": {
                                 "id": "TzYn~ZBLT$$?-sp3EP{0",
                                 "name": "VARIABLE",
-                                "value": "ballradius"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u534a\u5f84"
                             }
                         },
                         "id": "q$l-1^F09l@h#s-cQrDt",
@@ -12464,7 +12464,7 @@
                             "VARIABLE": {
                                 "id": "TzYn~ZBLT$$?-sp3EP{0",
                                 "name": "VARIABLE",
-                                "value": "ballradius"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u534a\u5f84"
                             }
                         },
                         "id": "qI|`onHTfM/?10sR`AR/",
@@ -12498,7 +12498,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "ja!"
+                                "value": "\u3084\u3063\u305f\uff01"
                             }
                         },
                         "id": "qf_n5C!II4m*)_ROClHJ",
@@ -12514,7 +12514,7 @@
                             "VARIABLE": {
                                 "id": "8P(48np~@_zeR}t8mdV+",
                                 "name": "VARIABLE",
-                                "value": "wenn sich der ball auf cozmos seite befindet, beweg seinen schl\u00e4ger zum ball."
+                                "value": "\u30dc\u30fc\u30eb\u304cCOZMO\u5074\u306b\u3042\u308b\u3068\u304d\u3001\u5f7c\u306e\u30d1\u30c9\u30eb\u3092\u30dc\u30fc\u30eb\u306b\u5411\u3063\u3066\u52d5\u304b\u3057\u307e\u3059\u3002"
                             }
                         },
                         "id": "qfq_:6[NdnbKiK4E@.=M",
@@ -12532,7 +12532,7 @@
                             "VARIABLE": {
                                 "id": "o)|8?w5spmx%f_.GJs;9",
                                 "name": "VARIABLE",
-                                "value": "runde ist vorbei"
+                                "value": "\u8a66\u5408\u7d42\u4e86\u3067\u3059"
                             }
                         },
                         "id": "qhz|Nwh`3{;NvUbOdxkk",
@@ -12579,7 +12579,7 @@
                             "VARIABLE": {
                                 "id": "rFoU9C%RL!225]YFH{a+",
                                 "name": "VARIABLE",
-                                "value": "zeichenrate"
+                                "value": "\u63cf\u753b\u30ec\u30fc\u30c8"
                             }
                         },
                         "id": "qvi*]-RYw2S2]zI*%kQv",
@@ -12625,7 +12625,7 @@
                             "VARIABLE": {
                                 "id": "NluXerqXX#!qwYcUn{7M",
                                 "name": "VARIABLE",
-                                "value": "schl\u00e4ger von cozmo: position\u00a0y"
+                                "value": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u4f4d\u7f6ey"
                             }
                         },
                         "id": "rA!lzpG.5DosR/y@c~:^",
@@ -12737,7 +12737,7 @@
                             "VARIABLE": {
                                 "id": ";,8.KO+3@42(n/VrGfz_",
                                 "name": "VARIABLE",
-                                "value": "ballgeschwindigkeit\u00a0x"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u901f\u5ea6x"
                             }
                         },
                         "id": "rtPY4k}+fL95%X,8AgPN",
@@ -12770,7 +12770,7 @@
                             "VARIABLE": {
                                 "id": "]l881I{MJE$~lyf|{/!q",
                                 "name": "VARIABLE",
-                                "value": "schl\u00e4ger des spielers: position\u00a0y"
+                                "value": "\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u30d1\u30c9\u30eb\u306e\u4f4d\u7f6ey"
                             }
                         },
                         "id": "r{n3B-aZujiK2v{e?zER",
@@ -12788,7 +12788,7 @@
                             "VARIABLE": {
                                 "id": "AXGh4s/e^J6+(u)*+d%Y",
                                 "name": "VARIABLE",
-                                "value": "wo f\u00fcr cozmo der ball ist"
+                                "value": "COZMO\u304c\u30dc\u30fc\u30eb\u306f\u2026\u2026\u3068\u8003\u3048\u308b\u3068\u304d"
                             }
                         },
                         "id": "r}%?`,ZpM33jAx12;7kl",
@@ -12812,7 +12812,7 @@
                             "VARIABLE": {
                                 "id": "`z$NRf|9{SJ#s$]*Sm]A",
                                 "name": "VARIABLE",
-                                "value": "spiel ist beendet"
+                                "value": "\u30b2\u30fc\u30e0\u30aa\u30fc\u30d0\u30fc\u3067\u3059"
                             }
                         },
                         "id": "s%WTbK^%A{pcTc#M*FRs",
@@ -12937,7 +12937,7 @@
                             "VARIABLE": {
                                 "id": "5*NstnK2k!}anQPVm$$j",
                                 "name": "VARIABLE",
-                                "value": "h\u00e4lfte der h\u00f6he des schl\u00e4gers des spielers"
+                                "value": "\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u30d1\u30c9\u30eb\u306e\u9ad8\u3055\u306e\u534a\u5206"
                             }
                         },
                         "id": "smp-PbFY!(T:X5ySJr)^",
@@ -13051,7 +13051,7 @@
                             "VARIABLE": {
                                 "id": "NluXerqXX#!qwYcUn{7M",
                                 "name": "VARIABLE",
-                                "value": "schl\u00e4ger von cozmo: position\u00a0y"
+                                "value": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u4f4d\u7f6ey"
                             }
                         },
                         "id": "tV4R?myqHh/SQIRkz43n",
@@ -13069,7 +13069,7 @@
                             "VARIABLE": {
                                 "id": "}]gOzGcQ@O^6pncdwy8z",
                                 "name": "VARIABLE",
-                                "value": "punktzahl von cozmo"
+                                "value": "COZMO\u306e\n\u30b9\u30b3\u30a2"
                             }
                         },
                         "id": "tW9`$rv-KLBka?Qa!R-(",
@@ -13171,7 +13171,7 @@
                             "VARIABLE": {
                                 "id": "Z6V]#gYg;:N`E#%K(URF",
                                 "name": "VARIABLE",
-                                "value": "punktzahl des spielers"
+                                "value": "\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\n\u30b9\u30b3\u30a2"
                             }
                         },
                         "id": "tuU}8f@LG}y6lZ|;SHgr",
@@ -13213,7 +13213,7 @@
                             "VARIABLE": {
                                 "id": "NluXerqXX#!qwYcUn{7M",
                                 "name": "VARIABLE",
-                                "value": "schl\u00e4ger von cozmo: position\u00a0y"
+                                "value": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u4f4d\u7f6ey"
                             }
                         },
                         "id": "u5L@;*FIXhjlT`%,j}t/",
@@ -13350,7 +13350,7 @@
                             "VARIABLE": {
                                 "id": "Un(M(aYayhUWSn{cE(+V",
                                 "name": "VARIABLE",
-                                "value": "ballposition\u00a0y"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u4f4d\u7f6ey"
                             }
                         },
                         "id": "uwaNkR%i;JH~No])je|y",
@@ -13385,7 +13385,7 @@
                             "VARIABLE": {
                                 "id": "o)|8?w5spmx%f_.GJs;9",
                                 "name": "VARIABLE",
-                                "value": "runde ist vorbei"
+                                "value": "\u8a66\u5408\u7d42\u4e86\u3067\u3059"
                             }
                         },
                         "id": "v2%:/:CA|D(@U)8[`quZ",
@@ -13447,7 +13447,7 @@
                             "VARIABLE": {
                                 "id": "-:HBy)n6c:cBxM.p#0UN",
                                 "name": "VARIABLE",
-                                "value": "schleifenrate"
+                                "value": "\u30eb\u30fc\u30d7\u30ec\u30fc\u30c8"
                             }
                         },
                         "id": "wBQmV*O00M3|LbE^vr7o",
@@ -13758,7 +13758,7 @@
                             "VARIABLE": {
                                 "id": "Un(M(aYayhUWSn{cE(+V",
                                 "name": "VARIABLE",
-                                "value": "ballposition\u00a0y"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u4f4d\u7f6ey"
                             }
                         },
                         "id": "xf3Nz|m{Tch8a?|.8G+@",
@@ -13776,7 +13776,7 @@
                             "VARIABLE": {
                                 "id": ";+)ef@A}n,M/_h$Jg[tz",
                                 "name": "VARIABLE",
-                                "value": "schl\u00e4ger von cozmo: geschwindigkeit"
+                                "value": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u901f\u5ea6"
                             }
                         },
                         "id": "y#|/)6:K8M6pCt,2bc-s",
@@ -13794,7 +13794,7 @@
                             "VARIABLE": {
                                 "id": "AXGh4s/e^J6+(u)*+d%Y",
                                 "name": "VARIABLE",
-                                "value": "wo f\u00fcr cozmo der ball ist"
+                                "value": "COZMO\u304c\u30dc\u30fc\u30eb\u306f\u2026\u2026\u3068\u8003\u3048\u308b\u3068\u304d"
                             }
                         },
                         "id": "y%1x^,XoQr$:i8WYP;TH",
@@ -13818,7 +13818,7 @@
                             "VARIABLE": {
                                 "id": "{YHsXwAt+asRXa)nnh+f",
                                 "name": "VARIABLE",
-                                "value": "ballposition\u00a0x"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u4f4d\u7f6ex"
                             }
                         },
                         "id": "y.k]vQT)ZOVl}Z-Rm}Od",
@@ -13927,7 +13927,7 @@
                             "VARIABLE": {
                                 "id": "|Z-{pQ3;E{+2^LU~Empv",
                                 "name": "VARIABLE",
-                                "value": "h\u00e4lfte der h\u00f6he des schl\u00e4gers von cozmo"
+                                "value": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u9ad8\u3055\u306e\u534a\u5206"
                             }
                         },
                         "id": "z)[cYDq?|?|YXIqX400{",
@@ -13963,7 +13963,7 @@
                             "VARIABLE": {
                                 "id": "vc)o#04i]t]|_wDkV*z/",
                                 "name": "VARIABLE",
-                                "value": "leg die spieleinstellungen fest."
+                                "value": "\u8abf\u6574\u53ef\u80fd\u306a\u30b2\u30fc\u30e0\u8a2d\u5b9a\u3092\u30bb\u30c3\u30c8\u3057\u307e\u3059\u3002"
                             }
                         },
                         "id": "z1AwU152#US5d9vr$A}D",
@@ -13999,7 +13999,7 @@
                             "VARIABLE": {
                                 "id": "]l881I{MJE$~lyf|{/!q",
                                 "name": "VARIABLE",
-                                "value": "schl\u00e4ger des spielers: position\u00a0y"
+                                "value": "\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u30d1\u30c9\u30eb\u306e\u4f4d\u7f6ey"
                             }
                         },
                         "id": "zO$zMfe`GaX.15%f/NIK",
@@ -14057,7 +14057,7 @@
                             "VARIABLE": {
                                 "id": "-:HBy)n6c:cBxM.p#0UN",
                                 "name": "VARIABLE",
-                                "value": "schleifenrate"
+                                "value": "\u30eb\u30fc\u30d7\u30ec\u30fc\u30c8"
                             }
                         },
                         "id": "zg@p=7_(5d@{EXY99;U2",
@@ -14075,7 +14075,7 @@
                             "VARIABLE": {
                                 "id": "2R7G,w^iNhDzuM8oL4=^",
                                 "name": "VARIABLE",
-                                "value": "punkte f\u00fcr den sieg"
+                                "value": "\u52dd\u3064\u305f\u3081\u306b\u5fc5\u8981\u306a\u5f97\u70b9"
                             }
                         },
                         "id": "zj+9Jb[sW/hc@cO#]C%B",
@@ -14116,7 +14116,7 @@
                             "VARIABLE": {
                                 "id": "]l881I{MJE$~lyf|{/!q",
                                 "name": "VARIABLE",
-                                "value": "schl\u00e4ger des spielers: position\u00a0y"
+                                "value": "\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u30d1\u30c9\u30eb\u306e\u4f4d\u7f6ey"
                             }
                         },
                         "id": "{8CqeD0fdCCx!gMp[)dS",
@@ -14152,7 +14152,7 @@
                             "VARIABLE": {
                                 "id": "WaJW5)%7n{*Z[jtseU~S",
                                 "name": "VARIABLE",
-                                "value": "sobald cozmo oder der spieler einen punkt erzielt, entscheidest du, was als n\u00e4chstes passiert."
+                                "value": "COZMO\u304b\u30d7\u30ec\u30a4\u30e4\u30fc\u304c\u5f97\u70b9\u3059\u308b\u3068\u6b21\u306e\u884c\u52d5\u304c\u6c7a\u307e\u308a\u307e\u3059"
                             }
                         },
                         "id": "{D3,M*%R06xGZuXZ;?ZS",
@@ -14210,7 +14210,7 @@
                             "VARIABLE": {
                                 "id": "Fb0:eMS4J@ZNADdV{R1(",
                                 "name": "VARIABLE",
-                                "value": "w\u00e4hle aus, was cozmo sagt, wenn der spieler einen punkt erzielt."
+                                "value": "\u30d7\u30ec\u30a4\u30e4\u30fc\u304c\u5f97\u70b9\u3057\u305f\u3068\u304d\u306eCOZMO\u306e\u30e9\u30f3\u30c0\u30e0\u306a\u30bb\u30ea\u30d5\u3092\u9078\u3073\u307e\u3059\u3002"
                             }
                         },
                         "id": "{QOYuj`jVL}P`hO4109g",
@@ -14228,7 +14228,7 @@
                             "VARIABLE": {
                                 "id": "Uo$b[8m_V;*[p-4+wR)t",
                                 "name": "VARIABLE",
-                                "value": "schl\u00e4ger von cozmo: beschleunigung"
+                                "value": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u52a0\u901f"
                             }
                         },
                         "id": "{Tw`6o0[ITML(DaJ%Tc8",
@@ -14261,7 +14261,7 @@
                             "VARIABLE": {
                                 "id": ";,8.KO+3@42(n/VrGfz_",
                                 "name": "VARIABLE",
-                                "value": "ballgeschwindigkeit\u00a0x"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u901f\u5ea6x"
                             }
                         },
                         "id": "{b#4O)W-?81~fY.^yx9;",
@@ -14285,7 +14285,7 @@
                             "VARIABLE": {
                                 "id": "Un(M(aYayhUWSn{cE(+V",
                                 "name": "VARIABLE",
-                                "value": "ballposition\u00a0y"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u4f4d\u7f6ey"
                             }
                         },
                         "id": "{nPvBFf^/KRh6_b!X0G4",
@@ -14341,7 +14341,7 @@
                             "VARIABLE": {
                                 "id": "{YHsXwAt+asRXa)nnh+f",
                                 "name": "VARIABLE",
-                                "value": "ballposition\u00a0x"
+                                "value": "\u30dc\u30fc\u30eb\u306e\u4f4d\u7f6ex"
                             }
                         },
                         "id": "|-;o%6sM*Hug0Y-m2jjJ",
@@ -14364,7 +14364,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "hallo"
+                                "value": "\u3053\u3093\u306b\u3061\u306f"
                             }
                         },
                         "id": "|46#mS|:2bG6CbQr=EQ7",
@@ -14397,7 +14397,7 @@
                             "VARIABLE": {
                                 "id": "2R7G,w^iNhDzuM8oL4=^",
                                 "name": "VARIABLE",
-                                "value": "punkte f\u00fcr den sieg"
+                                "value": "\u52dd\u3064\u305f\u3081\u306b\u5fc5\u8981\u306a\u5f97\u70b9"
                             }
                         },
                         "id": "|D@hP[0%[umWEAVfLut6",
@@ -14507,7 +14507,7 @@
                             "VARIABLE": {
                                 "id": ";+)ef@A}n,M/_h$Jg[tz",
                                 "name": "VARIABLE",
-                                "value": "schl\u00e4ger von cozmo: geschwindigkeit"
+                                "value": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u901f\u5ea6"
                             }
                         },
                         "id": "}73s#.L~][YRx`v2]i=_",
@@ -14523,7 +14523,7 @@
                             "VARIABLE": {
                                 "id": "Uo$b[8m_V;*[p-4+wR)t",
                                 "name": "VARIABLE",
-                                "value": "schl\u00e4ger von cozmo: beschleunigung"
+                                "value": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u52a0\u901f"
                             }
                         },
                         "id": "}:#PRjSCIfen.dCx4XwW",
@@ -14670,7 +14670,7 @@
                             "VARIABLE": {
                                 "id": ";+)ef@A}n,M/_h$Jg[tz",
                                 "name": "VARIABLE",
-                                "value": "schl\u00e4ger von cozmo: geschwindigkeit"
+                                "value": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u901f\u5ea6"
                             }
                         },
                         "id": "}f].tTLw(Z=UaJHg4q|0",
@@ -14836,7 +14836,7 @@
                             "VARIABLE": {
                                 "id": "NluXerqXX#!qwYcUn{7M",
                                 "name": "VARIABLE",
-                                "value": "schl\u00e4ger von cozmo: position\u00a0y"
+                                "value": "COZMO\u306e\u30d1\u30c9\u30eb\u306e\u4f4d\u7f6ey"
                             }
                         },
                         "id": "~*OvNKhdjx3-x~r1P(E3",
@@ -14920,7 +14920,7 @@
                             "VARIABLE": {
                                 "id": "N;1W$..-rhJ8tGc4UOzl",
                                 "name": "VARIABLE",
-                                "value": "cozmo-antwort"
+                                "value": "COZMO\u306e\u53cd\u5fdc"
                             }
                         },
                         "id": "~U,t*lu~@^x:%/=9$/jk",
