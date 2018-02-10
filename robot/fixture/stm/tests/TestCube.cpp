@@ -191,13 +191,23 @@ static void ShortCircuitTest(void)
 }
 
 //led test array
-typedef struct { char* name; uint16_t bits; int duty; int i_meas; int i_nominal; int i_variance; } led_test_t;
+typedef struct { char* name; uint16_t bits; int duty; int i_meas; int i_nominal; int i_variance; error_t e; } led_test_t;
 led_test_t ledtest[] = {
-  {(char*)"All.RED",  0x1111, 12, 0, 15, 5}, {(char*)"All.GRN",  0x2222, 12, 0, 15, 5}, {(char*)"All.BLU",  0x4444, 12, 0, 15, 5},
-  {(char*)"D1.RED",   0x0001,  1, 0, 43, 8}, {(char*)"D1.GRN",   0x0002,  1, 0, 43, 8}, {(char*)"D1.BLU",   0x0004,  1, 0, 43, 8},
-  {(char*)"D2.RED",   0x0010,  1, 0, 43, 8}, {(char*)"D2.GRN",   0x0020,  1, 0, 43, 8}, {(char*)"D2.BLU",   0x0040,  1, 0, 43, 8},
-  {(char*)"D3.RED",   0x0100,  1, 0, 43, 8}, {(char*)"D3.GRN",   0x0200,  1, 0, 43, 8}, {(char*)"D3.BLU",   0x0400,  1, 0, 43, 8},
-  {(char*)"D4.RED",   0x1000,  1, 0, 43, 8}, {(char*)"D4.GRN",   0x2000,  1, 0, 43, 8}, {(char*)"D4.BLU",   0x4000,  1, 0, 43, 8}
+  {(char*)"All.RED", 0x1111, 12, 0, 15, 5, ERROR_CUBE_LED    },
+  {(char*)"All.GRN", 0x2222, 12, 0, 15, 5, ERROR_CUBE_LED    },
+  {(char*)"All.BLU", 0x4444, 12, 0, 15, 5, ERROR_CUBE_LED    },
+  {(char*)"D1.RED",  0x0001,  1, 0, 43, 8, ERROR_CUBE_LED_D1 },
+  {(char*)"D1.GRN",  0x0002,  1, 0, 43, 8, ERROR_CUBE_LED_D1 },
+  {(char*)"D1.BLU",  0x0004,  1, 0, 43, 8, ERROR_CUBE_LED_D1 },
+  {(char*)"D2.RED",  0x0010,  1, 0, 43, 8, ERROR_CUBE_LED_D2 },
+  {(char*)"D2.GRN",  0x0020,  1, 0, 43, 8, ERROR_CUBE_LED_D2 },
+  {(char*)"D2.BLU",  0x0040,  1, 0, 43, 8, ERROR_CUBE_LED_D2 },
+  {(char*)"D3.RED",  0x0100,  1, 0, 43, 8, ERROR_CUBE_LED_D3 },
+  {(char*)"D3.GRN",  0x0200,  1, 0, 43, 8, ERROR_CUBE_LED_D3 },
+  {(char*)"D3.BLU",  0x0400,  1, 0, 43, 8, ERROR_CUBE_LED_D3 },
+  {(char*)"D4.RED",  0x1000,  1, 0, 43, 8, ERROR_CUBE_LED_D4 },
+  {(char*)"D4.GRN",  0x2000,  1, 0, 43, 8, ERROR_CUBE_LED_D4 },
+  {(char*)"D4.BLU",  0x4000,  1, 0, 43, 8, ERROR_CUBE_LED_D4 }
 };
 
 static inline bool ledtest_pass(led_test_t *ptest, int i_test) {
@@ -247,13 +257,21 @@ static void CubeTest(void)
     bool pass = ledtest_pass( &ledtest[n], i_test );
     ConsolePrintf("%s current %imA %s\n", ledtest[n].name, i_test, pass ? "ok" : "--FAIL--");
     if( !pass )
-      e = ERROR_CUBE_LED;
+      e = ledtest[n].e;
   }
   if( e != ERROR_OK )
     throw e;
   
-  //DEBUG: "test" accel
-  //cmdSend(CMD_IO_DUT_UART, "accel", 250);
+  //Accelerometer (ref: status error codes in cubetest::cmd.h)
+  cmdSend(CMD_IO_DUT_UART, "leds 0x1 static"); //pull some led current for typical usecase
+  cmdSend(CMD_IO_DUT_UART, "vled 1");
+  Timer::delayMs(50); //wait for VLED boost reg to stabilize
+  cmdSend(CMD_IO_DUT_UART, "accel", 250, CMD_OPTS_DEFAULT | CMD_OPTS_ALLOW_STATUS_ERRS);
+  if( cmdStatus() == 10 )
+    throw ERROR_CUBE_ACCEL_PWR;
+  if( cmdStatus() != 0 ) // == 11
+    throw ERROR_CUBE_ACCEL;
+  cmdSend(CMD_IO_DUT_UART, "vled 0");
   
   /*/DEBUG: console bridge, manual testing
   cmdSend(CMD_IO_DUT_UART, "echo on");
