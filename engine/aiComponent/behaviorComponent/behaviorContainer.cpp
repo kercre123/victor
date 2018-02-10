@@ -102,6 +102,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToUnexpectedMovement.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToVoiceCommand.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorProceduralClock.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorTimerUtilityCoordinator.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/sleeping/behaviorSleeping.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorComeHere.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorReactToSound.h"
@@ -333,6 +334,11 @@ ICozmoBehaviorPtr BehaviorContainer::CreateBehaviorBase(BehaviorClass behaviorTy
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorAnimStatesGetInLoop(config));
       break;
+    }
+    case BehaviorClass::TimerUtilityCoordinator:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorTimerUtilityCoordinator(config));
+      break; 
     }
 
     case BehaviorClass::PounceOnMotion:

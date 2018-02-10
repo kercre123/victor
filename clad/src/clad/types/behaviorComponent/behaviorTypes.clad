@@ -91,6 +91,7 @@ enum uint_8 BehaviorClass {
   ObservingLookAtFaces,
   ObservingOnCharger,
   Sleeping,
+  TimerUtilityCoordinator,
 
   // Dev Behaviors
   DevImageCapture,
@@ -215,14 +216,17 @@ enum uint_8 BehaviorID {
   ReactToCubeMoved,
   ReactToPet,
   TriggerWordDetected,
-
   ObservingOnChargerIdle,
 
   GlobalInterruptions,
+  TimerUtilityCoordinator, 
 
   Wait,
   Wait_TestInjectable, // BehaviorID used by tests to create fake behaviors
 
+  SingletonTimerSet,
+  SingletonTimerAntic,
+  SingletonTimerRinging,
 
   // Singing Behaviors
   Singing_AbaDaba,
@@ -290,7 +294,7 @@ enum uint_8 BehaviorID {
   LiftLoadTest,
 
   // Example Behaviors
-  ExampleAnimStateGetInLoop,
+  ExampleAnimStateGetInLoop, 
   ExampleAnonymousBehaviors,
   ExampleDispatcherScoring,
   ExampleFacePositionUpdated,
@@ -300,7 +304,6 @@ enum uint_8 BehaviorID {
   ExampleObjectPositionUpdated,
   ExamplePetInitialDetection,
   ExampleProceduralClock
-
 }
 
 // Each of these should map to exactly 1 instance of a behavior at runtime
