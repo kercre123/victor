@@ -279,9 +279,15 @@ typedef int error_t;
 
 //<export heading> Cube Errors
 #define ERROR_CUBE_CANNOT_WRITE     700   // MCU is locked
-#define ERROR_CUBE_NO_COMMUNICATION 701   // MCU is not working (bad crystal?)
+#define ERROR_CUBE_NO_COMMUNICATION 701   // MCU broken wire or locked. Already OTP'd? Bad crystal?
 #define ERROR_CUBE_VERIFY_FAILED    702   // OTP is not empty or did not program correctly
 #define ERROR_CUBE_LED              703   // Detected bad LED
+#define ERROR_CUBE_LED_D1           704   // Detected bad LED [D1]
+#define ERROR_CUBE_LED_D2           705   // Detected bad LED [D2]
+#define ERROR_CUBE_LED_D3           706   // Detected bad LED [D3]
+#define ERROR_CUBE_LED_D4           707   // Detected bad LED [D4]
+#define ERROR_CUBE_ACCEL            708   // Accelerometer cannot communicate
+#define ERROR_CUBE_ACCEL_PWR        709   // Accelerometer power fault
 //#define ERROR_CUBE_CANNOT_READ      705   // Broken wire or MCU is locked 
 //#define ERROR_CUBEX_NOT_SET         706   // Cube not programmed - CUBEX requires cube to be already programmed
 //#define ERROR_CUBE_SCAN_FAILED      707   // Did not detect advertising packets from the cube's radio
