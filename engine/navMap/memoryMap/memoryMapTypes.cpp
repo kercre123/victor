@@ -81,6 +81,14 @@ EContentTypePackedType EContentTypeToFlag(EContentType contentType)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool IsInEContentTypePackedType(EContentType contentType, EContentTypePackedType contentPackedTypes)
+{
+  const EContentTypePackedType packedType = EContentTypeToFlag(contentType);
+  const bool isIn = (packedType & contentPackedTypes) != 0;
+  return isIn;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool IsRemovalType(EContentType type)
 {
   using FullNodeContentToBoolArray = Util::FullEnumToValueArrayChecker::FullEnumToValueArray<EContentType, bool>;
@@ -104,6 +112,31 @@ bool IsRemovalType(EContentType type)
   // value of entry in array tells if it's a removal type
   const bool isRemoval = removalTypes[ Util::EnumToUnderlying(type) ].Value();
   return isRemoval;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// convert between our internal node content type and an external content type
+ExternalInterface::ENodeContentTypeEnum ConvertContentType(EContentType contentType)
+{
+  using namespace MemoryMapTypes;
+  using namespace ExternalInterface;
+
+  ENodeContentTypeEnum externalContentType = ENodeContentTypeEnum::Unknown;
+  switch (contentType) {
+    case EContentType::Unknown:               { externalContentType = ENodeContentTypeEnum::Unknown;              break; }
+    case EContentType::ClearOfObstacle:       { externalContentType = ENodeContentTypeEnum::ClearOfObstacle;      break; }
+    case EContentType::ClearOfCliff:          { externalContentType = ENodeContentTypeEnum::ClearOfCliff;         break; }
+    case EContentType::ObstacleObservable:    { externalContentType = ENodeContentTypeEnum::ObstacleCube;         break; }
+    case EContentType::ObstacleCharger:       { externalContentType = ENodeContentTypeEnum::ObstacleCharger;      break; }
+    case EContentType::ObstacleChargerRemoved:{ DEV_ASSERT(false, "NavMeshQuadTreeNode.ConvertContentType");      break; } // Should never get this
+    case EContentType::ObstacleProx:          { externalContentType = ENodeContentTypeEnum::ObstacleProx;         break; } 
+    case EContentType::ObstacleUnrecognized:  { externalContentType = ENodeContentTypeEnum::ObstacleUnrecognized; break; }
+    case EContentType::Cliff:                 { externalContentType = ENodeContentTypeEnum::Cliff;                break; }
+    case EContentType::InterestingEdge:       { externalContentType = ENodeContentTypeEnum::InterestingEdge;      break; }
+    case EContentType::NotInterestingEdge:    { externalContentType = ENodeContentTypeEnum::NotInterestingEdge;   break; }
+    case EContentType::_Count:                { DEV_ASSERT(false, "NavMeshQuadTreeNode._Count"); break; }
+  }
+  return externalContentType;
 }
 
 } // namespace

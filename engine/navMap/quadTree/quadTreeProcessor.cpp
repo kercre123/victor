@@ -541,14 +541,6 @@ BorderSegment QuadTreeProcessor::MakeBorderSegment(const Point3f& origin, const 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeProcessor::IsInEContentTypePackedType(EContentType contentType, EContentTypePackedType contentPackedTypes)
-{
-  const EContentTypePackedType packedType = EContentTypeToFlag(contentType);
-  const bool isIn = (packedType & contentPackedTypes) != 0;
-  return isIn;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void QuadTreeProcessor::InvalidateBorders()
 {
   // set all borders as dirty

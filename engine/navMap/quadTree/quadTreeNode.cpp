@@ -26,40 +26,6 @@
 namespace Anki {
 namespace Cozmo {
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Helpers
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-namespace
-{
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// convert between our internal node content type and an external content type
-using namespace MemoryMapTypes;
-using namespace ExternalInterface;
-
-ENodeContentTypeEnum ConvertContentType(EContentType contentType)
-{
-  
-  ENodeContentTypeEnum externalContentType = ENodeContentTypeEnum::Unknown;
-  switch (contentType) {
-    case EContentType::Unknown:               { externalContentType = ENodeContentTypeEnum::Unknown;         break; }
-    case EContentType::ClearOfObstacle:       { externalContentType = ENodeContentTypeEnum::ClearOfObstacle; break; }
-    case EContentType::ClearOfCliff:          { externalContentType = ENodeContentTypeEnum::ClearOfCliff;    break; }
-    case EContentType::ObstacleObservable:    { externalContentType = ENodeContentTypeEnum::ObstacleCube;    break; }
-    case EContentType::ObstacleCharger:       { externalContentType = ENodeContentTypeEnum::ObstacleCharger; break; }
-    case EContentType::ObstacleChargerRemoved:{ DEV_ASSERT(false, "NavMeshQuadTreeNode.ConvertContentType"); break; } // Should never get this
-    case EContentType::ObstacleProx:          { externalContentType = ENodeContentTypeEnum::ObstacleProx;    break; } 
-    case EContentType::ObstacleUnrecognized:  { DEV_ASSERT(false, "NavMeshQuadTreeNode.ConvertContentType"); break; } // Should never get this (unsupported)
-    case EContentType::Cliff:                 { externalContentType = ENodeContentTypeEnum::Cliff;           break; }
-    case EContentType::InterestingEdge:       { externalContentType = ENodeContentTypeEnum::InterestingEdge; break; }
-    case EContentType::NotInterestingEdge:    { externalContentType = ENodeContentTypeEnum::NotInterestingEdge; break;}
-    case EContentType::_Count:                { DEV_ASSERT(false, "NavMeshQuadTreeNode._Count"); break; }
-  }
-  return externalContentType;
-}
-
-} // namespace
-
 static_assert( !std::is_copy_assignable<QuadTreeNode>::value, "QuadTreeNode was designed non-copyable" );
 static_assert( !std::is_copy_constructible<QuadTreeNode>::value, "QuadTreeNode was designed non-copyable" );
 static_assert( !std::is_move_assignable<QuadTreeNode>::value, "QuadTreeNode was designed non-movable" );
