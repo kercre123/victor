@@ -22,8 +22,6 @@
 namespace Anki {
 namespace Cozmo {
 
-class Robot;
-  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class QuadTree
 {
@@ -34,7 +32,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // constructor/destructor
-  QuadTree(MemoryMapData rootData);
+  QuadTree(MemoryMapDataPtr rootData);
   ~QuadTree();
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -55,7 +53,7 @@ public:
         QuadTreeProcessor& GetProcessor()       { return _processor; }
   const QuadTreeProcessor& GetProcessor() const { return _processor; }
   
-  const NodeContent& GetRootNodeContent() const { return _root.GetContent(); }
+  const QuadTreeNode::NodeContent& GetRootNodeContent() const { return _root.GetContent(); }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Operations
@@ -64,7 +62,7 @@ public:
   // notify the QT that the given poly has the specified content
   // shiftAllowedCount: number of shifts we can do for a fully expanded root that still needs to move to
   // fit the data.
-  bool Insert(const FastPolygon& poly, const MemoryMapData& data, int shiftAllowedCount);
+  bool Insert(const FastPolygon& poly, MemoryMapDataPtr data, int shiftAllowedCount);
   
   // modify content bounded by poly. Note that if the poly extends outside the current size of the root node,
   // it will not expand the root node

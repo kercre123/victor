@@ -55,7 +55,7 @@ EContentTypePackedType ConvertContentArrayToFlags(const MemoryMapTypes::FullCont
 // MemoryMap
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 MemoryMap::MemoryMap()
-: _quadTree(MemoryMapData(EContentType::Unknown, 0.f))
+: _quadTree(std::make_shared<MemoryMapData>())
 {
 }
 
@@ -162,7 +162,8 @@ bool MemoryMap::HasContentType(EContentType type) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool MemoryMap::Insert(const Poly2f& poly, const MemoryMapData& data)
 {
-  return _quadTree.Insert(poly, data, numberOfAllowedShiftsToIncludeContent);
+  // clone data to make into a shared pointer.
+  return _quadTree.Insert(poly, data.Clone(), numberOfAllowedShiftsToIncludeContent);
 }
 
 } // namespace Cozmo

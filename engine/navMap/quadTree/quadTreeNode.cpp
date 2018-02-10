@@ -66,7 +66,7 @@ static_assert( !std::is_move_assignable<QuadTreeNode>::value, "QuadTreeNode was 
 static_assert( !std::is_move_constructible<QuadTreeNode>::value, "QuadTreeNode was designed non-movable" );
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-QuadTreeNode::QuadTreeNode(const Point3f &center, float sideLength, uint8_t level, EQuadrant quadrant, QuadTreeNode* parent, MemoryMapData& data)
+QuadTreeNode::QuadTreeNode(const Point3f &center, float sideLength, uint8_t level, EQuadrant quadrant, QuadTreeNode* parent, MemoryMapDataPtr data)
 : _center(center)
 , _sideLen(sideLength)
 , _boundingBox(center - Point3f(sideLength/2, sideLength/2, 0), center + Point3f(sideLength/2, sideLength/2, 0))
@@ -143,7 +143,7 @@ const std::unique_ptr<QuadTreeNode>& QuadTreeNode::GetChildAt(size_t index) cons
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeNode::Insert(const FastPolygon& poly, const MemoryMapData& data, QuadTreeProcessor& processor)
+bool QuadTreeNode::Insert(const FastPolygon& poly, const MemoryMapDataPtr data, QuadTreeProcessor& processor)
 {
   ANKI_CPU_PROFILE("QuadTreeNode::Insert");
   
@@ -208,7 +208,7 @@ bool QuadTreeNode::ShiftRoot(const Poly2f& requiredPoints, QuadTreeProcessor& pr
     // create new children
     const float chHalfLen = rootHalfLen*0.5f;
     const TimeStamp_t timeCreated = _content.data->GetLastObservedTime();
-    MemoryMapData newData(EContentType::Unknown, timeCreated);
+    MemoryMapDataPtr newData = std::make_shared<MemoryMapData>(EContentType::Unknown, timeCreated);
       
     _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+chHalfLen, _center.y()+chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::TopLeft , this, newData) ); // up L
     _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+chHalfLen, _center.y()-chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::TopRight, this, newData) ); // up R
@@ -242,7 +242,7 @@ bool QuadTreeNode::ShiftRoot(const Poly2f& requiredPoints, QuadTreeProcessor& pr
     
     // this content is set to the children that don't inherit old children
     MemoryMapData data(EContentType::Unknown, timeCreated);
-    NodeContent emptyUnknownContent(data);
+    NodeContent emptyUnknownContent(data.Clone());
     
     // calculate which children are brought over from the old ones
     if ( xShift && yShift )
@@ -350,7 +350,7 @@ bool QuadTreeNode::UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLev
   const bool xPlus = FLT_GE_ZERO(direction.x());
   const bool yPlus = FLT_GE_ZERO(direction.y());
   const TimeStamp_t timeCreated = _content.data->GetLastObservedTime();
-  MemoryMapData newDaata(EContentType::Unknown, timeCreated);
+  MemoryMapDataPtr newData = std::make_shared<MemoryMapData>(EContentType::Unknown, timeCreated);
   
   // move to its new center
   const float oldHalfLen = _sideLen * 0.50f;
@@ -358,10 +358,10 @@ bool QuadTreeNode::UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLev
   _center.y() = _center.y() + (yPlus ? oldHalfLen : -oldHalfLen);
 
   // create new children
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+oldHalfLen, _center.y()+oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::TopLeft , this, newDaata) ); // up L
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+oldHalfLen, _center.y()-oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::TopRight, this, newDaata) ); // up R
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-oldHalfLen, _center.y()+oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::BotLeft , this, newDaata) ); // lo L
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-oldHalfLen, _center.y()-oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::BotRight, this, newDaata) ); // lo R
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+oldHalfLen, _center.y()+oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::TopLeft , this, newData) ); // up L
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+oldHalfLen, _center.y()-oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::TopRight, this, newData) ); // up R
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-oldHalfLen, _center.y()+oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::BotLeft , this, newData) ); // lo L
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-oldHalfLen, _center.y()-oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::BotRight, this, newData) ); // lo R
 
   // calculate the child that takes my place by using the opposite direction to expansion
   size_t childIdx = 0;
@@ -373,7 +373,7 @@ bool QuadTreeNode::UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLev
   // we have to set the new first level children as Unknown, since they are initialized as Invalid
   // except the child that takes my place, since that one is going to inherit my content
   MemoryMapData unknownData(EContentType::Unknown, timeCreated);
-  NodeContent emptyUnknownContent(unknownData);
+  NodeContent emptyUnknownContent(unknownData.Clone());
   for(size_t idx=0; idx<_childrenPtr.size(); ++idx) {
     if ( idx != childIdx ) {
       _childrenPtr[idx]->ForceSetDetectedContentType(emptyUnknownContent, processor);
@@ -431,7 +431,7 @@ void QuadTreeNode::Subdivide(QuadTreeProcessor& processor)
   const float quarterLen = halfLen * 0.50f;
   const uint8_t cLevel = _level-1;
   const TimeStamp_t timeCreated = _content.data->GetLastObservedTime();
-  MemoryMapData newData(EContentType::Unknown, timeCreated);
+  MemoryMapDataPtr newData = std::make_shared<MemoryMapData>(EContentType::Unknown, timeCreated);
   _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+quarterLen, _center.y()+quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::TopLeft , this, newData) ); // up L
   _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+quarterLen, _center.y()-quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::TopRight, this, newData) ); // up R
   _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-quarterLen, _center.y()+quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::BotLeft , this, newData) ); // lo L
@@ -639,7 +639,7 @@ void QuadTreeNode::ForceSetDetectedContentType(const NodeContent& detectedConten
     if ( isObstacleRemoved )
     {
       MemoryMapData newData(EContentType::ClearOfObstacle, detectedContent.data->GetLastObservedTime());
-      finalContent = NodeContent(newData);
+      finalContent = NodeContent(newData.Clone());
     }
   }
   
@@ -981,8 +981,7 @@ bool QuadTreeNode::Transform(const FastPolygon& poly,
     // if the node contains any data, attempt to perform the transform
     if (_content.data)
     {
-      auto newData = transform(_content.data);
-      NodeContent newContent(newData);
+      NodeContent newContent(transform(_content.data));
       
       // AddContentPoint checks if content has changed for us
       contentChanged = (_content != newContent) && !IsSubdivided();
