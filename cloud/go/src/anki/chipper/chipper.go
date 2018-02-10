@@ -14,6 +14,8 @@ var (
 	defaultTLSCert = credentials.NewClientTLSFromCert(nil, "")
 )
 
+type IntentResult = pb.IntentResult
+
 type rpcAppKey struct {
 	Value string
 }
@@ -37,7 +39,6 @@ type Conn struct {
 
 type StreamOpts struct {
 	SessionId string
-	FullFile  bool
 }
 
 type Stream struct {
@@ -91,13 +92,13 @@ func (c *Stream) SendAudio(audioData []byte) error {
 			DeviceId:        c.conn.device,
 			Session:         c.opts.SessionId,
 			LanguageCode:    pb.LanguageCode_ENGLISH_US,
-			SingleUtterance: c.opts.FullFile,
+			SingleUtterance: false,
 			IntentService:   pb.IntentService_DIALOGFLOW,
 			AppKey:          c.conn.appKey,
 			InputAudio:      audioData})
 }
 
-func (c *Stream) WaitForIntent() (*pb.IntentResult, error) {
+func (c *Stream) WaitForIntent() (*IntentResult, error) {
 	for {
 		intent, err := c.stream.Recv()
 		if err != nil {

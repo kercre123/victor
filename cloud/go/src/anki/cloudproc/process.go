@@ -3,6 +3,8 @@ package cloudproc
 import (
 	"anki/chipper"
 	"anki/util"
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"sync"
@@ -94,9 +96,25 @@ func sendAudio(ctx *voiceContext, samples []byte, cloudChan chan<- string) {
 				return
 			}
 			fmt.Println("Intent response ->", resp)
-			cloudChan <- resp.Action
+			sendJsonResponse(resp, cloudChan)
 		}()
 	})
+}
+
+func sendJsonResponse(resp *chipper.IntentResult, cloudChan chan<- string) {
+	outResponse := make(map[string]interface{})
+	outResponse["intent"] = resp.Action
+	if resp.Parameters != nil && len(resp.Parameters) > 0 {
+		outResponse["params"] = resp.Parameters
+	}
+	buf := bytes.Buffer{}
+	encoder := json.NewEncoder(&buf)
+	if err := encoder.Encode(outResponse); err != nil {
+		fmt.Println("JSON encode error:", err)
+		cloudChan <- ""
+		return
+	}
+	cloudChan <- buf.String()
 }
 
 // SetVerbose enables or disables verbose logging
@@ -133,8 +151,7 @@ procloop:
 					return
 				}
 				stream, err = chipperConn.NewStream(chipper.StreamOpts{
-					SessionId: uuid.New().String()[:16],
-					FullFile:  false})
+					SessionId: uuid.New().String()[:16]})
 			})
 			if err != nil {
 				fmt.Println("Error creating Chipper:", err)
