@@ -94,6 +94,7 @@ target_link_libraries(webotsCtrlLightCube
   cti_common
   engine_clad
   robot_interface
+  supervisor # for ledController
   webotsCtrlCommon
   ${PLATFORM_LIBS}
 )

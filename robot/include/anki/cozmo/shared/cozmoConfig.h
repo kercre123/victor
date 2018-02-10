@@ -249,6 +249,9 @@ namespace Cozmo {
   const s32 WEB_SERVER_OVERTIME_WARNING_THRESH_MS = 500;
   const s32 WEB_SERVER_OVERTIME_WARNING_THRESH_US = WEB_SERVER_OVERTIME_WARNING_THRESH_MS * 1000;
   
+  // Timestep for cube animation LED 'frames'
+  const u32 CUBE_LED_FRAME_LENGTH_MS = 30;
+  
   /***************************************************************************
    *
    *                          Communications

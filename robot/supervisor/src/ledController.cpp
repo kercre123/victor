@@ -38,7 +38,7 @@ namespace Cozmo {
   }
 
   bool GetCurrentLEDcolor(const LightState& ledParams, const TimeStamp_t currentTime, TimeStamp_t& phaseTime,
-                          u32& newColor)
+                          u32& newColor, const u32 msPerFrame)
   {
     // Check for constant color
     if (ledParams.onFrames == 255 || (ledParams.onColor == ledParams.offColor)) {
@@ -46,7 +46,7 @@ namespace Cozmo {
       return true;
     }
     
-    u16 phaseFrame = TIMESTAMP_TO_FRAMES(currentTime - phaseTime);
+    u16 phaseFrame = (currentTime - phaseTime) / msPerFrame;
     if (phaseFrame > 1024)
     {
       phaseTime = currentTime; // Someone changed currentTime under us or something else went wrong so reset

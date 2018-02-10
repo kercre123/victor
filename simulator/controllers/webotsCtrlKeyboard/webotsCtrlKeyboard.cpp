@@ -2063,7 +2063,7 @@ namespace Cozmo {
     REGISTER_SHIFTED_KEY_FCN(':', MOD_NONE, SetRollActionParams,               "Set parameters for roll action");
 //      REGISTER_SHIFTED_KEY_FCN(':', MOD_ALT, , "");
     REGISTER_SHIFTED_KEY_FCN('"', MOD_NONE, PlayCubeAnimation,                 "Play cube animation");
-//      REGISTER_SHIFTED_KEY_FCN('"', MOD_ALT, , "");
+    REGISTER_SHIFTED_KEY_FCN('"', MOD_ALT,  PlayCubeAnimation,                 "Play cube animation");
     REGISTER_SHIFTED_KEY_FCN('<', MOD_NONE, TurnInPlaceCCW,                    "Turn in place CCW by 'pointTurnAngle_deg'");
     REGISTER_SHIFTED_KEY_FCN('<', MOD_ALT,  TurnInPlaceCCW,                    "Turn in place CCW forever");
     REGISTER_SHIFTED_KEY_FCN('>', MOD_NONE, TurnInPlaceCW,                     "Turn in place CW by 'pointTurnAngle_deg'");

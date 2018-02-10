@@ -12,6 +12,7 @@
 #include "clad/externalInterface/lightCubeMessage.h"
 #include "clad/externalInterface/messageFromActiveObject.h"
 #include "anki/cozmo/robot/ledController.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 #include "util/logging/logging.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/math/math.h"
@@ -40,6 +41,8 @@ namespace ActiveBlock {
 namespace {
 
   const s32 TIMESTEP = 10; // ms
+  
+  u32 TimestampToLedFrames(TimeStamp_t ts) { return (u32)(ts / CUBE_LED_FRAME_LENGTH_MS); }
 
   // Number of cycles (of length TIMESTEP) in between transmission of ObjectAvailable messages
   const u32 OBJECT_AVAILABLE_MESSAGE_PERIOD = 100;
@@ -105,8 +108,20 @@ namespace {
   // Store them here (key is LED index, value is RGB color).
   std::map<u32, std::array<double, 3>> pendingLedColors_;
 
-  LightState ledParams_[NUM_CUBE_LEDS];
-  TimeStamp_t ledPhases_[NUM_CUBE_LEDS];
+  // Parameters for setting individual LEDs on this cube
+  struct LedParams
+  {
+    std::array<Anki::Cozmo::LightState, NUM_CUBE_LEDS> lightStates;
+    
+    // Keep track of where we are in the phase cycle for each LED
+    std::array<TimeStamp_t, NUM_CUBE_LEDS> phases;
+    
+    u8 rotationPeriod = 0;
+    TimeStamp_t lastRotation = 0;
+    u8 rotationOffset = 0;
+  };
+  
+  LedParams ledParams_;
   
   // To keep track of previous (and next) UpAxis
   //  sent to the robot (via UpAxisChanged msg)
@@ -151,6 +166,7 @@ namespace {
   
 } // private namespace
 
+  
 template <typename T>
 void SendMessageHelper(webots::Emitter* emitter, T&& msg)
 {
@@ -181,27 +197,14 @@ inline void SetLED_helper(u32 index, u32 rgbaColor) {
 
 // ========== Callbacks for messages from robot =========
 
-void Process_setCubeID(const CubeID& msg)
+void Process_cubeLights(const CubeLights& msg)
 {
+  ledParams_.lightStates = msg.lights;
+  ledParams_.phases.fill(0);
   
-}
-
-void Process_setCubeLights(const CubeLights& msg)
-{
-  // See if the message is actually changing anything about the block's current
-  // state. If not, don't update anything.
-  if(memcmp(ledParams_, msg.lights.data(), sizeof(ledParams_))) {
-    memcpy(ledParams_, msg.lights.data(), sizeof(ledParams_));
-    for (int i=0; i<NUM_CUBE_LEDS; ++i) ledPhases_[i] = 0;
-  } else {
-    //PRINT_NAMED_INFO("ActiveBlock", "Ignoring SetBlockLights message with parameters identical to current state");
-  }
-  
-  // Set lights immediately
-  for (u32 i=0; i<NUM_CUBE_LEDS; ++i) {
-    SetLED_helper(i, msg.lights[i].onColor);
-  }
-  
+  ledParams_.rotationPeriod = msg.rotationPeriod_frames;
+  ledParams_.lastRotation = 0;
+  ledParams_.rotationOffset = 0;
 }
 
 void Process_streamObjectAccel(const StreamObjectAccel& msg)
@@ -498,6 +501,28 @@ bool CheckForTap(f32 accelX, f32 accelY, f32 accelZ)
 }
 
 
+void ApplyLEDParams(TimeStamp_t currentTime)
+{
+  if(ledParams_.rotationPeriod > 0 &&
+     TimestampToLedFrames(currentTime - ledParams_.lastRotation) > ledParams_.rotationPeriod)
+  {
+    ledParams_.lastRotation = currentTime;
+    ++ledParams_.rotationOffset;
+    if(ledParams_.rotationOffset >= NUM_CUBE_LEDS) {
+      ledParams_.rotationOffset = 0;
+    }
+  }
+
+  for(u8 i=0; i<NUM_CUBE_LEDS; ++i) {
+    u32 newColor;
+    if (GetCurrentLEDcolor(ledParams_.lightStates[i], currentTime, ledParams_.phases[i], newColor, CUBE_LED_FRAME_LENGTH_MS)) {
+      const u32 index = (i + ledParams_.rotationOffset) % NUM_CUBE_LEDS;
+      SetLED_helper(index, newColor);
+    }
+  }
+}
+
+
 Result Update() {
   if (active_object_controller.step(TIMESTEP) != -1) {
     
@@ -578,8 +603,13 @@ Result Update() {
       SendMessageHelper(emitter_, std::move(msg));
     }
     
+    // Update lights:
+    TimeStamp_t currTimestamp_ms = static_cast<TimeStamp_t>(currTime_sec * 1000.f);
+    ApplyLEDParams(currTimestamp_ms);
+    
     // Set any pending LED color fields. This must be done here since setMFVec3f can only
     // be called once per simulation time step for a given field (known Webots R2018a bug)
+    // TODO: Remove?
     if (!pendingLedColors_.empty()) {
       for (const auto& newColorEntry : pendingLedColors_) {
         const auto index = newColorEntry.first;
