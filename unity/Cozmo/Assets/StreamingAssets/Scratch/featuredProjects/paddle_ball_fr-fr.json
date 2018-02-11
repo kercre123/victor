@@ -103,7 +103,7 @@
                     },
                     "C98$ucj/(Z0/_I;Wqgv1": {
                         "id": "C98$ucj/(Z0/_I;Wqgv1",
-                        "name": "D\u00e9finis o\u00f9 Cozmo pense que la balle se trouve selon son niveau de comp\u00e9tence.",
+                        "name": "D\u00e9finit o\u00f9 Cozmo pense que la balle se trouve selon son niveau de comp\u00e9tence.",
                         "value": 0
                     },
                     "Emsk)D`uo07V(p/5@]yX": {
@@ -233,12 +233,12 @@
                     },
                     "vc)o#04i]t]|_wDkV*z/": {
                         "id": "vc)o#04i]t]|_wDkV*z/",
-                        "name": "D\u00e9finis les param\u00e8tres de jeu r\u00e9glables.",
+                        "name": "D\u00e9finit les param\u00e8tres de jeu r\u00e9glables.",
                         "value": 0
                     },
                     "xtus709,csCGWPUXkK7Z": {
                         "id": "xtus709,csCGWPUXkK7Z",
-                        "name": "En cours de jeu, utilise les donn\u00e9es pour dessiner tout ce que tu veux sur la t\u00eate de Cozmo.",
+                        "name": "En cours de jeu, utilise les donn\u00e9es pour dessiner tout ce que tu veux sur le visage de Cozmo.",
                         "value": 0
                     },
                     "{YHsXwAt+asRXa)nnh+f": {
@@ -263,7 +263,7 @@
                     },
                     "~j3j3@|P{=IzQ5PMcSN*": {
                         "id": "~j3j3@|P{=IzQ5PMcSN*",
-                        "name": "D\u00e9finis les variables de gameplay.",
+                        "name": "D\u00e9finit les variables de gameplay.",
                         "value": 0
                     }
                 },
@@ -2791,7 +2791,7 @@
                             "VARIABLE": {
                                 "id": "C98$ucj/(Z0/_I;Wqgv1",
                                 "name": "VARIABLE",
-                                "value": "D\u00e9finis o\u00f9 Cozmo pense que la balle se trouve selon son niveau de comp\u00e9tence."
+                                "value": "D\u00e9finit o\u00f9 Cozmo pense que la balle se trouve selon son niveau de comp\u00e9tence."
                             }
                         },
                         "id": "4Sz$lk9_iLFUQ1Q*+7i2",
@@ -4139,7 +4139,7 @@
                             "VARIABLE": {
                                 "id": "~j3j3@|P{=IzQ5PMcSN*",
                                 "name": "VARIABLE",
-                                "value": "D\u00e9finis les variables de gameplay."
+                                "value": "D\u00e9finit les variables de gameplay."
                             }
                         },
                         "id": "=9^xmqt_-r7d)Q7yL^j#",
@@ -8811,7 +8811,7 @@
                             "VARIABLE": {
                                 "id": "xtus709,csCGWPUXkK7Z",
                                 "name": "VARIABLE",
-                                "value": "En cours de jeu, utilise les donn\u00e9es pour dessiner tout ce que tu veux sur la t\u00eate de Cozmo."
+                                "value": "En cours de jeu, utilise les donn\u00e9es pour dessiner tout ce que tu veux sur le visage de Cozmo."
                             }
                         },
                         "id": "[B/)S|5?4aiyfoO]cLLl",
@@ -13963,7 +13963,7 @@
                             "VARIABLE": {
                                 "id": "vc)o#04i]t]|_wDkV*z/",
                                 "name": "VARIABLE",
-                                "value": "D\u00e9finis les param\u00e8tres de jeu r\u00e9glables."
+                                "value": "D\u00e9finit les param\u00e8tres de jeu r\u00e9glables."
                             }
                         },
                         "id": "z1AwU152#US5d9vr$A}D",

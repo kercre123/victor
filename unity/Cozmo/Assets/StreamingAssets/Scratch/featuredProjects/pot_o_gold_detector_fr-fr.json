@@ -43,7 +43,7 @@
                     },
                     "$ZW`KnF@/`ulm)-@fKwB": {
                         "id": "$ZW`KnF@/`ulm)-@fKwB",
-                        "name": "direction par d\u00e9faut \u00e0 z\u00e9ro",
+                        "name": "Position z\u00e9ro par d\u00e9faut",
                         "value": 2.892032
                     },
                     "(TC/Yq/]zMSK-lEuw$M1": {
@@ -63,7 +63,7 @@
                     },
                     "*3S#5zLqo.4t!$1Tp05U": {
                         "id": "*3S#5zLqo.4t!$1Tp05U",
-                        "name": "D\u00e9finis toutes les variables r\u00e9glables.",
+                        "name": "D\u00e9finit toutes les variables r\u00e9glables.",
                         "value": 0
                     },
                     ",48Jlq|s[01_Y`)UH_o~": {
@@ -73,12 +73,12 @@
                     },
                     ",^6M)c%Ll-+N[hD=pLf~": {
                         "id": ",^6M)c%Ll-+N[hD=pLf~",
-                        "name": "Dessine un haut-de-forme sur la t\u00eate de Cozmo.",
+                        "name": "Dessine un haut-de-forme sur le visage de Cozmo.",
                         "value": 0
                     },
                     "-[=@}^j;3L?UoMy`@(x(": {
                         "id": "-[=@}^j;3L?UoMy`@(x(",
-                        "name": "Dessine un arc-en-ciel sur la t\u00eate de Cozmo.",
+                        "name": "Dessine un arc-en-ciel sur le visage de Cozmo.",
                         "value": 0
                     },
                     ".ga`scq50Tx9}|[!gnGM": {
@@ -113,7 +113,7 @@
                     },
                     "6lq9ftrQ(L7%cp,cX/}U": {
                         "id": "6lq9ftrQ(L7%cp,cX/}U",
-                        "name": "Fais tourner Cozmo \u00e0 droite.",
+                        "name": "Fait tourner Cozmo \u00e0 droite.",
                         "value": 0
                     },
                     ":97,u(1$h|G:(Qz=]!)b": {
@@ -123,12 +123,12 @@
                     },
                     ":Lnz5v]bFIR~#Li~9;2N": {
                         "id": ":Lnz5v]bFIR~#Li~9;2N",
-                        "name": "nombre de tr\u00e9sors al\u00e9atoires",
+                        "name": "num\u00e9ro al\u00e9atoire du tr\u00e9sor",
                         "value": 2
                     },
                     ";1RKqnv?SNY{(b=Hn{%f": {
                         "id": ";1RKqnv?SNY{(b=Hn{%f",
-                        "name": "Fais tourner Cozmo \u00e0 gauche.",
+                        "name": "Fait tourner Cozmo \u00e0 gauche.",
                         "value": 0
                     },
                     "=~n.9#n%@H3Pfra7`X,F": {
@@ -183,7 +183,7 @@
                     },
                     "[{7suEbBzexe0xr)pDh`": {
                         "id": "[{7suEbBzexe0xr)pDh`",
-                        "name": "Dessine un tr\u00e8fle sur la t\u00eate de Cozmo.",
+                        "name": "Dessine un tr\u00e8fle sur le visage de Cozmo.",
                         "value": 0
                     },
                     "]Q2t1h`{U.6w;HJcO,qd": {
@@ -193,17 +193,17 @@
                     },
                     "^.,uR0qho2SY::}FUAU*": {
                         "id": "^.,uR0qho2SY::}FUAU*",
-                        "name": "Fais avancer Cozmo.",
+                        "name": "Fait avancer Cozmo.",
                         "value": 0
                     },
                     "c.OITwyo^+m8-w6o6Uf|": {
                         "id": "c.OITwyo^+m8-w6o6Uf|",
-                        "name": "Anime un radar sur la t\u00eate de Cozmo.",
+                        "name": "Anime un radar sur le visage de Cozmo.",
                         "value": "0"
                     },
                     "dd.+]JF7EXbmf7qK#~zP": {
                         "id": "dd.+]JF7EXbmf7qK#~zP",
-                        "name": "Cozmo f\u00eate la d\u00e9couverte du tr\u00e9sor et en affiche un au hasard.",
+                        "name": "Cozmo se r\u00e9jouit et affiche un tr\u00e9sor au hasard.",
                         "value": 0
                     },
                     "euA-c$4iLtZ!$j6R!Wa;": {
@@ -258,7 +258,7 @@
                     },
                     "u0M(W}lEjGi`lA$0Xk/m": {
                         "id": "u0M(W}lEjGi`lA$0Xk/m",
-                        "name": "Fais reculer Cozmo.",
+                        "name": "Fait reculer Cozmo.",
                         "value": 0
                     },
                     "xJYCT}?LriQ%e)$?ejU~": {
@@ -1302,7 +1302,7 @@
                             "VARIABLE": {
                                 "id": "[{7suEbBzexe0xr)pDh`",
                                 "name": "VARIABLE",
-                                "value": "Dessine un tr\u00e8fle sur la t\u00eate de Cozmo."
+                                "value": "Dessine un tr\u00e8fle sur le visage de Cozmo."
                             }
                         },
                         "id": "*Ca,AlRi5YiAiFm+h(^e",
@@ -3147,7 +3147,7 @@
                             "VARIABLE": {
                                 "id": ";1RKqnv?SNY{(b=Hn{%f",
                                 "name": "VARIABLE",
-                                "value": "Fais tourner Cozmo \u00e0 gauche."
+                                "value": "Fait tourner Cozmo \u00e0 gauche."
                             }
                         },
                         "id": "3h1JK6f#)2Em?`y;m=Y~",
@@ -4086,7 +4086,7 @@
                             "VARIABLE": {
                                 "id": ":Lnz5v]bFIR~#Li~9;2N",
                                 "name": "VARIABLE",
-                                "value": "nombre de tr\u00e9sors al\u00e9atoires"
+                                "value": "num\u00e9ro al\u00e9atoire du tr\u00e9sor"
                             }
                         },
                         "id": "8x4a[{5iUj(g$,Z{Ua*s",
@@ -5364,7 +5364,7 @@
                             "VARIABLE": {
                                 "id": ":Lnz5v]bFIR~#Li~9;2N",
                                 "name": "VARIABLE",
-                                "value": "nombre de tr\u00e9sors al\u00e9atoires"
+                                "value": "num\u00e9ro al\u00e9atoire du tr\u00e9sor"
                             }
                         },
                         "id": "@[%C*80JT(u[:NMNO7jr",
@@ -6639,7 +6639,7 @@
                             "VARIABLE": {
                                 "id": ",^6M)c%Ll-+N[hD=pLf~",
                                 "name": "VARIABLE",
-                                "value": "Dessine un haut-de-forme sur la t\u00eate de Cozmo."
+                                "value": "Dessine un haut-de-forme sur le visage de Cozmo."
                             }
                         },
                         "id": "GQ}DT#H17l$@l8J*6Fe^",
@@ -6904,7 +6904,7 @@
                             "VARIABLE": {
                                 "id": "^.,uR0qho2SY::}FUAU*",
                                 "name": "VARIABLE",
-                                "value": "Fais avancer Cozmo."
+                                "value": "Fait avancer Cozmo."
                             }
                         },
                         "id": "I3S]1?E{=iGlLyh#PKX*",
@@ -7633,7 +7633,7 @@
                             "VARIABLE": {
                                 "id": "$ZW`KnF@/`ulm)-@fKwB",
                                 "name": "VARIABLE",
-                                "value": "direction par d\u00e9faut \u00e0 z\u00e9ro"
+                                "value": "Position z\u00e9ro par d\u00e9faut"
                             }
                         },
                         "id": "MAJ%nX:,ZWo=wwe*w6_1",
@@ -8759,7 +8759,7 @@
                             "VARIABLE": {
                                 "id": "*3S#5zLqo.4t!$1Tp05U",
                                 "name": "VARIABLE",
-                                "value": "D\u00e9finis toutes les variables r\u00e9glables."
+                                "value": "D\u00e9finit toutes les variables r\u00e9glables."
                             }
                         },
                         "id": "R_oS8K(eFFAjE*.SA?Kg",
@@ -9449,7 +9449,7 @@
                             "VARIABLE": {
                                 "id": ":Lnz5v]bFIR~#Li~9;2N",
                                 "name": "VARIABLE",
-                                "value": "nombre de tr\u00e9sors al\u00e9atoires"
+                                "value": "num\u00e9ro al\u00e9atoire du tr\u00e9sor"
                             }
                         },
                         "id": "Uv41.fOQ;4W$r;3,oTAZ",
@@ -10015,7 +10015,7 @@
                             "VARIABLE": {
                                 "id": "$ZW`KnF@/`ulm)-@fKwB",
                                 "name": "VARIABLE",
-                                "value": "direction par d\u00e9faut \u00e0 z\u00e9ro"
+                                "value": "Position z\u00e9ro par d\u00e9faut"
                             }
                         },
                         "id": "X`%tlNBsT^EJ}{jkLAHm",
@@ -12115,7 +12115,7 @@
                             "VARIABLE": {
                                 "id": "u0M(W}lEjGi`lA$0Xk/m",
                                 "name": "VARIABLE",
-                                "value": "Fais reculer Cozmo."
+                                "value": "Fait reculer Cozmo."
                             }
                         },
                         "id": "esaD]7_YC*AtxeE4G^lV",
@@ -12133,7 +12133,7 @@
                             "VARIABLE": {
                                 "id": "6lq9ftrQ(L7%cp,cX/}U",
                                 "name": "VARIABLE",
-                                "value": "Fais tourner Cozmo \u00e0 droite."
+                                "value": "Fait tourner Cozmo \u00e0 droite."
                             }
                         },
                         "id": "ey@v7+?:1l[DXA`Zl1r1",
@@ -12582,7 +12582,7 @@
                             "VARIABLE": {
                                 "id": "c.OITwyo^+m8-w6o6Uf|",
                                 "name": "VARIABLE",
-                                "value": "Anime un radar sur la t\u00eate de Cozmo."
+                                "value": "Anime un radar sur le visage de Cozmo."
                             }
                         },
                         "id": "h[*+EjIymH^@*BpRz|Fs",
@@ -13779,7 +13779,7 @@
                             "VARIABLE": {
                                 "id": "dd.+]JF7EXbmf7qK#~zP",
                                 "name": "VARIABLE",
-                                "value": "Cozmo f\u00eate la d\u00e9couverte du tr\u00e9sor et en affiche un au hasard."
+                                "value": "Cozmo se r\u00e9jouit et affiche un tr\u00e9sor au hasard."
                             }
                         },
                         "id": "oF18!,qJY!=,Rn}+{sm=",
@@ -13970,7 +13970,7 @@
                             "VARIABLE": {
                                 "id": "$ZW`KnF@/`ulm)-@fKwB",
                                 "name": "VARIABLE",
-                                "value": "direction par d\u00e9faut \u00e0 z\u00e9ro"
+                                "value": "Position z\u00e9ro par d\u00e9faut"
                             }
                         },
                         "id": "pV#~Kj-$~BsnL,]Zt[mF",
@@ -15521,7 +15521,7 @@
                             "VARIABLE": {
                                 "id": "-[=@}^j;3L?UoMy`@(x(",
                                 "name": "VARIABLE",
-                                "value": "Dessine un arc-en-ciel sur la t\u00eate de Cozmo."
+                                "value": "Dessine un arc-en-ciel sur le visage de Cozmo."
                             }
                         },
                         "id": "wV=LGZL,k@_L`=ckaIvL",
@@ -16662,7 +16662,7 @@
                             "VARIABLE": {
                                 "id": ":Lnz5v]bFIR~#Li~9;2N",
                                 "name": "VARIABLE",
-                                "value": "nombre de tr\u00e9sors al\u00e9atoires"
+                                "value": "num\u00e9ro al\u00e9atoire du tr\u00e9sor"
                             }
                         },
                         "id": "~T{o7lA2!xX,Vx/6$;!B",

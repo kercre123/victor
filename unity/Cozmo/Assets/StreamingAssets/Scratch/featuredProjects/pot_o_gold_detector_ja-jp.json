@@ -73,7 +73,7 @@
                     },
                     ",^6M)c%Ll-+N[hD=pLf~": {
                         "id": ",^6M)c%Ll-+N[hD=pLf~",
-                        "name": "COZMO\u306e\u9854\u306b\u30c8\u30c3\u30d7\u30cf\u30c3\u30c8\u3092\u63cf\u3044\u3066\u304f\u3060\u3055\u3044\u3002",
+                        "name": "COZMO\u306e\u9854\u306b\u30b7\u30eb\u30af\u30cf\u30c3\u30c8\u3092\u63cf\u3044\u3066\u304f\u3060\u3055\u3044\u3002",
                         "value": 0
                     },
                     "-[=@}^j;3L?UoMy`@(x(": {
@@ -93,12 +93,12 @@
                     },
                     "0C4/;D!tA+^0pg0tyuqv": {
                         "id": "0C4/;D!tA+^0pg0tyuqv",
-                        "name": "COZMO\u306f\u30e9\u30f3\u30c0\u30e0\u5316\u3055\u308c\u305f\u5b9d\u7269\u306e\u5ea7\u6a19\u3092\u9078\u3073\u307e\u3059\u3002",
+                        "name": "COZMO\u306f\u30e9\u30f3\u30c0\u30e0\u306b\u5b9d\u7269\u306e\u5ea7\u6a19\u3092\u9078\u3073\u307e\u3059\u3002",
                         "value": 0
                     },
                     "0D1j?,:zBAXY0%D+,5_*": {
                         "id": "0D1j?,:zBAXY0%D+,5_*",
-                        "name": "\u5b9d\u7269\u306e\u5ea7\u6a19\u3068\u306e\u8fd1\u3055\u3092\u78ba\u8a8d\u3057\u3001\u305d\u308c\u306b\u5fdc\u3058\u3066\u8868\u793a\u3092\u8abf\u7bc0\u3057\u307e\u3059\u3002",
+                        "name": "\u5b9d\u7269\u307e\u3067\u306e\u8ddd\u96e2\u5ea7\u6a19\u3092\u78ba\u8a8d\u3057\u3001\u305d\u308c\u306b\u3088\u3063\u3066\u65b9\u5411\u8868\u793a\u3092\u8abf\u7bc0\u3057\u307e\u3059\u3002",
                         "value": 0
                     },
                     "3/WnzF/u2TOKx#rpT-).": {
@@ -183,7 +183,7 @@
                     },
                     "[{7suEbBzexe0xr)pDh`": {
                         "id": "[{7suEbBzexe0xr)pDh`",
-                        "name": "COZMO\u306e\u9854\u306b\u30b7\u30e3\u30e0\u30ed\u30c3\u30af\u3092\u63cf\u3044\u3066\u304f\u3060\u3055\u3044\u3002",
+                        "name": "COZMO\u306e\u9854\u306b\u4e09\u3064\u8449\u306e\u30af\u30ed\u30fc\u30d0\u30fc\u3092\u63cf\u3044\u3066\u304f\u3060\u3055\u3044\u3002",
                         "value": 0
                     },
                     "]Q2t1h`{U.6w;HJcO,qd": {
@@ -203,7 +203,7 @@
                     },
                     "dd.+]JF7EXbmf7qK#~zP": {
                         "id": "dd.+]JF7EXbmf7qK#~zP",
-                        "name": "COZMO\u306f\u559c\u3073\u3001\u5b9d\u7269\u3092\u30e9\u30f3\u30c0\u30e0\u5316\u3055\u308c\u305f\u9078\u3093\u3067\u8868\u793a\u3057\u307e\u3059\u3002",
+                        "name": "COZMO\u306f\u304a\u795d\u3044\u3057\u3001\u8868\u793a\u3059\u308b\u5b9d\u7269\u3092\u30e9\u30f3\u30c0\u30e0\u306b\u9078\u3073\u307e\u3059\u3002",
                         "value": 0
                     },
                     "euA-c$4iLtZ!$j6R!Wa;": {
@@ -213,7 +213,7 @@
                     },
                     "h!fBR}%lW}K7GRhVQ:]9": {
                         "id": "h!fBR}%lW}K7GRhVQ:]9",
-                        "name": "\u56de\u8ee2\u30e9\u30b8\u30a2\u30f3",
+                        "name": "\u73fe\u5728\u306e\u534a\u5f84",
                         "value": "60"
                     },
                     "j3Fmz+/(/h/Nh#K7-Idm": {
@@ -248,7 +248,7 @@
                     },
                     "tGCC|1aEB|VJfYB0fC|l": {
                         "id": "tGCC|1aEB|VJfYB0fC|l",
-                        "name": "COZMO\u306e\u30ad\u30e5\u30fc\u30d6\u306e\u30e9\u30a4\u30c8\u3092\u8679\u8272\u306e\u30b7\u30fc\u30b1\u30f3\u30b9\u3067\u56de\u8ee2\u3055\u305b\u307e\u3059\u3002",
+                        "name": "COZMO\u306e\u30ad\u30e5\u30fc\u30d6\u306e\u30e9\u30a4\u30c8\u3092\u8679\u8272\u306e\u9806\u756a\u3067\u70b9\u706f\u3057\u56de\u8ee2\u3055\u305b\u307e\u3059\u3002",
                         "value": 0
                     },
                     "tS^h3l+B,5fFeo=Ng7cO": {
@@ -268,7 +268,7 @@
                     },
                     "x{1gEOQLrrk=#m?6[}Xz": {
                         "id": "x{1gEOQLrrk=#m?6[}Xz",
-                        "name": "\u30ec\u30fc\u30c0\u30fc\u306e\u30e9\u30b8\u30a2\u30f3",
+                        "name": "\u30ec\u30fc\u30c0\u30fc\u306e\u534a\u5f84",
                         "value": "64"
                     }
                 },
@@ -495,7 +495,7 @@
                             "VARIABLE": {
                                 "id": "x{1gEOQLrrk=#m?6[}Xz",
                                 "name": "VARIABLE",
-                                "value": "\u30ec\u30fc\u30c0\u30fc\u306e\u30e9\u30b8\u30a2\u30f3"
+                                "value": "\u30ec\u30fc\u30c0\u30fc\u306e\u534a\u5f84"
                             }
                         },
                         "id": "#}Bnmz@Vx*KWBixPtbkl",
@@ -1302,7 +1302,7 @@
                             "VARIABLE": {
                                 "id": "[{7suEbBzexe0xr)pDh`",
                                 "name": "VARIABLE",
-                                "value": "COZMO\u306e\u9854\u306b\u30b7\u30e3\u30e0\u30ed\u30c3\u30af\u3092\u63cf\u3044\u3066\u304f\u3060\u3055\u3044\u3002"
+                                "value": "COZMO\u306e\u9854\u306b\u4e09\u3064\u8449\u306e\u30af\u30ed\u30fc\u30d0\u30fc\u3092\u63cf\u3044\u3066\u304f\u3060\u3055\u3044\u3002"
                             }
                         },
                         "id": "*Ca,AlRi5YiAiFm+h(^e",
@@ -4171,7 +4171,7 @@
                             "VARIABLE": {
                                 "id": "x{1gEOQLrrk=#m?6[}Xz",
                                 "name": "VARIABLE",
-                                "value": "\u30ec\u30fc\u30c0\u30fc\u306e\u30e9\u30b8\u30a2\u30f3"
+                                "value": "\u30ec\u30fc\u30c0\u30fc\u306e\u534a\u5f84"
                             }
                         },
                         "id": "917T76%NM]|bfv.z;h=r",
@@ -6524,7 +6524,7 @@
                             "VARIABLE": {
                                 "id": "h!fBR}%lW}K7GRhVQ:]9",
                                 "name": "VARIABLE",
-                                "value": "\u56de\u8ee2\u30e9\u30b8\u30a2\u30f3"
+                                "value": "\u73fe\u5728\u306e\u534a\u5f84"
                             }
                         },
                         "id": "G/~{]$-qNrtTTHcx{,*{",
@@ -6639,7 +6639,7 @@
                             "VARIABLE": {
                                 "id": ",^6M)c%Ll-+N[hD=pLf~",
                                 "name": "VARIABLE",
-                                "value": "COZMO\u306e\u9854\u306b\u30c8\u30c3\u30d7\u30cf\u30c3\u30c8\u3092\u63cf\u3044\u3066\u304f\u3060\u3055\u3044\u3002"
+                                "value": "COZMO\u306e\u9854\u306b\u30b7\u30eb\u30af\u30cf\u30c3\u30c8\u3092\u63cf\u3044\u3066\u304f\u3060\u3055\u3044\u3002"
                             }
                         },
                         "id": "GQ}DT#H17l$@l8J*6Fe^",
@@ -7044,7 +7044,7 @@
                             "VARIABLE": {
                                 "id": "h!fBR}%lW}K7GRhVQ:]9",
                                 "name": "VARIABLE",
-                                "value": "\u56de\u8ee2\u30e9\u30b8\u30a2\u30f3"
+                                "value": "\u73fe\u5728\u306e\u534a\u5f84"
                             }
                         },
                         "id": "Il;}eo,w^+tvgqw?npr4",
@@ -8151,7 +8151,7 @@
                             "VARIABLE": {
                                 "id": "x{1gEOQLrrk=#m?6[}Xz",
                                 "name": "VARIABLE",
-                                "value": "\u30ec\u30fc\u30c0\u30fc\u306e\u30e9\u30b8\u30a2\u30f3"
+                                "value": "\u30ec\u30fc\u30c0\u30fc\u306e\u534a\u5f84"
                             }
                         },
                         "id": "P/g0):_aBuDMKOO@(w$z",
@@ -8922,7 +8922,7 @@
                             "VARIABLE": {
                                 "id": "x{1gEOQLrrk=#m?6[}Xz",
                                 "name": "VARIABLE",
-                                "value": "\u30ec\u30fc\u30c0\u30fc\u306e\u30e9\u30b8\u30a2\u30f3"
+                                "value": "\u30ec\u30fc\u30c0\u30fc\u306e\u534a\u5f84"
                             }
                         },
                         "id": "SO=sYp^A9MCr@5=zYQ{p",
@@ -9407,7 +9407,7 @@
                             "VARIABLE": {
                                 "id": "0D1j?,:zBAXY0%D+,5_*",
                                 "name": "VARIABLE",
-                                "value": "\u5b9d\u7269\u306e\u5ea7\u6a19\u3068\u306e\u8fd1\u3055\u3092\u78ba\u8a8d\u3057\u3001\u305d\u308c\u306b\u5fdc\u3058\u3066\u8868\u793a\u3092\u8abf\u7bc0\u3057\u307e\u3059\u3002"
+                                "value": "\u5b9d\u7269\u307e\u3067\u306e\u8ddd\u96e2\u5ea7\u6a19\u3092\u78ba\u8a8d\u3057\u3001\u305d\u308c\u306b\u3088\u3063\u3066\u65b9\u5411\u8868\u793a\u3092\u8abf\u7bc0\u3057\u307e\u3059\u3002"
                             }
                         },
                         "id": "UedUw+*c6B%+!rBVaH*S",
@@ -9516,7 +9516,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "\u5b9d\u7269\u304c\u8fd1\u304f\u306b\u3042\u308b\uff01"
+                                "value": "\u305f\u304b\u3089\u3082\u306e\u304c\u3061\u304b\u304f\u306b\u3042\u308b\uff01"
                             }
                         },
                         "id": "V-_lF54dGyn)XSaHS?[y",
@@ -10301,7 +10301,7 @@
                             "VARIABLE": {
                                 "id": "tGCC|1aEB|VJfYB0fC|l",
                                 "name": "VARIABLE",
-                                "value": "COZMO\u306e\u30ad\u30e5\u30fc\u30d6\u306e\u30e9\u30a4\u30c8\u3092\u8679\u8272\u306e\u30b7\u30fc\u30b1\u30f3\u30b9\u3067\u56de\u8ee2\u3055\u305b\u307e\u3059\u3002"
+                                "value": "COZMO\u306e\u30ad\u30e5\u30fc\u30d6\u306e\u30e9\u30a4\u30c8\u3092\u8679\u8272\u306e\u9806\u756a\u3067\u70b9\u706f\u3057\u56de\u8ee2\u3055\u305b\u307e\u3059\u3002"
                             }
                         },
                         "id": "Z[)Ef%avGMYiJo,R{6:u",
@@ -13779,7 +13779,7 @@
                             "VARIABLE": {
                                 "id": "dd.+]JF7EXbmf7qK#~zP",
                                 "name": "VARIABLE",
-                                "value": "COZMO\u306f\u559c\u3073\u3001\u5b9d\u7269\u3092\u30e9\u30f3\u30c0\u30e0\u5316\u3055\u308c\u305f\u9078\u3093\u3067\u8868\u793a\u3057\u307e\u3059\u3002"
+                                "value": "COZMO\u306f\u304a\u795d\u3044\u3057\u3001\u8868\u793a\u3059\u308b\u5b9d\u7269\u3092\u30e9\u30f3\u30c0\u30e0\u306b\u9078\u3073\u307e\u3059\u3002"
                             }
                         },
                         "id": "oF18!,qJY!=,Rn}+{sm=",
@@ -14164,7 +14164,7 @@
                             "VARIABLE": {
                                 "id": "0C4/;D!tA+^0pg0tyuqv",
                                 "name": "VARIABLE",
-                                "value": "COZMO\u306f\u30e9\u30f3\u30c0\u30e0\u5316\u3055\u308c\u305f\u5b9d\u7269\u306e\u5ea7\u6a19\u3092\u9078\u3073\u307e\u3059\u3002"
+                                "value": "COZMO\u306f\u30e9\u30f3\u30c0\u30e0\u306b\u5b9d\u7269\u306e\u5ea7\u6a19\u3092\u9078\u3073\u307e\u3059\u3002"
                             }
                         },
                         "id": "q?LrH=c-]WSBiYB_=FDQ",
@@ -15281,7 +15281,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "\u5b9d\u7269\u3092\u307f\u3064\u3051\u307e\u3057\u305f\uff01"
+                                "value": "\u305f\u304b\u3089\u3082\u306e\u3092\u307f\u3064\u3051\u307e\u3057\u305f\uff01"
                             }
                         },
                         "id": "vZ#`Jk7.k:77ioR1G,ka",
@@ -15314,7 +15314,7 @@
                             "VARIABLE": {
                                 "id": "x{1gEOQLrrk=#m?6[}Xz",
                                 "name": "VARIABLE",
-                                "value": "\u30ec\u30fc\u30c0\u30fc\u306e\u30e9\u30b8\u30a2\u30f3"
+                                "value": "\u30ec\u30fc\u30c0\u30fc\u306e\u534a\u5f84"
                             }
                         },
                         "id": "vdGc4OFpFY;/;dK9Nq;y",
@@ -15740,7 +15740,7 @@
                             "VARIABLE": {
                                 "id": "h!fBR}%lW}K7GRhVQ:]9",
                                 "name": "VARIABLE",
-                                "value": "\u56de\u8ee2\u30e9\u30b8\u30a2\u30f3"
+                                "value": "\u73fe\u5728\u306e\u534a\u5f84"
                             }
                         },
                         "id": "x?+ry{i6c:[-8H]%Vj_p",
@@ -16118,7 +16118,7 @@
                             "VARIABLE": {
                                 "id": "x{1gEOQLrrk=#m?6[}Xz",
                                 "name": "VARIABLE",
-                                "value": "\u30ec\u30fc\u30c0\u30fc\u306e\u30e9\u30b8\u30a2\u30f3"
+                                "value": "\u30ec\u30fc\u30c0\u30fc\u306e\u534a\u5f84"
                             }
                         },
                         "id": "{HrXTY@P4or#Xx]hPGuq",

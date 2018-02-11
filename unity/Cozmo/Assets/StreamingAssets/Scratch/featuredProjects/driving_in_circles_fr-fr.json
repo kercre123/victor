@@ -38,7 +38,7 @@
                     },
                     "0x0WRyPu$rf[KdmpTgTO": {
                         "id": "0x0WRyPu$rf[KdmpTgTO",
-                        "name": "D\u00e9finis les variables r\u00e9glables.",
+                        "name": "D\u00e9finit les variables r\u00e9glables.",
                         "value": 0
                     },
                     "5g2?U]O24mKX5Pg`|dgA": {
@@ -58,7 +58,7 @@
                     },
                     "=oTt@I7]P;hjGM9C8/4D": {
                         "id": "=oTt@I7]P;hjGM9C8/4D",
-                        "name": "D\u00e9finis les variables centr\u00e9es x et y selon l'emplacement du cube\u00a03.",
+                        "name": "D\u00e9finit les variables centr\u00e9es x et y selon l'emplacement du cube\u00a03.",
                         "value": 0
                     },
                     "E`Q`z[4dXjFr%01eZjh6": {
@@ -93,7 +93,7 @@
                     },
                     "Vo7meBx7CC`3@UysSo_E": {
                         "id": "Vo7meBx7CC`3@UysSo_E",
-                        "name": "D\u00e9finis les variables centr\u00e9es x et y selon l'emplacement du cube\u00a01.",
+                        "name": "D\u00e9finit les variables centr\u00e9es x et y selon l'emplacement du cube\u00a01.",
                         "value": 0
                     },
                     "XR9IORB51=Sp3O]$%TRd": {
@@ -163,7 +163,7 @@
                     },
                     "}#yIO.a0Ll1sGLt0Cy+S": {
                         "id": "}#yIO.a0Ll1sGLt0Cy+S",
-                        "name": "D\u00e9finis les variables centr\u00e9es x et y selon l'emplacement du cube\u00a02.",
+                        "name": "D\u00e9finit les variables centr\u00e9es x et y selon l'emplacement du cube\u00a02.",
                         "value": 0
                     },
                     "~|z9f9Pg8h=VIo]c}xO9": {
@@ -1360,7 +1360,7 @@
                             "VARIABLE": {
                                 "id": "Vo7meBx7CC`3@UysSo_E",
                                 "name": "VARIABLE",
-                                "value": "D\u00e9finis les variables centr\u00e9es x et y selon l'emplacement du cube\u00a01."
+                                "value": "D\u00e9finit les variables centr\u00e9es x et y selon l'emplacement du cube\u00a01."
                             }
                         },
                         "id": ".e.~0;ruJ83e^9SO~mBu",
@@ -2820,7 +2820,7 @@
                             "VARIABLE": {
                                 "id": "=oTt@I7]P;hjGM9C8/4D",
                                 "name": "VARIABLE",
-                                "value": "D\u00e9finis les variables centr\u00e9es x et y selon l'emplacement du cube\u00a03."
+                                "value": "D\u00e9finit les variables centr\u00e9es x et y selon l'emplacement du cube\u00a03."
                             }
                         },
                         "id": "DJRUI=YFZ@LmPUY/J`a^",
@@ -5317,7 +5317,7 @@
                             "VARIABLE": {
                                 "id": "0x0WRyPu$rf[KdmpTgTO",
                                 "name": "VARIABLE",
-                                "value": "D\u00e9finis les variables r\u00e9glables."
+                                "value": "D\u00e9finit les variables r\u00e9glables."
                             }
                         },
                         "id": "gL+#!d4n!clcI|BNr0mx",
@@ -6941,7 +6941,7 @@
                             "VARIABLE": {
                                 "id": "}#yIO.a0Ll1sGLt0Cy+S",
                                 "name": "VARIABLE",
-                                "value": "D\u00e9finis les variables centr\u00e9es x et y selon l'emplacement du cube\u00a02."
+                                "value": "D\u00e9finit les variables centr\u00e9es x et y selon l'emplacement du cube\u00a02."
                             }
                         },
                         "id": "|ta^]!nqd]t@l.4UHCa:",

@@ -108,7 +108,7 @@
                     },
                     "Emsk)D`uo07V(p/5@]yX": {
                         "id": "Emsk)D`uo07V(p/5@]yX",
-                        "name": "\u30b2\u30fc\u30e0\u3067\u65b0\u3057\u3044\u30e9\u30a6\u30f3\u30c9\u3092\u958b\u59cb\u3057\u307e\u3059\u3002",
+                        "name": "\u65b0\u3057\u3044\u30b2\u30fc\u30e0\u30e9\u30a6\u30f3\u30c9\u3092\u958b\u59cb\u3057\u307e\u3059\u3002",
                         "value": 0
                     },
                     "Fb0:eMS4J@ZNADdV{R1(": {
@@ -158,7 +158,7 @@
                     },
                     "Z6V]#gYg;:N`E#%K(URF": {
                         "id": "Z6V]#gYg;:N`E#%K(URF",
-                        "name": "\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\n\u30b9\u30b3\u30a2",
+                        "name": "\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u30b9\u30b3\u30a2",
                         "value": 3
                     },
                     "[fopL9zl_$hRfJ#B-!fs": {
@@ -253,7 +253,7 @@
                     },
                     "}]gOzGcQ@O^6pncdwy8z": {
                         "id": "}]gOzGcQ@O^6pncdwy8z",
-                        "name": "COZMO\u306e\n\u30b9\u30b3\u30a2",
+                        "name": "COZMO\u306e\u30b9\u30b3\u30a2",
                         "value": 1
                     },
                     "~+xe2@l-w0oAG18*)N}I": {
@@ -997,7 +997,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "\u3042\u306a\u305f\u306e\u52dd\u3061\uff01"
+                                "value": "\u3042\u306a\u305f\u306e\u304b\u3061\uff01"
                             }
                         },
                         "id": "(dpSc+VI71H;^5CY]f7a",
@@ -4104,7 +4104,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "\u6b63 "
+                                "value": "\u305b\u3044 "
                             }
                         },
                         "id": ";llmE[;~CK89mfBRN%FH",
@@ -7226,7 +7226,7 @@
                             "VARIABLE": {
                                 "id": "}]gOzGcQ@O^6pncdwy8z",
                                 "name": "VARIABLE",
-                                "value": "COZMO\u306e\n\u30b9\u30b3\u30a2"
+                                "value": "COZMO\u306e\u30b9\u30b3\u30a2"
                             }
                         },
                         "id": "QA0kKbTo)L_S+}|ml@H;",
@@ -7292,7 +7292,7 @@
                             "VARIABLE": {
                                 "id": "Z6V]#gYg;:N`E#%K(URF",
                                 "name": "VARIABLE",
-                                "value": "\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\n\u30b9\u30b3\u30a2"
+                                "value": "\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u30b9\u30b3\u30a2"
                             }
                         },
                         "id": "QVdU|c@YQ9TXymMxnljY",
@@ -7847,7 +7847,7 @@
                             "VARIABLE": {
                                 "id": "Z6V]#gYg;:N`E#%K(URF",
                                 "name": "VARIABLE",
-                                "value": "\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\n\u30b9\u30b3\u30a2"
+                                "value": "\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u30b9\u30b3\u30a2"
                             }
                         },
                         "id": "S}.k~Tc_rl#n6k]])pK(",
@@ -8957,7 +8957,7 @@
                             "VARIABLE": {
                                 "id": "Z6V]#gYg;:N`E#%K(URF",
                                 "name": "VARIABLE",
-                                "value": "\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\n\u30b9\u30b3\u30a2"
+                                "value": "\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u30b9\u30b3\u30a2"
                             }
                         },
                         "id": "]AKh[CxO[+^V78s`tiM@",
@@ -9493,7 +9493,7 @@
                             "VARIABLE": {
                                 "id": "}]gOzGcQ@O^6pncdwy8z",
                                 "name": "VARIABLE",
-                                "value": "COZMO\u306e\n\u30b9\u30b3\u30a2"
+                                "value": "COZMO\u306e\u30b9\u30b3\u30a2"
                             }
                         },
                         "id": "_leL$ofd3{)=s}s!:{h!",
@@ -10545,7 +10545,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "\u6b63 "
+                                "value": "\u305b\u3044 "
                             }
                         },
                         "id": "f/]~18(FxT-[%Y_]G}%_",
@@ -10597,7 +10597,7 @@
                             "VARIABLE": {
                                 "id": "Emsk)D`uo07V(p/5@]yX",
                                 "name": "VARIABLE",
-                                "value": "\u30b2\u30fc\u30e0\u3067\u65b0\u3057\u3044\u30e9\u30a6\u30f3\u30c9\u3092\u958b\u59cb\u3057\u307e\u3059\u3002"
+                                "value": "\u65b0\u3057\u3044\u30b2\u30fc\u30e0\u30e9\u30a6\u30f3\u30c9\u3092\u958b\u59cb\u3057\u307e\u3059\u3002"
                             }
                         },
                         "id": "fP}yq,3DL!-V2Of,vvV@",
@@ -10630,7 +10630,7 @@
                             "VARIABLE": {
                                 "id": "}]gOzGcQ@O^6pncdwy8z",
                                 "name": "VARIABLE",
-                                "value": "COZMO\u306e\n\u30b9\u30b3\u30a2"
+                                "value": "COZMO\u306e\u30b9\u30b3\u30a2"
                             }
                         },
                         "id": "feQE4rOw;qs/~kb(c]g5",
@@ -11601,7 +11601,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "\u6e96\u5099\u306f\u3044\u3044\uff1f"
+                                "value": "\u3058\u3085\u3093\u3073\u306f\u3044\u3044\uff1f"
                             }
                         },
                         "id": "mCbI:ro?7Mw.AkcTp~Q|",
@@ -11923,7 +11923,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "\u52dd\u3063\u305f\uff01"
+                                "value": "\u304b\u3063\u305f\uff01"
                             }
                         },
                         "id": "nso?,z1E|n7kXYr898(}",
@@ -13069,7 +13069,7 @@
                             "VARIABLE": {
                                 "id": "}]gOzGcQ@O^6pncdwy8z",
                                 "name": "VARIABLE",
-                                "value": "COZMO\u306e\n\u30b9\u30b3\u30a2"
+                                "value": "COZMO\u306e\u30b9\u30b3\u30a2"
                             }
                         },
                         "id": "tW9`$rv-KLBka?Qa!R-(",
@@ -13171,7 +13171,7 @@
                             "VARIABLE": {
                                 "id": "Z6V]#gYg;:N`E#%K(URF",
                                 "name": "VARIABLE",
-                                "value": "\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\n\u30b9\u30b3\u30a2"
+                                "value": "\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u30b9\u30b3\u30a2"
                             }
                         },
                         "id": "tuU}8f@LG}y6lZ|;SHgr",
