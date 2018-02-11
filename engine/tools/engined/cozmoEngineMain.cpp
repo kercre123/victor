@@ -40,13 +40,13 @@
 constexpr const char * ROBOT_ADVERTISING_HOST_IP = "127.0.0.1";
 
 // What process name do we use for logging?
-constexpr const char * LOG_PROCNAME = "engine";
+constexpr const char * LOG_PROCNAME = "vic-engine";
 
 // What channel name do we use for logging?
 constexpr const char * LOG_CHANNEL = "CozmoEngineMain";
 
 // How often do we check for engine stop?
-constexpr const int SLEEP_DELAY_US = (10*1000);         
+constexpr const int SLEEP_DELAY_US = (10*1000);
 
 // Global singletons
 Anki::Cozmo::CozmoAPI* gEngineAPI = nullptr;
@@ -63,7 +63,7 @@ void configure_engine(Json::Value& config)
   if (!config.isMember(AnkiUtil::kP_SDK_ON_DEVICE_TCP_PORT)) {
     config[AnkiUtil::kP_SDK_ON_DEVICE_TCP_PORT] = Anki::Cozmo::SDK_ON_DEVICE_TCP_PORT;
   }
-  
+
 }
 
 static Anki::Util::Data::DataPlatform* createPlatform(const std::string& filesPath,
@@ -107,7 +107,7 @@ static void getAndroidPlatformPaths(std::string& filesPath,
 static int cozmo_start(const Json::Value& configuration)
 {
   int result = 0;
-  
+
   if (gEngineAPI != nullptr) {
       LOG_ERROR("cozmo_start", "Game already initialized");
       return 1;
@@ -124,7 +124,7 @@ static int cozmo_start(const Json::Value& configuration)
   std::string externalPath;
   std::string resourcesPath;
   std::string resourcesBasePath;
-  
+
   getAndroidPlatformPaths(filesPath, cachePath, externalPath, resourcesPath, resourcesBasePath);
 
   // copy existing configuration data
@@ -185,7 +185,7 @@ static int cozmo_start(const Json::Value& configuration)
   {
     using namespace Anki::Util;
     ChannelFilter* consoleFilter = new ChannelFilter();
-    
+
     // load file config
     Json::Value consoleFilterConfig;
     const std::string& consoleFilterConfigPath = "config/engine/console_filter_config.json";
@@ -193,25 +193,25 @@ static int cozmo_start(const Json::Value& configuration)
     {
       PRINT_NAMED_ERROR("webotsCtrlGameEngine.main.loadConsoleConfig", "Failed to parse Json file '%s'", consoleFilterConfigPath.c_str());
     }
-    
+
     // initialize console filter for this platform
     const std::string& platformOS = gDataPlatform->GetOSPlatformString();
     const Json::Value& consoleFilterConfigOnPlatform = consoleFilterConfig[platformOS];
     consoleFilter->Initialize(consoleFilterConfigOnPlatform);
-    
+
     // set filter in the loggers
     std::shared_ptr<const IChannelFilter> filterPtr( consoleFilter );
 
     // loggerProvider->SetFilter(filterPtr);
   }
-  
+
   LOG_INFO("cozmo_start", "Creating engine");
   LOG_INFO("cozmo_start",
             "Initialized data platform with filesPath = %s, cachePath = %s, externalPath = %s, resourcesPath = %s",
             filesPath.c_str(), cachePath.c_str(), externalPath.c_str(), resourcesPath.c_str());
 
   configure_engine(config);
-  
+
   // Set up the console vars to load from file, if it exists
   ANKI_CONSOLE_SYSTEM_INIT(gDataPlatform->pathToResource(Anki::Util::Data::Scope::Cache, "consoleVars.ini").c_str());
   NativeAnkiUtilConsoleLoadVars();
@@ -223,9 +223,9 @@ static int cozmo_start(const Json::Value& configuration)
     delete engineInstance;
     return (int)engineResult;
   }
-  
+
   gEngineAPI = engineInstance;
-  
+
   return result;
 }
 
@@ -240,7 +240,7 @@ static bool cozmo_is_running()
 static int cozmo_stop()
 {
   int result = 0;
-    
+
   Anki::Util::SafeDelete(gEngineAPI);
   Anki::Util::gEventProvider = nullptr;
   Anki::Util::SafeDelete(Anki::Util::gLoggerProvider);
@@ -358,7 +358,7 @@ int main(int argc, char* argv[])
     }
 
     LOG_INFO("CozmoEngineMain.main", "Engine started");
-    
+
     while (true) {
       if (!cozmo_is_running()) {
         LOG_INFO("CozmoEngineMain.main", "Engine has stopped");
