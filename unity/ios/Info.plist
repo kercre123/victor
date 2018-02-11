@@ -42,7 +42,7 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>2.3.0</string>
+	<string>2.4.0</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -86,16 +86,16 @@
 			</dict>
 		</dict>
 	</dict>
-	<key>NSCameraUsageDescription</key>
-	<string>Required for crash reporting</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Required for crash reporting</string>
 	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>Required for crash reporting</string>
+	<key>NSCameraUsageDescription</key>
 	<string>Required for crash reporting</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string></string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Enable microphone access to talk to Cozmo</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Required for crash reporting</string>
 	<key>UIApplicationExitsOnSuspend</key>
 	<false/>
 	<key>UIBackgroundModes</key>
