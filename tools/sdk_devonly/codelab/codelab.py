@@ -890,8 +890,9 @@ class CodeLabInterface():
                             # XML
                             project_xml_escaped = self.escape_project_xml(project_xml)
 
+                            project_version_num = 1 # TODO Hack. Figure out how to get the version num here from the messsage. Currently version num is unused in js.
                             self.send_to_webpage(
-                                "window.openCozmoProjectXML('" + project_uuid + "','" + project_name_escaped + "',\"" + project_xml_escaped + "\",'" + is_sample_str + "');",
+                                "window.openCozmoProjectXML('" + project_uuid + "','" + project_name_escaped + "','" + project_version_num + "',\"" + project_xml_escaped + "\",'" + is_sample_str + "');",
                                 wait_for_page_load=True)
             elif command == "cozmoRequestToCreateProject":
                 if command_args.verbose:
@@ -1290,7 +1291,7 @@ class CodeLabInterface():
                 log_text("_update_project() - Adding project %s" % project_uuid)
             self._save_project(project_uuid, user_project)
 
-    def on_openCozmoProject_helper(self, project_uuid, project_name, project_xml, project_json, is_sample):
+    def on_openCozmoProject_helper(self, project_uuid, project_name, project_version_num, project_xml, project_json, is_sample):
         is_connected_to_unity = (app['sdk_conn'] is not None)
         use_python_projects_with_unity = is_connected_to_unity and not command_args.use_python_projects
         if use_python_projects_with_unity:
@@ -1326,7 +1327,7 @@ class CodeLabInterface():
                 else:
                     # XML
                     self.send_to_webpage(
-                        "window.openCozmoProjectXML('" + project_uuid + "','" + project_name + "',\"" + project_xml + "\",'" + is_sample + "');",
+                        "window.openCozmoProjectXML('" + project_uuid + "','" + project_name + "','" + project_version_num + "',\"" + project_xml + "\",'" + is_sample + "');",
                         wait_for_page_load=wait_for_page_load)
 
         is_sample = js_bool_to_python_bool(is_sample)
@@ -1355,11 +1356,14 @@ class CodeLabInterface():
         project_json = json.dumps(loaded_json["projectJSON"])
         project_uuid = loaded_json["projectUUID"]
         is_sample = loaded_json["isSampleStr"]
-        self.on_openCozmoProject_helper(project_uuid, project_name, project_xml, project_json, is_sample)
+        self.on_openCozmoProject_helper(project_uuid, project_name, "", project_xml, project_json, is_sample) # TODO Pass valid version num. Currently unused.
 
-    def on_recv_window_openCozmoProjectXML(self, project_uuid, project_name, project_xml, is_sample):
+    def on_recv_window_openCozmoProjectXML(self, project_uuid, project_name, project_version_num, project_xml, is_sample):
         project_json = None
-        self.on_openCozmoProject_helper(project_uuid, project_name, project_xml, project_json, is_sample)
+        self.on_openCozmoProject_helper(project_uuid, project_name, project_version_num, project_xml, project_json, is_sample)
+
+    def on_recv_window_callbackReceiveFeaturedProjects(self, projects):
+        pass
 
     def on_recv_window_renderProjects(self, user_projects, sample_projects):
         is_connected_to_unity = (app['sdk_conn'] is not None)

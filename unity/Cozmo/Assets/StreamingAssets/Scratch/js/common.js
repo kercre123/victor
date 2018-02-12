@@ -201,9 +201,8 @@
 
         // Receipt of new block XML for the selected target.
         vm.on('workspaceUpdate', function(data) {
-            var dom = window.Blockly.Xml.textToDom(data.xml);
-            window.Blockly.Xml.domToWorkspace(dom, workspace);
-            Scratch.workspace.clearUndo();
+            window.openBlocklyXML(data.xml);
+
             if (window.isLoadingProject) {
                 window.notifyProjectIsLoaded();
                 window.startSaveProjectTimer();

@@ -19,7 +19,8 @@ namespace DataPersistence {
     // 1.7             1
     // 2.0             2
     // 2.1             3
-    public static uint kCurrentVersionNum = 3;
+    // 2.4             4
+    public static uint kCurrentVersionNum = 4;
 
     public CodeLabProject() {
       ProjectUUID = Guid.NewGuid();

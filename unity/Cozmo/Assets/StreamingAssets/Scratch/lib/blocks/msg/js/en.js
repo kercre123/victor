@@ -79,6 +79,13 @@ Blockly.Msg["OPERATORS_TEN_MULT_SCRATCH_2"] = "10 ^";
 // Data category
 Blockly.Msg["DATA_SET_VAR_SCRATCH_2"] = "set %1 to %2";
 Blockly.Msg["DATA_CHANGE_VAR_SCRATCH_2"] = "change %1 by %2";
+Blockly.Msg["DATA_ADD_TO_LIST_SCRATCH_2"] = "add %1 to %2";
+Blockly.Msg["DATA_DELETE_FROM_LIST_SCRATCH_2"] = "delete %1 of %2";
+Blockly.Msg["DATA_INSERT_LIST_SCRATCH_2"] = "insert %1 at %2 of %3";
+Blockly.Msg["DATA_REPLACE_IN_LIST_SCRATCH_2"] = "replace item %1 of %2 with %3";
+Blockly.Msg["DATA_ITEM_IN_LIST_SCRATCH_2"] = "item %1 of %2";
+Blockly.Msg["DATA_LENGTH_OF_LIST_SCRATCH_2"] = "length of %1";
+Blockly.Msg["DATA_LIST_CONTAINS_SCRATCH_2"] = "%1 contains %2?";
 
 // Sensor category
 Blockly.Msg["SENSING_CURRENT_SCRATCH_2"] = "current %1";
@@ -153,6 +160,7 @@ Blockly.Msg["DELETE_VARIABLE_CONFIRMATION"] = "Delete %1 uses of the '%2' variab
 Blockly.Msg["DELETE_X_BLOCKS"] = "Delete %1 Blocks";
 Blockly.Msg["DISABLE_BLOCK"] = "Disable Block";
 Blockly.Msg["DUPLICATE_BLOCK"] = "Duplicate";
+Blockly.Msg["EDIT_PROCEDURE"] = "Edit";
 Blockly.Msg["ENABLE_BLOCK"] = "Enable Block";
 Blockly.Msg["EXPAND_ALL"] = "Expand Blocks";
 Blockly.Msg["EXPAND_BLOCK"] = "Expand Block";
@@ -366,6 +374,23 @@ Blockly.Msg["MATH_TRIG_TOOLTIP_ATAN"] = "Return the arctangent of a number.";
 Blockly.Msg["MATH_TRIG_TOOLTIP_COS"] = "Return the cosine of a degree (not radian).";
 Blockly.Msg["MATH_TRIG_TOOLTIP_SIN"] = "Return the sine of a degree (not radian).";
 Blockly.Msg["MATH_TRIG_TOOLTIP_TAN"] = "Return the tangent of a degree (not radian).";
+Blockly.Msg["DEFAULT_BROADCAST_MESSAGE_NAME"] = 'message1';
+Blockly.Msg["NEW_BROADCAST_MESSAGE"] = "New message";
+Blockly.Msg["NEW_BROADCAST_MESSAGE_TITLE"] = "New message name:";
+Blockly.Msg["BROADCAST_MODAL_TITLE"] = "New Message";
+//Blockly.Msg["NEW_LIST"] = "Create list...";
+Blockly.Msg["NEW_LIST"] = "Make a List";
+Blockly.Msg["NEW_LIST_TITLE"] = "New list name:";
+// prompt title - Title of the prompt asking the user to enter the name for the new list.
+Blockly.Msg["LIST_MODAL_TITLE"] = 'New List';
+// alert - Tells the user that the name they entered is already in use.
+Blockly.Msg["LIST_ALREADY_EXISTS"] = 'A list named "%1" already exists.';
+// List renaming
+// prompt - Prompts the user to enter the new name for the selected list.
+Blockly.Msg["RENAME_LIST_TITLE"] = 'Rename all "%1" lists to:';
+// prompt title - Title of the prompt asking the user to rename the list
+Blockly.Msg["RENAME_LIST_MODAL_TITLE"] = 'Rename List';
+Blockly.Msg["NEW_PROCEDURE"] = "Make a Block";
 Blockly.Msg["NEW_VARIABLE"] = "Create variable...";
 Blockly.Msg["NEW_VARIABLE_TITLE"] = "New variable name:";
 Blockly.Msg["ORDINAL_NUMBER_SUFFIX"] = "";
@@ -400,6 +425,8 @@ Blockly.Msg["REDO"] = "Redo";
 Blockly.Msg["REMOVE_COMMENT"] = "Remove Comment";
 Blockly.Msg["RENAME_VARIABLE"] = "Rename variable...";
 Blockly.Msg["RENAME_VARIABLE_TITLE"] = "Rename all '%1' variables to:";
+Blockly.Msg["RENAME_VARIABLE_MODAL_TITLE"] = 'Rename Variable';
+Blockly.Msg["SHOW_PROCEDURE_DEFINITION"] = "Go to definition";
 Blockly.Msg["TEXT_APPEND_HELPURL"] = "https://github.com/google/blockly/wiki/Text#text-modification";
 Blockly.Msg["TEXT_APPEND_TITLE"] = "to %1 append text %2";
 Blockly.Msg["TEXT_APPEND_TOOLTIP"] = "Append some text to variable '%1'.";

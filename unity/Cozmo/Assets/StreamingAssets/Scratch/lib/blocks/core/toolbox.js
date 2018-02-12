@@ -85,12 +85,10 @@ Blockly.Toolbox = function(workspace) {
 
 /**
  * Width of the toolbox, which changes only in vertical layout.
+ * This is the sum of the width of the flyout (250) and the category menu (52).
  * @type {number}
  */
-// *** ANKI CHANGE ***
-// Width of the toolbox. Matches scratchCategoryMenu plus padding in css.js. msintov, 9/1/17
-Blockly.Toolbox.prototype.width = 90;
-//Blockly.Toolbox.prototype.width = 310;
+Blockly.Toolbox.prototype.width = 302;
 
 /**
  * Height of the toolbox, which changes only in horizontal layout.
@@ -107,6 +105,37 @@ Blockly.Toolbox.prototype.selectedItem_ = null;
  * Initializes the toolbox.
  */
 Blockly.Toolbox.prototype.init = function() {
+  // *** ANKI CHANGE ***
+  // Compute Blockly.Toolbox.prototype.width. Note that Scratch code
+  // sets it as a constant earlier in this file.
+  var flyoutWidth = 0;
+  var cozmoLocale = window.getUrlVars()['locale'];
+  if (window.innerWidth < window.TABLET_WIDTH) {
+    if (cozmoLocale == "de-DE") {
+      flyoutWidth = Blockly.Css.TestWidth.FLYOUT_DEFAULT_WIDTH_PHONE_DE;
+    } else if (cozmoLocale == "fr-FR") {
+      flyoutWidth = Blockly.Css.TestWidth.FLYOUT_DEFAULT_WIDTH_PHONE_FR;
+    } else if (cozmoLocale == "ja-JP") {
+      flyoutWidth = Blockly.Css.TestWidth.FLYOUT_DEFAULT_WIDTH_PHONE_JP;
+    } else {
+      flyoutWidth = Blockly.Css.TestWidth.FLYOUT_DEFAULT_WIDTH_PHONE;
+    }
+  }
+  else {
+    if (cozmoLocale == "de-DE") {
+      flyoutWidth = Blockly.Css.TestWidth.FLYOUT_DEFAULT_WIDTH_TABLET_DE;
+    } else if (cozmoLocale == "fr-FR") {
+      flyoutWidth = Blockly.Css.TestWidth.FLYOUT_DEFAULT_WIDTH_TABLET_FR;
+    } else if (cozmoLocale == "ja-JP") {
+      flyoutWidth = Blockly.Css.TestWidth.FLYOUT_DEFAULT_WIDTH_TABLET_JP;
+    } else {
+      flyoutWidth = Blockly.Css.TestWidth.FLYOUT_DEFAULT_WIDTH_TABLET;
+    }
+  }
+  // Set width of the toolbox, which changes only in vertical layout.
+  // This is the sum of the width of the flyout and the category menu (e.g., 70 for non-Japanese flyouts).
+  Blockly.Toolbox.prototype.width = flyoutWidth + 70;
+
   var workspace = this.workspace_;
   var svg = this.workspace_.getParentSvg();
 
@@ -114,15 +143,8 @@ Blockly.Toolbox.prototype.init = function() {
    * HTML container for the Toolbox menu.
    * @type {Element}
    */
-
-  // *** ANKI CHANGE ***
-  var toolboxDiv = 'blocklyToolboxDiv';
-  if (window.isVertical) {
-    toolboxDiv = 'blocklyToolboxDivVertical';
-  }
-  
   this.HtmlDiv =
-      goog.dom.createDom(goog.dom.TagName.DIV, toolboxDiv); // *** ANKI CHANGE ***
+      goog.dom.createDom(goog.dom.TagName.DIV, 'blocklyToolboxDiv');
 
   // *** ANKI CHANGE ***
   if (window.isVertical) {
@@ -142,6 +164,8 @@ Blockly.Toolbox.prototype.init = function() {
   // Clicking on toolbox closes popups.
   Blockly.bindEventWithChecks_(this.HtmlDiv, 'mousedown', this,
       function(e) {
+        // Cancel any gestures in progress.
+        this.workspace_.cancelCurrentGesture();
         if (Blockly.utils.isRightButton(e) || e.target == this.HtmlDiv) {
           // Close flyout.
           Blockly.hideChaff(false);
@@ -206,6 +230,8 @@ Blockly.Toolbox.prototype.createFlyout_ = function() {
 Blockly.Toolbox.prototype.populate_ = function(newTree) {
   this.categoryMenu_.populate(newTree);
 
+  this.showAll_();
+
   // *** ANKI CHANGE ***
   // In vertical, don't initially set a category as selected, since we want the flyout to start closed.
   if (!window.isVertical) {
@@ -214,11 +240,39 @@ Blockly.Toolbox.prototype.populate_ = function(newTree) {
 };
 
 /**
+ * Show all blocks for all categories in the flyout
+ * @private
+ */
+Blockly.Toolbox.prototype.showAll_ = function() {
+  var allContents = [];
+  for (var i = 0; i < this.categoryMenu_.categories_.length; i++) {
+    var category = this.categoryMenu_.categories_[i];
+
+    // create a label node to go at the top of the category
+    var labelString = '<xml><label text="' + category.name_ + '"' +
+      ' category-label="true"' +
+      ' web-class="categoryLabel">' +
+      '</label></xml>';
+    var labelXML = Blockly.Xml.textToDom(labelString);
+    allContents.push(labelXML.firstChild);
+
+    allContents = allContents.concat(category.getContents());
+  }
+  this.flyout_.show(allContents);
+};
+
+/**
  * Get the width of the toolbox.
  * @return {number} The width of the toolbox.
  */
 Blockly.Toolbox.prototype.getWidth = function() {
   return this.width;
+};
+
+// *** ANKI CHANGE ***
+// Allow a public way for the toolbox width to be set to accommodate flyout auto-closing.
+Blockly.Toolbox.prototype.setWidth = function(width) {
+  this.width = width;
 };
 
 /**
@@ -303,6 +357,11 @@ Blockly.Toolbox.prototype.getClientRect = function() {
     return null;
   }
 
+  // If not an auto closing flyout, always use the (larger) flyout client rect
+  if (!this.flyout_.autoClose) {
+    return this.flyout_.getClientRect();
+  }
+
   // BIG_NUM is offscreen padding so that blocks dragged beyond the toolbox
   // area are still deleted.  Must be smaller than Infinity, but larger than
   // the largest screen size.
@@ -310,21 +369,8 @@ Blockly.Toolbox.prototype.getClientRect = function() {
   var toolboxRect = this.HtmlDiv.getBoundingClientRect();
 
   var x = toolboxRect.left;
-
   var y = toolboxRect.top;
-  if (!window.isVertical) {
-    // *** ANKI CHANGE ***
-    // After adding categories, delete area was not tall enough.
-    // Here we increase it by adding the flyout height plus some extra.
-    y = toolboxRect.top - 1.25*this.flyout_.getHeight(); 
-  }
-
-  var width = this.getWidth();
-  // *** ANKI CHANGE ***
-  if (window.isVertical) {
-    // The deletion area for the toolbox should be just slightly wider than the width of the toolbox, thus the padding to getWidth(). msintov, 9/1/17
-    width = this.getWidth() + 20;
-  }
+  var width = toolboxRect.width;
   var height = toolboxRect.height;
 
   // Assumes that the toolbox is on the SVG edge.  If this changes
@@ -338,7 +384,7 @@ Blockly.Toolbox.prototype.getClientRect = function() {
     return new goog.math.Rect(-BIG_NUM, -BIG_NUM, 2 * BIG_NUM,
         BIG_NUM + y + height);
   } else {  // Bottom
-    return new goog.math.Rect(0, y, 2 * BIG_NUM, BIG_NUM + width);
+    return new goog.math.Rect(0, y, 2 * BIG_NUM, BIG_NUM);
   }
 };
 
@@ -348,10 +394,7 @@ Blockly.Toolbox.prototype.getClientRect = function() {
  * procedures.
  */
 Blockly.Toolbox.prototype.refreshSelection = function() {
-  var selectedItem = this.getSelectedItem();
-  if (selectedItem && selectedItem.getContents()) {
-    this.flyout_.show(selectedItem.getContents());
-  }
+  this.showAll_();
 };
 
 /**
@@ -367,10 +410,6 @@ Blockly.Toolbox.prototype.getSelectedItem = function() {
  */
 Blockly.Toolbox.prototype.setSelectedItem = function(item) {
   if (this.selectedItem_) {
-    // Don't do anything if they selected the already-open category.
-    if (this.selectedItem_ == item) {
-      return;
-    }
     // They selected a different category but one was already open.  Close it.
     // *** ANKI CHANGE ***
     // Play sound when category is selected.
@@ -380,8 +419,54 @@ Blockly.Toolbox.prototype.setSelectedItem = function(item) {
   this.selectedItem_ = item;
   if (this.selectedItem_ != null) {
     this.selectedItem_.setSelected(true);
-    this.flyout_.show(item.getContents());
-    this.flyout_.scrollToStart();
+    // Scroll flyout to the top of the selected category
+    var categoryName = item.name_;
+    this.scrollToCategoryByName(categoryName);
+  }
+};
+
+/**
+ * Select and scroll to a category by name.
+ * @param {string} name The name of the category to select and scroll to.
+ */
+Blockly.Toolbox.prototype.setSelectedCategoryByName = function(name) {
+  this.selectCategoryByName(name);
+  this.scrollToCategoryByName(name);
+};
+
+/**
+ * Scroll to a category by name.
+ * @param {string} name The name of the category to scroll to.
+ * @package
+ */
+Blockly.Toolbox.prototype.scrollToCategoryByName = function(name) {
+  var scrollPositions = this.flyout_.categoryScrollPositions;
+  for (var i = 0; i < scrollPositions.length; i++) {
+    if (name === scrollPositions[i].categoryName) {
+      this.flyout_.setVisible(true);
+      this.flyout_.scrollTo(scrollPositions[i].position);
+      return;
+    }
+  }
+};
+
+/**
+ * Select a category by name.
+ * @param {string} name The name of the category to select.
+ * @package
+ */
+Blockly.Toolbox.prototype.selectCategoryByName = function(name) {
+  for (var i = 0; i < this.categoryMenu_.categories_.length; i++) {
+    var category = this.categoryMenu_.categories_[i];
+
+    // *** ANKI CHANGE ***
+    // Prevent failure if selectedItem is null.
+    if (name === category.name_ && this.selectedItem_ != null) {
+    //if (name === category.name_) {
+      this.selectedItem_.setSelected(false);
+      this.selectedItem_ = category;
+      this.selectedItem_.setSelected(true);
+    }
   }
 };
 
@@ -452,36 +537,14 @@ Blockly.Toolbox.CategoryMenu.prototype.populate = function(domTree) {
     categories.push(child);
   }
 
-  // *** ANKI CHANGE ***
-  // Create 1 row of categories for horizontal.
-  if (!window.isVertical) {
-    var row = goog.dom.createDom('tr', 'scratchCategoryMenuRow');
+  // Create a single column of categories
+  for (var i = 0; i < categories.length; i++) {
+    var child = categories[i];
+    var row = goog.dom.createDom('div', 'scratchCategoryMenuRow');
     this.table.appendChild(row);
-    for (var a = 0; a < categories.length; a ++) {
-      child = categories[a];
-      if (child) {
-        this.categories_.push(new Blockly.Toolbox.Category(this, row,
-            child));
-      }
-    }
-  }
-  else {
-    // Create a single column of categories
-    for (var i = 0; i < categories.length; i++) {
-      var child = categories[i];
-      var row = goog.dom.createDom('div', 'scratchCategoryMenuRowVertical'); // *** ANKI CHANGE ***
-
-      // *** ANKI CHANGE ***
-      // Make categories less tall on phones.
-      if (window.innerWidth < window.TABLET_WIDTH) {
-        row.style.padding = 0;
-      }
-
-      this.table.appendChild(row);
-      if (child) {
-        this.categories_.push(new Blockly.Toolbox.Category(this, row,
-            child));
-      }
+    if (child) {
+      this.categories_.push(new Blockly.Toolbox.Category(this, row,
+          child));
     }
   }
   this.height_ = this.table.offsetHeight;
@@ -522,6 +585,7 @@ Blockly.Toolbox.Category = function(parent, parentHtml, domTree) {
 
   this.setColour(domTree);
   this.custom_ = domTree.getAttribute('custom');
+  this.iconURI_ = domTree.getAttribute('iconURI');
   this.contents_ = [];
   if (!this.custom_) {
     this.parseContents_(domTree);
@@ -547,47 +611,26 @@ Blockly.Toolbox.Category.prototype.dispose = function() {
  */
 Blockly.Toolbox.Category.prototype.createDom = function() {
   var toolbox = this.parent_.parent_;
-
-  // *** ANKI CHANGE ***
-  // Set up horizontal categories.
-  if (!window.isVertical) {
-    this.item_ = goog.dom.createDom('td',
-      {'class': 'scratchCategoryMenuItemHorizontal'});
-    this.bubble_ = goog.dom.createDom('div', {
-      'class': (toolbox.RTL) ? 'scratchCategoryItemBubbleRTL' :
-      'scratchCategoryItemBubbleLTRHorizontal'}, this.name_.toUpperCase());
-
-    this.bubble_.style.backgroundColor = this.colour_;
-    this.bubble_.style.borderColor = this.secondaryColour_;
-
-    // *** ANKI CHANGE ***
-    if (window.innerWidth > window.TABLET_WIDTH) {
-      this.bubble_.style.fontSize = "14px";
-      this.bubble_.style.width = "130px";
-      this.bubble_.style.paddingTop = "7.5px";
-    }
-
-    this.item_.appendChild(this.bubble_);
-    this.parentHtml_.appendChild(this.item_);
-    Blockly.bindEvent_(this.item_, 'mousedown', toolbox,
-      toolbox.setSelectedItemFactory(this));
-  }
-  else {
-    this.item_ = goog.dom.createDom('div',
-      {'class': 'scratchCategoryMenuItem'});
-    this.label_ = goog.dom.createDom('div',
-      {'class': 'scratchCategoryMenuItemLabel'},
-      this.name_);
+  this.item_ = goog.dom.createDom('div',
+    {'class': 'scratchCategoryMenuItem'});
+  this.label_ = goog.dom.createDom('div',
+    {'class': 'scratchCategoryMenuItemLabel'},
+    this.name_);
+  if (this.iconURI_) {
     this.bubble_ = goog.dom.createDom('div',
-      {'class': 'scratchCategoryItemBubble'});
+        {'class': 'scratchCategoryItemIcon'});
+    this.bubble_.style.backgroundImage = 'url(' + this.iconURI_ + ')';
+  } else {
+    this.bubble_ = goog.dom.createDom('div',
+        {'class': 'scratchCategoryItemBubble'});
     this.bubble_.style.backgroundColor = this.colour_;
     this.bubble_.style.borderColor = this.secondaryColour_;
-    this.item_.appendChild(this.bubble_);
-    this.item_.appendChild(this.label_);
-    this.parentHtml_.appendChild(this.item_);
-    Blockly.bindEvent_(this.item_, 'mousedown', toolbox,
-      toolbox.setSelectedItemFactory(this), true);
   }
+  this.item_.appendChild(this.bubble_);
+  this.item_.appendChild(this.label_);
+  this.parentHtml_.appendChild(this.item_);
+  Blockly.bindEvent_(this.item_, 'mouseup', toolbox,
+    toolbox.setSelectedItemFactory(this));
 };
 
 /**
@@ -595,17 +638,10 @@ Blockly.Toolbox.Category.prototype.createDom = function() {
  * @param {boolean} selected Whether this category is selected.
  */
 Blockly.Toolbox.Category.prototype.setSelected = function(selected) {
-  // *** ANKI CHANGE ***
-  // Preserves our old horizontal categories' selected appearance
-  var menuItemString = 'scratchCategoryMenuItem';
-  if (!window.isVertical) {
-    menuItemString = 'scratchCategoryMenuItemHorizontal';
-  }
-
   if (selected) {
-    this.item_.className = menuItemString +' categorySelected';
+    this.item_.className = 'scratchCategoryMenuItem categorySelected';
   } else {
-    this.item_.className = menuItemString;
+    this.item_.className = 'scratchCategoryMenuItem';
   }
 };
 

@@ -137,94 +137,94 @@ Blockly.ZoomControls.prototype.createDom = function() {
     </image>
   </g>
   */
-  // this.svgGroup_ = Blockly.utils.createSvgElement(
-  //   'g',
-  //   {'class': 'blocklyZoom'},
-  //   null
-  // );
+  this.svgGroup_ = Blockly.utils.createSvgElement(
+    'g',
+    {'class': 'blocklyZoom'},
+    null
+  );
 
   /**
    * Zoom in control.
    * @type {SVGElement}
    */
-  // var zoominSvg = Blockly.utils.createSvgElement(
-  //   'image',
-  //   {
-  //     'width': this.WIDTH_,
-  //     'height': this.WIDTH_,
-  //     'y': 0
-  //   },
-  //   this.svgGroup_
-  // );
-  // zoominSvg.setAttributeNS(
-  //   'http://www.w3.org/1999/xlink',
-  //   'xlink:href',
-  //   workspace.options.pathToMedia + this.ZOOM_IN_PATH_
-  // );
+  var zoominSvg = Blockly.utils.createSvgElement(
+    'image',
+    {
+      'width': this.WIDTH_,
+      'height': this.WIDTH_,
+      'y': 0
+    },
+    this.svgGroup_
+  );
+  zoominSvg.setAttributeNS(
+    'http://www.w3.org/1999/xlink',
+    'xlink:href',
+    workspace.options.pathToMedia + this.ZOOM_IN_PATH_
+  );
 
   /**
    * Zoom out control.
    * @type {SVGElement}
    */
-  // var zoomoutSvg = Blockly.utils.createSvgElement(
-  //   'image',
-  //   {
-  //     'width': this.WIDTH_,
-  //     'height': this.WIDTH_,
-  //     'y': (this.WIDTH_ * 1) + (this.MARGIN_BETWEEN_ * 1)
-  //   },
-  //   this.svgGroup_
-  // );
-  // zoomoutSvg.setAttributeNS(
-  //   'http://www.w3.org/1999/xlink',
-  //   'xlink:href',
-  //   workspace.options.pathToMedia + this.ZOOM_OUT_PATH_
-  // );
+  var zoomoutSvg = Blockly.utils.createSvgElement(
+    'image',
+    {
+      'width': this.WIDTH_,
+      'height': this.WIDTH_,
+      'y': (this.WIDTH_ * 1) + (this.MARGIN_BETWEEN_ * 1)
+    },
+    this.svgGroup_
+  );
+  zoomoutSvg.setAttributeNS(
+    'http://www.w3.org/1999/xlink',
+    'xlink:href',
+    workspace.options.pathToMedia + this.ZOOM_OUT_PATH_
+  );
 
   /**
    * Zoom reset control.
    * @type {SVGElement}
    */
-  // var zoomresetSvg = Blockly.utils.createSvgElement(
-  //   'image',
-  //   {
-  //     'width': this.WIDTH_,
-  //     'height': this.WIDTH_,
-  //     'y': (this.WIDTH_ * 2) + (this.MARGIN_BETWEEN_ * 2)
-  //   },
-  //   this.svgGroup_
-  // );
-  // zoomresetSvg.setAttributeNS(
-  //   'http://www.w3.org/1999/xlink',
-  //   'xlink:href',
-  //   workspace.options.pathToMedia + this.ZOOM_RESET_PATH_
-  // );
+  var zoomresetSvg = Blockly.utils.createSvgElement(
+    'image',
+    {
+      'width': this.WIDTH_,
+      'height': this.WIDTH_,
+      'y': (this.WIDTH_ * 2) + (this.MARGIN_BETWEEN_ * 2)
+    },
+    this.svgGroup_
+  );
+  zoomresetSvg.setAttributeNS(
+    'http://www.w3.org/1999/xlink',
+    'xlink:href',
+    workspace.options.pathToMedia + this.ZOOM_RESET_PATH_
+  );
 
   // Attach event listeners.
-  // Blockly.bindEventWithChecks_(zoomresetSvg, 'mousedown', null, function(e) {
-  //   workspace.markFocused();
-  //   workspace.setScale(workspace.options.zoomOptions.startScale);
-  //   workspace.scrollCenter();
-  //   Blockly.Touch.clearTouchIdentifier();  // Don't block future drags.
-  //   e.stopPropagation();  // Don't start a workspace scroll.
-  //   e.preventDefault();  // Stop double-clicking from selecting text.
-  // });
-  // Blockly.bindEventWithChecks_(zoominSvg, 'mousedown', null, function(e) {
-  //   workspace.markFocused();
-  //   workspace.zoomCenter(1);
-  //   Blockly.Touch.clearTouchIdentifier();  // Don't block future drags.
-  //   e.stopPropagation();  // Don't start a workspace scroll.
-  //   e.preventDefault();  // Stop double-clicking from selecting text.
-  // });
-  // Blockly.bindEventWithChecks_(zoomoutSvg, 'mousedown', null, function(e) {
-  //   workspace.markFocused();
-  //   workspace.zoomCenter(-1);
-  //   Blockly.Touch.clearTouchIdentifier();  // Don't block future drags.
-  //   e.stopPropagation();  // Don't start a workspace scroll.
-  //   e.preventDefault();  // Stop double-clicking from selecting text.
-  // });
+  Blockly.bindEventWithChecks_(zoomresetSvg, 'mousedown', null, function(e) {
+    workspace.markFocused();
+    workspace.setScale(workspace.options.zoomOptions.startScale);
+    workspace.scrollCenter();
+    Blockly.Touch.clearTouchIdentifier();  // Don't block future drags.
+    e.stopPropagation();  // Don't start a workspace scroll.
+    e.preventDefault();  // Stop double-clicking from selecting text.
+  });
+  Blockly.bindEventWithChecks_(zoominSvg, 'mousedown', null, function(e) {
+    workspace.markFocused();
+    workspace.zoomCenter(1);
+    Blockly.Touch.clearTouchIdentifier();  // Don't block future drags.
+    e.stopPropagation();  // Don't start a workspace scroll.
+    e.preventDefault();  // Stop double-clicking from selecting text.
+  });
+  Blockly.bindEventWithChecks_(zoomoutSvg, 'mousedown', null, function(e) {
+    workspace.markFocused();
+    workspace.zoomCenter(-1);
+    Blockly.Touch.clearTouchIdentifier();  // Don't block future drags.
+    e.stopPropagation();  // Don't start a workspace scroll.
+    e.preventDefault();  // Stop double-clicking from selecting text.
+  });
 
-  // return this.svgGroup_;
+  return this.svgGroup_;
 };
 
 /**

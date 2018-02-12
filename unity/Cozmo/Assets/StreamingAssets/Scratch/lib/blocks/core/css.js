@@ -45,6 +45,23 @@ Blockly.Css.Cursor = {
 };
 
 /**
+ * *** ANKI CHANGE ***
+ * Enum of flyout widths by locale.
+ */
+ Blockly.Css.TestWidth = {
+  // Tablet flyout widths
+  FLYOUT_DEFAULT_WIDTH_TABLET: 400,
+  FLYOUT_DEFAULT_WIDTH_TABLET_DE: 510,
+  FLYOUT_DEFAULT_WIDTH_TABLET_FR: 470,
+  FLYOUT_DEFAULT_WIDTH_TABLET_JP: 510,
+  // Phone flyout widths
+  FLYOUT_DEFAULT_WIDTH_PHONE: 330,
+  FLYOUT_DEFAULT_WIDTH_PHONE_DE: 420,
+  FLYOUT_DEFAULT_WIDTH_PHONE_FR: 380,
+  FLYOUT_DEFAULT_WIDTH_PHONE_JP: 425
+ }
+
+/**
  * Current cursor (cached value).
  * @type {string}
  * @private
@@ -172,8 +189,22 @@ Blockly.Css.CONTENT = [
     '-webkit-transform-origin: 0 0;',
   '}',
 
+  '.blocklyWidgetDiv.fieldTextInput.removableTextInput {',
+    'overflow: visible;',
+  '}',
+
   '.blocklyTextDropDownArrow {',
     'position: absolute;',
+  '}',
+
+  '.blocklyTextRemoveIcon {',
+    'position: absolute;',
+    'width: 24px;',
+    'height: 24px;',
+    'top: -40px;',
+    'left: 50%;',
+    'margin-left: -12px;',
+    'cursor: pointer;',
   '}',
 
   '.blocklyNonSelectable {',
@@ -186,9 +217,14 @@ Blockly.Css.CONTENT = [
   '.blocklyWsDragSurface {',
     'display: none;',
     'position: absolute;',
-    'overflow: visible;',
     'top: 0;',
     'left: 0;',
+  '}',
+  /* Added as a separate rule with multiple classes to make it more specific
+     than a bootstrap rule that selects svg:root. See issue #1275 for context.
+  */
+  '.blocklyWsDragSurface.blocklyOverflowVisible {',
+    'overflow: visible;',
   '}',
 
   '.blocklyBlockDragSurface {',
@@ -493,6 +529,10 @@ Blockly.Css.CONTENT = [
     'fill: $colour_text;',
   '}',
 
+  '.blocklyEditableText>.blocklyEditableLabel {',
+    'fill: #fff;',
+  '}',
+
   '.blocklyDropdownText {',
     'fill: #fff !important;',
   '}',
@@ -537,7 +577,11 @@ Blockly.Css.CONTENT = [
   '}',
 
   '.blocklyFlyoutLabelText {',
-    'fill: #000;',
+    'font-family: "Helvetica Neue", Helvetica, sans-serif;',
+    'font-size: 14pt;',
+    'fill: #bcbdbe;',
+    //'fill: #575E75;', // *** ANKI CHANGE ***
+    'font-weight: bold;',
   '}',
 
   /*
@@ -651,13 +695,11 @@ Blockly.Css.CONTENT = [
   '.blocklyScrollbarVertical {',
     'display: none !important;',
   '}',
-
-/*
+  
   '.blocklyScrollbarHorizontal, .blocklyScrollbarVertical {',
     'position: absolute;',
     'outline: none;',
   '}',
-*/
 
   '.blocklyScrollbarBackground {',
     'opacity: 0.2;', // *** ANKI CHANGE ***
@@ -755,10 +797,8 @@ Blockly.Css.CONTENT = [
   '}',
 
   /* Category tree in Toolbox. */
-  // Horizontal only
   '.blocklyToolboxDiv {',
-    'background-color: #535252;', // *** ANKI CHANGE ***
-    //'background-color: $colour_toolbox;',
+    //'background-color: $colour_toolbox;',  // *** ANKI CHANGE ***
     'color: $colour_toolboxText;',
     'overflow-x: visible;',
     'overflow-y: auto;',
@@ -766,21 +806,7 @@ Blockly.Css.CONTENT = [
     'font-family: "Avenir Next";', // *** ANKI CHANGE ***
     //'font-family: "Helvetica Neue", Helvetica, sans-serif;',
     'z-index: 40;', /* so blocks go over toolbox when dragging */
-  '}',
-
-  // *** ANKI CHANGE ***
-  /* Category tree in Toolbox. */
-  '.blocklyToolboxDivVertical {',
-    'top: 100px;',
-    'background: transparent;', // *** ANKI CHANGE ***
-    //'background-color: $colour_toolbox;',
-    //'color: $colour_toolboxText;', // *** ANKI CHANGE ***
-    'overflow-x: visible;',
-    'overflow-y: auto;',
-    'position: absolute;',
-    'font-family: "Avenir Next";', // *** ANKI CHANGE ***
-    //'font-family: "Helvetica Neue", Helvetica, sans-serif;',
-    'z-index: 40;', /* so blocks go over toolbox when dragging */
+    '-webkit-tap-highlight-color: transparent;', /* issue #1345 */
   '}',
 
   '.blocklyTreeRoot {',
@@ -883,6 +909,9 @@ Blockly.Css.CONTENT = [
     'color: #fff;',
   '}',
 
+  // *** ANKI CHANGE ***
+  // Adds border to color selector.
+  //
   /* Copied from: goog/css/colorpicker-simplegrid.css */
   /*
    * Copyright 2007 The Closure Library Authors. All Rights Reserved.
@@ -890,30 +919,62 @@ Blockly.Css.CONTENT = [
    * Use of this source code is governed by the Apache License, Version 2.0.
    * See the COPYING file for details.
    */
-
+ 
   /* Author: pupius@google.com (Daniel Pupius) */
-
+ 
   /*
-    Styles to make the colorpicker look like the old gmail color picker
-    NOTE: without CSS scoping this will override styles defined in palette.css
-  */
-  '.blocklyWidgetDiv .goog-palette {',
+     Styles to make the colorpicker look like the old gmail color picker
+     NOTE: without CSS scoping this will override styles defined in palette.css
+   */  
+  '.blocklyWidgetDiv .goog-palette-cell-selected .goog-palette-colorswatch {',
+    'border: 1px solid #000;',
+    'box-sizing: border-box;',
+    'color: #fff;',
+  '}',
+
+  '.blocklyDropDownDiv .goog-slider-horizontal {',
+    'margin: 8px;',
+    'height: 22px;',
+    'width: 150px;',
+    'position: relative;',
     'outline: none;',
-    'cursor: default;',
+    'border-radius: 11px;',
+    'margin-bottom: 20px;',
   '}',
 
-  '.blocklyWidgetDiv .goog-palette-table {',
-    'border-collapse: collapse;',
+  '.blocklyDropDownDiv .goog-slider-horizontal .goog-slider-thumb {',
+    'width: 26px;',
+    'height: 26px;',
+    'margin-top: -1px;',
+    'position: absolute;',
+    'background-color: white;',
+    'border-radius: 100%;',
+    '-webkit-box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.15);',
+    '-moz-box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.15);',
+    'box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.15);',
   '}',
 
-  '.blocklyWidgetDiv .goog-palette-cell {',
-    'height: 13px;',
-    'width: 15px;',
-    'margin: 0;',
-    'border: 0;',
+
+  '.scratchEyedropper {',
+    'background: none;',
+    'outline: none;',
+    'border: none;',
+    'width: 100%;',
     'text-align: center;',
-    'vertical-align: middle;',
-    'font-size: 1px;',
+    'border-top: 1px solid #ddd;',
+    'padding-top: 5px;',
+    'cursor: pointer;',
+  '}',
+
+  '.scratchColourPickerLabel {',
+    'font-family: "Helvetica Neue", Helvetica, sans-serif;',
+    'font-size: 0.65rem;',
+    'color: $colour_toolboxText;',
+    'margin: 8px;',
+  '}',
+
+  '.scratchColourPickerLabelText {',
+    'font-weight: bold;',
   '}',
 
   '.blocklyWidgetDiv .goog-palette-colorswatch {',
@@ -924,15 +985,8 @@ Blockly.Css.CONTENT = [
 //    'width: 15px;',
   '}',
 
-  '.blocklyWidgetDiv .goog-palette-cell-hover .goog-palette-colorswatch {',
-    'border: 1px solid #FFF;',
-    'box-sizing: border-box;',
-  '}',
-
-  '.blocklyWidgetDiv .goog-palette-cell-selected .goog-palette-colorswatch {',
-    'border: 1px solid #000;',
-    'box-sizing: border-box;',
-    'color: #fff;',
+  '.scratchColourPickerReadout {',
+    'margin-left: 10px;',
   '}',
 
   /* Copied from: goog/css/menu.css */
@@ -1021,6 +1075,7 @@ Blockly.Css.CONTENT = [
     'font-weight: bold;',
     'list-style: none;',
     'margin: 0;',
+    'min-height: 24px;',
      /* 28px on the left for icon or checkbox; 7em on the right for shortcut. */
     'padding: 4px 7em 4px 28px;',
     'white-space: nowrap;',
@@ -1203,145 +1258,67 @@ Blockly.Css.CONTENT = [
     'stroke-linejoin: round;',
   '}',
 
-  // *** ANKI CHANGE ***
-  // Settings specific to horizontal categories
-  '.scratchCategoryMenuHorizontal {',
-    'width: 250px;',
-    'background-color: #535252;',
+  '.scratchCategoryMenu {',
+    'width: 70px;', // *** ANKI CHANGE ***
+    //'width: 52px;',
+    'background: #bcbdbe;', // *** ANKI CHANGE ***
+    //'background: $colour_toolbox;',
     'color: $colour_toolboxText;',
-    'font-size: .9em;',
+    'font-size: .7rem;',
     'user-select: none;',
     '-webkit-user-select: none;',
     '-moz-user-select: none;',
     '-ms-user-select: none;',
   '}',
 
-  // Used for vertical
-  '.scratchCategoryMenu {',
-    // *** ANKI CHANGE ***
-    'font-size: .8em;',
-    'list-style-type: none;',
-    'cursor: pointer;',
-    'width: 80px;',
-    'padding: 0px 0px 0px 10px;',
-    'background: #bcbdbe;',
-    '-webkit-tap-highlight-color: transparent;',
-    // 'background: $colour_toolbox;',
-    // 'color: $colour_toolboxText;',
-    // 'font-size: .7em;',
-    // 'user-select: none;',
-    // 'text-transform: uppercase;',
-    // '-webkit-user-select: none;',
-    // '-moz-user-select: none;',
-    // '-ms-user-select: none;',
+  '.scratchCategoryMenuHorizontal {',
+    'width: 100%;',
+    'height: 50px;',
+    'background: #bcbdbe;', // *** ANKI CHANGE ***
+    //'background: $colour_toolbox;',
+    'color: $colour_toolboxText;',
+    'font-size: .7em;',
+    'user-select: none;',
+    '-webkit-user-select: none;',
+    '-moz-user-select: none;',
+    '-ms-user-select: none;',
+  '}',
+
+  '.scratchCategoryMenuHorizontal .scratchCategoryMenuRow {',
+    'float: left;',
+    // 'margin: 3px;', // *** ANKI CHANGE ***
   '}',
 
   '.scratchCategoryMenuRow {',
   '}',
 
-  // Added by Anki.
-  '.scratchCategoryMenuRowVertical {',
-    //'margin: 2px;', // *** ANKI CHANGE ***
-    'text-transform: uppercase;',
-    'font-size: .8em;',
-    'list-style-type: none;',
-    'cursor: pointer;',
-    'line-height: 1.2em;', // *** ANKI CHANGE ***
-    'margin: 0;',
-    'padding: 14px 20px 10px 0;', // *** ANKI CHANGE ***
-    'border-bottom: 1px solid #afb1b1;',
-    'background-image: radial-gradient(circle at bottom, #b0b1b2 0%, #bcbdbe 60%);',
-  '}',
-
-  '.scratchCategoryMenu .scratchCategoryMenuRow + .scratchCategoryMenuRow:before {',
-    //*** ANKI CHANGE ***
-    // 'display: block;',
-    // 'border-top: 1px solid #ddd;',
-    // 'content: "";',
-    // 'width: 60%;',
-    // 'margin: 4px auto;',
-  '}',
-
-  // *** ANKI CHANGE ***
-  // Horizontal-specific version of scratchCategoryMenuItem
-  '.scratchCategoryMenuItemHorizontal {',
-    'padding: 2px;',
-    'width: 25%;',
-    'cursor: pointer;',
-  '}',
-
-  // Used by Anki for vertical only
   '.scratchCategoryMenuItem {',
-    'padding: 6px 0px 2px 0px;',  // *** ANKI CHANGE ***
-    //'padding: 6px 0px;',
+    'padding: 0.375rem 0px;',
     'cursor: pointer;',
-    //'margin: 0px 2px;', // *** ANKI CHANGE ***
-  '}',
-
-  // *** ANKI CHANGE ***
-  // Used for horizontal only
-  '.scratchCategoryMenuItemHorizontal.categorySelected {',
-    'background: #ffffff;',
-    //'background: $colour_toolboxSelected;',
-    'border-radius: 16px;',
-  '}',
-
-  // Used by Anki for vertical only
-  '.scratchCategoryMenuItem.categorySelected {',
-    'position: relative;',
-    // 'background: $colour_toolboxSelected;',
-    // 'border-radius: 6px;',
-  '}',
-
-  // Added by Anki to show arrow selector
-  '.scratchCategoryMenuItem.categorySelected::before {',
-    'content: "";',
-    'position: absolute;',
-    'top: 11px;',
-    'right: 0px;',
-    'left: 69.5px;',
-    'display: inline-block;',
-    'width: 0;',
-    'height: 0;',
-    'border-top: 10px solid transparent;',
-    'border-bottom: 10px solid transparent;',
-    'border-right:10px solid #7d7d7d;',
-  '}',
-
-  // *** ANKI CHANGE ***
-  // Horizontal-specific version of scratchCategoryItemBubbleLTR
-  '.scratchCategoryItemBubbleLTRHorizontal {',
-    'width: 87px;',
-    'height: 20px;',
-    'border-radius: 20px;',
     'text-align: center;',
-    'font-family: "Avenir Next";',
-    'font-size: 8pt;',
-    'color: white;',
-    'user-select: none;',
-    '-webkit-user-select: none;',
-    '-moz-user-select: none;',
-    '-ms-user-select: none;',
-    'padding-top: 12px',
   '}',
 
-  // Used by Anki only for vertical
+  '.scratchCategoryMenuHorizontal .scratchCategoryMenuItem {',
+    'padding: 6px 5px;',
+  '}',
+
+  '.scratchCategoryMenuItem.categorySelected {',
+    'background: $colour_toolboxSelected;',
+  '}',
+
   '.scratchCategoryItemBubble {',
-    // *** ANKI CHANGE ***
-    'display: block;',
-    'width: 1.4em;',
-    'height: 1.4em;',
-    'border-radius: 5px;',
-    'margin: 0 8px 3px 0;',
-    // 'width: 16px;',
-    // 'height: 16px;',
-    // 'border: 1px solid;',
-    // 'border-radius: 100%;',
-    // 'margin: 0 auto 3px;',
+    'width: 1.25rem;',
+    'height: 1.25rem;',
+    'border: 1px solid;',
+    'border-radius: 100%;',
+    'margin: 0 auto 0.125rem;',
   '}',
 
-  '.scratchCategoryMenuItem:hover {',
-    //'color: $colour_toolboxHover !important;', // *** ANKI CHANGE ***
+  '.scratchCategoryItemIcon {',
+    'width: 1.25rem;',
+    'height: 1.25rem;',
+    'margin: 0 auto 0.125rem;',
+    'background-size: 100%;',
   '}',
 
   // *** ANKI CHANGE ***

@@ -74,6 +74,13 @@ Blockly.FlyoutButton = function(workspace, targetWorkspace, xml, isLabel) {
   this.isLabel_ = isLabel;
 
   /**
+   * Whether this button is a label at the top of a category.
+   * @type {boolean}
+   * @private
+   */
+  this.isCategoryLabel_ = xml.getAttribute('category-label') === 'true';
+
+  /**
    * Function to call when this button is clicked.
    * @type {function(!Blockly.FlyoutButton)}
    * @private
@@ -155,15 +162,24 @@ Blockly.FlyoutButton.prototype.createDom = function() {
       {'class': this.isLabel_ ? 'blocklyFlyoutLabelText' : 'blocklyText',
           'x': 0, 'y': 0, 'text-anchor': 'middle'},
       this.svgGroup_);
-  svgText.textContent = this.text_;
+  
+  // *** ANKI CHANGE ***
+  // Do not show category text in flyout for horizontal.
+  if (!window.isVertical) {
+    svgText.textContent = '';
+  }
+  else {
+    svgText.textContent = this.text_;  
+  }
 
-  this.width = svgText.getComputedTextLength() +
-      2 * Blockly.FlyoutButton.MARGIN;
+  this.width = Blockly.Field.getCachedWidth(svgText);
 
   if (!this.isLabel_) {
+    this.width += 2 * Blockly.FlyoutButton.MARGIN;
     shadow.setAttribute('width', this.width);
     shadow.setAttribute('height', this.height);
   }
+
   rect.setAttribute('width', this.width);
   rect.setAttribute('height', this.height);
 
@@ -171,8 +187,6 @@ Blockly.FlyoutButton.prototype.createDom = function() {
   svgText.setAttribute('alignment-baseline', 'central');
   svgText.setAttribute('x', this.width / 2);
   svgText.setAttribute('y', this.height / 2);
-
-  this.updateTransform_();
 
   this.mouseUpWrapper_ = Blockly.bindEventWithChecks_(this.svgGroup_, 'mouseup',
       this, this.onMouseUp_);
@@ -214,6 +228,33 @@ Blockly.FlyoutButton.prototype.moveTo = function(x, y) {
  */
 Blockly.FlyoutButton.prototype.getTargetWorkspace = function() {
   return this.targetWorkspace_;
+};
+
+/**
+ * Get whether this button is a label at the top of a category.
+ * @return {boolean} True if it is a category label.
+ * @package
+ */
+Blockly.FlyoutButton.prototype.getIsCategoryLabel = function() {
+  return this.isCategoryLabel_;
+};
+
+/**
+ * Get the text of this button.
+ * @return {string} The text on the button.
+ * @package
+ */
+Blockly.FlyoutButton.prototype.getText = function() {
+  return this.text_;
+};
+
+/**
+ * Get the position of this button.
+ * @return {!goog.math.Coordinate} The button position.
+ * @package
+ */
+Blockly.FlyoutButton.prototype.getPosition = function() {
+  return this.position_;
 };
 
 /**

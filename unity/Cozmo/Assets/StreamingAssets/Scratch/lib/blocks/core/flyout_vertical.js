@@ -34,10 +34,10 @@ goog.require('Blockly.FlyoutButton');
 goog.require('Blockly.utils');
 goog.require('Blockly.WorkspaceSvg');
 goog.require('goog.dom');
+goog.require('goog.dom.animationFrame.polyfill');
 goog.require('goog.events');
 goog.require('goog.math.Rect');
 goog.require('goog.userAgent');
-
 
 /**
  * Class for a flyout.
@@ -79,20 +79,6 @@ Blockly.VerticalFlyout.prototype.autoClose = true;
  * @type {number}
  */
 Blockly.VerticalFlyout.prototype.DEFAULT_WIDTH = 250;
-
-// *** ANKI CHANGE ***
-// Tablet flyout widths
-Blockly.VerticalFlyout.prototype.DEFAULT_WIDTH_TABLET = 400;
-Blockly.VerticalFlyout.prototype.DEFAULT_WIDTH_TABLET_DE = 510;
-Blockly.VerticalFlyout.prototype.DEFAULT_WIDTH_TABLET_FR = 470;
-Blockly.VerticalFlyout.prototype.DEFAULT_WIDTH_TABLET_JP = 510;
-// Phone flyout widths
-Blockly.VerticalFlyout.prototype.DEFAULT_WIDTH_PHONE = 330;
-Blockly.VerticalFlyout.prototype.DEFAULT_WIDTH_PHONE_DE = 420;
-Blockly.VerticalFlyout.prototype.DEFAULT_WIDTH_PHONE_FR = 380;
-Blockly.VerticalFlyout.prototype.DEFAULT_WIDTH_PHONE_JP = 425;
-
-
 
 /**
  * Size of a checkbox next to a variable reporter.
@@ -149,24 +135,24 @@ Blockly.VerticalFlyout.prototype.init = function(targetWorkspace) {
   var cozmoLocale = window.getUrlVars()['locale'];
   if (window.innerWidth < window.TABLET_WIDTH) {
     if (cozmoLocale == "de-DE") {
-      Blockly.VerticalFlyout.prototype.DEFAULT_WIDTH = Blockly.VerticalFlyout.prototype.DEFAULT_WIDTH_PHONE_DE;
+      Blockly.VerticalFlyout.prototype.DEFAULT_WIDTH = Blockly.Css.TestWidth.FLYOUT_DEFAULT_WIDTH_PHONE_DE;
     } else if (cozmoLocale == "fr-FR") {
-      Blockly.VerticalFlyout.prototype.DEFAULT_WIDTH = Blockly.VerticalFlyout.prototype.DEFAULT_WIDTH_PHONE_FR;
+      Blockly.VerticalFlyout.prototype.DEFAULT_WIDTH = Blockly.Css.TestWidth.FLYOUT_DEFAULT_WIDTH_PHONE_FR;
     } else if (cozmoLocale == "ja-JP") {
-      Blockly.VerticalFlyout.prototype.DEFAULT_WIDTH = Blockly.VerticalFlyout.prototype.DEFAULT_WIDTH_PHONE_JP;
+      Blockly.VerticalFlyout.prototype.DEFAULT_WIDTH = Blockly.Css.TestWidth.FLYOUT_DEFAULT_WIDTH_PHONE_JP;
     } else {
-      Blockly.VerticalFlyout.prototype.DEFAULT_WIDTH = Blockly.VerticalFlyout.prototype.DEFAULT_WIDTH_PHONE;
+      Blockly.VerticalFlyout.prototype.DEFAULT_WIDTH = Blockly.Css.TestWidth.FLYOUT_DEFAULT_WIDTH_PHONE;
     }
   }
   else {
     if (cozmoLocale == "de-DE") {
-      Blockly.VerticalFlyout.prototype.DEFAULT_WIDTH = Blockly.VerticalFlyout.prototype.DEFAULT_WIDTH_TABLET_DE;
+      Blockly.VerticalFlyout.prototype.DEFAULT_WIDTH = Blockly.Css.TestWidth.FLYOUT_DEFAULT_WIDTH_TABLET_DE;
     } else if (cozmoLocale == "fr-FR") {
-      Blockly.VerticalFlyout.prototype.DEFAULT_WIDTH = Blockly.VerticalFlyout.prototype.DEFAULT_WIDTH_TABLET_FR;
+      Blockly.VerticalFlyout.prototype.DEFAULT_WIDTH = Blockly.Css.TestWidth.FLYOUT_DEFAULT_WIDTH_TABLET_FR;
     } else if (cozmoLocale == "ja-JP") {
-      Blockly.VerticalFlyout.prototype.DEFAULT_WIDTH = Blockly.VerticalFlyout.prototype.DEFAULT_WIDTH_TABLET_JP;
+      Blockly.VerticalFlyout.prototype.DEFAULT_WIDTH = Blockly.Css.TestWidth.FLYOUT_DEFAULT_WIDTH_TABLET_JP;
     } else {
-      Blockly.VerticalFlyout.prototype.DEFAULT_WIDTH = Blockly.VerticalFlyout.prototype.DEFAULT_WIDTH_TABLET;
+      Blockly.VerticalFlyout.prototype.DEFAULT_WIDTH = Blockly.Css.TestWidth.FLYOUT_DEFAULT_WIDTH_TABLET;
     }
   }
 
@@ -279,6 +265,10 @@ Blockly.VerticalFlyout.prototype.setMetrics_ = function(xyRatio) {
 
   this.clipRect_.setAttribute('height', Math.max(0, metrics.viewHeight) + 'px');
   this.clipRect_.setAttribute('width', metrics.viewWidth + 'px');
+
+  if (this.categoryScrollPositions) {
+    this.selectCategoryByScrollPosition(-this.workspace_.scrollY);
+  }
 };
 
 /**
@@ -300,12 +290,7 @@ Blockly.VerticalFlyout.prototype.position = function() {
 
   if (this.parentToolbox_) {
     var toolboxWidth = this.parentToolbox_.getWidth();
-
-    // *** ANKI CHANGE ***
-    // categoryWidth is used to set the x value of the flyout.
-    // We want the flyout positioned immediately to the right of the categories. - msintov, 9/1/17
-    var categoryWidth = toolboxWidth;
-    //var categoryWidth = toolboxWidth - this.width_;
+    var categoryWidth = toolboxWidth - this.width_;
 
     var x = this.toolboxPosition_ == Blockly.TOOLBOX_AT_RIGHT ?
         targetWorkspaceMetrics.viewWidth : categoryWidth;
@@ -385,20 +370,42 @@ Blockly.VerticalFlyout.prototype.scrollToStart = function() {
 };
 
 /**
+ * Scroll the flyout to a position.
+ * @param {number} pos The targeted scroll position in workspace coordinates.
+ * @package
+ */
+Blockly.VerticalFlyout.prototype.scrollTo = function(pos) {
+  this.scrollTarget = pos * this.workspace_.scale;
+
+  // Make sure not to set the scroll target below the lowest point we can
+  // scroll to, i.e. the content height minus the view height
+  var metrics = this.workspace_.getMetrics();
+  var contentHeight = metrics.contentHeight;
+  var viewHeight = metrics.viewHeight;
+  this.scrollTarget = Math.min(this.scrollTarget, contentHeight - viewHeight);
+
+  this.stepScrollAnimation();
+};
+
+/**
  * Scroll the flyout.
  * @param {!Event} e Mouse wheel scroll event.
  * @private
  */
 Blockly.VerticalFlyout.prototype.wheel_ = function(e) {
+  // remove scrollTarget to stop auto scrolling in stepScrollAnimation
+  this.scrollTarget = null;
+
   var delta = e.deltaY;
 
   if (delta) {
-    if (goog.userAgent.GECKO) {
-      // Firefox's deltas are a tenth that of Chrome/Safari.
+    // Firefox's mouse wheel deltas are a tenth that of Chrome/Safari.
+    // DeltaMode is 1 for a mouse wheel, but not for a trackpad scroll event
+    if (goog.userAgent.GECKO && (e.deltaMode === 1)) {
       delta *= 10;
     }
     var metrics = this.getMetrics_();
-    var pos = -this.workspace_.scrollY + delta;
+    var pos = (metrics.viewTop - metrics.contentTop) + delta;
     var limit = metrics.contentHeight - metrics.viewHeight;
     pos = Math.min(pos, limit);
     pos = Math.max(pos, 0);

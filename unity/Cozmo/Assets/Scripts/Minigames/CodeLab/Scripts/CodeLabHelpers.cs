@@ -74,6 +74,7 @@ namespace CodeLab {
 
   public class CozmoProjectOpenInWorkspaceRequest {
     public Guid projectUUID;
+    public uint versionNum;
     public string projectName;
     [JsonConverter(typeof(RawJsonConverter))]
     public string projectJSON;

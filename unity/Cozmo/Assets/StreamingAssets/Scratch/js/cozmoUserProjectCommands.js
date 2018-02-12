@@ -13,6 +13,7 @@
 
     window.cozmoProjectName = null;
     window.cozmoProjectUUID = window.getUrlVar('projectID') || null;
+    window.cozmoProjectVersionNum = null;
     window.previouslySavedProjectJSON = null;
     window.originalSampleProjectJSON = null;
     window.saveProjectTimerId = null;
@@ -71,10 +72,11 @@
       var xmlStart = '<xml xmlns="http://www.w3.org/1999/xhtml">';
       var xmlEnd = '</xml>';
 
-      if (window.getNodes().length <= 0) {
+      var blocks = Scratch.workspace.getTopBlocks(false);
+      if (blocks.length <= 0) {
         // No other blocks are on the workspace so put green flag back on workspace by itself.
         var xmlTextWithGreenFlag = xmlStart + greenFlagXML + xmlEnd;
-        window.openCozmoProjectXML(window.cozmoProjectUUID, window.cozmoProjectName, xmlTextWithGreenFlag, window.isCozmoSampleProject);
+        window.openCozmoProjectXML(window.cozmoProjectUUID, window.cozmoProjectName, window.cozmoProjectVersionNum, xmlTextWithGreenFlag, window.isCozmoSampleProject);
         if (window.isVertical) {
             Blockly.getMainWorkspace().scrollHome(true);
         }
@@ -86,24 +88,50 @@
           var xmlText = Blockly.Xml.domToText(xml);
           var xmlTextWithGreenFlag = xmlStart + greenFlagXML + xmlText.substring(xmlStart.length, xmlText.length);
 
-          window.openCozmoProjectXML(window.cozmoProjectUUID, window.cozmoProjectName, xmlTextWithGreenFlag, window.isCozmoSampleProject);
+          window.openCozmoProjectXML(window.cozmoProjectUUID, window.cozmoProjectName, window.cozmoProjectVersionNum, xmlTextWithGreenFlag, window.isCozmoSampleProject);
         }
       }
+    }
+
+    window.isGreenFlagBlock = function(block) {
+        var localizedGreenFlagString = 'When green flag clicked';
+        if (window.isVertical) {
+            var locale = LOCALE;
+            switch(locale){
+                case 'en-US':
+                    localizedGreenFlagString = 'when flag clicked';
+                    break;
+                case 'de-DE':
+                    localizedGreenFlagString = 'Wenn flag angeklickt';
+                    break;
+                case 'fr-FR':
+                    localizedGreenFlagString = 'quand flag est cliqué';
+                    break;
+                case 'ja-JP':
+                    localizedGreenFlagString = 'flag がクリックされたとき';
+                    break;
+                default:
+                    window.cozmoDASError("CodeLab.IsGreenFlagBlock.LocaleError", "Unknown locale in window.isGreenFlagBlock");
+                    break;
+            }
+        }
+
+        if (block == localizedGreenFlagString) {
+            return true;
+        }
+
+        return false;
     }
 
     // Check that there is a script on the workspace and it contains
     // more than just the green flag.
     window.hasUserAddedBlocks = function() {
-        // TODO Update to use JSON?
-        var nodes = window.getNodes();
-        var greenFlagType = 'event_whenflagclicked';
+        var blocks = Scratch.workspace.getTopBlocks(false);
         var hasUserAddedBlocks = false;
-        if (nodes.length > 0) {
-            for(var i = 0; i < nodes.length; i++) { //loop thru the nodes
-                if (nodes[i].getAttribute("type") != greenFlagType) {
-                    hasUserAddedBlocks = true;
-                    break;
-                }
+        for (var i = 0, block; block = blocks[i]; i++) {
+            if (!window.isGreenFlagBlock(block)) {
+                hasUserAddedBlocks = true;
+                break;
             }
         }
 
@@ -111,24 +139,14 @@
     }
 
     window.isGreenFlagOnWorkspace = function() {
-        // TODO Update to use JSON?
-        var nodes = window.getNodes();
-        var greenFlagType = 'event_whenflagclicked';
-        for(var i = 0; i < nodes.length; i++) { //loop thru the nodes
-            if (nodes[i].getAttribute("type") == greenFlagType) {
+        var blocks = Scratch.workspace.getTopBlocks(false);
+        for (var i = 0, block; block = blocks[i]; i++) {
+            if (window.isGreenFlagBlock(block)) {
                 return true;
             }
         }
 
         return false;
-    }
-
-    // A node is a block representation on the workspace.
-    window.getNodes = function() {
-        // TODO Update to use JSON?
-        var xml = Blockly.Xml.workspaceToDom(Scratch.workspace);
-        var nodes = xml.getElementsByTagName('block');
-        return nodes;
     }
 
     window.saveProjectCompleted = function (unityIsWaitingForCallback) {
@@ -239,7 +257,7 @@
 
     window.openCozmoProjectJSON = function (cozmoProjectJSON) {
         try {
-            window.openCozmoProject(cozmoProjectJSON.projectUUID, cozmoProjectJSON.projectName, cozmoProjectJSON.projectJSON, null, cozmoProjectJSON.isSampleStr);
+            window.openCozmoProject(cozmoProjectJSON.projectUUID, cozmoProjectJSON.projectName, cozmoProjectJSON.versionNum, cozmoProjectJSON.projectJSON, null, cozmoProjectJSON.isSampleStr);
         }
         catch(err) {
             window.cozmoDASError("Codelab.OpenCozmoProjectJSON.JavaScriptError", err.message);
@@ -248,13 +266,13 @@
     }
 
     // DEPRECATED - only used to open user projects that were created before 2.1 and are still in XML
-    window.openCozmoProjectXML = function(projectUUID, projectName, projectXML, isCozmoSampleProjectStr) {
-        window.openCozmoProject(projectUUID, projectName, null, projectXML, isCozmoSampleProjectStr);
+    window.openCozmoProjectXML = function(projectUUID, projectName, projectVersionNum, projectXML, isCozmoSampleProjectStr) {
+        window.openCozmoProject(projectUUID, projectName, projectVersionNum, null, projectXML, isCozmoSampleProjectStr);
     }
 
     // Don't call this method directly. Please call openCozmoProjectJSON instead.
     // This method takes a projectXML parameter to support pre-2.1 builds.
-    window.openCozmoProject = function(projectUUID, projectName, projectJSON, projectXML, isCozmoSampleProjectStr) {
+    window.openCozmoProject = function(projectUUID, projectName, projectVersionNum, projectJSON, projectXML, isCozmoSampleProjectStr) {
         var isCozmoSampleProject = (isCozmoSampleProjectStr == 'true');
         window.isCozmoSampleProject = isCozmoSampleProject;
 
@@ -264,10 +282,8 @@
             projectXML = window.replaceSampleProjectTextForIntruder(projectXML);
         }
 
-        // Remove all existing scripts from workspace.
-        Scratch.workspace.clear();
-
         window.cozmoProjectUUID = projectUUID;
+        window.cozmoProjectVersionNum = projectVersionNum;
         window.previouslySavedProjectJSON = null;
 
         window.setProjectNameAndSavedText(projectName, isCozmoSampleProject);
@@ -284,12 +300,24 @@
         }
 
         window.startLoadingProject();
-        if (projectJSON != null) {
-            window.Scratch.vm.fromJSON(JSON.stringify(projectJSON));
+
+        if (projectJSON != null) {            
+            window.Scratch.vm.fromJSON(JSON.stringify(projectJSON));            
         }
         else {
             // User project was build pre-Cozmo app 2.1 release. Open projectXML.
-            openBlocklyXML(projectXML);
+        
+            try {
+                // Remove all existing scripts from workspace.
+                Scratch.workspace.clear();
+
+                var domXML = Blockly.Xml.textToDom(projectXML);
+                Blockly.Xml.domToWorkspace(domXML, Scratch.workspace);
+            }
+            catch (err) {
+                window.cozmoDASError("Codelab.OpenCozmoProject.JavaScriptError", "Error when loading XML project: " + err.message);
+            }
+
             window.notifyProjectIsLoaded();
             window.startSaveProjectTimer();
         }
@@ -413,8 +441,17 @@
     }
 
     window.openBlocklyXML = function(xml) {
-        var domXML = Blockly.Xml.textToDom(xml);
-        Blockly.Xml.domToWorkspace(domXML, Scratch.workspace);
+        try {
+            // Remove and reattach the workspace listener (but allow flyout events)
+            Scratch.workspace.removeChangeListener(Scratch.vm.blockListener);   
+            var domXML = Blockly.Xml.textToDom(xml);
+            Blockly.Xml.clearWorkspaceAndLoadFromXml(domXML, Scratch.workspace);
+            Scratch.workspace.addChangeListener(Scratch.vm.blockListener);
+            Scratch.workspace.clearUndo();
+        }
+        catch (err) {
+            window.cozmoDASError("Codelab.openBlocklyXML.JavaScriptError", "Error when loading project: " + err.message);
+        }
     }
 
     // TODO Replace this method used for the very particular case of replacing intruder localized text in sample project.

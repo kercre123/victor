@@ -31,6 +31,7 @@ goog.require('Blockly.Colours');
 goog.require('Blockly.Comment');
 goog.require('Blockly.Connection');
 goog.require('Blockly.Extensions');
+goog.require('Blockly.FieldLabelSerializable');
 goog.require('Blockly.FieldVariableGetter');
 goog.require('Blockly.Input');
 goog.require('Blockly.Mutator');
@@ -181,8 +182,21 @@ Blockly.Block = function(workspace, prototypeName, opt_id) {
   // Record initial inline state.
   /** @type {boolean|undefined} */
   this.inputsInlineDefault = this.inputsInline;
+
+  // Fire a create event.
   if (Blockly.Events.isEnabled()) {
-    Blockly.Events.fire(new Blockly.Events.BlockCreate(this));
+    var existingGroup = Blockly.Events.getGroup();
+    if (!existingGroup) {
+      Blockly.Events.setGroup(true);
+    }
+    try {
+      Blockly.Events.fire(new Blockly.Events.BlockCreate(this));
+    } finally {
+      if (!existingGroup) {
+        Blockly.Events.setGroup(false);
+      }
+    }
+
   }
   // Bind an onchange function, if it exists.
   if (goog.isFunction(this.onchange)) {
@@ -285,6 +299,25 @@ Blockly.Block.prototype.dispose = function(healStack) {
       setTimeout(function() {
         window.ensureGreenFlagIsOnWorkspace();
       }, 0);
+    }
+  }
+};
+
+/**
+ * Call initModel on all fields on the block.
+ * May be called more than once.
+ * Either initModel or initSvg must be called after creating a block and before
+ * the first interaction with it.  Interactions include UI actions
+ * (e.g. clicking and dragging) and firing events (e.g. create, delete, and
+ * change).
+ * @public
+ */
+Blockly.Block.prototype.initModel = function() {
+  for (var i = 0, input; input = this.inputList[i]; i++) {
+    for (var j = 0, field; field = input.fieldRow[j]; j++) {
+      if (field.initModel) {
+        field.initModel();
+      }
     }
   }
 };
@@ -822,6 +855,7 @@ Blockly.Block.prototype.getField = function(name) {
 /**
  * Return all variables referenced by this block.
  * @return {!Array.<string>} List of variable names.
+ * @package
  */
 Blockly.Block.prototype.getVars = function() {
   var vars = [];
@@ -837,18 +871,60 @@ Blockly.Block.prototype.getVars = function() {
 };
 
 /**
- * Notification that a variable is renaming.
- * If the name matches one of this block's variables, rename it.
- * @param {string} oldName Previous name of variable.
- * @param {string} newName Renamed variable.
+ * Return all variables referenced by this block.
+ * @return {!Array.<!Blockly.VariableModel>} List of variable models.
+ * @package
  */
-Blockly.Block.prototype.renameVar = function(oldName, newName) {
+Blockly.Block.prototype.getVarModels = function() {
+  var vars = [];
+  for (var i = 0, input; input = this.inputList[i]; i++) {
+    for (var j = 0, field; field = input.fieldRow[j]; j++) {
+      if (field instanceof Blockly.FieldVariable ||
+          field instanceof Blockly.FieldVariableGetter) {
+        var model = this.workspace.getVariableById(field.getValue());
+        // Check if the variable actually exists (and isn't just a potential
+        // variable).
+        if (model) {
+          vars.push(model);
+        }
+      }
+    }
+  }
+  return vars;
+};
+
+/**
+ * Notification that a variable is renaming but keeping the same ID.  If the
+ * variable is in use on this block, rerender to show the new name.
+ * @param {!Blockly.VariableModel} variable The variable being renamed.
+ * @package
+ */
+Blockly.Block.prototype.updateVarName = function(variable) {
   for (var i = 0, input; input = this.inputList[i]; i++) {
     for (var j = 0, field; field = input.fieldRow[j]; j++) {
       if ((field instanceof Blockly.FieldVariable ||
           field instanceof Blockly.FieldVariableGetter) &&
-          Blockly.Names.equals(oldName, field.getValue())) {
-        field.setValue(newName);
+          variable.getId() == field.getValue()) {
+        field.setText(variable.name);
+      }
+    }
+  }
+};
+
+/**
+ * Notification that a variable is renaming.
+ * If the ID matches one of this block's variables, rename it.
+ * @param {string} oldId ID of variable to rename.
+ * @param {string} newId ID of new variable.  May be the same as oldId, but with
+ *     an updated name.
+ */
+Blockly.Block.prototype.renameVarById = function(oldId, newId) {
+  for (var i = 0, input; input = this.inputList[i]; i++) {
+    for (var j = 0, field; field = input.fieldRow[j]; j++) {
+      if ((field instanceof Blockly.FieldVariable ||
+          field instanceof Blockly.FieldVariableGetter) &&
+          oldId == field.getValue()) {
+        field.setValue(newId);
       }
     }
   }
@@ -1343,8 +1419,14 @@ Blockly.Block.prototype.interpolate_ = function(message, args, lastDummyAlign) {
             case 'field_label':
               field = Blockly.Block.newFieldLabelFromJson_(element);
               break;
+            case 'field_label_serializable':
+              field = Blockly.Block.newFieldLabelSerializableFromJson_(element);
+              break;
             case 'field_input':
               field = Blockly.Block.newFieldTextInputFromJson_(element);
+              break;
+            case 'field_input_removable':
+              field = Blockly.FieldTextInputRemovable.fromJson(element);
               break;
             case 'field_textdropdown':
               field = new Blockly.FieldTextDropdown(element['text'], element['options']);
@@ -1368,6 +1450,9 @@ Blockly.Block.prototype.interpolate_ = function(message, args, lastDummyAlign) {
             case 'field_colour':
               field = new Blockly.FieldColour(element['colour']);
               break;
+            case 'field_colour_slider':
+              field = new Blockly.FieldColourSlider(element['colour']);
+              break;
             case 'field_variable':
               field = Blockly.Block.newFieldVariableFromJson_(element);
               break;
@@ -1386,6 +1471,9 @@ Blockly.Block.prototype.interpolate_ = function(message, args, lastDummyAlign) {
               break;
             case 'field_variable_getter':
               field = Blockly.Block.newFieldVariableGetterFromJson_(element);
+              break;
+            case 'field_vertical_separator':
+              field = new Blockly.FieldVerticalSeparator();
               break;
             case 'field_date':
               if (Blockly.FieldDate) {
@@ -1450,6 +1538,18 @@ Blockly.Block.newFieldLabelFromJson_ = function(options) {
 };
 
 /**
+ * Helper function to construct a FieldLabelSerializable from a JSON arg object,
+ * dereferencing any string table references.
+ * @param {!Object} options A JSON object with options (text, and class).
+ * @returns {!Blockly.FieldLabelSerializable} The new label.
+ * @private
+ */
+Blockly.Block.newFieldLabelSerializableFromJson_ = function(options) {
+  var text = Blockly.utils.replaceMessageReferences(options['text']);
+  return new Blockly.FieldLabelSerializable(text, options['class']);
+};
+
+/**
  * Helper function to construct a FieldTextInput from a JSON arg object,
  * dereferencing any string table references.
  * @param {!Object} options A JSON object with options (text, class, and
@@ -1489,7 +1589,7 @@ Blockly.Block.newFieldVariableFromJson_ = function(options) {
 Blockly.Block.newFieldVariableGetterFromJson_ = function(options) {
   var varname = Blockly.utils.replaceMessageReferences(options['text']);
   return new Blockly.FieldVariableGetter(varname, options['name'],
-      options['class']);
+      options['class'], options['variableType']);
 };
 
 /**

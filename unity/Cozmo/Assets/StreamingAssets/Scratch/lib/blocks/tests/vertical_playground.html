@@ -7,7 +7,9 @@
     <title>Vertical Playground</title>
 
     <script src="../blockly_uncompressed_vertical.js"></script>
-    <script src="../msg/messages.js"></script>
+<!--     <script src="../msg/messages.js"></script> -->
+     <script src="../msg/js/en.js"></script>
+    <script src="../blocks_vertical/vertical_extensions.js"></script>
     <script src="../blocks_common/math.js"></script>
     <script src="../blocks_common/text.js"></script>
     <script src="../blocks_common/colour.js"></script>
@@ -21,6 +23,7 @@
     <script src="../blocks_vertical/sound.js"></script>
     <script src="../blocks_vertical/sensing.js"></script>
     <script src="../blocks_vertical/data.js"></script>
+    <script src="../blocks_vertical/extensions.js"></script>
     <script src="../blocks_vertical/default_toolbox.js"></script>
     <script src="../../../extra/extra-common.js"></script>
     <script src="../../../extra/localize.js"></script>
@@ -28,7 +31,6 @@
     <script>
       'use strict';
 
-      var fakeDragStack = [];
       var workspace = null;
 
       function start() {
@@ -210,7 +212,11 @@
 
       function sprinkles(n) {
         var prototypes = [];
-        var toolbox = getToolboxElement();
+        var toolbox = workspace.options.languageTree;
+        if (!toolbox) {
+          console.error('Toolbox not found; add a toolbox element to the DOM.');
+          return;
+        }
         var blocks = toolbox.getElementsByTagName('block');
         for (var i = 0; i < n; i++) {
           var blockXML = blocks[Math.floor(Math.random() * blocks.length)];
@@ -285,65 +291,6 @@
         if (sessionStorage) {
           sessionStorage.setItem('soundsEnabled', state);
         }
-      }
-
-      function fakeDrag(id, dx, dy, opt_workspace) {
-        var ws = opt_workspace || Blockly.getMainWorkspace();
-        var blockToDrag = ws.getBlockById(id);
-
-        if (!blockToDrag) {
-          fakeDragWrapper();
-          return;
-        }
-        var blockTop = blockToDrag.svgGroup_.getBoundingClientRect().top;
-        var blockLeft = blockToDrag.svgGroup_.getBoundingClientRect().left;
-
-        // Click somewhere on the block.
-        var mouseDownEvent = new MouseEvent('mousedown',
-            {clientX: blockLeft + 5, clientY: blockTop + 5});
-        blockToDrag.onMouseDown_(mouseDownEvent);
-
-        // Throw in a move for good measure.
-        setTimeout(
-          function() {
-            var mouseMoveEvent = new MouseEvent('mousemove',
-                {clientX: blockLeft + dx,
-                clientY: blockTop + dy});
-            blockToDrag.onMouseMove_(mouseMoveEvent);
-
-            // Drop at dx, dy.
-            setTimeout(
-              function() {
-                var mouseUpEvent = new MouseEvent('mouseup',
-                    {clientX: blockLeft + dx,
-                    clientY: blockTop + dy});
-                blockToDrag.onMouseUp_(mouseUpEvent);
-
-                setTimeout(fakeDragWrapper(), 100);
-              }, 30);
-          }, 30);
-      };
-
-      function fakeDragWrapper() {
-        var dragInfo = fakeDragStack.pop();
-        if (dragInfo) {
-          fakeDrag(dragInfo.id, dragInfo.dx, dragInfo.dy, dragInfo.workspace);
-        }
-      }
-
-      function fakeManyDrags() {
-        var blockList = workspace.getAllBlocks();
-        for (var i = 0; i < 2 * blockList.length; i++) {
-          fakeDragStack.push(
-            {
-              id: blockList[Math.round(Math.random() * (blockList.length - 1))].id,
-              // Move some blocks up and to the left, but mostly down and to the right.
-              dx: Math.round((Math.random() - 0.25) * 200),
-              dy: Math.round((Math.random() - 0.25) * 200),
-              workspace: workspace
-            });
-        }
-        fakeDragWrapper();
       }
 
       function reportDemo() {
@@ -562,7 +509,6 @@
       Stress test: &nbsp;
       <input type="button" value="Sprinkles!" onclick="sprinkles(100)">
       <input type="button" value="Spaghetti!" onclick="spaghetti(3)">
-      <input type="button" value="Fake some drags!" onclick="fakeManyDrags()">
     </p>
 
     <p>

@@ -3426,7 +3426,7 @@ namespace CodeLab {
             String projectNameEscaped = EscapeProjectText(projectToOpen.ProjectName);
             if (projectToOpen.ProjectJSON != null) {
               SessionState.DAS_Event("robot.code_lab.open_json_user_project", projectToOpen.ProjectJSON.Length.ToString(), SessionState.DAS_Format_IsVertical(projectToOpen.IsVertical));
-              OpenCozmoProjectJSON(projectNameEscaped, projectToOpen.ProjectJSON, projectToOpen.ProjectUUID, "false");
+              OpenCozmoProjectJSON(projectNameEscaped, projectToOpen.VersionNum, projectToOpen.ProjectJSON, projectToOpen.ProjectUUID, "false");
             }
             else if (projectToOpen.ProjectXML != null) {
               // User project is in XML. It must have been created before the Cozmo app 2.1 release and is CodeLabProject VersionNum 2 or less.
@@ -3435,7 +3435,7 @@ namespace CodeLab {
               String projectXMLEscaped = EscapeXML(projectToOpen.ProjectXML);
 
               // Open requested project in webview
-              this.EvaluateJS("window.openCozmoProjectXML('" + projectToOpen.ProjectUUID + "','" + projectNameEscaped + "',\"" + projectXMLEscaped + "\",'false');");
+              this.EvaluateJS("window.openCozmoProjectXML('" + projectToOpen.ProjectUUID + "','" + projectNameEscaped + "','" + projectToOpen.VersionNum + "',\"" + projectXMLEscaped + "\",'false');");//
             }
             else {
               DAS.Error("CodeLab.NoUserProjectSerialized", "No ProjectJSON or ProjectXML found for user project with _ProjectUUIDToOpen = '" + _ProjectUUIDToOpen + "'");
@@ -3470,14 +3470,14 @@ namespace CodeLab {
               // Sample project is in JSON.
               // Open requested project in webview.
 
-              OpenCozmoProjectJSON(sampleProjectNameEscaped, codeLabSampleProject.ProjectJSON, codeLabSampleProject.ProjectUUID, "true");
+              OpenCozmoProjectJSON(sampleProjectNameEscaped, codeLabSampleProject.VersionNum, codeLabSampleProject.ProjectJSON, codeLabSampleProject.ProjectUUID, "true");
             }
             else if (codeLabSampleProject.ProjectXML != null) {
               // Sample project is still in XML. This will be true for some until we convert them all over.
               String projectXMLEscaped = EscapeXML(codeLabSampleProject.ProjectXML);
 
               // Open requested project in webview
-              this.EvaluateJS("window.openCozmoProjectXML('" + codeLabSampleProject.ProjectUUID + "','" + sampleProjectNameEscaped + "',\"" + projectXMLEscaped + "\",'true');");
+              this.EvaluateJS("window.openCozmoProjectXML('" + codeLabSampleProject.ProjectUUID + "','" + sampleProjectNameEscaped + "','" + codeLabSampleProject.VersionNum + "',\"" + projectXMLEscaped + "\",'true');");
             }
             else {
               DAS.Error("CodeLab.NoSampleProjectSerialized", "No ProjectJSON or ProjectXML found for sample project with _ProjectUUIDToOpen = '" + _ProjectUUIDToOpen + "'");
@@ -3515,7 +3515,7 @@ namespace CodeLab {
               String featuredProjectNameEscaped = EscapeProjectText(featuredProjectName);
 
               // Open requested project in webview
-              OpenCozmoProjectJSON(featuredProjectNameEscaped, serializedProjectJSON, codeLabFeaturedProject.ProjectUUID, "true");
+              OpenCozmoProjectJSON(featuredProjectNameEscaped, codeLabFeaturedProject.VersionNum, serializedProjectJSON, codeLabFeaturedProject.ProjectUUID, "true");
               isOpeningProject = true;
             }
           }
@@ -3569,13 +3569,14 @@ namespace CodeLab {
     }
 
     // Open requested project in webview
-    private void OpenCozmoProjectJSON(String projectName, String projectJSON, Guid projectUUID, string isSampleStr) {
-      DAS.Info("CodeLabTest", "OpenCozmoProjectJSONUnity: projectUUID = " + projectUUID.ToString() + ", isSampleStr = " + isSampleStr);
+    private void OpenCozmoProjectJSON(String projectName, uint projectVersionNum, String projectJSON, Guid projectUUID, string isSampleStr) {
+      DAS.Info("CodeLab.OpenCozmoProjectJSON", "OpenCozmoProjectJSONUnity: projectUUID = " + projectUUID.ToString() + ", isSampleStr = " + isSampleStr);
 
       CozmoProjectOpenInWorkspaceRequest cozmoProjectRequest = new CozmoProjectOpenInWorkspaceRequest();
       cozmoProjectRequest.projectName = projectName;
       cozmoProjectRequest.projectJSON = projectJSON;
       cozmoProjectRequest.projectUUID = projectUUID;
+      cozmoProjectRequest.versionNum = projectVersionNum;
       cozmoProjectRequest.isSampleStr = isSampleStr;
 
       string cozmoProjectSerialized = JsonConvert.SerializeObject(cozmoProjectRequest);

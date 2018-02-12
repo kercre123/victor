@@ -960,6 +960,24 @@
   "codeLabGlossary.block_definitions.description.event_broadcastandwait" : {
     "translation" : "Diffuse (envoie) un message pour déclencher le bloc « quand [message#] est reçu », puis attend que les blocs figurant sous ce dernier s'exécutent intégralement avant de poursuivre. Astuce : pour les programmeurs expérimentés, considérez ce cas comme un appel de fonction dans la plupart des langages de programmation."
   },
+  "codeLabGlossary.block_definitions.title.event_whenbroadcastreceived_with_broadcast_input": {
+    "translation" : "quand [message#] est reçu"
+  },
+  "codeLabGlossary.block_definitions.description.event_whenbroadcastreceived_with_broadcast_input": {
+    "translation" : "Déclenche ce bloc de code et exécute les blocs de code sous celui-ci chaque fois qu'un autre bloc de code diffuse le message correspondant. Astuce : pour les programmeurs expérimentés, considérez les messages comme des fonctions."
+  },
+  "codeLabGlossary.block_definitions.title.event_broadcast_with_broadcast_input": {
+    "translation" : "diffuser [message#]"
+  },
+  "codeLabGlossary.block_definitions.description.event_broadcast_with_broadcast_input": {
+    "translation" : "Diffuse (envoie) un message pour déclencher le bloc « quand [message#] est reçu ». Astuce : une fois le message diffusé, le bloc figurant sous le présent bloc continuera à s'exécuter. Ainsi, cette pile initiale de blocs et les blocs figurant sous « quand [message#] est reçu » s'exécutent en parallèle. Pour les programmeurs expérimentés, considérez ce cas comme l'exécution d'un nouveau thread dans la plupart des langages de programmation."
+  },
+  "codeLabGlossary.block_definitions.title.event_broadcastandwait_with_broadcast_input": {
+    "translation" : "diffuser [message#] et attendre qu'il s'achève"
+  },
+  "codeLabGlossary.block_definitions.description.event_broadcastandwait_with_broadcast_input": {
+    "translation" : "Diffuse (envoie) un message pour déclencher le bloc « quand [message#] est reçu », puis attend que les blocs figurant sous ce dernier s'exécutent intégralement avant de poursuivre. Astuce : pour les programmeurs expérimentés, considérez ce cas comme un appel de fonction dans la plupart des langages de programmation."
+  },
   "codeLabGlossary.block_definitions.title.control_wait" : {
     "translation" : "attendre [X] secondes"
   },

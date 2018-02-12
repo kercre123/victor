@@ -36,6 +36,7 @@ goog.require('Blockly.Events');
 goog.require('Blockly.FieldAngle');
 goog.require('Blockly.FieldCheckbox');
 goog.require('Blockly.FieldColour');
+goog.require('Blockly.FieldColourSlider');
 // Date picker commented out since it increases footprint by 60%.
 // Add it only if you need it.
 //goog.require('Blockly.FieldDate');
@@ -43,10 +44,12 @@ goog.require('Blockly.FieldDropdown');
 goog.require('Blockly.FieldIconMenu');
 goog.require('Blockly.FieldImage');
 goog.require('Blockly.FieldTextInput');
+goog.require('Blockly.FieldTextInputRemovable');
 goog.require('Blockly.FieldTextDropdown');
 goog.require('Blockly.FieldNumber');
 goog.require('Blockly.FieldNumberDropdown');
 goog.require('Blockly.FieldVariable');
+goog.require('Blockly.FieldVerticalSeparator');
 goog.require('Blockly.Generator');
 goog.require('Blockly.Msg');
 goog.require('Blockly.Procedures');
@@ -293,6 +296,11 @@ Blockly.hideChaff = function(opt_allowToolbox) {
         // *** ANKI CHANGE ***
         // Update delete areas now that flyout is closed. msintov, 9/1/17
         workspace.recordDeleteAreas();
+
+        // *** ANKI CHANGE ***
+        // Reduce toolbox width to only include toolbox itself instead of both toolbox and flyout, now that flyout is closed.
+        // TODO Read the 70 dynamically (from scratchCategoryMenu width setting in css.js) instead of hard-coding it.
+        workspace.toolbox_.setWidth(70);
       }
     }
   }
@@ -348,6 +356,7 @@ Blockly.confirm = function(message, callback) {
   // callback(window.confirm(message));
 };
 
+/* eslint-disable no-unused-vars */
 /**
  * Wrapper to window.prompt() that app developers may override to provide
  * alternatives to the modal browser window. Built-in browser prompts are
@@ -356,8 +365,12 @@ Blockly.confirm = function(message, callback) {
  * @param {string} message The message to display to the user.
  * @param {string} defaultValue The value to initialize the prompt with.
  * @param {!function(string)} callback The callback for handling user response.
+ * @param {?string} opt_title An optional title for the prompt.
  */
-Blockly.prompt = function(message, defaultValue, callback) {
+Blockly.prompt = function(message, defaultValue, callback, opt_title) {
+  // opt_title is unused because we only need it to pass information to the
+  // scratch-gui, which overwrites this function
+
   // *** ANKI CHANGE ***
   // Use of custom modal for easier translation via Blockly.Msg
   ModalPrompt.open({
@@ -369,6 +382,7 @@ Blockly.prompt = function(message, defaultValue, callback) {
   });
   // callback(window.prompt(message, defaultValue));
 };
+/* eslint-enable no-unused-vars */
 
 /**
  * Helper function for defining a block from JSON.  The resulting function has

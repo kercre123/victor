@@ -1,5 +1,8 @@
 const RenderedTarget = require('./rendered-target');
 const Blocks = require('../engine/blocks');
+const {loadSoundFromAsset} = require('../import/load-sound');
+const {loadCostumeFromAsset} = require('../import/load-costume');
+const StringUtil = require('../util/string-util');
 
 class Sprite {
     /**
@@ -53,6 +56,7 @@ class Sprite {
         const newClone = new RenderedTarget(this, this.runtime);
         newClone.isOriginal = this.clones.length === 0;
         this.clones.push(newClone);
+        newClone.initAudio();
         if (newClone.isOriginal) {
             newClone.initDrawable();
             this.runtime.fireTargetWasCreated(newClone);
@@ -68,10 +72,38 @@ class Sprite {
      * @param {!RenderedTarget} clone - the clone to be removed.
      */
     removeClone (clone) {
+        this.runtime.fireTargetWasRemoved(clone);
         const cloneIndex = this.clones.indexOf(clone);
         if (cloneIndex >= 0) {
             this.clones.splice(cloneIndex, 1);
         }
+    }
+
+    duplicate () {
+        const newSprite = new Sprite(null, this.runtime);
+
+        newSprite.blocks = this.blocks.duplicate();
+
+        const allNames = this.runtime.targets.map(t => t.name);
+        newSprite.name = StringUtil.unusedName(this.name, allNames);
+
+        const assetPromises = [];
+
+        newSprite.costumes = this.costumes.map(costume => {
+            const newCostume = Object.assign({}, costume);
+            const costumeAsset = this.runtime.storage.get(costume.assetId);
+            assetPromises.push(loadCostumeFromAsset(newCostume, costumeAsset, this.runtime));
+            return newCostume;
+        });
+
+        newSprite.sounds = this.sounds.map(sound => {
+            const newSound = Object.assign({}, sound);
+            const soundAsset = this.runtime.storage.get(sound.assetId);
+            assetPromises.push(loadSoundFromAsset(newSound, soundAsset, this.runtime));
+            return newSound;
+        });
+
+        return Promise.all(assetPromises).then(() => newSprite);
     }
 }
 

@@ -49,7 +49,10 @@ Blockly.Blocks['colour_picker'] = {
       "message0": "%1",
       "args0": [
         {
+          // *** ANKI CHANGE ***
           "type": "field_colour",
+          //"type": "field_colour_slider",
+          
           "name": "COLOUR",
 
           // *** ANKI CHANGE ***

@@ -118,6 +118,14 @@ Blockly.Flyout = function(workspaceOptions) {
    * @private
    */
   this.parentToolbox_ = null;
+
+  /**
+   * The target position for the flyout scroll animation in pixels.
+   * Is a number while animating, null otherwise.
+   * @type {?number}
+   * @package
+   */
+  this.scrollTarget = null;
 };
 
 /**
@@ -155,6 +163,8 @@ Blockly.Flyout.prototype.CORNER_RADIUS = 0;
  // *** ANKI CHANGE ***
 // Change to make blocks appear closer together in the toolbox. Was 12.
 Blockly.Flyout.prototype.MARGIN = 6;
+
+// TODO: Move GAP_X and GAP_Y to their appropriate files.
 
 /**
  * Gap between items in horizontal flyouts. Can be overridden with the "sep"
@@ -231,6 +241,14 @@ Blockly.Flyout.prototype.verticalOffset_ = 0;
 Blockly.Flyout.prototype.dragAngleRange_ = 70;
 
 /**
+ * The fraction of the distance to the scroll target to move the flyout on
+ * each animation frame, when auto-scrolling. Values closer to 1.0 will make
+ * the scroll animation complete faster. Use 1.0 for no animation.
+ * @type {number}
+ */
+Blockly.Flyout.prototype.scrollAnimationFraction = 0.3;
+
+/**
  * Creates the flyout's DOM.  Only needs to be called once. The flyout can
  * either exist as its own svg element or be a g element nested inside a
  * separate svg element.
@@ -287,26 +305,9 @@ Blockly.Flyout.prototype.init = function(targetWorkspace) {
       this.targetWorkspace_.getGesture.bind(this.targetWorkspace_);
 
   // Get variables from the main workspace rather than the target workspace.
-  this.workspace_.getVariable =
-      this.targetWorkspace_.getVariable.bind(this.targetWorkspace_);
+  this.workspace_.variableMap_  = this.targetWorkspace_.getVariableMap();
 
-  this.workspace_.getVariableById =
-      this.targetWorkspace_.getVariableById.bind(this.targetWorkspace_);
-
-  this.workspace_.getVariablesOfType =
-      this.targetWorkspace_.getVariablesOfType.bind(this.targetWorkspace_);
-
-  this.workspace_.deleteVariable =
-      this.targetWorkspace_.deleteVariable.bind(this.targetWorkspace_);
-
-  this.workspace_.deleteVariableById =
-      this.targetWorkspace_.deleteVariableById.bind(this.targetWorkspace_);
-
-  this.workspace_.renameVariable =
-      this.targetWorkspace_.renameVariable.bind(this.targetWorkspace_);
-
-  this.workspace_.renameVariableById =
-      this.targetWorkspace_.renameVariableById.bind(this.targetWorkspace_);
+  this.workspace_.createPotentialVariableMap();
 };
 
 /**
@@ -381,6 +382,13 @@ Blockly.Flyout.prototype.isVisible = function() {
  * @param {boolean} visible True if visible.
  */
 Blockly.Flyout.prototype.setVisible = function(visible) {
+  // *** ANKI CHANGE ***
+  // If flyout is set to visible, include the width of the flyout in the toolbox setting.
+  if (window.isVertical && visible) {
+    /// TODO Read the 70 dynamically from css.js instead of hard-coding it.
+    this.parentToolbox_.setWidth(70 + this.getWidth());
+  }
+
   var visibilityChanged = (visible != this.isVisible());
 
   this.isVisible_ = visible;
@@ -446,22 +454,9 @@ Blockly.Flyout.prototype.hide = function() {
  *     Variables and procedures have a custom set of blocks.
  */
 Blockly.Flyout.prototype.show = function(xmlList) {
-  this.workspace_.setBulkUpdate(true);
+  this.workspace_.setResizesEnabled(false);
   this.hide();
   this.clearOldBlocks_();
-
-  // Handle dynamic categories, represented by a name instead of a list of XML.
-  // Look up the correct category generation function and call that to get a
-  // valid XML list.
-  if (typeof xmlList == 'string') {
-    var fnToApply = this.workspace_.targetWorkspace.getToolboxCategoryCallback(
-        xmlList);
-    goog.asserts.assert(goog.isFunction(fnToApply),
-        'Couldn\'t find a callback function when opening a toolbox category.');
-    xmlList = fnToApply(this.workspace_.targetWorkspace);
-    goog.asserts.assert(goog.isArray(xmlList),
-        'The result of a toolbox category callback must be an array.');
-  }
 
   this.setVisible(true);
   // Create the blocks to be shown in this flyout.
@@ -469,6 +464,20 @@ Blockly.Flyout.prototype.show = function(xmlList) {
   var gaps = [];
   this.permanentlyDisabled_.length = 0;
   for (var i = 0, xml; xml = xmlList[i]; i++) {
+    // Handle dynamic categories, represented by a name instead of a list of XML.
+    // Look up the correct category generation function and call that to get a
+    // valid XML list.
+    if (typeof xml === 'string') {
+      var fnToApply = this.workspace_.targetWorkspace.getToolboxCategoryCallback(
+          xmlList[i]);
+      var newList = fnToApply(this.workspace_.targetWorkspace);
+      // Insert the new list of blocks in the middle of the list.
+      // We use splice to insert at index i, and remove a single element
+      // (the placeholder string). Because the spread operator (...) is not
+      // available, use apply and concat the array.
+      xmlList.splice.apply(xmlList, [i, 1].concat(newList));
+      xml = xmlList[i];
+    }
     if (xml.tagName) {
       var tagName = xml.tagName.toUpperCase();
       var default_gap = this.horizontalLayout_ ? this.GAP_X : this.GAP_Y;
@@ -521,7 +530,7 @@ Blockly.Flyout.prototype.show = function(xmlList) {
   this.listeners_.push(Blockly.bindEvent_(this.svgBackground_, 'mouseover',
       this, deselectAll));
 
-  this.workspace_.setBulkUpdate(false);
+  this.workspace_.setResizesEnabled(true);
   this.reflow();
 
   // Correctly position the flyout's scrollbar when it opens.
@@ -529,6 +538,72 @@ Blockly.Flyout.prototype.show = function(xmlList) {
 
   this.reflowWrapper_ = this.reflow.bind(this);
   this.workspace_.addChangeListener(this.reflowWrapper_);
+
+  this.recordCategoryScrollPositions_();
+};
+
+/**
+ * Store an array of category names and scrollbar positions.
+ * This is used when scrolling the flyout to cause a category to be selected.
+ * @private
+ */
+Blockly.Flyout.prototype.recordCategoryScrollPositions_ = function() {
+  this.categoryScrollPositions = [];
+  for (var i = 0; i < this.buttons_.length; i++) {
+    if (this.buttons_[i].getIsCategoryLabel()) {
+      var categoryLabel = this.buttons_[i];
+      this.categoryScrollPositions.push({
+        categoryName: categoryLabel.getText(),
+        position: this.horizontalLayout_ ?
+          categoryLabel.getPosition().x : categoryLabel.getPosition().y
+      });
+    }
+  }
+};
+
+/**
+ * Select a category using the scroll position.
+ * @param {number} pos The scroll position in pixels.
+ * @package
+ */
+Blockly.Flyout.prototype.selectCategoryByScrollPosition = function(pos) {
+  // If we are currently auto-scrolling, due to selecting a category by clicking on it,
+  // do not update the category selection.
+  if (this.scrollTarget) {
+    return;
+  }
+  var workspacePos = pos / this.workspace_.scale;
+  // Traverse the array of scroll positions in reverse, so we can select the furthest
+  // category that the scroll position is beyond.
+  for (var i = this.categoryScrollPositions.length - 1; i >= 0; i--) {
+    if (workspacePos > this.categoryScrollPositions[i].position) {
+      this.parentToolbox_.selectCategoryByName(this.categoryScrollPositions[i].categoryName);
+      return;
+    }
+  }
+};
+
+/**
+ * Step the scrolling animation by scrolling a fraction of the way to
+ * a scroll target, and request the next frame if necessary.
+ * @package
+ */
+Blockly.Flyout.prototype.stepScrollAnimation = function() {
+  if (!this.scrollTarget) {
+    return;
+  }
+  var scrollPos = this.horizontalLayout_ ?
+    -this.workspace_.scrollX : -this.workspace_.scrollY;
+  var diff = this.scrollTarget - scrollPos;
+  if (Math.abs(diff) < 1) {
+    this.scrollbar_.set(this.scrollTarget);
+    this.scrollTarget = null;
+    return;
+  }
+  this.scrollbar_.set(scrollPos + diff * this.scrollAnimationFraction);
+
+  // Polyfilled by goog.dom.animationFrame.polyfill
+  requestAnimationFrame(this.stepScrollAnimation.bind(this));
 };
 
 /**
@@ -544,8 +619,9 @@ Blockly.Flyout.prototype.clearOldBlocks_ = function() {
     }
   }
   // Delete any background buttons from a previous showing.
-  for (var j = 0, rect; rect = this.backgroundButtons_[j]; j++) {
-    goog.dom.removeNode(rect);
+  for (var j = 0; j < this.backgroundButtons_.length; j++) {
+    var rect = this.backgroundButtons_[j];
+    if (rect) goog.dom.removeNode(rect);
   }
   this.backgroundButtons_.length = 0;
 
@@ -553,6 +629,9 @@ Blockly.Flyout.prototype.clearOldBlocks_ = function() {
     button.dispose();
   }
   this.buttons_.length = 0;
+
+  // Clear potential variables from the previous showing.
+  this.workspace_.getPotentialVariableMap().clear();
 };
 
 /**
@@ -623,26 +702,27 @@ Blockly.Flyout.prototype.onMouseDown_ = function(e) {
 Blockly.Flyout.prototype.createBlock = function(originalBlock) {
   var newBlock = null;
   Blockly.Events.disable();
+  var variablesBeforeCreation = this.targetWorkspace_.getAllVariables();
   this.targetWorkspace_.setResizesEnabled(false);
   try {
     newBlock = this.placeNewBlock_(originalBlock);
-    //Force a render on IE and Edge to get around the issue described in
-    //Blockly.Field.getCachedWidth
-    if (goog.userAgent.IE || goog.userAgent.EDGE) {
-      var blocks = newBlock.getDescendants();
-      for (var i = blocks.length - 1; i >= 0; i--) {
-        blocks[i].render(false);
-      }
-    }
     // Close the flyout.
     Blockly.hideChaff();
   } finally {
     Blockly.Events.enable();
   }
 
+  var newVariables = Blockly.Variables.getAddedVariables(this.targetWorkspace_,
+      variablesBeforeCreation);
+
   if (Blockly.Events.isEnabled()) {
     Blockly.Events.setGroup(true);
     Blockly.Events.fire(new Blockly.Events.Create(newBlock));
+    // Fire a VarCreate event for each (if any) new variable created.
+    for(var i = 0; i < newVariables.length; i++) {
+      var thisVariable = newVariables[i];
+      Blockly.Events.fire(new Blockly.Events.VarCreate(thisVariable));
+    }
   }
   if (this.autoClose) {
     this.hide();

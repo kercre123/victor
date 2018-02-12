@@ -122,6 +122,7 @@ Blockly.FieldDropdown.prototype.init = function() {
   });
   this.arrow_.setAttributeNS('http://www.w3.org/1999/xlink',
       'xlink:href', Blockly.mainWorkspace.options.pathToMedia + 'dropdown-arrow.svg');
+  this.className_ += ' blocklyDropdownText';
 
   Blockly.FieldDropdown.superClass_.init.call(this);
   // If not in a shadow block, draw a box.
@@ -151,6 +152,9 @@ Blockly.FieldDropdown.prototype.init = function() {
  * @private
  */
 Blockly.FieldDropdown.prototype.showEditor_ = function() {
+  var options = this.getOptions();
+  if (options.length == 0) return;
+
   this.dropDownOpen_ = true;
   // If there is an existing drop-down someone else owns, hide it immediately and clear it.
   Blockly.DropDownDiv.hideWithoutAnimation();
@@ -172,7 +176,6 @@ Blockly.FieldDropdown.prototype.showEditor_ = function() {
 
   var menu = new goog.ui.Menu();
   menu.setRightToLeft(this.sourceBlock_.RTL);
-  var options = this.getOptions();
   for (var i = 0; i < options.length; i++) {
     var content = options[i][0]; // Human-readable text or image.
     var value = options[i][1];   // Language-neutral value.
@@ -410,17 +413,20 @@ Blockly.FieldDropdown.prototype.setValue = function(newValue) {
       var content = options[i][0];
       if (typeof content == 'object') {
         this.imageJson_ = content;
-        this.setText(content.alt);
+        this.text_ = content.alt;
       } else {
         this.imageJson_ = null;
-        this.setText(content);
+        this.text_ = content;
       }
+      // Always rerender if either the value or the text has changed.
+      this.forceRerender();
       return;
     }
   }
   // Value not found.  Add it, maybe it will become valid once set
   // (like variable names).
-  this.setText(newValue);
+  this.text_ = newValue;
+  this.forceRerender();
 };
 
 /**
@@ -436,11 +442,6 @@ Blockly.FieldDropdown.prototype.setText = function(text) {
   this.updateTextNode_();
 
   if (this.textElement_) {
-    // Update class for dropdown text.
-    // This class is reset every time updateTextNode_ is called.
-    this.textElement_.setAttribute('class',
-        this.textElement_.getAttribute('class') + ' blocklyDropdownText'
-    );
     this.textElement_.parentNode.appendChild(this.arrow_);
   }
   if (this.sourceBlock_ && this.sourceBlock_.rendered) {
