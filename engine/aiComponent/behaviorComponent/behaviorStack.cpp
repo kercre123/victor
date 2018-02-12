@@ -29,7 +29,7 @@ namespace Anki {
 namespace Cozmo {
 
 namespace{
-
+  const std::string kWebVizModuleName = "behaviors";
 }
 
 
@@ -236,6 +236,21 @@ void BehaviorStack::SendDebugVizMessages(BehaviorExternalInterface& behaviorExte
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorStack::SendDebugBehaviorTreeToWebViz(BehaviorExternalInterface& behaviorExternalInterface) const
 {
+  Json::Value data = BuildDebugBehaviorTree(behaviorExternalInterface);
+  
+  const auto* context = behaviorExternalInterface.GetRobotInfo().GetContext();
+  if( context != nullptr ) {
+    const auto* webService = context->GetWebService();
+    if( webService != nullptr ){
+      webService->SendToWebViz( kWebVizModuleName, data );
+    }
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Json::Value BehaviorStack::BuildDebugBehaviorTree(BehaviorExternalInterface& behaviorExternalInterface) const
+{
+   
   Json::Value data;
   data["time"] = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   auto& tree = data["tree"];
@@ -260,14 +275,7 @@ void BehaviorStack::SendDebugBehaviorTreeToWebViz(BehaviorExternalInterface& beh
     stack.append( stackElem->GetDebugLabel() );
   }
   
-  const auto* context = behaviorExternalInterface.GetRobotInfo().GetContext();
-  if( context != nullptr ) {
-    const auto* webService = context->GetWebService();
-    if( webService != nullptr ){
-      const std::string moduleName = "behaviors";
-      webService->SendToWebViz( moduleName, data );
-    }
-  }
+  return data;
 }
 
 

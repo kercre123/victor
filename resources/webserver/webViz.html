@@ -267,15 +267,42 @@
         subscribedModules.splice(idx, 1);
       }
     }
+    var sendToSocket = function(moduleName, data) {
+      var payload = {"type": "data", "module": moduleName.toLowerCase(), "data": data};
+      socket.send( JSON.stringify(payload) );
+    }
 
+    var modulesContexts = {};
     var moduleMethods = {}; // global passed to modules
+    var moduleSendDataFunc; // global passed to modules
     $(function(){
 
       // load module data
       var moduleIndex = 0;
       var moduleNames = Object.keys(modules).sort();
       
-      var loadJS = function(url, onLoad, elem){
+      var loadJS = function(moduleIndex, onLoad, elem){
+
+        // add an empty object for methods and callbacks
+        modulesContexts[moduleNames[moduleIndex]] = {
+          methods: {},
+          sendFunc: {}
+        };
+
+        // bind moduleName to the function passed to the module
+        modulesContexts[moduleNames[moduleIndex]].sendFunc 
+          = (function (moduleName) { 
+              return function(data){
+                  sendToSocket(moduleName, data);
+              } 
+            })(moduleNames[moduleIndex]);
+
+        // these refs will be sent to the module
+        moduleMethods = modulesContexts[moduleNames[moduleIndex]].methods;
+        moduleSendDataFunc = modulesContexts[moduleNames[moduleIndex]].sendFunc;
+
+        var url = modules[moduleNames[moduleIndex]];
+
         var scriptTag = document.createElement('script');
         scriptTag.src = url;
 
@@ -318,11 +345,10 @@
         } else {
           // increment and continue
           ++moduleIndex;
-          moduleMethods = {};
-          loadJS(modules[moduleNames[moduleIndex]], onModuleLoad, document.body);
+          loadJS(moduleIndex, onModuleLoad, document.body);
         }
       }
-      loadJS(modules[moduleNames[moduleIndex]], onModuleLoad, document.body);
+      loadJS(moduleIndex, onModuleLoad, document.body);
 
       
 

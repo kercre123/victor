@@ -14,12 +14,17 @@
 #define AI_COMPONENT_BEHAVIOR_COMPONENT_BEHAVIOR_STACK
 
 #include "util/helpers/noncopyable.h"
+#include "util/signals/simpleSignal_fwd.h"
 
 #include <map>
 #include <memory>
 #include <set>
 #include <unordered_map>
 #include <vector>
+
+namespace Json {
+class Value;
+}
 
 namespace Anki {
 namespace Cozmo {
@@ -63,6 +68,8 @@ public:
   
   // for debug only, prints stack info
   void DebugPrintStack(const std::string& debugStr) const;
+  // builds and returns the behavior tree as a flat array in json
+  Json::Value BuildDebugBehaviorTree(BehaviorExternalInterface& behaviorExternalInterface) const;
   
 private:
   std::vector<IBehavior*> _behaviorStack;
@@ -82,6 +89,7 @@ private:
   
   // sends behavior tree to web viz
   void SendDebugBehaviorTreeToWebViz(BehaviorExternalInterface& behaviorExternalInterface) const;
+  
 };
 
 

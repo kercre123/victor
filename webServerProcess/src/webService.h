@@ -17,8 +17,10 @@
 #include <vector>
 #include <mutex>
 #include <unordered_set>
+#include <unordered_map>
 
 #include "util/export/export.h"
+#include "util/signals/simpleSignal.hpp"
 
 struct mg_context; // copied from civetweb.h
 struct mg_connection;
@@ -55,6 +57,15 @@ public:
   
   inline void SendToWebViz(const std::string& moduleName, const Json::Value& data) const { SendToWebSockets(moduleName, data); }
   
+  // subscribe to when a client connects and notifies the webservice that they want data for moduleName
+  using SendToClientFunc = std::function<void(const Json::Value&)>;
+  using OnWebVizSubscribedType = Signal::Signal<void(const SendToClientFunc&)>;
+  OnWebVizSubscribedType& OnWebVizSubscribed(const std::string& moduleName) { return _webVizSubscribedSignals[moduleName]; }
+  
+  // subscribe to when a client (who is listening to moduleName) sends data back to the webservice
+  using OnWebVizDataType = Signal::Signal<void(const Json::Value&,const SendToClientFunc&)>;
+  OnWebVizDataType& OnWebVizData(const std::string& moduleName) { return _webVizDataSignals[moduleName]; }
+  
   const std::string& getConsoleVarsTemplate();
 
   enum RequestType
@@ -64,14 +75,19 @@ public:
     RT_ConsoleVarSet,
     RT_ConsoleVarList,
     RT_ConsoleFuncCall,
+    
+    RT_WebsocketOnSubscribe,
+    RT_WebsocketOnData,
   };
 
   struct Request
   {
     Request(RequestType rt, const std::string& param1, const std::string& param2);
+    Request(RequestType rt, const std::string& param1, const std::string& param2, const std::string& param3);
     RequestType _requestType;
     std::string _param1;
     std::string _param2;
+    std::string _param3;
     std::string _result;
     bool        _resultReady; // Result is ready for use by the webservice thread
     bool        _done;        // Result has been used and now it's OK for main thread to delete this item
@@ -111,6 +127,9 @@ private:
   std::string _consoleVarsUIHTMLTemplate;
 
   std::vector<Request*> _requests;
+  
+  std::unordered_map<std::string, OnWebVizSubscribedType> _webVizSubscribedSignals;
+  std::unordered_map<std::string, OnWebVizDataType> _webVizDataSignals;
 };
 
 } // namespace WebService

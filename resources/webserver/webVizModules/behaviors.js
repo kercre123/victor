@@ -1,6 +1,33 @@
-(function(moduleMethods) {
+(function(myMethods, sendData) {
 
   // helper methods
+
+  function setBehaviorDropdown(data, container) {
+    // create if needed, then populate a dropdown with behaviorIDs,
+    // and when the user selects one, tell the engine to start that behavior 
+    var dropDown = $('#behaviorDropdown');
+    if( dropDown.length == 0 ) {
+      dropDown = $('<select></select>', {id: 'behaviorDropdown'}).appendTo(container);
+      dropDown.change(function() {
+        if( this.value ) {
+          var payload = {'behaviorName': this.value};
+          sendData( payload );
+
+          flatData = undefined;
+          treeData = undefined;
+          svgGroups.rowGroup.selectAll('*').remove();
+          svgGroups.labelGroup.selectAll('*').remove();
+          svgGroups.timeBarsGroup.selectAll('.timeBar').remove();
+          svgGroups.zoomGroup.selectAll('.miniTimeBar').remove();
+        }
+      });
+    }
+    dropDown.empty();
+    $("<option/>", {val: '', text:'Select a behaviorID to switch to immediately'}).appendTo(dropDown);
+    $(data).each(function() {
+      $("<option/>", {val: this, text: this}).appendTo(dropDown);
+    });
+  }
 
   var liveUpdating = true;
   function setLiveUpdates(v) {
@@ -503,7 +530,7 @@
   // this module's methods, passed back to calling page
   // // // // // // // // // // // // // // // // // // 
 
-  moduleMethods.update = function(dt, elem) {
+  myMethods.update = function(dt, elem) {
     cachedTime += dt;
     if( hasLiveUpdates() ) {
       globalTime += cachedTime;
@@ -519,8 +546,8 @@
     }
   } // end update
 
-  moduleMethods.init = function(elem) {
-    
+  myMethods.init = function(elem) {
+
     params.duration = 400;
     params.margin = {top: 30, right: 20, bottom: 30, left: 20};
     params.frameWidth = $(elem).width() - params.margin.right - params.margin.left;
@@ -648,7 +675,13 @@
              });
   }; // end init
 
-  moduleMethods.onData = function(allData, elem) {
+  myMethods.onData = function(allData, elem) {
+
+    if( typeof allData.tree === 'undefined' ) {
+      // currently the only other option a list of behaviors
+      setBehaviorDropdown( allData, elem );
+      return;
+    }
 
     cachedTime = allData.time;
     var stack = allData.stack;
@@ -710,9 +743,14 @@
 
   }; // end onData 
 
-  moduleMethods.getStyles = function() {
+  myMethods.getStyles = function() {
     // return a string of all css styles to be injected
     return `
+
+      #behaviorDropdown {
+        margin-left: 20px;
+        padding-left:20px;
+      }
       .node text {
         cursor: pointer;
         font: 10px sans-serif;
@@ -774,4 +812,4 @@
       }`
   }; // end getStyles
 
-})(moduleMethods);
+})(moduleMethods, moduleSendDataFunc);

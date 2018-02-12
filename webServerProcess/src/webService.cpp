@@ -166,29 +166,36 @@ LogHandler(struct mg_connection *conn, void *cbdata)
 
 static int
 ProcessRequest(struct mg_connection *conn, Anki::Cozmo::WebService::WebService::RequestType requestType,
-               const std::string& param1, const std::string& param2)
+               const std::string& param1, const std::string& param2, const std::string& param3 = "", bool waitAndSendResponse = true)
 {
   using namespace Anki::Cozmo::WebService;
-  WebService::Request* requestPtr = new WebService::Request(requestType, param1, param2);
+  WebService::Request* requestPtr = new WebService::Request(requestType, param1, param2, param3);
 
   struct mg_context *ctx = mg_get_context(conn);
   Anki::Cozmo::WebService::WebService* that = static_cast<Anki::Cozmo::WebService::WebService*>(mg_get_user_data(ctx));
 
   that->AddRequest(requestPtr);
 
-  // Now wait until the main thread processes the request
-  do
-  {
-    std::this_thread::sleep_for(std::chrono::milliseconds(20));
-  } while (!requestPtr->_resultReady);
+  if( waitAndSendResponse ) {
+    
+    // Now wait until the main thread processes the request
+    do
+    {
+      std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    } while (!requestPtr->_resultReady);
 
-  mg_printf(conn,
-            "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
-            "close\r\n\r\n");
-  mg_printf(conn, "%s\n", requestPtr->_result.c_str());
+  
+    mg_printf(conn,
+              "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
+              "close\r\n\r\n");
+    mg_printf(conn, "%s\n", requestPtr->_result.c_str());
+  
+    // Now mark the request as done so the main thread can delete it.
+    // if you pass !waitAndSendResponse, you need to manually set this flag
+    requestPtr->_done = true;
+  }
 
-  // Now mark the request as done so the main thread can delete it
-  requestPtr->_done = true;
+  
 
   return 1;
 }
@@ -336,14 +343,23 @@ ConsoleFuncCall(struct mg_connection *conn, void *cbdata)
   return returnCode;
 }
 
-Anki::Cozmo::WebService::WebService::Request::Request(RequestType rt, const std::string& param1, const std::string& param2)
+Anki::Cozmo::WebService::WebService::Request::Request(RequestType rt,
+                                                      const std::string& param1,
+                                                      const std::string& param2,
+                                                      const std::string& param3)
 {
   _requestType = rt;
   _param1 = param1;
   _param2 = param2;
+  _param3 = param3;
   _result = "";
   _resultReady = false;
   _done = false;
+}
+Anki::Cozmo::WebService::WebService::Request::Request(RequestType rt, const std::string& param1, const std::string& param2)
+  : Request(rt, param1, param2, "")
+{
+  
 }
 
 static int
@@ -598,6 +614,45 @@ void WebService::Update()
             else {
               PRINT_NAMED_INFO("WebService", "CONSOLE_FUNC %s %s not found", func.c_str(), args.c_str());
             }
+          }
+          break;
+        case RT_WebsocketOnSubscribe:
+        case RT_WebsocketOnData:
+          {
+            const auto& moduleName = requestPtr->_param1;
+            const auto& idxStr = requestPtr->_param2;
+            size_t idx = std::stoi( idxStr );
+            
+            auto sendToClient = [idx, moduleName, this](const Json::Value& toSend){
+              // might crash if webservice is somehow destroyed after the subscriber, but only in dev
+              if( (idx < _webSocketConnections.size())
+                 && (_webSocketConnections[idx].subscribedModules.count( moduleName ) > 0) )
+              {
+                Json::Value payload;
+                payload["module"] = moduleName;
+                payload["data"] = toSend;
+                SendToWebSocket( _webSocketConnections[idx].conn, payload );
+              }
+            };
+            
+            if( requestPtr->_requestType == RT_WebsocketOnSubscribe ) {
+              auto signalIt = _webVizSubscribedSignals.find( moduleName );
+              if( signalIt != _webVizSubscribedSignals.end() ) {
+                signalIt->second.emit( sendToClient );
+              }
+            } else if( requestPtr->_requestType == RT_WebsocketOnData ) {
+              const auto& dataStr = requestPtr->_param3;
+              Json::Reader reader;
+              Json::Value data;
+              
+              if( reader.parse(dataStr, data) ) {
+                auto signalIt = _webVizDataSignals.find( moduleName );
+                if( signalIt != _webVizDataSignals.end() ) {
+                  signalIt->second.emit( data, sendToClient );
+                }
+              }
+            }
+            requestPtr->_done = true; // no one cares about the result, just cleanup immediately
           }
           break;
       }
@@ -887,13 +942,34 @@ void WebService::OnReceiveWebSocket(struct mg_connection* conn, const Json::Valu
   });
   
   if( it != _webSocketConnections.end() ) {
-    if( !data["type"].isNull() ) {
+    if( !data["type"].isNull() && !data["module"].isNull() ) {
+      const std::string& moduleName = data["module"].asString();
+      size_t idx = it - _webSocketConnections.begin();
       
-      if( (data["type"].asString() == "subscribe") && !data["module"].isNull() ) {
-        it->subscribedModules.insert( data["module"].asString() );
+      if( data["type"].asString() == "subscribe" ) {
+        it->subscribedModules.insert( moduleName );
+        
+        const bool waitAndSendResponse = false;
+        ProcessRequest(conn,
+                       Anki::Cozmo::WebService::WebService::RequestType::RT_WebsocketOnSubscribe,
+                       moduleName,
+                       std::to_string(idx),
+                       "",
+                       waitAndSendResponse);
       }
-      if( (data["type"].asString() == "unsubscribe") && !data["module"].isNull() ) {
-        it->subscribedModules.erase( data["module"].asString() );
+      if( data["type"].asString() == "unsubscribe" ) {
+        it->subscribedModules.erase( moduleName );
+      }
+      if( (data["type"].asString() == "data") && !data["data"].isNull() ) {
+        const bool waitAndSendResponse = false;
+        std::stringstream ss;
+        ss << data["data"];
+        ProcessRequest(conn,
+                       Anki::Cozmo::WebService::WebService::RequestType::RT_WebsocketOnData,
+                       moduleName,
+                       std::to_string(idx),
+                       ss.str(),
+                       waitAndSendResponse);
       }
       
     }

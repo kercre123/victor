@@ -10,26 +10,30 @@
  *     <head> of webViz.html
  */
 
-(function(moduleMethods) {
+(function(myMethods, sendData) {
 
-  moduleMethods.init = function(elem) {
+  // you should fill in myMethods, and sendData
+  // is a function you can call to pass data back to
+  // the engine
+
+  myMethods.init = function(elem) {
     // Called once when the module is loaded.
     // Any created elements should be placed inside elem.
   };
 
-  moduleMethods.onData = function(data, elem) {
+  myMethods.onData = function(data, elem) {
     // The engine has sent a new json blob.
     // Any created elements should be placed inside elem.
   };
 
-  moduleMethods.update = function(dt, elem) {
+  myMethods.update = function(dt, elem) {
     // Called regularly. dt is the time since the previous call.
     // Note that this update loop originates from the web page,
     // not the engine, so the times may be different.
     // Any created elements should be placed inside elem.
   };
 
-  moduleMethods.getStyles = function() {
+  myMethods.getStyles = function() {
     // Return a string of all css styles to be added for this
     // module. Don't worry about conflicts with other modules;
     // your styles will only apply to the children of the elem
@@ -44,4 +48,4 @@
     `;
   };
 
-})(moduleMethods);
+})(moduleMethods, moduleSendDataFunc);

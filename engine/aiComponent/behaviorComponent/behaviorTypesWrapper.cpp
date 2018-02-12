@@ -17,6 +17,8 @@
 // only include this here in the cpp
 #include "clad/types/behaviorComponent/behaviorTypes.h"
 
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
+
 namespace Anki {
 namespace Cozmo {
 namespace BehaviorTypesWrapper {
@@ -61,6 +63,13 @@ const char* ExecutableBehaviorTypeToString(const ExecutableBehaviorType in)
 {
   return Anki::Cozmo::ExecutableBehaviorTypeToString(in);
 }
+  
+#if BEHAVIOR_ID_DEV_MODE
+uint8_t GetBehaviorIDNumEntries()
+{
+  return BehaviorIDNumEntries;
+}
+#endif
 
 ExecutableBehaviorType GetDefaultExecutableBehaviorType()
 {
