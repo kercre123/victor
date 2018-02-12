@@ -126,6 +126,17 @@ generate_clad(
     INCLUDES "${CLAD_INCLUDES}"
     OUTPUT_SRCS CLAD_HASH_GEN_SRCS
 )
+generate_clad(
+    SRCS "${ENGINE_HASH_SRCS}"
+    RELATIVE_SRC_DIR "src"
+    OUTPUT_DIR "${CLAD_PY_OUTPUT_DIR}"
+    OUTPUT_FILE true
+    EMITTER "${CLAD_HASH}"
+    OUTPUT_EXTS "_hash.py"
+    INCLUDES "${CLAD_INCLUDES}"
+    OUTPUT_SRCS CLAD_HASH_PY_GEN_SRCS
+)
+add_custom_target(engine_clad_python_hash ALL DEPENDS ${CLAD_HASH_PY_GEN_SRCS})
 
 add_library(engine_clad STATIC
     ${CLAD_CPP_GEN_SRCS}
