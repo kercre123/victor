@@ -7,8 +7,8 @@
 
 
 enum {
-  ERR_OK,
-  ERR_PENDING, //does not return right away
+  ERR_PENDING = -1, //does not return right away
+  ERR_OK = 0,
   ERR_UNKNOWN,
   ERR_SYNTAX,
   ERR_SYSTEM,
@@ -94,8 +94,8 @@ int get_esn(char buf[], int len)
   close(fd);
   if (nchars > 0) {
     buf[nchars]='\0';
+    return nchars;
   }
-  return nchars;
   return 0;
 }
 
@@ -158,7 +158,7 @@ struct text_buffer_t {
   idx_t tail;
 };
 
-#pragma clang diagnostic ignored "-Wmissing-braces" //F'in Clang doesn't know how to init.
+#pragma clang diagnostic ignored "-Wmissing-braces" //F'in clang doesn't know how to init.
 static struct text_buffer_t gOutgoingText = {0};
 
 static inline idx_t contact_text_buffer_count() {
@@ -214,20 +214,20 @@ int ReadLogN(uint8_t n) {
 int SetMedicalRecord(uint8_t index, uint32_t value)
 {
   print_response("EMR %d := %d\n", index, value);
-//  EMR[index]=value;
-  return ERR_OK;
+  return emr_set(index, value);
 }
 
 int GetMedicalRecord(uint8_t index)
 {
   uint32_t value = 0;//EMR[index];
+  int err = emr_get(index, &value);
   print_response("EMR %d == %d\n", index, value);
-  return ERR_OK;
+  return err;
 }
 
 
 int SendEngineCommand(uint8_t index, uint8_t v0, uint8_t v1, uint8_t v2, uint8_t v3){
-  return ERR_OK;
+  return ERR_UNKNOWN;
 }
 
 /***** pending commands  **************************/
@@ -285,7 +285,7 @@ uint8_t handle_esn_command(const uint8_t args[])
 uint8_t handle_bsv_command(const uint8_t args[])
 {
   print_response("BSV UNIMPLEMENTED");
-  return ERR_OK;
+  return ERR_UNKNOWN;
 }
 
 
