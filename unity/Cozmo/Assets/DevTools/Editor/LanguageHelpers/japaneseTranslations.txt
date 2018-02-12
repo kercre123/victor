@@ -158,7 +158,7 @@ COZMOを右折させてください。
 まだだよ
 ダメかも
 ていしサイン 
-青
+アオ
 センサー音の速度
 きいろ
 マルチカラー
@@ -202,13 +202,13 @@ COZMOの顔のピクセルy
 しかめっ面・位置x
 じゅんびはいい？
 ランダムな宝物の数
-白
+シロ
 COZMOに質問をしてあげましょう。
 ボールの位置y
 カシオペアざ 
 Set x and y coordinates for the next point in the constellation.
 ダメだね
-紫
+ムラサキ
 レーザーを発射
 ハートの鼓動
 形容詞
@@ -308,19 +308,19 @@ COZMOかプレイヤーが得点すると次の行動が決まります
 現在の半径
 ゲーム終了
 Anki
-LEDの色
+LEDのいろ
 弧の長半径
 ラウンド時間
  / 
 回転乗数
 たからものをみつけました！
-黄色
-キューブ2の色
+キイロ
+キューブ２のいろ
 y2
 y3
 プレイヤーのスコア
 y1
-良いタップ
+いいタップ
 バラ 
 てんかくとく！
 トマト 
@@ -445,11 +445,11 @@ x2
 あきらめよう
 ホールのサイズ
 ゲームタイマーをスタートして記録をつけましょう。
-白 
+しろ 
 このブロックでCOZMOの顔に残りの時間を表示します。
 こんにちは
 すばらしいゲームでした
-ゲーム時間
+ゲームじかん
 正しいアクション
 COZMOの反応
 横向きの楕円を描いてください。
@@ -468,7 +468,7 @@ COZMOの反応
 ともだち
 COZMO
 絵文字の表情
-タイマー（秒）
+タイマー　（びょう）
 スミレ 
 ゲームラウンド
 線分の角度
@@ -485,7 +485,7 @@ COZMOを前進させてください。
 ふるじゅんびはいい？ 
 みりょくてき 
 Cube 3を振りました
-キューブ1の色
+キューブ１のいろ
 うつくしい 
 ランダムに運勢を選びます。
 COZMOの顔にシルクハットを描いてください。
@@ -521,9 +521,9 @@ COZMOは飛行中、ポジションを変えると反応します。
 ポイント!
 開始のアニメーションが流れ、光ります。
 Cube 1が動いた回数
-キューブ3の色
+キューブ３のいろ
 COZMOのスキルレベル
-悪いタップ
+わるいタップ
 ゲームオーバーです
 instructions count
 振るアクション
@@ -586,6 +586,7 @@ COZMOの顔のピクセルx
 そして、選んだキューブの番号がCOZMOのキューブになります。
 ボールが壁かパドルにあたったか、または得点したかを確認します。
 #31：キューブを元の場所に戻す：<span class='yellow'>キューブが見えたら、</span>COZMOを<span class='blue'>後ろを向かせ、</span>キューブをCOZMOの数フィート後ろに置いて戻ります。<span class='orange'>無制限に繰り返します。</span>
+broadcast [message#]
 ホールインワンを決められるかな？
 勝者
 上級のコードブロック。Cozmo Python SDKを使うと、数百以上のCOZMOのアニメーションにアクセスできます。アニメーションのid文字列は、このブロックを使って再生します。SDKの詳細については、developer.anki.com をご覧ください。このブロックには「play SDK animation group（SDKアニメーショングループを再生）」ブロックを使用されることをお薦めします。アニメーションのid文字列は、時間とともに変更される可能性があるためです。お使いのプログラムは、これらの変更を実施しないと今後使用できなくなることがあります。
@@ -609,6 +610,7 @@ COZMOと言いましょう
 キャンセル
 <コンディション>が真と評価されるまで無制限に繰り返します。トラブルシューティング：作成したコードの動作が重い。無制限のループに短い「待機」ブロックを追加してみてください。コードにも休憩時間が必要な場合があります。
 #24：「笑って！」と<span class='purple'>言います</span>。<span class='yellow'>笑顔が見えたら、</span><span class='violet'>勝者</span>のように振る舞います。
+Triggers this code block and runs the code blocks underneath it whenever another code block broadcasts the corresponding message. Tip: For experienced coders, think of messages like functions.
 変更が加えられました。
 笑顔を見るのを待つ
 特定のキューブ見えた場合、COZMOのカメラの視点からキューブの中心の2D位置を[X]または[Y]座標で返します。（COZMOのカメラの範囲：0、0～320、240）キューブ1：ペーパークリップのように見えます。キューブ2：はランプかハートのように見えます。キューブ3：はベビーシートに座る赤ちゃんのように見えます。
@@ -657,6 +659,7 @@ COZMOのリフトの高さ%
 ( [X] < [Y] )
 有効にする：常にCOZMOが完了するのを待つ
 #26の答え
+Broadcasts (sends) a message to trigger the "when [message#] received" block. Tip: After broadcasting a message, the blocks under this block will continue to execute. Therefore, both this original stack of blocks and the blocks underneath the "when [message#] received" block will run in parallel. For experienced coders, think of this like starting a new thread in most programming languages.
 しんにゅうしゃ警報！
 このコードブロックをトリガーすると、COZMOが悲しい顔を見るたびにその下位のコードブロックが実行されます。このブロックをトリガーするには、緑のフラグ（スタート）ボタンが有効になっている必要があります。ヒント：ほんとうにご機嫌ななめなしかめっ面になってください。
 バックパックライトを設定する[色]
@@ -706,6 +709,7 @@ COZMOのリフトの高さ%
 
 3. スタートフラグをタップすると、COZMOが円周率と算数を使ってキューブの周りを円を描いて走ります。
 [X]が[Y]に等しい場合は真です。
+しかめっ面をひっくり返そう！
 [X]掛ける[Y]の値を返します。
 COZMOのバックパックライトを特定の色に設定する。ライトをオフにするには黒を使用します。
 特定のキューブが見えているかを「真」か「偽」で返します。キューブが見えているというのはCOZMOがマーカーをはっきりと見える状態だということに注意してください。したがってキューブはCOZMOの視野に入っていなければならず、近すぎてはいけません。また、周囲の明るさは暗すぎても明るすぎてもいけません。キューブ1：はペーパークリップのように見えます。キューブ2：はランプかハートのように見えます。キューブ3：はベビーシートに座る赤ちゃんのように見えます。
@@ -816,7 +820,7 @@ COZMOを描きましょう
 先に課題に取り組んでから「次へ」をタップして答えを確認します！
 しんにゅうしゃ!
 先に課題に取り組んでから「次へ」をタップして答えを確認します！
-しかめっ面をひっくり返そう！
+broadcast [message#] and wait to complete
 #21：<span class='yellow'>キューブがタップされたら、</span>正方形の一辺を<span class='blue'>進んで</span>、<span class='blue'>振り返ります。</span>
 センサー
 #12の答え
@@ -970,6 +974,7 @@ COZMOが選んだもの
 [音楽の名前]音楽を再生して待機
 キューブ[#]の[色]のライトを[回転/点滅]させる
 特定のキューブ[#]の角[1、2、3、4、または一度にすべて]を[色]に設定します。ライトをオフにするには黒を使用します。ヒント：キューブ1：はペーパークリップのように見えます。キューブ2：はランプかハートのように見えます。キューブ3：はベビーシートに座る赤ちゃんのように見えます。
+Broadcasts (sends) a message to trigger the "when [message#] received" block, and then waits for the blocks under the "when [message#] received" to fully execute before continuing on. Tip: For experienced coders, think of this like a function call in most programming languages.
 「円周率の日」のために集合！
 [X]、[Y]から[X2]、[Y2]に長方形を描画
 [メッセージ#]を発信
@@ -979,6 +984,7 @@ round [X]
 ( [X] > [Y] )
 このコードブロックをトリガーすると、特定のキューブ[#]が動くたびにその下位のコードブロックが実行されます。ヒント：「キューブが動く」というのは、キューブが少し違う位置や場所に置かれるという意味です。「キューブをタップする」というのは、キューブを意図的にすばやくタップするという意味です。
 ( (X) and (Y) )
+when [message#] received
 1. 始める前に、デバイスのサウンドが十分な音量であることを確認します。
 
 2. COZMOの前に3つのキューブを置きます。

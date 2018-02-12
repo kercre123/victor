@@ -244,40 +244,40 @@
     "translation" : "Anki"
   },
   "codeLabFeaturedProject.CubeWhack.bad_tap" : {
-    "translation" : "悪いタップ"
+    "translation" : "わるいタップ"
   },
   "codeLabFeaturedProject.CubeWhack.better_luck_next_time" : {
     "translation" : "つぎはがんばってね"
   },
   "codeLabFeaturedProject.CubeWhack.blue" : {
-    "translation" : "青"
+    "translation" : "アオ"
   },
   "codeLabFeaturedProject.CubeWhack.cozmo" : {
     "translation" : "COZMO"
   },
   "codeLabFeaturedProject.CubeWhack.cube_1_color" : {
-    "translation" : "キューブ1の色"
+    "translation" : "キューブ１のいろ"
   },
   "codeLabFeaturedProject.CubeWhack.cube_2_color" : {
-    "translation" : "キューブ2の色"
+    "translation" : "キューブ２のいろ"
   },
   "codeLabFeaturedProject.CubeWhack.cube_3_color" : {
-    "translation" : "キューブ3の色"
+    "translation" : "キューブ３のいろ"
   },
   "codeLabFeaturedProject.CubeWhack.cube_locked" : {
     "translation" : "キューブがロックされました"
   },
   "codeLabFeaturedProject.CubeWhack.game_length" : {
-    "translation" : "ゲーム時間"
+    "translation" : "ゲームじかん"
   },
   "codeLabFeaturedProject.CubeWhack.good_tap" : {
-    "translation" : "良いタップ"
+    "translation" : "いいタップ"
   },
   "codeLabFeaturedProject.CubeWhack.orange" : {
     "translation" : "オレンジ"
   },
   "codeLabFeaturedProject.CubeWhack.pack_color" : {
-    "translation" : "LEDの色"
+    "translation" : "LEDのいろ"
   },
   "codeLabFeaturedProject.CubeWhack.pack_random" : {
     "translation" : "ランダムなLED"
@@ -289,7 +289,7 @@
     "translation" : "ポイント"
   },
   "codeLabFeaturedProject.CubeWhack.purple" : {
-    "translation" : "紫"
+    "translation" : "ムラサキ"
   },
   "codeLabFeaturedProject.CubeWhack.random" : {
     "translation" : "ランダム"
@@ -301,19 +301,19 @@
     "translation" : "テキスト"
   },
   "codeLabFeaturedProject.CubeWhack.timer_in_sec" : {
-    "translation" : "タイマー（秒）"
+    "translation" : "タイマー　（びょう）"
   },
   "codeLabFeaturedProject.CubeWhack.white" : {
-    "translation" : "白"
+    "translation" : "シロ"
   },
   "codeLabFeaturedProject.CubeWhack.white_" : {
-    "translation" : "白 "
+    "translation" : "しろ "
   },
   "codeLabFeaturedProject.CubeWhack.x" : {
     "translation" : "X"
   },
   "codeLabFeaturedProject.CubeWhack.yellow" : {
-    "translation" : "黄色"
+    "translation" : "キイロ"
   },
   "codeLabFeaturedProject.CubeWhack.you_won" : {
     "translation" : "あなたのかち"
