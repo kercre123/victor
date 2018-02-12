@@ -59,6 +59,7 @@ const struct SpineMessageHeader* hal_read_frame();
 void start_overrride(int count);
 
 enum {
+  show_NONE,
   show_BAT,
   show_CLIFF,
   show_ENCODER,
@@ -68,6 +69,13 @@ enum {
   show_RSSI,
   SHOW_LAST
 };
+
+enum  {
+  runstate_NORMAL,
+  runstate_CMDLINE_PENDING,
+  runstate_CMDLINE_ACTIVE,
+} gRunState;
+
 
 struct HeadToBody gHeadData = {0};
 
@@ -196,6 +204,7 @@ int ReadLogN(uint8_t n) {
   sprintf(filename, FACTORY_FILENAME_TEMPLATE, n);
   int fd = open(filename, O_RDONLY);
   if (!fd) { return ERR_SYSTEM; }
+  print_response(":LOG %d\n", n);
   while (1) {
     int nchars = read(fd, logline, RESPONSE_CHUNK_SZ);
     if (nchars <= 0) {
@@ -214,15 +223,17 @@ int ReadLogN(uint8_t n) {
 int SetMedicalRecord(uint8_t index, uint32_t value)
 {
   print_response("EMR %d := %d\n", index, value);
-  return emr_set(index, value);
+//  return emr_set(index, value);
+  return 3;
 }
 
 int GetMedicalRecord(uint8_t index)
 {
-  uint32_t value = 0;//EMR[index];
-  int err = emr_get(index, &value);
-  print_response("EMR %d == %d\n", index, value);
-  return err;
+  uint32_t value = 0;
+//  int err = emr_get(index, &value);
+  print_response(":%d @ EMR[%d]\n", value, index);
+//  return err;
+  return 3;
 }
 
 
@@ -246,7 +257,9 @@ void show_command(CozmoCommand* cmd) {
 void PrepCommand(void) { memset(&gPending,0,sizeof(gPending)); }
 void SetRepeats(int n) {gPending.repeat_count = n; }
 void AddPrintFlag(int flag) { gPending.printmask |= flag; }
-void AddMotorCommand(RobotMotor motor, float power) {
+void AddMotorCommand(RobotMotor motor, uint8_t power_byte) {
+  int8_t signed_power = (int8_t)*(&power_byte);
+  float power = signed_power / 128.0;
   if (power > 1.0) { power = 1.0;}
   if (power < -1.0) { power = -1.0;}
   gPending.motorValues[motor] = 0x7FFF * power;
@@ -276,7 +289,7 @@ uint8_t handle_esn_command(const uint8_t args[])
 {
   char esn_text[MAX_SERIAL_LEN];
   if ( get_esn(esn_text, sizeof(esn_text)) ) {
-    print_response("ESN = %s\n", esn_text);
+    print_response(":%s is ESN\n", esn_text);
     return ERR_OK;
   }
   return ERR_SYSTEM;
@@ -284,7 +297,7 @@ uint8_t handle_esn_command(const uint8_t args[])
 
 uint8_t handle_bsv_command(const uint8_t args[])
 {
-  print_response("BSV UNIMPLEMENTED");
+  print_response("BSV UNIMPLEMENTED\n");
   return ERR_UNKNOWN;
 }
 
@@ -389,7 +402,7 @@ static const CommandHandler handlers[] = {
 
 
 uint8_t parse_command_text(char* cmd, int len) {
-   if (len < FIXED_LINE_LEN) {
+   if (len <= FIXED_LINE_LEN) {
       return ERR_SYNTAX;
    }
    const CommandHandler* candidate = &handlers[0];
@@ -408,7 +421,7 @@ uint8_t parse_command_text(char* cmd, int len) {
             return ERR_SYNTAX;
           }
           args[i]=arg;
-          argstr+=FIXED_ARG_LEN+1;
+          argstr = end+1;//next word, skips null.
         }
         uint8_t result = candidate->handler(args);
         return result;
@@ -478,7 +491,7 @@ bool gather_contact_text(const char* contactData, int len)
     if (c=='\n' || c=='\r') {
       linebuf[linelen]='\0';
       ccc_debug("CCC Line recieved [ %.*s ]", linelen, linebuf);
-      if (linebuf[0]=='>' && linebuf[1]=='>') {
+      if (linelen >= 5 && linebuf[0]=='>' && linebuf[1]=='>') {
         ccc_debug_x("good prefix\n");
         int status = parse_command_text(linebuf+2, linelen-2);
         ccc_debug_x("replying <<%.3s %d\n",linebuf+2, status);
@@ -544,6 +557,12 @@ int print_response(const char* format, ...) {
   va_list argptr;
   va_start(argptr, format);
 
+  if (gRunState != runstate_NORMAL) {
+    int retval = vprintf(format, argptr);
+    va_end(argptr);
+    return retval;
+  }
+
   memset(response.data, SLUG_PAD_CHAR, SLUG_PAD_SIZE);
 
   const int space_remaining = sizeof(response.data)-SLUG_PAD_SIZE;
@@ -572,26 +591,26 @@ int print_response(const char* format, ...) {
 
 
 uint16_t show_legend(uint16_t mask) {
-  print_response("framect ");
+//  print_response("framect ");
   if (mask & (1<<show_ENCODER)) {
-    print_response("encs:left right lift head");
+    print_response("encs:left right lift head \n");
   }
   if (mask & (1<<show_SPEED)) {
-    print_response("speed:left right lift head");
+    print_response("speed:left right lift head \n");
   }
   if (mask & (1<<show_CLIFF)) {
-    print_response("cliff:fl fr br bl");
+    print_response("cliff:fl fr br bl \n");
   }
   if (mask & (1<<show_BAT)) {
-    print_response("bat ");
+    print_response("bat \n");
   }
   if (mask & (1<<show_PROX)) {
-    print_response("rangeMM ");
+    print_response("rangeMM \n");
   }
   if (mask & (1<<show_TOUCH)) {
-    print_response("touch0 touch1 ");
+    print_response("touch0 touch1 \n");
   }
-  print_response("\n");
+//  print_response("\n");
   return mask;
 }
 
@@ -605,11 +624,11 @@ void process_incoming_frame(struct BodyToHead* bodyData)
     }
 
     if (gActiveState.printmask) {
-      print_response("%d ", bodyData->framecounter);
+//      print_response("%d ", bodyData->framecounter);
     }
 
     if (gActiveState.printmask & (1<<show_ENCODER)) {
-      print_response("%d %d %d %d ",
+      print_response(":%d %d %d %d \n",
              bodyData->motor[0].position,
              bodyData->motor[1].position,
              bodyData->motor[2].position,
@@ -622,33 +641,34 @@ void process_incoming_frame(struct BodyToHead* bodyData)
         speeds[i]= bodyData->motor[i].time ?
           ((float)bodyData->motor[i].delta / bodyData->motor[i].time) : 0;
       }
-      print_response("%.2f %.2f %.2f %.2f ",
+      print_response(":%.2f %.2f %.2f %.2f \n",
              speeds[0],
              speeds[1],
              speeds[2],
              speeds[3] );
     }
     if (gActiveState.printmask & (1<<show_CLIFF)) {
-      print_response("%d %d %d %d ",
+      print_response(":%d %d %d %d \n",
              bodyData->cliffSense[0],
              bodyData->cliffSense[1],
              bodyData->cliffSense[2],
              bodyData->cliffSense[3] );
     }
     if (gActiveState.printmask & (1<<show_BAT)) {
-      print_response("%d ",
+      print_response(":%d \n",
              bodyData->battery.battery);
     }
     if (gActiveState.printmask & (1<<show_PROX)) {
-      print_response("%d",
+      print_response(":%d \n",
              bodyData->proximity.rangeMM);
+
     }
     if (gActiveState.printmask & (1<<show_TOUCH)) {
-      print_response("%d %d",
+      print_response(":%d %d \n",
              bodyData->touchLevel[0],
              bodyData->touchLevel[1]);
     }
-    print_response("\n");
+//    print_response("\n");
 
     if (--gActiveState.repeat_count == 0) {
       //clear print request at end
@@ -758,8 +778,14 @@ int main(int argc, const char* argv[])
 
 #else
 
+ShutdownFunction gShutdownFp = NULL;
 
 bool ccc_commander_is_active(void) {
+  if (gRunState == runstate_CMDLINE_PENDING) {
+    gRunState = runstate_CMDLINE_ACTIVE;
+    gather_contact_text("\n",1); //newline to force execution
+  }
+
   return gRemainingActiveCycles > 0 || gActiveState.repeat_count > 0;
 }
 
@@ -806,15 +832,15 @@ struct ContactData* ccc_text_response(void) {
 void ccc_parse_command_line(int argc, const char* argv[])
 {
   start_overrride( CCC_COOLDOWN_TIME );
+  gRunState = runstate_CMDLINE_PENDING;
+  gather_contact_text(">>",2);
   while (argc-->0) {
     gather_contact_text(*argv, strlen(*argv));
     gather_contact_text(" ",1);
     argv++;
   }
-  gather_contact_text("\n",1); //newline to force execution
 }
 
-ShutdownFunction gShutdownFp;
 void ccc_set_shutdown_function(ShutdownFunction fp) {
   gShutdownFp = fp;
   //TODO: actually use this to shut down at end
