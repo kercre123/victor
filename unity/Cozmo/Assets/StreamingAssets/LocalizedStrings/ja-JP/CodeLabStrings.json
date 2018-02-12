@@ -960,23 +960,23 @@
   "codeLabGlossary.block_definitions.description.event_broadcastandwait" : {
     "translation" : "[メッセージ#]を受信したら」ブロックをトリガーするメッセージを発信（送信）し、そのまま続行する前に[メッセージ#]を受信したら」の下位ブロックの実行が完了するのを待ちます。ヒント：経験豊富なプログラマーの方はこれを一般的なプログラミング言語における関数呼び出しのようなものだと考えてください。"
   },
-  "codeLabGlossary.block_definitions.title.event_whenbroadcastreceived_with_broadcast_input": {
-    "translation" : "[メッセージ#]を受信したら"
+  "codeLabGlossary.block_definitions.title.event_whenbroadcastreceived_with_broadcast_input" : {
+    "translation" : "when [message#] received"
   },
-  "codeLabGlossary.block_definitions.description.event_whenbroadcastreceived_with_broadcast_input": {
-    "translation" : "このコードブロックをトリガーすれば別のコードブロックが該当するメッセージを発信するたびにその下位のコードブロックを実行します。ヒント：経験豊富なプログラマーの方はメッセージを関数のようなものと考えてください。"
+  "codeLabGlossary.block_definitions.description.event_whenbroadcastreceived_with_broadcast_input" : {
+    "translation" : "Triggers this code block and runs the code blocks underneath it whenever another code block broadcasts the corresponding message. Tip: For experienced coders, think of messages like functions."
   },
-  "codeLabGlossary.block_definitions.title.event_broadcast_with_broadcast_input": {
-    "translation" : "[メッセージ#]を発信"
+  "codeLabGlossary.block_definitions.title.event_broadcast_with_broadcast_input" : {
+    "translation" : "broadcast [message#]"
   },
-  "codeLabGlossary.block_definitions.description.event_broadcast_with_broadcast_input": {
-    "translation" : "「[メッセージ#]を受信したら」ブロックをトリガーするメッセージを発信（送信）します。ヒント：メッセージを発信した後、このブロックの下位ブロックは実行され続けます。よってこの元のブロックの集合と「[メッセージ#]を受信したら」ブロックの下位ブロックは並行して実行されます。経験豊富なプログラマーの方は、一般的なプログラミング言語で新しいスレッドを開始するようなものだと考えてください。"
+  "codeLabGlossary.block_definitions.description.event_broadcast_with_broadcast_input" : {
+    "translation" : "Broadcasts (sends) a message to trigger the \"when [message#] received\" block. Tip: After broadcasting a message, the blocks under this block will continue to execute. Therefore, both this original stack of blocks and the blocks underneath the \"when [message#] received\" block will run in parallel. For experienced coders, think of this like starting a new thread in most programming languages."
   },
-  "codeLabGlossary.block_definitions.title.event_broadcastandwait_with_broadcast_input": {
-    "translation" : "[メッセージ#]を発信し完了まで待機"
+  "codeLabGlossary.block_definitions.title.event_broadcastandwait_with_broadcast_input" : {
+    "translation" : "broadcast [message#] and wait to complete"
   },
-  "codeLabGlossary.block_definitions.description.event_broadcastandwait_with_broadcast_input": {
-    "translation" : "[メッセージ#]を受信したら」ブロックをトリガーするメッセージを発信（送信）し、そのまま続行する前に[メッセージ#]を受信したら」の下位ブロックの実行が完了するのを待ちます。ヒント：経験豊富なプログラマーの方はこれを一般的なプログラミング言語における関数呼び出しのようなものだと考えてください。"
+  "codeLabGlossary.block_definitions.description.event_broadcastandwait_with_broadcast_input" : {
+    "translation" : "Broadcasts (sends) a message to trigger the \"when [message#] received\" block, and then waits for the blocks under the \"when [message#] received\" to fully execute before continuing on. Tip: For experienced coders, think of this like a function call in most programming languages."
   },
   "codeLabGlossary.block_definitions.title.control_wait" : {
     "translation" : "[X]秒待機"
