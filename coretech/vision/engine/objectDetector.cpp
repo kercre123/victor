@@ -116,7 +116,7 @@ bool ObjectDetector::StartProcessingIfIdle(ImageCache& imageCache)
       // in the params.
       // TODO: resize here instead of the Model, to copy less data
       // TODO: avoid copying data entirely somehow? (but maybe who cares b/c it's tiny and fwd inference time likely dwarfs the copy)
-      const ImageCache::Size kImageSize = ImageCache::Size::Quarter_AverageArea;
+      const ImageCache::Size kImageSize = ImageCache::Size::Half_AverageArea;
       
       // Grab a copy of the image
       imageCache.GetRGB(kImageSize).CopyTo(_imgBeingProcessed);
@@ -132,14 +132,20 @@ bool ObjectDetector::StartProcessingIfIdle(ImageCache& imageCache)
         std::list<DetectedObject> objects;
         if(kUseTensorFlowProcess)
         {
+          // Profiling will be from time we write file to when we get results
+          _profiler.Tic("StandaloneInferenceProcess");
+          
           // Write image to a temporary file
           const std::string tempFilename = Util::FileUtils::FullFilePath({_cachePath, "temp.png"});
           _imgBeingProcessed.Save(tempFilename);
           
-          // Rename to what TF process expects once the data is fully written
+          // Rename to what TF process expects once the data is fully written (poor man's "lock")
           const std::string imageFilename = Util::FileUtils::FullFilePath({_cachePath, "objectDetectionImage.png"});
           const std::string cmd = "mv " + tempFilename + " " + imageFilename;
           system(cmd.c_str());
+          
+          PRINT_CH_DEBUG(kLogChannelName, "ObjectDetector.Model.SavedImageFileForProcessing", "%s t:%d",
+                         imageFilename.c_str(), _imgBeingProcessed.GetTimestamp());
           
           const u32 kPollPeriod_ms = 10;
           const f32 timeoutDuration_sec = 10.f;
@@ -160,7 +166,8 @@ bool ObjectDetector::StartProcessingIfIdle(ImageCache& imageCache)
           
           if(resultAvailable)
           {
-            PRINT_CH_DEBUG(kLogChannelName, "ObjectDetector.Model.FoundDetectionResultsJSON", "");
+            PRINT_CH_DEBUG(kLogChannelName, "ObjectDetector.Model.FoundDetectionResultsJSON", "%s",
+                           resultFilename.c_str());
             
             Json::Reader reader;
             Json::Value detectionResult;
@@ -201,6 +208,8 @@ bool ObjectDetector::StartProcessingIfIdle(ImageCache& imageCache)
             }
             file.close();
             Util::FileUtils::DeleteFile(resultFilename);
+            
+            _profiler.Toc("StandaloneInferenceProcess");
           }
           
         }
