@@ -8,40 +8,40 @@
 
 #include "keyExchange.h"
 
-uint8_t* Anki::Networking::KeyExchange::GenerateKeys() {
-  crypto_kx_keypair(_PublicKey, _SecretKey);
-  return _PublicKey;
+uint8_t* Anki::Switchboard::KeyExchange::GenerateKeys() {
+  crypto_kx_keypair(_publicKey, _secretKey);
+  return _publicKey;
 };
 
-void Anki::Networking::KeyExchange::Reset() {
+void Anki::Switchboard::KeyExchange::Reset() {
   // set all keys to 0
-  memset(_SecretKey, 0, crypto_kx_SECRETKEYBYTES);
-  memset(_DecryptKey, 0, crypto_kx_SESSIONKEYBYTES);
-  memset(_EncryptKey, 0, crypto_kx_SESSIONKEYBYTES);
-  memset(_RemotePublicKey, 0, crypto_kx_PUBLICKEYBYTES);
-  memset(_PublicKey, 0, crypto_kx_PUBLICKEYBYTES);
+  memset(_secretKey, 0, crypto_kx_SECRETKEYBYTES);
+  memset(_decryptKey, 0, crypto_kx_SESSIONKEYBYTES);
+  memset(_encryptKey, 0, crypto_kx_SESSIONKEYBYTES);
+  memset(_remotePublicKey, 0, crypto_kx_PUBLICKEYBYTES);
+  memset(_publicKey, 0, crypto_kx_PUBLICKEYBYTES);
 }
 
-void Anki::Networking::KeyExchange::SetRemotePublicKey(const uint8_t* pubKey) {
+void Anki::Switchboard::KeyExchange::SetRemotePublicKey(const uint8_t* pubKey) {
   // Copy in public key
-  memcpy(_RemotePublicKey, pubKey, crypto_kx_PUBLICKEYBYTES);
+  memcpy(_remotePublicKey, pubKey, crypto_kx_PUBLICKEYBYTES);
 }
 
-bool Anki::Networking::KeyExchange::CalculateSharedKeys(const uint8_t* pin) {
+bool Anki::Switchboard::KeyExchange::CalculateSharedKeys(const uint8_t* pin) {
   //
   // Messages from the robot will be encrypted with a hash that incorporates
   // a random pin
   // server_tx (encryptKey) needs to be sha-256'ed
   // client_rx (client's decrypt key) needs to be sha-256'ed
   //
-  bool success = crypto_kx_server_session_keys(_DecryptKey, _EncryptKey, _PublicKey, _SecretKey, _RemotePublicKey) == 0;
+  bool success = crypto_kx_server_session_keys(_decryptKey, _encryptKey, _publicKey, _secretKey, _remotePublicKey) == 0;
   
   // Save tmp version of encryptKey
   uint8_t tmpEncryptKey[crypto_kx_SESSIONKEYBYTES];
-  memcpy(tmpEncryptKey, _EncryptKey, crypto_kx_SESSIONKEYBYTES);
+  memcpy(tmpEncryptKey, _encryptKey, crypto_kx_SESSIONKEYBYTES);
   
   // Hash mix of pin and encryptKey to form new encryptKey
-  crypto_generichash(_EncryptKey, crypto_kx_SESSIONKEYBYTES, tmpEncryptKey, crypto_kx_SESSIONKEYBYTES, pin, _NumPinDigits);
+  crypto_generichash(_encryptKey, crypto_kx_SESSIONKEYBYTES, tmpEncryptKey, crypto_kx_SESSIONKEYBYTES, pin, _numPinDigits);
   
   return success;
 }

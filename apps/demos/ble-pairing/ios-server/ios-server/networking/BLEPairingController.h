@@ -21,7 +21,12 @@ public:
     [_BLEPeripheral advertiseWithService:LOCAL_NAME withService:PAIRING_SERVICE];
   };
   
-  using BLEConnectedSignal = Signal::Signal<void (Anki::Networking::BLENetworkStream*)>;
+  void StopAdvertising() {
+    [_BLEPeripheral stopAdvertising];
+    _BLEPeripheral = nil;
+  };
+  
+  using BLEConnectedSignal = Signal::Signal<void (Anki::Switchboard::BLENetworkStream*)>;
   
   // Message Receive Event
   BLEConnectedSignal& OnBLEConnectedEvent() {

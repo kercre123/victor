@@ -8,7 +8,7 @@
 
 #import <UIKit/UIKit.h>
 #import "networking/INetworkStream.h"
-#include "networking/SecurePairing.h"
+#include "networking/securePairing.h"
 
 @interface ViewController : UIViewController {
   dispatch_queue_t pairingQueue;

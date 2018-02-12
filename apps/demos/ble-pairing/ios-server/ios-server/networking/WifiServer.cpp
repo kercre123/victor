@@ -8,12 +8,12 @@
 
 #include "WifiServer.h"
 
-Anki::Networking::WifiServer::WifiServer(struct ev_loop* loop, int port) {
+Anki::Switchboard::WifiServer::WifiServer(struct ev_loop* loop, int port) {
   _Loop = loop;
   _Port = port;
 }
 
-void Anki::Networking::WifiServer::StartServer() {
+void Anki::Switchboard::WifiServer::StartServer() {
   struct ev_loop* defaultLoop = ev_default_loop(0);
   struct sockaddr_in6 addr;
   struct ev_io w_accept;
@@ -42,7 +42,7 @@ void Anki::Networking::WifiServer::StartServer() {
   ev_loop(defaultLoop, 0);
 }
 
-void Anki::Networking::WifiServer::AcceptCallback(struct ev_loop *loop, struct ev_io *watcher, int revents) {
+void Anki::Switchboard::WifiServer::AcceptCallback(struct ev_loop *loop, struct ev_io *watcher, int revents) {
   struct sockaddr_in client_addr;
   socklen_t client_len = sizeof(client_addr);
   int client_fd;

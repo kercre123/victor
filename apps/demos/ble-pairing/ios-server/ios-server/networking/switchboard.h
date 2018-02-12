@@ -19,44 +19,50 @@
 #include "BLEPairingController.h"
 #include "taskExecutor.h"
 
-#define SB_WIFI_PORT 3291
-#define SB_LOOP_TIME 30
-
 namespace Anki {
-  class Switchboard {
+  class SwitchboardDaemon {
   public:
     static void Start();
     
-    // Pin Updated Event
+    // Types
     using PinUpdatedSignal = Signal::Signal<void (std::string)>;
+    
+    // Methods
     static PinUpdatedSignal& OnPinUpdatedEvent() {
-      return _PinUpdatedSignal;
+      return sPinUpdatedSignal;
     }
     
     static void SetQueue(dispatch_queue_t q) {
-      switchboardQueue = q;
+      sSwitchboardQueue = q;
     }
     
   private:
-    static struct ev_loop* sLoop;
-    static Anki::Networking::SecurePairing* securePairing;
-    static Signal::SmartHandle pinHandle;
-    static Signal::SmartHandle wifiHandle;
-    static dispatch_queue_t switchboardQueue;
-    static Anki::TaskExecutor* _sTaskExecutor;
-    
+    // Methods
     static void HandleStartPairing();
     
     static void StartBleComms();
+    static void StopBleComms();
     static void StartWifiComms();
     
-    static void OnConnected(Anki::Networking::INetworkStream* stream);
-    static void OnDisconnected(Anki::Networking::INetworkStream* stream);
+    static void OnConnected(Anki::Switchboard::INetworkStream* stream);
+    static void OnDisconnected(Anki::Switchboard::INetworkStream* stream);
     static void OnPinUpdated(std::string pin);
     static void OnReceiveWifiCredentials(std::string ssid, std::string pw);
-    static void sEvTimerHandler(struct ev_loop* loop, struct ev_timer* w, int revents);
+    static void OnTimerTick(struct ev_loop* loop, struct ev_timer* w, int revents);
     
-    static PinUpdatedSignal _PinUpdatedSignal;
+    // Variables
+    const static uint32_t kTick_s = 30;
+    
+    static struct ev_loop* sLoop;
+    static Anki::Switchboard::SecurePairing* sSecurePairing;
+    static dispatch_queue_t sSwitchboardQueue;
+    static Anki::TaskExecutor* sTaskExecutor;
+    static Signal::SmartHandle sPinHandle;
+    static Signal::SmartHandle sWifiHandle;
+    
+    // todo: tmp connection manager
+    static BLEPairingController* sPairingController;
+    static PinUpdatedSignal sPinUpdatedSignal;
   };
 }
 

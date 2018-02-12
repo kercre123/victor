@@ -12,128 +12,131 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include "log.h"
+#include "libev.h"
 #include "INetworkStream.h"
 #include "keyExchange.h"
-#include "log.h"
-#include "../libev/ev.h"
-#include "../libev/ev++.h"
 #include "pairingMessages.h"
 
 namespace Anki {
-  namespace Networking {
-    #define NUM_PIN_DIGITS 6
-    #define MIN_MSG_LENGTH 2
+namespace Switchboard {
+  enum PairingState : uint8_t {
+    Initial,
+    AwaitingPartnerReady,
+    AwaitingPublicKey,
+    AwaitingNonceAck,
+    AwaitingChallengeResponse,
+    ConfirmedSharedSecret
+  };
+  
+  class SecurePairing {
+  public:
+    // Types
+    using ReceivedWifiCredentialsSignal = Signal::Signal<void (std::string, std::string)>;
+    using UpdatedPinSignal = Signal::Signal<void (std::string)>;
     
-    enum PairingState {
-      Initial,
-      AwaitingPartnerReady,
-      AwaitingPublicKey,
-      AwaitingNonceAck,
-      AwaitingChallengeResponse,
-      ConfirmedSharedSecret
-    };
+    // Constructors
+    SecurePairing(INetworkStream* stream, struct ev_loop* evloop);
+    ~SecurePairing();
     
-    class SecurePairing {
-    public:
-      SecurePairing(INetworkStream* stream, struct ev_loop* evloop);
-      ~SecurePairing();
-      
-      void BeginPairing();
-      void StopPairing();
-      
-      std::string GetPin() { return _Pin; }
-      
-      using ReceivedWifiCredentialsSignal = Signal::Signal<void (std::string, std::string)>;
-      using UpdatedPinSignal = Signal::Signal<void (std::string)>;
-      
-      // WiFi Receive Event
-      ReceivedWifiCredentialsSignal& OnReceivedWifiCredentialsEvent() {
-        return _ReceivedWifiCredentialSignal;
-      }
-      
-      // PIN Update Event
-      UpdatedPinSignal& OnUpdatedPinEvent() {
-        return _UpdatedPinSignal;
-      }
-      
-    private:
-      void Init();
-      void Reset(bool forced=false);
-      
-      template <class T>
-      typename std::enable_if<std::is_base_of<Anki::Networking::Message, T>::value, void>::type
-      SendPlainText(const T& message);
-      
-      template <class T>
-      typename std::enable_if<std::is_base_of<Anki::Networking::Message, T>::value, void>::type
-      SendEncrypted(const T& message);
-      
-      void HandleMessageReceived(uint8_t* bytes, uint32_t length);
-      void HandleEncryptedMessageReceived(uint8_t* bytes, uint32_t length);
-      void HandleDecryptionFailed();
-      void HandleInitialPair(uint8_t* bytes, uint32_t length);
-      void HandleRestoreConnection();
-      void HandleCancelSetup();
-      void HandleNonceAck();
-      void HandleTimeout();
-      void HandlePingResponse(uint8_t* bytes, uint32_t length);
-      
-      void SendPublicKey();
-      void SendNonce();
-      void SendChallenge();
-      void SendCancelPairing();
-      void SendChallengeSuccess();
-      
-      std::string GeneratePin();
-      
-      void IncrementAbnormalityCount();
-      void IncrementChallengeCount();
-      
-      const uint8_t MAX_MATCH_ATTEMPTS = 5;
-      const uint8_t MAX_PAIRING_ATTEMPTS = 3;
-      const uint32_t MAX_ABNORMALITY_COUNT = 5;
-      const uint16_t PAIRING_TIMEOUT_SECONDS = 10;
-      
-      std::string _Pin;
-      uint8_t _ChallengeAttempts = 0;
-      uint8_t _TotalPairingAttempts;
-      uint8_t _NumPinDigits;
-      uint32_t _PingChallenge;
-      uint32_t _AbnormalityCount = 0;
-      
-      INetworkStream* _Stream;
-      //KeyExchange* _KeyExchange;
-      std::unique_ptr<KeyExchange> _KeyExchange;
-      PairingState _State = PairingState::Initial;
-      
-      //
-      //
-      //
-      Signal::SmartHandle _OnReceivePlainTextHandle;
-      Signal::SmartHandle _OnReceiveEncryptedHandle;
-      Signal::SmartHandle _OnFailedDecryptionHandle;
-      //
-      using PairingTimeoutSignal = Signal::Signal<void ()>;
-      PairingTimeoutSignal _PairingTimeoutSignal;
-      
-      static long long _TimeStarted;
-      struct ev_loop* _Loop;
-      ev_timer _Timer;
-      static void sEvTimerHandler(struct ev_loop* loop, struct ev_timer* w, int revents);
-      
-      struct ev_TimerStruct {
-        ev_timer timer;
-        PairingTimeoutSignal* signal;
-      };
-      ev_TimerStruct _HandleTimeoutTimer;
-      //
-      //
-      //
-      
-      UpdatedPinSignal _UpdatedPinSignal;
-      ReceivedWifiCredentialsSignal _ReceivedWifiCredentialSignal;
-    };
-  }
-}
+    // Methods
+    void BeginPairing();
+    void StopPairing();
+    
+    std::string GetPin() {
+      return _pin;
+    }
+    
+    // WiFi Receive Event
+    ReceivedWifiCredentialsSignal& OnReceivedWifiCredentialsEvent() {
+      return _receivedWifiCredentialSignal;
+    }
+    
+    // PIN Update Event
+    UpdatedPinSignal& OnUpdatedPinEvent() {
+      return _updatedPinSignal;
+    }
+    
+  private:
+    // Statics
+    static long long sTimeStarted;
+    static void sEvTimerHandler(struct ev_loop* loop, struct ev_timer* w, int revents);
+    
+    // Types
+    using PairingTimeoutSignal = Signal::Signal<void ()>;
+    
+    // Template Methods
+    template <class T>
+    typename std::enable_if<std::is_base_of<Anki::Switchboard::Message, T>::value, int>::type
+    SendPlainText(const T& message);
+    
+    template <class T>
+    typename std::enable_if<std::is_base_of<Anki::Switchboard::Message, T>::value, int>::type
+    SendEncrypted(const T& message);
+    
+    // Methods
+    void Init();
+    void Reset(bool forced=false);
+    
+    void HandleMessageReceived(uint8_t* bytes, uint32_t length);
+    void HandleEncryptedMessageReceived(uint8_t* bytes, uint32_t length);
+    void HandleDecryptionFailed();
+    void HandleInitialPair(uint8_t* bytes, uint32_t length);
+    void HandleRestoreConnection();
+    void HandleCancelSetup();
+    void HandleNonceAck();
+    void HandleTimeout();
+    void HandlePingResponse(uint8_t* bytes, uint32_t length);
+    
+    void SendPublicKey();
+    void SendNonce();
+    void SendChallenge();
+    void SendCancelPairing();
+    void SendChallengeSuccess();
+    
+    std::string GeneratePin();
+    
+    void IncrementAbnormalityCount();
+    void IncrementChallengeCount();
+    
+    // Variables
+    const uint8_t kMaxMatchAttempts = 5;
+    const uint8_t kMaxPairingAttempts = 3;
+    const uint32_t kMaxAbnormalityCount = 5;
+    const uint16_t kPairingTimeout_s = 10;
+    const uint8_t kNumPinDigits = 6;
+    const uint8_t kMinMessageSize = 2;
+    
+    std::string _pin;
+    uint8_t _challengeAttempts;
+    uint8_t _totalPairingAttempts;
+    uint8_t _numPinDigits;
+    uint32_t _pingChallenge;
+    uint32_t _abnormalityCount;
+    
+    INetworkStream* _stream;
+    PairingState _state = PairingState::Initial;
+    
+    std::unique_ptr<KeyExchange> _keyExchange;
+    
+    Signal::SmartHandle _onReceivePlainTextHandle;
+    Signal::SmartHandle _onReceiveEncryptedHandle;
+    Signal::SmartHandle _onFailedDecryptionHandle;
+
+    PairingTimeoutSignal _pairingTimeoutSignal;
+    
+    struct ev_loop* _loop;
+    ev_timer _timer;
+    
+    struct ev_TimerStruct {
+      ev_timer timer;
+      PairingTimeoutSignal* signal;
+    } _handleTimeoutTimer;
+    
+    UpdatedPinSignal _updatedPinSignal;
+    ReceivedWifiCredentialsSignal _receivedWifiCredentialSignal;
+  };
+} // Switchboard
+} // Anki
 
 #endif /* SecurePairing_h */

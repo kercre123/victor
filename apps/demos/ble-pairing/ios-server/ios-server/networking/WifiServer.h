@@ -21,32 +21,31 @@
 #define SB_BUFFER_SIZE 1024
 
 namespace Anki {
-  namespace Networking {
+namespace Switchboard {
+  class WifiServer {
+    using ClientConnectedSignal = Signal::Signal<void (Anki::Switchboard::WiFiNetworkStream*)>;
+    using AcceptedSocketSignal = Signal::Signal<void (struct sockaddr* client_address, int size)>;
     
-    class WifiServer {
-      using ClientConnectedSignal = Signal::Signal<void (Anki::Networking::WiFiNetworkStream*)>;
-      using AcceptedSocketSignal = Signal::Signal<void (struct sockaddr* client_address, int size)>;
-      
-    public:
-      WifiServer(struct ev_loop* loop, int port);
-      
-      // Handle WiFi Client Connected
-      ClientConnectedSignal& OnWifiClientConnectedEvent() {
-        return _wifiClientConnectedSignal;
-      }
-      
-      void StartServer();
-      
-    private:
-      ClientConnectedSignal _wifiClientConnectedSignal;
-      uint16_t _numberConnectedClients = 0;
-      
-      struct ev_loop* _Loop;
-      int _Port = 0;
-      
-      static void AcceptCallback(struct ev_loop *loop, struct ev_io *watcher, int revents);
-    };
-  }
-}
+  public:
+    WifiServer(struct ev_loop* loop, int port);
+    
+    // Handle WiFi Client Connected
+    ClientConnectedSignal& OnWifiClientConnectedEvent() {
+      return _wifiClientConnectedSignal;
+    }
+    
+    void StartServer();
+    
+  private:
+    ClientConnectedSignal _wifiClientConnectedSignal;
+    uint16_t _numberConnectedClients = 0;
+    
+    struct ev_loop* _Loop;
+    int _Port = 0;
+    
+    static void AcceptCallback(struct ev_loop *loop, struct ev_io *watcher, int revents);
+  };
+} // Switchboard
+} // Anki
 
 #endif /* WiFiConnection_hpp */

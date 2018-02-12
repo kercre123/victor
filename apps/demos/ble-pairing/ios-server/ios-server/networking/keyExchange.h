@@ -13,57 +13,59 @@
 #include "../sodium/sodium.h"
 
 namespace Anki {
-  namespace Networking {
-    class KeyExchange {
-    public:
-      KeyExchange(uint8_t numPinDigits) :
-      _NumPinDigits(numPinDigits)
-      {
-      }
+namespace Switchboard {
+  class KeyExchange {
+  public:
+    KeyExchange(uint8_t numPinDigits) :
+    _numPinDigits(numPinDigits)
+    {
+    }
+    
+    // Getters
+    uint8_t* GetEncryptKey() {
+      return _encryptKey;
+    }
+    
+    uint8_t* GetDecryptKey() {
+      return _decryptKey;
+    }
+    
+    uint8_t* GetPublicKey() {
+      return _publicKey;
+    }
+    
+    uint8_t* GetPinLengthPtr() {
+      return &_numPinDigits;
+    }
+    
+    uint8_t* GetNonce() {
+      return _initialNonce;
+    }
+    
+    uint8_t* GetVerificationHash() {
+      crypto_generichash(_hashedKey, crypto_kx_SESSIONKEYBYTES, _encryptKey, crypto_kx_SESSIONKEYBYTES, nullptr, 0);
       
-      uint8_t* GetEncryptKey() {
-        return _EncryptKey;
-      }
-      
-      uint8_t* GetDecryptKey() {
-        return _DecryptKey;
-      }
-      
-      uint8_t* GetPublicKey() {
-        return _PublicKey;
-      }
-      
-      uint8_t* GetPinLengthPtr() {
-        return &_NumPinDigits;
-      }
-      
-      uint8_t* GetNonce() {
-        // Return nonce
-        return _InitialNonce;
-      }
-      
-      uint8_t* GetVerificationHash() {
-        crypto_generichash(_HashedKey, crypto_kx_SESSIONKEYBYTES, _EncryptKey, crypto_kx_SESSIONKEYBYTES, nullptr, 0);
-        
-        return _HashedKey;
-      }
-      
-      uint8_t* GenerateKeys();
-      void Reset();
-      void SetRemotePublicKey(const uint8_t* pubKey);
-      bool CalculateSharedKeys(const uint8_t* pin);
-      
-    private:
-      uint8_t _SecretKey [crypto_kx_SECRETKEYBYTES];   // our secret key
-      uint8_t _DecryptKey [crypto_kx_SESSIONKEYBYTES]; // rx
-      uint8_t _EncryptKey [crypto_kx_SESSIONKEYBYTES]; // tx
-      uint8_t _RemotePublicKey [crypto_kx_PUBLICKEYBYTES];  // partner's public key
-      uint8_t _PublicKey [crypto_kx_PUBLICKEYBYTES];   // our public key
-      uint8_t _HashedKey [crypto_kx_SESSIONKEYBYTES];  // size of code
-      uint8_t _InitialNonce [crypto_aead_xchacha20poly1305_ietf_NPUBBYTES];
-      uint8_t _NumPinDigits = 6;
-    };
-  }
-}
+      return _hashedKey;
+    }
+    
+    // Method Declarations
+    uint8_t* GenerateKeys();
+    void Reset();
+    void SetRemotePublicKey(const uint8_t* pubKey);
+    bool CalculateSharedKeys(const uint8_t* pin);
+    
+  private:
+    // Variables
+    uint8_t _secretKey [crypto_kx_SECRETKEYBYTES];   // our secret key
+    uint8_t _decryptKey [crypto_kx_SESSIONKEYBYTES]; // rx
+    uint8_t _encryptKey [crypto_kx_SESSIONKEYBYTES]; // tx
+    uint8_t _remotePublicKey [crypto_kx_PUBLICKEYBYTES];  // partner's public key
+    uint8_t _publicKey [crypto_kx_PUBLICKEYBYTES];   // our public key
+    uint8_t _hashedKey [crypto_kx_SESSIONKEYBYTES];  // size of code
+    uint8_t _initialNonce [crypto_aead_xchacha20poly1305_ietf_NPUBBYTES];
+    uint8_t _numPinDigits = 6;
+  };
+} // Switchboard
+} // Anki
 
 #endif /* KeyExchange_h */

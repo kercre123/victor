@@ -41,10 +41,10 @@
   
   NSObject* _Context;
   
-  Anki::Networking::BLENetworkStream* _BLEStream;
+  Anki::Switchboard::BLENetworkStream* _BLEStream;
   
-  Signal::Signal<void (Anki::Networking::BLENetworkStream*)>* _ConnectedSignal;
-  Signal::Signal<void (Anki::Networking::BLENetworkStream*)>* _DisconnectedSignal;
+  Signal::Signal<void (Anki::Switchboard::BLENetworkStream*)>* _ConnectedSignal;
+  Signal::Signal<void (Anki::Switchboard::BLENetworkStream*)>* _DisconnectedSignal;
   
   bool _SubscribedPing;
   bool _SubscribedRead;
@@ -53,10 +53,11 @@
   bool _SubscribedSecureWrite;
 }
 
--(void) setConnectedSignal: (Signal::Signal<void (Anki::Networking::BLENetworkStream*)> *)connectedSignal;
--(void) setDisconnectedSignal: (Signal::Signal<void (Anki::Networking::BLENetworkStream*)> *)disconnectedSignal;
+-(void) setConnectedSignal: (Signal::Signal<void (Anki::Switchboard::BLENetworkStream*)> *)connectedSignal;
+-(void) setDisconnectedSignal: (Signal::Signal<void (Anki::Switchboard::BLENetworkStream*)> *)disconnectedSignal;
 
 -(void) advertiseWithService: (const char*)name withService:(const char*)service;
+-(void) stopAdvertising;
 
 @end
 

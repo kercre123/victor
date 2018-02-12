@@ -13,24 +13,24 @@
 #include "INetworkStream.h"
 
 namespace Anki {
-  namespace Networking {
-    class BLENetworkStream : public INetworkStream {
-    public:
-      BLENetworkStream(CBPeripheralManager* manager, CBMutableCharacteristic* writeCharacteristic, CBMutableCharacteristic* encryptedWriteCharacteristic) {
-        _peripheralManager = manager;
-        _writeCharacteristic = writeCharacteristic;
-        _encryptedWriteCharacteristic = encryptedWriteCharacteristic;
-      }
-      
-      void SendPlainText(uint8_t* bytes, int length);
-      void SendEncrypted(uint8_t* bytes, int length);
-      
-    private:
-      CBPeripheralManager* _peripheralManager;
-      CBMutableCharacteristic* _writeCharacteristic;
-      CBMutableCharacteristic* _encryptedWriteCharacteristic;
-    };
-  }
-}
+namespace Switchboard {
+  class BLENetworkStream : public INetworkStream {
+  public:
+    BLENetworkStream(CBPeripheralManager* manager, CBMutableCharacteristic* writeCharacteristic, CBMutableCharacteristic* encryptedWriteCharacteristic) {
+      _peripheralManager = manager;
+      _writeCharacteristic = writeCharacteristic;
+      _encryptedWriteCharacteristic = encryptedWriteCharacteristic;
+    }
+    
+    int SendPlainText(uint8_t* bytes, int length) __attribute__((warn_unused_result));
+    int SendEncrypted(uint8_t* bytes, int length) __attribute__((warn_unused_result));
+    
+  private:
+    CBPeripheralManager* _peripheralManager;
+    CBMutableCharacteristic* _writeCharacteristic;
+    CBMutableCharacteristic* _encryptedWriteCharacteristic;
+  };
+} // Switchboard
+} // Anki
 
 #endif /* BLENetworkStream_h */

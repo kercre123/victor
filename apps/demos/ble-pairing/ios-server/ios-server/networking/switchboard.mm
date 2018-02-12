@@ -15,18 +15,20 @@
 #define IOS_MAIN 1
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-struct ev_loop* Anki::Switchboard::sLoop;
-Anki::Switchboard::PinUpdatedSignal Anki::Switchboard::_PinUpdatedSignal;
-Anki::Networking::SecurePairing* Anki::Switchboard::securePairing;
-Signal::SmartHandle Anki::Switchboard::pinHandle;
-Signal::SmartHandle Anki::Switchboard::wifiHandle;
-dispatch_queue_t Anki::Switchboard::switchboardQueue;
-Anki::TaskExecutor* Anki::Switchboard::_sTaskExecutor;
+struct ev_loop* Anki::SwitchboardDaemon::sLoop;
+Anki::SwitchboardDaemon::PinUpdatedSignal Anki::SwitchboardDaemon::sPinUpdatedSignal;
+Anki::Switchboard::SecurePairing* Anki::SwitchboardDaemon::sSecurePairing;
+Signal::SmartHandle Anki::SwitchboardDaemon::sPinHandle;
+Signal::SmartHandle Anki::SwitchboardDaemon::sWifiHandle;
+dispatch_queue_t Anki::SwitchboardDaemon::sSwitchboardQueue;
+Anki::TaskExecutor* Anki::SwitchboardDaemon::sTaskExecutor;
+BLEPairingController* Anki::SwitchboardDaemon::sPairingController;
+const uint32_t Anki::SwitchboardDaemon::kTick_s;
 
-void Anki::Switchboard::Start() {
+void Anki::SwitchboardDaemon::Start() {
   // Set static loop
   sLoop = ev_default_loop(0);
-  _sTaskExecutor = new Anki::TaskExecutor(sLoop);
+  sTaskExecutor = new Anki::TaskExecutor(sLoop);
   ////////////////////////////////////////
   // Setup BLE process comms
   ////////////////////////////////////////
@@ -73,70 +75,77 @@ void Anki::Switchboard::Start() {
 
   // Begin event loop
   ev_timer timer;
-  ev_timer_init(&timer, sEvTimerHandler, SB_LOOP_TIME, SB_LOOP_TIME);
+  ev_timer_init(&timer, OnTimerTick, kTick_s, kTick_s);
   ev_timer_start(sLoop, &timer);
   Log::Write("Initialized . . .");
   ev_loop(sLoop, 0);
   Log::Write(". . . Terminated");
 }
 
-void Anki::Switchboard::sEvTimerHandler(struct ev_loop* loop, struct ev_timer* w, int revents)
-{
-  // Log::Write("[timer] Outer tick.");
-}
-
-void Anki::Switchboard::StartBleComms() {
+void Anki::SwitchboardDaemon::StartBleComms() {
   // Tell ankibluetoothd to start advertising.
-  BLEPairingController* pairingController = new BLEPairingController();
+  sPairingController = new BLEPairingController();
   
-  pairingController->OnBLEConnectedEvent().SubscribeForever(OnConnected);
-  pairingController->OnBLEDisconnectedEvent().SubscribeForever(OnDisconnected);
-  pairingController->StartAdvertising();
+  sPairingController->OnBLEConnectedEvent().SubscribeForever(OnConnected);
+  sPairingController->OnBLEDisconnectedEvent().SubscribeForever(OnDisconnected);
+  sPairingController->StartAdvertising();
 }
 
-void Anki::Switchboard::StartWifiComms() {
+void Anki::SwitchboardDaemon::StopBleComms() {
+  // Tell ankibluetoothd to stop advertising.
+  sPairingController->StopAdvertising();
+  
+  delete sPairingController;
+}
+
+void Anki::SwitchboardDaemon::StartWifiComms() {
   // Start WiFi server
   // ##
 }
 
-void Anki::Switchboard::HandleStartPairing() {
+void Anki::SwitchboardDaemon::HandleStartPairing() {
   
 }
 
-void Anki::Switchboard::OnDisconnected(Anki::Networking::INetworkStream* stream) {
-  _sTaskExecutor->Wake([stream]() {
+void Anki::SwitchboardDaemon::OnDisconnected(Anki::Switchboard::INetworkStream* stream) {
+  sTaskExecutor->Wake([stream]() {
     Log::Write("Disconnected from BLE central");
-    securePairing->StopPairing();
+    sSecurePairing->StopPairing();
   });
 }
 
-void Anki::Switchboard::OnPinUpdated(std::string pin) {
-  _PinUpdatedSignal.emit(pin);
+void Anki::SwitchboardDaemon::OnPinUpdated(std::string pin) {
+  sPinUpdatedSignal.emit(pin);
 }
 
-void Anki::Switchboard::OnReceiveWifiCredentials(std::string ssid, std::string pw) {
+void Anki::SwitchboardDaemon::OnReceiveWifiCredentials(std::string ssid, std::string pw) {
   NEHotspotConfiguration* wifi = [[NEHotspotConfiguration alloc] initWithSSID:[NSString stringWithUTF8String:ssid.c_str()] passphrase:[NSString stringWithUTF8String:pw.c_str()] isWEP:false];
   NSLog(@"Connecting to : [%s], [%s]", ssid.c_str(), pw.c_str());
   [[NEHotspotConfigurationManager sharedManager] applyConfiguration:wifi completionHandler:nullptr];
 }
 
-void Anki::Switchboard::OnConnected(Anki::Networking::INetworkStream* stream) {
-  _sTaskExecutor->Wake([stream]() {
+void Anki::SwitchboardDaemon::OnConnected(Anki::Switchboard::INetworkStream* stream) {
+  sTaskExecutor->Wake([stream]() {
     Log::Write("Connected to a BLE central.");
     
-    if(securePairing == nullptr) {
-      securePairing = new Anki::Networking::SecurePairing(stream, ev_default_loop(0));
-      pinHandle = securePairing->OnUpdatedPinEvent().ScopedSubscribe(OnPinUpdated);
-      wifiHandle = securePairing->OnReceivedWifiCredentialsEvent().ScopedSubscribe(OnReceiveWifiCredentials);
+    if(sSecurePairing == nullptr) {
+      sSecurePairing = new Anki::Switchboard::SecurePairing(stream, ev_default_loop(0));
+      sPinHandle = sSecurePairing->OnUpdatedPinEvent().ScopedSubscribe(OnPinUpdated);
+      sWifiHandle = sSecurePairing->OnReceivedWifiCredentialsEvent().ScopedSubscribe(OnReceiveWifiCredentials);
     }
     
     // Initiate pairing process
-    securePairing->BeginPairing();
+    sSecurePairing->BeginPairing();
   });
+}
+
+void Anki::SwitchboardDaemon::OnTimerTick(struct ev_loop* loop, struct ev_timer* w, int revents)
+{
+  // no op
 }
 
 # if !IOS_MAIN
 int main() {
-  Anki::Switchboard::Start();
+  Anki::SwitchboardDaemon::Start();
 }
 # endif

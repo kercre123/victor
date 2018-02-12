@@ -84,11 +84,11 @@
   return [super init];
 }
 
--(void) setConnectedSignal: (Signal::Signal<void (Anki::Networking::BLENetworkStream*)> *)connectedSignal {
+-(void) setConnectedSignal: (Signal::Signal<void (Anki::Switchboard::BLENetworkStream*)> *)connectedSignal {
   _ConnectedSignal = connectedSignal;
 }
 
--(void) setDisconnectedSignal: (Signal::Signal<void (Anki::Networking::BLENetworkStream*)> *)disconnectedSignal {
+-(void) setDisconnectedSignal: (Signal::Signal<void (Anki::Switchboard::BLENetworkStream*)> *)disconnectedSignal {
   _DisconnectedSignal = disconnectedSignal;
 }
 
@@ -99,7 +99,14 @@
   _PeripheralManager = [[CBPeripheralManager alloc] init];
   _PeripheralManager.delegate = self;
   
-  _BLEStream = new Anki::Networking::BLENetworkStream(_PeripheralManager, CH_WRITE, CH_SECURE_WRITE);
+  _BLEStream = new Anki::Switchboard::BLENetworkStream(_PeripheralManager, CH_WRITE, CH_SECURE_WRITE);
+}
+
+-(void) stopAdvertising {
+  [_PeripheralManager stopAdvertising];
+  _PeripheralManager = nil;
+  
+  delete _BLEStream;
 }
 
 - (void)peripheralManager:(CBPeripheralManager *)peripheral central:(CBCentral *)central didSubscribeToCharacteristic:(CBCharacteristic *)characteristic {
@@ -161,12 +168,12 @@ didUnsubscribeFromCharacteristic:(CBCharacteristic *)characteristic {
     if(requests[i].characteristic.UUID.UUIDString == CH_READ.UUID.UUIDString) {
       // We are receiving input to read stream
       Log::Write("------> [plain text] Receiving incoming writee to BLE characteristic");
-      ((Anki::Networking::INetworkStream*)_BLEStream)->ReceivePlainText((uint8_t*)requests[i].value.bytes, (int)requests[i].value.length);
+      ((Anki::Switchboard::INetworkStream*)_BLEStream)->ReceivePlainText((uint8_t*)requests[i].value.bytes, (int)requests[i].value.length);
       [peripheral respondToRequest:requests[i] withResult:CBATTErrorSuccess];
     } else if(requests[i].characteristic.UUID.UUIDString == CH_SECURE_READ.UUID.UUIDString) {
       // We are receiving input to read stream
       Log::Write("------> [##encrypted##] Receiving incoming writee to BLE characteristic");
-      ((Anki::Networking::INetworkStream*)_BLEStream)->ReceiveEncrypted((uint8_t*)requests[i].value.bytes, (int)requests[i].value.length);
+      ((Anki::Switchboard::INetworkStream*)_BLEStream)->ReceiveEncrypted((uint8_t*)requests[i].value.bytes, (int)requests[i].value.length);
       [peripheral respondToRequest:requests[i] withResult:CBATTErrorSuccess];
     }
   }
