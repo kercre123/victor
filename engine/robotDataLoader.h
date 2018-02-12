@@ -98,10 +98,6 @@ public:
   const Json::Value& GetLocalNotificationConfig() const      { return _localNotificationConfig; }
   const Json::Value& GetInventoryConfig() const              { return _inventoryConfig; }
   const Json::Value& GetDasEventConfig() const               { return _dasEventConfig; }
-  
-  // voice command configs
-  const Json::Value& GetGameRequestWeightsConfig() const { return _gameRequestWeights; }
-  const Json::Value& GetDoATrickWeightsConfig() const { return _doATrickWeights; }
 
   // images are stored as a map of stripped file name (no file extension) to full path
   const ImagePathMap& GetFacePNGPaths()       const { return _facePNGPaths; }
@@ -180,10 +176,6 @@ private:
   Json::Value _textToSpeechConfig;
   Json::Value _inventoryConfig;
   Json::Value _dasEventConfig;
-  
-  // voice command configs
-  Json::Value _gameRequestWeights;
-  Json::Value _doATrickWeights;
   
   ImagePathMap _facePNGPaths;
 

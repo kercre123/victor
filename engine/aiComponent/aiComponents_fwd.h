@@ -22,8 +22,6 @@ enum class AIComponentID{
   // component which sits between the behavior system and action list/animation streamer
   // to ensure smooth transitions between actions
   ContinuityComponent,
-  // component which behaviors can delegate to for selecting a random Trick / Spark
-  DoATrick,
   // provide a simple interface for selecting the best face to interact with
   FaceSelection,
   // component for tracking freeplay DAS data
@@ -35,8 +33,6 @@ enum class AIComponentID{
   ObjectInteractionInfoCache,
   // Component that maintains the puzzles victor can solve
   Puzzle,
-  // component for keeping track of what game cozmo should request next
-  RequestGame,
   // component that caches templated images and only swaps out quadrants that have
   // changed between requests
   TemplatedImageCache,

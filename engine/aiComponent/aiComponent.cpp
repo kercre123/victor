@@ -18,12 +18,10 @@
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/continuityComponent.h"
-#include "engine/aiComponent/doATrickSelector.h"
 #include "engine/aiComponent/faceSelectionComponent.h"
 #include "engine/aiComponent/freeplayDataTracker.h"
 #include "engine/aiComponent/objectInteractionInfoCache.h"
 #include "engine/aiComponent/puzzleComponent.h"
-#include "engine/aiComponent/requestGameComponent.h"
 #include "engine/aiComponent/templatedImageCache.h"
 #include "engine/aiComponent/timerUtility.h"
 #include "engine/components/sensors/proxSensorComponent.h"
@@ -54,13 +52,11 @@ namespace ComponentWrappers{
 AIComponentComponents::AIComponentComponents(Robot&                      robot,
                                              BehaviorComponent*&         behaviorComponent,
                                              ContinuityComponent*        continuityComponent,
-                                             DoATrickSelector*           doATrickSelector,
                                              FaceSelectionComponent*     faceSelectionComponent,
                                              FreeplayDataTracker*        freeplayDataTracker,
                                              AIInformationAnalyzer*      infoAnalyzer,
                                              ObjectInteractionInfoCache* objectInteractionInfoCache,
                                              PuzzleComponent*            puzzleComponent,
-                                             RequestGameComponent*       requestGameComponent,
                                              TemplatedImageCache*        templatedImageCache,
                                              TimerUtility*               timerUtility,
                                              AIWhiteboard*               aiWhiteboard)
@@ -68,13 +64,11 @@ AIComponentComponents::AIComponentComponents(Robot&                      robot,
 ,_components({
   {AIComponentID::BehaviorComponent,          ComponentWrapper(behaviorComponent, true)},
   {AIComponentID::ContinuityComponent,        ComponentWrapper(continuityComponent, true)},
-  {AIComponentID::DoATrick,                   ComponentWrapper(doATrickSelector, true)},
   {AIComponentID::FaceSelection,              ComponentWrapper(faceSelectionComponent, true)},
   {AIComponentID::FreeplayDataTracker,        ComponentWrapper(freeplayDataTracker, true)},
   {AIComponentID::InformationAnalyzer,        ComponentWrapper(infoAnalyzer, true)},
   {AIComponentID::ObjectInteractionInfoCache, ComponentWrapper(objectInteractionInfoCache, true)},
   {AIComponentID::Puzzle,                     ComponentWrapper(puzzleComponent, true)},
-  {AIComponentID::RequestGame,                ComponentWrapper(requestGameComponent, true)},
   {AIComponentID::TemplatedImageCache,        ComponentWrapper(templatedImageCache, true)},
   {AIComponentID::TimerUtility,               ComponentWrapper(timerUtility, true)},
   {AIComponentID::Whiteboard,                 ComponentWrapper(aiWhiteboard, true)}
@@ -127,14 +121,11 @@ Result AIComponent::Init(Robot* robot, BehaviorComponent*& customBehaviorCompone
           *robot,
           behaviorComponent,
           new ContinuityComponent(*robot),
-          new DoATrickSelector(robot->GetContext()->GetDataLoader()->GetDoATrickWeightsConfig()),
           new FaceSelectionComponent(*robot, robot->GetFaceWorld(), robot->GetMicDirectionHistory()),
           new FreeplayDataTracker(),
           new AIInformationAnalyzer(),
           new ObjectInteractionInfoCache(*robot),
           new PuzzleComponent(*robot),
-          new RequestGameComponent(robot->HasExternalInterface() ? robot->GetExternalInterface() : nullptr,
-                                  robot->GetContext()->GetDataLoader()->GetGameRequestWeightsConfig()),
           new TemplatedImageCache(robot->GetContext()->GetDataLoader()->GetFacePNGPaths()),
           new TimerUtility(),
           new AIWhiteboard(*robot)

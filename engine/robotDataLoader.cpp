@@ -446,32 +446,6 @@ void RobotDataLoader::LoadVoiceCommandConfigs()
     }
   }
 #endif
-  
-  // Configuration for "lets play" game selection
-  {
-    std::string jsonFilename = "config/engine/game_request_weights.json";
-    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _gameRequestWeights);
-    if (!success)
-    {
-      LOG_ERROR("RobotDataLoader.LetsPlayWeightsConfigFailed",
-                "Lets play Json config file %s not found or failed to parse",
-                jsonFilename.c_str());
-      _gameRequestWeights.clear();
-    }
-  }
-  
-  // Configuration for "do a trick" spark selection
-  {
-    std::string jsonFilename = "config/engine/voiceCommands/do_a_trick_weights.json";
-    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _doATrickWeights);
-    if (!success)
-    {
-      LOG_ERROR("RobotDataLoader.DoATrickWeightsConfigFailed",
-                "Do a trick Json config file %s not found or failed to parse",
-                  jsonFilename.c_str());
-      _doATrickWeights.clear();
-    }
-  }
 }
 
 

@@ -36,12 +36,10 @@ class BehaviorComponent;
 class BehaviorContainer;
 class BehaviorHelperComponent;
 class ContinuityComponent;
-class DoATrickSelector;
 class FaceSelectionComponent;
 class FreeplayDataTracker;
 class ObjectInteractionInfoCache;
 class PuzzleComponent;
-class RequestGameComponent;
 class Robot;
 class TemplatedImageCache;
 class TimerUtility;
@@ -52,13 +50,11 @@ public:
   AIComponentComponents(Robot&                      robot,
                         BehaviorComponent*&         behaviorComponent,
                         ContinuityComponent*        continuityComponent,
-                        DoATrickSelector*           doATrickSelector,
                         FaceSelectionComponent*     faceSelectionComponent,
                         FreeplayDataTracker*        freeplayDataTracker,
                         AIInformationAnalyzer*      infoAnalyzer,
                         ObjectInteractionInfoCache* objectInteractionInfoCache,
                         PuzzleComponent*            puzzleComponent,
-                        RequestGameComponent*       requestGameComponent,
                         TemplatedImageCache*        templatedImageCache,
                         TimerUtility*               timerUtility,
                         AIWhiteboard*               aiWhiteboard);
@@ -131,12 +127,7 @@ public:
   inline PuzzleComponent&       GetPuzzleComponent()       { return GetComponent<PuzzleComponent>(AIComponentID::Puzzle);}
 
   inline const FaceSelectionComponent& GetFaceSelectionComponent() const {return GetComponent<FaceSelectionComponent>(AIComponentID::FaceSelection);}
-  
-  inline RequestGameComponent& GetRequestGameComponent()               {  return GetComponent<RequestGameComponent>(AIComponentID::RequestGame);}
-  inline RequestGameComponent& GetNonConstRequestGameComponent() const {  return GetComponent<RequestGameComponent>(AIComponentID::RequestGame);}
-  
-  inline DoATrickSelector& GetDoATrickSelector()  {  return GetComponent<DoATrickSelector>(AIComponentID::DoATrick); }
-
+    
   inline FreeplayDataTracker& GetFreeplayDataTracker()  {  return GetComponent<FreeplayDataTracker>(AIComponentID::FreeplayDataTracker); }  
   
   ////////////////////////////////////////////////////////////////////////////////
