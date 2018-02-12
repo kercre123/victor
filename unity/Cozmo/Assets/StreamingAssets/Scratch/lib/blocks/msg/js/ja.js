@@ -58,6 +58,7 @@ Blockly.Msg["OPERATORS_NOT_SCRATCH_2"] = "%1 ではない";
 Blockly.Msg["OPERATORS_JOIN_SCRATCH_2"] = "%1 と %2";
 Blockly.Msg["OPERATORS_LETTER_X_OF_SCRATCH_2"] = "%1 番目( %2 )の文字";
 Blockly.Msg["OPERATORS_LENGTH_OF_SCRATCH_2"] = "%1 の長さ";
+Blockly.Msg["OPERATORS_CONTAINS_OF_SCRATCH_2"] = "%1 に %2 が含まれる";
 Blockly.Msg["OPERATORS_MOD_SCRATCH_2"] = "%1 を %2 で割った余り";
 Blockly.Msg["OPERATORS_ROUND_SCRATCH_2"] = "%1 を四捨五入"
 Blockly.Msg["OPERATORS_MATH_OP_SCRATCH_2"] = "%1 ( %2 )";

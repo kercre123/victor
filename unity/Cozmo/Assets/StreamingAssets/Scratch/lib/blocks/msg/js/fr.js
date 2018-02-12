@@ -58,6 +58,7 @@ Blockly.Msg["OPERATORS_NOT_SCRATCH_2"] = "non %1";
 Blockly.Msg["OPERATORS_JOIN_SCRATCH_2"] = "regroupe %1 %2";
 Blockly.Msg["OPERATORS_LETTER_X_OF_SCRATCH_2"] = "lettre %1 de %2";
 Blockly.Msg["OPERATORS_LENGTH_OF_SCRATCH_2"] = "longueur de %1"
+Blockly.Msg["OPERATORS_CONTAINS_OF_SCRATCH_2"] = "%1 contient %2?";
 Blockly.Msg["OPERATORS_MOD_SCRATCH_2"] = "%1 modulo %2"
 Blockly.Msg["OPERATORS_ROUND_SCRATCH_2"] = "arrondi de %1"
 Blockly.Msg["OPERATORS_MATH_OP_SCRATCH_2"] = "%1 de %2";

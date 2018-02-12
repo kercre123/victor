@@ -395,7 +395,9 @@ Blockly.Blocks['operator_contains'] = {
   init: function() {
     this.jsonInit(
       {
-        "message0": "%1 contains %2?", // TODO Fix missing translation
+        "message0": "%{BKY_OPERATORS_CONTAINS_OF_SCRATCH_2}", // *** ANKI CHANGE ***
+        //"message0": "%1 contains %2?",
+
         "args0": [
           {
             "type": "input_value",
