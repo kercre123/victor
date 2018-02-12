@@ -430,7 +430,11 @@ class HStructEmitter(BaseEmitter):
                 member_val = initial_value.value
                 member_str = hex(member_val) if initial_value.type == "hex" else str(member_val)
                 self.output.write(" = %s" % member_str)
-            self.output.write(';\n')
+
+            if member.clad_version is not None:
+                self.output.write('; // {clad_version}\n'.format(clad_version=member.clad_version))
+            else:
+                self.output.write(';\n')
 
         self.output.write('\n')
 
@@ -497,16 +501,16 @@ class HStructEmitter(BaseEmitter):
     def emitPack(self, node, globals):
         self.output.write(textwrap.dedent('''\
             /**** Pack ****/
-            size_t Pack(uint8_t* buff, size_t len) const;
-            size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+            size_t Pack(uint8_t* buff, size_t len, int cladVersion=0) const;
+            size_t Pack(CLAD::SafeMessageBuffer& buffer, int cladVersion=0) const;
 
             '''))
 
     def emitUnpack(self, node, globals):
         self.output.write(textwrap.dedent('''\
             /**** Unpack ****/
-            size_t Unpack(const uint8_t* buff, const size_t len);
-            size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+            size_t Unpack(const uint8_t* buff, const size_t len, int cladVersion=0);
+            size_t Unpack(const CLAD::SafeMessageBuffer& buffer, int cladVersion=0);
 
             '''))
 
@@ -636,19 +640,28 @@ class CPPStructEmitter(HStructEmitter):
 
     def emitPack(self, node, globals):
         self.output.write(textwrap.dedent('''\
-            size_t {message_name}::Pack(uint8_t* buff, size_t len) const
+            size_t {message_name}::Pack(uint8_t* buff, size_t len, int cladVersion) const
             {{
             \tCLAD::SafeMessageBuffer buffer(buff, len, false);
-            \treturn Pack(buffer);
+            \treturn Pack(buffer, cladVersion);
             }}
 
-            size_t {message_name}::Pack(CLAD::SafeMessageBuffer& buffer) const
+            size_t {message_name}::Pack(CLAD::SafeMessageBuffer& buffer, int cladVersion) const
             {{
             '''.format(**globals)))
         with self.output.indent(1):
+            self.output.write(textwrap.dedent('''(void)cladVersion; // Suppress unused-var warning\n'''))
             visitor = CPPPackStatementEmitter(self.output, self.options)
             for member in node.members():
+                if member.clad_version is not None:
+                    self.output.write(textwrap.dedent("if ((cladVersion >= {min_version}) && (cladVersion <= {max_version}))\n{{\n".format(min_version=member.clad_version.min_version, max_version=member.clad_version.max_version)))
+                    self.output.indent(1)
+
                 visitor.visit(member.type, member_name=member.name)
+
+                if member.clad_version is not None:
+                    self.output.indent(-1)
+                    self.output.write(textwrap.dedent('''}\n'''))
         self.output.write(textwrap.dedent('''\
             \tconst size_t bytesWritten {buffer.GetBytesWritten()};
             \treturn bytesWritten;
@@ -658,19 +671,28 @@ class CPPStructEmitter(HStructEmitter):
 
     def emitUnpack(self, node, globals):
         self.output.write(textwrap.dedent('''\
-            size_t {message_name}::Unpack(const uint8_t* buff, const size_t len)
+            size_t {message_name}::Unpack(const uint8_t* buff, const size_t len, int cladVersion)
             {{
             \tconst CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
-            \treturn Unpack(buffer);
+            \treturn Unpack(buffer, cladVersion);
             }}
 
-            size_t {message_name}::Unpack(const CLAD::SafeMessageBuffer& buffer)
+            size_t {message_name}::Unpack(const CLAD::SafeMessageBuffer& buffer, int cladVersion)
             {{
             ''').format(**globals));
         with self.output.indent(1):
+            self.output.write(textwrap.dedent('''(void)cladVersion; // Suppress unused-var warning\n'''))
             visitor = CPPUnpackStatementEmitter(self.output, self.options)
             for member in node.members():
+                if member.clad_version is not None:
+                    self.output.write(textwrap.dedent("if ((cladVersion >= {min_version}) && (cladVersion <= {max_version}))\n{{\n".format(min_version=member.clad_version.min_version, max_version=member.clad_version.max_version)))
+                    self.output.indent(1)
+
                 visitor.visit(member.type, member_name=member.name)
+
+                if member.clad_version is not None:
+                    self.output.indent(-1)
+                    self.output.write(textwrap.dedent('''}\nelse\n{\n}\n\n'''))
         self.output.write(textwrap.dedent('''\
             \treturn buffer.GetBytesRead();
             }

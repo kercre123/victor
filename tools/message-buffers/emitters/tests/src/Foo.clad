@@ -16,7 +16,7 @@
 
 message Foo {
   bool isFoo,
-  int_8 myByte,
+  clad_version 0 3 int_8 myByte,
   uint_8 byteTwo,
   int_16 myShort,
   float_32 myFloat,

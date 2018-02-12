@@ -245,6 +245,17 @@ class IncludeDecl(Node):
     def __str__(self):
         return self.name
 
+class CladVersionDecl(Node):
+    def __init__(self, min_version, max_version, coord):
+        super(CladVersionDecl, self).__init__(coord)
+        self.min_version = min_version
+        self.max_version = max_version
+
+    attr_names = ('min_version', 'max_version')
+
+    def __str__(self):
+        return "clad_version %s..%s" % (self.min_version, self.max_version)
+
 class MessageDecl(Decl):
     def __init__(self, name, decl_list, coord, namespace=None, is_structure=False, default_constructor=True):
         super(MessageDecl, self).__init__(name, coord=coord, namespace=namespace)
@@ -337,12 +348,13 @@ class MessageMemberDeclList(Node):
 
 
 class MessageMemberDecl(Node):
-    def __init__(self, name, type, init, coord):
+    def __init__(self, name, type, init, coord, clad_version=None):
         super(MessageMemberDecl, self).__init__(coord)
         self.name = name
         self.type = type
         self.init = init
         self.tag = None
+        self.clad_version = clad_version
 
     def children(self):
         nodelist = []

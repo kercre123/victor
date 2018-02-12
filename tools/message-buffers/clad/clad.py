@@ -625,6 +625,15 @@ class CLADParser(PLYParser):
         """
         p[0] = p[1]
 
+    def p_clad_version(self, p):
+        """ clad_version : CLAD_VERSION int_constant int_constant
+        """
+        # TODO: provide syntax for min... without having to specifiy max (when the max version isn't yet known
+        p[0] = ast.CladVersionDecl(
+            p[2].value,  # min_version
+            p[3].value,  # max_version
+            self.production_to_coord(p, 1))
+
     def p_message_member_decl_list(self, p):
         """ message_member_decl_list : message_member_decl
                                      | message_member_decl_list COMMA message_member_decl
@@ -645,22 +654,30 @@ class CLADParser(PLYParser):
     def p_message_member(self, p):
         """ message_member : type ID
                            | type ID EQ constant
+                           | clad_version type ID
+                           | clad_version type ID EQ constant
         """
+        has_clad_version = (len(p) > 1) and isinstance(p[1], ast.CladVersionDecl)
+        version_offset = 1 if has_clad_version else 0
+        clad_version = p[1] if has_clad_version else None
+
         coord = self.production_to_coord(p, 2)
-        if len(p) > 4:
-            self._check_message_member_initializer(p[1], p[4], coord)
+        if len(p) > 4+version_offset:
+            self._check_message_member_initializer(p[1+version_offset], p[4+version_offset], coord)
             p[0] = ast.MessageMemberDecl(
-                p[2], #name
-                p[1].type, #type
-                p[4], #initializer
+                p[2+version_offset], #name
+                p[1+version_offset].type, #type
+                p[4+version_offset], #initializer
                 coord, #file / line number
+                clad_version=clad_version
             )
         else:
             p[0] = ast.MessageMemberDecl(
-                p[2], #name
-                p[1].type, #type
+                p[2+version_offset], #name
+                p[1+version_offset].type, #type
                 None, #initializer
-                coord #file / line number
+                coord, #file / line number
+                clad_version=clad_version
             )
 
     def p_message_variable_array_member(self, p):
