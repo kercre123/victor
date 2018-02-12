@@ -24,7 +24,7 @@
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/robotInterface/messageHandler.h"
-#include "engine/robotManager.h"
+#include "engine/robotDataLoader.h"
 
 
 namespace Anki {
@@ -133,10 +133,10 @@ namespace Anki {
     {
       _animTrigger = animTrigger;
     
-      RobotManager* robot_mgr = GetRobot().GetContext()->GetRobotManager();
-      if( robot_mgr->HasAnimationForTrigger(_animTrigger) )
+      auto* data_ldr = GetRobot().GetContext()->GetDataLoader();
+      if( data_ldr->HasAnimationForTrigger(_animTrigger) )
       {
-        _animGroupName = robot_mgr->GetAnimationForTrigger(_animTrigger);
+        _animGroupName = data_ldr->GetAnimationForTrigger(_animTrigger);
         if(_animGroupName.empty()) {
           PRINT_NAMED_WARNING("TriggerAnimationAction.EmptyAnimGroupNameForTrigger",
                               "Event: %s", EnumToString(_animTrigger));
@@ -163,8 +163,8 @@ namespace Anki {
       else {
         const ActionResult res = PlayAnimationAction::Init();
         
-        RobotManager* robotMgr = GetRobot().GetContext()->GetRobotManager();
-        const std::set<AnimationTrigger>& dasBlacklistedTriggers = robotMgr->GetDasBlacklistedAnimationTriggers();
+        auto* dataLoader = GetRobot().GetContext()->GetDataLoader();
+        const std::set<AnimationTrigger>& dasBlacklistedTriggers = dataLoader->GetDasBlacklistedAnimationTriggers();
         const bool isBlacklisted = std::find(dasBlacklistedTriggers.begin(), dasBlacklistedTriggers.end(), _animTrigger) != dasBlacklistedTriggers.end();
         
         if( res == ActionResult::SUCCESS && !isBlacklisted ) {

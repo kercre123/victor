@@ -70,7 +70,6 @@ CozmoContext::CozmoContext() : CozmoContext(nullptr, nullptr)
 
 CozmoContext::~CozmoContext()
 {
-  _robotMgr->RemoveRobots();
 }
 
 

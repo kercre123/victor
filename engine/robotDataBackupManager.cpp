@@ -20,7 +20,6 @@
 #include "engine/robot.h"
 #include "engine/robotDataBackupManager.h"
 #include "engine/robotInterface/messageHandler.h"
-#include "engine/robotManager.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/onboardingData.h"
 #include "json/json.h"

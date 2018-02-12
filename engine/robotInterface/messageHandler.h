@@ -77,10 +77,6 @@ public:
   
   const Util::Stats::StatsAccumulator& GetQueuedTimes_ms() const;
 
-  void ReadLabAssignmentsFromRobot(u32 serialNumber) const;
-
-  void ConnectRobotToNeedsManager(u32 serialNumber) const;
-
   uint32_t GetMessageCountRtE() const { return _messageCountRtE; }
   uint32_t GetMessageCountEtR() const { return _messageCountEtR; }
   void     ResetMessageCounts() { _messageCountRtE = 0; _messageCountEtR = 0; }

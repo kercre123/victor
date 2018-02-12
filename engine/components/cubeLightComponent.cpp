@@ -32,7 +32,7 @@
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
-#include "engine/robotManager.h"
+#include "engine/robotDataLoader.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
@@ -95,7 +95,7 @@ CubeLightComponent::CubeLightComponent()
 void CubeLightComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
 {
   _robot = robot;
-  _cubeLightAnimations = std::make_unique<CubeLightAnimWrapper>(robot->GetContext()->GetRobotManager()->GetCubeLightAnimations());
+  _cubeLightAnimations = std::make_unique<CubeLightAnimWrapper>(*(_robot->GetContext()->GetDataLoader()->GetCubeLightAnimations()));
   // Subscribe to messages
   if( _robot->HasExternalInterface() ) {
     auto helper = MakeAnkiEventUtil(*_robot->GetExternalInterface(), *this, _eventHandles);
@@ -345,7 +345,7 @@ bool CubeLightComponent::PlayLightAnim(const ObjectID& objectID,
     }
     
     // Get the name of the animation to play for this trigger
-    const std::string& animName = _robot->GetContext()->GetRobotManager()->GetCubeAnimationForTrigger(animTrigger);
+    const std::string& animName = _robot->GetContext()->GetDataLoader()->GetCubeAnimationForTrigger(animTrigger);
     auto* anim = _cubeLightAnimations->_container.GetAnimation(animName);
     if(anim == nullptr)
     {
@@ -744,7 +744,7 @@ void CubeLightComponent::PickNextAnimForDefaultLayer(const ObjectID& objectID)
 
 u32 CubeLightComponent::GetAnimDuration(const CubeAnimationTrigger& trigger)
 {
-  const std::string& animName = _robot->GetContext()->GetRobotManager()->GetCubeAnimationForTrigger(trigger);
+  const std::string& animName = _robot->GetContext()->GetDataLoader()->GetCubeAnimationForTrigger(trigger);
   const auto* anim = _cubeLightAnimations->_container.GetAnimation(animName);
   if(anim == nullptr)
   {

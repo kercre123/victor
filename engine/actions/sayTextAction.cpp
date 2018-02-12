@@ -19,7 +19,6 @@
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/robotInterface/messageHandler.h"
-#include "engine/robotManager.h"
 
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageRobotToEngine.h"

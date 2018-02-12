@@ -13,7 +13,7 @@
 #ifndef ANKI_COZMO_BASESTATION_ROBOT_DATA_LOADER_H
 #define ANKI_COZMO_BASESTATION_ROBOT_DATA_LOADER_H
 
-
+#include "clad/types/animationTrigger.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 
 #include "util/helpers/noncopyable.h"
@@ -24,6 +24,7 @@
 #include <mutex>
 #include <string>
 #include <thread>
+#include <set>
 #include <unordered_map>
 #include <vector>
 
@@ -77,6 +78,12 @@ public:
   AnimationTriggerResponsesContainer* GetCubeAnimationTriggerResponses() const { return _cubeAnimationTriggerResponses.get(); }
   BackpackLightAnimationContainer* GetBackpackLightAnimations() const { return _backpackLightAnimations.get(); }
 
+  bool HasAnimationForTrigger( AnimationTrigger ev );
+  std::string GetAnimationForTrigger( AnimationTrigger ev );
+  std::string GetCubeAnimationForTrigger( CubeAnimationTrigger ev );
+  
+  const std::set<AnimationTrigger>& GetDasBlacklistedAnimationTriggers() const { return _dasBlacklistedAnimationTriggers; }
+
   // robot configuration json files
   const Json::Value& GetRobotMoodConfig() const              { return _robotMoodConfig; }
   const Json::Value& GetVictorFreeplayBehaviorConfig() const { return _victorFreeplayBehaviorConfig; }
@@ -125,6 +132,8 @@ private:
 
   void LoadEmotionEvents();
   void LoadBehaviors();
+
+  void LoadDasBlacklistedAnimationTriggers();
   
   void LoadFacePNGPaths();
 
@@ -186,6 +195,7 @@ private:
   std::thread           _dataLoadingThread;
   std::atomic<bool>     _abortLoad{false};
   
+  std::set<AnimationTrigger> _dasBlacklistedAnimationTriggers;
 };
 
 }

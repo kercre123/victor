@@ -19,7 +19,6 @@
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
 #include "engine/robotInterface/messageHandler.h"
-#include "engine/robotManager.h"
 #include "engine/utils/cozmoFeatureGate.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "clad/externalInterface/messageGameToEngine.h"

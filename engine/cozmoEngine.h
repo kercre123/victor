@@ -101,11 +101,7 @@ public:
   
   void ListenForRobotConnections(bool listen);
   
-  Robot* GetFirstRobot();
-  int    GetNumRobots() const;
-  Robot* GetRobotByID(const RobotID_t robotID); // returns nullptr for invalid ID
-
-  std::vector<RobotID_t> const& GetRobotIDList() const;
+  Robot* GetRobot();
 
   void ExecuteBackgroundTransfers();
 

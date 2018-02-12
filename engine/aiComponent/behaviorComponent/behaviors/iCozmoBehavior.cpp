@@ -44,7 +44,6 @@
 #include "engine/moodSystem/moodManager.h"
 #include "engine/needsSystem/needsManager.h"
 #include "engine/robotInterface/messageHandler.h"
-#include "engine/robotManager.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"

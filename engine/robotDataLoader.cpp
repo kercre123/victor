@@ -67,6 +67,7 @@ RobotDataLoader::RobotDataLoader(const CozmoContext* context)
 , _animationTriggerResponses(new AnimationTriggerResponsesContainer())
 , _cubeAnimationTriggerResponses(new AnimationTriggerResponsesContainer())
 , _backpackLightAnimations(new BackpackLightAnimationContainer())
+, _dasBlacklistedAnimationTriggers()
 {
 }
 
@@ -131,6 +132,11 @@ void RobotDataLoader::LoadNonConfigData()
     {
       ANKI_CPU_PROFILE("RobotDataLoader::LoadCubeAnimationTriggerResponses");
       LoadCubeAnimationTriggerResponses();
+    }
+
+    {
+      ANKI_CPU_PROFILE("RobotDataLoader::LoadDasBlacklistedAnimationTriggers");
+      LoadDasBlacklistedAnimationTriggers();
     }
   }
 
@@ -479,6 +485,18 @@ void RobotDataLoader::LoadCubeAnimationTriggerResponses()
   _cubeAnimationTriggerResponses->Load(_platform, "assets/cubeAnimationGroupMaps");
 }
 
+void RobotDataLoader::LoadDasBlacklistedAnimationTriggers()
+{
+  static const std::string kBlacklistedAnimationTriggersConfigKey = "blacklisted_animation_triggers";  
+  const Json::Value& blacklistedTriggers = _dasEventConfig[kBlacklistedAnimationTriggersConfigKey];
+  for (int i = 0; i < blacklistedTriggers.size(); i++)
+  {
+    const std::string& trigger = blacklistedTriggers[i].asString();
+    _dasBlacklistedAnimationTriggers.insert(AnimationTriggerFromString(trigger));
+  }
+}
+
+
 void RobotDataLoader::LoadRobotConfigs()
 {
   if (_platform == nullptr) {
@@ -694,6 +712,22 @@ bool RobotDataLoader::DoNonConfigDataLoading(float& loadingCompleteRatio_out)
   
   return true;
 }
+
+bool RobotDataLoader::HasAnimationForTrigger( AnimationTrigger ev )
+{
+  return _animationTriggerResponses->HasResponse(ev);
+}
+std::string RobotDataLoader::GetAnimationForTrigger( AnimationTrigger ev )
+{
+  return _animationTriggerResponses->GetResponse(ev);
+}
+std::string RobotDataLoader::GetCubeAnimationForTrigger( CubeAnimationTrigger ev )
+{
+  return _cubeAnimationTriggerResponses->GetResponse(ev);
+}
+
+
+
 
 }
 }

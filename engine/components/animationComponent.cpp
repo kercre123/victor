@@ -16,6 +16,7 @@
 #include "engine/components/animationComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
+#include "engine/robotDataLoader.h"
 #include "engine/robotManager.h"
 #include "engine/robotInterface/messageHandler.h"
 
@@ -59,7 +60,7 @@ void AnimationComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& 
 {
   _robot = robot;
   const CozmoContext* context = _robot->GetContext();
-  _animationGroups = std::make_unique<AnimationGroupWrapper>(context->GetRobotManager()->GetAnimationGroups());
+  _animationGroups = std::make_unique<AnimationGroupWrapper>(*(context->GetDataLoader()->GetAnimationGroups()));
   if (context) {
     // Setup game message handlers
     IExternalInterface *extInterface = context->GetExternalInterface();
@@ -69,6 +70,7 @@ void AnimationComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& 
   
       using namespace ExternalInterface;
       helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestAvailableAnimations>();
+      helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestAvailableAnimationGroups>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::DisplayProceduralFace>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::SetFaceHue>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::DisplayFaceImageBinaryChunk>();
@@ -516,6 +518,15 @@ void AnimationComponent::HandleMessage(const ExternalInterface::RequestAvailable
 {
   PRINT_CH_INFO("AnimationComponent", "RequestAvailableAnimations.Recvd", "");
   _isDolingAnims = true;
+}
+  
+template<>
+void AnimationComponent::HandleMessage(const ExternalInterface::RequestAvailableAnimationGroups& msg)
+{
+  std::vector<std::string> animNames(_robot->GetContext()->GetDataLoader()->GetAnimationGroups()->GetAnimationGroupNames());
+  for (std::vector<std::string>::iterator i=animNames.begin(); i != animNames.end(); ++i) {
+    _robot->GetExternalInterface()->BroadcastToGame<ExternalInterface::AnimationGroupAvailable>(*i);
+  }
 }
   
 template<>
