@@ -6,6 +6,7 @@
 //  Copyright © 2018 Paul Aluri. All rights reserved.
 //
 
+#include <sstream>
 #include <random>
 #include "securePairing.h"
 
@@ -42,13 +43,15 @@ _pin("")
   _pairingTimeoutSignal.SubscribeForever(std::bind(&SecurePairing::HandleTimeout, this));
   
   // Initialize the key exchange object
-  _keyExchange = std::unique_ptr<KeyExchange>(new KeyExchange(kNumPinDigits)); //new KeyExchange(kNumPinDigits);
+  _keyExchange = std::make_unique<KeyExchange>(kNumPinDigits);
+  
+  // Initialize the task executor
+  _taskExecutor = std::make_unique<TaskExecutor>(_loop);
   
   // Initialize ev timer
   Log::Write("[timer] init");
   ev_timer_init(&_handleTimeoutTimer.timer, &SecurePairing::sEvTimerHandler, kPairingTimeout_s, kPairingTimeout_s);
   _handleTimeoutTimer.signal = &_pairingTimeoutSignal;
-  //
   
   Log::Write("SecurePairing starting up.");
 }
@@ -151,7 +154,6 @@ void Anki::Switchboard::SecurePairing::SendNonce() {
   
   // Send nonce (in the clear) to client, update our state
   SendPlainText(NonceMessage((char*)nonce));
-  _state = PairingState::AwaitingNonceAck;
 }
 
 void Anki::Switchboard::SecurePairing::SendChallenge() {
@@ -163,14 +165,11 @@ void Anki::Switchboard::SecurePairing::SendChallenge() {
   
   // Send challenge and update state
   SendEncrypted(ChallengeMessage_crypto(_pingChallenge));
-  
-  _state = PairingState::AwaitingChallengeResponse;
 }
 
 void Anki::Switchboard::SecurePairing::SendChallengeSuccess() {
   // Send challenge and update state
   SendEncrypted(ChallengeAcceptedMessage_crypto());
-  _state = PairingState::ConfirmedSharedSecret;
 }
 
 void Anki::Switchboard::SecurePairing::SendCancelPairing() {
@@ -226,10 +225,11 @@ void Anki::Switchboard::SecurePairing::HandleNonceAck() {
 }
 
 inline bool isChallengeSuccess(uint32_t challenge, uint32_t answer) {
-  return answer == challenge + 1;
+  const bool isSuccess = answer == challenge + 1;
+  return isSuccess;
 }
 
-void Anki::Switchboard::SecurePairing::HandlePingResponse(uint8_t* pingChallengeAnswer, uint32_t length) {
+void Anki::Switchboard::SecurePairing::HandleChallengeResponse(uint8_t* pingChallengeAnswer, uint32_t length) {
   bool success = false;
   
   if(length < sizeof(uint32_t)) {
@@ -243,6 +243,7 @@ void Anki::Switchboard::SecurePairing::HandlePingResponse(uint8_t* pingChallenge
     // Inform client that we are good to go and
     // update our state
     SendChallengeSuccess();
+    _state = PairingState::ConfirmedSharedSecret;
     Log::Write("Challenge answer was accepted. Encrypted channel established.");
   } else {
     // Increment our abnormality and attack counter, and
@@ -254,85 +255,92 @@ void Anki::Switchboard::SecurePairing::HandlePingResponse(uint8_t* pingChallenge
 }
 
 void Anki::Switchboard::SecurePairing::HandleMessageReceived(uint8_t* bytes, uint32_t length) {
-  Log::Write("Handling plain text message received.");
-  if(length < kMinMessageSize) {
-    return;
-  }
-  
-  // First byte has message type
-  Anki::Switchboard::SetupMessage messageType = (Anki::Switchboard::SetupMessage)bytes[0];
-  
-  switch(messageType) {
-    case Anki::Switchboard::SetupMessage::MSG_REQUEST_INITIAL_PAIR: {
-      if(_state == PairingState::Initial ||
-         _state == PairingState::AwaitingPublicKey) {
-        HandleInitialPair(bytes+1, length-1);
-      } else {
-        // ignore msg
-        IncrementAbnormalityCount();
-        Log::Write("Received initial pair request in wrong state.");
-      }
-      break;
+  _taskExecutor->WakeSync([this, bytes, length]() {
+    Log::Write("Handling plain text message received.");
+    if(length < kMinMessageSize) {
+      return;
     }
-    case Anki::Switchboard::SetupMessage::MSG_REQUEST_RENEW: {
-      SendNonce();
-      Log::Write("Received renew connection request.");
-      break;
-    }
-    case Anki::Switchboard::SetupMessage::MSG_ACK:
-    {
-      if(bytes[1] == Anki::Switchboard::SetupMessage::MSG_NONCE) {
-        if(_state == PairingState::AwaitingNonceAck) {
-          HandleNonceAck();
+    
+    // First byte has message type
+    Anki::Switchboard::SetupMessage messageType = (Anki::Switchboard::SetupMessage)bytes[0];
+    
+    switch(messageType) {
+      case Anki::Switchboard::SetupMessage::MSG_REQUEST_INITIAL_PAIR: {
+        if(_state == PairingState::Initial ||
+           _state == PairingState::AwaitingPublicKey) {
+          HandleInitialPair(bytes+1, length-1);
+          _state = PairingState::AwaitingNonceAck;
         } else {
           // ignore msg
           IncrementAbnormalityCount();
-          Log::Write("Received nonce ack in wrong state.");
+          Log::Write("Received initial pair request in wrong state.");
         }
+        break;
       }
-      
-      break;
+      case Anki::Switchboard::SetupMessage::MSG_REQUEST_RENEW: {
+        SendNonce();
+        Log::Write("Received renew connection request.");
+        break;
+      }
+      case Anki::Switchboard::SetupMessage::MSG_ACK:
+      {
+        if(bytes[1] == Anki::Switchboard::SetupMessage::MSG_NONCE) {
+          if(_state == PairingState::AwaitingNonceAck) {
+            HandleNonceAck();
+            _state = PairingState::AwaitingChallengeResponse;
+          } else {
+            // ignore msg
+            IncrementAbnormalityCount();
+            Log::Write("Received nonce ack in wrong state.");
+          }
+        }
+        
+        break;
+      }
+      default:
+        IncrementAbnormalityCount();
+        Log::Write("Unknown plain text message type.");
+        break;
     }
-    default:
-      IncrementAbnormalityCount();
-      Log::Write("Unknown plain text message type.");
-      break;
-  }
+  });
 }
 
 void Anki::Switchboard::SecurePairing::HandleEncryptedMessageReceived(uint8_t* bytes, uint32_t length) {
-  if(length < kMinMessageSize) {
-    return;
-  }
-  
-  // first byte has type
-  Anki::Switchboard::SecureMessage messageType = (Anki::Switchboard::SecureMessage)bytes[0];
-  
-  switch(messageType) {
-    case Anki::Switchboard::SecureMessage::CRYPTO_CHALLENGE_RESPONSE:
-      if(_state == PairingState::AwaitingChallengeResponse) {
-        HandlePingResponse(bytes+1, length-1);
-      } else {
-        // ignore msg
+  _taskExecutor->WakeSync([this, bytes, length]() {
+    Log::Write("Handling encrypted message received.");
+    if(length < kMinMessageSize) {
+      return;
+    }
+    
+    // first byte has type
+    Anki::Switchboard::SecureMessage messageType = (Anki::Switchboard::SecureMessage)bytes[0];
+    
+    switch(messageType) {
+      case Anki::Switchboard::SecureMessage::CRYPTO_CHALLENGE_RESPONSE:
+        if(_state == PairingState::AwaitingChallengeResponse) {
+          HandleChallengeResponse(bytes+1, length-1);
+        } else {
+          // ignore msg
+          IncrementAbnormalityCount();
+          Log::Write("Received challenge response in wrong state.");
+        }
+        break;
+      case Anki::Switchboard::SecureMessage::CRYPTO_WIFI_CREDENTIALS:
+        if(_state == PairingState::ConfirmedSharedSecret) {
+          char* ssidPtr = (char*)bytes + 2;
+          std::string ssid(ssidPtr, bytes[1]);
+          std::string pw(ssidPtr + bytes[1] + 1, bytes[2 + bytes[1]]);
+          
+          _receivedWifiCredentialSignal.emit(ssid, pw);
+        } else {
+          Log::Write("Received wifi credentials in wrong state.");
+        }
+      default:
         IncrementAbnormalityCount();
-        Log::Write("Received challenge response in wrong state.");
-      }
-      break;
-    case Anki::Switchboard::SecureMessage::CRYPTO_WIFI_CREDENTIALS:
-      if(_state == PairingState::ConfirmedSharedSecret) {
-        char* ssidPtr = (char*)bytes + 2;
-        std::string ssid(ssidPtr, bytes[1]);
-        std::string pw(ssidPtr + bytes[1] + 1, bytes[2 + bytes[1]]);
-        
-        _receivedWifiCredentialSignal.emit(ssid, pw);
-      } else {
-        Log::Write("Received wifi credentials in wrong state.");
-      }
-    default:
-      IncrementAbnormalityCount();
-      Log::Write("Unknown encrypted message type.");
-      break;
-  }
+        Log::Write("Unknown encrypted message type.");
+        break;
+    }
+  });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -409,8 +417,10 @@ Anki::Switchboard::SecurePairing::SendEncrypted(const T& message) {
 
 void Anki::Switchboard::SecurePairing::sEvTimerHandler(struct ev_loop* loop, struct ev_timer* w, int revents)
 {
-  printf("[timer] [%d]\n", (time(0) - sTimeStarted));
-  Log::Write("[timer] tick");
+  std::ostringstream ss;
+  ss << "[timer] " << (time(0) - sTimeStarted) << "s since beginning.";
+  Log::Write(ss.str().c_str());
+  
   struct ev_TimerStruct *wData = (struct ev_TimerStruct*)w;
   wData->signal->emit();
 }

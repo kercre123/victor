@@ -17,6 +17,7 @@
 #include "INetworkStream.h"
 #include "keyExchange.h"
 #include "pairingMessages.h"
+#include "taskExecutor.h"
 
 namespace Anki {
 namespace Switchboard {
@@ -86,7 +87,7 @@ namespace Switchboard {
     void HandleCancelSetup();
     void HandleNonceAck();
     void HandleTimeout();
-    void HandlePingResponse(uint8_t* bytes, uint32_t length);
+    void HandleChallengeResponse(uint8_t* bytes, uint32_t length);
     
     void SendPublicKey();
     void SendNonce();
@@ -118,6 +119,7 @@ namespace Switchboard {
     PairingState _state = PairingState::Initial;
     
     std::unique_ptr<KeyExchange> _keyExchange;
+    std::unique_ptr<TaskExecutor> _taskExecutor;
     
     Signal::SmartHandle _onReceivePlainTextHandle;
     Signal::SmartHandle _onReceiveEncryptedHandle;
