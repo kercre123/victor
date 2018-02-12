@@ -201,7 +201,8 @@ void VisionScheduleMediator::UpdateVisionSchedule()
   }
 
   if(scheduleDirty){
-    AllVisionModesSchedule schedule(allModeScheduleList, false);
+    const bool kUseDefaultsForUnspecified = true;
+    AllVisionModesSchedule schedule(allModeScheduleList, kUseDefaultsForUnspecified);
     _visionComponent->PopCurrentModeSchedule();
     _visionComponent->PushNextModeSchedule(std::move(schedule));
   }
