@@ -57,6 +57,16 @@ should be represented as plus signs (+) and quote marks should be escaped (e.g.
 You can make requests to the web server from a script or command line, e.g.
 curl victor:8888/consolevarget?key=ForceDisableABTesting
 
+## WebViz
+
+Visit http://victor:8888/webViz.html for a collection of debug output and data
+visualization. Each tab corresponds to a javascript module that decides how to
+display data sent from the engine.
+
+To create a new module, make a copy of the file [module.js.template](../../resources/webserver/webVizModules/module.js.template) 
+and follow the instructions there. To send data from the engine, pass a Json::Value blob
+and your target module name to WebService::SendToWebViz
+
 ## Currently not working
 
 The 'daslog' button, and /daslog request, are currently not working.
