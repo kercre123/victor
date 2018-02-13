@@ -6,7 +6,7 @@
 //
 //
 {
-  "behaviorClass": "BringCubeToBeacon",
+  "behaviorClass": "ExploreBringCubeToBeacon",
   "behaviorID": "Hiking_BringCubeToBeacon",
 
   "params":

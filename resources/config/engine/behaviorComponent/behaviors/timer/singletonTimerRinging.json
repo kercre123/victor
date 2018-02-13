@@ -1,6 +1,6 @@
 {
   "behaviorID"       : "SingletonTimerRinging",
-  "behaviorClass"    : "PlayAnimStatesGetInLoop",
+  "behaviorClass"    : "AnimGetInLoop",
   "getIn"            : "Hiccup",
   "loopAnimation"    : "DroneModeBackwardDrivingLoop",
   "getOut"           : "Hiccup",

@@ -16,7 +16,7 @@
 
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/timerUtility.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimStatesGetInLoop.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimGetInLoop.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorProceduralClock.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
@@ -212,7 +212,7 @@ void BehaviorTimerUtilityCoordinator::InitBehavior()
                                  _iParams.timerAnticBehavior);
 
   BC.FindBehaviorByIDAndDowncast(BEHAVIOR_ID(SingletonTimerRinging),
-                                 BEHAVIOR_CLASS(PlayAnimStatesGetInLoop),
+                                 BEHAVIOR_CLASS(AnimGetInLoop),
                                  _iParams.timerRingingBehavior);
   
   SetupTimerBehaviorFunctions();
