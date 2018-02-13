@@ -8,10 +8,9 @@
 #include "messages.h"
 #include "lights.h"
 #include "flash.h"
+#include "comms.h"
 
 //#define DISABLE_TOF
-
-extern "C" void SystemIdle();
 
 enum I2C_Op {
   I2C_DONE,
@@ -49,6 +48,10 @@ struct SequenceStepTimeouts
 };
 
 #define TARGET(value) sizeof(value), (void*)&value
+
+static bool aborted_setup = false;
+FailureCode Opto::failure = BOOT_FAIL_NONE;
+static FailureCode runLevel = BOOT_FAIL_NONE;
 
 // Readback values
 static uint16_t cliffSense[4];
@@ -180,10 +183,16 @@ extern "C" void I2C2_IRQHandler(void) {
 }
 
 static bool multiOp(I2C_Op func, uint8_t channel, uint8_t slave, uint8_t reg, int size, void* data) {
+  if (aborted_setup) {
+    return true;
+  }
+
   int max_retries = 15;
   do {
     // Welp, something went wrong, we should just give up
     if (max_retries-- == 0) {
+      Opto::failure = runLevel;
+      aborted_setup = true;
       return true;
     }
 
@@ -193,7 +202,7 @@ static bool multiOp(I2C_Op func, uint8_t channel, uint8_t slave, uint8_t reg, in
     };
     i2c_op = opTable;
     kickOff();
-    while (i2c_op != i2c_hold) SystemIdle();
+    while (i2c_op != i2c_hold) __wfi();
   } while (total_bytes < size);
 
   return false;
@@ -450,9 +459,11 @@ static uint32_t getMeasurementTimingBudget(void)
 }
 
 static void initHardware() {
+  aborted_setup = false;
+
   // Turn on and configure the drop sensors
   for (int i = 0; i < 4; i++) {
-    Lights::boot(i+1);
+    runLevel = BOOT_FAIL_CLIFF1 + i;
     writeReg(i, DROP_SENSOR_ADDRESS, MAIN_CTRL, 0x01);
     writeReg(i, DROP_SENSOR_ADDRESS, PS_LED, 6 | (5 << 4));
     writeReg(i, DROP_SENSOR_ADDRESS, PS_PULSES, 8);
@@ -461,9 +472,8 @@ static void initHardware() {
     writeReg(i, DROP_SENSOR_ADDRESS, PS_CAN_1, 0);
   }
 
-  Lights::boot(5);
-
   #ifndef DISABLE_TOF
+  runLevel = BOOT_FAIL_TOF;
   // Turn on TOF sensor
   // "Set I2C standard mode"
   writeReg(0, TOF_SENSOR_ADDRESS, 0x88, 0x00);
@@ -683,8 +693,6 @@ static void initHardware() {
 
   // Return the i2c bus to the main execution loop
   i2c_op = NULL;
-
-  Lights::boot(6);
 }
 
 void Opto::init(void) {
@@ -728,6 +736,10 @@ void Opto::init(void) {
   NVIC_EnableIRQ(I2C2_IRQn);
 
   initHardware();
+}
+
+void Opto::stop(void) {
+  // TODO
 }
 
 void Opto::tick(void) {

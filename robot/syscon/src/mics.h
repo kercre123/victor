@@ -5,6 +5,7 @@
 namespace Mics {
   void init(void);
   void transmit(int16_t* payload);
+  void errorCode(uint16_t* data);
 }
 
 #endif

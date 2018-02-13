@@ -56,17 +56,8 @@ void Lights::init(void) {
 
   disabled = false;
   terminate();
-}
 
-void Lights::boot(int index) {
-  if (index <= 0) {
-    memcpy(value, booted, sizeof(value));
-    return ;
-  }
-
-  memset(value, 0, sizeof(value));
-  if (index > sizeof(value)) index = sizeof(value);  
-  memset(value, 0xFF, index);
+  memcpy(value, booted, sizeof(value));
 }
 
 void Lights::receive(const uint8_t* data) {

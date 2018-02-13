@@ -42,6 +42,10 @@ enum {
 };
 typedef uint32_t RobotMotor;
 
+enum {
+  RUNNING_FLAGS_SENSORS_VALID = 1
+};
+
 // ENUM DropSensor
 enum {
   DROP_SENSOR_FRONT_LEFT  = 0,
@@ -62,7 +66,9 @@ enum {
   PAYLOAD_ERASE       = 0x7878,
   PAYLOAD_VALIDATE    = 0x7374,
   PAYLOAD_DFU_PACKET  = 0x6675,
-  PAYLOAD_TYPE_COUNT  = 8,
+  PAYLOAD_SHUT_DOWN   = 0x6473,
+  PAYLOAD_BOOT_FRAME  = 0x6662,
+  PAYLOAD_TYPE_COUNT  = 10,
 };
 typedef uint16_t PayloadId;
 
@@ -84,11 +90,11 @@ typedef int32_t Ack;
 
 // ENUM BatteryFlags
 enum {
-  isCharging  = 0x1,
-  isOnCharger = 0x2,
-  chargerOOS  = 0x4,
+  isCharging    = 0x1,
+  isOnCharger   = 0x2,
+  isBatteryLow  = 0x4
 };
-typedef uint32_t BatteryFlags;
+typedef uint16_t BatteryFlags;
 
 // ENUM PowerState
 enum {
@@ -125,6 +131,16 @@ enum {
 typedef uint32_t LedIndexes;
 #define LED_CHANEL_CT 3  //RGB
 
+enum {
+  BOOT_FAIL_NONE   = 0x00,
+  BOOT_FAIL_CLIFF1 = 0x00,
+  BOOT_FAIL_CLIFF2 = 0x01,
+  BOOT_FAIL_CLIFF3 = 0x02,
+  BOOT_FAIL_CLIFF4 = 0x03,
+  BOOT_FAIL_TOF    = 0x04,
+};
+typedef uint8_t FailureCode;
+
 struct MotorPower
 {
   int16_t leftWheel;
@@ -138,7 +154,6 @@ struct BatteryState
   int16_t battery;
   int16_t charger;
   int16_t temperature;
-  int16_t _unused;
   BatteryFlags flags;
 };
 
@@ -192,13 +207,17 @@ struct SpineMessageFooter
 struct BodyToHead
 {
   uint32_t framecounter;
-  PowerState powerState;
+  uint8_t flags;
+  FailureCode failureCode;
+  uint16_t _unused0;
   struct MotorState motor[4];
   uint16_t cliffSense[4];
   struct BatteryState battery;
+  uint32_t _unused1;
   struct RangeData proximity;
   uint16_t touchLevel[2];
-  uint8_t _unused[32];  // Future expansion
+  uint16_t micError[2]; // Raw bits from a segment of mic data (stuck bit detect)
+  uint8_t _unused[28];  // Future expansion
 #if MICDATA_ENABLED
   int16_t audio[MICDATA_SAMPLES_COUNT];
 #endif
@@ -216,6 +235,13 @@ struct HeadToBody
   int16_t motorPower[4];
   uint8_t ledColors[16];
   uint8_t _unused[32];  // Future expansion
+};
+
+// Must be same size as ack message
+struct MicroBodyToHead
+{
+  uint8_t buttonPressed;
+  uint8_t _unused[3];
 };
 
 struct AckMessage
