@@ -3,6 +3,7 @@
 #include "common.h"
 #include "hardware.h"
 #include "analog.h"
+#include "timer.h"
 
 #include "contacts.h"
 #include "comms.h"
@@ -54,8 +55,15 @@ void Contacts::forward(const ContactData& pkt) {
     if (txWriteIndex >= sizeof(txData)) txWriteIndex = 0;
   }
   
-  USART2->CR1 &= ~USART_CR1_RE;
-  USART2->CR1 |= USART_CR1_TXEIE;
+
+  if (USART2->CR1 & USART_CR1_RE) {
+    USART2->CR1 &= ~USART_CR1_RE;
+
+    VEXT_TX::pull(PULL_UP);
+    MicroWait(30);
+
+    USART2->CR1 |= USART_CR1_TXEIE;
+  }
 
   NVIC_EnableIRQ(USART2_IRQn);
 }
@@ -88,6 +96,7 @@ extern "C" void USART2_IRQHandler(void) {
   if (USART2->ISR & USART_ISR_TC) {
     if (txReadIndex == txWriteIndex) {
       USART2->CR1 &= ~USART_CR1_TCIE;
+      VEXT_TX::pull(PULL_NONE);
       USART2->CR1 |= USART_CR1_RE;
     }
   }
