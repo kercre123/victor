@@ -93,7 +93,7 @@ namespace { // "Private members"
     {"Some Mics Broken",     HALConfig::FLOAT, &HAL_SOME_MICS_BROKEN},
     {0} //Need zeros as end-of-list marker
   };
-  
+
 } // "private" namespace
 
 
@@ -110,7 +110,7 @@ Result InitMotor()
 float HAL::MotorGetCalibPower(MotorID motor)
 {
   f32 power = 0.f;
-  switch (motor) 
+  switch (motor)
   {
     case MotorID::MOTOR_LIFT:
       power = HAL_LIFT_MOTOR_CALIB_POWER;
@@ -194,4 +194,3 @@ void PrintConsoleOutput(void)
 
 } // namespace Cozmo
 } // namespace Anki
-

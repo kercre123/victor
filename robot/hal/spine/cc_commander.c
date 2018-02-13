@@ -42,7 +42,7 @@ enum {
 #define FIXED_LINE_LEN FIXED_NAME_LEN+(FIXED_ARG_LEN+1)*FIXED_ARG_COUNT
 
 #define SLUG_PAD_CHAR 0xFF
-#define SLUG_PAD_SIZE 4
+#define SLUG_PAD_SIZE 2
 
 
 #define MAX_KNOWN_LOG  10
@@ -74,7 +74,7 @@ enum  {
   runstate_NORMAL,
   runstate_CMDLINE_PENDING,
   runstate_CMDLINE_ACTIVE,
-} gRunState;
+} gRunState = runstate_NORMAL;
 
 
 struct HeadToBody gHeadData = {0};
@@ -210,7 +210,7 @@ int ReadLogN(uint8_t n) {
     if (nchars <= 0) {
       break;
     }
-    print_response("%.32s", logline); //THIS MUST BE SIZEOF(ContactData)-SLUG_PAD_SIZE
+    print_response("%.32s", logline); //THIS MUST BE <=SIZEOF(ContactData)-SLUG_PAD_SIZE
   }
   close(fd);
   return ERR_OK;
@@ -218,22 +218,26 @@ int ReadLogN(uint8_t n) {
 }
 
 
+int emr_set(uint8_t index, uint32_t value);
+int emr_get(uint8_t index, uint32_t* value);
+
+
 /******* EMR interface  **************************/
 
 int SetMedicalRecord(uint8_t index, uint32_t value)
 {
   print_response("EMR %d := %d\n", index, value);
-//  return emr_set(index, value);
-  return 3;
+  return emr_set(index, value);
+//  return 3;
 }
 
 int GetMedicalRecord(uint8_t index)
 {
   uint32_t value = 0;
-//  int err = emr_get(index, &value);
+  int err = emr_get(index, &value);
   print_response(":%d @ EMR[%d]\n", value, index);
-//  return err;
-  return 3;
+  return err;
+//  return 3;
 }
 
 
@@ -402,7 +406,7 @@ static const CommandHandler handlers[] = {
 
 
 uint8_t parse_command_text(char* cmd, int len) {
-   if (len <= FIXED_LINE_LEN) {
+   if (len < FIXED_LINE_LEN) {
       return ERR_SYNTAX;
    }
    const CommandHandler* candidate = &handlers[0];
@@ -615,6 +619,9 @@ uint16_t show_legend(uint16_t mask) {
 }
 
 
+static const float HAL_SEC_PER_TICK = (1.0 / 256) / 48000000;
+
+
 void process_incoming_frame(struct BodyToHead* bodyData)
 {
   static uint16_t oldmask = 0;
@@ -639,7 +646,9 @@ void process_incoming_frame(struct BodyToHead* bodyData)
       int i;
       for (i=0;i<4;i++) {
         speeds[i]= bodyData->motor[i].time ?
-          ((float)bodyData->motor[i].delta / bodyData->motor[i].time) : 0;
+
+
+          ((float)bodyData->motor[i].delta / bodyData->motor[i].time) / HAL_SEC_PER_TICK : 0;
       }
       print_response(":%.2f %.2f %.2f %.2f \n",
              speeds[0],
@@ -831,6 +840,7 @@ struct ContactData* ccc_text_response(void) {
 
 void ccc_parse_command_line(int argc, const char* argv[])
 {
+  ccc_debug_x("CCC Parsing %d cmdline args\n", argc);
   start_overrride( CCC_COOLDOWN_TIME );
   gRunState = runstate_CMDLINE_PENDING;
   gather_contact_text(">>",2);
