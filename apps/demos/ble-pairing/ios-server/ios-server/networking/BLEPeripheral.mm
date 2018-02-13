@@ -100,6 +100,13 @@
   _PeripheralManager.delegate = self;
   
   _BLEStream = new Anki::Switchboard::BLENetworkStream(_PeripheralManager, CH_WRITE, CH_SECURE_WRITE);
+  _BLEStream->OnSendEvent().SubscribeForever(^(uint8_t* bytes, int length, bool encrypted) {
+    NSData* data = [NSData dataWithBytes:bytes length:length];
+    
+    dispatch_async(dispatch_get_main_queue(), ^() {
+      [self send:data characteristic:encrypted?CH_SECURE_WRITE:CH_WRITE];
+    });
+  });
 }
 
 -(void) stopAdvertising {
@@ -143,6 +150,37 @@ didUnsubscribeFromCharacteristic:(CBCharacteristic *)characteristic {
     _SubscribedSecureWrite = false;
     
     _DisconnectedSignal->emit(_BLEStream);
+  }
+}
+
+- (bool)send:(NSData*) data characteristic:(CBMutableCharacteristic*) characteristic {
+  bool sent = [_PeripheralManager updateValue:data forCharacteristic:characteristic onSubscribedCentrals:nil];
+  
+  if(sent) {
+    return YES;
+  }
+
+  SendContainer sendContainer;
+  sendContainer.data = data;
+  sendContainer.characteristic = characteristic;
+  
+  _SendQueue.push(std::move(sendContainer));
+  
+  return NO;
+}
+
+- (void)peripheralManagerIsReadyToUpdateSubscribers:(CBPeripheralManager *)peripheral {
+  // Triggered when peripheral manager is ready to again send data
+  //
+  // !!! Warning, this might only work with 2 messages max. It depends on
+  // if this delegate is called after every updateValue or only if updateValue
+  // fails.
+  //
+  if(_SendQueue.size() > 0) {
+    SendContainer container = _SendQueue.front();
+    _SendQueue.pop();
+    
+    [self send:container.data characteristic:container.characteristic];
   }
 }
 

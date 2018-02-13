@@ -71,11 +71,12 @@ Anki::Switchboard::SecurePairing::~SecurePairing() {
 void Anki::Switchboard::SecurePairing::BeginPairing() {
   Log::Write("Beginning secure pairing process.");
   
+  _totalPairingAttempts = 0;
+  
   // Initialize object
   Init();
   
   Log::Write("[timer] again");
-  //ev_timer_again(_Loop, &_HandleTimeoutTimer.timer);
   ev_timer_start(_loop, &_handleTimeoutTimer.timer);
 }
 
@@ -99,6 +100,8 @@ void Anki::Switchboard::SecurePairing::Init() {
   
   // Send public key
   Log::Write("Sending public key to client.");
+  
+  ev_timer_again(_loop, &_handleTimeoutTimer.timer);
   SendPublicKey();
   
   _state = PairingState::AwaitingPublicKey;
@@ -291,7 +294,10 @@ void Anki::Switchboard::SecurePairing::HandleMessageReceived(uint8_t* bytes, uin
           } else {
             // ignore msg
             IncrementAbnormalityCount();
-            Log::Write("Received nonce ack in wrong state.");
+            
+            std::ostringstream ss;
+            ss << "Received nonce ack in wrong state '" << _state << "'.";
+            Log::Write(ss.str().c_str());
           }
         }
         

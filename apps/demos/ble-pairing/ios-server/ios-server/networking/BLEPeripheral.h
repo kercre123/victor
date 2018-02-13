@@ -10,8 +10,14 @@
 #define BLECentral_h
 
 #import <Foundation/Foundation.h>
+#include <queue>
 #include "BLENetworkStream.h"
 #include <CoreBluetooth/CoreBluetooth.h>
+
+struct SendContainer {
+  NSData* data;
+  CBMutableCharacteristic* characteristic;
+};
 
 @interface BLEPeripheral : NSObject <CBPeripheralManagerDelegate> {
   CBUUID* CHAR_WRITE;
@@ -51,7 +57,11 @@
   bool _SubscribedWrite;
   bool _SubscribedSecureRead;
   bool _SubscribedSecureWrite;
+  
+  std::queue<SendContainer> _SendQueue;
 }
+
+- (bool)send:(NSData*) data characteristic:(CBMutableCharacteristic*) characteristic;
 
 -(void) setConnectedSignal: (Signal::Signal<void (Anki::Switchboard::BLENetworkStream*)> *)connectedSignal;
 -(void) setDisconnectedSignal: (Signal::Signal<void (Anki::Switchboard::BLENetworkStream*)> *)disconnectedSignal;

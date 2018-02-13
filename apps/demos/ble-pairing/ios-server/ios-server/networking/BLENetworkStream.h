@@ -16,10 +16,16 @@ namespace Anki {
 namespace Switchboard {
   class BLENetworkStream : public INetworkStream {
   public:
-    BLENetworkStream(CBPeripheralManager* manager, CBMutableCharacteristic* writeCharacteristic, CBMutableCharacteristic* encryptedWriteCharacteristic) {
-      _peripheralManager = manager;
+    BLENetworkStream(CBPeripheralManager* peripheral, CBMutableCharacteristic* writeCharacteristic, CBMutableCharacteristic* encryptedWriteCharacteristic) {
+      _peripheralManager = peripheral;
       _writeCharacteristic = writeCharacteristic;
       _encryptedWriteCharacteristic = encryptedWriteCharacteristic;
+    }
+    
+    using SendSignal = Signal::Signal<void (uint8_t*, int, bool)>;
+    
+    SendSignal& OnSendEvent() {
+      return _sendSignal;
     }
     
     int SendPlainText(uint8_t* bytes, int length) __attribute__((warn_unused_result));
@@ -29,6 +35,8 @@ namespace Switchboard {
     CBPeripheralManager* _peripheralManager;
     CBMutableCharacteristic* _writeCharacteristic;
     CBMutableCharacteristic* _encryptedWriteCharacteristic;
+    
+    SendSignal _sendSignal;
   };
 } // Switchboard
 } // Anki

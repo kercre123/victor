@@ -9,10 +9,8 @@
 #include "BLENetworkStream.h"
 
 int Anki::Switchboard::BLENetworkStream::SendPlainText(uint8_t* bytes, int length) {
-  NSData* data = [NSData dataWithBytes:bytes length:length];
-  bool couldSend = [_peripheralManager updateValue:data forCharacteristic:_writeCharacteristic onSubscribedCentrals:nil];
-  
-  return (int)(couldSend? NetworkResult::MsgSuccess : NetworkResult::MsgFailure);
+  _sendSignal.emit(bytes, length, false);
+  return 0;
 }
 
 int Anki::Switchboard::BLENetworkStream::SendEncrypted(uint8_t* bytes, int length) {
@@ -25,12 +23,8 @@ int Anki::Switchboard::BLENetworkStream::SendEncrypted(uint8_t* bytes, int lengt
   if(encryptResult != ENCRYPTION_SUCCESS) {
     return NetworkResult::MsgFailure;
   }
-
-  NSData* data = [NSData dataWithBytes:bytesWithExtension length:encryptedLength];
   
+  _sendSignal.emit(bytesWithExtension, (int)encryptedLength, true);
   free(bytesWithExtension);
-  
-  bool couldSend = [_peripheralManager updateValue:data forCharacteristic:_encryptedWriteCharacteristic onSubscribedCentrals:nil];
-  
-  return (int)(couldSend? NetworkResult::MsgSuccess : NetworkResult::MsgFailure);
+  return 0;
 }

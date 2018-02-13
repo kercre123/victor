@@ -87,12 +87,12 @@ function onConnect(peripheral) {
         writeChar.on('data', function(data, isNotification) {
             let MSG_PUBK = 4;
             let MSG_NONCE = 5;
+            let MSG_CANCEL = 6;
 
             if(data[0] == MSG_PUBK) {
                 keys = sodium.crypto_kx_keypair();
 
-                // let buf = ConvertIntToByteBufferLittleEndian(keys.publicKey.length);
-                // buf.push(2);
+                console.log("--> Received public key");
                 let buf = [2]; // initial pairing request
                 let msg = buf.concat(Array.from(keys.publicKey));
 
@@ -103,7 +103,7 @@ function onConnect(peripheral) {
 
                 var readline = require('readline');
 
-                var rl = readline.createInterface({
+                rl = readline.createInterface({
                     input: process.stdin,
                     output: process.stdout
                 });
@@ -128,6 +128,13 @@ function onConnect(peripheral) {
                 }
 
                 receivedNonce = true;
+            } else if(data[0] == MSG_CANCEL) {
+                if(rl != null) {
+                    rl.close();
+                    console.log("");
+                }
+
+                printConnectionMessage("Victor cancelled pairing...", "\x1b[31m");
             }
         });
     });
