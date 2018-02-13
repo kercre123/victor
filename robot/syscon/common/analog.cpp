@@ -19,7 +19,7 @@ static const int SELECTED_CHANNELS = 0
   | ADC_CHSELR_CHSEL17
   ;
 
-static const uint16_t LOW_BAT_POINT = ADC_VOLTS(3.3);
+static const uint16_t POWER_DOWN_POINT = ADC_VOLTS(3.4);
 static const uint16_t TRANSITION_POINT = ADC_VOLTS(4.5);
 static const uint32_t FALLING_EDGE = ADC_WINDOW(TRANSITION_POINT, ~0);
 
@@ -40,6 +40,7 @@ static bool bouncy_button = false;
 static int bouncy_count = 0;
 static int hold_count = 0;
 static int total_release = 0;
+static bool on_charger = false;
 
 uint16_t volatile Analog::values[ADC_CHANNELS];
 bool Analog::button_pressed = false;
@@ -135,6 +136,11 @@ void Analog::transmit(BodyToHead* data) {
   data->battery.battery = values[ADC_VMAIN];
   data->battery.charger = values[ADC_VEXT];
   data->battery.temperature = values[ADC_TEMP];
+  data->battery.flags = 0
+                      | (is_charging ? isCharging : 0)
+                      | (on_charger ? isOnCharger : 0)
+                      ;
+
   data->touchLevel[1] = button_pressed ? 0xFFFF : 0x0000;
 }
 
@@ -162,7 +168,7 @@ void Analog::tick(void) {
   // Emergency trap (V3.3)
   if (!is_charging) {
     battery_voltage = Analog::values[ADC_VMAIN];
-    if (Analog::values[ADC_VMAIN] < LOW_BAT_POINT) {
+    if (Analog::values[ADC_VMAIN] < POWER_DOWN_POINT) {
       Power::setMode(POWER_STOP);
     }
   }
@@ -177,7 +183,8 @@ void Analog::tick(void) {
   last_vext = vext_now;
 
   // Charge logic
-  is_charging = chargeAllowed && vext_debounce >= MINIMUM_VEXT_TIME;
+  on_charger = vext_debounce >= MINIMUM_VEXT_TIME;
+  is_charging = chargeAllowed && on_charger;
   if (is_charging) {
     CHG_PWR::set();
   } else {

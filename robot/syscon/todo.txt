@@ -1,5 +1,4 @@
 DVT2
-* Populate battery flags
 * Put opto sensors to sleep when asked
 * Reenterant gpio alteration
 * Figure out why low battery charging does not work
