@@ -535,8 +535,13 @@ namespace Cozmo {
     
   } // DrawEye()
   
-  void ProceduralFaceDrawer::DrawFace(const ProceduralFace& faceData, const Util::RandomGenerator& rng, Vision::ImageRGB& faceImg)
+  void ProceduralFaceDrawer::DrawFace(const ProceduralFace& faceData, 
+                                      const Util::RandomGenerator& rng, 
+                                      Vision::ImageRGB565& output)
   {
+    // Static image to do all our drawing in, will be converted to RGB565 at the end
+    // This is treated as an HSV image
+    static Vision::ImageRGB faceImg;
     faceImg.Allocate(ProceduralFace::HEIGHT, ProceduralFace::WIDTH); // Will do nothing if already the right size
     faceImg.FillWith(Vision::PixelRGB(0,0,0));
     
@@ -618,7 +623,9 @@ namespace Cozmo {
       }
       
       Rectangle<s32> eyesROI(colMin, rowMin, colMax-colMin+1, rowMax-rowMin+1);
-      cv::cvtColor(faceImg.GetROI(eyesROI).get_CvMat_(), faceImg.GetROI(eyesROI).get_CvMat_(), CV_HSV2RGB);
+      output.FillWith(0);
+      Vision::ImageRGB565 roi = output.GetROI(eyesROI);
+      faceImg.GetROI(eyesROI).ConvertHSV2RGB565(roi);
     }
     
   } // DrawFace()

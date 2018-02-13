@@ -668,6 +668,367 @@ namespace Vision {
     }
   }
 
+  void ImageRGB::ConvertHSV2RGB565(ImageRGB565& output)
+  {
+    output.Allocate(GetNumRows(), GetNumCols());
+
+    const u32 kSizeOfPixelRGB = 3;
+    u32 numRows = GetNumRows();
+    u32 numCols = GetNumCols();
+
+    if(this->IsContinuous() && output.IsContinuous())
+    {
+      numCols *= numRows;
+      numRows = 1;
+    }
+
+    for(u32 r = 0; r < numRows; r++)
+    {
+      const u8* row = reinterpret_cast<u8*>(GetRow(r));
+      u16* out = reinterpret_cast<u16*>(output.GetRow(r));
+
+      u32 c = 0;
+
+#ifdef __ARM_NEON__
+
+      const float32x4_t kOne = vdupq_n_f32(1.f);
+
+      // Vectors to hold LUT table to figure out which variables will
+      // need to be set to r, g, and b
+      const uint8x8_t rp = vcreate_u8(0x00000000FFFF0000);
+      const uint8x8_t rq = vcreate_u8(0x000000000000FF00);
+      const uint8x8_t rt = vcreate_u8(0x000000FF00000000);
+
+      const uint8x8_t gp = vcreate_u8(0x0000FFFF00000000);
+      const uint8x8_t gq = vcreate_u8(0x00000000FF000000);
+      const uint8x8_t gt = vcreate_u8(0x00000000000000FF);
+
+      const uint8x8_t bp = vcreate_u8(0x000000000000FFFF);
+      const uint8x8_t bq = vcreate_u8(0x0000FF0000000000);
+      const uint8x8_t bt = vcreate_u8(0x0000000000FF0000);
+
+      const u32 kNumElementsProcessedPerLoop = 8;
+
+      for(; c < numCols - (kNumElementsProcessedPerLoop - 1); c += kNumElementsProcessedPerLoop)
+      {
+        float32x4x3_t hsv1;
+        float32x4x3_t hsv2;
+        uint8x8x3_t hsv255 = vld3_u8(row);
+        row += kNumElementsProcessedPerLoop*kSizeOfPixelRGB;
+
+        // Expand H to float and convert from 0-255 to 0-360 and divide by 60
+        uint16x8_t which16x8 = vmovl_u8(hsv255.val[0]);
+        uint16x4_t which16x4_1 = vget_low_u16(which16x8);
+        uint16x4_t which16x4_2 = vget_high_u16(which16x8);
+        uint32x4_t which32x4_1 = vmovl_u16(which16x4_1);
+        uint32x4_t which32x4_2 = vmovl_u16(which16x4_2);
+        float32x4_t whichF32x4_1 = vcvtq_f32_u32(which32x4_1);
+        float32x4_t whichF32x4_2 = vcvtq_f32_u32(which32x4_2);
+        hsv1.val[0] = vmulq_n_f32(whichF32x4_1, (360/255.f) * (1/60.f));
+        hsv2.val[0] = vmulq_n_f32(whichF32x4_2, (360/255.f) * (1/60.f));
+
+        // Expand S to float and convert from 0-255 to 0-1
+        which16x8 = vmovl_u8(hsv255.val[1]);
+        which16x4_1 = vget_low_u16(which16x8);
+        which16x4_2 = vget_high_u16(which16x8);
+        which32x4_1 = vmovl_u16(which16x4_1);
+        which32x4_2 = vmovl_u16(which16x4_2);
+        whichF32x4_1 = vcvtq_f32_u32(which32x4_1);
+        whichF32x4_2 = vcvtq_f32_u32(which32x4_2);
+        hsv1.val[1] = vmulq_n_f32(whichF32x4_1, 1/255.f);
+        hsv2.val[1] = vmulq_n_f32(whichF32x4_2, 1/255.f);
+
+        // Expand V to float and convert from 0-255 to 0-1
+        which16x8 = vmovl_u8(hsv255.val[2]);
+        which16x4_1 = vget_low_u16(which16x8);
+        which16x4_2 = vget_high_u16(which16x8);
+        which32x4_1 = vmovl_u16(which16x4_1);
+        which32x4_2 = vmovl_u16(which16x4_2);
+        whichF32x4_1 = vcvtq_f32_u32(which32x4_1);
+        whichF32x4_2 = vcvtq_f32_u32(which32x4_2);
+        hsv1.val[2] = vmulq_n_f32(whichF32x4_1, 1/255.f);
+        hsv2.val[2] = vmulq_n_f32(whichF32x4_2, 1/255.f);
+
+        // Convert H to u32 and then back to float, this will floor(H)
+        // i will be between [0, 5]
+        float32x4_t i1 = vcvtq_f32_u32(vcvtq_u32_f32(hsv1.val[0]));
+        float32x4_t i2 = vcvtq_f32_u32(vcvtq_u32_f32(hsv2.val[0]));
+        
+        // H - floor(H) will be the decimal portion of H
+        float32x4_t f1 = vsubq_f32(hsv1.val[0], i1);
+        float32x4_t f2 = vsubq_f32(hsv2.val[0], i2);
+        
+        // p = V * ( 1 - S )
+        float32x4_t p1 = vsubq_f32(kOne, hsv1.val[1]);
+        p1 = vmulq_f32(p1, hsv1.val[2]);
+        float32x4_t p2 = vsubq_f32(kOne, hsv2.val[1]);
+        p2 = vmulq_f32(p2, hsv2.val[2]);
+
+        // q = V * ( 1 - (S * f) )
+        float32x4_t q1 = vmulq_f32(hsv1.val[1], f1);
+        q1 = vsubq_f32(kOne, q1);
+        q1 = vmulq_f32(q1, hsv1.val[2]);
+        float32x4_t q2 = vmulq_f32(hsv2.val[1], f2);
+        q2 = vsubq_f32(kOne, q2);
+        q2 = vmulq_f32(q2, hsv2.val[2]);
+
+        // t = V * ( 1 - (S * ( 1 - f ) ) )
+        float32x4_t t1 = vsubq_f32(kOne, f1);
+        t1 = vmulq_f32(t1, hsv1.val[1]);
+        t1 = vsubq_f32(kOne, t1);
+        t1 = vmulq_f32(t1, hsv1.val[2]);
+        float32x4_t t2 = vsubq_f32(kOne, f2);
+        t2 = vmulq_f32(t2, hsv2.val[1]);
+        t2 = vsubq_f32(kOne, t2);
+        t2 = vmulq_f32(t2, hsv2.val[2]);
+
+        // Convert i from f32 to u8
+        uint32x4_t index32x4_1 = vcvtq_u32_f32(i1);
+        uint16x4_t index16x4_1 = vmovn_u32(index32x4_1);
+        uint32x4_t index32x4_2 = vcvtq_u32_f32(i2);
+        uint16x4_t index16x4_2 = vmovn_u32(index32x4_2);
+        uint16x8_t index16x8 = vcombine_u16(index16x4_1, index16x4_2);
+        uint8x8_t index = vmovn_u16(index16x8);
+
+        // The following block is repeated 3 times one for each color channel
+
+        // Depending on which of the 6 sectors hue falls in r,g,b may either be set
+        // from V, p, q, or t. index holds which sector each pixel's hue is in and is used
+        // to index into the tables held by rp,rq,rt gp,gq,gt and bp,bq,bt. The result of
+        // the look up will either be all 0s or all 1s. If all 1s, then for this sector the 
+        // variable corresponding to the table should be used for this channel.
+        // Ex: HSV = (0, 1, 1) which is sector 0 so r = V, g = t, b = p
+        // rp[0] == 0s, rq[0] == 0s, rt[0] == 0s  r is set from V
+        // gp[0] == 0s, gq[0] == 0s, gt[0] == 1s  g is set from t
+        // bp[0] == 1s, bq[0] == 0s, bt[0] == 0s  b is set from p
+
+        // Initialize to V
+        float32x4_t r1 = hsv1.val[2];
+        float32x4_t r2 = hsv2.val[2];
+
+        // Check if r should be set from p
+        uint8x8_t which = vtbl1_u8(rp, index);
+        // Expand to f32 and multiply by 0xFFFFFFFF so 
+        // elements will be all 1s or all 0s
+        which16x8 = vmovl_u8(which);
+        which16x4_1 = vget_low_u16(which16x8);
+        which16x4_2 = vget_high_u16(which16x8);
+        which32x4_1 = vmovl_u16(which16x4_1);
+        which32x4_2 = vmovl_u16(which16x4_2);
+        which32x4_1 = vmulq_n_u32(which32x4_1, 0xFFFFFFFF);
+        which32x4_2 = vmulq_n_u32(which32x4_2, 0xFFFFFFFF);
+        whichF32x4_1 = vreinterpretq_f32_u32(which32x4_1);
+        whichF32x4_2 = vreinterpretq_f32_u32(which32x4_2);
+        // If r should be set from p then whichF32x4 will be 1s which will
+        // select values from p instead of r
+        r1 = vbslq_f32(whichF32x4_1, p1, r1);
+        r2 = vbslq_f32(whichF32x4_2, p2, r2);
+
+
+        // Check if r should be set from q
+        which = vtbl1_u8(rq, index);
+        // Expand to f32 and multiply by 0xFFFFFFFF so 
+        // elements will be all 1s or all 0s
+        which16x8 = vmovl_u8(which);
+        which16x4_1 = vget_low_u16(which16x8);
+        which16x4_2 = vget_high_u16(which16x8);
+        which32x4_1 = vmovl_u16(which16x4_1);
+        which32x4_2 = vmovl_u16(which16x4_2);
+        which32x4_1 = vmulq_n_u32(which32x4_1, 0xFFFFFFFF);
+        which32x4_2 = vmulq_n_u32(which32x4_2, 0xFFFFFFFF);
+        whichF32x4_1 = vreinterpretq_f32_u32(which32x4_1);
+        whichF32x4_2 = vreinterpretq_f32_u32(which32x4_2);
+        // If r should be set from q then whichF32x4 will be 1s which will
+        // select values from q instead of r
+        r1 = vbslq_f32(whichF32x4_1, q1, r1);
+        r2 = vbslq_f32(whichF32x4_2, q2, r2);
+
+
+        // Check if r should be set from t
+        which = vtbl1_u8(rt, index);
+        // Expand to f32 and multiply by 0xFFFFFFFF so 
+        // elements will be all 1s or all 0s
+        which16x8 = vmovl_u8(which);
+        which16x4_1 = vget_low_u16(which16x8);
+        which16x4_2 = vget_high_u16(which16x8);
+        which32x4_1 = vmovl_u16(which16x4_1);
+        which32x4_2 = vmovl_u16(which16x4_2);
+        which32x4_1 = vmulq_n_u32(which32x4_1, 0xFFFFFFFF);
+        which32x4_2 = vmulq_n_u32(which32x4_2, 0xFFFFFFFF);
+        whichF32x4_1 = vreinterpretq_f32_u32(which32x4_1);
+        whichF32x4_2 = vreinterpretq_f32_u32(which32x4_2);
+        // If r should be set from t then whichF32x4 will be 1s which will
+        // select values from t instead of r
+        r1 = vbslq_f32(whichF32x4_1, t1, r1);
+        r2 = vbslq_f32(whichF32x4_2, t2, r2);
+
+        // Repeat for green
+
+        float32x4_t g1 = hsv1.val[2];
+        float32x4_t g2 = hsv2.val[2];
+
+        which = vtbl1_u8(gp, index);
+        which16x8 = vmovl_u8(which);
+        which16x4_1 = vget_low_u16(which16x8);
+        which16x4_2 = vget_high_u16(which16x8);
+        which32x4_1 = vmovl_u16(which16x4_1);
+        which32x4_2 = vmovl_u16(which16x4_2);
+        which32x4_1 = vmulq_n_u32(which32x4_1, 0xFFFFFFFF);
+        which32x4_2 = vmulq_n_u32(which32x4_2, 0xFFFFFFFF);
+        whichF32x4_1 = vreinterpretq_f32_u32(which32x4_1);
+        whichF32x4_2 = vreinterpretq_f32_u32(which32x4_2);
+        g1 = vbslq_f32(whichF32x4_1, p1, g1);
+        g2 = vbslq_f32(whichF32x4_2, p2, g2);
+
+        which = vtbl1_u8(gq, index);
+        which16x8 = vmovl_u8(which);
+        which16x4_1 = vget_low_u16(which16x8);
+        which16x4_2 = vget_high_u16(which16x8);
+        which32x4_1 = vmovl_u16(which16x4_1);
+        which32x4_2 = vmovl_u16(which16x4_2);
+        which32x4_1 = vmulq_n_u32(which32x4_1, 0xFFFFFFFF);
+        which32x4_2 = vmulq_n_u32(which32x4_2, 0xFFFFFFFF);
+        whichF32x4_1 = vreinterpretq_f32_u32(which32x4_1);
+        whichF32x4_2 = vreinterpretq_f32_u32(which32x4_2);
+        g1 = vbslq_f32(whichF32x4_1, q1, g1);
+        g2 = vbslq_f32(whichF32x4_2, q2, g2);
+
+        which = vtbl1_u8(gt, index);
+        which16x8 = vmovl_u8(which);
+        which16x4_1 = vget_low_u16(which16x8);
+        which16x4_2 = vget_high_u16(which16x8);
+        which32x4_1 = vmovl_u16(which16x4_1);
+        which32x4_2 = vmovl_u16(which16x4_2);
+        which32x4_1 = vmulq_n_u32(which32x4_1, 0xFFFFFFFF);
+        which32x4_2 = vmulq_n_u32(which32x4_2, 0xFFFFFFFF);
+        whichF32x4_1 = vreinterpretq_f32_u32(which32x4_1);
+        whichF32x4_2 = vreinterpretq_f32_u32(which32x4_2);
+        g1 = vbslq_f32(whichF32x4_1, t1, g1);
+        g2 = vbslq_f32(whichF32x4_2, t2, g2);
+
+        // Repeat for blue
+
+        float32x4_t b1 = hsv1.val[2];
+        float32x4_t b2 = hsv2.val[2];
+
+        which = vtbl1_u8(bp, index);
+        which16x8 = vmovl_u8(which);
+        which16x4_1 = vget_low_u16(which16x8);
+        which16x4_2 = vget_high_u16(which16x8);
+        which32x4_1 = vmovl_u16(which16x4_1);
+        which32x4_2 = vmovl_u16(which16x4_2);
+        which32x4_1 = vmulq_n_u32(which32x4_1, 0xFFFFFFFF);
+        which32x4_2 = vmulq_n_u32(which32x4_2, 0xFFFFFFFF);
+        whichF32x4_1 = vreinterpretq_f32_u32(which32x4_1);
+        whichF32x4_2 = vreinterpretq_f32_u32(which32x4_2);
+        b1 = vbslq_f32(whichF32x4_1, p1, b1);
+        b2 = vbslq_f32(whichF32x4_2, p2, b2);
+
+        which = vtbl1_u8(bq, index);
+        which16x8 = vmovl_u8(which);
+        which16x4_1 = vget_low_u16(which16x8);
+        which16x4_2 = vget_high_u16(which16x8);
+        which32x4_1 = vmovl_u16(which16x4_1);
+        which32x4_2 = vmovl_u16(which16x4_2);
+        which32x4_1 = vmulq_n_u32(which32x4_1, 0xFFFFFFFF);
+        which32x4_2 = vmulq_n_u32(which32x4_2, 0xFFFFFFFF);
+        whichF32x4_1 = vreinterpretq_f32_u32(which32x4_1);
+        whichF32x4_2 = vreinterpretq_f32_u32(which32x4_2);
+        b1 = vbslq_f32(whichF32x4_1, q1, b1);
+        b2 = vbslq_f32(whichF32x4_2, q2, b2);
+
+        which = vtbl1_u8(bt, index);
+        which16x8 = vmovl_u8(which);
+        which16x4_1 = vget_low_u16(which16x8);
+        which16x4_2 = vget_high_u16(which16x8);
+        which32x4_1 = vmovl_u16(which16x4_1);
+        which32x4_2 = vmovl_u16(which16x4_2);
+        which32x4_1 = vmulq_n_u32(which32x4_1, 0xFFFFFFFF);
+        which32x4_2 = vmulq_n_u32(which32x4_2, 0xFFFFFFFF);
+        whichF32x4_1 = vreinterpretq_f32_u32(which32x4_1);
+        whichF32x4_2 = vreinterpretq_f32_u32(which32x4_2);
+        b1 = vbslq_f32(whichF32x4_1, t1, b1);
+        b2 = vbslq_f32(whichF32x4_2, t2, b2);
+
+        // Convert from 0-1 to 0-255
+        r1 = vmulq_n_f32(r1, 255.f);
+        g1 = vmulq_n_f32(g1, 255.f);
+        b1 = vmulq_n_f32(b1, 255.f);
+        r2 = vmulq_n_f32(r2, 255.f);
+        g2 = vmulq_n_f32(g2, 255.f);
+        b2 = vmulq_n_f32(b2, 255.f);
+
+        // Convert from f32x4 r,g,b to 16x8 rgb565
+        uint32x4_t color32x4_1 = vcvtq_u32_f32(r1);
+        uint16x4_t color16x4_1 = vqmovn_u32(color32x4_1);
+        uint32x4_t color32x4_2= vcvtq_u32_f32(r2);
+        uint16x4_t color16x4_2 = vqmovn_u32(color32x4_2);
+        uint16x8_t colorR16x8 = vcombine_u16(color16x4_1, color16x4_2);
+        // Shift red bits into top half of a u16
+        colorR16x8 = vshlq_n_u16(colorR16x8, 8);
+
+        color32x4_1 = vcvtq_u32_f32(g1);
+        color16x4_1 = vqmovn_u32(color32x4_1);
+        color32x4_2 = vcvtq_u32_f32(g2);
+        color16x4_2 = vqmovn_u32(color32x4_2);
+        uint16x8_t colorG16x8 = vcombine_u16(color16x4_1, color16x4_2);
+        // Shift green bits into top half of u16
+        colorG16x8 = vshlq_n_u16(colorG16x8, 8);
+
+        // Shift green bits by 5 and insert into red vector this is the RG56 of RGB565
+        uint16x8_t colorRG = vsriq_n_u16(colorR16x8, colorG16x8, 5);
+
+        color32x4_1 = vcvtq_u32_f32(b1);
+        color16x4_1 = vqmovn_u32(color32x4_1);
+        color32x4_2 = vcvtq_u32_f32(b2);
+        color16x4_2 = vqmovn_u32(color32x4_2);
+        uint16x8_t colorB16x8 = vcombine_u16(color16x4_1, color16x4_2);
+        // Shift blue bits into top half of a u16
+        colorB16x8 = vshlq_n_u16(colorB16x8, 8);
+
+        // Shift blue bits right by 11 and insert into red/green vector
+        uint16x8_t rgb565 = vsriq_n_u16(colorRG, colorB16x8, 11);
+
+        // Write into output
+        vst1q_u16(out, rgb565);
+        out += kNumElementsProcessedPerLoop;
+      }
+
+#endif
+
+      for(; c < numCols; c++)
+      {
+        f32 h = (f32)row[0] * (360/255.f) * (1/60.f);
+        f32 s = (f32)row[1] * (1/255.f);
+        f32 v = (f32)row[2] * (1/255.f);
+
+        static const int sector_data[][3]= {{1,3,0}, {1,0,2}, 
+                                            {3,0,1}, {0,2,1}, 
+                                            {0,1,3}, {2,1,0}};
+
+        u32 i = floor(h);
+        h -= i;
+
+        float vpqt[4];
+        vpqt[0] = v;
+        vpqt[1] = v * (1.f - s);
+        vpqt[2] = v * (1.f - (s * h));
+        vpqt[3] = v * (1.f - (s * (1.f - h)));
+
+        u16 b = cv::saturate_cast<u8>(vpqt[sector_data[i][0]] * 255);
+        u16 g = cv::saturate_cast<u8>(vpqt[sector_data[i][1]] * 255);
+        u16 r = cv::saturate_cast<u8>(vpqt[sector_data[i][2]] * 255);
+
+        *out = (r << 8 & 0xF800) |
+               (g << 3 & 0x07E0) |
+               (b >> 3);
+
+        row += kSizeOfPixelRGB;
+        out++;
+      }
+    }
+  }
+
 
   
 #if 0

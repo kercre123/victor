@@ -589,12 +589,10 @@ namespace Cozmo {
         s_faceDataOverride.SetFacePosition({kProcFace_CenterX, kProcFace_CenterY});
         s_faceDataOverride.SetScanlineOpacity(kProcFace_ScanlineOpacity);
 
-        ProceduralFaceDrawer::DrawFace(s_faceDataOverride, *_context->GetRandom(), _procFaceImg);
+        ProceduralFaceDrawer::DrawFace(s_faceDataOverride, *_context->GetRandom(), _faceDrawBuf);
       } else {
-        ProceduralFaceDrawer::DrawFace(procFace, *_context->GetRandom(), _procFaceImg);
+        ProceduralFaceDrawer::DrawFace(procFace, *_context->GetRandom(), _faceDrawBuf);
       }
-
-      _faceDrawBuf.SetFromImageRGB(_procFaceImg);
     }
     
     BufferFaceToSend(_faceDrawBuf);

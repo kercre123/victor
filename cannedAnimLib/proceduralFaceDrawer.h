@@ -30,7 +30,7 @@ namespace Cozmo {
     static bool GetNextBlinkFrame(ProceduralFace& faceData, TimeStamp_t& offset);
     
     // Actually draw the face with the current parameters
-    static void DrawFace(const ProceduralFace& faceData, const Util::RandomGenerator& rng, Vision::ImageRGB& faceImg);
+    static void DrawFace(const ProceduralFace& faceData, const Util::RandomGenerator& rng, Vision::ImageRGB565& output);
     
     // Applies scanlines to the input image.
     // Although the type of the input image is ImageRGB, it should be an HSV image, i.e.

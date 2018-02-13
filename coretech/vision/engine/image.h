@@ -279,6 +279,9 @@ namespace Vision {
     
     virtual void ConvertToShowableFormat(cv::Mat& showImg) const override;
 
+    // Conversion from hsv to rgb565
+    void ConvertHSV2RGB565(ImageRGB565& output);
+
   protected:
     virtual void SetFromShowableFormat(const cv::Mat& showImg) override;
 
