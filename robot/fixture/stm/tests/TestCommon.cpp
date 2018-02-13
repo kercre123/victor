@@ -92,10 +92,17 @@ namespace TestCommon
     }
   }
   
+  static inline void bridge_get_errs_(bridge_target_e which, int e[]) {
+    e[0] = which == TO_DUT_UART ? DUT_UART::getRxDroppedChars() : Contacts::getRxDroppedChars();
+    e[1] = which == TO_DUT_UART ? DUT_UART::getRxOverflowErrors() : Contacts::getRxOverflowErrors();
+    e[2] = which == TO_DUT_UART ? DUT_UART::getRxFramingErrors() : Contacts::getRxFramingErrors();
+  }
+  
   void consoleBridge(bridge_target_e which, int inactivity_delay_ms, int timeout_ms)
   {
     const char exit[5] = "exit";
-    int c, ei = 0;
+    const char stats[6] = "stats";
+    int c, ei = 0, si = 0;
     
     ConsolePrintf("Console Bridge <-> %s for %ims,inactive:%ims [or type 'exit']\n", which_s_(which), timeout_ms, inactivity_delay_ms);
     
@@ -116,10 +123,12 @@ namespace TestCommon
       }
       
       //be the bridge you were born to be
-      if( (c = bridge_getchar_(which)) > -1 ) {
-        if( c > 0 && c <= 0x7f ) //limit to ascii, ignore null. getline() methods usually do this.
-          ConsolePutChar(c);
-      }
+      do {        
+        if( (c = bridge_getchar_(which)) > -1 ) {
+          if( c > 0 && c <= 0x7f ) //limit to ascii, ignore null. getline() methods usually do this.
+            ConsolePutChar(c);
+        }
+      } while( c > -1 );
       
       if( (c = ConsoleReadChar()) > -1 )
       {
@@ -131,6 +140,15 @@ namespace TestCommon
           timeout_ms = 50; //wait around to hear response/echo
         else
           ei = (c == exit[ei]) ? ei+1 : 0; //index track
+        
+        //watch for 'stats' cmd
+        if( (c == '\r' || c == '\n') && si == sizeof(stats)-1 ) { //EOL after receiving 'stats'
+          struct { int dropped_chars; int overflow; int framing; } e;
+          bridge_get_errs_(which, (int*)&e );
+          ConsolePrintf("\ndrop:%i ovf:%i frame:%i\n", e.dropped_chars, e.overflow, e.framing );
+          si = 0;
+        } else
+          si = (c == stats[si]) ? si+1 : 0; //index track
       }
       
     }
