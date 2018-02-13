@@ -18,6 +18,7 @@
 #include "visionScheduleMediator_fwd.h"
 
 #include "clad/types/visionModes.h"
+#include "engine/components/visionScheduleMediator/iVisionModeSubscriber.h"
 #include "engine/robotComponents_fwd.h"
 #include "json/json-forwards.h"
 #include "util/helpers/noncopyable.h"
@@ -35,7 +36,9 @@ class CozmoContext;
 class VisionComponent;
 class IVisionModeSubscriber;
 
-class VisionScheduleMediator : public IDependencyManagedComponent<RobotComponentID>, public Util::noncopyable
+class VisionScheduleMediator : public IDependencyManagedComponent<RobotComponentID>,
+                               public Util::noncopyable,
+                               public IVisionModeSubscriber
 {
 public:
 
@@ -52,6 +55,14 @@ public:
   virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
   // IDependencyManagedComponent
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  // Update called from Robot for the time being. May shift to UpdateDependent later
+  void Update();
+
+  // Set up baseline subscriptions to manage VisionMode defaults via the VSM
+  void GetInternalSubscriptions(std::set<VisionModeRequest>& baselineSubscriptions) const {
+    baselineSubscriptions.insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::High });
+  }
 
   // Subscribe at "standard" update frequency to a set of VisionModes. This call REPLACES existing subscriptions for
   // the pertinent subscriber
@@ -101,6 +112,8 @@ private:
   const CozmoContext* _context;
   VisionComponent* _visionComponent;
   std::unordered_map<VisionMode, VisionModeData> _modeDataMap;
+  bool subscriptionRecordIsDirty = false;
+  uint8_t framesSinceSendingDebugViz = 0;
 
 }; // class VisionScheduleMediator
 

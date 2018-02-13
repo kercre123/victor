@@ -54,6 +54,9 @@ private:
   ICozmoBehaviorPtr WrapRequestedBehaviorInDispatcherRerun(BehaviorContainer& bContainer, 
                                                            BehaviorID requestedBehaviorID, 
                                                            const int numRuns);
+  
+  // subscribes to webviz OnSubscribed and OnData
+  void SubscribeToWebViz(BehaviorExternalInterface& bei, const BehaviorSystemManager& bsm);
 };
 
 } // namespace Cozmo

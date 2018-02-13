@@ -45,7 +45,7 @@ TEST(ProceduralFace, ParameterSweep)
   // all display.
   ProceduralFace::EnableClippingWarning(false);
 
-  Vision::ImageRGB _procFaceImg(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
+  Vision::ImageRGB565 _procFaceImg(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
 
   // Note: whichever test runs first generates the noise textures that are retained for
   //       the duration of the test. For determinism hard-code the same seed for all tests.
@@ -71,7 +71,7 @@ TEST(ProceduralFace, ParameterSweep)
 } // TEST(ProceduralFace, ParameterSweep)
 
 // Compare two images by getting the square-root of sum of squared error
-static double getSimilarity(const Vision::ImageRGB& testImage, const Vision::ImageRGB& storedImage) {
+static double getSimilarity(const Vision::ImageRGB565& testImage, const Vision::ImageRGB& storedImage) {
     EXPECT_GT(testImage.GetNumRows(), 0);
     EXPECT_GT(testImage.GetNumCols(), 0);
     EXPECT_EQ(testImage.GetNumRows(), storedImage.GetNumRows());
@@ -91,7 +91,7 @@ static void testFaceAgainstStoredVersion(const ProceduralFace& procFace, const s
 
   // Generate procedural face
 
-  Vision::ImageRGB procFaceImg;
+  Vision::ImageRGB565 procFaceImg;
   procFaceImg.Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
 
   // Note: whichever test runs first generates the noise textures that are retained for

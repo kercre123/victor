@@ -248,29 +248,24 @@ void BehaviorReactToSound::BehaviorUpdate()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-MicDirectionHistory::DirectionNode BehaviorReactToSound::GetLatestMicDirectionData() const
+MicDirectionHistory::NodeList BehaviorReactToSound::GetLatestMicDirectionData() const
 {
-  MicDirectionHistory::DirectionNode node;
-  node.directionIndex = kInvalidDirectionIndex; // default to invalid node
-
-  const BehaviorExternalInterface& behaviorExternalInterface = GetBEI();
-
-  const MicDirectionHistory& micHistory = behaviorExternalInterface.GetMicDirectionHistory();
-  MicDirectionHistory::NodeList nodeList = micHistory.GetRecentHistory( 0 );
+  const MicDirectionHistory& micHistory = GetBEI().GetMicDirectionHistory();
+  MicDirectionHistory::NodeList nodeList = micHistory.GetRecentHistory( kSoundReaction_MaxReactionTime );
   if ( !nodeList.empty() )
   {
-    node = nodeList.back(); // most recent node
+    MicDirectionHistory::DirectionNode& node = nodeList.back(); // most recent node
 
     // allow us to fake some data for testing purposes
     if ( kSoundReaction_FakeDirection != MicDirectionHistory::kDirectionUnknown )
     {
       node.directionIndex = kSoundReaction_FakeDirection;
       node.confidenceMax = kSoundReaction_FakeConfidence;
-      node.timestampAtMax = GetCurrentTime();
+      node.timestampAtMax = GetCurrentTimeMS();
     }
   }
 
-  return node;
+  return nodeList;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -324,12 +319,12 @@ BehaviorReactToSound::DirectionResponse BehaviorReactToSound::GetResponseData( M
 bool BehaviorReactToSound::CanReactToSound() const
 {
   // we can react to sound as long as we're not on cooldown
-  const TimeStamp_t currentTime = GetCurrentTime();
+  const TimeStamp_t currentTime = GetCurrentTimeMS();
   const TimeStamp_t cooldownBeginTime = GetCooldownBeginTime();
   const TimeStamp_t cooldownEndTime = GetCooldownEndTime();
 
   const bool notOnCooldown = ( ( currentTime < cooldownBeginTime ) || ( currentTime >= cooldownEndTime ) );
-  const bool enoughTimeHasPassed = ( currentTime > kSoundReaction_MaxReactionTime );
+  const bool enoughTimeHasPassed = ( currentTime > kSoundReaction_MaxReactionTime ); // avoids "underflow" in case reaction happens at bootup
 
   return ( notOnCooldown && enoughTimeHasPassed );
 }
@@ -343,22 +338,16 @@ void BehaviorReactToSound::RespondToSound()
     PRINT_CH_DEBUG( "MicData", "BehaviorReactToSound", "Responding to sound from direction [%d]", _triggeredDirection );
 
     // We want to preserve the time of the first reaction to occur after the cooldown is over
-    const TimeStamp_t currentTime = GetCurrentTime();
+    const TimeStamp_t currentTime = GetCurrentTimeMS();
     const TimeStamp_t reTriggerTime = GetCooldownEndTime();
     if ( currentTime >= reTriggerTime )
     {
-      _reactionTriggeredTime = GetCurrentTime();
+      _reactionTriggeredTime = GetCurrentTimeMS();
     }
 
-    // in our special tuning mode, disable turning so that we can observe the debug face display
-    if ( !kSoundReaction_TuningMode )
-    {
-      const DirectionResponse& response = GetResponseData( _triggeredDirection );
-//      const Radians turnAngle = response.facing;
-//      DelegateIfInControl( new TurnInPlaceAction( turnAngle.ToFloat(), false ) );
-      const AnimationTrigger anim = response.animation;
-      DelegateIfInControl( new TriggerAnimationAction( anim ) );
-    }
+    const DirectionResponse& response = GetResponseData( _triggeredDirection );
+    const AnimationTrigger anim = response.animation;
+    DelegateIfInControl( new TriggerAnimationAction( anim ) );
   }
 }
 
@@ -367,50 +356,58 @@ void BehaviorReactToSound::OnResponseComplete()
 {
   // reset any response we may have been carrying out and start cooldowns
   _triggeredDirection = MicDirectionHistory::kDirectionUnknown;
+  _reactionEndedTime = GetCurrentTimeMS();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToSound::HeardValidSound( MicDirectionHistory::DirectionIndex& outIndex ) const
 {
+  using NodeList = MicDirectionHistory::NodeList;
+
   bool shouldReactToSound = false;
 
-  const MicDirectionHistory::DirectionNode currentDirectionNode = GetLatestMicDirectionData();
-  if ( kInvalidDirectionIndex != currentDirectionNode.directionIndex )
+  // grab all of the directions we've heard sound from recently
+  const NodeList nodeList = GetLatestMicDirectionData();
+  for ( auto rit = nodeList.rbegin(); rit != nodeList.rend(); ++rit )
   {
-    const DirectionTrigger triggerData = GetTriggerData( currentDirectionNode.directionIndex );
-
-    const TimeStamp_t currentTime = GetCurrentTime();
-    const TimeStamp_t reactionWindowTime = ( currentTime - static_cast<TimeStamp_t>(Util::SecToMilliSec(kSoundReaction_MaxReactionTime)) );
-
-    #if DEBUG_MIC_OBSERVING_VERBOSE
+    const MicDirectionHistory::DirectionNode& currentDirectionNode = *rit;
+    if ( kInvalidDirectionIndex != currentDirectionNode.directionIndex )
     {
-      PRINT_CH_DEBUG( "MicData", "BehaviorReactToSound", "Heard sound ... direction [%d], confidence [%d >= %d], time [%d >= %d]",
-                      currentDirectionNode.directionIndex,
-                      currentDirectionNode.confidenceMax,
-                      triggerData.threshold,
-                      currentDirectionNode.timestampAtMax,
-                      reactionWindowTime );
-    }
-    #endif
+      const DirectionTrigger triggerData = GetTriggerData( currentDirectionNode.directionIndex );
+      const TimeStamp_t reactionWindowTime = GetReactionWindowBeginTime();
 
-    // + we've seen a spike in confidence above a certain threshold
-    if ( currentDirectionNode.timestampAtMax >= reactionWindowTime )
-    {
-      shouldReactToSound |= ( currentDirectionNode.confidenceMax >= triggerData.threshold );
-    }
+      #if DEBUG_MIC_OBSERVING_VERBOSE
+      {
+        PRINT_CH_DEBUG( "MicData", "BehaviorReactToSound", "Heard sound ... direction [%d], confidence [%d >= %d], time [%d >= %d]",
+                        currentDirectionNode.directionIndex,
+                        currentDirectionNode.confidenceMax,
+                        triggerData.threshold,
+                        currentDirectionNode.timestampAtMax,
+                        reactionWindowTime );
+      }
+      #endif
 
-//      // + we have an average confidence above a certain threshold
-//      if ( currentDirectionNode.timestampEnd >= reactionWindowTime )
-//      {
-//        chooseDirection |= ( currentDirectionNode.confidenceAvg >= kMinimumConfidenceAverage );
-//      }
+      // + we've seen a spike in confidence above a certain threshold
+      if ( currentDirectionNode.timestampAtMax >= reactionWindowTime )
+      {
+        shouldReactToSound |= ( currentDirectionNode.confidenceMax >= triggerData.threshold );
+      }
 
-    if ( shouldReactToSound )
-    {
-      outIndex = currentDirectionNode.directionIndex;
+  //      // + we have an average confidence above a certain threshold
+  //      if ( currentDirectionNode.timestampEnd >= reactionWindowTime )
+  //      {
+  //        chooseDirection |= ( currentDirectionNode.confidenceAvg >= kMinimumConfidenceAverage );
+  //      }
 
-      PRINT_CH_DEBUG( "MicData", "BehaviorReactToSound", "Heard valid sound from direction [%d] with max conf (%d)",
-                    currentDirectionNode.directionIndex, currentDirectionNode.confidenceMax );
+      if ( shouldReactToSound )
+      {
+        outIndex = currentDirectionNode.directionIndex;
+
+        PRINT_CH_DEBUG( "MicData", "BehaviorReactToSound", "Heard valid sound from direction [%d] with max conf (%d)",
+                      currentDirectionNode.directionIndex, currentDirectionNode.confidenceMax );
+
+        break;
+      }
     }
   }
 
@@ -418,7 +415,7 @@ bool BehaviorReactToSound::HeardValidSound( MicDirectionHistory::DirectionIndex&
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TimeStamp_t BehaviorReactToSound::GetCurrentTime() const
+TimeStamp_t BehaviorReactToSound::GetCurrentTimeMS() const
 {
   using namespace std::chrono;
 
@@ -441,103 +438,15 @@ TimeStamp_t BehaviorReactToSound::GetCooldownEndTime() const
   return ( reactiveWindowEndTime + cooldownDuration );
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// NOTE: Work in progress; prototyping some ways to tweak how/when victor decides what is the "best" sound to turn to
-//       None of this has been tested ... leaving it here until I get it under version control
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TimeStamp_t BehaviorReactToSound::GetReactionWindowBeginTime() const
+{
+  const TimeStamp_t currentTime = GetCurrentTimeMS();
+  const TimeStamp_t reactionWindowDuration = static_cast<TimeStamp_t>(Util::SecToMilliSec(kSoundReaction_MaxReactionTime));
+  const TimeStamp_t reactionWindowTime = ( currentTime - reactionWindowDuration );
 
-//namespace {
-//  const MicDirectionIndex kStraightAhead  { MicDirectionHistory::kFirstIndex };
-//
-//  // scoring system ...
-//  //  const TimeStamp_t kScoreRequiredDuration                            ( 0.5 * 1000 );
-//  //  const TimeStamp_t kScoreUpdateInterval = kScoreRequiredDuration;
-//  const TimeStamp_t kScoreMaxHistoryTime                              ( 2.0 * 1000 );
-//  const MicDirectionConfidence kScoreConfidenceMin  ( 8000 );
-//  const MicDirectionConfidence kScoreConfidenceMax  ( 15000 );
-//  const float kScoreFocusDirectionBonus                               ( 0.1f );
-//  const float kScoreWeightConfidence                                  ( 0.2f );
-//  const float kScoreWeightDuration                                    ( 0.4f );
-//  const float KScoreWeightRecent                                      ( 0.4f );
-//}
-//
-//std::vector<BehaviorReactToSound::DirectionScore> BehaviorReactToSound::GetDirectionScores() const
-//{
-//  const BehaviorExternalInterface& behaviorExternalInterface = GetBEI();
-//  std::vector<DirectionScore> scores;
-//
-//  // the earliest time stamp that we care about sound data, anything before this time we ignore
-//  // even though we're asking for only the previous x ms of data, currently the history
-//  const TimeStamp_t currentTime = GetCurrentTime();
-//
-//  const MicDirectionHistory& micHistory = behaviorExternalInterface.GetMicDirectionHistory();
-//  const MicDirectionHistory::NodeList nodeList = micHistory.GetRecentHistory( kScoreMaxHistoryTime );
-//
-//  TimeStamp_t prevNodeEnd = ( currentTime - kScoreMaxHistoryTime );
-//  for ( MicDirectionHistory::DirectionNode node : nodeList )
-//  {
-//    bool nodeIsCandidate = true;
-//    nodeIsCandidate &= ( node.timestampEnd > prevNodeEnd );
-//    nodeIsCandidate &= ( node.confidenceAvg >= kScoreConfidenceMin );
-//
-//    if ( nodeIsCandidate )
-//    {
-//      auto it = std::find_if( scores.begin(), scores.end(), [node]( const DirectionScore& scoreNode )
-//      {
-//        return ( scoreNode.direction == node.directionIndex );
-//      } );
-//
-//      if ( it != scores.end() )
-//      {
-//        it->scoreConfidence = Anki::Util::Max( it->scoreConfidence, node.confidenceAvg );
-//        it->scoreDuration += ( node.timestampEnd - prevNodeEnd );
-//        it->scoreRecent = Anki::Util::Min( it->scoreRecent, ( currentTime - node.timestampEnd ) );
-//      }
-//      else
-//      {
-//        DirectionScore newNode =
-//        {
-//          .direction = MicDirectionHistory::kDirectionUnknown,
-//          .score = 0.0f,
-//
-//          .scoreConfidence = node.confidenceAvg,
-//          .scoreDuration = ( node.timestampEnd - prevNodeEnd ),
-//          .scoreRecent = ( currentTime - node.timestampEnd ),
-//        };
-//
-//        scores.push_back( newNode );
-//      }
-//    }
-//
-//    prevNodeEnd = node.timestampEnd;
-//  }
-//
-//  for ( auto scoreNode : scores )
-//  {
-//    const MicDirectionConfidence confidence = Anki::Util::Clamp( scoreNode.scoreConfidence, kScoreConfidenceMin, kScoreConfidenceMax );
-//    const float confidenceScore = ( ( confidence - kScoreConfidenceMin ) / ( kScoreConfidenceMax - kScoreConfidenceMin ) );
-//
-//    const float durationScore = ( scoreNode.scoreDuration / kScoreMaxHistoryTime );
-//
-//    const float recentAlpha = ( scoreNode.scoreRecent / kScoreMaxHistoryTime );
-//    const float recentScore = 1.0f - ( recentAlpha * recentAlpha );
-//
-//    scoreNode.score += ( confidenceScore * kScoreWeightConfidence );
-//    scoreNode.score += ( durationScore * kScoreWeightDuration );
-//    scoreNode.score += ( recentScore * KScoreWeightRecent );
-//
-//    if ( scoreNode.direction == kStraightAhead )
-//    {
-//      scoreNode.score += kScoreFocusDirectionBonus;
-//    }
-//  }
-//
-//  std::sort( scores.begin(), scores.end(), []( const DirectionScore& lhs, const DirectionScore& rhs )
-//  {
-//    return ( lhs.score >= rhs.score );
-//  } );
-//
-//  return scores;
-//}
+  return Anki::Util::Max( reactionWindowTime, _reactionEndedTime );
+}
 
 }
 }

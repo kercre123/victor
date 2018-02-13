@@ -10,6 +10,7 @@ then
 fi                                                                                                  
 TOPLEVEL=`$GIT rev-parse --show-toplevel`
 
+: ${ANKI_PROFILE_SYMBOLCACHE:="$1"}
 : ${FORCE:=0}
 : ${BUILD_ROOT:="${TOPLEVEL}/_build/android/Release"}
 : ${INSTALL_ROOT:="/data/data/com.anki.cozmoengine"}
@@ -38,8 +39,8 @@ device_bin_dir="${INSTALL_ROOT}/bin"
 device_lib_dir="${INSTALL_ROOT}/lib"
 
 # Path to symbolicated version of native executables
-symbol_bin_dir="symbol_cache/${device_bin_dir}"
-symbol_lib_dir="symbol_cache/${device_lib_dir}"
+symbol_bin_dir="${ANKI_PROFILE_SYMBOLCACHE}/${device_bin_dir}"
+symbol_lib_dir="${ANKI_PROFILE_SYMBOLCACHE}/${device_lib_dir}"
 
 #
 # Build a "shadow filesystem" of links that will be used for symbol lookups.

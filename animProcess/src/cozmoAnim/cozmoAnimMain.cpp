@@ -38,29 +38,29 @@ void Cleanup(int signum)
     delete animEngine;
     animEngine = nullptr;
   }
-  
+
   exit(signum);
 }
 
 int main(void)
 {
   signal(SIGTERM, Cleanup);
-  
+
   // - create and set logger
-  Util::AndroidLogPrintLogger logPrintLogger("anim");
+  Util::AndroidLogPrintLogger logPrintLogger("vic-anim");
   Util::gLoggerProvider = &logPrintLogger;
 
   // TODO: Load DataPlatform paths from json or however engine does it
   /*
   const char* configuration_data = "{}";
-  
+
   Json::Reader reader;
   Json::Value config;
   if (!reader.parse(configuration_data, configuration_data + std::strlen(configuration_data), config)) {
     PRINT_STREAM_ERROR("cozmo_startup", "json configuration parsing error: " << reader.getFormattedErrorMessages());
     return -1;
   }
-  
+
   // Create the data platform with the folders sent from Unity
   std::string filesPath = config["DataPlatformFilesPath"].asCString();
   std::string cachePath = config["DataPlatformCachePath"].asCString();
@@ -69,8 +69,8 @@ int main(void)
   std::string resourcesBasePath = config["DataPlatformResourcesBasePath"].asCString();
   std::string appRunId = config["appRunId"].asCString();
   */
-  
-  
+
+
   // Check /data/data/com.anki.cozmoengine/files/assets/current for the hash of the assets directory to use
   std::string rootDir = "/data/data/com.anki.cozmoengine";
   std::string assetHash;
@@ -84,29 +84,29 @@ int main(void)
     PRINT_NAMED_ERROR("main.AssetHashFileNotFound", "%s not found", assetHashFileName.c_str());
     exit(-1);
   }
-  
-  
+
+
   std::string filesPath = rootDir + "/files/output";
   std::string cachePath = rootDir + "/cache";
   std::string externalPath = "/data/local/tmp";
   std::string resourcesPath = rootDir + "/files/assets/" + assetHash + "/cozmo_resources";
-  
-  
+
+
   Util::Data::DataPlatform* dataPlatform = new Util::Data::DataPlatform(filesPath, cachePath, externalPath, resourcesPath);
-  
+
   // Create and init AnimEngine
   animEngine = new AnimEngine(dataPlatform);
-  
+
   animEngine->Init();
-  
+
   using namespace std::chrono;
   using TimeClock = steady_clock;
 
   const auto runStart = TimeClock::now();
-  
+
   // Set the target time for the end of the first frame
   auto targetEndFrameTime = runStart + (microseconds)(ANIM_TIME_STEP_US);
-  
+
 
   while (1) {
 
@@ -118,7 +118,7 @@ int main(void)
       PRINT_NAMED_WARNING("CozmoAnimMain.Update.Failed", "Exiting...");
       break;
     }
-    
+
     const auto tickNow = TimeClock::now();
     const auto remaining_us = duration_cast<microseconds>(targetEndFrameTime - tickNow);
 
@@ -132,7 +132,7 @@ int main(void)
       PRINT_NAMED_WARNING("CozmoAnimMain.overtime", "Update() (%dms max) is behind by %.3fms",
                           ANIM_TIME_STEP_MS, (float)(-remaining_us).count() * 0.001f);
     }
-    
+
     // Now we ALWAYS sleep, but if we're overtime, we 'sleep zero' which still
     // allows other threads to run
     static const auto minimumSleepTime_us = microseconds((long)0);
@@ -140,7 +140,7 @@ int main(void)
 
     // Set the target end time for the next frame
     targetEndFrameTime += (microseconds)(ANIM_TIME_STEP_US);
-    
+
     // See if we've fallen very far behind (this happens e.g. after a 5-second blocking
     // load operation); if so, compensate by catching the target frame end time up somewhat.
     // This is so that we don't spend the next SEVERAL frames catching up.

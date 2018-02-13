@@ -18,7 +18,6 @@
 #include "engine/debug/devLoggingSystem.h"
 #include "engine/needsSystem/needsManager.h"
 #include "engine/robot.h"
-#include "engine/robotManager.h"
 #include "engine/cozmoAPI/comms/directGameComms.h"
 #include "engine/cozmoAPI/comms/tcpSocketComms.h"
 #include "engine/cozmoAPI/comms/udpSocketComms.h"

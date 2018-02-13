@@ -32,7 +32,7 @@ The `VisionSystem` has several modes that can be enabled, and corresponding sub-
 * Camera Calibration (used by the Playpen Factory Test)
 * Benchmarking
 * Overhead Mapping / Driving Surface Classification
-* Object Detection / Image Classification (via Convolutional Neural Nets)
+* [Object Detection](objectDetector.md) / Image Classification (via Convolutional Neural Nets)
 
 Note that both Face Recognition and anything using neural nets are themselves quite computationally intensive and slow, so they also have their own sub-threads in order to run asynchronously.
 

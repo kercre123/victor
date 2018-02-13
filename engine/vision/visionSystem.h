@@ -67,6 +67,7 @@ namespace Vision {
   class ImageCache;
   class ImagingPipeline;
   class MarkerDetector;
+  class ObjectDetector;
   class PetTracker;
 }
   
@@ -102,6 +103,7 @@ namespace Cozmo {
     std::list<ToolCodeInfo>                                     toolCodes;
     std::list<ExternalInterface::RobotObservedLaserPoint>       laserPoints;
     std::list<Vision::CameraCalibration>                        cameraCalibration;
+    std::list<ExternalInterface::RobotObservedGenericObject>    generalObjects;
     
     // Used to pass debug images back to main thread for display:
     DebugImageList<Vision::Image>    debugImages;
@@ -311,6 +313,9 @@ namespace Cozmo {
     std::unique_ptr<CameraCalibrator>       _cameraCalibrator;
     std::unique_ptr<OverheadMap>            _overheadMap;
     std::unique_ptr<Vision::Benchmark>      _benchmark;
+    std::unique_ptr<Vision::ObjectDetector> _generalObjectDetector;
+    
+    TimeStamp_t                   _generalObjectDetectionTimestamp = 0;
     
     // Tool code stuff
     TimeStamp_t                   _firstReadToolCodeTime_ms = 0;
@@ -351,6 +356,8 @@ namespace Cozmo {
     Result DetectMotion(Vision::ImageCache& imageCache);
 
     Result UpdateOverheadMap(const Vision::ImageRGB& image);
+    
+    void CheckForGeneralObjectDetections();
     
     Result ReadToolCode(const Vision::Image& image);
     

@@ -35,6 +35,7 @@ public:
   virtual ~IBehavior(){};
   
   const std::string& GetDebugLabel() const { return _debugLabel;}
+  void SetDebugLabel(const std::string& debugLabel) { _debugLabel = debugLabel; }
   
   // Function that allows the behavior to initialize variables/subscribe
   // through the behaviorExternalInterface

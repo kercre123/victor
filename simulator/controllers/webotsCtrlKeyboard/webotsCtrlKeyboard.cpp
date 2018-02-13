@@ -403,15 +403,7 @@ namespace Cozmo {
     printf("Pose marker mode: %d\n", poseMarkerMode_);
     poseMarkerDiffuseColor_->setSFColor(poseMarkerColor_[poseMarkerMode_]);
     SendErasePoseMarker();
-  }
-  
-  void WebotsKeyboardController::PlayNeedsGetOutAnimIfNeeded()
-  {
-    ExternalInterface::QueueSingleAction msg;
-    msg.action.Set_playNeedsGetOutAnimIfNeeded(ExternalInterface::PlayNeedsGetOutAnimIfNeeded{});
-    SendAction(msg);
-  }
-  
+  }  
   
   void WebotsKeyboardController::GotoPoseMarker()
   {
@@ -1519,6 +1511,29 @@ namespace Cozmo {
     SendAnimation(animToSendName.c_str(), animNumLoops, true);
   }
 
+  void WebotsKeyboardController::PlayAnimationTrigger()
+  {
+    // Send whatever animation is specified in the animationToSendName field
+    webots::Field* animToSendNameField = root_->getField("animationToSendName");
+    if (animToSendNameField == nullptr) {
+      printf("ERROR: No animationToSendName field found in WebotsKeyboardController.proto\n");
+      return;
+    }
+    std::string animTriggerName = animToSendNameField->getSFString();
+    if (animTriggerName.empty()) {
+      printf("ERROR: animationToSendName field is empty\n");
+      return;
+    }
+    
+    webots::Field* animNumLoopsField = root_->getField("animationNumLoops");
+    u32 animNumLoops = 1;
+    if (animNumLoopsField && (animNumLoopsField->getSFInt32() > 0)) {
+      animNumLoops = (u32) animNumLoopsField->getSFInt32();
+    }
+    
+    SendAnimationTrigger(animTriggerName.c_str(), animNumLoops, true);
+  }
+  
   void WebotsKeyboardController::PlayAnimationGroup()
   {
     // Send whatever animation is specified in the animationToSendName field
@@ -1527,12 +1542,19 @@ namespace Cozmo {
       printf("ERROR: No animationToSendName field found in WebotsKeyboardController.proto\n");
       return;
     }
-    std::string animToSendName = animToSendNameField->getSFString();
-    if (animToSendName.empty()) {
+    std::string animGroupName = animToSendNameField->getSFString();
+    if (animGroupName.empty()) {
       printf("ERROR: animationToSendName field is empty\n");
       return;
     }
-    SendAnimationGroup(animToSendName.c_str(), true);
+    
+    webots::Field* animNumLoopsField = root_->getField("animationNumLoops");
+    u32 animNumLoops = 1;
+    if (animNumLoopsField && (animNumLoopsField->getSFInt32() > 0)) {
+      animNumLoops = (u32) animNumLoopsField->getSFInt32();
+    }
+    
+    SendAnimationGroup(animGroupName.c_str(), animNumLoops, true);
   }
 
   void WebotsKeyboardController::RunDebugConsoleFunc()
@@ -1998,8 +2020,8 @@ namespace Cozmo {
 //      REGISTER_KEY_FCN('/', MOD_NONE,      , "");
 //      REGISTER_KEY_FCN('/', MOD_ALT,       , "");
     
-    REGISTER_SHIFTED_KEY_FCN('~', MOD_NONE, PlayAnimationGroup,                "Play animation group specified in 'animationToSendName'");
-//      REGISTER_SHIFTED_KEY_FCN('~', MOD_ALT, , "");
+    REGISTER_SHIFTED_KEY_FCN('~', MOD_NONE, PlayAnimationTrigger,              "Play animation trigger specified in 'animationToSendName'");
+    REGISTER_SHIFTED_KEY_FCN('~', MOD_ALT,  PlayAnimationGroup,                "Play animation group specified in 'animationToSendName'");
 //      REGISTER_SHIFTED_KEY_FCN('!', MOD_NONE, , "");
 //      REGISTER_SHIFTED_KEY_FCN('!', MOD_ALT, , "");
     REGISTER_SHIFTED_KEY_FCN('@', MOD_NONE, ToggleSendAvailableObjects,        "Toggle sending of available objects");
@@ -2033,7 +2055,7 @@ namespace Cozmo {
     REGISTER_SHIFTED_KEY_FCN(':', MOD_NONE, SetRollActionParams,               "Set parameters for roll action");
 //      REGISTER_SHIFTED_KEY_FCN(':', MOD_ALT, , "");
     REGISTER_SHIFTED_KEY_FCN('"', MOD_NONE, PlayCubeAnimation,                 "Play cube animation");
-//      REGISTER_SHIFTED_KEY_FCN('"', MOD_ALT, , "");
+    REGISTER_SHIFTED_KEY_FCN('"', MOD_ALT,  PlayCubeAnimation,                 "Play cube animation");
     REGISTER_SHIFTED_KEY_FCN('<', MOD_NONE, TurnInPlaceCCW,                    "Turn in place CCW by 'pointTurnAngle_deg'");
     REGISTER_SHIFTED_KEY_FCN('<', MOD_ALT,  TurnInPlaceCCW,                    "Turn in place CCW forever");
     REGISTER_SHIFTED_KEY_FCN('>', MOD_NONE, TurnInPlaceCW,                     "Turn in place CW by 'pointTurnAngle_deg'");
@@ -2073,7 +2095,7 @@ namespace Cozmo {
     
     REGISTER_KEY_FCN('G', MOD_NONE,      GotoPoseMarker,              "Goto/place object at pose marker");
     REGISTER_KEY_FCN('G', MOD_SHIFT,     TogglePoseMarkerMode,        "Toggle pose marker mode");
-    REGISTER_KEY_FCN('G', MOD_ALT,       PlayNeedsGetOutAnimIfNeeded, "Play needs get out anim if needed");  // Remove?
+//      REGISTER_KEY_FCN('G', MOD_ALT,       , "");
 //      REGISTER_KEY_FCN('G', MOD_ALT_SHIFT, , "");
 
     REGISTER_KEY_FCN('H', MOD_NONE,      FakeCloudIntent, "Fake clound intent with contents of 'cloudIntent'");

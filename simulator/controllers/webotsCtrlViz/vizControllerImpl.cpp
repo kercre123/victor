@@ -657,8 +657,6 @@ void VizControllerImpl::ProcessVizDisplayImageMessage(const AnkiEvent<VizInterfa
   auto encImgIter = _encodedImages.find(payload.timestamp);
   if(encImgIter == _encodedImages.end())
   {
-    PRINT_NAMED_WARNING("VizControllerImpl.ProcessVizDisplayImage.InvalidTimestamp",
-                        "t=%u", payload.timestamp);
     return;
   }
   

@@ -32,7 +32,11 @@
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
-#include "engine/robotManager.h"
+#include "engine/robotDataLoader.h"
+
+#include "anki/cozmo/shared/cozmoConfig.h"
+
+#include "clad/externalInterface/messageToActiveObject.h"
 
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
@@ -91,7 +95,7 @@ CubeLightComponent::CubeLightComponent()
 void CubeLightComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
 {
   _robot = robot;
-  _cubeLightAnimations = std::make_unique<CubeLightAnimWrapper>(robot->GetContext()->GetRobotManager()->GetCubeLightAnimations());
+  _cubeLightAnimations = std::make_unique<CubeLightAnimWrapper>(*(_robot->GetContext()->GetDataLoader()->GetCubeLightAnimations()));
   // Subscribe to messages
   if( _robot->HasExternalInterface() ) {
     auto helper = MakeAnkiEventUtil(*_robot->GetExternalInterface(), *this, _eventHandles);
@@ -341,7 +345,7 @@ bool CubeLightComponent::PlayLightAnim(const ObjectID& objectID,
     }
     
     // Get the name of the animation to play for this trigger
-    const std::string& animName = _robot->GetContext()->GetRobotManager()->GetCubeAnimationForTrigger(animTrigger);
+    const std::string& animName = _robot->GetContext()->GetDataLoader()->GetCubeAnimationForTrigger(animTrigger);
     auto* anim = _cubeLightAnimations->_container.GetAnimation(animName);
     if(anim == nullptr)
     {
@@ -740,7 +744,7 @@ void CubeLightComponent::PickNextAnimForDefaultLayer(const ObjectID& objectID)
 
 u32 CubeLightComponent::GetAnimDuration(const CubeAnimationTrigger& trigger)
 {
-  const std::string& animName = _robot->GetContext()->GetRobotManager()->GetCubeAnimationForTrigger(trigger);
+  const std::string& animName = _robot->GetContext()->GetDataLoader()->GetCubeAnimationForTrigger(trigger);
   const auto* anim = _cubeLightAnimations->_container.GetAnimation(animName);
   if(anim == nullptr)
   {
@@ -852,7 +856,9 @@ void CubeLightComponent::EnableGameLayerOnly(const ObjectID& objectID, bool enab
 void CubeLightComponent::SendTransitionMessage(const ObjectID& objectID, const ObjectLights& values)
 {
   // Convert MS to LED FRAMES
-  #define MS_TO_LED_FRAMES(ms)  (ms == std::numeric_limits<u32>::max() ? std::numeric_limits<u8>::max() : (((ms)+29)/30))
+  #define MS_TO_LED_FRAMES(ms)  ((ms) == std::numeric_limits<u32>::max() ?      \
+                                  std::numeric_limits<u8>::max() :              \
+                                  Util::numeric_cast<u8>(((ms)+CUBE_LED_FRAME_LENGTH_MS-1)/CUBE_LED_FRAME_LENGTH_MS))
   
   if(_sendTransitionMessages)
   {
@@ -1179,31 +1185,32 @@ bool CubeLightComponent::CanEngineSetLightsOnCube(const ObjectID& objectID)
 
 Result CubeLightComponent::SetLights(const ActiveObject* object, const u32 rotationPeriod_ms)
 {
-  std::array<Anki::Cozmo::LightState, (size_t) kNumCubeLeds> lights;
+  CubeLights cubeLights;
+  cubeLights.rotationPeriod_frames = MS_TO_LED_FRAMES(rotationPeriod_ms);
   for(int i = 0; i < kNumCubeLeds; ++i)
   {
     // Apply white balancing and encode colors
     const ActiveObject::LEDstate ledState = object->GetLEDState(i);
-    lights[i].onColor  = WhiteBalanceColor(ledState.onColor);
-    lights[i].offColor = WhiteBalanceColor(ledState.offColor);
-    lights[i].onFrames  = MS_TO_LED_FRAMES(ledState.onPeriod_ms);
-    lights[i].offFrames = MS_TO_LED_FRAMES(ledState.offPeriod_ms);
-    lights[i].transitionOnFrames  = MS_TO_LED_FRAMES(ledState.transitionOnPeriod_ms);
-    lights[i].transitionOffFrames = MS_TO_LED_FRAMES(ledState.transitionOffPeriod_ms);
-    lights[i].offset = MS_TO_LED_FRAMES(ledState.offset);
+    cubeLights.lights[i].onColor  = WhiteBalanceColor(ledState.onColor);
+    cubeLights.lights[i].offColor = WhiteBalanceColor(ledState.offColor);
+    cubeLights.lights[i].onFrames  = MS_TO_LED_FRAMES(ledState.onPeriod_ms);
+    cubeLights.lights[i].offFrames = MS_TO_LED_FRAMES(ledState.offPeriod_ms);
+    cubeLights.lights[i].transitionOnFrames  = MS_TO_LED_FRAMES(ledState.transitionOnPeriod_ms);
+    cubeLights.lights[i].transitionOffFrames = MS_TO_LED_FRAMES(ledState.transitionOffPeriod_ms);
+    cubeLights.lights[i].offset = MS_TO_LED_FRAMES(ledState.offset);
     
     if(DEBUG_LIGHTS)
     {
       PRINT_CH_DEBUG("CubeLightComponent", "CubeLightComponent.SetLights",
                      "LED %u, onColor 0x%x (0x%x), offColor 0x%x (0x%x), onFrames 0x%x (%ums), "
                      "offFrames 0x%x (%ums), transOnFrames 0x%x (%ums), transOffFrames 0x%x (%ums), offset 0x%x (%ums)",
-                     i, lights[i].onColor, ledState.onColor.AsRGBA(),
-                     lights[i].offColor, ledState.offColor.AsRGBA(),
-                     lights[i].onFrames, ledState.onPeriod_ms,
-                     lights[i].offFrames, ledState.offPeriod_ms,
-                     lights[i].transitionOnFrames, ledState.transitionOnPeriod_ms,
-                     lights[i].transitionOffFrames, ledState.transitionOffPeriod_ms,
-                     lights[i].offset, ledState.offset);
+                     i, cubeLights.lights[i].onColor, ledState.onColor.AsRGBA(),
+                     cubeLights.lights[i].offColor, ledState.offColor.AsRGBA(),
+                     cubeLights.lights[i].onFrames, ledState.onPeriod_ms,
+                     cubeLights.lights[i].offFrames, ledState.offPeriod_ms,
+                     cubeLights.lights[i].transitionOnFrames, ledState.transitionOnPeriod_ms,
+                     cubeLights.lights[i].transitionOffFrames, ledState.transitionOffPeriod_ms,
+                     cubeLights.lights[i].offset, ledState.offset);
     }
   }
   
@@ -1223,16 +1230,11 @@ Result CubeLightComponent::SetLights(const ActiveObject* object, const u32 rotat
     //_robot->SendMessage(RobotInterface::EngineToRobot(SetCubeGamma(gamma)));
     _prevGamma = gamma;
   }
-  
 
-  // TODO: Implement proper setting of cube lights here, and send the appropriate
-  // message via CubeCommsComponent() (VIC-766)
-  
-//  _robot->SendMessage(RobotInterface::EngineToRobot(CubeID((uint32_t)object->GetActiveID(),
-//                                                          MS_TO_LED_FRAMES(rotationPeriod_ms))));
-//  return _robot->SendMessage(RobotInterface::EngineToRobot(CubeLights(lights)));
-  
-  return RESULT_OK;
+  const bool result = _robot->GetCubeCommsComponent().SendCubeLights((uint32_t)object->GetActiveID(),
+                                                                     cubeLights);
+
+  return result ? RESULT_OK : RESULT_FAIL;
 }
 
 // TEMP (Kevin): WhiteBalancing is eventually to be done in body so just doing something simple here to get us by.

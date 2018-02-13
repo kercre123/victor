@@ -71,7 +71,6 @@ target_link_libraries(cozmo_engine
   ${FLATBUFFERS_LIBS}
   ${LIBARCHIVE_LIBS}
   ${BREAKPAD_LIBS}
-  civetweb
   # system
   z
   # platform

@@ -1,0 +1,360 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>Victor Veb Viz</title>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.13.0/d3.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.slim.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/processing.js/1.6.6/processing.min.js"></script>
+
+  <script>
+    var modules = { 
+      // add new modules here, which also become the tab
+      // names. The (case-insensitive) key should match
+      // the moduleName used when your c++ code passes
+      // data to the webservice.
+      Behaviors : 'webVizModules/behaviors.js'
+    }
+  </script>
+
+  <style>
+    *, *:before, *:after {
+      margin: 0;
+      padding: 0;
+      box-sizing:border-box;
+      -moz-box-sizing:border-box;
+    }
+
+    body {
+      font: 12px sans-serif;
+    }
+
+    .container {
+      width: 800px;
+      margin: 20px auto;
+
+    }
+
+    ul.tabs {
+      margin: 0px;
+      padding: 0px;
+      list-style: none;
+    }
+    ul.tabs li {
+      background: none;
+      color: #222;
+      display: inline-block;
+      padding: 10px 15px;
+      cursor: pointer;
+    }
+    ul.tabs li.current {
+      background: #ededed;
+      color: #222;
+    }
+
+    .tab-content {
+      display: none;
+      background: #ededed;
+      padding: 15px;
+    }
+
+    .tab-content.current {
+      display: inherit;
+    }
+
+    #tab-overview p {
+      padding:10px;
+    }
+
+    #status {
+      position:fixed;
+      bottom:10px;
+      right:10px;
+      font-size:20px;
+    }
+
+    
+  </style>
+
+  <!--[if lt IE 9]>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.js"></script>
+  <![endif]-->
+</head>
+
+<body>
+
+  <div id="status">Not connected to robot</div>
+  <div class="container">
+
+    <ul class="tabs">
+      <li class="tab-link current" data-tab="tab-overview">Overview</li>
+    </ul>
+
+    <div id="tab-overview" class="tab-content current">
+      <p>This page will display data "pushed" from Victor engine to multiple drawing modules.</p>
+      <p>Each tab contains its own module. Open the tab to subscribe to the data source for that module.</p>
+      <p>To add new modules, start with the template file module.js.template.</p>
+    </div>
+    
+  </div>
+
+
+  <script>
+
+    var kUpdatePeriod_ms = 200; // todo: maybe a module should request its period?
+
+    function createStyles(moduleName, rules) {
+      // use the styles rules provided by the module, but prepend the tab name
+      // to all of them by creating a style sheet in the DOM, parsing it, then
+      // creating a modified version with tab-Module prepended, and finally
+      // removing the original style sheet
+      var styleId = 'sty-' + moduleName;
+      var origStyleId = styleId + '-orig';
+      var styleOrig = document.createElement('style');
+      styleOrig.type = 'text/css';
+      styleOrig.innerHTML = rules;
+      styleOrig.id = origStyleId
+      document.getElementsByTagName('head')[0].appendChild(styleOrig);
+
+      var newSheetText = '';
+
+      var sheets = $(document.styleSheets); 
+      for (var idxSheet=0; idxSheet<sheets.length; ++idxSheet ){
+        if( sheets[idxSheet].ownerNode.id == origStyleId ){
+          var ruleSet = sheets[idxSheet].cssRules || sheets[idxSheet].rules;
+          for( var idxRule=0; idxRule<ruleSet.length; ++idxRule ) {
+            var oldSelector = ruleSet[idxRule].selectorText;
+            if( typeof oldSelector === 'undefined' ) {
+              // maybe it's a media selector? use it as is
+              newSheetText += ruleSet[idxRule].cssText += '\n';
+            } else {
+              var oldSelectors = oldSelector.split(',');
+
+              var selectorText = '';
+              for( var idxSelector=0; idxSelector<oldSelectors.length; ++idxSelector ) {
+                selectorText += '#tab-' + moduleName + ' ' + oldSelectors[idxSelector];
+                if( idxSelector < oldSelectors.length-1 ) {
+                  selectorText += ',';
+                }
+              }
+             
+              newSheetText += selectorText + '{' + ruleSet[idxRule].style.cssText + '}\n';
+            }
+          }
+          break;               
+        }
+      }
+
+      styleOrig.parentNode.removeChild(styleOrig);
+      
+      var style = document.createElement('style');
+      style.type = 'text/css';
+      style.id = styleId;
+      style.innerHTML = newSheetText;
+
+      document.getElementsByTagName('head')[0].appendChild(style);
+
+    }
+    var originalNamesMap = {};
+    function makeTabs() {
+      // add tabs and tab content
+      for( var moduleName in modules ) {
+        var originalName = originalNamesMap[moduleName];
+        $('ul.tabs').append('<li class="tab-link" data-tab="tab-' + moduleName + '">' 
+                            + originalName 
+                            + '</li>');
+        $('.container').append('<div id="tab-' + moduleName + '" class="tab-content"></div>');
+      }
+      // handle tab clicks (assumes no new tabs created after this)
+      $('ul.tabs li').click(function(){
+        var tab_id = $(this).attr('data-tab');
+
+        $('ul.tabs li').removeClass('current');
+        $('.tab-content').removeClass('current');
+
+        $(this).addClass('current');
+        $('#'+tab_id).addClass('current');
+
+        var moduleName = tab_id.substring(4); // after "tab-"
+        if( typeof modules[moduleName] === 'undefined' ) {
+          return;
+        }
+
+        // on first click, subscribe to engine updates and create css styles
+        if( !isSubscribed(moduleName) ) {
+          subscribe(moduleName);
+          // activate style sheets
+          var styles = modules[moduleName].getStyles();
+          if( typeof styles !== 'undefined' ) {
+            createStyles(moduleName, styles);
+          }
+        
+          modules[moduleName].init($('#' + tab_id)[0]);
+        }
+      });
+    }
+
+    var isSubscribed = function(moduleName) {
+      return (subscribedModules.indexOf(moduleName) >= 0);
+    }
+
+    var startUpdateLoop = function(dt) {
+      setTimeout(function() {
+        for( var moduleName in modules ) {
+          if( isSubscribed(moduleName) ) {
+            modules[moduleName].update(dt / 1000.0);
+          }
+        }
+        startUpdateLoop(dt);
+      }, dt);
+    }
+
+    var onNewData = function(moduleName, data) {
+      if( typeof modules[moduleName] !== 'undefined' ) {
+        var elem = $('#tab-' + moduleName)[0];
+        modules[moduleName].onData(data, elem);
+      }
+    }
+
+    var socket;
+    var subscribedModules = [];
+    function setupSocket() {
+      if( typeof socket !== 'undefined' ) {
+        return;
+      }
+      var loc = window.location;
+      var uri = "ws:" + "//" + loc.host + "/socket";
+      socket = new WebSocket(uri);
+      socket.onopen = function(){
+        // notify that we've connected
+        $('#status').text('Connected');
+      }
+      socket.onmessage = function(msg){
+        var jsonData = JSON.parse(msg.data);
+        var moduleName = jsonData["module"].toLowerCase();
+        var data = jsonData["data"];
+        onNewData(moduleName, data);
+        return false; // keep open
+      }
+      socket.onclose = function(e){
+        $('#status').text('Disconnected');
+        for( var moduleName in modules ) {
+          var idx = subscribedModules.indexOf(moduleName);
+          if( idx >= 0 ) {
+            subscribedModules.splice(idx, 1);
+          }
+        }
+      } 
+      socket.onerror=function (e) {
+        $('#status').text('WebSockets error: ' + e.code + ' '  + e.reason + '\n');
+      } 
+    }
+    var subscribe = function(moduleName) {
+      if( !isSubscribed(moduleName) ) {
+        var subscribeData = {"type": "subscribe", "module": moduleName};
+        socket.send( JSON.stringify(subscribeData) ); 
+        subscribedModules.push(moduleName);
+      }
+    }
+    var unsubscribe = function(moduleName) {
+      var unsubscribeData = {"type": "unsubscribe", "module": moduleName};
+      socket.send( JSON.stringify(unsubscribeData) ); 
+      var idx = subscribedModules.indexOf(moduleName);
+      if( idx >= 0 ) {
+        subscribedModules.splice(idx, 1);
+      }
+    }
+    var sendToSocket = function(moduleName, data) {
+      var payload = {"type": "data", "module": moduleName.toLowerCase(), "data": data};
+      socket.send( JSON.stringify(payload) );
+    }
+
+    var modulesContexts = {};
+    var moduleMethods = {}; // global passed to modules
+    var moduleSendDataFunc; // global passed to modules
+    $(function(){
+
+      // load module data
+      var moduleIndex = 0;
+      var moduleNames = Object.keys(modules).sort();
+      
+      var loadJS = function(moduleIndex, onLoad, elem){
+
+        // add an empty object for methods and callbacks
+        modulesContexts[moduleNames[moduleIndex]] = {
+          methods: {},
+          sendFunc: {}
+        };
+
+        // bind moduleName to the function passed to the module
+        modulesContexts[moduleNames[moduleIndex]].sendFunc 
+          = (function (moduleName) { 
+              return function(data){
+                  sendToSocket(moduleName, data);
+              } 
+            })(moduleNames[moduleIndex]);
+
+        // these refs will be sent to the module
+        moduleMethods = modulesContexts[moduleNames[moduleIndex]].methods;
+        moduleSendDataFunc = modulesContexts[moduleNames[moduleIndex]].sendFunc;
+
+        var url = modules[moduleNames[moduleIndex]];
+
+        var scriptTag = document.createElement('script');
+        scriptTag.src = url;
+
+        scriptTag.onload = onLoad;
+        scriptTag.onreadystatechange = onLoad;
+
+        elem.appendChild(scriptTag);
+      };
+      var onModuleLoad = function(){
+        if( (typeof moduleMethods.init === 'undefined') ||
+            (typeof moduleMethods.onData === 'undefined') ||
+            (typeof moduleMethods.update === 'undefined') ||
+            (typeof moduleMethods.getStyles === 'undefined') ) {
+          alert('Module ' + moduleNames[moduleIndex] + ' has a syntax error or does not expose required methods. Bailing');
+          delete modules[moduleNames[moduleIndex]]
+          moduleNames.splice(moduleIndex,1);
+          moduleIndex = moduleIndex - 1;
+        } else {
+          // replace file path with functions, and convert to lowercase if needed
+          if( moduleNames[moduleIndex] != moduleNames[moduleIndex].toLowerCase() ) {
+            delete modules[moduleNames[moduleIndex]]
+            modules[moduleNames[moduleIndex].toLowerCase()] = moduleMethods;
+            originalNamesMap[moduleNames[moduleIndex].toLowerCase()] = moduleNames[moduleIndex];
+            moduleNames[moduleIndex] = moduleNames[moduleIndex].toLowerCase();
+          } else {
+            modules[moduleNames[moduleIndex]] = moduleMethods;
+            originalNamesMap[moduleNames[moduleIndex]] = moduleNames[moduleIndex];
+          }
+        }
+        if( moduleIndex >= moduleNames.length - 1 ) {
+          // done loading modules.
+
+          // make tabs
+          makeTabs();
+
+          // connect to websockets
+          setupSocket();
+
+          startUpdateLoop(kUpdatePeriod_ms);
+        } else {
+          // increment and continue
+          ++moduleIndex;
+          loadJS(moduleIndex, onModuleLoad, document.body);
+        }
+      }
+      loadJS(moduleIndex, onModuleLoad, document.body);
+
+      
+
+
+    });
+  </script>
+
+</body>
+</html>

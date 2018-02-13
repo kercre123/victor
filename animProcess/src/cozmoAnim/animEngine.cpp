@@ -59,11 +59,9 @@ AnimEngine::AnimEngine(Util::Data::DataPlatform* dataPlatform)
   , _context(std::make_unique<AnimContext>(dataPlatform))
   , _animationStreamer(std::make_unique<AnimationStreamer>(_context.get()))
 {
-  
   if (Anki::Util::gTickTimeProvider == nullptr) {
     Anki::Util::gTickTimeProvider = BaseStationTimer::getInstance();
   }
-  
 }
 
 AnimEngine::~AnimEngine()
@@ -74,8 +72,8 @@ AnimEngine::~AnimEngine()
   BaseStationTimer::removeInstance();
 }
 
-Result AnimEngine::Init() {
-
+Result AnimEngine::Init()
+{
   if (_isInitialized) {
     LOG_INFO("AnimEngine.Init.ReInit", "Reinitializing already-initialized CozmoEngineImpl with new config.");
   }
@@ -99,7 +97,8 @@ Result AnimEngine::Init() {
   auto * audioInput = static_cast<Audio::EngineRobotAudioInput*>(audioMux->GetInput(regId));
   AnimProcessMessages::Init(this, _animationStreamer.get(), audioInput, _context.get());
 
-  _context->GetWebService()->Start(_context->GetDataPlatform(), "8889");
+  _context->GetWebService()->Start(_context->GetDataPlatform(),
+                                   _context->GetDataLoader()->GetWebServerAnimConfig());
 
   LOG_INFO("AnimEngine.Init.Success","Success");
   _isInitialized = true;

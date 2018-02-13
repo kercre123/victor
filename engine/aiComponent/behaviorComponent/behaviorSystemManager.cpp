@@ -210,6 +210,16 @@ const IBehavior* BehaviorSystemManager::GetBehaviorDelegatedTo(const IBehavior* 
   return _behaviorStack->GetBehaviorInStackAbove(delegatingBehavior);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Json::Value BehaviorSystemManager::BuildDebugBehaviorTree(BehaviorExternalInterface& bei) const
+{
+  if( _behaviorStack != nullptr ) {
+    return _behaviorStack->BuildDebugBehaviorTree( bei );
+  } else {
+    return {};
+  }
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorSystemManager::CanDelegate(IBehavior* delegator)

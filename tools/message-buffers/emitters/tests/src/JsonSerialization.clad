@@ -57,6 +57,11 @@ structure testStructure_Lists
   uint_16 testList[uint_8],
 }
 
+structure testStructure_ListOfEnums
+{
+  testEnum vals[uint_8],
+}
+
 structure testStructure_Nested {
   testNestedStructure testNestedStructure,
 }
@@ -91,6 +96,21 @@ union testUnion_NestedNoDefault
   testStructure_NoDefault a,
   testStruct2 t2,
   testStruct3 t3
+}
+
+structure testStructure_WithLists
+{
+  bool boolVal,
+  float_32 floatVal,
+  uint_16 intVal,
+  testEnum enumVal,
+  testUnionStructures unionVal,
+  
+  bool boolValList[uint_8],
+  float_32 floatValList[uint_8],
+  uint_16 intValList[uint_8],
+  testEnum enumValList[uint_8],
+  testUnionStructures unionValList[uint_8],
 }
 
 }

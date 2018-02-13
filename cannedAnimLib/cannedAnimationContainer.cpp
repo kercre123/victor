@@ -58,8 +58,12 @@ namespace Cozmo {
     }
     const std::string& name = animation->GetName();
 
-    // Overwrite animation with the given one because this
-    // is mainly for animators testing new animations 
+    // Replace animation with the given one because this
+    // is mainly for animators testing new animations
+    auto iter = _animations.find(name);
+    if(iter != _animations.end()) {
+      _animations.erase(iter);
+    }
     _animations.emplace(name, *animation);
     
     return lastResult;

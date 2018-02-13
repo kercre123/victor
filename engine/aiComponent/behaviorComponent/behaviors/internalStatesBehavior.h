@@ -63,8 +63,10 @@ protected:
   float GetLastTimeStarted(StateID state) const;
   // the the time the state started (in seconds)
   float GetLastTimeEnded(StateID state) const;
-  // true if at least time timeout has elapsed since the state has exited, or it has never exited before
-  bool StateExitCooldownExpired(StateID state, float timeout) const;
+  // returns true if state was exited at least timeout seconds ago. if valueIfNeverRun, this will
+  // return true if state was never exited. if !trueIfNeverRun, then the cooldown timer counts up
+  // from the engine start time
+  bool StateExitCooldownExpired(StateID state, float timeout, bool valueIfNeverRun = true) const;
   
 private:
 

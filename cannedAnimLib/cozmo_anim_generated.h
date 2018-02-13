@@ -362,15 +362,18 @@ inline flatbuffers::Offset<BackpackLights> CreateBackpackLightsDirect(flatbuffer
 struct FaceAnimation FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum {
     VT_TRIGGERTIME_MS = 4,
-    VT_ANIMNAME = 6
+    VT_ANIMNAME = 6,
+    VT_SCANLINEOPACITY = 8
   };
   uint32_t triggerTime_ms() const { return GetField<uint32_t>(VT_TRIGGERTIME_MS, 0); }
   const flatbuffers::String *animName() const { return GetPointer<const flatbuffers::String *>(VT_ANIMNAME); }
+  float scanlineOpacity() const { return GetField<float>(VT_SCANLINEOPACITY, 0.7f); }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint32_t>(verifier, VT_TRIGGERTIME_MS) &&
            VerifyFieldRequired<flatbuffers::uoffset_t>(verifier, VT_ANIMNAME) &&
            verifier.Verify(animName()) &&
+           VerifyField<float>(verifier, VT_SCANLINEOPACITY) &&
            verifier.EndTable();
   }
 };
@@ -380,10 +383,11 @@ struct FaceAnimationBuilder {
   flatbuffers::uoffset_t start_;
   void add_triggerTime_ms(uint32_t triggerTime_ms) { fbb_.AddElement<uint32_t>(FaceAnimation::VT_TRIGGERTIME_MS, triggerTime_ms, 0); }
   void add_animName(flatbuffers::Offset<flatbuffers::String> animName) { fbb_.AddOffset(FaceAnimation::VT_ANIMNAME, animName); }
+  void add_scanlineOpacity(float scanlineOpacity) { fbb_.AddElement<float>(FaceAnimation::VT_SCANLINEOPACITY, scanlineOpacity, 0.7f); }
   FaceAnimationBuilder(flatbuffers::FlatBufferBuilder &_fbb) : fbb_(_fbb) { start_ = fbb_.StartTable(); }
   FaceAnimationBuilder &operator=(const FaceAnimationBuilder &);
   flatbuffers::Offset<FaceAnimation> Finish() {
-    auto o = flatbuffers::Offset<FaceAnimation>(fbb_.EndTable(start_, 2));
+    auto o = flatbuffers::Offset<FaceAnimation>(fbb_.EndTable(start_, 3));
     fbb_.Required(o, FaceAnimation::VT_ANIMNAME);  // animName
     return o;
   }
@@ -391,8 +395,10 @@ struct FaceAnimationBuilder {
 
 inline flatbuffers::Offset<FaceAnimation> CreateFaceAnimation(flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t triggerTime_ms = 0,
-    flatbuffers::Offset<flatbuffers::String> animName = 0) {
+    flatbuffers::Offset<flatbuffers::String> animName = 0,
+    float scanlineOpacity = 0.7f) {
   FaceAnimationBuilder builder_(_fbb);
+  builder_.add_scanlineOpacity(scanlineOpacity);
   builder_.add_animName(animName);
   builder_.add_triggerTime_ms(triggerTime_ms);
   return builder_.Finish();
@@ -400,8 +406,9 @@ inline flatbuffers::Offset<FaceAnimation> CreateFaceAnimation(flatbuffers::FlatB
 
 inline flatbuffers::Offset<FaceAnimation> CreateFaceAnimationDirect(flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t triggerTime_ms = 0,
-    const char *animName = nullptr) {
-  return CreateFaceAnimation(_fbb, triggerTime_ms, animName ? _fbb.CreateString(animName) : 0);
+    const char *animName = nullptr,
+    float scanlineOpacity = 0.7f) {
+  return CreateFaceAnimation(_fbb, triggerTime_ms, animName ? _fbb.CreateString(animName) : 0, scanlineOpacity);
 }
 
 struct Event FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {

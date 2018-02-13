@@ -169,6 +169,15 @@ message PlayAnimation {
     bool    ignoreLiftTrack=0
 }
 
+// PlayAnimationGroup
+message PlayAnimationGroup {
+    uint_32 numLoops,
+    string animationGroupName,
+    bool    ignoreBodyTrack=0,
+    bool    ignoreHeadTrack=0,
+    bool    ignoreLiftTrack=0
+}
+
 // PlayAnimationTrigger
 message PlayAnimationTrigger {
   uint_32 numLoops,
@@ -177,15 +186,6 @@ message PlayAnimationTrigger {
   bool    ignoreBodyTrack,
   bool    ignoreHeadTrack,
   bool    ignoreLiftTrack
-}
-
-// PlayCubeAnimationTrigger
-message PlayCubeAnimationTrigger {
-  uint_32 objectID,
-  CubeAnimationTrigger trigger,
-}
-
-message PlayNeedsGetOutAnimIfNeeded {
 }
 
 // PopAWheelie
@@ -496,9 +496,8 @@ union RobotActionUnion {
   PlaceOnObject                 placeOnObject,
   PlaceRelObject                placeRelObject,
   PlayAnimation                 playAnimation,
+  PlayAnimationGroup            playAnimationGroup,
   PlayAnimationTrigger          playAnimationTrigger,
-  PlayCubeAnimationTrigger      playCubeAnimationTrigger,
-  PlayNeedsGetOutAnimIfNeeded   playNeedsGetOutAnimIfNeeded,
   PopAWheelie                   popAWheelie,
   ReadToolCode                  readToolCode,
   RealignWithObject             realignWithObject,

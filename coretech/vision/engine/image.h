@@ -103,9 +103,11 @@ namespace Vision {
     
     // Draw rectangle from top left <X,Y> to bottom right <X+width,Y+height>
     void DrawRect(const Rectangle<f32>& rect, const ColorRGBA& color, const s32 thickness = 1);
+    void DrawRect(const Rectangle<s32>& rect, const ColorRGBA& color, const s32 thickness = 1);
     
     // Draw filled rectangle from top left <X,Y> to bottom right <X+width,Y+height>
     void DrawFilledRect(const Rectangle<f32>& rect, const ColorRGBA& color);
+    void DrawFilledRect(const Rectangle<s32>& rect, const ColorRGBA& color);
     
     // Draw quadrangle defined by four given points
     void DrawQuad(const Quad2f& quad, const ColorRGBA& color, const s32 thickness = 1);
@@ -135,6 +137,9 @@ namespace Vision {
     // Converts image to a format that is usable by imshow and imwrite
     // (BGR in general)
     virtual void ConvertToShowableFormat(cv::Mat& showImg) const = 0;
+
+    // Runs a boxFilter of the given size on this image outputing filtered
+    virtual void BoxFilter(ImageBase<T>& filtered, u32 size) const;
 
   protected:
     template<typename DerivedType>
@@ -213,6 +218,8 @@ namespace Vision {
 
     virtual void ConvertToShowableFormat(cv::Mat& showImg) const override;
 
+    void BoxFilter(ImageBase<u8>& filtered, u32 size) const override;
+
   protected:
     virtual cv::Scalar GetCvColor(const ColorRGBA& color) const override;
 
@@ -271,6 +278,9 @@ namespace Vision {
     void GetNormalizedColor(ImageRGB& imgNorm, Array2d<s32>* workingArray = nullptr) const;
     
     virtual void ConvertToShowableFormat(cv::Mat& showImg) const override;
+
+    // Conversion from hsv to rgb565
+    void ConvertHSV2RGB565(ImageRGB565& output);
 
   protected:
     virtual void SetFromShowableFormat(const cv::Mat& showImg) override;

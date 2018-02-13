@@ -202,8 +202,8 @@ void QuadTreeProcessor::GetBorders(EContentType innerType, EContentTypePackedTyp
     EDirection firstNeighborDir = borderCombination.waypoints[0].direction;
     Point3f curOrigin = CalculateBorderWaypointCenter(borderCombination.waypoints[0]);
     Point3f curDest   = curOrigin;
-    const NodeContent* curBorderContentPtr = &(borderCombination.waypoints[0].from->GetContent());
-    
+    auto curBorderContent = borderCombination.waypoints[0].from->GetContent();
+
     // note: curNeighborDirection could be first, last, average, ... all should yield same result, so I'm doing first
   
     // iterate all waypoints (even 0)
@@ -241,8 +241,8 @@ void QuadTreeProcessor::GetBorders(EContentType innerType, EContentTypePackedTyp
       
       // check if the extra data can be shared between the current border and the waypoint we intend to add
       if ( canMergeIntoPreviousLine ) {
-        const NodeContent& waypointContent = borderCombination.waypoints[idx].from->GetContent();
-        const bool canShareData = ((*curBorderContentPtr) == waypointContent);
+        const auto& waypointContent = borderCombination.waypoints[idx].from->GetContent();
+        const bool canShareData = (curBorderContent == waypointContent);
         canMergeIntoPreviousLine = canShareData;
       }
       
@@ -264,12 +264,12 @@ void QuadTreeProcessor::GetBorders(EContentType innerType, EContentTypePackedTyp
           outBorders.emplace_back();
         }
         MemoryMapTypes::BorderRegion& curRegion = outBorders.back();
-        curRegion.segments.emplace_back( MakeBorderSegment(curOrigin, curDest, curBorderContentPtr->data, firstNeighborDir, lastNeighborDir) );
+        curRegion.segments.emplace_back( MakeBorderSegment(curOrigin, curDest, curBorderContent.data, firstNeighborDir, lastNeighborDir) );
         
         // origin <- dest
         curOrigin = curDest;
         firstNeighborDir = lastNeighborDir;
-        curBorderContentPtr = &(borderCombination.waypoints[idx].from->GetContent());
+        curBorderContent = borderCombination.waypoints[idx].from->GetContent();
       }
       
       curDest = borderCenter;
@@ -282,7 +282,8 @@ void QuadTreeProcessor::GetBorders(EContentType innerType, EContentTypePackedTyp
           outBorders.emplace_back();
         }
         MemoryMapTypes::BorderRegion& curRegion = outBorders.back();
-        curRegion.segments.emplace_back( MakeBorderSegment(curOrigin, curDest, curBorderContentPtr->data, firstNeighborDir, lastNeighborDir) );
+        curRegion.segments.emplace_back( MakeBorderSegment(curOrigin, curDest, curBorderContent.data, firstNeighborDir, lastNeighborDir) );
+
         
         // calculate the area of the border by adding all node's area
         float totalArea_m2 = 0.0f;
@@ -305,7 +306,7 @@ void QuadTreeProcessor::GetBorders(EContentType innerType, EContentTypePackedTyp
           firstNeighborDir = borderCombination.waypoints[nextIdx].direction;
           curOrigin = CalculateBorderWaypointCenter(borderCombination.waypoints[nextIdx]);
           curDest   = curOrigin;
-          curBorderContentPtr = &(borderCombination.waypoints[nextIdx].from->GetContent());
+          curBorderContent = borderCombination.waypoints[nextIdx].from->GetContent();
         }
       }
       
@@ -412,7 +413,7 @@ bool QuadTreeProcessor::FillBorder(EContentType filledType, EContentTypePackedTy
   // add flooded centers to the tree (not this does not cause flood filling)
   bool changed = false;
   for( const auto& center : floodedQuadCenters ) {
-    changed |= _root->Insert(Poly2f({center}), data, *this);
+    changed |= _root->Insert(Poly2f({center}), data.Clone(), *this);
   }
   
   timer.Toc("QuadTreeProcessor.FillBorder");
@@ -537,14 +538,6 @@ BorderSegment QuadTreeProcessor::MakeBorderSegment(const Point3f& origin, const 
 
   MemoryMapTypes::BorderSegment ret{origin, dest, perpendicular, data};
   return ret;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeProcessor::IsInEContentTypePackedType(EContentType contentType, EContentTypePackedType contentPackedTypes)
-{
-  const EContentTypePackedType packedType = EContentTypeToFlag(contentType);
-  const bool isIn = (packedType & contentPackedTypes) != 0;
-  return isIn;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

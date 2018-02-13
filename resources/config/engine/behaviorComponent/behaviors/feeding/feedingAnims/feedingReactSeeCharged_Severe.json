@@ -1,6 +1,0 @@
-{
-  "behaviorClass": "PlayAnim",
-  "behaviorID": "FeedingReactSeeCharged_Severe",
-  
-  "animTriggers": ["FeedingReactToSeeCube_Severe"]
-}

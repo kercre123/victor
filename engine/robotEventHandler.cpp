@@ -124,16 +124,13 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlayAnimat
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Helper function that is friended by TriggerCubeAnimationAction so we can call its private constructor
-IActionRunner* GetPlayCubeAnimationHelper(Robot& robot, const ExternalInterface::PlayCubeAnimationTrigger& msg)
-{
-  return new TriggerCubeAnimationAction(msg.objectID, msg.trigger);
-}
-  
 template<>
-IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlayCubeAnimationTrigger& msg)
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlayAnimationGroup& msg)
 {
-  return GetPlayCubeAnimationHelper(robot, msg);
+  AnimTrackFlagType ignoreTracks = GetIgnoreTracks(msg.ignoreBodyTrack, msg.ignoreHeadTrack, msg.ignoreLiftTrack);
+  const bool kInterruptRunning = true; // TODO: expose this option in CLAD?
+  const auto& animName = robot.GetAnimationComponent().GetAnimationNameFromGroup(msg.animationGroupName);
+  return new PlayAnimationAction(animName, msg.numLoops, kInterruptRunning, ignoreTracks);
 }
  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -827,12 +824,6 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlayAnimat
   return newAction;
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template<>
-IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlayNeedsGetOutAnimIfNeeded& msg)
-{
-  return new PlayNeedsGetOutAnimIfNeeded();
-}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
@@ -984,9 +975,8 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       DEFINE_HANDLER(placeOnObject,            PlaceOnObject,            1),
       DEFINE_HANDLER(placeRelObject,           PlaceRelObject,           1),
       DEFINE_HANDLER(playAnimation,            PlayAnimation,            0),
+      DEFINE_HANDLER(playAnimationGroup,       PlayAnimationGroup,       0),
       DEFINE_HANDLER(playAnimationTrigger,     PlayAnimationTrigger,     0),
-      DEFINE_HANDLER(playCubeAnimationTrigger, PlayCubeAnimationTrigger, 0),
-      DEFINE_HANDLER(playNeedsGetOutAnimIfNeeded, PlayNeedsGetOutAnimIfNeeded, 0),
       DEFINE_HANDLER(popAWheelie,              PopAWheelie,              1),
       DEFINE_HANDLER(readToolCode,             ReadToolCode,             0),
       DEFINE_HANDLER(realignWithObject,        RealignWithObject,        1),
@@ -1087,7 +1077,7 @@ u32 RobotEventHandler::GetNextGameActionTag() {
 
 void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
       
   // If we don't have a valid robot there's nothing to do
   if (nullptr == robot)
@@ -1127,7 +1117,7 @@ template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::QueueSingleAction& msg)
 {
   // Can't queue actions for nonexistent robots...
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   if (nullptr == robot)
   {
     return;
@@ -1173,7 +1163,7 @@ template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::QueueCompoundAction& msg)
 {
   // Can't queue actions for nonexistent robots...
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   if (nullptr == robot)
   {
     PRINT_NAMED_WARNING("RobotEventHandler.HandleQueueCompoundAction.InvalidRobotID", "Failed to find robot. Missing 'first' robot.");
@@ -1232,7 +1222,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::QueueCompoundActi
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::EnableLiftPower& msg)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   
   // We need a robot
   if (nullptr == robot)
@@ -1252,7 +1242,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::EnableLiftPower& 
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::EnableCliffSensor& msg)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   
   if (nullptr != robot)
   {
@@ -1265,7 +1255,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::EnableCliffSensor
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::EnableStopOnCliff& msg)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
 
   if (nullptr != robot)
   {
@@ -1278,7 +1268,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::EnableStopOnCliff
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::ForceDelocalizeRobot& msg)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   
   // We need a robot
   if (nullptr == robot) {
@@ -1300,7 +1290,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::ForceDelocalizeRo
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::SaveCalibrationImage& msg)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   
   // We need a robot
   if (nullptr == robot)
@@ -1318,7 +1308,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::SaveCalibrationIm
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::ClearCalibrationImages& msg)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   
   // We need a robot
   if (nullptr == robot)
@@ -1336,7 +1326,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::ClearCalibrationI
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::ComputeCameraCalibration& msg)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   
   // We need a robot
   if (nullptr == robot)
@@ -1353,7 +1343,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::ComputeCameraCali
 template<>
 void RobotEventHandler::HandleMessage(const CameraCalibration& calib)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   
   // We need a robot
   if (nullptr == robot)
@@ -1376,7 +1366,7 @@ void RobotEventHandler::HandleMessage(const CameraCalibration& calib)
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::AnimationAborted& msg)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   
   if(nullptr == robot) {
     PRINT_NAMED_WARNING("RobotEventHandler.HandleAnimationAborted.InvalidRobotID", "Failed to find robot.");
@@ -1432,7 +1422,7 @@ template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::RobotConnectionResponse& msg)
 {
   if (msg.result == RobotConnectionResult::Success) {
-    Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+    Robot* robot = _context->GetRobotManager()->GetRobot();
     
     if(nullptr == robot) {
       PRINT_NAMED_WARNING("RobotEventHandler.HandleRobotConnectionResponse.InvalidRobotID", "Failed to find robot.");
@@ -1451,7 +1441,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::RobotConnectionRe
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::CancelAction& msg)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   
   // We need a robot
   if (nullptr == robot)
@@ -1468,7 +1458,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::CancelAction& msg
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::CancelActionByIdTag& msg)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   
   // We need a robot
   if (nullptr == robot)
@@ -1486,7 +1476,7 @@ template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::ControllerGains& msg)
 {
   // We need a robot
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   if (nullptr == robot) {
     PRINT_NAMED_WARNING("RobotEventHandler.HandleControllerGains.InvalidRobotID", "Failed to find robot");
   } else {
@@ -1499,7 +1489,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::ControllerGains& 
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::DrawPoseMarker& msg)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   
   // We need a robot
   if (nullptr == robot)
@@ -1528,7 +1518,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::DrawPoseMarker& m
 template<>
 void RobotEventHandler::HandleMessage(const IMURequest& msg)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   
   // We need a robot
   if (nullptr == robot)
@@ -1545,7 +1535,7 @@ void RobotEventHandler::HandleMessage(const IMURequest& msg)
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::LogRawCliffData& msg)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   
   // We need a robot
   if (nullptr == robot) {
@@ -1559,7 +1549,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::LogRawCliffData& 
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::LogRawProxData& msg)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   
   // We need a robot
   if (nullptr == robot) {
@@ -1573,7 +1563,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::LogRawProxData& m
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::ExecuteTestPlan& msg)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   
   // We need a robot
   if (nullptr == robot)
@@ -1591,7 +1581,7 @@ template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::RollActionParams& msg)
 {
   // We need a robot
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   if (nullptr == robot) {
     PRINT_NAMED_WARNING("RobotEventHandler.HandleRollActionParams.InvalidRobotID", "Failed to find robot");
   } else {
@@ -1609,7 +1599,7 @@ template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::SetMotionModelParams& msg)
 {
   // We need a robot
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   if (nullptr == robot) {
     PRINT_NAMED_WARNING("RobotEventHandler.HandleSetMotionModelParams.InvalidRobotID", "Failed to find robot");
   } else {
@@ -1622,7 +1612,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::SetMotionModelPar
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::SetRobotCarryingObject& msg)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   
   // We need a robot
   if (nullptr == robot)
@@ -1644,7 +1634,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::SetRobotCarryingO
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::StopRobotForSdk& msg)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   
   // We need a robot
   if (nullptr == robot)
@@ -1671,7 +1661,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::StopRobotForSdk& 
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::StreamObjectAccel& msg)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   if (nullptr == robot)
   {
     PRINT_NAMED_WARNING("RobotEventHandler.StreamObjectAccel.InvalidRobotID", "Failed to find robot.");
@@ -1695,7 +1685,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::StreamObjectAccel
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::AbortPath& msg)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   
   // We need a robot
   if (nullptr == robot)
@@ -1712,7 +1702,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::AbortPath& msg)
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::AbortAll& msg)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   
   // We need a robot
   if (nullptr == robot)

@@ -17,7 +17,6 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
-#include "engine/aiComponent/requestGameComponent.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/components/progressionUnlockComponent.h"
@@ -84,15 +83,7 @@ void ICozmoBehaviorRequestGame::InitBehavior()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ICozmoBehaviorRequestGame::WantsToBeActivatedBehavior() const
-{  
-  // Save some computation by checking wether this request is the one the request component
-  // wants next first
-  RequestGameComponent& requestComponent = GetBEI().GetAIComponent().GetNonConstRequestGameComponent();
-  UnlockId nextRequest = requestComponent.IdentifyNextGameTypeToRequest(GetBEI());
-  if(nextRequest != GetRequiredUnlockID()){
-    return false;
-  }
-  
+{ 
   const bool hasFace = HasFace();
 
   if( DEBUG_BEHAVIOR_GAME_REQUEST_ACTIVATABLE ) {
@@ -127,9 +118,7 @@ void ICozmoBehaviorRequestGame::SendRequest()
 
   //robot.Broadcast( MessageEngineToGame( RequestGameStart(GetRequiredUnlockID())) );
   _requestTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  
-  
-  GetBEI().GetAIComponent().GetRequestGameComponent().RegisterRequestingGameType(GetRequiredUnlockID());
+    
   GetBEI().GetRobotPublicStateBroadcaster().UpdateRequestingGame(true);
 }
 

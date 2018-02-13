@@ -1,8 +1,9 @@
-# Victor Profile Scripts
+# Simpleperf
 
-## Simpleperf
+Anki modified source code can be found here:
+[../../lib/tools/simpleperf]
 
-Source code can be found here:
+Original source code can be found here:
 <https://android.googlesource.com/platform/system/extras/+/master/simpleperf/>
 
 Documentation can be found here:
@@ -13,21 +14,4 @@ Prebuilt executables are taken from here:
 
 Initial code drop was taken from master branch on 11/9/2017:
 <https://android.googlesource.com/platform/prebuilts/simpleperf/+/2265c7eb3a01f72af30c92de4b318deecdd582b9>
-
-## Helper Scripts
-
-Helper scripts (HOW-simpleperf.sh and HOW-inferno.sh) recognize the following
-environment variables, with default values shown:
-
-  ANKI_PROFILE_PROCNAME=cozmoengined
-
-  ANKI_PROFILE_DURATION=10 (in seconds)
-
-  ANKI_PROFILE_FREQUENCY=4000 (in usec)
-
-  ANKI_PROFILE_SYMBOLCACHE=symbol_cache
-
-Default values may be overridden as needed:
-
-  # ANKI_PROFILE_PROCNAME=victor_animator bash HOW-inferno.sh
 

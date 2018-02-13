@@ -57,6 +57,7 @@ public:
   bool DoNonConfigDataLoading(float& loadingCompleteRatio_out);
 
   const Json::Value & GetTextToSpeechConfig() const { return _tts_config; }
+  const Json::Value & GetWebServerAnimConfig() const { return _ws_config; }
   Animation* GetCannedAnimation(const std::string& name);
   
 private:
@@ -76,6 +77,7 @@ private:
 
   
   Json::Value _tts_config;
+  Json::Value _ws_config;
   
 };
 

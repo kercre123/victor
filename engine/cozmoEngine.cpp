@@ -207,7 +207,7 @@ Result CozmoEngine::Init(const Json::Value& config) {
                                     _context->GetDataLoader()->GetRobotNeedsHandlersConfig(),
                                     _context->GetDataLoader()->GetLocalNotificationConfig());
 
-  _context->GetRobotManager()->Init(_config, _context->GetDataLoader()->GetDasEventConfig());
+  _context->GetRobotManager()->Init(_config);
 
   // TODO: Specify random seed from config?
   //       Setting to non-zero value for now for repeatable testing.
@@ -223,7 +223,8 @@ Result CozmoEngine::Init(const Json::Value& config) {
 
   SetEngineState(EngineState::LoadingData);
 
-  _context->GetWebService()->Start(_context->GetDataPlatform(), "8888");
+  _context->GetWebService()->Start(_context->GetDataPlatform(),
+                                   _context->GetDataLoader()->GetWebServerEngineConfig());
 
   // DAS Event: "cozmo_engine.init.build_configuration"
   // s_val: Build configuration
@@ -412,7 +413,7 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
 
       // Let the robot manager do whatever it's gotta do to update the
       // robots in the world.
-      _context->GetRobotManager()->UpdateAllRobots();
+      _context->GetRobotManager()->UpdateRobot();
       
       UpdateLatencyInfo();
       break;
@@ -481,10 +482,10 @@ void CozmoEngine::UpdateLatencyInfo()
 
     // pull image stats from robot if available
     static const Util::Stats::StatsAccumulator nullStats;
-    const Robot* firstRobot = GetFirstRobot();
-    const bool useRobotStats = firstRobot != nullptr;
-    const Util::Stats::StatsAccumulator& imageStats = useRobotStats ? firstRobot->GetImageStats() : nullStats;
-    double currentImageDelay = useRobotStats ? firstRobot->GetCurrentImageDelay() : 0.0;
+    const Robot* robot = GetRobot();
+    const bool useRobotStats = robot != nullptr;
+    const Util::Stats::StatsAccumulator& imageStats = useRobotStats ? robot->GetImageStats() : nullStats;
+    double currentImageDelay = useRobotStats ? robot->GetCurrentImageDelay() : 0.0;
     
     const Util::Stats::StatsAccumulator& unityLatency = _uiMsgHandler->GetLatencyStats(UiConnectionType::UI);
     const Util::Stats::StatsAccumulator& sdk1Latency  = _uiMsgHandler->GetLatencyStats(UiConnectionType::SdkOverUdp);
@@ -596,22 +597,8 @@ Result CozmoEngine::ConnectToRobotProcess()
   return RESULT_OK;
 }
   
-Robot* CozmoEngine::GetFirstRobot() {
-  return _context->GetRobotManager()->GetFirstRobot();
-}
-  
-int CozmoEngine::GetNumRobots() const {
-  const size_t N = _context->GetRobotManager()->GetNumRobots();
-  assert(N < INT_MAX);
-  return static_cast<int>(N);
-}
-  
-Robot* CozmoEngine::GetRobotByID(const RobotID_t robotID) {
-  return _context->GetRobotManager()->GetRobotByID(robotID);
-}
-
-std::vector<RobotID_t> const& CozmoEngine::GetRobotIDList() const {
-  return _context->GetRobotManager()->GetRobotIDList();
+Robot* CozmoEngine::GetRobot() {
+  return _context->GetRobotManager()->GetRobot();
 }
 
 template<>
@@ -626,7 +613,7 @@ template<>
 void CozmoEngine::HandleMessage(const ExternalInterface::SetRobotImageSendMode& msg)
 {
   const ImageSendMode newMode = msg.mode;
-  Robot* robot = GetFirstRobot();
+  Robot* robot = GetRobot();
   
   if(robot != nullptr) {
     robot->SetImageSendMode(newMode);
@@ -638,7 +625,7 @@ void CozmoEngine::HandleMessage(const ExternalInterface::SetRobotImageSendMode& 
 template<>
 void CozmoEngine::HandleMessage(const ExternalInterface::ImageRequest& msg)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = GetRobot();
   if(robot != nullptr) {
     return robot->SetImageSendMode(msg.mode);
   }
@@ -647,7 +634,7 @@ void CozmoEngine::HandleMessage(const ExternalInterface::ImageRequest& msg)
 template<>
 void CozmoEngine::HandleMessage(const ExternalInterface::StartTestMode& msg)
 {
-  Robot* robot = GetFirstRobot();
+  Robot* robot = GetRobot();
   if(robot != nullptr) {
     robot->SendRobotMessage<StartControllerTestMode>(msg.p1, msg.p2, msg.p3, msg.mode);
   }

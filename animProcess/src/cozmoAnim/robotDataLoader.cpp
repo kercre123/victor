@@ -70,6 +70,17 @@ void RobotDataLoader::LoadConfigData()
                   tts_config.c_str());
     }
   }
+  // Web server config
+  {
+    static const std::string & ws_config = "webserver/webServerConfig_anim.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, ws_config, _ws_config);
+    if (!success)
+    {
+      LOG_ERROR("RobotDataLoader.WebServerAnimConfigNotFound",
+                "Web server anim config file %s not found or failed to parse",
+                  ws_config.c_str());
+    }
+  }
 }
 
 void RobotDataLoader::LoadNonConfigData()

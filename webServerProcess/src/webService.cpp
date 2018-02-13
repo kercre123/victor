@@ -20,7 +20,6 @@
 #include "civetweb.h"
 
 #include "coretech/common/engine/utils/data/dataPlatform.h"
-//#include "driveEngine/luaScriptService/luaScriptService.h"
 #include "util/logging/logging.h"
 #include "util/console/consoleSystem.h"
 #include "util/console/consoleChannel.h"
@@ -28,7 +27,8 @@
 #include "util/helpers/templateHelpers.h"
 #include "util/string/stringUtils.h"
 
-#include "json/json.h"
+#include "osState/osState.h"
+
 #if defined(ANKI_PLATFORM_ANDROID)
 #include <android/log.h>
 #endif
@@ -37,6 +37,27 @@
 #include <string>
 #include <chrono>
 #include <thread>
+#include <fstream>
+#include <iomanip>
+
+using namespace Anki::Cozmo;
+
+
+namespace {
+
+#ifndef SIMULATOR
+  std::ifstream _cpuFile;
+  std::ifstream _temperatureFile;
+  std::ifstream _batteryVoltageFile;
+
+//  const char* kNominalCPUFreqFile = "/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq";
+  const char* kCPUFreqFile = "/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_cur_freq";
+  const char* kTemperatureFile = "/sys/devices/virtual/thermal/thermal_zone8/temp";
+  const char* kBatteryVoltageFile = "/sys/devices/soc.0/qpnp-linear-charger-8/power_supply/battery/voltage_now";
+#endif
+
+} // namespace
+
 
 // Used websockets codes, see websocket RFC pg 29
 // http://tools.ietf.org/html/rfc6455#section-5.2
@@ -167,29 +188,51 @@ LogHandler(struct mg_connection *conn, void *cbdata)
 
 static int
 ProcessRequest(struct mg_connection *conn, Anki::Cozmo::WebService::WebService::RequestType requestType,
-               const std::string& param1, const std::string& param2)
+               const std::string& param1, const std::string& param2, const std::string& param3 = "", bool waitAndSendResponse = true)
 {
-  using namespace Anki::Cozmo::WebService;
-  WebService::Request* requestPtr = new WebService::Request(requestType, param1, param2);
+  WebService::WebService::Request* requestPtr = new WebService::WebService::Request(requestType, param1, param2, param3);
 
   struct mg_context *ctx = mg_get_context(conn);
-  Anki::Cozmo::WebService::WebService* that = static_cast<Anki::Cozmo::WebService::WebService*>(mg_get_user_data(ctx));
+  WebService::WebService* that = static_cast<WebService::WebService*>(mg_get_user_data(ctx));
 
   that->AddRequest(requestPtr);
 
-  // Now wait until the main thread processes the request
-  do
-  {
-    std::this_thread::sleep_for(std::chrono::milliseconds(20));
-  } while (!requestPtr->_resultReady);
+  if( waitAndSendResponse ) {
+    
+    // Now wait until the main thread processes the request
+    using namespace std::chrono;
+    static const double kTimeoutDuration_s = 10.0;
+    const auto startTime = steady_clock::now();
+    bool timedOut = false;
+    do
+    {
+      std::this_thread::sleep_for(std::chrono::milliseconds(20));
+      const auto now = steady_clock::now();
+      const auto elapsed_s = duration_cast<seconds>(now - startTime).count();
+      if (elapsed_s > kTimeoutDuration_s)
+      {
+        timedOut = true;
+        break;
+      }
+    } while (!requestPtr->_resultReady);
 
-  mg_printf(conn,
-            "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
-            "close\r\n\r\n");
-  mg_printf(conn, "%s\n", requestPtr->_result.c_str());
+    // We check if result is there because we just slept and it may have come in
+    // just before the timeout
+    if (timedOut && !requestPtr->_resultReady)
+    {
+      std::lock_guard<std::mutex> lock(that->_requestMutex);
+      requestPtr->_result = "Timed out after " + std::to_string(kTimeoutDuration_s) + " seconds";
+    }
 
-  // Now mark the request as done so the main thread can delete it
-  requestPtr->_done = true;
+    mg_printf(conn,
+              "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
+              "close\r\n\r\n");
+    mg_printf(conn, "%s\n", requestPtr->_result.c_str());
+  
+    // Now mark the request as done so the main thread can delete it.
+    // if you pass !waitAndSendResponse, you need to manually set this flag
+    requestPtr->_done = true;
+  }
 
   return 1;
 }
@@ -200,13 +243,13 @@ ConsoleVarsUI(struct mg_connection *conn, void *cbdata)
   const mg_request_info* info = mg_get_request_info(conn);
   std::string category = ((info->query_string) ? info->query_string : "");
 
-  const int returnCode = ProcessRequest(conn, Anki::Cozmo::WebService::WebService::RequestType::RT_ConsoleVarsUI, category, "");
+  const int returnCode = ProcessRequest(conn, WebService::WebService::RequestType::RT_ConsoleVarsUI, category, "");
 
   return returnCode;
 }
 
 static int
-ConsoleVarsSet(struct mg_connection *conn, void *cbdata)
+ConsoleVarSet(struct mg_connection *conn, void *cbdata)
 {
   const mg_request_info* info = mg_get_request_info(conn);
 
@@ -240,7 +283,7 @@ ConsoleVarsSet(struct mg_connection *conn, void *cbdata)
         }
       }
 
-      returnCode = ProcessRequest(conn, Anki::Cozmo::WebService::WebService::RequestType::RT_ConsoleVarSet, key, value);
+      returnCode = ProcessRequest(conn, WebService::WebService::RequestType::RT_ConsoleVarSet, key, value);
 
       key = remainder;
     } else {
@@ -251,7 +294,7 @@ ConsoleVarsSet(struct mg_connection *conn, void *cbdata)
 }
 
 static int
-ConsoleVarsGet(struct mg_connection *conn, void *cbdata)
+ConsoleVarGet(struct mg_connection *conn, void *cbdata)
 {
   const mg_request_info* info = mg_get_request_info(conn);
 
@@ -263,13 +306,13 @@ ConsoleVarsGet(struct mg_connection *conn, void *cbdata)
     }
   }
 
-  const int returnCode = ProcessRequest(conn, Anki::Cozmo::WebService::WebService::RequestType::RT_ConsoleVarGet, key, "");
+  const int returnCode = ProcessRequest(conn, WebService::WebService::RequestType::RT_ConsoleVarGet, key, "");
 
   return returnCode;
 }
 
 static int
-ConsoleVarsList(struct mg_connection *conn, void *cbdata)
+ConsoleVarList(struct mg_connection *conn, void *cbdata)
 {
   const mg_request_info* info = mg_get_request_info(conn);
 
@@ -281,7 +324,7 @@ ConsoleVarsList(struct mg_connection *conn, void *cbdata)
     }
   }
   
-  const int returnCode = ProcessRequest(conn, Anki::Cozmo::WebService::WebService::RequestType::RT_ConsoleVarList, key, "");
+  const int returnCode = ProcessRequest(conn, WebService::WebService::RequestType::RT_ConsoleVarList, key, "");
 
   return returnCode;
 }
@@ -331,111 +374,30 @@ ConsoleFuncCall(struct mg_connection *conn, void *cbdata)
       }
     }
 
-    returnCode = ProcessRequest(conn, Anki::Cozmo::WebService::WebService::RequestType::RT_ConsoleFuncCall, func, args);
+    returnCode = ProcessRequest(conn, WebService::WebService::RequestType::RT_ConsoleFuncCall, func, args);
   }
 
   return returnCode;
 }
 
-Anki::Cozmo::WebService::WebService::Request::Request(RequestType rt, const std::string& param1, const std::string& param2)
+WebService::WebService::Request::Request(RequestType rt,
+                                         const std::string& param1,
+                                         const std::string& param2,
+                                         const std::string& param3)
 {
   _requestType = rt;
   _param1 = param1;
   _param2 = param2;
+  _param3 = param3;
   _result = "";
   _resultReady = false;
   _done = false;
 }
-
-#if 0 //////// temp
-
-static int
-JsonUpload(struct mg_connection *conn, void *cbdata)
+Anki::Cozmo::WebService::WebService::Request::Request(RequestType rt, const std::string& param1, const std::string& param2)
+  : Request(rt, param1, param2, "")
 {
-  const struct mg_request_info* info = mg_get_request_info(conn);
-
-  std::stringstream ssPayload;
-  if (info->content_length > 0) {
-    char buf[info->content_length + 1];
-    mg_read(conn, buf, sizeof(buf));
-    buf[info->content_length] = 0;
-    ssPayload << buf;
-  }
-
-  std::string jsonName;
-  std::string jsonContents;
-
-  // this is fragile and browser-specific, but it's dev only, so just use chrome and look away
-  bool reading = false;
-  int blobCnt = 0;
-  for( std::string line; std::getline(ssPayload, line); ) {
-    // if line starts with "Content-", start parsing. If it starts with "------", end
-    if( line.substr(0,8) == "Content-" ) {
-      reading = true;
-    } else if( reading && (line.substr(0,6) == "------") ) {
-      reading = false;
-      ++blobCnt;
-    } else if( reading && !line.empty() ) {
-      if( blobCnt == 0 ) {
-        jsonName += line;
-      } else if( blobCnt == 1 ) {
-        jsonContents += line + "\n";
-      }
-    }
-  }
-
-  jsonName.erase(std::remove(jsonName.begin(), jsonName.end(), '\r'), jsonName.end());
-
-  bool success = false;
-  if( !jsonName.empty() && !jsonContents.empty() ) {
-    const auto& metagameComponent = Anki::DriveEngine::RushHour::getInstance()->GetMetaGameComponent();
-    success = metagameComponent.ReloadFromString(jsonName, jsonContents);
-  }
-
-  if( success ) {
-    mg_printf(conn,
-              "HTTP/1.1 200 OK\r\nContent-Type: "
-              "text/html\r\nConnection: close\r\n\r\n");
-  } else {
-    mg_printf(conn,
-              "HTTP/1.1 400 Bad Request\r\nContent-Type: "
-              "text/html\r\nConnection: close\r\n\r\n");
-  }
-
-  return 1;
+  
 }
-
-static int
-sku(struct mg_connection *conn, void *cbdata)
-{
-  mg_printf(conn,
-            "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
-            "close\r\n\r\n");
-
-#define STRINGIFY_HELPER(x) #x
-#define STRINGIFY(x) STRINGIFY_HELPER(x)
-  mg_printf(conn, "%s", STRINGIFY(ANKI_BUILD_SKUi));
-#undef STRINGIFY_HELPER
-#undef STRINGIFY
-  return 1;
-}
-
-static int
-appinfo(struct mg_connection *conn, void *cbdata)
-{
-  mg_printf(conn,
-            "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
-            "close\r\n\r\n");
-
-  const Anki::DriveEngine::AppInfo* appInfo = Anki::DriveEngine::RushHour::getRefInstance().GetRushHourAppInfo()->GetAppInfo();
-  std::string appString = "Version: " + appInfo->GetVersion() + " Display Version: " + appInfo->GetDisplayVersion() + " OS: " + appInfo->GetOSName() + " AppPlatform: " + appInfo->GetAppPlatform();
-
-  mg_printf(conn, "%s", appString.c_str());
-  return 1;
-}
-
-
-#endif  ///// temp
 
 static int
 dasinfo(struct mg_connection *conn, void *cbdata)
@@ -444,6 +406,7 @@ dasinfo(struct mg_connection *conn, void *cbdata)
             "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
             "close\r\n\r\n");
 
+// NOTE:  For some reason, android builds of the webserver are not getting USE_DAS defined properly
 #if USE_DAS
   std::string dasString = "DAS: " + std::string(DASGetLogDir()) + " DASDisableNetworkReason:";
   int disabled = DASNetworkingDisabled;
@@ -463,85 +426,132 @@ dasinfo(struct mg_connection *conn, void *cbdata)
 //    dasString += " Debug";
 //  }
 #else
-  std::string dasString = "DAS: #undefined";
+  std::string dasString = "DAS: #undefined for this platform";
 #endif
 
   mg_printf(conn, "%s", dasString.c_str());
   return 1;
 }
 
-#if 0 //////  temp
 
-static int
-LuaScripts(struct mg_connection *conn, void *cbdata)
+static int GetInitialConfig(struct mg_connection *conn, void *cbdata)
 {
+  mg_printf(conn,
+            "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
+            "close\r\n\r\n");
+
   struct mg_context *ctx = mg_get_context(conn);
-  Anki::Cozmo::WebService::WebService* that = static_cast<Anki::Cozmo::WebService::WebService*>(mg_get_user_data(ctx));
-  
-  const auto& luaScriptService = *Anki::DriveEngine::RushHour::getInstance()->GetLuaScriptService();
-  if( luaScriptService.AreScriptsSupported() ) {
-    std::string page = that->getLuaTemplate();
+  WebService::WebService* that = static_cast<WebService::WebService*>(mg_get_user_data(ctx));
 
-    std::string scriptsList;
-    auto scriptNames = luaScriptService.GetScriptNames();
-    std::sort(scriptNames.begin(), scriptNames.end());
-    for( const auto& scriptName : scriptNames ) {
-      std::string elapsedTimeStr;
-      if( luaScriptService.IsPlaying(scriptName) ) {
-        float elapsedTime = luaScriptService.GetElapsedTime(scriptName);
-        elapsedTimeStr = "data-elapsed-time=\"" + std::to_string(elapsedTime) + "\" ";
-      }
-      // <option value="filename" data-elapsed-time="elapsedTime" >filename.lua</option>
-      scriptsList += "  <option value=\"" + scriptName +  + "\" " + elapsedTimeStr + ">" + scriptName + ".lua</option>";
-    }
-    
-    const std::string placeholder = "<!-- scripts list -->";
-    Anki::Util::StringReplace(page, placeholder, scriptsList);
+  const std::string title0    = that->GetConfig()["title0"].asString();
+  const std::string title1    = that->GetConfig()["title1"].asString();
+  const std::string startPage = that->GetConfig()["startPage"].asString();
+#ifdef SIMULATOR
+  const std::string webotsSim = "true";
+#else
+  const std::string webotsSim = "false";
+#endif
 
-    mg_printf(conn,
-              "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
-              "close\r\n\r\n");
-    mg_printf(conn, "%s", page.c_str());
-  } else {
-    mg_printf(conn,
-              "HTTP/1.1 503 Service Unavailable\r\nContent-Type: text/html\r\nConnection: "
-              "close\r\n\r\n");
-    mg_printf(conn, "%s", "This device does not support scripts yet. You must access this page through a device hosting an active match.");
-  }
-
+  mg_printf(conn, "%s\n%s\n%s\n%s\n", title0.c_str(), title1.c_str(),
+            startPage.c_str(), webotsSim.c_str());
   return 1;
 }
 
-static int
-JsonUploadUI(struct mg_connection *conn, void *cbdata)
+
+static int GetMainRobotInfo(struct mg_connection *conn, void *cbdata)
 {
-  struct mg_context *ctx = mg_get_context(conn);
-  Anki::Cozmo::WebService::WebService* that = static_cast<Anki::Cozmo::WebService::WebService*>(mg_get_user_data(ctx));
+  mg_printf(conn,
+            "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
+            "close\r\n\r\n");
 
-  const auto& metagameComponent = Anki::DriveEngine::RushHour::getInstance()->GetMetaGameComponent();
+  const auto& osState = OSState::getInstance();
+  const std::string robotID  = std::to_string(osState->GetRobotID());
+  const std::string serialNo = osState->GetSerialNumberAsString();
+  const std::string ip       = osState->GetIPAddress();
 
-  std::string page = that->getMetaGameJsonTemplate();
+  mg_printf(conn, "%s\n%s\n%s\n", robotID.c_str(), serialNo.c_str(), ip.c_str());
+  return 1;
+}
 
-  std::string jsonList;
-  auto jsonNames = metagameComponent.GetWebReloadableComponents();
-  std::sort(jsonNames.begin(), jsonNames.end());
-  for( const auto& jsonName : jsonNames ) {
-    // <option value="filename">filename.json</option>
-    jsonList += "  <option value=\"" + jsonName +  + "\">" + jsonName + ".json</option>";
+
+static int GetPerfStats(struct mg_connection *conn, void *cbdata)
+{
+  using namespace std::chrono;
+  const auto startTime = steady_clock::now();
+
+  static const int kNumStats = 3;
+  bool active[kNumStats];
+
+  const mg_request_info* info = mg_get_request_info(conn);
+  const std::string boolsString = info->query_string ? info->query_string : "";
+  int i = 0;
+  for ( ; i < kNumStats && boolsString[i]; i++)
+  {
+    active[i] = (boolsString[i] == '1');
   }
-  
-  const std::string placeholder = "<!-- json list -->";
-  Anki::Util::StringReplace(page, placeholder, jsonList);
+  // If the string wasn't long enough, make the rest of the flags false
+  for ( ; i < kNumStats; i++)
+  {
+    active[i] = false;
+  }
+
+#ifdef SIMULATOR
+
+  // On webots simulator, most if not all of these don't apply
+  const std::string stat_cpuFreq = "n/a";
+  const std::string stat_temperature = "n/a";
+  const std::string stat_batteryVoltage = "n/a";
+
+#else
+
+  std::string stat_cpuFreq;
+  if (active[0]) {
+    // Update cpu freq
+    uint32_t cpuFreq_kHz;
+    _cpuFile.seekg(0, _cpuFile.beg);
+    _cpuFile >> cpuFreq_kHz;
+    stat_cpuFreq = std::to_string(cpuFreq_kHz);
+  }
+
+  std::string stat_temperature;
+  if (active[1]) {
+    // Update temperature reading; convert milli-Celsius to Celsius
+    uint32_t cpuTemp_mC;
+    _temperatureFile.seekg(0, _temperatureFile.beg);
+    _temperatureFile >> cpuTemp_mC;
+    const float cpuTemp_C = cpuTemp_mC * 0.001f;
+    std::stringstream ss;
+    ss << std::fixed << std::setprecision(3) << cpuTemp_C;
+    stat_temperature = ss.str();
+  }
+
+  std::string stat_batteryVoltage;
+  if (active[2]) {
+    // Battery voltage
+    uint32_t batteryVoltage;
+    _batteryVoltageFile.seekg(0, _batteryVoltageFile.beg);
+    _batteryVoltageFile >> batteryVoltage;
+    stat_batteryVoltage = std::to_string(batteryVoltage);
+  }
+
+#endif
+
+  const auto now = steady_clock::now();
+  const auto elapsed_us = duration_cast<microseconds>(now - startTime).count();
+  PRINT_NAMED_INFO("WebService", "GetPerfStats took %lld microseconds to read", elapsed_us);
 
   mg_printf(conn,
             "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
             "close\r\n\r\n");
-  mg_printf(conn, "%s", page.c_str());
+
+  mg_printf(conn, "%s\n%s\n%s\n",
+            stat_cpuFreq.c_str(),
+            stat_temperature.c_str(),
+            stat_batteryVoltage.c_str());
 
   return 1;
 }
 
-#endif  //////////
 
 namespace Anki {
 namespace Cozmo {
@@ -557,10 +567,7 @@ WebService::~WebService()
   Stop();
 }
 
-// TODO:  Instead of passing in a 'port number' we'll pass in a 'config', which will
-// contain port number, and other stuff like text indicating to user which webserver
-// is running, etc.
-void WebService::Start(Anki::Util::Data::DataPlatform* platform, const char* portNumStr)
+void WebService::Start(Anki::Util::Data::DataPlatform* platform, const Json::Value& config)
 {
   if (platform == nullptr) {
     return;
@@ -568,6 +575,10 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform, const char* por
   if (_ctx != nullptr) {
     return;
   }
+
+  _config = config;
+
+  const std::string portNumString = _config["port"].asString();
 
   const std::string webserverPath = platform->pathToResource(Util::Data::Scope::Resources, "webserver");
 
@@ -592,7 +603,7 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform, const char* por
     "document_root",
     webserverPath.c_str(),
     "listening_ports",
-    portNumStr, // "8888",
+    portNumString.c_str(),
     "num_threads",
     "4",
     "url_rewrite_patterns",
@@ -626,30 +637,27 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform, const char* por
 
   mg_set_request_handler(_ctx, "/daslog", LogHandler, 0);
   mg_set_request_handler(_ctx, "/consolevars", ConsoleVarsUI, 0);
-//  mg_set_request_handler(_ctx, "/json", JsonUploadUI, 0);
 
-  mg_set_request_handler(_ctx, "/consolevarset", ConsoleVarsSet, 0);
-  mg_set_request_handler(_ctx, "/consolevarget", ConsoleVarsGet, 0);
-  mg_set_request_handler(_ctx, "/consolevarlist", ConsoleVarsList, 0);
+  mg_set_request_handler(_ctx, "/consolevarset", ConsoleVarSet, 0);
+  mg_set_request_handler(_ctx, "/consolevarget", ConsoleVarGet, 0);
+  mg_set_request_handler(_ctx, "/consolevarlist", ConsoleVarList, 0);
   mg_set_request_handler(_ctx, "/consolefunccall", ConsoleFuncCall, 0);
-//  mg_set_request_handler(_ctx, "/jsonUpload", JsonUpload, 0);
 
-//  mg_set_request_handler(_ctx, "/sku", sku, 0);
-//  mg_set_request_handler(_ctx, "/appinfo", appinfo, 0);
   mg_set_request_handler(_ctx, "/dasinfo", dasinfo, 0);
-
-//  mg_set_request_handler(_ctx, "/scripts", LuaScripts, 0); // landing page. other xfer through sockets
+  mg_set_request_handler(_ctx, "/getinitialconfig", GetInitialConfig, 0);
+  mg_set_request_handler(_ctx, "/getmainrobotinfo", GetMainRobotInfo, 0);
+  mg_set_request_handler(_ctx, "/getperfstats", GetPerfStats, 0);
 
   const std::string& consoleVarsTemplate = platform->pathToResource(Util::Data::Scope::Resources, "webserver/consolevarsui.html");
   _consoleVarsUIHTMLTemplate = Anki::Util::StringFromContentsOfFile(consoleVarsTemplate);
 
-  const std::string& luaTemplate = platform->pathToResource(Util::Data::Scope::Resources, "webserver/lua.html");
-  _luaHTMLTemplate = Anki::Util::StringFromContentsOfFile(luaTemplate);
-  
-  const std::string& metaGameJsonTemplate = platform->pathToResource(Util::Data::Scope::Resources, "webserver/json.html");
-  _metaGameJsonHTMLTemplate = Anki::Util::StringFromContentsOfFile(metaGameJsonTemplate);
-
   _requests.clear();
+
+#ifndef SIMULATOR
+  _temperatureFile.open(kTemperatureFile, std::ifstream::in);
+  _cpuFile.open(kCPUFreqFile, std::ifstream::in);
+  _batteryVoltageFile.open(kBatteryVoltageFile, std::ifstream::in);
+#endif
 }
 
 
@@ -776,6 +784,45 @@ void WebService::Update()
             }
           }
           break;
+        case RT_WebsocketOnSubscribe:
+        case RT_WebsocketOnData:
+          {
+            const auto& moduleName = requestPtr->_param1;
+            const auto& idxStr = requestPtr->_param2;
+            size_t idx = std::stoi( idxStr );
+            
+            auto sendToClient = [idx, moduleName, this](const Json::Value& toSend){
+              // might crash if webservice is somehow destroyed after the subscriber, but only in dev
+              if( (idx < _webSocketConnections.size())
+                 && (_webSocketConnections[idx].subscribedModules.count( moduleName ) > 0) )
+              {
+                Json::Value payload;
+                payload["module"] = moduleName;
+                payload["data"] = toSend;
+                SendToWebSocket( _webSocketConnections[idx].conn, payload );
+              }
+            };
+            
+            if( requestPtr->_requestType == RT_WebsocketOnSubscribe ) {
+              auto signalIt = _webVizSubscribedSignals.find( moduleName );
+              if( signalIt != _webVizSubscribedSignals.end() ) {
+                signalIt->second.emit( sendToClient );
+              }
+            } else if( requestPtr->_requestType == RT_WebsocketOnData ) {
+              const auto& dataStr = requestPtr->_param3;
+              Json::Reader reader;
+              Json::Value data;
+              
+              if( reader.parse(dataStr, data) ) {
+                auto signalIt = _webVizDataSignals.find( moduleName );
+                if( signalIt != _webVizDataSignals.end() ) {
+                  signalIt->second.emit( data, sendToClient );
+                }
+              }
+            }
+            requestPtr->_done = true; // no one cares about the result, just cleanup immediately
+          }
+          break;
       }
 
       // Notify the requesting thread that the result is now ready
@@ -786,8 +833,18 @@ void WebService::Update()
 
 void WebService::Stop()
 {
-  if (_ctx)
-  {
+#ifndef SIMULATOR
+  if (_temperatureFile.is_open()) {
+    _temperatureFile.close();
+  }
+  if (_cpuFile.is_open()) {
+    _cpuFile.close();
+  }
+  if (_batteryVoltageFile.is_open()) {
+    _batteryVoltageFile.close();
+  }
+#endif
+  if (_ctx) {
     mg_stop(_ctx);
   }
   _ctx = nullptr;
@@ -953,27 +1010,21 @@ void WebService::GenerateConsoleVarsUI(std::string& page, const std::string& cat
   pos = page.find(tmp);
   if (pos != std::string::npos) {
     page = page.replace(pos, tmp.length(), html);
-  }}
-
-
-#if 0
-void WebService::SendWebSocketError(struct mg_connection* conn, const std::string& str) const
-{
-  Json::Value err;
-  err["type"] = "error";
-  err["reason"] = str;
-  SendToWebSocket(conn, err);
+  }
 }
 
-void WebService::SendToWebSockets(const std::string& service, const Json::Value& data)
+
+void WebService::SendToWebSockets(const std::string& moduleName, const Json::Value& data) const
 {
+  Json::Value payload;
+  payload["module"] = moduleName;
+  payload["data"] = data;
   for( const auto& connData : _webSocketConnections ) {
-    if( connData.subscribed && (connData.serviceName.empty() || (connData.serviceName == service)) ) {
-      SendToWebSocket(connData.conn, data);
+    if( connData.subscribedModules.find( moduleName ) != connData.subscribedModules.end() ) {
+      SendToWebSocket(connData.conn, payload);
     }
   }
 }
-#endif
 
 int WebService::HandleWebSocketsConnect(const struct mg_connection* conn, void* cbparams)
 {
@@ -1037,7 +1088,6 @@ void WebService::HandleWebSocketsClose(const struct mg_connection* conn, void* c
   that->OnCloseWebSocket( conn );
 }
 
-#if 0 // websockets used for OD game tuning...disabling for now
 void WebService::SendToWebSocket(struct mg_connection* conn, const Json::Value& data)
 {
   // todo: deal with threads if this is used outside dev
@@ -1047,23 +1097,12 @@ void WebService::SendToWebSocket(struct mg_connection* conn, const Json::Value& 
   std::string str = ss.str();
   mg_websocket_write(conn, WebSocketsTypeText, str.c_str(), str.size());
 }
-#endif
 
 const std::string& WebService::getConsoleVarsTemplate()
 {
   return _consoleVarsUIHTMLTemplate;
 }
   
-const std::string& WebService::getLuaTemplate()
-{
-  return _luaHTMLTemplate;
-}
-  
-const std::string& WebService::getMetaGameJsonTemplate()
-{
-  return _metaGameJsonHTMLTemplate;
-}
-
 void WebService::OnOpenWebSocket(struct mg_connection* conn)
 {
   ASSERT_NAMED(conn != nullptr, "Can't create connection to n");
@@ -1082,24 +1121,34 @@ void WebService::OnReceiveWebSocket(struct mg_connection* conn, const Json::Valu
   });
   
   if( it != _webSocketConnections.end() ) {
-    if( !data["type"].isNull() ) {
+    if( !data["type"].isNull() && !data["module"].isNull() ) {
+      const std::string& moduleName = data["module"].asString();
+      size_t idx = it - _webSocketConnections.begin();
       
-      if( (data["type"].asString() == "subscribe") && !data["service"].isNull() ) {
+      if( data["type"].asString() == "subscribe" ) {
+        it->subscribedModules.insert( moduleName );
         
-        // first message after connection is "subscribe", which can be empty, meaning subscribe to all
-        it->serviceName = data["service"].asString();
-        it->subscribed = true;
-        
-//      } else if( data["type"].asString() == "luaget" ) {
-//        HandleLuaGet(conn, data);
-//      } else if( data["type"].asString() == "luaset" ) {
-//        HandleLuaSet(conn, data);
-//      } else if( data["type"].asString() == "luarevert" ) {
-//        HandleLuaRevert(conn, data);
-//      } else if( data["type"].asString() == "luaplay" ) {
-//        HandleLuaPlay(conn, data);
-//      } else if( data["type"].asString() == "luastop" ) {
-//        HandleLuaStop(conn, data);
+        const bool waitAndSendResponse = false;
+        ProcessRequest(conn,
+                       Anki::Cozmo::WebService::WebService::RequestType::RT_WebsocketOnSubscribe,
+                       moduleName,
+                       std::to_string(idx),
+                       "",
+                       waitAndSendResponse);
+      }
+      if( data["type"].asString() == "unsubscribe" ) {
+        it->subscribedModules.erase( moduleName );
+      }
+      if( (data["type"].asString() == "data") && !data["data"].isNull() ) {
+        const bool waitAndSendResponse = false;
+        std::stringstream ss;
+        ss << data["data"];
+        ProcessRequest(conn,
+                       Anki::Cozmo::WebService::WebService::RequestType::RT_WebsocketOnData,
+                       moduleName,
+                       std::to_string(idx),
+                       ss.str(),
+                       waitAndSendResponse);
       }
       
     }
@@ -1122,127 +1171,6 @@ void WebService::OnCloseWebSocket(const struct mg_connection* conn)
   std::swap(data, _webSocketConnections.back());
   _webSocketConnections.pop_back();
 }
-
-
-#if 0 ///////
-
-void WebService::HandleLuaGet(struct mg_connection* conn, const Json::Value& data)
-{
-  if( !ANKI_DEVELOPER_CODE ) {
-    // dont show anyone our scripts for now
-    return;
-  }
-
-  bool success = false;
-  std::string selectedScript;
-  
-  if( data["script"].isString() ) {
-    selectedScript = data["script"].asString();
-  }
-  
-  if( selectedScript == "NOTASCRIPTNAME" ) { // the default dropdown value...shouldnt happen
-    selectedScript = "";
-  }
-  
-  if( !selectedScript.empty() ) {
-    std::string contents;
-    float elapsedTime = -1.0f;
-    
-    const auto& luaScriptService = *Anki::DriveEngine::RushHour::getInstance()->GetLuaScriptService();
-    contents = luaScriptService.GetScript( selectedScript );
-    elapsedTime = luaScriptService.GetElapsedTime( selectedScript );
-    assert( !contents.empty() );
-    
-    if( !contents.empty() ) {
-      
-      Json::Value retJson;
-      retJson["type"] = "luascriptcontents";
-      retJson["script"] = selectedScript;
-      retJson["contents"] = contents;
-      retJson["elapsedTime"] = elapsedTime;
-      
-      SendToWebSocket( conn, retJson );
-      
-      success = true;
-    }
-  }
-  
-  if( !success ) {
-    SendWebSocketError(conn, "lua script " + selectedScript + " not found" );
-  }
-}
-  
-void WebService::HandleLuaSet(struct mg_connection* conn, const Json::Value& data)
-{
-  std::string scriptName;
-  std::string scriptContents;
-  
-  if( data["scriptName"].isString() ) {
-    scriptName = data["scriptName"].asString();
-  }
-  if( !data["contents"].isNull() ) {
-    scriptContents = data["contents"].asString();
-  }
-  
-  if( !scriptName.empty() && !scriptContents.empty() ) {
-    
-    auto& luaScriptService = *Anki::DriveEngine::RushHour::getRefInstance().GetLuaScriptService();
-    luaScriptService.SetScript(scriptName, scriptContents);
-    // response comes from LuaScriptService
-  } else {
-    SendWebSocketError( conn, "400 bad request (luaset)" );
-  }
-}
- 
-void WebService::HandleLuaRevert(struct mg_connection* conn, const Json::Value& data)
-{
-  if( data["scriptName"].isString() ) {
-    std::string scriptName;
-    scriptName = data["scriptName"].asString();
-
-    auto& luaScriptService = *Anki::DriveEngine::RushHour::getRefInstance().GetLuaScriptService();
-    luaScriptService.RevertScript(scriptName);
-
-    Json::Value retJson;
-    retJson["type"] = "luascriptcontents";
-    retJson["script"] = scriptName;
-    retJson["contents"] = luaScriptService.GetScript(scriptName);
-    retJson["elapsedTime"] = luaScriptService.GetElapsedTime(scriptName);
-    SendToWebSocket(conn, retJson);
-
-  } else {
-    SendWebSocketError( conn, "400 bad request (luarevert)" );
-  }
-}
-
-void WebService::HandleLuaPlay(struct mg_connection* conn, const Json::Value& data)
-{
-  if( data["scriptName"].isString() ) {
-    std::string scriptName;
-    scriptName = data["scriptName"].asString();
-  
-    auto& luaScriptService = *Anki::DriveEngine::RushHour::getRefInstance().GetLuaScriptService();
-    luaScriptService.CommandScript(scriptName, true);
-    // response comes from LuaScriptService
-  } else {
-    SendWebSocketError( conn, "400 bad request (luaplay)" );
-  }
-}
- 
-void WebService::HandleLuaStop(struct mg_connection* conn, const Json::Value& data)
-{
-  if( data["scriptName"].isString() ) {
-    std::string scriptName;
-    scriptName = data["scriptName"].asString();
-  
-    auto& luaScriptService = *Anki::DriveEngine::RushHour::getRefInstance().GetLuaScriptService();
-    luaScriptService.CommandScript(scriptName, false);
-  } else {
-    SendWebSocketError( conn, "400 bad request (luastop)" );
-  }
-}
-
-#endif  /////
 
 } // namespace WebService
 } // namespace Cozmo

@@ -16,7 +16,6 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 
-#include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorPlayAnimOnNeedsChange.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorPlayAnimSequence.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorPlayAnimSequenceWithFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorPlayAnimSequenceWithObject.h"
@@ -25,7 +24,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorFindHome.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorGoHome.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorInteractWithFaces.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorKnockOverCubes.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorLookAround.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorPickupCube.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorPopAWheelie.h"
@@ -64,12 +62,9 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherStrictPriority.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherStrictPriorityWithCooldown.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/feeding/behaviorFeedingEat.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/feeding/behaviorFeedingSearchForCube.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/freeplay/behaviorCubeLiftWorkout.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/behaviorDriveInDesperation.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/behaviorDriveToFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/behaviorPickUpAndPutDownCube.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/freeplay/buildPyramid/behaviorRespondPossiblyRoll.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/exploration/behaviorExploreBringCubeToBeacon.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/exploration/behaviorExploreLookAroundInPlace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/exploration/behaviorExploreVisitPossibleMarker.h"
@@ -77,14 +72,12 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/exploration/behaviorThinkAboutBeacons.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/exploration/behaviorVisitInterestingEdge.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/gameRequest/behaviorRequestGameSimple.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/freeplay/oneShots/behaviorCantHandleTallStack.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/oneShots/behaviorDance.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/oneShots/behaviorSinging.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/putDownDispatch/behaviorLookForFaceAndCube.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorBouncer.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorFistBump.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorGuardDog.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorPeekABoo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorPounceOnMotion.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorPounceWithProx.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorPuzzleMaze.h"
@@ -94,16 +87,13 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/meetCozmo/behaviorRespondToRenameFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/observing/behaviorObservingLookAtFaces.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/observing/behaviorObservingOnCharger.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorOnboardingShowCube.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/proxBehaviors/behaviorProxGetToDistance.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorAcknowledgeCubeMoved.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorAcknowledgeFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorAcknowledgeObject.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorRamIntoBlock.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToCliff.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToFrustration.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToMotorCalibration.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToOnCharger.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToPet.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToPlacedOnSlope.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToReturnedToTreads.h"
@@ -113,6 +103,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToRobotShaken.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToUnexpectedMovement.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToVoiceCommand.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorProceduralClock.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/sleeping/behaviorSleeping.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorComeHere.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorReactToSound.h"
@@ -291,6 +282,9 @@ ICozmoBehaviorPtr BehaviorContainer::CreateBehaviorAndAddToContainer(BehaviorCla
 ICozmoBehaviorPtr BehaviorContainer::CreateAnonymousBehavior(BehaviorClass behaviorType, const Json::Value& config) const
 {
   ICozmoBehaviorPtr newBehavior = CreateBehaviorBase(behaviorType, config);
+  if( newBehavior != nullptr ) {
+    MakeDebugLabelUnique( newBehavior );
+  }
   return newBehavior;  
 }
 
@@ -447,11 +441,6 @@ ICozmoBehaviorPtr BehaviorContainer::CreateBehaviorBase(BehaviorClass behaviorTy
       newBehavior = ICozmoBehaviorPtr(new BehaviorPopAWheelie(config));
       break;
     }
-    case BehaviorClass::PeekABoo:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorPeekABoo(config));
-      break;
-    }
     case BehaviorClass::PickUpCube:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorPickUpCube(config));
@@ -462,29 +451,9 @@ ICozmoBehaviorPtr BehaviorContainer::CreateBehaviorBase(BehaviorClass behaviorTy
       newBehavior = ICozmoBehaviorPtr(new BehaviorPickUpAndPutDownCube(config));
       break;
     }
-    case BehaviorClass::KnockOverCubes:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorKnockOverCubes(config));
-      break;
-    }
-    case BehaviorClass::CantHandleTallStack:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorCantHandleTallStack(config));
-      break;
-    }
-    case BehaviorClass::OnboardingShowCube:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorOnboardingShowCube(config));
-      break;
-    }
     case BehaviorClass::LookForFaceAndCube:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorLookForFaceAndCube(config));
-      break;
-    }
-    case BehaviorClass::CubeLiftWorkout:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorCubeLiftWorkout(config));
       break;
     }
     case BehaviorClass::EnrollFace:
@@ -497,16 +466,6 @@ ICozmoBehaviorPtr BehaviorContainer::CreateBehaviorBase(BehaviorClass behaviorTy
       newBehavior = ICozmoBehaviorPtr(new BehaviorLiftLoadTest(config));
       break;
     }
-    case BehaviorClass::RamIntoBlock:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorRamIntoBlock(config));
-      break;
-    }
-    case BehaviorClass::RespondPossiblyRoll:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorRespondPossiblyRoll(config));
-      break;
-    }
     case BehaviorClass::RespondToRenameFace:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorRespondToRenameFace(config));
@@ -516,11 +475,6 @@ ICozmoBehaviorPtr BehaviorContainer::CreateBehaviorBase(BehaviorClass behaviorTy
     case BehaviorClass::FeedingEat:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorFeedingEat(config));
-      break;
-    }
-    case BehaviorClass::FeedingSearchForCube:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorFeedingSearchForCube(config));
       break;
     }
     case BehaviorClass::Singing:
@@ -557,13 +511,7 @@ ICozmoBehaviorPtr BehaviorContainer::CreateBehaviorBase(BehaviorClass behaviorTy
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorTurnToFace(config));
       break;
-    }
-    case BehaviorClass::PlayAnimOnNeedsChange:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorPlayAnimOnNeedsChange(config));
-      break;
-    }
-      
+    } 
     case BehaviorClass::PuzzleMaze:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorPuzzleMaze(config));
@@ -652,7 +600,12 @@ ICozmoBehaviorPtr BehaviorContainer::CreateBehaviorBase(BehaviorClass behaviorTy
       newBehavior = ICozmoBehaviorPtr(new BehaviorProxGetToDistance(config));
       break;
     }
-
+    case BehaviorClass::ProceduralClock:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorProceduralClock(config));
+      break;
+    }
+    
     // Dispatch Behvaiors
     case BehaviorClass::BehaviorDispatcherRerun:
     {
@@ -726,11 +679,6 @@ ICozmoBehaviorPtr BehaviorContainer::CreateBehaviorBase(BehaviorClass behaviorTy
     case BehaviorClass::ReactToRobotShaken:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorReactToRobotShaken(config));
-      break;
-    }
-    case BehaviorClass::ReactToOnCharger:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToOnCharger(config));
       break;
     }
     case BehaviorClass::AcknowledgeObject:
@@ -824,6 +772,8 @@ ICozmoBehaviorPtr BehaviorContainer::CreateBehaviorBase(BehaviorClass behaviorTy
   if (newBehavior == nullptr){
     PRINT_NAMED_ERROR("BehaviorContainer.CreateBehavior.Failed",
                       "Failed to create Behavior of type '%s'", BehaviorClassToString(behaviorType));
+  } else {
+    MakeDebugLabelUnique( newBehavior );
   }
   
   return newBehavior;
@@ -904,6 +854,18 @@ BehaviorClass BehaviorContainer::GetBehaviorClass(ICozmoBehaviorPtr behavior) co
 std::string BehaviorContainer::GetClassString(BehaviorClass behaviorClass) const
 {
   return BehaviorClassToString(behaviorClass);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorContainer::MakeDebugLabelUnique(ICozmoBehaviorPtr behavior) const
+{
+  // make sure the debug label is unique by appending the count of instances with the same debug
+  // label, if the index is positive
+  const auto& debugLabel = behavior->GetDebugLabel();
+  const unsigned int labelIndex = _debugLabelCounters[debugLabel]++; // and post increment
+  if( labelIndex > 0 ) {
+    behavior->SetDebugLabel( behavior->GetDebugLabel() + std::to_string(labelIndex) );
+  }
 }
 
   

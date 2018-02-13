@@ -13,7 +13,6 @@ enum uint_8 BEIConditionType {
 
   TrueCondition, // (note: name can't be True due to clad rules)
   CloudIntentPending,
-  ExpressNeedsTransition,
   FacePositionUpdated,
   Frustration,
   InNeedsBracket,

@@ -1,0 +1,9 @@
+{
+  "behaviorID" : "DriveOffChargerIntoPlay",
+  "behaviorClass" : "DispatcherQueue",
+
+  "behaviors": [
+    "DriveOffCharger",
+    "ShortLookAroundForFaceAndCube"
+  ]
+}

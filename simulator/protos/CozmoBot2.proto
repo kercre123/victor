@@ -7,8 +7,8 @@ PROTO CozmoBot2 [
   field SFRotation rotation 0 0 1 0
 
   field SFFloat headAngle          0
-  field SFFloat headAngle_lowLimit -0.4014 # 23 degrees down
-  field SFFloat headAngle_highLimit 0.7854 # 45 degrees up
+  field SFFloat headAngle_lowLimit -0.383972 # 22 degrees down
+  field SFFloat headAngle_highLimit 0.785398 # 45 degrees up
 
   field SFFloat liftAngle 0
   field SFFloat liftAngle_lowLimit  -0.01  # Should be 0, but Webots needs it to be less than liftAngle
@@ -257,6 +257,7 @@ Supervisor {
                 
                 # Web server process:
                 CozmoWebServer {
+                  robotID IS robotID
                   filterLogs IS filterLogs
                   colorizeStderrOutput IS colorizeStderrOutput
                 }

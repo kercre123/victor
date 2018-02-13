@@ -49,7 +49,7 @@ constexpr uint8_t kQuadTreeMaxRootDepth = 8;
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-QuadTree::QuadTree(MemoryMapData rootData)
+QuadTree::QuadTree(MemoryMapDataPtr rootData)
 : _processor()
 , _root({0,0,1}, kQuadTreeInitialRootSideLength, kQuadTreeInitialMaxDepth, QuadTreeTypes::EQuadrant::Root, nullptr, rootData)  // Note the root is created at z=1
 {
@@ -72,7 +72,7 @@ float QuadTree::GetContentPrecisionMM() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTree::Insert(const FastPolygon& poly, const MemoryMapData& data, int shiftAllowedCount)
+bool QuadTree::Insert(const FastPolygon& poly, MemoryMapDataPtr data, int shiftAllowedCount)
 {
   ANKI_CPU_PROFILE("QuadTree::Insert");
   
@@ -100,7 +100,7 @@ bool QuadTree::Insert(const FastPolygon& poly, const MemoryMapData& data, int sh
     
     // if we are 'adding' a removal poly, do not expand, since it would be useless to expand or shift to try
     // to remove data.
-    const bool isRemovingContent = MemoryMapTypes::IsRemovalType(data.type);
+    const bool isRemovingContent = MemoryMapTypes::IsRemovalType(data->type);
     if ( isRemovingContent ) {
       PRINT_NAMED_WARNING("QuadTree.Insert.RemovalPolyNotContained",
         "Poly is not fully contained in root, removal does not cause expansion.");
@@ -171,12 +171,10 @@ bool QuadTree::Merge(const QuadTree& other, const Pose3d& transform)
       
       // add to this
       // TODO: don't copy the data, pass the shared pointer. Also generate the poly directly rather than through a quad
-      MemoryMapData* copyOfData(nodeInOther->GetContent().data.get());
       Poly2f transformedPoly;
       transformedPoly.ImportQuad2d(transformedQuad2d);
       
-//      AddQuad(transformedQuad2d, *copyOfData, maxNumberOfShifts);
-      changed |= Insert(transformedPoly, *copyOfData, maxNumberOfShifts);
+      changed |= Insert(transformedPoly, nodeInOther->GetData(), maxNumberOfShifts);
     }
   }
   return changed;

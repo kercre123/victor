@@ -28,7 +28,7 @@ struct MemoryMapData_Cliff : public MemoryMapData
   MemoryMapData_Cliff(const Pose3d& cliffPose, TimeStamp_t t);
   
   // create a copy of self (of appropriate subclass) and return it
-  MemoryMapData* Clone() const override;
+  MemoryMapDataPtr Clone() const override;
   
   // compare to INavMemoryMapQuadData and return bool if the data stored is the same
   bool Equals(const MemoryMapData* other) const override;

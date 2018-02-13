@@ -78,7 +78,7 @@ Result MessageHandler::ProcessMessages()
       ++_messageCountRtE;
 
       // If we don't have a robot to care about this message, throw it away
-      Robot* destRobot = _robotManager->GetFirstRobot();
+      Robot* destRobot = _robotManager->GetRobot();
       if (nullptr == destRobot)
       {
         continue;
@@ -95,7 +95,7 @@ Result MessageHandler::ProcessMessages()
 
       // see if message type should be filtered out based on potential firmware mismatch
       const RobotInterface::RobotToEngineTag msgType = static_cast<RobotInterface::RobotToEngineTag>(nextData.data()[0]);
-      if (_robotManager->ShouldFilterMessage(robotId, msgType)) {
+      if (_robotManager->ShouldFilterMessage(msgType)) {
         continue;
       }
 
@@ -128,7 +128,7 @@ Result MessageHandler::SendMessage(const RobotID_t robotId, const RobotInterface
     return RESULT_FAIL;
   }
   
-  if (_robotManager->ShouldFilterMessage(robotId, msg.GetTag()))
+  if (_robotManager->ShouldFilterMessage(msg.GetTag()))
   {
     return RESULT_FAIL;
   }
@@ -194,16 +194,6 @@ const Util::Stats::StatsAccumulator& MessageHandler::GetQueuedTimes_ms() const
   return _robotConnectionManager->GetQueuedTimes_ms();
 }
 
-void MessageHandler::ReadLabAssignmentsFromRobot(u32 serialNumber) const
-{
-  _robotManager->ReadLabAssignmentsFromRobot(serialNumber);
-}
-
-void MessageHandler::ConnectRobotToNeedsManager(u32 serialNumber) const
-{
-  _robotManager->ConnectRobotToNeedsManager(serialNumber);
-}
-  
 template<>
 void MessageHandler::HandleMessage(const ExternalInterface::ExitSdkMode& msg)
 {

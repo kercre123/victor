@@ -140,9 +140,6 @@ private:
                                                             EDirection firstEDirection,
                                                             EDirection lastEDirection);
   
-  // returns true if the given contentType is contained within the set of types defined in the packedTypes
-  static bool IsInEContentTypePackedType(EContentType contentType, EContentTypePackedType contentPackedTypes);
-
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Modification
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

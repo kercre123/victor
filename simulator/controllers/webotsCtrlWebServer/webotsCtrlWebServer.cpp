@@ -6,14 +6,12 @@
  * Modifications: 
  */
 
-#include "cozmoWebServer.h"
-
 #include "../shared/ctrlCommonInitialization.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/jsonTools.h"
 
-//#include "osState/osState.h"
+#include "osState/osState.h"
 
 #include "json/json.h"
 
@@ -24,6 +22,8 @@
 #include "util/logging/printfLoggerProvider.h"
 #include "util/logging/logging.h"
 #include "util/logging/multiFormattedLoggerProvider.h"
+
+#include "webService.h"
 
 #include <fstream>
 
@@ -57,7 +57,7 @@ int main(int argc, char **argv)
   Util::Data::DataPlatform dataPlatform = WebotsCtrlShared::CreateDataPlatformBS(argv[0], "webotsCtrlWebServer");
   
   // Set Webots supervisor
-  //OSState::SetSupervisor(&webserverSupervisor);
+  OSState::SetSupervisor(&webserverSupervisor);
 
   // - create and set logger
   Util::IFormattedLoggerProvider* printfLoggerProvider = new Util::PrintfLoggerProvider(Anki::Util::ILoggerProvider::LOG_LEVEL_WARN,
@@ -106,24 +106,27 @@ int main(int argc, char **argv)
   // Set up the console vars to load from file, if it exists
   ANKI_CONSOLE_SYSTEM_INIT("consoleVars.ini");
   NativeAnkiUtilConsoleLoadVars();
-  
-  // Initialize the API
-  CozmoWebServerEngine cozmoWebServer(&dataPlatform);
-  cozmoWebServer.Init();
 
-  LOG_INFO("webotsCtrlWebServer.main", "cozmoWebServer created and initialized.");
+  // Create the standalone web server
+  Json::Value wsConfig;
+  static const std::string & wsConfigPath = "webserver/webServerConfig_robot.json";
+  const bool success = dataPlatform.readAsJson(Util::Data::Scope::Resources, wsConfigPath, wsConfig);
+  if (!success)
+  {
+    LOG_ERROR("webotsCtrlWebServer.main.WebServerConfigNotFound",
+              "Web server config file %s not found or failed to parse",
+              wsConfigPath.c_str());
+  }
+  WebService::WebService cozmoWebServer;
+  cozmoWebServer.Start(&dataPlatform, wsConfig);
+  LOG_INFO("webotsCtrlWebServer.main", "cozmoWebServer created and initialized");
 
   //
   // Main Execution loop: step the world forward forever
   //
-  auto tick_start = std::chrono::system_clock::now();
   while (webserverSupervisor.step(WEB_SERVER_TIME_STEP_MS) != -1)
   {
-    double currTimeNanoseconds = Util::SecToNanoSec(webserverSupervisor.getTime());
-    cozmoWebServer.Update(Util::numeric_cast<BaseStationTime_t>(currTimeNanoseconds));
-    
-    tick_start = std::chrono::system_clock::now();
-    
+    cozmoWebServer.Update();
   }
 
   Util::gLoggerProvider = nullptr;

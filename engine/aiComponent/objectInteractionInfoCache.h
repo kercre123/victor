@@ -50,10 +50,6 @@ enum class ObjectInteractionIntention {
   
   PopAWheelieOnObject,
   
-  PyramidBaseObject,
-  PyramidStaticObject,
-  PyramidTopObject,
-  
   Count
 };
   
@@ -117,9 +113,6 @@ private:
   bool CanUseForPopAWheelie(const ObservableObject* object) const;
   bool CanRollObjectDelegateNoAxisCheck(const ObservableObject* object) const;
   bool CanRollObjectDelegateAxisCheck(const ObservableObject* object) const;
-  bool CanUseAsBuildPyramidBaseBlock(const ObservableObject* object) const;
-  bool CanUseAsBuildPyramidStaticBlock(const ObservableObject* object);
-  bool CanUseAsBuildPyramidTopBlock(const ObservableObject* object);
   
   // Functions which return the "best" object to use given a set of valid objects
   ObjectID DefaultBestObjectFunction(const std::set<ObjectID>& validObjects);

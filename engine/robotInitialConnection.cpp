@@ -10,9 +10,13 @@
  *
  **/
 
+#include "engine/cozmoContext.h"
 #include "engine/robotInitialConnection.h"
+#include "engine/robotManager.h"
 #include "engine/externalInterface/externalInterface.h"
+#include "engine/needsSystem/needsManager.h"
 #include "engine/robotInterface/messageHandler.h"
+#include "engine/utils/cozmoExperiments.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "util/console/consoleInterface.h"
@@ -40,12 +44,12 @@ using namespace ExternalInterface;
 using namespace RobotInterface;
 using namespace RobotInitialConnectionConsoleVars;
   
-RobotInitialConnection::RobotInitialConnection(RobotID_t id, MessageHandler* messageHandler,
-    IExternalInterface* externalInterface)
+RobotInitialConnection::RobotInitialConnection(RobotID_t id, const CozmoContext* context)
 : _id(id)
 , _notified(false)
-, _externalInterface(externalInterface)
-, _robotMessageHandler(messageHandler)
+, _externalInterface(context != nullptr ? context->GetExternalInterface() : nullptr)
+, _context(context)
+, _robotMessageHandler(context != nullptr ? context->GetRobotManager()->GetMsgHandler() : nullptr)
 , _validFirmware(false) // guilty until proven innocent
 , _robotIsAvailable(false)
 {
@@ -183,9 +187,9 @@ void RobotInitialConnection::OnNotified(RobotConnectionResult result, uint32_t r
       
       SendConnectionResponse(result, robotFwVersion);
 
-      _robotMessageHandler->ReadLabAssignmentsFromRobot(_serialNumber);
+      _context->GetExperiments()->ReadLabAssignmentsFromRobot(_serialNumber);
       
-      _robotMessageHandler->ConnectRobotToNeedsManager(_serialNumber);
+      _context->GetNeedsManager()->InitAfterSerialNumberAcquired(_serialNumber);
     }));
     
     _robotMessageHandler->SendMessage(_id, RobotInterface::EngineToRobot{RobotInterface::GetManufacturingInfo{}});

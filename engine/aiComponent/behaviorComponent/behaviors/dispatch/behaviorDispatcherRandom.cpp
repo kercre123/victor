@@ -136,7 +136,9 @@ ICozmoBehaviorPtr BehaviorDispatcherRandom::GetDesiredBehavior()
 void BehaviorDispatcherRandom::DispatcherUpdate()
 {
   if( _shouldEndAfterBehavior &&
-      ! IsControlDelegated() ) {
+      ! IsControlDelegated() &&
+      IsActivated() )
+  {
     CancelSelf();
   }
 }

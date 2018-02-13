@@ -22,6 +22,7 @@ namespace Anki {
 namespace Cozmo {
   
 class IBEICondition;
+class TriggerAnimationAction;
   
 class BehaviorDevPettingTestSimple : public ICozmoBehavior
 {
@@ -46,32 +47,67 @@ protected:
   virtual void OnBehaviorDeactivated() override;
   
   virtual void BehaviorUpdate() override;
+  
+  virtual void AlwaysHandleInScope(const EngineToGameEvent& event) override;
 
+  void AudioStateMachine(int ticksVolumeIncFreq, int volumeLevelInc) const;
+  
+  void CancelAndPlayAction(TriggerAnimationAction* action, bool doCancelSelf = false);
+  
 private:
+
+  // - - - - - - - - - - - - - -
+  // constants
+  std::vector<AnimationTrigger> _animTrigPetting;
+  AnimationTrigger _animTrigPettingGetin;
+  AnimationTrigger _animTrigPettingGetout;
   
-  // helper struct to organize the mapping between
-  // touch-gesture and the animation metadata
-  struct TouchGestureAnimationConfig
-  {
-    IBEIConditionPtr strategy;
-    std::string animationName;
-    float animationRate_s;
-    float timeLastPlayed_s;
-    
-    TouchGestureAnimationConfig(IBEIConditionPtr sp,
-                                std::string animationName,
-                                float animationRate_s,
-                                float timeLastPlayed_s)
-    : strategy(sp)
-    , animationName(animationName)
-    , animationRate_s(animationRate_s)
-    , timeLastPlayed_s(timeLastPlayed_s)
-    {
-    }
-    
-  };
+  // duration of time to wait before checking
+  // for state transition conditions for bliss
+  // levels (i.e. num pets rcvd OR any active touch)
+  float _timeTilTouchCheck;
   
-  std::vector<TouchGestureAnimationConfig> _tgAnimConfigs;
+  // the timeout for the max bliss state when
+  // not receiving any touch input
+  float _blissTimeout;
+  
+  // the timeout for any non-bliss state when
+  // not receiving any touch input
+  float _nonBlissTimeout;
+  
+  // mininum number of consecutive pets before
+  // unlocking the opportunity to advance the
+  // bliss level
+  int _minNumPetsToAdvanceBliss;
+  
+  // internal setting to prevent certain tracks
+  // in the animation reactions from playing
+  u8 _tracksToLock;
+  
+  // - - - - - - - - - - - - -
+  // mutable attributes
+  
+  float _checkForTimeoutTimeBliss;
+  
+  float _checkForTimeoutTimeNonbliss;
+  
+  // touch event bookmarked time (used to determine
+  // when it is possible to start checking the
+  // state transition conditions for the bliss state
+  // machine)
+  float _checkForTransitionTime;
+  
+  u32 _currBlissLevel;
+  
+  u32 _numPressesAtCurrentBlissLevel;
+  
+  u32 _numTicksPressed;
+  
+  bool _isPressed;
+  
+  bool _reachedBliss;
+  
+  bool _isPressedPrevTick;
 };
 
 }

@@ -29,7 +29,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/aiComponent/continuityComponent.h"
-#include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionCloudIntentPending.h"
 #include "engine/components/carryingComponent.h"
@@ -44,7 +43,6 @@
 #include "engine/moodSystem/moodManager.h"
 #include "engine/needsSystem/needsManager.h"
 #include "engine/robotInterface/messageHandler.h"
-#include "engine/robotManager.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -65,7 +63,6 @@ static const char* kBehaviorIDConfigKey              = "behaviorID";
 static const char* kNeedsActionIDKey                 = "needsActionID";
 
 static const char* kRequiredUnlockKey                = "requiredUnlockId";
-static const char* kRequiredSevereNeedsStateKey      = "requiredSevereNeedsState";
 static const char* kRequiredDriveOffChargerKey       = "requiredRecentDriveOffCharger_sec";
 static const char* kRequiredParentSwitchKey          = "requiredRecentSwitchToParent_sec";
 static const char* kExecutableBehaviorTypeKey        = "executableBehaviorType";
@@ -186,7 +183,6 @@ ICozmoBehavior::ICozmoBehavior(const Json::Value& config)
 , _executableType(BehaviorTypesWrapper::GetDefaultExecutableBehaviorType())
 , _respondToCloudIntent(CloudIntent::Count)
 , _requiredUnlockId( UnlockId::Count )
-, _requiredSevereNeed( NeedId::Count )
 , _requiredRecentDriveOffCharger_sec(-1.0f)
 , _requiredRecentSwitchToParent_sec(-1.0f)
 , _isActivated(false)
@@ -220,21 +216,6 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
       PRINT_NAMED_ERROR("ICozmoBehavior.ReadFromJson.InvalidUnlockId", "Could not convert string to unlock id '%s'",
         requiredUnlockJson.asString().c_str());
     }
-  }
-
-  // - - - - - - - - - - - - - -
-  // Required severe needs state
-  // - - - - - - - - - - - - - -
-  const Json::Value& requiredSevereNeedJson = config[kRequiredSevereNeedsStateKey];
-  if( !requiredSevereNeedJson.isNull() ) {
-    DEV_ASSERT(requiredSevereNeedJson.isString(), "ICozmoBehavior.ReadFromJson.NonStringRequiredNeedsState");
-
-    _requiredSevereNeed = NeedIdFromString(requiredSevereNeedJson.asString());
-    ANKI_VERIFY(_requiredSevereNeed != NeedId::Count,
-                "ICozmoBehavior.ReadFromJson.ConfigError.InvalidRequiredSevereNeed",
-                "%s: Required severe need '%s' converted to Count. This field is optional",
-                GetDebugLabel().c_str(),
-                requiredSevereNeedJson.asCString());
   }
   
   // - - - - - - - - - -
@@ -623,13 +604,6 @@ bool ICozmoBehavior::WantsToBeActivatedBase() const
         GetDebugLabel().c_str());
       return false;
     }
-  }
-
-  // check if a severe needs state is required
-  if( _requiredSevereNeed != NeedId::Count &&
-      _requiredSevereNeed != GetBEI().GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression() ) {
-    // not in the correct state
-    return false;
   }
 
   const float curTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();

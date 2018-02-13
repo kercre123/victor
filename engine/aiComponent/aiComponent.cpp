@@ -18,15 +18,12 @@
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/continuityComponent.h"
-#include "engine/aiComponent/doATrickSelector.h"
 #include "engine/aiComponent/faceSelectionComponent.h"
-#include "engine/aiComponent/feedingSoundEffectManager.h"
 #include "engine/aiComponent/freeplayDataTracker.h"
 #include "engine/aiComponent/objectInteractionInfoCache.h"
 #include "engine/aiComponent/puzzleComponent.h"
-#include "engine/aiComponent/requestGameComponent.h"
-#include "engine/aiComponent/severeNeedsComponent.h"
-#include "engine/aiComponent/workoutComponent.h"
+#include "engine/aiComponent/templatedImageCache.h"
+#include "engine/aiComponent/timerUtility.h"
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/publicStateBroadcaster.h"
 #include "engine/components/progressionUnlockComponent.h"
@@ -55,32 +52,26 @@ namespace ComponentWrappers{
 AIComponentComponents::AIComponentComponents(Robot&                      robot,
                                              BehaviorComponent*&         behaviorComponent,
                                              ContinuityComponent*        continuityComponent,
-                                             DoATrickSelector*           doATrickSelector,
                                              FaceSelectionComponent*     faceSelectionComponent,
-                                             FeedingSoundEffectManager*  feedingSoundEFfectManager,
                                              FreeplayDataTracker*        freeplayDataTracker,
                                              AIInformationAnalyzer*      infoAnalyzer,
                                              ObjectInteractionInfoCache* objectInteractionInfoCache,
                                              PuzzleComponent*            puzzleComponent,
-                                             RequestGameComponent*       requestGameComponent,
-                                             SevereNeedsComponent*       severeNeedsComponent,
-                                             AIWhiteboard*               aiWhiteboard,
-                                             WorkoutComponent*           workoutComponent)
+                                             TemplatedImageCache*        templatedImageCache,
+                                             TimerUtility*               timerUtility,
+                                             AIWhiteboard*               aiWhiteboard)
 :_robot(robot)
 ,_components({
   {AIComponentID::BehaviorComponent,          ComponentWrapper(behaviorComponent, true)},
   {AIComponentID::ContinuityComponent,        ComponentWrapper(continuityComponent, true)},
-  {AIComponentID::DoATrick,                   ComponentWrapper(doATrickSelector, true)},
   {AIComponentID::FaceSelection,              ComponentWrapper(faceSelectionComponent, true)},
-  {AIComponentID::FeedingSoundEffect,         ComponentWrapper(feedingSoundEFfectManager, true)},
   {AIComponentID::FreeplayDataTracker,        ComponentWrapper(freeplayDataTracker, true)},
   {AIComponentID::InformationAnalyzer,        ComponentWrapper(infoAnalyzer, true)},
   {AIComponentID::ObjectInteractionInfoCache, ComponentWrapper(objectInteractionInfoCache, true)},
   {AIComponentID::Puzzle,                     ComponentWrapper(puzzleComponent, true)},
-  {AIComponentID::RequestGame,                ComponentWrapper(requestGameComponent, true)},
-  {AIComponentID::SevereNeeds,                ComponentWrapper(severeNeedsComponent, true)},
-  {AIComponentID::Whiteboard,                 ComponentWrapper(aiWhiteboard, true)},
-  {AIComponentID::Workout,                    ComponentWrapper(workoutComponent, true)}
+  {AIComponentID::TemplatedImageCache,        ComponentWrapper(templatedImageCache, true)},
+  {AIComponentID::TimerUtility,               ComponentWrapper(timerUtility, true)},
+  {AIComponentID::Whiteboard,                 ComponentWrapper(aiWhiteboard, true)}
 }){}
 
 AIComponentComponents::~AIComponentComponents()
@@ -130,18 +121,14 @@ Result AIComponent::Init(Robot* robot, BehaviorComponent*& customBehaviorCompone
           *robot,
           behaviorComponent,
           new ContinuityComponent(*robot),
-          new DoATrickSelector(robot->GetContext()->GetDataLoader()->GetDoATrickWeightsConfig()),
           new FaceSelectionComponent(*robot, robot->GetFaceWorld(), robot->GetMicDirectionHistory()),
-          new FeedingSoundEffectManager(),
           new FreeplayDataTracker(),
           new AIInformationAnalyzer(),
           new ObjectInteractionInfoCache(*robot),
           new PuzzleComponent(*robot),
-          new RequestGameComponent(robot->HasExternalInterface() ? robot->GetExternalInterface() : nullptr,
-                                  robot->GetContext()->GetDataLoader()->GetGameRequestWeightsConfig()),
-          new SevereNeedsComponent(*robot),
-          new AIWhiteboard(*robot),
-          new WorkoutComponent(*robot)
+          new TemplatedImageCache(robot->GetContext()->GetDataLoader()->GetFacePNGPaths()),
+          new TimerUtility(),
+          new AIWhiteboard(*robot)
     );
 
     if(behaviorCompInitRequired){
@@ -166,30 +153,9 @@ Result AIComponent::Init(Robot* robot, BehaviorComponent*& customBehaviorCompone
   auto& whiteBoard = GetComponent<AIWhiteboard>(AIComponentID::Whiteboard);
   whiteBoard.Init();
   
-  auto& severeNeedsComp = GetComponent<SevereNeedsComponent>(AIComponentID::SevereNeeds);
-  severeNeedsComp.Init();
-  
   RobotDataLoader* dataLoader = nullptr;
   if(context){
     dataLoader = robot->GetContext()->GetDataLoader();
-  }
-  
-
-  // initialize workout component
-  if(dataLoader != nullptr){
-    auto& puzzleComponent = GetComponent<PuzzleComponent>(AIComponentID::Puzzle);
-
-    puzzleComponent.InitConfigs();
-    
-    auto& workoutComp = GetComponent<WorkoutComponent>(AIComponentID::Workout);
-    const Json::Value& workoutConfig = dataLoader->GetRobotWorkoutConfig();
-
-    const Result res = workoutComp.InitConfiguration(workoutConfig);
-    if( res != RESULT_OK ) {
-      PRINT_NAMED_ERROR("AIComponent.Init.FailedToInitWorkoutComponent",
-                        "Couldn't init workout component, deleting");
-      return res;      
-    }
   }
   
   return RESULT_OK;
@@ -209,11 +175,6 @@ Result AIComponent::Update(Robot& robot, std::string& currentActivityName,
   {
     auto& whiteboard = GetComponent<AIWhiteboard>(AIComponentID::Whiteboard);
     whiteboard.Update();
-  }
-
-  {
-    auto& severeNeedsComp = GetComponent<SevereNeedsComponent>(AIComponentID::SevereNeeds);
-    severeNeedsComp.Update();
   }
   
   // Update continuity component before behavior component to ensure behaviors don't

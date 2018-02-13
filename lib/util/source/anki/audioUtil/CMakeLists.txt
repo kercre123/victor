@@ -1,5 +1,7 @@
 project(libankiutil LANGUAGES CXX)
 
+include(android_strip)
+
 set(AUDIO_UTIL_SRC
   audioRecognizerProcessor.cpp
   audioRecognizerProcessor.h
@@ -52,6 +54,8 @@ PRIVATE
 target_link_libraries(util_audio
   util
   ${PLATFORM_LIBS})
+
+android_strip(TARGET util_audio)
 
 #export(TARGETS ankiutil FILE ankiutil-config.cmake)
 

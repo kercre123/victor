@@ -15,6 +15,7 @@
 
 #include "coretech/common/shared/types.h"
 #include "coretech/common/engine/math/point.h"
+#include "coretech/vision/engine/image.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "clad/types/proceduralFaceTypes.h"
 #include "util/logging/logging.h"
@@ -119,6 +120,13 @@ public:
   // Set the global hue of all faces
   static void  SetHue(Value hue); 
   static Value GetHue();
+  
+  // Get an image filled with the current hue value
+  static Vision::Image& GetHueImage();
+  
+  // Get an image filled with a saturation value suitable for
+  // creating an HSV face image
+  static Vision::Image& GetSaturationImage();
 
   // Initialize scanline distortion
   void InitScanlineDistorter(s32 maxAmount_pix, f32 noiseProb);
@@ -268,12 +276,24 @@ inline void ProceduralFace::SetHue(Value hue) {
     ClipWarnFcn("Hue", _hue, Value(0), Value(1));
     _hue = Util::Clamp(_hue, Value(0), Value(1));
   }
+  // Update the hue image (used for displaying FaceAnimations):
+  GetHueImage().FillWith(static_cast<u8>(_hue * std::numeric_limits<u8>::max()));
 }
 
 inline ProceduralFace::Value ProceduralFace::GetHue() {
   return _hue;
 }
+  
+inline Vision::Image& ProceduralFace::GetHueImage() {
+  static Vision::Image hueImage(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH, static_cast<u8>(_hue * std::numeric_limits<u8>::max()));
+  return hueImage;
+}
 
+inline Vision::Image& ProceduralFace::GetSaturationImage() {
+  static Vision::Image satImage(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH, std::numeric_limits<u8>::max());
+  return satImage;
+}
+  
 } // namespace Cozmo
 } // namespace Anki
 

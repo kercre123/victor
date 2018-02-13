@@ -145,7 +145,7 @@ Connect cable to robot. Run `adb devices` to verify that only one device is avai
 
 ### Connecting over Wifi
 
-Connect your computer to the `AnkiTest2` access point (ask around for the password). If you don't know the IP address of your robot, connect to the robot with USB and run
+If you don't know the IP address of your robot, connect to the robot with USB and run
 
 ```
 adb shell ifconfig
@@ -168,7 +168,7 @@ Run `victor_deploy` and `victor_assets` to deploy the binaries and asset files t
 If you want to deploy the release build, run
 
 ```
-ANKI_BUILD_TYPES=Release ./project/victor/scripts/deploy.sh
+ANKI_BUILD_TYPE=Release ./project/victor/scripts/deploy.sh
 ```
 
 ## Running Victor

@@ -24,6 +24,7 @@
 #include "coretech/common/engine/math/point.h"
 #include "coretech/common/engine/math/triangle.h"
 #include "coretech/common/engine/math/lineSegment2d.h"
+#include "coretech/common/engine/math/fastPolygon2d.h"
 
 #include "util/helpers/noncopyable.h"
 
@@ -46,6 +47,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   using NodeCPtrVector = std::vector<const QuadTreeNode*>;  
+  using NodeContent    = QuadTreeTypes::NodeContent;
   
   // type of overlap for two sets
   enum class ESetOverlap { Disjoint, Intersecting, SupersetOf, SubsetOf};
@@ -57,7 +59,7 @@ public:
   // Crete node
   // it will allow subdivision as long as level is greater than 0
   QuadTreeNode(const Point3f &center, float sideLength, uint8_t level, EQuadrant quadrant,
-                      QuadTreeNode* parent, MemoryMapData& data);
+                      QuadTreeNode* parent, MemoryMapDataPtr data);
   
   // Note: Destructor should call processor.OnNodeDestroyed for any processor the node has been registered to.
   // However, by design, we don't do this (no need to store processor pointers, etc). We can do it because of the
@@ -106,7 +108,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // store data in the tree bounded by the provided polygon
-  bool Insert(const FastPolygon& poly, const MemoryMapData& data, QuadTreeProcessor& processor);
+  bool Insert(const FastPolygon& poly, const MemoryMapDataPtr data, QuadTreeProcessor& processor);
 
   
   // attempt to apply a transformation function to the node, returns true of content changes

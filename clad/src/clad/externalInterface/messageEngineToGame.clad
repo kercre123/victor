@@ -288,6 +288,14 @@ message RobotObservedPossibleObject {
     RobotObservedObject possibleObject
 }
 
+// RobotObservedGenericObject - for detecting general objects (not Cozmo accessories with markers on them)
+message RobotObservedGenericObject {
+    CladRect      img_rect,       // Position in the image, if available
+    string        name,
+    uint_32       timestamp,
+    float_32      score
+}
+
 // RobotObservedFace
 message RobotObservedFace {
     int_32        faceID,         // negative: tracked but not recognized; positive: recognized face

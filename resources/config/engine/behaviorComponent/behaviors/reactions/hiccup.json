@@ -1,7 +1,0 @@
-{
-  "behaviorClass": "PlayAnim",
-  "behaviorID": "Hiccup",
-  "displayNameKey":"behavior.Hiccup",
-  
-  "animTriggers": ["Hiccup"]
-}

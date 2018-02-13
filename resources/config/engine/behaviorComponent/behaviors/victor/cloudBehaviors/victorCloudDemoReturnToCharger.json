@@ -1,6 +1,0 @@
-{
-  "behaviorClass": "PlayAnim",
-  "behaviorID": "VictorCloudDemoReturnToCharger",
-  "respondToCloudIntent": "ReturnToCharger",
-  "animTriggers": ["VC_Refuse_repair"]  
-}

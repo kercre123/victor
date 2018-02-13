@@ -55,17 +55,17 @@ namespace { // "Private members"
 
   //encoder counts -> mm or deg
   static f32 HAL_MOTOR_POSITION_SCALE[MOTOR_COUNT] = {
-    ((0.948 * 0.25 * 29.2 * 3.14159265359) / 173.43), //Left Tread mm
-    ((-1.0 * 0.948 * 0.25 * 29.2 * 3.14159265359) / 173.43), //Right Tread mm
-    (0.25 * 3.14159265359) / 149.7,    //Lift radians
-    (0.25 * 3.14159265359) / 348.77,   //Head radians
+    ((       0.96 * 29.0 * 0.25 * 3.14159265359) / 172.3), //Left Tread mm (Magic 96% corrective fudge factor, 29mm wheel diameter)
+    ((-1.0 * 0.96 * 29.0 * 0.25 * 3.14159265359) / 172.3), //Right Tread mm
+    (0.25 * 3.14159265359) / 149.7,     //Lift radians
+    (0.25 * 3.14159265359) / 366.211,   //Head radians
   };
 
   static f32 HAL_MOTOR_DIRECTION[MOTOR_COUNT] = {
     1.0, -1.0, 1.0, 1.0
   };
 
-  static f32 HAL_HEAD_MOTOR_CALIB_POWER = -0.6f;
+  static f32 HAL_HEAD_MOTOR_CALIB_POWER = -0.3f;
 
   static f32 HAL_LIFT_MOTOR_CALIB_POWER = -0.4f;
 

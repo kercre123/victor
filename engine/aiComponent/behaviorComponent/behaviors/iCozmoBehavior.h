@@ -33,6 +33,7 @@
 #include "clad/types/needsSystemTypes.h"
 #include "clad/types/needsSystemTypes.h"
 #include "clad/types/unlockTypes.h"
+#include "util/console/consoleVariable.h"
 #include "util/logging/logging.h"
 
 //Transforms enum into string
@@ -188,9 +189,6 @@ public:
   
   // returns the required unlockID for the behavior
   const UnlockId GetRequiredUnlockID() const {  return _requiredUnlockId;}
-
-  // returns the need id of the severe need state that must be expressed (see AIWhiteboard), or Count if none
-  NeedId GetRequiredSevereNeedExpression() const { return _requiredSevereNeed; }
   
   // Get the ObjectUseIntentions this behavior uses
   virtual std::set<ObjectInteractionIntention>
@@ -441,6 +439,15 @@ protected:
   
   bool ShouldStreamline() const { return (_alwaysStreamline); }
   
+  // make a member variable a console var that is only around as long as its class instance is
+  #if ANKI_DEV_CHEATS
+    template <typename T>
+    void MakeMemberTunable(T& param, const std::string& name);
+  #else // no op
+    template <typename T>
+    void MakeMemberTunable(T& param, const std::string& name) {  }
+  #endif
+  
 private:
   
   NeedsActionId ExtractNeedsActionIDFromConfig(const Json::Value& config);
@@ -483,9 +490,6 @@ private:
 
   // if an unlockId is set, the behavior won't be activatable unless the unlockId is unlocked in the progression component
   UnlockId _requiredUnlockId;
-
-  // required severe needs expression to run this activity
-  NeedId _requiredSevereNeed;
   
   // if _requiredRecentDriveOffCharger_sec is greater than 0, this behavior is only activatable if last time the robot got off the charger by
   // itself was less than this time ago. Eg, a value of 1 means if we got off the charger less than 1 second ago
@@ -547,6 +551,11 @@ private:
   // anonymous behavior factory
   Json::Value _anonymousBehaviorMapConfig;  
   std::map<std::string,ICozmoBehaviorPtr> _anonymousBehaviorMap;
+  
+  // list of member vars in this behavior that have been marked as tunable. upon class
+  // desctruction, each console var will be unregistered.
+  std::vector< std::unique_ptr<Anki::Util::IConsoleVariable> > _tunableParams;
+  
 }; // class ICozmoBehavior
 
   
@@ -620,6 +629,27 @@ bool ICozmoBehavior::FindAnonymousBehaviorByNameAndDowncast(const std::string& b
   
   return false;
 }
+  
+#if ANKI_DEV_CHEATS
+template <typename T>
+void ICozmoBehavior::MakeMemberTunable(T& param, const std::string& name)
+{
+  const std::string uniqueName = GetDebugLabel() + "_" + name;
+  const bool unregisterOnDestruction = true;
+  const char* category = "BehaviorInstanceParams";
+  // ensure this param isnt already registered
+  for( const auto& var : _tunableParams ) {
+    if( !ANKI_VERIFY( var->GetID() != uniqueName,
+                      "ICozmoBehavior.MakeMemberTunable.AlreadyExists",
+                      "Per-instance console var '%s' already exists",
+                      uniqueName.c_str() ) )
+    {
+      return;
+    }
+  }
+  _tunableParams.emplace_back( new Util::ConsoleVar<T>( param, uniqueName.c_str(), category, unregisterOnDestruction ) );
+}
+#endif
 
 } // namespace Cozmo
 } // namespace Anki

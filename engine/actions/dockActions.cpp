@@ -17,10 +17,7 @@
 #include "engine/actions/driveToActions.h"
 #include "engine/actions/visuallyVerifyActions.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/ankiEventUtil.h"
-#include "engine/blockWorld/blockConfigurationManager.h"
-#include "engine/blockWorld/blockConfigurationStack.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/charger.h"
 #include "engine/components/carryingComponent.h"
@@ -837,7 +834,7 @@ namespace Anki {
     
     bool IDockAction::ShouldApplyDockingSquint()
     {
-      return !(NeedId::Energy == GetRobot().GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression());
+      return true;
     }
 
     
@@ -1011,25 +1008,6 @@ namespace Anki {
       // TODO: Stop using constant ROBOT_BOUNDING_Z for this
       if (dockObjectHeightWrtRobot > 0.5f*ROBOT_BOUNDING_Z) { //  dockObject->GetSize().z()) {
         PRINT_CH_INFO("Actions", "FacePlantAction.SelectDockAction.ObjectTooHigh", "");
-        return ActionResult::BAD_OBJECT;
-      }
-      
-      // Check that this block is at the bottom of a 3-block stack
-      // TODO: This logic only works because there can only ever be one stack with three blocks,
-      //       but it should be made more generic.
-      auto blockStackPtr = GetRobot().GetBlockWorld().GetBlockConfigurationManager().GetStackCache().GetTallestStack();
-      if (auto blockStack = blockStackPtr.lock()) {
-        if (blockStack->GetStackHeight() < 3) {
-          PRINT_CH_INFO("Actions", "FacePlantAction.SelectDockAction.ObjectStackNotBigEnough", "");
-          return ActionResult::BAD_OBJECT;
-        }
-        
-        if (blockStack->GetBottomBlockID() != object->GetID() ) {
-          PRINT_CH_INFO("Actions", "FacePlantAction.SelectDockAction.ObjectNotAtBottomOfStack", "");
-          return ActionResult::BAD_OBJECT;
-        }
-      } else {
-        PRINT_CH_INFO("Actions", "FacePlantAction.SelectDockAction.NoStackFound", "");
         return ActionResult::BAD_OBJECT;
       }
     

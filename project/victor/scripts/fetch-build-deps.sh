@@ -34,7 +34,6 @@ vlog "Check homebrew dependencies"
     ninja \
     python3 \
     libsndfile \
-    go \
     graphviz \
     node \
     --pip2 graphviz \
@@ -48,6 +47,9 @@ vlog "Android NDK"
 
 vlog "CMake"
 ./tools/build/tools/ankibuild/cmake.py
+
+vlog "Go"
+./tools/build/tools/ankibuild/go.py
 
 vlog "Build output dirs"
 mkdir -p generated

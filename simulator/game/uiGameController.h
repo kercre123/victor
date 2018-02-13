@@ -279,7 +279,8 @@ protected:
   void SendLogCliffDataRequest(const u32 length_ms);
   void SendLogProxDataRequest(const u32 length_ms);
   void SendAnimation(const char* animName, u32 numLoops, bool throttleMessages = false);
-  void SendAnimationGroup(const char* animName, bool throttleMessages = false);
+  void SendAnimationGroup(const char* animGroupName, u32 numLoops, bool throttleMessages = false);
+  void SendAnimationTrigger(const char* animTriggerName, u32 numLoops, bool throttleMessages = false);
   void SendReadAnimationFile();
   void SendEnableVisionMode(VisionMode mode, bool enable);
   void SendSetIdleAnimation(const std::string &animName);

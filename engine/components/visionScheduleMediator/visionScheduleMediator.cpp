@@ -57,7 +57,29 @@ void VisionScheduleMediator::InitDependent(Cozmo::Robot* robot, const RobotCompM
     _modeDataMap.insert(std::pair<VisionMode, VisionModeData>(visionMode, newModeData));
   }
 
+  // Set up baseline subscriptions to manage VisionMode defaults via the VSM
+  std::set<VisionModeRequest> baselineSubscriptions;
+  GetInternalSubscriptions(baselineSubscriptions);
+  SetVisionModeSubscriptions(this, baselineSubscriptions);
+
   return;
+}
+
+void VisionScheduleMediator::Update()
+{
+  // Update the VisionSchedule, if necessary
+  if(subscriptionRecordIsDirty){
+    UpdateVisionSchedule();
+  }
+
+  // Update the visualization tools
+  if(ANKI_DEV_CHEATS){
+    // Send every 50 frames to update corner cases for the vizManager e.g. after init
+    if(framesSinceSendingDebugViz++ >= 50){
+      SendDebugVizMessages();
+      framesSinceSendingDebugViz = 0;
+    }
+  } 
 }
 
 void VisionScheduleMediator::SetVisionModeSubscriptions(IVisionModeSubscriber* const subscriber,
@@ -75,6 +97,12 @@ void VisionScheduleMediator::SetVisionModeSubscriptions(IVisionModeSubscriber* c
 void VisionScheduleMediator::SetVisionModeSubscriptions(IVisionModeSubscriber* const subscriber,
                                                         const std::set<VisionModeRequest>& requests)
 {
+  // Prevent subscriptions using nullptr
+  DEV_ASSERT(nullptr != subscriber, "VisionScheduleMediator.NullVisionModeSubscriber");
+  if(nullptr == subscriber){
+    return;
+  }
+
   // Remove any existing subscriptions from this subscriber
   for(auto& modeDataPair : _modeDataMap){
     if(modeDataPair.second.requestMap.erase(subscriber)){
@@ -98,18 +126,24 @@ void VisionScheduleMediator::SetVisionModeSubscriptions(IVisionModeSubscriber* c
     }
   }
 
-  UpdateVisionSchedule();
+  subscriptionRecordIsDirty = true;
 }
 
 void VisionScheduleMediator::ReleaseAllVisionModeSubscriptions(IVisionModeSubscriber* subscriber)
 {
+  // Prevent subscription releases using nullptr
+  DEV_ASSERT(nullptr != subscriber, "VisionScheduleMediator.NullVisionModeSubscriber");
+  if(nullptr == subscriber){
+    return;
+  }
+
   for(auto& modeDataPair : _modeDataMap){
     if(modeDataPair.second.requestMap.erase(subscriber)){
       modeDataPair.second.dirty = true;
     }
   }
 
-  UpdateVisionSchedule();
+  subscriptionRecordIsDirty = true;
 }
 
 void VisionScheduleMediator::UpdateVisionSchedule()
@@ -167,14 +201,18 @@ void VisionScheduleMediator::UpdateVisionSchedule()
   }
 
   if(scheduleDirty){
-    AllVisionModesSchedule schedule(allModeScheduleList, false);
+    const bool kUseDefaultsForUnspecified = true;
+    AllVisionModesSchedule schedule(allModeScheduleList, kUseDefaultsForUnspecified);
     _visionComponent->PopCurrentModeSchedule();
     _visionComponent->PushNextModeSchedule(std::move(schedule));
   }
 
-  if( ANKI_DEV_CHEATS && (scheduleDirty || activeModesDirty)){
+  // On any occasion where we made updates, update the debug viz
+  if(ANKI_DEV_CHEATS && (scheduleDirty || activeModesDirty)){
     SendDebugVizMessages();
   }
+
+  subscriptionRecordIsDirty = false;
 }
 
 bool VisionScheduleMediator::UpdateModePeriodIfNecessary(VisionModeData& modeData) const

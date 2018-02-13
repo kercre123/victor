@@ -102,9 +102,9 @@ set -e
 $ADB shell chmod 777 ${INSTALL_ROOT}
 $ADB shell "${DEVICE_RSYNC_BIN_DIR}/rsync.bin --daemon --config=${DEVICE_RSYNC_CONF_DIR}/rsyncd.conf &"
 
-rsync -rv --include="*.so" --exclude="*" ${BUILD_ROOT}/lib/ rsync://${DEVICE_IP_ADDRESS}/install_root/lib/
-rsync -rv --exclude="*.full" --exclude="axattr" ${BUILD_ROOT}/bin/ rsync://${DEVICE_IP_ADDRESS}/install_root/bin/
-rsync -rv ${TOPLEVEL}/project/victor/runtime/ rsync://${DEVICE_IP_ADDRESS}/install_root/
+rsync -Prv --include="*.so" --exclude="*" ${BUILD_ROOT}/lib/ rsync://${DEVICE_IP_ADDRESS}/install_root/lib/
+rsync -Prv --exclude="*.full" --exclude="axattr" ${BUILD_ROOT}/bin/ rsync://${DEVICE_IP_ADDRESS}/install_root/bin/
+rsync -Prv ${TOPLEVEL}/project/victor/runtime/ rsync://${DEVICE_IP_ADDRESS}/install_root/
 
 
 #
