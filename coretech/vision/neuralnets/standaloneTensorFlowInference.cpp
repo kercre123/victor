@@ -14,6 +14,7 @@
 #include "objectDetector_tensorflow.h"
 
 #include <atomic>
+#include <chrono>
 #include <fstream>
 #include <iostream>
 #include <signal.h>
@@ -23,6 +24,22 @@ std::atomic<bool> quit(false);
 void got_signal(int)
 {
   quit.store(true);
+}
+
+#define PRINT_TIMING 1
+
+using ClockType = std::chrono::high_resolution_clock;
+using TimePoint = std::chrono::time_point<ClockType>;
+
+inline TimePoint Tic() {
+  return ClockType::now();  
+}
+
+void Toc(TimePoint startTime, const std::string& name) {
+  if(PRINT_TIMING) {
+    const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(ClockType::now() - startTime);
+    std::cout << "StandaloneTensorFlow." << name << " took " << duration.count() << "ms" << std::endl;
+  }
 }
 
 int main(int argc, char **argv)
@@ -63,7 +80,9 @@ int main(int argc, char **argv)
 
   // Initialize the detector
   ObjectDetector detector;
+  auto startTime = Tic();
   Result initResult = detector.LoadModel(modelPath, config);
+  Toc(startTime, "LoadModel");
   if(RESULT_OK != initResult)
   {
     PRINT_NAMED_ERROR(argv[0], "Failed to load model from path: %s", modelPath.c_str());
@@ -85,11 +104,15 @@ int main(int argc, char **argv)
       }
 
       // Get the image
+      auto startTime = Tic();
       cv::Mat img = cv::imread(imageFilename);
+      Toc(startTime, "ImageRead");
 
       // Detect what's in it
+      startTime = Tic();
       std::list<ObjectDetector::DetectedObject> objects;
       Result result = detector.Detect(img, objects);
+      Toc(startTime, "Detect");
 
       Json::Value detectionResults;
       
@@ -112,6 +135,7 @@ int main(int argc, char **argv)
       }
 
       // Write out the Json
+      startTime = Tic();
       {
         const std::string jsonFilename = FullFilePath(cachePath, "objectDetectionResults.json");
         if(detector.IsVerbose())
@@ -129,6 +153,7 @@ int main(int argc, char **argv)
         writer.write(fs, detectionResults);
         fs.close();
       }
+      Toc(startTime, "WriteJSON");
 
       // Remove the image file we were working with
       if(detector.IsVerbose())
