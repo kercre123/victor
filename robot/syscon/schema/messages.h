@@ -74,6 +74,7 @@ typedef uint16_t PayloadId;
 
 // ENUM Ack
 enum {
+  ACK_UNUSED        = 0,
   ACK_PAYLOAD       = 1,
   ACK_BOOTED        = 2,
   ACK_APPLICATION   = 3,

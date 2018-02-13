@@ -59,10 +59,10 @@ void Contacts::forward(const ContactData& pkt) {
 
     if (!transmitting) {
       transmitting = true;
+      Analog::delayCharge();
       USART2->CR1 &= ~USART_CR1_RE;
       USART2->TDR = 0xFF;
       VEXT_TX::pull(PULL_UP);
-      Analog::delayCharge();
       USART2->CR1 |= USART_CR1_TXEIE;
     }
   }
