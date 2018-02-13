@@ -17,8 +17,9 @@
 
 // Forward declarations:
 namespace tensorflow {
-  class Tensor;
+  class MemmappedEnv;
   class Session;
+  class Tensor;
 }
 
 class ObjectDetector
@@ -77,9 +78,10 @@ private:
   std::vector<std::string>             _outputLayerNames;
   bool                                 _useFloatInput = false;
 
-  std::unique_ptr<tensorflow::Session> _session;
-  std::unique_ptr<tensorflow::Session> _imageReadSession;
-  std::vector<std::string>             _labels;
+  std::unique_ptr<tensorflow::Session>      _session;
+  std::unique_ptr<tensorflow::MemmappedEnv> _memmapped_env;
+  std::unique_ptr<tensorflow::Session>      _imageReadSession;
+  std::vector<std::string>                  _labels;
   
 }; // class ObjectDetector
 
