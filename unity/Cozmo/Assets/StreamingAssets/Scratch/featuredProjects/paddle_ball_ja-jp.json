@@ -13,7 +13,7 @@
                 "currentCostume": 0,
                 "direction": 90,
                 "draggable": false,
-                "id": "g+-AT1n9b*0cl#%sUELx",
+                "id": "{K_YKh!S^}kSHNZxk%6E",
                 "isStage": true,
                 "lists": {},
                 "name": "Stage",
@@ -3799,6 +3799,24 @@
                         "topLevel": false,
                         "x": 552.9411764705883,
                         "y": 5712.411764705882
+                    },
+                    "96`K3|I.N|J:J[5#R[5F": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "#8;LiTNtYf+1r,Bb_r[h",
+                                "name": "VARIABLE",
+                                "value": "true"
+                            }
+                        },
+                        "id": "96`K3|I.N|J:J[5#R[5F",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": "qnK}B|^IF3YCSb7kjnDo",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-1675",
+                        "y": "4622"
                     },
                     "9E1w(0dHhirxYJV[[RUz": {
                         "fields": {
@@ -10552,9 +10570,11 @@
                         "inputs": {},
                         "next": null,
                         "opcode": "text",
-                        "parent": "qnK}B|^IF3YCSb7kjnDo",
+                        "parent": null,
                         "shadow": true,
-                        "topLevel": false
+                        "topLevel": true,
+                        "x": -1356.9835405349731,
+                        "y": 4446
                     },
                     "f?n3HzY%ql~W,KsvTcX,": {
                         "fields": {
@@ -12561,7 +12581,7 @@
                                 "shadow": "LmGcIyi5HK7WR?j:Z{6f"
                             },
                             "OPERAND2": {
-                                "block": "f/]~18(FxT-[%Y_]G}%_",
+                                "block": "96`K3|I.N|J:J[5#R[5F",
                                 "name": "OPERAND2",
                                 "shadow": "f/]~18(FxT-[%Y_]G}%_"
                             }
@@ -15038,7 +15058,7 @@
                 "currentCostume": 0,
                 "direction": 90,
                 "draggable": false,
-                "id": "`xmh=rOc]]{3]j3yEPlU",
+                "id": "bG~0+I!FprtlUHqVP-UW",
                 "isStage": false,
                 "lists": {},
                 "name": "Sprite1",
