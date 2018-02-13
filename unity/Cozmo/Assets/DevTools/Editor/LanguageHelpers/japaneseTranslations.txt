@@ -975,7 +975,7 @@ COZMOが選んだもの
 キューブ[#]の[色]のライトを[回転/点滅]させる
 特定のキューブ[#]の角[1、2、3、4、または一度にすべて]を[色]に設定します。ライトをオフにするには黒を使用します。ヒント：キューブ1：はペーパークリップのように見えます。キューブ2：はランプかハートのように見えます。キューブ3：はベビーシートに座る赤ちゃんのように見えます。
 Broadcasts (sends) a message to trigger the "when [message#] received" block, and then waits for the blocks under the "when [message#] received" to fully execute before continuing on. Tip: For experienced coders, think of this like a function call in most programming languages.
-「円周率の日」のために集合！
+円周率の日のために集合！
 [X]、[Y]から[X2]、[Y2]に長方形を描画
 [メッセージ#]を発信
 #17の答え
@@ -1095,7 +1095,7 @@ COZMOの顔に表示されるテキストの位置を調整します。[上/中�
 おしゃべりしたい
 退屈
 イベント
-「聖パトリックの祝日」の究極の宝探し！
+聖パトリックの祝日の究極の宝探し！
 「{0}」を削除しますか？
 リフトを動かす
 #7：<span class='purple'>バックライト</span>をあなたの好きな色にして、それからその色の名前を<span class='purple'>言います</span>。
