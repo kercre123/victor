@@ -207,59 +207,6 @@ namespace Anki {
     {
       SetTracksToLock(TracksToLock(GetRobot(), GetTracksToLock()));
     }
-    
-    
-    TriggerCubeAnimationAction::TriggerCubeAnimationAction(const ObjectID& objectID,
-                                                           const CubeAnimationTrigger& trigger)
-    : IAction("TriggerCubeAnimation_" + std::string(EnumToString(trigger)),
-              RobotActionType::PLAY_CUBE_ANIMATION,
-              (u8)AnimTrackFlag::NO_TRACKS)
-    , _objectID(objectID)
-    , _trigger(trigger)
-    {
-    
-    }
-    
-    TriggerCubeAnimationAction::~TriggerCubeAnimationAction()
-    {
-      // If the action has started and the light animation has not ended stop the animation
-      if(HasStarted() && !_animEnded)
-      {
-        GetRobot().GetCubeLightComponent().StopLightAnimAndResumePrevious(_trigger);
-      }
-    }
-    
-    ActionResult TriggerCubeAnimationAction::Init()
-    {
-      // If the animation corresponding to the trigger has no duration we can't play it from an
-      // action because then the action would never complete
-      if(GetRobot().GetCubeLightComponent().GetAnimDuration(_trigger) == 0)
-      {
-        PRINT_NAMED_WARNING("TriggerCubeAnimationAction.AnimPlaysForever",
-                            "AnimTrigger %s plays forever refusing to play in an action",
-                            EnumToString(_trigger));
-        _animEnded = true;
-        return ActionResult::ABORT;
-      }
-    
-      // Use a private function of CubeLightComponent in order to play on the user/game layer instead of
-      // the engine layer
-      const bool animPlayed = GetRobot().GetCubeLightComponent().PlayLightAnimFromAction(_objectID,
-                                                                                            _trigger,
-                                                                                            [this](){_animEnded = true;},
-                                                                                            GetTag());
-      if(!animPlayed)
-      {
-        _animEnded = true;
-        return ActionResult::ABORT;
-      }
-      return ActionResult::SUCCESS;
-    }
-    
-    ActionResult TriggerCubeAnimationAction::CheckIfDone()
-    {
-      return (_animEnded ? ActionResult::SUCCESS : ActionResult::RUNNING);
-    }
   
   }
 }

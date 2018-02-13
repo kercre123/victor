@@ -132,19 +132,6 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlayAnimat
   const auto& animName = robot.GetAnimationComponent().GetAnimationNameFromGroup(msg.animationGroupName);
   return new PlayAnimationAction(animName, msg.numLoops, kInterruptRunning, ignoreTracks);
 }
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Helper function that is friended by TriggerCubeAnimationAction so we can call its private constructor
-IActionRunner* GetPlayCubeAnimationHelper(Robot& robot, const ExternalInterface::PlayCubeAnimationTrigger& msg)
-{
-  return new TriggerCubeAnimationAction(msg.objectID, msg.trigger);
-}
-  
-template<>
-IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlayCubeAnimationTrigger& msg)
-{
-  return GetPlayCubeAnimationHelper(robot, msg);
-}
  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
@@ -990,7 +977,6 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       DEFINE_HANDLER(playAnimation,            PlayAnimation,            0),
       DEFINE_HANDLER(playAnimationGroup,       PlayAnimationGroup,       0),
       DEFINE_HANDLER(playAnimationTrigger,     PlayAnimationTrigger,     0),
-      DEFINE_HANDLER(playCubeAnimationTrigger, PlayCubeAnimationTrigger, 0),
       DEFINE_HANDLER(popAWheelie,              PopAWheelie,              1),
       DEFINE_HANDLER(readToolCode,             ReadToolCode,             0),
       DEFINE_HANDLER(realignWithObject,        RealignWithObject,        1),
