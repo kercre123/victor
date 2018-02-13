@@ -137,10 +137,13 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
   {
     // See also: https://www.tensorflow.org/mobile/optimizing
 
-    std::unique_ptr<tensorflow::MemmappedEnv> memmapped_env(new tensorflow::MemmappedEnv(tensorflow::Env::Default()));
-    tensorflow::Status mmap_status = memmapped_env->InitializeFromFile(graph_file_name);
+    // Note that this is a class member because it needs to persist as long as we
+    // use the graph referring to it
+    _memmapped_env.reset(new tensorflow::MemmappedEnv(tensorflow::Env::Default()));
+
+    tensorflow::Status mmap_status = _memmapped_env->InitializeFromFile(graph_file_name);
     
-    tensorflow::Status load_graph_status = ReadBinaryProto(memmapped_env.get(),
+    tensorflow::Status load_graph_status = ReadBinaryProto(_memmapped_env.get(),
         tensorflow::MemmappedFileSystem::kMemmappedPackageDefaultGraphDef,
         &graph_def);
 
@@ -157,7 +160,7 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
     options.config.mutable_graph_options()
         ->mutable_optimizer_options()
         ->set_opt_level(::tensorflow::OptimizerOptions::L0);
-    options.env = memmapped_env.get();
+    options.env = _memmapped_env.get();
 
     tensorflow::Session* session_pointer = nullptr;
     tensorflow::Status session_status = tensorflow::NewSession(options, &session_pointer);
@@ -321,30 +324,34 @@ void ObjectDetector::GetDetectedObjects(const std::vector<tensorflow::Tensor>& o
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result ObjectDetector::Detect(cv::Mat& img, std::list<DetectedObject>& objects)
 {
-  // TODO: specify size on command line or get from graph?
-  cv::resize(img, img, cv::Size(224,224), 0, 0, CV_INTER_AREA);
-
   tensorflow::Tensor image_tensor;
 
   if(_useFloatInput)
   {
     if(_params.verbose)
     {
-      std::cout << "Copying in FLOAT " << img.rows << "x" << img.cols << " image data" << std::endl;
+      std::cout << "Resizing " << img.cols << "x" << img.rows " image into " << 
+        _params.input_width << "x" << _params.input_height << " FLOAT tensor" << std::endl;
     }
 
+    // TODO: Resize and convert directly into the tensor
+    cv::resize(img, img, cv::Size(_params.input_width,_params.input_height), 0, 0, CV_INTER_AREA);
+    assert(img.isContinuous());
+
     image_tensor = tensorflow::Tensor(tensorflow::DT_FLOAT, {
-      1, img.rows, img.cols, img.channels()
+      1, _params.input_height, _params.input_width, img.channels()
     });
 
     img.convertTo(img, CV_32FC3, 1.f/255.f);
     memcpy(image_tensor.tensor<float, 4>().data(), img.data, img.rows*img.cols*img.channels()*sizeof(float));
 
     // float* tensor_data = image_tensor.tensor<float,4>().data();
-    // for(int i=0; i<img.rows; ++i)
+    // for(int i=0; i<_params.input_height; ++i)
     // {
+    //   const int scaled_row = i/
     //   const uint8_t* img_i = img.ptr<uint8_t>(i);
-    //   for(int j=0; j<img.cols*img.channels(); ++j)
+
+    //   for(int j=0; j<_params.input_width*img.channels(); ++j)
     //   {
     //     tensor_data[j] = (float)(img_i[j]) / 255.f;
     //     ++tensor_data;
@@ -356,17 +363,19 @@ Result ObjectDetector::Detect(cv::Mat& img, std::list<DetectedObject>& objects)
   {
     if(_params.verbose)
     {
-      std::cout << "Copying in UINT8 " << img.rows << "x" << img.cols << " image data" << std::endl;
+      std::cout << "Resizing " << img.cols << "x" << img.rows " image into " << 
+        _params.input_width << "x" << _params.input_height << " UINT8 tensor" << std::endl;
     }
 
     image_tensor = tensorflow::Tensor(tensorflow::DT_UINT8, {
-      1, img.rows, img.cols, img.channels()
+      1, _params.input_height, _params.input_width, img.channels()
     });
 
-    assert(img.isContinuous());
-    
-    // TODO: Avoid copying the data (just "point" the tensor at the image's data pointer?)
-    memcpy(image_tensor.tensor<uint8_t, 4>().data(), img.data, img.rows*img.cols*img.channels());
+    // Resize input image directly into the tensor data    
+    cv::Mat cvTensor(_params.input_height, _params.input_width, CV_8UC3, 
+                     image_tensor.tensor<uint8_t, 4>().data());
+
+    cv::resize(img, cvTensor, cv::Size(_params.input_width,_params.input_height), 0, 0, CV_INTER_AREA);
   }
     
   if(_params.verbose)
