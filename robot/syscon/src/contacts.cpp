@@ -6,6 +6,7 @@
 
 #include "contacts.h"
 #include "comms.h"
+#include "timer.h"
 
 static ContactData rxData;
 static int rxDataIndex;
@@ -13,6 +14,7 @@ static int rxDataIndex;
 static uint8_t txData[64];
 static int txReadIndex;
 static int txWriteIndex;
+static bool transmitting;
 
 static const ContactData boot_msg = {"\xFF\xFF\xFF\xFF\nbooted\n"};
 
@@ -39,14 +41,13 @@ void Contacts::init(void) {
   rxDataIndex = 0;
   txReadIndex = 0;
   txWriteIndex = 0;
+  transmitting = false;
 
   Contacts::forward( boot_msg );
 }
 
 void Contacts::forward(const ContactData& pkt) {
-  Analog::delayCharge();
   NVIC_DisableIRQ(USART2_IRQn);
-  memcpy(&txData, &pkt.data, sizeof(pkt.data));
 
   for (int i = 0; i < sizeof(pkt.data); i++) {
     uint8_t byte = pkt.data[i];
@@ -55,8 +56,11 @@ void Contacts::forward(const ContactData& pkt) {
     if (txWriteIndex >= sizeof(txData)) txWriteIndex = 0;
   }
   
-  USART2->CR1 &= ~USART_CR1_RE;
-  USART2->CR1 |= USART_CR1_TXEIE;
+  if (!transmitting) {
+    transmitting = true;
+    USART2->CR1 &= ~USART_CR1_RE;
+    USART2->CR1 |= USART_CR1_TXEIE;
+  }
 
   NVIC_EnableIRQ(USART2_IRQn);
 }
@@ -78,6 +82,8 @@ extern "C" void USART2_IRQHandler(void) {
   // Transmit data
   if (USART2->ISR & USART_ISR_TXE) {
     if (txReadIndex != txWriteIndex) {
+      Analog::delayCharge();
+
       USART2->TDR = txData[txReadIndex++];
       if (txReadIndex >= sizeof(txData)) txReadIndex = 0;
     } else {
@@ -90,6 +96,7 @@ extern "C" void USART2_IRQHandler(void) {
     if (txReadIndex == txWriteIndex) {
       USART2->CR1 &= ~USART_CR1_TCIE;
       USART2->CR1 |= USART_CR1_RE;
+      transmitting = false;
     }
   }
   
