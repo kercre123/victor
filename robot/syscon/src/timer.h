@@ -28,7 +28,7 @@ namespace Timer {
   extern void_funct LightHandler;
   void init();
 
-  static uint32_t getTime(void) {
+  static inline uint32_t getTime(void) {
     return SysTick->VAL << 8;
   }
 }

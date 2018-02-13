@@ -52,14 +52,19 @@ void Contacts::forward(const ContactData& pkt) {
   for (int i = 0; i < sizeof(pkt.data); i++) {
     uint8_t byte = pkt.data[i];
     if (!byte) continue ;
+
     txData[txWriteIndex++] = byte;
+
     if (txWriteIndex >= sizeof(txData)) txWriteIndex = 0;
-  }
-  
-  if (!transmitting) {
-    transmitting = true;
-    USART2->CR1 &= ~USART_CR1_RE;
-    USART2->CR1 |= USART_CR1_TXEIE;
+
+    if (!transmitting) {
+      transmitting = true;
+      USART2->CR1 &= ~USART_CR1_RE;
+      USART2->TDR = 0xFF;
+      VEXT_TX::pull(PULL_UP);
+      Analog::delayCharge();
+      USART2->CR1 |= USART_CR1_TXEIE;
+    }
   }
 
   NVIC_EnableIRQ(USART2_IRQn);
@@ -82,8 +87,6 @@ extern "C" void USART2_IRQHandler(void) {
   // Transmit data
   if (USART2->ISR & USART_ISR_TXE) {
     if (txReadIndex != txWriteIndex) {
-      Analog::delayCharge();
-
       USART2->TDR = txData[txReadIndex++];
       if (txReadIndex >= sizeof(txData)) txReadIndex = 0;
     } else {
@@ -94,6 +97,7 @@ extern "C" void USART2_IRQHandler(void) {
 
   if (USART2->ISR & USART_ISR_TC) {
     if (txReadIndex == txWriteIndex) {
+      VEXT_TX::pull(PULL_NONE);
       USART2->CR1 &= ~USART_CR1_TCIE;
       USART2->CR1 |= USART_CR1_RE;
       transmitting = false;
