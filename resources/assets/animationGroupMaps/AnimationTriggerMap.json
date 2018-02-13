@@ -1501,6 +1501,30 @@
       "AnimName": "ag_petdetection_misc"
     },
     {
+      "CladEvent": "PettingGetin",
+      "AnimName": "ag_petting_getin_01"
+    },
+    {
+      "CladEvent": "PettingLevel1",
+      "AnimName": "ag_petting_lvl1"
+    },
+    {
+      "CladEvent": "PettingLevel2",
+      "AnimName": "ag_petting_lvl2"
+    },
+    {
+      "CladEvent": "PettingLevel3",
+      "AnimName": "ag_petting_lvl3"
+    },
+    {
+      "CladEvent": "PettingBlissLoop",
+      "AnimName": "ag_petting_blissloop"
+    },
+    {
+      "CladEvent": "PettingBlissGetout",
+      "AnimName": "ag_petting_bliss_getout"
+    },
+    {
       "CladEvent":"PickupHelperPreActionNamedFace",
       "AnimName": "ag_freeplay_reacttoface_identified"
     },
