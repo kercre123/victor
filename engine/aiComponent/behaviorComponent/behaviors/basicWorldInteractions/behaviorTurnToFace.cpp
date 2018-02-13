@@ -34,13 +34,13 @@ BehaviorTurnToFace::BehaviorTurnToFace(const Json::Value& config)
  
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorTurnToFace::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorTurnToFace::WantsToBeActivatedBehavior() const
 {
   Pose3d wastedPose;
-  TimeStamp_t lastTimeObserved = behaviorExternalInterface.GetFaceWorld().GetLastObservedFace(wastedPose);
-  std::set<Vision::FaceID_t> facesObserved = behaviorExternalInterface.GetFaceWorld().GetFaceIDsObservedSince(lastTimeObserved);
+  TimeStamp_t lastTimeObserved = GetBEI().GetFaceWorld().GetLastObservedFace(wastedPose);
+  std::set<Vision::FaceID_t> facesObserved = GetBEI().GetFaceWorld().GetFaceIDsObservedSince(lastTimeObserved);
   if(facesObserved.size() > 0){
-    _targetFace = behaviorExternalInterface.GetFaceWorld().GetSmartFaceID(*facesObserved.begin());
+    _targetFace = GetBEI().GetFaceWorld().GetSmartFaceID(*facesObserved.begin());
   }
   
   return _targetFace.IsValid();
@@ -48,7 +48,7 @@ bool BehaviorTurnToFace::WantsToBeActivatedBehavior(BehaviorExternalInterface& b
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorTurnToFace::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorTurnToFace::OnBehaviorActivated()
 {
   if(_targetFace.IsValid()){
     DelegateIfInControl(new TurnTowardsFaceAction(_targetFace)); 
@@ -57,7 +57,7 @@ void BehaviorTurnToFace::OnBehaviorActivated(BehaviorExternalInterface& behavior
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorTurnToFace::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorTurnToFace::OnBehaviorDeactivated()
 {
   _targetFace.Reset();
 }

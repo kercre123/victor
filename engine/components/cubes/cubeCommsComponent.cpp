@@ -39,20 +39,25 @@ namespace {
 }
 
   
-CubeCommsComponent::CubeCommsComponent(Robot& robot)
-  : _robot(robot)
-  , _cubeBleClient(CubeBleClient::GetInstance())
+CubeCommsComponent::CubeCommsComponent()
+: IDependencyManagedComponent(RobotComponentID::CubeComms)
+, _cubeBleClient(CubeBleClient::GetInstance())
 {
   // Register callbacks for messages from CubeBleClient
   _cubeBleClient->RegisterObjectAvailableCallback(std::bind(&CubeCommsComponent::HandleObjectAvailable, this, std::placeholders::_1));
   _cubeBleClient->RegisterLightCubeMessageCallback(std::bind(&CubeCommsComponent::HandleLightCubeMessage, this, std::placeholders::_1, std::placeholders::_2));
   _cubeBleClient->RegisterCubeConnectedCallback([this](const BleFactoryId& factoryId) { this->HandleConnectionStateChange(factoryId, true); });
   _cubeBleClient->RegisterCubeDisconnectedCallback([this](const BleFactoryId& factoryId) { this->HandleConnectionStateChange(factoryId, false); });
+}
 
+
+void CubeCommsComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
+{
+  _robot = robot;
   // Game to engine message handling:
-  if (robot.HasExternalInterface()) {
+  if (_robot->HasExternalInterface()) {
     auto callback = std::bind(&CubeCommsComponent::HandleGameEvents, this, std::placeholders::_1);
-    auto* extInterface = robot.GetExternalInterface();
+    auto* extInterface = _robot->GetExternalInterface();
     _signalHandles.push_back(extInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::BlockPoolEnabledMessage, callback));
     _signalHandles.push_back(extInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::BlockPoolResetMessage, callback));
     _signalHandles.push_back(extInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::GetBlockPoolMessage, callback));
@@ -99,7 +104,7 @@ void CubeCommsComponent::Update()
         it = _availableCubes.erase(it);
         
         if (_broadcastObjectAvailableMsg) {
-          _robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ObjectUnavailable(cube.factoryId)));
+          _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ObjectUnavailable(cube.factoryId)));
         }
       } else {
         ++it;
@@ -275,7 +280,7 @@ void CubeCommsComponent::HandleObjectAvailable(const ObjectAvailable& msg)
   }
   
   if (_broadcastObjectAvailableMsg) {
-    _robot.Broadcast(ExternalInterface::MessageEngineToGame(ObjectAvailable(msg)));
+    _robot->Broadcast(ExternalInterface::MessageEngineToGame(ObjectAvailable(msg)));
   }
 }
 
@@ -301,10 +306,10 @@ void CubeCommsComponent::HandleLightCubeMessage(const BleFactoryId& factoryId, c
       // Modify the message to include the correct activeId and timestamp
       ObjectAccel msg(lcm.Get_accel());
       msg.objectID = activeId;
-      msg.timestamp = _robot.GetLastMsgTimestamp(); // TODO: Is this accurate enough?
+      msg.timestamp = _robot->GetLastMsgTimestamp(); // TODO: Is this accurate enough?
       
       // Pass this to the CubeAccelComponent to handle:
-      _robot.GetCubeAccelComponent().HandleObjectAccel(msg);
+      _robot->GetCubeAccelComponent().HandleObjectAccel(msg);
       break;
     }
     case BlockMessages::LightCubeMessageTag::moved:
@@ -312,11 +317,11 @@ void CubeCommsComponent::HandleLightCubeMessage(const BleFactoryId& factoryId, c
       // Call into Blockworld to handle the message.
       ObjectMoved msg(lcm.Get_moved());
       msg.objectID = activeId;
-      msg.timestamp = _robot.GetLastMsgTimestamp();
+      msg.timestamp = _robot->GetLastMsgTimestamp();
       // This is sort of a hack - should be probably be moved to BlockWorld
-      _robot.GetRobotToEngineImplMessaging().HandleActiveObjectMoved(msg, &_robot);
+      _robot->GetRobotToEngineImplMessaging().HandleActiveObjectMoved(msg, _robot);
       
-      _robot.GetBlockTapFilter().HandleActiveObjectMoved(msg);
+      _robot->GetBlockTapFilter().HandleActiveObjectMoved(msg);
       break;
     }
     case BlockMessages::LightCubeMessageTag::powerLevel:
@@ -325,7 +330,7 @@ void CubeCommsComponent::HandleLightCubeMessage(const BleFactoryId& factoryId, c
       ObjectPowerLevel msg(lcm.Get_powerLevel());
       msg.objectID = activeId;
       // This is sort of a hack - should be probably be moved elsewhere
-      _robot.GetRobotToEngineImplMessaging().HandleObjectPowerLevel(msg, &_robot);
+      _robot->GetRobotToEngineImplMessaging().HandleObjectPowerLevel(msg, _robot);
       break;
     }
     case BlockMessages::LightCubeMessageTag::stopped:
@@ -333,30 +338,30 @@ void CubeCommsComponent::HandleLightCubeMessage(const BleFactoryId& factoryId, c
       // Call into Blockworld to handle the message.
       ObjectStoppedMoving msg(lcm.Get_stopped());
       msg.objectID = activeId;
-      msg.timestamp = _robot.GetLastMsgTimestamp();
+      msg.timestamp = _robot->GetLastMsgTimestamp();
       // This is sort of a hack - should be probably be moved to BlockWorld
-      _robot.GetRobotToEngineImplMessaging().HandleActiveObjectStopped(msg, &_robot);
+      _robot->GetRobotToEngineImplMessaging().HandleActiveObjectStopped(msg, _robot);
       
-      _robot.GetBlockTapFilter().HandleActiveObjectStopped(msg);
+      _robot->GetBlockTapFilter().HandleActiveObjectStopped(msg);
       break;
     }
     case BlockMessages::LightCubeMessageTag::upAxisChanged:
     {
       ObjectUpAxisChanged msg(lcm.Get_upAxisChanged());
       msg.objectID = activeId;
-      msg.timestamp = _robot.GetLastMsgTimestamp();
+      msg.timestamp = _robot->GetLastMsgTimestamp();
       
       // This is sort of a hack - should be probably be moved to BlockWorld
-      _robot.GetRobotToEngineImplMessaging().HandleActiveObjectUpAxisChanged(msg, &_robot);
+      _robot->GetRobotToEngineImplMessaging().HandleActiveObjectUpAxisChanged(msg, _robot);
       break;
     }
     case BlockMessages::LightCubeMessageTag::tapped:
     {
       ObjectTapped msg(lcm.Get_tapped());
       msg.objectID = activeId;
-      msg.timestamp = _robot.GetLastMsgTimestamp();
+      msg.timestamp = _robot->GetLastMsgTimestamp();
       
-      _robot.GetBlockTapFilter().HandleActiveObjectTapped(msg);
+      _robot->GetBlockTapFilter().HandleActiveObjectTapped(msg);
       break;
     }
     default:
@@ -404,7 +409,7 @@ void CubeCommsComponent::HandleConnectionStateChange(const BleFactoryId& factory
                         cube->factoryId, EnumToString(cube->objectType));
     
     // Add active object to blockworld
-    objID = _robot.GetBlockWorld().AddConnectedActiveObject(activeId, cube->factoryId, cube->objectType);
+    objID = _robot->GetBlockWorld().AddConnectedActiveObject(activeId, cube->factoryId, cube->objectType);
     if (objID.IsSet()) {
       PRINT_NAMED_INFO("CubeCommsComponent.HandleConnectionStateChange.Connected",
                        "Object %d (activeID %d, factoryID 0x%x, objectType '%s')",
@@ -416,7 +421,7 @@ void CubeCommsComponent::HandleConnectionStateChange(const BleFactoryId& factory
                         cube->factoryId, EnumToString(cube->objectType));
     
     // Remove active object from blockworld if it exists, and remove all instances in all origins
-    objID = _robot.GetBlockWorld().RemoveConnectedActiveObject(activeId);
+    objID = _robot->GetBlockWorld().RemoveConnectedActiveObject(activeId);
     
     // TODO: Remove this object from our list or just leave as not connected?
   }
@@ -425,12 +430,12 @@ void CubeCommsComponent::HandleConnectionStateChange(const BleFactoryId& factory
                    cube->factoryId, cube->connected);
   
   // Viz info
-  _robot.GetContext()->GetVizManager()->SendObjectConnectionState(activeId, cube->objectType, cube->connected);
+  _robot->GetContext()->GetVizManager()->SendObjectConnectionState(activeId, cube->objectType, cube->connected);
   
   // TODO: arguably blockworld should do this, because when do we want to remove/add objects and not notify?
   if (objID.IsSet()) {
     // Send connection message to game
-    _robot.Broadcast(ExternalInterface::MessageEngineToGame(ObjectConnectionState(objID.GetValue(),
+    _robot->Broadcast(ExternalInterface::MessageEngineToGame(ObjectConnectionState(objID.GetValue(),
                                                                                   cube->factoryId,
                                                                                   cube->objectType,
                                                                                   cube->connected)));

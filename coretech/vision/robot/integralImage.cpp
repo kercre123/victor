@@ -335,11 +335,12 @@ namespace Anki
 
     void ScrollingIntegralImage_u8_s32::ComputeIntegralImageRow(const u8 * restrict paddedImage_currentRow, const s32 * restrict integralImage_previousRow, s32 * restrict integralImage_currentRow, const s32 integralImageWidth)
     {
-      s32 horizontalSum = 0;
+      u32 horizontalSum = 0;
 
       s32 x = 0;
 
 #if ACCELERATION_TYPE == ACCELERATION_ARM_M4
+
       const s32 integralImageWidth4 = (integralImageWidth-3) / 4;
 
       const u32 * restrict paddedImage_currentRowU32 = reinterpret_cast<const u32*>(paddedImage_currentRow);
@@ -361,14 +362,90 @@ namespace Anki
       }
 
       x *= 4;
-#elif ACCELERATION_TYPE == ACCELERATION_ARM_A7
-    // TODO: doesn't seem possible to accelerate this much. Just loading the data takes most of the time. A manual 16x unrolling improves the speed by maybe 8%.
-#endif
+
+// Initial attempt at neon optimization is no better than non-accelerated version below
+// #elif ACCELERATION_TYPE == ACCELERATION_ARM_A7
+
+//       int32x4_t kZeros = vdupq_n_s32(0);
+//       for(; x < integralImageWidth; x += 8)
+//       {
+//         uint8x8_t paddedImageRow = vld1_u8(paddedImage_currentRow);
+//         paddedImage_currentRow += 8;
+
+//         uint16x8_t row16x8 = vmovl_u8(paddedImageRow);
+//         uint16x4_t row16x4_1 = vget_low_u16(row16x8);
+//         uint16x4_t row16x4_2 = vget_high_u16(row16x8);
+//         uint32x4_t row32x4_1 = vmovl_u16(row16x4_1);
+//         uint32x4_t row32x4_2 = vmovl_u16(row16x4_2);
+
+//         uint32x4_t row1Shift = vextq_u32(kZeros, row32x4_1, 3);
+//         row32x4_1 = vaddq_u32(row32x4_1, row1Shift);
+
+//         row1Shift = vextq_u32(kZeros, row1Shift, 3);
+//         row32x4_1 = vaddq_u32(row32x4_1, row1Shift);
+
+//         row1Shift = vextq_u32(kZeros, row1Shift, 3);
+//         row32x4_1 = vaddq_u32(row32x4_1, row1Shift);
+
+//         uint32x4_t sum1 = vdupq_n_u32(horizontalSum);
+//         sum1 = vaddq_u32(row32x4_1, sum1);
+        
+//         uint32_t sum = vgetq_lane_u32(row32x4_1, 3);
+//         uint32x4_t sumDup = vdupq_n_u32(sum);
+
+//         uint32x4_t row2Shift = vextq_u32(kZeros, row32x4_2, 3);
+//         row32x4_2 = vaddq_u32(row32x4_2, row2Shift);
+
+//         row2Shift = vextq_u32(kZeros, row2Shift, 3);
+//         row32x4_2 = vaddq_u32(row32x4_2, row2Shift);
+
+//         row2Shift = vextq_u32(kZeros, row2Shift, 3);
+//         row32x4_2 = vaddq_u32(row32x4_2, row2Shift);
+
+//         row32x4_2 = vaddq_u32(row32x4_2, sumDup);
+
+//         uint32x4_t sum2 = vdupq_n_u32(horizontalSum);
+//         sum2 = vaddq_u32(row32x4_2, sum2);
+
+//         int32x4_t previousRow0 = vld1q_s32(integralImage_previousRow);
+//         integralImage_previousRow += 4;
+
+//         previousRow0 = vaddq_s32((int32x4_t)sum1, previousRow0);
+//         vst1q_s32(integralImage_currentRow, previousRow0);
+//         integralImage_currentRow += 4;
+
+//         int32x4_t previousRow1 = vld1q_s32(integralImage_previousRow);
+//         integralImage_previousRow += 4;
+
+//         previousRow1 = vaddq_s32((int32x4_t)sum2, previousRow1);
+//         vst1q_s32(integralImage_currentRow, previousRow1);
+//         integralImage_currentRow += 4;
+
+//         horizontalSum = vgetq_lane_u32(sum2, 3);
+//       }
+
+//       if(x >= integralImageWidth)
+//       {
+//         x -= (8 - 1);
+//       }
+
+//       for(; x<integralImageWidth; x++)
+//       {
+//         horizontalSum += *paddedImage_currentRow;
+//         *integralImage_currentRow = horizontalSum + *integralImage_previousRow;
+//         paddedImage_currentRow++;
+//         integralImage_previousRow++;
+//         integralImage_currentRow++;
+//       }
+
+#else
 
       for(; x<integralImageWidth; x++) {
         horizontalSum += paddedImage_currentRow[x];
         integralImage_currentRow[x] = horizontalSum + integralImage_previousRow[x];
       }
+
+#endif
     }
 
     template<> void ScrollingIntegralImage_u8_s32::FilterRow_innerLoop(
@@ -383,6 +460,7 @@ namespace Anki
       u8 * restrict pOutput)
     {
 #if ACCELERATION_TYPE == ACCELERATION_NONE
+      
       if(outputMultiply == 1 && outputRightShift == 0) {
         for(s32 x=minX; x<=maxX; x++) {
           pOutput[x] = static_cast<u8>( pIntegralImage_11[x] - pIntegralImage_10[x] + pIntegralImage_00[x] - pIntegralImage_01[x] );
@@ -392,7 +470,9 @@ namespace Anki
           pOutput[x] = static_cast<u8>( ((pIntegralImage_11[x] - pIntegralImage_10[x] + pIntegralImage_00[x] - pIntegralImage_01[x]) * outputMultiply) >> outputRightShift ) ;
         }
       }
+
 #elif ACCELERATION_TYPE == ACCELERATION_ARM_M4
+
       if(outputMultiply == 1 && outputRightShift == 0) {
         const s32 maxX_firstCycles = RoundUp(minX, 4);
 
@@ -432,74 +512,79 @@ namespace Anki
           pOutputU32[x] = (out0 & 0xFF) | ((out1 & 0xFF) << 8) | ((out2 & 0xFF) << 16) | ((out3 & 0xFF) << 24);
         }
       }
+
 #elif ACCELERATION_TYPE == ACCELERATION_ARM_A7
-      if(outputMultiply == 1 && outputRightShift == 0) {
-        BeginBenchmark("integral1");
-        for(s32 x=minX; x<=maxX; x++) {
-          pOutput[x] = static_cast<u8>( pIntegralImage_11[x] - pIntegralImage_10[x] + pIntegralImage_00[x] - pIntegralImage_01[x] );
-        }
-        EndBenchmark("integral1");
-      } else {
-        //        BeginBenchmark("integral2");
 
-        s32 x = minX;
+        // Setup the multiply and shift vectors
+      int32x4_t outMult = vdupq_n_s32(outputMultiply);
+      int32x4_t outShift = vdupq_n_s32(-outputRightShift); // Negative for right shift
 
-        for(; x<=(maxX-3); x+=4) {
-          pOutput[x]   = static_cast<u8>( ((pIntegralImage_11[x]   - pIntegralImage_10[x]   + pIntegralImage_00[x]   - pIntegralImage_01[x])   * outputMultiply) >> outputRightShift ) ;
-          pOutput[x+1] = static_cast<u8>( ((pIntegralImage_11[x+1] - pIntegralImage_10[x+1] + pIntegralImage_00[x+1] - pIntegralImage_01[x+1]) * outputMultiply) >> outputRightShift ) ;
-          pOutput[x+2] = static_cast<u8>( ((pIntegralImage_11[x+2] - pIntegralImage_10[x+2] + pIntegralImage_00[x+2] - pIntegralImage_01[x+2]) * outputMultiply) >> outputRightShift ) ;
-          pOutput[x+3] = static_cast<u8>( ((pIntegralImage_11[x+3] - pIntegralImage_10[x+3] + pIntegralImage_00[x+3] - pIntegralImage_01[x+3]) * outputMultiply) >> outputRightShift ) ;
-        }
+      const u32 kNumElementsProcessedPerLoop = 8;
+      const u32 kNumIntegralElementsLoadedAtATime = kNumElementsProcessedPerLoop/2;
+      const s32 kMaxXNeon = maxX - (kNumElementsProcessedPerLoop - 1);
 
-        /*for(; x<=(maxX-7); x+=8) {
-          pOutput[x]   = static_cast<u8>( ((pIntegralImage_11[x]   - pIntegralImage_10[x]   + pIntegralImage_00[x]   - pIntegralImage_01[x])   * outputMultiply) >> outputRightShift ) ;
-          pOutput[x+1] = static_cast<u8>( ((pIntegralImage_11[x+1] - pIntegralImage_10[x+1] + pIntegralImage_00[x+1] - pIntegralImage_01[x+1]) * outputMultiply) >> outputRightShift ) ;
-          pOutput[x+2] = static_cast<u8>( ((pIntegralImage_11[x+2] - pIntegralImage_10[x+2] + pIntegralImage_00[x+2] - pIntegralImage_01[x+2]) * outputMultiply) >> outputRightShift ) ;
-          pOutput[x+3] = static_cast<u8>( ((pIntegralImage_11[x+3] - pIntegralImage_10[x+3] + pIntegralImage_00[x+3] - pIntegralImage_01[x+3]) * outputMultiply) >> outputRightShift ) ;
-          pOutput[x+4] = static_cast<u8>( ((pIntegralImage_11[x+4] - pIntegralImage_10[x+4] + pIntegralImage_00[x+4] - pIntegralImage_01[x+4]) * outputMultiply) >> outputRightShift ) ;
-          pOutput[x+5] = static_cast<u8>( ((pIntegralImage_11[x+5] - pIntegralImage_10[x+5] + pIntegralImage_00[x+5] - pIntegralImage_01[x+5]) * outputMultiply) >> outputRightShift ) ;
-          pOutput[x+6] = static_cast<u8>( ((pIntegralImage_11[x+6] - pIntegralImage_10[x+6] + pIntegralImage_00[x+6] - pIntegralImage_01[x+6]) * outputMultiply) >> outputRightShift ) ;
-          pOutput[x+7] = static_cast<u8>( ((pIntegralImage_11[x+7] - pIntegralImage_10[x+7] + pIntegralImage_00[x+7] - pIntegralImage_01[x+7]) * outputMultiply) >> outputRightShift ) ;
-        }*/
+      // Process as much as we can with NEON, whatever is left over will need to be done one element at a time
+      s32 x = minX;
+      for(; x <= kMaxXNeon; x += kNumElementsProcessedPerLoop)
+      {
+        // Load 4 elements from each pIntegralImage
+        int32x4_t img_00 = vld1q_s32(pIntegralImage_00);
+        pIntegralImage_00 += kNumIntegralElementsLoadedAtATime;
+        int32x4_t img_01 = vld1q_s32(pIntegralImage_01);
+        pIntegralImage_01 += kNumIntegralElementsLoadedAtATime;
+        int32x4_t img_10 = vld1q_s32(pIntegralImage_10);
+        pIntegralImage_10 += kNumIntegralElementsLoadedAtATime;
+        int32x4_t img_11 = vld1q_s32(pIntegralImage_11);
+        pIntegralImage_11 += kNumIntegralElementsLoadedAtATime;
 
-        /*      const u32 * restrict pIntegralImageU32_00 = reinterpret_cast<const u32*>(pIntegralImage_00);
-        const u32 * restrict pIntegralImageU32_01 = reinterpret_cast<const u32*>(pIntegralImage_01);
-        const u32 * restrict pIntegralImageU32_10 = reinterpret_cast<const u32*>(pIntegralImage_10);
-        const u32 * restrict pIntegralImageU32_11 = reinterpret_cast<const u32*>(pIntegralImage_11);
+        // ((11[x] - 10[x] + 00[x] - 01[x]) * outputMultiply) >> outputRightShift 
+        int32x4_t out = vsubq_s32(img_11, img_10);
+        out = vaddq_s32(out, img_00);
+        out = vsubq_s32(out, img_01);
+        out = vmulq_s32(out, outMult);
+        out = vshlq_s32(out, outShift);
 
-        s32 x;
-        for(; x<=(maxX-7); x+=8) {
-        const uint32x4_t ii00_0 = vld1q_u32(&pIntegralImageU32_00[x]);
-        const uint32x4_t ii01_0 = vld1q_u32(&pIntegralImageU32_01[x]);
-        const uint32x4_t ii10_0 = vld1q_u32(&pIntegralImageU32_10[x]);
-        const uint32x4_t ii11_0 = vld1q_u32(&pIntegralImageU32_11[x]);
-        const uint32x4_t ii00_1 = vld1q_u32(&pIntegralImageU32_00[x+4]);
-        const uint32x4_t ii01_1 = vld1q_u32(&pIntegralImageU32_01[x+4]);
-        const uint32x4_t ii10_1 = vld1q_u32(&pIntegralImageU32_10[x+4]);
-        const uint32x4_t ii11_1 = vld1q_u32(&pIntegralImageU32_11[x+4]);
+        // Narrow from s32 to s16 as the first step of converting from s32 to u8
+        int16x4_t outNar0 = vmovn_s32(out);
 
-        const uint32x4_t boxSum_0 = ii11_0 - ii10_0 + ii00_0 - ii01_0;
-        const uint32x4_t boxSum_1 = ii11_1 - ii10_1 + ii00_1 - ii01_1;
+        // Repeat the above for the next 4 elements so we will have 8 elements total
+        img_00 = vld1q_s32(pIntegralImage_00);
+        pIntegralImage_00 += kNumIntegralElementsLoadedAtATime;
+        img_01 = vld1q_s32(pIntegralImage_01);
+        pIntegralImage_01 += kNumIntegralElementsLoadedAtATime;
+        img_10 = vld1q_s32(pIntegralImage_10);
+        pIntegralImage_10 += kNumIntegralElementsLoadedAtATime;
+        img_11 = vld1q_s32(pIntegralImage_11);
+        pIntegralImage_11 += kNumIntegralElementsLoadedAtATime;
 
-        const uint32x4_t normalizedBoxSum_0 = (boxSum_0 * outputMultiply) >> outputRightShift;
-        const uint32x4_t normalizedBoxSum_1 = (boxSum_1 * outputMultiply) >> outputRightShift;
+        out = vsubq_s32(img_11, img_10);
+        out = vaddq_s32(out, img_00);
+        out = vsubq_s32(out, img_01);
+        out = vmulq_s32(out, outMult);
+        out = vshlq_s32(out, outShift);
 
-        const uint16x4_t normalizedBoxSumU16_0 = vmovn_u32(normalizedBoxSum_0);
-        const uint16x4_t normalizedBoxSumU16_1 = vmovn_u32(normalizedBoxSum_1);
+        int16x4_t outNar1 = vmovn_u32(out);
 
-        const uint16x8_t normalizedBoxSumU16_10 = vcombine_u16(normalizedBoxSumU16_0, normalizedBoxSumU16_1);
+        // Combine the two s16x4 vectors into an 8 element vector and narrow to s8
+        int16x8_t outComb = vcombine_s16(outNar0, outNar1);
+        int8x8_t output = vmovn_s16(outComb);
 
-        const uint8x8_t normalizedBoxSumU8_10 = vmovn_u16(normalizedBoxSumU16_10);
-
-        vst1_u8(&pOutput[x], normalizedBoxSumU8_10);
-        }*/
-
-        for(; x<=maxX; x++) {
-          pOutput[x] = static_cast<u8>( ((pIntegralImage_11[x] - pIntegralImage_10[x] + pIntegralImage_00[x] - pIntegralImage_01[x]) * outputMultiply) >> outputRightShift ) ;
-        }
-
-        //        EndBenchmark("integral2");
+        // Store to pOutput as u8
+        vst1_u8(pOutput, (uint8x8_t)output);
+        pOutput += kNumElementsProcessedPerLoop;
       }
+
+      for(; x <= maxX; x++)
+      {
+        *pOutput = static_cast<u8>(((*pIntegralImage_11 - *pIntegralImage_10 + *pIntegralImage_00 - *pIntegralImage_01) * outputMultiply) >> outputRightShift);
+        
+        pOutput++;
+        pIntegralImage_00++;
+        pIntegralImage_01++;
+        pIntegralImage_10++;
+        pIntegralImage_11++;
+      }
+
 #else
 #error Unknown acceleration
 #endif // #if ACCELERATION_TYPE == ACCELERATION_NONE ... #else

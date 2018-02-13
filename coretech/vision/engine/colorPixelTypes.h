@@ -99,16 +99,15 @@ namespace Vision {
   
   static_assert(sizeof(PixelRGBA)==4, "PixelRGBA not 4 bytes!");
   
-  class PixelRGB565
+  class PixelRGB565 : public cv::Vec2b
   {
   public:
     
-    PixelRGB565(u16 value = 0) : _value(value) { }
+    PixelRGB565(u16 value = 0) { SetValue(value); }
     
     PixelRGB565(u8 r, u8 g, u8 b)
-    : _value( (u16(0xF8 & r) << 8) | (u16(0xFC & g) << 3) | (u16(0xF8 & b) >> 3) )
     {
-
+      SetValue((u16(0xF8 & r) << 8) | (u16(0xFC & g) << 3) | (u16(0xF8 & b) >> 3));
     }
     
     PixelRGB565(const PixelRGB& pixRGB)
@@ -117,9 +116,9 @@ namespace Vision {
       
     }
     
-    u8 r() const { return ((Rmask & _value) >> 8); }
-    u8 g() const { return ((Gmask & _value) >> 3); }
-    u8 b() const { return ((Bmask & _value) << 3); }
+    u8 r() const { return ((Rmask & GetValue()) >> 8); }
+    u8 g() const { return ((Gmask & GetValue()) >> 3); }
+    u8 b() const { return ((Bmask & GetValue()) << 3); }
     
     inline PixelRGB ToPixelRGB() const;
     
@@ -127,19 +126,16 @@ namespace Vision {
     // 32-bit BGRA color (i.e. 0xBBGGRRAA), e.g. which webots expects
     inline u32 ToBGRA32(u8 alpha = 0xFF) const;
 
-    inline u16 GetValue()    const { return _value;         }
-    inline u8  GetHighByte() const { return _valueBytes[1]; }
-    inline u8  GetLowByte()  const { return _valueBytes[0]; }
+    inline void SetValue(u16 value){ *((u16*)&(this->operator[](0))) = value; }
+    inline u16 GetValue()    const { return *((u16*)&(this->operator[](0))); }
+    inline u8  GetHighByte() const { return this->operator[](1); }
+    inline u8  GetLowByte()  const { return this->operator[](0); }
+
   private:
     
     static constexpr u16 Rmask = 0xF800;
     static constexpr u16 Gmask = 0x07E0;
     static constexpr u16 Bmask = 0x001F;
-    
-    union {
-      u16 _value;
-      u8  _valueBytes[2];
-    };
   };
 
   
@@ -260,9 +256,9 @@ namespace Vision {
     const u16 Gshift = 13;
     const u16 Bshift = 27;
     
-    const u32 color = (((u32) (_value & Rmask) << Rshift) |
-                       ((u32) (_value & Gmask) << Gshift) |
-                       ((u32) (_value & Bmask) << Bshift) |
+    const u32 color = (((u32) (GetValue() & Rmask) << Rshift) |
+                       ((u32) (GetValue() & Gmask) << Gshift) |
+                       ((u32) (GetValue() & Bmask) << Bshift) |
                        alpha);
     
     return color;

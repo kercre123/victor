@@ -71,9 +71,7 @@ PRIVATE
 # cti
   cti_common
   cti_vision
-  cti_planning
-  cti_messaging
-  robot_clad # imageTypes.h
+  engine_clad # imageTypes.h
 # platform
   ${PLATFORM_LIBS}
 )

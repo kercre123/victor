@@ -187,12 +187,6 @@ message PlayAnimationTrigger {
   bool    ignoreLiftTrack
 }
 
-// PlayAnimation -- TEMP CODE!! Iterating animation code
-message PlayAnimation_DEV {
-  uint_32 numLoops,
-  string animationName
-}
-
 // PlayCubeAnimationTrigger
 message PlayCubeAnimationTrigger {
   uint_32 objectID,

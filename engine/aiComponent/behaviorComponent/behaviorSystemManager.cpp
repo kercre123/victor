@@ -30,6 +30,10 @@
 #include "util/helpers/boundedWhile.h"
 #include "util/logging/logging.h"
 
+#if FACTORY_TEST
+#include "anki/cozmo/shared/factory/emrHelper.h"
+#endif
+
 namespace Anki {
 namespace Cozmo {
 
@@ -42,7 +46,8 @@ const int kArbitrarilyLargeCancelBound = 1000000;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorSystemManager::BehaviorSystemManager()
-: _initializationStage(InitializationStage::SystemNotInitialized)
+: IDependencyManagedComponent(BCComponentID::BehaviorSystemManager)
+, _initializationStage(InitializationStage::SystemNotInitialized)
 {
   _behaviorStack.reset();
 }
@@ -52,6 +57,19 @@ BehaviorSystemManager::BehaviorSystemManager()
 BehaviorSystemManager::~BehaviorSystemManager()
 {
 
+}
+
+
+void BehaviorSystemManager::InitDependent(Robot* robot, const BCCompMap& dependentComponents)
+{
+  auto& baseBehaviorWrapper = dependentComponents.find(BCComponentID::BaseBehaviorWrapper)->second.GetValue<BaseBehaviorWrapper>();
+  auto& bei = dependentComponents.find(BCComponentID::BehaviorExternalInterface)->second.GetValue<BehaviorExternalInterface>();
+  auto& async = dependentComponents.find(BCComponentID::AsyncMessageComponent)->second.GetValue<AsyncMessageGateComponent>();
+
+  InitConfiguration(*robot,
+                    baseBehaviorWrapper._baseBehavior,
+                    bei,
+                    &async);
 }
 
 
@@ -68,8 +86,12 @@ Result BehaviorSystemManager::InitConfiguration(Robot& robot,
              baseBehavior != nullptr,
              "BehaviorSystemManager.InitConfiguration.AlreadyInitialized");
 
-  // If this is the factory test forcibly set baseBehavior as playpen
-  if(FACTORY_TEST)
+  // If this is the factory test forcibly set baseBehavior as playpen as long as the robot has not been through packout
+  bool startInPlaypen = false;
+#if FACTORY_TEST
+  startInPlaypen = !Factory::GetEMR()->PACKED_OUT_FLAG;
+#endif
+  if(startInPlaypen)
   {
     baseBehavior = behaviorExternalInterface.GetBehaviorContainer().FindBehaviorByID(BEHAVIOR_ID(PlaypenTest)).get();
     DEV_ASSERT(baseBehavior != nullptr, "BehaviorSystemManager.InitConfiguration.ForcingPlaypen.Null");
@@ -101,7 +123,7 @@ void BehaviorSystemManager::ResetBehaviorStack(IBehavior* baseBehavior)
   if(_behaviorStack != nullptr){
     _behaviorStack->ClearStack();
   }
-  _behaviorStack.reset(new BehaviorStack(_behaviorExternalInterface));
+  _behaviorStack.reset(new BehaviorStack());
 }
 
 
@@ -123,7 +145,7 @@ void BehaviorSystemManager::Update(BehaviorExternalInterface& behaviorExternalIn
 
     IBehavior* baseBehavior = _baseBehaviorTmp;
     
-    _behaviorStack->InitBehaviorStack(behaviorExternalInterface, baseBehavior);
+    _behaviorStack->InitBehaviorStack(baseBehavior);
     _baseBehaviorTmp = nullptr;
   }
 
@@ -177,7 +199,7 @@ void BehaviorSystemManager::UpdateInActivatableScope(BehaviorExternalInterface& 
        entry,
        behaviorExternalInterface.GetBehaviorEventComponent()._robotToEngineEvents);
 
-    entry->Update(behaviorExternalInterface);
+    entry->Update();
   }
 }
 
@@ -258,7 +280,7 @@ void BehaviorSystemManager::CancelDelegates(IBehavior* delegator)
   }
 
   PRINT_CH_INFO("BehaviorSystem", "BehaviorSystemManager.CancelDelegates",
-                "'%s' canceled it's delegates",
+                "'%s' canceled its delegates",
                 delegator->GetPrintableID().c_str());
 
   _behaviorStack->DebugPrintStack("AfterCancelDelgates");

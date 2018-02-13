@@ -31,14 +31,17 @@ protected:
   friend class BehaviorContainer;
   BehaviorStackBlocks(const Json::Value& config);
 
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenCarryingObject = true;
+  }
 
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
-  virtual bool CarryingObjectHandledInternally() const override { return true;}
+  virtual void OnBehaviorActivated() override;
+  virtual void OnBehaviorDeactivated() override;
+  virtual void BehaviorUpdate() override;
+
+  virtual bool WantsToBeActivatedBehavior() const override;
   
-  virtual void UpdateTargetBlocksInternal(BehaviorExternalInterface& behaviorExternalInterface) const override { BehaviorStackBlocks::UpdateTargetBlocks(behaviorExternalInterface); }
+  virtual void UpdateTargetBlocksInternal() const override { BehaviorStackBlocks::UpdateTargetBlocks(); }
   
   virtual std::set<ObjectInteractionIntention>
         GetBehaviorObjectInteractionIntentions() const override {
@@ -61,22 +64,21 @@ private:
   bool _stackInAnyOrientation;
   bool _hasBottomTargetSwitched;
 
-  void TransitionToPickingUpBlock(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToStackingBlock(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToFailedToStack(BehaviorExternalInterface& behaviorExternalInterface);
-  void TransitionToPlayingFinalAnim(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToPickingUpBlock();
+  void TransitionToStackingBlock();
+  void TransitionToFailedToStack();
+  void TransitionToPlayingFinalAnim();
   
   
   // Utility functions
-  ObjectID GetClosestValidBottom(BehaviorExternalInterface& behaviorExternalInterface, ObjectInteractionIntention bottomIntention) const;
-  void UpdateTargetBlocks(BehaviorExternalInterface& behaviorExternalInterface) const;
-  bool CanUseNonUprightBlocks(BehaviorExternalInterface& behaviorExternalInterface) const;
+  ObjectID GetClosestValidBottom(ObjectInteractionIntention bottomIntention) const;
+  void UpdateTargetBlocks() const;
+  bool CanUseNonUprightBlocks() const;
   void ResetBehavior();
   void SetState_internal(State state, const std::string& stateName);
 
   // prints some useful stuff about the block
-  void PrintCubeDebug(BehaviorExternalInterface& behaviorExternalInterface,
-                      const char* event, const ObservableObject* obj) const;
+  void PrintCubeDebug(const char* event, const ObservableObject* obj) const;
 };
 
 

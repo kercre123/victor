@@ -15,6 +15,7 @@
 #ifndef __AnimProcess_CozmoAnim_FaceDisplay_FaceDebugDraw_H_
 #define __AnimProcess_CozmoAnim_FaceDisplay_FaceDebugDraw_H_
 
+#include "anki/cozmo/shared/cozmoConfig.h"
 #include "coretech/common/shared/types.h"
 #include "coretech/common/engine/math/point.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -26,7 +27,7 @@ namespace Anki {
 class ColorRGBA;
 
 namespace Vision {
-  class ImageRGB;
+  class ImageRGB565;
 }
 
 namespace Cozmo {
@@ -61,15 +62,19 @@ public:
   void SetShouldDrawFAC(bool draw);
 
   // Begin drawing functionality
-  void DrawConfidenceClock(const RobotInterface::MicDirection& micData);
+  void DrawConfidenceClock(
+    const RobotInterface::MicDirection& micData,
+    float bufferFullPercent,
+    uint32_t secondsRemaining,
+    bool triggerRecognized);
   void DrawStateInfo(const RobotState& state);
   void DrawMicInfo(const RobotInterface::MicData& micData);
   void DrawFAC();
   void SetCustomText(const RobotInterface::DrawTextOnScreen& text);
   
 private:
-  DrawState                         _drawState = DrawState::None;
-  std::unique_ptr<Vision::ImageRGB> _scratchDrawingImg;
+  DrawState                            _drawState = DrawState::None;
+  std::unique_ptr<Vision::ImageRGB565> _scratchDrawingImg;
 
   // Draw the _scratchDrawingImg to the face
   // Adds a debug menu page indicator in the top right
@@ -80,7 +85,7 @@ private:
   void DrawTextOnScreen(const std::vector<std::string>& textVec, 
                         const ColorRGBA& textColor,
                         const ColorRGBA& bgColor,
-                        const Point2f& loc = {0, 0},
+                        const Point2f& loc = {0, FACE_DISPLAY_HEIGHT-10},
                         u32 textSpacing_pix = 10,
                         f32 textScale = 3.f);
   

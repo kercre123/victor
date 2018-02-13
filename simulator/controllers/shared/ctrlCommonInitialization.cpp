@@ -33,10 +33,12 @@ ParsedCommandLine ParseCommandLine(int argc, char** argv)
   if ( argc > 1 )
   {
     const std::string kFilterParam = "--applyLogFilter";
+    const std::string kColorizeParam = "--colorizeStderrOutput";
     for( int i=1; i<argc; ++i) {
       if ( kFilterParam == argv[i] ) {
         ret.filterLog = true;
-        break;
+      } else if ( kColorizeParam == argv[i] ) {
+        ret.colorizeStderrOutput = true;
       }
     }
   }
@@ -151,7 +153,7 @@ void AutoGlobalLogger::Initialize(Util::IFormattedLoggerProvider* loggerProvider
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-DefaultAutoGlobalLogger::DefaultAutoGlobalLogger(const Util::Data::DataPlatform& dataPlatform, bool loadLoggerFilter) :
+DefaultAutoGlobalLogger::DefaultAutoGlobalLogger(const Util::Data::DataPlatform& dataPlatform, bool loadLoggerFilter, bool colorizeStderrOutput) :
 AutoGlobalLogger(new Util::PrintfLoggerProvider(), dataPlatform, loadLoggerFilter)
 {
   // assert in case the logger created (passed to base constructor) is not a printfLogger, since we
@@ -159,6 +161,7 @@ AutoGlobalLogger(new Util::PrintfLoggerProvider(), dataPlatform, loadLoggerFilte
   DEV_ASSERT(dynamic_cast<Util::PrintfLoggerProvider*>(_provider), "DefaultAutoGlobalLogger.DefaultLoggerIsNotPrintf");
   Util::PrintfLoggerProvider* provider = static_cast<Util::PrintfLoggerProvider*>(_provider);
   provider->SetMinToStderrLevel(Util::ILoggerProvider::LOG_LEVEL_WARN);
+  provider->SetColorizeStderrOutput(colorizeStderrOutput);
 }
 
 }; // namespace

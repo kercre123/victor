@@ -166,7 +166,7 @@ protected:
   void SendStopAllMotors();
   void SendImageRequest(ImageSendMode mode);
   void SendSetRobotImageSendMode(ImageSendMode mode);
-  void SendSaveImages(ImageSendMode imageMode, const std::string& path = "", const int8_t qualityOnRobot = 0);
+  void SendSaveImages(ImageSendMode imageMode, const std::string& path = "", const int8_t qualityOnRobot = -1);
   void SendSaveState(bool enabled, const std::string& path = "");
   void SendEnableDisplay(bool on);
   void SendExecutePathToPose(const Pose3d& p,
@@ -279,6 +279,8 @@ protected:
   void SendTrackToObject(const u32 objectID, bool headOnly = false);
   void SendTrackToFace(const u32 faceID, bool headOnly = false);
   void SendExecuteTestPlan(PathMotionProfile motionProf);
+  void SendFakeTriggerWordDetect();
+  void SendForceDelocalize();
   void SendClearAllBlocks();
   void SendClearAllObjects();
   void SendSelectNextObject();
@@ -295,8 +297,6 @@ protected:
   void SendLogProxDataRequest(const u32 length_ms);
   void SendAnimation(const char* animName, u32 numLoops, bool throttleMessages = false);
   void SendAnimationGroup(const char* animName, bool throttleMessages = false);
-  void SendDevAnimation(const char* animName, u32 numLoops); // FIXME: Remove after code refactor - JMR
-  void SendReplayLastAnimation();
   void SendReadAnimationFile();
   void SendEnableVisionMode(VisionMode mode, bool enable);
   void SendSetIdleAnimation(const std::string &animName);
@@ -436,7 +436,8 @@ protected:
   //
   bool AddLightCubeByType(ObjectType type, const Pose3d& p, const u32 factoryID = 0);
 
-  
+  // Sets the "pluggedIn" field for the given charger.
+  void SetChargerPluggedIn(webots::Node* chargerNode, const bool pluggedIn);
   
   static size_t MakeWordAligned(size_t size);
   const std::string GetAnimationTestName() const;
@@ -540,7 +541,6 @@ private:
   webots::Supervisor _supervisor;
   
   webots::Node* _robotNode       = nullptr;
-  webots::Node* _robotEngineNode = nullptr;
 
   std::vector<webots::Node*> _lightCubes;
   std::vector<webots::Node*>::iterator _lightCubeOriginIter = _lightCubes.end();

@@ -55,34 +55,34 @@ BehaviorDevPettingTestSimple::BehaviorDevPettingTestSimple(const Json::Value& co
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorDevPettingTestSimple::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorDevPettingTestSimple::WantsToBeActivatedBehavior() const
 {
   return true;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDevPettingTestSimple::InitBehavior(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDevPettingTestSimple::InitBehavior()
 {
   for( auto& config : _tgAnimConfigs ) {
-    config.strategy->Init(behaviorExternalInterface);
+    config.strategy->Init(GetBEI());
   }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDevPettingTestSimple::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDevPettingTestSimple::OnBehaviorActivated()
 {
   for( auto& tgAnim :  _tgAnimConfigs ) {
     if( tgAnim.strategy ) {
-      tgAnim.strategy->Reset(behaviorExternalInterface);
+      tgAnim.strategy->Reset(GetBEI());
     }
   }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDevPettingTestSimple::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDevPettingTestSimple::BehaviorUpdate()
 {
   if(!IsActivated()){
     return;
@@ -96,7 +96,7 @@ void BehaviorDevPettingTestSimple::BehaviorUpdate(BehaviorExternalInterface& beh
   decltype(_tgAnimConfigs)::iterator gotAnim;
   for(gotAnim = _tgAnimConfigs.begin(); gotAnim != _tgAnimConfigs.end(); ++gotAnim) {
     ANKI_VERIFY(gotAnim->strategy.get()!=nullptr, "BehaviorDevPettingTestSimple.NullTouchStrategy", "");
-    if(gotAnim->strategy->AreConditionsMet(behaviorExternalInterface)) {
+    if(gotAnim->strategy->AreConditionsMet(GetBEI())) {
       break;
     }
   }
@@ -115,7 +115,7 @@ void BehaviorDevPettingTestSimple::BehaviorUpdate(BehaviorExternalInterface& beh
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDevPettingTestSimple::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorDevPettingTestSimple::OnBehaviorDeactivated()
 {
 }
 

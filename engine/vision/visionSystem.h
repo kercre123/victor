@@ -322,6 +322,7 @@ namespace Cozmo {
     Radians GetCurrentHeadAngle();
     Radians GetPreviousHeadAngle();
     
+    // NOTE: CLAHE is NOT used when MarkerDetector is in LightOnDark mode
     enum class MarkerDetectionCLAHE : u8 {
       Off         = 0, // Do detection in original image only
       On          = 1, // Do detection in CLAHE image only

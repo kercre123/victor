@@ -22,7 +22,8 @@ namespace Cozmo {
 AsyncMessageGateComponent::AsyncMessageGateComponent(IExternalInterface* externalInterface,
                                                      RobotInterface::MessageHandler* robotInterface,
                                                      RobotID_t robotID)
-: _externalInterface(externalInterface)
+: IDependencyManagedComponent(BCComponentID::AsyncMessageComponent)
+, _externalInterface(externalInterface)
 , _robotInterface(robotInterface)
 , _robotID(robotID)
 , _isCacheValid(false)

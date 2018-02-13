@@ -1,0 +1,11 @@
+{
+  "behaviorID" : "ObservingOnChargerState",
+  "behaviorClass" : "DispatcherStrictPriority",
+
+  "interruptActiveBehavior": true,
+
+  "behaviors": [
+    "ObservingOnCharger"
+  ]
+}
+

@@ -26,11 +26,11 @@ protected:
   friend class BehaviorContainer;
   BehaviorPlaypenReadToolCode(const Json::Value& config);
   
-  virtual Result OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)   override;
+  virtual Result OnBehaviorActivatedInternal()   override;
   
 private:
   
-  void TransitionToToolCodeRead(BehaviorExternalInterface& behaviorExternalInterface, const ExternalInterface::RobotCompletedAction& rca);
+  void TransitionToToolCodeRead(const ExternalInterface::RobotCompletedAction& rca);
 };
 
 }

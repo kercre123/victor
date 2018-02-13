@@ -19,6 +19,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_C_STANDARD 99)
 
+if (CMAKE_GENERATOR MATCHES "Xcode")
+  set(CMAKE_XCODE_GENERATE_SCHEME ON)
+endif()
+
 # Set up custom property for file locations for custom targets
 define_property(TARGET PROPERTY ANKI_OUT_PATH
                 BRIEF_DOCS "The output path for this custom target"
@@ -51,7 +55,9 @@ else()
 endif()
 
 if (FACTORY_TEST_DEV)
-  add_definitions(-DFACTORY_TEST_DEV)
+  add_definitions(-DFACTORY_TEST_DEV=1)
+else()
+  add_definitions(-DFACTORY_TEST_DEV=0)
 endif()
 
 if (ANDROID)
@@ -119,7 +125,9 @@ add_subdirectory("cloud")
 add_subdirectory("cubeBleClient")
 add_subdirectory("osState")
 add_subdirectory("androidHAL")
+add_subdirectory("cannedAnimLib")
 add_subdirectory("animProcess")
+add_subdirectory("lib/signalEssence")
 
 target_include_directories(victor_anim PRIVATE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/anki/cozmo>

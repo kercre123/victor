@@ -85,20 +85,21 @@ private:
 
 public:
   virtual ~BehaviorRespondPossiblyRoll();
-  virtual bool CarryingObjectHandledInternally() const override { return false;}
   
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual bool WantsToBeActivatedBehavior() const override;
   
   // Behavior can be queried to find out where it is in its process
   const RespondPossiblyRollMetadata& GetResponseMetadata() const { return _metadata;}
   void SetRespondPossiblyRollMetadata(const RespondPossiblyRollMetadata& metadata){_metadata = metadata;}
 
 protected:
-  void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
+
+  void InitBehavior() override;
   
-  virtual void OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void AlwaysHandleInScope(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnBehaviorActivated() override;
+  virtual void BehaviorUpdate() override;
+  virtual void AlwaysHandleInScope(const EngineToGameEvent& event) override;
 
 private:
   RespondPossiblyRollMetadata _metadata;
@@ -106,11 +107,11 @@ private:
   std::map<ObjectID, UpAxis> _upAxisChangedIDs;
   u32 _lastActionTag = ActionConstants::INVALID_TAG;
   
-  void DetermineNextResponse(BehaviorExternalInterface& behaviorExternalInterface);
-  void TurnAndRespondPositively(BehaviorExternalInterface& behaviorExternalInterface);
-  void TurnAndRespondNegatively(BehaviorExternalInterface& behaviorExternalInterface);
-  void DelegateToRollHelper(BehaviorExternalInterface& behaviorExternalInterface);
-  void RollBlock(BehaviorExternalInterface& behaviorExternalInterface);
+  void DetermineNextResponse();
+  void TurnAndRespondPositively();
+  void TurnAndRespondNegatively();
+  void DelegateToRollHelper();
+  void RollBlock();
 
 };
   

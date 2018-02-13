@@ -1,0 +1,18 @@
+{
+  "behaviorID" : "Observing",
+  "behaviorClass" : "DispatcherStrictPriorityWithCooldown",
+
+  "interruptActiveBehavior": false,
+
+  "behaviors": [    
+    {
+      "behavior": "ObservingLookAtFaces",
+      "cooldown_s": 30.0,
+      "cooldown_random_factor": 0.5
+    },
+    {
+      "behavior": "NothingToDo_Idle",
+      "cooldown_s": 0.0
+    }
+  ]
+}

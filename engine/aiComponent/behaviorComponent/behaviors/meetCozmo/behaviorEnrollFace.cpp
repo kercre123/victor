@@ -117,14 +117,14 @@ BehaviorEnrollFace::BehaviorEnrollFace(const Json::Value& config)
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorEnrollFace::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorEnrollFace::WantsToBeActivatedBehavior() const
 {
   // This behavior is activatable iff a face enrollment has been requested
   return IsEnrollmentRequested();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorEnrollFace::InitEnrollmentSettings(BehaviorExternalInterface& behaviorExternalInterface)
+Result BehaviorEnrollFace::InitEnrollmentSettings()
 {
   // Behavior should not even be activatable if face enrollment not requested,
   // so should not be attempting initialize
@@ -148,7 +148,7 @@ Result BehaviorEnrollFace::InitEnrollmentSettings(BehaviorExternalInterface& beh
   // sure that it is the ID of a _named_ face
   if(_saveID != Vision::UnknownFaceID)
   {
-    const Face* face = behaviorExternalInterface.GetFaceWorld().GetFace(_saveID);
+    const Face* face = GetBEI().GetFaceWorld().GetFace(_saveID);
     if(nullptr != face && !face->HasName())
     {
       PRINT_NAMED_WARNING("BehaviorEnrollFace.InitEnrollmentSettings.UnnamedSaveID",
@@ -161,7 +161,7 @@ Result BehaviorEnrollFace::InitEnrollmentSettings(BehaviorExternalInterface& beh
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorEnrollFace::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorEnrollFace::OnBehaviorActivated()
 {
   // Check if we were interrupted and need to fast forward:
   switch(_state)
@@ -169,7 +169,7 @@ void BehaviorEnrollFace::OnBehaviorActivated(BehaviorExternalInterface& behavior
     case State::SayingName:
     {
       PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.InitInternal.FastForwardToSayingName", "");
-      TransitionToSayingName(behaviorExternalInterface);
+      TransitionToSayingName();
       return;
     }
       
@@ -177,7 +177,7 @@ void BehaviorEnrollFace::OnBehaviorActivated(BehaviorExternalInterface& behavior
     case State::SaveFailed:
     {
       PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.InitInternal.FastForwardToSavingToRobot", "");
-      TransitionToSavingToRobot(behaviorExternalInterface);
+      TransitionToSavingToRobot();
       return;
     }
       
@@ -186,7 +186,7 @@ void BehaviorEnrollFace::OnBehaviorActivated(BehaviorExternalInterface& behavior
       // If we were interrupted while getting out of the scanning animation and have
       // now resumed, we need to complete the animation
       PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.InitInternal.FastForwardToScanningInterrupted", "");
-      TransitionToScanningInterrupted(behaviorExternalInterface);
+      TransitionToScanningInterrupted();
       return;
     }
     default:
@@ -194,12 +194,12 @@ void BehaviorEnrollFace::OnBehaviorActivated(BehaviorExternalInterface& behavior
       SET_STATE(NotStarted);
   }
   
-  const Result settingsResult = InitEnrollmentSettings(behaviorExternalInterface);
+  const Result settingsResult = InitEnrollmentSettings();
   if(RESULT_OK != settingsResult)
   {
     PRINT_NAMED_WARNING("BehaviorEnrollFace.InitInternal.BadSettings",
                         "Disabling enrollment");
-    DisableEnrollment(behaviorExternalInterface);
+    DisableEnrollment();
     return;
   }
   
@@ -225,12 +225,12 @@ void BehaviorEnrollFace::OnBehaviorActivated(BehaviorExternalInterface& behavior
   
   // Reset flag in FaceWorld because we're starting a new enrollment and will
   // be waiting for this new enrollment to be "complete" after this
-  behaviorExternalInterface.GetFaceWorldMutable().SetFaceEnrollmentComplete(false);
+  GetBEI().GetFaceWorldMutable().SetFaceEnrollmentComplete(false);
   
   // Make sure enrollment is enabled for session-only faces when we start. Otherwise,
   // we won't even be able to start enrollment because everything will remain a
   // "tracking only" face.
-  behaviorExternalInterface.GetFaceWorldMutable().Enroll(Vision::UnknownFaceID);
+  GetBEI().GetFaceWorldMutable().Enroll(Vision::UnknownFaceID);
   
   PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.InitInternal",
                 "Initialize with ID=%d and name '%s', to be saved to ID=%d",
@@ -240,11 +240,11 @@ void BehaviorEnrollFace::OnBehaviorActivated(BehaviorExternalInterface& behavior
   _timeout_sec = kEnrollFace_Timeout_sec;
   
   // First thing we want to do is turn towards the face and make sure we see it
-  TransitionToLookingForFace(behaviorExternalInterface);
+  TransitionToLookingForFace();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorEnrollFace::BehaviorUpdate(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorEnrollFace::BehaviorUpdate()
 {
   if(!IsActivated()){
     return;
@@ -278,7 +278,7 @@ void BehaviorEnrollFace::BehaviorUpdate(BehaviorExternalInterface& behaviorExter
     {
       // Check to see if the face we've been enrolling has changed based on what was
       // observed since the last tick
-      UpdateFaceToEnroll(behaviorExternalInterface);
+      UpdateFaceToEnroll();
       break;
     }
       
@@ -293,33 +293,33 @@ void BehaviorEnrollFace::BehaviorUpdate(BehaviorExternalInterface& behaviorExter
     case State::Enrolling:
     {
       // Check to see if we're done
-      if(behaviorExternalInterface.GetFaceWorld().IsFaceEnrollmentComplete())
+      if(GetBEI().GetFaceWorld().IsFaceEnrollmentComplete())
       {
         PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.CheckIfDone.ReachedEnrollmentCount", "");
         
         // If we complete successfully, unset the observed ID/name
         _observedUnusableID = Vision::UnknownFaceID;
         _observedUnusableName.clear();
-        behaviorExternalInterface.GetVisionComponent().AssignNameToFace(_faceID, _faceName, _saveID);
+        GetBEI().GetVisionComponent().AssignNameToFace(_faceID, _faceName, _saveID);
 
         // Note that we will wait to disable face enrollment until the very end of
         // the behavior so that we remain resume-able from reactions, in case we
         // are interrupted after this point (e.g. while playing the sayname animations).
         
-        TransitionToSayingName(behaviorExternalInterface);
+        TransitionToSayingName();
       }
       else if(HasTimedOut())
       {
         // Need to play scanning get-out because we timed out while enrolling
-        TransitionToScanningInterrupted(behaviorExternalInterface);
+        TransitionToScanningInterrupted();
       }
       else
       {
         // Check to see if the face we've been enrolling has changed based on what was
         // observed since the last tick
-        UpdateFaceToEnroll(behaviorExternalInterface);
+        UpdateFaceToEnroll();
 
-        const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+        const auto& robotInfo = GetBEI().GetRobotInfo();
         // If we haven't seen the person (and only the one person) in too long, go back to looking for them
         if(robotInfo.GetLastImageTimeStamp() - _lastFaceSeenTime_ms > kEnrollFace_TimeoutForReLookForFace_ms)
         {
@@ -338,7 +338,7 @@ void BehaviorEnrollFace::BehaviorUpdate(BehaviorExternalInterface& behaviorExter
             _faceID = Vision::UnknownFaceID;
           }
           
-          TransitionToLookingForFace(behaviorExternalInterface);
+          TransitionToLookingForFace();
         }
       }
       
@@ -349,12 +349,12 @@ void BehaviorEnrollFace::BehaviorUpdate(BehaviorExternalInterface& behaviorExter
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorEnrollFace::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorEnrollFace::OnBehaviorDeactivated()
 {
   // Leave general-purpose / session-only enrollment enabled (i.e. not for a specific face)
-  behaviorExternalInterface.GetFaceWorldMutable().Enroll(Vision::UnknownFaceID);
+  GetBEI().GetFaceWorldMutable().Enroll(Vision::UnknownFaceID);
 
-  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  const auto& robotInfo = GetBEI().GetRobotInfo();
   // if on the charger, we're exiting to the on charger reaction, unity is going to try to cancel but too late.
   if( robotInfo.IsOnCharger() )
   {
@@ -446,7 +446,7 @@ void BehaviorEnrollFace::OnBehaviorDeactivated(BehaviorExternalInterface& behavi
   // and don't disable face enrollment.
   if(info.result != FaceEnrollmentResult::Incomplete)
   {
-    DisableEnrollment(behaviorExternalInterface);
+    DisableEnrollment();
     
     // If enrollment did not succeed (but is complete) and we're enrolling a *new* face:
     // It is possible that the vision system (on its own thread!) actually finished enrolling internally. Therefore we
@@ -459,7 +459,7 @@ void BehaviorEnrollFace::OnBehaviorDeactivated(BehaviorExternalInterface& behavi
       PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.StopInternal.ErasingNewlyEnrolledFace",
                     "Erasing new face %d as a precaution because we are about to report failure result: %s",
                     _faceID, EnumToString(info.result));
-      behaviorExternalInterface.GetVisionComponent().EraseFace(_faceID);
+      GetBEI().GetVisionComponent().EraseFace(_faceID);
     }
     
     if(info.result == FaceEnrollmentResult::Success)
@@ -495,11 +495,11 @@ bool BehaviorEnrollFace::IsEnrollmentRequested() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorEnrollFace::DisableEnrollment(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorEnrollFace::DisableEnrollment()
 {
   _settings->name.clear();
   // Leave "session-only" face enrollment enabled when we finish
-  behaviorExternalInterface.GetFaceWorldMutable().Enroll(Vision::UnknownFaceID);
+  GetBEI().GetFaceWorldMutable().Enroll(Vision::UnknownFaceID);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -528,14 +528,14 @@ bool BehaviorEnrollFace::HasTimedOut() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorEnrollFace::CanMoveTreads(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorEnrollFace::CanMoveTreads() const
 {
-  if(behaviorExternalInterface.GetOffTreadsState() != OffTreadsState::OnTreads)
+  if(GetBEI().GetOffTreadsState() != OffTreadsState::OnTreads)
   {
     return false;
   }
 
-  const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  const auto& robotInfo = GetBEI().GetRobotInfo();
   if(robotInfo.GetCliffSensorComponent().IsCliffDetected())
   {
     return false;
@@ -545,14 +545,14 @@ bool BehaviorEnrollFace::CanMoveTreads(BehaviorExternalInterface& behaviorExtern
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorEnrollFace::TransitionToLookingForFace(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorEnrollFace::TransitionToLookingForFace()
 {
   const bool playScanningGetOut = (State::Enrolling == _state);
   
   SET_STATE(LookingForFace);
 
   IActionRunner* action = new CompoundActionSequential({
-    CreateTurnTowardsFaceAction(behaviorExternalInterface, _faceID, _saveID, playScanningGetOut),
+    CreateTurnTowardsFaceAction(_faceID, _saveID, playScanningGetOut),
     new WaitForImagesAction(kEnrollFace_NumImagesToWait, VisionMode::DetectingFaces),
   });
 
@@ -561,7 +561,7 @@ void BehaviorEnrollFace::TransitionToLookingForFace(BehaviorExternalInterface& b
   // a tracking action)
   CancelDelegates(false);
   
-  DelegateIfInControl(action, [this](BehaviorExternalInterface& behaviorExternalInterface)
+  DelegateIfInControl(action, [this]()
               {
                 if(_lastFaceSeenTime_ms == 0)
                 {
@@ -577,8 +577,8 @@ void BehaviorEnrollFace::TransitionToLookingForFace(BehaviorExternalInterface& b
                                   "Trying again. FaceID:%d",
                                   _faceID);
                     
-                    DelegateIfInControl(CreateLookAroundAction(behaviorExternalInterface),
-                                &BehaviorEnrollFace::TransitionToLookingForFace);
+                    DelegateIfInControl(CreateLookAroundAction(),
+                                        &BehaviorEnrollFace::TransitionToLookingForFace);
                   }
                 }
                 else
@@ -596,9 +596,9 @@ void BehaviorEnrollFace::TransitionToLookingForFace(BehaviorExternalInterface& b
                   auto getInAnimAction = new TriggerAnimationAction(AnimationTrigger::MeetCozmoLookFaceGetIn);
                   
                   IActionRunner* action = nullptr;
-                  if(CanMoveTreads(behaviorExternalInterface))
+                  if(CanMoveTreads())
                   {
-                    SmartFaceID smartID = behaviorExternalInterface.GetFaceWorld().GetSmartFaceID(_faceID);
+                    SmartFaceID smartID = GetBEI().GetFaceWorld().GetSmartFaceID(_faceID);
                     // Turn towards the person we've chosen to enroll, play the "get in" animation
                     // to start "scanning" and move towards the person a bit to show intentionality
                     action = new CompoundActionSequential({
@@ -623,16 +623,16 @@ void BehaviorEnrollFace::TransitionToLookingForFace(BehaviorExternalInterface& b
 }
     
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorEnrollFace::TransitionToEnrolling(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorEnrollFace::TransitionToEnrolling()
 {
   SET_STATE(Enrolling);
   
   // Actually enable directed enrollment of the selected face in the vision system
-  behaviorExternalInterface.GetFaceWorldMutable().Enroll(_faceID);
+  GetBEI().GetFaceWorldMutable().Enroll(_faceID);
 
   TrackFaceAction* trackAction = new TrackFaceAction(_faceID);
     
-  if(!CanMoveTreads(behaviorExternalInterface))
+  if(!CanMoveTreads())
   {
     // Only move head during tracking if robot is off the ground or a cliff is detected
     // (the latter can happen if picked up but held very level)
@@ -658,7 +658,7 @@ void BehaviorEnrollFace::TransitionToEnrolling(BehaviorExternalInterface& behavi
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorEnrollFace::TransitionToScanningInterrupted(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorEnrollFace::TransitionToScanningInterrupted()
 {
   SET_STATE(ScanningInterrupted);
   
@@ -672,7 +672,7 @@ void BehaviorEnrollFace::TransitionToScanningInterrupted(BehaviorExternalInterfa
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorEnrollFace::TransitionToSayingName(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorEnrollFace::TransitionToSayingName()
 {
   SET_STATE(SayingName);
   
@@ -734,7 +734,7 @@ void BehaviorEnrollFace::TransitionToSayingName(BehaviorExternalInterface& behav
   }
   
   // Note: even if the animation fails for some reason, we will still continue with the behavior
-  DelegateIfInControl(finalAnimation, [this,&behaviorExternalInterface](ActionResult result)
+  DelegateIfInControl(finalAnimation, [this](ActionResult result)
   {
     if(ActionResult::SUCCESS != result)
     {
@@ -744,7 +744,7 @@ void BehaviorEnrollFace::TransitionToSayingName(BehaviorExternalInterface& behav
     {
       if(_saveToRobot)
       {
-        TransitionToSavingToRobot(behaviorExternalInterface);
+        TransitionToSavingToRobot();
       }
       else
       {
@@ -756,7 +756,7 @@ void BehaviorEnrollFace::TransitionToSayingName(BehaviorExternalInterface& behav
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorEnrollFace::TransitionToSavingToRobot(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorEnrollFace::TransitionToSavingToRobot()
 {
   SET_STATE(SavingToRobot);
   
@@ -780,7 +780,7 @@ void BehaviorEnrollFace::TransitionToSavingToRobot(BehaviorExternalInterface& be
     }
   };
   
-  behaviorExternalInterface.GetVisionComponent().SaveFaceAlbumToRobot(saveAlbumCallback, saveEnrollCallback);
+  GetBEI().GetVisionComponent().SaveFaceAlbumToRobot(saveAlbumCallback, saveEnrollCallback);
   
   std::function<bool(Robot& robot)> waitForSave = [this](Robot& robot) -> bool
   {
@@ -840,7 +840,7 @@ void BehaviorEnrollFace::TransitionToSavingToRobot(BehaviorExternalInterface& be
 #pragma mark Action Creation Helpers
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IActionRunner* BehaviorEnrollFace::CreateTurnTowardsFaceAction(BehaviorExternalInterface& behaviorExternalInterface, Vision::FaceID_t faceID,
+IActionRunner* BehaviorEnrollFace::CreateTurnTowardsFaceAction(Vision::FaceID_t faceID,
                                                                Vision::FaceID_t saveID,
                                                                bool playScanningGetOut)
 {
@@ -855,7 +855,7 @@ IActionRunner* BehaviorEnrollFace::CreateTurnTowardsFaceAction(BehaviorExternalI
     liftAndTurnTowardsAction->AddAction(new TriggerAnimationAction(AnimationTrigger::MeetCozmoLookFaceInterrupt));
   }
   
-  if(!CanMoveTreads(behaviorExternalInterface))
+  if(!CanMoveTreads())
   {
     // If being held in the air, don't try to turn, so just return the parallel
     // compound action as it is now
@@ -867,13 +867,13 @@ IActionRunner* BehaviorEnrollFace::CreateTurnTowardsFaceAction(BehaviorExternalI
   if(faceID != Vision::UnknownFaceID)
   {
     // Try to look at the specified face
-    const Vision::TrackedFace* face = behaviorExternalInterface.GetFaceWorld().GetFace(faceID);
+    const Vision::TrackedFace* face = GetBEI().GetFaceWorld().GetFace(faceID);
     if(nullptr != face) {
       PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.CreateTurnTowardsFaceAction.TurningTowardsFaceID",
                     "Turning towards faceID=%d (saveID=%d)",
                     faceID, saveID);
 
-      SmartFaceID smartID = behaviorExternalInterface.GetFaceWorld().GetSmartFaceID(faceID);
+      SmartFaceID smartID = GetBEI().GetFaceWorld().GetSmartFaceID(faceID);
       turnAction = new TurnTowardsFaceAction(smartID, DEG_TO_RAD(45.f));
     }
   }
@@ -886,15 +886,15 @@ IActionRunner* BehaviorEnrollFace::CreateTurnTowardsFaceAction(BehaviorExternalI
     const Vision::TrackedFace* faceToTurnTowards = nullptr;
     if(saveID != Vision::UnknownFaceID )
     {
-      faceToTurnTowards = behaviorExternalInterface.GetFaceWorld().GetFace(saveID);
+      faceToTurnTowards = GetBEI().GetFaceWorld().GetFace(saveID);
     }
     
     if(faceToTurnTowards == nullptr)
     {
-      auto allFaceIDs = behaviorExternalInterface.GetFaceWorld().GetFaceIDs();
+      auto allFaceIDs = GetBEI().GetFaceWorld().GetFaceIDs();
       for(auto & ID : allFaceIDs)
       {
-        const Vision::TrackedFace* face = behaviorExternalInterface.GetFaceWorld().GetFace(ID);
+        const Vision::TrackedFace* face = GetBEI().GetFaceWorld().GetFace(ID);
         if(ANKI_VERIFY(face != nullptr, "BehaviorEnrollFace.CreateTurnTowardsFaceAction.NullFace", "ID:%d", ID))
         {
           if(!face->HasName())
@@ -907,7 +907,7 @@ IActionRunner* BehaviorEnrollFace::CreateTurnTowardsFaceAction(BehaviorExternalI
             if((faceToTurnTowards == nullptr) ||
                (face->GetTimeStamp() > faceToTurnTowards->GetTimeStamp()) ||
                (face->GetTimeStamp() == faceToTurnTowards->GetTimeStamp() &&
-                behaviorExternalInterface.GetRNG().RandDbl() < 0.5))
+                GetBEI().GetRNG().RandDbl() < 0.5))
             {
               faceToTurnTowards = face;
             }
@@ -923,7 +923,7 @@ IActionRunner* BehaviorEnrollFace::CreateTurnTowardsFaceAction(BehaviorExternalI
                     "Turning towards faceID=%d last seen at t=%d (saveID=%d)",
                     faceToTurnTowards->GetID(), faceToTurnTowards->GetTimeStamp(), saveID);
 
-      SmartFaceID smartID = behaviorExternalInterface.GetFaceWorld().GetSmartFaceID(faceToTurnTowards->GetID());
+      SmartFaceID smartID = GetBEI().GetFaceWorld().GetSmartFaceID(faceToTurnTowards->GetID());
       turnAction = new TurnTowardsFaceAction(smartID, DEG_TO_RAD(90.f));
     }
   }
@@ -947,7 +947,7 @@ IActionRunner* BehaviorEnrollFace::CreateTurnTowardsFaceAction(BehaviorExternalI
 } // CreateTurnTowardsFaceAction()
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IActionRunner* BehaviorEnrollFace::CreateLookAroundAction(BehaviorExternalInterface& behaviorExternalInterface)
+IActionRunner* BehaviorEnrollFace::CreateLookAroundAction()
 {
   // If we haven't seen the face since this behavior was created,
   // try looking up further: it's more likely a face is further up and
@@ -963,7 +963,7 @@ IActionRunner* BehaviorEnrollFace::CreateLookAroundAction(BehaviorExternalInterf
 
   CompoundActionSequential* compoundAction = new CompoundActionSequential();
   
-  if(CanMoveTreads(behaviorExternalInterface))
+  if(CanMoveTreads())
   {
     compoundAction->AddAction(new PanAndTiltAction(relBodyAngle, absHeadAngle, false, true));
     
@@ -1052,14 +1052,14 @@ bool BehaviorEnrollFace::IsSeeingTooManyFaces(FaceWorld& faceWorld, const TimeSt
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorEnrollFace::UpdateFaceToEnroll(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorEnrollFace::UpdateFaceToEnroll()
 {
-  const FaceWorld& faceWorld = behaviorExternalInterface.GetFaceWorld();
-  auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
+  const FaceWorld& faceWorld = GetBEI().GetFaceWorld();
+  auto& robotInfo = GetBEI().GetRobotInfo();
 
   const TimeStamp_t lastImgTime = robotInfo.GetLastImageTimeStamp();
   
-  const bool tooManyFaces = IsSeeingTooManyFaces(behaviorExternalInterface.GetFaceWorldMutable(), lastImgTime);
+  const bool tooManyFaces = IsSeeingTooManyFaces(GetBEI().GetFaceWorldMutable(), lastImgTime);
   if(tooManyFaces)
   {
     PRINT_CH_DEBUG(kLogChannelName, "BehaviorEnrollFace.UpdateFaceToEnroll.TooManyFaces", "");
@@ -1079,7 +1079,7 @@ void BehaviorEnrollFace::UpdateFaceToEnroll(BehaviorExternalInterface& behaviorE
   {
     // If we saw the face we're currently enrolling, there's nothing to do other than
     // update it's last seen time
-    const Face* enrollFace = behaviorExternalInterface.GetFaceWorld().GetFace(_faceID);
+    const Face* enrollFace = GetBEI().GetFaceWorld().GetFace(_faceID);
     UpdateFaceIDandTime(enrollFace);
   }
   else
@@ -1100,7 +1100,7 @@ void BehaviorEnrollFace::UpdateFaceToEnroll(BehaviorExternalInterface& behaviorE
         continue;
       }
       
-      const Face* newFace = behaviorExternalInterface.GetFaceWorld().GetFace(faceID);
+      const Face* newFace = GetBEI().GetFaceWorld().GetFace(faceID);
       if(nullptr == newFace)
       {
         PRINT_NAMED_WARNING("BehaviorEnrollFace.UpdateFaceToEnroll.NullFace",
@@ -1130,7 +1130,7 @@ void BehaviorEnrollFace::UpdateFaceToEnroll(BehaviorExternalInterface& behaviorE
           // Face ID is already set but we didn't see it and instead we're seeing a face
           // with a different ID. See if it matches the pose of the one we were already enrolling.
           
-          auto currentFace = behaviorExternalInterface.GetFaceWorld().GetFace(_faceID);
+          auto currentFace = GetBEI().GetFaceWorld().GetFace(_faceID);
           
           if(nullptr != currentFace && nullptr != newFace &&
              newFace->GetHeadPose().IsSameAs(currentFace->GetHeadPose(),
@@ -1175,7 +1175,7 @@ void BehaviorEnrollFace::UpdateFaceToEnroll(BehaviorExternalInterface& behaviorE
 #pragma mark Event Handlers
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorEnrollFace::AlwaysHandleInScope(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorEnrollFace::AlwaysHandleInScope(const EngineToGameEvent& event)
 {
   switch (event.GetData().GetTag())
   {
@@ -1187,7 +1187,7 @@ void BehaviorEnrollFace::AlwaysHandleInScope(const EngineToGameEvent& event, Beh
       // were enrolling
       if(msg.oldID == _faceID)
       {
-        const Vision::TrackedFace* newFace = behaviorExternalInterface.GetFaceWorld().GetFace(msg.newID);
+        const Vision::TrackedFace* newFace = GetBEI().GetFaceWorld().GetFace(msg.newID);
         if(msg.newID != _saveID &&
            newFace != nullptr &&
            newFace->HasName())
@@ -1242,7 +1242,7 @@ void BehaviorEnrollFace::AlwaysHandleInScope(const EngineToGameEvent& event, Beh
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorEnrollFace::HandleWhileActivated(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorEnrollFace::HandleWhileActivated(const EngineToGameEvent& event)
 {
   switch (event.GetData().GetTag())
   {
@@ -1266,7 +1266,7 @@ void BehaviorEnrollFace::HandleWhileActivated(const EngineToGameEvent& event, Be
           PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.HandleWhileRunning.LookForFaceInterrupted",
                         "Restarting look-for-face due to %s event",
                         MessageEngineToGameTagToString(event.GetData().GetTag()));
-          TransitionToLookingForFace(behaviorExternalInterface);
+          TransitionToLookingForFace();
         }
         else if(State::Enrolling == _state)
         {
@@ -1276,7 +1276,7 @@ void BehaviorEnrollFace::HandleWhileActivated(const EngineToGameEvent& event, Be
                         "Restarting enrollment due to %s event",
                         MessageEngineToGameTagToString(event.GetData().GetTag()));
           CancelDelegates(false);
-          TransitionToEnrolling(behaviorExternalInterface);
+          TransitionToEnrolling();
         }
       }
       break;
@@ -1289,7 +1289,7 @@ void BehaviorEnrollFace::HandleWhileActivated(const EngineToGameEvent& event, Be
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorEnrollFace::HandleWhileInScopeButNotActivated(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorEnrollFace::HandleWhileInScopeButNotActivated(const GameToEngineEvent& event)
 {
   switch(event.GetData().GetTag())
   {
@@ -1327,7 +1327,7 @@ void BehaviorEnrollFace::HandleWhileInScopeButNotActivated(const GameToEngineEve
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorEnrollFace::HandleWhileActivated(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorEnrollFace::HandleWhileActivated(const GameToEngineEvent& event)
 {
   switch(event.GetData().GetTag())
   {

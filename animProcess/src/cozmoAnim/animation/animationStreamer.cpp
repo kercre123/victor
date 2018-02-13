@@ -18,9 +18,9 @@
 #include "cozmoAnim/animation/animationStreamer.h"
 //#include "cozmoAnim/animation/trackLayerManagers/faceLayerManager.h"
 
-#include "cozmoAnim/animation/cannedAnimationContainer.h"
-#include "cozmoAnim/animation/faceAnimationManager.h"
-#include "cozmoAnim/animation/proceduralFaceDrawer.h"
+#include "cannedAnimLib/cannedAnimationContainer.h"
+#include "cannedAnimLib/faceAnimationManager.h"
+#include "cannedAnimLib/proceduralFaceDrawer.h"
 #include "cozmoAnim/animation/trackLayerComponent.h"
 #include "cozmoAnim/audio/animationAudioClient.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
@@ -49,7 +49,9 @@
 
 namespace Anki {
 namespace Cozmo {
-  
+
+  CONSOLE_VAR(bool, kProcFace_UseNoise, "ProceduralFace", false); // Victor vs Cozmo effect, no noise = lazy updates
+
   namespace{
     
   const char* kLogChannelName = "Animations";
@@ -74,7 +76,6 @@ namespace Cozmo {
   
   AnimationStreamer::AnimationStreamer(const CozmoAnimContext* context)
   : _context(context)
-  , _animationContainer(*(_context->GetDataLoader()->GetCannedAnimations()))
   , _trackLayerComponent(new TrackLayerComponent(context))
   , _lockedTracks(0)
   , _tracksInUse(0)
@@ -91,6 +92,7 @@ namespace Cozmo {
     DEV_ASSERT(nullptr != _context, "AnimationStreamer.Init.NullContext");
     DEV_ASSERT(nullptr != _context->GetDataLoader(), "AnimationStreamer.Init.NullRobotDataLoader");
     DEV_ASSERT(nullptr != _context->GetDataLoader()->GetCannedAnimations(), "AnimationStreamer.Init.NullCannedAnimationsContainer");
+    _animationContainer = _context->GetDataLoader()->GetCannedAnimations();
     
     SetDefaultParams();
     
@@ -98,10 +100,10 @@ namespace Cozmo {
     //       It's currently hard to do with CPPlite messages.
     // SetupHandlers(_context->GetExternalInterface());
     
-    
+
     // Set neutral face
     const std::string neutralFaceAnimName = "anim_neutral_eyes_01";
-    _neutralFaceAnimation = _animationContainer.GetAnimation(neutralFaceAnimName);
+    _neutralFaceAnimation = _animationContainer->GetAnimation(neutralFaceAnimName);
     if (nullptr != _neutralFaceAnimation)
     {
       auto frame = _neutralFaceAnimation->GetTrack<ProceduralFaceKeyFrame>().GetFirstKeyFrame();
@@ -140,7 +142,7 @@ namespace Cozmo {
   
   const Animation* AnimationStreamer::GetCannedAnimation(const std::string& name) const
   {
-    return _animationContainer.GetAnimation(name);
+    return _animationContainer->GetAnimation(name);
   }
   
   AnimationStreamer::~AnimationStreamer()
@@ -164,7 +166,7 @@ namespace Cozmo {
       return RESULT_OK;
     }
     
-    return SetStreamingAnimation(_animationContainer.GetAnimation(name), tag, numLoops, interruptRunning, false);
+    return SetStreamingAnimation(_animationContainer->GetAnimation(name), tag, numLoops, interruptRunning, false);
   }
   
   Result AnimationStreamer::SetStreamingAnimation(Animation* anim, Tag tag, u32 numLoops, bool interruptRunning, bool isInternalAnim)
@@ -512,6 +514,18 @@ namespace Cozmo {
     }
     else
     {
+      if(!kProcFace_UseNoise) {
+        static ProceduralFace::EyeParamArray previousEyeParameters[2];
+
+        if (previousEyeParameters[ProceduralFace::WhichEye::Left] == procFace.GetParameters(ProceduralFace::WhichEye::Left) &&
+            previousEyeParameters[ProceduralFace::WhichEye::Right] == procFace.GetParameters(ProceduralFace::WhichEye::Right)) {
+          return;
+        }
+
+        previousEyeParameters[ProceduralFace::WhichEye::Left] = procFace.GetParameters(ProceduralFace::WhichEye::Left);
+        previousEyeParameters[ProceduralFace::WhichEye::Right] = procFace.GetParameters(ProceduralFace::WhichEye::Right);
+      }
+
       DEV_ASSERT(_context != nullptr, "AnimationStreamer.BufferFaceToSend.NoContext");
       DEV_ASSERT(_context->GetRandom() != nullptr, "AnimationStreamer.BufferFaceToSend.NoRNGinContext");
       ProceduralFaceDrawer::DrawFace(procFace, *_context->GetRandom(), _procFaceImg);

@@ -11,6 +11,8 @@ If you need to work on Cozmo, you should look in [cozmo-one].
 
 [cozmo-one]: https://github.com/anki/cozmo-one
 
+For more information about the system architecture, components, organization at a high level, check out the [Victor System Architecture](docs/architecture/README.md) page.
+
 ## Getting Started
 
 If you are new to Anki please also see the [New Hire Onboarding](https://ankiinc.atlassian.net/wiki/pages/viewpage.action?pageId=72614010) page.
@@ -102,7 +104,14 @@ See [build-instructions](docs/development/build-instructions.md) for a more thor
 
 ### ADB setup
 
-Since the Android SDK and NDK are automatically downloaded with `./configure.py` you should be using `adb` from there. Make sure you do not have android-sdk installed from `brew` by running. 
+You can get the android SDK and NDK by running the following commands:
+
+```
+./tools/build/tools/ankibuild/android.py --install-sdk
+./tools/build/tools/ankibuild/android.py --install-ndk
+```
+
+Make sure you do not have android-sdk installed from `brew` by running. 
 
 `brew uninstall android-sdk`
 
@@ -186,3 +195,7 @@ Most developers shouldn't have to do this. Better to ask someone in hardware or 
 1. If the robot has previously run the robot process since last boot then you'll need to first reboot the robot. 
 
 1. Run `dfu.sh` in `robot/`. There should be a bunch of messages indicating transfer of data. Might need to run twice.
+
+## Having trouble?
+
+Check out the [Frequently Asked Questions](docs/FAQ.md) page. When you get new questions answered, consider adding them to the list to help others!

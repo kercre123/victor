@@ -83,4 +83,14 @@ function program_status()
     process_status ${PROGRAM_EXE}
 }
 
+function get_program_pid()
+{
+    get_process_pid ${PROGRAM_EXE}
+}
+
+function get_program_name()
+{
+    get_process_name ${PROGRAM_EXE}
+}
+
 main $*

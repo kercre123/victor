@@ -22,6 +22,9 @@
 #include "audioEngine/multiplexer/audioMultiplexer.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 
+// TODO HACK this is temporary until we get a webserver >process<
+#include "engine/util/webService/webService.h"
+
 #include "osState/osState.h"
 
 #include "util/logging/logging.h"
@@ -39,10 +42,6 @@
 #endif
 
 #define LOG_CHANNEL    "CozmoAnim"
-#define LOG_ERROR      PRINT_NAMED_ERROR
-#define LOG_WARNING    PRINT_NAMED_WARNING
-#define LOG_INFO(...)  PRINT_CH_INFO(LOG_CHANNEL, ##__VA_ARGS__)
-#define LOG_DEBUG(...) PRINT_CH_DEBUG(LOG_CHANNEL, ##__VA_ARGS__)
 
 #if ANKI_PROFILING_ENABLED && !defined(SIMULATOR)
   #define ENABLE_CE_SLEEP_TIME_DIAGNOSTICS 0
@@ -100,13 +99,15 @@ Result CozmoAnimEngine::Init() {
   auto * audioInput = static_cast<Audio::EngineRobotAudioInput*>(audioMux->GetInput(regId));
   AnimProcessMessages::Init( _animationStreamer.get(), audioInput, _context.get());
 
+  _context->GetWebService()->Start(_context->GetDataPlatform(), "8889");
+
   LOG_INFO("CozmoAnimEngine.Init.Success","Success");
   _isInitialized = true;
 
   return RESULT_OK;
 }
 
-Result CozmoAnimEngine::Update(const BaseStationTime_t currTime_nanosec)
+Result CozmoAnimEngine::Update(BaseStationTime_t currTime_nanosec)
 {
   //ANKI_CPU_PROFILE("CozmoAnimEngine::Update");
   
@@ -140,7 +141,9 @@ Result CozmoAnimEngine::Update(const BaseStationTime_t currTime_nanosec)
   
   BaseStationTimer::getInstance()->UpdateTime(currTime_nanosec);
   
-  AnimProcessMessages::Update();
+  _context->GetWebService()->Update();
+
+  AnimProcessMessages::Update(currTime_nanosec);
   
   OSState::getInstance()->Update();
   _animationStreamer->Update();

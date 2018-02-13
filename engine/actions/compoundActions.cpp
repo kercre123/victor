@@ -494,8 +494,10 @@ namespace Anki {
       for(auto currentAction = _actions.begin(); currentAction != _actions.end();)
       {
         assert((*currentAction) != nullptr); // should not have been allowed in by constructor
-        (*currentAction)->SetRobot(&GetRobot());
-        
+        if (!(*currentAction)->HasRobot()) {
+          (*currentAction)->SetRobot(&GetRobot());
+        }
+          
         // If the compound action is suppressing track locking then the constituent actions should too
         (*currentAction)->ShouldSuppressTrackLocking(IsSuppressingTrackLocking());
 

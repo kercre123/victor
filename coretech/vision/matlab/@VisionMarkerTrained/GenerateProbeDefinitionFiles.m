@@ -2,7 +2,7 @@ function [probeDefString] = GenerateProbeDefinitionFiles(varargin)
 
 writeFiles = false;
 projectRoot = fullfile(fileparts(mfilename('fullpath')), '..', '..');
-probeDefFile = '/robot/src/probeDefinition.cpp';
+probeDefFile = '/robot/probeDefinition.cpp';
 
 numFractionalBits = 15;
 

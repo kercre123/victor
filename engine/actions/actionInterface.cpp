@@ -161,6 +161,7 @@ namespace Anki {
         case RobotActionType::TRACK_OBJECT:
         case RobotActionType::TRAVERSE_OBJECT:
         case RobotActionType::TURN_IN_PLACE:
+        case RobotActionType::TURN_TO_ALIGN_WITH_CHARGER:
         case RobotActionType::TURN_TOWARDS_FACE:
         case RobotActionType::TURN_TOWARDS_IMAGE_POINT:
         case RobotActionType::TURN_TOWARDS_LAST_FACE_POSE:

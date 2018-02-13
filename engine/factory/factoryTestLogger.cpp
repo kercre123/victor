@@ -28,6 +28,7 @@ namespace Cozmo {
   static const std::string _kLogRootDirName = "factory_test_logs";
   static const std::string _kArchiveRootDirName = "factory_test_log_archives";
   static const Util::Data::Scope _kLogScope = Util::Data::Scope::Persistent;
+  static std::string _kPathToCopyLogTo = "/factory/log0";
   
   static const int _kMaxEngineLogSizeBytes = 1500000;
   
@@ -144,6 +145,7 @@ namespace Cozmo {
     PRINT_NAMED_INFO("FactoryTestLogger.StartLog.CreatingLogDir", "%s", _logDir.c_str());
     Util::FileUtils::CreateDirectory(_logDir);
     _logFileName = Util::FileUtils::FullFilePath({_logDir, _kLogTextFileName + (_exportJson ? ".json" : ".txt")});
+    _kPathToCopyLogTo += (_exportJson ? ".json" : ".txt");
     
     if (_logFileHandle.is_open()) {
       PRINT_NAMED_WARNING("FactoryTestLogger.FileUnexpectedlyOpen", "");
@@ -169,6 +171,14 @@ namespace Cozmo {
         _logFileHandle << _json;
       }
       _logFileHandle.close();
+
+      // Copy log to factory partition. This should overwrite any log already there
+      // so it will always contain the most recent log
+      PRINT_NAMED_INFO("FactoryTestLogger.CloseLog.Copying", 
+                       "Copying log from %s to %s", 
+                       _logFileName.c_str(),
+                       _kPathToCopyLogTo.c_str());
+      Util::FileUtils::CopyFile(_kPathToCopyLogTo, _logFileName);
     }
     
     _logDir = "";

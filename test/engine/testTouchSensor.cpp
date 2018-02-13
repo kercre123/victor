@@ -249,8 +249,9 @@ TEST_F(TouchSensorTest, CalibrateAndClassifyMultirobotTests)
     // - the number of detected touches matches for hard-strokes
     // - the number of detected touches matches for soft-strokes (within reason)
     
-    TouchSensorComponent testTouchSensorComponent(*_robot);
-
+    TouchSensorComponent testTouchSensorComponent;
+    std::map<RobotComponentID, RobotComp> empty;
+    testTouchSensorComponent.InitDependent(_robot, empty);
     auto feedAndTestHelper = [&](std::pair<size_t,size_t> interval,
                                  const std::function<void(void)>& testBody)
     {

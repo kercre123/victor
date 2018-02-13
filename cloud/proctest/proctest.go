@@ -8,6 +8,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/binary"
+	"flag"
 	"fmt"
 	"os"
 	"strings"
@@ -22,13 +23,17 @@ const (
 type appData struct {
 	sock        ipc.Conn
 	sampleCount int
+	verbose     bool
 }
 
 var app *appData
 
 func (a *appData) audioCallback(samples []int16) {
 	a.sampleCount += len(samples)
-	fmt.Print("\rSamples recorded: ", a.sampleCount)
+	if !a.verbose {
+		// if verbose is on this will format terribly
+		fmt.Print("\rSamples recorded: ", a.sampleCount)
+	}
 
 	data := &bytes.Buffer{}
 	binary.Write(data, binary.LittleEndian, samples)
@@ -54,6 +59,10 @@ func GoMain(startRecording, stopRecording C.voidFunc) {
 	defer aiServer.Close()
 	defer micServerDaemon.Close()
 
+	var verbose bool
+	flag.BoolVar(&verbose, "verbose", false, "enable verbose logging")
+	flag.Parse()
+
 	time.Sleep(100 * time.Millisecond)
 
 	aiClient, err3 := ipc.NewUDPClient("0.0.0.0", aiPort)
@@ -67,13 +76,14 @@ func GoMain(startRecording, stopRecording C.voidFunc) {
 	}
 
 	kill := make(chan struct{})
-	go cloudproc.RunProcess(micClient, aiClient, kill)
+	cloudproc.SetVerbose(verbose)
+	go cloudproc.RunProcess(micClient, aiClient, nil, kill)
 	defer close(kill)
 
 	micServer := <-micServerDaemon.NewConns()
 
 	for {
-		app = &appData{micServer, 0}
+		app = &appData{micServer, 0, verbose}
 		fmt.Println("Press enter to start recording! (type \"done\" to quit)")
 		r := bufio.NewReader(os.Stdin)
 		str, _ := r.ReadString('\n')

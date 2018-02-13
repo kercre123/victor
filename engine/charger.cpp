@@ -56,14 +56,14 @@ namespace Anki {
     : ObservableObject(ObjectFamily::Charger, type), ActionableObject()
     , _size(Length, Width, Height)
     , _vizHandle(VizManager::INVALID_HANDLE)
-    
     {
       // TODO: Support multiple Charger types
       
       Pose3d frontPose(-M_PI_2_F, Z_AXIS_3D(),
                        Point3f{SlopeLength+PlatformLength, 0, MarkerZPosition});
       
-      _marker = &AddMarker(Vision::MARKER_CHARGERHOME, frontPose, Point2f(MarkerWidth, MarkerHeight));
+      // TODO: Update to newer CHARGER_HOME marker once DVT2 chargers are here (VIC-945) [will need to update proto too]
+      _marker = &AddMarker(Vision::MARKER_CHARGER_HOME_EYES, frontPose, Point2f(MarkerWidth, MarkerHeight));
       
     } // Charger() Constructor
 

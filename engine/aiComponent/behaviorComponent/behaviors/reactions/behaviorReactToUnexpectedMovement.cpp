@@ -35,17 +35,17 @@ BehaviorReactToUnexpectedMovement::BehaviorReactToUnexpectedMovement(const Json:
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorReactToUnexpectedMovement::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorReactToUnexpectedMovement::WantsToBeActivatedBehavior() const
 {
   return true;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToUnexpectedMovement::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToUnexpectedMovement::OnBehaviorActivated()
 {
-  if(behaviorExternalInterface.HasMoodManager()){
-    auto& moodManager = behaviorExternalInterface.GetMoodManager();
+  if(GetBEI().HasMoodManager()){
+    auto& moodManager = GetBEI().GetMoodManager();
     // Make Cozmo more frustrated if he keeps running into things/being turned
     moodManager.TriggerEmotionEvent("ReactToUnexpectedMovement",
                                     MoodManager::GetCurrentTimeInSeconds());
@@ -62,7 +62,7 @@ void BehaviorReactToUnexpectedMovement::OnBehaviorActivated(BehaviorExternalInte
   
   AnimationTrigger reactionAnimation = AnimationTrigger::ReactToUnexpectedMovement;
   
-  NeedId expressedNeed = behaviorExternalInterface.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression();
+  NeedId expressedNeed = GetBEI().GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression();
   if(expressedNeed == NeedId::Energy){
     reactionAnimation = AnimationTrigger::ReactToUnexpectedMovement_Severe_Energy;
   }else if(expressedNeed == NeedId::Repair){
@@ -78,7 +78,7 @@ void BehaviorReactToUnexpectedMovement::OnBehaviorActivated(BehaviorExternalInte
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToUnexpectedMovement::AlwaysHandleInScope(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorReactToUnexpectedMovement::AlwaysHandleInScope(const EngineToGameEvent& event)
 {
   _unexpectedMovementSide = event.GetData().Get_UnexpectedMovement().movementSide;
 }

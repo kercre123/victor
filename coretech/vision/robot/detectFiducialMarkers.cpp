@@ -107,6 +107,7 @@ namespace Anki
     Result DetectFiducialMarkers(const Array<u8> &image,
                                  FixedLengthList<VisionMarker> &markers,
                                  const FiducialDetectionParameters &params,
+                                 const bool isDarkOnLight,
                                  MemoryStack scratchCcm,
                                  MemoryStack scratchOnchip,
                                  MemoryStack scratchOffChip)
@@ -166,7 +167,7 @@ namespace Anki
         if((lastResult = ExtractComponentsViaCharacteristicScale(
           image,
           filterHalfWidths, params.scaleImage_thresholdMultiplier,
-          params.component1d_minComponentWidth, params.component1d_maxSkipDistance,
+          params.component1d_minComponentWidth, params.component1d_maxSkipDistance, isDarkOnLight,
           extractedComponents,
           scratchCcm, scratchOnchip, scratchOffChip)) != RESULT_OK)
         {
@@ -384,6 +385,7 @@ namespace Anki
                                                    params.quads_minDistanceFromImageEdge,
                                                    params.fiducialThicknessFraction,
                                                    params.roundedCornersFraction,
+                                                   isDarkOnLight,
                                                    meanGrayvalueThreshold,
                                                    scratchOnchip);
 

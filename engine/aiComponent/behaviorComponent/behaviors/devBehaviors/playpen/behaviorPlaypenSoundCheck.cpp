@@ -28,12 +28,12 @@ BehaviorPlaypenSoundCheck::BehaviorPlaypenSoundCheck(const Json::Value& config)
 {
 }
 
-void BehaviorPlaypenSoundCheck::InitBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPlaypenSoundCheck::InitBehaviorInternal()
 {
   ICozmoBehavior::SubscribeToTags({RobotInterface::RobotToEngineTag::audioFFTResult});
 }
 
-Result BehaviorPlaypenSoundCheck::OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)
+Result BehaviorPlaypenSoundCheck::OnBehaviorActivatedInternal()
 {
   // Move head and lift to extremes then move to sound playing angle
   MoveHeadToAngleAction* head = new MoveHeadToAngleAction(PlaypenConfig::kHeadAngleToPlaySound);
@@ -41,16 +41,16 @@ Result BehaviorPlaypenSoundCheck::OnBehaviorActivatedInternal(BehaviorExternalIn
   
   CompoundActionParallel* liftAndHead = new CompoundActionParallel({head, lift});
 
-  DelegateIfInControl(liftAndHead, [this, &behaviorExternalInterface](){ TransitionToPlayingSound(behaviorExternalInterface); });
+  DelegateIfInControl(liftAndHead, [this](){ TransitionToPlayingSound(); });
   
   return RESULT_OK;
 }
 
-void BehaviorPlaypenSoundCheck::TransitionToPlayingSound(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPlaypenSoundCheck::TransitionToPlayingSound()
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
+  Robot& robot = GetBEI().GetRobotInfo()._robot;
 
   RecordTouchSensorData(robot, GetIDStr());
 
@@ -68,12 +68,12 @@ void BehaviorPlaypenSoundCheck::TransitionToPlayingSound(BehaviorExternalInterfa
   DelegateIfInControl(soundAction, [this](){ PLAYPEN_SET_RESULT(FactoryTestResultCode::SUCCESS) });
 }
 
-void BehaviorPlaypenSoundCheck::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPlaypenSoundCheck::OnBehaviorDeactivated()
 {
   _soundComplete = false;
 }
 
-void BehaviorPlaypenSoundCheck::AlwaysHandleInScope(const RobotToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPlaypenSoundCheck::AlwaysHandleInScope(const RobotToEngineEvent& event)
 {
   const auto& tag = event.GetData().GetTag();
   if(tag == RobotInterface::RobotToEngineTag::audioFFTResult)
@@ -130,7 +130,7 @@ void BehaviorPlaypenSoundCheck::AlwaysHandleInScope(const RobotToEngineEvent& ev
 
     // DEPRECATED - Grabbing robot to support current cozmo code, but this should
     // be removed
-    Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
+    Robot& robot = GetBEI().GetRobotInfo()._robot;
 
     if(!robot.IsPhysical())
     {

@@ -28,11 +28,11 @@ BehaviorPlaypenWaitToStart::BehaviorPlaypenWaitToStart(const Json::Value& config
   SubscribeToTags(std::move(tags));
 }
 
-Result BehaviorPlaypenWaitToStart::OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)
+Result BehaviorPlaypenWaitToStart::OnBehaviorActivatedInternal()
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
+  Robot& robot = GetBEI().GetRobotInfo()._robot;
 
   // Remove the default playpen behavior timeout timer since this behavior will
   // run forever until the conditions for playpen to start are met
@@ -41,28 +41,14 @@ Result BehaviorPlaypenWaitToStart::OnBehaviorActivatedInternal(BehaviorExternalI
   // Turn the middle backpack light green to know that this behavior is running
   robot.GetBodyLightComponent().SetBackpackLights(_lights);
 
-  // Check that raw touch values are in expected range (the range assumes no touch)
-  const u16 rawTouchValue = robot.GetTouchSensorComponent().GetLatestRawTouchValue();
-  if(!Util::InRange(rawTouchValue,
-      PlaypenConfig::kMinExpectedTouchValue,
-      PlaypenConfig::kMaxExpectedTouchValue))
-  {
-    PRINT_NAMED_WARNING("BehaviorPlaypenWaitToStart.OnActivated.TouchOOR", 
-                        "Min %u < Val %u < Max %u",
-                        PlaypenConfig::kMinExpectedTouchValue,
-                        rawTouchValue,
-                        PlaypenConfig::kMaxExpectedTouchValue);
-    PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::TOUCH_VALUES_OOR, RESULT_FAIL);
-  }
-
   return RESULT_OK;
 }
 
-IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenWaitToStart::PlaypenUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenWaitToStart::PlaypenUpdateInternal()
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
+  Robot& robot = GetBEI().GetRobotInfo()._robot;
 
   const TimeStamp_t curTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
   
@@ -126,11 +112,11 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenWaitToStart::PlaypenUpdateInterna
   return PlaypenStatus::Running;
 }
 
-void BehaviorPlaypenWaitToStart::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPlaypenWaitToStart::OnBehaviorDeactivated()
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
+  Robot& robot = GetBEI().GetRobotInfo()._robot;
   
   _touchStartTime_ms = 0;
   _buttonPressed = false;

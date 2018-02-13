@@ -39,8 +39,8 @@ TEST(BehaviorSystemManager, TestDelegationVariants)
 {
   std::unique_ptr<TestSuperPoweredBehavior> baseBehavior = std::make_unique<TestSuperPoweredBehavior>();
   TestBehaviorFramework testFramework;
-  auto initializeBehavior = [&baseBehavior](const BehaviorComponent::ComponentsPtr& comps){
-    baseBehavior->SetBehaviorContainer(comps->_behaviorContainer);
+  auto initializeBehavior = [&baseBehavior](const BehaviorComponent::UniqueComponents& comps){
+    baseBehavior->SetBehaviorContainer(comps->_array.GetComponent(BCComponentID::BehaviorContainer).GetValue<BehaviorContainer>());
   };
   testFramework.InitializeStandardBehaviorComponent(baseBehavior.get(),initializeBehavior);
   
@@ -63,7 +63,7 @@ TEST(BehaviorSystemManager, TestDelegationVariants)
     bunchOfDelegates.back()->SetBehaviorContainer(behaviorContainer);
     bunchOfDelegates.back()->Init(bei);
     bunchOfDelegates.back()->OnEnteredActivatableScope();
-    bunchOfDelegates.back()->WantsToBeActivated(bei);
+    bunchOfDelegates.back()->WantsToBeActivated();
     InjectValidDelegateIntoBSM(testFramework, behaviorDelegating, bunchOfDelegates.back().get());
     
     EXPECT_TRUE(bsm.Delegate(bsm._behaviorStack->GetTopOfStack(),
@@ -101,8 +101,8 @@ TEST(BehaviorSystemManager, TestCancelingDelegation)
   // TODO: Ensure that canceling delegates operates as expected
   std::unique_ptr<TestSuperPoweredBehavior> baseBehavior = std::make_unique<TestSuperPoweredBehavior>();
   TestBehaviorFramework testFramework;
-  auto initializeBehavior = [&baseBehavior](const BehaviorComponent::ComponentsPtr& comps){
-    baseBehavior->SetBehaviorContainer(comps->_behaviorContainer);
+  auto initializeBehavior = [&baseBehavior](const BehaviorComponent::UniqueComponents& comps){
+    baseBehavior->SetBehaviorContainer(comps->_array.GetComponent(BCComponentID::BehaviorContainer).GetValue<BehaviorContainer>());
   };
   testFramework.InitializeStandardBehaviorComponent(baseBehavior.get(),initializeBehavior);
   
@@ -125,7 +125,7 @@ TEST(BehaviorSystemManager, TestCancelingDelegation)
     bunchOfDelegates.back()->SetBehaviorContainer(behaviorContainer);
     bunchOfDelegates.back()->Init(bei);
     bunchOfDelegates.back()->OnEnteredActivatableScope();
-    bunchOfDelegates.back()->WantsToBeActivated(bei);
+    bunchOfDelegates.back()->WantsToBeActivated();
     InjectValidDelegateIntoBSM(testFramework, behaviorDelegating, bunchOfDelegates.back().get());
     
     EXPECT_TRUE(bsm.Delegate(bsm._behaviorStack->GetTopOfStack(),
@@ -161,7 +161,7 @@ TEST(BehaviorSystemManager, TestCancelingDelegation)
     bunchOfDelegates.back()->SetBehaviorContainer(behaviorContainer);
     bunchOfDelegates.back()->Init(bei);
     bunchOfDelegates.back()->OnEnteredActivatableScope();
-    bunchOfDelegates.back()->WantsToBeActivated(bei);
+    bunchOfDelegates.back()->WantsToBeActivated();
     InjectValidDelegateIntoBSM(testFramework, behaviorDelegating, bunchOfDelegates.back().get());
     
     EXPECT_TRUE(bsm.Delegate(bsm._behaviorStack->GetTopOfStack(),
@@ -188,7 +188,7 @@ TEST(BehaviorSystemManager, TestCancelingDelegation)
     bunchOfDelegates.back()->SetBehaviorContainer(behaviorContainer);
     bunchOfDelegates.back()->Init(bei);
     bunchOfDelegates.back()->OnEnteredActivatableScope();
-    bunchOfDelegates.back()->WantsToBeActivated(bei);
+    bunchOfDelegates.back()->WantsToBeActivated();
     InjectValidDelegateIntoBSM(testFramework, behaviorDelegating, bunchOfDelegates.back().get());
     
     EXPECT_TRUE(bsm.Delegate(bsm._behaviorStack->GetTopOfStack(),

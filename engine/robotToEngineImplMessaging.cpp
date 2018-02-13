@@ -75,15 +75,17 @@ namespace Cozmo {
   
 using GameToEngineEvent = AnkiEvent<ExternalInterface::MessageGameToEngine>;
 
-RobotToEngineImplMessaging::RobotToEngineImplMessaging(Robot* robot) :
-    _hasMismatchedEngineToRobotCLAD(false)
-  , _hasMismatchedRobotToEngineCLAD(false)
+RobotToEngineImplMessaging::RobotToEngineImplMessaging() 
+: IDependencyManagedComponent(RobotComponentID::RobotToEngineImplMessaging)
+, _hasMismatchedEngineToRobotCLAD(false)
+, _hasMismatchedRobotToEngineCLAD(false)
 {
 }
 
 RobotToEngineImplMessaging::~RobotToEngineImplMessaging()
 {
 }
+
 
 void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHandler, RobotID_t robotId, Robot* const robot)
 {
@@ -119,7 +121,6 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::motorAutoEnabled,               &RobotToEngineImplMessaging::HandleMotorAutoEnabled);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::dockingStatus,                             &RobotToEngineImplMessaging::HandleDockingStatus);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::mfgId,                          &RobotToEngineImplMessaging::HandleRobotSetBodyID);
-  doRobotSubscribe(RobotInterface::RobotToEngineTag::timeProfStat,                              &RobotToEngineImplMessaging::HandleTimeProfileStat);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::micDirection,                   &RobotToEngineImplMessaging::HandleMicDirection);
   
   // lambda wrapper to call internal handler
@@ -169,19 +170,6 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
                                                              robot->SetPoseOnCharger();
                                                            }
                                                          }));
-  
-  GetSignalHandles().push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::mainCycleTimeError,
-                                                     [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
-                                                       ANKI_CPU_PROFILE("RobotTag::mainCycleTimeError");
-                                                       
-                                                       const RobotInterface::MainCycleTimeError& payload = message.GetData().Get_mainCycleTimeError();
-                                                       if (payload.numMainTooLongErrors > 0) {
-                                                         PRINT_NAMED_WARNING("Robot.MainCycleTooLong", " %d Num errors: %d, Avg time: %d us", robot->GetID(), payload.numMainTooLongErrors, payload.avgMainTooLongTime);
-                                                       }
-                                                       if (payload.numMainTooLateErrors > 0) {
-                                                         PRINT_NAMED_WARNING("Robot.MainCycleTooLate", "%d Num errors: %d, Avg time: %d us", robot->GetID(), payload.numMainTooLateErrors, payload.avgMainTooLateTime);
-                                                       }
-                                                     }));
   
   GetSignalHandles().push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::imuTemperature,
                                                      [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
@@ -969,19 +957,6 @@ void RobotToEngineImplMessaging::HandleObjectPowerLevel(const ObjectPowerLevel& 
     robot->Broadcast(ExternalInterface::MessageEngineToGame(ObjectPowerLevel(objectID, missedPackets, batteryLevel)));
   }
 
-}
-
-void RobotToEngineImplMessaging::HandleTimeProfileStat(const AnkiEvent<RobotInterface::RobotToEngine>& message)
-{
-  const auto& payload = message.GetData().Get_timeProfStat();
-  if(payload.isHeader)
-  {
-    PRINT_NAMED_INFO("Profile", "%s", payload.profName.c_str());
-  }
-  else
-  {
-    PRINT_NAMED_INFO("Profile", "name:%s avg:%u max:%u", payload.profName.c_str(), payload.avg, payload.max);
-  }
 }
 
 void RobotToEngineImplMessaging::HandleMicDirection(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)

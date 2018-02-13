@@ -58,11 +58,11 @@ BehaviorPlaypenCameraCalibration::BehaviorPlaypenCameraCalibration(const Json::V
                     EngineToGameTag::RobotObservedObject}});
 }
 
-Result BehaviorPlaypenCameraCalibration::OnBehaviorActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)
+Result BehaviorPlaypenCameraCalibration::OnBehaviorActivatedInternal()
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
+  Robot& robot = GetBEI().GetRobotInfo()._robot;
 
   // Set CameraCalibrator's CalibTargetType console var to what the playpen config says
   NativeAnkiUtilConsoleSetValueWithString("CalibTargetType",
@@ -102,11 +102,11 @@ Result BehaviorPlaypenCameraCalibration::OnBehaviorActivatedInternal(BehaviorExt
   return RESULT_OK;
 }
 
-IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenCameraCalibration::PlaypenUpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenCameraCalibration::PlaypenUpdateInternal()
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
+  Robot& robot = GetBEI().GetRobotInfo()._robot;
 
   if(!_computingCalibration)
   {
@@ -165,11 +165,11 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenCameraCalibration::PlaypenUpdateI
   return PlaypenStatus::Running;
 }
 
-void BehaviorPlaypenCameraCalibration::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPlaypenCameraCalibration::OnBehaviorDeactivated()
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
+  Robot& robot = GetBEI().GetRobotInfo()._robot;
 
   robot.GetVisionComponent().ClearCalibrationImages();
   
@@ -193,27 +193,26 @@ void BehaviorPlaypenCameraCalibration::OnBehaviorDeactivated(BehaviorExternalInt
   _waitingToStoreImage = false;
 }
 
-void BehaviorPlaypenCameraCalibration::HandleWhileActivatedInternal(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorPlaypenCameraCalibration::HandleWhileActivatedInternal(const EngineToGameEvent& event)
 {
   if(event.GetData().GetTag() == EngineToGameTag::CameraCalibration)
   {
-    HandleCameraCalibration(behaviorExternalInterface, event.GetData().Get_CameraCalibration());
+    HandleCameraCalibration(event.GetData().Get_CameraCalibration());
   }
   else if(event.GetData().GetTag() == EngineToGameTag::RobotObservedObject)
   {
-    HandleRobotObservedObject(behaviorExternalInterface, event.GetData().Get_RobotObservedObject());
+    HandleRobotObservedObject(event.GetData().Get_RobotObservedObject());
   }
 }
 
-void BehaviorPlaypenCameraCalibration::HandleCameraCalibration(BehaviorExternalInterface& behaviorExternalInterface,
-                                                               const CameraCalibration& calibMsg)
+void BehaviorPlaypenCameraCalibration::HandleCameraCalibration(const CameraCalibration& calibMsg)
 {
   // We recieved calibration so remove the waiting for calibration timer
   RemoveTimer(kWaitingForCalibTimer);
 
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
-  Robot& robot = behaviorExternalInterface.GetRobotInfo()._robot;
+  Robot& robot = GetBEI().GetRobotInfo()._robot;
 
   std::shared_ptr<Vision::CameraCalibration> camCalib(new Vision::CameraCalibration(
     calibMsg.nrows, calibMsg.ncols,
@@ -322,8 +321,7 @@ void BehaviorPlaypenCameraCalibration::HandleCameraCalibration(BehaviorExternalI
   DelegateIfInControl(new MoveHeadToAngleAction(0), [this](){ PLAYPEN_SET_RESULT(FactoryTestResultCode::SUCCESS); });
 }
 
-void BehaviorPlaypenCameraCalibration::HandleRobotObservedObject(BehaviorExternalInterface& behaviorExternalInterface,
-                                                                 const ExternalInterface::RobotObservedObject& msg)
+void BehaviorPlaypenCameraCalibration::HandleRobotObservedObject(const ExternalInterface::RobotObservedObject& msg)
 {
   if(msg.objectType == ObjectType::CustomType00)
   {
