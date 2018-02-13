@@ -141,7 +141,7 @@ DelegationComponent::DelegationComponent()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void DelegationComponent::InitDependent(Robot* robot, const BCCompMap& dependentComponents)
 {
-  auto* bsm = dependentComponents.GetBasePtr<BehaviorSystemManager>(BCComponentID::BehaviorSystemManager);
+  auto* bsm = dependentComponents.GetBasePtr<BehaviorSystemManager>();
   Init(*robot, bsm, &robot->GetAIComponent().GetComponent<ContinuityComponent>(AIComponentID::ContinuityComponent));
 }
 

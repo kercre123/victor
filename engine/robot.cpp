@@ -1100,9 +1100,9 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   
 # pragma clang diagnostic push
 # pragma clang diagnostic ignored "-Wdeprecated-declarations" 
-  GetComponent<RobotGyroDriftDetector>(RobotComponentID::GyroDriftDetector).DetectGyroDrift(msg);
+  GetComponent<RobotGyroDriftDetector>().DetectGyroDrift(msg);
 # pragma clang diagnostic pop
-  GetComponent<RobotGyroDriftDetector>(RobotComponentID::GyroDriftDetector).DetectBias(msg);
+  GetComponent<RobotGyroDriftDetector>().DetectBias(msg);
   
   /*
     PRINT_NAMED_INFO("Robot.UpdateFullRobotState.OdometryUpdate",
@@ -1647,7 +1647,7 @@ Radians Robot::GetPitchAngle() const
   
 bool Robot::WasObjectTappedRecently(const ObjectID& objectID) const
 {
-  return GetComponent<BlockTapFilterComponent>(RobotComponentID::BlockTapFilter).ShouldIgnoreMovementDueToDoubleTap(objectID);
+  return GetComponent<BlockTapFilterComponent>().ShouldIgnoreMovementDueToDoubleTap(objectID);
 }
 
 

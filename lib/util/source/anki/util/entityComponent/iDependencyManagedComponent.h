@@ -12,6 +12,8 @@
 #ifndef __Util_EntityComponent_iDependencyManagedComponent_H__
 #define __Util_EntityComponent_iDependencyManagedComponent_H__
 
+
+#include "util/entityComponent/componentTypeEnumMap.h"
 #include "util/logging/logging.h"
 
 #include <map>
@@ -47,6 +49,11 @@ protected:
   : _derivedPtr(derivedPtr)
   , _type(componentEnum)
   {
+    EnumType enumForTypeT = _type;
+    GetComponentIDForType<EnumType,T>(enumForTypeT);
+    ANKI_VERIFY(_type == enumForTypeT, 
+                "IDependencyManagedComponent.IncorrectTypeToEnumMapping",
+                "Data will be corrupted if you try to get this value");
   }
   
 public:
@@ -80,6 +87,10 @@ public:
 
   template<typename T>
   T& GetValue() const {
+    EnumType enumID = EnumType::Count;
+    GetComponentIDForType<EnumType,T>(enumID);
+    ANKI_VERIFY(enumID == _type, 
+                "DependencyManagedComponentWrapper.GetValue.CastingToIncorrectType", "");
     ANKI_VERIFY(IsValueValid(),"DependencyManagedComponentWrapper.GetValue.ValueIsNotValid",""); 
     auto* castPtr = static_cast<T*>(_derivedPtr);
     return *castPtr;
@@ -87,7 +98,11 @@ public:
 
   template<typename T>
   T* GetBasePtr() const {
-    ANKI_VERIFY(IsValueValid(),"DependencyManagedComponentWrapper.GetValue.ValueIsNotValid",""); 
+    EnumType enumID = EnumType::Count;
+    GetComponentIDForType<EnumType,T>(enumID);
+    ANKI_VERIFY(enumID == _type, 
+                "DependencyManagedComponentWrapper.GetBasePtr.CastingToIncorrectType", "");
+    ANKI_VERIFY(IsValueValid(),"DependencyManagedComponentWrapper.GetBasePtr.ValueIsNotValid",""); 
     auto* castPtr = static_cast<T*>(_derivedPtr);
     return castPtr;
   }

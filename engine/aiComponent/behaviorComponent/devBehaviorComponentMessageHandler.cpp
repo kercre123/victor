@@ -58,9 +58,9 @@ void DevBehaviorComponentMessageHandler::GetInitDependencies(BCCompIDSet& depend
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void DevBehaviorComponentMessageHandler::InitDependent(Robot* robot, const BCCompMap& dependentComponents) 
 {
-  auto& bContainer = dependentComponents.GetValue<BehaviorContainer>(BCComponentID::BehaviorContainer);
-  auto& bsm = dependentComponents.GetValue<BehaviorSystemManager>(BCComponentID::BehaviorSystemManager);
-  auto& bei = dependentComponents.GetValue<BehaviorExternalInterface>(BCComponentID::BehaviorExternalInterface);
+  auto& bContainer = dependentComponents.GetValue<BehaviorContainer>();
+  auto& bsm = dependentComponents.GetValue<BehaviorSystemManager>();
+  auto& bei = dependentComponents.GetValue<BehaviorExternalInterface>();
 
   if(_robot.HasExternalInterface()){
     

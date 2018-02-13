@@ -165,7 +165,7 @@ BehaviorContainer::~BehaviorContainer()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorContainer::InitDependent(Robot* robot, const BCCompMap& dependentComponents)
 {
-  auto& bei = dependentComponents.GetValue<BehaviorExternalInterface>(BCComponentID::BehaviorExternalInterface);
+  auto& bei = dependentComponents.GetValue<BehaviorExternalInterface>();
   Init(bei);
 }
 

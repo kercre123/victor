@@ -70,13 +70,13 @@ void BehaviorComponent::GenerateManagedComponents(Robot& robot,
   // Face World
   if(!entity->HasComponent(BCComponentID::FaceWorld)){
     entity->AddDependentComponent(BCComponentID::FaceWorld, 
-      robot.GetComponentPtr<FaceWorld>(RobotComponentID::FaceWorld), false);
+      robot.GetComponentPtr<FaceWorld>(), false);
   }
   
   // Block World
   if(!entity->HasComponent(BCComponentID::BlockWorld)){
     entity->AddDependentComponent(BCComponentID::BlockWorld, 
-      robot.GetComponentPtr<BlockWorld>(RobotComponentID::BlockWorld), false);
+      robot.GetComponentPtr<BlockWorld>(), false);
   }
   
   //////
@@ -132,7 +132,7 @@ void BehaviorComponent::GenerateManagedComponents(Robot& robot,
       dataLoader->GetVictorFreeplayBehaviorConfig() : blankActivitiesConfig;
     
     
-    BehaviorContainer& bc = entity->GetValue<BehaviorContainer>(BCComponentID::BehaviorContainer);
+    BehaviorContainer& bc = entity->GetValue<BehaviorContainer>();
     if(!behaviorSystemConfig.empty()){
       BehaviorID baseBehaviorID = ICozmoBehavior::ExtractBehaviorIDFromConfig(behaviorSystemConfig);
       baseBehavior = bc.FindBehaviorByID(baseBehaviorID);
@@ -213,12 +213,12 @@ void BehaviorComponent::Update(Robot& robot,
                                std::string& behaviorDebugStr)
 {
 
-  BehaviorExternalInterface& bei = GetComponent<BehaviorExternalInterface>(BCComponentID::BehaviorExternalInterface);
+  BehaviorExternalInterface& bei = GetComponent<BehaviorExternalInterface>();
 
   GetBehaviorHelperComponent().Update();
   
   {
-    BehaviorSystemManager& bsm = GetComponent<BehaviorSystemManager>(BCComponentID::BehaviorSystemManager);
+    BehaviorSystemManager& bsm = GetComponent<BehaviorSystemManager>();
     bsm.Update(bei);
   }
   
@@ -234,7 +234,7 @@ void BehaviorComponent::Update(Robot& robot,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorComponent::SubscribeToTags(IBehavior* subscriber, std::set<ExternalInterface::MessageGameToEngineTag>&& tags) const
 {
-  AsyncMessageGateComponent& gateComp = GetComponent<AsyncMessageGateComponent>(BCComponentID::AsyncMessageComponent);
+  AsyncMessageGateComponent& gateComp = GetComponent<AsyncMessageGateComponent>();
   gateComp.SubscribeToTags(subscriber, std::move(tags));
 }
 
@@ -242,7 +242,7 @@ void BehaviorComponent::SubscribeToTags(IBehavior* subscriber, std::set<External
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorComponent::SubscribeToTags(IBehavior* subscriber, std::set<ExternalInterface::MessageEngineToGameTag>&& tags) const
 {
-  AsyncMessageGateComponent& gateComp = GetComponent<AsyncMessageGateComponent>(BCComponentID::AsyncMessageComponent);
+  AsyncMessageGateComponent& gateComp = GetComponent<AsyncMessageGateComponent>();
   gateComp.SubscribeToTags(subscriber, std::move(tags));
 }
 
@@ -250,7 +250,7 @@ void BehaviorComponent::SubscribeToTags(IBehavior* subscriber, std::set<External
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorComponent::SubscribeToTags(IBehavior* subscriber, std::set<RobotInterface::RobotToEngineTag>&& tags) const
 {
-  AsyncMessageGateComponent& gateComp = GetComponent<AsyncMessageGateComponent>(BCComponentID::AsyncMessageComponent);
+  AsyncMessageGateComponent& gateComp = GetComponent<AsyncMessageGateComponent>();
   gateComp.SubscribeToTags(subscriber, std::move(tags));
 }
 
@@ -258,7 +258,7 @@ void BehaviorComponent::SubscribeToTags(IBehavior* subscriber, std::set<RobotInt
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorContainer& BehaviorComponent::GetBehaviorContainer()
 {
-  return GetComponent<BehaviorContainer>(BCComponentID::BehaviorContainer);
+  return GetComponent<BehaviorContainer>();
 }
 
   

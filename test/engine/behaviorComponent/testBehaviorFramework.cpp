@@ -152,7 +152,7 @@ void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseB
     auto entity = std::make_unique<BehaviorComponent::EntityType>();
 
     entity->AddDependentComponent(BCComponentID::AIComponent, 
-      _robot->GetComponentPtr<AIComponent>(RobotComponentID::AIComponent), false);
+      _robot->GetComponentPtr<AIComponent>(), false);
     auto wrapper = new BaseBehaviorWrapper(baseBehavior);
     entity->AddDependentComponent(BCComponentID::BaseBehaviorWrapper, wrapper);
     entity->AddDependentComponent(BCComponentID::BehaviorContainer, _behaviorContainer.get(), false);
@@ -166,7 +166,7 @@ void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseB
   }
   
   if(shouldCallInitOnBase){
-    auto& bei = _behaviorComponent->GetComponent<BehaviorExternalInterface>(BCComponentID::BehaviorExternalInterface);
+    auto& bei = _behaviorComponent->GetComponent<BehaviorExternalInterface>();
     baseBehavior->Init(bei);
 
     ICozmoBehavior* cozmoBehavior = dynamic_cast<ICozmoBehavior*>(baseBehavior);
@@ -183,15 +183,15 @@ void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseB
   
   // Grab components from the behaviorComponent
   {
-    auto& bei = _behaviorComponent->GetComponent<BehaviorExternalInterface>(BCComponentID::BehaviorExternalInterface);
+    auto& bei = _behaviorComponent->GetComponent<BehaviorExternalInterface>();
     _behaviorExternalInterface = &bei;
   }
   {
-    auto& bsm = _behaviorComponent->GetComponent<BehaviorSystemManager>(BCComponentID::BehaviorSystemManager);
+    auto& bsm = _behaviorComponent->GetComponent<BehaviorSystemManager>();
     _behaviorSystemManager = &bsm;
   }
   {
-    auto& aiComp = _behaviorComponent->GetComponent<AIComponent>(BCComponentID::AIComponent);
+    auto& aiComp = _behaviorComponent->GetComponent<AIComponent>();
     _aiComponent = &aiComp;
   }
 }
@@ -256,7 +256,7 @@ void DoBehaviorInterfaceTicks(Robot& robot, ICozmoBehavior& behavior, int num)
 void InjectBehaviorIntoStack(ICozmoBehavior& injectBehavior, TestBehaviorFramework& testFramework)
 {
   auto& bc = testFramework.GetBehaviorComponent();
-  auto& bsm = bc.GetComponent<BehaviorSystemManager>(BCComponentID::BehaviorSystemManager);
+  auto& bsm = bc.GetComponent<BehaviorSystemManager>();
 
   auto& behaviorStack = bsm._behaviorStack->_behaviorStack;
   if(ANKI_VERIFY(!behaviorStack.empty(),"InjectBehaviorIntoStack.NoBaseBehavior","")){

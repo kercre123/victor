@@ -14,6 +14,7 @@
 
 #include "util/entityComponent/iDependencyManagedComponent.h"
 
+#include "util/entityComponent/componentTypeEnumMap.h"
 #include "util/helpers/fullEnumToValueArrayChecker.h"
 #include "util/logging/logging.h"
 
@@ -64,12 +65,16 @@ public:
   void UpdateComponents();
 
   template<typename T>
-  T& GetValue(EnumType enumID) const {
+  T& GetValue() const {
+    EnumType enumID = EnumType::Count;
+    GetComponentIDForType<EnumType,T>(enumID);
     return GetComponent(enumID). template GetValue<T>();
   }
 
   template<typename T>
-  T* GetBasePtr(EnumType enumID) const {
+  T* GetBasePtr() const {
+    EnumType enumID = EnumType::Count;
+    GetComponentIDForType<EnumType,T>(enumID);
     return GetComponent(enumID). template GetBasePtr<T>();
   }
 

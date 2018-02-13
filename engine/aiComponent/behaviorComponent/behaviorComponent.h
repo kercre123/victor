@@ -102,17 +102,17 @@ public:
               std::string& behaviorDebugStr);
     
   template<typename T>
-  T& GetComponent(BCComponentID componentID) const {return _comps->GetValue<T>(componentID);}
+  T& GetComponent() const {return _comps->GetValue<T>();}
 
   virtual void SubscribeToTags(IBehavior* subscriber, std::set<ExternalInterface::MessageGameToEngineTag>&& tags) const override;
   virtual void SubscribeToTags(IBehavior* subscriber, std::set<ExternalInterface::MessageEngineToGameTag>&& tags) const override;
   virtual void SubscribeToTags(IBehavior* subscriber, std::set<RobotInterface::RobotToEngineTag>&& tags) const override;
   
   inline const BehaviorEventAnimResponseDirector& GetBehaviorEventAnimResponseDirector() const
-    { return GetComponent<BehaviorEventAnimResponseDirector>(BCComponentID::BehaviorEventAnimResponseDirector);}
+    { return GetComponent<BehaviorEventAnimResponseDirector>();}
 
   inline BehaviorComponentCloudReceiver& GetCloudReceiver() const 
-    { return GetComponent<BehaviorComponentCloudReceiver>(BCComponentID::BehaviorComponentCloudReceiver); }
+    { return GetComponent<BehaviorComponentCloudReceiver>(); }
            
   
 protected:
@@ -126,9 +126,9 @@ protected:
 
 
   inline const BehaviorHelperComponent& GetBehaviorHelperComponent() const 
-    { return GetComponent<BehaviorHelperComponent>(BCComponentID::BehaviorHelperComponent); }
+    { return GetComponent<BehaviorHelperComponent>(); }
   inline BehaviorHelperComponent&       GetBehaviorHelperComponent()
-    { return GetComponent<BehaviorHelperComponent>(BCComponentID::BehaviorHelperComponent); }
+    { return GetComponent<BehaviorHelperComponent>(); }
   
   // For test only
   BehaviorContainer& GetBehaviorContainer();

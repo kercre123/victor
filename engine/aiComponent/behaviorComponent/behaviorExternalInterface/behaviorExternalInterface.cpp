@@ -50,13 +50,13 @@ BehaviorExternalInterface::~BehaviorExternalInterface()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExternalInterface::InitDependent(Robot* robot, const BCCompMap& dependentComponents)
 {
-  auto& aiComponent            = dependentComponents.GetValue<AIComponent>(BCComponentID::AIComponent);
-  auto& behaviorContainer      = dependentComponents.GetValue<BehaviorContainer>(BCComponentID::BehaviorContainer);
-  auto& behaviorEventComponent = dependentComponents.GetValue<BehaviorEventComponent>(BCComponentID::BehaviorEventComponent);
-  auto& blockWorld             = dependentComponents.GetValue<BlockWorld>(BCComponentID::BlockWorld);
-  auto& delegationComponent    = dependentComponents.GetValue<DelegationComponent>(BCComponentID::DelegationComponent);
-  auto& faceWorld              = dependentComponents.GetValue<FaceWorld>(BCComponentID::FaceWorld);
-  auto& robotInfo              = dependentComponents.GetValue<BEIRobotInfo>(BCComponentID::RobotInfo);
+  auto& aiComponent            = dependentComponents.GetValue<AIComponent>();
+  auto& behaviorContainer      = dependentComponents.GetValue<BehaviorContainer>();
+  auto& behaviorEventComponent = dependentComponents.GetValue<BehaviorEventComponent>();
+  auto& blockWorld             = dependentComponents.GetValue<BlockWorld>();
+  auto& delegationComponent    = dependentComponents.GetValue<DelegationComponent>();
+  auto& faceWorld              = dependentComponents.GetValue<FaceWorld>();
+  auto& robotInfo              = dependentComponents.GetValue<BEIRobotInfo>();
 
   Init(&aiComponent,
        &robot->GetAnimationComponent(),

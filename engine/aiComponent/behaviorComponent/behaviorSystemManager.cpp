@@ -59,9 +59,9 @@ BehaviorSystemManager::~BehaviorSystemManager()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorSystemManager::InitDependent(Robot* robot, const BCCompMap& dependentComponents)
 {
-  auto& baseBehaviorWrapper = dependentComponents.GetValue<BaseBehaviorWrapper>(BCComponentID::BaseBehaviorWrapper);
-  auto& bei = dependentComponents.GetValue<BehaviorExternalInterface>(BCComponentID::BehaviorExternalInterface);
-  auto& async = dependentComponents.GetValue<AsyncMessageGateComponent>(BCComponentID::AsyncMessageComponent);
+  auto& baseBehaviorWrapper = dependentComponents.GetValue<BaseBehaviorWrapper>();
+  auto& bei = dependentComponents.GetValue<BehaviorExternalInterface>();
+  auto& async = dependentComponents.GetValue<AsyncMessageGateComponent>();
 
   InitConfiguration(*robot,
                     baseBehaviorWrapper._baseBehavior,

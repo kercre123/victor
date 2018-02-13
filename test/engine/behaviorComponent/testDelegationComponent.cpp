@@ -122,7 +122,7 @@ TEST(DelegationComponent, TestDelegationVariants)
 
   // Delegate to helper
   {
-    auto& factory = testFramework.GetBehaviorComponent().GetComponent<BehaviorHelperComponent>(BCComponentID::BehaviorHelperComponent).GetBehaviorHelperFactory();
+    auto& factory = testFramework.GetBehaviorComponent().GetComponent<BehaviorHelperComponent>().GetBehaviorHelperFactory();
     bunchOfHelpers.push_back(factory.CreatePlaceBlockHelper(*bunchOfCozmoBehaviors.back().get()));
     HelperHandle toDelegate = bunchOfHelpers.back();
     InjectValidDelegateIntoBSM(testFramework, behaviorDelegating, toDelegate.get(), false);
