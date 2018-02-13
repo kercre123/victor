@@ -1,6 +1,7 @@
 #include <string.h>
 #include "app.h"
 #include "board.h"
+#include "contacts.h"
 #include "fixture.h"
 #include "flash.h"
 #include "motorled.h"
@@ -109,9 +110,9 @@ void MotorMV(int millivolts, bool reverse_nForward )
   TIM_Cmd(TIM3, ENABLE);
   TIM_CtrlPWMOutputs(TIM3, ENABLE);
   
-  //XXX: pwm output signal changed to unsupported pin. Remap (require hw support change)
-  //CHGPWR::alternate(GPIO_AF_TIM3); //PC11 does NOT map to TIM3!!
-  //CHGPWR::mode(MODE_ALTERNATE);
+  Contacts::deinit(); //allow CHGTX to override CHGPWR
+  CHGTX::alternate(GPIO_AF_TIM3); //GPIO_PinAFConfig(GPIOC, PINC_CHGTX, GPIO_AF_TIM3);
+  CHGTX::mode(MODE_ALTERNATE); //PIN_AF(GPIOC, PINC_CHGTX);
 }
 
 //static int VCC = 2800, OVERSAMPLE = 4;  // 2^n samples
