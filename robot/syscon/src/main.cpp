@@ -14,9 +14,6 @@
 #include "touch.h"
 
 void Main_Execution(void) {
-  // Kick watch dog when we enter our service routine
-  IWDG->KR = 0xAAAA;
-
   // Do our main execution loop
   Comms::tick();
   Motors::tick();
@@ -49,5 +46,7 @@ int main (void) {
   for (;;) {   
     Power::tick();
     __wfi();
+    // Kick watch dog when we enter our service routine
+    IWDG->KR = 0xAAAA;
   }
 }
