@@ -5,6 +5,7 @@
 namespace Contacts
 {
   void init(void);
+  void deinit(void);
   void echo(bool on); //if supported, turns on console-echo
   void setModeIdle(void); //disconnect pins etc
   

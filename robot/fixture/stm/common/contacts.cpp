@@ -115,6 +115,9 @@ void Contacts::init(void)
     VEXT_SENSE::init(MODE_INPUT, PULL_NONE, TYPE_PUSHPULL);
     VEXT_SENSE::alternate(GPIO_AF_1); //USART2_TX
   #elif TARGET_FIXTURE
+    if( (int)Board::revision >= BOARD_REV_2_0 ) {
+      CHGPWR::init(MODE_OUTPUT, PULL_NONE, TYPE_PUSHPULL); //always drive, to override CHGTX_4V control
+    }
     CHGRX::init(MODE_INPUT, PULL_NONE, TYPE_PUSHPULL);
     CHGTX::init(MODE_INPUT, PULL_NONE, TYPE_PUSHPULL);
     CHGTX::alternate(GPIO_AF_USART6);
@@ -148,6 +151,29 @@ void Contacts::init(void)
   #endif
 }
 
+void Contacts::deinit(void)
+{
+  if( mode == MODE_UNINITIALIZED )
+    return;
+  
+  Contacts::setModeIdle();
+  
+  //deconfigure pin(s)
+  #if TARGET_SYSCON
+    //XXX: not implemented
+  #elif TARGET_FIXTURE
+    if( (int)Board::revision >= BOARD_REV_2_0 ) {
+      CHGPWR::init(MODE_INPUT, PULL_NONE); //release power ctrl
+    }
+  #endif
+  
+  //Disable peripheral clocks
+  //GPIO_RCC_EN(0);
+  //USART_RCC_EN(0);
+  
+  mode = MODE_UNINITIALIZED;
+}
+
 void Contacts::echo(bool on)
 {
   #if TARGET_SYSCON
@@ -168,7 +194,7 @@ void Contacts::setModeIdle(void)
   #elif TARGET_FIXTURE
     if( (int)Board::revision >= BOARD_REV_2_0 ) {
       CHGTX_EN::init(MODE_INPUT, PULL_NONE); //4V TX driver disabled
-      CHGPWR::init(MODE_INPUT, PULL_NONE); //5V charge power disabled
+      CHGPWR::reset(); //5V charge power disabled
     }
     CHGRX::mode(MODE_INPUT);
     CHGTX::mode(MODE_INPUT);
@@ -195,10 +221,10 @@ void Contacts::setModePower(void)
   #if TARGET_SYSCON
     //doesn't supply power. effectively in idle mode.
   #elif TARGET_FIXTURE
-    if( (int)Board::revision >= BOARD_REV_2_0 ) {
-      CHGPWR::reset(); //5V charge power disabled
-      CHGPWR::init(MODE_OUTPUT, PULL_NONE);
-    }
+    //if( (int)Board::revision >= BOARD_REV_2_0 ) {
+    //  CHGPWR::reset(); //5V charge power disabled
+    //  CHGPWR::init(MODE_OUTPUT, PULL_NONE);
+    //}
     CHGTX::reset(); //VEXT floating(off)
     CHGTX::mode(MODE_OUTPUT);
     CHGRX::reset(); //prime output register for force discharge
