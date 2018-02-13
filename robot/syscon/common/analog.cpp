@@ -137,8 +137,8 @@ void Analog::transmit(BodyToHead* data) {
   data->battery.charger = values[ADC_VEXT];
   data->battery.temperature = values[ADC_TEMP];
   data->battery.flags = 0
-                      | (is_charging ? isCharging : 0)
-                      | (on_charger ? isOnCharger : 0)
+                      | (is_charging ? POWER_IS_CHARGING : 0)
+                      | (on_charger ? POWER_ON_CHARGER : 0)
                       ;
 
   data->touchLevel[1] = button_pressed ? 0xFFFF : 0x0000;
