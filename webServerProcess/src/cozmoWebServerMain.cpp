@@ -9,7 +9,7 @@
 * Copyright: Anki, inc. 2018
 *
 */
-#include "cozmoWebServer.h"
+#include "webService.h"
 
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
@@ -28,7 +28,7 @@ using namespace Anki;
 using namespace Anki::Cozmo;
 
 namespace {
-CozmoWebServerEngine* cozmoWebServer = nullptr;
+WebService::WebService* cozmoWebServer = nullptr;
 }
 
 void Cleanup(int signum)
@@ -95,9 +95,17 @@ int main(void)
   Util::Data::DataPlatform* dataPlatform = new Util::Data::DataPlatform(filesPath, cachePath, externalPath, resourcesPath);
   
   // Create and init cozmoWebServer
-  cozmoWebServer = new CozmoWebServerEngine(dataPlatform);
-  
-  cozmoWebServer->Init();
+  Json::Value wsConfig;
+  static const std::string & wsConfigPath = "webserver/webServerConfig_robot.json";
+  const bool success = dataPlatform->readAsJson(Util::Data::Scope::Resources, wsConfigPath, wsConfig);
+  if (!success)
+  {
+    LOG_ERROR("CozmoWebServerMain.WebServerConfigNotFound",
+              "Web server config file %s not found or failed to parse",
+              wsConfigPath.c_str());
+  }
+  cozmoWebServer = new WebService::WebService();
+  cozmoWebServer->Start(dataPlatform, wsConfig);
   
   using namespace std::chrono;
   using TimeClock = steady_clock;
@@ -108,16 +116,9 @@ int main(void)
   auto targetEndFrameTime = runStart + (microseconds)(WEB_SERVER_TIME_STEP_US);
   
 
-  while (1) {
-
-    const auto tickStart = TimeClock::now();
-    const duration<double> curTime_s = tickStart - runStart;
-    const BaseStationTime_t curTime_ns = Util::numeric_cast<BaseStationTime_t>(Util::SecToNanoSec(curTime_s.count()));
-
-    if (cozmoWebServer->Update(curTime_ns) != RESULT_OK) {
-      PRINT_NAMED_WARNING("cozmoWebServer.Update.Failed", "Exiting...");
-      break;
-    }
+  while (1)
+  {
+    cozmoWebServer->Update();
     
     const auto tickNow = TimeClock::now();
     const auto remaining_us = duration_cast<microseconds>(targetEndFrameTime - tickNow);
@@ -125,10 +126,6 @@ int main(void)
     // Complain if we're going overtime
     if (remaining_us < microseconds(-WEB_SERVER_OVERTIME_WARNING_THRESH_US))
     {
-      //const auto tickDuration_us = duration_cast<microseconds>(tickNow - tickStart);
-      //PRINT_NAMED_INFO("CozmoAPI.CozmoInstanceRunner", "targetEndFrameTime:%8lld, tickDuration_us:%8lld, remaining_us:%8lld",
-      //                 TimeClock::time_point(targetEndFrameTime).time_since_epoch().count(), tickDuration_us.count(), remaining_us.count());
-
       PRINT_NAMED_WARNING("cozmoWebServer.overtime", "Update() (%dms max) is behind by %.3fms",
                           WEB_SERVER_TIME_STEP_MS, (float)(-remaining_us).count() * 0.001f);
     }
@@ -157,6 +154,5 @@ int main(void)
                           "Update was too far behind so moving target end frame time forward by an additional %.3fms",
                           (float)(forwardJumpDuration * 0.001f));
     }
-
   }
 }

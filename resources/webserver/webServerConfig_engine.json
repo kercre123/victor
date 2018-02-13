@@ -1,0 +1,6 @@
+{
+  "port": "8888",
+  "title0": "Victor Web Server (Engine process)",
+  "title1": "This web server is running in the Engine process",
+  "startPage": "page_consolevars"
+}

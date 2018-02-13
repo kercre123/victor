@@ -13,13 +13,16 @@
 #ifndef WEB_SERVICE_H
 #define WEB_SERVICE_H
 
+#include "util/export/export.h"
+
+#include "json/json.h"
+
 #include <string>
 #include <vector>
 #include <mutex>
 #include <unordered_set>
 #include <unordered_map>
 
-#include "util/export/export.h"
 #include "util/signals/simpleSignal.hpp"
 
 struct mg_context; // copied from civetweb.h
@@ -48,7 +51,7 @@ public:
   WebService();
   ~WebService();
 
-  void Start(Anki::Util::Data::DataPlatform* platform, const char* portNumStr);
+  void Start(Anki::Util::Data::DataPlatform* platform, const Json::Value& config);
   void Update();
   void Stop();
   
@@ -96,6 +99,8 @@ public:
   void AddRequest(Request* requestPtr);
   std::mutex _requestMutex;
 
+  const Json::Value& GetConfig() { return _config; }
+
 private:
 
   void GenerateConsoleVarsUI(std::string& page, const std::string& category);
@@ -127,7 +132,9 @@ private:
   std::string _consoleVarsUIHTMLTemplate;
 
   std::vector<Request*> _requests;
-  
+
+  Json::Value _config;
+ 
   std::unordered_map<std::string, OnWebVizSubscribedType> _webVizSubscribedSignals;
   std::unordered_map<std::string, OnWebVizDataType> _webVizDataSignals;
 };

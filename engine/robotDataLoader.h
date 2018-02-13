@@ -97,6 +97,7 @@ public:
   const Json::Value& GetRobotNeedsHandlersConfig() const     { return _needsHandlersConfig; }
   const Json::Value& GetLocalNotificationConfig() const      { return _localNotificationConfig; }
   const Json::Value& GetInventoryConfig() const              { return _inventoryConfig; }
+  const Json::Value& GetWebServerEngineConfig() const        { return _webServerEngineConfig; }
   const Json::Value& GetDasEventConfig() const               { return _dasEventConfig; }
 
   // images are stored as a map of stripped file name (no file extension) to full path
@@ -175,6 +176,7 @@ private:
   Json::Value _localNotificationConfig;
   Json::Value _textToSpeechConfig;
   Json::Value _inventoryConfig;
+  Json::Value _webServerEngineConfig;
   Json::Value _dasEventConfig;
   
   ImagePathMap _facePNGPaths;

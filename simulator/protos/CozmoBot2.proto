@@ -257,6 +257,7 @@ Supervisor {
                 
                 # Web server process:
                 CozmoWebServer {
+                  robotID IS robotID
                   filterLogs IS filterLogs
                   colorizeStderrOutput IS colorizeStderrOutput
                 }

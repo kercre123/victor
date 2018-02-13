@@ -4,13 +4,9 @@ project(cozmo_webserver)
 
 include(anki_build_cxx)
 
-anki_build_cxx_library(victor_web_library ${ANKI_SRCLIST_DIR} STATIC)
+anki_build_cxx_library(victor_web_library ${ANKI_SRCLIST_DIR})
 
-include(flatbuffers)
 include(opencv)
-include(speexdsp)
-include(sensory)
-# include(robot_core)
 
 if (NOT DEFINED USE_DAS)
   set(USE_DAS 0)
@@ -24,11 +20,10 @@ if (ANDROID)
     set(PLATFORM_LIBS
         android
         log
-        robot_core)
+    )
 elseif (MACOSX)
     include(webots)
     set(PLATFORM_LIBS
-        ${OPENCV_LIBS}
         ${WEBOTS_LIBS}
     )
     set(PLATFORM_COMPILE_DEFS "-DSIMULATOR")
@@ -38,6 +33,8 @@ target_link_libraries(victor_web_library
   PRIVATE
   util
   cti_vision
+  DAS
+  osState
   # vendor
   civetweb
   PUBLIC
@@ -67,7 +64,7 @@ if (ANDROID)
   target_link_libraries(victor_web_server
     PRIVATE
     victor_web_library
-    cti_common_robot
+    cti_common
     util
     ${PLATFORM_LIBS}
   )

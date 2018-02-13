@@ -56,7 +56,6 @@ target_link_libraries(victor_anim
   ${SPEEXDSP_LIBS}
   ${TEXT2SPEECH_LIBS}
   ${SENSORY_LIBS}
-  civetweb
   # platform
   ${PLATFORM_LIBS}
   PUBLIC

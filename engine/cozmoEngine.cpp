@@ -223,7 +223,8 @@ Result CozmoEngine::Init(const Json::Value& config) {
 
   SetEngineState(EngineState::LoadingData);
 
-  _context->GetWebService()->Start(_context->GetDataPlatform(), "8888");
+  _context->GetWebService()->Start(_context->GetDataPlatform(),
+                                   _context->GetDataLoader()->GetWebServerEngineConfig());
 
   // DAS Event: "cozmo_engine.init.build_configuration"
   // s_val: Build configuration

@@ -223,6 +223,7 @@ target_link_libraries(webotsCtrlWebServer
   PRIVATE
   #util
   webotsCtrlCommon
+  osState
   victor_web_library
 )
 

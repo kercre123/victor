@@ -27,7 +27,8 @@
 #include "util/helpers/templateHelpers.h"
 #include "util/string/stringUtils.h"
 
-#include "json/json.h"
+#include "osState/osState.h"
+
 #if defined(ANKI_PLATFORM_ANDROID)
 #include <android/log.h>
 #endif
@@ -36,6 +37,27 @@
 #include <string>
 #include <chrono>
 #include <thread>
+#include <fstream>
+#include <iomanip>
+
+using namespace Anki::Cozmo;
+
+
+namespace {
+
+#ifndef SIMULATOR
+  std::ifstream _cpuFile;
+  std::ifstream _temperatureFile;
+  std::ifstream _batteryVoltageFile;
+
+//  const char* kNominalCPUFreqFile = "/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq";
+  const char* kCPUFreqFile = "/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_cur_freq";
+  const char* kTemperatureFile = "/sys/devices/virtual/thermal/thermal_zone8/temp";
+  const char* kBatteryVoltageFile = "/sys/devices/soc.0/qpnp-linear-charger-8/power_supply/battery/voltage_now";
+#endif
+
+} // namespace
+
 
 // Used websockets codes, see websocket RFC pg 29
 // http://tools.ietf.org/html/rfc6455#section-5.2
@@ -168,23 +190,40 @@ static int
 ProcessRequest(struct mg_connection *conn, Anki::Cozmo::WebService::WebService::RequestType requestType,
                const std::string& param1, const std::string& param2, const std::string& param3 = "", bool waitAndSendResponse = true)
 {
-  using namespace Anki::Cozmo::WebService;
-  WebService::Request* requestPtr = new WebService::Request(requestType, param1, param2, param3);
+  WebService::WebService::Request* requestPtr = new WebService::WebService::Request(requestType, param1, param2, param3);
 
   struct mg_context *ctx = mg_get_context(conn);
-  Anki::Cozmo::WebService::WebService* that = static_cast<Anki::Cozmo::WebService::WebService*>(mg_get_user_data(ctx));
+  WebService::WebService* that = static_cast<WebService::WebService*>(mg_get_user_data(ctx));
 
   that->AddRequest(requestPtr);
 
   if( waitAndSendResponse ) {
     
     // Now wait until the main thread processes the request
+    using namespace std::chrono;
+    static const double kTimeoutDuration_s = 10.0;
+    const auto startTime = steady_clock::now();
+    bool timedOut = false;
     do
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(20));
+      const auto now = steady_clock::now();
+      const auto elapsed_s = duration_cast<seconds>(now - startTime).count();
+      if (elapsed_s > kTimeoutDuration_s)
+      {
+        timedOut = true;
+        break;
+      }
     } while (!requestPtr->_resultReady);
 
-  
+    // We check if result is there because we just slept and it may have come in
+    // just before the timeout
+    if (timedOut && !requestPtr->_resultReady)
+    {
+      std::lock_guard<std::mutex> lock(that->_requestMutex);
+      requestPtr->_result = "Timed out after " + std::to_string(kTimeoutDuration_s) + " seconds";
+    }
+
     mg_printf(conn,
               "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
               "close\r\n\r\n");
@@ -195,8 +234,6 @@ ProcessRequest(struct mg_connection *conn, Anki::Cozmo::WebService::WebService::
     requestPtr->_done = true;
   }
 
-  
-
   return 1;
 }
 
@@ -206,13 +243,13 @@ ConsoleVarsUI(struct mg_connection *conn, void *cbdata)
   const mg_request_info* info = mg_get_request_info(conn);
   std::string category = ((info->query_string) ? info->query_string : "");
 
-  const int returnCode = ProcessRequest(conn, Anki::Cozmo::WebService::WebService::RequestType::RT_ConsoleVarsUI, category, "");
+  const int returnCode = ProcessRequest(conn, WebService::WebService::RequestType::RT_ConsoleVarsUI, category, "");
 
   return returnCode;
 }
 
 static int
-ConsoleVarsSet(struct mg_connection *conn, void *cbdata)
+ConsoleVarSet(struct mg_connection *conn, void *cbdata)
 {
   const mg_request_info* info = mg_get_request_info(conn);
 
@@ -246,7 +283,7 @@ ConsoleVarsSet(struct mg_connection *conn, void *cbdata)
         }
       }
 
-      returnCode = ProcessRequest(conn, Anki::Cozmo::WebService::WebService::RequestType::RT_ConsoleVarSet, key, value);
+      returnCode = ProcessRequest(conn, WebService::WebService::RequestType::RT_ConsoleVarSet, key, value);
 
       key = remainder;
     } else {
@@ -257,7 +294,7 @@ ConsoleVarsSet(struct mg_connection *conn, void *cbdata)
 }
 
 static int
-ConsoleVarsGet(struct mg_connection *conn, void *cbdata)
+ConsoleVarGet(struct mg_connection *conn, void *cbdata)
 {
   const mg_request_info* info = mg_get_request_info(conn);
 
@@ -269,13 +306,13 @@ ConsoleVarsGet(struct mg_connection *conn, void *cbdata)
     }
   }
 
-  const int returnCode = ProcessRequest(conn, Anki::Cozmo::WebService::WebService::RequestType::RT_ConsoleVarGet, key, "");
+  const int returnCode = ProcessRequest(conn, WebService::WebService::RequestType::RT_ConsoleVarGet, key, "");
 
   return returnCode;
 }
 
 static int
-ConsoleVarsList(struct mg_connection *conn, void *cbdata)
+ConsoleVarList(struct mg_connection *conn, void *cbdata)
 {
   const mg_request_info* info = mg_get_request_info(conn);
 
@@ -287,7 +324,7 @@ ConsoleVarsList(struct mg_connection *conn, void *cbdata)
     }
   }
   
-  const int returnCode = ProcessRequest(conn, Anki::Cozmo::WebService::WebService::RequestType::RT_ConsoleVarList, key, "");
+  const int returnCode = ProcessRequest(conn, WebService::WebService::RequestType::RT_ConsoleVarList, key, "");
 
   return returnCode;
 }
@@ -337,16 +374,16 @@ ConsoleFuncCall(struct mg_connection *conn, void *cbdata)
       }
     }
 
-    returnCode = ProcessRequest(conn, Anki::Cozmo::WebService::WebService::RequestType::RT_ConsoleFuncCall, func, args);
+    returnCode = ProcessRequest(conn, WebService::WebService::RequestType::RT_ConsoleFuncCall, func, args);
   }
 
   return returnCode;
 }
 
-Anki::Cozmo::WebService::WebService::Request::Request(RequestType rt,
-                                                      const std::string& param1,
-                                                      const std::string& param2,
-                                                      const std::string& param3)
+WebService::WebService::Request::Request(RequestType rt,
+                                         const std::string& param1,
+                                         const std::string& param2,
+                                         const std::string& param3)
 {
   _requestType = rt;
   _param1 = param1;
@@ -369,6 +406,7 @@ dasinfo(struct mg_connection *conn, void *cbdata)
             "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
             "close\r\n\r\n");
 
+// NOTE:  For some reason, android builds of the webserver are not getting USE_DAS defined properly
 #if USE_DAS
   std::string dasString = "DAS: " + std::string(DASGetLogDir()) + " DASDisableNetworkReason:";
   int disabled = DASNetworkingDisabled;
@@ -388,12 +426,132 @@ dasinfo(struct mg_connection *conn, void *cbdata)
 //    dasString += " Debug";
 //  }
 #else
-  std::string dasString = "DAS: #undefined";
+  std::string dasString = "DAS: #undefined for this platform";
 #endif
 
   mg_printf(conn, "%s", dasString.c_str());
   return 1;
 }
+
+
+static int GetInitialConfig(struct mg_connection *conn, void *cbdata)
+{
+  mg_printf(conn,
+            "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
+            "close\r\n\r\n");
+
+  struct mg_context *ctx = mg_get_context(conn);
+  WebService::WebService* that = static_cast<WebService::WebService*>(mg_get_user_data(ctx));
+
+  const std::string title0    = that->GetConfig()["title0"].asString();
+  const std::string title1    = that->GetConfig()["title1"].asString();
+  const std::string startPage = that->GetConfig()["startPage"].asString();
+#ifdef SIMULATOR
+  const std::string webotsSim = "true";
+#else
+  const std::string webotsSim = "false";
+#endif
+
+  mg_printf(conn, "%s\n%s\n%s\n%s\n", title0.c_str(), title1.c_str(),
+            startPage.c_str(), webotsSim.c_str());
+  return 1;
+}
+
+
+static int GetMainRobotInfo(struct mg_connection *conn, void *cbdata)
+{
+  mg_printf(conn,
+            "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
+            "close\r\n\r\n");
+
+  const auto& osState = OSState::getInstance();
+  const std::string robotID  = std::to_string(osState->GetRobotID());
+  const std::string serialNo = osState->GetSerialNumberAsString();
+  const std::string ip       = osState->GetIPAddress();
+
+  mg_printf(conn, "%s\n%s\n%s\n", robotID.c_str(), serialNo.c_str(), ip.c_str());
+  return 1;
+}
+
+
+static int GetPerfStats(struct mg_connection *conn, void *cbdata)
+{
+  using namespace std::chrono;
+  const auto startTime = steady_clock::now();
+
+  static const int kNumStats = 3;
+  bool active[kNumStats];
+
+  const mg_request_info* info = mg_get_request_info(conn);
+  const std::string boolsString = info->query_string ? info->query_string : "";
+  int i = 0;
+  for ( ; i < kNumStats && boolsString[i]; i++)
+  {
+    active[i] = (boolsString[i] == '1');
+  }
+  // If the string wasn't long enough, make the rest of the flags false
+  for ( ; i < kNumStats; i++)
+  {
+    active[i] = false;
+  }
+
+#ifdef SIMULATOR
+
+  // On webots simulator, most if not all of these don't apply
+  const std::string stat_cpuFreq = "n/a";
+  const std::string stat_temperature = "n/a";
+  const std::string stat_batteryVoltage = "n/a";
+
+#else
+
+  std::string stat_cpuFreq;
+  if (active[0]) {
+    // Update cpu freq
+    uint32_t cpuFreq_kHz;
+    _cpuFile.seekg(0, _cpuFile.beg);
+    _cpuFile >> cpuFreq_kHz;
+    stat_cpuFreq = std::to_string(cpuFreq_kHz);
+  }
+
+  std::string stat_temperature;
+  if (active[1]) {
+    // Update temperature reading; convert milli-Celsius to Celsius
+    uint32_t cpuTemp_mC;
+    _temperatureFile.seekg(0, _temperatureFile.beg);
+    _temperatureFile >> cpuTemp_mC;
+    const float cpuTemp_C = cpuTemp_mC * 0.001f;
+    std::stringstream ss;
+    ss << std::fixed << std::setprecision(3) << cpuTemp_C;
+    stat_temperature = ss.str();
+  }
+
+  std::string stat_batteryVoltage;
+  if (active[2]) {
+    // Battery voltage
+    uint32_t batteryVoltage;
+    _batteryVoltageFile.seekg(0, _batteryVoltageFile.beg);
+    _batteryVoltageFile >> batteryVoltage;
+    stat_batteryVoltage = std::to_string(batteryVoltage);
+  }
+
+#endif
+
+  const auto now = steady_clock::now();
+  const auto elapsed_us = duration_cast<microseconds>(now - startTime).count();
+  PRINT_NAMED_INFO("WebService", "GetPerfStats took %lld microseconds to read", elapsed_us);
+
+  mg_printf(conn,
+            "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
+            "close\r\n\r\n");
+
+  mg_printf(conn, "%s\n%s\n%s\n",
+            stat_cpuFreq.c_str(),
+            stat_temperature.c_str(),
+            stat_batteryVoltage.c_str());
+
+  return 1;
+}
+
 
 namespace Anki {
 namespace Cozmo {
@@ -409,10 +567,7 @@ WebService::~WebService()
   Stop();
 }
 
-// TODO:  Instead of passing in a 'port number' we'll pass in a 'config', which will
-// contain port number, and other stuff like text indicating to user which webserver
-// is running, etc.
-void WebService::Start(Anki::Util::Data::DataPlatform* platform, const char* portNumStr)
+void WebService::Start(Anki::Util::Data::DataPlatform* platform, const Json::Value& config)
 {
   if (platform == nullptr) {
     return;
@@ -420,6 +575,10 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform, const char* por
   if (_ctx != nullptr) {
     return;
   }
+
+  _config = config;
+
+  const std::string portNumString = _config["port"].asString();
 
   const std::string webserverPath = platform->pathToResource(Util::Data::Scope::Resources, "webserver");
 
@@ -444,7 +603,7 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform, const char* por
     "document_root",
     webserverPath.c_str(),
     "listening_ports",
-    portNumStr, // "8888",
+    portNumString.c_str(),
     "num_threads",
     "4",
     "url_rewrite_patterns",
@@ -479,17 +638,26 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform, const char* por
   mg_set_request_handler(_ctx, "/daslog", LogHandler, 0);
   mg_set_request_handler(_ctx, "/consolevars", ConsoleVarsUI, 0);
 
-  mg_set_request_handler(_ctx, "/consolevarset", ConsoleVarsSet, 0);
-  mg_set_request_handler(_ctx, "/consolevarget", ConsoleVarsGet, 0);
-  mg_set_request_handler(_ctx, "/consolevarlist", ConsoleVarsList, 0);
+  mg_set_request_handler(_ctx, "/consolevarset", ConsoleVarSet, 0);
+  mg_set_request_handler(_ctx, "/consolevarget", ConsoleVarGet, 0);
+  mg_set_request_handler(_ctx, "/consolevarlist", ConsoleVarList, 0);
   mg_set_request_handler(_ctx, "/consolefunccall", ConsoleFuncCall, 0);
 
   mg_set_request_handler(_ctx, "/dasinfo", dasinfo, 0);
+  mg_set_request_handler(_ctx, "/getinitialconfig", GetInitialConfig, 0);
+  mg_set_request_handler(_ctx, "/getmainrobotinfo", GetMainRobotInfo, 0);
+  mg_set_request_handler(_ctx, "/getperfstats", GetPerfStats, 0);
 
   const std::string& consoleVarsTemplate = platform->pathToResource(Util::Data::Scope::Resources, "webserver/consolevarsui.html");
   _consoleVarsUIHTMLTemplate = Anki::Util::StringFromContentsOfFile(consoleVarsTemplate);
 
   _requests.clear();
+
+#ifndef SIMULATOR
+  _temperatureFile.open(kTemperatureFile, std::ifstream::in);
+  _cpuFile.open(kCPUFreqFile, std::ifstream::in);
+  _batteryVoltageFile.open(kBatteryVoltageFile, std::ifstream::in);
+#endif
 }
 
 
@@ -665,8 +833,18 @@ void WebService::Update()
 
 void WebService::Stop()
 {
-  if (_ctx)
-  {
+#ifndef SIMULATOR
+  if (_temperatureFile.is_open()) {
+    _temperatureFile.close();
+  }
+  if (_cpuFile.is_open()) {
+    _cpuFile.close();
+  }
+  if (_batteryVoltageFile.is_open()) {
+    _batteryVoltageFile.close();
+  }
+#endif
+  if (_ctx) {
     mg_stop(_ctx);
   }
   _ctx = nullptr;
@@ -832,7 +1010,8 @@ void WebService::GenerateConsoleVarsUI(std::string& page, const std::string& cat
   pos = page.find(tmp);
   if (pos != std::string::npos) {
     page = page.replace(pos, tmp.length(), html);
-  }}
+  }
+}
 
 
 void WebService::SendToWebSockets(const std::string& moduleName, const Json::Value& data) const
