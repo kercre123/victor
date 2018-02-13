@@ -330,7 +330,7 @@ Result ObjectDetector::Detect(cv::Mat& img, std::list<DetectedObject>& objects)
   {
     if(_params.verbose)
     {
-      std::cout << "Resizing " << img.cols << "x" << img.rows " image into " << 
+      std::cout << "Resizing " << img.cols << "x" << img.rows << " image into " << 
         _params.input_width << "x" << _params.input_height << " FLOAT tensor" << std::endl;
     }
 
@@ -363,7 +363,7 @@ Result ObjectDetector::Detect(cv::Mat& img, std::list<DetectedObject>& objects)
   {
     if(_params.verbose)
     {
-      std::cout << "Resizing " << img.cols << "x" << img.rows " image into " << 
+      std::cout << "Resizing " << img.cols << "x" << img.rows << " image into " << 
         _params.input_width << "x" << _params.input_height << " UINT8 tensor" << std::endl;
     }
 

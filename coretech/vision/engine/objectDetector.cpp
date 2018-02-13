@@ -136,6 +136,7 @@ bool ObjectDetector::StartProcessingIfIdle(ImageCache& imageCache)
           _profiler.Tic("StandaloneInferenceProcess");
           
           // Write image to a temporary file
+          _profiler.Tic("StandaloneInferenceProcess.WriteImage");
           const std::string tempFilename = Util::FileUtils::FullFilePath({_cachePath, "temp.png"});
           _imgBeingProcessed.Save(tempFilename);
           
@@ -143,10 +144,12 @@ bool ObjectDetector::StartProcessingIfIdle(ImageCache& imageCache)
           const std::string imageFilename = Util::FileUtils::FullFilePath({_cachePath, "objectDetectionImage.png"});
           const std::string cmd = "mv " + tempFilename + " " + imageFilename;
           system(cmd.c_str());
-          
+          _profiler.Toc("StandaloneInferenceProcess.WriteImage");
+
           PRINT_CH_DEBUG(kLogChannelName, "ObjectDetector.Model.SavedImageFileForProcessing", "%s t:%d",
                          imageFilename.c_str(), _imgBeingProcessed.GetTimestamp());
           
+          _profiler.Tic("StandaloneInferenceProcess.Polling");
           const u32 kPollPeriod_ms = 10;
           const f32 timeoutDuration_sec = 10.f;
           const f32 starttTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -160,12 +163,15 @@ bool ObjectDetector::StartProcessingIfIdle(ImageCache& imageCache)
             std::this_thread::sleep_for(std::chrono::milliseconds(kPollPeriod_ms));
             resultAvailable = Util::FileUtils::FileExists(resultFilename);
           }
-          
+          _profiler.Toc("StandaloneInferenceProcess.Polling");
+
           // Delete image file (whether or not we got the result or timed out)
           Util::FileUtils::DeleteFile(imageFilename);
           
           if(resultAvailable)
           {
+            auto ticToc = _profiler.TicToc("StandaloneInferenceProcess.ReadingResult");
+            
             PRINT_CH_DEBUG(kLogChannelName, "ObjectDetector.Model.FoundDetectionResultsJSON", "%s",
                            resultFilename.c_str());
             
@@ -208,10 +214,9 @@ bool ObjectDetector::StartProcessingIfIdle(ImageCache& imageCache)
             }
             file.close();
             Util::FileUtils::DeleteFile(resultFilename);
-            
-            _profiler.Toc("StandaloneInferenceProcess");
           }
           
+          _profiler.Toc("StandaloneInferenceProcess");      
         }
         else
         {
