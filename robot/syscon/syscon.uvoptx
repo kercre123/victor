@@ -176,18 +176,18 @@
         <Bp>
           <Number>0</Number>
           <Type>0</Type>
-          <LineNumber>36</LineNumber>
+          <LineNumber>39</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>134230388</Address>
+          <Address>134239922</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>\vmware-host\Shared Folders\github\victor\robot\syscon\src\mics.cpp</Filename>
+          <Filename>\\vmware-host\Shared Folders\vmware-host\Shared Folders\github\victor\robot\syscon\src\main.cpp</Filename>
           <ExecCommand></ExecCommand>
-          <Expression>\\syscon\src/mics.cpp\36</Expression>
+          <Expression>\\syscon\src/main.cpp\39</Expression>
         </Bp>
       </Breakpoint>
       <WatchWindow1>
@@ -195,6 +195,21 @@
           <count>0</count>
           <WinNumber>1</WinNumber>
           <ItemText>outboundPacket</ItemText>
+        </Ww>
+        <Ww>
+          <count>1</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>ch</ItemText>
+        </Ww>
+        <Ww>
+          <count>2</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>chargeAllowed</ItemText>
+        </Ww>
+        <Ww>
+          <count>3</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>is_charging</ItemText>
         </Ww>
       </WatchWindow1>
       <WatchWindow2>

@@ -100,7 +100,7 @@ int main(void) {
     Comms::run();
   }
   
-  // Clear reset pin flag (for reset detect)
+  // Clear reset pin flag (for reset detect).
   RCC->CSR |= RCC_CSR_RMVF;
 
   // This flag is only set when DFU has validated the image
