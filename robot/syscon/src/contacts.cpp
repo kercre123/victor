@@ -46,7 +46,6 @@ void Contacts::init(void) {
 void Contacts::forward(const ContactData& pkt) {
   Analog::delayCharge();
   NVIC_DisableIRQ(USART2_IRQn);
-  memcpy(&txData, &pkt.data, sizeof(pkt.data));
 
   for (int i = 0; i < sizeof(pkt.data); i++) {
     uint8_t byte = pkt.data[i];
