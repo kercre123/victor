@@ -83,14 +83,13 @@ void AnimationComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& 
   
   // Setup robot message handlers
   RobotInterface::MessageHandler *messageHandler = _robot->GetContext()->GetRobotManager()->GetMsgHandler();
-  RobotID_t robotId = _robot->GetID();
 
   // Subscribe to RobotToEngine messages
   using localHandlerType = void(AnimationComponent::*)(const AnkiEvent<RobotInterface::RobotToEngine>&);
   // Create a helper lambda for subscribing to a tag with a local handler
-  auto doRobotSubscribe = [this, robotId, messageHandler] (RobotInterface::RobotToEngineTag tagType, localHandlerType handler)
+  auto doRobotSubscribe = [this, messageHandler] (RobotInterface::RobotToEngineTag tagType, localHandlerType handler)
   {
-    GetSignalHandles().push_back(messageHandler->Subscribe(robotId, tagType, std::bind(handler, this, std::placeholders::_1)));
+    GetSignalHandles().push_back(messageHandler->Subscribe(tagType, std::bind(handler, this, std::placeholders::_1)));
   };
   
   // bind to specific handlers

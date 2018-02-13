@@ -91,8 +91,6 @@ Result MessageHandler::ProcessMessages()
         continue;
       }
 
-      auto robotId = destRobot->GetID();
-
       // see if message type should be filtered out based on potential firmware mismatch
       const RobotInterface::RobotToEngineTag msgType = static_cast<RobotInterface::RobotToEngineTag>(nextData.data()[0]);
       if (_robotManager->ShouldFilterMessage(msgType)) {
@@ -113,13 +111,13 @@ Result MessageHandler::ProcessMessages()
         DevLoggingSystem::GetInstance()->LogMessage(message);
       }
 #endif
-      Broadcast(robotId, std::move(message));      
+      Broadcast(std::move(message));
     }
   }
   return RESULT_OK;
 }
 
-Result MessageHandler::SendMessage(const RobotID_t robotId, const RobotInterface::EngineToRobot& msg, bool reliable, bool hot)
+Result MessageHandler::SendMessage(const RobotInterface::EngineToRobot& msg, bool reliable, bool hot)
 {
   ++_messageCountEtR;
 
@@ -158,20 +156,20 @@ Result MessageHandler::SendMessage(const RobotID_t robotId, const RobotInterface
   return RESULT_OK;
 }
 
-void MessageHandler::Broadcast(const uint32_t robotId, const RobotInterface::RobotToEngine& message)
+void MessageHandler::Broadcast(const RobotInterface::RobotToEngine& message)
 {
   ANKI_CPU_PROFILE("Broadcast_R2E");
   
   u32 type = static_cast<u32>(message.GetTag());
-  _eventMgr.Broadcast(robotId, AnkiEvent<RobotInterface::RobotToEngine>(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(), type, message));
+  _eventMgr.Broadcast(AnkiEvent<RobotInterface::RobotToEngine>(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(), type, message));
 }
 
-void MessageHandler::Broadcast(const uint32_t robotId, RobotInterface::RobotToEngine&& message)
+void MessageHandler::Broadcast(RobotInterface::RobotToEngine&& message)
 {
   ANKI_CPU_PROFILE("Broadcast_R2E");
   
   u32 type = static_cast<u32>(message.GetTag());
-  _eventMgr.Broadcast(robotId, AnkiEvent<RobotInterface::RobotToEngine>(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(), type, std::move(message)));
+  _eventMgr.Broadcast(AnkiEvent<RobotInterface::RobotToEngine>(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(), type, std::move(message)));
 }
 
 bool MessageHandler::IsConnected(RobotID_t robotID)

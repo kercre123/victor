@@ -74,9 +74,8 @@ BehaviorComponentCloudReceiver::BehaviorComponentCloudReceiver(Robot& robot)
             EI->Subscribe(GameToEngineTag::FakeCloudIntent, fakeCloudIntentCallback));
     }
     if(robot.GetRobotMessageHandler() != nullptr){
-      _eventHandles.push_back(robot.GetRobotMessageHandler()->Subscribe(robot.GetID(),
-                                                  RobotInterface::RobotToEngineTag::triggerWordDetected,
-                                                  triggerWordCallback));
+      _eventHandles.push_back(robot.GetRobotMessageHandler()->Subscribe(RobotInterface::RobotToEngineTag::triggerWordDetected,
+                                                                        triggerWordCallback));
     }
   }
 }

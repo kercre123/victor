@@ -86,8 +86,7 @@ void BehaviorComponent::GenerateManagedComponents(Robot& robot,
   // Async Message Component
   if(!entity->HasComponent(BCComponentID::AsyncMessageComponent)){
     auto messagePtr = new AsyncMessageGateComponent(robot.HasExternalInterface() ? robot.GetExternalInterface() : nullptr,
-                                                                  robot.GetRobotMessageHandler(),
-                                                                  robot.GetID());
+                                                                  robot.GetRobotMessageHandler());
     entity->AddDependentComponent(BCComponentID::AsyncMessageComponent, std::move(messagePtr));
   }
  

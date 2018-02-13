@@ -249,7 +249,7 @@ ActionResult SayTextAction::Init()
   // Subscribe to TTS events
   auto & robot = GetRobot();
   auto * messageHandler = robot.GetRobotMessageHandler();
-  _signalHandle = messageHandler->Subscribe(robot.GetID(), RobotToEngineTag::textToSpeechEvent, callback);
+  _signalHandle = messageHandler->Subscribe(RobotToEngineTag::textToSpeechEvent, callback);
    
   // Compose a TTS request
   TextToSpeechStart msg;

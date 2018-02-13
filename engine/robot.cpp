@@ -241,7 +241,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   GetStateHistory()->Clear();
   _needToSendLocalizationUpdate = false;
 
-  GetRobotToEngineImplMessaging().InitRobotMessageComponent(GetContext()->GetRobotManager()->GetMsgHandler(), robotID, this);
+  GetRobotToEngineImplMessaging().InitRobotMessageComponent(GetContext()->GetRobotManager()->GetMsgHandler(), this);
   
   // Setup audio messages
   GetAudioClient()->SubscribeAudioCallbackMessages(this);
@@ -2234,7 +2234,7 @@ Result Robot::SetPoseOnCharger()
     
 Result Robot::SendMessage(const RobotInterface::EngineToRobot& msg, bool reliable, bool hot) const
 {
-  Result sendResult = GetContext()->GetRobotManager()->GetMsgHandler()->SendMessage(_ID, msg, reliable, hot);
+  Result sendResult = GetContext()->GetRobotManager()->GetMsgHandler()->SendMessage(msg, reliable, hot);
   if (sendResult != RESULT_OK) {
     const char* msgTypeName = EngineToRobotTagToString(msg.GetTag());
     Util::sWarningF("Robot.SendMessage", { {DDATA, msgTypeName} }, "Robot %d failed to send a message type %s", _ID, msgTypeName);

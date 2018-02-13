@@ -82,7 +82,7 @@ void RobotManager::AddRobot(const RobotID_t withID)
   if (_robot == nullptr) {
     LOG_INFO("RobotManager.AddRobot.Adding", "Adding robot with ID=%d", withID);
     _robot.reset(new Robot(withID, _context));
-    _initialConnection.reset(new RobotInitialConnection(withID,_context));
+    _initialConnection.reset(new RobotInitialConnection(_context));
   } else {
     LOG_WARNING("RobotManager.AddRobot.AlreadyAdded", "Robot already exists. Must remove first.");
   }  

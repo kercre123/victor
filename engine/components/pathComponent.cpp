@@ -79,11 +79,10 @@ void PathComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& depen
 {
   _robot = robot;
   const CozmoContext* context =  _robot->GetContext();
-  const RobotID_t robotID = _robot->GetID();
   _speedChooser = std::make_unique<SpeedChooser>(*_robot);
   if( context ) {
     // might not exist (e.g. unit tests)
-    _pdo.reset(new PathDolerOuter(context->GetRobotManager()->GetMsgHandler(), robotID));
+    _pdo.reset(new PathDolerOuter(context->GetRobotManager()->GetMsgHandler()));
 
     if (nullptr != context->GetDataPlatform()) {
       _longPathPlanner.reset(new LatticePlanner(_robot, context->GetDataPlatform()));
@@ -238,9 +237,8 @@ void PathComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& depen
     }
   };
   
-  _pathEventHandle = _robot->GetRobotMessageHandler()->Subscribe(_robot->GetID(),
-                                                                RobotInterface::RobotToEngineTag::pathFollowingEvent,
-                                                                eventLambda);
+  _pathEventHandle = _robot->GetRobotMessageHandler()->Subscribe(RobotInterface::RobotToEngineTag::pathFollowingEvent,
+                                                                 eventLambda);
 
 }
 

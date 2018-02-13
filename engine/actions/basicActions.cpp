@@ -264,8 +264,7 @@ namespace Anki {
         }
       };
       
-      _signalHandle = GetRobot().GetRobotMessageHandler()->Subscribe(GetRobot().GetID(),
-                                                                     RobotInterface::RobotToEngineTag::motorActionAck,
+      _signalHandle = GetRobot().GetRobotMessageHandler()->Subscribe(RobotInterface::RobotToEngineTag::motorActionAck,
                                                                      actionStartedLambda);
 
 
@@ -926,8 +925,7 @@ namespace Anki {
         }
       };
       
-      _signalHandle = GetRobot().GetRobotMessageHandler()->Subscribe(GetRobot().GetID(),
-                                                                     RobotInterface::RobotToEngineTag::motorActionAck,
+      _signalHandle = GetRobot().GetRobotMessageHandler()->Subscribe(RobotInterface::RobotToEngineTag::motorActionAck,
                                                                      actionStartedLambda);
 
 
@@ -1164,8 +1162,7 @@ namespace Anki {
         }
       };
       
-      _signalHandle = GetRobot().GetRobotMessageHandler()->Subscribe(GetRobot().GetID(),
-                                                                     RobotInterface::RobotToEngineTag::motorActionAck,
+      _signalHandle = GetRobot().GetRobotMessageHandler()->Subscribe(RobotInterface::RobotToEngineTag::motorActionAck,
                                                                      actionStartedLambda);
 
 

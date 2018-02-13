@@ -570,8 +570,8 @@ namespace Anki {
         _liftLoadState = event.GetData().Get_liftLoad().hasLoad ? LiftLoadState::HAS_LOAD : LiftLoadState::HAS_NO_LOAD;;
       };
 
-      _liftMovingSignalHandle = GetRobot().GetRobotMessageHandler()->Subscribe(GetRobot().GetID(), RobotToEngineTag::movingLiftPostDock, liftSoundLambda);
-      _liftLoadSignalHandle = GetRobot().GetRobotMessageHandler()->Subscribe(GetRobot().GetID(), RobotToEngineTag::liftLoad, liftLoadLambda);
+      _liftMovingSignalHandle = GetRobot().GetRobotMessageHandler()->Subscribe(RobotToEngineTag::movingLiftPostDock, liftSoundLambda);
+      _liftLoadSignalHandle = GetRobot().GetRobotMessageHandler()->Subscribe(RobotToEngineTag::liftLoad, liftLoadLambda);
     
       if (GetRobot().HasExternalInterface() )
       {

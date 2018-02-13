@@ -26,7 +26,7 @@ class PathDolerOuter
 {
 public:
 
-  PathDolerOuter(RobotInterface::MessageHandler* msgHandler, RobotID_t robotID_);
+  PathDolerOuter(RobotInterface::MessageHandler* msgHandler);
 
   // Updates the current path and will begins doling it out
   // immediately. NOTE: robot should already have a clear path before
@@ -58,7 +58,6 @@ protected:
   
   // A reference to the MessageHandler that the robot uses for outgoing comms
   RobotInterface::MessageHandler* msgHandler_;
-  RobotID_t robotID_;
 
 };
 
