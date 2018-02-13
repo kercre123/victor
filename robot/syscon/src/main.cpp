@@ -22,6 +22,9 @@ void Main_Execution(void) {
   Analog::tick();
   Lights::tick();
   Touch::tick();
+
+  // Kick watch dog when we enter our service routine
+  IWDG->KR = 0xAAAA;
 }
 
 int main (void) {
@@ -46,7 +49,5 @@ int main (void) {
   for (;;) {   
     Power::tick();
     __wfi();
-    // Kick watch dog when we enter our service routine
-    IWDG->KR = 0xAAAA;
   }
 }
