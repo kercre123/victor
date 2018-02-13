@@ -3,7 +3,6 @@
 #include "common.h"
 #include "hardware.h"
 #include "analog.h"
-#include "timer.h"
 
 #include "contacts.h"
 #include "comms.h"
@@ -47,6 +46,7 @@ void Contacts::init(void) {
 void Contacts::forward(const ContactData& pkt) {
   Analog::delayCharge();
   NVIC_DisableIRQ(USART2_IRQn);
+  memcpy(&txData, &pkt.data, sizeof(pkt.data));
 
   for (int i = 0; i < sizeof(pkt.data); i++) {
     uint8_t byte = pkt.data[i];
@@ -55,15 +55,8 @@ void Contacts::forward(const ContactData& pkt) {
     if (txWriteIndex >= sizeof(txData)) txWriteIndex = 0;
   }
   
-
-  if (USART2->CR1 & USART_CR1_RE) {
-    USART2->CR1 &= ~USART_CR1_RE;
-
-    VEXT_TX::pull(PULL_UP);
-    MicroWait(30);
-
-    USART2->CR1 |= USART_CR1_TXEIE;
-  }
+  USART2->CR1 &= ~USART_CR1_RE;
+  USART2->CR1 |= USART_CR1_TXEIE;
 
   NVIC_EnableIRQ(USART2_IRQn);
 }
@@ -96,7 +89,6 @@ extern "C" void USART2_IRQHandler(void) {
   if (USART2->ISR & USART_ISR_TC) {
     if (txReadIndex == txWriteIndex) {
       USART2->CR1 &= ~USART_CR1_TCIE;
-      VEXT_TX::pull(PULL_NONE);
       USART2->CR1 |= USART_CR1_RE;
     }
   }
