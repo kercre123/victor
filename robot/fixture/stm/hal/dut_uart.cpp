@@ -31,6 +31,8 @@ namespace DUT_UART {
     volatile int len; 
     int w, r, enabled;
   } rx;
+  
+  static volatile int framing_err_cnt = 0, overflow_err_cnt = 0, drop_char_cnt = 0;
 }
 
 void DUT_UART::init(int baud)
@@ -112,6 +114,10 @@ void DUT_UART::deinit(void)
   rx.len = 0;
   rx.r = 0;
   rx.w = 0;
+  
+  framing_err_cnt = 0;
+  overflow_err_cnt = 0;
+  drop_char_cnt = 0;
 }
 
 int DUT_UART::printf(const char *format, ... )
@@ -217,15 +223,39 @@ char* DUT_UART::getline(char* buf, int bufsize, int timeout_us, int *out_len)
   return eol ? buf : NULL;
 }
 
-namespace DUT_UART {
+namespace DUT_UART
+{
   static inline void uart_isr_handler_(char c)
   {
-    if( rx.enabled && rx.len < rx_fifo_size ) { //drop chars if fifo full
-      rx.buf[rx.w] = c;
-      if(++rx.w >= rx_fifo_size)
-        rx.w = 0;
-      rx.len++;
+    if( rx.enabled ) {
+      if( rx.len < rx_fifo_size ) { //drop chars if fifo full
+        rx.buf[rx.w] = c;
+        if(++rx.w >= rx_fifo_size)
+          rx.w = 0;
+        rx.len++;
+      }
+      else {
+        drop_char_cnt++;
+      }
     }
+  }
+  
+  int getRxDroppedChars() {
+    int temp = drop_char_cnt;
+    drop_char_cnt = 0;
+    return temp;
+  }
+  
+  int getRxOverflowErrors() {
+    int temp = overflow_err_cnt;
+    overflow_err_cnt = 0;
+    return temp;
+  }
+  
+  int getRxFramingErrors() {
+    int temp = framing_err_cnt;
+    framing_err_cnt = 0;
+    return temp;
   }
 }
 
@@ -233,7 +263,14 @@ extern "C" void USART2_IRQHandler(void)
 {
   volatile int junk;
   
-  if( USART2->SR & (USART_SR_ORE | USART_SR_FE) ) { //framing and/or overrun error
+  uint32_t status = USART2->SR;
+  if( status & (USART_SR_ORE | USART_SR_FE) ) //framing and/or overrun error
+  {
+    if( status & USART_SR_ORE )
+      DUT_UART::overflow_err_cnt++;
+    if( status & USART_SR_FE )
+      DUT_UART::framing_err_cnt++;
+    
     junk = USART2->DR; //flush the dr & shift register
     junk = USART2->DR; //reading DR clears error flags
   } else if (USART2->SR & USART_SR_RXNE) {

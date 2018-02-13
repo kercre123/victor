@@ -58,6 +58,8 @@ namespace Contacts
     int w, r;
   } rx;
   
+  static volatile int framing_err_cnt = 0, overflow_err_cnt = 0, drop_char_cnt = 0;
+  
   static inline void delay_bit_time_(const uint16_t n) {
     Timer::wait(1 + ( ((uint32_t)n*1000*1000) / CONTACT_BAUD) );
   }
@@ -365,6 +367,10 @@ void Contacts::setModeRx(void)
   rx.r = 0;
   rx.w = 0;
   
+  //framing_err_cnt = 0;
+  //overflow_err_cnt = 0;
+  //drop_char_cnt = 0;
+  
   NVIC_EnableIRQ(USART_IRQn);
   mode = MODE_RX;
 }
@@ -474,12 +480,17 @@ int Contacts::flushRx(void)
   rx.r = 0;
   rx.w = 0;
   
+  framing_err_cnt = 0;
+  overflow_err_cnt = 0;
+  drop_char_cnt = 0;
+  
   NVIC_EnableIRQ(USART_IRQn);
   
   return n;
 }
 
-namespace Contacts {
+namespace Contacts
+{
   static inline void uart_isr_handler_(char c)
   {
     if( mode == MODE_RX ) {
@@ -488,8 +499,28 @@ namespace Contacts {
         if(++rx.w >= rx_fifo_size)
           rx.w = 0;
         rx.len++;
+      } else {
+        drop_char_cnt++;
       }
     }
+  }
+  
+  int getRxDroppedChars() {
+    int temp = drop_char_cnt;
+    drop_char_cnt = 0;
+    return temp;
+  }
+  
+  int getRxOverflowErrors() {
+    int temp = overflow_err_cnt;
+    overflow_err_cnt = 0;
+    return temp;
+  }
+  
+  int getRxFramingErrors() {
+    int temp = framing_err_cnt;
+    framing_err_cnt = 0;
+    return temp;
   }
 }
 
@@ -498,7 +529,14 @@ extern "C" void USART_IRQHandler(void)
   volatile int junk;
   
   #if TARGET_SYSCON
-    if( USART->ISR & (USART_ISR_ORE | USART_ISR_FE) ) { //framing and/or overrun error
+    uint32_t status = USART->ISR;
+    if( status & (USART_ISR_ORE | USART_ISR_FE) ) //framing and/or overrun error
+    {
+      if( status & USART_ISR_ORE )
+        Contacts::overflow_err_cnt++;
+      if( status & USART_ISR_FE )
+        Contacts::framing_err_cnt++;
+      
       junk = USART->RDR; //flush the rdr & shift register
       junk = USART->RDR;
       USART->ICR = USART_ICR_ORECF | USART_ICR_FECF; //clear flags
@@ -507,7 +545,14 @@ extern "C" void USART_IRQHandler(void)
     }
     
   #elif TARGET_FIXTURE
-    if( USART->SR & (USART_SR_ORE | USART_SR_FE) ) { //framing and/or overrun error
+    uint32_t status = USART->SR;
+    if( status & (USART_SR_ORE | USART_SR_FE) ) //framing and/or overrun error
+    {
+      if( status & USART_SR_ORE )
+        Contacts::overflow_err_cnt++;
+      if( status & USART_SR_FE )
+        Contacts::framing_err_cnt++;
+      
       junk = USART->DR; //flush the dr & shift register
       junk = USART->DR; //reading DR clears error flags
     } else if (USART->SR & USART_SR_RXNE) {

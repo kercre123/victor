@@ -21,6 +21,10 @@ namespace DUT_UART
   //@return 'buf' if EOL found, NULL if timeout or bufsize exceeded
   char* getline(char* buf, int bufsize, int timeout_us = 20*1000, int *out_len = 0);
   int   getchar(int timeout_us = 0);
+  
+  int getRxDroppedChars();   //get and clear count of dropped rx chars
+  int getRxOverflowErrors(); //get and clear count of receive buffer overflows (uart periph)
+  int getRxFramingErrors();  //get and clear count of receive framing errors
 }
 #endif /* __cplusplus */
 
