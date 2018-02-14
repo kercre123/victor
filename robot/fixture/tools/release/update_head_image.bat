@@ -1,9 +1,8 @@
 @echo OFF
 
-REM 'adb.exe' expected to be in C:\Users\[username]\android\adb.exe
-set ADB_PATH=%userprofile%\android
-if not exist "%ADB_PATH%\adb.exe" (
-  echo %ADB_PATH%\adb.exe does not exist
+set ADB=C:\android\adb.exe
+if not exist "%ADB%" (
+  echo %ADB% does not exist
   goto END
 )
 
@@ -14,15 +13,15 @@ if not exist "emmcdl" (
 )
 
 REM create fixture directory, if it doesn't exist
-%ADB_PATH%\adb shell -x "mkdir -p data/local/fixture"
+%ADB% shell -x "mkdir -p data/local/fixture"
 
 REM update head scripts & image files
-%ADB_PATH%\adb push headprogram data/local/fixture/
-%ADB_PATH%\adb shell -x "cd data/local/fixture && chmod +x headprogram"
-%ADB_PATH%\adb shell -x "cd data/local/fixture && rm -rf emmcdl && mkdir emmcdl"
-%ADB_PATH%\adb push emmcdl data/local/fixture/
-%ADB_PATH%\adb push bin/emmcdl data/local/fixture/emmcdl/
-%ADB_PATH%\adb shell -x "cd data/local/fixture/emmcdl && chmod +x emmcdl"
+%ADB% push headprogram data/local/fixture/
+%ADB% shell -x "cd data/local/fixture && chmod +x headprogram"
+%ADB% shell -x "cd data/local/fixture && rm -rf emmcdl && mkdir emmcdl"
+%ADB% push emmcdl data/local/fixture/
+%ADB% push bin/emmcdl data/local/fixture/emmcdl/
+%ADB% shell -x "cd data/local/fixture/emmcdl && chmod +x emmcdl"
 
-REM %ADB_PATH%\adb reboot
+REM %ADB% reboot
 :END
