@@ -69,9 +69,9 @@ void getAndroidPlatformPaths(std::string& filesPath,
                              std::string& resourcesBasePath)
 {
   filesPath = "/anki/data/assets";
-  cachePath = "/data/data/com.anki.cozmoengine/cache";
-  externalPath = "/anki/data/assets";
-  resourcesBasePath = externalPath + "/assets";
+  cachePath = "/data/data/com.anki.victor/cache";
+  externalPath = "/data/data/com.anki.victor/files";
+  resourcesBasePath = "/anki/data";
   resourcesPath = createResourcesPath("/anki/data/assets");
 }
 

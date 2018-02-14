@@ -2398,7 +2398,7 @@ int main(int argc, char ** argv)
     std::string path = aux.substr(0,pos);
 */
     std::string path = cwdPath;
-    resourcePath = path + "/../../assets/cozmo_resources";
+    resourcePath = path + "/../../data/assets/cozmo_resources";
     filesPath = path + "/files";
     cachePath = path + "/temp";
     externalPath = path + "/temp";
@@ -2413,7 +2413,7 @@ int main(int argc, char ** argv)
   // Suppress break-on-error for duration of these tests
   Anki::Util::_errBreakOnError = false;
 
-  // Initialize AndroidHAL singleton without supervisor
+  // Initialize CameraService singleton without supervisor
   CameraService::SetSupervisor(nullptr);
   
   // Initialize OSState singleton without supervisor

@@ -55,7 +55,7 @@ done
 : ${DEVICE_RSYNC_CONF_DIR:="/data/rsync"}
 
 # increment the following value if the contents of rsyncd.conf change
-RSYNCD_CONF_VERSION=1
+RSYNCD_CONF_VERSION=2
 
 
 function usage() {
@@ -131,21 +131,20 @@ set -e
 # startup rsync daemon
 $ADB shell "${DEVICE_RSYNC_BIN_DIR}/rsync.bin --daemon --config=${DEVICE_RSYNC_CONF_DIR}/${RSYNCD_CONF}"
 
-rsync -rv --include="*.so" --exclude="*" --delete \
-  ${BUILD_ROOT}/lib/ \
-  rsync://${DEVICE_IP_ADDRESS}/anki_root/lib/
+pushd ${BUILD_ROOT} > /dev/null 2>&1
 
-rsync -rv --exclude="*.full" --delete \
-  ${BUILD_ROOT}/bin/ \
-  rsync://${DEVICE_IP_ADDRESS}/anki_root/bin/
+# Since invoking rsync multiple times is expensive.
+# build an include file list so that we can run a single rsync command
+RSYNC_LIST="${BUILD_ROOT}/rsync.$$.lst"
+touch ${RSYNC_LIST}
 
-rsync -Prv --include="*.so" --exclude="*" ${BUILD_ROOT}/lib/ rsync://${DEVICE_IP_ADDRESS}/install_root/lib/
-rsync -Prv --exclude="*.full" --exclude="axattr" ${BUILD_ROOT}/bin/ rsync://${DEVICE_IP_ADDRESS}/install_root/bin/
-rsync -Prv ${TOPLEVEL}/project/victor/runtime/ rsync://${DEVICE_IP_ADDRESS}/install_root/
-rsync -rv --delete ${TOPLEVEL}/project/victor/runtime/ rsync://${DEVICE_IP_ADDRESS}/anki_root/etc/
+find lib -type f -name '*.so' >> ${RSYNC_LIST}
+find bin -type f -not -name '*.full' >> ${RSYNC_LIST}
+find etc >> ${RSYNC_LIST}
+find data >> ${RSYNC_LIST}
 
+rsync -rlptD -uzvP --delete --files-from=${RSYNC_LIST} ./ rsync://${DEVICE_IP_ADDRESS}/anki_root/
 
-#
-# Put a link in /data/appinit.sh for automatic startup
-#
-$ADB shell ln -sf ${INSTALL_ROOT}/etc/appinit.sh /data/appinit.sh
+rm -f ${BUILD_ROOT}/rsync.*.lst
+
+popd > /dev/null 2>&1

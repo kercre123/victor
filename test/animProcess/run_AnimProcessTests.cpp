@@ -57,7 +57,7 @@ int main(int argc, char ** argv)
     std::string path = aux.substr(0,pos);
 */
     std::string path = cwdPath;
-    resourcePath = path + "/../../assets/cozmo_resources";
+    resourcePath = path + "/../../data/assets/cozmo_resources";
   } else {
     // build server specifies configRoot and workRoot
     resourcePath = configRoot + "/resources";
