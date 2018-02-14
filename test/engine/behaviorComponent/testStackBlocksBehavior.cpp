@@ -43,12 +43,34 @@ void CreateStackBehavior(Robot& robot, ICozmoBehaviorPtr& stackBehavior, Behavio
   ASSERT_TRUE(stackBehavior == nullptr) << "test bug: should not have behavior yet";
 
   BehaviorContainer& behaviorContainer = robot.GetAIComponent().GetBehaviorContainer();
+  
+  // Build PICKUP ID
+  {
+    // Arbitrarily using the Wait ID - no effect on implementation details
+    const std::string& configStr =
+      R"({
+        "behaviorClass": "PickUpCube",
+        "behaviorID": "PickupCube"
+    
+      })";
 
+    Json::Value config;
+    Json::Reader reader;
+    bool parseOK = reader.parse( configStr.c_str(), config);
+    ASSERT_TRUE(parseOK) << "failed to parse JSON, bug in the test";
+    behaviorContainer.CreateBehaviorAndAddToContainer(BEHAVIOR_CLASS(PickUpCube),
+                                                      config);
+    
+  }
+  
+
+  
   // Arbitrarily using the Wait ID - no effect on implementation details
   const std::string& configStr =
     R"({
          "behaviorClass": "StackBlocks",
          "behaviorID": "Wait_TestInjectable",
+         "pickupBehaviorID": "PickupCube",
          "flatScore": 0.8
        })";
 

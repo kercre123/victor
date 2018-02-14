@@ -25,7 +25,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
 #include "engine/aiComponent/behaviorComponent/devBehaviorComponentMessageHandler.h"
 #include "engine/aiComponent/behaviorEventAnimResponseDirector.h"
-#include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/faceWorld.h"
 #include "engine/audio/engineRobotAudioClient.h"
@@ -167,12 +166,6 @@ void BehaviorComponent::GenerateManagedComponents(Robot& robot,
                                   new BehaviorExternalInterface());
   }
 
-  // Behavior Helper Component
-  if(!entity->HasComponent(BCComponentID::BehaviorHelperComponent)){
-    entity->AddDependentComponent(BCComponentID::BehaviorHelperComponent,
-                                  new BehaviorHelperComponent());
-  }
-
   // Behavior System Manager
   if(!entity->HasComponent(BCComponentID::BehaviorSystemManager)){
     entity->AddDependentComponent(BCComponentID::BehaviorSystemManager,
@@ -214,8 +207,6 @@ void BehaviorComponent::Update(Robot& robot,
 {
 
   BehaviorExternalInterface& bei = GetComponent<BehaviorExternalInterface>();
-
-  GetBehaviorHelperComponent().Update();
   
   {
     BehaviorSystemManager& bsm = GetComponent<BehaviorSystemManager>();

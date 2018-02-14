@@ -34,7 +34,6 @@ class AIWhiteboard;
 class BEIRobotInfo;
 class BehaviorComponent;
 class BehaviorContainer;
-class BehaviorHelperComponent;
 class ContinuityComponent;
 class FaceSelectionComponent;
 class FreeplayDataTracker;
@@ -102,6 +101,8 @@ public:
   template<typename T>
   T& GetComponent(AIComponentID componentID) const {assert(_aiComponents); return _aiComponents->_components.GetComponent(componentID).GetValue<T>();}
 
+  template<typename T>
+  T* GetBasePtr(AIComponentID componentID) const {assert(_aiComponents); return _aiComponents->_components.GetComponent(componentID).GetBasePtr<T>();}
 
   inline const AIInformationAnalyzer& GetAIInformationAnalyzer() const { return GetComponent<AIInformationAnalyzer>(AIComponentID::InformationAnalyzer);}
   inline AIInformationAnalyzer& GetAIInformationAnalyzer() { return GetComponent<AIInformationAnalyzer>(AIComponentID::InformationAnalyzer);}
@@ -110,9 +111,6 @@ public:
   inline const BehaviorComponent& GetBehaviorComponent() const {  return GetComponent<BehaviorComponent>(AIComponentID::BehaviorComponent); }
   inline BehaviorComponent&       GetBehaviorComponent()       {  return GetComponent<BehaviorComponent>(AIComponentID::BehaviorComponent); }
   
-  // Support legacy code until move helper comp into delegate component
-  const BehaviorHelperComponent& GetBehaviorHelperComponent() const;
-  BehaviorHelperComponent&       GetBehaviorHelperComponent();
   // For test only
   BehaviorContainer& GetBehaviorContainer();
   

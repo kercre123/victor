@@ -39,36 +39,35 @@ protected:
 
   virtual void OnBehaviorActivated() override;
   virtual void BehaviorUpdate() override;
-  virtual void OnBehaviorDeactivated() override;
 
   virtual bool WantsToBeActivatedBehavior() const override;
     
-  virtual std::set<ObjectInteractionIntention>
-        GetBehaviorObjectInteractionIntentions() const override {
-          return {(_isBlockRotationImportant ?
-                   ObjectInteractionIntention::RollObjectWithDelegateAxisCheck :
-                   ObjectInteractionIntention::RollObjectWithDelegateNoAxisCheck)};
-        }
-  
 private:
   enum class State {
     RollingBlock,
     CelebratingRoll
   };
-  
-  // TODO:(bn) a few behaviors have used this pattern now, maybe we should re-think having some kind of
-  // UpdateWhileNotRunning
-  mutable ObjectID _targetID;
-  bool _isBlockRotationImportant;
-  
-  bool _didCozmoAttemptDock;
-  AxisName _upAxisOnBehaviorStart;
-  State    _behaviorState;
 
-  void TransitionToPerformingAction(bool isRetry = false);
+  struct InstanceConfig{
+    bool isBlockRotationImportant = false;
+    int rollRetryCount = 1;
+  };
+
+  struct DynamicVariables{
+    ObjectID targetID;
+    bool     didAttemptDock        = false;
+    AxisName upAxisOnBehaviorStart = AxisName::X_POS;
+    State    behaviorState         = State::RollingBlock;
+    int rollRetryCount             = 0;
+  };
+
+  InstanceConfig _iConfig;
+  DynamicVariables _dVars;
+
+  void TransitionToPerformingAction();
   void TransitionToRollSuccess();
-  void ResetBehavior();
-  virtual void UpdateTargetBlock() const;
+  
+  void CalculateTargetID(ObjectID& targetID) const;
   
   void UpdateTargetsUpAxis();
   

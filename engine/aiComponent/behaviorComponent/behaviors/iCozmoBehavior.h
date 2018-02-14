@@ -19,7 +19,6 @@
 #include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/iBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
-#include "engine/aiComponent/behaviorComponent/behaviorHelpers/helperHandle.h"
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
 #include "engine/components/cubeLightComponent.h"
 #include "engine/components/visionScheduleMediator/iVisionModeSubscriber.h"
@@ -49,8 +48,6 @@ namespace Cozmo {
 // Forward declarations
 class ActionableObject;
 class DriveToObjectAction;
-class BehaviorHelperFactory;
-class IHelper;
 enum class ObjectInteractionIntention;
 enum class CloudIntent : uint8_t;
 
@@ -105,9 +102,6 @@ class ICozmoBehavior : public IBehavior, public IVisionModeSubscriber
 {
 protected:  
   friend class BehaviorContainer;
-  // Allows helpers to run DelegateIfInControl calls directly on the behavior that
-  // delegated to them
-  friend class IHelper;
 
   // Can't create a public ICozmoBehavior, but derived classes must pass a robot
   // reference into this protected constructor.
@@ -129,12 +123,6 @@ public:
 
   // returns true if the behavior has delegated control to a helper/action/behavior
   bool IsControlDelegated() const;
-  
-  // DEPRECATED: use IsControlDelegated() instead
-  // returns true iff: 
-  // + behavior delegated to an Action,
-  // + the Action is still running
-  bool IsActing() const;
 
   // returns the number of times this behavior has been started (number of times Init was called and returned
   // OK, not counting calls to Resume)
@@ -189,10 +177,6 @@ public:
   
   // returns the required unlockID for the behavior
   const UnlockId GetRequiredUnlockID() const {  return _requiredUnlockId;}
-  
-  // Get the ObjectUseIntentions this behavior uses
-  virtual std::set<ObjectInteractionIntention>
-                           GetBehaviorObjectInteractionIntentions() const { return {}; }
   
   
   // Add Listeners to a behavior which will notify them of milestones/events in the behavior's lifecycle
@@ -360,9 +344,8 @@ protected:
 
   // This function cancels the action started by DelegateIfInControl (if there is one). Returns true if an action was
   // canceled, false otherwise. Note that if you are activated, this will trigger a callback for the
-  // cancellation unless you set allowCallback to false. If the action was created by a helper, the helper
-  // will be canceled as well, unless allowHelperToContinue is true
-  bool CancelDelegates(bool allowCallback = true, bool allowHelperToContinue = false);
+  // cancellation unless you set allowCallback to false.
+  bool CancelDelegates(bool allowCallback = true);
 
   // This function cancels this behavior. It never allows callbacks or helpers to continue. This is just a
   // convenience wrapper for calling CancelSelf on the delegation component. It returns true if the behavior
@@ -408,29 +391,9 @@ protected:
                                   const ObjectLights& modifier = {});
   bool SmartRemoveCustomLightPattern(const ObjectID& objectID,
                                      const std::vector<CubeAnimationTrigger>& anims);
-  
-  // Ensures that a handle is stopped if the behavior is stopped
-  bool SmartDelegateToHelper(HelperHandle handleToRun,
-                             SimpleCallback successCallback = nullptr,
-                             SimpleCallback failureCallback = nullptr);
-
-  template<typename T>
-  bool SmartDelegateToHelper(HelperHandle handleToRun,
-                             void(T::*successCallback)());
-
-  template<typename T>
-  bool SmartDelegateToHelper(HelperHandle handleToRun,
-                             void(T::*successCallback)(),
-                             void(T::*failureCallback)());
-
-  // Stop a helper delegated with SmartDelegateToHelper
-  bool StopHelperWithoutCallback();
 
   // Helper function to play an emergency get out through the continuity component
   void PlayEmergencyGetOut(AnimationTrigger anim);
-  
-  // Convenience Method for accessing the behavior helper factory
-  BehaviorHelperFactory& GetBehaviorHelperFactory();
   
   // If a behavior requires that an AIInformationProcess is running for the behavior
   // to operate properly, the behavior should set this variable directly so that
@@ -523,10 +486,6 @@ private:
   std::map<std::string, u8> _lockingNameToTracksMap;
 
   bool _hasSetMotionProfile = false;
-  
-  
-  // Handle for SmartDelegateToHelper
-  WeakHelperHandle _currentHelperHandle;
 
   //A list of object IDs that have had a custom light pattern set
   std::vector<ObjectID> _customLightObjects;
@@ -571,24 +530,6 @@ template<typename T>
 bool ICozmoBehavior::DelegateIfInControl(IActionRunner* action, void(T::*callback)(ActionResult))
 {
   return DelegateIfInControl(action, std::bind(callback, static_cast<T*>(this), std::placeholders::_1));
-}
-
-template<typename T>
-bool ICozmoBehavior::SmartDelegateToHelper(HelperHandle handleToRun,
-                                           void(T::*successCallback)())
-{
-  SimpleCallback unambiguous = std::bind(successCallback, static_cast<T*>(this));
-  return SmartDelegateToHelper(handleToRun, unambiguous);
-}
-
-template<typename T>
-bool ICozmoBehavior::SmartDelegateToHelper(HelperHandle handleToRun,
-                                           void(T::*successCallback)(),
-                                           void(T::*failureCallback)())
-{
-  SimpleCallback unambiguousSuccess = std::bind(successCallback, static_cast<T*>(this));
-  SimpleCallback unambiguousFailure = std::bind(failureCallback, static_cast<T*>(this));
-  return SmartDelegateToHelper(handleToRun, unambiguousSuccess, unambiguousFailure);
 }
 
 template<typename T>

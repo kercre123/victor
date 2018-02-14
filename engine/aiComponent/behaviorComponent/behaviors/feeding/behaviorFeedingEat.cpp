@@ -242,8 +242,6 @@ void BehaviorFeedingEat::TransitionToDrivingToFood()
       // can't see the cube, maybe it's obstructed? give up on the cube until we see it again. Let the
       // behavior end (it may get re-selected with a different cube)
       MarkCubeAsBad();
-    } else if( result == ActionResult::NO_PREACTION_POSES){
-      GetBEI().GetAIComponent().GetWhiteboard().SetNoPreDockPosesOnObject(_targetID);
     } else {
       const ActionResultCategory resCat = IActionRunner::GetActionResultCategory(result);
 

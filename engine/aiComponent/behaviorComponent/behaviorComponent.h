@@ -44,7 +44,6 @@ class BehaviorComponentCloudReceiver;
 class BehaviorContainer;
 class BehaviorEventAnimResponseDirector;
 class BehaviorExternalInterface;
-class BehaviorHelperComponent;
 class BehaviorManager;
 class BehaviorSystemManager;
 class BlockWorld;
@@ -121,14 +120,6 @@ protected:
   friend class AIComponent;
   friend class DevBehaviorComponentMessageHandler;
   friend class TestBehaviorFramework; // for testing access to internals
-  
-
-
-
-  inline const BehaviorHelperComponent& GetBehaviorHelperComponent() const 
-    { return GetComponent<BehaviorHelperComponent>(); }
-  inline BehaviorHelperComponent&       GetBehaviorHelperComponent()
-    { return GetComponent<BehaviorHelperComponent>(); }
   
   // For test only
   BehaviorContainer& GetBehaviorContainer();

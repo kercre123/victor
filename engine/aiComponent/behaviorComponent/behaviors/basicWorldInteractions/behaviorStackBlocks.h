@@ -16,11 +16,13 @@
 #include "coretech/common/engine/objectIDs.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/objectInteractionInfoCache.h"
-
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 
 namespace Anki {
 namespace Cozmo {
 
+// forward declarations
+class BehaviorPickUpCube;
 class BlockWorldFilter;
 class ObservableObject;
 
@@ -35,32 +37,38 @@ protected:
     modifiers.wantsToBeActivatedWhenCarryingObject = true;
   }
 
+  virtual void InitBehavior() override;
   virtual void OnBehaviorActivated() override;
-  virtual void OnBehaviorDeactivated() override;
   virtual void BehaviorUpdate() override;
 
   virtual bool WantsToBeActivatedBehavior() const override;
-    
-  virtual std::set<ObjectInteractionIntention>
-        GetBehaviorObjectInteractionIntentions() const override {
-          return {(_stackInAnyOrientation ?
-                   ObjectInteractionIntention::PickUpObjectNoAxisCheck :
-                   ObjectInteractionIntention::PickUpObjectAxisCheck)};
-        }
-  
+  virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
+
 private:
   enum class State {
     PickingUpBlock,
     StackingBlock,
     PlayingFinalAnim
   };
-  State _behaviorState;
-  
-  mutable ObjectID _targetBlockTop;
-  mutable ObjectID _targetBlockBottom;
 
-  bool _stackInAnyOrientation;
-  bool _hasBottomTargetSwitched;
+  struct InstanceConfig{
+    bool stackInAnyOrientation = false;
+    int placeRetryCount = 1;
+    BehaviorID pickupID = BehaviorID::Wait;
+    std::shared_ptr<BehaviorPickUpCube> pickupBehavior;
+  };
+
+  struct DynamicVariables{
+    ObjectID targetBlockTop;
+    ObjectID targetBlockBottom;
+
+    State behaviorState = State::PickingUpBlock;
+    bool hasBottomTargetSwitched = false;
+    int placeRetryCount = 0;
+  };
+
+  InstanceConfig _iConfig;
+  DynamicVariables _dVars;
 
   void TransitionToPickingUpBlock();
   void TransitionToStackingBlock();
@@ -70,9 +78,8 @@ private:
   
   // Utility functions
   ObjectID GetClosestValidBottom(ObjectInteractionIntention bottomIntention) const;
-  void UpdateTargetBlocks() const;
+  void CalculateTargetBlocks(ObjectID& bottomBlock, ObjectID& topBlock) const;
   bool CanUseNonUprightBlocks() const;
-  void ResetBehavior();
   void SetState_internal(State state, const std::string& stateName);
 
   // prints some useful stuff about the block

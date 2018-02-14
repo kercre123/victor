@@ -390,7 +390,7 @@ void BehaviorPuzzleMaze::DrawCozmo(Vision::Image& image)
 void BehaviorPuzzleMaze::UpdateDisplay()
 {
   // Do we need to draw a new face?
-  if (!IsControlDelegated() && !IsActing() && _animateBetweenTiles) {
+  if (!IsControlDelegated() && _animateBetweenTiles) {
     
     // Init background, height by width
     Vision::Image image(FACE_DISPLAY_HEIGHT,FACE_DISPLAY_WIDTH, NamedColors::BLACK);

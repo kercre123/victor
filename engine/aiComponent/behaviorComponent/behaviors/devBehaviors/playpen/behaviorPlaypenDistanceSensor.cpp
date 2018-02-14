@@ -151,7 +151,7 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenDistanceSensor::PlaypenUpdateInte
   else
   {
     // If we aren't acting then turn back to where we were facing when the behavior started
-    if(!IsActing())
+    if(!IsControlDelegated())
     {
       TransitionToTurnBack();
     }

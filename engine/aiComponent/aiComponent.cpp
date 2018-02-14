@@ -270,22 +270,6 @@ void AIComponent::CheckForSuddenObstacle(Robot& robot)
   } 
 }
 
-// Support legacy code until move helper comp into delegate component
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const BehaviorHelperComponent& AIComponent::GetBehaviorHelperComponent() const
-{
-  auto& behaviorComponent = GetComponent<BehaviorComponent>(AIComponentID::BehaviorComponent);
-  return behaviorComponent.GetBehaviorHelperComponent();
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorHelperComponent& AIComponent::GetBehaviorHelperComponent()
-{
-  auto& behaviorComponent = GetComponent<BehaviorComponent>(AIComponentID::BehaviorComponent);
-  return behaviorComponent.GetBehaviorHelperComponent();
-}
-
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorContainer& AIComponent::GetBehaviorContainer() 

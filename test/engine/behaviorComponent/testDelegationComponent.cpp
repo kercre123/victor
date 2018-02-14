@@ -23,7 +23,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
@@ -59,7 +58,6 @@ TEST(DelegationComponent, TestDelegationVariants)
   const int arbitraryDelegationNumber = 50;
   std::vector<std::unique_ptr<TestSuperPoweredBehavior>> bunchOfBehaviors;
   std::vector<std::unique_ptr<ICozmoBehavior>> bunchOfCozmoBehaviors;
-  std::vector<HelperHandle> bunchOfHelpers;
 
   {
     for(int i = 0; i < arbitraryDelegationNumber; i++){
@@ -118,25 +116,6 @@ TEST(DelegationComponent, TestDelegationVariants)
       
       behaviorDelegating = bunchOfCozmoBehaviors.back().get();
     }
-  }
-
-  // Delegate to helper
-  {
-    auto& factory = testFramework.GetBehaviorComponent().GetComponent<BehaviorHelperComponent>().GetBehaviorHelperFactory();
-    bunchOfHelpers.push_back(factory.CreatePlaceBlockHelper(*bunchOfCozmoBehaviors.back().get()));
-    HelperHandle toDelegate = bunchOfHelpers.back();
-    InjectValidDelegateIntoBSM(testFramework, behaviorDelegating, toDelegate.get(), false);
-    
-    ASSERT_TRUE(delegationComp.HasDelegator(behaviorDelegating));
-    auto& delegatorComp = delegationComp.GetDelegator(behaviorDelegating);
-    
-    EXPECT_TRUE(delegatorComp.Delegate(behaviorDelegating,
-                                       toDelegate,
-                                       nullptr,
-                                       nullptr));
-    
-    // Cancel the action that the helper just delegated to in its init
-    delegationComp.CancelDelegates(behaviorDelegating);
   }
   
   // Delegate to an action

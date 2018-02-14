@@ -27,7 +27,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
-#include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/aiComponent/continuityComponent.h"
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionCloudIntentPending.h"
@@ -509,11 +508,6 @@ void ICozmoBehavior::OnLeftActivatableScopeInternal()
 void ICozmoBehavior::OnDeactivatedInternal()
 {
   PRINT_CH_INFO("Behaviors", (GetDebugLabel() + ".Stop").c_str(), "Stopping...");
-
-  // If the behavior delegated off to a helper, stop that first
-  if(!_currentHelperHandle.expired()){
-    StopHelperWithoutCallback();
-  }
   
   _isActivated = false;
   OnBehaviorDeactivated();
@@ -705,7 +699,7 @@ void ICozmoBehavior::UpdateInternal()
 
   // Handle stop after requested action finishes
   if(IsActivated()){
-    if(!IsActing()){
+    if(!IsControlDelegated()){
       if(_stopRequestedAfterAction) {
         // we've been asked to stop, so do that
         if(GetBEI().HasDelegationComponent()){
@@ -803,18 +797,6 @@ bool ICozmoBehavior::IsControlDelegated() const
   
   return false;
 }
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ICozmoBehavior::IsActing() const
-{
-  if(GetBEI().HasDelegationComponent()){
-    auto& delegationComponent = GetBEI().GetDelegationComponent();
-    return delegationComponent.IsActing(this);
-  }
-  
-  return false;
-}
-
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -830,7 +812,7 @@ bool ICozmoBehavior::DelegateIfInControl(IActionRunner* action, RobotCompletedAc
   
   auto& delegationComponent = GetBEI().GetDelegationComponent();
   if(!delegationComponent.HasDelegator(this)){
-    PRINT_NAMED_ERROR("ICozmoBehavior.DelegateIfInControl.NoDelegator",
+    PRINT_NAMED_ERROR("ICozmoBehavior.DelegateIfInControl.ControlAlreadyDelegated",
                       "Behavior %s attempted to start action while it did not have control of delegation",
                       GetDebugLabel().c_str());
     delete action;
@@ -851,15 +833,6 @@ bool ICozmoBehavior::DelegateIfInControl(IActionRunner* action, RobotCompletedAc
     PRINT_NAMED_WARNING("ICozmoBehavior.DelegateIfInControl.Failure.NotRunning",
                         "Behavior '%s' can't start %s action because it is not running",
                         GetDebugLabel().c_str(), action->GetName().c_str());
-    delete action;
-    return false;
-  }
-
-  if( IsActing() ) {
-    PRINT_NAMED_WARNING("ICozmoBehavior.DelegateIfInControl.Failure.AlreadyActing",
-                        "Behavior '%s' can't start %s action because it is already running an action in state %s",
-                        GetDebugLabel().c_str(), action->GetName().c_str(),
-                        GetDebugStateName().c_str());
     delete action;
     return false;
   }
@@ -973,17 +946,8 @@ void ICozmoBehavior::HandleActionComplete(const ExternalInterface::RobotComplete
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ICozmoBehavior::CancelDelegates(bool allowCallback, bool allowHelperToContinue)
+bool ICozmoBehavior::CancelDelegates(bool allowCallback)
 {
-  if( !allowHelperToContinue ) {
-    // stop the helper first. This is generally what we want, because if someone else is stopping an action,
-    // the helper likely won't know how to respond. Note that helpers can't call StopActing
-    if( !_currentHelperHandle.expired() ) {
-      PRINT_CH_INFO("Behaviors", (GetDebugLabel() + ".StopActing.WithoutCallback.StopHelper").c_str(),
-                    "Stopping behavior helper because action stopped without callback");
-    }
-    StopHelperWithoutCallback();
-  }    
   
   if( IsControlDelegated() ) {
     if(!allowCallback){
@@ -1149,93 +1113,6 @@ bool ICozmoBehavior::SmartRemoveCustomLightPattern(const ObjectID& objectID,
                         "No custom light pattern is set for object %d", objectID.GetValue());
     return false;
   }
-}
- 
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ICozmoBehavior::SmartDelegateToHelper(HelperHandle handleToRun,
-                                           SimpleCallback successCallback,
-                                           SimpleCallback failureCallback)
-{
-  PRINT_CH_INFO("Behaviors", (GetDebugLabel() + ".SmartDelegateToHelper").c_str(),
-                "Behavior requesting to delegate to helper %s", handleToRun->GetName().c_str());
-
-  if(!_currentHelperHandle.expired()){
-   PRINT_NAMED_WARNING("ICozmoBehavior.SmartDelegateToHelper",
-                       "Attempted to start a handler while handle already running, stopping running helper");
-   StopHelperWithoutCallback();
-  }
-  
-  if(!GetBEI().HasDelegationComponent()){
-    PRINT_NAMED_ERROR("ICozmoBehavior.SmartDelegateToHelper.NotInControlOfDelegationComponent",
-                      "Behavior %s attempted to delegate while not in control",
-                      GetDebugLabel().c_str());
-    return false;
-  }
-  
-  auto& delegationComponent = GetBEI().GetDelegationComponent();
-
-  
-  if(!delegationComponent.HasDelegator(this)){
-    PRINT_NAMED_ERROR("ICozmoBehavior.SmartDelegateToHelper.NotInControlOfDelegator",
-                      "Behavior %s attempted to delegate while not in control",
-                      GetDebugLabel().c_str());
-    return false;
-  }
-  auto& delegateWrapper = delegationComponent.GetDelegator(this);
-
-  
-  // A bit of a hack while BSM is still under construction - essentially IsControlDelegated
-  // is now overloaded for both helpers and actions, but DelegateIfInControl needs to be able
-  // to distinguish the same IsActing used to indicate only actions - assigning
-  // this tmp handle indicates to behaviors that they've "delegated" and should allow
-  // helpers to queue actions - but if the delegation fails this tmp handle will fall
-  // out of scope as soon as this function ends so that _currentHelperHandle becomes
-  // invalid again
-  HelperHandle tmpHandle = GetBEI().GetAIComponent().GetBehaviorHelperComponent().
-                                        GetBehaviorHelperFactory().CreatePlaceBlockHelper(*this);
-  _currentHelperHandle = tmpHandle;
-  
-  const bool delegateSuccess = delegateWrapper.Delegate(this,
-                                                        handleToRun,
-                                                        successCallback,
-                                                        failureCallback);
-
-  if( delegateSuccess ) {
-    _currentHelperHandle = handleToRun;
-  }
-  else {
-    PRINT_CH_INFO("Behaviors", (GetDebugLabel() + "SmartDelegateToHelper.Failed").c_str(),
-                  "Failed to delegate to helper");
-  }
-  
-  return delegateSuccess;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorHelperFactory& ICozmoBehavior::GetBehaviorHelperFactory()
-{
-  return GetBEI().GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ICozmoBehavior::StopHelperWithoutCallback()
-{
-  bool handleStopped = false;
-  auto handle = _currentHelperHandle.lock();
-  if( handle ) {
-    PRINT_CH_INFO("Behaviors", (GetDebugLabel() + ".SmartStopHelper").c_str(),
-                  "Behavior stopping its helper");
-    if(GetBEI().HasDelegationComponent()){
-      auto& delegationComponent = GetBEI().GetDelegationComponent();
-      delegationComponent.CancelDelegates(this);
-      handleStopped = true;
-    }
-  }
-  
-  return handleStopped;
 }
 
 

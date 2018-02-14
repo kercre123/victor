@@ -31,7 +31,6 @@ enum uint_8 BehaviorClass {
   InternalStatesBehavior,
 
   // Interact with blocks
-  PickUpAndPutDownCube,
   PickUpCube,
   PopAWheelie,
   PutDownBlock,
@@ -46,14 +45,12 @@ enum uint_8 BehaviorClass {
   PounceOnMotion,
   PounceWithProx,
   PuzzleMaze,
-  RequestGameSimple,
   RequestToGoHome,
   Singing,
   TrackLaser,
 
   // Behaviors related to going to a place
   ComeHere,
-  DriveInDesperation,
   DriveOffCharger,
   DriveToFace,
   GoHome,
@@ -184,9 +181,6 @@ enum uint_8 BehaviorID {
   PutDownBlock,
   PutDownDispatch_LookForFaceAndCube,
 
-  RequestKeepAway,
-  RequestMemoryMatch,
-  RequestSpeedTap,
   RequestToGoHome,
   RespondToRenameFace,
   RollBlockOnSide,
@@ -198,6 +192,7 @@ enum uint_8 BehaviorID {
 
   FistBumpVoiceCommand,
 
+  PickupCube,
   Observing,
   ObservingLookAtFaces,
   ObservingFindFaces,

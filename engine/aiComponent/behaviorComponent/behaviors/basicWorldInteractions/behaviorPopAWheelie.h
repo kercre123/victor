@@ -37,11 +37,6 @@ namespace Anki {
       virtual void OnBehaviorDeactivated() override;
       
       virtual bool WantsToBeActivatedBehavior() const override;
-            
-      virtual std::set<ObjectInteractionIntention>
-            GetBehaviorObjectInteractionIntentions() const override {
-              return {ObjectInteractionIntention::PopAWheelieOnObject};
-            }
 
     private:
       

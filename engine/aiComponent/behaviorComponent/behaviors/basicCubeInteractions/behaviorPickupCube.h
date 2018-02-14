@@ -37,8 +37,15 @@ class ObservableObject;
   
 class BehaviorPickUpCube : public ICozmoBehavior
 {
-using super = ICozmoBehavior;
+public:
+  void SetTargetID(const ObjectID& targetID){
+    _dVars.targetBlockID = targetID;
+    _dVars.idSetExternally = true;
+  }
+
 protected:  
+  using super = ICozmoBehavior;
+
   // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
   BehaviorPickUpCube(const Json::Value& config);
@@ -50,12 +57,7 @@ protected:
 
   virtual bool WantsToBeActivatedBehavior() const override;
   
-  void UpdateTargetBlocks() const;
-  
-  virtual std::set<ObjectInteractionIntention>
-        GetBehaviorObjectInteractionIntentions() const override {
-           return {ObjectInteractionIntention::PickUpObjectNoAxisCheck};
-        }
+  void CalculateTargetID(ObjectID& outTargetID) const;
   
 private:
   enum class DebugState
@@ -64,8 +66,19 @@ private:
     PickingUpCube,
     DoingFinalReaction
   };
-  
-  mutable ObjectID    _targetBlockID;
+
+  struct InstanceConfig{
+    int pickupRetryCount = 1;
+  };
+
+  struct DynamicVariables{
+    ObjectID targetBlockID;
+    bool idSetExternally = false;
+    int pickupRetryCount = 0;
+  };
+
+  InstanceConfig _iConfig;
+  DynamicVariables _dVars;
   
   void TransitionToDoingInitialReaction();
   void TransitionToPickingUpCube();

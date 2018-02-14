@@ -188,12 +188,6 @@ public:
   AIBeacon* GetActiveBeacon();
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Impossible States handling
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void SetNoPreDockPosesOnObject(const ObjectID& objectID) { _objectIDWithoutPreDock = objectID; }
-  const ObjectID& GetNoPreDockPosesOnObject() const { return _objectIDWithoutPreDock;}
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
@@ -328,9 +322,6 @@ private:
   
   // container of beacons currently defined (high level AI concept)
   BeaconList _beacons;
-    
-  // Track objects without pre-doc poses - currently used for pyramid
-  ObjectID _objectIDWithoutPreDock;
   
   // Whether or not Cozmo has the hiccups
   bool _hasHiccups;
