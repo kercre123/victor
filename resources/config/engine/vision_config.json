@@ -123,14 +123,40 @@
     "ProfilingPrintFrequency_ms"     : 10000,
     "ProfilingEventLogFrequency_ms"  : 30000,
     
-    // OpenCV DNN w/ MobileNet SSD Model
-    // NOTE: Currently assumes model is symlinked in resources/config/engine/vision/dnn_models to:
-    //       ~/DropBox/DeepLearningVisionModels, shared by andrew (until VIC-1071)
-    "graph"  : "ssd_mobilenet_v1_coco_11_06_2017_frozen.pb", 
-    "labels" : "cocostuff-labels.txt", 
-    "mode"   : "detection",
-    "input_width" : 224, 
-    "input_height": 224, 
+    // // OpenCV DNN w/ MobileNet SSD Model
+    // // NOTE: Currently assumes model is symlinked in resources/config/engine/vision/dnn_models to:
+    // //       ~/DropBox/DeepLearningVisionModels, shared by andrew (until VIC-1071)
+    // "graph"  : "ssd_mobilenet_v1_coco_11_06_2017_frozen.pb", 
+    // "labels" : "cocostuff-labels.txt", 
+    // "mode"   : "ssd",
+    // "input_width" : 224, 
+    // "input_height": 224, 
+    // "input_mean_R": 0, 
+    // "input_mean_G": 0, 
+    // "input_mean_B": 0, 
+    // "input_std": 255, 
+    // "top_K": 1, 
+    // "min_score": 0.5
+
+    // YOLO using Darknet
+    // "graph" : "yolo.cfg",
+    // "labels" : "coco-labels-80.txt",
+    // "mode" : "yolo", 
+    // "input_width" : 416, 
+    // "input_height" : 416, 
+    // "input_mean_R": 0, 
+    // "input_mean_G": 0, 
+    // "input_mean_B": 0, 
+    // "input_std": 255, 
+    // "top_K": 1, 
+    // "min_score": 0.5
+
+    // Tiny YOLO using Darknet
+    "graph" : "tiny_yolo_coco.cfg",
+    "labels" : "coco-labels-80.txt",
+    "mode" : "yolo", 
+    "input_width" : 416, 
+    "input_height" : 416, 
     "input_mean_R": 0, 
     "input_mean_G": 0, 
     "input_mean_B": 0, 
