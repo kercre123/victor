@@ -532,7 +532,6 @@ void Opto::start(void) {
   writeReg(0, TOF_SENSOR_ADDRESS, 0xFF, 0x00);
   writeReg(0, TOF_SENSOR_ADDRESS, 0x80, 0x00);
   writeReg(0, TOF_SENSOR_ADDRESS, SYSRANGE_START, 0x02); // VL53L0X_REG_SYSRANGE_MODE_BACKTOBACK
-  #endif
 
   // Return the i2c bus to the main execution loop
   I2C::release();
