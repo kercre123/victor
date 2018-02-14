@@ -7,6 +7,7 @@
 #include "timer.h"
 #include "motors.h"
 #include "encoders.h"
+#include "i2c.h"
 #include "opto.h"
 #include "analog.h"
 #include "lights.h"
@@ -18,7 +19,7 @@ void Main_Execution(void) {
   Comms::tick();
   Motors::tick();
   Contacts::tick();
-  if (Power::sensorsValid()) Opto::tick();
+  Opto::tick();
   Analog::tick();
   Lights::tick();
   Touch::tick();
@@ -42,6 +43,7 @@ int main (void) {
   Motors::init();
   Lights::init();
   Touch::init();
+  I2C::init();
 
   __enable_irq(); // Start firing interrupts
 

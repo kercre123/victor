@@ -5,11 +5,13 @@
 
 namespace Opto {
   extern FailureCode failure;
+  extern FailureCode runLevel;
 
-  void init(void);
+  void start(void);
   void stop(void);
   void tick(void);
   void transmit(BodyToHead *payload);
+  bool sensorsValid(void);
 }
 
 // Cliff sensor registers

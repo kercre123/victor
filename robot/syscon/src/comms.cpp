@@ -189,7 +189,7 @@ void Comms::tick(void) {
   // Soft-watchdog (Disable power to sensors when robot process is idle)
   if (missed_frames < MAX_MISSED_FRAMES) {
     missed_frames++;
-  } else if (Power::sensorsValid()) {
+  } else if (Opto::sensorsValid()) {
     Power::setMode(POWER_CALM);
   }
 
@@ -203,14 +203,11 @@ void Comms::tick(void) {
   Analog::transmit(&outboundPacket.sync.payload);
   Motors::transmit(&outboundPacket.sync.payload);
   Opto::transmit(&outboundPacket.sync.payload);
-  outboundPacket.sync.payload.failureCode = Opto::failure;
 #if MICDATA_ENABLED
   Mics::transmit(outboundPacket.sync.payload.audio);
   Mics::errorCode(outboundPacket.sync.payload.micError);
 #endif
   Touch::transmit(outboundPacket.sync.payload.touchLevel);
-  outboundPacket.sync.payload.flags =
-    (Power::sensorsValid() ? RUNNING_FLAGS_SENSORS_VALID : 0);
 
   outboundPacket.sync.payload.framecounter++;
   outboundPacket.sync.footer.checksum = crc(&outboundPacket.sync.payload, sizeof(outboundPacket.sync.payload) / sizeof(uint32_t));

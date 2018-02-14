@@ -3,7 +3,8 @@
 
 #include "messages.h"
 
-#define ADC_VOLTS(v) ((uint16_t)(v * 610.0f))
+// This is invalid for button channel (button is 2x)
+#define ADC_VOLTS(v) ((uint16_t)(v * (2048.0f / 2.8f)))
 #define ADC_WINDOW(low, high) (((high & 0xFFF) << 16) | (low & 0xFFF))
 
 enum ADC_CHANNEL {

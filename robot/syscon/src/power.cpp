@@ -34,7 +34,6 @@ static const uint32_t APB2_CLOCKS = 0
 
 static PowerMode currentState = POWER_UNINIT;
 static PowerMode desiredState = POWER_CALM;
-static bool optoActive = false;
 
 void Power::init(void) {
   RCC->APB1ENR |= APB1_CLOCKS;
@@ -120,10 +119,6 @@ static void enterBootloader(void) {
   SoftReset(*(uint32_t*)0x08000004);
 }
 
-bool Power::sensorsValid() {
-  return optoActive;
-}
-
 void Power::setMode(PowerMode set) {
   desiredState = set;
 }
@@ -134,13 +129,11 @@ void Power::tick(void) {
   if (currentState != desired) {
     // Disable optical sensors
     if (currentState == POWER_ACTIVE) {
-      optoActive = false;
       Opto::stop();
       Encoders::stop();
     } else if (desired == POWER_ACTIVE) {
       Encoders::init();
-      Opto::init();
-      optoActive = true;
+      Opto::start();
     }
 
     currentState = desired;
