@@ -1,6 +1,5 @@
 DVT2
 * Put opto sensors to sleep when asked
 * Reenterant gpio alteration
-* Figure out why low battery charging does not work
 * Add cube encryption
 * Put Accelerometer to sleep on boot
