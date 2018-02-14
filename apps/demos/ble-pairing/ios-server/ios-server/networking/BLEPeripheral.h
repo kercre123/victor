@@ -69,6 +69,8 @@ struct SendContainer {
 -(void) advertiseWithService: (const char*)name withService:(const char*)service;
 -(void) stopAdvertising;
 
+-(void) tick;
+
 @end
 
 #endif /* BLECentral_h */

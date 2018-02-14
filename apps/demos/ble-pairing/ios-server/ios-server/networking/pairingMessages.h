@@ -18,6 +18,12 @@
 
 namespace Anki {
 namespace Switchboard {
+  enum PairingProtocolVersion : uint16_t {
+    INVALID                   = 0,
+    V1                        = 1,
+    CURRENT                   = V1,
+  };
+  
   enum SetupMessage : uint8_t {
     MSG_RESERVED              = 0,
     MSG_ACK                   = 1,
@@ -74,9 +80,9 @@ namespace Switchboard {
   
   SB_PackedStruct HandshakeMessage : Message {
   public:
-    short version;
+    uint16_t version;
     
-    HandshakeMessage(short vers) {
+    HandshakeMessage(uint16_t vers) {
       version = vers;
       type = SetupMessage::MSG_HANDSHAKE;
     }

@@ -81,7 +81,20 @@
   _SubscribedSecureRead = false;
   _SubscribedSecureWrite = false;
   
+  [NSTimer scheduledTimerWithTimeInterval:0.1 repeats:YES block:^(NSTimer * _Nonnull timer) {
+    [self tick];
+  }];
+  
   return [super init];
+}
+
+-(void) tick {
+  if(_SendQueue.size() > 0) {
+    SendContainer container = _SendQueue.front();
+    _SendQueue.pop();
+    
+    [self send:container.data characteristic:container.characteristic];
+  }
 }
 
 -(void) setConnectedSignal: (Signal::Signal<void (Anki::Switchboard::BLENetworkStream*)> *)connectedSignal {

@@ -102,9 +102,11 @@ void Anki::Switchboard::SecurePairing::Init() {
   Log::Write("Sending public key to client.");
   
   ev_timer_again(_loop, &_handleTimeoutTimer.timer);
-  SendPublicKey();
   
-  _state = PairingState::AwaitingPublicKey;
+  SendHandshake();
+  //SendPublicKey();
+  
+  _state = PairingState::AwaitingHandshake;
 }
 
 void Anki::Switchboard::SecurePairing::Reset(bool forced) {
@@ -135,6 +137,11 @@ void Anki::Switchboard::SecurePairing::Reset(bool forced) {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Send data methods
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+void Anki::Switchboard::SecurePairing::SendHandshake() {
+  // Send versioning handshake
+  SendPlainText(HandshakeMessage(PairingProtocolVersion::CURRENT));
+}
 
 void Anki::Switchboard::SecurePairing::SendPublicKey() {
   // Generate public, private key
@@ -184,6 +191,17 @@ void Anki::Switchboard::SecurePairing::SendCancelPairing() {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Event handling methods
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+bool Anki::Switchboard::SecurePairing::HandleHandshake(uint16_t version) {
+  // Todo: in the future, when there are more versions,
+  // this method will need to handle telling this object
+  // to properly switch states to adjust to proper version.
+  if(version == PairingProtocolVersion::CURRENT) {
+    return true;
+  }
+  
+  return false;
+}
 
 void Anki::Switchboard::SecurePairing::HandleInitialPair(uint8_t* publicKey, uint32_t publicKeyLength) {
   // Handle initial pair request from client
@@ -268,9 +286,33 @@ void Anki::Switchboard::SecurePairing::HandleMessageReceived(uint8_t* bytes, uin
     Anki::Switchboard::SetupMessage messageType = (Anki::Switchboard::SetupMessage)bytes[0];
     
     switch(messageType) {
-      case Anki::Switchboard::SetupMessage::MSG_REQUEST_INITIAL_PAIR: {
+      case Anki::Switchboard::SetupMessage::MSG_HANDSHAKE: {
         if(_state == PairingState::Initial ||
-           _state == PairingState::AwaitingPublicKey) {
+           _state == PairingState::AwaitingHandshake) {
+          
+          HandshakeMessage* handshakeMessage = Message::CastFromBuffer<HandshakeMessage>((char*)bytes);
+          bool handleHandshake = HandleHandshake(handshakeMessage->version);
+          
+          if(handleHandshake) {
+            SendPublicKey();
+            
+            _state = PairingState::AwaitingPublicKey;
+          } else {
+            // If we can't handle handshake, must cancel
+            // THIS SHOULD NEVER HAPPEN
+            Log::Write("Unable to process handshake. Something very bad happened.");
+            Reset();
+          }
+        } else {
+          // ignore msg
+          IncrementAbnormalityCount();
+          Log::Write("Received handshake request in wrong state.");
+        }
+        
+        break;
+      }
+      case Anki::Switchboard::SetupMessage::MSG_REQUEST_INITIAL_PAIR: {
+        if(_state == PairingState::AwaitingPublicKey) {
           HandleInitialPair(bytes+1, length-1);
           _state = PairingState::AwaitingNonceAck;
         } else {

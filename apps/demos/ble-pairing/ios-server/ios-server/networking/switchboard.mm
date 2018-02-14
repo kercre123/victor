@@ -39,9 +39,7 @@ void Anki::SwitchboardDaemon::Start() {
   StartBleComms();
   //
   // ###
-  for(int i = 0; i < 100000; i++) {
-    TestMessageProtocol(i);
-  }
+  
   ////////////////////////////////////////
   // Setup WiFi process comms
   ////////////////////////////////////////

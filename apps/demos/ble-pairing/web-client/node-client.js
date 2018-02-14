@@ -89,14 +89,19 @@ function onConnect(peripheral) {
             let MSG_PUBK = 4;
             let MSG_NONCE = 5;
             let MSG_CANCEL = 6;
+            let MSG_HANDSHAKE = 7;
 
-            if(data[0] == MSG_PUBK) {
+            if(data[0] == MSG_HANDSHAKE) {
+                let buf = [7];
+                let msg = buf.concat(Array.from(data.slice(1)));
+                sendMessage(Buffer.from(msg), false);
+            }
+            else if(data[0] == MSG_PUBK) {
                 keys = sodium.crypto_kx_keypair();
 
                 console.log("--> Received public key");
                 let buf = [2]; // initial pairing request
                 let msg = buf.concat(Array.from(keys.publicKey));
-
                 sendMessage(Buffer.from(msg), false);
 
                 let foreignKey = data.slice(1);
@@ -226,8 +231,6 @@ let verHash = [];
 let enteredPin = false;
 let receivedNonce = false;
 
-testMessageProtocol();
-
 loadSodium().then(function() {
     tryConnect();
 });
@@ -336,6 +339,17 @@ function ConvertByteBufferToShort(buffer) {
     });
 
     return view.getInt16(0);
+}
+
+function ConvertByteBufferToUShort(buffer) {
+    var buf = new ArrayBuffer(2);
+    var view = new DataView(buf);
+
+    buffer.forEach(function (b, i) {
+        view.setUint8(i, b);
+    });
+
+    return view.getUint16(0);
 }
 
 function ConvertByteBufferToUInt(buffer) {

@@ -23,7 +23,7 @@ namespace Anki {
 namespace Switchboard {
   enum PairingState : uint8_t {
     Initial,
-    AwaitingPartnerReady,
+    AwaitingHandshake,
     AwaitingPublicKey,
     AwaitingNonceAck,
     AwaitingChallengeResponse,
@@ -82,6 +82,7 @@ namespace Switchboard {
     void HandleMessageReceived(uint8_t* bytes, uint32_t length);
     void HandleEncryptedMessageReceived(uint8_t* bytes, uint32_t length);
     void HandleDecryptionFailed();
+    bool HandleHandshake(uint16_t version);
     void HandleInitialPair(uint8_t* bytes, uint32_t length);
     void HandleRestoreConnection();
     void HandleCancelSetup();
@@ -89,6 +90,7 @@ namespace Switchboard {
     void HandleTimeout();
     void HandleChallengeResponse(uint8_t* bytes, uint32_t length);
     
+    void SendHandshake();
     void SendPublicKey();
     void SendNonce();
     void SendChallenge();
