@@ -968,7 +968,8 @@ namespace Cozmo {
         tryAndReport(&VisionComponent::UpdateImageQuality,        VisionMode::CheckingQuality);
         tryAndReport(&VisionComponent::UpdateLaserPoints,         VisionMode::DetectingLaserPoints);
         tryAndReport(&VisionComponent::UpdateDetectedObjects,     VisionMode::Count); // Use Count here to always call UpdateDetectedObjects
-
+        tryAndReport(&VisionComponent::UpdateVisualObstacles,     VisionMode::DetectingVisualObstacles);
+        
         // Display any debug images left by the vision system
         if(ANKI_DEV_CHEATS)
         {
@@ -1251,6 +1252,16 @@ namespace Cozmo {
 
     return RESULT_OK;
   } // UpdateMotionCentroid()
+
+  Result VisionComponent::UpdateVisualObstacles(const VisionProcessingResult& procResult)
+  {
+    for(auto const& edgeFrame : procResult.visualObstacles)
+    {
+      _robot->GetMapComponent().AddDetectedObstacles(edgeFrame);
+    }
+    
+    return RESULT_OK;
+  }
   
   Result VisionComponent::UpdateLaserPoints(const VisionProcessingResult& procResult)
   {

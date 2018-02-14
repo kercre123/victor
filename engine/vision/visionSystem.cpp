@@ -21,6 +21,7 @@
 
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
+#include "engine/vision/groundPlaneClassifier.h"
 #include "engine/vision/laserPointDetector.h"
 #include "engine/vision/motionDetector.h"
 #include "engine/vision/overheadEdgesDetector.h"
@@ -213,6 +214,9 @@ namespace Cozmo {
       return RESULT_FAIL;
     }
     _overheadMap.reset(new OverheadMap(config["OverheadMap"], _context));
+
+    // TODO check config entry here
+    _groundPlaneClassifier.reset(new GroundPlaneClassifier(config["GroundPlaneClassifier"], _context));
 
     const Result petTrackerInitResult = _petTracker->Init(config);
     if(RESULT_OK != petTrackerInitResult) {
@@ -927,6 +931,13 @@ namespace Cozmo {
     return result;
   }
 
+  Result VisionSystem::UpdateGroundPlaneClassifier(const Vision::ImageRGB& image)
+  {
+    Result result = _groundPlaneClassifier->Update(image, _poseData, _currentResult.debugImageRGBs,
+                                                   _currentResult.visualObstacles);
+    return result;
+  }
+
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   Result VisionSystem::DetectLaserPoints(Vision::ImageCache& imageCache)
   {
@@ -1465,6 +1476,17 @@ namespace Cozmo {
       else {
         PRINT_NAMED_WARNING("VisionSystem.Update.NoColorImage", "No color image!");
       }
+    }
+    
+    if (ShouldProcessVisionMode(VisionMode::DetectingVisualObstacles))
+    {
+      Tic("DetectVisualObstacles");
+      lastResult = UpdateGroundPlaneClassifier(imageCache.GetRGB());
+      Toc("DetectVisualObstacles");
+      if (lastResult != RESULT_OK) {
+        return lastResult;
+      }
+      visionModesProcessed.SetBitFlag(VisionMode::DetectingVisualObstacles, true);
     }
 
     if(ShouldProcessVisionMode(VisionMode::DetectingOverheadEdges))

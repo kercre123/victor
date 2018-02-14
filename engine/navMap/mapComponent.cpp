@@ -940,7 +940,7 @@ Result MapComponent::ProcessVisionOverheadEdges(const OverheadEdgeFrame& frameIn
 {
   Result ret = RESULT_OK;
   if ( frameInfo.groundPlaneValid ) {
-    if ( !frameInfo.chains.empty() ) {
+    if ( !frameInfo.chains.GetVector().empty() ) {
       ret = AddVisionOverheadEdges(frameInfo);
     } else {
       // we expect lack of borders to be reported as !isBorder chains
@@ -998,13 +998,23 @@ void MapComponent::ReviewInterestingEdges(const Quad2f& withinQuad, INavMap* map
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void MapComponent::AddDetectedObstacles(const OverheadEdgeFrame& edgeObstacles)
+{
+  // TODO: Do something different with these vs. "interesting" overhead edges?
+  if( edgeObstacles.groundPlaneValid && !edgeObstacles.chains.GetVector().empty() )
+  {
+    AddVisionOverheadEdges(edgeObstacles);
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
 {
   ANKI_CPU_PROFILE("MapComponent::AddVisionOverheadEdges");
   _robot->GetContext()->GetVizManager()->EraseSegments("MapComponent.AddVisionOverheadEdges");
   
   // check conditions to add edges
-  DEV_ASSERT(!frameInfo.chains.empty(), "AddVisionOverheadEdges.NoEdges");
+  DEV_ASSERT(!frameInfo.chains.GetVector().empty(), "AddVisionOverheadEdges.NoEdges");
   DEV_ASSERT(frameInfo.groundPlaneValid, "AddVisionOverheadEdges.InvalidGroundPlane");
   
   // we are only processing edges for the memory map, so if there's no map, don't do anything
@@ -1078,7 +1088,7 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
   float closestPointDist_mm2 = std::numeric_limits<float>::quiet_NaN();
   
   // iterate every chain finding contiguous segments
-  for( const auto& chain : frameInfo.chains )
+  for( const auto& chain : frameInfo.chains.GetVector() )
   {
 
     // debug render
