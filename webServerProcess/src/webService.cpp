@@ -206,7 +206,7 @@ ProcessRequest(struct mg_connection *conn, Anki::Cozmo::WebService::WebService::
     bool timedOut = false;
     do
     {
-      std::this_thread::sleep_for(std::chrono::milliseconds(20));
+      std::this_thread::sleep_for(std::chrono::milliseconds(5));
       const auto now = steady_clock::now();
       const auto elapsed_s = duration_cast<seconds>(now - startTime).count();
       if (elapsed_s > kTimeoutDuration_s)
@@ -266,30 +266,8 @@ ConsoleVarSet(struct mg_connection *conn, void *cbdata)
     key = info->query_string;
   }
 
-  int returnCode = 1;
+  const int returnCode = ProcessRequest(conn, Anki::Cozmo::WebService::WebService::RequestType::RT_ConsoleVarSet, key, "");
 
-  while (!key.empty()) {
-    if (key.substr(0, 4) == "key=") {
-      std::string remainder;
-
-      size_t amp = key.find('&');
-      if (amp != std::string::npos) {
-        value = key.substr(amp+7);
-        key = key.substr(4, amp-4);
-        size_t amp = value.find('&');
-        if (amp != std::string::npos) {
-          remainder = value.substr(amp+1);
-          value = value.substr(0, amp);
-        }
-      }
-
-      returnCode = ProcessRequest(conn, WebService::WebService::RequestType::RT_ConsoleVarSet, key, value);
-
-      key = remainder;
-    } else {
-      break;
-    }
-  }
   return returnCode;
 }
 
@@ -325,6 +303,24 @@ ConsoleVarList(struct mg_connection *conn, void *cbdata)
   }
   
   const int returnCode = ProcessRequest(conn, WebService::WebService::RequestType::RT_ConsoleVarList, key, "");
+
+  return returnCode;
+}
+
+static int
+ConsoleFuncList(struct mg_connection *conn, void *cbdata)
+{
+  const mg_request_info* info = mg_get_request_info(conn);
+
+  std::string key;
+
+  if (info->query_string) {
+    if (!strncmp(info->query_string, "key=", 4)) {
+      key = std::string(info->query_string + 4);
+    }
+  }
+
+  const int returnCode = ProcessRequest(conn, Anki::Cozmo::WebService::WebService::RequestType::RT_ConsoleFuncList, key, "");
 
   return returnCode;
 }
@@ -641,6 +637,7 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform, const Json::Val
   mg_set_request_handler(_ctx, "/consolevarset", ConsoleVarSet, 0);
   mg_set_request_handler(_ctx, "/consolevarget", ConsoleVarGet, 0);
   mg_set_request_handler(_ctx, "/consolevarlist", ConsoleVarList, 0);
+  mg_set_request_handler(_ctx, "/consolefunclist", ConsoleFuncList, 0);
   mg_set_request_handler(_ctx, "/consolefunccall", ConsoleFuncCall, 0);
 
   mg_set_request_handler(_ctx, "/dasinfo", dasinfo, 0);
@@ -720,22 +717,43 @@ void WebService::Update()
           break;
         case RT_ConsoleVarSet:
           {
-            const std::string& key = requestPtr->_param1;
-            const std::string& value = requestPtr->_param2;
+            std::string key = requestPtr->_param1;
 
-            Anki::Util::IConsoleVariable* consoleVar = consoleSystem.FindVariable(key.c_str());
-            if (consoleVar) {
-              if (consoleVar->ParseText(value.c_str() )) {
-                // success
-                PRINT_NAMED_INFO("WebService", "CONSOLE_VAR %s %s", key.c_str(), value.c_str());
-                requestPtr->_result = consoleVar->ToString() + "<br>";
+            while (!key.empty()) {
+              if (key.substr(0, 4) == "key=") {
+                std::string value;
+                std::string remainder;
+
+                size_t amp = key.find('&');
+                if (amp != std::string::npos) {
+                  value = key.substr(amp+7);
+                  key = key.substr(4, amp-4);
+                  size_t amp = value.find('&');
+                  if (amp != std::string::npos) {
+                    remainder = value.substr(amp+1);
+                    value = value.substr(0, amp);
+                  }
+                }
+
+                Anki::Util::IConsoleVariable* consoleVar = consoleSystem.FindVariable(key.c_str());
+                if (consoleVar) {
+                  if (consoleVar->ParseText(value.c_str() )) {
+                    // success
+                    PRINT_NAMED_INFO("WebService", "CONSOLE_VAR %s %s", key.c_str(), value.c_str());
+                    requestPtr->_result += consoleVar->ToString() + "<br>";
+                  }
+                  else {
+                    requestPtr->_result += "Error setting variable "+key+"="+value+"<br>";
+                  }
+                }
+                else {
+                  requestPtr->_result += "Variable not found "+key+"<br>";
+                }
+
+                key = remainder;
+              } else {
+                break;
               }
-              else {
-                requestPtr->_result = "Error setting variable<br>";
-              }
-            }
-            else {
-              requestPtr->_result = "Variable not found<br>";
             }
           }
           break;
@@ -759,6 +777,25 @@ void WebService::Update()
           }
           break;
 
+        case RT_ConsoleFuncList:
+          {
+            const std::string& key = requestPtr->_param1;
+            const auto keyLen = key.length();
+
+            const Anki::Util::ConsoleSystem::FunctionDatabase& funcDatabase = consoleSystem.GetFunctionDatabase();
+            for (Anki::Util::ConsoleSystem::FunctionDatabase::const_iterator it = funcDatabase.begin();
+                 it != funcDatabase.end(); ++it)
+            {
+              std::string label = it->second->GetID();
+              if (keyLen == 0 || Anki::Util::StringCaseInsensitiveEquals(label.substr(0, keyLen), key))
+              {
+                requestPtr->_result += label.c_str();
+                requestPtr->_result += "<br>\n";
+              }
+            }
+          }
+          break;
+
         case RT_ConsoleFuncCall:
           {
             const std::string& func = requestPtr->_param1;
@@ -766,7 +803,8 @@ void WebService::Update()
 
             Anki::Util::IConsoleFunction* consoleFunc = consoleSystem.FindFunction(func.c_str());
             if (consoleFunc) {
-              char outText[255+1];
+              // 64KB to accommodate output of animation names
+              char outText[65536+1] = {0};
               uint32_t outTextLength = sizeof(outText);
 
               ExternalOnlyConsoleChannel consoleChannel(outText, outTextLength);
@@ -774,9 +812,11 @@ void WebService::Update()
               bool success = consoleSystem.ParseConsoleFunctionCall(consoleFunc, args.c_str(), consoleChannel);
               if (success) {
                 PRINT_NAMED_INFO("WebService", "CONSOLE_FUNC %s %s success", func.c_str(), args.c_str());
+                requestPtr->_result += outText;
               }
               else {
                 PRINT_NAMED_INFO("WebService", "CONSOLE_FUNC %s %s failed %s", func.c_str(), args.c_str(), outText);
+                requestPtr->_result += outText;
               }
             }
             else {

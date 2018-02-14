@@ -77,6 +77,7 @@ public:
     RT_ConsoleVarGet,
     RT_ConsoleVarSet,
     RT_ConsoleVarList,
+    RT_ConsoleFuncList,
     RT_ConsoleFuncCall,
     
     RT_WebsocketOnSubscribe,
