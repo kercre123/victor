@@ -197,8 +197,8 @@ Blockly.FieldVariable.prototype.setValue = function(id) {
   if (!this.typeIsAllowed_(type)) {
     // *** ANKI CHANGE ***
     // We are not aware of a case when we would go down this path, but just in case, log an error instead of aborting the load.
-    window.cozmoDASWarn("Codelab.FieldVariable.setValue.WrongVarType", 'Variable type doesn\'t match this field!  Type was ' +
-        type);
+    window.cozmoDASWarn("Codelab.FieldVariable.setValue.WrongVarType", 'Variable type doesn\'t match this field!  Type was \'' +
+        type + '\' for variable.name = ' + variable.name);
     // throw new Error('Variable type doesn\'t match this field!  Type was ' +
     //     type);
   }

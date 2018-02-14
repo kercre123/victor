@@ -253,6 +253,33 @@ Blockly.Blocks['event_broadcast_menu'] = {
    }
 };
 
+// *** ANKI CHANGE ***
+// This is the Scratch replacement for event_broadcast_menu.
+Blockly.Blocks['event_broadcast_menu_with_broadcast_input'] = {
+  /**
+   * Broadcast drop-down menu.
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit(
+      {
+        "message0": "%1",
+        "args0": [
+          {
+            "type": "field_variable",
+            "name": "BROADCAST_OPTION",
+            "variableTypes":[Blockly.BROADCAST_MESSAGE_VARIABLE_TYPE],
+            "variable": Blockly.Msg.DEFAULT_BROADCAST_MESSAGE_NAME
+          }
+        ],
+        "colour": Blockly.Colours.event.secondary,
+        "colourSecondary": Blockly.Colours.event.secondary,
+        "colourTertiary": Blockly.Colours.event.tertiary,
+        "extensions": ["output_string"]
+      });
+  }
+};
+
 // *** ANKI CHANGE
 // Deprecated block. No longer available from toolbox.
 // We still support old projects that contain this block.
