@@ -21,11 +21,10 @@ static bool optoActive = false;
 static uint16_t cliffSense[4];
 static uint8_t stop_variable;
 static uint8_t tof_status;
-
-static uint16_t tof_spad_count;   // fixed point 8.8
+static uint16_t tof_reading;
 static uint16_t tof_signal_rate;  // fixed point 9.7
 static uint16_t tof_ambient_rate; // fixed point 9.7
-static uint16_t tof_reading;
+static uint16_t tof_spad_count;   // fixed point 8.8
 static uint32_t measurement_timing_budget_us;
 
 #define TARGET(value) sizeof(value), (void*)&value
@@ -37,10 +36,10 @@ const I2C_Operation I2C_LOOP[] = {
   { I2C_REG_READ, 2, DROP_SENSOR_ADDRESS, PS_DATA_0, TARGET(cliffSense[1]) },
   { I2C_REG_READ, 3, DROP_SENSOR_ADDRESS, PS_DATA_0, TARGET(cliffSense[0]) },
   { I2C_REG_READ, 0, TOF_SENSOR_ADDRESS, RESULT_RANGE_STATUS, TARGET(tof_status) },
-  { I2C_REG_READ, 0, TOF_SENSOR_ADDRESS, RESULT_RANGE_STATUS + 2, TARGET(tof_spad_count) },
+  { I2C_REG_READ, 0, TOF_SENSOR_ADDRESS, RESULT_RANGE_STATUS + 10, TARGET(tof_reading) },
   { I2C_REG_READ, 0, TOF_SENSOR_ADDRESS, RESULT_RANGE_STATUS + 6, TARGET(tof_signal_rate) },
   { I2C_REG_READ, 0, TOF_SENSOR_ADDRESS, RESULT_RANGE_STATUS + 8, TARGET(tof_ambient_rate) },
-  { I2C_REG_READ, 0, TOF_SENSOR_ADDRESS, RESULT_RANGE_STATUS + 10, TARGET(tof_reading) },
+  { I2C_REG_READ, 0, TOF_SENSOR_ADDRESS, RESULT_RANGE_STATUS + 2, TARGET(tof_spad_count) },
 
   { I2C_REG_WRITE_VALUE, 0, TOF_SENSOR_ADDRESS, 0x80, VALUE(0x01) },
   { I2C_REG_WRITE_VALUE, 0, TOF_SENSOR_ADDRESS, 0xFF, VALUE(0x01) },
