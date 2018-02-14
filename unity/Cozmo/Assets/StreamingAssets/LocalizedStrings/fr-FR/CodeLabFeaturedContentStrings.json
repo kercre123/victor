@@ -645,9 +645,6 @@
   "codeLabFeaturedProject.PaddleBall.cozmo_skill_level" : {
     "translation" : "Niveau de compétence de Cozmo"
   },
-  "codeLabFeaturedProject.PaddleBall.decide_whether_to_end_the_game_or_start_a_new_round__cozmo_acts_accordingly" : {
-    "translation" : "Décide si tu souhaites arrêter la partie ou démarrer une nouvelle manche. Cozmo agit en conséquence."
-  },
   "codeLabFeaturedProject.PaddleBall.decrease_paddle_height_by" : {
     "translation" : "diminuer la hauteur de la raquette de"
   },
@@ -755,9 +752,6 @@
   },
   "codeLabFeaturedProject.PaddleBall.the_player_scores_a_point" : {
     "translation" : "Le joueur a marqué un point."
-  },
-  "codeLabFeaturedProject.PaddleBall.true_" : {
-    "translation" : "vrai "
   },
   "codeLabFeaturedProject.PaddleBall.when_the_ball_is_on_cozmos_side_move_his_paddle_towards_it" : {
     "translation" : "Lorsque la balle se trouve du côté de Cozmo, déplace sa raquette vers elle."

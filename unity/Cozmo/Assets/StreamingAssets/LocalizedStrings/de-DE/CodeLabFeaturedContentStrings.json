@@ -645,9 +645,6 @@
   "codeLabFeaturedProject.PaddleBall.cozmo_skill_level" : {
     "translation" : "Cozmo-Skill-Level"
   },
-  "codeLabFeaturedProject.PaddleBall.decide_whether_to_end_the_game_or_start_a_new_round__cozmo_acts_accordingly" : {
-    "translation" : "Entscheide, ob du das Spiel beenden oder eine neue Runde beginnen möchtest. Cozmo richtet sich ganz nach dir."
-  },
   "codeLabFeaturedProject.PaddleBall.decrease_paddle_height_by" : {
     "translation" : "Schlägerhöhe verringern um"
   },
@@ -755,9 +752,6 @@
   },
   "codeLabFeaturedProject.PaddleBall.the_player_scores_a_point" : {
     "translation" : "Der Spieler erzielt einen Punkt."
-  },
-  "codeLabFeaturedProject.PaddleBall.true_" : {
-    "translation" : "wahr "
   },
   "codeLabFeaturedProject.PaddleBall.when_the_ball_is_on_cozmos_side_move_his_paddle_towards_it" : {
     "translation" : "Wenn sich der Ball auf Cozmos Seite befindet, beweg seinen Schläger zum Ball."

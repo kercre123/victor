@@ -151,7 +151,6 @@ COZMO
 COZMOを右折させてください。
 音楽が鳴っていると、アニメーションが流れます。
 バレンタインを届けます。
-ゲームを終了するか、新しいゲームを開始するかを選んでください。COZMOはそれに応じて動きます。
 外車輪の速度
 弧y
 弧x
@@ -418,7 +417,6 @@ COZMOを振る
 リフトの下にキューブをセット
 つぎはがんばってね
 Use the constellation instructions variable to determine whether to draw a dot, a line, both, or none.
-せい 
 最も広い y
 しかめっつら
 しょうぼうしゃ 

@@ -645,9 +645,6 @@
   "codeLabFeaturedProject.PaddleBall.cozmo_skill_level" : {
     "translation" : "COZMOのスキルレベル"
   },
-  "codeLabFeaturedProject.PaddleBall.decide_whether_to_end_the_game_or_start_a_new_round__cozmo_acts_accordingly" : {
-    "translation" : "ゲームを終了するか、新しいゲームを開始するかを選んでください。COZMOはそれに応じて動きます。"
-  },
   "codeLabFeaturedProject.PaddleBall.decrease_paddle_height_by" : {
     "translation" : "パドルの高さを下げる"
   },
@@ -755,9 +752,6 @@
   },
   "codeLabFeaturedProject.PaddleBall.the_player_scores_a_point" : {
     "translation" : "プレイヤーが1ポイント獲得しました。"
-  },
-  "codeLabFeaturedProject.PaddleBall.true_" : {
-    "translation" : "せい "
   },
   "codeLabFeaturedProject.PaddleBall.when_the_ball_is_on_cozmos_side_move_his_paddle_towards_it" : {
     "translation" : "ボールがCOZMO側にあるとき、彼のパドルをボールに向って動かします。"
