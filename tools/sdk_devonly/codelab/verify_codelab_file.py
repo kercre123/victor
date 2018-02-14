@@ -17,6 +17,8 @@ import urllib.parse
 
 CODELAB_FILE_HEADER = "CODELAB:"
 
+# Set the log level requested
+logger = logging.getLogger('codelab.verify_file')
 
 def parse_command_args():
     arg_parser = argparse.ArgumentParser()
@@ -74,7 +76,7 @@ def is_valid_codelab_file(file_path):
 
                 # Check the header
                 if not unencoded_contents.startswith(CODELAB_FILE_HEADER):
-                    logging.error("Invalid Header: File='%s' doesn't start with '%s'",
+                    logger.error("Invalid Header: File='%s' doesn't start with '%s'",
                                   file_path, CODELAB_FILE_HEADER)
                     return False
 
@@ -85,36 +87,36 @@ def is_valid_codelab_file(file_path):
                 try:
                     json_contents = json.loads(unencoded_contents)
                 except json.decoder.JSONDecodeError as e:
-                    logging.error("Invalid JSON: File='%s' error='%s'", file_path, e)
+                    logger.error("Invalid JSON: File='%s' error='%s'", file_path, e)
                     return False
 
                 # Verify critical fields are valid / present
                 try:
                     project_data = json_contents["ProjectJSON"]
                 except KeyError:
-                    logging.error("Missing ProjectJSON entry: File='%s'", file_path)
+                    logger.error("Missing ProjectJSON entry: File='%s'", file_path)
                     return False
 
                 try:
                     is_vertical = json_contents["IsVertical"]
                 except KeyError:
-                    logging.error("Missing IsVertical entry: File='%s'", file_path)
+                    logger.error("Missing IsVertical entry: File='%s'", file_path)
                     return False
                 # We don't accept horizontal submissions - the grammar is too simple to make
                 # them worthwhile featuring.
                 is_vertical = json_bool_to_python_bool(is_vertical)
                 if not is_vertical:
-                    logging.error("Horizontal project - ignore: File='%s'", file_path)
+                    logger.error("Horizontal project - ignore: File='%s'", file_path)
                     return False
 
-                logging.debug("File '%s' size=%s is a Valid codelab file",
+                logger.debug("File '%s' size=%s is a Valid codelab file",
                               file_path, len(unencoded_contents))
                 return True
             except Exception as e:
-                logging.error("Unhandled Error loading: File='%s' error='%s'", file_path, e)
+                logger.error("Unhandled Error loading: File='%s' error='%s'", file_path, e)
                 return False
     except Exception as e:
-        logging.error("Unhandled Error opening: File='%s' error='%s'", file_path, e)
+        logger.error("Unhandled Error opening: File='%s' error='%s'", file_path, e)
         return False
 
 
@@ -126,13 +128,13 @@ def test_all_files_in_directory(directory_name):
             if filename.lower().endswith(".codelab"):
                 full_path = os.path.join(root, filename)
                 is_valid = is_valid_codelab_file(full_path)
-                logging.debug("Test file '%s' valid=%s", filename, is_valid)
+                logger.debug("Test file '%s' valid=%s", filename, is_valid)
                 if is_valid:
                     num_valid += 1
                 else:
                     num_invalid += 1
 
-    logging.info("Tested %s files in '%s', %s valid, %s invalid",
+    logger.info("Tested %s files in '%s', %s valid, %s invalid",
                  (num_valid + num_invalid), directory_name, num_valid, num_invalid)
 
     if num_invalid > 0:
@@ -152,7 +154,7 @@ if __name__ == '__main__':
         test_all_files_in_directory(command_args.test_directory)
     elif command_args.test_file is not None:
         if is_valid_codelab_file(command_args.test_file):
-            logging.info("Tested single file - it was valid")
+            logger.info("Tested single file - it was valid")
         else:
-            logging.info("Tested single file - it was INVALID")
+            logger.info("Tested single file - it was INVALID")
             sys.exit(1)
