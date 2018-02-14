@@ -41,8 +41,8 @@ int main (void) {
   Timer::init();
   Comms::init();
   Motors::init();
-  Lights::init();
-  Touch::init();
+  //Lights::init();
+  //Touch::init();
   I2C::init();
 
   __enable_irq(); // Start firing interrupts

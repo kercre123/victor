@@ -11,12 +11,12 @@
 
 extern "C" void start_mic_spi(int16_t a, int16_t b, void* tim);
 
-static const int WORDS_PER_SAMPLE = (AUDIO_DECIMATION * 2) / 8;
 static const int SAMPLES_PER_IRQ = 20;
 static const int IRQS_PER_FRAME = AUDIO_SAMPLES_PER_FRAME / SAMPLES_PER_IRQ;
+static const int PDM_BYTES_PER_IRQ = SAMPLES_PER_IRQ * AUDIO_DECIMATION * 2 / 8;
 
 static int16_t audio_data[2][AUDIO_SAMPLES_PER_FRAME * 4];
-__align(2) static uint8_t pdm_data[2][2][WORDS_PER_SAMPLE * SAMPLES_PER_IRQ];
+__align(2) static uint8_t pdm_data[2][2][PDM_BYTES_PER_IRQ];
 static int sample_index;
 
 static int16_t MIC_SPI_CR1 = 0
@@ -111,57 +111,59 @@ void Mics::transmit(int16_t* payload) {
   memcpy(payload, audio_data[sample_index < IRQS_PER_FRAME ? 1 : 0], sizeof(audio_data[0]));
 }
 
-#define STAGE2(t_a) \
-  ptr = &DECIMATION_TABLE[t_a][*samples]; samples+=2;  \
-  acc_0 += *ptr; \
-  ptr += 0xC00; acc_2 += *ptr; \
+#define STAGE2(ti) \
+  ptr = &DECIMATION_TABLE[ti][*samples]; samples+=2;  \
+  acc_0 += *ptr; ptr += 0xC00; \
+  acc_1 += *ptr; \
 
-#define STAGE3(t_a) \
-  ptr = &DECIMATION_TABLE[t_a][*samples]; samples+=2; \
+#define STAGE3(ti) \
+  ptr = &DECIMATION_TABLE[ti][*samples]; samples+=2; \
+  acc_0 += *ptr; ptr += 0xC00; \
+  acc_1 += *ptr; ptr += 0xC00; \
   acc_2 += *ptr; \
-  ptr += 0xC00; acc_0 += *ptr;  \
-  ptr += 0xC00; acc_1 += *ptr; \
 
-#define STAGE3_A() \
-  ptr = &DECIMATION_TABLE[31][*samples]; samples+=2; \
-  output[0] = (int16_t)((acc_2 + *ptr) >> 16); \
-  ptr -= 0xC00; acc_1 = acc_0 + *ptr; \
-  ptr -= 0xC00; acc_0 = acc_2 + *ptr; \
-  output += 4;
+#define STAGE3A(ti) \
+  ptr = &DECIMATION_TABLE[ti][*samples]; samples+=2; \
+  acc_0 += *ptr; ptr += 0xC00; \
+  acc_1 += *ptr; ptr += 0xC00; \
+  *output = (int16_t)((acc_2 + *ptr) >> 16); output += 4; \
 
 static void dec_loop(int32_t* acc, uint8_t* samples, int16_t* output) {
-  int32_t acc_0 = acc[0];
-  int32_t acc_1 = acc[1];
+  int32_t acc_1 = acc[0];
+  int32_t acc_2 = acc[1];
 
   const int32_t *ptr;
   for (int i = 0; i < SAMPLES_PER_IRQ; i++) {
-    int32_t acc_2 = 0;
+    int32_t acc_0 = 0;
 
-    STAGE2( 8);
-    STAGE2( 9);
-    STAGE2(10);
-    STAGE2(11);
-    STAGE3( 0);
-    STAGE3( 1);
-    STAGE3( 2);
-    STAGE3( 3);
-    STAGE3( 4);
-    STAGE3( 5);
-    STAGE3( 6);
-    STAGE3_A();
+    STAGE3 ( 0);
+    STAGE3 ( 1);
+    STAGE3 ( 2);
+    STAGE3 ( 3);
+    STAGE3 ( 4);
+    STAGE3 ( 5);
+    STAGE3 ( 6);
+    STAGE3A( 7);
+    STAGE2 ( 8);
+    STAGE2 ( 9);
+    STAGE2 (10);
+    STAGE2 (11);
+    
+    acc_2 = acc_1;
+    acc_1 = acc_0;
   }
 
-  acc[0] = acc_0;
-  acc[1] = acc_1;
+  acc[0] = acc_1;
+  acc[1] = acc_2;
 }
 
-static uint8_t deinter[sizeof(uint16_t) * 12 * SAMPLES_PER_IRQ];
 
 static void decimate(const uint8_t* input, int32_t* acc,  int16_t* output) {
+  uint8_t deinter[sizeof(uint16_t) * 12 * SAMPLES_PER_IRQ];
   uint16_t* target = (uint16_t*)&deinter;
 
   // Deinterlace the channel data
-  for (int i = 0; i < 12 * SAMPLES_PER_IRQ; i++) {
+  for (int i = 0; i < PDM_BYTES_PER_IRQ; i += 2) {
     *(target++) = DEINTERLACE_TABLE[0][input[0]] | DEINTERLACE_TABLE[1][input[1]];
     input += 2;
   }
@@ -171,30 +173,30 @@ static void decimate(const uint8_t* input, int32_t* acc,  int16_t* output) {
 }
 
 extern "C" void DMA1_Channel2_3_IRQHandler(void) {
-  static int16_t *index = audio_data[0];
+  static int16_t *output = audio_data[0];
   uint32_t isr = DMA1->ISR;
   DMA1->IFCR = DMA_IFCR_CGIF2;
 
-  static int32_t accumulator[2][4]; // 2 data lines, 2 channels, 2 accumulators
+  static int32_t accumulator[2][4]; // 2 data lines, 2x2 channel accumulators
 
   // Note: if this falls behind, it will drop a bunch of samples
   if (isr & DMA_ISR_HTIF2) {
-    decimate(pdm_data[0][0], accumulator[0], &index[0]);
-    decimate(pdm_data[1][0], accumulator[1], &index[2]);
-    index += SAMPLES_PER_IRQ * 4;
+    decimate(pdm_data[0][0], accumulator[0], &output[0]);
+    decimate(pdm_data[1][0], accumulator[1], &output[2]);
+    output += SAMPLES_PER_IRQ * 4;
     sample_index++;
   }
 
   if (isr & DMA_ISR_TCIF2) {
-    decimate(pdm_data[0][1], accumulator[0], &index[0]);
-    decimate(pdm_data[1][1], accumulator[1], &index[2]);
-    index += SAMPLES_PER_IRQ * 4;
+    decimate(pdm_data[0][1], accumulator[0], &output[0]);
+    decimate(pdm_data[1][1], accumulator[1], &output[2]);
+    output += SAMPLES_PER_IRQ * 4;
     sample_index++;
   }
 
   // Circular buffer increment
   if (sample_index >= IRQS_PER_FRAME * 2) {
-    index = audio_data[0];
+    output = audio_data[0];
     sample_index = 0;
   }
 }
