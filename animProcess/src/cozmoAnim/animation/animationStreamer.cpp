@@ -902,10 +902,8 @@ namespace Cozmo {
               ProceduralFaceDrawer::ApplyScanlines(faceHSV, scanlineOpacity);
             }
               
-            // convert HSV -> RGB
-            cv::cvtColor(faceHSV.get_CvMat_(), faceHSV.get_CvMat_(), CV_HSV2RGB);
-            // convert RGB -> RGB565
-            _faceDrawBuf.SetFromImageRGB(faceHSV);
+            // convert HSV -> RGB565
+            faceHSV.ConvertHSV2RGB565(_faceDrawBuf);
           }
         } else {
           // Display the ImageRGB565 directly to the face, without modification
