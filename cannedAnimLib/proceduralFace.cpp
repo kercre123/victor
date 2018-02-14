@@ -46,7 +46,7 @@ namespace {
     None,
     Add,
     Multiply,
-    AverageIfBothUnset
+    Average
   };
   
   // Each entry in the LUT is one of these
@@ -85,8 +85,8 @@ namespace {
     {ProceduralFace::Parameter::Saturation,        { false, true,  -1.f,  1.f, EyeParamCombineMethod::None,     {-1.f, 1.f}   }     },
     {ProceduralFace::Parameter::Lightness,         { false, true,  -1.f,  1.f, EyeParamCombineMethod::None,     {-1.f, 1.f}   }     },
     {ProceduralFace::Parameter::GlowSize,          { false, true,  -1.f, 0.5f, EyeParamCombineMethod::None,     {-1.f, 1.f}   }     },
-    {ProceduralFace::Parameter::HotSpotCenterX,    { false, true,   0.f, 0.0f, EyeParamCombineMethod::AverageIfBothUnset,     {-1.f, 1.f}   }     },
-    {ProceduralFace::Parameter::HotSpotCenterY,    { false, true,   0.f, 0.0f, EyeParamCombineMethod::AverageIfBothUnset,     {-1.f, 1.f}   }     },
+    {ProceduralFace::Parameter::HotSpotCenterX,    { false, true,   0.f, 0.0f, EyeParamCombineMethod::Average,  {-1.f, 1.f}   }     },
+    {ProceduralFace::Parameter::HotSpotCenterY,    { false, true,   0.f, 0.0f, EyeParamCombineMethod::Average,  {-1.f, 1.f}   }     },
   };
   
   static_assert( Util::FullEnumToValueArrayChecker::IsSequentialArray(kEyeParamInfoLUT),
@@ -385,33 +385,6 @@ inline static T LinearBlendHelper(const T value1, const T value2, const float bl
   return blendValue;
 }
   
-// Blend if both set, use the set one if only one is set, use default if neither set
-// "Set" means value >= 0
-template<typename T>
-inline static T LinearBlendIfBothSetHelper(const T value1, const T value2, const float blendFraction, const T defaultValue)
-{
-  const bool isSet1 = Util::IsFltGEZero(value1);
-  const bool isSet2 = Util::IsFltGEZero(value2);
-  
-  if(isSet1 && isSet2)
-  {
-    return LinearBlendHelper(value1, value2, blendFraction);
-  }
-  else if(isSet1)
-  {
-    return value1;
-  }
-  else if(isSet2)
-  {
-    return value2;
-  }
-  else
-  {
-    // Use default
-    return defaultValue;
-  }
-}
-  
 inline static ProceduralFace::Value BlendAngleHelper(const ProceduralFace::Value angle1,
                                                      const ProceduralFace::Value angle2,
                                                      const float blendFraction)
@@ -462,10 +435,9 @@ void ProceduralFace::Interpolate(const ProceduralFace& face1, const ProceduralFa
       }
       else if(paramInfo.canBeUnset) {
         // Special linear blend taking into account whether values are "set"
-        SetParameter(whichEye, param, LinearBlendIfBothSetHelper(face1.GetParameter(whichEye, param),
+        SetParameter(whichEye, param, LinearBlendHelper(face1.GetParameter(whichEye, param),
                                                                  face2.GetParameter(whichEye, param),
-                                                                 blendFraction,
-                                                                 paramInfo.defaultValueIfCombiningWithUnset));
+                                                                 blendFraction));
       }
       else {
         SetParameter(whichEye, param, LinearBlendHelper(face1.GetParameter(whichEye, param),
@@ -482,9 +454,9 @@ void ProceduralFace::Interpolate(const ProceduralFace& face1, const ProceduralFa
   SetFaceScale({LinearBlendHelper(face1.GetFaceScale().x(), face2.GetFaceScale().x(), blendFraction),
                 LinearBlendHelper(face1.GetFaceScale().y(), face2.GetFaceScale().y(), blendFraction)});
   
-  SetScanlineOpacity(LinearBlendIfBothSetHelper(face1.GetScanlineOpacity(), face2.GetScanlineOpacity(),
-                                                blendFraction, kProcFace_DefaultScanlineOpacity));
-  
+  SetScanlineOpacity(LinearBlendHelper(face1.GetScanlineOpacity(), face2.GetScanlineOpacity(),
+                                       blendFraction));
+
 } // Interpolate()
   
 void ProceduralFace::GetEyeBoundingBox(Value& xmin, Value& xmax, Value& ymin, Value& ymax)
@@ -548,8 +520,8 @@ void ProceduralFace::CombineEyeParams(EyeParamArray& eyeArray0, const EyeParamAr
         eyeArray0[iParam] *= eyeArray1[iParam];
         break;
         
-      case EyeParamCombineMethod::AverageIfBothUnset:
-        LinearBlendIfBothSetHelper(eyeArray0[iParam], eyeArray1[iParam], 0.5f, paramInfo.defaultValueIfCombiningWithUnset);
+      case EyeParamCombineMethod::Average:
+        LinearBlendHelper(eyeArray0[iParam], eyeArray1[iParam], 0.5f);
         break;
     }
   }
@@ -564,7 +536,7 @@ ProceduralFace& ProceduralFace::Combine(const ProceduralFace& otherFace)
   _faceScale     *= otherFace.GetFaceScale();
   _faceCenter    += otherFace.GetFacePosition();
   
-  LinearBlendIfBothSetHelper(_scanlineOpacity, otherFace._scanlineOpacity, 0.5f, kProcFace_DefaultScanlineOpacity);
+  LinearBlendHelper(_scanlineOpacity, otherFace._scanlineOpacity, 0.5f);
   
   const bool thisHasScanlineDistortion  = (nullptr != _scanlineDistorter);
   const bool otherHasScanlineDistortion = (nullptr != otherFace._scanlineDistorter);
