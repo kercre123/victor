@@ -2300,7 +2300,13 @@ namespace Anki {
     
     void WaitForImagesAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const 
     {
-      requests.insert({ _visionMode, EVisionUpdateFrequency::High });
+      // If the user has subscribed to VisionMode::Count, they are asking to be notified after N
+      // vision processing frames, regardless of mode. This does not require any subscription to 
+      // be made to the VSM since the RobotProcessImage message will be sent even if no modes are
+      // currently enabled.
+      if(_visionMode != VisionMode::Count){
+        requests.insert({ _visionMode, EVisionUpdateFrequency::High });
+      }
     }
 
     ActionResult WaitForImagesAction::Init()
