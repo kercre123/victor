@@ -65,7 +65,7 @@ namespace Anki {
     static Signal::SmartHandle sWifiHandle;
     
     // todo: tmp connection manager
-    static std::unique_ptr<BLEPairingController> sPairingController;
+    //static std::unique_ptr<BLEPairingController> sPairingController;
     static PinUpdatedSignal sPinUpdatedSignal;
   };
 }
