@@ -1,5 +1,7 @@
 DVT2
-* Put opto sensors to sleep when asked
+* Disable mics when head is not powered
 * Reenterant gpio alteration
-* Add cube encryption
 * Put Accelerometer to sleep on boot
+* Add cube encryption
+
+* Cube application

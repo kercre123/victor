@@ -15,7 +15,6 @@ using namespace I2C;
 
 // Failure codes
 FailureCode Opto::failure = BOOT_FAIL_NONE;
-FailureCode Opto::runLevel = BOOT_FAIL_NONE;
 static bool optoActive = false;
 
 // Readback values
@@ -310,7 +309,6 @@ void Opto::start(void) {
 
   // Turn on and configure the drop sensors
   for (int i = 0; i < 4; i++) {
-    runLevel = BOOT_FAIL_CLIFF1 + i;
     writeReg(i, DROP_SENSOR_ADDRESS, MAIN_CTRL, 0x01);
     writeReg(i, DROP_SENSOR_ADDRESS, PS_LED, 6 | (5 << 4));
     writeReg(i, DROP_SENSOR_ADDRESS, PS_PULSES, 8);
@@ -319,8 +317,6 @@ void Opto::start(void) {
     writeReg(i, DROP_SENSOR_ADDRESS, PS_CAN_1, 0);
   }
 
-  #ifndef DISABLE_TOF
-  runLevel = BOOT_FAIL_TOF;
   // Turn on TOF sensor
   // "Set I2C standard mode"
   writeReg(0, TOF_SENSOR_ADDRESS, 0x88, 0x00);

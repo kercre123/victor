@@ -11,8 +11,6 @@
 #include "flash.h"
 #include "comms.h"
 
-//#define DISABLE_TOF
-
 struct I2C_BulkWrite {
   uint8_t reg;
   uint8_t data;
@@ -28,7 +26,7 @@ static volatile uint8_t total_bytes;
 static bool address_sent;
 typedef void (*callback)(void);
 
-static void setupChannel() {
+static void setupChannel(uint8_t* target) {
   // Move our pins around
   if (i2c_op->channel & 1) {
     SDA1::mode(MODE_INPUT);
@@ -46,7 +44,7 @@ static void setupChannel() {
     SCL1::mode(MODE_ALTERNATE);
   }
 
-  i2c_target = (uint8_t*) i2c_op->data;
+  i2c_target = target;
   address_sent = false;
   total_bytes = 0;  // used to see if we aborted early on sync functions
 }
@@ -63,7 +61,7 @@ static void kickOff() {
       i2c_op = NULL;
       return ;
     case I2C_REG_READ:
-      setupChannel();
+      setupChannel((uint8_t*) i2c_op->data);
 
       // Enable NBYTE interrupt (Read specific)
       I2C2->CR1 |= I2C_CR1_TCIE;
@@ -73,9 +71,17 @@ static void kickOff() {
                   ;
       break ;
     case I2C_REG_WRITE_VALUE:
-      i2c_target = (uint8_t*) &i2c_op->data;
+      setupChannel((uint8_t*) &i2c_op->data);
+
+      I2C2->CR1 &= ~I2C_CR1_TCIE;
+      I2C2->CR2   = ((i2c_op->length + 1) << 16)
+                  | I2C_CR2_START
+                  | I2C_CR2_AUTOEND
+                  | i2c_op->slave
+                  ;
+      break ;
     case I2C_REG_WRITE:
-      setupChannel();
+      setupChannel((uint8_t*) i2c_op->data);
 
       I2C2->CR1 &= ~I2C_CR1_TCIE;
       I2C2->CR2   = ((i2c_op->length + 1) << 16)
@@ -129,7 +135,7 @@ bool I2C::multiOp(I2C_Op func, uint8_t channel, uint8_t slave, uint8_t reg, int 
   do {
     // Welp, something went wrong, we should just give up
     if (max_retries-- == 0) {
-      Opto::failure = Opto::runLevel;
+      Opto::failure = (channel << 8) || slave;
       return true;
     }
 
@@ -150,6 +156,10 @@ bool I2C::writeReg(uint8_t channel, uint8_t slave, uint8_t reg, uint8_t data) {
 }
 
 bool I2C::writeReg16(uint8_t channel, uint8_t slave, uint8_t reg, uint16_t data) {
+  return multiOp(I2C_REG_WRITE, channel, slave, reg, sizeof(data), &data);
+}
+
+bool I2C::writeReg32(uint8_t channel, uint8_t slave, uint8_t reg, uint32_t data) {
   return multiOp(I2C_REG_WRITE, channel, slave, reg, sizeof(data), &data);
 }
 
@@ -227,6 +237,7 @@ void I2C::capture() {
       break ;
     }
     NVIC_EnableIRQ(I2C2_IRQn);
+    __wfi();
   }
 }
 

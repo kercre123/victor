@@ -155,3 +155,13 @@ void Power::tick(void) {
       break ;
   }
 }
+
+void Power::disableHead(void) {
+  MAIN_EN::mode(MODE_OUTPUT);
+  MAIN_EN::reset();
+}
+
+void Power::enableHead(void) {
+  MAIN_EN::mode(MODE_OUTPUT);
+  MAIN_EN::set();
+}

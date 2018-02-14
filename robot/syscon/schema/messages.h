@@ -132,14 +132,14 @@ typedef uint32_t LedIndexes;
 #define LED_CHANEL_CT 3  //RGB
 
 enum {
-  BOOT_FAIL_NONE   = 0x00,
-  BOOT_FAIL_CLIFF1 = 0x00,
-  BOOT_FAIL_CLIFF2 = 0x01,
-  BOOT_FAIL_CLIFF3 = 0x02,
-  BOOT_FAIL_CLIFF4 = 0x03,
-  BOOT_FAIL_TOF    = 0x04,
+  BOOT_FAIL_NONE   = 0x0000,
+  BOOT_FAIL_TOF    = 0x0052,
+  BOOT_FAIL_CLIFF1 = 0x00A6,
+  BOOT_FAIL_CLIFF2 = 0x01A6,
+  BOOT_FAIL_CLIFF3 = 0x02A6,
+  BOOT_FAIL_CLIFF4 = 0x03A6,
 };
-typedef uint8_t FailureCode;
+typedef uint16_t FailureCode;
 
 struct MotorPower
 {
@@ -208,8 +208,8 @@ struct BodyToHead
 {
   uint32_t framecounter;
   uint8_t flags;
+  uint8_t _unused0;
   FailureCode failureCode;
-  uint16_t _unused0;
   struct MotorState motor[4];
   uint16_t cliffSense[4];
   struct BatteryState battery;

@@ -46,16 +46,6 @@ uint16_t volatile Analog::values[ADC_CHANNELS];
 bool Analog::button_pressed = false;
 uint16_t Analog::battery_voltage = 0;
 
-static void disableVMain(void) {
-  MAIN_EN::mode(MODE_OUTPUT);
-  MAIN_EN::reset();
-}
-
-static void enableVMain(void) {
-  MAIN_EN::mode(MODE_OUTPUT);
-  MAIN_EN::set();
-}
-
 void Analog::init(void) {
   // Calibrate ADC1
   if ((ADC1->CR & ADC_CR_ADEN) != 0) {
@@ -108,7 +98,7 @@ void Analog::init(void) {
   POWER_EN::mode(MODE_INPUT);
   POWER_EN::pull(PULL_UP);
 
-  enableVMain();
+  Power::enableHead();
 
   CHG_EN::type(TYPE_OPENDRAIN);
   CHG_PWR::type(TYPE_OPENDRAIN);
@@ -221,13 +211,13 @@ void Analog::tick(void) {
       BODY_TX::mode(MODE_OUTPUT);
 
       // Reenable power to the head
-      enableVMain();
+      Power::enableHead();
     } else if (hold_count >= POWER_DOWN_TIME) {
-      disableVMain();
+      Power::disableHead();
       Lights::disable();
     } else {
       Power::setMode(POWER_ACTIVE);
-      enableVMain();
+      Power::enableHead();
     }
   } else {
     if (hold_count >= POWER_DOWN_TIME && hold_count < POWER_WIPE_TIME) {
