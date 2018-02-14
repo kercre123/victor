@@ -21,6 +21,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 
+#include "util/bitFlags/bitFlags.h"
 #include "util/helpers/templateHelpers.h"
 
 namespace Anki {
@@ -70,8 +71,11 @@ public:
   bool IsCliffSensorEnabled() const { return _enableCliffSensor; }
   void SetEnableCliffSensor(const bool val) { _enableCliffSensor = val; }
   
-  bool IsCliffDetected() const { return _isCliffDetected; }
-  void SetCliffDetected(const bool isCliffDetected) { _isCliffDetected = isCliffDetected; }
+  bool IsCliffDetected() const { return _cliffDetectedFlags.AreAnyFlagsSet(); }
+  bool IsCliffDetected(CliffSensor sensor) const;
+  
+  void SetCliffDetectedFlags(const uint8_t cliffDetectedFlags) { _cliffDetectedFlags.SetFlags(cliffDetectedFlags); }
+  uint8_t GetCliffDetectedFlags() const { return _cliffDetectedFlags.GetFlags(); }
   
   bool IsCliffDetectedStatusBitOn() const { return _cliffDetectedStatusBitOn; }
   
@@ -101,7 +105,7 @@ private:
   bool _isPaused = false;
   
   bool _enableCliffSensor = true;
-  bool _isCliffDetected = false;
+  Util::BitFlags8<CliffSensor> _cliffDetectedFlags;
   
   // True if the robot is reporting CLIFF_DETECTED in its status message
   bool _cliffDetectedStatusBitOn = false;

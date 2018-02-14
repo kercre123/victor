@@ -6,7 +6,6 @@ cxx_project(
                             'latticePlannerTest.cpp',
                             'minAnglePlannerTest.cpp',
                             'pathComponentTest.cpp',
-                            'run_RobotPoseHistoryTest.cpp',
                             'testActionList.cpp'
                         ]),
     platform_srcs = [

@@ -33,15 +33,15 @@ namespace Anki {
     }
     
 
-    HistRobotState::HistRobotState(const Pose3d& pose, const RobotState& state)
-    {
-      SetAll(pose, state);
-    }
-    
-    void HistRobotState::SetAll(const Pose3d& pose, const RobotState& state)
+    HistRobotState::HistRobotState(const Pose3d& pose,
+                                   const RobotState& state,
+                                   const bool isProxSensorValid,
+                                   const uint8_t cliffDetectedFlags)
     {
       _pose  = pose;
       _state = state;
+      _wasProxSensorValid = isProxSensorValid;
+      _cliffDetectedFlags.SetFlags(cliffDetectedFlags);
     }
     
     void HistRobotState::SetPose(const PoseFrameID_t frameID, const Pose3d& pose,
@@ -68,22 +68,32 @@ namespace Anki {
       return ConvertLiftAngleToLiftHeightMM(_state.liftAngle);
     }
     
-    const u16 HistRobotState::GetCliffData(unsigned int ind) const
+    const u16 HistRobotState::GetCliffData(CliffSensor sensor) const
     {
-      DEV_ASSERT(ind < Util::EnumToUnderlying(CliffSensor::CLIFF_COUNT), "HistRobotState.GetCliffData.InvalidIndex");
-      return _state.cliffDataRaw[ind];
+      DEV_ASSERT(sensor < CliffSensor::CLIFF_COUNT, "HistRobotState.GetCliffData.InvalidIndex");
+      return _state.cliffDataRaw[Util::EnumToUnderlying(sensor)];
     }
     
     void HistRobotState::Print() const
     {
-      printf("Frame %d, headAng %f, cliff %d, carrying %s, moving %s, whichMoving [%s%s%s]",
-             GetFrameId(), GetHeadAngle_rad(), GetCliffData(),
+      printf("Frame %d, headAng %f, cliff %d %d %d %d, carrying %s, moving %s, whichMoving [%s%s%s]",
+             GetFrameId(), GetHeadAngle_rad(),
+             GetCliffData(CliffSensor::CLIFF_FL),
+             GetCliffData(CliffSensor::CLIFF_FR),
+             GetCliffData(CliffSensor::CLIFF_BL),
+             GetCliffData(CliffSensor::CLIFF_BR),
              WasCarryingObject() ? "Y" : "N",
              WasMoving()         ? "Y" : "N",
              WasHeadMoving()     ? "H" : "",
              WasLiftMoving()     ? "L" : "",            
              WereWheelsMoving()  ? "B" : "");
       _pose.Print();
+    }
+    
+    bool HistRobotState::WasCliffDetected(CliffSensor sensor) const
+    {
+      DEV_ASSERT(sensor < CliffSensor::CLIFF_COUNT, "HistRobotState.WasCliffDetected.InvalidIndex");
+      return _cliffDetectedFlags.IsBitFlagSet(sensor);
     }
     
     HistRobotState HistRobotState::Interpolate(const HistRobotState& histState1, const HistRobotState& histState2,
@@ -93,13 +103,14 @@ namespace Anki {
                  "HistRobotState.Interpolate.FractionOOR");
       
       const bool isCloserToFirst = Util::IsFltLT(fraction, 0.5f);
+      const HistRobotState* closestHistRobotState = isCloserToFirst ? &histState1 : &histState2;
       
       //
       // Interpolate RobotState data
       //
       
       // For now, just take most state info from whichever entry is closer in time.
-      RobotState interpState = (isCloserToFirst ? histState1._state : histState2._state);
+      RobotState interpState = closestHistRobotState->_state;
       
       DEV_ASSERT(histState1._state.pose_frame_id == histState2._state.pose_frame_id,
                  "HistRobotState.Interpolate.MisMatchedPoseFrameIDs");
@@ -113,7 +124,8 @@ namespace Anki {
       
       // Interp cliff data
       for (int i=0 ; i<interpState.cliffDataRaw.size() ; i++) {
-        interpState.cliffDataRaw[i] = std::round(f32(histState1.GetCliffData(i)) + fraction * f32(histState2.GetCliffData(i) - histState1.GetCliffData(i)));
+        const auto s = static_cast<CliffSensor>(i);
+        interpState.cliffDataRaw[i] = std::round(f32(histState1.GetCliffData(s)) + fraction * f32(histState2.GetCliffData(s) - histState1.GetCliffData(s)));
       }
       
       // Interp wheel speeds
@@ -134,8 +146,17 @@ namespace Anki {
       const Radians interpRotation = histState1.GetPose().GetRotationAngle<'Z'>() + Radians(pose2wrtPose1.GetRotationAngle<'Z'>() * fraction);
       const Pose3d interpPose(interpRotation, Z_AXIS_3D(), interpTrans, histState1.GetPose().GetParent());
       
+      //
+      // Interpolate booleans
+      //
+      const auto interpProxSensorValid = closestHistRobotState->WasProxSensorValid();
+      const auto interpCliffDetectedFlags = closestHistRobotState->_cliffDetectedFlags.GetFlags();
+      
       // Construct interpolated HistRobotState to return
-      HistRobotState interpHistState(interpPose, interpState);
+      HistRobotState interpHistState(interpPose,
+                                     interpState,
+                                     interpProxSensorValid,
+                                     interpCliffDetectedFlags);
       
       return interpHistState;
     }

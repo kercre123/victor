@@ -788,7 +788,7 @@ void RobotToEngineImplMessaging::HandleCliffEvent(const AnkiEvent<RobotInterface
     LOG_INFO("RobotImplMessaging.HandleCliffEvent.Undetected", "");
   }
   
-  robot->GetCliffSensorComponent().SetCliffDetected(cliffEvent.detectedFlags != 0);
+  robot->GetCliffSensorComponent().SetCliffDetectedFlags(cliffEvent.detectedFlags);
   
   // Forward on with EngineToGame event
   robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(cliffEvent)));

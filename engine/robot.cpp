@@ -1051,7 +1051,10 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     } // if/else on ramp
     
     // Add to history
-    const HistRobotState histState(newPose, msg);
+    const HistRobotState histState(newPose,
+                                   msg,
+                                   GetProxSensorComponent().IsLatestReadingValid(),
+                                   GetCliffSensorComponent().GetCliffDetectedFlags() );
     lastResult = GetStateHistory()->AddRawOdomState(msg.timestamp, histState);
     
     if (lastResult != RESULT_OK) {

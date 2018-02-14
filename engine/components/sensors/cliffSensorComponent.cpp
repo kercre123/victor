@@ -120,6 +120,11 @@ std::string CliffSensorComponent::GetLogRow()
   }
   return str;
 }
+  
+bool CliffSensorComponent::IsCliffDetected(CliffSensor sensor) const
+{
+  return _cliffDetectedFlags.IsBitFlagSet(sensor);
+}
 
 void CliffSensorComponent::UpdateCliffDetectThresholds()
 {
