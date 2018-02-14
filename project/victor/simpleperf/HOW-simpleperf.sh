@@ -16,8 +16,8 @@ SCRIPTDIR=$(dirname $([ -L $0 ] && echo "$(dirname $0)/$(readlink -n $0)" || ech
 # Where is symbol cache?
 : ${ANKI_PROFILE_SYMBOLCACHE:="${SCRIPTDIR}/${ANKI_PROFILE_PROCNAME}/symbol_cache"}
 
-# Where is the binary cache?
-: ${ANKI_PROFILE_BINARYCACHE:="${SCRIPTDIR}/${ANKI_PROFILE_PROCNAME}/binary_cache"}
+# Where is perf.data?
+: ${ANKI_PROFILE_PERFDATA:="${SCRIPTDIR}/${ANKI_PROFILE_PROCNAME}/perf.data"}
 
 # Where is top level?
 : ${TOPLEVEL:="`git rev-parse --show-toplevel`"}
@@ -43,11 +43,11 @@ fi
 #
 PROFILER=${SIMPLEPERF}/app_profiler.py
 
-python ${PROFILER} -nc \
+python ${PROFILER} -nc -nb \
   -np ${ANKI_PROFILE_PROCNAME} \
-  -r "-e cpu-cycles:u -f ${ANKI_PROFILE_FREQUENCY} --duration ${ANKI_PROFILE_DURATION} --call-graph fp" \
+  -r "-e cpu-cycles:u -f ${ANKI_PROFILE_FREQUENCY} --duration ${ANKI_PROFILE_DURATION}" \
   -lib ${ANKI_PROFILE_SYMBOLCACHE} \
-  -bin ${ANKI_PROFILE_BINARYCACHE}
+  -o ${ANKI_PROFILE_PERFDATA}
 
 #
 # To view perf.data, run 
@@ -56,4 +56,6 @@ python ${PROFILER} -nc \
 #
 
 export PATH=${SIMPLEPERF}/bin/darwin/x86_64:${PATH}
-simpleperf report --symfs ${ANKI_PROFILE_SYMBOLCACHE} $@
+simpleperf report \
+  -i ${ANKI_PROFILE_PERFDATA} \
+  --symfs ${ANKI_PROFILE_SYMBOLCACHE} $@

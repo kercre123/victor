@@ -14,7 +14,7 @@ SCRIPTDIR=$(dirname $([ -L $0 ] && echo "$(dirname $0)/$(readlink -n $0)" || ech
 : ${ANKI_PROFILE_FREQUENCY:="4000"}
 
 # Where is symbol cache?
-: ${ANKI_PROFILE_SYMBOLCACHE:="${SCRIPTDIR}/symbol_cache"}
+: ${ANKI_PROFILE_SYMBOLCACHE:="${SCRIPTDIR}/${ANKI_PROFILE_PROCNAME}/symbol_cache"}
 
 # Where is top level?
 : ${TOPLEVEL:="`git rev-parse --show-toplevel`"}
@@ -29,8 +29,8 @@ fi
 #
 # Invoke inferno.sh to collect data and generate html report
 #
-${SIMPLEPERF}/inferno.sh \
-  -np ${ANKI_PROFILE_PROCNAME} \
-  -t ${ANKI_PROFILE_DURATION} \
-  -f ${ANKI_PROFILE_FREQUENCY} \
+${SIMPLEPERF}/inferno.sh -nc -nb \ 
+  -np ${ANKI_PROFILE_PROCNAME} \ 
+  -t ${ANKI_PROFILE_DURATION} \ 
+  -f ${ANKI_PROFILE_FREQUENCY} \ 
   --symfs ${ANKI_PROFILE_SYMBOLCACHE} $@

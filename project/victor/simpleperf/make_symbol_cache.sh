@@ -39,8 +39,8 @@ device_bin_dir="${INSTALL_ROOT}/bin"
 device_lib_dir="${INSTALL_ROOT}/lib"
 
 # Path to symbolicated version of native executables
-symbol_bin_dir="${ANKI_PROFILE_SYMBOLCACHE}/${device_bin_dir}"
-symbol_lib_dir="${ANKI_PROFILE_SYMBOLCACHE}/${device_lib_dir}"
+symbol_bin_dir="${ANKI_PROFILE_SYMBOLCACHE}${device_bin_dir}"
+symbol_lib_dir="${ANKI_PROFILE_SYMBOLCACHE}${device_lib_dir}"
 
 #
 # Build a "shadow filesystem" of links that will be used for symbol lookups.
@@ -58,4 +58,3 @@ done
 for full in ${native_lib_dir}/*.full ; do
   ln -sf ${full} ${symbol_lib_dir}/$(basename ${full%.full})
 done
-

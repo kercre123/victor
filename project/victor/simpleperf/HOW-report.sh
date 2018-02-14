@@ -13,17 +13,11 @@ SCRIPTDIR=$(dirname $([ -L $0 ] && echo "$(dirname $0)/$(readlink -n $0)" || ech
 # How often do we sample? (in usec)
 : ${ANKI_PROFILE_FREQUENCY:="4000"}
 
-# Where is the symbol cache?
+# Where is symbol cache?
 : ${ANKI_PROFILE_SYMBOLCACHE:="${SCRIPTDIR}/${ANKI_PROFILE_PROCNAME}/symbol_cache"}
-
-# Where is the binary cache?
-: ${ANKI_PROFILE_BINARYCACHE:="${SCRIPTDIR}/${ANKI_PROFILE_PROCNAME}/binary_cache"}
 
 # Where is perf.data?
 : ${ANKI_PROFILE_PERFDATA:="${SCRIPTDIR}/${ANKI_PROFILE_PROCNAME}/perf.data"}
-
-# Where is the generated report?
-: ${ANKI_PROFILE_REPORTDIR:="${SCRIPTDIR}/${ANKI_PROFILE_PROCNAME}"}
 
 # Where is top level?
 : ${TOPLEVEL:="`git rev-parse --show-toplevel`"}
@@ -39,16 +33,12 @@ if [ ! -d ${ANKI_PROFILE_SYMBOLCACHE} ] ; then
 fi
 
 #
-# Run report_html.py to start profiling.
-# When it finishes it will pull a `perf.data` file off the robot.
-#
-# Use '-i' because perf.data is stored in a per process directory.
-# Use '--symfs' because the symbolcache is per process.
-# Use '-o' because reports are per process.
+# To view perf.data, run 
+#  simpleperf report --symfs symbol_cache
+# which will print performance stuff to console. 
 #
 
-python ${SIMPLEPERF}/report_html.py \
+export PATH=${SIMPLEPERF}/bin/darwin/x86_64:${PATH}
+simpleperf report \
   -i ${ANKI_PROFILE_PERFDATA} \
-  --symfs ${ANKI_PROFILE_SYMBOLCACHE} \
-  -o ${ANKI_PROFILE_REPORTDIR}/report.html  $@
-open ${ANKI_PROFILE_REPORTDIR}/report.html
+  --symfs ${ANKI_PROFILE_SYMBOLCACHE} $@
