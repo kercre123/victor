@@ -407,6 +407,15 @@ message DisplayFaceImageBinaryChunk {
     uint_8   chunkIndex
 }
 
+// Format: 1200 pixels, 8-bits each (grayscale)
+message DisplayFaceImageGrayscaleChunk {
+    uint_32  duration_ms,     // Use uint_32 max value to keep the image on the screen
+    uint_8   faceData[1200],  // TODO: Make size a clad const
+    uint_16  numPixels,       // Number of pixels in faceData
+    uint_8   imageId,         // ID for this image, used only to track chunks of the same image
+    uint_8   chunkIndex
+}
+
 // Format: 600 pixels, 16-bits each (RGB565)
 message DisplayFaceImageRGBChunk {
     uint_32  duration_ms,     // Use uint_32 max value to keep the image on the screen
@@ -555,6 +564,8 @@ union EngineToRobot
   RemoveEyeShift                removeEyeShift              = 0x5E,
   AddSquint                     addSquint                   = 0x5F,
   RemoveSquint                  removeSquint                = 0x60,
+  
+  DisplayFaceImageGrayscaleChunk   displayFaceImageGrayscaleChunk      = 0x61,
 
   AudioEngine::Multiplexer::PostAudioEvent        postAudioEvent       = 0x70,
   AudioEngine::Multiplexer::StopAllAudioEvents    stopAllAudioEvents   = 0x71,

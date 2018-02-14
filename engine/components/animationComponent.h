@@ -106,6 +106,7 @@ public:
 
   // If you want to play multiple frames in sequence, duration_ms should be multiples of ANIM_TIME_STEP_MS.
   Result DisplayFaceImageBinary(const Vision::Image& img, u32 duration_ms, bool interruptRunning = false);
+  Result DisplayFaceImage(const Vision::Image& img, u32 duration_ms, bool interruptRunning = false);
   Result DisplayFaceImage(const Vision::ImageRGB& img, u32 duration_ms, bool interruptRunning = false);
   Result DisplayFaceImage(const Vision::ImageRGB565& imgRGB565, u32 duration_ms, bool interruptRunning = false);
 
@@ -192,6 +193,8 @@ private:
   
   Tag GetNextTag() { return ++_tagCtr; }
 
+  template <typename MessageType, typename ImageType>
+  Result DisplayFaceImageHelper(const ImageType& imgRGB565, u32 duration_ms, bool interruptRunning);
   
   static constexpr float _kDefaultTimeout_sec = 60.f;
 

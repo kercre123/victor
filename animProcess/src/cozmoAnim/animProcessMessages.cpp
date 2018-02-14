@@ -125,6 +125,11 @@ void Process_displayFaceImageBinaryChunk(const Anki::Cozmo::RobotInterface::Disp
   _animStreamer->Process_displayFaceImageChunk(msg);
 }
 
+void Process_displayFaceImageGrayscaleChunk(const Anki::Cozmo::RobotInterface::DisplayFaceImageGrayscaleChunk& msg)
+{
+  _animStreamer->Process_displayFaceImageChunk(msg);
+}
+  
 void Process_displayFaceImageRGBChunk(const Anki::Cozmo::RobotInterface::DisplayFaceImageRGBChunk& msg)
 {
   _animStreamer->Process_displayFaceImageChunk(msg);

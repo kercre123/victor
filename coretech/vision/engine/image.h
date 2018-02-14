@@ -186,6 +186,15 @@ namespace Vision {
     using Array2d<u8>::get_CvMat_;
 #   endif
 
+    // Methods to access the raw data pointer to match what exists
+    // in ImageRGB565
+    u8* GetRawDataPointer() {
+      return ImageBase<u8>::GetDataPointer();
+    }
+    const u8* GetRawDataPointer() const {
+      return ImageBase<u8>::GetDataPointer();
+    }
+    
     void DrawSubImage(Image& subImage, const Point2f& topLeftCorner) { 
       return ImageBase<u8>::DrawSubImage<Image>(subImage, topLeftCorner); 
     }
