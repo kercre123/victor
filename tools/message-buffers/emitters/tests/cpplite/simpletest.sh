@@ -28,5 +28,5 @@ done
 
 cp -f cpplitetest.cpp $OUTPUT_DIR
 
-clang++ -DCLAD_DEBUG -Wall -Wextra -g -Os -o $OUTPUT_DIR/cpplitetest.out $OUTPUT_DIR/cpplitetest.cpp $OUTPUT_DIR/aligned-lite/CTest.cpp
+clang++ -DCLAD_DEBUG -Wall -Wextra --std=c++11 -g -Os -o $OUTPUT_DIR/cpplitetest.out $OUTPUT_DIR/cpplitetest.cpp $OUTPUT_DIR/aligned-lite/CTest.cpp
 $OUTPUT_DIR/cpplitetest.out
