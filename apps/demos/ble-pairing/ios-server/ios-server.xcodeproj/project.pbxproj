@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		DA087F7320337866008F9639 /* bleMessageProtocol.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DA087F7120337866008F9639 /* bleMessageProtocol.cpp */; };
 		DA27A5A6201D0AE800359EE0 /* NetworkExtension.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA27A5A5201D0AE800359EE0 /* NetworkExtension.framework */; };
 		DA27A6552023E86200359EE0 /* libev.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DA27A6532023E52400359EE0 /* libev.a */; };
 		DA27A65920252F2F00359EE0 /* WiFiNetworkStream.mm in Sources */ = {isa = PBXBuildFile; fileRef = DA27A65720252F2F00359EE0 /* WiFiNetworkStream.mm */; };
@@ -30,6 +31,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		DA087F7120337866008F9639 /* bleMessageProtocol.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = bleMessageProtocol.cpp; sourceTree = "<group>"; };
+		DA087F7220337866008F9639 /* bleMessageProtocol.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = bleMessageProtocol.h; sourceTree = "<group>"; };
 		DA27A59B20193A6A00359EE0 /* pairingMessages.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = pairingMessages.h; sourceTree = "<group>"; };
 		DA27A5A2201C083900359EE0 /* ios-server.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "ios-server.entitlements"; sourceTree = "<group>"; };
 		DA27A5A5201D0AE800359EE0 /* NetworkExtension.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = NetworkExtension.framework; path = System/Library/Frameworks/NetworkExtension.framework; sourceTree = SDKROOT; };
@@ -116,8 +119,10 @@
 		DAB7E39A200EB57500D57664 /* networking */ = {
 			isa = PBXGroup;
 			children = (
-				DAB7E39B200EB59B00D57664 /* INetworkStream.h */,
 				DA27A59B20193A6A00359EE0 /* pairingMessages.h */,
+				DA087F7220337866008F9639 /* bleMessageProtocol.h */,
+				DA087F7120337866008F9639 /* bleMessageProtocol.cpp */,
+				DAB7E39B200EB59B00D57664 /* INetworkStream.h */,
 				DAB7E39E200EB77700D57664 /* BLENetworkStream.h */,
 				DAB7E39C200EB76600D57664 /* BLENetworkStream.mm */,
 				DAB7E3A4200EB8C000D57664 /* securePairing.h */,
@@ -286,6 +291,7 @@
 				DACEF047200598FF00894864 /* AppDelegate.m in Sources */,
 				DA27A65F2029472700359EE0 /* switchboard.mm in Sources */,
 				DA27A65920252F2F00359EE0 /* WiFiNetworkStream.mm in Sources */,
+				DA087F7320337866008F9639 /* bleMessageProtocol.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

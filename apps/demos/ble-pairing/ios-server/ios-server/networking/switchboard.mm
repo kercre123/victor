@@ -8,6 +8,7 @@
 //
 
 #include "switchboard.h"
+#include "bleMessageProtocol.h"
 
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // DEBUG DEFINE FOR TESTING ON iOS !!
@@ -16,14 +17,15 @@
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 struct ev_loop* Anki::SwitchboardDaemon::sLoop;
+const uint32_t Anki::SwitchboardDaemon::kTick_s;
+ev_timer Anki::SwitchboardDaemon::sTimer;
 Anki::SwitchboardDaemon::PinUpdatedSignal Anki::SwitchboardDaemon::sPinUpdatedSignal;
 Anki::Switchboard::SecurePairing* Anki::SwitchboardDaemon::sSecurePairing;
 Signal::SmartHandle Anki::SwitchboardDaemon::sPinHandle;
 Signal::SmartHandle Anki::SwitchboardDaemon::sWifiHandle;
 dispatch_queue_t Anki::SwitchboardDaemon::sSwitchboardQueue;
 Anki::TaskExecutor* Anki::SwitchboardDaemon::sTaskExecutor;
-BLEPairingController* Anki::SwitchboardDaemon::sPairingController;
-const uint32_t Anki::SwitchboardDaemon::kTick_s;
+std::unique_ptr<BLEPairingController> Anki::SwitchboardDaemon::sPairingController;
 
 void Anki::SwitchboardDaemon::Start() {
   // Set static loop
@@ -37,7 +39,9 @@ void Anki::SwitchboardDaemon::Start() {
   StartBleComms();
   //
   // ###
-
+  for(int i = 0; i < 100000; i++) {
+    TestMessageProtocol(i);
+  }
   ////////////////////////////////////////
   // Setup WiFi process comms
   ////////////////////////////////////////
@@ -74,17 +78,24 @@ void Anki::SwitchboardDaemon::Start() {
   // ###
 
   // Begin event loop
-  ev_timer timer;
-  ev_timer_init(&timer, OnTimerTick, kTick_s, kTick_s);
-  ev_timer_start(sLoop, &timer);
+  ev_timer_init(&sTimer, OnTimerTick, kTick_s, kTick_s);
+  ev_timer_start(sLoop, &sTimer);
   Log::Write("Initialized . . .");
   ev_loop(sLoop, 0);
   Log::Write(". . . Terminated");
 }
 
+void Anki::SwitchboardDaemon::Stop() {
+  StopBleComms();
+  
+  Log::Write("Stopping daemon . . .");
+  ev_timer_stop(sLoop, &sTimer);
+  ev_unloop(sLoop, EVBREAK_ALL);
+}
+
 void Anki::SwitchboardDaemon::StartBleComms() {
   // Tell ankibluetoothd to start advertising.
-  sPairingController = new BLEPairingController();
+  sPairingController = std::make_unique<BLEPairingController>();
   
   sPairingController->OnBLEConnectedEvent().SubscribeForever(OnConnected);
   sPairingController->OnBLEDisconnectedEvent().SubscribeForever(OnDisconnected);
@@ -94,8 +105,6 @@ void Anki::SwitchboardDaemon::StartBleComms() {
 void Anki::SwitchboardDaemon::StopBleComms() {
   // Tell ankibluetoothd to stop advertising.
   sPairingController->StopAdvertising();
-  
-  delete sPairingController;
 }
 
 void Anki::SwitchboardDaemon::StartWifiComms() {
@@ -142,6 +151,44 @@ void Anki::SwitchboardDaemon::OnConnected(Anki::Switchboard::INetworkStream* str
 void Anki::SwitchboardDaemon::OnTimerTick(struct ev_loop* loop, struct ev_timer* w, int revents)
 {
   // no op
+}
+
+void Anki::SwitchboardDaemon::TestMessageProtocol(int n) {
+  // <--
+  Anki::Switchboard::BLEMessageProtocol* msgProtocol = new Anki::Switchboard::BLEMessageProtocol(20);
+  
+  const int kMsgSize = n;
+  
+  uint8_t* buffer = (uint8_t*)malloc(kMsgSize);
+  for(int i = 0; i < kMsgSize; i++) {
+    buffer[i] = i;
+  }
+  
+  msgProtocol->OnReceiveMessageEvent().SubscribeForever([msgProtocol](uint8_t* buffer, size_t size) {
+    bool success = true;
+    for(int i = 0; i < size; i++) {
+      if(buffer[i] != (uint8_t)i) {
+        success = false;
+        break;
+      }
+    }
+    
+    if(!success) {
+      printf("Msg protocol test failed!!!\n");
+    } else {
+      //printf("Msg protocol succeeded for size [%d].\n", size);
+    }
+  });
+  msgProtocol->OnSendRawBufferEvent().SubscribeForever([msgProtocol](uint8_t* buffer, size_t size) {
+    msgProtocol->ReceiveRawBuffer(buffer, size);
+  });
+  
+  msgProtocol->SendMessage(buffer, kMsgSize);
+  msgProtocol->SendMessage(buffer, kMsgSize);
+  
+  free(buffer);
+  delete msgProtocol;
+  // --!>
 }
 
 # if !IOS_MAIN

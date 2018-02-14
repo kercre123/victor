@@ -23,6 +23,7 @@ namespace Anki {
   class SwitchboardDaemon {
   public:
     static void Start();
+    static void Stop();
     
     // Types
     using PinUpdatedSignal = Signal::Signal<void (std::string)>;
@@ -44,6 +45,8 @@ namespace Anki {
     static void StopBleComms();
     static void StartWifiComms();
     
+    static void TestMessageProtocol(int n);
+    
     static void OnConnected(Anki::Switchboard::INetworkStream* stream);
     static void OnDisconnected(Anki::Switchboard::INetworkStream* stream);
     static void OnPinUpdated(std::string pin);
@@ -54,6 +57,7 @@ namespace Anki {
     const static uint32_t kTick_s = 30;
     
     static struct ev_loop* sLoop;
+    static ev_timer sTimer;
     static Anki::Switchboard::SecurePairing* sSecurePairing;
     static dispatch_queue_t sSwitchboardQueue;
     static Anki::TaskExecutor* sTaskExecutor;
@@ -61,7 +65,7 @@ namespace Anki {
     static Signal::SmartHandle sWifiHandle;
     
     // todo: tmp connection manager
-    static BLEPairingController* sPairingController;
+    static std::unique_ptr<BLEPairingController> sPairingController;
     static PinUpdatedSignal sPinUpdatedSignal;
   };
 }
