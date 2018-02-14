@@ -72,7 +72,16 @@ private:
   
   cv::dnn::Net              _network;
   std::vector<std::string>  _labels;
-  bool                      _isDetectionMode;
+  
+  enum class Mode : uint8_t
+  {
+    Unknown = 0,
+    Classification,
+    SSD_Detection,
+    YOLO_Detection
+  };
+  
+  Mode _mode = Mode::Unknown;
   
   Profiler& _profiler;
   
@@ -107,6 +116,8 @@ Result ObjectDetector::Model::LoadModel(const std::string& modelPath, const Json
   GetFromConfig(input_mean_B);
   GetFromConfig(input_std);
   
+  std::string modelType = "UNKNOWN";
+  
   if(_params.graph.substr(_params.graph.size()-3,3) == ".pb")
   {
     // Tensorflow models:
@@ -140,6 +151,15 @@ Result ObjectDetector::Model::LoadModel(const std::string& modelPath, const Json
                         "Model file: %s", graphFileName.c_str());
       return RESULT_FAIL;
     }
+    modelType = "TensorFlow";
+  }
+  else if(_params.graph.substr(_params.graph.size()-4,4) == ".cfg")
+  {
+    // Darknet Model
+    const std::string modelConfiguration = Util::FileUtils::FullFilePath({modelPath,_params.graph});
+    const std::string modelBinary = Util::FileUtils::FullFilePath({modelPath,_params.graph.substr(0,_params.graph.size()-4) + ".weights"});
+    _network = cv::dnn::readNetFromDarknet(modelConfiguration, modelBinary);
+    modelType = "Darknet";
   }
   else
   {
@@ -150,6 +170,7 @@ Result ObjectDetector::Model::LoadModel(const std::string& modelPath, const Json
     {
       try {
         _network = cv::dnn::readNetFromCaffe(protoFileName, modelFileName);
+        modelType = "Caffe";
       }
       catch(const cv::Exception& e) {
         PRINT_NAMED_ERROR("ObjectDetector.Model.LoadModel.ReadCaffeModelCvException",
@@ -177,7 +198,7 @@ Result ObjectDetector::Model::LoadModel(const std::string& modelPath, const Json
   }
   
   PRINT_CH_INFO(kLogChannelName, "ObjectDetector.Model.OpenCvDNN.LoadedGraph",
-                "%s", _params.graph.c_str());
+                "%s: %s", modelType.c_str(), _params.graph.c_str());
   
   // Report network complexity in FLOPS
   {
@@ -203,20 +224,25 @@ Result ObjectDetector::Model::LoadModel(const std::string& modelPath, const Json
   }
   
   GetFromConfig(mode);
-  if(_params.mode == "detection")
+  _mode = Mode::Unknown;
+  if(_params.mode == "ssd" || _params.mode == "detection")
   {
-    _isDetectionMode = true;
+    _mode = Mode::SSD_Detection;
   }
-  else
+  else if(_params.mode == "yolo")
   {
-    if(_params.mode != "classification")
-    {
-      PRINT_NAMED_ERROR("ObjectDetector.Model.LoadGraph.UnknownMode",
-                        "Expecting 'classification' or 'detection'. Got '%s'.",
-                        _params.mode.c_str());
-      return RESULT_FAIL;
-    }
-    _isDetectionMode = false;
+    _mode = Mode::YOLO_Detection;
+  }
+  else if(_params.mode == "classification")
+  {
+    _mode = Mode::Classification;
+  }
+  
+  if(Mode::Unknown == _mode)
+  {
+    PRINT_NAMED_ERROR("ObjectDetector.Model.LoadGraph.UnknownMode",
+                      "%s", _params.mode.c_str());
+    return RESULT_FAIL;
   }
   
   const std::string labelsFileName = Util::FileUtils::FullFilePath({modelPath, _params.labels});
@@ -251,6 +277,20 @@ Result ObjectDetector::Model::ReadLabelsFile(const std::string& fileName)
   
   return RESULT_OK;
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+static inline void AddObjectToList(ObjectDetector::DetectedObject&& object,
+                                   std::list<ObjectDetector::DetectedObject>& outputList)
+{
+  PRINT_CH_DEBUG(kLogChannelName,
+                 "ObjectDetector.Model.Run.ObjectDetected",
+                 "Name:%s Score:%.3f Box:[%d %d %d %d] t:%ums",
+                 object.name.c_str(), object.score,
+                 object.rect.GetX(), object.rect.GetY(), object.rect.GetWidth(), object.rect.GetHeight(),
+                 object.timestamp);
+  
+  outputList.emplace_back(std::move(object));
+}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result ObjectDetector::Model::Run(const ImageRGB& img, std::list<ObjectDetector::DetectedObject>& objects)
@@ -277,87 +317,123 @@ Result ObjectDetector::Model::Run(const ImageRGB& img, std::list<ObjectDetector:
     }
   }
   
-  DetectedObject object;
-  bool wasObjectDetected = false;
+  switch(_mode)
+  {
+    case Mode::Unknown:
+      PRINT_NAMED_ERROR("ObjectDetector.Model.Run.UnknownMode", "");
+      return RESULT_FAIL;
   
-  if(_isDetectionMode)
-  {
-    const Array2d<float> detectionMat(detections.size[2], detections.size[3], detections.ptr<float>());
-    
-    const int numDetections = detections.size[2];
-    for(int iDetection=0; iDetection<numDetections; ++iDetection)
+    case Mode::SSD_Detection:
     {
-      const float* detection = detectionMat.GetRow(iDetection);
-      const float confidence = detection[2];
+      const Array2d<float> detectionMat(detections.size[2], detections.size[3], detections.ptr<float>());
       
-      if(confidence >= _params.min_score)
+      const int numDetections = detections.size[2];
+      for(int iDetection=0; iDetection<numDetections; ++iDetection)
       {
-        const int labelIndex = detection[1];
-        const int xmin = std::max(0,(int)std::round(detection[3] * (float)img.GetNumCols()));
-        const int ymin = std::max(0,(int)std::round(detection[4] * (float)img.GetNumRows()));
-        const int xmax = std::min(img.GetNumCols(), (int)std::round(detection[5] * (float)img.GetNumCols()));
-        const int ymax = std::min(img.GetNumRows(), (int)std::round(detection[6] * (float)img.GetNumRows()));
+        const float* detection = detectionMat.GetRow(iDetection);
+        const float confidence = detection[2];
         
-        DEV_ASSERT_MSG(xmax > xmin, "ObjectDetector.Model.Run.InvalidDetectionBoxWidth",
-                       "xmin=%d xmax=%d", xmin, xmax);
-        DEV_ASSERT_MSG(ymax > ymin, "ObjectDetector.Model.Run.InvalidDetectionBoxHeight",
-                       "ymin=%d ymax=%d", ymin, ymax);
-        
-        const bool labelIndexOOB = (labelIndex < 0 || labelIndex > _labels.size());
-        
-        object.timestamp = img.GetTimestamp();
-        object.score     = confidence;
-        object.name      = (labelIndexOOB ? "UNKNOWN" :  _labels.at((size_t)labelIndex));
-        object.rect      = Rectangle<s32>(xmin, ymin, xmax-xmin, ymax-ymin);
-        
-        wasObjectDetected = true;
+        if(confidence >= _params.min_score)
+        {
+          const int labelIndex = detection[1];
+          const int xmin = std::max(0,(int)std::round(detection[3] * (float)img.GetNumCols()));
+          const int ymin = std::max(0,(int)std::round(detection[4] * (float)img.GetNumRows()));
+          const int xmax = std::min(img.GetNumCols(), (int)std::round(detection[5] * (float)img.GetNumCols()));
+          const int ymax = std::min(img.GetNumRows(), (int)std::round(detection[6] * (float)img.GetNumRows()));
+          
+          DEV_ASSERT_MSG(xmax > xmin, "ObjectDetector.Model.Run.InvalidDetectionBoxWidth",
+                         "xmin=%d xmax=%d", xmin, xmax);
+          DEV_ASSERT_MSG(ymax > ymin, "ObjectDetector.Model.Run.InvalidDetectionBoxHeight",
+                         "ymin=%d ymax=%d", ymin, ymax);
+          
+          const bool labelIndexOOB = (labelIndex < 0 || labelIndex > _labels.size());
+          
+          DetectedObject object{
+            .timestamp = img.GetTimestamp(),
+            .score     = confidence,
+            .name      = (labelIndexOOB ? "UNKNOWN" :  _labels.at((size_t)labelIndex)),
+            .rect      = Rectangle<s32>(xmin, ymin, xmax-xmin, ymax-ymin),
+          };
+          
+          AddObjectToList(std::move(object), objects);
+        }
       }
+      break;
     }
-  }
-  else // classification mode
-  {
-    int maxLabelIndex = -1;
-    float maxScore = _params.min_score;
-    const float* scores = detections.ptr<float>(0);
-    
-    // NOTE: this is more general / safer than using cols. (Some architectures seem to output a 4D tensor
-    //       and not set cols)
-    const int numDetections = detections.size[1];
-    
-    DEV_ASSERT_MSG(numDetections == _labels.size(), "ObjectDetector.Model.Run.UnexpectedResultSize",
-                   "NumLabels:%zu, DNN returned %d values", _labels.size(), numDetections);
-    
-    for(int i=0; i<numDetections; ++i)
-    {
-      if(scores[i] > maxScore)
-      {
-        maxLabelIndex = i;
-        maxScore = scores[i];
-      }
-    }
-    
-    if(maxLabelIndex >= 0)
-    {
-      object.timestamp = img.GetTimestamp();
-      object.score     = maxScore;
-      object.name      = _labels.at((size_t)maxLabelIndex);
-      object.rect      = Rectangle<s32>(0,0,img.GetNumCols(),img.GetNumRows());
       
-      wasObjectDetected = true;
+    case Mode::YOLO_Detection:
+    {
+      // Adapted from: https://docs.opencv.org/trunk/da/d9d/tutorial_dnn_yolo.html
+      
+      const Array2d<float> detectionMat(detections);
+      
+      for (int i = 0; i < detectionMat.GetNumRows(); i++)
+      {
+        const float *detection_i = detectionMat.GetRow(i);
+        
+        const int probability_index = 5;
+        const int probability_size = detectionMat.GetNumCols() - probability_index;
+        const float *prob_array_ptr = detection_i + probability_index;
+        const size_t labelIndex = std::max_element(prob_array_ptr, prob_array_ptr + probability_size) - prob_array_ptr;
+        const float confidence = detection_i[labelIndex + probability_index];
+        
+        if (confidence > _params.min_score)
+        {
+          const float x_center = detection_i[0] * img.GetNumCols();
+          const float y_center = detection_i[1] * img.GetNumRows();
+          const float width    = detection_i[2] * img.GetNumCols();
+          const float height   = detection_i[3] * img.GetNumRows();
+          
+          DetectedObject object{
+            .timestamp = img.GetTimestamp(),
+            .score     = confidence,
+            .name      = (labelIndex > _labels.size() ? "UNKNOWN" : _labels.at(labelIndex)),
+            .rect      = Rectangle<s32>(std::round(x_center - 0.5f*width),
+                                              std::round(y_center - 0.5f*height),
+                                              std::round(width), std::round(height)),
+          };
+          AddObjectToList(std::move(object), objects);
+        }
+      }
+      break;
     }
-  }
-  
-  if(wasObjectDetected)
-  {
-    PRINT_CH_DEBUG(kLogChannelName,
-                   (_isDetectionMode ? "ObjectDetector.Model.Run.ObjectDetected" : "ObjectDetector.Model.Run.ObjectClassified"),
-                   "Name:%s Score:%.3f Box:[%d %d %d %d] t:%ums",
-                   object.name.c_str(), object.score,
-                   object.rect.GetX(), object.rect.GetY(), object.rect.GetWidth(), object.rect.GetHeight(),
-                   object.timestamp);
-    
-    objects.emplace_back(std::move(object));
-  }
+      
+    case Mode::Classification:
+    {
+      int maxLabelIndex = -1;
+      float maxScore = _params.min_score;
+      const float* scores = detections.ptr<float>(0);
+      
+      // NOTE: this is more general / safer than using cols. (Some architectures seem to output a 4D tensor
+      //       and not set cols)
+      const int numDetections = detections.size[1];
+      
+      DEV_ASSERT_MSG(numDetections == _labels.size(), "ObjectDetector.Model.Run.UnexpectedResultSize",
+                     "NumLabels:%zu, DNN returned %d values", _labels.size(), numDetections);
+      
+      for(int i=0; i<numDetections; ++i)
+      {
+        if(scores[i] > maxScore)
+        {
+          maxLabelIndex = i;
+          maxScore = scores[i];
+        }
+      }
+      
+      if(maxLabelIndex >= 0)
+      {
+        DetectedObject object{
+          .timestamp = img.GetTimestamp(),
+          .score     = maxScore,
+          .name      = _labels.at((size_t)maxLabelIndex),
+          .rect      = Rectangle<s32>(0,0,img.GetNumCols(),img.GetNumRows()),
+        };
+        
+        AddObjectToList(std::move(object), objects);
+      }
+      break;
+    }
+  } // switch(_mode)
   
   return RESULT_OK;
 }
