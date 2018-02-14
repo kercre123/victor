@@ -113,8 +113,8 @@ void Mics::transmit(int16_t* payload) {
 
 #define STAGE2(ti) \
   ptr = &DECIMATION_TABLE[ti][*samples]; samples+=2;  \
-  acc_0 += *ptr; ptr += 0xC00; \
-  acc_1 += *ptr; \
+  acc_1 += *ptr; ptr += 0xC00; \
+  acc_2 += *ptr; \
 
 #define STAGE3(ti) \
   ptr = &DECIMATION_TABLE[ti][*samples]; samples+=2; \
@@ -123,10 +123,10 @@ void Mics::transmit(int16_t* payload) {
   acc_2 += *ptr; \
 
 #define STAGE3A(ti) \
-  ptr = &DECIMATION_TABLE[ti][*samples]; samples+=2; \
-  acc_0 += *ptr; ptr += 0xC00; \
-  acc_1 += *ptr; ptr += 0xC00; \
+  ptr = &DECIMATION_TABLE[ti+24][*samples]; samples+=2; \
   *output = (int16_t)((acc_2 + *ptr) >> 16); output += 4; \
+  ptr -= 0xC00; acc_2 = acc_1 + *ptr; \
+  ptr -= 0xC00; acc_1 = acc_0 + *ptr;
 
 static void dec_loop(int32_t* acc, uint8_t* samples, int16_t* output) {
   int32_t acc_1 = acc[0];
@@ -136,6 +136,10 @@ static void dec_loop(int32_t* acc, uint8_t* samples, int16_t* output) {
   for (int i = 0; i < SAMPLES_PER_IRQ; i++) {
     int32_t acc_0 = 0;
 
+    STAGE2 ( 8);
+    STAGE2 ( 9);
+    STAGE2 (10);
+    STAGE2 (11);
     STAGE3 ( 0);
     STAGE3 ( 1);
     STAGE3 ( 2);
@@ -144,13 +148,6 @@ static void dec_loop(int32_t* acc, uint8_t* samples, int16_t* output) {
     STAGE3 ( 5);
     STAGE3 ( 6);
     STAGE3A( 7);
-    STAGE2 ( 8);
-    STAGE2 ( 9);
-    STAGE2 (10);
-    STAGE2 (11);
-    
-    acc_2 = acc_1;
-    acc_1 = acc_0;
   }
 
   acc[0] = acc_1;
