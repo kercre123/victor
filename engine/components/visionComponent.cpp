@@ -1336,9 +1336,20 @@ namespace Cozmo {
       {
         const std::string str(object.name + ":" + std::to_string((s32)std::round(object.score*100.f)));
         
-        std::function<void (Vision::ImageRGB&)> modFcn = [str,offset](Vision::ImageRGB& img)
+        // TODO: Figure out the original image resolution?
+        const f32 heightScale = (f32)FACE_DISPLAY_HEIGHT / 360.f;
+        const f32 widthScale  = (f32)FACE_DISPLAY_WIDTH / 720.f;
+        
+        const f32 x_topRight = object.img_rect.x_topLeft + object.img_rect.width; // will become upper left after mirroring
+        const Rectangle<f32> rect((f32)FACE_DISPLAY_WIDTH - widthScale*x_topRight, // mirror rectangle for display
+                                  object.img_rect.y_topLeft * heightScale,
+                                  object.img_rect.width * widthScale,
+                                  object.img_rect.height * heightScale);
+        
+        std::function<void (Vision::ImageRGB&)> modFcn = [str,offset,rect,color](Vision::ImageRGB& img)
         {
           img.DrawText({1.f, offset}, str, NamedColors::YELLOW, 0.6f, true);
+          img.DrawRect(rect, color);
         };
         
         AddDrawScreenModifier(modFcn);
