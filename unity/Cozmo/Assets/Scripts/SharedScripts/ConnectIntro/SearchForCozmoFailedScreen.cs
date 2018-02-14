@@ -185,9 +185,23 @@ public class SearchForCozmoFailedScreen : MonoBehaviour {
   }
 
   private void CreateWifiAnimations() {
-    if (_WifiAnimationsInstance == null) {
+    if (_WifiAnimationsInstance == null && _WifiAnimationsPrefab != null) {
       _WifiAnimationsInstance = GameObject.Instantiate(_WifiAnimationsPrefab);
-      _WifiAnimationsInstance.transform.SetParent(transform, false);
+      if (_WifiAnimationsInstance.transform != null) {
+        _WifiAnimationsInstance.transform.SetParent(transform, false);
+      }
+      else {
+        DAS.Error("SearchForCozmoFailedScreen", "COZMO-15964 - transform is null");
+      }
+    }
+    else {
+      if (_WifiAnimationsInstance == null) {
+        DAS.Error("SearchForCozmoFailedScreen", "COZMO-15964 - _WifiAnimationsInstance is null");
+      }
+      else if (_WifiAnimationsPrefab == null) {
+        DAS.Error("SearchForCozmoFailedScreen", "COZMO-15964 - _WifiAnimationsPrefab is null");
+      }
+      
     }
   }
   #endregion
