@@ -11,12 +11,12 @@
 
 #include <stdio.h>
 #include <memory>
-//#include <NetworkExtension/NetworkExtension.h>
-//#include <CoreBluetooth/CoreBluetooth.h>
-#include "../signals/simpleSignal.hpp"
+#include <NetworkExtension/NetworkExtension.h>
+#include <CoreBluetooth/CoreBluetooth.h>
+#include "simpleSignal.hpp"
 #include "libev.h"
 #include "securePairing.h"
-//#include "BLEPairingController.h"
+#include "BLEPairingController.h"
 #include "taskExecutor.h"
 
 namespace Anki {
@@ -33,9 +33,9 @@ namespace Anki {
       return sPinUpdatedSignal;
     }
     
-    /*static void SetQueue(dispatch_queue_t q) {
+    static void SetQueue(dispatch_queue_t q) {
       sSwitchboardQueue = q;
-    }*/
+    }
     
   private:
     // Methods
@@ -59,13 +59,13 @@ namespace Anki {
     static struct ev_loop* sLoop;
     static ev_timer sTimer;
     static Anki::Switchboard::SecurePairing* sSecurePairing;
-    //static dispatch_queue_t sSwitchboardQueue;
+    static dispatch_queue_t sSwitchboardQueue;
     static Anki::TaskExecutor* sTaskExecutor;
     static Signal::SmartHandle sPinHandle;
     static Signal::SmartHandle sWifiHandle;
     
     // todo: tmp connection manager
-    //static std::unique_ptr<BLEPairingController> sPairingController;
+    static std::unique_ptr<BLEPairingController> sPairingController;
     static PinUpdatedSignal sPinUpdatedSignal;
   };
 }

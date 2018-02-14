@@ -1,4 +1,5 @@
 const aes = require("./aes.js");
+const ankible = require("./ankibluetooth.js");
 const os = require('os');
 var noble = require('noble');
 var math = require('mathjs');
@@ -225,9 +226,31 @@ let verHash = [];
 let enteredPin = false;
 let receivedNonce = false;
 
+testMessageProtocol();
+
 loadSodium().then(function() {
     tryConnect();
 });
+
+function testMessageProtocol() {
+    let bleMsgProtocol = new ankible.BleMessageProtocol(20);
+
+    bleMsgProtocol.onReceiveMsg(function(buffer) {
+        console.log("Received: ");
+        console.log(buffer);
+    });
+
+    bleMsgProtocol.onSendRaw(function(buffer) {
+        bleMsgProtocol.receiveRawBuffer(buffer);
+    });
+
+    let buffer = [];
+    for(let i = 0; i < 40; i++) {
+        buffer.push(i);
+    }
+
+    bleMsgProtocol.sendMessage(buffer);
+}
 
 function testEncryption() {
     let serverKeys = sodium.crypto_kx_keypair();

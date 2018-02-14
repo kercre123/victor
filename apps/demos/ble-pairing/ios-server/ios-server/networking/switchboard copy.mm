@@ -13,7 +13,7 @@
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // DEBUG DEFINE FOR TESTING ON iOS !!
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-#define IOS_MAIN 0
+#define IOS_MAIN 1
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 struct ev_loop* Anki::SwitchboardDaemon::sLoop;
@@ -23,7 +23,9 @@ Anki::SwitchboardDaemon::PinUpdatedSignal Anki::SwitchboardDaemon::sPinUpdatedSi
 Anki::Switchboard::SecurePairing* Anki::SwitchboardDaemon::sSecurePairing;
 Signal::SmartHandle Anki::SwitchboardDaemon::sPinHandle;
 Signal::SmartHandle Anki::SwitchboardDaemon::sWifiHandle;
+dispatch_queue_t Anki::SwitchboardDaemon::sSwitchboardQueue;
 Anki::TaskExecutor* Anki::SwitchboardDaemon::sTaskExecutor;
+std::unique_ptr<BLEPairingController> Anki::SwitchboardDaemon::sPairingController;
 
 void Anki::SwitchboardDaemon::Start() {
   // Set static loop
@@ -93,17 +95,16 @@ void Anki::SwitchboardDaemon::Stop() {
 
 void Anki::SwitchboardDaemon::StartBleComms() {
   // Tell ankibluetoothd to start advertising.
-  // sPairingController = std::make_unique<BLEPairingController>();
+  sPairingController = std::make_unique<BLEPairingController>();
   
-  // sPairingController->OnBLEConnectedEvent().SubscribeForever(OnConnected);
-  // sPairingController->OnBLEDisconnectedEvent().SubscribeForever(OnDisconnected);
-  // sPairingController->StartAdvertising();
-  printf("Not actually starting BLE Comms\n");
+  sPairingController->OnBLEConnectedEvent().SubscribeForever(OnConnected);
+  sPairingController->OnBLEDisconnectedEvent().SubscribeForever(OnDisconnected);
+  sPairingController->StartAdvertising();
 }
 
 void Anki::SwitchboardDaemon::StopBleComms() {
   // Tell ankibluetoothd to stop advertising.
-  //sPairingController->StopAdvertising();
+  sPairingController->StopAdvertising();
 }
 
 void Anki::SwitchboardDaemon::StartWifiComms() {
@@ -127,9 +128,9 @@ void Anki::SwitchboardDaemon::OnPinUpdated(std::string pin) {
 }
 
 void Anki::SwitchboardDaemon::OnReceiveWifiCredentials(std::string ssid, std::string pw) {
-  // NEHotspotConfiguration* wifi = [[NEHotspotConfiguration alloc] initWithSSID:[NSString stringWithUTF8String:ssid.c_str()] passphrase:[NSString stringWithUTF8String:pw.c_str()] isWEP:false];
-  // NSLog(@"Connecting to : [%s], [%s]", ssid.c_str(), pw.c_str());
-  // [[NEHotspotConfigurationManager sharedManager] applyConfiguration:wifi completionHandler:nullptr];
+  NEHotspotConfiguration* wifi = [[NEHotspotConfiguration alloc] initWithSSID:[NSString stringWithUTF8String:ssid.c_str()] passphrase:[NSString stringWithUTF8String:pw.c_str()] isWEP:false];
+  NSLog(@"Connecting to : [%s], [%s]", ssid.c_str(), pw.c_str());
+  [[NEHotspotConfigurationManager sharedManager] applyConfiguration:wifi completionHandler:nullptr];
 }
 
 void Anki::SwitchboardDaemon::OnConnected(Anki::Switchboard::INetworkStream* stream) {
