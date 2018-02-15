@@ -17,6 +17,8 @@
 #include "policy_actions.h"
 #include "se_diag.h"
 
+#include "speex/speex_resampler.h"
+
 #include "coretech/messaging/shared/LocalUdpServer.h"
 
 #include "cozmoAnim/animProcessMessages.h"
@@ -143,6 +145,14 @@ MicDataProcessor::MicDataProcessor(const std::string& writeLocation, const std::
   _bestSearchBeamIndex = SEDiagGetIndex("fdsearch_best_beam_index");
   _bestSearchBeamConfidence = SEDiagGetIndex("fdsearch_best_beam_confidence");
   _searchConfidenceState = SEDiagGetIndex("fdsearch_confidence_state");
+
+  int error = 0;
+  _speexState = speex_resampler_init(
+    kNumInputChannels, // num channels
+    kSampleRateIncoming_hz, // in rate, int
+    AudioUtil::kSampleRate_hz, // out rate, int
+    10, // quality 0-10
+    &error);
   
   
   // Enable this to test a repeating recording job.
@@ -151,6 +161,7 @@ MicDataProcessor::MicDataProcessor(const std::string& writeLocation, const std::
   {
     MicDataInfo* newJob = new MicDataInfo{};
     newJob->_typesToRecord.SetBitFlag(MicDataType::Raw, true);
+    newJob->_typesToRecord.SetBitFlag(MicDataType::Resampled, true);
     newJob->_typesToRecord.SetBitFlag(MicDataType::Processed, true);
     newJob->_writeLocationDir = _writeLocationDir;
     newJob->SetTimeToRecord(kSecondsPerFile * 1000);
@@ -201,6 +212,7 @@ void MicDataProcessor::TriggerWordDetectCallback(const char* resultFound, float 
   newJob->_writeNameBase = ""; // Use the autogen names in this subfolder
   newJob->_numMaxFiles = 100;
   newJob->_typesToRecord.SetBitFlag(MicDataType::Processed, true);
+  newJob->_typesToRecord.SetBitFlag(MicDataType::Resampled, false);
   newJob->_typesToRecord.SetBitFlag(MicDataType::Raw, false);
   newJob->SetTimeToRecord(MicDataInfo::kMaxRecordTime_ms);
 
@@ -242,24 +254,25 @@ MicDataProcessor::~MicDataProcessor()
 
   _udpServer->StopListening();
 
+  speex_resampler_destroy(_speexState);
   MMIfDestroy();
   _recognizer->Stop();
 }
 
-bool MicDataProcessor::ProcessRawAudio(TimeStamp_t timestamp,
-                                       const AudioUtil::AudioSample* audioChunk,
-                                       uint32_t robotStatus,
-                                       float robotAngle)
+bool MicDataProcessor::ProcessResampledAudio(TimeStamp_t timestamp,
+                                             const AudioUtil::AudioSample* audioChunk,
+                                             uint32_t robotStatus,
+                                             float robotAngle)
 {
   {
     ANKI_CPU_PROFILE("UninterleaveAudioForSE");
     // Uninterleave the chunks when copying out of the payload, since that's what SE wants
-    for (uint32_t sampleIdx = 0; sampleIdx < kSamplesPerChunkIncoming; ++sampleIdx)
+    for (uint32_t sampleIdx = 0; sampleIdx < kSamplesPerChunkForSE; ++sampleIdx)
     {
       const uint32_t interleaveBase = (sampleIdx * kNumInputChannels);
       for (uint32_t channelIdx = 0; channelIdx < kNumInputChannels; ++channelIdx)
       {
-        uint32_t dataOffset = _inProcessAudioBlockFirstHalf ? 0 : kSamplesPerChunkIncoming;
+        uint32_t dataOffset = _inProcessAudioBlockFirstHalf ? 0 : kSamplesPerChunkForSE;
         const uint32_t uninterleaveBase = (channelIdx * kSamplesPerBlock) + dataOffset;
         _inProcessAudioBlock[sampleIdx + uninterleaveBase] = audioChunk[channelIdx + interleaveBase];
       }
@@ -374,6 +387,24 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
   return result;
 }
 
+void MicDataProcessor::ResampleAudioChunk(const AudioUtil::AudioSample* audioChunk,
+                                          AudioUtil::AudioSample* bufferOut)
+{
+  ANKI_CPU_PROFILE("ResampleAudioChunk");
+  uint32_t numSamplesProcessed = kSamplesPerChunkIncoming;
+  uint32_t numSamplesWritten = kSamplesPerChunkForSE;
+  speex_resampler_process_interleaved_int(_speexState, 
+                                          audioChunk, &numSamplesProcessed, 
+                                          bufferOut, &numSamplesWritten);
+  ANKI_VERIFY(numSamplesProcessed == kSamplesPerChunkIncoming,
+              "MicDataProcessor.ResampleAudioChunk.SamplesProcessed",
+              "Expected %d processed only processed %d", kSamplesPerChunkIncoming, numSamplesProcessed);
+
+  ANKI_VERIFY(numSamplesProcessed == kSamplesPerChunkIncoming,
+              "MicDataProcessor.ResampleAudioChunk.SamplesWritten",
+              "Expected %d written only wrote %d", kSamplesPerChunkForSE, numSamplesWritten);
+}
+
 void MicDataProcessor::ProcessLoop()
 {
   Anki::Util::SetThreadName(pthread_self(), "MicDataProc");
@@ -387,7 +418,7 @@ void MicDataProcessor::ProcessLoop()
   
     // Switch which buffer we're processing if it's empty
     {
-      std::lock_guard<std::mutex> lock(_rawMicDataMutex);
+      std::lock_guard<std::mutex> lock(_resampleMutex);
       if (_rawAudioBuffers[_rawAudioProcessingIndex].empty())
       {
         _rawAudioProcessingIndex = (_rawAudioProcessingIndex == 1) ? 0 : 1;
@@ -421,10 +452,18 @@ void MicDataProcessor::ProcessLoop()
       // Factory test doesn't need to do any mic processing, it just uses raw data
       if(!FACTORY_TEST)
       {
+        // Resample the audio, then collect it if desired
+        std::array<AudioUtil::AudioSample, kResampledAudioChunkSize> resampledAudioChunk;
+        ResampleAudioChunk(audioChunk, resampledAudioChunk.data());
+        for (auto& job : stolenJobs)
+        {
+          job->CollectResampledAudio(resampledAudioChunk.data(), resampledAudioChunk.size());
+        }
+        
         // Process the audio into a single channel, and collect it if desired
-        bool audioBlockReady = ProcessRawAudio(
+        bool audioBlockReady = ProcessResampledAudio(
           nextData.timestamp,
-          audioChunk,
+          resampledAudioChunk.data(),
           nextData.robotStatusFlags,
           nextData.robotRotationAngle);
         if (audioBlockReady)
@@ -495,7 +534,7 @@ void MicDataProcessor::ProcessLoop()
 void MicDataProcessor::ProcessMicDataPayload(const RobotInterface::MicData& payload)
 {
   // Store off this next job
-  std::lock_guard<std::mutex> lock(_rawMicDataMutex);
+  std::lock_guard<std::mutex> lock(_resampleMutex);
   // Use whichever buffer is currently _not_ being processed
   auto& bufferToUse = (_rawAudioProcessingIndex == 1) ? _rawAudioBuffers[0] : _rawAudioBuffers[1];
   RobotInterface::MicData& nextJob = bufferToUse.push_back();
@@ -745,7 +784,7 @@ void MicDataProcessor::ClearCurrentStreamingJob()
 
 float MicDataProcessor::GetIncomingMicDataPercentUsed()
 {
-  std::lock_guard<std::mutex> lock(_rawMicDataMutex);
+  std::lock_guard<std::mutex> lock(_resampleMutex);
   // Use whichever buffer is currently _not_ being processed
   const auto inUseIndex = (_rawAudioProcessingIndex == 1) ? 0 : 1;
   const auto& bufferInUse = _rawAudioBuffers[inUseIndex];
