@@ -27,8 +27,6 @@ elseif (MACOSX)
   set(PLATFORM_LIBS ${FOUNDATION})
 endif()
 
-android_strip(TARGET util)
-
 target_link_libraries(util
   # anki libs
   clad
