@@ -193,7 +193,7 @@
                     },
                     "iHn2k[px%O2BD@yR;Ofu": {
                         "id": "iHn2k[px%O2BD@yR;Ofu",
-                        "name": "Joueur",
+                        "name": "joueur",
                         "value": "player"
                     },
                     "o)|8?w5spmx%f_.GJs;9": {
@@ -834,7 +834,7 @@
                             "VARIABLE": {
                                 "id": "iHn2k[px%O2BD@yR;Ofu",
                                 "name": "VARIABLE",
-                                "value": "Joueur"
+                                "value": "joueur"
                             }
                         },
                         "id": "%X%QNr4=2$IOgwmVWb8M",
@@ -5215,7 +5215,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Joueur"
+                                "value": "joueur"
                             }
                         },
                         "id": "E)Q2Bi3SotsH3,@}Jal+",
@@ -11673,7 +11673,7 @@
                             "VARIABLE": {
                                 "id": "iHn2k[px%O2BD@yR;Ofu",
                                 "name": "VARIABLE",
-                                "value": "Joueur"
+                                "value": "joueur"
                             }
                         },
                         "id": "n^?]yxPo.Ob8B|.7yK93",
@@ -11885,7 +11885,7 @@
                             "VARIABLE": {
                                 "id": "iHn2k[px%O2BD@yR;Ofu",
                                 "name": "VARIABLE",
-                                "value": "Joueur"
+                                "value": "joueur"
                             }
                         },
                         "id": "oWSxcA}Y?/@W^Z2W*|(.",
