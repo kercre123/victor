@@ -127,6 +127,7 @@ ProceduralFace::ProceduralFace(const ProceduralFace& other)
 , _faceAngle_deg(other._faceAngle_deg)
 , _faceScale(other._faceScale)
 , _faceCenter(other._faceCenter)
+, _scanlineOpacity(other._scanlineOpacity)
 {
   if(nullptr != other._scanlineDistorter)
   {
@@ -157,7 +158,8 @@ ProceduralFace& ProceduralFace::operator=(const ProceduralFace &other)
     _faceAngle_deg = other._faceAngle_deg;
     _faceScale     = other._faceScale;
     _faceCenter    = other._faceCenter;
-    
+    _scanlineOpacity = other._scanlineOpacity;
+
     if(nullptr != other._scanlineDistorter)
     {
       // Deep copy other's ScanlineDistorter (since they are unique)
@@ -535,8 +537,8 @@ ProceduralFace& ProceduralFace::Combine(const ProceduralFace& otherFace)
   _faceAngle_deg += otherFace.GetFaceAngle();
   _faceScale     *= otherFace.GetFaceScale();
   _faceCenter    += otherFace.GetFacePosition();
-  
-  LinearBlendHelper(_scanlineOpacity, otherFace._scanlineOpacity, 0.5f);
+
+  _scanlineOpacity = LinearBlendHelper(_scanlineOpacity, otherFace._scanlineOpacity, 0.5f);
   
   const bool thisHasScanlineDistortion  = (nullptr != _scanlineDistorter);
   const bool otherHasScanlineDistortion = (nullptr != otherFace._scanlineDistorter);
