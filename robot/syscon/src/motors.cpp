@@ -16,6 +16,7 @@ static const uint16_t MOTOR_PERIOD = 20000; // 20khz
 static const int16_t MOTOR_MAX_POWER = SYSTEM_CLOCK / MOTOR_PERIOD;
 
 enum TargetEnable {
+  TARGET_DISABLE,
   TARGET_ENABLE_MOTORS,
   TARGET_ENABLE_CHARGER
 };
@@ -69,7 +70,7 @@ static const MotorConfig MOTOR_DEF[MOTOR_COUNT] = {
     &TIM1->CCR2, CONFIG_N(LTN2)
   },
   {
-    false,
+    true,
     &RTP1::bank->BSRR, RTP1::mask,
     &TIM1->CCR1, CONFIG_N(RTN1),
     &TIM1->CCR1, CONFIG_N(RTN2)
@@ -94,7 +95,7 @@ static int moterServiced;
 
 // How many main execution ticks before we reenable our charger
 static const int DISABLE_ON_TIME = 200;
-static TargetEnable targetEnable = TARGET_ENABLE_CHARGER;
+static TargetEnable targetEnable = TARGET_DISABLE;
 static int idleTimer = 0;
 
 static void Motors::receive(HeadToBody *payload) {
@@ -201,22 +202,18 @@ void Motors::init() {
   LTN2::alternate(2);
   RTN1::alternate(2);
   RTN2::alternate(2);
+  
+  // Setup the P-Fets for head and lift
+  LP1::reset();
+  HP1::reset();
+  LP1::mode(MODE_OUTPUT);
+  HP1::mode(MODE_OUTPUT);
 
   // Configure P pins
   LP1::type(TYPE_OPENDRAIN);
   HP1::type(TYPE_OPENDRAIN);
   RTP1::type(TYPE_OPENDRAIN);
   LTP1::type(TYPE_OPENDRAIN);
-
-  LP1::reset();
-  HP1::reset();
-  RTP1::reset();
-  LTP1::reset();
-
-  LP1::mode(MODE_OUTPUT);
-  HP1::mode(MODE_OUTPUT);
-  RTP1::mode(MODE_OUTPUT);
-  LTP1::mode(MODE_OUTPUT);
 
   configure_timer(TIM1);
   configure_timer(TIM3);
@@ -233,7 +230,6 @@ void Motors::stop() {
   LTN2::mode(MODE_OUTPUT);
 
   MicroWait(5000);
-
   LP1::mode(MODE_INPUT);
   HP1::mode(MODE_INPUT);
   RTP1::mode(MODE_INPUT);
@@ -258,17 +254,40 @@ void Motors::tick() {
 
   if (targetEnable != desiredEnable) {
     // Disable phase
-    switch (desiredEnable) {
+    switch (targetEnable) {
     case TARGET_ENABLE_MOTORS:
-      Analog::allowCharge(false);
-      break ;
+      RTP1::mode(MODE_INPUT);
+      LTP1::mode(MODE_INPUT);
 
+      targetEnable = TARGET_DISABLE;
+      break ;
     case TARGET_ENABLE_CHARGER:
-      Analog::allowCharge(true);
+      Analog::allowCharge(false);
+
+      targetEnable = TARGET_DISABLE;
+      break ;
+    case TARGET_DISABLE:
+      // Enable phase
+      switch (desiredEnable)  {
+        case TARGET_ENABLE_CHARGER:
+          Analog::allowCharge(true);
+          break ;
+        case TARGET_ENABLE_MOTORS:
+          // Reset our ports (This is portable, but ugly, can easily collapse this into 6 writes)
+          RTP1::reset();
+          LTP1::reset();
+
+          RTP1::mode(MODE_OUTPUT);
+          LTP1::mode(MODE_OUTPUT);
+          break ;
+        default:
+          break ;
+      }
+
+      targetEnable = desiredEnable;
       break ;
     }
 
-    targetEnable = desiredEnable;
     return ;
   }
 

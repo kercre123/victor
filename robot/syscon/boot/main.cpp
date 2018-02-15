@@ -32,6 +32,8 @@ bool validate(void) {
 }
 
 static bool boot_test(void) {
+  BODY_TX::mode(MODE_OUTPUT);
+
   // Failure count reached max
   if (APP->faultCounter[MAX_FAULT_COUNT - 1] != FAULT_NONE) {
     BODY_TX::reset();
@@ -40,10 +42,11 @@ static bool boot_test(void) {
 
   // Evil flag not set
   if (APP->fingerPrint != COZMO_APPLICATION_FINGERPRINT) {
+    BODY_TX::reset();
     return false;
   }
 
-  // Check certificate
+  BODY_TX::set();
   return validate();
 }
 
@@ -78,7 +81,6 @@ extern "C" void TIM14_IRQHandler(void) {
   #endif
   TIM14->SR = 0;
   Analog::tick();
-  Comms::tick();
 }
 
 int main(void) {
@@ -95,13 +97,7 @@ int main(void) {
 
     // Wait for firmware
     Comms::run();
-  } else if (~RCC->CSR & RCC_CSR_PINRSTF) {
-    // Hardware watchdog trap
-    Comms::run();
   }
-  
-  // Clear reset pin flag (for reset detect).
-  RCC->CSR |= RCC_CSR_RMVF;
 
   // This flag is only set when DFU has validated the image
   if (APP->fingerPrint != COZMO_APPLICATION_FINGERPRINT) {

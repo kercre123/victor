@@ -3,7 +3,6 @@
 
 namespace Comms {
   void run(void);
-  void tick(void);
 }
 
 #endif

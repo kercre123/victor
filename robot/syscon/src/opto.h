@@ -4,13 +4,9 @@
 #include "messages.h"
 
 namespace Opto {
-  extern FailureCode failure;
-
-  void start(void);
-  void stop(void);
+  void init(void);
   void tick(void);
   void transmit(BodyToHead *payload);
-  bool sensorsValid(void);
 }
 
 // Cliff sensor registers
