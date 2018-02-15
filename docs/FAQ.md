@@ -106,7 +106,21 @@ CMake Error at CMakeLists.txt:9 (project):
   * ... then perform these steps (continued from above)
    	* Install command line tools
     * `sudo xcode-select -s /Applications/Xcode.app/Contents/Developer`# New Document
-    
+   
+* Can't generate Xcode project using `build-victor.sh -g Xcode -C` and getting error output like this
+```
+CMake Error at lib/util/source/3rd/civetweb/cmake/FindWinSock.cmake:77 (if):
+  if given arguments:
+
+    "x86_64" "STREQUAL" "AMD64" "AND" "EQUAL" "4"
+
+  Unknown arguments specified
+Call Stack (most recent call first):
+  lib/util/source/3rd/civetweb/src/CMakeLists.txt:26 (find_package)
+```
+
+  * you forgot `-p mac`
+  
 * My Victor won't turn on/stay on
   - If only the top backpack light blinks when on the charger then the robot is low on battery and will not turn on by just being placed on the charger
   - First turn the robot on with the backpack button and all the lights should turn on as normal
