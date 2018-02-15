@@ -137,8 +137,7 @@ namespace Anki {
       if(nullptr != robot.GetContext()->GetRobotManager() &&
          robot.GetContext()->GetRobotManager()->GetMsgHandler() != nullptr)
       {
-        _signalHandle = (robot.GetContext()->GetRobotManager()->GetMsgHandler()->Subscribe(robot.GetID(),
-                                                                                           RobotInterface::RobotToEngineTag::dockingStatus,
+        _signalHandle = (robot.GetContext()->GetRobotManager()->GetMsgHandler()->Subscribe(RobotInterface::RobotToEngineTag::dockingStatus,
                                                                                            std::bind(&BehaviorDockingTestSimple::HandleDockingStatus, this, std::placeholders::_1)));
       }
     }

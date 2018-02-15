@@ -19,6 +19,7 @@
 #include "util/environment/locale.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/random/randomGenerator.h"
+#include "webServerProcess/src/webService.h"
 
 
 namespace Anki {
@@ -48,6 +49,7 @@ CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInte
   , _needsManager(new NeedsManager(this))
   , _cozmoExperiments(new CozmoExperiments(this))
   , _perfMetric(new PerfMetric(this))
+  , _webService(new WebService::WebService())
   , _threadIdHolder(new ThreadIDInternal)
 {
 
@@ -68,7 +70,6 @@ CozmoContext::CozmoContext() : CozmoContext(nullptr, nullptr)
 
 CozmoContext::~CozmoContext()
 {
-  _robotMgr->RemoveRobots();
 }
 
 

@@ -16,7 +16,7 @@
 #define __Cozmo_Basestation_BehaviorSystem_ObjectInteractionInfoCache_H__
 
 #include "engine/blockWorld/blockWorldFilter.h"
-#include "engine/entity.h"
+#include "util/entityComponent/iManageableComponent.h"
 
 #include "coretech/common/engine/objectIDs.h"
 
@@ -50,10 +50,6 @@ enum class ObjectInteractionIntention {
   
   PopAWheelieOnObject,
   
-  PyramidBaseObject,
-  PyramidStaticObject,
-  PyramidTopObject,
-  
   Count
 };
   
@@ -61,7 +57,7 @@ enum class ObjectInteractionIntention {
 // ObjectInteractionCache - Maintains a map of ObjectInteractionIntentions
 // to the Cache entrys that wrap information about the best objects to use
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class  ObjectInteractionInfoCache : public ManageableComponent, private Util::noncopyable  {
+class  ObjectInteractionInfoCache : public IManageableComponent, private Util::noncopyable  {
 public:
   ObjectInteractionInfoCache(const Robot& robot);
   using BestObjectFunction = std::function<ObjectID(const std::set<ObjectID>& validObjects)>;
@@ -117,9 +113,6 @@ private:
   bool CanUseForPopAWheelie(const ObservableObject* object) const;
   bool CanRollObjectDelegateNoAxisCheck(const ObservableObject* object) const;
   bool CanRollObjectDelegateAxisCheck(const ObservableObject* object) const;
-  bool CanUseAsBuildPyramidBaseBlock(const ObservableObject* object) const;
-  bool CanUseAsBuildPyramidStaticBlock(const ObservableObject* object);
-  bool CanUseAsBuildPyramidTopBlock(const ObservableObject* object);
   
   // Functions which return the "best" object to use given a set of valid objects
   ObjectID DefaultBestObjectFunction(const std::set<ObjectID>& validObjects);

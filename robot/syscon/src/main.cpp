@@ -7,21 +7,14 @@
 #include "timer.h"
 #include "motors.h"
 #include "encoders.h"
+#include "i2c.h"
 #include "opto.h"
 #include "analog.h"
 #include "lights.h"
 #include "mics.h"
 #include "touch.h"
 
-extern "C" void SystemIdle() {
-  __asm("WFI");
-  Power::eject();
-}
-
 void Main_Execution(void) {
-  // Kick watch dog when we enter our service routine
-  IWDG->KR = 0xAAAA;
-
   // Do our main execution loop
   Comms::tick();
   Motors::tick();
@@ -30,6 +23,9 @@ void Main_Execution(void) {
   Analog::tick();
   Lights::tick();
   Touch::tick();
+
+  // Kick watch dog when we enter our service routine
+  IWDG->KR = 0xAAAA;
 }
 
 int main (void) {
@@ -45,18 +41,15 @@ int main (void) {
   Timer::init();
   Comms::init();
   Motors::init();
-  Encoders::init();
   Lights::init();
   Touch::init();
+  I2C::init();
 
   __enable_irq(); // Start firing interrupts
 
-  // This is all driven by IRQ logic
-  Opto::init();
-
-  // Clear boot code lights
-  Lights::boot(0);
-
   // Low priority interrupts are now our main execution
-  for (;;) SystemIdle();
+  for (;;) {   
+    Power::tick();
+    __wfi();
+  }
 }

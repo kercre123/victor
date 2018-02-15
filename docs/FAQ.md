@@ -2,10 +2,29 @@
 
 If you have a question that you get answered (e.g. in a Slack channel) which might plague others, consider creating an entry here for it.
 
-* How do I set a console var fromm Webots?
+* How do I set my Android NDK?
+  - Follow the setup instructions for `adb` in [README.md](/README.md) to get the default Android NDK.
+  - Don't try to override the default NDK unless you know what you are doing!
+
+* How do I override the default NDK?
+  - If you set `${ANDROID_NDK}` in your environment, the build script ([`build-victor.sh`](/project/victor/build-victor.sh)) will use it.
+  - If you have `ndk.dir` set in your top-level `local.properties`, the environment script ([`envsetup.sh`](/project/victor/envsetup.sh)) will use it.
+  - If you have an NDK installed by Android Studio, the android locator script ([`android.py`](/tools/build/tools/ankibuild/android.py)) will use it.
+  - If you have an NDK set in your top-level `.buckconfig`, the android locator script ([`android.py`](/tools/build/tools/ankibuild/android.py)) will use it.
+
+* How do I fix my Android NDK?
+  - Check for each of the overrides listed above.
+  - Figure out which one is wrong.
+  - Fix it or remove it.
+  - If you change your NDK settings, you must force a full rebuild by removing your top-level `_build/android`.
+
+* How do I set a console var from Webots?
   - Set the `consoleVarName` and `consoleVarValue` strings under the WebotsKeyboardController in the scene tree at left. Press `]` (closing square bracket) to send the message to the engine to set the console var. 
   - Using `}` (closing curly brace) instead will use the name and value strings as a console _function_ and its arguments instead.
   - Hold down `ALT` to send either of the above to the animation process to set console vars/functions there.
+
+* How do I access the Victor embedded web server, from which I can set console vars?
+  - [Run the Victor web server](/docs/development/web-server.md) 
   
 * `victor_stop`/`victor_restart` hangs with `stopping <number>...` when trying to kill one of the processes
   - Manually kill the process with `adb shell kill -9 <number>`
@@ -17,8 +36,9 @@ If you have a question that you get answered (e.g. in a Slack channel) which mig
   - Reproduce the crash and you should now see symbols
   
 * How do I do performance analysis/benchmarking on robot?
-  - Use simpleperf to generate list of highest overhead functions in a process by running `project/victor/simpleperf/HOW-simpleperf.sh`
-  - Use inferno to generate a flame graph of call hierarchies by running `project/victor/simpleperf/HOW-inferno.sh`
+  - Use simpleperf to generate list of highest overhead functions in a process by running [`project/victor/simpleperf/HOW-simpleperf.sh`](/project/victor/simpleperf/HOW-simpleperf.sh)
+  - If the script fails with the error: `[native_lib_dir] "./project/victor/simpleperf/symbol_cache" is not a dir`, cd into `./project/victor/simpleperf/` and run `make_symbol_cache.sh`
+  - Use inferno to generate a flame graph of call hierarchies by running [`project/victor/simpleperf/HOW-inferno.sh`](/project/victor/simpleperf/HOW-inferno.sh)
   - By default both scripts run on the engine process, `cozmoengined`. Change this by prepending `ANKI_PROFILE_PROCNAME="<name_of_process>"` to the command to run the script. The other two process names are `victor_animator` and `robot_supervisor`
   - To see overall cpu load per process run `top -m 10`
   
@@ -42,6 +62,11 @@ If you have a question that you get answered (e.g. in a Slack channel) which mig
   - Trying restarting the [wpa_supplicant](https://en.wikipedia.org/wiki/Wpa_supplicant)
   - `pkill wpa_supplicant` then `wpa_supplicant -iwlan0 -Dnl80211 -c/data/misc/wifi/wpa_supplicant.conf -O/data/misc/wifi/sockets -B`
 
+* Seriously... I cannot get connected to my home WIFI using wifi-set-config ^^
+  - These issues should be resolved when we update the OS, but in the meantime:
+  - You can connect with a static IP to your network using a shell script located at .../victor/tools/victor-ble-cli/vic_join_network.sh
+  - You will have to rerun the script every time you power cycle so it may be worth your time to make an alias with your network config as arguments
+
 * Deploying is super slow
   - Try turning off wifi on your laptop and use ethernet instead
   - Run `victor_stop` before deploying
@@ -63,3 +88,44 @@ If you have a question that you get answered (e.g. in a Slack channel) which mig
 * To check the battery level:
   - With the processes running, press the backpack button twice. The battery voltage is in the bottom right. It should be around 4.0v. The backpack lights will blink green when charging (and the processes are running)
   - Otherwise: `adb shell cat /sys/devices/soc.0/qpnp-linear-charger-8/power_supply/battery/voltage_now`
+  
+* Webots Firewall Connection issues?
+  - [Create a code signing certificate](/project/build-scripts/webots/FirewallCertificateInstructions.md)
+  - [Run a sample script to initially sign](/simulator/README.md#firewall)
+
+* Can't generate Xcode project using `build-victor.sh -p mac -g Xcode -C` and getting error output like this
+```
+-- The C compiler identification is unknown
+-- The CXX compiler identification is unknown
+CMake Error at CMakeLists.txt:9 (project):
+  No CMAKE_C_COMPILER could be found.
+CMake Error at CMakeLists.txt:9 (project):
+  No CMAKE_CXX_COMPILER could be found.
+```
+
+  * ... then perform these steps (continued from above)
+   	* Install command line tools
+    * `sudo xcode-select -s /Applications/Xcode.app/Contents/Developer`# New Document
+   
+* Can't generate Xcode project using `build-victor.sh -g Xcode -C` and getting error output like this
+```
+CMake Error at lib/util/source/3rd/civetweb/cmake/FindWinSock.cmake:77 (if):
+  if given arguments:
+
+    "x86_64" "STREQUAL" "AMD64" "AND" "EQUAL" "4"
+
+  Unknown arguments specified
+Call Stack (most recent call first):
+  lib/util/source/3rd/civetweb/src/CMakeLists.txt:26 (find_package)
+```
+
+  * you forgot `-p mac`
+  
+* My Victor won't turn on/stay on
+  - If only the top backpack light blinks when on the charger then the robot is low on battery and will not turn on by just being placed on the charger
+  - First turn the robot on with the backpack button and all the lights should turn on as normal
+  - Quickly place the robot on the charger. It should stay on at this point and begin charging
+  - Leave the robot on the charger for ~30 minutes
+
+* When profiling I see "...doesn't contain symbol table"
+  - This is just a warning, there are no symbol tables for the .so files on the device, instead we use symbols from the symbol cache

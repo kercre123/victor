@@ -149,7 +149,7 @@ void BehaviorPounceOnMotion::InitHelper()
      {AnimationTrigger::PounceDriveStart,
       AnimationTrigger::PounceDriveLoop,
       AnimationTrigger::PounceDriveEnd},
-        GetIDStr());
+        GetDebugLabel());
   }
   
 }
@@ -698,7 +698,7 @@ void BehaviorPounceOnMotion::Cleanup()
   // Only pop animations if set within this behavior
   if(!ShouldStreamline()){
     SmartRemoveIdleAnimation();
-    GetBEI().GetRobotInfo().GetDrivingAnimationHandler().RemoveDrivingAnimations(GetIDStr());
+    GetBEI().GetRobotInfo().GetDrivingAnimationHandler().RemoveDrivingAnimations(GetDebugLabel());
   }
 }
 

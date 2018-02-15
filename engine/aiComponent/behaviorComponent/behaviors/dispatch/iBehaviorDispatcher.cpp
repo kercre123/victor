@@ -47,7 +47,7 @@ IBehaviorDispatcher::IBehaviorDispatcher(const Json::Value& config, bool shouldI
   ANKI_VERIFY(config.get(kInterruptBehaviorKey, shouldInterruptActiveBehavior).asBool() == shouldInterruptActiveBehavior,
               "IBehaviorDispatcher.ConfigMismatch",
               "Behavior '%s' specified a '%s' value of %s, but behaviors of this type will ignore this flag",
-              GetIDStr().c_str(),
+              GetDebugLabel().c_str(),
               kInterruptBehaviorKey,
               config.get(kInterruptBehaviorKey, false).asBool() ? "true" : "false");
 }
@@ -55,16 +55,27 @@ IBehaviorDispatcher::IBehaviorDispatcher(const Json::Value& config, bool shouldI
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IBehaviorDispatcher::InitBehavior()
 {
-  for( const auto& behaviorID : _behaviorIds ) {      
-    ICozmoBehaviorPtr behavior =  GetBEI().GetBehaviorContainer().FindBehaviorByID(behaviorID);
-    DEV_ASSERT_MSG(behavior != nullptr,
-                   "IBehaviorDispatcher.InitBehavior.FailedToFindBehavior",
-                   "Behavior not found: %s",
-                   BehaviorTypesWrapper::BehaviorIDToString(behaviorID));
+  for( const auto& behaviorStr : _behaviorStrs ) {
+    // first check anonymous behaviors
+    ICozmoBehaviorPtr behavior = FindAnonymousBehaviorByName(behaviorStr);
+    if( nullptr == behavior ) {
+      // no match, try behavior IDs
+      const BehaviorID behaviorID = BehaviorTypesWrapper::BehaviorIDFromString(behaviorStr);
+      behavior = GetBEI().GetBehaviorContainer().FindBehaviorByID(behaviorID);
+      
+      DEV_ASSERT_MSG(behavior != nullptr,
+                     "IBehaviorDispatcher.InitBehavior.FailedToFindBehavior",
+                     "Behavior not found: %s",
+                     behaviorStr.c_str());
+    }
     if(behavior != nullptr){
       _behaviors.push_back(behavior);
     }
   }
+
+  // don't need the strings anymore, so clear them to release memory
+  _behaviorStrs.clear();
+  
   InitDispatcher();
 }
 
@@ -83,19 +94,23 @@ void IBehaviorDispatcher::GetBehaviorOperationModifiers(BehaviorOperationModifie
   bool subBehaviorCarryingObject = false;
   bool subBehaviorOffTreads = false;
   bool subBehaviorOnCharger = false;
-
+  
   // check all sub behavior values
   for( const auto& behaviorPtr : _behaviors ) {
-    behaviorPtr->GetBehaviorOperationModifiers(modifiers);
-    subBehaviorCarryingObject |= modifiers.wantsToBeActivatedWhenCarryingObject;
-    subBehaviorOffTreads      |= modifiers.wantsToBeActivatedWhenOffTreads;
-    subBehaviorOnCharger      |= modifiers.wantsToBeActivatedWhenOnCharger;
+    BehaviorOperationModifiers subModifiers;
+    behaviorPtr->GetBehaviorOperationModifiers(subModifiers);
+    subBehaviorCarryingObject |= subModifiers.wantsToBeActivatedWhenCarryingObject;
+    subBehaviorOffTreads      |= subModifiers.wantsToBeActivatedWhenOffTreads;
+    subBehaviorOnCharger      |= subModifiers.wantsToBeActivatedWhenOnCharger;
   }
 
   // assign return variables
   modifiers.wantsToBeActivatedWhenCarryingObject = subBehaviorCarryingObject;
   modifiers.wantsToBeActivatedWhenOffTreads = subBehaviorOffTreads;
   modifiers.wantsToBeActivatedWhenOnCharger = subBehaviorOnCharger;
+
+  // dispatchers always delegate to a behavior if they are meant to keep running
+  modifiers.behaviorAlwaysDelegates = true;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -175,7 +190,7 @@ void IBehaviorDispatcher::BehaviorUpdate()
       const bool delegated = DelegateNow(desiredBehavior.get());
       DEV_ASSERT_MSG(delegated, "IBehaviorDispatcher.BehaviorUpdate.DelegateFailed",
                      "Failed to delegate to behavior '%s'",
-                     desiredBehavior->GetIDStr().c_str());
+                     desiredBehavior->GetDebugLabel().c_str());
     }
   }
 }

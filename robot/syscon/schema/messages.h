@@ -42,6 +42,10 @@ enum {
 };
 typedef uint32_t RobotMotor;
 
+enum {
+  RUNNING_FLAGS_SENSORS_VALID = 1
+};
+
 // ENUM DropSensor
 enum {
   DROP_SENSOR_FRONT_LEFT  = 0,
@@ -62,12 +66,15 @@ enum {
   PAYLOAD_ERASE       = 0x7878,
   PAYLOAD_VALIDATE    = 0x7374,
   PAYLOAD_DFU_PACKET  = 0x6675,
-  PAYLOAD_TYPE_COUNT  = 8,
+  PAYLOAD_SHUT_DOWN   = 0x6473,
+  PAYLOAD_BOOT_FRAME  = 0x6662,
+  PAYLOAD_TYPE_COUNT  = 10,
 };
 typedef uint16_t PayloadId;
 
 // ENUM Ack
 enum {
+  ACK_UNUSED        = 0,
   ACK_PAYLOAD       = 1,
   ACK_BOOTED        = 2,
   ACK_APPLICATION   = 3,
@@ -84,11 +91,10 @@ typedef int32_t Ack;
 
 // ENUM BatteryFlags
 enum {
-  isCharging  = 0x1,
-  isOnCharger = 0x2,
-  chargerOOS  = 0x4,
+  POWER_ON_CHARGER    = 0x1,
+  POWER_IS_CHARGING   = 0x2,
 };
-typedef uint32_t BatteryFlags;
+typedef uint16_t BatteryFlags;
 
 // ENUM PowerState
 enum {
@@ -125,6 +131,16 @@ enum {
 typedef uint32_t LedIndexes;
 #define LED_CHANEL_CT 3  //RGB
 
+enum {
+  BOOT_FAIL_NONE   = 0x0000,
+  BOOT_FAIL_TOF    = 0x0052,
+  BOOT_FAIL_CLIFF1 = 0x00A6,
+  BOOT_FAIL_CLIFF2 = 0x01A6,
+  BOOT_FAIL_CLIFF3 = 0x02A6,
+  BOOT_FAIL_CLIFF4 = 0x03A6,
+};
+typedef uint16_t FailureCode;
+
 struct MotorPower
 {
   int16_t leftWheel;
@@ -135,8 +151,9 @@ struct MotorPower
 
 struct BatteryState
 {
-  int32_t battery;
-  int32_t charger;
+  int16_t battery;
+  int16_t charger;
+  int16_t temperature;
   BatteryFlags flags;
 };
 
@@ -183,18 +200,24 @@ struct SpineMessageFooter
 };
 
 // TODO(Al/Lee): Put back once mics and camera can co-exist
-#define MICDATA_ENABLED 0
-#define MICDATA_SAMPLES_COUNT 480 // 120 samples per channel * 4 channels
+#define MICDATA_ENABLED 1
+#define AUDIO_SAMPLES_PER_FRAME 80
+#define MICDATA_SAMPLES_COUNT (AUDIO_SAMPLES_PER_FRAME*4)
 /// Start Packets
 struct BodyToHead
 {
   uint32_t framecounter;
-  PowerState powerState;
+  uint8_t flags;
+  uint8_t _unused0;
+  FailureCode failureCode;
   struct MotorState motor[4];
   uint16_t cliffSense[4];
   struct BatteryState battery;
+  uint32_t _unused1;
   struct RangeData proximity;
   uint16_t touchLevel[2];
+  uint16_t micError[2]; // Raw bits from a segment of mic data (stuck bit detect)
+  uint8_t _unused[28];  // Future expansion
 #if MICDATA_ENABLED
   int16_t audio[MICDATA_SAMPLES_COUNT];
 #endif
@@ -211,6 +234,14 @@ struct HeadToBody
   PowerState powerState;
   int16_t motorPower[4];
   uint8_t ledColors[16];
+  uint8_t _unused[32];  // Future expansion
+};
+
+// Must be same size as ack message
+struct MicroBodyToHead
+{
+  uint8_t buttonPressed;
+  uint8_t _unused[3];
 };
 
 struct AckMessage

@@ -16,6 +16,7 @@ import json
 from enum import Enum, unique
 from functools import lru_cache
 import shutil
+import getpass
 
 # Root folder path of cozmo-one repo
 COZMO_ENGINE_ROOT = subprocess.check_output(['git', 'rev-parse', '--show-toplevel']).rstrip(b"\r\n").decode("utf-8")
@@ -250,6 +251,7 @@ def sign_webot_executables(build_type, password):
 
   executables = [
     'webotsCtrlBuildServerTest',
+    'webotsCtrlWebServer',
     'webotsCtrlGameEngine',
     'webotsCtrlRobot',
     'webotsCtrlGameEngine2',
@@ -812,6 +814,11 @@ def main():
                       help="""Your password is needed to add the webots executables to the firewall exception list. Can
                       be omitted if your firewall is disabled. It is requested in plaintext so this script can be re-ran 
                       easily and also for build server/steps reasons.""")
+                      
+  parser.add_argument('--setupFirewall',
+                      dest='setupFirewallAndExit',
+                      action='store_true',
+                      help="""Add the webots executables to the firewall exception list and exit.""")
 
   parser.add_argument('--forwardWebotsLogLevel',
                       dest='log_level',
@@ -874,7 +881,13 @@ def main():
     UtilLog.error("build failed")
     return 1
 
-  sign_webot_executables(options.build_type, options.password)
+  if options.setupFirewallAndExit:
+    print("Enter your password to set up firewall exceptions:")
+    sign_webot_executables(options.build_type, getpass.getpass()) # prompt for password
+    sys.exit(0)
+  
+  if options.password:
+    sign_webot_executables(options.build_type, options.password)
 
   num_of_failed_runs = 0
   num_of_passed_runs = 0

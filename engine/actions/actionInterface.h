@@ -22,6 +22,8 @@
 #include "coretech/common/engine/math/pose.h"
 
 #include "engine/actions/actionContainers.h"
+#include "engine/components/visionScheduleMediator/iVisionModeSubscriber.h"
+#include "engine/components/visionScheduleMediator/visionScheduleMediator_fwd.h"
 
 #include "clad/types/actionTypes.h"
 #include "clad/types/actionResults.h"
@@ -235,7 +237,7 @@ namespace Anki {
     
     
     // Action Interface
-    class IAction : public IActionRunner
+    class IAction : public IActionRunner, public IVisionModeSubscriber
     {
     public:
       
@@ -243,7 +245,7 @@ namespace Anki {
               const RobotActionType type,
               const u8 trackToLock);
       
-      virtual ~IAction() { }
+      virtual ~IAction();
       
       
       // Provide a retry function that will be called by Update() if
@@ -262,10 +264,15 @@ namespace Anki {
       // is final and cannot be overridden by specific individual actions.
       virtual ActionResult UpdateInternal() override final;
 
+      // If the derived action has specific vision mode requirements, they should be noted by implementing this 
+      // function, subscriptions to the VisionScheduleMediator will then be handled by IAction::UpdateInternal().
+      // By default, we assume that no vision modes are required for the action
+      virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const { }
+
       // Derived Actions should implement these.
       virtual ActionResult  Init() { return ActionResult::SUCCESS; } // Optional: default is no preconditions to meet
       virtual ActionResult  CheckIfDone() = 0;
-      
+
       //
       // Timing delays:
       //  (e.g. for allowing for communications to physical robot to have an effect)
@@ -289,6 +296,8 @@ namespace Anki {
       
       bool          _preconditionsMet;
       f32           _startTime_sec;
+
+      std::set<VisionModeRequest> _requiredVisionModes;
       
     }; // class IAction
     

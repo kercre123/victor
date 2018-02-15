@@ -41,6 +41,7 @@ public:
   s32  GetOrigNumRows() const { return _origNumRows; }
   s32  GetOrigNumCols() const { return _origNumCols; }
   bool HasColor()       const { return _hasColor;    }
+  TimeStamp_t GetTimeStamp() const { return _timeStamp; }
   
   // For requesting different sizes and resize interpolation methods
   enum class Size : u8
@@ -57,7 +58,11 @@ public:
     Half_Linear,
     Quarter_Linear,
     Double_Linear,
-    
+
+    // Average-Area Downsampling
+    Half_AverageArea,
+    Quarter_AverageArea,
+
     // TODO: add other sizes/methods (e.g. cubic interpolation)
   };
   
@@ -94,6 +99,7 @@ private:
   s32  _origNumRows = 0;
   s32  _origNumCols = 0;
   bool _hasColor = false;
+  TimeStamp_t _timeStamp = 0;
   
   class ResizedEntry
   {

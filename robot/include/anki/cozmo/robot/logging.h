@@ -1,4 +1,4 @@
-/** Emedded logging facilities for Cozmo
+/** Embedded logging facilities for Cozmo
  * @author Daniel Casner <daniel@anki.com>
  * @copyright Anki Inc. 2015
  * For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
@@ -21,15 +21,18 @@
 #include <stdlib.h>
 
 #if defined(ANDROID)
+
 #include <android/log.h>
-#define console_printf(fmt, ...) __android_log_print(ANDROID_LOG_INFO, "robot", fmt, ##__VA_ARGS__)
-#define log_assert(line, file, expr, fmt, ...) __android_log_assert(expr, "robot", fmt ": failed at line " line " in file " file, ##__VA_ARGS__)
-#define log_error(name, fmt, ...) __android_log_print(ANDROID_LOG_ERROR, "robot", name ": " fmt, ##__VA_ARGS__)
-#define log_warn(name, fmt, ...) __android_log_print(ANDROID_LOG_WARN, "robot", name ": " fmt, ##__VA_ARGS__)
-#define log_event(name, fmt, ...) __android_log_print(ANDROID_LOG_INFO, "robot", name ": " fmt, ##__VA_ARGS__)
-#define log_info(name, fmt, ...) __android_log_print(ANDROID_LOG_DEBUG, "robot", name ": " fmt, ##__VA_ARGS__)
-#define log_debug(name, fmt, ...) __android_log_print(ANDROID_LOG_VERBOSE, "robot", name ": " fmt, ##__VA_ARGS__)
+#define console_printf(fmt, ...) __android_log_print(ANDROID_LOG_INFO, "vic-robot", fmt, ##__VA_ARGS__)
+#define log_assert(line, file, expr, fmt, ...) __android_log_assert(expr, "vic-robot", fmt ": failed at line " line " in file " file, ##__VA_ARGS__)
+#define log_error(name, fmt, ...) __android_log_print(ANDROID_LOG_ERROR, "vic-robot", name ": " fmt, ##__VA_ARGS__)
+#define log_warn(name, fmt, ...) __android_log_print(ANDROID_LOG_WARN, "vic-robot", name ": " fmt, ##__VA_ARGS__)
+#define log_event(name, fmt, ...) __android_log_print(ANDROID_LOG_INFO, "vic-robot", name ": " fmt, ##__VA_ARGS__)
+#define log_info(name, fmt, ...) __android_log_print(ANDROID_LOG_DEBUG, "vic-robot", name ": " fmt, ##__VA_ARGS__)
+#define log_debug(name, fmt, ...) __android_log_print(ANDROID_LOG_VERBOSE, "vic-robot", name ": " fmt, ##__VA_ARGS__)
+
 #else
+
 #define console_printf(fmt, ...) printf(fmt, ##__VA_ARGS__)
 #define log_assert(line, file, expr, fmt, ...) console_printf("[Assert] " fmt ": \"" expr "\" failed at line " line " in file " file "\r\n", ##__VA_ARGS__)
 #define log_error(name, fmt, ...) console_printf("[Error] " name ": " fmt "\r\n", ##__VA_ARGS__)
@@ -37,9 +40,10 @@
 #define log_event(name, fmt, ...) console_printf("[Event] " name ": " fmt "\r\n", ##__VA_ARGS__)
 #define log_info(name, fmt, ...) console_printf("[Info] " name ": " fmt "\r\n", ##__VA_ARGS__)
 #define log_debug(name, fmt, ...) console_printf("[Debug] " name ": " fmt "\r\n", ##__VA_ARGS__)
+
 #endif
 
-// Keil doesn't seem to reliably error on these not being defined below so trigger explictily.
+// Keil doesn't seem to reliably error on these not being defined below so trigger explicitly.
 #ifndef ANKI_DEBUG_EVENTS
 #error ANKI_DEBUG_EVENTS not defined
 #endif
@@ -53,7 +57,7 @@
 namespace Anki {
   namespace Cozmo {
     namespace RobotInterface {
-		
+
 #if ANKI_DEBUG_EVENTS
       #define AnkiEvent(nameString, fmtString, ...) \
       { \
@@ -77,7 +81,7 @@ namespace Anki {
       { \
         log_debug(nameString, fmtString, ##__VA_ARGS__); \
       }
-      
+
       #define AnkiDebugPeriodic(num_calls_between_prints, nameString, fmtString, ...) \
       {   static u16 cnt = num_calls_between_prints; \
           if (++cnt > num_calls_between_prints) { \
@@ -105,7 +109,7 @@ namespace Anki {
           log_error(nameString, fmtString, ##__VA_ARGS__); \
           return; \
         }
-      
+
       #define AnkiConditionalErrorAndReturnValue(expression, returnValue, nameString, fmtString, ...) \
         if(!(expression)) { \
           log_error(nameString, fmtString, ##__VA_ARGS__); \
@@ -133,7 +137,7 @@ namespace Anki {
           log_warn(nameString, fmtString, ##__VA_ARGS__); \
           return; \
         }
-      
+
       #define AnkiConditionalWarnAndReturnValue(expression, returnValue, nameString, fmtString, ...) \
         if(!(expression)) { \
           log_warn(nameString, fmtString, ##__VA_ARGS__); \

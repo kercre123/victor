@@ -22,8 +22,6 @@
 namespace Anki {
 namespace Cozmo {
 
-class Robot;
-  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class QuadTree
 {
@@ -34,19 +32,8 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // constructor/destructor
-  QuadTree(VizManager* vizManager, MemoryMapData rootData);
+  QuadTree(MemoryMapDataPtr rootData);
   ~QuadTree();
-  
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Render
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-  // Stop rendering navmesh
-  void ClearDraw() const;
-  
-  // Forces redrawing even if Mesh thinks content hasn't changed. This is because QTProcessor now can modify
-  // content, and navmesh has no other way of knowing that it happened
-  void ForceRedraw() { _gfxDirty = true; }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Broadcast
@@ -66,7 +53,7 @@ public:
         QuadTreeProcessor& GetProcessor()       { return _processor; }
   const QuadTreeProcessor& GetProcessor() const { return _processor; }
   
-  const NodeContent& GetRootNodeContent() const { return _root.GetContent(); }
+  const QuadTreeNode::NodeContent& GetRootNodeContent() const { return _root.GetContent(); }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Operations
@@ -75,16 +62,16 @@ public:
   // notify the QT that the given poly has the specified content
   // shiftAllowedCount: number of shifts we can do for a fully expanded root that still needs to move to
   // fit the data.
-  void Insert(const FastPolygon& poly, const MemoryMapData& data, int shiftAllowedCount);
+  bool Insert(const FastPolygon& poly, MemoryMapDataPtr data, int shiftAllowedCount);
   
   // modify content bounded by poly. Note that if the poly extends outside the current size of the root node,
   // it will not expand the root node
-  void Transform(const Poly2f& poly, NodeTransformFunction transform) {_root.Transform(poly, transform, _processor);}
+  bool Transform(const Poly2f& poly, NodeTransformFunction transform) {return _root.Transform(poly, transform, _processor);}
   
   void FindIf(const Poly2f& poly, NodePredicate pred, MemoryMapDataConstList& output) {_root.FindIf(poly, pred, output);}
   
   // merge the given quadtree into this quad tree, applying to the quads from other the given transform
-  void Merge(const QuadTree& other, const Pose3d& transform);
+  bool Merge(const QuadTree& other, const Pose3d& transform);
   
 private:
 
@@ -94,14 +81,11 @@ private:
 
   // Expand the root node so that the given quad/point/triangle is included in the navMesh, up to the max root size limit.
   // shiftAllowedCount: number of shifts we can do if the root reaches the max size upon expanding (or already is at max.)
-  void Expand(const Poly2f& polyToCover, int shiftAllowedCount);  
+  bool Expand(const Poly2f& polyToCover, int shiftAllowedCount);  
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-  // set to true if data has changed since last time we send to gfx
-  mutable bool _gfxDirty;
 
   // processor for this quadtree
   QuadTreeProcessor _processor;

@@ -7,15 +7,16 @@
 #include "mics.h"
 #include "mic_tables.h"
 
+#include "messages.h"
+
 extern "C" void start_mic_spi(int16_t a, int16_t b, void* tim);
 
-static const int WORDS_PER_SAMPLE = (AUDIO_DECIMATION * 2) / 8;
-static const int SAMPLES_PER_IRQ = 24;  // 5 IRQS PER FRAME
-static const int SAMPLE_LOOPS = SAMPLES_PER_IRQ / 4;
+static const int SAMPLES_PER_IRQ = 20;
 static const int IRQS_PER_FRAME = AUDIO_SAMPLES_PER_FRAME / SAMPLES_PER_IRQ;
+static const int PDM_BYTES_PER_IRQ = SAMPLES_PER_IRQ * AUDIO_DECIMATION * 2 / 8;
 
 static int16_t audio_data[2][AUDIO_SAMPLES_PER_FRAME * 4];
-__align(2) static uint8_t pdm_data[2][2][WORDS_PER_SAMPLE * SAMPLES_PER_IRQ];
+__align(2) static uint8_t pdm_data[2][2][PDM_BYTES_PER_IRQ];
 static int sample_index;
 
 static int16_t MIC_SPI_CR1 = 0
@@ -28,10 +29,13 @@ static int16_t MIC_SPI_CR1 = 0
            | SPI_CR1_SPE
            ;
 
+static const int BUFFER_WORDS = sizeof(pdm_data[0]) / sizeof(uint16_t);
+
 static void configurePerf(SPI_TypeDef* spi, DMA_Channel_TypeDef* ch, int perf) {
+  ch->CCR = 0;
   ch->CPAR = (uint32_t) &spi->DR;
   ch->CMAR = (uint32_t) &pdm_data[perf];
-  ch->CNDTR = sizeof(pdm_data[0]) / sizeof(uint16_t);
+  ch->CNDTR = BUFFER_WORDS;
   ch->CCR = 0
           | DMA_CCR_MINC      // Memory is incrementing
           | DMA_CCR_PSIZE_0   // 16-bit mode
@@ -98,101 +102,93 @@ void Mics::init(void) {
   start_mic_spi(TIM_CR1_CEN, MIC_SPI_CR1, (void*)&TIM15->CR1);
 }
 
+void Mics::errorCode(uint16_t* data) {
+  data[0] = *(uint16_t*)&pdm_data[0][0];
+  data[1] = *(uint16_t*)&pdm_data[1][0];
+}
+
 void Mics::transmit(int16_t* payload) {
   memcpy(payload, audio_data[sample_index < IRQS_PER_FRAME ? 1 : 0], sizeof(audio_data[0]));
 }
 
-#define SETUP_ACC(a,b,c,d) \
-  coff_set = DECIMATION_TABLE[0][*source]; \
-  source = &source[2]; \
-  acc##d  = coff_set[0]; \
-  acc##c += coff_set[1]; \
-  acc##b += coff_set[2]; \
-  acc##a += coff_set[3]
+#define STAGE3(ti) \
+  ptr = &DECIMATION_TABLE[ti+24][*samples]; samples += 2; \
+  acc_2 += *ptr; ptr -= 0xC00; \
+  acc_1 += *ptr; ptr -= 0xC00; \
+  acc_0 += *ptr; \
 
-#define ACCUMULATE(a,b,c,d,block) \
-  coff_set = DECIMATION_TABLE[block][*source]; \
-  source = &source[2]; \
-  acc##d += coff_set[0]; \
-  acc##c += coff_set[1]; \
-  acc##b += coff_set[2]; \
-  acc##a += coff_set[3]
+#define STAGE3A(ti) \
+  ptr = &DECIMATION_TABLE[ti+24][*samples]; samples += 2; \
+  *output = (int16_t)((acc_2 + *ptr) >> 16); output += 4; \
+  ptr -= 0xC00; acc_2 = acc_1 + *ptr; \
+  ptr -= 0xC00; acc_1 = acc_0 + *ptr;
 
-#define STAGE(a,b,c,d) \
-   SETUP_ACC(a,b,c,d);   \
-  ACCUMULATE(a,b,c,d,1); \
-  ACCUMULATE(a,b,c,d,2); \
-  ACCUMULATE(a,b,c,d,3); \
-  ACCUMULATE(a,b,c,d,4); \
-  ACCUMULATE(a,b,c,d,5); \
-  ACCUMULATE(a,b,c,d,6); \
-  ACCUMULATE(a,b,c,d,7); \
-  *result = acc##a >> 16; \
-  result = &result[4]
+static void dec_loop(int32_t* acc, uint8_t* samples, int16_t* output) {
+  int32_t acc_1 = acc[0];
+  int32_t acc_2 = acc[1];
 
-static void decimate(const uint8_t* input, int32_t* accumulator,  int16_t* output) {
-  // Deinterlace the input streams
-  static uint8_t deinter[2 * 32 * SAMPLE_LOOPS];
+  const int32_t *ptr;
+  for (int i = 0; i < SAMPLES_PER_IRQ; i++) {
+    int32_t acc_0 = 0;
+
+    STAGE3 ( 0);
+    STAGE3 ( 1);
+    STAGE3 ( 2);
+    STAGE3 ( 3);
+    STAGE3 ( 4);
+    STAGE3 ( 5);
+    STAGE3 ( 6);
+    STAGE3 ( 7);
+    STAGE3 ( 8);
+    STAGE3 ( 9);
+    STAGE3 (10);
+    STAGE3A(11);
+  }
+
+  acc[0] = acc_1;
+  acc[1] = acc_2;
+}
+
+
+static void decimate(const uint8_t* input, int32_t* acc,  int16_t* output) {
+  uint8_t deinter[sizeof(uint16_t) * 12 * SAMPLES_PER_IRQ];
   uint16_t* target = (uint16_t*)&deinter;
 
-  // Eight LUTs per channel, 4 channels
-  for (int i = 0; i < 8 * 4 * SAMPLE_LOOPS; i++) {
-    uint16_t word;
-
-    word        = DEINTERLACE_TABLE[0][*(input++)];
-    *(target++) = word | DEINTERLACE_TABLE[1][*(input++)];
+  // Deinterlace the channel data
+  for (int i = 0; i < PDM_BYTES_PER_IRQ; i += 2) {
+    *(target++) = DEINTERLACE_TABLE[0][input[0]] | DEINTERLACE_TABLE[1][input[1]];
+    input += 2;
   }
 
-  // Run accumulators on the program
-  int32_t acc0, acc1, acc2, acc3;
-
-  const int32_t* coff_set;
-
-  for (int channel = 0; channel < 2; channel++) {
-    const uint8_t* source = &deinter[channel];
-    int16_t* result = &output[channel];
-
-    acc2 = accumulator[2];
-    acc1 = accumulator[1];
-    acc0 = accumulator[0];
-    for (int i = 0; i < SAMPLE_LOOPS; i++) {
-        STAGE(0,1,2,3);
-        STAGE(1,2,3,0);
-        STAGE(2,3,0,1);
-        STAGE(3,0,1,2);
-    }
-    accumulator[2] = acc2;
-    accumulator[1] = acc1;
-    accumulator[0] = acc0;
-
-    accumulator = &accumulator[3];
-  }
+  dec_loop(&acc[0], &deinter[0], &output[0]);
+  dec_loop(&acc[2], &deinter[1], &output[1]);
 }
 
 extern "C" void DMA1_Channel2_3_IRQHandler(void) {
-  static int16_t *index = audio_data[0];
+  static int16_t *output = audio_data[0];
   uint32_t isr = DMA1->ISR;
-  DMA1->IFCR = DMA_ISR_GIF2;
+  DMA1->IFCR = DMA_IFCR_CGIF2;
 
-  static int32_t accumulator[4][3];
+  static int32_t accumulator[2][4]; // 2 data lines, 2x2 channel accumulators
 
   // Note: if this falls behind, it will drop a bunch of samples
   if (isr & DMA_ISR_HTIF2) {
-    decimate(pdm_data[0][0], accumulator[0], &index[0]);
-    decimate(pdm_data[1][0], accumulator[2], &index[2]);
-    index += SAMPLES_PER_IRQ * 4;
-    sample_index++;
-  } else {
-    decimate(pdm_data[0][1], accumulator[0], &index[0]);
-    decimate(pdm_data[1][1], accumulator[2], &index[2]);
-    index += SAMPLES_PER_IRQ * 4;
+    decimate(pdm_data[0][0], accumulator[0], &output[0]);
+    decimate(pdm_data[1][0], accumulator[1], &output[2]);
+    output += SAMPLES_PER_IRQ * 4;
     sample_index++;
   }
 
+  if (isr & DMA_ISR_TCIF2) {
+    decimate(pdm_data[0][1], accumulator[0], &output[0]);
+    decimate(pdm_data[1][1], accumulator[1], &output[2]);
+    output += SAMPLES_PER_IRQ * 4;
+    sample_index++;
+  }
 
   // Circular buffer increment
   if (sample_index >= IRQS_PER_FRAME * 2) {
-    index = audio_data[0];
+    output = audio_data[0];
     sample_index = 0;
   }
 }

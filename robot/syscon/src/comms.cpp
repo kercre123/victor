@@ -79,7 +79,6 @@ static int txFifo_write = 0;
 static uint8_t inbound_raw[MAX_INBOUND_SIZE];
 
 static int missed_frames = 0;
-static bool applicationRunning = false;
 
 static uint32_t crc(const void* ptr, int length) {
   const uint32_t* data = (const uint32_t*) ptr;
@@ -141,8 +140,6 @@ void Comms::init(void) {
                      | DMA_CCR_HTIE
                      | DMA_CCR_EN
                      ;
-
-  applicationRunning = false;
 }
 
 void Comms::enqueue(PayloadId kind, const void* packet, int size) {
@@ -189,9 +186,11 @@ static int dequeue(void* out, int size) {
 }
 
 void Comms::tick(void) {
-  // Soft-watchdog (This is lame)
-  if (missed_frames++ >= MAX_MISSED_FRAMES) {
-    applicationRunning = false;
+  // Soft-watchdog (Disable power to sensors when robot process is idle)
+  if (missed_frames < MAX_MISSED_FRAMES) {
+    missed_frames++;
+  } else if (Opto::sensorsValid()) {
+    Power::setMode(POWER_CALM);
   }
 
   // Stop our DMA
@@ -199,41 +198,35 @@ void Comms::tick(void) {
                      | DMA_CCR_DIR;
 
   // Finalize the packet
-  int count;
+  int count = sizeof(outboundPacket.sync);
 
-  if (applicationRunning) {
-    Analog::transmit(&outboundPacket.sync.payload);
-    Motors::transmit(&outboundPacket.sync.payload);
-    Opto::transmit(&outboundPacket.sync.payload);
+  Analog::transmit(&outboundPacket.sync.payload);
+  Motors::transmit(&outboundPacket.sync.payload);
+  Opto::transmit(&outboundPacket.sync.payload);
 #if MICDATA_ENABLED
-    Mics::transmit(outboundPacket.sync.payload.audio);
+  Mics::transmit(outboundPacket.sync.payload.audio);
+  Mics::errorCode(outboundPacket.sync.payload.micError);
 #endif
-    Touch::transmit(outboundPacket.sync.payload.touchLevel);
+  Touch::transmit(outboundPacket.sync.payload.touchLevel);
 
-    outboundPacket.sync.payload.framecounter++;
-    outboundPacket.sync.footer.checksum = crc(&outboundPacket.sync.payload, sizeof(outboundPacket.sync.payload) / sizeof(uint32_t));
+  outboundPacket.sync.payload.framecounter++;
+  outboundPacket.sync.footer.checksum = crc(&outboundPacket.sync.payload, sizeof(outboundPacket.sync.payload) / sizeof(uint32_t));
 
-    DMA1_Channel3->CMAR = (uint32_t)&outboundPacket;
-    count = sizeof(outboundPacket.sync);
-  } else {
-    DMA1_Channel3->CMAR = (uint32_t)&outboundPacket.tail;
-    count = 0;
-  }
+  DMA1_Channel3->CMAR = (uint32_t)&outboundPacket;
 
   count += dequeue(&outboundPacket.tail, sizeof(outboundPacket.tail));
 
   // Fire out ourbound data
-  if (count > 0) {
-    DMA1_Channel3->CPAR = (uint32_t)&USART1->TDR;
-    DMA1_Channel3->CNDTR = count;
-    DMA1_Channel3->CCR |= DMA_CCR_EN;
-  }
+  DMA1_Channel3->CPAR = (uint32_t)&USART1->TDR;
+  DMA1_Channel3->CNDTR = count;
+  DMA1_Channel3->CCR |= DMA_CCR_EN;
 
   NVIC_SetPendingIRQ(DMA1_Channel4_5_IRQn);
 }
 
 static int sizeOfInboundPayload(PayloadId id) {
   switch (id) {
+    case PAYLOAD_SHUT_DOWN:
     case PAYLOAD_MODE_CHANGE:
     case PAYLOAD_ERASE:
     case PAYLOAD_VERSION:
@@ -266,16 +259,22 @@ static void ProcessMessage(InboundPacket& packet) {
 
   // Process our packet
   if (foundCRC == footer->checksum) {
+    // Emergency eject in case of recovery mode
+    BODY_TX::mode(MODE_ALTERNATE);
+
     switch (packet.header.payload_type) {
+      case PAYLOAD_SHUT_DOWN:
+        Power::setMode(POWER_STOP);
+        break ;
       case PAYLOAD_MODE_CHANGE:
         missed_frames = 0;
-        applicationRunning = true;
+        Power::setMode(POWER_ACTIVE);
         break ;
       case PAYLOAD_VERSION:
         Comms::sendVersion();
         break ;
       case PAYLOAD_ERASE:
-        Power::softReset(true);
+        Power::setMode(POWER_ERASE);
         break ;
       case PAYLOAD_DATA_FRAME:
         missed_frames = 0;

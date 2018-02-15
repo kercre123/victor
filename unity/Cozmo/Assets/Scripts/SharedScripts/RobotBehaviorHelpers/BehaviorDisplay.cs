@@ -70,9 +70,6 @@ public class BehaviorDisplay : MonoBehaviour {
     if (CurrentRobot != null) {
       if (_OverrideString == null) {
         string currBehaviorString = string.Empty;
-        if (CurrentRobot.CurrentBehaviorDisplayNameKey != string.Empty) {
-          currBehaviorString = Localization.Get(CurrentRobot.CurrentBehaviorDisplayNameKey);
-        }
         // If string is empty the design is that cozmo should stay in the previous state
         if ((currBehaviorString != string.Empty && currBehaviorString != _CurrString) || _IsDisconnected) {
           // start counting start of a change

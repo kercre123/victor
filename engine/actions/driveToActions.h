@@ -39,18 +39,15 @@ namespace Anki {
     public:
       DriveToPoseAction(const Pose3d& pose,
                         const bool forceHeadDown,
-                        const bool useManualSpeed = false,
                         const Point3f& distThreshold = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM,
                         const Radians& angleThreshold = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD,
                         const float maxPlanningTime = DEFAULT_MAX_PLANNER_COMPUTATION_TIME_S,
                         const float maxReplanPlanningTime = DEFAULT_MAX_PLANNER_REPLAN_COMPUTATION_TIME_S);
       
-      DriveToPoseAction(const bool forceHeadDown,
-                        const bool useManualSpeed = false); // Note that SetGoal(s) must be called before Update()!
+      DriveToPoseAction(const bool forceHeadDown); // Note that SetGoal(s) must be called before Update()!
       
       DriveToPoseAction(const std::vector<Pose3d>& poses,
                         const bool forceHeadDown,
-                        const bool useManualSpeed = false,
                         const Point3f& distThreshold = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM,
                         const Radians& angleThreshold = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD,
                         const float maxPlanningTime = DEFAULT_MAX_PLANNER_COMPUTATION_TIME_S,
@@ -76,12 +73,10 @@ namespace Anki {
                       const Radians& angleThreshold = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD);
 
     protected:
-      
+      virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const override;
       virtual f32 GetTimeoutInSeconds() const override;
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
-      
-      bool IsUsingManualSpeed() {return _useManualSpeed;}
       
     private:
       bool     _isGoalSet;
@@ -92,7 +87,6 @@ namespace Anki {
             
       Point3f  _goalDistanceThreshold;
       Radians  _goalAngleThreshold;
-      bool     _useManualSpeed;
       
       float _maxPlanningTime;
       float _maxReplanPlanningTime;
@@ -119,12 +113,10 @@ namespace Anki {
                           const PreActionPose::ActionType& actionType,
                           const f32 predockOffsetDistX_mm = 0,
                           const bool useApproachAngle = false,
-                          const f32 approachAngle_rad = 0,
-                          const bool useManualSpeed = false);
+                          const f32 approachAngle_rad = 0);
       
       DriveToObjectAction(const ObjectID& objectID,
-                          const f32 distance_mm,
-                          const bool useManualSpeed = false);
+                          const f32 distance_mm);
       virtual ~DriveToObjectAction();
       
       // TODO: Add version where marker code is specified instead of action?
@@ -184,7 +176,6 @@ namespace Anki {
       PreActionPose::ActionType  _actionType;
       f32                        _distance_mm;
       f32                        _predockOffsetDistX_mm;
-      bool                       _useManualSpeed;
       CompoundActionSequential   _compoundAction;
       
       bool                       _useApproachAngle;
@@ -211,7 +202,6 @@ namespace Anki {
       DriveToPlaceCarriedObjectAction(const Pose3d& placementPose,
                                       const bool placeOnGround,
                                       const bool useExactRotation = false,
-                                      const bool useManualSpeed = false,
                                       const bool checkDestinationFree = false,
                                       const float destinationObjectPadding_mm = 0.0f);
       
@@ -247,13 +237,11 @@ namespace Anki {
                                  const f32 predockOffsetDistX_mm,
                                  const bool useApproachAngle,
                                  const f32 approachAngle_rad,
-                                 const bool useManualSpeed,
                                  const Radians& maxTurnTowardsFaceAngle_rad,
                                  const bool sayName);
       
       IDriveToInteractWithObject(const ObjectID& objectID,
-                                 const f32 distance,
-                                 const bool useManualSpeed);
+                                 const f32 distance);
 
     public:
       virtual ~IDriveToInteractWithObject();
@@ -342,7 +330,6 @@ namespace Anki {
                                    const bool useApproachAngle = false,
                                    const f32 approachAngle_rad = 0,
                                    const AlignmentType alignmentType = AlignmentType::CUSTOM,
-                                   const bool useManualSpeed = false,
                                    Radians maxTurnTowardsFaceAngle_rad = 0.f,
                                    const bool sayName = false);
       
@@ -361,7 +348,6 @@ namespace Anki {
       DriveToPickupObjectAction(const ObjectID& objectID,
                                 const bool useApproachAngle = false,
                                 const f32 approachAngle_rad = 0,
-                                const bool useManualSpeed = false,
                                 Radians maxTurnTowardsFaceAngle_rad = 0.f,
                                 const bool sayName = false,
                                 AnimationTrigger animBeforeDock = AnimationTrigger::Count);
@@ -388,7 +374,6 @@ namespace Anki {
       DriveToPlaceOnObjectAction(const ObjectID& objectID,
                                  const bool useApproachAngle = false,
                                  const f32 approachAngle_rad = 0,
-                                 const bool useManualSpeed = false,
                                  Radians maxTurnTowardsFaceAngle_rad = 0.f,
                                  const bool sayName = false);
       
@@ -415,7 +400,6 @@ namespace Anki {
                                   const f32 placementOffsetY_mm = 0,
                                   const bool useApproachAngle = false,
                                   const f32 approachAngle_rad = 0,
-                                  const bool useManualSpeed = false,
                                   Radians maxTurnTowardsFaceAngle_rad = 0.f,
                                   const bool sayName = false,
                                   const bool relativeCurrentMarker = true);
@@ -437,7 +421,6 @@ namespace Anki {
       DriveToRollObjectAction(const ObjectID& objectID,
                               const bool useApproachAngle = false,
                               const f32 approachAngle_rad = 0,
-                              const bool useManualSpeed = false,
                               Radians maxTurnTowardsFaceAngle_rad = 0.f,
                               const bool sayName = true);
 
@@ -474,7 +457,6 @@ namespace Anki {
       DriveToPopAWheelieAction(const ObjectID& objectID,
                                const bool useApproachAngle = false,
                                const f32 approachAngle_rad = 0,
-                               const bool useManualSpeed = false,
                                Radians maxTurnTowardsFaceAngle_rad = 0.f,
                                const bool sayName = true);
       
@@ -491,7 +473,6 @@ namespace Anki {
       DriveToFacePlantAction(const ObjectID& objectID,
                              const bool useApproachAngle = false,
                              const f32 approachAngle_rad = 0,
-                             const bool useManualSpeed = false,
                              Radians maxTurnTowardsFaceAngle_rad = 0.f,
                              const bool sayName = false);
       
@@ -503,7 +484,6 @@ namespace Anki {
     {
     public:
       DriveToAndTraverseObjectAction(const ObjectID& objectID,
-                                     const bool useManualSpeed = false,
                                      Radians maxTurnTowardsFaceAngle_rad = 0.f,
                                      const bool sayName = false);
       

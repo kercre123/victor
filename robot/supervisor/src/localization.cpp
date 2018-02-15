@@ -523,8 +523,6 @@ namespace Anki {
         orientation_ = angle;
 #else
 
-        bool movement = false;
-
         // Update current pose estimate based on wheel motion
 
         f32 currLeftWheelPos = HAL::MotorGetPosition(MotorID::MOTOR_LEFT_WHEEL);
@@ -534,10 +532,17 @@ namespace Anki {
         f32 lDist = currLeftWheelPos - prevLeftWheelPos_;
         f32 rDist = currRightWheelPos - prevRightWheelPos_;
 
-
         // Compute new pose based on encoders and gyros, but only if there was any motion.
-        movement = (!FLT_NEAR(rDist, 0.f) || !FLT_NEAR(lDist,0.f));
-        if (movement ) {
+        bool movement = (!FLT_NEAR(rDist, 0.f) || !FLT_NEAR(lDist,0.f));
+        
+        // Consider there to be no movement if we're on the charger (VIC-1046).
+        // This is to prevent the estimated pose from wandering if we're trying
+        // to drive on the charger but slipping.
+        if (HAL::BatteryIsOnCharger()) {
+          movement = false;
+        }
+        
+        if (movement) {
 #if(DEBUG_LOCALIZATION)
           PRINT("\ncurrWheelPos (%f, %f)   prevWheelPos (%f, %f)\n",
                 currLeftWheelPos, currRightWheelPos, prevLeftWheelPos_, prevRightWheelPos_);

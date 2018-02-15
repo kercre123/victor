@@ -1,8 +1,10 @@
 #include "gtest/gtest.h"
 
-#include "anki/common/types.h"
-#include "anki/common/basestation/math/pose.h"
-#include "anki/common/basestation/math/point_impl.h"
+#include "coretech/common/engine/math/pose.h"
+#include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/shared/types.h"
+
+#include "clad/types/proxMessages.h"
 
 #include "engine/robot.h"
 
@@ -16,6 +18,12 @@
 
 // Single origin for all the poses here to use, which will not destruct before anything that uses it
 const Anki::Pose3d origin(0, Anki::Z_AXIS_3D(), {0,0,0}, "Origin");
+
+const bool proxSensorNotValid = false;
+const bool proxSensorValid = true;
+const uint8_t noCliffDetectedFlags = 0;
+const uint8_t frontCliffDetectedFlags = (1<<Anki::Util::EnumToUnderlying(Anki::Cozmo::CliffSensor::CLIFF_FL)) | 
+                                        (1<<Anki::Util::EnumToUnderlying(Anki::Cozmo::CliffSensor::CLIFF_FR));
 
 TEST(RobotStateHistory, AddGetPose)
 {
@@ -68,7 +76,7 @@ TEST(RobotStateHistory, AddGetPose)
   
   
   // Add and get one pose
-  hist.AddRawOdomState(t1, HistRobotState(p1, state1));
+  hist.AddRawOdomState(t1, HistRobotState(p1, state1, proxSensorNotValid, noCliffDetectedFlags));
   
   ASSERT_TRUE(hist.GetNumRawStates() == 1);
   ASSERT_TRUE(hist.ComputeStateAt(t1, t, histState) == RESULT_OK);
@@ -80,7 +88,8 @@ TEST(RobotStateHistory, AddGetPose)
   
   
   // Add another pose
-  hist.AddRawOdomState(t2, HistRobotState(p2, state2));
+  HistRobotState histState2(p2, state2, proxSensorValid, frontCliffDetectedFlags);
+  hist.AddRawOdomState(t2, histState2);
   
   // Request out of range pose
   ASSERT_TRUE(hist.GetNumRawStates() == 2);
@@ -101,10 +110,14 @@ TEST(RobotStateHistory, AddGetPose)
   
   // since interpolation is in the middle it should be the newest
   ASSERT_TRUE(histState.WasCarryingObject() == WasStateCarrying(state2));
-  
+  ASSERT_TRUE(histState.WasProxSensorValid() == histState2.WasProxSensorValid());
+  for (int i=0; i<Util::EnumToUnderlying(CliffSensor::CLIFF_COUNT); ++i) {
+    CliffSensor sensor = static_cast<CliffSensor>(i);
+    ASSERT_TRUE(histState.WasCliffDetected(sensor) == histState2.WasCliffDetected(sensor));
+  }
 
   // Add new pose that should bump off oldest pose
-  hist.AddRawOdomState(t3, HistRobotState(p3, state3));
+  hist.AddRawOdomState(t3, HistRobotState(p3, state3, proxSensorValid, noCliffDetectedFlags));
   
   ASSERT_TRUE(hist.GetNumRawStates() == 2);
   
@@ -117,7 +130,7 @@ TEST(RobotStateHistory, AddGetPose)
   ASSERT_TRUE(p2.IsSameAs(histState.GetPose(), 1e-5f, DEG_TO_RAD(0.1f)));  
   
   // Add old pose that is out of time window
-  hist.AddRawOdomState(t1, HistRobotState(p1, state1));
+  hist.AddRawOdomState(t1, HistRobotState(p1, state1, proxSensorValid, noCliffDetectedFlags));
   
   ASSERT_TRUE(hist.GetNumRawStates() == 2);
   ASSERT_TRUE(hist.GetOldestTimeStamp() == t2);
@@ -245,7 +258,7 @@ TEST(RobotStateHistory, CullToWindowSizeTest)
   
   const Pose3d p(0, Z_AXIS_3D(), Vec3f(0,0,0), origin );
   RobotState state(Robot::GetDefaultRobotState());
-  HistRobotState histState(p, state);
+  HistRobotState histState(p, state, proxSensorValid, noCliffDetectedFlags);
 
   // Verify that culling on empty history doesn't cause a crash
   hist.CullToWindowSize();  // Keeps the latest 300ms and removes the rest

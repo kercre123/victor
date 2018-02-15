@@ -63,7 +63,8 @@ public:
   void Register( const std::string& keystring, IConsoleVariable* variable );
   void Register( const std::string& keystring, ConsoleFunc function, const char* categoryName, const std::string& args );
   void Register( const std::string& keystring, IConsoleFunction* function );
-  
+  void Unregister( const std::string& keystring );
+
   bool Eval( const char *text, IConsoleChannel& channel );
   
   template< typename T>
@@ -140,7 +141,7 @@ template <typename T>
 inline void ConsoleSystem::Register( T& value, const std::string& keystring, const std::string& category )
 {
   // The IConsoleVariable will register itself within its constructor.
-  IConsoleVariable* var = new ConsoleVar<T>( value, keystring.c_str(), category.c_str() );
+  IConsoleVariable* var = new ConsoleVar<T>( value, keystring.c_str(), category.c_str(), false );
   allocatedVariables_.push_back( var );
 }
 

@@ -20,8 +20,6 @@
 
 #include "schema/messages.h"
 #include "clad/types/proxMessages.h"
-#include "clad/robotInterface/messageRobotToEngine.h"
-#include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 
 #include <errno.h>
 
@@ -56,22 +54,15 @@ namespace { // "Private members"
   // so we cache the last non-0xFFFF value and return this as the latest touch sensor reading
   u16 lastValidTouchIntensity_;
 
-  
   struct spine_ctx spine_;
   uint8_t frameBuffer_[SPINE_B2H_FRAME_LEN];
   uint8_t readBuffer_[4096];
-  TimeStamp_t nextSleepTimeMs_ = 1000;
-  bool processedPartialFrame_ = false;
-  bool processedIMU_ = false;
-  uint32_t lastFrameCounter_ = 0;
-  Result lastResult_;
 
   bool chargingEnabled_ = false;
   
 } // "private" namespace
 
 // Forward Declarations
-Result InitMotor();
 Result InitRadio();
 void InitIMU();
 void ProcessIMUEvents();
@@ -146,8 +137,6 @@ Result HAL::Init()
   // Set ID
   robotID_ = Anki::Cozmo::DEFAULT_ROBOT_ID;
 
-  InitMotor();
-
 //#if IMU_WORKING
   InitIMU();
 //#endif
@@ -175,8 +164,9 @@ Result HAL::Init()
 
     spine_set_mode(&spine_, RobotMode_RUN);
 
+    // Do we need to check for errors here?
     AnkiDebug("HAL.Init.WaitingForDataFrame", "");
-    Result result = spine_wait_for_first_frame(&spine_);
+    (void) spine_wait_for_first_frame(&spine_);
   }
 #else
   bodyData_ = &dummyBodyData_;
@@ -192,24 +182,9 @@ Result HAL::Init()
   return RESULT_OK;
 }  // Init()
 
-void ForwardMicData(void)
-{
-  static_assert(MICDATA_SAMPLES_COUNT == 
-                (sizeof(RobotInterface::MicData::data) / sizeof(RobotInterface::MicData::data[0])),
-                "bad mic data sample count define");
-  RobotInterface::MicData micData;
-  micData.sequenceID = bodyData_->framecounter;
-  micData.timestamp = HAL::GetTimeStamp();
-#if MICDATA_ENABLED
-  std::copy(bodyData_->audio, bodyData_->audio + MICDATA_SAMPLES_COUNT, micData.data);
-  RobotInterface::SendMessage(micData);
-#endif
-}
-
 Result spine_get_frame() {
   Result result = RESULT_FAIL_IO_TIMEOUT;
   uint8_t frame_buffer[SPINE_B2H_FRAME_LEN];
-  bool processedFrame = false;
 
   ssize_t r = 0;
   do {
@@ -220,12 +195,8 @@ Result spine_get_frame() {
     } else if (r > 0) {
       const struct SpineMessageHeader* hdr = (const struct SpineMessageHeader*)frame_buffer;
       if (hdr->payload_type == PAYLOAD_DATA_FRAME) {
-        const struct spine_frame_b2h* frame = (const struct spine_frame_b2h*)frame_buffer;
         memcpy(frameBuffer_, frame_buffer, sizeof(frameBuffer_));
         bodyData_ = (BodyToHead*)(frameBuffer_ + sizeof(struct SpineMessageHeader));
-        
-        // BRC: Should accumulate all of the audio data and send it in one shot
-        ForwardMicData();
         result = RESULT_OK;
         continue;
       }
@@ -361,6 +332,16 @@ u16 HAL::GetCliffOffLevel(const CliffID cliff_id)
   return 0;
 }
 
+bool HAL::HandleLatestMicData(SendDataFunction sendDataFunc)
+{
+  #if MICDATA_ENABLED
+  {
+    sendDataFunc(bodyData_->audio, MICDATA_SAMPLES_COUNT);
+  }
+  #endif
+  return false;
+}
+
 f32 HAL::BatteryGetVoltage()
 {
   // On charger battery.battery reports ~3520 so scale it to 5v
@@ -404,7 +385,9 @@ bool HAL::BatteryIsOnCharger()
 
 bool HAL::BatteryIsChargerOOS()
 {
-  return bodyData_->battery.flags & chargerOOS;
+  return false;
+  // BRC: no longer supported in DVT2
+  // bodyData_->battery.flags & chargerOOS;
 }
 
 u8 HAL::GetWatchdogResetCounter()

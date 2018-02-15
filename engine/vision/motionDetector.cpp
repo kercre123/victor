@@ -10,7 +10,8 @@
  * Copyright: Anki, Inc. 2017
  **/
 
-#include "motionDetector.h"
+#include "engine/vision/motionDetector.h"
+#include "engine/vision/motionDetector_neon.h"
 
 #include "coretech/common/engine/math/linearAlgebra_impl.h"
 #include "coretech/vision/engine/camera.h"
@@ -39,11 +40,11 @@ namespace {
   
   // Affects sensitivity (darker pixels are inherently noisier and should be ignored for
   // change detection). Range is [0,255]
-  CONSOLE_VAR(u8,   kMotionDetection_MinBrightness,       CONSOLE_GROUP_NAME, 10);
+  WRAP_EXTERN_CONSOLE_VAR(u8,   kMotionDetection_MinBrightness,       CONSOLE_GROUP_NAME);
   
   // This is the main sensitivity parameter: higher means more image difference is required
   // to register a change and thus report motion.
-  CONSOLE_VAR(f32,  kMotionDetection_RatioThreshold,      CONSOLE_GROUP_NAME, 1.25f);
+  WRAP_EXTERN_CONSOLE_VAR(f32,  kMotionDetection_RatioThreshold,      CONSOLE_GROUP_NAME);
   CONSOLE_VAR(f32,  kMotionDetection_MinAreaFraction,     CONSOLE_GROUP_NAME, 1.f/225.f); // 1/15 of each image dimension
   
   // For computing robust "centroid" of motion
@@ -79,8 +80,8 @@ namespace {
 // This class is used to accumulate data for peripheral motion detection. The image area is divided in three sections:
 // top, right and left. If the centroid of a motion patch falls inside one these areas, it's increased, otherwise it's
 // decreased. This follows a very simple impulse/decay model. The parameters *horizontalSize* and *verticalSize* control
-// how much of the image is for the left sector and the top sector. The parameters *increaseFactor* and *decreaseFactor*
-// control the impulse response.
+// how much of the image is for the left/right sectors and the top/bottom sector. The parameters *increaseFactor* and
+// *decreaseFactor* control the impulse response.
 //
 // The centroid of the motion in the different sectors are also stored here. Every time one of the areas is activated,
 // the centroid "moves" towards the new activation following an exponential moving average method.
@@ -90,26 +91,34 @@ public:
   ImageRegionSelector(int imageWidth, int imageHeight, float horizontalSize, float verticalSize,
                       float increaseFactor, float decreaseFactor, float maxValue,
                       float alpha)
-  : _topID(increaseFactor, decreaseFactor, maxValue)
+  : _alpha(alpha)
+  , _maxValue(maxValue)
+  , _leftMargin(imageWidth * horizontalSize)
+  , _rightMargin(imageWidth - _leftMargin)
+  , _topMargin(imageHeight * verticalSize)
+  , _bottomMargin(imageHeight - _topMargin)
+  , _topArea(verticalSize * imageHeight * imageWidth)
+  , _bottomArea(verticalSize * imageHeight * imageWidth)
+  , _leftArea(horizontalSize * imageHeight * imageWidth)
+  , _rightArea(horizontalSize * imageHeight * imageWidth)
+  , _topID(increaseFactor, decreaseFactor, maxValue)
+  , _bottomID(increaseFactor, decreaseFactor, maxValue)
   , _leftID(increaseFactor, decreaseFactor, maxValue)
   , _rightID(increaseFactor, decreaseFactor, maxValue)
-  , _alpha(alpha), _maxValue(maxValue)
   {
     DEV_ASSERT(horizontalSize <= 0.5, "MotionDetector::ImageRegionSelector: horizontal size has to be less then half"
                                       "of the image");
     DEV_ASSERT(verticalSize <= 0.5, "MotionDetector::ImageRegionSelector: vertical size has to be less then half"
                                     "of the image");
-
-    _leftMargin = imageWidth * horizontalSize;
-    _rightMargin = imageWidth - _leftMargin;
-    _upperMargin = imageHeight * verticalSize;
-    _imageArea = imageHeight * imageWidth;
-
   }
 
   float GetTopResponse() const
   {
     return _topID.Value();
+  }
+  float GetBottomResponse() const
+  {
+    return _bottomID.Value();
   }
   float GetLeftResponse() const
   {
@@ -120,8 +129,28 @@ public:
     return _rightID.Value();
   }
 
+  float GetTopActivationArea() const
+  {
+    return _topActivatedArea;
+  }
+  float GetBottomActivationArea() const
+  {
+    return _bottomActivatedArea;
+  }
+  float GetLeftActivationArea() const
+  {
+    return _leftActivatedArea;
+  }
+  float GetRightActivationArea() const
+  {
+    return _rightActivatedArea;
+  }
+
   bool IsTopActivated() const {
     return GetTopResponse() >= _maxValue;
+  }
+  bool IsBottomActivated() const {
+    return GetBottomResponse() >= _maxValue;
   }
   bool IsRightActivated() const {
     return GetRightResponse() >= _maxValue;
@@ -133,6 +162,9 @@ public:
   const Point2f& GetTopResponseCentroid() const {
     return _topCentroid;
   }
+  const Point2f& GetBottomResponseCentroid() const {
+    return _bottomCentroid;
+  }
   const Point2f& GetLeftResponseCentroid() const {
     return _leftCentroid;
   }
@@ -140,60 +172,111 @@ public:
     return _rightCentroid;
   }
 
+  float GetTopMargin() const {
+    return _topMargin;
+  }
+  float GetBottomMargin() const {
+    return _bottomMargin;
+  }
   float GetLeftMargin() const {
     return _leftMargin;
   }
   float GetRightMargin() const {
     return _rightMargin;
   }
-  float GetUpperMargin() const {
-    return _upperMargin;
-  }
 
   void Update(const Point2f &point,
               float value)
   {
 
-    // The real activation value is a fraction of the image area
-    value = value / float(_imageArea);
-
     const float x = point.x();
     const float y = point.y();
-    //where does the point lie?
 
+    // Where does the point lie?
+    // Either top or bottom
     //top
-    if (y <= _upperMargin) {
-      _topID.Update(value);
+    if (y <= _topMargin) {
+      // The real activation value is a fraction of the relative image area
+      const float realValue = value / _topArea;
+      _topID.Update(realValue);
       _topCentroid = UpdatePoint(_topCentroid, point);
+      _topActivatedArea = std::min(realValue, 1.0f);
+
+      _bottomID.Decay();
+      _bottomActivatedArea = 0.0;
+      _bottomCentroid = Point2f(-1, -1);
     }
+    // bottom
+    else if (y >= _bottomMargin) {
+      // The real activation value is a fraction of the relative image area
+      const float realValue = value / _bottomArea;
+      _bottomID.Update(realValue);
+      _bottomCentroid = UpdatePoint(_bottomCentroid, point);
+      _bottomActivatedArea = std::min(realValue, 1.0f);
+
+      _topID.Decay();
+      _topActivatedArea = 0.0;
+      _topCentroid = Point2f(-1, -1);
+    }
+    // they both go down
     else {
       _topID.Decay();
+      _bottomID.Decay();
+      _topActivatedArea = 0.0;
+      _bottomActivatedArea = 0.0;
+      _topCentroid = Point2f(-1, -1);
+      _bottomCentroid = Point2f(-1, -1);
     }
-    //left and right are not in exclusion with top
+
+    //left and right are not in exclusion with top or bottom
     //left
     if (x <= _leftMargin) {
-      _rightID.Decay();
-      _leftID.Update(value);
+      // The real activation value is a fraction of the relative image area
+      const float realValue = value / _leftArea;
+      _leftID.Update(realValue);
       _leftCentroid = UpdatePoint(_leftCentroid, point);
-    }
-      //right
-    else if (x >= _rightMargin) {
-      _rightID.Update(value);
-      _rightCentroid = UpdatePoint(_rightCentroid, point);
-      _leftID.Decay();
+      _leftActivatedArea = std::min(realValue, 1.0f);
 
+      _rightID.Decay();
+      _rightActivatedArea = 0.0;
+      _rightCentroid = Point2f(-1, -1);
     }
-    else { //they both go down
+    //right
+    else if (x >= _rightMargin) {
+      // The real activation value is a fraction of the relative image area
+      const float realValue = value / _rightArea;
+      _rightID.Update(realValue);
+      _rightCentroid = UpdatePoint(_rightCentroid, point);
+      _rightActivatedArea = std::min(realValue, 1.0f);
+
+      _leftID.Decay();
+      _leftActivatedArea = 0.0;
+      _leftCentroid = Point2f(-1, -1);
+    }
+    //they both go down
+    else {
       _rightID.Decay();
       _leftID.Decay();
+      _rightActivatedArea = 0.0;
+      _leftActivatedArea = 0.0;
+      _rightCentroid = Point2f(-1, -1);
+      _leftCentroid = Point2f(-1, -1);
     }
-
   }
 
   void Decay() {
     _topID.Decay();
+    _bottomID.Decay();
     _rightID.Decay();
     _leftID.Decay();
+    _topActivatedArea = 0.0;
+    _bottomActivatedArea = 0.0;
+    _rightActivatedArea = 0.0;
+    _leftActivatedArea = 0.0;
+    _topCentroid = Point2f(-1, -1);
+    _bottomCentroid = Point2f(-1, -1);
+    _rightCentroid = Point2f(-1, -1);
+    _leftCentroid = Point2f(-1, -1);
   }
 
 
@@ -246,22 +329,30 @@ private:
 
   };
 
-  float _leftMargin;
-
-private:
-  float _rightMargin;
-  float _upperMargin;
+  const float _alpha = 0.6;
+  const float _maxValue;
+  const float _leftMargin;
+  const float _rightMargin;
+  const float _topMargin;
+  const float _bottomMargin;
+  const float _topArea;     // area of top of the image (up until _topMargin)
+  const float _bottomArea;  // area of bottom of the image (down below _topMargin)
+  const float _leftArea;    // area of right of the image (up until _rightMargin)
+  const float _rightArea;   // area of left of the image (up until _leftMargin)
 
   ImpulseDecay _topID;
+  ImpulseDecay _bottomID;
   ImpulseDecay _leftID;
   ImpulseDecay _rightID;
 
-  Point2f _topCentroid   = Point2f(-1, -1);
-  Point2f _leftCentroid  = Point2f(-1, -1);
-  Point2f _rightCentroid = Point2f(-1, -1);
-  const float _alpha = 0.6;
-  float _maxValue;
-  int _imageArea;
+  Point2f _topCentroid       = Point2f(-1, -1);
+  Point2f _bottomCentroid    = Point2f(-1, -1);
+  Point2f _leftCentroid      = Point2f(-1, -1);
+  Point2f _rightCentroid     = Point2f(-1, -1);
+  float _topActivatedArea    = 0;
+  float _bottomActivatedArea = 0;
+  float _leftActivatedArea   = 0;
+  float _rightActivatedArea  = 0;
 };
 
 static const char * const kLogChannelName = "VisionSystem";
@@ -311,34 +402,30 @@ void MotionDetector::SetPrevImage(const Vision::ImageRGB &image, bool wasBlurred
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-static inline f32 ratioTestHelper(u8 value1, u8 value2)
-{
-  // NOTE: not checking for divide-by-zero here because kMotionDetection_MinBrightness (DEV_ASSERTed to be > 0 in
-  //  the constructor) prevents values of zero from getting to this helper
-  if(value1 > value2) {
-    return static_cast<f32>(value1) / std::max(1.f, static_cast<f32>(value2));
-  } else {
-    return static_cast<f32>(value2) / std::max(1.f, static_cast<f32>(value1));
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 s32 MotionDetector::RatioTest(const Vision::ImageRGB& image, Vision::Image& ratioImg)
 {
   DEV_ASSERT(ratioImg.GetNumRows() == image.GetNumRows() && ratioImg.GetNumCols() == image.GetNumCols(),
              "MotionDetector.RatioTestColor.MismatchedSize");
   
-  s32 numAboveThresh = 0;
+  u32 numAboveThresh = 0;
   
-  std::function<u8(const Vision::PixelRGB& thisElem, const Vision::PixelRGB& otherElem)> ratioTest = [&numAboveThresh](const Vision::PixelRGB& p1, const Vision::PixelRGB& p2)
+#ifdef ANDROID
+
+  return RatioTestNeon(image, ratioImg);
+
+#else
+
+  // somehow auto doens't work here... the right type cannot be deduced. Bug in clang?
+  std::function<u8(const Vision::PixelRGB& thisElem, const Vision::PixelRGB& otherElem)> ratioTest =
+      [&numAboveThresh](const Vision::PixelRGB& p1, const Vision::PixelRGB& p2)
   {
     u8 retVal = 0;
     if(p1.IsBrighterThan(kMotionDetection_MinBrightness) &&
        p2.IsBrighterThan(kMotionDetection_MinBrightness))
     {
-      const f32 ratioR = ratioTestHelper(p1.r(), p2.r());
-      const f32 ratioG = ratioTestHelper(p1.g(), p2.g());
-      const f32 ratioB = ratioTestHelper(p1.b(), p2.b());
+      const f32 ratioR = RatioTestHelper(p1.r(), p2.r());
+      const f32 ratioG = RatioTestHelper(p1.g(), p2.g());
+      const f32 ratioB = RatioTestHelper(p1.b(), p2.b());
       if(ratioR > kMotionDetection_RatioThreshold || ratioG > kMotionDetection_RatioThreshold || ratioB > kMotionDetection_RatioThreshold) {
         ++numAboveThresh;
         retVal = 255; // use 255 because it will actually display
@@ -349,6 +436,8 @@ s32 MotionDetector::RatioTest(const Vision::ImageRGB& image, Vision::Image& rati
   };
   
   image.ApplyScalarFunction(ratioTest, _prevImageRGB, ratioImg);
+
+#endif
   
   return numAboveThresh;
 }
@@ -359,13 +448,19 @@ s32 MotionDetector::RatioTest(const Vision::Image& image, Vision::Image& ratioIm
              "MotionDetector.RatioTestGray.MismatchedSize");
   
   s32 numAboveThresh = 0;
+
+#ifdef ANDROID
+
+  return RatioTestNeon(image, ratioImg);
+
+#else
   
   std::function<u8(const u8& thisElem, const u8& otherElem)> ratioTest = [&numAboveThresh](const u8& p1, const u8& p2)
   {
     u8 retVal = 0;
     if((p1 > kMotionDetection_MinBrightness) && (p2 > kMotionDetection_MinBrightness))
     {
-      const f32 ratio = ratioTestHelper(p1, p2);
+      const f32 ratio = RatioTestHelper(p1, p2);
       if(ratio > kMotionDetection_RatioThreshold)
       {
         ++numAboveThresh;
@@ -377,6 +472,8 @@ s32 MotionDetector::RatioTest(const Vision::Image& image, Vision::Image& ratioIm
   };
   
   image.ApplyScalarFunction(ratioTest, _prevImageGray, ratioImg);
+
+#endif
   
   return numAboveThresh;
 }
@@ -773,9 +870,10 @@ bool MotionDetector::DetectPeripheralMotionHelper(Vision::Image &ratioImage,
   // The image has several disjoint components, try to join them
   {
     const int kernelSize = int(kMotionDetection_MorphologicalSize_pix / scaleMultiplier);
-    cv::Mat structuringElement = cv::getStructuringElement(cv::MORPH_ELLIPSE,
+    cv::Mat structuringElement = cv::getStructuringElement(cv::MORPH_RECT,
                                                            cv::Size(kernelSize, kernelSize));
     cv::Mat &cvRatioImage = ratioImage.get_CvMat_();
+    // TODO morphologyEx might be slow. See VIC-1026
     cv::morphologyEx(cvRatioImage, cvRatioImage, cv::MORPH_CLOSE, structuringElement);
   }
 
@@ -785,18 +883,24 @@ bool MotionDetector::DetectPeripheralMotionHelper(Vision::Image &ratioImage,
   ratioImage.GetConnectedComponents(labelImage, stats);
 
   // Update the impulse/decay model
+  // The update is done per connected component, which means that several areas might activate at once
   bool updated = false;
-  for (const auto& stat: stats) {
+  for (uint i = 1; i < stats.size(); ++i) { //skip stats[0] since that's background
+    const auto& stat = stats[i];
     const f32 scaledArea = stat.area * scaleMultiplier;
     if (scaledArea < kMotionDetection_MinAreaForMotion_pix) { //too small
       continue;
     }
-    updated  = true;
-    _regionSelector->Update(stat.centroid, scaledArea);
+    updated = true;
+    _regionSelector->Update(stat.centroid, stat.area);
+    PRINT_CH_DEBUG(kLogChannelName, "MotionDetector.DetectPeripheralMotionHelper.MotionDetected",
+                   "Motion detected with an area of %d (scaled %f)", int(stat.area), scaledArea);
   }
+
   // No movement = global decay
   if (! updated) {
     _regionSelector->Decay();
+    PRINT_CH_DEBUG(kLogChannelName, "MotionDetector.DetectPeripheralMotionHelper.NoMotionDetected","");
   }
 
   // Filling the message
@@ -804,9 +908,11 @@ bool MotionDetector::DetectPeripheralMotionHelper(Vision::Image &ratioImage,
     // top
     if (_regionSelector->IsTopActivated())
     {
-      const float value = _regionSelector->GetTopResponse();
+      const float value = _regionSelector->GetTopActivationArea();
+      DEV_ASSERT_MSG(value > 0, "MotionDetector::DetectPeripheralMotionHelper.WrongTopValue",
+                     "Error: top is activated but the activation area is: %f", value);
       const Point2f& centroid = _regionSelector->GetTopResponseCentroid();
-      msg.top_img_area = value; //not really the area here, but the response value
+      msg.top_img_area = value;
       msg.top_img_x = int16_t(std::round(centroid.x() * scaleMultiplier));
       msg.top_img_y = int16_t(std::round(centroid.y() * scaleMultiplier));
       motionDetected = true;
@@ -817,12 +923,36 @@ bool MotionDetector::DetectPeripheralMotionHelper(Vision::Image &ratioImage,
       msg.top_img_x = 0;
       msg.top_img_y = 0;
     }
+
+    // Either area could be activated here, even all 4 of them at the same time
+
+    // bottom
+    if (_regionSelector->IsBottomActivated())
+    {
+      const float value = _regionSelector->GetBottomActivationArea();
+      DEV_ASSERT_MSG(value > 0, "MotionDetector::DetectPeripheralMotionHelper.WrongBottomValue",
+                     "Error: bottom is activated but the activation area is: %f", value);
+      const Point2f& centroid = _regionSelector->GetBottomResponseCentroid();
+      msg.bottom_img_area = value;
+      msg.bottom_img_x = int16_t(std::round(centroid.x() * scaleMultiplier));
+      msg.bottom_img_y = int16_t(std::round(centroid.y() * scaleMultiplier));
+      motionDetected = true;
+    }
+    else
+    {
+      msg.bottom_img_area = 0;
+      msg.bottom_img_x = 0;
+      msg.bottom_img_y = 0;
+    }
+
     // left
     if (_regionSelector->IsLeftActivated())
     {
-      const float value = _regionSelector->GetLeftResponse();
+      const float value = _regionSelector->GetLeftActivationArea();
+      DEV_ASSERT_MSG(value > 0, "MotionDetector::DetectPeripheralMotionHelper.WrongLeftValue",
+                     "Error: left is activated but the activation area is: %f", value);
       const Point2f& centroid = _regionSelector->GetLeftResponseCentroid();
-      msg.left_img_area = value; //not really the area here, but the response value
+      msg.left_img_area = value;
       msg.left_img_x = int16_t(std::round(centroid.x() * scaleMultiplier));
       msg.left_img_y = int16_t(std::round(centroid.y() * scaleMultiplier));
       motionDetected = true;
@@ -833,12 +963,15 @@ bool MotionDetector::DetectPeripheralMotionHelper(Vision::Image &ratioImage,
       msg.left_img_x = 0;
       msg.left_img_y = 0;
     }
+
     // right
     if (_regionSelector->IsRightActivated())
     {
-      const float value = _regionSelector->GetRightResponse();
+      const float value = _regionSelector->GetRightActivationArea();
+      DEV_ASSERT_MSG(value > 0, "MotionDetector::DetectPeripheralMotionHelper.WrongRightValue",
+                     "Error: right is activated but the activation area is: %f", value);
       const Point2f& centroid = _regionSelector->GetRightResponseCentroid();
-      msg.right_img_area = value; //not really the area here, but the response value
+      msg.right_img_area = value;
       msg.right_img_x = int16_t(std::round(centroid.x() * scaleMultiplier));
       msg.right_img_y = int16_t(std::round(centroid.y() * scaleMultiplier));
       motionDetected = true;
@@ -862,62 +995,86 @@ bool MotionDetector::DetectPeripheralMotionHelper(Vision::Image &ratioImage,
       };
 
       const float scale = 0.5;
+      if (_regionSelector->IsTopActivated())
       {
-        const float value = _regionSelector->GetTopResponse();
+        const float value = msg.top_img_area;
         const std::string& text = to_string_with_precision(value, 3);
         const Point2f origin(imageToDisplay.GetNumCols()/2 - 10, 30);
-        imageToDisplay.DrawText(origin, text, Anki::ColorRGBA(u8(255), u8(0), u8(0)), scale);
+        imageToDisplay.DrawText(origin, text, Anki::NamedColors::RED, scale);
       }
+      if (_regionSelector->IsBottomActivated())
       {
-        const float value = _regionSelector->GetRightResponse();
+        const float value = msg.bottom_img_area;
         const std::string& text = to_string_with_precision(value, 3);
-        const Point2f origin(imageToDisplay.GetNumCols()-50, imageToDisplay.GetNumRows()/2 );
-        imageToDisplay.DrawText(origin, text, Anki::ColorRGBA(u8(255), u8(0), u8(0)), scale);
+        const Point2f origin(imageToDisplay.GetNumCols()/2 - 10, imageToDisplay.GetNumRows() - 30);
+        imageToDisplay.DrawText(origin, text, Anki::NamedColors::BLUE, scale);
       }
+      if (_regionSelector->IsLeftActivated())
       {
-        const float value = _regionSelector->GetLeftResponse();
+        const float value = msg.left_img_area;
         const std::string& text = to_string_with_precision(value, 3);
         const Point2f origin(10, imageToDisplay.GetNumRows()/2);
-        imageToDisplay.DrawText(origin, text, Anki::ColorRGBA(u8(255), u8(0), u8(0)), scale);
+        imageToDisplay.DrawText(origin, text, Anki::NamedColors::YELLOW, scale);
+      }
+      if (_regionSelector->IsRightActivated())
+      {
+        const float value = msg.right_img_area;
+        const std::string& text = to_string_with_precision(value, 3);
+        const Point2f origin(imageToDisplay.GetNumCols()-50, imageToDisplay.GetNumRows()/2 );
+        imageToDisplay.DrawText(origin, text, Anki::NamedColors::GREEN, scale);
       }
     }
 
     // Draw the bounding lines
     { // Top line
-      int thickness = 1;
-      const Point2f topLeft(0, _regionSelector->GetUpperMargin());
-      const Point2f topRight(imageToDisplay.GetNumCols(), _regionSelector->GetUpperMargin());
-      imageToDisplay.DrawLine(topLeft, topRight, Anki::ColorRGBA(u8(255), u8(0), u8(0)), thickness);
+      const int thickness = 1;
+      const Point2f topLeft(0, _regionSelector->GetTopMargin());
+      const Point2f topRight(imageToDisplay.GetNumCols(), _regionSelector->GetTopMargin());
+      imageToDisplay.DrawLine(topLeft, topRight, Anki::NamedColors::RED, thickness);
+    }
+    { // Bottom line
+      const int thickness = 1;
+      const Point2f topLeft(0, _regionSelector->GetBottomMargin());
+      const Point2f topRight(imageToDisplay.GetNumCols(), _regionSelector->GetBottomMargin());
+      imageToDisplay.DrawLine(topLeft, topRight, Anki::NamedColors::RED, thickness);
     }
     { // Left line
-      int thickness = 1;
+      const int thickness = 1;
       const Point2f topLeft(_regionSelector->GetLeftMargin(), 0);
       const Point2f bottomLeft(_regionSelector->GetLeftMargin(), imageToDisplay.GetNumRows());
-      imageToDisplay.DrawLine(topLeft, bottomLeft, Anki::ColorRGBA(u8(255), u8(0), u8(0)), thickness);
+      imageToDisplay.DrawLine(topLeft, bottomLeft, Anki::NamedColors::RED, thickness);
     }
     { // Right line
-      int thickness = 1;
+      const int thickness = 1;
       const Point2f topRight(_regionSelector->GetRightMargin(), 0);
       const Point2f BottomRight(_regionSelector->GetRightMargin(), imageToDisplay.GetNumCols());
-      imageToDisplay.DrawLine(topRight, BottomRight, Anki::ColorRGBA(u8(255), u8(0), u8(0)), thickness);
+      imageToDisplay.DrawLine(topRight, BottomRight, Anki::NamedColors::RED, thickness);
     }
 
-    //Draw the motion centroids
+    //Draw the motion centroids -- scaled back to the working resolution
     {
+      if (_regionSelector->IsTopActivated())
       {
-        const Point2f centroid = _regionSelector->GetTopResponseCentroid();
-        imageToDisplay.DrawFilledCircle(centroid, Anki::ColorRGBA(u8(255), u8(255), u8(0)), 10);
+        const Point2f centroid(msg.top_img_x / scaleMultiplier, msg.top_img_y / scaleMultiplier);
+        imageToDisplay.DrawFilledCircle(centroid, Anki::NamedColors::RED, 10);
       }
+      if (_regionSelector->IsBottomActivated())
       {
-        const Point2f centroid = _regionSelector->GetLeftResponseCentroid();
-        imageToDisplay.DrawFilledCircle(centroid, Anki::ColorRGBA(u8(255), u8(255), u8(0)), 10);
+        const Point2f centroid(msg.bottom_img_x / scaleMultiplier, msg.bottom_img_y / scaleMultiplier);
+        imageToDisplay.DrawFilledCircle(centroid, Anki::NamedColors::BLUE, 10);
       }
+      if (_regionSelector->IsLeftActivated())
       {
-        const Point2f centroid = _regionSelector->GetRightResponseCentroid();
-        imageToDisplay.DrawFilledCircle(centroid, Anki::ColorRGBA(u8(255), u8(255), u8(0)), 10);
+        const Point2f centroid(msg.left_img_x / scaleMultiplier, msg.left_img_y / scaleMultiplier);
+        imageToDisplay.DrawFilledCircle(centroid, Anki::NamedColors::YELLOW, 10);
+      }
+      if (_regionSelector->IsRightActivated())
+      {
+        const Point2f centroid(msg.right_img_x / scaleMultiplier, msg.right_img_y / scaleMultiplier);
+        imageToDisplay.DrawFilledCircle(centroid, Anki::NamedColors::GREEN, 10);
       }
     }
-    debugImageRGBs.push_back({"PeripheralMotion", imageToDisplay});
+    debugImageRGBs.emplace_back("PeripheralMotion", imageToDisplay);
   }
 
   return motionDetected;

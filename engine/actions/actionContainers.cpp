@@ -27,7 +27,7 @@ namespace Anki {
 #pragma mark ---- ActionList ----
     
     ActionList::ActionList()
-    : IDependencyManagedComponent(RobotComponentID::ActionList)
+    : IDependencyManagedComponent(this, RobotComponentID::ActionList)
     , _actionWatcher(new ActionWatcher())
     {
     

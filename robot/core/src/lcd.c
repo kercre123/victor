@@ -148,11 +148,6 @@ void lcd_set_brightness(int brightness)
 
 int lcd_init(void) {
 
-//TODO : BACKLIGHT and REGULATOR INTERFACE
-  // Echo to device to activate backlight
-  system("echo 1 > /sys/kernel/debug/regulator/8916_l17/enable");
-  system("echo 1 > /sys/kernel/debug/regulator/8916_l4/enable");
-
   lcd_set_brightness(10);
 
   // IO Setup
@@ -184,8 +179,6 @@ int lcd_init(void) {
 
 void lcd_shutdown(void) {
   //todo: turn off screen?
-  system("echo 0 > /sys/kernel/debug/regulator/8916_l17/enable");
-  system("echo 0 > /sys/kernel/debug/regulator/8916_l4/enable");
 
   if (spi_fd) {
     static const uint8_t SLEEP = 0x10;

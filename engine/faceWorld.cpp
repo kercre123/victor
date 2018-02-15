@@ -76,8 +76,8 @@ namespace Cozmo {
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   FaceWorld::FaceWorld()
-  : UnreliableComponent<BCComponentID>(BCComponentID::FaceWorld)
-  , IDependencyManagedComponent<RobotComponentID>(RobotComponentID::FaceWorld)
+  : UnreliableComponent<BCComponentID>(this, BCComponentID::FaceWorld)
+  , IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::FaceWorld)
   {
 
   }

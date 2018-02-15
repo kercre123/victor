@@ -23,7 +23,7 @@
 #include "clad/types/emotionTypes.h"
 #include "clad/types/simpleMoodTypes.h"
 
-#include "engine/dependencyManagedComponent.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 #include "engine/moodSystem/emotion.h"
 #include "engine/moodSystem/moodDebug.h"
 #include "engine/robotComponents_fwd.h"

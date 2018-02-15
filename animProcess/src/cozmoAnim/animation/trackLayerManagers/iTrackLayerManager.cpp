@@ -14,10 +14,6 @@
 #include "cozmoAnim/animation/trackLayerManagers/iTrackLayerManager.h"
 
 #define LOG_CHANNEL    "TrackLayerManager"
-#define LOG_ERROR      PRINT_NAMED_ERROR
-#define LOG_WARNING    PRINT_NAMED_WARNING
-#define LOG_INFO(...)  PRINT_CH_INFO(LOG_CHANNEL, ##__VA_ARGS__)
-#define LOG_DEBUG(...) PRINT_CH_DEBUG(LOG_CHANNEL, ##__VA_ARGS__)
 
 #define DEBUG_FACE_LAYERING 0
 
@@ -29,20 +25,6 @@ ITrackLayerManager<FRAME_TYPE>::ITrackLayerManager(const Util::RandomGenerator& 
 : _rng(rng)
 {
   
-}
-
-template<class FRAME_TYPE>
-void ITrackLayerManager<FRAME_TYPE>::IncrementLayerTagCtr()
-{
-  // Increment the tag counter and keep it from being the "special"
-  // value used to indicate "not animating" or any existing
-  // layer tag in use
-  ++_layerTagCtr;
-  while(_layerTagCtr == kNotAnimatingTag ||
-        _layers.find(_layerTagCtr) != _layers.end())
-  {
-    ++_layerTagCtr;
-  }
 }
 
 template<class FRAME_TYPE>
@@ -60,10 +42,11 @@ bool ITrackLayerManager<FRAME_TYPE>::ApplyLayersToFrame(FRAME_TYPE& frame,
 
   bool frameUpdated = false;
   
-  std::list<AnimationTag> tagsToErase;
+  std::list<std::string> layersToErase;
   
   for (auto layerIter = _layers.begin(); layerIter != _layers.end(); ++layerIter)
   {
+    auto& layerName = layerIter->first;
     auto& layer = layerIter->second;
     
     // Apply the layer's track with frame
@@ -80,7 +63,7 @@ bool ITrackLayerManager<FRAME_TYPE>::ApplyLayersToFrame(FRAME_TYPE& frame,
         {
           LOG_WARNING("AnimationStreamer.UpdateFace.EmptyPersistentLayer",
                       "Persistent face layer is empty - perhaps live frames were "
-                      "used? (tag=%d)", layer.tag);
+                      "used? (layer=%s)", layerName.c_str());
           layer.isPersistent = false;
         }
         else
@@ -92,8 +75,8 @@ bool ITrackLayerManager<FRAME_TYPE>::ApplyLayersToFrame(FRAME_TYPE& frame,
           if (DEBUG_FACE_LAYERING)
           {
             LOG_DEBUG("AnimationStreamer.UpdateFace.HoldingLayer",
-                      "Holding last frame of face layer %s with tag %d",
-                      layer.name.c_str(), layer.tag);
+                      "Holding last frame of face layer %s",
+                      layerName.c_str());
           }
           
           layer.sentOnce = true; // mark that it has been sent at least once
@@ -109,19 +92,19 @@ bool ITrackLayerManager<FRAME_TYPE>::ApplyLayersToFrame(FRAME_TYPE& frame,
         if (DEBUG_FACE_LAYERING)
         {
           LOG_DEBUG("AnimationStreamer.UpdateFace.RemovingFaceLayer",
-                    "%s, Tag = %d (Layers remaining=%lu)",
-                    layer.name.c_str(), layer.tag, (unsigned long)_layers.size()-1);
+                    "%s (Layers remaining=%lu)",
+                    layerName.c_str(), (unsigned long)_layers.size()-1);
         }
         
-        tagsToErase.push_back(layerIter->first);
+        layersToErase.push_back(layerName);
       }
     }
   }
   
   // Actually erase elements from the map
-  for (auto tag : tagsToErase)
+  for (const auto& layerName : layersToErase)
   {
-    _layers.erase(tag);
+    _layers.erase(layerName);
   }
   
   return frameUpdated;
@@ -132,12 +115,13 @@ Result ITrackLayerManager<FRAME_TYPE>::AddLayer(const std::string& name,
                                                 const Animations::Track<FRAME_TYPE>& track,
                                                 TimeStamp_t delay_ms)
 {
+  if (_layers.find(name) != _layers.end()) {
+    PRINT_NAMED_WARNING("TrackLayerManager.AddLayer.LayerAlreadyExists", "");
+  }
+  
   Result lastResult = RESULT_OK;
   
-  IncrementLayerTagCtr();
-  
   Layer newLayer;
-  newLayer.tag = _layerTagCtr;
   newLayer.track = track; // COPY the track in
   newLayer.track.SetIsLive(true);
   newLayer.track.Init();
@@ -145,21 +129,21 @@ Result ITrackLayerManager<FRAME_TYPE>::AddLayer(const std::string& name,
   newLayer.streamTime_ms = 0;
   newLayer.isPersistent = false;
   newLayer.sentOnce = false;
-  newLayer.name = name;
   
-  _layers[_layerTagCtr] = std::move(newLayer);
+  _layers[name] = std::move(newLayer);
   
   return lastResult;
 }
 
 template<class FRAME_TYPE>
-AnimationTag ITrackLayerManager<FRAME_TYPE>::AddPersistentLayer(const std::string& name,
-                                                                const Animations::Track<FRAME_TYPE>& track)
+void ITrackLayerManager<FRAME_TYPE>::AddPersistentLayer(const std::string& name,
+                                                        const Animations::Track<FRAME_TYPE>& track)
 {
-  IncrementLayerTagCtr();
+  if (_layers.find(name) != _layers.end()) {
+    PRINT_NAMED_WARNING("TrackLayerManager.AddPersistentLayer.LayerAlreadyExists", "");
+  }
   
   Layer newLayer;
-  newLayer.tag = _layerTagCtr;
   newLayer.track = track;
   newLayer.track.SetIsLive(false); // don't want keyframes to delete as they play
   newLayer.track.Init();
@@ -167,17 +151,14 @@ AnimationTag ITrackLayerManager<FRAME_TYPE>::AddPersistentLayer(const std::strin
   newLayer.streamTime_ms = 0;
   newLayer.isPersistent = true;
   newLayer.sentOnce = false;
-  newLayer.name = name;
   
-  _layers[_layerTagCtr] = std::move(newLayer);
-  
-  return _layerTagCtr;
+  _layers[name] = std::move(newLayer);
 }
 
 template<class FRAME_TYPE>
-void ITrackLayerManager<FRAME_TYPE>::AddToPersistentLayer(AnimationTag tag, FRAME_TYPE& keyframe)
+void ITrackLayerManager<FRAME_TYPE>::AddToPersistentLayer(const std::string& layerName, FRAME_TYPE& keyframe)
 {
-  auto layerIter = _layers.find(tag);
+  auto layerIter = _layers.find(layerName);
   if (layerIter != _layers.end())
   {
     auto& track = layerIter->second.track;
@@ -195,14 +176,15 @@ void ITrackLayerManager<FRAME_TYPE>::AddToPersistentLayer(AnimationTag tag, FRAM
 }
 
 template<class FRAME_TYPE>
-void ITrackLayerManager<FRAME_TYPE>::RemovePersistentLayer(AnimationTag tag, s32 duration_ms)
+void ITrackLayerManager<FRAME_TYPE>::RemovePersistentLayer(const std::string& layerName, u32 duration_ms)
 {
-  auto layerIter = _layers.find(tag);
+  auto layerIter = _layers.find(layerName);
   if (layerIter != _layers.end())
   {
+    auto& layerName = layerIter->first;
     LOG_INFO("ITrackLayerManager.RemovePersistentLayer",
-             "%s, Tag = %d (Layers remaining=%lu)",
-             layerIter->second.name.c_str(), layerIter->first, (unsigned long)_layers.size()-1);
+             "%s, (Layers remaining=%lu)",
+             layerName.c_str(), (unsigned long)_layers.size()-1);
     
     
     // Add a layer that takes us back from where this persistent frame leaves
@@ -219,7 +201,7 @@ void ITrackLayerManager<FRAME_TYPE>::RemovePersistentLayer(AnimationTag tag, s32
     lastFrame.SetTriggerTime(duration_ms);
     track.AddKeyFrameToBack(std::move(lastFrame));
     
-    AddLayer("Remove" + layerIter->second.name, track);
+    AddLayer("Remove" + layerName, track);
     
     _layers.erase(layerIter);
   }
@@ -254,23 +236,9 @@ bool ITrackLayerManager<FRAME_TYPE>::HaveLayersToSend() const
 }
 
 template<class FRAME_TYPE>
-bool ITrackLayerManager<FRAME_TYPE>::HasLayerWithName(const std::string& name) const
+bool ITrackLayerManager<FRAME_TYPE>::HasLayer(const std::string& layerName) const
 {
-  for (const auto& layer : _layers)
-  {
-    if (layer.second.name == name)
-    {
-      return true;
-    }
-  }
-  
-  return false;
-}
-
-template<class FRAME_TYPE>
-bool ITrackLayerManager<FRAME_TYPE>::HasLayerWithTag(AnimationTag tag) const
-{
-  return _layers.find(tag) != _layers.end();
+  return _layers.find(layerName) != _layers.end();
 }
 
 // Explicit instantiation of allowed templated classes

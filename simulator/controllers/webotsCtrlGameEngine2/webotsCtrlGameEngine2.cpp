@@ -12,7 +12,7 @@
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/jsonTools.h"
 
-#include "androidHAL/androidHAL.h"
+#include "camera/cameraService.h"
 #include "cubeBleClient/cubeBleClient.h"
 #include "osState/osState.h"
 
@@ -66,7 +66,7 @@ int main(int argc, char **argv)
   
   // Instantiate supervisor and pass to AndroidHAL and cubeBleClient
   webots::Supervisor engineSupervisor;
-  AndroidHAL::SetSupervisor(&engineSupervisor);
+  CameraService::SetSupervisor(&engineSupervisor);
   OSState::SetSupervisor(&engineSupervisor);
   CubeBleClient::SetSupervisor(&engineSupervisor);
 
@@ -148,7 +148,7 @@ int main(int argc, char **argv)
   }
   
   // Start with a step so that we can attach to the process here for debugging
-  engineSupervisor.step(BS_TIME_STEP);
+  engineSupervisor.step(BS_TIME_STEP_MS);
   
   // Get configuration JSON
   Json::Value config;
@@ -203,7 +203,7 @@ int main(int argc, char **argv)
   //
   // Main Execution loop: step the world forward forever
   //
-  while (engineSupervisor.step(BS_TIME_STEP) != -1)
+  while (engineSupervisor.step(BS_TIME_STEP_MS) != -1)
   {
     double currTimeNanoseconds = Util::SecToNanoSec(engineSupervisor.getTime());
     myCozmo.Update(Util::numeric_cast<BaseStationTime_t>(currTimeNanoseconds));

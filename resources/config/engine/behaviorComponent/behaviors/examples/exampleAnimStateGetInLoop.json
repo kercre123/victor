@@ -1,0 +1,9 @@
+{
+  "behaviorID"       : "ExampleAnimStateGetInLoop",  
+  "behaviorClass"    : "PlayAnimStatesGetInLoop",
+  "getIn"            : "NeedsSevereLowRepairGetIn",
+  "loopAnimation"    : "PeekABooLowIntensity",
+  "getOut"           : "NeedsSevereLowRepairGetIn",
+  "emergencyGetOut"  : "NeedsSevereLowRepairGetIn"
+  //"loopEndCondition" : ""
+}

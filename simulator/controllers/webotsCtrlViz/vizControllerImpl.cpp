@@ -10,6 +10,7 @@
 *
 */
 
+#include "simulator/controllers/shared/webotsHelpers.h"
 #include "coretech/common/engine/array2d_impl.h"
 #include "coretech/common/engine/colorRGBA.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
@@ -98,6 +99,8 @@ void VizControllerImpl::Init()
     std::bind(&VizControllerImpl::ProcessVizEndRobotUpdate, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::SaveImages,
     std::bind(&VizControllerImpl::ProcessSaveImages, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::SaveState,
+    std::bind(&VizControllerImpl::ProcessSaveState, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::CameraInfo,
     std::bind(&VizControllerImpl::ProcessCameraInfo, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::ObjectConnectionState,
@@ -110,6 +113,8 @@ void VizControllerImpl::Init()
     std::bind(&VizControllerImpl::ProcessObjectAccelState, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::BehaviorStackDebug,
     std::bind(&VizControllerImpl::ProcessBehaviorStackDebug, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::VisionModeDebug,
+    std::bind(&VizControllerImpl::ProcessVisionModeDebug, this, std::placeholders::_1));
 
 
   // Get display devices
@@ -118,6 +123,7 @@ void VizControllerImpl::Init()
   _moodDisp = _vizSupervisor.getDisplay("cozmo_mood_display");
   _behaviorDisp = _vizSupervisor.getDisplay("cozmo_behavior_display");
   _bsmStackDisp = _vizSupervisor.getDisplay("victor_behavior_stack_display");
+  _visionModeDisp = _vizSupervisor.getDisplay("victor_vision_mode_display");
   _activeObjectDisp = _vizSupervisor.getDisplay("cozmo_active_object_display");
   _cubeAccelDisp = _vizSupervisor.getDisplay("cozmo_cube_accel_display");
 
@@ -162,24 +168,19 @@ void VizControllerImpl::Init()
   _moodDisp->setFont("Lucida Console", 8, true);
   _activeObjectDisp->setFont("Lucida Console", 8, true);
   _bsmStackDisp->setFont("Lucida Console", 8, true);
+  _visionModeDisp->setFont("Lucida Console", 8, true);
 
   DrawText(_activeObjectDisp, 0, (u32)Anki::NamedColors::WHITE, "Slot | Moving | UpAxis");
   
   
   // === Look for CozmoBot in scene tree ===
 
-  // Get world root node
-  webots::Node* root = _vizSupervisor.getRoot();
-
   // Look for controller-less CozmoBot in children.
   // These will be used as visualization robots.
-  webots::Field* rootChildren = root->getField("children");
-  int numRootChildren = rootChildren->getCount();
-  for (int n = 0 ; n<numRootChildren; ++n) {
-    webots::Node* nd = rootChildren->getMFNode(n);
-
-    // Get the node name
-    std::string nodeName = nd->getTypeName();
+  const auto& nodeInfo = WebotsHelpers::GetFirstMatchingSceneTreeNode(&_vizSupervisor, "CozmoBot");
+  const auto* nd = nodeInfo.nodePtr;
+  if (nd != nullptr) {
+    DEV_ASSERT(nodeInfo.type == webots::Node::SUPERVISOR, "VizControllerImpl.Init.CozmoBotNotASupervisor");
     
     // Get the vizMode status
     bool vizMode = false;
@@ -187,16 +188,10 @@ void VizControllerImpl::Init()
     if (vizModeField) {
       vizMode = vizModeField->getSFBool();
     }
-
-    //printf(" Node %d: name \"%s\" typeName \"%s\" controllerName \"%s\"\n",
-    //       n, nodeName.c_str(), nd->getTypeName().c_str(), controllerName.c_str());
-    int nodeType = nd->getType();
     
-    if (nodeType == static_cast<int>(webots::Node::SUPERVISOR) &&
-      nodeName.find("CozmoBot") != std::string::npos &&
-      vizMode) {
-
-      printf("Found Viz robot with name %s\n", nodeName.c_str());
+    if (vizMode) {
+      PRINT_NAMED_INFO("VizControllerImpl.Init.FoundVizRobot",
+                       "Found Viz robot with name %s", nodeInfo.typeName.c_str());
       CozmoBotVizParams p;
       p.supNode = (webots::Supervisor*)nd;
 
@@ -209,10 +204,12 @@ void VizControllerImpl::Init()
       p.liftAngle = nd->getField("liftAngle");
 
       if (p.supNode && p.trans && p.rot && p.headAngle && p.liftAngle) {
-        printf("Added viz robot %s\n", nodeName.c_str());
+        PRINT_NAMED_INFO("VizControllerImpl.Init.AddedVizRobot",
+                         "Added viz robot %s", nodeInfo.typeName.c_str());
         vizBots_.push_back(p);
       } else {
-        printf("ERROR: Could not find all required fields in CozmoBot supervisor\n");
+        PRINT_NAMED_ERROR("VizControllerImpl.Init.MissingFields",
+                          "ERROR: Could not find all required fields in CozmoBot supervisor");
       }
     }
   }
@@ -249,7 +246,8 @@ void VizControllerImpl::ProcessSaveImages(const AnkiEvent<VizInterface::MessageV
   }
   else
   {
-    printf("ProcessSaveImages: disabling image saving\n");
+    PRINT_NAMED_INFO("VizControllerImpl.ProcessSaveImages.DisablingImageSaving",
+                     "Disabling image saving");
   }
 }
   
@@ -659,8 +657,6 @@ void VizControllerImpl::ProcessVizDisplayImageMessage(const AnkiEvent<VizInterfa
   auto encImgIter = _encodedImages.find(payload.timestamp);
   if(encImgIter == _encodedImages.end())
   {
-    PRINT_NAMED_WARNING("VizControllerImpl.ProcessVizDisplayImage.InvalidTimestamp",
-                        "t=%u", payload.timestamp);
     return;
   }
   
@@ -786,11 +782,10 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_CLIFF, cliffDetected ? Anki::NamedColors::RED : Anki::NamedColors::GREEN, txt);
 
   const auto& proxData = payload.state.proxData;
-  sprintf(txt, "Dist: %4u mm, sigStrength: %5.3f, status 0x%02X (%s)",
+  sprintf(txt, "Dist: %4u mm, sigStrength: %5.3f, status 0x%02X",
           proxData.distance_mm,
           proxData.signalIntensity / proxData.spadCount,
-          proxData.rangeStatus,
-          proxData.distance_mm < kProxSensorMaxDistance_mm ? "OBJ DETECTED" : "CLEAR");
+          proxData.rangeStatus);
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_DIST, Anki::NamedColors::GREEN, txt);
   
   sprintf(txt, "Speed L: %4d  R: %4d mm/s",
@@ -1513,6 +1508,23 @@ void VizControllerImpl::ProcessBehaviorStackDebug(const AnkiEvent<VizInterface::
   }
 }
 
+void VizControllerImpl::ProcessVisionModeDebug(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  if( _visionModeDisp == nullptr ) {
+    return;
+  }
+
+  // Clear the space
+  _visionModeDisp->setColor(0x0);
+  _visionModeDisp->fillRectangle(0, 0, _bsmStackDisp->getWidth(), _bsmStackDisp->getHeight());
+
+  const VizInterface::VisionModeDebug& debugData = msg.GetData().Get_VisionModeDebug();
+
+  for( size_t i=0; i < debugData.debugStrings.size(); ++i ) {
+    DrawText(_visionModeDisp, (u32)i, (u32)Anki::NamedColors::GREEN, debugData.debugStrings[i].c_str());
+  }
+
+}
 
 // ========== Start/End of Robot Updates ==========
   

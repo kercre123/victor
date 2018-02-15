@@ -12,6 +12,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviorStack.h"
 
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/aiComponent/behaviorComponent/asyncMessageGateComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
@@ -19,6 +20,7 @@
 #include "engine/aiComponent/behaviorComponent/iBehavior.h"
 #include "engine/viz/vizManager.h"
 #include "util/logging/logging.h"
+#include "webServerProcess/src/webService.h"
 
 // TODO:(bn) put viz manager in BehaviorExternalInterface, then remove these includes
 #include "engine/cozmoContext.h"
@@ -27,7 +29,7 @@ namespace Anki {
 namespace Cozmo {
 
 namespace{
-
+  const std::string kWebVizModuleName = "behaviors";
 }
 
 
@@ -123,6 +125,11 @@ void BehaviorStack::UpdateBehaviorStack(BehaviorExternalInterface& behaviorExter
 
   if( ANKI_DEV_CHEATS ) {
     SendDebugVizMessages(behaviorExternalInterface);
+    
+    if( behaviorWebVizDirty ) {
+      SendDebugBehaviorTreeToWebViz( behaviorExternalInterface );
+      behaviorWebVizDirty = false;
+    }
   }
 
 }
@@ -150,6 +157,8 @@ void BehaviorStack::PushOntoStack(IBehavior* behavior)
   
   PrepareDelegatesToEnterScope(behavior);
   behavior->OnActivated();
+  
+  behaviorWebVizDirty = true;
 }
 
 
@@ -162,6 +171,8 @@ void BehaviorStack::PopStack()
   
   _behaviorToIndexMap.erase(_behaviorStack.back());
   _behaviorStack.pop_back();
+  
+  behaviorWebVizDirty = true;
 }
 
 
@@ -200,7 +211,7 @@ void BehaviorStack::DebugPrintStack(const std::string& debugStr) const
     PRINT_CH_DEBUG("BehaviorSystem", ("BehaviorSystemManager.Stack." + debugStr).c_str(),
                    "%zu: %s",
                    i,
-                   _behaviorStack[i]->GetPrintableID().c_str());
+                   _behaviorStack[i]->GetDebugLabel().c_str());
   }
 }
 
@@ -210,8 +221,8 @@ void BehaviorStack::SendDebugVizMessages(BehaviorExternalInterface& behaviorExte
   VizInterface::BehaviorStackDebug data;
 
   for( const auto& behavior : _behaviorStack ) {
-    data.debugStrings.push_back( behavior->GetPrintableID() );
-  }  
+    data.debugStrings.push_back( behavior->GetDebugLabel() );
+  }
   
   auto context = behaviorExternalInterface.GetRobotInfo().GetContext();
   if(context != nullptr){
@@ -220,6 +231,51 @@ void BehaviorStack::SendDebugVizMessages(BehaviorExternalInterface& behaviorExte
       vizManager->SendBehaviorStackDebug(std::move(data));
     }
   }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorStack::SendDebugBehaviorTreeToWebViz(BehaviorExternalInterface& behaviorExternalInterface) const
+{
+  Json::Value data = BuildDebugBehaviorTree(behaviorExternalInterface);
+  
+  const auto* context = behaviorExternalInterface.GetRobotInfo().GetContext();
+  if( context != nullptr ) {
+    const auto* webService = context->GetWebService();
+    if( webService != nullptr ){
+      webService->SendToWebViz( kWebVizModuleName, data );
+    }
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Json::Value BehaviorStack::BuildDebugBehaviorTree(BehaviorExternalInterface& behaviorExternalInterface) const
+{
+   
+  Json::Value data;
+  data["time"] = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  auto& tree = data["tree"];
+  auto& stack = data["stack"];
+  
+  // construct flat table of tree relationships
+  for( const auto& elem : _delegatesMap ) {
+    for( const auto& child : elem.second ) {
+      Json::Value relationship;
+      relationship["behaviorID"] = child->GetDebugLabel();
+      relationship["parent"] = elem.first->GetDebugLabel();
+      tree.append( relationship );
+    }
+  }
+  if( !_behaviorStack.empty() ) {
+    Json::Value relationship;
+    relationship["behaviorID"] = _behaviorStack.front()->GetDebugLabel();
+    relationship["parent"] = Json::nullValue;
+    tree.append( relationship );
+  }
+  for( const auto& stackElem : _behaviorStack ) {
+    stack.append( stackElem->GetDebugLabel() );
+  }
+  
+  return data;
 }
 
 

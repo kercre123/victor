@@ -17,8 +17,12 @@
 #include "textToSpeechComponent.h"
 #include "textToSpeechProvider.h"
 
-#include "cozmoAnim/cozmoAnimContext.h"
+#include "cozmoAnim/animContext.h"
+#include "cozmoAnim/animProcessMessages.h"
 #include "cozmoAnim/robotDataLoader.h"
+
+#include "clad/robotInterface/messageRobotToEngine.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
 
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "audioEngine/audioEngineController.h"
@@ -32,10 +36,6 @@
 
 // Log options
 #define LOG_CHANNEL    "TextToSpeech"
-#define LOG_ERROR      PRINT_NAMED_ERROR
-#define LOG_WARNING    PRINT_NAMED_WARNING
-#define LOG_INFO(...)  PRINT_CH_INFO(LOG_CHANNEL, ##__VA_ARGS__)
-#define LOG_DEBUG(...) PRINT_CH_DEBUG(LOG_CHANNEL, ##__VA_ARGS__)
 
 // Trace options
 #define DEBUG_TEXTTOSPEECH_COMPONENT 0
@@ -44,7 +44,7 @@ namespace Anki {
 namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TextToSpeechComponent::TextToSpeechComponent(const CozmoAnimContext* context)
+TextToSpeechComponent::TextToSpeechComponent(const AnimContext* context)
 : _dispatchQueue(Util::Dispatch::Create("TtSpeechComponent"))
 {
   const Json::Value& tts_config = context->GetDataLoader()->GetTextToSpeechConfig();
@@ -185,7 +185,7 @@ void TextToSpeechComponent::CleanupAudioEngine(const OperationId operationId)
   if (TextToSpeechComponent::kInvalidOperationId != operationId) {
     ClearOperationData(operationId);
   }
-} // CompltedSpeech()
+} // CompletedSpeech()
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TextToSpeechComponent::ClearOperationData(const OperationId operationId)
@@ -317,7 +317,6 @@ TextToSpeechComponent::TtsBundle* TextToSpeechComponent::GetTtsBundle(const Oper
   return nullptr;
 } // GetTtsBundle()
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TextToSpeechComponent::OperationId TextToSpeechComponent::GetNextOperationId()
 {
   if (++_prevOperationId == kInvalidOperationId) {
@@ -325,6 +324,54 @@ TextToSpeechComponent::OperationId TextToSpeechComponent::GetNextOperationId()
   }
   return _prevOperationId;
 } // GetNextOperationId()
+
+void TextToSpeechComponent::HandleMessage(const RobotInterface::TextToSpeechStart & msg)
+{
+  using Anki::Util::HidePersonallyIdentifiableInfo;
+
+  const auto ttsID = msg.ttsID;
+  const std::string & text = std::string(msg.text, msg.text_length);
+
+  LOG_DEBUG("TextToSpeechComponent.HandleMessage.TextToSpeechStart", "ttsID %d text %s",  
+    ttsID, HidePersonallyIdentifiableInfo(text.c_str()));
+
+  //
+  // TBD: Perform TTS.  For now, just send a sequence of dummy events corresponding to normal execution.
+  //
+
+  // Send starting event
+  TextToSpeechEvent starting;
+  starting.ttsID = ttsID;
+  starting.ttsState = TextToSpeechState::Starting;
+  AnimProcessMessages::SendAnimToEngine(std::move(starting));
+
+  // Send running event
+  TextToSpeechEvent running;
+  running.ttsID = ttsID;
+  running.ttsState = TextToSpeechState::Running;
+  AnimProcessMessages::SendAnimToEngine(std::move(running));
+
+  // Send done event
+  TextToSpeechEvent done;
+  done.ttsID = ttsID;
+  done.ttsState = TextToSpeechState::Done;
+  AnimProcessMessages::SendAnimToEngine(std::move(done));
+}
+
+void TextToSpeechComponent::HandleMessage(const RobotInterface::TextToSpeechStop& msg)
+{
+  const auto ttsID = msg.ttsID;
+
+  LOG_DEBUG("TextToSpeechComponent.HandleMessage.TextToSpeechStop", "ttsID %d", ttsID);
+
+  // TBD: Perform TTS cancel
+
+  // Send done event
+  TextToSpeechEvent evt;
+  evt.ttsID = ttsID;
+  evt.ttsState = TextToSpeechState::Done;
+  AnimProcessMessages::SendAnimToEngine(std::move(evt));
+}
 
 } // end namespace Cozmo
 } // end namespace Anki

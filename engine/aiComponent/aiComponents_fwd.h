@@ -19,12 +19,11 @@ namespace Cozmo {
 enum class AIComponentID{
   // component which manages all aspects of the AI system that relate to behaviors
   BehaviorComponent,
-  // component which behaviors can delegate to for selecting a random Trick / Spark
-  DoATrick,
+  // component which sits between the behavior system and action list/animation streamer
+  // to ensure smooth transitions between actions
+  ContinuityComponent,
   // provide a simple interface for selecting the best face to interact with
   FaceSelection,
-  // Coordinates sound effect events across various feeding cubes/activities etc
-  FeedingSoundEffect,
   // component for tracking freeplay DAS data
   FreeplayDataTracker,
   // module to analyze information for the AI in processes common to more than one behavior, for example
@@ -34,14 +33,13 @@ enum class AIComponentID{
   ObjectInteractionInfoCache,
   // Component that maintains the puzzles victor can solve
   Puzzle,
-  // component for keeping track of what game cozmo should request next
-  RequestGame,
-  // component for tracking severe needs states
-  SevereNeeds,
+  // component that caches templated images and only swaps out quadrants that have
+  // changed between requests
+  TemplatedImageCache,
+  // component that maintains persistant information about the timer utility
+  TimerUtility,
   // whiteboard for behaviors to share information, or to store information only useful to behaviors
   Whiteboard,
-  // component for tracking cozmo's work-out behaviors
-  Workout,
   
   Count
 };

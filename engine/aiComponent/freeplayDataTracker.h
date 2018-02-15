@@ -14,7 +14,7 @@
 #define __Cozmo_Basestation_AiComponent_FreeplayDataTracker_H__
 
 #include "coretech/common/engine/utils/timer.h"
-#include "engine/entity.h"
+#include "util/entityComponent/iManageableComponent.h"
 
 #include "util/helpers/noncopyable.h"
 
@@ -31,7 +31,7 @@ enum class FreeplayPauseFlag
   OnCharger
 };
 
-class FreeplayDataTracker : public ManageableComponent, private Util::noncopyable
+class FreeplayDataTracker : public IManageableComponent, private Util::noncopyable
 {
 public:
 

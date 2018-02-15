@@ -34,7 +34,9 @@ public:
   }
 
 protected:
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::Standard });
+  }
 
 
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;

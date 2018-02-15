@@ -56,18 +56,21 @@ void MessageHandler::Init(const Json::Value& config, RobotManager* robotMgr, con
   if (context->GetExternalInterface() != nullptr) {
     auto helper = MakeAnkiEventUtil(*context->GetExternalInterface(), *this, _signalHandles);
     using namespace ExternalInterface;
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::ReliableTransportRunMode>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::ExitSdkMode>();
   }
 }
 
-void MessageHandler::ProcessMessages()
+Result MessageHandler::ProcessMessages()
 {
   ANKI_CPU_PROFILE("MessageHandler::ProcessMessages");
   
-  if(_isInitialized)
+  if (_isInitialized)
   {
-    _robotConnectionManager->Update();
+    Result result = _robotConnectionManager->Update();
+    if (RESULT_OK != result) {
+      LOG_ERROR("MessageHandler.ProcessMessages", "Unable to update robot connection (result %d)", result);
+      return result;
+    }
     
     std::vector<uint8_t> nextData;
     while (_robotConnectionManager->PopData(nextData))
@@ -75,7 +78,7 @@ void MessageHandler::ProcessMessages()
       ++_messageCountRtE;
 
       // If we don't have a robot to care about this message, throw it away
-      Robot* destRobot = _robotManager->GetFirstRobot();
+      Robot* destRobot = _robotManager->GetRobot();
       if (nullptr == destRobot)
       {
         continue;
@@ -88,11 +91,9 @@ void MessageHandler::ProcessMessages()
         continue;
       }
 
-      auto robotId = destRobot->GetID();
-
       // see if message type should be filtered out based on potential firmware mismatch
       const RobotInterface::RobotToEngineTag msgType = static_cast<RobotInterface::RobotToEngineTag>(nextData.data()[0]);
-      if (_robotManager->ShouldFilterMessage(robotId, msgType)) {
+      if (_robotManager->ShouldFilterMessage(msgType)) {
         continue;
       }
 
@@ -110,12 +111,13 @@ void MessageHandler::ProcessMessages()
         DevLoggingSystem::GetInstance()->LogMessage(message);
       }
 #endif
-      Broadcast(robotId, std::move(message));      
+      Broadcast(std::move(message));
     }
   }
+  return RESULT_OK;
 }
 
-Result MessageHandler::SendMessage(const RobotID_t robotId, const RobotInterface::EngineToRobot& msg, bool reliable, bool hot)
+Result MessageHandler::SendMessage(const RobotInterface::EngineToRobot& msg, bool reliable, bool hot)
 {
   ++_messageCountEtR;
 
@@ -124,7 +126,7 @@ Result MessageHandler::SendMessage(const RobotID_t robotId, const RobotInterface
     return RESULT_FAIL;
   }
   
-  if (_robotManager->ShouldFilterMessage(robotId, msg.GetTag()))
+  if (_robotManager->ShouldFilterMessage(msg.GetTag()))
   {
     return RESULT_FAIL;
   }
@@ -154,33 +156,30 @@ Result MessageHandler::SendMessage(const RobotID_t robotId, const RobotInterface
   return RESULT_OK;
 }
 
-void MessageHandler::Broadcast(const uint32_t robotId, const RobotInterface::RobotToEngine& message)
+void MessageHandler::Broadcast(const RobotInterface::RobotToEngine& message)
 {
   ANKI_CPU_PROFILE("Broadcast_R2E");
   
   u32 type = static_cast<u32>(message.GetTag());
-  _eventMgr.Broadcast(robotId, AnkiEvent<RobotInterface::RobotToEngine>(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(), type, message));
+  _eventMgr.Broadcast(AnkiEvent<RobotInterface::RobotToEngine>(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(), type, message));
 }
 
-void MessageHandler::Broadcast(const uint32_t robotId, RobotInterface::RobotToEngine&& message)
+void MessageHandler::Broadcast(RobotInterface::RobotToEngine&& message)
 {
   ANKI_CPU_PROFILE("Broadcast_R2E");
   
   u32 type = static_cast<u32>(message.GetTag());
-  _eventMgr.Broadcast(robotId, AnkiEvent<RobotInterface::RobotToEngine>(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(), type, std::move(message)));
+  _eventMgr.Broadcast(AnkiEvent<RobotInterface::RobotToEngine>(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(), type, std::move(message)));
 }
-  
+
+bool MessageHandler::IsConnected(RobotID_t robotID)
+{
+  return _robotConnectionManager->IsConnected(robotID);
+}
+
 Result MessageHandler::AddRobotConnection(RobotID_t robotId)
 {
-  const char* robotProcessIPAddress = "127.0.0.1";
-
-  int port = Anki::Cozmo::ANIM_PROCESS_SERVER_BASE_PORT + robotId;
-  PRINT_NAMED_WARNING("AddRobotConnection", "%s:%d", robotProcessIPAddress, port);
-
-  Anki::Util::TransportAddress address(robotProcessIPAddress, static_cast<uint16_t>(port));
-  _robotConnectionManager->Connect(address);
-  
-  return RESULT_OK;
+  return _robotConnectionManager->Connect(robotId);
 }
   
 void MessageHandler::Disconnect()
@@ -193,23 +192,6 @@ const Util::Stats::StatsAccumulator& MessageHandler::GetQueuedTimes_ms() const
   return _robotConnectionManager->GetQueuedTimes_ms();
 }
 
-void MessageHandler::ReadLabAssignmentsFromRobot(u32 serialNumber) const
-{
-  _robotManager->ReadLabAssignmentsFromRobot(serialNumber);
-}
-
-void MessageHandler::ConnectRobotToNeedsManager(u32 serialNumber) const
-{
-  _robotManager->ConnectRobotToNeedsManager(serialNumber);
-}
-
-
-template<>
-void MessageHandler::HandleMessage(const ExternalInterface::ReliableTransportRunMode& msg)
-{
-  _robotConnectionManager->SetReliableTransportRunMode(msg.isSync);
-}
-  
 template<>
 void MessageHandler::HandleMessage(const ExternalInterface::ExitSdkMode& msg)
 {

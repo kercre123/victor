@@ -130,7 +130,7 @@ namespace Cozmo {
     
     u32 GetNumAdvertisingDevices() const { return (u32)advertisingDevices_.size(); }
     
-    u32 GetAdvertisingDeviceIDs(std::vector<int> &robotIDs);
+    u32 GetAdvertisingDeviceIDs(std::vector<int> &devIDs);
     
     const char* GetAdvertisingHostIP() const { return advertisingHostIP_; }
     

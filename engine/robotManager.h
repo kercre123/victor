@@ -12,15 +12,8 @@
 #define ANKI_COZMO_BASESTATION_ROBOTMANAGER_H
 
 #include "engine/robotEventHandler.h"
-#include "util/signals/simpleSignal.hpp"
 #include "util/helpers/noncopyable.h"
-#include "clad/types/animationTrigger.h"
-#include <map>
-#include <vector>
 #include <memory>
-#include <set>
-#include <unordered_map>
-#include <string>
 
 
 namespace Json {
@@ -29,12 +22,6 @@ namespace Json {
 
 namespace Anki {
   
-namespace Util {
-namespace Data {
-  class DataPlatform;
-}
-}
-
 namespace Cozmo {
   
 // Forward declarations:
@@ -45,12 +32,7 @@ enum class RobotToEngineTag : uint8_t;
 }
 class Robot;
 class IExternalInterface;
-class BackpackLightAnimationContainer;
-class CubeLightAnimationContainer;
 class CozmoContext;
-class AnimationGroupContainer;
-enum class FirmwareType : uint8_t;
-class AnimationTriggerResponsesContainer;
 class RobotInitialConnection;
 
 class RobotManager : Util::noncopyable
@@ -61,83 +43,37 @@ public:
   
   ~RobotManager();
   
-  void Init(const Json::Value& config, const Json::Value& dasEventConfig);
-  
-  // Get the list of known robot ID's
-  std::vector<RobotID_t> const& GetRobotIDList() const;
+  void Init(const Json::Value& config);
 
-  // for when you don't care and you just want a damn robot
-  Robot* GetFirstRobot();
-
-  // Get a pointer to a robot by ID
-  Robot* GetRobotByID(const RobotID_t robotID);
+  // Return raw pointer to robot
+  Robot* GetRobot();
   
   // Check whether a robot exists
   bool DoesRobotExist(const RobotID_t withID) const;
   
-  // Add / remove robots
+  // Add / remove robot
   void AddRobot(const RobotID_t withID);
-  void RemoveRobot(const RobotID_t withID, bool robotRejectedConnection);
-  void RemoveRobots();
+  void RemoveRobot(bool robotRejectedConnection);
   
-  // Call each Robot's Update() function
-  void UpdateAllRobots();
+  // Call Robot's Update() function
+  void UpdateRobot();
   
   // Update robot connection state
-  void UpdateRobotConnection();
+  Result UpdateRobotConnection();
   
-  // Return a
-  // Return the number of availale robots
-  size_t GetNumRobots() const;
-
-  CubeLightAnimationContainer&     GetCubeLightAnimations()     { return *_cubeLightAnimations; }
-  BackpackLightAnimationContainer& GetBackpackLightAnimations() { return *_backpackLightAnimations; }
-  AnimationGroupContainer&         GetAnimationGroups()         { return *_animationGroups; }
-  
-  RobotEventHandler& GetRobotEventHandler() { return _robotEventHandler; }
-  
-  bool HasCannedAnimation(const std::string& animName);
-  bool HasAnimationGroup(const std::string& groupName);
-  bool HasAnimationForTrigger( AnimationTrigger ev );
-  std::string GetAnimationForTrigger( AnimationTrigger ev );
-  bool HasCubeAnimationForTrigger( CubeAnimationTrigger ev );
-  std::string GetCubeAnimationForTrigger( CubeAnimationTrigger ev );
-  
-  // Iterate through the loaded animation groups and broadcast their names
-  void BroadcastAvailableAnimationGroups();
-  
-  using RobotMap = std::map<RobotID_t,Robot*>;
-  const RobotMap& GetRobotMap() const { return _robots; }
   RobotInterface::MessageHandler* GetMsgHandler() const { return _robotMessageHandler.get(); }
 
-  bool ShouldFilterMessage(RobotID_t robotId, RobotInterface::RobotToEngineTag msgType) const;
-  bool ShouldFilterMessage(RobotID_t robotId, RobotInterface::EngineToRobotTag msgType) const;
-
-  void ReadLabAssignmentsFromRobot(u32 serialNumber) const;
-  
-  void ConnectRobotToNeedsManager(u32 serialNumber) const;
-  
-  const std::set<AnimationTrigger>& GetDasBlacklistedAnimationTriggers() const { return _dasBlacklistedAnimationTriggers; }
+  bool ShouldFilterMessage(RobotInterface::RobotToEngineTag msgType) const;
+  bool ShouldFilterMessage(RobotInterface::EngineToRobotTag msgType) const;
 
 protected:
-  RobotMap _robots;
-  std::vector<RobotID_t>     _IDs;
+  std::unique_ptr<Robot> _robot;
   const CozmoContext* _context;
   RobotEventHandler _robotEventHandler;
-  BackpackLightAnimationContainer* const _backpackLightAnimations;
-  CubeLightAnimationContainer* const _cubeLightAnimations;
-  AnimationGroupContainer* const _animationGroups;
-  AnimationTriggerResponsesContainer* const _animationTriggerResponses;
-  AnimationTriggerResponsesContainer* const _cubeAnimationTriggerResponses;
   std::unique_ptr<RobotInterface::MessageHandler> _robotMessageHandler;
-  std::vector<Signal::SmartHandle> _signalHandles;
-  std::unordered_map<RobotID_t, RobotInitialConnection> _initialConnections;
+  std::unique_ptr<RobotInitialConnection> _initialConnection;
 
 private:
-  bool MakeRobotFirmwareUntrusted(RobotID_t robotId);
-  void LoadDasBlacklistedAnimationTriggers(const Json::Value& dasEventConfig);
-  
-  std::set<AnimationTrigger> _dasBlacklistedAnimationTriggers;
 
 }; // class RobotManager
 

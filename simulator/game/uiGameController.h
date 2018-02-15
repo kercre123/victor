@@ -170,13 +170,11 @@ protected:
   void SendSaveState(bool enabled, const std::string& path = "");
   void SendEnableDisplay(bool on);
   void SendExecutePathToPose(const Pose3d& p,
-                             PathMotionProfile motionProf,
-                             const bool useManualSpeed);
+                             PathMotionProfile motionProf);
                              
   void SendGotoObject(const s32 objectID,
                       const f32 distFromObjectOrigin_mm,
                       PathMotionProfile motionProf,
-                      const bool useManualSpeed = false,
                       const bool usePreDockPose = false);
   
   void SendAlignWithObject(const s32 objectID,
@@ -184,101 +182,88 @@ protected:
                            PathMotionProfile motionProf,
                            const bool usePreDockPose,
                            const bool useApproachAngle = false,
-                           const f32 approachAngle_rad = false,
-                           const bool useManualSpeed = false);
+                           const f32 approachAngle_rad = false);
   
   void SendPlaceObjectOnGroundSequence(const Pose3d& p,
                                        PathMotionProfile motionProf,
-                                       const bool useExactRotation = false,
-                                       const bool useManualSpeed = false);
+                                       const bool useExactRotation = false);
   
   void SendPickupObject(const s32 objectID,
                         PathMotionProfile motionProf,
                         const bool usePreDockPose,
                         const bool useApproachAngle = false,
-                        const f32 approachAngle_rad = 0,
-                        const bool useManualSpeed = false);
+                        const f32 approachAngle_rad = 0);
   
   void SendPickupSelectedObject(PathMotionProfile motionProf,
                                 const bool usePreDockPose,
                                 const bool useApproachAngle,
-                                const f32 approachAngle_rad,
-                                const bool useManualSpeed = false);
+                                const f32 approachAngle_rad);
   
   void SendPlaceOnObject(const s32 objectID,
                          PathMotionProfile motionProf,
                          const bool usePreDockPose,
                          const bool useApproachAngle = false,
-                         const f32 approachAngle_rad = 0,
-                         const bool useManualSpeed = false);
+                         const f32 approachAngle_rad = 0);
   
   void SendPlaceOnSelectedObject(PathMotionProfile motionProf,
                                  const bool usePreDockPose,
                                  const bool useApproachAngle = false,
-                                 const f32 approachAngle_rad = 0,
-                                 const bool useManualSpeed = false);
+                                 const f32 approachAngle_rad = 0);
 
   void SendPlaceRelObject(const s32 objectID,
                           PathMotionProfile motionProf,
                           const bool usePreDockPose,
                           const f32 placementOffsetX_mm,
                           const bool useApproachAngle = false,
-                          const f32 approachAngle_rad = 0,
-                          const bool useManualSpeed = false);
+                          const f32 approachAngle_rad = 0);
   
   void SendPlaceRelSelectedObject(PathMotionProfile motionProf,
                                   const bool usePreDockPose,
                                   const f32 placementOffsetX_mm,
                                   const bool useApproachAngle = false,
-                                  const f32 approachAngle_rad = 0,
-                                  const bool useManualSpeed = false);
+                                  const f32 approachAngle_rad = 0);
 
   void SendRollObject(const s32 objectID,
                       PathMotionProfile motionProf,
                       const bool doDeepRoll,
                       const bool usePreDockPose,
                       const bool useApproachAngle = false,
-                      const f32 approachAngle_rad = 0,
-                      const bool useManualSpeed = false);
+                      const f32 approachAngle_rad = 0);
   
   void SendRollSelectedObject(PathMotionProfile motionProf,
                               const bool doDeepRoll,
                               const bool usePreDockPose,
                               const bool useApproachAngle = false,
-                              const f32 approachAngle_rad = 0,
-                              const bool useManualSpeed = false);
+                              const f32 approachAngle_rad = 0);
 
   void SendPopAWheelie(const s32 objectID,
                        PathMotionProfile motionProf,
                        const bool usePreDockPose,
                        const bool useApproachAngle = false,
-                       const f32 approachAngle_rad = 0,
-                       const bool useManualSpeed = false);
+                       const f32 approachAngle_rad = 0);
 
   void SendFacePlant(const s32 objectID,
                      PathMotionProfile motionProf,
                      const bool usePreDockPose,
                      const bool useApproachAngle = false,
-                     const f32 approachAngle_rad = 0,
-                     const bool useManualSpeed = false);
+                     const f32 approachAngle_rad = 0);
   
   void SendTraverseSelectedObject(PathMotionProfile motionProf,
-                                  const bool usePreDockPose,
-                                  const bool useManualSpeed);
+                                  const bool usePreDockPose);
 
   void SendMountCharger(const s32 objectID,
                         PathMotionProfile motionProf,
-                        const bool useCliffSensorCorrection = true,
-                        const bool useManualSpeed = false);
+                        const bool useCliffSensorCorrection = true);
   
   void SendMountSelectedCharger(PathMotionProfile motionProf,
-                                const bool useCliffSensorCorrection = true,
-                                const bool useManualSpeed = false);
+                                const bool useCliffSensorCorrection = true);
   
   void SendRequestEnabledBehaviorList();
   void SendTrackToObject(const u32 objectID, bool headOnly = false);
   void SendTrackToFace(const u32 faceID, bool headOnly = false);
   void SendExecuteTestPlan(PathMotionProfile motionProf);
+  void SendFakeTriggerWordDetect();
+  void SendForceDelocalize();
   void SendClearAllBlocks();
   void SendClearAllObjects();
   void SendSelectNextObject();
@@ -294,9 +279,8 @@ protected:
   void SendLogCliffDataRequest(const u32 length_ms);
   void SendLogProxDataRequest(const u32 length_ms);
   void SendAnimation(const char* animName, u32 numLoops, bool throttleMessages = false);
-  void SendAnimationGroup(const char* animName, bool throttleMessages = false);
-  void SendDevAnimation(const char* animName, u32 numLoops); // FIXME: Remove after code refactor - JMR
-  void SendReplayLastAnimation();
+  void SendAnimationGroup(const char* animGroupName, u32 numLoops, bool throttleMessages = false);
+  void SendAnimationTrigger(const char* animTriggerName, u32 numLoops, bool throttleMessages = false);
   void SendReadAnimationFile();
   void SendEnableVisionMode(VisionMode mode, bool enable);
   void SendSetIdleAnimation(const std::string &animName);
@@ -400,6 +384,9 @@ protected:
   void ClearReceivedNVStorageData(NVStorage::NVEntryTag tag);
   bool IsMultiBlobEntryTag(u32 tag) const;
 
+  // Press or release the backpack button
+  void PressBackpackButton(bool pressed);
+  
   ///
   // @brief      Sets the actual robot pose.
   // @param[in]  newPose  The new pose with translation in millimeters.
@@ -436,7 +423,8 @@ protected:
   //
   bool AddLightCubeByType(ObjectType type, const Pose3d& p, const u32 factoryID = 0);
 
-  
+  // Sets the "pluggedIn" field for the given charger.
+  void SetChargerPluggedIn(webots::Node* chargerNode, const bool pluggedIn);
   
   static size_t MakeWordAligned(size_t size);
   const std::string GetAnimationTestName() const;
@@ -540,6 +528,7 @@ private:
   webots::Supervisor _supervisor;
   
   webots::Node* _robotNode       = nullptr;
+  webots::Field* _backpackButtonPressedField = nullptr;
 
   std::vector<webots::Node*> _lightCubes;
   std::vector<webots::Node*>::iterator _lightCubeOriginIter = _lightCubes.end();

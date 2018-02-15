@@ -49,7 +49,23 @@ int8_t ParseInt8(const Json::Value& config, const char* key, const std::string& 
   const auto & val = config[key];
   DEV_ASSERT_MSG(val.isNumeric(), (debugName + ".ParseUint8.NotValidInt8").c_str(), "%s", key);
   return Anki::Util::numeric_cast<int8_t>(val.asInt());
-}  
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+int32_t ParseInt32(const Json::Value& config, const char* key, const std::string& debugName)
+{
+  const auto & val = config[key];
+  DEV_ASSERT_MSG(val.isNumeric(), (debugName + ".ParseInt.NotValidInt32").c_str(), "%s", key);
+  return val.asInt();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+uint32_t ParseUInt32(const Json::Value& config, const char* key, const std::string& debugName)
+{
+  const auto & val = config[key];
+  DEV_ASSERT_MSG(val.isNumeric(), (debugName + ".ParseUint.NotValidUInt32").c_str(), "%s", key);
+  return val.asUInt();
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ParseBool(const Json::Value& config, const char* key, const std::string& debugName) {

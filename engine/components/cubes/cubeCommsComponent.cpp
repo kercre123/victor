@@ -40,7 +40,7 @@ namespace {
 
   
 CubeCommsComponent::CubeCommsComponent()
-: IDependencyManagedComponent(RobotComponentID::CubeComms)
+: IDependencyManagedComponent(this, RobotComponentID::CubeComms)
 , _cubeBleClient(CubeBleClient::GetInstance())
 {
   // Register callbacks for messages from CubeBleClient
@@ -183,7 +183,7 @@ void CubeCommsComponent::EnableDiscovery(const bool enable, const float discover
 
 bool CubeCommsComponent::SendLightCubeMessage(const ActiveID& activeId, const BlockMessages::LightCubeMessage& msg)
 {
-  const auto cube = GetCubeByActiveId(activeId);
+  const auto* cube = GetCubeByActiveId(activeId);
   
   if (nullptr == cube) {
     PRINT_NAMED_WARNING("CubeCommsComponent.SendLightCubeMessage.InvalidCube", "Could not find cube with activeID %d", activeId);
@@ -204,16 +204,30 @@ bool CubeCommsComponent::SendLightCubeMessage(const ActiveID& activeId, const Bl
 // Note: Once we overhaul the cube messaging to only send raw accelerometer
 // data and pretty much nothing else, we can get rid of the StreamObjectAccel
 // CLAD message, since it would be redundant
-void CubeCommsComponent::SetStreamObjectAccel(const ActiveID& activeId, const bool enable)
+bool CubeCommsComponent::SetStreamObjectAccel(const ActiveID& activeId, const bool enable)
 {
   const auto cube = GetCubeByActiveId(activeId);
   if ((nullptr != cube) && cube->connected) {
     BlockMessages::LightCubeMessage msg;
     msg.Set_streamObjectAccel(StreamObjectAccel(activeId, enable));
-    _cubeBleClient->SendMessageToLightCube(cube->factoryId, msg);
+    return _cubeBleClient->SendMessageToLightCube(cube->factoryId, msg);
   }
+  return false;
 }
-  
+
+
+bool CubeCommsComponent::SendCubeLights(const ActiveID& activeId, const CubeLights& cubeLights)
+{
+  const auto cube = GetCubeByActiveId(activeId);
+  bool success = false;
+  if ((nullptr != cube) && cube->connected) {
+    BlockMessages::LightCubeMessage lightStateMsg;
+    lightStateMsg.Set_cubeLights(CubeLights(cubeLights));
+    success = _cubeBleClient->SendMessageToLightCube(cube->factoryId, lightStateMsg);
+  }
+  return success;
+}
+
   
 void CubeCommsComponent::SendBlockPoolData() const
 {

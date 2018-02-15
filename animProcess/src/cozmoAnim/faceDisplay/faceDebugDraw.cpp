@@ -26,7 +26,7 @@ namespace Anki {
 namespace Cozmo {
 
 FaceDebugDraw::FaceDebugDraw()
-: _scratchDrawingImg(new Vision::ImageRGB())
+: _scratchDrawingImg(new Vision::ImageRGB565())
 {
   _scratchDrawingImg->Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
 
@@ -93,7 +93,11 @@ void FaceDebugDraw::DrawFAC()
   }
 }
 
-void FaceDebugDraw::DrawConfidenceClock(const RobotInterface::MicDirection& micData, uint32_t secondsRemaining)
+void FaceDebugDraw::DrawConfidenceClock(
+  const RobotInterface::MicDirection& micData,
+  float bufferFullPercent,
+  uint32_t secondsRemaining,
+  bool triggerRecognized)
 {
   if (GetDrawState() != DrawState::MicDirectionClock)
   {
@@ -107,7 +111,8 @@ void FaceDebugDraw::DrawConfidenceClock(const RobotInterface::MicDirection& micD
     return;
   }
 
-  Vision::ImageRGB& drawImg = *_scratchDrawingImg;
+  DEV_ASSERT(_scratchDrawingImg != nullptr, "FaceDebugDraw::DrawConfidenceClock.InvalidScratchImage");
+  Vision::ImageRGB565& drawImg = *_scratchDrawingImg;
   const auto& clearColor = NamedColors::BLACK;
   drawImg.FillWith( {clearColor.r(), clearColor.g(), clearColor.b()} );
 
@@ -124,8 +129,9 @@ void FaceDebugDraw::DrawConfidenceClock(const RobotInterface::MicDirection& micD
   constexpr int barWidthB_px = (int) (angleFactorB * (float)barWidth_px * 0.5f); // 0
   constexpr int halfBarWidth_px = (int) ((float)barWidth_px * 0.5f);
 
-  // Multiplying factors (cos/sin) for the clock directions
-  static const std::array<Point2f, 12> barLenFactor = 
+  // Multiplying factors (cos/sin) for the clock directions.
+  // NOTE: Needs to have the 13th value so the unknown direction dot can display properly
+  static const std::array<Point2f, 13> barLenFactor = 
   {{
     {0.f, 1.f}, // 12 o'clock - in front of robot so point down
     {-angleFactorB, angleFactorA}, // 1 o'clock
@@ -138,7 +144,8 @@ void FaceDebugDraw::DrawConfidenceClock(const RobotInterface::MicDirection& micD
     {angleFactorA, -angleFactorB}, // 8 o'clock
     {1.f, 0.f}, // 9 o'clock
     {angleFactorA, angleFactorB}, // 10 o'clock
-    {angleFactorB, angleFactorA} // 11 o'clock
+    {angleFactorB, angleFactorA}, // 11 o'clock
+    {0.f, 0.f} // Unknown direction
   }};
 
   // Precalculated offsets for the center of the base of each of the direction bars,
@@ -230,6 +237,76 @@ void FaceDebugDraw::DrawConfidenceClock(const RobotInterface::MicDirection& micD
     (float) (center_px.y() + (int)(barLenFactor[winningIndex].y() * (float)(circleRadius_px + 1.f)))
     }, NamedColors::RED, 5);
 
+
+  // If we have an active state flag set, draw a blue circle for it
+  constexpr int activeCircleRad_px = 10;
+  if (micData.activeState != 0)
+  {
+    drawImg.DrawFilledCircle({
+      (float) FACE_DISPLAY_WIDTH - activeCircleRad_px, 
+      (float) FACE_DISPLAY_HEIGHT - activeCircleRad_px
+      }, NamedColors::BLUE, activeCircleRad_px);
+  }
+
+  // Display the trigger recognized symbol if needed
+  constexpr int triggerDispWidth_px = 15;
+  constexpr int triggerDispHeight = 16;
+  constexpr int triggerOffsetFromActiveCircle_px = 20;
+  if (triggerRecognized)
+  {
+    drawImg.DrawFilledConvexPolygon({
+      {FACE_DISPLAY_WIDTH - triggerDispWidth_px, 
+        FACE_DISPLAY_HEIGHT - activeCircleRad_px*2 - triggerOffsetFromActiveCircle_px},
+      {FACE_DISPLAY_WIDTH - triggerDispWidth_px, 
+        FACE_DISPLAY_HEIGHT - activeCircleRad_px*2 - triggerOffsetFromActiveCircle_px + triggerDispHeight},
+      {FACE_DISPLAY_WIDTH, 
+        FACE_DISPLAY_HEIGHT - activeCircleRad_px*2 - triggerOffsetFromActiveCircle_px + triggerDispHeight/2}
+      }, 
+      NamedColors::GREEN);
+  }
+
+  constexpr int endOfBarHeight_px = 20;
+  constexpr int endOfBarWidth_px = 5;
+
+  constexpr int buffFullBarHeight_px = endOfBarHeight_px / 2;
+  constexpr int buffFullBarWidth_px = 52;
+  bufferFullPercent = CLIP(bufferFullPercent, 0.0f, 1.0f);
+
+  // Draw the end-of-bar line
+  drawImg.DrawFilledConvexPolygon({
+    {buffFullBarWidth_px, FACE_DISPLAY_HEIGHT - endOfBarHeight_px},
+    {buffFullBarWidth_px, FACE_DISPLAY_HEIGHT},
+    {buffFullBarWidth_px + endOfBarWidth_px, FACE_DISPLAY_HEIGHT},
+    {buffFullBarWidth_px + endOfBarWidth_px, FACE_DISPLAY_HEIGHT - endOfBarHeight_px}
+    }, 
+    NamedColors::RED);
+    
+  // Draw the bar showing the mic data buffer fullness
+  drawImg.DrawFilledConvexPolygon({
+    {0, FACE_DISPLAY_HEIGHT - endOfBarHeight_px + buffFullBarHeight_px / 2},
+    {0, FACE_DISPLAY_HEIGHT - buffFullBarHeight_px / 2},
+    {(int) (bufferFullPercent * (float) buffFullBarWidth_px), FACE_DISPLAY_HEIGHT - buffFullBarHeight_px / 2},
+    {(int) (bufferFullPercent * (float) buffFullBarWidth_px), FACE_DISPLAY_HEIGHT - endOfBarHeight_px + buffFullBarHeight_px / 2}
+    }, 
+    NamedColors::RED);
+    
+  const std::string confidenceString = std::to_string(micData.confidence);
+  drawImg.DrawText( {0.0f, 10.0f}, confidenceString, NamedColors::WHITE, 0.5f );
+
+  // Also draw the delay time in milliseconds
+  // Copied from kRawAudioPerBuffer_ms in micDataProcessor.h
+  // and doubled for 2 buffers
+  const auto maxDelayTime_ms = 2000.f * 2.f;
+  const auto delayTime_ms = (int) (maxDelayTime_ms * bufferFullPercent);
+  const auto delayStr = std::to_string(delayTime_ms);
+  const Point2f textLoc = {0.f, FACE_DISPLAY_HEIGHT - endOfBarHeight_px};
+  const auto textScale = 0.5f;
+  _scratchDrawingImg->DrawText(textLoc,
+                               delayStr,
+                               NamedColors::WHITE,
+                               textScale);
+
+  // Draw the debug page number
   DrawScratch();
 }
 

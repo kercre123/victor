@@ -14,7 +14,7 @@
 #include "textToSpeechProvider_android.h"
 #include "textToSpeechProvider_acapela.h"
 
-#include "cozmoAnim/cozmoAnimContext.h"
+#include "cozmoAnim/animContext.h"
 
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
@@ -25,10 +25,6 @@
 
 // Log options
 #define LOG_CHANNEL    "TextToSpeech"
-#define LOG_ERROR      PRINT_NAMED_ERROR
-#define LOG_WARNING    PRINT_NAMED_WARNING
-#define LOG_INFO(...)  PRINT_CH_INFO(LOG_CHANNEL, ##__VA_ARGS__)
-#define LOG_DEBUG(...) PRINT_CH_DEBUG(LOG_CHANNEL, ##__VA_ARGS__)
 
 // Debug sliders
 #if REMOTE_CONSOLE_ENABLED
@@ -47,7 +43,7 @@ namespace Anki {
 namespace Cozmo {
 namespace TextToSpeech {
   
-TextToSpeechProviderImpl::TextToSpeechProviderImpl(const CozmoAnimContext* context, const Json::Value& tts_platform_config)
+TextToSpeechProviderImpl::TextToSpeechProviderImpl(const AnimContext* context, const Json::Value& tts_platform_config)
 {
   // Check for valid data platform before we do any work
   using DataPlatform = Anki::Util::Data::DataPlatform;

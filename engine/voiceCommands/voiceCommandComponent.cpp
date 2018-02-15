@@ -40,7 +40,6 @@
 #include <functional>
 
 #define LOG_CHANNEL "VoiceCommands"
-#define LOG_INFO(...) PRINT_CH_INFO(LOG_CHANNEL, ##__VA_ARGS__)
 
 namespace {
   Anki::Cozmo::VoiceCommand::VoiceCommandComponent* sThis = nullptr;
@@ -483,7 +482,7 @@ bool VoiceCommandComponent::HandleCommand(const VoiceCommandType& command)
 
 void VoiceCommandComponent::UpdateCommandLight(bool heardTriggerPhrase)
 {
-  auto* robot = _context.GetRobotManager()->GetFirstRobot();
+  auto* robot = _context.GetRobotManager()->GetRobot();
   
   if (_commandLightTimeRemaining_s >= 0.f)
   {

@@ -90,7 +90,6 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlaceObjec
   Pose3d targetPose(rot, Vec3f(msg.x_mm, msg.y_mm, 22.f), robot.GetWorldOrigin());
   return new PlaceObjectOnGroundAtPoseAction(targetPose,
                                              msg.useExactRotation,
-                                             msg.useManualSpeed,
                                              msg.checkDestinationFree);
 }
 
@@ -125,16 +124,13 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlayAnimat
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Helper function that is friended by TriggerCubeAnimationAction so we can call its private constructor
-IActionRunner* GetPlayCubeAnimationHelper(Robot& robot, const ExternalInterface::PlayCubeAnimationTrigger& msg)
-{
-  return new TriggerCubeAnimationAction(msg.objectID, msg.trigger);
-}
-  
 template<>
-IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlayCubeAnimationTrigger& msg)
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlayAnimationGroup& msg)
 {
-  return GetPlayCubeAnimationHelper(robot, msg);
+  AnimTrackFlagType ignoreTracks = GetIgnoreTracks(msg.ignoreBodyTrack, msg.ignoreHeadTrack, msg.ignoreLiftTrack);
+  const bool kInterruptRunning = true; // TODO: expose this option in CLAD?
+  const auto& animName = robot.GetAnimationComponent().GetAnimationNameFromGroup(msg.animationGroupName);
+  return new PlayAnimationAction(animName, msg.numLoops, kInterruptRunning, ignoreTracks);
 }
  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -150,8 +146,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::GotoPose& 
   const bool driveWithHeadDown = false;
   
   DriveToPoseAction* action = new DriveToPoseAction(targetPose,
-                                                    driveWithHeadDown,
-                                                    msg.useManualSpeed);
+                                                    driveWithHeadDown);
   
   if(msg.motionProf.isCustom)
   {
@@ -203,8 +198,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PickupObje
   {
     DriveToPickupObjectAction* action = new DriveToPickupObjectAction(selectedObjectID,
                                                                       msg.useApproachAngle,
-                                                                      msg.approachAngle_rad,
-                                                                      msg.useManualSpeed);
+                                                                      msg.approachAngle_rad);
     if(msg.motionProf.isCustom)
     {
       robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
@@ -215,7 +209,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PickupObje
   }
   else
   {
-    PickupObjectAction* action = new PickupObjectAction(selectedObjectID, msg.useManualSpeed);
+    PickupObjectAction* action = new PickupObjectAction(selectedObjectID);
     if(msg.motionProf.isCustom)
     {
       robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
@@ -245,8 +239,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlaceRelOb
                                                                           msg.placementOffsetX_mm,
                                                                           0,
                                                                           msg.useApproachAngle,
-                                                                          msg.approachAngle_rad,
-                                                                          msg.useManualSpeed);
+                                                                          msg.approachAngle_rad);
     if(msg.motionProf.isCustom)
     {
       robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
@@ -256,8 +249,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlaceRelOb
     PlaceRelObjectAction* action = new PlaceRelObjectAction(selectedObjectID,
                                                             true,
                                                             msg.placementOffsetX_mm,
-                                                            0,
-                                                            msg.useManualSpeed);
+                                                            0);
     action->SetDoNearPredockPoseCheck(false);
     // We don't care about a specific marker just that we are docking with the correct object
     action->SetShouldVisuallyVerifyObjectOnly(true);
@@ -280,8 +272,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlaceOnObj
     
     DriveToPlaceOnObjectAction* action = new DriveToPlaceOnObjectAction(selectedObjectID,
                                                                         msg.useApproachAngle,
-                                                                        msg.approachAngle_rad,
-                                                                        msg.useManualSpeed);
+                                                                        msg.approachAngle_rad);
     if(msg.motionProf.isCustom)
     {
       robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
@@ -292,8 +283,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlaceOnObj
     PlaceRelObjectAction* action = new PlaceRelObjectAction(selectedObjectID,
                                                             false,
                                                             0,
-                                                            0,
-                                                            msg.useManualSpeed);
+                                                            0);
     action->SetDoNearPredockPoseCheck(false);
     // We don't care about a specific marker just that we are docking with the correct object
     action->SetShouldVisuallyVerifyObjectOnly(true);
@@ -320,8 +310,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::GotoObject
                                      PreActionPose::ActionType::DOCKING);
   } else {
     action = new DriveToObjectAction(selectedObjectID,
-                                     msg.distanceFromObjectOrigin_mm,
-                                     msg.useManualSpeed);
+                                     msg.distanceFromObjectOrigin_mm);
   }
   
   if(msg.motionProf.isCustom)
@@ -348,8 +337,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::AlignWithO
                                                                             msg.distanceFromMarker_mm,
                                                                             msg.useApproachAngle,
                                                                             msg.approachAngle_rad,
-                                                                            msg.alignmentType,
-                                                                            msg.useManualSpeed);
+                                                                            msg.alignmentType);
     if(msg.motionProf.isCustom)
     {
       robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
@@ -359,8 +347,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::AlignWithO
   } else {
     AlignWithObjectAction* action = new AlignWithObjectAction(selectedObjectID,
                                                               msg.distanceFromMarker_mm,
-                                                              msg.alignmentType,
-                                                              msg.useManualSpeed);
+                                                              msg.alignmentType);
     if(msg.motionProf.isCustom)
     {
       robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
@@ -409,8 +396,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::RollObject
   if(static_cast<bool>(msg.usePreDockPose)) {
     DriveToRollObjectAction* action = new DriveToRollObjectAction(selectedObjectID,
                                                                   msg.useApproachAngle,
-                                                                  msg.approachAngle_rad,
-                                                                  msg.useManualSpeed);
+                                                                  msg.approachAngle_rad);
     action->EnableDeepRoll(msg.doDeepRoll);
     if(msg.motionProf.isCustom)
     {
@@ -419,7 +405,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::RollObject
     action->SetShouldCheckForObjectOnTopOf(msg.checkForObjectOnTop);
     return action;
   } else {
-    RollObjectAction* action = new RollObjectAction(selectedObjectID, msg.useManualSpeed);
+    RollObjectAction* action = new RollObjectAction(selectedObjectID);
     if(msg.motionProf.isCustom)
     {
       robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
@@ -448,8 +434,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PopAWheeli
   if(static_cast<bool>(msg.usePreDockPose)) {
     DriveToPopAWheelieAction* action = new DriveToPopAWheelieAction(selectedObjectID,
                                                                     msg.useApproachAngle,
-                                                                    msg.approachAngle_rad,
-                                                                    msg.useManualSpeed);
+                                                                    msg.approachAngle_rad);
     if(msg.motionProf.isCustom)
     {
       robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
@@ -457,7 +442,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PopAWheeli
     
     return action;
   } else {
-    PopAWheelieAction* action = new PopAWheelieAction(selectedObjectID, msg.useManualSpeed);
+    PopAWheelieAction* action = new PopAWheelieAction(selectedObjectID);
     if(msg.motionProf.isCustom)
     {
       robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
@@ -483,8 +468,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::FacePlant&
   if(static_cast<bool>(msg.usePreDockPose)) {
     DriveToFacePlantAction* action = new DriveToFacePlantAction(selectedObjectID,
                                                                 msg.useApproachAngle,
-                                                                msg.approachAngle_rad,
-                                                                msg.useManualSpeed);
+                                                                msg.approachAngle_rad);
     if(msg.motionProf.isCustom)
     {
       robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
@@ -492,7 +476,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::FacePlant&
     
     return action;
   } else {
-    FacePlantAction* action = new FacePlantAction(selectedObjectID, msg.useManualSpeed);
+    FacePlantAction* action = new FacePlantAction(selectedObjectID);
     if(msg.motionProf.isCustom)
     {
       robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
@@ -511,15 +495,14 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TraverseOb
   ObjectID selectedObjectID = robot.GetBlockWorld().GetSelectedObject();
   
   if(static_cast<bool>(msg.usePreDockPose)) {
-    DriveToAndTraverseObjectAction* action = new DriveToAndTraverseObjectAction(selectedObjectID,
-                                                                                msg.useManualSpeed);
+    DriveToAndTraverseObjectAction* action = new DriveToAndTraverseObjectAction(selectedObjectID);
     if(msg.motionProf.isCustom)
     {
       robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
     }
     return action;
   } else {
-    TraverseObjectAction* traverseAction = new TraverseObjectAction(selectedObjectID, msg.useManualSpeed);
+    TraverseObjectAction* traverseAction = new TraverseObjectAction(selectedObjectID);
     if(msg.motionProf.isCustom)
     {
       robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, traverseAction);
@@ -540,8 +523,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::MountCharg
   }
   
   auto action =  new DriveToAndMountChargerAction(selectedObjectID,
-                                                  msg.useCliffSensorCorrection,
-                                                  msg.useManualSpeed);
+                                                  msg.useCliffSensorCorrection);
   if(msg.motionProf.isCustom)
   {
     robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
@@ -687,6 +669,7 @@ template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TrackToFace& trackFace)
 {
   TrackFaceAction* action = new TrackFaceAction(trackFace.faceID);
+  action->SetMoveEyes(true);
   
   // TODO: Support body-only mode
   if(trackFace.headOnly) {
@@ -841,12 +824,6 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlayAnimat
   return newAction;
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template<>
-IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlayNeedsGetOutAnimIfNeeded& msg)
-{
-  return new PlayNeedsGetOutAnimIfNeeded();
-}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
@@ -998,9 +975,8 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       DEFINE_HANDLER(placeOnObject,            PlaceOnObject,            1),
       DEFINE_HANDLER(placeRelObject,           PlaceRelObject,           1),
       DEFINE_HANDLER(playAnimation,            PlayAnimation,            0),
+      DEFINE_HANDLER(playAnimationGroup,       PlayAnimationGroup,       0),
       DEFINE_HANDLER(playAnimationTrigger,     PlayAnimationTrigger,     0),
-      DEFINE_HANDLER(playCubeAnimationTrigger, PlayCubeAnimationTrigger, 0),
-      DEFINE_HANDLER(playNeedsGetOutAnimIfNeeded, PlayNeedsGetOutAnimIfNeeded, 0),
       DEFINE_HANDLER(popAWheelie,              PopAWheelie,              1),
       DEFINE_HANDLER(readToolCode,             ReadToolCode,             0),
       DEFINE_HANDLER(realignWithObject,        RealignWithObject,        1),
@@ -1101,7 +1077,7 @@ u32 RobotEventHandler::GetNextGameActionTag() {
 
 void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
       
   // If we don't have a valid robot there's nothing to do
   if (nullptr == robot)
@@ -1141,7 +1117,7 @@ template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::QueueSingleAction& msg)
 {
   // Can't queue actions for nonexistent robots...
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   if (nullptr == robot)
   {
     return;
@@ -1187,7 +1163,7 @@ template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::QueueCompoundAction& msg)
 {
   // Can't queue actions for nonexistent robots...
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   if (nullptr == robot)
   {
     PRINT_NAMED_WARNING("RobotEventHandler.HandleQueueCompoundAction.InvalidRobotID", "Failed to find robot. Missing 'first' robot.");
@@ -1246,7 +1222,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::QueueCompoundActi
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::EnableLiftPower& msg)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   
   // We need a robot
   if (nullptr == robot)
@@ -1266,7 +1242,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::EnableLiftPower& 
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::EnableCliffSensor& msg)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   
   if (nullptr != robot)
   {
@@ -1279,7 +1255,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::EnableCliffSensor
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::EnableStopOnCliff& msg)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
 
   if (nullptr != robot)
   {
@@ -1292,7 +1268,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::EnableStopOnCliff
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::ForceDelocalizeRobot& msg)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   
   // We need a robot
   if (nullptr == robot) {
@@ -1314,7 +1290,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::ForceDelocalizeRo
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::SaveCalibrationImage& msg)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   
   // We need a robot
   if (nullptr == robot)
@@ -1332,7 +1308,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::SaveCalibrationIm
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::ClearCalibrationImages& msg)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   
   // We need a robot
   if (nullptr == robot)
@@ -1350,7 +1326,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::ClearCalibrationI
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::ComputeCameraCalibration& msg)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   
   // We need a robot
   if (nullptr == robot)
@@ -1367,7 +1343,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::ComputeCameraCali
 template<>
 void RobotEventHandler::HandleMessage(const CameraCalibration& calib)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   
   // We need a robot
   if (nullptr == robot)
@@ -1390,7 +1366,7 @@ void RobotEventHandler::HandleMessage(const CameraCalibration& calib)
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::AnimationAborted& msg)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   
   if(nullptr == robot) {
     PRINT_NAMED_WARNING("RobotEventHandler.HandleAnimationAborted.InvalidRobotID", "Failed to find robot.");
@@ -1446,7 +1422,7 @@ template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::RobotConnectionResponse& msg)
 {
   if (msg.result == RobotConnectionResult::Success) {
-    Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+    Robot* robot = _context->GetRobotManager()->GetRobot();
     
     if(nullptr == robot) {
       PRINT_NAMED_WARNING("RobotEventHandler.HandleRobotConnectionResponse.InvalidRobotID", "Failed to find robot.");
@@ -1465,7 +1441,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::RobotConnectionRe
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::CancelAction& msg)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   
   // We need a robot
   if (nullptr == robot)
@@ -1482,7 +1458,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::CancelAction& msg
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::CancelActionByIdTag& msg)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   
   // We need a robot
   if (nullptr == robot)
@@ -1500,7 +1476,7 @@ template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::ControllerGains& msg)
 {
   // We need a robot
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   if (nullptr == robot) {
     PRINT_NAMED_WARNING("RobotEventHandler.HandleControllerGains.InvalidRobotID", "Failed to find robot");
   } else {
@@ -1513,7 +1489,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::ControllerGains& 
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::DrawPoseMarker& msg)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   
   // We need a robot
   if (nullptr == robot)
@@ -1542,7 +1518,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::DrawPoseMarker& m
 template<>
 void RobotEventHandler::HandleMessage(const IMURequest& msg)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   
   // We need a robot
   if (nullptr == robot)
@@ -1559,7 +1535,7 @@ void RobotEventHandler::HandleMessage(const IMURequest& msg)
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::LogRawCliffData& msg)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   
   // We need a robot
   if (nullptr == robot) {
@@ -1573,7 +1549,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::LogRawCliffData& 
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::LogRawProxData& msg)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   
   // We need a robot
   if (nullptr == robot) {
@@ -1587,7 +1563,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::LogRawProxData& m
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::ExecuteTestPlan& msg)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   
   // We need a robot
   if (nullptr == robot)
@@ -1605,7 +1581,7 @@ template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::RollActionParams& msg)
 {
   // We need a robot
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   if (nullptr == robot) {
     PRINT_NAMED_WARNING("RobotEventHandler.HandleRollActionParams.InvalidRobotID", "Failed to find robot");
   } else {
@@ -1623,7 +1599,7 @@ template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::SetMotionModelParams& msg)
 {
   // We need a robot
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   if (nullptr == robot) {
     PRINT_NAMED_WARNING("RobotEventHandler.HandleSetMotionModelParams.InvalidRobotID", "Failed to find robot");
   } else {
@@ -1636,7 +1612,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::SetMotionModelPar
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::SetRobotCarryingObject& msg)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   
   // We need a robot
   if (nullptr == robot)
@@ -1658,7 +1634,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::SetRobotCarryingO
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::StopRobotForSdk& msg)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   
   // We need a robot
   if (nullptr == robot)
@@ -1685,7 +1661,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::StopRobotForSdk& 
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::StreamObjectAccel& msg)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   if (nullptr == robot)
   {
     PRINT_NAMED_WARNING("RobotEventHandler.StreamObjectAccel.InvalidRobotID", "Failed to find robot.");
@@ -1709,7 +1685,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::StreamObjectAccel
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::AbortPath& msg)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   
   // We need a robot
   if (nullptr == robot)
@@ -1726,7 +1702,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::AbortPath& msg)
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::AbortAll& msg)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   
   // We need a robot
   if (nullptr == robot)

@@ -442,6 +442,11 @@
               <FileType>2</FileType>
               <FilePath>.\src\start_mics.s</FilePath>
             </File>
+            <File>
+              <FileName>i2c.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\src\i2c.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

@@ -38,10 +38,20 @@ static const char* SkipHungarianNotation(const char* inVarName)
 
 
 //------------------------------------------------------------------------------------------------------------------------------
-IConsoleVariable::IConsoleVariable(const char* id, const char* category) :
+// NOTE: static initialized console variables should have unregisterInDestructor false, this prevents actions during the static
+//       destructors dynamically initialzed console variables, e.g. those instantiated after main has started should have dynamic
+//       false which will cause unregistration during destruction.
+IConsoleVariable::IConsoleVariable(const char* id, const char* category, bool unregisterInDestructor) :
   id_(SkipHungarianNotation(id)),
-  category_(category) {
+  category_(category),
+  unregisterInDestructor_(unregisterInDestructor) {
   Anki::Util::ConsoleSystem::Instance().Register(id_, this);
+}
+
+IConsoleVariable::~IConsoleVariable() {
+  if (unregisterInDestructor_) {
+    Anki::Util::ConsoleSystem::Instance().Unregister(id_);
+  }
 }
 
 

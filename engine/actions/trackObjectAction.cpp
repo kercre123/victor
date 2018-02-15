@@ -45,6 +45,12 @@ TrackObjectAction::~TrackObjectAction()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void TrackObjectAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const
+{
+  requests.insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::High });
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ActionResult TrackObjectAction::InitInternal()
 {
   if(!_objectID.IsSet()) {

@@ -32,10 +32,6 @@
 #include "util/console/consoleInterface.h"
 
 #define LOG_CHANNEL    "Movement"
-#define LOG_ERROR      PRINT_NAMED_ERROR
-#define LOG_WARNING    PRINT_NAMED_WARNING
-#define LOG_INFO(...)  PRINT_CH_INFO(LOG_CHANNEL, ##__VA_ARGS__)
-#define LOG_DEBUG(...) PRINT_CH_DEBUG(LOG_CHANNEL, ##__VA_ARGS__)
 
 #define DEBUG_ANIMATION_LOCKING 0
 
@@ -50,7 +46,7 @@ using namespace ExternalInterface;
 
 
 MovementComponent::MovementComponent()
-: IDependencyManagedComponent<RobotComponentID>(RobotComponentID::Movement)
+: IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::Movement)
 {
 
 }
@@ -95,20 +91,19 @@ void MovementComponent::Update(const Cozmo::RobotState& robotState)
   _isLiftMoving = !static_cast<bool>(robotState.status & (uint16_t)RobotStatusFlag::LIFT_IN_POS);
   _areWheelsMoving = static_cast<bool>(robotState.status & (uint16_t)RobotStatusFlag::ARE_WHEELS_MOVING);
   
-  for (auto layerIter = _faceLayerTagsToRemoveOnHeadMovement.begin();
-      layerIter != _faceLayerTagsToRemoveOnHeadMovement.end(); )
+  for (auto layerIter = _eyeShiftToRemove.begin(); layerIter != _eyeShiftToRemove.end(); )
   {
-    FaceLayerToRemove & layer = layerIter->second;
-    if(_isHeadMoving && false == layer.headWasMoving) {
+    EyeShiftToRemove& layer = layerIter->second;
+    if(_isHeadMoving && !layer.headWasMoving) {
       // Wait for transition from stopped to moving again
-      // TODO: Restore eye shifts (VIC-363)
-      //_robot->GetAnimationStreamer().GetTrackLayerComponent()->RemoveEyeShift(layerIter->first, layer.duration_ms);
-      layerIter = _faceLayerTagsToRemoveOnHeadMovement.erase(layerIter);
+      _robot->GetAnimationComponent().RemoveEyeShift(layerIter->first, layer.duration_ms);
+      layerIter = _eyeShiftToRemove.erase(layerIter);
     } else {
       layer.headWasMoving = _isHeadMoving;
       ++layerIter;
     }
   }
+
   if (kDebugTrackLocking)
   {
     // Flip logic from enabled to locked here, since robot stores bits as enabled and 1 means locked here.
@@ -371,18 +366,13 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
   }
 }
 
-void MovementComponent::RemoveFaceLayerWhenHeadMoves(AnimationTag faceLayerTag, TimeStamp_t duration_ms)
+void MovementComponent::RemoveEyeShiftWhenHeadMoves(const std::string& name, TimeStamp_t duration_ms)
 {
-  LOG_DEBUG("MovementComponent.RemoveFaceLayersWhenHeadMoves.",
-            "Registering tag=%d for removal with duration=%dms",
-            faceLayerTag, duration_ms);
+  LOG_DEBUG("MovementComponent.RemoveEyeShiftWhenHeadMoves",
+            "Layer: %s, duration=%dms", name.c_str(), duration_ms);
 
-  FaceLayerToRemove info{
-    .duration_ms  = duration_ms,
-    .headWasMoving = _isHeadMoving,
-  };
-  _faceLayerTagsToRemoveOnHeadMovement[faceLayerTag] = std::move(info);
-  
+  _eyeShiftToRemove[name].duration_ms  = duration_ms;
+  _eyeShiftToRemove[name].headWasMoving = _isHeadMoving;
 }
 
   
@@ -610,28 +600,58 @@ Result MovementComponent::EnableHeadPower(bool enable)
   return _robot->SendRobotMessage<RobotInterface::EnableMotorPower>(MotorID::MOTOR_HEAD, enable);
 }
   
+MovementComponent::MotorActionID MovementComponent::GetNextMotorActionID(MotorActionID* actionID_out)
+{
+  ++_lastMotorActionID;
+  if (actionID_out != nullptr) {
+    *actionID_out = _lastMotorActionID;
+  }
+  return _lastMotorActionID;
+}
+  
 // Sends a message to the robot to move the lift to the specified height
 Result MovementComponent::MoveLiftToHeight(const f32 height_mm,
                                            const f32 max_speed_rad_per_sec,
                                            const f32 accel_rad_per_sec2,
-                                           const f32 duration_sec)
+                                           const f32 duration_sec,
+                                           MotorActionID* actionID_out)
 {
   return _robot->SendRobotMessage<RobotInterface::SetLiftHeight>(height_mm,
                                                                 max_speed_rad_per_sec,
                                                                 accel_rad_per_sec2,
-                                                                duration_sec);
+                                                                duration_sec,
+                                                                GetNextMotorActionID(actionID_out));
 }
 
 // Sends a message to the robot to move the head to the specified angle
 Result MovementComponent::MoveHeadToAngle(const f32 angle_rad,
                                           const f32 max_speed_rad_per_sec,
                                           const f32 accel_rad_per_sec2,
-                                          const f32 duration_sec)
+                                          const f32 duration_sec,
+                                          MotorActionID* actionID_out)
 {
   return _robot->SendRobotMessage<RobotInterface::SetHeadAngle>(angle_rad,
                                                                max_speed_rad_per_sec,
                                                                accel_rad_per_sec2,
-                                                               duration_sec);
+                                                               duration_sec,
+                                                               GetNextMotorActionID(actionID_out));
+}
+  
+Result MovementComponent::TurnInPlace(const f32 angle_rad,
+                                      const f32 max_speed_rad_per_sec,
+                                      const f32 accel_rad_per_sec2,
+                                      const f32 angle_tolerance,
+                                      const u16 num_half_revolutions,
+                                      bool use_shortest_direction,
+                                      MotorActionID* actionID_out)
+{
+  return _robot->SendRobotMessage<RobotInterface::SetBodyAngle>(angle_rad,
+                                                                max_speed_rad_per_sec,
+                                                                accel_rad_per_sec2,
+                                                                angle_tolerance,
+                                                                num_half_revolutions,
+                                                                use_shortest_direction,
+                                                                GetNextMotorActionID(actionID_out));
 }
 
 Result MovementComponent::StopAllMotors()

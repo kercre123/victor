@@ -31,10 +31,11 @@ class BehaviorSystemManager;
   
 class IBehavior : private Util::noncopyable {
 public:
-  IBehavior(const std::string& idString);
+  IBehavior(const std::string& debugLabel);
   virtual ~IBehavior(){};
   
-  const std::string& GetPrintableID() const { return _idString;}
+  const std::string& GetDebugLabel() const { return _debugLabel;}
+  void SetDebugLabel(const std::string& debugLabel) { _debugLabel = debugLabel; }
   
   // Function that allows the behavior to initialize variables/subscribe
   // through the behaviorExternalInterface
@@ -90,8 +91,8 @@ protected:
   BehaviorExternalInterface& GetBEI() const {assert(_beiWrapper); return _beiWrapper->_bei;}
 
 private:
-  // tmp string for identifying Behaviors until IDs are combined
-  std::string _idString;
+  // string for identifying Behaviors (different than an ID since the latter might just be "Anonymous")
+  std::string _debugLabel;
   // Track the number of EnteredScope requests
   uint32_t _currentInScopeCount;
   mutable size_t _lastTickWantsToBeActivatedCheckedOn;

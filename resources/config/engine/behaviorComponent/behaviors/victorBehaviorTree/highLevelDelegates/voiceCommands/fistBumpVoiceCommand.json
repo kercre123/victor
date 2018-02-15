@@ -1,0 +1,20 @@
+{
+  "behaviorID" : "FistBumpVoiceCommand",
+  "behaviorClass" : "DispatcherQueue",
+
+  "respondToCloudIntent": "AnyTrick",
+
+  "behaviors": [
+    "DriveOffCharger",
+    "FistBumpInternal"
+  ],
+
+  "anonymousBehaviors" :[
+    {
+      "behaviorClass": "FistBump",
+      "behaviorName": "FistBumpInternal",
+      "abortIfNoFaceFound": false
+    }
+  ]
+}
+

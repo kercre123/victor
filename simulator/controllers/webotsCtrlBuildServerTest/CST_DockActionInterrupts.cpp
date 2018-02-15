@@ -14,6 +14,7 @@
  */
 
 #include "simulator/game/cozmoSimTestController.h"
+#include "simulator/controllers/shared/webotsHelpers.h"
 #include "coretech/common/engine/math/point_impl.h"
 #include "engine/actions/basicActions.h"
 #include "engine/robot.h"
@@ -39,8 +40,8 @@ private:
   
   TestState _testState = TestState::Init;
   
+  webots::Node* _solidBoxNode = nullptr;
   ObjectID _id;
-  int _solidBoxId = -1;
   
   // Message handlers
   virtual void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg) override;
@@ -58,6 +59,11 @@ s32 CST_DockActionInterrupts::UpdateSimInternal()
   {
     case TestState::Init:
     {
+      // Find the SolidBox in the world for later use
+      const auto& solidBoxNodeInfo = WebotsHelpers::GetFirstMatchingSceneTreeNode(GetSupervisor(), "SolidBox");
+      CST_ASSERT(solidBoxNodeInfo.nodePtr != nullptr, "No SolidBox node in world!");
+      _solidBoxNode = solidBoxNodeInfo.nodePtr;
+      
       // We need to have waits before and after the VisuallyVerifyAction in TurnTowardsObject so we have
       // enough time to move the dock object and have it be unobserved
       SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetDebugConsoleVarMessage("InsertWaitsInTurnTowardsObjectVerify", "true")));
@@ -80,7 +86,7 @@ s32 CST_DockActionInterrupts::UpdateSimInternal()
         auto objectsWithType = GetAllObjectIDsByFamilyAndType(ObjectFamily::LightCube, ObjectType::Block_LIGHTCUBE1);
         CST_ASSERT(objectsWithType.size()==1, "Expecting 1 object of type LIGHTCUBE1");
         _id = objectsWithType.front();
-        m.action.Set_pickupObject(ExternalInterface::PickupObject(_id, DEFAULT_PATH_MOTION_PROFILE, 0, false, false, false, false));
+        m.action.Set_pickupObject(ExternalInterface::PickupObject(_id, DEFAULT_PATH_MOTION_PROFILE, 0, false, false, false));
         ExternalInterface::MessageGameToEngine message;
         message.Set_QueueSingleAction(m);
         SendMessage(message);
@@ -101,30 +107,14 @@ s32 CST_DockActionInterrupts::UpdateSimInternal()
         p.SetTranslation({trans.x() + 50, trans.y(), trans.z() + 10});
         SetLightCubePose(ObjectType::Block_LIGHTCUBE1, p);
         
-        // Find the SolidBox in the world and put it in front of LightCube1
-        webots::Field* rootChildren = GetSupervisor()->getRoot()->getField("children");
-        int numRootChildren = rootChildren->getCount();
-        for (int n = 0 ; n<numRootChildren; ++n) {
-          webots::Node* nd = rootChildren->getMFNode(n);
-          std::string nodeName = nd->getTypeName();
-          
-          if(nodeName.find("SolidBox") != std::string::npos)
-          {
-            _solidBoxId = n;
-          
-            webots::Field* transField = nd->getField("translation");
-            
-            const double translation[3] = {
-              MM_TO_M(trans.x()),
-              MM_TO_M(trans.y()),
-              MM_TO_M(trans.z())
-            };
-            transField->setSFVec3f(translation);
-            
-            break;
-          }
-        }
-        
+        // Move the SolidBox in front of LightCube1
+        const double translation[3] = {
+          MM_TO_M(trans.x()),
+          MM_TO_M(trans.y()),
+          MM_TO_M(trans.z())
+        };
+        _solidBoxNode->getField("translation")->setSFVec3f(translation);
+
         SET_TEST_STATE(SeeObject);
       }
       break;
@@ -135,16 +125,8 @@ s32 CST_DockActionInterrupts::UpdateSimInternal()
       // Engine should be in the middle of a VisuallyVerifyAction
       if(HasXSecondsPassedYet(1))
       {
-        webots::Field* rootChildren = GetSupervisor()->getRoot()->getField("children");
-        webots::Node* nd = rootChildren->getMFNode(_solidBoxId);
-        std::string nodeName = nd->getTypeName();
-        
-        if(nodeName.find("SolidBox") != std::string::npos)
-        {
-          webots::Field* transField = nd->getField("translation");
-          const double translation[3] = {10, 10, 10};
-          transField->setSFVec3f(translation);
-        }
+        const double translation[3] = {10, 10, 10};
+        _solidBoxNode->getField("translation")->setSFVec3f(translation);
         
         Pose3d p = GetLightCubePoseActual(ObjectType::Block_LIGHTCUBE1);
         const Vec3f trans = p.GetTranslation();

@@ -19,9 +19,10 @@
 #include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/iBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
-#include "engine/aiComponent/behaviorComponent/behaviorHelpers/helperHandle.h"
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
 #include "engine/components/cubeLightComponent.h"
+#include "engine/components/visionScheduleMediator/iVisionModeSubscriber.h"
+#include "engine/components/visionScheduleMediator/visionScheduleMediator_fwd.h"
 #include "engine/robotInterface/messageHandler.h"
 #include <set>
 
@@ -31,6 +32,7 @@
 #include "clad/types/needsSystemTypes.h"
 #include "clad/types/needsSystemTypes.h"
 #include "clad/types/unlockTypes.h"
+#include "util/console/consoleVariable.h"
 #include "util/logging/logging.h"
 
 //Transforms enum into string
@@ -46,8 +48,6 @@ namespace Cozmo {
 // Forward declarations
 class ActionableObject;
 class DriveToObjectAction;
-class BehaviorHelperFactory;
-class IHelper;
 enum class ObjectInteractionIntention;
 enum class CloudIntent : uint8_t;
 
@@ -72,6 +72,11 @@ struct BehaviorObjectiveAchieved;
 // the default values set below in order to change the way the behavior
 // operates
 struct BehaviorOperationModifiers{
+  BehaviorOperationModifiers(){
+    visionModesForActivatableScope = std::make_unique<std::set<VisionModeRequest>>();
+    visionModesForActiveScope = std::make_unique<std::set<VisionModeRequest>>();
+  }
+
   // WantsToBeActivated modifiers
   bool wantsToBeActivatedWhenCarryingObject = false;
   bool wantsToBeActivatedWhenOffTreads = false;
@@ -85,16 +90,18 @@ struct BehaviorOperationModifiers{
   //      monitor its status - it will be automatically canceled when the final delegation completes.
   // Override to false if the behavior will always cancel itself when it's done
   bool behaviorAlwaysDelegates = true;
+
+  // Behaviors which require vision processing can add requests to these vectors to have the base class
+  // manage subscriptions to those VisionModes. Default is none.
+  std::unique_ptr<std::set<VisionModeRequest>> visionModesForActivatableScope;
+  std::unique_ptr<std::set<VisionModeRequest>> visionModesForActiveScope;
 };
 
 // Base Behavior Interface specification
-class ICozmoBehavior : public IBehavior
+class ICozmoBehavior : public IBehavior, public IVisionModeSubscriber
 {
 protected:  
   friend class BehaviorContainer;
-  // Allows helpers to run DelegateIfInControl calls directly on the behavior that
-  // delegated to them
-  friend class IHelper;
 
   // Can't create a public ICozmoBehavior, but derived classes must pass a robot
   // reference into this protected constructor.
@@ -116,12 +123,6 @@ public:
 
   // returns true if the behavior has delegated control to a helper/action/behavior
   bool IsControlDelegated() const;
-  
-  // DEPRECATED: use IsControlDelegated() instead
-  // returns true iff: 
-  // + behavior delegated to an Action,
-  // + the Action is still running
-  bool IsActing() const;
 
   // returns the number of times this behavior has been started (number of times Init was called and returned
   // OK, not counting calls to Resume)
@@ -151,11 +152,9 @@ public:
   bool WantsToBeActivatedInternal() const override final;
 
   BehaviorID         GetID()      const { return _id; }
-  const std::string& GetIDStr()   const { return _idString; }
 
   void SetNeedsActionID(NeedsActionId needsActionID) { _needsActionID = needsActionID; }
 
-  const std::string& GetDisplayNameKey() const { return _displayNameKey; }
   const std::string& GetDebugStateName() const { return _debugStateName;}
   ExecutableBehaviorType GetExecutableType() const { return _executableType; }
   const BehaviorClass GetClass() const { return _behaviorClassID; }
@@ -178,16 +177,6 @@ public:
   
   // returns the required unlockID for the behavior
   const UnlockId GetRequiredUnlockID() const {  return _requiredUnlockId;}
-
-  // returns the need id of the severe need state that must be expressed (see AIWhiteboard), or Count if none
-  NeedId GetRequiredSevereNeedExpression() const { return _requiredSevereNeed; }
-
-  // Force a behavior to update its target blocks but only if it is in a state where it can
-  void UpdateTargetBlocks() const { UpdateTargetBlocksInternal(); }
-  
-  // Get the ObjectUseIntentions this behavior uses
-  virtual std::set<ObjectInteractionIntention>
-                           GetBehaviorObjectInteractionIntentions() const { return {}; }
   
   
   // Add Listeners to a behavior which will notify them of milestones/events in the behavior's lifecycle
@@ -212,14 +201,17 @@ protected:
 
   // default is no delegates, but behaviors which delegate can overload this
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override { }
-  
 
   inline void SetDebugStateName(const std::string& inName) {
     PRINT_CH_INFO("Behaviors", "Behavior.TransitionToState", "Behavior:%s, FromState:%s ToState:%s",
-                  GetIDStr().c_str(), _debugStateName.c_str(), inName.c_str());
+                  GetDebugLabel().c_str(), _debugStateName.c_str(), inName.c_str());
     _debugStateName = inName;
   }
-  
+
+  // set the cloud intent that this responds to. Only valid to call this before Init is called (i.e. from the
+  // constructor). Normally this can be specified in json, but in some cases it may be more desirable to set
+  // it from code
+  void SetRespondToCloudIntent(CloudIntent intent);
   
   virtual void OnEnteredActivatableScopeInternal() override;
   virtual void OnLeftActivatableScopeInternal() override;
@@ -352,9 +344,8 @@ protected:
 
   // This function cancels the action started by DelegateIfInControl (if there is one). Returns true if an action was
   // canceled, false otherwise. Note that if you are activated, this will trigger a callback for the
-  // cancellation unless you set allowCallback to false. If the action was created by a helper, the helper
-  // will be canceled as well, unless allowHelperToContinue is true
-  bool CancelDelegates(bool allowCallback = true, bool allowHelperToContinue = false);
+  // cancellation unless you set allowCallback to false.
+  bool CancelDelegates(bool allowCallback = true);
 
   // This function cancels this behavior. It never allows callbacks or helpers to continue. This is just a
   // convenience wrapper for calling CancelSelf on the delegation component. It returns true if the behavior
@@ -400,28 +391,9 @@ protected:
                                   const ObjectLights& modifier = {});
   bool SmartRemoveCustomLightPattern(const ObjectID& objectID,
                                      const std::vector<CubeAnimationTrigger>& anims);
-  
-  // Ensures that a handle is stopped if the behavior is stopped
-  bool SmartDelegateToHelper(HelperHandle handleToRun,
-                             SimpleCallback successCallback = nullptr,
-                             SimpleCallback failureCallback = nullptr);
 
-  template<typename T>
-  bool SmartDelegateToHelper(HelperHandle handleToRun,
-                             void(T::*successCallback)());
-
-  template<typename T>
-  bool SmartDelegateToHelper(HelperHandle handleToRun,
-                             void(T::*successCallback)(),
-                             void(T::*failureCallback)());
-
-  // Stop a helper delegated with SmartDelegateToHelper
-  bool StopHelperWithoutCallback();
-
-  virtual void UpdateTargetBlocksInternal() const {};
-  
-  // Convenience Method for accessing the behavior helper factory
-  BehaviorHelperFactory& GetBehaviorHelperFactory();
+  // Helper function to play an emergency get out through the continuity component
+  void PlayEmergencyGetOut(AnimationTrigger anim);
   
   // If a behavior requires that an AIInformationProcess is running for the behavior
   // to operate properly, the behavior should set this variable directly so that
@@ -430,9 +402,19 @@ protected:
   
   bool ShouldStreamline() const { return (_alwaysStreamline); }
   
+  // make a member variable a console var that is only around as long as its class instance is
+  #if ANKI_DEV_CHEATS
+    template <typename T>
+    void MakeMemberTunable(T& param, const std::string& name);
+  #else // no op
+    template <typename T>
+    void MakeMemberTunable(T& param, const std::string& name) {  }
+  #endif
+  
 private:
   
   NeedsActionId ExtractNeedsActionIDFromConfig(const Json::Value& config);
+  std::string ExtractDebugLabelForBaseFromConfig(const Json::Value& config);
 
   float _lastRunTime_s;
   float _activatedTime_s;
@@ -456,9 +438,7 @@ private:
   
   // The ID and a convenience cast of the ID to a string
   const BehaviorID  _id;
-  const std::string _idString;
   
-  std::string _displayNameKey = "";
   std::string _debugStateName = "";
   BehaviorClass _behaviorClassID;
   NeedsActionId _needsActionID;
@@ -473,9 +453,6 @@ private:
 
   // if an unlockId is set, the behavior won't be activatable unless the unlockId is unlocked in the progression component
   UnlockId _requiredUnlockId;
-
-  // required severe needs expression to run this activity
-  NeedId _requiredSevereNeed;
   
   // if _requiredRecentDriveOffCharger_sec is greater than 0, this behavior is only activatable if last time the robot got off the charger by
   // itself was less than this time ago. Eg, a value of 1 means if we got off the charger less than 1 second ago
@@ -509,10 +486,6 @@ private:
   std::map<std::string, u8> _lockingNameToTracksMap;
 
   bool _hasSetMotionProfile = false;
-  
-  
-  // Handle for SmartDelegateToHelper
-  WeakHelperHandle _currentHelperHandle;
 
   //A list of object IDs that have had a custom light pattern set
   std::vector<ObjectID> _customLightObjects;
@@ -520,7 +493,8 @@ private:
   // Whether or not the behavior is always be streamlined (set via json)
   bool _alwaysStreamline = false;
   
-
+  bool _initHasBeenCalled = false;
+  
   
   ///////
   // Tracking subscribe tags for initialization
@@ -536,6 +510,11 @@ private:
   // anonymous behavior factory
   Json::Value _anonymousBehaviorMapConfig;  
   std::map<std::string,ICozmoBehaviorPtr> _anonymousBehaviorMap;
+  
+  // list of member vars in this behavior that have been marked as tunable. upon class
+  // desctruction, each console var will be unregistered.
+  std::vector< std::unique_ptr<Anki::Util::IConsoleVariable> > _tunableParams;
+  
 }; // class ICozmoBehavior
 
   
@@ -551,24 +530,6 @@ template<typename T>
 bool ICozmoBehavior::DelegateIfInControl(IActionRunner* action, void(T::*callback)(ActionResult))
 {
   return DelegateIfInControl(action, std::bind(callback, static_cast<T*>(this), std::placeholders::_1));
-}
-
-template<typename T>
-bool ICozmoBehavior::SmartDelegateToHelper(HelperHandle handleToRun,
-                                           void(T::*successCallback)())
-{
-  SimpleCallback unambiguous = std::bind(successCallback, static_cast<T*>(this));
-  return SmartDelegateToHelper(handleToRun, unambiguous);
-}
-
-template<typename T>
-bool ICozmoBehavior::SmartDelegateToHelper(HelperHandle handleToRun,
-                                           void(T::*successCallback)(),
-                                           void(T::*failureCallback)())
-{
-  SimpleCallback unambiguousSuccess = std::bind(successCallback, static_cast<T*>(this));
-  SimpleCallback unambiguousFailure = std::bind(failureCallback, static_cast<T*>(this));
-  return SmartDelegateToHelper(handleToRun, unambiguousSuccess, unambiguousFailure);
 }
 
 template<typename T>
@@ -609,6 +570,27 @@ bool ICozmoBehavior::FindAnonymousBehaviorByNameAndDowncast(const std::string& b
   
   return false;
 }
+  
+#if ANKI_DEV_CHEATS
+template <typename T>
+void ICozmoBehavior::MakeMemberTunable(T& param, const std::string& name)
+{
+  const std::string uniqueName = GetDebugLabel() + "_" + name;
+  const bool unregisterOnDestruction = true;
+  const char* category = "BehaviorInstanceParams";
+  // ensure this param isnt already registered
+  for( const auto& var : _tunableParams ) {
+    if( !ANKI_VERIFY( var->GetID() != uniqueName,
+                      "ICozmoBehavior.MakeMemberTunable.AlreadyExists",
+                      "Per-instance console var '%s' already exists",
+                      uniqueName.c_str() ) )
+    {
+      return;
+    }
+  }
+  _tunableParams.emplace_back( new Util::ConsoleVar<T>( param, uniqueName.c_str(), category, unregisterOnDestruction ) );
+}
+#endif
 
 } // namespace Cozmo
 } // namespace Anki

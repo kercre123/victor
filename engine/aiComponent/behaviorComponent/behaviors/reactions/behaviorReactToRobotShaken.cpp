@@ -15,7 +15,6 @@
 
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
-#include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 
@@ -42,13 +41,7 @@ BehaviorReactToRobotShaken::BehaviorReactToRobotShaken(const Json::Value& config
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToRobotShaken::OnBehaviorActivated()
-{  
-  // Clear severe needs expression since eyes are being re-set
-  if(GetBEI().GetAIComponent().GetSevereNeedsComponent().HasSevereNeedExpression())
-  {
-    GetBEI().GetAIComponent().GetSevereNeedsComponent().ClearSevereNeedExpression();
-  }
-  
+{    
   // Reset variables:
   _maxShakingAccelMag = 0.f;
   _shakingStartedTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();

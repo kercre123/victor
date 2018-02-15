@@ -19,7 +19,7 @@
 #include "coretech/common/engine/math/pose.h"
 #include "coretech/common/engine/objectIDs.h"
 #include "coretech/vision/engine/faceIdTypes.h"
-#include "engine/entity.h"
+#include "util/entityComponent/iManageableComponent.h"
 #include "clad/types/needsSystemTypes.h"
 #include "clad/types/objectFamilies.h"
 #include "clad/types/objectTypes.h"
@@ -49,7 +49,7 @@ constexpr static const float kObjectInvalidAfterFailureRadius_mm = 60.f;
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // AIWhiteboard
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class AIWhiteboard : public ManageableComponent, private Util::noncopyable
+class AIWhiteboard : public IManageableComponent, private Util::noncopyable
 {
 public:
   
@@ -188,12 +188,6 @@ public:
   AIBeacon* GetActiveBeacon();
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Impossible States handling
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void SetNoPreDockPosesOnObject(const ObjectID& objectID) { _objectIDWithoutPreDock = objectID; }
-  const ObjectID& GetNoPreDockPosesOnObject() const { return _objectIDWithoutPreDock;}
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
@@ -328,9 +322,6 @@ private:
   
   // container of beacons currently defined (high level AI concept)
   BeaconList _beacons;
-    
-  // Track objects without pre-doc poses - currently used for pyramid
-  ObjectID _objectIDWithoutPreDock;
   
   // Whether or not Cozmo has the hiccups
   bool _hasHiccups;

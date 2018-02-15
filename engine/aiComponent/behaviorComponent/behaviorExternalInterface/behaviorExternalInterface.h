@@ -17,7 +17,8 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiComponents_fwd.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
-#include "engine/entity.h"
+#include "util/entityComponent/componentWrapper.h"
+#include "util/entityComponent/entity.h"
 
 #include "clad/types/offTreadsStates.h"
 
@@ -56,6 +57,7 @@ class ProxSensorComponent;
 class PublicStateBroadcaster;
 class TouchSensorComponent;
 class VisionComponent;
+class VisionScheduleMediator;
   
 namespace Audio {
 class EngineRobotAudioClient;
@@ -86,7 +88,7 @@ class BEIComponentWrapper : public ComponentWrapper {
 class BehaviorExternalInterface : public IDependencyManagedComponent<BCComponentID>, private Util::noncopyable{
 public:
   BehaviorExternalInterface()
-  :IDependencyManagedComponent(BCComponentID::BehaviorExternalInterface) {}
+  :IDependencyManagedComponent(this, BCComponentID::BehaviorExternalInterface) {}
   
   //////
   // IDependencyManagedComponent functions
@@ -134,7 +136,8 @@ public:
             Audio::EngineRobotAudioClient* robotAudioClient,
             BEIRobotInfo*                  robotInfo,
             TouchSensorComponent*          touchSensorComponent,
-            VisionComponent*               visionComponent);
+            VisionComponent*               visionComponent,
+            VisionScheduleMediator*        visionScheduleMediator);
     
   virtual ~BehaviorExternalInterface();
 
@@ -177,6 +180,9 @@ public:
 
   inline bool HasVisionComponent() const { return GetComponentWrapper(BEIComponentID::Vision).IsValueValid();}
   VisionComponent& GetVisionComponent() const { return GetComponentWrapper(BEIComponentID::Vision).GetValue<VisionComponent>();}
+
+  inline bool HasVisionScheduleMediator() const { return GetComponentWrapper(BEIComponentID::VisionScheduleMediator).IsValueValid();}
+  VisionScheduleMediator& GetVisionScheduleMediator() const { return GetComponentWrapper(BEIComponentID::VisionScheduleMediator).GetValue<VisionScheduleMediator>();}
 
   inline bool HasMapComponent() const { return GetComponentWrapper(BEIComponentID::Map).IsValueValid();}
   MapComponent& GetMapComponent() const { return GetComponentWrapper(BEIComponentID::Map).GetValue<MapComponent>();}
@@ -232,7 +238,8 @@ private:
                        Audio::EngineRobotAudioClient* robotAudioClient,
                        BEIRobotInfo*                  robotInfo,
                        TouchSensorComponent*          touchSensorComponent,
-                       VisionComponent*               visionComponent);
+                       VisionComponent*               visionComponent,
+                       VisionScheduleMediator*        visionSchedulMediator);
       ~CompArrayWrapper(){};
       EntityFullEnumeration<BEIComponentID, BEIComponentWrapper, BEIComponentID::Count> _array;
   };

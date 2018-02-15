@@ -1,0 +1,307 @@
+
+<!doctype html>
+<html lang="en">
+
+<!-- page preamble -->
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Anki Webservices</title>
+    <link rel="stylesheet" href="jquery-ui.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="jquery-1.12.4.js"></script>
+    <script src="jquery-ui.js"></script>
+
+    <script>
+    var mainPageInitialized = false;
+    var connectedToWebotsSim = false;
+    var curPageName = "";
+
+    var perfAutoUpdate = false;
+    var perfAutoUpdatePeriod_ms = 1000;
+    var perfAutoUpdateTimerId = 0;
+
+    var perfItems = [
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:1500000, desc:"CPU freq (kHz)" },
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:150,     desc:"Temperature (Celcius)" },
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:4000000, desc:"Battery voltage" }
+    ];
+
+    function ClearAllPages() {
+        $('div[id^="page_"]').hide();
+        $(':button[name^="page_"]').each(function () {
+            var elem = $(this);
+            elem.css('background-color', 'White');
+            elem.removeAttr("disabled");
+        });
+    }
+
+    function SetPage(pageName) {
+        // Page exit actions:
+        if (curPageName == "page_perf") {
+            if (perfAutoUpdate) {
+                clearTimeout(perfAutoUpdateTimerId);
+            }
+        }
+
+        ClearAllPages();
+        $('#content').hide();
+        $('#' + pageName).show();
+        $(':button[name=' + pageName + ']').css('background-color', 'LightBlue');
+        $(':button[name=' + pageName + ']').attr("disabled", "disabled");
+
+        curPageName = pageName;
+
+        // Page entry actions:
+        if (pageName == "page_main") {
+            if (!mainPageInitialized) {
+                mainPageInitialized = true;
+                $.post("/getmainrobotinfo", function(data) {
+                    var payload = data.split("\n");
+                    $("#main_robot_id").html(payload[0]);
+                    $("#main_robot_serial_number").html(payload[1]);
+                    $("#main_robot_ip_address").html(payload[2]);
+                    $("#main_build_config").html(payload[3]);
+                    $("#main_os_version").html(payload[4]);
+                    $("#main_cmd_line").html(payload[5]);
+                })
+            }
+        } else if (pageName == "page_perf") {
+            UpdatePerfHeader();
+            var numItems = perfItems.length;
+            for (var i = 0; i < numItems; i++) {
+                // Set checkbox states to reflect the internal flags
+                var item = perfItems[i];
+                $('#' + 'id_perf_checkbox_' + i).prop("checked", item["activeUpdate"]);
+                if (item["hasGraph"]) {
+                    $('#' + 'id_graph_' + i).progressbar({
+                        max: parseFloat(item["graphMax"]),
+                        value: parseFloat(item["val"])
+                    })
+                }
+            }
+            if (perfAutoUpdate) {
+                // When entering perf page and auto-update is on, do the first update immediately
+                perfAutoUpdateTimerId = setTimeout(SendPerfUpdateRequest, 0, true);
+            }
+        }
+    }
+
+    function UpdatePerfHeader() {
+        $("#perf_auto_update").html("Auto update is " + (perfAutoUpdate ? "ON" : "off"));
+        $("#perf_cur_update_period").html("Update period: " + perfAutoUpdatePeriod_ms + "ms");
+        $('#update_freq_value').val(perfAutoUpdatePeriod_ms);
+    }
+
+    function ButtonHandler_ToggleAutoUpdate() {
+        perfAutoUpdate = !perfAutoUpdate;
+        UpdatePerfHeader();
+        if (perfAutoUpdate) {
+            perfAutoUpdateTimerId = setTimeout(SendPerfUpdateRequest, 0, true);
+        } else {
+            clearTimeout(perfAutoUpdateTimerId);
+        }
+    }
+    function ButtonHandler_SetUpdatePeriod() {
+        var v = $("#update_freq_value").val();
+        perfAutoUpdatePeriod_ms = v;
+        UpdatePerfHeader();
+    }
+    function ButtonHandler_UpdateNow() {
+        SendPerfUpdateRequest(false);
+    }
+    function onPerfRowCheckboxClickHandler(index) {
+        perfItems[index]["activeUpdate"] = !perfItems[index]["activeUpdate"];
+    }
+
+    function SendPerfUpdateRequest(triggeredByTimer) {
+        var whichStats = "";
+        var numItems = perfItems.length;
+        for (var i = 0; i < numItems; i++) {
+            whichStats += (perfItems[i]["activeUpdate"] ? "1" : "0");
+        }
+        // console.log("SendPerfUpdateRequest: " + triggeredByTimer + "; whichStats=" + whichStats);
+        $.post("/getperfstats?" + whichStats, function(data) {
+            var payload = data.split("\n");
+            for (var i = 0; i < numItems; i++) {
+                var item = perfItems[i];
+                if (item["activeUpdate"]) {
+                    var v = payload[i];
+                    item["val"] = v;
+                    $("#id_perf_row_value_" + i).html(v);
+                    if (item["hasGraph"]) {
+                        var graph = $('#' + 'id_graph_' + i);
+                        graph.progressbar( "option", "value", parseFloat(v) );
+                        graph.progressbar( "option", "max", parseFloat(item["graphMax"]) );
+                    }
+                }
+            }
+        });
+        if (perfAutoUpdate && triggeredByTimer) {
+            perfAutoUpdateTimerId = setTimeout(SendPerfUpdateRequest, perfAutoUpdatePeriod_ms, true);
+        }
+    }
+
+    $(document).ready(function() {
+        ClearAllPages();
+        $("#btn_toggle_auto_update").click(ButtonHandler_ToggleAutoUpdate);
+        $("#btn_set_update_period").click(ButtonHandler_SetUpdatePeriod);
+        $("#btn_update_now").click(ButtonHandler_UpdateNow);
+        $.post("getinitialconfig", function(data) {
+            var payload = data.split("\n");
+            $("#id_title0").html(payload[0]);
+            $("#id_title1").html(payload[1]);
+            var startPage = payload[2];
+            connectedToWebotsSim = (payload[3] === "true");
+            $("#main_robot_connection_type").html(connectedToWebotsSim ? "Webots Simulator" : "Physical Robot");
+            SetPage(startPage);
+        });
+        // Initialize the perf table
+        var table = $("#perf_table");
+        var numRows = perfItems.length;
+        for (var r = 0; r < numRows; r++) {
+            var data = perfItems[r];
+            var s = "<tr><td><input id='id_perf_checkbox_" + r + "' type='checkbox' onClick='onPerfRowCheckboxClickHandler(" + r + ")'/>" +
+                "</td><td>" + data["desc"] +
+                "</td><td width='100px' id='id_perf_row_value_" + r +
+                "'></td><td width='200px' id='id_graph_" + r + "'></td></tr>";
+            table.append(s);
+        }
+    });
+    $(function() {
+        // $(".widget input[type=submit], .widget a, .widget button").button();
+        // $(".widget input[type=submit]").button();
+
+        $("button").click(function(event) {
+            var name = event.target.name;
+            if (name.startsWith('page_')) {
+                SetPage(name);
+                event.preventDefault();
+                return;
+            }
+            // ELSE other button handlers go here
+
+            event.preventDefault();
+        });
+        $("input[type='submit']").click(function(event) {
+            $.post("/"+event.target.value, function(data) {
+                $("#content").html(data);
+                $("#content").show();
+            });
+            event.preventDefault();
+        });
+    });
+    </script>
+
+</head>
+
+<!-- page content -->
+
+<body class="ui-widget-content" style="border:0;">
+    <div>
+        <body><div id="id_title0" style="color:blue; font-size:18pt; display:inline">title</div></body>
+        &nbsp;&nbsp;&nbsp;&nbsp;
+        <body><div id="id_title1" style="display:inline">title</div></body>
+
+        <hr>
+        <div>&nbsp
+            <button type="button" name="page_main">MAIN</button>&nbsp&nbsp&nbsp
+            <button type="button" name="page_consolevars">CONSOLE VARS/FUNCS</button>&nbsp&nbsp&nbsp
+            <button type="button" name="page_perf">PERF</button>&nbsp&nbsp&nbsp
+            <button type="button" name="page_files">FILES</button>&nbsp&nbsp&nbsp
+<!--             <button type="button" name="page_processes">PROCESSES</button>&nbsp&nbsp&nbsp
+ -->        </div>
+        <hr>
+
+        <div id="page_main">
+            <table border=0>
+                <tr>
+                    <td width='160px' style='text-align:right'>Connected to:</td><td id="main_robot_connection_type"></td>
+                </tr>
+                <tr>
+                    <td style='text-align:right'>Robot ID:</td><td id="main_robot_id"></td>
+                </tr>
+                <tr>
+                    <td style='text-align:right'>Robot Serial Number:</td><td id="main_robot_serial_number"></td>
+                </tr>
+                <tr>
+                    <td style='text-align:right'>IP Address:</td><td id="main_robot_ip_address"></td>
+                </tr>
+                <tr>
+                    <td style='text-align:right'>Build Configuration:</td><td id="main_build_config"></td>
+                </tr>
+                <tr>
+                    <td style='text-align:right'>OS Version:</td><td id="main_os_version"></td>
+                </tr>
+                <tr>
+                    <td style='text-align:right'>Command Line:</td><td id="main_cmd_line"></td>
+                </tr>
+            </table>
+            <br>
+        </div>
+
+        <div id="page_consolevars">
+            These are for the console variables and console functions in THIS process only.<br>
+            <table border=1>
+                <tr>
+                    <th>description</th><th>url</th>
+                </tr>
+                <tr>
+                    <td>View and edit console variables</td><td><a href="/consolevars">/consolevars</a></td>
+                </tr>
+                <tr>
+                    <td>List console variables</td><td><a href="/consolevarlist">/consolevarlist</a></td>
+                </tr>
+                <tr>
+                    <td>List console variables matching</td><td>/consolevarlist?key=search_key</td>
+                </tr>
+                <tr>
+                    <td>Set console variable</td><td>/consolevarset?key=name_of_variable&amp;value=new_value_of_variable</td>
+                </tr>
+                <tr>
+                    <td>Get console variable</td><td>/consolevarget?key=name_of_variable</td>
+                </tr>
+                <tr>
+                    <td>Call console function</td><td>/consolefunccall?func=name_of_function&amp;args=arguments</td>
+                </tr>
+            </table>
+            <br>
+            <div>
+                <input type="submit" value="consolevars">
+            </div>
+        </div>
+
+        <div id="page_perf">
+            <br>
+            <button id="btn_update_now">Update NOW</button>&nbsp&nbsp&nbsp&nbsp
+            <input id="update_freq_value" type="number" min="1" max="100000"></input>
+            <button id="btn_set_update_period">Set update period (ms)</button>
+            <span   id='perf_cur_update_period'></span>&nbsp&nbsp&nbsp&nbsp
+            <button id="btn_toggle_auto_update">Toggle Auto Update</button>
+            <span   id='perf_auto_update'></span>
+            <br><br>
+            <table id="perf_table" border=1>
+                <tr>
+                    <th>Active</th><th>Description</th><th>Value</th><th>Graph</th>
+                </tr>
+            </table>
+        </div>
+
+        <div id="page_files">
+            <div>
+                <input type="submit" value="output">
+                <input type="submit" value="resources">
+                <input type="submit" value="cache">
+                <input type="submit" value="currentgamelog">
+                <input type="submit" value="external">
+            </div>
+        </div>
+
+    </div>
+
+    <div id="content">
+    </div>
+</body>
+
+</html>

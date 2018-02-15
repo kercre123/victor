@@ -18,9 +18,9 @@
 
 #include "coretech/common/shared/types.h"
 #include "coretech/vision/engine/image.h"
-#include "cozmoAnim/animation/animation.h"
-#include "cozmoAnim/animation/track.h"
-#include "clad/types/liveIdleAnimationParameters.h"
+#include "cannedAnimLib/animation.h"
+#include "cannedAnimLib/track.h"
+#include "clad/types/keepFaceAliveParameters.h"
 
 #include <list>
 #include <memory>
@@ -31,7 +31,7 @@ namespace Cozmo {
   // Forward declaration
   class ProceduralFace;
   class CannedAnimationContainer;
-  class CozmoAnimContext;
+  class AnimContext;
   class TrackLayerComponent;
   
   namespace Audio {
@@ -49,7 +49,7 @@ namespace Cozmo {
     // TODO: This could be removed in favor of just referring to ::Anki::Cozmo, but avoiding touching too much code now.
     static const Tag kNotAnimatingTag = ::Anki::Cozmo::kNotAnimatingTag;
     
-    AnimationStreamer(const CozmoAnimContext* context);
+    AnimationStreamer(const AnimContext* context);
     
     ~AnimationStreamer();
     
@@ -71,8 +71,9 @@ namespace Cozmo {
     
     Result SetProceduralFace(const ProceduralFace& face, u32 duration_ms);    
 
-    void Process_displayFaceImageChunk(const Anki::Cozmo::RobotInterface::DisplayFaceImageBinaryChunk& msg);
-    void Process_displayFaceImageChunk(const Anki::Cozmo::RobotInterface::DisplayFaceImageRGBChunk& msg);
+    void Process_displayFaceImageChunk(const RobotInterface::DisplayFaceImageBinaryChunk& msg);
+    void Process_displayFaceImageChunk(const RobotInterface::DisplayFaceImageGrayscaleChunk& msg);
+    void Process_displayFaceImageChunk(const RobotInterface::DisplayFaceImageRGBChunk& msg);
 
     Result SetFaceImage(const Vision::Image& img, u32 duration_ms);
     Result SetFaceImage(const Vision::ImageRGB565& img, u32 duration_ms);
@@ -85,14 +86,12 @@ namespace Cozmo {
     
     const std::string GetStreamingAnimationName() const;
     const Animation* GetStreamingAnimation() const { return _streamingAnimation; }
-    
-    const Animation* GetCannedAnimation(const std::string& name) const;
-    const CannedAnimationContainer& GetCannedAnimationContainer() const { return _animationContainer; }
 
-    void SetDefaultParams();
+    void EnableKeepFaceAlive(bool enable, u32 disableTimeout_ms);
     
-    // Overload of SetParam from base class. Mostly just calls base class method.
-    void SetParam(LiveIdleAnimationParameter whichParam, float newValue);
+    void SetDefaultKeepFaceAliveParams();
+    void SetParamToDefault(KeepFaceAliveParameter whichParam);
+    void SetParam(KeepFaceAliveParameter whichParam, float newValue);
     
     // Set/Reset the amount of time to wait before forcing KeepFaceAlive() after the last stream has stopped
     void SetKeepFaceAliveLastStreamTimeout(const f32 time_s)
@@ -155,10 +154,10 @@ namespace Cozmo {
       StopTracks(_tracksInUse);
     }
     
-    const CozmoAnimContext* _context = nullptr;
+    template<typename ImageType>
+    Result SetFaceImageHelper(const ImageType& img, const u32 duration_ms);
     
-    // Container for all known "canned" animations (i.e. non-live)
-    CannedAnimationContainer& _animationContainer;
+    const AnimContext* _context = nullptr;
     
     Animation*  _streamingAnimation = nullptr;
     Animation*  _neutralFaceAnimation = nullptr;
@@ -198,8 +197,13 @@ namespace Cozmo {
     // clock)
     TimeStamp_t _streamingTime_ms;
     
-    // When animation is waiting for audio, track how much time has passed so we can abort in needed
-//    TimeStamp_t _audioBufferingTime_ms = 0;
+    // Time when procedural face layer can next be applied.
+    // There's a minimum amount of time that must pass since the last
+    // non-procedural face (which has higher priority) was drawn in order
+    // to smooth over gaps in between non-procedural frames that can occur
+    // when trying to render them at near real-time. Otherwise, procedural
+    // face layers like eye darts could play during these gaps.
+    TimeStamp_t _nextProceduralFaceAllowedTime_ms = 0;
     
     // Last time we streamed anything
     f32 _lastStreamTime = std::numeric_limits<f32>::lowest();
@@ -223,23 +227,14 @@ namespace Cozmo {
     // Which tracks are currently playing
     u8 _tracksInUse;
     
-    
-    // For live animation
-    std::map<LiveIdleAnimationParameter, f32> _liveAnimParams;
+    // For keep face alive animations
+    std::map<KeepFaceAliveParameter, f32> _keepFaceAliveParams;
+    bool _enableKeepFaceAlive = true;
 
-    s32            _bodyMoveDuration_ms  = 0;
-    s32            _liftMoveDuration_ms  = 0;
-    s32            _headMoveDuration_ms  = 0;
-    s32            _bodyMoveSpacing_ms   = 0;
-    s32            _liftMoveSpacing_ms   = 0;
-    s32            _headMoveSpacing_ms   = 0;
-    
     std::unique_ptr<Audio::AnimationAudioClient> _audioClient;
     
     // Time to wait before forcing KeepFaceAlive() after the latest stream has stopped
     f32 _longEnoughSinceLastStreamTimeout_s;
-    
-    AnimationTag _liveIdleTurnEyeShiftTag = kNotAnimatingTag;
 
     // Image buffer that is fed directly to face display (in RGB565 format)
     Vision::ImageRGB565 _faceDrawBuf;
@@ -248,12 +243,20 @@ namespace Cozmo {
     Vision::ImageRGB _procFaceImg;
 
     // Storage and chunk tracking for faceImage data received from engine
+    
+    // Image used for both binary and grayscale images
+    Vision::Image    _faceImageGrayscale;
+    
     // Binary images
-    Vision::Image    _faceImageBinary;
     u32              _faceImageId                       = 0;          // Used only for tracking chunks of the same image as they are received
     u8               _faceImageChunksReceivedBitMask    = 0;
     const u8         kAllFaceImageChunksReceivedMask    = 0x3;        // 2 bits for 2 expected chunks
 
+    // Grayscale images
+    u32                 _faceImageGrayscaleId                    = 0;      // Used only for tracking chunks of the same image as they are received
+    u32                 _faceImageGrayscaleChunksReceivedBitMask = 0;
+    const u32           kAllFaceImageGrayscaleChunksReceivedMask = 0x7fff; // 15 bits for 15 expected chunks (FACE_DISPLAY_NUM_PIXELS / 1200 pixels_per_msg ~= 15)
+    
     // RGB images
     Vision::ImageRGB565 _faceImageRGB565;
     u32                 _faceImageRGBId                    = 0;          // Used only for tracking chunks of the same image as they are received

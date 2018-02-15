@@ -30,7 +30,7 @@ CONSOLE_VAR(u8,  kNumImuDataToLookBackPet,     "WasRotatingTooFast.Pet.NumToLook
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
 PetWorld::PetWorld()
-: IDependencyManagedComponent(RobotComponentID::PetWorld)
+: IDependencyManagedComponent(this, RobotComponentID::PetWorld)
 {
   
 }

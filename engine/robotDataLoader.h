@@ -13,7 +13,7 @@
 #ifndef ANKI_COZMO_BASESTATION_ROBOT_DATA_LOADER_H
 #define ANKI_COZMO_BASESTATION_ROBOT_DATA_LOADER_H
 
-
+#include "clad/types/animationTrigger.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 
 #include "util/helpers/noncopyable.h"
@@ -24,6 +24,7 @@
 #include <mutex>
 #include <string>
 #include <thread>
+#include <set>
 #include <unordered_map>
 #include <vector>
 
@@ -39,6 +40,7 @@ namespace Cozmo {
 
 class AnimationGroupContainer;
 class BackpackLightAnimationContainer;
+class CannedAnimationContainer;
 class CubeLightAnimationContainer;
 class CozmoContext;
 class AnimationTriggerResponsesContainer;
@@ -63,22 +65,30 @@ public:
   void LoadVoiceCommandConfigs();
 
   using FileJsonMap       = std::unordered_map<std::string, const Json::Value>;
+  using ImagePathMap      = std::unordered_map<std::string, std::string>;
   using BehaviorIDJsonMap = std::unordered_map<BehaviorID,  const Json::Value>;
 
   const FileJsonMap& GetEmotionEventJsons()   const { return _emotionEvents; }
   const BehaviorIDJsonMap& GetBehaviorJsons() const { return _behaviors; }
   
+  CannedAnimationContainer* GetCannedAnimationContainer() const { return _cannedAnimations.get(); }
   CubeLightAnimationContainer* GetCubeLightAnimations() const { return _cubeLightAnimations.get(); }
   AnimationGroupContainer* GetAnimationGroups() const { return _animationGroups.get(); }
   AnimationTriggerResponsesContainer* GetAnimationTriggerResponses() const { return _animationTriggerResponses.get(); }
   AnimationTriggerResponsesContainer* GetCubeAnimationTriggerResponses() const { return _cubeAnimationTriggerResponses.get(); }
   BackpackLightAnimationContainer* GetBackpackLightAnimations() const { return _backpackLightAnimations.get(); }
 
+  bool HasAnimationForTrigger( AnimationTrigger ev );
+  std::string GetAnimationForTrigger( AnimationTrigger ev );
+  std::string GetCubeAnimationForTrigger( CubeAnimationTrigger ev );
+  
+  const std::set<AnimationTrigger>& GetDasBlacklistedAnimationTriggers() const { return _dasBlacklistedAnimationTriggers; }
+
   // robot configuration json files
   const Json::Value& GetRobotMoodConfig() const              { return _robotMoodConfig; }
   const Json::Value& GetVictorFreeplayBehaviorConfig() const { return _victorFreeplayBehaviorConfig; }
-  const Json::Value& GetRobotWorkoutConfig() const           { return _robotWorkoutConfig; }
   const Json::Value& GetRobotVisionConfig() const            { return _robotVisionConfig; }
+  const Json::Value& GetVisionScheduleMediatorConfig() const { return _visionScheduleMediatorConfig; }
   const Json::Value& GetVoiceCommandConfig() const           { return _voiceCommandConfig; }
   const Json::Value& GetRobotNeedsConfig() const             { return _needsSystemConfig; }
   const Json::Value& GetStarRewardsConfig() const            { return _starRewardsConfig; }
@@ -87,11 +97,11 @@ public:
   const Json::Value& GetRobotNeedsHandlersConfig() const     { return _needsHandlersConfig; }
   const Json::Value& GetLocalNotificationConfig() const      { return _localNotificationConfig; }
   const Json::Value& GetInventoryConfig() const              { return _inventoryConfig; }
+  const Json::Value& GetWebServerEngineConfig() const        { return _webServerEngineConfig; }
   const Json::Value& GetDasEventConfig() const               { return _dasEventConfig; }
-  
-  // voice command configs
-  const Json::Value& GetGameRequestWeightsConfig() const { return _gameRequestWeights; }
-  const Json::Value& GetDoATrickWeightsConfig() const { return _doATrickWeights; }
+
+  // images are stored as a map of stripped file name (no file extension) to full path
+  const ImagePathMap& GetFacePNGPaths()       const { return _facePNGPaths; }
 
   bool IsCustomAnimLoadEnabled() const;
   
@@ -118,7 +128,12 @@ private:
 
   void LoadEmotionEvents();
   void LoadBehaviors();
+
+  void LoadDasBlacklistedAnimationTriggers();
   
+  void LoadFacePNGPaths();
+
+
   const CozmoContext* const _context;
   const Util::Data::DataPlatform* _platform;
 
@@ -134,6 +149,7 @@ private:
   std::unordered_map<int, std::vector<std::string>> _jsonFiles;
 
   // animation data
+  std::unique_ptr<CannedAnimationContainer>           _cannedAnimations;
   std::unique_ptr<CubeLightAnimationContainer>        _cubeLightAnimations;
   std::unique_ptr<AnimationGroupContainer>            _animationGroups;
   std::unique_ptr<AnimationTriggerResponsesContainer> _animationTriggerResponses;
@@ -150,7 +166,7 @@ private:
   Json::Value _robotMoodConfig;
   Json::Value _victorFreeplayBehaviorConfig;
   Json::Value _robotVisionConfig;
-  Json::Value _robotWorkoutConfig;
+  Json::Value _visionScheduleMediatorConfig;
   Json::Value _voiceCommandConfig;
   Json::Value _needsSystemConfig;
   Json::Value _starRewardsConfig;
@@ -160,18 +176,18 @@ private:
   Json::Value _localNotificationConfig;
   Json::Value _textToSpeechConfig;
   Json::Value _inventoryConfig;
+  Json::Value _webServerEngineConfig;
   Json::Value _dasEventConfig;
   
-  // voice command configs
-  Json::Value _gameRequestWeights;
-  Json::Value _doATrickWeights;
-  
+  ImagePathMap _facePNGPaths;
+
   bool                  _isNonConfigDataLoaded = false;
   std::mutex            _parallelLoadingMutex;
   std::atomic<float>    _loadingCompleteRatio{0};
   std::thread           _dataLoadingThread;
   std::atomic<bool>     _abortLoad{false};
   
+  std::set<AnimationTrigger> _dasBlacklistedAnimationTriggers;
 };
 
 }

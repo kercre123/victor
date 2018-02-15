@@ -68,6 +68,18 @@ cxx_project(
 
 
 cxx_project(
+    name = 'webotsCtrlWebServer',
+    srcs = cxx_src_glob(['controllers/webotsCtrlWebServer'],
+                        ),
+    platform_srcs = [],
+    headers = cxx_header_glob(['controllers/webotsCtrlWebServer'],
+                              ),
+    platform_headers = [
+    ]
+)
+
+
+cxx_project(
     name = 'webotsCtrlGameEngine2',
     srcs = cxx_src_glob(['controllers/webotsCtrlGameEngine2'],
                         ),

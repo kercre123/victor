@@ -35,7 +35,9 @@ protected:
   virtual void HandleWhileActivated(const EngineToGameEvent& event) override;
   virtual void HandleWhileInScopeButNotActivated(const EngineToGameEvent& event) override;
 
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingMotion, EVisionUpdateFrequency::Standard });
+  }
 
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;

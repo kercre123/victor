@@ -18,8 +18,6 @@
 namespace Anki {
 namespace Cozmo {
   
-class VizManager;
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class MemoryMap : public INavMap
 {
@@ -31,7 +29,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Construction/Destruction
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  MemoryMap(VizManager* vizManager);
+  MemoryMap();
   virtual ~MemoryMap() {}
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -39,22 +37,22 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
   
   // add data to the memory map defined by poly
-  virtual void Insert(const Poly2f& poly, const MemoryMapData& data) override;
+  virtual bool Insert(const Poly2f& poly, const MemoryMapData& data) override;
   
   // merge the given map into this map by applying to the other's information the given transform
   // although this methods allows merging any INavMemoryMap into any INavMemoryMap, subclasses are not
   // expected to provide support for merging other subclasses, but only other instances from the same
   // subclass
-  virtual void Merge(const INavMap* other, const Pose3d& transform) override;
+  virtual bool Merge(const INavMap* other, const Pose3d& transform) override;
   
   // change the content type from typeToReplace into newTypeSet if there's a border from any of the typesToFillFrom towards typeToReplace
-  virtual void FillBorderInternal(EContentType typeToReplace, const FullContentArray& neighborsToFillFrom, EContentType newTypeSet, TimeStamp_t timeMeasured) override;
+  virtual bool FillBorder(EContentType typeToReplace, const FullContentArray& neighborsToFillFrom, EContentType newTypeSet, TimeStamp_t timeMeasured) override;
   
   // attempt to apply a transformation function to all nodes in the tree
-  virtual void TransformContent(NodeTransformFunction transform) override;
+  virtual bool TransformContent(NodeTransformFunction transform) override;
   
   // attempt to apply a transformation function to any node intersecting the poly
-  virtual void TransformContent(const Poly2f& poly, NodeTransformFunction transform) override;
+  virtual bool TransformContent(const Poly2f& poly, NodeTransformFunction transform) override;
 
   // populate a list of all data that matches the predicate
   virtual void FindContentIf(NodePredicate pred, MemoryMapDataConstList& output) const override;
@@ -84,10 +82,6 @@ public:
   
   // returns true if there are any nodes of the given type, false otherwise
   virtual bool HasContentType(EContentType type) const override;
-  
-  // Draw/stop drawing the memory map
-  virtual void DrawDebugProcessorInfo() const override;
-  virtual void ClearDraw() const override;
   
   // Broadcast the memory map
   virtual void GetBroadcastInfo(MemoryMapTypes::MapBroadcastData& info) const override { _quadTree.GetBroadcastInfo(info); }

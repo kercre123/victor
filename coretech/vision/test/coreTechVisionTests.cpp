@@ -1,4 +1,7 @@
+#include "util/helpers/boundedWhile.h"
 #include "util/helpers/includeGTest.h" // Used in place of gTest/gTest.h directly to suppress warnings in the header
+#include "util/fileUtils/fileUtils.h"
+#include "util/helpers/quoteMacro.h"
 
 #include "coretech/common/shared/radians.h"
 #include "coretech/common/shared/types.h"
@@ -10,6 +13,7 @@
 #include "coretech/vision/engine/camera.h"
 #include "coretech/vision/engine/image.h"
 #include "coretech/vision/engine/imageCache.h"
+#include "coretech/vision/engine/objectDetector.h"
 #include "coretech/vision/engine/observableObject.h"
 #include "coretech/vision/engine/perspectivePoseEstimation.h"
 #include "coretech/vision/engine/profiler.h"
@@ -541,8 +545,8 @@ GTEST_TEST(ImageCache, ImageCacheGray)
   ASSERT_EQ(nrows, newGray.GetNumRows());
   ASSERT_EQ(ncols, newGray.GetNumCols());
   
-  // Gray value should be weighted average of the RGB values
-  ASSERT_EQ(colorPixel.weightedGray(), newGray(0,0));
+  // Gray value should be (R+2G+B)
+  ASSERT_EQ(colorPixel.gray(), newGray(0,0));
   
   // ReleaseMemory should clear out the cache and thus a request for an image should fail
   cache.ReleaseMemory();
@@ -668,4 +672,206 @@ GTEST_TEST(ResizeImage, CorrectSizes)
   EXPECT_EQ(13, origImg.GetNumRows());
   EXPECT_EQ(25, origImg.GetNumCols());
   
+}
+
+GTEST_TEST(ObjectDetector, DetectionAndClassification)
+{
+  Vision::ObjectDetector detector;
+  
+  const std::string modelPath = std::string(getenv("TEST_DATA_PATH")) + "/resources/test/dnn_models";
+  const std::string testImagePath = std::string(getenv("TEST_DATA_PATH")) + "/resources/test/images";
+  
+  // For now, to get this test to run, you need to have "dnn_models" symlinked to "~/DropBox/VictorDeepLearningModels"
+  // Andrew can share it with you.
+  // TODO: Remove this once we have models stored in the repo (VIC-1071)
+  if(Util::FileUtils::DirectoryDoesNotExist(modelPath))
+  {
+    PRINT_NAMED_WARNING("ObjectDetector.DetectionAndClassification.Skipping", "Model path not found: %s", modelPath.c_str());
+    return;
+  }
+                        
+  Json::Value config;
+  
+//  config["graph"] = "squeezenet_v1.1";
+//  config["labels"] = "squeezenet_labels.txt";
+//  config["mode"]   = "classification";
+//  config["input_width"] = 227;
+//  config["input_height"] = 227;
+//  config["input_mean_R"] = 104;
+//  config["input_mean_G"] = 117;
+//  config["input_mean_B"] = 123;
+//  config["input_std"]    = 1;
+//  config["top_K"] = 1;
+//  config["min_score"] = 0.5;
+  
+  config["graph"] = "mobilenet_v1_1.0_224_opencvdnn.pb";
+  config["labels"] = "mobilenet_labels.txt";
+  config["mode"] = "classification";
+  config["input_width"] = 224;
+  config["input_height"] = 224;
+  config["do_crop"] = false;
+  config["input_mean_R"] = 0;
+  config["input_mean_G"] = 0;
+  config["input_mean_B"] = 0;
+  config["input_std"] = 255;
+  config["input_layer"] = "input";
+  config["output_scores_layer"] = "MobilenetV1/Predictions/Reshape_1";
+  config["top_K"] = 1;
+  config["min_score"] = 0.1f;
+  
+  Result result;
+  std::string testImageFile;
+  Vision::ImageRGB testImg;
+  Vision::ImageCache imageCache;
+  std::list<Vision::ObjectDetector::DetectedObject> objects;
+  
+  // Helper to deal with the fact the detector runs asynchronously.
+  // This just waits for it to finish.
+  auto DetectionHelper = [&detector](Vision::ImageCache& imageCache, std::list<Vision::ObjectDetector::DetectedObject>& objects) -> Result
+  {
+    const bool started = detector.StartProcessingIfIdle(imageCache);
+    if(!started)
+    {
+      return RESULT_FAIL;
+    }
+    
+    bool gotResult = false;
+    BOUNDED_WHILE(10, (gotResult = detector.GetObjects(objects)) == false)
+    { 
+      std::this_thread::sleep_for(std::chrono::milliseconds(250));
+    }
+
+    if(!gotResult)
+    {
+      return RESULT_FAIL;
+    }
+    
+    return RESULT_OK;
+  };
+
+  // Image classification test: verify expected name is returned for each image
+  {
+    testImageFile = Util::FileUtils::FullFilePath({testImagePath, "grace_hopper.jpg"});
+    result = detector.Init(modelPath, config);
+    ASSERT_EQ(RESULT_OK, result);
+    
+    result = testImg.Load(testImageFile);
+    ASSERT_EQ(RESULT_OK, result);
+    imageCache.Reset(testImg);
+    
+    result = DetectionHelper(imageCache, objects);
+    ASSERT_EQ(RESULT_OK, result);
+
+    for(auto const& object : objects)
+    {
+      printf("Found %s in image %s\n", object.name.c_str(), testImageFile.c_str());
+    }
+    EXPECT_EQ(1, objects.size());
+    if(!objects.empty())
+    {
+      EXPECT_EQ("653:military uniform", objects.front().name);
+    }
+    
+    testImageFile = Util::FileUtils::FullFilePath({testImagePath, "cat.jpg"});
+    result = testImg.Load(testImageFile);
+    ASSERT_EQ(RESULT_OK, result);
+    imageCache.Reset(testImg);
+    
+    result = DetectionHelper(imageCache, objects);
+    ASSERT_EQ(RESULT_OK, result);
+
+    EXPECT_EQ(1, objects.size());
+    
+    bool catFound = false;
+    for(auto const& object : objects)
+    {
+      printf("Found %s in image %s\n", object.name.c_str(), testImageFile.c_str());
+      
+      // Expecting "cat" to be somewhere in the object's name
+      if(objects.front().name.find("cat") != std::string::npos) {
+        catFound = true;
+      }
+    }
+
+    EXPECT_TRUE(catFound);
+  }
+  
+  // SSD object detection model (i.e. bounding boxes): test that expected object ("cat") is found in each image
+  // for a couple of models. Does not test accuracy of bounding box.
+  // NOTE: This uses the same ObjectDetector as above and for each model so is also testing model switching.
+  {
+    // Test both Caffe and TensorFlow models:
+    std::list<Json::Value> configs;
+    
+    Json::Value config;
+    config["graph"] = "ssd_mobilenet_v1_coco_11_06_2017_frozen.pb";
+    config["labels"] = "cocostuff-labels.txt";
+    config["mode"] = "detection";
+    config["input_width"]  = 224;
+    config["input_height"] = 224;
+    config["input_mean_R"] = 0;
+    config["input_mean_G"] = 0;
+    config["input_mean_B"] = 0;
+    config["input_std"] = 255;
+    config["top_K"] = 1;
+    config["min_score"] = 0.5f;
+    
+    configs.push_back(config);
+    
+    config["graph"] = "MobileNetSSD_deploy";
+    config["labels"] = "coco-labels-20.txt";
+    config["mode"] = "detection";
+    config["input_width"]  = 300;
+    config["input_height"] = 300;
+    config["input_mean_R"] = 127.5;
+    config["input_mean_G"] = 127.5;
+    config["input_mean_B"] = 127.5;
+    config["input_std"] = 127.5;
+    config["top_K"] = 1;
+    config["min_score"] = 0.5f;
+    
+    configs.push_back(config);
+    
+    for(auto const& config : configs)
+    {
+      result = detector.Init(modelPath, config);
+      ASSERT_EQ(RESULT_OK, result);
+      
+      for(auto const& filename : {"cat.jpg", "linus.jpg"})
+      {
+        testImageFile = Util::FileUtils::FullFilePath({testImagePath, filename});
+        result = testImg.Load(testImageFile);
+        ASSERT_EQ(RESULT_OK, result);
+        imageCache.Reset(testImg);
+        
+        result = DetectionHelper(imageCache, objects);
+        ASSERT_EQ(RESULT_OK, result);
+        
+        bool catFound = false;
+        std::for_each(objects.begin(), objects.end(),
+                      [&catFound](const Vision::ObjectDetector::DetectedObject& object)
+                      {
+                        if(object.name == "cat")
+                        {
+                          catFound = true;
+                        }
+                      });
+        EXPECT_TRUE(catFound);
+        
+        const bool kEnableDetectedObjectDisplay = false;
+        if(kEnableDetectedObjectDisplay)
+        {
+          Vision::ImageRGB dispImg(testImg);
+          for(auto const& object : objects)
+          {
+            dispImg.DrawRect(object.rect, NamedColors::RED);
+            std::stringstream caption;
+            caption << object.name << "[" << std::round(100.f*object.score) << "]";
+            dispImg.DrawText((object.rect.GetBottomLeft() + Point2i(2,-6)).CastTo<f32>(), caption.str(), NamedColors::RED, .5f, true);
+          }
+          dispImg.Display("Detections", 0);
+        }
+      }
+    }
+  }
 }

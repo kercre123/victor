@@ -1,5 +1,8 @@
 project(libankiutil LANGUAGES CXX)
 
+include(anki_build_cxx)
+include(android_strip)
+
 set(AUDIO_UTIL_SRC
   audioRecognizerProcessor.cpp
   audioRecognizerProcessor.h
@@ -43,6 +46,16 @@ elseif(MACOSX)
     set(PLATFORM_LIBS ${AUDIO_TOOLBOX} ${FOUNDATION})
 endif()
 
+target_compile_options(util_audio
+  PRIVATE
+  ${ANKI_BUILD_CXX_COMPILE_OPTIONS}
+)
+
+target_compile_definitions(util_audio
+  PRIVATE
+  ${ANKI_BUILD_CXX_COMPILE_DEFINITIONS}
+)
+
 target_include_directories(util_audio PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
 PRIVATE
@@ -52,6 +65,8 @@ PRIVATE
 target_link_libraries(util_audio
   util
   ${PLATFORM_LIBS})
+
+android_strip(TARGET util_audio)
 
 #export(TARGETS ankiutil FILE ankiutil-config.cmake)
 

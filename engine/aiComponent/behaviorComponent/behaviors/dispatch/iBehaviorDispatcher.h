@@ -16,6 +16,8 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
+#include <string>
+
 namespace Anki {
 namespace Cozmo {
 
@@ -28,8 +30,10 @@ protected:
   // "interruptActiveBehavior". If not specified, the first constructor will read it from config
   IBehaviorDispatcher(const Json::Value& config, bool shouldInterruptActiveBehavior);
 
-  // called during (child) constructors to add a behavior id that this behavior may dispatch to.
-  void AddPossibleDispatch(BehaviorID id) { _behaviorIds.push_back(id); }
+  // called during (child) constructors to add a behavior string to dispatch to. First, anonymous behaviors
+  // will be searched, if there are no matches there, behavior ID's will be checked. If those also don't
+  // match, this will print an error (during Init)
+  void AddPossibleDispatch(const std::string& behavior) { _behaviorStrs.push_back(behavior); }
 
 public:
   virtual bool WantsToBeActivatedBehavior() const override;
@@ -62,7 +66,7 @@ protected:
 
 private:
 
-  std::vector<BehaviorID> _behaviorIds;
+  std::vector<std::string> _behaviorStrs;
   std::vector<ICozmoBehaviorPtr> _behaviors;
 
   bool _shouldInterruptActiveBehavior;

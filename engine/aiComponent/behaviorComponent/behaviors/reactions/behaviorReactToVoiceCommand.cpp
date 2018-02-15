@@ -10,18 +10,23 @@
 *
 **/
 
+#include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToVoiceCommand.h"
+
+#include "clad/types/animationTrigger.h"
+#include "clad/types/behaviorComponent/cloudIntents.h"
+#include "coretech/common/engine/math/pose.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/compoundActions.h"
+#include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponentCloudReceiver.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToVoiceCommand.h"
 #include "engine/components/movementComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
 #include "engine/voiceCommands/voiceCommandComponent.h"
-#include "coretech/common/engine/math/pose.h"
-#include "clad/types/animationTrigger.h"
-
 
 namespace Anki {
 namespace Cozmo {
@@ -31,6 +36,7 @@ namespace Cozmo {
 BehaviorReactToVoiceCommand::BehaviorReactToVoiceCommand(const Json::Value& config)
 : ICozmoBehavior(config)
 {
+  SetRespondToCloudIntent(CloudIntent::TriggerDetected);
 }
 
 
@@ -61,17 +67,23 @@ void BehaviorReactToVoiceCommand::OnBehaviorActivated()
   
   // Stop all movement so we can listen for a command
   robotInfo.GetMoveComponent().StopAllMotors();
+
+  const bool onCharger = robotInfo.IsOnChargerPlatform();
   
   auto* actionSeries = new CompoundActionSequential();
   
   // Tilt the head up slightly, like we're listening, and wait a bit
   {
-    actionSeries->AddAction(
-      new TriggerLiftSafeAnimationAction(AnimationTrigger::VC_Listening));
+    if( onCharger ) {
+      actionSeries->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::ListeningOnCharger));
+    }
+    else {
+      actionSeries->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::VC_Listening));
+    }
   }
   
   // After waiting let's turn toward the face we know about, if we have one
-  if(_desiredFace.IsValid()){
+  if(_desiredFace.IsValid() && !onCharger){
     const bool sayName = true;
     TurnTowardsFaceAction* turnAction = new TurnTowardsFaceAction(_desiredFace,
                                                                   M_PI_F,
@@ -87,8 +99,16 @@ void BehaviorReactToVoiceCommand::OnBehaviorActivated()
        new TriggerLiftSafeAnimationAction(AnimationTrigger::VC_NoFollowupCommand_WithFace));
   }else{
     // Play animation to indicate "What was that" since no face to tun towards
-    actionSeries->AddAction(
-       new TriggerLiftSafeAnimationAction(AnimationTrigger::VC_NoFollowupCommand_NoFace));
+    TriggerLiftSafeAnimationAction* animAction =
+      new TriggerLiftSafeAnimationAction(AnimationTrigger::VC_NoFollowupCommand_NoFace);
+
+    if( onCharger ) {
+      // lock body on charger
+      // TODO:(bn) play a different anim?
+      animAction->SetTracksToLock( animAction->GetTracksToLock() | (u8)AnimTrackFlag::BODY_TRACK );
+    }
+    
+    actionSeries->AddAction(animAction);
   }
   
   using namespace ::Anki::Cozmo::VoiceCommand;

@@ -16,6 +16,7 @@
 #include "coretech/common/engine/math/pose.h"
 #include "engine/actions/actionInterface.h"
 #include "engine/actions/compoundActions.h"
+#include "engine/components/movementComponent.h"
 #include "engine/smartFaceId.h"
 #include "anki/cozmo/shared/animationTag.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
@@ -75,37 +76,43 @@ namespace Cozmo {
     private:
       
       bool IsBodyInPosition(Radians& currentAngle) const;
-      Result SendSetBodyAngle() const;
+      Result SendSetBodyAngle();
       bool IsOffTreadsStateValid() const;
       
       const f32 _kDefaultSpeed        = MAX_BODY_ROTATION_SPEED_RAD_PER_SEC;
       const f32 _kDefaultAccel        = 10.f;
       const f32 _kMaxRelativeTurnRevs = 25.f; // Maximum number of revolutions allowed for a relative turn.
+      const std::string _kEyeShiftLayerName = "TurnInPlaceEyeShiftLayer";
       
-      bool    _inPosition = false;
-      bool    _turnStarted = false;
-      float _requestedAngle_rad = 0.f;
-      Radians _currentAngle;
-      Radians _previousAngle;
-      Radians _currentTargetAngle;
-      float _angularDistExpected_rad           = 0.f;
-      float _angularDistTraversed_rad          = 0.f;
-      float _absAngularDistToRemoveEyeDart_rad = 0.f;
-      Radians _angleTolerance = POINT_TURN_ANGLE_TOL;
-      Radians _variability;
+      bool       _inPosition = false;
+      bool       _turnStarted = false;
+      float      _requestedAngle_rad = 0.f;
+      Radians    _currentAngle;
+      Radians    _previousAngle;
+      Radians    _currentTargetAngle;
+      float      _angularDistExpected_rad           = 0.f;
+      float      _angularDistTraversed_rad          = 0.f;
+      float      _absAngularDistToRemoveEyeDart_rad = 0.f;
+      Radians    _angleTolerance = POINT_TURN_ANGLE_TOL;
+      Radians    _variability;
       const bool _isAbsoluteAngle;
-      f32     _maxSpeed_radPerSec = _kDefaultSpeed;
-      f32     _accel_radPerSec2 = _kDefaultAccel;
-      bool    _motionProfileManuallySet = false;
+      f32        _maxSpeed_radPerSec = _kDefaultSpeed;
+      f32        _accel_radPerSec2 = _kDefaultAccel;
+      bool       _motionProfileManuallySet = false;
       
       // To keep track of PoseFrameId changes mid-turn:
       PoseFrameID_t _prevPoseFrameId = 0;
       u32 _relocalizedCnt = 0;
       
       bool    _moveEyes = true;
-      AnimationTag _eyeShiftTag = kNotAnimatingTag;
       
       bool _isInitialized = false;
+      
+      MovementComponent::MotorActionID _actionID = 0;
+      bool       _motionCommanded = false;
+      bool       _motionCommandAcked = false;
+      
+      Signal::SmartHandle _signalHandle;
       
     }; // class TurnInPlaceAction
 
@@ -128,6 +135,7 @@ namespace Cozmo {
       void SetSearchWaitTime(f32 minWaitTime_s, f32 maxWaitTime_s);
 
     protected:
+      virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const override;
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
       virtual void OnRobotSet() override final;
@@ -168,7 +176,7 @@ namespace Cozmo {
       virtual bool SetMotionProfile(const PathMotionProfile& motionProfile) override;
       
     protected:
-      
+      virtual void GetRequiredVisionModes(std::set<VisionModeRequest>&requests) const override; 
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
       
@@ -312,6 +320,8 @@ namespace Cozmo {
     
       static f32 GetPresetHeadAngle(Preset preset);
       static const char* GetPresetName(Preset preset);
+
+      const std::string _kEyeShiftLayerName = "MoveHeadToAngleEyeShiftLayer";
       
       bool IsHeadInPosition() const;
       
@@ -319,19 +329,21 @@ namespace Cozmo {
       Radians     _angleTolerance;
       Radians     _variability;
       
-      bool        _inPosition;
-      
       f32         _maxSpeed_radPerSec = 15.f;
       f32         _accel_radPerSec2   = 20.f;
       f32         _duration_sec = 0.f;
       bool        _moveEyes = true;
       bool        _holdEyes = false;
       Radians     _halfAngle;
-      
-      AnimationTag _eyeShiftTag = kNotAnimatingTag;
-      
+
+      MovementComponent::MotorActionID _actionID = 0;
       bool        _motionCommanded = false;
+      bool        _motionCommandAcked = false;
+      
+      bool        _inPosition;
       bool        _motionStarted = false;
+      
+      Signal::SmartHandle _signalHandle;
       
     };  // class MoveHeadToAngleAction
     
@@ -379,10 +391,15 @@ namespace Cozmo {
       f32         _duration = 0.0f; // 0 means "as fast as it can"
       f32         _maxLiftSpeedRadPerSec = 10.0f;
       f32         _liftAccelRacPerSec2 = 20.0f;
+
+      MovementComponent::MotorActionID _actionID;
+      bool        _motionCommanded = false;
+      bool        _motionCommandAcked = false;
       
       bool        _inPosition;
-      bool        _motionCommanded = false;      
       bool        _motionStarted = false;
+      
+      Signal::SmartHandle _signalHandle;
       
     }; // class MoveLiftToHeightAction
     
@@ -392,7 +409,7 @@ namespace Cozmo {
     class TraverseObjectAction : public IActionRunner
     {
     public:
-      TraverseObjectAction(ObjectID objectID, const bool useManualSpeed);
+      TraverseObjectAction(ObjectID objectID);
       virtual ~TraverseObjectAction()
       {
         if(_chosenAction != nullptr)
@@ -414,7 +431,6 @@ namespace Cozmo {
       f32            _speed_mmps;
       f32            _accel_mmps2;
       f32            _decel_mmps2;
-      bool           _useManualSpeed;
       
     }; // class TraverseObjectAction
     
@@ -492,6 +508,9 @@ namespace Cozmo {
       
     protected:
       
+      // This action will automatically subscribe to whatever VisionMode it is asked to wait on
+      virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const override;
+
       virtual ActionResult Init() override;
       
       virtual ActionResult CheckIfDone() override;
@@ -540,7 +559,7 @@ namespace Cozmo {
       void SetRefinedTurnAngleTol(const f32 tol) { _refinedTurnAngleTol_rad = tol; }
       
     protected:
-      
+      virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const override;
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
 
@@ -594,7 +613,7 @@ namespace Cozmo {
 
       // Sets whether or not we require a face. Default is false (it will play animations and return success
       // even if no face is found). If set to true and no face is found, the action will fail with
-      // FAILURE_ABORT and no animations will be played
+      // NO_FACE and no animations will be played
       void SetRequireFaceConfirmation(bool isRequired) { _requireFaceConfirmation = isRequired; }
       
       // Template for all events we subscribe to
@@ -602,7 +621,7 @@ namespace Cozmo {
       void HandleMessage(const T& msg);
       
     protected:
-
+      virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const override;
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
       
@@ -634,7 +653,7 @@ namespace Cozmo {
       void CreateFineTuneAction();
       void SetAction(IActionRunner* action);
       
-    }; // TurnTowardsLastFacePoseAction
+    }; // TurnTowardsFaceAction
 
   
     class TurnTowardsLastFacePoseAction : public TurnTowardsFaceAction

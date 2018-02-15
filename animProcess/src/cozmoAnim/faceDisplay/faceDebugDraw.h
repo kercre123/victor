@@ -27,7 +27,7 @@ namespace Anki {
 class ColorRGBA;
 
 namespace Vision {
-  class ImageRGB;
+  class ImageRGB565;
 }
 
 namespace Cozmo {
@@ -62,15 +62,19 @@ public:
   void SetShouldDrawFAC(bool draw);
 
   // Begin drawing functionality
-  void DrawConfidenceClock(const RobotInterface::MicDirection& micData, uint32_t secondsRemaining);
+  void DrawConfidenceClock(
+    const RobotInterface::MicDirection& micData,
+    float bufferFullPercent,
+    uint32_t secondsRemaining,
+    bool triggerRecognized);
   void DrawStateInfo(const RobotState& state);
   void DrawMicInfo(const RobotInterface::MicData& micData);
   void DrawFAC();
   void SetCustomText(const RobotInterface::DrawTextOnScreen& text);
   
 private:
-  DrawState                         _drawState = DrawState::None;
-  std::unique_ptr<Vision::ImageRGB> _scratchDrawingImg;
+  DrawState                            _drawState = DrawState::None;
+  std::unique_ptr<Vision::ImageRGB565> _scratchDrawingImg;
 
   // Draw the _scratchDrawingImg to the face
   // Adds a debug menu page indicator in the top right

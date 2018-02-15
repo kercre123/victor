@@ -1,0 +1,6 @@
+{
+  "port": "8889",
+  "title0": "Victor Web Server (Anim process)",
+  "title1": "This web server is running in the Anim process",
+  "startPage": "page_consolevars"
+}

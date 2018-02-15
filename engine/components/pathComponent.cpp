@@ -59,7 +59,7 @@ void PlanParameters::Reset() {
 }
 
 PathComponent::PathComponent()
-: IDependencyManagedComponent<RobotComponentID>(RobotComponentID::PathPlanning)
+: IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::PathPlanning)
 , _shortPathPlanner(new FaceAndApproachPlanner)
 , _shortMinAnglePathPlanner(new MinimalAnglePlanner)
 , _pathMotionProfile(new PathMotionProfile(DEFAULT_PATH_MOTION_PROFILE))
@@ -79,11 +79,10 @@ void PathComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& depen
 {
   _robot = robot;
   const CozmoContext* context =  _robot->GetContext();
-  const RobotID_t robotID = _robot->GetID();
   _speedChooser = std::make_unique<SpeedChooser>(*_robot);
   if( context ) {
     // might not exist (e.g. unit tests)
-    _pdo.reset(new PathDolerOuter(context->GetRobotManager()->GetMsgHandler(), robotID));
+    _pdo.reset(new PathDolerOuter(context->GetRobotManager()->GetMsgHandler()));
 
     if (nullptr != context->GetDataPlatform()) {
       _longPathPlanner.reset(new LatticePlanner(_robot, context->GetDataPlatform()));
@@ -238,9 +237,8 @@ void PathComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& depen
     }
   };
   
-  _pathEventHandle = _robot->GetRobotMessageHandler()->Subscribe(_robot->GetID(),
-                                                                RobotInterface::RobotToEngineTag::pathFollowingEvent,
-                                                                eventLambda);
+  _pathEventHandle = _robot->GetRobotMessageHandler()->Subscribe(RobotInterface::RobotToEngineTag::pathFollowingEvent,
+                                                                 eventLambda);
 
 }
 
@@ -278,8 +276,7 @@ Result PathComponent::Abort()
       // no change
       break;
   }
-  
-  _usingManualPathSpeed = false;
+
   _currPlanParams->Reset();
   
   return ret;
@@ -576,7 +573,7 @@ void PathComponent::HandlePlanComplete()
     PRINT_CH_INFO("Planner", "PathComponent.Update.Planner.CompleteWithPlan",
                   "Running planner complete with a plan");
         
-    Result res = ExecutePath(newPath, _usingManualPathSpeed);
+    Result res = ExecutePath(newPath);
 
     if( res != RESULT_OK ) {
       PRINT_NAMED_WARNING("Robot.PathComponent.UnableToExecuteCompletedPath",
@@ -718,8 +715,7 @@ const PathMotionProfile& PathComponent::GetCustomMotionProfile() const
 
 
 Result PathComponent::StartDrivingToPose(const std::vector<Pose3d>& poses,
-                                         std::shared_ptr<Planning::GoalID> selectedPoseIndexPtr,
-                                         bool useManualSpeed)
+                                         std::shared_ptr<Planning::GoalID> selectedPoseIndexPtr)
 {
   if( poses.empty() ) {
     PRINT_NAMED_WARNING("PathComponent.StartDrivingToPose.NoTargetPoses",
@@ -741,7 +737,6 @@ Result PathComponent::StartDrivingToPose(const std::vector<Pose3d>& poses,
     Abort();
   }
 
-  _usingManualPathSpeed = useManualSpeed;
   _plannerSelectedPoseIndex = selectedPoseIndexPtr;
 
   _currPlanParams->commonOriginID = _robot->GetPoseOriginList().GetCurrentOriginID();
@@ -1004,7 +999,7 @@ bool PathComponent::IsWaitingForRobotResponse() const
   }
 }
 
-Result PathComponent::ExecuteCustomPath(const Planning::Path& path, const bool useManualSpeed )
+Result PathComponent::ExecuteCustomPath(const Planning::Path& path)
 {
 
   // clear the selected planner, so we don't replan along this manual path
@@ -1014,10 +1009,10 @@ Result PathComponent::ExecuteCustomPath(const Planning::Path& path, const bool u
   _plannerActive = false;
   _selectedPathPlanner.reset();
 
-  return ExecutePath(path, useManualSpeed);
+  return ExecutePath(path);
 }
 
-Result PathComponent::ExecutePath(const Planning::Path& path, const bool useManualSpeed)
+Result PathComponent::ExecutePath(const Planning::Path& path)
 {  
   Result lastResult = RESULT_FAIL;
       
@@ -1034,13 +1029,12 @@ Result PathComponent::ExecutePath(const Planning::Path& path, const bool useManu
       if( _pdo ) {
         _pdo->SetPath(path);
       }
-      _usingManualPathSpeed = useManualSpeed;
 
       PRINT_CH_INFO("Planner", "PathComponent.SendExecutePath",
-                    "sending start execution message (pathID = %d, manualSpeed == %d)",
-                    _lastSentPathID, useManualSpeed);
+                    "sending start execution message (pathID = %d)",
+                    _lastSentPathID);
       lastResult = _robot->SendMessage(RobotInterface::EngineToRobot(
-                                        RobotInterface::ExecutePath(_lastSentPathID, useManualSpeed)));
+                                        RobotInterface::ExecutePath(_lastSentPathID)));
 
       if( lastResult == RESULT_OK) {
         const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -1062,7 +1056,7 @@ void PathComponent::ExecuteTestPath(const PathMotionProfile& motionProfile)
   // NOTE: no need to use the custom motion profile here, we just manually pass it in to the test path
   Planning::Path p;
   _longPathPlanner->GetTestPath(_robot->GetPose(), p, &motionProfile);
-  ExecutePath(p, false);
+  ExecutePath(p);
 }
 
 void PathComponent::SetDriveToPoseStatus(ERobotDriveToPoseStatus newValue)

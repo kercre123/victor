@@ -306,7 +306,7 @@ namespace Cozmo {
           const bool reliable = true;
           const bool hot = false;
           
-          Result sendResult = _robotInterface->SendMessage(-1, RobotInterface::EngineToRobot(std::move(robotInterfaceMsg)), reliable, hot);
+          Result sendResult = _robotInterface->SendMessage(RobotInterface::EngineToRobot(std::move(robotInterfaceMsg)), reliable, hot);
           if(sendResult != RESULT_OK) {
             PRINT_NAMED_WARNING("DebugConsoleManager.HandleEvent.SetDebugConsoleVarMessage.SendFailed",
                                 "Failed to send message to set '%s'", msg.varName.c_str());
@@ -337,8 +337,7 @@ namespace Cozmo {
           const bool reliable = true;
           const bool hot = false;
           
-          Result sendResult = _robotInterface->SendMessage(-1,
-                                                           RobotInterface::EngineToRobot(std::move(robotInterfaceMsg)),
+          Result sendResult = _robotInterface->SendMessage(RobotInterface::EngineToRobot(std::move(robotInterfaceMsg)),
                                                            reliable,
                                                            hot);
           if (sendResult != RESULT_OK) {

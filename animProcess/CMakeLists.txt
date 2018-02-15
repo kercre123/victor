@@ -8,8 +8,6 @@ anki_build_cxx_library(victor_anim ${ANKI_SRCLIST_DIR} STATIC)
 
 include(flatbuffers)
 include(opencv)
-include(signalessence)
-include(speexdsp)
 include(text2speech)
 include(sensory)
 include(robot_core)
@@ -40,6 +38,7 @@ target_link_libraries(victor_anim
   PRIVATE
   util
   util_audio
+  canned_anim_lib_anim
   # cti
   cti_common_robot
   cti_vision
@@ -52,13 +51,13 @@ target_link_libraries(victor_anim
   # vendor
   ${OPENCV_LIBS}
   ${FLATBUFFERS_LIBS} 
-  ${SIGNALESSENCE_LIBS}
-  ${SPEEXDSP_LIBS}
+  signal_essence
   ${TEXT2SPEECH_LIBS}
   ${SENSORY_LIBS}
   # platform
   ${PLATFORM_LIBS}
   PUBLIC
+  victor_web_library
   robot_interface  # Needs to be public for cozmoConfig.h
 )
 
@@ -80,9 +79,9 @@ target_include_directories(victor_anim
 # mac implementation uses (webotsCtrlAnim)
 if (ANDROID)
 
-  anki_build_cxx_executable(victor_animator ${ANKI_SRCLIST_DIR})
+  anki_build_cxx_executable(vic-anim ${ANKI_SRCLIST_DIR})
 
-  target_link_libraries(victor_animator
+  target_link_libraries(vic-anim
     PRIVATE
     victor_anim
     cti_common_robot
@@ -91,8 +90,6 @@ if (ANDROID)
     ${PLATFORM_LIBS}
   )
 
-  android_strip(TARGET victor_animator)
+  android_strip(TARGET vic-anim)
     
 endif()
-
-set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/src/signalEssence/policy_actions.c PROPERTIES COMPILE_FLAGS -Wno-shorten-64-to-32)

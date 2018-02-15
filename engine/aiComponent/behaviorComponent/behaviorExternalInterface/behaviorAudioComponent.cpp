@@ -19,7 +19,6 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
-#include "engine/aiComponent/workoutComponent.h"
 #include "engine/audio/engineRobotAudioClient.h"
 #include "engine/components/publicStateBroadcaster.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -92,9 +91,7 @@ const std::array<AudioMetaData::SwitchState::Gameplay_Round, 11> kGameplayRoundM
   { BehaviorStageTag::Feeding, BehaviorID::Activity_Feeding},
   { BehaviorStageTag::GuardDog, BehaviorID::Activity_PlayAlone},
   { BehaviorStageTag::PyramidConstruction, BehaviorID::Activity_BuildPyramid},
-  { BehaviorStageTag::PyramidConstruction, BehaviorID::Activity_SparksBuildPyramid},
-  { BehaviorStageTag::Workout, BehaviorID::Activity_PlayAlone},
-  { BehaviorStageTag::Workout, BehaviorID::Activity_SparksWorkout},
+  { BehaviorStageTag::PyramidConstruction, BehaviorID::Activity_SparksBuildPyramid}
 };**/
   
 } // end anonymous namespace
@@ -102,7 +99,7 @@ const std::array<AudioMetaData::SwitchState::Gameplay_Round, 11> kGameplayRoundM
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorAudioComponent::BehaviorAudioComponent(Audio::EngineRobotAudioClient* robotAudioClient)
 //: _robotAudioClient(robotAudioClient)
-: IDependencyManagedComponent(BCComponentID::BehaviorAudioComponent)
+: IDependencyManagedComponent(this, BCComponentID::BehaviorAudioComponent)
 , _activeBehaviorStage(BehaviorStageTag::Count)
 //, _prevGuardDogStage(GuardDogStage::Count)
 //, _prevFeedingStage(FeedingStage::MildEnergy)
@@ -113,7 +110,7 @@ BehaviorAudioComponent::BehaviorAudioComponent(Audio::EngineRobotAudioClient* ro
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAudioComponent::InitDependent(Cozmo::Robot* robot, const BCCompMap& dependentComponents)
 {
-  auto& bei = dependentComponents.find(BCComponentID::BehaviorExternalInterface)->second.GetValue<BehaviorExternalInterface>();
+  auto& bei = dependentComponents.GetValue<BehaviorExternalInterface>();
   Init(bei);
 }
 

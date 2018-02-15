@@ -12,6 +12,8 @@
 
 #include "engine/robotDataLoader.h"
 
+#include "cannedAnimLib/cannedAnimationContainer.h"
+#include "cannedAnimLib/cannedAnimationLoader.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/sayTextAction.h"
@@ -20,7 +22,6 @@
 #include "engine/animations/animationGroup/animationGroupContainer.h"
 #include "engine/animations/animationTransfer.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/components/cubeLightComponent.h"
 #include "engine/components/bodyLightComponent.h"
 #include "engine/components/cubeLightComponent.h"
 #include "engine/cozmoContext.h"
@@ -43,10 +44,6 @@
 #include <sys/stat.h>
 
 #define LOG_CHANNEL    "RobotDataLoader"
-#define LOG_ERROR      PRINT_NAMED_ERROR
-#define LOG_WARNING    PRINT_NAMED_WARNING
-#define LOG_INFO(...)  PRINT_CH_INFO(LOG_CHANNEL, ##__VA_ARGS__)
-#define LOG_DEBUG(...) PRINT_CH_INFO(LOG_CHANNEL, ##__VA_ARGS__)
 
 namespace {
 
@@ -70,6 +67,7 @@ RobotDataLoader::RobotDataLoader(const CozmoContext* context)
 , _animationTriggerResponses(new AnimationTriggerResponsesContainer())
 , _cubeAnimationTriggerResponses(new AnimationTriggerResponsesContainer())
 , _backpackLightAnimations(new BackpackLightAnimationContainer())
+, _dasBlacklistedAnimationTriggers()
 {
 }
 
@@ -125,10 +123,20 @@ void RobotDataLoader::LoadNonConfigData()
       ANKI_CPU_PROFILE("RobotDataLoader::LoadEmotionEvents");
       LoadEmotionEvents();
     }
-
+    
+    {
+      ANKI_CPU_PROFILE("RobotDataLoader::LoadFacePNGPaths");
+      LoadFacePNGPaths();
+    }
+    
     {
       ANKI_CPU_PROFILE("RobotDataLoader::LoadCubeAnimationTriggerResponses");
       LoadCubeAnimationTriggerResponses();
+    }
+
+    {
+      ANKI_CPU_PROFILE("RobotDataLoader::LoadDasBlacklistedAnimationTriggers");
+      LoadDasBlacklistedAnimationTriggers();
     }
   }
 
@@ -146,6 +154,13 @@ void RobotDataLoader::LoadNonConfigData()
     // Load SayText Action Intent Config
     ANKI_CPU_PROFILE("RobotDataLoader::LoadSayTextActionIntentConfigs");
     SayTextAction::LoadMetadata(*_context->GetDataPlatform());
+  }
+
+  {
+    // Load animations into engine - disabled for the time being to save the 30 MB hit
+    // of loading animations into engine in addition to anim process
+    //CannedAnimationLoader animLoader(_platform, _loadingCompleteRatio, _abortLoad);
+    //_cannedAnimations.reset(animLoader.LoadAnimations());
   }
 
   // this map doesn't need to be persistent
@@ -401,6 +416,19 @@ void RobotDataLoader::LoadBehaviors()
   }
 }
 
+ 
+void RobotDataLoader::LoadFacePNGPaths()
+{
+  const std::string facePNGFolder = _platform->pathToResource(Util::Data::Scope::Resources, "config/facePNGs/");
+  auto pngs = Util::FileUtils::FilesInDirectory(facePNGFolder, true, ".png", true);
+  for (const std::string& fullPath : pngs) {
+    std::string fileName = Util::FileUtils::GetFileName(fullPath);
+    auto dotIndex = fileName.find_last_of(".");
+    std::string strippedName = (dotIndex == std::string::npos) ? fileName : fileName.substr(0, dotIndex);
+    _facePNGPaths.emplace(std::piecewise_construct, std::forward_as_tuple(strippedName), std::forward_as_tuple(std::move(fullPath)));
+  }
+}
+
 
 void RobotDataLoader::LoadVoiceCommandConfigs()
 {
@@ -418,32 +446,6 @@ void RobotDataLoader::LoadVoiceCommandConfigs()
     }
   }
 #endif
-  
-  // Configuration for "lets play" game selection
-  {
-    std::string jsonFilename = "config/engine/game_request_weights.json";
-    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _gameRequestWeights);
-    if (!success)
-    {
-      LOG_ERROR("RobotDataLoader.LetsPlayWeightsConfigFailed",
-                "Lets play Json config file %s not found or failed to parse",
-                jsonFilename.c_str());
-      _gameRequestWeights.clear();
-    }
-  }
-  
-  // Configuration for "do a trick" spark selection
-  {
-    std::string jsonFilename = "config/engine/voiceCommands/do_a_trick_weights.json";
-    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _doATrickWeights);
-    if (!success)
-    {
-      LOG_ERROR("RobotDataLoader.DoATrickWeightsConfigFailed",
-                "Do a trick Json config file %s not found or failed to parse",
-                  jsonFilename.c_str());
-      _doATrickWeights.clear();
-    }
-  }
 }
 
 
@@ -456,6 +458,18 @@ void RobotDataLoader::LoadCubeAnimationTriggerResponses()
 {
   _cubeAnimationTriggerResponses->Load(_platform, "assets/cubeAnimationGroupMaps");
 }
+
+void RobotDataLoader::LoadDasBlacklistedAnimationTriggers()
+{
+  static const std::string kBlacklistedAnimationTriggersConfigKey = "blacklisted_animation_triggers";  
+  const Json::Value& blacklistedTriggers = _dasEventConfig[kBlacklistedAnimationTriggersConfigKey];
+  for (int i = 0; i < blacklistedTriggers.size(); i++)
+  {
+    const std::string& trigger = blacklistedTriggers[i].asString();
+    _dasBlacklistedAnimationTriggers.insert(AnimationTriggerFromString(trigger));
+  }
+}
+
 
 void RobotDataLoader::LoadRobotConfigs()
 {
@@ -489,19 +503,6 @@ void RobotDataLoader::LoadRobotConfigs()
     }
   }
 
-  // Workout config
-  {
-    static const std::string jsonFilename = "config/engine/behaviorComponent/workout_config.json";
-    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _robotWorkoutConfig);
-    if (!success)
-    {
-      LOG_ERROR("RobotDataLoader.WorkoutConfigJsonFailed",
-                "Workout Json config file %s not found or failed to parse",
-                jsonFilename.c_str());
-      _robotWorkoutConfig.clear();
-    }
-  }
-
   // vision config
   {
     static const std::string jsonFilename = "config/engine/vision_config.json";
@@ -510,6 +511,18 @@ void RobotDataLoader::LoadRobotConfigs()
     {
       LOG_ERROR("RobotDataLoader.VisionConfigJsonNotFound",
                 "Vision Json config file %s not found or failed to parse",
+                jsonFilename.c_str());
+    }
+  }
+
+  // visionScheduleMediator config
+  {
+    static const std::string jsonFilename = "config/engine/visionScheduleMediator_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _visionScheduleMediatorConfig);
+    if(!success)
+    {
+      LOG_ERROR("RobotDataLoader.VisionScheduleMediatorConfigNotFound",
+                "VisionScheduleMediator Json config file %s not found or failed to parse",
                 jsonFilename.c_str());
     }
   }
@@ -628,6 +641,18 @@ void RobotDataLoader::LoadRobotConfigs()
                 jsonFilename.c_str());
     }
   }
+
+  // Web server config
+  {
+    static const std::string jsonFilename = "webserver/webServerConfig_engine.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _webServerEngineConfig);
+    if (!success)
+    {
+      LOG_ERROR("RobotDataLoader.WebServerEngineConfigNotFound",
+                "Web Server Engine Config file %s not found or failed to parse",
+                jsonFilename.c_str());
+    }
+  }
 }
 
 bool RobotDataLoader::DoNonConfigDataLoading(float& loadingCompleteRatio_out)
@@ -660,6 +685,22 @@ bool RobotDataLoader::DoNonConfigDataLoading(float& loadingCompleteRatio_out)
   
   return true;
 }
+
+bool RobotDataLoader::HasAnimationForTrigger( AnimationTrigger ev )
+{
+  return _animationTriggerResponses->HasResponse(ev);
+}
+std::string RobotDataLoader::GetAnimationForTrigger( AnimationTrigger ev )
+{
+  return _animationTriggerResponses->GetResponse(ev);
+}
+std::string RobotDataLoader::GetCubeAnimationForTrigger( CubeAnimationTrigger ev )
+{
+  return _cubeAnimationTriggerResponses->GetResponse(ev);
+}
+
+
+
 
 }
 }

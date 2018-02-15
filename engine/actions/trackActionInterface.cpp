@@ -41,8 +41,6 @@ ITrackAction::ITrackAction(const std::string name, const RobotActionType type)
 : IAction(name,
           type,
           ((u8)AnimTrackFlag::BODY_TRACK | (u8)AnimTrackFlag::HEAD_TRACK))
-, _eyeShiftTag(kNotAnimatingTag)
-, _originalEyeDartDist(-1.f)
 {
 
 }
@@ -50,18 +48,16 @@ ITrackAction::ITrackAction(const std::string name, const RobotActionType type)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ITrackAction::~ITrackAction()
 {
-  if(_eyeShiftTag != kNotAnimatingTag) {
-    // Make sure any eye shift gets removed
-    // TODO: Restore eye shifts (VIC-363)
-    //GetRobot().GetAnimationStreamer().GetTrackLayerComponent()->RemoveEyeShift(_eyeShiftTag);
-    _eyeShiftTag = kNotAnimatingTag;
-  }
+  // Make sure eye shift gets removed
+  GetRobot().GetAnimationComponent().RemoveEyeShift(_kEyeShiftLayerName);
+  
 
-  if(_originalEyeDartDist >= 0.f) {
-    // Make sure to restore original eye dart distance
-    // TODO: Restore KeepFaceAlive stuff (VIC-364)
-    //GetRobot().GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EyeDartMaxDistance_pix, _originalEyeDartDist);
-  }
+  // Set default eye dart distance
+  // NOTE: It may not have been at default before, but it doesn't seem worth
+  //       exposing the parameters to the engine just for this.
+  //       Currently, the only way it wouldn't have previously been at default
+  //       is if it was changed via G2E::SetKeepFaceAliveParameter message.
+  GetRobot().GetAnimationComponent().SetKeepFaceAliveParameterToDefault(KeepFaceAliveParameter::EyeDartMaxDistance_pix);
   
   if(HasRobot()){
     // Make sure we abort any sound actions we triggered
@@ -316,13 +312,12 @@ ActionResult ITrackAction::Init()
                         "Stop criteria set with interruptDrivingAnim=true, but driving animation not enabled");
   }
   
-  // Store eye dart setting so we can restore after tracking
-  // TODO: Restore KeepFaceAlive stuff (VIC-364)
-  //_originalEyeDartDist = GetRobot().GetAnimationStreamer().GetParam(LiveIdleAnimationParameter::EyeDartMaxDistance_pix);
-  
   // Reduce eye darts so we better appear to be tracking and not look around
-  // TODO: Restore KeepFaceAlive stuff (VIC-364)
-  //GetRobot().GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EyeDartMaxDistance_pix, 1.f);
+  // NOTE: When action destructs, this parameter will be changed back to default.
+  //       So if the default value is not what it used to be, and we care, we would need
+  //       some way of getting the current parameter value from animation process
+  //       but for now it seems unnecessary since nobody else changes this parameter.
+  GetRobot().GetAnimationComponent().SetKeepFaceAliveParameter(KeepFaceAliveParameter::EyeDartMaxDistance_pix, 1.f);
 
   if( _stopOnOtherActionTag != ActionConstants::INVALID_TAG &&
       ! IsTagInUse( _stopOnOtherActionTag ) ) {
@@ -544,14 +539,12 @@ ActionResult ITrackAction::CheckIfDone()
                            distance_mm, RAD_TO_DEG(relPanAngle), rotSpeed_radPerSec, accel);
           }
           
-          RobotInterface::SetBodyAngle setBodyAngle(turnAngle.ToFloat(),      // angle_rad
-                                                    rotSpeed_radPerSec,       // max_speed_rad_per_sec
-                                                    accel,                    // accel_rad_per_sec2
-                                                    _panTolerance.ToFloat(),  // angle_tolerance
-                                                    0,                        // num_half_revolutions
-                                                    true);                    // use_shortest_direction
-          
-          if(RESULT_OK != GetRobot().SendRobotMessage<RobotInterface::SetBodyAngle>(std::move(setBodyAngle))) {
+          if(RESULT_OK != GetRobot().GetMoveComponent().TurnInPlace(turnAngle.ToFloat(),      // angle_rad
+                                                                 rotSpeed_radPerSec,       // max_speed_rad_per_sec
+                                                                 accel,                    // accel_rad_per_sec2
+                                                                 _panTolerance.ToFloat(),  // angle_tolerance
+                                                                 0,                        // num_half_revolutions
+                                                                 true)) {                  // use_shortest_direction
             return CheckIfDoneReturnHelper(ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED, false);
           }
         }
@@ -585,34 +578,31 @@ ActionResult ITrackAction::CheckIfDone()
          (eyeShiftX != 0.f || eyeShiftY != 0.f))
       {
         // Clip, but retain sign
-        eyeShiftX = CLIP(eyeShiftX, (f32)-GetRobot().GetDisplayWidthInPixels()/4,  (f32)GetRobot().GetDisplayWidthInPixels()/4);
-        eyeShiftY = CLIP(eyeShiftY, (f32)-GetRobot().GetDisplayHeightInPixels()/4, (f32)GetRobot().GetDisplayHeightInPixels()/4);
+        const f32 shiftLimitX = GetRobot().GetDisplayWidthInPixels()/4;
+        const f32 shiftLimitY = GetRobot().GetDisplayHeightInPixels()/4;
+        eyeShiftX = CLIP(eyeShiftX, -shiftLimitX, shiftLimitX);
+        eyeShiftY = CLIP(eyeShiftY, -shiftLimitY, shiftLimitY);
         
         if(DEBUG_TRACKING_ACTIONS) {
           PRINT_NAMED_DEBUG("ITrackAction.CheckIfDone.EyeShift",
-                            "Adjusting eye shift to (%.1f,%.1f), with tag=%d",
-                            eyeShiftX, eyeShiftY, _eyeShiftTag);
+                            "Adjusting eye shift to (%.1f,%.1f)",
+                            eyeShiftX, eyeShiftY);
         }
         
-        // TODO: Restore eye shifts (VIC-363)
-        /*
         // Expose as params?
         const f32 kMaxLookUpScale   = 1.1f;
         const f32 kMinLookDownScale = 0.8f;
         const f32 kOuterEyeScaleIncrease = 0.1f;
         const f32 kXMax = static_cast<f32>(GetRobot().GetDisplayWidthInPixels()/4);
         const f32 kYMax = static_cast<f32>(GetRobot().GetDisplayHeightInPixels()/4);
-        
-        GetRobot().GetAnimationStreamer().GetTrackLayerComponent()->AddOrUpdateEyeShift(_eyeShiftTag,
-                                                                                    "TrackActionEyeShift",
-                                                                                    eyeShiftX, eyeShiftY,
-                                                                                    BS_TIME_STEP,
-                                                                                    kXMax,
-                                                                                    kYMax,
-                                                                                    kMaxLookUpScale,
-                                                                                    kMinLookDownScale,
-                                                                                    kOuterEyeScaleIncrease);
-         */
+        GetRobot().GetAnimationComponent().AddOrUpdateEyeShift(_kEyeShiftLayerName,
+                                                               eyeShiftX, eyeShiftY,
+                                                               BS_TIME_STEP_MS,
+                                                               kXMax,
+                                                               kYMax,
+                                                               kMaxLookUpScale,
+                                                               kMinLookDownScale,
+                                                               kOuterEyeScaleIncrease);
       } // if(_moveEyes)
       
       // Can't meet stop criteria based on predicted updates (as opposed to actual observations)
@@ -679,6 +669,10 @@ ActionResult ITrackAction::CheckIfDone()
                          currentTime, _lastUpdateTime, _updateTimeout_sec);
         }
       }
+      
+      // Remove eye shift once "locked on" target
+      GetRobot().GetAnimationComponent().RemoveEyeShift(_kEyeShiftLayerName, BS_TIME_STEP_MS);
+
       break;
     }
       

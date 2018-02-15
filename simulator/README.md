@@ -42,9 +42,18 @@ Webots runs concurrent processes for each active simulation object via "controll
 * `webotsCtrlViz` Visualization overlays and display windows
 * `webotsCtrlKeyboard` Keyboard interface for communicating with engine in place of the Unity app. Useful for quick headless (i.e. no Unity UI/Game) development.
 * `webotsCtrlDevLog` For visualizing logs recorded from an application run. (Only used in `devLogViz.wbt`)
+* `webotsCtrlWebServer` Victor web server process
 * `webotsCtrlBuildServerTest` For Webots-based tests (that are executed on the build server with every PR and master build, as well as in nightly tests)
 
 ## Troubleshooting
+
+### Firewall
+
+When running webots, if you get pop-ups asking "Do you want the application 'webotsCtrl...' to accept incoming network connections?", then you have to set up a firewall certificate.
+
+1. Close Webots.
+1. Follow the instructions in [FirewallCertificateInstructions.md](/project/build-scripts/webots/FirewallCertificateInstructions.md).
+1. Run the Webots test script (which will automatically set up firewall exceptions for you) with the following command: `project/build-scripts/webots/webotsTest.py --setupFirewall`. You will need to enter your password.
 
 ### Crash in webotsCtrlGameEngine2
 

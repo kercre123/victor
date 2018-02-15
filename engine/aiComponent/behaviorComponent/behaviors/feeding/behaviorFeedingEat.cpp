@@ -17,7 +17,6 @@
 #include "engine/actions/basicActions.h"
 #include "engine/actions/driveToActions.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorListenerInterfaces/iFeedingListener.h"
@@ -30,7 +29,7 @@
 #include "engine/needsSystem/needsManager.h"
 #include "engine/needsSystem/needsState.h"
 #include "engine/robotInterface/messageHandler.h"
-#include "engine/robotManager.h"
+#include "engine/robotDataLoader.h"
 
 #include "coretech/common/engine/utils/timer.h"
 #include "clad/externalInterface/messageEngineToGame.h"
@@ -243,8 +242,6 @@ void BehaviorFeedingEat::TransitionToDrivingToFood()
       // can't see the cube, maybe it's obstructed? give up on the cube until we see it again. Let the
       // behavior end (it may get re-selected with a different cube)
       MarkCubeAsBad();
-    } else if( result == ActionResult::NO_PREACTION_POSES){
-      GetBEI().GetAIComponent().GetWhiteboard().SetNoPreDockPosesOnObject(_targetID);
     } else {
       const ActionResultCategory resCat = IActionRunner::GetActionResultCategory(result);
 
@@ -291,13 +288,13 @@ void BehaviorFeedingEat::TransitionToEating()
   AnimationTrigger eatingAnim = CheckNeedsStateAndCalculateAnimation();
   
   uint32_t timeDrainCube_s = 0;
-  RobotManager* robot_mgr = GetBEI().GetRobotInfo().GetContext()->GetRobotManager();
-  if( robot_mgr->HasAnimationForTrigger(eatingAnim) )
+  auto* data_ldr = GetBEI().GetRobotInfo().GetContext()->GetDataLoader();
+  if( data_ldr->HasAnimationForTrigger(eatingAnim) )
   {
     // Extract the length of time that the animation will be playing for so that
     // it can be passed through to listeners
     const auto& animComponent = GetBEI().GetAnimationComponent();
-    const auto& animGroupName = robot_mgr->GetAnimationForTrigger(eatingAnim);
+    const auto& animGroupName = data_ldr->GetAnimationForTrigger(eatingAnim);
     const auto& animName = animComponent.GetAnimationNameFromGroup(animGroupName);
 
     AnimationComponent::AnimationMetaInfo metaInfo;
@@ -346,9 +343,6 @@ void BehaviorFeedingEat::TransitionToReactingToInterruption()
   CancelDelegates(false);
   AnimationTrigger trigger = AnimationTrigger::FeedingInterrupted;
   
-  if(NeedId::Energy == GetBEI().GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression()){
-    trigger = AnimationTrigger::FeedingInterrupted_Severe;
-  }
   {
     DelegateIfInControl(new TriggerLiftSafeAnimationAction(trigger));
   }
@@ -408,7 +402,7 @@ void BehaviorFeedingEat::MarkCubeAsBad()
 {
   if( ! ANKI_VERIFY(_targetID.IsSet(), "BehaviorFeedingEat.MarkCubeAsBad.NoTargetID",
                     "Behavior %s trying to mark target cube as bad, but target is unset",
-                    GetIDStr().c_str()) ) {
+                    GetDebugLabel().c_str()) ) {
     return;
   }
 

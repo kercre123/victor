@@ -23,11 +23,10 @@
 namespace Anki {
 namespace Cozmo {
 
-PathDolerOuter::PathDolerOuter(RobotInterface::MessageHandler* msgHandler, RobotID_t robotID)
+PathDolerOuter::PathDolerOuter(RobotInterface::MessageHandler* msgHandler)
   : pathSizeOnBasestation_(0)
   , lastDoledSegmentIdx_(-1)
   , msgHandler_(msgHandler)
-  , robotID_(robotID)
 {
 }
 
@@ -87,7 +86,7 @@ void PathDolerOuter::Dole(size_t numToDole)
       m.speed.accel = path_.GetSegmentConstRef(Util::numeric_cast<uint8_t>(i)).GetAccel();
       m.speed.decel = path_.GetSegmentConstRef(Util::numeric_cast<uint8_t>(i)).GetDecel();
             
-      if (msgHandler_->SendMessage(robotID_, RobotInterface::EngineToRobot(std::move(m))) == RESULT_FAIL) {
+      if (msgHandler_->SendMessage(RobotInterface::EngineToRobot(std::move(m))) == RESULT_FAIL) {
         PRINT_NAMED_ERROR("PathDolerOuter.Dole", "ERROR: failed to send message!");
         return;
       }
@@ -107,7 +106,7 @@ void PathDolerOuter::Dole(size_t numToDole)
       m.speed.accel = path_.GetSegmentConstRef(Util::numeric_cast<uint8_t>(i)).GetAccel();
       m.speed.decel = path_.GetSegmentConstRef(Util::numeric_cast<uint8_t>(i)).GetDecel();
             
-      if (msgHandler_->SendMessage(robotID_, RobotInterface::EngineToRobot(std::move(m))) == RESULT_FAIL) {
+      if (msgHandler_->SendMessage(RobotInterface::EngineToRobot(std::move(m))) == RESULT_FAIL) {
         PRINT_NAMED_ERROR("PathDolerOuter.Dole", "ERROR: failed to send message!");
         return;
       }
@@ -127,7 +126,7 @@ void PathDolerOuter::Dole(size_t numToDole)
       m.speed.decel = path_.GetSegmentConstRef(Util::numeric_cast<uint8_t>(i)).GetDecel();
       m.useShortestDir = t->useShortestDir;
 
-      if (msgHandler_->SendMessage(robotID_, RobotInterface::EngineToRobot(std::move(m))) == RESULT_FAIL) {
+      if (msgHandler_->SendMessage(RobotInterface::EngineToRobot(std::move(m))) == RESULT_FAIL) {
         PRINT_NAMED_ERROR("PathDolerOuter.Dole", "ERROR: failed to send message!");
         return;
       }

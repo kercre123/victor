@@ -34,7 +34,9 @@ public:
   virtual bool WantsToBeActivatedBehavior() const override;
   
 protected:
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::Standard });
+  }
 
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;

@@ -23,7 +23,7 @@ go_project(
 )
 
 go_project(
-    name = 'cloud_process',
+    name = 'vic-cloud',
     gopath = 'go',
     dir = 'process'
 )
@@ -43,4 +43,10 @@ go_project(
     name = 'servbench',
     gopath = 'go',
     dir = 'servbench'
+)
+
+go_project(
+    name = 'wavtest',
+    gopath = 'go',
+    dir = 'wavtest'
 )

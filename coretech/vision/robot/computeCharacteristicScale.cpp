@@ -133,9 +133,10 @@ namespace Anki
       const uint8x16_t kOnes = vdupq_n_u8(isDarkOnLight);
 
       const u32 kNumElementsProcessedPerLoop = 16;
+      const u32 kNumIterations = imageWidth - (kNumElementsProcessedPerLoop - 1);
 
       s32 x = 0;
-      for(; x < imageWidth; x += kNumElementsProcessedPerLoop)
+      for(; x < kNumIterations; x += kNumElementsProcessedPerLoop)
       {
         // Load FilteredRows
         uint8x16_t rows0 = vld1q_u8(pFilteredRows0);
@@ -216,13 +217,6 @@ namespace Anki
         uint8x16_t output = vbslq_u8(lessThanThresh, kOnes, kZeros);
         vst1q_u8(pBinaryImageRow, output);
         pBinaryImageRow += kNumElementsProcessedPerLoop;
-      }
-
-      // Above loop exits after adding to x so subtract what it added so we
-      // can finish processing what is left over
-      if(x >= imageWidth)
-      {
-        x -= (kNumElementsProcessedPerLoop-1);
       }
 
       for(; x < imageWidth; x++)
