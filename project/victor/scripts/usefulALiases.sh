@@ -16,8 +16,6 @@ alias victor_build='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/victor
 alias victor_deploy='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/victor_deploy.sh'
 alias victor_deploy_run='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/victor_deploy_run.sh'
 alias victor_build_run='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/victor_build_run.sh'
-alias victor_assets='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/victor_assets.sh'
-alias victor_assets_force='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/victor_assets_force.sh'
 
 alias victor_log='adb logcat mm-camera:S mm-camera-intf:S mm-camera-eztune:S mm-camera-sensor:S mm-camera-img:S cnss-daemon:S cozmoengined:S ServiceManager:S chatty:S'
 alias victor_ble='GET_GIT_ROOT; node ${GIT_PROJ_ROOT}/tools/victor-ble-cli/index.js'
