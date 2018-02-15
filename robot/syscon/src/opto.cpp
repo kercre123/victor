@@ -41,10 +41,11 @@ const I2C_Operation I2C_LOOP[] = {
   { I2C_REG_READ, 0, TOF_SENSOR_ADDRESS, RESULT_RANGE_STATUS + 8, TARGET(tof_ambient_rate) },
   { I2C_REG_READ, 0, TOF_SENSOR_ADDRESS, RESULT_RANGE_STATUS + 2, TARGET(tof_spad_count) },
 
+  // Start single read
   { I2C_REG_WRITE_VALUE, 0, TOF_SENSOR_ADDRESS, 0x80, VALUE(0x01) },
   { I2C_REG_WRITE_VALUE, 0, TOF_SENSOR_ADDRESS, 0xFF, VALUE(0x01) },
   { I2C_REG_WRITE_VALUE, 0, TOF_SENSOR_ADDRESS, 0x00, VALUE(0x00) },
-  { I2C_REG_WRITE, 0, TOF_SENSOR_ADDRESS, 0x91, TARGET(stop_variable) },
+  { I2C_REG_WRITE,       0, TOF_SENSOR_ADDRESS, 0x91, TARGET(stop_variable) },
   { I2C_REG_WRITE_VALUE, 0, TOF_SENSOR_ADDRESS, 0x00, VALUE(0x01) },
   { I2C_REG_WRITE_VALUE, 0, TOF_SENSOR_ADDRESS, 0xFF, VALUE(0x00) },
   { I2C_REG_WRITE_VALUE, 0, TOF_SENSOR_ADDRESS, 0x80, VALUE(0x00) },
@@ -316,6 +317,8 @@ static uint32_t getMeasurementTimingBudget(void)
 
 void Opto::start(void) {
   failure = BOOT_FAIL_NONE;
+
+  I2C::capture();
 
   // Turn on and configure the drop sensors
   for (int i = 0; i < 4; i++) {
