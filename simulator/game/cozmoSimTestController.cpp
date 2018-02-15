@@ -23,7 +23,7 @@ namespace Anki {
   namespace Cozmo {
   
     CozmoSimTestController::CozmoSimTestController()
-    : UiGameController(BS_TIME_STEP)
+    : UiGameController(BS_TIME_STEP_MS)
     , _result(0)
     , _isRecording(false)
     , _screenshotInterval(-1.f)

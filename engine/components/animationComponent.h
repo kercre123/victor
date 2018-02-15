@@ -18,6 +18,7 @@
 #include "coretech/vision/engine/image.h"
 #include "anki/cozmo/shared/animationTag.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "engine/actions/actionInterface.h"
 #include "engine/events/ankiEvent.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -104,7 +105,22 @@ public:
   
   Result StopAnimByName(const std::string& animName);
 
-  // If you want to play multiple frames in sequence, duration_ms should be multiples of ANIM_TIME_STEP_MS.
+  // If you want to play multiple frames in sequence, duration_ms should be a multiple of ANIM_TIME_STEP_MS.
+  //
+  // Note: If you're streaming a real-time sequence, the rate at which you stream should also approximately
+  // match the duration. e.g. If you're streaming one image every engine tick, then the duration should be
+  // 2 x ANIM_TIME_STEP_MS which is roughly equal to BS_TIME_STEP_MS. For convenience you can use this.
+  static constexpr u32 DEFAULT_STREAMING_FACE_DURATION_MS = ANIM_TIME_STEP_MS * ( (BS_TIME_STEP_MS % ANIM_TIME_STEP_MS == 0) ?
+                                                                                  (BS_TIME_STEP_MS / ANIM_TIME_STEP_MS)      :
+                                                                                  (BS_TIME_STEP_MS / ANIM_TIME_STEP_MS) + 1 );
+  // (Didn't use the obvious 'ceil' function here because it's non-const and can't
+  //  be used to init a static constexpr.)
+  //
+  // If the durations are too short, it may allow for procedural faces to (sporadically) interrupt the
+  // face images. If the durations are too long, you won't be streaming in real-time. In either case you
+  // should use GetAnimState_NumProcAnimFaceKeyframes() to monitor how many frames are currently in the
+  // buffer and not call these DisplayFaceImage functions so frequently such that it grows too large,
+  // otherwise there will be increasing lag in the stream.
   Result DisplayFaceImageBinary(const Vision::Image& img, u32 duration_ms, bool interruptRunning = false);
   Result DisplayFaceImage(const Vision::Image& img, u32 duration_ms, bool interruptRunning = false);
   Result DisplayFaceImage(const Vision::ImageRGB& img, u32 duration_ms, bool interruptRunning = false);

@@ -71,6 +71,10 @@ namespace Cozmo {
   // Specifies how often to send AnimState message
   static const u32 kAnimStateReportingPeriod_tics = 2;
 
+  // Minimum amount of time that must expire after the last non-procedural face
+  // is drawn and the next procedural face can be drawn
+  static const u32 kMinTimeBetweenLastNonProcFaceAndNextProcFace_ms = 2 * ANIM_TIME_STEP_MS;
+    
   // Default time to wait before forcing KeepFaceAlive() after the latest stream has stopped
   const f32 kDefaultLongEnoughSinceLastStreamTimeout_s = 0.5f;
 
@@ -451,10 +455,6 @@ namespace Cozmo {
       _endOfAnimationSent = false;
       _startOfAnimationSent = false;
       
-//      // Prep sound
-//      _audioClient.CreateAudioAnimation( anim );
-//      _audioBufferingTime_ms = 0;
-      
       // Make sure any eye dart (which is persistent) gets removed so it doesn't
       // affect the animation we are about to start streaming. Give it a little
       // duration so it doesn't pop.
@@ -729,25 +729,6 @@ namespace Cozmo {
                                               layeredKeyFrames,
                                               false);
       
-//      // If we have audio to send
-//      if(layeredKeyFrames.haveAudioKeyFrame)
-//      {
-//        BufferMessageToSend(new RobotInterface::EngineToRobot(std::move(layeredKeyFrames.audioKeyFrame)));
-//      }
-//      // Otherwise we don't have an audio keyframe so send silence
-//      else
-//      {
-//        BufferMessageToSend(new RobotInterface::EngineToRobot(AnimKeyFrame::AudioSilence()));
-//      }
-      
-//      // If we haven't sent the start of animation yet do so now (after audio)
-//      if(!_startOfAnimationSent)
-//      {
-//        IncrementTagCtr();
-//        _tag = _tagCtr;
-//        SendStartOfAnimation();
-//      }  
-      
       // If we have backpack keyframes to send
       if(layeredKeyFrames.haveBackpackKeyFrame)
       {
@@ -757,7 +738,8 @@ namespace Cozmo {
       }
       
       // If we have face keyframes to send
-      if(layeredKeyFrames.haveFaceKeyFrame)
+      const bool shouldDrawFaceLayer = BaseStationTimer::getInstance()->GetCurrentTimeStamp() > _nextProceduralFaceAllowedTime_ms;
+      if(layeredKeyFrames.haveFaceKeyFrame && shouldDrawFaceLayer)
       {
         BufferFaceToSend(layeredKeyFrames.faceKeyFrame.GetFace());
       }
@@ -767,13 +749,6 @@ namespace Cozmo {
       // relative to the same start time.
       _streamingTime_ms += ANIM_TIME_STEP_MS;
     }
-    
-//    // If we just finished buffering all the layers, send an end of animation message
-//    if(_startOfAnimationSent &&
-//       !_trackLayerComponent->HaveLayersToSend() &&
-//       !_endOfAnimationSent) {
-//      lastResult = SendEndOfAnimation();
-//    }
     
     return lastResult;
   }// StreamLayers()
@@ -913,6 +888,7 @@ namespace Cozmo {
         if (gotImage) {
           DEBUG_STREAM_KEYFRAME_MESSAGE("FaceAnimation");
           BufferFaceToSend(_faceDrawBuf, false);  // Don't overwrite FaceAnimationKeyFrame images
+          _nextProceduralFaceAllowedTime_ms = currTime_ms + kMinTimeBetweenLastNonProcFaceAndNextProcFace_ms;
         } else {
           PRINT_NAMED_ERROR("AnimationStreamer.UpdateStream", "%s: Failed retrieving face image.",
                             anim->GetName().c_str());

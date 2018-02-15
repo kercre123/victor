@@ -2292,7 +2292,7 @@ namespace Cozmo {
     static bool keyboardRestart = false;
     if (keyboardRestart) {
       GetSupervisor()->getKeyboard()->disable();
-      GetSupervisor()->getKeyboard()->enable(BS_TIME_STEP);
+      GetSupervisor()->getKeyboard()->enable(BS_TIME_STEP_MS);
       keyboardRestart = false;
     }
     
@@ -2797,7 +2797,7 @@ int main(int argc, char **argv)
   // initialize logger
   WebotsCtrlShared::DefaultAutoGlobalLogger autoLogger(dataPlatform, params.filterLog, params.colorizeStderrOutput);
 
-  Anki::Cozmo::WebotsKeyboardController webotsCtrlKeyboard(BS_TIME_STEP);
+  Anki::Cozmo::WebotsKeyboardController webotsCtrlKeyboard(BS_TIME_STEP_MS);
   webotsCtrlKeyboard.PreInit();
   webotsCtrlKeyboard.WaitOnKeyboardToConnect();
   

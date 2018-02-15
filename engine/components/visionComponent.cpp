@@ -526,8 +526,8 @@ namespace Cozmo {
             }
 
             img565.SetFromImageRGB(screenImg, gammaLUT);
-          
-            animComponent.DisplayFaceImage(img565, ANIM_TIME_STEP_MS, false);
+
+            animComponent.DisplayFaceImage(img565, AnimationComponent::DEFAULT_STREAMING_FACE_DURATION_MS, false);
           }
         }
 

@@ -398,7 +398,7 @@ void BehaviorPuzzleMaze::UpdateDisplay()
     DrawMaze(image);
     DrawCozmo(image);
     
-    GetBEI().GetAnimationComponent().DisplayFaceImage(image, 1.0f, true);
+    GetBEI().GetAnimationComponent().DisplayFaceImage(image, AnimationComponent::DEFAULT_STREAMING_FACE_DURATION_MS, true);
   }
 
 }

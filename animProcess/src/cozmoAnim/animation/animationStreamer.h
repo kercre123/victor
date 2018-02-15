@@ -197,8 +197,13 @@ namespace Cozmo {
     // clock)
     TimeStamp_t _streamingTime_ms;
     
-    // When animation is waiting for audio, track how much time has passed so we can abort in needed
-//    TimeStamp_t _audioBufferingTime_ms = 0;
+    // Time when procedural face layer can next be applied.
+    // There's a minimum amount of time that must pass since the last
+    // non-procedural face (which has higher priority) was drawn in order
+    // to smooth over gaps in between non-procedural frames that can occur
+    // when trying to render them at near real-time. Otherwise, procedural
+    // face layers like eye darts could play during these gaps.
+    TimeStamp_t _nextProceduralFaceAllowedTime_ms = 0;
     
     // Last time we streamed anything
     f32 _lastStreamTime = std::numeric_limits<f32>::lowest();

@@ -315,10 +315,10 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
     if (! firstUpdate)
     {
       const double timeSinceLastUpdate = startUpdateTimeMs - lastUpdateTimeMs;
-      const double maxLatency = BS_TIME_STEP + 15.;
+      const double maxLatency = BS_TIME_STEP_MS + 15.;
       if (timeSinceLastUpdate > maxLatency)
       {
-        Anki::Util::sEventF("cozmo_engine.update.sleep.slow", {{DDATA,TO_DDATA_STR(BS_TIME_STEP)}}, "%.2f", timeSinceLastUpdate);
+        Anki::Util::sEventF("cozmo_engine.update.sleep.slow", {{DDATA,TO_DDATA_STR(BS_TIME_STEP_MS)}}, "%.2f", timeSinceLastUpdate);
       }
     }
     lastUpdateTimeMs = startUpdateTimeMs;
@@ -426,10 +426,10 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
   {
     const double endUpdateTimeMs = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
     const double updateLengthMs = endUpdateTimeMs - startUpdateTimeMs;
-    const double maxUpdateDuration = BS_TIME_STEP;
+    const double maxUpdateDuration = BS_TIME_STEP_MS;
     if (updateLengthMs > maxUpdateDuration)
     {
-      static const std::string targetMs = std::to_string(BS_TIME_STEP);
+      static const std::string targetMs = std::to_string(BS_TIME_STEP_MS);
       Anki::Util::sEventF("cozmo_engine.update.run.slow",
                           {{DDATA, targetMs.c_str()}},
                           "%.2f", updateLengthMs);
