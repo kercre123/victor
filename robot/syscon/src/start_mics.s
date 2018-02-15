@@ -12,6 +12,7 @@ start_mic_spi   PROC
                 LDR       r3, =0x40013000   ; SPI1->CR1
                 LDR       r4, =0x40003800   ; SPI2->CR1
 
+                CPSID   I
                 STRH r0, [r2, #0]
                 NOP
                 NOP
@@ -28,6 +29,7 @@ start_mic_spi   PROC
                 NOP
                 STRH r1, [r3, #0]
                 STRH r1, [r4, #0]
+                CPSIE   I
 
                 POP       {r3-r4}
                 BX lr
