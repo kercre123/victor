@@ -36,11 +36,8 @@
 static void da14580_load_program_(const uint8_t *bin, int size, const char* name)
 {
   ConsolePrintf("da14580 load %s: %ikB (%u)\n", (name ? name : "program"), CEILDIV(size,1024), size );
-  
-  //power up and hold in reset
+  DUT_RESET::init(MODE_INPUT, PULL_NONE);
   Board::powerOn(PWR_CUBEBAT, 0);
-  DUT_RESET::write(1);
-  DUT_RESET::init(MODE_OUTPUT, PULL_NONE, TYPE_PUSHPULL);
   
   //wait for cube Vcc to stabilize
   ConsolePrintf("VBAT3V=");
@@ -49,13 +46,13 @@ static void da14580_load_program_(const uint8_t *bin, int size, const char* name
   while(1)
   {
     vbat3v_mv = Board::getAdcMv(ADC_DUT_VDD_IN) << 1; //this input has a resistor divider
-    if( ABS(vbat3v_mv-vbat3v_last) > 50 && Timer::elapsedUs(Tupdate) > 50*1000 ) //detect changes, rate limited
+    if( ABS(vbat3v_mv-vbat3v_last) > 25 && Timer::elapsedUs(Tupdate) > 50*1000 ) //detect changes, rate limited
     {
       vbat3v_last = vbat3v_mv;
       Tupdate = Timer::get();
       ConsolePrintf("%u,", vbat3v_mv);
     }
-    if( Timer::elapsedUs(Tupdate) > 250*1000 || Timer::elapsedUs(Tstart) > 2000*1000 ) //stable or timeout
+    if( Timer::elapsedUs(Tupdate) > 250*1000 || Timer::elapsedUs(Tstart) > 3000*1000 ) //stable or timeout
       break;
   }
   ConsolePrintf("%u\n", vbat3v_mv); //print final value
@@ -69,6 +66,9 @@ static void da14580_load_program_(const uint8_t *bin, int size, const char* name
   int ack = -1;
   ConsolePrintf("waiting for bootloader\n");
   DUT_UART::init( 57600 ); //ROM bootloader baud 57.6k
+  DUT_RESET::write(1); //hold in reset
+  DUT_RESET::init(MODE_OUTPUT, PULL_NONE, TYPE_PUSHPULL);
+  Timer::delayMs(100);
   DUT_RESET::write(0); //release from reset
   Tstart = Timer::get();
   while(1)
@@ -115,7 +115,7 @@ static void da14580_load_program_(const uint8_t *bin, int size, const char* name
   
   Timer::wait(1000); //make sure ack clears the output SR before disabling UART
   DUT_UART::deinit();
-  DUT_RESET::init(MODE_INPUT, PULL_NONE);
+  //DUT_RESET::init(MODE_INPUT, PULL_NONE);
   
   //leave the lights on to run some tests
 }
@@ -193,21 +193,21 @@ static void ShortCircuitTest(void)
 //led test array
 typedef struct { char* name; uint16_t bits; int duty; int i_meas; int i_nominal; int i_variance; error_t e; } led_test_t;
 led_test_t ledtest[] = {
-  {(char*)"All.RED", 0x1111, 12, 0, 15, 5, ERROR_CUBE_LED    },
-  {(char*)"All.GRN", 0x2222, 12, 0, 15, 5, ERROR_CUBE_LED    },
-  {(char*)"All.BLU", 0x4444, 12, 0, 15, 5, ERROR_CUBE_LED    },
-  {(char*)"D1.RED",  0x0001,  1, 0, 43, 8, ERROR_CUBE_LED_D1 },
-  {(char*)"D1.GRN",  0x0002,  1, 0, 43, 8, ERROR_CUBE_LED_D1 },
-  {(char*)"D1.BLU",  0x0004,  1, 0, 43, 8, ERROR_CUBE_LED_D1 },
-  {(char*)"D2.RED",  0x0010,  1, 0, 43, 8, ERROR_CUBE_LED_D2 },
-  {(char*)"D2.GRN",  0x0020,  1, 0, 43, 8, ERROR_CUBE_LED_D2 },
-  {(char*)"D2.BLU",  0x0040,  1, 0, 43, 8, ERROR_CUBE_LED_D2 },
-  {(char*)"D3.RED",  0x0100,  1, 0, 43, 8, ERROR_CUBE_LED_D3 },
-  {(char*)"D3.GRN",  0x0200,  1, 0, 43, 8, ERROR_CUBE_LED_D3 },
-  {(char*)"D3.BLU",  0x0400,  1, 0, 43, 8, ERROR_CUBE_LED_D3 },
-  {(char*)"D4.RED",  0x1000,  1, 0, 43, 8, ERROR_CUBE_LED_D4 },
-  {(char*)"D4.GRN",  0x2000,  1, 0, 43, 8, ERROR_CUBE_LED_D4 },
-  {(char*)"D4.BLU",  0x4000,  1, 0, 43, 8, ERROR_CUBE_LED_D4 }
+  {(char*)"All.RED", 0x1111, 12, 0, 12, 5, ERROR_CUBE_LED    },
+  {(char*)"All.GRN", 0x2222, 12, 0, 12, 5, ERROR_CUBE_LED    },
+  {(char*)"All.BLU", 0x4444, 12, 0, 12, 5, ERROR_CUBE_LED    },
+  {(char*)"D1.RED",  0x0001,  1, 0, 28, 8, ERROR_CUBE_LED_D1 },
+  {(char*)"D1.GRN",  0x0002,  1, 0, 35, 8, ERROR_CUBE_LED_D1 },
+  {(char*)"D1.BLU",  0x0004,  1, 0, 28, 8, ERROR_CUBE_LED_D1 },
+  {(char*)"D2.RED",  0x0010,  1, 0, 28, 8, ERROR_CUBE_LED_D2 },
+  {(char*)"D2.GRN",  0x0020,  1, 0, 35, 8, ERROR_CUBE_LED_D2 },
+  {(char*)"D2.BLU",  0x0040,  1, 0, 28, 8, ERROR_CUBE_LED_D2 },
+  {(char*)"D3.RED",  0x0100,  1, 0, 28, 8, ERROR_CUBE_LED_D3 },
+  {(char*)"D3.GRN",  0x0200,  1, 0, 35, 8, ERROR_CUBE_LED_D3 },
+  {(char*)"D3.BLU",  0x0400,  1, 0, 28, 8, ERROR_CUBE_LED_D3 },
+  {(char*)"D4.RED",  0x1000,  1, 0, 28, 8, ERROR_CUBE_LED_D4 },
+  {(char*)"D4.GRN",  0x2000,  1, 0, 35, 8, ERROR_CUBE_LED_D4 },
+  {(char*)"D4.BLU",  0x4000,  1, 0, 28, 8, ERROR_CUBE_LED_D4 }
 };
 
 static inline bool ledtest_pass(led_test_t *ptest, int i_test) {
@@ -225,6 +225,11 @@ static void CubeTest(void)
   cmdSend(CMD_IO_DUT_UART, "getvers");
   cmdSend(CMD_IO_DUT_UART, "vbat");
   //cmdSend(CMD_IO_DUT_UART, "delay 500", 600);
+  
+  /*/DEBUG: console bridge, manual testing
+  cmdSend(CMD_IO_DUT_UART, "echo on");
+  TestCommon::consoleBridge(TO_DUT_UART,2000);
+  //-*/
   
   //measure LED current draws
   cmdSend(CMD_IO_DUT_UART, "vled 1");
@@ -263,15 +268,15 @@ static void CubeTest(void)
     throw e;
   
   //Accelerometer (ref: status error codes in cubetest::cmd.h)
-  cmdSend(CMD_IO_DUT_UART, "leds 0x1 static"); //pull some led current for typical usecase
-  cmdSend(CMD_IO_DUT_UART, "vled 1");
+  //cmdSend(CMD_IO_DUT_UART, "leds 0x1 static"); //pull some led current for typical usecase
+  //cmdSend(CMD_IO_DUT_UART, "vled 1");
   Timer::delayMs(50); //wait for VLED boost reg to stabilize
   cmdSend(CMD_IO_DUT_UART, "accel", 250, CMD_OPTS_DEFAULT | CMD_OPTS_ALLOW_STATUS_ERRS);
   if( cmdStatus() == 10 )
     throw ERROR_CUBE_ACCEL_PWR;
   if( cmdStatus() != 0 ) // == 11
     throw ERROR_CUBE_ACCEL;
-  cmdSend(CMD_IO_DUT_UART, "vled 0");
+  //cmdSend(CMD_IO_DUT_UART, "vled 0");
   
   /*/DEBUG: console bridge, manual testing
   cmdSend(CMD_IO_DUT_UART, "echo on");
