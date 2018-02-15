@@ -501,11 +501,6 @@ namespace Cozmo {
               const bool isPartOfEye = (eyeValue >= glowValue); // (and not part of glow)
               if(isPartOfEye)
               {
-                if(ShouldApplyScanlineToRow(i))
-                {
-                  newValue *= scanlineOpacity;
-                }
-                
                 newValue *= kProcFace_EyeBrightnessMultiplier;
               }
               else
@@ -590,7 +585,13 @@ namespace Cozmo {
       rowMin = std::min(leftBBox.GetY(), rightBBox.GetY());
       rowMax = std::max(leftBBox.GetYmax(), rightBBox.GetYmax());
     }
-    
+
+    const float scanlineOpacity = faceData.GetScanlineOpacity();
+    const bool applyScanlines = !Util::IsNear(scanlineOpacity, 1.f);
+    if (applyScanlines) {
+      ProceduralFaceDrawer::ApplyScanlines(faceImg, scanlineOpacity);
+    }
+
     // Just to be safe:
     rowMin = Util::Clamp(rowMin, 0, ProceduralFace::HEIGHT-1);
     rowMax = Util::Clamp(rowMax, 0, ProceduralFace::HEIGHT-1);

@@ -2,8 +2,17 @@
 #include "cubeBleClient/cubeBleClient.h"
 #include "gtest/gtest.h"
 #include "osState/osState.h"
+#include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
 #include "util/logging/printfLoggerProvider.h"
+
+namespace Anki {
+namespace Cozmo {
+  CONSOLE_VAR_EXTERN(bool, kProcFace_RenderInnerOuterGlow)
+  CONSOLE_VAR_EXTERN(bool, kProcFace_ApplyGlowFilter)
+  CONSOLE_VAR_EXTERN(bool, kProcFace_UseAntialiasing)
+}
+}
 
 using namespace Anki;
 using namespace Cozmo;
@@ -21,6 +30,10 @@ std::string resourcePath; // This is externed and used by tests
 
 int main(int argc, char ** argv)
 {
+  // For victor rendering
+  kProcFace_RenderInnerOuterGlow = kProcFace_ApplyGlowFilter = true;
+  kProcFace_UseAntialiasing = false;
+
   //LEAKING HERE
   Anki::Util::PrintfLoggerProvider* loggerProvider = new Anki::Util::PrintfLoggerProvider();
   loggerProvider->SetMinLogLevel(Anki::Util::ILoggerProvider::LOG_LEVEL_DEBUG);
