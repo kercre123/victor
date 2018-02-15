@@ -28,7 +28,7 @@ function usage()
 #
 FORCE_PUSH_ASSETS=0
 REMOVE_ALL_ASSETS=0
-: ${INSTALL_ROOT:="/data/data/com.anki.cozmoengine"}
+: ${INSTALL_ROOT:="/anki"}
 
 while getopts ":hfx" opt; do
   case ${opt} in
@@ -95,11 +95,14 @@ if [ ! -d "$ASSETSDIR" ]; then
   exit 1
 fi
 
-DEVICE_RSYNC_BIN_DIR="/data/local/tmp"
+DEVICE_RSYNC_BIN_DIR="/tmp"
 DEVICE_RSYNC_CONF_DIR="/data/rsync"
 
+# increment the following value if the contents of rsyncd.conf change
+RSYNCD_CONF_VERSION=1
+
 DEVICE_ASSET_REL_DIR="files"
-DEVICE_ASSET_ROOT_DIR="${INSTALL_ROOT}/files/assets"
+DEVICE_ASSET_ROOT_DIR="${INSTALL_ROOT}/data/files/assets"
 DEVICE_ASSET_DIR="$DEVICE_ASSET_ROOT_DIR/$DEVICE_ASSET_REL_DIR"
 RSYNC_BIN_DIR=(${TOPLEVEL}/tools/rsync)
 
@@ -139,31 +142,29 @@ $ADB shell mkdir -p ${DEVICE_ASSET_DIR}
 
 # install rsync binary and config if needed
 set +e
-$ADB shell [ -f "$DEVICE_RSYNC_BIN_DIR/rsync.bin" ]
+adb_shell "[ -f "$DEVICE_RSYNC_BIN_DIR/rsync.bin" ]"
 if [ $? -ne 0 ]; then
   echo "loading rsync to device"
   $ADB push ${RSYNC_BIN_DIR}/rsync.bin ${DEVICE_RSYNC_BIN_DIR}
 fi
 
-$ADB shell [ -f "$DEVICE_RSYNC_CONF_DIR/rsyncd.conf" ]
+RSYNCD_CONF="rsyncd-v${RSYNCD_CONF_VERSION}.conf"
+
+adb_shell "[ -f "$DEVICE_RSYNC_CONF_DIR/$RSYNCD_CONF" ]"
 if [ $? -ne 0 ]; then
   echo "loading rsync config to device"
-  $ADB push ${RSYNC_BIN_DIR}/rsyncd.conf ${DEVICE_RSYNC_CONF_DIR}/rsyncd.conf
-else
-  if [ -z `$ADB shell cat "$DEVICE_RSYNC_CONF_DIR/rsyncd.conf" | grep "\[assets\]"` ]; then
-    echo "updating rsync config"
-    $ADB push ${RSYNC_BIN_DIR}/rsyncd.conf ${DEVICE_RSYNC_CONF_DIR}/rsyncd.conf
-  fi
+  $ADB push ${RSYNC_BIN_DIR}/rsyncd.conf ${DEVICE_RSYNC_CONF_DIR}/$RSYNCD_CONF
 fi
 set -e
 
 echo "deploying assets: ${ASSETSDIR}"
 
 # startup rsync daemon
-$ADB shell "${DEVICE_RSYNC_BIN_DIR}/rsync.bin --daemon --config=${DEVICE_RSYNC_CONF_DIR}/rsyncd.conf &"
+$ADB shell "${DEVICE_RSYNC_BIN_DIR}/rsync.bin --daemon \
+    --config=${DEVICE_RSYNC_CONF_DIR}/${RSYNCD_CONF}"
 
 # sync files
-rsync -rP --stats --delete . rsync://${DEVICE_IP_ADDRESS}/assets/${DEVICE_ASSET_REL_DIR}
+rsync -rcP --stats --delete ./ rsync://${DEVICE_IP_ADDRESS}/assets/${DEVICE_ASSET_REL_DIR}/
 
 # record the asset directory for the animation process
 $ADB shell "echo '${DEVICE_ASSET_REL_DIR}' > '${DEVICE_ASSET_ROOT_DIR}/current'"

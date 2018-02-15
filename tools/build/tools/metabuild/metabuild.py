@@ -153,7 +153,7 @@ def subdir_glob(glob_specs, excludes=None, prefix=None, build_env=None, search_b
 class FindSrc(object):
     """Encapsulate state and processes associated with find source files."""
 
-    ANKI_BUILD_PLATFORMS = ('android', 'ios', 'mac', 'linux', 'windows')
+    ANKI_BUILD_PLATFORMS = ('android', 'ios', 'mac', 'linux', 'vicos', 'windows')
     ANKI_CXX_SRC_EXTS = ( '.c', '.cpp', '.cc' )
     ANKI_GO_SRC_EXTS = ( '.go', )
     ANKI_CXX_INCLUDE_EXTS = ( '.h', '.hpp', '.inl', '.def' )

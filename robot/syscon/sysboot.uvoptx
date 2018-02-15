@@ -73,7 +73,7 @@
         <LExpSel>0</LExpSel>
       </OPTXL>
       <OPTFL>
-        <tvExp>1</tvExp>
+        <tvExp>0</tvExp>
         <tvExpOptDlg>0</tvExpOptDlg>
         <IsCurrentTarget>1</IsCurrentTarget>
       </OPTFL>
@@ -177,22 +177,27 @@
         <Ww>
           <count>0</count>
           <WinNumber>1</WinNumber>
-          <ItemText>Analog::values</ItemText>
+          <ItemText>Analog::values[0] * 2.8 / 4096.0</ItemText>
         </Ww>
         <Ww>
           <count>1</count>
           <WinNumber>1</WinNumber>
-          <ItemText>onBatPower,0x10</ItemText>
+          <ItemText>Analog::values[1] * 2.8 / 4096.0</ItemText>
         </Ww>
         <Ww>
           <count>2</count>
           <WinNumber>1</WinNumber>
-          <ItemText>button_pressed</ItemText>
+          <ItemText>Analog::values[2] * 2.8 / 2048.0</ItemText>
         </Ww>
         <Ww>
           <count>3</count>
           <WinNumber>1</WinNumber>
-          <ItemText>hold_count,0x0A</ItemText>
+          <ItemText>Analog::values[4] * 2.8 / 4096.0</ItemText>
+        </Ww>
+        <Ww>
+          <count>4</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>button_pressed</ItemText>
         </Ww>
       </WatchWindow1>
       <MemoryWindow1>

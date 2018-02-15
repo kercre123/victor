@@ -59,7 +59,7 @@ target_link_libraries(cozmo_engine
   util_audio
   ble_cozmo
   DAS 
-  androidHAL
+  cameraService
   canned_anim_lib_engine
   victor_web_library
   # cti

@@ -118,6 +118,7 @@ namespace Vision {
   ImageBase<T>& ImageBase<T>::operator= (const ImageBase<T> &other)
   {
     SetTimestamp(other.GetTimestamp());
+    SetImageId(other.GetImageId());
     Array2d<T>::operator=(other);
     return *this;
   }
@@ -302,6 +303,7 @@ namespace Vision {
       cv::resize(this->get_CvMat_(), resizedImage.get_CvMat_(), desiredSize, 0, 0,
                  GetOpenCvInterpMethod(method));
       resizedImage.SetTimestamp(this->GetTimestamp());
+      resizedImage.SetImageId(this->GetImageId());
     }
   }
 
@@ -328,6 +330,7 @@ namespace Vision {
     const s32 desiredRows = resizedImage.GetNumRows();
     ResizeKeepAspectRatioHelper(this->get_CvMat_(), resizedImage.get_CvMat_(), desiredCols, desiredRows, GetOpenCvInterpMethod(method), false);
     resizedImage.SetTimestamp(this->GetTimestamp());
+    resizedImage.SetImageId(this->GetImageId());
   }
 
   template<typename T>
@@ -335,6 +338,7 @@ namespace Vision {
   {
     Array2d<T>::CopyTo(otherImage);
     otherImage.SetTimestamp(GetTimestamp()); // Make sure timestamp gets copied too
+    otherImage.SetImageId(GetImageId());
   }
 
   template<typename T>
@@ -1068,6 +1072,7 @@ namespace Vision {
     }
     
     SetTimestamp(imageRGB.GetTimestamp());
+    SetImageId(imageRGB.GetImageId());
   }
   
   Image ImageRGBA::ToGray() const
@@ -1080,6 +1085,7 @@ namespace Vision {
   void ImageRGBA::FillGray(Image& grayImage) const
   {
     grayImage.SetTimestamp(GetTimestamp()); // Make sure timestamp gets transferred!
+    grayImage.SetImageId(GetImageId());
     cv::cvtColor(this->get_CvMat_(), grayImage.get_CvMat_(), CV_RGBA2GRAY);
   }
 
@@ -1134,6 +1140,7 @@ namespace Vision {
       dataRGB[i].b() = dataRGBA[i].b();
     }
     SetTimestamp(imageRGBA.GetTimestamp());
+    SetImageId(imageRGBA.GetImageId());
   }
   
   ImageRGB::ImageRGB(const ImageRGB565& rgb565)
@@ -1152,6 +1159,7 @@ namespace Vision {
   {
     cv::cvtColor(imageGray.get_CvMat_(), this->get_CvMat_(), CV_GRAY2RGB);
     SetTimestamp(imageGray.GetTimestamp());
+    SetImageId(imageGray.GetImageId());
     return *this;
   }
   
@@ -1173,7 +1181,8 @@ namespace Vision {
   void ImageRGB::FillGray(Image& grayImage) const
   {
     grayImage.SetTimestamp(GetTimestamp()); // Make sure timestamp gets transferred!
-    
+    grayImage.SetImageId(GetImageId());
+
     grayImage.Allocate(GetNumRows(), GetNumCols());
 
     u32 numRows = GetNumRows();

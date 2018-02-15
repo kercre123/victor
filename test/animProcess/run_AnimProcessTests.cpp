@@ -1,4 +1,4 @@
-#include "androidHAL/androidHAL.h"
+#include "camera/cameraService.h"
 #include "cubeBleClient/cubeBleClient.h"
 #include "gtest/gtest.h"
 #include "osState/osState.h"
@@ -70,7 +70,7 @@ int main(int argc, char ** argv)
     std::string path = aux.substr(0,pos);
 */
     std::string path = cwdPath;
-    resourcePath = path + "/../../assets/cozmo_resources";
+    resourcePath = path + "/../../data/assets/cozmo_resources";
   } else {
     // build server specifies configRoot and workRoot
     resourcePath = configRoot + "/resources";
@@ -80,7 +80,7 @@ int main(int argc, char ** argv)
   Anki::Util::_errBreakOnError = false;
 
   // Initialize AndroidHAL singleton without supervisor
-  AndroidHAL::SetSupervisor(nullptr);
+  CameraService::SetSupervisor(nullptr);
   
   // Initialize OSState singleton without supervisor
   OSState::SetSupervisor(nullptr);

@@ -81,14 +81,7 @@ static Anki::Util::Data::DataPlatform* createPlatform(const std::string& filesPa
 
 static std::string createResourcesPath(const std::string& resourcesBasePath)
 {
-  std::string resourcesRefPath = resourcesBasePath + "/current";
-  std::string resourcesRef = Anki::Util::FileUtils::ReadFile(resourcesRefPath);
-  {
-    auto it = std::find_if(resourcesRef.rbegin(), resourcesRef.rend(),
-          [](char ch){ return !std::iswspace(ch); });
-    resourcesRef.erase(it.base() , resourcesRef.end());
-  }
-  return resourcesBasePath + "/" + resourcesRef + "/cozmo_resources";
+  return resourcesBasePath + "/cozmo_resources";
 }
 
 static void getAndroidPlatformPaths(std::string& filesPath,
@@ -97,11 +90,11 @@ static void getAndroidPlatformPaths(std::string& filesPath,
                              std::string& resourcesPath,
                              std::string& resourcesBasePath)
 {
-  filesPath = "/data/data/com.anki.cozmoengine/files";
-  cachePath = "/data/data/com.anki.cozmoengine/cache";
-  externalPath = "/sdcard/Android/data/com.anki.cozmoengine/files";
-  resourcesBasePath = externalPath + "/assets";
-  resourcesPath = createResourcesPath(resourcesBasePath);
+  filesPath = "/anki/data/assets";
+  cachePath = "/data/data/com.anki.victor/cache";
+  externalPath = "/data/data/com.anki.victor/files";
+  resourcesBasePath = "/anki/data";
+  resourcesPath = createResourcesPath("/anki/data/assets");
 }
 
 static int cozmo_start(const Json::Value& configuration)
@@ -151,7 +144,7 @@ static int cozmo_start(const Json::Value& configuration)
   if (config.isMember("DataPlatformResourcesBasePath")) {
     resourcesBasePath = config["DataPlatformResourcesBasePath"].asCString();
   } else {
-    resourcesBasePath = externalPath + "/assets";
+    resourcesBasePath = externalPath;
     config["DataPlatformResourcesBasePath"] = resourcesBasePath;
   }
 

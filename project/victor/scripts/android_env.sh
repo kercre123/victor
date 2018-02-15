@@ -12,6 +12,23 @@ if [ -e $TOPLEVEL/local.properties ]; then
 fi                                                                                                  
 
 # echo "ADB: $ADB"
+
+function adb_shell {
+    CMD='$ADB'
+    CMD+=" shell '"
+    CMD+="$1; echo "
+    CMD+='$?'
+    CMD+=" | tr -d [:space:]"
+    CMD+="'"
+
+    # uncomment for debugging   
+    # set -x
+    RC=$(eval $CMD)
+    # set +x
+    # echo "RC = $RC"
+
+    [[ $RC == "0" ]]
+}
                                                                                                     
 # Grab the IDs of all the connected devices / emulators                                             
 IDS=($($ADB devices | sed '1,1d' | sed '$d' | cut -f 1 | sort))

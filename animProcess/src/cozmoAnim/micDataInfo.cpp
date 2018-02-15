@@ -32,7 +32,6 @@ namespace {
   const std::string kMicCapturePrefix = "miccapture_";
   const std::string kWavFileExtension = ".wav";
   const std::string kRawFileExtension = "_raw.wav";
-  const std::string kResampledFileExtension = "_resamp.wav";
 }
 
 void MicDataInfo::CollectRawAudio(const AudioUtil::AudioSample* audioChunk, size_t size)
@@ -44,18 +43,6 @@ void MicDataInfo::CollectRawAudio(const AudioUtil::AudioSample* audioChunk, size
     newChunk.resize(kRawAudioChunkSize);
     std::copy(audioChunk, audioChunk + size, newChunk.begin());
     _rawAudioData.push_back(std::move(newChunk));
-  }
-}
-
-void MicDataInfo::CollectResampledAudio(const AudioUtil::AudioSample* audioChunk, size_t size)
-{
-  std::lock_guard<std::mutex> lock(_dataMutex);
-  if (_typesToRecord.IsBitFlagSet(MicDataType::Resampled))
-  {
-    AudioUtil::AudioChunk newChunk;
-    newChunk.resize(kResampledAudioChunkSize);
-    std::copy(audioChunk, audioChunk + size, newChunk.begin());
-    _resampledAudioData.push_back(std::move(newChunk));
   }
 }
 
@@ -156,10 +143,9 @@ void MicDataInfo::SaveCollectedAudio(const std::string& dataDirectory,
                                      const std::string& nameToUse,
                                      const std::string& nameToRemove)
 {
-  // Check against a min recording length. If we're not recording raw/resampled and our recorded processed time
+  // Check against a min recording length. If we're not recording raw and our recorded processed time
   // is too short, we're going to abandon saving it.
   if (_rawAudioData.empty() && 
-      _resampledAudioData.empty() && 
       (_processedAudioData.size() * kTimePerChunk_ms * kChunksPerSEBlock) < kMinAudioSizeToSave_ms)
   {
     return;
@@ -201,18 +187,6 @@ void MicDataInfo::SaveCollectedAudio(const std::string& dataDirectory,
     };
     std::thread(saveRawWave).detach();
     _rawAudioData.clear();
-  }
-
-  if (!_resampledAudioData.empty())
-  {
-    auto saveResampledWave = [dest = (writeLocationBase + kResampledFileExtension),
-                              data = std::move(_resampledAudioData)] () {
-      Anki::Util::SetThreadName(pthread_self(), "saveResmplWave");
-      AudioUtil::WaveFile::SaveFile(dest, data, kNumInputChannels);
-      LOG_INFO("MicDataInfo.WriteResampledWaveFile", "%s", dest.c_str());
-    };
-    std::thread(saveResampledWave).detach();
-    _resampledAudioData.clear();
   }
 
   if (!_processedAudioData.empty())

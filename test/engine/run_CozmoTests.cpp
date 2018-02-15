@@ -8,7 +8,7 @@
 #include "coretech/common/robot/matlabInterface.h"
 #include "coretech/common/shared/types.h"
 
-#include "androidHAL/androidHAL.h"
+#include "camera/cameraService.h"
 #include "osState/osState.h"
 #include "cubeBleClient/cubeBleClient.h"
 
@@ -2398,7 +2398,7 @@ int main(int argc, char ** argv)
     std::string path = aux.substr(0,pos);
 */
     std::string path = cwdPath;
-    resourcePath = path + "/../../assets/cozmo_resources";
+    resourcePath = path + "/../../data/assets/cozmo_resources";
     filesPath = path + "/files";
     cachePath = path + "/temp";
     externalPath = path + "/temp";
@@ -2413,8 +2413,8 @@ int main(int argc, char ** argv)
   // Suppress break-on-error for duration of these tests
   Anki::Util::_errBreakOnError = false;
 
-  // Initialize AndroidHAL singleton without supervisor
-  AndroidHAL::SetSupervisor(nullptr);
+  // Initialize CameraService singleton without supervisor
+  CameraService::SetSupervisor(nullptr);
   
   // Initialize OSState singleton without supervisor
   OSState::SetSupervisor(nullptr);
