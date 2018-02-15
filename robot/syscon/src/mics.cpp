@@ -102,6 +102,14 @@ void Mics::init(void) {
   start_mic_spi(TIM_CR1_CEN, MIC_SPI_CR1, (void*)&TIM15->CR1);
 }
 
+void Mics::stop(void) {
+  // Turn off mic spi and dma
+  SPI1->CR1 = 0;
+  SPI2->CR1 = 0;
+  DMA1_Channel2->CCR = 0;
+  DMA1_Channel4->CCR = 0;
+}
+
 void Mics::errorCode(uint16_t* data) {
   data[0] = *(uint16_t*)&pdm_data[0][0];
   data[1] = *(uint16_t*)&pdm_data[1][0];
@@ -112,10 +120,10 @@ void Mics::transmit(int16_t* payload) {
 }
 
 #define STAGE3(ti) \
-  ptr = &DECIMATION_TABLE[ti+24][*samples]; samples += 2; \
-  acc_2 += *ptr; ptr -= 0xC00; \
-  acc_1 += *ptr; ptr -= 0xC00; \
-  acc_0 += *ptr; \
+  ptr = &DECIMATION_TABLE[ti][*samples]; samples += 2; \
+  acc_0 += *ptr; ptr += 0xC00; \
+  acc_1 += *ptr; ptr += 0xC00; \
+  acc_2 += *ptr; \
 
 #define STAGE3A(ti) \
   ptr = &DECIMATION_TABLE[ti+24][*samples]; samples += 2; \

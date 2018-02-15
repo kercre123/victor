@@ -9,7 +9,6 @@
 #include "power.h"
 #include "vectors.h"
 #include "flash.h"
-#include "lights.h"
 
 static const int SELECTED_CHANNELS = 0
   | ADC_CHSELR_CHSEL2
@@ -94,12 +93,12 @@ void Analog::init(void) {
                      | DMA_CCR_CIRC;
   DMA1_Channel1->CCR |= DMA_CCR_EN;
 
-  #ifdef BOOTLOADER
   POWER_EN::mode(MODE_INPUT);
   POWER_EN::pull(PULL_UP);
 
   Power::enableHead();
 
+  #ifdef BOOTLOADER
   CHG_EN::type(TYPE_OPENDRAIN);
   CHG_PWR::type(TYPE_OPENDRAIN);
 
@@ -214,7 +213,6 @@ void Analog::tick(void) {
       Power::enableHead();
     } else if (hold_count >= POWER_DOWN_TIME) {
       Power::disableHead();
-      Lights::disable();
     } else {
       Power::setMode(POWER_ACTIVE);
       Power::enableHead();
