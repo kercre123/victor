@@ -14,22 +14,22 @@
 
 namespace Anki {
 namespace Switchboard {
-  class BLEMessageProtocol {
+  class BleMessageProtocol {
   public:
     // Constructor
-    BLEMessageProtocol(size_t maxSize);
+    BleMessageProtocol(size_t maxSize);
     
     // Signals
-    using BLEMessageSignal = Signal::Signal<void (uint8_t*, size_t)>;
+    using BleMessageSignal = Signal::Signal<void (uint8_t*, size_t)>;
     
     void ReceiveRawBuffer(uint8_t* buffer, size_t size);
     void SendMessage(uint8_t* buffer, size_t size);
     
-    BLEMessageSignal& OnReceiveMessageEvent() {
+    BleMessageSignal& OnReceiveMessageEvent() {
       return _receiveMessageSignal;
     }
     
-    BLEMessageSignal& OnSendRawBufferEvent() {
+    BleMessageSignal& OnSendRawBufferEvent() {
       return _sendRawBufferSignal;
     }
     
@@ -71,8 +71,8 @@ namespace Switchboard {
       return msgSize & (~kMultipartBits);
     }
     
-    BLEMessageSignal _sendRawBufferSignal;
-    BLEMessageSignal _receiveMessageSignal;
+    BleMessageSignal _sendRawBufferSignal;
+    BleMessageSignal _receiveMessageSignal;
   };
 } // Switchboard
 } // Anki

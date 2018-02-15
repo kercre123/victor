@@ -8,7 +8,7 @@
 
 #include "bleMessageProtocol.h"
 
-Anki::Switchboard::BLEMessageProtocol::BLEMessageProtocol(size_t size)
+Anki::Switchboard::BleMessageProtocol::BleMessageProtocol(size_t size)
 : _maxSize(size),
   _receiveState(kMsgStart)
 {
@@ -17,15 +17,15 @@ Anki::Switchboard::BLEMessageProtocol::BLEMessageProtocol(size_t size)
   }
 }
 
-void Anki::Switchboard::BLEMessageProtocol::ReceiveRawBuffer(uint8_t* buffer, size_t size) {
+void Anki::Switchboard::BleMessageProtocol::ReceiveRawBuffer(uint8_t* buffer, size_t size) {
   if(size < 1) {
     return;
   }
   
   uint8_t headerByte = buffer[0];
   
-  uint8_t sizeByte = BLEMessageProtocol::GetSize(headerByte);
-  uint8_t mulipartState = BLEMessageProtocol::GetMultipartBits(headerByte);
+  uint8_t sizeByte = BleMessageProtocol::GetSize(headerByte);
+  uint8_t mulipartState = BleMessageProtocol::GetMultipartBits(headerByte);
   
   if(sizeByte != size - 1) {
     printf("Size failure: %d %d\n", sizeByte, size);
@@ -91,7 +91,7 @@ void Anki::Switchboard::BLEMessageProtocol::ReceiveRawBuffer(uint8_t* buffer, si
   }
 }
 
-void Anki::Switchboard::BLEMessageProtocol::SendMessage(uint8_t* buffer, size_t size) {
+void Anki::Switchboard::BleMessageProtocol::SendMessage(uint8_t* buffer, size_t size) {
   size_t sizeRemaining = size;
   
   if(size < _maxSize) {

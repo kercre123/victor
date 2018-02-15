@@ -104,12 +104,14 @@ void Anki::Switchboard::SecurePairing::Init() {
   ev_timer_again(_loop, &_handleTimeoutTimer.timer);
   
   SendHandshake();
-  //SendPublicKey();
   
   _state = PairingState::AwaitingHandshake;
 }
 
 void Anki::Switchboard::SecurePairing::Reset(bool forced) {
+  // Tell the stream that we can no longer send over encrypted channel
+  _stream->SetEncryptedChannelEstablished(false);
+  
   // Tell key exchange to reset
   _keyExchange->Reset();
   
@@ -198,6 +200,11 @@ bool Anki::Switchboard::SecurePairing::HandleHandshake(uint16_t version) {
   // to properly switch states to adjust to proper version.
   if(version == PairingProtocolVersion::CURRENT) {
     return true;
+  }
+  else if(version == PairingProtocolVersion::INVALID) {
+    // Client should never send us this message.
+    Log::Write("Client reported incompatible version.");
+    return false;
   }
   
   return false;
@@ -301,7 +308,7 @@ void Anki::Switchboard::SecurePairing::HandleMessageReceived(uint8_t* bytes, uin
             // If we can't handle handshake, must cancel
             // THIS SHOULD NEVER HAPPEN
             Log::Write("Unable to process handshake. Something very bad happened.");
-            Reset();
+            StopPairing();
           }
         } else {
           // ignore msg

@@ -8,7 +8,7 @@
 //
 
 #include "switchboard.h"
-#include "bleMessageProtocol.h"
+#include "BleMessageProtocol.h"
 
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // DEBUG DEFINE FOR TESTING ON iOS !!
@@ -153,7 +153,7 @@ void Anki::SwitchboardDaemon::OnTimerTick(struct ev_loop* loop, struct ev_timer*
 
 void Anki::SwitchboardDaemon::TestMessageProtocol(int n) {
   // <--
-  Anki::Switchboard::BLEMessageProtocol* msgProtocol = new Anki::Switchboard::BLEMessageProtocol(20);
+  Anki::Switchboard::BleMessageProtocol* msgProtocol = new Anki::Switchboard::BleMessageProtocol(20);
   
   const int kMsgSize = n;
   

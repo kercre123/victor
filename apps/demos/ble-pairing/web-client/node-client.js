@@ -38,110 +38,163 @@ function tryConnect() {
     });
 }
 
+function handleReceivePlainText(data) {
+    let MSG_PUBK = 4;
+    let MSG_NONCE = 5;
+    let MSG_CANCEL = 6;
+    let MSG_HANDSHAKE = 7;
+
+    data = Buffer.from(data);
+
+    if(data[0] == MSG_HANDSHAKE) {
+        let buf = [7];
+        let msg = buf.concat(Array.from(data.slice(1)));
+        protocolSend(Buffer.from(msg), false);
+    }
+    else if(data[0] == MSG_PUBK) {
+        keys = sodium.crypto_kx_keypair();
+
+        console.log("--> Received public key");
+        let buf = [2]; // initial pairing request
+        let msg = buf.concat(Array.from(keys.publicKey));
+        protocolSend(Buffer.from(msg), false);
+
+        let foreignKey = data.slice(1);
+        let clientKeys = sodium.crypto_kx_client_session_keys(keys.publicKey, keys.privateKey, foreignKey);
+
+        var readline = require('readline');
+
+        rl = readline.createInterface({
+            input: process.stdin,
+            output: process.stdout
+        });
+
+        rl.question("Enter pin:", function(pin) {
+            let hashedShared = sodium.crypto_generichash(32, clientKeys.sharedRx, pin);
+            cryptoKeys["decrypt"] = hashedShared;
+            cryptoKeys["encrypt"] = clientKeys.sharedTx;
+
+            if(receivedNonce) {
+                protocolSend(Buffer.from([1, MSG_NONCE]), false);
+            }
+
+            enteredPin = true;
+        });
+    } else if(data[0] == MSG_NONCE) { 
+        decryptNonce = Buffer.from(data.slice(1));
+        encryptNonce = Buffer.from(data.slice(1));
+
+        if(enteredPin) {
+            protocolSend(Buffer.from([1, MSG_NONCE]), false);
+        }
+
+        receivedNonce = true;
+    } else if(data[0] == MSG_CANCEL) {
+        if(rl != null) {
+            rl.close();
+            console.log("");
+        }
+
+        printConnectionMessage("Victor cancelled pairing...", "\x1b[31m");
+    }
+}
+
+function handleReceiveEncrypted(ctext) {
+    let CRYPTO_PING = 1;
+    let CRYPTO_ACCEPTED = 4;
+
+    let cipher = new Uint8Array(ctext);
+    let nonce = new Uint8Array(decryptNonce);
+
+    ctext = Buffer.from(ctext);
+
+    try{
+        let data = sodium.crypto_aead_xchacha20poly1305_ietf_decrypt(null, cipher, null, nonce, cryptoKeys["decrypt"]);
+        sodium.increment(decryptNonce);
+
+        if(data[0] == CRYPTO_PING) {
+            let challenge = ConvertByteBufferToUInt(Buffer.from(data.slice(1)));
+            let arr = ConvertIntToByteBufferLittleEndian(challenge + 1);
+            arr.unshift(CRYPTO_PING);
+            let buf = Buffer.from(arr);
+
+            // send challenge response
+            protocolSend(buf, true);
+        } else if(data[0] == CRYPTO_ACCEPTED) {
+            printConnectionMessage("Secure connection has been established...", "\x1b[32m");
+
+            let wifiCred = Buffer.concat([Buffer.from([5]), Buffer.from([13]), Buffer.from("vic-home-wifi"), Buffer.from([8]), Buffer.from("password")]);
+
+            console.log(wifiCred);
+            protocolSend(wifiCred, true);
+        }
+    } catch(err) {
+        console.log("Failed to decrypt");
+        console.log(err);
+    }
+}
+
+function protocolReceive(data, isEncrypted) {
+    if(isEncrypted) {
+        bleMsgProtocolSecure.receiveRawBuffer(Array.from(data));
+    } else {
+        bleMsgProtocol.receiveRawBuffer(Array.from(data));
+    }
+}
+
+function protocolSend(msg, isEncrypted) {
+    if(isEncrypted) {
+        let nonce = new Uint8Array(encryptNonce);
+        let msgBuffer = Buffer.from(msg);
+        let data = new Uint8Array(msgBuffer);
+
+        encrypted = sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(data, null, null, nonce, cryptoKeys["encrypt"]);
+
+        sodium.increment(encryptNonce);
+        buffer = Buffer.from(encrypted);
+
+        bleMsgProtocolSecure.sendMessage(Array.from(buffer));
+    } else {
+        bleMsgProtocol.sendMessage(Array.from(msg));
+    }
+}
+
+function initBleProtocol() {
+    bleMsgProtocol = new ankible.BleMessageProtocol(maxPacketSize);
+    bleMsgProtocolSecure = new ankible.BleMessageProtocol(maxPacketSize);
+
+    bleMsgProtocol.onReceiveMsg(handleReceivePlainText);
+    bleMsgProtocolSecure.onReceiveMsg(handleReceiveEncrypted);
+
+    bleMsgProtocol.onSendRaw(function(buffer) {
+        sendMessage(Buffer.from(buffer), false);
+    });
+
+    bleMsgProtocolSecure.onSendRaw(function(buffer) {
+        sendMessage(Buffer.from(buffer), true);
+    });
+}
+
 function onConnect(peripheral) {
     printConnectionMessage("Unsecure connection complete...", "\x1b[31m");
 
+    initBleProtocol();
+
     discoverServices(peripheral).then(function(characteristics) {
-        let pingChar = characteristics[0];
-        let writeChar = characteristics[1];
-        let readChar = characteristics[2];
-        let secureWriteChar = characteristics[3];
-        let secureReadChar = characteristics[4];
+        pingChar = characteristics[0];
+        writeChar = characteristics[1];
+        readChar = characteristics[2];
+        secureWriteChar = characteristics[3];
+        secureReadChar = characteristics[4];
 
         printConnectionMessage("Finished discovering services and characteristics...", "\x1b[31m");
 
         secureWriteChar.on('data', function(ctext, isNotification) {
-            let CRYPTO_PING = 1;
-            let CRYPTO_ACCEPTED = 4;
-
-            let cipher = new Uint8Array(ctext);
-            let nonce = new Uint8Array(decryptNonce);
-
-            try{
-                let data = sodium.crypto_aead_xchacha20poly1305_ietf_decrypt(null, cipher, null, nonce, cryptoKeys["decrypt"]);
-                sodium.increment(decryptNonce);
-
-                if(data[0] == CRYPTO_PING) {
-                    let challenge = ConvertByteBufferToUInt(Buffer.from(data.slice(1)));
-                    let arr = ConvertIntToByteBufferLittleEndian(challenge + 1);
-                    arr.unshift(CRYPTO_PING);
-                    let buf = Buffer.from(arr);
-    
-                    // send challenge response
-                    sendMessage(buf, true);
-                } else if(data[0] == CRYPTO_ACCEPTED) {
-                    printConnectionMessage("Secure connection has been established...", "\x1b[32m");
-
-                    let wifiCred = Buffer.concat([Buffer.from([5]), Buffer.from([13]), Buffer.from("vic-home-wifi"), Buffer.from([8]), Buffer.from("password")]);
-
-                    console.log(wifiCred);
-                    sendMessage(wifiCred, true);
-                }
-            } catch(err) {
-                console.log("Failed to decrypt");
-                console.log(err);
-            }
-
-
+            protocolReceive(ctext, true);
         });
 
         writeChar.on('data', function(data, isNotification) {
-            let MSG_PUBK = 4;
-            let MSG_NONCE = 5;
-            let MSG_CANCEL = 6;
-            let MSG_HANDSHAKE = 7;
-
-            if(data[0] == MSG_HANDSHAKE) {
-                let buf = [7];
-                let msg = buf.concat(Array.from(data.slice(1)));
-                sendMessage(Buffer.from(msg), false);
-            }
-            else if(data[0] == MSG_PUBK) {
-                keys = sodium.crypto_kx_keypair();
-
-                console.log("--> Received public key");
-                let buf = [2]; // initial pairing request
-                let msg = buf.concat(Array.from(keys.publicKey));
-                sendMessage(Buffer.from(msg), false);
-
-                let foreignKey = data.slice(1);
-                let clientKeys = sodium.crypto_kx_client_session_keys(keys.publicKey, keys.privateKey, foreignKey);
-
-                var readline = require('readline');
-
-                rl = readline.createInterface({
-                    input: process.stdin,
-                    output: process.stdout
-                });
-
-                rl.question("Enter pin:", function(pin) {
-                    let hashedShared = sodium.crypto_generichash(32, clientKeys.sharedRx, pin);
-                    cryptoKeys["decrypt"] = hashedShared;
-                    cryptoKeys["encrypt"] = clientKeys.sharedTx;
-
-                    if(receivedNonce) {
-                        sendMessage(Buffer.from([1, MSG_NONCE]), false);
-                    }
-
-                    enteredPin = true;
-                });
-            } else if(data[0] == MSG_NONCE) { 
-                decryptNonce = Buffer.from(data.slice(1));
-                encryptNonce = Buffer.from(data.slice(1));
-
-                if(enteredPin) {
-                    sendMessage(Buffer.from([1, MSG_NONCE]), false);
-                }
-
-                receivedNonce = true;
-            } else if(data[0] == MSG_CANCEL) {
-                if(rl != null) {
-                    rl.close();
-                    console.log("");
-                }
-
-                printConnectionMessage("Victor cancelled pairing...", "\x1b[31m");
-            }
+            protocolReceive(data, false);
         });
     });
 }
@@ -231,12 +284,16 @@ let verHash = [];
 let enteredPin = false;
 let receivedNonce = false;
 
+let maxPacketSize = 20;
+let bleMsgProtocol = new ankible.BleMessageProtocol(maxPacketSize);
+let bleMsgProtocolSecure = new ankible.BleMessageProtocol(maxPacketSize);
+
 loadSodium().then(function() {
     tryConnect();
 });
 
 function testMessageProtocol() {
-    let bleMsgProtocol = new ankible.BleMessageProtocol(20);
+    let bleMsgProtocol = new ankible.BleMessageProtocol(maxPacketSize);
 
     bleMsgProtocol.onReceiveMsg(function(buffer) {
         console.log("Received: ");
@@ -282,18 +339,6 @@ let encryptNonce;
 let decryptNonce;
 function sendMessage(msg, encrypt) {
     let buffer = msg;
-
-    if(encrypt) {
-        let nonce = new Uint8Array(encryptNonce);
-        let msgBuffer = Buffer.from(msg);
-        let data = new Uint8Array(msgBuffer);
-
-        encrypted = sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(data, null, null, nonce, cryptoKeys["encrypt"]);
-
-        sodium.increment(encryptNonce);
-
-        buffer = Buffer.from(encrypted);
-    }
 
     if(encrypt) {
         secureReadChar.write(buffer, true);

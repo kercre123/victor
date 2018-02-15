@@ -106,7 +106,7 @@ namespace Switchboard {
     const uint8_t kMaxMatchAttempts = 5;
     const uint8_t kMaxPairingAttempts = 10;
     const uint32_t kMaxAbnormalityCount = 5;
-    const uint16_t kPairingTimeout_s = 10;
+    const uint16_t kPairingTimeout_s = 60;
     const uint8_t kNumPinDigits = 6;
     const uint8_t kMinMessageSize = 2;
     
