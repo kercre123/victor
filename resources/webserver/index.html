@@ -62,6 +62,9 @@
                     $("#main_robot_id").html(payload[0]);
                     $("#main_robot_serial_number").html(payload[1]);
                     $("#main_robot_ip_address").html(payload[2]);
+                    $("#main_build_config").html(payload[3]);
+                    $("#main_os_version").html(payload[4]);
+                    $("#main_cmd_line").html(payload[5]);
                 })
             }
         } else if (pageName == "page_perf") {
@@ -214,7 +217,7 @@
         <div id="page_main">
             <table border=0>
                 <tr>
-                    <td style='text-align:right'>Connected to:</td><td id="main_robot_connection_type"></td>
+                    <td width='160px' style='text-align:right'>Connected to:</td><td id="main_robot_connection_type"></td>
                 </tr>
                 <tr>
                     <td style='text-align:right'>Robot ID:</td><td id="main_robot_id"></td>
@@ -224,6 +227,15 @@
                 </tr>
                 <tr>
                     <td style='text-align:right'>IP Address:</td><td id="main_robot_ip_address"></td>
+                </tr>
+                <tr>
+                    <td style='text-align:right'>Build Configuration:</td><td id="main_build_config"></td>
+                </tr>
+                <tr>
+                    <td style='text-align:right'>OS Version:</td><td id="main_os_version"></td>
+                </tr>
+                <tr>
+                    <td style='text-align:right'>Command Line:</td><td id="main_cmd_line"></td>
                 </tr>
             </table>
             <br>

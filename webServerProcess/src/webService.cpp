@@ -465,7 +465,46 @@ static int GetMainRobotInfo(struct mg_connection *conn, void *cbdata)
   const std::string serialNo = osState->GetSerialNumberAsString();
   const std::string ip       = osState->GetIPAddress();
 
-  mg_printf(conn, "%s\n%s\n%s\n", robotID.c_str(), serialNo.c_str(), ip.c_str());
+  const std::string buildConfig =
+#if defined(DEBUG)
+  "DEBUG";
+#elif defined(RELEASE)
+  "RELEASE";
+#elif defined(PROFILE)
+  "PROFILE";
+#elif defined(SHIPPING)
+  "SHIPPING";
+#else
+  "UNKNOWN";
+#endif
+
+#ifdef SIMULATOR
+
+  const std::string procVersion = "n/a (webots)";
+  const std::string procCmdLine = "n/a (webots)";
+
+#else
+
+  // This is a one-time read of info that won't change during the run,
+  // so we don't keep any file streams open
+  std::ifstream fs;
+
+  fs.open("/proc/version", std::ifstream::in);
+  std::string procVersion;
+  std::getline(fs, procVersion);
+  fs.close();
+
+  fs.open("/proc/cmdline", std::ifstream::in);
+  std::string procCmdLine;
+  std::getline(fs, procCmdLine);
+  fs.close();
+
+#endif
+
+  mg_printf(conn, "%s\n%s\n%s\n%s\n%s\n%s\n",
+            robotID.c_str(), serialNo.c_str(), ip.c_str(),
+            buildConfig.c_str(),
+            procVersion.c_str(), procCmdLine.c_str());
   return 1;
 }
 
