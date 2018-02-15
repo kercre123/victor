@@ -140,11 +140,11 @@ namespace Meter
     return value;
   }
   
-  static board_rev_t m_hw_rev = BOARD_REV_INVALID;
+  //static board_rev_t m_hw_rev = BOARD_REV_INVALID;
   void init()
   {
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_I2C1, ENABLE);
-    m_hw_rev = Board::revision();
+    //m_hw_rev = Board::revision();
     
     //Init bus pins
     SCL::init(MODE_OUTPUT, PULL_UP, TYPE_OPENDRAIN, SPEED_LOW);
@@ -173,10 +173,8 @@ namespace Meter
     I2C_Send16(INA220_VBAT_BUS_ADDR, 5, 0);          // No calibration - we can do our own math
     
     //init CUBEBAT monitor IC
-    if( m_hw_rev > BOARD_REV_2_0 ) //shunt resistor change
-      I2C_Send16(INA220_CBAT_BUS_ADDR, 0, 7 + (1<<3) + (1<<11)); // Measure voltage(9-bit,84us) + current(10-bit,148uS,GAIN/2,+/-80mV -> 156.863mA @ 0.51R full-scale)
-    else
-      I2C_Send16(INA220_CBAT_BUS_ADDR, 0, 7 + (1<<3) + (3<<11)); // Measure voltage(9-bit,84us) + current(10-bit,148uS,GAIN/8,+/-320mV -> 106.666mA @ 3R full-scale)
+    //I2C_Send16(INA220_CBAT_BUS_ADDR, 0, 7 + (1<<3) + (3<<11)); // Measure voltage(9-bit,84us) + current(10-bit,148uS,GAIN/8,+/-320mV -> 106.666mA @ 3R full-scale)
+    I2C_Send16(INA220_CBAT_BUS_ADDR, 0, 7 + (1<<3) + (1<<11)); // Measure voltage(9-bit,84us) + current(10-bit,148uS,GAIN/2,+/-80mV -> 156.863mA @ 0.51R full-scale)
     I2C_Send16(INA220_CBAT_BUS_ADDR, 5, 0);          // No calibration - we can do our own math
     
     //init UAMP monitor IC
@@ -195,11 +193,8 @@ namespace Meter
     switch( address ) {
       case INA220_VEXT_BUS_ADDR: return shunt_reg >> 1;   //R=0.02: FS 40mV  = reg val 4000 -> 2000mA
       case INA220_VBAT_BUS_ADDR: return shunt_reg >> 1;   //R=0.02: FS 40mV  = reg val 4000 -> 2000mA
-      case INA220_CBAT_BUS_ADDR:
-        if( m_hw_rev > BOARD_REV_2_0 ) //shunt resistor change
-          return shunt_reg / 51;   //R=3.0 : FS 80mV  = reg val 8000 -> 156.863mA
-        else
-          return shunt_reg / 300;  //R=3.0 : FS 320mV = reg val 32000 -> 106.666mA
+      //case INA220_CBAT_BUS_ADDR: return shunt_reg / 300;  //R=3.0 : FS 320mV = reg val 32000 -> 106.666mA  
+      case INA220_CBAT_BUS_ADDR: return shunt_reg / 51;   //R=0.51 : FS 80mV  = reg val 8000 -> 156.863mA
       //case INA220_UAMP_BUS_ADDR: return shunt_reg / 1000; //R=10  : FS 40mV  = reg val 4000 -> 4mA
       case INA220_UAMP_BUS_ADDR: return shunt_reg;        //R=10  : FS 40mV  = reg val 4000 -> 4000uA -- PSYCH! CONVERT THIS ONE TO UA
     }
