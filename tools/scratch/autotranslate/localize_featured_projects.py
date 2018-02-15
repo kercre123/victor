@@ -5,28 +5,38 @@
 
 # This script is expected to be run in it's containing folder from the command line
 #  command line parameters:
-#    -p PROJECT_NAME    ... Specifies a project to be operated on by DASProjectName
-#    -a                 ... Operates on all projects specified in codelab
+# PROJECT MASKING:
+#    -p, --project PROJECT_NAME ... Specifies a project to be operated on by DASProjectName
+#    -a, --all                  ... Operates on all projects specified in codelab
+#    -b, --blacklist            ... Specifies a json blacklist to exclude specific projects when using all
 #
-#    -s                 ... Scans the specified project(s) and exports localizable strings into the local folder
-#    -t                 ... Translates the specified projects
-#    -l                 ... Lists projects to console
+# MUST SPECIFY FUNCTION:
+#    -s, --scan                 ... Scans the specified project(s) and exports localizable strings into the local folder
+#    -t, --translate            ... Translates the specified projects
+#    -l, --list                 ... Lists projects to console
 #
-# example usages:
-#    "./localize_featured_projects.py -al"  ... Lists all codelab featured projects
-#    "./localize_featured_projects.py -s -p LaserSmile"  ... Scans laser smile project for strings
-#    "./localize_featured_projects.py -t -p LaserSmile"  ... Translates the laser smile project
+# SCAN/TRANSLATE PARAMETERS:
+#    --scan_loc_target          ... Specify the localization file to export scanned strings into during scan
+#    --exclude_project_agnostic_strings     ... Flag to avoid exporing project agnostic strings during scan
+#    -o, --source_language      ... Specify the source language to be operated on for either scan or translate
+#
+# ALWAYS REQUIRED:
+#    --streaming_assets_path    ... Specify the root path of the StreamingAssets
+#    --project_config_file      ... Specify the project configuration file with project metadata
+#    --project_folder           ... Specify the codelab featured project folder
+#    --scan_output_path         ... Path to export project scans to (Not needed when scan_loc_target specified, currently deprecated)
 #
 
 #
 # This script will parse cozmo codelab's featured projects, and relocalize them into different languages
 # the script will only act on projects that specify a Language field, others will be ignored
 #
-# 1) The source-language version is reverse-localized back to loc keys using a table of all localization keys in that language of translation:key
-# 2) Versions of the project are generated for every other language found in the localization folder, localized with a table of that languages key:translations
-# 3) The translated projects are inserted into the project list with modified language keys, next to the source projects, with all non-language, non-projectJSON fields unchanged
+# Scan Behavior:
+#  1) Parses the Json content of a source language project, and exports all strings matching proper criteria into an output file, or into a specfied target file
 #
-# The intent is that the cozmo app will then mask on locale for any featured project that specifies a language.
+# Translate Behavior:
+#  1) The source-language version is reverse-localized back to loc keys using a table of all localization keys in that language of translation:key
+#  2) The translated projects are exported to a project folder with modified localized values, and all non-localizeable values unchanged
 #
 
 import argparse
