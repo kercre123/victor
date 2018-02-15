@@ -60,6 +60,8 @@ namespace { // "Private members"
   uint32_t lastFrameCounter_ = 0;
   Result lastResult_;
 
+  struct VersionInfo bodyVersion_ = {0};
+
   bool chargingEnabled_ = false;
 
 } // "private" namespace
@@ -71,6 +73,15 @@ void InitIMU();
 void ProcessIMUEvents();
 void ProcessTouchLevel(void);
 void PrintConsoleOutput(void);
+
+
+extern "C" {
+  ssize_t spine_write_frame(spine_ctx_t spine, PayloadId type, const void* data, int len);
+  void record_body_version( const struct VersionInfo* info);
+  void request_version(void) {
+    spine_write_frame(&spine_, PAYLOAD_VERSION, NULL, 0);
+  }
+}
 
 ssize_t robot_io(spine_ctx_t spine, uint32_t sleepTimeMicroSec = 1000)
 {
@@ -87,6 +98,7 @@ ssize_t robot_io(spine_ctx_t spine, uint32_t sleepTimeMicroSec = 1000)
   }
   return r;
 }
+
 
 Result spine_wait_for_first_frame(spine_ctx_t spine)
 {
@@ -109,8 +121,11 @@ Result spine_wait_for_first_frame(spine_ctx_t spine)
         ccc_data_process( (ContactData*)(hdr+1) );
         continue;
       }
+      else if (hdr->payload_type == PAYLOAD_VERSION) {
+        record_body_version( (VersionInfo*)(hdr+1) );
+      }
       else {
-        LOGD("Unknown Frame Type\n");
+        LOGD("Unknown Frame Type %x\n", hdr->payload_type);
       }
 
     } else {
@@ -161,7 +176,9 @@ Result HAL::Init()
     }
     AnkiDebug("HAL.Init.SettingRunMode", "");
 
+
     spine_set_mode(&spine_, RobotMode_RUN);
+
 
     AnkiDebug("HAL.Init.WaitingForDataFrame", "");
     Result result = spine_wait_for_first_frame(&spine_);
@@ -233,13 +250,17 @@ Result spine_get_frame() {
         continue;
       }
       else if (hdr->payload_type == PAYLOAD_CONT_DATA) {
-         LOGD("Handling payload type %x\n", hdr->payload_type);
+         LOGD("Handling CD payload type %x\n", hdr->payload_type);
         ccc_data_process( (ContactData*)(hdr+1) );
         result = RESULT_OK;
         continue;
       }
+      else if (hdr->payload_type == PAYLOAD_VERSION) {
+         LOGD("Handling VR payload type %x\n", hdr->payload_type);
+        record_body_version( (VersionInfo*)(hdr+1) );
+      }
       else {
-        LOGD("Unknown Frame Type\n");
+        LOGD("Unknown Frame Type %x\n", hdr->payload_type);
       }
 
     } else {

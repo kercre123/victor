@@ -1,5 +1,4 @@
 
-#if 1
 #include <stdint.h>
 #include <stdio.h>
 
@@ -10,25 +9,24 @@
 extern "C" {
   int emr_set(uint8_t index, uint32_t value) {
 
-
-    uint32_t* emr = (uint32_t*)Anki::Cozmo::Factory::GetEMR();
+    const Anki::Cozmo::Factory::EMR* emr;
+    emr = Anki::Cozmo::Factory::GetEMR();
     if (emr) {
-      emr[index] = value;
+      uint32_t *item = (uint32_t*)&(emr->data[index]);
+      *item = value;
       return 0;
     }
     return 3;
   }
 
   int emr_get(uint8_t index, uint32_t* value) {
-    uint32_t* emr = (uint32_t*)Anki::Cozmo::Factory::GetEMR();
+    const Anki::Cozmo::Factory::EMR* emr;
+    emr = Anki::Cozmo::Factory::GetEMR();
     if (emr) {
-      *value = emr[index];
+      *value = emr->data[index];
       return 0;
     }
     return 3;
   }
 
 }
-
-
-  #endif

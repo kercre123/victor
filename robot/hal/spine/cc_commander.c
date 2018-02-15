@@ -57,6 +57,10 @@ typedef void (*ShutdownFunction)(int);
 
 const struct SpineMessageHeader* hal_read_frame();
 void start_overrride(int count);
+void SetHoldToken(char token);
+int clear_hold(char token, int status);
+extern void request_version(void);
+
 
 enum {
   show_NONE,
@@ -83,7 +87,9 @@ typedef struct CozmoCommand_t {
   uint16_t repeat_count;
   int16_t motorValues[MOTOR_COUNT];
   uint16_t printmask;
-  char reply[30];
+  char cmd[3];
+  int result;
+  char holdToken;
 } CozmoCommand;
 
 CozmoCommand gActiveState = {0};
@@ -93,19 +99,7 @@ int gRemainingActiveCycles = 0;
 //int gRespPending = 0;
 
 
-#define MAX_SERIAL_LEN 20
-int get_esn(char buf[], int len)
-{
-  int fd = open("/sys/devices/virtual/android_usb/android0/iSerial", O_RDONLY);
-  if (len > MAX_SERIAL_LEN) len = MAX_SERIAL_LEN;
-  int nchars = read(fd, buf, len-1);
-  close(fd);
-  if (nchars > 0) {
-    buf[nchars]='\0';
-    return nchars;
-  }
-  return 0;
-}
+
 
 #ifdef STANDALONE_TEST
 #define print_response printf
@@ -228,7 +222,6 @@ int SetMedicalRecord(uint8_t index, uint32_t value)
 {
   print_response("EMR %d := %d\n", index, value);
   return emr_set(index, value);
-//  return 3;
 }
 
 int GetMedicalRecord(uint8_t index)
@@ -237,13 +230,53 @@ int GetMedicalRecord(uint8_t index)
   int err = emr_get(index, &value);
   print_response(":%d @ EMR[%d]\n", value, index);
   return err;
-//  return 3;
 }
 
 
+//todo: collapse
+int engine_test_run(uint8_t id, uint8_t args[4]);
 int SendEngineCommand(uint8_t index, uint8_t v0, uint8_t v1, uint8_t v2, uint8_t v3){
-  return ERR_UNKNOWN;
+  uint8_t args[4] = {v0, v1, v2, v3};
+  int result = engine_test_run(index, args);
+  if (result < 0) {
+    SetHoldToken('e');
+  }
+  return result;
 }
+
+/***** version commands  **************************/
+
+
+#define MAX_SERIAL_LEN 20
+int get_esn(char buf[], int len)
+{
+  int fd = open("/sys/devices/virtual/android_usb/android0/iSerial", O_RDONLY);
+  if (len > MAX_SERIAL_LEN) len = MAX_SERIAL_LEN;
+  int nchars = read(fd, buf, len-1);
+  close(fd);
+  if (nchars > 0) {
+    buf[nchars]='\0';
+    return nchars;
+  }
+  return 0;
+}
+
+  struct VersionInfo bodyVersion_ = {0};
+
+  void record_body_version( const struct VersionInfo* info)
+  {
+    memcpy(&bodyVersion_, info, sizeof(bodyVersion_));
+    print_response(":%d %d\n", bodyVersion_.hw_revision, bodyVersion_.hw_model);
+    print_response(":%.32s\n", bodyVersion_.app_version);
+    ccc_debug_x("clearing hold for body version");//
+    clear_hold('b', 0);
+  }
+  void get_body_version( struct VersionInfo* info_out)
+  {
+    memcpy(info_out, &bodyVersion_, sizeof(bodyVersion_));
+  }
+
+
 
 /***** pending commands  **************************/
 CozmoCommand gPending = {0};
@@ -268,13 +301,18 @@ void AddMotorCommand(RobotMotor motor, uint8_t power_byte) {
   if (power < -1.0) { power = -1.0;}
   gPending.motorValues[motor] = 0x7FFF * power;
 }
-void SubmitCommand(bool cmd_rcvd) {
+void SetHoldToken(char token)
+{
+    gPending.holdToken = token;
+}
+void SubmitCommand() {
   ccc_debug_x("CCC submitting command");
   if (!gPending.repeat_count) { gPending.repeat_count=1;}
   show_command(&gPending);
   command_buffer_put(&gPending);
   PrepCommand(); //make sure it is cleared
 }
+
 
 
 
@@ -299,10 +337,14 @@ uint8_t handle_esn_command(const uint8_t args[])
   return ERR_SYSTEM;
 }
 
+
+extern void get_body_version(struct VersionInfo*);
 uint8_t handle_bsv_command(const uint8_t args[])
 {
-  print_response("BSV UNIMPLEMENTED\n");
-  return ERR_UNKNOWN;
+  SetHoldToken('b');
+  request_version();
+
+  return ERR_OK;
 }
 
 
@@ -499,9 +541,10 @@ bool gather_contact_text(const char* contactData, int len)
         ccc_debug_x("good prefix\n");
         int status = parse_command_text(linebuf+2, linelen-2);
         ccc_debug_x("replying <<%.3s %d\n",linebuf+2, status);
-        snprintf(gPending.reply, sizeof(gPending.reply), "<<%.3s %d\n",linebuf+2, status);
+        snprintf(gPending.cmd, sizeof(gPending.cmd), "%.3s", linebuf+2);
+        gPending.result = status;
         cmd_detected = true ;
-        SubmitCommand( (status==0) );
+        SubmitCommand( );
       }
       else {
         ccc_debug_x("non-command line\n");
@@ -679,9 +722,9 @@ void process_incoming_frame(struct BodyToHead* bodyData)
     }
 //    print_response("\n");
 
-    if (--gActiveState.repeat_count == 0) {
+    if (!gActiveState.holdToken && --gActiveState.repeat_count == 0) {
       //clear print request at end
-      print_response("%s", gActiveState.reply);
+      print_response("<<%.3s %d", gActiveState.cmd, gActiveState.result);
       gActiveState.printmask = 0;
     }
 
@@ -722,6 +765,15 @@ int run_commands(void) {
   return (gActiveState.repeat_count == 0 && gQuit);
 }
 
+int clear_hold(char token, int status) {
+  if (token == gActiveState.holdToken) {
+    gActiveState.holdToken=0;
+    gActiveState.result = 0;
+    return 1;
+  }
+  ccc_debug_x("token mismatch %c != %c\n", token, gActiveState.holdToken);
+  return 0;
+}
 
 #ifdef STANDALONE_UTILITY
 
@@ -856,5 +908,13 @@ void ccc_set_shutdown_function(ShutdownFunction fp) {
   //TODO: actually use this to shut down at end
 }
 
+
+void ccc_test_result(int status, const char string[32])
+{
+  if (clear_hold('e', status)) {
+    print_response("%.32s", string);
+  }
+
+}
 
 #endif
