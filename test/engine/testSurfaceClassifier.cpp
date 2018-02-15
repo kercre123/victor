@@ -421,7 +421,7 @@ TEST(SurfaceClassifier, DTClassifier_TestSerialization)
   Anki::Cozmo::DTRawPixelsClassifier clf(config, cozmoContext);
 
   const std::string path = cozmoContext->GetDataPlatform()->pathToResource(Anki::Util::Data::Scope::Resources,
-                                                                           "test/overheadMap/RealImagesDesk");
+                                                                           "test/overheadMap/realImagesDesk");
 
   PRINT_NAMED_INFO("TestSurfaceClassifier.TrainingFromFile.PrintPath",
                    "Path to training data is %s", path.c_str());
@@ -466,7 +466,7 @@ TEST(SurfaceClassifier, DTClassifier_TestMeanData)
     config["Use1SERule"] = true;
     config["PositiveWeight"] = 1.0f;
     config["OnTheFlyTrain"] = true;
-    config["FileOrDirName"] = "test/overheadMap/RealImagesDesk";
+    config["FileOrDirName"] = "test/overheadMap/realImagesDesk";
   }
 
   Anki::Cozmo::DTRawPixelsClassifier clf(config, cozmoContext);
@@ -514,7 +514,7 @@ TEST(SurfaceClassifier, GroundClassifier_NoiseRemoval)
   Anki::Cozmo::DebugImageList <Anki::Vision::ImageRGB> debugImageList;
   std::list<Anki::Cozmo::OverheadEdgeFrame> outEdges;
   const std::string path = cozmoContext->GetDataPlatform()->pathToResource(Anki::Util::Data::Scope::Resources,
-                                                                           "test/overheadMap/RealImagesDesk");
+                                                                           "test/overheadMap/realImagesDesk");
 
 //  const std::string path = "/Users/lorenzori/tmp/images_training/real_images/selective_annotation";
 
@@ -565,7 +565,7 @@ TEST(SurfaceClassifier, DTClassifier_TestReflectiveDesk)
   Anki::Cozmo::DTRawPixelsClassifier clf(config, cozmoContext);
 
   const std::string path = cozmoContext->GetDataPlatform()->pathToResource(Anki::Util::Data::Scope::Resources,
-                                                                           "test/overheadMap/ReflectiveDesk");
+                                                                           "test/overheadMap/reflectiveDesk");
 
   PRINT_NAMED_INFO("TestSurfaceClassifier.TrainingFromFile.PrintPath",
                    "Path to training data is %s", path.c_str());
