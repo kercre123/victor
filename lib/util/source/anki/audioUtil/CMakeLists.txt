@@ -1,5 +1,6 @@
 project(libankiutil LANGUAGES CXX)
 
+include(anki_build_cxx)
 include(android_strip)
 
 set(AUDIO_UTIL_SRC
@@ -44,6 +45,16 @@ elseif(MACOSX)
     find_library(FOUNDATION Foundation)
     set(PLATFORM_LIBS ${AUDIO_TOOLBOX} ${FOUNDATION})
 endif()
+
+target_compile_options(util_audio
+  PRIVATE
+  ${ANKI_BUILD_CXX_COMPILE_OPTIONS}
+)
+
+target_compile_definitions(util_audio
+  PRIVATE
+  ${ANKI_BUILD_CXX_COMPILE_DEFINITIONS}
+)
 
 target_include_directories(util_audio PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
