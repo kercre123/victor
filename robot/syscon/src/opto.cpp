@@ -554,15 +554,6 @@ void Opto::stop(void) {
   for (int i = 0; i < 4; i++) {
     writeReg(i, DROP_SENSOR_ADDRESS, MAIN_CTRL, 0x00);
   }
-
-  // Disable the TOF sensor
-  writeReg(0, TOF_SENSOR_ADDRESS, 0x80, 0x01);
-  writeReg(0, TOF_SENSOR_ADDRESS, 0xFF, 0x01);
-  writeReg(0, TOF_SENSOR_ADDRESS, 0x00, 0x00);
-  writeReg(0, TOF_SENSOR_ADDRESS, 0x91, 0x00);
-  writeReg(0, TOF_SENSOR_ADDRESS, 0x00, 0x01);
-  writeReg(0, TOF_SENSOR_ADDRESS, 0xFF, 0x00);
-  writeReg(0, TOF_SENSOR_ADDRESS, 0x80, 0x00);
 }
 
 bool Opto::sensorsValid() {
