@@ -1,20 +1,11 @@
 /*  
- *  *** Template module for victor web viz *** 
- *  This file should turn data into a visualization.
- *  Anything you need will need to be dynamically added
- *  to the DOM.
- *  You have access to d3, jquery, and processing.js
- *  Instructions:
- *  1) Supply the following four methods
- *  2) Add your module to the list of modules in the 
- *     <head> of webViz.html
+ * This module draws the directional mic information on a clock face,
+ * along with confidence values and other debug information.
+ * Only useful on a Victor robot as Webots has no direction information from
+ * the mic.
  */
 
 (function(myMethods, sendData) {
-
-  // you should fill in myMethods, and sendData
-  // is a function you can call to pass data back to
-  // the engine
 
   var ClockData = {}
   ClockData.center = [125, 125]
@@ -43,7 +34,11 @@
 
   myMethods.init = function(elem) {
     // Called once when the module is loaded.
-    // Any created elements should be placed inside elem.
+
+    if ( location.port != "8889" )
+    {   // not sure, this might be a string
+      $('<h3>You must use this tab with the anim process (port 8889)</h3>').appendTo(elem);
+    }
 
     var angleFactorA = 0.866; // cos(30 degrees)
     var angleFactorB = 0.5; // sin(30 degrees)
@@ -81,7 +76,6 @@
 
   myMethods.onData = function(data, elem) {
     // The engine has sent a new json blob.
-    // Any created elements should be placed inside elem.
 
     var canvas = $('#myCanvas')[0];
     var context = canvas.getContext("2d");
@@ -143,25 +137,11 @@
   };
 
   myMethods.update = function(dt, elem) {
-    // Called regularly. dt is the time since the previous call.
-    // Note that this update loop originates from the web page,
-    // not the engine, so the times may be different.
-    // Any created elements should be placed inside elem.
+
   };
 
   myMethods.getStyles = function() {
-    // Return a string of all css styles to be added for this
-    // module. Don't worry about conflicts with other modules;
-    // your styles will only apply to the children of the elem
-    // object passed into the above methods. However, the css
-    // selectors you provide here should be relative to the 
-    // document body, e.g., "#myHtmlElement", 
-    // not "#moduleTab #myHtmlElement".
-    return `
-      #myHtmlElement {
-        background-color: red;
-      }
-    `;
+    return "";
   };
 
 })(moduleMethods, moduleSendDataFunc);

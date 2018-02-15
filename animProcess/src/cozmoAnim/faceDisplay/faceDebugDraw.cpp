@@ -16,6 +16,7 @@
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "coretech/common/engine/array2d_impl.h"
 #include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "coretech/vision/engine/image.h"
 #include "util/helpers/templateHelpers.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
@@ -146,26 +147,24 @@ void FaceDebugDraw::DrawConfidenceClock(
 
     // if we send this data every tick, we crash the robot;
     // only send the web data every X seconds
-    static steady_clock::time_point nextWebServerUpdateTime; // defaults to epoch
-    const steady_clock::time_point currentTime = time_point_cast<milliseconds>(steady_clock::now());
+    static double nextWebServerUpdateTime = 0.0;
+    const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSecondsDouble();
     if (currentTime > nextWebServerUpdateTime)
     {
-      nextWebServerUpdateTime = currentTime + milliseconds(150);
+      nextWebServerUpdateTime = currentTime + 0.150;
 
       Json::Value webData;
-      webData["clockData"] = true;
       webData["confidence"] = micData.confidence;
       webData["dominant"] = micData.direction;
       webData["maxConfidence"] = maxConf;
       webData["triggerDetected"] = triggerRecognized;
       webData["delayTime"] = delayTime_ms;
 
-      Json::Value directionValues(Json::arrayValue);
+      Json::Value& directionValues = webData["directions"];
       for ( float confidence : micData.confidenceList )
       {
         directionValues.append(confidence);
       }
-      webData["directions"] = directionValues;
 
       const std::string moduleName = "micdata";
       _webService->SendToWebViz( moduleName, webData );
