@@ -175,6 +175,8 @@ namespace Board
 
   char* revString(void) 
   {
+    if( revision() <= BOARD_REV_INVALID )
+      return (char*)"INVALID";
     switch( revision() ) {
       case BOARD_REV_1_0:       return (char*)"1.0"; //break;
       case BOARD_REV_2_0:       return (char*)"2.0"; //break;
