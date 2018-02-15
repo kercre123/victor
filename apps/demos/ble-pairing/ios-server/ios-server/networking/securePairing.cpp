@@ -313,7 +313,9 @@ void Anki::Switchboard::SecurePairing::HandleMessageReceived(uint8_t* bytes, uin
       }
       case Anki::Switchboard::SetupMessage::MSG_REQUEST_INITIAL_PAIR: {
         if(_state == PairingState::AwaitingPublicKey) {
-          HandleInitialPair(bytes+1, length-1);
+          PublicKeyMessage* pKeyMsg = Message::CastFromBuffer<PublicKeyMessage>((char*)bytes);
+          
+          HandleInitialPair((uint8_t*)pKeyMsg->publicKey, crypto_kx_PUBLICKEYBYTES);
           _state = PairingState::AwaitingNonceAck;
         } else {
           // ignore msg
