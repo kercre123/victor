@@ -123,13 +123,8 @@ target_link_libraries(webotsCtrlViz
   PRIVATE
   util
   kazmath
-  cti_common
-  cti_vision
-  cti_messaging
-  cti_common_robot
   cozmo_engine
   webotsCtrlCommon
-  ${OPENCV_LIBS}
   ${PLATFORM_LIBS}
 )
 
@@ -286,14 +281,9 @@ target_link_libraries(webotsCtrlKeyboard
   PRIVATE
   util
   kazmath
-  cti_common
-  cti_vision
-  cti_messaging
-  cti_planning
   webotsCtrlCommon
   cozmo_engine
   robot_interface
-  ${OPENCV_LIBS}
   ${PLATFORM_LIBS}
 )
 
