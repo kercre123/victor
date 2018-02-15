@@ -100,9 +100,11 @@ namespace TestCommon
   
   void consoleBridge(bridge_target_e which, int inactivity_delay_ms, int timeout_ms)
   {
-    const char exit[5] = "exit";
-    const char stats[6] = "stats";
-    int c, ei = 0, si = 0;
+    const char cmd_exit[5] = "exit";    int exit_idx = 0;
+    const char cmd_echo[5] = "echo";    int echo_idx = 0;
+    const char cmd_stats[6] = "stats";  int stats_idx = 0;
+    int c;
+    bool echo = 0;
     
     ConsolePrintf("Console Bridge <-> %s for %ims,inactive:%ims [or type 'exit']\n", which_s_(which), timeout_ms, inactivity_delay_ms);
     
@@ -133,22 +135,31 @@ namespace TestCommon
       if( (c = ConsoleReadChar()) > -1 )
       {
         inactivity_delay_ms = 0; //disabled on activity
+        if( echo ) { ConsolePutChar(c); }
         bridge_putchar_(which, c);
         
-        //watch for 'exit' cmd
-        if( (c == '\r' || c == '\n') && ei == sizeof(exit)-1 ) //EOL after receiving 'exit'
+        //track 'exit' cmd
+        if( (c == '\r' || c == '\n') && exit_idx == sizeof(cmd_exit)-1 ) //cmd match w/ EOL
           timeout_ms = 50; //wait around to hear response/echo
         else
-          ei = (c == exit[ei]) ? ei+1 : 0; //index track
+          exit_idx = (c == cmd_exit[exit_idx]) ? exit_idx+1 : 0; //index track
         
-        //watch for 'stats' cmd
-        if( (c == '\r' || c == '\n') && si == sizeof(stats)-1 ) { //EOL after receiving 'stats'
+        //track 'echo' cmd
+        if( (c == '\r' || c == '\n') && echo_idx == sizeof(cmd_echo)-1 ) { //cmd match w/ EOL
+          echo = !echo;
+          ConsolePrintf("echo %s\n", echo ? "on" : "off");
+          echo_idx = 0;
+        } else
+          echo_idx = (c == cmd_echo[echo_idx]) ? echo_idx+1 : 0; //index track
+        
+        //track 'stats' cmd
+        if( (c == '\r' || c == '\n') && stats_idx == sizeof(cmd_stats)-1 ) { //cmd match w/ EOL
           struct { int dropped_chars; int overflow; int framing; } e;
           bridge_get_errs_(which, (int*)&e );
           ConsolePrintf("\ndrop:%i ovf:%i frame:%i\n", e.dropped_chars, e.overflow, e.framing );
-          si = 0;
+          stats_idx = 0;
         } else
-          si = (c == stats[si]) ? si+1 : 0; //index track
+          stats_idx = (c == cmd_stats[stats_idx]) ? stats_idx+1 : 0; //index track
       }
       
     }
