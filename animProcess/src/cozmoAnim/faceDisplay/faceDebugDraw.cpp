@@ -19,14 +19,19 @@
 #include "coretech/vision/engine/image.h"
 #include "util/helpers/templateHelpers.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
+#include "webServerProcess/src/webService.h"
 
+#include "json/json.h"
 #include "osState/osState.h"
+
+#include <chrono>
 
 namespace Anki {
 namespace Cozmo {
 
 FaceDebugDraw::FaceDebugDraw()
 : _scratchDrawingImg(new Vision::ImageRGB565())
+  , _webService( nullptr )
 {
   _scratchDrawingImg->Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
 
@@ -99,6 +104,74 @@ void FaceDebugDraw::DrawConfidenceClock(
   uint32_t secondsRemaining,
   bool triggerRecognized)
 {
+  // since we're always sending this data to the server, let's compute the max confidence
+  // values each time and send the pre-computed values to the web server so that if any
+  // of these default values change the server gets them too
+
+  const auto& confList = micData.confidenceList;
+  const auto& winningIndex = micData.direction;
+  auto maxCurConf = (float)micData.confidence;
+  for (int i=0; i<12; ++i)
+  {
+    if (maxCurConf < confList[i])
+    {
+      maxCurConf = confList[i];
+    }
+  }
+
+  // Calculate the current scale for the bars to use, based on filtered and current confidence levels
+  constexpr float filteredConfScale = 2.0f;
+  constexpr float confMaxDefault = 1000.f;
+  static auto filteredConf = confMaxDefault;
+  filteredConf = ((0.98f * filteredConf) + (0.02f * maxCurConf));
+  auto maxConf = filteredConf * filteredConfScale;
+  if (maxConf < maxCurConf)
+  {
+    maxConf = maxCurConf;
+  }
+  if (maxConf < confMaxDefault)
+  {
+    maxConf = confMaxDefault;
+  }
+
+  // pre-calc the delay time as well for use in both web server and face debug ...
+  const auto maxDelayTime_ms = 2000.f * 2.f;
+  const auto delayTime_ms = (int) (maxDelayTime_ms * bufferFullPercent);
+
+
+  // always send web server data until we feel this is too much a perf hit
+  if (nullptr != _webService)
+  {
+    using namespace std::chrono;
+
+    // if we send this data every tick, we crash the robot;
+    // only send the web data every X seconds
+    static steady_clock::time_point nextWebServerUpdateTime; // defaults to epoch
+    const steady_clock::time_point currentTime = time_point_cast<milliseconds>(steady_clock::now());
+    if (currentTime > nextWebServerUpdateTime)
+    {
+      nextWebServerUpdateTime = currentTime + milliseconds(150);
+
+      Json::Value webData;
+      webData["clockData"] = true;
+      webData["confidence"] = micData.confidence;
+      webData["dominant"] = micData.direction;
+      webData["maxConfidence"] = maxConf;
+      webData["triggerDetected"] = triggerRecognized;
+      webData["delayTime"] = delayTime_ms;
+
+      Json::Value directionValues(Json::arrayValue);
+      for ( float confidence : micData.confidenceList )
+      {
+        directionValues.append(confidence);
+      }
+      webData["directions"] = directionValues;
+
+      const std::string moduleName = "micdata";
+      _webService->SendToWebViz( moduleName, webData );
+    }
+  }
+
   if (GetDrawState() != DrawState::MicDirectionClock)
   {
     return;
@@ -187,32 +260,6 @@ void FaceDebugDraw::DrawConfidenceClock(
   // Draw the outer circle
   drawImg.DrawCircle({(float)center_px.x(), (float)center_px.y()}, NamedColors::BLUE, circleRadius_px, 2);
 
-  const auto& confList = micData.confidenceList;
-  const auto& winningIndex = micData.direction;
-  auto maxCurConf = (float)micData.confidence;
-  for (int i=0; i<12; ++i)
-  {
-    if (maxCurConf < confList[i])
-    {
-      maxCurConf = confList[i];
-    }
-  }
-
-  // Calculate the current scale for the bars to use, based on filtered and current confidence levels
-  constexpr float filteredConfScale = 2.0f;
-  constexpr float confMaxDefault = 1000.f;
-  static auto filteredConf = confMaxDefault;
-  filteredConf = ((0.98f * filteredConf) + (0.02f * maxCurConf));
-  auto maxConf = filteredConf * filteredConfScale;
-  if (maxConf < maxCurConf)
-  {
-    maxConf = maxCurConf;
-  }
-  if (maxConf < confMaxDefault)
-  {
-    maxConf = confMaxDefault;
-  }
-
   // Draw each of the clock directions
   for (int i=0; i<12; ++i)
   {
@@ -296,8 +343,6 @@ void FaceDebugDraw::DrawConfidenceClock(
   // Also draw the delay time in milliseconds
   // Copied from kRawAudioPerBuffer_ms in micDataProcessor.h
   // and doubled for 2 buffers
-  const auto maxDelayTime_ms = 2000.f * 2.f;
-  const auto delayTime_ms = (int) (maxDelayTime_ms * bufferFullPercent);
   const auto delayStr = std::to_string(delayTime_ms);
   const Point2f textLoc = {0.f, FACE_DISPLAY_HEIGHT - endOfBarHeight_px};
   const auto textScale = 0.5f;
