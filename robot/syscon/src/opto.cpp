@@ -28,19 +28,30 @@ static uint16_t tof_spad_count;   // fixed point 8.8
 static uint32_t measurement_timing_budget_us;
 
 #define TARGET(value) sizeof(value), (void*)&value
+#define VALUE(value) 1, (void*)value
 
 const I2C_Operation I2C_LOOP[] = {
   { I2C_REG_READ, 0, DROP_SENSOR_ADDRESS, PS_DATA_0, TARGET(cliffSense[3]) },
   { I2C_REG_READ, 1, DROP_SENSOR_ADDRESS, PS_DATA_0, TARGET(cliffSense[2]) },
   { I2C_REG_READ, 2, DROP_SENSOR_ADDRESS, PS_DATA_0, TARGET(cliffSense[1]) },
   { I2C_REG_READ, 3, DROP_SENSOR_ADDRESS, PS_DATA_0, TARGET(cliffSense[0]) },
-  #ifndef DISABLE_TOF
   { I2C_REG_READ, 0, TOF_SENSOR_ADDRESS, RESULT_RANGE_STATUS, TARGET(tof_status) },
   { I2C_REG_READ, 0, TOF_SENSOR_ADDRESS, RESULT_RANGE_STATUS + 10, TARGET(tof_reading) },
   { I2C_REG_READ, 0, TOF_SENSOR_ADDRESS, RESULT_RANGE_STATUS + 6, TARGET(tof_signal_rate) },
   { I2C_REG_READ, 0, TOF_SENSOR_ADDRESS, RESULT_RANGE_STATUS + 8, TARGET(tof_ambient_rate) },
   { I2C_REG_READ, 0, TOF_SENSOR_ADDRESS, RESULT_RANGE_STATUS + 2, TARGET(tof_spad_count) },
-  #endif
+
+  // Start single read
+  { I2C_REG_WRITE_VALUE, 0, TOF_SENSOR_ADDRESS, 0x80, VALUE(0x01) },
+  { I2C_REG_WRITE_VALUE, 0, TOF_SENSOR_ADDRESS, 0xFF, VALUE(0x01) },
+  { I2C_REG_WRITE_VALUE, 0, TOF_SENSOR_ADDRESS, 0x00, VALUE(0x00) },
+  { I2C_REG_WRITE,       0, TOF_SENSOR_ADDRESS, 0x91, TARGET(stop_variable) },
+  { I2C_REG_WRITE_VALUE, 0, TOF_SENSOR_ADDRESS, 0x00, VALUE(0x01) },
+  { I2C_REG_WRITE_VALUE, 0, TOF_SENSOR_ADDRESS, 0xFF, VALUE(0x00) },
+  { I2C_REG_WRITE_VALUE, 0, TOF_SENSOR_ADDRESS, 0x80, VALUE(0x00) },
+
+  { I2C_REG_WRITE_VALUE, 0, TOF_SENSOR_ADDRESS, SYSRANGE_START, VALUE(0x01) },
+
   { I2C_DONE }
 };
 
@@ -307,6 +318,8 @@ static uint32_t getMeasurementTimingBudget(void)
 void Opto::start(void) {
   failure = BOOT_FAIL_NONE;
 
+  I2C::capture();
+
   // Turn on and configure the drop sensors
   for (int i = 0; i < 4; i++) {
     writeReg(i, DROP_SENSOR_ADDRESS, MAIN_CTRL, 0x01);
@@ -523,16 +536,6 @@ void Opto::start(void) {
   // "restore the previous Sequence Config"
   writeReg(0, TOF_SENSOR_ADDRESS, SYSTEM_SEQUENCE_CONFIG, 0xE8);
 
-  // Start back to back mode
-  writeReg(0, TOF_SENSOR_ADDRESS, 0x80, 0x01);
-  writeReg(0, TOF_SENSOR_ADDRESS, 0xFF, 0x01);
-  writeReg(0, TOF_SENSOR_ADDRESS, 0x00, 0x00);
-  writeReg(0, TOF_SENSOR_ADDRESS, 0x91, stop_variable);
-  writeReg(0, TOF_SENSOR_ADDRESS, 0x00, 0x01);
-  writeReg(0, TOF_SENSOR_ADDRESS, 0xFF, 0x00);
-  writeReg(0, TOF_SENSOR_ADDRESS, 0x80, 0x00);
-  writeReg(0, TOF_SENSOR_ADDRESS, SYSRANGE_START, 0x02); // VL53L0X_REG_SYSRANGE_MODE_BACKTOBACK
-
   // Return the i2c bus to the main execution loop
   I2C::release();
 
@@ -545,7 +548,12 @@ void Opto::stop(void) {
   // I2C bus is no longer valid
   I2C::capture();
   
-  // TODO: TURN OFF CLIFF SENSORS AND TOF
+  failure = BOOT_FAIL_NONE;
+
+  // Turn on and configure the drop sensors
+  for (int i = 0; i < 4; i++) {
+    writeReg(i, DROP_SENSOR_ADDRESS, MAIN_CTRL, 0x00);
+  }
 }
 
 bool Opto::sensorsValid() {

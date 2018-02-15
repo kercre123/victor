@@ -51,8 +51,9 @@ static void setupChannel(uint8_t* target) {
 
 static void kickOff() {
   // We have not selected our save address
+  volatile uint8_t flush = I2C2->RXDR;
   I2C2->ICR = ~0; // Clear all flags
-
+  
   switch (i2c_op->op) {
     case I2C_HOLD:
       i2c_op = I2C_BLOCKED;
@@ -74,21 +75,21 @@ static void kickOff() {
       setupChannel((uint8_t*) &i2c_op->data);
 
       I2C2->CR1 &= ~I2C_CR1_TCIE;
-      I2C2->CR2   = ((i2c_op->length + 1) << 16)
-                  | I2C_CR2_START
-                  | I2C_CR2_AUTOEND
-                  | i2c_op->slave
-                  ;
+      I2C2->CR2  = ((i2c_op->length + 1) << 16)
+                 | I2C_CR2_START
+                 | I2C_CR2_AUTOEND
+                 | i2c_op->slave
+                 ;
       break ;
     case I2C_REG_WRITE:
       setupChannel((uint8_t*) i2c_op->data);
 
       I2C2->CR1 &= ~I2C_CR1_TCIE;
-      I2C2->CR2   = ((i2c_op->length + 1) << 16)
-                  | I2C_CR2_START
-                  | I2C_CR2_AUTOEND
-                  | i2c_op->slave
-                  ;
+      I2C2->CR2  = ((i2c_op->length + 1) << 16)
+                 | I2C_CR2_START
+                 | I2C_CR2_AUTOEND
+                 | i2c_op->slave
+                 ;
       break ;
   }
 }
@@ -230,19 +231,17 @@ void I2C::execute(const I2C_Operation* cmd) {
 // These can only be called in the main thread (anti-watchdog)
 void I2C::capture() {
   while (i2c_op != I2C_BLOCKED) {
-    NVIC_DisableIRQ(I2C2_IRQn);
+    __disable_irq();
     if (i2c_op == NULL) {
       i2c_op = I2C_BLOCKED;
-      NVIC_EnableIRQ(I2C2_IRQn);
-      break ;
     }
-    NVIC_EnableIRQ(I2C2_IRQn);
+    __enable_irq();
     __wfi();
   }
 }
 
 void I2C::release() {
-  NVIC_DisableIRQ(I2C2_IRQn);
+  __disable_irq();
   i2c_op = NULL;
-  NVIC_EnableIRQ(I2C2_IRQn);
+  __enable_irq();
 }
