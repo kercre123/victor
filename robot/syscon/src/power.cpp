@@ -7,6 +7,7 @@
 #include "motors.h"
 #include "encoders.h"
 #include "opto.h"
+#include "mics.h"
 
 #include "contacts.h"
 
@@ -156,12 +157,15 @@ void Power::tick(void) {
   }
 }
 
-void Power::disableHead(void) {
-  MAIN_EN::mode(MODE_OUTPUT);
-  MAIN_EN::reset();
-}
-
 void Power::enableHead(void) {
   MAIN_EN::mode(MODE_OUTPUT);
   MAIN_EN::set();
+  Mics::start();
 }
+
+void Power::disableHead(void) {
+  MAIN_EN::mode(MODE_OUTPUT);
+  MAIN_EN::reset();
+  Mics::stop();
+}
+

@@ -96,18 +96,18 @@ void Mics::init(void) {
                      | DMA_CCR_TCIE
                      ;
 
-  NVIC_EnableIRQ(DMA1_Channel2_3_IRQn);
   NVIC_SetPriority(DMA1_Channel2_3_IRQn, PRIORITY_MICS);
 
   start_mic_spi(TIM_CR1_CEN, MIC_SPI_CR1, (void*)&TIM15->CR1);
 }
 
+void Mics::start(void) {
+  DMA1->IFCR = DMA_IFCR_CGIF2;
+  NVIC_EnableIRQ(DMA1_Channel2_3_IRQn);
+}
+
 void Mics::stop(void) {
-  // Turn off mic spi and dma
-  SPI1->CR1 = 0;
-  SPI2->CR1 = 0;
-  DMA1_Channel2->CCR = 0;
-  DMA1_Channel4->CCR = 0;
+  NVIC_DisableIRQ(DMA1_Channel2_3_IRQn);
 }
 
 void Mics::errorCode(uint16_t* data) {
@@ -119,14 +119,19 @@ void Mics::transmit(int16_t* payload) {
   memcpy(payload, audio_data[sample_index < IRQS_PER_FRAME ? 1 : 0], sizeof(audio_data[0]));
 }
 
+#define STAGE2(ti) \
+  ptr = &DECIMATION_TABLE[ti][*samples]; samples+=2;  \
+  acc_1 += *ptr; ptr += 0xC00; \
+  acc_2 += *ptr; \
+
 #define STAGE3(ti) \
-  ptr = &DECIMATION_TABLE[ti][*samples]; samples += 2; \
+  ptr = &DECIMATION_TABLE[ti][*samples]; samples+=2; \
   acc_0 += *ptr; ptr += 0xC00; \
   acc_1 += *ptr; ptr += 0xC00; \
   acc_2 += *ptr; \
 
 #define STAGE3A(ti) \
-  ptr = &DECIMATION_TABLE[ti+24][*samples]; samples += 2; \
+  ptr = &DECIMATION_TABLE[ti+24][*samples]; samples+=2; \
   *output = (int16_t)((acc_2 + *ptr) >> 16); output += 4; \
   ptr -= 0xC00; acc_2 = acc_1 + *ptr; \
   ptr -= 0xC00; acc_1 = acc_0 + *ptr;
@@ -139,6 +144,10 @@ static void dec_loop(int32_t* acc, uint8_t* samples, int16_t* output) {
   for (int i = 0; i < SAMPLES_PER_IRQ; i++) {
     int32_t acc_0 = 0;
 
+    STAGE2 ( 8);
+    STAGE2 ( 9);
+    STAGE2 (10);
+    STAGE2 (11);
     STAGE3 ( 0);
     STAGE3 ( 1);
     STAGE3 ( 2);
@@ -146,11 +155,7 @@ static void dec_loop(int32_t* acc, uint8_t* samples, int16_t* output) {
     STAGE3 ( 4);
     STAGE3 ( 5);
     STAGE3 ( 6);
-    STAGE3 ( 7);
-    STAGE3 ( 8);
-    STAGE3 ( 9);
-    STAGE3 (10);
-    STAGE3A(11);
+    STAGE3A( 7);
   }
 
   acc[0] = acc_1;
