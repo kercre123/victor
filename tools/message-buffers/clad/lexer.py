@@ -147,7 +147,8 @@ class AnkiBufferLexer(object):
         'include',
         'no_cpp_class',
         'no_default_constructor',
-        'enum_concept'
+        'enum_concept',
+        'dupes_allowed'
         #'tag',
     )
 

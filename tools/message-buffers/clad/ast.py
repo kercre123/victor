@@ -421,12 +421,13 @@ class EnumMember(Node):
     attr_names = tuple(["name"])
 
 class UnionDecl(Decl):
-    def __init__(self, name, member_list, coord, namespace=None, is_explicit_auto_union=False):
+    def __init__(self, name, member_list, coord, namespace=None, is_explicit_auto_union=False, dupes_allowed=False):
         super(UnionDecl, self).__init__(name, coord=coord, namespace=namespace)
         self.member_list = member_list
         self.tag_storage_type = builtin_types['uint_8']
         self.hash_str = "None"
         self._is_explicit_auto_union = is_explicit_auto_union
+        self._dupes_allowed = dupes_allowed
     
     def children(self):
         nodelist = [("member_list", self.member_list)]
@@ -480,6 +481,10 @@ class UnionDecl(Decl):
     
     def is_explicit_auto_union(self):
         return self._is_explicit_auto_union
+
+    @property
+    def dupes_allowed(self):
+        return self._dupes_allowed
 
     attr_names = tuple(["name", "fully_qualified_name", "alignment", "hash_str"])
 

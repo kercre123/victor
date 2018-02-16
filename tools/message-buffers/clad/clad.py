@@ -26,6 +26,7 @@ from __future__ import print_function
 import copy
 import os.path
 import re
+import itertools
 
 from .ply import yacc
 
@@ -220,22 +221,22 @@ class CLADParser(PLYParser):
                 value += 1
 
     def _postprocess_unions(self):
-        # Figure out autounions
-        for auto_union in self._union_decls:
+        # Figure out autounions and dupes
+        for union_entry in self._union_decls:
             # Autounions are specified explicitly with the autounion keyword
-            if auto_union.is_explicit_auto_union():
-                coord = auto_union.coord
+            if union_entry.is_explicit_auto_union():
+                coord = union_entry.coord
 
-                if auto_union.member_list is None:
-                    auto_union.member_list = ast.MessageMemberDeclList([], coord)
+                if union_entry.member_list is None:
+                    union_entry.member_list = ast.MessageMemberDeclList([], coord)
 
                 names = dict()
                 for message_type in self._message_types:
                     if message_type.name in names:
                         raise ParseError(
-                            auto_union.coord,
+                            union_entry.coord,
                             "Autounion '{0}' would contain two members with the name '{1}': '{2}' and '{3}'".format(
-                            auto_union.fully_qualified_name(),
+                            union_entry.fully_qualified_name(),
                             message_type.name,
                             names[message_type.name].fully_qualified_name(),
                             message_type.fully_qualified_name()))
@@ -243,14 +244,22 @@ class CLADParser(PLYParser):
 
                 # generate the list of already initialized names, don't add auto entries for these
                 initialized_names = dict()
-                for member in auto_union.members():
+                for member in union_entry.members():
                     initialized_names[member.name] = member
             
                 for init_value, message_type in enumerate(self._message_types):
                     if message_type.name not in initialized_names:
                         decl = ast.MessageMemberDecl(message_type.name, message_type, None, coord)
-                        auto_union.member_list.append(decl)
+                        union_entry.member_list.append(decl)
                         self._all_members.append(decl)
+
+            if union_entry.dupes_allowed:
+                for member in union_entry.members():
+                    member.has_duplicates = False
+                for pair in itertools.combinations(union_entry.members(), r=2):
+                    if pair[0].type == pair[1].type:
+                        pair[0].has_duplicates = True
+                        pair[1].has_duplicates = True
         
         # calculate all union initializers
         for union in self._union_decls:
@@ -734,15 +743,21 @@ class CLADParser(PLYParser):
         """ union_decl : union_decl_begin ID LBRACE union_member_decl_list RBRACE
                        | union_decl_begin ID LBRACE union_member_decl_list COMMA RBRACE
                        | union_decl_begin ID LBRACE RBRACE
+                       | union_decl_begin DUPES_ALLOWED ID LBRACE union_member_decl_list RBRACE
+                       | union_decl_begin DUPES_ALLOWED ID LBRACE union_member_decl_list COMMA RBRACE
+                       | union_decl_begin DUPES_ALLOWED ID LBRACE RBRACE
         """
 
+        dupes_allowed = (p[2] == "dupes_allowed")
         is_explicit_auto_union = p[1] == "autounion"
+        indexOffset = 1 if dupes_allowed else 0
 
-        member_list = p[4] if len(p) > 5 else None
-        decl = ast.UnionDecl(p[2], member_list,
+        member_list = p[4+indexOffset] if len(p) > (5+indexOffset) else None
+        decl = ast.UnionDecl(p[2+indexOffset], member_list,
                              self.production_to_coord(p, 2),
                              self._get_current_namespace(),
-                             is_explicit_auto_union)
+                             is_explicit_auto_union,
+                             dupes_allowed)
 
         p[0] = decl
 

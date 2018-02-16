@@ -26,6 +26,8 @@ for file in $CLADSRC/Foo.clad $CLADSRC/Bar.clad $CLADSRC/SimpleTest.clad \
                               $CLADSRC/ExplicitUnion.clad \
                               $CLADSRC/ExplicitAutoUnion.clad \
                               $CLADSRC/UnionOfUnion.clad \
+                              $CLADSRC/DupesAllowedUnion.clad \
+                              $CLADSRC/DupesAutoUnion.clad \
                               $CLADSRC/aligned/AutoUnionTest.clad \
                               $CLADSRC/aligned/AnkiEnum.clad \
                               $CLADSRC/DefaultValues.clad \
@@ -49,6 +51,8 @@ clang++ -Wall -Wextra -std=c++11 -stdlib=libc++ \
     $OUTPUT_DIR/aligned/AnkiEnum.cpp \
     $OUTPUT_DIR/ExplicitUnion.cpp \
     $OUTPUT_DIR/UnionOfUnion.cpp \
+    $OUTPUT_DIR/DupesAllowedUnion.cpp \
+    $OUTPUT_DIR/DupesAutoUnion.cpp \
     $SUPPORTDIR/source/SafeMessageBuffer.cpp \
     $OUTPUT_DIR/DefaultValues.cpp \
     $OUTPUT_DIR/TestEnum.cpp \
