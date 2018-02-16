@@ -29,6 +29,8 @@
 using namespace Anki;
 using namespace Anki::Cozmo;
 
+extern CozmoContext* cozmoContext;
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 namespace {
 
@@ -80,8 +82,7 @@ ObservableObject* CreateObjectLocatedAtOrigin(Robot& robot, ObjectType objectTyp
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TEST(ObjectInteractionInfoCache, BestObjectConsistency)
 {
-  CozmoContext context{};
-  Robot robot(0, &context);
+  Robot robot(0, cozmoContext);
   ObjectID objID1, objID2;
 
   // Add two objects

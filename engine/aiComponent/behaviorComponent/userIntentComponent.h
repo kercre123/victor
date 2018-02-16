@@ -13,23 +13,30 @@
 #ifndef __Engine_AiComponent_UserIntentComponent_H__
 #define __Engine_AiComponent_UserIntentComponent_H__
 
-#include "util/entityComponent/iManageableComponent.h"
-
+#include "coretech/common/shared/types.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
+#include "engine/aiComponent/behaviorComponent/userIntents.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
+#include "util/signals/simpleSignal_fwd.h"
 
 #include "json/json-forwards.h"
+
+#include <mutex>
 
 namespace Anki {
 namespace Cozmo {
 
-class UserIntentData;
+class BehaviorComponentCloudServer;
+class Robot;
+class UserIntent;
 class UserIntentMap;
 
-class UserIntentComponent : public IManageableComponent, private Util::noncopyable
+class UserIntentComponent : public IDependencyManagedComponent<BCComponentID>, private Util::noncopyable
 {
 public:
   
-  explicit UserIntentComponent(const Json::Value& userIntentMapConfig);
+  UserIntentComponent(const Robot& robot, const Json::Value& userIntentMapConfig);
 
   ~UserIntentComponent();
   
@@ -56,54 +63,71 @@ public:
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // User Intent:
   //
-  // A user intent is a string defined in user_intent_map.json. It can come from a voice command but also
+  // A user intent is an enum member defined in userIntent.clad. It can come from a voice command but also
   // elsewhere (e.g. from the app once that is supported). Intents, like trigger words, should generally be
   // handled immediately, and they do not queue. If another intent comes in while the last one is still
   // pending, it will be overwritten
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  // Returns true if the passed in string is a valid user intent. This function should be used to verify all
-  // data-defined intents
-  bool IsValidUserIntent(const std::string& userIntent) const;
-
   // Returns true if any user intent is pending
   bool IsAnyUserIntentPending() const;
 
   // Returns true if the specific user intent is pending
-  bool IsUserIntentPending(const std::string& userIntent) const;
+  bool IsUserIntentPending(UserIntentTag userIntent) const;
 
-  // Same as above, but also set extra data
-  bool IsUserIntentPending(const std::string& userIntent, UserIntentData& extraData) const;
-  
+  // Same as above, but also get data
+  bool IsUserIntentPending(UserIntentTag userIntent, UserIntent& extraData) const;
 
   // Clear the passed in user intent. If this is the current pending one, the pending intent will be cleared
   // until a new intent comes in. If not (e.g. another more-recent intent came in), this call will have no
   // effect (other than printing a warning)
-  void ClearUserIntent(const std::string& userIntent);
+  void ClearUserIntent(UserIntentTag userIntent);
+  
+  // The same as above, but also gets ownership of the intent, if userIntent matches what is pending
+  UserIntent* ClearUserIntentWithOwnership(UserIntentTag userIntent);
 
-  // replace the current pending user intent (if any) with this one
-  void SetUserIntentPending(const std::string& userIntent);
+  // replace the current pending user intent (if any) with this one. This will assert in dev if the
+  // user intent data type is not void
+  void SetUserIntentPending(UserIntentTag userIntent);
+  
+  // replace the current pending user intent (if any) with this one. 
+  void SetUserIntentPending(UserIntent&& userIntent);
 
-  // convert the passed in cloud intent to a user intent and set it pending
+  
+  // convert the passed in cloud intent to a user intent and set it pending. This will assert in dev
+  // if the resulting user intent requires data, in which case you should call SetCloudIntentPendingFromJSON
   void SetCloudIntentPending(const std::string& cloudIntent);
 
   // convert the cloud JSON object into a user intent, mapping to the default intent if no cloud intent
   // matches. Returns true if successfully converted (including if it matched against the default), and false
   // if there was an error (e.g. malformed json, incorrect data fields, etc)
-  bool SetCloudIntentFromJSON(const std::string& cloudJsonStr);
+  bool SetCloudIntentPendingFromJSON(const std::string& cloudJsonStr);
 
 private:
+  
+  // callback from the cloud
+  void OnCloudData(std::string&& data);
+  
+  std::string GetServerName(const Robot& robot) const;
 
   std::unique_ptr<UserIntentMap> _intentMap;
 
   bool _pendingTrigger = false;
-  std::string _pendingIntent;
-
-  std::unique_ptr<UserIntentData> _pendingExtraData;
+  
+  std::unique_ptr<UserIntent> _pendingIntent;
 
   // for debugging -- intents should be processed within one tick so track the ticks here
   size_t _pendingTriggerTick = 0;
   size_t _pendingIntentTick = 0;
+  
+  // holds cloud and trigger word event handles
+  std::vector<::Signal::SmartHandle> _eventHandles;
+  
+  std::mutex _mutex;
+  std::string _pendingCloudIntent; // only pending for as long as it takes this thread to obtain a lock
+  std::unique_ptr<BehaviorComponentCloudServer> _server;
+  
+  
 
 };
 

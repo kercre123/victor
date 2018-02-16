@@ -40,7 +40,6 @@ class AIComponent;
 class AsyncMessageGateComponent;
 class BEIRobotInfo;
 class BehaviorComponent;
-class BehaviorComponentCloudReceiver;
 class BehaviorContainer;
 class BehaviorEventAnimResponseDirector;
 class BehaviorExternalInterface;
@@ -53,6 +52,7 @@ class DevBehaviorComponentMessageHandler;
 class FaceWorld;
 class IBehavior;
 class Robot;
+class UserIntentComponent;
 class BehaviorEventComponent;
   
 namespace Audio {
@@ -109,9 +109,9 @@ public:
   
   inline const BehaviorEventAnimResponseDirector& GetBehaviorEventAnimResponseDirector() const
     { return GetComponent<BehaviorEventAnimResponseDirector>();}
-
-  inline BehaviorComponentCloudReceiver& GetCloudReceiver() const 
-    { return GetComponent<BehaviorComponentCloudReceiver>(); }
+  
+  inline UserIntentComponent& GetUserIntentComponent() const
+    { return GetComponent<UserIntentComponent>(); }
            
   
 protected:

@@ -644,14 +644,13 @@ namespace Cozmo {
   }
   
 
-  // shift + alt = Fake trigger word detected
-  // no optional key = Fake cloud intent w/ string in field
+  // shift + alt + H = Fake trigger word detected
+  // H = Fake cloud intent w/ string in field
   void WebotsKeyboardController::FakeCloudIntent()
   {
-    // select behavior chooser
-    webots::Field* cloudIntentField = root_->getField("cloudIntent");
+    webots::Field* cloudIntentField = root_->getField("intent");
     if (cloudIntentField == nullptr) {
-      printf("ERROR: No cloud animation name field found in WebotsKeyboardController.proto\n");
+      printf("ERROR: No intent field found in WebotsKeyboardController.proto\n");
       return;
     }
     
@@ -665,6 +664,26 @@ namespace Cozmo {
     
     SendMessage(ExternalInterface::MessageGameToEngine(
                                                        ExternalInterface::FakeCloudIntent(cloudIntent)));
+  }
+  
+  // shift + H = Fake user intent detected
+  void WebotsKeyboardController::FakeUserIntent()
+  {
+    webots::Field* userIntentField = root_->getField("intent");
+    if (userIntentField == nullptr) {
+      printf("ERROR: No intent field found in WebotsKeyboardController.proto\n");
+      return;
+    }
+    
+    std::string userIntent = userIntentField->getSFString();
+    if (userIntent.empty()) {
+      printf("ERROR: cloudIntent field is empty\n");
+      return;
+    }
+    
+    printf("sending user intent '%s'\n", userIntent.c_str());
+    
+    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::FakeUserIntent(userIntent)));
   }
   
   
@@ -2107,8 +2126,8 @@ namespace Cozmo {
 //      REGISTER_KEY_FCN('G', MOD_ALT,       , "");
 //      REGISTER_KEY_FCN('G', MOD_ALT_SHIFT, , "");
 
-    REGISTER_KEY_FCN('H', MOD_NONE,      FakeCloudIntent, "Fake clound intent with contents of 'cloudIntent'");
-//      REGISTER_KEY_FCN('H', MOD_SHIFT,     , "");
+    REGISTER_KEY_FCN('H', MOD_NONE,      FakeCloudIntent, "Fake clound intent with contents of 'intent' (either a name or valid json)");
+    REGISTER_KEY_FCN('H', MOD_SHIFT,     FakeUserIntent, "Fake user intent with the contents of 'intent'");
 //      REGISTER_KEY_FCN('H', MOD_ALT,       , "");
     REGISTER_KEY_FCN('H', MOD_ALT_SHIFT, SendFakeTriggerWordDetect, "Send fake trigger word detect");
     

@@ -19,9 +19,14 @@
 namespace Anki {
 namespace Cozmo {
   
+enum class BEIConditionType : uint8_t;
+  
 class BEIConditionFactory{
 public:
   static IBEIConditionPtr CreateBEICondition(const Json::Value& config);
+  
+  // for conditions without config
+  static IBEIConditionPtr CreateBEICondition(BEIConditionType type);
   
 }; // class BEIConditionFactory
   

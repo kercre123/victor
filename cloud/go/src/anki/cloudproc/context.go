@@ -70,7 +70,7 @@ func (ctx *voiceContext) sendAudio(samples []byte, cloudChan chan<- string) {
 				return
 			}
 			fmt.Println("Intent response ->", resp)
-			cloudChan <- resp.Action
+			sendJSONResponse(resp, cloudChan)
 		}()
 	})
 }

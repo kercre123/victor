@@ -22,7 +22,6 @@ class BehaviorAudioComponent;
 
 class AIComponent;
 class AsyncMessageGateComponent;
-class BehaviorComponentCloudReceiver;
 class BehaviorContainer;
 class BehaviorEventAnimResponseDirector;
 class BehaviorEventComponent;
@@ -35,6 +34,7 @@ class DevBehaviorComponentMessageHandler;
 class FaceWorld;
 class BEIRobotInfo;
 class BaseBehaviorWrapper;
+class UserIntentComponent;
 
 } // namespace Cozmo
 
@@ -45,8 +45,6 @@ template<>
 void GetComponentIDForType<Cozmo::BCComponentID, Cozmo::AsyncMessageGateComponent>(Cozmo::BCComponentID& enumToSet){enumToSet = Cozmo::BCComponentID::AsyncMessageComponent;}
 template<>
 void GetComponentIDForType<Cozmo::BCComponentID, Cozmo::Audio::BehaviorAudioComponent>(Cozmo::BCComponentID& enumToSet){enumToSet =  Cozmo::BCComponentID::BehaviorAudioComponent;}
-template<>
-void GetComponentIDForType<Cozmo::BCComponentID, Cozmo::BehaviorComponentCloudReceiver>(Cozmo::BCComponentID& enumToSet){enumToSet =  Cozmo::BCComponentID::BehaviorComponentCloudReceiver;}
 template<>
 void GetComponentIDForType<Cozmo::BCComponentID, Cozmo::BehaviorContainer>(Cozmo::BCComponentID& enumToSet){enumToSet =  Cozmo::BCComponentID::BehaviorContainer;}
 template<>
@@ -71,6 +69,7 @@ template<>
 void GetComponentIDForType<Cozmo::BCComponentID, Cozmo::BEIRobotInfo>(Cozmo::BCComponentID& enumToSet){enumToSet =  Cozmo::BCComponentID::RobotInfo;}
 template<>
 void GetComponentIDForType<Cozmo::BCComponentID, Cozmo::BaseBehaviorWrapper>(Cozmo::BCComponentID& enumToSet){enumToSet =  Cozmo::BCComponentID::BaseBehaviorWrapper;}
-
+template<>
+void GetComponentIDForType<Cozmo::BCComponentID, Cozmo::UserIntentComponent>(Cozmo::BCComponentID& enumToSet){enumToSet = Cozmo::BCComponentID::UserIntentComponent;}
 
 } // namespace Anki

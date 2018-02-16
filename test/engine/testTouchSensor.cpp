@@ -132,18 +132,14 @@ public:
 
   virtual void SetUp() override
   {
-    _handler = new UiMessageHandler(0, nullptr);
-    _messagingContext = new CozmoContext(nullptr, _handler);
-    _robot = new Robot(0, _messagingContext);
-    _msgMonitor = new TestTouchSensorMessageMonitor(_messagingContext);
+    _robot = new Robot(0, cozmoContext);
+    _msgMonitor = new TestTouchSensorMessageMonitor(_robot->GetContext());
   }
 
   virtual void TearDown() override
   {
     Util::SafeDelete(_msgMonitor);
     Util::SafeDelete(_robot);
-    Util::SafeDelete(_messagingContext);
-    Util::SafeDelete(_handler);
   }
 
   // file-io helper to load the annotations from disk
@@ -210,10 +206,6 @@ public:
   }
 
 public: 
-  UiMessageHandler*  _handler;
-
-  CozmoContext*      _messagingContext;
-
   Robot*             _robot;
 
   TestTouchSensorMessageMonitor* _msgMonitor;

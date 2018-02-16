@@ -123,7 +123,7 @@ TEST(PuzzleMazeBehavior, DISABLED_BalanceTool)
   Anki::Util::Data::DataPlatform dataPlatform(filesPath, cachePath, externalPath, resourcePath);
   CozmoContext context(&dataPlatform, &handler);
   
-  TestBehaviorFramework testBehaviorFramework(1, &context);
+  TestBehaviorFramework testBehaviorFramework;
   RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
   {
     BehaviorContainer* bc = new BehaviorContainer(emptyBehaviorMap);

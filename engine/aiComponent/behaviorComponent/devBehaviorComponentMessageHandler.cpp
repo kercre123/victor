@@ -11,6 +11,7 @@
 *
 **/
 
+#include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
@@ -18,6 +19,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherRerun.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/devBehaviorComponentMessageHandler.h"
+#include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
@@ -86,8 +88,62 @@ void DevBehaviorComponentMessageHandler::InitDependent(Robot* robot, const BCCom
       _robot.GetExternalInterface()->Subscribe(GameToEngineTag::ExecuteBehaviorByID, 
                                                handlerCallback)
     );
+    
+    SetupUserIntentEvents();
   }
-};
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void DevBehaviorComponentMessageHandler::SetupUserIntentEvents()
+{
+  
+  auto EI = _robot.GetExternalInterface();
+  
+  // fake trigger word
+  auto fakeTriggerWordCallback = [this]( const GameToEngineEvent& event ) {
+    PRINT_CH_INFO("BehaviorSystem","DevBehaviorComponentMessageHandler.ReceivedFakeTriggerWordDetected","");
+    auto& uic = _robot.GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
+    uic.SetTriggerWordPending();
+  };
+  _eventHandles.push_back( EI->Subscribe( GameToEngineTag::FakeTriggerWordDetected, fakeTriggerWordCallback ) );
+  
+  // fake cloud intent
+  auto fakeCloudIntentCallback = [this]( const GameToEngineEvent& event ) {
+    PRINT_CH_INFO("BehaviorSystem","DevBehaviorComponentMessageHandler.FakeCloudIntentReceived","");
+    auto& uic = _robot.GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
+    const auto& intent = event.GetData().Get_FakeCloudIntent().intent;
+    if( (intent.find("{") != std::string::npos) // super awesome json detection
+        && (intent.find("}") != std::string::npos) )
+    {
+      uic.SetCloudIntentPendingFromJSON( intent );
+    } else {
+      std::string jsonIntent = "{\"intent\": \"" + intent + "\"}";
+      uic.SetCloudIntentPendingFromJSON( jsonIntent );
+    }
+  };
+  _eventHandles.push_back( EI->Subscribe( GameToEngineTag::FakeCloudIntent, fakeCloudIntentCallback ) );
+  
+  // fake user intent
+  auto fakeUserIntentCallback = [this]( const GameToEngineEvent& event ) {
+    PRINT_CH_INFO("BehaviorSystem","DevBehaviorComponentMessageHandler.FakeUserIntentReceived","");
+    auto& uic = _robot.GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
+    const auto& intent = event.GetData().Get_FakeUserIntent().intent;
+    
+    UserIntentTag tag;
+    if( UserIntentTagFromString(intent, tag) ) {
+      uic.SetUserIntentPending( tag );
+    } else {
+      PRINT_CH_INFO("BehaviorSystem",
+                    "DevBehaviorComponentMessageHandler.FakeUserIntentReceived.Invalid",
+                    "Invalid intent '%s'",
+                    intent.c_str());
+    }
+  };
+  _eventHandles.push_back( EI->Subscribe( GameToEngineTag::FakeUserIntent, fakeUserIntentCallback ) );
+  
+  // hook up to webviz
+  
+}
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

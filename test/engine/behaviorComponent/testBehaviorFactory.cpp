@@ -115,8 +115,7 @@ void VerifyBehavior(const ICozmoBehaviorPtr inBehavior, const BehaviorContainer&
 
 TEST(BehaviorFactory, CreateAndDestroyBehaviors)
 {
-  CozmoContext context{};
-  TestBehaviorFramework testBehaviorFramework(1, &context);
+  TestBehaviorFramework testBehaviorFramework;
   RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
   Json::Value emptyConfig = ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait , BehaviorID::Anonymous);
   TestBehavior emptyBase(emptyConfig);

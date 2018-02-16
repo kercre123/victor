@@ -12,7 +12,6 @@
 
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 
-#include "engine/aiComponent/beiConditions/conditions/conditionCloudIntentPending.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionFacePositionUpdated.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionFrustration.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionInNeedsBracket.h"
@@ -31,6 +30,8 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotTouchGesture.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionTimedDedup.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionTimerInRange.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionTriggerWordPending.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionUserIntentPending.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionTrue.h"
 
 #include "clad/types/behaviorComponent/beiConditionTypes.h"
@@ -60,9 +61,9 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
       strategy = std::make_shared<ConditionTrue>(config);
       break;
     }
-    case BEIConditionType::CloudIntentPending:
+    case BEIConditionType::TriggerWordPending:
     {
-      strategy = std::make_shared<ConditionCloudIntentPending>(config);
+      strategy = std::make_shared<ConditionTriggerWordPending>(config);
       break;
     }
     case BEIConditionType::FacePositionUpdated:
@@ -140,6 +141,11 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
       strategy = std::make_shared<ConditionTimedDedup>(config);
       break;
     }
+    case BEIConditionType::UserIntentPending:
+    {
+      strategy = std::make_shared<ConditionUserIntentPending>(config);
+      break;
+    }
     case BEIConditionType::Negate:
     {
       strategy = std::make_shared<ConditionNegate>(config);
@@ -170,6 +176,13 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
   }
   
   return strategy;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+IBEIConditionPtr BEIConditionFactory::CreateBEICondition(BEIConditionType type)
+{
+  Json::Value config = IBEICondition::GenerateBaseConditionConfig( type );
+  return CreateBEICondition( config );
 }
   
 } // namespace Cozmo

@@ -2785,7 +2785,7 @@ RobotState Robot::GetDefaultRobotState()
   return state;
 }
 
-RobotInterface::MessageHandler* Robot::GetRobotMessageHandler()
+RobotInterface::MessageHandler* Robot::GetRobotMessageHandler() const
 {
   if ((!_components->GetComponent(RobotComponentID::CozmoContext).IsValueValid()) ||
       (GetContext()->GetRobotManager() == nullptr))
