@@ -8,13 +8,7 @@
 //
 
 #include "switchboard.h"
-#include "BleMessageProtocol.h"
-
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-// DEBUG DEFINE FOR TESTING ON iOS !!
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-#define IOS_MAIN 1
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#include "bleMessageProtocol.h"
 
 struct ev_loop* Anki::SwitchboardDaemon::sLoop;
 const uint32_t Anki::SwitchboardDaemon::kTick_s;
@@ -188,9 +182,3 @@ void Anki::SwitchboardDaemon::TestMessageProtocol(int n) {
   delete msgProtocol;
   // --!>
 }
-
-# if !IOS_MAIN
-int main() {
-  Anki::SwitchboardDaemon::Start();
-}
-# endif

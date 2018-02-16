@@ -1,10 +1,14 @@
-//
-//  log.h
-//  ios-server
-//
-//  Created by Paul Aluri on 1/31/18.
-//  Copyright © 2018 Paul Aluri. All rights reserved.
-//
+/**
+ * File: log.h
+ *
+ * Author: paluri
+ * Created: 1/31/2018
+ *
+ * Description: Abstracted log for ankiswitchboardd
+ *
+ * Copyright: Anki, Inc. 2018
+ *
+ **/
 
 #ifndef log_h
 #define log_h

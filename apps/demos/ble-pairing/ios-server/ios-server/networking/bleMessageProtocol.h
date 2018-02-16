@@ -1,10 +1,14 @@
-//
-//  messages.h
-//  ios-server
-//
-//  Created by Paul Aluri on 2/13/18.
-//  Copyright © 2018 Paul Aluri. All rights reserved.
-//
+/**
+ * File: bleMessageProtocol.h
+ *
+ * Author: paluri
+ * Created: 2/13/2018
+ *
+ * Description: Multipart BLE message protocol for ankiswitchboardd
+ *
+ * Copyright: Anki, Inc. 2018
+ *
+ **/
 
 #ifndef messages_hpp
 #define messages_hpp

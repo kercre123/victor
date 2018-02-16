@@ -12,7 +12,7 @@ let readChar;
 let secureReadChar;
 let secureWriteChar;
 
-let pairingService = "00112233445566778899887766554433";
+let pairingService = "D55E356B59CC42659D5F3C61E9DFD70F";
 let pingService = "ABCD";
 let interfaceService = "1234";
 let secureInterfaceService = "6767";
@@ -25,10 +25,14 @@ let secureWriteCharService = "7766";
 
 function tryConnect() {
     noble.on('discover', function(peripheral) {
-        console.log("Connecting to " + peripheral.advertisement.localName + "... ");
-        peripheral.once('connect', function() { onConnect(peripheral); });
+        if(peripheral.advertisement.localName.includes("1f19f8bb")) {
+            console.log("Connecting to " + peripheral.advertisement.localName + "... ");
+            peripheral.once('connect', function() { onConnect(peripheral); });
 
-        peripheral.connect();
+            peripheral.connect();
+        } else {
+            console.log("[" + peripheral.advertisement.localName + "]");
+        }
     });
 
     noble.on('stateChange', function(state) {

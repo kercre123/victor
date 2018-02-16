@@ -1,10 +1,14 @@
-//
-//  IAnkiNetworkStream.h
-//  ios-server
-//
-//  Created by Paul Aluri on 1/16/18.
-//  Copyright © 2018 Paul Aluri. All rights reserved.
-//
+/**
+ * File: INetworkStream.h
+ *
+ * Author: paluri
+ * Created: 1/16/2018
+ *
+ * Description: Interface for network streams.
+ *
+ * Copyright: Anki, Inc. 2018
+ *
+ **/
 
 #ifndef IAnkiNetworkStream_h
 #define IAnkiNetworkStream_h

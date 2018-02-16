@@ -1,10 +1,14 @@
-//
-//  SecurePairing.m
-//  ios-server
-//
-//  Created by Paul Aluri on 1/16/18.
-//  Copyright © 2018 Paul Aluri. All rights reserved.
-//
+/**
+ * File: securePairing.cpp
+ *
+ * Author: paluri
+ * Created: 1/16/2018
+ *
+ * Description: Secure Pairing controller for ankiswitchboardd
+ *
+ * Copyright: Anki, Inc. 2018
+ *
+ **/
 
 #include <sstream>
 #include <random>

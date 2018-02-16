@@ -1,9 +1,14 @@
-//
-//  PairingMessages.h
-//
-//  Created by Paul Aluri on 1/24/18.
-//  Copyright © 2018 Anki, Inc. All rights reserved.
-//
+/**
+ * File: pairingMessages.h
+ *
+ * Author: paluri
+ * Created: 1/24/2018
+ *
+ * Description: Actual pairing messages for ankiswitchboardd
+ *
+ * Copyright: Anki, Inc. 2018
+ *
+ **/
 
 #ifndef SecurePairingMessages_h
 #define SecurePairingMessages_h
