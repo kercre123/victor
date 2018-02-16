@@ -810,8 +810,17 @@ public class StartupManager : MonoBehaviour {
   }
 #endif
 
-  protected void LogCodeLabImportErrors(string data) {
-    CodeLab.CodeLabGame.PushImportError(data);
+  protected void LogCodeLabImportErrors(string errorString) {
+    LogCodeLabImportErrors("CodeLab.OpenCodelabFile.Error.PlatformSpecific", errorString);
+  }
+
+  protected void LogCodeLabImportErrors(string errorCategory, string errorDetail) {
+    DAS.Error(errorCategory, errorDetail);
+
+    // This will export to android logcat in case DAS isn't running
+    Debug.LogError(errorCategory + " " + errorDetail);
+
+    CodeLab.CodeLabGame.PushImportError(errorCategory, errorDetail);
   }
 
   // Parses an incoming json stream expected to contain a codelab file.
@@ -828,20 +837,19 @@ public class StartupManager : MonoBehaviour {
             return;
           }
           else {
-            DAS.Error("CodeLab.OpenCodelabFile.Error.AddProjectToList", "Could not add generated project from platform; size=" + data.Length);
+            LogCodeLabImportErrors("CodeLab.OpenCodelabFile.Error.AddProjectToList", "Could not add generated project from platform; size=" + data.Length);
           }
         }
         else {
-          DAS.Error("CodeLab.OpenCodelabFile.Error.ProjectCreationError", "Could not generate a project from platform; size=" + data.Length);
+          LogCodeLabImportErrors("CodeLab.OpenCodelabFile.Error.ProjectCreationError", "Could not generate a project from platform; size=" + data.Length);
         }
       }
       else {
-        DAS.Error("CodeLab.OpenCodelabFile.Error.RecievedBadJson", "Recieved improperly formatted raw json; size=" + data.Length);
+        LogCodeLabImportErrors("CodeLab.OpenCodelabFile.Error.RecievedBadJson Recieved improperly formatted raw json; size=" + data.Length);
       }
     }
     catch (Exception e) {
-      DAS.Error("CodeLab.OpenCodelabFile.Error.UnhandleException", "Error parsing json " + e.Message + "; size=" + data.Length);
+      LogCodeLabImportErrors("CodeLab.OpenCodelabFile.Error.UnhandleException", e.Message + "; size=" + data.Length);
     }
-    LogCodeLabImportErrors("CodeLab.Import.Error.Description.Generic");
   }
 }

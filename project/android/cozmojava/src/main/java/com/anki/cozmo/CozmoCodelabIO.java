@@ -16,6 +16,13 @@ import com.unity3d.player.UnityPlayer;
 
 public final class CozmoCodelabIO
 {
+  private static void onImportError(String errorCategory, String errorDetail)
+  {
+    String unityErrorString = errorCategory + ", " + errorDetail;
+    UnityPlayer.UnitySendMessage("StartupManager", "LogCodeLabImportErrors", unityErrorString);
+    android.util.Log.e(errorCategory, errorDetail);
+  }
+
   // @NOTE: this wheel has been invented - but its in the apache-commons library which we don't include
   public static String stringFromInputStream(InputStream is)
   {
@@ -29,13 +36,13 @@ public final class CozmoCodelabIO
         sb.append(line);
       }
     } catch (IOException ex) {
-      UnityPlayer.UnitySendMessage("StartupManager", "LogCodeLabImportErrors", "Codelab.Android.stringFromInputStream.Read.IOException, " + ex.toString());
+      onImportError("Codelab.Android.stringFromInputStream.Read.IOException", ex.toString());
     } finally {
       if (br != null) {
         try {
           br.close();
         } catch (IOException ex) {
-          UnityPlayer.UnitySendMessage("StartupManager", "LogCodeLabImportErrors", "Codelab.Android.stringFromInputStream.Close.IOException" + ex.toString());
+          onImportError("Codelab.Android.stringFromInputStream.Close.IOException", ex.toString());
         }
       }
     }
@@ -50,7 +57,7 @@ public final class CozmoCodelabIO
       InputStream is = contentResolver.openInputStream(uri);
       if( is == null )
       {
-        UnityPlayer.UnitySendMessage("StartupManager", "LogCodeLabImportErrors", "Codelab.Android.openCodelabFileFromURI.NullInputStream, Null input stream");
+        onImportError("Codelab.Android.openCodelabFileFromURI.NullInputStream", "Null input stream");
       }
       else
       {
@@ -58,13 +65,13 @@ public final class CozmoCodelabIO
         UnityPlayer.UnitySendMessage("StartupManager", "LoadCodeLabFromRawJson", codelabJsonString );
       }
     } catch (Exception ex) {
-      UnityPlayer.UnitySendMessage("StartupManager", "LogCodeLabImportErrors", "Codelab.Android.openCodelabFileFromURI.Open.Exception, General exception: " + ex.toString());
+      onImportError("Codelab.Android.openCodelabFileFromURI.Open.Exception", "General exception: " + ex.toString());
     } finally {
       if (br != null) {
         try {
           br.close();
         } catch (IOException ex) {
-          UnityPlayer.UnitySendMessage("StartupManager", "LogCodeLabImportErrors", "Codelab.Android.openCodelabFileFromURI.Close.Exception, " + ex.toString());
+          onImportError("Codelab.Android.openCodelabFileFromURI.Close.Exception", ex.toString());
         }
       }
     }

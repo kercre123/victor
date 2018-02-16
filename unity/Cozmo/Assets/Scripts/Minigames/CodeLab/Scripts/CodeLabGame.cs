@@ -271,12 +271,6 @@ namespace CodeLab {
       return Mathf.Clamp(inputValue, 0.0f, maxValue);
     }
 
-    // @TODO: Currently nothing is done with this list.
-    //  it should be used when we want to surface errors in the codelab file import process that occur before the ui
-    //  is ready for them.  At present the list is not cleared out, and could get quite long if many external files are
-    //  loaded incorrectly during the same session.
-    private static List<string> _importErrors = new List<string>();
-
     private bool _DeviceGyroSupportReportingInaccurrate = false;
 
     protected override void InitializeGame(ChallengeConfigBase challengeConfigData) {
@@ -3784,8 +3778,12 @@ namespace CodeLab {
       return TextToSpeech.Trim(rawString);
     }
 
-    public static void PushImportError(string errorLocString) {
-      _importErrors.Add(errorLocString);
+    public static void PushImportError(string errorCategory, string errorDetail) {
+      // @TODO: Currently nothing is done with this.
+      //  It should be used when we want to surface errors in the codelab file import process that occur before DAS
+      //  is ready.  Currently there haven't been a high volume of undiagnosable import issues in the wild, so it
+      //  hasn't been a priority to expand this.  This hook should remain as a convinient entry point if we want to 
+      //  add visibility to this later.
     }
   }
 }
