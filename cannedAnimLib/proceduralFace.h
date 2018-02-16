@@ -46,7 +46,7 @@ public:
 
   static const int WIDTH  = FACE_DISPLAY_WIDTH;
   static const int HEIGHT = FACE_DISPLAY_HEIGHT;
-  
+
   // Nominal positions/sizes for everything (these are things that aren't
   // parameterized at dynamically, but could be if we want)
   
@@ -56,6 +56,8 @@ public:
   static constexpr s32   NominalEyeHeight       = 57;  // V1: 40;
   static constexpr s32   NominalEyeWidth        = 43;  // V1: 30;
   
+  static constexpr f32 DefaultHue = 0.566f;
+
   using Value = f32;
   using Parameter = ProceduralEyeParameter;
   

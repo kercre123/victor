@@ -24,13 +24,13 @@ namespace Anki {
 namespace Cozmo {
   
 ProceduralFace* ProceduralFace::_resetData = nullptr;
-ProceduralFace::Value ProceduralFace::_hue = 0.566f;
+ProceduralFace::Value ProceduralFace::_hue = DefaultHue;
 
 namespace {
 # define CONSOLE_GROUP "ProceduralFace"
   
-  CONSOLE_VAR(ProceduralFace::Value, kProcFace_DefaultScanlineOpacity, CONSOLE_GROUP, 0.7f);
-  CONSOLE_VAR(s32, kProcFace_NominalEyeSpacing, CONSOLE_GROUP, 91);  // V1: 64;
+  CONSOLE_VAR_RANGED(ProceduralFace::Value, kProcFace_DefaultScanlineOpacity, CONSOLE_GROUP, 0.7f, 0.f, 1.f);
+  CONSOLE_VAR_RANGED(s32, kProcFace_NominalEyeSpacing, CONSOLE_GROUP, 91, -FACE_DISPLAY_WIDTH, FACE_DISPLAY_WIDTH);  // V1: 64;
   
 # undef CONSOLE_GROUP
   
@@ -628,17 +628,41 @@ void ProceduralFace::RemoveScanlineDistorter()
 }
 
 void ProceduralFace::RegisterFaceWithConsoleVars() {
+   new Util::ConsoleVar<float>(_faceAngle_deg,
+                               "kProcFace_Angle_deg", "ProceduralFace",
+                               -90.f, 90.f, true);
+
+   new Util::ConsoleVar<float>(_faceScale[0],
+                               "kProcFace_ScaleX", "ProceduralFace",
+                               0.f, 10.f, true);
+
+   new Util::ConsoleVar<float>(_faceScale[1],
+                               "kProcFace_ScaleY", "ProceduralFace",
+                               0.f, 10.f,
+                               true);
+
+   new Util::ConsoleVar<float>(_faceCenter[0],
+                               "kProcFace_CenterX", "ProceduralFace",
+                               -100.f, 100.f, true);
+
+   new Util::ConsoleVar<float>(_faceCenter[1],
+                               "kProcFace_CenterY", "ProceduralFace",
+                               -100.f, 100.f, true);
+
+   new Util::ConsoleVar<float>(_scanlineOpacity,
+                               "kProcFace_ScanlineOpacity", "ProceduralFace",
+                               0.f, 1.f, true);
+
   for(auto whichEye : {WhichEye::Left, WhichEye::Right}) {
     for (std::underlying_type<Parameter>::type iParam=0; iParam < Util::EnumToUnderlying(Parameter::NumParameters); ++iParam) {
       std::string eyeName = (whichEye == 0 ? "Left" : "Right");
-      std::string param = eyeName+"."+EnumToString(kEyeParamInfoLUT[iParam].EnumValue());
-      Util::ConsoleSystem::Instance().Register(param,
-                                                     new Util::ConsoleVar<float>(_eyeParams[whichEye][iParam],
-                                                                                 param.c_str(),
-                                                                                 "ProceduralFace",
-                                                                                 kEyeParamInfoLUT[iParam].Value().clipLimits.min,
-                                                                                 kEyeParamInfoLUT[iParam].Value().clipLimits.max,
-                                                                                 true));
+      std::string param = eyeName+"_"+EnumToString(kEyeParamInfoLUT[iParam].EnumValue());
+      new Util::ConsoleVar<float>(_eyeParams[whichEye][iParam],
+                                  param.c_str(),
+                                  "ProceduralFace",
+                                  kEyeParamInfoLUT[iParam].Value().clipLimits.min,
+                                  kEyeParamInfoLUT[iParam].Value().clipLimits.max,
+                                  true);
     }
   }
 }

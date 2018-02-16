@@ -93,4 +93,6 @@ Put a check against *ProcFace_OverrideEyeParams* to allow the sliders take contr
 
 *ProcFace_OverrideRightEyeParams* will force the eyes to be the same, based on the left eye.
 
-*ProcFace_OverrideReset* will reset both eyes from a bad state to the current canned animation state.
+The *ResetFace* button will reset both eyes from a bad state to the current canned animation state.
+
+To toggle between Victor eye rendering and the original Cozmo eye rendering there are two buttons *VictorFaceRenderer* and *CozmoFaceRenderer*, clicking either will change state as appropriate.
