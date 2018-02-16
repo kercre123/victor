@@ -59,6 +59,12 @@ except KeyError:
   Logger.error('Please set the environment variable SLACK_TOKEN')
   sys.exit(1)
 
+try:
+  SLACK_TOKEN_URL = os.environ['SLACK_TOKEN_URL']
+except KeyError:
+  Logger.error('Please set the environment variable SLACK_TOKEN_URL')
+  sys.exit(1)
+
 
 def get_unverified_codelab_filelist():
   unverified_codelab_file_pattern = r'(^production/[a-zA-Z\d]{23}/[a-fA-F\d]{26}/[a-fA-F\d]{26}.codelab$)'
@@ -88,7 +94,6 @@ def verify_codelab_files(args):
   codelab_files = get_unverified_codelab_filelist()
 
   codelab_file_status_dict = {}
-  good_codelab_files = False
   log_capture_string = None
   for codelab_file in codelab_files:
     codelab_filepath, codelab_json_filepath = download_codelab_file_and_json(args, codelab_file)
@@ -101,7 +106,6 @@ def verify_codelab_files(args):
     logger.addHandler(ch)
 
     if verify_codelab_file.is_valid_codelab_file(codelab_filepath):
-      good_codelab_files = True
 
       with open(codelab_json_filepath, encoding='utf8') as data:
         project_metadata = json.load(data)
@@ -113,7 +117,10 @@ def verify_codelab_files(args):
       log_contents = log_capture_string.getvalue()
       codelab_file_status_dict[codelab_file] = {"status": "bad", "error_msg": log_contents}
 
-  log_capture_string.close()
+  try:
+    log_capture_string.close()
+  except:
+    Logger.warning('No io.StringIO() to close.')
 
   for codelab_file, status in codelab_file_status_dict.items():
     if status['status'] is 'bad':
@@ -132,16 +139,21 @@ def verify_codelab_files(args):
   try:
     shutil.rmtree(os.path.join(args.output_dir, 'production'))
   except Exception as e:
-    Logger.error('Could not remove bad codelab files from filesystem:\n{}'.format(e))
-    raise
+    Logger.warning('Could not remove bad codelab files from filesystem:\n{}'.format(e))
 
-  if good_codelab_files:
+  good = len([file for (file, status) in codelab_file_status_dict.items() if status['status'] is 'good'])
+  if good > 1:
     zipfile = make_zip_archive(args)
-
+    post_results_to_slack('There were {} valid codelab submissions since I last checked.'.format(good))
     post_file_to_slack(zipfile)
 
-  # remove left over build files
-  shutil.rmtree(args.output_dir)
+  else:
+    post_results_to_slack('There were no valid codelab submissions since I last checked :cry:')
+
+  try:
+    shutil.rmtree(args.output_dir)
+  except:
+    Logger.warning('Could not remove left over build files.')
 
 
 ####################################
@@ -230,6 +242,18 @@ def makedirs_exist_ok(path):
       raise
 
 
+def post_results_to_slack(message):
+  payload = '{{\
+              "text": "{0}\n",\
+              "mrkdwn": true,\
+              "channel": "{1}",\
+              "username": "buildbot",\
+          }}'.format(message, SLACK_CHANNEL)
+
+  headers = { 'content-type': "application/json" }
+  response = requests.request("POST", SLACK_TOKEN_URL, data=payload, headers=headers)
+
+
 def post_file_to_slack(file):
   payload = {
     'channels': SLACK_CHANNEL,
@@ -237,9 +261,7 @@ def post_file_to_slack(file):
     'filename': os.path.basename(file),
     'filetype': 'zip'
   }
-  file_to_send = {
-    'file': (os.path.basename(file), open(file, 'rb'), 'zip')
-  }
+  file_to_send = { 'file': (os.path.basename(file), open(file, 'rb'), 'zip') }
 
   requests.post('https://slack.com/api/files.upload', params=payload, files=file_to_send)
 
