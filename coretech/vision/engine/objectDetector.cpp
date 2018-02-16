@@ -47,7 +47,8 @@ namespace Vision {
 // static const char * const kLogChannelName = "VisionSystem";
  
 namespace {
-  CONSOLE_VAR(bool, kUseTensorFlowProcess, "Vision.ObjectDetector", true);
+  CONSOLE_VAR(bool, kObjectDetection_UseTensorFlowProcess, "Vision.ObjectDetector", false);
+  CONSOLE_VAR(f32,  kObjectDetection_Gamma,                "Vision.ObjectDetector", 1.0f); // set to 1.0 to disable
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -84,7 +85,7 @@ Result ObjectDetector::Init(const std::string& modelPath, const std::string& cac
   _profiler.SetDasLogFrequency(config.get("ProfilingEventLogFrequency_ms", 10000).asUInt());
 
   _cachePath = cachePath;
-  if(kUseTensorFlowProcess)
+  if(kObjectDetection_UseTensorFlowProcess)
   {
     // Clear the cache on startup
     Util::FileUtils::RemoveDirectory(_cachePath);
@@ -116,10 +117,48 @@ bool ObjectDetector::StartProcessingIfIdle(ImageCache& imageCache)
       // in the params.
       // TODO: resize here instead of the Model, to copy less data
       // TODO: avoid copying data entirely somehow? (but maybe who cares b/c it's tiny and fwd inference time likely dwarfs the copy)
-      const ImageCache::Size kImageSize = ImageCache::Size::Half_AverageArea;
+      const ImageCache::Size kImageSize = ImageCache::Size::Full;
       
       // Grab a copy of the image
       imageCache.GetRGB(kImageSize).CopyTo(_imgBeingProcessed);
+      
+      // Use gamma to make it easier to see
+      // TODO: Do this on the final image size, so we don't waste time applying gamma unnecessarily
+      if(!Util::IsFltNear(kObjectDetection_Gamma, 1.f))
+      {
+        auto ticToc = _profiler.TicToc("Gamma");
+
+        static f32 currentGamma = 1.f;
+        static std::array<u8,256> gammaLUT{};
+        if(!Util::IsFltNear(kObjectDetection_Gamma, currentGamma))
+        {
+          currentGamma = kObjectDetection_Gamma;
+          const f32 gamma = 1.f / currentGamma;
+          const f32 divisor = 1.f / 255.f;
+          for(s32 value=0; value<256; ++value)
+          {
+            gammaLUT[value] = std::round(255.f * std::powf((f32)value * divisor, gamma));
+          }
+        }
+
+        s32 nrows = _imgBeingProcessed.GetNumRows();
+        s32 ncols = _imgBeingProcessed.GetNumCols();
+        if(_imgBeingProcessed.IsContinuous()) {
+          ncols *= nrows;
+          nrows = 1;
+        }
+        for(s32 i=0; i<nrows; ++i)
+        {
+          Vision::PixelRGB* img_i = _imgBeingProcessed.GetRow(i);
+          for(s32 j=0; j<ncols; ++j)
+          {
+            Vision::PixelRGB& pixel = img_i[j];
+            pixel.r() = gammaLUT[pixel.r()];
+            pixel.g() = gammaLUT[pixel.g()];
+            pixel.b() = gammaLUT[pixel.b()];
+          }
+        }
+      }
       
       // Store its size relative to original size so we can rescale object detections later
       _widthScale = (f32)imageCache.GetOrigNumRows() / (f32)_imgBeingProcessed.GetNumRows();
@@ -130,7 +169,7 @@ bool ObjectDetector::StartProcessingIfIdle(ImageCache& imageCache)
       
       _future = std::async(std::launch::async, [this]() {
         std::list<DetectedObject> objects;
-        if(kUseTensorFlowProcess)
+        if(kObjectDetection_UseTensorFlowProcess)
         {
           // Profiling will be from time we write file to when we get results
           _profiler.Tic("StandaloneInferenceProcess");
