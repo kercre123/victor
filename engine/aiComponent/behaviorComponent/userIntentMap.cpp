@@ -206,6 +206,16 @@ void UserIntentMap::SanitizeCloudIntentVariables(const std::string& cloudIntent,
     }
   }
 }
+  
+std::vector<std::string> UserIntentMap::DevGetCloudIntentsList() const
+{
+  std::vector<std::string> ret;
+  ret.reserve( _cloudToUserMap.size() );
+  for( const auto& pair : _cloudToUserMap ) {
+    ret.push_back( pair.first );
+  }
+  return ret;
+}
 
 }
 }
