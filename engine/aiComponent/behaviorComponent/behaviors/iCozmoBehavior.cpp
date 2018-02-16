@@ -160,21 +160,28 @@ NeedsActionId ICozmoBehavior::ExtractNeedsActionIDFromConfig(const Json::Value& 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::string ICozmoBehavior::ExtractDebugLabelForBaseFromConfig(const Json::Value& config)
+std::string ICozmoBehavior::MakeUniqueDebugLabelFromConfig(const Json::Value& config)
 {
   std::string ret;
+  const BehaviorID behaviorID = ExtractBehaviorIDFromConfig( config );
   if( config.isMember(kBehaviorDebugLabel) ) {
     ret = config[kBehaviorDebugLabel].asString();
   } else {
-    const BehaviorID behaviorID = ExtractBehaviorIDFromConfig( config );
     ret = BehaviorTypesWrapper::BehaviorIDToString( behaviorID );
+  }
+  // now make it unique and append the instance # if not the very first
+  // this will be unique per BehaviorID instead of per "kBehaviorDebugLabel," but theyre usually the same
+  static std::unordered_map<BehaviorID, unsigned int> counts;
+  const auto index = counts[behaviorID]++; // and post-increment
+  if( index > 0 ) {
+    ret += std::to_string(index);
   }
   return ret;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ICozmoBehavior::ICozmoBehavior(const Json::Value& config)
-: IBehavior( ExtractDebugLabelForBaseFromConfig( config ) )
+: IBehavior( MakeUniqueDebugLabelFromConfig( config ) )
 , _requiredProcess( AIInformationAnalysis::EProcess::Invalid )
 , _lastRunTime_s(0.0f)
 , _activatedTime_s(0.0f)

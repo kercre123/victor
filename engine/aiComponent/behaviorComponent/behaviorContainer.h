@@ -120,14 +120,9 @@ private:
   // The base function used to create behaviors - should only be called internally
   ICozmoBehaviorPtr CreateBehaviorBase(BehaviorClass behaviorType, const Json::Value& config) const;
   
-  void MakeDebugLabelUnique(ICozmoBehaviorPtr behavior) const;
-  
   // ============================== Private Member Vars ==============================
   BehaviorIDToBehaviorMap _idToBehaviorMap;
   std::vector<Signal::SmartHandle> _signalHandles;
-  
-  mutable std::unordered_map<std::string, unsigned int> _debugLabelCounters;
-  
   
   
 };

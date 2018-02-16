@@ -441,7 +441,7 @@ protected:
 private:
   
   NeedsActionId ExtractNeedsActionIDFromConfig(const Json::Value& config);
-  std::string ExtractDebugLabelForBaseFromConfig(const Json::Value& config);
+  std::string MakeUniqueDebugLabelFromConfig(const Json::Value& config);
 
   float _lastRunTime_s;
   float _activatedTime_s;
