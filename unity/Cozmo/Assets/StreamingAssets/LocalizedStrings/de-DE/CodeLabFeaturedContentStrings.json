@@ -757,7 +757,7 @@
     "translation" : "Wenn sich der Ball auf Cozmos Seite befindet, beweg seinen Schläger zum Ball."
   },
   "codeLabFeaturedProject.PaddleBall.where_cozmo_thinks_the_ball_is" : {
-    "translation" : "wo für Cozmo der Ball ist"
+    "translation" : "Wo für Cozmo der Ball ist"
   },
   "codeLabFeaturedProject.PaddleBall.while_gameplay_is_active_update_cozmos_paddle_position_with_its_current_speed" : {
     "translation" : "Während das Spiel läuft, kannst du die Position von Cozmos Schläger mit seiner aktuellen Geschwindigkeit aktualisieren."
