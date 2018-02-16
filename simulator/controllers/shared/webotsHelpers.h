@@ -46,6 +46,13 @@ RootNodeInfo GetFirstMatchingSceneTreeNode(const webots::Supervisor* const, cons
 // Return all scene tree nodes whose typeNames match the input string.
 std::vector<RootNodeInfo> GetMatchingSceneTreeNodes(const webots::Supervisor* const, const std::string& typeNameToMatch);
 
+// Populates outputStr with the string contents of the specified field. Returns true on success.
+// Does not modify outputStr if not successful.
+bool GetFieldAsString(const webots::Node* const rootNode,
+                      const std::string& fieldName,
+                      std::string& outputStr,
+                      const bool failOnEmptyString = true);
+  
 }; // namespace
 }; // namespace
 
