@@ -491,6 +491,25 @@ static int enqueue_message(struct client_ctx *ctx, anki_camera_msg_id_t msg_id)
   return 0;
 }
 
+static int enqueue_message_with_payload(struct client_ctx *ctx, anki_camera_msg_id_t msg_id, void* buf, size_t len)
+{
+  uint32_t cursor = ctx->tx_cursor;
+  struct anki_camera_msg *msg = &ctx->tx_packets[cursor];
+  msg->msg_id = msg_id;
+
+  size_t num = len;
+  if(num > ANKI_CAMERA_MSG_PAYLOAD_LEN)
+  {
+    loge("%s: enqueue_message payload size too large %u > %u", __func__, len, ANKI_CAMERA_MSG_PAYLOAD_LEN);
+    return -1;
+  }
+  memcpy(msg->payload, buf, num);
+  
+  ctx->tx_cursor = cursor + 1;
+  logv("%s: enqueue_message: %d", __func__, msg_id);
+  return 0;
+}
+
 static int process_one_message(struct client_ctx *ctx, struct anki_camera_msg *msg)
 {
   int rc = 0;
@@ -894,4 +913,17 @@ anki_camera_status_t camera_status(struct anki_camera_handle *camera)
   else {
     return client->status;
   }
+}
+
+int camera_set_exposure(struct anki_camera_handle* camera, uint16_t exposure_ms, float gain)
+{
+  anki_camera_exposure_t exposure;
+  exposure.exposure_ms = exposure_ms;
+  exposure.gain = gain;
+  
+  uint8_t buf[sizeof(anki_camera_exposure_t)];
+  memcpy(buf, &exposure, sizeof(anki_camera_exposure_t));
+
+  return enqueue_message_with_payload(&CAMERA_HANDLE_P(camera)->camera_client, 
+                                      ANKI_CAMERA_MSG_C2S_PARAMS, buf, sizeof(buf));
 }

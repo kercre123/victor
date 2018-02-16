@@ -269,13 +269,13 @@ namespace Cozmo {
     
     // These baseline defaults are overridden by whatever we receive from the camera
     f32 _minCameraGain     = 0.1f; 
-    f32 _maxCameraGain     = 4.0f;
+    f32 _maxCameraGain     = 3.8f;
     
     struct CameraParams {
       s32  exposure_ms;
       f32  gain;
     };
-    CameraParams _currentCameraParams{16, 2.0};
+    CameraParams _currentCameraParams{31, 1.0};
     std::pair<bool,CameraParams> _nextCameraParams; // bool represents if set but not yet sent
     
     Util::BitFlags32<VisionMode> _mode;
