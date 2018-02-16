@@ -117,10 +117,10 @@ static f32 kDistanceSensorBiasAdjustment_mm = 30;
 
 // ----------Camera Calibration----------
 // Exposure setting for playpen
-static u16 kExposure_ms                               = 3;
+static u16 kExposure_ms                               = 31;
 
 // Gain setting for playpen
-static f32 kGain                                      = 2.f;
+static f32 kGain                                      = 1.f;
 
 // Tolerance on the calculated camera focal length
 static u32 kFocalLengthTolerance                      = 30;
