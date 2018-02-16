@@ -252,11 +252,9 @@ bool ConditionUserIntentPending::AreConditionsMetInternal( BehaviorExternalInter
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ConditionUserIntentPending::ResetInternal( BehaviorExternalInterface& behaviorExternalInterface )
+void ConditionUserIntentPending::SetActiveInternal(BehaviorExternalInterface& behaviorExternalInterface, bool isActive)
 {
   _selectedTag = USER_INTENT(INVALID);
-  
-  IBEICondition::ResetInternal( behaviorExternalInterface );
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

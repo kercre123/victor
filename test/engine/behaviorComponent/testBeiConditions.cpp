@@ -508,7 +508,7 @@ TEST(BeiConditions, TriggerWordPending)
   BehaviorExternalInterface& bei = tbf.GetBehaviorExternalInterface();
   
   cond->Init(bei);
-  cond->Reset(bei);
+  cond->SetActive(bei, true);
   
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
   
@@ -571,7 +571,7 @@ TEST(BeiConditions, UserIntentPending)
   BehaviorExternalInterface& bei = tbf.GetBehaviorExternalInterface();
   
   cond->Init(bei);
-  cond->Reset(bei);
+  cond->SetActive(bei, true);
   
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
   
