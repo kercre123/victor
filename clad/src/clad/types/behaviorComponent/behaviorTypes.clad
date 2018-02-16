@@ -94,6 +94,7 @@ enum uint_8 BehaviorClass {
   TimerUtilityCoordinator,
 
   // Dev Behaviors
+  DevDisplayReadingsOnFace,
   DevImageCapture,
   DevPettingTestSimple,
   DevTurnInPlaceTest,
@@ -270,6 +271,7 @@ enum uint_8 BehaviorID {
   Singing_YellowRose,
 
   // Dev Behaviors
+  DevDisplayReadingsOnFace,
   DevExecuteBehaviorRerun,
   DevPettingTestSimple,
   DevTurnInPlaceTest,

@@ -37,6 +37,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorTurnToFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/behaviorHighLevelAI.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/behaviorWait.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevDisplayReadingsOnFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevImageCapture.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevPettingTestSimple.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevTurnInPlaceTest.h"
@@ -723,6 +724,12 @@ ICozmoBehaviorPtr BehaviorContainer::CreateBehaviorBase(BehaviorClass behaviorTy
       newBehavior = ICozmoBehaviorPtr(new BehaviorDevImageCapture(config));
       break;
     }
+    case BehaviorClass::DevDisplayReadingsOnFace:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorDevDisplayReadingsOnFace(config));
+      break;
+    }
+    
 
     case BehaviorClass::HighLevelAI:
     {
