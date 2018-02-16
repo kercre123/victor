@@ -205,7 +205,7 @@ char* DUT_UART::getline(char* buf, int bufsize, int timeout_us, int *out_len)
   //assert(buf != NULL && bufsize > 0);
   int c, len=0, eol=0, maxlen=bufsize-1;
   uint32_t start = Timer::get();
-  while( !eol && Timer::elapsedUs(start) < timeout_us )
+  do //read 1 char (even if timeout==0)
   {
     if( (c = dut_uart_getchar_()) > 0 ) { //ignore null; messes with ascii parser
       if( c == '\r' || c == '\n' )
@@ -215,6 +215,7 @@ char* DUT_UART::getline(char* buf, int bufsize, int timeout_us, int *out_len)
       //else, whoops! drop data we don't have room for
     }
   }
+  while( !eol && Timer::elapsedUs(start) < timeout_us );
   
   buf[len] = '\0'; //always null terminate
   if( out_len )
