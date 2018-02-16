@@ -14,7 +14,7 @@ function usage() {
     echo "  -c [CONFIGURATION]      build configuration {Debug,Release}"
     echo "  -p [PLATFORM]           build target platform {android,mac}"
     echo "  -a                      append cmake platform argument {arg}"
-    echo "  -g [CMAKE_GENERATOR]    CMake generator {Ninja,Xcode}"
+    echo "  -g [GENERATOR]          CMake generator {Ninja,Xcode,Makefile}"
     echo "  -f                      force-run filelist updates and cmake configure before building, and force-copy assets"
     echo "  -d                      DEBUG: generate file lists and exit"
     echo "  -x [CMAKE_EXE]          path to cmake executable"
@@ -43,7 +43,7 @@ BUILD_SHARED_LIBS=1
 
 CONFIGURATION=Debug
 PLATFORM=android
-CMAKE_GENERATOR=Ninja
+GENERATOR=Ninja
 FEATURES=""
 ADDITIONAL_PLATFORM_ARGS=()
 
@@ -87,7 +87,7 @@ while getopts ":x:c:p:a:t:g:F:hvfdCTeIS" opt; do
             ADDITIONAL_PLATFORM_ARGS+=("${OPTARG}")
             ;;
         g)
-            CMAKE_GENERATOR="${OPTARG}"
+            GENERATOR="${OPTARG}"
             ;;
         F)
             FEATURES="${FEATURES} ${OPTARG}"
@@ -176,18 +176,22 @@ fi
 
 # For non-ninja builds, add generator type to build dir
 BUILD_SYSTEM_TAG=""
-if [ ${CMAKE_GENERATOR} != "Ninja" ]; then
-    BUILD_SYSTEM_TAG="-${CMAKE_GENERATOR}"
+if [ ${GENERATOR} != "Ninja" ]; then
+    BUILD_SYSTEM_TAG="-${GENERATOR}"
 fi
 : ${BUILD_DIR:="${TOPLEVEL}/_build/${PLATFORM}/${CONFIGURATION}${BUILD_SYSTEM_TAG}"}
 
-case ${CMAKE_GENERATOR} in
+case ${GENERATOR} in
     "Ninja")
         PROJECT_FILE="build.ninja"
         ;;
     "Xcode")
         PROJECT_FILE="cozmo.xcodeproj"
         ;;
+    "Makefile") 
+        PROJECT_FILE="Makefile" 
+        GENERATOR="CodeBlocks - Unix Makefiles"
+      ;; 
     "*")
         PROJECT_FILE=""
         ;;
@@ -200,7 +204,7 @@ if [ ${PROJECT_FILE}+_} ]; then
     fi
 else
     # not found
-    echo "Unsupported CMake generator: ${CMAKE_GENERATOR}"
+    echo "Unsupported CMake generator: ${GENERATOR}"
     exit 1
 fi
 
@@ -338,13 +342,12 @@ if [ $CONFIGURE -eq 1 ]; then
 
     $CMAKE_EXE ${TOPLEVEL} \
         ${VERBOSE_ARG} \
-        -G${CMAKE_GENERATOR} \
+        -G"${GENERATOR}" \
         -DCMAKE_BUILD_TYPE=${CONFIGURATION} \
         -DBUILD_SHARED_LIBS=${BUILD_SHARED_LIBS} \
         ${EXPORT_FLAGS} \
         ${FEATURE_FLAGS} \
-        "${PLATFORM_ARGS[@]}"
-
+        "${PLATFORM_ARGS[@]}" 
 fi
 
 if [ $RUN_BUILD -ne 1 ]; then
