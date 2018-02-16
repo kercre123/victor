@@ -359,7 +359,11 @@ void Contacts::putchar(char c)
 
 namespace Contacts {
   //getline() local buffer
+  #if TARGET_SYSCON
   const  int  line_maxlen = 31;
+  #else //TARGET_FIXTURE
+  const  int  line_maxlen = 127;
+  #endif
   static char line[line_maxlen+1];
   static int  line_len = 0;
 }
