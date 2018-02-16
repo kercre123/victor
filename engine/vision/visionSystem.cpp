@@ -204,7 +204,7 @@ namespace Cozmo {
     
     PRINT_CH_INFO(kLogChannelName, "VisionSystem.Init.InstantiatingFaceTracker",
                   "With model path %s.", dataPath.c_str());
-    _faceTracker.reset(new Vision::FaceTracker(dataPath, config));
+    _faceTracker.reset(new Vision::FaceTracker(_camera, dataPath, config));
     PRINT_CH_INFO(kLogChannelName, "VisionSystem.Init.DoneInstantiatingFaceTracker", "");
 
     _motionDetector.reset(new MotionDetector(_camera, _vizManager, config));
@@ -858,11 +858,6 @@ namespace Cozmo {
                                   (s32)std::round(faceIter->GetRect().GetY()),
                                   (s32)std::round(faceIter->GetRect().GetWidth()),
                                   (s32)std::round(faceIter->GetRect().GetHeight()));
-      
-      // Use a camera from the robot's pose history to estimate the head's
-      // 3D translation, w.r.t. that camera. Also puts the face's pose in
-      // the camera's pose chain.
-      currentFace.UpdateTranslation(_camera);
       
       // Make head pose w.r.t. the historical world origin
       Pose3d headPose = currentFace.GetHeadPose();

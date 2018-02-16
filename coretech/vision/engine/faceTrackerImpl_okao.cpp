@@ -52,8 +52,11 @@ namespace Vision {
     static const uint32_t kRandomSeed = 1;
   }
   
-  FaceTracker::Impl::Impl(const std::string& modelPath, const Json::Value& config)
-  : _recognizer(config)
+  FaceTracker::Impl::Impl(const Camera& camera,
+                          const std::string& modelPath,
+                          const Json::Value& config)
+  : _camera(camera)
+  , _recognizer(config)
   , _rng(new Util::RandomGenerator(FaceEnrollParams::kRandomSeed))
   {
     if(config.isMember("FaceDetection")) {
@@ -869,6 +872,11 @@ namespace Vision {
         
         face.SetRecognitionDebugInfo(recognitionData.GetDebugMatchingInfo());
       }
+
+      // Use a camera from the robot's pose history to estimate the head's
+      // 3D translation, w.r.t. that camera. Also puts the face's pose in
+      // the camera's pose chain.
+      face.UpdateTranslation(_camera);
       
     } // FOR each face
     

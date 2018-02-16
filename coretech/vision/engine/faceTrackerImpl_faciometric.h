@@ -55,7 +55,9 @@ namespace Vision {
   {
   public:
     
-    Impl(const std::string& modelPath, FaceTracker::DetectionMode mode);
+    Impl(const Camera&        camera,
+         const std::string&   modelPath,
+         const Json::Value&   config);
     ~Impl();
     
     Result Update(const Vision::Image& frame);

@@ -46,7 +46,9 @@ namespace Vision {
   class FaceTracker::Impl : public Profiler
   {
   public:
-    Impl(const std::string& modelPath, const Json::Value& config);
+    Impl(const Camera&        camera,
+         const std::string&   modelPath,
+         const Json::Value&   config);
     ~Impl();
     
     void SetRecognitionIsSynchronous(bool isSynchronous);
@@ -118,6 +120,8 @@ namespace Vision {
     bool _detectBlinks  = false;
     
     Json::Value _config;
+
+    const Camera& _camera;
     
     static const s32   MaxFaces = 10; // detectable at once
     
