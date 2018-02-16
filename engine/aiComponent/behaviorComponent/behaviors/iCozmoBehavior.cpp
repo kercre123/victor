@@ -570,9 +570,7 @@ void ICozmoBehavior::OnActivatedInternal()
   }**/
   
   _isActivated = true;
-  _stopRequestedAfterAction = false;
-  _actionCallback = nullptr;
-  _behaviorDelegateCallback = nullptr;
+  _delegationCallback = nullptr;
   _activatedTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _hasSetIdle = false;
   _startCount++;
@@ -668,8 +666,7 @@ void ICozmoBehavior::OnDeactivatedInternal()
   CancelDelegates(false);
   
   // Clear callbacks
-  _actionCallback = nullptr;
-  _behaviorDelegateCallback = nullptr;
+  _delegationCallback = nullptr;
   
   if(_hasSetIdle){
     SmartRemoveIdleAnimation();
@@ -702,21 +699,6 @@ void ICozmoBehavior::OnDeactivatedInternal()
   _customLightObjects.clear();
   
   DEV_ASSERT(_smartLockIDs.empty(), "ICozmoBehavior.Stop.DisabledReactionsNotEmpty");
-}
-  
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehavior::StopOnNextActionComplete()
-{
-  if( !_stopRequestedAfterAction ) {
-    PRINT_CH_INFO("Behaviors", (GetDebugLabel() + ".StopOnNextActionComplete").c_str(),
-                  "Behavior has been asked to stop on the next complete action");
-  }
-  
-  // clear the callback and don't let any new actions start
-  _stopRequestedAfterAction = true;
-  _actionCallback = nullptr;
-  _behaviorDelegateCallback = nullptr;
 }
 
 
@@ -841,33 +823,11 @@ Util::RandomGenerator& ICozmoBehavior::GetRNG() const {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::UpdateInternal()
 {
-  // first call the behavior delegation callback if there is one
-  if( IsActivated() &&
-      !IsControlDelegated() &&
-      _behaviorDelegateCallback != nullptr ) {
-
-    // make local copy to avoid any issues with the callback delegating to another behavior
-    auto callback = _behaviorDelegateCallback;
-    _behaviorDelegateCallback = nullptr;
-    callback();
-  }
-
   //// Event handling
   // Call message handling convenience functions
   UpdateMessageHandlingHelpers();
 
-  // Handle stop after requested action finishes
-  if(IsActivated()){
-    if(!IsControlDelegated()){
-      if(_stopRequestedAfterAction) {
-        // we've been asked to stop, so do that
-        if(GetBEI().HasDelegationComponent()){
-          auto& delegationComponent = GetBEI().GetDelegationComponent();
-          delegationComponent.CancelSelf(this);
-        }
-      }
-    }
-  }
+  CheckDelegationCallbacks();
 
   // Tick behavior update
   BehaviorUpdate();
@@ -886,15 +846,8 @@ void ICozmoBehavior::UpdateInternal()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::UpdateMessageHandlingHelpers()
-{
+{ 
   const auto& stateChangeComp = GetBEI().GetBehaviorEventComponent();
-  const auto& actionsCompleted = stateChangeComp.GetActionsCompletedThisTick();
-  for(auto& entry: actionsCompleted){
-    if(entry.idTag == _lastActionTag){
-      HandleActionComplete(entry);
-    }
-  }
-  
   for(const auto& event: stateChangeComp.GetGameToEngineEvents()){
     // Handle specific callbacks
     auto iter = _gameToEngineTags.find(event.GetData().GetTag());
@@ -959,6 +912,45 @@ bool ICozmoBehavior::IsControlDelegated() const
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool ICozmoBehavior::DelegateNow(IActionRunner* action, RobotCompletedActionCallback callback)
+{
+  if(IsControlDelegated()){
+    CancelDelegates();
+  }
+  return DelegateIfInControl(action, callback);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool ICozmoBehavior::DelegateNow(IActionRunner* action, ActionResultCallback callback)
+{
+  if(IsControlDelegated()){
+    CancelDelegates();
+  }
+  return DelegateIfInControl(action, callback);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool ICozmoBehavior::DelegateNow(IActionRunner* action, SimpleCallback callback)
+{
+  if(IsControlDelegated()){
+    CancelDelegates();
+  }
+  return DelegateIfInControl(action, callback);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool ICozmoBehavior::DelegateNow(IBehavior* delegate, SimpleCallback callback)
+{
+  if(IsControlDelegated()){
+    CancelDelegates();
+  }
+  return DelegateIfInControl(delegate, callback);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ICozmoBehavior::DelegateIfInControl(IActionRunner* action, RobotCompletedActionCallback callback)
 {
   if(!GetBEI().HasDelegationComponent()) {
@@ -979,14 +971,6 @@ bool ICozmoBehavior::DelegateIfInControl(IActionRunner* action, RobotCompletedAc
   }
   
   auto& delegateWrapper = delegationComponent.GetDelegator(this);
-
-  
-  // needed for StopOnNextActionComplete to work properly, don't allow starting new actions if we've requested
-  // the behavior to stop
-  if( _stopRequestedAfterAction ) {
-    delete action;
-    return false;
-  }
   
   if( !IsActivated() ) {
     PRINT_NAMED_WARNING("ICozmoBehavior.DelegateIfInControl.Failure.NotRunning",
@@ -996,14 +980,14 @@ bool ICozmoBehavior::DelegateIfInControl(IActionRunner* action, RobotCompletedAc
     return false;
   }
 
-  _actionCallback = callback;
+  _delegationCallback = callback;
   _lastActionTag = action->GetTag();
     
   return delegateWrapper.Delegate(this,
                                   action);
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ICozmoBehavior::DelegateIfInControl(IActionRunner* action, ActionResultCallback callback)
 {
@@ -1022,7 +1006,7 @@ bool ICozmoBehavior::DelegateIfInControl(IActionRunner* action, SimpleCallback c
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ICozmoBehavior::DelegateIfInControl(IBehavior* delegate)
+bool ICozmoBehavior::DelegateIfInControl(IBehavior* delegate, BehaviorSimpleCallback callback)
 {
   if((GetBEI().HasDelegationComponent()) &&
      !GetBEI().GetDelegationComponent().IsControlDelegated(this)) {
@@ -1030,6 +1014,12 @@ bool ICozmoBehavior::DelegateIfInControl(IBehavior* delegate)
     
     if( delegationComponent.HasDelegator(this)) {
       delegationComponent.GetDelegator(this).Delegate(this, delegate);
+      if(callback != nullptr){
+        _delegationCallback = [callback = std::move(callback)](const ExternalInterface::RobotCompletedAction& msg) 
+        {
+          callback();
+        };
+      }
       return true;
     }
   }
@@ -1037,43 +1027,6 @@ bool ICozmoBehavior::DelegateIfInControl(IBehavior* delegate)
   return false;
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ICozmoBehavior::DelegateIfInControl(IBehavior* delegate,
-                                         BehaviorSimpleCallback callback)
-{
-  // TODO:(bn) unit test this!!!
-
-  if( DelegateIfInControl(delegate) ) {
-    _behaviorDelegateCallback = callback;
-    return true;
-  }
-  else {
-    // couldn't delegate (for whatever reason)
-    return false;
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ICozmoBehavior::DelegateNow(IBehavior* delegate)
-{
-  if(GetBEI().HasDelegationComponent()) {
-    auto& delegationComponent = GetBEI().GetDelegationComponent();
-    if( delegationComponent.IsControlDelegated(this) ) {
-      delegationComponent.CancelDelegates(this);
-    }
-    
-    DEV_ASSERT(!delegationComponent.IsControlDelegated(this), "IBehavior.DelegateNow.CanceledButStillNotInControl");
-    
-    if(delegationComponent.HasDelegator(this)) {
-      auto& delegator = delegationComponent.GetDelegator(this);
-      delegator.Delegate(this, delegate);
-      return true;
-    }
-  }
-  
-  return false;
-}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ICozmoBehaviorPtr ICozmoBehavior::FindAnonymousBehaviorByName(const std::string& behaviorName) const
@@ -1088,19 +1041,36 @@ ICozmoBehaviorPtr ICozmoBehavior::FindAnonymousBehaviorByName(const std::string&
 
   return foundBehavior;
 }
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehavior::HandleActionComplete(const ExternalInterface::RobotCompletedAction& msg)
-{
-  if( _actionCallback ) {
 
-    // Note that the callback may itself call DelegateIfInControl and set _actionCallback. Because of that, we create
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::CheckDelegationCallbacks()
+{
+  // first call the behavior delegation callback if there is one
+  if( IsActivated() &&
+      !IsControlDelegated() &&
+      _delegationCallback != nullptr) {
+    // Note that the callback may itself call DelegateIfInControl and set _delegationCallback. Because of that, we create
     // a copy here so we can null out the member variable such that it can be re-set by callback (if desired)
-    auto callback = _actionCallback;
-    _actionCallback = nullptr;
-    
-    callback(msg);
+    auto callback = _delegationCallback;
+    _delegationCallback = nullptr;
+
+    // check to see if an action completed and provide the real action completed message
+    const auto& stateChangeComp = GetBEI().GetBehaviorEventComponent();
+    const auto& actionsCompleted = stateChangeComp.GetActionsCompletedThisTick();
+    for(const auto& entry: actionsCompleted){
+      if(entry.idTag == _lastActionTag){
+        callback(entry);
+        return;
+      }
+    }
+
+    // otherwise, it's a behavior callback so give it an empty action message
+    ExternalInterface::RobotCompletedAction empty;
+    callback(empty);
   }
+
+
 }
 
   
@@ -1110,8 +1080,7 @@ bool ICozmoBehavior::CancelDelegates(bool allowCallback)
   
   if( IsControlDelegated() ) {
     if(!allowCallback){
-      _actionCallback = nullptr;
-      _behaviorDelegateCallback = nullptr;
+      _delegationCallback = nullptr;
     }
     if(GetBEI().HasDelegationComponent()){
       GetBEI().GetDelegationComponent().CancelDelegates(this);
