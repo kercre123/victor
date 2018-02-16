@@ -79,7 +79,6 @@ void BehaviorAnimStatesGetInLoop::InitBehavior()
 {
   if(_instanceParams.endLoopCondition != nullptr){
     _instanceParams.endLoopCondition->Init(GetBEI());
-    _instanceParams.endLoopCondition->Reset(GetBEI());
   }
 }
 
@@ -87,6 +86,7 @@ void BehaviorAnimStatesGetInLoop::InitBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAnimStatesGetInLoop::OnBehaviorActivated()
 {
+  _instanceParams.endLoopCondition->SetActive(GetBEI(), true);
   _lifetimeParams = LifetimeParams();
   TransitionToGetIn();
 }
@@ -95,6 +95,8 @@ void BehaviorAnimStatesGetInLoop::OnBehaviorActivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAnimStatesGetInLoop::OnBehaviorDeactivated()
 {
+  _instanceParams.endLoopCondition->SetActive(GetBEI(), false);
+
   if((_lifetimeParams.stage == BehaviorStage::Loop) &&
      (_instanceParams.emergencyGetOutTrigger != AnimationTrigger::Count)){
     PlayEmergencyGetOut(_instanceParams.emergencyGetOutTrigger);

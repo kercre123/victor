@@ -2,7 +2,16 @@
   "behaviorID" : "FistBumpVoiceCommand",
   "behaviorClass" : "DispatcherQueue",
 
-  "respondToCloudIntent": "AnyTrick",
+  "respondToUserIntents": [
+    // this behavior responds to ANY of these being pending
+    {
+      "type": "play_anytrick"
+    },
+    {
+      "type": "play_specific",
+      "entity_behavior": "fist_bump"
+    }
+  ],
 
   "behaviors": [
     "DriveOffCharger",

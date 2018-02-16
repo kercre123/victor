@@ -518,14 +518,19 @@ message SetMemoryMapBroadcastFrequency_sec {
 // Behavior Commands
 ///////////////////////////////////////////////////////////////////////////////
 
-// Allows game to fake trigger word detection to the behavior component
+// Fake trigger word detection to the behavior component
 message FakeTriggerWordDetected
 {
 }
 
-// Allows Game to fake an intent coming from the cloud
+// Fake an intent coming from the cloud
 message FakeCloudIntent{
   string intent
+}
+
+// Fake a user intent
+message FakeUserIntent {
+  string intent,
 }
 
 // ExecuteBehavior

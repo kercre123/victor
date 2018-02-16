@@ -56,6 +56,7 @@ protected:
   void LogCliffSensorData();
   
   void FakeCloudIntent();
+  void FakeUserIntent();
   
   void NVStorage_EraseTag();
   void NVStorage_ReadTag();

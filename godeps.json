@@ -1,12 +1,4 @@
 {
-  "cloud.google.com/go": {
-    "commit": "fd7767e8876b52efa597af4d0ec944e9b2574120",
-    "branch": "master"
-  },
-  "google.golang.org/api": {
-    "commit": "e771abbff930c1ae3c6e2c35117fc88856f11b2f",
-    "branch": "master"
-  },
   "google.golang.org/genproto": {
     "commit": "2b5a72b8730b0b16380010cfe5286c42108d88e7",
     "branch": "master"
@@ -15,40 +7,16 @@
     "commit": "d50734d1d6ca477a72646f3022216ec39639f4cd",
     "branch": "master"
   },
-  "github.com/aalpern/go-metrics": {
-    "commit": "e181e095bae94582363434144c61a9653aff6e50",
-    "branch": "master"
-  },
   "github.com/anki/sai-chipper-voice": {
     "commit": "80a4a3b52135ecfbdee3955f90f7fe3265366f1b",
     "branch": "develop"
-  },
-  "github.com/anki/sai-go-util": {
-    "commit": "a96b659ff902ac082274cb82bd22b15d1e1b27a9",
-    "branch": "master"
-  },
-  "github.com/aws/aws-sdk-go": {
-    "commit": "9d2e2c90e5b140adba893bf0ffaaef7c3c891207",
-    "branch": "master"
-  },
-  "github.com/cenkalti/backoff": {
-    "commit": "2ea60e5f094469f9e65adb9cd103795b73ae743e",
-    "branch": "master"
   },
   "github.com/golang/protobuf": {
     "commit": "bbd03ef6da3a115852eaf24c8a1c46aeb39aa175",
     "branch": "master"
   },
-  "github.com/google/martian": {
-    "commit": "edc2749c00e8e156c2c3bb3d89df11f5416edef4",
-    "branch": "master"
-  },
   "github.com/google/uuid": {
     "commit": "dec09d789f3dba190787f8b4454c7d3c936fed9e",
-    "branch": "master"
-  },
-  "github.com/gorilla/context": {
-    "commit": "08b5f424b9271eedf6f9f0ce86cb9396ed337a42",
     "branch": "master"
   },
   "github.com/youpy/go-riff": {
@@ -61,10 +29,6 @@
   },
   "golang.org/x/net": {
     "commit": "f5dfe339be1d06f81b22525fe34671ee7d2c8904",
-    "branch": "master"
-  },
-  "golang.org/x/oauth2": {
-    "commit": "543e37812f10c46c622c9575afd7ad22f22a12ba",
     "branch": "master"
   },
   "golang.org/x/text": {

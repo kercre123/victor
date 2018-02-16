@@ -527,6 +527,18 @@ void RobotDataLoader::LoadRobotConfigs()
     }
   }
   
+  // userIntentsComponent config (also maps cloud intents to user intents)
+  {
+    static const std::string jsonFilename = "config/engine/behaviorComponent/user_intent_map.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _userIntentsConfig);
+    if(!success)
+    {
+      LOG_ERROR("RobotDataLoader.UserIntentsConfigNotFound",
+                "UserIntents Json config file %s not found or failed to parse",
+                jsonFilename.c_str());
+    }
+  }
+  
   // Voice Command config
   {
     LoadVoiceCommandConfigs();

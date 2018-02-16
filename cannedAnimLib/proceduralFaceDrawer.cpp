@@ -18,18 +18,31 @@ namespace Cozmo {
   
   #define CONSOLE_GROUP "ProceduralFace"
 
-  CONSOLE_VAR_RANGED(f32, kProcFace_InnerGlowFrac,            CONSOLE_GROUP, 0.4f, 0.05f, 1.f);
-  CONSOLE_VAR(bool,       kProcFace_UseAntiAliasing,          CONSOLE_GROUP, true); // Only affects OpenCV drawing, not post-smoothing
   CONSOLE_VAR_RANGED(f32, kProcFace_NoiseFraction,            CONSOLE_GROUP, 0.15f, 0.f, 1.f); // TODO: Tie to audio
-  CONSOLE_VAR(bool,       kProcFace_GaussianGlowFilter,       CONSOLE_GROUP, false); // simpler box filter if not
-  CONSOLE_VAR(f32,        kProcFace_GlowSizeMultiplier,       CONSOLE_GROUP, 1.f);
-  CONSOLE_VAR(f32,        kProcFace_GlowBrightnessMultiplier, CONSOLE_GROUP, 1.f);
-  CONSOLE_VAR(f32,        kProcFace_EyeBrightnessMultiplier,  CONSOLE_GROUP, 1.f);
+
+  CONSOLE_VAR(bool,       kProcFace_UseAntiAliasedLines,      CONSOLE_GROUP, true); // Only affects OpenCV drawing, not post-smoothing
+  CONSOLE_VAR_RANGED(f32, kProcFace_GlowSizeMultiplier,       CONSOLE_GROUP, 1.f, 0.f, 1.f);
+  CONSOLE_VAR_RANGED(f32, kProcFace_EyeBrightnessMultiplier,  CONSOLE_GROUP, 1.f, 0.f, 10.f);
+  CONSOLE_VAR_RANGED(f32, kProcFace_GlowBrightnessMultiplier, CONSOLE_GROUP, 1.f, 0.f, 10.f);
 
   CONSOLE_VAR(bool,       kProcFace_RenderInnerOuterGlow,     CONSOLE_GROUP, false); // Render glow
+  CONSOLE_VAR_RANGED(f32, kProcFace_InnerGlowFrac,            CONSOLE_GROUP, 0.4f, 0.05f, 1.f);
   CONSOLE_VAR(bool,       kProcFace_ApplyGlowFilter,          CONSOLE_GROUP, false); // Gausssian or boxfilter for glow
-  CONSOLE_VAR(bool,       kProcFace_UseAntialiasing,          CONSOLE_GROUP, false); // Gausssian or boxfilter for antialiasing
-  CONSOLE_VAR(bool,       kProcFace_VictorRenderer,           CONSOLE_GROUP, false);
+  CONSOLE_VAR(bool,       kProcFace_GaussianGlowFilter,       CONSOLE_GROUP, false); // simpler box filter if not
+  CONSOLE_VAR_RANGED(s32, kProcFace_AntiAliasingSize,         CONSOLE_GROUP, 0, 0, 63); // full image antialiasing
+
+  static void VictorFaceRenderer(ConsoleFunctionContextRef context)
+  {
+    kProcFace_RenderInnerOuterGlow = kProcFace_ApplyGlowFilter = true;
+    kProcFace_AntiAliasingSize = 5;
+  }
+  static void CozmoFaceRenderer(ConsoleFunctionContextRef context)
+  {
+    kProcFace_RenderInnerOuterGlow = kProcFace_ApplyGlowFilter = false;
+    kProcFace_AntiAliasingSize = 0;
+  }
+  CONSOLE_FUNC(VictorFaceRenderer, CONSOLE_GROUP);
+  CONSOLE_FUNC(CozmoFaceRenderer, CONSOLE_GROUP);
 
   #undef CONSOLE_GROUP
 
@@ -167,7 +180,7 @@ namespace Cozmo {
     //
     std::vector<cv::Point> eyePoly, segment, lowerLidPoly, upperLidPoly;
     const s32 kEllipseDelta = 5;
-    const s32 kLineType = (kProcFace_UseAntiAliasing ? cv::LINE_AA : cv::LINE_8);
+    const s32 kLineType = (kProcFace_UseAntiAliasedLines ? cv::LINE_AA : cv::LINE_8);
     
     // 1. Eye shape poly
     {
@@ -277,8 +290,7 @@ namespace Cozmo {
                                                              eyeCenter.x(),
                                                              eyeCenter.y());
 
-    const Value glowFraction = kProcFace_GlowSizeMultiplier * faceData.GetParameter(whichEye, Parameter::GlowSize);
-    DEV_ASSERT(Util::InRange(glowFraction, -1.f, 1.0f), "ProceduralFaceDrawer.DrawEye.InvalidGlow");
+    const Value glowFraction = Util::Min(1.f, Util::Max(-1.f, kProcFace_GlowSizeMultiplier * faceData.GetParameter(whichEye, Parameter::GlowSize)));
 
     const SmallMatrix<2, 3, f32> W_glow = GetTransformationMatrix(faceData.GetParameter(whichEye, Parameter::EyeAngle),
                                                                   (1+glowFraction) * faceData.GetParameter(whichEye, Parameter::EyeScaleX),
@@ -440,16 +452,17 @@ namespace Cozmo {
         }
       }
 
-      if(kProcFace_UseAntialiasing) {
-        // Antialiasing (AFTER glow because it changes eyeShape, which we use to compute the glow above)
-        const s32 kAntiAliasingSize = 5;
-        static_assert(kAntiAliasingSize % 2 == 1, "Antialiasing filter size should be odd");
+      // Antialiasing (AFTER glow because it changes eyeShape, which we use to compute the glow above)
+      if(kProcFace_AntiAliasingSize > 0) {
+        if(kProcFace_AntiAliasingSize % 2 == 0) {
+          ++kProcFace_AntiAliasingSize; // Antialiasing filter size should be odd
+        }
         if(kProcFace_GaussianGlowFilter) {
           const f32 kAntiAliasingSigmaFraction = 0.5f;
-          cv::GaussianBlur(eyeShapeROI.get_CvMat_(), eyeShapeROI.get_CvMat_(), cv::Size(kAntiAliasingSize,kAntiAliasingSize),
-                           (f32)kAntiAliasingSize * kAntiAliasingSigmaFraction);
+          cv::GaussianBlur(eyeShapeROI.get_CvMat_(), eyeShapeROI.get_CvMat_(), cv::Size(kProcFace_AntiAliasingSize,kProcFace_AntiAliasingSize),
+                           (f32)kProcFace_AntiAliasingSize * kAntiAliasingSigmaFraction);
         } else {
-          cv::boxFilter(eyeShapeROI.get_CvMat_(), eyeShapeROI.get_CvMat_(), -1, cv::Size(kAntiAliasingSize,kAntiAliasingSize));
+          cv::boxFilter(eyeShapeROI.get_CvMat_(), eyeShapeROI.get_CvMat_(), -1, cv::Size(kProcFace_AntiAliasingSize,kProcFace_AntiAliasingSize));
         }
       }
       
@@ -541,11 +554,6 @@ namespace Cozmo {
     faceImg.FillWith(Vision::PixelRGB(0,0,0));
     
     Rectangle<f32> leftBBox, rightBBox;
-    if(kProcFace_VictorRenderer) {
-      kProcFace_RenderInnerOuterGlow = kProcFace_ApplyGlowFilter = kProcFace_UseAntialiasing = true;
-    } else {
-      kProcFace_VictorRenderer = kProcFace_RenderInnerOuterGlow && kProcFace_ApplyGlowFilter && kProcFace_UseAntialiasing;
-    }
     DrawEye(faceData, WhichEye::Left,  rng, faceImg, leftBBox);
     DrawEye(faceData, WhichEye::Right, rng, faceImg, rightBBox);
 

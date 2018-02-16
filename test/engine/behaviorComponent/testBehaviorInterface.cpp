@@ -13,8 +13,13 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 #include "clad/types/behaviorComponent/behaviorTypes.h"
+#include "clad/types/behaviorComponent/userIntent.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/basicActions.h"
+#include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
+#include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
@@ -34,8 +39,7 @@ static const BehaviorID emptyID2 = BEHAVIOR_ID(Wait_TestInjectable);
 
 TEST(BehaviorInterface, Create)
 {
-  CozmoContext context{};
-  TestBehaviorFramework testBehaviorFramework(1, &context);
+  TestBehaviorFramework testBehaviorFramework;
   RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
   Json::Value emptyConfig = ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait , BehaviorID::Anonymous);
   TestBehavior emptyBase(emptyConfig);
@@ -62,8 +66,7 @@ TEST(BehaviorInterface, Create)
 
 TEST(BehaviorInterface, Init)
 {
-  CozmoContext context{};
-  TestBehaviorFramework testBehaviorFramework(1, &context);
+  TestBehaviorFramework testBehaviorFramework;
   RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
   Json::Value emptyConfig = ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait , BehaviorID::Anonymous);
   TestBehavior emptyBase(emptyConfig);
@@ -91,9 +94,7 @@ TEST(BehaviorInterface, Init)
 
 TEST(BehaviorInterface, InitWithInterface)
 {
-  UiMessageHandler handler(0, nullptr);
-  CozmoContext context(nullptr, &handler);
-  TestBehaviorFramework testBehaviorFramework(1, &context);
+  TestBehaviorFramework testBehaviorFramework;
   RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
   Json::Value emptyConfig = ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait , BehaviorID::Anonymous);
   TestBehavior emptyBase(emptyConfig);
@@ -122,8 +123,7 @@ TEST(BehaviorInterface, InitWithInterface)
 
 TEST(BehaviorInterface, Run)
 {
-  CozmoContext context{};
-  TestBehaviorFramework testBehaviorFramework(1, &context);
+  TestBehaviorFramework testBehaviorFramework;
   RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
   Json::Value emptyConfig = ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait , BehaviorID::Anonymous);
   TestBehavior emptyBase(emptyConfig);
@@ -159,9 +159,7 @@ TEST(BehaviorInterface, Run)
 
 TEST(BehaviorInterface, HandleMessages)
 {
-  UiMessageHandler handler(0, nullptr);
-  CozmoContext context(nullptr, &handler);
-  TestBehaviorFramework testBehaviorFramework(1, &context);
+  TestBehaviorFramework testBehaviorFramework;
   RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
   
   Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
@@ -235,9 +233,7 @@ TEST(BehaviorInterface, HandleMessages)
 
 TEST(BehaviorInterface, OutsideAction)
 {
-  UiMessageHandler handler(0, nullptr);
-  CozmoContext context(nullptr, &handler);
-  TestBehaviorFramework testBehaviorFramework(1, &context);
+  TestBehaviorFramework testBehaviorFramework;
   RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
   Json::Value emptyConfig = ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait , BehaviorID::Anonymous);
   TestBehavior emptyBase(emptyConfig);
@@ -292,14 +288,12 @@ TEST(BehaviorInterface, OutsideAction)
 
 TEST(BehaviorInterface, DelegateIfInControlSimple)
 {
-  UiMessageHandler handler(0, nullptr);
-  CozmoContext context(nullptr, &handler);
   BaseStationTimer::getInstance()->UpdateTime(0);
   
   Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
   TestBehavior b(empty);
   
-  TestBehaviorFramework testBehaviorFramework(1, &context);
+  TestBehaviorFramework testBehaviorFramework;
   RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
   {
     BehaviorContainer* bc = new BehaviorContainer(emptyBehaviorMap);
@@ -333,14 +327,12 @@ TEST(BehaviorInterface, DelegateIfInControlSimple)
 
 TEST(BehaviorInterface, DelegateIfInControlFailures)
 {
-  UiMessageHandler handler(0, nullptr);
-  CozmoContext context(nullptr, &handler);
   BaseStationTimer::getInstance()->UpdateTime(0);
   
   Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
   TestBehavior b(empty);
   
-  TestBehaviorFramework testBehaviorFramework(1, &context);
+  TestBehaviorFramework testBehaviorFramework;
   RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
   {
     BehaviorContainer* container = new BehaviorContainer(emptyBehaviorMap);
@@ -403,14 +395,12 @@ TEST(BehaviorInterface, DelegateIfInControlFailures)
 
 TEST(BehaviorInterface, DelegateIfInControlCallbacks)
 {
-  UiMessageHandler handler(0, nullptr);
-  CozmoContext context(nullptr, &handler);
   BaseStationTimer::getInstance()->UpdateTime(0);
   
   Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
   TestBehavior b(empty);
   
-  TestBehaviorFramework testBehaviorFramework(1, &context);
+  TestBehaviorFramework testBehaviorFramework;
   RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
   {
     BehaviorContainer* container = new BehaviorContainer(emptyBehaviorMap);
@@ -476,14 +466,12 @@ TEST(BehaviorInterface, DelegateIfInControlCallbacks)
 
 TEST(BehaviorInterface, DelegateIfInControlWhenNotRunning)
 {
-  UiMessageHandler handler(0, nullptr);
-  CozmoContext context(nullptr, &handler);
   BaseStationTimer::getInstance()->UpdateTime(0);
   
   Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
   TestBehavior b(empty);
   
-  TestBehaviorFramework testBehaviorFramework(1, &context);
+  TestBehaviorFramework testBehaviorFramework;
   RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
   {
     BehaviorContainer* container = new BehaviorContainer(emptyBehaviorMap);
@@ -547,14 +535,12 @@ TEST(BehaviorInterface, DelegateIfInControlWhenNotRunning)
 
 TEST(BehaviorInterface, StopActingWithoutCallback)
 {
-  UiMessageHandler handler(0, nullptr);
-  CozmoContext context(nullptr, &handler);
   BaseStationTimer::getInstance()->UpdateTime(0);
   
   Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
   TestBehavior b(empty);
   
-  TestBehaviorFramework testBehaviorFramework(1, &context);
+  TestBehaviorFramework testBehaviorFramework;
   RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
   {
     BehaviorContainer* container = new BehaviorContainer(emptyBehaviorMap);
@@ -653,14 +639,12 @@ public:
 
 TEST(BehaviorInterface, DelegateIfInControlInsideInit)
 {
-  UiMessageHandler handler(0, nullptr);
-  CozmoContext context(nullptr, &handler);
   BaseStationTimer::getInstance()->UpdateTime(0);
   
   Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
   TestInitBehavior b(empty);
   
-  TestBehaviorFramework testBehaviorFramework(1, &context);
+  TestBehaviorFramework testBehaviorFramework;
   RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
   {
     BehaviorContainer* bc = new BehaviorContainer(emptyBehaviorMap);
@@ -683,3 +667,197 @@ TEST(BehaviorInterface, DelegateIfInControlInsideInit)
 
   EXPECT_TRUE(robot.GetActionList().IsEmpty());
 }
+
+class TestBehavior_RespondsUserIntents : public ICozmoBehavior
+{
+public:
+  TestBehavior_RespondsUserIntents(const Json::Value& config)
+    :ICozmoBehavior(config)
+  {
+    _type = config["responseType"].asString();
+  
+    if( _type == "user intent tags" ) {
+      AddWaitForUserIntent( USER_INTENT(test_user_intent_1) );
+      AddWaitForUserIntent( USER_INTENT(test_name) );
+    }
+    else if( _type == "user intent lambdas" ) {
+      AddWaitForUserIntent( USER_INTENT(test_name), [](const UserIntent& intent){
+        return intent.Get_test_name().name == "Victor";
+      });
+    }
+    else if( _type == "user intent intent Victor" ) {
+      UserIntent intent;
+      intent.Set_test_name( UserIntent_Test_Name{"Victor"} );
+      AddWaitForUserIntent( std::move(intent) );
+    }
+    else if( _type == "user intent intent empty" ) {
+      UserIntent intent;
+      intent.Set_test_name( UserIntent_Test_Name{""} );
+      AddWaitForUserIntent( std::move(intent) );
+    }
+    else if( _type == "trigger" ) {
+      SetRespondToTriggerWord( true );
+    }
+    // otherwise don't do anything
+  }
+  
+  std::function<void(const UserIntent&)> _onGetData;
+  std::string _type;
+
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
+
+  virtual bool WantsToBeActivatedBehavior() const override {
+    return true;
+  }
+
+  virtual void OnBehaviorActivated() override {
+    if( _onGetData ) {
+      _onGetData( GetTriggeringUserIntent() );
+    }
+  }
+
+};
+
+TEST(BehaviorInterface, BehaviorRespondsToUserIntents)
+{
+  // test all the ways we can make this behavior wait for user intents
+  TestBehaviorFramework testBehaviorFramework;
+  RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
+  Json::Value emptyConfig = ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait , BehaviorID::Anonymous);
+  TestBehavior emptyBase(emptyConfig);
+  {
+    BehaviorContainer* bc = new BehaviorContainer(emptyBehaviorMap);
+    testBehaviorFramework.InitializeStandardBehaviorComponent(&emptyBase, nullptr, true, bc);
+  }
+  
+  BehaviorExternalInterface& bei = testBehaviorFramework.GetBehaviorExternalInterface();
+  auto& uic = bei.GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
+  
+  for( int i=0; i<=11; ++i ) {
+    bool callbackFired = false;
+    bool expectingCallback = false;
+    Json::Value config = ICozmoBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
+    
+    if( i == 0 ) { // behavior isn't listening for anything
+      
+    }
+    else if( i >= 1 && i <= 3 ) { // 1-3 are behavior waiting for tags (one tag, the other tag, a wrong tag)
+      config["responseType"] = "user intent tags";
+    }
+    else if( i >= 4 && i <= 6 ) { // 4-6 are lambdas (lambda with correct data, lambda with wrong data, a wrong tag)
+      config["responseType"] = "user intent lambdas";
+    }
+    else if( i >= 7 && i <= 9 ) { // 7-9 are intents (intent with correct data, intent with wrong/empty data, wrong tag)
+      config["responseType"] = "user intent intent Victor";
+    }
+    else if( i == 10 || i == 11 ) { // 10-11 are intents with null string (intent with null string, intent with nonnull string)
+      config["responseType"] = "user intent intent empty";
+    }
+    else if( i == 12 ) { // 12 is trigger
+      config["responseType"] = "trigger";
+    }
+    TestBehavior_RespondsUserIntents b(config);
+    
+    UserIntent passedIntent;
+    
+    if( i==1 || i==2 || i==4 || i==7 || i==10 ) {
+      expectingCallback = true;
+      // these ones should have data and it should match
+      b._onGetData = [&](const UserIntent& intent) {
+        EXPECT_EQ( intent, passedIntent );
+        callbackFired = true;
+      };
+    }
+    
+    b.Init( bei );
+    b.InitBehaviorOperationModifiers();
+    b.OnEnteredActivatableScope();
+    
+    EXPECT_FALSE( uic.IsAnyUserIntentPending() );
+    EXPECT_FALSE( uic.IsTriggerWordPending() );
+
+    EXPECT_TRUE( b.WantsToBeActivatedBehavior() ); // it's the ICozmoBehavior we're testing here, not b
+    
+    switch( i ) {
+      case 0: // behavior isnt listening to intents, so it should always be true
+      {
+        passedIntent.Set_test_name( UserIntent_Test_Name{""} );
+        EXPECT_TRUE( b.WantsToBeActivated() );
+        uic.SetUserIntentPending( std::move(passedIntent) );
+        EXPECT_TRUE( b.WantsToBeActivatedInternal() );
+        uic.ClearUserIntent( USER_INTENT(test_name) );
+      }
+        break;
+      case 1: // behavior is waiting for test_user_intent_1; also, it should clear the intent
+      {
+        passedIntent.Set_test_user_intent_1({});
+        EXPECT_FALSE( b.WantsToBeActivated() );
+        uic.SetUserIntentPending( passedIntent.GetTag() );
+        EXPECT_TRUE( b.WantsToBeActivated() );
+        b.OnActivated();
+        EXPECT_FALSE( uic.IsUserIntentPending(USER_INTENT(test_user_intent_1)) );
+        EXPECT_FALSE( uic.IsAnyUserIntentPending() );
+      }
+        break;
+      case 2: // behavior is waiting for test_name; also, it should clear the intent
+      case 4: // behavior is waiting for test_name with "Victor"
+      case 7: // behavior is waiting for test_name with "Victor"
+      {
+        passedIntent.Set_test_name( UserIntent_Test_Name{"Victor"} );
+        EXPECT_FALSE( b.WantsToBeActivated() );
+        uic.SetUserIntentPending( std::move(passedIntent) );
+        EXPECT_TRUE( b.WantsToBeActivated() );
+        b.OnActivated();
+        EXPECT_FALSE( uic.IsUserIntentPending(USER_INTENT(test_name)) );
+        EXPECT_FALSE( uic.IsAnyUserIntentPending() );
+      }
+        break;
+      case 3: // passing a different tag. should not want to start
+      case 6: // passing a different tag. should not want to start
+      case 9: // passing a different tag. should not want to start
+      {
+        passedIntent.Set_test_user_intent_2({});
+        EXPECT_FALSE( b.WantsToBeActivated() );
+        uic.SetUserIntentPending( passedIntent.GetTag() );
+        EXPECT_FALSE( b.WantsToBeActivated() );
+        uic.ClearUserIntent( USER_INTENT(test_user_intent_2) );
+      }
+        break;
+      case 5: // behavior is waiting for test_name with "Victor" but we give it Cozmo
+      case 8: // behavior is waiting for test_name with "Victor" but we give it Cozmo
+      case 11: // behavior is waiting for test_name with "" but we give it Cozmo
+      {
+        passedIntent.Set_test_name( UserIntent_Test_Name{"Cozmo"} );
+        EXPECT_FALSE( b.WantsToBeActivated() );
+        uic.SetUserIntentPending( std::move(passedIntent) );
+        EXPECT_FALSE( b.WantsToBeActivated() );
+        uic.ClearUserIntent( USER_INTENT(test_name) );
+      }
+        break;
+      case 10: // behavior is waiting for test_name with "".
+      {
+        passedIntent.Set_test_name( UserIntent_Test_Name{""} );
+        EXPECT_FALSE( b.WantsToBeActivated() );
+        uic.SetUserIntentPending( std::move(passedIntent) );
+        EXPECT_TRUE( b.WantsToBeActivated() );
+        b.OnActivated();
+        EXPECT_FALSE( uic.IsUserIntentPending(USER_INTENT(test_name)) );
+        EXPECT_FALSE( uic.IsAnyUserIntentPending() );
+      }
+        break;
+      case 12: // behavior is waiting for a trigger
+      {
+        EXPECT_FALSE( b.WantsToBeActivated() );
+        uic.SetTriggerWordPending();
+        EXPECT_TRUE( b.WantsToBeActivated() );
+        b.OnActivated();
+        EXPECT_FALSE( uic.IsTriggerWordPending() );
+      }
+        break;
+    }
+    
+    EXPECT_EQ(callbackFired, expectingCallback);
+  }
+  
+}
+

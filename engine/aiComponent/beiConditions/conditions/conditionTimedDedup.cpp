@@ -50,16 +50,6 @@ ConditionTimedDedup::ConditionTimedDedup(IBEIConditionPtr subCondition, float de
   ANKI_VERIFY(_instanceParams.subCondition, "ConditionTimedDedup.Constructor.Direct.NullSubCondition", "" );
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ConditionTimedDedup::ResetInternal(BehaviorExternalInterface& bei)
-{  
-  if( _instanceParams.subCondition ) {
-    _instanceParams.subCondition->Reset(bei);
-  }
-}
-
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ConditionTimedDedup::InitInternal(BehaviorExternalInterface& bei)
 {
@@ -81,6 +71,14 @@ bool ConditionTimedDedup::AreConditionsMetInternal(BehaviorExternalInterface& be
     return subResult;
   }
   return false;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ConditionTimedDedup::SetActiveInternal(BehaviorExternalInterface& bei, bool setActive)
+{
+  if(_instanceParams.subCondition){
+    _instanceParams.subCondition->SetActive(bei, setActive);
+  }
 }
 
 } // namespace Cozmo

@@ -575,7 +575,7 @@ public:
   
   IExternalInterface* GetExternalInterface();
   
-  RobotInterface::MessageHandler* GetRobotMessageHandler();
+  RobotInterface::MessageHandler* GetRobotMessageHandler() const;
   void SetImageSendMode(ImageSendMode newMode) { _imageSendMode = newMode; }
   const ImageSendMode GetImageSendMode() const { return _imageSendMode; }
   

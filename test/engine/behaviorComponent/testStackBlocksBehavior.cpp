@@ -196,10 +196,7 @@ void SetupStackTest(Robot& robot, ICozmoBehaviorPtr& stackBehavior,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TEST(StackBlocksBehavior, InitBehavior)
 {
-  UiMessageHandler handler(0, nullptr);
-  CozmoContext context(nullptr, &handler);
-  
-  TestBehaviorFramework testBehaviorFramework(1, &context);
+  TestBehaviorFramework testBehaviorFramework;
   RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
   Json::Value emptyConfig = ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait , BehaviorID::Anonymous);
   TestBehavior emptyBase(emptyConfig);
@@ -220,9 +217,7 @@ TEST(StackBlocksBehavior, InitBehavior)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TEST(StackBlocksBehavior, DeleteCubeCrash)
 {
-  UiMessageHandler handler(0, nullptr);
-  CozmoContext context(nullptr, &handler);
-  TestBehaviorFramework testBehaviorFramework(1, &context);
+  TestBehaviorFramework testBehaviorFramework;
   RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
   Json::Value emptyConfig = ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait , BehaviorID::Anonymous);
   TestBehavior emptyBase(emptyConfig);

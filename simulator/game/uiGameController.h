@@ -278,6 +278,8 @@ protected:
   void SendIMURequest(u32 length_ms);
   void SendLogCliffDataRequest(const u32 length_ms);
   void SendLogProxDataRequest(const u32 length_ms);
+  void SendCubeAnimation(const u32 objectID, const CubeAnimationTrigger cubeAnimTrigger);
+  void SendStopCubeAnimation(const u32 objectID, const CubeAnimationTrigger cubeAnimTrigger);
   void SendAnimation(const char* animName, u32 numLoops, bool throttleMessages = false);
   void SendAnimationGroup(const char* animGroupName, u32 numLoops, bool throttleMessages = false);
   void SendAnimationTrigger(const char* animTriggerName, u32 numLoops, bool throttleMessages = false);

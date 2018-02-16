@@ -24,7 +24,6 @@ enum class BCComponentID{
   AIComponent,
   AsyncMessageComponent,
   BehaviorAudioComponent,
-  BehaviorComponentCloudReceiver,
   BehaviorContainer,
   BehaviorEventAnimResponseDirector,
   BehaviorEventComponent,
@@ -36,6 +35,7 @@ enum class BCComponentID{
   DevBehaviorComponentMessageHandler,
   FaceWorld,
   RobotInfo,
+  UserIntentComponent,
   BaseBehaviorWrapper,
   Count
 };

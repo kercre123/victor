@@ -52,17 +52,19 @@ namespace Cozmo {
 
   CONSOLE_VAR(bool, kProcFace_OverrideEyeParams,        "ProceduralFace", false); // Override procedural face with ConsoleVars edited version
   CONSOLE_VAR(bool, kProcFace_OverrideRightEyeParams,   "ProceduralFace", false); // Make left and right eyes override in unison
-  CONSOLE_VAR(bool, kProcFace_OverrideReset,            "ProceduralFace", false); // Reset overriden parameters to current canned animation
   CONSOLE_VAR(bool, kProcFace_UseNoise,                 "ProceduralFace", false); // Victor vs Cozmo effect, no noise = lazy updates
 
-  CONSOLE_VAR_RANGED(float, kProcFace_Angle_deg,               "ProceduralFace", 0.0f, -90.0f, 90.0f);
-  CONSOLE_VAR_RANGED(float, kProcFace_ScaleX,                  "ProceduralFace", 1.0f, 0.0f, 10.0f);
-  CONSOLE_VAR_RANGED(float, kProcFace_ScaleY,                  "ProceduralFace", 1.0f, 0.0f, 10.0f);
-  CONSOLE_VAR_RANGED(float, kProcFace_CenterX,                 "ProceduralFace", 0.0f, -100.0f, 100.0f);
-  CONSOLE_VAR_RANGED(float, kProcFace_CenterY,                 "ProceduralFace", 0.0f, -100.0f, 100.0f);
-  CONSOLE_VAR_RANGED(float, kProcFace_ScanlineOpacity,         "ProceduralFace", 0.7f, 0.0f, 1.0f);
+  static ProceduralFace s_faceDataOverride; // incoming values from console var system
+  static ProceduralFace s_faceDataBaseline; // baseline to compare against, differences mean override the incoming animation
+  static bool s_faceDataOverrideRegistered = false;
+  static bool s_faceDataReset = false;
 
-  ProceduralFace s_faceDataOverride;
+  void ResetFace(ConsoleFunctionContextRef context)
+  {
+    s_faceDataReset = true;
+  }
+  
+  CONSOLE_FUNC(ResetFace, "ProceduralFace");
 
   namespace{
     
@@ -117,6 +119,13 @@ namespace Cozmo {
   {
     _proceduralAnimation = new Animation(EnumToString(AnimConstants::PROCEDURAL_ANIM));
     _proceduralAnimation->SetIsLive(true);
+
+    if(ANKI_DEV_CHEATS) {
+      if (!s_faceDataOverrideRegistered) {
+        s_faceDataOverride.RegisterFaceWithConsoleVars();
+        s_faceDataOverrideRegistered = true;
+      }
+    }
   }
   
   Result AnimationStreamer::Init()
@@ -566,29 +575,65 @@ namespace Cozmo {
       DEV_ASSERT(_context->GetRandom() != nullptr, "AnimationStreamer.BufferFaceToSend.NoRNGinContext");
 
       if(kProcFace_OverrideEyeParams) {
-        static bool overrideInit = false;
-        if (!overrideInit) {
-          s_faceDataOverride.RegisterFaceWithConsoleVars();
-          kProcFace_OverrideReset = true;
-          overrideInit = true;
+        if(s_faceDataReset) {
+          s_faceDataOverride = s_faceDataBaseline = procFace;
+          ProceduralFace::SetHue(ProceduralFace::DefaultHue);
+
+          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_DefaultScanlineOpacity");
+          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_NominalEyeSpacing");
+
+          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_NoiseFraction");
+          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_UseAntiAliasedLines");
+          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_GlowSizeMultiplier");
+          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_EyeBrightnessMultiplier");
+          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_GlowBrightnessMultiplier");
+          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_RenderInnerOuterGlow");
+          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_InnerGlowFrac");
+          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_ApplyGlowFilter");
+          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_GaussianGlowFilter");
+          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_AntiAliasingSize");
+
+          s_faceDataReset = false;
         }
 
-        if(kProcFace_OverrideReset) {
-          s_faceDataOverride = procFace;
-          kProcFace_OverrideReset = false;
-        } else {
-          if(kProcFace_OverrideRightEyeParams) {
-            s_faceDataOverride.SetParameters(ProceduralFace::WhichEye::Right,
-                                             s_faceDataOverride.GetParameters(ProceduralFace::WhichEye::Left));
+        // compare override face data with baseline, if different update the rendered face
+
+        ProceduralFace newProcFace = procFace;
+
+        // for each eye parameter
+        if(kProcFace_OverrideRightEyeParams) {
+          s_faceDataOverride.SetParameters(ProceduralFace::WhichEye::Right, s_faceDataOverride.GetParameters(ProceduralFace::WhichEye::Left));
+        }
+        for(auto whichEye : {ProceduralFace::WhichEye::Left, ProceduralFace::WhichEye::Right}) {
+          for (std::underlying_type<ProceduralFace::Parameter>::type iParam=0;
+               iParam < Util::EnumToUnderlying(ProceduralFace::Parameter::NumParameters);
+               ++iParam) {
+            if(s_faceDataOverride.GetParameter(whichEye, (ProceduralFace::Parameter)iParam) !=
+               s_faceDataBaseline.GetParameter(whichEye, (ProceduralFace::Parameter)iParam)) {
+              newProcFace.SetParameter(whichEye,
+                                       (ProceduralFace::Parameter)iParam,
+                                       s_faceDataOverride.GetParameter(whichEye, (ProceduralFace::Parameter)iParam));
+            }
           }
         }
 
-        s_faceDataOverride.SetFaceAngle(kProcFace_Angle_deg);
-        s_faceDataOverride.SetFaceScale({kProcFace_ScaleX, kProcFace_ScaleY});
-        s_faceDataOverride.SetFacePosition({kProcFace_CenterX, kProcFace_CenterY});
-        s_faceDataOverride.SetScanlineOpacity(kProcFace_ScanlineOpacity);
+        // for each face parameter
+        if(s_faceDataOverride.GetFaceAngle() != s_faceDataBaseline.GetFaceAngle()) {
+          newProcFace.SetFaceAngle(s_faceDataOverride.GetFaceAngle());
+        }
+        if(s_faceDataOverride.GetFaceScale()[0] != s_faceDataBaseline.GetFaceScale()[0] ||
+           s_faceDataOverride.GetFaceScale()[1] != s_faceDataBaseline.GetFaceScale()[1]) {
+          newProcFace.SetFaceScale(s_faceDataOverride.GetFaceScale());
+        }
+        if(s_faceDataOverride.GetFacePosition()[0] != s_faceDataBaseline.GetFacePosition()[0] ||
+           s_faceDataOverride.GetFacePosition()[1] != s_faceDataBaseline.GetFacePosition()[1]) {
+          newProcFace.SetFacePosition(s_faceDataOverride.GetFacePosition());
+        }
+        if(s_faceDataOverride.GetScanlineOpacity() != s_faceDataBaseline.GetScanlineOpacity()) {
+          newProcFace.SetScanlineOpacity(s_faceDataOverride.GetScanlineOpacity());
+        }
 
-        ProceduralFaceDrawer::DrawFace(s_faceDataOverride, *_context->GetRandom(), _faceDrawBuf);
+        ProceduralFaceDrawer::DrawFace(newProcFace, *_context->GetRandom(), _faceDrawBuf);
       } else {
         ProceduralFaceDrawer::DrawFace(procFace, *_context->GetRandom(), _faceDrawBuf);
       }
@@ -887,10 +932,17 @@ namespace Cozmo {
         
         if (gotImage) {
           DEBUG_STREAM_KEYFRAME_MESSAGE("FaceAnimation");
-          BufferFaceToSend(_faceDrawBuf, false);  // Don't overwrite FaceAnimationKeyFrame images
+          
+          // The faceDrawBuf can be empty and gotImage still be true if we're meant to hold
+          // the last image that was drawn. (If the keyframe contains an image with duration
+          // longer than ANIM_TIME_STEP_MS, only the first frame is non-empty and it is followed by
+          // however many ANIM_TIME_STEP_MS long empty frames are required to equal the duration.)
+          if (!_faceDrawBuf.IsEmpty()) {
+            BufferFaceToSend(_faceDrawBuf, false);  // Don't overwrite FaceAnimationKeyFrame images
+          }
           _nextProceduralFaceAllowedTime_ms = currTime_ms + kMinTimeBetweenLastNonProcFaceAndNextProcFace_ms;
         } else {
-          PRINT_NAMED_ERROR("AnimationStreamer.UpdateStream", "%s: Failed retrieving face image.",
+          PRINT_NAMED_WARNING("AnimationStreamer.UpdateStream.FailedToGetFaceImage", "Anim: %s",
                             anim->GetName().c_str());
         }
 

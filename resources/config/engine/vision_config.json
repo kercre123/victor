@@ -7,7 +7,7 @@
     "DetectingPets"              : false,
     "DetectingMotion"            : false,
     "DetectingOverheadEdges"     : false,
-    "CheckingQuality"            : false,
+    "CheckingQuality"            : true,
     "EstimatingFacialExpression" : false,
     "DetectingSmileAmount"       : false,
     "DetectingGaze"              : false,

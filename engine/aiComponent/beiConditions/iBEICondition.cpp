@@ -16,6 +16,8 @@
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
 
 #include "coretech/common/engine/jsonTools.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/components/visionScheduleMediator/visionScheduleMediator.h"
 #include "engine/robot.h"
 
 namespace Anki {
@@ -52,10 +54,21 @@ IBEICondition::IBEICondition(const Json::Value& config)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBEICondition::Reset(BehaviorExternalInterface& bei)
+void IBEICondition::SetActive(BehaviorExternalInterface& bei, bool setToActive)
 {
-  _hasEverBeenReset = true;
-  ResetInternal(bei);
+  // Activate required VisionModes(if any)
+  std::set<VisionModeRequest> visionModeRequests;
+  GetRequiredVisionModes(visionModeRequests);
+  if(!visionModeRequests.empty()){
+    if(setToActive){
+      bei.GetVisionScheduleMediator().SetVisionModeSubscriptions(this, visionModeRequests);
+    } else {
+      bei.GetVisionScheduleMediator().ReleaseAllVisionModeSubscriptions(this);
+    }
+  }
+
+  _isActive = setToActive;
+  SetActiveInternal(bei, _isActive);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -73,7 +86,7 @@ void IBEICondition::Init(BehaviorExternalInterface& bei)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool IBEICondition::AreConditionsMet(BehaviorExternalInterface& behaviorExternalInterface) const
 {
-  DEV_ASSERT(_hasEverBeenReset, "IBEICondition.AreConditionsMet.NotEverReset");
+  DEV_ASSERT(_isActive, "IBEICondition.AreConditionsMet.IsInactive");
   DEV_ASSERT(_isInitialized, "IBEICondition.AreConditionsMet.NotInitialized");
   return AreConditionsMetInternal(behaviorExternalInterface);
 }

@@ -1,0 +1,81 @@
+// File: userIntent.clad
+// Author: Brad Neuman
+// Created: 2018-02-04
+// Copyright: Anki, inc. 2018
+
+namespace Anki {
+namespace Cozmo {
+
+// put all your super verbose void types here
+structure UserIntent_Void_unmatched_intent {}
+structure UserIntent_Void_greeting_goodbye {}
+structure UserIntent_Void_greeting_hello {}
+structure UserIntent_Void_imperative_come {}
+structure UserIntent_Void_imperative_quiet {}
+structure UserIntent_Void_play_anytrick {}
+structure UserIntent_Void_system_charger {}
+structure UserIntent_Void_status_feeling {}
+structure UserIntent_Void_system_sleep {}
+structure UserIntent_Void_system_wake {}
+structure UserIntent_Void_test_SEPARATOR {}
+structure UserIntent_Void_test_user_intent_1 {}
+structure UserIntent_Void_test_user_intent_2 {}
+
+structure UserIntent_PlaySpecific
+{
+  string entity_behavior,
+}
+
+// test structs. todo: get rid of these in favor of actual structs once
+// there are legit user intents. tests can use the actual structs
+structure UserIntent_Test_TimeInSeconds
+{
+  uint_32 time_s
+}
+
+enum uint_8 UserIntent_Test_Time_Units
+{
+  s=0,
+  m
+}
+structure UserIntent_Test_TimeWithUnits
+{
+  uint_32 time,
+  UserIntent_Test_Time_Units units,
+}
+
+structure UserIntent_Test_Name
+{
+  string name
+}
+
+union UserIntent
+{
+  UserIntent_Void_unmatched_intent unmatched_intent,
+
+  // PLEASE KEEP ALPHABETIZED 
+  // thank you in advance for caring
+
+  UserIntent_Void_greeting_goodbye          greeting_goodbye,
+  UserIntent_Void_greeting_hello            greeting_hello,
+  UserIntent_Void_imperative_come           imperative_come,
+  UserIntent_Void_imperative_quiet          imperative_quiet,
+  UserIntent_Void_play_anytrick             play_anytrick,
+  UserIntent_PlaySpecific                   play_specific,
+  UserIntent_Void_system_charger            system_charger,
+  UserIntent_Void_status_feeling            status_feeling,
+  UserIntent_Void_system_sleep              system_sleep,
+  UserIntent_Void_system_wake               system_wake,
+
+
+  // for tests
+  UserIntent_Void_test_SEPARATOR             test_SEPARATOR, // used for validation to know when the above ends
+  UserIntent_Void_test_user_intent_1         test_user_intent_1,
+  UserIntent_Void_test_user_intent_2         test_user_intent_2,
+  UserIntent_Test_TimeInSeconds              test_timeInSeconds,
+  UserIntent_Test_Name                       test_name,
+  UserIntent_Test_TimeWithUnits              test_timeWithUnits,
+}
+
+} // namespace Cozmo
+} // namespace Anki

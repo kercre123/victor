@@ -46,6 +46,11 @@ typedef struct {
   uint8_t  data[0];
 } anki_camera_frame_t;
 
+typedef struct {
+  uint16_t exposure_ms;
+  float gain;
+} anki_camera_exposure_t;
+
 // END: shared types
 
 
@@ -73,6 +78,8 @@ int camera_frame_acquire(struct anki_camera_handle* camera, anki_camera_frame_t*
 
 // Release (unlock) frame to camera system
 int camera_frame_release(struct anki_camera_handle* camera, uint32_t frame_id);
+
+int camera_set_exposure(struct anki_camera_handle* camera, uint16_t exposure_ms, float gain);
 
 // Get current status of camera system
 anki_camera_status_t camera_status(struct anki_camera_handle* camera);

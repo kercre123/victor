@@ -461,7 +461,9 @@ namespace Cozmo {
   {
     ExternalInterface::EnableLightStates msg;
     static bool enableLightComponent = false;
-    printf("EnableLightsComponent: %d", enableLightComponent);
+    LOG_INFO("ToggleEngineLightComponent.EnableLightsComponent",
+             "EnableLightsComponent: %s",
+             enableLightComponent ? "TRUE" : "FALSE");
     msg.enable = enableLightComponent;
     enableLightComponent = !enableLightComponent;
     
@@ -642,14 +644,13 @@ namespace Cozmo {
   }
   
 
-  // shift + alt = Fake trigger word detected
-  // no optional key = Fake cloud intent w/ string in field
+  // shift + alt + H = Fake trigger word detected
+  // H = Fake cloud intent w/ string in field
   void WebotsKeyboardController::FakeCloudIntent()
   {
-    // select behavior chooser
-    webots::Field* cloudIntentField = root_->getField("cloudIntent");
+    webots::Field* cloudIntentField = root_->getField("intent");
     if (cloudIntentField == nullptr) {
-      printf("ERROR: No cloud animation name field found in WebotsKeyboardController.proto\n");
+      printf("ERROR: No intent field found in WebotsKeyboardController.proto\n");
       return;
     }
     
@@ -663,6 +664,26 @@ namespace Cozmo {
     
     SendMessage(ExternalInterface::MessageGameToEngine(
                                                        ExternalInterface::FakeCloudIntent(cloudIntent)));
+  }
+  
+  // shift + H = Fake user intent detected
+  void WebotsKeyboardController::FakeUserIntent()
+  {
+    webots::Field* userIntentField = root_->getField("intent");
+    if (userIntentField == nullptr) {
+      printf("ERROR: No intent field found in WebotsKeyboardController.proto\n");
+      return;
+    }
+    
+    std::string userIntent = userIntentField->getSFString();
+    if (userIntent.empty()) {
+      printf("ERROR: cloudIntent field is empty\n");
+      return;
+    }
+    
+    printf("sending user intent '%s'\n", userIntent.c_str());
+    
+    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::FakeUserIntent(userIntent)));
   }
   
   
@@ -1650,23 +1671,30 @@ namespace Cozmo {
   
   void WebotsKeyboardController::PlayCubeAnimation()
   {
-    if(_altKeyPressed)
-    {
-      ExternalInterface::PlayCubeAnim s;
-      s.trigger = CubeAnimationTrigger::WakeUp;
-      s.objectID = 1;
-      ExternalInterface::MessageGameToEngine m;
-      m.Set_PlayCubeAnim(s);
-      SendMessage(m);
-    }
-    else
-    {
-      ExternalInterface::PlayCubeAnim s;
-      s.trigger = CubeAnimationTrigger::Flash;
-      s.objectID = 1;
-      ExternalInterface::MessageGameToEngine m;
-      m.Set_PlayCubeAnim(s);
-      SendMessage(m);
+    if(_altKeyPressed) {
+      // Send whatever cube animation trigger is specified in the animationToSendName field
+      webots::Field* animToSendNameField = root_->getField("animationToSendName");
+      if (animToSendNameField == nullptr) {
+        printf("ERROR: No animationToSendName field found in WebotsKeyboardController.proto\n");
+        return;
+      }
+      std::string cubeAnimTriggerStr = animToSendNameField->getSFString();
+      if (cubeAnimTriggerStr.empty()) {
+        printf("ERROR: animationToSendName field is empty\n");
+        return;
+      }
+      
+      CubeAnimationTrigger cubeAnimTrigger;
+      if (!EnumFromString(cubeAnimTriggerStr, cubeAnimTrigger)) {
+        LOG_ERROR("WebotsKeyboardController.PlayCubeAnimation.InvalidCubeAnimationTrigger",
+                  "ERROR: %s is not a valid CubeAnimationTrigger name",
+                  cubeAnimTriggerStr.c_str());
+        return;
+      }
+      
+      SendCubeAnimation(-1, cubeAnimTrigger);
+    } else {
+      SendCubeAnimation(-1, CubeAnimationTrigger::Flash);
     }
   }
   
@@ -2054,8 +2082,8 @@ namespace Cozmo {
 //      REGISTER_SHIFTED_KEY_FCN('|', MOD_ALT, , "");
     REGISTER_SHIFTED_KEY_FCN(':', MOD_NONE, SetRollActionParams,               "Set parameters for roll action");
 //      REGISTER_SHIFTED_KEY_FCN(':', MOD_ALT, , "");
-    REGISTER_SHIFTED_KEY_FCN('"', MOD_NONE, PlayCubeAnimation,                 "Play cube animation");
-    REGISTER_SHIFTED_KEY_FCN('"', MOD_ALT,  PlayCubeAnimation,                 "Play cube animation");
+    REGISTER_SHIFTED_KEY_FCN('"', MOD_NONE, PlayCubeAnimation,                 "Play 'Flash' cube animation on selected cube");
+    REGISTER_SHIFTED_KEY_FCN('"', MOD_ALT,  PlayCubeAnimation,                 "Play cube animation trigger specified in 'animationToSendName' on selected cube");
     REGISTER_SHIFTED_KEY_FCN('<', MOD_NONE, TurnInPlaceCCW,                    "Turn in place CCW by 'pointTurnAngle_deg'");
     REGISTER_SHIFTED_KEY_FCN('<', MOD_ALT,  TurnInPlaceCCW,                    "Turn in place CCW forever");
     REGISTER_SHIFTED_KEY_FCN('>', MOD_NONE, TurnInPlaceCW,                     "Turn in place CW by 'pointTurnAngle_deg'");
@@ -2098,8 +2126,8 @@ namespace Cozmo {
 //      REGISTER_KEY_FCN('G', MOD_ALT,       , "");
 //      REGISTER_KEY_FCN('G', MOD_ALT_SHIFT, , "");
 
-    REGISTER_KEY_FCN('H', MOD_NONE,      FakeCloudIntent, "Fake clound intent with contents of 'cloudIntent'");
-//      REGISTER_KEY_FCN('H', MOD_SHIFT,     , "");
+    REGISTER_KEY_FCN('H', MOD_NONE,      FakeCloudIntent, "Fake clound intent with contents of 'intent' (either a name or valid json)");
+    REGISTER_KEY_FCN('H', MOD_SHIFT,     FakeUserIntent, "Fake user intent with the contents of 'intent'");
 //      REGISTER_KEY_FCN('H', MOD_ALT,       , "");
     REGISTER_KEY_FCN('H', MOD_ALT_SHIFT, SendFakeTriggerWordDetect, "Send fake trigger word detect");
     
@@ -2185,7 +2213,7 @@ namespace Cozmo {
     
     REGISTER_KEY_FCN('Y', MOD_NONE,      ToggleKeepFaceAliveEnable,     "Toggle keep face alive enable");
     REGISTER_KEY_FCN('Y', MOD_SHIFT,     SetDefaultKeepFaceAliveParams, "Sets default KeepFaceAlive parameters");
-    REGISTER_KEY_FCN('Y', MOD_ALT,       SetKeepFaceAliveParams,        "Sets KeepFaceAlive parameters from keyboard node's params (starting at 'BlinkSpacingMinTime_ms'");
+    REGISTER_KEY_FCN('Y', MOD_ALT,       SetKeepFaceAliveParams,        "Sets KeepFaceAlive parameters from keyboard node's params (starting at 'BlinkSpacingMinTime_ms')");
 //    REGISTER_KEY_FCN('Y', MOD_ALT_SHIFT, , "");
     
     REGISTER_KEY_FCN('Z', MOD_NONE,      MoveLiftDown,    "Move lift down");

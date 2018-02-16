@@ -2323,15 +2323,12 @@ namespace Cozmo {
                   exposure_ms,
                   gain);
 
-    // SetCameraParams params(gain,
-    //                        exposure_ms_u16,
-    //                        false);
-    // _robot->SendMessage(RobotInterface::EngineToRobot(std::move(params)));
-    PRINT_NAMED_WARNING("VisionComponent.SetCameraSettings.NotYetImplemented", "");
-
     _vizManager->SendCameraInfo(exposure_ms_u16, gain);
 
     _visionSystem->SetNextCameraParams(exposure_ms, gain);
+
+    auto cameraService = CameraService::getInstance();
+    cameraService->CameraSetParameters(exposure_ms_u16, gain);
 
     _robot->Broadcast(ExternalInterface::MessageEngineToGame(
                         ExternalInterface::CurrentCameraParams(gain, exposure_ms_u16, _enableAutoExposure) ));

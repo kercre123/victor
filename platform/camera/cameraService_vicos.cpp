@@ -139,8 +139,7 @@ namespace Anki {
 
     void CameraService::CameraSetParameters(u16 exposure_ms, f32 gain)
     {
-      // STUB
-      return;
+      camera_set_exposure(_camera, exposure_ms, gain);
     }
 
     bool CameraService::CameraGetFrame(u8*& frame, u32& imageID, TimeStamp_t& imageCaptureSystemTimestamp_ms)

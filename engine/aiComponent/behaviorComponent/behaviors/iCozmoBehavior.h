@@ -47,9 +47,11 @@ namespace Cozmo {
   
 // Forward declarations
 class ActionableObject;
+class ConditionUserIntentPending;
 class DriveToObjectAction;
 enum class ObjectInteractionIntention;
-enum class CloudIntent : uint8_t;
+class UserIntent;
+enum class UserIntentTag : uint8_t;
 
 class ISubtaskListener;
 class IReactToFaceListener;
@@ -207,11 +209,32 @@ protected:
                   GetDebugLabel().c_str(), _debugStateName.c_str(), inName.c_str());
     _debugStateName = inName;
   }
-
-  // set the cloud intent that this responds to. Only valid to call this before Init is called (i.e. from the
-  // constructor). Normally this can be specified in json, but in some cases it may be more desirable to set
-  // it from code
-  void SetRespondToCloudIntent(CloudIntent intent);
+  
+  using EvalUserIntentFunc = std::function<bool(const UserIntent&)>; // should be true if data matches
+  
+  // You can add any number of user intents that you wish to wait for. If there is a pending intent
+  // and it matches, based on any of the conditions you supply, then this ICozmoBehavior will
+  // WantsToBeActivated(), in the absence of any other blocking conditions. When the behavior
+  // activates, it will clear the pending intent that matched one of your conditions.
+  // The functionality of all of these methods is also available in your behavior instance json
+  // with the parameter "respondToUserIntents," but sometimes it's more appropriate to use code.
+  // All of these methods must be called before Init() is called. You may:
+  // Wait for a match with the specfic tag
+  void AddWaitForUserIntent( UserIntentTag intentTag );
+  // Wait for an intent, which must match in entirety.
+  void AddWaitForUserIntent( UserIntent&& intent );
+  // Wait for a match with tag AND func(intent). The func will only be evaluated if the tag matches,
+  // so your lambda only needs to worry about the params, not the tag.
+  void AddWaitForUserIntent( UserIntentTag tag, EvalUserIntentFunc&& func );
+  
+  // remove all of the conditions added above
+  void ClearWaitForUserIntent();
+  
+  
+  // Set whether this behavior responds to the trigger word. It's only valid to call this before Init
+  // is called (i.e. from the constructor). Normally this can be specified in json, but in some cases
+  // it may be more desirable to set it from code
+  void SetRespondToTriggerWord(bool shouldRespond);
   
   virtual void OnEnteredActivatableScopeInternal() override;
   virtual void OnLeftActivatableScopeInternal() override;
@@ -402,6 +425,10 @@ protected:
   
   bool ShouldStreamline() const { return (_alwaysStreamline); }
   
+  // If you _know_ you have been activated due to a pending intent, get the intent along with
+  // its data using this helper
+  UserIntent& GetTriggeringUserIntent();
+  
   // make a member variable a console var that is only around as long as its class instance is
   #if ANKI_DEV_CHEATS
     template <typename T>
@@ -445,11 +472,21 @@ private:
   ExecutableBehaviorType _executableType;
   int _timesResumedFromPossibleInfiniteLoop = 0;
   float _timeCanRunAfterPossibleInfiniteLoopCooldown_sec = 0.f;
-  
-  // when respond to cloud intent is set the behavior will
-  // 1) WantToBeActivated when that intent is pending
+
+  // when initialized with a condition, this ICozmoBehavior will
+  // 1) Return false from WantToBeActivated if the condition evaluates to false (and true in
+  //    the absence of other negative conditions), and
   // 2) Clear the intent when the behavior is activated
-  CloudIntent _respondToCloudIntent;
+  std::shared_ptr< ConditionUserIntentPending > _respondToUserIntent;
+  
+  // if a behavior is waiting for a specific intent and it got it, then the intent will be here just
+  // prior to activation. otherwise it will be null
+  std::unique_ptr<UserIntent> _pendingIntent;
+  
+  // true when the trigger word is pending, in which case ICozmoBehavior will
+  // 1) WantToBeActivated, in the absence of other negative conditions
+  // 2) Clear the trigger word when the behavior is activated
+  bool _respondToTriggerWord;
 
   // if an unlockId is set, the behavior won't be activatable unless the unlockId is unlocked in the progression component
   UnlockId _requiredUnlockId;

@@ -21,15 +21,16 @@
 #include "engine/aiComponent/aiInformationAnalysis/aiInformationAnalyzer.h"
 #include "engine/aiComponent/behaviorComponent/anonymousBehaviorFactory.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
-#include "engine/aiComponent/behaviorComponent/behaviorComponentCloudReceiver.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
+#include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/continuityComponent.h"
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
-#include "engine/aiComponent/beiConditions/conditions/conditionCloudIntentPending.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionTriggerWordPending.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionUserIntentPending.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/cubeLightComponent.h"
 #include "engine/components/movementComponent.h"
@@ -45,7 +46,7 @@
 
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
-#include "clad/types/behaviorComponent/cloudIntents.h"
+#include "clad/types/behaviorComponent/userIntent.h"
 
 #include "util/enums/stringToEnumMapper.hpp"
 #include "util/fileUtils/fileUtils.h"
@@ -67,7 +68,8 @@ static const char* kRequiredParentSwitchKey          = "requiredRecentSwitchToPa
 static const char* kExecutableBehaviorTypeKey        = "executableBehaviorType";
 static const char* kAlwaysStreamlineKey              = "alwaysStreamline";
 static const char* kWantsToBeActivatedCondConfigKey  = "wantsToBeActivatedCondition";
-static const char* kRespondToCloudIntentKey          = "respondToCloudIntent";
+static const char* kRespondToUserIntentsKey          = "respondToUserIntents";
+static const char* kRespondToTriggerWordKey          = "respondToTriggerWord";
 static const std::string kIdleLockPrefix             = "Behavior_";
 
 // Keys for loading in anonymous behaviors
@@ -180,7 +182,7 @@ ICozmoBehavior::ICozmoBehavior(const Json::Value& config)
 , _behaviorClassID(ExtractBehaviorClassFromConfig(config))
 , _needsActionID(ExtractNeedsActionIDFromConfig(config))
 , _executableType(BehaviorTypesWrapper::GetDefaultExecutableBehaviorType())
-, _respondToCloudIntent(CloudIntent::Count)
+, _respondToTriggerWord( false )
 , _requiredUnlockId( UnlockId::Count )
 , _requiredRecentDriveOffCharger_sec(-1.0f)
 , _requiredRecentSwitchToParent_sec(-1.0f)
@@ -252,10 +254,16 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
   if(config.isMember(kAnonymousBehaviorMapKey)){
     _anonymousBehaviorMapConfig = config[kAnonymousBehaviorMapKey];
   }    
-    
-  if(config.isMember(kRespondToCloudIntentKey)){
-    _respondToCloudIntent = CloudIntentFromString(config[kRespondToCloudIntentKey].asCString());
+  
+  if(config.isMember(kRespondToUserIntentsKey)){
+    // create a ConditionUserIntentPending based on the config json
+    Json::Value json = ConditionUserIntentPending::GenerateConfig( config[kRespondToUserIntentsKey] );
+    // another shared_ptr is kept outside of the regular list _wantsToBeActivatedConditions to avoid casting
+    _respondToUserIntent = std::make_shared<ConditionUserIntentPending>( json );
+    _wantsToBeActivatedConditions.push_back( _respondToUserIntent );
   }
+  
+  _respondToTriggerWord = config.get(kRespondToTriggerWordKey, false).asBool();
 
   return true;
 }
@@ -277,9 +285,8 @@ void ICozmoBehavior::InitInternal()
       strategy->Init(GetBEI());
     }
 
-    if(_respondToCloudIntent != CloudIntent::Count){
-      Json::Value config = ConditionCloudIntentPending::GenerateCloudIntentPendingConfig(_respondToCloudIntent);
-      IBEIConditionPtr strategy(BEIConditionFactory::CreateBEICondition(config));
+    if( _respondToTriggerWord ){
+      IBEIConditionPtr strategy(BEIConditionFactory::CreateBEICondition(BEIConditionType::TriggerWordPending));
       strategy->Init(GetBEI());
       _wantsToBeActivatedConditions.push_back(strategy);
     }
@@ -373,22 +380,129 @@ void ICozmoBehavior::InitBehaviorOperationModifiers()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehavior::SetRespondToCloudIntent(CloudIntent intent)
+void ICozmoBehavior::AddWaitForUserIntent( UserIntentTag intentTag )
+{
+  if( !ANKI_VERIFY( !_initHasBeenCalled,
+                    "ICozmoBehavior.AddWaitForUserIntent.TagAfterInit",
+                    "behavior '%s' trying to set user intent '%s' after init has already been called",
+                    GetDebugLabel().c_str(),
+                    UserIntentTagToString(intentTag) ) )
+  {
+    return;
+  }
+  if( !ANKI_VERIFY( intentTag != USER_INTENT(INVALID),
+                    "ICozmoBehavior.AddWaitForUserIntent.TagInvalid",
+                    "behavior '%s' trying to set invalid user intent. use ClearWaitForUserIntent",
+                    GetDebugLabel().c_str()) )
+  {
+    return;
+  }
+  
+
+  if( _respondToUserIntent == nullptr ) {
+    _respondToUserIntent = std::make_shared<ConditionUserIntentPending>();
+    _wantsToBeActivatedConditions.push_back( _respondToUserIntent );
+  }
+  _respondToUserIntent->AddUserIntent( intentTag );
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::AddWaitForUserIntent( UserIntent&& intent )
+{
+  if( !ANKI_VERIFY( !_initHasBeenCalled,
+                    "ICozmoBehavior.AddWaitForUserIntent.IntentAfterInit",
+                    "behavior '%s' trying to set user intent '%s' after init has already been called",
+                    GetDebugLabel().c_str(),
+                    UserIntentTagToString(intent.GetTag() ) ) )
+  {
+    return;
+  }
+  if( !ANKI_VERIFY( intent.GetTag() != USER_INTENT(INVALID),
+                    "ICozmoBehavior.AddWaitForUserIntent.IntentInvalid",
+                    "behavior '%s' trying to set invalid user intent. use ClearWaitForUserIntent",
+                    GetDebugLabel().c_str()) )
+  {
+    return;
+  }
+  
+
+  if( _respondToUserIntent == nullptr ) {
+    _respondToUserIntent = std::make_shared<ConditionUserIntentPending>();
+    _wantsToBeActivatedConditions.push_back( _respondToUserIntent );
+  }
+  _respondToUserIntent->AddUserIntent( std::move(intent) );
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::AddWaitForUserIntent( UserIntentTag tag, EvalUserIntentFunc&& func )
+{
+  if( !ANKI_VERIFY( !_initHasBeenCalled,
+                    "ICozmoBehavior.AddWaitForUserIntent.FuncAfterInit",
+                    "behavior '%s' trying to set user intent '%s' after init has already been called",
+                    GetDebugLabel().c_str(),
+                    UserIntentTagToString(tag) ) )
+  {
+    return;
+  }
+  if( !ANKI_VERIFY( tag != USER_INTENT(INVALID),
+                    "ICozmoBehavior.AddWaitForUserIntent.FuncTagInvalid",
+                    "behavior '%s' trying to set invalid user intent. use ClearWaitForUserIntent",
+                    GetDebugLabel().c_str()) )
+  {
+    return;
+  }
+  
+  if( !ANKI_VERIFY( func != nullptr,
+                   "ICozmoBehavior.AddWaitForUserIntent.FuncInvalid",
+                   "behavior '%s' trying to set invalid lambda. use an overloaded method",
+                   GetDebugLabel().c_str()) )
+  {
+    return;
+  }
+  
+
+  if( _respondToUserIntent == nullptr ) {
+    _respondToUserIntent = std::make_shared<ConditionUserIntentPending>();
+    _wantsToBeActivatedConditions.push_back( _respondToUserIntent );
+  }
+  _respondToUserIntent->AddUserIntent( tag, std::move(func) );
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::ClearWaitForUserIntent()
+{
+  if( _respondToUserIntent != nullptr ) {
+    auto remIt = std::remove_if( _wantsToBeActivatedConditions.begin(),
+                                 _wantsToBeActivatedConditions.end(),
+                                 [&ref=_respondToUserIntent](const IBEIConditionPtr ptr) {
+                                   return ref == ptr;
+                                 });
+    _wantsToBeActivatedConditions.erase( remIt );
+    _respondToUserIntent.reset();
+  } else {
+    PRINT_NAMED_WARNING( "ICozmoBehavior.ClearWaitForUserIntent.Empty",
+                         "behavior '%s' clearing wait for user intent, but it was never set",
+                         GetDebugLabel().c_str() );
+    
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::SetRespondToTriggerWord(bool shouldRespond)
 {
   if( ANKI_VERIFY( !_initHasBeenCalled,
-                   "ICozmoBehavior.SetRespondToCloudIntent.AfterInit",
-                   "behavior '%s' trying to set cloud intent to '%s' after init has already been called",
-                   GetDebugLabel().c_str(),
-                   CloudIntentToString(intent)) ) {
-    if( _respondToCloudIntent != CloudIntent::Count ) {
-      PRINT_NAMED_WARNING("ICozmoBehavior.SetRespondToCloudIntent.ReplaceIntent",
-                          "behavior '%s' setting cloud intent to '%s', but it was previously '%s'",
+                   "ICozmoBehavior.SetRespondToTriggerWord.AfterInit",
+                   "behavior '%s' trying to set trigger word after init has already been called",
+                   GetDebugLabel().c_str()) ) {
+    if( _respondToTriggerWord ) {
+      PRINT_NAMED_WARNING("ICozmoBehavior.SetRespondToTriggerWord.Replace",
+                          "behavior '%s' setting should respond to %d, but it was previously %d",
                           GetDebugLabel().c_str(),
-                          CloudIntentToString(intent),
-                          CloudIntentToString(_respondToCloudIntent));
+                          shouldRespond,
+                          _respondToTriggerWord);
     }
 
-    _respondToCloudIntent = intent;
+    _respondToTriggerWord = shouldRespond;
   }
 }
 
@@ -456,16 +570,39 @@ void ICozmoBehavior::OnActivatedInternal()
   _hasSetIdle = false;
   _startCount++;
   
-  // Clear cloud intent if responding to it
-  if(_respondToCloudIntent != CloudIntent::Count){
-    GetBEI().GetAIComponent().GetBehaviorComponent().
-                 GetCloudReceiver().ClearIntentIfPending(_respondToCloudIntent);
+  // Clear user intent if responding to it. Since _respondToUserIntent is initialized, this
+  // behavior has a BEI condition that won't be true unless the specific user intent is pending.
+  // If this behavior was activated, then it must have been true, so it suffices to check if it's
+  // initialized instead of evaluating it here.
+  if( _respondToUserIntent != nullptr ) {
+    auto tag = _respondToUserIntent->GetUserIntentTagSelected();
+    if( tag != USER_INTENT(INVALID) ) {
+      auto& uic = GetBEI().GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
+      // u now pwn it
+      _pendingIntent.reset( uic.ClearUserIntentWithOwnership( tag ) );
+    } else {
+      // this can happen in tests
+      PRINT_NAMED_WARNING("ICozmoBehavior.OnActivatedInternal.InvalidTag",
+                          "_respondToUserIntent said it was responding to the INVALID tag" );
+      _pendingIntent.reset();
+    }
+  }
+  
+  // Clear trigger word if responding to it
+  if( _respondToTriggerWord ) {
+    GetBEI().GetAIComponent().GetBehaviorComponent().GetUserIntentComponent().ClearPendingTriggerWord();
   }
 
   // Handle Vision Mode Subscriptions
   if(!_operationModifiers.visionModesForActiveScope->empty()){
     GetBEI().GetVisionScheduleMediator().SetVisionModeSubscriptions(this, 
       *_operationModifiers.visionModesForActiveScope);
+  }
+
+  // Manage state for any IBEIConditions used by this Behavior
+  // Conditions may not be evaluted when the behavior is Active
+  for(auto& strategy: _wantsToBeActivatedConditions){
+    strategy->SetActive(GetBEI(), false);
   }
 
   OnBehaviorActivated();
@@ -479,14 +616,16 @@ void ICozmoBehavior::OnEnteredActivatableScopeInternal()
     infoProcessor.AddEnableRequest(_requiredProcess, GetDebugLabel().c_str());
   }
 
-  for( auto& strategy : _wantsToBeActivatedConditions ) {
-    strategy->Reset(GetBEI());
-  }
-
   // Handle Vision Mode Subscriptions
   if(!_operationModifiers.visionModesForActivatableScope->empty()){
     GetBEI().GetVisionScheduleMediator().SetVisionModeSubscriptions(this, 
       *_operationModifiers.visionModesForActivatableScope);
+  }
+
+  // Manage state for any IBEIConditions used by this Behavior
+  // Conditions may be evaluted when the behavior is inside the Activatable Scope
+  for(auto& strategy: _wantsToBeActivatedConditions){
+    strategy->SetActive(GetBEI(), true);
   }
 
 }
@@ -501,6 +640,13 @@ void ICozmoBehavior::OnLeftActivatableScopeInternal()
   }
 
   GetBEI().GetVisionScheduleMediator().ReleaseAllVisionModeSubscriptions(this);
+
+  // Manage state for any IBEIConditions used by this Behavior
+  // Conditions may not be evaluted when the behavior is outside the Activatable Scope
+  for(auto& strategy: _wantsToBeActivatedConditions){
+    strategy->SetActive(GetBEI(), false);
+  }
+
 }
 
 
@@ -526,6 +672,12 @@ void ICozmoBehavior::OnDeactivatedInternal()
   if(!_operationModifiers.visionModesForActivatableScope->empty()){
     GetBEI().GetVisionScheduleMediator().SetVisionModeSubscriptions(this, 
       *_operationModifiers.visionModesForActivatableScope);
+  }
+
+  // Manage state for any IBEIConditions used by this Behavior:
+  // Conditions may be evaluted when inactive, if in Activatable scope
+  for(auto& strategy: _wantsToBeActivatedConditions){
+    strategy->SetActive(GetBEI(), true);
   }
 
   // clear the path component motion profile if it was set by the behavior
@@ -1112,6 +1264,21 @@ bool ICozmoBehavior::SmartRemoveCustomLightPattern(const ObjectID& objectID,
     PRINT_NAMED_INFO("ICozmoBehavior.SmartRemoveCustomLightPattern.LightsNotSet",
                         "No custom light pattern is set for object %d", objectID.GetValue());
     return false;
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+UserIntent& ICozmoBehavior::GetTriggeringUserIntent()
+{
+  if( ANKI_VERIFY( _pendingIntent,
+                   "ICozmoBehavior.GetTriggeringUserIntent.NoIntent",
+                   "Behavior '%s' called this without having been activated because of a user intent",
+                   GetDebugLabel().c_str() ) )
+  {
+    return *_pendingIntent;
+  } else {
+    static UserIntent emptyIntent;
+    return emptyIntent;
   }
 }
 

@@ -51,6 +51,8 @@ private:
   std::vector<::Signal::SmartHandle> _eventHandles;
   ICozmoBehaviorPtr _rerunBehavior;
 
+  void SetupUserIntentEvents();
+  
   ICozmoBehaviorPtr WrapRequestedBehaviorInDispatcherRerun(BehaviorContainer& bContainer, 
                                                            BehaviorID requestedBehaviorID, 
                                                            const int numRuns);

@@ -18,9 +18,9 @@ PROTO WebotsKeyboardController [
   field SFString behaviorName "Wait"
   field SFInt32  numBehaviorRuns 1
 
-  # Fake cloud commands
-  # Send a fake cloud intent to respond to
-  field SFString cloudIntent "Count"
+  # Fake intent (user/cloud/etc) commands
+  # Send a fake intent to respond to. 
+  field SFString intent ""
 
   field SFString emotionName "WantToPlay"
   field SFFloat emotionVal 1.0

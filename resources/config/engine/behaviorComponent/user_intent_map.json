@@ -35,8 +35,12 @@
     {
       "cloud_intent": "intent_system_wake",
       "user_intent": "system_wake"
+    },
+    {
+      "cloud_intent": "intent_play_specific",
+      "user_intent": "play_specific"
     }
   ],
 
-  "unmatched_intent": "unmatched"
+  "unmatched_intent": "unmatched_intent"
 }

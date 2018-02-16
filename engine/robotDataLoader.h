@@ -99,6 +99,7 @@ public:
   const Json::Value& GetInventoryConfig() const              { return _inventoryConfig; }
   const Json::Value& GetWebServerEngineConfig() const        { return _webServerEngineConfig; }
   const Json::Value& GetDasEventConfig() const               { return _dasEventConfig; }
+  const Json::Value& GetUserIntentConfig() const             { return _userIntentsConfig; }
 
   // images are stored as a map of stripped file name (no file extension) to full path
   const ImagePathMap& GetFacePNGPaths()       const { return _facePNGPaths; }
@@ -178,6 +179,7 @@ private:
   Json::Value _inventoryConfig;
   Json::Value _webServerEngineConfig;
   Json::Value _dasEventConfig;
+  Json::Value _userIntentsConfig;
   
   ImagePathMap _facePNGPaths;
 

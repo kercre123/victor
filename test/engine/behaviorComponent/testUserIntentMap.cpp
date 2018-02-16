@@ -12,11 +12,14 @@
 
 #include "gtest/gtest.h"
 
-#include "engine/aiComponent/userIntentComponent.h"
+#include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
+#include "engine/aiComponent/behaviorComponent/userIntents.h"
 
-#include "clad/types/userIntents.h"
+#include "clad/types/behaviorComponent/userIntent.h"
 
 #include "coretech/common/engine/utils/timer.h"
+
+#include "test/engine/behaviorComponent/testBehaviorFramework.h"
 
 #include <json/json.h>
 
@@ -33,62 +36,77 @@ const std::string& testMapConfig = R"json(
   "user_intent_map": [
     {
       "cloud_intent": "cloud_intent_1",
-      "user_intent": "user_intent_1"
+      "user_intent": "test_user_intent_1"
     },
     {
       "cloud_intent": "cloud_intent_2",
-      "user_intent": "user_intent_2"
+      "user_intent": "test_user_intent_2"
     },
     {
       "cloud_intent": "cloud_time_intent",
-      "user_intent": "user_time_intent",
-      "extra_data": "timeInSeconds"
+      "user_intent": "test_timeInSeconds"
     },
     {
       "cloud_intent": "cloud_name_intent",
-      "user_intent": "user_name_intent",
-      "extra_data": "name"
+      "user_intent": "test_name"
+    },
+    {
+      "cloud_intent": "cloud_time_intent_substitution",
+      "user_intent": "test_timeWithUnits",
+      "substitutions": {
+        "timer-duration.time": "time",
+        "timer-duration.units": "units"
+      },
+      "numerics": ["timer-duration.time"]
     }
   ],
 
-  "unmatched_intent": "default_intent"
+  "unmatched_intent": "unmatched_intent",
+  
+  "is_test": true // ignore a data validation step that ensures the above contains ALL clad enum values
 })json";
 
 }
 
-void CreateComponent(const std::string& json, std::unique_ptr<UserIntentComponent>& comp)
+void CreateComponent(const std::string& json, std::unique_ptr<UserIntentComponent>& comp, const Robot& robot)
 {
   Json::Reader reader;
   Json::Value config;
   const bool parsedOK = reader.parse(json, config, false);
   ASSERT_TRUE(parsedOK);
 
-  comp.reset(new UserIntentComponent(config));  
+  comp.reset(new UserIntentComponent(robot, config));
 }
-
+  
+void Reset(UserIntent& intent)
+{
+  intent = UserIntent::Createunmatched_intent({});
+}
+  
 TEST(UserIntentMap, CreateComponent)
 {
+  TestBehaviorFramework testBehaviorFramework(1, nullptr);
+  const Robot& robot = testBehaviorFramework.GetRobot();
   std::unique_ptr<UserIntentComponent> comp;
-  CreateComponent(testMapConfig, comp);
+  CreateComponent(testMapConfig, comp, robot);
 
   ASSERT_TRUE(comp != nullptr);
 }
 
 TEST(UserIntentMap, UserIntentsValid)
 {
-  std::unique_ptr<UserIntentComponent> comp;
-  CreateComponent(testMapConfig, comp);
-
-  EXPECT_TRUE(comp->IsValidUserIntent("user_intent_1"));
-  EXPECT_TRUE(comp->IsValidUserIntent("user_intent_2"));
-  EXPECT_FALSE(comp->IsValidUserIntent("user_intent_3"));
-  EXPECT_FALSE(comp->IsValidUserIntent("cloud_intent_1"));
+  EXPECT_TRUE(IsValidUserIntentTag("test_user_intent_1"));
+  EXPECT_TRUE(IsValidUserIntentTag("test_user_intent_2"));
+  EXPECT_FALSE(IsValidUserIntentTag("test_user_intent_3"));
+  EXPECT_FALSE(IsValidUserIntentTag("cloud_intent_1"));
 }
 
 TEST(UserIntentMap, TriggerWord)
 {
+  TestBehaviorFramework testBehaviorFramework(1, nullptr);
+  const Robot& robot = testBehaviorFramework.GetRobot();
   std::unique_ptr<UserIntentComponent> comp;
-  CreateComponent(testMapConfig, comp);
+  CreateComponent(testMapConfig, comp, robot);
 
   EXPECT_FALSE(comp->IsTriggerWordPending());
 
@@ -110,123 +128,129 @@ TEST(UserIntentMap, TriggerWord)
 
 TEST(UserIntentMap, UserIntent)
 {
+  TestBehaviorFramework testBehaviorFramework(1, nullptr);
+  const Robot& robot = testBehaviorFramework.GetRobot();
   std::unique_ptr<UserIntentComponent> comp;
-  CreateComponent(testMapConfig, comp);
+  CreateComponent(testMapConfig, comp, robot);
 
   EXPECT_FALSE(comp->IsAnyUserIntentPending());
-  EXPECT_FALSE(comp->IsUserIntentPending("user_intent_1"));
-  EXPECT_FALSE(comp->IsUserIntentPending("user_intent_2"));
-  EXPECT_FALSE(comp->IsUserIntentPending("default_intent"));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_1)));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_2)));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(unmatched_intent)));
 
-  comp->SetUserIntentPending("user_intent_1");
+  comp->SetUserIntentPending(USER_INTENT(test_user_intent_1));
   EXPECT_TRUE(comp->IsAnyUserIntentPending());
-  EXPECT_TRUE(comp->IsUserIntentPending("user_intent_1"));
-  EXPECT_FALSE(comp->IsUserIntentPending("user_intent_2"));
-  EXPECT_FALSE(comp->IsUserIntentPending("default_intent"));
+  EXPECT_TRUE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_1)));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_2)));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(unmatched_intent)));
 
-  comp->ClearUserIntent("user_intent_1");
+  comp->ClearUserIntent(USER_INTENT(test_user_intent_1));
   EXPECT_FALSE(comp->IsAnyUserIntentPending());
-  EXPECT_FALSE(comp->IsUserIntentPending("user_intent_1"));
-  EXPECT_FALSE(comp->IsUserIntentPending("user_intent_2"));
-  EXPECT_FALSE(comp->IsUserIntentPending("default_intent"));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_1)));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_2)));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(unmatched_intent)));
 
-  comp->SetUserIntentPending("user_intent_2");
+  comp->SetUserIntentPending(USER_INTENT(test_user_intent_2));
   EXPECT_TRUE(comp->IsAnyUserIntentPending());
-  EXPECT_FALSE(comp->IsUserIntentPending("user_intent_1"));
-  EXPECT_TRUE(comp->IsUserIntentPending("user_intent_2"));
-  EXPECT_FALSE(comp->IsUserIntentPending("default_intent"));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_1)));
+  EXPECT_TRUE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_2)));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(unmatched_intent)));
 
-  comp->SetUserIntentPending("user_intent_1");
+  comp->SetUserIntentPending(USER_INTENT(test_user_intent_1));
   EXPECT_TRUE(comp->IsAnyUserIntentPending());
-  EXPECT_TRUE(comp->IsUserIntentPending("user_intent_1"));
-  EXPECT_FALSE(comp->IsUserIntentPending("user_intent_2"));
-  EXPECT_FALSE(comp->IsUserIntentPending("default_intent"));
+  EXPECT_TRUE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_1)));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_2)));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(unmatched_intent)));
 
-  comp->SetUserIntentPending("default_intent");
+  comp->SetUserIntentPending(USER_INTENT(unmatched_intent));
   EXPECT_TRUE(comp->IsAnyUserIntentPending());
-  EXPECT_FALSE(comp->IsUserIntentPending("user_intent_1"));
-  EXPECT_FALSE(comp->IsUserIntentPending("user_intent_2"));
-  EXPECT_TRUE(comp->IsUserIntentPending("default_intent"));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_1)));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_2)));
+  EXPECT_TRUE(comp->IsUserIntentPending(USER_INTENT(unmatched_intent)));
 
-  comp->ClearUserIntent("user_intent_1");
+  comp->ClearUserIntent(USER_INTENT(test_user_intent_1));
   EXPECT_TRUE(comp->IsAnyUserIntentPending());
-  EXPECT_FALSE(comp->IsUserIntentPending("user_intent_1"));
-  EXPECT_FALSE(comp->IsUserIntentPending("user_intent_2"));
-  EXPECT_TRUE(comp->IsUserIntentPending("default_intent"));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_1)));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_2)));
+  EXPECT_TRUE(comp->IsUserIntentPending(USER_INTENT(unmatched_intent)));
 
-  comp->ClearUserIntent("default_intent");
+  comp->ClearUserIntent(USER_INTENT(unmatched_intent));
   EXPECT_FALSE(comp->IsAnyUserIntentPending());
-  EXPECT_FALSE(comp->IsUserIntentPending("user_intent_1"));
-  EXPECT_FALSE(comp->IsUserIntentPending("user_intent_2"));
-  EXPECT_FALSE(comp->IsUserIntentPending("default_intent"));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_1)));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_2)));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(unmatched_intent)));
 }
 
 TEST(UserIntentMap, CloudIntent)
 {
+  TestBehaviorFramework testBehaviorFramework(1, nullptr);
+  const Robot& robot = testBehaviorFramework.GetRobot();
   std::unique_ptr<UserIntentComponent> comp;
-  CreateComponent(testMapConfig, comp);
+  CreateComponent(testMapConfig, comp, robot);
 
   EXPECT_FALSE(comp->IsAnyUserIntentPending());
-  EXPECT_FALSE(comp->IsUserIntentPending("user_intent_1"));
-  EXPECT_FALSE(comp->IsUserIntentPending("user_intent_2"));
-  EXPECT_FALSE(comp->IsUserIntentPending("default_intent"));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_1)));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_2)));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(unmatched_intent)));
 
   comp->SetCloudIntentPending("cloud_intent_1");
   EXPECT_TRUE(comp->IsAnyUserIntentPending());
-  EXPECT_TRUE(comp->IsUserIntentPending("user_intent_1"));
-  EXPECT_FALSE(comp->IsUserIntentPending("user_intent_2"));
-  EXPECT_FALSE(comp->IsUserIntentPending("default_intent"));
+  EXPECT_TRUE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_1)));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_2)));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(unmatched_intent)));
 
-  comp->ClearUserIntent("user_intent_1");
+  comp->ClearUserIntent(USER_INTENT(test_user_intent_1));
   EXPECT_FALSE(comp->IsAnyUserIntentPending());
-  EXPECT_FALSE(comp->IsUserIntentPending("user_intent_1"));
-  EXPECT_FALSE(comp->IsUserIntentPending("user_intent_2"));
-  EXPECT_FALSE(comp->IsUserIntentPending("default_intent"));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_1)));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_2)));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(unmatched_intent)));
 
   comp->SetCloudIntentPending("cloud_intent_2");
   EXPECT_TRUE(comp->IsAnyUserIntentPending());
-  EXPECT_FALSE(comp->IsUserIntentPending("user_intent_1"));
-  EXPECT_TRUE(comp->IsUserIntentPending("user_intent_2"));
-  EXPECT_FALSE(comp->IsUserIntentPending("default_intent"));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_1)));
+  EXPECT_TRUE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_2)));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(unmatched_intent)));
 
   comp->SetCloudIntentPending("cloud_intent_1");
   EXPECT_TRUE(comp->IsAnyUserIntentPending());
-  EXPECT_TRUE(comp->IsUserIntentPending("user_intent_1"));
-  EXPECT_FALSE(comp->IsUserIntentPending("user_intent_2"));
-  EXPECT_FALSE(comp->IsUserIntentPending("default_intent"));
+  EXPECT_TRUE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_1)));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_2)));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(unmatched_intent)));
 
   comp->SetCloudIntentPending("asdf");
   EXPECT_TRUE(comp->IsAnyUserIntentPending());
-  EXPECT_FALSE(comp->IsUserIntentPending("user_intent_1"));
-  EXPECT_FALSE(comp->IsUserIntentPending("user_intent_2"));
-  EXPECT_TRUE(comp->IsUserIntentPending("default_intent"));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_1)));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_2)));
+  EXPECT_TRUE(comp->IsUserIntentPending(USER_INTENT(unmatched_intent)));
 
-  comp->ClearUserIntent("user_intent_1");
+  comp->ClearUserIntent(USER_INTENT(test_user_intent_1));
   EXPECT_TRUE(comp->IsAnyUserIntentPending());
-  EXPECT_FALSE(comp->IsUserIntentPending("user_intent_1"));
-  EXPECT_FALSE(comp->IsUserIntentPending("user_intent_2"));
-  EXPECT_TRUE(comp->IsUserIntentPending("default_intent"));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_1)));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_2)));
+  EXPECT_TRUE(comp->IsUserIntentPending(USER_INTENT(unmatched_intent)));
 
-  comp->ClearUserIntent("default_intent");
+  comp->ClearUserIntent(USER_INTENT(unmatched_intent));
   EXPECT_FALSE(comp->IsAnyUserIntentPending());
-  EXPECT_FALSE(comp->IsUserIntentPending("user_intent_1"));
-  EXPECT_FALSE(comp->IsUserIntentPending("user_intent_2"));
-  EXPECT_FALSE(comp->IsUserIntentPending("default_intent"));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_1)));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_2)));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(unmatched_intent)));
 }
 
 TEST(UserIntentMap, IntentExpiration)
 {
+  TestBehaviorFramework testBehaviorFramework(1, nullptr);
+  const Robot& robot = testBehaviorFramework.GetRobot();
   std::unique_ptr<UserIntentComponent> comp;
-  CreateComponent(testMapConfig, comp);
+  CreateComponent(testMapConfig, comp, robot);
 
   BaseStationTimer::getInstance()->UpdateTime(0);
   comp->Update();
   
-  comp->SetUserIntentPending("user_intent_1");
+  comp->SetUserIntentPending(USER_INTENT(test_user_intent_1));
   EXPECT_TRUE(comp->IsAnyUserIntentPending());
-  EXPECT_TRUE(comp->IsUserIntentPending("user_intent_1"));
-  EXPECT_FALSE(comp->IsUserIntentPending("user_intent_2"));
-  EXPECT_FALSE(comp->IsUserIntentPending("default_intent"));
+  EXPECT_TRUE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_1)));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_2)));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(unmatched_intent)));
 
   for( float t=0.1f; t<1.0f; t+=0.1f ) {
     BaseStationTimer::getInstance()->UpdateTime(t);
@@ -234,92 +258,124 @@ TEST(UserIntentMap, IntentExpiration)
   }
 
   EXPECT_FALSE(comp->IsAnyUserIntentPending());
-  EXPECT_FALSE(comp->IsUserIntentPending("user_intent_1"));
-  EXPECT_FALSE(comp->IsUserIntentPending("user_intent_2"));
-  EXPECT_FALSE(comp->IsUserIntentPending("default_intent"));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_1)));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_2)));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(unmatched_intent)));
 }
 
 TEST(UserIntentMap, JsonIntent)
 {
+  TestBehaviorFramework testBehaviorFramework(1, nullptr);
+  const Robot& robot = testBehaviorFramework.GetRobot();
   std::unique_ptr<UserIntentComponent> comp;
-  CreateComponent(testMapConfig, comp);
+  CreateComponent(testMapConfig, comp, robot);
 
-  EXPECT_FALSE(comp->SetCloudIntentFromJSON(""));
+  EXPECT_FALSE(comp->SetCloudIntentPendingFromJSON(""));
   EXPECT_FALSE(comp->IsAnyUserIntentPending());
 
-  EXPECT_FALSE(comp->SetCloudIntentFromJSON(R"json(
+  EXPECT_FALSE(comp->SetCloudIntentPendingFromJSON(R"json(
   {
      'invalid", "format: no way }}}} this cant be valid
   )json"));
   EXPECT_FALSE(comp->IsAnyUserIntentPending());
 
-  EXPECT_FALSE(comp->SetCloudIntentFromJSON(R"json(
+  EXPECT_FALSE(comp->SetCloudIntentPendingFromJSON(R"json(
   {
      "wrong_key": "cloud_intent_1"
   })json"));
   EXPECT_FALSE(comp->IsAnyUserIntentPending());
 
-  EXPECT_TRUE(comp->SetCloudIntentFromJSON(R"json(
+  EXPECT_TRUE(comp->SetCloudIntentPendingFromJSON(R"json(
   {
      "intent": "cloud_intent_1"
   })json"));
   EXPECT_TRUE(comp->IsAnyUserIntentPending());
-  EXPECT_TRUE(comp->IsUserIntentPending("user_intent_1"));
+  EXPECT_TRUE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_1)));
 
-  EXPECT_TRUE(comp->SetCloudIntentFromJSON(R"json(
+  // this one is not expecting any data "data_tag"
+  EXPECT_TRUE(comp->SetCloudIntentPendingFromJSON(R"json(
   {
      "intent": "cloud_intent_2",
-     "extra_data": 3.1415
+     "params": {
+       "data_tag": 3.1415
+     }
   })json"));
   EXPECT_TRUE(comp->IsAnyUserIntentPending());
-  EXPECT_TRUE(comp->IsUserIntentPending("user_intent_2"));
+  EXPECT_TRUE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_2)));
 }
 
 TEST(UserIntentMap, ExtraData)
 {
+  TestBehaviorFramework testBehaviorFramework(1, nullptr);
+  const Robot& robot = testBehaviorFramework.GetRobot();
   std::unique_ptr<UserIntentComponent> comp;
-  CreateComponent(testMapConfig, comp);
+  CreateComponent(testMapConfig, comp, robot);
 
-  UserIntentData data;
+  UserIntent data;
   
-  EXPECT_TRUE(comp->SetCloudIntentFromJSON(R"json(
+  EXPECT_TRUE(comp->SetCloudIntentPendingFromJSON(R"json(
   {
      "intent": "cloud_time_intent",
-     "time_s": 42  
+     "params": {
+       "time_s": 42
+     }
   })json"));
   EXPECT_TRUE(comp->IsAnyUserIntentPending());
-  data.Set_none({});
-  EXPECT_TRUE(comp->IsUserIntentPending("user_time_intent", data));
-  EXPECT_EQ(data.GetTag(), UserIntentDataTag::timeInSeconds);
-  EXPECT_EQ(data.Get_timeInSeconds().time_s, 42);
+  Reset(data);
+  EXPECT_TRUE(comp->IsUserIntentPending(USER_INTENT(test_timeInSeconds), data));
+  EXPECT_EQ(data.GetTag(), UserIntentTag::test_timeInSeconds);
+  EXPECT_EQ(data.Get_test_timeInSeconds().time_s, 42);
 
-  comp->ClearUserIntent("user_time_intent");
-  EXPECT_FALSE(comp->IsUserIntentPending("user_time_intent", data));
+  comp->ClearUserIntent(USER_INTENT(test_timeInSeconds));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_timeInSeconds), data));
 
-  EXPECT_TRUE(comp->SetCloudIntentFromJSON(R"json(
+  EXPECT_TRUE(comp->SetCloudIntentPendingFromJSON(R"json(
   {
      "intent": "cloud_time_intent",
-     "time_s": 9001
+     "params": {
+       "time_s": 9001
+     }
   })json"));
   EXPECT_TRUE(comp->IsAnyUserIntentPending());
-  data.Set_none({});
-  EXPECT_TRUE(comp->IsUserIntentPending("user_time_intent", data));
-  EXPECT_EQ(data.GetTag(), UserIntentDataTag::timeInSeconds);
-  EXPECT_EQ(data.Get_timeInSeconds().time_s, 9001);
+  Reset(data);
+  EXPECT_TRUE(comp->IsUserIntentPending(USER_INTENT(test_timeInSeconds), data));
+  EXPECT_EQ(data.GetTag(), UserIntentTag::test_timeInSeconds);
+  EXPECT_EQ(data.Get_test_timeInSeconds().time_s, 9001);
 
-  comp->ClearUserIntent("user_time_intent");
-  EXPECT_FALSE(comp->IsUserIntentPending("user_time_intent"));
+  comp->ClearUserIntent(USER_INTENT(test_timeInSeconds));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_timeInSeconds)));
   
-  EXPECT_TRUE(comp->SetCloudIntentFromJSON(R"json(
+  EXPECT_TRUE(comp->SetCloudIntentPendingFromJSON(R"json(
   {
      "intent": "cloud_name_intent",
-     "name": "Victor"
+     "params": {
+       "name": "Victor"
+     }
   })json"));
   EXPECT_TRUE(comp->IsAnyUserIntentPending());
-  data.Set_none({});
-  EXPECT_FALSE(comp->IsUserIntentPending("user_time_intent", data));
-  EXPECT_TRUE(comp->IsUserIntentPending("user_name_intent", data));
-  EXPECT_EQ(data.GetTag(), UserIntentDataTag::name);
-  EXPECT_EQ(data.Get_name().name, "Victor");
+  Reset(data);
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_timeInSeconds), data));
+  EXPECT_TRUE(comp->IsUserIntentPending(USER_INTENT(test_name), data));
+  EXPECT_EQ(data.GetTag(), UserIntentTag::test_name);
+  EXPECT_EQ(data.Get_test_name().name, "Victor");
+              
+  comp->ClearUserIntent(USER_INTENT(test_name));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_name)));
+              
+  // extra data with params that aren't camelCase or snake_case, and passing an int as a string
+  EXPECT_TRUE(comp->SetCloudIntentPendingFromJSON(R"json(
+  {
+    "intent": "cloud_time_intent_substitution",
+    "params": {
+      "timer-duration.time": "60",
+      "timer-duration.units": "s"
+    }
+  })json"));
+  EXPECT_TRUE(comp->IsAnyUserIntentPending());
+  Reset(data);
+  EXPECT_TRUE(comp->IsUserIntentPending(USER_INTENT(test_timeWithUnits), data));
+  EXPECT_EQ(data.GetTag(), UserIntentTag::test_timeWithUnits);
+  EXPECT_EQ(data.Get_test_timeWithUnits().time, 60);
+  EXPECT_EQ(data.Get_test_timeWithUnits().units, UserIntent_Test_Time_Units::s);
 
 }

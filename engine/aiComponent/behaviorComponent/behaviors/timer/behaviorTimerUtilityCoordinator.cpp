@@ -18,7 +18,6 @@
 #include "engine/aiComponent/timerUtility.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimStatesGetInLoop.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorProceduralClock.h"
-#include "engine/aiComponent/behaviorComponent/behaviorComponentCloudReceiver.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "coretech/common/engine/jsonTools.h"
@@ -232,8 +231,7 @@ void BehaviorTimerUtilityCoordinator::GetAllDelegates(std::set<IBehavior*>& dele
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorTimerUtilityCoordinator::WantsToBeActivatedBehavior() const 
 {
-  auto& cloudReceiver = GetBEI().GetAIComponent().GetBehaviorComponent().GetCloudReceiver();
-  const bool setTimerWantsToRun = cloudReceiver.IsIntentPending(CloudIntent::SetATimer);
+  const bool setTimerWantsToRun = false; //cloudReceiver.IsIntentPending(CloudIntent::SetATimer);
   const bool timerShouldRing    = TimerShouldRing();
   
   // Todo - need to have a distinction of polite interrupt on min time vs max time

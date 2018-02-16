@@ -10,7 +10,7 @@ namespace Anki {
 namespace Cozmo {
   CONSOLE_VAR_EXTERN(bool, kProcFace_RenderInnerOuterGlow)
   CONSOLE_VAR_EXTERN(bool, kProcFace_ApplyGlowFilter)
-  CONSOLE_VAR_EXTERN(bool, kProcFace_UseAntialiasing)
+  CONSOLE_VAR_EXTERN(s32, kProcFace_AntiAliasingSize)
 }
 }
 
@@ -32,7 +32,7 @@ int main(int argc, char ** argv)
 {
   // For victor rendering
   kProcFace_RenderInnerOuterGlow = kProcFace_ApplyGlowFilter = true;
-  kProcFace_UseAntialiasing = false;
+  kProcFace_AntiAliasingSize = 5.f;
 
   //LEAKING HERE
   Anki::Util::PrintfLoggerProvider* loggerProvider = new Anki::Util::PrintfLoggerProvider();

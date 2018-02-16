@@ -336,6 +336,19 @@ function recordDeps(args) {
     });
     names = subdirs;
   }
+
+  // see if any of our tracked deps are no longer used and should be removed
+  getAllDeps()
+    // find deps in our tracked list that don't contain any dependencies found by go
+    .filter(dep => !allDeps.find(name => name.startsWith(dep.name)))
+    // remove each of them
+    .forEach(dep => {
+      console.log('dependency ' + dep.name + ' is no longer used, removing');
+      delete deps[dep.name];
+      changed = true;
+    }
+  );
+
   if (changed) {
     save();
     console.log('Updates written to godeps.json; now exiting with failure');
