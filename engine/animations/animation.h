@@ -101,11 +101,11 @@ public:
   // Get last key frame + duration of keyframe
   uint32_t GetLastKeyFrameEndTime_ms();
 
-
 private:
 
   // Name of this animation
   std::string _name;
+
   bool _isInitialized;
   bool _isLive = false;
 

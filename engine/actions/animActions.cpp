@@ -96,12 +96,23 @@ namespace Anki {
       _stoppedPlaying = false;
       _wasAborted     = false;
       
+      bool isCustomSongAnim = false;
       if (nullptr == _animPointer)
       {
+        // Note: This string matches the one in CodeLabGame.cs
+        if (!strcmp(_animName.c_str(), "cozmo_sings_custom"))
+        {
+          isCustomSongAnim = true;
+          _animName = "anim_cozmosings_120_song_01";
+        }
         _animPointer = _robot.GetContext()->GetRobotManager()->GetCannedAnimations().GetAnimation(_animName);
+        if (isCustomSongAnim)
+        {
+          _robot.GetAnimationStreamer().CreateCustomSongAnimation(_animPointer);
+        }
       }
       
-      _animTag = _robot.GetAnimationStreamer().SetStreamingAnimation(_animPointer, _numLoopsRemaining, _interruptRunning);
+      _animTag = _robot.GetAnimationStreamer().SetStreamingAnimation(_animPointer, _numLoopsRemaining, _interruptRunning, isCustomSongAnim);
       
       if(_animTag == AnimationStreamer::NotAnimatingTag) {
         _wasAborted = true;

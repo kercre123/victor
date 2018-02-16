@@ -404,6 +404,99 @@ Blockly.Blocks['cozmo_sound_stop'] = {
   }
 };
 
+Blockly.Blocks['cozmo_sound_song_add_note'] = {
+  /**
+   * Block to add a note for composable song
+   * @this Blockly.Block
+  */
+  init: function() {
+    this.jsonInit({
+        "id": "cozmo_sound_song_add_note",
+        "message0": "%{BKY_SONG_ADD_NOTE}",
+        "args0": [
+          {
+            "type": "field_dropdown",
+            "name": "SONG_NOTE_TYPE",
+            "options": [
+              ['%{BKY_NOTE_C2}', '0'],
+              ['%{BKY_NOTE_C2_SHARP}', '1'],
+              ['%{BKY_NOTE_D2}', '2'],
+              ['%{BKY_NOTE_D2_SHARP}', '3'],
+              ['%{BKY_NOTE_E2}', '4'],
+              ['%{BKY_NOTE_F2}', '5'],
+              ['%{BKY_NOTE_F2_SHARP}', '6'],
+              ['%{BKY_NOTE_G2}', '7'],
+              ['%{BKY_NOTE_G2_SHARP}', '8'],
+              ['%{BKY_NOTE_A2}', '9'],
+              ['%{BKY_NOTE_A2_SHARP}', '10'],
+              ['%{BKY_NOTE_B2}', '11'],
+              ['%{BKY_NOTE_C3}', '12'],
+              ['%{BKY_NOTE_C3_SHARP}', '13'],
+              ['%{BKY_NOTE_REST}', '14']
+             ]
+          },
+          {
+             "type": "field_dropdown",
+             "name": "SONG_NOTE_DURATION",
+             "options": [
+                ['%{BKY_NOTE_DURATION_WHOLE}', '0'],
+                ['%{BKY_NOTE_DURATION_THREE_QUARTER}', '1'],
+                ['%{BKY_NOTE_DURATION_HALF}', '2'],
+                ['%{BKY_NOTE_DURATION_QUARTER}', '3']
+              ]
+          }
+        ],
+        "inputsInline": true,
+        "previousStatement": null,
+        "nextStatement": null,
+        "category": Blockly.Categories.actions,
+        "colour": Blockly.Colours.actions.primary,
+        "colourSecondary": Blockly.Colours.actions.secondary,
+        "colourTertiary": Blockly.Colours.actions.tertiary
+    });
+  }
+};
+
+Blockly.Blocks['cozmo_sound_song_clear_all_notes'] = {
+  /**
+   * Block to clear all accumulated notes in a song
+   * @this Blockly.Block
+  */
+  init: function() {
+    this.jsonInit({
+        "id": "cozmo_sound_song_clear_all_notes",
+        "message0": "%{BKY_CLEAR_ALL_NOTES}",
+        "inputsInline": true,
+        "previousStatement": null,
+        "nextStatement": null,
+        "category": Blockly.Categories.actions,
+        "colour": Blockly.Colours.actions.primary,
+        "colourSecondary": Blockly.Colours.actions.secondary,
+        "colourTertiary": Blockly.Colours.actions.tertiary
+    });
+  }
+};
+
+Blockly.Blocks['cozmo_sound_song_play_all_notes'] = {
+  /**
+   * Block to play all accumulated notes in a song
+   * @this Blockly.Block
+  */
+  init: function() {
+    this.jsonInit({
+        "id": "cozmo_sound_song_play_all_notes",
+        "message0": "%{BKY_PLAY_ALL_NOTES}",
+        "inputsInline": true,
+        "previousStatement": null,
+        "nextStatement": null,
+        "category": Blockly.Categories.actions,
+        "colour": Blockly.Colours.actions.primary,
+        "colourSecondary": Blockly.Colours.actions.secondary,
+        "colourTertiary": Blockly.Colours.actions.tertiary
+    });
+  }
+};
+
 Blockly.Blocks['cozmo_cube_motion_select_menu'] = {
   /**
    * Cube ID drop-down menu.

@@ -55,6 +55,70 @@ namespace Cozmo {
   // idle animation
   const f32 kDefaultLongEnoughSinceLastStreamTimeout_s = 0.5f;
 
+  using namespace AudioMetaData::GameEvent;
+  const GenericEvent songNotes[] = {
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_C2_Quarter,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_C2_Half,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_C2_Three_Quarter,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_C2_Whole,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_Csharp2_Quarter,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_Csharp2_Half,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_Csharp2_Three_Quarter,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_Csharp2_Whole,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_D2_Quarter,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_D2_Half,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_D2_Three_Quarter,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_D2_Whole,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_Dsharp2_Quarter,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_Dsharp2_Half,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_Dsharp2_Three_Quarter,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_Dsharp2_Whole,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_E2_Quarter,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_E2_Half,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_E2_Three_Quarter,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_E2_Whole,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_F2_Quarter,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_F2_Half,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_F2_Three_Quarter,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_F2_Whole,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_Fsharp2_Quarter,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_Fsharp2_Half,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_Fsharp2_Three_Quarter,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_Fsharp2_Whole,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_G2_Quarter,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_G2_Half,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_G2_Three_Quarter,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_G2_Whole,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_Gsharp2_Quarter,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_Gsharp2_Half,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_Gsharp2_Three_Quarter,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_Gsharp2_Whole,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_A2_Quarter,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_A2_Half,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_A2_Three_Quarter,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_A2_Whole,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_Asharp2_Quarter,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_Asharp2_Half,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_Asharp2_Three_Quarter,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_Asharp2_Whole,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_B2_Quarter,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_B2_Half,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_B2_Three_Quarter,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_B2_Whole,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_C3_Quarter,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_C3_Half,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_C3_Three_Quarter,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_C3_Whole,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_Csharp3_Quarter,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_Csharp3_Half,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_Csharp3_Three_Quarter,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_Csharp3_Whole,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_Rest_Quarter,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_Rest_Half,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_Rest_Three_Quarter,
+    GenericEvent::Play__Robot_Vo__Singing_120Bpm_Rest_Whole,
+  };
+
   } // namespace
   
   const AnimationTrigger AnimationStreamer::NeutralFaceTrigger = AnimationTrigger::NeutralFace;
@@ -151,7 +215,67 @@ namespace Cozmo {
                                                                            msg.GetData().Get_ReplayLastAnimation().numLoops);
                                                    }));
 
+    _eventHandlers.push_back(extIntFace->Subscribe(MessageGameToEngineTag::ReplaceNotesInSong,
+                                                   [this](const GameToEngineEvent& msg) {
+                                                     this->HandleCustomSongNotesPayload(msg);
+                                                   }));
   } // SetupHandlers()
+
+  void AnimationStreamer::HandleCustomSongNotesPayload(const AnkiEvent<ExternalInterface::MessageGameToEngine>& msg)
+  {
+    _customSongNotes = msg.GetData().Get_ReplaceNotesInSong().notes;
+    PRINT_NAMED_INFO("AnimationStreamer.HandleCustomSongNotesPayload",
+                     "Received %d notes for custom song", (int)_customSongNotes.size());
+  }
+
+  void AnimationStreamer::CreateCustomSongAnimation(const Animation* const srcAnim)
+  {
+    using namespace AudioMetaData::GameEvent;
+    using namespace ExternalInterface;
+    // First, make a copy of the source animation (a 120bpm singing animation)
+    delete _customAnimation;
+    _customAnimation = new Animation(*srcAnim);
+
+    // Now strip out the audio track, and add notes based on the payload received
+    auto& audioTrack = _customAnimation->GetTrack<RobotAudioKeyFrame>();
+    audioTrack.Clear();
+    const auto lastKeyFrameTime_ms = _customAnimation->GetLastKeyFrameTime_ms();
+    PRINT_NAMED_INFO("AnimationStreamer.CreateCustomSongAnimation",
+                     "lastKeyFrameTime_ms = %d", lastKeyFrameTime_ms);
+
+    TimeStamp_t triggerTime_ms = 0;
+    for (size_t i = 0; i < _customSongNotes.size(); i++)
+    {
+      const auto& note = _customSongNotes[i];
+      // Quarter note = 0.5 seconds = 15 frames
+      const int noteIndex = (static_cast<int>(note.noteType) * 4) +
+                            (3 - static_cast<int>(note.noteDuration));
+      const GenericEvent robotVOEvent = songNotes[noteIndex];
+
+      PRINT_NAMED_INFO("AnimationStreamer.CreateCustomSongAnimation",
+                       "Adding note index %d:  trigger time %d; noteType %s; noteDuration %s; genericEvent %s",
+                       (int)i, triggerTime_ms, EnumToString(note.noteType), EnumToString(note.noteDuration),
+                       EnumToString(robotVOEvent));
+      const auto audioKeyFrame = RobotAudioKeyFrame(RobotAudioKeyFrame::AudioRef(robotVOEvent), triggerTime_ms);
+      _customAnimation->AddKeyFrameByTime(audioKeyFrame);
+
+      static const TimeStamp_t kMillisecondsPerQuarterNote = 500;
+      const TimeStamp_t noteDuration_ms = (4 - static_cast<int>(note.noteDuration)) * kMillisecondsPerQuarterNote;
+      triggerTime_ms += noteDuration_ms;
+    }
+    // At this point, triggerTime_ms is the total time of all notes/rests, in ms.
+    // We can compare against the known duration of the singing section of the
+    // song animation (which is 8000 ms), and tell whether we're under or over.
+    // If under, we want to stop the animation early when we reach the end of
+    // the notes programmed by the user. (COZMO-16252)
+    static const TimeStamp_t KSongDurationInAnim_ms = (4 * 2000); // Four whole notes
+    if (triggerTime_ms < KSongDurationInAnim_ms) {
+      _customSongCutoffTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp() +
+                                 triggerTime_ms;
+    } else {
+      _customSongCutoffTime_ms = 0;
+    }
+  }
 
   const std::string& AnimationStreamer::GetAnimationNameFromGroup(const std::string& name, const Robot& robot, bool strictCooldown) const
   {
@@ -190,7 +314,8 @@ namespace Cozmo {
     return SetStreamingAnimation(_animationContainer.GetAnimation(name), numLoops, interruptRunning);
   }
   
-  AnimationStreamer::Tag AnimationStreamer::SetStreamingAnimation(Animation* anim, u32 numLoops, bool interruptRunning)
+  AnimationStreamer::Tag AnimationStreamer::SetStreamingAnimation(Animation* anim, u32 numLoops, bool interruptRunning,
+                                                                  bool isCustomSongAnim)
   {
     const bool wasStreamingSomething = nullptr != _streamingAnimation;
     const bool wasIdling = nullptr != _idleAnimation;
@@ -216,7 +341,7 @@ namespace Cozmo {
     {
       Abort();
     }
-    
+
     _streamingAnimation = anim;
     
     if(_streamingAnimation == nullptr) {
@@ -229,6 +354,13 @@ namespace Cozmo {
     }
     else
     {
+      if (isCustomSongAnim)
+      {
+        PRINT_NAMED_INFO("AnimationStreamer.SetStreamingAnimation",
+                         "About to play the custom song");
+        _streamingAnimation = _customAnimation;
+      }
+
       if(_streamingAnimation->IsLive())
       {
         // We cannot loop a "live" animation: its keyframes are deleted as they are played
@@ -1103,6 +1235,15 @@ namespace Cozmo {
         
         _trackLayerComponent->KeepFaceAlive(GetAllParams());
       }
+    }
+
+    if (_customSongCutoffTime_ms > 0 &&
+        BaseStationTimer::getInstance()->GetCurrentTimeStamp() > _customSongCutoffTime_ms)
+    {
+      _customSongCutoffTime_ms = 0;
+      Abort();
+      PRINT_NAMED_INFO("AnimationStreamer.Update.CustomSongCutoff",
+                       "Cutting off custom song animation because the notes lasted less than a 4/4 measure");
     }
   
     if(_streamingAnimation != nullptr) {

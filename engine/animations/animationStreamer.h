@@ -69,7 +69,7 @@ namespace Cozmo {
     // If interruptRunning == true, any currently-streaming animation will be aborted.
     // Actual streaming occurs on calls to Update().
     Tag SetStreamingAnimation(const std::string& name, u32 numLoops = 1, bool interruptRunning = true);
-    Tag SetStreamingAnimation(Animation* anim, u32 numLoops = 1, bool interruptRunning = true);
+    Tag SetStreamingAnimation(Animation* anim, u32 numLoops = 1, bool interruptRunning = true, bool isCustomSongAnim = false);
     
     // Set the idle animation and also add it to the idle animation stack, so we can use pop later. The current
     // idle (even if it came from SetIdleAnimation) is always on the stack
@@ -116,6 +116,8 @@ namespace Cozmo {
     TrackLayerComponent* GetTrackLayerComponent() { return _trackLayerComponent.get(); }
     const TrackLayerComponent* GetTrackLayerComponent() const { return _trackLayerComponent.get(); }
 
+    void CreateCustomSongAnimation(const Animation* const srcAnim);
+
   private:
     
     // Initialize the streaming of an animation with a given tag
@@ -130,7 +132,9 @@ namespace Cozmo {
     
     Result SendStartOfAnimation();
     Result SendEndOfAnimation(Robot& robot);
-    
+
+    void HandleCustomSongNotesPayload(const AnkiEvent<ExternalInterface::MessageGameToEngine>& msg);
+
     // Get an audio sample from the AudioManager
     // Outputs rawAudio_out which will contain the audio sample from the AudioManager
     // Returns true if rawAudio_out is valid (there is audio to play)
@@ -160,6 +164,7 @@ namespace Cozmo {
     
     Animation*  _idleAnimation = nullptr;
     Animation*  _streamingAnimation = nullptr;
+    Animation*  _customAnimation = nullptr;
     Animation*  _neutralFaceAnimation = nullptr;
     TimeStamp_t _timeSpentIdling_ms = 0;
     std::vector<std::pair<AnimationTrigger, std::string>> _idleAnimationNameStack;
@@ -184,6 +189,9 @@ namespace Cozmo {
     bool _startOfAnimationSent = false;
     bool _endOfAnimationSent   = false;
     bool _wasAnimationInterruptedWithNothing = false;
+
+    std::vector<ExternalInterface::SongNote> _customSongNotes;
+    TimeStamp_t _customSongCutoffTime_ms = 0;
     
     // When this animation started playing (was initialized) in milliseconds, in
     // "real" basestation time

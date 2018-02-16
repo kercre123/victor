@@ -911,6 +911,44 @@ message MoodMessage {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+// R&D project:  Cozmo sings user-specified notes
+///////////////////////////////////////////////////////////////////////////////
+
+enum uint_8 SongNoteType {
+  C2,
+  C2_Sharp,
+  D2,
+  D2_Sharp,
+  E2,
+  F2,
+  F2_Sharp,
+  G2,
+  G2_Sharp,
+  A2,
+  A2_Sharp,
+  B2,
+  C3,
+  C3_Sharp,
+  Rest,
+}
+
+enum uint_8 SongNoteDuration {
+  Whole,
+  ThreeQuarter,
+  Half,
+  Quarter,
+}
+
+structure SongNote {
+  SongNoteType     noteType,
+  SongNoteDuration noteDuration,
+}
+
+message ReplaceNotesInSong {
+  SongNote notes[uint_8],
+}
+
+///////////////////////////////////////////////////////////////////////////////
 // Needs
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -1249,7 +1287,6 @@ autounion MessageGameToEngine
 {
   UiDeviceConnectionWrongVersion          UiDeviceConnectionWrongVersion          = 0x00, // DO NOT CHANGE THIS VALUE
 }
-
 
 } // namespace U2G
 } // namespace Cozmo

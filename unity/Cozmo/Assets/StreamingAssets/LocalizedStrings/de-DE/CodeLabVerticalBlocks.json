@@ -6,6 +6,72 @@
     "placeholder_format_custom" : ["%[0-9]+"],
     "source_key_paths" : ["/{*}"]
   },
+  "codeLabVertical.SONG_ADD_NOTE": {
+    "translation": "add note %1 with duration %2"
+  },
+  "codeLabVertical.NOTE_C2": {
+    "translation": "C"
+  },
+  "codeLabVertical.NOTE_C2_SHARP": {
+    "translation": "C#"
+  },
+  "codeLabVertical.NOTE_D2": {
+    "translation": "D"
+  },
+  "codeLabVertical.NOTE_D2_SHARP": {
+    "translation": "D#"
+  },
+  "codeLabVertical.NOTE_E2": {
+    "translation": "E"
+  },
+  "codeLabVertical.NOTE_F2": {
+    "translation": "F"
+  },
+  "codeLabVertical.NOTE_F2_SHARP": {
+    "translation": "F#"
+  },
+  "codeLabVertical.NOTE_G2": {
+    "translation": "G"
+  },
+  "codeLabVertical.NOTE_G2_SHARP": {
+    "translation": "G#"
+  },
+  "codeLabVertical.NOTE_A2": {
+    "translation": "A"
+  },
+  "codeLabVertical.NOTE_A2_SHARP": {
+    "translation": "A#"
+  },
+  "codeLabVertical.NOTE_B2": {
+    "translation": "B"
+  },
+  "codeLabVertical.NOTE_C3": {
+    "translation": "C"
+  },
+  "codeLabVertical.NOTE_C3_SHARP": {
+    "translation": "C#"
+  },
+  "codeLabVertical.NOTE_REST": {
+    "translation": "Rest"
+  },
+  "codeLabVertical.NOTE_DURATION_QUARTER": {
+    "translation": "1/4"
+  },
+  "codeLabVertical.NOTE_DURATION_HALF": {
+    "translation": "1/2"
+  },
+  "codeLabVertical.NOTE_DURATION_THREE_QUARTER": {
+    "translation": "3/4"
+  },
+  "codeLabVertical.NOTE_DURATION_WHOLE": {
+    "translation": "Whole"
+  },
+  "codeLabVertical.CLEAR_ALL_NOTES": {
+    "translation": "clear all notes"
+  },
+  "codeLabVertical.PLAY_ALL_NOTES": {
+    "translation": "play all notes (4 measures max)"
+  },
   "codeLabVertical.COZMO_VERT_DRIVE" : {
     "translation" : "Mit %2 mm/s %1 mm fahren"
   },

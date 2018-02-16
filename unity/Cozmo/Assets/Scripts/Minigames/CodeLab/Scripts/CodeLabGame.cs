@@ -271,6 +271,14 @@ namespace CodeLab {
       return Mathf.Clamp(inputValue, 0.0f, maxValue);
     }
 
+    private List<SongNote> _SongNotes = new List<SongNote>();
+
+    // @TODO: Currently nothing is done with this list.
+    //  it should be used when we want to surface errors in the codelab file import process that occur before the ui
+    //  is ready for them.  At present the list is not cleared out, and could get quite long if many external files are
+    //  loaded incorrectly during the same session.
+    //private static List<string> _importErrors = new List<string>();
+
     private bool _DeviceGyroSupportReportingInaccurrate = false;
 
     protected override void InitializeGame(ChallengeConfigBase challengeConfigData) {
@@ -2092,6 +2100,46 @@ namespace CodeLab {
           DAS.Info("CodeLab.Audio.StopSoundEffect", "Posting Audio event=" + audioEvent.ToString());
         }
         inProgressScratchBlock.AdvanceToNextBlock(true);
+      }
+      else if (scratchRequest.command == "cozVertAddNote") {
+        var type = (SongNoteType)scratchRequest.argUInt;
+        var duration = (SongNoteDuration)scratchRequest.argUInt2;
+        _SessionState.InstantScratchBlockEvent();
+
+        DAS.Info("CodeLab.Audio.AddNote", "Adding note of type " + type + " and duration " + duration);
+        var note = new SongNote(type, duration);
+        _SongNotes.Add(note);
+        inProgressScratchBlock.AdvanceToNextBlock(true);
+      }
+      else if (scratchRequest.command == "cozVertClearAllNotes") {
+        _SessionState.InstantScratchBlockEvent();
+        DAS.Info("CodeLab.Audio.ClearAllNotes", "Clearing all notes");
+        _SongNotes.Clear();
+        inProgressScratchBlock.AdvanceToNextBlock(true);
+      }
+      else if (scratchRequest.command == "cozVertPlayAllNotes") {
+        DAS.Info("CodeLab.Audio.AddNote", "Playing all " + _SongNotes.Count + " notes");
+        // First, send the notes data to engine
+        var msg = new ReplaceNotesInSong(_SongNotes.ToArray());
+        RobotEngineManager.Instance.Message.ReplaceNotesInSong = msg;
+        RobotEngineManager.Instance.SendMessage();
+
+        bool ignoreBodyTrack = !_SessionState.IsAnimTrackEnabled(AnimTrack.Wheels);
+        bool ignoreHeadTrack = !_SessionState.IsAnimTrackEnabled(AnimTrack.Head);
+        bool ignoreLiftTrack = !_SessionState.IsAnimTrackEnabled(AnimTrack.Lift);
+        // Cancel any current anim (or say which is an animation) actions so that this new action can run
+        InProgressScratchBlockPool.CancelActionsOfType(ActionType.Anim);
+        InProgressScratchBlockPool.CancelActionsOfType(ActionType.Say);
+
+        // This string matches the one in AnimActions.cpp in the engine
+        string animationName = "cozmo_sings_custom";
+
+        _SessionState.ScratchBlockEvent(scratchRequest.command);
+
+        uint idTag = robot.SendQueueSingleAction(Singleton<PlayAnimation>.Instance.Initialize(1, animationName, ignoreBodyTrack, ignoreHeadTrack, ignoreLiftTrack),
+                                                 inProgressScratchBlock.VerticalOnAnimationComplete, QueueActionPosition.IN_PARALLEL);
+        inProgressScratchBlock.SetActionData(ActionType.Anim, idTag);
+        _RequiresResetToNeutralFace = true;
       }
       else if (scratchRequest.command == "cozVertDrive") {
         float dist_mm = ClampDistanceInput(scratchRequest.argFloat);

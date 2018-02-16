@@ -79,6 +79,9 @@ Scratch3CozmoBlocks.prototype.getPrimitives = function () {
         cozmo_sound_play: this.verticalPlaySound,
         cozmo_sound_play_and_wait: this.verticalPlaySoundAndWait,
         cozmo_sound_stop: this.verticalStopSound,
+        cozmo_sound_song_add_note: this.verticalAddNote,
+        cozmo_sound_song_clear_all_notes: this.verticalClearAllNotes,
+        cozmo_sound_song_play_all_notes: this.verticalPlayAllNotes,
         // Draw (on Cozmo's face)
         cozmo_vert_cozmoface_clear: this.verticalCozmoFaceClear,
         cozmo_vert_cozmoface_display: this.verticalCozmoFaceDisplay,
@@ -424,7 +427,6 @@ Scratch3CozmoBlocks.prototype.speak = function(args, util) {
     window.Unity.call({requestId: requestId, command: "cozmoSays", argString: textToSay});
     return commandPromise;
 };
-
 /**
  * Wait until see face helper.
  *
@@ -735,6 +737,25 @@ Scratch3CozmoBlocks.prototype.verticalStopSound = function(args, util) {
     var soundSelection = Cast.toNumber(args.SOUND_MENU);
     window.Unity.call({requestId: -1, command: "cozVertStopSoundEffects", argInt: soundSelection});
     return window.Unity.sleepPromiseIfNecessary();
+};
+
+Scratch3CozmoBlocks.prototype.verticalAddNote = function(args, util) {
+    var noteType = Cast.toNumber(args.SONG_NOTE_TYPE);
+    var noteDuration = Cast.toNumber(args.SONG_NOTE_DURATION);
+    window.Unity.call({requestId: -1, command: "cozVertAddNote", argUInt: noteType, argUInt2: noteDuration});
+    return window.Unity.sleepPromiseIfNecessary();
+};
+
+Scratch3CozmoBlocks.prototype.verticalClearAllNotes = function(args, util) {
+    window.Unity.call({requestId: -1, command: "cozVertClearAllNotes"});
+    return window.Unity.sleepPromiseIfNecessary();
+};
+
+Scratch3CozmoBlocks.prototype.verticalPlayAllNotes = function(args, util) {
+    var requestId = this._getRequestId();
+    var commandPromise = this._promiseForCommand(requestId);
+    window.Unity.call({requestId: requestId, command: "cozVertPlayAllNotes"});
+    return commandPromise;
 };
 
 // Drawing on Cozmo's Face

@@ -245,6 +245,25 @@ enum uint_32 Mood
   Mood_Sad = 777739821,
 }
 
+enum uint_32 Note_Length
+{
+  Half = 3633416822,
+  Invalid = 0,
+  Quarter = 626916951,
+  Threequarter = 1297858357,
+  Whole = 2709953046,
+}
+
+enum uint_32 Note_Type
+{
+  C2 = 1853303302,
+  Csharp2 = 3036490834,
+  D2 = 1836525715,
+  Dsharp2 = 2321315049,
+  Invalid = 0,
+  Rest = 2277599019,
+}
+
 enum uint_32 Relationship
 {
   Invalid = 0,
@@ -286,6 +305,8 @@ enum uint_32 SwitchGroupType
   Gameplay_Round = 2536359484,
   Invalid = 0,
   Mood = 3128647864,
+  Note_Length = 1306192548,
+  Note_Type = 1228038248,
   Relationship = 3723222599,
   Sparked = 62349551,
   World_Event = 846944294,

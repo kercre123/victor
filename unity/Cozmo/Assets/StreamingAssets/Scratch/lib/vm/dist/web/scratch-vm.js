@@ -355,6 +355,33 @@ if (typeof Object.create === 'function') {
 
 /***/ }),
 /* 3 */
+/***/ (function(module, exports) {
+
+var g;
+
+// This works in non-strict mode
+g = (function() {
+	return this;
+})();
+
+try {
+	// This works if eval is allowed (see CSP)
+	g = g || Function("return this")() || (1,eval)("this");
+} catch(e) {
+	// This works if the window reference is available
+	if(typeof window === "object")
+		g = window;
+}
+
+// g can still be undefined, but nothing to do about it...
+// We return undefined, instead of nothing here, so it's
+// easier to handle this case. if(!global) { ...}
+
+module.exports = g;
+
+
+/***/ }),
+/* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var microee = __webpack_require__(63);
@@ -432,7 +459,7 @@ module.exports = Transform;
 
 
 /***/ }),
-/* 4 */
+/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -531,33 +558,6 @@ var MathUtil = function () {
 }();
 
 module.exports = MathUtil;
-
-/***/ }),
-/* 5 */
-/***/ (function(module, exports) {
-
-var g;
-
-// This works in non-strict mode
-g = (function() {
-	return this;
-})();
-
-try {
-	// This works if eval is allowed (see CSP)
-	g = g || Function("return this")() || (1,eval)("this");
-} catch(e) {
-	// This works if the window reference is available
-	if(typeof window === "object")
-		g = window;
-}
-
-// g can still be undefined, but nothing to do about it...
-// We return undefined, instead of nothing here, so it's
-// easier to handle this case. if(!global) { ...}
-
-module.exports = g;
-
 
 /***/ }),
 /* 6 */
@@ -7845,7 +7845,7 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 var log = __webpack_require__(1);
-var MathUtil = __webpack_require__(4);
+var MathUtil = __webpack_require__(5);
 var StringUtil = __webpack_require__(12);
 var Target = __webpack_require__(76);
 
@@ -10848,7 +10848,7 @@ function isnan (val) {
   return val !== val // eslint-disable-line no-self-compare
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ }),
 /* 25 */
@@ -12062,7 +12062,7 @@ Writable.prototype._destroy = function (err, cb) {
   this.end();
   cb(err);
 };
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(15), __webpack_require__(88).setImmediate, __webpack_require__(5)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(15), __webpack_require__(88).setImmediate, __webpack_require__(3)))
 
 /***/ }),
 /* 32 */
@@ -15798,7 +15798,7 @@ function indexOf(xs, x) {
   }
   return -1;
 }
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5), __webpack_require__(15)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3), __webpack_require__(15)))
 
 /***/ }),
 /* 48 */
@@ -16291,7 +16291,7 @@ module.exports = Sprite;
 /* WEBPACK VAR INJECTION */(function(global) {
 
 module.exports = global["VirtualMachine"] = __webpack_require__(55);
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ }),
 /* 55 */
@@ -21029,7 +21029,7 @@ exports.backends = {
 /* 62 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Transform = __webpack_require__(3),
+var Transform = __webpack_require__(4),
     Filter = __webpack_require__(64);
 
 var log = new Transform(),
@@ -21137,7 +21137,7 @@ module.exports = M;
 /***/ (function(module, exports, __webpack_require__) {
 
 // default filter
-var Transform = __webpack_require__(3);
+var Transform = __webpack_require__(4);
 
 var levelMap = { debug: 1, info: 2, warn: 3, error: 4 };
 
@@ -21198,7 +21198,7 @@ module.exports = Filter;
 /* 65 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Transform = __webpack_require__(3);
+var Transform = __webpack_require__(4);
 
 var newlines = /\n+$/,
     logger = new Transform();
@@ -21236,7 +21236,7 @@ module.exports = logger;
 /* 66 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Transform = __webpack_require__(3),
+var Transform = __webpack_require__(4),
     color = __webpack_require__(35);
 
 var colors = { debug: ['cyan'], info: ['purple' ], warn: [ 'yellow', true ], error: [ 'red', true ] },
@@ -21260,7 +21260,7 @@ module.exports = logger;
 /* 67 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Transform = __webpack_require__(3),
+var Transform = __webpack_require__(4),
     color = __webpack_require__(35),
     colors = { debug: ['gray'], info: ['purple' ], warn: [ 'yellow', true ], error: [ 'red', true ] },
     logger = new Transform();
@@ -21292,7 +21292,7 @@ module.exports = logger;
 /* 68 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Transform = __webpack_require__(3),
+var Transform = __webpack_require__(4),
     cache = [ ];
 
 var logger = new Transform();
@@ -21312,7 +21312,7 @@ module.exports = logger;
 /* 69 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Transform = __webpack_require__(3),
+var Transform = __webpack_require__(4),
     cache = false;
 
 var logger = new Transform();
@@ -21332,7 +21332,7 @@ module.exports = logger;
 /* 70 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Transform = __webpack_require__(3);
+var Transform = __webpack_require__(4);
 
 var cid = new Date().valueOf().toString(36);
 
@@ -21757,7 +21757,7 @@ var Cast = __webpack_require__(0);
 var Clone = __webpack_require__(11);
 var Color = __webpack_require__(10);
 var formatMessage = __webpack_require__(36);
-var MathUtil = __webpack_require__(4);
+var MathUtil = __webpack_require__(5);
 var RenderedTarget = __webpack_require__(21);
 var log = __webpack_require__(1);
 
@@ -24584,7 +24584,7 @@ module.exports = function () {
 /* 88 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var apply = Function.prototype.apply;
+/* WEBPACK VAR INJECTION */(function(global) {var apply = Function.prototype.apply;
 
 // DOM APIs, for completeness
 
@@ -24635,9 +24635,17 @@ exports._unrefActive = exports.active = function(item) {
 
 // setimmediate attaches itself to the global object
 __webpack_require__(89);
-exports.setImmediate = setImmediate;
-exports.clearImmediate = clearImmediate;
+// On some exotic environments, it's not clear which object `setimmeidate` was
+// able to install onto.  Search each possibility in the same order as the
+// `setimmediate` library.
+exports.setImmediate = (typeof self !== "undefined" && self.setImmediate) ||
+                       (typeof global !== "undefined" && global.setImmediate) ||
+                       (this && this.setImmediate);
+exports.clearImmediate = (typeof self !== "undefined" && self.clearImmediate) ||
+                         (typeof global !== "undefined" && global.clearImmediate) ||
+                         (this && this.clearImmediate);
 
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ }),
 /* 89 */
@@ -24830,7 +24838,7 @@ exports.clearImmediate = clearImmediate;
     attachTo.clearImmediate = clearImmediate;
 }(typeof self === "undefined" ? typeof global === "undefined" ? this : global : self));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5), __webpack_require__(15)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3), __webpack_require__(15)))
 
 /***/ }),
 /* 90 */
@@ -24904,7 +24912,7 @@ function config (name) {
   return String(val).toLowerCase() === 'true';
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ }),
 /* 91 */
@@ -27155,7 +27163,7 @@ var ArgumentType = __webpack_require__(20);
 var BlockType = __webpack_require__(9);
 var Clone = __webpack_require__(11);
 var Cast = __webpack_require__(0);
-var MathUtil = __webpack_require__(4);
+var MathUtil = __webpack_require__(5);
 var Timer = __webpack_require__(19);
 
 /**
@@ -32275,7 +32283,7 @@ if (typeof window !== "undefined") {
 
 module.exports = win;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ }),
 /* 128 */
@@ -32766,7 +32774,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var MathUtil = __webpack_require__(4);
+var MathUtil = __webpack_require__(5);
 
 var Mouse = function () {
     function Mouse(runtime) {
@@ -33165,7 +33173,7 @@ var Scratch3EventBlocks = function () {
 
         // *** ANKI CHANGE ***
         // Deprecated
-        // This is old implementation.
+        // This is an old implementation.
 
     }, {
         key: 'broadcast',
@@ -33193,6 +33201,7 @@ var Scratch3EventBlocks = function () {
 
         // *** ANKI CHANGE *** 
         // Deprecated
+        // This is an old implementation.
 
     }, {
         key: 'broadcastAndWait',
@@ -33789,7 +33798,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var Cast = __webpack_require__(0);
-var MathUtil = __webpack_require__(4);
+var MathUtil = __webpack_require__(5);
 var Timer = __webpack_require__(19);
 
 var Scratch3MotionBlocks = function () {
@@ -34086,7 +34095,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var Cast = __webpack_require__(0);
-var MathUtil = __webpack_require__(4);
+var MathUtil = __webpack_require__(5);
 
 var Scratch3OperatorsBlocks = function () {
     function Scratch3OperatorsBlocks(runtime) {
@@ -34292,7 +34301,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var MathUtil = __webpack_require__(4);
+var MathUtil = __webpack_require__(5);
 var Cast = __webpack_require__(0);
 var Clone = __webpack_require__(11);
 
@@ -35267,7 +35276,7 @@ module.exports = Scratch3ProcedureBlocks;
 
 var Cast = __webpack_require__(0);
 var Color = __webpack_require__(10);
-var MathUtil = __webpack_require__(4);
+var MathUtil = __webpack_require__(5);
 var Timer = __webpack_require__(19);
 
 var Scratch3CozmoBlocks = function Scratch3CozmoBlocks(runtime) {
@@ -35346,6 +35355,9 @@ Scratch3CozmoBlocks.prototype.getPrimitives = function () {
         cozmo_sound_play: this.verticalPlaySound,
         cozmo_sound_play_and_wait: this.verticalPlaySoundAndWait,
         cozmo_sound_stop: this.verticalStopSound,
+        cozmo_sound_song_add_note: this.verticalAddNote,
+        cozmo_sound_song_clear_all_notes: this.verticalClearAllNotes,
+        cozmo_sound_song_play_all_notes: this.verticalPlayAllNotes,
         // Draw (on Cozmo's face)
         cozmo_vert_cozmoface_clear: this.verticalCozmoFaceClear,
         cozmo_vert_cozmoface_display: this.verticalCozmoFaceDisplay,
@@ -35691,7 +35703,6 @@ Scratch3CozmoBlocks.prototype.speak = function (args, util) {
     window.Unity.call({ requestId: requestId, command: "cozmoSays", argString: textToSay });
     return commandPromise;
 };
-
 /**
  * Wait until see face helper.
  *
@@ -35991,6 +36002,25 @@ Scratch3CozmoBlocks.prototype.verticalStopSound = function (args, util) {
     var soundSelection = Cast.toNumber(args.SOUND_MENU);
     window.Unity.call({ requestId: -1, command: "cozVertStopSoundEffects", argInt: soundSelection });
     return window.Unity.sleepPromiseIfNecessary();
+};
+
+Scratch3CozmoBlocks.prototype.verticalAddNote = function (args, util) {
+    var noteType = Cast.toNumber(args.SONG_NOTE_TYPE);
+    var noteDuration = Cast.toNumber(args.SONG_NOTE_DURATION);
+    window.Unity.call({ requestId: -1, command: "cozVertAddNote", argUInt: noteType, argUInt2: noteDuration });
+    return window.Unity.sleepPromiseIfNecessary();
+};
+
+Scratch3CozmoBlocks.prototype.verticalClearAllNotes = function (args, util) {
+    window.Unity.call({ requestId: -1, command: "cozVertClearAllNotes" });
+    return window.Unity.sleepPromiseIfNecessary();
+};
+
+Scratch3CozmoBlocks.prototype.verticalPlayAllNotes = function (args, util) {
+    var requestId = this._getRequestId();
+    var commandPromise = this._promiseForCommand(requestId);
+    window.Unity.call({ requestId: requestId, command: "cozVertPlayAllNotes" });
+    return commandPromise;
 };
 
 // Drawing on Cozmo's Face
