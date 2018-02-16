@@ -461,7 +461,9 @@ namespace Cozmo {
   {
     ExternalInterface::EnableLightStates msg;
     static bool enableLightComponent = false;
-    printf("EnableLightsComponent: %d", enableLightComponent);
+    LOG_INFO("ToggleEngineLightComponent.EnableLightsComponent",
+             "EnableLightsComponent: %s",
+             enableLightComponent ? "TRUE" : "FALSE");
     msg.enable = enableLightComponent;
     enableLightComponent = !enableLightComponent;
     
@@ -1650,23 +1652,30 @@ namespace Cozmo {
   
   void WebotsKeyboardController::PlayCubeAnimation()
   {
-    if(_altKeyPressed)
-    {
-      ExternalInterface::PlayCubeAnim s;
-      s.trigger = CubeAnimationTrigger::WakeUp;
-      s.objectID = 1;
-      ExternalInterface::MessageGameToEngine m;
-      m.Set_PlayCubeAnim(s);
-      SendMessage(m);
-    }
-    else
-    {
-      ExternalInterface::PlayCubeAnim s;
-      s.trigger = CubeAnimationTrigger::Flash;
-      s.objectID = 1;
-      ExternalInterface::MessageGameToEngine m;
-      m.Set_PlayCubeAnim(s);
-      SendMessage(m);
+    if(_altKeyPressed) {
+      // Send whatever cube animation trigger is specified in the animationToSendName field
+      webots::Field* animToSendNameField = root_->getField("animationToSendName");
+      if (animToSendNameField == nullptr) {
+        printf("ERROR: No animationToSendName field found in WebotsKeyboardController.proto\n");
+        return;
+      }
+      std::string cubeAnimTriggerStr = animToSendNameField->getSFString();
+      if (cubeAnimTriggerStr.empty()) {
+        printf("ERROR: animationToSendName field is empty\n");
+        return;
+      }
+      
+      CubeAnimationTrigger cubeAnimTrigger;
+      if (!EnumFromString(cubeAnimTriggerStr, cubeAnimTrigger)) {
+        LOG_ERROR("WebotsKeyboardController.PlayCubeAnimation.InvalidCubeAnimationTrigger",
+                  "ERROR: %s is not a valid CubeAnimationTrigger name",
+                  cubeAnimTriggerStr.c_str());
+        return;
+      }
+      
+      SendCubeAnimation(-1, cubeAnimTrigger);
+    } else {
+      SendCubeAnimation(-1, CubeAnimationTrigger::Flash);
     }
   }
   
@@ -2054,8 +2063,8 @@ namespace Cozmo {
 //      REGISTER_SHIFTED_KEY_FCN('|', MOD_ALT, , "");
     REGISTER_SHIFTED_KEY_FCN(':', MOD_NONE, SetRollActionParams,               "Set parameters for roll action");
 //      REGISTER_SHIFTED_KEY_FCN(':', MOD_ALT, , "");
-    REGISTER_SHIFTED_KEY_FCN('"', MOD_NONE, PlayCubeAnimation,                 "Play cube animation");
-    REGISTER_SHIFTED_KEY_FCN('"', MOD_ALT,  PlayCubeAnimation,                 "Play cube animation");
+    REGISTER_SHIFTED_KEY_FCN('"', MOD_NONE, PlayCubeAnimation,                 "Play 'Flash' cube animation on selected cube");
+    REGISTER_SHIFTED_KEY_FCN('"', MOD_ALT,  PlayCubeAnimation,                 "Play cube animation trigger specified in 'animationToSendName' on selected cube");
     REGISTER_SHIFTED_KEY_FCN('<', MOD_NONE, TurnInPlaceCCW,                    "Turn in place CCW by 'pointTurnAngle_deg'");
     REGISTER_SHIFTED_KEY_FCN('<', MOD_ALT,  TurnInPlaceCCW,                    "Turn in place CCW forever");
     REGISTER_SHIFTED_KEY_FCN('>', MOD_NONE, TurnInPlaceCW,                     "Turn in place CW by 'pointTurnAngle_deg'");
@@ -2185,7 +2194,7 @@ namespace Cozmo {
     
     REGISTER_KEY_FCN('Y', MOD_NONE,      ToggleKeepFaceAliveEnable,     "Toggle keep face alive enable");
     REGISTER_KEY_FCN('Y', MOD_SHIFT,     SetDefaultKeepFaceAliveParams, "Sets default KeepFaceAlive parameters");
-    REGISTER_KEY_FCN('Y', MOD_ALT,       SetKeepFaceAliveParams,        "Sets KeepFaceAlive parameters from keyboard node's params (starting at 'BlinkSpacingMinTime_ms'");
+    REGISTER_KEY_FCN('Y', MOD_ALT,       SetKeepFaceAliveParams,        "Sets KeepFaceAlive parameters from keyboard node's params (starting at 'BlinkSpacingMinTime_ms')");
 //    REGISTER_KEY_FCN('Y', MOD_ALT_SHIFT, , "");
     
     REGISTER_KEY_FCN('Z', MOD_NONE,      MoveLiftDown,    "Move lift down");

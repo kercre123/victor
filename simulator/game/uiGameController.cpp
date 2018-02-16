@@ -1511,6 +1511,22 @@ namespace Anki {
       message.Set_LogRawProxData(m);
       SendMessage(message);
     }
+    
+    void UiGameController::SendCubeAnimation(const u32 objectID, const CubeAnimationTrigger cubeAnimTrigger)
+    {
+      ExternalInterface::PlayCubeAnim m;
+      m.objectID = objectID;
+      m.trigger = cubeAnimTrigger;
+      SendMessage(ExternalInterface::MessageGameToEngine(std::move(m)));
+    }
+    
+    void UiGameController::SendStopCubeAnimation(const u32 objectID, const CubeAnimationTrigger cubeAnimTrigger)
+    {
+      ExternalInterface::StopCubeAnim m;
+      m.objectID = objectID;
+      m.trigger = cubeAnimTrigger;
+      SendMessage(ExternalInterface::MessageGameToEngine(std::move(m)));
+    }
 
     void UiGameController::SendAnimation(const char* animName, u32 numLoops, bool throttleMessages)
     {
