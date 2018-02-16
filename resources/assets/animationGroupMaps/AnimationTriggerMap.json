@@ -2289,6 +2289,14 @@
       "AnimName": "ag_rtsound_offcharger_asleep_front"
     },
     {
+      "CladEvent": "ReactToSoundOffChargerAsleepFrontLeft",
+      "AnimName": "ag_rtsound_offcharger_asleep_45left"
+    },
+    {
+      "CladEvent": "ReactToSoundOffChargerAsleepFrontRight",
+      "AnimName": "ag_rtsound_offcharger_asleep_45right"
+    },
+    {
       "CladEvent": "ReactToSoundOffChargerAsleepLeft",
       "AnimName": "ag_rtsound_offcharger_asleep_left"
     },
@@ -2301,12 +2309,28 @@
       "AnimName": "ag_rtsound_offcharger_asleep_behind"
     },
     {
+      "CladEvent": "ReactToSoundOffChargerAsleepBehindLeft",
+      "AnimName": "ag_rtsound_offcharger_asleep_135left"
+    },
+    {
+      "CladEvent": "ReactToSoundOffChargerAsleepBehindRight",
+      "AnimName": "ag_rtsound_offcharger_asleep_135right"
+    },
+    {
       "CladEvent": "ReactToSoundOffChargerObserveAmbient",
       "AnimName": "ag_rtsound_offcharger_observe_ambient"
     },
     {
       "CladEvent": "ReactToSoundOffChargerObserveFront",
       "AnimName": "ag_rtsound_offcharger_observe_front"
+    },
+    {
+      "CladEvent": "ReactToSoundOffChargerObserveFrontLeft",
+      "AnimName": "ag_rtsound_offcharger_observe_45left"
+    },
+    {
+      "CladEvent": "ReactToSoundOffChargerObserveFrontRight",
+      "AnimName": "ag_rtsound_offcharger_observe_45right"
     },
     {
       "CladEvent": "ReactToSoundOffChargerObserveLeft",
@@ -2319,6 +2343,14 @@
     {
       "CladEvent": "ReactToSoundOffChargerObserveBehind",
       "AnimName": "ag_rtsound_offcharger_observe_behind"
+    },
+    {
+      "CladEvent": "ReactToSoundOffChargerObserveBehindLeft",
+      "AnimName": "ag_rtsound_offcharger_observe_135left"
+    },
+    {
+      "CladEvent": "ReactToSoundOffChargerObserveBehindRight",
+      "AnimName": "ag_rtsound_offcharger_observe_135right"
     },
     {
       "CladEvent": "ReactToSoundOnChargerAsleepAmbient",
