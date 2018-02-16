@@ -28,19 +28,19 @@
     "translation" : "あなたはせかいいち "
   },
   "codeLabFeaturedProject.ComplimentGenerator.awesome_" : {
-    "translation" : "さいこう "
+    "translation" : "いけてる "
   },
   "codeLabFeaturedProject.ComplimentGenerator.beautiful_" : {
     "translation" : "うつくしい "
   },
   "codeLabFeaturedProject.ComplimentGenerator.brave_" : {
-    "translation" : "ゆうかん "
+    "translation" : "ゆうきがある "
   },
   "codeLabFeaturedProject.ComplimentGenerator.brilliant_" : {
-    "translation" : "はなやか "
+    "translation" : "かがやかしい "
   },
   "codeLabFeaturedProject.ComplimentGenerator.charming_" : {
-    "translation" : "みりょくてき "
+    "translation" : "みりょくがある "
   },
   "codeLabFeaturedProject.ComplimentGenerator.choose_a_sentence" : {
     "translation" : "文章を選んでください。"
@@ -55,13 +55,13 @@
     "translation" : "かしこい "
   },
   "codeLabFeaturedProject.ComplimentGenerator.cool_" : {
-    "translation" : "クール "
+    "translation" : "かっこいい "
   },
   "codeLabFeaturedProject.ComplimentGenerator.fantastic_" : {
     "translation" : "すばらしい "
   },
   "codeLabFeaturedProject.ComplimentGenerator.friendly_" : {
-    "translation" : "フレンドリー "
+    "translation" : "したしみやすい "
   },
   "codeLabFeaturedProject.ComplimentGenerator.funny_" : {
     "translation" : "たのしい "
@@ -79,7 +79,7 @@
     "translation" : "あなたのような "
   },
   "codeLabFeaturedProject.ComplimentGenerator.inspiring_" : {
-    "translation" : "しげきてき "
+    "translation" : "しげきがある "
   },
   "codeLabFeaturedProject.ComplimentGenerator.kind_" : {
     "translation" : "やさしい "
@@ -88,16 +88,16 @@
     "translation" : "あてずっぽう"
   },
   "codeLabFeaturedProject.ComplimentGenerator.smart_" : {
-    "translation" : "おりこう "
+    "translation" : "あたまがいい "
   },
   "codeLabFeaturedProject.ComplimentGenerator.strong_" : {
     "translation" : "つよい "
   },
   "codeLabFeaturedProject.ComplimentGenerator.stylish_" : {
-    "translation" : "おしゃれ "
+    "translation" : "しゃれている "
   },
   "codeLabFeaturedProject.ComplimentGenerator.thoughtful" : {
-    "translation" : "しんせつ"
+    "translation" : "おもいやりがある"
   },
   "codeLabFeaturedProject.ComplimentGenerator.wonderful_" : {
     "translation" : "すごい "

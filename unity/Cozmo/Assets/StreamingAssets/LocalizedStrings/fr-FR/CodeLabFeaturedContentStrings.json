@@ -706,7 +706,7 @@
     "translation" : "Rejouer ?"
   },
   "codeLabFeaturedProject.PaddleBall.player" : {
-    "translation" : "Joueur"
+    "translation" : "joueur"
   },
   "codeLabFeaturedProject.PaddleBall.player_paddle_position_y" : {
     "translation" : "position y de la raquette du joueur"
@@ -826,7 +826,7 @@
     "translation" : "Cozmo choisit les coordonnées du trésor au hasard."
   },
   "codeLabFeaturedProject.PotOGoldDetector.default_yaw_zero" : {
-    "translation" : "Position zéro par défaut"
+    "translation" : "position zéro par défaut"
   },
   "codeLabFeaturedProject.PotOGoldDetector.detect_mode" : {
     "translation" : "mode de détection"
