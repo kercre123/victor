@@ -1,0 +1,12 @@
+// Loaded directly into activity socialize
+{
+  "behaviorClass": "FindFaces",
+  "behaviorID": "FindFaces_socialize",
+  "executableBehaviorType": "FindFaces",
+  
+  "maxFaceAgeToLook_ms": 180000,
+
+  "stoppingCondition": "None",
+  "searchBehavior": "LookInPlaceHeadUp"
+
+}

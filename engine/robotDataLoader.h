@@ -13,7 +13,7 @@
 #ifndef ANKI_COZMO_BASESTATION_ROBOT_DATA_LOADER_H
 #define ANKI_COZMO_BASESTATION_ROBOT_DATA_LOADER_H
 
-
+#include "clad/types/animationTrigger.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 
 #include "util/helpers/noncopyable.h"
@@ -24,6 +24,7 @@
 #include <mutex>
 #include <string>
 #include <thread>
+#include <set>
 #include <unordered_map>
 #include <vector>
 
@@ -64,6 +65,7 @@ public:
   void LoadVoiceCommandConfigs();
 
   using FileJsonMap       = std::unordered_map<std::string, const Json::Value>;
+  using ImagePathMap      = std::unordered_map<std::string, std::string>;
   using BehaviorIDJsonMap = std::unordered_map<BehaviorID,  const Json::Value>;
 
   const FileJsonMap& GetEmotionEventJsons()   const { return _emotionEvents; }
@@ -76,10 +78,15 @@ public:
   AnimationTriggerResponsesContainer* GetCubeAnimationTriggerResponses() const { return _cubeAnimationTriggerResponses.get(); }
   BackpackLightAnimationContainer* GetBackpackLightAnimations() const { return _backpackLightAnimations.get(); }
 
+  bool HasAnimationForTrigger( AnimationTrigger ev );
+  std::string GetAnimationForTrigger( AnimationTrigger ev );
+  std::string GetCubeAnimationForTrigger( CubeAnimationTrigger ev );
+  
+  const std::set<AnimationTrigger>& GetDasBlacklistedAnimationTriggers() const { return _dasBlacklistedAnimationTriggers; }
+
   // robot configuration json files
   const Json::Value& GetRobotMoodConfig() const              { return _robotMoodConfig; }
   const Json::Value& GetVictorFreeplayBehaviorConfig() const { return _victorFreeplayBehaviorConfig; }
-  const Json::Value& GetRobotWorkoutConfig() const           { return _robotWorkoutConfig; }
   const Json::Value& GetRobotVisionConfig() const            { return _robotVisionConfig; }
   const Json::Value& GetVisionScheduleMediatorConfig() const { return _visionScheduleMediatorConfig; }
   const Json::Value& GetVoiceCommandConfig() const           { return _voiceCommandConfig; }
@@ -90,11 +97,12 @@ public:
   const Json::Value& GetRobotNeedsHandlersConfig() const     { return _needsHandlersConfig; }
   const Json::Value& GetLocalNotificationConfig() const      { return _localNotificationConfig; }
   const Json::Value& GetInventoryConfig() const              { return _inventoryConfig; }
+  const Json::Value& GetWebServerEngineConfig() const        { return _webServerEngineConfig; }
   const Json::Value& GetDasEventConfig() const               { return _dasEventConfig; }
-  
-  // voice command configs
-  const Json::Value& GetGameRequestWeightsConfig() const { return _gameRequestWeights; }
-  const Json::Value& GetDoATrickWeightsConfig() const { return _doATrickWeights; }
+  const Json::Value& GetUserIntentConfig() const             { return _userIntentsConfig; }
+
+  // images are stored as a map of stripped file name (no file extension) to full path
+  const ImagePathMap& GetFacePNGPaths()       const { return _facePNGPaths; }
 
   bool IsCustomAnimLoadEnabled() const;
   
@@ -121,7 +129,12 @@ private:
 
   void LoadEmotionEvents();
   void LoadBehaviors();
+
+  void LoadDasBlacklistedAnimationTriggers();
   
+  void LoadFacePNGPaths();
+
+
   const CozmoContext* const _context;
   const Util::Data::DataPlatform* _platform;
 
@@ -155,7 +168,6 @@ private:
   Json::Value _victorFreeplayBehaviorConfig;
   Json::Value _robotVisionConfig;
   Json::Value _visionScheduleMediatorConfig;
-  Json::Value _robotWorkoutConfig;
   Json::Value _voiceCommandConfig;
   Json::Value _needsSystemConfig;
   Json::Value _starRewardsConfig;
@@ -165,18 +177,19 @@ private:
   Json::Value _localNotificationConfig;
   Json::Value _textToSpeechConfig;
   Json::Value _inventoryConfig;
+  Json::Value _webServerEngineConfig;
   Json::Value _dasEventConfig;
+  Json::Value _userIntentsConfig;
   
-  // voice command configs
-  Json::Value _gameRequestWeights;
-  Json::Value _doATrickWeights;
-  
+  ImagePathMap _facePNGPaths;
+
   bool                  _isNonConfigDataLoaded = false;
   std::mutex            _parallelLoadingMutex;
   std::atomic<float>    _loadingCompleteRatio{0};
   std::thread           _dataLoadingThread;
   std::atomic<bool>     _abortLoad{false};
   
+  std::set<AnimationTrigger> _dasBlacklistedAnimationTriggers;
 };
 
 }

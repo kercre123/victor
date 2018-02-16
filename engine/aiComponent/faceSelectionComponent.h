@@ -15,7 +15,7 @@
 #define __Cozmo_Basestation_AIComponent_FaceSelectionComponent_H__
 
 #include "coretech/common/shared/types.h"
-#include "engine/entity.h"
+#include "util/entityComponent/iManageableComponent.h"
 #include "util/helpers/noncopyable.h"
 
 #include <set>
@@ -38,7 +38,7 @@ class SmartFaceID;
 
 
   
-class FaceSelectionComponent : public ManageableComponent, private Util::noncopyable
+class FaceSelectionComponent : public IManageableComponent, private Util::noncopyable
 {
 public:
   // Enum that specifies the way that score penalties are applied when selecting face

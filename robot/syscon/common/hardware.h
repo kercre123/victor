@@ -23,8 +23,7 @@ static const uint32_t WATCHDOG_CLOCK  = 10000;
 static const uint32_t WATCHDOG_LIMIT  = WATCHDOG_CLOCK / 200 * 10; // 10 main execution frames
 
 enum IRQ_Priority {
-  PRIORITY_ADC = 0,
-  PRIORITY_ENCODERS = 1,
+  PRIORITY_ENCODERS = 0,
   PRIORITY_MAIN_EXEC = 2,
   PRIORITY_I2C_TRANSMIT = 2,
   PRIORITY_SPINE_COMMS = 2,
@@ -61,7 +60,7 @@ namespace LTENC GPIO_DEFINE(C, 15);
 // Power
 namespace POWER_EN GPIO_DEFINE(A, 6);
 namespace POWER_B GPIO_DEFINE(A, 6);
-namespace nVDDs_EN GPIO_DEFINE(C, 13);
+namespace nVENC_EN GPIO_DEFINE(C, 13);
 namespace VEXT_SENSE GPIO_DEFINE(A, 2);
 namespace VMAIN_SENSE GPIO_DEFINE(A, 4);
 namespace MAIN_EN GPIO_DEFINE(A, 3);

@@ -20,7 +20,7 @@
 #include "coretech/vision/engine/visionMarker.h"
 #include "coretech/vision/engine/faceTracker.h"
 #include "engine/components/nvStorageComponent.h"
-#include "engine/entity.h"
+#include "util/entityComponent/entity.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robotStateHistory.h"
 #include "engine/rollingShutterCorrector.h"
@@ -151,6 +151,8 @@ struct DockingErrorSignal;
     Result UpdateToolCode(const VisionProcessingResult& result);
     Result UpdateComputedCalibration(const VisionProcessingResult& result);
     Result UpdateImageQuality(const VisionProcessingResult& procResult);
+    Result UpdateVisualObstacles(const VisionProcessingResult& procResult);
+    Result UpdateDetectedObjects(const VisionProcessingResult& result);
 
     const Vision::Camera& GetCamera(void) const;
     Vision::Camera& GetCamera(void);
@@ -304,6 +306,8 @@ struct DockingErrorSignal;
     
     void SetPhysicalRobot(const bool isPhysical);
 
+    bool LookupGroundPlaneHomography(f32 atHeadAngle, Matrix_3x3f& H) const;
+
     // Non-rotated points representing the lift cross bar
     std::vector<Point3f> _liftCrossBarSource;
 
@@ -317,6 +321,7 @@ struct DockingErrorSignal;
     VisionSystem* _visionSystem = nullptr;
     VizManager*   _vizManager = nullptr;
     std::map<std::string, s32> _vizDisplayIndexMap;
+    std::list<std::pair<TimeStamp_t, ExternalInterface::RobotObservedGenericObject>> _detectedObjectsToDraw;
     
     // Robot stores the calibration, camera just gets a reference to it
     // This is so we can share the same calibration data across multiple
@@ -374,7 +379,6 @@ struct DockingErrorSignal;
     
     std::map<f32,Matrix_3x3f> _groundPlaneHomographyLUT; // keyed on head angle in radians
     void PopulateGroundPlaneHomographyLUT(f32 angleResolution_rad = DEG_TO_RAD(0.25f));
-    bool LookupGroundPlaneHomography(f32 atHeadAngle, Matrix_3x3f& H) const;
     
     void Processor();
     void UpdateVisionSystem(const VisionPoseData& poseData, const Vision::ImageRGB& image);

@@ -26,7 +26,7 @@ namespace Anki {
 namespace Cozmo {
 
 RobotIdleTimeoutComponent::RobotIdleTimeoutComponent()
-: IDependencyManagedComponent(RobotComponentID::RobotIdleTimeout)
+: IDependencyManagedComponent(this, RobotComponentID::RobotIdleTimeout)
 {
 
 }

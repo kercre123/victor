@@ -1,3 +1,16 @@
+/**
+ * File: camera_client.h
+ *
+ * Author: Brian Chapados
+ * Created: 01/24/2018
+ *
+ * Description:
+ *               API for remote IPC connection to anki camera system daemon
+ *
+ * Copyright: Anki, Inc. 2018
+ *
+ **/
+
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -21,16 +34,22 @@
 static char *cli_socket_path = "/tmp/cam_client0";
 static char *srv_socket_path = "/var/run/mm-anki-camera/camera-server";
 
-#define ANKI_CAMERA_MAX_PACKETS 8
-#define ANKI_CAMERA_MSG_PAYLOAD_LEN 128
-#define ANKI_CAMERA_MAX_FRAME_COUNT 5
-
 static const uint64_t HEARTBEAT_INTERVAL_NS = 200000000;
 static const uint64_t HEARTBEAT_INTERVAL_US = 200000;
 
 #define NSEC_PER_SEC ((uint64_t)1000000000)
 #define NSEC_PER_MSEC ((uint64_t)1000000)
 #define NSEC_PER_USEC (1000)
+
+// BEGIN: shared types
+// These types are shared with the server component in the OS.
+// Eventually these structs will be available via a header in our
+// custom toolchain, or we will move the camera system back into the
+// engine instead of using a separate process.
+
+#define ANKI_CAMERA_MAX_PACKETS 8
+#define ANKI_CAMERA_MSG_PAYLOAD_LEN 128
+#define ANKI_CAMERA_MAX_FRAME_COUNT 6
 
 //
 // IPC Message Protocol
@@ -122,6 +141,7 @@ static ssize_t read_fd(int fd, void *ptr, size_t nbytes, int *recvfd)
   struct iovec iov[1];
   ssize_t n;
   int newfd;
+  *recvfd = -1; /* default: descriptor was not passed */
 
   union {
     struct cmsghdr cm;
@@ -140,11 +160,14 @@ static ssize_t read_fd(int fd, void *ptr, size_t nbytes, int *recvfd)
   msg.msg_iov = iov;
   msg.msg_iovlen = 1;
 
-  if ((n = recvmsg(fd, &msg, 0)) <= 0)
-  { return (n); }
+  n = recvmsg(fd, &msg, 0);
+  if (n <= 0) {
+    return (n);
+  }
 
-  if ((cmptr = CMSG_FIRSTHDR(&msg)) != NULL &&
-      cmptr->cmsg_len == CMSG_LEN(sizeof(int))) {
+  cmptr = CMSG_FIRSTHDR(&msg);
+  if ((cmptr != NULL) &&
+      (cmptr->cmsg_len == CMSG_LEN(sizeof(int)))) {
     if (cmptr->cmsg_level != SOL_SOCKET) {
       loge("%s: control level != SOL_SOCKET: %s", __func__, strerror(errno));
       return -1;
@@ -155,33 +178,39 @@ static ssize_t read_fd(int fd, void *ptr, size_t nbytes, int *recvfd)
     }
     *recvfd = *((int *)CMSG_DATA(cmptr));
   }
-  else {
-    *recvfd = -1; /* descriptor was not passed */
-  }
 
   return (n);
 }
-/* end read_fd */
 
 static int configure_socket(int socket)
 {
-  int flags = fcntl(socket, F_GETFL, 0);
-  if (flags == -1) {
-    loge("%s: configure socket: %s", __func__, strerror(errno));
-    return -1;
-  }
-
-  flags |= O_NONBLOCK;
-  flags = fcntl(socket, F_SETFL, flags);
-  if (flags == -1) {
-    loge("%s: configure nonblocking: %s", __func__, strerror(errno));
-    return -1;
-  }
-
   const int enable = 1;
   const int status = setsockopt(socket, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable));
 
   return status;
+}
+
+static ssize_t writen(int fd, const void *vptr, size_t n)
+{
+  ssize_t nleft;
+  ssize_t nwritten;
+  const char *ptr;
+
+  ptr = vptr;
+  nleft = n;
+  while (nleft > 0) {
+    if ( (nwritten = write(fd, ptr, nleft)) <= 0) {
+      if (nwritten < 0 && errno == EINTR) {
+        nwritten = 0;   /* and call write() again */
+      } else {
+        return (-1);    /* error */
+      }
+
+      nleft -= nwritten;
+      ptr += nwritten;
+    }
+  }
+  return (n);
 }
 
 static void debug_dump_image_frame(uint8_t *frame, int width, int height, int bpp)
@@ -198,7 +227,7 @@ static void debug_dump_image_frame(uint8_t *frame, int width, int height, int bp
     loge("%s: cannot open file %s \n", __func__, file_name);
   }
   else {
-    write(file_fd, frame, width * height * bpp / 8);
+    writen(file_fd, frame, width * height * bpp / 8);
   }
 
   close(file_fd);
@@ -209,17 +238,22 @@ static int socket_connect(int *out_fd)
 {
   struct sockaddr_un caddr;
   struct sockaddr_un saddr;
-  char buf[100];
   int fd = -1;
   int rc = 0;
+  *out_fd = -1;
 
-  if ((fd = socket(AF_UNIX, SOCK_DGRAM, 0)) == -1) {
+  fd = socket(AF_UNIX, SOCK_DGRAM | SOCK_NONBLOCK, 0);
+  if (fd == -1) {
     loge("%s: socket error: %s", __func__, strerror(errno));
     return -1;
   }
 
-  // configure non-blocking
-  configure_socket(fd);
+  // configure (reuse)
+  rc = configure_socket(fd);
+  if (rc == -1) {
+    loge("%s: socket configuration error: %s", __func__, strerror(errno));
+    return -1;
+  }
 
   // bind client socket
   memset(&caddr, 0, sizeof(caddr));
@@ -227,7 +261,8 @@ static int socket_connect(int *out_fd)
   strncpy(caddr.sun_path, cli_socket_path, sizeof(caddr.sun_path) - 1);
   unlink(cli_socket_path);
 
-  if (bind(fd, (struct sockaddr *)&caddr, sizeof(caddr)) == -1) {
+  rc = bind(fd, (struct sockaddr *)&caddr, sizeof(caddr));
+  if (rc == -1) {
     loge("%s: bind error: %s", __func__, strerror(errno));
     return -1;
   }
@@ -237,7 +272,8 @@ static int socket_connect(int *out_fd)
   saddr.sun_family = AF_UNIX;
   strncpy(saddr.sun_path, srv_socket_path, sizeof(saddr.sun_path) - 1);
 
-  if (connect(fd, (struct sockaddr *)&saddr, sizeof(saddr)) == -1) {
+  rc = connect(fd, (struct sockaddr *)&saddr, sizeof(saddr));
+  if (rc == -1) {
     loge("%s: connect error: %s", __func__, strerror(errno));
     return -1;
   }
@@ -248,8 +284,8 @@ static int socket_connect(int *out_fd)
 
 static int send_message(struct client_ctx *ctx, struct anki_camera_msg *msg)
 {
-  ssize_t bytes_sent = write(ctx->fd, msg, sizeof(struct anki_camera_msg));
-  if (bytes_sent != sizeof(struct anki_camera_msg)) {
+  ssize_t bytes_sent = write(ctx->fd, msg, sizeof(*msg));
+  if (bytes_sent != sizeof(*msg)) {
     loge("%s: write error: %zd %s\n", __func__, bytes_sent, strerror(errno));
     return -1;
   }
@@ -280,11 +316,11 @@ static int unmap_camera_capture_buf(struct client_ctx *ctx)
   }
 
   if (mem_info->ion_fd > 0) {
-    struct ion_handle_data handle_data;
-    memset(&handle_data, 0, sizeof(handle_data));
-    handle_data.handle = mem_info->ion_handle;
+    struct ion_handle_data handle_data = {
+      .handle = mem_info->ion_handle
+    };
     rc = ioctl(mem_info->ion_fd, ION_IOC_FREE, &handle_data);
-    if (rc != 0) {
+    if (rc == -1) {
       loge("%s: failed to free ION mem: %s", __func__, strerror(errno));
     }
     close(mem_info->ion_fd);
@@ -299,28 +335,28 @@ static int mmap_camera_capture_buf(struct client_ctx *ctx)
   struct camera_capture_mem_info *mem_info = &(ctx->camera_buf);
 
   int main_ion_fd = open("/dev/ion", O_RDONLY);
-  if (main_ion_fd <= 0) {
+  if (main_ion_fd == -1) {
     loge("%s: Ion dev open failed: %s", __func__, strerror(errno));
     goto ION_OPEN_FAILED;
   }
 
   // ion_share - import shared fd
-  int ret;
+  int rc = 0;
   struct ion_fd_data data = {
     .fd = mem_info->camera_capture_fd,
   };
 
-  ret = ioctl(main_ion_fd, ION_IOC_IMPORT, &data);
-  if (ret < 0) {
+  rc = ioctl(main_ion_fd, ION_IOC_IMPORT, &data);
+  if (rc == -1) {
     loge("%s: Ion import failed: %s", __func__, strerror(errno));
     goto ION_IMPORT_FAILED;
   }
 
-  struct ion_fd_data ion_info_fd;
-  memset(&ion_info_fd, 0, sizeof(ion_info_fd));
-  ion_info_fd.handle = data.handle;
-  int rc = ioctl(main_ion_fd, ION_IOC_SHARE, &ion_info_fd);
-  if (rc < 0) {
+  struct ion_fd_data ion_info_fd = {
+    .handle = data.handle
+  };
+  rc = ioctl(main_ion_fd, ION_IOC_SHARE, &ion_info_fd);
+  if (rc == -1) {
     loge("%s: ION map failed: %s\n", __func__, strerror(errno));
     goto ION_MAP_FAILED;
   }
@@ -348,10 +384,13 @@ static int mmap_camera_capture_buf(struct client_ctx *ctx)
   return 0;
 
 ION_MAP_FAILED: {
-    struct ion_handle_data handle_data;
-    memset(&handle_data, 0, sizeof(handle_data));
-    handle_data.handle = ion_info_fd.handle;
-    ioctl(main_ion_fd, ION_IOC_FREE, &handle_data);
+    struct ion_handle_data handle_data = {
+      .handle = ion_info_fd.handle
+    };
+    rc = ioctl(main_ion_fd, ION_IOC_FREE, &handle_data);
+    if (rc == -1) {
+      loge("%s: ION FREE failed: %s\n", __func__, strerror(errno));
+    }
   }
 ION_IMPORT_FAILED: {
     close(main_ion_fd);
@@ -452,6 +491,25 @@ static int enqueue_message(struct client_ctx *ctx, anki_camera_msg_id_t msg_id)
   return 0;
 }
 
+static int enqueue_message_with_payload(struct client_ctx *ctx, anki_camera_msg_id_t msg_id, void* buf, size_t len)
+{
+  uint32_t cursor = ctx->tx_cursor;
+  struct anki_camera_msg *msg = &ctx->tx_packets[cursor];
+  msg->msg_id = msg_id;
+
+  size_t num = len;
+  if(num > ANKI_CAMERA_MSG_PAYLOAD_LEN)
+  {
+    loge("%s: enqueue_message payload size too large %u > %u", __func__, len, ANKI_CAMERA_MSG_PAYLOAD_LEN);
+    return -1;
+  }
+  memcpy(msg->payload, buf, num);
+  
+  ctx->tx_cursor = cursor + 1;
+  logv("%s: enqueue_message: %d", __func__, msg_id);
+  return 0;
+}
+
 static int process_one_message(struct client_ctx *ctx, struct anki_camera_msg *msg)
 {
   int rc = 0;
@@ -536,9 +594,9 @@ static int read_incoming_data(struct client_ctx *ctx)
 
     // Prepare rx buffer
     struct anki_camera_msg *msg = &(ctx->rx_packets[ctx->rx_cursor]);
-    memset(msg, 0, sizeof(struct anki_camera_msg));
+    memset(msg, 0, sizeof(*msg));
     int recv_fd = -1;
-    rc = read_fd(ctx->fd, msg, sizeof(struct anki_camera_msg), &recv_fd);
+    rc = read_fd(ctx->fd, msg, sizeof(*msg), &recv_fd);
     if (rc < 0) {
       if (errno == EAGAIN || errno == EWOULDBLOCK) {
         // Expected normal case after reading all data
@@ -594,7 +652,7 @@ static int event_loop(struct client_ctx *ctx)
 
     rc = select(max_fd + 1, &read_fds, &write_fds, NULL, &timeout);
 
-    if (rc < 0) {
+    if (rc == -1) {
       loge("%s: select failed: %s", __func__, strerror(errno));
       break;
     }
@@ -697,7 +755,7 @@ int camera_init(struct anki_camera_handle **camera)
   memset(&s_camera_handle, 0, sizeof(s_camera_handle));
 
   struct client_ctx *client = &s_camera_handle.camera_client;
-  client->fd = 1;
+  client->fd = -1;
   client->camera_buf.camera_capture_fd = -1;
   client->camera_buf.ion_fd = -1;
 
@@ -772,7 +830,15 @@ int camera_frame_acquire(struct anki_camera_handle *camera, anki_camera_frame_t 
   uint32_t lock_status = 0;
   _Atomic uint32_t *slot_lock = &(header->locks.frame_locks[slot]);
   if (!atomic_compare_exchange_strong(slot_lock, &lock_status, 1)) {
-    loge("%s: could not lock frame (slot: %u): %s", __func__, slot, strerror(errno));
+    // Is this our lock?
+    uint32_t fid = 0;
+    int is_locked = get_locked_frame(client, slot, &fid);
+    if (is_locked == 0) {
+      logd("%s: attempting lock while already locked: (slot: %u frame_id: %u)",
+           __func__, slot, fid);
+    } else {
+      loge("%s: could not lock frame (slot: %u): %s", __func__, slot, strerror(errno));
+    }
     return -1;
   }
 
@@ -847,4 +913,17 @@ anki_camera_status_t camera_status(struct anki_camera_handle *camera)
   else {
     return client->status;
   }
+}
+
+int camera_set_exposure(struct anki_camera_handle* camera, uint16_t exposure_ms, float gain)
+{
+  anki_camera_exposure_t exposure;
+  exposure.exposure_ms = exposure_ms;
+  exposure.gain = gain;
+  
+  uint8_t buf[sizeof(anki_camera_exposure_t)];
+  memcpy(buf, &exposure, sizeof(anki_camera_exposure_t));
+
+  return enqueue_message_with_payload(&CAMERA_HANDLE_P(camera)->camera_client, 
+                                      ANKI_CAMERA_MSG_C2S_PARAMS, buf, sizeof(buf));
 }

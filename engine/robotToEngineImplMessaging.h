@@ -9,7 +9,7 @@
 #ifndef __Anki_Cozmo_Basestation_RobotToEngineImplMessaging_H__
 #define __Anki_Cozmo_Basestation_RobotToEngineImplMessaging_H__
 
-#include "engine/dependencyManagedComponent.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 #include "engine/robotComponents_fwd.h"
 #include "engine/robotInterface/messageHandler.h"
 #include "clad/robotInterface/messageRobotToEngine_hash.h"
@@ -55,7 +55,7 @@ public:
   bool HasMismatchedCLAD() const { return _hasMismatchedEngineToRobotCLAD || _hasMismatchedRobotToEngineCLAD; }
   
   
-  void InitRobotMessageComponent(RobotInterface::MessageHandler* messageHandler, RobotID_t robotId, Robot* const robot);
+  void InitRobotMessageComponent(RobotInterface::MessageHandler* messageHandler, Robot* const robot);
   void HandleRobotSetHeadID(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleRobotSetBodyID(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleFirmwareVersion(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);

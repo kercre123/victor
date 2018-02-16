@@ -37,15 +37,34 @@ namespace Cozmo {
                         "Failed to add keyframe to procedural animation.");
     }
   }
-  
+
   Result CannedAnimationContainer::AddAnimation(const std::string& name)
   {
     Result lastResult = RESULT_OK;
-    
+
     auto retVal = _animations.find(name);
     if(retVal == _animations.end()) {
       _animations.emplace(name,Animation(name));
     }
+
+    return lastResult;
+  }
+  
+  Result CannedAnimationContainer::AddAnimation(Animation* animation)
+  {
+    Result lastResult = RESULT_OK;
+    if (animation == nullptr) {
+      return RESULT_FAIL;
+    }
+    const std::string& name = animation->GetName();
+
+    // Replace animation with the given one because this
+    // is mainly for animators testing new animations
+    auto iter = _animations.find(name);
+    if(iter != _animations.end()) {
+      _animations.erase(iter);
+    }
+    _animations.emplace(name, *animation);
     
     return lastResult;
   }

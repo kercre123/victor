@@ -125,16 +125,14 @@ void EngineRobotAudioClient::SubscribeAudioCallbackMessages( Robot* robot )
   // Setup robot message handlers
   _robot = robot;
   RobotInterface::MessageHandler* messageHandler = _robot->GetContext()->GetRobotManager()->GetMsgHandler();
-  RobotID_t robotId = _robot->GetID();
   
   // Subscribe to RobotToEngine messages
   using localHandlerType = void(EngineRobotAudioClient::*)(const AnkiEvent<RobotInterface::RobotToEngine>&);
   // Create a helper lambda for subscribing to a tag with a local handler
-  auto doRobotSubscribe = [this, robotId, messageHandler] ( RobotInterface::RobotToEngineTag tagType,
-                                                            localHandlerType handler )
+  auto doRobotSubscribe = [this, messageHandler] ( RobotInterface::RobotToEngineTag tagType,
+                                                   localHandlerType handler )
   {
-    _signalHandles.push_back(messageHandler->Subscribe( robotId,
-                                                        tagType,
+    _signalHandles.push_back(messageHandler->Subscribe( tagType,
                                                         std::bind( handler, this, std::placeholders::_1 ) ));
   };
 

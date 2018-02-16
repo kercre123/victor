@@ -127,7 +127,7 @@ void PerfMetric::Update(const float tickDuration_ms,
 
     frame._wifiLatency_ms = Util::gNetStat2LatencyAvg;
 
-    Robot* robot = _cozmoContext->GetRobotManager()->GetFirstRobot();
+    Robot* robot = _cozmoContext->GetRobotManager()->GetRobot();
 
     frame._batteryVoltage = robot == nullptr ? 0.0f : robot->GetBatteryVoltage();
 

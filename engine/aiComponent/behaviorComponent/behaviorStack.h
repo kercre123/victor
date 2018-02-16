@@ -14,12 +14,17 @@
 #define AI_COMPONENT_BEHAVIOR_COMPONENT_BEHAVIOR_STACK
 
 #include "util/helpers/noncopyable.h"
+#include "util/signals/simpleSignal_fwd.h"
 
 #include <map>
 #include <memory>
 #include <set>
 #include <unordered_map>
 #include <vector>
+
+namespace Json {
+class Value;
+}
 
 namespace Anki {
 namespace Cozmo {
@@ -28,6 +33,7 @@ namespace Cozmo {
 class AsyncMessageGateComponent;
 class BehaviorExternalInterface;
 class IBehavior;
+class CozmoContext;
   
 namespace ExternalInterface{
 struct RobotCompletedAction;
@@ -62,22 +68,28 @@ public:
   
   // for debug only, prints stack info
   void DebugPrintStack(const std::string& debugStr) const;
-
-  // in debug builds, send viz messages to webots
-  void SendDebugVizMessages(BehaviorExternalInterface& behaviorExternalInterface) const;
+  // builds and returns the behavior tree as a flat array in json
+  Json::Value BuildDebugBehaviorTree(BehaviorExternalInterface& behaviorExternalInterface) const;
   
 private:
   std::vector<IBehavior*> _behaviorStack;
   std::unordered_map<const IBehavior*, int> _behaviorToIndexMap;
   std::map<IBehavior*,std::set<IBehavior*>> _delegatesMap;
   
-  
+  bool behaviorWebVizDirty = false;
   
   // calls all appropriate functions to prep the delegates of something about to be added to the stack
   void PrepareDelegatesToEnterScope(IBehavior* delegated);
   
   // calls all appropriate functions to prepare a delegate to be removed from the stack
   void PrepareDelegatesForRemovalFromStack(IBehavior* delegated);
+  
+  // in debug builds, send viz messages to webots
+  void SendDebugVizMessages(BehaviorExternalInterface& behaviorExternalInterface) const;
+  
+  // sends behavior tree to web viz
+  void SendDebugBehaviorTreeToWebViz(BehaviorExternalInterface& behaviorExternalInterface) const;
+  
 };
 
 

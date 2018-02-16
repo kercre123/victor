@@ -59,7 +59,8 @@ namespace {
 
 
 CliffSensorComponent::CliffSensorComponent() 
-: ISensorComponent(kLogDirectory, RobotComponentID::CliffSensor)
+: ISensorComponent(kLogDirectory)
+, IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::CliffSensor)
 , _cliffDetectAllowedDelta(kCliffDetectAllowedDeltaDefault)
 {
   _cliffDataRaw.fill(std::numeric_limits<uint16_t>::max());
@@ -118,6 +119,11 @@ std::string CliffSensorComponent::GetLogRow()
     }
   }
   return str;
+}
+  
+bool CliffSensorComponent::IsCliffDetected(CliffSensor sensor) const
+{
+  return _cliffDetectedFlags.IsBitFlagSet(sensor);
 }
 
 void CliffSensorComponent::UpdateCliffDetectThresholds()

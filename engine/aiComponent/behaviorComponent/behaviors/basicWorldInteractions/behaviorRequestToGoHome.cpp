@@ -209,7 +209,7 @@ void BehaviorRequestToGoHome::UpdateCurrRequestTypeAndLoadParams()
 
 void BehaviorRequestToGoHome::LoadConfig(const Json::Value& config)
 {
-  const std::string& debugName = "Behavior" + GetIDStr() + ".LoadConfig";
+  const std::string& debugName = "Behavior" + GetDebugLabel() + ".LoadConfig";
   
   const std::map<std::string, RequestParams*> configEntryMap {
     {"normal", &_params.normal},

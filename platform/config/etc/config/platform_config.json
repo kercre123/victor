@@ -1,0 +1,6 @@
+{
+    "DataPlatformResourcesBasePath": "/anki/data/assets",
+    "DataPlatformCachePath": "/data/data/com.anki.victor/cache",
+    "DataPlatformFilesPath": "/anki/data/assets",
+    "DataPlatformExternalPath": "/data/data/com.anki.victor/files"
+}

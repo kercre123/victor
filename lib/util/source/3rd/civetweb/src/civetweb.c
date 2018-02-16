@@ -1162,7 +1162,6 @@ mg_current_thread_id(void)
 #pragma clang diagnostic pop
 #endif
 
-
 #if !defined(DEBUG_TRACE)
 #if defined(DEBUG)
 static void DEBUG_TRACE_FUNC(const char *func,
@@ -6487,7 +6486,7 @@ is_authorized_for_put(struct mg_connection *conn)
 	if (conn) {
 		struct mg_file file = STRUCT_FILE_INITIALIZER;
 		const char *passfile = conn->ctx->config[PUT_DELETE_PASSWORDS_FILE];
-		int ret = 0;
+		int ret = (passfile == NULL);
 
 		if (passfile != NULL
 		    && mg_fopen(conn, passfile, MG_FOPEN_MODE_READ, &file)) {

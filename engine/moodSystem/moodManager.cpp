@@ -62,7 +62,7 @@ float MoodManager::GetCurrentTimeInSeconds()
   
   
 MoodManager::MoodManager()
-: IDependencyManagedComponent(RobotComponentID::MoodManager)
+: IDependencyManagedComponent(this, RobotComponentID::MoodManager)
 , _lastUpdateTime(0.0f)
 {
 }

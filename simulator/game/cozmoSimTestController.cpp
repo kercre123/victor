@@ -23,7 +23,7 @@ namespace Anki {
   namespace Cozmo {
   
     CozmoSimTestController::CozmoSimTestController()
-    : UiGameController(BS_TIME_STEP)
+    : UiGameController(BS_TIME_STEP_MS)
     , _result(0)
     , _isRecording(false)
     , _screenshotInterval(-1.f)
@@ -244,15 +244,6 @@ namespace Anki {
         m.isSync = true;
         ExternalInterface::MessageGameToEngine message;
         message.Set_VisionRunMode(m);
-        SendMessage(message);
-      }
-      
-      {
-        // Set reliable transport to synchronous
-        ExternalInterface::ReliableTransportRunMode m1;
-        m1.isSync = true;
-        ExternalInterface::MessageGameToEngine message;
-        message.Set_ReliableTransportRunMode(m1);
         SendMessage(message);
       }
       

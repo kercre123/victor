@@ -15,16 +15,18 @@
 #include "engine/comms/robotConnectionManager.h"
 #include "engine/robot.h"
 #include "engine/robotManager.h"
+
+#include "anki/cozmo/shared/cozmoConfig.h"
+
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/logging/logging.h"
-#include "util/transport/udpTransport.h"
-#include "util/transport/reliableConnection.h"
-#include "util/transport/reliableTransport.h"
 #include "util/wifi/wifiUtil_android.h"
 
-// Match embedded reliableTransport.h
-#define RELIABLE_PACKET_HEADER_PREFIX "COZ\x03"
-#define RELIABLE_PACKET_HEADER_PREFIX_LENGTH 4
+#define LOG_CHANNEL "RobotConnectionManager"
+
+// Maximum size of one message
+#define MAX_PACKET_BUFFER_SIZE 2048
+
 
 namespace Anki {
 namespace Cozmo {
@@ -35,67 +37,23 @@ static const int kNumQueueSizeStatsToSendToDas = 4000;
   
 RobotConnectionManager::RobotConnectionManager(RobotManager* robotManager)
 : _currentConnectionData(new RobotConnectionData())
-, _udpTransport(new Util::UDPTransport())
-, _reliableTransport(new Util::ReliableTransport(_udpTransport.get(), _currentConnectionData.get()))
 , _robotManager(robotManager)
 {
-  #ifdef ANKI_PLATFORM_ANDROID
-  // Provide our UDP socket instance to Android's WifiUtil, so that
-  // we can reset the socket when directed by our Java code
-  AddSignalHandle(Util::WifiUtil::RegisterTransport(_udpTransport.get()));
-  #endif
+
 }
 
 RobotConnectionManager::~RobotConnectionManager()
 {
   DisconnectCurrent();
-  _reliableTransport->StopClient();
 }
 
 void RobotConnectionManager::Init()
 {
-  _udpTransport->SetHeaderPrefix((uint8_t*)(RELIABLE_PACKET_HEADER_PREFIX), RELIABLE_PACKET_HEADER_PREFIX_LENGTH);
-  _udpTransport->SetDoesHeaderHaveCRC(false);
-  _udpTransport->SetMaxNetMessageSize(1420);
-  _udpTransport->SetPort(0);
-  
-  ConfigureReliableTransport();
-  
-  _reliableTransport->StartClient();
-}
-
-void RobotConnectionManager::ConfigureReliableTransport()
-{
-  // Set parameters for all reliable transport instances
-  Util::ReliableTransport::SetSendAckOnReceipt(false);
-  Util::ReliableTransport::SetSendUnreliableMessagesImmediately(true);
-  Util::ReliableTransport::SetMaxPacketsToReSendOnAck(0);
-  Util::ReliableTransport::SetMaxPacketsToSendOnSendMessage(1);
-  Util::ReliableTransport::SetTrackAckLatency(true);
-  // Set parameters for all reliable connections
-  Util::ReliableConnection::SetTimeBetweenPingsInMS(33.3); // Heartbeat interval
-  Util::ReliableConnection::SetTimeBetweenResendsInMS(33.3);
-  Util::ReliableConnection::SetMaxTimeSinceLastSend( Util::ReliableConnection::GetTimeBetweenResendsInMS() - 1.0 );
-  Util::ReliableConnection::SetConnectionTimeoutInMS(15000.0);  // Increased to allow engine more time to connect to anim process
-                                                                // which might be busy loading animations for more than 5 seconds.
-                                                                // Eventually (VIC-698) we should not use reliableTransport for
-                                                                // engine<->anim process comms.
-  Util::ReliableConnection::SetPacketSeparationIntervalInMS(2.0);
-  Util::ReliableConnection::SetMaxPingRoundTripsToTrack(10);
-  Util::ReliableConnection::SetSendSeparatePingMessages(false);
-  Util::ReliableConnection::SetSendPacketsImmediately(false);
-  Util::ReliableConnection::SetMaxPacketsToReSendOnUpdate(1);
 }
   
-void RobotConnectionManager::Update()
+Result RobotConnectionManager::Update()
 {
   ANKI_CPU_PROFILE("RobotConnectionManager::Update");
-  
-  // If we're running reliableTransport sync we need to update it
-  if(_reliableTransport->IsSynchronous())
-  {
-    _reliableTransport->Update();
-  }
 
   // Update queue stats before processing messages so we get stats about how big the queue was prior to it
   // being cleared
@@ -103,7 +61,14 @@ void RobotConnectionManager::Update()
     SendAndResetQueueStats();
   }  
 
+  // If we lose connection to robot, report connection closed
+  if (!_udpClient.IsConnected()) {
+    return RESULT_FAIL_IO_CONNECTION_CLOSED;
+  }
+
   ProcessArrivedMessages();
+
+  return RESULT_OK;
 }
 
 void RobotConnectionManager::SendAndResetQueueStats()
@@ -121,21 +86,51 @@ void RobotConnectionManager::SendAndResetQueueStats()
   _queueSizeAccumulator.Clear();
 }
 
-void RobotConnectionManager::Connect(const Util::TransportAddress& address)
+bool RobotConnectionManager::IsConnected(RobotID_t robotID) const
 {
-  _currentConnectionData->Clear();
+  if (_robotID == robotID && _udpClient.IsConnected()) {
+    return true;
+  }
+  return false;
+}
   
-  _currentConnectionData->SetAddress(address);
-  _reliableTransport->Disconnect(address);
-  _reliableTransport->Connect(address);
-  _currentConnectionData->SetState(RobotConnectionData::State::Waiting);
+Result RobotConnectionManager::Connect(RobotID_t robotID)
+{
+  LOG_INFO("RobotConnectionManager.Connect", "Connect to robot %d", robotID);
+
+  _currentConnectionData->Clear();
+
+  if (_udpClient.IsConnected()) {
+    _udpClient.Disconnect();
+  }
+
+  const std::string & client_path = Anki::Cozmo::ENGINE_ANIM_CLIENT_PATH + std::to_string(robotID);
+  const std::string & server_path = Anki::Cozmo::ENGINE_ANIM_SERVER_PATH + std::to_string(robotID);
+
+  const bool ok = _udpClient.Connect(client_path, server_path);
+  if (!ok) {
+    LOG_ERROR("RobotConnectionManager.Connect", "Unable to connect from %s to %s",
+              client_path.c_str(), server_path.c_str());
+    _currentConnectionData->SetState(RobotConnectionData::State::Disconnected);
+    return RESULT_FAIL_IO;
+  }
+
+  _robotID = robotID;
+  _currentConnectionData->SetState(RobotConnectionData::State::Connected);
+
+  return RESULT_OK;
 }
   
 void RobotConnectionManager::DisconnectCurrent()
 {
-  _reliableTransport->Disconnect(_currentConnectionData->GetAddress());
-  _currentConnectionData->QueueConnectionDisconnect();
-  
+  LOG_DEBUG("RobotConnectionManager.DisconnectCurrent", "Disconnect");
+  if (_udpClient.IsConnected()) {
+    _udpClient.Disconnect();
+    _robotID = -1;
+  }
+
+  _currentConnectionData->SetState(RobotConnectionData::State::Disconnected);
+
   // send connection stats data if there is any
   if( _queueSizeAccumulator.GetNum() > 0 ) {
     SendAndResetQueueStats();
@@ -147,17 +142,38 @@ bool RobotConnectionManager::SendData(const uint8_t* buffer, unsigned int size)
   const bool validState = IsValidConnection();
   if (!validState)
   {
-    PRINT_NAMED_INFO("RobotConnectionManager.SendData.NotValidState", "");
+    LOG_DEBUG("RobotConnectionManager.SendData.NotValidState", "Not connected");
     return false;
   }
-  
-  _reliableTransport->SendData(false, _currentConnectionData->GetAddress(), buffer, size);
+
+  const ssize_t sent = _udpClient.Send((const char *) buffer, size);
+  if (sent != size) {
+    LOG_ERROR("RobotConnectionManager.SendData.Error", "Sent %zd/%d bytes to robot", sent, size);
+    DisconnectCurrent();
+    return false;
+  }
   
   return true;
 }
 
 void RobotConnectionManager::ProcessArrivedMessages()
 {
+  static const Util::TransportAddress addr;
+  while (_udpClient.IsConnected()) {
+    char buf[MAX_PACKET_BUFFER_SIZE];
+    const ssize_t n = _udpClient.Recv(buf, sizeof(buf));
+    if (n < 0) {
+      LOG_ERROR("RobotConnectionManager.ProcessArrivedMessages", "Read error from robot");
+      break;
+    } else if (n == 0) {
+      //LOG_DEBUG("RobotConnectionManager.ProcessArrivedMessages", "Nothing to read");
+      break;
+    } else {
+      //LOG_DEBUG("RobotConnectionManager.ProcessArrivedMessages", "Read %zd/%lu from robot", n, sizeof(buf));
+      _currentConnectionData->PushArrivedMessage((const uint8_t *) buf, (uint32_t) n, addr);
+    }
+  }
+
   while (_currentConnectionData->HasMessages())
   {
     RobotConnectionMessageData nextMessage = _currentConnectionData->PopNextMessage();
@@ -191,28 +207,28 @@ void RobotConnectionManager::ProcessArrivedMessages()
     }
     else
     {
-      PRINT_NAMED_ERROR("RobotConnectionManager.ProcessArrivedMessages.UnhandledMessageType",
-                        "Unhandled message type %d. Ignoring", nextMessage.GetType());
+      LOG_ERROR("RobotConnectionManager.ProcessArrivedMessages.UnhandledMessageType",
+                "Unhandled message type %d. Ignoring", nextMessage.GetType());
     }
   }
 }
   
 void RobotConnectionManager::HandleDataMessage(RobotConnectionMessageData& nextMessage)
 {
-  const bool validState = IsValidConnection();
-  if (!validState)
+  const bool isConnected = IsValidConnection();
+  if (!isConnected)
   {
-    PRINT_NAMED_INFO("RobotConnectionManager.HandleDataMessage.NotValidState", "Connection not yet valid, dropping message");
+    LOG_INFO("RobotConnectionManager.HandleDataMessage.NotValidState", "Connection not yet valid, dropping message");
     return;
   }
   
   const bool correctAddress = _currentConnectionData->GetAddress() == nextMessage.GetAddress();
   if (!correctAddress)
   {
-    PRINT_NAMED_ERROR("RobotConnectionManager.HandleDataMessage.IncorrectAddress",
-                      "Expected messages from %s but arrived from %s. Dropping message.",
-                      _currentConnectionData->GetAddress().ToString().c_str(),
-                      nextMessage.GetAddress().ToString().c_str());
+    LOG_ERROR("RobotConnectionManager.HandleDataMessage.IncorrectAddress",
+              "Expected messages from %s but arrived from %s. Dropping message.",
+              _currentConnectionData->GetAddress().ToString().c_str(),
+              nextMessage.GetAddress().ToString().c_str());
     return;
   }
   
@@ -221,10 +237,13 @@ void RobotConnectionManager::HandleDataMessage(RobotConnectionMessageData& nextM
 
 void RobotConnectionManager::HandleConnectionResponseMessage(RobotConnectionMessageData& nextMessage)
 {
+  LOG_DEBUG("RobotConnectionManager.HandleConnectionResponseMessage", "Handle connection response");
+
   const bool isWaitingState = _currentConnectionData->GetState() == RobotConnectionData::State::Waiting;
   if (!isWaitingState)
   {
-    PRINT_NAMED_ERROR("RobotConnectionManager.HandleConnectionResponseMessage.NotWaitingForConnection", "Got connection response at unexpected time");
+    LOG_ERROR("RobotConnectionManager.HandleConnectionResponseMessage.NotWaitingForConnection",
+              "Got connection response at unexpected time");
     return;
   }
   
@@ -233,6 +252,8 @@ void RobotConnectionManager::HandleConnectionResponseMessage(RobotConnectionMess
 
 void RobotConnectionManager::HandleDisconnectMessage(RobotConnectionMessageData& nextMessage)
 {
+  LOG_DEBUG("RobotConnectionManager.HandleDisconnectMessage", "Handle disconnect");
+
   const bool connectionWasInWaitingState = (RobotConnectionData::State::Waiting == _currentConnectionData->GetState());
   
   // This connection is no longer valid.
@@ -240,19 +261,19 @@ void RobotConnectionManager::HandleDisconnectMessage(RobotConnectionMessageData&
   _currentConnectionData->Clear();
   
   // This robot is gone.
-  Robot* robot =  _robotManager->GetFirstRobot();
+  Robot* robot =  _robotManager->GetRobot();
   if (nullptr != robot)
   {
     // If the connection is waiting when we handle this disconnect message, report it as a robot rejection
-    _robotManager->RemoveRobot(robot->GetID(), connectionWasInWaitingState);
+    _robotManager->RemoveRobot(connectionWasInWaitingState);
   }
 }
 
 void RobotConnectionManager::HandleConnectionRequestMessage(RobotConnectionMessageData& nextMessage)
 {
-  PRINT_NAMED_WARNING("RobotConnectionManager.HandleConnectionRequestMessage",
-                      "Received connection request from %s. Ignoring",
-                      nextMessage.GetAddress().ToString().c_str());
+  LOG_WARNING("RobotConnectionManager.HandleConnectionRequestMessage",
+              "Received connection request from %s. Ignoring",
+              nextMessage.GetAddress().ToString().c_str());
 }
   
 bool RobotConnectionManager::IsValidConnection() const
@@ -262,9 +283,7 @@ bool RobotConnectionManager::IsValidConnection() const
   
 bool RobotConnectionManager::PopData(std::vector<uint8_t>& data_out)
 {
-  const bool hasData = !_readyData.empty();
-  if (!hasData)
-  {
+  if (_readyData.empty()) {
     return false;
   }
 
@@ -286,11 +305,6 @@ const Anki::Util::Stats::StatsAccumulator& RobotConnectionManager::GetQueuedTime
   static Anki::Util::Stats::StatsAccumulator sNullStats;
   return sNullStats;
 #endif // TRACK_INCOMING_PACKET_LATENCY
-}
-  
-void RobotConnectionManager::SetReliableTransportRunMode(bool isSync)
-{
-  _reliableTransport->ChangeSyncMode(isSync);
 }
 
 } // end namespace Cozmo

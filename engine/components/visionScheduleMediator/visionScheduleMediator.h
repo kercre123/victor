@@ -18,10 +18,11 @@
 #include "visionScheduleMediator_fwd.h"
 
 #include "clad/types/visionModes.h"
-#include "engine/dependencyManagedComponent.h"
+#include "engine/components/visionScheduleMediator/iVisionModeSubscriber.h"
 #include "engine/robotComponents_fwd.h"
 #include "json/json-forwards.h"
 #include "util/helpers/noncopyable.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 
 #include <set>
 #include <unordered_map>
@@ -31,10 +32,13 @@ namespace Anki{
 namespace Cozmo{
 
 // Forward declaration:
+class CozmoContext;
 class VisionComponent;
 class IVisionModeSubscriber;
 
-class VisionScheduleMediator : public IDependencyManagedComponent<RobotComponentID>, public Util::noncopyable
+class VisionScheduleMediator : public IDependencyManagedComponent<RobotComponentID>,
+                               public Util::noncopyable,
+                               public IVisionModeSubscriber
 {
 public:
 
@@ -52,31 +56,39 @@ public:
   // IDependencyManagedComponent
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+  // Update called from Robot for the time being. May shift to UpdateDependent later
+  void Update();
+
+  // Set up baseline subscriptions to manage VisionMode defaults via the VSM
+  void GetInternalSubscriptions(std::set<VisionModeRequest>& baselineSubscriptions) const {
+    baselineSubscriptions.insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::High });
+  }
+
   // Subscribe at "standard" update frequency to a set of VisionModes. This call REPLACES existing subscriptions for
   // the pertinent subscriber
   void SetVisionModeSubscriptions(IVisionModeSubscriber* subscriber, const std::set<VisionMode>& desiredModes);
 
   // Subscribe at defined update frequencies to a vector of VisionModes. This call REPLACES existing subscriptions for
   // the pertinent subscriber 
-  void SetVisionModeSubscriptions(IVisionModeSubscriber* subscriber, const std::vector<VisionModeRequest>& requests);
+  void SetVisionModeSubscriptions(IVisionModeSubscriber* subscriber, const std::set<VisionModeRequest>& requests);
 
   // Remove all existing subscriptions for the pertinent subscriber
   void ReleaseAllVisionModeSubscriptions(IVisionModeSubscriber* subscriber);
 
+  // in debug builds, send viz messages to webots
+  void SendDebugVizMessages();
+
 private:
 
-  // Internal call to parse the subscription record and send the emergent config to the VisionComponent
-  void UpdateVisionSchedule();
-  int GetUpdatePeriodFromEnum(const VisionMode& mode, const EVisionUpdateFrequency& frequencySetting) const;
-
-  using RequestRecord = std::pair<IVisionModeSubscriber*, EVisionUpdateFrequency>;
-  
   struct VisionModeData
   {
     uint8_t low;
     uint8_t med;
     uint8_t high;
     uint8_t standard;
+    bool    enabled;
+    bool    dirty;
+    uint8_t updatePeriod;
     std::unordered_map<IVisionModeSubscriber*, int> requestMap;
     using record = std::pair<IVisionModeSubscriber*, int>;
     static bool CompareRecords(record i, record j) { return i.second < j.second; }
@@ -86,8 +98,22 @@ private:
     }
   };
 
+  // Internal call to parse the subscription record and send the emergent config to the VisionComponent if it changed
+  void UpdateVisionSchedule();
+
+  // Returns true if the update period for this mode changed as a result of subscription changes
+  bool UpdateModePeriodIfNecessary(VisionModeData& mode) const;
+
+  // Helper method to convert between enums and settings in (frames between updates)
+  int GetUpdatePeriodFromEnum(const VisionMode& mode, const EVisionUpdateFrequency& frequencySetting) const;
+
+  using RequestRecord = std::pair<IVisionModeSubscriber*, EVisionUpdateFrequency>;
+
+  const CozmoContext* _context;
   VisionComponent* _visionComponent;
   std::unordered_map<VisionMode, VisionModeData> _modeDataMap;
+  bool subscriptionRecordIsDirty = false;
+  uint8_t framesSinceSendingDebugViz = 0;
 
 }; // class VisionScheduleMediator
 

@@ -5,7 +5,7 @@ set -eu
 SCRIPTDIR=$(dirname $([ -L $0 ] && echo "$(dirname $0)/$(readlink -n $0)" || echo $0))           
 
 # What do we want to profile?
-: ${ANKI_PROFILE_PROCNAME:="cozmoengined"}
+: ${ANKI_PROFILE_PROCNAME:="vic-engine"}
 
 # How long do we capture? (in seconds)
 : ${ANKI_PROFILE_DURATION:="10"}
@@ -14,7 +14,10 @@ SCRIPTDIR=$(dirname $([ -L $0 ] && echo "$(dirname $0)/$(readlink -n $0)" || ech
 : ${ANKI_PROFILE_FREQUENCY:="4000"}
 
 # Where is symbol cache?
-: ${ANKI_PROFILE_SYMBOLCACHE:="${SCRIPTDIR}/symbol_cache"}
+: ${ANKI_PROFILE_SYMBOLCACHE:="${SCRIPTDIR}/${ANKI_PROFILE_PROCNAME}/symbol_cache"}
+
+# Where is perf.data?
+: ${ANKI_PROFILE_PERFDATA:="${SCRIPTDIR}/${ANKI_PROFILE_PROCNAME}/perf.data"}
 
 # Where is top level?
 : ${TOPLEVEL:="`git rev-parse --show-toplevel`"}
@@ -34,15 +37,17 @@ fi
 # When it finishes it will pull a `perf.data` file off the robot.
 #
 # Use '-nc' because we don't need to recompile JNI.
+# Use '-nb' because we use the symbol cache instead of binaries from the device.
 # Use '-np' and '-r' to set collection parameters.
 # Use '-lib' to fetch symbols from cache.
 #
 PROFILER=${SIMPLEPERF}/app_profiler.py
 
-python ${PROFILER} -nc \
+python ${PROFILER} -nc -nb \
   -np ${ANKI_PROFILE_PROCNAME} \
   -r "-e cpu-cycles:u -f ${ANKI_PROFILE_FREQUENCY} --duration ${ANKI_PROFILE_DURATION}" \
-  -lib ${ANKI_PROFILE_SYMBOLCACHE}
+  -lib ${ANKI_PROFILE_SYMBOLCACHE} \
+  -o ${ANKI_PROFILE_PERFDATA}
 
 #
 # To view perf.data, run 
@@ -51,5 +56,6 @@ python ${PROFILER} -nc \
 #
 
 export PATH=${SIMPLEPERF}/bin/darwin/x86_64:${PATH}
-simpleperf report --symfs ${ANKI_PROFILE_SYMBOLCACHE}
-
+simpleperf report \
+  -i ${ANKI_PROFILE_PERFDATA} \
+  --symfs ${ANKI_PROFILE_SYMBOLCACHE} $@

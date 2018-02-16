@@ -12,11 +12,10 @@
 
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 
-#include "engine/aiComponent/beiConditions/conditions/conditionCloudIntentPending.h"
-#include "engine/aiComponent/beiConditions/conditions/conditionExpressNeedsTransition.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionFacePositionUpdated.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionFrustration.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionInNeedsBracket.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionMotionDetected.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionNegate.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectInitialDetection.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectMoved.h"
@@ -25,10 +24,14 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionOffTreadsState.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionOnCharger.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionPetInitialDetection.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionProxInRange.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotPlacedOnSlope.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotShaken.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotTouchGesture.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionTimedDedup.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionTimerInRange.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionTriggerWordPending.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionUserIntentPending.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionTrue.h"
 
 #include "clad/types/behaviorComponent/beiConditionTypes.h"
@@ -58,14 +61,9 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
       strategy = std::make_shared<ConditionTrue>(config);
       break;
     }
-    case BEIConditionType::CloudIntentPending:
+    case BEIConditionType::TriggerWordPending:
     {
-      strategy = std::make_shared<ConditionCloudIntentPending>(config);
-      break;
-    }
-    case BEIConditionType::ExpressNeedsTransition:
-    {
-      strategy = std::make_shared<ConditionExpressNeedsTransition>(config);
+      strategy = std::make_shared<ConditionTriggerWordPending>(config);
       break;
     }
     case BEIConditionType::FacePositionUpdated:
@@ -81,6 +79,11 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
     case BEIConditionType::InNeedsBracket:
     {
       strategy = std::make_shared<ConditionInNeedsBracket>(config);
+      break;
+    }
+    case BEIConditionType::MotionDetected:
+    {
+      strategy = std::make_shared<ConditionMotionDetected>(config);
       break;
     }
     case BEIConditionType::ObjectInitialDetection:
@@ -108,6 +111,11 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
       strategy = std::make_shared<ConditionPetInitialDetection>(config);
       break;
     }
+    case BEIConditionType::ProxInRange:
+    {
+      strategy = std::make_shared<ConditionProxInRange>(config);
+      break;
+    }
     case BEIConditionType::RobotPlacedOnSlope:
     {
       strategy = std::make_shared<ConditionRobotPlacedOnSlope>(config);
@@ -126,6 +134,16 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
     case BEIConditionType::TimerInRange:
     {
       strategy = std::make_shared<ConditionTimerInRange>(config);
+      break;
+    }
+    case BEIConditionType::TimedDedup:
+    {
+      strategy = std::make_shared<ConditionTimedDedup>(config);
+      break;
+    }
+    case BEIConditionType::UserIntentPending:
+    {
+      strategy = std::make_shared<ConditionUserIntentPending>(config);
       break;
     }
     case BEIConditionType::Negate:
@@ -158,6 +176,13 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
   }
   
   return strategy;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+IBEIConditionPtr BEIConditionFactory::CreateBEICondition(BEIConditionType type)
+{
+  Json::Value config = IBEICondition::GenerateBaseConditionConfig( type );
+  return CreateBEICondition( config );
 }
   
 } // namespace Cozmo

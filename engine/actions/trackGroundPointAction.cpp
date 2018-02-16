@@ -38,12 +38,16 @@ TrackGroundPointAction::TrackGroundPointAction(const ExternalInterface::MessageE
 : ITrackAction("TrackGroundPoint", RobotActionType::TRACK_GROUND_POINT)
 {
   _salientTag = salientPointTag;
-  
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void TrackGroundPointAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const
+{
   switch(_salientTag)
   {
     case ExternalInterface::MessageEngineToGameTag::RobotObservedLaserPoint:
     {
-      _visionMode = VisionMode::DetectingLaserPoints;
+      requests.insert({ VisionMode::DetectingLaserPoints, EVisionUpdateFrequency::High });
       break;
     }
       
@@ -120,14 +124,6 @@ ActionResult TrackGroundPointAction::InitInternal()
   
   // TODO: Use an action or animation for this? (Not super simple b/c base class prevents overloading CheckIfDone)
   GetRobot().GetMoveComponent().MoveHeadToAngle(MIN_HEAD_ANGLE, MAX_HEAD_SPEED_RAD_PER_S, MAX_HEAD_ACCEL_RAD_PER_S2);
-  
-  // Vision mode should have been set successfully in the constructor, based on the message tag
-  if(ANKI_VERIFY(VisionMode::Count != _visionMode, "TrackGroundPointAction.InitInternal.VisionModeNotSet", ""))
-  {
-    const bool kUseDefaultsForUnspecifiedModes = false; // Turn everything else off
-    AllVisionModesSchedule schedule({ {_visionMode, VisionModeSchedule(true)} }, kUseDefaultsForUnspecifiedModes);
-    GetRobot().GetVisionComponent().PushNextModeSchedule(std::move(schedule));
-  }
   
   return ActionResult::SUCCESS;
 } // InitInternal()

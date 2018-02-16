@@ -17,9 +17,9 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
 #include "engine/aiComponent/behaviorComponent/iBehaviorMessageSubscriber.h"
-#include "engine/dependencyManagedComponent.h"
-#include "engine/dependencyManagedEntity.h"
-#include "engine/entity.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
+#include "util/entityComponent/dependencyManagedEntity.h"
+#include "util/entityComponent/iManageableComponent.h"
 
 #include "clad/externalInterface/messageEngineToGameTag.h"
 #include "clad/externalInterface/messageGameToEngineTag.h"
@@ -40,11 +40,9 @@ class AIComponent;
 class AsyncMessageGateComponent;
 class BEIRobotInfo;
 class BehaviorComponent;
-class BehaviorComponentCloudReceiver;
 class BehaviorContainer;
 class BehaviorEventAnimResponseDirector;
 class BehaviorExternalInterface;
-class BehaviorHelperComponent;
 class BehaviorManager;
 class BehaviorSystemManager;
 class BlockWorld;
@@ -54,6 +52,7 @@ class DevBehaviorComponentMessageHandler;
 class FaceWorld;
 class IBehavior;
 class Robot;
+class UserIntentComponent;
 class BehaviorEventComponent;
   
 namespace Audio {
@@ -65,8 +64,10 @@ class BaseBehaviorWrapper : public IDependencyManagedComponent<BCComponentID>
 {
 public:
   BaseBehaviorWrapper(IBehavior* baseBehavior)
-  : IDependencyManagedComponent(BCComponentID::BaseBehaviorWrapper)
+  : IDependencyManagedComponent(this, BCComponentID::BaseBehaviorWrapper)
   , _baseBehavior(baseBehavior){}
+  
+  virtual ~BaseBehaviorWrapper(){}
 
 
   virtual void InitDependent(Robot* robot, const BCCompMap& dependentComponents) override {};
@@ -78,51 +79,39 @@ public:
 
 };
 
-class BehaviorComponent : public IBehaviorMessageSubscriber, public ManageableComponent, private Util::noncopyable
+class BehaviorComponent : public IBehaviorMessageSubscriber, public IManageableComponent, private Util::noncopyable
 {
 public:
   BehaviorComponent();
   ~BehaviorComponent();
   
-  struct BCComponentWrapper{
-      // pass in a fully enumerated entity
-      BCComponentWrapper(DependencyManagedEntity<BCComponentID,BCComponentID::Count>&& entity);
-      using RequiredComponents = DependencyManagedEntityFullEnumeration<BCComponentID, BCComponentID::Count>;
-      RequiredComponents _array;
-  };
-
-  using UniqueComponents   = std::unique_ptr<BCComponentWrapper>;
-
-  // Pass in nullptr for any components you want managed internally
-  // Pass in a pointer to use it as a reference for the behavior component
-  static UniqueComponents GenerateManagedComponents(Robot& robot,
-                                                    AIComponent&               aiComponent,
-                                                    IBehavior*                 baseBehavior,
-                                                    BehaviorSystemManager*     behaviorSysMgrPtr = nullptr,
-                                                    BehaviorExternalInterface* behaviorExternalInterfacePtr = nullptr,
-                                                    BehaviorContainer*         behaviorContainerPtr = nullptr, 
-                                                    BehaviorEventComponent*    behaviorEventComponentPtr = nullptr,
-                                                    AsyncMessageGateComponent* asyncMessageComponentPtr = nullptr,
-                                                    DelegationComponent*       delegationComponentPtr = nullptr);
+  using EntityType = DependencyManagedEntity<BCComponentID>;
+  using CompononentPtr = std::unique_ptr<EntityType>;
   
-  void Init(Robot* robot, UniqueComponents&& components);
+
+  // Pass in any components that have already been initialized as part of the entity
+  // all other required components will be automatically generated
+  static void GenerateManagedComponents(Robot& robot,
+                                        CompononentPtr& entity);
+  
+  void Init(Robot* robot, CompononentPtr&& components);
 
   void Update(Robot& robot,
               std::string& currentActivityName,
               std::string& behaviorDebugStr);
     
   template<typename T>
-  T& GetComponent(BCComponentID componentID) const {assert(_components); return _components->_array.GetComponent(componentID).GetValue<T>();}
+  T& GetComponent() const {return _comps->GetValue<T>();}
 
   virtual void SubscribeToTags(IBehavior* subscriber, std::set<ExternalInterface::MessageGameToEngineTag>&& tags) const override;
   virtual void SubscribeToTags(IBehavior* subscriber, std::set<ExternalInterface::MessageEngineToGameTag>&& tags) const override;
   virtual void SubscribeToTags(IBehavior* subscriber, std::set<RobotInterface::RobotToEngineTag>&& tags) const override;
   
   inline const BehaviorEventAnimResponseDirector& GetBehaviorEventAnimResponseDirector() const
-    { return GetComponent<BehaviorEventAnimResponseDirector>(BCComponentID::BehaviorEventAnimResponseDirector);}
-
-  inline BehaviorComponentCloudReceiver& GetCloudReceiver() const 
-    { return GetComponent<BehaviorComponentCloudReceiver>(BCComponentID::BehaviorComponentCloudReceiver); }
+    { return GetComponent<BehaviorEventAnimResponseDirector>();}
+  
+  inline UserIntentComponent& GetUserIntentComponent() const
+    { return GetComponent<UserIntentComponent>(); }
            
   
 protected:
@@ -132,19 +121,11 @@ protected:
   friend class DevBehaviorComponentMessageHandler;
   friend class TestBehaviorFramework; // for testing access to internals
   
-
-
-
-  inline const BehaviorHelperComponent& GetBehaviorHelperComponent() const 
-    { return GetComponent<BehaviorHelperComponent>(BCComponentID::BehaviorHelperComponent); }
-  inline BehaviorHelperComponent&       GetBehaviorHelperComponent()
-    { return GetComponent<BehaviorHelperComponent>(BCComponentID::BehaviorHelperComponent); }
-  
   // For test only
   BehaviorContainer& GetBehaviorContainer();
   
 private:
-   UniqueComponents _components;
+  CompononentPtr _comps;
 };
 
 } // namespace Cozmo

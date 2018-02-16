@@ -72,6 +72,7 @@ public:
                                AnimationTrigger rightTurnAnimTrigger = AnimationTrigger::Count);
   
 protected:
+  virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const override;
   virtual ActionResult Init() override;
   virtual ActionResult CheckIfDone() override;
   
@@ -122,8 +123,7 @@ class DriveToAndMountChargerAction : public CompoundActionSequential
 {
 public:
   DriveToAndMountChargerAction(const ObjectID& objectID,
-                               const bool useCliffSensorCorrection = true,
-                               const bool useManualSpeed = false);
+                               const bool useCliffSensorCorrection = true);
   
   virtual ~DriveToAndMountChargerAction() { }
 }; // class DriveToAndMountChargerAction

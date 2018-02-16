@@ -15,7 +15,7 @@
 
 #include "coretech/common/engine/math/point.h"
 #include "coretech/common/shared/types.h"
-#include "engine/entity.h"
+#include "util/entityComponent/iManageableComponent.h"
 #include "json/json.h"
 
 #include "util/helpers/noncopyable.h"
@@ -50,7 +50,7 @@ public:
 };
 
 
-class PuzzleComponent : public ManageableComponent, private Util::noncopyable
+class PuzzleComponent : public IManageableComponent, private Util::noncopyable
 {
 public:
 

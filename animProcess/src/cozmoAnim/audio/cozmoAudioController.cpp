@@ -13,11 +13,11 @@
  **/
 
 #include "cozmoAnim/audio/cozmoAudioController.h"
+#include "cozmoAnim/animContext.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "audioEngine/audioScene.h"
 #include "audioEngine/soundbankLoader.h"
 #include "clad/audio/audioGameObjectTypes.h"
-#include "cozmoAnim/cozmoAnimContext.h"
 #include "util/console/consoleInterface.h"
 #include "util/environment/locale.h"
 #include "util/fileUtils/fileUtils.h"
@@ -34,6 +34,7 @@
 #ifndef EXCLUDE_ANKI_AUDIO_LIBS
 
 #define USE_AUDIO_ENGINE 1
+#include "audioEngine/plugins/ankiPluginInterface.h"
 #include "audioEngine/plugins/hijackAudioPlugIn.h"
 #include "audioEngine/plugins/wavePortalPlugIn.h"
 #else
@@ -91,11 +92,11 @@ CONSOLE_FUNC( SetWriteAudioOutputCapture, "CozmoAudioController", bool writeOutp
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // CozmoAudioController
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-CozmoAudioController::CozmoAudioController( const CozmoAnimContext* context )
+CozmoAudioController::CozmoAudioController( const AnimContext* context )
 {
 #if USE_AUDIO_ENGINE
   {
-    DEV_ASSERT(nullptr != context, "CozmoAudioController.CozmoAudioController.CozmoAnimContext.IsNull");
+    DEV_ASSERT(nullptr != context, "CozmoAudioController.CozmoAudioController.AnimContext.IsNull");
 
     const Util::Data::DataPlatform* dataPlatform = context->GetDataPlatform();
     const std::string assetPath = dataPlatform->pathToResource(Util::Data::Scope::Resources, "sound" );
@@ -110,13 +111,13 @@ CozmoAudioController::CozmoAudioController( const CozmoAnimContext* context )
     }
     // Create sound bank loader
     _soundbankLoader.reset(new SoundbankLoader(*this, assetPath));
-    
+
     // Config Engine
     SetupConfig config{};
     // Read/Write Asset path
     config.assetFilePath = assetPath;
     config.writeFilePath = writePath;
-    
+
     // Cozmo uses default audio locale regardless of current context.
     // Locale-specific adjustments are made by setting GameState::External_Language
     // below.
@@ -144,21 +145,24 @@ CozmoAudioController::CozmoAudioController( const CozmoAnimContext* context )
   {
     // Setup Engine Logging callback
     SetLogOutput( ErrorLevel::All, &AudioEngineLogCallback );
-    
+
+    InitializePluginInterface();
+    GetPluginInterface()->SetupWavePortalPlugIn();
+
     // Load audio sound bank metadata
     // NOTE: This will slightly change when we implement RAMS
     if (_soundbankLoader.get() != nullptr) {
       _soundbankLoader->LoadDefaultSoundbanks();
     }
 
-    // Use Console vars to controll profiling settings
+    // Use Console vars to control profiling settings
     if ( kWriteAudioProfilerCapture ) {
       WriteProfilerCapture( true );
     }
     if ( kWriteAudioOutputCapture ) {
       WriteAudioOutputCapture( true );
     }
-    
+
     RegisterCladGameObjectsWithAudioController();
   }
   if (sThis == nullptr) {

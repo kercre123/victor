@@ -19,8 +19,8 @@
 /* -- generated style -- */
     </style>
 
-    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
-    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script src="jquery-1.12.4.js"></script>
+    <script src="jquery-ui.js"></script>
 
     <script>
     $(function() {
@@ -40,15 +40,6 @@
     $(function() {
         $('input:text').each(function(index){
             console.log($(this));
-        });
-    });
-
-    $( function() {
-        $( ".widget input[type=submit], .widget a, .widget button" ).button();
-        $( "button, input, a" ).click( function( event ) {
-            var func = this.value;
-            $.post("consolefunccall", {func: func}, function(result){});
-            // event.preventDefault();
         });
     });
 
@@ -90,10 +81,16 @@
         })
         // when function call button is clicked, get arguments from text box, and call function
         $(".function").click(function() {
-            var func = this.id.split('_function')[0];
-            var argsId = func + "_args";
-            var selector = ("#" + argsId);
-            var args = $(selector).val();
+            if (this.id != "") {
+                var func = this.id.split('_function')[0];
+                var argsId = func + "_args";
+                var selector = ("#" + argsId);
+                var args = $(selector).val();
+            } else {
+                var func = this.value;
+                var args = "";
+            }
+            console.log("Call consolefunccall with func:" + func + " and args:" + args);
             $.post("consolefunccall", {func: func, args: args}, function(result){});
         })
     });

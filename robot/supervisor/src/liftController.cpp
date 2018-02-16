@@ -47,10 +47,6 @@ namespace Anki {
         const f32 DEFAULT_START_ACCEL_FRAC = 0.25f;
         const f32 DEFAULT_END_ACCEL_FRAC   = 0.25f;
 
-        // Only angles greater than this can contribute to error
-        // TODO: Find out what this actually is
-        const f32 ENCODER_ANGLE_RES = DEG_TO_RAD_F32(0.35f);
-        
         // Physical limits in radians
         const f32 LIFT_ANGLE_LOW_LIMIT_RAD = ConvertLiftHeightToLiftAngleRad(LIFT_HEIGHT_LOWDOCK);
         const f32 LIFT_ANGLE_HIGH_LIMIT_RAD = ConvertLiftHeightToLiftAngleRad(LIFT_HEIGHT_CARRY);
@@ -62,6 +58,11 @@ namespace Anki {
         const f32 USE_PI_CONTROL_LIFT_ANGLE_HIGH_THRESH_RAD = LIFT_ANGLE_HIGH_LIMIT_RAD - NO_D_ANGULAR_RANGE_RAD;
 
 #ifdef SIMULATOR
+        // Only angles greater than this can contribute to error
+        // This is to prevent micro-oscillations in sim which make the lift
+        // never actually stop moving
+        const f32 ENCODER_ANGLE_RES = DEG_TO_RAD_F32(0.35f);
+
         // For disengaging gripper once the lift has reached its final position
         bool disengageGripperAtDest_ = false;
         f32  disengageAtAngle_ = 0.f;
@@ -467,6 +468,11 @@ namespace Anki {
         f32 startRad = currDesiredAngle_;
         if (!inPosition_) {
           vpg_.Step(startRadSpeed, startRad);
+        } else {
+          // If already in position, reset angleErrorSum_.
+          // Small and short lift motions can be overpowered by the unwinding of 
+          // accumulated error and not render well/consistently.
+          angleErrorSum_ = 0.f;
         }
 
         lastInPositionTime_ms_ = 0;
@@ -669,11 +675,14 @@ namespace Anki {
         }
 
         // Compute position error
-        // Ignore if it's less than encoder resolution
         f32 angleError = currDesiredAngle_ - currentAngle_.ToFloat();
+
+#ifdef SIMULATOR
+        // Ignore if it's less than encoder resolution
         if (ABS(angleError) < ENCODER_ANGLE_RES) {
           angleError = 0;
         }
+#endif
 
         // Compute power
         const f32 powerP = Kp_ * angleError;
@@ -689,22 +698,13 @@ namespace Anki {
           power_ -= powerD;
         }
         
-        // Update error terms
-        prevAngleError_ = angleError;
-        angleErrorSum_ += angleError;
-        angleErrorSum_ = CLIP(angleErrorSum_, -MAX_ERROR_SUM, MAX_ERROR_SUM);
 
-
-
-        // If accurately tracking current desired angle...
+        // If accurately tracking final desired angle...
         if((ABS(angleError) < LIFT_ANGLE_TOL) && (desiredAngle_ == currDesiredAngle_)) {
-
-          // Keep angleErrorSum from accumulating once we're in position
-          angleErrorSum_ -= angleError;
           
           // Decay angleErrorSum as long as power exceeds MAX_POWER_IN_POSITION
           if (ABS(power_) > MAX_POWER_IN_POSITION) {
-            f32 decay = ANGLE_ERROR_SUM_DECAY_STEP * (angleErrorSum_ > 0 ? 1.f : -1.f);
+            const f32 decay = ANGLE_ERROR_SUM_DECAY_STEP * (angleErrorSum_ > 0 ? 1.f : -1.f);
             angleErrorSum_ -= decay;
           } else if (checkForLoadWhenInPosition_ && !IsMoving()) {
             checkingForLoadStartTime_ = currTime;
@@ -723,9 +723,17 @@ namespace Anki {
 #endif
           }
         } else {
+          // Not near final desired angle yet
           lastInPositionTime_ms_ = 0;
+          
+          // Only accumulate integral error when not in position
+          angleErrorSum_ += angleError;
         }
-
+        
+        // Clip integral error term
+        angleErrorSum_ = CLIP(angleErrorSum_, -MAX_ERROR_SUM, MAX_ERROR_SUM);
+        prevAngleError_ = angleError;
+        
 
 #if(DEBUG_LIFT_CONTROLLER)
         AnkiDebugPeriodic(50, "LiftController.Update.Values", "LIFT: currA %f, curDesA %f, currVel %f, desA %f, err %f, errSum %f, inPos %d",

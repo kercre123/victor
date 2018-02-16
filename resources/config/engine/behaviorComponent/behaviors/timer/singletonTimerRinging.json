@@ -1,0 +1,12 @@
+{
+  "behaviorID"       : "SingletonTimerRinging",
+  "behaviorClass"    : "PlayAnimStatesGetInLoop",
+  "getIn"            : "Hiccup",
+  "loopAnimation"    : "DroneModeBackwardDrivingLoop",
+  "getOut"           : "Hiccup",
+  "emergencyGetOut"  : "GuardDogPlayerSuccess",
+  "loopEndCondition" : {
+    "conditionType"  : "RobotTouchGesture",
+    "touchGesture"  : "ContactSustain"
+  }
+}

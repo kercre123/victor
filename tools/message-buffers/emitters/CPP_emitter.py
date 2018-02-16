@@ -204,11 +204,22 @@ class HEnumEmitter(BaseEmitter):
             enum_member_count=0
         )
 
+        self.emitPrefix(node, globals)
         self.emitHeader(node, globals)
         self.emitMembers(node, globals)
         self.emitFooter(node, globals)
         self.emitSuffix(node, globals)
 
+    def emitPrefix(self, node, globals):
+        if self.options.emitJSON:
+            # need optional macro for "warn unused"
+            self.output.write(textwrap.dedent('''\
+            #ifndef CLAD_CPP_WARN_UNUSED_RESULT
+            #define CLAD_CPP_WARN_UNUSED_RESULT __attribute__((warn_unused_result))
+            #endif
+
+            '''))
+        
     def emitHeader(self, node, globals):
         if (node.cpp_class):
             self.output.write(textwrap.dedent('''\
@@ -242,11 +253,13 @@ class HEnumEmitter(BaseEmitter):
 
     def emitSuffix(self, node, globals):
         self.output.write('const char* EnumToString(const {enum_name} m);\n'.format(**globals))
+        self.output.write('inline const char* {enum_name}ToString(const {enum_name} m) {{ return EnumToString(m); }}\n\n'.format(**globals))
         if self.options.emitJSON:
+            self.output.write('template<typename T>\nCLAD_CPP_WARN_UNUSED_RESULT bool EnumFromString(const std::string& str, T& enumOutput);\n')
+            self.output.write('CLAD_CPP_WARN_UNUSED_RESULT bool {enum_name}FromString(const std::string& str, {enum_name}& enumOutput);\n\n'.format(**globals))
             self.output.write('{enum_name} {enum_name}FromString(const std::string&);\n\n'.format(**globals))
         else:
             self.output.write('\n')
-        self.output.write('inline const char* {enum_name}ToString(const {enum_name} m) {{ return EnumToString(m); }}\n\n'.format(**globals))
         self.output.write('extern const char* {enum_name}VersionHashStr;\n'.format(**globals))
         self.output.write('extern const uint8_t {enum_name}VersionHash[16];\n\n'.format(**globals))
         self.output.write('constexpr {enum_storage_type} {enum_name}NumEntries = {enum_member_count};\n\n'.format(**globals))
@@ -297,7 +310,8 @@ class CPPEnumEmitter(HEnumEmitter):
 
     def emitStringToEnum(self, node, globals):
         self.output.write(textwrap.dedent('''\
-            {enum_name} {enum_name}FromString(const std::string& str)
+            template<>
+            bool EnumFromString(const std::string& str, {enum_name}& enumOutput)
             {{
             ''').format(num_values=len(node.members()), **globals))
 
@@ -310,16 +324,43 @@ class CPPEnumEmitter(HEnumEmitter):
             self.output.write(textwrap.dedent('''\
                 auto it = stringToEnumMap.find(str);
                 if(it == stringToEnumMap.end()) {{
-                    std::cerr << "error: string '" << str << "' is not a valid {enum_name} value" << std::endl;
-                    assert(false && "string must be a valid {enum_name} value");
-                    return {enum_name}::{first_val};
+                  return false;
                 }}
 
-            ''').format(first_val=node.members()[0].name, **globals))
-
-            self.output.write('return it->second;\n')
+                enumOutput = it->second;
+                return true;
+            ''').format(**globals))
 
         self.output.write('}\n\n')
+
+        self.output.write(textwrap.dedent('''\
+        bool {enum_name}FromString(const std::string& str, {enum_name}& enumOutput)
+        {{
+          return EnumFromString(str, enumOutput);
+        }}
+
+        ''').format(**globals))
+
+        self.output.write(textwrap.dedent('''\
+        {enum_name} {enum_name}FromString(const std::string& str)
+        {{
+        ''').format(**globals))
+        
+        with self.output.indent(1):
+            self.output.write(textwrap.dedent('''\
+            {enum_name} returnVal;
+            if( !EnumFromString(str, returnVal) ) {{
+              std::cerr << "error: string '" << str << "' is not a valid {enum_name} value" << std::endl;
+              assert(false && "string must be a valid {enum_name} value");
+              return {enum_name}::{first_val};
+            }}
+            else {{
+              return returnVal;
+            }}
+            ''').format(first_val=node.members()[0].name, **globals))
+
+        self.output.write('}\n\n')
+
 
     def emitSuffix(self, node, globals):
         self.output.write('const char* {enum_name}VersionHashStr = "{enum_hash}";\n\n'.format(**globals))
@@ -703,11 +744,26 @@ class CPPStructEmitter(HStructEmitter):
 
         for member in node.members():
             if isinstance(member.type, (ast.VariableArrayType, ast.FixedArrayType)) and not isinstance(member.type, ast.PascalStringType):
-                self.output.write(textwrap.dedent('''\
-                    \tfor(auto& value : {member_name}) {{
-                        root["{json_name}"].append({json_value});
-                    \t}}
-                ''').format(json_name=member.name.lstrip('_'), member_name=member.name, json_value=toJsonValue("value", member.type.member_type)))
+                with self.output.indent(1):
+
+                    # vector<bool> is not a container in C++, so we need some special logic because we can't use
+                    # ranged-for with references
+                    if isinstance(member.type.member_type, ast.BuiltinType) and member.type.member_type.name == 'bool':
+                        range_type = 'auto'
+                        cast_prefix = '(bool)'
+                    else:
+                        range_type = 'const auto&'
+                        cast_prefix = ''
+
+                    self.output.write(textwrap.dedent('''\
+                        for({range_type} value : {member_name}) {{
+                          root["{json_name}"].append({cast_prefix}{json_value});
+                        }}
+                        ''').format(json_name=member.name.lstrip('_'),
+                                    member_name=member.name,
+                                    json_value=toJsonValue("value", member.type.member_type),
+                                    range_type=range_type,
+                                    cast_prefix=cast_prefix))
             else:
                 self.output.write('\troot["{json_name}"] = {json_value};\n'.format(json_name=member.name.lstrip('_'), member_name=member.name, json_value=toJsonValue(member.name, member.type)))
 
@@ -719,40 +775,69 @@ class CPPStructEmitter(HStructEmitter):
         self.output.write(textwrap.dedent('''
             bool {message_name}::SetFromJSON(const Json::Value& root)
             {{
+              try {{
+
             ''').format(**globals))
 
-        for member in node.members():
-            json_name = member.name.lstrip('_')
+        with self.output.indent(1):
 
-            self.output.write('\tif (root.isMember("{json_name}")) {{\n'.format(json_name=json_name))
-            with self.output.indent(1):
-                if jsoncpp_as_method(member.type) is not None:
-                    self.output.write('\t{member_name} = root["{json_name}"].{as_method};\n'.format(json_name=json_name, member_name=member.name, as_method=jsoncpp_as_method(member.type)))
-                elif isinstance(member.type, (ast.VariableArrayType, ast.FixedArrayType)):
-                    self.output.write('\tauto& json_array = root["{json_name}"];\n'.format(json_name=json_name))
+            for member in node.members():
+                json_name = member.name.lstrip('_')
 
-                    if isinstance(member.type, ast.VariableArrayType):
-                        self.output.write('\t{member_name}.resize(json_array.size());\n'.format(member_name=member.name))
+                self.output.write('\tif (root.isMember("{json_name}")) {{\n'.format(json_name=json_name))
+                with self.output.indent(1):
+                    if jsoncpp_as_method(member.type) is not None:
+                        self.output.write('\t{member_name} = root["{json_name}"].{as_method};\n'.format(json_name=json_name, member_name=member.name, as_method=jsoncpp_as_method(member.type)))
+                    elif isinstance(member.type, (ast.VariableArrayType, ast.FixedArrayType)):
+                        self.output.write('\tauto& json_array = root["{json_name}"];\n'.format(json_name=json_name))
 
-                    self.output.write('\tfor(Json::ArrayIndex i = 0; i < json_array.size(); i++) {\n')
+                        if isinstance(member.type, ast.VariableArrayType):
+                            self.output.write('\t{member_name}.resize(json_array.size());\n'.format(member_name=member.name))
 
-                    with self.output.indent(1):
-                        if jsoncpp_as_method(member.type.member_type) is not None:
-                            self.output.write('\t{member_name}[i] = json_array[i].{as_method};\n'.format(member_name=member.name, as_method=jsoncpp_as_method(member.type.member_type)))
-                        elif isinstance(member.type.member_type, ast.DefinedType):
-                            self.output.write('\t{member_name}[i] = {member_type}FromString(json_array[i].asString());\n'.format(member_type=cpp_value_type(member.type.member_type), member_name=member.name))
-                        else:
-                            self.output.write('\t{member_name}[i].SetFromJSON(json_array[i]);\n'.format(member_name=member.name))
+                        self.output.write('\tfor(Json::ArrayIndex i = 0; i < json_array.size(); i++) {\n')
 
-                    self.output.write('\t}\n')
-                elif isinstance(member.type, ast.DefinedType):
-                    self.output.write('\t{member_name} = {member_type}FromString(root["{json_name}"].asString());\n'.format(member_type=cpp_value_type(member.type), json_name=json_name, member_name=member.name))
-                else:
-                    self.output.write('\t{member_name}.SetFromJSON(root["{json_name}"]);\n'.format(json_name=json_name, member_name=member.name))
-            self.output.write('\t}\n')
+                        with self.output.indent(1):
+                            if jsoncpp_as_method(member.type.member_type) is not None:
+                                self.output.write('\t{member_name}[i] = json_array[i].{as_method};\n'.format(member_name=member.name, as_method=jsoncpp_as_method(member.type.member_type)))
+                            elif isinstance(member.type.member_type, ast.DefinedType):
+                                with self.output.indent(1):
+                                    self.output.write(textwrap.dedent('''\
+                                    if (!{enum_name}FromString(json_array[i].asString(), {member_name}[i])) {{
+                                      return false;
+                                    }}
+                                    ''').format(enum_name=member.type.member_type.name, member_name=member.name))
+                            else:
+                                with self.output.indent(1):
+                                    self.output.write(textwrap.dedent('''\
+                                    if (!{member_name}[i].SetFromJSON(json_array[i])) {{
+                                      return false;
+                                    }}
+                                    ''').format(member_name=member.name))
+
+                        self.output.write('\t}\n')
+                    elif isinstance(member.type, ast.DefinedType):
+                        with self.output.indent(1):
+                            self.output.write(textwrap.dedent('''\
+                            if (!{enum_name}FromString(root["{json_name}"].asString(), {member_name})) {{
+                              return false;
+                            }}
+                            ''').format(enum_name=member.type.name, json_name=json_name, member_name=member.name))
+                    else:
+                        with self.output.indent(1):
+                            self.output.write(textwrap.dedent('''\
+                            if (!{member_name}.SetFromJSON(root["{json_name}"])) {{
+                              return false;
+                            }}
+                            ''').format(json_name=json_name, member_name=member.name))
+                self.output.write('\t}\n')                
 
         self.output.write(textwrap.dedent('''
-            \treturn true;
+              }}
+              catch(Json::LogicError) {{
+                return false;
+              }}
+
+              return true;
             }}
             ''').format(**globals))
 
@@ -1453,17 +1538,22 @@ class CPPUnionEmitter(BaseEmitter):
         self.output.write(textwrap.dedent('''
             bool {union_name}::SetFromJSON(const Json::Value& json)
             {{
-            \tClearCurrent();
+              ClearCurrent();
 
-            \tif(json.isMember("type")) {{
-            \t\tstd::string tagStr = json["type"].asString();
+              bool result = false;
 
-                if(tagStr == "INVALID") {{
+              if(json.isMember("type")) {{
+                std::string tagStr = json["type"].asString();
+
+                try {{
+
+                  if(tagStr == "INVALID") {{
                     // Already cleared, do nothing.
-                }}
+                    result = true;  
+                  }}
             ''').format(**globals))
 
-        with self.output.indent(2):
+        with self.output.indent(3):
             for member in node.members():
                 self.output.write('else if(tagStr == "{member_name}") {{\n'.format(member_name=member.name))
                 with self.output.indent(1):
@@ -1471,19 +1561,24 @@ class CPPUnionEmitter(BaseEmitter):
                     self.output.write('new(&(this->{private_name})) {member_type};\n'.format(private_name=private_name, member_type=cpp_value_type(member.type)))
                     if jsoncpp_as_method(member.type) is None:
                         if isinstance(member.type.type_decl, ast.MessageDecl) and member.type.type_decl.object_type() == "structure":
-                            self.output.write('this->{private_name}.SetFromJSON(json);\n'.format(private_name=private_name))
+                            self.output.write('result = this->{private_name}.SetFromJSON(json);\n'.format(private_name=private_name))
                         else:
-                            self.output.write('// {member_name} is not a structure, is not serializable.\n'.format(member_name=member.name))
+                            self.output.write('// {member_name} is not a structure, is not serializable.\nresult = false;\n'.format(member_name=member.name))
                     else:
-                        self.output.write('this->{private_name} = json["value"].{as_method};\n'.format(private_name=private_name, as_method=jsoncpp_as_method(member.type)))
+                        self.output.write('this->{private_name} = json["value"].{as_method};\nresult = true;\n'.format(private_name=private_name, as_method=jsoncpp_as_method(member.type)))
                     self.output.write('_tag = Tag::{member_name};\n'.format(member_name=member.name))
 
                 self.output.write('}\n')
 
         self.output.write(textwrap.dedent('''\
-            \t}
 
-            \treturn true;
+                }
+                catch(Json::LogicError) {
+                  result = false;
+                }
+              }
+
+              return result;
             }
 
         '''))

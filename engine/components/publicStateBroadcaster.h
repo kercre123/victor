@@ -15,7 +15,7 @@
 #ifndef __Anki_Cozmo_Basestation_Components_PublicStateBroadcaster_H__
 #define __Anki_Cozmo_Basestation_Components_PublicStateBroadcaster_H__
 
-#include "engine/dependencyManagedComponent.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 #include "engine/events/ankiEventMgr.h"
 #include "engine/robotComponents_fwd.h"
 
@@ -61,7 +61,6 @@ public:
   void UpdateBroadcastBehaviorStage(BehaviorStageTag stageType, uint8_t stage);
   
   void UpdateRequestingGame(bool isRequesting);
-  void NotifyBroadcasterOfConfigurationManagerUpdate(const Robot& robot);
   
 private:
   std::unique_ptr<RobotPublicState> _currentState;

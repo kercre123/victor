@@ -56,12 +56,10 @@ endif()
 target_link_libraries(cameraService
 PRIVATE
   util
-# cti
   cti_common
   cti_vision
   engine_clad # imageTypes.h
   robot_interface # cozmoConfig.h
-# platform
   ${PLATFORM_LIBS}
 )
 

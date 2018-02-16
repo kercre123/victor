@@ -1,0 +1,348 @@
+{
+  "behaviorID" : "HighLevelAI",
+  "behaviorClass" : "HighLevelAI",
+
+  
+  "socializeKnownFaceCooldown_s": 600.0,
+  "playWithCubeCooldown_s": 60.0,
+  "playWithCubeOnChargerCooldown_s": 600.0,
+  "goToSleepTimeout_s": 240.0,
+  "minFaceAgeToAllowSleep_ms": 5000,
+  "needsToChargeTime_ms": 300000,
+  "maxFaceDistanceToSocialize_mm": 1000.0,
+
+  "initialState": "ObservingOnCharger",
+
+  "states": [
+    {
+      "name": "ObservingOnCharger",
+      "behavior": "ObservingOnCharger",
+      "visionModes": [ "DetectingMarkers", "DetectingFaces" ],
+      "debugColor": "ORANGE"
+    },
+    {
+      "name": "ObservingOnChargerRecentlyPlaced",
+      "behavior": "ObservingOnCharger",
+      "visionModes": [ "DetectingMarkers" ],
+      "debugColor": "RED"
+    },
+    {
+      "name": "DriveOffChargerIntoObserving",
+      "behavior": "DriveOffChargerIntoObserving",
+      "visionModes": [ "DetectingFaces", "DetectingMarkers" ]
+    },
+    {
+      "name": "DriveOffChargerIntoSocializing",
+      "behavior": "DriveOffCharger"
+    },
+    {
+      "name": "DriveOffChargerIntoPlay",
+      "behavior": "DriveOffChargerIntoPlay",
+      "visionModes": [ "DetectingMarkers" ]
+    },
+    {
+      "name": "Observing",
+      "behavior": "Observing",
+      "visionModes": [ "DetectingFaces", "DetectingMarkers" ],
+      "debugColor": "BLUE"
+    },
+    {
+      "name": "Socializing",
+      "behavior": "Socialize",
+      "visionModes": [ "DetectingFaces" ],
+      "debugColor": "MAGENTA"
+    },
+    {
+      "name": "PlayingWithCube",
+      "behavior": "PlayWithCube",
+      "visionModes": [ "DetectingMarkers" ],
+      "debugColor": "DARKGREEN"
+    },
+    {
+      "name": "Napping",
+      "behavior": "Sleeping",
+      "debugColor": "GREEN"
+    },
+    {
+      "name": "WakingUp",
+      "behavior": "SleepingWakeUp"
+    },
+    {
+      "name": "ReturningToCharger",
+      "behavior": "FindAndGoToHome",
+      "visionModes": [ "DetectingMarkers" ],
+      "debugColor": "WHITE"
+    },
+    {
+      "name": "FailedToFindCharger",
+      "behavior": "ObservingFailedToFindCharger",
+      "visionModes": [ "DetectingMarkers" ]
+    }
+  ],
+
+  "transitionDefinitions": [
+    {
+      // TODO:(bn) split this up into multiple files?
+      
+      "from": "ObservingOnCharger",
+      "interruptingTransitions": [
+        {
+          "to": "Observing",
+          "condition": {
+            "conditionType": "Negate",
+            "operand": {
+              "conditionType": "OnCharger"
+            }
+          }
+        },        
+        {
+          "to": "DriveOffChargerIntoSocializing",
+          "preDefinedStrategyName": "CloseFaceForSocializing"
+        }
+      ],
+      "nonInterruptingTransitions": [
+        {
+          "to": "DriveOffChargerIntoObserving",
+          "condition": {
+            "conditionType": "TimerInRange",
+            "begin_s": 600.0
+          }
+        },
+        {
+          "to": "DriveOffChargerIntoPlay",
+          "preDefinedStrategyName": "NeedsToLeaveChargerForPlay"
+        },
+        {
+          "to": "Napping",
+          "preDefinedStrategyName": "WantsToSleep"
+        }
+      ]
+    },
+
+    {
+      "from": "ObservingOnChargerRecentlyPlaced",
+
+      "interruptingTransitions": [
+        {
+          "to": "Observing",
+          "condition": {
+            "conditionType": "Negate",
+            "operand": {
+              "conditionType": "OnCharger"
+            }
+          }
+        }
+      ],
+      "nonInterruptingTransitions": [        
+        {
+          "to": "ObservingOnCharger",
+          "condition": {
+            "conditionType": "TimerInRange",
+            "begin_s": 120.0
+          }
+        }
+      ]
+    },
+
+    {
+      "from": "Observing",
+      "interruptingTransitions": [
+        {
+          "to": "ObservingOnChargerRecentlyPlaced",
+          "condition": {
+            "conditionType": "OnCharger"
+          }
+        },
+        {
+          "to": "Socializing",
+          "preDefinedStrategyName": "CloseFaceForSocializing"
+        },
+        {
+          "to": "PlayingWithCube",
+          "preDefinedStrategyName": "CloseCubeForPlaying"
+        }
+      ],
+      "nonInterruptingTransitions": [
+        {
+          "to": "ReturningToCharger",
+          "preDefinedStrategyName": "NeedsToCharge"
+        }
+      ]
+    },
+
+    {
+      "from": "Socializing",
+      "interruptingTransitions": [
+        {
+          "to": "ObservingOnChargerRecentlyPlaced",
+          "condition": {
+            "conditionType": "OnCharger"
+          }
+        }
+      ],
+      "exitTransitions": [
+        {
+          "to": "Observing",
+          "condition": {
+            "conditionType": "TrueCondition" 
+          }
+        }
+      ]
+    },
+
+    {
+      "from": "PlayingWithCube",
+      "interruptingTransitions": [
+        {
+          "to": "ObservingOnChargerRecentlyPlaced",
+          "condition": {
+            "conditionType": "OnCharger"
+          }
+        }
+      ],
+      "exitTransitions": [
+        {
+          "to": "Observing",
+          "condition": {
+            "conditionType": "TrueCondition" 
+          }
+        }
+      ]
+    },
+
+    {
+      "from": "DriveOffChargerIntoObserving",
+      "exitTransitions": [
+        {
+          "to": "Socializing",
+          "preDefinedStrategyName": "CloseFaceForSocializing"
+        },
+        {
+          // fall back to observing if can't find a face after driving off the charger
+          "to": "Observing",
+          "condition": {
+            "conditionType": "TrueCondition"
+          }
+        }
+      ]
+    },
+
+    {
+      "from": "DriveOffChargerIntoPlay",
+      "exitTransitions": [
+        {
+          "to": "PlayingWithCube",
+          "preDefinedStrategyName": "CloseCubeForPlaying"
+        },
+        {
+          // fall back to observing if can't find a cube after driving off the charger
+          "to": "Observing",
+          "condition": {
+            "conditionType": "TrueCondition"
+          }
+        }
+      ]
+    },
+
+    {
+      "from": "DriveOffChargerIntoSocializing",
+      "exitTransitions": [
+        {
+          "to": "Socializing",
+          "condition": {
+            "conditionType": "TrueCondition"
+          }
+        }
+      ]
+    },
+    
+    {
+      "from": "Napping",
+      "interruptingTransitions": [
+        {
+          "to": "WakingUp",
+          "condition": {
+            "conditionType": "Negate",
+            "operand": {
+              "conditionType": "OnCharger"
+            }
+          }
+        }
+      ],
+      "nonInterruptingTransitions": [
+        {
+          "to": "WakingUp",
+          "condition": {
+            "conditionType": "TimerInRange",
+            "begin_s": 300.0
+          }
+        }
+      ]
+    },
+
+    {
+      "from": "WakingUp",
+      "exitTransitions": [
+        {
+          "to": "ObservingOnCharger",
+          "condition": {
+            "conditionType": "TrueCondition" 
+          }
+        }
+      ]
+    },
+
+    {
+      "from": "ReturningToCharger",
+      "interruptingTransitions": [
+        {
+          "to": "Observing",
+          "condition": {
+            "conditionType": "OffTreadsState",
+            "targetState": "InAir"
+          }
+        }
+      ],
+      "exitTransitions": [
+        {
+          "to": "ObservingOnChargerRecentlyPlaced",
+          "condition": {
+            "conditionType": "OnCharger"
+          }
+        },
+        {
+          // TODO:(bn) this doesn't work right now because FindAndGoToHome never stops unless it find a charger
+          "to": "FailedToFindCharger",
+          "condition": {
+            "conditionType": "TrueCondition" 
+          }
+        }
+      ]
+    },
+
+    {
+      "from": "FailedToFindCharger",
+      "interruptingTransitions": [
+        {
+          "to": "ReturningToCharger",
+          "preDefinedStrategyName": "ChargerLocated"
+        }
+      ],
+      "exitTransitions": [
+        {
+          "to": "ObservingOnChargerRecentlyPlaced",
+          "condition": {
+            "conditionType": "OnCharger"
+          }
+        },
+        {
+          "to": "Napping",
+          "condition": {
+            "conditionType": "TrueCondition" 
+          }
+        }
+      ]
+    }
+  ]
+
+}

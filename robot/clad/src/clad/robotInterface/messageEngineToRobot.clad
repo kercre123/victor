@@ -6,19 +6,19 @@
  */
 
 #include "clad/audio/audioMessage.clad"
-#include "clad/types/robotStatusAndActions.clad"
-#include "clad/types/ledTypes.clad"
+#include "clad/robotInterface/otaMessages.clad"
 #include "clad/types/animationTypes.clad"
-#include "clad/types/robotTestModes.clad"
+#include "clad/types/cameraFOVInfo.clad"
+#include "clad/types/controllerChannels.clad"
 #include "clad/types/dockingSignals.clad"
 #include "clad/types/imu.clad"
-#include "clad/types/controllerChannels.clad"
+#include "clad/types/keepFaceAliveParameters.clad"
+#include "clad/types/ledTypes.clad"
+#include "clad/types/motorTypes.clad"
 #include "clad/types/proceduralFaceTypes.clad"
 #include "clad/types/proxMessages.clad"
-#include "clad/robotInterface/otaMessages.clad"
-#include "clad/types/cameraFOVInfo.clad"
-#include "clad/types/motorTypes.clad"
-
+#include "clad/types/robotStatusAndActions.clad"
+#include "clad/types/robotTestModes.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -167,7 +167,6 @@ message TrimPath
 message ExecutePath
 {
   uint_16 pathID,
-  bool    useManualSpeed,
 }
 
 message AbsoluteLocalizationUpdate
@@ -272,9 +271,65 @@ message AbortAnimation
 {
 }
 
+message EnableKeepFaceAlive
+{
+  uint_32 disableTimeout_ms,  // If enable == false, the amount of time to wait before actually disabling
+  bool    enable
+}
+
+message SetDefaultKeepFaceAliveParameters
+{
+}
+
+message SetKeepFaceAliveParameter 
+{
+  float_32               value,
+  KeepFaceAliveParameter param,
+  bool                   setToDefault = 0, // If true, value is ignored
+}
+
+message AddOrUpdateEyeShift
+{
+  float_32 xPix,
+  float_32 yPix,
+  uint_32 duration_ms,
+  float_32 xMax,
+  float_32 yMax,
+  float_32 lookUpMaxScale,
+  float_32 lookDownMinScale,
+  float_32 outerEyeScaleIncrease,
+  string name,
+}
+
+message RemoveEyeShift
+{
+  uint_32 disableTimeout_ms,
+  string name,
+}
+
+message AddSquint
+{
+  float_32 squintScaleX, 
+  float_32 squintScaleY, 
+  float_32 upperLidAngle,
+  string name,
+}
+
+message RemoveSquint
+{
+  uint_32 disableTimeout_ms,
+  string name,
+}
+
+
 message LockAnimTracks
 {
   uint_8 whichTracks    // See AnimTrackFlags
+}
+
+message AddAnim
+{
+  string animPath
 }
 
 message RecordHeading
@@ -352,6 +407,15 @@ message DisplayFaceImageBinaryChunk {
     uint_8   chunkIndex
 }
 
+// Format: 1200 pixels, 8-bits each (grayscale)
+message DisplayFaceImageGrayscaleChunk {
+    uint_32  duration_ms,     // Use uint_32 max value to keep the image on the screen
+    uint_8   faceData[1200],  // TODO: Make size a clad const
+    uint_16  numPixels,       // Number of pixels in faceData
+    uint_8   imageId,         // ID for this image, used only to track chunks of the same image
+    uint_8   chunkIndex
+}
+
 // Format: 600 pixels, 16-bits each (RGB565)
 message DisplayFaceImageRGBChunk {
     uint_32  duration_ms,     // Use uint_32 max value to keep the image on the screen
@@ -370,6 +434,24 @@ message SetDebugConsoleVarMessage {
 message RunDebugConsoleFuncMessage {
   uint_8 funcName[64],   // Array of chars, zero-terminated
   uint_8 funcArgs[64]   //   "
+}
+
+//
+// Sent from engine to robot (anim process) to initiate TTS
+//
+// TODO VIC-610: Additional TTS params
+//
+message TextToSpeechStart {
+  
+  uint_8 ttsID, // ID of utterance
+  string text   // Text to be pronounced
+}
+
+//
+// Sent from robot (anim process) to engine to cancel TTS
+//
+message TextToSpeechStop {
+  uint_8 ttsID  // ID of utterance
 }
 
 // ====================================================
@@ -464,7 +546,7 @@ union EngineToRobot
   // 0x50 to 0xAF: To Anim Process
   PlayAnim                      playAnim                    = 0x50,
   LockAnimTracks                lockAnimTracks              = 0x51,
-  //      FREE SLOT                                         = 0x52,
+  AddAnim                       addAnim                     = 0x52,
   AbortAnimation                abortAnimation              = 0x53,
 
   StartRecordingMics            startRecordingMics          = 0x54,
@@ -475,6 +557,16 @@ union EngineToRobot
   DisplayFaceImageBinaryChunk   displayFaceImageBinaryChunk = 0x58,
   DisplayFaceImageRGBChunk      displayFaceImageRGBChunk    = 0x59,
 
+  SetDefaultKeepFaceAliveParameters setDefaultKeepFaceAliveParameters = 0x5A,
+  SetKeepFaceAliveParameter     setKeepFaceAliveParameter   = 0x5B,
+  EnableKeepFaceAlive           enableKeepFaceAlive         = 0x5C,
+  AddOrUpdateEyeShift           addOrUpdateEyeShift         = 0x5D,
+  RemoveEyeShift                removeEyeShift              = 0x5E,
+  AddSquint                     addSquint                   = 0x5F,
+  RemoveSquint                  removeSquint                = 0x60,
+  
+  DisplayFaceImageGrayscaleChunk   displayFaceImageGrayscaleChunk      = 0x61,
+
   AudioEngine::Multiplexer::PostAudioEvent        postAudioEvent       = 0x70,
   AudioEngine::Multiplexer::StopAllAudioEvents    stopAllAudioEvents   = 0x71,
   AudioEngine::Multiplexer::PostAudioGameState    postAudioGameState   = 0x72,
@@ -483,11 +575,13 @@ union EngineToRobot
 
   SetDebugConsoleVarMessage     setDebugConsoleVarMessage   = 0x90,
   RunDebugConsoleFuncMessage    runDebugConsoleFuncMessage  = 0x91,
+  TextToSpeechStart             textToSpeechStart           = 0x92,
+  TextToSpeechStop              textToSpeechStop            = 0x93,
 
   // 0xB0 to 0xFE: To engine, see messageRobotToEngine.clad
 }
 
 
-} // namespace Robot Interface
+} // namespace RobotInterface
 } // namespace Cozmo
 } // namespace Anki

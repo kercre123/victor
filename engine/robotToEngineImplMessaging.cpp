@@ -59,6 +59,8 @@
 
 #include <functional>
 
+#define LOG_CHANNEL "RobotState"
+
 // Prints the IDs of the active blocks that are on but not currently
 // talking to a robot whose rssi is less than this threshold.
 // Prints roughly once/sec.
@@ -76,7 +78,7 @@ namespace Cozmo {
 using GameToEngineEvent = AnkiEvent<ExternalInterface::MessageGameToEngine>;
 
 RobotToEngineImplMessaging::RobotToEngineImplMessaging() 
-: IDependencyManagedComponent(RobotComponentID::RobotToEngineImplMessaging)
+: IDependencyManagedComponent(this, RobotComponentID::RobotToEngineImplMessaging)
 , _hasMismatchedEngineToRobotCLAD(false)
 , _hasMismatchedRobotToEngineCLAD(false)
 {
@@ -87,19 +89,19 @@ RobotToEngineImplMessaging::~RobotToEngineImplMessaging()
 }
 
 
-void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHandler, RobotID_t robotId, Robot* const robot)
+void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHandler, Robot* const robot)
 {
   using localHandlerType = void(RobotToEngineImplMessaging::*)(const AnkiEvent<RobotInterface::RobotToEngine>&);
   // Create a helper lambda for subscribing to a tag with a local handler
-  auto doRobotSubscribe = [this, robotId, messageHandler] (RobotInterface::RobotToEngineTag tagType, localHandlerType handler)
+  auto doRobotSubscribe = [this, messageHandler] (RobotInterface::RobotToEngineTag tagType, localHandlerType handler)
   {
-    GetSignalHandles().push_back(messageHandler->Subscribe(robotId, tagType, std::bind(handler, this, std::placeholders::_1)));
+    GetSignalHandles().push_back(messageHandler->Subscribe(tagType, std::bind(handler, this, std::placeholders::_1)));
   };
   
   using localHandlerTypeWithRoboRef = void(RobotToEngineImplMessaging::*)(const AnkiEvent<RobotInterface::RobotToEngine>&, Robot* const);
-  auto doRobotSubscribeWithRoboRef = [this, robotId, messageHandler, robot] (RobotInterface::RobotToEngineTag tagType, localHandlerTypeWithRoboRef handler)
+  auto doRobotSubscribeWithRoboRef = [this, messageHandler, robot] (RobotInterface::RobotToEngineTag tagType, localHandlerTypeWithRoboRef handler)
   {
-    GetSignalHandles().push_back(messageHandler->Subscribe(robotId, tagType, std::bind(handler, this, std::placeholders::_1, robot)));
+    GetSignalHandles().push_back(messageHandler->Subscribe(tagType, std::bind(handler, this, std::placeholders::_1, robot)));
   };
   
   // bind to specific handlers in the robotImplMessaging class
@@ -124,7 +126,7 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::micDirection,                   &RobotToEngineImplMessaging::HandleMicDirection);
   
   // lambda wrapper to call internal handler
-  GetSignalHandles().push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::state,
+  GetSignalHandles().push_back(messageHandler->Subscribe(RobotInterface::RobotToEngineTag::state,
                                                      [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
                                                        ANKI_CPU_PROFILE("RobotTag::state");
                                                        const RobotState& payload = message.GetData().Get_state();
@@ -134,51 +136,64 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   
   
   // lambda for some simple message handling
-  GetSignalHandles().push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::rampTraverseStarted,
+  GetSignalHandles().push_back(messageHandler->Subscribe(RobotInterface::RobotToEngineTag::rampTraverseStarted,
                                                      [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
                                                        ANKI_CPU_PROFILE("RobotTag::rampTraverseStarted");
-                                                       PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage", "Robot %d reported it started traversing a ramp.", robot->GetID());
+                                                       LOG_INFO("RobotMessageHandler.ProcessMessage",
+                                                                "Robot %d reported it started traversing a ramp.",
+                                                                robot->GetID());
                                                        robot->SetOnRamp(true);
                                                      }));
   
-  GetSignalHandles().push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::rampTraverseCompleted,
+  GetSignalHandles().push_back(messageHandler->Subscribe(RobotInterface::RobotToEngineTag::rampTraverseCompleted,
                                                      [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
                                                        ANKI_CPU_PROFILE("RobotTag::rampTraverseCompleted");
-                                                       PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage", "Robot %d reported it completed traversing a ramp.", robot->GetID());
+                                                       LOG_INFO("RobotMessageHandler.ProcessMessage",
+                                                                "Robot %d reported it completed traversing a ramp.",
+                                                                robot->GetID());
                                                        robot->SetOnRamp(false);
                                                      }));
   
-  GetSignalHandles().push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::bridgeTraverseStarted,
+  GetSignalHandles().push_back(messageHandler->Subscribe(RobotInterface::RobotToEngineTag::bridgeTraverseStarted,
                                                      [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
                                                        ANKI_CPU_PROFILE("RobotTag::bridgeTraverseStarted");
-                                                       PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage", "Robot %d reported it started traversing a bridge.", robot->GetID());
+                                                       LOG_INFO("RobotMessageHandler.ProcessMessage",
+                                                                "Robot %d reported it started traversing a bridge.",
+                                                                robot->GetID());
                                                        //SetOnBridge(true);
                                                      }));
   
-  GetSignalHandles().push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::bridgeTraverseCompleted,
+  GetSignalHandles().push_back(messageHandler->Subscribe(RobotInterface::RobotToEngineTag::bridgeTraverseCompleted,
                                                      [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
                                                        ANKI_CPU_PROFILE("RobotTag::bridgeTraverseCompleted");
-                                                       PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage", "Robot %d reported it completed traversing a bridge.", robot->GetID());
+                                                       LOG_INFO("RobotMessageHandler.ProcessMessage",
+                                                                "Robot %d reported it completed traversing a bridge.",
+                                                                robot->GetID());
                                                        //SetOnBridge(false);
                                                      }));
 
-  GetSignalHandles().push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::chargerMountCompleted,
+  GetSignalHandles().push_back(messageHandler->Subscribe(RobotInterface::RobotToEngineTag::chargerMountCompleted,
                                                          [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
                                                            ANKI_CPU_PROFILE("RobotTag::chargerMountCompleted");
-                                                           PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage", "Charger mount %s.", message.GetData().Get_chargerMountCompleted().didSucceed ? "SUCCEEDED" : "FAILED" );
-                                                           if (message.GetData().Get_chargerMountCompleted().didSucceed) {
+                                                           const bool didSucceed = message.GetData().Get_chargerMountCompleted().didSucceed;
+                                                           LOG_INFO("RobotMessageHandler.ProcessMessage",
+                                                                    "Charger mount %s.",
+                                                                    didSucceed ? "SUCCEEDED" : "FAILED" );
+                                                           if (didSucceed) {
                                                              robot->SetPoseOnCharger();
                                                            }
                                                          }));
   
-  GetSignalHandles().push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::imuTemperature,
+  GetSignalHandles().push_back(messageHandler->Subscribe(RobotInterface::RobotToEngineTag::imuTemperature,
                                                      [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
                                                        ANKI_CPU_PROFILE("RobotTag::imuTemperature");
                                                        
                                                        const auto temp_degC = message.GetData().Get_imuTemperature().temperature_degC;
                                                        // This prints an info every time we receive this message. This is useful for gathering data
                                                        // in the prototype stages, and could probably be removed in production.
-                                                       PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.MessageImuTemperature", "IMU temperature: %.3f degC", temp_degC);
+                                                       LOG_INFO("RobotMessageHandler.ProcessMessage.MessageImuTemperature",
+                                                                "IMU temperature: %.3f degC",
+                                                                temp_degC);
                                                        robot->SetImuTemperature(temp_degC);
                                                      }));
   
@@ -196,7 +211,8 @@ void RobotToEngineImplMessaging::HandleMotorCalibration(const AnkiEvent<RobotInt
   ANKI_CPU_PROFILE("Robot::HandleMotorCalibration");
   
   const MotorCalibration& payload = message.GetData().Get_motorCalibration();
-  PRINT_NAMED_INFO("HandleMotorCalibration.Recvd", "Motor %d, started %d, autoStarted %d", (int)payload.motorID, payload.calibStarted, payload.autoStarted);
+  LOG_INFO("HandleMotorCalibration.Recvd", "Motor %d, started %d, autoStarted %d",
+           (int)payload.motorID, payload.calibStarted, payload.autoStarted);
   
   if (payload.calibStarted) {
     Util::sEventF("HandleMotorCalibration.Start",
@@ -208,8 +224,8 @@ void RobotToEngineImplMessaging::HandleMotorCalibration(const AnkiEvent<RobotInt
                   "%s", EnumToString(payload.motorID));
   }
   
-  if( payload.motorID == MotorID::MOTOR_LIFT &&
-      payload.calibStarted && robot->GetCarryingComponent().IsCarryingObject() )
+  if (payload.motorID == MotorID::MOTOR_LIFT &&
+      payload.calibStarted && robot->GetCarryingComponent().IsCarryingObject())
   {
     // if this was a lift calibration, we are no longer holding a cube
     const bool deleteObjects = true; // we have no idea what happened to the cube, so remove completely from the origin
@@ -232,11 +248,11 @@ void RobotToEngineImplMessaging::HandleMotorAutoEnabled(const AnkiEvent<RobotInt
   ANKI_CPU_PROFILE("Robot::HandleMotorAutoEnabled");
   
   const MotorAutoEnabled& payload = message.GetData().Get_motorAutoEnabled();
-  PRINT_NAMED_INFO("HandleMotorAutoEnabled.Recvd", "Motor %d, enabled %d", (int)payload.motorID, payload.enabled);
+  LOG_INFO("HandleMotorAutoEnabled.Recvd", "Motor %d, enabled %d", (int)payload.motorID, payload.enabled);
 
   if (!payload.enabled) {
     // Burnout protection triggered.
-    // Someobody is probably messing with the lift
+    // Somebody is probably messing with the lift
     LOG_EVENT("HandleMotorAutoEnabled.MotorDisabled", "%s", EnumToString(payload.motorID));
   } else {
     LOG_EVENT("HandleMotorAutoEnabled.MotorEnabled", "%s", EnumToString(payload.motorID));
@@ -244,8 +260,8 @@ void RobotToEngineImplMessaging::HandleMotorAutoEnabled(const AnkiEvent<RobotInt
 
   // This probably applies here as it does in HandleMotorCalibration.
   // Seems reasonable to expect whatever object the robot may have been carrying to no longer be there.
-  if( payload.motorID == MotorID::MOTOR_LIFT &&
-      !payload.enabled && robot->GetCarryingComponent().IsCarryingObject() ) {
+  if (payload.motorID == MotorID::MOTOR_LIFT &&
+      !payload.enabled && robot->GetCarryingComponent().IsCarryingObject()) {
     const bool deleteObjects = true; // we have no idea what happened to the cube, so remove completely from the origin
     robot->GetCarryingComponent().SetCarriedObjectAsUnattached(deleteObjects);
   }
@@ -308,7 +324,7 @@ void RobotToEngineImplMessaging::HandleFirmwareVersion(const AnkiEvent<RobotInte
   std::string jsonString{fwData.begin(), fwData.end()};
   Json::Reader reader;
   Json::Value headerData;
-  if(!reader.parse(jsonString, headerData))
+  if (!reader.parse(jsonString, headerData))
   {
     return;
   }
@@ -316,7 +332,7 @@ void RobotToEngineImplMessaging::HandleFirmwareVersion(const AnkiEvent<RobotInte
   // simulated robot will have special tag in json
   const bool robotIsPhysical = headerData["sim"].isNull();
 
-  PRINT_NAMED_INFO("RobotIsPhysical", "%d", robotIsPhysical);
+  LOG_INFO("RobotIsPhysical", "%d", robotIsPhysical);
   robot->SetPhysicalRobot(robotIsPhysical);
 }
 
@@ -335,7 +351,9 @@ void RobotToEngineImplMessaging::HandleFWVersionInfo(const AnkiEvent<RobotInterf
     robotEngineToRobotStr = Anki::Util::ConvertMessageBufferToString(_factoryFirmwareVersion.toRobotCLADHash.data(), static_cast<uint32_t>(_factoryFirmwareVersion.toRobotCLADHash.size()), Anki::Util::EBytesToTextType::eBTTT_Hex);
     engineEngineToRobotStr = Anki::Util::ConvertMessageBufferToString(messageEngineToRobotHash, sizeof(messageEngineToRobotHash), Anki::Util::EBytesToTextType::eBTTT_Hex);
     
-    PRINT_NAMED_WARNING("RobotFirmware.VersionMismatch", "Engine to Robot CLAD version hash mismatch. Robot's EngineToRobot hash = %s. Engine's EngineToRobot hash = %s.", robotEngineToRobotStr.c_str(), engineEngineToRobotStr.c_str());
+    LOG_WARNING("RobotFirmware.VersionMismatch",
+                "Engine to Robot CLAD version hash mismatch. Robot's EngineToRobot hash = %s. Engine's EngineToRobot hash = %s.",
+                robotEngineToRobotStr.c_str(), engineEngineToRobotStr.c_str());
     
     _hasMismatchedEngineToRobotCLAD = true;
   }
@@ -349,7 +367,9 @@ void RobotToEngineImplMessaging::HandleFWVersionInfo(const AnkiEvent<RobotInterf
     
     engineRobotToEngineStr = Anki::Util::ConvertMessageBufferToString(messageRobotToEngineHash, sizeof(messageRobotToEngineHash), Anki::Util::EBytesToTextType::eBTTT_Hex);
     
-    PRINT_NAMED_WARNING("RobotFirmware.VersionMismatch", "Robot to Engine CLAD version hash mismatch. Robot's RobotToEngine hash = %s. Engine's RobotToEngine hash = %s.", robotRobotToEngineStr.c_str(), engineRobotToEngineStr.c_str());
+    LOG_WARNING("RobotFirmware.VersionMismatch",
+                "Robot to Engine CLAD version hash mismatch. Robot's RobotToEngine hash = %s. Engine's RobotToEngine hash = %s.",
+                robotRobotToEngineStr.c_str(), engineRobotToEngineStr.c_str());
     
     _hasMismatchedRobotToEngineCLAD = true;
   }
@@ -378,16 +398,18 @@ void RobotToEngineImplMessaging::HandlePickAndPlaceResult(const AnkiEvent<RobotI
   {
     case BlockStatus::NO_BLOCK:
     {
-      PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.HandlePickAndPlaceResult.NoBlock",
-                       "Robot %d reported it %s doing something without a block. Stopping docking and turning on Look-for-Markers mode.", robot->GetID(), successStr);
+      LOG_INFO("RobotMessageHandler.ProcessMessage.HandlePickAndPlaceResult.NoBlock",
+               "Robot %d reported it %s doing something without a block. Stopping docking and turning on Look-for-Markers mode.",
+               robot->GetID(), successStr);
       break;
     }
     case BlockStatus::BLOCK_PLACED:
     {
-      PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.HandlePickAndPlaceResult.BlockPlaced",
-                       "Robot %d reported it %s placing block. Stopping docking and turning on Look-for-Markers mode.", robot->GetID(), successStr);
+      LOG_INFO("RobotMessageHandler.ProcessMessage.HandlePickAndPlaceResult.BlockPlaced",
+               "Robot %d reported it %s placing block. Stopping docking and turning on Look-for-Markers mode.",
+               robot->GetID(), successStr);
     
-      if(payload.didSucceed) {
+      if (payload.didSucceed) {
         robot->GetCarryingComponent().SetCarriedObjectAsUnattached();
       }
       
@@ -399,10 +421,11 @@ void RobotToEngineImplMessaging::HandlePickAndPlaceResult(const AnkiEvent<RobotI
     {
       const char* resultStr = EnumToString(payload.result);
       
-      PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.HandlePickAndPlaceResult.BlockPickedUp",
-                       "Robot %d reported it %s picking up block with %s. Stopping docking and turning on Look-for-Markers mode.", robot->GetID(), successStr, resultStr);
+      LOG_INFO("RobotMessageHandler.ProcessMessage.HandlePickAndPlaceResult.BlockPickedUp",
+               "Robot %d reported it %s picking up block with %s. Stopping docking and turning on Look-for-Markers mode.",
+               robot->GetID(), successStr, resultStr);
     
-      if(payload.didSucceed) {
+      if (payload.didSucceed) {
         robot->GetCarryingComponent().SetDockObjectAsAttachedToLift();
       }
 
@@ -461,33 +484,32 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
   
   // find active object by activeID
   ObservableObject* connectedObj = robot->GetBlockWorld().GetConnectedActiveObjectByActiveID(activeID);
-  if ( nullptr == connectedObj ) {
-    PRINT_NAMED_WARNING(MAKE_EVENT_NAME("UnknownActiveID"),
-                        "Could not find match for active object ID %d", payload.objectID);
+  if (nullptr == connectedObj) {
+    LOG_WARNING(MAKE_EVENT_NAME("UnknownActiveID"), "Could not find match for active object ID %d", payload.objectID);
   }
   else
   {
     // Only do this stuff once, since these checks should be the same across all frames. Use connected instance
-    if( connectedObj->GetID() == robot->GetCharger() )
+    if (connectedObj->GetID() == robot->GetCharger())
     {
-      PRINT_NAMED_INFO(MAKE_EVENT_NAME("Charger"), "Charger sending garbage move messages");
+      LOG_INFO(MAKE_EVENT_NAME("Charger"), "Charger sending garbage move messages");
       return;
     }
   
     DEV_ASSERT(connectedObj->IsActive(), MAKE_EVENT_NAME("NonActiveObject"));
   
-    PRINT_NAMED_INFO(MAKE_EVENT_NAME("ObjectMovedOrStopped"),
-                     "ObjectID: %d (Active ID %d), type: %s, axisOfAccel: %s, accel: %f %f %f, time: %d ms",
-                     connectedObj->GetID().GetValue(), connectedObj->GetActiveID(),
-                     EnumToString(connectedObj->GetType()), GetAxisString(payload),
-                     GetXAccelVal(payload), GetYAccelVal(payload), GetZAccelVal(payload), payload.timestamp );
+    LOG_INFO(MAKE_EVENT_NAME("ObjectMovedOrStopped"),
+             "ObjectID: %d (Active ID %d), type: %s, axisOfAccel: %s, accel: %f %f %f, time: %d ms",
+             connectedObj->GetID().GetValue(), connectedObj->GetActiveID(),
+             EnumToString(connectedObj->GetType()), GetAxisString(payload),
+             GetXAccelVal(payload), GetYAccelVal(payload), GetZAccelVal(payload), payload.timestamp );
     
     const bool shouldIgnoreMovement = robot->GetBlockTapFilter().ShouldIgnoreMovementDueToDoubleTap(connectedObj->GetID());
-    if(shouldIgnoreMovement && GetIsMoving<PayloadType>())
+    if (shouldIgnoreMovement && GetIsMoving<PayloadType>())
     {
-      PRINT_NAMED_INFO(MAKE_EVENT_NAME("IgnoringMessage"),
-                       "Waiting for double tap id:%d ignoring movement message",
-                       connectedObj->GetID().GetValue());
+      LOG_INFO(MAKE_EVENT_NAME("IgnoringMessage"),
+               "Waiting for double tap id:%d ignoring movement message",
+               connectedObj->GetID().GetValue());
       return;
     }
     
@@ -497,7 +519,7 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
     // update Moving flag of connected object when it changes
     const bool wasMoving = connectedObj->IsMoving();
     const bool isMovingNow = GetIsMoving<PayloadType>();
-    if ( wasMoving != isMovingNow ) {
+    if (wasMoving != isMovingNow) {
       connectedObj->SetIsMoving(GetIsMoving<PayloadType>(), payload.timestamp);
       robot->GetContext()->GetVizManager()->SendObjectMovingState(activeID, connectedObj->IsMoving());
     }
@@ -517,18 +539,18 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
   std::vector<ObservableObject *> matchingObjects;
   robot->GetBlockWorld().FindLocatedMatchingObjects(filter, matchingObjects);
   
-  for(ObservableObject* object : matchingObjects)
+  for (ObservableObject* object : matchingObjects)
   {
     assert(object != nullptr); // FindMatchingObjects should not return nullptrs
     
-    if(object->GetID() != matchedObjectID)
+    if (object->GetID() != matchedObjectID)
     {
-      PRINT_NAMED_WARNING(MAKE_EVENT_NAME("ActiveObjectInDifferentFramesWithDifferentIDs"),
-                          "First object=%d in '%s'. This object=%d in '%s'.",
-                          matchingObjects.front()->GetID().GetValue(),
-                          matchingObjects.front()->GetPose().FindRoot().GetName().c_str(),
-                          object->GetID().GetValue(),
-                          object->GetPose().FindRoot().GetName().c_str());
+      LOG_WARNING(MAKE_EVENT_NAME("ActiveObjectInDifferentFramesWithDifferentIDs"),
+                  "First object=%d in '%s'. This object=%d in '%s'.",
+                  matchingObjects.front()->GetID().GetValue(),
+                  matchingObjects.front()->GetPose().FindRoot().GetName().c_str(),
+                  object->GetID().GetValue(),
+                  object->GetPose().FindRoot().GetName().c_str());
     }
     
     // We expect carried objects to move, so don't mark them as dirty/inaccurate.
@@ -536,7 +558,7 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
     // the lift. I'm leaving this a separate check from the decision about broadcasting
     // the movement, in case we want to easily remove the checks above but keep this one.
     const bool isCarryingObject = robot->GetCarryingComponent().IsCarryingObject(object->GetID());
-    if(object->IsPoseStateKnown() && !isCarryingObject)
+    if (object->IsPoseStateKnown() && !isCarryingObject)
     {
       // Once an object moves, we can no longer use it for localization because
       // we don't know where it is anymore. Next time we see it, relocalize it
@@ -548,7 +570,7 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
     
     const bool wasMoving = object->IsMoving();
     const bool isMovingNow = GetIsMoving<PayloadType>();
-    if ( wasMoving != isMovingNow )
+    if (wasMoving != isMovingNow)
     {
       // Set moving state of object (in any frame)
       object->SetIsMoving(GetIsMoving<PayloadType>(), payload.timestamp);
@@ -556,7 +578,7 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
     
   } // for(ObservableObject* object : matchingObjects)
   
-  if ( matchedObjectID.IsSet() )
+  if (matchedObjectID.IsSet())
   {
     // Don't notify game about objects being carried that have moved, since we expect
     // them to move when the robot does.
@@ -577,15 +599,14 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
     // Update the ID to be the blockworld ID before broadcasting
     payload.objectID = matchedObjectID;
     
-    if(!isDockingObject && !isCarryingObject)
+    if (!isDockingObject && !isCarryingObject)
     {
       robot->Broadcast(ExternalInterface::MessageEngineToGame(PayloadType(payload)));
     }
   }
   else
   {
-    PRINT_NAMED_WARNING("ObjectMovedOrStoppedHelper.UnknownActiveID",
-                        "Could not find match for active object ID %d", activeID);
+    LOG_WARNING("ObjectMovedOrStoppedHelper.UnknownActiveID", "Could not find match for active object ID %d", activeID);
   }
   
 # undef MAKE_EVENT_NAME
@@ -618,18 +639,19 @@ void RobotToEngineImplMessaging::HandleActiveObjectUpAxisChanged(const ObjectUpA
   // grab objectID from the connected instance
   ActiveID activeID = payload.objectID;
   const ObservableObject* conObj = robot->GetBlockWorld().GetConnectedActiveObjectByActiveID(activeID);
-  if ( nullptr == conObj )
+  if (nullptr == conObj)
   {
-    PRINT_NAMED_ERROR("Robot.HandleActiveObjectUpAxisChanged.UnknownActiveID",
-                      "Could not find match for active object ID %d", payload.objectID);
+    LOG_ERROR("Robot.HandleActiveObjectUpAxisChanged.UnknownActiveID",
+              "Could not find match for active object ID %d",
+              payload.objectID);
     return;
   }
 
-  PRINT_NAMED_INFO("Robot.HandleActiveObjectUpAxisChanged.UpAxisChanged",
-                  "Type: %s, ObjectID: %d, UpAxis: %s",
-                  EnumToString(conObj->GetType()),
-                  conObj->GetID().GetValue(),
-                  EnumToString(payload.upAxis));
+  LOG_INFO("Robot.HandleActiveObjectUpAxisChanged.UpAxisChanged",
+           "Type: %s, ObjectID: %d, UpAxis: %s",
+           EnumToString(conObj->GetType()),
+           conObj->GetID().GetValue(),
+           EnumToString(payload.upAxis));
   
   // Viz update
   robot->GetContext()->GetVizManager()->SendObjectUpAxisState(payload.objectID, payload.upAxis);
@@ -643,11 +665,11 @@ void RobotToEngineImplMessaging::HandleFallingEvent(const AnkiEvent<RobotInterfa
 {
   const auto& msg = message.GetData().Get_fallingEvent();
   
-  PRINT_NAMED_INFO("Robot.HandleFallingEvent.FallingEvent",
-                   "timestamp: %u, duration (ms): %u, intensity %.1f",
-                   msg.timestamp,
-                   msg.duration_ms,
-                   msg.impactIntensity);
+  LOG_INFO("Robot.HandleFallingEvent.FallingEvent",
+           "timestamp: %u, duration (ms): %u, intensity %.1f",
+           msg.timestamp,
+           msg.duration_ms,
+           msg.impactIntensity);
   
   // If the impact intensity was high enough, register a fall event to the needs manager
   const f32 needsActionIntensityThreshold = 1000.f;
@@ -710,14 +732,14 @@ void RobotToEngineImplMessaging::HandlePotentialCliffEvent(const AnkiEvent<Robot
   
   // Ignore potential cliff events while on the charger platform because we expect them
   // while driving off the charger
-  if(robot->IsOnChargerPlatform())
+  if (robot->IsOnChargerPlatform())
   {
-    PRINT_NAMED_DEBUG("Robot.HandlePotentialCliffEvent.OnChargerPlatform",
-                      "Ignoring potential cliff event while on charger platform");
+    LOG_DEBUG("Robot.HandlePotentialCliffEvent.OnChargerPlatform",
+              "Ignoring potential cliff event while on charger platform");
     return;
   }
   
-  if(robot->GetIsCliffReactionDisabled()){
+  if (robot->GetIsCliffReactionDisabled()){
     // Special case handling of potential cliff event when in drone/explorer mode...
 
     // TODO: Don't try to play this special cliff event animation for drone/explorer mode if it is already
@@ -734,7 +756,7 @@ void RobotToEngineImplMessaging::HandlePotentialCliffEvent(const AnkiEvent<Robot
                                                                true, (u8)AnimTrackFlag::NO_TRACKS, 3.f, true);
     robot->GetActionList().QueueAction(QueueActionPosition::NOW, action);
   } else if (!robot->GetContext()->IsInSdkMode()) {
-    PRINT_NAMED_WARNING("Robot.HandlePotentialCliffEvent", "Got potential cliff message but not in drone mode");
+    LOG_WARNING("Robot.HandlePotentialCliffEvent", "Got potential cliff message but not in drone mode");
     robot->GetMoveComponent().StopAllMotors();
     robot->SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableStopOnCliff(false)));
   }
@@ -747,7 +769,7 @@ void RobotToEngineImplMessaging::HandleCliffEvent(const AnkiEvent<RobotInterface
   CliffEvent cliffEvent = message.GetData().Get_cliffEvent();
   // always listen to events which say we aren't on a cliff, but ignore ones which say we are (so we don't
   // get "stuck" on a cliff
-  if( !robot->GetCliffSensorComponent().IsCliffSensorEnabled() && (cliffEvent.detectedFlags != 0) ) {
+  if (!robot->GetCliffSensorComponent().IsCliffSensorEnabled() && (cliffEvent.detectedFlags != 0)) {
     return;
   }
   
@@ -756,17 +778,17 @@ void RobotToEngineImplMessaging::HandleCliffEvent(const AnkiEvent<RobotInterface
     if (robot->GetCliffSensorComponent().ComputeCliffPose(cliffEvent, cliffPose)) {
       // Add cliff obstacle
       robot->GetBlockWorld().AddCliff(cliffPose);
-      PRINT_NAMED_INFO("RobotImplMessaging.HandleCliffEvent.Detected", "at %.3f,%.3f. DetectedFlags = 0x%02X",
-                       cliffPose.GetTranslation().x(), cliffPose.GetTranslation().y(), cliffEvent.detectedFlags);
+      LOG_INFO("RobotImplMessaging.HandleCliffEvent.Detected", "at %.3f,%.3f. DetectedFlags = 0x%02X",
+               cliffPose.GetTranslation().x(), cliffPose.GetTranslation().y(), cliffEvent.detectedFlags);
     } else {
-      PRINT_NAMED_ERROR("RobotImplMessaging.HandleCliffEvent.ComputeCliffPoseFailed",
-                        "Failed computing cliff pose!");
+      LOG_ERROR("RobotImplMessaging.HandleCliffEvent.ComputeCliffPoseFailed",
+                "Failed computing cliff pose!");
     }
   } else {
-    PRINT_NAMED_INFO("RobotImplMessaging.HandleCliffEvent.Undetected", "");
+    LOG_INFO("RobotImplMessaging.HandleCliffEvent.Undetected", "");
   }
   
-  robot->GetCliffSensorComponent().SetCliffDetected(cliffEvent.detectedFlags != 0);
+  robot->GetCliffSensorComponent().SetCliffDetectedFlags(cliffEvent.detectedFlags);
   
   // Forward on with EngineToGame event
   robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(cliffEvent)));
@@ -794,13 +816,13 @@ void RobotToEngineImplMessaging::HandleImuData(const AnkiEvent<RobotInterface::R
     // Make sure imu capture folder exists
     std::string imuLogsDir = robot->GetContextDataPlatform()->pathToResource(Util::Data::Scope::Cache, AnkiUtil::kP_IMU_LOGS_DIR);
     if (!Util::FileUtils::CreateDirectory(imuLogsDir, false, true)) {
-      PRINT_NAMED_ERROR("Robot.HandleImuData.CreateDirFailed","%s", imuLogsDir.c_str());
+      LOG_ERROR("Robot.HandleImuData.CreateDirFailed","%s", imuLogsDir.c_str());
     }
     
     // Open imu log file
     std::string imuLogFileName = std::string(imuLogsDir.c_str()) + "/imuLog_" + std::to_string(_imuSeqID) + ".dat";
-    PRINT_NAMED_INFO("Robot.HandleImuData.OpeningLogFile",
-                     "%s", imuLogFileName.c_str());
+
+    LOG_INFO("Robot.HandleImuData.OpeningLogFile", "%s", imuLogFileName.c_str());
     
     _imuLogFileStream.open(imuLogFileName.c_str());
     _imuLogFileStream << "aX aY aZ gX gY gZ\n";
@@ -817,7 +839,7 @@ void RobotToEngineImplMessaging::HandleImuData(const AnkiEvent<RobotInterface::R
   
   // Close file when last chunk received
   if (payload.chunkId == payload.totalNumChunks - 1) {
-    PRINT_NAMED_INFO("Robot.HandleImuData.ClosingLogFile", "");
+    LOG_INFO("Robot.HandleImuData.ClosingLogFile", "");
     _imuLogFileStream.close();
   }
 }
@@ -833,7 +855,7 @@ void RobotToEngineImplMessaging::HandleImuRawData(const AnkiEvent<RobotInterface
     // Make sure imu capture folder exists
     std::string imuLogsDir = robot->GetContextDataPlatform()->pathToResource(Util::Data::Scope::Cache, AnkiUtil::kP_IMU_LOGS_DIR);
     if (!Util::FileUtils::CreateDirectory(imuLogsDir, false, true)) {
-      PRINT_NAMED_ERROR("Robot.HandleImuRawData.CreateDirFailed","%s", imuLogsDir.c_str());
+      LOG_ERROR("Robot.HandleImuRawData.CreateDirFailed","%s", imuLogsDir.c_str());
     }
     
     // Open imu log file
@@ -841,9 +863,9 @@ void RobotToEngineImplMessaging::HandleImuRawData(const AnkiEvent<RobotInterface
     do {
       ++_imuSeqID;
       imuLogFileName = std::string(imuLogsDir.c_str()) + "/imuRawLog_" + std::to_string(_imuSeqID) + ".dat";
-    } while( Util::FileUtils::FileExists(imuLogFileName) );
+    } while (Util::FileUtils::FileExists(imuLogFileName));
     
-    PRINT_NAMED_INFO("Robot.HandleImuRawData.OpeningLogFile",
+    LOG_INFO("Robot.HandleImuRawData.OpeningLogFile",
                      "%s", imuLogFileName.c_str());
     
     _imuLogFileStream.open(imuLogFileName.c_str());
@@ -861,7 +883,7 @@ void RobotToEngineImplMessaging::HandleImuRawData(const AnkiEvent<RobotInterface
 
   // Close file when last chunk received
   if (payload.order == 2) {
-    PRINT_NAMED_INFO("Robot.HandleImuRawData.ClosingLogFile", "");
+    LOG_INFO("Robot.HandleImuRawData.ClosingLogFile", "");
     _imuLogFileStream.close();
   }
 }
@@ -881,7 +903,7 @@ void RobotToEngineImplMessaging::HandleImageImuData(const AnkiEvent<RobotInterfa
 void RobotToEngineImplMessaging::HandleSyncTimeAck(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
 {
   ANKI_CPU_PROFILE("Robot::HandleSyncTimeAck");
-  PRINT_NAMED_INFO("Robot.HandleSyncTimeAck","");
+  LOG_INFO("Robot.HandleSyncTimeAck","");
   robot->SetTimeSynced();
 }
 
@@ -890,7 +912,7 @@ void RobotToEngineImplMessaging::HandleRobotPoked(const AnkiEvent<RobotInterface
   ANKI_CPU_PROFILE("Robot::HandleRobotPoked");
   
   // Forward on with EngineToGame event
-  PRINT_NAMED_INFO("Robot.HandleRobotPoked","");
+  LOG_INFO("Robot.HandleRobotPoked","");
   robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotPoked()));
 }
 
@@ -925,8 +947,8 @@ void RobotToEngineImplMessaging::HandleObjectPowerLevel(const ObjectPowerLevel& 
   const float batteryPercent = GetBatteryPercent(batteryVoltage);
   
   // Report to log
-  PRINT_NAMED_DEBUG("RobotToEngine.ObjectPowerLevel.Log", "RobotID %u activeID %u at %.2fV %.2f%%",
-    robotID, activeID, batteryVoltage, batteryPercent);
+  LOG_DEBUG("RobotToEngine.ObjectPowerLevel.Log", "RobotID %u activeID %u at %.2fV %.2f%%",
+            robotID, activeID, batteryVoltage, batteryPercent);
   
   // Report to DAS if this is first event for this accessory or if appropriate interval has passed since last report
   const uint32_t now = Util::numeric_cast<uint32_t>(Anki::BaseStationTimer::getInstance()->GetCurrentTimeInSeconds());
@@ -934,9 +956,9 @@ void RobotToEngineImplMessaging::HandleObjectPowerLevel(const ObjectPowerLevel& 
   const uint32_t was = _lastMissedPacketCount[activeID];
 
   if (then == 0 || now - then >= POWER_LEVEL_INTERVAL_SEC || missedPackets - was > 512) {
-    PRINT_NAMED_DEBUG("RobotToEngine.ObjectPowerLevel.Report",
-                     "Sending DAS report for robotID %u activeID %u now %u then %u",
-                     robotID, activeID, now, then);
+    LOG_DEBUG("RobotToEngine.ObjectPowerLevel.Report",
+              "Sending DAS report for robotID %u activeID %u now %u then %u",
+              robotID, activeID, now, then);
     char ddata[BUFSIZ];
     snprintf(ddata, sizeof(ddata), "%.2f,%.2f", batteryVoltage, batteryPercent);
     Anki::Util::sEventF("robot.accessory_powerlevel", {{DDATA, ddata}},
@@ -951,9 +973,9 @@ void RobotToEngineImplMessaging::HandleObjectPowerLevel(const ObjectPowerLevel& 
   const ActiveObject * object = blockWorld.GetConnectedActiveObjectByActiveID(activeID);
   if (object != nullptr) {
     const uint32_t objectID = object->GetID();
-    PRINT_NAMED_DEBUG("RobotToEngine.ObjectPowerLevel.Broadcast",
-                      "RobotID %u activeID %u objectID %u at %u cv",
-                      robotID, activeID, objectID, batteryLevel);
+    LOG_DEBUG("RobotToEngine.ObjectPowerLevel.Broadcast",
+              "RobotID %u activeID %u objectID %u at %u cv",
+              robotID, activeID, objectID, batteryLevel);
     robot->Broadcast(ExternalInterface::MessageEngineToGame(ObjectPowerLevel(objectID, missedPackets, batteryLevel)));
   }
 

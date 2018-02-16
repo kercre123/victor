@@ -23,7 +23,7 @@ namespace AudioEngine {
 class SoundbankLoader;
 }
 namespace Cozmo {
-class CozmoAnimContext;
+class AnimContext;
 namespace Audio {
 
 
@@ -32,7 +32,7 @@ class CozmoAudioController : public AudioEngine::AudioEngineController
 
 public:
 
-  CozmoAudioController(const CozmoAnimContext* context);
+  CozmoAudioController(const AnimContext* context);
 
   virtual ~CozmoAudioController();
   

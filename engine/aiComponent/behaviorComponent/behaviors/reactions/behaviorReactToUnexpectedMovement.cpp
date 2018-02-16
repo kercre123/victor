@@ -14,7 +14,6 @@
 
 #include "engine/actions/animActions.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/robotManager.h"
 #include "engine/moodSystem/moodManager.h"
 #include "util/helpers/templateHelpers.h"
@@ -61,13 +60,6 @@ void BehaviorReactToUnexpectedMovement::OnBehaviorActivated()
   const bool kInterruptRunning = true;
   
   AnimationTrigger reactionAnimation = AnimationTrigger::ReactToUnexpectedMovement;
-  
-  NeedId expressedNeed = GetBEI().GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression();
-  if(expressedNeed == NeedId::Energy){
-    reactionAnimation = AnimationTrigger::ReactToUnexpectedMovement_Severe_Energy;
-  }else if(expressedNeed == NeedId::Repair){
-    reactionAnimation = AnimationTrigger::ReactToUnexpectedMovement_Severe_Repair;
-  }
 
   DelegateIfInControl(new TriggerLiftSafeAnimationAction(reactionAnimation,
                                                  kNumLoops, kInterruptRunning, tracksToLock), [this]()

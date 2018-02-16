@@ -25,9 +25,9 @@ MemoryMapData_ProxObstacle::MemoryMapData_ProxObstacle(Vec2f dir, TimeStamp_t t)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-MemoryMapData* MemoryMapData_ProxObstacle::Clone() const
+MemoryMapTypes::MemoryMapDataPtr MemoryMapData_ProxObstacle::Clone() const
 {
-  return new MemoryMapData_ProxObstacle(*this);
+  return std::make_shared<MemoryMapData_ProxObstacle>(*this);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

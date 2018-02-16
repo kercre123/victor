@@ -13,7 +13,6 @@
 // Our Includes
 #include "anki/cozmo/robot/logging.h"
 #include "anki/cozmo/robot/hal.h"
-#include "anki/cozmo/robot/hal_config.h"
 
 #include "schema/messages.h"
 
@@ -56,55 +55,27 @@ namespace { // "Private members"
 
   //encoder counts -> mm or deg
   static f32 HAL_MOTOR_POSITION_SCALE[MOTOR_COUNT] = {
-    ((0.948 * 0.125 * 29.2 * 3.14159265359) / 173.43), //Left Tread mm
-    ((0.948 * 0.125 * 29.2 * 3.14159265359) / 173.43), //Right Tread mm
-    (0.25 * 3.14159265359) / 149.7,    //Lift radians
-    (0.25 * 3.14159265359) / 348.77,   //Head radians
+    ((       0.96 * 29.0 * 0.25 * 3.14159265359) / 172.3), //Left Tread mm (Magic 96% corrective fudge factor, 29mm wheel diameter)
+    ((-1.0 * 0.96 * 29.0 * 0.25 * 3.14159265359) / 172.3), //Right Tread mm
+    (0.25 * 3.14159265359) / 149.7,     //Lift radians
+    (0.25 * 3.14159265359) / 366.211,   //Head radians
   };
 
   static f32 HAL_MOTOR_DIRECTION[MOTOR_COUNT] = {
-    1.0,1.0,1.0,1.0
+    1.0, -1.0, 1.0, 1.0
   };
 
-  static f32 HAL_HEAD_MOTOR_CALIB_POWER = -0.4f;
+  static f32 HAL_HEAD_MOTOR_CALIB_POWER = -0.3f;
 
   static f32 HAL_LIFT_MOTOR_CALIB_POWER = -0.4f;
-
-  // Stubbed here but not used in robot process; used in animProcess
-  static f32 HAL_SOME_MICS_BROKEN = 0.0f;
 
   struct {
     s32 motorOffset[MOTOR_COUNT];
     CONSOLE_DATA(f32 motorPower[MOTOR_COUNT]);
   } internalData_;
-
-  static const char* HAL_INI_PATH = "/data/persist/hal.conf";
-  const HALConfig::Item  configitems_[]  = {
-    {"LeftTread mm/count",  HALConfig::FLOAT, &HAL_MOTOR_POSITION_SCALE[MOTOR_LEFT]},
-    {"RightTread mm/count", HALConfig::FLOAT, &HAL_MOTOR_POSITION_SCALE[MOTOR_RIGHT]},
-    {"Lift rad/count",      HALConfig::FLOAT, &HAL_MOTOR_POSITION_SCALE[MOTOR_LIFT]},
-    {"Head rad/count",      HALConfig::FLOAT, &HAL_MOTOR_POSITION_SCALE[MOTOR_HEAD]},
-    {"LeftTread Motor Direction",  HALConfig::FLOAT, &HAL_MOTOR_DIRECTION[MOTOR_LEFT]},
-    {"RightTread Motor Direction", HALConfig::FLOAT, &HAL_MOTOR_DIRECTION[MOTOR_RIGHT]},
-    {"Lift Motor Direction",       HALConfig::FLOAT, &HAL_MOTOR_DIRECTION[MOTOR_LIFT]},
-    {"Head Motor Direction",       HALConfig::FLOAT, &HAL_MOTOR_DIRECTION[MOTOR_HEAD]},
-    {"Lift Motor Calib Power",     HALConfig::FLOAT, &HAL_LIFT_MOTOR_CALIB_POWER},
-    {"Head Motor Calib Power",     HALConfig::FLOAT, &HAL_HEAD_MOTOR_CALIB_POWER},
-    {"Some Mics Broken",     HALConfig::FLOAT, &HAL_SOME_MICS_BROKEN},
-    {0} //Need zeros as end-of-list marker
-  };
   
 } // "private" namespace
 
-
-Result InitMotor()
-{
-  Result res = HALConfig::ReadConfigFile(HAL_INI_PATH, configitems_);
-  if (res != RESULT_OK) {
-    AnkiWarn("HAL.MotorInit.HALConfigReadFailed", "result 0x%08X", res);
-  }
-  return res;
-}
 
 // Returns the motor power used for calibration [-1.0, 1.0]
 float HAL::MotorGetCalibPower(MotorID motor)

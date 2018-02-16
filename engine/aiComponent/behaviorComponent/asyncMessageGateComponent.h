@@ -20,7 +20,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
-#include "engine/dependencyManagedComponent.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 
 #include "util/signals/simpleSignal_fwd.h"
 #include "util/helpers/noncopyable.h"
@@ -42,8 +42,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   AsyncMessageGateComponent(IExternalInterface* externalInterface,
-                            RobotInterface::MessageHandler* robotInterface,
-                            RobotID_t robotID);
+                            RobotInterface::MessageHandler* robotInterface);
   virtual ~AsyncMessageGateComponent() {};
 
   //////
@@ -74,7 +73,6 @@ public:
 private:
   IExternalInterface* _externalInterface;
   RobotInterface::MessageHandler* _robotInterface;
-  RobotID_t _robotID;
   bool _isCacheValid;
   
   

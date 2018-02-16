@@ -58,6 +58,14 @@ bool CozmoAPI::StartRun(Util::Data::DataPlatform* dataPlatform, const Json::Valu
   return gameInitResult;
 }
 
+bool CozmoAPI::IsRunning() const
+{
+  if (_cozmoRunner) {
+    return _cozmoRunner->IsRunning();
+  }
+  return false;
+}
+
 bool CozmoAPI::Start(Util::Data::DataPlatform* dataPlatform, const Json::Value& config)
 {
   // If we have a joinable thread already, we can't start
@@ -260,7 +268,7 @@ void CozmoAPI::CozmoInstanceRunner::Run()
     if (remaining_us < microseconds(-10000))
     {
       PRINT_NAMED_WARNING("CozmoAPI.CozmoInstanceRunner.overtime", "Update() (%dms max) is behind by %.3fms",
-                          BS_TIME_STEP, (float)(-remaining_us).count() * 0.001f);
+                          BS_TIME_STEP_MS, (float)(-remaining_us).count() * 0.001f);
     }
 
     // Now we ALWAYS sleep, but if we're overtime, we 'sleep zero' which still

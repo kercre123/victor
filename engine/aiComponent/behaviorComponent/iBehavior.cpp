@@ -29,8 +29,8 @@ static const int kBSTickInterval = 1;
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::IBehavior(const std::string& idString)
-: _idString(idString)
+IBehavior::IBehavior(const std::string& debugLabel)
+: _debugLabel(debugLabel)
 , _currentInScopeCount(0)
 , _lastTickWantsToBeActivatedCheckedOn(0)
 , _lastTickOfUpdate(0)
@@ -64,7 +64,7 @@ void IBehavior::OnEnteredActivatableScope()
     PRINT_CH_INFO("Behaviors",
                   "IBehavior.OnEnteredActivatableScope.AlreadyInScope",
                   "Behavior '%s' is already in scope, ignoring request to enter scope",
-                  _idString.c_str());
+                  _debugLabel.c_str());
     return;
   }
 
@@ -88,7 +88,7 @@ void IBehavior::Update()
   DEV_ASSERT_MSG(_lastTickOfUpdate == (tickCount - kBSTickInterval),
                 "IBehavior.Update.TickCountMismatch",
                 "Behavior '%s' is receiving tick on %zu, but hasn't been ticked since %zu",
-                _idString.c_str(),
+                _debugLabel.c_str(),
                 tickCount,
                 _lastTickOfUpdate);
   _lastTickOfUpdate = tickCount;
@@ -116,7 +116,7 @@ void IBehavior::OnActivated()
   DEV_ASSERT_MSG(tickCount == _lastTickWantsToBeActivatedCheckedOn,
                   "IBehavior.OnActivated.WantsToRunNotCheckedThisTick",
                   "Attempted to activate %s on tick %zu, but wants to run was last checked on %zu",
-                  _idString.c_str(),
+                  _debugLabel.c_str(),
                   tickCount,
                   _lastTickWantsToBeActivatedCheckedOn);
   
@@ -151,7 +151,7 @@ void IBehavior::OnLeftActivatableScope()
                   "IBehavior.OnLeftActivatableScope.StillInScope",
                   "There's still an in scope count of %d on %s",
                   _currentInScopeCount,
-                  _idString.c_str());
+                  _debugLabel.c_str());
     return;
   }
   
@@ -167,7 +167,7 @@ void IBehavior::SetActivationState_DevOnly(ActivationState state)
   PRINT_CH_DEBUG("Behaviors",
                  "IBehavior.SetActivationState",
                  "%s: Activation state set to %s",
-                 _idString.c_str(),
+                 _debugLabel.c_str(),
                  ActivationStateToString(state).c_str());
   
   #if ANKI_DEV_CHEATS
@@ -183,7 +183,7 @@ void IBehavior::AssertActivationState_DevOnly(ActivationState state) const
   DEV_ASSERT_MSG(_currentActivationState == state,
                  "IBehavior.AssertActivationState_DevOnly.WrongActivationState",
                  "Behavior '%s' is state %s, but should be in %s",
-                 _idString.c_str(),
+                 _debugLabel.c_str(),
                  ActivationStateToString(_currentActivationState).c_str(),
                  ActivationStateToString(state).c_str());
   #endif
@@ -197,7 +197,7 @@ void IBehavior::AssertNotActivationState_DevOnly(ActivationState state) const
   DEV_ASSERT_MSG(_currentActivationState != state,
                  "IBehavior.AssertNotActivationState_DevOnly.WrongActivationState",
                  "Behavior '%s' is state %s, but should not be",
-                 _idString.c_str(),
+                 _debugLabel.c_str(),
                  ActivationStateToString(_currentActivationState).c_str());
   #endif
 }

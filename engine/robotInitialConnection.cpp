@@ -10,9 +10,13 @@
  *
  **/
 
+#include "engine/cozmoContext.h"
 #include "engine/robotInitialConnection.h"
+#include "engine/robotManager.h"
 #include "engine/externalInterface/externalInterface.h"
+#include "engine/needsSystem/needsManager.h"
 #include "engine/robotInterface/messageHandler.h"
+#include "engine/utils/cozmoExperiments.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "util/console/consoleInterface.h"
@@ -40,12 +44,11 @@ using namespace ExternalInterface;
 using namespace RobotInterface;
 using namespace RobotInitialConnectionConsoleVars;
   
-RobotInitialConnection::RobotInitialConnection(RobotID_t id, MessageHandler* messageHandler,
-    IExternalInterface* externalInterface)
-: _id(id)
-, _notified(false)
-, _externalInterface(externalInterface)
-, _robotMessageHandler(messageHandler)
+RobotInitialConnection::RobotInitialConnection(const CozmoContext* context)
+: _notified(false)
+, _externalInterface(context != nullptr ? context->GetExternalInterface() : nullptr)
+, _context(context)
+, _robotMessageHandler(context != nullptr ? context->GetRobotManager()->GetMsgHandler() : nullptr)
 , _validFirmware(false) // guilty until proven innocent
 , _robotIsAvailable(false)
 {
@@ -54,13 +57,13 @@ RobotInitialConnection::RobotInitialConnection(RobotID_t id, MessageHandler* mes
   }
 
   auto handleFactoryFunc = std::bind(&RobotInitialConnection::HandleFactoryFirmware, this, std::placeholders::_1);
-  AddSignalHandle(_robotMessageHandler->Subscribe(_id, RobotToEngineTag::factoryFirmwareVersion, handleFactoryFunc));
+  AddSignalHandle(_robotMessageHandler->Subscribe(RobotToEngineTag::factoryFirmwareVersion, handleFactoryFunc));
 
   auto handleFirmwareFunc = std::bind(&RobotInitialConnection::HandleFirmwareVersion, this, std::placeholders::_1);
-  AddSignalHandle(_robotMessageHandler->Subscribe(_id, RobotToEngineTag::firmwareVersion, handleFirmwareFunc));
+  AddSignalHandle(_robotMessageHandler->Subscribe(RobotToEngineTag::firmwareVersion, handleFirmwareFunc));
   
   auto handleAvailableFunc = std::bind(&RobotInitialConnection::HandleRobotAvailable, this, std::placeholders::_1);
-  AddSignalHandle(_robotMessageHandler->Subscribe(_id, RobotToEngineTag::robotAvailable, handleAvailableFunc));
+  AddSignalHandle(_robotMessageHandler->Subscribe(RobotToEngineTag::robotAvailable, handleAvailableFunc));
 }
 
 bool RobotInitialConnection::ShouldFilterMessage(RobotToEngineTag messageTag) const
@@ -157,7 +160,7 @@ void RobotInitialConnection::OnNotified(RobotConnectionResult result, uint32_t r
 
   // If the connection completed successfully, ask for the robot ID and send the success once we get it
   if (RobotConnectionResult::Success == result) {
-    AddSignalHandle(_robotMessageHandler->Subscribe(_id, RobotToEngineTag::mfgId, [this, result, robotFwVersion] (const AnkiEvent<RobotToEngine>& message) {
+    AddSignalHandle(_robotMessageHandler->Subscribe(RobotToEngineTag::mfgId, [this, result, robotFwVersion] (const AnkiEvent<RobotToEngine>& message) {
       const auto& payload = message.GetData().Get_mfgId();
       _serialNumber = payload.esn;
       _bodyHWVersion = payload.hw_version;
@@ -183,12 +186,12 @@ void RobotInitialConnection::OnNotified(RobotConnectionResult result, uint32_t r
       
       SendConnectionResponse(result, robotFwVersion);
 
-      _robotMessageHandler->ReadLabAssignmentsFromRobot(_serialNumber);
+      _context->GetExperiments()->ReadLabAssignmentsFromRobot(_serialNumber);
       
-      _robotMessageHandler->ConnectRobotToNeedsManager(_serialNumber);
+      _context->GetNeedsManager()->InitAfterSerialNumberAcquired(_serialNumber);
     }));
     
-    _robotMessageHandler->SendMessage(_id, RobotInterface::EngineToRobot{RobotInterface::GetManufacturingInfo{}});
+    _robotMessageHandler->SendMessage(RobotInterface::EngineToRobot{RobotInterface::GetManufacturingInfo{}});
   }
   else {
     SendConnectionResponse(result, robotFwVersion);

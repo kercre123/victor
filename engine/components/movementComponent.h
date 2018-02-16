@@ -17,7 +17,7 @@
 #include "coretech/common/engine/objectIDs.h"
 #include "coretech/vision/engine/trackedFace.h"
 #include "engine/components/animationComponent.h"
-#include "engine/entity.h"
+#include "util/entityComponent/entity.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include <list>
@@ -155,10 +155,10 @@ public:
                      MotorActionID* actionID_out = nullptr);
 
   
-  // Register a persistent face layer tag for removal next time head moves
+  // Flag the eye shift layer with the given name for removal next time head moves.
   // You may optionally specify the duration of the layer removal (i.e. how
   // long it takes to return to not making any face adjustment)
-  void RemoveFaceLayerWhenHeadMoves(AnimationComponent::Tag faceLayerTag, TimeStamp_t duration_ms=0);
+  void RemoveEyeShiftWhenHeadMoves(const std::string& name, TimeStamp_t duration_ms=0);
   
   Result StopAllMotors();
   Result StopHead();
@@ -238,11 +238,11 @@ private:
   
   std::array<std::multiset<LockInfo>, (size_t)AnimConstants::NUM_TRACKS> _trackLockCount;
   
-  struct FaceLayerToRemove {
+  struct EyeShiftToRemove {
     TimeStamp_t duration_ms;
     bool        headWasMoving;
   };
-  std::map<AnimationComponent::Tag, FaceLayerToRemove> _faceLayerTagsToRemoveOnHeadMovement;
+  std::unordered_map<std::string, EyeShiftToRemove> _eyeShiftToRemove;
   
   // Helper class for detecting unexpected movement
   class UnexpectedMovement

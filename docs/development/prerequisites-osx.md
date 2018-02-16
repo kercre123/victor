@@ -1,7 +1,7 @@
 # Prerequisites for building on OS X
 
 Build prerequisites for OS X should be installed automatically as part of the build process.
-This is currently the only part of the `configure.py` inherited from cozmo-one that is still required.
+This is currently the only part of the [`configure.py`](/configure-DEPRECATED.py) inherited from cozmo-one that is still required.
 
 ## Mac OS X
 
@@ -59,7 +59,7 @@ brew uninstall android-ndk
 The robotics and engine code run on an embedded android system and require both 
 the Android NDK toolchain and SDK tools in order to build and deploy to devices. 
 The correct versions will be automatically installed for you when you run 
-`./configure.py` for the Android platform.
+[`configure.py`](/configure-DEPRECATED.py) for the Android platform.
 
 You can also install them ahead of time with:
 

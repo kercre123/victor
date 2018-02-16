@@ -1,7 +1,0 @@
-{
-  "behaviorClass": "CubeLiftWorkout",
-  "behaviorID": "SparksCubeLiftWorkout",
-  "needsActionID": "Workout_Sparked",
-  "displayNameKey":"behavior.Workout",
-  "requiredUnlockId": "Workout"
-}

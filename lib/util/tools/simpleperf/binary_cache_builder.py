@@ -52,7 +52,8 @@ class BinaryCacheBuilder(object):
         self.readelf_path = find_tool_path('readelf')
         if not self.readelf_path and self.symfs_dirs:
             log_warning("Debug shared libraries on host are not used because can't find readelf.")
-        self.binary_cache_dir = 'binary_cache'
+        # Anki, passed in via configuration. self.binary_cache_dir = 'binary_cache'
+        self.binary_cache_dir = config['binary_cache_dir']
         if not os.path.isdir(self.binary_cache_dir):
             os.makedirs(self.binary_cache_dir)
 

@@ -17,7 +17,7 @@
 #include "coretech/planning/shared/goalDefs.h"
 #include "coretech/planning/shared/path.h"
 
-#include "engine/dependencyManagedComponent.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 #include "engine/robotComponents_fwd.h"
 
 #include "util/helpers/noncopyable.h"
@@ -90,8 +90,6 @@ constexpr const char* ERobotDriveToPoseStatusToString(ERobotDriveToPoseStatus st
 class PathComponent : public IDependencyManagedComponent<RobotComponentID>, private Util::noncopyable
 {
 public:
-  // Constructor takes a robotID because the passed in robot may still be under construction when this
-  // constructor is called, and therefore we shouldn't trust it's contents (just store it and pass it around)
   PathComponent();
   ~PathComponent();
 
@@ -116,17 +114,14 @@ public:
   void ExecuteTestPath(const PathMotionProfile& motionProfile);
 
   // Begin computation of a path to drive to the given pose (or poses). Once the path is computed, the robot
-  // will immediately start following it, and will replan (e.g. to avoid new obstacles) automatically. If
-  // useManualSpeed is set to true, the robot will plan a path to the goal, but won't actually execute any
-  // speed changes, so the user (or some other system) will have control of the speed along the "rails" of the
-  // path. It's up to the robot / planner to pick which pose it wants to go to. The optional selectedPoseIndex
+  // will immediately start following it, and will replan (e.g. to avoid new obstacles) automatically. 
+  // It's up to the robot / planner to pick which pose it wants to go to. The optional selectedPoseIndex
   // shared_ptr, if specified, will be updated when planning is complete to specify which of the target poses
   // the planner selected. The speed along the path will be determined by the CustomPathMotionProfile held in
   // this component, or will get set by the SpeedChooser if this component hasn't been set to use a custom
   // profile
   Result StartDrivingToPose(const std::vector<Pose3d>& poses,
-                            std::shared_ptr<Planning::GoalID> selectedPoseIndex = {},
-                            bool useManualSpeed = false);
+                            std::shared_ptr<Planning::GoalID> selectedPoseIndex = {});
 
   // set or clear the custom motion profile that all motion should follow. If cleared, then defaults will be
   // used, or the speed chooser will be used if enabled
@@ -157,7 +152,7 @@ public:
   bool LastPathFailed() const;
   
   // Execute a manually-assembled path
-  Result ExecuteCustomPath(const Planning::Path& path, const bool useManualSpeed = false);
+  Result ExecuteCustomPath(const Planning::Path& path);
 
   // Handle new data from the robot
   void UpdateCurrentPathSegment(s8 currPathSegment);
@@ -173,9 +168,6 @@ public:
   s8   GetCurrentPathSegment() const { return _currPathSegment; }
   u16  GetLastRecvdPathID()    const { return _lastRecvdPathID; }
   u16  GetLastSentPathID()     const { return _lastSentPathID; }
-  
-  // Deprecated
-  void SetUsingManualSpeed(bool useManualSpeed) { _usingManualPathSpeed = useManualSpeed; }
 
 private:
 
@@ -229,7 +221,7 @@ private:
   bool IsWaitingForRobotResponse() const;
   
   // Drive the given path
-  Result ExecutePath(const Planning::Path& path, const bool useManualSpeed = false);
+  Result ExecutePath(const Planning::Path& path);
 
   void SetDriveToPoseStatus(ERobotDriveToPoseStatus newValue);
   
@@ -257,7 +249,6 @@ private:
   s8                       _currPathSegment              = -1;
   u16                      _lastSentPathID               = 0;
   u16                      _lastRecvdPathID              = 0;
-  bool                     _usingManualPathSpeed         = false;
   bool                     _plannerActive                = false;
   bool                     _hasCustomMotionProfile       = false;
 

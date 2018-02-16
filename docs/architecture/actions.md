@@ -23,7 +23,7 @@ Actions are intended to provide a common interface for having the robot do some 
 
 Note that while "Actions" and [Animations](animations.md) are different, typically one plays an animation using a `TriggerAnimationAction`, which handles setting the current playing animation, waiting for it to finish, and notifying listeners of its completion.
 
-These actions are also exposed via a message interface for the SDK or other users of the engine (e.g. the App) to create complex behaviors and games for the robot. See also the [messageActions.clad](../../clad/src/clad/externalInterface/messageActions.clad) file for definitins.
+These actions are also exposed via a message interface for the SDK or other users of the engine (e.g. the App) to create complex behaviors and games for the robot. See also the [messageActions.clad](../../clad/src/clad/externalInterface/messageActions.clad) file for definitions.
 
 ### Containers: ActionLists and ActionQueues
 At the top level, the Robot has a list of actions to be run concurrently, called an ActionList. Each "slot" in the ActionList is actually an ActionQueue, which is a set of actions to be run sequentially. This is arguably overkill, but it does provide a lot of flexibility even if we typically just have one action running in a single ActionQueue in the ActionList.

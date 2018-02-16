@@ -33,7 +33,6 @@ public:
   DriveAndFlipBlockAction(const ObjectID objectID,
                           const bool useApproachAngle = false,
                           const f32 approachAngle_rad = 0,
-                          const bool useManualSpeed = false,
                           Radians maxTurnTowardsFaceAngle_rad = 0.f,
                           const bool sayName = false,
                           const float minAlignThreshold_mm = -1.f);
@@ -77,6 +76,7 @@ public:
   
   
 protected:
+  virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const override;
   virtual ActionResult Init() override;
   virtual ActionResult CheckIfDone() override;
 

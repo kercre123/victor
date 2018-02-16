@@ -1,37 +1,14 @@
 {
   "behaviorClass" : "DevPettingTestSimple",
   "behaviorID"    : "DevPettingTestSimple",
-  "gestureTriggerToAnimations" : 
-  [
-    {
-      "conditionType"  : "RobotTouchGesture",
-      "touchGesture"  : "ContactInitial",
-      "animationName" : "anim_rtpkeepaway_reacttocube_03",
-      "animRate_s"    : 4.0
-    },
-    {
-      "conditionType"  : "RobotTouchGesture",
-      "touchGesture"  : "ContactSustain",
-      "animationName" : "anim_rtpkeepaway_playeryes_01",
-      "animRate_s"    : 2.0
-    },
-    {
-      "conditionType"  : "RobotTouchGesture",
-      "touchGesture"  : "SlowRepeating",
-      "animationName" : "anim_rtpmemorymatch_yes_04",
-      "animRate_s"    : 1.0
-    },
-    {
-      "conditionType"  : "RobotTouchGesture",
-      "touchGesture"  : "FastRepeating",
-      "animationName" : "anim_rtpkeepaway_playeryes_03",
-      "animRate_s"    : 0.5
-    },
-    {
-      "conditionType"  : "RobotTouchGesture",
-      "touchGesture"  : "NoTouch",
-      "animationName" : "anim_neutral_eyes_01",
-      "animRate_s"    : 4.0
-    }
-  ]
+  "animGroupGetin" : "PettingGetin",
+  "animGroupGetout": "PettingBlissGetout",
+  "animGroupNames" : ["PettingLevel1", "PettingLevel2", "PettingLevel3","PettingBlissLoop"],
+  "timeTilTouchCheck" : 5.0,
+  "timeTilBlissGetout" : 5.0,
+  "timeTilNonBlissGetout" : 3.0,
+  "animBodyTrackEnabled" : false,
+  "animHeadTrackEnabled" : true,
+  "animLiftTrackEnabled" : true,
+  "numPetsToAdvanceBliss" : 2
 }

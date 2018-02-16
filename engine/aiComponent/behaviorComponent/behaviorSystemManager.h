@@ -90,6 +90,9 @@ public:
   // behavior that it was delegated to. Otherwise, return nullptr (including if control was delegated to an
   // action or helper)
   const IBehavior* GetBehaviorDelegatedTo(const IBehavior* delegatingBehavior) const;
+  
+  // calls upon the behavior stack to build and return the behavior tree as a flat array in json
+  Json::Value BuildDebugBehaviorTree(BehaviorExternalInterface& bei) const;
 
 private:
   enum class InitializationStage{
