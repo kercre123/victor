@@ -59,14 +59,16 @@ public:
     {
     }
 
-  virtual void ResetInternal(BehaviorExternalInterface& behaviorExternalInterface) override {
-    _resetCount++;
-  }
-  
   virtual void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) override {
     _initCount++;
   }
-  
+
+  virtual void SetActiveInternal(BehaviorExternalInterface& behaviorExternalInterface, bool setActive) override {
+    if(setActive){
+      _setActiveCount++;
+    } 
+  }
+
   virtual bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override {
     _areMetCount++;
     return _val;
@@ -74,8 +76,8 @@ public:
 
   bool _val = false;
 
-  int _resetCount = 0;
   int _initCount = 0;
+  int _setActiveCount = 0;
   mutable int _areMetCount = 0;  
 };
 
@@ -89,35 +91,35 @@ TEST(BeiConditions, TestCondition)
 
   auto cond = std::make_shared<TestCondition>();
 
-  EXPECT_EQ(cond->_resetCount, 0);
   EXPECT_EQ(cond->_initCount, 0);
+  EXPECT_EQ(cond->_setActiveCount, 0);
   EXPECT_EQ(cond->_areMetCount, 0);
 
   cond->Init(bei);
-  EXPECT_EQ(cond->_resetCount, 0);
   EXPECT_EQ(cond->_initCount, 1);
+  EXPECT_EQ(cond->_setActiveCount, 0);
   EXPECT_EQ(cond->_areMetCount, 0);
 
-  cond->Reset(bei);
-  EXPECT_EQ(cond->_resetCount, 1);
+  cond->SetActive(bei, true);
   EXPECT_EQ(cond->_initCount, 1);
+  EXPECT_EQ(cond->_setActiveCount, 1);
   EXPECT_EQ(cond->_areMetCount, 0);
 
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
-  EXPECT_EQ(cond->_resetCount, 1);
   EXPECT_EQ(cond->_initCount, 1);
+  EXPECT_EQ(cond->_setActiveCount, 1);
   EXPECT_EQ(cond->_areMetCount, 1);
 
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
-  EXPECT_EQ(cond->_resetCount, 1);
   EXPECT_EQ(cond->_initCount, 1);
+  EXPECT_EQ(cond->_setActiveCount, 1);
   EXPECT_EQ(cond->_areMetCount, 2);
 
   cond->_val = true;
 
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
-  EXPECT_EQ(cond->_resetCount, 1);
   EXPECT_EQ(cond->_initCount, 1);
+  EXPECT_EQ(cond->_setActiveCount, 1);
   EXPECT_EQ(cond->_areMetCount, 3);
 
 }
@@ -138,7 +140,7 @@ TEST(BeiConditions, CreateLambda)
   // bei.Init();
   
   cond->Init(bei);
-  cond->Reset(bei);
+  cond->SetActive(bei, true);
 
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
@@ -163,13 +165,12 @@ TEST(BeiConditions, True)
   BehaviorExternalInterface bei;
   
   cond->Init(bei);
-  cond->Reset(bei);
+  cond->SetActive(bei, true);
 
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
 
-  cond->Reset(bei);
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
@@ -194,7 +195,7 @@ TEST(BeiConditions, Frustration)
   InitBEIPartial( { {BEIComponentID::MoodManager, &moodManager} }, bei );
   
   cond->Init(bei);
-  cond->Reset(bei);
+  cond->SetActive(bei, true);
 
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
 
@@ -222,7 +223,7 @@ TEST(BeiConditions, Timer)
   BehaviorExternalInterface bei;
 
   cond->Init(bei);
-  cond->Reset(bei);
+  cond->SetActive(bei, true);
 
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
 
@@ -246,7 +247,7 @@ TEST(BeiConditions, Timer)
 
   const float resetTime_s = 950.0f;
   BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(resetTime_s));
-  cond->Reset(bei);
+  cond->SetActive(bei, true);
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
 
   BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(resetTime_s + 1.0f));
@@ -276,44 +277,44 @@ TEST(BeiConditions, Negate)
 
   auto cond = std::make_shared<ConditionNegate>(subCond);
 
-  EXPECT_EQ(subCond->_resetCount, 0);
   EXPECT_EQ(subCond->_initCount, 0);
+  EXPECT_EQ(subCond->_setActiveCount, 0);
   EXPECT_EQ(subCond->_areMetCount, 0);
 
   cond->Init(bei);
-  EXPECT_EQ(subCond->_resetCount, 0);
   EXPECT_EQ(subCond->_initCount, 1);
+  EXPECT_EQ(subCond->_setActiveCount, 0);
   EXPECT_EQ(subCond->_areMetCount, 0);
 
-  cond->Reset(bei);
-  EXPECT_EQ(subCond->_resetCount, 1);
+  cond->SetActive(bei, true);
   EXPECT_EQ(subCond->_initCount, 1);
+  EXPECT_EQ(subCond->_setActiveCount, 1);
   EXPECT_EQ(subCond->_areMetCount, 0);
+
 
   EXPECT_TRUE(cond->AreConditionsMet(bei));
-  EXPECT_EQ(subCond->_resetCount, 1);
   EXPECT_EQ(subCond->_initCount, 1);
+  EXPECT_EQ(subCond->_setActiveCount, 1);
   EXPECT_EQ(subCond->_areMetCount, 1);
 
   EXPECT_TRUE(cond->AreConditionsMet(bei));
-  EXPECT_EQ(subCond->_resetCount, 1);
   EXPECT_EQ(subCond->_initCount, 1);
+  EXPECT_EQ(subCond->_setActiveCount, 1);
   EXPECT_EQ(subCond->_areMetCount, 2);
 
   subCond->_val = true;
   EXPECT_FALSE(cond->AreConditionsMet(bei));
-  EXPECT_EQ(subCond->_resetCount, 1);
   EXPECT_EQ(subCond->_initCount, 1);
+  EXPECT_EQ(subCond->_setActiveCount, 1);
   EXPECT_EQ(subCond->_areMetCount, 3);
 
-  cond->Reset(bei);
-  EXPECT_EQ(subCond->_resetCount, 2);
   EXPECT_EQ(subCond->_initCount, 1);
+  EXPECT_EQ(subCond->_setActiveCount, 1);
   EXPECT_EQ(subCond->_areMetCount, 3);
 
   EXPECT_FALSE(cond->AreConditionsMet(bei));
-  EXPECT_EQ(subCond->_resetCount, 2);
   EXPECT_EQ(subCond->_initCount, 1);
+  EXPECT_EQ(subCond->_setActiveCount, 1);
   EXPECT_EQ(subCond->_areMetCount, 4);
 
 }
@@ -334,13 +335,13 @@ TEST(BeiConditions, NegateTrue)
   BehaviorExternalInterface bei;
   
   cond->Init(bei);
-  cond->Reset(bei);
+  cond->SetActive(bei, true);
 
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
 
-  cond->Reset(bei);
+  cond->SetActive(bei, true);
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
@@ -366,7 +367,7 @@ TEST(BeiConditions, NegateTimerInRange)
   BehaviorExternalInterface bei;
 
   cond->Init(bei);
-  cond->Reset(bei);
+  cond->SetActive(bei, true);
 
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
 
@@ -390,7 +391,7 @@ TEST(BeiConditions, NegateTimerInRange)
 
   const float resetTime_s = 950.0f;
   BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(resetTime_s));
-  cond->Reset(bei);
+  cond->SetActive(bei, true);
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
 
   BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(resetTime_s + 1.0f));
@@ -431,7 +432,7 @@ TEST(BeiConditions, OnCharger)
   InitBEIPartial( { {BEIComponentID::RobotInfo, &info} }, bei );
   
   cond->Init(bei);
-  cond->Reset(bei);
+  cond->SetActive(bei, true);
 
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
 
@@ -474,7 +475,7 @@ TEST(BeiConditions, TimedDedup)
   BehaviorExternalInterface bei;
 
   cond->Init(bei);
-  cond->Reset(bei);
+  cond->SetActive(bei, true);
 
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
   EXPECT_FALSE( cond->AreConditionsMet(bei) );

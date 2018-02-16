@@ -599,6 +599,12 @@ void ICozmoBehavior::OnActivatedInternal()
       *_operationModifiers.visionModesForActiveScope);
   }
 
+  // Manage state for any IBEIConditions used by this Behavior
+  // Conditions may not be evaluted when the behavior is Active
+  for(auto& strategy: _wantsToBeActivatedConditions){
+    strategy->SetActive(GetBEI(), false);
+  }
+
   OnBehaviorActivated();
 }
 
@@ -610,14 +616,16 @@ void ICozmoBehavior::OnEnteredActivatableScopeInternal()
     infoProcessor.AddEnableRequest(_requiredProcess, GetDebugLabel().c_str());
   }
 
-  for( auto& strategy : _wantsToBeActivatedConditions ) {
-    strategy->Reset(GetBEI());
-  }
-
   // Handle Vision Mode Subscriptions
   if(!_operationModifiers.visionModesForActivatableScope->empty()){
     GetBEI().GetVisionScheduleMediator().SetVisionModeSubscriptions(this, 
       *_operationModifiers.visionModesForActivatableScope);
+  }
+
+  // Manage state for any IBEIConditions used by this Behavior
+  // Conditions may be evaluted when the behavior is inside the Activatable Scope
+  for(auto& strategy: _wantsToBeActivatedConditions){
+    strategy->SetActive(GetBEI(), true);
   }
 
 }
@@ -632,6 +640,13 @@ void ICozmoBehavior::OnLeftActivatableScopeInternal()
   }
 
   GetBEI().GetVisionScheduleMediator().ReleaseAllVisionModeSubscriptions(this);
+
+  // Manage state for any IBEIConditions used by this Behavior
+  // Conditions may not be evaluted when the behavior is outside the Activatable Scope
+  for(auto& strategy: _wantsToBeActivatedConditions){
+    strategy->SetActive(GetBEI(), false);
+  }
+
 }
 
 
@@ -657,6 +672,12 @@ void ICozmoBehavior::OnDeactivatedInternal()
   if(!_operationModifiers.visionModesForActivatableScope->empty()){
     GetBEI().GetVisionScheduleMediator().SetVisionModeSubscriptions(this, 
       *_operationModifiers.visionModesForActivatableScope);
+  }
+
+  // Manage state for any IBEIConditions used by this Behavior:
+  // Conditions may be evaluted when inactive, if in Activatable scope
+  for(auto& strategy: _wantsToBeActivatedConditions){
+    strategy->SetActive(GetBEI(), true);
   }
 
   // clear the path component motion profile if it was set by the behavior

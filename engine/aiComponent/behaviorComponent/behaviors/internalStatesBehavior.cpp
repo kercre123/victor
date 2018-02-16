@@ -76,7 +76,7 @@ public:
   void AddExitTransition(StateID toState, IBEIConditionPtr condition);
 
   void OnActivated(BehaviorExternalInterface& bei);
-  void OnDeactivated();
+  void OnDeactivated(BehaviorExternalInterface& bei);
   // TODO:(bn) add asserts for these
 
   // fills in allTransitions with the transitions present in this state
@@ -104,10 +104,6 @@ public:
   // checked _after_ all of the other transitions
   Transitions _exitTransitions;
 
-  // TODO:(bn) maybe these should be a property of the transitions or state concept strategies? That way they
-  // just turn on automatically? Or at least move these into ICozmoBehavior
-  std::set<VisionMode> _requiredVisionModes;
-
   // optional light debugging color
   ColorRGBA _debugColor = NamedColors::BLACK;
 };  
@@ -128,7 +124,7 @@ InternalStatesBehavior::InternalStatesBehavior(const Json::Value& config, PreDef
   }
 
   for( auto& pair : predefinedTransitions ) {
-    AddPreDefinedStrategy(pair.first, std::move(pair.second) );
+    AddPreDefinedStrategy(pair.first, std::move(pair.second.first), pair.second.second );
   }
   
   // Parse the state config again to create the actual states
@@ -434,7 +430,7 @@ void InternalStatesBehavior::TransitionToState(const StateID targetState)
   // TODO:(bn) don't de- and re-activate behaviors if switching states doesn't change the behavior  
 
   if( _currState != InvalidStateID ) {
-    _states->at(_currState).OnDeactivated();
+    _states->at(_currState).OnDeactivated(GetBEI());
     const bool allowCallback = false;
     CancelDelegates(allowCallback);
   }
@@ -481,10 +477,6 @@ InternalStatesBehavior::State::State(const Json::Value& config)
 {
   _name = JsonTools::ParseString(config, kStateNameConfgKey, "InternalStatesBehavior.StateConfig");
   _behaviorName = JsonTools::ParseString(config, "behavior", "InternalStatesBehavior.StateConfig");
-
-  for( const auto& visionModeJson : config["visionModes"] ) {
-    _requiredVisionModes.insert( VisionModeFromString( visionModeJson.asString() ) );
-  }
 
   const std::string& debugColorStr = config.get("debugColor", "BLACK").asString();
   _debugColor = NamedColors::GetByString(debugColorStr);  
@@ -536,23 +528,36 @@ void InternalStatesBehavior::State::OnActivated(BehaviorExternalInterface& bei)
 {
   for( const auto& transitionPair : _interruptingTransitions ) {
     const auto& iConditionPtr = transitionPair.second;
-    iConditionPtr->Reset(bei);
+    iConditionPtr->SetActive(bei, true);
   }
   for( const auto& transitionPair : _nonInterruptingTransitions ) {
     const auto& iConditionPtr = transitionPair.second;
-    iConditionPtr->Reset(bei);
+    iConditionPtr->SetActive(bei, true);
   }
   for( const auto& transitionPair : _exitTransitions ) {
     const auto& iConditionPtr = transitionPair.second;
-    iConditionPtr->Reset(bei);
+    iConditionPtr->SetActive(bei, true);
   }
 
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _lastTimeStarted_s = currTime_s;       
 }
 
-void InternalStatesBehavior::State::OnDeactivated()
+void InternalStatesBehavior::State::OnDeactivated(BehaviorExternalInterface& bei)
 {
+  for( const auto& transitionPair : _interruptingTransitions ) {
+    const auto& iConditionPtr = transitionPair.second;
+    iConditionPtr->SetActive(bei, false);
+  }
+  for( const auto& transitionPair : _nonInterruptingTransitions ) {
+    const auto& iConditionPtr = transitionPair.second;
+    iConditionPtr->SetActive(bei, false);
+  }
+  for( const auto& transitionPair : _exitTransitions ) {
+    const auto& iConditionPtr = transitionPair.second;
+    iConditionPtr->SetActive(bei, false);
+  }
+
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _lastTimeEnded_s = currTime_s;
 }
@@ -606,15 +611,17 @@ float InternalStatesBehavior::GetLastTimeEnded(StateID state) const
   return _states->at(state)._lastTimeEnded_s;
 }
   
-void InternalStatesBehavior::AddPreDefinedStrategy(const std::string& name, StrategyFunc&& func)
+void InternalStatesBehavior::AddPreDefinedStrategy(const std::string& name, 
+                                                   StrategyFunc&& strategyFunc,
+                                                   std::set<VisionModeRequest>& requiredVisionModes)
 {
   ANKI_VERIFY( _preDefinedStrategies.find(name) == _preDefinedStrategies.end(),
                "InternalStatesBehavior.AddPreDefinedStrategy.Duplicate",
                "Behavior '%s' is adding duplicate strategy '%s'",
                GetDebugLabel().c_str(),
                name.c_str() );
-  
-  _preDefinedStrategies[name] = std::make_shared<ConditionLambda>( func );
+
+  _preDefinedStrategies[name] = std::make_shared<ConditionLambda>(strategyFunc, requiredVisionModes);
 }
 
 InternalStatesBehavior::StateID InternalStatesBehavior::ParseStateFromJson(const Json::Value& config,

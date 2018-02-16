@@ -17,19 +17,16 @@
     {
       "name": "ObservingOnCharger",
       "behavior": "ObservingOnCharger",
-      "visionModes": [ "DetectingMarkers", "DetectingFaces" ],
       "debugColor": "ORANGE"
     },
     {
       "name": "ObservingOnChargerRecentlyPlaced",
       "behavior": "ObservingOnCharger",
-      "visionModes": [ "DetectingMarkers" ],
       "debugColor": "RED"
     },
     {
       "name": "DriveOffChargerIntoObserving",
-      "behavior": "DriveOffChargerIntoObserving",
-      "visionModes": [ "DetectingFaces", "DetectingMarkers" ]
+      "behavior": "DriveOffChargerIntoObserving"
     },
     {
       "name": "DriveOffChargerIntoSocializing",
@@ -37,25 +34,21 @@
     },
     {
       "name": "DriveOffChargerIntoPlay",
-      "behavior": "DriveOffChargerIntoPlay",
-      "visionModes": [ "DetectingMarkers" ]
+      "behavior": "DriveOffChargerIntoPlay"
     },
     {
       "name": "Observing",
       "behavior": "Observing",
-      "visionModes": [ "DetectingFaces", "DetectingMarkers" ],
       "debugColor": "BLUE"
     },
     {
       "name": "Socializing",
       "behavior": "Socialize",
-      "visionModes": [ "DetectingFaces" ],
       "debugColor": "MAGENTA"
     },
     {
       "name": "PlayingWithCube",
       "behavior": "PlayWithCube",
-      "visionModes": [ "DetectingMarkers" ],
       "debugColor": "DARKGREEN"
     },
     {
@@ -70,13 +63,11 @@
     {
       "name": "ReturningToCharger",
       "behavior": "FindAndGoToHome",
-      "visionModes": [ "DetectingMarkers" ],
       "debugColor": "WHITE"
     },
     {
       "name": "FailedToFindCharger",
-      "behavior": "ObservingFailedToFindCharger",
-      "visionModes": [ "DetectingMarkers" ]
+      "behavior": "ObservingFailedToFindCharger"
     }
   ],
 
