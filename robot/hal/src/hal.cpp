@@ -51,9 +51,6 @@ namespace { // "Private members"
   struct spine_ctx spine_;
   uint8_t frameBuffer_[SPINE_B2H_FRAME_LEN];
   uint8_t readBuffer_[4096];
-
-  bool chargingEnabled_ = false;
-
 } // "private" namespace
 
 // Forward Declarations
@@ -216,13 +213,6 @@ Result HAL::Step(void)
   bool commander_is_active = ccc_commander_is_active();
   //  struct HeadToBody* h2bp = (commander_is_active) ? ccc_data_get_response() : &headData_;
   struct HeadToBody* h2bp =  &headData_;
-
-
-  // Send zero motor power when charging is enabled
-  if(chargingEnabled_)
-  {
-    memset(h2bp->motorPower, 0, sizeof(h2bp->motorPower));
-  }
 
   spine_write_h2b_frame(&spine_, h2bp);
 
