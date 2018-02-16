@@ -43,6 +43,7 @@ u32 g_dateCode = 0;
 
 static TestFunction* m_functions = 0;
 static int m_functionCount = 0;
+static error_t m_last_error = ERROR_OK;
 
 bool ToggleContacts(void);
 static bool TryToRunTests(void);
@@ -103,16 +104,21 @@ void SetFixtureText(void)
     #ifdef FCC
       HelperLcdSetLine(7, "CERT/TEST ONLY");
     #else
-      if( g_fixmode == FIXMODE_PLAYPEN ) {
-        HelperLcdSetLine(7, snformat(b,bz,"   SSID: Afix %02u", FIXTURE_SERIAL&63) ); //XXX: this is probably going away
-      }
+      //if( g_fixmode == FIXMODE_PLAYPEN ) {
+      //  HelperLcdSetLine(7, snformat(b,bz,"   SSID: Afix %02u", FIXTURE_SERIAL&63) ); //XXX: this is probably going away
+      //}
     #endif
   
     //show build info and version
     HelperLcdSetLine(8, snformat(b,bz,"%-15s v%03u", BUILD_INFO, g_fixtureReleaseVersion) );
   }
   
-  HelperLcdShow(0,0,'b', (char*)fixtureName());
+  //debug builds show last error code
+  if( !g_isReleaseBuild /*&& g_fixmode == FIXMODE_HEAD1*/ )
+    HelperLcdSetLine(7, snformat(b,bz,"       last:%03i", m_last_error) );
+  
+  char color = g_isReleaseBuild ? 'b' : ( m_last_error == ERROR_OK ? 'g' : 'r' );
+  HelperLcdShow(0,0, color, (char*)fixtureName());
   inited = 1;
 }
 
@@ -222,6 +228,7 @@ static void RunTests()
     ConsolePrintf("[CLEANUP-ERROR:%03i]\n", e);
   }
   
+  m_last_error = error; //save the error code
   ConsolePrintf("[TEST:END]\n", error);
   cmdSend(CMD_IO_HELPER, "logstop", CMD_DEFAULT_TIMEOUT, APP_CMD_OPTS );
   
