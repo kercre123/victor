@@ -19,6 +19,7 @@
 #include "clad/types/proxMessages.clad"
 #include "clad/types/robotStatusAndActions.clad"
 #include "clad/types/robotTestModes.clad"
+#include "clad/types/sayTextStyles.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -281,7 +282,7 @@ message SetDefaultKeepFaceAliveParameters
 {
 }
 
-message SetKeepFaceAliveParameter 
+message SetKeepFaceAliveParameter
 {
   float_32               value,
   KeepFaceAliveParameter param,
@@ -309,8 +310,8 @@ message RemoveEyeShift
 
 message AddSquint
 {
-  float_32 squintScaleX, 
-  float_32 squintScaleY, 
+  float_32 squintScaleX,
+  float_32 squintScaleY,
   float_32 upperLidAngle,
   string name,
 }
@@ -378,7 +379,7 @@ message DrawTextOnScreen
 }
 
 // DisplayProceduralFace
-message DisplayProceduralFace 
+message DisplayProceduralFace
 {
     ProceduralFaceParameters  faceParams,
     uint_32                   duration_ms     // Use uint_32 max value to keep the image on the screen
@@ -396,7 +397,7 @@ message SetFaceHue
 // Bit-image: one bit for each of 184x96 pixels = 2208 bytes
 // If index == 0, this is the top half of the image
 // If index == 1, this is the bottom half of the image
-// Image is actually drawn when index == 1 as long as the associated 
+// Image is actually drawn when index == 1 as long as the associated
 // top half (i.e. index == 0) message with matching tag was received.
 // The duration_ms that is actually used is whichever last image half
 // is sent. Just make sure they're the same for both halves!
@@ -439,12 +440,12 @@ message RunDebugConsoleFuncMessage {
 //
 // Sent from engine to robot (anim process) to initiate TTS
 //
-// TODO VIC-610: Additional TTS params
-//
 message TextToSpeechStart {
-  
-  uint_8 ttsID, // ID of utterance
-  string text   // Text to be pronounced
+  float_32 durationScalar, // Duration adjustment
+  float_32 pitchScalar,    // Pitch adjustment
+  SayTextVoiceStyle style, // Audio processing style
+  uint_8 ttsID,            // ID of utterance
+  string text              // Text to be pronounced
 }
 
 //
@@ -502,8 +503,8 @@ union EngineToRobot
   SetBodyAngle                  setBodyAngle                = 0x17,
   TurnInPlaceAtSpeed            turnInPlaceAtSpeed          = 0x18,
   RecordHeading                 recordHeading               = 0x19,
-  TurnToRecordedHeading         turnToRecordedHeading       = 0x1A,  
-  EnableMotorPower              enableMotorPower            = 0x1B,    
+  TurnToRecordedHeading         turnToRecordedHeading       = 0x1A,
+  EnableMotorPower              enableMotorPower            = 0x1B,
   StopAllMotors                 stop                        = 0x1C,
 
   // Lights
@@ -524,21 +525,21 @@ union EngineToRobot
   PlaceObjectOnGround           placeObjectOnGround         = 0x28,
   DockingErrorSignal            dockingErrorSignal          = 0x2A,
   CarryStateUpdate              setCarryState               = 0x2B,
-  CameraFOVInfo                 cameraFOVInfo               = 0x2C,  
+  CameraFOVInfo                 cameraFOVInfo               = 0x2C,
 
   // Localization
   AbsoluteLocalizationUpdate    absLocalizationUpdate       = 0x2D,
-  ForceDelocalizeSimulatedRobot forceDelocalizeSimulatedRobot = 0x2E, // Used for simulation only, no-op for physical  
+  ForceDelocalizeSimulatedRobot forceDelocalizeSimulatedRobot = 0x2E, // Used for simulation only, no-op for physical
 
   // Sensor messages
-  IMURequest                    imuRequest                  = 0x30,  
-  CheckLiftLoad                 checkLiftLoad               = 0x31,  
+  IMURequest                    imuRequest                  = 0x30,
+  CheckLiftLoad                 checkLiftLoad               = 0x31,
   SetCliffDetectThresholds      setCliffDetectThresholds    = 0x32,
 
   // Calibration
   EnableReadToolCodeMode        enableReadToolCodeMode      = 0x33,
   StartMotorCalibration         startMotorCalibration       = 0x34,
-  
+
   // Reactions
   EnableStopOnCliff             enableStopOnCliff           = 0x35,
   EnableBraceWhenFalling        enableBraceWhenFalling      = 0x36,
