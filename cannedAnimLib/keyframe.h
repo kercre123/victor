@@ -298,6 +298,9 @@ namespace Cozmo {
     
     // These functions actually retrieves image data and increments the frame count so that it will
     // retrieve the next image on the next call.
+    // If the image is empty but the function returns true, it simply means that the last
+    // non-empty image should remain on the display. This can happen if an image of duration
+    // longer than ANIM_TIME_STEP_MS was inserted into the keyframe.
     bool GetFaceImage(Vision::Image&);
     bool GetFaceImage(Vision::ImageRGB565&);
 
