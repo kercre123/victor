@@ -24,6 +24,10 @@ LIBPATH += -L$(CORE_DIR)
 CFLAGS  += -I../ -O2
 CFLAGS  += -I$(CORE_DIR)/inc
 
+CFLAGS  += -I../../syscon
+CFLAGS  += -I../../hal
+CFLAGS  += -DANDROID
+
 
 # All the c files in this directory will be compiled
 SRCDIR = .
@@ -49,6 +53,10 @@ HELPER_OBJ = $(HELPER_SRC:%.c=$(OBJDIR)/%.o)
 PIDOPEN = pidopen
 PIDOPEN_SRC = pidopen.c
 PIDOPEN_OBJ = $(PIDOPEN_SRC:%.c=$(OBJDIR)/%.o)
+
+MENUMAN = menuman
+MENUMAN_SRC = menuman.c
+MENUMAN_OBJ = $(MENUMAN_SRC:%.c=$(OBJDIR)/%.o)
 
 
 REMOTE_DEST = /data/local/fixture/
@@ -78,8 +86,8 @@ $(DISPLAY): $(CORE) $(DISPLAY_OBJ)
 $(HELPER): $(CORE) $(HELPER_OBJ)
 	$(CROSS_COMPILE)gcc -pie $(HELPER_OBJ) $(LIBPATH) $(LIBS)  -o $(HELPER)
 
-$(PIDOPEN): $(CORE) $(PIDOPEN_OBJ)
-	$(CROSS_COMPILE)gcc -pie $(PIDOPEN_OBJ) $(LIBPATH) $(LIBS)  -o $(PIDOPEN)
+$(MENUMAN): $(CORE) $(MENUMAN_OBJ)
+	$(CROSS_COMPILE)gcc -pie $(MENUMAN_OBJ) $(LIBPATH) $(LIBS)  -o $(MENUMAN)
 
 
 app=$(HELPER)
