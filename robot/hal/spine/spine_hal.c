@@ -303,7 +303,8 @@ const struct SpineMessageHeader* hal_read_frame()
 
   //At this point we have a valid message header. (spine_sync rejects bad lengths and payloadTypes)
   // Collect the right number of bytes.
-  unsigned int payload_length = ((struct SpineMessageHeader*)gHal.inbuffer)->bytes_to_follow;
+  struct SpineMessageHeader* hdr = (struct SpineMessageHeader*)gHal.inbuffer;
+  unsigned int payload_length = hdr->bytes_to_follow;
   unsigned int total_message_length = SPINE_HEADER_LEN + payload_length + SPINE_CRC_LEN;
 
   spine_debug_x("%d byte payload\n", payload_length);

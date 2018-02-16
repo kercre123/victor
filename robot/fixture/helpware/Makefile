@@ -26,7 +26,7 @@ CFLAGS  += -I$(CORE_DIR)/inc
 
 CFLAGS  += -I../../syscon
 CFLAGS  += -I../../hal
-CFLAGS  += -DANDROID
+CFLAGS  += -DPLATFORM_ANDROID
 
 
 # All the c files in this directory will be compiled
@@ -47,16 +47,23 @@ DISPLAY_SRC = display.c helper_text.c display_test.c
 DISPLAY_OBJ = $(DISPLAY_SRC:%.c=$(OBJDIR)/%.o)
 
 HELPER = helper
-HELPER_SRC = main.c display.c helper_text.c logging.c pidopen.c
+HELPER_SRC = main.c display.c helper_text.c logging.c pidopen.c kbhit.c
 HELPER_OBJ = $(HELPER_SRC:%.c=$(OBJDIR)/%.o)
 
 PIDOPEN = pidopen
 PIDOPEN_SRC = pidopen.c
 PIDOPEN_OBJ = $(PIDOPEN_SRC:%.c=$(OBJDIR)/%.o)
 
+COMMANDER = commander
+COMMANDER_SRC = commander.c kbhit.c display.c
+COMMANDER_OBJ = $(COMMANDER_SRC:%.c=$(OBJDIR)/%.o) $(SPINE_OBJ)
+
+SPINE_SRC = spine_hal.c spine_crc.c
+SPINE_OBJ = $(SPINE_SRC:%.c=$(OBJDIR)/%.o)
+
 MENUMAN = menuman
-MENUMAN_SRC = menuman.c
-MENUMAN_OBJ = $(MENUMAN_SRC:%.c=$(OBJDIR)/%.o)
+MENUMAN_SRC = menuman.c kbhit.c display.c
+MENUMAN_OBJ = $(MENUMAN_SRC:%.c=$(OBJDIR)/%.o) $(SPINE_OBJ)
 
 
 REMOTE_DEST = /data/local/fixture/
@@ -86,8 +93,18 @@ $(DISPLAY): $(CORE) $(DISPLAY_OBJ)
 $(HELPER): $(CORE) $(HELPER_OBJ)
 	$(CROSS_COMPILE)gcc -pie $(HELPER_OBJ) $(LIBPATH) $(LIBS)  -o $(HELPER)
 
+
+$(COMMANDER): $(CORE) $(COMMANDER_OBJ)
+	$(CROSS_COMPILE)gcc -pie $(COMMANDER_OBJ) $(LIBPATH) $(LIBS) -llog -o $(COMMANDER)
+
+$(OBJDIR)/spine_hal.o:
+	$(CROSS_COMPILE)gcc $(CFLAGS) ../../hal/spine/spine_hal.c  -o $@
+$(OBJDIR)/spine_crc.o:
+	$(CROSS_COMPILE)gcc $(CFLAGS) ../../hal/spine/spine_crc.c  -o $@
+
+
 $(MENUMAN): $(CORE) $(MENUMAN_OBJ)
-	$(CROSS_COMPILE)gcc -pie $(MENUMAN_OBJ) $(LIBPATH) $(LIBS)  -o $(MENUMAN)
+	$(CROSS_COMPILE)gcc -pie $(MENUMAN_OBJ) $(LIBPATH) $(LIBS) -llog  -o $(MENUMAN)
 
 
 app=$(HELPER)

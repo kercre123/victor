@@ -18,7 +18,7 @@ enum {
 #ifdef STANDALONE_UTILITY
 #include "core/common.h"
 #include "core/lcd.h"
-//#include "helpware/kbhit.h"
+#include "helpware/kbhit.h"
 #include "helpware/display.h"
 #endif
 
@@ -222,28 +222,19 @@ int emr_get(uint8_t index, uint32_t* value);
 int SetMedicalRecord(uint8_t index, uint32_t value)
 {
   print_response("EMR %d := %d\n", index, value);
-  return emr_set(index, value);
+//  return emr_set(index, value);
+  return 0;
 }
 
 int GetMedicalRecord(uint8_t index)
 {
   uint32_t value = 0;
-  int err = emr_get(index, &value);
+//  int err = emr_get(index, &value);
+  int err = 0;
   print_response(":%d @ EMR[%d]\n", value, index);
   return err;
 }
 
-
-//todo: collapse
-int engine_test_run(uint8_t id, uint8_t args[4]);
-int SendEngineCommand(uint8_t index, uint8_t v0, uint8_t v1, uint8_t v2, uint8_t v3){
-  uint8_t args[4] = {v0, v1, v2, v3};
-  int result = engine_test_run(index, args);
-  if (result < 0) {
-    SetHoldToken('e');
-  }
-  return result;
-}
 
 /***** version commands  **************************/
 
@@ -343,7 +334,7 @@ extern void get_body_version(struct VersionInfo*);
 uint8_t handle_bsv_command(const uint8_t args[])
 {
   SetHoldToken('b');
-  request_version();
+//  request_version();
 
   return ERR_OK;
 }
@@ -378,10 +369,6 @@ uint8_t handle_rlg_command(const uint8_t args[])
   return ReadLogN(args[0]);
 }
 
-uint8_t handle_eng_command(const uint8_t args[])
-{
-  return SendEngineCommand(args[0], args[1], args[2], args[3], args[4]);
-}
 
 uint8_t handle_smr_command(const uint8_t args[]) {
   uint32_t value = args[1] << 24|
@@ -409,7 +396,7 @@ const char* handle_quit_command(const char* text, int len)
 void on_exit(void)
 {
   //TODO: hal_terminate();
-  //enable_kbhit(0);
+  enable_kbhit(0);
 }
 
 
@@ -438,7 +425,7 @@ static const CommandHandler handlers[] = {
   REGISTER_COMMAND(get),
   REGISTER_COMMAND(fcc),
   REGISTER_COMMAND(rlg),
-  REGISTER_COMMAND(eng),
+//  REGISTER_COMMAND(eng),
 //  REGISTER_COMMAND(lfe),
   REGISTER_COMMAND(smr),
   REGISTER_COMMAND(gmr),
