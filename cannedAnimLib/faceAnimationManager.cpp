@@ -373,7 +373,7 @@ namespace Cozmo {
         }
         anim.GetFrame(0, frame);
         PopFront();
-        return true;
+        return !frame.IsEmpty();
       } else if(frameNum < anim.GetNumFrames()) {
         anim.GetFrame(frameNum, frame);
         return true;
