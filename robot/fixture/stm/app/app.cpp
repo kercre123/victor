@@ -43,6 +43,7 @@ u32 g_dateCode = 0;
 
 static TestFunction* m_functions = 0;
 static int m_functionCount = 0;
+static int m_last_time_ms = 0;
 static error_t m_last_error = ERROR_OK;
 
 bool ToggleContacts(void);
@@ -115,7 +116,7 @@ void SetFixtureText(void)
   
   //debug builds show last error code
   if( !g_isReleaseBuild /*&& g_fixmode == FIXMODE_HEAD1*/ )
-    HelperLcdSetLine(7, snformat(b,bz,"       last:%03i", m_last_error) );
+    HelperLcdSetLine(7, snformat(b,bz,"e:%03i in %u.%03us", m_last_error, m_last_time_ms/1000, m_last_time_ms%1000 ) );
   
   char color = g_isReleaseBuild ? 'b' : ( m_last_error == ERROR_OK ? 'g' : 'r' );
   HelperLcdShow(0,0, color, (char*)fixtureName());
@@ -209,6 +210,7 @@ static void RunTests()
   ConsolePrintf("[TEST:START]\n");
   printFixtureInfo();
   
+  uint32_t Tstart = Timer::get();
   error_t error = ERROR_OK;
   try {
     for (g_stepNumber = 0; g_stepNumber < m_functionCount; g_stepNumber++) {      
@@ -229,6 +231,7 @@ static void RunTests()
   }
   
   m_last_error = error; //save the error code
+  m_last_time_ms = Timer::elapsedUs(Tstart) / 1000; //Note: may be less than actual time, if test isn't using the Timer (requires polling for accuracy)
   ConsolePrintf("[TEST:END]\n", error);
   cmdSend(CMD_IO_HELPER, "logstop", CMD_DEFAULT_TIMEOUT, APP_CMD_OPTS );
   
