@@ -621,6 +621,30 @@ namespace Vision {
     
     return RESULT_OK;
   }
+
+  bool FaceTracker::Impl::DetectEyeContact(const TrackedFace& face,
+                                           const TimeStamp_t& timeStamp)
+  {
+    return true;
+    auto id = facesEyeContact.find(face.GetID());
+    if(id == facesEyeContact.end())
+    {
+      facesEyeContact[face.GetID()] = EyeContact();
+    }
+    facesEyeContact[face.GetID()].Update(face, timeStamp);
+
+    // Check if the face is stale
+    bool eyeContact = false;
+    if (facesEyeContact[face.GetID()].GetExpired(timeStamp))
+    {
+      facesEyeContact.erase(face.GetID());
+    }
+    else if (facesEyeContact[face.GetID()].GetFixating())
+    {
+      eyeContact = facesEyeContact[face.GetID()].GetEyeContact();
+    }
+    return eyeContact;
+  }
   
   Result FaceTracker::Impl::Update(const Vision::Image& frameOrig,
                                    std::list<TrackedFace>& faces,
@@ -877,6 +901,11 @@ namespace Vision {
       // 3D translation, w.r.t. that camera. Also puts the face's pose in
       // the camera's pose chain.
       face.UpdateTranslation(_camera);
+
+      if(_detectGaze && facePartsFound)
+      {
+        face.SetEyeContact(DetectEyeContact(face, frameOrig.GetTimestamp()));
+      }
       
     } // FOR each face
     

@@ -137,6 +137,10 @@ namespace Vision {
     const BlinkAmount& GetBlinkAmount() const { return _blinkAmount; }
     void  SetBlinkAmount(f32 leftAmount, f32 rightAmount);
     
+    // Eye contact detection, if available
+    bool GetEyeContact() const { return _eyeContact; }
+    void SetEyeContact(const bool eyeContact);
+
     void SetRecognitionDebugInfo(const std::list<FaceRecognitionMatch>& info);
     const std::list<FaceRecognitionMatch>& GetRecognitionDebugInfo() const;
     
@@ -148,6 +152,7 @@ namespace Vision {
     s32            _numEnrollments = 0;
     bool           _isBeingTracked = false;
     bool           _isFacingCamera = false;
+    bool           _eyeContact     = false;
 
     std::string    _name;
     
@@ -331,6 +336,10 @@ namespace Vision {
     _blinkAmount.wasChecked = true;
     _blinkAmount.blinkAmountLeft  = leftAmount;
     _blinkAmount.blinkAmountRight = rightAmount;
+  }
+
+  inline void TrackedFace::SetEyeContact(const bool eyeContact) {
+    _eyeContact = eyeContact;
   }
   
 } // namespace Vision
