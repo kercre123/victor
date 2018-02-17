@@ -12,8 +12,8 @@ namespace Cozmo.Notifications {
     public string TextKey { get; private set; }
     public bool Persist { get; private set; }
     public string OrderId;
-    public UInt32 TimeToSend;
-    public UInt32 TimeClicked;
+    public UInt64 TimeToSend;
+    public UInt64 TimeClicked;
 
     public Notification(int secondsInFuture, string textKey, bool persist) {
       SecondsInFuture = secondsInFuture;
@@ -55,6 +55,7 @@ namespace Cozmo.Notifications {
     private const string _kNotificationClickDasEvent = "app.notification.click";
     private const string _kNotificationSendDasEvent = "app.notification.send";
     private const string _kTimeStampDasEventDataKey = "$ts";
+    private const string _kTimeStampDasEventKey_Cozmo_16395 = "$custom_timestamp";
     private const string _kDataDasEventDataKey = "$data";
     private const UInt32 _kNotifClickGetsCreditWindowInSeconds = 30 * 60;
 
@@ -120,8 +121,8 @@ namespace Cozmo.Notifications {
       CancelAllNotifications();
     }
 
-    private UInt32 DateTimeToEpochTimestamp(DateTime dateTime) {
-      return Convert.ToUInt32((dateTime - _sEpochZero).TotalSeconds);
+    private UInt64 DateTimeToEpochTimestamp(DateTime dateTime) {
+      return Convert.ToUInt64((dateTime - _sEpochZero).TotalMilliseconds);
     }
 
     private void HandlePauseStateChanged(bool isPaused) {
@@ -169,13 +170,12 @@ namespace Cozmo.Notifications {
         DateTime timeToSend = DateTime.UtcNow.AddSeconds(notification.SecondsInFuture);
         notification.TimeToSend = DateTimeToEpochTimestamp(timeToSend);
         notification.OrderId = orderId.ToString();
-
         Dictionary<string, string> notifData = new Dictionary<string, string>(){
           {_kOrderIdNotificationDataKey, notification.OrderId},
           {_kTimeSentNotificationDataKey, notification.TimeToSend.ToString()},
           {_kMessageKeyNotificationDataKey, notification.TextKey}
         };
-
+        
         UTNotifications.Manager.Instance.ScheduleNotification(
           notification.SecondsInFuture,
 #if UNITY_ANDROID && !UNITY_EDITOR
@@ -203,14 +203,22 @@ namespace Cozmo.Notifications {
     private void LogDasEventsForSentNotifications() {
       List<Notification> possiblySentNotifications = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.NotificationsToBeSent;
 
-      UInt32 now = DateTimeToEpochTimestamp(DateTime.UtcNow);
+      UInt64 now = DateTimeToEpochTimestamp(DateTime.UtcNow);
       foreach (var notification in possiblySentNotifications) {
         if (notification.TimeToSend < now) {
+          JSONObject dasData = new JSONObject();
+          dasData.AddField("notificationId", notification.TextKey);
+          dasData.AddField(_kTimeStampDasEventKey_Cozmo_16395, notification.TimeToSend.ToString());
+          
           var dataDict = DasTracker.GetDataDictionary(
             _kTimeStampDasEventDataKey, notification.TimeToSend.ToString(),
-            _kDataDasEventDataKey, notification.TextKey);
+            _kDataDasEventDataKey, dasData.ToString());
 
           DAS.Event(_kNotificationSendDasEvent, notification.OrderId.ToString(), dataDict);
+        }
+
+        if (notification.TimeToSend == 0) {
+          DAS.Error("NotificationsManager.NotificationSend",  "COZMO-16395 - TimeToSend is 0!");
         }
       }
     }
@@ -223,7 +231,7 @@ namespace Cozmo.Notifications {
       string orderId = notification.userData[_kOrderIdNotificationDataKey];
       string timeSent = notification.userData[_kTimeSentNotificationDataKey];
       string messageKey = notification.userData[_kMessageKeyNotificationDataKey];
-      UInt32 timeClicked = DateTimeToEpochTimestamp(DateTime.UtcNow);
+      UInt64 timeClicked = DateTimeToEpochTimestamp(DateTime.UtcNow);
 
       Dictionary<string, string> dasData = new Dictionary<string, string>() {
         { _kTimeStampDasEventDataKey, timeClicked.ToString() },
@@ -245,7 +253,7 @@ namespace Cozmo.Notifications {
         return null;
       }
 
-      UInt32 secondsSinceClick = DateTimeToEpochTimestamp(DateTime.UtcNow) - notifClicked.TimeClicked;
+      UInt64 secondsSinceClick = DateTimeToEpochTimestamp(DateTime.UtcNow) - notifClicked.TimeClicked;
       if (secondsSinceClick > _kNotifClickGetsCreditWindowInSeconds) {
         return null;
       }
