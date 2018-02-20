@@ -89,7 +89,7 @@ Result BehaviorSystemManager::InitConfiguration(Robot& robot,
   // If this is the factory test forcibly set baseBehavior as playpen as long as the robot has not been through packout
   bool startInPlaypen = false;
 #if FACTORY_TEST
-  startInPlaypen = !Factory::GetEMR()->PACKED_OUT;
+  startInPlaypen = !Factory::GetEMR()->PACKED_OUT_FLAG;
 #endif
   if(startInPlaypen)
   {
