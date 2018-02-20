@@ -26,7 +26,7 @@ set(PLATFORM_LIBS
 
 target_link_libraries(vic-switchboard
 PRIVATE
-  sodium
+  ${SODIUM_LIBS}
   ${PLATFORM_LIBS}
 )
 
