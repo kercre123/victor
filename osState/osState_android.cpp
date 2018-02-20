@@ -43,7 +43,7 @@ namespace {
 
   const char* kNominalCPUFreqFile = "/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq";
   const char* kCPUFreqFile = "/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_cur_freq";
-  const char* kTemperatureFile = "/sys/devices/virtual/thermal/thermal_zone8/temp";
+  const char* kTemperatureFile = "/sys/devices/virtual/thermal/thermal_zone7/temp";
 
   // System vars
   uint32_t _cpuFreq_kHz; // CPU freq
