@@ -256,7 +256,7 @@ void RawPixelsClassifier::SetTrainingData(const cv::Mat& trainingSamples, const 
 }
 
 /****************************************************************
- *                     GMMDrivingSurfaceClassifier               *
+ *                     GMMDrivingSurfaceClassifier              *
  ****************************************************************/
 
 GMMRawPixelsClassifier::GMMRawPixelsClassifier(const Json::Value& config, const CozmoContext *context)
@@ -367,11 +367,11 @@ LRRawPixelsClassifier::LRRawPixelsClassifier(const Json::Value& config, const Co
           " values are (L1, L2, Disable)", regularization.c_str());
     }
   }
-  uint numItereations = 1000;
-  GET_JSON_PARAMETER(config, "NumIterations", numItereations);
+  uint numIterations = 1000;
+  GET_JSON_PARAMETER(config, "NumIterations", numIterations);
 
   _logisticRegressor = cv::makePtr<WeightedLogisticRegression>();
-  _logisticRegressor->setIterations(numItereations);
+  _logisticRegressor->setIterations(numIterations);
   _logisticRegressor->setRegularization(cvRegularization);
   _logisticRegressor->setTrainMethod(cv::ml::LogisticRegression::BATCH);
 
@@ -412,7 +412,7 @@ bool LRRawPixelsClassifier::Train(const cv::Mat& allInputs, const cv::Mat& allCl
   // Train Logistic Regression
   {
     const uint totalSize = allInputs.rows;
-    // set the learning rate here as a multiple of the number of elements. OpenCV quirkness
+    // set the learning rate here as a multiple of the number of elements. OpenCV quirkiness
     _logisticRegressor->setLearningRate(_trainingAlpha * totalSize);
     const std::vector<float> minDistances = this->MinMahalanobisDistanceFromGMM(allInputs, true);
     const cv::Mat minDistancesMat = cv::Mat(minDistances);
@@ -479,7 +479,7 @@ uchar LRRawPixelsClassifier::PredictClass(const std::vector<FeatureType>& values
 }
 
 /****************************************************************
- *                     THDrivingSurfaceClassifier               *
+ *                     THRawPixelsClassifier                    *
  ****************************************************************/
 
 uchar THRawPixelsClassifier::PredictClass(const std::vector<FeatureType>& values) const
