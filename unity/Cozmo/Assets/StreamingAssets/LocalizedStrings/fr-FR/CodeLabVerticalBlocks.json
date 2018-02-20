@@ -657,10 +657,25 @@
   "codeLabVertical.PLAY_ANIMATION_BY_TRIGGER_NAME_BLOCK" : {
     "translation" : "avancé : lire le groupe d'animations %1 du SDK"
   },
+  "codeLabVertical.EVENTS_BROADCAST_SCRATCH_2_LEGACY": {
+    "translation": "broadcast %1 - legacy"
+  },
+  "codeLabVertical.EVENTS_BROADCAST_HAT_LEGACY": {
+    "translation": "when %1 received - legacy"
+  },
   "codeLabVertical.EVENTS_BROADCAST_HAT" : {
     "translation" : "quand %1 est reçu"
   },
   "codeLabVertical.EVENTS_BROADCAST_AND_WAIT" : {
     "translation" : "diffuser %1 et attendre qu'il s'achève"
+  },
+  "codeLabVertical.EVENTS_BROADCAST_AND_WAIT_LEGACY": {
+    "translation": "broadcast %1 and wait to complete - legacy"
+  },
+  "codeLabVertical.LIST_ALREADY_EXISTS": {
+    "translation": "A list named \"%1\" already exists."
+  },
+  "codeLabVertical.RENAME_LIST_TITLE": {
+    "translation": "Rename all \"%1\" lists to:"
   }
 }

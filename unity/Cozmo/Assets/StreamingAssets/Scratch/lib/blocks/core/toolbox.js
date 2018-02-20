@@ -244,6 +244,7 @@ Blockly.Toolbox.prototype.populate_ = function(newTree) {
  * @private
  */
 Blockly.Toolbox.prototype.showAll_ = function() {
+  //console.log("ANKIPERFTEST top Blockly.Toolbox.prototype.showAll_");
   var allContents = [];
   for (var i = 0; i < this.categoryMenu_.categories_.length; i++) {
     var category = this.categoryMenu_.categories_[i];
@@ -259,6 +260,7 @@ Blockly.Toolbox.prototype.showAll_ = function() {
     allContents = allContents.concat(category.getContents());
   }
   this.flyout_.show(allContents);
+  //console.log("ANKIPERFTEST end Blockly.Toolbox.prototype.showAll_");
 };
 
 /**

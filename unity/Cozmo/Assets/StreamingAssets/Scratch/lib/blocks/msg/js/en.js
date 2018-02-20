@@ -384,11 +384,6 @@ Blockly.Msg["NEW_LIST"] = "Make a List";
 Blockly.Msg["NEW_LIST_TITLE"] = "New list name:";
 // prompt title - Title of the prompt asking the user to enter the name for the new list.
 Blockly.Msg["LIST_MODAL_TITLE"] = 'New List';
-// alert - Tells the user that the name they entered is already in use.
-Blockly.Msg["LIST_ALREADY_EXISTS"] = 'A list named "%1" already exists.';
-// List renaming
-// prompt - Prompts the user to enter the new name for the selected list.
-Blockly.Msg["RENAME_LIST_TITLE"] = 'Rename all "%1" lists to:';
 // prompt title - Title of the prompt asking the user to rename the list
 Blockly.Msg["RENAME_LIST_MODAL_TITLE"] = 'Rename List';
 Blockly.Msg["NEW_PROCEDURE"] = "Make a Block";

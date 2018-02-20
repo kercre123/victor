@@ -45,6 +45,7 @@
 
     // Request that horizontal or vertical workspace be presented with only a green flag on the workspace.
     window.requestToCreateCozmoProject = function(isVertical) {
+        //console.log("ANKIPERFTEST requestToCreateCozmoProject");
         window.Unity.call({requestId: -1, command: "cozmoRequestToCreateProject", argBool: isVertical});
     }
 

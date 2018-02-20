@@ -454,6 +454,7 @@ Blockly.Flyout.prototype.hide = function() {
  *     Variables and procedures have a custom set of blocks.
  */
 Blockly.Flyout.prototype.show = function(xmlList) {
+  //console.log("- - - - ANKIPERFTEST Blockly.Flyout.prototype.show top");
   this.workspace_.setResizesEnabled(false);
   this.hide();
   this.clearOldBlocks_();
@@ -540,6 +541,8 @@ Blockly.Flyout.prototype.show = function(xmlList) {
   this.workspace_.addChangeListener(this.reflowWrapper_);
 
   this.recordCategoryScrollPositions_();
+
+  //console.log("- - - - ANKIPERFTEST Blockly.Flyout.prototype.show end");
 };
 
 /**

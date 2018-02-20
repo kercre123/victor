@@ -405,8 +405,8 @@ Blockly.Xml.domToWorkspace = function(xml, workspace) {
   }
 
   // Disable workspace resizes as an optimization.
-  if (workspace.setBulkUpdate) {
-    workspace.setBulkUpdate(true);
+  if (workspace.setResizesEnabled) {
+    workspace.setResizesEnabled(false);
   }
   var variablesFirst = true;
   try {
@@ -452,8 +452,8 @@ Blockly.Xml.domToWorkspace = function(xml, workspace) {
     Blockly.Field.stopCache();
   }
   // Re-enable workspace resizing.
-  if (workspace.setBulkUpdate) {
-    workspace.setBulkUpdate(false);
+  if (workspace.setResizesEnabled) {
+    workspace.setResizesEnabled(true);
   }
   return newBlockIds;
 };

@@ -1066,6 +1066,7 @@ Blockly.WorkspaceSvg.prototype.paste = function(xmlBlock) {
  * @private
  */
 Blockly.WorkspaceSvg.prototype.refreshToolboxSelection_ = function() {
+  //console.log("ANKIPERFTEST refreshToolboxSelection_ top");
   // Updating the toolbox can be expensive. Don't do it when when it is
   // disabled.
   if (this.toolbox_) {
@@ -1080,6 +1081,7 @@ Blockly.WorkspaceSvg.prototype.refreshToolboxSelection_ = function() {
       thisTarget.toolbox_.refreshSelection();
     }
   }
+  //console.log("ANKIPERFTEST refreshToolboxSelection_ end");
 };
 
 /**

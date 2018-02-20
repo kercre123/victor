@@ -91,6 +91,7 @@
      * @return {void}
      */
     function onLoad () {
+        //console.log("ANKIPERFTEST common.js onLoad top, about to construct vm");
         window.TABLET_WIDTH = 800;
 
         checkForObjectAssignSupport();
@@ -201,7 +202,20 @@
 
         // Receipt of new block XML for the selected target.
         vm.on('workspaceUpdate', function(data) {
-            window.openBlocklyXML(data.xml);
+            //console.log("ANKIPERFTEST vm.on workspaceUpdate top");
+            try {
+                // Remove and reattach the workspace listener (but allow flyout events)
+                Scratch.workspace.removeChangeListener(Scratch.vm.blockListener);   
+                var domXML = Blockly.Xml.textToDom(data.xml);
+                //console.log("ANKIPERFTEST openBlocklyXML. After textToDom, before clearWorkspaceAndLoadFromXml");
+                Blockly.Xml.clearWorkspaceAndLoadFromXml(domXML, Scratch.workspace);
+                //console.log("ANKIPERFTEST openBlocklyXML. After clearWorkspaceAndLoadFromXml, bascially end of openBlocklyXML");
+                Scratch.workspace.addChangeListener(Scratch.vm.blockListener);
+                Scratch.workspace.clearUndo();
+            }
+            catch (err) {
+                window.cozmoDASError("Codelab.VM.WorkspaceUpdate", "Error when loading project: " + err.message);
+            }
 
             if (window.isLoadingProject) {
                 window.notifyProjectIsLoaded();
@@ -211,6 +225,7 @@
             if (window.isVertical) {
                 workspace.toolbox_.flyout_.hide();
             }
+            //console.log("ANKIPERFTEST vm.on workspaceUpdate end");
         });
 
         // Run threads

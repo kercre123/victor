@@ -256,6 +256,7 @@
     }
 
     window.openCozmoProjectJSON = function (cozmoProjectJSON) {
+        //console.log("ANKIPERFTEST top openCozmoProjectJSON");
         try {
             window.openCozmoProject(cozmoProjectJSON.projectUUID, cozmoProjectJSON.projectName, cozmoProjectJSON.versionNum, cozmoProjectJSON.projectJSON, null, cozmoProjectJSON.isSampleStr);
         }
@@ -267,12 +268,15 @@
 
     // DEPRECATED - only used to open user projects that were created before 2.1 and are still in XML
     window.openCozmoProjectXML = function(projectUUID, projectName, projectVersionNum, projectXML, isCozmoSampleProjectStr) {
+        //console.log("ANKIPERFTEST top openCozmoProjectXML");
         window.openCozmoProject(projectUUID, projectName, projectVersionNum, null, projectXML, isCozmoSampleProjectStr);
     }
 
     // Don't call this method directly. Please call openCozmoProjectJSON instead.
     // This method takes a projectXML parameter to support pre-2.1 builds.
     window.openCozmoProject = function(projectUUID, projectName, projectVersionNum, projectJSON, projectXML, isCozmoSampleProjectStr) {
+        //console.log("ANKIPERFTEST top openCozmoProject for projectName = " + projectName);
+
         var isCozmoSampleProject = (isCozmoSampleProjectStr == 'true');
         window.isCozmoSampleProject = isCozmoSampleProject;
 
@@ -321,6 +325,8 @@
             window.notifyProjectIsLoaded();
             window.startSaveProjectTimer();
         }
+
+        //console.log("ANKIPERFTEST end openCozmoProject for projectName = " + projectName);
     }
 
     window.newProjectCreated = function(projectUUID, projectName) {
@@ -410,9 +416,11 @@
     // Returns project as string.
     function cleanSerializedProjectStringForComparison(serializedProjectAsString) {
         var serializedProjectJSONObject = JSON.parse(serializedProjectAsString);
-        for (var key in serializedProjectJSONObject.targets[0].variables) {
-            if (serializedProjectJSONObject.targets[0].variables.hasOwnProperty(key)) {
-                serializedProjectJSONObject.targets[0].variables[key].value = "";
+        if (serializedProjectJSONObject.targets[0]) {
+             for (var key in serializedProjectJSONObject.targets[0].variables) {
+                if (serializedProjectJSONObject.targets[0].variables.hasOwnProperty(key)) {
+                    serializedProjectJSONObject.targets[0].variables[key].value = "";
+                }
             }
         }
 
@@ -438,20 +446,6 @@
         }
 
         return false;
-    }
-
-    window.openBlocklyXML = function(xml) {
-        try {
-            // Remove and reattach the workspace listener (but allow flyout events)
-            Scratch.workspace.removeChangeListener(Scratch.vm.blockListener);   
-            var domXML = Blockly.Xml.textToDom(xml);
-            Blockly.Xml.clearWorkspaceAndLoadFromXml(domXML, Scratch.workspace);
-            Scratch.workspace.addChangeListener(Scratch.vm.blockListener);
-            Scratch.workspace.clearUndo();
-        }
-        catch (err) {
-            window.cozmoDASError("Codelab.openBlocklyXML.JavaScriptError", "Error when loading project: " + err.message);
-        }
     }
 
     // TODO Replace this method used for the very particular case of replacing intruder localized text in sample project.

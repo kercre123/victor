@@ -82,7 +82,7 @@ Blockly.Blocks['event_whenbroadcastreceived'] = {
     this.jsonInit({
       "id": "event_whenbroadcastreceived",
 
-      "message0": "%{BKY_EVENTS_BROADCAST_HAT}",
+      "message0": "%{BKY_EVENTS_BROADCAST_HAT_LEGACY}",
       "args0": [
         {
           "type": "field_dropdown",
@@ -293,7 +293,7 @@ Blockly.Blocks['event_broadcast'] = {
     this.jsonInit({
       "id": "event_broadcast",
       
-      "message0": "%{BKY_EVENTS_BROADCAST_SCRATCH_2}", // *** ANKI CHANGE ***
+      "message0": "%{BKY_EVENTS_BROADCAST_SCRATCH_2_LEGACY}", // *** ANKI CHANGE ***
       //"message0": "broadcast %1",
 
       "args0": [
@@ -346,7 +346,7 @@ Blockly.Blocks['event_broadcastandwait'] = {
   init: function() {
     this.jsonInit({
       
-      "message0": "%{BKY_EVENTS_BROADCAST_AND_WAIT}", // *** ANKI CHANGE ***
+      "message0": "%{BKY_EVENTS_BROADCAST_AND_WAIT_LEGACY}", // *** ANKI CHANGE ***
       //"message0": "broadcast %1 and wait",
 
       "args0": [
