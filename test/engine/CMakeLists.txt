@@ -91,5 +91,6 @@ if (MACOSX)
   set_tests_properties(test_engine
     PROPERTIES
     ENVIRONMENT "GTEST_OUTPUT=xml:cozmoEngineGoogleTest.xml"
+    ENVIRONMENT "ROOT_DIR=${CMAKE_SOURCE_DIR}"
   )
 endif(MACOSX)
