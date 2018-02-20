@@ -134,26 +134,48 @@ uint32_t OSState::GetTemperature_mC() const
 
 const std::string& OSState::GetSerialNumberAsString()
 {
-  if(_serialNumString == "")
+  if(_serialNumString.empty())
   {
-    _serialNumString = ExecCommand("getprop ro.serialno");
+    std::ifstream infile("/proc/cmdline");
+
+    std::string line;
+    while(std::getline(infile, line))
+    {
+      static const std::string kProp = "androidboot.serialno=";
+      size_t index = line.find(kProp);
+      if(index != std::string::npos)
+      {
+        _serialNumString = line.substr(index + kProp.length(), 8);
+      }
+    }
+
+    infile.close();
   }
   
   return _serialNumString;
 }
 
-u32 OSState::GetOSBuildNumber()
+const std::string& OSState::GetOSBuildVersion()
 {
-  if(_osBuildNum == 0)
+  if(_osBuildVersion.empty())
   {
-    std::string osBuildNum = ExecCommand("getprop ro.anki.os_build_number");
-    if (!osBuildNum.empty())
+    std::ifstream infile("/build.prop");
+
+    std::string line;
+    while(std::getline(infile, line))
     {
-      _osBuildNum = static_cast<u32>(std::stoi(osBuildNum));
+      static const std::string kProp = "ro.build.version.release=";
+      size_t index = line.find(kProp);
+      if(index != std::string::npos)
+      {
+        _osBuildVersion = line.substr(kProp.length(), 12);
+      }
     }
+
+    infile.close();
   }
   
-  return _osBuildNum;
+  return _osBuildVersion;
 }
   
 std::string OSState::GetIPAddressInternal()
@@ -166,53 +188,23 @@ std::string OSState::GetIPAddressInternal()
     memcpy(ifr.ifr_name,if_name,if_name_len);
     ifr.ifr_name[if_name_len]=0;
   } else {
-    ASSERT_NAMED_EVENT(false, "EngineMessages.GetIPAddress.InvalidInterfaceName", "");
+    ASSERT_NAMED_EVENT(false, "OSState.GetIPAddress.InvalidInterfaceName", "");
   }
 
   int fd=socket(AF_INET,SOCK_DGRAM,0);
   if (fd==-1) {
-    ASSERT_NAMED_EVENT(false, "EngineMessages.GetIPAddress.OpenSocketFail", "");
+    ASSERT_NAMED_EVENT(false, "OSState.GetIPAddress.OpenSocketFail", "");
   }
 
   if (ioctl(fd,SIOCGIFADDR,&ifr)==-1) {
     int temp_errno=errno;
     close(fd);
-    ASSERT_NAMED_EVENT(false, "EngineMessages.GetIPAddress.IoctlError", "%s", strerror(temp_errno));
+    ASSERT_NAMED_EVENT(false, "OSState.GetIPAddress.IoctlError", "%s", strerror(temp_errno));
   }
   close(fd);
 
   struct sockaddr_in* ipaddr = (struct sockaddr_in*)&ifr.ifr_addr;
   return std::string(inet_ntoa(ipaddr->sin_addr));
-}
-
-std::string OSState::ExecCommand(const char* cmd) 
-{
-  try
-  {
-    std::array<char, 128> buffer;
-    std::string result;
-    std::shared_ptr<FILE> pipe(popen(cmd, "r"), pclose);
-    if (!pipe)
-    {
-      PRINT_NAMED_WARNING("EngineMessages.ExecCommand.FailedToOpenPipe", "");
-      return "";
-    }
-
-    while (!feof(pipe.get()))
-    {
-      if (fgets(buffer.data(), 128, pipe.get()) != nullptr)
-      {
-        result += buffer.data();
-      }
-    }
-
-    // Remove the last character as it is a newline
-    return result.substr(0,result.size()-1);
-  }
-  catch(...)
-  {
-    return "";
-  }
 }
 
 } // namespace Cozmo

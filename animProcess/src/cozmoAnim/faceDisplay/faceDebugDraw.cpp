@@ -86,6 +86,12 @@ void FaceDebugDraw::ChangeDrawState()
   // draw on state change
   DrawFAC();
   DrawCustomText();
+
+  if(_drawState == DrawState::GeneralInfo)
+  {
+    // Try to update the ip address if we are transitioning to the GeneralInfo screen
+    OSState::getInstance()->GetIPAddress(true);
+  }
 }
 
 void FaceDebugDraw::DrawFAC()
@@ -362,9 +368,9 @@ void FaceDebugDraw::DrawStateInfo(const RobotState& state)
   {
     const std::string ip       = OSState::getInstance()->GetIPAddress();
     const std::string serialNo = OSState::getInstance()->GetSerialNumberAsString();
-    const std::string osNum    = std::to_string(OSState::getInstance()->GetOSBuildNumber());
+    const std::string osVer    = OSState::getInstance()->GetOSBuildVersion();
 
-    std::vector<std::string> text = {ip, serialNo, osNum};
+    std::vector<std::string> text = {ip, serialNo, osVer};
 
     if(FACTORY_TEST)
     {

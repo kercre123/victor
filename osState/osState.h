@@ -67,9 +67,9 @@ public:
   uint32_t GetTemperature_mC() const;
 
   // Returns our ip address
-  const std::string& GetIPAddress()
+  const std::string& GetIPAddress(bool update = false)
   {
-    if(_ipAddress.empty())
+    if(_ipAddress.empty() || update)
     {
       _ipAddress = GetIPAddressInternal();
     }
@@ -90,22 +90,19 @@ public:
 
   const std::string& GetSerialNumberAsString();
 
-  u32 GetOSBuildNumber();
+  const std::string& GetOSBuildVersion();
 
 private:
   // private ctor
   OSState();
 
   std::string GetIPAddressInternal();
-
-  // Executes the provided command and returns the output as a string
-  std::string ExecCommand(const char* cmd);
   
   uint32_t kNominalCPUFreq_kHz = 800000;
 
   std::string _ipAddress       = "";
   std::string _serialNumString = "";
-  u32         _osBuildNum      = 0;
+  std::string _osBuildVersion  = "";
 
 }; // class OSState
   
