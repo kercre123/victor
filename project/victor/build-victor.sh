@@ -15,7 +15,8 @@ function usage() {
     echo "  -p [PLATFORM]           build target platform {android,mac}"
     echo "  -a                      append cmake platform argument {arg}"
     echo "  -g [GENERATOR]          CMake generator {Ninja,Xcode,Makefile}"
-    echo "  -f                      force-run filelist updates and cmake configure before building, and force-copy assets"
+    echo "  -f                      force-run filelist updates and cmake configure before building"
+    echo "  -X                      delete build assets, forcing assets to be re-copied"
     echo "  -d                      DEBUG: generate file lists and exit"
     echo "  -x [CMAKE_EXE]          path to cmake executable"
     echo "  -C                      generate build config and exit without building"
@@ -47,7 +48,7 @@ GENERATOR=Ninja
 FEATURES=""
 ADDITIONAL_PLATFORM_ARGS=()
 
-while getopts ":x:c:p:a:t:g:F:hvfdCTeIS" opt; do
+while getopts ":x:c:p:a:t:g:F:hvfdCTeISX" opt; do
     case $opt in
         h)
             usage
@@ -58,7 +59,6 @@ while getopts ":x:c:p:a:t:g:F:hvfdCTeIS" opt; do
             ;;
         f)
             CONFIGURE=1
-            RM_BUILD_ASSETS=1
             ;;
         C)
             CONFIGURE=1
@@ -103,6 +103,9 @@ while getopts ":x:c:p:a:t:g:F:hvfdCTeIS" opt; do
             ;;
         S)
             BUILD_SHARED_LIBS=0
+            ;;
+        X)
+            RM_BUILD_ASSETS=1
             ;;
         :)
             echo "Option -${OPTARG} required an argument." >&2
@@ -240,11 +243,11 @@ tools/build/tools/ankibuild/go.py --check-version $GO_EXE
 if [ $RM_BUILD_ASSETS -eq 1 ]; then
     if [ $VERBOSE -eq 1 ]; then
         RM_VERBOSE_ARG="v"
-        echo "Removing assets in ${BUILD_DIR}/assets"
+        echo "Removing assets in ${BUILD_DIR}/data/assets"
     else
         RM_VERBOSE_ARG=""
     fi
-    rm -rf${RM_VERBOSE_ARG} ${BUILD_DIR}/assets
+    rm -rf${RM_VERBOSE_ARG} ${BUILD_DIR}/data/assets
 fi
 
 #
