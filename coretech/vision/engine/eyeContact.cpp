@@ -140,8 +140,8 @@ namespace Vision {
     // TODO we might want to consider using an adpative threshold here
     // depending on how well the blink amount varifies per
     // individual
-    bool blinking = (_face.GetBlinkAmount().blinkAmountLeft > kBlinkAmountThreshold) || 
-        (_face.GetBlinkAmount().blinkAmountRight > kBlinkAmountThreshold);
+    bool blinking = (_face.GetBlinkAmount().blinkAmountLeft < kBlinkAmountThreshold) ||
+        (_face.GetBlinkAmount().blinkAmountRight < kBlinkAmountThreshold);
 
     bool near = _face.GetHeadPose().GetTranslation().Length() < kDistanceFromCameraThresholdmm;
 
