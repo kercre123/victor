@@ -390,7 +390,7 @@ void BehaviorPuzzleMaze::DrawCozmo(Vision::Image& image)
 void BehaviorPuzzleMaze::UpdateDisplay()
 {
   // Do we need to draw a new face?
-  if (!IsControlDelegated() && !IsActing() && _animateBetweenTiles) {
+  if (!IsControlDelegated() && _animateBetweenTiles) {
     
     // Init background, height by width
     Vision::Image image(FACE_DISPLAY_HEIGHT,FACE_DISPLAY_WIDTH, NamedColors::BLACK);
@@ -398,7 +398,7 @@ void BehaviorPuzzleMaze::UpdateDisplay()
     DrawMaze(image);
     DrawCozmo(image);
     
-    GetBEI().GetAnimationComponent().DisplayFaceImage(image, 1.0f, true);
+    GetBEI().GetAnimationComponent().DisplayFaceImage(image, AnimationComponent::DEFAULT_STREAMING_FACE_DURATION_MS, true);
   }
 
 }

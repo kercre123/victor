@@ -111,9 +111,6 @@ namespace Anki {
         
         // Amount of time that Cozmo pitch needs to exceed TILT_FAILURE_ANGLE_RAD in order to fail at backing up on charger
         const u32 TILT_FAILURE_DURATION_MS = 250;
-
-        // Whether or not docking path should be traversed with manually controlled speed
-        bool useManualSpeed_ = false;
         
         typedef enum
         {
@@ -359,8 +356,7 @@ namespace Anki {
                                                          dockDecel_mmps2_,
                                                          dockOffsetDistX_,
                                                          dockOffsetDistY_,
-                                                         dockOffsetAng_,
-                                                         useManualSpeed_);
+                                                         dockOffsetAng_);
               } else {
 
                 // Set the distance to the marker beyond which
@@ -391,7 +387,6 @@ namespace Anki {
                                                 dockOffsetDistX_,
                                                 dockOffsetDistY_,
                                                 dockOffsetAng_,
-                                                useManualSpeed_,
                                                 pointOfNoReturnDist,
                                                 useFirstErrorSignalOnly);
               }
@@ -911,7 +906,6 @@ namespace Anki {
                        const f32 rel_x,
                        const f32 rel_y,
                        const f32 rel_angle,
-                       const bool useManualSpeed,
                        const u8 numRetries)
       {
 #if(DEBUG_PAP_CONTROLLER)
@@ -935,8 +929,6 @@ namespace Anki {
           dockOffsetAng_ = 0;
         }
 
-        useManualSpeed_ = useManualSpeed;
-
         transitionTime_ = 0;
         mode_ = SET_LIFT_PREDOCK;
         
@@ -949,8 +941,7 @@ namespace Anki {
                          const f32 decel_mmps2,
                          const f32 rel_x,
                          const f32 rel_y,
-                         const f32 rel_angle,
-                         const bool useManualSpeed)
+                         const f32 rel_angle)
       {
         DockToBlock(DockAction::DA_PLACE_LOW_BLIND,
                     speed_mmps,
@@ -958,8 +949,7 @@ namespace Anki {
                     decel_mmps2,
                     rel_x,
                     rel_y,
-                    rel_angle,
-                    useManualSpeed);
+                    rel_angle);
       }
 
       

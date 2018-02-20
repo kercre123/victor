@@ -15,9 +15,11 @@ static const int SELECTED_CHANNELS = 0
   | ADC_CHSELR_CHSEL2
   | ADC_CHSELR_CHSEL4
   | ADC_CHSELR_CHSEL6
+  | ADC_CHSELR_CHSEL16
   | ADC_CHSELR_CHSEL17
   ;
 
+static const uint16_t POWER_DOWN_POINT = ADC_VOLTS(3.4);
 static const uint16_t TRANSITION_POINT = ADC_VOLTS(4.5);
 static const uint32_t FALLING_EDGE = ADC_WINDOW(TRANSITION_POINT, ~0);
 
@@ -25,30 +27,24 @@ static const int POWER_DOWN_TIME = 200 * 2;   // Shutdown
 static const int POWER_WIPE_TIME = 200 * 10;  // Enter recovery mode
 static const int MINIMUM_VEXT_TIME = 20; // 0.1s
 
-static const int BUTTON_THRESHOLD = ADC_VOLTS(6.5);
+static const int BUTTON_THRESHOLD = ADC_VOLTS(5.45); // Must be halved from actual
 static const int BOUNCE_LENGTH = 3;
+static const int MINIMUM_RELEASE_UNSTUCK = 20;
 
 static volatile bool onBatPower;
 static bool chargeAllowed;
+static bool is_charging;
 static int vext_debounce;
 static bool last_vext = false;
-static bool bouncy_button;
-static int bouncy_count;
-static int hold_count;
+static bool bouncy_button = false;
+static int bouncy_count = 0;
+static int hold_count = 0;
+static int total_release = 0;
+static bool on_charger = false;
 
 uint16_t volatile Analog::values[ADC_CHANNELS];
-bool Analog::button_pressed;
-
-
-static void disableVMain(void) {
-  MAIN_EN::mode(MODE_OUTPUT);
-  MAIN_EN::reset();
-}
-
-static void enableVMain(void) {
-  MAIN_EN::mode(MODE_OUTPUT);
-  MAIN_EN::set();
-}
+bool Analog::button_pressed = false;
+uint16_t Analog::battery_voltage = 0;
 
 void Analog::init(void) {
   // Calibrate ADC1
@@ -75,7 +71,9 @@ void Analog::init(void) {
   ADC1->IER = ADC_IER_AWDIE;
   ADC1->TR = FALLING_EDGE;
 
-  ADC->CCR = ADC_CCR_VREFEN;
+  ADC->CCR = 0
+           | ADC_CCR_TSEN
+           | ADC_CCR_VREFEN;
 
   // Enable ADC
   ADC1->ISR = ADC_ISR_ADRDY;
@@ -100,7 +98,7 @@ void Analog::init(void) {
   POWER_EN::mode(MODE_INPUT);
   POWER_EN::pull(PULL_UP);
 
-  enableVMain();
+  Power::enableHead();
 
   CHG_EN::type(TYPE_OPENDRAIN);
   CHG_PWR::type(TYPE_OPENDRAIN);
@@ -127,6 +125,12 @@ void Analog::stop(void) {
 void Analog::transmit(BodyToHead* data) {
   data->battery.battery = values[ADC_VMAIN];
   data->battery.charger = values[ADC_VEXT];
+  data->battery.temperature = values[ADC_TEMP];
+  data->battery.flags = 0
+                      | (is_charging ? POWER_IS_CHARGING : 0)
+                      | (on_charger ? POWER_ON_CHARGER : 0)
+                      ;
+
   data->touchLevel[1] = button_pressed ? 0xFFFF : 0x0000;
 }
 
@@ -142,13 +146,22 @@ void Analog::allowCharge(bool enable) {
   vext_debounce = 0;
 }
 
-void Analog::delayCharge() {
+bool Analog::delayCharge() {
   vext_debounce = 0;
+  return is_charging;
 }
 
 void Analog::tick(void) {
   // On-charger delay
   bool vext_now = Analog::values[ADC_VEXT] >= TRANSITION_POINT;
+
+  // Emergency trap (V3.3)
+  if (!is_charging) {
+    battery_voltage = Analog::values[ADC_VMAIN];
+    if (Analog::values[ADC_VMAIN] < POWER_DOWN_POINT) {
+      Power::setMode(POWER_STOP);
+    }
+  }
 
   // Debounced VEXT line
   if (vext_now && last_vext) {
@@ -156,10 +169,13 @@ void Analog::tick(void) {
   } else {
     vext_debounce = 0;
   }
+
   last_vext = vext_now;
 
   // Charge logic
-  if (chargeAllowed && vext_debounce >= MINIMUM_VEXT_TIME) {
+  on_charger = vext_debounce >= MINIMUM_VEXT_TIME;
+  is_charging = chargeAllowed && on_charger;
+  if (is_charging) {
     CHG_PWR::set();
   } else {
     CHG_PWR::reset();
@@ -168,6 +184,18 @@ void Analog::tick(void) {
   // Button logic
   bool new_button = (values[ADC_BUTTON] >= BUTTON_THRESHOLD);
 
+  // Trap stuck down button
+  if (total_release < MINIMUM_RELEASE_UNSTUCK) {
+    if (!new_button) {
+      total_release++;
+    } else {
+      total_release = 0;
+    }
+
+    return ;
+  }
+
+  // Debounce the button
   if (bouncy_button != new_button) {
     bouncy_button = new_button;
     bouncy_count = 0;
@@ -183,17 +211,17 @@ void Analog::tick(void) {
       BODY_TX::mode(MODE_OUTPUT);
 
       // Reenable power to the head
-      enableVMain();
+      Power::enableHead();
     } else if (hold_count >= POWER_DOWN_TIME) {
-      disableVMain();
+      Power::disableHead();
       Lights::disable();
+    } else {
+      Power::setMode(POWER_ACTIVE);
+      Power::enableHead();
     }
   } else {
-    if (hold_count >= POWER_WIPE_TIME) {
-      // Switch back to transmission mode
-      BODY_TX::mode(MODE_ALTERNATE);
-    } else if (hold_count >= POWER_DOWN_TIME) {
-      Power::stop();
+    if (hold_count >= POWER_DOWN_TIME && hold_count < POWER_WIPE_TIME) {
+      Power::setMode(POWER_STOP);
     }
 
     hold_count = 0;

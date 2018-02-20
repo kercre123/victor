@@ -18,7 +18,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
 #include "engine/ankiEventUtil.h"
-#include "engine/dependencyManagedComponent.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 #include "engine/overheadEdge.h"
 #include "engine/navMap/iNavMap.h"
 #include "engine/robotComponents_fwd.h"
@@ -29,6 +29,7 @@
 
 #include <assert.h>
 #include <string>
+#include <list>
 
 namespace Anki {
 namespace Cozmo {
@@ -72,6 +73,9 @@ public:
   
   // Processes the edges found in the given frame
   Result ProcessVisionOverheadEdges(const OverheadEdgeFrame& frameInfo);
+  
+  // add obstacles detected from the driving classifier to navMap
+  void AddDetectedObstacles(const OverheadEdgeFrame& edgeObstacle);
 
   ////////////////////////////////////////////////////////////////////////////////
   // Message handling / dispatch
@@ -83,6 +87,9 @@ public:
   
   // flags any interesting edges in the given quad as not interesting anymore. Quad should be passed wrt current origin
   void FlagQuadAsNotInterestingEdges(const Quad2f& quadWRTOrigin);
+
+  // set the region defined by the given poly with the provided data.
+  void InsertData(const Poly2f& polyWRTOrigin, const MemoryMapData& data);
   
   // flags all current interesting edges as too small to give useful information
   void FlagInterestingEdgesAsUseless();
@@ -90,17 +97,21 @@ public:
   // create a new memory map from current robot frame of reference.
   void CreateLocalizedMemoryMap(PoseOriginID_t worldOriginID);
   
-  // Visualize the navigation memory information
-  void DrawMap() const;
+  // Publish navMap to the Viz channel
+  void DrawMap(const MemoryMapTypes::MapBroadcastData& mapData) const;
   
-  // Send navigation memory map (e.g. so SDK can get the data)
-  void BroadcastMap();
+  // Publish navMap to the EngineToGame channel (e.g. so SDK can get the data)
+  void BroadcastMap(const MemoryMapTypes::MapBroadcastData& mapData) const;
   
   // clear the space in the memory map between the robot and observed markers for the given object,
   // because if we saw the marker, it means there's nothing between us and the marker.
   // The observed markers are obtained querying the current marker observation time
   void ClearRobotToMarkers(const ObservableObject* object);
-    
+
+  // clear the space between the robot and the line segment defined by points p and q
+  void ClearRobotToEdge(const Point2f& p, const Point2f& q, const TimeStamp_t t);
+
+
   
   ////////////////////////////////////////////////////////////////////////////////
   // Accessors
@@ -118,7 +129,10 @@ private:
   INavMap* GetCurrentMemoryMapHelper() const;
   
   // remove current renders for all maps if any
-  void ClearRender() const;
+  void ClearRender();
+
+  // update broadcast dirty flags with new changes
+  void UpdateBroadcastFlags(bool wasChanged);
 
   // enable/disable rendering of the memory maps
   void SetRenderEnabled(bool enabled);
@@ -129,6 +143,9 @@ private:
   // add/remove the given object to/from the memory map
   void AddObservableObject(const ObservableObject& object, const Pose3d& newPose);
   void RemoveObservableObject(const ObservableObject& object, PoseOriginID_t originID);
+
+  // search the navMap and remove any nodes that have exceeded their timeout period
+  void TimeoutObjects();
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Vision border detection
@@ -159,10 +176,13 @@ private:
   PoseOriginID_t                  _currentMapOriginID;
   ObjectIdToPosesPerOrigin        _reportedPoses;
   Pose3d                          _reportedRobotPose;
+
+  // use multiple dirty flags to broadcast to different channels in case they have different broadcast rates
+  bool                            _vizMessageDirty;
+  bool                            _gameMessageDirty;
   
   bool                            _isRenderEnabled;
   float                           _broadcastRate_sec = -1.0f;      // (Negative means don't send)
-  float                           _nextBroadcastTimeStamp = 0.0f;  // The next time we should broadcast
 };
 
 }

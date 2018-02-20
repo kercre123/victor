@@ -1,5 +1,5 @@
 """
-SDK Interface to Cozmo-Engine, supports communication over either a localhost UDP socket, or a TCP socket
+SDK Interface to Victor-Engine, supports communication over either a localhost UDP socket, or a TCP socket
 All communication is via CLAD messages.
 """
 __author__ = "Mark Wesley"
@@ -25,8 +25,8 @@ except Exception as e:
 #Anki.update(_Anki.deep_clone())
 
 # namespace shortcuts
-EToG  =  Anki.Cozmo
-GToE  = _Anki.Cozmo
+EToG  =  Anki.Victor
+GToE  = _Anki.Victor
 EToGI = EToG.ExternalInterface
 GToEI = GToE.ExternalInterface
 EToGM = EToGI.MessageEngineToGame
@@ -60,12 +60,12 @@ def ArgListToString(*args):
 
 
 # ================================================================================    
-# Internal Private _EngineInterfaceImpl for talking to/from cozmo-engine
+# Internal Private _EngineInterfaceImpl for talking to/from victor-engine
 # ================================================================================
 
 
 class _EngineInterfaceImpl:
-    "Internal interface for talking to cozmo-engine"
+    "Internal interface for talking to victor-engine"
     
     def __init__(self, useTcpConnection, verboseLevel):
 
@@ -166,9 +166,9 @@ class _EngineInterfaceImpl:
                         msg = fromEngMsg.UiDeviceConnected
                         if self.verboseLevel >= VerboseLevel.High:
                             sys.stdout.write("Recv: UiDeviceConnected Type=" + str(msg.connectionType) + ", id=" + str(msg.deviceID) + ", success=" + str(msg.successful) + os.linesep)
-                        if self.useTcpConnection and (msg.connectionType == Anki.Cozmo.UiConnectionType.SdkOverTcp):
+                        if self.useTcpConnection and (msg.connectionType == Anki.Victor.UiConnectionType.SdkOverTcp):
                             self.OnConnectionAcked()
-                        elif (not self.useTcpConnection) and (msg.connectionType == Anki.Cozmo.UiConnectionType.SdkOverUdp):
+                        elif (not self.useTcpConnection) and (msg.connectionType == Anki.Victor.UiConnectionType.SdkOverUdp):
                             self.OnConnectionAcked()
                         else:
                             sys.stdout.write("Something else Connected to Engine" + os.linesep)

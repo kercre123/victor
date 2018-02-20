@@ -22,7 +22,7 @@
 #include "clad/types/dockingSignals.h"
 #include "clad/types/robotStatusAndActions.h"
 
-#include "engine/dependencyManagedComponent.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 #include "engine/robotComponents_fwd.h"
 
 #include "util/helpers/noncopyable.h"
@@ -58,7 +58,6 @@ public:
   // dockAction.
   // Optionally takes
   // - offsets from the marker at which to dock
-  // - whether or not to use manual speed control
   // - how many firmware side retries should occur
   // - which docking method to use
   // - whether or not to a lift load check
@@ -72,7 +71,6 @@ public:
                         const f32 placementOffsetX_mm = 0,
                         const f32 placementOffsetY_mm = 0,
                         const f32 placementOffsetAngle_rad = 0,
-                        const bool useManualSpeed = false,
                         const u8 numRetries = 2,
                         const DockingMethod dockingMethod = DockingMethod::BLIND_DOCKING,
                         const bool doLiftLoadCheck = false);

@@ -71,9 +71,9 @@ public:
 protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
     modifiers.wantsToBeActivatedWhenCarryingObject = _configParams.behavior_CanCarryCube;
-    modifiers.visionModesForActiveScope->push_back({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::Standard });
-    modifiers.visionModesForActiveScope->push_back({ VisionMode::DetectingFaces, EVisionUpdateFrequency::Standard });
-    modifiers.visionModesForActiveScope->push_back({ VisionMode::DetectingPets, EVisionUpdateFrequency::Standard });
+    modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::Standard });
+    modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::Standard });
+    modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingPets, EVisionUpdateFrequency::Standard });
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

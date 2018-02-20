@@ -1,6 +1,0 @@
-{
-  "behaviorClass": "PlayAnimWithFace",
-  
-  "behaviorID": "FeedingPlayRequestAtFace_Severe",
-  "animTriggers": ["NeedsSevereLowEnergyRequest"]  
-}

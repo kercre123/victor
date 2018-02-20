@@ -46,7 +46,6 @@
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
 #include "engine/robotInterface/messageHandler.h"
-#include "engine/robotManager.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -135,7 +134,7 @@ std::map<NVEntryTag, u32> NVStorageComponent::_maxFactoryEntrySizeTable = {
 
   
 NVStorageComponent::NVStorageComponent()
-: IDependencyManagedComponent<RobotComponentID>(RobotComponentID::NVStorage)
+: IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::NVStorage)
 {
 }
 

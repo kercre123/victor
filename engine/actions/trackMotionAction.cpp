@@ -24,7 +24,12 @@ namespace Anki {
 namespace Cozmo {
   
 static const char * const kLogChannelName = "Actions";
-  
+
+void TrackMotionAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const
+{
+  requests.insert({ VisionMode::DetectingMotion, EVisionUpdateFrequency::High });
+}
+
 ActionResult TrackMotionAction::InitInternal()
 {
   if(false == GetRobot().HasExternalInterface()) {

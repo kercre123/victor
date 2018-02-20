@@ -13,6 +13,7 @@
 #include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
+#include "util/console/consoleInterface.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -59,10 +60,22 @@ namespace {
   const float kBaselineMaxAllowableBufferStdev = 15;
 
   const float kBaselineMaxAllowStdevFactorForLowMean = 1.5f;
+  
+  bool devSendTouchSensor = false;
+  bool devTouchSensorPressed = false;
+  #if ANKI_DEV_CHEATS
+  void SetTouchSensor(ConsoleFunctionContextRef context)
+  {
+    devTouchSensorPressed = ConsoleArg_Get_Bool(context, "pressed");
+    devSendTouchSensor = true;
+  }
+  CONSOLE_FUNC(SetTouchSensor, "Touch", bool pressed);
+  #endif
 } // end anonymous namespace
 
 TouchSensorComponent::TouchSensorComponent() 
-: ISensorComponent(kLogDirectory, RobotComponentID::TouchSensor)
+: ISensorComponent(kLogDirectory)
+, IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::TouchSensor)
 , _debouncer(kDebounceLimitPressLow, 
              kDebounceLimitPressHi)
 , _gestureClassifier(kGestureMinTimeForHeld_s,
@@ -100,7 +113,7 @@ void TouchSensorComponent::UpdateInternal(const RobotState& msg)
   const bool isPickedUp = (msg.status & (uint32_t)RobotStatusFlag::IS_PICKED_UP) != 0;
 
   TouchGesture curGesture = _touchGesture;
-  if( !_baselineCalib.IsCalibrated() ) {
+  if( !_baselineCalib.IsCalibrated() && (!devSendTouchSensor) ) {
     // note: do not detect touch instances during fast-calibration
     if(!isPickedUp) {
       _baselineCalib.UpdateCalibration(msg.backpackTouchSensorRaw);
@@ -110,8 +123,8 @@ void TouchSensorComponent::UpdateInternal(const RobotState& msg)
     const auto normTouch = msg.backpackTouchSensorRaw-_baselineCalib.GetFilteredTouchMean();
     const bool isTouched = normTouch > 
                             (_touchDetectStdevFactor*_baselineCalib.GetFilteredTouchStdev());
-    if( _debouncer.ProcessRawPress(isTouched) ) {
-      const bool debouncedButtonState = _debouncer.GetDebouncedPress();
+    if( _debouncer.ProcessRawPress(isTouched) || devSendTouchSensor ) {
+      const bool debouncedButtonState = devSendTouchSensor ? devTouchSensorPressed : _debouncer.GetDebouncedPress();
       _robot->Broadcast(ExternalInterface::MessageEngineToGame(
                         ExternalInterface::TouchButtonEvent(debouncedButtonState)));
       if( debouncedButtonState ) {
@@ -119,6 +132,8 @@ void TouchSensorComponent::UpdateInternal(const RobotState& msg)
       } else {
         _gestureClassifier.AddTouchReleased();
       }
+      
+      devSendTouchSensor = false;
     }
     curGesture = _gestureClassifier.CalcTouchGesture();
 

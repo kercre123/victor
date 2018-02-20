@@ -9,6 +9,7 @@ set(CLAD_INCLUDES
 )
 
 set(OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/coretech/vision")
+set(PY_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/cladPython")
 
 generate_clad_cpp(LIBRARY "cti_vision_clad" 
   STATIC
@@ -17,6 +18,15 @@ generate_clad_cpp(LIBRARY "cti_vision_clad"
   OUTPUT_DIR "${OUTPUT_DIR}"
   INCLUDES "${CLAD_INCLUDES}"
   OUTPUT_SRCS CLAD_CPP_GEN_SRCS
+)
+
+generate_clad_py(
+  TARGET "cti_vision_clad_python"
+  SRCS "${SRCS}"
+  RELATIVE_SRC_DIR ".."
+  OUTPUT_DIR "${PY_OUTPUT_DIR}"
+  INCLUDES "${CLAD_INCLUDES}"
+  OUTPUT_SRCS CLAD_PY_GEN_SRCS
 )
 
 target_include_directories(cti_vision_clad

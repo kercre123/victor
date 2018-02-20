@@ -26,3 +26,8 @@ target_include_directories(cti_messaging_robot
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../..>
 )
+
+target_link_libraries(cti_messaging_robot
+  PUBLIC
+  cti_common_robot
+)

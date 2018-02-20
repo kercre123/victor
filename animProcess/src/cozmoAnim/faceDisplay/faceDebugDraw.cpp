@@ -129,8 +129,9 @@ void FaceDebugDraw::DrawConfidenceClock(
   constexpr int barWidthB_px = (int) (angleFactorB * (float)barWidth_px * 0.5f); // 0
   constexpr int halfBarWidth_px = (int) ((float)barWidth_px * 0.5f);
 
-  // Multiplying factors (cos/sin) for the clock directions
-  static const std::array<Point2f, 12> barLenFactor = 
+  // Multiplying factors (cos/sin) for the clock directions.
+  // NOTE: Needs to have the 13th value so the unknown direction dot can display properly
+  static const std::array<Point2f, 13> barLenFactor = 
   {{
     {0.f, 1.f}, // 12 o'clock - in front of robot so point down
     {-angleFactorB, angleFactorA}, // 1 o'clock
@@ -143,7 +144,8 @@ void FaceDebugDraw::DrawConfidenceClock(
     {angleFactorA, -angleFactorB}, // 8 o'clock
     {1.f, 0.f}, // 9 o'clock
     {angleFactorA, angleFactorB}, // 10 o'clock
-    {angleFactorB, angleFactorA} // 11 o'clock
+    {angleFactorB, angleFactorA}, // 11 o'clock
+    {0.f, 0.f} // Unknown direction
   }};
 
   // Precalculated offsets for the center of the base of each of the direction bars,
@@ -287,6 +289,22 @@ void FaceDebugDraw::DrawConfidenceClock(
     {(int) (bufferFullPercent * (float) buffFullBarWidth_px), FACE_DISPLAY_HEIGHT - endOfBarHeight_px + buffFullBarHeight_px / 2}
     }, 
     NamedColors::RED);
+    
+  const std::string confidenceString = std::to_string(micData.confidence);
+  drawImg.DrawText( {0.0f, 10.0f}, confidenceString, NamedColors::WHITE, 0.5f );
+
+  // Also draw the delay time in milliseconds
+  // Copied from kRawAudioPerBuffer_ms in micDataProcessor.h
+  // and doubled for 2 buffers
+  const auto maxDelayTime_ms = 2000.f * 2.f;
+  const auto delayTime_ms = (int) (maxDelayTime_ms * bufferFullPercent);
+  const auto delayStr = std::to_string(delayTime_ms);
+  const Point2f textLoc = {0.f, FACE_DISPLAY_HEIGHT - endOfBarHeight_px};
+  const auto textScale = 0.5f;
+  _scratchDrawingImg->DrawText(textLoc,
+                               delayStr,
+                               NamedColors::WHITE,
+                               textScale);
 
   // Draw the debug page number
   DrawScratch();

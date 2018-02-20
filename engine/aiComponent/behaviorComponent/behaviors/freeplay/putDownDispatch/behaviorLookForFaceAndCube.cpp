@@ -69,7 +69,7 @@ bool BehaviorLookForFaceAndCube::WantsToBeActivatedBehavior() const
 void BehaviorLookForFaceAndCube::LoadConfig(const Json::Value& config)
 {
   using namespace JsonTools;
-  const std::string& debugName = GetIDStr() + ".BehaviorLookForFaceAndCube.LoadConfig";
+  const std::string& debugName = GetDebugLabel() + ".BehaviorLookForFaceAndCube.LoadConfig";
 
   // shared
   _configParams.bodyTurnSpeed_radPerSec = DEG_TO_RAD( ParseFloat(config, "bodyTurnSpeed_degPerSec", debugName) );
@@ -99,7 +99,7 @@ void BehaviorLookForFaceAndCube::LoadConfig(const Json::Value& config)
   {
     PRINT_NAMED_ERROR("BehaviorLookForFaceAndCube.LoadConfig.Invalid.lookInPlaceAnimTrigger",
       "[%s] Invalid animation trigger '%s'",
-      GetIDStr().c_str(), lookInPlaceAnimTriggerStr.c_str());
+      GetDebugLabel().c_str(), lookInPlaceAnimTriggerStr.c_str());
   }
   
 }
@@ -107,7 +107,7 @@ void BehaviorLookForFaceAndCube::LoadConfig(const Json::Value& config)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorLookForFaceAndCube::OnBehaviorActivated()
 {
-  PRINT_CH_INFO("Behaviors", (GetIDStr() + ".InitInternal").c_str(), "Starting to look for face at center");
+  PRINT_CH_INFO("Behaviors", (GetDebugLabel() + ".InitInternal").c_str(), "Starting to look for face at center");
 
   auto& robotInfo = GetBEI().GetRobotInfo();
   _startingBodyFacing_rad = robotInfo.GetPose().GetWithRespectToRoot().GetRotationAngle<'Z'>();
@@ -255,7 +255,7 @@ void BehaviorLookForFaceAndCube::StopBehaviorOnFaceIfNeeded(FaceID_t observedID)
     // need to handle that here. We never kill the behavior on a tracking only face
 
     if( _configParams.stopBehaviorOnAnyFace ) {
-      PRINT_CH_INFO("Behavior", (GetIDStr() + ".SawFace.End").c_str(),
+      PRINT_CH_INFO("Behavior", (GetDebugLabel() + ".SawFace.End").c_str(),
                     "Stopping behavior because we saw (any) face id %d",
                     observedID);
         
@@ -274,7 +274,7 @@ void BehaviorLookForFaceAndCube::StopBehaviorOnFaceIfNeeded(FaceID_t observedID)
                       observedID) ) {
         
         if( facePtr->HasName() ) {
-          PRINT_CH_INFO("Behavior", (GetIDStr() + ".SawFace.End").c_str(),
+          PRINT_CH_INFO("Behavior", (GetDebugLabel() + ".SawFace.End").c_str(),
                         "Stopping behavior because we saw (any) face id %d",
                         observedID);
         
@@ -290,7 +290,7 @@ void BehaviorLookForFaceAndCube::StopBehaviorOnFaceIfNeeded(FaceID_t observedID)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorLookForFaceAndCube::CancelActionAndVerifyFace(FaceID_t observedFace)
 {
-  PRINT_CH_INFO("Behaviors", (GetIDStr() + ".VerifyFace").c_str(),
+  PRINT_CH_INFO("Behaviors", (GetDebugLabel() + ".VerifyFace").c_str(),
                 "Stopping current action to verify face %d",
                 observedFace);
 
@@ -339,7 +339,7 @@ void BehaviorLookForFaceAndCube::TransitionToS1_FaceOnLeft()
 {
   _currentState = State::S1FaceOnLeft;
   ++_currentSidePicksDone;
-  PRINT_CH_INFO("Behaviors", (GetIDStr() + ".S1FaceOnLeft").c_str(),
+  PRINT_CH_INFO("Behaviors", (GetDebugLabel() + ".S1FaceOnLeft").c_str(),
     "Looking for face to my left (%u out of %u)", _currentSidePicksDone, _configParams.face_sidePicks);
   
   // create head move action
@@ -366,7 +366,7 @@ void BehaviorLookForFaceAndCube::TransitionToS2_FaceOnRight()
 {
   _currentState = State::S2FaceOnRight;
   ++_currentSidePicksDone;
-  PRINT_CH_INFO("Behaviors", (GetIDStr() + ".S2FaceOnRight").c_str(),
+  PRINT_CH_INFO("Behaviors", (GetDebugLabel() + ".S2FaceOnRight").c_str(),
     "Looking for face to my right (%u out of %u)", _currentSidePicksDone, _configParams.face_sidePicks);
   
   // create head move action
@@ -392,7 +392,7 @@ void BehaviorLookForFaceAndCube::TransitionToS3_CubeOnRight()
 {
   _currentState = State::S3CubeOnRight;
   ++_currentSidePicksDone;
-  PRINT_CH_INFO("Behaviors", (GetIDStr() + ".S3CubeOnRight").c_str(),
+  PRINT_CH_INFO("Behaviors", (GetDebugLabel() + ".S3CubeOnRight").c_str(),
     "Looking for cube to my right (%u out of %u)", _currentSidePicksDone, _configParams.cube_sidePicks);
 
   // create head move action
@@ -419,7 +419,7 @@ void BehaviorLookForFaceAndCube::TransitionToS4_CubeOnLeft()
 {
   _currentState = State::S4CubeOnLeft;
   ++_currentSidePicksDone;
-  PRINT_CH_INFO("Behaviors", (GetIDStr() + ".S4CubeOnLeft").c_str(),
+  PRINT_CH_INFO("Behaviors", (GetDebugLabel() + ".S4CubeOnLeft").c_str(),
     "Looking for cube to my left (%u out of %u)", _currentSidePicksDone, _configParams.cube_sidePicks);
 
   // create head move action
@@ -447,7 +447,7 @@ void BehaviorLookForFaceAndCube::TransitionToS5_Center()
 {
   _currentState = State::S5Center;
   ++_currentSidePicksDone;
-  PRINT_CH_INFO("Behaviors", (GetIDStr() + ".S4CubeOnLeft").c_str(),
+  PRINT_CH_INFO("Behaviors", (GetDebugLabel() + ".S4CubeOnLeft").c_str(),
     "Looking for cube to my left (%u out of %u)", _currentSidePicksDone, _configParams.cube_sidePicks);
 
   // create head move action

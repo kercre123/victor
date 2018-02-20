@@ -11,7 +11,7 @@
 #define DEBUG_HEAD_CONTROLLER 0
 
 // If defined, angle is calibrated while power is still being applied, versus a short period of time after motor is "relaxed"
-#define CALIB_WHILE_APPLYING_POWER
+//#define CALIB_WHILE_APPLYING_POWER
 
 namespace Anki {
 namespace Cozmo {
@@ -84,7 +84,7 @@ namespace HeadController {
 
       const f32 MAX_HEAD_CONSIDERED_STOPPED_RAD_PER_SEC = 0.001f;
 
-      const u32 HEAD_STOP_TIME = 500;  // ms
+      const u32 HEAD_STOP_TIME = 200;  // ms
 
       bool enable_ = false;
 

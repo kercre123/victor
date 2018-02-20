@@ -31,7 +31,7 @@ const float kBiasMaxRange_rad_per_sec = DEG_TO_RAD(0.05f); // maximum allowed di
   
 
 RobotGyroDriftDetector::RobotGyroDriftDetector()
-: IDependencyManagedComponent(RobotComponentID::GyroDriftDetector)
+: IDependencyManagedComponent(this, RobotComponentID::GyroDriftDetector)
 {
 
 }

@@ -65,7 +65,7 @@ Result BehaviorPlaypenPickupCube::OnBehaviorActivatedInternal()
   // be removed
   Robot& robot = GetBEI().GetRobotInfo()._robot;
 
-  RecordTouchSensorData(robot, GetIDStr());
+  RecordTouchSensorData(robot, GetDebugLabel());
   
   // Make sure marker detection is enabled (probably super overkill...)
   robot.GetVisionComponent().EnableMode(VisionMode::DetectingMarkers, true);

@@ -1,7 +1,0 @@
-{
-  "behaviorClass": "PlayAnim",
-  "behaviorID": "VictorCloudDemoHowAreYou",
-  "respondToCloudIntent": "HowAreYou",
-  "animNames": ["anim_energy_requestshortlvl1_01",
-                "anim_petdetection_shortreaction_01"]  
-}

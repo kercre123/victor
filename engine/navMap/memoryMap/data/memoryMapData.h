@@ -23,11 +23,15 @@ namespace Cozmo {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class MemoryMapData
 {
+protected:
+  using MemoryMapDataPtr = MemoryMapTypes::MemoryMapDataPtr;
+  using EContentType     = MemoryMapTypes::EContentType;
+
 public:
-  const MemoryMapTypes::EContentType type;
+  const EContentType type;
 
   // base_of_five_defaults - destructor
-  MemoryMapData(MemoryMapTypes::EContentType type, TimeStamp_t time) : MemoryMapData(type, time, false) {}
+  MemoryMapData(EContentType type = EContentType::Unknown, TimeStamp_t time = 0.f) : MemoryMapData(type, time, false) {}
   MemoryMapData(const MemoryMapData&) = default;
   MemoryMapData(MemoryMapData&&) = default;
   MemoryMapData& operator=(const MemoryMapData&) = default;
@@ -35,7 +39,7 @@ public:
   virtual ~MemoryMapData() = default;
   
   // create a copy of self (of appropriate subclass) and return it
-  virtual MemoryMapData* Clone() const { return new MemoryMapData(*this); };
+  virtual MemoryMapDataPtr Clone() const { return std::make_shared<MemoryMapData>(*this); };
   
   // compare to MemoryMapData and return bool if the data stored is the same
   virtual bool Equals(const MemoryMapData* other) const { return (type == other->type); }

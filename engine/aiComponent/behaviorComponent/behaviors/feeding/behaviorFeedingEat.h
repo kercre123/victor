@@ -15,7 +15,6 @@
 #define __Cozmo_Basestation_Behaviors_Feeding_BehaviorFeedingEat_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/aiComponent/behaviorComponent/feedingCubeController.h"
 #include "engine/components/bodyLightComponent.h"
 
 

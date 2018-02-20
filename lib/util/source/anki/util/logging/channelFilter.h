@@ -29,10 +29,9 @@ namespace Util {
 // ChannelVar: console var
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 struct ChannelVar {
-  ChannelVar(const std::string& name, bool defaultEnable)
+  ChannelVar(const std::string& name, bool defaultEnable, bool unregisterInDestructor)
   : enable(defaultEnable)
-  , cvar(enable, name.c_str()
-  , "Channels") {}
+  , cvar(enable, name.c_str(), "Channels", unregisterInDestructor) {}
   
   bool enable; // variable where the value is stored
   ConsoleVar<bool> cvar; // consoleVar provider (for console var menu) that links to the storage variable 'enable'
@@ -52,7 +51,7 @@ public:
   
   void EnableChannel(const std::string& channelName);
   void DisableChannel(const std::string& channelName);
-  void RegisterChannel(const std::string& channelName, bool defaultEnableStatus);
+  void RegisterChannel(const std::string& channelName, bool defaultEnableStatus, bool unregisterInDestructor);
   bool IsChannelRegistered(const std::string& channelName) const;
   
   // IChannelFilter API

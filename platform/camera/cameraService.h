@@ -1,6 +1,10 @@
 /**
  * File: cameraService.h
  *
+ * Author: chapados
+ * Created: 02/07/2018
+ * 
+ * based on androidHAL.h
  * Author: Kevin Yoon
  * Created: 02/17/2017
  *
@@ -68,17 +72,18 @@ namespace Anki
       // Sets the camera parameters (non-blocking call)
       void CameraSetParameters(u16 exposure_ms, f32 gain);
 
-      // Points provided frame to a buffer of image data if available
-      // Returns true if image available
-      // TODO: How fast will this be in hardware? Is image ready and waiting?
+      // Points provided frame to a buffer of image data if available.
+      // Returns true if image available.
+      // If this method results in acquiring a frame, the frame is locked, ensuring
+      // that the camera system will not update the buffer.
+      // The caller is responsible for releasing the lock by calling CameraFrameRelease.
       bool CameraGetFrame(u8*& frame, u32& imageID, TimeStamp_t& imageCaptureSystemTimestamp_ms);
 
+      // Releases lock on buffer for specified frameID acquired by calling CameraGetFrame.
       bool CameraReleaseFrame(u32 imageID);
 
       u16 CameraGetHeight() const {return _imageCaptureHeight;}
       u16 CameraGetWidth()  const {return _imageCaptureWidth; }
-
-      void CameraSwapLocks();
 
     private:
 

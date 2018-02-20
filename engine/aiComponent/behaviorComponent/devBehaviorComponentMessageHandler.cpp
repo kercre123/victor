@@ -11,6 +11,7 @@
 *
 **/
 
+#include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
@@ -18,21 +19,23 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherRerun.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/devBehaviorComponentMessageHandler.h"
+#include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/externalInterface/externalInterface.h"
-
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
+#include "webServerProcess/src/webService.h"
 
 namespace Anki {
 namespace Cozmo {
 
 namespace {
 static const BehaviorID kBehaviorIDForDevMessage = BEHAVIOR_ID(DevExecuteBehaviorRerun);
+const std::string kWebVizModuleName = "behaviors";
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 DevBehaviorComponentMessageHandler::DevBehaviorComponentMessageHandler(Robot& robot)
-: IDependencyManagedComponent<BCComponentID>(BCComponentID::DevBehaviorComponentMessageHandler)
+: IDependencyManagedComponent<BCComponentID>(this, BCComponentID::DevBehaviorComponentMessageHandler)
 , _robot(robot)
 {
 
@@ -57,11 +60,14 @@ void DevBehaviorComponentMessageHandler::GetInitDependencies(BCCompIDSet& depend
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void DevBehaviorComponentMessageHandler::InitDependent(Robot* robot, const BCCompMap& dependentComponents) 
 {
-  auto& bContainer = dependentComponents.find(BCComponentID::BehaviorContainer)->second.GetValue<BehaviorContainer>();
-  auto& bsm = dependentComponents.find(BCComponentID::BehaviorSystemManager)->second.GetValue<BehaviorSystemManager>();
-  auto& bei = dependentComponents.find(BCComponentID::BehaviorExternalInterface)->second.GetValue<BehaviorExternalInterface>();
+  auto& bContainer = dependentComponents.GetValue<BehaviorContainer>();
+  auto& bsm = dependentComponents.GetValue<BehaviorSystemManager>();
+  auto& bei = dependentComponents.GetValue<BehaviorExternalInterface>();
 
   if(_robot.HasExternalInterface()){
+    
+    SubscribeToWebViz( bei, bsm );
+    
     auto handlerCallback = [this, &bContainer, &bsm, &bei](const GameToEngineEvent& event) {
       const auto& msg = event.GetData().Get_ExecuteBehaviorByID();
       
@@ -82,8 +88,62 @@ void DevBehaviorComponentMessageHandler::InitDependent(Robot* robot, const BCCom
       _robot.GetExternalInterface()->Subscribe(GameToEngineTag::ExecuteBehaviorByID, 
                                                handlerCallback)
     );
+    
+    SetupUserIntentEvents();
   }
-};
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void DevBehaviorComponentMessageHandler::SetupUserIntentEvents()
+{
+  
+  auto EI = _robot.GetExternalInterface();
+  
+  // fake trigger word
+  auto fakeTriggerWordCallback = [this]( const GameToEngineEvent& event ) {
+    PRINT_CH_INFO("BehaviorSystem","DevBehaviorComponentMessageHandler.ReceivedFakeTriggerWordDetected","");
+    auto& uic = _robot.GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
+    uic.SetTriggerWordPending();
+  };
+  _eventHandles.push_back( EI->Subscribe( GameToEngineTag::FakeTriggerWordDetected, fakeTriggerWordCallback ) );
+  
+  // fake cloud intent
+  auto fakeCloudIntentCallback = [this]( const GameToEngineEvent& event ) {
+    PRINT_CH_INFO("BehaviorSystem","DevBehaviorComponentMessageHandler.FakeCloudIntentReceived","");
+    auto& uic = _robot.GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
+    const auto& intent = event.GetData().Get_FakeCloudIntent().intent;
+    if( (intent.find("{") != std::string::npos) // super awesome json detection
+        && (intent.find("}") != std::string::npos) )
+    {
+      uic.SetCloudIntentPendingFromJSON( intent );
+    } else {
+      std::string jsonIntent = "{\"intent\": \"" + intent + "\"}";
+      uic.SetCloudIntentPendingFromJSON( jsonIntent );
+    }
+  };
+  _eventHandles.push_back( EI->Subscribe( GameToEngineTag::FakeCloudIntent, fakeCloudIntentCallback ) );
+  
+  // fake user intent
+  auto fakeUserIntentCallback = [this]( const GameToEngineEvent& event ) {
+    PRINT_CH_INFO("BehaviorSystem","DevBehaviorComponentMessageHandler.FakeUserIntentReceived","");
+    auto& uic = _robot.GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
+    const auto& intent = event.GetData().Get_FakeUserIntent().intent;
+    
+    UserIntentTag tag;
+    if( UserIntentTagFromString(intent, tag) ) {
+      uic.SetUserIntentPending( tag );
+    } else {
+      PRINT_CH_INFO("BehaviorSystem",
+                    "DevBehaviorComponentMessageHandler.FakeUserIntentReceived.Invalid",
+                    "Invalid intent '%s'",
+                    intent.c_str());
+    }
+  };
+  _eventHandles.push_back( EI->Subscribe( GameToEngineTag::FakeUserIntent, fakeUserIntentCallback ) );
+  
+  // hook up to webviz
+  
+}
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -100,6 +160,50 @@ ICozmoBehaviorPtr DevBehaviorComponentMessageHandler::WrapRequestedBehaviorInDis
   Json::Value config = BehaviorDispatcherRerun::CreateConfig(kBehaviorIDForDevMessage, requestedBehaviorID, numRuns);
   rerunDispatcher = bContainer.CreateBehaviorFromConfig(config);
   return rerunDispatcher;
+}
+  
+
+void DevBehaviorComponentMessageHandler::SubscribeToWebViz(BehaviorExternalInterface& bei, const BehaviorSystemManager& bsm)
+{
+  DEV_ASSERT( _eventHandles.empty(), "only call once" );
+  
+  const auto* context = _robot.GetContext();
+  if( context != nullptr ) {
+    auto* webService = context->GetWebService();
+    if( webService != nullptr ) {
+      
+      auto onSubscribed = [&bei, &bsm](const std::function<void(const Json::Value&)>& sendToClient) {
+        // resend just that client the new tree
+        Json::Value data = bsm.BuildDebugBehaviorTree( bei );
+        sendToClient( data );
+        
+        // also send them the list of behaviorIDs that can be created
+        Json::Value allBehaviors;
+        auto& list = allBehaviors["list"];
+        for( uint8_t i=0; i<BehaviorTypesWrapper::GetBehaviorIDNumEntries(); ++i ) {
+          list.append( EnumToString( static_cast<BehaviorID>(i) ) );
+        }
+        sendToClient( list );
+      };
+      auto onData = [this](const Json::Value& data, const std::function<void(const Json::Value&)>& sendToClient) {
+        // client wants us to run a specific behavior
+        const auto& name = data["behaviorName"];
+        if( name.isString() ) {
+          PRINT_CH_DEBUG("BehaviorSystem",
+                         "BehaviorStack.SubscribeToWebViz.Transition",
+                         "WebViz just instructed us to transition to '%s'",
+                         name.asString().c_str());
+          auto* ei = _robot.GetExternalInterface();
+          const int numRuns = 1;
+          using namespace ExternalInterface;
+          ei->Broadcast(MessageGameToEngine(ExecuteBehaviorByID( name.asString(), numRuns )));
+        }
+      };
+      
+      _eventHandles.emplace_back( webService->OnWebVizSubscribed( kWebVizModuleName ).ScopedSubscribe( onSubscribed ) );
+      _eventHandles.emplace_back( webService->OnWebVizData( kWebVizModuleName ).ScopedSubscribe( onData ) );
+    }
+  }
 }
 
   

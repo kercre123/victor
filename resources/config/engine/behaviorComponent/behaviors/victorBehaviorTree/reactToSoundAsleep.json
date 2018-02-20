@@ -1,0 +1,6 @@
+{
+  "behaviorClass" : "ReactToSound",
+  "behaviorID" : "ReactToSoundAsleep",
+
+  "FromSleep" : true
+}

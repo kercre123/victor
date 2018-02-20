@@ -20,6 +20,7 @@
 #include "engine/components/animTrackHelpers.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/pathComponent.h"
+#include "engine/components/visionScheduleMediator/visionScheduleMediator.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/moodSystem/moodManager.h"
@@ -560,6 +561,18 @@ namespace Anki {
     {
       Reset();
     }
+
+    IAction::~IAction()
+    {
+      // release any subscriptions held by the VSM for this Action
+      if(!_requiredVisionModes.empty()) {
+        PRINT_CH_DEBUG(kLogChannelName, "IAction.Update.UnSettingVisionModes", 
+                        "Action %s [%d] Releasing VisionModes",
+                        GetName().c_str(),
+                        GetTag());
+        GetRobot().GetVisionScheduleMediator().ReleaseAllVisionModeSubscriptions(this);
+      }
+    }
     
     void IAction::Reset(bool shouldUnlockTracks)
     {
@@ -627,7 +640,17 @@ namespace Anki {
                              GetName().c_str(),
                              GetTag());
             }
-            
+
+            // This action is ready to run, subscribe to appropriate vision modes
+            GetRequiredVisionModes(_requiredVisionModes);
+            if(!_requiredVisionModes.empty()) {
+              PRINT_CH_DEBUG(kLogChannelName, "IAction.Update.SettingVisionModes", 
+                             "Action %s [%d] Requesting VisionModes",
+                             GetName().c_str(),
+                             GetTag());
+              GetRobot().GetVisionScheduleMediator().SetVisionModeSubscriptions(this, _requiredVisionModes);
+            }
+
             // If preconditions were successfully met, switch result to RUNNING
             // so that we don't think the entire action is completed. (We still
             // need to do CheckIfDone() calls!)

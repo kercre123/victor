@@ -9,12 +9,6 @@
           "flatScore": 30
         }
       },
-      { "behaviorID" : "KnockOverCubes",
-        "scoring"      :
-        {
-          "flatScore": 20
-        }
-      },
       { "behaviorID" : "Hiking_DriveOffCharger",
         "scoring"      :
         {

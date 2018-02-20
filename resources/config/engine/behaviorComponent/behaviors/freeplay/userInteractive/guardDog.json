@@ -1,7 +1,0 @@
-{
-  "behaviorClass": "GuardDog",
-  "behaviorID": "GuardDog",
-  "displayNameKey": "behavior.GuardDog",
-  "requiredUnlockId": "GuardDog"
-
-}

@@ -26,15 +26,23 @@ import json
 
 kRenderEngine = 'fdp'  #also try circo, but unset splines=curved
 
+def getEdgeLabel( data ):
+  if 'preDefinedStrategyName' in data:
+    edgeLabel = data['preDefinedStrategyName']
+  elif 'strategy' in data:
+    edgeLabel = data['strategy']['strategyType']
+  elif 'condition' in data and 'conditionType' in data['condition']:
+    if 'Negate' in data['condition']['conditionType']:
+      edgeLabel = 'not ' + data['condition']['operand']['conditionType']
+    else:
+      edgeLabel = data['condition']['conditionType']
+  else:
+    edgeLabel = ''
+  return edgeLabel
 def addEdges( fromNode, edges, transitionJson, edgeStyle='solid', color='black' ):
   for toData in transitionJson:
     toNode = toData['to']
-    if 'preDefinedStrategyName' in toData:
-      edgeLabel = toData['preDefinedStrategyName']
-    elif 'strategy' in toData:
-      edgeLabel = toData['strategy']['strategyType']
-    else:
-      edgeLabel = ''
+    edgeLabel = getEdgeLabel( toData )
     edge = (fromNode, toNode)
     props = {'style': edgeStyle, 'label': edgeLabel, 'color': color}
     if [fromNode.lower(), toNode.lower()] != sorted([fromNode.lower(), toNode.lower()]):

@@ -403,29 +403,19 @@ namespace Cozmo {
     printf("Pose marker mode: %d\n", poseMarkerMode_);
     poseMarkerDiffuseColor_->setSFColor(poseMarkerColor_[poseMarkerMode_]);
     SendErasePoseMarker();
-  }
-  
-  void WebotsKeyboardController::PlayNeedsGetOutAnimIfNeeded()
-  {
-    ExternalInterface::QueueSingleAction msg;
-    msg.action.Set_playNeedsGetOutAnimIfNeeded(ExternalInterface::PlayNeedsGetOutAnimIfNeeded{});
-    SendAction(msg);
-  }
-  
+  }  
   
   void WebotsKeyboardController::GotoPoseMarker()
   {
-    bool useManualSpeed = false;
     if (poseMarkerMode_ == 0) {
       // Execute path to pose
       
       // the pose of the green-cone marker in the WebotsOrigin frame
       Pose3d goalMarkerPose = GetGoalMarkerPose();
-      printf("Going to pose marker at x=%f y=%f angle=%f (useManualSpeed: %d)\n",
+      printf("Going to pose marker at x=%f y=%f angle=%f\n",
              goalMarkerPose.GetTranslation().x(),
              goalMarkerPose.GetTranslation().y(),
-             goalMarkerPose.GetRotationAngle<'Z'>().ToFloat(),
-             useManualSpeed);
+             goalMarkerPose.GetRotationAngle<'Z'>().ToFloat());
       
       // note: Goal is w.r.t. webots origin which may not match
       // engine origin (due to delocalization or drift). This
@@ -446,7 +436,7 @@ namespace Cozmo {
       GetRobotPoseActual().GetInverse() *
       goalMarkerPose;
       
-      SendExecutePathToPose(markerPose_inEngineFrame, pathMotionProfile_, useManualSpeed);
+      SendExecutePathToPose(markerPose_inEngineFrame, pathMotionProfile_);
       //SendMoveHeadToAngle(-0.26, headSpeed, headAccel);
     } else {
       Pose3d goalMarkerPose = GetGoalMarkerPose();
@@ -460,8 +450,7 @@ namespace Cozmo {
       
       SendPlaceObjectOnGroundSequence(goalMarkerPose,
                                       pathMotionProfile_,
-                                      useExactRotation,
-                                      useManualSpeed);
+                                      useExactRotation);
       // Make sure head is tilted down so that it can localize well
       //SendMoveHeadToAngle(-0.26, headSpeed, headAccel);
       
@@ -472,7 +461,9 @@ namespace Cozmo {
   {
     ExternalInterface::EnableLightStates msg;
     static bool enableLightComponent = false;
-    printf("EnableLightsComponent: %d", enableLightComponent);
+    LOG_INFO("ToggleEngineLightComponent.EnableLightsComponent",
+             "EnableLightsComponent: %s",
+             enableLightComponent ? "TRUE" : "FALSE");
     msg.enable = enableLightComponent;
     enableLightComponent = !enableLightComponent;
     
@@ -653,14 +644,13 @@ namespace Cozmo {
   }
   
 
-  // shift + alt = Fake trigger word detected
-  // no optional key = Fake cloud intent w/ string in field
+  // shift + alt + H = Fake trigger word detected
+  // H = Fake cloud intent w/ string in field
   void WebotsKeyboardController::FakeCloudIntent()
   {
-    // select behavior chooser
-    webots::Field* cloudIntentField = root_->getField("cloudIntent");
+    webots::Field* cloudIntentField = root_->getField("intent");
     if (cloudIntentField == nullptr) {
-      printf("ERROR: No cloud animation name field found in WebotsKeyboardController.proto\n");
+      printf("ERROR: No intent field found in WebotsKeyboardController.proto\n");
       return;
     }
     
@@ -674,6 +664,26 @@ namespace Cozmo {
     
     SendMessage(ExternalInterface::MessageGameToEngine(
                                                        ExternalInterface::FakeCloudIntent(cloudIntent)));
+  }
+  
+  // shift + H = Fake user intent detected
+  void WebotsKeyboardController::FakeUserIntent()
+  {
+    webots::Field* userIntentField = root_->getField("intent");
+    if (userIntentField == nullptr) {
+      printf("ERROR: No intent field found in WebotsKeyboardController.proto\n");
+      return;
+    }
+    
+    std::string userIntent = userIntentField->getSFString();
+    if (userIntent.empty()) {
+      printf("ERROR: cloudIntent field is empty\n");
+      return;
+    }
+    
+    printf("sending user intent '%s'\n", userIntent.c_str());
+    
+    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::FakeUserIntent(userIntent)));
   }
   
   
@@ -733,7 +743,6 @@ namespace Cozmo {
   
   void WebotsKeyboardController::PickOrPlaceObject()
   {
-    bool useManualSpeed = false;
     bool usePreDockPose = !_shiftKeyPressed;
     bool placeOnGroundAtOffset = _altKeyPressed;
     
@@ -752,22 +761,19 @@ namespace Cozmo {
       SendPickupSelectedObject(pathMotionProfile_,
                                usePreDockPose,
                                useApproachAngle,
-                               approachAngle_rad,
-                               useManualSpeed);
+                               approachAngle_rad);
     } else {
       if (placeOnGroundAtOffset) {
         SendPlaceRelSelectedObject(pathMotionProfile_,
                                    usePreDockPose,
                                    placementOffsetX_mm,
                                    useApproachAngle,
-                                   approachAngle_rad,
-                                   useManualSpeed);
+                                   approachAngle_rad);
       } else {
         SendPlaceOnSelectedObject(pathMotionProfile_,
                                   usePreDockPose,
                                   useApproachAngle,
-                                  approachAngle_rad,
-                                  useManualSpeed);
+                                  approachAngle_rad);
       }
     }
     
@@ -776,38 +782,32 @@ namespace Cozmo {
   
   void WebotsKeyboardController::MountSelectedCharger()
   {
-    bool useManualSpeed = false;
     bool useCliffSensorCorrection = !_shiftKeyPressed;
     
     SendMountSelectedCharger(pathMotionProfile_,
-                             useCliffSensorCorrection,
-                             useManualSpeed);
+                             useCliffSensorCorrection);
   }
   
   
   void WebotsKeyboardController::PopAWheelie()
   {
     bool usePreDockPose = !_shiftKeyPressed;
-    bool useManualSpeed = false;
     SendPopAWheelie(-1,
                     pathMotionProfile_,
                     usePreDockPose,
                     useApproachAngle,
-                    approachAngle_rad,
-                    useManualSpeed);
+                    approachAngle_rad);
   }
   
   void WebotsKeyboardController::RollObject()
   {
     bool usePreDockPose = !_shiftKeyPressed;
-    bool useManualSpeed = false;
     bool doDeepRoll = root_->getField("doDeepRoll")->getSFBool();
     SendRollSelectedObject(pathMotionProfile_,
                            doDeepRoll,
                            usePreDockPose,
                            useApproachAngle,
-                           approachAngle_rad,
-                           useManualSpeed);
+                           approachAngle_rad);
   }
   
   
@@ -862,6 +862,65 @@ namespace Cozmo {
     }
   }
   
+  void WebotsKeyboardController::ToggleKeepFaceAliveEnable()
+  {
+    static bool enable = false;
+    PRINT_NAMED_INFO("WebotsKeyboardController.ToggleKeepFaceAliveEnable", "Enable: %d", enable);
+    
+    ExternalInterface::EnableKeepFaceAlive msg;
+    msg.enable = enable;
+    msg.disableTimeout_ms = 3*ANIM_TIME_STEP_MS;
+    enable = !enable;
+    
+    ExternalInterface::MessageGameToEngine msgWrapper;
+    msgWrapper.Set_EnableKeepFaceAlive(msg);
+    SendMessage(msgWrapper);
+  }
+  
+  void WebotsKeyboardController::SetDefaultKeepFaceAliveParams()
+  {
+    PRINT_NAMED_INFO("WebotsKeyboardController.SetDefaultKeepFaceAliveParams", "");
+    
+    ExternalInterface::SetKeepFaceAliveParameters msg;
+    msg.setUnspecifiedToDefault = true;
+
+    ExternalInterface::MessageGameToEngine msgWrapper;
+    msgWrapper.Set_SetKeepFaceAliveParameters(msg);
+    SendMessage(msgWrapper);    
+  }
+
+  void WebotsKeyboardController::SetKeepFaceAliveParams()
+  {
+    PRINT_NAMED_INFO("WebotsKeyboardController.SetKeepFaceAliveParams", "");
+    
+    // Get values from fields
+    #define SET_KFA_PARAM(param) { \
+      const auto* paramField = root_->getField(#param); \
+      DEV_ASSERT(paramField != nullptr, "WebotsKeyboardController.SetKeepFaceAliveParams.paramNotFound"); \
+      msg.paramNames.push_back(KeepFaceAliveParameter::param); \
+      msg.paramValues.push_back(paramField->getSFFloat()); \
+    }
+
+    ExternalInterface::SetKeepFaceAliveParameters msg;
+    SET_KFA_PARAM(BlinkSpacingMinTime_ms);
+    SET_KFA_PARAM(BlinkSpacingMaxTime_ms);
+    SET_KFA_PARAM(EyeDartSpacingMinTime_ms);
+    SET_KFA_PARAM(EyeDartSpacingMaxTime_ms);
+    SET_KFA_PARAM(EyeDartMaxDistance_pix);
+    SET_KFA_PARAM(EyeDartMinDuration_ms);
+    SET_KFA_PARAM(EyeDartMaxDuration_ms);
+    SET_KFA_PARAM(EyeDartOuterEyeScaleIncrease);
+    SET_KFA_PARAM(EyeDartUpMaxScale);
+    SET_KFA_PARAM(EyeDartDownMinScale);
+    msg.setUnspecifiedToDefault = false;
+
+    #undef SET_KFA_PARAM
+
+    ExternalInterface::MessageGameToEngine msgWrapper;
+    msgWrapper.Set_SetKeepFaceAliveParameters(msg);
+    SendMessage(msgWrapper);
+  }
+
   void WebotsKeyboardController::ToggleVisionWhileMoving()
   {
     static bool visionWhileMovingEnabled = false;
@@ -1225,6 +1284,21 @@ namespace Cozmo {
     toggle = !toggle;
   }
 
+  void WebotsKeyboardController::ToggleEyeRendering()
+  {
+    using namespace ExternalInterface;
+
+    static bool toggle = false;
+    toggle = !toggle;
+
+    for(auto key : {"ProcFace_RenderInnerOuterGlow","ProcFace_ApplyGlowFilter", "ProcFace_UseAntialiasing", "ProcFace_UseNoise"}) {
+      SendMessage(MessageGameToEngine(SetAnimDebugConsoleVarMessage(key,
+                                                                    (toggle ? "1" : "0"))));
+    }
+
+    LOG_INFO("ToggleEyeRendering", "%s eye rendering", (toggle ? "Victor" : "Cozmo"));
+  }
+
   void WebotsKeyboardController::FlipSelectedBlock()
   {
     ExternalInterface::FlipBlock m;
@@ -1458,6 +1532,29 @@ namespace Cozmo {
     SendAnimation(animToSendName.c_str(), animNumLoops, true);
   }
 
+  void WebotsKeyboardController::PlayAnimationTrigger()
+  {
+    // Send whatever animation is specified in the animationToSendName field
+    webots::Field* animToSendNameField = root_->getField("animationToSendName");
+    if (animToSendNameField == nullptr) {
+      printf("ERROR: No animationToSendName field found in WebotsKeyboardController.proto\n");
+      return;
+    }
+    std::string animTriggerName = animToSendNameField->getSFString();
+    if (animTriggerName.empty()) {
+      printf("ERROR: animationToSendName field is empty\n");
+      return;
+    }
+    
+    webots::Field* animNumLoopsField = root_->getField("animationNumLoops");
+    u32 animNumLoops = 1;
+    if (animNumLoopsField && (animNumLoopsField->getSFInt32() > 0)) {
+      animNumLoops = (u32) animNumLoopsField->getSFInt32();
+    }
+    
+    SendAnimationTrigger(animTriggerName.c_str(), animNumLoops, true);
+  }
+  
   void WebotsKeyboardController::PlayAnimationGroup()
   {
     // Send whatever animation is specified in the animationToSendName field
@@ -1466,12 +1563,19 @@ namespace Cozmo {
       printf("ERROR: No animationToSendName field found in WebotsKeyboardController.proto\n");
       return;
     }
-    std::string animToSendName = animToSendNameField->getSFString();
-    if (animToSendName.empty()) {
+    std::string animGroupName = animToSendNameField->getSFString();
+    if (animGroupName.empty()) {
       printf("ERROR: animationToSendName field is empty\n");
       return;
     }
-    SendAnimationGroup(animToSendName.c_str(), true);
+    
+    webots::Field* animNumLoopsField = root_->getField("animationNumLoops");
+    u32 animNumLoops = 1;
+    if (animNumLoopsField && (animNumLoopsField->getSFInt32() > 0)) {
+      animNumLoops = (u32) animNumLoopsField->getSFInt32();
+    }
+    
+    SendAnimationGroup(animGroupName.c_str(), animNumLoops, true);
   }
 
   void WebotsKeyboardController::RunDebugConsoleFunc()
@@ -1567,23 +1671,30 @@ namespace Cozmo {
   
   void WebotsKeyboardController::PlayCubeAnimation()
   {
-    if(_altKeyPressed)
-    {
-      ExternalInterface::PlayCubeAnim s;
-      s.trigger = CubeAnimationTrigger::WakeUp;
-      s.objectID = 1;
-      ExternalInterface::MessageGameToEngine m;
-      m.Set_PlayCubeAnim(s);
-      SendMessage(m);
-    }
-    else
-    {
-      ExternalInterface::PlayCubeAnim s;
-      s.trigger = CubeAnimationTrigger::Flash;
-      s.objectID = 1;
-      ExternalInterface::MessageGameToEngine m;
-      m.Set_PlayCubeAnim(s);
-      SendMessage(m);
+    if(_altKeyPressed) {
+      // Send whatever cube animation trigger is specified in the animationToSendName field
+      webots::Field* animToSendNameField = root_->getField("animationToSendName");
+      if (animToSendNameField == nullptr) {
+        printf("ERROR: No animationToSendName field found in WebotsKeyboardController.proto\n");
+        return;
+      }
+      std::string cubeAnimTriggerStr = animToSendNameField->getSFString();
+      if (cubeAnimTriggerStr.empty()) {
+        printf("ERROR: animationToSendName field is empty\n");
+        return;
+      }
+      
+      CubeAnimationTrigger cubeAnimTrigger;
+      if (!EnumFromString(cubeAnimTriggerStr, cubeAnimTrigger)) {
+        LOG_ERROR("WebotsKeyboardController.PlayCubeAnimation.InvalidCubeAnimationTrigger",
+                  "ERROR: %s is not a valid CubeAnimationTrigger name",
+                  cubeAnimTriggerStr.c_str());
+        return;
+      }
+      
+      SendCubeAnimation(-1, cubeAnimTrigger);
+    } else {
+      SendCubeAnimation(-1, CubeAnimationTrigger::Flash);
     }
   }
   
@@ -1836,16 +1947,18 @@ namespace Cozmo {
   
   // ===== End of key press functions ====
 
-  
+  // Register key press and modifier to a function
   #define REGISTER_KEY_FCN(key, modifier, fcn, help_msg) \
   if (!RegisterKeyFcn(key, modifier, std::bind(&WebotsKeyboardController::fcn, this), help_msg)) { \
     PRINT_NAMED_ERROR("WebotsKeyboardController.RegisterKeyFcn.DuplicateRegistration", "Key: '%c' (0x%x), Modifier: 0x%x, Fcn: %s", key, key, modifier, #fcn); \
-  } \
+  }
 
+  // Register key press and modifier to a function with a special display_string
+  // for keys that don't print nicely in ASCII (e.g. 'PageUp')
   #define REGISTER_KEY_FCN_WITH_SPECIAL_DISPLAY_CHAR(key, modifier, fcn, help_msg, display_string) \
   if (!RegisterKeyFcn(key, modifier, std::bind(&WebotsKeyboardController::fcn, this), help_msg, display_string)) { \
     PRINT_NAMED_ERROR("WebotsKeyboardController.RegisterKeyFcn.DuplicateRegistration", "Key: '%c' (0x%x), Modifier: 0x%x, Fcn: %s", key, key, modifier, #fcn); \
-  } \
+  }
   
   // Register key that already requires shift to be pressed.
   // Only MOD_NONE and MOD_ALT are valid modifiers since MOD_SHIFT is already implied.
@@ -1854,7 +1967,7 @@ namespace Cozmo {
     PRINT_NAMED_ERROR("WebotsKeyboardController.RegisterKeyFcn.InvalidModifier", "Can't use shift modifier because it's already implied in key '%c' (0x%x)", key, key); \
   } else if (!RegisterKeyFcn(key, modifier | MOD_SHIFT, std::bind(&WebotsKeyboardController::fcn, this), help_msg)) { \
     PRINT_NAMED_ERROR("WebotsKeyboardController.RegisterKeyFcn.DuplicateRegistration", "Key: '%c' (0x%x), Modifier: 0x%x, Fcn: %s", key, key, modifier, #fcn); \
-  } \
+  }
 
   WebotsKeyboardController::WebotsKeyboardController(s32 step_time_ms) :
   UiGameController(step_time_ms)
@@ -1935,8 +2048,8 @@ namespace Cozmo {
 //      REGISTER_KEY_FCN('/', MOD_NONE,      , "");
 //      REGISTER_KEY_FCN('/', MOD_ALT,       , "");
     
-    REGISTER_SHIFTED_KEY_FCN('~', MOD_NONE, PlayAnimationGroup,                "Play animation group specified in 'animationToSendName'");
-//      REGISTER_SHIFTED_KEY_FCN('~', MOD_ALT, , "");
+    REGISTER_SHIFTED_KEY_FCN('~', MOD_NONE, PlayAnimationTrigger,              "Play animation trigger specified in 'animationToSendName'");
+    REGISTER_SHIFTED_KEY_FCN('~', MOD_ALT,  PlayAnimationGroup,                "Play animation group specified in 'animationToSendName'");
 //      REGISTER_SHIFTED_KEY_FCN('!', MOD_NONE, , "");
 //      REGISTER_SHIFTED_KEY_FCN('!', MOD_ALT, , "");
     REGISTER_SHIFTED_KEY_FCN('@', MOD_NONE, ToggleSendAvailableObjects,        "Toggle sending of available objects");
@@ -1969,8 +2082,8 @@ namespace Cozmo {
 //      REGISTER_SHIFTED_KEY_FCN('|', MOD_ALT, , "");
     REGISTER_SHIFTED_KEY_FCN(':', MOD_NONE, SetRollActionParams,               "Set parameters for roll action");
 //      REGISTER_SHIFTED_KEY_FCN(':', MOD_ALT, , "");
-    REGISTER_SHIFTED_KEY_FCN('"', MOD_NONE, PlayCubeAnimation,                 "Play cube animation");
-//      REGISTER_SHIFTED_KEY_FCN('"', MOD_ALT, , "");
+    REGISTER_SHIFTED_KEY_FCN('"', MOD_NONE, PlayCubeAnimation,                 "Play 'Flash' cube animation on selected cube");
+    REGISTER_SHIFTED_KEY_FCN('"', MOD_ALT,  PlayCubeAnimation,                 "Play cube animation trigger specified in 'animationToSendName' on selected cube");
     REGISTER_SHIFTED_KEY_FCN('<', MOD_NONE, TurnInPlaceCCW,                    "Turn in place CCW by 'pointTurnAngle_deg'");
     REGISTER_SHIFTED_KEY_FCN('<', MOD_ALT,  TurnInPlaceCCW,                    "Turn in place CCW forever");
     REGISTER_SHIFTED_KEY_FCN('>', MOD_NONE, TurnInPlaceCW,                     "Turn in place CW by 'pointTurnAngle_deg'");
@@ -2010,16 +2123,16 @@ namespace Cozmo {
     
     REGISTER_KEY_FCN('G', MOD_NONE,      GotoPoseMarker,              "Goto/place object at pose marker");
     REGISTER_KEY_FCN('G', MOD_SHIFT,     TogglePoseMarkerMode,        "Toggle pose marker mode");
-    REGISTER_KEY_FCN('G', MOD_ALT,       PlayNeedsGetOutAnimIfNeeded, "Play needs get out anim if needed");  // Remove?
+//      REGISTER_KEY_FCN('G', MOD_ALT,       , "");
 //      REGISTER_KEY_FCN('G', MOD_ALT_SHIFT, , "");
 
-    REGISTER_KEY_FCN('H', MOD_NONE,      FakeCloudIntent, "Fake clound intent with contents of 'cloudIntent'");
-//      REGISTER_KEY_FCN('H', MOD_SHIFT,     , "");
+    REGISTER_KEY_FCN('H', MOD_NONE,      FakeCloudIntent, "Fake clound intent with contents of 'intent' (either a name or valid json)");
+    REGISTER_KEY_FCN('H', MOD_SHIFT,     FakeUserIntent, "Fake user intent with the contents of 'intent'");
 //      REGISTER_KEY_FCN('H', MOD_ALT,       , "");
     REGISTER_KEY_FCN('H', MOD_ALT_SHIFT, SendFakeTriggerWordDetect, "Send fake trigger word detect");
     
     REGISTER_KEY_FCN('I', MOD_NONE,      ToggleImageStreaming, "Toggle image streaming");
-//      REGISTER_KEY_FCN('I', MOD_SHIFT,     , "");
+    REGISTER_KEY_FCN('I', MOD_SHIFT,     ToggleEyeRendering, "Toggle Victor/Cozmo eye rendering");
 //      REGISTER_KEY_FCN('I', MOD_ALT,       , "");
 //      REGISTER_KEY_FCN('I', MOD_ALT_SHIFT, , "");
     
@@ -2065,13 +2178,13 @@ namespace Cozmo {
     
     REGISTER_KEY_FCN('R', MOD_NONE,      MountSelectedCharger, "Dock to charger using cliff sensor correction");
     REGISTER_KEY_FCN('R', MOD_SHIFT,     MountSelectedCharger, "Dock to charger without using cliff sensor correction");
-//      REGISTER_KEY_FCN('R', MOD_ALT,       , "");
+    REGISTER_KEY_FCN('R', MOD_ALT,       FlipSelectedBlock,    "Flips the selected cube");
 //      REGISTER_KEY_FCN('R', MOD_ALT_SHIFT, , "");
     
     REGISTER_KEY_FCN('S', MOD_NONE,      MoveHeadUp, "Move head up");
     REGISTER_KEY_FCN('S', MOD_SHIFT,     MoveHeadUp, "Move head up (half speed)");
-//      REGISTER_KEY_FCN('S', MOD_ALT,       , "");
-//      REGISTER_KEY_FCN('S', MOD_ALT_SHIFT, , "");
+//    REGISTER_KEY_FCN('S', MOD_ALT,       , "");
+//    REGISTER_KEY_FCN('S', MOD_ALT_SHIFT, , "");
     
     REGISTER_KEY_FCN('T', MOD_NONE,      ExecuteTestPlan,     "Execute test plan");
     REGISTER_KEY_FCN('T', MOD_ALT,       ToggleTrackToFace,   "Track to face");
@@ -2098,10 +2211,10 @@ namespace Cozmo {
 //      REGISTER_KEY_FCN('X', MOD_ALT,       , "");
     REGISTER_KEY_FCN('X', MOD_ALT_SHIFT, QuitKeyboardController, "Quit keyboard controller");
     
-    REGISTER_KEY_FCN('Y', MOD_NONE,      FlipSelectedBlock, "Flips the selected cube");
-//      REGISTER_KEY_FCN('Y', MOD_SHIFT,     , "");
-//      REGISTER_KEY_FCN('Y', MOD_ALT,       , "");
-//      REGISTER_KEY_FCN('Y', MOD_ALT_SHIFT, , "");
+    REGISTER_KEY_FCN('Y', MOD_NONE,      ToggleKeepFaceAliveEnable,     "Toggle keep face alive enable");
+    REGISTER_KEY_FCN('Y', MOD_SHIFT,     SetDefaultKeepFaceAliveParams, "Sets default KeepFaceAlive parameters");
+    REGISTER_KEY_FCN('Y', MOD_ALT,       SetKeepFaceAliveParams,        "Sets KeepFaceAlive parameters from keyboard node's params (starting at 'BlinkSpacingMinTime_ms')");
+//    REGISTER_KEY_FCN('Y', MOD_ALT_SHIFT, , "");
     
     REGISTER_KEY_FCN('Z', MOD_NONE,      MoveLiftDown,    "Move lift down");
     REGISTER_KEY_FCN('Z', MOD_SHIFT,     MoveLiftDown,    "Move lift down (half speed)");
@@ -2196,12 +2309,18 @@ namespace Cozmo {
     _throttleDir = 0.f;
     _pressBackpackButton = false;
     
+    _commandedLiftSpeed = 0.f;
+    _commandedHeadSpeed = 0.f;
+    
+    _movingHead = false;
+    _movingLift = false;
+    
     root_ = GetSupervisor()->getSelf();
     
     static bool keyboardRestart = false;
     if (keyboardRestart) {
       GetSupervisor()->getKeyboard()->disable();
-      GetSupervisor()->getKeyboard()->enable(BS_TIME_STEP);
+      GetSupervisor()->getKeyboard()->enable(BS_TIME_STEP_MS);
       keyboardRestart = false;
     }
     
@@ -2706,7 +2825,7 @@ int main(int argc, char **argv)
   // initialize logger
   WebotsCtrlShared::DefaultAutoGlobalLogger autoLogger(dataPlatform, params.filterLog, params.colorizeStderrOutput);
 
-  Anki::Cozmo::WebotsKeyboardController webotsCtrlKeyboard(BS_TIME_STEP);
+  Anki::Cozmo::WebotsKeyboardController webotsCtrlKeyboard(BS_TIME_STEP_MS);
   webotsCtrlKeyboard.PreInit();
   webotsCtrlKeyboard.WaitOnKeyboardToConnect();
   

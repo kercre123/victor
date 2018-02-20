@@ -16,12 +16,17 @@
 #define private public
 #define protected public
 
+#include "clad/types/behaviorComponent/userIntent.h"
 #include "coretech/common/engine/utils/timer.h"
+#include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
+#include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionLambda.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionNegate.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionUserIntentPending.h"
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
 #include "engine/moodSystem/moodManager.h"
 #include "engine/robot.h"
@@ -419,7 +424,7 @@ TEST(BeiConditions, OnCharger)
 
   BehaviorExternalInterface bei;
 
-  TestBehaviorFramework tbf;
+  TestBehaviorFramework tbf(1, nullptr);
   Robot& robot = tbf.GetRobot();
   
   BEIRobotInfo info(robot);
@@ -449,3 +454,197 @@ TEST(BeiConditions, OnCharger)
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
 }
+
+TEST(BeiConditions, TimedDedup)
+{
+  BaseStationTimer::getInstance()->UpdateTime(0);
+  
+  const std::string json = R"json(
+  {
+    "conditionType": "TimedDedup",
+    "dedupInterval_ms" : 4000.0,
+    "subCondition": {
+      "conditionType": "TrueCondition"
+    }
+  })json";
+
+  IBEIConditionPtr cond;
+  CreateBEI(json, cond);
+
+  BehaviorExternalInterface bei;
+
+  cond->Init(bei);
+  cond->Reset(bei);
+
+  EXPECT_TRUE( cond->AreConditionsMet(bei) );
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+
+  BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(2.0));
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+
+  BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(3.9));
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+
+  BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(4.1));
+  EXPECT_TRUE( cond->AreConditionsMet(bei) );
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+}
+
+TEST(BeiConditions, TriggerWordPending)
+{
+  BaseStationTimer::getInstance()->UpdateTime(0);
+  
+  const std::string json = R"json(
+  {
+    "conditionType": "TriggerWordPending"
+  })json";
+  
+  IBEIConditionPtr cond;
+  CreateBEI(json, cond);
+  
+  TestBehaviorFramework tbf(1, nullptr);
+  tbf.InitializeStandardBehaviorComponent();
+  BehaviorExternalInterface& bei = tbf.GetBehaviorExternalInterface();
+  
+  cond->Init(bei);
+  cond->Reset(bei);
+  
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+  
+  auto& uic = bei.GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
+  uic.SetTriggerWordPending();
+  EXPECT_TRUE( cond->AreConditionsMet(bei) );
+  EXPECT_TRUE( cond->AreConditionsMet(bei) );
+  uic.SetTriggerWordPending();
+  EXPECT_TRUE( cond->AreConditionsMet(bei) );
+  
+  uic.ClearPendingTriggerWord();
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+}
+
+TEST(BeiConditions, UserIntentPending)
+{
+  BaseStationTimer::getInstance()->UpdateTime(0);
+  
+  const std::string json = R"json(
+  {
+    "conditionType": "UserIntentPending",
+    "list": [
+      {
+        "type": "test_user_intent_1"
+      },
+      {
+        "type": "test_timeInSeconds"
+      },
+      {
+        "type": "test_name",
+        "name": ""
+      },
+      {
+        "type": "test_timeWithUnits",
+        "time": 60,
+        "units": "m"
+      },
+      {
+        "type": "test_name",
+        "_lambda": "test_lambda"
+      }
+    ]
+  })json";
+  // in the above, the condition should fire if
+  // (1) test_user_intent_1  matches the tag
+  // (2) test_timeInSeconds  matches the tag
+  // (3) test_name           matches the tag and name must strictly be empty
+  // (4) test_timeWithUnits  matches the tag and and data
+  // (5) test_name           matches the tag and lambda must eval (name must be Victor)
+  
+  IBEIConditionPtr ptr;
+  std::shared_ptr<ConditionUserIntentPending> cond;
+  CreateBEI( json, ptr );
+  cond = std::dynamic_pointer_cast<ConditionUserIntentPending>(ptr);
+  ASSERT_NE( cond, nullptr );
+  
+  TestBehaviorFramework tbf(1, nullptr);
+  tbf.InitializeStandardBehaviorComponent();
+  BehaviorExternalInterface& bei = tbf.GetBehaviorExternalInterface();
+  
+  cond->Init(bei);
+  cond->Reset(bei);
+  
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+  
+  auto& uic = bei.GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
+  
+  // (1) test_user_intent_1  matches the tag
+  
+  uic.SetUserIntentPending( USER_INTENT(test_user_intent_1) ); // right intent
+  EXPECT_TRUE( cond->AreConditionsMet(bei) );
+  EXPECT_TRUE( cond->AreConditionsMet(bei) );
+  EXPECT_EQ( cond->GetUserIntentTagSelected(), USER_INTENT(test_user_intent_1) );
+  
+  
+  uic.ClearUserIntent( USER_INTENT(test_user_intent_1) );
+  EXPECT_FALSE( cond->AreConditionsMet(bei) ); // no intent
+  
+  UserIntent_Test_TimeWithUnits timeWithUnits;
+  uic.SetUserIntentPending( UserIntent::Createtest_timeWithUnits(std::move(timeWithUnits)) );
+  EXPECT_FALSE( cond->AreConditionsMet(bei) ); // wrong intent
+  uic.ClearUserIntent( USER_INTENT(test_timeWithUnits) );
+  EXPECT_FALSE( cond->AreConditionsMet(bei) ); // no intent
+  
+  // (2) test_timeInSeconds  matches the tag
+  
+  UserIntent_Test_TimeInSeconds timeInSeconds1; // default
+  UserIntent_Test_TimeInSeconds timeInSeconds2{10}; // non default
+  uic.SetUserIntentPending( UserIntent::Createtest_timeInSeconds(std::move(timeInSeconds1)) );
+  EXPECT_TRUE( cond->AreConditionsMet(bei) ); // correct intent
+  EXPECT_EQ( cond->GetUserIntentTagSelected(), USER_INTENT(test_timeInSeconds) );
+  uic.ClearUserIntent( USER_INTENT(test_timeInSeconds) );
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+  uic.SetUserIntentPending( UserIntent::Createtest_timeInSeconds(std::move(timeInSeconds2)) );
+  EXPECT_TRUE( cond->AreConditionsMet(bei) ); // correct intent
+  EXPECT_EQ( cond->GetUserIntentTagSelected(), USER_INTENT(test_timeInSeconds) );
+  uic.ClearUserIntent( USER_INTENT(test_timeInSeconds) );
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+  
+  // (3) test_name           matches the tag and name must strictly be empty
+  
+  UserIntent_Test_Name name1; // default
+  UserIntent_Test_Name name2{"whizmo"}; // non default
+  uic.SetUserIntentPending( UserIntent::Createtest_name(std::move(name1)) );
+  EXPECT_TRUE( cond->AreConditionsMet(bei) ); // correct intent
+  EXPECT_EQ( cond->GetUserIntentTagSelected(), USER_INTENT(test_name) );
+  uic.ClearUserIntent( USER_INTENT(test_name) );
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+  uic.SetUserIntentPending( UserIntent::Createtest_name(std::move(name2)) );
+  EXPECT_FALSE( cond->AreConditionsMet(bei) ); // wrong intent
+  uic.ClearUserIntent( USER_INTENT(test_name) );
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+  
+  // (4) test_timeWithUnits  matches the tag and data (60mins)
+  
+  UserIntent_Test_TimeWithUnits timeWithUnits1{60, UserIntent_Test_Time_Units::m};
+  UserIntent_Test_TimeWithUnits timeWithUnits2{20, UserIntent_Test_Time_Units::m};
+  uic.SetUserIntentPending( UserIntent::Createtest_timeWithUnits(std::move(timeWithUnits1)) );
+  EXPECT_TRUE( cond->AreConditionsMet(bei) ); // correct intent
+  EXPECT_EQ( cond->GetUserIntentTagSelected(), USER_INTENT(test_timeWithUnits) );
+  uic.ClearUserIntent( USER_INTENT(test_timeWithUnits) );
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+  uic.SetUserIntentPending( UserIntent::Createtest_timeWithUnits(std::move(timeWithUnits2)) );
+  EXPECT_FALSE( cond->AreConditionsMet(bei) ); // wrong data
+  uic.ClearUserIntent( USER_INTENT(test_timeWithUnits) );
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+  
+  // (5) test_name           matches the tag and lambda must eval (name must be Victor)
+  
+  UserIntent name5;
+  name5.Set_test_name( UserIntent_Test_Name{"Victor"} );
+  uic.SetUserIntentPending( std::move(name5) ); // right intent with right data
+  EXPECT_TRUE( cond->AreConditionsMet(bei) );
+  EXPECT_EQ( cond->GetUserIntentTagSelected(), USER_INTENT(test_name) );
+  uic.ClearUserIntent( USER_INTENT(test_name) );
+}
+
+
+

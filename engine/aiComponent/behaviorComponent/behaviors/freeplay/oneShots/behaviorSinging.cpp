@@ -55,20 +55,12 @@ BehaviorSinging::BehaviorSinging(const Json::Value& config)
 : ICozmoBehavior(config)
 {
   std::string value;
-  // Assert that displayNameKey exists in the config. All the singing behaviors
-  // need it to display in app text
-  bool res = JsonTools::GetValueOptional(config, "displayNameKey", value);
-  DEV_ASSERT_MSG(res,
-                 "BehaviorSinging.DisplayNameKeyRequired",
-                 "No displayName for singing behavior %s",
-                 GetIDStr().c_str());
-
   // We have to have a audioSwitchGroup otherwise this behavior is useless
-  res = JsonTools::GetValueOptional(config, kAudioSwitchGroup, value);
+  bool res = JsonTools::GetValueOptional(config, kAudioSwitchGroup, value);
   DEV_ASSERT_MSG(res,
                  "BehaviorSinging.NoAudioSwitchGroup",
                  "No audioSwitchGroup for singing behavior %s",
-                 GetIDStr().c_str());
+                 GetDebugLabel().c_str());
   _audioSwitchGroup = AudioMetaData::SwitchState::SwitchGroupTypeFromString(value);
   
   // We have to have a audioSwitch otherwise this behavior is useless
@@ -76,7 +68,7 @@ BehaviorSinging::BehaviorSinging(const Json::Value& config)
   DEV_ASSERT_MSG(res,
                  "BehaviorSinging.NoAudioSwitch",
                  "No audioSwitch for singing behavior %s",
-                 GetIDStr().c_str());
+                 GetDebugLabel().c_str());
 
   // Depending on which SwitchGroup we are using, figure out which
   // specific switch and animation to use
@@ -106,7 +98,7 @@ BehaviorSinging::BehaviorSinging(const Json::Value& config)
       DEV_ASSERT_MSG(false,
                      "BehaviorSinging.NoAudioSwitch",
                      "No audioSwitch for singing behavior %s",
-                     GetIDStr().c_str());
+                     GetDebugLabel().c_str());
       
       // Default to a 80Bpm fallback song
       _audioSwitch = GenericSwitch::Invalid;

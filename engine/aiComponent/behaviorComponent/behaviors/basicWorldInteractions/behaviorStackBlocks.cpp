@@ -12,6 +12,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorStackBlocks.h"
 
+#include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
@@ -20,14 +21,18 @@
 #include "engine/actions/retryWrapperAction.h"
 #include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/behaviorHelperComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/basicCubeInteractions/behaviorPickupCube.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/components/progressionUnlockComponent.h"
+
+#include "clad/types/actionResults.h"
 #include "coretech/vision/engine/observableObject.h"
 #include "util/console/consoleInterface.h"
 
@@ -41,7 +46,10 @@ CONSOLE_VAR(f32, kBSB_ScoreIncreaseForAction, "Behavior.StackBlocks", 0.8f);
 CONSOLE_VAR(f32, kBSB_MaxTurnTowardsFaceBeforePickupAngle_deg, "Behavior.StackBlocks", 90.f);
 
 static const char* const kStackInAnyOrientationKey = "stackInAnyOrientation";
-  static const f32   kDistToBackupOnStackFailure_mm = 40;
+static const char* const kPickupBehaviorIDKey      = "pickupBehaviorID";
+static const char* const kDefaultPickupBehaviorID  = "PickupCube";
+static const char* const kRetryPlaceCountKey       = "numPlaceRetries";
+static const f32   kDistToBackupOnStackFailure_mm  = 40;
   
 }
 
@@ -49,39 +57,62 @@ static const char* const kStackInAnyOrientationKey = "stackInAnyOrientation";
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorStackBlocks::BehaviorStackBlocks(const Json::Value& config)
 : ICozmoBehavior(config)
-, _stackInAnyOrientation(false)
-, _hasBottomTargetSwitched(false)
 {
-  _stackInAnyOrientation = config.get(kStackInAnyOrientationKey, false).asBool();
+  _iConfig.stackInAnyOrientation = config.get(kStackInAnyOrientationKey, false).asBool();
+  
+  {
+    std::string behaivorIDStr = kDefaultPickupBehaviorID;
+    JsonTools::GetValueOptional(config, kPickupBehaviorIDKey, behaivorIDStr);
+    _iConfig.pickupID = BehaviorIDFromString(behaivorIDStr);
+  }
+
+  if(config.isMember(kRetryPlaceCountKey)){
+    _iConfig.placeRetryCount = JsonTools::ParseUint8(config, kRetryPlaceCountKey, 
+                                                     "BehaviorStackBlocks.Constructor.RetryCountIssue");
+  }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorStackBlocks::InitBehavior()
+{
+  auto& BC = GetBEI().GetBehaviorContainer();
+  BC.FindBehaviorByIDAndDowncast<BehaviorPickUpCube>(_iConfig.pickupID,
+                                                     BEHAVIOR_CLASS(PickUpCube),
+                                                     _iConfig.pickupBehavior);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorStackBlocks::GetAllDelegates(std::set<IBehavior*>& delegates) const 
+{ 
+  delegates.insert(_iConfig.pickupBehavior.get());
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorStackBlocks::WantsToBeActivatedBehavior() const
 {
-  UpdateTargetBlocks();
-  return _targetBlockBottom.IsSet() && _targetBlockTop.IsSet();
+  ObjectID bottomBlock;
+  ObjectID topBlock;
+  CalculateTargetBlocks(bottomBlock, topBlock);
+  return bottomBlock.IsSet() && topBlock.IsSet();
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorStackBlocks::OnBehaviorActivated()
 {
+  _dVars = DynamicVariables();
+  CalculateTargetBlocks(_dVars.targetBlockBottom, _dVars.targetBlockTop);
+
   const auto& robotInfo = GetBEI().GetRobotInfo();
-  
-  if(robotInfo.GetCarryingComponent().GetCarryingObject() == _targetBlockTop){
+  if(robotInfo.GetCarryingComponent().GetCarryingObject() == _dVars.targetBlockTop){
     TransitionToStackingBlock();
   }else{
     TransitionToPickingUpBlock();
   }
   
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorStackBlocks::OnBehaviorDeactivated()
-{
-  ResetBehavior();
 }
 
 
@@ -96,21 +127,21 @@ bool BehaviorStackBlocks::CanUseNonUprightBlocks() const
     isRollingUnlocked = progressionUnlockComp.IsUnlocked(UnlockId::RollCube, forFreeplay);
   }
   
-  return isRollingUnlocked || _stackInAnyOrientation;
+  return isRollingUnlocked || _iConfig.stackInAnyOrientation;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorStackBlocks::UpdateTargetBlocks() const
+void BehaviorStackBlocks::CalculateTargetBlocks(ObjectID& bottomBlock, ObjectID& topBlock) const
 {
   auto& objInfoCache = GetBEI().GetAIComponent().GetObjectInteractionInfoCache();
   
   if(CanUseNonUprightBlocks()){
-    _targetBlockTop = objInfoCache.GetBestObjectForIntention(ObjectInteractionIntention::StackTopObjectNoAxisCheck);
-    _targetBlockBottom = objInfoCache.GetBestObjectForIntention(ObjectInteractionIntention::StackBottomObjectNoAxisCheck);
+    topBlock = objInfoCache.GetBestObjectForIntention(ObjectInteractionIntention::StackTopObjectNoAxisCheck);
+    bottomBlock = objInfoCache.GetBestObjectForIntention(ObjectInteractionIntention::StackBottomObjectNoAxisCheck);
   }else{
-    _targetBlockTop = objInfoCache.GetBestObjectForIntention(ObjectInteractionIntention::StackTopObjectAxisCheck);
-    _targetBlockBottom = objInfoCache.GetBestObjectForIntention(ObjectInteractionIntention::StackBottomObjectAxisCheck);
+    topBlock = objInfoCache.GetBestObjectForIntention(ObjectInteractionIntention::StackTopObjectAxisCheck);
+    bottomBlock = objInfoCache.GetBestObjectForIntention(ObjectInteractionIntention::StackBottomObjectAxisCheck);
   }
 }
 
@@ -134,20 +165,20 @@ void BehaviorStackBlocks::BehaviorUpdate()
 
   // Verify that blocks are still valid
   auto validTopObjs = objInfoCache.GetValidObjectsForIntention(topBlockIntention);
-  const bool topValid = validTopObjs.find(_targetBlockTop) != validTopObjs.end();
+  const bool topValid = validTopObjs.find(_dVars.targetBlockTop) != validTopObjs.end();
   
   // Bottom block validity doesn't matter if we haven't picked up the top block yet
   // this prevents stopping when the top block has just been placed
   auto validBottomObjs = objInfoCache.GetValidObjectsForIntention(bottomBlockIntention);
-  const bool bottomValid = validBottomObjs.find(_targetBlockBottom) != validBottomObjs.end();
+  const bool bottomValid = validBottomObjs.find(_dVars.targetBlockBottom) != validBottomObjs.end();
   
   if(!(topValid && bottomValid)){
     // if the bottom block is the one that's not valid, check if that's because
     // the top block is now on top of it - in which case don't cancel the behavior
     bool shouldStop = true;
     if(!bottomValid){
-      const ObservableObject* bottomObj = GetBEI().GetBlockWorld().GetLocatedObjectByID(_targetBlockBottom);
-      const ObservableObject* topObj    = GetBEI().GetBlockWorld().GetLocatedObjectByID(_targetBlockTop);
+      const ObservableObject* bottomObj = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.targetBlockBottom);
+      const ObservableObject* topObj    = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.targetBlockTop);
       
       if((bottomObj != nullptr)  &&
          (topObj != nullptr)){
@@ -169,19 +200,25 @@ void BehaviorStackBlocks::BehaviorUpdate()
       return;
     }
   }
+
+  // Attempt to transition to stacking - will fall back to another pickup if necessary
+  if(_dVars.behaviorState == State::PickingUpBlock &&
+     !IsControlDelegated()){
+    TransitionToStackingBlock();
+  }
   
   // Check to see if a better base block has become available for stacking on top of
   // only do this once per behavior run so that we don't throttle between blocks
   // when aligning - this is to catch cases where kids shove blocks to cozmo
-  if((_behaviorState == State::StackingBlock)  &&
-     !_hasBottomTargetSwitched){
+  if((_dVars.behaviorState == State::StackingBlock)  &&
+     !_dVars.hasBottomTargetSwitched){
     
     
     auto bestBottom = GetClosestValidBottom(bottomBlockIntention);
-    if(bestBottom != _targetBlockBottom){
+    if(bestBottom != _dVars.targetBlockBottom){
       CancelDelegates(false);
-      _targetBlockBottom = bestBottom;
-      _hasBottomTargetSwitched = true;
+      _dVars.targetBlockBottom = bestBottom;
+      _dVars.hasBottomTargetSwitched = true;
       TransitionToStackingBlock();
     }
   }
@@ -192,15 +229,8 @@ void BehaviorStackBlocks::BehaviorUpdate()
 void BehaviorStackBlocks::TransitionToPickingUpBlock()
 {
   SET_STATE(PickingUpBlock);
-
-  
-  PickupBlockParamaters params;
-  params.maxTurnTowardsFaceAngle_rad = ShouldStreamline() ? 0 : kBSB_MaxTurnTowardsFaceBeforePickupAngle_deg;
-  HelperHandle pickupHelper = GetBehaviorHelperFactory().
-                                      CreatePickupBlockHelper(*this,
-                                                              _targetBlockTop, params);
-  
-  SmartDelegateToHelper(pickupHelper, &BehaviorStackBlocks::TransitionToStackingBlock);
+  _iConfig.pickupBehavior->SetTargetID(_dVars.targetBlockTop);
+  DelegateIfInControl(_iConfig.pickupBehavior.get());
 }
 
 
@@ -213,23 +243,33 @@ void BehaviorStackBlocks::TransitionToStackingBlock()
 
   // if we aren't carrying the top block, fail back to pick up
   const bool holdingTopBlock = robotInfo.GetCarryingComponent().IsCarryingObject() &&
-                               robotInfo.GetCarryingComponent().GetCarryingObject() == _targetBlockTop;
+                               robotInfo.GetCarryingComponent().GetCarryingObject() == _dVars.targetBlockTop;
   if( ! holdingTopBlock ) {
     PRINT_NAMED_DEBUG("BehaviorStackBlocks.FailBackToPickup",
                       "wanted to stack, but we aren't carrying a block");
     TransitionToPickingUpBlock();
     return;
   }
-  
-  const bool placingOnGround = false;
-  HelperHandle placeHelper = GetBehaviorHelperFactory().
-                      CreatePlaceRelObjectHelper(*this,
-                                                 _targetBlockBottom,
-                                                 placingOnGround);
 
-  SmartDelegateToHelper(placeHelper,
-                        &BehaviorStackBlocks::TransitionToPlayingFinalAnim,
-                        &BehaviorStackBlocks::TransitionToFailedToStack);
+  const bool placingOnGround = false;
+  DelegateIfInControl(new PlaceRelObjectAction(_dVars.targetBlockBottom, placingOnGround),
+                      [this](ActionResult result){
+                        if(result == ActionResult::SUCCESS){
+                          TransitionToPlayingFinalAnim();
+                        }else if((IActionRunner::GetActionResultCategory(result) == ActionResultCategory::RETRY) &&
+                                  (_dVars.placeRetryCount < _iConfig.placeRetryCount)){
+                          _dVars.placeRetryCount++;
+                          TransitionToStackingBlock();
+                        }else{
+                          auto& blockWorld = GetBEI().GetBlockWorld();
+                          const ObservableObject* bottomObj = blockWorld.GetLocatedObjectByID(_dVars.targetBlockBottom);
+                          if(bottomObj != nullptr){
+                            auto& whiteboard = GetBEI().GetAIComponent().GetWhiteboard();	
+                            whiteboard.SetFailedToUse(*bottomObj,	
+                                                      AIWhiteboard::ObjectActionFailure::StackOnObject);
+                          }
+                        }        
+                      });
 }
 
 
@@ -250,8 +290,8 @@ void BehaviorStackBlocks::TransitionToPlayingFinalAnim()
 void BehaviorStackBlocks::TransitionToFailedToStack()
 {
   auto retryIfPossible = [this](){
-    UpdateTargetBlocks();
-    if(_targetBlockTop.IsSet() && _targetBlockBottom.IsSet()){
+    CalculateTargetBlocks(_dVars.targetBlockBottom, _dVars.targetBlockTop);
+    if(_dVars.targetBlockTop.IsSet() && _dVars.targetBlockBottom.IsSet()){
       TransitionToPickingUpBlock();
     }
   };
@@ -274,13 +314,13 @@ void BehaviorStackBlocks::TransitionToFailedToStack()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ObjectID BehaviorStackBlocks::GetClosestValidBottom(ObjectInteractionIntention bottomIntention) const
 {
-  DEV_ASSERT(_targetBlockBottom.IsSet(),
+  DEV_ASSERT(_dVars.targetBlockBottom.IsSet(),
              "BehaviorStackBlocks.GetClosestValidBottom.TargetBlockNotValid");
   
   auto& objInfoCache = GetBEI().GetAIComponent().GetObjectInteractionInfoCache();
 
-  ObjectID bestBottom = _targetBlockBottom;
-  const ObservableObject* currentTarget =  GetBEI().GetBlockWorld().GetLocatedObjectByID(_targetBlockBottom);
+  ObjectID bestBottom = _dVars.targetBlockBottom;
+  const ObservableObject* currentTarget =  GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.targetBlockBottom);
   f32 distToClosestBottom_mm_sq;
   
   const auto& robotInfo = GetBEI().GetRobotInfo();
@@ -306,18 +346,9 @@ ObjectID BehaviorStackBlocks::GetClosestValidBottom(ObjectInteractionIntention b
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorStackBlocks::ResetBehavior()
-{
-  _hasBottomTargetSwitched = false;
-  _targetBlockTop.UnSet();
-  _targetBlockBottom.UnSet();
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorStackBlocks::SetState_internal(State state, const std::string& stateName)
 {
-  _behaviorState = state;
+  _dVars.behaviorState = state;
   SetDebugStateName(stateName);
 }
 

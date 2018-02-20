@@ -20,7 +20,7 @@
 #include "util/signals/simpleSignal_fwd.h"
 #include "util/global/globalDefinitions.h"
 #include "clad/externalInterface/messageGameToEngine.h"
-#include "engine/dependencyManagedComponent.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/robotComponents_fwd.h"
 #include "coretech/common/engine/objectIDs.h"

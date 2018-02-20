@@ -4,24 +4,32 @@ import (
 	"anki/ipc"
 	"bytes"
 	"encoding/binary"
+	"flag"
 	"fmt"
 	"io"
 	"os"
+	"sync"
 	"time"
 
 	"anki/cloudproc"
+	"anki/cloudproc/harness"
 
 	wav "github.com/youpy/go-wav"
 )
 
 func main() {
-	if len(os.Args) < 2 {
+	infile := flag.String("file", "", "wav file to open")
+	makeproc := flag.Bool("harness", false, "create cloud process harness inside this")
+	verbose := flag.Bool("verbose", false, "enable verbose logging")
+	flag.Parse()
+
+	if *infile == "" {
 		fmt.Println("Error: need a filename on the command line")
 		return
 	}
-	f, err := os.Open(os.Args[1])
+	f, err := os.Open(*infile)
 	if err != nil {
-		fmt.Println("Couldn't open file", os.Args[1], ":", err)
+		fmt.Println("Couldn't open file", *infile, ":", err)
 		return
 	}
 
@@ -52,12 +60,34 @@ func main() {
 	}
 	fmt.Println("Read", len(data), "samples")
 
-	conn, err := ipc.NewUnixgramClient(ipc.GetSocketPath("cp_test"), "wavtester")
-	if err != nil {
-		fmt.Println("Couldn't connect to cloud client:", err)
-		return
+	var sender cloudproc.Sender
+	if *makeproc {
+		cloudproc.SetVerbose(*verbose)
+		proc, err := harness.CreateMemProcess()
+		if err != nil {
+			fmt.Println("Couldn't create test cloud process:", err)
+			return
+		}
+		defer proc.Close()
+		sender = proc
+
+		wg := sync.WaitGroup{}
+		go func() {
+			wg.Add(1)
+			defer wg.Done()
+			intent, _ := proc.ReadIntent()
+			fmt.Println("Got AI response:", intent)
+		}()
+		defer wg.Wait()
+	} else {
+		conn, err := ipc.NewUnixgramClient(ipc.GetSocketPath("cp_test"), "wavtester")
+		if err != nil {
+			fmt.Println("Couldn't connect to cloud client:", err)
+			return
+		}
+		defer conn.Close()
+		sender = cloudproc.NewIpcSender(conn)
 	}
-	defer conn.Close()
 
 	// simulate real-time recording and delay between each send
 	interval := time.Millisecond * (1000 / cloudproc.ChunkHz)
@@ -65,7 +95,7 @@ func main() {
 
 	// send hotword
 	fmt.Println("Sent: 0 samples")
-	conn.Write([]byte(cloudproc.HotwordMessage))
+	sender.SendHotword()
 	buf := data
 	sent := 0
 	for len(buf) >= cloudproc.ChunkSamples {
@@ -79,7 +109,10 @@ func main() {
 		data := &bytes.Buffer{}
 		binary.Write(data, binary.LittleEndian, temp)
 
-		conn.Write(data.Bytes())
+		n, err := sender.SendAudio(data.Bytes())
+		if n != len(data.Bytes()) || err != nil {
+			fmt.Println("Expected to send", len(data.Bytes()), "but instead sent", n, "with error:", err)
+		}
 		sent += len(temp)
 		fmt.Println("\rSent:", sent, "samples")
 	}

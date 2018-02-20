@@ -70,7 +70,7 @@ private:
   const u32 kBlueColor = (kBlue << 8) + kAlpha;
   const u32 kBlackColor = 0x00000000;
   
-  // We pick 240 for on/off period here because it is a multiple of BS_TIME_STEP (currently 60ms)
+  // We pick 240 for on/off period here because it is a multiple of BS_TIME_STEP_MS (currently 60ms)
   // which makes it a lot easier to detect the on/off timing correctly
   const u32 kOnPeriod_ms = 240;
   const u32 kOffPeriod_ms = 240;
@@ -225,9 +225,9 @@ s32 CST_LEDColor::UpdateSimInternal()
                      "CST_LEDColor.VerifyLEDAnimation",
                      "All the LEDs should have the same color at this stage.");
 
-      if (kOnPeriod_ms % BS_TIME_STEP != 0 || kOffPeriod_ms % BS_TIME_STEP != 0) {
+      if (kOnPeriod_ms % BS_TIME_STEP_MS != 0 || kOffPeriod_ms % BS_TIME_STEP_MS != 0) {
         PRINT_NAMED_WARNING("CST_LEDColor.VerifyLEDAnimation",
-                            "If on or off period is not divisible by BS_TIME_STEP it is going to be"
+                            "If on or off period is not divisible by BS_TIME_STEP_MS it is going to be"
                             "difficult to verify the on or off period because this update loop will"
                             "be out of sync with the on/off frequency.");
       }
@@ -245,13 +245,13 @@ s32 CST_LEDColor::UpdateSimInternal()
       }
 
       if (_ledState == LEDAnimationState::ON) {
-        if (_framesOn == kOnPeriod_ms / BS_TIME_STEP) {
+        if (_framesOn == kOnPeriod_ms / BS_TIME_STEP_MS) {
           _onFramesMatched = true;
         } else {
           _onFramesMatched = false;
         }
       } else if (_ledState == LEDAnimationState::OFF) {
-        if (_framesOff == kOffPeriod_ms / BS_TIME_STEP) {
+        if (_framesOff == kOffPeriod_ms / BS_TIME_STEP_MS) {
           _offFramesMatched = true;
         } else {
           _offFramesMatched = false;

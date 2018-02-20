@@ -19,7 +19,7 @@
 
 
 #include "audioEngine/multiplexer/audioMuxClient.h"
-#include "engine/dependencyManagedComponent.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 #include "engine/robotComponents_fwd.h"
 #include "engine/events/ankiEvent.h"
 #include <vector>
@@ -42,7 +42,7 @@ public:
   using CurveType = AudioEngine::Multiplexer::CurveType;
 
   EngineRobotAudioClient()
-  : IDependencyManagedComponent(RobotComponentID::EngineAudioClient) {}
+  : IDependencyManagedComponent(this, RobotComponentID::EngineAudioClient) {}
 
   //////
   // IDependencyManagedComponent functions

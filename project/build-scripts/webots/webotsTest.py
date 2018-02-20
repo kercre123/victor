@@ -251,6 +251,7 @@ def sign_webot_executables(build_type, password):
 
   executables = [
     'webotsCtrlBuildServerTest',
+    'webotsCtrlWebServer',
     'webotsCtrlGameEngine',
     'webotsCtrlRobot',
     'webotsCtrlGameEngine2',
@@ -884,8 +885,9 @@ def main():
     print("Enter your password to set up firewall exceptions:")
     sign_webot_executables(options.build_type, getpass.getpass()) # prompt for password
     sys.exit(0)
-    
-  sign_webot_executables(options.build_type, options.password)
+  
+  if options.password:
+    sign_webot_executables(options.build_type, options.password)
 
   num_of_failed_runs = 0
   num_of_passed_runs = 0

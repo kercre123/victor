@@ -20,7 +20,6 @@
 #include "engine/robot.h"
 #include "engine/robotDataBackupManager.h"
 #include "engine/robotInterface/messageHandler.h"
-#include "engine/robotManager.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/onboardingData.h"
 #include "json/json.h"
@@ -45,8 +44,7 @@ RobotDataBackupManager::RobotDataBackupManager(Robot& robot)
 {
   if(_robot.HasExternalInterface())
   {
-    _signalHandles.push_back(_robot.GetRobotMessageHandler()->Subscribe(_robot.GetID(),
-                                                                        RobotInterface::RobotToEngineTag::robotAvailable,
+    _signalHandles.push_back(_robot.GetRobotMessageHandler()->Subscribe(RobotInterface::RobotToEngineTag::robotAvailable,
                                                                         std::bind(&RobotDataBackupManager::RobotConnected, this, std::placeholders::_1)));
     
     using namespace ExternalInterface;

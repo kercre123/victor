@@ -30,13 +30,13 @@ enum class EngineToRobotTag : uint8_t;
 }
 
 class IExternalInterface;
+class CozmoContext;
 enum class RobotConnectionResult : uint8_t;
 
 class RobotInitialConnection : private Util::SignalHolder
 {
 public:
-  RobotInitialConnection(RobotID_t id, RobotInterface::MessageHandler* messageHandler,
-    IExternalInterface* externalInterface);
+  RobotInitialConnection(const CozmoContext* context);
 
   // called when getting a disconnect message from robot
   // returns true if robot was in the process of connecting and we broadcasted a connection failed message
@@ -56,9 +56,9 @@ private:
   void OnNotified(RobotConnectionResult result, uint32_t robotFwVersion);
   void SendConnectionResponse(RobotConnectionResult result, uint32_t robotFwVersion);
 
-  RobotID_t _id;
   bool _notified;
   IExternalInterface* _externalInterface;
+  const CozmoContext* _context;
   RobotInterface::MessageHandler* _robotMessageHandler;
   uint32_t _serialNumber = 0;
   int32_t  _bodyHWVersion = -1;

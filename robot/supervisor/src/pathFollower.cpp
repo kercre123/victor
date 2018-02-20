@@ -63,16 +63,6 @@ namespace Anki
         const f32 COAST_VELOCITY_MMPS = 25.f;
         const f32 COAST_VELOCITY_RADPS = 0.4f; // Same as POINT_TURN_TERMINAL_VEL_RAD_PER_S
 
-        // If true, then the path is not traversed according to its speed parameters, but
-        // instead by the SetPathSpeed message.
-        bool manualSpeedControl_ = false;
-        f32 manualPathSpeed_ = 0;
-        f32 manualPathAccel_ = 100;
-        f32 manualPathDecel_ = 100;
-
-        // Max speed the robot can travel when in assisted RC mode
-        const f32 MAX_ASSISTED_RC_SPEED = 50.f;
-
         // Target speed to decelerate to when slowing down at end of segment
         const u16 END_OF_PATH_TARGET_SPEED_MMPS = 20;
 
@@ -117,9 +107,6 @@ namespace Anki
         path_.Clear();
         currPathSegment_ = -1;
         realPathSegment_ = -1;
-        
-        manualPathSpeed_ = 0.f;
-        manualSpeedControl_ = false;
         
         pointTurnStarted_ = false;
         
@@ -223,7 +210,7 @@ namespace Anki
         }
       }
 
-      bool StartPathTraversal(u16 path_id, bool manualSpeedControl)
+      bool StartPathTraversal(u16 path_id)
       {
         // If we were already following an externally-specified path, send an interruption event.
         if(IsTraversingPath() && currentPathIsExternal_)
@@ -240,9 +227,6 @@ namespace Anki
 
           AnkiConditionalErrorAndReturnValue(path_.CheckContinuity(CONTINUITY_TOL_MM2), false, "PathFollower.StartPathTraversal.PathIsDiscontinuous", "");
 
-          // Set whether or not path is traversed according to speed in path parameters
-          manualSpeedControl_ = manualSpeedControl;
-
           currPathSegment_ = 0;
           realPathSegment_ = currPathSegment_;
           startedDecelOnSegment_ = false;
@@ -251,15 +235,9 @@ namespace Anki
           // Set speed
           // (Except for point turns whose speeds are handled at the steering controller level)
           if (path_[currPathSegment_].GetType() != Planning::PST_POINT_TURN) {
-            if (manualSpeedControl_) {
-              SpeedController::SetUserCommandedDesiredVehicleSpeed( manualPathSpeed_ );
-              SpeedController::SetUserCommandedAcceleration( manualPathAccel_ );
-              SpeedController::SetUserCommandedDeceleration( manualPathDecel_ );
-            } else {
-              SpeedController::SetUserCommandedDesiredVehicleSpeed( path_[currPathSegment_].GetTargetSpeed() );
-              SpeedController::SetUserCommandedAcceleration( path_[currPathSegment_].GetAccel() );
-              SpeedController::SetUserCommandedDeceleration( path_[currPathSegment_].GetDecel() );
-            }
+            SpeedController::SetUserCommandedDesiredVehicleSpeed( path_[currPathSegment_].GetTargetSpeed() );
+            SpeedController::SetUserCommandedAcceleration( path_[currPathSegment_].GetAccel() );
+            SpeedController::SetUserCommandedDeceleration( path_[currPathSegment_].GetDecel() );
           }
 
           AnkiDebug( "PathFollower.StartPathTraversal", "Start segment %d, speed = %f, accel = %f, decel = %f",
@@ -285,24 +263,10 @@ namespace Anki
         return TRUE;
       }
 
-
       bool IsTraversingPath()
       {
         return currPathSegment_ >= 0;
       }
-
-      bool IsInManualSpeedMode()
-      {
-        return manualSpeedControl_;
-      }
-
-      void SetManualPathSpeed(f32 speed_mmps, f32 accel_mmps2, f32 decel_mmps2)
-      {
-        manualPathSpeed_ = CLIP(speed_mmps, -MAX_ASSISTED_RC_SPEED, MAX_ASSISTED_RC_SPEED);
-        manualPathAccel_ = accel_mmps2;
-        manualPathDecel_ = decel_mmps2;
-      }
-
 
       s8 GetCurrPathSegment()
       {
@@ -509,13 +473,6 @@ namespace Anki
           WheelController::ResetIntegralGainSums();
 #endif
 
-        }
-
-        // If in manual speed control, apply speed here
-        if (manualSpeedControl_) {
-          SpeedController::SetUserCommandedDesiredVehicleSpeed( manualPathSpeed_ );
-          SpeedController::SetUserCommandedAcceleration( manualPathAccel_ );
-          SpeedController::SetUserCommandedDeceleration( manualPathDecel_ );
         }
 
         if (!DockingController::IsBusy()) {

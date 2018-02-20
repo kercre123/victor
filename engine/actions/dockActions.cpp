@@ -17,10 +17,7 @@
 #include "engine/actions/driveToActions.h"
 #include "engine/actions/visuallyVerifyActions.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/ankiEventUtil.h"
-#include "engine/blockWorld/blockConfigurationManager.h"
-#include "engine/blockWorld/blockConfigurationStack.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/charger.h"
 #include "engine/components/carryingComponent.h"
@@ -104,15 +101,13 @@ namespace Anki {
 
     IDockAction::IDockAction(ObjectID objectID,
                              const std::string name,
-                             const RobotActionType type,
-                             const bool useManualSpeed)
+                             const RobotActionType type)
     : IAction(name,
               type,
               ((u8)AnimTrackFlag::HEAD_TRACK |
                (u8)AnimTrackFlag::LIFT_TRACK |
-               (useManualSpeed ? 0 : (u8)AnimTrackFlag::BODY_TRACK)))
+               (u8)AnimTrackFlag::BODY_TRACK))
     , _dockObjectID(objectID)
-    , _useManualSpeed(useManualSpeed)
     , _dockingMethod((DockingMethod)kDefaultDockingMethod)
     {
       
@@ -139,8 +134,7 @@ namespace Anki {
         GetRobot().GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::Interacting, _dockObjectID);
       }
       // Stop squinting
-      // TODO: Restore squinting (add message to AnimationComponent to send to AnimationStreamer) (VIC-362)
-      //GetRobot().GetAnimationStreamer().GetTrackLayerComponent()->RemoveSquint(_squintLayerTag, 250);
+      GetRobot().GetAnimationComponent().RemoveSquint(_kEyeSquintLayerName, 250);
 
       if(_dockingComponentPtr != nullptr){
         if(_dockingComponentPtr->IsPickingOrPlacing()) {
@@ -489,6 +483,11 @@ namespace Anki {
       return removed;
     }
 
+    void IDockAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const 
+    {
+      requests.insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::High });
+    }
+
     ActionResult IDockAction::Init()
     {
       _waitToVerifyTimeSecs = -1.f;
@@ -571,8 +570,8 @@ namespace Anki {
         _liftLoadState = event.GetData().Get_liftLoad().hasLoad ? LiftLoadState::HAS_LOAD : LiftLoadState::HAS_NO_LOAD;;
       };
 
-      _liftMovingSignalHandle = GetRobot().GetRobotMessageHandler()->Subscribe(GetRobot().GetID(), RobotToEngineTag::movingLiftPostDock, liftSoundLambda);
-      _liftLoadSignalHandle = GetRobot().GetRobotMessageHandler()->Subscribe(GetRobot().GetID(), RobotToEngineTag::liftLoad, liftLoadLambda);
+      _liftMovingSignalHandle = GetRobot().GetRobotMessageHandler()->Subscribe(RobotToEngineTag::movingLiftPostDock, liftSoundLambda);
+      _liftLoadSignalHandle = GetRobot().GetRobotMessageHandler()->Subscribe(RobotToEngineTag::liftLoad, liftLoadLambda);
     
       if (GetRobot().HasExternalInterface() )
       {
@@ -655,14 +654,8 @@ namespace Anki {
         _lightsSet = true;
       }
       
-      // If this is a reset clear the _squintLayerTag
-      // TODO: Restore squinting  (VIC-362)
-      /*
-      if(_squintLayerTag != AnimationStreamer::kNotAnimatingTag){
-        GetRobot().GetAnimationStreamer().GetTrackLayerComponent()->RemoveSquint(_squintLayerTag, 250);
-        _squintLayerTag = AnimationStreamer::kNotAnimatingTag;
-      }
-       */
+      // If this is a reset clear the squinting
+      GetRobot().GetAnimationComponent().RemoveSquint(_kEyeSquintLayerName, 250);
       
       // Allow actions the opportunity to check or set any properties they need to
       // this allows actions that are part of driveTo or wrappers a chance to check data
@@ -721,7 +714,6 @@ namespace Anki {
                                                     _placementOffsetX_mm,
                                                     _placementOffsetY_mm,
                                                     _placementOffsetAngle_rad,
-                                                    _useManualSpeed,
                                                     _numDockingRetries,
                                                     _dockingMethod,
                                                     _doLiftLoadCheck) == RESULT_OK)
@@ -748,17 +740,14 @@ namespace Anki {
         _wasPickingOrPlacing = _dockingComponentPtr->IsPickingOrPlacing();
         
         if(_wasPickingOrPlacing && ShouldApplyDockingSquint()) {
-          // TODO: Restore squinting  (VIC-362)
-          /*
           // Apply continuous eye squint if we have just now started picking and placing
           const f32 DockSquintScaleX = 1.05f;
           const f32 DockSquintScaleY = 0.35f;
           const f32 DockSquintUpperLidAngle = -10.f;
-          _squintLayerTag = GetRobot().GetAnimationStreamer().GetTrackLayerComponent()->AddSquint("DockSquint",
-                                                                                              DockSquintScaleX,
-                                                                                              DockSquintScaleY,
-                                                                                              DockSquintUpperLidAngle);
-           */
+          GetRobot().GetAnimationComponent().AddSquint(_kEyeSquintLayerName,
+                                                       DockSquintScaleX,
+                                                       DockSquintScaleY,
+                                                       DockSquintUpperLidAngle);
         }
       }
       else if (VerifyDockingComponentValid() &&
@@ -845,7 +834,7 @@ namespace Anki {
     
     bool IDockAction::ShouldApplyDockingSquint()
     {
-      return !(NeedId::Energy == GetRobot().GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression());
+      return true;
     }
 
     
@@ -862,12 +851,10 @@ namespace Anki {
     
 #pragma mark ---- PopAWheelieAction ----
     
-    PopAWheelieAction::PopAWheelieAction(ObjectID objectID,
-                                         const bool useManualSpeed)
+    PopAWheelieAction::PopAWheelieAction(ObjectID objectID)
     : IDockAction(objectID,
                   "PopAWheelie",
-                  RobotActionType::POP_A_WHEELIE,
-                  useManualSpeed)
+                  RobotActionType::POP_A_WHEELIE)
     {
       
     }
@@ -976,9 +963,8 @@ namespace Anki {
     
 #pragma mark ---- FacePlantAction ----
     
-    FacePlantAction::FacePlantAction(ObjectID objectID,
-                                     const bool useManualSpeed)
-    : IDockAction(objectID, "FacePlant", RobotActionType::FACE_PLANT, useManualSpeed)
+    FacePlantAction::FacePlantAction(ObjectID objectID)
+    : IDockAction(objectID, "FacePlant", RobotActionType::FACE_PLANT)
     {
       SetShouldCheckForObjectOnTopOf(false);      
     }
@@ -1022,25 +1008,6 @@ namespace Anki {
       // TODO: Stop using constant ROBOT_BOUNDING_Z for this
       if (dockObjectHeightWrtRobot > 0.5f*ROBOT_BOUNDING_Z) { //  dockObject->GetSize().z()) {
         PRINT_CH_INFO("Actions", "FacePlantAction.SelectDockAction.ObjectTooHigh", "");
-        return ActionResult::BAD_OBJECT;
-      }
-      
-      // Check that this block is at the bottom of a 3-block stack
-      // TODO: This logic only works because there can only ever be one stack with three blocks,
-      //       but it should be made more generic.
-      auto blockStackPtr = GetRobot().GetBlockWorld().GetBlockConfigurationManager().GetStackCache().GetTallestStack();
-      if (auto blockStack = blockStackPtr.lock()) {
-        if (blockStack->GetStackHeight() < 3) {
-          PRINT_CH_INFO("Actions", "FacePlantAction.SelectDockAction.ObjectStackNotBigEnough", "");
-          return ActionResult::BAD_OBJECT;
-        }
-        
-        if (blockStack->GetBottomBlockID() != object->GetID() ) {
-          PRINT_CH_INFO("Actions", "FacePlantAction.SelectDockAction.ObjectNotAtBottomOfStack", "");
-          return ActionResult::BAD_OBJECT;
-        }
-      } else {
-        PRINT_CH_INFO("Actions", "FacePlantAction.SelectDockAction.NoStackFound", "");
         return ActionResult::BAD_OBJECT;
       }
     
@@ -1123,12 +1090,10 @@ namespace Anki {
     
     AlignWithObjectAction::AlignWithObjectAction(ObjectID objectID,
                                                  const f32 distanceFromMarker_mm,
-                                                 const AlignmentType alignmentType,
-                                                 const bool useManualSpeed)
+                                                 const AlignmentType alignmentType)
     : IDockAction(objectID,
                   "AlignWithObject",
-                  RobotActionType::ALIGN_WITH_OBJECT,
-                  useManualSpeed)
+                  RobotActionType::ALIGN_WITH_OBJECT)
     , _alignmentType(alignmentType)
     {
       SetShouldCheckForObjectOnTopOf(false);
@@ -1243,11 +1208,10 @@ namespace Anki {
     
 #pragma mark ---- PickupObjectAction ----
     
-    PickupObjectAction::PickupObjectAction(ObjectID objectID, const bool useManualSpeed)
+    PickupObjectAction::PickupObjectAction(ObjectID objectID)
     : IDockAction(objectID,
                   "PickupObject",
-                  RobotActionType::PICK_AND_PLACE_INCOMPLETE,
-                  useManualSpeed)
+                  RobotActionType::PICK_AND_PLACE_INCOMPLETE)
     {
       _dockingMethod = (DockingMethod)kPickupDockingMethod;
       SetPostDockLiftMovingAnimation(AnimationTrigger::SoundOnlyLiftEffortPickup);
@@ -1688,7 +1652,6 @@ namespace Anki {
     
     PlaceObjectOnGroundAtPoseAction::PlaceObjectOnGroundAtPoseAction(const Pose3d& placementPose,
                                                                      const bool useExactRotation,
-                                                                     const bool useManualSpeed,
                                                                      const bool checkFreeDestination,
                                                                      const float destinationObjectPadding_mm)
     : CompoundActionSequential()
@@ -1696,7 +1659,6 @@ namespace Anki {
       auto* driveAction = new DriveToPlaceCarriedObjectAction(placementPose,
                                                               true,
                                                               useExactRotation,
-                                                              useManualSpeed,
                                                               checkFreeDestination,
                                                               destinationObjectPadding_mm);
       _driveAction = AddAction(driveAction);
@@ -1712,12 +1674,10 @@ namespace Anki {
                                                const bool placeOnGround,
                                                const f32 placementOffsetX_mm,
                                                const f32 placementOffsetY_mm,
-                                               const bool useManualSpeed,
                                                const bool relativeCurrentMarker)
     : IDockAction(objectID,
                   "PlaceRelObject",
-                  RobotActionType::PICK_AND_PLACE_INCOMPLETE,
-                  useManualSpeed)
+                  RobotActionType::PICK_AND_PLACE_INCOMPLETE)
     , _relOffsetX_mm(placementOffsetX_mm)
     , _relOffsetY_mm(placementOffsetY_mm)
     , _relativeCurrentMarker(relativeCurrentMarker)
@@ -2293,11 +2253,10 @@ namespace Anki {
     
 #pragma mark ---- RollObjectAction ----
     
-    RollObjectAction::RollObjectAction(ObjectID objectID, const bool useManualSpeed)
+    RollObjectAction::RollObjectAction(ObjectID objectID)
     : IDockAction(objectID,
                   "RollObject",
-                  RobotActionType::ROLL_OBJECT_LOW,
-                  useManualSpeed)
+                  RobotActionType::ROLL_OBJECT_LOW)
     {
       _dockingMethod = (DockingMethod)kRollDockingMethod;
       _dockAction = DockAction::DA_ROLL_LOW;
@@ -2491,11 +2450,10 @@ namespace Anki {
     
 #pragma mark ---- AscendOrDescendRampAction ----
     
-    AscendOrDescendRampAction::AscendOrDescendRampAction(ObjectID rampID, const bool useManualSpeed)
+    AscendOrDescendRampAction::AscendOrDescendRampAction(ObjectID rampID)
     : IDockAction(rampID,
                   "AscendOrDescendRamp",
-                  RobotActionType::ASCEND_OR_DESCEND_RAMP,
-                  useManualSpeed)
+                  RobotActionType::ASCEND_OR_DESCEND_RAMP)
     {
       
     }
@@ -2547,11 +2505,10 @@ namespace Anki {
 
 #pragma mark ---- CrossBridgeAction ----
     
-    CrossBridgeAction::CrossBridgeAction(ObjectID bridgeID, const bool useManualSpeed)
+    CrossBridgeAction::CrossBridgeAction(ObjectID bridgeID)
     : IDockAction(bridgeID,
                   "CrossBridge",
-                  RobotActionType::CROSS_BRIDGE,
-                  useManualSpeed)
+                  RobotActionType::CROSS_BRIDGE)
     {
       
     }

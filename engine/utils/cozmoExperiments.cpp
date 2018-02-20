@@ -54,7 +54,7 @@ void CozmoExperiments::InitExperiments()
     op(&_lab);
   };
   auto userIdAccessor = [this] {
-    Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+    Robot* robot = _context->GetRobotManager()->GetRobot();
     return robot != nullptr ? std::to_string(robot->GetBodySerialNumber()) : GetDeviceId();
   };
   Util::AnkiLab::InitializeABInterface(labOpRunner, userIdAccessor);
@@ -81,7 +81,7 @@ void CozmoExperiments::AutoActivateExperiments(const std::string& userId)
 
 void CozmoExperiments::WriteLabAssignmentsToRobot(const std::vector<Util::AnkiLab::AssignmentDef>& assignments)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   if (robot != nullptr)
   {
     LabAssignments labAssignments;
@@ -103,7 +103,7 @@ void CozmoExperiments::WriteLabAssignmentsToRobot(const std::vector<Util::AnkiLa
 
 void CozmoExperiments::ReadLabAssignmentsFromRobot(const u32 serialNumber)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = _context->GetRobotManager()->GetRobot();
   if (robot != nullptr)
   {
     _loadedLabAssignments.labAssignments.clear();

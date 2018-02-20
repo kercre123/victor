@@ -423,7 +423,7 @@ void NeedsManager::InitInternal(const float currentTime_s)
 
 void NeedsManager::InitAfterConnection()
 {
-  _robot = _cozmoContext->GetRobotManager()->GetFirstRobot();
+  _robot = _cozmoContext->GetRobotManager()->GetRobot();
 
   _pendingReadFromRobot = true;
 

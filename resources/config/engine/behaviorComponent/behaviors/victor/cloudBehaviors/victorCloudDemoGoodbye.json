@@ -1,6 +1,0 @@
-{
-  "behaviorClass": "PlayAnim",
-  "behaviorID": "VictorCloudDemoGoodbye",
-  "respondToCloudIntent": "Goodbye",
-  "animNames": ["anim_repair_mild_fix_tread_01"]  
-}

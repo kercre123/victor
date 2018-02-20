@@ -1,6 +1,11 @@
 /**
  * File: cameraService_vicos.cpp
  *
+ * 
+ * Author: chapados
+ * Created: 02/07/2018
+ * 
+ * based on androidHAL_mac.cpp
  * Author: Kevin Yoon
  * Created: 02/17/2017
  *
@@ -23,34 +28,30 @@
 #include <unistd.h>
 
 #ifdef SIMULATOR
-#error SIMULATOR should NOT be defined by any target using cameraService.cpp
+#error SIMULATOR should NOT be defined by any target using cameraService_vicos.cpp
 #endif
 
 namespace Anki {
   namespace Cozmo {
 
     namespace { // "Private members"
-      // Pointer to the current (latest) frame the camera has given us
-      uint8_t* _currentFrame = nullptr;
-      bool     _frameReady = false;
-      TimeStamp_t _currentFrameSystemTimestamp_ms = 0;
-      struct anki_camera_handle* _camera;
+      struct anki_camera_handle* _camera = nullptr;
       bool     _isRestartingCamera = false;
       std::mutex _lock;
     } // "private" namespace
 
 
-#pragma mark --- Simulated Hardware Method Implementations ---
+#pragma mark --- Hardware Method Implementations ---
 
     // Definition of static field
-    CameraService* CameraService::_instance = 0;
+    CameraService* CameraService::_instance = nullptr;
 
     /**
      * Returns the single instance of the object.
      */
     CameraService* CameraService::getInstance() {
       // check if the instance has been created yet
-      if(0 == _instance) {
+      if(nullptr == _instance) {
         // if not, then create it
         _instance = new CameraService;
       }
@@ -77,19 +78,9 @@ namespace Anki {
       DeleteCamera();
     }
 
-    int CameraCallback(uint8_t* image, int width, int height)
-    {
-      DEV_ASSERT(image != nullptr, "CameraService.CameraCallback.NullImage");
-      _currentFrame = image;
-
-      _currentFrameSystemTimestamp_ms = CameraService::getInstance()->GetTimeStamp();
-
-      _frameReady = true;
-      return 0;
-    }
-
     void CameraService::InitCamera()
     {
+      std::lock_guard<std::mutex> lock(_lock);
       PRINT_NAMED_INFO("CameraService.InitCamera.StartingInit", "");
 
       int rc = camera_init(&_camera);
@@ -100,6 +91,7 @@ namespace Anki {
     }
 
     void CameraService::DeleteCamera() {
+      std::lock_guard<std::mutex> lock(_lock);
       int res = camera_stop(_camera);
       DEV_ASSERT(res == 0, "CameraService.Delete.CameraStopFailed");
 
@@ -147,8 +139,7 @@ namespace Anki {
 
     void CameraService::CameraSetParameters(u16 exposure_ms, f32 gain)
     {
-      // STUB
-      return;
+      camera_set_exposure(_camera, exposure_ms, gain);
     }
 
     bool CameraService::CameraGetFrame(u8*& frame, u32& imageID, TimeStamp_t& imageCaptureSystemTimestamp_ms)
@@ -193,11 +184,6 @@ namespace Anki {
       std::lock_guard<std::mutex> lock(_lock);
       int rc = camera_frame_release(_camera, imageID);
       return (rc == 0);
-    }
-
-    void CameraService::CameraSwapLocks()
-    {
-      // camera_swap_locks();
     }
   } // namespace Cozmo
 } // namespace Anki

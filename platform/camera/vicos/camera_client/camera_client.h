@@ -27,6 +27,12 @@ typedef enum {
   ANKI_CAMERA_STATUS_RUNNING,
 } anki_camera_status_t;
 
+// BEGIN: shared types
+// These types are shared with the server component in the OS.
+// Eventually these structs will be available via a header in our
+// custom toolchain, or we will move the camera system back into the
+// engine instead of using a separate process.
+
 typedef struct {
   uint64_t timestamp;
   uint32_t frame_id;
@@ -36,8 +42,17 @@ typedef struct {
   uint8_t  bits_per_pixel;
   uint8_t  format;
   uint8_t  _reserved[2];
+  uint32_t _pad_to_64[8];
   uint8_t  data[0];
 } anki_camera_frame_t;
+
+typedef struct {
+  uint16_t exposure_ms;
+  float gain;
+} anki_camera_exposure_t;
+
+// END: shared types
+
 
 struct anki_camera_handle {
   int client_handle;
@@ -63,6 +78,8 @@ int camera_frame_acquire(struct anki_camera_handle* camera, anki_camera_frame_t*
 
 // Release (unlock) frame to camera system
 int camera_frame_release(struct anki_camera_handle* camera, uint32_t frame_id);
+
+int camera_set_exposure(struct anki_camera_handle* camera, uint16_t exposure_ms, float gain);
 
 // Get current status of camera system
 anki_camera_status_t camera_status(struct anki_camera_handle* camera);

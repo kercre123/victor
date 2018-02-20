@@ -92,7 +92,7 @@ Result BehaviorPlaypenCameraCalibration::OnBehaviorActivatedInternal()
   robot.GetVisionComponent().ClearCalibrationImages();
   
   // Move head and lift so we can see the target
-  CompoundActionParallel* action = new CompoundActionParallel({new MoveHeadToAngleAction(PlaypenConfig::kHeadAngleToSeeTarget),
+  CompoundActionParallel* action = new CompoundActionParallel({new MoveHeadToAngleAction(PlaypenConfig::kHeadAngleToSeeTarget_rad),
                                                                new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK)});
   
   DelegateIfInControl(action, [this]() {
@@ -116,7 +116,7 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenCameraCalibration::PlaypenUpdateI
     // just uses markers detected from the current image, however, we need to store an image
     // so we can grab it later to write to log
     if(!_waitingToStoreImage &&
-       !IsActing() &&
+       !IsControlDelegated() &&
        !robot.GetMoveComponent().IsHeadMoving() &&
        robot.GetVisionComponent().GetNumStoredCameraCalibrationImages() == 0 &&
        _seeingTarget)
@@ -132,7 +132,7 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenCameraCalibration::PlaypenUpdateI
       });
     }
     // Otherwise if we have a calibration image, start computing calibration
-    else if(!IsActing() && robot.GetVisionComponent().GetNumStoredCameraCalibrationImages() == 1)
+    else if(!IsControlDelegated() && robot.GetVisionComponent().GetNumStoredCameraCalibrationImages() == 1)
     {
       robot.GetVisionComponent().EnableMode(VisionMode::ComputingCalibration, true);
       _computingCalibration = true;

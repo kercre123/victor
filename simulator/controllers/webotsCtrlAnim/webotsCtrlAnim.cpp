@@ -6,7 +6,7 @@
  * Modifications: 
  */
 
-#include "cozmoAnim/cozmoAnim.h"
+#include "cozmoAnim/animEngine.h"
 
 #include "../shared/ctrlCommonInitialization.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
@@ -109,10 +109,10 @@ int main(int argc, char **argv)
   NativeAnkiUtilConsoleLoadVars();
   
   // Initialize the API
-  CozmoAnimEngine cozmoAnim(&dataPlatform);
-  cozmoAnim.Init();
+  AnimEngine animEngine(&dataPlatform);
+  animEngine.Init();
 
-  LOG_INFO("webotsCtrlAnim.main", "CozmoAnim created and initialized.");
+  LOG_INFO("webotsCtrlAnim.main", "AnimEngine created and initialized.");
 
   //
   // Main Execution loop: step the world forward forever
@@ -121,7 +121,7 @@ int main(int argc, char **argv)
   while (animSupervisor.step(ANIM_TIME_STEP_MS) != -1)
   {
     double currTimeNanoseconds = Util::SecToNanoSec(animSupervisor.getTime());
-    cozmoAnim.Update(Util::numeric_cast<BaseStationTime_t>(currTimeNanoseconds));
+    animEngine.Update(Util::numeric_cast<BaseStationTime_t>(currTimeNanoseconds));
     
     tick_start = std::chrono::system_clock::now();
     

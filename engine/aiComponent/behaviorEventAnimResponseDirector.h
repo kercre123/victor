@@ -19,7 +19,7 @@
 #include "clad/types/userFacingResults.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
-#include "engine/dependencyManagedComponent.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
 
 #include <map>

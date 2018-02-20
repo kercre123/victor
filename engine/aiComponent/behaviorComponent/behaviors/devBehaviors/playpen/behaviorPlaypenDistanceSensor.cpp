@@ -140,7 +140,7 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenDistanceSensor::PlaypenUpdateInte
       data.visualAngleAwayFromTarget_rad = angle.ToFloat();
     }
     
-    if(!GetLogger().Append(GetIDStr(), std::move(data)))
+    if(!GetLogger().Append(GetDebugLabel(), std::move(data)))
     {
       PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::WRITE_TO_LOG_FAILED, PlaypenStatus::Running);
     }
@@ -166,7 +166,7 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenDistanceSensor::PlaypenUpdateInte
   else
   {
     // If we aren't acting then turn back to where we were facing when the behavior started
-    if(!IsActing())
+    if(!IsControlDelegated())
     {
       TransitionToTurnBack();
     }

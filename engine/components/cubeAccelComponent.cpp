@@ -83,7 +83,7 @@ CONSOLE_FUNC(FakeCubeShake, "CubeAccelComponent.FakeAccel");
   
   
 CubeAccelComponent::CubeAccelComponent()
-: IDependencyManagedComponent(RobotComponentID::CubeAccel)
+: IDependencyManagedComponent(this, RobotComponentID::CubeAccel)
 {  
   sThis = this;
 }

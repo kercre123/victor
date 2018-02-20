@@ -1,0 +1,19 @@
+// Text-To-Speech Type Declarations
+//  for the C-Like Abstract Data language
+//
+// Copyright: Anki Inc (c) 2018
+
+namespace Anki {
+namespace Cozmo {
+
+  // Text To Speech processing state
+  enum uint_8 TextToSpeechState
+  {
+    Invalid = 0,  // Initial state
+    Starting = 1, // TTS startup
+    Running = 2,  // TTS in progress
+    Done = 3,     // TTS complete
+  }
+
+} // namespace Cozmo
+} // namespace Anki

@@ -61,7 +61,7 @@ bool BehaviorThinkAboutBeacons::WantsToBeActivatedBehavior() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorThinkAboutBeacons::OnBehaviorActivated()
 {
-  PRINT_CH_INFO("Behaviors", (std::string(GetIDStr()) + ".InitInternal").c_str(), "Selecting new beacon");
+  PRINT_CH_INFO("Behaviors", (std::string(GetDebugLabel()) + ".InitInternal").c_str(), "Selecting new beacon");
   
   // select new beacon
   SelectNewBeacon();
@@ -80,7 +80,7 @@ void BehaviorThinkAboutBeacons::OnBehaviorActivated()
 void BehaviorThinkAboutBeacons::LoadConfig(const Json::Value& config)
 {
   using namespace JsonTools;
-  const std::string& debugName = std::string(GetIDStr()) + ".BehaviorThinkAboutBeacons.LoadConfig";
+  const std::string& debugName = std::string(GetDebugLabel()) + ".BehaviorThinkAboutBeacons.LoadConfig";
 
   _configParams.newAreaAnimTrigger = ParseString(config, "newAreaAnimTrigger", debugName);
   _configParams.beaconRadius_mm = ParseFloat(config, "beaconRadius_mm", debugName);

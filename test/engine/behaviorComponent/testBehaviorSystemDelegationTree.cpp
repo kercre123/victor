@@ -71,7 +71,7 @@ TEST(DelegationTree, FullTreeWalkthrough)
   // Read in the current behavior system configuration
   // and then walk through the full tree appropirately activating
   // and deactivating all delegates to ensure the tree is valid
-  TestBehaviorFramework testFramework;
+  TestBehaviorFramework testFramework(1, nullptr);
   testFramework.InitializeStandardBehaviorComponent();
   IBehavior* baseBehavior = nullptr;
   // Load base behavior in from data
@@ -126,7 +126,7 @@ TEST(DelegationTree, DumpBehaviorTransitionsToFile)
     return;
   }
   
-  TestBehaviorFramework testFramework;
+  TestBehaviorFramework testFramework(1, nullptr);
   testFramework.InitializeStandardBehaviorComponent();
   
   const auto* dataLoader = testFramework.GetRobot().GetContext()->GetDataLoader();
@@ -146,7 +146,7 @@ TEST(DelegationTree, DumpBehaviorTransitionsToFile)
     behavior->GetAllDelegates( delegates );
     for( const auto* delegate : delegates ) {
       
-      const std::string& outId = delegate->GetPrintableID();
+      const std::string& outId = delegate->GetDebugLabel();
       ss << id << " " << outId << std::endl;
       
     }

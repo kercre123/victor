@@ -14,17 +14,12 @@
 #ifndef __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorHighLevelAI_H__
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorHighLevelAI_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-
-#include "coretech/common/engine/objectIDs.h"
-#include "engine/components/bodyLightComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/internalStatesBehavior.h"
 
 namespace Anki {
 namespace Cozmo {
 
-class BehaviorFeedingEat;
-
-class BehaviorHighLevelAI : public ICozmoBehavior
+class BehaviorHighLevelAI : public InternalStatesBehavior
 {
 protected:
   // Enforce creation through BehaviorContainer
@@ -35,8 +30,8 @@ public:
 
   virtual ~BehaviorHighLevelAI();
   
-  virtual bool WantsToBeActivatedBehavior() const override {
-    return true; }
+  virtual bool WantsToBeActivatedBehavior() const override { return true; }
+
 protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override{
     modifiers.wantsToBeActivatedWhenOffTreads = true;
@@ -44,65 +39,23 @@ protected:
     modifiers.behaviorAlwaysDelegates = false;
   }
 
-  virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
-
-  virtual void InitBehavior() override;
-
-  virtual void BehaviorUpdate() override;
-  virtual void OnBehaviorActivated() override;
-  virtual void OnBehaviorDeactivated() override;
-
 private:
-
-  using StateID = size_t;
-  static const StateID InvalidStateID = 0;
   
-  class State;
-
-  enum class TransitionType {
-    NonInterrupting,
-    Interrupting,
-    Exit
-  };
-
-  static TransitionType TransitionTypeFromString(const std::string& str);
-
-  // place to put all of the hardcoded / predefined transition strategies
-  void CreatePreDefinedStrategies();
+  struct {
+    float socializeKnownFaceCooldown_s;
+    float playWithCubeCooldown_s;
+    float playWithCubeOnChargerCooldown_s;
+    float goToSleepTimeout_s;
+    u32 minFaceAgeToAllowSleep_ms;
+    u32 needsToChargeTime_ms;
+    float maxFaceDistanceToSocialize_mm;
+  } _params;
   
-  // returns the newly created ID
-  StateID AddStateName(const std::string& stateName);
-
-  // asserts if not found
-  StateID GetStateID(const std::string& stateName) const;
-
-  StateID ParseStateFromJson(const Json::Value& config, const std::string& key);
-  IBEIConditionPtr ParseTransitionStrategy(const Json::Value& config);
+  PreDefinedStrategiesMap CreatePreDefinedStrategies();
   
-  void AddState( State&& state );
-  
-  void TransitionToState(StateID targetState);
-
-  bool StateExitCooldownExpired(StateID state, float timeout) const;
-
-  std::map< std::string, StateID > _stateNameToID;
-
-  using StateMap = std::map< StateID, State >;
-  std::unique_ptr< StateMap > _states;
-
-  std::map< std::string, IBEIConditionPtr > _preDefinedStrategies;
-
-  StateID _currState = InvalidStateID;
-
-  StateID _defaultState = InvalidStateID;
-
-  BackpackLights _currDebugLights;
-  bool _debugLightsDirty = false;
-  bool _useDebugLights = false;
-  float _lastHearbeatLightTime = -1.0f;
 };
 
 }
 }
 
-#endif
+#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorHighLevelAI_H__

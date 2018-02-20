@@ -20,12 +20,10 @@ namespace Cozmo {
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AsyncMessageGateComponent::AsyncMessageGateComponent(IExternalInterface* externalInterface,
-                                                     RobotInterface::MessageHandler* robotInterface,
-                                                     RobotID_t robotID)
-: IDependencyManagedComponent(BCComponentID::AsyncMessageComponent)
+                                                     RobotInterface::MessageHandler* robotInterface)
+: IDependencyManagedComponent(this, BCComponentID::AsyncMessageComponent)
 , _externalInterface(externalInterface)
 , _robotInterface(robotInterface)
-, _robotID(robotID)
 , _isCacheValid(false)
 , _cachedTracker(new EventTracker())
 , _activeTracker(new EventTracker())
@@ -260,7 +258,6 @@ void AsyncMessageGateComponent::SubscribeToTags(IBehavior* subscriber,
       _robotToEngineSubscribers[tag] = subscribers;
       
       _eventHandles.push_back(_robotInterface->Subscribe(
-                                  _robotID,
                                   tag,
                                   [this](const RobotToEngineEvent& event){
                                      std::lock_guard<std::mutex> lock(_activeTracker->_robotToEngineMutex);

@@ -540,7 +540,7 @@ void BehaviorTrackLaser::TransitionToRespondToLaser()
                                                              {AnimationTrigger::LaserDriveStart,
                                                                AnimationTrigger::LaserDriveLoop,
                                                                AnimationTrigger::LaserDriveEnd},
-                                                             GetIDStr());
+                                                             GetDebugLabel());
     
     _haveAdjustedAnimations = true;
   }
@@ -795,7 +795,7 @@ void BehaviorTrackLaser::Cleanup()
   if(_haveAdjustedAnimations)
   {
     SmartRemoveIdleAnimation();
-    GetBEI().GetRobotInfo().GetDrivingAnimationHandler().RemoveDrivingAnimations(GetIDStr());
+    GetBEI().GetRobotInfo().GetDrivingAnimationHandler().RemoveDrivingAnimations(GetDebugLabel());
     _haveAdjustedAnimations = false;
   }
 }

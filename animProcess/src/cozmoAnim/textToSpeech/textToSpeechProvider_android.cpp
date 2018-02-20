@@ -14,7 +14,7 @@
 #include "textToSpeechProvider_android.h"
 #include "textToSpeechProvider_acapela.h"
 
-#include "cozmoAnim/cozmoAnimContext.h"
+#include "cozmoAnim/animContext.h"
 
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
@@ -43,7 +43,7 @@ namespace Anki {
 namespace Cozmo {
 namespace TextToSpeech {
   
-TextToSpeechProviderImpl::TextToSpeechProviderImpl(const CozmoAnimContext* context, const Json::Value& tts_platform_config)
+TextToSpeechProviderImpl::TextToSpeechProviderImpl(const AnimContext* context, const Json::Value& tts_platform_config)
 {
   // Check for valid data platform before we do any work
   using DataPlatform = Anki::Util::Data::DataPlatform;

@@ -91,7 +91,6 @@ struct MapBroadcastData {
   MapBroadcastData() : mapInfo(), quadInfo() {}
   ExternalInterface::MemoryMapInfo                  mapInfo;
   std::vector<ExternalInterface::MemoryMapQuadInfo> quadInfo;
-  bool                                              isDirty;
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -121,6 +120,9 @@ bool ExpectsAdditionalData(EContentType type);
 // String representing ENodeContentType for debugging purposes
 const char* EContentTypeToString(EContentType contentType);
 
+// convert between our internal node content type and an external content type
+ExternalInterface::ENodeContentTypeEnum ConvertContentType(EContentType contentType);
+
 // returns true if type is a removal type, false otherwise. Removal types are not expected to be stored in the memory
 // map, but rather reset other types to defaults.
 bool IsRemovalType(EContentType type);
@@ -141,6 +143,9 @@ using EContentTypePackedType = uint32_t;
 // the smallest type possible since we have a lot of quad nodes, but I want to pass groups as bit flags in one
 // packed variable
 EContentTypePackedType EContentTypeToFlag(EContentType nodeContentType);
+
+// returns true if contentType is in PackedTypes
+bool IsInEContentTypePackedType(EContentType contentType, EContentTypePackedType contentPackedTypes);
 
 } // namespace MemoryMapTypes
 } // namespace Cozmo

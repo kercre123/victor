@@ -54,7 +54,7 @@
 /****************************************************************************************************************/
 /* Periodic wakeup period to poll GTL iface. Time in msec.                                                      */
 /****************************************************************************************************************/
-#define CFG_MAX_SLEEP_DURATION_PERIODIC_WAKEUP_MS                  500  // 0.5s
+#define CFG_MAX_SLEEP_DURATION_PERIODIC_WAKEUP_MS                  100  // 0.5s
 
 /****************************************************************************************************************/
 /* Periodic wakeup period if GTL iface is not enabled. Time in msec.                                            */

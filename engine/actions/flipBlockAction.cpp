@@ -48,7 +48,6 @@ static constexpr f32 kPreDockPoseAngleTolerance = DEG_TO_RAD(5.f);
 DriveAndFlipBlockAction::DriveAndFlipBlockAction(const ObjectID objectID,
                                                  const bool useApproachAngle,
                                                  const f32 approachAngle_rad,
-                                                 const bool useManualSpeed,
                                                  Radians maxTurnTowardsFaceAngle_rad,
                                                  const bool sayName,
                                                  const float minAlignThreshold_mm)
@@ -57,7 +56,6 @@ DriveAndFlipBlockAction::DriveAndFlipBlockAction(const ObjectID objectID,
                              0,
                              useApproachAngle,
                              approachAngle_rad,
-                             useManualSpeed,
                              maxTurnTowardsFaceAngle_rad,
                              sayName)
 {
@@ -280,7 +278,12 @@ void FlipBlockAction::SetShouldCheckPreActionPose(bool shouldCheck)
 {
   _shouldCheckPreActionPose = shouldCheck;
 }
-  
+
+void FlipBlockAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const
+{
+  requests.insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::High });
+}
+
 ActionResult FlipBlockAction::Init()
 {
   // Incase we are being retried

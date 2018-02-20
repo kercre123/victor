@@ -12,7 +12,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorDriveOffCharger.h"
 
 #include "engine/actions/basicActions.h"
-#include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
@@ -70,15 +69,13 @@ void BehaviorDriveOffCharger::OnBehaviorActivated()
 {
   
   _pushedIdleAnimation = false;
-  if(NeedId::Count == GetBEI().GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression()){
-    auto& robotInfo = GetBEI().GetRobotInfo();
-    robotInfo.GetDrivingAnimationHandler().PushDrivingAnimations(
-           {AnimationTrigger::DriveStartLaunch,
-            AnimationTrigger::DriveLoopLaunch,
-            AnimationTrigger::DriveEndLaunch},
-           GetIDStr());
-    _pushedIdleAnimation = true;
-  }
+  auto& robotInfo = GetBEI().GetRobotInfo();
+  robotInfo.GetDrivingAnimationHandler().PushDrivingAnimations(
+          {AnimationTrigger::DriveStartLaunch,
+          AnimationTrigger::DriveLoopLaunch,
+          AnimationTrigger::DriveEndLaunch},
+          GetDebugLabel());
+  _pushedIdleAnimation = true;
 
   const bool onTreads = GetBEI().GetOffTreadsState() == OffTreadsState::OnTreads;
   if( onTreads ) {
@@ -97,7 +94,7 @@ void BehaviorDriveOffCharger::OnBehaviorDeactivated()
 {
   if(_pushedIdleAnimation){
     auto& robotInfo = GetBEI().GetRobotInfo();
-    robotInfo.GetDrivingAnimationHandler().RemoveDrivingAnimations(GetIDStr());
+    robotInfo.GetDrivingAnimationHandler().RemoveDrivingAnimations(GetDebugLabel());
   }
 }
     

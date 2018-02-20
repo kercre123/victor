@@ -18,7 +18,7 @@
 
 (The robot's origin is located at the point halfway between the two front wheels)
 
-The pose of an object (including the robot) represents its position with respect to (w.r.t.) its "parent" coordinate frame. Poses are simply a 2D or 3D Transformplus a  "parent" pose. Note that Poses only know about their parents, not their children. 
+The pose of an object (including the robot) represents its position with respect to (w.r.t.) its "parent" coordinate frame. Poses are simply a 2D or 3D Transform plus a  "parent" pose. Note that Poses only know about their parents, not their children. 
 
 A Transform is made up of a rotation and translation and can be "applied to" points, quads, rectangles, etc, or "composed with" another Transform via multiplication. 
 
@@ -39,7 +39,7 @@ In general, care should be taken to create and maintain valid pose trees. This l
 
 ### Pose states
 
-Estimates of objets poses are not perfect. In lieu of trying to fully represent uncertainty in 2D or 3D space, we have a discrete notion of uncertainty: the Pose State. This is far from ideal in many situations, but is also far simpler than trying to represent a distribution over 6DoF pose, for exaple.
+Object pose estimates are not perfect.  In lieu of trying to fully represent uncertainty in 2D or 3D space, we have a discrete notion of uncertainty: the Pose State. This is far from ideal in many situations, but is also far simpler than trying to represent a distribution over 6DoF pose, for example.
 
 In practice this means that we split poses into two states: Known and Dirty. Known roughly corresponds to "accurate" or "trusted". Dirty effectively means "uncertain" or "untrusted". Note that when the pose of an object is "Unknown", it simply does not exist as a Located Object in [BlockWorld](blockWorld.md), so there is no explicit "Unknown" Pose State.
 

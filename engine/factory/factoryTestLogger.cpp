@@ -27,7 +27,7 @@ namespace Cozmo {
   static const std::string _kLogTextFileName = "mfgData";
   static const std::string _kLogRootDirName = "factory_test_logs";
   static const std::string _kArchiveRootDirName = "factory_test_log_archives";
-  static const Util::Data::Scope _kLogScope = Util::Data::Scope::Persistent;
+  static const Util::Data::Scope _kLogScope = Util::Data::Scope::Cache;
   static std::string _kPathToCopyLogTo = "/factory/log0";
   
   static const int _kMaxEngineLogSizeBytes = 1500000;
@@ -145,7 +145,6 @@ namespace Cozmo {
     PRINT_NAMED_INFO("FactoryTestLogger.StartLog.CreatingLogDir", "%s", _logDir.c_str());
     Util::FileUtils::CreateDirectory(_logDir);
     _logFileName = Util::FileUtils::FullFilePath({_logDir, _kLogTextFileName + (_exportJson ? ".json" : ".txt")});
-    _kPathToCopyLogTo += (_exportJson ? ".json" : ".txt");
     
     if (_logFileHandle.is_open()) {
       PRINT_NAMED_WARNING("FactoryTestLogger.FileUnexpectedlyOpen", "");
@@ -654,7 +653,7 @@ namespace Cozmo {
     
     // Get directories inside CurrentGameLog. There should only ever be one.
     // TODO (Al): Get LOGNAME (log folder) from cozmoeEngineMain.cpp instead of duplicating it
-    std::string srcDir = dataPlatform->pathToResource(Util::Data::Scope::CurrentGameLog, "engine");
+    std::string srcDir = dataPlatform->pathToResource(Util::Data::Scope::CurrentGameLog, "vic-engine");
     std::vector<std::string> dirs;
     Util::FileUtils::ListAllDirectories(srcDir, dirs);
 

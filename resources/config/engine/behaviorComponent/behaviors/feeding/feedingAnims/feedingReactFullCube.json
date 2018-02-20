@@ -1,6 +1,0 @@
-{
-  "behaviorClass": "PlayAnim",
-  "behaviorID": "FeedingReactFullCube",
-  
-  "animTriggers": ["FeedingReactToFullCube_Normal"]
-}

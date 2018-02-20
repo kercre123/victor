@@ -1,6 +1,10 @@
 /**
  * File: cameraService_mac.cpp
  *
+ * Author: chapados
+ * Created: 02/07/2018
+ * 
+ * based on androidHAL_android.cpp
  * Author: Kevin Yoon
  * Created: 02/17/2017
  *
@@ -342,11 +346,5 @@ namespace Anki {
       // no-op
       return true;
     }
-
-    void CameraService::CameraSwapLocks()
-    {
-      // no-op
-    }
-
   } // namespace Cozmo
 } // namespace Anki

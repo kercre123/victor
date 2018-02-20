@@ -21,7 +21,7 @@
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
-#include "engine/robotManager.h"
+#include "engine/robotDataLoader.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "util/fileUtils/fileUtils.h"
 
@@ -44,7 +44,7 @@ struct BackpackLightData
 };
 
 BodyLightComponent::BodyLightComponent()
-: IDependencyManagedComponent(RobotComponentID::BodyLights)
+: IDependencyManagedComponent(this, RobotComponentID::BodyLights)
 {  
   static_assert((int)LEDId::NUM_BACKPACK_LEDS == 3, "BodyLightComponent.WrongNumBackpackLights");
 }
@@ -54,7 +54,7 @@ void BodyLightComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& 
 {
   _robot = robot;
   _backpackLightAnimations = std::make_unique<BackpackLightWrapper>(
-              _robot->GetContext()->GetRobotManager()->GetBackpackLightAnimations());
+              *(_robot->GetContext()->GetDataLoader()->GetBackpackLightAnimations()));
   // Subscribe to messages
   if( _robot->HasExternalInterface() ) {
     auto helper = MakeAnkiEventUtil(*_robot->GetExternalInterface(), *this, _eventHandles);

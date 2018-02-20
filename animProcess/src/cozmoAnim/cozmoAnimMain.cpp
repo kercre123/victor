@@ -9,7 +9,7 @@
 * Copyright: Anki, inc. 2017
 *
 */
-#include "cozmoAnim/cozmoAnim.h"
+#include "cozmoAnim/animEngine.h"
 
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
@@ -30,17 +30,17 @@ using namespace Anki;
 using namespace Anki::Cozmo;
 
 namespace {
-CozmoAnimEngine* cozmoAnim = nullptr;
+AnimEngine* animEngine = nullptr;
 }
 
 void Cleanup(int signum)
 {
-  if(cozmoAnim != nullptr)
+  if (animEngine != nullptr)
   {
-    delete cozmoAnim;
-    cozmoAnim = nullptr;
+    delete animEngine;
+    animEngine = nullptr;
   }
-  
+
   exit(signum);
 }
 
@@ -59,14 +59,7 @@ Anki::Util::Data::DataPlatform* createPlatform(const std::string& filesPath,
 
 std::string createResourcesPath(const std::string& resourcesBasePath)
 {
-  std::string resourcesRefPath = resourcesBasePath + "/current";
-  std::string resourcesRef = Anki::Util::FileUtils::ReadFile(resourcesRefPath);
-  {
-    auto it = std::find_if(resourcesRef.rbegin(), resourcesRef.rend(),
-          [](char ch){ return !std::iswspace(ch); });
-    resourcesRef.erase(it.base() , resourcesRef.end());
-  }
-  return resourcesBasePath + "/" + resourcesRef + "/cozmo_resources";
+  return resourcesBasePath + "/cozmo_resources";
 }
 
 void getAndroidPlatformPaths(std::string& filesPath,
@@ -75,11 +68,11 @@ void getAndroidPlatformPaths(std::string& filesPath,
                              std::string& resourcesPath,
                              std::string& resourcesBasePath)
 {
-  filesPath = "/data/data/com.anki.cozmoengine/files";
-  cachePath = "/data/data/com.anki.cozmoengine/cache";
-  externalPath = "/sdcard/Android/data/com.anki.cozmoengine/files";
-  resourcesBasePath = externalPath + "/assets";
-  resourcesPath = createResourcesPath(resourcesBasePath);
+  filesPath = "/anki/data/assets";
+  cachePath = "/data/data/com.anki.victor/cache";
+  externalPath = "/data/data/com.anki.victor/files";
+  resourcesBasePath = "/anki/data";
+  resourcesPath = createResourcesPath("/anki/data/assets");
 }
 
 Anki::Util::Data::DataPlatform* createPlatform()
@@ -113,7 +106,7 @@ Anki::Util::Data::DataPlatform* createPlatform()
   std::string externalPath;
   std::string resourcesPath;
   std::string resourcesBasePath;
-  
+
   getAndroidPlatformPaths(filesPath, cachePath, externalPath, resourcesPath, resourcesBasePath);
 
 
@@ -159,26 +152,26 @@ Anki::Util::Data::DataPlatform* createPlatform()
 int main(void)
 {
   signal(SIGTERM, Cleanup);
-  
+
   // - create and set logger
-  Util::AndroidLogPrintLogger logPrintLogger("anim");
+  Util::AndroidLogPrintLogger logPrintLogger("vic-anim");
   Util::gLoggerProvider = &logPrintLogger;
 
   Util::Data::DataPlatform* dataPlatform = createPlatform();
-    
-  // Create and init CozmoAnim
-  cozmoAnim = new CozmoAnimEngine(dataPlatform);
-  
-  cozmoAnim->Init();
-  
+
+  // Create and init AnimEngine
+  animEngine = new AnimEngine(dataPlatform);
+
+  animEngine->Init();
+
   using namespace std::chrono;
   using TimeClock = steady_clock;
 
   const auto runStart = TimeClock::now();
-  
+
   // Set the target time for the end of the first frame
   auto targetEndFrameTime = runStart + (microseconds)(ANIM_TIME_STEP_US);
-  
+
 
   while (1) {
 
@@ -186,11 +179,11 @@ int main(void)
     const duration<double> curTime_s = tickStart - runStart;
     const BaseStationTime_t curTime_ns = Util::numeric_cast<BaseStationTime_t>(Util::SecToNanoSec(curTime_s.count()));
 
-    if (cozmoAnim->Update(curTime_ns) != RESULT_OK) {
+    if (animEngine->Update(curTime_ns) != RESULT_OK) {
       PRINT_NAMED_WARNING("CozmoAnimMain.Update.Failed", "Exiting...");
       break;
     }
-    
+
     const auto tickNow = TimeClock::now();
     const auto remaining_us = duration_cast<microseconds>(targetEndFrameTime - tickNow);
 
@@ -204,7 +197,7 @@ int main(void)
       PRINT_NAMED_WARNING("CozmoAnimMain.overtime", "Update() (%dms max) is behind by %.3fms",
                           ANIM_TIME_STEP_MS, (float)(-remaining_us).count() * 0.001f);
     }
-    
+
     // Now we ALWAYS sleep, but if we're overtime, we 'sleep zero' which still
     // allows other threads to run
     static const auto minimumSleepTime_us = microseconds((long)0);
@@ -212,7 +205,7 @@ int main(void)
 
     // Set the target end time for the next frame
     targetEndFrameTime += (microseconds)(ANIM_TIME_STEP_US);
-    
+
     // See if we've fallen very far behind (this happens e.g. after a 5-second blocking
     // load operation); if so, compensate by catching the target frame end time up somewhat.
     // This is so that we don't spend the next SEVERAL frames catching up.

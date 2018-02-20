@@ -12,9 +12,6 @@
 *
 */
 
-// TODO: JIRA VIC-23 - Migrate Text to Speech component to Victor
-
-
 #ifndef __Anki_cozmo_cozmoAnim_textToSpeech_textToSpeechComponent_H__
 #define __Anki_cozmo_cozmoAnim_textToSpeech_textToSpeechComponent_H__
 
@@ -38,7 +35,11 @@ namespace Anki {
     }
   }
   namespace Cozmo {
-    class CozmoAnimContext;
+    class AnimContext;
+    namespace RobotInterface {
+      struct TextToSpeechStart;
+      struct TextToSpeechStop;
+    }
     namespace TextToSpeech {
       class TextToSpeechProvider;
     }
@@ -60,7 +61,7 @@ public:
   };
   
   
-  TextToSpeechComponent(const CozmoAnimContext* context);
+  TextToSpeechComponent(const AnimContext* context);
   ~TextToSpeechComponent();
 
   using OperationId = uint8_t;
@@ -94,6 +95,9 @@ public:
   // Get appropriate Audio Event for SayTextStyle
   AudioMetaData::GameEvent::GenericEvent GetAudioEvent(SayTextVoiceStyle style) const;
 
+  // CLAD message handlers
+  void HandleMessage(const RobotInterface::TextToSpeechStart& msg);
+  void HandleMessage(const RobotInterface::TextToSpeechStop& msg);
 
 private:
 

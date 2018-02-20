@@ -219,7 +219,7 @@ void BehaviorVisitInterestingEdge::OnBehaviorActivated()
   DEV_ASSERT(_cache.IsSet(), "BehaviorVisitInterestingEdge.InitInternal.CantTrustCache");
   
   // make sure we are not updating borders while running the behavior (useless)
-  GetBEI().GetAIComponent().GetAIInformationAnalyzer().AddDisableRequest(AIInformationAnalysis::EProcess::CalculateInterestingRegions, GetIDStr());
+  GetBEI().GetAIComponent().GetAIInformationAnalyzer().AddDisableRequest(AIInformationAnalysis::EProcess::CalculateInterestingRegions, GetDebugLabel());
 
   // reset operating state to pick the starting one
   _operatingState = EOperatingState::Invalid;
@@ -234,7 +234,7 @@ void BehaviorVisitInterestingEdge::OnBehaviorActivated()
 void BehaviorVisitInterestingEdge::OnBehaviorDeactivated()
 {
   // remove our request to disable the analysis process
-  GetBEI().GetAIComponent().GetAIInformationAnalyzer().RemoveDisableRequest(AIInformationAnalysis::EProcess::CalculateInterestingRegions, GetIDStr());
+  GetBEI().GetAIComponent().GetAIInformationAnalyzer().RemoveDisableRequest(AIInformationAnalysis::EProcess::CalculateInterestingRegions, GetDebugLabel());
 
   const auto& robotInfo = GetBEI().GetRobotInfo();
   // clear debug render
@@ -614,7 +614,7 @@ void BehaviorVisitInterestingEdge::TransitionToS1_MoveToVantagePoint(uint8_t att
   // change operating state
   _operatingState = EOperatingState::MovingToVantagePoint;
   SetDebugStateName("ToS1_MoveToVantagePoint");
-  PRINT_CH_INFO("Behaviors", (GetIDStr() + ".S1").c_str(), "Moving to vantage point");
+  PRINT_CH_INFO("Behaviors", (GetDebugLabel() + ".S1").c_str(), "Moving to vantage point");
   
   // there have to be vantage points. If it's impossible to generate vantage points from the memory map,
   // we should change those borders/quads to "not visitable" to prevent failing multiple times
@@ -674,7 +674,7 @@ void BehaviorVisitInterestingEdge::TransitionToS2_GatherAccurateEdge()
   // change operating state
   _operatingState = EOperatingState::GatheringAccurateEdge;
   SetDebugStateName("S2_GatherBorderPrecision");
-  PRINT_CH_INFO("Behaviors", (GetIDStr() + ".S2").c_str(), "At vantage point, trying to grab more accurate borders");
+  PRINT_CH_INFO("Behaviors", (GetDebugLabel() + ".S2").c_str(), "At vantage point, trying to grab more accurate borders");
   
   // start squint loop
   DEV_ASSERT(!IsPlayingSquintLoop(), "BehaviorVisitInterestingEdge.TransitionToS2_GatherAccurateEdge.AlreadySquintLooping");
@@ -702,7 +702,7 @@ void BehaviorVisitInterestingEdge::TransitionToS3_ObserveFromClose()
   DEV_ASSERT(!std::isnan(lastEdgeDistance_mm), "BehaviorVisitInterestingEdge.TransitionToS3_ObserveFromClose.NaNEdgeDist");
   const float distanceToMoveForward_mm = lastEdgeDistance_mm - robotLen - _configParams.observationDistanceFromBorder_mm;
   
-  PRINT_CH_INFO("Behaviors", (GetIDStr() + ".S3").c_str(), "Observing edges from close distance (moving closer %.2fmm)", distanceToMoveForward_mm);
+  PRINT_CH_INFO("Behaviors", (GetDebugLabel() + ".S3").c_str(), "Observing edges from close distance (moving closer %.2fmm)", distanceToMoveForward_mm);
 
   // This should be done when the move action finishes, but it's not big deal and that way I can have the
   // compound action be easier. It just basically means we clear from observationPose-distanceToMoveForward_mm.
@@ -844,7 +844,7 @@ void BehaviorVisitInterestingEdge::StateUpdate_GatheringAccurateEdge()
       // eventually we might want to review this and stop searching for borders (play NotFoundAnim), or flag the
       // memory map as "possibleBorderNoise"
       // Todo: make a decision about how to handle this (waiting to see what people think)
-      PRINT_CH_INFO("Behaviors", (GetIDStr() + ".GatheringAccurateEdge.RegionTooSmall").c_str(),
+      PRINT_CH_INFO("Behaviors", (GetDebugLabel() + ".GatheringAccurateEdge.RegionTooSmall").c_str(),
         "Detected edges, but the region is too small (changed from %.8f to %.8f = %.8f, required %.8f at least). Is this a reflection or noise?",
         _interestingEdgesArea_m2,
         newArea_m2,
@@ -858,14 +858,14 @@ void BehaviorVisitInterestingEdge::StateUpdate_GatheringAccurateEdge()
     // we have new edges
     if ( isCloseToEdge )
     {
-      PRINT_CH_INFO("Behaviors", (GetIDStr() + ".GatheringAccurateEdge.Close").c_str(), "Got a close edge, observe from here");
+      PRINT_CH_INFO("Behaviors", (GetDebugLabel() + ".GatheringAccurateEdge.Close").c_str(), "Got a close edge, observe from here");
       
       // we can observe from here
       TransitionToS3_ObserveFromClose();
     }
     else
     {
-      PRINT_CH_INFO("Behaviors", (GetIDStr() + ".GatheringAccurateEdge.Far").c_str(), "Got a far edge, continuing forward fetch");
+      PRINT_CH_INFO("Behaviors", (GetDebugLabel() + ".GatheringAccurateEdge.Far").c_str(), "Got a far edge, continuing forward fetch");
       
       // not close enough, keep moving forward
       const bool isControlDelegated = IsControlDelegated();
@@ -886,7 +886,7 @@ void BehaviorVisitInterestingEdge::StateUpdate_GatheringAccurateEdge()
   else
   {
     // there are no borders in front of us, we can't see it anymore or it was never here
-    PRINT_CH_INFO("Behaviors", (GetIDStr() + ".GatheringAccurateEdge.Done").c_str(), "Processed edges and did not find any.");
+    PRINT_CH_INFO("Behaviors", (GetDebugLabel() + ".GatheringAccurateEdge.Done").c_str(), "Processed edges and did not find any.");
     
     // stop moving
     CancelDelegates();
@@ -978,7 +978,7 @@ void BehaviorVisitInterestingEdge::RenderChosenGoal(const BorderRegionScore& bes
 void BehaviorVisitInterestingEdge::LoadConfig(const Json::Value& config)
 {
   using namespace JsonTools;
-  const std::string& debugName = GetIDStr() + ".BehaviorVisitInterestingEdge.LoadConfig";
+  const std::string& debugName = GetDebugLabel() + ".BehaviorVisitInterestingEdge.LoadConfig";
 
   // anim triggers
   {

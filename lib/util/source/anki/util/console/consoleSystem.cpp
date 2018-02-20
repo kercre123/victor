@@ -144,13 +144,6 @@ StringID ConsoleSystem::GetSearchKey( const string& key ) const
 //------------------------------------------------------------------------------------------------------------------------------
 void ConsoleSystem::Register( const std::string& keystring, IConsoleVariable* variable )
 {
-  if (_isInitializationComplete)
-  {
-    // Most vars are added in static init (way before ini load), some are added manually but they should be added as
-    // early as possible - vars added now won't be updated by ini file as that has already been applied
-    LOG_WARNING("ConsoleSystem.RegisterVar", "Adding var '%s' after initialization (and ini file was read)!", keystring.c_str());
-  }
-  
   const StringID key = GetSearchKey( keystring );
 
   pair<VariableDatabase::iterator, bool> result;
@@ -219,7 +212,7 @@ void ConsoleSystem::Register( const std::string& keystring, IConsoleFunction* fu
 void ConsoleSystem::Unregister( const std::string& keystring )
 {
   const StringID key = GetSearchKey( keystring );
-  editvars_.erase( editvars_.find( key ) );
+  editvars_.erase( key );
 }
 
 //------------------------------------------------------------------------------------------------------------------------------

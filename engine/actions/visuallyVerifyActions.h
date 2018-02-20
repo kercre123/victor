@@ -78,7 +78,7 @@ namespace Cozmo {
     virtual ~VisuallyVerifyObjectAction();
     
   protected:
-    
+    virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const override;
     virtual ActionResult InitInternal() override;
     virtual bool HaveSeenObject() override;
     
@@ -98,7 +98,7 @@ namespace Cozmo {
     virtual ~VisuallyVerifyFaceAction();
     
   protected:
-    
+    virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const override;
     virtual ActionResult InitInternal() override;
     virtual bool HaveSeenObject() override;
     
@@ -118,6 +118,7 @@ namespace Cozmo {
     void AddIgnoreID(const ObjectID& objID);
     
   protected:
+    virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const override;
     virtual ActionResult Init() override;
     virtual ActionResult CheckIfDone() override;
     

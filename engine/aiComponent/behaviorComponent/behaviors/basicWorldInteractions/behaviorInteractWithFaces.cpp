@@ -110,7 +110,7 @@ void BehaviorInteractWithFaces::LoadConfig(const Json::Value& config)
   if( ! ANKI_VERIFY(_configParams.maxTimeToTrackFace_s >= _configParams.minTimeToTrackFace_s,
                     "BehaviorInteractWithFaces.LoadConfig.InvalidTrackingTime",
                     "%s: minTrackTime = %f, maxTrackTime = %f",
-                    GetIDStr().c_str(),
+                    GetDebugLabel().c_str(),
                     _configParams.minTimeToTrackFace_s,
                     _configParams.maxTimeToTrackFace_s) ) {
     _configParams.maxTimeToTrackFace_s = _configParams.minTimeToTrackFace_s;
@@ -124,7 +124,7 @@ void BehaviorInteractWithFaces::LoadConfig(const Json::Value& config)
     if( ! ANKI_VERIFY(_configParams.maxClampPeriod_s >= _configParams.minClampPeriod_s,
                       "BehaviorInteractWithFaces.LoadConfig.InvalidClampPeriod",
                       "%s: minPeriod = %f, maxPeriod = %f",
-                      GetIDStr().c_str(),
+                      GetDebugLabel().c_str(),
                       _configParams.minClampPeriod_s,
                       _configParams.maxClampPeriod_s) ) {
       _configParams.maxClampPeriod_s = _configParams.minClampPeriod_s;

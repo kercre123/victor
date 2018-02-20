@@ -13,12 +13,33 @@
 #include "anki/cozmo/robot/logging.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 
+#include <array>
+
 namespace Anki {
   namespace Cozmo {
     namespace ProxSensors {
 
       namespace {
 
+#ifndef SIMULATOR
+        struct ProxSensorLookupEntry {
+          u16 rawDistance_mm; // raw distance reading from the sensor
+          int offset_mm;      // offset to add to the raw distance to get actual distance
+        };
+        // Piecewise linear look-up table for raw prox sensor reading offset. The table
+        // must be ordered on 'first' element. Keep this table small (lookup is linear!)
+#if !FACTORY_TEST
+        const std::array<ProxSensorLookupEntry, 2> kProxSensorRawDistLUT_mm {{
+          {100, -30},
+          {300, -22}
+        }};
+#else
+        const std::array<ProxSensorLookupEntry, 1> kProxSensorRawDistLUT_mm {{
+          {0, 0}
+        }};
+#endif
+#endif
+        
         // Cliff sensor
         const int _nCliffSensors = HAL::CLIFF_COUNT;
         u16 _cliffVals[_nCliffSensors] = {0};
@@ -66,10 +87,44 @@ namespace Anki {
         return _cliffVals[ind];
       }
       
-      u16 GetRawProxValue()
+      ProxSensorData GetProxData()
       {
-        return HAL::GetRawProxData().distance_mm;
+        auto proxData = HAL::GetRawProxData();
+#ifndef SIMULATOR
+        // Apply look-up table to convert from raw distance reading
+        // to corrected reading. Piecewise linear interpolation.
+        // Assumes kProxSensorRawDistLUT_mm is sorted on 'first' elements.
+        const u16 rawDist_mm = proxData.distance_mm;
+        int offset_mm = 0;
+        const auto& lut = kProxSensorRawDistLUT_mm;
+        if (rawDist_mm <= lut.front().rawDistance_mm) {
+          offset_mm = lut.front().offset_mm;
+        } else if (rawDist_mm >= lut.back().rawDistance_mm) {
+          offset_mm = lut.back().offset_mm;
+        } else {
+          // Linearly interpolate
+          for (auto low = lut.begin() ; low != lut.end() ; ++low) {
+            const auto high = std::next(low);
+            const auto x0 = low->rawDistance_mm;
+            const auto x1 = high->rawDistance_mm;
+            const auto y0 = low->offset_mm;
+            const auto y1 = high->offset_mm;
+            if ((rawDist_mm >= x0) &&
+                (rawDist_mm <= x1)) {
+              offset_mm = y0 + (y1 - y0) * (rawDist_mm - x0) / (x1 - x0);
+              break;
+            }
+          }
+        }
+        if (rawDist_mm + offset_mm < 0) {
+          proxData.distance_mm = 0;
+        } else {
+          proxData.distance_mm = rawDist_mm + offset_mm;
+        }
+#endif
+        return proxData;
       }
+      
       // Stops robot if cliff detected as wheels are driving forward.
       // Delays cliff event to allow pickup event to cancel it in case the
       // reason for the cliff was actually a pickup.

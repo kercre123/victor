@@ -16,10 +16,7 @@
 #include "memoryMap/memoryMapTypes.h"
 #include "memoryMap/data/memoryMapData.h"
 
-#include "coretech/common/engine/math/polygon_impl.h"
-#include "coretech/common/engine/math/triangle.h"
-#include "coretech/common/engine/math/point.h"
-#include "coretech/common/engine/math/quad.h"
+#include "coretech/common/engine/math/polygon.h"
 #include "coretech/common/engine/math/pose.h"
 #include "util/logging/logging.h"
 
@@ -28,13 +25,13 @@
 namespace Anki {
 namespace Cozmo {
   
-class VizManager;
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Class INavMemoryMap
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class INavMap
 {
+friend class MapComponent;
+
 public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Types		
@@ -52,65 +49,6 @@ public:
   // Construction/Destruction
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   virtual ~INavMap() {}
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Modification
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-  // TODO: change these so there is only Insert(Poly2f). This will hide polygon_impl from the header include
-  
-  // add a quad with the specified additional content. Such content specifies the associated EContentType
-  inline void AddQuad(const Quad2f& quad, const MemoryMapData& data) {
-    Poly2f poly;
-    poly.ImportQuad2d(quad); // use import rather than initializer list because ¯\_(ツ)_/¯
-    Insert(poly, data);
-  }
-  
-  // add a line with the specified additional content. Such content specifies the associated EContentType
-  inline void AddLine(const Point2f& from, const Point2f& to, const MemoryMapData& data) {
-    Poly2f poly({from, to});
-    Insert(poly, data);
-  }
-
-  // add a triangle with the specified additional content. Such content specifies the associated EContentType
-  inline void AddTriangle(const Triangle2f& tri, const MemoryMapData& data) {
-    Poly2f poly({tri[0], tri[1], tri[2]});
-    Insert(poly, data);
-  }
-
-  // add a point with the specified additional content. Such content specifies the associated EContentType
-  inline void AddPoint(const Point2f& point, const MemoryMapData& data) {
-    Poly2f poly({point});
-    Insert(poly, data);
-  }
-  
-  // add a poly with the specified content. 
-  virtual void Insert(const Poly2f& poly, const MemoryMapData& data) = 0;
-  
-  // merge the given map into this map by applying to the other's information the given transform
-  // although this methods allows merging any INavMap into any INavMap, subclasses are not
-  // expected to provide support for merging other subclasses, but only other instances from the same
-  // subclass
-  virtual void Merge(const INavMap* other, const Pose3d& transform) = 0;
-
-  // TODO: FillBorder should be local (need to specify a max quad that can perform the operation, otherwise the
-  // bounds keeps growing as Cozmo explores). Profiling+Performance required
-  // fills content regions of filledType that have borders with fillingType(s), converting the filledType region
-  // into withThisType content
-  void FillBorder(EContentType typeToReplace, const FullContentArray& neighborsToFillFrom, EContentType newTypeSet, TimeStamp_t timeMeasured) {
-    DEV_ASSERT(!ExpectsAdditionalData(newTypeSet), "INavMap.FillBorder.CantFillExtraInfo");
-    FillBorderInternal(typeToReplace, neighborsToFillFrom, newTypeSet, timeMeasured);
-  }
-  
-  // attempt to apply a transformation function to all nodes in the tree
-  virtual void TransformContent(NodeTransformFunction transform) = 0;
-  
-  // attempt to apply a transformation function to all nodes in the tree constrained by poly
-  virtual void TransformContent(const Poly2f& poly, NodeTransformFunction transform) = 0;
-
-  // populate a list of all data that matches the predicate
-  virtual void FindContentIf(NodePredicate pred, MemoryMapTypes::MemoryMapDataConstList& output) const = 0;
-
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Query
@@ -146,20 +84,38 @@ public:
   
   // Pack map data to broadcast
   virtual void GetBroadcastInfo(MemoryMapTypes::MapBroadcastData& info) const = 0;
-  
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Debug
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
-  // Render/stop rendering memory map
-  virtual void DrawDebugProcessorInfo() const = 0;
-  virtual void ClearDraw() const = 0;
-  
+
+  // populate a list of all data that matches the predicate
+  virtual void FindContentIf(NodePredicate pred, MemoryMapTypes::MemoryMapDataConstList& output) const = 0;
   
 protected:
   
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Modification
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  // NOTE: Leave modifying calls as protected methods, and access them via the friend classes (at the moment only
+  //       MapComponent). The classes manage publication of map data, and need to monitor if the map state has changed
+
+  // add a poly with the specified content. 
+  virtual bool Insert(const Poly2f& poly, const MemoryMapData& data) = 0;
+  
+  // merge the given map into this map by applying to the other's information the given transform
+  // although this methods allows merging any INavMap into any INavMap, subclasses are not
+  // expected to provide support for merging other subclasses, but only other instances from the same
+  // subclass
+  virtual bool Merge(const INavMap* other, const Pose3d& transform) = 0;
+ 
+  // attempt to apply a transformation function to all nodes in the tree
+  virtual bool TransformContent(NodeTransformFunction transform) = 0;
+  
+  // attempt to apply a transformation function to all nodes in the tree constrained by poly
+  virtual bool TransformContent(const Poly2f& poly, NodeTransformFunction transform) = 0;
+
+  // TODO: FillBorder should be local (need to specify a max quad that can perform the operation, otherwise the
+  // bounds keeps growing as Cozmo explores). Profiling+Performance required.
   // change the content type from typeToReplace into newTypeSet if there's a border from any of the typesToFillFrom towards typeToReplace
-  virtual void FillBorderInternal(EContentType typeToReplace, const FullContentArray& neighborsToFillFrom, EContentType newTypeSet, TimeStamp_t timeMeasured) = 0;
+  virtual bool FillBorder(EContentType typeToReplace, const FullContentArray& neighborsToFillFrom, EContentType newTypeSet, TimeStamp_t timeMeasured) = 0;
 
 }; // class
 

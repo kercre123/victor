@@ -4,6 +4,7 @@
 #include <vector>
 #include <functional>
 
+#include "coretech/common/engine/array2d_impl.h"
 #include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/shared/types.h"
 #include "coretech/common/engine/array2d_impl.h"
@@ -45,7 +46,7 @@ TEST(ProceduralFace, ParameterSweep)
   // all display.
   ProceduralFace::EnableClippingWarning(false);
 
-  Vision::ImageRGB _procFaceImg(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
+  Vision::ImageRGB565 _procFaceImg(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
 
   // Note: whichever test runs first generates the noise textures that are retained for
   //       the duration of the test. For determinism hard-code the same seed for all tests.
@@ -71,7 +72,7 @@ TEST(ProceduralFace, ParameterSweep)
 } // TEST(ProceduralFace, ParameterSweep)
 
 // Compare two images by getting the square-root of sum of squared error
-static double getSimilarity(const Vision::ImageRGB& testImage, const Vision::ImageRGB& storedImage) {
+static double GetSimilarity(const Vision::ImageRGB565& testImage, const Vision::ImageRGB565& storedImage) {
     EXPECT_GT(testImage.GetNumRows(), 0);
     EXPECT_GT(testImage.GetNumCols(), 0);
     EXPECT_EQ(testImage.GetNumRows(), storedImage.GetNumRows());
@@ -87,11 +88,9 @@ static double getSimilarity(const Vision::ImageRGB& testImage, const Vision::Ima
 
 static void testFaceAgainstStoredVersion(const ProceduralFace& procFace, const std::string& filename)
 {
-  SCOPED_TRACE(filename);
-
   // Generate procedural face
 
-  Vision::ImageRGB procFaceImg;
+  Vision::ImageRGB565 procFaceImg;
   procFaceImg.Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
 
   // Note: whichever test runs first generates the noise textures that are retained for
@@ -100,18 +99,26 @@ static void testFaceAgainstStoredVersion(const ProceduralFace& procFace, const s
 
   ProceduralFaceDrawer::DrawFace(procFace, rng, procFaceImg);
 #if GENERATE_TEST_FILES
-  procFaceImg.Save(filename);
-#endif
+  const size_t slash = filename.find_last_of("/");
+  const std::string generatedFilename = Util::FileUtils::FullFilePath({'/tmp', filename});
+  procFaceImg.Save(generatedFilename);
 
+  // Load just generated procedural face
+
+  Vision::ImageRGB565 savedFaceImg;
+  savedFaceImg.Load(generatedFilename);
+#else
   // Load previously generated procedural face
 
-  Vision::ImageRGB savedFaceImg;
+  Vision::ImageRGB565 savedFaceImg;
   savedFaceImg.Load(filename);
+#endif
+
 
   // Compare, threshold is 0.01f based on inspecton
   // Note: see comment on random number generation and determinism
 
-  double similarity = getSimilarity(procFaceImg, savedFaceImg);
+  double similarity = GetSimilarity(procFaceImg, savedFaceImg);
   EXPECT_LT(similarity, 0.01f);
 }
 
@@ -128,9 +135,11 @@ TEST(ProceduralFace, RenderKeyframeCheck)
   };
 
   for(auto const& key : files) {
+    std::string fullpath = Util::FileUtils::FullFilePath({resourcePath, "test", "animProcessTests", key+".json"});
+    SCOPED_TRACE(fullpath);
+
     Json::Reader reader;
     Json::Value data;
-    std::string fullpath = Util::FileUtils::FullFilePath({resourcePath, "test", "animProcessTests", key+".json"});
     bool success = reader.parse(Util::FileUtils::ReadFile(fullpath), data);
     ASSERT_TRUE(success);
 
