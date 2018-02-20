@@ -62,10 +62,10 @@ namespace Vision {
     TrackedFace _face;
     TimeStamp_t _lastUpdated;
 
-    int _currentIndex;
-    int _numberOfInliers;
-    bool _eyeContact;
-    bool _initialized;
+    int _currentIndex = 0;
+    int _numberOfInliers = 0;
+    bool _eyeContact = false;
+    bool _initialized = false;
 
     std::vector<GazeData> _gazeHistory;
     Point2f _gazeAverage;

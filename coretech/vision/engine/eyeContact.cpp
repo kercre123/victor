@@ -36,6 +36,11 @@ namespace Vision {
     CONSOLE_VAR(u32, kExpireThreshold,                "Vision.EyeContact",  50);
   }
 
+  EyeContact::EyeContact()
+    : _gazeAverage(Point2f(-30.f, -20.f)) {
+    _gazeHistory.resize(kHistorySize);
+  }
+
   void EyeContact::Update(const TrackedFace& face, 
         const TimeStamp_t& timeStamp) {
     _face = face;
