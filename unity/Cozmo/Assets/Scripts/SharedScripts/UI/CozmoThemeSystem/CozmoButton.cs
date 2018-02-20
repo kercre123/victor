@@ -399,7 +399,7 @@ namespace Cozmo.UI {
       if (_ShowDisabledStateWhenInteractable) {
         ShowDisabledState();
       }
-      else {
+      else { 
         if (ButtonGraphics != null) {
           foreach (AnkiButtonImage graphic in ButtonGraphics) {
             if (graphic != null) {
@@ -407,14 +407,24 @@ namespace Cozmo.UI {
                 SetGraphic(graphic, graphic.enabledSprite, graphic.enabledColor);
               }
               else {
-                DAS.Error(this, "Found null graphic data in button! gameObject.name=" + gameObject.name
-                          + " targetImage=" + graphic.targetImage + " sprite="
-                          + graphic.enabledSprite + ". Have you initialized this button?");
+                if (gameObject == null) {
+                  DAS.Error("CozmoButton", "gameObject is null - error 1");
+                }
+                else {
+                  DAS.Error(this, "Found null graphic data in button! gameObject.name=" + gameObject.name
+                            + " targetImage=" + graphic.targetImage + " sprite="
+                            + graphic.enabledSprite + ". Have you initialized this button?");  
+                }
               }
             }
             else {
-              DAS.Error(this, "Found null graphic data in button! gameObject.name=" + gameObject.name +
+              if (gameObject == null) {
+                  DAS.Error("CozmoButton", "gameObject is null - error 2");
+              }
+              else {
+                 DAS.Error(this, "Found null graphic data in button! gameObject.name=" + gameObject.name +
                         ". Please check prefab hook-ups.");
+              }
             }
           }
         }
