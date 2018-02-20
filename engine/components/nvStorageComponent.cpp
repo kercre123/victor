@@ -80,7 +80,7 @@ static constexpr u32 _kMaxNvStorageBlobSize = 1024;
 
 static const char*   _kNVDataFileExtension = ".nvdata";
 
-static const char*   _kFactoryPath = "/data/persist/factory/";
+static const char*   _kFactoryPath = "/factory/nvStorage/";
 
 namespace Anki {
 namespace Cozmo {

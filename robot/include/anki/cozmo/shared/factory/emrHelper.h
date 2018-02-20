@@ -26,8 +26,7 @@ namespace Factory {
 
   namespace 
   {
-    // static const char* kEMRFile = "/factory/birthcertificate";
-    static const char* kEMRFile = "/data/persist/factory/birthcertificate";
+    static const char* kEMRFile = "/factory/birthcertificate";
 
     static Factory::EMR* _emr = nullptr;
   
