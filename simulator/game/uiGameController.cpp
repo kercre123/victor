@@ -2043,7 +2043,9 @@ namespace Anki {
 
     const std::string UiGameController::GetAnimationTestName() const
     {
-      return _robotNode->getField("animationTestName")->getSFString();
+      std::string animTestName;
+      WebotsHelpers::GetFieldAsString(_robotNode, "animationTestName", animTestName);
+      return animTestName;
     }
 
     const Pose3d UiGameController::GetPose3dOfNode(webots::Node* node) const

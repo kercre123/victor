@@ -57,7 +57,10 @@ public:
 
   typedef float FeatureType;
 
-  explicit RawPixelsClassifier(const CozmoContext *context, Anki::Vision::Profiler* profiler= nullptr);
+  explicit RawPixelsClassifier(const CozmoContext *context, Anki::Vision::Profiler* profiler = nullptr);
+
+  /* Base class should declare a virtual destructor so derived class destructors will be called by delete */
+  virtual ~RawPixelsClassifier() = default;
 
   /*
    * Train from a set of drivable and non-drivable pixels. Data might come from OverheadMap
@@ -71,7 +74,7 @@ public:
   void SetTrainingData(const cv::Mat& trainingSamples, const cv::Mat& trainingLabels);
 
   /*
-   * Predict the class of a single pixel (1 is drivable, 0 is not). It must overriden by a subclass.
+   * Predict the class of a single pixel (1 is drivable, 0 is not). Implementation must be provided by subclass.
    */
   virtual uchar PredictClass(const std::vector<FeatureType>& values) const = 0;
 
@@ -120,7 +123,7 @@ protected:
 
 /*
  * Abstract class for drivable surface classification using Gaussian Mixture Models. See LRRawPixelsClassifier
- * and THrivingSurfaceClassifier for implementations
+ * and THRawPixelsClassifier for implementations
  */
 class GMMRawPixelsClassifier : public RawPixelsClassifier{
 public:
@@ -146,7 +149,7 @@ protected:
 /*
  * This class uses Gaussian Mixture Models (GMM) and Logistic Regression (LR) to classify pixels as drivable or not.
  * To classify/train a set of pixels, a 3-dimensional GMM is created with only the positive (drivable surface) pixels.
- * Then for each pixel its minimum Mahalhanobis distance from all the kernels is computed. This new one dimensional
+ * Then for each pixel its minimum Mahalanobis distance from all the kernels is computed. This new one dimensional
  * vector is used as training for LR which finally classifies the pixel as drivable or not.
  *
  * Since the OverheadMap only labels pixels the robot has driven on as positive, a higher weight should be given to the
@@ -189,7 +192,7 @@ protected:
 
 /*
  * Threshold based drivable surface classifier. During training this class builds a Gaussian Mixture Model out of the
- * data. Then during prediction the minimum Mahlanobis distance between the test point and the kernels is computed,
+ * data. Then during prediction the minimum Mahalanobis distance between the test point and the kernels is computed,
  * and the result is thresholded. The threshold is automatically found as a multiple of the median of the training data.
  */
 class THRawPixelsClassifier : public GMMRawPixelsClassifier
@@ -206,14 +209,14 @@ public:
 
   bool Serialize(const char *filename) override
   {
-    PRINT_NAMED_ERROR("THRawPixelsClassifier.SerializeNotImplemented", "Serialize is not implementd for "
+    PRINT_NAMED_ERROR("THRawPixelsClassifier.SerializeNotImplemented", "Serialize is not implemented for "
                                                                             "THRawPixelsClassifier");
     return false;
   }
 
   bool DeSerialize(const char *filename) override
   {
-    PRINT_NAMED_ERROR("THRawPixelsClassifier.SerializeNotImplemented", "DeSerialize is not implementd for "
+    PRINT_NAMED_ERROR("THRawPixelsClassifier.SerializeNotImplemented", "DeSerialize is not implemented for "
                                                                             "THRawPixelsClassifier");
     return false;
   }

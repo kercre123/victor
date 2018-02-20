@@ -15,6 +15,9 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/components/bodyLightComponent.h"
+#include "engine/components/visionScheduleMediator/visionScheduleMediator_fwd.h"
+
+#include <set>
 
 namespace Anki {
 namespace Cozmo {
@@ -24,7 +27,8 @@ class InternalStatesBehavior : public ICozmoBehavior
 protected:
   // add a named strategy as a transition type that may be referenced in json
   using StrategyFunc = std::function<bool(BehaviorExternalInterface&)>;
-  using PreDefinedStrategiesMap = std::unordered_map<std::string, StrategyFunc>;
+  using LambdaArgsPair = std::pair<StrategyFunc, std::set<VisionModeRequest>>;
+  using PreDefinedStrategiesMap = std::unordered_map<std::string, LambdaArgsPair>;
   
   // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
@@ -70,7 +74,9 @@ protected:
   
 private:
 
-  void AddPreDefinedStrategy(const std::string& name, StrategyFunc&& func);
+  void AddPreDefinedStrategy(const std::string& name, 
+                             StrategyFunc&& strategyFunc,
+                             std::set<VisionModeRequest>& requiredVisionModes);
   
   class State;
 

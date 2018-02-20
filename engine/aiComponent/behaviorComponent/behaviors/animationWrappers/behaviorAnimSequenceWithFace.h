@@ -1,5 +1,5 @@
 /**
- * File: behaviorPlayAnimSequenceWithFace.h
+ * File: behaviorAnimSequenceWithFace.h
  *
  * Author: Brad Neuman
  * Created: 2017-05-23
@@ -10,22 +10,22 @@
  *
  **/
 
-#ifndef __Cozmo_Basestation_Behaviors_BehaviorPlayAnimSequenceWithFace_H__
-#define __Cozmo_Basestation_Behaviors_BehaviorPlayAnimSequenceWithFace_H__
+#ifndef __Cozmo_Basestation_Behaviors_BehaviorAnimSequenceWithFace_H__
+#define __Cozmo_Basestation_Behaviors_BehaviorAnimSequenceWithFace_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorPlayAnimSequence.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimSequence.h"
 
 namespace Anki {
 namespace Cozmo {
 
-class BehaviorPlayAnimSequenceWithFace : public BehaviorPlayAnimSequence
+class BehaviorAnimSequenceWithFace : public BehaviorAnimSequence
 {
-using BaseClass = BehaviorPlayAnimSequence;
+using BaseClass = BehaviorAnimSequence;
 protected:
   
   // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
-  BehaviorPlayAnimSequenceWithFace(const Json::Value& config);
+  BehaviorAnimSequenceWithFace(const Json::Value& config);
 
 public:
 

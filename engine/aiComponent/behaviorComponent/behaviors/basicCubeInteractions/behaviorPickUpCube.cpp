@@ -10,7 +10,7 @@
  *
  **/
 
-#include "engine/aiComponent/behaviorComponent/behaviors/basicCubeInteractions/behaviorPickupCube.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/basicCubeInteractions/behaviorPickUpCube.h"
 
 #include "coretech/common/engine/jsonTools.h"
 #include "engine/actions/animActions.h"

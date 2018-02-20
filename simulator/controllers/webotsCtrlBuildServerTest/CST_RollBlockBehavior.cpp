@@ -30,7 +30,7 @@ enum class TestState {
   TestDone
 };
 
-static BehaviorID kBehaviorID = BEHAVIOR_ID(RollBlockOnSide);
+static BehaviorID kBehaviorID = BEHAVIOR_ID(PlayRollBlock);
 
 class CST_RollBlockBehavior : public CozmoSimTestController {
 private:

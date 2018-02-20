@@ -38,13 +38,6 @@ ConditionNegate::ConditionNegate(IBEIConditionPtr operand)
   ANKI_VERIFY(_operand, "ConditionNegate.Constructor.Direct.NullOperand", "" );
 }
 
-void ConditionNegate::ResetInternal(BehaviorExternalInterface& bei)
-{  
-  if( _operand ) {
-    _operand->Reset(bei);
-  }
-}
-
 void ConditionNegate::InitInternal(BehaviorExternalInterface& bei)
 {
   if( _operand ) {
@@ -59,6 +52,13 @@ bool ConditionNegate::AreConditionsMetInternal(BehaviorExternalInterface& bei) c
     return !subResult;
   }
   return false;
+}
+
+void ConditionNegate::SetActiveInternal(BehaviorExternalInterface& bei, bool setActive)
+{
+  if( _operand ){
+    _operand->SetActive(bei, setActive);
+  }
 }
 
 }

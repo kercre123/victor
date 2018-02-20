@@ -51,6 +51,8 @@ SRCFILES="$OUTPUT_DIR/cpptest.cpp \
     $OUTPUT_DIR/ExplicitUnion.cpp \
     $OUTPUT_DIR/ExplicitAutoUnion.cpp \
     $OUTPUT_DIR/UnionOfUnion.cpp \
+    $OUTPUT_DIR/DupesAllowedUnion.cpp \
+    $OUTPUT_DIR/DupesAutoUnion.cpp \
     $OUTPUT_DIR/TestEnum.cpp \
     $SUPPORTDIR/source/SafeMessageBuffer.cpp \
     $OUTPUT_DIR/JsonSerialization.cpp \

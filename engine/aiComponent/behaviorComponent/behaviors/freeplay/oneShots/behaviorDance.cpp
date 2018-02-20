@@ -40,7 +40,7 @@ const std::vector<CubeAnimationTrigger> kDanceCubeAnims = {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDance::BehaviorDance(const Json::Value& config)
-: BehaviorPlayAnimSequence(config)
+: BehaviorAnimSequence(config)
 {
   
 }
@@ -95,7 +95,7 @@ void BehaviorDance::OnBehaviorActivated()
   DEV_ASSERT(false, "BehaviorDance.Init.MusicTurnedOff");
   
   // Init base class to play our animation sequence
-  return BehaviorPlayAnimSequence::OnBehaviorActivated();
+  return BehaviorAnimSequence::OnBehaviorActivated();
 }
 
 

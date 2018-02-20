@@ -28,6 +28,7 @@ namespace Anki {
 namespace Cozmo {
 
 class BehaviorComponentCloudServer;
+class CozmoContext;
 class Robot;
 class UserIntent;
 class UserIntentMap;
@@ -102,6 +103,9 @@ public:
   // matches. Returns true if successfully converted (including if it matched against the default), and false
   // if there was an error (e.g. malformed json, incorrect data fields, etc)
   bool SetCloudIntentPendingFromJSON(const std::string& cloudJsonStr);
+  
+  // get list of cloud intents from json
+  std::vector<std::string> DevGetCloudIntentsList() const;
 
 private:
   
@@ -109,6 +113,8 @@ private:
   void OnCloudData(std::string&& data);
   
   std::string GetServerName(const Robot& robot) const;
+  
+  void SendWebVizIntents();
 
   std::unique_ptr<UserIntentMap> _intentMap;
 
@@ -126,6 +132,10 @@ private:
   std::mutex _mutex;
   std::string _pendingCloudIntent; // only pending for as long as it takes this thread to obtain a lock
   std::unique_ptr<BehaviorComponentCloudServer> _server;
+  
+  const CozmoContext* _context = nullptr; // for webviz
+  
+  std::string _devLastReceivedCloudIntent;
   
   
 

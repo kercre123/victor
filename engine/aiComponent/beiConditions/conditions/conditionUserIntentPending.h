@@ -62,7 +62,7 @@ protected:
   
   virtual bool AreConditionsMetInternal( BehaviorExternalInterface& behaviorExternalInterface ) const override;
   
-  virtual void ResetInternal( BehaviorExternalInterface& behaviorExternalInterface ) override;
+  virtual void SetActiveInternal(BehaviorExternalInterface& behaviorExternalInterface, bool isActive) override;
   
 private:
   

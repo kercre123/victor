@@ -45,6 +45,9 @@ public:
   // turning quoted numeric types like "123" into actual json numeric types (no quotes), based on
   // the config passed in the constructor
   void SanitizeCloudIntentVariables(const std::string& cloudIntent, Json::Value& paramsList) const;
+  
+  // get list of cloud intents from json
+  std::vector<std::string> DevGetCloudIntentsList() const;
 
 private:
 

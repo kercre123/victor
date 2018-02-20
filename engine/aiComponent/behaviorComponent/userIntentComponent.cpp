@@ -15,6 +15,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorComponentCloudServer.h"
 #include "engine/aiComponent/behaviorComponent/userIntents.h"
 #include "engine/aiComponent/behaviorComponent/userIntentMap.h"
+#include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/robotInterface/messageHandler.h"
 
@@ -22,6 +23,8 @@
 
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
+
+#include "webServerProcess/src/webService.h"
 
 
 #include "json/json.h"
@@ -41,6 +44,7 @@ static const char* kParamsKey = "params";
 UserIntentComponent::UserIntentComponent(const Robot& robot, const Json::Value& userIntentMapConfig)
   : IDependencyManagedComponent( this, BCComponentID::UserIntentComponent )
   , _intentMap( new UserIntentMap(userIntentMapConfig) )
+  , _context( robot.GetContext() )
 {
   
   // setup cloud intent handler
@@ -181,12 +185,18 @@ void UserIntentComponent::SetUserIntentPending(UserIntent&& userIntent)
     auto& intent = *_pendingIntent.get();
     intent = std::move(userIntent);
   }
+  
+  if( ANKI_DEV_CHEATS ) {
+    SendWebVizIntents();
+  }
 
   _pendingIntentTick = BaseStationTimer::getInstance()->GetTickCount();
 }
 
 void UserIntentComponent::SetCloudIntentPending(const std::string& cloudIntent)
 {
+  _devLastReceivedCloudIntent = cloudIntent;
+  
   SetUserIntentPending( _intentMap->GetUserIntentFromCloudIntent(cloudIntent) );
 }
 
@@ -262,6 +272,8 @@ bool UserIntentComponent::SetCloudIntentPendingFromJSON(const std::string& cloud
     return false;
   }
   
+  _devLastReceivedCloudIntent = cloudIntent;
+  
   SetUserIntentPending( std::move(pendingIntent) );
   
   return true;
@@ -330,6 +342,39 @@ std::string UserIntentComponent::GetServerName(const Robot& robot) const
   return "ai_sock" + ((robot.GetID() == 0)
                       ? ""
                       : std::to_string(robot.GetID()));  // Offset port by robotID so that we can run sims with multiple robots
+}
+  
+std::vector<std::string> UserIntentComponent::DevGetCloudIntentsList() const
+{
+  return _intentMap->DevGetCloudIntentsList();
+}
+  
+void UserIntentComponent::SendWebVizIntents()
+{
+  if( _context != nullptr ) {
+    const auto* webService = _context->GetWebService();
+    
+    Json::Value toSend = Json::arrayValue;
+    
+    {
+      Json::Value blob;
+      blob["intentType"] = "user";
+      blob["type"] = "current-intent";
+      blob["value"] = UserIntentTagToString( _pendingIntent->GetTag() );
+      toSend.append(blob);
+    }
+    
+    if( !_devLastReceivedCloudIntent.empty() ) {
+      Json::Value blob;
+      blob["intentType"] = "cloud";
+      blob["type"] = "current-intent";
+      blob["value"] = _devLastReceivedCloudIntent;
+      toSend.append(blob);
+      _devLastReceivedCloudIntent.clear();
+    }
+    
+    webService->SendToWebViz( "intents", toSend );
+  }
 }
 
 }

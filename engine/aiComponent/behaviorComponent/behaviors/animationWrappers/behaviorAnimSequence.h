@@ -1,5 +1,5 @@
 /**
- * File: BehaviorPlayAnimSequence
+ * File: BehaviorAnimSequence
  *
  * Author: Mark Wesley
  * Created: 11/03/15
@@ -10,8 +10,8 @@
  *
  **/
 
-#ifndef __Cozmo_Basestation_Behaviors_BehaviorPlayAnimSequence_H__
-#define __Cozmo_Basestation_Behaviors_BehaviorPlayAnimSequence_H__
+#ifndef __Cozmo_Basestation_Behaviors_BehaviorAnimSequence_H__
+#define __Cozmo_Basestation_Behaviors_BehaviorAnimSequence_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviorListenerInterfaces/iSubtaskListener.h"
@@ -20,17 +20,17 @@
 namespace Anki {
 namespace Cozmo {
   
-class BehaviorPlayAnimSequence : public ICozmoBehavior
+class BehaviorAnimSequence : public ICozmoBehavior
 {
 protected:
   
   // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
-  BehaviorPlayAnimSequence(const Json::Value& config, bool triggerRequired = true);
+  BehaviorAnimSequence(const Json::Value& config, bool triggerRequired = true);
   
 public:
   
-  virtual ~BehaviorPlayAnimSequence();
+  virtual ~BehaviorAnimSequence();
   
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void AddListener(ISubtaskListener* listener) override;
@@ -87,4 +87,4 @@ private:
 } // namespace Cozmo
 } // namespace Anki
 
-#endif // __Cozmo_Basestation_Behaviors_BehaviorPlayAnimSequence_H__
+#endif // __Cozmo_Basestation_Behaviors_BehaviorAnimSequence_H__

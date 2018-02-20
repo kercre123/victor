@@ -162,10 +162,6 @@ namespace Anki {
         // Apply offset
         const TimeStamp_t now_ms = GetTimeStamp();
         const TimeStamp_t frame_time_ms = now_ms - static_cast<TimeStamp_t>(offset_ns / 1000000LL);
-        
-        PRINT_CH_DEBUG("VisionComponent", "CameraService.CameraGetFrame.Timestamp",
-                  "offset_ns=%llu now_ms=%u frame_time_ms=%u",
-                  offset_ns, now_ms, frame_time_ms);
 
         imageCaptureSystemTimestamp_ms = frame_time_ms;
       } else {

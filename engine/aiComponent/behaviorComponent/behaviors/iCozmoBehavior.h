@@ -123,7 +123,7 @@ public:
 
   bool IsActivated() const { return _isActivated; }
 
-  // returns true if the behavior has delegated control to a helper/action/behavior
+  // returns true if the behavior has delegated control to a action/behavior
   bool IsControlDelegated() const;
 
   // returns the number of times this behavior has been started (number of times Init was called and returned
@@ -145,10 +145,6 @@ public:
   // This behavior was active, but is now stopping (to make way for a new current
   // behavior). Any behaviors from DelegateIfInControl will be canceled.
   void OnDeactivatedInternal() final override;
-  
-  // Prevents the behavior from calling a callback function when ActionCompleted occurs
-  // this allows the behavior to be stopped gracefully
-  void StopOnNextActionComplete();
   
   // Returns true if the state of the world/robot is sufficient for this behavior to be executed
   bool WantsToBeActivatedInternal() const override final;
@@ -294,64 +290,62 @@ protected:
   virtual void HandleWhileInScopeButNotActivated(const EngineToGameEvent& event) { }
   virtual void HandleWhileInScopeButNotActivated(const RobotToEngineEvent& event) { }
   
-  // Many behaviors use a pattern of executing an action, then waiting for it to finish before selecting the
-  // next action. Instead of directly starting actions and handling ActionCompleted callbacks, derived
-  // classes can use the functions below. Note: none of the DelegateIfInControl functions can be called when the
-  // behavior is not running (will result in an error and no action). Also, if the behavior was running when
-  // you called DelegateIfInControl, but is no longer running when the action completed, the callback will NOT be
-  // called (this is necessary to prevent non-running behaviors from doing things with the robot). If the
-  // behavior is stopped, within the Stop function, any actions which are still running will be canceled
-  // (and you will not get any callback for it).
+  // Many behaviors use a pattern of delegating control to a behavior or action, then waiting for it to finish 
+  // before selecting what to do next. Behaviors can use the functions below to pass lambdas or member functions
+  // as callbacks when delegation finishes instead of monitoring for changes in IsControlDelegated() directly.
+  // Standard delegation restrictions apply: 
+  //   1) You must active and on top of the behavior stack to delegate
+  //   2) You may only delegate to one action or behavior at a time
+  // Callbacks are cleared when the behavior leaves activated scope
   //
-  // Each DelegateIfInControl function returns true if the action was started, false otherwise. Reasons actions
-  // might not be started include:
-  // 1. Another action (from DelegateIfInControl) is currently running or queued
-  // 2. You are not running ( IsActivated() returns false )
-  //
-  // DelegateIfInControl takes ownership of the action.  If the action is not
+  // DelegateIfInControl takes ownership of actions.  If the action is not
   // successfully queued, the action is immediately destroyed.
   //
-  // Start an action now, and optionally provide a callback which will be called with the
-  // RobotCompletedAction that corresponds to the action
-  using RobotCompletedActionCallback =  BehaviorRobotCompletedActionCallback;
-  bool DelegateIfInControl(IActionRunner* action, RobotCompletedActionCallback callback = {});
-
-  // helper that just looks at the result (simpler, but you can't get things like the completion union)
-  using ActionResultCallback = BehaviorActionResultCallback;
-  bool DelegateIfInControl(IActionRunner* action, ActionResultCallback callback);
-
-  // If you want to do something when the action finishes, regardless of its result, you can use the
-  // following callbacks, with either a callback function taking no arguments or taking a single BehaviorExternalInterface&
-  // argument. You can also use member functions. The callback will be called when action completes for any
-  // reason (as long as the behavior is running)
 
   using SimpleCallback = BehaviorSimpleCallback;
+  using RobotCompletedActionCallback =  BehaviorRobotCompletedActionCallback;
+  using ActionResultCallback = BehaviorActionResultCallback;
+
+  // DelegateNow functions will automatically cancel delegates and then delegate
+  // Delegation can still fail if the behavior is not in charge of the behavior stack
+  bool DelegateNow(IActionRunner* action, RobotCompletedActionCallback callback = {});
+  bool DelegateNow(IActionRunner* action, ActionResultCallback callback);
+  bool DelegateNow(IActionRunner* action, SimpleCallback callback);
+
+  bool DelegateNow(IBehavior* delegate, SimpleCallback callback = {});
+
+  // DelegateIfInControl functions will only successfully delegate if the behavior
+  // is currently in control of the behavior stack and has not delegated to an action
+  bool DelegateIfInControl(IActionRunner* action, RobotCompletedActionCallback callback = {});
+  bool DelegateIfInControl(IActionRunner* action, ActionResultCallback callback);
   bool DelegateIfInControl(IActionRunner* action, SimpleCallback callback);
 
+  bool DelegateIfInControl(IBehavior* delegate, SimpleCallback callback = {});
+
+  // DelegateNow templated functions - allow member functions to be used for callbacks
+  template<typename T>
+  bool DelegateNow(IActionRunner* action, void(T::*callback)(RobotCompletedActionCallback));
+  template<typename T>
+  bool DelegateNow(IActionRunner* action, void(T::*callback)(ActionResult));
+  template<typename T>
+  bool DelegateNow(IActionRunner* action, void(T::*callback)());
+
+  template<typename T>
+  bool DelegateNow(IBehavior* delegate, void(T::*callback)());
+
+
+  // DelegateIfInControl templated functions - allow member functions to be used for callbacks
+  template<typename T>
+  bool DelegateIfInControl(IActionRunner* action, void(T::*callback)(RobotCompletedActionCallback));
+  template<typename T>
+  bool DelegateIfInControl(IActionRunner* action, void(T::*callback)(ActionResult));
   template<typename T>
   bool DelegateIfInControl(IActionRunner* action, void(T::*callback)());
 
   template<typename T>
-  bool DelegateIfInControl(IActionRunner* action, void(T::*callback)(ActionResult));
-  
-  
-  // If possible (without canceling anything), delegate to the given behavior and return true. Otherwise,
-  // return false
-  bool DelegateIfInControl(IBehavior* delegate);
-  
-  // same as above but with a callback that will get called as soon as the delegate stops itself (regardless
-  // of why)
-  bool DelegateIfInControl(IBehavior* delegate,
-                           SimpleCallback callback);
+  bool DelegateIfInControl(IBehavior* delegate, void(T::*callback)());
 
-  // If possible (even if it means canceling delegated, delegate to the given behavior and return
-  // true. Otherwise, return false (e.g. if the passed in interface doesn't have access to the delegation
-  // component)
-  bool DelegateNow(IBehavior* delegate);
 
-  template<typename T>
-  bool DelegateIfInControl(IBehavior* delegate,
-                           void(T::*callback)());
 
   // Behaviors can easily create delegates using "anonymous" behaviors in their config file (see _anonymousBehaviorMap
   // comments below).  This function enables access to those anonymous behaviors.
@@ -370,7 +364,7 @@ protected:
   // cancellation unless you set allowCallback to false.
   bool CancelDelegates(bool allowCallback = true);
 
-  // This function cancels this behavior. It never allows callbacks or helpers to continue. This is just a
+  // This function cancels this behavior. It never allows callbacks to continue. This is just a
   // convenience wrapper for calling CancelSelf on the delegation component. It returns true if the behavior
   // was successfully canceled, false otherwise (e.g. the behavior wasn't active to begin with)
   bool CancelSelf();
@@ -441,7 +435,7 @@ protected:
 private:
   
   NeedsActionId ExtractNeedsActionIDFromConfig(const Json::Value& config);
-  std::string ExtractDebugLabelForBaseFromConfig(const Json::Value& config);
+  std::string MakeUniqueDebugLabelFromConfig(const Json::Value& config);
 
   float _lastRunTime_s;
   float _activatedTime_s;
@@ -456,7 +450,8 @@ private:
   
   bool ReadFromJson(const Json::Value& config);
   
-  void HandleActionComplete(const ExternalInterface::RobotCompletedAction& msg);
+  // Checks to see if delegation has completed and callbacks should run
+  void CheckDelegationCallbacks();
 
   // hide behaviorTypes.h file in .cpp
   std::string GetClassString(BehaviorClass behaviorClass) const;
@@ -504,11 +499,7 @@ private:
   int _startCount = 0;
 
   // for when delegation finishes - if invalid, no action
-  RobotCompletedActionCallback _actionCallback;
-  bool _stopRequestedAfterAction = false;
-
-  // for when delegation to a _behavior_ finishes. If invalid, no callback
-  SimpleCallback _behaviorDelegateCallback;
+  RobotCompletedActionCallback _delegationCallback;
   
   bool _isActivated;
   
@@ -554,8 +545,58 @@ private:
   
 }; // class ICozmoBehavior
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<typename T>
+bool ICozmoBehavior::DelegateNow(IActionRunner* action, void(T::*callback)(RobotCompletedActionCallback))
+{
+  return DelegateNow(action, std::bind(callback, static_cast<T*>(this), std::placeholders::_1));
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<typename T>
+bool ICozmoBehavior::DelegateNow(IActionRunner* action, void(T::*callback)(ActionResult))
+{
+  return DelegateNow(action, std::bind(callback, static_cast<T*>(this), std::placeholders::_1));
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<typename T>
+bool ICozmoBehavior::DelegateNow(IActionRunner* action, void(T::*callback)(void))
+{
+  SimpleCallback unambiguous = std::bind(callback, static_cast<T*>(this));
+  return DelegateNow(action, unambiguous);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<typename T>
+bool ICozmoBehavior::DelegateNow(IBehavior* delegate, void(T::*callback)())
+{
+  return DelegateNow(delegate,
+                     std::bind(callback, static_cast<T*>(this), std::placeholders::_1));
+}
+
   
-  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<typename T>
+bool ICozmoBehavior::DelegateIfInControl(IActionRunner* action, void(T::*callback)(RobotCompletedActionCallback))
+{
+  return DelegateIfInControl(action, std::bind(callback, static_cast<T*>(this), std::placeholders::_1));
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<typename T>
+bool ICozmoBehavior::DelegateIfInControl(IActionRunner* action, void(T::*callback)(ActionResult))
+{
+  return DelegateIfInControl(action, std::bind(callback, static_cast<T*>(this), std::placeholders::_1));
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<typename T>
 bool ICozmoBehavior::DelegateIfInControl(IActionRunner* action, void(T::*callback)(void))
 {
@@ -563,20 +604,17 @@ bool ICozmoBehavior::DelegateIfInControl(IActionRunner* action, void(T::*callbac
   return DelegateIfInControl(action, unambiguous);
 }
 
-template<typename T>
-bool ICozmoBehavior::DelegateIfInControl(IActionRunner* action, void(T::*callback)(ActionResult))
-{
-  return DelegateIfInControl(action, std::bind(callback, static_cast<T*>(this), std::placeholders::_1));
-}
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<typename T>
-bool ICozmoBehavior::DelegateIfInControl(IBehavior* delegate,
-                                         void(T::*callback)())
+bool ICozmoBehavior::DelegateIfInControl(IBehavior* delegate, void(T::*callback)())
 {
   return DelegateIfInControl(delegate,
                              std::bind(callback, static_cast<T*>(this), std::placeholders::_1));
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<typename T>
 bool ICozmoBehavior::FindAnonymousBehaviorByNameAndDowncast(const std::string& behaviorName,
                                                               BehaviorClass requiredClass,
@@ -607,7 +645,9 @@ bool ICozmoBehavior::FindAnonymousBehaviorByNameAndDowncast(const std::string& b
   
   return false;
 }
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #if ANKI_DEV_CHEATS
 template <typename T>
 void ICozmoBehavior::MakeMemberTunable(T& param, const std::string& name)

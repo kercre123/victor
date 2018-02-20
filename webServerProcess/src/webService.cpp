@@ -11,6 +11,7 @@
  *
  **/
 
+// #include "webServerProcess/src/webService.h"
 #include "webService.h"
 
 #if USE_DAS
@@ -23,6 +24,7 @@
 #include "util/logging/logging.h"
 #include "util/console/consoleSystem.h"
 #include "util/console/consoleChannel.h"
+#include "util/global/globalDefinitions.h"
 #include "util/helpers/ankiDefines.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/string/stringUtils.h"
@@ -376,6 +378,42 @@ ConsoleFuncCall(struct mg_connection *conn, void *cbdata)
   return returnCode;
 }
 
+static int
+ProcessRequestFromQueryString(struct mg_connection *conn, void *cbdata, WebService::WebService::RequestType type)
+{
+  const mg_request_info* info = mg_get_request_info(conn);
+  std::string request;
+  if (info->content_length > 0) {
+    char buf[info->content_length+1];
+    mg_read(conn, buf, sizeof(buf));
+    buf[info->content_length] = 0;
+    request = buf;
+  }
+  else if (info->query_string) {
+    request = info->query_string;
+  }
+  int returnCode = ProcessRequest(conn, type, request, "");
+  
+  return returnCode;
+}
+
+static int
+TempAppToEngine(struct mg_connection *conn, void *cbdata)
+{
+  return ProcessRequestFromQueryString( conn,
+                                        cbdata,
+                                        Anki::Cozmo::WebService::WebService::RequestType::RT_TempAppToEngine );
+}
+
+static int
+TempEngineToApp(struct mg_connection *conn, void *cbdata)
+{
+  return ProcessRequestFromQueryString( conn,
+                                        cbdata,
+                                        Anki::Cozmo::WebService::WebService::RequestType::RT_TempEngineToApp );
+}
+
+
 WebService::WebService::Request::Request(RequestType rt,
                                          const std::string& param1,
                                          const std::string& param2,
@@ -683,6 +721,12 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform, const Json::Val
   mg_set_request_handler(_ctx, "/getinitialconfig", GetInitialConfig, 0);
   mg_set_request_handler(_ctx, "/getmainrobotinfo", GetMainRobotInfo, 0);
   mg_set_request_handler(_ctx, "/getperfstats", GetPerfStats, 0);
+  
+  // todo (VIC-1398): remove
+  if( ANKI_DEV_CHEATS ) { 
+    mg_set_request_handler(_ctx, "/sendAppMessage", TempAppToEngine, 0);
+    mg_set_request_handler(_ctx, "/getAppMessages", TempEngineToApp, 0);
+  }
 
   const std::string& consoleVarsTemplate = platform->pathToResource(Util::Data::Scope::Resources, "webserver/consolevarsui.html");
   _consoleVarsUIHTMLTemplate = Anki::Util::StringFromContentsOfFile(consoleVarsTemplate);
@@ -861,6 +905,16 @@ void WebService::Update()
             else {
               PRINT_NAMED_INFO("WebService", "CONSOLE_FUNC %s %s not found", func.c_str(), args.c_str());
             }
+          }
+          break;
+        case RT_TempAppToEngine:
+          {
+            _appToEngineOnData.emit( requestPtr->_param1 );
+          }
+          break;
+        case RT_TempEngineToApp:
+          {
+            requestPtr->_result = _appToEngineRequestData.emit();
           }
           break;
         case RT_WebsocketOnSubscribe:

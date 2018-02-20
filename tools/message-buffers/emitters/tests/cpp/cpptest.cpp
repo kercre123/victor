@@ -20,6 +20,8 @@
 #include "SimpleTest.h"
 #include "TestEnum.h"
 #include "UnionOfUnion.h"
+#include "DupesAllowedUnion.h"
+#include "DupesAutoUnion.h"
 #include "aligned/AutoUnionTest.h"
 #include "json/json.h"
 
@@ -498,6 +500,98 @@ TEST Union_VersionHash() {
     buf << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(c);
   }
   ASSERT_EQ(ExplicitlyTaggedUnionVersionHashStr, buf.str());
+  PASS();
+}
+
+
+// For verifying that T(Arg&&) does or does not exist
+template <bool B>
+using bool_constant = std::integral_constant<bool, B>;
+template <typename T, typename Arg>
+struct IsExplicitlyConstructible 
+  : public bool_constant< std::is_constructible<T, Arg&&>::value
+                          && !std::is_convertible<Arg, T>::value >
+{
+};
+
+TEST Union_DupesAllowed() {
+  // This test is only valid if --output-union-helper-constructors is set.
+  // This tests that the union should exist and can be set, and that it should not have
+  // constructors accepting the union member structures if they appear in duplicate
+
+  {
+    DupesAllowedUnion testUnion;
+    DuplicatedType duped;
+    NonDuplicatedType normal;
+
+    testUnion.Set_dupedMember1(duped);
+    ASSERT_EQ(testUnion.GetTag(), DupesAllowedUnionTag::dupedMember1);
+    
+    testUnion.Set_dupedMember2(duped);
+    ASSERT_EQ(testUnion.GetTag(), DupesAllowedUnionTag::dupedMember2);
+
+    testUnion.Set_normalMember(normal);
+    ASSERT_EQ(testUnion.GetTag(), DupesAllowedUnionTag::normalMember);
+  }
+
+  // check ctors for the types we care about
+  constexpr bool dupedTypeHasCtor 
+    = IsExplicitlyConstructible<DupesAllowedUnion, DuplicatedType>::value;
+  constexpr bool nondupedTypeHasCtor 
+    = IsExplicitlyConstructible<DupesAllowedUnion, NonDuplicatedType>::value;
+
+  // if default (non- dupes_allowed) unions have constructors for creating the 
+  // union from the union member type, then --output-union-helper-constructors is 
+  // probably set.
+  const bool otherTypeCtor = IsExplicitlyConstructible<FunkyMessage, Monkey>::value;
+  if( otherTypeCtor ) {
+    ASSERT_EQ( nondupedTypeHasCtor, true ); // no dupes==>possible to construct
+    ASSERT_EQ( dupedTypeHasCtor, false ); // dupes==>no ctor so that we can allow dupes
+  } else {
+    // if the normal one doesnt have the ctors, no one else should either.
+    // perhaps --output-union-helper-constructors was not set.
+    ASSERT_EQ( nondupedTypeHasCtor, false );
+    ASSERT_EQ( dupedTypeHasCtor, false );
+  }
+  
+  PASS();
+}
+
+TEST Autounion_DupesAllowed() {
+  DupesAutoUnion msg;
+
+  AutoWithDupe withDupe{10};
+  AutoNoDupe noDupe{true};
+
+  msg.Set_explicitMember( withDupe );
+  ASSERT_EQ(DupesAutoUnion::Tag::explicitMember, msg.GetTag());
+
+  msg.Set_AutoWithDupe( withDupe );
+  ASSERT_EQ(DupesAutoUnion::Tag::AutoWithDupe, msg.GetTag());
+
+  msg.Set_AutoNoDupe( noDupe );
+  ASSERT_EQ(DupesAutoUnion::Tag::AutoNoDupe, msg.GetTag());
+
+  // check ctors for the types we care about
+  constexpr bool dupedTypeHasCtor 
+    = IsExplicitlyConstructible<DupesAutoUnion, AutoWithDupe>::value;
+  constexpr bool nondupedTypeHasCtor 
+    = IsExplicitlyConstructible<DupesAutoUnion, AutoNoDupe>::value;
+
+  // if default (non- dupes_allowed) unions have constructors for creating the 
+  // union from the union member type, then --output-union-helper-constructors is 
+  // probably set.
+  const bool otherTypeCtor = IsExplicitlyConstructible<FunkyMessage, Monkey>::value;
+  if( otherTypeCtor ) {
+    ASSERT_EQ( nondupedTypeHasCtor, true ); // no dupes==>possible to construct
+    ASSERT_EQ( dupedTypeHasCtor, false ); // dupes==>no ctor so that we can allow dupes
+  } else {
+    // if the normal one doesnt have the ctors, no one else should either.
+    // perhaps --output-union-helper-constructors was not set.
+    ASSERT_EQ( nondupedTypeHasCtor, false );
+    ASSERT_EQ( dupedTypeHasCtor, false );
+  }  
+
   PASS();
 }
 
@@ -1356,6 +1450,11 @@ SUITE(CPP_Emitter) {
 
   // Autounion
   RUN_TEST(Autounion_should_exist);
+
+  // Union with dupes_allowed
+  RUN_TEST(Union_DupesAllowed);
+  // Autounion with dupes_allowed
+  RUN_TEST(Autounion_DupesAllowed);
 
   // Template helpies
   RUN_TEST(Union_TagToType);

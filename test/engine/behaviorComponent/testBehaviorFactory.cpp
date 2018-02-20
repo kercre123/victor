@@ -33,7 +33,7 @@ using namespace Anki::Cozmo;
 
 static const char* kTestBehaviorJson =
 "{"
-"   \"behaviorClass\" : \"PlayAnim\","
+"   \"behaviorClass\" : \"AnimSequence\","
 "   \"behaviorID\" : \"Wait_TestInjectable\","
 "   \"animTriggers\" : [ \"UnitTestAnim\" ],"
 "   \"minTimeBetweenRuns\" : 5.0,"

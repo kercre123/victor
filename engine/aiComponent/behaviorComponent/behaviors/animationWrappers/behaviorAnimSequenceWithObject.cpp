@@ -1,16 +1,16 @@
 /**
- * File: behaviorPlayAnimSequenceWithObject.cpp
+ * File: behaviorAnimSequenceWithObject.cpp
  *
  * Author: Matt Michini
  * Created: 2018-01-11
  *
- * Description: Play a sequence of animations after turning to an object (if possible)
+ * Description:  a sequence of animations after turning to an object (if possible)
  *
  * Copyright: Anki, Inc. 2018
  *
  **/
 
-#include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorPlayAnimSequenceWithObject.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimSequenceWithObject.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
@@ -27,7 +27,7 @@ namespace {
 }
 
   
-BehaviorPlayAnimSequenceWithObject::BehaviorPlayAnimSequenceWithObject(const Json::Value& config)
+BehaviorAnimSequenceWithObject::BehaviorAnimSequenceWithObject(const Json::Value& config)
 : BaseClass(config)
 {
   std::string objectTypeStr;
@@ -37,18 +37,18 @@ BehaviorPlayAnimSequenceWithObject::BehaviorPlayAnimSequenceWithObject(const Jso
 }
   
   
-bool BehaviorPlayAnimSequenceWithObject::WantsToBeActivatedBehavior() const
+bool BehaviorAnimSequenceWithObject::WantsToBeActivatedBehavior() const
 {
   return (GetLocatedObject() != nullptr);
 }
   
 
-void BehaviorPlayAnimSequenceWithObject::OnBehaviorActivated()
+void BehaviorAnimSequenceWithObject::OnBehaviorActivated()
 {
   const auto* obj = GetLocatedObject();
   
   if (ANKI_VERIFY(obj != nullptr,
-                  "BehaviorPlayAnimSequenceWithObject.OnBehaviorActivated.NullObject",
+                  "BehaviorAnimSequenceWithObject.OnBehaviorActivated.NullObject",
                   "Null object!")) {
     // Attempt to turn toward the specified object, and even if fails, move on to the animations
     DelegateIfInControl(new TurnTowardsObjectAction(obj->GetID()), [this]() {
@@ -58,7 +58,7 @@ void BehaviorPlayAnimSequenceWithObject::OnBehaviorActivated()
 }
   
 
-const ObservableObject* BehaviorPlayAnimSequenceWithObject::GetLocatedObject() const
+const ObservableObject* BehaviorAnimSequenceWithObject::GetLocatedObject() const
 {
   // Find matching objects
   BlockWorldFilter filter;

@@ -29,7 +29,9 @@ public:
 
 protected:
   virtual bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
-
+  virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requiredVisionModes) const override {
+    requiredVisionModes.insert({ VisionMode::DetectingPets, EVisionUpdateFrequency::Low });
+  }
 private:  
   // Everything we have already reacted to
   mutable std::set<Vision::FaceID_t> _reactedTo;

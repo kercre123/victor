@@ -15,12 +15,12 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorDance_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorDance_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorPlayAnimSequence.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimSequence.h"
 
 namespace Anki {
 namespace Cozmo {
   
-class BehaviorDance : public BehaviorPlayAnimSequence
+class BehaviorDance : public BehaviorAnimSequence
 {
 protected:
   

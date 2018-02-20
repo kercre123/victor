@@ -1,5 +1,5 @@
 /**
-* File: behaviorAnimStatesGetInLoop.cpp
+* File: behaviorAnimGetInLoop.cpp
 *
 * Author: Kevin M. Karol
 * Created: 2/7/18
@@ -12,7 +12,7 @@
 *
 **/
 
-#include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimStatesGetInLoop.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimGetInLoop.h"
 
 #include "engine/actions/animActions.h"
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
@@ -32,14 +32,14 @@ const char* kLoopEndConditionKey = "loopEndCondition";
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorAnimStatesGetInLoop::BehaviorAnimStatesGetInLoop(const Json::Value& config)
+BehaviorAnimGetInLoop::BehaviorAnimGetInLoop(const Json::Value& config)
 : ICozmoBehavior(config)
 {
   auto loadTrigger = [&config](AnimationTrigger& trigger, const char* key){
-    std::string debugStr = "BehaviorAnimStatesGetInLoop.Constructor.MissingParam.";
+    std::string debugStr = "BehaviorAnimGetInLoop.Constructor.MissingParam.";
     trigger = AnimationTriggerFromString(JsonTools::ParseString(config,  key, debugStr + key));
     ANKI_VERIFY(trigger != AnimationTrigger::Count, 
-            "BehaviorAnimStatesGetInLoop.Constructor.InvalidAnimTrigger",
+            "BehaviorAnimGetInLoop.Constructor.InvalidAnimTrigger",
             "%s cannot be count",
             key);
   };
@@ -55,46 +55,48 @@ BehaviorAnimStatesGetInLoop::BehaviorAnimStatesGetInLoop(const Json::Value& conf
   if(config.isMember(kLoopEndConditionKey)){
     _instanceParams.endLoopCondition = BEIConditionFactory::CreateBEICondition(config[kLoopEndConditionKey]); 
    ANKI_VERIFY(_instanceParams.endLoopCondition != nullptr,
-               "BehaviorAnimStatesGetInLoop.Constructor.InvalidEndLoopCondition",
+               "BehaviorAnimGetInLoop.Constructor.InvalidEndLoopCondition",
                "End loop condition specified, but did not build properly");
   }
 }
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorAnimStatesGetInLoop::~BehaviorAnimStatesGetInLoop()
+BehaviorAnimGetInLoop::~BehaviorAnimGetInLoop()
 {
 
 }
  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorAnimStatesGetInLoop::WantsToBeActivatedBehavior() const
+bool BehaviorAnimGetInLoop::WantsToBeActivatedBehavior() const
 {
   return true;
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAnimStatesGetInLoop::InitBehavior()
+void BehaviorAnimGetInLoop::InitBehavior()
 {
   if(_instanceParams.endLoopCondition != nullptr){
     _instanceParams.endLoopCondition->Init(GetBEI());
-    _instanceParams.endLoopCondition->Reset(GetBEI());
   }
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAnimStatesGetInLoop::OnBehaviorActivated()
+void BehaviorAnimGetInLoop::OnBehaviorActivated()
 {
+  _instanceParams.endLoopCondition->SetActive(GetBEI(), true);
   _lifetimeParams = LifetimeParams();
   TransitionToGetIn();
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAnimStatesGetInLoop::OnBehaviorDeactivated()
+void BehaviorAnimGetInLoop::OnBehaviorDeactivated()
 {
+  _instanceParams.endLoopCondition->SetActive(GetBEI(), false);
+
   if((_lifetimeParams.stage == BehaviorStage::Loop) &&
      (_instanceParams.emergencyGetOutTrigger != AnimationTrigger::Count)){
     PlayEmergencyGetOut(_instanceParams.emergencyGetOutTrigger);
@@ -103,15 +105,15 @@ void BehaviorAnimStatesGetInLoop::OnBehaviorDeactivated()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAnimStatesGetInLoop::TransitionToGetIn()
+void BehaviorAnimGetInLoop::TransitionToGetIn()
 {
   DelegateIfInControl(new TriggerAnimationAction(_instanceParams.getInTrigger),
-                      &BehaviorAnimStatesGetInLoop::TransitionToLoop);
+                      &BehaviorAnimGetInLoop::TransitionToLoop);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAnimStatesGetInLoop::TransitionToLoop()
+void BehaviorAnimGetInLoop::TransitionToLoop()
 {
   if(_instanceParams.endLoopCondition != nullptr){
     _lifetimeParams.shouldLoopEnd |= _instanceParams.endLoopCondition->AreConditionsMet(GetBEI());
@@ -121,13 +123,13 @@ void BehaviorAnimStatesGetInLoop::TransitionToLoop()
     TransitionToGetOut();
   }else{
     DelegateIfInControl(new TriggerAnimationAction(_instanceParams.loopTrigger),
-                        &BehaviorAnimStatesGetInLoop::TransitionToLoop);
+                        &BehaviorAnimGetInLoop::TransitionToLoop);
   }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAnimStatesGetInLoop::TransitionToGetOut()
+void BehaviorAnimGetInLoop::TransitionToGetOut()
 {
   DelegateIfInControl(new TriggerAnimationAction(_instanceParams.getOutTrigger));
 }

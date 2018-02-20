@@ -21,7 +21,7 @@ namespace Cozmo {
 
 // forward declarations
 class BehaviorProceduralClock;
-class BehaviorAnimStatesGetInLoop;
+class BehaviorAnimGetInLoop;
 class TimerUtility;
 // Specified in .cpp
 class AnticTracker;
@@ -51,7 +51,7 @@ private:
   struct InstanceParams{
     std::shared_ptr<BehaviorProceduralClock> setTimerBehavior;
     std::shared_ptr<BehaviorProceduralClock> timerAnticBehavior;
-    std::shared_ptr<BehaviorAnimStatesGetInLoop> timerRingingBehavior;
+    std::shared_ptr<BehaviorAnimGetInLoop> timerRingingBehavior;
     std::unique_ptr<AnticTracker> anticTracker;
   };
 

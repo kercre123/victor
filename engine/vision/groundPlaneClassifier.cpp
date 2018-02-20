@@ -66,6 +66,7 @@ GroundPlaneClassifier::GroundPlaneClassifier(const Json::Value& config, const Co
 
   DEV_ASSERT(context != nullptr, "GroundPlaneClassifier.ContextCantBeNULL");
 
+
   // TODO Classifier and extractor (with their parameters) should be passed at config time!
   _classifier.reset(new DTRawPixelsClassifier(config, context, &_profiler));
   _extractor.reset(new MeanFeaturesExtractor(1));
@@ -106,16 +107,16 @@ Result GroundPlaneClassifier::Update(const Vision::ImageRGB& image, const Vision
 
   auto tictoc = _profiler.TicToc("GroundPlaneClassifier.Update");
   // nothing to do here if there's no ground plane visible
-  if (! poseData.groundPlaneVisible) {
+  if (!poseData.groundPlaneVisible) {
     PRINT_CH_DEBUG("VisionSystem", "GroundPlaneClassifier.Update.GroundPlane", "Ground plane is not visible");
     return RESULT_OK;
   }
-  if (! IsInitizialized()) {
-    PRINT_NAMED_ERROR("GroundPlaneClassifier.NotIinitialized", "Ground Plane Classifier is not initizalied");
+  if (!IsInitialized()) {
+    PRINT_NAMED_ERROR("GroundPlaneClassifier.NotInitialized", "Ground Plane Classifier is not initialized");
     return RESULT_FAIL;
   }
 
-  PRINT_CH_DEBUG("VisionSystyem", "GroundPlaneClassifier.Update.Starting","");
+  PRINT_CH_DEBUG("VisionSystem", "GroundPlaneClassifier.Update.Starting","");
 
   // STEP 1: Obtain the overhead ground plane image
   GroundPlaneROI groundPlaneROI;
@@ -140,7 +141,7 @@ Result GroundPlaneClassifier::Update(const Vision::ImageRGB& image, const Vision
   {
     const u8* overheadMask_i   = overheadMask.GetRow(i);
     const u8* classifiedMask_i = classifiedMask.GetRow(i);
-    
+
     // Walk along the row and look for the first transition from not
     const Point2f& overheadOrigin = groundPlaneROI.GetOverheadImageOrigin();
     for(s32 j=1; j<classifiedMask.GetNumCols(); ++j)
@@ -160,9 +161,9 @@ Result GroundPlaneClassifier::Update(const Vision::ImageRGB& image, const Vision
           edgePoint.position.x() = static_cast<f32>(j) + overheadOrigin.x();
           edgePoint.position.y() = static_cast<f32>(i) + overheadOrigin.y();
           edgePoint.gradient = 0.f; // TODO: Do we need the gradient for anything?
-          
+
           candidateChains.AddEdgePoint(edgePoint, true);
-          
+
           // No need to keep looking at this row as soon as a leading edge is found
           break;
         }
@@ -174,44 +175,44 @@ Result GroundPlaneClassifier::Update(const Vision::ImageRGB& image, const Vision
   const u32 kMinChainLength_mm = 5;
   candidateChains.RemoveChainsShorterThan(kMinChainLength_mm);
   // TODO add other post-processing step (e.g. ray trace from the robot to remove obstacles "behind" others
-  
+
   if(DEBUG_DISPLAY_IMAGES)
   {
     debugImageRGBs.emplace_back("OverheadImage", groundPlaneImage);
-    
+
     Vision::ImageRGB leadingEdgeDisp(classifiedMask);
-    
+
     static const std::vector<ColorRGBA> lineColorList = {
       NamedColors::RED, NamedColors::GREEN, NamedColors::BLUE,
       NamedColors::ORANGE, NamedColors::CYAN, NamedColors::YELLOW,
     };
     auto color = lineColorList.begin();
-    
+
     const Point2f& overheadOrigin = groundPlaneROI.GetOverheadImageOrigin();
-    
+
     for (const auto &chain : candidateChains.GetVector())
     {
       // Draw line segments between all pairs of points in this chain
       Anki::Point2f startPoint(chain.points[0].position);
       startPoint -= overheadOrigin;
-      
+
       for (s32 i = 1; i < chain.points.size(); ++i) {
         Anki::Point2f endPoint(chain.points[i].position);
         endPoint -= overheadOrigin;
-        
+
         leadingEdgeDisp.DrawLine(startPoint, endPoint, *color, 3);
         std::swap(endPoint, startPoint);
       }
-      
+
       // Switch colors for next segment
       ++color;
       if (color == lineColorList.end()) {
         color = lineColorList.begin();
       }
     }
-    
+
     debugImageRGBs.emplace_back("LeadingEdges", std::move(leadingEdgeDisp));
-  
+
     // Draw Ground plane on the camera image and display it
     Vision::ImageRGB toDisplay;
     image.CopyTo(toDisplay);
@@ -231,7 +232,7 @@ Result GroundPlaneClassifier::Update(const Vision::ImageRGB& image, const Vision
   // Actually return the resulting edges in the provided list
   outEdges.emplace_back(std::move(edgeFrame));
 
-  PRINT_CH_DEBUG("VisionSystyem", "GroundPlaneClassifier.Update.Stopping","");
+  PRINT_CH_DEBUG("VisionSystem", "GroundPlaneClassifier.Update.Stopping","");
   return RESULT_OK;
 }
 

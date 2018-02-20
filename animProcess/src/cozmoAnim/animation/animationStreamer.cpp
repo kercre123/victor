@@ -932,18 +932,8 @@ namespace Cozmo {
         
         if (gotImage) {
           DEBUG_STREAM_KEYFRAME_MESSAGE("FaceAnimation");
-          
-          // The faceDrawBuf can be empty and gotImage still be true if we're meant to hold
-          // the last image that was drawn. (If the keyframe contains an image with duration
-          // longer than ANIM_TIME_STEP_MS, only the first frame is non-empty and it is followed by
-          // however many ANIM_TIME_STEP_MS long empty frames are required to equal the duration.)
-          if (!_faceDrawBuf.IsEmpty()) {
-            BufferFaceToSend(_faceDrawBuf, false);  // Don't overwrite FaceAnimationKeyFrame images
-          }
+          BufferFaceToSend(_faceDrawBuf, false);  // Don't overwrite FaceAnimationKeyFrame images
           _nextProceduralFaceAllowedTime_ms = currTime_ms + kMinTimeBetweenLastNonProcFaceAndNextProcFace_ms;
-        } else {
-          PRINT_NAMED_WARNING("AnimationStreamer.UpdateStream.FailedToGetFaceImage", "Anim: %s",
-                            anim->GetName().c_str());
         }
 
         if(faceKeyFrame.IsDone()) {

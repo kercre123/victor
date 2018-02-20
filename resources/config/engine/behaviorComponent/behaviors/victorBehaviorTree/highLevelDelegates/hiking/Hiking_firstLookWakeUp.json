@@ -6,7 +6,7 @@
 //
 //
 {
-  "behaviorClass": "PlayAnim",
+  "behaviorClass": "AnimSequence",
   "behaviorID": "Hiking_FirstLookWakeUp",
 
   "requiredRecentDriveOffCharger_sec" : 1.0,

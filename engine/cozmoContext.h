@@ -51,6 +51,7 @@ class RobotManager;
 class VizManager;
 class NeedsManager;
 class PerfMetric;
+class AppToEngineHandler;
 
 namespace WebService {
   class WebService;
@@ -137,6 +138,7 @@ private:
   std::unique_ptr<CozmoExperiments>                     _cozmoExperiments;
   std::unique_ptr<PerfMetric>                           _perfMetric;
   std::unique_ptr<WebService::WebService>               _webService;
+  std::unique_ptr<AppToEngineHandler>                   _appToEngineHandler;
 
   // for holding the thread id (and avoiding needed to include the .h here)
   std::unique_ptr<ThreadIDInternal> _threadIdHolder;

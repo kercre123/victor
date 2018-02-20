@@ -1,5 +1,5 @@
 /**
-* File: behaviorAnimStatesGetInLoop.h
+* File: behaviorAnimGetInLoop.h
 *
 * Author: Kevin M. Karol
 * Created: 2/7/18
@@ -8,12 +8,14 @@
 * Flow: Play GetIn animation followed by Loop animation until EndLoop condition is met
 *   followed by GetOut animation
 *
+* Named for the animation state machine structure: https://ankiinc.atlassian.net/wiki/spaces/COZMO/pages/119668760/Animation+Statemachines+Guide
+*
 * Copyright: Anki, Inc. 2018
 *
 **/
 
-#ifndef __Cozmo_Basestation_Behaviors_BehaviorAnimStatesGetInLoop_H__
-#define __Cozmo_Basestation_Behaviors_BehaviorAnimStatesGetInLoop_H__
+#ifndef __Cozmo_Basestation_Behaviors_BehaviorAnimGetInLoop_H__
+#define __Cozmo_Basestation_Behaviors_BehaviorAnimGetInLoop_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "clad/types/animationTrigger.h"
@@ -21,16 +23,16 @@
 namespace Anki {
 namespace Cozmo {
   
-class BehaviorAnimStatesGetInLoop : public ICozmoBehavior
+class BehaviorAnimGetInLoop : public ICozmoBehavior
 {
 protected:
   // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
-  BehaviorAnimStatesGetInLoop(const Json::Value& config);
+  BehaviorAnimGetInLoop(const Json::Value& config);
   
 public:
   
-  virtual ~BehaviorAnimStatesGetInLoop();
+  virtual ~BehaviorAnimGetInLoop();
   
   virtual bool WantsToBeActivatedBehavior() const override;
 
@@ -78,4 +80,4 @@ private:
 } // namespace Cozmo
 } // namespace Anki
 
-#endif // __Cozmo_Basestation_Behaviors_BehaviorAnimStatesGetInLoop_H__
+#endif // __Cozmo_Basestation_Behaviors_BehaviorAnimGetInLoop_H__

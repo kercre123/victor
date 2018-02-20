@@ -13,6 +13,7 @@
 #include "util/logging/logging.h"
 
 #include <webots/Supervisor.hpp>
+#include <webots/Field.hpp>
 
 namespace Anki {
 namespace WebotsHelpers {
@@ -62,6 +63,44 @@ std::vector<RootNodeInfo> GetMatchingSceneTreeNodes(const webots::Supervisor* co
     }
   }
   return foundNodes;
+}
+
+
+bool GetFieldAsString(const webots::Node* const rootNode,
+                      const std::string& fieldName,
+                      std::string& outputStr,
+                      const bool failOnEmptyString)
+{
+  DEV_ASSERT_MSG(rootNode != nullptr,
+                 "WebotsHelpers.GetFieldAsString.NullRootNode",
+                 "Null root node (field name %s)",
+                 fieldName.c_str());
+
+  const auto* field = rootNode->getField(fieldName);
+  if (field == nullptr) {
+    PRINT_NAMED_ERROR("WebotsHelpers.GetFieldAsString.NullField",
+                      "Field named %s does not exist (root node type %s)",
+                      fieldName.c_str(),
+                      rootNode->getTypeName().c_str());
+    return false;
+  } else if (field->getType() != webots::Field::SF_STRING) {
+    PRINT_NAMED_ERROR("WebotsHelpers.GetFieldAsString.WrongFieldType",
+                      "Wrong field type '%s' for field %s (should be string)",
+                      field->getTypeName().c_str(),
+                      fieldName.c_str());
+    return false;
+  }
+
+  outputStr = field->getSFString();
+  
+  if (failOnEmptyString && outputStr.empty()) {
+    PRINT_NAMED_WARNING("WebotsHelpers.GetFieldAsString.EmptyString",
+                        "Empty string for field name %s",
+                        fieldName.c_str());
+    return false;
+  }
+
+  return true;
 }
 
 

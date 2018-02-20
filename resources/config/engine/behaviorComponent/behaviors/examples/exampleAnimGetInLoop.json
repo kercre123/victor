@@ -1,6 +1,6 @@
 {
-  "behaviorID"       : "ExampleAnimStateGetInLoop",  
-  "behaviorClass"    : "PlayAnimStatesGetInLoop",
+  "behaviorID"       : "ExampleAnimGetInLoop",
+  "behaviorClass"    : "AnimGetInLoop",
   "getIn"            : "NeedsSevereLowRepairGetIn",
   "loopAnimation"    : "PeekABooLowIntensity",
   "getOut"           : "NeedsSevereLowRepairGetIn",

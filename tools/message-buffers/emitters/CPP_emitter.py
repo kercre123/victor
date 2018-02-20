@@ -861,7 +861,8 @@ class HUnionEmitter(BaseEmitter):
             tag_name='{union_name}Tag'.format(union_name=node.name),
             qualified_union_name=node.fully_qualified_name(),
             qualified_tag_name='{union_name}Tag'.format(union_name=node.fully_qualified_name()),
-            object_type='UNION')
+            object_type='UNION',
+            dupes_allowed=node.dupes_allowed)
 
         # Templated TagToType lookup structs
         self.output.write(textwrap.dedent('''\
@@ -975,7 +976,9 @@ class HUnionEmitter(BaseEmitter):
             self.output.write('/** {member_name} **/\n'.format(**locals))
             self.output.write('static {union_name} Create{member_name}({value_type}&& new_{member_name});\n'.format(**locals))
 
-            if self.options and self.options.helperConstructors:
+            # helper constructor: add it if (1) options request it, and (2) either dupes are not allowed, or dupes are
+            # allowed but the ctor is distinct, i.e., that member has no duplicates
+            if self.options and self.options.helperConstructors and (not globals["dupes_allowed"] or not member.has_duplicates):
                 self.output.write('explicit {union_name}({value_type}&& new_{member_name});\n'.format(**locals))
 
             self.output.write('{parameter_type} Get_{member_name}() const;\n'.format(**locals))
@@ -1115,7 +1118,8 @@ class CPPUnionEmitter(BaseEmitter):
             tag_name='{union_name}Tag'.format(union_name=node.name),
             qualified_union_name=node.fully_qualified_name(),
             qualified_tag_name='{union_name}Tag'.format(union_name=node.fully_qualified_name()),
-            object_type='UNION')
+            object_type='UNION',
+            dupes_allowed=node.dupes_allowed)
 
         self.emitHeader(node, globals)
 
@@ -1291,8 +1295,9 @@ class CPPUnionEmitter(BaseEmitter):
 
               ''').format(**locals))
 
-            # helper constructor
-            if self.options and self.options.helperConstructors:
+            # helper constructor: add it if (1) options request it, and (2) either dupes are not allowed, or dupes are
+            # allowed but the ctor is distinct, i.e., that member has no duplicates
+            if self.options and self.options.helperConstructors and (not globals["dupes_allowed"] or not member.has_duplicates):
                 value_type = locals['value_type']
                 if value_type in value_types:
                     emitterutil.exit_at_coord(member.coord, ('Type-based helper constructors are being generated, ' +

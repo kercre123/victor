@@ -59,9 +59,9 @@ target_include_directories(victor_web_library
 # mac implementation uses (webotsCtrlWebServer)
 if (ANDROID)
 
-  anki_build_cxx_executable(victor_web_server ${ANKI_SRCLIST_DIR})
+  anki_build_cxx_executable(vic-webserver ${ANKI_SRCLIST_DIR})
 
-  target_link_libraries(victor_web_server
+  target_link_libraries(vic-webserver
     PRIVATE
     victor_web_library
     cti_common
@@ -69,6 +69,6 @@ if (ANDROID)
     ${PLATFORM_LIBS}
   )
 
-  android_strip(TARGET victor_web_server)
+  android_strip(TARGET vic-webserver)
     
 endif()

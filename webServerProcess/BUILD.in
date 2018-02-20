@@ -17,7 +17,7 @@ cxx_project(
 )
 
 cxx_project(
-    name = 'victor_web_server',
+    name = 'vic-webserver',
     srcs = glob(['src/cozmoWebServerMain.cpp']),
     platform_srcs = [
     ],

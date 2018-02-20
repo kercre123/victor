@@ -1201,7 +1201,7 @@ namespace Vision {
 
       u32 j = 0;
 
-#ifdef ANDROID
+#ifdef __ARM_NEON__
       const u32 kNumElementsProcessedPerLoop = 8;
       const u32 kSizeOfRGBElement = 3;
       const u32 kNumIterations = numCols - (kNumElementsProcessedPerLoop - 1);

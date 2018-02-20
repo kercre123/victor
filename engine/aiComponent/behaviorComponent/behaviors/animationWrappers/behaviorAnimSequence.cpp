@@ -1,5 +1,5 @@
 /**
- * File: behaviorPlayAnimSequence
+ * File: behaviorAnimSequence
  *
  * Author: Mark Wesley
  * Created: 11/03/15
@@ -10,7 +10,7 @@
  *
  **/
 
-#include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorPlayAnimSequence.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimSequence.h"
 
 #include "engine/actions/animActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
@@ -27,7 +27,7 @@ static const char* kAnimNamesKey   = "animNames";
 static const char* kLoopsKey       = "num_loops";
 static const char* kSupportCharger = "playOnChargerWithoutBody";
 
-BehaviorPlayAnimSequence::BehaviorPlayAnimSequence(const Json::Value& config, bool triggerRequired)
+BehaviorAnimSequence::BehaviorAnimSequence(const Json::Value& config, bool triggerRequired)
 : ICozmoBehavior(config)
 , _numLoops(0)
 , _sequenceLoopsDone(0)
@@ -39,7 +39,7 @@ BehaviorPlayAnimSequence::BehaviorPlayAnimSequence(const Json::Value& config, bo
   {
     // make sure each trigger is valid
     const AnimationTrigger animTrigger = AnimationTriggerFromString(trigger.asString().c_str());
-    DEV_ASSERT_MSG(animTrigger != AnimationTrigger::Count, "BehaviorPlayAnimSequence.InvalidTriggerString",
+    DEV_ASSERT_MSG(animTrigger != AnimationTrigger::Count, "BehaviorAnimSequence.InvalidTriggerString",
                   "'%s'", trigger.asString().c_str());
     if (animTrigger != AnimationTrigger::Count) {
       _animTriggers.emplace_back( animTrigger );
@@ -57,7 +57,7 @@ BehaviorPlayAnimSequence::BehaviorPlayAnimSequence(const Json::Value& config, bo
     const bool onlyNamesSet    =  _animTriggers.empty() && !_animationNames.empty();
     // make sure we loaded at least one trigger or animation by name
     DEV_ASSERT_MSG(!triggerRequired || onlyTriggersSet || onlyNamesSet,
-                   "BehaviorPlayAnimSequence.NoTriggers", "Behavior '%s'", GetDebugLabel().c_str());
+                   "BehaviorAnimSequence.NoTriggers", "Behavior '%s'", GetDebugLabel().c_str());
   }
 
   // load loop count
@@ -67,12 +67,12 @@ BehaviorPlayAnimSequence::BehaviorPlayAnimSequence(const Json::Value& config, bo
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorPlayAnimSequence::~BehaviorPlayAnimSequence()
+BehaviorAnimSequence::~BehaviorAnimSequence()
 {
 }
  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorPlayAnimSequence::WantsToBeActivatedBehavior() const
+bool BehaviorAnimSequence::WantsToBeActivatedBehavior() const
 {
   const bool hasAnims = !_animTriggers.empty() || !_animationNames.empty();
   return hasAnims && WantsToBeActivatedAnimSeqInternal();
@@ -80,7 +80,7 @@ bool BehaviorPlayAnimSequence::WantsToBeActivatedBehavior() const
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPlayAnimSequence::OnBehaviorActivated()
+void BehaviorAnimSequence::OnBehaviorActivated()
 {
   StartPlayingAnimations();
 
@@ -89,9 +89,9 @@ void BehaviorPlayAnimSequence::OnBehaviorActivated()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPlayAnimSequence::StartPlayingAnimations()
+void BehaviorAnimSequence::StartPlayingAnimations()
 {
-  DEV_ASSERT(!_animTriggers.empty() || !_animationNames.empty(), "BehaviorPlayAnimSequence.InitInternal.NoTriggers");
+  DEV_ASSERT(!_animTriggers.empty() || !_animationNames.empty(), "BehaviorAnimSequence.InitInternal.NoTriggers");
   if(IsSequenceLoop()){
     _sequenceLoopsDone = 0;    
     StartSequenceLoop();
@@ -105,7 +105,7 @@ void BehaviorPlayAnimSequence::StartPlayingAnimations()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPlayAnimSequence::StartSequenceLoop()
+void BehaviorAnimSequence::StartSequenceLoop()
 {
     // if not done, start another sequence
     if (_sequenceLoopsDone < _numLoops)
@@ -123,7 +123,7 @@ void BehaviorPlayAnimSequence::StartSequenceLoop()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IActionRunner* BehaviorPlayAnimSequence::GetAnimationAction()
+IActionRunner* BehaviorAnimSequence::GetAnimationAction()
 {
   u32 numLoops = _numLoops; 
   if(IsSequenceLoop()){
@@ -158,20 +158,20 @@ IActionRunner* BehaviorPlayAnimSequence::GetAnimationAction()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorPlayAnimSequence::IsSequenceLoop()
+bool BehaviorAnimSequence::IsSequenceLoop()
 {
   return (_animTriggers.size() > 1) || 
          (_animationNames.size() > 1);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPlayAnimSequence::AddListener(ISubtaskListener* listener)
+void BehaviorAnimSequence::AddListener(ISubtaskListener* listener)
 {
   _listeners.insert(listener);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPlayAnimSequence::CallToListeners()
+void BehaviorAnimSequence::CallToListeners()
 {
   for(auto& listener : _listeners)
   {
@@ -180,7 +180,7 @@ void BehaviorPlayAnimSequence::CallToListeners()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-u8 BehaviorPlayAnimSequence::GetTracksToLock() const
+u8 BehaviorAnimSequence::GetTracksToLock() const
 {
   if( _supportCharger ) {
     const auto& robotInfo = GetBEI().GetRobotInfo();

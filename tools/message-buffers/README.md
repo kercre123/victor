@@ -79,6 +79,9 @@ Any new emitter can easily be unit-tested against the other emitters, meaning th
 	* used to 'wrap' a set of messages into a protocol
 	* emitted code contains pack and unpack functions, just like the message objects
 	* emitted code contains a tag and a GetTag method as is appropriate for your language or environment.
+	* Note: if you supply `--output-union-helper-constructors`, each union must have distinct member types. To use
+	this param but allow for some unions to contain duplicate member types, declare the union with `dupes_allowed`, as follows
+	 ```[union|autounion] dupes_allowed NAME { ... }```
 
 * Primitive types:
     * 'bool' (bool)
