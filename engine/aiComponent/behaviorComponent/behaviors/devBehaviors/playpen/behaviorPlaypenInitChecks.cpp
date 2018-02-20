@@ -14,6 +14,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenInitChecks.h"
 
 #include "engine/components/sensors/cliffSensorComponent.h"
+#include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/components/nvStorageComponent.h"
 #include "engine/factory/factoryTestLogger.h"
 #include "engine/robot.h"
@@ -37,6 +38,20 @@ Result BehaviorPlaypenInitChecks::OnBehaviorActivatedInternal()
   if(robot.GetCliffSensorComponent().IsCliffDetectedStatusBitOn())
   {
     PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::CLIFF_UNEXPECTED, RESULT_FAIL);
+  }
+
+  // Check that raw touch values are in expected range (the range assumes no touch)
+  const u16 rawTouchValue = robot.GetTouchSensorComponent().GetLatestRawTouchValue();
+  if(!Util::InRange(rawTouchValue,
+      PlaypenConfig::kMinExpectedTouchValue,
+      PlaypenConfig::kMaxExpectedTouchValue))
+  {
+    PRINT_NAMED_WARNING("BehaviorPlaypenWaitToStart.OnActivated.TouchOOR", 
+                        "Min %u < Val %u < Max %u",
+                        PlaypenConfig::kMinExpectedTouchValue,
+                        rawTouchValue,
+                        PlaypenConfig::kMaxExpectedTouchValue);
+    PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::TOUCH_VALUES_OOR, RESULT_FAIL);
   }
   
   // Battery voltage should be relatively high as we are on the charger

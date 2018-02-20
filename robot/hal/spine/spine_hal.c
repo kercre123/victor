@@ -113,7 +113,7 @@ int hal_serial_read(uint8_t* buffer, int len)   //->bytes_recieved
   int result = read(gHal.fd, buffer, len);
   if (result < 0) {
     if (errno == EAGAIN) { //nonblocking no-data
-      usleep(200); //wait a bit.
+      usleep(HAL_SERIAL_POLL_INTERVAL_US); //wait a bit.
       result = 0; //not an error
     }
   }
@@ -346,21 +346,30 @@ const struct SpineMessageHeader* hal_read_frame()
 }
 
 
-//pulls off frames until it gets one of matching type
+//pulls out frames
+const void* hal_get_next_frame(int32_t timeout_ms) {
+  timeout_ms *= 1000 / HAL_SERIAL_POLL_INTERVAL_US;
+  const struct SpineMessageHeader* hdr;
+  do {
+    if (timeout_ms>0 && --timeout_ms==0) {
+      LOGE("TIMEOUT in hal_get_next_frame() TIMEOUT");
+      return NULL;
+    }
+    hdr = hal_read_frame();
+  } while (!hdr);
+  return hdr;
+}
 
 const void* hal_get_frame(uint16_t type, int32_t timeout_ms)
 {
-  timeout_ms *= 5;
-  const struct SpineMessageHeader* hdr;
-  do {
-    hdr = hal_read_frame();
-    if (timeout_ms>0 && --timeout_ms==0) {
-      LOGE("TIMEOUT in hal_get_frame() TIMEOUT");
-      return NULL;
+  while (1) {
+    const struct SpineMessageHeader* hdr;
+    hdr = hal_get_next_frame(timeout_ms);
+    if (!hdr || hdr->payload_type == type) {
+      return hdr;
     }
   }
-  while (!hdr || hdr->payload_type != type);
-  return hdr;
+  return NULL;
 }
 
 const void* hal_wait_for_frame(uint16_t type)

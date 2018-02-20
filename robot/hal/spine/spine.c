@@ -97,7 +97,7 @@ int spine_get_fd(spine_ctx_t spine)
     return spine->fd;
 }
 
-// read data from spine 
+// read data from spine
 ssize_t spine_read_all(int fd, void* buf, size_t buf_len)
 {
     ssize_t bytes_read = 0;
@@ -201,7 +201,7 @@ ssize_t spine_parse_b2h_frame(const void* inbuf, size_t inbuf_len, struct spine_
             continue;
         }
 
-        struct spine_frame_b2h* candidate = (struct spine_frame_b2h*)bytes; 
+        struct spine_frame_b2h* candidate = (struct spine_frame_b2h*)bytes;
         if (spine_frame_is_valid(candidate)) {
             break;
         }
@@ -210,7 +210,7 @@ ssize_t spine_parse_b2h_frame(const void* inbuf, size_t inbuf_len, struct spine_
     if (header != NULL) {
         out_frame = (struct spine_frame_b2h*)(bytes + offset);
     } else {
-        offset = -1;        
+        offset = -1;
     }
 
     return offset;
@@ -245,6 +245,9 @@ int spine_get_payload_len(PayloadId payload_type, enum MsgDir dir)
     break;
   case PAYLOAD_DFU_PACKET:
     return sizeof(struct WriteDFU);
+    break;
+  case PAYLOAD_CONT_DATA:
+    return sizeof(struct ContactData);
     break;
   default:
     break;
@@ -301,7 +304,7 @@ ssize_t spine_parse_frame(spine_ctx_t spine, void *out_buf, size_t out_buf_len, 
             sync[3] == bytes[3])
         {
             sync_index = i;
-            spine_debug_x("found header\n");
+//            spine_debug_x("found header\n");
             break;
         }
     }
@@ -323,23 +326,23 @@ ssize_t spine_parse_frame(spine_ctx_t spine, void *out_buf, size_t out_buf_len, 
         // reset to start of header & wait
         //printf("set_rx_cursor: %u\n", sync_index);
         spine_set_rx_cursor(spine, sync_index);
-        spine_debug_x("wait for header\n");
+//        spine_debug_x("wait for header\n");
         return 0;
     }
 
     // set `rx` to the beginning of the packet
-    // offset 
+    // offset
     rx = (spine->buf_rx + sync_index);
 
     // Validate payload data
     const struct SpineMessageHeader* header = (const struct SpineMessageHeader*)rx;
     int expected_payload_len = spine_get_payload_len(header->payload_type, dir_READ);
-    
+
     // Payload type is invalid or payload len is invalid
-    if (expected_payload_len == -1 || 
+    if (expected_payload_len == -1 ||
         header->bytes_to_follow != expected_payload_len) {
         // skip current sync
-        spine_debug_x("invalid payload: expected=%u | observed=%u\n", expected_payload_len, header->bytes_to_follow);
+        spine_debug("invalid payload: expected=%u | observed=%u\n", expected_payload_len, header->bytes_to_follow);
         spine_set_rx_cursor(spine, sync_index + sizeof(SYNC_BODY_TO_HEAD));
         return -1;
     }
@@ -351,7 +354,7 @@ ssize_t spine_parse_frame(spine_ctx_t spine, void *out_buf, size_t out_buf_len, 
     size_t required_data_len = expected_payload_len + sizeof(struct SpineMessageFooter);
     if (rx_remaining < required_data_len) {
         // partial frame: wait for more data
-        spine_debug_x("wait for frame\n");
+//        spine_debug_x("wait for frame\n");
 
         #if 0  // HACK attempt to support partial frame update
         size_t bytes_processed = spine->rx_cursor - sync_index;
@@ -370,10 +373,12 @@ ssize_t spine_parse_frame(spine_ctx_t spine, void *out_buf, size_t out_buf_len, 
 
         return 0;
     }
+            spine_debug_x("full slug\n");
 
-    const size_t frame_len = 
+
+    const size_t frame_len =
         sizeof(struct SpineMessageHeader) + expected_payload_len + sizeof(struct SpineMessageFooter);
-    
+
     // Calculate crc of payload
     const uint8_t* payload_bytes = rx + sizeof(struct SpineMessageHeader);
     crc_t true_crc = calc_crc(payload_bytes, expected_payload_len);
@@ -392,7 +397,7 @@ ssize_t spine_parse_frame(spine_ctx_t spine, void *out_buf, size_t out_buf_len, 
     }
 
     // At this point we have a valid frame.
-    
+
     // Copy data to output buffer
     if (out_buf != NULL) {
         assert(out_buf_len >= frame_len);
@@ -402,7 +407,7 @@ ssize_t spine_parse_frame(spine_ctx_t spine, void *out_buf, size_t out_buf_len, 
     // Reset RX buffer
     spine_set_rx_cursor(spine, sync_index + frame_len);
 
-    spine_debug_x("==> found frame\n");
+    spine_debug_x("==> found frame %x \n", header->payload_type);
 
     return frame_len;
 }
@@ -443,12 +448,13 @@ ssize_t spine_make_h2b_frame(const struct HeadToBody* h2b_payload, struct spine_
     return payload_len;
 }
 
+
 ssize_t spine_write(spine_ctx_t spine, const void* data, size_t len)
 {
     const uint8_t* bytes = (const uint8_t*)data;
     ssize_t remaining = len;
     ssize_t written = 0;
-    ssize_t wr = 0;    
+    ssize_t wr = 0;
     while(remaining > 0) {
         wr = write(spine->fd, bytes, remaining);
         if (wr <= 0) {
@@ -458,7 +464,7 @@ ssize_t spine_write(spine_ctx_t spine, const void* data, size_t len)
         written += wr;
         remaining = len - written;
     }
-    
+
     return (wr < 0) ? wr : written;
 }
 
@@ -475,7 +481,7 @@ ssize_t spine_write_frame(spine_ctx_t spine, PayloadId type, const void* data, i
   }
   outBytes += r;
   remaining -= r;
-  
+
   if (len > 0) {
     if (len > remaining) {
         return -1;
@@ -504,6 +510,29 @@ ssize_t spine_write_h2b_frame(spine_ctx_t spine, const struct HeadToBody* h2b_pa
     }
 
     return spine_write(spine, spine->buf_tx, sizeof(struct spine_frame_h2b));
+}
+
+ssize_t spine_write_ccc_frame(spine_ctx_t spine, const struct ContactData* ccc_payload)
+{
+    struct SpineMessageHeader* out_frame = (struct SpineMessageHeader*)spine->buf_tx;
+    size_t payload_len = sizeof(struct ContactData);
+    ssize_t r = spine_construct_header(PAYLOAD_CONT_DATA, payload_len, out_frame);
+    if (r == -1) {
+        return -1;
+    }
+
+    uint8_t* payload_start = (uint8_t*)(out_frame+1);
+    memmove(payload_start, ccc_payload, payload_len);
+    crc_t* csp = (crc_t*)(payload_start+payload_len);
+    *csp = calc_crc(payload_start, payload_len);
+
+    r = payload_len;
+    if (r <= 0) {
+        return r;
+    }
+
+    return spine_write(spine, spine->buf_tx,
+                       sizeof(struct SpineMessageHeader) + sizeof(struct ContactData) + sizeof(struct SpineMessageFooter));
 }
 
 ssize_t spine_set_mode(spine_ctx_t spine, int new_mode)
@@ -546,9 +575,9 @@ void handle_incoming_frame(const struct spine_frame_b2h* frame)
        printf("%02x ",*dp++);
      }
      printf("%08x\n", *(crc_t*)(dp));
-     printf("CRC = %08x\n",calc_crc((const uint8_t*)data, sizeof(struct BodyToHead)));  
+     printf("CRC = %08x\n",calc_crc((const uint8_t*)data, sizeof(struct BodyToHead)));
    }
-   
+
    lastfc = data->framecounter;
    static uint8_t printcount=0;
    if (( ++printcount & RATEMASK ) == 0) {
@@ -645,7 +674,7 @@ int spine_test_loop_once() {
         }
         s_read_count = 0;
       }
-      
+
     }
 
     robot_io(&gSpine, false);

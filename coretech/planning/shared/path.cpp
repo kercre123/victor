@@ -341,7 +341,7 @@ namespace Anki
           }
         }
         
-      } else if (FLT_NEAR(line_m_, 0.f)) {
+      } else if (NEAR(line_m_, 0.f, 0.001f)) {
         // Special case: Horizontal line
         if (seg->endPt_x > seg->startPt_x) {
           shortestDistanceToPath = y - seg->startPt_y;
