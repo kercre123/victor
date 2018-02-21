@@ -28,7 +28,7 @@ namespace Cozmo {
   static const std::string _kLogRootDirName = "factory_test_logs";
   static const std::string _kArchiveRootDirName = "factory_test_log_archives";
   static const Util::Data::Scope _kLogScope = Util::Data::Scope::Cache;
-  static std::string _kPathToCopyLogTo = "/factory/log0";
+  static std::string _kPathToCopyLogTo = "/factory";
   
   static const int _kMaxEngineLogSizeBytes = 1500000;
   
@@ -167,7 +167,10 @@ namespace Cozmo {
       
       // If exporting json, write it to file here
       if (_exportJson) {
-        _logFileHandle << _json;
+        // Use FastWriter to "compress" the json string (removes newlines, tabs, etc)
+        Json::FastWriter writer;
+        std::string json = writer.write(_json);
+        _logFileHandle << json;
       }
       _logFileHandle.close();
 
@@ -178,6 +181,20 @@ namespace Cozmo {
                        _logFileName.c_str(),
                        _kPathToCopyLogTo.c_str());
       Util::FileUtils::CopyFile(_kPathToCopyLogTo, _logFileName);
+
+      // The log file has been copied to the correct directory but now needs to be renamed
+      const std::string oldFileName = _kPathToCopyLogTo + "/" + (_kLogTextFileName + (_exportJson ? ".json" : ".txt"));
+      const std::string newFileName = _kPathToCopyLogTo + "/log0";
+      int rc = std::rename(oldFileName.c_str(), 
+                           newFileName.c_str());
+
+      if(rc != 0)
+      {
+        PRINT_NAMED_ERROR("FactoryTestLogger.CloseLog.RenameFail",
+                          "Failed to rename log from %s to %s",
+                          oldFileName.c_str(),
+                          newFileName.c_str());
+      }
     }
     
     _logDir = "";

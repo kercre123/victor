@@ -115,6 +115,11 @@ namespace Factory {
     // Attempt to read the EMR, will do nothing if it has already been read
     ReadEMR();
 
+    if(_emr == nullptr)
+    {
+      printf("EMR is null, is /factory writable?");
+    }
+
     return _emr;
   }
 }
