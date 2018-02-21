@@ -29,6 +29,7 @@ enum uint_8 BehaviorClass {
 
   // basicWorldInteractions
   DriveOffCharger,
+  EyeContact,
   FindFaces,
   FindHome,
   GoHome,
