@@ -12,6 +12,7 @@
  *
  **/
 
+#include "audioEngine/audioTypeTranslator.h"
 #include "cozmoAnim/audio/cozmoAudioController.h"
 #include "cozmoAnim/animContext.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
@@ -131,11 +132,6 @@ CozmoAudioController::CozmoAudioController( const AnimContext* context )
     config.enableGameSyncPreparation  = true;
     config.enableStreamCache          = true;
 
-    // Set output for Victor Robot
-#ifdef VICOS
-    config.mainOutputSharesetName = "ALSA_SINK";
-#endif
-
     // Start your Engines!!!
     InitializeAudioEngine( config );
 
@@ -166,6 +162,7 @@ CozmoAudioController::CozmoAudioController( const AnimContext* context )
     if ( kWriteAudioOutputCapture ) {
       WriteAudioOutputCapture( true );
     }
+    SetDefaultListeners( { ToAudioGameObject( AudioMetaData::GameObjectType::Cozmo_Listener ) } );
 
     RegisterCladGameObjectsWithAudioController();
   }
