@@ -43,7 +43,7 @@ namespace Vision {
                 const TimeStamp_t& timeStamp);
 
     bool GetEyeContact() {return _eyeContact;}
-    Point2f GetAverageGaze() {return _gazeAverage;}
+    Point2f GetGazeAverage() {return _gazeAverage;}
     bool GetFixating();
     bool GetExpired(const TimeStamp_t& currentTime);
     std::vector<GazeData> GetHistory() {return _gazeHistory;}

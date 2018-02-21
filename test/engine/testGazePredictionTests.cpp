@@ -70,11 +70,9 @@ TEST(EyeContact, GazeEstimationInterface){
   std::string static_path = "/resources/test/gazeEstimationTests/clip1";
   std::string pathToImages = base + static_path;
 
-  // TODO also should not need this output directory either
   std::vector<std::string> imageFiles = 
     Anki::Util::FileUtils::FilesInDirectory(pathToImages, true, ".jpg");
 
-  uint imageNumber = 0;
   for (auto const& filename : imageFiles) {
 
     // TODO should really only be loading the the gray scale images
@@ -101,11 +99,9 @@ TEST(EyeContact, GazeEstimationInterface){
       ASSERT_LT(blink.blinkAmountRight, 1.f);
       ASSERT_GT(blink.blinkAmountRight, 0.f);
 
-      ASSERT_GT(imageNumber, 1);
       return;
     } // if face found
 
-    imageNumber += 1;
   } // imageFiles
 }
 
@@ -154,7 +150,6 @@ TEST(EyeContact, DISABLED_GazeEstimationAccuracy){
 
   std::string outputDir("/tmp/outputDirGaze/");
   for (const auto& clip: clips) {
-    // TODO also should not need this output directory either
     std::string outputClipDir = outputDir + clip;
     Anki::Util::FileUtils::CreateDirectory(outputClipDir, false, true);
     std::vector<std::string> imageFiles = 
@@ -237,7 +232,6 @@ TEST(EyeContact, DISABLED_GazeEstimationAccuracy){
         Point2f gazeDot(dot_x, dot_y);
         img.DrawFilledCircle(gazeDot, drawColor, 5);
 
-        // TODO there must be a better way to do this
         std::string unpaddedName = std::to_string(imageNumber);
         auto numberOfZeros = 3 - unpaddedName.size();
         std::string output_filename;
@@ -325,8 +319,6 @@ TEST(EyeContact, DISABLED_EyeContactEvaluation) {
     for (Json::Value::iterator it = gazeData.begin();
           it != gazeData.end(); it++) {
 
-      // TODO is this really the best way to do this, seems
-      // a bit verbose?
       auto key = it.key().asString();
       uint frameNumber = static_cast<uint>(std::stoi(key));
 
@@ -356,7 +348,6 @@ TEST(EyeContact, DISABLED_EyeContactEvaluation) {
 
       // Make sure if we missed a detection we pass
       // that along to the fixation detector
-      // TODO include head pose data, currently not in the file we read in
       eyeContact.Update(trackedFace, timeStamp);
 
       char buffer[4];
@@ -398,12 +389,11 @@ TEST(EyeContact, DISABLED_EyeContactEvaluation) {
         index += 1;
       }
 
-      // TODO the naming here is terrible
-      auto averageGaze = eyeContact.GetAverageGaze();
+      auto gazeAverage = eyeContact.GetGazeAverage();
       ColorRGBA green = NamedColors::GREEN;
-      auto fixation_dot_x = (averageGaze[0] + maxGazeLeftRight) / 
+      auto fixation_dot_x = (gazeAverage[0] + maxGazeLeftRight) /
         (2 * maxGazeLeftRight) * (img.GetNumCols() - 1);
-      auto fixation_dot_y = (-averageGaze[1] + maxGazeUpDown) / 
+      auto fixation_dot_y = (-gazeAverage[1] + maxGazeUpDown) /
         (2 * maxGazeUpDown) * (img.GetNumRows() - 1);
       Point2f fixationDot(fixation_dot_x, fixation_dot_y);
       img.DrawFilledCircle(fixationDot, green, 6);
