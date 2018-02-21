@@ -3,7 +3,6 @@
 `victor` is the _code name_ for the next iteration of the Cozmo product line.
 
 This repo contains code for the embedded firmware (syscon), robotics, animation and engine layers.
-It currently contains a snapshot of the Cozmo 2.x app, but this is not supported or guaranteed to work.
 
 If you're looking for the embedded OS that runs on victor hardware, there is not much in the way of formal documentation yet, but you can start by looking at our repo of [cozmos-proprietary-patches](https://github.com/anki/cozmos-proprietary-patches).
 
@@ -17,7 +16,7 @@ For more information about the system architecture, components, organization at 
 
 If you are new to Anki please also see the [New Hire Onboarding](https://ankiinc.atlassian.net/wiki/pages/viewpage.action?pageId=72614010) page.
 
-More documentation related to development, building, and running is available under [/docs](/docs).
+More documentation related to development, building, and running is available under [/docs](/docs). See also the [Frequently Asked Questions](/docs/FAQ.md) page.
 
 ### Getting the code
 
@@ -54,11 +53,11 @@ git clone --recursive <git url>
 
 ## Building Victor
 
-It is highly recommended that you check out the [Victor Build System Walkthrough](/docs/build-system-walkthrough.md) doc to familiarize yourself with the build system.
+If you're a developer, it is highly recommended that you check out the [Victor Build System Walkthrough](/docs/build-system-walkthrough.md) doc to familiarize yourself with the build system.
 
-The underlying build system for victor is currently `CMake`.  The appropriate version of CMake and other dependencies required for building victor will be fetched automatically.
+The underlying build system for victor is `CMake`.  The appropriate version of CMake and other dependencies required for building victor will be fetched automatically.
 
-To speed up builds, [install `ccache`](docs/ccache.md) on your system and the build system will automatically start using it.
+To speed up builds, [install `ccache`](/docs/ccache.md) on your system and the build system will automatically start using it.
 
 First, add the following to your `~/.bash_profile`:
 
@@ -68,13 +67,10 @@ source <PATH_TO_YOUR_VICTOR_REPO>/project/victor/scripts/usefulALiases.sh
 
 This will give you access to very useful aliases for the various build/deploy scripts. These aliases will be referenced extensively in this doc.
 
-To build for embedded android (the default):
+To build for embedded android (the default), ensure you are in the `victor` directory and run:
 
 ```
-project/victor/build-victor.sh
-
-# you can also explicitly pass the platform
-project/victor/build-victor.sh -p android
+victor_build
 ```
 
 To build for mac:
@@ -92,13 +88,20 @@ We use a helper script to generate file lists to tell CMake what to build. Somet
 project/victor/build-victor.sh -f
 ```
 
+You can force assets to be re-synchronized by using the `-X` flag:
+
+```
+project/victor/build-victor.sh -X
+```
+
+
 If you want to force a 'clean' build, the brute-force method is to:
 
 ```
 rm -rf _build EXTERNALS generated
 ```
 
-See [build-instructions](docs/development/build-instructions.md) for a more thorough description of build options.
+See [build-instructions](/docs/development/build-instructions.md) for a more thorough description of build options.
 
 ## Deploying Victor
 
@@ -139,41 +142,40 @@ export PATH=${PATH}:${ANDROID_HOME}/anki/bin # For tools like buck
 
 4. Run `source ~/.bash_profile` or open a new terminal. `adb` should now be in your path.
 
-### Connecting over USB
-
-Connect cable to robot. Run `adb devices` to verify that only one device is available.
 
 ### Connecting over Wifi
 
-If you don't know the IP address of your robot, connect to the robot with USB and run
+If you don't know the IP address of your robot, make sure you're connected to Anki5Ghz and run
 
 ```
-adb shell ifconfig
+tools/victor-ble-cli/vic_show_ip.sh VICTOR_xxxxxx
 ```
 
-The `inet addr` for `wlan0` is the robot's IP address. You can then disconnect the cable and run
+where `xxxxxx` is the bluetooth ID of the robot (which is displayed on the screen when the robot is powered up). You may need to put the robot physically near your computer when you run the script.
+
+The `inet addr` for `wlan0` is the robot's IP address. You can then run
 
 ```
 adb connect <Robot's IP address>
 ```
 
-(If the operation times out, try connecting with USB, running `adb root`, and trying again.)
+You should now see the robot's IP as a connected device when you run `adb devices`.
 
-You should now see the robot's IP as a connected device when you run `adb devices`. Disconnect USB if still connected.
+If the operation times out, try connecting to the robot via the BLE tool and restarting `adb` on the robot. To do this, navigate to the `tools/victor-ble-cli/` directory and run `node index.js`. Then run `scan`, and when you see your robot on the list, run `connect VICTOR_xxxxxx`. Then run `restart-adb` and try the connection process again.
 
 ### Deploying binaries and assets to physical robot
 
-Run `victor_deploy` and `victor_assets` to deploy the binaries and asset files to the robot (see [usefulAliases.sh](project/victor/scripts/usefulALiases.sh) to see what these do).
+Run `victor_deploy` to deploy the binaries and asset files to the robot (see [usefulAliases.sh](project/victor/scripts/usefulALiases.sh) to see what this does).
 
-If you want to deploy the release build, run
+If you want to deploy the debug build, run
 
 ```
-ANKI_BUILD_TYPE=Release ./project/victor/scripts/deploy.sh
+ANKI_BUILD_TYPE=Debug ./project/victor/scripts/deploy.sh
 ```
 
 ## Running Victor
 
-Once the binaries and assets are deployed, you can run everything by running `victor_restart`.
+Once the binaries and assets are deployed, you can run everything by running `victor_start`.
 
 You can view output from all processes by running `victor_log`.
 
