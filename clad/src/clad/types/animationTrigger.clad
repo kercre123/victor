@@ -470,6 +470,7 @@ enum int_32 AnimationTrigger
   ReactToSoundOnChargerObserveLeft,
   ReactToSoundOnChargerObserveRight,
   ReactToSoundOnChargerObserveBehind,
+  ReactToUnclaimedIntent,
   ReactToUnexpectedMovement,
   ReactToUnexpectedMovement_Severe_Energy,
   ReactToUnexpectedMovement_Severe_Repair,

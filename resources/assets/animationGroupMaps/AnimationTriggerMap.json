@@ -2391,6 +2391,10 @@
     {
       "CladEvent": "ReactToSoundOnChargerObserveBehind",
       "AnimName": "ag_rtsound_oncharger_observe_behind"
+    },
+    {
+      "CladEvent": "ReactToUnclaimedIntent",
+      "AnimName": "ag_pounceonmotionfail"
     }
     
   ]

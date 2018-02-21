@@ -100,6 +100,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorTimerUtilityCoordinator.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorComeHere.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorReactToSound.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorReactToUnclaimedIntent.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -647,6 +648,12 @@ ICozmoBehaviorPtr BehaviorContainer::CreateBehavior_generated(BehaviorClass beha
     case BehaviorClass::ReactToSound:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorReactToSound(config));
+      break;
+    }
+    
+    case BehaviorClass::ReactToUnclaimedIntent:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToUnclaimedIntent(config));
       break;
     }
     

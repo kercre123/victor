@@ -103,6 +103,10 @@ public:
   // preserved intents, and then remove them. The clearingBehavior should call this OnDeactivated()
   void ResetPreservedUserIntents(BehaviorID clearingBehavior);
 
+  // returns if an intent has recently gone unclaimed. or, reset the corresponding flag
+  bool WasUserIntentUnclaimed() const { return _wasIntentUnclaimed; };
+  void ResetUserIntentUnclaimed() { _wasIntentUnclaimed = false; };
+
   // replace the current pending user intent (if any) with this one. This will assert in dev if the
   // user intent data type is not void
   void SetUserIntentPending(UserIntentTag userIntent);
@@ -156,6 +160,8 @@ private:
   std::mutex _mutex;
   std::string _pendingCloudIntent; // only pending for as long as it takes this thread to obtain a lock
   std::unique_ptr<BehaviorComponentCloudServer> _server;
+  
+  bool _wasIntentUnclaimed = false;
   
   const CozmoContext* _context = nullptr; // for webviz
   

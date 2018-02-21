@@ -400,6 +400,7 @@ void UserIntentComponent::Update()
                         UserIntentTagToString(_pendingIntent->GetTag()),
                         dt);
       _pendingIntent.reset();
+      _wasIntentUnclaimed = true;
     }
   }
   
