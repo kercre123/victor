@@ -59,8 +59,7 @@ If you have a question that you get answered (e.g. in a Slack channel) which mig
   - This connection will likely only be temporary, if after power cycling your robot is again not autoconnecting then bring to Al or Nathan
   
 * I get `Failed to connect to non-global ctrl_ifname: wlan0  error: No such file or directory` errors in the [BLE-CLI](../tools/victor-ble-cli) tool
-  - Trying restarting the [wpa_supplicant](https://en.wikipedia.org/wiki/Wpa_supplicant)
-  - `pkill wpa_supplicant` then `wpa_supplicant -iwlan0 -Dnl80211 -c/data/misc/wifi/wpa_supplicant.conf -O/data/misc/wifi/sockets -B`
+  - Reboot the robot and hope!
 
 * Seriously... I cannot get connected to my home WIFI using wifi-set-config ^^
   - These issues should be resolved when we update the OS, but in the meantime:
