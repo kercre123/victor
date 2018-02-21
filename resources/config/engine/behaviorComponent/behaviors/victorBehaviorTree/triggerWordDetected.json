@@ -1,4 +1,6 @@
 {
   "behaviorClass": "ReactToVoiceCommand",
-  "behaviorID": "TriggerWordDetected"
+  "behaviorID": "TriggerWordDetected",
+
+  "anim_unmatched": "PounceFail" 
 }

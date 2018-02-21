@@ -45,9 +45,14 @@ protected:
 
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
+  virtual void BehaviorUpdate() override;
   
 private:
   mutable SmartFaceID _desiredFace;
+  
+  // json params and their defaults
+  AnimationTrigger _animUnmatched = AnimationTrigger::Count;
+  bool _exitOnIntents = true;
   
 }; // class BehaviorReactToVoiceCommand
 

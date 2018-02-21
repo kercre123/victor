@@ -34,8 +34,8 @@ namespace Cozmo {
 
 namespace {
 
-static const size_t kMaxTicksToWarn = 1;
-static const size_t kMaxTicksToClear = 2;
+static const size_t kMaxTicksToWarn = 2;
+static const size_t kMaxTicksToClear = 3;
   
 static const float kPreservedTimeToClear = 60*60*24;
 
