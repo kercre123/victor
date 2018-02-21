@@ -33,7 +33,7 @@ const char* kDedupIntervalKey = "dedupInterval_ms";
 ConditionTimedDedup::ConditionTimedDedup(const Json::Value& config)
 : IBEICondition(config)
 {
-  _instanceParams.subCondition     = BEIConditionFactory::CreateBEICondition( config[kSubConditionKey] );
+  _instanceParams.subCondition     = BEIConditionFactory::CreateBEICondition( config[kSubConditionKey], GetDebugLabel() );
   _instanceParams.dedupInterval_ms = JsonTools::ParseFloat(config,
                                                            kDedupIntervalKey,
                                                            "ConditionTimedDedup.ConfigError.DedupInterval");

@@ -57,6 +57,8 @@ public:
   
   // helper to build the sort of json you'd find in a file
   static Json::Value GenerateConfig( const Json::Value& config );
+  
+  DebugFactorsList GetDebugFactors() const override;
 
 protected:
   

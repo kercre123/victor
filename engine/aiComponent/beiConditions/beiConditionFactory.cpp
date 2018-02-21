@@ -48,7 +48,7 @@ namespace{
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& config)
+IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& config, const std::string& ownerDebugLabel)
 {
 
   BEIConditionType strategyType = IBEICondition::ExtractConditionType(config);
@@ -175,14 +175,18 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
     
   }
   
+  if( (strategy != nullptr) && !ownerDebugLabel.empty() ) {
+    strategy->SetOwnerDebugLabel( ownerDebugLabel );
+  }
+  
   return strategy;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBEIConditionPtr BEIConditionFactory::CreateBEICondition(BEIConditionType type)
+IBEIConditionPtr BEIConditionFactory::CreateBEICondition(BEIConditionType type, const std::string& ownerDebugLabel)
 {
   Json::Value config = IBEICondition::GenerateBaseConditionConfig( type );
-  return CreateBEICondition( config );
+  return CreateBEICondition( config, ownerDebugLabel );
 }
   
 } // namespace Cozmo

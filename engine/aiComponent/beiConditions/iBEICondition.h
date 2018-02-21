@@ -25,6 +25,7 @@
 #include "json/json-forwards.h"
 
 #include <set>
+#include <string>
 
 namespace Anki {
 namespace Cozmo {
@@ -56,6 +57,8 @@ public:
   
   BEIConditionType GetConditionType(){return _conditionType;}
   
+  void SetOwnerDebugLabel(const std::string& ownerLabel) { _ownerLabel = ownerLabel; }
+  
 protected:
 
   // // ResetInternal is called whenever Reset is called, which depends on how the strategy is being used
@@ -71,11 +74,43 @@ protected:
   // If a BEICondition has VisionMode Requirements, override this function to specify them. Modes set here
   // will be automatically managed by the SetActive infrastructure.
   virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const {};
+  
+  struct DebugFactors {
+    bool operator==(const DebugFactors& other) const { return ((name==other.name) && (value==other.value)); }
+    DebugFactors(const std::string& n, const std::string& v) : name(n), value(v) {}
+    std::string name;
+    std::string value;
+  };
+  using DebugFactorsList = std::vector<DebugFactors>;
+  
+  // Report here whatever factors influence the AreConditionsMetInternal. If the "value" or "name"
+  // change, it will trigger some debug output. 
+  // try not to return two elements with the same "name"
+  virtual DebugFactorsList GetDebugFactors() const { return {}; };
+  
+  const std::string GetDebugLabel() const { return _debugLabel; }
 
 private:
+  
+  // called when whenever AreConditionsMet is evaluated
+  void SendConditionsToWebViz( bool conditionsMet, BehaviorExternalInterface& bei ) const;
+  
+  // called when this condition becomes inactive
+  void SendInactiveToWebViz( BehaviorExternalInterface& bei ) const;
+  
+  // call only once
+  std::string MakeUniqueDebugLabel() const;
+  
   BEIConditionType _conditionType;
   bool _isActive = false;
   bool _isInitialized = false;
+  
+  std::string _debugLabel;
+  std::string _ownerLabel;
+  
+  mutable DebugFactorsList _previousDebugFactorsList;
+  mutable bool _previouslyMet;
+  mutable bool _firstRun = true;
 };
 
 } // namespace Cozmo

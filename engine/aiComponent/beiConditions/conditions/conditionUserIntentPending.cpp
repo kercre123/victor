@@ -281,6 +281,26 @@ const ConditionUserIntentPending::EvalUserIntentFunc& ConditionUserIntentPending
   static EvalUserIntentFunc nullfunc;
   return nullfunc;
 }
+  
+IBEICondition::DebugFactorsList ConditionUserIntentPending::GetDebugFactors() const
+{
+  DebugFactorsList ret;
+  ret.reserve( _evalList.size() );
+  unsigned int cnt=0;
+  for( const auto& elem : _evalList ) {
+    std::string cntStr = (cnt>0) ? std::to_string(cnt) : "";
+    ret.emplace_back("tag" + cntStr, UserIntentTagToString(elem.tag));
+    if( elem.func != nullptr ) {
+      ret.emplace_back("lambda" + cntStr, "true");
+    } else if( elem.intent != nullptr ) {
+      std::stringstream ss;
+      ss << elem.intent->GetJSON();
+      ret.emplace_back("intent" + cntStr, ss.str());
+    }
+    ++cnt;
+  }
+  return ret;
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ConditionUserIntentPending::EvalStruct::EvalStruct(UserIntentTag it)

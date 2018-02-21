@@ -53,7 +53,7 @@ BehaviorAnimGetInLoop::BehaviorAnimGetInLoop(const Json::Value& config)
   }
 
   if(config.isMember(kLoopEndConditionKey)){
-    _instanceParams.endLoopCondition = BEIConditionFactory::CreateBEICondition(config[kLoopEndConditionKey]); 
+    _instanceParams.endLoopCondition = BEIConditionFactory::CreateBEICondition(config[kLoopEndConditionKey], GetDebugLabel()); 
    ANKI_VERIFY(_instanceParams.endLoopCondition != nullptr,
                "BehaviorAnimGetInLoop.Constructor.InvalidEndLoopCondition",
                "End loop condition specified, but did not build properly");

@@ -36,7 +36,7 @@
     // Called once when the module is loaded.
 
     if ( location.port != "8889" )
-    {   // not sure, this might be a string
+    { 
       $('<h3>You must use this tab with the anim process (port 8889)</h3>').appendTo(elem);
     }
 

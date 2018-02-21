@@ -23,10 +23,10 @@ enum class BEIConditionType : uint8_t;
   
 class BEIConditionFactory{
 public:
-  static IBEIConditionPtr CreateBEICondition(const Json::Value& config);
+  static IBEIConditionPtr CreateBEICondition(const Json::Value& config, const std::string& ownerDebugLabel);
   
   // for conditions without config
-  static IBEIConditionPtr CreateBEICondition(BEIConditionType type);
+  static IBEIConditionPtr CreateBEICondition(BEIConditionType type, const std::string& ownerDebugLabel);
   
 }; // class BEIConditionFactory
   

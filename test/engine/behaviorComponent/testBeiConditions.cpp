@@ -45,7 +45,7 @@ void CreateBEI(const std::string& json, IBEIConditionPtr& cond)
   const bool parsedOK = reader.parse(json, config, false);
   ASSERT_TRUE(parsedOK);
 
-  cond = BEIConditionFactory::CreateBEICondition(config);
+  cond = BEIConditionFactory::CreateBEICondition(config, "testing");
 
   ASSERT_TRUE( cond != nullptr );
 }
@@ -87,7 +87,9 @@ TEST(BeiConditions, TestCondition)
 {
   // a test of the test, if you will
 
-  BehaviorExternalInterface bei;
+  TestBehaviorFramework testBehaviorFramework(1, nullptr);
+  testBehaviorFramework.InitializeStandardBehaviorComponent();
+  BehaviorExternalInterface& bei = testBehaviorFramework.GetBehaviorExternalInterface();
 
   auto cond = std::make_shared<TestCondition>();
 
@@ -135,7 +137,9 @@ TEST(BeiConditions, CreateLambda)
 
   ASSERT_TRUE( cond != nullptr );
 
-  BehaviorExternalInterface bei;
+  TestBehaviorFramework testBehaviorFramework(1, nullptr);
+  testBehaviorFramework.InitializeStandardBehaviorComponent();
+  BehaviorExternalInterface& bei = testBehaviorFramework.GetBehaviorExternalInterface();
   // don't call init, should be ok if no one uses it
   // bei.Init();
   
@@ -162,7 +166,9 @@ TEST(BeiConditions, True)
   IBEIConditionPtr cond;
   CreateBEI(json, cond);
 
-  BehaviorExternalInterface bei;
+  TestBehaviorFramework testBehaviorFramework(1, nullptr);
+  testBehaviorFramework.InitializeStandardBehaviorComponent();
+  BehaviorExternalInterface& bei = testBehaviorFramework.GetBehaviorExternalInterface();
   
   cond->Init(bei);
   cond->SetActive(bei, true);
@@ -189,10 +195,14 @@ TEST(BeiConditions, Frustration)
   IBEIConditionPtr cond;
   CreateBEI(json, cond);
 
-  BehaviorExternalInterface bei;
-
+  TestBehaviorFramework testBehaviorFramework(1, nullptr);
+  testBehaviorFramework.InitializeStandardBehaviorComponent();
+  BehaviorExternalInterface& bei = testBehaviorFramework.GetBehaviorExternalInterface();
+  
+  Robot& robot = testBehaviorFramework.GetRobot();
+  BEIRobotInfo info(robot);
   MoodManager moodManager;
-  InitBEIPartial( { {BEIComponentID::MoodManager, &moodManager} }, bei );
+  InitBEIPartial( { {BEIComponentID::MoodManager, &moodManager}, {BEIComponentID::RobotInfo, &info} }, bei );
   
   cond->Init(bei);
   cond->SetActive(bei, true);
@@ -220,7 +230,9 @@ TEST(BeiConditions, Timer)
   IBEIConditionPtr cond;
   CreateBEI(json, cond);
 
-  BehaviorExternalInterface bei;
+  TestBehaviorFramework testBehaviorFramework(1, nullptr);
+  testBehaviorFramework.InitializeStandardBehaviorComponent();
+  BehaviorExternalInterface& bei = testBehaviorFramework.GetBehaviorExternalInterface();
 
   cond->Init(bei);
   cond->SetActive(bei, true);
@@ -271,7 +283,9 @@ TEST(BeiConditions, Timer)
 
 TEST(BeiConditions, Negate)
 {
-  BehaviorExternalInterface bei;
+  TestBehaviorFramework testBehaviorFramework(1, nullptr);
+  testBehaviorFramework.InitializeStandardBehaviorComponent();
+  BehaviorExternalInterface& bei = testBehaviorFramework.GetBehaviorExternalInterface();
 
   auto subCond = std::make_shared<TestCondition>();
 
@@ -332,7 +346,9 @@ TEST(BeiConditions, NegateTrue)
   IBEIConditionPtr cond;
   CreateBEI(json, cond);
 
-  BehaviorExternalInterface bei;
+  TestBehaviorFramework testBehaviorFramework(1, nullptr);
+  testBehaviorFramework.InitializeStandardBehaviorComponent();
+  BehaviorExternalInterface& bei = testBehaviorFramework.GetBehaviorExternalInterface();
   
   cond->Init(bei);
   cond->SetActive(bei, true);
@@ -364,7 +380,9 @@ TEST(BeiConditions, NegateTimerInRange)
   IBEIConditionPtr cond;
   CreateBEI(json, cond);
 
-  BehaviorExternalInterface bei;
+  TestBehaviorFramework testBehaviorFramework(1, nullptr);
+  testBehaviorFramework.InitializeStandardBehaviorComponent();
+  BehaviorExternalInterface& bei = testBehaviorFramework.GetBehaviorExternalInterface();
 
   cond->Init(bei);
   cond->SetActive(bei, true);
@@ -423,7 +441,9 @@ TEST(BeiConditions, OnCharger)
   IBEIConditionPtr cond;
   CreateBEI(json, cond);
 
-  BehaviorExternalInterface bei;
+  TestBehaviorFramework testBehaviorFramework(1, nullptr);
+  testBehaviorFramework.InitializeStandardBehaviorComponent();
+  BehaviorExternalInterface& bei = testBehaviorFramework.GetBehaviorExternalInterface();
 
   TestBehaviorFramework tbf(1, nullptr);
   Robot& robot = tbf.GetRobot();
@@ -472,7 +492,9 @@ TEST(BeiConditions, TimedDedup)
   IBEIConditionPtr cond;
   CreateBEI(json, cond);
 
-  BehaviorExternalInterface bei;
+  TestBehaviorFramework testBehaviorFramework(1, nullptr);
+  testBehaviorFramework.InitializeStandardBehaviorComponent();
+  BehaviorExternalInterface& bei = testBehaviorFramework.GetBehaviorExternalInterface();
 
   cond->Init(bei);
   cond->SetActive(bei, true);

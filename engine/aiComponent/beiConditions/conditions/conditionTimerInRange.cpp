@@ -52,6 +52,18 @@ bool ConditionTimerInRange::AreConditionsMetInternal(BehaviorExternalInterface& 
 
   return _params._rangeBegin_s <= timerVal && timerVal < _params._rangeEnd_s;
 }
-
+  
+IBEICondition::DebugFactorsList ConditionTimerInRange::GetDebugFactors() const
+{
+  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  const float timerVal = currTime_s - _timeReset;
+  DebugFactorsList ret
+    = { {"min_t", std::to_string(_params._rangeBegin_s)},
+        {"max_t", std::to_string(_params._rangeEnd_s)},
+        {"cur_t", std::to_string(timerVal)} };
+  return ret;
 }
+  
+};
+
 }

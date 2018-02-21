@@ -26,7 +26,7 @@ const char* kOperandKey = "operand";
 
 ConditionNegate::ConditionNegate(const Json::Value& config)
   : IBEICondition(config)
-  , _operand( BEIConditionFactory::CreateBEICondition( config[kOperandKey] ) )
+  , _operand( BEIConditionFactory::CreateBEICondition( config[kOperandKey], GetDebugLabel() ) )
 {
   ANKI_VERIFY(_operand, "ConditionNegate.Constructor.Config.NullOperand", "" );
 }  

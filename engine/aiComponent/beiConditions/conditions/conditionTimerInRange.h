@@ -31,6 +31,8 @@ public:
   // By default the timer will be reset when SetActive is called. 
   // This behavior can be modified from JSON or consoleVar
   virtual void SetActiveInternal(BehaviorExternalInterface& bei, bool setActive) override;
+  
+  virtual DebugFactorsList GetDebugFactors() const override;
 
 private:
 
