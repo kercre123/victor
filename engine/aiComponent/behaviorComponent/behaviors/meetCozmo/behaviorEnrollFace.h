@@ -59,7 +59,6 @@ protected:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
 
-
   virtual void OnBehaviorActivated()   override;
   virtual void BehaviorUpdate() override;
   virtual void OnBehaviorDeactivated()   override;
@@ -121,6 +120,9 @@ private:
   
   bool IsEnrollmentRequested() const;
   void DisableEnrollment();
+  
+  // helper to see if a user intent was left in the user intent component for us by a parent behavior
+  void CheckForIntentData() const;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Members

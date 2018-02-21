@@ -19,8 +19,11 @@
 #include "engine/actions/trackFaceAction.h"
 #include "engine/actions/sayTextAction.h"
 
+#include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/visionComponent.h"
@@ -35,6 +38,7 @@
 #include "coretech/vision/engine/faceTracker.h"
 #include "coretech/vision/engine/trackedFace.h"
 
+#include "clad/types/behaviorComponent/userIntent.h"
 #include "clad/types/enrolledFaceStorage.h"
 
 #include "util/console/consoleInterface.h"
@@ -116,9 +120,28 @@ BehaviorEnrollFace::BehaviorEnrollFace(const Json::Value& config)
   _tooManyFacesRecentTime_sec = config.get(kTooManyFacesRecentTimeKey, kEnrollFace_DefaultTooManyFacesRecentTime_sec).asFloat();
 }
   
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorEnrollFace::CheckForIntentData() const
+{
+  auto& uic = GetBEI().GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
+  UserIntent* intent = uic.TakePreservedUserIntentOwnership( USER_INTENT(meet_victor) );
+  if( intent != nullptr ) {
+    const auto& meetVictor = intent->Get_meet_victor();
+    _settings->name = meetVictor.name;
+    _settings->observedID = Vision::UnknownFaceID;
+    _settings->saveID = 0;
+    _settings->saveToRobot = true;
+    _settings->sayName = true;
+    _settings->useMusic = false;
+    delete intent;
+  }
+}
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorEnrollFace::WantsToBeActivatedBehavior() const
 {
+  CheckForIntentData();
   // This behavior is activatable iff a face enrollment has been requested
   return IsEnrollmentRequested();
 }
@@ -126,10 +149,11 @@ bool BehaviorEnrollFace::WantsToBeActivatedBehavior() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorEnrollFace::InitEnrollmentSettings()
 {
-  // Behavior should not even be activatable if face enrollment not requested,
-  // so should not be attempting initialize
-  DEV_ASSERT(IsEnrollmentRequested(),
-             "BehaviorEnrollFace.InitEnrollmentSettings.FaceEnrollmentNotRequested");
+  if( !IsEnrollmentRequested() ) {
+    // this can happen in tests
+    PRINT_NAMED_WARNING("BehaviorEnrollFace.InitEnrollmentSettings.FaceEnrollmentNotRequested",
+                        "BehaviorEnrollFace started without an enrollment request");
+  }
   
   _faceID        = _settings->observedID;
   _saveID        = _settings->saveID;
@@ -474,7 +498,9 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
                   "In state:%hhu, FaceEnrollmentResult=%s",
                   _state, EnumToString(info.result));
     
-    //robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(info)));
+    if( GetBEI().GetRobotInfo().HasExternalInterface() ) {
+      GetBEI().GetRobotInfo().GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(std::move(info)));
+    }
     
     // Done (whether success or failure), so reset state for next run
     SET_STATE(NotStarted);

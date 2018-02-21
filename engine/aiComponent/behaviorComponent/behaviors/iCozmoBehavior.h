@@ -474,8 +474,12 @@ private:
   // 2) Clear the intent when the behavior is activated
   std::shared_ptr< ConditionUserIntentPending > _respondToUserIntent;
   
-  // if a behavior is waiting for a specific intent and it got it, then the intent will be here just
-  // prior to activation. otherwise it will be null
+  // if config changes this to false, the intent will be cleared but not moved into _pendingIntent,
+  // below. It will instead remain in the UserIntentComponent as a backup
+  bool _claimUserIntentData;
+  
+  // if a behavior is waiting for a specific intent and it got it, and _claimUserIntentData,
+  // then the intent will be here just prior to activation. otherwise it will be null
   std::unique_ptr<UserIntent> _pendingIntent;
   
   // true when the trigger word is pending, in which case ICozmoBehavior will

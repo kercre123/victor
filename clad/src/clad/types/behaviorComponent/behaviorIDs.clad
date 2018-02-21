@@ -141,10 +141,11 @@ enum uint_8 BehaviorID {
   InteractWithFaces,
   LookInPlaceHeadUp,
 
-  // victorBehaviorTree/highLevelDelegates/meetCozmo
+  // victorBehaviorTree/highLevelDelegates/meetVictor
   EnrollFace,
   MeetCozmo_FindFaces_Socialize,
   MeetCozmo_InteractWithFaces,
+  MeetVictor,
   RespondToRenameFace,
 
   // victorBehaviorTree/highLevelDelegates

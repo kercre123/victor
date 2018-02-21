@@ -146,7 +146,16 @@ TEST(DelegationTree, DumpBehaviorTransitionsToFile)
     behavior->GetAllDelegates( delegates );
     for( const auto* delegate : delegates ) {
       
-      const std::string& outId = delegate->GetDebugLabel();
+      std::string outId = delegate->GetDebugLabel();
+      // skip trailing digits that were added to make labels unique
+      for( auto it = outId.rbegin(); it != outId.rend(); ) {
+        if( std::isdigit(*it) ) {
+          ++it;
+          outId.pop_back();
+        } else {
+          break;
+        }
+      }
       ss << id << " " << outId << std::endl;
       
     }

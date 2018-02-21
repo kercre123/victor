@@ -69,6 +69,7 @@ static const char* kExecutableBehaviorTypeKey        = "executableBehaviorType";
 static const char* kAlwaysStreamlineKey              = "alwaysStreamline";
 static const char* kWantsToBeActivatedCondConfigKey  = "wantsToBeActivatedCondition";
 static const char* kRespondToUserIntentsKey          = "respondToUserIntents";
+static const char* kClaimUserIntentDataKey           = "claimUserIntentData";
 static const char* kRespondToTriggerWordKey          = "respondToTriggerWord";
 static const std::string kIdleLockPrefix             = "Behavior_";
 
@@ -189,6 +190,7 @@ ICozmoBehavior::ICozmoBehavior(const Json::Value& config)
 , _behaviorClassID(ExtractBehaviorClassFromConfig(config))
 , _needsActionID(ExtractNeedsActionIDFromConfig(config))
 , _executableType(BehaviorTypesWrapper::GetDefaultExecutableBehaviorType())
+, _claimUserIntentData( true )
 , _respondToTriggerWord( false )
 , _requiredUnlockId( UnlockId::Count )
 , _requiredRecentDriveOffCharger_sec(-1.0f)
@@ -269,6 +271,8 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
     _respondToUserIntent = std::make_shared<ConditionUserIntentPending>( json );
     _respondToUserIntent->SetOwnerDebugLabel( GetDebugLabel() );
     _wantsToBeActivatedConditions.push_back( _respondToUserIntent );
+    
+    _claimUserIntentData = config.get( kClaimUserIntentDataKey, true ).asBool();
   }
   
   _respondToTriggerWord = config.get(kRespondToTriggerWordKey, false).asBool();
@@ -587,8 +591,12 @@ void ICozmoBehavior::OnActivatedInternal()
     auto tag = _respondToUserIntent->GetUserIntentTagSelected();
     if( tag != USER_INTENT(INVALID) ) {
       auto& uic = GetBEI().GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
-      // u now pwn it
-      _pendingIntent.reset( uic.ClearUserIntentWithOwnership( tag ) );
+      if( _claimUserIntentData ) {
+        // u now pwn it
+        _pendingIntent.reset( uic.ClearUserIntentWithOwnership( tag ) );
+      } else {
+        uic.ClearUserIntentWithPreservation( tag, GetID() );
+      }
     } else {
       // this can happen in tests
       PRINT_NAMED_WARNING("ICozmoBehavior.OnActivatedInternal.InvalidTag",
@@ -701,6 +709,13 @@ void ICozmoBehavior::OnDeactivatedInternal()
   
   _lockingNameToTracksMap.clear();
   _customLightObjects.clear();
+  
+  if( (_respondToUserIntent != nullptr) && (!_claimUserIntentData) ) {
+    // make sure a delegate of this behavior claimed the intent that we preserved for them, and
+    // remove it if not
+    auto& uic = GetBEI().GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
+    uic.ResetPreservedUserIntents( GetID() );
+  }
   
   DEV_ASSERT(_smartLockIDs.empty(), "ICozmoBehavior.Stop.DisabledReactionsNotEmpty");
 }

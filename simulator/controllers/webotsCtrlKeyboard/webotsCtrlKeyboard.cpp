@@ -1161,8 +1161,12 @@ namespace Cozmo {
     SetFaceToEnroll setFaceToEnroll(userName, observedID, enrollToID, saveFaceToRobot, sayName, useMusic);
     SendMessage(MessageGameToEngine(std::move(setFaceToEnroll)));
     
-    // Enable selection chooser and specify EnrollFace now that settings are sent
-    SendMessage(MessageGameToEngine(ExecuteBehaviorByID("EnrollFace", -1)));
+    // todo: currently we send both the SetFaceToEnroll and the cloud intent for meet victor. This
+    // will change, but since we don't know what SetFaceToEnroll will be replaced by yet, both messages
+    // are being send for now. Eventually there should be one "meet_victor" message and one "I'm changing
+    // the name, but don't restart meet victor"
+    std::string json = "{ \"intent\": \"intent_meet_victor\", \"params\": { \"name\": \"" + userName + "\" } }";
+    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::FakeCloudIntent(json)));
   }
   
   void WebotsKeyboardController::TurnTowardsFace()

@@ -10,6 +10,11 @@ structure UserIntent_Void
 { 
 }
 
+structure UserIntent_MeetVictor
+{
+  string name,
+}
+
 structure UserIntent_PlaySpecific
 {
   string entity_behavior,
@@ -49,6 +54,7 @@ union dupes_allowed UserIntent
   UserIntent_Void greeting_hello,
   UserIntent_Void imperative_come,
   UserIntent_Void imperative_quiet,
+  UserIntent_MeetVictor meet_victor, 
   UserIntent_Void play_anytrick,
   UserIntent_PlaySpecific play_specific,
   UserIntent_Void system_charger,

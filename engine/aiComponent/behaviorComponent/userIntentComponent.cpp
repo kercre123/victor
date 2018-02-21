@@ -36,6 +36,8 @@ namespace {
 
 static const size_t kMaxTicksToWarn = 1;
 static const size_t kMaxTicksToClear = 2;
+  
+static const float kPreservedTimeToClear = 60*60*24;
 
 static const char* kCloudIntentJsonKey = "intent";
 static const char* kParamsKey = "params";
@@ -146,6 +148,78 @@ UserIntent* UserIntentComponent::ClearUserIntentWithOwnership(UserIntentTag user
                          "Trying to clear+get intent '%s', but it doesn't exist",
                          UserIntentTagToString( userIntent ) );
     return nullptr;
+  }
+}
+  
+void UserIntentComponent::ClearUserIntentWithPreservation(UserIntentTag userIntent, BehaviorID clearingBehavior)
+{
+  if( (_pendingIntent != nullptr) && (userIntent != _pendingIntent->GetTag()) ) {
+    PRINT_NAMED_WARNING( "UserIntentComponent.ClearUserIntentWithPreservation.IncorrectIntent",
+                        "Trying to clear+get intent '%s' but '%s' is pending. Not clearing",
+                        UserIntentTagToString( userIntent),
+                        UserIntentTagToString( _pendingIntent->GetTag() ) );
+  } else if( _pendingIntent != nullptr ) {
+    auto it = std::find_if( _preservedIntents.begin(), _preservedIntents.end(), [userIntent](const auto& p) {
+      return p.tag == userIntent;
+    });
+    
+    if( it != _preservedIntents.end() ) {
+      if( it->intent != nullptr ) {
+        PRINT_NAMED_WARNING( "UserIntentComponent.ClearUserIntentWithPreservation.Replaced",
+                             "A delegate of behavior '%s' never took the preserved intent '%s' before it was replaced by '%s'",
+                             BehaviorTypesWrapper::BehaviorIDToString(it->responsibleBehavior),
+                             UserIntentTagToString(userIntent),
+                             BehaviorTypesWrapper::BehaviorIDToString(clearingBehavior) );
+      }
+      it->intent.reset( _pendingIntent.release() );
+      it->responsibleBehavior = clearingBehavior;
+    } else {
+      std::unique_ptr<UserIntent> intent( _pendingIntent.release() );
+      const float currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      Preserved preserved{userIntent, std::move(intent), clearingBehavior, currTime};
+      _preservedIntents.emplace_back( std::move(preserved) );
+    }
+  } else {
+    PRINT_NAMED_WARNING( "UserIntentComponent.ClearUserIntentWithPreservation.NothingPending",
+                         "Trying to clear+get intent '%s', but it doesn't exist",
+                         UserIntentTagToString( userIntent ) );
+  }
+}
+  
+UserIntent* UserIntentComponent::TakePreservedUserIntentOwnership(UserIntentTag userIntent)
+{
+  auto it = std::find_if( _preservedIntents.begin(), _preservedIntents.end(), [userIntent](const auto& p) {
+    return p.tag == userIntent;
+  });
+  if( it != _preservedIntents.end() ) {
+    UserIntent* intent = it->intent.release();
+    ANKI_VERIFY( intent != nullptr,
+                 "UserIntentComponent.TakePreservedUserIntentOwnership.AlreadyClaimed",
+                 "Intent '%s' has been claimed already",
+                 UserIntentTagToString(userIntent) );
+    return intent;
+  } else {
+    PRINT_NAMED_WARNING( "UserIntentComponent.TakePreservedUserIntentOwnership.NotFound",
+                         "Intent '%s' not found in preserved list",
+                         UserIntentTagToString(userIntent) );
+    return nullptr;
+  }
+}
+  
+void UserIntentComponent::ResetPreservedUserIntents(BehaviorID clearingBehavior)
+{
+  auto it = std::find_if( _preservedIntents.begin(), _preservedIntents.end(), [clearingBehavior](const auto& p) {
+    return p.responsibleBehavior == clearingBehavior;
+  });
+  if( it != _preservedIntents.end() ) {
+    if( !ANKI_VERIFY( it->intent == nullptr,
+                      "UserIntentComponent.ResetPreservedUserIntents.Unclaimed",
+                      "The intent '%s' preserved by '%s' was unclaimed",
+                      UserIntentTagToString(it->tag),
+                      BehaviorTypesWrapper::BehaviorIDToString(clearingBehavior) ) )
+    {
+      it->intent.reset();
+    }
   }
 }
 
@@ -292,6 +366,7 @@ void UserIntentComponent::Update()
   
   
   const size_t currTick = BaseStationTimer::getInstance()->GetTickCount();
+  const float currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
   // if things pend too long they will queue up and trigger at the wrong time, which will be wrong and
   // confusing. Issue warnings here and clear the pending tick / intent if they aren't handled quickly enough
@@ -325,6 +400,17 @@ void UserIntentComponent::Update()
                         UserIntentTagToString(_pendingIntent->GetTag()),
                         dt);
       _pendingIntent.reset();
+    }
+  }
+  
+  for( auto& preserved : _preservedIntents ) {
+    if( preserved.intent != nullptr ) {
+      if( currTime - preserved.timeAdded > kPreservedTimeToClear ) {
+        PRINT_NAMED_ERROR( "UserIntentComponent.Update.UnclaimedPreserved",
+                           "The preserved intent '%s' was unclaimed",
+                           UserIntentTagToString(preserved.tag) );
+        preserved.intent.reset();
+      }
     }
   }
 }

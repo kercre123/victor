@@ -39,6 +39,10 @@
     {
       "cloud_intent": "intent_play_specific",
       "user_intent": "play_specific"
+    },
+    {
+      "cloud_intent": "intent_meet_victor",
+      "user_intent": "meet_victor"
     }
   ],
 

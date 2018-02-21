@@ -15,6 +15,7 @@
 
 #include "coretech/common/shared/types.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/userIntents.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
@@ -86,6 +87,21 @@ public:
   
   // The same as above, but also gets ownership of the intent, if userIntent matches what is pending
   UserIntent* ClearUserIntentWithOwnership(UserIntentTag userIntent);
+  
+  // clears but keeps the data in a list obtainable through TakePreservedUserIntentOwnership(). This
+  // might be useful if a behavior expects that one of its delegates will consume the data. The
+  // behavior clearingBehavior doing the clearing is now on the hook for someone else to consume it,
+  // and clearingBehavior should ResetPreservedUserIntents() when it deactivates
+  void ClearUserIntentWithPreservation(UserIntentTag userIntent, BehaviorID clearingBehavior);
+  
+  // if ClearUserIntentWithPreservation was used to clear the user intent instead of
+  // ClearUserIntentWithOwnership, then the data can be obtained here. you now own it.
+  UserIntent* TakePreservedUserIntentOwnership(UserIntentTag userIntent);
+  
+  // The clearingBehavior who called ClearUserIntentWithPreservation is on the hook for one of its
+  // delegates to TakePreservedUserIntentOwnership. This will print an error if there are any
+  // preserved intents, and then remove them. The clearingBehavior should call this OnDeactivated()
+  void ResetPreservedUserIntents(BehaviorID clearingBehavior);
 
   // replace the current pending user intent (if any) with this one. This will assert in dev if the
   // user intent data type is not void
@@ -121,6 +137,14 @@ private:
   bool _pendingTrigger = false;
   
   std::unique_ptr<UserIntent> _pendingIntent;
+  
+  struct Preserved {
+    UserIntentTag tag;
+    std::unique_ptr<UserIntent> intent;
+    BehaviorID responsibleBehavior;
+    float timeAdded;
+  };
+  std::vector<Preserved> _preservedIntents;
 
   // for debugging -- intents should be processed within one tick so track the ticks here
   size_t _pendingTriggerTick = 0;
