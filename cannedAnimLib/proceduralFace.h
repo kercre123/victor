@@ -76,6 +76,8 @@ public:
   
   ~ProceduralFace();
 
+  bool operator==(const ProceduralFace& other) const;
+  
   // Allows setting an instance of ProceduralFace to be used as reset values
   static void SetResetData(const ProceduralFace& newResetData);
   

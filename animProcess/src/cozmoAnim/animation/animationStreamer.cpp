@@ -560,15 +560,11 @@ namespace Cozmo {
     else
     {
       if(!kProcFace_UseNoise) {
-        static ProceduralFace::EyeParamArray previousEyeParameters[2];
-
-        if (previousEyeParameters[ProceduralFace::WhichEye::Left] == procFace.GetParameters(ProceduralFace::WhichEye::Left) &&
-            previousEyeParameters[ProceduralFace::WhichEye::Right] == procFace.GetParameters(ProceduralFace::WhichEye::Right)) {
+        static ProceduralFace previousFace;
+        if (previousFace == procFace) {
           return;
         }
-
-        previousEyeParameters[ProceduralFace::WhichEye::Left] = procFace.GetParameters(ProceduralFace::WhichEye::Left);
-        previousEyeParameters[ProceduralFace::WhichEye::Right] = procFace.GetParameters(ProceduralFace::WhichEye::Right);
+        previousFace = procFace;
       }
 
       DEV_ASSERT(_context != nullptr, "AnimationStreamer.BufferFaceToSend.NoContext");

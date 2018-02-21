@@ -134,7 +134,30 @@ ProceduralFace::ProceduralFace(const ProceduralFace& other)
     _scanlineDistorter.reset(new ScanlineDistorter(*other._scanlineDistorter));
   }
 }
-  
+
+bool ProceduralFace::operator==(const ProceduralFace& other) const
+{
+  if (_eyeParams[ProceduralFace::WhichEye::Left] != other._eyeParams[ProceduralFace::WhichEye::Left]) {
+    return false;
+  }
+  if (_eyeParams[ProceduralFace::WhichEye::Right] != other._eyeParams[ProceduralFace::WhichEye::Right]) {
+    return false;
+  }
+  if (_faceAngle_deg != other._faceAngle_deg) {
+    return false;
+  }
+  if (_faceScale != other._faceScale) {
+    return false;
+  }
+  if (_faceCenter != other._faceCenter) {
+    return false;
+  }
+  if (_scanlineOpacity != other._scanlineOpacity) {
+    return false;
+  }
+  return true;
+}
+
 s32 ProceduralFace::GetNominalLeftEyeX()
 {
   return (WIDTH - kProcFace_NominalEyeSpacing)/2;
@@ -386,23 +409,32 @@ inline static T LinearBlendHelper(const T value1, const T value2, const float bl
                                 blendFraction*static_cast<float>(value2));
   return blendValue;
 }
-  
-inline static ProceduralFace::Value BlendAngleHelper(const ProceduralFace::Value angle1,
-                                                     const ProceduralFace::Value angle2,
+
+inline static ProceduralFace::Value BlendAngleHelper(const ProceduralFace::Value angle1_deg,
+                                                     const ProceduralFace::Value angle2_deg,
                                                      const float blendFraction)
 {
-  if(angle1 == angle2) {
+  if(angle1_deg == angle2_deg) {
     // Special case, no math needed
-    return angle1;
+    return angle1_deg;
   }
-  
-  const float angle1_rad = DEG_TO_RAD(static_cast<float>(angle1));
-  const float angle2_rad = DEG_TO_RAD(static_cast<float>(angle2));
-  
-  const float x = LinearBlendHelper(std::cos(angle1_rad), std::cos(angle2_rad), blendFraction);
-  const float y = LinearBlendHelper(std::sin(angle1_rad), std::sin(angle2_rad), blendFraction);
-  
-  return static_cast<ProceduralFace::Value>(RAD_TO_DEG(std::atan2(y,x)));
+
+  const float angle1_rad = DEG_TO_RAD(static_cast<float>(angle1_deg));
+  const float angle2_rad = DEG_TO_RAD(static_cast<float>(angle2_deg));
+
+  float fromAngle = fmodf(angle1_rad + M_TWO_PI_F, M_TWO_PI_F);
+  float toAngle = fmodf(angle2_rad + M_TWO_PI_F, M_TWO_PI_F);
+
+  const float diff = fabsf(fromAngle - toAngle);
+  if (diff >= M_PI) {
+      if (fromAngle > toAngle) {
+          fromAngle -= M_TWO_PI_F;
+      } else {
+          toAngle -= M_TWO_PI_F;
+      }
+  }
+  const float result = LinearBlendHelper(fromAngle, toAngle, blendFraction);
+  return static_cast<ProceduralFace::Value>(RAD_TO_DEG(result));
 }
   
 void ProceduralFace::Interpolate(const ProceduralFace& face1, const ProceduralFace& face2,
@@ -449,7 +481,6 @@ void ProceduralFace::Interpolate(const ProceduralFace& face1, const ProceduralFa
 
     } // for each parameter
   } // for each eye
-  
   SetFaceAngle(BlendAngleHelper(face1.GetFaceAngle(), face2.GetFaceAngle(), blendFraction));
   SetFacePosition({LinearBlendHelper(face1.GetFacePosition().x(), face2.GetFacePosition().x(), blendFraction),
                    LinearBlendHelper(face1.GetFacePosition().y(), face2.GetFacePosition().y(), blendFraction)});
