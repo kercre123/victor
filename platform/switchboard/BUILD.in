@@ -1,5 +1,5 @@
 cxx_project(
   name = 'vic-switchboard',
-  srcs = cxx_src_glob(['switchboardd', 'libev', 'signals']),
-  headers = cxx_header_glob(['switchboardd', 'libev', 'signals'])
+  srcs = cxx_src_glob(['switchboardd', 'anki-ble', 'signals']),
+  headers = cxx_header_glob(['switchboardd', 'anki-ble', 'signals'])
 )
