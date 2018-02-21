@@ -488,19 +488,7 @@ void ProceduralFace::GetEyeBoundingBox(Value& xmin, Value& xmax, Value& ymin, Va
   
 void ProceduralFace::SetFacePosition(Point<2, Value> center)
 {
-  // Try not to let the eyes drift off the face (ignores outer glow)
-  // NOTE: (1) if you set center and *then* change eye centers/scales, you could still go off screen
-  //       (2) this also doesn't take lid height into account, so if the top lid is half closed and
-  //           you move the eyes way down, it could look like they disappeared, for example
-  
-  Value xmin=0, xmax=0, ymin=0, ymax=0;
-  GetEyeBoundingBox(xmin, xmax, ymin, ymax);
-  
-  // The most we can move left is the distance b/w left edge of left eye and the
-  // left edge of the screen. The most we can move right is the distance b/w the
-  // right edge of the right eye and the right edge of the screen
-  _faceCenter.x() = CLIP(center.x(), -xmin, ProceduralFace::WIDTH-xmax);
-  _faceCenter.y() = CLIP(center.y(), -ymin, ProceduralFace::HEIGHT-ymax);
+  _faceCenter = center;
 }
   
 void ProceduralFace::CombineEyeParams(EyeParamArray& eyeArray0, const EyeParamArray& eyeArray1)
