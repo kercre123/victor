@@ -881,6 +881,20 @@ namespace Cozmo {
     Enroll(faceID.GetID());
   }
 
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  bool FaceWorld::IsMakingEyeContact() const
+  {
+    // Loop over all the faces and see if any of them are making eye contact
+    for (const auto& entry: _faceEntries)
+    {
+      if (entry.second.face.IsMakingEyeContact())
+      {
+        return true;
+      }
+    }
+    return false;
+  }
+
 } // namespace Cozmo
 } // namespace Anki
 
