@@ -1655,10 +1655,6 @@ Blockly.WorkspaceSvg.prototype.scrollCenter = function() {
  * @param {boolean} centerY Scroll to center of y-axis.
  */
 Blockly.WorkspaceSvg.prototype.scrollHome = function(centerX, centerY) {
-  // TODO Revisit this implementation post Feb 2018 Scratch merge.
-  return;
-
-  /*
   if (!this.scrollbar) {
     // Can't scroll a non-scrolling workspace.
     return;
@@ -1700,7 +1696,6 @@ Blockly.WorkspaceSvg.prototype.scrollHome = function(centerX, centerY) {
   }
 
   this.scrollbar.set(x, y);
-  */
 };
 
 /**
