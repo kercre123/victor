@@ -80,6 +80,7 @@ Scratch3CozmoBlocks.prototype.getPrimitives = function () {
         cozmo_sound_play_and_wait: this.verticalPlaySoundAndWait,
         cozmo_sound_stop: this.verticalStopSound,
         cozmo_sound_song_add_note: this.verticalAddNote,
+        cozmo_sound_song_add_rest: this.verticalAddRest,
         cozmo_sound_song_clear_all_notes: this.verticalClearAllNotes,
         cozmo_sound_song_play_all_notes: this.verticalPlayAllNotes,
         // Draw (on Cozmo's face)
@@ -741,6 +742,13 @@ Scratch3CozmoBlocks.prototype.verticalStopSound = function(args, util) {
 
 Scratch3CozmoBlocks.prototype.verticalAddNote = function(args, util) {
     var noteType = Cast.toNumber(args.SONG_NOTE_TYPE);
+    var noteDuration = Cast.toNumber(args.SONG_NOTE_DURATION);
+    window.Unity.call({requestId: -1, command: "cozVertAddNote", argUInt: noteType, argUInt2: noteDuration});
+    return window.Unity.sleepPromiseIfNecessary();
+};
+
+Scratch3CozmoBlocks.prototype.verticalAddRest = function(args, util) {
+    var noteType = 14; // Rest is 14 in SongNoteType messageGameToEngine
     var noteDuration = Cast.toNumber(args.SONG_NOTE_DURATION);
     window.Unity.call({requestId: -1, command: "cozVertAddNote", argUInt: noteType, argUInt2: noteDuration});
     return window.Unity.sleepPromiseIfNecessary();

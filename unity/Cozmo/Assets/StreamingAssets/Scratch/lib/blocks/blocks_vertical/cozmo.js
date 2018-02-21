@@ -431,10 +431,41 @@ Blockly.Blocks['cozmo_sound_song_add_note'] = {
               ['%{BKY_NOTE_A2_SHARP}', '10'],
               ['%{BKY_NOTE_B2}', '11'],
               ['%{BKY_NOTE_C3}', '12'],
-              ['%{BKY_NOTE_C3_SHARP}', '13'],
-              ['%{BKY_NOTE_REST}', '14']
+              ['%{BKY_NOTE_C3_SHARP}', '13']
              ]
           },
+          {
+             "type": "field_dropdown",
+             "name": "SONG_NOTE_DURATION",
+             "options": [
+                ['%{BKY_NOTE_DURATION_WHOLE}', '0'],
+                ['%{BKY_NOTE_DURATION_THREE_QUARTER}', '1'],
+                ['%{BKY_NOTE_DURATION_HALF}', '2'],
+                ['%{BKY_NOTE_DURATION_QUARTER}', '3']
+              ]
+          }
+        ],
+        "inputsInline": true,
+        "previousStatement": null,
+        "nextStatement": null,
+        "category": Blockly.Categories.actions,
+        "colour": Blockly.Colours.actions.primary,
+        "colourSecondary": Blockly.Colours.actions.secondary,
+        "colourTertiary": Blockly.Colours.actions.tertiary
+    });
+  }
+};
+
+Blockly.Blocks['cozmo_sound_song_add_rest'] = {
+  /**
+   * Block to add a note for composable song
+   * @this Blockly.Block
+  */
+  init: function() {
+    this.jsonInit({
+        "id": "cozmo_sound_song_add_rest",
+        "message0": "%{BKY_SONG_ADD_REST}",
+        "args0": [
           {
              "type": "field_dropdown",
              "name": "SONG_NOTE_DURATION",

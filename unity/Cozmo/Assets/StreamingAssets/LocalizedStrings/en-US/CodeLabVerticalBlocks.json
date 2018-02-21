@@ -57,8 +57,8 @@
   "codeLabVertical.NOTE_C3_SHARP": {
     "translation": "C#/Db"
   },
-  "codeLabVertical.NOTE_REST": {
-    "translation": "Rest"
+  "codeLabVertical.SONG_ADD_REST": {
+    "translation": "add rest with duration %1"
   },
   "codeLabVertical.NOTE_DURATION_QUARTER": {
     "translation": "1/4"
