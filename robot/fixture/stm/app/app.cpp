@@ -114,6 +114,22 @@ void SetFixtureText(void)
     HelperLcdSetLine(8, snformat(b,bz,"%-15s v%03u", BUILD_INFO, g_fixtureReleaseVersion) );
   }
   
+  /*/==========================DEBUG==========================================
+  static int ci = 0;  
+  typedef struct { char color; const char *desc; } dbg_display_t;
+  const dbg_display_t display[] = { 
+    {'r', "---RED---"},
+    {'g', "---GREEN---"},
+    {'b', "---BLUE---"},
+    {'w', "---WHITE---"} };
+  
+  ci = ci+1 < sizeof(display)/sizeof(dbg_display_t) ? ci+1 : 0;
+  HelperLcdSetLine(7, display[ci].desc ); //write color description to the display
+  HelperLcdShow(0,0, display[ci].color, (char*)fixtureName()); //set display text/color
+  inited = 1;
+  return;
+  //========================================================================*/
+  
   //debug builds show last error code
   if( !g_isReleaseBuild /*&& g_fixmode == FIXMODE_HEAD1*/ )
     HelperLcdSetLine(7, snformat(b,bz,"e:%03i in %u.%03us", m_last_error, m_last_time_ms/1000, m_last_time_ms%1000 ) );
@@ -372,6 +388,13 @@ static void MainExecution()
   
   //DEBUG
   dbgBtnHandler();
+  
+  /*/DEBUG: periodic display refresh
+  static uint32_t Tstart = Timer::get();
+  if( Timer::elapsedUs(Tstart) > 5*1000*1000 ) {
+    Tstart = Timer::get();
+    SetFixtureText();
+  }//-*/
 }
 
 // Fetch flash parameters - done once on boot up
