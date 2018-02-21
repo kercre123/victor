@@ -1,0 +1,530 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 48;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		DA087F7320337866008F9639 /* bleMessageProtocol.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DA087F7120337866008F9639 /* bleMessageProtocol.cpp */; };
+		DA27A5A6201D0AE800359EE0 /* NetworkExtension.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA27A5A5201D0AE800359EE0 /* NetworkExtension.framework */; };
+		DA27A6552023E86200359EE0 /* libev.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DA27A6532023E52400359EE0 /* libev.a */; };
+		DA27A65920252F2F00359EE0 /* WiFiNetworkStream.mm in Sources */ = {isa = PBXBuildFile; fileRef = DA27A65720252F2F00359EE0 /* WiFiNetworkStream.mm */; };
+		DA27A65C20252F5C00359EE0 /* WifiServer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DA27A65A20252F5C00359EE0 /* WifiServer.cpp */; };
+		DA27A65F2029472700359EE0 /* switchboard.mm in Sources */ = {isa = PBXBuildFile; fileRef = DA27A65D2029472700359EE0 /* switchboard.mm */; };
+		DA5EC9E620084554003ABD16 /* libsodium.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DA5EC9E520084554003ABD16 /* libsodium.a */; };
+		DAACE279202E389000153C28 /* taskExecutor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DAACE277202E389000153C28 /* taskExecutor.cpp */; };
+		DAB7E39D200EB76600D57664 /* BLENetworkStream.mm in Sources */ = {isa = PBXBuildFile; fileRef = DAB7E39C200EB76600D57664 /* BLENetworkStream.mm */; };
+		DAB7E3A1200EB84F00D57664 /* BLEPeripheral.mm in Sources */ = {isa = PBXBuildFile; fileRef = DAB7E3A0200EB84F00D57664 /* BLEPeripheral.mm */; };
+		DAB7E3A3200EB8A600D57664 /* securePairing.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DAB7E3A2200EB8A600D57664 /* securePairing.cpp */; };
+		DAB7E3B0200ED2ED00D57664 /* keyExchange.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DAB7E3AF200ED2ED00D57664 /* keyExchange.cpp */; };
+		DAB9F288203663E9000E87C3 /* ipcBleStream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DAB9F286203663E9000E87C3 /* ipcBleStream.cpp */; };
+		DAB9F28A20366B14000E87C3 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DAB9F28920366B14000E87C3 /* main.cpp */; };
+		DACEF047200598FF00894864 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = DACEF046200598FF00894864 /* AppDelegate.m */; };
+		DACEF04A200598FF00894864 /* ViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = DACEF049200598FF00894864 /* ViewController.mm */; };
+		DACEF04D200598FF00894864 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = DACEF04B200598FF00894864 /* Main.storyboard */; };
+		DACEF050200598FF00894864 /* ios_server.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = DACEF04E200598FF00894864 /* ios_server.xcdatamodeld */; };
+		DACEF052200598FF00894864 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DACEF051200598FF00894864 /* Assets.xcassets */; };
+		DACEF055200598FF00894864 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = DACEF053200598FF00894864 /* LaunchScreen.storyboard */; };
+		DACEF058200598FF00894864 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = DACEF057200598FF00894864 /* main.m */; };
+		DACEF0662005994B00894864 /* CoreBluetooth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DACEF0652005994600894864 /* CoreBluetooth.framework */; };
+		DAE4FC282008451A007D04BB /* sodium in Resources */ = {isa = PBXBuildFile; fileRef = DAE4FC2720084519007D04BB /* sodium */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		DA087F7120337866008F9639 /* bleMessageProtocol.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = bleMessageProtocol.cpp; sourceTree = "<group>"; };
+		DA087F7220337866008F9639 /* bleMessageProtocol.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = bleMessageProtocol.h; sourceTree = "<group>"; };
+		DA27A59B20193A6A00359EE0 /* pairingMessages.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = pairingMessages.h; sourceTree = "<group>"; };
+		DA27A5A2201C083900359EE0 /* ios-server.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "ios-server.entitlements"; sourceTree = "<group>"; };
+		DA27A5A5201D0AE800359EE0 /* NetworkExtension.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = NetworkExtension.framework; path = System/Library/Frameworks/NetworkExtension.framework; sourceTree = SDKROOT; };
+		DA27A63420224F1100359EE0 /* libev.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = libev.h; sourceTree = "<group>"; };
+		DA27A63920229DD600359EE0 /* log.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = log.h; sourceTree = "<group>"; };
+		DA27A63F2023DFFC00359EE0 /* ev++.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "ev++.h"; sourceTree = "<group>"; };
+		DA27A6402023DFFC00359EE0 /* ev.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ev.h; sourceTree = "<group>"; };
+		DA27A6412023DFFC00359EE0 /* event.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = event.h; sourceTree = "<group>"; };
+		DA27A6532023E52400359EE0 /* libev.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libev.a; sourceTree = "<group>"; };
+		DA27A6562024F1A000359EE0 /* IPAddress.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IPAddress.h; sourceTree = "<group>"; };
+		DA27A65720252F2F00359EE0 /* WiFiNetworkStream.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = WiFiNetworkStream.mm; sourceTree = "<group>"; };
+		DA27A65820252F2F00359EE0 /* WiFiNetworkStream.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WiFiNetworkStream.h; sourceTree = "<group>"; };
+		DA27A65A20252F5C00359EE0 /* WifiServer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = WifiServer.cpp; sourceTree = "<group>"; };
+		DA27A65B20252F5C00359EE0 /* WifiServer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WifiServer.h; sourceTree = "<group>"; };
+		DA27A65D2029472700359EE0 /* switchboard.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = switchboard.mm; sourceTree = "<group>"; };
+		DA27A65E2029472700359EE0 /* switchboard.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = switchboard.h; sourceTree = "<group>"; };
+		DA5EC9E520084554003ABD16 /* libsodium.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libsodium.a; path = "ios-server/sodium/libsodium.a"; sourceTree = "<group>"; };
+		DA8141B7201173A700AC8A73 /* signalHolder.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = signalHolder.h; sourceTree = "<group>"; };
+		DA8141B8201173D900AC8A73 /* simpleSignal.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = simpleSignal.hpp; sourceTree = "<group>"; };
+		DA8141B9201173F300AC8A73 /* simpleSignal_fwd.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = simpleSignal_fwd.h; sourceTree = "<group>"; };
+		DAACE277202E389000153C28 /* taskExecutor.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = taskExecutor.cpp; sourceTree = "<group>"; };
+		DAACE278202E389000153C28 /* taskExecutor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = taskExecutor.h; sourceTree = "<group>"; };
+		DAB7E39B200EB59B00D57664 /* INetworkStream.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = INetworkStream.h; sourceTree = "<group>"; };
+		DAB7E39C200EB76600D57664 /* BLENetworkStream.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = BLENetworkStream.mm; sourceTree = "<group>"; };
+		DAB7E39E200EB77700D57664 /* BLENetworkStream.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BLENetworkStream.h; sourceTree = "<group>"; };
+		DAB7E39F200EB84200D57664 /* BLEPeripheral.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BLEPeripheral.h; sourceTree = "<group>"; };
+		DAB7E3A0200EB84F00D57664 /* BLEPeripheral.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = BLEPeripheral.mm; sourceTree = "<group>"; };
+		DAB7E3A2200EB8A600D57664 /* securePairing.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = securePairing.cpp; sourceTree = "<group>"; };
+		DAB7E3A4200EB8C000D57664 /* securePairing.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = securePairing.h; sourceTree = "<group>"; };
+		DAB7E3A5200EB8F800D57664 /* keyExchange.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = keyExchange.h; sourceTree = "<group>"; };
+		DAB7E3A6200EB92300D57664 /* BLEPairingController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BLEPairingController.h; sourceTree = "<group>"; };
+		DAB7E3AF200ED2ED00D57664 /* keyExchange.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = keyExchange.cpp; sourceTree = "<group>"; };
+		DAB9F286203663E9000E87C3 /* ipcBleStream.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ipcBleStream.cpp; sourceTree = "<group>"; };
+		DAB9F287203663E9000E87C3 /* ipcBleStream.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ipcBleStream.h; sourceTree = "<group>"; };
+		DAB9F28920366B14000E87C3 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		DACEF042200598FF00894864 /* ios-server.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "ios-server.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		DACEF045200598FF00894864 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
+		DACEF046200598FF00894864 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+		DACEF048200598FF00894864 /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
+		DACEF049200598FF00894864 /* ViewController.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = ViewController.mm; sourceTree = "<group>"; };
+		DACEF04C200598FF00894864 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		DACEF04F200598FF00894864 /* ios_server.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = ios_server.xcdatamodel; sourceTree = "<group>"; };
+		DACEF051200598FF00894864 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		DACEF054200598FF00894864 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		DACEF056200598FF00894864 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		DACEF057200598FF00894864 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		DACEF0652005994600894864 /* CoreBluetooth.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreBluetooth.framework; path = System/Library/Frameworks/CoreBluetooth.framework; sourceTree = SDKROOT; };
+		DAE4FC2720084519007D04BB /* sodium */ = {isa = PBXFileReference; lastKnownFileType = folder; path = sodium; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		DACEF03F200598FF00894864 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DA5EC9E620084554003ABD16 /* libsodium.a in Frameworks */,
+				DA27A5A6201D0AE800359EE0 /* NetworkExtension.framework in Frameworks */,
+				DACEF0662005994B00894864 /* CoreBluetooth.framework in Frameworks */,
+				DA27A6552023E86200359EE0 /* libev.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		DA27A63A2023DE1500359EE0 /* libev */ = {
+			isa = PBXGroup;
+			children = (
+				DA27A6532023E52400359EE0 /* libev.a */,
+				DA27A6402023DFFC00359EE0 /* ev.h */,
+				DA27A63F2023DFFC00359EE0 /* ev++.h */,
+				DA27A6412023DFFC00359EE0 /* event.h */,
+			);
+			path = libev;
+			sourceTree = "<group>";
+		};
+		DA8141B62011738800AC8A73 /* signals */ = {
+			isa = PBXGroup;
+			children = (
+				DA8141B7201173A700AC8A73 /* signalHolder.h */,
+				DA8141B8201173D900AC8A73 /* simpleSignal.hpp */,
+				DA8141B9201173F300AC8A73 /* simpleSignal_fwd.h */,
+			);
+			path = signals;
+			sourceTree = "<group>";
+		};
+		DAB7E39A200EB57500D57664 /* networking */ = {
+			isa = PBXGroup;
+			children = (
+				DA27A59B20193A6A00359EE0 /* pairingMessages.h */,
+				DA087F7220337866008F9639 /* bleMessageProtocol.h */,
+				DA087F7120337866008F9639 /* bleMessageProtocol.cpp */,
+				DAB7E39B200EB59B00D57664 /* INetworkStream.h */,
+				DAB9F286203663E9000E87C3 /* ipcBleStream.cpp */,
+				DAB9F287203663E9000E87C3 /* ipcBleStream.h */,
+				DAB7E3A4200EB8C000D57664 /* securePairing.h */,
+				DAB7E3A2200EB8A600D57664 /* securePairing.cpp */,
+				DAB7E3A5200EB8F800D57664 /* keyExchange.h */,
+				DAB7E3AF200ED2ED00D57664 /* keyExchange.cpp */,
+				DAACE278202E389000153C28 /* taskExecutor.h */,
+				DAACE277202E389000153C28 /* taskExecutor.cpp */,
+				DA27A63920229DD600359EE0 /* log.h */,
+				DA27A63420224F1100359EE0 /* libev.h */,
+				DAB9F28920366B14000E87C3 /* main.cpp */,
+				DA27A65E2029472700359EE0 /* switchboard.h */,
+				DA27A65D2029472700359EE0 /* switchboard.mm */,
+				DAB7E39E200EB77700D57664 /* BLENetworkStream.h */,
+				DAB7E39C200EB76600D57664 /* BLENetworkStream.mm */,
+				DAB7E39F200EB84200D57664 /* BLEPeripheral.h */,
+				DAB7E3A0200EB84F00D57664 /* BLEPeripheral.mm */,
+				DAB7E3A6200EB92300D57664 /* BLEPairingController.h */,
+				DA27A65820252F2F00359EE0 /* WiFiNetworkStream.h */,
+				DA27A65720252F2F00359EE0 /* WiFiNetworkStream.mm */,
+				DA27A65B20252F5C00359EE0 /* WifiServer.h */,
+				DA27A65A20252F5C00359EE0 /* WifiServer.cpp */,
+				DA27A6562024F1A000359EE0 /* IPAddress.h */,
+			);
+			path = networking;
+			sourceTree = "<group>";
+		};
+		DACEF039200598FF00894864 = {
+			isa = PBXGroup;
+			children = (
+				DACEF044200598FF00894864 /* ios-server */,
+				DACEF043200598FF00894864 /* Products */,
+				DACEF0642005994600894864 /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		DACEF043200598FF00894864 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				DACEF042200598FF00894864 /* ios-server.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		DACEF044200598FF00894864 /* ios-server */ = {
+			isa = PBXGroup;
+			children = (
+				DA27A63A2023DE1500359EE0 /* libev */,
+				DA27A5A2201C083900359EE0 /* ios-server.entitlements */,
+				DAE4FC2720084519007D04BB /* sodium */,
+				DA8141B62011738800AC8A73 /* signals */,
+				DAB7E39A200EB57500D57664 /* networking */,
+				DACEF045200598FF00894864 /* AppDelegate.h */,
+				DACEF046200598FF00894864 /* AppDelegate.m */,
+				DACEF048200598FF00894864 /* ViewController.h */,
+				DACEF049200598FF00894864 /* ViewController.mm */,
+				DACEF04B200598FF00894864 /* Main.storyboard */,
+				DACEF051200598FF00894864 /* Assets.xcassets */,
+				DACEF053200598FF00894864 /* LaunchScreen.storyboard */,
+				DACEF056200598FF00894864 /* Info.plist */,
+				DACEF057200598FF00894864 /* main.m */,
+				DACEF04E200598FF00894864 /* ios_server.xcdatamodeld */,
+			);
+			path = "ios-server";
+			sourceTree = "<group>";
+		};
+		DACEF0642005994600894864 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				DA27A5A5201D0AE800359EE0 /* NetworkExtension.framework */,
+				DA5EC9E520084554003ABD16 /* libsodium.a */,
+				DACEF0652005994600894864 /* CoreBluetooth.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		DACEF041200598FF00894864 /* ios-server */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DACEF05B200598FF00894864 /* Build configuration list for PBXNativeTarget "ios-server" */;
+			buildPhases = (
+				DACEF03E200598FF00894864 /* Sources */,
+				DACEF03F200598FF00894864 /* Frameworks */,
+				DACEF040200598FF00894864 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "ios-server";
+			productName = "ios-server";
+			productReference = DACEF042200598FF00894864 /* ios-server.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		DACEF03A200598FF00894864 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				KnownAssetTags = (
+					openssl,
+				);
+				LastUpgradeCheck = 0910;
+				ORGANIZATIONNAME = "Paul Aluri";
+				TargetAttributes = {
+					DACEF041200598FF00894864 = {
+						CreatedOnToolsVersion = 9.1;
+						ProvisioningStyle = Automatic;
+						SystemCapabilities = {
+							com.apple.HotspotConfiguration = {
+								enabled = 1;
+							};
+							com.apple.WAC = {
+								enabled = 0;
+							};
+						};
+					};
+				};
+			};
+			buildConfigurationList = DACEF03D200598FF00894864 /* Build configuration list for PBXProject "ios-server" */;
+			compatibilityVersion = "Xcode 8.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = DACEF039200598FF00894864;
+			productRefGroup = DACEF043200598FF00894864 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				DACEF041200598FF00894864 /* ios-server */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		DACEF040200598FF00894864 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DACEF055200598FF00894864 /* LaunchScreen.storyboard in Resources */,
+				DACEF052200598FF00894864 /* Assets.xcassets in Resources */,
+				DACEF04D200598FF00894864 /* Main.storyboard in Resources */,
+				DAE4FC282008451A007D04BB /* sodium in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		DACEF03E200598FF00894864 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DACEF050200598FF00894864 /* ios_server.xcdatamodeld in Sources */,
+				DAB7E3B0200ED2ED00D57664 /* keyExchange.cpp in Sources */,
+				DACEF04A200598FF00894864 /* ViewController.mm in Sources */,
+				DAACE279202E389000153C28 /* taskExecutor.cpp in Sources */,
+				DAB7E39D200EB76600D57664 /* BLENetworkStream.mm in Sources */,
+				DAB7E3A1200EB84F00D57664 /* BLEPeripheral.mm in Sources */,
+				DA27A65C20252F5C00359EE0 /* WifiServer.cpp in Sources */,
+				DACEF058200598FF00894864 /* main.m in Sources */,
+				DAB9F28A20366B14000E87C3 /* main.cpp in Sources */,
+				DAB7E3A3200EB8A600D57664 /* securePairing.cpp in Sources */,
+				DACEF047200598FF00894864 /* AppDelegate.m in Sources */,
+				DA27A65F2029472700359EE0 /* switchboard.mm in Sources */,
+				DA27A65920252F2F00359EE0 /* WiFiNetworkStream.mm in Sources */,
+				DAB9F288203663E9000E87C3 /* ipcBleStream.cpp in Sources */,
+				DA087F7320337866008F9639 /* bleMessageProtocol.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		DACEF04B200598FF00894864 /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				DACEF04C200598FF00894864 /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+		DACEF053200598FF00894864 /* LaunchScreen.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				DACEF054200598FF00894864 /* Base */,
+			);
+			name = LaunchScreen.storyboard;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		DACEF059200598FF00894864 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.1;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+			};
+			name = Debug;
+		};
+		DACEF05A200598FF00894864 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.1;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = iphoneos;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		DACEF05C200598FF00894864 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++14";
+				CODE_SIGN_ENTITLEMENTS = "ios-server/ios-server.entitlements";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = BEJF9NAYCL;
+				ENABLE_BITCODE = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
+				INFOPLIST_FILE = "ios-server/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					/usr/local/Cellar/openssl/1.0.2n/lib,
+					"$(PROJECT_DIR)/ios-server/sodium",
+					"$(PROJECT_DIR)/ios-server/libev",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.anki.paul.iosserver;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		DACEF05D200598FF00894864 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++14";
+				CODE_SIGN_ENTITLEMENTS = "ios-server/ios-server.entitlements";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = BEJF9NAYCL;
+				ENABLE_BITCODE = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
+				INFOPLIST_FILE = "ios-server/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					/usr/local/Cellar/openssl/1.0.2n/lib,
+					"$(PROJECT_DIR)/ios-server/sodium",
+					"$(PROJECT_DIR)/ios-server/libev",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.anki.paul.iosserver;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		DACEF03D200598FF00894864 /* Build configuration list for PBXProject "ios-server" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DACEF059200598FF00894864 /* Debug */,
+				DACEF05A200598FF00894864 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		DACEF05B200598FF00894864 /* Build configuration list for PBXNativeTarget "ios-server" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DACEF05C200598FF00894864 /* Debug */,
+				DACEF05D200598FF00894864 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCVersionGroup section */
+		DACEF04E200598FF00894864 /* ios_server.xcdatamodeld */ = {
+			isa = XCVersionGroup;
+			children = (
+				DACEF04F200598FF00894864 /* ios_server.xcdatamodel */,
+			);
+			currentVersion = DACEF04F200598FF00894864 /* ios_server.xcdatamodel */;
+			path = ios_server.xcdatamodeld;
+			sourceTree = "<group>";
+			versionGroupType = wrapper.xcdatamodel;
+		};
+/* End XCVersionGroup section */
+	};
+	rootObject = DACEF03A200598FF00894864 /* Project object */;
+}
