@@ -15,11 +15,14 @@ from collections import OrderedDict
 from shutil import copyfile
 from datetime import datetime
 
+def isAllowedChar(c):
+    return c.isalnum() or c == ' '
+
 def UnderscoreName(name):
-    return name.lower().replace(" ","_")
+    return filter(isAllowedChar, name).lower().replace(" ","_")
     
 def CamelCaseName(name, firstLower=False):
-    name = name.title().replace(" ","")
+    name = filter(isAllowedChar, name).title().replace(" ","")
     if firstLower:
         name = name[0].lower() + name[1:]
     return name
