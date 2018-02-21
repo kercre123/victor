@@ -101,7 +101,7 @@ TEST(EyeContact, GazeEstimationInterface){
       ASSERT_LT(blink.blinkAmountRight, 1.f);
       ASSERT_GT(blink.blinkAmountRight, 0.f);
 
-      ASSERT_EQ(imageNumber, 1);
+      ASSERT_GT(imageNumber, 1);
       return;
     } // if face found
 
