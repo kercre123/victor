@@ -59,10 +59,8 @@ namespace Anki {
       recvBufSize_ = 0;
     }
 
-    bool HAL::RadioSendPacket(const void *buffer, const u32 length, u8 socket)
+    bool HAL::RadioSendPacket(const void *buffer, const u32 length)
     {
-      (void)socket;
-
       if (server.HasClient()) {
         const ssize_t bytesSent = server.Send((char*)buffer, length);
         if (bytesSent < (ssize_t) length) {

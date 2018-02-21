@@ -181,7 +181,7 @@ namespace Anki {
 
       void UpdatePoseSnapshot()
       {
-        Localization::GetCurrentMatPose(ptStamp_.x, ptStamp_.y, angleStamp_);
+        Localization::GetCurrPose(ptStamp_.x, ptStamp_.y, angleStamp_);
       }
       
       Result SendPickAndPlaceResultMessage(const bool success,
