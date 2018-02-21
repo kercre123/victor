@@ -6,7 +6,7 @@
   "getOut"           : "Hiccup",
   "emergencyGetOut"  : "GuardDogPlayerSuccess",
   "loopEndCondition" : {
-    "conditionType"  : "RobotTouchGesture",
-    "touchGesture"  : "ContactSustain"
+    "conditionType"  : "RobotTouched",
+    "minTouchTime"   : 2.0
   }
 }

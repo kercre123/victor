@@ -27,7 +27,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionProxInRange.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotPlacedOnSlope.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotShaken.h"
-#include "engine/aiComponent/beiConditions/conditions/conditionRobotTouchGesture.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionRobotTouched.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionTimedDedup.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionTimerInRange.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionTriggerWordPending.h"
@@ -126,9 +126,9 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
       strategy = std::make_shared<ConditionRobotShaken>(config);
       break;
     }
-    case BEIConditionType::RobotTouchGesture:
+    case BEIConditionType::RobotTouched:
     {
-      strategy = std::make_shared<ConditionRobotTouchGesture>(config);
+      strategy = std::make_shared<ConditionRobotTouched>(config);
       break;
     }
     case BEIConditionType::TimerInRange:

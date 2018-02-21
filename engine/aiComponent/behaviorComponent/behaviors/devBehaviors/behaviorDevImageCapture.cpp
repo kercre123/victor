@@ -215,7 +215,7 @@ void BehaviorDevImageCapture::BehaviorUpdate()
   const bool wasTouched = (_touchStartedTime_s >= 0.0f);
 
   const bool isTouched = (_useCapTouch ? 
-                          GetBEI().GetTouchSensorComponent().IsTouched() :
+                          GetBEI().GetTouchSensorComponent().GetIsPressed() :
                           GetBEI().GetRobotInfo().IsPowerButtonPressed());
 
   if( wasTouched && !isTouched ) {

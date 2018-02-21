@@ -51,10 +51,8 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenWaitToStart::PlaypenUpdateInterna
   Robot& robot = GetBEI().GetRobotInfo()._robot;
 
   const TimeStamp_t curTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-  
-  const TouchGesture gesture = robot.GetTouchSensorComponent().GetLatestTouchGesture();
 
-  if(gesture == TouchGesture::ContactInitial && _touchStartTime_ms == 0)
+  if(robot.GetTouchSensorComponent().GetIsPressed() && _touchStartTime_ms == 0)
   {
     _touchStartTime_ms = curTime;
 
@@ -62,7 +60,7 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenWaitToStart::PlaypenUpdateInterna
     _lights.offColors[(int)LEDId::LED_BACKPACK_FRONT] = NamedColors::CYAN;
     _needLightUpdate = true;
   }
-  else if(gesture == TouchGesture::NoTouch && _touchStartTime_ms != 0)
+  else if(!robot.GetTouchSensorComponent().GetIsPressed() && _touchStartTime_ms != 0)
   {
     _touchStartTime_ms = 0;
 
