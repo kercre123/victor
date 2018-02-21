@@ -296,11 +296,6 @@ Blockly.hideChaff = function(opt_allowToolbox) {
         // *** ANKI CHANGE ***
         // Update delete areas now that flyout is closed. msintov, 9/1/17
         workspace.recordDeleteAreas();
-
-        // *** ANKI CHANGE ***
-        // Reduce toolbox width to only include toolbox itself instead of both toolbox and flyout, now that flyout is closed.
-        // TODO Read the 70 dynamically (from scratchCategoryMenu width setting in css.js) instead of hard-coding it.
-        workspace.toolbox_.setWidth(70);
       }
     }
   }

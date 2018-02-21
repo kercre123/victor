@@ -281,6 +281,10 @@ public static class CozmoBinding {
 
   public static bool IsOreoOrNewer()
   {
+#if UNITY_ANDROID && !UNITY_EDITOR
     return CozmoBinding.GetCurrentActivity().Call<int>("getSDKVersion") >= _kAndroidOreoSdkVersion;
+#else
+    return false;
+#endif
   }
 }

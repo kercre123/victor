@@ -1907,6 +1907,19 @@ Blockly.WorkspaceSvg.getTopLevelWorkspaceMetrics_ = function() {
 
   var toolboxDimensions =
       Blockly.WorkspaceSvg.getDimensionsPx_(this.toolbox_);
+
+  // *** ANKI CHANGE ***
+  // Force the toolbox width recognized here to be only the width without the flyout.
+  // This enables the user to drag their program closer to the toolbox.
+  // Unfortunately I was not able to find a better place to put this fix that
+  // didn't cause other badness like scripts jumping on workspace pan after project load
+  // or a newly dragged out block jumping. - msintov, 2/20/18
+  //
+  // TODO Retrieve this dynamically instead of hardcoding
+  if (window.isVertical) {
+    toolboxDimensions.width = 70;
+  }
+
   var flyoutDimensions =
       Blockly.WorkspaceSvg.getDimensionsPx_(this.flyout_);
 
