@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <termios.h>
 #include <sys/time.h>
 #include <sys/wait.h>
@@ -110,6 +111,37 @@ int handle_shell_timeout_test_command(const char* cmd, int len) {
   return 0;
 }
 
+int linelen(char *s) {
+  int len = 0;
+  while( s != NULL && *s > 0x1f && *s < 0x7e ) { len++; s++; }
+  return len;
+}
+
+#define EMMCDL_VERS_FILE "/data/local/fixture/emmcdl/version"
+#define EMMCDL_VERS_MAX 20
+int handle_get_emmcdl_ver_command(const char* cmd, int len)
+{
+  char buf[EMMCDL_VERS_MAX+1];
+  int vlen = 0;
+  
+  int fd = open(EMMCDL_VERS_FILE, O_RDONLY); //attempt to open version file
+  if (fd > 0) {
+    int rlen = read(fd, buf, EMMCDL_VERS_MAX);
+    buf[EMMCDL_VERS_MAX] = '\0'; //truncate long lines
+
+    if( rlen > 0 )
+      vlen = linelen(buf); //printable, single line
+    buf[vlen] = '\0';
+    
+    close(fd);
+  } else {
+    printf("file open error: %i (fd=%i)\n", errno, fd);
+  }
+  
+  printf(":%s\n", (vlen>0 ? buf : "file-error"));
+  return 0;
+}
+
 #define REGISTER_COMMAND(s) {#s, sizeof(#s)-1, handle_##s##_command}
 
 
@@ -130,6 +162,7 @@ static const CommandHandler handlers[] = {
   REGISTER_COMMAND(dutprogram),
   REGISTER_COMMAND(shell_timeout_test),
   {"shell-timeout-test", 18, handle_shell_timeout_test_command},
+  REGISTER_COMMAND(get_emmcdl_ver),
  /* ^^ insert new commands here ^^ */
   {0}
 };
