@@ -26,6 +26,7 @@
 #include "engine/vision/motionDetector.h"
 #include "engine/vision/overheadEdgesDetector.h"
 #include "engine/vision/overheadMap.h"
+#include "engine/vision/proxSensorImageAnalyzer.h"
 #include "engine/vision/visionModesHelpers.h"
 #include "engine/utils/cozmoFeatureGate.h"
 
@@ -208,6 +209,8 @@ namespace Cozmo {
     PRINT_CH_INFO(kLogChannelName, "VisionSystem.Init.DoneInstantiatingFaceTracker", "");
 
     _motionDetector.reset(new MotionDetector(_camera, _vizManager, config));
+
+    _proxSensorImageAnalyzer.reset(new ProxSensorImageAnalyzer(config));
 
     if (!config.isMember("OverheadMap")) {
       PRINT_NAMED_ERROR("VisionSystem.Init.MissingJsonParameter", "OverheadMap");
@@ -931,6 +934,12 @@ namespace Cozmo {
     return result;
   }
 
+  Result VisionSystem::UpdateProxSensorAnalyzer(const Vision::ImageRGB& image)
+  {
+    const Result result = _proxSensorImageAnalyzer->Update(image, _poseData, _currentResult.debugImageRGBs);
+    return result;
+  }
+
   Result VisionSystem::UpdateGroundPlaneClassifier(const Vision::ImageRGB& image)
   {
     Result result = _groundPlaneClassifier->Update(image, _poseData, _currentResult.debugImageRGBs,
@@ -1460,6 +1469,15 @@ namespace Cozmo {
       }
       visionModesProcessed.SetBitFlag(VisionMode::DetectingMotion, true);
       Toc("TotalDetectingMotion");
+    }
+
+    if (ShouldProcessVisionMode(VisionMode::AnalyzingProxSensor)) {
+      auto tictoc = TicToc("AnalyzingProxSensor.Update");
+      if((lastResult = UpdateProxSensorAnalyzer(imageCache.GetRGB())) != RESULT_OK) {
+        PRINT_NAMED_ERROR("VisionSystem.Update.ShouldProcessVisionMode.Failed", "");
+        return lastResult;
+      }
+      visionModesProcessed.SetBitFlag(VisionMode::AnalyzingProxSensor, true);
     }
 
     if (ShouldProcessVisionMode(VisionMode::BuildingOverheadMap))

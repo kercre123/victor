@@ -83,6 +83,7 @@ namespace Cozmo {
   class Robot;
   class VizManager;
   class GroundPlaneClassifier;
+  class ProxSensorImageAnalyzer;
   
   // Everything that can be generated from one image in one big package:
   struct VisionProcessingResult
@@ -306,15 +307,16 @@ namespace Cozmo {
     VizManager*                   _vizManager = nullptr;
 
     // Sub-components for detection/tracking/etc:
-    std::unique_ptr<Vision::FaceTracker>    _faceTracker;
-    std::unique_ptr<Vision::PetTracker>     _petTracker;
-    std::unique_ptr<Vision::MarkerDetector> _markerDetector;
-    std::unique_ptr<LaserPointDetector>     _laserPointDetector;
-    std::unique_ptr<MotionDetector>         _motionDetector;
-    std::unique_ptr<OverheadEdgesDetector>  _overheadEdgeDetector;
-    std::unique_ptr<CameraCalibrator>       _cameraCalibrator;
-    std::unique_ptr<OverheadMap>            _overheadMap;
-    std::unique_ptr<GroundPlaneClassifier>  _groundPlaneClassifier;
+    std::unique_ptr<Vision::FaceTracker>     _faceTracker;
+    std::unique_ptr<Vision::PetTracker>      _petTracker;
+    std::unique_ptr<Vision::MarkerDetector>  _markerDetector;
+    std::unique_ptr<LaserPointDetector>      _laserPointDetector;
+    std::unique_ptr<MotionDetector>          _motionDetector;
+    std::unique_ptr<OverheadEdgesDetector>   _overheadEdgeDetector;
+    std::unique_ptr<CameraCalibrator>        _cameraCalibrator;
+    std::unique_ptr<OverheadMap>             _overheadMap;
+    std::unique_ptr<GroundPlaneClassifier>   _groundPlaneClassifier;
+    std::unique_ptr<ProxSensorImageAnalyzer> _proxSensorImageAnalyzer;
 
     std::unique_ptr<Vision::Benchmark>      _benchmark;
     std::unique_ptr<Vision::ObjectDetector> _generalObjectDetector;
@@ -358,6 +360,8 @@ namespace Cozmo {
     
     // Will use color if not empty, or gray otherwise
     Result DetectMotion(Vision::ImageCache& imageCache);
+
+    Result UpdateProxSensorAnalyzer(const Vision::ImageRGB& image);
 
     Result UpdateOverheadMap(const Vision::ImageRGB& image);
 

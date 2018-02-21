@@ -25,6 +25,7 @@ namespace Cozmo {
     DetectingLaserPoints,
     BuildingOverheadMap,
     DetectingVisualObstacles,
+    AnalyzingProxSensor,
     Benchmarking,
     SavingImages,
     DetectingGeneralObjects, // I.e. via Deep CNN / TensorFlow
