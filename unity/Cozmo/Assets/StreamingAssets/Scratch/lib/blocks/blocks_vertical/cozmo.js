@@ -305,8 +305,8 @@ Blockly.Blocks['cozmo_sound_sounds_menu'] = {
               ['%{BKY_SOUND_BLIP_1}','39'],
               ['%{BKY_SOUND_BLIP_2}','40'],
               ['%{BKY_SOUND_BLIP_3}','41'],
-              ['%{BKY_SOUND_BOUNCE}','42']
-              // ['%{BKY_SOUND_TWINKLE}','43'],
+              ['%{BKY_SOUND_BOUNCE}','42'],
+              ['%{BKY_SOUND_TWINKLE}','43']
               // ['%{BKY_SOUND_MORSE_CODE_DOT}','44'],
               // ['%{BKY_SOUND_MORSE_CODE_DASH}','45'],
               // ['%{BKY_SOUND_MORSE_CODE_SPACE}','46'],
