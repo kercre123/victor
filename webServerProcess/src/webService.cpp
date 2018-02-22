@@ -886,8 +886,8 @@ void WebService::Update()
 
             Anki::Util::IConsoleFunction* consoleFunc = consoleSystem.FindFunction(func.c_str());
             if (consoleFunc) {
-              // 64KB to accommodate output of animation names
-              char outText[65536+1] = {0};
+              // 256KB to accommodate output of animation names
+              char outText[256*1024+1] = {0};
               uint32_t outTextLength = sizeof(outText);
 
               ExternalOnlyConsoleChannel consoleChannel(outText, outTextLength);

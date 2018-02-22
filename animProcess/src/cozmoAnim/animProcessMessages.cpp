@@ -26,6 +26,7 @@
 #include "audioEngine/multiplexer/audioMultiplexer.h"
 
 #include "coretech/common/engine/utils/timer.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
 
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -67,6 +68,55 @@ namespace {
 
   CONSOLE_VAR(bool, kDebugFaceDraw_CycleWithButton, "DebugFaceDraw", true);   
 
+  static void ListAnimations(ConsoleFunctionContextRef context)
+  {
+    context->channel->WriteLog("<html>\n");
+    context->channel->WriteLog("<h1>Animations</h1>\n");
+    std::vector<std::string> names = _context->GetDataLoader()->GetAnimationNames();
+    for(const auto& name : names) {
+      std::string url = "consolefunccall?func=playanimation&args="+name+"+1";
+      std::string html = "<a href=\""+url+"\">"+name+"</a>&nbsp\n";
+      context->channel->WriteLog(html.c_str());
+    }
+    context->channel->WriteLog("</html>\n");
+  }
+
+  static void PlayAnimation(ConsoleFunctionContextRef context)
+  {
+    const char* name = ConsoleArg_Get_String(context, "name");
+    if (name) {
+      int numLoops = ConsoleArg_GetOptional_Int(context, "numLoops", 1);
+      _animStreamer->SetStreamingAnimation(name, /*tag*/ 1, numLoops, /*interruptRunning*/ true);
+
+      char numLoopsStr[4+1];
+      snprintf(numLoopsStr, sizeof(numLoopsStr), "%d", (numLoops > 9999) ? 9999 : numLoops);
+      std::string text = std::string("Playing ")+name+" "+numLoopsStr+" times<br>";
+      context->channel->WriteLog(text.c_str());
+    } else {
+      context->channel->WriteLog("PlayAnimation name not specified.");
+    }
+  }
+
+  static void AddAnimation(ConsoleFunctionContextRef context)
+  {
+    const char* path = ConsoleArg_Get_String(context, "path");
+    if (path) {
+      const std::string animationFolder = _context->GetDataPlatform()->pathToResource(Anki::Util::Data::Scope::Resources, "/assets/animations/");
+      std::string animationPath = animationFolder + path;
+
+      _context->GetDataLoader()->LoadAnimationFile(animationPath.c_str());
+
+      std::string text = "Adding animation ";
+      text += animationPath;
+      context->channel->WriteLog(text.c_str());
+    } else {
+      context->channel->WriteLog("PlayAnimation name not specified.");
+    }
+  }
+
+  CONSOLE_FUNC(ListAnimations, "Animations");
+  CONSOLE_FUNC(PlayAnimation, "Animations", const char* name, optional int numLoops);
+  CONSOLE_FUNC(AddAnimation, "Animations", const char* path);
 }
 
 namespace Anki {

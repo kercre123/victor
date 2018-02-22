@@ -29,6 +29,7 @@
 
 #include "osState/osState.h"
 
+#include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
 #include "util/time/universalTime.h"
 
