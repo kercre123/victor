@@ -39,6 +39,8 @@ namespace Switchboard {
     
   private:
     static const uint8_t kMultipartBits = 0b11 << 6;
+    static const uint8_t kSizeBits = 0b00111111;
+    static const uint8_t kEncryptedBit = 0b1 << 5;
     static const uint8_t kMsgStart = 0b10;
     static const uint8_t kMsgContinue = 0b00;
     static const uint8_t kMsgEnd = 0b01;
@@ -72,7 +74,7 @@ namespace Switchboard {
     }
     
     static inline uint8_t GetSize(uint8_t msgSize) {
-      return msgSize & (~kMultipartBits);
+      return msgSize & (kSizeBits);
     }
     
     BleMessageSignal _sendRawBufferSignal;
