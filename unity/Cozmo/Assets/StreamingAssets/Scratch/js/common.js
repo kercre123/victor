@@ -91,8 +91,8 @@
      * @return {void}
      */
     function onLoad () {
+        window.TABLET_WIDTH = 813; // Sam C. - increased to 813 to handle iPhone X (812x375)
         //console.log("ANKIPERFTEST common.js onLoad top, about to construct vm");
-        window.TABLET_WIDTH = 800;
 
         checkForObjectAssignSupport();
 

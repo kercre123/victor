@@ -90,6 +90,8 @@ button:focus {
   height: 100%;
   background-repeat: no-repeat;
   font-size: 3.5vh;
+  margin-left: 0;
+  margin-left: calc(env(safe-area-inset-left) / 2);
 }
 
 #projects .tab-hero .tab-hero-text {
@@ -140,7 +142,9 @@ button:focus {
   left: 0;
   height: 100%;
   list-style-type: none;
-  padding: 0 0 9vh 50%;   /* use padding to shift so dragging hero img scrolls projects */
+  padding: 0 0 9vh 50%; /* use padding to shift so dragging hero img scrolls projects */
+  padding: 0 0 9vh calc(50% + (constant(safe-area-inset-left) / 2)); /* Sam C. - const() for < iOS 11.2*/
+  padding: 0 0 9vh calc(50% + (env(safe-area-inset-left) / 2)); /* Sam C. - iPhone X fix using iOS11 CSS property*/
   margin: 0;
   text-align: left;
   white-space: nowrap;

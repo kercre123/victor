@@ -64,15 +64,15 @@ button:focus {
 #close .primary {
     display: block;
     position: absolute;
-    top: 20px;
-    left: 15px;
+    top: 3vh;
+    left: 2vw;
 }
 
 #close .primary button {
     display: block;
     position: relative;
-    width: 54px;
-    height: 54px;
+    width: 4vw;
+    height: 4vw;
     background-color: transparent;
     background-image: url('../images/ui/close.svg');
     background-size: cover;
@@ -81,7 +81,7 @@ button:focus {
 }
 
 #close .primary button:active {
-    background-position:0px -54px;
+    background-position:0px -4vw;
 }
 
 /**
@@ -100,15 +100,15 @@ button:focus {
 
 #challenges .primary {
     position: absolute;
-    top: 20px;
-    left: 100px;
+    top: 3vh;
+    left: 8vw;
 }
 
 #challenges .primary button {
     display: block;
     position: relative;
-    width: 54px;
-    height: 54px;
+    width: 4vw;
+    height: 4vw;
     background-color: transparent;
     background-image: url('../images/ui/challenges.svg');
     background-size: cover;
@@ -117,7 +117,7 @@ button:focus {
 }
 
 #challenges .primary button:active {
-    background-position: 0 -54px;
+    background-position: 0 -4vw;
 }
 
 /**
@@ -138,15 +138,15 @@ button:focus {
 #tutorial .primary {
     display: block;
     position: absolute;
-    top: 20px;
-    left: 185px;
+    top: 3vh;
+    left: 14vw;
 }
 
 #tutorial .primary button {
     display: block;
     position: relative;
-    width: 54px;
-    height: 54px;
+    width: 4vw;
+    height: 4vw;
     background-color: transparent;
     background-image: url('../images/ui/tutorials.svg');
     background-size: cover;
@@ -155,7 +155,7 @@ button:focus {
 }
 
 #tutorial .primary button:active {
-    background-position:0px -54px;
+    background-position:0px -4vw;
 }
 
 /**
@@ -176,15 +176,15 @@ button:focus {
 #exportbtn .primary {
     display: block;
     position: absolute;
-    top: 20px;
-    left: 270px;
+    top: 3vh;
+    left: 20vw;
 }
 
 #exportbtn .primary button {
     display: block;
     position: relative;
-    width: 54px;
-    height: 54px;
+    width: 4vw;
+    height: 4vw;
     background-color: transparent;
     background-image: url('../images/ui/export.svg');
     background-size: cover;
@@ -193,7 +193,7 @@ button:focus {
 }
 
 #exportbtn .primary button:active {
-    background-position:0px -54px;
+    background-position:0px -4vw;
 }
 
 /**
@@ -316,8 +316,8 @@ button:focus {
 #navigation {
     display: block;
     position: absolute;
-    top: 150px;
-    left: calc(100% - 80px);
+    top: 24vh;
+    left: calc(100% - 6vw);
     width: 5%;
     height: 170px;
     z-index: 1;
@@ -333,8 +333,8 @@ button:focus {
 #navigation .greenflag button {
     display: block;
     position: relative;
-    width: 54px;
-    height: 54px;
+    width: 4vw;
+    height: 4vw;
     background-color: transparent;
     background-image: url('../images/ui/greenflag.svg');
     background-size: cover;
@@ -344,7 +344,7 @@ button:focus {
 }
 
 #navigation .greenflag button:active {
-    background-position:0px -54px;
+    background-position:0px -4vw;
 }
 
 .is-program-running #navigation .greenflag button {
@@ -355,14 +355,14 @@ button:focus {
 #navigation .stop {
     display: block;
     position: absolute;
-    top: 90px;
+    top: 14vh;
 }
 
 #navigation .stop button {
     display: block;
     position: relative;
-    width: 54px;
-    height: 54px;
+    width: 4vw;
+    height: 4vw;
     background-color: transparent;
     background-image: url('../images/ui/stop.svg');
     background-size: cover;
@@ -371,7 +371,7 @@ button:focus {
 }
 
 #navigation .stop button:active {
-    background-position:0px -54px;
+    background-position:0px -4vw;
 }
 
 #navigation .stop button img {

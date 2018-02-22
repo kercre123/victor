@@ -40,9 +40,16 @@ button:focus {
     position: absolute;
     left: 0;
     top: 0;
-    width: 100%;
+    width:100%;
+    /* Sam C. - Just adding padding causes the window to scroll horizontally - adjust the
+    width back down inside the screen bounds to stop that */
+    width: calc(100% - constant(env(safe-area-inset-left) / 2)); /* iOS 11.0*/
+    width: calc(100% - calc(env(safe-area-inset-left) / 2)); /* iOS 11.2+*/
     height: 100%;
     font-family: 'Avenir Next';
+    padding-left: 0;
+    padding-left: calc(constant(safe-area-inset-left) / 2); /* iOS 11.0 */
+    padding-left: calc(env(safe-area-inset-left) / 2); /* iOS 11.2+ */
 }
 
 /**
@@ -64,15 +71,15 @@ button:focus {
 #close .primary {
     display: block;
     position: absolute;
-    top: 20px;
-    left: 15px;
+    top: 3vh;
+    left: 2vw;
 }
 
 #close .primary button {
     display: block;
     position: relative;
-    width: 54px;
-    height: 54px;
+    width: 4vw;
+    height: 4vw;
     background-color: transparent;
     background-image: url('../images/ui/close.svg');
     background-size: cover;
@@ -81,7 +88,7 @@ button:focus {
 }
 
 #close .primary button:active {
-    background-position:0px -54px;
+    background-position:0px -4vw;
 }
 
 /**
@@ -99,15 +106,15 @@ button:focus {
 
 #glossary-button .primary {
     position: absolute;
-    top: 20px;
-    left: 100px;
+    top: 3vh;
+    left: 8vw;
 }
 
 #glossary-button .primary button {
     display: block;
     position: relative;
-    width: 54px;
-    height: 54px;
+    width: 4vw;
+    height: 4vw;
     background-color: transparent;
     background-image: url('../images/ui/glossary.svg');
     background-size: cover;
@@ -116,7 +123,7 @@ button:focus {
 }
 
 #glossary-button .primary button:active {
-    background-position: 0 -54px;
+    background-position: 0 -4vw;
 }
 
 /**
@@ -137,15 +144,15 @@ button:focus {
 #exportbtn .primary {
     display: block;
     position: absolute;
-    top: 20px;
-    left: 185px;
+    top: 3vh;
+    left: 14vw;
 }
 
 #exportbtn .primary button {
     display: block;
     position: relative;
-    width: 54px;
-    height: 54px;
+    width: 4vw;
+    height: 4vw;
     background-color: transparent;
     background-image: url('../images/ui/export.svg');
     background-size: cover;
@@ -154,7 +161,7 @@ button:focus {
 }
 
 #exportbtn .primary button:active {
-    background-position:0px -54px;
+    background-position:0px -4vw;
 }
 
 /**
@@ -281,10 +288,10 @@ button:focus {
 #navigation {
     display: block;
     position: absolute;
-    top: 150px;
-    left: calc(100% - 80px);
+    top: 26vh;
+    left: calc(100% - 7vw);
     width: 5%;
-    height: 170px;
+    height: 22vh;
     z-index: 1;
     pointer-events: none;
     border-width: 2px;
@@ -296,13 +303,14 @@ button:focus {
 #navigation .greenflag {
     display: block;
     position: absolute;
+    left:1vh;
 }
 
 #navigation .greenflag button {
     display: block;
     position: relative;
-    width: 54px;
-    height: 54px;
+    width: 4vw;
+    height: 4vw;
     background-color: transparent;
     background-image: url('../images/ui/greenflag.svg');
     background-size: cover;
@@ -312,7 +320,7 @@ button:focus {
 }
 
 #navigation .greenflag button:active {
-    background-position:0px -54px;
+    background-position:0px -4vw;
 }
 
 .is-program-running #navigation .greenflag button {
@@ -323,14 +331,15 @@ button:focus {
 #navigation .stop {
     display: block;
     position: absolute;
-    top: 90px;
+    top: 12vh;
+    left:1vh;
 }
 
 #navigation .stop button {
     display: block;
     position: relative;
-    width: 54px;
-    height: 54px;
+    width: 4vw;
+    height: 4vw;
     background-color: transparent;
     background-image: url('../images/ui/stop.svg');
     background-size: cover;
@@ -339,7 +348,7 @@ button:focus {
 }
 
 #navigation .stop button:active {
-    background-position:0px -54px;
+    background-position:0px -4vw;
 }
 
 #navigation .stop button img {
@@ -354,10 +363,10 @@ button:focus {
 #undoRedo {
     display: block;
     position: absolute;
-    top: 345px;
-    left: calc(100% - 80px);
+    top: 49vh;
+    left: calc(100% - 7vw);
     width: 5%;
-    height: 160px;
+    height: 20vh;
     z-index: 1;
     pointer-events: none;
     border-width: 2px;
@@ -369,13 +378,14 @@ button:focus {
 #undoRedo .redo {
     display: block;
     position: absolute;
+    left:1vh;
 }
 
 #undoRedo .redo button {
     display: block;
     position: relative;
-    width: 54px;
-    height: 54px;
+    width: 4vw;
+    height: 4vw;
     background-color: transparent;
     background-image: url('../lib/blocks/media/rotate-right.svg');
     background-size: cover;
@@ -384,7 +394,7 @@ button:focus {
 }
 
 #undoRedo .redo button:active {
-    background-position:0px -54px;
+    background-position:0px -4vw;
 }
 
 #undoRedo .redo button img {
@@ -396,14 +406,15 @@ button:focus {
 #undoRedo .undo {
     display: block;
     position: absolute;
-    top: 85px;
+    top: 10vh;
+    left:1vh;
 }
 
 #undoRedo .undo button {
     display: block;
     position: relative;
-    width: 54px;
-    height: 54px;
+    width: 4vw;
+    height: 4vw;
     background-color: transparent;
     background-image: url('../lib/blocks/media/rotate-left.svg');
     background-size: cover;
@@ -412,7 +423,7 @@ button:focus {
 }
 
 #undoRedo .undo button:active {
-    background-position:0px -54px;
+    background-position:0px -4vw;
 }
 
 #undoRedo .undo button img {
@@ -427,10 +438,9 @@ button:focus {
 #zoomControls {
     display: block;
     position: absolute;
-    top: 525px;
-    left: calc(100% - 80px);
+    top: 70vh;
+    left: calc(100% - 7vw);
     width: 5%;
-    height: 200px;
     z-index: 1;
     pointer-events: none;
 }
@@ -438,13 +448,14 @@ button:focus {
 #zoomControls .zoomIn {
     display: block;
     position: absolute;
+    left:1vh;
 }
 
 #zoomControls .zoomIn button {
     display: block;
     position: relative;
-    width: 54px;
-    height: 54px;
+    width: 4vw;
+    height: 4vw;
     background-color: transparent;
     background-image: url('../lib/blocks/media/zoom-in.svg');
     background-size: cover;
@@ -453,7 +464,7 @@ button:focus {
 }
 
 #zoomControls .zoomIn button:active {
-    background-position:0px -54px;
+    background-position:0px -4vw;
 }
 
 #zoomControls .zoomIn button img {
@@ -465,14 +476,15 @@ button:focus {
 #zoomControls .zoomOut {
     display: block;
     position: absolute;
-    top: 80px;
+    top: 9vh;
+    left:1vh;
 }
 
 #zoomControls .zoomOut button {
     display: block;
     position: relative;
-    width: 54px;
-    height: 54px;
+    width: 4vw;
+    height: 4vw;
     background-color: transparent;
     background-image: url('../lib/blocks/media/zoom-out.svg');
     background-size: cover;
@@ -481,7 +493,7 @@ button:focus {
 }
 
 #zoomControls .zoomOut button:active {
-    background-position:0px -54px;
+    background-position:0px -4vw;
 }
 
 #zoomControls .zoomOut button img {
@@ -493,14 +505,15 @@ button:focus {
 #zoomControls .zoomReset {
     display: block;
     position: absolute;
-    top: 160px;
+    top: 18vh;
+    left:1vh;
 }
 
 #zoomControls .zoomReset button {
     display: block;
     position: relative;
-    width: 54px;
-    height: 54px;
+    width: 4vw;
+    height: 4vw;
     background-color: transparent;
     background-image: url('../lib/blocks/media/zoom-reset.svg');
     background-size: cover;
@@ -509,7 +522,7 @@ button:focus {
 }
 
 #zoomControls .zoomReset button:active {
-    background-position:0px -54px;
+    background-position:0px -4vw;
 }
 
 #zoomControls .zoomReset button img {
