@@ -11,8 +11,7 @@ TOOLS_PATH='tools/ai'
 BEHAVIOR_CODE_PATH='engine/aiComponent/behaviorComponent/behaviors'
 BEHAVIOR_CONFIG_PATH='resources/config/engine/behaviorComponent/behaviors'
 
-# GENERATED_CODE_PATH='generated/behaviors/behaviorContainerGenerated.cpp'
-GENERATED_BEHAVIOR_CONTAINER_CODE_PATH='engine/aiComponent/behaviorComponent/behaviorContainerGenerated.cpp'
+GENERATED_BEHAVIOR_FACTORY_CODE_PATH='engine/aiComponent/behaviorComponent/behaviorFactory.cpp'
 GENERATED_BEHAVIOR_CLASS_CLAD_PATH='clad/src/clad/types/behaviorComponent/behaviorClasses.clad'
 GENERATED_BEHAVIOR_ID_CLAD_PATH='clad/src/clad/types/behaviorComponent/behaviorIDs.clad'
 
@@ -105,8 +104,8 @@ if __name__ == "__main__":
     behavior_classes = get_behavior_classes(behaviors_code_path)
     print('found {} behavior class files'.format(len(behavior_classes)))
 
-    container_cpp_path = os.path.join(repo_root, GENERATED_BEHAVIOR_CONTAINER_CODE_PATH)        
-    write_behavior_container_cpp(container_cpp_path, behavior_classes, BEHAVIOR_CODE_PATH)
+    factory_cpp_path = os.path.join(repo_root, GENERATED_BEHAVIOR_FACTORY_CODE_PATH)        
+    write_behavior_factory_cpp(factory_cpp_path, behavior_classes, BEHAVIOR_CODE_PATH)
 
     class_clad_path = os.path.join(repo_root, GENERATED_BEHAVIOR_CLASS_CLAD_PATH)
     write_behavior_class_clad(class_clad_path, behavior_classes)

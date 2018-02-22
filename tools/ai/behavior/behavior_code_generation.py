@@ -16,23 +16,25 @@ auto_generated_comment =  '''\
 // and re-run ./tools/ai/generateBehavior.py
 '''
 
-container_file_template = '''\
+factory_file_template = '''\
 ${auto_generated_comment}
-//
-// This file creates behaviors from behavior types where the behavior class and
-// file name both match Behavior{BEHAVIOR_CLASS}.h/cpp
+// This factory creates behaviors from behavior JSONs with a specified
+// `behavior_class` where the behavior C++ class name and file name both match
+// Behavior{behavior_class}.h/cpp
 
-#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
-
-#include "clad/types/behaviorComponent/behaviorTypes.h"
+#include "engine/aiComponent/behaviorComponent/behaviorFactory.h"
 
 $includes
+
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 
 namespace Anki {
 namespace Cozmo {
 
-ICozmoBehaviorPtr BehaviorContainer::CreateBehavior_generated(BehaviorClass behaviorType, const Json::Value& config) const
+ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
 {
+  const BehaviorClass behaviorType = ICozmoBehavior::ExtractBehaviorClassFromConfig(config);
+
   ICozmoBehaviorPtr newBehavior;
 
   switch (behaviorType)
@@ -60,13 +62,13 @@ def generate_factory_case(behavior):
     '''.format(behavior_class = behavior.class_name)
 
 
-def write_behavior_container_cpp(filename, behaviors, path_to_behavior_code):
+def write_behavior_factory_cpp(filename, behaviors, path_to_behavior_code):
     '''
-    Write a behavior container cpp file to `filename` that contains a factory for
+    Write a behavior factory cpp file to `filename` that contains a factory for
     making all of the BehaviorClass objects in the `behaviors` list
     '''
     with open(filename, 'w') as outfile:
-        t = Template(container_file_template)
+        t = Template(factory_file_template)
         d = {}
         d['includes'] = os.linesep.join( [generate_include(x, path_to_behavior_code) for x in behaviors] )
         d['factory_case_statements'] = os.linesep.join( [generate_factory_case(x) for x in behaviors] )
