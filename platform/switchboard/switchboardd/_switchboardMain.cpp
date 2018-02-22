@@ -1,8 +1,8 @@
 #include <stdio.h> 
 #include <sodium.h>
 #include <signals/simpleSignal.hpp>
-#include "anki-ble/log.h"
 #include "libev/libev.h"
+#include "anki-ble/log.h"
 #include "anki-ble/bleClient.h"
 #include "switchboardd/securePairing.h"
 
@@ -20,7 +20,6 @@ void Tick(struct ev_loop* loop, struct ev_timer* w, int revents);
 
 int main() {
   defaultLoop = ev_default_loop(0);
-
   taskExecutor = new Anki::TaskExecutor(defaultLoop);
 
   StartBleComms();
@@ -39,10 +38,10 @@ void StartBleComms() {
 
 void OnConnected(int connId, Anki::Switchboard::IpcBleStream* stream) {
   taskExecutor->Wake([stream]() {
-    logi("Connected to a BLE central.");
+    printf("Connected to a BLE central.\n");
 
     if(securePairing == nullptr) {
-      securePairing = new Anki::Switchboard::SecurePairing(stream, ev_default_loop(0));
+      securePairing = new Anki::Switchboard::SecurePairing(stream, defaultLoop);
       securePairing->OnUpdatedPinEvent().SubscribeForever(OnPinUpdated);
       ///sWifiHandle = sSecurePairing->OnReceivedWifiCredentialsEvent().ScopedSubscribe(OnReceiveWifiCredentials);
     }
@@ -57,5 +56,5 @@ void OnPinUpdated(std::string pin) {
 }
 
 void Tick(struct ev_loop* loop, struct ev_timer* w, int revents) {  
-  printf("Tick!\n");
+  // noop
 }
