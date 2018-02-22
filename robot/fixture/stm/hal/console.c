@@ -5,6 +5,7 @@
 #include <string.h>
 #include "app.h"
 #include "board.h"
+#include "cmd.h"
 #include "console.h"
 #include "crypto/crypto.h"
 #include "fixture.h"
@@ -378,6 +379,28 @@ static void BinVersionCmd(void)
   binPrintInfo(format_csv);
 }
 
+extern void HelperLcdSetLine(int n, const char* line);
+static void emmcdlVersionCmd(void)
+{
+  int display = 0, timeout_ms = 0;
+  try {
+    display = strtol(GetArgument(1),0,0);
+    timeout_ms = strtol(GetArgument(2),0,0);
+  } catch (int e) { }
+  
+  timeout_ms = timeout_ms < 1 ? CMD_DEFAULT_TIMEOUT : (timeout_ms > 600000 ? 600000 : timeout_ms);
+  
+  //read version from head and format display string
+  char b[31]; int bz=sizeof(b);
+  snformat(b,bz,"emmcdl: %s", cmdGetEmmcdlVersion(timeout_ms));
+  ConsolePrintf("%s\n", b);
+  
+  if( display ) {
+    HelperLcdSetLine(2, b);
+    SetFixtureText();
+  }
+}
+
 static void DutProgCmd_(void)
 {
   int enable = 0;
@@ -440,6 +463,7 @@ static CommandFunction m_functions[] =
   {"AllowOutdated", AllowOutdated, FALSE},
   {"GetSerial", GetSerialCmd, FALSE},
   {"BinVersion", BinVersionCmd, FALSE},
+  {"emmcdlVersion", emmcdlVersionCmd, FALSE},
   {"SetDateCode", SetDateCode, FALSE},
   {"SetLotCode", SetLotCode, FALSE},
   {"SetMode", SetMode, FALSE},
