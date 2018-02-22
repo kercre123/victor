@@ -119,8 +119,8 @@ bool LineSegment::IntersectsAt(const LineSegment& l, Point2f& location) const {
   if (div == 0) { // collinear or overlapping
     return false;
   }
-  Point2f d = -Point2f(det(this->from, this->to),
-                       det(l.from, l.to));
+  Point2f d = Point2f(det(this->to, this->from),
+                      det(l.to, l.from));
   location.x() = det(d, xdiff) / div;
   location.y() = det(d, ydiff) / div;
   return true;
