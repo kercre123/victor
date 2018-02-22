@@ -41,8 +41,11 @@
       "user_intent": "play_specific"
     },
     {
-      "cloud_intent": "intent_meet_victor",
-      "user_intent": "meet_victor"
+      "app_intent": "intent_meet_victor",
+      "user_intent": "meet_victor",
+      "app_substitutions": {
+        "param": "name"
+      }
     }
   ],
 

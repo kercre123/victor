@@ -610,6 +610,17 @@ message RequestPyramidPreReqState{
 message NotifyCozmoWakeup{
 }
 
+// The app requests that the robot perform some non-instantaneous action, usually
+// an action with an associated voice command, such as "go to your charger"
+// todo (VIC-1398): eventually AppIntent should be its own union of structures, but
+// currently there's only one intent, with one arg, and it's not possible to transmit
+// a union over the temporary webservice handler. This will need replacing once the
+// real app->engine channel is working
+message AppIntent {
+  string intent,
+  string param,
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // BlockWorld
 ///////////////////////////////////////////////////////////////////////////////

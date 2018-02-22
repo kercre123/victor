@@ -33,6 +33,11 @@ class CozmoContext;
 class Robot;
 class UserIntent;
 class UserIntentMap;
+  
+namespace ExternalInterface{
+struct AppIntent;
+}
+
 
 class UserIntentComponent : public IDependencyManagedComponent<BCComponentID>, private Util::noncopyable
 {
@@ -132,6 +137,9 @@ private:
   // callback from the cloud
   void OnCloudData(std::string&& data);
   
+  // message received from app
+  void OnAppIntent( const ExternalInterface::AppIntent& appIntent );
+  
   std::string GetServerName(const Robot& robot) const;
   
   void SendWebVizIntents();
@@ -166,6 +174,7 @@ private:
   const CozmoContext* _context = nullptr; // for webviz
   
   std::string _devLastReceivedCloudIntent;
+  std::string _devLastReceivedAppIntent;
   
   
 

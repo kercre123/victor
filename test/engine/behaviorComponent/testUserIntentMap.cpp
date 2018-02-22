@@ -14,6 +14,8 @@
 
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntents.h"
+#include "engine/externalInterface/externalInterface.h"
+#include "engine/robot.h"
 
 #include "clad/types/behaviorComponent/userIntent.h"
 
@@ -53,11 +55,18 @@ const std::string& testMapConfig = R"json(
     {
       "cloud_intent": "cloud_time_intent_substitution",
       "user_intent": "test_timeWithUnits",
-      "substitutions": {
+      "cloud_substitutions": {
         "timer-duration.time": "time",
         "timer-duration.units": "units"
       },
-      "numerics": ["timer-duration.time"]
+      "cloud_numerics": ["timer-duration.time"]
+    },
+    {
+      "app_intent": "intent_meet_victor",
+      "user_intent": "meet_victor",
+      "app_substitutions": {
+        "param": "name"
+      }
     }
   ],
 
@@ -234,6 +243,56 @@ TEST(UserIntentMap, CloudIntent)
   EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_1)));
   EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_user_intent_2)));
   EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(unmatched_intent)));
+}
+  
+TEST(UserIntentMap, AppIntent)
+{
+  TestBehaviorFramework testBehaviorFramework;
+  
+  testBehaviorFramework.InitializeStandardBehaviorComponent(nullptr, nullptr, true);
+  IncrementBaseStationTimerTicks();
+  
+  Robot& robot = testBehaviorFramework.GetRobot();
+  
+  auto& uic = testBehaviorFramework.GetBehaviorComponent().GetUserIntentComponent();
+  
+  EXPECT_FALSE( uic.IsAnyUserIntentPending() );
+  
+  // tick the behavior to make sure ticking has no effect, unless we broadcast
+  {
+    std::string currentActivityName;
+    std::string behaviorDebugStr;
+    testBehaviorFramework.GetBehaviorComponent().Update(robot, currentActivityName, behaviorDebugStr);
+  }
+  
+  EXPECT_FALSE( uic.IsAnyUserIntentPending() );
+  
+  IncrementBaseStationTimerTicks();
+  
+  // broadcast an app intent
+  const char* name = "Cozmo";
+  
+  ExternalInterface::AppIntent appIntent;
+  appIntent.intent = "intent_meet_victor";
+  appIntent.param = name;
+  ASSERT_TRUE( robot.HasExternalInterface() );
+  robot.GetExternalInterface()->Broadcast(ExternalInterface::MessageGameToEngine(std::move(appIntent)));
+  
+  // Tick the behavior component to send the message to the user intent component
+  {
+    std::string currentActivityName;
+    std::string behaviorDebugStr;
+    testBehaviorFramework.GetBehaviorComponent().Update(robot, currentActivityName, behaviorDebugStr);
+  }
+  
+  EXPECT_TRUE( uic.IsAnyUserIntentPending() );
+  EXPECT_TRUE( uic.IsUserIntentPending( USER_INTENT(meet_victor) ) );
+  UserIntent intent;
+  EXPECT_TRUE( uic.IsUserIntentPending( USER_INTENT(meet_victor), intent ) );
+  EXPECT_EQ( intent.GetTag(), USER_INTENT(meet_victor) );
+  EXPECT_EQ( intent.Get_meet_victor().name, name );
+  uic.ClearUserIntent( USER_INTENT(meet_victor) );
+  EXPECT_FALSE( uic.IsAnyUserIntentPending() );
 }
 
 TEST(UserIntentMap, IntentExpiration)

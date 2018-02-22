@@ -41,10 +41,15 @@ public:
   // returns true if the specified intent exists in the map
   bool IsValidCloudIntent(const std::string& cloudIntent) const;
   
+  UserIntentTag GetUserIntentFromAppIntent(const std::string& appIntent) const;
+  
+  bool IsValidAppIntent(const std::string& appIntent) const;
+  
   // modify paramsList, replacing the cloud variable names with the user intent variable names, and
   // turning quoted numeric types like "123" into actual json numeric types (no quotes), based on
   // the config passed in the constructor
   void SanitizeCloudIntentVariables(const std::string& cloudIntent, Json::Value& paramsList) const;
+  void SanitizeAppIntentVariables(const std::string& appIntent, Json::Value& paramsList) const;
   
   // get list of cloud intents from json
   std::vector<std::string> DevGetCloudIntentsList() const;
@@ -64,9 +69,17 @@ private:
     VarSubstitutionList varSubstitutions;
   };
   
-  std::map<std::string, IntentInfo> _cloudToUserMap;
+  using MapType = std::map<std::string, IntentInfo>;
+  
+  MapType _cloudToUserMap;
+  MapType _appToUserMap;
 
   UserIntentTag _unmatchedUserIntent;
+  
+  void SanitizeVariables(const std::string& intent,
+                         const MapType& container,
+                         const char* debugName,
+                         Json::Value& paramsList) const;
 };
 
 }

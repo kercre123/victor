@@ -16,9 +16,11 @@
 #include "engine/aiComponent/behaviorComponent/userIntents.h"
 #include "engine/aiComponent/behaviorComponent/userIntentMap.h"
 #include "engine/cozmoContext.h"
+#include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
 #include "engine/robotInterface/messageHandler.h"
 
+#include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/behaviorComponent/userIntent.h"
 
 #include "coretech/common/engine/jsonTools.h"
@@ -63,6 +65,17 @@ UserIntentComponent::UserIntentComponent(const Robot& robot, const Json::Value& 
   if( robot.GetRobotMessageHandler() != nullptr ) {
     _eventHandles.push_back( robot.GetRobotMessageHandler()->Subscribe( RobotInterface::RobotToEngineTag::triggerWordDetected,
                                                                         triggerWordCallback ) );
+  }
+  
+  // setup app intent handler
+  if( robot.HasExternalInterface() ){
+    using namespace ExternalInterface;
+    auto onEvent = [this](const AnkiEvent<MessageGameToEngine>& event) {
+      if( event.GetData().GetTag() == MessageGameToEngineTag::AppIntent ) {
+        OnAppIntent( event.GetData().Get_AppIntent() );
+      }
+    };
+    _eventHandles.push_back( robot.GetExternalInterface()->Subscribe( MessageGameToEngineTag::AppIntent, onEvent ));
   }
   
 }
@@ -424,6 +437,32 @@ void UserIntentComponent::OnCloudData(std::string&& data)
   _pendingCloudIntent = data;
 }
   
+void UserIntentComponent::OnAppIntent(const ExternalInterface::AppIntent& appIntent )
+{
+  UserIntentTag userIntentTag = _intentMap->GetUserIntentFromAppIntent( appIntent.intent );
+  
+  Json::Value json;
+  // todo: eventually AppIntent should be its own union of structures, but
+  // currently there's only one intent, with one arg, and it's not possible to transmit
+  // a union over the temporary webservice handler. Once the real app-engine channels are open,
+  // these two lines will need replacing
+  json["type"] = UserIntentTagToString(userIntentTag);
+  json["param"] = appIntent.param;
+  
+  _intentMap->SanitizeAppIntentVariables( appIntent.intent, json );
+  
+  UserIntent intent;
+  if( ANKI_VERIFY( intent.SetFromJSON(json),
+                   "UserIntentComponent.OnAppIntent.BadJson",
+                   "Could not create user intent from app intent '%s'",
+                   appIntent.intent.c_str() ) )
+  {
+    _devLastReceivedAppIntent = appIntent.intent;
+    
+    SetUserIntentPending( std::move(intent) );
+  }
+}
+  
 std::string UserIntentComponent::GetServerName(const Robot& robot) const
 {
   return "ai_sock" + ((robot.GetID() == 0)
@@ -458,6 +497,15 @@ void UserIntentComponent::SendWebVizIntents()
       blob["value"] = _devLastReceivedCloudIntent;
       toSend.append(blob);
       _devLastReceivedCloudIntent.clear();
+    }
+    
+    if( !_devLastReceivedAppIntent.empty() ) {
+      Json::Value blob;
+      blob["intentType"] = "app";
+      blob["type"] = "current-intent";
+      blob["value"] = _devLastReceivedAppIntent;
+      toSend.append(blob);
+      _devLastReceivedAppIntent.clear();
     }
     
     webService->SendToWebViz( "intents", toSend );

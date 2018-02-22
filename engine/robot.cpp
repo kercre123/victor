@@ -2332,7 +2332,7 @@ bool Robot::HasExternalInterface() const
   return false;
 }
 
-IExternalInterface* Robot::GetExternalInterface()
+IExternalInterface* Robot::GetExternalInterface() const
 {
   DEV_ASSERT(GetContext()->GetExternalInterface() != nullptr, "Robot.ExternalInterface.nullptr");
   return GetContext()->GetExternalInterface();

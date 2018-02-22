@@ -136,7 +136,14 @@ bool AppToEngineHandler::CreateCLAD( const Json::Value& data, ExternalInterface:
       success &= SetFromJSON(data, sfte, sayName);
       success &= SetFromJSON(data, sfte, useMusic);
       tmpMsg.Set_SetFaceToEnroll(std::move(sfte));
-    } else {
+    }
+    else if( data["type"] == "AppIntent" ) {
+      AppIntent appIntent;
+      success &= SetFromJSON(data, appIntent, intent);
+      success &= SetFromJSON(data, appIntent, param);
+      tmpMsg.Set_AppIntent(std::move(appIntent));
+    }
+    else {
       success = false;
     }
   } catch( std::exception ) {
@@ -191,14 +198,19 @@ void AppToEngineHandler::AssignBestGuess( Json::Value& data, const std::string& 
   for( const char& c : str ) {
     if( !std::isdigit(c) ) {
       mightBeInt = false;
-      mightBeFloat = false;
-      break;
+      if( c != '.' ) {
+        mightBeFloat = false;
+        break;
+      }
     }
     if( mightBeFloat && (c == '.') ) { // there can only be one .
       mightBeFloat = false;
       break;
     } else if( c == '.' ) {
       mightBeFloat = true;
+    }
+    if( !mightBeInt && !mightBeFloat ) {
+      break;
     }
   }
   

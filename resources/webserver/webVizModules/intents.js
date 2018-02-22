@@ -1,7 +1,7 @@
 
 (function(myMethods, sendData) {
 
-  var intentTypes = ['user', 'cloud'];
+  var intentTypes = ['user', 'cloud', 'app'];
 
   myMethods.init = function(elem) {
 
@@ -22,14 +22,37 @@
         $(this).next().val(selected);
         this.selectedIndex = 0;
       });
+      var placeholder = '';
+      if( intent == 'app' ) {
+        placeholder = 'intent_name [param]';
+      } else if( intent == 'cloud' ) {
+        placeholder = 'intent_name, or JSON';
+      } else {
+        placeholder = 'intent_name';
+      }
       var text = $('<input/>', {class: 'intent-text'}).appendTo( container );
+      text.attr('placeholder', placeholder );
       var button = $('<input/>', {class: 'intent-submit', type:'submit', value:'Trigger'}).appendTo( container );
       button.on('click', (function(intent, dropdown) {
         return function() {
           var requestedIntent = $(this).prev().val();
-          var selected = dropdown.val();
-          var payload = {intentType: intent, request: requestedIntent};
-          sendData( payload );
+          if( intent == 'app' ) {
+            var url = 'http://' + window.location.href.split('/')[2];
+            url += '/sendAppMessage?type=AppIntent&intent='
+            var splitRequest = requestedIntent.split(' ');
+            if( splitRequest.length == 2 ) {
+              url += splitRequest[0] + '&param=' + splitRequest[1];
+            } else if( splitRequest.length == 1 ) {
+              url += splitRequest[0];
+            } else {
+              alert('Format is either one string (the intent type), or two strings separated by a space: the intent type and its param');
+              return;
+            }
+            $.get(url);
+          } else {
+            var payload = {intentType: intent, request: requestedIntent};
+            sendData( payload );
+          }
 
           $(this).prev().val(''); // clear text box
         }

@@ -26,10 +26,13 @@ namespace {
 
 const char* kUserIntentMapKey = "user_intent_map";
 const char* kCloudIntentKey = "cloud_intent";
+const char* kAppIntentKey = "app_intent";
 const char* kUserIntentKey = "user_intent";
 const char* kUnmatchedKey = "unmatched_intent";
-const char* kVariableSubstitutionsKey = "substitutions";
-const char* kVariableNumericsKey = "numerics";
+const char* kCloudVariableSubstitutionsKey = "cloud_substitutions";
+const char* kCloudVariableNumericsKey = "cloud_numerics";
+const char* kAppVariableSubstitutionsKey = "app_substitutions";
+const char* kAppVariableNumericsKey = "app_numerics";
 
 const char* kDebugName = "UserIntentMap";
 }
@@ -57,49 +60,72 @@ UserIntentMap::UserIntentMap(const Json::Value& config)
     
     foundUserIntent.insert( intentTag );
     
-    const std::string& cloudIntent = mapping.get(kCloudIntentKey, "").asString();
-    if( !cloudIntent.empty() ) {
-      VarSubstitutionList varSubstitutions;
-      
-      const auto& subs = mapping[kVariableSubstitutionsKey];
-      if( !subs.isNull() ) {
-        for( const auto& fromStr : subs.getMemberNames() ) {
-          const auto& to = subs[fromStr];
-          if( ANKI_VERIFY( !to.isNull(), "UserIntentMap.Ctor.WTF", "Missing value") ) {
-            const auto& toStr = to.asString();
-            
-            varSubstitutions.emplace_back( SanitationActions{fromStr, toStr, false} );
+    auto processMapping = [&intentTag](const Json::Value& input,
+                                       MapType& container,
+                                       const char* intentKey,
+                                       const char* subsKey,
+                                       const char* numericsKey,
+                                       const char* debugName)
+    {
+      const std::string& intentName = input.get(intentKey, "").asString();
+      if( !intentName.empty() ) {
+        VarSubstitutionList varSubstitutions;
+        
+        const auto& subs = input[subsKey];
+        if( !subs.isNull() ) {
+          for( const auto& fromStr : subs.getMemberNames() ) {
+            const auto& to = subs[fromStr];
+            if( ANKI_VERIFY( !to.isNull(), "UserIntentMap.Ctor.WTF", "Missing value") ) {
+              const auto& toStr = to.asString();
+              
+              varSubstitutions.emplace_back( SanitationActions{fromStr, toStr, false} );
+            }
           }
         }
-      }
 
-      const auto& numerics = mapping[kVariableNumericsKey];
-      if( !numerics.isNull() ) {
-        for( const auto& from : numerics ) {
-          const auto& fromStr = from.asString();
-          auto it = std::find_if( varSubstitutions.begin(), varSubstitutions.end(), [&fromStr](const auto& s) {
-            return (s.from == fromStr);
-          });
-          if( it != varSubstitutions.end() ) {
-            it->isNumeric = true;
-          } else {
-            varSubstitutions.emplace_back( SanitationActions{fromStr, "", true} );
+        const auto& numerics = input[numericsKey];
+        if( !numerics.isNull() ) {
+          for( const auto& from : numerics ) {
+            const auto& fromStr = from.asString();
+            auto it = std::find_if( varSubstitutions.begin(), varSubstitutions.end(), [&fromStr](const auto& s) {
+              return (s.from == fromStr);
+            });
+            if( it != varSubstitutions.end() ) {
+              it->isNumeric = true;
+            } else {
+              varSubstitutions.emplace_back( SanitationActions{fromStr, "", true} );
+            }
           }
         }
-      }
-      
-      // a cloud intent should only appear once, since it only has one user intent (although multiple
-      // cloud intents can map to the same user intent
-      ANKI_VERIFY( _cloudToUserMap.find(cloudIntent) == _cloudToUserMap.end(),
-                   "UserIntentMap.Ctor.MultipleAssociations",
-                   "The cloud intent '%s' is already mapped to user intent '%s'",
-                   cloudIntent.c_str(),
-                   UserIntentTagToString( _cloudToUserMap.find(cloudIntent)->second.userIntent ) );
+        
+        // a cloud/app intent should only appear once, since it only has one user intent (although multiple
+        // cloud/app intents can map to the same user intent
+        ANKI_VERIFY( container.find(intentName) == container.end(),
+                     "UserIntentMap.Ctor.MultipleAssociations",
+                     "The %s' intent '%s' is already mapped to user intent '%s'",
+                     debugName,
+                     intentName.c_str(),
+                     UserIntentTagToString( container.find(intentName)->second.userIntent ) );
 
-      _cloudToUserMap.emplace(cloudIntent, IntentInfo{intentTag, varSubstitutions});
+        container.emplace(intentName, IntentInfo{intentTag, varSubstitutions});
+      }
+    };
+    
+    processMapping( mapping, _cloudToUserMap, kCloudIntentKey, kCloudVariableSubstitutionsKey, kCloudVariableNumericsKey, "cloud" );
+    processMapping( mapping, _appToUserMap, kAppIntentKey, kAppVariableSubstitutionsKey, kAppVariableNumericsKey, "app" );
+    
+    if( ANKI_DEVELOPER_CODE ) {
+      // prevent typos
+      const char* validKeys[] = {kCloudIntentKey, kCloudVariableSubstitutionsKey, kCloudVariableNumericsKey,
+                                 kAppIntentKey, kAppVariableSubstitutionsKey, kAppVariableNumericsKey,
+                                 kUserIntentKey};
+      for( const auto& memberName : mapping.getMemberNames() ) {
+        const auto it = std::find_if(std::begin(validKeys), std::end(validKeys), [&memberName](const char* c) {
+          return (memberName == c);
+        });
+        DEV_ASSERT( it != std::end(validKeys), "Invalid key" );
+      }
     }
-    
-    
   }
 
   std::string unmatchedString = JsonTools::ParseString(config, kUnmatchedKey, kDebugName);
@@ -153,10 +179,47 @@ bool UserIntentMap::IsValidCloudIntent(const std::string& cloudIntent) const
   return found;
 }
   
+UserIntentTag UserIntentMap::GetUserIntentFromAppIntent(const std::string& appIntent) const
+{
+  using Tag = std::underlying_type<UserIntentTag>::type;
+  auto it = _appToUserMap.find(appIntent);
+  if( it != _appToUserMap.end() ) {
+    DEV_ASSERT( static_cast<Tag>( it->second.userIntent ) < static_cast<Tag>( USER_INTENT(INVALID) ), "Invalid intent value" );
+    return it->second.userIntent;
+  }
+  else {
+    DEV_ASSERT( static_cast<Tag>(_unmatchedUserIntent) < static_cast<Tag>(USER_INTENT(INVALID)), "Invalid intent value" );
+    PRINT_NAMED_WARNING("UserIntentMap.NoAppIntentMatch",
+                        "No match for app intent '%s', returning default user intent '%s'",
+                        appIntent.c_str(),
+                        UserIntentTagToString(_unmatchedUserIntent));
+    return _unmatchedUserIntent;
+  }
+}
+  
+bool UserIntentMap::IsValidAppIntent(const std::string& appIntent) const
+{
+  const bool found = ( _appToUserMap.find(appIntent) != _appToUserMap.end() );
+  return found;
+}
+
 void UserIntentMap::SanitizeCloudIntentVariables(const std::string& cloudIntent, Json::Value& paramsList) const
 {
-  const auto it = _cloudToUserMap.find( cloudIntent );
-  if( it != _cloudToUserMap.end() ) {
+  SanitizeVariables(cloudIntent, _cloudToUserMap, "cloud", paramsList);
+}
+  
+void UserIntentMap::SanitizeAppIntentVariables(const std::string& appIntent, Json::Value& paramsList) const
+{
+  SanitizeVariables(appIntent, _appToUserMap, "app", paramsList);
+}
+  
+void UserIntentMap::SanitizeVariables(const std::string& intent,
+                                      const MapType& container,
+                                      const char* debugName,
+                                      Json::Value& paramsList) const
+{
+  const auto it = container.find( intent );
+  if( it != container.end() ) {
     const auto& subs = it->second.varSubstitutions;
     for( const auto& varName : paramsList.getMemberNames() ) {
       const auto* varNameP = &varName;
@@ -167,16 +230,18 @@ void UserIntentMap::SanitizeCloudIntentVariables(const std::string& cloudIntent,
         if( !it->to.empty() ) {
           // ignore it if the TO variable name already exists
           if( !ANKI_VERIFY( paramsList[it->to].isNull(),
-                            "UserIntentMap.SanitizeCloudIntentVariables.InvalidSubs",
-                            "Cloud intent '%s' variable substitutions are invalid",
-                            cloudIntent.c_str() ) )
+                            "UserIntentMap.SanitizeVariables.InvalidSubs",
+                            "%s intent '%s' variable substitutions are invalid",
+                            debugName,
+                            intent.c_str() ) )
           {
             continue;
           }
           
           if( it->to == it->from ) {
-            PRINT_NAMED_WARNING( "UserIntentMap.SanitizeCloudIntentVariables.NoOp",
-                                 "The provided substitution '%s' resulted in no op. Substitution is optional",
+            PRINT_NAMED_WARNING( "UserIntentMap.SanitizeVariables.NoOp",
+                                 "The provided '%s' substitution '%s' resulted in no op. Substitution is optional",
+                                 debugName,
                                  it->to.c_str() );
           }
           
@@ -197,8 +262,9 @@ void UserIntentMap::SanitizeCloudIntentVariables(const std::string& cloudIntent,
               paramsList[*varNameP] = std::stoll(str);
             }
           } catch( std::exception ) {
-            PRINT_NAMED_ERROR( "UserIntentMap.SanitizeCloudIntentVariables.Invalid",
-                               "Tried to convert '%s' and failed. No conversion performed",
+            PRINT_NAMED_ERROR( "UserIntentMap.SanitizeVariables.Invalid",
+                               "Tried to convert %s intent '%s' and failed. No conversion performed",
+                               debugName,
                                str.c_str() );
           }
         }
