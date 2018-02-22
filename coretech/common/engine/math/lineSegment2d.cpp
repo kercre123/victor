@@ -101,7 +101,7 @@ LineSegment::EOrientation LineSegment::Orientation(const Point2f& p) const
   }
 }
 
-bool LineSegment::IntersectsWith(const LineSegment& l, Point2f& location) const {
+bool LineSegment::IntersectsAt(const LineSegment& l, Point2f& location) const {
 
   const bool isIntersecting = IntersectsWith(l); // quickly check for intersection
   if (! isIntersecting) { // nothing to see here
@@ -116,8 +116,9 @@ bool LineSegment::IntersectsWith(const LineSegment& l, Point2f& location) const 
   };
 
   float div = det(xdiff, ydiff);
-  DEV_ASSERT(div != 0, "LineSegment.IntersectsWith.IntersectionNotPossible");
-
+  if (div == 0) { // collinear or overlapping
+    return false;
+  }
   Point2f d = -Point2f(det(this->from, this->to),
                        det(l.from, l.to));
   location.x() = det(d, xdiff) / div;
