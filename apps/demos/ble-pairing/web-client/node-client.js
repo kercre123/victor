@@ -20,8 +20,8 @@ let secureInterfaceService = "6767";
 let pingCharService = "5555";
 let readCharService = "7D2A4BDAD29B4152B7252491478C5CD7";
 let writeCharService = "30619F2D0F5441BDA65A7588D8C85B45";
-let secureReadCharService = "6677";
-let secureWriteCharService = "7766";
+let secureReadCharService = "045C81553D7B41BC9DA00ED27D0C8A61";
+let secureWriteCharService = "28C35E4CB21843CB97183D7EDE9B5316";
 
 function tryConnect() {
     noble.on('discover', function(peripheral) {
@@ -187,16 +187,21 @@ function onConnect(peripheral) {
 
     discoverServices(peripheral).then(function(characteristics) {
         //pingChar = characteristics[0];
-        writeChar = characteristics[0];
-        readChar = characteristics[1];
-        //secureWriteChar = characteristics[3];
-        //secureReadChar = characteristics[4];
+        // writeChar = characteristics[0];
+        // readChar = characteristics[1];
+        // secureWriteChar = characteristics[2];
+        // secureReadChar = characteristics[3];
+
+        // console.log("w: " + writeChar.uuid);
+        // console.log("r: " + readChar.uuid);
+        // console.log("sw: " + secureWriteChar.uuid);
+        // console.log("sr: " + secureReadChar.uuid);
 
         printConnectionMessage("Finished discovering services and characteristics...", "\x1b[31m");
 
-        /*secureWriteChar.on('data', function(ctext, isNotification) {
+        secureWriteChar.on('data', function(ctext, isNotification) {
             protocolReceive(ctext, true);
-        });*/
+        });
         writeChar.on('data', function(data, isNotification) {
             protocolReceive(data, false);
         });
@@ -209,63 +214,29 @@ function discoverServices(peripheral) {
     return new Promise(function(resolve, reject) {
         peripheral.discoverServices([pairingService], function(error, services) {
             console.log("Discovering characteristics...");
-            /*let pingPromise = new Promise(function(resolve, reject) {
-                services[0].discoverCharacteristics([pingCharService], function(error, characteristics) {
-                    if(error != undefined) {
-                        reject();
-                    } else {
-                        pingChar = characteristics[0];
-                        console.log("Subscribe to ping...");
-                        pingChar.subscribe();
-                        resolve(pingChar);
-                    }
-                });
-            });*/
 
             let streamPromise = new Promise(function(resolve, reject) {
-                services[0].discoverCharacteristics([writeCharService, readCharService], function(error, characteristics) {
+                services[0].discoverCharacteristics([writeCharService, readCharService, secureWriteCharService, secureReadCharService], function(error, characteristics) {
                     if(error != undefined) {
                         reject();
                     } else {
-                        if(characteristics[0].uuid == readCharService) {
-                            readChar = characteristics[0];
-                            writeChar = characteristics[1];
-                        } else {
-                            writeChar = characteristics[0];
-                            readChar = characteristics[1];
-                        }
+                        writeChar = characteristics[0];
+                        readChar = characteristics[1];
+                        secureWriteChar = characteristics[2];
+                        secureReadChar = characteristics[3];
 
                         readChar.subscribe();
                         writeChar.subscribe();
-                        
-                        resolve([writeChar, readChar]);
-                    }
-                });
-            });
-
-            /*let secureStreamPromise = new Promise(function(resolve, reject) {
-                services[2].discoverCharacteristics([secureWriteCharService, secureReadCharService], function(error, characteristics) {
-                    if(error != undefined) {
-                        reject();
-                    } else {
-                        if(characteristics[0].uuid == secureReadCharService) {
-                            secureReadChar = characteristics[0];
-                            secureWriteChar = characteristics[1];
-                        } else {
-                            secureWriteChar = characteristics[0];
-                            secureReadChar = characteristics[1];
-                        }
-
                         secureReadChar.subscribe();
                         secureWriteChar.subscribe();
                         
-                        resolve([secureWriteChar, secureReadChar]);
+                        resolve([writeChar, readChar, secureWriteChar, secureReadChar]);
                     }
                 });
-            });*/
+            });
             
-            Promise.all([streamPromise/*, secureStreamPromise*/]).then(function(data) {
-                resolve([data[0][0], data[0][1]]);
+            Promise.all([streamPromise]).then(function(data) {
+                resolve([data[0], data[1], data[2], data[3]]);
             });
         });
     });
