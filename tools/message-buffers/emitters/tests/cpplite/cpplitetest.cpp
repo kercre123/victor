@@ -31,7 +31,7 @@ int test_Foo()
   foo1.myShort = 0x0c0a;
   foo1.myFloat = 1.0f;
   foo1.myNormal = 0x0eadbeef;
-  foo1.myFoo = d2;
+  foo1.myFoo = AnkiEnum::d2;
   foo1.myVariable_length = 255;
   //foo1.myString = "Blah Blah Blah";
 
@@ -84,7 +84,7 @@ int test_MyMessage()
   message.foo.myShort = 0x0c0a;
   message.foo.myFloat = -0.0f;
   message.foo.myNormal = 0x0eadbeef;
-  message.foo.myFoo = d2;
+  message.foo.myFoo = AnkiEnum::d2;
 
   if (!message.IsValid()) {
     printf("INVALID MESSAGE 1\n");
@@ -126,7 +126,7 @@ int test_MyMessage()
     { 5, 6, 7 },
     1000000000000000,
     { 3.1415926535897932, -22.0e-123, 1.0 / 0.0 },
-    { d1, e1, d2, e2 },
+    { AnkiEnum::d1, AnkiEnum::e1, AnkiEnum::d2, AnkiEnum::e2 },
     { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 },
     1,
     { 2 },

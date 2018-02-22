@@ -32,9 +32,9 @@ CPPLITE_BUILD_DIR?=$(CPPLITE_TEST_DIR)/build
 CPPLITE_ROOT_DIR?=$(CPPLITE_TEST_DIR)/../../..
 
 CPPLITE_COMPILER?=clang++
-CPPLITE_COMPILERFLAGS?=-DCLAD_DEBUG -c -Wall -Wextra -std=c++98 -stdlib=libc++ -Os -g
+CPPLITE_COMPILERFLAGS?=-DCLAD_DEBUG -c -Wall -Wextra -std=c++11 -stdlib=libc++ -Os -g
 CPPLITE_LINKER?=clang++
-CPPLITE_LINKERFLAGS?=-Wall -Wextra -std=c++98 -stdlib=libc++ -Os -g
+CPPLITE_LINKERFLAGS?=-Wall -Wextra -std=c++11 -stdlib=libc++ -Os -g
 
 PYTHON?=python
 PYTHONFLAGS?=
