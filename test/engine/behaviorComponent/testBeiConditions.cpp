@@ -32,6 +32,7 @@
 #include "engine/robot.h"
 #include "test/engine/behaviorComponent/testBehaviorFramework.h"
 #include "util/math/math.h"
+#include "util/console/consoleInterface.h"
 
 using namespace Anki;
 using namespace Anki::Cozmo;
@@ -669,5 +670,32 @@ TEST(BeiConditions, UserIntentPending)
   uic.ClearUserIntent( USER_INTENT(test_name) );
 }
 
+CONSOLE_VAR( unsigned int, kTestBEIConsoleVar, "unit tests", 0);
+TEST(BeiConditions, ConsoleVar)
+{
+  const std::string json = R"json(
+  {
+    "conditionType": "ConsoleVar",
+    "variable": "TestBEIConsoleVar",
+    "value": 5
+  })json";
 
+  IBEIConditionPtr cond;
+  CreateBEI(json, cond);
+
+  TestBehaviorFramework testBehaviorFramework(1, nullptr);
+  testBehaviorFramework.InitializeStandardBehaviorComponent();
+  BehaviorExternalInterface& bei = testBehaviorFramework.GetBehaviorExternalInterface();
+  
+  cond->Init(bei);
+  cond->SetActive(bei, true);
+
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+  kTestBEIConsoleVar = 1;
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+  kTestBEIConsoleVar = 5;
+  EXPECT_TRUE( cond->AreConditionsMet(bei) );
+  kTestBEIConsoleVar = 1;
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+}
 
