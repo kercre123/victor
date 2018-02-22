@@ -22,8 +22,8 @@ class BehaviorReactToRobotShaken : public ICozmoBehavior
 {
 private:
   
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorReactToRobotShaken(const Json::Value& config);
   
 public:

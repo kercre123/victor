@@ -46,8 +46,8 @@ public:
 protected:  
   using super = ICozmoBehavior;
 
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorPickUpCube(const Json::Value& config);
 
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}

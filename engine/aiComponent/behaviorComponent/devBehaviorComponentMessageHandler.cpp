@@ -157,7 +157,13 @@ ICozmoBehaviorPtr DevBehaviorComponentMessageHandler::WrapRequestedBehaviorInDis
   }
 
   Json::Value config = BehaviorDispatcherRerun::CreateConfig(kBehaviorIDForDevMessage, requestedBehaviorID, numRuns);
-  rerunDispatcher = bContainer.CreateBehaviorFromConfig(config);
+  const bool createdOK = bContainer.CreateAndStoreBehavior(config);
+  if( ANKI_VERIFY(createdOK,
+                  "DevBehaviorComponentMessageHandler.CreateRerunWrapper.Fail",
+                  "Couldn't create behavior wrapper") ) {
+    rerunDispatcher = bContainer.FindBehaviorByID( kBehaviorIDForDevMessage );
+  }
+  
   return rerunDispatcher;
 }
   

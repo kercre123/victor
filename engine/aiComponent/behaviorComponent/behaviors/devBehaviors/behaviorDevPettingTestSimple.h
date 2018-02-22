@@ -32,7 +32,7 @@ public:
   
 protected:
   
-  friend class BehaviorContainer;
+  friend class BehaviorFactory;
   BehaviorDevPettingTestSimple(const Json::Value& config);
   
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {

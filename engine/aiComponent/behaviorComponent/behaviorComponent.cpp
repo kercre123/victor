@@ -140,8 +140,10 @@ void BehaviorComponent::GenerateManagedComponents(Robot& robot,
     }else{
       // Need a base behavior, so make it base behavior wait
       Json::Value config = ICozmoBehavior::CreateDefaultBehaviorConfig(BEHAVIOR_CLASS(Wait), BEHAVIOR_ID(Wait));
-      bc.CreateBehaviorFromConfig(config);
+      const bool ret = bc.CreateAndStoreBehavior(config);
+      DEV_ASSERT(ret, "BehaviorComponent.CreateWaitBehavior.Failed");
       baseBehavior = bc.FindBehaviorByID(BEHAVIOR_ID(Wait));
+      DEV_ASSERT(baseBehavior != nullptr, "BehaviorComponent.CreateWaitBehavior.WaitNotInContainers");
     }
     entity->AddDependentComponent(BCComponentID::BaseBehaviorWrapper,
                                   new BaseBehaviorWrapper(baseBehavior.get()));

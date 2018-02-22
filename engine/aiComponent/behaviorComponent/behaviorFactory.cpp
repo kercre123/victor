@@ -2,13 +2,11 @@
 // To add a behavior, just create the .cpp and .h files in the correct places
 // and re-run ./tools/ai/generateBehavior.py
 
-//
-// This file creates behaviors from behavior types where the behavior class and
-// file name both match Behavior{BEHAVIOR_CLASS}.h/cpp
+// This factory creates behaviors from behavior JSONs with a specified
+// `behavior_class` where the behavior C++ class name and file name both match
+// Behavior{behavior_class}.h/cpp
 
-#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
-
-#include "clad/types/behaviorComponent/behaviorTypes.h"
+#include "engine/aiComponent/behaviorComponent/behaviorFactory.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviors/behaviorHighLevelAI.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/behaviorWait.h"
@@ -103,11 +101,15 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorReactToSound.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorReactToUnclaimedIntent.h"
 
+#include "clad/types/behaviorComponent/behaviorTypes.h"
+
 namespace Anki {
 namespace Cozmo {
 
-ICozmoBehaviorPtr BehaviorContainer::CreateBehavior_generated(BehaviorClass behaviorType, const Json::Value& config) const
+ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
 {
+  const BehaviorClass behaviorType = ICozmoBehavior::ExtractBehaviorClassFromConfig(config);
+
   ICozmoBehaviorPtr newBehavior;
 
   switch (behaviorType)

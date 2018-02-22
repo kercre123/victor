@@ -23,8 +23,8 @@ class BehaviorPounceOnMotion : public ICozmoBehavior
 {
 private:
   
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorPounceOnMotion(const Json::Value& config);
   
 public:

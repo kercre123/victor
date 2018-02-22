@@ -23,8 +23,8 @@ class BehaviorAnimSequenceWithFace : public BehaviorAnimSequence
 using BaseClass = BehaviorAnimSequence;
 protected:
   
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorAnimSequenceWithFace(const Json::Value& config);
 
 public:

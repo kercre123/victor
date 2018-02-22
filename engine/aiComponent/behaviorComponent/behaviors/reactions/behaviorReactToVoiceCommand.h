@@ -26,7 +26,7 @@ class BehaviorReactToVoiceCommand : public ICozmoBehavior
 private:
   using super = ICozmoBehavior;
   
-  friend class BehaviorContainer;
+  friend class BehaviorFactory;
   BehaviorReactToVoiceCommand(const Json::Value& config);
   
 public:

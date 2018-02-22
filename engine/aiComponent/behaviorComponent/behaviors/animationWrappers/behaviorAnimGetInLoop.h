@@ -26,8 +26,8 @@ namespace Cozmo {
 class BehaviorAnimGetInLoop : public ICozmoBehavior
 {
 protected:
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorAnimGetInLoop(const Json::Value& config);
   
 public:

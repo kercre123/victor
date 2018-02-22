@@ -35,8 +35,8 @@ protected:
   using LambdaArgsPair = std::pair<StrategyFunc, std::set<VisionModeRequest>>;
   using PreDefinedStrategiesMap = std::unordered_map<std::string, LambdaArgsPair>;
   
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   InternalStatesBehavior(const Json::Value& config);
   
   // subclasses of InternalStatesBehavior can pass a map of predefined strategies

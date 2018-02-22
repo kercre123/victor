@@ -41,8 +41,8 @@ public:
   }
 
 protected:
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;  
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;  
   BehaviorProceduralClock(const Json::Value& config);
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override{
     modifiers.behaviorAlwaysDelegates = false;

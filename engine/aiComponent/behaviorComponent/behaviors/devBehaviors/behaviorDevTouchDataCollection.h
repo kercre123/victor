@@ -40,7 +40,7 @@ protected:
 
   using BExtI = BehaviorExternalInterface;
   
-  friend class BehaviorContainer;
+  friend class BehaviorFactory;
   BehaviorDevTouchDataCollection(const Json::Value& config);
   
   void InitBehavior() override;

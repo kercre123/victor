@@ -19,18 +19,18 @@
 #include "engine/actions/driveToActions.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/aiInformationAnalysis/aiInformationAnalyzer.h"
-#include "engine/aiComponent/behaviorComponent/anonymousBehaviorFactory.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorFactory.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
-#include "engine/aiComponent/continuityComponent.h"
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionTriggerWordPending.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionUserIntentPending.h"
+#include "engine/aiComponent/continuityComponent.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/cubeLightComponent.h"
 #include "engine/components/movementComponent.h"
@@ -291,7 +291,6 @@ void ICozmoBehavior::InitInternal()
   }
 
   if(!_anonymousBehaviorMapConfig.empty()){
-    AnonymousBehaviorFactory factory(GetBEI().GetBehaviorContainer()); 
     for(auto& entry: _anonymousBehaviorMapConfig){
       const std::string debugStr = "ICozmoBehavior.ReadFromJson.";
       
@@ -313,25 +312,38 @@ void ICozmoBehavior::InitInternal()
                           kBehaviorDebugLabel );
       }
 
+      if( entry.isMember( kBehaviorIDConfigKey ) ) {
+        PRINT_NAMED_ERROR("ICozmoBehavior.InitInternal.AnonymousBehaviorHasID",
+                          "Anonymous behaviors cannot contain IDs. Anonymous behavior '%s' defined in behavior '%s'"
+                          "had id '%s'. Overwriting with 'Anonymous'",
+                          behaviorName.c_str(),
+                          GetDebugLabel().c_str(),
+                          entry[kBehaviorIDConfigKey].asCString());
+      }
+      
+      entry[kBehaviorIDConfigKey] = BehaviorTypesWrapper::BehaviorIDToString(BEHAVIOR_ID(Anonymous));
+
       // check for duplicate behavior names since maps require a unique key
       auto it = _anonymousBehaviorMap.find(behaviorName);
       if(it == _anonymousBehaviorMap.end()){
-        std::string classStr = JsonTools::ParseString(entry, kBehaviorClassKey, debugStr + "BehaviorClassMissing");
-        const BehaviorClass behaviorClass = BehaviorTypesWrapper::BehaviorClassFromString(classStr);
-        // Remove the class from the JSON entry to avoid anonymous factory warning - this will break if we enter a world
-        // where Init can be called twice
-        entry.removeMember(kBehaviorClassKey);
-        auto resultPair = _anonymousBehaviorMap.insert(std::make_pair(behaviorName,
-                                                       factory.CreateBehavior(behaviorClass, entry)));
+        ICozmoBehaviorPtr newBehavior = BehaviorFactory::CreateBehavior(entry);
+        if( ANKI_VERIFY(newBehavior != nullptr,
+                        "ICozmoBehavior.InitInternal.FailedToCreateAnonymousBehavior",
+                        "Could not create anonymous behavior with name '%s'",
+                        behaviorName.c_str()) ) {
 
-        DEV_ASSERT_MSG(resultPair.first->second != nullptr, "ICozmoBehavior.InitInternal.FailedToAllocateAnonymousBehavior",
-                       "Failed to allocate new anonymous behavior (%s) within behavior %s",
-                       behaviorName.c_str(),
-                       GetDebugLabel().c_str());
+          auto resultPair = _anonymousBehaviorMap.insert(std::make_pair(behaviorName, newBehavior));
 
-        // we need to initlaize the anon behaviors as well
-        resultPair.first->second->Init(GetBEI());
-        resultPair.first->second->InitBehaviorOperationModifiers();
+          DEV_ASSERT_MSG(resultPair.first->second != nullptr,
+                         "ICozmoBehavior.InitInternal.FailedToAllocateAnonymousBehavior",
+                         "Failed to allocate new anonymous behavior (%s) within behavior %s",
+                         behaviorName.c_str(),
+                         GetDebugLabel().c_str());
+
+          // we need to initlaize the anon behaviors as well
+          newBehavior->Init(GetBEI());
+          newBehavior->InitBehaviorOperationModifiers();
+        }
       }
       else
       {

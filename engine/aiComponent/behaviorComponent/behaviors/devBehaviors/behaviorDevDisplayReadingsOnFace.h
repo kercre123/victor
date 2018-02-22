@@ -28,7 +28,7 @@ namespace Cozmo {
 class BehaviorDevDisplayReadingsOnFace : public ICozmoBehavior
 {
 protected:
-  friend class BehaviorContainer;
+  friend class BehaviorFactory;
   explicit BehaviorDevDisplayReadingsOnFace(const Json::Value& config);
 
 public:

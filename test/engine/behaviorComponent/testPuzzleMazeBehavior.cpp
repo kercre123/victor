@@ -15,16 +15,17 @@
 
 #include "gtest/gtest.h"
 
+#include "clad/types/behaviorComponent/behaviorTypes.h"
 #include "coretech/common/engine/utils/timer.h"
+#include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviorFactory.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorPuzzleMaze.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/puzzleComponent.h"
+#include "engine/cozmoAPI/comms/uiMessageHandler.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
-#include "engine/cozmoAPI/comms/uiMessageHandler.h"
-#include "clad/types/behaviorComponent/behaviorTypes.h"
-#include "engine/aiComponent/aiComponent.h"
 
 #include "test/engine/behaviorComponent/testBehaviorFramework.h"
 
@@ -39,8 +40,6 @@ void CreatePuzzleMazeBehavior(Robot& robot, ICozmoBehaviorPtr& puzzleMazeBehavio
 {
   ASSERT_TRUE(puzzleMazeBehavior == nullptr) << "test bug: should not have behavior yet";
   
-  BehaviorContainer& behaviorContainer = robot.GetAIComponent().GetBehaviorContainer();
-  
   Json::Value jsonRoot;
   dataPlatform.readAsJson(Util::Data::Scope::Resources, "config/engine/behaviorComponent/behaviors/freeplay/userInteractive/puzzleMaze.json", jsonRoot);
   
@@ -51,8 +50,7 @@ void CreatePuzzleMazeBehavior(Robot& robot, ICozmoBehaviorPtr& puzzleMazeBehavio
   bool parseOK = reader.parse( configStr.c_str(), config);
   ASSERT_TRUE(parseOK) << "failed to parse JSON, bug in the test";
 
-  puzzleMazeBehavior = behaviorContainer.CreateBehaviorAndAddToContainer(BehaviorClass::PuzzleMaze,
-                                                                    config);
+  puzzleMazeBehavior = BehaviorFactory::CreateBehavior(config);
   puzzleMazeBehavior->Init(behaviorExternalInterface);
   puzzleMazeBehavior->OnEnteredActivatableScope();
   ASSERT_TRUE(puzzleMazeBehavior != nullptr);

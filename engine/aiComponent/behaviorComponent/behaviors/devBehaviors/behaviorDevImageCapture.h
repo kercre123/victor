@@ -22,7 +22,7 @@ namespace Cozmo {
 
 class BehaviorDevImageCapture : public ICozmoBehavior
 {
-  friend class BehaviorContainer;
+  friend class BehaviorFactory;
   explicit BehaviorDevImageCapture(const Json::Value& config);
 
 public:

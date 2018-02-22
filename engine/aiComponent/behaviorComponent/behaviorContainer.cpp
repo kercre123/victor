@@ -15,6 +15,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorFactory.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 #include "clad/types/behaviorComponent/behaviorTypes.h"
@@ -36,8 +37,8 @@ BehaviorContainer::BehaviorContainer(const BehaviorIDJsonMap& behaviorData)
     if (!behaviorJson.empty())
     {
       // PRINT_NAMED_DEBUG("BehaviorContainer.Constructor", "Loading '%s'", fullFileName.c_str());
-      ICozmoBehaviorPtr newBehaviorPtr = CreateBehaviorFromConfig(behaviorJson);
-      if ( newBehaviorPtr == nullptr ) {
+      const bool createdOK = CreateAndStoreBehavior(behaviorJson);
+      if ( !createdOK ) {
         PRINT_NAMED_ERROR("Robot.LoadBehavior.CreateFailed",
                           "Failed to create a behavior for behavior id '%s'",
                           BehaviorIDToString(behaviorID));
@@ -166,74 +167,32 @@ void BehaviorContainer::VerifyExecutableBehaviors() const
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehaviorPtr BehaviorContainer::CreateBehaviorFromConfig(const Json::Value& behaviorJson)
+bool BehaviorContainer::CreateAndStoreBehavior(const Json::Value& behaviorConfig)
 {
-  const BehaviorClass behaviorClass = ICozmoBehavior::ExtractBehaviorClassFromConfig(behaviorJson);
-  ICozmoBehaviorPtr newBehavior = CreateBehaviorAndAddToContainer(behaviorClass, behaviorJson);
-  return newBehavior;  
-}
+  ICozmoBehaviorPtr newBehavior = BehaviorFactory::CreateBehavior(behaviorConfig);
+  if( newBehavior ) {
+    const BehaviorID behaviorID = newBehavior->GetID();
+    const auto newEntry = _idToBehaviorMap.emplace( behaviorID, newBehavior );
+    const bool addedNewEntry = newEntry.second;
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehaviorPtr BehaviorContainer::CreateBehaviorAndAddToContainer(BehaviorClass behaviorType, const Json::Value& config)
-{
-  ICozmoBehaviorPtr newBehavior = CreateBehaviorBase(behaviorType, config);  
-  if(newBehavior != nullptr){
-    newBehavior = AddToContainer(newBehavior);
+    if (addedNewEntry) {
+      PRINT_CH_DEBUG(LOG_CHANNEL, "BehaviorContainer::AddToContainer",
+                     "Added new behavior '%s' %p",
+                     BehaviorIDToString(behaviorID), newBehavior.get());
+      return true;
+    }
+    else {
+      DEV_ASSERT_MSG(false,
+                     "BehaviorContainer.AddToContainer.DuplicateID",
+                     "Attempted to create a second behavior with id %s",
+                     newBehavior->GetDebugLabel().c_str());
+      return false;
+    }
   }
-  return newBehavior;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehaviorPtr BehaviorContainer::CreateAnonymousBehavior(BehaviorClass behaviorType, const Json::Value& config) const
-{
-  ICozmoBehaviorPtr newBehavior = CreateBehaviorBase(behaviorType, config);
-  return newBehavior;  
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehaviorPtr BehaviorContainer::CreateBehaviorBase(BehaviorClass behaviorType, const Json::Value& config) const
-{
-  ICozmoBehaviorPtr newBehavior = CreateBehavior_generated(behaviorType, config);
-  
-  if (newBehavior == nullptr){
-    PRINT_NAMED_ERROR("BehaviorContainer.CreateBehavior.Failed",
-                      "Failed to create Behavior of type '%s'", BehaviorClassToString(behaviorType));
+  else {
+    return false;
   }
-  
-  return newBehavior;
 }
-
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehaviorPtr BehaviorContainer::AddToContainer(ICozmoBehaviorPtr newBehavior)
-{
-  assert(newBehavior);
-  
-  BehaviorID behaviorID = newBehavior->GetID();
-  auto newEntry = _idToBehaviorMap.insert( BehaviorIDToBehaviorMap::value_type(behaviorID, newBehavior) );
-  
-  const bool addedNewEntry = newEntry.second;
-
-  if (addedNewEntry)
-  {
-    PRINT_CH_DEBUG(LOG_CHANNEL, "BehaviorContainer::AddToContainer",
-                   "Added new behavior '%s' %p",
-                   BehaviorIDToString(behaviorID), newBehavior.get());
-  }
-  else
-  {
-    DEV_ASSERT_MSG(false,
-                   "BehaviorContainer.AddToContainer.DuplicateID",
-                   "Attempted to create a second behavior with id %s",
-                   newBehavior->GetDebugLabel().c_str());
-  }
-  
-  return newBehavior;
-}
-
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorContainer::RemoveBehaviorFromMap(ICozmoBehaviorPtr behavior)

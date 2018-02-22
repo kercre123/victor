@@ -26,8 +26,8 @@ class BehaviorReactToCliff : public ICozmoBehavior
 private:
   using super = ICozmoBehavior;
   
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorReactToCliff(const Json::Value& config);
   
 public:  

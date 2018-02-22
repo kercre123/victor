@@ -24,8 +24,8 @@ class BehaviorAnimSequence : public ICozmoBehavior
 {
 protected:
   
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorAnimSequence(const Json::Value& config, bool triggerRequired = true);
   
 public:

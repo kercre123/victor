@@ -33,8 +33,8 @@ public:
   virtual ~BehaviorTimerUtilityCoordinator();
 
 protected:
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;  
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;  
   BehaviorTimerUtilityCoordinator(const Json::Value& config);
 
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;

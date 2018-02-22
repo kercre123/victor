@@ -21,8 +21,8 @@ namespace Cozmo {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class BehaviorReactToUnclaimedIntent : public ICozmoBehavior
 {
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorReactToUnclaimedIntent( const Json::Value& config );
 
 

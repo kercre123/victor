@@ -22,8 +22,8 @@ class BehaviorWait: public ICozmoBehavior
 {
 private:
   
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorWait(const Json::Value& config)
   : ICozmoBehavior(config)
   {

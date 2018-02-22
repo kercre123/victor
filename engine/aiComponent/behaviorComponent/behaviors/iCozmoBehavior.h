@@ -101,7 +101,7 @@ struct BehaviorOperationModifiers{
 class ICozmoBehavior : public IBehavior, public IVisionModeSubscriber
 {
 protected:  
-  friend class BehaviorContainer;
+  friend class BehaviorFactory;
 
   // Can't create a public ICozmoBehavior, but derived classes must pass a robot
   // reference into this protected constructor.
