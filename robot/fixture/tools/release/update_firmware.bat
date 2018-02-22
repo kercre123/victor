@@ -6,6 +6,12 @@ if %ERRORLEVEL% NEQ 0 (
   exit 1
 )
 
+adb shell "echo shell connection established"
+if %ERRORLEVEL% NEQ 0 (
+  echo adb not connected to a device, e=%ERRORLEVEL%
+  exit 2
+)
+
 REM manual step - copy updated firmware package to release path
 if not exist "fixture.safe" (
   echo could not find a firmware package
@@ -24,6 +30,9 @@ REM send firmware to bootloader
 echo updating firmware...
 adb shell -x "pkill helper"
 adb shell -x "cd data/local/fixture && ./dfu fixture.safe"
-echo done
 
-REM adb reboot
+REM echo restarting helper
+echo restarting helper
+adb shell "/data/local/fixture/helper > /dev/null 2>&1 &"
+
+echo ----- please power cycle the fixture (do NOT use adb reboot!) -----

@@ -6,6 +6,12 @@ if %ERRORLEVEL% NEQ 0 (
   exit 1
 )
 
+adb shell "echo shell connection established"
+if %ERRORLEVEL% NEQ 0 (
+  echo adb not connected to a device, e=%ERRORLEVEL%
+  exit 2
+)
+
 REM create fixture directory, if it doesn't exist
 adb shell -x "mkdir -p data/local/fixture"
 
@@ -20,4 +26,4 @@ adb shell -x "cd data/local/fixture && chmod +x display"
 REM enable helper auto-start
 adb shell -x "cd data/local/fixture && ./helpify"
 
-adb reboot
+echo ----- please power cycle the fixture (do NOT use adb reboot!) -----

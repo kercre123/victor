@@ -6,6 +6,12 @@ if %ERRORLEVEL% NEQ 0 (
   exit 1
 )
 
+adb shell "echo shell connection established"
+if %ERRORLEVEL% NEQ 0 (
+  echo adb not connected to a device, e=%ERRORLEVEL%
+  exit 2
+)
+
 REM manual step - copy updated emmcdl files to release path
 if not exist "emmcdl" (
   echo could not find head image directory
@@ -23,4 +29,3 @@ adb push emmcdl data/local/fixture/
 adb push bin/emmcdl data/local/fixture/emmcdl/
 adb shell -x "cd data/local/fixture/emmcdl && chmod +x emmcdl"
 
-REM adb reboot
