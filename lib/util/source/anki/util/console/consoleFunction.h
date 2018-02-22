@@ -43,9 +43,12 @@ public:
   
   //----------------------------------------------------------------------------------------------------------------------------
 public:
+  using ConsoleStdFunc = std::function<void(ConsoleFunctionContextRef)>;
+  
   IConsoleFunction( const std::string& keystring, ConsoleFunc function, const char* categoryName, const std::string& args );
+  IConsoleFunction( const std::string& keystring, ConsoleStdFunc&& function, const char* categoryName, const std::string& args );
   ~IConsoleFunction();
-  void operator()( const ConsoleFunctionContext& context ) const { function_( (ConsoleFunctionContextRef)&context ); }
+  void operator()( const ConsoleFunctionContext& context ) const { if( function_ != nullptr ) { function_( (ConsoleFunctionContextRef)&context ); } }
   
   void Reset();
   ERROR_CODE ParseText( const std::string& text );
@@ -76,7 +79,7 @@ protected:
 
   //----------------------------------------------------------------------------------------------------------------------------
 private:
-  ConsoleFunc function_;
+  std::function<void(ConsoleFunctionContextRef)> function_;
   typedef std::vector<IConsoleFunctionArg*> ArgList;
   ArgList args_;
   std::string signature_;
