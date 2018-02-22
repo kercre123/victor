@@ -1,12 +1,9 @@
 @echo OFF
 
-REM 'adb.exe' expected to be in C:\Users\[username]\android\adb.exe
-set ADB_PATH=%userprofile%\android
-if not exist "%ADB_PATH%\adb.exe" (
-  echo %ADB_PATH%\adb.exe does not exist
-  goto END
+where adb >nul 2>nul
+if %ERRORLEVEL% NEQ 0 (
+  echo adb command not found
+  exit 1
 )
 
-%ADB_PATH%\adb pull data/local/fixture/logs
-
-:END
+adb pull data/local/fixture/logs

@@ -1,27 +1,26 @@
 @echo OFF
 
-set ADB=C:\android\adb.exe
-if not exist "%ADB%" (
-  echo %ADB% does not exist
-  goto END
+where adb >nul 2>nul
+if %ERRORLEVEL% NEQ 0 (
+  echo adb command not found
+  exit 1
 )
 
 REM manual step - copy updated emmcdl files to release path
 if not exist "emmcdl" (
   echo could not find head image directory
-  goto END
+  exit 1
 )
 
 REM create fixture directory, if it doesn't exist
-%ADB% shell -x "mkdir -p data/local/fixture"
+adb shell -x "mkdir -p data/local/fixture"
 
 REM update head scripts & image files
-%ADB% push headprogram data/local/fixture/
-%ADB% shell -x "cd data/local/fixture && chmod +x headprogram"
-%ADB% shell -x "cd data/local/fixture && rm -rf emmcdl && mkdir emmcdl"
-%ADB% push emmcdl data/local/fixture/
-%ADB% push bin/emmcdl data/local/fixture/emmcdl/
-%ADB% shell -x "cd data/local/fixture/emmcdl && chmod +x emmcdl"
+adb push headprogram data/local/fixture/
+adb shell -x "cd data/local/fixture && chmod +x headprogram"
+adb shell -x "cd data/local/fixture && rm -rf emmcdl && mkdir emmcdl"
+adb push emmcdl data/local/fixture/
+adb push bin/emmcdl data/local/fixture/emmcdl/
+adb shell -x "cd data/local/fixture/emmcdl && chmod +x emmcdl"
 
-REM %ADB% reboot
-:END
+REM adb reboot
