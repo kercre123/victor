@@ -6,7 +6,6 @@
 
   "behaviors": [
     "TriggerWordDetected",
-    "FistBumpVoiceCommand",
     "MeetVictor",
     "ReactToSoundAwake",
     "DevPettingTestSimple",

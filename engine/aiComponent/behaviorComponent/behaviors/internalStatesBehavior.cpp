@@ -15,10 +15,14 @@
 #include "coretech/common/engine/colorRGBA.h"
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
+#include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
+#include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
+#include "engine/aiComponent/behaviorComponent/userIntents.h"
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionLambda.h"
@@ -106,6 +110,8 @@ public:
 
   // optional light debugging color
   ColorRGBA _debugColor = NamedColors::BLACK;
+  
+  UserIntentTag _clearIntent = USER_INTENT(INVALID);
 };  
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -148,45 +154,57 @@ InternalStatesBehavior::InternalStatesBehavior(const Json::Value& config, PreDef
   std::set< StateID > allToStates;
   
   for( const auto& transitionDefConfig : config["transitionDefinitions"] ) {
-    const StateID fromStateID = ParseStateFromJson(transitionDefConfig, "from");
-
-    if( allFromStates.find(fromStateID) != allFromStates.end() ) {
-      PRINT_NAMED_WARNING("HighLevelAI.TransitionDefinitions.DuplicateFromState",
-                          "The transition definitions have multiple blocks defining transitions from '%s'.",
-                          _states->at(fromStateID)._name.c_str());
+    std::vector<StateID> fromStates;
+    if( transitionDefConfig["from"].isArray() ) {
+      ANKI_VERIFY( transitionDefConfig["from"].size() > 0,
+                   "InternalStatesBehavior.Ctor.EmptyArray",
+                   "'from' array cannot be empty" );
+      for( const auto& elem : transitionDefConfig["from"] ) {
+        if( ANKI_VERIFY( elem.isString(),
+                         "InternalStatesBehavior.Ctor.InvalidArray",
+                         "'from' array does not contain strings" ) )
+        {
+          fromStates.push_back( GetStateID( elem.asString() ) );
+        }
+      }
+    } else {
+      fromStates.push_back( ParseStateFromJson(transitionDefConfig, "from") );
     }
-    else {
-      allFromStates.insert(fromStateID);
-    }
 
-    State& fromState = _states->at(fromStateID);
+    for( const StateID fromStateID : fromStates ) {
+      if( allFromStates.find(fromStateID) == allFromStates.end() ) {
+        allFromStates.insert(fromStateID);
+      }
 
-    for( const auto& transitionConfig : transitionDefConfig["interruptingTransitions"] ) {
-      StateID toState = ParseStateFromJson(transitionConfig, "to");
-      IBEIConditionPtr strategy = ParseTransitionStrategy(transitionConfig);
-      if( strategy ) {
-        fromState.AddInterruptingTransition(toState, strategy);
-        allToStates.insert(toState);
+      State& fromState = _states->at(fromStateID);
+
+      for( const auto& transitionConfig : transitionDefConfig["interruptingTransitions"] ) {
+        StateID toState = ParseStateFromJson(transitionConfig, "to");
+        IBEIConditionPtr strategy = ParseTransitionStrategy(transitionConfig);
+        if( strategy ) {
+          fromState.AddInterruptingTransition(toState, strategy);
+          allToStates.insert(toState);
+        }
+      }
+
+      for( const auto& transitionConfig : transitionDefConfig["nonInterruptingTransitions"] ) {
+        StateID toState = ParseStateFromJson(transitionConfig, "to");
+        IBEIConditionPtr strategy = ParseTransitionStrategy(transitionConfig);
+        if( strategy ) {
+          fromState.AddNonInterruptingTransition(toState, strategy);
+          allToStates.insert(toState);
+        }
+      }
+
+      for( const auto& transitionConfig : transitionDefConfig["exitTransitions"] ) {
+        StateID toState = ParseStateFromJson(transitionConfig, "to");
+        IBEIConditionPtr strategy = ParseTransitionStrategy(transitionConfig);
+        if( strategy ) {
+          fromState.AddExitTransition(toState, strategy);
+          allToStates.insert(toState);
+        }
       }
     }
-
-    for( const auto& transitionConfig : transitionDefConfig["nonInterruptingTransitions"] ) {
-      StateID toState = ParseStateFromJson(transitionConfig, "to");
-      IBEIConditionPtr strategy = ParseTransitionStrategy(transitionConfig);
-      if( strategy ) {
-        fromState.AddNonInterruptingTransition(toState, strategy);
-        allToStates.insert(toState);
-      }
-    }
-
-    for( const auto& transitionConfig : transitionDefConfig["exitTransitions"] ) {
-      StateID toState = ParseStateFromJson(transitionConfig, "to");
-      IBEIConditionPtr strategy = ParseTransitionStrategy(transitionConfig);
-      if( strategy ) {
-        fromState.AddExitTransition(toState, strategy);
-        allToStates.insert(toState);
-      }
-    }    
   }
 
   if( allFromStates.size() != _states->size() ) {
@@ -479,7 +497,15 @@ InternalStatesBehavior::State::State(const Json::Value& config)
   _behaviorName = JsonTools::ParseString(config, "behavior", "InternalStatesBehavior.StateConfig");
 
   const std::string& debugColorStr = config.get("debugColor", "BLACK").asString();
-  _debugColor = NamedColors::GetByString(debugColorStr);  
+  _debugColor = NamedColors::GetByString(debugColorStr);
+  
+  const std::string& clearIntent = config.get("clearIntent", "").asString();
+  if( !clearIntent.empty() ) {
+    ANKI_VERIFY( UserIntentTagFromString( clearIntent, _clearIntent ),
+                 "InternalStateBehavior.State.Ctor.InvalidIntent",
+                 "Could not get user intent from '%s'",
+                 clearIntent.c_str() );
+  }
 }
 
 void InternalStatesBehavior::State::Init(BehaviorExternalInterface& bei)
@@ -526,6 +552,12 @@ void InternalStatesBehavior::State::AddExitTransition(StateID toState, IBEICondi
 
 void InternalStatesBehavior::State::OnActivated(BehaviorExternalInterface& bei)
 {
+  if( _clearIntent != USER_INTENT(INVALID) ) {
+    auto& uic = bei.GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
+    if( uic.IsUserIntentPending( _clearIntent ) ) {
+      uic.ClearUserIntent( _clearIntent );
+    }
+  }
   for( const auto& transitionPair : _interruptingTransitions ) {
     const auto& iConditionPtr = transitionPair.second;
     iConditionPtr->SetActive(bei, true);
