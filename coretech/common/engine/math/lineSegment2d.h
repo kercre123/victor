@@ -28,7 +28,9 @@ public:
   
   // check if the two line segments intersect
   bool IntersectsWith(const LineSegment& l) const;
-  
+
+  // check if two line segments intersect and return the intersection in location
+  bool IntersectsWith(const LineSegment& l, Point2f& location) const;
   
   // compute the dot product of a point relative to the vector `from->to`
   float Dot(const Point2f& p) const;

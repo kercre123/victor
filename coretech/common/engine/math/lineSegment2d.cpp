@@ -13,7 +13,8 @@
 
 #include "coretech/common/engine/math/lineSegment2d.h"
 #include "coretech/common/engine/math/point_impl.h"
-#include <vector>
+#include "util/logging/logging.h"
+
 
 namespace Anki {
 
@@ -98,7 +99,31 @@ LineSegment::EOrientation LineSegment::Orientation(const Point2f& p) const
   {
     return EOrientation::CCW;       // point is to the left
   }
-} 
-
 }
+
+bool LineSegment::IntersectsWith(const LineSegment& l, Point2f& location) const {
+
+  const bool isIntersecting = IntersectsWith(l); // quickly check for intersection
+  if (! isIntersecting) { // nothing to see here
+    return false;
+  }
+
+  Point2f xdiff(this->dX, l.dX);
+  Point2f ydiff(this->dY, l.dY);
+
+  auto det = [](const Point2f& a, const Point2f& b) {
+    return a.x() * b.y() - a.y() * b.x();
+  };
+
+  float div = det(xdiff, ydiff);
+  DEV_ASSERT(div != 0, "LineSegment.IntersectsWith.IntersectionNotPossible");
+
+  Point2f d = -Point2f(det(this->from, this->to),
+                       det(l.from, l.to));
+  location.x() = det(d, xdiff) / div;
+  location.y() = det(d, ydiff) / div;
+  return true;
+}
+
+} // namespace Anki
 
