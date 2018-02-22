@@ -89,7 +89,7 @@ def get_behavior_instances(behaviors_config_path):
     behavior_instances.sort(key=rel_path_sorter)
     return behavior_instances
 
-if __name__ == "__main__":
+def generate_all():
     
     repo_root = get_repo_root(__file__, TOOLS_PATH)
     print('repo root is {}'.format(repo_root))
@@ -99,7 +99,7 @@ if __name__ == "__main__":
 
     if not os.path.isdir(behaviors_code_path):
         print("error: invalid path '{}'".format(behaviors_code_path))
-        exit(-1)
+        return False
 
     behavior_classes = get_behavior_classes(behaviors_code_path)
     print('found {} behavior class files'.format(len(behavior_classes)))
@@ -130,4 +130,10 @@ if __name__ == "__main__":
             anyError = True
 
     if anyError:
+        return False
+    else:
+        return True
+
+if __name__ == "__main__":
+    if not generate_all():
         exit(-1)
