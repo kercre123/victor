@@ -45,7 +45,6 @@ bool BehaviorEyeContact::WantsToBeActivatedBehavior() const
   return GetBEI().GetFaceWorld().IsMakingEyeContact();
 }
 
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEyeContact::OnBehaviorActivated()
 {
