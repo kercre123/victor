@@ -27,6 +27,10 @@
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionLambda.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
+#include "util/console/consoleFunction.h"
+#include "util/console/consoleInterface.h"
+
+#include <cctype>
 
 namespace Anki {
 namespace Cozmo {
@@ -374,6 +378,16 @@ void InternalStatesBehavior::BehaviorUpdate()
   }
   
   State& state = _states->at(_currState);
+  
+  if( ANKI_DEV_CHEATS ) {
+    // check for console var transitions
+    if( _consoleFuncState != InvalidStateID ) {
+      const StateID stateID = _consoleFuncState;
+      _consoleFuncState = InvalidStateID;
+      TransitionToState(stateID);
+      return;
+    }
+  }
 
   // first check the interrupting conditions
   for( const auto& transitionPair : state._interruptingTransitions ) {
@@ -619,6 +633,40 @@ InternalStatesBehavior::StateID InternalStatesBehavior::AddStateName(const std::
     return newID;
   }
   return InvalidStateID;
+}
+  
+void InternalStatesBehavior::AddConsoleVarTransitions( const char* uniqueVarName, const char* category )
+{
+  if( ANKI_DEV_CHEATS ) {
+    auto func = [this](ConsoleFunctionContextRef context) {
+      const char* stateName = ConsoleArg_Get_String(context, "stateName");
+      // case insensitive find for convenience
+      auto tolower = [](const char c) { return std::tolower(c); };
+      // lower cased request
+      std::string requestLowerCase{stateName};
+      std::transform(requestLowerCase.begin(), requestLowerCase.end(), requestLowerCase.begin(), tolower);
+      // and make a lower-cased version of _stateNameToID
+      NameToIdMapType lcStateNameToID;
+      for( const auto& pair : _stateNameToID ) {
+        std::string lcName(pair.first.size(),0);
+        std::transform(pair.first.begin(), pair.first.end(), lcName.begin(), tolower);
+        lcStateNameToID.emplace( lcName, pair.second );
+      }
+      // actually find the state
+      const auto it = lcStateNameToID.find( requestLowerCase );
+      if( it != lcStateNameToID.end() ) {
+        const StateID stateID = it->second;
+        if( stateID != InvalidStateID ) {
+          // don't transition here, otherwise the tick timing doesn't
+          // work out like if this were a normal transition. Instead,
+          // something else is watching _consoleFuncState
+          _consoleFuncState = stateID;
+        }
+      }
+    };
+    auto* cfunc = new Anki::Util::IConsoleFunction( uniqueVarName, std::move(func), category, "const char* stateName" );
+    _consoleFunc.reset( cfunc );
+  }
 }
 
 InternalStatesBehavior::StateID InternalStatesBehavior::GetStateID(const std::string& stateName) const

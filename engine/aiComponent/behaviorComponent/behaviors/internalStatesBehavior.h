@@ -20,6 +20,11 @@
 #include <set>
 
 namespace Anki {
+  
+namespace Util {
+class IConsoleFunction;
+}
+  
 namespace Cozmo {
 
 class InternalStatesBehavior : public ICozmoBehavior
@@ -72,6 +77,9 @@ protected:
   // from the engine start time
   bool StateExitCooldownExpired(StateID state, float timeout, bool valueIfNeverRun = true) const;
   
+  // Set up a console var under uniqueVarName that transitions to each state type by name
+  void AddConsoleVarTransitions(const char* uniqueVarName, const char* category );
+  
 private:
 
   void AddPreDefinedStrategy(const std::string& name, 
@@ -98,7 +106,8 @@ private:
   
   void TransitionToState(StateID targetState);
 
-  std::map< std::string, StateID > _stateNameToID;
+  using NameToIdMapType = std::map< std::string, StateID >;
+  NameToIdMapType _stateNameToID;
 
   using StateMap = std::map< StateID, State >;
   std::unique_ptr< StateMap > _states;
@@ -113,6 +122,9 @@ private:
   bool _debugLightsDirty = false;
   bool _useDebugLights = false;
   float _lastHearbeatLightTime = -1.0f;
+  
+  std::unique_ptr<Anki::Util::IConsoleFunction> _consoleFunc;
+  StateID _consoleFuncState = InvalidStateID;
 };
 
 }

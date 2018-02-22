@@ -45,6 +45,8 @@ BehaviorHighLevelAI::BehaviorHighLevelAI(const Json::Value& config)
   MakeMemberTunable( _params.socializeKnownFaceCooldown_s, "socializeKnownFaceCooldown_s" );
   MakeMemberTunable( _params.playWithCubeOnChargerCooldown_s, "playWithCubeOnChargerCooldown_s" );
   MakeMemberTunable( _params.playWithCubeCooldown_s, "playWithCubeCooldown_s" );
+  
+  AddConsoleVarTransitions( "MoveToState", kDebugName );
 }
   
 BehaviorHighLevelAI::~BehaviorHighLevelAI()
