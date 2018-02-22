@@ -118,5 +118,11 @@ void       cmdRobotLfe(uint8_t idx, uint32_t val);
 void       cmdRobotSmr(uint8_t idx, uint32_t val);
 uint32_t   cmdRobotGmr(uint8_t idx);
 
+//-----------------------------------------------------------------------------
+//                  Additional Cmd + response parsing
+//-----------------------------------------------------------------------------
+
+char* cmdGetEmmcdlVersion(int timeout_ms = CMD_DEFAULT_TIMEOUT);
+
 #endif //CMD_H
 

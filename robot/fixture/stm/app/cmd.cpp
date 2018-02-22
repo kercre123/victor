@@ -548,3 +548,32 @@ uint32_t cmdRobotGmr(uint8_t idx)
   return m_dat.rsp.esn.esn;
 }
 
+//-----------------------------------------------------------------------------
+//                  Additional Cmd + response parsing
+//-----------------------------------------------------------------------------
+
+#define EMMCDL_VER_MAX_LEN  20
+static char emmcdl_version[EMMCDL_VER_MAX_LEN+1];
+static int emmcdl_read_cnt;
+
+void emmcdl_ver_handler_(char* s) {
+  strncpy(emmcdl_version, s, EMMCDL_VER_MAX_LEN);
+  emmcdl_version[EMMCDL_VER_MAX_LEN] = '\0';
+  emmcdl_read_cnt++;
+  //ConsolePrintf("handler (%d): '%s'\n", emmcdl_read_cnt, s); //DEBUG
+}
+
+char* cmdGetEmmcdlVersion(int timeout_ms)
+{
+  memset( &emmcdl_version, 0, sizeof(emmcdl_version) );
+  emmcdl_read_cnt = 0;
+  cmdSend(CMD_IO_HELPER, "get_emmcdl_ver", timeout_ms, CMD_OPTS_DEFAULT & ~CMD_OPTS_EXCEPTION_EN, emmcdl_ver_handler_);
+  
+  if( cmdStatus() == 0 && emmcdl_read_cnt == 1 && strlen(emmcdl_version) > 0 )
+    return emmcdl_version;
+  
+  //else
+  static const char estring[] = "read-error";
+  return (char*)estring;
+}
+
