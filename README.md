@@ -139,7 +139,7 @@ For a more thorough description of build options, run `project/victor/build-vict
 
 ### Connecting over Wifi
 
-1. Make sure your laptop is connected to the `Anki5Ghz` wifi network.
+1. Make sure your laptop is connected to the `Anki5Ghz` wifi network. If you are on a home network, follow the instructions [here](/tools/victor-ble-cli#configuring-wifi).
 
 1. Power on your robot and wait until the eyes appear on the screen. Then click the backpack button once to show the debug display. The robot's IP address appears on the first line.
 
