@@ -126,7 +126,7 @@
     // Check that there is a script on the workspace and it contains
     // more than just the green flag.
     window.hasUserAddedBlocks = function() {
-        var blocks = Scratch.workspace.getTopBlocks(false);
+        var blocks = Scratch.workspace.getAllBlocks();
         var hasUserAddedBlocks = false;
         for (var i = 0, block; block = blocks[i]; i++) {
             if (!window.isGreenFlagBlock(block)) {
