@@ -12,6 +12,7 @@
 
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 
+#include "engine/aiComponent/beiConditions/conditions/conditionConsoleVar.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionFacePositionUpdated.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionFrustration.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionInNeedsBracket.h"
@@ -56,14 +57,9 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
   IBEIConditionPtr strategy = nullptr;
 
   switch (strategyType) {
-    case BEIConditionType::TrueCondition:
+    case BEIConditionType::ConsoleVar:
     {
-      strategy = std::make_shared<ConditionTrue>(config);
-      break;
-    }
-    case BEIConditionType::TriggerWordPending:
-    {
-      strategy = std::make_shared<ConditionTriggerWordPending>(config);
+      strategy = std::make_shared<ConditionConsoleVar>(config);
       break;
     }
     case BEIConditionType::FacePositionUpdated:
@@ -139,6 +135,16 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
     case BEIConditionType::TimedDedup:
     {
       strategy = std::make_shared<ConditionTimedDedup>(config);
+      break;
+    }
+    case BEIConditionType::TrueCondition:
+    {
+      strategy = std::make_shared<ConditionTrue>(config);
+      break;
+    }
+    case BEIConditionType::TriggerWordPending:
+    {
+      strategy = std::make_shared<ConditionTriggerWordPending>(config);
       break;
     }
     case BEIConditionType::UserIntentPending:
