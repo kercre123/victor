@@ -68,6 +68,10 @@ BehaviorDevImageCapture::BehaviorDevImageCapture(const Json::Value& config)
   _imageSaveQuality = JsonTools::ParseInt8(config, "quality", "BehaviorDevImageCapture");
   _useCapTouch = JsonTools::ParseBool(config, "use_capacitive_touch", "BehaviorDevImageCapture");
 
+  if (config.isMember("save_sensor_data")) {
+    _saveSensorData = config["save_sensor_data"].asBool();
+  }
+
   if(config.isMember("class_names"))
   {
     auto const& classNames = config["class_names"];
@@ -238,9 +242,16 @@ void BehaviorDevImageCapture::BehaviorUpdate()
     else {
       PRINT_CH_DEBUG("Behaviors", "BehaviorDevImageCapture.touch.shortPress", "short press release");
       // take single photo
-      visionComponent.SetSaveImageParameters(ImageSendMode::SingleShot,
-                                             GetSavePath(),
-                                             _imageSaveQuality);
+      if (_saveSensorData) {
+        visionComponent.SetSaveImageParameters(ImageSendMode::SingleShotWithSensorData,
+                                               GetSavePath(),
+                                               _imageSaveQuality);
+      }
+      else {
+        visionComponent.SetSaveImageParameters(ImageSendMode::SingleShot,
+                                               GetSavePath(),
+                                               _imageSaveQuality);
+      }
 
       BlinkLight();
     }

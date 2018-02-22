@@ -370,6 +370,8 @@ namespace Cozmo {
     bool ShouldProcessVisionMode(VisionMode mode);
     
     Result EnableMode(VisionMode whichMode, bool enabled);
+
+    Result SaveSensorData() const;
     
     // Contrast-limited adaptive histogram equalization (CLAHE)
     cv::Ptr<cv::CLAHE> _clahe;
@@ -381,8 +383,9 @@ namespace Cozmo {
     std::mutex _mutex;
     std::queue<VisionProcessingResult> _results;
     VisionProcessingResult _currentResult;
-    
-  }; // class VisionSystem
+
+    std::string GetFileNameBasedOnFrameNumber(const char *extension) const;
+}; // class VisionSystem
   
 } // namespace Cozmo
 } // namespace Anki
