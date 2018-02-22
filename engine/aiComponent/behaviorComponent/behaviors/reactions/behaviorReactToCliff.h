@@ -38,6 +38,7 @@ protected:
     modifiers.wantsToBeActivatedWhenCarryingObject = true;
   }
 
+  virtual void InitBehavior() override;
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
   
@@ -48,6 +49,9 @@ protected:
 
 private:
   using base = ICozmoBehavior;
+  
+  IBEIConditionPtr _cliffDetectedCondition;
+  
   enum class State {
     PlayingStopReaction,
     PlayingCliffReaction,

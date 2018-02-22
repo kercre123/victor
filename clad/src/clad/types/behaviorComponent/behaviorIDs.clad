@@ -60,6 +60,7 @@ enum uint_8 BehaviorID {
   ExamplePetInitialDetection,
 
   // reactions
+  ReactToCliff,
   ReactToCubeMoved,
   ReactToPet,
 

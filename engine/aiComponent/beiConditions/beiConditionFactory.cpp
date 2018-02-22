@@ -12,6 +12,7 @@
 
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 
+#include "engine/aiComponent/beiConditions/conditions/conditionCliffDetected.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionConsoleVar.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionFacePositionUpdated.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionFrustration.h"
@@ -167,7 +168,12 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
       strategy = std::make_shared<ConditionOffTreadsState>(config);
       break;
     }
-    
+    case BEIConditionType::CliffDetected:
+    {
+      strategy = std::make_shared<ConditionCliffDetected>(config);
+      break;
+    }
+      
     case BEIConditionType::Lambda:
     {
       DEV_ASSERT(false, "BEIConditionFactory.CreateWantsToRunStrategy.CantCreateLambdaFromConfig");
