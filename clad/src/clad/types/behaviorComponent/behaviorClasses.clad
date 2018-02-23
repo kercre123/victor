@@ -45,6 +45,7 @@ enum uint_8 BehaviorClass {
   DevDisplayReadingsOnFace,
   DevImageCapture,
   DevPettingTestSimple,
+  DevTouchDataCollection,
   DevTurnInPlaceTest,
   DispatchAfterShake,
   DockingTestSimple,

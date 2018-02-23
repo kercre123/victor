@@ -24,6 +24,7 @@ enum uint_8 BehaviorID {
   DevDisplayReadingsOnFace,
   DevImageCapture,
   DevPettingTestSimple,
+  DevTouchDataCollection,
   DevTurnInPlaceTest,
   DockingTestSimple,
   FactoryCentroidExtractor,

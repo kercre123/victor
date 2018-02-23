@@ -34,6 +34,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevDisplayReadingsOnFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevImageCapture.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevPettingTestSimple.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevTouchDataCollection.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevTurnInPlaceTest.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDispatchAfterShake.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDockingTestSimple.h"
@@ -252,6 +253,12 @@ ICozmoBehaviorPtr BehaviorContainer::CreateBehavior_generated(BehaviorClass beha
     case BehaviorClass::DevPettingTestSimple:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorDevPettingTestSimple(config));
+      break;
+    }
+    
+    case BehaviorClass::DevTouchDataCollection:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorDevTouchDataCollection(config));
       break;
     }
     

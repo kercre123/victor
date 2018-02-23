@@ -278,6 +278,17 @@ void BEIRobotInfo::EnableStopOnCliff(const bool enable)
   _robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableStopOnCliff(enable)));
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+u32 BEIRobotInfo::GetHeadSerialNumber() const
+{
+  return _robot.GetHeadSerialNumber();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Util::Data::DataPlatform* BEIRobotInfo::GetDataPlatform() const
+{
+  return _robot.GetContextDataPlatform();
+}
 
   
 } // namespace Cozmo
