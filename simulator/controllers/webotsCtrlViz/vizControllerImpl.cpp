@@ -1516,12 +1516,13 @@ void VizControllerImpl::ProcessVisionModeDebug(const AnkiEvent<VizInterface::Mes
 
   // Clear the space
   _visionModeDisp->setColor(0x0);
-  _visionModeDisp->fillRectangle(0, 0, _bsmStackDisp->getWidth(), _bsmStackDisp->getHeight());
+  _visionModeDisp->fillRectangle(0, 0, _visionModeDisp->getWidth(), _visionModeDisp->getHeight());
 
   const VizInterface::VisionModeDebug& debugData = msg.GetData().Get_VisionModeDebug();
 
+  DrawText(_visionModeDisp, 0, (u32)Anki::NamedColors::WHITE, "Vision Schedule:       Mode:");
   for( size_t i=0; i < debugData.debugStrings.size(); ++i ) {
-    DrawText(_visionModeDisp, (u32)i, (u32)Anki::NamedColors::GREEN, debugData.debugStrings[i].c_str());
+    DrawText(_visionModeDisp, (u32)(i+1), (u32)Anki::NamedColors::GREEN, debugData.debugStrings[i].c_str());
   }
 
 }

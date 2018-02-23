@@ -249,7 +249,7 @@ Supervisor {
         }
       ]
       name "victor_vision_mode_display"
-      width 180
+      width 240
       #assumes size 8 font
       height %{= fields.numVisionModeLines.value * 10 + 16 }%
     }

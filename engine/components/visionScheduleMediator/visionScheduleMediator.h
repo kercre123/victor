@@ -61,7 +61,7 @@ public:
 
   // Set up baseline subscriptions to manage VisionMode defaults via the VSM
   void GetInternalSubscriptions(std::set<VisionModeRequest>& baselineSubscriptions) const {
-    baselineSubscriptions.insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::High });
+    baselineSubscriptions.insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::Low });
   }
 
   // Subscribe at "standard" update frequency to a set of VisionModes. This call REPLACES existing subscriptions for
@@ -86,9 +86,11 @@ private:
     uint8_t med;
     uint8_t high;
     uint8_t standard;
-    bool    enabled;
-    bool    dirty;
-    uint8_t updatePeriod;
+    uint8_t relativeCost = 1;
+    bool    enabled = false;
+    bool    dirty = false;
+    uint8_t updatePeriod = 0;
+    uint8_t offset = 0;
     std::unordered_map<IVisionModeSubscriber*, int> requestMap;
     using record = std::pair<IVisionModeSubscriber*, int>;
     static bool CompareRecords(record i, record j) { return i.second < j.second; }
@@ -101,6 +103,9 @@ private:
   // Internal call to parse the subscription record and send the emergent config to the VisionComponent if it changed
   void UpdateVisionSchedule();
 
+  // Makes a pass over the VisionModeSchedule to spread out processing requirements for various modes.
+  void GenerateBalancedSchedule();
+
   // Returns true if the update period for this mode changed as a result of subscription changes
   bool UpdateModePeriodIfNecessary(VisionModeData& mode) const;
 
@@ -112,8 +117,9 @@ private:
   const CozmoContext* _context;
   VisionComponent* _visionComponent;
   std::unordered_map<VisionMode, VisionModeData> _modeDataMap;
-  bool subscriptionRecordIsDirty = false;
-  uint8_t framesSinceSendingDebugViz = 0;
+  bool _subscriptionRecordIsDirty = false;
+  bool _hasScheduleOnStack = false;
+  uint8_t _framesSinceSendingDebugViz = 0;
 
 }; // class VisionScheduleMediator
 
