@@ -25,6 +25,7 @@
 #include <chrono>
 #include <fstream>
 #include <thread>
+#include <unistd.h>
 
 using namespace Anki;
 using namespace Anki::Cozmo;
@@ -41,6 +42,7 @@ void Cleanup(int signum)
     animEngine = nullptr;
   }
 
+  sync();
   exit(signum);
 }
 

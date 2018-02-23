@@ -3,6 +3,7 @@
 #include <thread>
 #include <sys/mman.h>
 #include <sched.h>
+#include <unistd.h>
 
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/logging.h"
@@ -67,6 +68,7 @@ int main(int argc, const char* argv[])
 
 
     if (shutdownSignal != 0 && --shutdownCounter == 0) {
+      sync();
       AnkiInfo("robot.main.shutdown", "%d", shutdownSignal);
       exit(shutdownSignal);
     }

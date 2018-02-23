@@ -42,6 +42,8 @@
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 
+#include <unistd.h>
+
 // Log options
 #define LOG_CHANNEL    "AnimProcessMessages"
 
@@ -60,6 +62,12 @@ namespace {
   Anki::Cozmo::AnimationStreamer*            _animStreamer = nullptr;
   Anki::Cozmo::Audio::EngineRobotAudioInput* _audioInput = nullptr;
   const Anki::Cozmo::AnimContext*       _context = nullptr;
+
+  // Amount of time the backpack button must be held before sync() is called
+  const f32 kButtonHoldTimeForSync_s = 1.f;
+
+  // Time at which sync() should be called
+  f32 syncTime_s = 0.f;
 
   #ifndef SIMULATOR
   const u8 kNumTicksToCheckForBC = 60; // ~2seconds
@@ -389,10 +397,27 @@ static void HandleRobotStateUpdate(const Anki::Cozmo::RobotState& robotState)
 
   static bool buttonWasPressed = false;
   const auto buttonIsPressed = static_cast<bool>(robotState.status & (uint16_t)RobotStatusFlag::IS_BUTTON_PRESSED);
-  const auto buttonReleased = buttonWasPressed && !buttonIsPressed;
+  const auto buttonPressedEvent = !buttonWasPressed && buttonIsPressed;
+  const auto buttonReleasedEvent = buttonWasPressed && !buttonIsPressed;
   buttonWasPressed = buttonIsPressed;
 
-  if (buttonReleased)
+  const auto currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(); 
+
+  if (buttonPressedEvent) {
+    // Get ready to sync(), in case we end up getting power
+    // pulled by long button press, to make sure all 
+    // pending writes are flushed.
+    syncTime_s = currentTime_s + kButtonHoldTimeForSync_s;
+  }
+
+  if (buttonIsPressed) {
+    if (syncTime_s > 0.f && (currentTime_s > syncTime_s)) {
+      sync();
+      syncTime_s = 0.f;
+    }
+  }
+
+  if (buttonReleasedEvent)
   {
     if(kDebugFaceDraw_CycleWithButton)
     {

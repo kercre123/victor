@@ -211,6 +211,8 @@ static int cozmo_stop()
 #endif
   Anki::Util::SafeDelete(gDataPlatform);
 
+  sync();
+
   return result;
 }
 
