@@ -31,6 +31,7 @@ function tryConnect() {
             peripheral.once('disconnect', function() { console.log("peripheralDisconnecting..."); });
 
             peripheral.connect();
+            noble.stopScanning();
         } else {
             console.log("[" + peripheral.advertisement.localName + "]");
         }
