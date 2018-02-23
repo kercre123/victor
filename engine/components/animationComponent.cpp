@@ -424,6 +424,8 @@ Result AnimationComponent::DisplayFaceImageHelper(const ImageType& img, u32 dura
   }
   
   ASSERT_NAMED(img.IsContinuous(), "AnimationComponent.DisplayFaceImage.NotContinuous");
+  ASSERT_NAMED(img.GetNumRows() == FACE_DISPLAY_HEIGHT, "AnimationComponent.DisplayFaceImage.IncorrectImageHeight");
+  ASSERT_NAMED(img.GetNumCols() == FACE_DISPLAY_WIDTH,  "AnimationComponent.DisplayFaceImage.IncorrectImageWidth");
   
   MessageType msg;
   const int kMaxPixelsPerMsg = msg.faceData.size();

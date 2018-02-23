@@ -4,14 +4,9 @@
 
   "anticConfig" : [
     {
-      "recurIntervalMin_s" : 60,
-      "recurIntervalMax_s" : 65,
+      "recurIntervalMin_s" : 180,
+      "recurIntervalMax_s" : 300,
       "ruleMin_s"          : 60
-    },
-    {
-      "recurIntervalMin_s" : 20,
-      "recurIntervalMax_s" : 30,
-      "ruleMax_s"          : 60
     }
   ]
 }

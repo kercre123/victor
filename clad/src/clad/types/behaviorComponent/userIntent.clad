@@ -20,13 +20,13 @@ structure UserIntent_PlaySpecific
   string entity_behavior,
 }
 
-// test structs. todo: get rid of these in favor of actual structs once
-// there are legit user intents. tests can use the actual structs
-structure UserIntent_Test_TimeInSeconds
+structure UserIntent_TimeInSeconds
 {
   uint_32 time_s
 }
 
+// test structs. todo: get rid of these in favor of actual structs once
+// there are legit user intents. tests can use the actual structs
 enum uint_8 UserIntent_Test_Time_Units
 {
   s=0,
@@ -57,6 +57,7 @@ union dupes_allowed UserIntent
   UserIntent_MeetVictor meet_victor, 
   UserIntent_Void play_anytrick,
   UserIntent_PlaySpecific play_specific,
+  UserIntent_TimeInSeconds set_timer,
   UserIntent_Void system_charger,
   UserIntent_Void status_feeling,
   UserIntent_Void system_sleep,
@@ -67,7 +68,6 @@ union dupes_allowed UserIntent
   UserIntent_Void test_SEPARATOR, // used for validation to know when the above ends
   UserIntent_Void test_user_intent_1,
   UserIntent_Void test_user_intent_2,
-  UserIntent_Test_TimeInSeconds test_timeInSeconds,
   UserIntent_Test_Name test_name,
   UserIntent_Test_TimeWithUnits test_timeWithUnits,
 }

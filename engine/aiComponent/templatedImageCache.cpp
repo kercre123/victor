@@ -13,17 +13,17 @@
 
 
 #include "engine/aiComponent/templatedImageCache.h"
-#include "util/helpers/compositeImageBuilder.h"
+#include "coretech/vision/engine/compositeImageBuilder.h"
 
 namespace Anki {
 namespace Cozmo {
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const Vision::Image& TemplatedImageCache::BuildImage(const std::string& imageName,
-                                                        s32 imageWidth, s32 imageHeight,
-                                                        const Json::Value& templateSpec, 
-                                                        const std::map<std::string, std::string>& quadrantMap)
+const Vision::ImageRGBA& TemplatedImageCache::BuildImage(const std::string& imageName,
+                                                         s32 imageWidth, s32 imageHeight,
+                                                         const Json::Value& templateSpec, 
+                                                         const std::map<std::string, std::string>& quadrantMap)
 {
   auto iter = _imageCache.find(imageName);
   if(iter == _imageCache.end()){
@@ -46,7 +46,7 @@ void TemplatedImageCache::UpdateCacheEntry(CacheEntry& cacheEntry,
   const std::string cacheDebugStr = "TemplatedImageCache.UpdateCacheEntry.TemplateKey";
   // Iterate through the templateSpec and construct a diff of the quadrants that should be re-drawn
   for(auto& entry: templateSpec){
-    const std::string qName = JsonTools::ParseString(entry, Util::CompositeImageBuilderKeys::kQuadrantNameKey, cacheDebugStr);
+    const std::string qName = JsonTools::ParseString(entry, Vision::CompositeImageBuilderKeys::kQuadrantNameKey, cacheDebugStr);
     auto newQuadIter = quadrantMap.find(qName);
     if(newQuadIter == quadrantMap.end()){
       PRINT_NAMED_INFO("TemplatedImageCache.UpdateCacheEntry.MissingQuadrantName",
@@ -64,8 +64,8 @@ void TemplatedImageCache::UpdateCacheEntry(CacheEntry& cacheEntry,
       // or ripped out totally if this work moves to the anim process
       diffTemplate[diffIdx] = entry;
       Json::Value specEntry;
-      specEntry[Util::CompositeImageBuilderKeys::kQuadrantNameKey] = qName;
-      specEntry[Util::CompositeImageBuilderKeys::kImagePathKey] = _imagePathMap.find(newQuadIter->second)->second;
+      specEntry[Vision::CompositeImageBuilderKeys::kQuadrantNameKey] = qName;
+      specEntry[Vision::CompositeImageBuilderKeys::kImagePathKey] = _imagePathMap.find(newQuadIter->second)->second;
 
       specTemplate[diffIdx] = specEntry;
       cacheEntry._quadrantMap[qName] = newQuadIter->second;
@@ -73,12 +73,11 @@ void TemplatedImageCache::UpdateCacheEntry(CacheEntry& cacheEntry,
     }
   }
   // use the diff template
-  Util::CompositeImageBuilder<Vision::Image>::BuildCompositeImage(diffTemplate,
-                                                                  specTemplate,
-                                                                  cacheEntry._image,
-                                                                  false);
+  Vision::CompositeImageBuilder::BuildCompositeImage(diffTemplate,
+                                                     specTemplate,
+                                                     cacheEntry._image,
+                                                     false);
 }
-
 
 } // namespace Cozmo
 } // namespace Anki

@@ -20,6 +20,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorProceduralClock.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
+#include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "coretech/common/engine/jsonTools.h"
 
 namespace Anki {
@@ -33,10 +34,6 @@ const char* kRecurIntervalMinKey = "recurIntervalMin_s";
 const char* kRecurIntervalMaxKey = "recurIntervalMax_s";
 const char* kRuleMinKey = "ruleMin_s";
 const char* kRuleMaxKey = "ruleMax_s";
-
-// const vals
-const int totalTimerTime = 200;
-
 }
 
 class AnticTracker{
@@ -79,8 +76,8 @@ AnticTracker::AnticTracker(const Json::Value& config)
   const std::string debugStr = "AnticTracker.Constructor.InvalidConfig";
   for(auto& configEntry: config){
     RecurranceEntry entry;
-    entry.recurIntervalMin_s = JsonTools::ParseUint8(configEntry, kRecurIntervalMinKey, debugStr + kRecurIntervalMinKey);
-    entry.recurIntervalMax_s = JsonTools::ParseUint8(configEntry, kRecurIntervalMaxKey, debugStr + kRecurIntervalMinKey);
+    entry.recurIntervalMin_s = JsonTools::ParseUInt32(configEntry, kRecurIntervalMinKey, debugStr + kRecurIntervalMinKey);
+    entry.recurIntervalMax_s = JsonTools::ParseUInt32(configEntry, kRecurIntervalMaxKey, debugStr + kRecurIntervalMinKey);
     if(!JsonTools::GetValueOptional(configEntry, kRuleMinKey, entry.ruleMin_s)){
       entry.ruleMin_s = 0;
     }
@@ -231,7 +228,8 @@ void BehaviorTimerUtilityCoordinator::GetAllDelegates(std::set<IBehavior*>& dele
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorTimerUtilityCoordinator::WantsToBeActivatedBehavior() const 
 {
-  const bool setTimerWantsToRun = false; //cloudReceiver.IsIntentPending(CloudIntent::SetATimer);
+  auto& uic = GetBEI().GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
+  const bool setTimerWantsToRun = uic.IsUserIntentPending(Anki::Cozmo::UserIntentTag::set_timer, *_lParams.setTimerIntent);
   const bool timerShouldRing    = TimerShouldRing();
   
   // Todo - need to have a distinction of polite interrupt on min time vs max time
@@ -249,8 +247,10 @@ bool BehaviorTimerUtilityCoordinator::WantsToBeActivatedBehavior() const
 void BehaviorTimerUtilityCoordinator::OnBehaviorActivated() 
 {
   const bool persistTimer = _lParams.timerSet;
+  auto* persistIntentData = _lParams.setTimerIntent.release();
   _lParams = LifetimeParams();
   _lParams.timerSet = persistTimer;
+  _lParams.setTimerIntent.reset(persistIntentData);
 }
 
 
@@ -307,6 +307,13 @@ void BehaviorTimerUtilityCoordinator::SetupTimerBehaviorFunctions() const
   using DigitID = BehaviorProceduralClock::DigitID;
   auto& timerUtility = GetBEI().GetAIComponent().GetComponent<TimerUtility>(AIComponentID::TimerUtility);
   
+  auto startTimerCallback = [&timerUtility, this](){
+    _lParams.timerSet = true;
+    timerUtility.StartTimer(_lParams.setTimerIntent->Get_set_timer().time_s);
+  };
+
+  _iParams.setTimerBehavior->SetShowClockCallback(startTimerCallback);
+
   std::map<DigitID, std::function<int()>> timerFuncs;
   // Ten Mins Digit
   {
@@ -354,9 +361,6 @@ void BehaviorTimerUtilityCoordinator::SetupTimerBehaviorFunctions() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorTimerUtilityCoordinator::TransitionToSetTimer()
 {
-  _lParams.timerSet = true;
-  auto& timerUtility = GetBEI().GetAIComponent().GetComponent<TimerUtility>(AIComponentID::TimerUtility);
-  timerUtility.StartTimer(totalTimerTime);
   _iParams.anticTracker->PlayingAntic(GetBEI());
   DelegateNow(_iParams.setTimerBehavior.get());
 }

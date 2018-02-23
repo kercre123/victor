@@ -25,6 +25,10 @@
       "user_intent": "status_feeling"
     },
     {
+      "cloud_intent" : "intent_clock_settimer",
+      "user_intent"  : "set_timer"
+    },
+    {
       "cloud_intent": "intent_system_charger",
       "user_intent": "system_charger"
     },

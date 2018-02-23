@@ -15,6 +15,7 @@
 #define __Engine_Behaviors_BehaviorTimerUtilityCoordinator_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "clad/types/behaviorComponent/userIntent.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -56,7 +57,8 @@ private:
   };
 
   struct LifetimeParams{
-    bool timerSet = false;
+    mutable bool timerSet = false;
+    std::unique_ptr<UserIntent> setTimerIntent = std::make_unique<UserIntent>();
   };
 
   InstanceParams _iParams;

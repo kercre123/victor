@@ -46,7 +46,7 @@ const std::string& testMapConfig = R"json(
     },
     {
       "cloud_intent": "cloud_time_intent",
-      "user_intent": "test_timeInSeconds"
+      "user_intent": "set_timer"
     },
     {
       "cloud_intent": "cloud_name_intent",
@@ -381,12 +381,12 @@ TEST(UserIntentMap, ExtraData)
   })json"));
   EXPECT_TRUE(comp->IsAnyUserIntentPending());
   Reset(data);
-  EXPECT_TRUE(comp->IsUserIntentPending(USER_INTENT(test_timeInSeconds), data));
-  EXPECT_EQ(data.GetTag(), UserIntentTag::test_timeInSeconds);
-  EXPECT_EQ(data.Get_test_timeInSeconds().time_s, 42);
+  EXPECT_TRUE(comp->IsUserIntentPending(USER_INTENT(set_timer), data));
+  EXPECT_EQ(data.GetTag(), UserIntentTag::set_timer);
+  EXPECT_EQ(data.Get_set_timer().time_s, 42);
 
-  comp->ClearUserIntent(USER_INTENT(test_timeInSeconds));
-  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_timeInSeconds), data));
+  comp->ClearUserIntent(USER_INTENT(set_timer));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(set_timer), data));
 
   EXPECT_TRUE(comp->SetCloudIntentPendingFromJSON(R"json(
   {
@@ -397,12 +397,12 @@ TEST(UserIntentMap, ExtraData)
   })json"));
   EXPECT_TRUE(comp->IsAnyUserIntentPending());
   Reset(data);
-  EXPECT_TRUE(comp->IsUserIntentPending(USER_INTENT(test_timeInSeconds), data));
-  EXPECT_EQ(data.GetTag(), UserIntentTag::test_timeInSeconds);
-  EXPECT_EQ(data.Get_test_timeInSeconds().time_s, 9001);
+  EXPECT_TRUE(comp->IsUserIntentPending(USER_INTENT(set_timer), data));
+  EXPECT_EQ(data.GetTag(), UserIntentTag::set_timer);
+  EXPECT_EQ(data.Get_set_timer().time_s, 9001);
 
-  comp->ClearUserIntent(USER_INTENT(test_timeInSeconds));
-  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_timeInSeconds)));
+  comp->ClearUserIntent(USER_INTENT(set_timer));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(set_timer)));
   
   EXPECT_TRUE(comp->SetCloudIntentPendingFromJSON(R"json(
   {
@@ -413,7 +413,7 @@ TEST(UserIntentMap, ExtraData)
   })json"));
   EXPECT_TRUE(comp->IsAnyUserIntentPending());
   Reset(data);
-  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(test_timeInSeconds), data));
+  EXPECT_FALSE(comp->IsUserIntentPending(USER_INTENT(set_timer), data));
   EXPECT_TRUE(comp->IsUserIntentPending(USER_INTENT(test_name), data));
   EXPECT_EQ(data.GetTag(), UserIntentTag::test_name);
   EXPECT_EQ(data.Get_test_name().name, "Victor");

@@ -152,7 +152,7 @@ namespace Vision {
     const DerivedType GetROI(Rectangle<s32>& roiRect) const;
 
     template<typename DerivedType>
-    void DrawSubImage(DerivedType& subImage, const Point2f& topLeftCorner);
+    void DrawSubImage(const DerivedType& subImage, const Point2f& topLeftCorner);
 
     virtual cv::Scalar GetCvColor(const ColorRGBA& color) const;
 
@@ -199,7 +199,7 @@ namespace Vision {
       return ImageBase<u8>::GetDataPointer();
     }
     
-    void DrawSubImage(Image& subImage, const Point2f& topLeftCorner) { 
+    void DrawSubImage(const Image& subImage, const Point2f& topLeftCorner) { 
       return ImageBase<u8>::DrawSubImage<Image>(subImage, topLeftCorner); 
     }
     Image GetROI(Rectangle<s32>& roiRect) { return ImageBase<u8>::GetROI<Image>(roiRect); }
@@ -265,7 +265,7 @@ namespace Vision {
     
     ImageRGB(const ImageRGB565& imgRGB565);
     
-    void DrawSubImage(ImageRGB& subImage, const Point2f& topLeftCorner) { 
+    void DrawSubImage(const ImageRGB& subImage, const Point2f& topLeftCorner) { 
       return ImageBase<PixelRGB>::DrawSubImage<ImageRGB>(subImage, topLeftCorner); 
     }
     ImageRGB GetROI(Rectangle<s32>& roiRect) { return ImageBase<PixelRGB>::GetROI<ImageRGB>(roiRect); }
@@ -318,7 +318,7 @@ namespace Vision {
     // Reference counting assignment (does not copy):
     ImageRGB565& operator= (const ImageBase<PixelRGB565> &other);
 
-    void DrawSubImage(ImageRGB565& subImage, const Point2f& topLeftCorner) { 
+    void DrawSubImage(const ImageRGB565& subImage, const Point2f& topLeftCorner) { 
       return ImageBase<PixelRGB565>::DrawSubImage<ImageRGB565>(subImage, topLeftCorner); 
     }
     ImageRGB565 GetROI(Rectangle<s32>& roiRect) { return ImageBase<PixelRGB565>::GetROI<ImageRGB565>(roiRect); }
@@ -371,7 +371,7 @@ namespace Vision {
     Image ToGray() const;
     void FillGray(Image& grayOut) const;
     
-    void DrawSubImage(ImageRGBA& subImage, const Point2f& topLeftCorner) { 
+    void DrawSubImage(const ImageRGBA& subImage, const Point2f& topLeftCorner) { 
       return ImageBase<PixelRGBA>::DrawSubImage<ImageRGBA>(subImage, topLeftCorner); 
     }
     ImageRGBA GetROI(Rectangle<s32>& roiRect) {

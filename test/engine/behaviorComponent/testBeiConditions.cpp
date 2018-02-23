@@ -559,7 +559,7 @@ TEST(BeiConditions, UserIntentPending)
         "type": "test_user_intent_1"
       },
       {
-        "type": "test_timeInSeconds"
+        "type": "set_timer"
       },
       {
         "type": "test_name",
@@ -578,7 +578,7 @@ TEST(BeiConditions, UserIntentPending)
   })json";
   // in the above, the condition should fire if
   // (1) test_user_intent_1  matches the tag
-  // (2) test_timeInSeconds  matches the tag
+  // (2) set_timer           matches the tag
   // (3) test_name           matches the tag and name must strictly be empty
   // (4) test_timeWithUnits  matches the tag and and data
   // (5) test_name           matches the tag and lambda must eval (name must be Victor)
@@ -617,19 +617,19 @@ TEST(BeiConditions, UserIntentPending)
   uic.ClearUserIntent( USER_INTENT(test_timeWithUnits) );
   EXPECT_FALSE( cond->AreConditionsMet(bei) ); // no intent
   
-  // (2) test_timeInSeconds  matches the tag
+  // (2) set_timer  matches the tag
   
-  UserIntent_Test_TimeInSeconds timeInSeconds1; // default
-  UserIntent_Test_TimeInSeconds timeInSeconds2{10}; // non default
-  uic.SetUserIntentPending( UserIntent::Createtest_timeInSeconds(std::move(timeInSeconds1)) );
+  UserIntent_TimeInSeconds timeInSeconds1; // default
+  UserIntent_TimeInSeconds timeInSeconds2{10}; // non default
+  uic.SetUserIntentPending( UserIntent::Createset_timer(std::move(timeInSeconds1)) );
   EXPECT_TRUE( cond->AreConditionsMet(bei) ); // correct intent
-  EXPECT_EQ( cond->GetUserIntentTagSelected(), USER_INTENT(test_timeInSeconds) );
-  uic.ClearUserIntent( USER_INTENT(test_timeInSeconds) );
+  EXPECT_EQ( cond->GetUserIntentTagSelected(), USER_INTENT(set_timer) );
+  uic.ClearUserIntent( USER_INTENT(set_timer) );
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
-  uic.SetUserIntentPending( UserIntent::Createtest_timeInSeconds(std::move(timeInSeconds2)) );
+  uic.SetUserIntentPending( UserIntent::Createset_timer(std::move(timeInSeconds2)) );
   EXPECT_TRUE( cond->AreConditionsMet(bei) ); // correct intent
-  EXPECT_EQ( cond->GetUserIntentTagSelected(), USER_INTENT(test_timeInSeconds) );
-  uic.ClearUserIntent( USER_INTENT(test_timeInSeconds) );
+  EXPECT_EQ( cond->GetUserIntentTagSelected(), USER_INTENT(set_timer) );
+  uic.ClearUserIntent( USER_INTENT(set_timer) );
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
   
   // (3) test_name           matches the tag and name must strictly be empty
