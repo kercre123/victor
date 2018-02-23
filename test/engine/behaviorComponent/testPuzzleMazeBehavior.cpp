@@ -115,12 +115,11 @@ TEST(PuzzleMazeBehavior, DISABLED_BalanceTool)
   getcwd(cwdPath, 1255);
   std::string path = cwdPath;
   std::string resourcePath = path + "/resources";
-  std::string filesPath = path + "/files";
+  std::string persistentPath = path + "/persistent";
   std::string cachePath = path + "/temp";
-  std::string externalPath = path + "/temp";
   
   // Really need a data Platform for configs.
-  Anki::Util::Data::DataPlatform dataPlatform(filesPath, cachePath, externalPath, resourcePath);
+  Anki::Util::Data::DataPlatform dataPlatform(persistentPath, cachePath, resourcePath);
   CozmoContext context(&dataPlatform, &handler);
   
   TestBehaviorFramework testBehaviorFramework;

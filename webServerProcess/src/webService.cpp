@@ -656,15 +656,13 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform, const Json::Val
   const std::string webserverPath = platform->pathToResource(Util::Data::Scope::Resources, "webserver");
 
   std::string rewrite;
-  rewrite += "/output=" + platform->pathToResource(Util::Data::Scope::Persistent, "");
+  rewrite += "/persistent=" + platform->pathToResource(Util::Data::Scope::Persistent, "");
   rewrite += ",";
   rewrite += "/resources=" + platform->pathToResource(Util::Data::Scope::Resources, "");
   rewrite += ",";
   rewrite += "/cache=" + platform->pathToResource(Util::Data::Scope::Cache, "");
   rewrite += ",";
   rewrite += "/currentgamelog=" + platform->pathToResource(Util::Data::Scope::CurrentGameLog, "");
-  rewrite += ",";
-  rewrite += "/external=" + platform->pathToResource(Util::Data::Scope::External, "");
 #if USE_DAS
   rewrite += ",";
   rewrite += "/daslog=" + std::string(DASGetLogDir());

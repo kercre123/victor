@@ -66,35 +66,15 @@ void configure_engine(Json::Value& config)
 
 }
 
-static Anki::Util::Data::DataPlatform* createPlatform(const std::string& filesPath,
+static Anki::Util::Data::DataPlatform* createPlatform(const std::string& persistentPath,
                                          const std::string& cachePath,
-                                         const std::string& externalPath,
                                          const std::string& resourcesPath)
 {
-    Anki::Util::FileUtils::CreateDirectory(filesPath);
+    Anki::Util::FileUtils::CreateDirectory(persistentPath);
     Anki::Util::FileUtils::CreateDirectory(cachePath);
-    Anki::Util::FileUtils::CreateDirectory(externalPath);
     Anki::Util::FileUtils::CreateDirectory(resourcesPath);
 
-    return new Anki::Util::Data::DataPlatform(filesPath, cachePath, externalPath, resourcesPath);
-}
-
-static std::string createResourcesPath(const std::string& resourcesBasePath)
-{
-  return resourcesBasePath + "/cozmo_resources";
-}
-
-static void getAndroidPlatformPaths(std::string& filesPath,
-                             std::string& cachePath,
-                             std::string& externalPath,
-                             std::string& resourcesPath,
-                             std::string& resourcesBasePath)
-{
-  filesPath = "/anki/data/assets";
-  cachePath = "/data/data/com.anki.victor/cache";
-  externalPath = "/data/data/com.anki.victor/files";
-  resourcesBasePath = "/anki/data";
-  resourcesPath = createResourcesPath("/anki/data/assets");
+    return new Anki::Util::Data::DataPlatform(persistentPath, cachePath, resourcesPath);
 }
 
 static int cozmo_start(const Json::Value& configuration)
@@ -112,50 +92,39 @@ static int cozmo_start(const Json::Value& configuration)
   Anki::Util::AndroidLogPrintLogger * logPrintLogger = new Anki::Util::AndroidLogPrintLogger(LOG_PROCNAME);
   loggers.push_back(logPrintLogger);
 
-  std::string filesPath;
+  std::string persistentPath;
   std::string cachePath;
-  std::string externalPath;
   std::string resourcesPath;
   std::string resourcesBasePath;
-
-  getAndroidPlatformPaths(filesPath, cachePath, externalPath, resourcesPath, resourcesBasePath);
 
   // copy existing configuration data
   Json::Value config(configuration);
 
-  if (config.isMember("DataPlatformFilesPath")) {
-    filesPath = config["DataPlatformFilesPath"].asCString();
+  if (config.isMember("DataPlatformPersistentPath")) {
+    persistentPath = config["DataPlatformPersistentPath"].asCString();
   } else {
-    config["DataPlatformFilesPath"] = filesPath;
+    PRINT_NAMED_ERROR("cozmoEngineMain.createPlatform.DataPlatformPersistentPathUndefined", "");
   }
 
   if (config.isMember("DataPlatformCachePath")) {
     cachePath = config["DataPlatformCachePath"].asCString();
   } else {
-    config["DataPlatformCachePath"] = cachePath;
-  }
-
-  if (config.isMember("DataPlatformExternalPath")) {
-    externalPath = config["DataPlatformExternalPath"].asCString();
-  } else {
-    config["DataPlatformExternalPath"] = externalPath;
+    PRINT_NAMED_ERROR("cozmoEngineMain.createPlatform.DataPlatformCachePathUndefined", "");
   }
 
   if (config.isMember("DataPlatformResourcesBasePath")) {
     resourcesBasePath = config["DataPlatformResourcesBasePath"].asCString();
   } else {
-    resourcesBasePath = externalPath;
-    config["DataPlatformResourcesBasePath"] = resourcesBasePath;
+    PRINT_NAMED_ERROR("cozmoEngineMain.createPlatform.DataPlatformResourcesBasePathUndefined", "");
   }
 
   if (config.isMember("DataPlatformResourcesPath")) {
     resourcesPath = config["DataPlatformResourcesPath"].asCString();
   } else {
-    resourcesPath = createResourcesPath(resourcesBasePath);
-    config["DataPlatformResourcesPath"] = resourcesPath;
+    PRINT_NAMED_ERROR("cozmoEngineMain.createPlatform.DataPlatformResourcesPathUndefined", "");
   }
 
-  gDataPlatform = createPlatform(filesPath, cachePath, externalPath, resourcesPath);
+  gDataPlatform = createPlatform(persistentPath, cachePath, resourcesPath);
 
   logPrintLogger->PrintLogD(LOG_PROCNAME, "CozmoStart.ResourcesPath", {}, resourcesPath.c_str());
 
@@ -200,8 +169,8 @@ static int cozmo_start(const Json::Value& configuration)
 
   LOG_INFO("cozmo_start", "Creating engine");
   LOG_INFO("cozmo_start",
-            "Initialized data platform with filesPath = %s, cachePath = %s, externalPath = %s, resourcesPath = %s",
-            filesPath.c_str(), cachePath.c_str(), externalPath.c_str(), resourcesPath.c_str());
+            "Initialized data platform with persistentPath = %s, cachePath = %s, resourcesPath = %s",
+            persistentPath.c_str(), cachePath.c_str(), resourcesPath.c_str());
 
   configure_engine(config);
 
@@ -266,7 +235,7 @@ int main(int argc, char* argv[])
     };
 
     char config_file_path[PATH_MAX] = { 0 };
-    const char* env_config = getenv("COZMO_ENGINE_CONFIG");
+    const char* env_config = getenv("VIC_ENGINE_CONFIG");
     if (env_config != NULL) {
       strncpy(config_file_path, env_config, sizeof(config_file_path));
     }

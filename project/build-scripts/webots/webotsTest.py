@@ -648,7 +648,7 @@ def generate_combined_webots_devLog(log_folder, log_file_name, didFail, test_con
 
 def clear_out_unwanted_persistent_files():
   # clear out the persistant needsState file
-  fullPath = get_subpath(os.path.join("simulator","controllers"), "webotsCtrlGameEngine2", "files", "output", "nurture", "needsState.json")
+  fullPath = get_subpath(os.path.join("simulator","controllers"), "webotsCtrlGameEngine2", "persistent", "nurture", "needsState.json")
   if os.path.exists(fullPath):
     os.remove(fullPath)
 

@@ -44,35 +44,15 @@ void Cleanup(int signum)
   exit(signum);
 }
 
-Anki::Util::Data::DataPlatform* createPlatform(const std::string& filesPath,
+Anki::Util::Data::DataPlatform* createPlatform(const std::string& persistentPath,
                                          const std::string& cachePath,
-                                         const std::string& externalPath,
                                          const std::string& resourcesPath)
 {
-    Anki::Util::FileUtils::CreateDirectory(filesPath);
+    Anki::Util::FileUtils::CreateDirectory(persistentPath);
     Anki::Util::FileUtils::CreateDirectory(cachePath);
-    Anki::Util::FileUtils::CreateDirectory(externalPath);
     Anki::Util::FileUtils::CreateDirectory(resourcesPath);
 
-    return new Anki::Util::Data::DataPlatform(filesPath, cachePath, externalPath, resourcesPath);
-}
-
-std::string createResourcesPath(const std::string& resourcesBasePath)
-{
-  return resourcesBasePath + "/cozmo_resources";
-}
-
-void getAndroidPlatformPaths(std::string& filesPath,
-                             std::string& cachePath,
-                             std::string& externalPath,
-                             std::string& resourcesPath,
-                             std::string& resourcesBasePath)
-{
-  filesPath = "/anki/data/assets";
-  cachePath = "/data/data/com.anki.victor/cache";
-  externalPath = "/data/data/com.anki.victor/files";
-  resourcesBasePath = "/anki/data";
-  resourcesPath = createResourcesPath("/anki/data/assets");
+    return new Anki::Util::Data::DataPlatform(persistentPath, cachePath, resourcesPath);
 }
 
 Anki::Util::Data::DataPlatform* createPlatform()
@@ -101,49 +81,30 @@ Anki::Util::Data::DataPlatform* createPlatform()
     }
   }
 
-  std::string filesPath;
+  std::string persistentPath;
   std::string cachePath;
-  std::string externalPath;
   std::string resourcesPath;
-  std::string resourcesBasePath;
 
-  getAndroidPlatformPaths(filesPath, cachePath, externalPath, resourcesPath, resourcesBasePath);
-
-
-  if (config.isMember("DataPlatformFilesPath")) {
-    filesPath = config["DataPlatformFilesPath"].asCString();
+  if (config.isMember("DataPlatformPersistentPath")) {
+    persistentPath = config["DataPlatformPersistentPath"].asCString();
   } else {
-    config["DataPlatformFilesPath"] = filesPath;
+    PRINT_NAMED_ERROR("cozmoAnimMain.createPlatform.DataPlatformPersistentPathUndefined", "");
   }
 
   if (config.isMember("DataPlatformCachePath")) {
     cachePath = config["DataPlatformCachePath"].asCString();
   } else {
-    config["DataPlatformCachePath"] = cachePath;
-  }
-
-  if (config.isMember("DataPlatformExternalPath")) {
-    externalPath = config["DataPlatformExternalPath"].asCString();
-  } else {
-    config["DataPlatformExternalPath"] = externalPath;
-  }
-
-  if (config.isMember("DataPlatformResourcesBasePath")) {
-    resourcesBasePath = config["DataPlatformResourcesBasePath"].asCString();
-  } else {
-    resourcesBasePath = externalPath;
-    config["DataPlatformResourcesBasePath"] = resourcesBasePath;
+    PRINT_NAMED_ERROR("cozmoAnimMain.createPlatform.DataPlatformCachePathUndefined", "");
   }
 
   if (config.isMember("DataPlatformResourcesPath")) {
     resourcesPath = config["DataPlatformResourcesPath"].asCString();
   } else {
-    resourcesPath = createResourcesPath(resourcesBasePath);
-    config["DataPlatformResourcesPath"] = resourcesPath;
+    PRINT_NAMED_ERROR("cozmoAnimMain.createPlatform.DataPlatformResourcesPathUndefined", "");    
   }
 
   Util::Data::DataPlatform* dataPlatform =
-    createPlatform(filesPath, cachePath, externalPath, resourcesPath);
+    createPlatform(persistentPath, cachePath, resourcesPath);
 
   return dataPlatform;
 }

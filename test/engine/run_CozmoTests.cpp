@@ -2376,9 +2376,8 @@ int main(int argc, char ** argv)
     workRoot = workRootChars;
 
   std::string resourcePath;
-  std::string filesPath;
+  std::string persistentPath;
   std::string cachePath;
-  std::string externalPath;
 
   if (configRoot.empty() || workRoot.empty()) {
     char cwdPath[1256];
@@ -2400,15 +2399,13 @@ int main(int argc, char ** argv)
 */
     std::string path = cwdPath;
     resourcePath = path + "/../../data/assets/cozmo_resources";
-    filesPath = path + "/files";
-    cachePath = path + "/temp";
-    externalPath = path + "/temp";
+    persistentPath = path + "/persistent";
+    cachePath = path + "/cache";
   } else {
     // build server specifies configRoot and workRoot
     resourcePath = configRoot + "/resources";
-    filesPath = workRoot + "/files";
-    cachePath = workRoot + "/temp";
-    externalPath = workRoot + "/temp";
+    persistentPath = workRoot + "/persistent";
+    cachePath = workRoot + "/cache";
   }
   
   // Suppress break-on-error for duration of these tests
@@ -2424,7 +2421,7 @@ int main(int argc, char ** argv)
   CubeBleClient::SetSupervisor(nullptr);
 
   //LEAKING HERE
-  Anki::Util::Data::DataPlatform* dataPlatform = new Anki::Util::Data::DataPlatform(filesPath, cachePath, externalPath, resourcePath);
+  Anki::Util::Data::DataPlatform* dataPlatform = new Anki::Util::Data::DataPlatform(persistentPath, cachePath, resourcePath);
   UiMessageHandler handler(0, nullptr);
   cozmoContext = new Anki::Cozmo::CozmoContext(dataPlatform, &handler);
   

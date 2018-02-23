@@ -34,7 +34,7 @@
             "program": "${workspaceRoot}/_build/android/Debug/bin/vic-engine",
             "env": {
                 "LD_LIBRARY_PATH": "/anki/lib",
-                "COZMO_ENGINE_CONFIG": "/anki/etc/config/platform_config.json"
+                "VIC_ENGINE_CONFIG": "/anki/etc/config/platform_config.json"
             },
             "stopOnEntry": false,
             "initCommands": [
@@ -51,7 +51,7 @@
             "program": "${workspaceRoot}/_build/android/Debug/bin/vic-engine",
             "env": {
                 "LD_LIBRARY_PATH": "/anki/lib",
-                "VIC_ANIM_CONFIG": "/anki/etc/config/platform_config.json"
+                "VIC_ENGINE_CONFIG": "/anki/etc/config/platform_config.json"
             },
             "stopOnEntry": false,
             "initCommands": [
@@ -67,7 +67,7 @@
             "program": "${workspaceRoot}/_build/android/Release/bin/vic-engine",
             "env": {
                 "LD_LIBRARY_PATH": "/anki/lib",
-                "COZMO_ENGINE_CONFIG": "/anki/etc/config/platform_config.json"
+                "VIC_ENGINE_CONFIG": "/anki/etc/config/platform_config.json"
             },
             "stopOnEntry": false,
             "initCommands": [
@@ -84,7 +84,7 @@
             "program": "${workspaceRoot}/_build/android/Release/bin/vic-engine",
             "env": {
                 "LD_LIBRARY_PATH": "/anki/lib",
-                "VIC_ANIM_CONFIG": "/anki/etc/config/platform_config.json"
+                "VIC_ENGINE_CONFIG": "/anki/etc/config/platform_config.json"
             },
             "stopOnEntry": false,
             "initCommands": [
