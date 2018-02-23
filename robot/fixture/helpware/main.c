@@ -24,8 +24,47 @@
 
 #define LINEBUFSZ 1024
 
+static int gSerialFd;
 
+#define SEND_CONSOLE   0x1
+#define SEND_LOG       0x2
+#define SEND_SERIAL    0x4
+#define SEND_CL        (SEND_CONSOLE | SEND_LOG) /*most incomming & error data is sent to console + log*/
+#define SEND_CLS       (SEND_CONSOLE | SEND_LOG | SEND_SERIAL) /*most outgoing data is sent to all 3 targets*/
+void write_multiple(int targets, const char* textstring, int len)
+{
+  if( targets & SEND_CONSOLE ) {
+    printf("%.*s", len, textstring);
+    fflush(stdout);
+  }
+  if( targets & SEND_LOG ) {
+    fixture_log_write(textstring, len);
+  }
+  if( (targets & SEND_SERIAL) && gSerialFd > 0 ) {
+    serial_write(gSerialFd, (uint8_t*)textstring, len);
+  }
+}
 
+int printf_multiple(int targets, const char* format, ...)
+{
+  va_list argptr;
+  va_start(argptr, format);
+  
+  char buf[256];
+  int formatlen = vsnprintf(buf, sizeof(buf), format, argptr);
+  int validlen = formatlen < sizeof(buf) ? formatlen : sizeof(buf); //MIN(formatlen, sizeof(buf))
+  va_end(argptr);
+  
+  if( validlen > 0 ) //neg on encoding err
+    write_multiple(targets, buf, validlen );
+  
+  if( validlen < formatlen ) {
+    const char err_msg[] = "--PRINTF_MULTIPLE BUFFER OVERFLOW--\n";
+    write_multiple(SEND_CL, err_msg, sizeof(err_msg));
+  }
+  
+  return formatlen;
+}
 
 int shellcommand(const char* command, int timeout_sec) {
   int retval = -666;
@@ -135,10 +174,10 @@ int handle_get_emmcdl_ver_command(const char* cmd, int len)
     
     close(fd);
   } else {
-    printf("file open error: %i (fd=%i)\n", errno, fd);
+    printf_multiple(SEND_CL, "file open error: %i (fd=%i)\n", errno, fd);
   }
   
-  printf(":%s\n", (vlen>0 ? buf : "file-error"));
+  printf_multiple(SEND_CLS, ":%s\n", (vlen>0 ? buf : "file-error"));
   return 0;
 }
 
@@ -252,7 +291,6 @@ int fixture_serial(int serialFd) {
 }
 
 
-static int gSerialFd;
 
 
 
