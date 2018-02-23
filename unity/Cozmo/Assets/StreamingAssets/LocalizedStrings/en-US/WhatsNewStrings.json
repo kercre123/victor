@@ -119,5 +119,23 @@
   },
   "whatsNew.CodeLab_Constellations.description": {
     "translation": "Celebrate Astronomy Day with cosmic constellations."
+  },
+  "whatsNew.CodeLab_CozmosGarden.title": {
+    "translation": "Cozmo's Garden"
+  },
+  "whatsNew.CodeLab_CozmosGarden.description": {
+    "translation": "Celebrate Earth Day by growing a garden with Cozmo!"
+  },
+  "whatsNew.CodeLab_GuessTheNumber.title": {
+    "translation": "User Submitted: \n\nGuess The Number"
+  },
+  "whatsNew.CodeLab_GuessTheNumber.description": {
+    "translation": "The mystical all-knowing Cozmo will guess your number!"
+  },
+  "whatsNew.CodeLab_WakeUpCozmo.title": {
+    "translation": "Wake Up, Cozmo!"
+  },
+  "whatsNew.CodeLab_WakeUpCozmo.description": {
+    "translation": "Who dares to disturb Cozmo at naptime?"
   }
 }

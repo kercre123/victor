@@ -3,384 +3,608 @@
     "FeatureID": "code_lab_lightshow",
     "DASEventFeatureID": "code_lab_lightshow",
     "StartDate": {
-        "Month": "12",
-        "Day": "1",
-        "Year": "2017"
+      "Month": "12",
+      "Day": "1",
+      "Year": "2017"
     },
     "EndDate": {
-        "Month": "12",
-        "Day": "18",
-        "Year": "2017"
+      "Month": "12",
+      "Day": "18",
+      "Year": "2017"
     },
     "TitleKey": "whatsNew.CodeLab_VerticalLaunch.title",
     "DescriptionKey": "whatsNew.CodeLab_VerticalLaunch.description",
     "IconAssetBundleName": "whats_new_icon_sprites",
     "IconAssetName": "icon_lightShow",
-    "LeftTintColor": [195,50,50],
-    "RightTintColor": [253,78,93],
+    "LeftTintColor": [
+      195,
+      50,
+      50
+    ],
+    "RightTintColor": [
+      253,
+      78,
+      93
+    ],
     "CodeLabData": {
-        "ShowButton": true,
-        "ProjectGuid": "ce67e190-c2d6-4e64-8084-5183eec50d94"
+      "ShowButton": true,
+      "ProjectGuid": "ce67e190-c2d6-4e64-8084-5183eec50d94"
     }
   },
-    {
+  {
     "FeatureID": "code_lab_tiny_orchestra",
     "DASEventFeatureID": "code_lab_tiny_orchestra",
     "StartDate": {
-        "Month": "12",
-        "Day": "19",
-        "Year": "2017"
+      "Month": "12",
+      "Day": "19",
+      "Year": "2017"
     },
     "EndDate": {
-        "Month": "12",
-        "Day": "25",
-        "Year": "2017"
+      "Month": "12",
+      "Day": "25",
+      "Year": "2017"
     },
     "TitleKey": "whatsNew.CodeLab_TinyOrchestra.title",
     "DescriptionKey": "whatsNew.CodeLab_TinyOrchestra.description",
     "IconAssetBundleName": "whats_new_icon_sprites",
     "IconAssetName": "Icon_tinyOrchestra",
-    "LeftTintColor": [212,172,3],
-    "RightTintColor": [255,220,26],
+    "LeftTintColor": [
+      212,
+      172,
+      3
+    ],
+    "RightTintColor": [
+      255,
+      220,
+      26
+    ],
     "CodeLabData": {
-        "ShowButton": true,
-        "ProjectGuid": "29e14062-8cc5-480d-964f-37c62cf4a3a9"
+      "ShowButton": true,
+      "ProjectGuid": "29e14062-8cc5-480d-964f-37c62cf4a3a9"
     }
   },
-    {
+  {
     "FeatureID": "code_lab_magic_fortune_teller",
     "DASEventFeatureID": "code_lab_magic_fortune_teller",
     "StartDate": {
-        "Month": "12",
-        "Day": "26",
-        "Year": "2017"
+      "Month": "12",
+      "Day": "26",
+      "Year": "2017"
     },
     "EndDate": {
-        "Month": "1",
-        "Day": "1",
-        "Year": "2018"
+      "Month": "1",
+      "Day": "1",
+      "Year": "2018"
     },
     "TitleKey": "whatsNew.CodeLab_MagicFortuneTeller.title",
     "DescriptionKey": "whatsNew.CodeLab_MagicFortuneTeller.description",
     "IconAssetBundleName": "whats_new_icon_sprites",
     "IconAssetName": "icon_magicFortuneTeller",
-    "LeftTintColor": [93,197,21],
-    "RightTintColor": [157,227,53],
+    "LeftTintColor": [
+      93,
+      197,
+      21
+    ],
+    "RightTintColor": [
+      157,
+      227,
+      53
+    ],
     "CodeLabData": {
-        "ShowButton": true,
-        "ProjectGuid": "8170ed3b-bfea-41f8-bc0a-b9ea75d4c523"
+      "ShowButton": true,
+      "ProjectGuid": "8170ed3b-bfea-41f8-bc0a-b9ea75d4c523"
     }
   },
-    {
+  {
     "FeatureID": "code_lab_hot_potato",
     "DASEventFeatureID": "code_lab_hot_potato",
     "StartDate": {
-        "Month": "1",
-        "Day": "2",
-        "Year": "2018"
+      "Month": "1",
+      "Day": "2",
+      "Year": "2018"
     },
     "EndDate": {
-        "Month": "1",
-        "Day": "8",
-        "Year": "2018"
+      "Month": "1",
+      "Day": "8",
+      "Year": "2018"
     },
     "TitleKey": "whatsNew.CodeLab_HotPotato.title",
     "DescriptionKey": "whatsNew.CodeLab_HotPotato.description",
     "IconAssetBundleName": "whats_new_icon_sprites",
     "IconAssetName": "icon_hotPotato",
-    "LeftTintColor": [130,31,183],
-    "RightTintColor": [150,73,190],
+    "LeftTintColor": [
+      130,
+      31,
+      183
+    ],
+    "RightTintColor": [
+      150,
+      73,
+      190
+    ],
     "CodeLabData": {
-        "ShowButton": true,
-        "ProjectGuid": "91a410f2-669e-447f-8681-e5dd06dce233"
+      "ShowButton": true,
+      "ProjectGuid": "91a410f2-669e-447f-8681-e5dd06dce233"
     }
   },
-    {
+  {
     "FeatureID": "code_lab_fire_truck_alarm",
     "DASEventFeatureID": "code_lab_fire_truck_alarm",
     "StartDate": {
-        "Month": "1",
-        "Day": "9",
-        "Year": "2018"
+      "Month": "1",
+      "Day": "9",
+      "Year": "2018"
     },
     "EndDate": {
-        "Month": "1",
-        "Day": "15",
-        "Year": "2018"
+      "Month": "1",
+      "Day": "15",
+      "Year": "2018"
     },
     "TitleKey": "whatsNew.CodeLab_FireTruckAlarm.title",
     "DescriptionKey": "whatsNew.CodeLab_FireTruckAlarm.description",
     "IconAssetBundleName": "whats_new_icon_sprites",
     "IconAssetName": "icon_firetruckAlarm",
-    "LeftTintColor": [212,172,3],
-    "RightTintColor": [255,220,26],
+    "LeftTintColor": [
+      212,
+      172,
+      3
+    ],
+    "RightTintColor": [
+      255,
+      220,
+      26
+    ],
     "CodeLabData": {
-        "ShowButton": true,
-        "ProjectGuid": "43b2136b-759b-432c-b17b-938a4c3db9e1"
+      "ShowButton": true,
+      "ProjectGuid": "43b2136b-759b-432c-b17b-938a4c3db9e1"
     }
   },
-    {
+  {
     "FeatureID": "code_lab_cube_whack",
     "DASEventFeatureID": "code_lab_cube_whack",
     "StartDate": {
-        "Month": "1",
-        "Day": "16",
-        "Year": "2018"
+      "Month": "1",
+      "Day": "16",
+      "Year": "2018"
     },
     "EndDate": {
-        "Month": "1",
-        "Day": "23",
-        "Year": "2018"
+      "Month": "1",
+      "Day": "23",
+      "Year": "2018"
     },
     "TitleKey": "whatsNew.CodeLab_CubeWhack.title",
     "DescriptionKey": "whatsNew.CodeLab_CubeWhack.description",
     "IconAssetBundleName": "whats_new_icon_sprites",
     "IconAssetName": "icon_cubeWhack",
-    "LeftTintColor": [93,197,21],
-    "RightTintColor": [157,227,53],
+    "LeftTintColor": [
+      93,
+      197,
+      21
+    ],
+    "RightTintColor": [
+      157,
+      227,
+      53
+    ],
     "CodeLabData": {
-        "ShowButton": true,
-        "ProjectGuid": "cb8f716e-1b8f-4f37-af10-4fe30a8ec31b"
+      "ShowButton": true,
+      "ProjectGuid": "cb8f716e-1b8f-4f37-af10-4fe30a8ec31b"
     }
   },
-    {
+  {
     "FeatureID": "code_lab_laser_smile",
     "DASEventFeatureID": "code_lab_laser_smile",
     "StartDate": {
-        "Month": "1",
-        "Day": "29",
-        "Year": "2018"
+      "Month": "1",
+      "Day": "29",
+      "Year": "2018"
     },
     "EndDate": {
-        "Month": "2",
-        "Day": "7",
-        "Year": "2018"
+      "Month": "2",
+      "Day": "7",
+      "Year": "2018"
     },
     "TitleKey": "whatsNew.CodeLab_LaserSmile.title",
     "DescriptionKey": "whatsNew.CodeLab_LaserSmile.description",
     "IconAssetBundleName": "whats_new_icon_sprites",
     "IconAssetName": "icon_laserSmile",
-    "LeftTintColor": [93,197,21],
-    "RightTintColor": [157,227,53],
+    "LeftTintColor": [
+      93,
+      197,
+      21
+    ],
+    "RightTintColor": [
+      157,
+      227,
+      53
+    ],
     "CodeLabData": {
-        "ShowButton": true,
-        "ProjectGuid": "467f67d5-9217-4e0c-9bf4-3896070f0318"
+      "ShowButton": true,
+      "ProjectGuid": "467f67d5-9217-4e0c-9bf4-3896070f0318"
     }
   },
-    {
+  {
     "FeatureID": "code_lab_valentimes_cozmogram",
     "DASEventFeatureID": "code_lab_valentimes_cozmogram",
     "StartDate": {
-        "Month": "2",
-        "Day": "8",
-        "Year": "2018"
+      "Month": "2",
+      "Day": "8",
+      "Year": "2018"
     },
     "EndDate": {
-        "Month": "2",
-        "Day": "14",
-        "Year": "2018"
+      "Month": "2",
+      "Day": "14",
+      "Year": "2018"
     },
     "TitleKey": "whatsNew.CodeLab_ValentinesCozmogram.title",
     "DescriptionKey": "whatsNew.CodeLab_ValentinesCozmogram.description",
     "IconAssetBundleName": "whats_new_icon_sprites",
     "IconAssetName": "icon_valentinesCozmogram",
-    "LeftTintColor": [93,197,21],
-    "RightTintColor": [157,227,53],
+    "LeftTintColor": [
+      93,
+      197,
+      21
+    ],
+    "RightTintColor": [
+      157,
+      227,
+      53
+    ],
     "CodeLabData": {
-        "ShowButton": true,
-        "ProjectGuid": "7a3522a8-cd48-4c3b-9a6a-275ce4bffd65"
+      "ShowButton": true,
+      "ProjectGuid": "7a3522a8-cd48-4c3b-9a6a-275ce4bffd65"
     }
   },
-    {
+  {
     "FeatureID": "code_lab_putt_putt",
     "DASEventFeatureID": "code_lab_putt_putt",
     "StartDate": {
-        "Month": "2",
-        "Day": "15",
-        "Year": "2018"
+      "Month": "2",
+      "Day": "15",
+      "Year": "2018"
     },
     "EndDate": {
-        "Month": "2",
-        "Day": "21",
-        "Year": "2018"
+      "Month": "2",
+      "Day": "21",
+      "Year": "2018"
     },
     "TitleKey": "whatsNew.CodeLab_PuttPutt.title",
     "DescriptionKey": "whatsNew.CodeLab_PuttPutt.description",
     "IconAssetBundleName": "whats_new_icon_sprites",
     "IconAssetName": "icon_puttPutt",
-    "LeftTintColor": [130,31,183],
-    "RightTintColor": [150,73,190],
+    "LeftTintColor": [
+      130,
+      31,
+      183
+    ],
+    "RightTintColor": [
+      150,
+      73,
+      190
+    ],
     "CodeLabData": {
-        "ShowButton": true,
-        "ProjectGuid": "c8b394a6-54e2-4347-ab4f-17cd5c641862"
+      "ShowButton": true,
+      "ProjectGuid": "c8b394a6-54e2-4347-ab4f-17cd5c641862"
     }
   },
-    {
+  {
     "FeatureID": "code_lab_shake_it",
     "DASEventFeatureID": "code_lab_shake_it",
     "StartDate": {
-        "Month": "2",
-        "Day": "22",
-        "Year": "2018"
+      "Month": "2",
+      "Day": "22",
+      "Year": "2018"
     },
     "EndDate": {
-        "Month": "2",
-        "Day": "28",
-        "Year": "2018"
+      "Month": "2",
+      "Day": "28",
+      "Year": "2018"
     },
     "TitleKey": "whatsNew.CodeLab_ShakeIt.title",
     "DescriptionKey": "whatsNew.CodeLab_ShakeIt.description",
     "IconAssetBundleName": "whats_new_icon_sprites",
     "IconAssetName": "icon_shakeIt",
-    "LeftTintColor": [212,172,3],
-    "RightTintColor": [255,220,26],
+    "LeftTintColor": [
+      212,
+      172,
+      3
+    ],
+    "RightTintColor": [
+      255,
+      220,
+      26
+    ],
     "CodeLabData": {
-        "ShowButton": true,
-        "ProjectGuid": "01ab9bf6-e0ae-4a6a-a94c-51ccadc42fc9"
+      "ShowButton": true,
+      "ProjectGuid": "01ab9bf6-e0ae-4a6a-a94c-51ccadc42fc9"
     }
   },
-    {
+  {
     "FeatureID": "code_lab_remote_control_racer",
     "DASEventFeatureID": "code_lab_remote_control_racer",
     "StartDate": {
-        "Month": "3",
-        "Day": "1",
-        "Year": "2018"
+      "Month": "3",
+      "Day": "1",
+      "Year": "2018"
     },
     "EndDate": {
-        "Month": "3",
-        "Day": "7",
-        "Year": "2018"
+      "Month": "3",
+      "Day": "7",
+      "Year": "2018"
     },
     "TitleKey": "whatsNew.CodeLab_RemoteControlRacer.title",
     "DescriptionKey": "whatsNew.CodeLab_RemoteControlRacer.description",
     "IconAssetBundleName": "whats_new_icon_sprites",
     "IconAssetName": "icon_remoteControlRacer",
-    "LeftTintColor": [93,197,21],
-    "RightTintColor": [157,227,53],
+    "LeftTintColor": [
+      93,
+      197,
+      21
+    ],
+    "RightTintColor": [
+      157,
+      227,
+      53
+    ],
     "CodeLabData": {
-        "ShowButton": true,
-        "ProjectGuid": "30ada9ed-efad-4eff-bca3-6facbddfd475"
+      "ShowButton": true,
+      "ProjectGuid": "30ada9ed-efad-4eff-bca3-6facbddfd475"
     }
   },
-    {
+  {
     "FeatureID": "code_lab_compliment_generator",
     "DASEventFeatureID": "code_lab_compliment_generator",
     "StartDate": {
-        "Month": "2",
-        "Day": "28",
-        "Year": "2018"
+      "Month": "2",
+      "Day": "28",
+      "Year": "2018"
     },
     "EndDate": {
-        "Month": "3",
-        "Day": "6",
-        "Year": "2018"
+      "Month": "3",
+      "Day": "6",
+      "Year": "2018"
     },
     "TitleKey": "whatsNew.CodeLab_ComplimentGenerator.title",
     "DescriptionKey": "whatsNew.CodeLab_ComplimentGenerator.description",
     "IconAssetBundleName": "whats_new_icon_sprites",
     "IconAssetName": "icon_complimentGenerator",
-    "LeftTintColor": [130,31,183],
-    "RightTintColor": [150,73,190],
+    "LeftTintColor": [
+      130,
+      31,
+      183
+    ],
+    "RightTintColor": [
+      150,
+      73,
+      190
+    ],
     "CodeLabData": {
-        "ShowButton": true,
-        "ProjectGuid": "3fab62c3-f268-4faa-8f68-db5bd67f11c1"
+      "ShowButton": true,
+      "ProjectGuid": "3fab62c3-f268-4faa-8f68-db5bd67f11c1"
     }
   },
-    {
+  {
     "FeatureID": "code_lab_pot_o_gold_detector",
     "DASEventFeatureID": "code_lab_pot_o_gold_detector",
     "StartDate": {
-        "Month": "3",
-        "Day": "7",
-        "Year": "2018"
+      "Month": "3",
+      "Day": "7",
+      "Year": "2018"
     },
     "EndDate": {
-        "Month": "3",
-        "Day": "13",
-        "Year": "2018"
+      "Month": "3",
+      "Day": "13",
+      "Year": "2018"
     },
     "TitleKey": "whatsNew.CodeLab_PotOGoldDetector.title",
     "DescriptionKey": "whatsNew.CodeLab_PotOGoldDetector.description",
     "IconAssetBundleName": "whats_new_icon_sprites",
     "IconAssetName": "icon_potOGoldDetector",
-    "LeftTintColor": [93,197,21],
-    "RightTintColor": [157,227,53],
+    "LeftTintColor": [
+      93,
+      197,
+      21
+    ],
+    "RightTintColor": [
+      157,
+      227,
+      53
+    ],
     "CodeLabData": {
-        "ShowButton": true,
-        "ProjectGuid": "66eab634-e300-4b28-9633-9e65eba2c488"
+      "ShowButton": true,
+      "ProjectGuid": "66eab634-e300-4b28-9633-9e65eba2c488"
     }
   },
-    {
+  {
     "FeatureID": "code_lab_driving_in_circles",
     "DASEventFeatureID": "code_lab_driving_in_circles",
     "StartDate": {
-        "Month": "3",
-        "Day": "14",
-        "Year": "2018"
+      "Month": "3",
+      "Day": "14",
+      "Year": "2018"
     },
     "EndDate": {
-        "Month": "3",
-        "Day": "20",
-        "Year": "2018"
+      "Month": "3",
+      "Day": "20",
+      "Year": "2018"
     },
     "TitleKey": "whatsNew.CodeLab_DrivingInCircles.title",
     "DescriptionKey": "whatsNew.CodeLab_DrivingInCircles.description",
     "IconAssetBundleName": "whats_new_icon_sprites",
     "IconAssetName": "icon_drivingInCircles",
-    "LeftTintColor": [212,172,3],
-    "RightTintColor": [255,220,26],
+    "LeftTintColor": [
+      212,
+      172,
+      3
+    ],
+    "RightTintColor": [
+      255,
+      220,
+      26
+    ],
     "CodeLabData": {
-        "ShowButton": true,
-        "ProjectGuid": "03dfa788-73c1-4b93-9e2c-f105f855c6a4"
+      "ShowButton": true,
+      "ProjectGuid": "03dfa788-73c1-4b93-9e2c-f105f855c6a4"
     }
   },
   {
     "FeatureID": "code_lab_paddle_ball",
     "DASEventFeatureID": "code_lab_paddle_ball",
     "StartDate": {
-        "Month": "3",
-        "Day": "21",
-        "Year": "2018"
+      "Month": "3",
+      "Day": "21",
+      "Year": "2018"
     },
     "EndDate": {
-        "Month": "3",
-        "Day": "27",
-        "Year": "2018"
+      "Month": "3",
+      "Day": "27",
+      "Year": "2018"
     },
     "TitleKey": "whatsNew.CodeLab_PaddleBall.title",
     "DescriptionKey": "whatsNew.CodeLab_PaddleBall.description",
     "IconAssetBundleName": "whats_new_icon_sprites",
     "IconAssetName": "icon_paddleBall",
-    "LeftTintColor": [195,50,50],
-    "RightTintColor": [253,78,93],
+    "LeftTintColor": [
+      195,
+      50,
+      50
+    ],
+    "RightTintColor": [
+      253,
+      78,
+      93
+    ],
     "CodeLabData": {
-        "ShowButton": true,
-        "ProjectGuid": "37e52fab-983f-49f9-83bd-90c284cd9f6b"
+      "ShowButton": true,
+      "ProjectGuid": "37e52fab-983f-49f9-83bd-90c284cd9f6b"
     }
   },
   {
     "FeatureID": "code_lab_constellations",
     "DASEventFeatureID": "code_lab_constellations",
     "StartDate": {
-        "Month": "4",
-        "Day": "21",
-        "Year": "2018"
+      "Month": "4",
+      "Day": "21",
+      "Year": "2018"
     },
     "EndDate": {
-        "Month": "4",
-        "Day": "27",
-        "Year": "2018"
+      "Month": "4",
+      "Day": "27",
+      "Year": "2018"
     },
     "TitleKey": "whatsNew.CodeLab_Constellations.title",
     "DescriptionKey": "whatsNew.CodeLab_Constellations.description",
     "IconAssetBundleName": "whats_new_icon_sprites",
     "IconAssetName": "icon_constellations",
-    "LeftTintColor": [130,31,183],
-    "RightTintColor": [150,73,190],
+    "LeftTintColor": [
+      130,
+      31,
+      183
+    ],
+    "RightTintColor": [
+      150,
+      73,
+      190
+    ],
     "CodeLabData": {
-        "ShowButton": true,
-        "ProjectGuid": "9238bb68-e2e3-46c0-ad0e-d2f88a7f6bb4"
+      "ShowButton": true,
+      "ProjectGuid": "9238bb68-e2e3-46c0-ad0e-d2f88a7f6bb4"
+    }
+  },
+  {
+    "FeatureID": "code_lab_cozmos_garden",
+    "DASEventFeatureID": "code_lab_cozmos_garden",
+    "StartDate": {
+      "Month": "4",
+      "Day": "20",
+      "Year": "2018"
+    },
+    "EndDate": {
+      "Month": "4",
+      "Day": "26",
+      "Year": "2018"
+    },
+    "TitleKey": "whatsNew.CodeLab_CozmosGarden.title",
+    "DescriptionKey": "whatsNew.CodeLab_CozmosGarden.description",
+    "IconAssetBundleName": "whats_new_icon_sprites",
+    "IconAssetName": "icon_cozmosGarden",
+    "LeftTintColor": [
+      212,
+      172,
+      3
+    ],
+    "RightTintColor": [
+      255,
+      220,
+      26
+    ],
+    "CodeLabData": {
+      "ShowButton": true,
+      "ProjectGuid": "58995258-5c09-4e47-8865-ada04811b366"
+    }
+  },
+  {
+    "FeatureID": "code_lab_guess_the_number",
+    "DASEventFeatureID": "code_lab_guess_the_number",
+    "StartDate": {
+      "Month": "4",
+      "Day": "13",
+      "Year": "2018"
+    },
+    "EndDate": {
+      "Month": "4",
+      "Day": "19",
+      "Year": "2018"
+    },
+    "TitleKey": "whatsNew.CodeLab_GuessTheNumber.title",
+    "DescriptionKey": "whatsNew.CodeLab_GuessTheNumber.description",
+    "IconAssetBundleName": "whats_new_icon_sprites",
+    "IconAssetName": "icon_guessTheNumber",
+    "LeftTintColor": [
+      212,
+      172,
+      3
+    ],
+    "RightTintColor": [
+      255,
+      220,
+      26
+    ],
+    "CodeLabData": {
+      "ShowButton": true,
+      "ProjectGuid": "5a050857-4bfe-4cfa-b743-2eacdbccee7b"
+    }
+  },
+  {
+    "FeatureID": "code_lab_wake_up_cozmo",
+    "DASEventFeatureID": "code_lab_wake_up_cozmo",
+    "StartDate": {
+      "Month": "4",
+      "Day": "6",
+      "Year": "2018"
+    },
+    "EndDate": {
+      "Month": "4",
+      "Day": "12",
+      "Year": "2018"
+    },
+    "TitleKey": "whatsNew.CodeLab_WakeUpCozmo.title",
+    "DescriptionKey": "whatsNew.CodeLab_WakeUpCozmo.description",
+    "IconAssetBundleName": "whats_new_icon_sprites",
+    "IconAssetName": "icon_wakeUpCozmo",
+    "LeftTintColor": [
+      195,
+      50,
+      50
+    ],
+    "RightTintColor": [
+      253,
+      78,
+      93
+    ],
+    "CodeLabData": {
+      "ShowButton": true,
+      "ProjectGuid": "bcc27fd9-63ea-4808-b565-490793fb03f2"
     }
   }
 ]

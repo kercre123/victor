@@ -1,0 +1,4013 @@
+{
+    "ProjectJSON": {
+        "meta": {
+            "agent": "Mozilla/5.0 (iPad; CPU OS 10_3_3 like Mac OS X) AppleWebKit/603.3.8 (KHTML, like Gecko) Mobile/14G60",
+            "semver": "3.0.0",
+            "vm": "0.1.0"
+        },
+        "targets": [
+            {
+                "blocks": {},
+                "costumeCount": 0,
+                "costumes": [],
+                "currentCostume": 0,
+                "direction": 90,
+                "draggable": false,
+                "id": "#F]BUDqp6v6*e?Gc]+{O",
+                "isStage": true,
+                "lists": {},
+                "name": "Stage",
+                "rotationStyle": "all around",
+                "size": 100,
+                "sounds": [],
+                "variables": {
+                    ",9=yzv7zR:zeE$;JXyyO": {
+                        "id": ",9=yzv7zR:zeE$;JXyyO",
+                        "name": "display guess",
+                        "type": "broadcast_msg",
+                        "value": "display guess"
+                    },
+                    "2bncxZXZ/NkerG~*iGe#": {
+                        "id": "2bncxZXZ/NkerG~*iGe#",
+                        "name": "codelabfeaturedproject.guessthenumber.lower_number_cube_is_tapped",
+                        "type": "",
+                        "value": 0
+                    },
+                    "5Ij(~W_P0A1U@J7t;}|U": {
+                        "id": "5Ij(~W_P0A1U@J7t;}|U",
+                        "name": "codelabfeaturedproject.guessthenumber.started",
+                        "type": "",
+                        "value": "1"
+                    },
+                    "7eq/8yclar7y~EO+ZtPY": {
+                        "id": "7eq/8yclar7y~EO+ZtPY",
+                        "name": "codelabfeaturedproject.guessthenumber.higher_number_cube_is_tapped",
+                        "type": "",
+                        "value": 0
+                    },
+                    "9lsmE|?rn+UvD|de-8z4": {
+                        "id": "9lsmE|?rn+UvD|de-8z4",
+                        "name": "codelabfeaturedproject.guessthenumber.cozmo_has_guessed_the_number_so_end_the_game",
+                        "type": "",
+                        "value": 0
+                    },
+                    "AhO~eVWZFAdF8)lihXK=": {
+                        "id": "AhO~eVWZFAdF8)lihXK=",
+                        "name": "codelabfeaturedproject.guessthenumber.initialize_the_game_and_give_instructions",
+                        "type": "",
+                        "value": 0
+                    },
+                    "C944iSq$Ka@@otR58d]3": {
+                        "id": "C944iSq$Ka@@otR58d]3",
+                        "name": "codelabfeaturedproject.guessthenumber.start_and_end_game_cube_is_tapped",
+                        "type": "",
+                        "value": 0
+                    },
+                    "E_Mb7Urs{p8,^U+7FF1d": {
+                        "id": "E_Mb7Urs{p8,^U+7FF1d",
+                        "name": "end game",
+                        "type": "broadcast_msg",
+                        "value": "end game"
+                    },
+                    "FL)wle7,1#do71s3J]_z": {
+                        "id": "FL)wle7,1#do71s3J]_z",
+                        "name": "spin lights",
+                        "type": "broadcast_msg",
+                        "value": "spin lights"
+                    },
+                    "H@p,^b(S38y[O}#k}}I|": {
+                        "id": "H@p,^b(S38y[O}#k}}I|",
+                        "name": "reset lights",
+                        "type": "broadcast_msg",
+                        "value": "reset lights"
+                    },
+                    "I]C.SU[:`mS]Fm)I:p4q": {
+                        "id": "I]C.SU[:`mS]Fm)I:p4q",
+                        "name": "codelabfeaturedproject.guessthenumber.max",
+                        "type": "",
+                        "value": 48
+                    },
+                    "V2rWPMh}?bCZTB/jIKWD": {
+                        "id": "V2rWPMh}?bCZTB/jIKWD",
+                        "name": "codelabfeaturedproject.guessthenumber.guess",
+                        "type": "",
+                        "value": 46
+                    },
+                    "ZdQ+4Z8GDf4v1wwX|-`y": {
+                        "id": "ZdQ+4Z8GDf4v1wwX|-`y",
+                        "name": "codelabfeaturedproject.guessthenumber.nextstate",
+                        "type": "",
+                        "value": 0
+                    },
+                    "^(T~92_uxQ0;_cHe4ZC#": {
+                        "id": "^(T~92_uxQ0;_cHe4ZC#",
+                        "name": "codelabfeaturedproject.guessthenumber.after_incorrect_guess_play_sad_animation_and_reguess",
+                        "type": "",
+                        "value": 0
+                    },
+                    "fiIc.L.}KtXO4vW]@|,f": {
+                        "id": "fiIc.L.}KtXO4vW]@|,f",
+                        "name": "codelabfeaturedproject.guessthenumber.display_the_guess_cozmo_has_made",
+                        "type": "",
+                        "value": 0
+                    },
+                    "jVQK4N12~ZZ}g=5Y+~Rk": {
+                        "id": "jVQK4N12~ZZ}g=5Y+~Rk",
+                        "name": "new guess",
+                        "type": "broadcast_msg",
+                        "value": "new guess"
+                    },
+                    "k6+o/oNDW2O68R,D.+c(": {
+                        "id": "k6+o/oNDW2O68R,D.+c(",
+                        "name": "codelabfeaturedproject.guessthenumber.reset_the_cube_lights_to_the_colors_used_for_gameplay",
+                        "type": "",
+                        "value": 0
+                    },
+                    "kf;Ezn.ORl:3j.v:.v`$": {
+                        "id": "kf;Ezn.ORl:3j.v:.v`$",
+                        "name": "codelabfeaturedproject.guessthenumber.min",
+                        "type": "",
+                        "value": 44
+                    },
+                    "oij$a?yKBJb+o5+Ol.=,": {
+                        "id": "oij$a?yKBJb+o5+Ol.=,",
+                        "name": "cozmo gives instructions.",
+                        "type": "",
+                        "value": 0
+                    },
+                    "qURdyL-v$_9]]+;ox,ya": {
+                        "id": "qURdyL-v$_9]]+;ox,ya",
+                        "name": "codelabfeaturedproject.guessthenumber.totalguesses",
+                        "type": "",
+                        "value": 5
+                    },
+                    "uj1v/FX)*u*BPrq$mv:a": {
+                        "id": "uj1v/FX)*u*BPrq$mv:a",
+                        "name": "give instructions",
+                        "type": "broadcast_msg",
+                        "value": "give instructions"
+                    },
+                    "wLTe)C4A2H}E=Hl-SA1!": {
+                        "id": "wLTe)C4A2H}E=Hl-SA1!",
+                        "name": "codelabfeaturedproject.guessthenumber.gameover",
+                        "type": "",
+                        "value": "1"
+                    },
+                    "}[neTF)o8A@8u%1[?`BN": {
+                        "id": "}[neTF)o8A@8u%1[?`BN",
+                        "name": "codelabfeaturedproject.guessthenumber.tapon",
+                        "type": "",
+                        "value": "1"
+                    },
+                    "~S9R6L^F[.MO15G:THcj": {
+                        "id": "~S9R6L^F[.MO15G:THcj",
+                        "name": "codelabfeaturedproject.guessthenumber.spin_all_of_the_cube_lights_in_white",
+                        "type": "",
+                        "value": 0
+                    }
+                },
+                "visible": true,
+                "x": 0,
+                "y": 0
+            },
+            {
+                "blocks": {
+                    "!R.=n-Kv2~s#|.IPW=]s": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "5Ij(~W_P0A1U@J7t;}|U",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.guessthenumber.started"
+                            }
+                        },
+                        "id": "!R.=n-Kv2~s#|.IPW=]s",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": "8HcrRh6;*|q*d0GO33pP",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-428",
+                        "y": "957"
+                    },
+                    "!RD%1,s^q8P:2+4)!md?": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": "180"
+                            }
+                        },
+                        "id": "!RD%1,s^q8P:2+4)!md?",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": "X4UR^ZTR2[2Z?3`V3tFW",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "#uM+v4QH1)!7yP1)^SFK": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "k6+o/oNDW2O68R,D.+c(",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.guessthenumber.reset_the_cube_lights_to_the_colors_used_for_gameplay",
+                                "variableType": ""
+                            }
+                        },
+                        "id": "#uM+v4QH1)!7yP1)^SFK",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": null,
+                        "shadow": false,
+                        "topLevel": true,
+                        "x": 379,
+                        "y": 2076
+                    },
+                    "$zk,T-mqS@A+0Id{4NMv": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "0"
+                            }
+                        },
+                        "id": "$zk,T-mqS@A+0Id{4NMv",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": "m4994wMRG#gXI(EeU6P|",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "%1x^-:G/P)D#7GV0o]Rg": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": "1"
+                            }
+                        },
+                        "id": "%1x^-:G/P)D#7GV0o]Rg",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": "+@lsIsg0Uog(R|{9R[bF",
+                        "shadow": true,
+                        "topLevel": false,
+                        "x": 62.96319498334623,
+                        "y": 897.8557194301056
+                    },
+                    "%E$]]W`w@{j2@)hVSYYt": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "C944iSq$Ka@@otR58d]3",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.guessthenumber.start_and_end_game_cube_is_tapped",
+                                "variableType": ""
+                            }
+                        },
+                        "id": "%E$]]W`w@{j2@)hVSYYt",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": null,
+                        "shadow": false,
+                        "topLevel": true,
+                        "x": 375,
+                        "y": -198
+                    },
+                    "%J@.E^$f:HnDG_En.f]O": {
+                        "fields": {},
+                        "id": "%J@.E^$f:HnDG_En.f]O",
+                        "inputs": {
+                            "TEXT": {
+                                "block": "gOr,VIf)OU0;Xz(.Orj%",
+                                "name": "TEXT",
+                                "shadow": "FQZ*J?qHIC;gXh)%HjuV"
+                            },
+                            "X1": {
+                                "block": "yxw;g;m,#05zu#.5~26M",
+                                "name": "X1",
+                                "shadow": "yxw;g;m,#05zu#.5~26M"
+                            },
+                            "Y1": {
+                                "block": "{?i1ja-a%,aXX*^/*pAk",
+                                "name": "Y1",
+                                "shadow": "{?i1ja-a%,aXX*^/*pAk"
+                            }
+                        },
+                        "next": "RuM_cIe?BA?7j[qbXwsi",
+                        "opcode": "cozmo_vert_cozmoface_draw_text",
+                        "parent": "l_8cHY?@q#MzJe)*0Vn[",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": -333.5914219447545,
+                        "y": 2371.7257385253906
+                    },
+                    "(,Snp(2?h=+D@MBL4;b)": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "V2rWPMh}?bCZTB/jIKWD",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.guessthenumber.guess"
+                            }
+                        },
+                        "id": "(,Snp(2?h=+D@MBL4;b)",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": "F2y}#|g:oSW562C67bbG",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-381",
+                        "y": "446"
+                    },
+                    "(XRtzO]f22t0JB4vz+2M": {
+                        "fields": {
+                            "ANIMATION_SELECT": {
+                                "name": "ANIMATION_SELECT",
+                                "value": "3"
+                            }
+                        },
+                        "id": "(XRtzO]f22t0JB4vz+2M",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "cozmo_animation_select_menu",
+                        "parent": "b[(pZaHpa!p`U,/9jVR)",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "(cFH;;iQ(%:+DAhX_FeC": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "2bncxZXZ/NkerG~*iGe#",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.guessthenumber.lower_number_cube_is_tapped",
+                                "variableType": ""
+                            }
+                        },
+                        "id": "(cFH;;iQ(%:+DAhX_FeC",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": null,
+                        "shadow": false,
+                        "topLevel": true,
+                        "x": 378,
+                        "y": 1079
+                    },
+                    "(s6gY6~pRl?X@g/i8u1w": {
+                        "fields": {
+                            "ANIMATION_SELECT": {
+                                "name": "ANIMATION_SELECT",
+                                "value": "3"
+                            }
+                        },
+                        "id": "(s6gY6~pRl?X@g/i8u1w",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "cozmo_animation_select_menu",
+                        "parent": "{=/QcZ4_.;|$;Gz$y^R/",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    ")}6.,q%CL2$/j.^o)EF{": {
+                        "fields": {},
+                        "id": ")}6.,q%CL2$/j.^o)EF{",
+                        "inputs": {
+                            "OPERAND1": {
+                                "block": "]Q:n)?{ju,EA~F%F^4vP",
+                                "name": "OPERAND1",
+                                "shadow": "B`z!-Da9%6VR%sZhz-0+"
+                            },
+                            "OPERAND2": {
+                                "block": "ZdL(o8+LPWNS7%bI5SYe",
+                                "name": "OPERAND2",
+                                "shadow": "ZdL(o8+LPWNS7%bI5SYe"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_equals",
+                        "parent": "@i7TFEscDEYxqLzkahX0",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-69",
+                        "y": "575"
+                    },
+                    "*KX2:JG%m2{XJ`PQ~Lgr": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": ""
+                            }
+                        },
+                        "id": "*KX2:JG%m2{XJ`PQ~Lgr",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 408.42427280970986,
+                        "y": 721.7799944196428
+                    },
+                    "+.}UkpYDdzvo1|SMY+|u": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "wLTe)C4A2H}E=Hl-SA1!",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.guessthenumber.gameover"
+                            }
+                        },
+                        "id": "+.}UkpYDdzvo1|SMY+|u",
+                        "inputs": {
+                            "VALUE": {
+                                "block": "j`y?]BM`P{SGnJlx6Chc",
+                                "name": "VALUE",
+                                "shadow": "j`y?]BM`P{SGnJlx6Chc"
+                            }
+                        },
+                        "next": "tVIhCsiff|@#{:!w0ahf",
+                        "opcode": "data_setvariableto",
+                        "parent": "7qE!6,pmR.|7@#D*;g@6",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": -410.73999459402904,
+                        "y": 1769.9942626953125
+                    },
+                    "+7:8OnEis~%F3%Z-IehS": {
+                        "fields": {},
+                        "id": "+7:8OnEis~%F3%Z-IehS",
+                        "inputs": {
+                            "SOUND_MENU": {
+                                "block": "tQ31L6BM#gF?P0qiMhBf",
+                                "name": "SOUND_MENU",
+                                "shadow": "tQ31L6BM#gF?P0qiMhBf"
+                            }
+                        },
+                        "next": "r~|K,l8v@kki(IOFak{)",
+                        "opcode": "cozmo_sound_play",
+                        "parent": "1d~;=$KOb$P*]9RWPqT0",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": 768.929411764706,
+                        "y": 25.55294117647059
+                    },
+                    "+@lsIsg0Uog(R|{9R[bF": {
+                        "fields": {},
+                        "id": "+@lsIsg0Uog(R|{9R[bF",
+                        "inputs": {
+                            "NUM1": {
+                                "block": ",)syq^/A0/wdAkH6Rc5o",
+                                "name": "NUM1",
+                                "shadow": "AjtkE||pFNmqia~R1oL@"
+                            },
+                            "NUM2": {
+                                "block": "%1x^-:G/P)D#7GV0o]Rg",
+                                "name": "NUM2",
+                                "shadow": "%1x^-:G/P)D#7GV0o]Rg"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_add",
+                        "parent": "in|FO[;yQt)jHoAdLLeZ",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-299",
+                        "y": "624"
+                    },
+                    "+OR%xGTd,{+]hid8x870": {
+                        "fields": {
+                            "BROADCAST_OPTION": {
+                                "id": ",9=yzv7zR:zeE$;JXyyO",
+                                "name": "BROADCAST_OPTION",
+                                "value": "display guess",
+                                "variableType": "broadcast_msg"
+                            }
+                        },
+                        "id": "+OR%xGTd,{+]hid8x870",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "event_broadcast_menu_with_broadcast_input",
+                        "parent": "WIM%V]BQX-Fi]4n*TY2z",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "+bsPgb/tYKd6@UKGIB}m": {
+                        "fields": {
+                            "LIGHT_SELECT": {
+                                "name": "LIGHT_SELECT",
+                                "value": "4"
+                            }
+                        },
+                        "id": "+bsPgb/tYKd6@UKGIB}m",
+                        "inputs": {
+                            "COLOR": {
+                                "block": "8.wy^Ud$KAntcQjNfe(u",
+                                "name": "COLOR",
+                                "shadow": "8.wy^Ud$KAntcQjNfe(u"
+                            },
+                            "CUBE_SELECT": {
+                                "block": "lD$:GI=HCq7D{?!2`TQx",
+                                "name": "CUBE_SELECT",
+                                "shadow": "lD$:GI=HCq7D{?!2`TQx"
+                            }
+                        },
+                        "next": "v4~JQ+*1yxPWa?SHXdZ2",
+                        "opcode": "cozmo_vert_set_cube_light_corner",
+                        "parent": "K*a!ZEN;z1}oZ)~qSz8]",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-475",
+                        "y": "1535"
+                    },
+                    ",)syq^/A0/wdAkH6Rc5o": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "qURdyL-v$_9]]+;ox,ya",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.guessthenumber.totalguesses"
+                            }
+                        },
+                        "id": ",)syq^/A0/wdAkH6Rc5o",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": "+@lsIsg0Uog(R|{9R[bF",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-299",
+                        "y": "910"
+                    },
+                    "-$;If}w{9c8FhMPg*gY=": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "5Ij(~W_P0A1U@J7t;}|U",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.guessthenumber.started"
+                            }
+                        },
+                        "id": "-$;If}w{9c8FhMPg*gY=",
+                        "inputs": {
+                            "VALUE": {
+                                "block": "vzVyWH[!G]lBL[qDk~)y",
+                                "name": "VALUE",
+                                "shadow": "vzVyWH[!G]lBL[qDk~)y"
+                            }
+                        },
+                        "next": "sU8]3rEbIx2Qh8X;X[5v",
+                        "opcode": "data_setvariableto",
+                        "parent": "L(m|arqO6rxGY(ccIAg(",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": -303.24999128069203,
+                        "y": 656.9543195452009
+                    },
+                    "-:ay0Y^J*V|t$YaM+Wa2": {
+                        "fields": {
+                            "BROADCAST_OPTION": {
+                                "id": "E_Mb7Urs{p8,^U+7FF1d",
+                                "name": "BROADCAST_OPTION",
+                                "value": "end game",
+                                "variableType": "broadcast_msg"
+                            }
+                        },
+                        "id": "-:ay0Y^J*V|t$YaM+Wa2",
+                        "inputs": {},
+                        "next": "X4UR^ZTR2[2Z?3`V3tFW",
+                        "opcode": "event_whenbroadcastreceived_with_broadcast_input",
+                        "parent": null,
+                        "shadow": false,
+                        "topLevel": true,
+                        "x": -389,
+                        "y": 1808
+                    },
+                    "-QqVI6)e^g#;A=b6LUuw": {
+                        "fields": {
+                            "CUBE_SELECT": {
+                                "name": "CUBE_SELECT",
+                                "value": "3"
+                            }
+                        },
+                        "id": "-QqVI6)e^g#;A=b6LUuw",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "cozmo_cube_looks_select_menu",
+                        "parent": "v4~JQ+*1yxPWa?SHXdZ2",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "-{[QJ_Smo-YE!sx6o#sq": {
+                        "fields": {
+                            "CUBE_SELECT": {
+                                "name": "CUBE_SELECT",
+                                "value": "3"
+                            }
+                        },
+                        "id": "-{[QJ_Smo-YE!sx6o#sq",
+                        "inputs": {},
+                        "next": "qH3.CL(0s]0+GZ$;EUDW",
+                        "opcode": "cozmo_event_on_cube_tap",
+                        "parent": null,
+                        "shadow": false,
+                        "topLevel": true,
+                        "x": 391,
+                        "y": 586
+                    },
+                    ".Al-C12PZv`BD;%-(zLy": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": "45"
+                            }
+                        },
+                        "id": ".Al-C12PZv`BD;%-(zLy",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": "X4UR^ZTR2[2Z?3`V3tFW",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    ".D,eXwW:,q4`HsMEVf-?": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "I]C.SU[:`mS]Fm)I:p4q",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.guessthenumber.max"
+                            }
+                        },
+                        "id": ".D,eXwW:,q4`HsMEVf-?",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": "^Uv8}fDUm(Cb^-aeSjmF",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": -19.50797871180947,
+                        "y": 898.0442526681084
+                    },
+                    ".Kg;a7Ar2A@/4ZNEHJo+": {
+                        "fields": {},
+                        "id": ".Kg;a7Ar2A@/4ZNEHJo+",
+                        "inputs": {
+                            "STRING": {
+                                "block": "A6Q!9gD`NzQFU#7jg*i@",
+                                "name": "STRING",
+                                "shadow": "A6Q!9gD`NzQFU#7jg*i@"
+                            }
+                        },
+                        "next": "@Y?bRuIeiTa!uA4S6*Uj",
+                        "opcode": "cozmo_says",
+                        "parent": "f6)^*Bt)2(jM:TqbZSe~",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": -93.83712768554689,
+                        "y": 321.6300136021205
+                    },
+                    ".c#1;B~6|G+?~T|?[}Ro": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "}[neTF)o8A@8u%1[?`BN",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.guessthenumber.tapon"
+                            }
+                        },
+                        "id": ".c#1;B~6|G+?~T|?[}Ro",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": "dU`YaB]NjXma}dncyFDf",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-103",
+                        "y": "1086"
+                    },
+                    ".i{pwqVIVTQb4wePidS!": {
+                        "fields": {},
+                        "id": ".i{pwqVIVTQb4wePidS!",
+                        "inputs": {
+                            "NUM1": {
+                                "block": "^Uv8}fDUm(Cb^-aeSjmF",
+                                "name": "NUM1",
+                                "shadow": "L25Zg|X}s$+cEDp_SUZ%"
+                            },
+                            "NUM2": {
+                                "block": "f5zWq2em6=IL+^%C,,@Y",
+                                "name": "NUM2",
+                                "shadow": "f5zWq2em6=IL+^%C,,@Y"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_divide",
+                        "parent": "7g9EWGr]T)pVovqXW}6Z",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": 38.67629514421728,
+                        "y": 856.7242933000838
+                    },
+                    "/TCI8U7EO0:tbo75LUEG": {
+                        "fields": {},
+                        "id": "/TCI8U7EO0:tbo75LUEG",
+                        "inputs": {
+                            "STRING": {
+                                "block": "r$a8,*a{Z}+2+Ty?+Hs%",
+                                "name": "STRING",
+                                "shadow": "r$a8,*a{Z}+2+Ty?+Hs%"
+                            }
+                        },
+                        "next": "@TV$r8P;O0yK}k_]a$L5",
+                        "opcode": "cozmo_says",
+                        "parent": "M{jTs/OJi8%5.li*o{67",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": -249.23529411764707,
+                        "y": 693.0470588235294
+                    },
+                    "0BJ%y!)-@u7fMxKarKM!": {
+                        "fields": {},
+                        "id": "0BJ%y!)-@u7fMxKarKM!",
+                        "inputs": {
+                            "STRING1": {
+                                "block": "_4A)e`?obCOga1L(F,HI",
+                                "name": "STRING1",
+                                "shadow": "_4A)e`?obCOga1L(F,HI"
+                            },
+                            "STRING2": {
+                                "block": "Y$LCnfFS)M`P+HkdtXFK",
+                                "name": "STRING2",
+                                "shadow": "eeDg$,Za*]QCFk9-2-1-"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_join",
+                        "parent": "7qE!6,pmR.|7@#D*;g@6",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-304",
+                        "y": "1242"
+                    },
+                    "0ktsiWKVwOso4RGilDtU": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "1"
+                            }
+                        },
+                        "id": "0ktsiWKVwOso4RGilDtU",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": "dU`YaB]NjXma}dncyFDf",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "1/RqMSfrjZflZ(P)kW-d": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "0"
+                            }
+                        },
+                        "id": "1/RqMSfrjZflZ(P)kW-d",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 520.9426100594657,
+                        "y": 738.715765816825
+                    },
+                    "1B4CM$w`)KGIwvzGFDMo": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": "45"
+                            }
+                        },
+                        "id": "1B4CM$w`)KGIwvzGFDMo",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": "AhPudUcGwS]pCN#9(_LB",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "1d~;=$KOb$P*]9RWPqT0": {
+                        "fields": {},
+                        "id": "1d~;=$KOb$P*]9RWPqT0",
+                        "inputs": {
+                            "BROADCAST_INPUT": {
+                                "block": "Z.KEro1[J8WZZFkr3+DN",
+                                "name": "BROADCAST_INPUT",
+                                "shadow": "Z.KEro1[J8WZZFkr3+DN"
+                            }
+                        },
+                        "next": "+7:8OnEis~%F3%Z-IehS",
+                        "opcode": "event_broadcast_with_broadcast_input",
+                        "parent": "nMzq3hzgVNB*|hIXP#91",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-35",
+                        "y": "403"
+                    },
+                    "1l{dId/`gQkj|ccTK=K:": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "7eq/8yclar7y~EO+ZtPY",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.guessthenumber.higher_number_cube_is_tapped",
+                                "variableType": ""
+                            }
+                        },
+                        "id": "1l{dId/`gQkj|ccTK=K:",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": null,
+                        "shadow": false,
+                        "topLevel": true,
+                        "x": 387,
+                        "y": 510
+                    },
+                    "1w,,AWnZkeL.6w}L,o]{": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "0"
+                            }
+                        },
+                        "id": "1w,,AWnZkeL.6w}L,o]{",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 27.528064727783203,
+                        "y": 885.3714425223216
+                    },
+                    "2IHW5)^=j|~I[APNt:G4": {
+                        "fields": {
+                            "SOUND_MENU": {
+                                "name": "SOUND_MENU",
+                                "value": "9"
+                            }
+                        },
+                        "id": "2IHW5)^=j|~I[APNt:G4",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "cozmo_sound_sounds_menu",
+                        "parent": "ACp[04h5A_wc|{)C,iW1",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "2_F2Z8-c@/b-moF4o(F#": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "0"
+                            }
+                        },
+                        "id": "2_F2Z8-c@/b-moF4o(F#",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 518.6340547289166,
+                        "y": 1026.8871198381698
+                    },
+                    "2v+Y`5@p2,yp2jOH~~mO": {
+                        "fields": {},
+                        "id": "2v+Y`5@p2,yp2jOH~~mO",
+                        "inputs": {
+                            "OPERAND1": {
+                                "block": "s_7CopE;=3~hoGG(E?I4",
+                                "name": "OPERAND1",
+                                "shadow": "*KX2:JG%m2{XJ`PQ~Lgr"
+                            },
+                            "OPERAND2": {
+                                "block": "UjX@DnE6V]*(0Mh{]q$T",
+                                "name": "OPERAND2",
+                                "shadow": "UjX@DnE6V]*(0Mh{]q$T"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_equals",
+                        "parent": "qH3.CL(0s]0+GZ$;EUDW",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-104",
+                        "y": "890"
+                    },
+                    "352WtSL{;7!i1ciH+;sx": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "anki"
+                            }
+                        },
+                        "id": "352WtSL{;7!i1ciH+;sx",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 182.9413386753627,
+                        "y": 1084.548592703683
+                    },
+                    "4Q3akbQJi*n#DU`5zd.8": {
+                        "fields": {},
+                        "id": "4Q3akbQJi*n#DU`5zd.8",
+                        "inputs": {
+                            "BROADCAST_INPUT": {
+                                "block": "N*_HuQg)DKOQGQ0,Zgr!",
+                                "name": "BROADCAST_INPUT",
+                                "shadow": "N*_HuQg)DKOQGQ0,Zgr!"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "event_broadcast_with_broadcast_input",
+                        "parent": "}Q_zY;xd+Nu6~nstf6Fa",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-2",
+                        "y": "1313"
+                    },
+                    "4R%/^(wx5fqAafdYFq4_": {
+                        "fields": {
+                            "ANIMATION_SELECT": {
+                                "name": "ANIMATION_SELECT",
+                                "value": "2"
+                            }
+                        },
+                        "id": "4R%/^(wx5fqAafdYFq4_",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "cozmo_animation_select_menu",
+                        "parent": "tVIhCsiff|@#{:!w0ahf",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "65bk`,#NZr5f4*s?Q}2]": {
+                        "fields": {
+                            "BROADCAST_OPTION": {
+                                "id": "FL)wle7,1#do71s3J]_z",
+                                "name": "BROADCAST_OPTION",
+                                "value": "spin lights",
+                                "variableType": "broadcast_msg"
+                            }
+                        },
+                        "id": "65bk`,#NZr5f4*s?Q}2]",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "event_broadcast_menu_with_broadcast_input",
+                        "parent": "xi[cqtCpm-d]1SOL+R^2",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "6ZL8~zMm6$U1R04D9[xj": {
+                        "fields": {
+                            "CUBE_SELECT": {
+                                "name": "CUBE_SELECT",
+                                "value": "1"
+                            }
+                        },
+                        "id": "6ZL8~zMm6$U1R04D9[xj",
+                        "inputs": {},
+                        "next": ":@Qe]h73},gYZ]qE#5D,",
+                        "opcode": "cozmo_event_on_cube_tap",
+                        "parent": null,
+                        "shadow": false,
+                        "topLevel": true,
+                        "x": 387,
+                        "y": 1167
+                    },
+                    "6rg/@R9]8.6^{vG$WMdx": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": ""
+                            }
+                        },
+                        "id": "6rg/@R9]8.6^{vG$WMdx",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": -102.18391091482985,
+                        "y": 322.72858537946416
+                    },
+                    "79L_d~,S97K#$J.U)C`f": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": ""
+                            }
+                        },
+                        "id": "79L_d~,S97K#$J.U)C`f",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 399.3014003208706,
+                        "y": 1011.1599818638393
+                    },
+                    "7UE#rwLIOV,$;JF*[7ih": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "I]C.SU[:`mS]Fm)I:p4q",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.guessthenumber.max"
+                            }
+                        },
+                        "id": "7UE#rwLIOV,$;JF*[7ih",
+                        "inputs": {
+                            "VALUE": {
+                                "block": "^BZ0`wp(?X_[1m]usg)1",
+                                "name": "VALUE",
+                                "shadow": "2_F2Z8-c@/b-moF4o(F#"
+                            }
+                        },
+                        "next": "N)?w,x4#0ITcpaeiT8DK",
+                        "opcode": "data_setvariableto",
+                        "parent": "{=/QcZ4_.;|$;Gz$y^R/",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": 331.3014003208706,
+                        "y": 1003.1599818638394
+                    },
+                    "7X9$qFyWP7F5Et!1*uDE": {
+                        "fields": {
+                            "BROADCAST_OPTION": {
+                                "id": "uj1v/FX)*u*BPrq$mv:a",
+                                "name": "BROADCAST_OPTION",
+                                "value": "give instructions",
+                                "variableType": "broadcast_msg"
+                            }
+                        },
+                        "id": "7X9$qFyWP7F5Et!1*uDE",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "event_broadcast_menu_with_broadcast_input",
+                        "parent": "?0|aqO-k)[.K4y4`OWP-",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "7g9EWGr]T)pVovqXW}6Z": {
+                        "fields": {},
+                        "id": "7g9EWGr]T)pVovqXW}6Z",
+                        "inputs": {
+                            "NUM": {
+                                "block": ".i{pwqVIVTQb4wePidS!",
+                                "name": "NUM",
+                                "shadow": "pm{*8OxLvO)!Vw,n]2qF"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_round",
+                        "parent": "m%g/@zgl+,R_DHaCtyPr",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-360",
+                        "y": "910"
+                    },
+                    "7qE!6,pmR.|7@#D*;g@6": {
+                        "fields": {},
+                        "id": "7qE!6,pmR.|7@#D*;g@6",
+                        "inputs": {
+                            "STRING": {
+                                "block": "0BJ%y!)-@u7fMxKarKM!",
+                                "name": "STRING",
+                                "shadow": "9fCz{F73[.!uHT}U0.O3"
+                            }
+                        },
+                        "next": "+.}UkpYDdzvo1|SMY+|u",
+                        "opcode": "cozmo_says",
+                        "parent": "X4UR^ZTR2[2Z?3`V3tFW",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": -332.6685834612165,
+                        "y": 1321.1285574776784
+                    },
+                    "8.wy^Ud$KAntcQjNfe(u": {
+                        "fields": {
+                            "COLOUR": {
+                                "name": "COLOUR",
+                                "value": "#ffffff"
+                            }
+                        },
+                        "id": "8.wy^Ud$KAntcQjNfe(u",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "colour_picker",
+                        "parent": "+bsPgb/tYKd6@UKGIB}m",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "84,Eqag{L):.XMq4hQ__": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": ""
+                            }
+                        },
+                        "id": "84,Eqag{L):.XMq4hQ__",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 522.6340547289166,
+                        "y": 1026.8871198381698
+                    },
+                    "8HcrRh6;*|q*d0GO33pP": {
+                        "fields": {},
+                        "id": "8HcrRh6;*|q*d0GO33pP",
+                        "inputs": {
+                            "OPERAND1": {
+                                "block": "!R.=n-Kv2~s#|.IPW=]s",
+                                "name": "OPERAND1",
+                                "shadow": "vS`OEH`Gq@^^X@|b5vv/"
+                            },
+                            "OPERAND2": {
+                                "block": "Kf1VIqB=+]ZHJNTY2C9Z",
+                                "name": "OPERAND2",
+                                "shadow": "Kf1VIqB=+]ZHJNTY2C9Z"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_equals",
+                        "parent": "L(m|arqO6rxGY(ccIAg(",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": -262.8114275251117,
+                        "y": 1180.9257354736333
+                    },
+                    "9fCz{F73[.!uHT}U0.O3": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "codelabfeaturedproject.guessthenumber.hi"
+                            }
+                        },
+                        "id": "9fCz{F73[.!uHT}U0.O3",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": -127.31571088518419,
+                        "y": 1080.5485927036832
+                    },
+                    ":@Qe]h73},gYZ]qE#5D,": {
+                        "fields": {},
+                        "id": ":@Qe]h73},gYZ]qE#5D,",
+                        "inputs": {
+                            "CONDITION": {
+                                "block": "dU`YaB]NjXma}dncyFDf",
+                                "name": "CONDITION",
+                                "shadow": null
+                            },
+                            "SUBSTACK": {
+                                "block": ":P1Zp^|a~EBuJ4GYIWGo",
+                                "name": "SUBSTACK",
+                                "shadow": null
+                            }
+                        },
+                        "next": null,
+                        "opcode": "control_if",
+                        "parent": "6ZL8~zMm6$U1R04D9[xj",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": 227.71000453404022,
+                        "y": 1114.6214076450897
+                    },
+                    ":P)T?9h,0rlf*k8m*x=N": {
+                        "fields": {},
+                        "id": ":P)T?9h,0rlf*k8m*x=N",
+                        "inputs": {
+                            "CONDITION": {
+                                "block": "T/,;XadOL:sz,83QN,MM",
+                                "name": "CONDITION",
+                                "shadow": null
+                            }
+                        },
+                        "next": null,
+                        "opcode": "control_wait_until",
+                        "parent": "AhPudUcGwS]pCN#9(_LB",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-290",
+                        "y": "365"
+                    },
+                    ":P1Zp^|a~EBuJ4GYIWGo": {
+                        "fields": {},
+                        "id": ":P1Zp^|a~EBuJ4GYIWGo",
+                        "inputs": {
+                            "BROADCAST_INPUT": {
+                                "block": "b)Wd/T!h#*!:na%567mf",
+                                "name": "BROADCAST_INPUT",
+                                "shadow": "b)Wd/T!h#*!:na%567mf"
+                            }
+                        },
+                        "next": "DauzG_R-(i9z#}@bovxH",
+                        "opcode": "event_broadcast_with_broadcast_input",
+                        "parent": ":@Qe]h73},gYZ]qE#5D,",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-48",
+                        "y": "1863"
+                    },
+                    ";+=[G|F0d^(-dbsvHPD|": {
+                        "fields": {},
+                        "id": ";+=[G|F0d^(-dbsvHPD|",
+                        "inputs": {
+                            "BROADCAST_INPUT": {
+                                "block": "Z=W4Vy7@Kg-R(;lhNNdW",
+                                "name": "BROADCAST_INPUT",
+                                "shadow": "Z=W4Vy7@Kg-R(;lhNNdW"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "event_broadcast_with_broadcast_input",
+                        "parent": "RuM_cIe?BA?7j[qbXwsi",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-518",
+                        "y": "2800"
+                    },
+                    ";:NX6h=Sxzibw171Vs8#": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "wLTe)C4A2H}E=Hl-SA1!",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.guessthenumber.gameover"
+                            }
+                        },
+                        "id": ";:NX6h=Sxzibw171Vs8#",
+                        "inputs": {
+                            "VALUE": {
+                                "block": "M|PzG8?PvR9MlG_O+MlP",
+                                "name": "VALUE",
+                                "shadow": "M|PzG8?PvR9MlG_O+MlP"
+                            }
+                        },
+                        "next": "J!D4$lU*L=5GE+r*38Fx",
+                        "opcode": "data_setvariableto",
+                        "parent": "m4994wMRG#gXI(EeU6P|",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-288",
+                        "y": "190"
+                    },
+                    "?0|aqO-k)[.K4y4`OWP-": {
+                        "fields": {},
+                        "id": "?0|aqO-k)[.K4y4`OWP-",
+                        "inputs": {
+                            "BROADCAST_INPUT": {
+                                "block": "7X9$qFyWP7F5Et!1*uDE",
+                                "name": "BROADCAST_INPUT",
+                                "shadow": "7X9$qFyWP7F5Et!1*uDE"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "event_broadcast_with_broadcast_input",
+                        "parent": "r~|K,l8v@kki(IOFak{)",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "2",
+                        "y": "642"
+                    },
+                    "?UeSNJ9]{$;s_Tv%AzAt": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "kf;Ezn.ORl:3j.v:.v`$",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.guessthenumber.min"
+                            }
+                        },
+                        "id": "?UeSNJ9]{$;s_Tv%AzAt",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": "^Uv8}fDUm(Cb^-aeSjmF",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": 62.96319498334606,
+                        "y": 893.8557194301061
+                    },
+                    "?Vf?5DP/Om+5LXL_32YL": {
+                        "fields": {},
+                        "id": "?Vf?5DP/Om+5LXL_32YL",
+                        "inputs": {
+                            "NUM1": {
+                                "block": "r;yFKAGGE,*FK!)?%TNt",
+                                "name": "NUM1",
+                                "shadow": "Xfz,^gPvUqhv]n[R33DE"
+                            },
+                            "NUM2": {
+                                "block": "B/UpI2AxVW830wk!C;8^",
+                                "name": "NUM2",
+                                "shadow": "B/UpI2AxVW830wk!C;8^"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_add",
+                        "parent": "}Q_zY;xd+Nu6~nstf6Fa",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": 568.9426100594657,
+                        "y": 782.7157658168248
+                    },
+                    "@I4C05(;RM0|0L70sm8w": {
+                        "fields": {
+                            "COLOUR": {
+                                "name": "COLOUR",
+                                "value": "#ff0000"
+                            }
+                        },
+                        "id": "@I4C05(;RM0|0L70sm8w",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "colour_picker",
+                        "parent": "K*a!ZEN;z1}oZ)~qSz8]",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "@TV$r8P;O0yK}k_]a$L5": {
+                        "fields": {},
+                        "id": "@TV$r8P;O0yK}k_]a$L5",
+                        "inputs": {
+                            "BROADCAST_INPUT": {
+                                "block": "a1tJDr[CB;nwkF78$)SK",
+                                "name": "BROADCAST_INPUT",
+                                "shadow": "a1tJDr[CB;nwkF78$)SK"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "event_broadcast_with_broadcast_input",
+                        "parent": "/TCI8U7EO0:tbo75LUEG",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-488",
+                        "y": "1009"
+                    },
+                    "@Y?bRuIeiTa!uA4S6*Uj": {
+                        "fields": {},
+                        "id": "@Y?bRuIeiTa!uA4S6*Uj",
+                        "inputs": {
+                            "BROADCAST_INPUT": {
+                                "block": "mZ,HD$9r){bLrHcwmU-X",
+                                "name": "BROADCAST_INPUT",
+                                "shadow": "mZ,HD$9r){bLrHcwmU-X"
+                            }
+                        },
+                        "next": "AhPudUcGwS]pCN#9(_LB",
+                        "opcode": "event_broadcast_with_broadcast_input",
+                        "parent": ".Kg;a7Ar2A@/4ZNEHJo+",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-483",
+                        "y": "767"
+                    },
+                    "@i7TFEscDEYxqLzkahX0": {
+                        "fields": {},
+                        "id": "@i7TFEscDEYxqLzkahX0",
+                        "inputs": {
+                            "CONDITION": {
+                                "block": ")}6.,q%CL2$/j.^o)EF{",
+                                "name": "CONDITION",
+                                "shadow": null
+                            },
+                            "SUBSTACK": {
+                                "block": "JB%HkLHJswZ;d,i%uoT8",
+                                "name": "SUBSTACK",
+                                "shadow": null
+                            }
+                        },
+                        "next": null,
+                        "opcode": "control_if",
+                        "parent": "r~|K,l8v@kki(IOFak{)",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-68",
+                        "y": "634"
+                    },
+                    "@txb_/f=v(dPs]Sn%Yp$": {
+                        "fields": {
+                            "CUBE_SELECT": {
+                                "name": "CUBE_SELECT",
+                                "value": "1"
+                            }
+                        },
+                        "id": "@txb_/f=v(dPs]Sn%Yp$",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "cozmo_cube_looks_select_menu",
+                        "parent": "u8ekS~k,;dtHE]bIB*wD",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "A6Q!9gD`NzQFU#7jg*i@": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "codelabfeaturedproject.guessthenumber.think_of_a_number_between_1_and_100_and_tap_white_to_continue"
+                            }
+                        },
+                        "id": "A6Q!9gD`NzQFU#7jg*i@",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": ".Kg;a7Ar2A@/4ZNEHJo+",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "ACp[04h5A_wc|{)C,iW1": {
+                        "fields": {},
+                        "id": "ACp[04h5A_wc|{)C,iW1",
+                        "inputs": {
+                            "SOUND_MENU": {
+                                "block": "2IHW5)^=j|~I[APNt:G4",
+                                "name": "SOUND_MENU",
+                                "shadow": "2IHW5)^=j|~I[APNt:G4"
+                            }
+                        },
+                        "next": "b[(pZaHpa!p`U,/9jVR)",
+                        "opcode": "cozmo_sound_play",
+                        "parent": "xi[cqtCpm-d]1SOL+R^2",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": 865.3764705882353,
+                        "y": 747.964705882353
+                    },
+                    "APxmhOK)1d@?OFL?E@_g": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "0"
+                            }
+                        },
+                        "id": "APxmhOK)1d@?OFL?E@_g",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": -90.53111212594172,
+                        "y": 965.7742680140905
+                    },
+                    "AhPudUcGwS]pCN#9(_LB": {
+                        "fields": {},
+                        "id": "AhPudUcGwS]pCN#9(_LB",
+                        "inputs": {
+                            "HEAD_ANGLE": {
+                                "block": "BZWGnFXk~wYe~wC5m4qe",
+                                "name": "HEAD_ANGLE",
+                                "shadow": "BZWGnFXk~wYe~wC5m4qe"
+                            },
+                            "SPEED": {
+                                "block": "1B4CM$w`)KGIwvzGFDMo",
+                                "name": "SPEED",
+                                "shadow": "1B4CM$w`)KGIwvzGFDMo"
+                            }
+                        },
+                        "next": ":P)T?9h,0rlf*k8m*x=N",
+                        "opcode": "cozmo_vert_set_headangle",
+                        "parent": "@Y?bRuIeiTa!uA4S6*Uj",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": 29.776470588235327,
+                        "y": 396.0470588235294
+                    },
+                    "AjtkE||pFNmqia~R1oL@": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": ""
+                            }
+                        },
+                        "id": "AjtkE||pFNmqia~R1oL@",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 31.528064727783203,
+                        "y": 885.3714425223213
+                    },
+                    "Au_)+/wbw8HO7Nxg$|$P": {
+                        "fields": {
+                            "ANIMATION_SELECT": {
+                                "name": "ANIMATION_SELECT",
+                                "value": "30"
+                            }
+                        },
+                        "id": "Au_)+/wbw8HO7Nxg$|$P",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "cozmo_animation_select_menu",
+                        "parent": "JB%HkLHJswZ;d,i%uoT8",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "Aw+miC]s_%+f063x]0aU": {
+                        "fields": {
+                            "BROADCAST_OPTION": {
+                                "id": "jVQK4N12~ZZ}g=5Y+~Rk",
+                                "name": "BROADCAST_OPTION",
+                                "value": "new guess",
+                                "variableType": "broadcast_msg"
+                            }
+                        },
+                        "id": "Aw+miC]s_%+f063x]0aU",
+                        "inputs": {},
+                        "next": "Z]~gbt!uFn,p3Xdk;w*)",
+                        "opcode": "event_whenbroadcastreceived_with_broadcast_input",
+                        "parent": null,
+                        "shadow": false,
+                        "topLevel": true,
+                        "x": -365,
+                        "y": 925
+                    },
+                    "B/UpI2AxVW830wk!C;8^": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": "1"
+                            }
+                        },
+                        "id": "B/UpI2AxVW830wk!C;8^",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": "?Vf?5DP/Om+5LXL_32YL",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "BZWGnFXk~wYe~wC5m4qe": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": "45"
+                            }
+                        },
+                        "id": "BZWGnFXk~wYe~wC5m4qe",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": "AhPudUcGwS]pCN#9(_LB",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "B`z!-Da9%6VR%sZhz-0+": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": ""
+                            }
+                        },
+                        "id": "B`z!-Da9%6VR%sZhz-0+",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 424.37428501674106,
+                        "y": 496.54001508440297
+                    },
+                    "C@^Q_6s{HpT[MmSr2MJf": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "V2rWPMh}?bCZTB/jIKWD",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.guessthenumber.guess"
+                            }
+                        },
+                        "id": "C@^Q_6s{HpT[MmSr2MJf",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": "^BZ0`wp(?X_[1m]usg)1",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": 566.6340547289166,
+                        "y": 1070.8871198381698
+                    },
+                    "CHF_xv6w7W[bxfi2wM:#": {
+                        "fields": {},
+                        "id": "CHF_xv6w7W[bxfi2wM:#",
+                        "inputs": {
+                            "HEAD_ANGLE": {
+                                "block": "oS?:T$oMG,6R*ji^qKlX",
+                                "name": "HEAD_ANGLE",
+                                "shadow": "oS?:T$oMG,6R*ji^qKlX"
+                            },
+                            "SPEED": {
+                                "block": "Sj@{~5u)VR2e~8J$|j#g",
+                                "name": "SPEED",
+                                "shadow": "Sj@{~5u)VR2e~8J$|j#g"
+                            }
+                        },
+                        "next": "T0%B2vr@Tr~0HjV/Lo3h",
+                        "opcode": "cozmo_vert_set_headangle",
+                        "parent": "M]RVkIywp4U^70`i0?m/",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": -357.68001447405135,
+                        "y": 2278.684278215682
+                    },
+                    "CiYr*+uJXzbyVViIf;IH": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "0"
+                            }
+                        },
+                        "id": "CiYr*+uJXzbyVViIf;IH",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": "J!D4$lU*L=5GE+r*38Fx",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "Cm#sw5b@Kl-BGJD5x`RI": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "qURdyL-v$_9]]+;ox,ya",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.guessthenumber.totalguesses"
+                            }
+                        },
+                        "id": "Cm#sw5b@Kl-BGJD5x`RI",
+                        "inputs": {
+                            "VALUE": {
+                                "block": "p6yn)=:_/q(23c,SK#vi",
+                                "name": "VALUE",
+                                "shadow": "p6yn)=:_/q(23c,SK#vi"
+                            }
+                        },
+                        "next": "m4994wMRG#gXI(EeU6P|",
+                        "opcode": "data_setvariableto",
+                        "parent": "RqohItYC/XpjZ2]xiar5",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-270",
+                        "y": "307"
+                    },
+                    "CvJ8Pf/IvAdX3WtJ*rr3": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": "6"
+                            }
+                        },
+                        "id": "CvJ8Pf/IvAdX3WtJ*rr3",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": "M]RVkIywp4U^70`i0?m/",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "DauzG_R-(i9z#}@bovxH": {
+                        "fields": {},
+                        "id": "DauzG_R-(i9z#}@bovxH",
+                        "inputs": {
+                            "SOUND_MENU": {
+                                "block": "w1kHaYA5K)uL3:A34Tkl",
+                                "name": "SOUND_MENU",
+                                "shadow": "w1kHaYA5K)uL3:A34Tkl"
+                            }
+                        },
+                        "next": "{=/QcZ4_.;|$;Gz$y^R/",
+                        "opcode": "cozmo_sound_play",
+                        "parent": ":P1Zp^|a~EBuJ4GYIWGo",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": 842.8705882352941,
+                        "y": 1317.5764705882352
+                    },
+                    "DsY%h9r2X#d~UZ,Lpc41": {
+                        "fields": {
+                            "COLOUR": {
+                                "name": "COLOUR",
+                                "value": "#ffffff"
+                            }
+                        },
+                        "id": "DsY%h9r2X#d~UZ,Lpc41",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "colour_picker",
+                        "parent": "u8ekS~k,;dtHE]bIB*wD",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "E.zmzcCmelwk2]JOJ:~A": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "0"
+                            }
+                        },
+                        "id": "E.zmzcCmelwk2]JOJ:~A",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": -189.34213311331627,
+                        "y": 1099.950016566685
+                    },
+                    "EO5po|wN3IehREscMN=(": {
+                        "fields": {
+                            "BROADCAST_OPTION": {
+                                "id": "FL)wle7,1#do71s3J]_z",
+                                "name": "BROADCAST_OPTION",
+                                "value": "spin lights",
+                                "variableType": "broadcast_msg"
+                            }
+                        },
+                        "id": "EO5po|wN3IehREscMN=(",
+                        "inputs": {},
+                        "next": "u8ekS~k,;dtHE]bIB*wD",
+                        "opcode": "event_whenbroadcastreceived_with_broadcast_input",
+                        "parent": null,
+                        "shadow": false,
+                        "topLevel": true,
+                        "x": 377,
+                        "y": 1730
+                    },
+                    "Eb@7]YUcw*_*e1X4S:hm": {
+                        "fields": {
+                            "ANIMATION_SELECT": {
+                                "name": "ANIMATION_SELECT",
+                                "value": "19"
+                            }
+                        },
+                        "id": "Eb@7]YUcw*_*e1X4S:hm",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "cozmo_animation_select_menu",
+                        "parent": "Z]~gbt!uFn,p3Xdk;w*)",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "Eio#yDI]qUoeRtTy7pRL": {
+                        "fields": {
+                            "COLOUR": {
+                                "name": "COLOUR",
+                                "value": "#ffffff"
+                            }
+                        },
+                        "id": "Eio#yDI]qUoeRtTy7pRL",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "colour_picker",
+                        "parent": "fi7:#B|~KX{b$[S5Hunf",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "F2y}#|g:oSW562C67bbG": {
+                        "fields": {},
+                        "id": "F2y}#|g:oSW562C67bbG",
+                        "inputs": {
+                            "STRING1": {
+                                "block": "nCS-bL-8B]s!M-MJ7HPe",
+                                "name": "STRING1",
+                                "shadow": "nCS-bL-8B]s!M-MJ7HPe"
+                            },
+                            "STRING2": {
+                                "block": "(,Snp(2?h=+D@MBL4;b)",
+                                "name": "STRING2",
+                                "shadow": "xEvquv`EK}W1ZWsSPdDn"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_join",
+                        "parent": "T?$mBtxg0wxwvpwpCyh?",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": -506.60287475585943,
+                        "y": 1530.1928580147878
+                    },
+                    "FQZ*J?qHIC;gXh)%HjuV": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "texte"
+                            }
+                        },
+                        "id": "FQZ*J?qHIC;gXh)%HjuV",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": -303.8726921081543,
+                        "y": 2218
+                    },
+                    "FYKUM$06,K;k2n~gaN=t": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "100"
+                            }
+                        },
+                        "id": "FYKUM$06,K;k2n~gaN=t",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": "m7JqS=N.riYov?S,SAr5",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "HL,ym3#24~Ijp%+Lxf3$": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "fiIc.L.}KtXO4vW]@|,f",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.guessthenumber.display_the_guess_cozmo_has_made",
+                                "variableType": ""
+                            }
+                        },
+                        "id": "HL,ym3#24~Ijp%+Lxf3$",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": null,
+                        "shadow": false,
+                        "topLevel": true,
+                        "x": -388,
+                        "y": 2242
+                    },
+                    "I=^J0^5yesDH?MVd=-,Q": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "I]C.SU[:`mS]Fm)I:p4q",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.guessthenumber.max"
+                            }
+                        },
+                        "id": "I=^J0^5yesDH?MVd=-,Q",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": "QKBCT6V_MyQ.;)/DF/?u",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-587",
+                        "y": "1031"
+                    },
+                    "I`GO4Jh)])#_`oBen(a4": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "codelabfeaturedproject.guessthenumber._guesses"
+                            }
+                        },
+                        "id": "I`GO4Jh)])#_`oBen(a4",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": "Y$LCnfFS)M`P+HkdtXFK",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "J!D4$lU*L=5GE+r*38Fx": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "kf;Ezn.ORl:3j.v:.v`$",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.guessthenumber.min"
+                            }
+                        },
+                        "id": "J!D4$lU*L=5GE+r*38Fx",
+                        "inputs": {
+                            "VALUE": {
+                                "block": "CiYr*+uJXzbyVViIf;IH",
+                                "name": "VALUE",
+                                "shadow": "CiYr*+uJXzbyVViIf;IH"
+                            }
+                        },
+                        "next": "m7JqS=N.riYov?S,SAr5",
+                        "opcode": "data_setvariableto",
+                        "parent": ";:NX6h=Sxzibw171Vs8#",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": 237.0769190107073,
+                        "y": 37.4957188197545
+                    },
+                    "JB%HkLHJswZ;d,i%uoT8": {
+                        "fields": {},
+                        "id": "JB%HkLHJswZ;d,i%uoT8",
+                        "inputs": {
+                            "ANIMATION": {
+                                "block": "Au_)+/wbw8HO7Nxg$|$P",
+                                "name": "ANIMATION",
+                                "shadow": "Au_)+/wbw8HO7Nxg$|$P"
+                            }
+                        },
+                        "next": "_D}t3bPHKGu!YYF54._6",
+                        "opcode": "cozmo_play_animation_from_dropdown",
+                        "parent": "@i7TFEscDEYxqLzkahX0",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": 668.7614397321428,
+                        "y": 239.47714233398438
+                    },
+                    "JR[ch;3Cvay2)_.SJtXL": {
+                        "fields": {
+                            "CUBE_SELECT": {
+                                "name": "CUBE_SELECT",
+                                "value": "3"
+                            }
+                        },
+                        "id": "JR[ch;3Cvay2)_.SJtXL",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "cozmo_cube_looks_select_menu",
+                        "parent": "c@rIspF|PIk?-G,n3[:}",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "K*a!ZEN;z1}oZ)~qSz8]": {
+                        "fields": {
+                            "LIGHT_SELECT": {
+                                "name": "LIGHT_SELECT",
+                                "value": "4"
+                            }
+                        },
+                        "id": "K*a!ZEN;z1}oZ)~qSz8]",
+                        "inputs": {
+                            "COLOR": {
+                                "block": "@I4C05(;RM0|0L70sm8w",
+                                "name": "COLOR",
+                                "shadow": "@I4C05(;RM0|0L70sm8w"
+                            },
+                            "CUBE_SELECT": {
+                                "block": "X-~D5w+DFM8LVZ^kuy6w",
+                                "name": "CUBE_SELECT",
+                                "shadow": "X-~D5w+DFM8LVZ^kuy6w"
+                            }
+                        },
+                        "next": "+bsPgb/tYKd6@UKGIB}m",
+                        "opcode": "cozmo_vert_set_cube_light_corner",
+                        "parent": "Rxf@1~%d/qz70rp`fs$+",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": 564.364705882353,
+                        "y": 2409.9882352941177
+                    },
+                    "K]EVL].yu2kK8vWN,7d:": {
+                        "fields": {
+                            "COLOUR": {
+                                "name": "COLOUR",
+                                "value": "#00ff00"
+                            }
+                        },
+                        "id": "K]EVL].yu2kK8vWN,7d:",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "colour_picker",
+                        "parent": "v4~JQ+*1yxPWa?SHXdZ2",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "Kf1VIqB=+]ZHJNTY2C9Z": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "1"
+                            }
+                        },
+                        "id": "Kf1VIqB=+]ZHJNTY2C9Z",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": "8HcrRh6;*|q*d0GO33pP",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "KlRPAcuAG09H#j+;*)R~": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "qURdyL-v$_9]]+;ox,ya",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.guessthenumber.totalguesses"
+                            }
+                        },
+                        "id": "KlRPAcuAG09H#j+;*)R~",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": "Y$LCnfFS)M`P+HkdtXFK",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-228",
+                        "y": "1192"
+                    },
+                    "L(m|arqO6rxGY(ccIAg(": {
+                        "fields": {},
+                        "id": "L(m|arqO6rxGY(ccIAg(",
+                        "inputs": {
+                            "CONDITION": {
+                                "block": "8HcrRh6;*|q*d0GO33pP",
+                                "name": "CONDITION",
+                                "shadow": null
+                            },
+                            "SUBSTACK": {
+                                "block": "m%g/@zgl+,R_DHaCtyPr",
+                                "name": "SUBSTACK",
+                                "shadow": null
+                            },
+                            "SUBSTACK2": {
+                                "block": "-$;If}w{9c8FhMPg*gY=",
+                                "name": "SUBSTACK2",
+                                "shadow": null
+                            }
+                        },
+                        "next": "T?$mBtxg0wxwvpwpCyh?",
+                        "opcode": "control_if_else",
+                        "parent": "g5d9#(frH?jkQklb,Ig/",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": -222.86717878069203,
+                        "y": 989.1471448625838
+                    },
+                    "L25Zg|X}s$+cEDp_SUZ%": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": ""
+                            }
+                        },
+                        "id": "L25Zg|X}s$+cEDp_SUZ%",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": -23.846969059535468,
+                        "y": 969.7742680140905
+                    },
+                    "M]RVkIywp4U^70`i0?m/": {
+                        "fields": {},
+                        "id": "M]RVkIywp4U^70`i0?m/",
+                        "inputs": {
+                            "DISTANCE": {
+                                "block": "CvJ8Pf/IvAdX3WtJ*rr3",
+                                "name": "DISTANCE",
+                                "shadow": "CvJ8Pf/IvAdX3WtJ*rr3"
+                            },
+                            "SPEED": {
+                                "block": "m1vBqW0@DPp/M?^I-p3?",
+                                "name": "SPEED",
+                                "shadow": "m1vBqW0@DPp/M?^I-p3?"
+                            }
+                        },
+                        "next": "CHF_xv6w7W[bxfi2wM:#",
+                        "opcode": "cozmo_vert_drive",
+                        "parent": "o[sWhLW]I!0^?({D`HOV",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": -189.24705882352941,
+                        "y": 2539.858823529412
+                    },
+                    "M{jTs/OJi8%5.li*o{67": {
+                        "fields": {
+                            "BROADCAST_OPTION": {
+                                "id": "uj1v/FX)*u*BPrq$mv:a",
+                                "name": "BROADCAST_OPTION",
+                                "value": "give instructions",
+                                "variableType": "broadcast_msg"
+                            }
+                        },
+                        "id": "M{jTs/OJi8%5.li*o{67",
+                        "inputs": {},
+                        "next": "/TCI8U7EO0:tbo75LUEG",
+                        "opcode": "event_whenbroadcastreceived_with_broadcast_input",
+                        "parent": null,
+                        "shadow": false,
+                        "topLevel": true,
+                        "x": -361,
+                        "y": 613
+                    },
+                    "M|PzG8?PvR9MlG_O+MlP": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "0"
+                            }
+                        },
+                        "id": "M|PzG8?PvR9MlG_O+MlP",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": ";:NX6h=Sxzibw171Vs8#",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "N)?w,x4#0ITcpaeiT8DK": {
+                        "fields": {},
+                        "id": "N)?w,x4#0ITcpaeiT8DK",
+                        "inputs": {
+                            "BROADCAST_INPUT": {
+                                "block": "U$PJl{F{PV3$RqYQ7dR=",
+                                "name": "BROADCAST_INPUT",
+                                "shadow": "U$PJl{F{PV3$RqYQ7dR="
+                            }
+                        },
+                        "next": null,
+                        "opcode": "event_broadcast_with_broadcast_input",
+                        "parent": "7UE#rwLIOV,$;JF*[7ih",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-48",
+                        "y": "1817"
+                    },
+                    "N*_HuQg)DKOQGQ0,Zgr!": {
+                        "fields": {
+                            "BROADCAST_OPTION": {
+                                "id": "jVQK4N12~ZZ}g=5Y+~Rk",
+                                "name": "BROADCAST_OPTION",
+                                "value": "new guess",
+                                "variableType": "broadcast_msg"
+                            }
+                        },
+                        "id": "N*_HuQg)DKOQGQ0,Zgr!",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "event_broadcast_menu_with_broadcast_input",
+                        "parent": "4Q3akbQJi*n#DU`5zd.8",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "N^w0:v4pJm4t(K5RWy/?": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "0"
+                            }
+                        },
+                        "id": "N^w0:v4pJm4t(K5RWy/?",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": "f6)^*Bt)2(jM:TqbZSe~",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "Oo@s`T*9pt5j#Fs#S^4C": {
+                        "fields": {
+                            "COLOUR": {
+                                "name": "COLOUR",
+                                "value": "#ffffff"
+                            }
+                        },
+                        "id": "Oo@s`T*9pt5j#Fs#S^4C",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "colour_picker",
+                        "parent": "c@rIspF|PIk?-G,n3[:}",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "QKBCT6V_MyQ.;)/DF/?u": {
+                        "fields": {},
+                        "id": "QKBCT6V_MyQ.;)/DF/?u",
+                        "inputs": {
+                            "FROM": {
+                                "block": "X[1of$L-h|uXfAUna!%|",
+                                "name": "FROM",
+                                "shadow": "]6DPMNUfxa!2_W,[Xv-y"
+                            },
+                            "TO": {
+                                "block": "I=^J0^5yesDH?MVd=-,Q",
+                                "name": "TO",
+                                "shadow": "v+tOO%HHePh.c8oo=8lO"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_random",
+                        "parent": "sU8]3rEbIx2Qh8X;X[5v",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-587",
+                        "y": "1031"
+                    },
+                    "R@Ck/Oa|fe_K-%srJ,^g": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "0"
+                            }
+                        },
+                        "id": "R@Ck/Oa|fe_K-%srJ,^g",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": -41.02783257620675,
+                        "y": 82.72858537946428
+                    },
+                    "RqohItYC/XpjZ2]xiar5": {
+                        "fields": {},
+                        "id": "RqohItYC/XpjZ2]xiar5",
+                        "inputs": {},
+                        "next": "Cm#sw5b@Kl-BGJD5x`RI",
+                        "opcode": "event_whenflagclicked",
+                        "parent": null,
+                        "shadow": false,
+                        "topLevel": true,
+                        "x": -356,
+                        "y": -111
+                    },
+                    "RuM_cIe?BA?7j[qbXwsi": {
+                        "fields": {},
+                        "id": "RuM_cIe?BA?7j[qbXwsi",
+                        "inputs": {},
+                        "next": ";+=[G|F0d^(-dbsvHPD|",
+                        "opcode": "cozmo_vert_cozmoface_display",
+                        "parent": "%J@.E^$f:HnDG_En.f]O",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": -356,
+                        "y": 2162
+                    },
+                    "Rxf@1~%d/qz70rp`fs$+": {
+                        "fields": {
+                            "BROADCAST_OPTION": {
+                                "id": "H@p,^b(S38y[O}#k}}I|",
+                                "name": "BROADCAST_OPTION",
+                                "value": "reset lights",
+                                "variableType": "broadcast_msg"
+                            }
+                        },
+                        "id": "Rxf@1~%d/qz70rp`fs$+",
+                        "inputs": {},
+                        "next": "K*a!ZEN;z1}oZ)~qSz8]",
+                        "opcode": "event_whenbroadcastreceived_with_broadcast_input",
+                        "parent": null,
+                        "shadow": false,
+                        "topLevel": true,
+                        "x": 384,
+                        "y": 2178
+                    },
+                    "Sj@{~5u)VR2e~8J$|j#g": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": "180"
+                            }
+                        },
+                        "id": "Sj@{~5u)VR2e~8J$|j#g",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": "CHF_xv6w7W[bxfi2wM:#",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "T/,;XadOL:sz,83QN,MM": {
+                        "fields": {},
+                        "id": "T/,;XadOL:sz,83QN,MM",
+                        "inputs": {
+                            "OPERAND1": {
+                                "block": "dyFi}]K?w3[~p4$r0PL7",
+                                "name": "OPERAND1",
+                                "shadow": "6rg/@R9]8.6^{vG$WMdx"
+                            },
+                            "OPERAND2": {
+                                "block": "wC;xeT9d030vbJX`(1.0",
+                                "name": "OPERAND2",
+                                "shadow": "wC;xeT9d030vbJX`(1.0"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_equals",
+                        "parent": ":P)T?9h,0rlf*k8m*x=N",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-290",
+                        "y": "358"
+                    },
+                    "T0%B2vr@Tr~0HjV/Lo3h": {
+                        "fields": {},
+                        "id": "T0%B2vr@Tr~0HjV/Lo3h",
+                        "inputs": {},
+                        "next": "l_8cHY?@q#MzJe)*0Vn[",
+                        "opcode": "cozmo_vert_cozmoface_clear",
+                        "parent": "CHF_xv6w7W[bxfi2wM:#",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": -330.22999790736606,
+                        "y": 2333.810010637556
+                    },
+                    "T4d%P*#Y`0/f:_E0pB~:": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": "100"
+                            }
+                        },
+                        "id": "T4d%P*#Y`0/f:_E0pB~:",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": "oH0NH/2tp_/MC!7u]J?c",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "T?$mBtxg0wxwvpwpCyh?": {
+                        "fields": {},
+                        "id": "T?$mBtxg0wxwvpwpCyh?",
+                        "inputs": {
+                            "STRING": {
+                                "block": "F2y}#|g:oSW562C67bbG",
+                                "name": "STRING",
+                                "shadow": "^XnV(OB5A)SI^NWIIxZg"
+                            }
+                        },
+                        "next": "WIM%V]BQX-Fi]4n*TY2z",
+                        "opcode": "cozmo_says",
+                        "parent": "L(m|arqO6rxGY(ccIAg(",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": -54.59998430524551,
+                        "y": 1699.4357147216795
+                    },
+                    "Tf,%K]G}@`i.EsY$_S(b": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "V2rWPMh}?bCZTB/jIKWD",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.guessthenumber.guess"
+                            }
+                        },
+                        "id": "Tf,%K]G}@`i.EsY$_S(b",
+                        "inputs": {
+                            "VALUE": {
+                                "block": "oH0NH/2tp_/MC!7u]J?c",
+                                "name": "VALUE",
+                                "shadow": "R@Ck/Oa|fe_K-%srJ,^g"
+                            }
+                        },
+                        "next": "f6)^*Bt)2(jM:TqbZSe~",
+                        "opcode": "data_setvariableto",
+                        "parent": "m7JqS=N.riYov?S,SAr5",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-295",
+                        "y": "184"
+                    },
+                    "U$PJl{F{PV3$RqYQ7dR=": {
+                        "fields": {
+                            "BROADCAST_OPTION": {
+                                "id": "jVQK4N12~ZZ}g=5Y+~Rk",
+                                "name": "BROADCAST_OPTION",
+                                "value": "new guess",
+                                "variableType": "broadcast_msg"
+                            }
+                        },
+                        "id": "U$PJl{F{PV3$RqYQ7dR=",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "event_broadcast_menu_with_broadcast_input",
+                        "parent": "N)?w,x4#0ITcpaeiT8DK",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "UjX@DnE6V]*(0Mh{]q$T": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "1"
+                            }
+                        },
+                        "id": "UjX@DnE6V]*(0Mh{]q$T",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": "2v+Y`5@p2,yp2jOH~~mO",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "WIM%V]BQX-Fi]4n*TY2z": {
+                        "fields": {},
+                        "id": "WIM%V]BQX-Fi]4n*TY2z",
+                        "inputs": {
+                            "BROADCAST_INPUT": {
+                                "block": "+OR%xGTd,{+]hid8x870",
+                                "name": "BROADCAST_INPUT",
+                                "shadow": "+OR%xGTd,{+]hid8x870"
+                            }
+                        },
+                        "next": "l09F2OOZXi{W.63.Q[-$",
+                        "opcode": "event_broadcast_with_broadcast_input",
+                        "parent": "T?$mBtxg0wxwvpwpCyh?",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-495",
+                        "y": "1775"
+                    },
+                    "X+#RV|xm,a=GqA{H#:KY": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "^(T~92_uxQ0;_cHe4ZC#",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.guessthenumber.after_incorrect_guess_play_sad_animation_and_reguess"
+                            }
+                        },
+                        "id": "X+#RV|xm,a=GqA{H#:KY",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": null,
+                        "shadow": false,
+                        "topLevel": true,
+                        "x": -368,
+                        "y": 833
+                    },
+                    "X-~D5w+DFM8LVZ^kuy6w": {
+                        "fields": {
+                            "CUBE_SELECT": {
+                                "name": "CUBE_SELECT",
+                                "value": "1"
+                            }
+                        },
+                        "id": "X-~D5w+DFM8LVZ^kuy6w",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "cozmo_cube_looks_select_menu",
+                        "parent": "K*a!ZEN;z1}oZ)~qSz8]",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "X4UR^ZTR2[2Z?3`V3tFW": {
+                        "fields": {},
+                        "id": "X4UR^ZTR2[2Z?3`V3tFW",
+                        "inputs": {
+                            "HEAD_ANGLE": {
+                                "block": ".Al-C12PZv`BD;%-(zLy",
+                                "name": "HEAD_ANGLE",
+                                "shadow": ".Al-C12PZv`BD;%-(zLy"
+                            },
+                            "SPEED": {
+                                "block": "!RD%1,s^q8P:2+4)!md?",
+                                "name": "SPEED",
+                                "shadow": "!RD%1,s^q8P:2+4)!md?"
+                            }
+                        },
+                        "next": "7qE!6,pmR.|7@#D*;g@6",
+                        "opcode": "cozmo_vert_set_headangle",
+                        "parent": "-:ay0Y^J*V|t$YaM+Wa2",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": -176.74117647058824,
+                        "y": 1975.035294117647
+                    },
+                    "X[1of$L-h|uXfAUna!%|": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "kf;Ezn.ORl:3j.v:.v`$",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.guessthenumber.min"
+                            }
+                        },
+                        "id": "X[1of$L-h|uXfAUna!%|",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": "QKBCT6V_MyQ.;)/DF/?u",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-587",
+                        "y": "1079"
+                    },
+                    "Xfz,^gPvUqhv]n[R33DE": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": ""
+                            }
+                        },
+                        "id": "Xfz,^gPvUqhv]n[R33DE",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 524.9426100594656,
+                        "y": 738.7157658168247
+                    },
+                    "Y$LCnfFS)M`P+HkdtXFK": {
+                        "fields": {},
+                        "id": "Y$LCnfFS)M`P+HkdtXFK",
+                        "inputs": {
+                            "STRING1": {
+                                "block": "KlRPAcuAG09H#j+;*)R~",
+                                "name": "STRING1",
+                                "shadow": "352WtSL{;7!i1ciH+;sx"
+                            },
+                            "STRING2": {
+                                "block": "I`GO4Jh)])#_`oBen(a4",
+                                "name": "STRING2",
+                                "shadow": "I`GO4Jh)])#_`oBen(a4"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_join",
+                        "parent": "0BJ%y!)-@u7fMxKarKM!",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-334",
+                        "y": "1242"
+                    },
+                    "Yl5HJ[Le$s0vV?L7b5+i": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "0"
+                            }
+                        },
+                        "id": "Yl5HJ[Le$s0vV?L7b5+i",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": "g5d9#(frH?jkQklb,Ig/",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "Z({PJ#Gxcvbf$XWIQ0K-": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "oij$a?yKBJb+o5+Ol.=,",
+                                "name": "VARIABLE",
+                                "value": "cozmo gives instructions.",
+                                "variableType": ""
+                            }
+                        },
+                        "id": "Z({PJ#Gxcvbf$XWIQ0K-",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": null,
+                        "shadow": false,
+                        "topLevel": true,
+                        "x": -352,
+                        "y": 539
+                    },
+                    "Z.KEro1[J8WZZFkr3+DN": {
+                        "fields": {
+                            "BROADCAST_OPTION": {
+                                "id": "FL)wle7,1#do71s3J]_z",
+                                "name": "BROADCAST_OPTION",
+                                "value": "spin lights",
+                                "variableType": "broadcast_msg"
+                            }
+                        },
+                        "id": "Z.KEro1[J8WZZFkr3+DN",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "event_broadcast_menu_with_broadcast_input",
+                        "parent": "1d~;=$KOb$P*]9RWPqT0",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "Z=W4Vy7@Kg-R(;lhNNdW": {
+                        "fields": {
+                            "BROADCAST_OPTION": {
+                                "id": "H@p,^b(S38y[O}#k}}I|",
+                                "name": "BROADCAST_OPTION",
+                                "value": "reset lights",
+                                "variableType": "broadcast_msg"
+                            }
+                        },
+                        "id": "Z=W4Vy7@Kg-R(;lhNNdW",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "event_broadcast_menu_with_broadcast_input",
+                        "parent": ";+=[G|F0d^(-dbsvHPD|",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "Z]~gbt!uFn,p3Xdk;w*)": {
+                        "fields": {},
+                        "id": "Z]~gbt!uFn,p3Xdk;w*)",
+                        "inputs": {
+                            "ANIMATION": {
+                                "block": "Eb@7]YUcw*_*e1X4S:hm",
+                                "name": "ANIMATION",
+                                "shadow": "Eb@7]YUcw*_*e1X4S:hm"
+                            }
+                        },
+                        "next": "g5d9#(frH?jkQklb,Ig/",
+                        "opcode": "cozmo_play_animation_from_dropdown",
+                        "parent": "Aw+miC]s_%+f063x]0aU",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": -366.4235294117647,
+                        "y": 1191.1882352941177
+                    },
+                    "ZdL(o8+LPWNS7%bI5SYe": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "1"
+                            }
+                        },
+                        "id": "ZdL(o8+LPWNS7%bI5SYe",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": ")}6.,q%CL2$/j.^o)EF{",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "]6DPMNUfxa!2_W,[Xv-y": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": "1"
+                            }
+                        },
+                        "id": "]6DPMNUfxa!2_W,[Xv-y",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": -79.27172906058183,
+                        "y": 1099.9500165666855
+                    },
+                    "]Q:n)?{ju,EA~F%F^4vP": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "}[neTF)o8A@8u%1[?`BN",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.guessthenumber.tapon"
+                            }
+                        },
+                        "id": "]Q:n)?{ju,EA~F%F^4vP",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": ")}6.,q%CL2$/j.^o)EF{",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-69",
+                        "y": "635"
+                    },
+                    "^-WvN[[+j;U4i3H?j[4Z": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "5Ij(~W_P0A1U@J7t;}|U",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.guessthenumber.started"
+                            }
+                        },
+                        "id": "^-WvN[[+j;U4i3H?j[4Z",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": "sw[(b4+Mm-h.U^*tNg$W",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-172",
+                        "y": "323"
+                    },
+                    "^BZ0`wp(?X_[1m]usg)1": {
+                        "fields": {},
+                        "id": "^BZ0`wp(?X_[1m]usg)1",
+                        "inputs": {
+                            "NUM1": {
+                                "block": "C@^Q_6s{HpT[MmSr2MJf",
+                                "name": "NUM1",
+                                "shadow": "84,Eqag{L):.XMq4hQ__"
+                            },
+                            "NUM2": {
+                                "block": "cWx*b]r2=Z-!4JJ8951b",
+                                "name": "NUM2",
+                                "shadow": "cWx*b]r2=Z-!4JJ8951b"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_subtract",
+                        "parent": "7UE#rwLIOV,$;JF*[7ih",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": 566.6340547289166,
+                        "y": 1070.8871198381698
+                    },
+                    "^Uv8}fDUm(Cb^-aeSjmF": {
+                        "fields": {},
+                        "id": "^Uv8}fDUm(Cb^-aeSjmF",
+                        "inputs": {
+                            "NUM1": {
+                                "block": "?UeSNJ9]{$;s_Tv%AzAt",
+                                "name": "NUM1",
+                                "shadow": "b*}[pv(VSDIivucEJp*J"
+                            },
+                            "NUM2": {
+                                "block": ".D,eXwW:,q4`HsMEVf-?",
+                                "name": "NUM2",
+                                "shadow": "jP7?PMp@8D2ix.2lW0D/"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_add",
+                        "parent": ".i{pwqVIVTQb4wePidS!",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-368",
+                        "y": "514"
+                    },
+                    "^XnV(OB5A)SI^NWIIxZg": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "codelabfeaturedproject.guessthenumber.is"
+                            }
+                        },
+                        "id": "^XnV(OB5A)SI^NWIIxZg",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": -506.6028747558594,
+                        "y": 1534.192858014788
+                    },
+                    "_4A)e`?obCOga1L(F,HI": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "codelabfeaturedproject.guessthenumber.i_guessed_your_number_in_"
+                            }
+                        },
+                        "id": "_4A)e`?obCOga1L(F,HI",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": "0BJ%y!)-@u7fMxKarKM!",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "_D}t3bPHKGu!YYF54._6": {
+                        "fields": {},
+                        "id": "_D}t3bPHKGu!YYF54._6",
+                        "inputs": {
+                            "BROADCAST_INPUT": {
+                                "block": "{cnU6.SW(Dzsk]Z_gM1K",
+                                "name": "BROADCAST_INPUT",
+                                "shadow": "{cnU6.SW(Dzsk]Z_gM1K"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "event_broadcast_with_broadcast_input",
+                        "parent": "JB%HkLHJswZ;d,i%uoT8",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "2",
+                        "y": "582"
+                    },
+                    "a1tJDr[CB;nwkF78$)SK": {
+                        "fields": {
+                            "BROADCAST_OPTION": {
+                                "id": "jVQK4N12~ZZ}g=5Y+~Rk",
+                                "name": "BROADCAST_OPTION",
+                                "value": "new guess",
+                                "variableType": "broadcast_msg"
+                            }
+                        },
+                        "id": "a1tJDr[CB;nwkF78$)SK",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "event_broadcast_menu_with_broadcast_input",
+                        "parent": "@TV$r8P;O0yK}k_]a$L5",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "b)Wd/T!h#*!:na%567mf": {
+                        "fields": {
+                            "BROADCAST_OPTION": {
+                                "id": "FL)wle7,1#do71s3J]_z",
+                                "name": "BROADCAST_OPTION",
+                                "value": "spin lights",
+                                "variableType": "broadcast_msg"
+                            }
+                        },
+                        "id": "b)Wd/T!h#*!:na%567mf",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "event_broadcast_menu_with_broadcast_input",
+                        "parent": ":P1Zp^|a~EBuJ4GYIWGo",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "b*}[pv(VSDIivucEJp*J": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": ""
+                            }
+                        },
+                        "id": "b*}[pv(VSDIivucEJp*J",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 46.67629514421728,
+                        "y": 868.7242933000838
+                    },
+                    "b[(pZaHpa!p`U,/9jVR)": {
+                        "fields": {},
+                        "id": "b[(pZaHpa!p`U,/9jVR)",
+                        "inputs": {
+                            "ANIMATION": {
+                                "block": "(XRtzO]f22t0JB4vz+2M",
+                                "name": "ANIMATION",
+                                "shadow": "(XRtzO]f22t0JB4vz+2M"
+                            }
+                        },
+                        "next": "}Q_zY;xd+Nu6~nstf6Fa",
+                        "opcode": "cozmo_play_animation_from_dropdown",
+                        "parent": "ACp[04h5A_wc|{)C,iW1",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": 592.6129324776786,
+                        "y": 760.4957406180245
+                    },
+                    "c@rIspF|PIk?-G,n3[:}": {
+                        "fields": {
+                            "ANIM_SELECT": {
+                                "name": "ANIM_SELECT",
+                                "value": "spin"
+                            }
+                        },
+                        "id": "c@rIspF|PIk?-G,n3[:}",
+                        "inputs": {
+                            "COLOR": {
+                                "block": "Oo@s`T*9pt5j#Fs#S^4C",
+                                "name": "COLOR",
+                                "shadow": "Oo@s`T*9pt5j#Fs#S^4C"
+                            },
+                            "CUBE_SELECT": {
+                                "block": "JR[ch;3Cvay2)_.SJtXL",
+                                "name": "CUBE_SELECT",
+                                "shadow": "JR[ch;3Cvay2)_.SJtXL"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "cozmo_vert_cube_anim",
+                        "parent": "fi7:#B|~KX{b$[S5Hunf",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": 710.1542314801898,
+                        "y": 1301.395695277623
+                    },
+                    "cWx*b]r2=Z-!4JJ8951b": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": "1"
+                            }
+                        },
+                        "id": "cWx*b]r2=Z-!4JJ8951b",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": "^BZ0`wp(?X_[1m]usg)1",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "dU`YaB]NjXma}dncyFDf": {
+                        "fields": {},
+                        "id": "dU`YaB]NjXma}dncyFDf",
+                        "inputs": {
+                            "OPERAND1": {
+                                "block": ".c#1;B~6|G+?~T|?[}Ro",
+                                "name": "OPERAND1",
+                                "shadow": "79L_d~,S97K#$J.U)C`f"
+                            },
+                            "OPERAND2": {
+                                "block": "0ktsiWKVwOso4RGilDtU",
+                                "name": "OPERAND2",
+                                "shadow": "0ktsiWKVwOso4RGilDtU"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_equals",
+                        "parent": ":@Qe]h73},gYZ]qE#5D,",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-103",
+                        "y": "1026"
+                    },
+                    "dyFi}]K?w3[~p4$r0PL7": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "wLTe)C4A2H}E=Hl-SA1!",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.guessthenumber.gameover"
+                            }
+                        },
+                        "id": "dyFi}]K?w3[~p4$r0PL7",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": "T/,;XadOL:sz,83QN,MM",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-290",
+                        "y": "130"
+                    },
+                    "eeDg$,Za*]QCFk9-2-1-": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "Cozmo"
+                            }
+                        },
+                        "id": "eeDg$,Za*]QCFk9-2-1-",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 136.8733760288783,
+                        "y": 1080.548592703683
+                    },
+                    "f5zWq2em6=IL+^%C,,@Y": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": "2"
+                            }
+                        },
+                        "id": "f5zWq2em6=IL+^%C,,@Y",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": ".i{pwqVIVTQb4wePidS!",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "f6)^*Bt)2(jM:TqbZSe~": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "}[neTF)o8A@8u%1[?`BN",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.guessthenumber.tapon"
+                            }
+                        },
+                        "id": "f6)^*Bt)2(jM:TqbZSe~",
+                        "inputs": {
+                            "VALUE": {
+                                "block": "N^w0:v4pJm4t(K5RWy/?",
+                                "name": "VALUE",
+                                "shadow": "N^w0:v4pJm4t(K5RWy/?"
+                            }
+                        },
+                        "next": ".Kg;a7Ar2A@/4ZNEHJo+",
+                        "opcode": "data_setvariableto",
+                        "parent": "Tf,%K]G}@`i.EsY$_S(b",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-444",
+                        "y": "412"
+                    },
+                    "fi7:#B|~KX{b$[S5Hunf": {
+                        "fields": {
+                            "ANIM_SELECT": {
+                                "name": "ANIM_SELECT",
+                                "value": "spin"
+                            }
+                        },
+                        "id": "fi7:#B|~KX{b$[S5Hunf",
+                        "inputs": {
+                            "COLOR": {
+                                "block": "Eio#yDI]qUoeRtTy7pRL",
+                                "name": "COLOR",
+                                "shadow": "Eio#yDI]qUoeRtTy7pRL"
+                            },
+                            "CUBE_SELECT": {
+                                "block": "l3rk6yCl6LdrT5Y3ji.o",
+                                "name": "CUBE_SELECT",
+                                "shadow": "l3rk6yCl6LdrT5Y3ji.o"
+                            }
+                        },
+                        "next": "c@rIspF|PIk?-G,n3[:}",
+                        "opcode": "cozmo_vert_cube_anim",
+                        "parent": "u8ekS~k,;dtHE]bIB*wD",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": 700.7357962472098,
+                        "y": 1345.5486155918666
+                    },
+                    "g5d9#(frH?jkQklb,Ig/": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "}[neTF)o8A@8u%1[?`BN",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.guessthenumber.tapon"
+                            }
+                        },
+                        "id": "g5d9#(frH?jkQklb,Ig/",
+                        "inputs": {
+                            "VALUE": {
+                                "block": "Yl5HJ[Le$s0vV?L7b5+i",
+                                "name": "VALUE",
+                                "shadow": "Yl5HJ[Le$s0vV?L7b5+i"
+                            }
+                        },
+                        "next": "L(m|arqO6rxGY(ccIAg(",
+                        "opcode": "data_setvariableto",
+                        "parent": "Z]~gbt!uFn,p3Xdk;w*)",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-595",
+                        "y": "1135"
+                    },
+                    "gOr,VIf)OU0;Xz(.Orj%": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "V2rWPMh}?bCZTB/jIKWD",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.guessthenumber.guess"
+                            }
+                        },
+                        "id": "gOr,VIf)OU0;Xz(.Orj%",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": "%J@.E^$f:HnDG_En.f]O",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": -10.292750222342477,
+                        "y": 2453.932874407088
+                    },
+                    "in|FO[;yQt)jHoAdLLeZ": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "qURdyL-v$_9]]+;ox,ya",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.guessthenumber.totalguesses"
+                            }
+                        },
+                        "id": "in|FO[;yQt)jHoAdLLeZ",
+                        "inputs": {
+                            "VALUE": {
+                                "block": "+@lsIsg0Uog(R|{9R[bF",
+                                "name": "VALUE",
+                                "shadow": "1w,,AWnZkeL.6w}L,o]{"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "data_setvariableto",
+                        "parent": "m%g/@zgl+,R_DHaCtyPr",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": -294.8114275251116,
+                        "y": 1040.9257354736328
+                    },
+                    "jP7?PMp@8D2ix.2lW0D/": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": ""
+                            }
+                        },
+                        "id": "jP7?PMp@8D2ix.2lW0D/",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 317.42881475176125,
+                        "y": 743.6799817766463
+                    },
+                    "j`y?]BM`P{SGnJlx6Chc": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "1"
+                            }
+                        },
+                        "id": "j`y?]BM`P{SGnJlx6Chc",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": "+.}UkpYDdzvo1|SMY+|u",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "l09F2OOZXi{W.63.Q[-$": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "}[neTF)o8A@8u%1[?`BN",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.guessthenumber.tapon"
+                            }
+                        },
+                        "id": "l09F2OOZXi{W.63.Q[-$",
+                        "inputs": {
+                            "VALUE": {
+                                "block": "xVD8ypY01MPvzev/=/[P",
+                                "name": "VALUE",
+                                "shadow": "xVD8ypY01MPvzev/=/[P"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "data_setvariableto",
+                        "parent": "WIM%V]BQX-Fi]4n*TY2z",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": 74.59225223295181,
+                        "y": 1548.5764747342455
+                    },
+                    "l3rk6yCl6LdrT5Y3ji.o": {
+                        "fields": {
+                            "CUBE_SELECT": {
+                                "name": "CUBE_SELECT",
+                                "value": "2"
+                            }
+                        },
+                        "id": "l3rk6yCl6LdrT5Y3ji.o",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "cozmo_cube_looks_select_menu",
+                        "parent": "fi7:#B|~KX{b$[S5Hunf",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "lD$:GI=HCq7D{?!2`TQx": {
+                        "fields": {
+                            "CUBE_SELECT": {
+                                "name": "CUBE_SELECT",
+                                "value": "2"
+                            }
+                        },
+                        "id": "lD$:GI=HCq7D{?!2`TQx",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "cozmo_cube_looks_select_menu",
+                        "parent": "+bsPgb/tYKd6@UKGIB}m",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "l_8cHY?@q#MzJe)*0Vn[": {
+                        "fields": {
+                            "TEXT_ALIGNMENT_X": {
+                                "name": "TEXT_ALIGNMENT_X",
+                                "value": "1"
+                            },
+                            "TEXT_ALIGNMENT_Y": {
+                                "name": "TEXT_ALIGNMENT_Y",
+                                "value": "1"
+                            }
+                        },
+                        "id": "l_8cHY?@q#MzJe)*0Vn[",
+                        "inputs": {},
+                        "next": "%J@.E^$f:HnDG_En.f]O",
+                        "opcode": "cozmo_vert_cozmoface_set_text_alignment",
+                        "parent": "T0%B2vr@Tr~0HjV/Lo3h",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-456",
+                        "y": "2398"
+                    },
+                    "m%g/@zgl+,R_DHaCtyPr": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "V2rWPMh}?bCZTB/jIKWD",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.guessthenumber.guess"
+                            }
+                        },
+                        "id": "m%g/@zgl+,R_DHaCtyPr",
+                        "inputs": {
+                            "VALUE": {
+                                "block": "7g9EWGr]T)pVovqXW}6Z",
+                                "name": "VALUE",
+                                "shadow": "APxmhOK)1d@?OFL?E@_g"
+                            }
+                        },
+                        "next": "in|FO[;yQt)jHoAdLLeZ",
+                        "opcode": "data_setvariableto",
+                        "parent": "L(m|arqO6rxGY(ccIAg(",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": -43.02281842912953,
+                        "y": 896.6786128452846
+                    },
+                    "m1vBqW0@DPp/M?^I-p3?": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": "25"
+                            }
+                        },
+                        "id": "m1vBqW0@DPp/M?^I-p3?",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": "M]RVkIywp4U^70`i0?m/",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "m4994wMRG#gXI(EeU6P|": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "5Ij(~W_P0A1U@J7t;}|U",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.guessthenumber.started"
+                            }
+                        },
+                        "id": "m4994wMRG#gXI(EeU6P|",
+                        "inputs": {
+                            "VALUE": {
+                                "block": "$zk,T-mqS@A+0Id{4NMv",
+                                "name": "VALUE",
+                                "shadow": "$zk,T-mqS@A+0Id{4NMv"
+                            }
+                        },
+                        "next": ";:NX6h=Sxzibw171Vs8#",
+                        "opcode": "data_setvariableto",
+                        "parent": "Cm#sw5b@Kl-BGJD5x`RI",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-290",
+                        "y": "365"
+                    },
+                    "m7JqS=N.riYov?S,SAr5": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "I]C.SU[:`mS]Fm)I:p4q",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.guessthenumber.max"
+                            }
+                        },
+                        "id": "m7JqS=N.riYov?S,SAr5",
+                        "inputs": {
+                            "VALUE": {
+                                "block": "FYKUM$06,K;k2n~gaN=t",
+                                "name": "VALUE",
+                                "shadow": "FYKUM$06,K;k2n~gaN=t"
+                            }
+                        },
+                        "next": "Tf,%K]G}@`i.EsY$_S(b",
+                        "opcode": "data_setvariableto",
+                        "parent": "J!D4$lU*L=5GE+r*38Fx",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": -15.584475381033798,
+                        "y": 71.49000331333708
+                    },
+                    "mZ,HD$9r){bLrHcwmU-X": {
+                        "fields": {
+                            "BROADCAST_OPTION": {
+                                "id": "H@p,^b(S38y[O}#k}}I|",
+                                "name": "BROADCAST_OPTION",
+                                "value": "reset lights",
+                                "variableType": "broadcast_msg"
+                            }
+                        },
+                        "id": "mZ,HD$9r){bLrHcwmU-X",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "event_broadcast_menu_with_broadcast_input",
+                        "parent": "@Y?bRuIeiTa!uA4S6*Uj",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "nCS-bL-8B]s!M-MJ7HPe": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "codelabfeaturedproject.guessthenumber.is_your_number_"
+                            }
+                        },
+                        "id": "nCS-bL-8B]s!M-MJ7HPe",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": "F2y}#|g:oSW562C67bbG",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "nMzq3hzgVNB*|hIXP#91": {
+                        "fields": {
+                            "CUBE_SELECT": {
+                                "name": "CUBE_SELECT",
+                                "value": "2"
+                            }
+                        },
+                        "id": "nMzq3hzgVNB*|hIXP#91",
+                        "inputs": {},
+                        "next": "1d~;=$KOb$P*]9RWPqT0",
+                        "opcode": "cozmo_event_on_cube_tap",
+                        "parent": null,
+                        "shadow": false,
+                        "topLevel": true,
+                        "x": 386,
+                        "y": -116
+                    },
+                    "oH0NH/2tp_/MC!7u]J?c": {
+                        "fields": {},
+                        "id": "oH0NH/2tp_/MC!7u]J?c",
+                        "inputs": {
+                            "FROM": {
+                                "block": "z+$xqX7D@dKLn/o%,4YO",
+                                "name": "FROM",
+                                "shadow": "z+$xqX7D@dKLn/o%,4YO"
+                            },
+                            "TO": {
+                                "block": "T4d%P*#Y`0/f:_E0pB~:",
+                                "name": "TO",
+                                "shadow": "T4d%P*#Y`0/f:_E0pB~:"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_random",
+                        "parent": "Tf,%K]G}@`i.EsY$_S(b",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-295",
+                        "y": "21"
+                    },
+                    "oS?:T$oMG,6R*ji^qKlX": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": "45"
+                            }
+                        },
+                        "id": "oS?:T$oMG,6R*ji^qKlX",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": "CHF_xv6w7W[bxfi2wM:#",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "o[sWhLW]I!0^?({D`HOV": {
+                        "fields": {
+                            "BROADCAST_OPTION": {
+                                "id": ",9=yzv7zR:zeE$;JXyyO",
+                                "name": "BROADCAST_OPTION",
+                                "value": "display guess",
+                                "variableType": "broadcast_msg"
+                            }
+                        },
+                        "id": "o[sWhLW]I!0^?({D`HOV",
+                        "inputs": {},
+                        "next": "M]RVkIywp4U^70`i0?m/",
+                        "opcode": "event_whenbroadcastreceived_with_broadcast_input",
+                        "parent": null,
+                        "shadow": false,
+                        "topLevel": true,
+                        "x": -388,
+                        "y": 2323
+                    },
+                    "p6yn)=:_/q(23c,SK#vi": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "0"
+                            }
+                        },
+                        "id": "p6yn)=:_/q(23c,SK#vi",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": "Cm#sw5b@Kl-BGJD5x`RI",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "pm{*8OxLvO)!Vw,n]2qF": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": ""
+                            }
+                        },
+                        "id": "pm{*8OxLvO)!Vw,n]2qF",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": -81.03227506365101,
+                        "y": 845.8557194301061
+                    },
+                    "qH3.CL(0s]0+GZ$;EUDW": {
+                        "fields": {},
+                        "id": "qH3.CL(0s]0+GZ$;EUDW",
+                        "inputs": {
+                            "CONDITION": {
+                                "block": "2v+Y`5@p2,yp2jOH~~mO",
+                                "name": "CONDITION",
+                                "shadow": null
+                            },
+                            "SUBSTACK": {
+                                "block": "xi[cqtCpm-d]1SOL+R^2",
+                                "name": "SUBSTACK",
+                                "shadow": null
+                            }
+                        },
+                        "next": null,
+                        "opcode": "control_if",
+                        "parent": "-{[QJ_Smo-YE!sx6o#sq",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": 329,
+                        "y": 1159
+                    },
+                    "r$a8,*a{Z}+2+Ty?+Hs%": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "codelabfeaturedproject.guessthenumber.if_i_guess_correctly_tap_white_if_your_number_is_higher_tap_green_if_it_is_lower_tap_red"
+                            }
+                        },
+                        "id": "r$a8,*a{Z}+2+Ty?+Hs%",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": "/TCI8U7EO0:tbo75LUEG",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "r;yFKAGGE,*FK!)?%TNt": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "V2rWPMh}?bCZTB/jIKWD",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.guessthenumber.guess"
+                            }
+                        },
+                        "id": "r;yFKAGGE,*FK!)?%TNt",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": "?Vf?5DP/Om+5LXL_32YL",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": 568.9426100594657,
+                        "y": 782.7157658168248
+                    },
+                    "r~|K,l8v@kki(IOFak{)": {
+                        "fields": {},
+                        "id": "r~|K,l8v@kki(IOFak{)",
+                        "inputs": {
+                            "CONDITION": {
+                                "block": "sw[(b4+Mm-h.U^*tNg$W",
+                                "name": "CONDITION",
+                                "shadow": null
+                            },
+                            "SUBSTACK": {
+                                "block": "?0|aqO-k)[.K4y4`OWP-",
+                                "name": "SUBSTACK",
+                                "shadow": null
+                            },
+                            "SUBSTACK2": {
+                                "block": "@i7TFEscDEYxqLzkahX0",
+                                "name": "SUBSTACK2",
+                                "shadow": null
+                            }
+                        },
+                        "next": null,
+                        "opcode": "control_if_else",
+                        "parent": "+7:8OnEis~%F3%Z-IehS",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": 695.0257088797433,
+                        "y": 7.701446533203125
+                    },
+                    "sDPRsEAj}[wYR]:{P22o": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "0"
+                            }
+                        },
+                        "id": "sDPRsEAj}[wYR]:{P22o",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": "sw[(b4+Mm-h.U^*tNg$W",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "sU8]3rEbIx2Qh8X;X[5v": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "V2rWPMh}?bCZTB/jIKWD",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.guessthenumber.guess"
+                            }
+                        },
+                        "id": "sU8]3rEbIx2Qh8X;X[5v",
+                        "inputs": {
+                            "VALUE": {
+                                "block": "QKBCT6V_MyQ.;)/DF/?u",
+                                "name": "VALUE",
+                                "shadow": "E.zmzcCmelwk2]JOJ:~A"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "data_setvariableto",
+                        "parent": "-$;If}w{9c8FhMPg*gY=",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": -294.8114275251117,
+                        "y": 1096.9257354736328
+                    },
+                    "s_7CopE;=3~hoGG(E?I4": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "}[neTF)o8A@8u%1[?`BN",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.guessthenumber.tapon"
+                            }
+                        },
+                        "id": "s_7CopE;=3~hoGG(E?I4",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": "2v+Y`5@p2,yp2jOH~~mO",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-104",
+                        "y": "950"
+                    },
+                    "sw[(b4+Mm-h.U^*tNg$W": {
+                        "fields": {},
+                        "id": "sw[(b4+Mm-h.U^*tNg$W",
+                        "inputs": {
+                            "OPERAND1": {
+                                "block": "^-WvN[[+j;U4i3H?j[4Z",
+                                "name": "OPERAND1",
+                                "shadow": "yk7_!:BCK:Dd!dDJnK`V"
+                            },
+                            "OPERAND2": {
+                                "block": "sDPRsEAj}[wYR]:{P22o",
+                                "name": "OPERAND2",
+                                "shadow": "sDPRsEAj}[wYR]:{P22o"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_equals",
+                        "parent": "r~|K,l8v@kki(IOFak{)",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-172",
+                        "y": "359"
+                    },
+                    "tQ31L6BM#gF?P0qiMhBf": {
+                        "fields": {
+                            "SOUND_MENU": {
+                                "name": "SOUND_MENU",
+                                "value": "9"
+                            }
+                        },
+                        "id": "tQ31L6BM#gF?P0qiMhBf",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "cozmo_sound_sounds_menu",
+                        "parent": "+7:8OnEis~%F3%Z-IehS",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "tVIhCsiff|@#{:!w0ahf": {
+                        "fields": {},
+                        "id": "tVIhCsiff|@#{:!w0ahf",
+                        "inputs": {
+                            "ANIMATION": {
+                                "block": "4R%/^(wx5fqAafdYFq4_",
+                                "name": "ANIMATION",
+                                "shadow": "4R%/^(wx5fqAafdYFq4_"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "cozmo_play_animation_from_dropdown",
+                        "parent": "+.}UkpYDdzvo1|SMY+|u",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-483",
+                        "y": "1676"
+                    },
+                    "u8ekS~k,;dtHE]bIB*wD": {
+                        "fields": {
+                            "ANIM_SELECT": {
+                                "name": "ANIM_SELECT",
+                                "value": "spin"
+                            }
+                        },
+                        "id": "u8ekS~k,;dtHE]bIB*wD",
+                        "inputs": {
+                            "COLOR": {
+                                "block": "DsY%h9r2X#d~UZ,Lpc41",
+                                "name": "COLOR",
+                                "shadow": "DsY%h9r2X#d~UZ,Lpc41"
+                            },
+                            "CUBE_SELECT": {
+                                "block": "@txb_/f=v(dPs]Sn%Yp$",
+                                "name": "CUBE_SELECT",
+                                "shadow": "@txb_/f=v(dPs]Sn%Yp$"
+                            }
+                        },
+                        "next": "fi7:#B|~KX{b$[S5Hunf",
+                        "opcode": "cozmo_vert_cube_anim",
+                        "parent": "EO5po|wN3IehREscMN=(",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": 837.9882352941177,
+                        "y": 1808.0117647058823
+                    },
+                    "uhQOPh:nR#k:,:*%j!x.": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "~S9R6L^F[.MO15G:THcj",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.guessthenumber.spin_all_of_the_cube_lights_in_white",
+                                "variableType": ""
+                            }
+                        },
+                        "id": "uhQOPh:nR#k:,:*%j!x.",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": null,
+                        "shadow": false,
+                        "topLevel": true,
+                        "x": 384,
+                        "y": 1646
+                    },
+                    "v+tOO%HHePh.c8oo=8lO": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": "10"
+                            }
+                        },
+                        "id": "v+tOO%HHePh.c8oo=8lO",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 8.500972202845901,
+                        "y": 1103.9500165666855
+                    },
+                    "v4~JQ+*1yxPWa?SHXdZ2": {
+                        "fields": {
+                            "LIGHT_SELECT": {
+                                "name": "LIGHT_SELECT",
+                                "value": "4"
+                            }
+                        },
+                        "id": "v4~JQ+*1yxPWa?SHXdZ2",
+                        "inputs": {
+                            "COLOR": {
+                                "block": "K]EVL].yu2kK8vWN,7d:",
+                                "name": "COLOR",
+                                "shadow": "K]EVL].yu2kK8vWN,7d:"
+                            },
+                            "CUBE_SELECT": {
+                                "block": "-QqVI6)e^g#;A=b6LUuw",
+                                "name": "CUBE_SELECT",
+                                "shadow": "-QqVI6)e^g#;A=b6LUuw"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "cozmo_vert_set_cube_light_corner",
+                        "parent": "+bsPgb/tYKd6@UKGIB}m",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-475",
+                        "y": "1535"
+                    },
+                    "v6+ENsoPffYm32Ke=Ke|": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "9lsmE|?rn+UvD|de-8z4",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.guessthenumber.cozmo_has_guessed_the_number_so_end_the_game",
+                                "variableType": ""
+                            }
+                        },
+                        "id": "v6+ENsoPffYm32Ke=Ke|",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": null,
+                        "shadow": false,
+                        "topLevel": true,
+                        "x": -391,
+                        "y": 1725
+                    },
+                    "vS`OEH`Gq@^^X@|b5vv/": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": ""
+                            }
+                        },
+                        "id": "vS`OEH`Gq@^^X@|b5vv/",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 161.84284319196422,
+                        "y": 752.9585614885601
+                    },
+                    "vzVyWH[!G]lBL[qDk~)y": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "1"
+                            }
+                        },
+                        "id": "vzVyWH[!G]lBL[qDk~)y",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": "-$;If}w{9c8FhMPg*gY=",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "w1kHaYA5K)uL3:A34Tkl": {
+                        "fields": {
+                            "SOUND_MENU": {
+                                "name": "SOUND_MENU",
+                                "value": "9"
+                            }
+                        },
+                        "id": "w1kHaYA5K)uL3:A34Tkl",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "cozmo_sound_sounds_menu",
+                        "parent": "DauzG_R-(i9z#}@bovxH",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "wC;xeT9d030vbJX`(1.0": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "1"
+                            }
+                        },
+                        "id": "wC;xeT9d030vbJX`(1.0",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": "T/,;XadOL:sz,83QN,MM",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "xEvquv`EK}W1ZWsSPdDn": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "Cozmo"
+                            }
+                        },
+                        "id": "xEvquv`EK}W1ZWsSPdDn",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 49.46625518798828,
+                        "y": 829.3714425223216
+                    },
+                    "xVD8ypY01MPvzev/=/[P": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "1"
+                            }
+                        },
+                        "id": "xVD8ypY01MPvzev/=/[P",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": "l09F2OOZXi{W.63.Q[-$",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "xi[cqtCpm-d]1SOL+R^2": {
+                        "fields": {},
+                        "id": "xi[cqtCpm-d]1SOL+R^2",
+                        "inputs": {
+                            "BROADCAST_INPUT": {
+                                "block": "65bk`,#NZr5f4*s?Q}2]",
+                                "name": "BROADCAST_INPUT",
+                                "shadow": "65bk`,#NZr5f4*s?Q}2]"
+                            }
+                        },
+                        "next": "ACp[04h5A_wc|{)C,iW1",
+                        "opcode": "event_broadcast_with_broadcast_input",
+                        "parent": "qH3.CL(0s]0+GZ$;EUDW",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-2",
+                        "y": "1250"
+                    },
+                    "yk7_!:BCK:Dd!dDJnK`V": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": ""
+                            }
+                        },
+                        "id": "yk7_!:BCK:Dd!dDJnK`V",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 460.20399202619274,
+                        "y": 141.17572239467077
+                    },
+                    "yxw;g;m,#05zu#.5~26M": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": "64"
+                            }
+                        },
+                        "id": "yxw;g;m,#05zu#.5~26M",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": "%J@.E^$f:HnDG_En.f]O",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "z+$xqX7D@dKLn/o%,4YO": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": "1"
+                            }
+                        },
+                        "id": "z+$xqX7D@dKLn/o%,4YO",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": "oH0NH/2tp_/MC!7u]J?c",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "{=/QcZ4_.;|$;Gz$y^R/": {
+                        "fields": {},
+                        "id": "{=/QcZ4_.;|$;Gz$y^R/",
+                        "inputs": {
+                            "ANIMATION": {
+                                "block": "(s6gY6~pRl?X@g/i8u1w",
+                                "name": "ANIMATION",
+                                "shadow": "(s6gY6~pRl?X@g/i8u1w"
+                            }
+                        },
+                        "next": "7UE#rwLIOV,$;JF*[7ih",
+                        "opcode": "cozmo_play_animation_from_dropdown",
+                        "parent": "DauzG_R-(i9z#}@bovxH",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": 338.66286795479914,
+                        "y": 1214.355708530971
+                    },
+                    "{?i1ja-a%,aXX*^/*pAk": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": "31"
+                            }
+                        },
+                        "id": "{?i1ja-a%,aXX*^/*pAk",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": "%J@.E^$f:HnDG_En.f]O",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "{cnU6.SW(Dzsk]Z_gM1K": {
+                        "fields": {
+                            "BROADCAST_OPTION": {
+                                "id": "E_Mb7Urs{p8,^U+7FF1d",
+                                "name": "BROADCAST_OPTION",
+                                "value": "end game",
+                                "variableType": "broadcast_msg"
+                            }
+                        },
+                        "id": "{cnU6.SW(Dzsk]Z_gM1K",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "event_broadcast_menu_with_broadcast_input",
+                        "parent": "_D}t3bPHKGu!YYF54._6",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "|%3HS,pj1J8!ji1QV5b7": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "AhO~eVWZFAdF8)lihXK=",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.guessthenumber.initialize_the_game_and_give_instructions",
+                                "variableType": ""
+                            }
+                        },
+                        "id": "|%3HS,pj1J8!ji1QV5b7",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": null,
+                        "shadow": false,
+                        "topLevel": true,
+                        "x": -360,
+                        "y": -196
+                    },
+                    "}Q_zY;xd+Nu6~nstf6Fa": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "kf;Ezn.ORl:3j.v:.v`$",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.guessthenumber.min"
+                            }
+                        },
+                        "id": "}Q_zY;xd+Nu6~nstf6Fa",
+                        "inputs": {
+                            "VALUE": {
+                                "block": "?Vf?5DP/Om+5LXL_32YL",
+                                "name": "VALUE",
+                                "shadow": "1/RqMSfrjZflZ(P)kW-d"
+                            }
+                        },
+                        "next": "4Q3akbQJi*n#DU`5zd.8",
+                        "opcode": "data_setvariableto",
+                        "parent": "b[(pZaHpa!p`U,/9jVR)",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": 373.16990879603793,
+                        "y": 730.7157658168248
+                    }
+                },
+                "costumeCount": 0,
+                "costumes": [],
+                "currentCostume": 0,
+                "direction": 90,
+                "draggable": false,
+                "id": "R/F?~xJA+%5xBDwpDdwr",
+                "isStage": false,
+                "lists": {},
+                "name": "Sprite1",
+                "rotationStyle": "all around",
+                "size": 100,
+                "sounds": [],
+                "variables": {},
+                "visible": true,
+                "x": 0,
+                "y": 0
+            }
+        ]
+    },
+    "ProjectUUID": "5a050857-4bfe-4cfa-b743-2eacdbccee7b"
+}
