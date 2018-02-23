@@ -45,10 +45,11 @@
       "user_intent": "play_specific"
     },
     {
-      "app_intent": "intent_meet_victor",
       "user_intent": "meet_victor",
+      "cloud_intent": "intent_names_username",
+      "app_intent": "intent_meet_victor",
       "app_substitutions": {
-        "param": "name"
+        "param": "username"
       }
     }
   ],
