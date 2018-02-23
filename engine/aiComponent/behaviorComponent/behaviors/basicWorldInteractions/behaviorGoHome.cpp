@@ -53,6 +53,11 @@ BehaviorGoHome::BehaviorGoHome(const Json::Value& config)
 
 bool BehaviorGoHome::WantsToBeActivatedBehavior() const
 {
+  const bool isOnCharger = GetBEI().GetRobotInfo().IsOnChargerPlatform();
+  if( isOnCharger ) {
+    return false;
+  }
+  
   // If we have a located Home/charger, then we can be activated.
   
   std::vector<const ObservableObject*> locatedHomes;
