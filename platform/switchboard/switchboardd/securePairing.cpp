@@ -11,7 +11,6 @@
  **/
 
 #include <sstream>
-#include <random>
 #include "switchboardd/securePairing.h"
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -96,7 +95,7 @@ void Anki::Switchboard::SecurePairing::Init() {
   _abnormalityCount = 0;
   
   // Generate a random number with kNumPinDigits digits
-  _pin = GeneratePin();
+  _pin = _keyExchange->GeneratePin();
   _updatedPinSignal.emit(_pin);
   
   // Update our state
@@ -407,26 +406,6 @@ void Anki::Switchboard::SecurePairing::HandleEncryptedMessageReceived(uint8_t* b
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Helper methods
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-std::string Anki::Switchboard::SecurePairing::GeneratePin() {
-  // @seichert
-  std::random_device rd;
-  std::mt19937 gen(rd());
-  
-  std::string pinStr;
-  
-  // The first digit cannot be 0, must be between 1 and 9
-  std::uniform_int_distribution<> dis('1', '9');
-  pinStr.push_back((char) dis(gen));
-  
-  // Subsequent digits can be between 0 and 9
-  dis.param(std::uniform_int_distribution<>::param_type('0','9'));
-  for (int i = 1 ; i < kNumPinDigits; i++) {
-    pinStr.push_back((char) dis(gen));
-  }
-  return pinStr;
-}
-
 
 void Anki::Switchboard::SecurePairing::IncrementChallengeCount() {
   // Increment challenge count

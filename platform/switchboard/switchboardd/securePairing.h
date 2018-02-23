@@ -101,8 +101,6 @@ namespace Switchboard {
     void SendCancelPairing();
     void SendChallengeSuccess();
     
-    std::string GeneratePin();
-    
     void IncrementAbnormalityCount();
     void IncrementChallengeCount();
     
