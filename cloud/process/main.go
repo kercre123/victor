@@ -3,7 +3,6 @@ package main
 import (
 	"anki/cloudproc"
 	"anki/ipc"
-	"flag"
 	"fmt"
 	"time"
 )
@@ -44,10 +43,14 @@ func testReader(serv ipc.Server, send cloudproc.Sender) {
 func main() {
 	fmt.Println("Hello, world!")
 
-	flag.BoolVar(&verbose, "verbose", false, "enable verbose logging")
-	var test bool
-	flag.BoolVar(&test, "test", false, "enable test channel")
-	flag.Parse()
+	// don't yet have control over process startup on DVT2, set these as default
+	verbose = true
+	test := true
+
+	// flag.BoolVar(&verbose, "verbose", false, "enable verbose logging")
+	// var test bool
+	// flag.BoolVar(&test, "test", false, "enable test channel")
+	// flag.Parse()
 
 	micSock := getSocketWithRetry(ipc.GetSocketPath("mic_sock"), "cp_mic")
 	defer micSock.Close()

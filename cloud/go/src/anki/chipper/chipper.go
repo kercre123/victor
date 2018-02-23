@@ -6,12 +6,13 @@ import (
 
 	pb "github.com/anki/sai-chipper-voice/grpc/pb2"
 
+	"github.com/gwatts/rootcerts"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
 
 var (
-	defaultTLSCert = credentials.NewClientTLSFromCert(nil, "")
+	defaultTLSCert = credentials.NewClientTLSFromCert(rootcerts.ServerCertPool(), "")
 )
 
 type IntentResult = pb.IntentResult

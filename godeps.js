@@ -288,13 +288,17 @@ function recordDeps(args) {
     return;
   }
 
-  const stdLibPackages = execSyncTrim('go list std').split('\n');
+  const stdLibPackages = execSyncTrim('go list std').split('\n')
+    .concat(execSyncTrim('GOOS="android" go list std').split('\n'))
+    .reduce((agg, pkg) => !agg.includes(pkg) ? agg + pkg : agg, []);
 
   const allDeps = godirFiles
     // get contents of godir files
     .map(filename => fs.readFileSync(filename, 'utf8'))
-    // get dependencies of each godir
+    // get dependencies of each godir, for both mac and android builds
     .map(godir => execSyncTrim('go list -f \'{{ join .Deps "\\n" }}\' ' + godir))
+      // might have to uncomment this someday if android/mac have separate dependencies
+      //+ '\n' + execSyncTrim('GOOS="android" CGO_ENABLED=1 go list -f \'{{ join .Deps "\\n" }}\' ' + godir))
     // split newline-separated deps into array, remove std lib packages
     .map(deps => deps.split('\n').filter(dep => !stdLibPackages.includes(dep)))
     // merge all deps into one array, removing duplicates
