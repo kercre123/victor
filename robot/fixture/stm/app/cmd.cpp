@@ -560,7 +560,6 @@ void emmcdl_ver_handler_(char* s) {
   strncpy(emmcdl_version, s, EMMCDL_VER_MAX_LEN);
   emmcdl_version[EMMCDL_VER_MAX_LEN] = '\0';
   emmcdl_read_cnt++;
-  //ConsolePrintf("handler (%d): '%s'\n", emmcdl_read_cnt, s); //DEBUG
 }
 
 char* cmdGetEmmcdlVersion(int timeout_ms)
