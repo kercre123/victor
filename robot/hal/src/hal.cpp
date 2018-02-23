@@ -278,7 +278,8 @@ void HAL::SetLED(LEDId led_id, u32 color)
 {
   assert(led_id >= 0 && led_id < LED_COUNT);
 
-  const u32 ledIdx = (u32)led_id;
+  // Light order is swapped in syscon
+  const u32 ledIdx = LED_COUNT - led_id - 1;
 
   uint8_t r = (color >> LED_RED_SHIFT) & LED_CHANNEL_MASK;
   uint8_t g = (color >> LED_GRN_SHIFT) & LED_CHANNEL_MASK;

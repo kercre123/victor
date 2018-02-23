@@ -37,7 +37,11 @@ namespace BackpackLightController {
 
   inline void ResetPhases()
   {
-    memset(_ledPhases, 0, sizeof(_ledPhases));
+    const TimeStamp_t currentTime = HAL::GetTimeStamp();
+    for(int i=0; i<(int)LEDId::NUM_BACKPACK_LEDS; ++i)
+    {
+      _ledPhases[i] = currentTime;
+    }
   }
 
   void SetParams(const RobotInterface::SetBackpackLights& params)

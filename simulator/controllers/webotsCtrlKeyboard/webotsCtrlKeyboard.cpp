@@ -519,7 +519,7 @@ namespace Cozmo {
     
     if(!backpackLightsOn) {
       // Use red channel to control left and right lights
-      msg.onColor[(uint32_t)LEDId::LED_BACKPACK_FRONT] = ::Anki::NamedColors::RED >> 1; // Shift to make dimmer
+      msg.onColor[(uint32_t)LEDId::LED_BACKPACK_FRONT] = ::Anki::NamedColors::RED;
       msg.onColor[(uint32_t)LEDId::LED_BACKPACK_MIDDLE] = ::Anki::NamedColors::GREEN;
       msg.onColor[(uint32_t)LEDId::LED_BACKPACK_BACK] = ::Anki::NamedColors::BLUE;
     }
