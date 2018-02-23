@@ -41,8 +41,8 @@ body.show-glossary-modal #glossary-modal {
 #glossary {
   position: absolute;
   top: 5vh;
-  left: 5vw;
-  width: 90vw;
+  left: 2.5vw;
+  width: 95vw;
   height: 90vh;
   z-index: 40;
   border: 2px solid #000;
@@ -55,8 +55,8 @@ body.show-glossary-modal #glossary-modal {
 #glossary .hd {
   color: #22a9d8;
   text-align: right;
-  font-size: 2.5rem;
-  padding-bottom: 15px;
+  font-size: 2rem;
+  padding-bottom: 1.5vh;
   font-family: 'Avenir Next Bold';
 }
 
@@ -64,8 +64,8 @@ body.show-glossary-modal #glossary-modal {
   display:inline-block;
   float:left;
   font-size: 50%;
-  width: 48px;
-  height: 48px;
+  width: 3.5vw;
+  height: 3.5vw;
   padding: 0;
   background-color: transparent;
   border: 0;
@@ -75,13 +75,13 @@ body.show-glossary-modal #glossary-modal {
 }
 
 #glossary .close-button:active {
-  background-position: 0 -48px;
+  background-position: 0 -4vw;
 }
 
 #glossary .bd {
   clear: left;
   display: flex;
-  height: calc(100% - 75px);
+  height: calc(100% - 10vh);
   overflow: hidden;
 }
 #glossary .bd #definitions-outer {
@@ -198,7 +198,7 @@ body.show-glossary-modal #glossary-modal {
 
 @media only screen and (max-width: 799px) {
   #glossary {
-    padding: 15px;
+    padding: 3vh 2vw 3vh 2vw;
   }
   #glossary .hd {
     height: 40px;
