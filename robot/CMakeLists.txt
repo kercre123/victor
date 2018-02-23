@@ -50,6 +50,7 @@ target_compile_definitions(robot_hal
   PRIVATE
   COZMO_ROBOT
   ${PLATFORM_COMPILE_DEFS}
+  #HAL_DUMMY_BODY # Uncomment if deploying on head only
 )
 
 set(PLATFORM_SRCS "")
@@ -124,7 +125,6 @@ target_compile_definitions(supervisor
   CORETECH_ROBOT
   _DEBUG
   ${PLATFORM_COMPILE_DEFS}
-  #HAL_DUMMY_BODY # Uncomment if deploying on head only
 )
 
 target_include_directories(supervisor
