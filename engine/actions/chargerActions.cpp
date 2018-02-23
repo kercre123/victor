@@ -241,7 +241,11 @@ ActionResult TurnToAlignWithChargerAction::Init()
   const auto& robotAngle = GetRobot().GetPose().GetRotation().GetAngleAroundZaxis();
   const bool clockwise = (angleToTurnTo - robotAngle).ToFloat() < 0.f;
   
-  _compoundAction->AddAction(new TriggerAnimationAction(clockwise ? _rightTurnAnimTrigger : _leftTurnAnimTrigger));
+  const auto animationTrigger = clockwise ? _rightTurnAnimTrigger : _leftTurnAnimTrigger;
+  
+  if (animationTrigger != AnimationTrigger::Count) {
+    _compoundAction->AddAction(new TriggerAnimationAction(animationTrigger));
+  }
   
   // Go ahead and do the first Update for the compound action so we don't
   // "waste" the first CheckIfDone call doing so. Proceed so long as this
