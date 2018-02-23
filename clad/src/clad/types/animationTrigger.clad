@@ -599,6 +599,7 @@ enum int_32 AnimationTrigger
   VC_Refuse_sparks,
   VC_StartledWakeup,
   WaitOnSideLoop,
+  WakeupGetout,
   WorkoutPostLift_highEnergy,
   WorkoutPostLift_lowEnergy,
   WorkoutPostLift_mediumEnergy,

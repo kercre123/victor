@@ -2179,6 +2179,10 @@
     {
       "CladEvent": "WaitOnSideLoop",
       "AnimName": "ag_reacttocliff_wait"
+    },
+    {
+      "CladEvent": "WakeupGetout",
+      "AnimName": "ag_vc_startledwakeup_01"
     },    
     {
       "CladEvent": "WorkoutPostLift_highEnergy",

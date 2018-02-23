@@ -31,6 +31,8 @@ protected:
   virtual bool CanBeGentlyInterruptedNow() const override;
 
   virtual void OnBehaviorActivated() override;
+  
+  virtual void OnBehaviorDeactivated() override;
 
   virtual bool WantsToBeActivatedBehavior() const override {
     return true;}
