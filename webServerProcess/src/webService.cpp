@@ -54,8 +54,8 @@ namespace {
 
 //  const char* kNominalCPUFreqFile = "/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq";
   const char* kCPUFreqFile = "/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_cur_freq";
-  const char* kTemperatureFile = "/sys/devices/virtual/thermal/thermal_zone8/temp";
-  const char* kBatteryVoltageFile = "/sys/devices/soc.0/qpnp-linear-charger-8/power_supply/battery/voltage_now";
+  const char* kTemperatureFile = "/sys/devices/virtual/thermal/thermal_zone7/temp";
+  const char* kBatteryVoltageFile = "/sys/devices/soc/qpnp-linear-charger-8/power_supply/battery/voltage_now";
 #endif
 
 } // namespace
@@ -255,20 +255,19 @@ ConsoleVarSet(struct mg_connection *conn, void *cbdata)
 {
   const mg_request_info* info = mg_get_request_info(conn);
 
-  std::string key;
-  std::string value;
+  std::string query;
 
   if (info->content_length > 0) {
     char buf[info->content_length+1];
     mg_read(conn, buf, sizeof(buf));
     buf[info->content_length] = 0;
-    key = buf;
+    query = buf;
   }
   else if (info->query_string) {
-    key = info->query_string;
+    query = info->query_string;
   }
 
-  const int returnCode = ProcessRequest(conn, Anki::Cozmo::WebService::WebService::RequestType::RT_ConsoleVarSet, key, "");
+  const int returnCode = ProcessRequest(conn, WebService::WebService::RequestType::RT_ConsoleVarSet, query, "");
 
   return returnCode;
 }
@@ -588,23 +587,23 @@ static int GetPerfStats(struct mg_connection *conn, void *cbdata)
 
   std::string stat_temperature;
   if (active[1]) {
-    // Update temperature reading; convert milli-Celsius to Celsius
-    uint32_t cpuTemp_mC;
+    // Update temperature reading (Celsius)
+    uint32_t cpuTemp_C;
     _temperatureFile.seekg(0, _temperatureFile.beg);
-    _temperatureFile >> cpuTemp_mC;
-    const float cpuTemp_C = cpuTemp_mC * 0.001f;
-    std::stringstream ss;
-    ss << std::fixed << std::setprecision(3) << cpuTemp_C;
-    stat_temperature = ss.str();
+    _temperatureFile >> cpuTemp_C;
+    stat_temperature = std::to_string(cpuTemp_C);
   }
 
   std::string stat_batteryVoltage;
   if (active[2]) {
     // Battery voltage
-    uint32_t batteryVoltage;
+    uint32_t batteryVoltage_uV;
     _batteryVoltageFile.seekg(0, _batteryVoltageFile.beg);
-    _batteryVoltageFile >> batteryVoltage;
-    stat_batteryVoltage = std::to_string(batteryVoltage);
+    _batteryVoltageFile >> batteryVoltage_uV;
+    const float batteryVoltage_V = batteryVoltage_uV * 0.000001f;
+    std::stringstream ss;
+    ss << std::fixed << std::setprecision(6) << batteryVoltage_V;
+    stat_batteryVoltage = ss.str();
   }
 
 #endif
@@ -719,7 +718,7 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform, const Json::Val
   mg_set_request_handler(_ctx, "/getinitialconfig", GetInitialConfig, 0);
   mg_set_request_handler(_ctx, "/getmainrobotinfo", GetMainRobotInfo, 0);
   mg_set_request_handler(_ctx, "/getperfstats", GetPerfStats, 0);
-  
+
   // todo (VIC-1398): remove
   if( ANKI_DEV_CHEATS ) { 
     mg_set_request_handler(_ctx, "/sendAppMessage", TempAppToEngine, 0);
