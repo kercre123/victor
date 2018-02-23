@@ -9,7 +9,7 @@
             "currentCostume": 0,
             "direction": 90,
             "draggable": false,
-            "id": "#F]BUDqp6v6*e?Gc]+{O",
+            "id": "]E7=DHB8t%tP,f+obk^l",
             "isStage": true,
             "lists": {},
             "name": "Stage",
@@ -26,6 +26,13 @@
                 "2bncxZXZ/NkerG~*iGe#": {
                     "id": "2bncxZXZ/NkerG~*iGe#",
                     "name": "Lower number cube is tapped.",
+                    "type": "",
+                    "value": 0
+                },
+                "5!ob.k8xwW~C26msLyLS": {
+                    "id": "5!ob.k8xwW~C26msLyLS",
+                    "isCloud": false,
+                    "name": "Turn off the backpack light.",
                     "type": "",
                     "value": 0
                 },
@@ -81,13 +88,13 @@
                     "id": "I]C.SU[:`mS]Fm)I:p4q",
                     "name": "max",
                     "type": "",
-                    "value": 48
+                    "value": 97
                 },
                 "V2rWPMh}?bCZTB/jIKWD": {
                     "id": "V2rWPMh}?bCZTB/jIKWD",
                     "name": "guess",
                     "type": "",
-                    "value": 46
+                    "value": 49
                 },
                 "ZdQ+4Z8GDf4v1wwX|-`y": {
                     "id": "ZdQ+4Z8GDf4v1wwX|-`y",
@@ -123,7 +130,7 @@
                     "id": "kf;Ezn.ORl:3j.v:.v`$",
                     "name": "min",
                     "type": "",
-                    "value": 44
+                    "value": "0"
                 },
                 "oij$a?yKBJb+o5+Ol.=,": {
                     "id": "oij$a?yKBJb+o5+Ol.=,",
@@ -135,7 +142,7 @@
                     "id": "qURdyL-v$_9]]+;ox,ya",
                     "name": "totalGuesses",
                     "type": "",
-                    "value": 5
+                    "value": 1
                 },
                 "uj1v/FX)*u*BPrq$mv:a": {
                     "id": "uj1v/FX)*u*BPrq$mv:a",
@@ -147,13 +154,20 @@
                     "id": "wLTe)C4A2H}E=Hl-SA1!",
                     "name": "gameOver",
                     "type": "",
-                    "value": "1"
+                    "value": "0"
+                },
+                "x)KbWLPvpKhh@|L?hp.T": {
+                    "id": "x)KbWLPvpKhh@|L?hp.T",
+                    "isCloud": false,
+                    "name": "turn off backpack",
+                    "type": "broadcast_msg",
+                    "value": "turn off backpack"
                 },
                 "}[neTF)o8A@8u%1[?`BN": {
                     "id": "}[neTF)o8A@8u%1[?`BN",
                     "name": "tapOn",
                     "type": "",
-                    "value": "1"
+                    "value": "0"
                 },
                 "~S9R6L^F[.MO15G:THcj": {
                     "id": "~S9R6L^F[.MO15G:THcj",
@@ -217,8 +231,8 @@
                     "parent": null,
                     "shadow": false,
                     "topLevel": true,
-                    "x": 379,
-                    "y": 2076
+                    "x": 364.90705882352944,
+                    "y": 2415.7964705882355
                 },
                 "$zk,T-mqS@A+0Id{4NMv": {
                     "fields": {
@@ -348,8 +362,8 @@
                     "parent": null,
                     "shadow": false,
                     "topLevel": true,
-                    "x": 378,
-                    "y": 1079
+                    "x": 390.5270588235294,
+                    "y": 1230.8905882352942
                 },
                 "(s6gY6~pRl?X@g/i8u1w": {
                     "fields": {
@@ -383,11 +397,11 @@
                     },
                     "next": null,
                     "opcode": "operator_equals",
-                    "parent": "@i7TFEscDEYxqLzkahX0",
+                    "parent": "Z)G;#-]KPaD)S5ge^p?t",
                     "shadow": false,
                     "topLevel": false,
-                    "x": "-69",
-                    "y": "575"
+                    "x": 963.6094117647059,
+                    "y": -16.77411764705883
                 },
                 "*KX2:JG%m2{XJ`PQ~Lgr": {
                     "fields": {
@@ -488,34 +502,6 @@
                     "shadow": true,
                     "topLevel": false
                 },
-                "+bsPgb/tYKd6@UKGIB}m": {
-                    "fields": {
-                        "LIGHT_SELECT": {
-                            "name": "LIGHT_SELECT",
-                            "value": "4"
-                        }
-                    },
-                    "id": "+bsPgb/tYKd6@UKGIB}m",
-                    "inputs": {
-                        "COLOR": {
-                            "block": "8.wy^Ud$KAntcQjNfe(u",
-                            "name": "COLOR",
-                            "shadow": "8.wy^Ud$KAntcQjNfe(u"
-                        },
-                        "CUBE_SELECT": {
-                            "block": "lD$:GI=HCq7D{?!2`TQx",
-                            "name": "CUBE_SELECT",
-                            "shadow": "lD$:GI=HCq7D{?!2`TQx"
-                        }
-                    },
-                    "next": "v4~JQ+*1yxPWa?SHXdZ2",
-                    "opcode": "cozmo_vert_set_cube_light_corner",
-                    "parent": "K*a!ZEN;z1}oZ)~qSz8]",
-                    "shadow": false,
-                    "topLevel": false,
-                    "x": "-475",
-                    "y": "1535"
-                },
                 ",)syq^/A0/wdAkH6Rc5o": {
                     "fields": {
                         "VARIABLE": {
@@ -574,8 +560,8 @@
                     "parent": null,
                     "shadow": false,
                     "topLevel": true,
-                    "x": -389,
-                    "y": 1808
+                    "x": -381.17058823529413,
+                    "y": 1983.3788235294119
                 },
                 "-QqVI6)e^g#;A=b6LUuw": {
                     "fields": {
@@ -601,13 +587,13 @@
                     },
                     "id": "-{[QJ_Smo-YE!sx6o#sq",
                     "inputs": {},
-                    "next": "qH3.CL(0s]0+GZ$;EUDW",
+                    "next": "jz~qv(}1vm!_5_|?`%)6",
                     "opcode": "cozmo_event_on_cube_tap",
                     "parent": null,
                     "shadow": false,
                     "topLevel": true,
-                    "x": 391,
-                    "y": 586
+                    "x": 394.13176470588235,
+                    "y": 643.9376470588236
                 },
                 ".Al-C12PZv`BD;%-(zLy": {
                     "fields": {
@@ -716,8 +702,8 @@
                     "parent": "M{jTs/OJi8%5.li*o{67",
                     "shadow": false,
                     "topLevel": false,
-                    "x": -249.23529411764707,
-                    "y": 693.0470588235294
+                    "x": -293.66705882352943,
+                    "y": 838.4258823529411
                 },
                 "0BJ%y!)-@u7fMxKarKM!": {
                     "fields": {},
@@ -754,6 +740,21 @@
                     "next": null,
                     "opcode": "text",
                     "parent": "dU`YaB]NjXma}dncyFDf",
+                    "shadow": true,
+                    "topLevel": false
+                },
+                "1,sLDcJ:Lh5^=A,S*D[u": {
+                    "fields": {
+                        "COLOUR": {
+                            "name": "COLOUR",
+                            "value": "#000000"
+                        }
+                    },
+                    "id": "1,sLDcJ:Lh5^=A,S*D[u",
+                    "inputs": {},
+                    "next": null,
+                    "opcode": "colour_picker",
+                    "parent": "nfCZsFJ@^BT0@hX/eO%a",
                     "shadow": true,
                     "topLevel": false
                 },
@@ -823,8 +824,8 @@
                     "parent": null,
                     "shadow": false,
                     "topLevel": true,
-                    "x": 387,
-                    "y": 510
+                    "x": 391.6976470588235,
+                    "y": 560.1082352941177
                 },
                 "1w,,AWnZkeL.6w}L,o]{": {
                     "fields": {
@@ -842,6 +843,21 @@
                     "topLevel": true,
                     "x": 27.528064727783203,
                     "y": 885.3714425223216
+                },
+                "2((7VD2O-JRhUBmy4?wu": {
+                    "fields": {
+                        "COLOUR": {
+                            "name": "COLOUR",
+                            "value": "#ff0000"
+                        }
+                    },
+                    "id": "2((7VD2O-JRhUBmy4?wu",
+                    "inputs": {},
+                    "next": null,
+                    "opcode": "colour_picker",
+                    "parent": "XA.[kL|_q?,(G,oc(]Q:",
+                    "shadow": true,
+                    "topLevel": false
                 },
                 "2IHW5)^=j|~I[APNt:G4": {
                     "fields": {
@@ -892,11 +908,11 @@
                     },
                     "next": null,
                     "opcode": "operator_equals",
-                    "parent": "qH3.CL(0s]0+GZ$;EUDW",
+                    "parent": "jz~qv(}1vm!_5_|?`%)6",
                     "shadow": false,
                     "topLevel": false,
-                    "x": "-104",
-                    "y": "890"
+                    "x": 930.6870588235295,
+                    "y": 520.5588235294117
                 },
                 "352WtSL{;7!i1ciH+;sx": {
                     "fields": {
@@ -948,6 +964,24 @@
                     "shadow": true,
                     "topLevel": false
                 },
+                "4YQyz{1a;=9[tv/k^~mV": {
+                    "fields": {},
+                    "id": "4YQyz{1a;=9[tv/k^~mV",
+                    "inputs": {
+                        "COLOR": {
+                            "block": "LhO18qh40J*@0fuhaA@^",
+                            "name": "COLOR",
+                            "shadow": "LhO18qh40J*@0fuhaA@^"
+                        }
+                    },
+                    "next": "K*a!ZEN;z1}oZ)~qSz8]",
+                    "opcode": "cozmo_vert_setbackpackcolor",
+                    "parent": "Rxf@1~%d/qz70rp`fs$+",
+                    "shadow": false,
+                    "topLevel": false,
+                    "x": "-339",
+                    "y": "1903"
+                },
                 "65bk`,#NZr5f4*s?Q}2]": {
                     "fields": {
                         "BROADCAST_OPTION": {
@@ -974,13 +1008,13 @@
                     },
                     "id": "6ZL8~zMm6$U1R04D9[xj",
                     "inputs": {},
-                    "next": ":@Qe]h73},gYZ]qE#5D,",
+                    "next": "]wJDJ4jpiT}%/iUnLqKc",
                     "opcode": "cozmo_event_on_cube_tap",
                     "parent": null,
                     "shadow": false,
                     "topLevel": true,
-                    "x": 387,
-                    "y": 1167
+                    "x": 388.5658823529412,
+                    "y": 1307.929411764706
                 },
                 "6rg/@R9]8.6^{vG$WMdx": {
                     "fields": {
@@ -1093,21 +1127,6 @@
                     "x": -332.6685834612165,
                     "y": 1321.1285574776784
                 },
-                "8.wy^Ud$KAntcQjNfe(u": {
-                    "fields": {
-                        "COLOUR": {
-                            "name": "COLOUR",
-                            "value": "#ffffff"
-                        }
-                    },
-                    "id": "8.wy^Ud$KAntcQjNfe(u",
-                    "inputs": {},
-                    "next": null,
-                    "opcode": "colour_picker",
-                    "parent": "+bsPgb/tYKd6@UKGIB}m",
-                    "shadow": true,
-                    "topLevel": false
-                },
                 "84,Eqag{L):.XMq4hQ__": {
                     "fields": {
                         "NUM": {
@@ -1165,29 +1184,6 @@
                     "x": -127.31571088518419,
                     "y": 1080.5485927036832
                 },
-                ":@Qe]h73},gYZ]qE#5D,": {
-                    "fields": {},
-                    "id": ":@Qe]h73},gYZ]qE#5D,",
-                    "inputs": {
-                        "CONDITION": {
-                            "block": "dU`YaB]NjXma}dncyFDf",
-                            "name": "CONDITION",
-                            "shadow": null
-                        },
-                        "SUBSTACK": {
-                            "block": ":P1Zp^|a~EBuJ4GYIWGo",
-                            "name": "SUBSTACK",
-                            "shadow": null
-                        }
-                    },
-                    "next": null,
-                    "opcode": "control_if",
-                    "parent": "6ZL8~zMm6$U1R04D9[xj",
-                    "shadow": false,
-                    "topLevel": false,
-                    "x": 227.71000453404022,
-                    "y": 1114.6214076450897
-                },
                 ":P)T?9h,0rlf*k8m*x=N": {
                     "fields": {},
                     "id": ":P)T?9h,0rlf*k8m*x=N",
@@ -1218,11 +1214,11 @@
                     },
                     "next": "DauzG_R-(i9z#}@bovxH",
                     "opcode": "event_broadcast_with_broadcast_input",
-                    "parent": ":@Qe]h73},gYZ]qE#5D,",
+                    "parent": "]wJDJ4jpiT}%/iUnLqKc",
                     "shadow": false,
                     "topLevel": false,
-                    "x": "-48",
-                    "y": "1863"
+                    "x": 874.330588235294,
+                    "y": 1230.1164705882352
                 },
                 ";+=[G|F0d^(-dbsvHPD|": {
                     "fields": {},
@@ -1265,6 +1261,21 @@
                     "topLevel": false,
                     "x": "-288",
                     "y": "190"
+                },
+                "=de9r?n({-])7@Zj+.Wr": {
+                    "fields": {
+                        "COLOUR": {
+                            "name": "COLOUR",
+                            "value": "#ff0000"
+                        }
+                    },
+                    "id": "=de9r?n({-])7@Zj+.Wr",
+                    "inputs": {},
+                    "next": null,
+                    "opcode": "colour_picker",
+                    "parent": "vyO|]2R-x(Fc/~eLH::E",
+                    "shadow": true,
+                    "topLevel": false
                 },
                 "?0|aqO-k)[.K4y4`OWP-": {
                     "fields": {},
@@ -1355,8 +1366,8 @@
                     "parent": "/TCI8U7EO0:tbo75LUEG",
                     "shadow": false,
                     "topLevel": false,
-                    "x": "-488",
-                    "y": "1009"
+                    "x": -50.95529411764704,
+                    "y": 925.0305882352941
                 },
                 "@Y?bRuIeiTa!uA4S6*Uj": {
                     "fields": {},
@@ -1375,29 +1386,6 @@
                     "topLevel": false,
                     "x": "-483",
                     "y": "767"
-                },
-                "@i7TFEscDEYxqLzkahX0": {
-                    "fields": {},
-                    "id": "@i7TFEscDEYxqLzkahX0",
-                    "inputs": {
-                        "CONDITION": {
-                            "block": ")}6.,q%CL2$/j.^o)EF{",
-                            "name": "CONDITION",
-                            "shadow": null
-                        },
-                        "SUBSTACK": {
-                            "block": "JB%HkLHJswZ;d,i%uoT8",
-                            "name": "SUBSTACK",
-                            "shadow": null
-                        }
-                    },
-                    "next": null,
-                    "opcode": "control_if",
-                    "parent": "r~|K,l8v@kki(IOFak{)",
-                    "shadow": false,
-                    "topLevel": false,
-                    "x": "-68",
-                    "y": "634"
                 },
                 "@txb_/f=v(dPs]Sn%Yp$": {
                     "fields": {
@@ -1418,7 +1406,7 @@
                     "fields": {
                         "TEXT": {
                             "name": "TEXT",
-                            "value": "Think of a number between 1 and 100 and tap white to continue."
+                            "value": "Think of a number between 1 and 100 and tap purple to continue."
                         }
                     },
                     "id": "A6Q!9gD`NzQFU#7jg*i@",
@@ -1535,8 +1523,8 @@
                     "parent": null,
                     "shadow": false,
                     "topLevel": true,
-                    "x": -365,
-                    "y": 925
+                    "x": -361.86823529411765,
+                    "y": 1097.2470588235294
                 },
                 "B/UpI2AxVW830wk!C;8^": {
                     "fields": {
@@ -1584,6 +1572,23 @@
                     "topLevel": true,
                     "x": 424.37428501674106,
                     "y": 496.54001508440297
+                },
+                "C#r_/@.]TPZzZ;Z5ZTpr": {
+                    "fields": {
+                        "BROADCAST_OPTION": {
+                            "id": "x)KbWLPvpKhh@|L?hp.T",
+                            "name": "BROADCAST_OPTION",
+                            "value": "turn off backpack",
+                            "variableType": "broadcast_msg"
+                        }
+                    },
+                    "id": "C#r_/@.]TPZzZ;Z5ZTpr",
+                    "inputs": {},
+                    "next": null,
+                    "opcode": "event_broadcast_menu_with_broadcast_input",
+                    "parent": "H,nH*R$v/-a65.k{`cyB",
+                    "shadow": true,
+                    "topLevel": false
                 },
                 "C@^Q_6s{HpT[MmSr2MJf": {
                     "fields": {
@@ -1730,6 +1735,25 @@
                     "x": -189.34213311331627,
                     "y": 1099.950016566685
                 },
+                "E6`66BFtaX3ZS]Y(~`Xt": {
+                    "fields": {
+                        "VARIABLE": {
+                            "id": "5!ob.k8xwW~C26msLyLS",
+                            "name": "VARIABLE",
+                            "value": "Turn off the backpack light.",
+                            "variableType": ""
+                        }
+                    },
+                    "id": "E6`66BFtaX3ZS]Y(~`Xt",
+                    "inputs": {},
+                    "next": null,
+                    "opcode": "data_variable",
+                    "parent": null,
+                    "shadow": false,
+                    "topLevel": true,
+                    "x": 1044.6001176470588,
+                    "y": -199.49341176470955
+                },
                 "EO5po|wN3IehREscMN=(": {
                     "fields": {
                         "BROADCAST_OPTION": {
@@ -1741,19 +1765,34 @@
                     },
                     "id": "EO5po|wN3IehREscMN=(",
                     "inputs": {},
-                    "next": "u8ekS~k,;dtHE]bIB*wD",
+                    "next": "GQ}X/.-c1r%z3g,S)RCi",
                     "opcode": "event_whenbroadcastreceived_with_broadcast_input",
                     "parent": null,
                     "shadow": false,
                     "topLevel": true,
-                    "x": 377,
-                    "y": 1730
+                    "x": 383.2635294117647,
+                    "y": 2010.2929411764705
+                },
+                "E[qkbR9X-S(A|[my]w=j": {
+                    "fields": {
+                        "COLOUR": {
+                            "name": "COLOUR",
+                            "value": "#000000"
+                        }
+                    },
+                    "id": "E[qkbR9X-S(A|[my]w=j",
+                    "inputs": {},
+                    "next": null,
+                    "opcode": "colour_picker",
+                    "parent": "GQ}X/.-c1r%z3g,S)RCi",
+                    "shadow": true,
+                    "topLevel": false
                 },
                 "Eb@7]YUcw*_*e1X4S:hm": {
                     "fields": {
                         "ANIMATION_SELECT": {
                             "name": "ANIMATION_SELECT",
-                            "value": "19"
+                            "value": "9"
                         }
                     },
                     "id": "Eb@7]YUcw*_*e1X4S:hm",
@@ -1834,6 +1873,42 @@
                     "shadow": true,
                     "topLevel": false
                 },
+                "GQ}X/.-c1r%z3g,S)RCi": {
+                    "fields": {},
+                    "id": "GQ}X/.-c1r%z3g,S)RCi",
+                    "inputs": {
+                        "COLOR": {
+                            "block": "E[qkbR9X-S(A|[my]w=j",
+                            "name": "COLOR",
+                            "shadow": "E[qkbR9X-S(A|[my]w=j"
+                        }
+                    },
+                    "next": "u8ekS~k,;dtHE]bIB*wD",
+                    "opcode": "cozmo_vert_setbackpackcolor",
+                    "parent": "EO5po|wN3IehREscMN=(",
+                    "shadow": false,
+                    "topLevel": false,
+                    "x": "-338",
+                    "y": "1904"
+                },
+                "H,nH*R$v/-a65.k{`cyB": {
+                    "fields": {},
+                    "id": "H,nH*R$v/-a65.k{`cyB",
+                    "inputs": {
+                        "BROADCAST_INPUT": {
+                            "block": "C#r_/@.]TPZzZ;Z5ZTpr",
+                            "name": "BROADCAST_INPUT",
+                            "shadow": "C#r_/@.]TPZzZ;Z5ZTpr"
+                        }
+                    },
+                    "next": null,
+                    "opcode": "event_broadcast_with_broadcast_input",
+                    "parent": "SN]$Z)3huBO2{2y,sB0;",
+                    "shadow": false,
+                    "topLevel": false,
+                    "x": "141",
+                    "y": "608"
+                },
                 "HL,ym3#24~Ijp%+Lxf3$": {
                     "fields": {
                         "VARIABLE": {
@@ -1850,8 +1925,8 @@
                     "parent": null,
                     "shadow": false,
                     "topLevel": true,
-                    "x": -388,
-                    "y": 2242
+                    "x": -378.60470588235296,
+                    "y": 2398.5882352941176
                 },
                 "I=^J0^5yesDH?MVd=-,Q": {
                     "fields": {
@@ -1922,11 +1997,11 @@
                     },
                     "next": "_D}t3bPHKGu!YYF54._6",
                     "opcode": "cozmo_play_animation_from_dropdown",
-                    "parent": "@i7TFEscDEYxqLzkahX0",
+                    "parent": "Z)G;#-]KPaD)S5ge^p?t",
                     "shadow": false,
                     "topLevel": false,
-                    "x": 668.7614397321428,
-                    "y": 239.47714233398438
+                    "x": 931.6094117647059,
+                    "y": 35.22588235294117
                 },
                 "JR[ch;3Cvay2)_.SJtXL": {
                     "fields": {
@@ -1963,13 +2038,13 @@
                             "shadow": "X-~D5w+DFM8LVZ^kuy6w"
                         }
                     },
-                    "next": "+bsPgb/tYKd6@UKGIB}m",
+                    "next": "yZD`NswK|#X$LX.%}r)A",
                     "opcode": "cozmo_vert_set_cube_light_corner",
-                    "parent": "Rxf@1~%d/qz70rp`fs$+",
+                    "parent": "4YQyz{1a;=9[tv/k^~mV",
                     "shadow": false,
                     "topLevel": false,
-                    "x": 564.364705882353,
-                    "y": 2409.9882352941177
+                    "x": 354.24823529411765,
+                    "y": 2555.3164705882355
                 },
                 "K]EVL].yu2kK8vWN,7d:": {
                     "fields": {
@@ -2064,6 +2139,54 @@
                     "x": -23.846969059535468,
                     "y": 969.7742680140905
                 },
+                "LhO18qh40J*@0fuhaA@^": {
+                    "fields": {
+                        "COLOUR": {
+                            "name": "COLOUR",
+                            "value": "#00ff00"
+                        }
+                    },
+                    "id": "LhO18qh40J*@0fuhaA@^",
+                    "inputs": {},
+                    "next": null,
+                    "opcode": "colour_picker",
+                    "parent": "4YQyz{1a;=9[tv/k^~mV",
+                    "shadow": true,
+                    "topLevel": false
+                },
+                "LjZ;C3:Kdhzv3lpCX$6g": {
+                    "fields": {},
+                    "id": "LjZ;C3:Kdhzv3lpCX$6g",
+                    "inputs": {
+                        "BROADCAST_INPUT": {
+                            "block": "OD1UtLwOozMz]/(2xbl[",
+                            "name": "BROADCAST_INPUT",
+                            "shadow": "OD1UtLwOozMz]/(2xbl["
+                        }
+                    },
+                    "next": null,
+                    "opcode": "event_broadcast_with_broadcast_input",
+                    "parent": "XA.[kL|_q?,(G,oc(]Q:",
+                    "shadow": false,
+                    "topLevel": false,
+                    "x": "19",
+                    "y": "1360"
+                },
+                "M[3QWypm!HQ_X#D|_=2e": {
+                    "fields": {
+                        "NUM": {
+                            "name": "NUM",
+                            "value": "2"
+                        }
+                    },
+                    "id": "M[3QWypm!HQ_X#D|_=2e",
+                    "inputs": {},
+                    "next": null,
+                    "opcode": "math_positive_number",
+                    "parent": "NG%oy57LhwROSyTeb@up",
+                    "shadow": true,
+                    "topLevel": false
+                },
                 "M]RVkIywp4U^70`i0?m/": {
                     "fields": {},
                     "id": "M]RVkIywp4U^70`i0?m/",
@@ -2103,8 +2226,8 @@
                     "parent": null,
                     "shadow": false,
                     "topLevel": true,
-                    "x": -361,
-                    "y": 613
+                    "x": -353.17058823529413,
+                    "y": 686.5964705882353
                 },
                 "M|PzG8?PvR9MlG_O+MlP": {
                     "fields": {
@@ -2156,6 +2279,24 @@
                     "shadow": true,
                     "topLevel": false
                 },
+                "NG%oy57LhwROSyTeb@up": {
+                    "fields": {},
+                    "id": "NG%oy57LhwROSyTeb@up",
+                    "inputs": {
+                        "DURATION": {
+                            "block": "M[3QWypm!HQ_X#D|_=2e",
+                            "name": "DURATION",
+                            "shadow": "M[3QWypm!HQ_X#D|_=2e"
+                        }
+                    },
+                    "next": "nfCZsFJ@^BT0@hX/eO%a",
+                    "opcode": "control_wait",
+                    "parent": "Q]:$~T!?59y(u,96DWR/",
+                    "shadow": false,
+                    "topLevel": false,
+                    "x": "141",
+                    "y": "-43"
+                },
                 "N^w0:v4pJm4t(K5RWy/?": {
                     "fields": {
                         "TEXT": {
@@ -2168,6 +2309,23 @@
                     "next": null,
                     "opcode": "text",
                     "parent": "f6)^*Bt)2(jM:TqbZSe~",
+                    "shadow": true,
+                    "topLevel": false
+                },
+                "OD1UtLwOozMz]/(2xbl[": {
+                    "fields": {
+                        "BROADCAST_OPTION": {
+                            "id": "x)KbWLPvpKhh@|L?hp.T",
+                            "name": "BROADCAST_OPTION",
+                            "value": "turn off backpack",
+                            "variableType": "broadcast_msg"
+                        }
+                    },
+                    "id": "OD1UtLwOozMz]/(2xbl[",
+                    "inputs": {},
+                    "next": null,
+                    "opcode": "event_broadcast_menu_with_broadcast_input",
+                    "parent": "LjZ;C3:Kdhzv3lpCX$6g",
                     "shadow": true,
                     "topLevel": false
                 },
@@ -2208,6 +2366,25 @@
                     "topLevel": false,
                     "x": "-587",
                     "y": "1031"
+                },
+                "Q]:$~T!?59y(u,96DWR/": {
+                    "fields": {
+                        "BROADCAST_OPTION": {
+                            "id": "x)KbWLPvpKhh@|L?hp.T",
+                            "name": "BROADCAST_OPTION",
+                            "value": "turn off backpack",
+                            "variableType": "broadcast_msg"
+                        }
+                    },
+                    "id": "Q]:$~T!?59y(u,96DWR/",
+                    "inputs": {},
+                    "next": "NG%oy57LhwROSyTeb@up",
+                    "opcode": "event_whenbroadcastreceived_with_broadcast_input",
+                    "parent": null,
+                    "shadow": false,
+                    "topLevel": true,
+                    "x": 1052.4295294117646,
+                    "y": -111.17764705882382
                 },
                 "R@Ck/Oa|fe_K-%srJ,^g": {
                     "fields": {
@@ -2261,13 +2438,31 @@
                     },
                     "id": "Rxf@1~%d/qz70rp`fs$+",
                     "inputs": {},
-                    "next": "K*a!ZEN;z1}oZ)~qSz8]",
+                    "next": "4YQyz{1a;=9[tv/k^~mV",
                     "opcode": "event_whenbroadcastreceived_with_broadcast_input",
                     "parent": null,
                     "shadow": false,
                     "topLevel": true,
-                    "x": 384,
-                    "y": 2178
+                    "x": 366.77529411764704,
+                    "y": 2506.835294117647
+                },
+                "SN]$Z)3huBO2{2y,sB0;": {
+                    "fields": {},
+                    "id": "SN]$Z)3huBO2{2y,sB0;",
+                    "inputs": {
+                        "COLOR": {
+                            "block": "v*n?KGN__n)orN_$9btN",
+                            "name": "COLOR",
+                            "shadow": "v*n?KGN__n)orN_$9btN"
+                        }
+                    },
+                    "next": "H,nH*R$v/-a65.k{`cyB",
+                    "opcode": "cozmo_vert_setbackpackcolor",
+                    "parent": "Z)G;#-]KPaD)S5ge^p?t",
+                    "shadow": false,
+                    "topLevel": false,
+                    "x": "-146",
+                    "y": "443"
                 },
                 "Sj@{~5u)VR2e~8J$|j#g": {
                     "fields": {
@@ -2441,8 +2636,8 @@
                     "parent": null,
                     "shadow": false,
                     "topLevel": true,
-                    "x": -368,
-                    "y": 833
+                    "x": -369.5658823529412,
+                    "y": 1009.944705882353
                 },
                 "X-~D5w+DFM8LVZ^kuy6w": {
                     "fields": {
@@ -2481,6 +2676,24 @@
                     "topLevel": false,
                     "x": -176.74117647058824,
                     "y": 1975.035294117647
+                },
+                "XA.[kL|_q?,(G,oc(]Q:": {
+                    "fields": {},
+                    "id": "XA.[kL|_q?,(G,oc(]Q:",
+                    "inputs": {
+                        "COLOR": {
+                            "block": "2((7VD2O-JRhUBmy4?wu",
+                            "name": "COLOR",
+                            "shadow": "2((7VD2O-JRhUBmy4?wu"
+                        }
+                    },
+                    "next": "LjZ;C3:Kdhzv3lpCX$6g",
+                    "opcode": "cozmo_vert_setbackpackcolor",
+                    "parent": "jz~qv(}1vm!_5_|?`%)6",
+                    "shadow": false,
+                    "topLevel": false,
+                    "x": "-134",
+                    "y": "952"
                 },
                 "X[1of$L-h|uXfAUna!%|": {
                     "fields": {
@@ -2571,8 +2784,36 @@
                     "parent": null,
                     "shadow": false,
                     "topLevel": true,
-                    "x": -352,
-                    "y": 539
+                    "x": -350.4341176470588,
+                    "y": 603.2011764705883
+                },
+                "Z)G;#-]KPaD)S5ge^p?t": {
+                    "fields": {},
+                    "id": "Z)G;#-]KPaD)S5ge^p?t",
+                    "inputs": {
+                        "CONDITION": {
+                            "block": ")}6.,q%CL2$/j.^o)EF{",
+                            "name": "CONDITION",
+                            "shadow": null
+                        },
+                        "SUBSTACK": {
+                            "block": "JB%HkLHJswZ;d,i%uoT8",
+                            "name": "SUBSTACK",
+                            "shadow": null
+                        },
+                        "SUBSTACK2": {
+                            "block": "SN]$Z)3huBO2{2y,sB0;",
+                            "name": "SUBSTACK2",
+                            "shadow": null
+                        }
+                    },
+                    "next": null,
+                    "opcode": "control_if_else",
+                    "parent": "r~|K,l8v@kki(IOFak{)",
+                    "shadow": false,
+                    "topLevel": false,
+                    "x": "-146",
+                    "y": "607"
                 },
                 "Z.KEro1[J8WZZFkr3+DN": {
                     "fields": {
@@ -2675,6 +2916,34 @@
                     "topLevel": false,
                     "x": "-69",
                     "y": "635"
+                },
+                "]wJDJ4jpiT}%/iUnLqKc": {
+                    "fields": {},
+                    "id": "]wJDJ4jpiT}%/iUnLqKc",
+                    "inputs": {
+                        "CONDITION": {
+                            "block": "dU`YaB]NjXma}dncyFDf",
+                            "name": "CONDITION",
+                            "shadow": null
+                        },
+                        "SUBSTACK": {
+                            "block": ":P1Zp^|a~EBuJ4GYIWGo",
+                            "name": "SUBSTACK",
+                            "shadow": null
+                        },
+                        "SUBSTACK2": {
+                            "block": "vyO|]2R-x(Fc/~eLH::E",
+                            "name": "SUBSTACK2",
+                            "shadow": null
+                        }
+                    },
+                    "next": null,
+                    "opcode": "control_if_else",
+                    "parent": "6ZL8~zMm6$U1R04D9[xj",
+                    "shadow": false,
+                    "topLevel": false,
+                    "x": "-221",
+                    "y": "1820"
                 },
                 "^-WvN[[+j;U4i3H?j[4Z": {
                     "fields": {
@@ -2859,6 +3128,24 @@
                     "x": 592.6129324776786,
                     "y": 760.4957406180245
                 },
+                "c3`=$GF3=?VRBxQRKLkC": {
+                    "fields": {},
+                    "id": "c3`=$GF3=?VRBxQRKLkC",
+                    "inputs": {
+                        "BROADCAST_INPUT": {
+                            "block": "k_Ba#8R{n|5w4zS;$lmZ",
+                            "name": "BROADCAST_INPUT",
+                            "shadow": "k_Ba#8R{n|5w4zS;$lmZ"
+                        }
+                    },
+                    "next": null,
+                    "opcode": "event_broadcast_with_broadcast_input",
+                    "parent": "vyO|]2R-x(Fc/~eLH::E",
+                    "shadow": false,
+                    "topLevel": false,
+                    "x": "5",
+                    "y": "2068"
+                },
                 "c@rIspF|PIk?-G,n3[:}": {
                     "fields": {
                         "ANIM_SELECT": {
@@ -2919,11 +3206,11 @@
                     },
                     "next": null,
                     "opcode": "operator_equals",
-                    "parent": ":@Qe]h73},gYZ]qE#5D,",
+                    "parent": "]wJDJ4jpiT}%/iUnLqKc",
                     "shadow": false,
                     "topLevel": false,
-                    "x": "-103",
-                    "y": "1026"
+                    "x": 906.330588235294,
+                    "y": 1186.1164705882352
                 },
                 "dyFi}]K?w3[~p4$r0PL7": {
                     "fields": {
@@ -3069,6 +3356,21 @@
                     "x": -10.292750222342477,
                     "y": 2453.932874407088
                 },
+                "i[7`3Ub`z/L$7`be{#1|": {
+                    "fields": {
+                        "COLOUR": {
+                            "name": "COLOUR",
+                            "value": "#ff00ff"
+                        }
+                    },
+                    "id": "i[7`3Ub`z/L$7`be{#1|",
+                    "inputs": {},
+                    "next": null,
+                    "opcode": "colour_picker",
+                    "parent": "yZD`NswK|#X$LX.%}r)A",
+                    "shadow": true,
+                    "topLevel": false
+                },
                 "in|FO[;yQt)jHoAdLLeZ": {
                     "fields": {
                         "VARIABLE": {
@@ -3125,6 +3427,51 @@
                     "shadow": true,
                     "topLevel": false
                 },
+                "jz~qv(}1vm!_5_|?`%)6": {
+                    "fields": {},
+                    "id": "jz~qv(}1vm!_5_|?`%)6",
+                    "inputs": {
+                        "CONDITION": {
+                            "block": "2v+Y`5@p2,yp2jOH~~mO",
+                            "name": "CONDITION",
+                            "shadow": null
+                        },
+                        "SUBSTACK": {
+                            "block": "xi[cqtCpm-d]1SOL+R^2",
+                            "name": "SUBSTACK",
+                            "shadow": null
+                        },
+                        "SUBSTACK2": {
+                            "block": "XA.[kL|_q?,(G,oc(]Q:",
+                            "name": "SUBSTACK2",
+                            "shadow": null
+                        }
+                    },
+                    "next": null,
+                    "opcode": "control_if_else",
+                    "parent": "-{[QJ_Smo-YE!sx6o#sq",
+                    "shadow": false,
+                    "topLevel": false,
+                    "x": "-134",
+                    "y": "1114"
+                },
+                "k_Ba#8R{n|5w4zS;$lmZ": {
+                    "fields": {
+                        "BROADCAST_OPTION": {
+                            "id": "x)KbWLPvpKhh@|L?hp.T",
+                            "name": "BROADCAST_OPTION",
+                            "value": "turn off backpack",
+                            "variableType": "broadcast_msg"
+                        }
+                    },
+                    "id": "k_Ba#8R{n|5w4zS;$lmZ",
+                    "inputs": {},
+                    "next": null,
+                    "opcode": "event_broadcast_menu_with_broadcast_input",
+                    "parent": "c3`=$GF3=?VRBxQRKLkC",
+                    "shadow": true,
+                    "topLevel": false
+                },
                 "l09F2OOZXi{W.63.Q[-$": {
                     "fields": {
                         "VARIABLE": {
@@ -3161,21 +3508,6 @@
                     "next": null,
                     "opcode": "cozmo_cube_looks_select_menu",
                     "parent": "fi7:#B|~KX{b$[S5Hunf",
-                    "shadow": true,
-                    "topLevel": false
-                },
-                "lD$:GI=HCq7D{?!2`TQx": {
-                    "fields": {
-                        "CUBE_SELECT": {
-                            "name": "CUBE_SELECT",
-                            "value": "2"
-                        }
-                    },
-                    "id": "lD$:GI=HCq7D{?!2`TQx",
-                    "inputs": {},
-                    "next": null,
-                    "opcode": "cozmo_cube_looks_select_menu",
-                    "parent": "+bsPgb/tYKd6@UKGIB}m",
                     "shadow": true,
                     "topLevel": false
                 },
@@ -3336,6 +3668,24 @@
                     "x": 386,
                     "y": -116
                 },
+                "nfCZsFJ@^BT0@hX/eO%a": {
+                    "fields": {},
+                    "id": "nfCZsFJ@^BT0@hX/eO%a",
+                    "inputs": {
+                        "COLOR": {
+                            "block": "1,sLDcJ:Lh5^=A,S*D[u",
+                            "name": "COLOR",
+                            "shadow": "1,sLDcJ:Lh5^=A,S*D[u"
+                        }
+                    },
+                    "next": null,
+                    "opcode": "cozmo_vert_setbackpackcolor",
+                    "parent": "NG%oy57LhwROSyTeb@up",
+                    "shadow": false,
+                    "topLevel": false,
+                    "x": "141",
+                    "y": "396"
+                },
                 "oH0NH/2tp_/MC!7u]J?c": {
                     "fields": {},
                     "id": "oH0NH/2tp_/MC!7u]J?c",
@@ -3390,8 +3740,8 @@
                     "parent": null,
                     "shadow": false,
                     "topLevel": true,
-                    "x": -388,
-                    "y": 2323
+                    "x": -380.17058823529413,
+                    "y": 2479.5882352941176
                 },
                 "p6yn)=:_/q(23c,SK#vi": {
                     "fields": {
@@ -3425,34 +3775,11 @@
                     "x": -81.03227506365101,
                     "y": 845.8557194301061
                 },
-                "qH3.CL(0s]0+GZ$;EUDW": {
-                    "fields": {},
-                    "id": "qH3.CL(0s]0+GZ$;EUDW",
-                    "inputs": {
-                        "CONDITION": {
-                            "block": "2v+Y`5@p2,yp2jOH~~mO",
-                            "name": "CONDITION",
-                            "shadow": null
-                        },
-                        "SUBSTACK": {
-                            "block": "xi[cqtCpm-d]1SOL+R^2",
-                            "name": "SUBSTACK",
-                            "shadow": null
-                        }
-                    },
-                    "next": null,
-                    "opcode": "control_if",
-                    "parent": "-{[QJ_Smo-YE!sx6o#sq",
-                    "shadow": false,
-                    "topLevel": false,
-                    "x": 329,
-                    "y": 1159
-                },
                 "r$a8,*a{Z}+2+Ty?+Hs%": {
                     "fields": {
                         "TEXT": {
                             "name": "TEXT",
-                            "value": "If I guess correctly tap white. If your number is higher, tap green. If it is lower, tap red."
+                            "value": "If I guess correctly tap purple. If your number is higher, tap green. If it is lower, tap red."
                         }
                     },
                     "id": "r$a8,*a{Z}+2+Ty?+Hs%",
@@ -3481,6 +3808,21 @@
                     "x": 568.9426100594657,
                     "y": 782.7157658168248
                 },
+                "ryo]r$mn?EMMiH.1k,$w": {
+                    "fields": {
+                        "CUBE_SELECT": {
+                            "name": "CUBE_SELECT",
+                            "value": "2"
+                        }
+                    },
+                    "id": "ryo]r$mn?EMMiH.1k,$w",
+                    "inputs": {},
+                    "next": null,
+                    "opcode": "cozmo_cube_looks_select_menu",
+                    "parent": "yZD`NswK|#X$LX.%}r)A",
+                    "shadow": true,
+                    "topLevel": false
+                },
                 "r~|K,l8v@kki(IOFak{)": {
                     "fields": {},
                     "id": "r~|K,l8v@kki(IOFak{)",
@@ -3496,7 +3838,7 @@
                             "shadow": null
                         },
                         "SUBSTACK2": {
-                            "block": "@i7TFEscDEYxqLzkahX0",
+                            "block": "Z)G;#-]KPaD)S5ge^p?t",
                             "name": "SUBSTACK2",
                             "shadow": null
                         }
@@ -3644,7 +3986,7 @@
                     },
                     "next": "fi7:#B|~KX{b$[S5Hunf",
                     "opcode": "cozmo_vert_cube_anim",
-                    "parent": "EO5po|wN3IehREscMN=(",
+                    "parent": "GQ}X/.-c1r%z3g,S)RCi",
                     "shadow": false,
                     "topLevel": false,
                     "x": 837.9882352941177,
@@ -3666,8 +4008,23 @@
                     "parent": null,
                     "shadow": false,
                     "topLevel": true,
-                    "x": 384,
-                    "y": 1646
+                    "x": 379.3023529411765,
+                    "y": 1930.9905882352941
+                },
+                "v*n?KGN__n)orN_$9btN": {
+                    "fields": {
+                        "COLOUR": {
+                            "name": "COLOUR",
+                            "value": "#ff0000"
+                        }
+                    },
+                    "id": "v*n?KGN__n)orN_$9btN",
+                    "inputs": {},
+                    "next": null,
+                    "opcode": "colour_picker",
+                    "parent": "SN]$Z)3huBO2{2y,sB0;",
+                    "shadow": true,
+                    "topLevel": false
                 },
                 "v+tOO%HHePh.c8oo=8lO": {
                     "fields": {
@@ -3708,11 +4065,11 @@
                     },
                     "next": null,
                     "opcode": "cozmo_vert_set_cube_light_corner",
-                    "parent": "+bsPgb/tYKd6@UKGIB}m",
+                    "parent": "yZD`NswK|#X$LX.%}r)A",
                     "shadow": false,
                     "topLevel": false,
-                    "x": "-475",
-                    "y": "1535"
+                    "x": 384,
+                    "y": 2274
                 },
                 "v6+ENsoPffYm32Ke=Ke|": {
                     "fields": {
@@ -3730,8 +4087,8 @@
                     "parent": null,
                     "shadow": false,
                     "topLevel": true,
-                    "x": -391,
-                    "y": 1725
+                    "x": -386.3023529411765,
+                    "y": 1901.944705882353
                 },
                 "vS`OEH`Gq@^^X@|b5vv/": {
                     "fields": {
@@ -3749,6 +4106,24 @@
                     "topLevel": true,
                     "x": 161.84284319196422,
                     "y": 752.9585614885601
+                },
+                "vyO|]2R-x(Fc/~eLH::E": {
+                    "fields": {},
+                    "id": "vyO|]2R-x(Fc/~eLH::E",
+                    "inputs": {
+                        "COLOR": {
+                            "block": "=de9r?n({-])7@Zj+.Wr",
+                            "name": "COLOR",
+                            "shadow": "=de9r?n({-])7@Zj+.Wr"
+                        }
+                    },
+                    "next": "c3`=$GF3=?VRBxQRKLkC",
+                    "opcode": "cozmo_vert_setbackpackcolor",
+                    "parent": "]wJDJ4jpiT}%/iUnLqKc",
+                    "shadow": false,
+                    "topLevel": false,
+                    "x": "-224",
+                    "y": "1568"
                 },
                 "vzVyWH[!G]lBL[qDk~)y": {
                     "fields": {
@@ -3839,11 +4214,39 @@
                     },
                     "next": "ACp[04h5A_wc|{)C,iW1",
                     "opcode": "event_broadcast_with_broadcast_input",
-                    "parent": "qH3.CL(0s]0+GZ$;EUDW",
+                    "parent": "jz~qv(}1vm!_5_|?`%)6",
                     "shadow": false,
                     "topLevel": false,
-                    "x": "-2",
-                    "y": "1250"
+                    "x": 898.6870588235295,
+                    "y": 572.5588235294117
+                },
+                "yZD`NswK|#X$LX.%}r)A": {
+                    "fields": {
+                        "ANIM_SELECT": {
+                            "name": "ANIM_SELECT",
+                            "value": "spin"
+                        }
+                    },
+                    "id": "yZD`NswK|#X$LX.%}r)A",
+                    "inputs": {
+                        "COLOR": {
+                            "block": "i[7`3Ub`z/L$7`be{#1|",
+                            "name": "COLOR",
+                            "shadow": "i[7`3Ub`z/L$7`be{#1|"
+                        },
+                        "CUBE_SELECT": {
+                            "block": "ryo]r$mn?EMMiH.1k,$w",
+                            "name": "CUBE_SELECT",
+                            "shadow": "ryo]r$mn?EMMiH.1k,$w"
+                        }
+                    },
+                    "next": "v4~JQ+*1yxPWa?SHXdZ2",
+                    "opcode": "cozmo_vert_cube_anim",
+                    "parent": "K*a!ZEN;z1}oZ)~qSz8]",
+                    "shadow": false,
+                    "topLevel": false,
+                    "x": "-303",
+                    "y": "2555"
                 },
                 "yk7_!:BCK:Dd!dDJnK`V": {
                     "fields": {
@@ -3991,7 +4394,7 @@
             "currentCostume": 0,
             "direction": 90,
             "draggable": false,
-            "id": "R/F?~xJA+%5xBDwpDdwr",
+            "id": "RSi9`szX+A@q]wLr?c]e",
             "isStage": false,
             "lists": {},
             "name": "Sprite1",

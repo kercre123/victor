@@ -484,12 +484,12 @@
     "DASEventFeatureID": "code_lab_constellations",
     "StartDate": {
       "Month": "4",
-      "Day": "21",
+      "Day": "13",
       "Year": "2018"
     },
     "EndDate": {
       "Month": "4",
-      "Day": "27",
+      "Day": "19",
       "Year": "2018"
     },
     "TitleKey": "whatsNew.CodeLab_Constellations.title",
@@ -521,7 +521,7 @@
     },
     "EndDate": {
       "Month": "4",
-      "Day": "26",
+      "Day": "24",
       "Year": "2018"
     },
     "TitleKey": "whatsNew.CodeLab_CozmosGarden.title",
@@ -548,12 +548,12 @@
     "DASEventFeatureID": "code_lab_guess_the_number",
     "StartDate": {
       "Month": "4",
-      "Day": "13",
+      "Day": "6",
       "Year": "2018"
     },
     "EndDate": {
       "Month": "4",
-      "Day": "19",
+      "Day": "12",
       "Year": "2018"
     },
     "TitleKey": "whatsNew.CodeLab_GuessTheNumber.title",
@@ -579,13 +579,13 @@
     "FeatureID": "code_lab_wake_up_cozmo",
     "DASEventFeatureID": "code_lab_wake_up_cozmo",
     "StartDate": {
-      "Month": "4",
-      "Day": "6",
+      "Month": "3",
+      "Day": "28",
       "Year": "2018"
     },
     "EndDate": {
       "Month": "4",
-      "Day": "12",
+      "Day": "5",
       "Year": "2018"
     },
     "TitleKey": "whatsNew.CodeLab_WakeUpCozmo.title",

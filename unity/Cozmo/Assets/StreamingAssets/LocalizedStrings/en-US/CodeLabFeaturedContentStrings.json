@@ -1482,11 +1482,32 @@
     "codeLabFeaturedProject.CozmosGarden._out_of_": {
         "translation": " Out of "
     },
+    "codeLabFeaturedProject.CozmosGarden.a_fancy_salad": {
+        "translation": "a fancy salad"
+    },
+    "codeLabFeaturedProject.CozmosGarden.a_fruit_salad": {
+        "translation": "a fruit salad"
+    },
+    "codeLabFeaturedProject.CozmosGarden.a_nice_red_sauce": {
+        "translation": "a nice red sauce"
+    },
     "codeLabFeaturedProject.CozmosGarden.activate_sun": {
         "translation": "activate sun"
     },
     "codeLabFeaturedProject.CozmosGarden.active_plant": {
         "translation": "active plant"
+    },
+    "codeLabFeaturedProject.CozmosGarden.add_or_subtract_points_from_a_plant": {
+        "translation": "Add or subtract points from a plant."
+    },
+    "codeLabFeaturedProject.CozmosGarden.all_the_plants_were_harvested_successfully": {
+        "translation": "All the plants were harvested successfully."
+    },
+    "codeLabFeaturedProject.CozmosGarden.almost_a_blt": {
+        "translation": "almost a B.L.T."
+    },
+    "codeLabFeaturedProject.CozmosGarden.almost_ready": {
+        "translation": "almost ready"
     },
     "codeLabFeaturedProject.CozmosGarden.and": {
         "translation": "and"
@@ -1496,6 +1517,9 @@
     },
     "codeLabFeaturedProject.CozmosGarden.blueberries": {
         "translation": "Blueberries"
+    },
+    "codeLabFeaturedProject.CozmosGarden.blueberry_lemonade": {
+        "translation": "blueberry lemonade"
     },
     "codeLabFeaturedProject.CozmosGarden.broccoli": {
         "translation": "Broccoli"
@@ -1508,6 +1532,9 @@
     },
     "codeLabFeaturedProject.CozmosGarden.bugs": {
         "translation": "Bugs"
+    },
+    "codeLabFeaturedProject.CozmosGarden.bugs_count": {
+        "translation": "bugs count"
     },
     "codeLabFeaturedProject.CozmosGarden.bugs_want_to_eat_our_plants": {
         "translation": "Bugs want to eat our plants!"
@@ -1524,6 +1551,24 @@
     "codeLabFeaturedProject.CozmosGarden.check_harvest": {
         "translation": "check harvest"
     },
+    "codeLabFeaturedProject.CozmosGarden.check_to_see_if_any_plants_are_ready_to_harvest": {
+        "translation": "Check to see if any plants are ready to harvest."
+    },
+    "codeLabFeaturedProject.CozmosGarden.check_to_see_whether_the_player_has_successfully_squashed_the_bugs": {
+        "translation": "Check to see whether the player has successfully squashed the bugs."
+    },
+    "codeLabFeaturedProject.CozmosGarden.choose_and_initialize_plants_to_grow_in_the_garden": {
+        "translation": "Choose and initialize plants to grow in the garden."
+    },
+    "codeLabFeaturedProject.CozmosGarden.clear_all_data_from_lists": {
+        "translation": "Clear all data from lists."
+    },
+    "codeLabFeaturedProject.CozmosGarden.clear_all_data_from_the_bug_plants_list": {
+        "translation": "Clear all data from the bug plants list."
+    },
+    "codeLabFeaturedProject.CozmosGarden.clear_all_data_from_the_plants_to_harvest_list": {
+        "translation": "Clear all data from the plants to harvest list."
+    },
     "codeLabFeaturedProject.CozmosGarden.clear_bug_plants": {
         "translation": "clear bug plants"
     },
@@ -1533,11 +1578,47 @@
     "codeLabFeaturedProject.CozmosGarden.clear_plants_to_harvest": {
         "translation": "clear plants to harvest"
     },
+    "codeLabFeaturedProject.CozmosGarden.combo": {
+        "translation": "combo"
+    },
+    "codeLabFeaturedProject.CozmosGarden.combos": {
+        "translation": "combos"
+    },
     "codeLabFeaturedProject.CozmosGarden.constrain_plant_growth": {
         "translation": "constrain plant growth"
     },
     "codeLabFeaturedProject.CozmosGarden.count": {
         "translation": "count"
+    },
+    "codeLabFeaturedProject.CozmosGarden.cozmo_displays_a_sun_on_his_face": {
+        "translation": "Cozmo displays a sun on his face."
+    },
+    "codeLabFeaturedProject.CozmosGarden.cozmo_displays_a_watering_can_on_his_face": {
+        "translation": "Cozmo displays a watering can on his face."
+    },
+    "codeLabFeaturedProject.CozmosGarden.cozmo_displays_blueberries_on_his_face": {
+        "translation": "Cozmo displays blueberries on his face."
+    },
+    "codeLabFeaturedProject.CozmosGarden.cozmo_displays_broccoli_on_his_face": {
+        "translation": "Cozmo displays broccoli on his face."
+    },
+    "codeLabFeaturedProject.CozmosGarden.cozmo_displays_bugs_on_his_face": {
+        "translation": "Cozmo displays bugs on his face."
+    },
+    "codeLabFeaturedProject.CozmosGarden.cozmo_displays_grapes_on_his_face": {
+        "translation": "Cozmo displays grapes on his face."
+    },
+    "codeLabFeaturedProject.CozmosGarden.cozmo_displays_lemons_on_his_face": {
+        "translation": "Cozmo displays lemons on his face."
+    },
+    "codeLabFeaturedProject.CozmosGarden.cozmo_displays_lettuce_on_his_face": {
+        "translation": "Cozmo displays lettuce on his face."
+    },
+    "codeLabFeaturedProject.CozmosGarden.cozmo_displays_oranges_on_his_face": {
+        "translation": "Cozmo displays oranges on his face."
+    },
+    "codeLabFeaturedProject.CozmosGarden.cozmo_displays_tomatoes_on_his_face": {
+        "translation": "Cozmo displays tomatoes on his face."
     },
     "codeLabFeaturedProject.CozmosGarden.create_garden": {
         "translation": "create garden"
@@ -1551,11 +1632,29 @@
     "codeLabFeaturedProject.CozmosGarden.deck": {
         "translation": "deck"
     },
+    "codeLabFeaturedProject.CozmosGarden.determine_which_plants_to_grow": {
+        "translation": "Determine which plant(s) to grow."
+    },
+    "codeLabFeaturedProject.CozmosGarden.disable_the_backpack_light": {
+        "translation": "Disable the backpack light."
+    },
     "codeLabFeaturedProject.CozmosGarden.draw_mode": {
         "translation": "draw mode"
     },
     "codeLabFeaturedProject.CozmosGarden.draw_next_card": {
         "translation": "draw next card"
+    },
+    "codeLabFeaturedProject.CozmosGarden.draw_the_next_card_from_the_deck": {
+        "translation": "Draw the next card from the deck."
+    },
+    "codeLabFeaturedProject.CozmosGarden.excellent_gardening_skills": {
+        "translation": "Excellent gardening skills"
+    },
+    "codeLabFeaturedProject.CozmosGarden.feedback": {
+        "translation": "feedback"
+    },
+    "codeLabFeaturedProject.CozmosGarden.feedback_random": {
+        "translation": "feedback random"
     },
     "codeLabFeaturedProject.CozmosGarden.ff0000": {
         "translation": "#ff0000"
@@ -1565,6 +1664,15 @@
     },
     "codeLabFeaturedProject.CozmosGarden.ffff00": {
         "translation": "#ffff00"
+    },
+    "codeLabFeaturedProject.CozmosGarden.fill_up_the_deck_of_cards_list": {
+        "translation": "Fill up the deck of cards list."
+    },
+    "codeLabFeaturedProject.CozmosGarden.fill_up_the_feedback_list_with_phrases": {
+        "translation": "Fill up the feedback list with phrases."
+    },
+    "codeLabFeaturedProject.CozmosGarden.fill_up_the_plant_types_and_plant_colors_lists": {
+        "translation": "Fill up the plant types and plant colors lists."
     },
     "codeLabFeaturedProject.CozmosGarden.game_over_lose": {
         "translation": "game over lose"
@@ -1587,11 +1695,17 @@
     "codeLabFeaturedProject.CozmosGarden.garden_plants_to_harvest": {
         "translation": "garden plants to harvest"
     },
+    "codeLabFeaturedProject.CozmosGarden.give_feedback": {
+        "translation": "give feedback"
+    },
     "codeLabFeaturedProject.CozmosGarden.got_em": {
         "translation": "Got 'em!"
     },
     "codeLabFeaturedProject.CozmosGarden.grapes": {
-        "translation": "Grapes"
+        "translation": "grapes"
+    },
+    "codeLabFeaturedProject.CozmosGarden.great_job": {
+        "translation": "great job!"
     },
     "codeLabFeaturedProject.CozmosGarden.grow_active_plant": {
         "translation": "grow active plant"
@@ -1615,7 +1729,7 @@
         "translation": "harvested plants"
     },
     "codeLabFeaturedProject.CozmosGarden.hey_no_fair_bugs": {
-        "translation": "Hey! No fair bugs!"
+        "translation": "Hey! No fair, bugs!"
     },
     "codeLabFeaturedProject.CozmosGarden.hi": {
         "translation": "Hi"
@@ -1623,8 +1737,14 @@
     "codeLabFeaturedProject.CozmosGarden.hooray_we_harvested_all_the_plants": {
         "translation": "Hooray! We harvested all the plants!"
     },
+    "codeLabFeaturedProject.CozmosGarden.initialize_game_data_and_begin": {
+        "translation": "Initialize game data and begin."
+    },
     "codeLabFeaturedProject.CozmosGarden.input_mode": {
         "translation": "input mode"
+    },
+    "codeLabFeaturedProject.CozmosGarden.instructions_max_amount": {
+        "translation": "instructions max amount"
     },
     "codeLabFeaturedProject.CozmosGarden.lemons": {
         "translation": "Lemons"
@@ -1634,6 +1754,18 @@
     },
     "codeLabFeaturedProject.CozmosGarden.lettuce": {
         "translation": "Lettuce"
+    },
+    "codeLabFeaturedProject.CozmosGarden.look_tasty": {
+        "translation": "look tasty"
+    },
+    "codeLabFeaturedProject.CozmosGarden.looks_good": {
+        "translation": "looks good"
+    },
+    "codeLabFeaturedProject.CozmosGarden.make_sure_no_plant_can_have_less_than_0_or_more_than_4_points": {
+        "translation": "Make sure no plant can have less than 0, or more than 4 points."
+    },
+    "codeLabFeaturedProject.CozmosGarden.make_the_sun_shine_on_all_the_plants": {
+        "translation": "Make the sun shine on all the plants."
     },
     "codeLabFeaturedProject.CozmosGarden.mode": {
         "translation": "mode"
@@ -1677,14 +1809,44 @@
     "codeLabFeaturedProject.CozmosGarden.populate_deck": {
         "translation": "populate deck"
     },
+    "codeLabFeaturedProject.CozmosGarden.populate_feedback_list": {
+        "translation": "populate feedback list"
+    },
     "codeLabFeaturedProject.CozmosGarden.populate_plant_list": {
         "translation": "populate plant list"
     },
     "codeLabFeaturedProject.CozmosGarden.present_card": {
         "translation": "present card"
     },
+    "codeLabFeaturedProject.CozmosGarden.present_the_next_drawn_card": {
+        "translation": "Present the next drawn card."
+    },
     "codeLabFeaturedProject.CozmosGarden.pretty_close": {
         "translation": "Pretty close!"
+    },
+    "codeLabFeaturedProject.CozmosGarden.put_the_events_of_the_bugs_card_into_action": {
+        "translation": "Put the events of the bugs card into action."
+    },
+    "codeLabFeaturedProject.CozmosGarden.put_the_events_of_the_sun_card_into_action": {
+        "translation": "Put the events of the sun card into action."
+    },
+    "codeLabFeaturedProject.CozmosGarden.put_the_events_of_the_water_card_into_action": {
+        "translation": "Put the events of the water card into action."
+    },
+    "codeLabFeaturedProject.CozmosGarden.ran_out_of_cards_before_all_plants_were_harvested": {
+        "translation": "Ran out of cards before all plants were harvested."
+    },
+    "codeLabFeaturedProject.CozmosGarden.randomly_choose_a_feedback_phrase_for_cozmo_to_say": {
+        "translation": "Randomly choose a feedback phrase for Cozmo to say."
+    },
+    "codeLabFeaturedProject.CozmosGarden.randomly_choose_a_phrase_for_cozmo_to_say_when_the_bugs_were_hit": {
+        "translation": "Randomly choose a phrase for Cozmo to say when the bugs were hit."
+    },
+    "codeLabFeaturedProject.CozmosGarden.randomly_choose_a_phrase_for_cozmo_to_say_when_the_bugs_were_missed": {
+        "translation": "Randomly choose a phrase for Cozmo to say when the bugs were missed."
+    },
+    "codeLabFeaturedProject.CozmosGarden.ready_set_grow": {
+        "translation": "Ready, set, grow!"
     },
     "codeLabFeaturedProject.CozmosGarden.round_": {
         "translation": "Round "
@@ -1695,11 +1857,17 @@
     "codeLabFeaturedProject.CozmosGarden.say_missed_bugs_phrase": {
         "translation": "say missed bugs phrase"
     },
+    "codeLabFeaturedProject.CozmosGarden.set_a_plant_to_the_harvested_state_and_spin_the_cube_lights": {
+        "translation": "Set a plant to the harvested state and spin the Cube lights."
+    },
     "codeLabFeaturedProject.CozmosGarden.show_and_check_harvest": {
         "translation": "show and check harvest"
     },
     "codeLabFeaturedProject.CozmosGarden.show_plant_growth": {
         "translation": "show plant growth"
+    },
+    "codeLabFeaturedProject.CozmosGarden.show_plant_growth_and_check_if_plants_are_ready_for_harvest": {
+        "translation": "Show plant growth and check if plants are ready for harvest."
     },
     "codeLabFeaturedProject.CozmosGarden.shuffle_card": {
         "translation": "shuffle card"
@@ -1710,11 +1878,23 @@
     "codeLabFeaturedProject.CozmosGarden.shuffle_random": {
         "translation": "shuffle random"
     },
+    "codeLabFeaturedProject.CozmosGarden.shuffle_the_deck_of_cards": {
+        "translation": "Shuffle the deck of cards."
+    },
+    "codeLabFeaturedProject.CozmosGarden.smart_choice": {
+        "translation": "Smart choice!"
+    },
     "codeLabFeaturedProject.CozmosGarden.smile_to_shine_the_sun_on_our_plants": {
         "translation": "Smile to shine the sun on our plants"
     },
+    "codeLabFeaturedProject.CozmosGarden.some_grapeade": {
+        "translation": "some grape-ade"
+    },
     "codeLabFeaturedProject.CozmosGarden.sun": {
         "translation": "Sun"
+    },
+    "codeLabFeaturedProject.CozmosGarden.sun_count": {
+        "translation": "sun count"
     },
     "codeLabFeaturedProject.CozmosGarden.tap_a_plant_to_guess_where_the_bugs_are": {
         "translation": "Tap a plant to guess where the bugs are!"
@@ -1731,8 +1911,17 @@
     "codeLabFeaturedProject.CozmosGarden.tomatoes": {
         "translation": "Tomatoes"
     },
+    "codeLabFeaturedProject.CozmosGarden.use_cube_lights_to_show_the_current_state_of_growth_of_each_nonharvested_plant": {
+        "translation": "Use Cube lights to show the current state of growth of each non-harvested plant."
+    },
     "codeLabFeaturedProject.CozmosGarden.water_active_plant": {
         "translation": "water active plant"
+    },
+    "codeLabFeaturedProject.CozmosGarden.water_count": {
+        "translation": "water count"
+    },
+    "codeLabFeaturedProject.CozmosGarden.water_the_plant_the_player_has_chosen": {
+        "translation": "Water the plant the player has chosen."
     },
     "codeLabFeaturedProject.CozmosGarden.watering_can": {
         "translation": "Watering Can"
@@ -1745,6 +1934,15 @@
     },
     "codeLabFeaturedProject.CozmosGarden.we_lost": {
         "translation": "We lost"
+    },
+    "codeLabFeaturedProject.CozmosGarden.what_a_nice_garden": {
+        "translation": "What a nice garden."
+    },
+    "codeLabFeaturedProject.CozmosGarden.when_cozmo_sees_the_player_smile_activate_the_sun": {
+        "translation": "When Cozmo sees the player smile, activate the sun."
+    },
+    "codeLabFeaturedProject.CozmosGarden.when_the_cube_is_tapped_activate_the_relevant_action": {
+        "translation": "When the Cube is tapped, activate the relevant action."
     },
     "codeLabFeaturedProject.GuessTheNumber._guesses": {
         "translation": " Guesses!"
@@ -1785,8 +1983,8 @@
     "codeLabFeaturedProject.GuessTheNumber.i_guessed_your_number_in_": {
         "translation": "I guessed your number in "
     },
-    "codeLabFeaturedProject.GuessTheNumber.if_i_guess_correctly_tap_white_if_your_number_is_higher_tap_green_if_it_is_lower_tap_red": {
-        "translation": "If I guess correctly tap white. If your number is higher, tap green. If it is lower, tap red."
+    "codeLabFeaturedProject.GuessTheNumber.if_i_guess_correctly_tap_purple_if_your_number_is_higher_tap_green_if_it_is_lower_tap_red": {
+        "translation": "If I guess correctly, tap purple. If your number is higher, tap green. If it is lower, tap red."
     },
     "codeLabFeaturedProject.GuessTheNumber.initialize_the_game_and_give_instructions": {
         "translation": "Initialize the game and give instructions."
@@ -1833,11 +2031,17 @@
     "codeLabFeaturedProject.GuessTheNumber.tapon": {
         "translation": "tapOn"
     },
-    "codeLabFeaturedProject.GuessTheNumber.think_of_a_number_between_1_and_100_and_tap_white_to_continue": {
-        "translation": "Think of a number between 1 and 100 and tap white to continue."
+    "codeLabFeaturedProject.GuessTheNumber.think_of_a_number_between_1_and_100_and_tap_purple_to_continue": {
+        "translation": "Think of a number between 1 and 100 and tap purple to continue."
     },
     "codeLabFeaturedProject.GuessTheNumber.totalguesses": {
         "translation": "totalGuesses"
+    },
+    "codeLabFeaturedProject.GuessTheNumber.turn_off_backpack": {
+        "translation": "turn off backpack"
+    },
+    "codeLabFeaturedProject.GuessTheNumber.turn_off_the_backpack_light": {
+        "translation": "Turn off the backpack light."
     },
     "codeLabFeaturedProject.WakeUpCozmo.advance_to_the_next_turn_and_enable_cubes_for_input": {
         "translation": "Advance to the next turn and enable Cubes for input."
