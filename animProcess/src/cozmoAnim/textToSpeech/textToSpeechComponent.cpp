@@ -41,10 +41,8 @@
 // Trace options
 #define DEBUG_TEXTTOSPEECH_COMPONENT 0
 
-//
-// TTS audio always plays on robot device
-//
 namespace {
+  // TTS audio always plays on robot device
   constexpr Anki::AudioMetaData::GameObjectType kTTSGameObject = Anki::AudioMetaData::GameObjectType::Cozmo_OnDevice;
 }
 
@@ -73,43 +71,42 @@ TextToSpeechComponent::~TextToSpeechComponent()
 } // ~TextToSpeechComponent()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TextToSpeechComponent::OperationId TextToSpeechComponent::CreateSpeech(const std::string& text,
-                                                                       const SayTextVoiceStyle style,
-                                                                       const float durationScalar)
+Result TextToSpeechComponent::CreateSpeech(const TTSID_t ttsID,
+                                                                   const std::string& text,
+                                                                   const SayTextVoiceStyle style,
+                                                                   const float durationScalar)
 {
   // Prepare to generate TtS on other thread
-  OperationId opId = GetNextOperationId();
-  LOG_INFO("TextToSpeechComponent.CreateSpeech", "Text '%s' Style: %d Duration: %f OperationId: %u",
-           Util::HidePersonallyIdentifiableInfo(text.c_str()), // could be a name!
-           (int) style, durationScalar, opId);
+  LOG_INFO("TextToSpeechComponent.CreateSpeech", "ttsID %d text '%s' style %hhu durationScalar %f",
+           ttsID, Util::HidePersonallyIdentifiableInfo(text.c_str()), style, durationScalar);
 
-  const auto it =_ttsWaveDataMap.emplace(opId, TtsBundle());
+  const auto it =_ttsWaveDataMap.emplace(ttsID, TtsBundle());
   if (!it.second) {
-    LOG_ERROR("TextToSpeechComponent.CreateSpeech.DispatchAsync", "OperationId %d already in cache", opId);
-    return kInvalidOperationId;
+    LOG_ERROR("TextToSpeechComponent.CreateSpeech.DispatchAsync", "ttsID %d already in cache", ttsID);
+    return RESULT_FAIL_INVALID_PARAMETER;
   }
 
   // Set initial state
   it.first->second.state = AudioCreationState::Preparing;
 
   // Dispatch work onto another thread
-  Util::Dispatch::Async(_dispatchQueue, [this, text, style, durationScalar, opId]
+  Util::Dispatch::Async(_dispatchQueue, [this, ttsID, text, style, durationScalar]
   {
     AudioEngine::StandardWaveDataContainer* audioData = CreateAudioData(text, style, durationScalar);
     {
       std::lock_guard<std::mutex> lock(_lock);
-      const auto bundle = GetTtsBundle(opId);
+      const auto bundle = GetTtsBundle(ttsID);
 
       // Check if the ttsBundle is still valid
       if (nullptr == bundle) {
-        LOG_INFO("TextToSpeechComponent.CreateSpeech.AsyncDispatch", "OperationId: %u for Tts Bundle NOT found", opId);
+        LOG_INFO("TextToSpeechComponent.CreateSpeech.AsyncDispatch", "No bundle for ttsID %u", ttsID);
         Util::SafeDelete(audioData);
         return;
       }
 
       // Check if audio was generated for Text to Speech
       if (nullptr == audioData) {
-        LOG_ERROR("TextToSpeechComponent.CreateSpeech.DispatchAsync", "No Audio data was created");
+        LOG_ERROR("TextToSpeechComponent.CreateSpeech.DispatchAsync", "No audio data was created for ttsID %u", ttsID);
         bundle->state = AudioCreationState::None;
         return;
       }
@@ -119,14 +116,14 @@ TextToSpeechComponent::OperationId TextToSpeechComponent::CreateSpeech(const std
     }
   });
 
-  return opId;
+  return RESULT_OK;
 } // CreateSpeech()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TextToSpeechComponent::AudioCreationState TextToSpeechComponent::GetOperationState(const OperationId operationId) const
+TextToSpeechComponent::AudioCreationState TextToSpeechComponent::GetOperationState(const TTSID_t ttsID) const
 {
   std::lock_guard<std::mutex> lock(_lock);
-  const auto * ttsBundle = GetTtsBundle(operationId);
+  const auto * ttsBundle = GetTtsBundle(ttsID);
   if (nullptr == ttsBundle) {
     return AudioCreationState::None;
   }
@@ -165,13 +162,13 @@ static AudioMetaData::GameEvent::GenericEvent GetAudioEvent(SayTextVoiceStyle st
 //
 // Deliver audio data to wwise audio engine
 //
-bool TextToSpeechComponent::PrepareAudioEngine(const OperationId operationId,
+bool TextToSpeechComponent::PrepareAudioEngine(const TTSID_t ttsID,
                                                SayTextVoiceStyle style,
                                                float& out_duration_ms)
 {
-  const auto ttsBundle = GetTtsBundle(operationId);
+  const auto ttsBundle = GetTtsBundle(ttsID);
   if (nullptr == ttsBundle) {
-    LOG_ERROR("TextToSpeechComponent.PrepareAudioEngine", "OperationId: %u Not Found", operationId);
+    LOG_ERROR("TextToSpeechComponent.PrepareAudioEngine", "ttsID %u not found", ttsID);
     return false;
   }
 
@@ -179,13 +176,13 @@ bool TextToSpeechComponent::PrepareAudioEngine(const OperationId operationId,
 
 if (AudioCreationState::Preparing == state) {
     LOG_WARNING("TextToSpeechComponent.PrepareAudioEngine.AudioPreparing", "Audio is not ready");
-    ClearOperationData(operationId);
+    ClearOperationData(ttsID);
     return false;
   }
 
   if (AudioCreationState::None == state) {
     LOG_WARNING("TextToSpeechComponent.PrepareAudioEngine.AudioNone", "Audio is empty");
-    ClearOperationData(operationId);
+    ClearOperationData(ttsID);
     return false;
   }
 
@@ -219,39 +216,35 @@ if (AudioCreationState::Preparing == state) {
   _audioController->PostAudioEvent(eventId, gameObject, nullptr);
 
   // Clear operation from bookkeeping
-  ClearOperationData(operationId);
+  ClearOperationData(ttsID);
 
   return true;
 } // PrepareToSay()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TextToSpeechComponent::CleanupAudioEngine(const OperationId operationId)
+void TextToSpeechComponent::CleanupAudioEngine(const TTSID_t ttsID)
 {
-  LOG_INFO("TextToSpeechComponent.CleanupAudioEngine", "");
+  LOG_INFO("TextToSpeechComponent.CleanupAudioEngine", "Clean up ttsID %d", ttsID);
 
-//  using namespace AudioEngine::PlugIns;
-//  DEV_ASSERT(nullptr != _audioController, "TextToSpeechComponent.CleanupAudioEngine.NullAudioController");
-//  AnkiPluginInterface* pluginInterface = _audioController->GetPluginInterface();
-//  DEV_ASSERT(pluginInterface != nullptr, "TextToSpeechComponent.CleanupAudioEngine.NullAudioControllerPluginInterface");
-//
-//  // Clear previously loaded data
-//  if (pluginInterface->WavePortalHasAudioDataInfo()) {
-//    pluginInterface->ClearWavePortalAudioData();
-//  }
+  // Clear previously loaded data
+  auto * pluginInterface = _audioController->GetPluginInterface();
+  if (pluginInterface->WavePortalHasAudioDataInfo()) {
+    pluginInterface->ClearWavePortalAudioData();
+  }
 
   // Clear operation data if needed
-  if (TextToSpeechComponent::kInvalidOperationId != operationId) {
-    ClearOperationData(operationId);
+  if (kInvalidTTSID != ttsID) {
+    ClearOperationData(ttsID);
   }
-} // CompletedSpeech()
+} // CleanupAudioEngine()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TextToSpeechComponent::ClearOperationData(const OperationId operationId)
+void TextToSpeechComponent::ClearOperationData(const TTSID_t ttsID)
 {
-  LOG_INFO("TextToSpeechComponent.ClearOperationData", "OperationId: %u", operationId);
+  LOG_INFO("TextToSpeechComponent.ClearOperationData", "Clear ttsID %u", ttsID);
 
   std::lock_guard<std::mutex> lock(_lock);
-  const auto it = _ttsWaveDataMap.find(operationId);
+  const auto it = _ttsWaveDataMap.find(ttsID);
   if (it != _ttsWaveDataMap.end()) {
     _ttsWaveDataMap.erase(it);
   }
@@ -260,7 +253,7 @@ void TextToSpeechComponent::ClearOperationData(const OperationId operationId)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TextToSpeechComponent::ClearAllLoadedAudioData()
 {
-  LOG_INFO("TextToSpeechComponent.ClearAllLoadedAudioData", "");
+  LOG_INFO("TextToSpeechComponent.ClearAllLoadedAudioData", "Clear all data");
 
   std::lock_guard<std::mutex> lock(_lock);
   _ttsWaveDataMap.clear();
@@ -331,9 +324,9 @@ AudioEngine::StandardWaveDataContainer* TextToSpeechComponent::CreateAudioData(c
 } // CreateAudioData()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const TextToSpeechComponent::TtsBundle* TextToSpeechComponent::GetTtsBundle(const OperationId operationId) const
+const TextToSpeechComponent::TtsBundle* TextToSpeechComponent::GetTtsBundle(const TTSID_t ttsID) const
 {
-  const auto iter = _ttsWaveDataMap.find(operationId);
+  const auto iter = _ttsWaveDataMap.find(ttsID);
   if (iter != _ttsWaveDataMap.end()) {
     return &iter->second;
   }
@@ -342,24 +335,15 @@ const TextToSpeechComponent::TtsBundle* TextToSpeechComponent::GetTtsBundle(cons
 } // GetTtsBundle()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TextToSpeechComponent::TtsBundle* TextToSpeechComponent::GetTtsBundle(const OperationId operationId)
+TextToSpeechComponent::TtsBundle* TextToSpeechComponent::GetTtsBundle(const TTSID_t ttsID)
 {
-  const auto iter = _ttsWaveDataMap.find(operationId);
+  const auto iter = _ttsWaveDataMap.find(ttsID);
   if (iter != _ttsWaveDataMap.end()) {
     return &iter->second;
   }
 
   return nullptr;
 } // GetTtsBundle()
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TextToSpeechComponent::OperationId TextToSpeechComponent::GetNextOperationId()
-{
-  if (++_prevOperationId == kInvalidOperationId) {
-    ++_prevOperationId;
-  }
-  return _prevOperationId;
-} // GetNextOperationId()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //
@@ -450,10 +434,10 @@ void TextToSpeechComponent::HandleMessage(const RobotInterface::TextToSpeechStar
   // Send starting event
   SendEvent(ttsID, TextToSpeechState::Starting);
 
-  const OperationId opID = CreateSpeech(text, style, durationScalar);
-  if (opID == kInvalidOperationId) {
-    LOG_ERROR("TextToSpeechComponent.TextToSpeechStart", "Unable to create audio data");
-    SendEvent(ttsID, TextToSpeechState::Done);
+  Result result = CreateSpeech(ttsID, text, style, durationScalar);
+  if (RESULT_OK != result) {
+    LOG_ERROR("TextToSpeechComponent.TextToSpeechStart", "Unable to create audio data (result %d)", result);
+    SendEvent(ttsID, TextToSpeechState::Invalid);
     return;
   }
 
@@ -463,14 +447,14 @@ void TextToSpeechComponent::HandleMessage(const RobotInterface::TextToSpeechStar
   AudioCreationState state = AudioCreationState::Preparing;
   while (state == AudioCreationState::Preparing) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    state = GetOperationState(opID);
+    state = GetOperationState(ttsID);
   }
 
   SetAudioProcessingStyle(style);
   SetAudioProcessingPitch(pitchScalar);
 
   float duration_ms = 0.f;
-  PrepareAudioEngine(opID, style, duration_ms);
+  PrepareAudioEngine(ttsID, style, duration_ms);
 
   LOG_INFO("TextToSpeechComponent.TextToSpeechStart", "ttsID %d will play for %.2f ms", ttsID, duration_ms);
 

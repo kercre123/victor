@@ -53,77 +53,60 @@ class TextToSpeechComponent
 {
 public:
 
-  // Text to Speech data state
-  enum class AudioCreationState {
-    None,       // Does NOT exist
-    Preparing,  // In process of creating data
-    Ready       // Data is ready to use
-  };
-
-
   TextToSpeechComponent(const AnimContext* context);
   ~TextToSpeechComponent();
-
-  using OperationId = uint8_t;
-  static const OperationId kInvalidOperationId = 0;
-
-  // Asynchronous create the wave data for the given text and style, to be played later
-  // Use GetOperationState() to check if wave data is Ready
-  // Return OperationId, if equal to kInvalidOperation there was an error creating speech
-  OperationId CreateSpeech(const std::string& text, const SayTextVoiceStyle style, const float durationScalar);
-
-  // Get the current state of the create speech operation
-  AudioCreationState GetOperationState(const OperationId operationId) const;
-
-  // Set up Audio Engine to play text's audio data
-  // out_duration_ms provides approximate duration of event before processing in audio engine
-  // Return false if the audio has NOT been created or is not yet ready, out_duration_ms will NOT be valid.
-  // NOTE: If this method is able to pass speech audio data ownership to plugin it will call ClearOperationData()
-  // TODO: Currently there is only 1 source plugin for inserting audio it would be nice to have more
-  bool PrepareAudioEngine(const OperationId operationId, const SayTextVoiceStyle style, float& out_duration_ms);
-
-  // Clear Speech audio data from audio engine and clear operation data
-  // TODO: Currently there is only 1 source plugin for inserting audio it would be nice to have more
-  void CleanupAudioEngine(const OperationId operationId);
-
-  // Clear speech operation audio data from memory
-  void ClearOperationData(const OperationId operationId);
-
-  // Clear ALL loaded text audio data from memory
-  void ClearAllLoadedAudioData();
 
   // CLAD message handlers
   void HandleMessage(const RobotInterface::TextToSpeechStart& msg);
   void HandleMessage(const RobotInterface::TextToSpeechStop& msg);
 
 private:
+  // -------------------------------------------------------------------------------------------------------------------
+  // Private types
+  // -------------------------------------------------------------------------------------------------------------------
   using AudioController = Anki::Cozmo::Audio::CozmoAudioController;
   using TextToSpeechProvider = Anki::Cozmo::TextToSpeech::TextToSpeechProvider;
   using DispatchQueue = Anki::Util::Dispatch::Queue;
+  using TTSID_t = uint8_t;
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Private Vars
+  // TTS creation state
+  enum class AudioCreationState {
+    None,       // Does NOT exist
+    Preparing,  // In process of creating data
+    Ready       // Data is ready to use
+  };
 
+  // TTS data bundle
   struct TtsBundle {
     AudioCreationState state                          = AudioCreationState::None;
     AudioEngine::StandardWaveDataContainer* waveData  = nullptr;
     ~TtsBundle() { Util::SafeDelete(waveData); }
   };
 
-  std::unordered_map<OperationId, TtsBundle> _ttsWaveDataMap;
+  // -------------------------------------------------------------------------------------------------------------------
+  // Private members
+  // -------------------------------------------------------------------------------------------------------------------
 
+  static constexpr TTSID_t kInvalidTTSID = 0;
+
+  // Internal mutex
   mutable std::mutex _lock;
 
+  // Map of data bundles
+  std::unordered_map<TTSID_t, TtsBundle> _ttsWaveDataMap;
+
+  // Audio controller provided by context
   AudioController * _audioController = nullptr;
 
+  // Worker thread
   DispatchQueue * _dispatchQueue = nullptr;
 
-  OperationId _prevOperationId = kInvalidOperationId;
-
+  // Platform-specific provider
   std::unique_ptr<TextToSpeechProvider> _pvdr;
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Private Methods
+  // -------------------------------------------------------------------------------------------------------------------
+  // Private methods
+  // -------------------------------------------------------------------------------------------------------------------
 
   // Use Text to Speech lib to create audio data & reformat into StandardWaveData format
   // Return nullptr if Text to Speech lib fails to create audio data
@@ -131,14 +114,35 @@ private:
                                                           SayTextVoiceStyle style,
                                                           float durationScalar);
 
-  // Helpers
   // Find TtsBundle for operation
-  const TtsBundle* GetTtsBundle(const OperationId operationId) const;
+  const TtsBundle* GetTtsBundle(const TTSID_t ttsID) const;
 
-  TtsBundle* GetTtsBundle(const OperationId operationId);
+  TtsBundle* GetTtsBundle(const TTSID_t ttsID);
 
-  // Increment the operation Id
-  OperationId GetNextOperationId();
+  // Asynchronous create the wave data for the given text and style, to be played later
+  // Use GetOperationState() to check if wave data is Ready
+  // Return RESULT_OK on success
+  Result CreateSpeech(const TTSID_t ttsID, const std::string& text, const SayTextVoiceStyle style, const float durationScalar);
+
+  // Get the current state of the create speech operation
+  AudioCreationState GetOperationState(const TTSID_t ttsID) const;
+
+  // Set up Audio Engine to play text's audio data
+  // out_duration_ms provides approximate duration of event before processing in audio engine
+  // Return false if the audio has NOT been created or is not yet ready, out_duration_ms will NOT be valid.
+  // NOTE: If this method is able to pass speech audio data ownership to plugin it will call ClearOperationData()
+  // TODO: Currently there is only 1 source plugin for inserting audio it would be nice to have more
+  bool PrepareAudioEngine(const TTSID_t ttsID, const SayTextVoiceStyle style, float& out_duration_ms);
+
+  // Clear Speech audio data from audio engine and clear operation data
+  // TODO: Currently there is only 1 source plugin for inserting audio it would be nice to have more
+  void CleanupAudioEngine(const TTSID_t ttsID);
+
+  // Clear speech operation audio data from memory
+  void ClearOperationData(const TTSID_t ttsID);
+
+  // Clear ALL loaded text audio data from memory
+  void ClearAllLoadedAudioData();
 
   void SetAudioProcessingStyle(SayTextVoiceStyle style);
   void SetAudioProcessingPitch(float pitchScalar);
