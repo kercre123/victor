@@ -17,6 +17,7 @@
 #include "coretech/vision/engine/image.h"
 #include "coretech/vision/engine/image_impl.h"
 #include "clad/types/actionTypes.h"
+#include "clad/types/behaviorComponent/behaviorIDs.h"
 #include "clad/types/ledTypes.h"
 #include "clad/types/proceduralFaceTypes.h"
 #include "engine/block.h"
@@ -613,18 +614,17 @@ namespace Cozmo {
       return;
     }
     
-    // FactoryTest behavior has to start on a charger so we need to wake up the robot first
-    if(behaviorName == "FactoryTest")
-    {
-      // Mute sound because annoying
-      SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetDebugConsoleVarMessage("BFT_PlaySound", "false")));
-      SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetDebugConsoleVarMessage("BFT_ConnectToRobotOnly", "false")));
-      
-      SendSetRobotVolume(1.f);
+    // Ensure that behaviorName is a valid BehaviorID
+    BehaviorID behaviorId;
+    if (!EnumFromString(behaviorName, behaviorId)) {
+      PRINT_NAMED_ERROR("WebotsKeyboardController.ExecuteBehavior.InvalidBehaviorID",
+                        "'%s' is not a valid behavior ID",
+                        behaviorName.c_str());
+      return;
     }
     
     printf("Selecting behavior by NAME: %s\n", behaviorName.c_str());
-    if (behaviorName == "LiftLoadTest") {
+    if (behaviorId == BehaviorID::LiftLoadTest) {
       SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetLiftLoadTestAsActivatable()));
     }
     const int numRuns = root_->getField("numBehaviorRuns")->getSFInt32();
