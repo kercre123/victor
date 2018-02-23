@@ -150,34 +150,50 @@ int handle_shell_timeout_test_command(const char* cmd, int len) {
   return 0;
 }
 
-int linelen(char *s) {
-  int len = 0;
-  while( s != NULL && *s > 0x1f && *s < 0x7e ) { len++; s++; }
-  return len;
-}
-
-#define EMMCDL_VERS_FILE "/data/local/fixture/emmcdl/version"
-#define EMMCDL_VERS_MAX 20
-int handle_get_emmcdl_ver_command(const char* cmd, int len)
+int read_file_(const char* filepath, char* out_buf, int buf_sz, int* out_len)
 {
-  char buf[EMMCDL_VERS_MAX+1];
-  int vlen = 0;
+  *out_len = 0;
+  out_buf[0] = '\0';
+  int fd = open(filepath, O_RDONLY);
   
-  int fd = open(EMMCDL_VERS_FILE, O_RDONLY); //attempt to open version file
   if (fd > 0) {
-    int rlen = read(fd, buf, EMMCDL_VERS_MAX);
-    buf[EMMCDL_VERS_MAX] = '\0'; //truncate long lines
-
-    if( rlen > 0 )
-      vlen = linelen(buf); //printable, single line
-    buf[vlen] = '\0';
-    
+    *out_len = read(fd, out_buf, buf_sz);
     close(fd);
   } else {
-    printf_multiple(SEND_CL, "file open error: %i (fd=%i)\n", errno, fd);
+    printf_multiple(SEND_CL, "file open error: '%s' errno=%i fd=%i\n", filepath, errno, fd);
+    return errno;
   }
   
-  printf_multiple(SEND_CLS, ":%s\n", (vlen>0 ? buf : "file-error"));
+  return 0;
+}
+
+#define READ_FILE_BUF_SZ 40
+char* read_file_line1_(const char* filepath)
+{
+  static char buf[READ_FILE_BUF_SZ+1];
+  
+  int rlen = 0;
+  int err = read_file_(filepath, buf, READ_FILE_BUF_SZ, &rlen);
+  buf[READ_FILE_BUF_SZ] = '\0';
+  
+  if( err == 0 )
+  {
+    int linelen = 0;
+    if( rlen > 0 ) {
+      char *s = buf;
+      while( *s > 0x1f && *s < 0x7e ) { linelen++; s++; } //stop at non-printable char or EOL
+    }
+    buf[linelen] = '\0';
+    return buf;
+  }
+  
+  return NULL;
+}
+
+int handle_get_emmcdl_ver_command(const char* cmd, int len)
+{
+  char* version = read_file_line1_("/data/local/fixture/emmcdl/version");
+  printf_multiple(SEND_CLS, ":%s\n", (version ? version : "file-error"));
   return 0;
 }
 
