@@ -10,6 +10,7 @@
  *
  **/
 
+#include <random>
 #include "switchboardd/keyExchange.h"
 
 uint8_t* Anki::Switchboard::KeyExchange::GenerateKeys() {
@@ -24,6 +25,25 @@ void Anki::Switchboard::KeyExchange::Reset() {
   memset(_encryptKey, 0, crypto_kx_SESSIONKEYBYTES);
   memset(_remotePublicKey, 0, crypto_kx_PUBLICKEYBYTES);
   memset(_publicKey, 0, crypto_kx_PUBLICKEYBYTES);
+}
+
+std::string Anki::Switchboard::KeyExchange::GeneratePin() {
+  // @seichert
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  
+  std::string pinStr;
+  
+  // The first digit cannot be 0, must be between 1 and 9
+  std::uniform_int_distribution<> dis('1', '9');
+  pinStr.push_back((char) dis(gen));
+  
+  // Subsequent digits can be between 0 and 9
+  dis.param(std::uniform_int_distribution<>::param_type('0','9'));
+  for (int i = 1 ; i < _numPinDigits; i++) {
+    pinStr.push_back((char) dis(gen));
+  }
+  return pinStr;
 }
 
 void Anki::Switchboard::KeyExchange::SetRemotePublicKey(const uint8_t* pubKey) {
