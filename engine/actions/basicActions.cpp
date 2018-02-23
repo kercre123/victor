@@ -29,7 +29,6 @@
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/faceWorld.h"
 #include "engine/moodSystem/moodManager.h"
-#include "engine/needsSystem/needsManager.h"
 #include "engine/robot.h"
 #include "engine/robotInterface/messageHandler.h"
 #include "engine/vision/visionModesHelpers.h"
@@ -2086,7 +2085,6 @@ namespace Anki {
                         "id %s returned null",
                         _obsFaceID.GetDebugStr().c_str()) ) {
           // Valid face...        
-          GetRobot().GetContext()->GetNeedsManager()->RegisterNeedsActionCompleted(NeedsActionId::SeeFace);
           Pose3d pose;
           if(true == face->GetHeadPose().GetWithRespectTo(GetRobot().GetPose(), pose)) {
             GetRobot().GetMoodManager().TriggerEmotionEvent("LookAtFaceVerified", MoodManager::GetCurrentTimeInSeconds());
@@ -2214,9 +2212,6 @@ namespace Anki {
           } else {
             // Wait for say name action to finish
             result = _action->Update();
-            if( ActionResult::SUCCESS == result ) {
-              GetRobot().GetContext()->GetNeedsManager()->RegisterNeedsActionCompleted(NeedsActionId::SayName);
-            }
           }
             
           break;

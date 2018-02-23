@@ -25,8 +25,6 @@
 #include "engine/drivingAnimationHandler.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/faceWorld.h"
-#include "engine/needsSystem/needsManager.h"
-#include "engine/needsSystem/needsState.h"
 #include "engine/robot.h"
 
 #include "coretech/common/engine/math/point_impl.h"

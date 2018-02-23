@@ -20,7 +20,6 @@
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "engine/components/visionComponent.h"
 #include "engine/deviceData/deviceDataManager.h"
-#include "engine/needsSystem/needsManager.h"
 #include "engine/perfMetric.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/utils/parsingConstants/parsingConstants.h"
@@ -197,15 +196,6 @@ Result CozmoEngine::Init(const Json::Value& config) {
   _context->GetDataLoader()->LoadRobotConfigs();
 
   _context->GetExperiments()->InitExperiments();
-
-  const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  _context->GetNeedsManager()->Init(currentTime,
-                                    _context->GetDataLoader()->GetRobotNeedsConfig(),
-                                    _context->GetDataLoader()->GetStarRewardsConfig(),
-                                    _context->GetDataLoader()->GetRobotNeedsActionsConfig(),
-                                    _context->GetDataLoader()->GetRobotNeedsDecayConfig(),
-                                    _context->GetDataLoader()->GetRobotNeedsHandlersConfig(),
-                                    _context->GetDataLoader()->GetLocalNotificationConfig());
 
   _context->GetRobotManager()->Init(_config);
 
@@ -408,9 +398,6 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
         return result;
       }
       
-      const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-      _context->GetNeedsManager()->Update(currentTime_s);
-
       // Let the robot manager do whatever it's gotta do to update the
       // robots in the world.
       _context->GetRobotManager()->UpdateRobot();
@@ -591,8 +578,6 @@ Result CozmoEngine::ConnectToRobotProcess()
       return result;
     }
   }
-
-  _context->GetNeedsManager()->InitAfterConnection();
 
   return RESULT_OK;
 }

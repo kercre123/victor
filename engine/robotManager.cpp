@@ -8,7 +8,6 @@
 
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
-#include "engine/needsSystem/needsManager.h"
 #include "engine/perfMetric.h"
 #include "engine/robot.h"
 #include "engine/robotInitialConnection.h"
@@ -104,7 +103,6 @@ void RobotManager::RemoveRobot(bool robotRejectedConnection)
       _context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDisconnected(0.0f)));
     }
 
-    _context->GetNeedsManager()->OnRobotDisconnected();
     _context->GetPerfMetric()->OnRobotDisconnected();
 
 #if USE_DAS

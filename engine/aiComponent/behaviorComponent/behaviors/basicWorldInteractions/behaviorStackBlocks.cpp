@@ -282,7 +282,6 @@ void BehaviorStackBlocks::TransitionToPlayingFinalAnim()
   if(!ShouldStreamline()){
     DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::StackBlocksSuccess));
   }
-  NeedActionCompleted();
 }
 
   

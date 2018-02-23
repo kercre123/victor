@@ -260,7 +260,6 @@ void BehaviorFistBump::BehaviorUpdate()
     }
     case State::CompleteSuccess:
     {
-      NeedActionCompleted();
       // Fall through
     }
     case State::CompleteFail:

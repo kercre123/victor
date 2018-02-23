@@ -20,7 +20,6 @@
 #include "clad/types/inventoryTypes.clad"
 #include "clad/types/ledTypes.clad"
 #include "clad/types/keepFaceAliveParameters.clad"
-#include "clad/types/needsSystemTypes.clad"
 #include "clad/types/objectTypes.clad"
 #include "clad/types/nvStorageTypes.clad"
 #include "clad/types/pathMotionProfile.clad"
@@ -900,85 +899,6 @@ union MoodMessageUnion {
 
 message MoodMessage {
   MoodMessageUnion  MoodMessageUnion
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// Needs
-///////////////////////////////////////////////////////////////////////////////
-
-message GetNeedsState {
-}
-
-message ForceSetNeedsLevels {
-  float_32 newNeedLevel[uint_8]
-}
-
-// In this message, I had to add a second, unused field to get CLAD to compile.
-// This is because of a conflict with the constructor that takes uint_8* and
-// length.
-message ForceSetDamagedParts {
-  bool partIsDamaged[uint_8],
-  bool dummyVarToCompileCLAD
-}
-
-message RegisterOnboardingComplete {
-  int_32 onboardingStage,
-  bool   finalStage,
-  bool   onboardingSkipped,
-}
-
-message SetNeedsPauseState {
-  bool pause
-}
-
-message GetNeedsPauseState {
-}
-
-message SetNeedsPauseStates {
-  bool decayPause[uint_8],
-  bool decayDiscardAfterUnpause[uint_8],
-  bool actionPause[uint_8]
-}
-
-message GetNeedsPauseStates {
-}
-
-// Only want to accept certain needs
-message SetNeedsActionWhitelist {
-  bool enable,
-  NeedsActionId whitelistedActions[uint_8],
-}
-
-message RegisterNeedsActionCompleted {
-  NeedsActionId actionCompleted
-}
-
-message GetWantsNeedsOnboarding {
-}
-
-// Wipes all needs data on the robot
-message WipeRobotNeedsData {
-}
-
-// Wipes all needs data on the device
-message WipeDeviceNeedsData {
-  bool reinitializeNeeds
-}
-
-message GetStarStatus {
-}
-
-message GetSongsList {
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// Notifications
-///////////////////////////////////////////////////////////////////////////////
-
-message NotificationsManagerReady {
-}
-
-message RequestNotificationTextKeys {
 }
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -2,7 +2,6 @@
   "behaviorClass": "StackBlocks",
   "behaviorID": "StackBlocks",
   "pickupBehaviorID": "PickupCube",
-  "needsActionID": "StackCube",
   "executableBehaviorType": "StackBlocks",
   "displayNameKey":"behavior.StackCube",
   "requiredUnlockId": "StackTwoCubes"

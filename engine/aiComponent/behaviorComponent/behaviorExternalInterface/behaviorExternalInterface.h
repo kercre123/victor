@@ -46,7 +46,6 @@ class DelegationComponent;
 class FaceWorld;
 class ICozmoBehavior;
 class IExternalInterface;
-class NeedsManager;
 class MapComponent;
 class MicDirectionHistory;
 class MoodManager;
@@ -127,7 +126,6 @@ public:
             MapComponent*                  mapComponent,
             MicDirectionHistory*           micDirectionHistory,
             MoodManager*                   moodManager,
-            NeedsManager*                  needsManager,
             ObjectPoseConfirmer*           objectPoseConfirmer,
             PetWorld*                      petWorld,
             ProgressionUnlockComponent*    progressionUnlockComponent,
@@ -172,9 +170,6 @@ public:
   inline bool HasMoodManager() const { return GetComponentWrapper(BEIComponentID::MoodManager).IsValueValid();}
   MoodManager& GetMoodManager() const{ return GetComponentWrapper(BEIComponentID::MoodManager).GetValue<MoodManager>();}
   
-  inline bool HasNeedsManager() const { return GetComponentWrapper(BEIComponentID::NeedsManager).IsValueValid();}
-  NeedsManager& GetNeedsManager() const { return GetComponentWrapper(BEIComponentID::NeedsManager).GetValue<NeedsManager>();}
-
   inline bool HasTouchSensorComponent() const { return GetComponentWrapper(BEIComponentID::TouchSensor).IsValueValid();}
   TouchSensorComponent& GetTouchSensorComponent() const { return GetComponentWrapper(BEIComponentID::TouchSensor).GetValue<TouchSensorComponent>();}
 
@@ -229,7 +224,6 @@ private:
                        MapComponent*                  mapComponent,
                        MicDirectionHistory*           micDirectionHistory,
                        MoodManager*                   moodManager,
-                       NeedsManager*                  needsManager,
                        ObjectPoseConfirmer*           objectPoseConfirmer,
                        PetWorld*                      petWorld,
                        ProgressionUnlockComponent*    progressionUnlockComponent,

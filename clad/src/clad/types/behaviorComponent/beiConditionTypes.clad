@@ -17,7 +17,6 @@ enum uint_8 BEIConditionType {
   ConsoleVar,
   FacePositionUpdated,
   Frustration,
-  InNeedsBracket,
   Lambda,
   MotionDetected,
   Negate,

@@ -14,7 +14,6 @@
 #include "engine/robotInitialConnection.h"
 #include "engine/robotManager.h"
 #include "engine/externalInterface/externalInterface.h"
-#include "engine/needsSystem/needsManager.h"
 #include "engine/robotInterface/messageHandler.h"
 #include "engine/utils/cozmoExperiments.h"
 #include "clad/externalInterface/messageEngineToGame.h"
@@ -187,8 +186,6 @@ void RobotInitialConnection::OnNotified(RobotConnectionResult result, uint32_t r
       SendConnectionResponse(result, robotFwVersion);
 
       _context->GetExperiments()->ReadLabAssignmentsFromRobot(_serialNumber);
-      
-      _context->GetNeedsManager()->InitAfterSerialNumberAcquired(_serialNumber);
     }));
     
     _robotMessageHandler->SendMessage(RobotInterface::EngineToRobot{RobotInterface::GetManufacturingInfo{}});

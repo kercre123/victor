@@ -20,7 +20,6 @@
 #include "coretech/common/engine/objectIDs.h"
 #include "coretech/vision/engine/faceIdTypes.h"
 #include "util/entityComponent/iManageableComponent.h"
-#include "clad/types/needsSystemTypes.h"
 #include "clad/types/objectFamilies.h"
 #include "clad/types/objectTypes.h"
 

@@ -41,7 +41,6 @@
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/moodSystem/moodManager.h"
-#include "engine/needsSystem/needsManager.h"
 #include "engine/robotInterface/messageHandler.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
@@ -60,7 +59,6 @@ namespace Cozmo {
 namespace {
 static const char* kBehaviorClassKey                 = "behaviorClass";
 static const char* kBehaviorIDConfigKey              = "behaviorID";
-static const char* kNeedsActionIDKey                 = "needsActionID";
 
 static const char* kRequiredUnlockKey                = "requiredUnlockId";
 static const char* kRequiredDriveOffChargerKey       = "requiredRecentDriveOffCharger_sec";
@@ -149,18 +147,6 @@ BehaviorClass ICozmoBehavior::ExtractBehaviorClassFromConfig(const Json::Value& 
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-NeedsActionId ICozmoBehavior::ExtractNeedsActionIDFromConfig(const Json::Value& config)
-{
-  const Json::Value& needsActionIDJson = config[kNeedsActionIDKey];
-  const char* needsActionIDString = needsActionIDJson.isString() ? needsActionIDJson.asCString() : "";
-  if (!needsActionIDString[0])
-  {
-    return NeedsActionId::NoAction;
-  }
-  return NeedsActionIdFromString(needsActionIDString);
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::string ICozmoBehavior::MakeUniqueDebugLabelFromConfig(const Json::Value& config)
 {
   std::string ret;
@@ -188,7 +174,6 @@ ICozmoBehavior::ICozmoBehavior(const Json::Value& config)
 , _activatedTime_s(0.0f)
 , _id(ExtractBehaviorIDFromConfig(config))
 , _behaviorClassID(ExtractBehaviorClassFromConfig(config))
-, _needsActionID(ExtractNeedsActionIDFromConfig(config))
 , _executableType(BehaviorTypesWrapper::GetDefaultExecutableBehaviorType())
 , _claimUserIntentData( true )
 , _respondToTriggerWord( false )
@@ -1133,21 +1118,6 @@ void ICozmoBehavior::BehaviorObjectiveAchieved(BehaviorObjective objectiveAchiev
   Util::sEventF("robot.freeplay_objective_achieved", {{DDATA, EnumToString(objectiveAchieved)}}, "%s", GetDebugLabel().c_str());
 }
   
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehavior::NeedActionCompleted(NeedsActionId needsActionId)
-{
-  if (needsActionId == NeedsActionId::NoAction)
-  {
-    needsActionId = _needsActionID;
-  }
-  
-  if(GetBEI().HasNeedsManager()){
-    auto& needsManager = GetBEI().GetNeedsManager();
-    needsManager.RegisterNeedsActionCompleted(needsActionId);
-  }
-}
-
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::SmartPushIdleAnimation(AnimationTrigger animation)
 {

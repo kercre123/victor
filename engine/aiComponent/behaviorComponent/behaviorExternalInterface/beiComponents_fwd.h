@@ -18,7 +18,6 @@ enum class BEIComponentID{
   Map,
   MicDirectionHistory,
   MoodManager,
-  NeedsManager,
   ObjectPoseConfirmer,
   PetWorld,
   ProgressionUnlock,

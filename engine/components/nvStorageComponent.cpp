@@ -94,7 +94,6 @@ std::map<NVEntryTag, u32> NVStorageComponent::_maxSizeTable = {
                                                           {NVEntryTag::NVEntry_GameUnlocks,     0},
                                                           {NVEntryTag::NVEntry_FaceEnrollData,  0},
                                                           {NVEntryTag::NVEntry_FaceAlbumData,   0},
-                                                          {NVEntryTag::NVEntry_NurtureGameData, 0},
                                                           {NVEntryTag::NVEntry_InventoryData,   0},
                                                           {NVEntryTag::NVEntry_LabAssignments,  0},
                                                           {NVEntryTag::NVEntry_NEXT_SLOT,       0} };

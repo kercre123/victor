@@ -30,7 +30,6 @@
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/faceWorld.h"
-#include "engine/needsSystem/needsManager.h"
 #include "engine/viz/vizManager.h"
 
 #include "coretech/common/engine/utils/timer.h"

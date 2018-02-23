@@ -18,7 +18,6 @@
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/cozmoContext.h"
-#include "engine/needsSystem/needsManager.h"
 #include "engine/robot.h"
 
 
@@ -66,30 +65,7 @@ void PublicStateBroadcaster::Update(Robot& robot)
                   );
   }
   
-  // check for changes to needs level
-  if((robot.GetContext() != nullptr) &&
-     (robot.GetContext()->GetNeedsManager() != nullptr)){
-    const NeedsState& needsState = robot.GetContext()->GetNeedsManager()->GetCurNeedsState();
-    
-    const float energy = needsState.GetNeedLevel(NeedId::Energy);
-    const float repair = needsState.GetNeedLevel(NeedId::Repair);
-    const float play = needsState.GetNeedLevel(NeedId::Play);
 
-    if(!FLT_NEAR(_currentState->needsLevels.energy, energy)){
-      _currentState->needsLevels.energy = energy;
-      currentStateUpdated = true;
-    }
-    if(!FLT_NEAR(_currentState->needsLevels.repair, repair)){
-      _currentState->needsLevels.repair = repair;
-      currentStateUpdated = true;
-    }
-    if(!FLT_NEAR(_currentState->needsLevels.play, play)){
-      _currentState->needsLevels.play = play;
-      currentStateUpdated = true;
-    }
-  }
-
-  
   // After all update checks, if any changed a state property, send the updated state
   if(currentStateUpdated){
     SendUpdatedState();

@@ -49,7 +49,6 @@ class IExternalInterface;
 class RobotDataLoader;
 class RobotManager;
 class VizManager;
-class NeedsManager;
 class PerfMetric;
 class AppToEngineHandler;
 
@@ -99,7 +98,6 @@ public:
   VizManager*                           GetVizManager() const { return _vizManager.get(); }
   Util::TransferQueueMgr*               GetTransferQueue() const { return _transferQueueMgr.get(); }
   VoiceCommand::VoiceCommandComponent*  GetVoiceCommandComponent() const { return _voiceCommandComponent.get(); }
-  NeedsManager*                         GetNeedsManager() const { return _needsManager.get(); }
   CozmoExperiments*                     GetExperiments() const { return _cozmoExperiments.get(); }
   PerfMetric*                           GetPerfMetric() const { return _perfMetric.get(); }
   WebService::WebService*               GetWebService() const { return _webService.get(); }
@@ -134,7 +132,6 @@ private:
   std::unique_ptr<Util::DasTransferTask>                _dasTransferTask;
   std::unique_ptr<Util::GameLogTransferTask>            _gameLogTransferTask;
   std::unique_ptr<VoiceCommand::VoiceCommandComponent>  _voiceCommandComponent;
-  std::unique_ptr<NeedsManager>                         _needsManager;
   std::unique_ptr<CozmoExperiments>                     _cozmoExperiments;
   std::unique_ptr<PerfMetric>                           _perfMetric;
   std::unique_ptr<WebService::WebService>               _webService;

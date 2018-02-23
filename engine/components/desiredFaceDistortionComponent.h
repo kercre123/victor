@@ -28,14 +28,12 @@ class RandomGenerator;
 
 namespace Cozmo {
 
-class NeedsManager;
-
 
 class DesiredFaceDistortionComponent : private Anki::Util::noncopyable
 {
 public:
 
-  DesiredFaceDistortionComponent(NeedsManager& needsManager);
+  DesiredFaceDistortionComponent();
 
   void Init(const Json::Value& config, Util::RandomGenerator* rng);
 
@@ -70,7 +68,6 @@ private:
 
   float _nextTimeToDistort_s = -1.0f;
   
-  NeedsManager& _needsManager;
   Util::RandomGenerator* _rng = nullptr;
   
   float  _curDistortion = -1.f;

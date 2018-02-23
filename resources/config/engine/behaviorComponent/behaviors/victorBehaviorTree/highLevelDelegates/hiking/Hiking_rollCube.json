@@ -1,6 +1,5 @@
 {
   "behaviorClass": "RollBlock",
   "behaviorID": "Hiking_RollCube",
-  "needsActionID": "RollACube",
   "requiredUnlockId": "RollCube"
 }

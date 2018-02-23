@@ -4,7 +4,6 @@
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "engine/appToEngineHandler.h"
 #include "engine/externalInterface/externalInterface.h"
-#include "engine/needsSystem/needsManager.h"
 #include "engine/perfMetric.h"
 #include "engine/robotDataLoader.h"
 #include "engine/robotManager.h"
@@ -47,7 +46,6 @@ CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInte
   , _dasTransferTask(new Anki::Util::DasTransferTask())
   #endif
   , _gameLogTransferTask(new Anki::Util::GameLogTransferTask())
-  , _needsManager(new NeedsManager(this))
   , _cozmoExperiments(new CozmoExperiments(this))
   , _perfMetric(new PerfMetric(this))
   , _webService(new WebService::WebService())

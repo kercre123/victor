@@ -49,9 +49,6 @@ namespace Anki {
     
   void CozmoSimTestController::HandleRobotConnected(ExternalInterface::RobotConnectionResponse const &msg)
   {    
-    // Disable needs during all tests
-    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetNeedsPauseState(true)));
-
   }
     
     bool CozmoSimTestController::IsTrueBeforeTimeout(bool cond,

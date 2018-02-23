@@ -29,8 +29,6 @@
 
 #include "clad/types/actionResults.h"
 #include "clad/types/behaviorComponent/behaviorObjectives.h"
-#include "clad/types/needsSystemTypes.h"
-#include "clad/types/needsSystemTypes.h"
 #include "clad/types/unlockTypes.h"
 #include "util/console/consoleVariable.h"
 #include "util/logging/logging.h"
@@ -150,8 +148,6 @@ public:
   bool WantsToBeActivatedInternal() const override final;
 
   BehaviorID         GetID()      const { return _id; }
-
-  void SetNeedsActionID(NeedsActionId needsActionID) { _needsActionID = needsActionID; }
 
   const std::string& GetDebugStateName() const { return _debugStateName;}
   ExecutableBehaviorType GetExecutableType() const { return _executableType; }
@@ -373,10 +369,6 @@ protected:
   // in order to log das events and notify activity strategies if they listen for the message
   void BehaviorObjectiveAchieved(BehaviorObjective objectiveAchieved, bool broadcastToGame = true) const;
 
-  // Behaviors can call this to register a needs action with the needs system
-  // If needActionId is not specified, the previously-initialized _needActionId will be used
-  void NeedActionCompleted(NeedsActionId needsActionId = NeedsActionId::NoAction);
-
   /////////////
   /// "Smart" helpers - Behaviors can call these functions to set properties that
   /// need to be cleared when the behavior stops.  ICozmoBehavior will hold the reference
@@ -434,7 +426,6 @@ protected:
   
 private:
   
-  NeedsActionId ExtractNeedsActionIDFromConfig(const Json::Value& config);
   std::string MakeUniqueDebugLabelFromConfig(const Json::Value& config);
 
   float _lastRunTime_s;
@@ -463,7 +454,6 @@ private:
   
   std::string _debugStateName = "";
   BehaviorClass _behaviorClassID;
-  NeedsActionId _needsActionID;
   ExecutableBehaviorType _executableType;
   int _timesResumedFromPossibleInfiniteLoop = 0;
   float _timeCanRunAfterPossibleInfiniteLoopCooldown_sec = 0.f;

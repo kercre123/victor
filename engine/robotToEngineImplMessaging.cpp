@@ -32,7 +32,6 @@
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/micDirectionHistory.h"
-#include "engine/needsSystem/needsManager.h"
 #include "engine/pathPlanner.h"
 #include "engine/robot.h"
 #include "engine/robotInterface/messageHandler.h"
@@ -670,12 +669,6 @@ void RobotToEngineImplMessaging::HandleFallingEvent(const AnkiEvent<RobotInterfa
            msg.timestamp,
            msg.duration_ms,
            msg.impactIntensity);
-  
-  // If the impact intensity was high enough, register a fall event to the needs manager
-  const f32 needsActionIntensityThreshold = 1000.f;
-  if (msg.impactIntensity > needsActionIntensityThreshold) {
-    robot->GetContext()->GetNeedsManager()->RegisterNeedsActionCompleted(NeedsActionId::Fall);
-  }
   
   // DAS Event: "robot.falling_event"
   // s_val: Impact intensity
