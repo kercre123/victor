@@ -11,7 +11,9 @@
 //-----------------------------------------------------------
 
 //hardware version string
-#if defined(HWVER_DVT2B)
+#if defined(HWVER_DVT3A)
+  #define HWVERS "DVT3A"
+#elif defined(HWVER_DVT2B)
   #define HWVERS "DVT2B"
 #else
   #define HWVERS "?"
@@ -27,10 +29,10 @@ namespace Board
   void init();
   
   //power ctrl
-  void pwr_vdd(bool en);  //VBATs + VDD regulator enable
+  void pwr_vdd(bool en);  //VBATs
   void pwr_vdds(bool en); //vdds (VENC) sensor rail
   void pwr_vmain(bool en); //VMAIN enable
-  void pwr_charge(bool en); //VEXT connect + battery charger enable
+  void pwr_charge(bool en); //VEXT connect
 }
 #endif /* __cplusplus */
 

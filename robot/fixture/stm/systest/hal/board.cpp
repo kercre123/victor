@@ -114,15 +114,19 @@ void Board::pwr_vmain(bool en)
 
 void Board::pwr_charge(bool en)
 {
+  CHG_PWR::write( !en );
+  CHG_PWR::mode(MODE_OUTPUT);
+  /*
   if( en ) {
     CHG_PWR::mode(MODE_INPUT);
-    CHG_EN::mode(MODE_INPUT);
+    //CHG_EN::mode(MODE_INPUT);
   } else {
     CHG_PWR::reset();
     CHG_PWR::mode(MODE_OUTPUT);
-    CHG_EN::reset();
-    CHG_EN::mode(MODE_OUTPUT);
+    //CHG_EN::reset();
+    //CHG_EN::mode(MODE_OUTPUT);
   }
+  */
 }
 
 //------------------------------------------------  

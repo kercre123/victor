@@ -41,10 +41,10 @@ namespace LTN1 GPIO_DEFINE(A, 9);
 namespace LTN2 GPIO_DEFINE(B, 0);
 
 // Encoders (A is always lowest pin)
-namespace HENCA GPIO_DEFINE(A, 0);
-namespace HENCB GPIO_DEFINE(A, 1);
-namespace LENCA GPIO_DEFINE(B, 2);
-namespace LENCB GPIO_DEFINE(B, 3);
+namespace HENCA GPIO_DEFINE(A, 0); //HENCA-B are swapped. But it matches how the driver is written so...
+namespace HENCB GPIO_DEFINE(A, 1); //^
+namespace LENCA GPIO_DEFINE(B, 2); //LENCA-B are swapped. But it matches how the driver is written so...
+namespace LENCB GPIO_DEFINE(B, 3); //^
 namespace RTENC GPIO_DEFINE(C, 14);
 namespace LTENC GPIO_DEFINE(C, 15);
 
@@ -56,7 +56,7 @@ namespace nVDDs_EN    GPIO_DEFINE(C, 13); //a.k.a. #VENC_EN
 namespace VEXT_SENSE  GPIO_DEFINE(A, 2);
 namespace VBAT_SENSE  GPIO_DEFINE(A, 4);
 namespace MAIN_EN     GPIO_DEFINE(A, 3);
-namespace CHG_EN      GPIO_DEFINE(A, 15);
+//namespace CHG_EN      GPIO_DEFINE(A, 15); //removed in DVT3 (logic'd from another signal)
 
 //namespace CHRG1 GPIO_DEFINE(F, 1);
 //namespace CHRG2 GPIO_DEFINE(F, 0);
