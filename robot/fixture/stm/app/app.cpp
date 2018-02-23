@@ -25,7 +25,7 @@ const bool g_isReleaseBuild = !NOT_FOR_FACTORY;
 
 #include "app_release_ver.h"
 u8 g_fixtureReleaseVersion = (NOT_FOR_FACTORY) ? 0 : (APP_RELEASE_VERSION);
-#define BUILD_INFO "Victor DVT2"
+#define BUILD_INFO "Victor DVT3"
 
 #define APP_CMD_OPTS    ((CMD_OPTS_DEFAULT & ~CMD_OPTS_EXCEPTION_EN) | CMD_OPTS_DBG_PRINT_RSP_TIME)
 #define LCD_CMD_TIMEOUT 150 /*ms*/
@@ -85,31 +85,28 @@ void HelperLcdClear(void)
 }
 
 // Show the name of the fixture and version information
-void SetFixtureText(void)
+void SetFixtureText(bool reinit=0);
+void SetFixtureText(bool reinit)
 {
   //const bool fcc = false;
   char b[50]; int bz = sizeof(b);
   static bool inited = 0;
   
-  if( !inited )
+  if( !inited || reinit )
   {
     HelperLcdClear();
     
     //Dev builds show compile date-time across the top
     #if NOT_FOR_FACTORY
-      HelperLcdSetLine(1, "DEV-NOT FOR FACTORY!");
-      HelperLcdSetLine(2, (__DATE__ " " __TIME__) );
+      HelperLcdSetLine(1, (__DATE__ " " __TIME__) );
+    //HelperLcdSetLine(2, "DEV-NOT FOR FACTORY!");
     #endif
     
-    //add verision #s and other useful info
-    #ifdef FCC
-      HelperLcdSetLine(7, "CERT/TEST ONLY");
-    #else
-      //if( g_fixmode == FIXMODE_PLAYPEN ) {
-      //  HelperLcdSetLine(7, snformat(b,bz,"   SSID: Afix %02u", FIXTURE_SERIAL&63) ); //XXX: this is probably going away
-      //}
-    #endif
-  
+    //mode-specific info
+    if( g_fixmode == FIXMODE_HEAD1 || g_fixmode == FIXMODE_HEAD2 ) {
+      HelperLcdSetLine(7, snformat(b,bz,"emmcdl: %s", cmdGetEmmcdlVersion()) );
+    }
+    
     //show build info and version
     HelperLcdSetLine(8, snformat(b,bz,"%-15s v%03u", BUILD_INFO, g_fixtureReleaseVersion) );
   }
@@ -124,17 +121,19 @@ void SetFixtureText(void)
     {'w', "---WHITE---"} };
   
   ci = ci+1 < sizeof(display)/sizeof(dbg_display_t) ? ci+1 : 0;
-  HelperLcdSetLine(7, display[ci].desc ); //write color description to the display
+  HelperLcdSetLine(2, display[ci].desc ); //write color description to the display
   HelperLcdShow(0,0, display[ci].color, (char*)fixtureName()); //set display text/color
   inited = 1;
   return;
   //========================================================================*/
   
   //debug builds show last error code
-  if( !g_isReleaseBuild /*&& g_fixmode == FIXMODE_HEAD1*/ )
-    HelperLcdSetLine(7, snformat(b,bz,"e:%03i in %u.%03us", m_last_error, m_last_time_ms/1000, m_last_time_ms%1000 ) );
+  char color = 'b';
+  if( !g_isReleaseBuild ) {
+    HelperLcdSetLine(2, snformat(b,bz,"DEBUG e%03i %u.%03us", m_last_error, m_last_time_ms/1000, m_last_time_ms%1000 ) );
+    color = m_last_error == ERROR_OK ? 'g' : 'r';
+  }
   
-  char color = g_isReleaseBuild ? 'b' : ( m_last_error == ERROR_OK ? 'g' : 'r' );
   HelperLcdShow(0,0, color, (char*)fixtureName());
   inited = 1;
 }

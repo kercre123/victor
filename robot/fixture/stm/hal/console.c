@@ -23,7 +23,7 @@
 
 #define BAUD_RATE   1000000
 
-extern void SetFixtureText(void);
+extern void SetFixtureText(bool reinit=0);
 extern void SetOKText(void);
 extern void SetErrorText(u16 error);
 
@@ -267,7 +267,7 @@ static void SetMode(void)
       g_flashParams.fixtureTypeOverride = i;
       StoreParams();
       g_fixmode = i;
-      SetFixtureText();
+      SetFixtureText(1);
       return;
     }
     
