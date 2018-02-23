@@ -36,6 +36,19 @@ protected:
   virtual void OnBehaviorActivated() override;
   virtual void BehaviorUpdate() override;
 
+private:
+
+  struct InstanceConfig {
+    // TODO: put configuration variables here
+  };
+
+  struct DynamicVariables {
+    // TODO: put member variables here
+  };
+
+  InstanceConfig _iConfig;
+  DynamicVariables _dVars;
+  
 };
 
 }

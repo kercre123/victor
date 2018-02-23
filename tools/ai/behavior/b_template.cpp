@@ -20,6 +20,7 @@ namespace Cozmo {
 ${class_name}::${class_name}(const Json::Value& config)
  : ICozmoBehavior(config)
 {
+  // TODO: read config into _iConfig
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -48,6 +49,9 @@ void ${class_name}::GetAllDelegates(std::set<IBehavior*>& delegates) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ${class_name}::OnBehaviorActivated() 
 {
+  // reset dynamic variables
+  _dVars = DynamicVariables();
+  
   // TODO: the behavior is active now, time to do something!
 }
 
