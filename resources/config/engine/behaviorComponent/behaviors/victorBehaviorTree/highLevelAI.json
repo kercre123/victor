@@ -363,6 +363,7 @@
         "DriveOffChargerIntoObserving",
         "DriveOffChargerIntoSocializing",
         "DriveOffChargerIntoPlay",
+        "FistBump",
         "Observing",
         "ReturningToCharger", // to avoid unclaimed intent
         "Socializing"  
