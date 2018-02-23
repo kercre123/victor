@@ -124,7 +124,7 @@ target_compile_definitions(supervisor
   CORETECH_ROBOT
   _DEBUG
   ${PLATFORM_COMPILE_DEFS}
-  #-DUSING_ANDROID_PHONE # Uncomment if deploying on non-Cozmo android device
+  #HAL_DUMMY_BODY # Uncomment if deploying on head only
 )
 
 target_include_directories(supervisor
@@ -196,7 +196,7 @@ if (ANDROID)
     CORETECH_ROBOT
     _DEBUG
     ${PLATFORM_COMPILE_DEFS}
-    #USING_ANDROID_PHONE # Uncomment if deploying on non-Cozmo android device
+    #HAL_DUMMY_BODY # Uncomment if deploying on head only
   )
 
   target_include_directories(vic-robot

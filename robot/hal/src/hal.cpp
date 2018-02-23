@@ -37,7 +37,7 @@ namespace { // "Private members"
   std::chrono::steady_clock::time_point timeOffset_ = std::chrono::steady_clock::now();
 
 
-#ifdef USING_ANDROID_PHONE
+#ifdef HAL_DUMMY_BODY
   BodyToHead dummyBodyData_ = {
     .cliffSense = {800, 800, 800, 800}
   };
@@ -132,7 +132,7 @@ Result HAL::Init()
     return RESULT_FAIL;
   }
 
-#ifndef USING_ANDROID_PHONE
+#ifndef HAL_DUMMY_BODY
   {
     AnkiInfo("HAL.Init.StartingSpineHAL", "");
 
@@ -206,6 +206,7 @@ Result HAL::Step(void)
 {
   Result result = RESULT_OK;
 
+#ifndef HAL_DUMMY_BODY
   headData_.framecounter++;
 
   //check if the charge contact commander is active,
@@ -220,12 +221,17 @@ Result HAL::Step(void)
   if (ccc_response) {
     spine_write_ccc_frame(&spine_, ccc_response);
   }
+#endif // #ifndef HAL_DUMMY_BODY
 
   ProcessIMUEvents();
 
+#ifndef HAL_DUMMY_BODY
   do {
     result = spine_get_frame();
   } while(result != RESULT_OK);
+#else
+  dummyBodyData_.framecounter++;
+#endif // #ifndef HAL_DUMMY_BODY
 
   ProcessTouchLevel(); // filter invalid values from touch sensor
 
