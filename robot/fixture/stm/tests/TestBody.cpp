@@ -159,13 +159,13 @@ static void BodyLoadTestFirmware(void)
   Timer::delayMs(150); //wait for systest to boot into main and enable battery power
   Contacts::setModeRx(); //switch to comms mode
   
-  //Run some tests
-  cmdSend(CMD_IO_CONTACTS, "getvers");
-  
   /*/DEBUG: console bridge, manual testing
   cmdSend(CMD_IO_CONTACTS, "echo on", CMD_DEFAULT_TIMEOUT, CMD_OPTS_DEFAULT & ~CMD_OPTS_EXCEPTION_EN);
   TestCommon::consoleBridge(TO_CONTACTS,1000);
   //-*/
+  
+  //Run some tests
+  cmdSend(CMD_IO_CONTACTS, "getvers");
   
   Board::powerOff(PWR_VEXT);
   Board::powerOff(PWR_VBAT);
