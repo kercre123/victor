@@ -202,8 +202,9 @@ int handle_get_temperature_command(const char* cmd, int len)
   //>>get_temperature 4 0 1 ... [zone list]
   //cat thermal_zone*/type to see a list of valid zones
   //printf("DEBUG,GET-TEMP: cmd=%08x, len=%i, cmd+len=%08x\n", (uint32_t)cmd, len, (uint32_t)(cmd+len) );
+  //printf("DEBUG,GET-TEMP: '%.*s' (%i)\n", len, cmd, len);
   
-  const char* next = cmd;
+  char* next = (char*)cmd;
   while(next < cmd+len) //each argument is zone # to report
   {
     errno = 0;
@@ -212,19 +213,18 @@ int handle_get_temperature_command(const char* cmd, int len)
     //printf("DEBUG,GET-TEMP: zone=%i, next=%08x, endptr-delta=%i, errno=%i\n", zone, (uint32_t)next, (uint32_t)(endptr-next), errno);
     
     char *temperature = NULL;
-    if( errno == 0 && zone >= 0 && zone <= 9 && endptr > next ) {
+    if( errno == 0 && zone >= 0 && zone <= 999 && endptr > next ) {
       char filepath[50];
       snprintf(filepath, sizeof(filepath), "/sys/devices/virtual/thermal/thermal_zone%u/temp", zone);
       temperature = read_file_line1_(filepath);
     } else {
       zone = -1;
     }
-    printf_multiple(SEND_CLS, ":zone%i %s\n", zone, (temperature ? temperature : "-1"));
+    printf_multiple(SEND_CLS, ":%i %s\n", zone, (temperature ? temperature : "-1"));
     next = endptr > next ? endptr : next+1;
   }
   
   //fflush(stdout);
-  
   return 0;
 }
 
@@ -258,6 +258,8 @@ const char* fixture_command_parse(const char*  command, int len) {
   static char responseBuffer[LINEBUFSZ];
 
 //  printf("\tparsing  \"%.*s\"\n", len, command);
+  if(len > 1 && command[len-1]=='\n') //strip trailing newline
+    len--;
 
   const CommandHandler* candidate = &handlers[0];
 
