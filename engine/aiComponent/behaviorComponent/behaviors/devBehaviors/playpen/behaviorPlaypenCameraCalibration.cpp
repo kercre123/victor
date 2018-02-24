@@ -33,7 +33,7 @@ namespace {
 // V2 Simulated camera calibration
 static const std::shared_ptr<Vision::CameraCalibration> kApproxCalib(
   new Vision::CameraCalibration(360, 640,
-                                185, 185,
+                                296, 296,
                                 319, 179,
                                 0.f,
                                 std::vector<f32>({0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f})));

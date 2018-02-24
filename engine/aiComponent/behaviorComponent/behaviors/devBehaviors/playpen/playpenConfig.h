@@ -135,7 +135,7 @@ static f32 kRadialDistortionTolerance                 = 0.15f;
 static f32 kTangentialDistortionTolerance             = 0.05f;
 
 // Head angle at which we can see the entire calibration target
-static f32 kHeadAngleToSeeTarget_rad                  = DEG_TO_RAD(40.f);
+static f32 kHeadAngleToSeeTarget_rad                  = DEG_TO_RAD(45.f);
 
 // How long we should wait to see the calibration target after looking up at it
 static u32 kTimeoutWaitingForTarget_ms                = 5000;
