@@ -92,7 +92,7 @@ Result BehaviorPlaypenCameraCalibration::OnBehaviorActivatedInternal()
   robot.GetVisionComponent().ClearCalibrationImages();
   
   // Move head and lift so we can see the target
-  CompoundActionParallel* action = new CompoundActionParallel({new MoveHeadToAngleAction(PlaypenConfig::kHeadAngleToSeeTarget),
+  CompoundActionParallel* action = new CompoundActionParallel({new MoveHeadToAngleAction(PlaypenConfig::kHeadAngleToSeeTarget_rad),
                                                                new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK)});
   
   DelegateIfInControl(action, [this]() {

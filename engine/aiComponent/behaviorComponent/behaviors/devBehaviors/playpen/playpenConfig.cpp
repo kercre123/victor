@@ -153,6 +153,7 @@ WRAP_EXTERN_CONSOLE_VAR(f32, kIMUDriftAngleThreshDeg,     "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(u32, kNumDistanceSensorReadingsToRecord,             "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(f32, kVisualDistanceToDistanceSensorObjectThresh_mm, "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(f32, kDistanceSensorReadingThresh_mm,                "Playpen");
+WRAP_EXTERN_CONSOLE_VAR(f32, kDistanceSensorBiasAdjustment_mm,               "Playpen");
 
 WRAP_EXTERN_CONSOLE_VAR(u16, kExposure_ms,                               "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(f32, kGain,                                      "Playpen");
@@ -160,7 +161,7 @@ WRAP_EXTERN_CONSOLE_VAR(u32, kFocalLengthTolerance,                      "Plaype
 WRAP_EXTERN_CONSOLE_VAR(u32, kCenterTolerance,                           "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(f32, kRadialDistortionTolerance,                 "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(f32, kTangentialDistortionTolerance,             "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(f32, kHeadAngleToSeeTarget,                      "Playpen");
+WRAP_EXTERN_CONSOLE_VAR(f32, kHeadAngleToSeeTarget_rad,                  "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(u32, kTimeoutWaitingForTarget_ms,                "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(u32, kTimeoutForComputingCalibration_ms,         "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(f32, kCalibMarkerSize_mm,                        "Playpen");

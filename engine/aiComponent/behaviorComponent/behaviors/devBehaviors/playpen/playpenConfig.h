@@ -135,7 +135,7 @@ static f32 kRadialDistortionTolerance                 = 0.15f;
 static f32 kTangentialDistortionTolerance             = 0.05f;
 
 // Head angle at which we can see the entire calibration target
-static f32 kHeadAngleToSeeTarget                      = MAX_HEAD_ANGLE;
+static f32 kHeadAngleToSeeTarget_rad                  = DEG_TO_RAD(40.f);
 
 // How long we should wait to see the calibration target after looking up at it
 static u32 kTimeoutWaitingForTarget_ms                = 5000;
@@ -167,7 +167,7 @@ static f32 kDistanceToTriggerBackCliffs_mm  = 80;
 static f32 kDistanceToDriveOverCliff_mm     = 50;
 
 // Speed at which to drive forwards towards cliff
-static f32 kCliffSpeed_mmps                 = 80;
+static f32 kCliffSpeed_mmps                 = 60;
 
 // Time to wait for a cliff event after getting a robot stopped event
 static f32 kTimeToWaitForCliffEvent_ms      = CLIFF_EVENT_DELAY_MS + 100;
