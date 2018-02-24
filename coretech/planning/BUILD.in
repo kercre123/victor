@@ -32,3 +32,12 @@ cxx_project(
   headers = cxx_header_glob(['test']),
   platform_headers = []
 )
+
+
+cxx_project(
+  name = 'cti_planning_standalone',
+  srcs = (['test/run_coreTechPlanningStandalone.cpp']),
+  platform_srcs = [],
+  headers = cxx_header_glob(['test']),
+  platform_headers = []
+)
