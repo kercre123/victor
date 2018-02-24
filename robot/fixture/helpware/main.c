@@ -197,6 +197,32 @@ int handle_get_emmcdl_ver_command(const char* cmd, int len)
   return 0;
 }
 
+int handle_get_temperature_command(const char* cmd, int len)
+{
+  //>>get_temperature 4 0 1 ... [zone list]
+  //cat thermal_zone*/type to see a list of valid zones
+  
+  const char* next = cmd;
+  while(next < cmd+len) //each argument is zone # to report
+  {
+    char *endptr;
+    int zone = strtol(next, &endptr, 10); //enforce base10
+    
+    char *temperature = NULL;
+    if( errno == 0 && zone >= 0 && zone <= 9 && endptr > next ) {
+      char filepath[50];
+      snprintf(filepath, sizeof(filepath), "/sys/devices/virtual/thermal/thermal_zone%u/temp", zone);
+      temperature = read_file_line1_(filepath);
+    } else {
+      zone = -1;
+    }
+    printf_multiple(SEND_CLS, ":%i %s\n", zone, (temperature ? temperature : "-1"));
+    next = endptr > next ? endptr : next+1;
+  }
+  
+  return 0;
+}
+
 #define REGISTER_COMMAND(s) {#s, sizeof(#s)-1, handle_##s##_command}
 
 
@@ -218,6 +244,7 @@ static const CommandHandler handlers[] = {
   REGISTER_COMMAND(shell_timeout_test),
   {"shell-timeout-test", 18, handle_shell_timeout_test_command},
   REGISTER_COMMAND(get_emmcdl_ver),
+  REGISTER_COMMAND(get_temperature),
  /* ^^ insert new commands here ^^ */
   {0}
 };
