@@ -66,6 +66,7 @@ void InitBEIPartial( const BEIComponentMap& map, BehaviorExternalInterface& bei 
            GetFromMap<AnimationComponent>(map, BEIComponentID::Animation),
            GetFromMap<BehaviorContainer>(map, BEIComponentID::BehaviorContainer),
            GetFromMap<BehaviorEventComponent>(map, BEIComponentID::BehaviorEvent),
+           GetFromMap<BehaviorTimerManager>(map, BEIComponentID::BehaviorTimerManager),
            GetFromMap<BlockWorld>(map, BEIComponentID::BlockWorld),
            GetFromMap<BodyLightComponent>(map, BEIComponentID::BodyLightComponent),
            GetFromMap<CubeAccelComponent>(map, BEIComponentID::CubeAccel),

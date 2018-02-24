@@ -26,6 +26,7 @@
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
 #include "engine/voiceCommands/voiceCommandComponent.h"
+#include "util/console/consoleInterface.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -33,6 +34,8 @@ namespace Cozmo {
 namespace {
 const char* kAnimUnmatchedKey = "anim_unmatched";
 const char* kExitOnIntentsKey = "exitOnIntents";
+  
+CONSOLE_VAR( bool, kRespondsToTriggerWord, "BehaviorReactToVoiceCommand", true );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -65,7 +68,8 @@ bool BehaviorReactToVoiceCommand::WantsToBeActivatedBehavior() const
     }
   }
   
-  return true;
+  
+  return kRespondsToTriggerWord;
 }
 
 

@@ -228,6 +228,13 @@ protected:
   // it may be more desirable to set it from code
   void SetRespondToTriggerWord(bool shouldRespond);
   
+  // Add to a list of BehaviorTimerManager timers that this behavior should reset upon activation.
+  // You don't want to put a reset in too high (/ deep in the stack) a behavior in case one
+  // of its delegates fails, which might reset the timer without the action being performed. You
+  // also don't want to put it in too low a delegate for the same reason -- if it doesn't start,
+  // the higher level behavior might try again, and you end up in a loop. Choose wisely my friend.
+  void AddResetTimer(const std::string& timerName) { _resetTimers.push_back(timerName); }
+  
   virtual void OnEnteredActivatableScopeInternal() override;
   virtual void OnLeftActivatableScopeInternal() override;
 
@@ -476,6 +483,9 @@ private:
   // 1) WantToBeActivated, in the absence of other negative conditions
   // 2) Clear the trigger word when the behavior is activated
   bool _respondToTriggerWord;
+  
+  // a list of named timers in the BehaviorTimerManager that should be reset when this behavior starts
+  std::vector<std::string> _resetTimers;
 
   // if an unlockId is set, the behavior won't be activatable unless the unlockId is unlocked in the progression component
   UnlockId _requiredUnlockId;

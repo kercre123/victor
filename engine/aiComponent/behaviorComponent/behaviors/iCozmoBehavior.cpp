@@ -25,6 +25,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorFactory.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTimers.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
@@ -69,6 +70,7 @@ static const char* kWantsToBeActivatedCondConfigKey  = "wantsToBeActivatedCondit
 static const char* kRespondToUserIntentsKey          = "respondToUserIntents";
 static const char* kClaimUserIntentDataKey           = "claimUserIntentData";
 static const char* kRespondToTriggerWordKey          = "respondToTriggerWord";
+static const char* kResetTimersKey                   = "resetTimers";
 static const std::string kIdleLockPrefix             = "Behavior_";
 
 // Keys for loading in anonymous behaviors
@@ -261,6 +263,14 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
   }
   
   _respondToTriggerWord = config.get(kRespondToTriggerWordKey, false).asBool();
+  
+  JsonTools::GetVectorOptional(config, kResetTimersKey, _resetTimers);
+  for( const auto& timerName : _resetTimers ) {
+    ANKI_VERIFY( BehaviorTimerManager::IsValidName( timerName ),
+                 "ICozmoBehavior.ReadFromJson.InvalidTimer",
+                 "Timer '%s' is invalid",
+                 timerName.c_str() );
+  }
 
   return true;
 }
@@ -617,6 +627,12 @@ void ICozmoBehavior::OnActivatedInternal()
   // Conditions may not be evaluted when the behavior is Active
   for(auto& strategy: _wantsToBeActivatedConditions){
     strategy->SetActive(GetBEI(), false);
+  }
+  
+  // reset any timers
+  for( const auto& timerName : _resetTimers ) {
+    auto timer = BehaviorTimerManager::BehaviorTimerFromString( timerName );
+    GetBEI().GetBehaviorTimerManager().GetTimer( timer  ).Reset();
   }
 
   OnBehaviorActivated();

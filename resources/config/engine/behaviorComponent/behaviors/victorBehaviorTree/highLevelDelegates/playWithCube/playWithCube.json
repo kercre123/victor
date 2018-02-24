@@ -8,6 +8,8 @@
     "PutDownBlock"
   ],
 
+  "resetTimers": ["PlayingWithCube"],
+
   "anonymousBehaviors": [
     {
       "behaviorName" : "PlayWithCubeInternal",

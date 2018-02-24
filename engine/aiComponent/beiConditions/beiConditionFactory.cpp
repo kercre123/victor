@@ -12,6 +12,7 @@
 
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 
+#include "engine/aiComponent/beiConditions/conditions/conditionBehaviorTimer.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionCliffDetected.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionConsoleVar.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionFacePositionUpdated.h"
@@ -57,6 +58,11 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
   IBEIConditionPtr strategy = nullptr;
 
   switch (strategyType) {
+    case BEIConditionType::BehaviorTimer:
+    {
+      strategy = std::make_shared<ConditionBehaviorTimer>(config);
+      break;
+    }
     case BEIConditionType::ConsoleVar:
     {
       strategy = std::make_shared<ConditionConsoleVar>(config);

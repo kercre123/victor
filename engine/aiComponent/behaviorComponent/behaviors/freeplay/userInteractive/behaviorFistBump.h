@@ -89,6 +89,8 @@ private:
   std::set<IFistBumpListener*> _fistBumpListeners;
   void ResetTrigger(bool updateLastCompletionTime);
   
+  void ResetFistBumpTimer() const;
+  
 }; // class BehaviorFistBump
   
 

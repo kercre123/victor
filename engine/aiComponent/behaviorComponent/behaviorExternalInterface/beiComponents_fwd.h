@@ -9,6 +9,7 @@ enum class BEIComponentID{
   Animation,
   BehaviorContainer,
   BehaviorEvent,
+  BehaviorTimerManager,
   BlockWorld,
   BodyLightComponent,
   CubeAccel,

@@ -13,9 +13,11 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/behaviorHighLevelAI.h"
 
+#include "clad/types/behaviorComponent/behaviorTimerTypes.h"
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTimers.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/faceWorld.h"
@@ -172,9 +174,9 @@ InternalStatesBehavior::PreDefinedStrategiesMap BehaviorHighLevelAI::CreatePreDe
           const bool hasntDrivenOffChargerForPlay = StateExitCooldownExpired(GetStateID("DriveOffChargerIntoPlay"),
                                                                             _params.playWithCubeOnChargerCooldown_s,
                                                                             valueIfNeverRun);
-          const bool hasntPlayed = StateExitCooldownExpired(GetStateID("PlayingWithCube"),
-                                                            _params.playWithCubeCooldown_s,
-                                                            valueIfNeverRun);
+          const auto& timer = GetBEI().GetBehaviorTimerManager().GetTimer( BehaviorTimerTypes::PlayingWithCube );
+          const bool hasntPlayed = timer.HasCooldownExpired(_params.playWithCubeCooldown_s, valueIfNeverRun);
+          
           return hasntDrivenOffChargerForPlay && hasntPlayed;
         },
         {/* Empty Set:: No Vision Requirements*/ }
@@ -185,7 +187,8 @@ InternalStatesBehavior::PreDefinedStrategiesMap BehaviorHighLevelAI::CreatePreDe
       {
         [this](BehaviorExternalInterface& behaviorExternalInterface) {
 
-          if( !StateExitCooldownExpired(GetStateID("PlayingWithCube"), _params.playWithCubeCooldown_s) ) {
+          const auto& timer = GetBEI().GetBehaviorTimerManager().GetTimer( BehaviorTimerTypes::PlayingWithCube );
+          if( !timer.HasCooldownExpired(_params.playWithCubeCooldown_s) ) {
             // still on cooldown
             return false;
           }

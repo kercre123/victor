@@ -45,6 +45,7 @@ class BehaviorEventAnimResponseDirector;
 class BehaviorExternalInterface;
 class BehaviorManager;
 class BehaviorSystemManager;
+class BehaviorTimers;
 class BlockWorld;
 class DelegationComponent;
 class DevBaseBehavior;
