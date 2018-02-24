@@ -22,6 +22,8 @@
 #include <sodium.h>
 #include <signals/simpleSignal.hpp>
 
+//#include <glib.h>
+
 #include "anki-ble/log.h"
 #include "switchboardd/_switchboardMain.h"
 
@@ -62,7 +64,7 @@ void Anki::Switchboard::Daemon::Stop() {
     sBleClient->Disconnect(sConnectionId);
     sBleClient->StopAdvertising();
 
-    delete sBleClient;
+    //delete sBleClient;
   }
 
   ev_timer_stop(sLoop, &sTimer);
