@@ -1513,5 +1513,8 @@
   },
   "codeLabFeaturedWakeUpCozmo.projectInstructions": {
     "translation": "1. Line up Cozmo's Cubes in front of you.\n\n2. Find a friend to take turns with, or play on your own.\n\n3. Once you tap the Start Flag, place Cozmo on his back when he asks.\n\n4. When Cozmo’s Cube lights spin blue, tap them to poke him. Whoever wakes Cozmo up, loses the game!"
+  },
+  "codeLab.toomanyprojectsDialog.dialogTitle": {
+    "translation": "You have reached the maximum number of projects. Please delete a project before creating a new one."
   }
 }
