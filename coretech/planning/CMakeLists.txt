@@ -80,24 +80,23 @@ target_include_directories(cti_planning_robot
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../..>
 )
 
-if (MACOSX)
-
-  #
-  # cti_planning_standalone
-  #
+#
+# cti_planning_standalone
+#
   
-  anki_build_cxx_executable(cti_planning_standalone ${ANKI_SRCLIST_DIR})
-  target_compile_definitions(cti_planning_standalone
-    PRIVATE
-    CORETECH_ENGINE
-  )
+anki_build_cxx_executable(cti_planning_standalone ${ANKI_SRCLIST_DIR})
+target_compile_definitions(cti_planning_standalone
+  PRIVATE
+  CORETECH_ENGINE
+)
 
-  target_link_libraries(cti_planning_standalone
-    PRIVATE
-    cti_planning
-    ${OPENCV_LIBS}
-  )
+target_link_libraries(cti_planning_standalone
+  PRIVATE
+  cti_planning
+  ${OPENCV_LIBS}
+)
 
+if (MACOSX)
 
   enable_testing()
 

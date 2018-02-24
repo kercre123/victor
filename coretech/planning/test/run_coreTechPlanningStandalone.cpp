@@ -22,6 +22,7 @@
 #include <iostream>
 #include <libgen.h>
 #include <map>
+#include <unistd.h>
 
 using namespace Anki::Planning;
 using namespace std;
