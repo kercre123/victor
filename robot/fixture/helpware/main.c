@@ -201,12 +201,15 @@ int handle_get_temperature_command(const char* cmd, int len)
 {
   //>>get_temperature 4 0 1 ... [zone list]
   //cat thermal_zone*/type to see a list of valid zones
+  //printf("DEBUG,GET-TEMP: cmd=%08x, len=%i, cmd+len=%08x\n", (uint32_t)cmd, len, (uint32_t)(cmd+len) );
   
   const char* next = cmd;
   while(next < cmd+len) //each argument is zone # to report
   {
+    errno = 0;
     char *endptr;
     int zone = strtol(next, &endptr, 10); //enforce base10
+    //printf("DEBUG,GET-TEMP: zone=%i, next=%08x, endptr-delta=%i, errno=%i\n", zone, (uint32_t)next, (uint32_t)(endptr-next), errno);
     
     char *temperature = NULL;
     if( errno == 0 && zone >= 0 && zone <= 9 && endptr > next ) {
@@ -216,9 +219,11 @@ int handle_get_temperature_command(const char* cmd, int len)
     } else {
       zone = -1;
     }
-    printf_multiple(SEND_CLS, ":%i %s\n", zone, (temperature ? temperature : "-1"));
+    printf_multiple(SEND_CLS, ":zone%i %s\n", zone, (temperature ? temperature : "-1"));
     next = endptr > next ? endptr : next+1;
   }
+  
+  //fflush(stdout);
   
   return 0;
 }
