@@ -10,9 +10,9 @@
  *
  **/
 
-#include "anki/planning/basestation/xythetaEnvironment.h"
-#include "anki/planning/basestation/xythetaPlanner.h"
-#include "anki/planning/basestation/xythetaPlannerContext.h"
+#include "coretech/planning/engine/xythetaEnvironment.h"
+#include "coretech/planning/engine/xythetaPlanner.h"
+#include "coretech/planning/engine/xythetaPlannerContext.h"
 #include "json/json.h"
 #include "util/logging/logging.h"
 #include "util/logging/printfLoggerProvider.h"
