@@ -23,7 +23,6 @@
 #include "anki-ble/bleClient.h"
 #include "switchboardd/securePairing.h"
 #include "switchboardd/taskExecutor.h"
-#include <glib-2.0/glib.h>
 
 namespace Anki {
 namespace Switchboard {
