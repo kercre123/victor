@@ -26,6 +26,7 @@
 
 #include "anki-ble/log.h"
 #include "switchboardd/_switchboardMain.h"
+#include "anki-wifi/wifi.h"
 
 // --------------------------------------------------------------------------------------------------------------------
 // Switchboard Daemon
@@ -51,6 +52,13 @@ void OnDisconnected(int connId, Anki::Switchboard::IpcBleStream* stream);
 void Anki::Switchboard::Daemon::Start() {
   sLoop = ev_default_loop(0);
   sTaskExecutor = new Anki::TaskExecutor(sLoop);
+
+  //####
+  std::vector<WiFiScanResult> wifiNetworks = Anki::ScanForWiFiAccessPoints();
+  for(int i = 0; i < wifiNetworks.size(); i++) {
+    printf("Network: %s \t\t\t[%d]\n", wifiNetworks[i].ssid.c_str(), wifiNetworks[i].signal_level);
+  }
+  //####
 
   InitializeBle();
 
