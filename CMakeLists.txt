@@ -36,6 +36,8 @@ if (ANDROID)
   set(SYMBOL_VISIBILITY_FLAGS "-fvisibility=hidden")
 elseif(MACOSX)
   set(ANKI_PLATFORM_NAME "mac")
+elseif(VICOS)
+  set(ANKI_PLATFORM_NAME "vicos")
 else()
   message(FATAL_ERROR "unsupported platform: ${ANKI_PLATFORM_NAME}")
 endif()
@@ -107,46 +109,49 @@ endif()
 #    message(FATAL_ERROR "breakpad_client not defined")
 #endif()
 
-
 import(clad "tools/message-buffers")
-import(util "lib/util")
-include(audio) # See ./cmake/audio.cmake for definitions and lib
-import(ble_cozmo "lib/BLECozmo")
-import(DAS "lib/das-client")
-
 # BRC-TODO: Make this top-level include into an "interface"
 # lib so that other target can depend on it, instead of manually injecting
 # include dirs
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 
-import(coretech "coretech")
-add_subdirectory("clad")
-add_subdirectory("cloud")
-add_subdirectory("cubeBleClient")
-add_subdirectory("osState")
-add_subdirectory("cannedAnimLib")
-add_subdirectory("animProcess")
-add_subdirectory("webServerProcess")
-add_subdirectory("lib/signalEssence")
-add_subdirectory("platform")
+if(VICOS)
+  add_subdirectory("platform/switchboard")
+else()
+  import(util "lib/util")
+  include(audio) # See ./cmake/audio.cmake for definitions and lib
+  import(ble_cozmo "lib/BLECozmo")
+  import(DAS "lib/das-client")
 
-target_include_directories(victor_anim PRIVATE
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/anki/cozmo>
-)
+  import(coretech "coretech")
+  add_subdirectory("clad")
+  add_subdirectory("cloud")
+  add_subdirectory("cubeBleClient")
+  add_subdirectory("osState")
+  add_subdirectory("cannedAnimLib")
+  add_subdirectory("animProcess")
+  add_subdirectory("webServerProcess")
+  add_subdirectory("lib/signalEssence")
+  add_subdirectory("platform")
 
-target_include_directories(victor_web_library PRIVATE
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/anki/cozmo>
-)
+  target_include_directories(victor_anim PRIVATE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/anki/cozmo>
+  )
 
-add_subdirectory("robot")
+  target_include_directories(victor_web_library PRIVATE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/anki/cozmo>
+  )
 
-import(cozmo_engine "engine")
+  add_subdirectory("robot")
 
-target_include_directories(cozmo_engine PRIVATE
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/anki/cozmo>
-)
+  import(cozmo_engine "engine")
 
-add_subdirectory("resources")
+  target_include_directories(cozmo_engine PRIVATE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/anki/cozmo>
+  )
+
+  add_subdirectory("resources")
+endif()
 
 if (ANDROID)
     add_subdirectory("project/victor/tools")
