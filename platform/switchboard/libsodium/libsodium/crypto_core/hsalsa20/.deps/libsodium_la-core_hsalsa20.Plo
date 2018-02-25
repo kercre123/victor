@@ -1,0 +1,14 @@
+crypto_core/hsalsa20/libsodium_la-core_hsalsa20.lo: \
+  crypto_core/hsalsa20/core_hsalsa20.c \
+  include/sodium/crypto_core_hsalsa20.h \
+  /Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/lib/clang/5.0.0/include/stddef.h \
+  /Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/lib/clang/5.0.0/include/__stddef_max_align_t.h \
+  include/sodium/export.h
+
+include/sodium/crypto_core_hsalsa20.h:
+
+/Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/lib/clang/5.0.0/include/stddef.h:
+
+/Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/lib/clang/5.0.0/include/__stddef_max_align_t.h:
+
+include/sodium/export.h:

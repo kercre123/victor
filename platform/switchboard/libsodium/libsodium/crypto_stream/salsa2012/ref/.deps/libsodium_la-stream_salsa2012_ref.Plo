@@ -1,0 +1,46 @@
+crypto_stream/salsa2012/ref/libsodium_la-stream_salsa2012_ref.lo: \
+  crypto_stream/salsa2012/ref/stream_salsa2012_ref.c \
+  /Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/lib/clang/5.0.0/include/stdint.h \
+  /Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/stdint.h \
+  /Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/features.h \
+  /Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/stdc-predef.h \
+  /Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/sys/cdefs.h \
+  /Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/bits/wordsize.h \
+  /Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/gnu/stubs.h \
+  /Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/gnu/stubs-soft.h \
+  /Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/bits/wchar.h \
+  include/sodium/crypto_core_salsa2012.h \
+  /Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/lib/clang/5.0.0/include/stddef.h \
+  /Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/lib/clang/5.0.0/include/__stddef_max_align_t.h \
+  include/sodium/export.h include/sodium/crypto_stream_salsa2012.h \
+  include/sodium/utils.h
+
+/Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/lib/clang/5.0.0/include/stdint.h:
+
+/Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/stdint.h:
+
+/Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/features.h:
+
+/Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/stdc-predef.h:
+
+/Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/sys/cdefs.h:
+
+/Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/bits/wordsize.h:
+
+/Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/gnu/stubs.h:
+
+/Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/gnu/stubs-soft.h:
+
+/Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/bits/wchar.h:
+
+include/sodium/crypto_core_salsa2012.h:
+
+/Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/lib/clang/5.0.0/include/stddef.h:
+
+/Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/lib/clang/5.0.0/include/__stddef_max_align_t.h:
+
+include/sodium/export.h:
+
+include/sodium/crypto_stream_salsa2012.h:
+
+include/sodium/utils.h:
