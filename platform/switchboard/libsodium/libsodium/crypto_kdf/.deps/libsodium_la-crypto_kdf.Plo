@@ -1,0 +1,90 @@
+crypto_kdf/libsodium_la-crypto_kdf.lo: crypto_kdf/crypto_kdf.c \
+  include/sodium/crypto_kdf.h \
+  /Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/lib/clang/5.0.0/include/stddef.h \
+  /Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/lib/clang/5.0.0/include/__stddef_max_align_t.h \
+  /Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/lib/clang/5.0.0/include/stdint.h \
+  /Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/stdint.h \
+  /Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/features.h \
+  /Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/stdc-predef.h \
+  /Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/sys/cdefs.h \
+  /Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/bits/wordsize.h \
+  /Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/gnu/stubs.h \
+  /Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/gnu/stubs-soft.h \
+  /Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/bits/wchar.h \
+  include/sodium/crypto_kdf_blake2b.h include/sodium/export.h \
+  include/sodium/randombytes.h \
+  /Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/sys/types.h \
+  /Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/bits/types.h \
+  /Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/bits/typesizes.h \
+  /Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/time.h \
+  /Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/endian.h \
+  /Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/bits/endian.h \
+  /Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/bits/byteswap.h \
+  /Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/bits/byteswap-16.h \
+  /Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/sys/select.h \
+  /Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/bits/select.h \
+  /Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/bits/sigset.h \
+  /Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/bits/time.h \
+  /Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/bits/select2.h \
+  /Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/sys/sysmacros.h \
+  /Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/bits/pthreadtypes.h
+
+include/sodium/crypto_kdf.h:
+
+/Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/lib/clang/5.0.0/include/stddef.h:
+
+/Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/lib/clang/5.0.0/include/__stddef_max_align_t.h:
+
+/Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/lib/clang/5.0.0/include/stdint.h:
+
+/Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/stdint.h:
+
+/Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/features.h:
+
+/Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/stdc-predef.h:
+
+/Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/sys/cdefs.h:
+
+/Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/bits/wordsize.h:
+
+/Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/gnu/stubs.h:
+
+/Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/gnu/stubs-soft.h:
+
+/Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/bits/wchar.h:
+
+include/sodium/crypto_kdf_blake2b.h:
+
+include/sodium/export.h:
+
+include/sodium/randombytes.h:
+
+/Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/sys/types.h:
+
+/Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/bits/types.h:
+
+/Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/bits/typesizes.h:
+
+/Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/time.h:
+
+/Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/endian.h:
+
+/Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/bits/endian.h:
+
+/Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/bits/byteswap.h:
+
+/Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/bits/byteswap-16.h:
+
+/Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/sys/select.h:
+
+/Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/bits/select.h:
+
+/Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/bits/sigset.h:
+
+/Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/bits/time.h:
+
+/Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/bits/select2.h:
+
+/Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/sys/sysmacros.h:
+
+/Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/bin/../../sysroot/usr/include/bits/pthreadtypes.h:

@@ -13,6 +13,7 @@
 #ifndef messages_hpp
 #define messages_hpp
 
+#include <cstdio>
 #include <stdlib.h>
 #include "signals/simpleSignal.hpp"
 
