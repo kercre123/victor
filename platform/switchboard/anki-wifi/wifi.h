@@ -42,6 +42,7 @@ class WiFiScanResult {
   std::string ssid;
 };
 
+//bool ConnectToWiFi(std::string ssid);
 std::vector<WiFiScanResult> ScanForWiFiAccessPoints();
 std::vector<uint8_t> PackWiFiScanResults(const std::vector<WiFiScanResult>& results);
 void EnableWiFiInterface(const bool enable, ExecCommandCallback callback);

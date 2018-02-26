@@ -56,6 +56,9 @@ void Anki::Switchboard::Daemon::Start() {
   //####
   std::vector<WiFiScanResult> wifiNetworks = Anki::ScanForWiFiAccessPoints();
   for(int i = 0; i < wifiNetworks.size(); i++) {
+    bool isWps = wifiNetworks[i].wps;
+    bool isEncrypted = wifiNetworks[i].encrypted;
+    bool isEncrypted = wifiNetworks[i].auth;
     printf("Network: %s \t\t\t[%d]\n", wifiNetworks[i].ssid.c_str(), wifiNetworks[i].signal_level);
   }
   //####
