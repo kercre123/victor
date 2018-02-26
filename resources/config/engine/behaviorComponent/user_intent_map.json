@@ -26,7 +26,11 @@
     },
     {
       "cloud_intent" : "intent_clock_settimer",
-      "user_intent"  : "set_timer"
+      "user_intent"  : "set_timer",
+      "cloud_substitutions": {
+        "timer-duration.amount": "time_s"
+      },
+      "cloud_numerics": ["timer-duration.amount"]
     },
     {
       "cloud_intent": "intent_system_charger",

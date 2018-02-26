@@ -398,6 +398,15 @@ void ICozmoBehavior::InitBehaviorOperationModifiers()
   GetBehaviorOperationModifiers(_operationModifiers);
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::SetDontActivateThisTick(const std::string& coordinatorName)
+{
+  _dontActivateCoordinator = coordinatorName;
+  _tickDontActivateSetFor = BaseStationTimer::getInstance()->GetTickCount();
+}
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::AddWaitForUserIntent( UserIntentTag intentTag )
 {
@@ -758,6 +767,13 @@ bool ICozmoBehavior::WantsToBeActivatedBase() const
   if (IsActivated()) {
     PRINT_CH_DEBUG("Behaviors", "ICozmoBehavior.WantsToBeActivatedBase", "Behavior %s is already running", GetDebugLabel().c_str());
     return true;
+  }
+
+  if(_tickDontActivateSetFor == BaseStationTimer::getInstance()->GetTickCount()){
+    PRINT_NAMED_INFO("ICozmoBehavior.WantsToBeActivatedBase.DontActivateDueToCoordinator",
+                    "Behavior %s was asked not to activate during tick %zu by coordinator %s", 
+                    GetDebugLabel().c_str(), _tickDontActivateSetFor, _dontActivateCoordinator.c_str());
+    return false;
   }
 
   // check if required processes are running

@@ -2,8 +2,8 @@
   "behaviorClass" : "ProceduralClock",
   "behaviorID" : "SingletonTimerAntic",
 
-  "getInAnimTrigger" : "Hiccup",
-  "getOutAnimTrigger" : "Hiccup",
+  "getInAnimTrigger" : "TimerSetGetIn",
+  "getOutAnimTrigger" : "TimerSetGetOut",
   "displayClockFor_s" : 3,
   "shouldTurnToFace"  : true,
 

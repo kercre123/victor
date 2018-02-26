@@ -190,6 +190,12 @@ public:
   // Give derived behaviors the opportunity to override default behavior operations
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const = 0;
 
+  // Allow external behaviors to ask that this behavior return false for WantsToBeActivated
+  // for this tick. This should only be used by "coordinator" behaviors to allow an "event"
+  // to bypass one of the behaviors InActivatableScope so that it can be handled by something
+  // further down the stack
+  void SetDontActivateThisTick(const std::string& coordinatorName);
+
 protected:
 
 
@@ -486,6 +492,10 @@ private:
   
   // a list of named timers in the BehaviorTimerManager that should be reset when this behavior starts
   std::vector<std::string> _resetTimers;
+
+  // Parameters that track SetDontActivateThisTick
+  std::string _dontActivateCoordinator;
+  size_t _tickDontActivateSetFor = -1;
 
   // if an unlockId is set, the behavior won't be activatable unless the unlockId is unlocked in the progression component
   UnlockId _requiredUnlockId;

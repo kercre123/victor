@@ -2125,6 +2125,22 @@
       "AnimName": "ag_surprise"
     },
     {
+      "CladEvent": "TimerSetGetIn",
+      "AnimName": "ag_timer_set_getin"
+    },
+    {
+      "CladEvent": "TimerSetGetOut",
+      "AnimName": "ag_timer_set_getout"
+    },
+    {
+      "CladEvent": "TimerRingGetIn",
+      "AnimName": "ag_codelab_tinyorchestra_celebration"
+    },
+    {
+      "CladEvent": "TimerRingGetOut",
+      "AnimName": "ag_codelab_getout"
+    },
+    {
       "CladEvent": "TurtleRoll",
       "AnimName": "ag_reacttocliff_turtleroll_01"
     },

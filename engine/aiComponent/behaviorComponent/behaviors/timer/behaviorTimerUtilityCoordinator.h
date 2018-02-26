@@ -32,6 +32,8 @@ class BehaviorTimerUtilityCoordinator : public ICozmoBehavior
 public:
   virtual ~BehaviorTimerUtilityCoordinator();
 
+  bool IsTimerRinging();
+
 protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;  

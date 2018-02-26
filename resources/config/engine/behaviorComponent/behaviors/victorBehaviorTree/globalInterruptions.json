@@ -7,10 +7,10 @@
   "behaviors": [
     "ReactToCliff",
     "TriggerWordDetected",
+    "TimerUtilityCoordinator",
     "MeetVictor",
     "ReactToSoundAwake",
     "DevPettingTestSimple",
-    "TimerUtilityCoordinator",
     "ReactToUnclaimedIntent",
     "HighLevelAI"
   ]
