@@ -49,10 +49,10 @@ public:
   virtual bool FillBorder(EContentType typeToReplace, const FullContentArray& neighborsToFillFrom, EContentType newTypeSet, TimeStamp_t timeMeasured) override;
   
   // attempt to apply a transformation function to all nodes in the tree
-  virtual bool TransformContent(NodeTransformFunction transform) override;
+  virtual bool TransformContent(NodeTransformFunction transform) override { return _quadTree.Transform(transform); }
   
   // attempt to apply a transformation function to any node intersecting the poly
-  virtual bool TransformContent(const Poly2f& poly, NodeTransformFunction transform) override;
+  virtual bool TransformContent(const Poly2f& poly, NodeTransformFunction transform) override { return _quadTree.Transform(poly, transform); }
 
   // populate a list of all data that matches the predicate
   virtual void FindContentIf(NodePredicate pred, MemoryMapDataConstList& output) const override;
@@ -84,11 +84,11 @@ public:
   virtual bool HasContentType(EContentType type) const override;
   
   // Broadcast the memory map
-  virtual void GetBroadcastInfo(MemoryMapTypes::MapBroadcastData& info) const override { _quadTree.GetBroadcastInfo(info); }
+  virtual void GetBroadcastInfo(MemoryMapTypes::MapBroadcastData& info) const override;
 
   // get the timestamp the QT was last measured (we can update the QT with a new timestamp even if the content
   // does not change)
-  virtual TimeStamp_t GetLastChangedTimeStamp() const override {return _quadTree.GetRootNodeContent().data->GetLastObservedTime();}
+  virtual TimeStamp_t GetLastChangedTimeStamp() const override {return _quadTree.GetRootNodeData()->GetLastObservedTime();}
 
 private:
 

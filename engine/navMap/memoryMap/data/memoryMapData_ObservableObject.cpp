@@ -31,7 +31,7 @@ MemoryMapData_ObservableObject::MemoryMapData_ObservableObject(const ObservableO
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 MemoryMapTypes::MemoryMapDataPtr MemoryMapData_ObservableObject::Clone() const
 {
-  return std::make_shared<MemoryMapData_ObservableObject>(*this);
+  return MemoryMapDataWrapper<MemoryMapData_ObservableObject>(*this);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

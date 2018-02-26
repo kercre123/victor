@@ -25,10 +25,6 @@ namespace Cozmo {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 namespace
 {
-
-// number of root shifts that should be made to include new content
-static const int numberOfAllowedShiftsToIncludeContent = 1;
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 EContentTypePackedType ConvertContentArrayToFlags(const MemoryMapTypes::FullContentArray& array)
 {
@@ -55,7 +51,7 @@ EContentTypePackedType ConvertContentArrayToFlags(const MemoryMapTypes::FullCont
 // MemoryMap
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 MemoryMap::MemoryMap()
-: _quadTree(std::make_shared<MemoryMapData>())
+: _quadTree(MemoryMapDataPtr())
 {
 }
 
@@ -78,22 +74,6 @@ bool MemoryMap::FillBorder(EContentType typeToReplace, const FullContentArray& n
 
   // ask the processor to do it
   return _quadTree.GetProcessor().FillBorder(typeToReplace, nodeNeighborsToFillFrom, data);
-}
-
-bool MemoryMap::TransformContent(NodeTransformFunction transform)
-{
-  return _quadTree.GetProcessor().Transform(transform);
-}
-
-bool MemoryMap::TransformContent(const Poly2f& poly, NodeTransformFunction transform)
-{
-  return _quadTree.Transform(poly, transform);
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MemoryMap::FindContentIf(NodePredicate pred, MemoryMapDataConstList& output) const
-{
-  _quadTree.GetProcessor().FindIf(pred, output);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -145,9 +125,15 @@ bool MemoryMap::HasCollisionRayWithTypes(const Point2f& rayFrom, const Point2f& 
 {
   // convert type to quadtree node content and to flag (since processor takes in flags)
   const EContentTypePackedType nodeTypeFlags = ConvertContentArrayToFlags(types);
+
+  bool hasCollision = false;
+
+  QuadTreeTypes::FoldFunctorConst accumulator = 
+    [&hasCollision, &nodeTypeFlags] (const QuadTreeNode& node) {
+      hasCollision |= IsInEContentTypePackedType(node.GetData()->type, nodeTypeFlags);
+    };
   
-  // ask the processor about the collision with the converted type
-  const bool hasCollision = _quadTree.GetProcessor().HasCollisionRayWithTypes(rayFrom, rayTo, nodeTypeFlags);
+  _quadTree.Fold(accumulator, Poly2f({rayFrom, rayTo}));
   return hasCollision;
 }
 
@@ -163,7 +149,51 @@ bool MemoryMap::HasContentType(EContentType type) const
 bool MemoryMap::Insert(const Poly2f& poly, const MemoryMapData& data)
 {
   // clone data to make into a shared pointer.
-  return _quadTree.Insert(poly, data.Clone(), numberOfAllowedShiftsToIncludeContent);
+  return _quadTree.Insert(poly, data.Clone());
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void MemoryMap::GetBroadcastInfo(MemoryMapTypes::MapBroadcastData& info) const 
+{ 
+  // get data for each node
+  QuadTreeTypes::FoldFunctorConst accumulator = 
+    [&info, this] (const QuadTreeNode& node) {
+      // if the root done, populate header info
+      if ( node.IsRootNode() ){
+        std::stringstream instanceId;
+        instanceId << "QuadTree_" << this;
+
+        info.mapInfo = ExternalInterface::MemoryMapInfo(
+          node.GetLevel(),
+          node.GetSideLen(),
+          node.GetCenter().x(),
+          node.GetCenter().y(),
+          node.GetCenter().z(),
+          instanceId.str());
+      }
+
+      // leaf node
+      if ( !node.IsSubdivided() )
+      {
+        info.quadInfo.emplace_back(
+          ExternalInterface::MemoryMapQuadInfo(ConvertContentType(node.GetData()->type), node.GetLevel()));
+      }
+    };
+
+  _quadTree.Fold(accumulator);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void MemoryMap::FindContentIf(NodePredicate pred, MemoryMapDataConstList& output) const
+{
+  QuadTreeTypes::FoldFunctorConst accumulator = [&output, &pred] (const QuadTreeNode& node) {
+    MemoryMapDataPtr data = node.GetData();
+    if (pred(data)) {
+      output.insert( MemoryMapDataConstPtr(node.GetData()) );
+    }
+  };
+
+  _quadTree.Fold(accumulator);
 }
 
 } // namespace Cozmo
