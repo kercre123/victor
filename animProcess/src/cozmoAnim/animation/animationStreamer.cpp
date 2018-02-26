@@ -988,8 +988,6 @@ namespace Cozmo {
   
   Result AnimationStreamer::Update()
   {
-    ANKI_CPU_PROFILE("AnimationStreamer::Update");
-    
     Result lastResult = RESULT_OK;
     
     bool streamUpdated = false;
