@@ -13,7 +13,7 @@
                 "currentCostume": 0,
                 "direction": 90,
                 "draggable": false,
-                "id": "`}{rn6^RQEWsd:sd8j!v",
+                "id": "njjjFAmz+u)-MX|Y/4H@",
                 "isStage": true,
                 "lists": {},
                 "name": "Stage",
@@ -29,19 +29,19 @@
                     },
                     "!t2*wl}jsG2/4K4WHF2.": {
                         "id": "!t2*wl}jsG2/4K4WHF2.",
-                        "name": "choose and initialize plants to grow in the garden.",
+                        "name": "codelabfeaturedproject.cozmosgarden.choose_and_initialize_plants_to_grow_in_the_garden",
                         "type": "",
                         "value": 0
                     },
                     "#?`cDM;MD.XO=(EWN3Ul": {
                         "id": "#?`cDM;MD.XO=(EWN3Ul",
-                        "name": "disable the backpack light.",
+                        "name": "codelabfeaturedproject.cozmosgarden.disable_the_backpack_light",
                         "type": "",
                         "value": 0
                     },
                     "#S$Wc8r3%eOcceXS4Dw:": {
                         "id": "#S$Wc8r3%eOcceXS4Dw:",
-                        "name": "water count",
+                        "name": "codelabfeaturedproject.cozmosgarden.water_count",
                         "type": "",
                         "value": "0"
                     },
@@ -53,13 +53,13 @@
                     },
                     "$MDgR.*G2QJ[*pF@*F=1": {
                         "id": "$MDgR.*G2QJ[*pF@*F=1",
-                        "name": "check to see if any plants are ready to harvest.",
+                        "name": "codelabfeaturedproject.cozmosgarden.check_to_see_if_any_plants_are_ready_to_harvest",
                         "type": "",
                         "value": 0
                     },
                     "$MhV4:Z+J;d]{#}}:M=f": {
                         "id": "$MhV4:Z+J;d]{#}}:M=f",
-                        "name": "present the next drawn card.",
+                        "name": "codelabfeaturedproject.cozmosgarden.present_the_next_drawn_card",
                         "type": "",
                         "value": 0
                     },
@@ -71,13 +71,13 @@
                     },
                     "%!W?_?F2wdJN`{8|])Tg": {
                         "id": "%!W?_?F2wdJN`{8|])Tg",
-                        "name": "cozmo displays tomatoes on his face.",
+                        "name": "codelabfeaturedproject.cozmosgarden.cozmo_displays_tomatoes_on_his_face",
                         "type": "",
                         "value": 0
                     },
                     "%L-3Ev.(rOhz7[?pASC*": {
                         "id": "%L-3Ev.(rOhz7[?pASC*",
-                        "name": "check to see whether the player has successfully squashed the bugs.",
+                        "name": "codelabfeaturedproject.cozmosgarden.check_to_see_whether_the_player_has_successfully_squashed_the_bugs",
                         "type": "",
                         "value": 0
                     },
@@ -97,11 +97,11 @@
                         "id": "*FIp.ND~==_]F6_%czy5",
                         "name": "codelabfeaturedproject.cozmosgarden.plant_roll",
                         "type": "",
-                        "value": 3
+                        "value": 7
                     },
                     "+VOrMNvRVf2+mZzrfBb~": {
                         "id": "+VOrMNvRVf2+mZzrfBb~",
-                        "name": "cozmo displays a watering can on his face.",
+                        "name": "codelabfeaturedproject.cozmosgarden.cozmo_displays_a_watering_can_on_his_face",
                         "type": "",
                         "value": 0
                     },
@@ -125,7 +125,7 @@
                     },
                     ",u;#GEb0e3:8z2#_ZKd;": {
                         "id": ",u;#GEb0e3:8z2#_ZKd;",
-                        "name": "when the cube is tapped, activate the relevant action.",
+                        "name": "codelabfeaturedproject.cozmosgarden.when_the_cube_is_tapped_activate_the_relevant_action",
                         "type": "",
                         "value": 0
                     },
@@ -136,6 +136,7 @@
                         "value": [
                             "#ff0000",
                             "#ff7700",
+                            "#ffff00",
                             "#029900",
                             "#00ffbb",
                             "#0055ff"
@@ -143,31 +144,25 @@
                     },
                     "/E,a!N^^Y|#rFHBuQzux": {
                         "id": "/E,a!N^^Y|#rFHBuQzux",
-                        "name": "randomly choose a feedback phrase for cozmo to say.",
+                        "name": "codelabfeaturedproject.cozmosgarden.randomly_choose_a_feedback_phrase_for_cozmo_to_say",
                         "type": "",
                         "value": 0
                     },
                     "/Nbm9VfO(:.)x^34X)X,": {
                         "id": "/Nbm9VfO(:.)x^34X)X,",
-                        "name": "fill up the feedback list with phrases.",
-                        "type": "",
-                        "value": 0
-                    },
-                    "/oKDZKV0;zM63LY`[G`q": {
-                        "id": "/oKDZKV0;zM63LY`[G`q",
-                        "name": "determine which plant(s) to grow.",
+                        "name": "codelabfeaturedproject.cozmosgarden.fill_up_the_feedback_list_with_phrases",
                         "type": "",
                         "value": 0
                     },
                     "0p7w#LMTnxvRF*%jP7#1": {
                         "id": "0p7w#LMTnxvRF*%jP7#1",
-                        "name": "put the events of the bugs card into action.",
+                        "name": "codelabfeaturedproject.cozmosgarden.put_the_events_of_the_bugs_card_into_action",
                         "type": "",
                         "value": 0
                     },
                     "2N:5I_;4VlUNw.k%-(6a": {
                         "id": "2N:5I_;4VlUNw.k%-(6a",
-                        "name": "make sure no plant can have less than 0, or more than 4 points.",
+                        "name": "codelabfeaturedproject.cozmosgarden.make_sure_no_plant_can_have_less_than_0_or_more_than_4_points",
                         "type": "",
                         "value": 0
                     },
@@ -197,7 +192,7 @@
                     },
                     "3Z$bIz*%0xDp[-pa(~.q": {
                         "id": "3Z$bIz*%0xDp[-pa(~.q",
-                        "name": "clear all data from the plants to harvest list.",
+                        "name": "codelabfeaturedproject.cozmosgarden.clear_all_data_from_the_plants_to_harvest_list",
                         "type": "",
                         "value": 0
                     },
@@ -215,31 +210,25 @@
                     },
                     "8-6,Lo%c^`WxW@i|fCNc": {
                         "id": "8-6,Lo%c^`WxW@i|fCNc",
-                        "name": "fill up the deck of cards list.",
+                        "name": "codelabfeaturedproject.cozmosgarden.fill_up_the_deck_of_cards_list",
                         "type": "",
                         "value": 0
                     },
                     "85iC(8DU8ZNx_,BC#`8u": {
                         "id": "85iC(8DU8ZNx_,BC#`8u",
-                        "name": "show plant growth and check if plants are ready for harvest.",
+                        "name": "codelabfeaturedproject.cozmosgarden.show_plant_growth_and_check_if_plants_are_ready_for_harvest",
                         "type": "",
                         "value": 0
                     },
                     "8V;?o-k@CeoBBVUEc?fj": {
                         "id": "8V;?o-k@CeoBBVUEc?fj",
-                        "name": "clear all data from lists.",
-                        "type": "",
-                        "value": 0
-                    },
-                    "9cK|U1@iLSOlGNp+|KDY": {
-                        "id": "9cK|U1@iLSOlGNp+|KDY",
-                        "name": "use cube lights to show the current state of growth of each non-harvested plant.",
+                        "name": "codelabfeaturedproject.cozmosgarden.clear_all_data_from_lists",
                         "type": "",
                         "value": 0
                     },
                     ":z}pMyXWX{Eq,S7v6i59": {
                         "id": ":z}pMyXWX{Eq,S7v6i59",
-                        "name": "initialize game data and begin.",
+                        "name": "codelabfeaturedproject.cozmosgarden.initialize_game_data_and_begin",
                         "type": "",
                         "value": 0
                     },
@@ -251,7 +240,7 @@
                     },
                     "=2kLEANAg1;LybuGj2U)": {
                         "id": "=2kLEANAg1;LybuGj2U)",
-                        "name": "fill up the plant types and plant colors lists.",
+                        "name": "codelabfeaturedproject.cozmosgarden.fill_up_the_plant_types_and_plant_colors_lists",
                         "type": "",
                         "value": 0
                     },
@@ -263,7 +252,7 @@
                     },
                     "?_lH+b)Lc`b9p$GT~A}3": {
                         "id": "?_lH+b)Lc`b9p$GT~A}3",
-                        "name": "set a plant to the harvested state and spin the cube lights.",
+                        "name": "codelabfeaturedproject.cozmosgarden.set_a_plant_to_the_harvested_state_and_spin_the_cube_lights",
                         "type": "",
                         "value": 0
                     },
@@ -281,7 +270,7 @@
                     },
                     "A#~,`~zK@C~wQsYk3_XK": {
                         "id": "A#~,`~zK@C~wQsYk3_XK",
-                        "name": "draw the next card from the deck.",
+                        "name": "codelabfeaturedproject.cozmosgarden.draw_the_next_card_from_the_deck",
                         "type": "",
                         "value": 0
                     },
@@ -290,7 +279,6 @@
                         "name": "codelabfeaturedproject.cozmosgarden.garden_plants_growth",
                         "type": "list",
                         "value": [
-                            "1",
                             "1"
                         ]
                     },
@@ -298,7 +286,7 @@
                         "id": "BJ@[qkF)Brtx-@a3?cZL",
                         "name": "codelabfeaturedproject.cozmosgarden.shuffle_card",
                         "type": "",
-                        "value": "3"
+                        "value": "1"
                     },
                     "Bgbc~L#XrP]M.IGwPWsJ": {
                         "id": "Bgbc~L#XrP]M.IGwPWsJ",
@@ -324,6 +312,12 @@
                         "type": "broadcast_msg",
                         "value": "shuffle deck"
                     },
+                    "E6ZC4o^I=7R`yR^qWyt*": {
+                        "id": "E6ZC4o^I=7R`yR^qWyt*",
+                        "name": "use cube lights to show the current state of growth for plants that have not been harvested.",
+                        "type": "",
+                        "value": 0
+                    },
                     "ESi]bm*/2%==av=mlpvq": {
                         "id": "ESi]bm*/2%==av=mlpvq",
                         "name": "codelabfeaturedproject.cozmosgarden.game_over_win",
@@ -332,13 +326,13 @@
                     },
                     "FB_wjTS9HqxfJrRL+A;b": {
                         "id": "FB_wjTS9HqxfJrRL+A;b",
-                        "name": "put the events of the water card into action.",
+                        "name": "codelabfeaturedproject.cozmosgarden.put_the_events_of_the_water_card_into_action",
                         "type": "",
                         "value": 0
                     },
                     "FQ1)Iej(}dU1CaZwQB7[": {
                         "id": "FQ1)Iej(}dU1CaZwQB7[",
-                        "name": "cozmo displays bugs on his face.",
+                        "name": "codelabfeaturedproject.cozmosgarden.cozmo_displays_bugs_on_his_face",
                         "type": "",
                         "value": 0
                     },
@@ -346,11 +340,11 @@
                         "id": "F_D79IB}b:Ecf:0m^U}a",
                         "name": "codelabfeaturedproject.cozmosgarden.count",
                         "type": "",
-                        "value": 2
+                        "value": "1"
                     },
                     "G)k4O3-Nyx1gk$RDI5^c": {
                         "id": "G)k4O3-Nyx1gk$RDI5^c",
-                        "name": "cozmo displays lettuce on his face.",
+                        "name": "codelabfeaturedproject.cozmosgarden.cozmo_displays_lettuce_on_his_face",
                         "type": "",
                         "value": 0
                     },
@@ -361,6 +355,7 @@
                         "value": [
                             "Tomatoes",
                             "Oranges",
+                            "Lemons",
                             "Broccoli",
                             "Lettuce",
                             "Blueberries"
@@ -371,8 +366,7 @@
                         "name": "codelabfeaturedproject.cozmosgarden.garden_plants",
                         "type": "list",
                         "value": [
-                            "Grapes",
-                            "Lemons"
+                            "Grapes"
                         ]
                     },
                     "Ign$qg(xXsR@.h)W/,v0": {
@@ -385,35 +379,29 @@
                         "id": "Ip86u5Ta|m`@#q5lKe#0",
                         "name": "codelabfeaturedproject.cozmosgarden.shuffle_random",
                         "type": "",
-                        "value": 10
+                        "value": 5
                     },
                     "K^H0jB;QOZajNFS{5NK3": {
                         "id": "K^H0jB;QOZajNFS{5NK3",
-                        "name": "give feedback",
+                        "name": "codelabfeaturedproject.cozmosgarden.give_feedback",
                         "type": "broadcast_msg",
                         "value": "give feedback"
                     },
                     "MM2bKXch7d@*6G)54oJ1": {
                         "id": "MM2bKXch7d@*6G)54oJ1",
-                        "name": "instructions max amount",
+                        "name": "codelabfeaturedproject.cozmosgarden.instructions_max_amount",
                         "type": "",
                         "value": "2"
                     },
-                    "P?chlOBX!GcS*,I,O{i}": {
-                        "id": "P?chlOBX!GcS*,I,O{i}",
-                        "name": "combos",
-                        "type": "list",
-                        "value": []
-                    },
                     "PEdlr[J4sVtEOv1=3g3V": {
                         "id": "PEdlr[J4sVtEOv1=3g3V",
-                        "name": "randomly choose a phrase for cozmo to say when the bugs were hit.",
+                        "name": "codelabfeaturedproject.cozmosgarden.randomly_choose_a_phrase_for_cozmo_to_say_when_the_bugs_were_hit",
                         "type": "",
                         "value": 0
                     },
                     "T:l7Ai[SsyoE+o,+a/6.": {
                         "id": "T:l7Ai[SsyoE+o,+a/6.",
-                        "name": "cozmo displays grapes on his face.",
+                        "name": "codelabfeaturedproject.cozmosgarden.cozmo_displays_grapes_on_his_face",
                         "type": "",
                         "value": 0
                     },
@@ -431,7 +419,7 @@
                     },
                     "UuoA/scSlT_[sOg(43P(": {
                         "id": "UuoA/scSlT_[sOg(43P(",
-                        "name": "cozmo displays broccoli on his face.",
+                        "name": "codelabfeaturedproject.cozmosgarden.cozmo_displays_broccoli_on_his_face",
                         "type": "",
                         "value": 0
                     },
@@ -449,19 +437,19 @@
                     },
                     "[NP:(q{?ifH^ow`hjFmu": {
                         "id": "[NP:(q{?ifH^ow`hjFmu",
-                        "name": "feedback random",
+                        "name": "codelabfeaturedproject.cozmosgarden.feedback_random",
                         "type": "",
                         "value": 0
                     },
                     "]3u(n[21w(Sgnwn$.LYs": {
                         "id": "]3u(n[21w(Sgnwn$.LYs",
-                        "name": "sun count",
+                        "name": "codelabfeaturedproject.cozmosgarden.sun_count",
                         "type": "",
                         "value": "0"
                     },
                     "]yh]`BdZ/jKJe@vxv*JS": {
                         "id": "]yh]`BdZ/jKJe@vxv*JS",
-                        "name": "ran out of cards before all plants were harvested.",
+                        "name": "codelabfeaturedproject.cozmosgarden.ran_out_of_cards_before_all_plants_were_harvested",
                         "type": "",
                         "value": 0
                     },
@@ -473,7 +461,7 @@
                     },
                     "^:7On02M-mju0+n^MC.a": {
                         "id": "^:7On02M-mju0+n^MC.a",
-                        "name": "clear all data from the bug plants list.",
+                        "name": "codelabfeaturedproject.cozmosgarden.clear_all_data_from_the_bug_plants_list",
                         "type": "",
                         "value": 0
                     },
@@ -485,19 +473,19 @@
                     },
                     "_[LMkiKFeJ:$V)5-Req)": {
                         "id": "_[LMkiKFeJ:$V)5-Req)",
-                        "name": "cozmo displays blueberries on his face.",
+                        "name": "codelabfeaturedproject.cozmosgarden.cozmo_displays_blueberries_on_his_face",
                         "type": "",
                         "value": 0
                     },
                     "_l0SC,-IC8xK=bn^VV,E": {
                         "id": "_l0SC,-IC8xK=bn^VV,E",
-                        "name": "water the plant the player has chosen.",
+                        "name": "codelabfeaturedproject.cozmosgarden.water_the_plant_the_player_has_chosen",
                         "type": "",
                         "value": 0
                     },
                     "aQ3K|1wu3aUP1-BB)qI{": {
                         "id": "aQ3K|1wu3aUP1-BB)qI{",
-                        "name": "put the events of the sun card into action.",
+                        "name": "codelabfeaturedproject.cozmosgarden.put_the_events_of_the_sun_card_into_action",
                         "type": "",
                         "value": 0
                     },
@@ -507,21 +495,15 @@
                         "type": "broadcast_msg",
                         "value": "populate deck"
                     },
-                    "cnLaJnYt{Rdf!tZP-UNr": {
-                        "id": "cnLaJnYt{Rdf!tZP-UNr",
-                        "name": "combo",
-                        "type": "",
-                        "value": 0
-                    },
                     "d1H$UCFMq(Z}LZUozb?;": {
                         "id": "d1H$UCFMq(Z}LZUozb?;",
-                        "name": "feedback",
+                        "name": "codelabfeaturedproject.cozmosgarden.feedback",
                         "type": "list",
                         "value": []
                     },
                     "dZdRU]:2;1`I1B`lngut": {
                         "id": "dZdRU]:2;1`I1B`lngut",
-                        "name": "make the sun shine on all the plants.",
+                        "name": "codelabfeaturedproject.cozmosgarden.make_the_sun_shine_on_all_the_plants",
                         "type": "",
                         "value": 0
                     },
@@ -530,13 +512,12 @@
                         "name": "codelabfeaturedproject.cozmosgarden.garden_plants_active",
                         "type": "list",
                         "value": [
-                            "1",
                             "1"
                         ]
                     },
                     "eu*Pwdz}CSE*[qpJ$cFo": {
                         "id": "eu*Pwdz}CSE*[qpJ$cFo",
-                        "name": "cozmo displays a sun on his face.",
+                        "name": "codelabfeaturedproject.cozmosgarden.cozmo_displays_a_sun_on_his_face",
                         "type": "",
                         "value": 0
                     },
@@ -564,7 +545,7 @@
                     },
                     "hE#nyCv2b|oe*5jPRIx+": {
                         "id": "hE#nyCv2b|oe*5jPRIx+",
-                        "name": "add or subtract points from a plant.",
+                        "name": "codelabfeaturedproject.cozmosgarden.add_or_subtract_points_from_a_plant",
                         "type": "",
                         "value": 0
                     },
@@ -575,13 +556,13 @@
                         "value": [
                             "3",
                             "2",
+                            "1",
                             "2",
                             "1",
+                            "2",
+                            "2",
+                            "2",
                             "3",
-                            "1",
-                            "2",
-                            "2",
-                            "2",
                             "3",
                             "3"
                         ]
@@ -594,7 +575,7 @@
                     },
                     "lUG)A9oz=}]WCb-m+NLG": {
                         "id": "lUG)A9oz=}]WCb-m+NLG",
-                        "name": "when cozmo sees the player smile, activate the sun.",
+                        "name": "codelabfeaturedproject.cozmosgarden.when_cozmo_sees_the_player_smile_activate_the_sun",
                         "type": "",
                         "value": 0
                     },
@@ -606,7 +587,7 @@
                     },
                     "oATL*b[qJO~b#o`rIOX]": {
                         "id": "oATL*b[qJO~b#o`rIOX]",
-                        "name": "populate feedback list",
+                        "name": "codelabfeaturedproject.cozmosgarden.populate_feedback_list",
                         "type": "broadcast_msg",
                         "value": "populate feedback list"
                     },
@@ -615,8 +596,7 @@
                         "name": "codelabfeaturedproject.cozmosgarden.garden_plants_colors",
                         "type": "list",
                         "value": [
-                            "#bb00ff",
-                            "#ffff00"
+                            "#bb00ff"
                         ]
                     },
                     "r0z]Bf^/|kkr@#qTtWJH": {
@@ -625,21 +605,27 @@
                         "type": "broadcast_msg",
                         "value": "create garden"
                     },
+                    "t+y)3`kp_riT3=uXD%9j": {
+                        "id": "t+y)3`kp_riT3=uXD%9j",
+                        "name": "determine which plants to grow.",
+                        "type": "",
+                        "value": 0
+                    },
                     "tX-tEBzb5eQ)Rb=u[9Zq": {
                         "id": "tX-tEBzb5eQ)Rb=u[9Zq",
-                        "name": "all the plants were harvested successfully.",
+                        "name": "codelabfeaturedproject.cozmosgarden.all_the_plants_were_harvested_successfully",
                         "type": "",
                         "value": 0
                     },
                     "t~up$A9_P;qcve1{Zdi3": {
                         "id": "t~up$A9_P;qcve1{Zdi3",
-                        "name": "cozmo displays oranges on his face.",
+                        "name": "codelabfeaturedproject.cozmosgarden.cozmo_displays_oranges_on_his_face",
                         "type": "",
                         "value": 0
                     },
                     "un@KO:(xf/!y^$.7x4$5": {
                         "id": "un@KO:(xf/!y^$.7x4$5",
-                        "name": "cozmo displays lemons on his face.",
+                        "name": "codelabfeaturedproject.cozmosgarden.cozmo_displays_lemons_on_his_face",
                         "type": "",
                         "value": 0
                     },
@@ -663,13 +649,13 @@
                     },
                     "|6+AIN+3kwd|.}CSu-%f": {
                         "id": "|6+AIN+3kwd|.}CSu-%f",
-                        "name": "shuffle the deck of cards.",
+                        "name": "codelabfeaturedproject.cozmosgarden.shuffle_the_deck_of_cards",
                         "type": "",
                         "value": 0
                     },
                     "|P94tIm9d@~m)Vuxvz0W": {
                         "id": "|P94tIm9d@~m)Vuxvz0W",
-                        "name": "bugs count",
+                        "name": "codelabfeaturedproject.cozmosgarden.bugs_count",
                         "type": "",
                         "value": "0"
                     },
@@ -681,7 +667,7 @@
                     },
                     "~p+ld(4Qy^6(zaJqr*k(": {
                         "id": "~p+ld(4Qy^6(zaJqr*k(",
-                        "name": "randomly choose a phrase for cozmo to say when the bugs were missed.",
+                        "name": "codelabfeaturedproject.cozmosgarden.randomly_choose_a_phrase_for_cozmo_to_say_when_the_bugs_were_missed",
                         "type": "",
                         "value": 0
                     }
@@ -809,6 +795,25 @@
                         "topLevel": false,
                         "x": "2810",
                         "y": "3828"
+                    },
+                    "!Xw2JKi1ce(IP~%6Oa,x": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "t+y)3`kp_riT3=uXD%9j",
+                                "name": "VARIABLE",
+                                "value": "determine which plants to grow.",
+                                "variableType": ""
+                            }
+                        },
+                        "id": "!Xw2JKi1ce(IP~%6Oa,x",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": null,
+                        "shadow": false,
+                        "topLevel": true,
+                        "x": 399,
+                        "y": 3272
                     },
                     "!_s|hh6BjKcOdh1ef~)O": {
                         "fields": {
@@ -945,7 +950,7 @@
                             "VARIABLE": {
                                 "id": ",u;#GEb0e3:8z2#_ZKd;",
                                 "name": "VARIABLE",
-                                "value": "when the cube is tapped, activate the relevant action.",
+                                "value": "codelabfeaturedproject.cozmosgarden.when_the_cube_is_tapped_activate_the_relevant_action",
                                 "variableType": ""
                             }
                         },
@@ -1061,7 +1066,7 @@
                             "VARIABLE": {
                                 "id": "hE#nyCv2b|oe*5jPRIx+",
                                 "name": "VARIABLE",
-                                "value": "add or subtract points from a plant.",
+                                "value": "codelabfeaturedproject.cozmosgarden.add_or_subtract_points_from_a_plant",
                                 "variableType": ""
                             }
                         },
@@ -1432,25 +1437,6 @@
                         "shadow": true,
                         "topLevel": false
                     },
-                    "(7+*cU_/X4EBcwH:lk%/": {
-                        "fields": {
-                            "VARIABLE": {
-                                "id": "/oKDZKV0;zM63LY`[G`q",
-                                "name": "VARIABLE",
-                                "value": "determine which plant(s) to grow.",
-                                "variableType": ""
-                            }
-                        },
-                        "id": "(7+*cU_/X4EBcwH:lk%/",
-                        "inputs": {},
-                        "next": null,
-                        "opcode": "data_variable",
-                        "parent": null,
-                        "shadow": false,
-                        "topLevel": true,
-                        "x": 393,
-                        "y": 3254
-                    },
                     "(=GF,u~(I!0JzCC.QDz:": {
                         "fields": {
                             "VARIABLE": {
@@ -1490,7 +1476,7 @@
                             "VARIABLE": {
                                 "id": "8-6,Lo%c^`WxW@i|fCNc",
                                 "name": "VARIABLE",
-                                "value": "fill up the deck of cards list.",
+                                "value": "codelabfeaturedproject.cozmosgarden.fill_up_the_deck_of_cards_list",
                                 "variableType": ""
                             }
                         },
@@ -1526,7 +1512,7 @@
                             "VARIABLE": {
                                 "id": "/Nbm9VfO(:.)x^34X)X,",
                                 "name": "VARIABLE",
-                                "value": "fill up the feedback list with phrases.",
+                                "value": "codelabfeaturedproject.cozmosgarden.fill_up_the_feedback_list_with_phrases",
                                 "variableType": ""
                             }
                         },
@@ -1742,31 +1728,6 @@
                         "shadow": true,
                         "topLevel": false
                     },
-                    ")MZ6G-UffB%e;fg0W6p*": {
-                        "fields": {
-                            "LIST": {
-                                "id": "P?chlOBX!GcS*,I,O{i}",
-                                "name": "LIST",
-                                "value": "combos",
-                                "variableType": "list"
-                            }
-                        },
-                        "id": ")MZ6G-UffB%e;fg0W6p*",
-                        "inputs": {
-                            "ITEM": {
-                                "block": "+?vhA=sp@B32ItXd[qvP",
-                                "name": "ITEM",
-                                "shadow": "+?vhA=sp@B32ItXd[qvP"
-                            }
-                        },
-                        "next": "{UC=AuGcA7REtCup#2%=",
-                        "opcode": "data_addtolist",
-                        "parent": "k(hU=f3%RhjtY.pLHtI`",
-                        "shadow": false,
-                        "topLevel": false,
-                        "x": "-441",
-                        "y": "2830"
-                    },
                     ")QrvRI$)yTb:yp3E-m(O": {
                         "fields": {
                             "CUBE_SELECT": {
@@ -1862,7 +1823,7 @@
                             "VARIABLE": {
                                 "id": "#S$Wc8r3%eOcceXS4Dw:",
                                 "name": "VARIABLE",
-                                "value": "water count",
+                                "value": "codelabfeaturedproject.cozmosgarden.water_count",
                                 "variableType": ""
                             }
                         },
@@ -2026,7 +1987,7 @@
                             "VARIABLE": {
                                 "id": "lUG)A9oz=}]WCb-m+NLG",
                                 "name": "VARIABLE",
-                                "value": "when cozmo sees the player smile, activate the sun.",
+                                "value": "codelabfeaturedproject.cozmosgarden.when_cozmo_sees_the_player_smile_activate_the_sun",
                                 "variableType": ""
                             }
                         },
@@ -2206,7 +2167,7 @@
                             "VARIABLE": {
                                 "id": "MM2bKXch7d@*6G)54oJ1",
                                 "name": "VARIABLE",
-                                "value": "instructions max amount",
+                                "value": "codelabfeaturedproject.cozmosgarden.instructions_max_amount",
                                 "variableType": ""
                             }
                         },
@@ -2359,21 +2320,6 @@
                         "topLevel": false,
                         "x": "1230",
                         "y": "2088"
-                    },
-                    "+?vhA=sp@B32ItXd[qvP": {
-                        "fields": {
-                            "TEXT": {
-                                "name": "TEXT",
-                                "value": "almost a b.l.t."
-                            }
-                        },
-                        "id": "+?vhA=sp@B32ItXd[qvP",
-                        "inputs": {},
-                        "next": null,
-                        "opcode": "text",
-                        "parent": ")MZ6G-UffB%e;fg0W6p*",
-                        "shadow": true,
-                        "topLevel": false
                     },
                     "+@({IWU~bC?7sp#xBn@x": {
                         "fields": {
@@ -2535,7 +2481,7 @@
                             "VARIABLE": {
                                 "id": "MM2bKXch7d@*6G)54oJ1",
                                 "name": "VARIABLE",
-                                "value": "instructions max amount",
+                                "value": "codelabfeaturedproject.cozmosgarden.instructions_max_amount",
                                 "variableType": ""
                             }
                         },
@@ -2644,29 +2590,6 @@
                         "topLevel": false,
                         "x": "756",
                         "y": "1059"
-                    },
-                    "-+59j}cfF?k+r!eZ=I[j": {
-                        "fields": {},
-                        "id": "-+59j}cfF?k+r!eZ=I[j",
-                        "inputs": {
-                            "CONDITION": {
-                                "block": "zNAY-Nfq}@F[_VcgaG!+",
-                                "name": "CONDITION",
-                                "shadow": null
-                            },
-                            "SUBSTACK": {
-                                "block": "WKg|s/)PR[+/~wV}61Ba",
-                                "name": "SUBSTACK",
-                                "shadow": null
-                            }
-                        },
-                        "next": "-i[^B-v+$a-%f7a7oJ{.",
-                        "opcode": "control_repeat_until",
-                        "parent": ":-m$w.zbH|c!C;_rJZlu",
-                        "shadow": false,
-                        "topLevel": false,
-                        "x": "-21",
-                        "y": "2739"
                     },
                     "-4X^r{5sQocsl?k1[Fm$": {
                         "fields": {
@@ -2921,11 +2844,11 @@
                         },
                         "next": "KV5^8xBug;T6`hg7mX)C",
                         "opcode": "event_broadcastandwait_with_broadcast_input",
-                        "parent": "-+59j}cfF?k+r!eZ=I[j",
+                        "parent": ":-m$w.zbH|c!C;_rJZlu",
                         "shadow": false,
                         "topLevel": false,
-                        "x": 533.9176470588235,
-                        "y": 2254.9529411764706
+                        "x": 553.704705882353,
+                        "y": 2315.363529411765
                     },
                     "-j9PFJqhD{Di.KBTrt`:": {
                         "fields": {
@@ -2957,7 +2880,7 @@
                             "VARIABLE": {
                                 "id": ":z}pMyXWX{Eq,S7v6i59",
                                 "name": "VARIABLE",
-                                "value": "initialize game data and begin.",
+                                "value": "codelabfeaturedproject.cozmosgarden.initialize_game_data_and_begin",
                                 "variableType": ""
                             }
                         },
@@ -3099,7 +3022,7 @@
                             "VARIABLE": {
                                 "id": "PEdlr[J4sVtEOv1=3g3V",
                                 "name": "VARIABLE",
-                                "value": "randomly choose a phrase for cozmo to say when the bugs were hit.",
+                                "value": "codelabfeaturedproject.cozmosgarden.randomly_choose_a_phrase_for_cozmo_to_say_when_the_bugs_were_hit",
                                 "variableType": ""
                             }
                         },
@@ -3203,7 +3126,7 @@
                             "VARIABLE": {
                                 "id": "|P94tIm9d@~m)Vuxvz0W",
                                 "name": "VARIABLE",
-                                "value": "bugs count",
+                                "value": "codelabfeaturedproject.cozmosgarden.bugs_count",
                                 "variableType": ""
                             }
                         },
@@ -3237,7 +3160,7 @@
                             "VARIABLE": {
                                 "id": "2N:5I_;4VlUNw.k%-(6a",
                                 "name": "VARIABLE",
-                                "value": "make sure no plant can have less than 0, or more than 4 points.",
+                                "value": "codelabfeaturedproject.cozmosgarden.make_sure_no_plant_can_have_less_than_0_or_more_than_4_points",
                                 "variableType": ""
                             }
                         },
@@ -3267,8 +3190,8 @@
                         "parent": null,
                         "shadow": false,
                         "topLevel": true,
-                        "x": -164,
-                        "y": 1554
+                        "x": -207,
+                        "y": 874
                     },
                     "/F%:ALZ^Q~gPr(Kbz_GD": {
                         "fields": {
@@ -3334,31 +3257,6 @@
                         "topLevel": false,
                         "x": "4809",
                         "y": "140"
-                    },
-                    "/LJkQ3*/fpH4.PjKpo8[": {
-                        "fields": {
-                            "LIST": {
-                                "id": "P?chlOBX!GcS*,I,O{i}",
-                                "name": "LIST",
-                                "value": "combos",
-                                "variableType": "list"
-                            }
-                        },
-                        "id": "/LJkQ3*/fpH4.PjKpo8[",
-                        "inputs": {
-                            "ITEM": {
-                                "block": "T|j3pBTh2T5D-_T1OJ%{",
-                                "name": "ITEM",
-                                "shadow": "T|j3pBTh2T5D-_T1OJ%{"
-                            }
-                        },
-                        "next": null,
-                        "opcode": "data_addtolist",
-                        "parent": "y6(CsRVlOjUHf(yz{r{I",
-                        "shadow": false,
-                        "topLevel": false,
-                        "x": "-441",
-                        "y": "2702"
                     },
                     "/NA_C7xqixn^WdGE1eP]": {
                         "fields": {
@@ -3750,6 +3648,21 @@
                         "x": "2703",
                         "y": "1025"
                     },
+                    "16j|QhNSeyY-F~#{3}+N": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": " rounds"
+                            }
+                        },
+                        "id": "16j|QhNSeyY-F~#{3}+N",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": "J8}l2eX:.B[VcFbPBw61",
+                        "shadow": true,
+                        "topLevel": false
+                    },
                     "1Bq-mKNN}gG+nfr;1JXh": {
                         "fields": {
                             "VARIABLE": {
@@ -3893,6 +3806,23 @@
                         "x": "1126",
                         "y": "3112"
                     },
+                    "2%[t;=CYoYkbK]Rl8`}s": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "COZMO"
+                            }
+                        },
+                        "id": "2%[t;=CYoYkbK]Rl8`}s",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 4327.97566986084,
+                        "y": -502
+                    },
                     "2)7~}W=L_2=bhha8AkgX": {
                         "fields": {
                             "TEXT": {
@@ -3915,7 +3845,7 @@
                             "VARIABLE": {
                                 "id": "]3u(n[21w(Sgnwn$.LYs",
                                 "name": "VARIABLE",
-                                "value": "sun count",
+                                "value": "codelabfeaturedproject.cozmosgarden.sun_count",
                                 "variableType": ""
                             }
                         },
@@ -4038,7 +3968,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "what a nice garden."
+                                "value": "codelabfeaturedproject.cozmosgarden.what_a_nice_garden"
                             }
                         },
                         "id": "2HQ,^[v=-(}tIY^gz:^r",
@@ -4258,7 +4188,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "great job!"
+                                "value": "codelabfeaturedproject.cozmosgarden.great_job"
                             }
                         },
                         "id": "39~UcbGn$eu`ou./SOxs",
@@ -4572,7 +4502,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.pretty_close"
+                                "value": "we're pretty good at this!"
                             }
                         },
                         "id": "4WYg42`$K+^HyFUy-v@j",
@@ -4620,7 +4550,7 @@
                             "VARIABLE": {
                                 "id": "FB_wjTS9HqxfJrRL+A;b",
                                 "name": "VARIABLE",
-                                "value": "put the events of the water card into action.",
+                                "value": "codelabfeaturedproject.cozmosgarden.put_the_events_of_the_water_card_into_action",
                                 "variableType": ""
                             }
                         },
@@ -4634,27 +4564,12 @@
                         "x": 3560,
                         "y": 1005
                     },
-                    "4p%]=SzV.ZbK,$ii:g/]": {
-                        "fields": {
-                            "TEXT": {
-                                "name": "TEXT",
-                                "value": "0"
-                            }
-                        },
-                        "id": "4p%]=SzV.ZbK,$ii:g/]",
-                        "inputs": {},
-                        "next": null,
-                        "opcode": "text",
-                        "parent": "zNAY-Nfq}@F[_VcgaG!+",
-                        "shadow": true,
-                        "topLevel": false
-                    },
                     "4wx{uQ-=BNtXgbdvV$w5": {
                         "fields": {
                             "VARIABLE": {
                                 "id": "]yh]`BdZ/jKJe@vxv*JS",
                                 "name": "VARIABLE",
-                                "value": "ran out of cards before all plants were harvested.",
+                                "value": "codelabfeaturedproject.cozmosgarden.ran_out_of_cards_before_all_plants_were_harvested",
                                 "variableType": ""
                             }
                         },
@@ -4721,6 +4636,29 @@
                         "parent": "yvtJ=g_l*Q+.Bmz`V:v.",
                         "shadow": true,
                         "topLevel": false
+                    },
+                    "5,L@6yF?kGgc=}-:%_xk": {
+                        "fields": {},
+                        "id": "5,L@6yF?kGgc=}-:%_xk",
+                        "inputs": {
+                            "STRING1": {
+                                "block": "ecFq:!l4Tsu$!B;}z,Dq",
+                                "name": "STRING1",
+                                "shadow": "ecFq:!l4Tsu$!B;}z,Dq"
+                            },
+                            "STRING2": {
+                                "block": "J8}l2eX:.B[VcFbPBw61",
+                                "name": "STRING2",
+                                "shadow": "2%[t;=CYoYkbK]Rl8`}s"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_join",
+                        "parent": "mi1hIjfsb~|@Ezo,qfmO",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "3269",
+                        "y": "-278"
                     },
                     "51$PBmWrXXl5Ag+0GfR_": {
                         "fields": {},
@@ -5070,7 +5008,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.we_lost"
+                                "value": ""
                             }
                         },
                         "id": "6@TI1YqV;WuoGhfFZBtC",
@@ -5080,8 +5018,8 @@
                         "parent": null,
                         "shadow": true,
                         "topLevel": true,
-                        "x": 3314.8470588235296,
-                        "y": -448.4588235294118
+                        "x": 3115,
+                        "y": -671
                     },
                     "6M58DfMN]$rPYy%$WO%n": {
                         "fields": {
@@ -5145,7 +5083,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "excellent gardening skills"
+                                "value": "codelabfeaturedproject.cozmosgarden.excellent_gardening_skills"
                             }
                         },
                         "id": "6SglD8o1_bN_VAgKe]TW",
@@ -5645,7 +5583,7 @@
                             "VARIABLE": {
                                 "id": "|6+AIN+3kwd|.}CSu-%f",
                                 "name": "VARIABLE",
-                                "value": "shuffle the deck of cards.",
+                                "value": "codelabfeaturedproject.cozmosgarden.shuffle_the_deck_of_cards",
                                 "variableType": ""
                             }
                         },
@@ -6090,7 +6028,7 @@
                                 "shadow": null
                             }
                         },
-                        "next": "-+59j}cfF?k+r!eZ=I[j",
+                        "next": "-i[^B-v+$a-%f7a7oJ{.",
                         "opcode": "control_repeat_until",
                         "parent": "43y0zTRB|,~Hw)Cs-|-/",
                         "shadow": false,
@@ -6102,7 +6040,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "look tasty"
+                                "value": "codelabfeaturedproject.cozmosgarden.look_tasty"
                             }
                         },
                         "id": ":046IPDrO7F[c9WLbt(L",
@@ -6275,25 +6213,6 @@
                         "shadow": true,
                         "topLevel": false
                     },
-                    ":gofuk:bih:E0}BR~h6P": {
-                        "fields": {
-                            "LIST": {
-                                "id": "P?chlOBX!GcS*,I,O{i}",
-                                "name": "LIST",
-                                "value": "combos",
-                                "variableType": "list"
-                            }
-                        },
-                        "id": ":gofuk:bih:E0}BR~h6P",
-                        "inputs": {},
-                        "next": null,
-                        "opcode": "data_lengthoflist",
-                        "parent": "zNAY-Nfq}@F[_VcgaG!+",
-                        "shadow": false,
-                        "topLevel": false,
-                        "x": "-21",
-                        "y": "2679"
-                    },
                     ":iB$Xy5WD9p:QL`F+Yw`": {
                         "fields": {
                             "NUM": {
@@ -6394,7 +6313,7 @@
                             "VARIABLE": {
                                 "id": "#S$Wc8r3%eOcceXS4Dw:",
                                 "name": "VARIABLE",
-                                "value": "water count",
+                                "value": "codelabfeaturedproject.cozmosgarden.water_count",
                                 "variableType": ""
                             }
                         },
@@ -7150,7 +7069,7 @@
                             "VARIABLE": {
                                 "id": "|P94tIm9d@~m)Vuxvz0W",
                                 "name": "VARIABLE",
-                                "value": "bugs count",
+                                "value": "codelabfeaturedproject.cozmosgarden.bugs_count",
                                 "variableType": ""
                             }
                         },
@@ -7288,7 +7207,7 @@
                             "VARIABLE": {
                                 "id": "0p7w#LMTnxvRF*%jP7#1",
                                 "name": "VARIABLE",
-                                "value": "put the events of the bugs card into action.",
+                                "value": "codelabfeaturedproject.cozmosgarden.put_the_events_of_the_bugs_card_into_action",
                                 "variableType": ""
                             }
                         },
@@ -7781,7 +7700,7 @@
                             "VARIABLE": {
                                 "id": "8V;?o-k@CeoBBVUEc?fj",
                                 "name": "VARIABLE",
-                                "value": "clear all data from lists.",
+                                "value": "codelabfeaturedproject.cozmosgarden.clear_all_data_from_lists",
                                 "variableType": ""
                             }
                         },
@@ -8135,7 +8054,7 @@
                             "VARIABLE": {
                                 "id": "_l0SC,-IC8xK=bn^VV,E",
                                 "name": "VARIABLE",
-                                "value": "water the plant the player has chosen.",
+                                "value": "codelabfeaturedproject.cozmosgarden.water_the_plant_the_player_has_chosen",
                                 "variableType": ""
                             }
                         },
@@ -8407,7 +8326,7 @@
                             "VARIABLE": {
                                 "id": "aQ3K|1wu3aUP1-BB)qI{",
                                 "name": "VARIABLE",
-                                "value": "put the events of the sun card into action.",
+                                "value": "codelabfeaturedproject.cozmosgarden.put_the_events_of_the_sun_card_into_action",
                                 "variableType": ""
                             }
                         },
@@ -9036,6 +8955,29 @@
                         "x": 492.3188235294113,
                         "y": 3903.9454259965364
                     },
+                    "J8}l2eX:.B[VcFbPBw61": {
+                        "fields": {},
+                        "id": "J8}l2eX:.B[VcFbPBw61",
+                        "inputs": {
+                            "STRING1": {
+                                "block": "de8y:1uMG~)D^dBr43(^",
+                                "name": "STRING1",
+                                "shadow": "hhGCXBMZ+^]AP}u!E.lg"
+                            },
+                            "STRING2": {
+                                "block": "16j|QhNSeyY-F~#{3}+N",
+                                "name": "STRING2",
+                                "shadow": "16j|QhNSeyY-F~#{3}+N"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_join",
+                        "parent": "5,L@6yF?kGgc=}-:%_xk",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "3269",
+                        "y": "-250"
+                    },
                     "J=OY+9S{}gO55,RT]x)(": {
                         "fields": {
                             "TEXT": {
@@ -9056,7 +8998,7 @@
                             "VARIABLE": {
                                 "id": "MM2bKXch7d@*6G)54oJ1",
                                 "name": "VARIABLE",
-                                "value": "instructions max amount",
+                                "value": "codelabfeaturedproject.cozmosgarden.instructions_max_amount",
                                 "variableType": ""
                             }
                         },
@@ -9729,7 +9671,7 @@
                             "VARIABLE": {
                                 "id": "%L-3Ev.(rOhz7[?pASC*",
                                 "name": "VARIABLE",
-                                "value": "check to see whether the player has successfully squashed the bugs.",
+                                "value": "codelabfeaturedproject.cozmosgarden.check_to_see_whether_the_player_has_successfully_squashed_the_bugs",
                                 "variableType": ""
                             }
                         },
@@ -9798,27 +9740,12 @@
                         "shadow": true,
                         "topLevel": false
                     },
-                    "Mo9_}o*8C!=^b3c2dLOg": {
-                        "fields": {
-                            "TEXT": {
-                                "name": "TEXT",
-                                "value": "a fruit salad"
-                            }
-                        },
-                        "id": "Mo9_}o*8C!=^b3c2dLOg",
-                        "inputs": {},
-                        "next": null,
-                        "opcode": "text",
-                        "parent": "{UC=AuGcA7REtCup#2%=",
-                        "shadow": true,
-                        "topLevel": false
-                    },
                     "Mr9rOq=]?T})NcG?0O4{": {
                         "fields": {
                             "VARIABLE": {
                                 "id": "]3u(n[21w(Sgnwn$.LYs",
                                 "name": "VARIABLE",
-                                "value": "sun count",
+                                "value": "codelabfeaturedproject.cozmosgarden.sun_count",
                                 "variableType": ""
                             }
                         },
@@ -9848,21 +9775,6 @@
                         "topLevel": true,
                         "x": 1917,
                         "y": 3273.0000000000005
-                    },
-                    "MvvyGli=4$_5R#LwA)jX": {
-                        "fields": {
-                            "TEXT": {
-                                "name": "TEXT",
-                                "value": "blueberry lemonade"
-                            }
-                        },
-                        "id": "MvvyGli=4$_5R#LwA)jX",
-                        "inputs": {},
-                        "next": null,
-                        "opcode": "text",
-                        "parent": "k(hU=f3%RhjtY.pLHtI`",
-                        "shadow": true,
-                        "topLevel": false
                     },
                     "Mw?`O!:C}V/gBEBig4Z:": {
                         "fields": {},
@@ -10015,7 +9927,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "smart choice!"
+                                "value": "codelabfeaturedproject.cozmosgarden.smart_choice"
                             }
                         },
                         "id": "N4}wN@67WktlS?TNC8%!",
@@ -10394,7 +10306,7 @@
                             "VARIABLE": {
                                 "id": "85iC(8DU8ZNx_,BC#`8u",
                                 "name": "VARIABLE",
-                                "value": "show plant growth and check if plants are ready for harvest.",
+                                "value": "codelabfeaturedproject.cozmosgarden.show_plant_growth_and_check_if_plants_are_ready_for_harvest",
                                 "variableType": ""
                             }
                         },
@@ -10969,7 +10881,7 @@
                             "VARIABLE": {
                                 "id": "tX-tEBzb5eQ)Rb=u[9Zq",
                                 "name": "VARIABLE",
-                                "value": "all the plants were harvested successfully.",
+                                "value": "codelabfeaturedproject.cozmosgarden.all_the_plants_were_harvested_successfully",
                                 "variableType": ""
                             }
                         },
@@ -10980,8 +10892,8 @@
                         "parent": null,
                         "shadow": false,
                         "topLevel": true,
-                        "x": 3921,
-                        "y": -694
+                        "x": 3824,
+                        "y": -675
                     },
                     "Qv:Ka`-,.P.RyvYNWWHz": {
                         "fields": {
@@ -11170,7 +11082,7 @@
                             "VARIABLE": {
                                 "id": "3Z$bIz*%0xDp[-pa(~.q",
                                 "name": "VARIABLE",
-                                "value": "clear all data from the plants to harvest list.",
+                                "value": "codelabfeaturedproject.cozmosgarden.clear_all_data_from_the_plants_to_harvest_list",
                                 "variableType": ""
                             }
                         },
@@ -11384,31 +11296,6 @@
                         "x": "31",
                         "y": "1185"
                     },
-                    "S*A7W9WSA+Ya9X6mC)vb": {
-                        "fields": {
-                            "LIST": {
-                                "id": "P?chlOBX!GcS*,I,O{i}",
-                                "name": "LIST",
-                                "value": "combos",
-                                "variableType": "list"
-                            }
-                        },
-                        "id": "S*A7W9WSA+Ya9X6mC)vb",
-                        "inputs": {
-                            "ITEM": {
-                                "block": "W]TKpYpPl-qU[4gh,]}m",
-                                "name": "ITEM",
-                                "shadow": "W]TKpYpPl-qU[4gh,]}m"
-                            }
-                        },
-                        "next": "k(hU=f3%RhjtY.pLHtI`",
-                        "opcode": "data_addtolist",
-                        "parent": "q.$z@6~ID1piCc9:G-ap",
-                        "shadow": false,
-                        "topLevel": false,
-                        "x": "-441",
-                        "y": "2982"
-                    },
                     "S?YI5=FQ{nfCrC^bpiQ{": {
                         "fields": {
                             "VARIABLE": {
@@ -11597,7 +11484,7 @@
                             "VARIABLE": {
                                 "id": "=2kLEANAg1;LybuGj2U)",
                                 "name": "VARIABLE",
-                                "value": "fill up the plant types and plant colors lists.",
+                                "value": "codelabfeaturedproject.cozmosgarden.fill_up_the_plant_types_and_plant_colors_lists",
                                 "variableType": ""
                             }
                         },
@@ -11733,23 +11620,6 @@
                         "shadow": true,
                         "topLevel": false
                     },
-                    "TipW^,wQ8LK@y2T1(wtO": {
-                        "fields": {
-                            "TEXT": {
-                                "name": "TEXT",
-                                "value": ""
-                            }
-                        },
-                        "id": "TipW^,wQ8LK@y2T1(wtO",
-                        "inputs": {},
-                        "next": null,
-                        "opcode": "text",
-                        "parent": null,
-                        "shadow": true,
-                        "topLevel": true,
-                        "x": 550.4000015258789,
-                        "y": 2048.0000000000005
-                    },
                     "TrSY_xF)W(4@Ns~RYtXV": {
                         "fields": {
                             "LIGHT_SELECT": {
@@ -11815,21 +11685,6 @@
                         "topLevel": false,
                         "x": "2502",
                         "y": "2370"
-                    },
-                    "T|j3pBTh2T5D-_T1OJ%{": {
-                        "fields": {
-                            "TEXT": {
-                                "name": "TEXT",
-                                "value": "a nice red sauce"
-                            }
-                        },
-                        "id": "T|j3pBTh2T5D-_T1OJ%{",
-                        "inputs": {},
-                        "next": null,
-                        "opcode": "text",
-                        "parent": "/LJkQ3*/fpH4.PjKpo8[",
-                        "shadow": true,
-                        "topLevel": false
                     },
                     "U#d(Wy[XiU)zx`qD!:~F": {
                         "fields": {
@@ -12023,7 +11878,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "almost ready"
+                                "value": "codelabfeaturedproject.cozmosgarden.almost_ready"
                             }
                         },
                         "id": "UVbu$4zMU86GXI)%lHe8",
@@ -12071,7 +11926,7 @@
                             "VARIABLE": {
                                 "id": "^:7On02M-mju0+n^MC.a",
                                 "name": "VARIABLE",
-                                "value": "clear all data from the bug plants list.",
+                                "value": "codelabfeaturedproject.cozmosgarden.clear_all_data_from_the_bug_plants_list",
                                 "variableType": ""
                             }
                         },
@@ -12155,7 +12010,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.thats_okay"
+                                "value": "one plant is better than none!"
                             }
                         },
                         "id": "V3QpmGufDpKk%*1~dfrE",
@@ -12285,7 +12140,7 @@
                             "VARIABLE": {
                                 "id": "?_lH+b)Lc`b9p$GT~A}3",
                                 "name": "VARIABLE",
-                                "value": "set a plant to the harvested state and spin the cube lights.",
+                                "value": "codelabfeaturedproject.cozmosgarden.set_a_plant_to_the_harvested_state_and_spin_the_cube_lights",
                                 "variableType": ""
                             }
                         },
@@ -12470,31 +12325,6 @@
                         "shadow": true,
                         "topLevel": false
                     },
-                    "WKg|s/)PR[+/~wV}61Ba": {
-                        "fields": {
-                            "LIST": {
-                                "id": "P?chlOBX!GcS*,I,O{i}",
-                                "name": "LIST",
-                                "value": "combos",
-                                "variableType": "list"
-                            }
-                        },
-                        "id": "WKg|s/)PR[+/~wV}61Ba",
-                        "inputs": {
-                            "INDEX": {
-                                "block": "cJm3ddq4Do:3XK;Uu+5i",
-                                "name": "INDEX",
-                                "shadow": "cJm3ddq4Do:3XK;Uu+5i"
-                            }
-                        },
-                        "next": null,
-                        "opcode": "data_deleteoflist",
-                        "parent": "-+59j}cfF?k+r!eZ=I[j",
-                        "shadow": false,
-                        "topLevel": false,
-                        "x": "-21",
-                        "y": "2443"
-                    },
                     "WRg6s8.^@V4JH%4`.Bi,": {
                         "fields": {},
                         "id": "WRg6s8.^@V4JH%4`.Bi,",
@@ -12553,21 +12383,6 @@
                         "topLevel": false,
                         "x": "4809",
                         "y": "435"
-                    },
-                    "W]TKpYpPl-qU[4gh,]}m": {
-                        "fields": {
-                            "TEXT": {
-                                "name": "TEXT",
-                                "value": "some grape-ade"
-                            }
-                        },
-                        "id": "W]TKpYpPl-qU[4gh,]}m",
-                        "inputs": {},
-                        "next": null,
-                        "opcode": "text",
-                        "parent": "S*A7W9WSA+Ya9X6mC)vb",
-                        "shadow": true,
-                        "topLevel": false
                     },
                     "W^hXJp0#^uKmY4^!+mb]": {
                         "fields": {
@@ -13354,7 +13169,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "hey! no fair, bugs!"
+                                "value": "codelabfeaturedproject.cozmosgarden.hey_no_fair_bugs"
                             }
                         },
                         "id": "Y|i0-[8R#1r6O).vp9U~",
@@ -13558,7 +13373,7 @@
                             "VARIABLE": {
                                 "id": "]3u(n[21w(Sgnwn$.LYs",
                                 "name": "VARIABLE",
-                                "value": "sun count",
+                                "value": "codelabfeaturedproject.cozmosgarden.sun_count",
                                 "variableType": ""
                             }
                         },
@@ -13907,7 +13722,7 @@
                             "VARIABLE": {
                                 "id": ",u;#GEb0e3:8z2#_ZKd;",
                                 "name": "VARIABLE",
-                                "value": "when the cube is tapped, activate the relevant action.",
+                                "value": "codelabfeaturedproject.cozmosgarden.when_the_cube_is_tapped_activate_the_relevant_action",
                                 "variableType": ""
                             }
                         },
@@ -13964,7 +13779,7 @@
                             "VARIABLE": {
                                 "id": "$MhV4:Z+J;d]{#}}:M=f",
                                 "name": "VARIABLE",
-                                "value": "present the next drawn card.",
+                                "value": "codelabfeaturedproject.cozmosgarden.present_the_next_drawn_card",
                                 "variableType": ""
                             }
                         },
@@ -14030,7 +13845,7 @@
                             "VARIABLE": {
                                 "id": "dZdRU]:2;1`I1B`lngut",
                                 "name": "VARIABLE",
-                                "value": "make the sun shine on all the plants.",
+                                "value": "codelabfeaturedproject.cozmosgarden.make_the_sun_shine_on_all_the_plants",
                                 "variableType": ""
                             }
                         },
@@ -14288,21 +14103,6 @@
                         "topLevel": false,
                         "x": "4114",
                         "y": "1485"
-                    },
-                    "^w+Ib[B7N:=ZN)f3/?9|": {
-                        "fields": {
-                            "TEXT": {
-                                "name": "TEXT",
-                                "value": "a fancy salad"
-                            }
-                        },
-                        "id": "^w+Ib[B7N:=ZN)f3/?9|",
-                        "inputs": {},
-                        "next": null,
-                        "opcode": "text",
-                        "parent": "y6(CsRVlOjUHf(yz{r{I",
-                        "shadow": true,
-                        "topLevel": false
                     },
                     "^~}+)nA0OTYO?Nqe2UJP": {
                         "fields": {},
@@ -14829,8 +14629,8 @@
                         "parent": "IVHfPXx5evPzSgWn:yJd",
                         "shadow": false,
                         "topLevel": false,
-                        "x": "3043",
-                        "y": "-91"
+                        "x": 3344.6867141723633,
+                        "y": -667
                     },
                     "`h)^{EQc}GC/Y)UMrCx{": {
                         "fields": {
@@ -14924,7 +14724,7 @@
                             "VARIABLE": {
                                 "id": "~p+ld(4Qy^6(zaJqr*k(",
                                 "name": "VARIABLE",
-                                "value": "randomly choose a phrase for cozmo to say when the bugs were missed.",
+                                "value": "codelabfeaturedproject.cozmosgarden.randomly_choose_a_phrase_for_cozmo_to_say_when_the_bugs_were_missed",
                                 "variableType": ""
                             }
                         },
@@ -15363,16 +15163,18 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.hooray_we_harvested_all_the_plants"
+                                "value": ""
                             }
                         },
                         "id": "bA%ABGj#f=-7*_B.%,6s",
                         "inputs": {},
                         "next": null,
                         "opcode": "text",
-                        "parent": "mi1hIjfsb~|@Ezo,qfmO",
+                        "parent": null,
                         "shadow": true,
-                        "topLevel": false
+                        "topLevel": true,
+                        "x": 3973,
+                        "y": -502
                     },
                     "bCQQRInMo9FeW.@|`^8m": {
                         "fields": {},
@@ -15580,8 +15382,8 @@
                         "parent": "nqduA$KiO(:[I|@[Oxxq",
                         "shadow": false,
                         "topLevel": false,
-                        "x": "3043",
-                        "y": "66"
+                        "x": 3462.3411764705884,
+                        "y": -810.2352941176471
                     },
                     "c#JYU*[+wVSr3_BMsu(M": {
                         "fields": {
@@ -15711,20 +15513,24 @@
                         "x": "2935",
                         "y": "-365"
                     },
-                    "cJm3ddq4Do:3XK;Uu+5i": {
+                    "cIUOLDhl]]=Ooa[wq,j_": {
                         "fields": {
-                            "NUM": {
-                                "name": "NUM",
-                                "value": "1"
+                            "VARIABLE": {
+                                "id": "E6ZC4o^I=7R`yR^qWyt*",
+                                "name": "VARIABLE",
+                                "value": "use cube lights to show the current state of growth for plants that have not been harvested.",
+                                "variableType": ""
                             }
                         },
-                        "id": "cJm3ddq4Do:3XK;Uu+5i",
+                        "id": "cIUOLDhl]]=Ooa[wq,j_",
                         "inputs": {},
                         "next": null,
-                        "opcode": "math_integer",
-                        "parent": "WKg|s/)PR[+/~wV}61Ba",
-                        "shadow": true,
-                        "topLevel": false
+                        "opcode": "data_variable",
+                        "parent": null,
+                        "shadow": false,
+                        "topLevel": true,
+                        "x": 1838,
+                        "y": 2999
                     },
                     "cP-yuDK?WRXkVqB@7u]~": {
                         "fields": {
@@ -15979,8 +15785,8 @@
                         "parent": null,
                         "shadow": true,
                         "topLevel": true,
-                        "x": 3543.056897690717,
-                        "y": -440.45882352941186
+                        "x": 3344.6867141723633,
+                        "y": -663
                     },
                     "d[uMRt_}#UmuuPazTfc~": {
                         "fields": {
@@ -16021,6 +15827,25 @@
                         "topLevel": false,
                         "x": "1303",
                         "y": "623"
+                    },
+                    "de8y:1uMG~)D^dBr43(^": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "5FUn|bxv:,H[b;8twf4[",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.cozmosgarden.card_count",
+                                "variableType": ""
+                            }
+                        },
+                        "id": "de8y:1uMG~)D^dBr43(^",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": "J8}l2eX:.B[VcFbPBw61",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "3484",
+                        "y": "-515"
                     },
                     "djI@7po,ErjsQ}bB|+_[": {
                         "fields": {
@@ -16292,7 +16117,7 @@
                             "VARIABLE": {
                                 "id": "A#~,`~zK@C~wQsYk3_XK",
                                 "name": "VARIABLE",
-                                "value": "draw the next card from the deck.",
+                                "value": "codelabfeaturedproject.cozmosgarden.draw_the_next_card_from_the_deck",
                                 "variableType": ""
                             }
                         },
@@ -16305,6 +16130,21 @@
                         "topLevel": true,
                         "x": 1349,
                         "y": 615
+                    },
+                    "ecFq:!l4Tsu$!B;}z,Dq": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "hooray! we harvested all the plants in "
+                            }
+                        },
+                        "id": "ecFq:!l4Tsu$!B;}z,Dq",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": "5,L@6yF?kGgc=}-:%_xk",
+                        "shadow": true,
+                        "topLevel": false
                     },
                     "efnFuZ5G`Sm[g]9;aO4(": {
                         "fields": {
@@ -16525,7 +16365,7 @@
                             "VARIABLE": {
                                 "id": "|P94tIm9d@~m)Vuxvz0W",
                                 "name": "VARIABLE",
-                                "value": "bugs count",
+                                "value": "codelabfeaturedproject.cozmosgarden.bugs_count",
                                 "variableType": ""
                             }
                         },
@@ -16840,7 +16680,7 @@
                             "VARIABLE": {
                                 "id": "MM2bKXch7d@*6G)54oJ1",
                                 "name": "VARIABLE",
-                                "value": "instructions max amount",
+                                "value": "codelabfeaturedproject.cozmosgarden.instructions_max_amount",
                                 "variableType": ""
                             }
                         },
@@ -17091,8 +16931,8 @@
                         "parent": null,
                         "shadow": false,
                         "topLevel": true,
-                        "x": 3925,
-                        "y": -606
+                        "x": 3826,
+                        "y": -593
                     },
                     "hdMEm-0FrIZPm@C1`E|U": {
                         "fields": {},
@@ -17111,6 +16951,23 @@
                         "topLevel": false,
                         "x": "2935",
                         "y": "-769"
+                    },
+                    "hhGCXBMZ+^]AP}u!E.lg": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "Anki"
+                            }
+                        },
+                        "id": "hhGCXBMZ+^]AP}u!E.lg",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 4375.351669311523,
+                        "y": -498
                     },
                     "hi;(|pvhd/_o_BCR]v0p": {
                         "fields": {
@@ -17544,31 +17401,6 @@
                         "topLevel": false,
                         "x": "1937",
                         "y": "2221"
-                    },
-                    "k(hU=f3%RhjtY.pLHtI`": {
-                        "fields": {
-                            "LIST": {
-                                "id": "P?chlOBX!GcS*,I,O{i}",
-                                "name": "LIST",
-                                "value": "combos",
-                                "variableType": "list"
-                            }
-                        },
-                        "id": "k(hU=f3%RhjtY.pLHtI`",
-                        "inputs": {
-                            "ITEM": {
-                                "block": "MvvyGli=4$_5R#LwA)jX",
-                                "name": "ITEM",
-                                "shadow": "MvvyGli=4$_5R#LwA)jX"
-                            }
-                        },
-                        "next": ")MZ6G-UffB%e;fg0W6p*",
-                        "opcode": "data_addtolist",
-                        "parent": "S*A7W9WSA+Ya9X6mC)vb",
-                        "shadow": false,
-                        "topLevel": false,
-                        "x": "-441",
-                        "y": "2814"
                     },
                     "k)pe,HS3(qip[Lg0*N7m": {
                         "fields": {},
@@ -18083,7 +17915,7 @@
                         "id": "mi1hIjfsb~|@Ezo,qfmO",
                         "inputs": {
                             "STRING": {
-                                "block": "bA%ABGj#f=-7*_B.%,6s",
+                                "block": "5,L@6yF?kGgc=}-:%_xk",
                                 "name": "STRING",
                                 "shadow": "bA%ABGj#f=-7*_B.%,6s"
                             }
@@ -18982,7 +18814,7 @@
                                 "shadow": "6SglD8o1_bN_VAgKe]TW"
                             }
                         },
-                        "next": "S*A7W9WSA+Ya9X6mC)vb",
+                        "next": null,
                         "opcode": "data_addtolist",
                         "parent": "3q*)t^j@i?Uv]qWq!XNm",
                         "shadow": false,
@@ -19274,7 +19106,7 @@
                             "VARIABLE": {
                                 "id": ",u;#GEb0e3:8z2#_ZKd;",
                                 "name": "VARIABLE",
-                                "value": "when the cube is tapped, activate the relevant action.",
+                                "value": "codelabfeaturedproject.cozmosgarden.when_the_cube_is_tapped_activate_the_relevant_action",
                                 "variableType": ""
                             }
                         },
@@ -19308,7 +19140,7 @@
                             "VARIABLE": {
                                 "id": "#S$Wc8r3%eOcceXS4Dw:",
                                 "name": "VARIABLE",
-                                "value": "water count",
+                                "value": "codelabfeaturedproject.cozmosgarden.water_count",
                                 "variableType": ""
                             }
                         },
@@ -19432,7 +19264,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "ready, set, grow!"
+                                "value": "codelabfeaturedproject.cozmosgarden.ready_set_grow"
                             }
                         },
                         "id": "s#G,(Yprof(IAcTkTD8n",
@@ -19485,7 +19317,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.not_so_good"
+                                "value": "don't give up! let's try again."
                             }
                         },
                         "id": "s9Ow)i}Trr({r?Ag3fPV",
@@ -20381,7 +20213,7 @@
                             "VARIABLE": {
                                 "id": "!t2*wl}jsG2/4K4WHF2.",
                                 "name": "VARIABLE",
-                                "value": "choose and initialize plants to grow in the garden.",
+                                "value": "codelabfeaturedproject.cozmosgarden.choose_and_initialize_plants_to_grow_in_the_garden",
                                 "variableType": ""
                             }
                         },
@@ -20625,7 +20457,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "looks good"
+                                "value": "codelabfeaturedproject.cozmosgarden.looks_good"
                             }
                         },
                         "id": "xFvklCLfWleAaoc_l4Bp",
@@ -20887,31 +20719,6 @@
                         "parent": "5db3.*]v1LpSe(Ccco$#",
                         "shadow": true,
                         "topLevel": false
-                    },
-                    "y6(CsRVlOjUHf(yz{r{I": {
-                        "fields": {
-                            "LIST": {
-                                "id": "P?chlOBX!GcS*,I,O{i}",
-                                "name": "LIST",
-                                "value": "combos",
-                                "variableType": "list"
-                            }
-                        },
-                        "id": "y6(CsRVlOjUHf(yz{r{I",
-                        "inputs": {
-                            "ITEM": {
-                                "block": "^w+Ib[B7N:=ZN)f3/?9|",
-                                "name": "ITEM",
-                                "shadow": "^w+Ib[B7N:=ZN)f3/?9|"
-                            }
-                        },
-                        "next": "/LJkQ3*/fpH4.PjKpo8[",
-                        "opcode": "data_addtolist",
-                        "parent": "{UC=AuGcA7REtCup#2%=",
-                        "shadow": false,
-                        "topLevel": false,
-                        "x": "-441",
-                        "y": "2803"
                     },
                     "y64CDRfH)z9nm.nG4epL": {
                         "fields": {},
@@ -21227,29 +21034,6 @@
                         "x": "4854",
                         "y": "-196"
                     },
-                    "zNAY-Nfq}@F[_VcgaG!+": {
-                        "fields": {},
-                        "id": "zNAY-Nfq}@F[_VcgaG!+",
-                        "inputs": {
-                            "OPERAND1": {
-                                "block": ":gofuk:bih:E0}BR~h6P",
-                                "name": "OPERAND1",
-                                "shadow": "TipW^,wQ8LK@y2T1(wtO"
-                            },
-                            "OPERAND2": {
-                                "block": "4p%]=SzV.ZbK,$ii:g/]",
-                                "name": "OPERAND2",
-                                "shadow": "4p%]=SzV.ZbK,$ii:g/]"
-                            }
-                        },
-                        "next": null,
-                        "opcode": "operator_equals",
-                        "parent": "-+59j}cfF?k+r!eZ=I[j",
-                        "shadow": false,
-                        "topLevel": false,
-                        "x": "-21",
-                        "y": "2240"
-                    },
                     "zSmIiYp5LBg(i`G1c#S,": {
                         "fields": {
                             "LIST": {
@@ -21335,25 +21119,6 @@
                         "x": "2937",
                         "y": "108"
                     },
-                    "zcU)J?28*rY$%5nAS`B=": {
-                        "fields": {
-                            "VARIABLE": {
-                                "id": "9cK|U1@iLSOlGNp+|KDY",
-                                "name": "VARIABLE",
-                                "value": "use cube lights to show the current state of growth of each non-harvested plant.",
-                                "variableType": ""
-                            }
-                        },
-                        "id": "zcU)J?28*rY$%5nAS`B=",
-                        "inputs": {},
-                        "next": null,
-                        "opcode": "data_variable",
-                        "parent": null,
-                        "shadow": false,
-                        "topLevel": true,
-                        "x": 1836,
-                        "y": 3008
-                    },
                     "zj~v]CJ;q}hSdrqeJN?[": {
                         "fields": {
                             "TEXT": {
@@ -21394,7 +21159,7 @@
                             "VARIABLE": {
                                 "id": "$MDgR.*G2QJ[*pF@*F=1",
                                 "name": "VARIABLE",
-                                "value": "check to see if any plants are ready to harvest.",
+                                "value": "codelabfeaturedproject.cozmosgarden.check_to_see_if_any_plants_are_ready_to_harvest",
                                 "variableType": ""
                             }
                         },
@@ -21526,31 +21291,6 @@
                         "topLevel": false,
                         "x": 3940.835294117647,
                         "y": 1234.830588235294
-                    },
-                    "{UC=AuGcA7REtCup#2%=": {
-                        "fields": {
-                            "LIST": {
-                                "id": "P?chlOBX!GcS*,I,O{i}",
-                                "name": "LIST",
-                                "value": "combos",
-                                "variableType": "list"
-                            }
-                        },
-                        "id": "{UC=AuGcA7REtCup#2%=",
-                        "inputs": {
-                            "ITEM": {
-                                "block": "Mo9_}o*8C!=^b3c2dLOg",
-                                "name": "ITEM",
-                                "shadow": "Mo9_}o*8C!=^b3c2dLOg"
-                            }
-                        },
-                        "next": "y6(CsRVlOjUHf(yz{r{I",
-                        "opcode": "data_addtolist",
-                        "parent": ")MZ6G-UffB%e;fg0W6p*",
-                        "shadow": false,
-                        "topLevel": false,
-                        "x": "-441",
-                        "y": "2766"
                     },
                     "{dFQlq)97rqcr{%[mH^p": {
                         "fields": {
@@ -22021,7 +21761,7 @@
                             "VARIABLE": {
                                 "id": "/E,a!N^^Y|#rFHBuQzux",
                                 "name": "VARIABLE",
-                                "value": "randomly choose a feedback phrase for cozmo to say.",
+                                "value": "codelabfeaturedproject.cozmosgarden.randomly_choose_a_feedback_phrase_for_cozmo_to_say",
                                 "variableType": ""
                             }
                         },
@@ -22032,8 +21772,8 @@
                         "parent": null,
                         "shadow": false,
                         "topLevel": true,
-                        "x": -176,
-                        "y": 1476
+                        "x": -213,
+                        "y": 797
                     },
                     "}a:6G$^e(-UfiNs$]Gd]": {
                         "fields": {
@@ -22316,7 +22056,7 @@
                 "currentCostume": 0,
                 "direction": 90,
                 "draggable": false,
-                "id": "APOh2%cT:8KCx+tIN8Vx",
+                "id": "p1l(IKzWB:ZzuRTp]5vQ",
                 "isStage": false,
                 "lists": {},
                 "name": "Sprite1",

@@ -220,7 +220,6 @@
         "FeaturedProjectBackgroundColor": "#ffe700",
         "FeaturedProjectTitleTextColor": "#ffffff",
         "ProjectJSONFile": "constellations",
-        "IsInvisible": "true",
         "StartDate": {
             "Month": "4",
             "Day": "13",

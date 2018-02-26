@@ -13,7 +13,7 @@
                 "currentCostume": 0,
                 "direction": 90,
                 "draggable": false,
-                "id": "MIx/FL{}-[YbZ7XAU(_n",
+                "id": "_n]QO)_e2?kkhR*u:U^T",
                 "isStage": true,
                 "lists": {},
                 "name": "Stage",
@@ -25,23 +25,18 @@
                         "id": "!k:T,WTKGBD8twaz2y3o",
                         "name": "x1",
                         "type": "",
-                        "value": "46"
+                        "value": "88"
                     },
                     "#*1NSDkV6i($ApbNHzTK": {
                         "id": "#*1NSDkV6i($ApbNHzTK",
                         "name": "coordonn\u00e9es y",
                         "type": "list",
                         "value": [
-                            "38",
-                            "32",
+                            "13",
+                            "29",
                             "26",
-                            "9",
-                            "14",
-                            "35",
-                            "49",
-                            "54",
-                            "35",
-                            "9"
+                            "45",
+                            "31"
                         ]
                     },
                     "#3%4J0D$LQ,#{{O9o;SZ": {
@@ -54,30 +49,42 @@
                         "id": "#C:O~$ySde0t?3!+-f.I",
                         "name": "x3",
                         "type": "",
-                        "value": "54"
+                        "value": ""
                     },
                     "#zAde}MYuoTYt:UOy0R-": {
                         "id": "#zAde}MYuoTYt:UOy0R-",
                         "name": "codelabfeaturedproject.constellations.factoids",
                         "type": "list",
                         "value": [
-                            "Since ancient times, Libra has been a sign of fairness.",
-                            "Some of Libra's stars could have livable planets. Pretty cool!",
-                            "Libra is best seen in the June night sky.",
-                            "I'd like to visit Libra someday and see if they have good tacos."
+                            "Cassiopeia can be seen all year from the northern hemisphere.",
+                            "Cassiopeia's brightest star shines 40 times brighter than the Sun.",
+                            "Cassiopeia used to be called the Lady of the Chair.",
+                            "My cousin's name is Cassiopeia. She's a keyboard."
                         ]
                     },
                     "$:(}5a.ZyjT}vSF5*S;v": {
                         "id": "$:(}5a.ZyjT}vSF5*S;v",
                         "name": "distance entre les lignes",
                         "type": "",
-                        "value": 7.211102550927978
+                        "value": 19.72308292331602
                     },
                     "(@_tdwd4*,bDFr5Uu|Uu": {
                         "id": "(@_tdwd4*,bDFr5Uu|Uu",
-                        "name": "set scorpius data",
+                        "name": "codelabfeaturedproject.constellations.set_scorpius_data",
                         "type": "broadcast_msg",
                         "value": "set scorpius data"
+                    },
+                    "*o3H?Ensy20R;*Fc]p#H": {
+                        "id": "*o3H?Ensy20R;*Fc]p#H",
+                        "name": "codelabfeaturedproject.constellations.set_up_the_data_for_the_libra_constellation",
+                        "type": "",
+                        "value": 0
+                    },
+                    ",XK)bGY2Hv`0@P:wW(n*": {
+                        "id": ",XK)bGY2Hv`0@P:wW(n*",
+                        "name": "codelabfeaturedproject.constellations.fill_up_the_choices_list_with_constellation_numbers",
+                        "type": "",
+                        "value": 0
                     },
                     ".G{_CxSWHuZHI5M/,zvQ": {
                         "id": ".G{_CxSWHuZHI5M/,zvQ",
@@ -87,7 +94,7 @@
                     },
                     ".ZT=AbOh!zZTgYj{=mja": {
                         "id": ".ZT=AbOh!zZTgYj{=mja",
-                        "name": "next constellation",
+                        "name": "codelabfeaturedproject.constellations.next_constellation",
                         "type": "broadcast_msg",
                         "value": "next constellation"
                     },
@@ -101,19 +108,31 @@
                         "id": "/f(9DGKhF5n8^Z:UA2C}",
                         "name": "nom de la constellation",
                         "type": "",
-                        "value": "Libra"
+                        "value": "Cassiopeia"
                     },
                     "9GaS_/,wE.7mm(g%kBN-": {
                         "id": "9GaS_/,wE.7mm(g%kBN-",
                         "name": "distance \u00e0 parcourir",
                         "type": "",
-                        "value": 43.26661530556787
+                        "value": 118.33849753989612
                     },
                     "9s9sg?duxZO{ld.P3j*I": {
                         "id": "9s9sg?duxZO{ld.P3j*I",
                         "name": "angle de braquage",
                         "type": "",
-                        "value": 116.39350743961644
+                        "value": -14.534455080540127
+                    },
+                    ":l/#YnDX^0_JtNeNiZP*": {
+                        "id": ":l/#YnDX^0_JtNeNiZP*",
+                        "name": "codelabfeaturedproject.constellations.set_up_the_data_for_the_cassiopeia_constellation",
+                        "type": "",
+                        "value": 0
+                    },
+                    "=#a$yb2Q#eU4|mLH(O6|": {
+                        "id": "=#a$yb2Q#eU4|mLH(O6|",
+                        "name": "codelabfeaturedproject.constellations.initialize_variables_and_start_the_activity",
+                        "type": "",
+                        "value": 0
                     },
                     "=]facy.O4s|fFWhv;edh": {
                         "id": "=]facy.O4s|fFWhv;edh",
@@ -121,21 +140,34 @@
                         "type": "broadcast_msg",
                         "value": "set orion data"
                     },
+                    "?XVmzOUgYiz(QA-:KvAt": {
+                        "id": "?XVmzOUgYiz(QA-:KvAt",
+                        "isCloud": false,
+                        "name": "codelabfeaturedproject.constellations.turn_cozmo_back_to_his_starting_position",
+                        "type": "",
+                        "value": 0
+                    },
+                    "@2(]LhemBX7l_IQQaJ^%": {
+                        "id": "@2(]LhemBX7l_IQQaJ^%",
+                        "name": "codelabfeaturedproject.constellations.clear_all_data_from_the_project_lists",
+                        "type": "",
+                        "value": 0
+                    },
                     "@C$*7V!5T}x{y(kPJH|g": {
                         "id": "@C$*7V!5T}x{y(kPJH|g",
                         "name": "y2",
                         "type": "",
-                        "value": "32"
+                        "value": "36"
                     },
                     "ANzBheuzB(vk`Iqw!t*e": {
                         "id": "ANzBheuzB(vk`Iqw!t*e",
-                        "name": "shuffle choices",
+                        "name": "codelabfeaturedproject.constellations.shuffle_choices",
                         "type": "broadcast_msg",
                         "value": "shuffle choices"
                     },
                     "C#^%+V)*-.nw0+Cm*bpb": {
                         "id": "C#^%+V)*-.nw0+Cm*bpb",
-                        "name": "ask to play again",
+                        "name": "codelabfeaturedproject.constellations.ask_to_play_again",
                         "type": "broadcast_msg",
                         "value": "ask to play again"
                     },
@@ -147,12 +179,7 @@
                             "0",
                             "0",
                             "0",
-                            "0",
-                            "0",
-                            "0",
-                            "0",
-                            "3",
-                            "1"
+                            "0"
                         ]
                     },
                     "Ci+:O30f9-PMiC+N0L:1": {
@@ -160,6 +187,12 @@
                         "name": "draw dot",
                         "type": "",
                         "value": "1"
+                    },
+                    "ELj5b9R.r9xIAms-CQwE": {
+                        "id": "ELj5b9R.r9xIAms-CQwE",
+                        "name": "codelabfeaturedproject.constellations.use_the_data_from_the_instructions_list_to_decide_whether_to_draw_a_dot_a_line_both_or_neither",
+                        "type": "",
+                        "value": 0
                     },
                     "G6GZ#oDR{k7gqSv)T3{e": {
                         "id": "G6GZ#oDR{k7gqSv)T3{e",
@@ -189,25 +222,37 @@
                         "id": "J(hMMQ3~)A?r9u7lY6XP",
                         "name": "x2",
                         "type": "",
-                        "value": "50"
+                        "value": "98"
                     },
                     "KnNs`9drP[R4!ji(G;lL": {
                         "id": "KnNs`9drP[R4!ji(G;lL",
-                        "name": "constellation count",
+                        "name": "codelabfeaturedproject.constellations.constellation_count",
                         "type": "",
                         "value": 1
+                    },
+                    "LNj8/]aCE+Z4]wMQHDzn": {
+                        "id": "LNj8/]aCE+Z4]wMQHDzn",
+                        "name": "codelabfeaturedproject.constellations.set_up_the_data_for_the_scorpius_constellation",
+                        "type": "",
+                        "value": 0
+                    },
+                    "Lz[@^]l31Y^VXU#+mb3A": {
+                        "id": "Lz[@^]l31Y^VXU#+mb3A",
+                        "name": "codelabfeaturedproject.constellations.enable_cube_taps_and_cozmo_gives_instruction_to_see_the_next_constellation",
+                        "type": "",
+                        "value": 0
                     },
                     "QMIEL.M@_GPc|Ut7@#;Q": {
                         "id": "QMIEL.M@_GPc|Ut7@#;Q",
                         "name": "codelabfeaturedproject.constellations.pair_y",
                         "type": "",
-                        "value": -6
+                        "value": 17
                     },
                     "Tc.Y9##7SyDgLTXNQ?xC": {
                         "id": "Tc.Y9##7SyDgLTXNQ?xC",
                         "name": "pente1",
                         "type": "",
-                        "value": -3.1666666666666665
+                        "value": 1.7
                     },
                     "V?p[M:HVR!Q^*rGSidH$": {
                         "id": "V?p[M:HVR!Q^*rGSidH$",
@@ -215,21 +260,39 @@
                         "type": "",
                         "value": "1"
                     },
+                    "VHX(-cXWv~FiBj#,f7yh": {
+                        "id": "VHX(-cXWv~FiBj#,f7yh",
+                        "name": "codelabfeaturedproject.constellations.set_up_the_data_for_the_orion_constellation",
+                        "type": "",
+                        "value": 0
+                    },
                     "X1)-Ybg6%(;IbJ=1.wlf": {
                         "id": "X1)-Ybg6%(;IbJ=1.wlf",
                         "name": "pente2",
                         "type": "",
-                        "value": 0.9629629629629629
+                        "value": 1
                     },
                     "X:Idv9SkW;_?cN7:]OFJ": {
                         "id": "X:Idv9SkW;_?cN7:]OFJ",
-                        "name": "shuffle count",
+                        "name": "codelabfeaturedproject.constellations.shuffle_count",
+                        "type": "",
+                        "value": 0
+                    },
+                    "YX1O$xWZ]?zPBjOD)/@x": {
+                        "id": "YX1O$xWZ]?zPBjOD)/@x",
+                        "name": "codelabfeaturedproject.constellations.choose_which_constellation_to_get_the_data_for",
+                        "type": "",
+                        "value": 0
+                    },
+                    "Yb#:(Xe{$B*ZiJhpsvYY": {
+                        "id": "Yb#:(Xe{$B*ZiJhpsvYY",
+                        "name": "codelabfeaturedproject.constellations.get_the_next_constellation_in_the_list_or_start_from_the_beginning",
                         "type": "",
                         "value": 0
                     },
                     "YuqIV|BhYSs@so$WZ/F]": {
                         "id": "YuqIV|BhYSs@so$WZ/F]",
-                        "name": "input enabled",
+                        "name": "codelabfeaturedproject.constellations.input_enabled",
                         "type": "",
                         "value": "0"
                     },
@@ -237,7 +300,7 @@
                         "id": "Z@YM/DWcuqzo?p2d%6%{",
                         "name": "y1",
                         "type": "",
-                        "value": "38"
+                        "value": "19"
                     },
                     "ZG=|W.TfM3U87b_uo.b{": {
                         "id": "ZG=|W.TfM3U87b_uo.b{",
@@ -245,21 +308,22 @@
                         "type": "broadcast_msg",
                         "value": "set libra data"
                     },
+                    "]@}+e|%V2_oSrWDLLRpa": {
+                        "id": "]@}+e|%V2_oSrWDLLRpa",
+                        "name": "codelabfeaturedproject.constellations.set_up_the_data_for_the_leo_constellation",
+                        "type": "",
+                        "value": 0
+                    },
                     "^nNGTgMVx,H97j@gfS4#": {
                         "id": "^nNGTgMVx,H97j@gfS4#",
                         "name": "coordonn\u00e9es x",
                         "type": "list",
                         "value": [
-                            "46",
-                            "50",
-                            "54",
-                            "52",
-                            "73",
-                            "79",
-                            "69",
-                            "73",
-                            "79",
-                            "52"
+                            "30",
+                            "43",
+                            "55",
+                            "70",
+                            "84"
                         ]
                     },
                     "_{TUL?som_nzvV^I~7w:": {
@@ -267,6 +331,30 @@
                         "name": "codelabfeaturedproject.constellations.set_casseopeia_data",
                         "type": "broadcast_msg",
                         "value": "set casseopeia data"
+                    },
+                    "`D(U_1^VDw40cu=}fg08": {
+                        "id": "`D(U_1^VDw40cu=}fg08",
+                        "name": "codelabfeaturedproject.constellations.when_the_user_taps_a_cube_get_the_next_constellation",
+                        "type": "",
+                        "value": 0
+                    },
+                    "aqN|xXe_n~f^|26av^2A": {
+                        "id": "aqN|xXe_n~f^|26av^2A",
+                        "name": "codelabfeaturedproject.constellations.shuffle_the_constellation_choices_list",
+                        "type": "",
+                        "value": 0
+                    },
+                    "arBPhf~)-D8x67M7i/e4": {
+                        "id": "arBPhf~)-D8x67M7i/e4",
+                        "name": "codelabfeaturedproject.constellations.loop_through_sets_of_coordinates_to_drive_and_draw_lines_and_dots",
+                        "type": "",
+                        "value": 0
+                    },
+                    "b5ZZbxuiC|*pF9VNej4d": {
+                        "id": "b5ZZbxuiC|*pF9VNej4d",
+                        "name": "codelabfeaturedproject.constellations.turn_to_starting_angle",
+                        "type": "broadcast_msg",
+                        "value": "turn to starting angle"
                     },
                     "cd*G@i9bt?0)}f5Pj%Th": {
                         "id": "cd*G@i9bt?0)}f5Pj%Th",
@@ -284,37 +372,43 @@
                         "id": "gpZ+sHST8X#$E@$v9{?_",
                         "name": "codelabfeaturedproject.constellations.pair_x",
                         "type": "",
-                        "value": 4
+                        "value": 10
                     },
                     "n(Y:S#Q8jt{e}8=uMn8+": {
                         "id": "n(Y:S#Q8jt{e}8=uMn8+",
                         "name": "y3",
                         "type": "",
-                        "value": "26"
+                        "value": ""
                     },
                     "oLO]runH8=u/*t{cwPeh": {
                         "id": "oLO]runH8=u/*t{cwPeh",
-                        "name": "choose constellation",
+                        "name": "codelabfeaturedproject.constellations.choose_constellation",
                         "type": "broadcast_msg",
                         "value": "choose constellation"
                     },
                     "p-izhJ]MUP_NJ%0P@I,n": {
                         "id": "p-izhJ]MUP_NJ%0P@I,n",
-                        "name": "codelabfeaturedproject.cozmosgarden.shuffle_random",
+                        "name": "codelabfeaturedproject.constellations.shuffle_random",
                         "type": "",
                         "value": 4
                     },
                     "q?n=nV;:q8w7ae`f[g/z": {
                         "id": "q?n=nV;:q8w7ae`f[g/z",
-                        "name": "populate choices",
+                        "name": "codelabfeaturedproject.constellations.populate_choices",
                         "type": "broadcast_msg",
                         "value": "populate choices"
+                    },
+                    "rfbbNRv%Xk={1sCFms+r": {
+                        "id": "rfbbNRv%Xk={1sCFms+r",
+                        "name": "Get the distance between two coordinates.",
+                        "type": "",
+                        "value": 0
                     },
                     "vA)9-FHNND6-@A+8KAev": {
                         "id": "vA)9-FHNND6-@A+8KAev",
                         "name": "instructions count",
                         "type": "",
-                        "value": "1"
+                        "value": 18
                     },
                     "x=yOYlHq#-h-_A*irBzd": {
                         "id": "x=yOYlHq#-h-_A*irBzd",
@@ -324,33 +418,45 @@
                     },
                     "ykQSnN*:~q(ES;;,zbX+": {
                         "id": "ykQSnN*:~q(ES;;,zbX+",
-                        "name": "choices",
+                        "name": "codelabfeaturedproject.constellations.choices",
                         "type": "list",
                         "value": [
+                            "1",
                             "3",
                             "2",
-                            "5",
-                            "1",
-                            "4"
+                            "4",
+                            "5"
                         ]
                     },
                     "yzuYw$2k}WWhxxPgllKg": {
                         "id": "yzuYw$2k}WWhxxPgllKg",
                         "name": "total",
                         "type": "",
-                        "value": 3
+                        "value": 20
+                    },
+                    "|6d{#[(c7TB$@e71S~R#": {
+                        "id": "|6d{#[(c7TB$@e71S~R#",
+                        "name": "Utilise les pentes de deux lignes d'intersection pour obtenir les degr\u00e9s de braquage de Cozmo.",
+                        "type": "",
+                        "value": 0
                     },
                     "|rP_=L{NHb1P!g19QCKx": {
                         "id": "|rP_=L{NHb1P!g19QCKx",
-                        "name": "shuffle choice",
+                        "name": "codelabfeaturedproject.constellations.shuffle_choice",
                         "type": "",
-                        "value": "1"
+                        "value": "4"
                     },
                     "~.0NM9Clmo_)/.No(P]a": {
                         "id": "~.0NM9Clmo_)/.No(P]a",
                         "name": "nombre de constellations",
                         "type": "",
-                        "value": "3"
+                        "value": "1"
+                    },
+                    "~a=Oa2eRZ)gmuu-Mcsn~": {
+                        "id": "~a=Oa2eRZ)gmuu-Mcsn~",
+                        "name": "codelabfeaturedproject.constellations.randomly_choose_a_fact_for_cozmo_to_say",
+                        "type": "",
+                        "value": 0
                     }
                 },
                 "visible": true,
@@ -442,6 +548,31 @@
                         "topLevel": false,
                         "x": 1990.4201201270625,
                         "y": 1726.764705882352
+                    },
+                    "!/|6|`VS+Z`e?hb;@xS[": {
+                        "fields": {
+                            "LIST": {
+                                "id": "#*1NSDkV6i($ApbNHzTK",
+                                "name": "LIST",
+                                "value": "y coordinates",
+                                "variableType": "list"
+                            }
+                        },
+                        "id": "!/|6|`VS+Z`e?hb;@xS[",
+                        "inputs": {
+                            "INDEX": {
+                                "block": "1Aohf~^0[y4c0%]J*?br",
+                                "name": "INDEX",
+                                "shadow": "fg$CS-mV/I|4?_T.9%`e"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "data_itemoflist",
+                        "parent": "X(p3vXgf%2cWI}4q!t1@",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "2707",
+                        "y": "1375"
                     },
                     "!49pb7jzF0wu/V2AK,tU": {
                         "fields": {
@@ -741,8 +872,8 @@
                         "parent": "M$m$rO;O@-l)T|d4}r)1",
                         "shadow": false,
                         "topLevel": false,
-                        "x": "2028",
-                        "y": "3078"
+                        "x": 2880.22677998185,
+                        "y": 2812.270902651068
                     },
                     "#B{xa^aI?@p^nkGjh^g[": {
                         "fields": {
@@ -769,12 +900,29 @@
                         "x": "2979",
                         "y": "6949"
                     },
+                    "#Oh^8L2`s`;=`OeO-~^B": {
+                        "fields": {
+                            "BROADCAST_OPTION": {
+                                "id": "b5ZZbxuiC|*pF9VNej4d",
+                                "name": "BROADCAST_OPTION",
+                                "value": "turn to starting angle",
+                                "variableType": "broadcast_msg"
+                            }
+                        },
+                        "id": "#Oh^8L2`s`;=`OeO-~^B",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "event_broadcast_menu_with_broadcast_input",
+                        "parent": "o)gPu[,N,QmnNCh2z@Ek",
+                        "shadow": true,
+                        "topLevel": false
+                    },
                     "#YR#,0E.{+y~H`dtCTAL": {
                         "fields": {
                             "VARIABLE": {
                                 "id": "KnNs`9drP[R4!ji(G;lL",
                                 "name": "VARIABLE",
-                                "value": "constellation count",
+                                "value": "codelabfeaturedproject.constellations.constellation_count",
                                 "variableType": ""
                             }
                         },
@@ -991,7 +1139,7 @@
                             "VARIABLE": {
                                 "id": "p-izhJ]MUP_NJ%0P@I,n",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.shuffle_random",
+                                "value": "codelabfeaturedproject.constellations.shuffle_random",
                                 "variableType": ""
                             }
                         },
@@ -1038,7 +1186,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "since ancient times, libra has been a sign of fairness."
+                                "value": "codelabfeaturedproject.constellations.since_ancient_times_libra_has_been_a_sign_of_fairness"
                             }
                         },
                         "id": "%%#TU]U}zQf91[)@T=gH",
@@ -1119,7 +1267,7 @@
                             "VARIABLE": {
                                 "id": "KnNs`9drP[R4!ji(G;lL",
                                 "name": "VARIABLE",
-                                "value": "constellation count",
+                                "value": "codelabfeaturedproject.constellations.constellation_count",
                                 "variableType": ""
                             }
                         },
@@ -1260,7 +1408,7 @@
                             "VARIABLE": {
                                 "id": "YuqIV|BhYSs@so$WZ/F]",
                                 "name": "VARIABLE",
-                                "value": "input enabled",
+                                "value": "codelabfeaturedproject.constellations.input_enabled",
                                 "variableType": ""
                             }
                         },
@@ -1438,6 +1586,23 @@
                         "topLevel": false,
                         "x": "1771",
                         "y": "2634"
+                    },
+                    "(%N4h::YV-m:=N7]Lp{R": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": ""
+                            }
+                        },
+                        "id": "(%N4h::YV-m:=N7]Lp{R",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 3638.211241631161,
+                        "y": 872.1764708651413
                     },
                     "(+3S@zc;[l6yimz[^~xG": {
                         "fields": {
@@ -1733,6 +1898,21 @@
                         "x": 585.5270576477051,
                         "y": 1971.8235294117646
                     },
+                    ")^UYZm_fEpzw#x?j[{Ua": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": "1"
+                            }
+                        },
+                        "id": ")^UYZm_fEpzw#x?j[{Ua",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_integer",
+                        "parent": ",TZwzIDJ=gie@tg{Vd,6",
+                        "shadow": true,
+                        "topLevel": false
+                    },
                     ")n0m-YPs!2/|-sV-!%5R": {
                         "fields": {
                             "BROADCAST_OPTION": {
@@ -1751,6 +1931,23 @@
                         "topLevel": true,
                         "x": 1231,
                         "y": 208
+                    },
+                    ")tOXd3FAc6IXQrVKDNnq": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": ""
+                            }
+                        },
+                        "id": ")tOXd3FAc6IXQrVKDNnq",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 1407.6631619784162,
+                        "y": 1198.0745067135902
                     },
                     "*+|j4EOnNEn}hhsA[o#$": {
                         "fields": {},
@@ -1829,7 +2026,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "cassiopeia used to be called the lady of the chair."
+                                "value": "codelabfeaturedproject.constellations.cassiopeia_used_to_be_called_the_lady_of_the_chair"
                             }
                         },
                         "id": "*F[Y9J#,ol^lyuiuJ5bE",
@@ -2021,6 +2218,23 @@
                         "shadow": true,
                         "topLevel": false
                     },
+                    "+!{LgozX!G7!E8*RN,h`": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": "1"
+                            }
+                        },
+                        "id": "+!{LgozX!G7!E8*RN,h`",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_integer",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 4362.414171604763,
+                        "y": 804.1764708651413
+                    },
                     "+(PA=;2P5;HBo|kB2ke?": {
                         "fields": {
                             "LIST": {
@@ -2045,6 +2259,23 @@
                         "topLevel": false,
                         "x": "2970",
                         "y": "4294"
+                    },
+                    "+*6dyTG~hTp/E4J::G^[": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "0"
+                            }
+                        },
+                        "id": "+*6dyTG~hTp/E4J::G^[",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 1403.6631619784162,
+                        "y": 1190.0745067135904
                     },
                     "+.j1r=k-Tl8pCUX9M^8R": {
                         "fields": {
@@ -2186,6 +2417,23 @@
                         "x": 1656.470588235296,
                         "y": 2065.1176470588234
                     },
+                    ",,5Nb:Sls:W3C4eHzPMO": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": ""
+                            }
+                        },
+                        "id": ",,5Nb:Sls:W3C4eHzPMO",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 1764.145510897331,
+                        "y": 1262.0745067135902
+                    },
                     ",BJ*Zv9(95=Nd#~[Pw[Z": {
                         "fields": {
                             "LIST": {
@@ -2225,6 +2473,29 @@
                         "parent": "dlW`sq*uj/fM%HY^Rm/z",
                         "shadow": true,
                         "topLevel": false
+                    },
+                    ",ML5SL/M$r$(xK/DpWdG": {
+                        "fields": {},
+                        "id": ",ML5SL/M$r$(xK/DpWdG",
+                        "inputs": {
+                            "NUM1": {
+                                "block": "9u)vbYY3?EJ9K4Cw(_a1",
+                                "name": "NUM1",
+                                "shadow": ",Vg~Mb$%2FV]qA6Hz9xj"
+                            },
+                            "NUM2": {
+                                "block": "W4nrIulesqq[n=Z5-$P8",
+                                "name": "NUM2",
+                                "shadow": "mH{H:EmuIk%2[`TyHPM#"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_subtract",
+                        "parent": "OTu?oNo^wGAi1ylWn3Lr",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "875",
+                        "y": "895"
                     },
                     ",OPE#a:{p0{C,qvG_0e$": {
                         "fields": {
@@ -2269,6 +2540,48 @@
                         "topLevel": false,
                         "x": "1242",
                         "y": "3480"
+                    },
+                    ",TZwzIDJ=gie@tg{Vd,6": {
+                        "fields": {
+                            "LIST": {
+                                "id": "#*1NSDkV6i($ApbNHzTK",
+                                "name": "LIST",
+                                "value": "y coordinates",
+                                "variableType": "list"
+                            }
+                        },
+                        "id": ",TZwzIDJ=gie@tg{Vd,6",
+                        "inputs": {
+                            "INDEX": {
+                                "block": ")^UYZm_fEpzw#x?j[{Ua",
+                                "name": "INDEX",
+                                "shadow": ")^UYZm_fEpzw#x?j[{Ua"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "data_itemoflist",
+                        "parent": "nA4V4gvSSd[KEe0TP~Bj",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "2875",
+                        "y": "1418"
+                    },
+                    ",Vg~Mb$%2FV]qA6Hz9xj": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": ""
+                            }
+                        },
+                        "id": ",Vg~Mb$%2FV]qA6Hz9xj",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 1432.7255055758285,
+                        "y": 1254.0745067135902
                     },
                     ",WXLfc,dXKels,X))$2;": {
                         "fields": {
@@ -2381,6 +2694,23 @@
                         "x": "359",
                         "y": "1706"
                     },
+                    ",qg$bYNB^ObRt.$qHJ@O": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": ""
+                            }
+                        },
+                        "id": ",qg$bYNB^ObRt.$qHJ@O",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 3638.211241631161,
+                        "y": 800.176470865141
+                    },
                     ",u2iVS|y3H7er18}3H**": {
                         "fields": {
                             "TEXT": {
@@ -2410,6 +2740,40 @@
                         "parent": "BTh{M=fV~[TsZS/GWfKd",
                         "shadow": true,
                         "topLevel": false
+                    },
+                    ",z=)Hx@IBI[UFzZO8]BM": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": ""
+                            }
+                        },
+                        "id": ",z=)Hx@IBI[UFzZO8]BM",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 1407.6631619784162,
+                        "y": 1142.0745067135904
+                    },
+                    "-+b%{o9I,)}S_qu,6nJ/": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": "1"
+                            }
+                        },
+                        "id": "-+b%{o9I,)}S_qu,6nJ/",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_integer",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 4462.4712313696255,
+                        "y": 808.1764708651414
                     },
                     "-0)AD#geZ0sMEq{}z[=P": {
                         "fields": {
@@ -2590,6 +2954,21 @@
                         "x": "3859",
                         "y": "5770"
                     },
+                    ".O21[|GXwWH$OUiOZ8mD": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": "1"
+                            }
+                        },
+                        "id": ".O21[|GXwWH$OUiOZ8mD",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": "1Aohf~^0[y4c0%]J*?br",
+                        "shadow": true,
+                        "topLevel": false
+                    },
                     ".Uv0M{)j]v%$lDYB;hO_": {
                         "fields": {
                             "TEXT": {
@@ -2674,7 +3053,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "cassiopeia's brightest star shines 40 times brighter than the sun."
+                                "value": "codelabfeaturedproject.constellations.cassiopeias_brightest_star_shines_40_times_brighter_than_the_sun"
                             }
                         },
                         "id": ".xiJZM`#%,W3Bgz-}b~P",
@@ -2970,7 +3349,7 @@
                             "VARIABLE": {
                                 "id": "p-izhJ]MUP_NJ%0P@I,n",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.shuffle_random",
+                                "value": "codelabfeaturedproject.constellations.shuffle_random",
                                 "variableType": ""
                             }
                         },
@@ -3016,6 +3395,31 @@
                         "topLevel": false,
                         "x": "2004",
                         "y": "2397"
+                    },
+                    "0!k:sOZ%uDwm}JJ#)5Qv": {
+                        "fields": {
+                            "LIST": {
+                                "id": "^nNGTgMVx,H97j@gfS4#",
+                                "name": "LIST",
+                                "value": "x coordinates",
+                                "variableType": "list"
+                            }
+                        },
+                        "id": "0!k:sOZ%uDwm}JJ#)5Qv",
+                        "inputs": {
+                            "INDEX": {
+                                "block": "[mZzoC5_/^mdwydQe$%7",
+                                "name": "INDEX",
+                                "shadow": "-+b%{o9I,)}S_qu,6nJ/"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "data_itemoflist",
+                        "parent": "6+RPJvDO0qcGJH|3SmkG",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "2875",
+                        "y": "1456"
                     },
                     "0#^G*V{rxhpP.Ajw):?h": {
                         "fields": {},
@@ -3184,6 +3588,31 @@
                         "x": 1561.5381232429957,
                         "y": 380.23529411764684
                     },
+                    "0It,nD.AH~Q-oT`/kP5C": {
+                        "fields": {
+                            "LIST": {
+                                "id": "^nNGTgMVx,H97j@gfS4#",
+                                "name": "LIST",
+                                "value": "x coordinates",
+                                "variableType": "list"
+                            }
+                        },
+                        "id": "0It,nD.AH~Q-oT`/kP5C",
+                        "inputs": {
+                            "INDEX": {
+                                "block": "PoDEZ[Mig~Au!qws@=-s",
+                                "name": "INDEX",
+                                "shadow": "PoDEZ[Mig~Au!qws@=-s"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "data_itemoflist",
+                        "parent": "v7:eqk6GoS7ocNo(C7Rx",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "3053",
+                        "y": "1253"
+                    },
                     "0J@|.|X)DSQvN.a{!8CG": {
                         "fields": {
                             "TEXT": {
@@ -3198,6 +3627,48 @@
                         "parent": "XGc|[8T4gA:gi),+2;BD",
                         "shadow": true,
                         "topLevel": false
+                    },
+                    "0Yp1$pv9Wof=/HheAP6H": {
+                        "fields": {},
+                        "id": "0Yp1$pv9Wof=/HheAP6H",
+                        "inputs": {
+                            "NUM1": {
+                                "block": "X(p3vXgf%2cWI}4q!t1@",
+                                "name": "NUM1",
+                                "shadow": ",z=)Hx@IBI[UFzZO8]BM"
+                            },
+                            "NUM2": {
+                                "block": "6+RPJvDO0qcGJH|3SmkG",
+                                "name": "NUM2",
+                                "shadow": "Q-Px[2p)e%*yjXj*Y:lV"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_divide",
+                        "parent": "2}$Tyu}q4k,:J;x2|C3j",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "875",
+                        "y": "1020"
+                    },
+                    "0c*qsl*SRZxJ$%n!*!~J": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "*o3H?Ensy20R;*Fc]p#H",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.constellations.set_up_the_data_for_the_libra_constellation",
+                                "variableType": ""
+                            }
+                        },
+                        "id": "0c*qsl*SRZxJ$%n!*!~J",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": null,
+                        "shadow": false,
+                        "topLevel": true,
+                        "x": 2572,
+                        "y": 3093
                     },
                     "0qf!Z16DVWPUyXa=!62A": {
                         "fields": {},
@@ -3226,6 +3697,23 @@
                         "shadow": true,
                         "topLevel": false
                     },
+                    "15LSH/#.%x3PINQa*@y=": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": ""
+                            }
+                        },
+                        "id": "15LSH/#.%x3PINQa*@y=",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 1411.6631619784162,
+                        "y": 1146.07450671359
+                    },
                     "16Vt7y/aJnz8/;F^7Q7B": {
                         "fields": {
                             "VARIABLE": {
@@ -3244,6 +3732,25 @@
                         "topLevel": false,
                         "x": "907",
                         "y": "1070"
+                    },
+                    "17P|n%.8JIsPZ3+j?M+K": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "?XVmzOUgYiz(QA-:KvAt",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.constellations.turn_cozmo_back_to_his_starting_position",
+                                "variableType": ""
+                            }
+                        },
+                        "id": "17P|n%.8JIsPZ3+j?M+K",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": null,
+                        "shadow": false,
+                        "topLevel": true,
+                        "x": 3160.3776470588236,
+                        "y": 656.5317647058782
                     },
                     "1;#p2CiAXP.u8%3M;C?N": {
                         "fields": {},
@@ -3284,6 +3791,29 @@
                         "topLevel": true,
                         "x": 548,
                         "y": 1000
+                    },
+                    "1Aohf~^0[y4c0%]J*?br": {
+                        "fields": {},
+                        "id": "1Aohf~^0[y4c0%]J*?br",
+                        "inputs": {
+                            "NUM1": {
+                                "block": "Ah9)m3=S^xuNXACjvV4{",
+                                "name": "NUM1",
+                                "shadow": "V=3$!}-IGDrn1{ZbFg7G"
+                            },
+                            "NUM2": {
+                                "block": ".O21[|GXwWH$OUiOZ8mD",
+                                "name": "NUM2",
+                                "shadow": ".O21[|GXwWH$OUiOZ8mD"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_subtract",
+                        "parent": "!/|6|`VS+Z`e?hb;@xS[",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "2875",
+                        "y": "470"
                     },
                     "1E/!Z+i;eO*?cfGRseTE": {
                         "fields": {
@@ -3412,7 +3942,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "scorpius is best seen in the july night sky."
+                                "value": "codelabfeaturedproject.constellations.scorpius_is_best_seen_in_the_july_night_sky"
                             }
                         },
                         "id": "2.xw/u^4-0QjN0t75G`T",
@@ -3552,6 +4082,50 @@
                         "x": "907",
                         "y": "503"
                     },
+                    "2{Eudtyq0!z08%ixqx5;": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "YX1O$xWZ]?zPBjOD)/@x",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.constellations.choose_which_constellation_to_get_the_data_for",
+                                "variableType": ""
+                            }
+                        },
+                        "id": "2{Eudtyq0!z08%ixqx5;",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": null,
+                        "shadow": false,
+                        "topLevel": true,
+                        "x": -387,
+                        "y": 104
+                    },
+                    "2}$Tyu}q4k,:J;x2|C3j": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "Tc.Y9##7SyDgLTXNQ?xC",
+                                "name": "VARIABLE",
+                                "value": "pente1",
+                                "variableType": ""
+                            }
+                        },
+                        "id": "2}$Tyu}q4k,:J;x2|C3j",
+                        "inputs": {
+                            "VALUE": {
+                                "block": "0Yp1$pv9Wof=/HheAP6H",
+                                "name": "VALUE",
+                                "shadow": "p;*biLV{yJzP5[,N#TF@"
+                            }
+                        },
+                        "next": "HmV]Q=X=yX5HhPVN@=eY",
+                        "opcode": "data_setvariableto",
+                        "parent": "bIV]l+02W$Ejz=W2;4aK",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "875",
+                        "y": "1293"
+                    },
                     "3!uVne#1J^_@CwH6~zkM": {
                         "fields": {
                             "NUM": {
@@ -3614,6 +4188,25 @@
                         "parent": "z62gsOtv~sM5V_hk5Nx-",
                         "shadow": true,
                         "topLevel": false
+                    },
+                    "3;ba#7Y$^bkHuU{_Un[9": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "X1)-Ybg6%(;IbJ=1.wlf",
+                                "name": "VARIABLE",
+                                "value": "pente2",
+                                "variableType": ""
+                            }
+                        },
+                        "id": "3;ba#7Y$^bkHuU{_Un[9",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": "9u)vbYY3?EJ9K4Cw(_a1",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "875",
+                        "y": "1600"
                     },
                     "3JFV}LQV#o^NsgDUJ1;#": {
                         "fields": {
@@ -3981,6 +4574,25 @@
                         "shadow": true,
                         "topLevel": false
                     },
+                    "4v7f}OcSD*)^1Ym2`DH.": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "LNj8/]aCE+Z4]wMQHDzn",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.constellations.set_up_the_data_for_the_scorpius_constellation",
+                                "variableType": ""
+                            }
+                        },
+                        "id": "4v7f}OcSD*)^1Ym2`DH.",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": null,
+                        "shadow": false,
+                        "topLevel": true,
+                        "x": 4304,
+                        "y": 3007
+                    },
                     "4y9{:upqz-!lRGmdDqy3": {
                         "fields": {
                             "TEXT": {
@@ -4260,6 +4872,29 @@
                         "x": "2952",
                         "y": "6176"
                     },
+                    "6+RPJvDO0qcGJH|3SmkG": {
+                        "fields": {},
+                        "id": "6+RPJvDO0qcGJH|3SmkG",
+                        "inputs": {
+                            "NUM1": {
+                                "block": "0!k:sOZ%uDwm}JJ#)5Qv",
+                                "name": "NUM1",
+                                "shadow": "`PI$t)HguL,^*k_E6zrj"
+                            },
+                            "NUM2": {
+                                "block": "M;H:yL+[u{{MWgVMf$fj",
+                                "name": "NUM2",
+                                "shadow": "W~Kd~!HbIK?.)ts8EMuo"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_subtract",
+                        "parent": "0Yp1$pv9Wof=/HheAP6H",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "875",
+                        "y": "895"
+                    },
                     "69k+,Cdl#(nr,oA6pLgC": {
                         "fields": {
                             "LIST": {
@@ -4488,6 +5123,23 @@
                         "x": "291",
                         "y": "1967"
                     },
+                    "7JEDBjFKf~b1K)PQ77Ys": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": "45"
+                            }
+                        },
+                        "id": "7JEDBjFKf~b1K)PQ77Ys",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 3349.843237309109,
+                        "y": 1000.1764708651413
+                    },
                     "7N5!~9Y6,RgXB~}|l3L+": {
                         "fields": {
                             "VARIABLE": {
@@ -4539,7 +5191,7 @@
                             "VARIABLE": {
                                 "id": "|rP_=L{NHb1P!g19QCKx",
                                 "name": "VARIABLE",
-                                "value": "shuffle choice",
+                                "value": "codelabfeaturedproject.constellations.shuffle_choice",
                                 "variableType": ""
                             }
                         },
@@ -4887,7 +5539,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "my cousin's name is cassiopeia. she's a keyboard."
+                                "value": "codelabfeaturedproject.constellations.my_cousins_name_is_cassiopeia_shes_a_keyboard"
                             }
                         },
                         "id": "9EV.JQ~/H*Kze$/-p9bv",
@@ -5066,6 +5718,25 @@
                         "shadow": true,
                         "topLevel": false
                     },
+                    "9hi1^fBCC(r2v,GH3GIv": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "Tc.Y9##7SyDgLTXNQ?xC",
+                                "name": "VARIABLE",
+                                "value": "pente1",
+                                "variableType": ""
+                            }
+                        },
+                        "id": "9hi1^fBCC(r2v,GH3GIv",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": "W4nrIulesqq[n=Z5-$P8",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "875",
+                        "y": "1419"
+                    },
                     "9kEu~MfS}q~_-?Q/p|r9": {
                         "fields": {
                             "LIST": {
@@ -5084,6 +5755,29 @@
                         "topLevel": false,
                         "x": 1714.1148251926215,
                         "y": 2156.8823529411766
+                    },
+                    "9u)vbYY3?EJ9K4Cw(_a1": {
+                        "fields": {
+                            "OPERATOR": {
+                                "name": "OPERATOR",
+                                "value": "atan"
+                            }
+                        },
+                        "id": "9u)vbYY3?EJ9K4Cw(_a1",
+                        "inputs": {
+                            "NUM": {
+                                "block": "3;ba#7Y$^bkHuU{_Un[9",
+                                "name": "NUM",
+                                "shadow": "[hXFP+!3^!@gP/u]z/X@"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_mathop",
+                        "parent": ",ML5SL/M$r$(xK/DpWdG",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "875",
+                        "y": "1860"
                     },
                     "9|j~g3$:u*u/,,l/sG#X": {
                         "fields": {
@@ -5114,6 +5808,25 @@
                         "parent": "#)#,d$,bSqXmx_5:kOs=",
                         "shadow": true,
                         "topLevel": false
+                    },
+                    ":%Fj0},-_ZtRm%*=s!4G": {
+                        "fields": {
+                            "LIST": {
+                                "id": "#*1NSDkV6i($ApbNHzTK",
+                                "name": "LIST",
+                                "value": "y coordinates",
+                                "variableType": "list"
+                            }
+                        },
+                        "id": ":%Fj0},-_ZtRm%*=s!4G",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_lengthoflist",
+                        "parent": "r0ecERiuSk?h)=,A/M?q",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "2875",
+                        "y": "1456"
                     },
                     ":,M!;!mX%aa6BCe0u+yo": {
                         "fields": {
@@ -5296,6 +6009,50 @@
                         "x": "2969",
                         "y": "4480"
                     },
+                    ":w#.1oV___dnU4#M4^gn": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "#3%4J0D$LQ,#{{O9o;SZ",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.constellations.turn_speed",
+                                "variableType": ""
+                            }
+                        },
+                        "id": ":w#.1oV___dnU4#M4^gn",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": "CTn=7j=X4T#D[:S:ye0y",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "2787",
+                        "y": "1453"
+                    },
+                    ":zFt4X[KG|cC^,#R*~9`": {
+                        "fields": {
+                            "LIST": {
+                                "id": "^nNGTgMVx,H97j@gfS4#",
+                                "name": "LIST",
+                                "value": "x coordinates",
+                                "variableType": "list"
+                            }
+                        },
+                        "id": ":zFt4X[KG|cC^,#R*~9`",
+                        "inputs": {
+                            "INDEX": {
+                                "block": "TszU+sTx/7=)UK/ad_K_",
+                                "name": "INDEX",
+                                "shadow": "TszU+sTx/7=)UK/ad_K_"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "data_itemoflist",
+                        "parent": "v7:eqk6GoS7ocNo(C7Rx",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "3053",
+                        "y": "1253"
+                    },
                     ";#az77c{z1/BFP3_LeG?": {
                         "fields": {
                             "VARIABLE": {
@@ -5387,6 +6144,23 @@
                         "x": "3668",
                         "y": "3867"
                     },
+                    ";Nhre*e$XXc)?Y51ABKJ": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "0"
+                            }
+                        },
+                        "id": ";Nhre*e$XXc)?Y51ABKJ",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 1428.7255055758283,
+                        "y": 1238.0745067135904
+                    },
                     ";PZvA*b1(n!}QONH[.|f": {
                         "fields": {},
                         "id": ";PZvA*b1(n!}QONH[.|f",
@@ -5423,6 +6197,23 @@
                         "topLevel": false,
                         "x": "1930",
                         "y": "2133"
+                    },
+                    ";T9/R#o_ZiG8x)p%(2=f": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": ""
+                            }
+                        },
+                        "id": ";T9/R#o_ZiG8x)p%(2=f",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 1538.8631627413556,
+                        "y": 1202.0745067135902
                     },
                     ";TcY}fVXk@S.,(vSCqt+": {
                         "fields": {
@@ -5642,7 +6433,7 @@
                             "VARIABLE": {
                                 "id": "X:Idv9SkW;_?cN7:]OFJ",
                                 "name": "VARIABLE",
-                                "value": "shuffle count",
+                                "value": "codelabfeaturedproject.constellations.shuffle_count",
                                 "variableType": ""
                             }
                         },
@@ -5685,7 +6476,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "tap a cube for another constellation "
+                                "value": "codelabfeaturedproject.constellations.tap_a_cube_for_another_constellation_"
                             }
                         },
                         "id": "=W.NI.C6z(,dWp6Hu3/i",
@@ -6183,7 +6974,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "scorpius was discovered by a man named ptolemy. say that three times fast!"
+                                "value": "codelabfeaturedproject.constellations.scorpius_was_discovered_by_a_man_named_ptolemy_say_that_three_times_fast"
                             }
                         },
                         "id": "AWf,z.mycu,Qfv^{F={1",
@@ -6227,6 +7018,25 @@
                         "topLevel": false,
                         "x": "1817",
                         "y": "1611"
+                    },
+                    "Ah9)m3=S^xuNXACjvV4{": {
+                        "fields": {
+                            "LIST": {
+                                "id": "#*1NSDkV6i($ApbNHzTK",
+                                "name": "LIST",
+                                "value": "y coordinates",
+                                "variableType": "list"
+                            }
+                        },
+                        "id": "Ah9)m3=S^xuNXACjvV4{",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_lengthoflist",
+                        "parent": "1Aohf~^0[y4c0%]J*?br",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "3121",
+                        "y": "1445"
                     },
                     "AjO-B)G?s)/s!hTrkb(4": {
                         "fields": {
@@ -6320,6 +7130,25 @@
                         "x": "259",
                         "y": "1592"
                     },
+                    "BGbE~`i%HK4K]OO~ljxy": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "9s9sg?duxZO{ld.P3j*I",
+                                "name": "VARIABLE",
+                                "value": "angle de braquage",
+                                "variableType": ""
+                            }
+                        },
+                        "id": "BGbE~`i%HK4K]OO~ljxy",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": "CTn=7j=X4T#D[:S:ye0y",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "2787",
+                        "y": "1155"
+                    },
                     "BJ)*!^[?Xd;WkSqX4Jw9": {
                         "fields": {
                             "TEXT": {
@@ -6334,6 +7163,25 @@
                         "parent": "47JoHDq8G),YOkm~k/ZF",
                         "shadow": true,
                         "topLevel": false
+                    },
+                    "BNqYQ1hZavPVHPsW~=wG": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "`D(U_1^VDw40cu=}fg08",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.constellations.when_the_user_taps_a_cube_get_the_next_constellation",
+                                "variableType": ""
+                            }
+                        },
+                        "id": "BNqYQ1hZavPVHPsW~=wG",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": null,
+                        "shadow": false,
+                        "topLevel": true,
+                        "x": -375,
+                        "y": 1138
                     },
                     "BTh{M=fV~[TsZS/GWfKd": {
                         "fields": {
@@ -6374,6 +7222,23 @@
                         "parent": "p3|Y.?WR##,oB.@=,,]@",
                         "shadow": true,
                         "topLevel": false
+                    },
+                    "Bm+H;i)bNc{32riBg|bk": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": "1"
+                            }
+                        },
+                        "id": "Bm+H;i)bNc{32riBg|bk",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_integer",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 3393.995951084744,
+                        "y": 804.1764708651413
                     },
                     "Bo^6mIkxNmtOT2:M]%?=": {
                         "fields": {
@@ -6559,6 +7424,46 @@
                         "parent": "Gir@e4SsdU%=bWz0yVp{",
                         "shadow": true,
                         "topLevel": false
+                    },
+                    "COZg].kFzrpq3wn)NCUp": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": ""
+                            }
+                        },
+                        "id": "COZg].kFzrpq3wn)NCUp",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 3943.9135898634304,
+                        "y": 880.1764708651415
+                    },
+                    "CTn=7j=X4T#D[:S:ye0y": {
+                        "fields": {},
+                        "id": "CTn=7j=X4T#D[:S:ye0y",
+                        "inputs": {
+                            "ANGLE": {
+                                "block": "BGbE~`i%HK4K]OO~ljxy",
+                                "name": "ANGLE",
+                                "shadow": "M}T#ER4@vJ$.YqB~$Xl5"
+                            },
+                            "SPEED": {
+                                "block": ":w#.1oV___dnU4#M4^gn",
+                                "name": "SPEED",
+                                "shadow": "7JEDBjFKf~b1K)PQ77Ys"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "cozmo_vert_turn",
+                        "parent": "OTu?oNo^wGAi1ylWn3Lr",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "2787",
+                        "y": "483"
                     },
                     "CWdzsOUtWWENf[.ioqdV": {
                         "fields": {},
@@ -7783,6 +8688,46 @@
                         "x": "1984",
                         "y": "1195"
                     },
+                    "HmV]Q=X=yX5HhPVN@=eY": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "X1)-Ybg6%(;IbJ=1.wlf",
+                                "name": "VARIABLE",
+                                "value": "pente2",
+                                "variableType": ""
+                            }
+                        },
+                        "id": "HmV]Q=X=yX5HhPVN@=eY",
+                        "inputs": {
+                            "VALUE": {
+                                "block": "hYw9/:S5mB6QalX0xJZ0",
+                                "name": "VALUE",
+                                "shadow": "+*6dyTG~hTp/E4J::G^["
+                            }
+                        },
+                        "next": "OTu?oNo^wGAi1ylWn3Lr",
+                        "opcode": "data_setvariableto",
+                        "parent": "2}$Tyu}q4k,:J;x2|C3j",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "875",
+                        "y": "1096"
+                    },
+                    "Hrkpy(#JHj-%^^VLL`8I": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": "2"
+                            }
+                        },
+                        "id": "Hrkpy(#JHj-%^^VLL`8I",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_integer",
+                        "parent": "N}y7[jzBI$O~lB)$7Ul6",
+                        "shadow": true,
+                        "topLevel": false
+                    },
                     "I%RXnSNuS{X4RHdIfmLD": {
                         "fields": {},
                         "id": "I%RXnSNuS{X4RHdIfmLD",
@@ -7845,8 +8790,8 @@
                         "parent": null,
                         "shadow": false,
                         "topLevel": true,
-                        "x": 2560,
-                        "y": 3084
+                        "x": 2573,
+                        "y": 3181
                     },
                     "I/Ml{FqgC3yN@)IFLhgI": {
                         "fields": {
@@ -7913,11 +8858,30 @@
                         "x": "2962",
                         "y": "7292"
                     },
+                    "I7!2Kkff_IOf.%IN3$x:": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "Yb#:(Xe{$B*ZiJhpsvYY",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.constellations.get_the_next_constellation_in_the_list_or_start_from_the_beginning",
+                                "variableType": ""
+                            }
+                        },
+                        "id": "I7!2Kkff_IOf.%IN3$x:",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": null,
+                        "shadow": false,
+                        "topLevel": true,
+                        "x": 462,
+                        "y": 835
+                    },
                     "IN7DIxzZX-M2MyZuQj?N": {
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "orion is best seen in the january night sky."
+                                "value": "codelabfeaturedproject.constellations.orion_is_best_seen_in_the_january_night_sky"
                             }
                         },
                         "id": "IN7DIxzZX-M2MyZuQj?N",
@@ -7990,7 +8954,7 @@
                             "VARIABLE": {
                                 "id": "X:Idv9SkW;_?cN7:]OFJ",
                                 "name": "VARIABLE",
-                                "value": "shuffle count",
+                                "value": "codelabfeaturedproject.constellations.shuffle_count",
                                 "variableType": ""
                             }
                         },
@@ -8033,7 +8997,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "libra is best seen in the june night sky."
+                                "value": "codelabfeaturedproject.constellations.libra_is_best_seen_in_the_june_night_sky"
                             }
                         },
                         "id": "JBt*q+kehvscRlfXkl_W",
@@ -8292,6 +9256,25 @@
                         "topLevel": true,
                         "x": 1459.2045937706444,
                         "y": 448.23529411764684
+                    },
+                    "KM0w)D5Sjqa*kl{)A84R": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": ",XK)bGY2Hv`0@P:wW(n*",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.constellations.fill_up_the_choices_list_with_constellation_numbers",
+                                "variableType": ""
+                            }
+                        },
+                        "id": "KM0w)D5Sjqa*kl{)A84R",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": null,
+                        "shadow": false,
+                        "topLevel": true,
+                        "x": -391,
+                        "y": 1714
                     },
                     "KZ27B)|6y}u@eLR1)`$f": {
                         "fields": {},
@@ -8652,6 +9635,31 @@
                         "x": 1561.1251798517565,
                         "y": 892.705882352941
                     },
+                    "M;H:yL+[u{{MWgVMf$fj": {
+                        "fields": {
+                            "LIST": {
+                                "id": "^nNGTgMVx,H97j@gfS4#",
+                                "name": "LIST",
+                                "value": "x coordinates",
+                                "variableType": "list"
+                            }
+                        },
+                        "id": "M;H:yL+[u{{MWgVMf$fj",
+                        "inputs": {
+                            "INDEX": {
+                                "block": "yEV?4BxABZbQu-C](dOA",
+                                "name": "INDEX",
+                                "shadow": "+!{LgozX!G7!E8*RN,h`"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "data_itemoflist",
+                        "parent": "6+RPJvDO0qcGJH|3SmkG",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "2875",
+                        "y": "1376"
+                    },
                     "M=,@nP*@WYvwu%gjA:D3": {
                         "fields": {
                             "LIST": {
@@ -8783,6 +9791,25 @@
                         "x": "907",
                         "y": "503"
                     },
+                    "MWOQg+79MU`^yXEyBy~j": {
+                        "fields": {
+                            "LIST": {
+                                "id": "^nNGTgMVx,H97j@gfS4#",
+                                "name": "LIST",
+                                "value": "x coordinates",
+                                "variableType": "list"
+                            }
+                        },
+                        "id": "MWOQg+79MU`^yXEyBy~j",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_lengthoflist",
+                        "parent": "yEV?4BxABZbQu-C](dOA",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "3995",
+                        "y": "1469"
+                    },
                     "M`.4NQa}$Au{]FMvHJA5": {
                         "fields": {
                             "TEXT": {
@@ -8836,6 +9863,25 @@
                         "x": "-621",
                         "y": "2193"
                     },
+                    "Mi_o#ycv?Abj8|%O;_A(": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": ":l/#YnDX^0_JtNeNiZP*",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.constellations.set_up_the_data_for_the_cassiopeia_constellation",
+                                "variableType": ""
+                            }
+                        },
+                        "id": "Mi_o#ycv?Abj8|%O;_A(",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": null,
+                        "shadow": false,
+                        "topLevel": true,
+                        "x": 485,
+                        "y": 2654
+                    },
                     "Mu;AzA).;?`{pD{VJ?_J": {
                         "fields": {
                             "NUM": {
@@ -8852,6 +9898,42 @@
                         "topLevel": true,
                         "x": 2437.0057621002193,
                         "y": 384.4705882352939
+                    },
+                    "Mw/7sw;Qf{*oqj)f%fa]": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "=#a$yb2Q#eU4|mLH(O6|",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.constellations.initialize_variables_and_start_the_activity",
+                                "variableType": ""
+                            }
+                        },
+                        "id": "Mw/7sw;Qf{*oqj)f%fa]",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": null,
+                        "shadow": false,
+                        "topLevel": true,
+                        "x": 475,
+                        "y": 113
+                    },
+                    "M}T#ER4@vJ$.YqB~$Xl5": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": "90"
+                            }
+                        },
+                        "id": "M}T#ER4@vJ$.YqB~$Xl5",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_angle",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 3210.955479054104,
+                        "y": 1000.1764708651413
                     },
                     "N%}.elcfcluH-)%Zl|)H": {
                         "fields": {
@@ -9166,6 +10248,31 @@
                         "x": "2004",
                         "y": "2213"
                     },
+                    "N}y7[jzBI$O~lB)$7Ul6": {
+                        "fields": {
+                            "LIST": {
+                                "id": "#*1NSDkV6i($ApbNHzTK",
+                                "name": "LIST",
+                                "value": "y coordinates",
+                                "variableType": "list"
+                            }
+                        },
+                        "id": "N}y7[jzBI$O~lB)$7Ul6",
+                        "inputs": {
+                            "INDEX": {
+                                "block": "Hrkpy(#JHj-%^^VLL`8I",
+                                "name": "INDEX",
+                                "shadow": "Hrkpy(#JHj-%^^VLL`8I"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "data_itemoflist",
+                        "parent": "nA4V4gvSSd[KEe0TP~Bj",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "2875",
+                        "y": "1376"
+                    },
                     "O!Fnc(oH:,|`BZkPwX-I": {
                         "fields": {
                             "VARIABLE": {
@@ -9230,7 +10337,7 @@
                             "VARIABLE": {
                                 "id": "X:Idv9SkW;_?cN7:]OFJ",
                                 "name": "VARIABLE",
-                                "value": "shuffle count",
+                                "value": "codelabfeaturedproject.constellations.shuffle_count",
                                 "variableType": ""
                             }
                         },
@@ -9383,6 +10490,31 @@
                         "topLevel": false,
                         "x": "2979",
                         "y": "6959"
+                    },
+                    "OTu?oNo^wGAi1ylWn3Lr": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "9s9sg?duxZO{ld.P3j*I",
+                                "name": "VARIABLE",
+                                "value": "angle de braquage",
+                                "variableType": ""
+                            }
+                        },
+                        "id": "OTu?oNo^wGAi1ylWn3Lr",
+                        "inputs": {
+                            "VALUE": {
+                                "block": ",ML5SL/M$r$(xK/DpWdG",
+                                "name": "VALUE",
+                                "shadow": ";Nhre*e$XXc)?Y51ABKJ"
+                            }
+                        },
+                        "next": "CTn=7j=X4T#D[:S:ye0y",
+                        "opcode": "data_setvariableto",
+                        "parent": "HmV]Q=X=yX5HhPVN@=eY",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "875",
+                        "y": "1595"
                     },
                     "O[Hv6Q,~D*iAyWHB|cly": {
                         "fields": {},
@@ -9709,6 +10841,21 @@
                         "x": "950",
                         "y": "1793"
                     },
+                    "PoDEZ[Mig~Au!qws@=-s": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": "1"
+                            }
+                        },
+                        "id": "PoDEZ[Mig~Au!qws@=-s",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_integer",
+                        "parent": "0It,nD.AH~Q-oT`/kP5C",
+                        "shadow": true,
+                        "topLevel": false
+                    },
                     "Ps};ny3,z0L6vT7-UtYi": {
                         "fields": {
                             "VARIABLE": {
@@ -9753,12 +10900,29 @@
                         "x": 1584,
                         "y": 2897
                     },
+                    "Q-Px[2p)e%*yjXj*Y:lV": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": ""
+                            }
+                        },
+                        "id": "Q-Px[2p)e%*yjXj*Y:lV",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 1538.8631627413556,
+                        "y": 1146.0745067135904
+                    },
                     "Q/W^5U52A9*?p.8)v0jm": {
                         "fields": {
                             "VARIABLE": {
                                 "id": "KnNs`9drP[R4!ji(G;lL",
                                 "name": "VARIABLE",
-                                "value": "constellation count",
+                                "value": "codelabfeaturedproject.constellations.constellation_count",
                                 "variableType": ""
                             }
                         },
@@ -9777,7 +10941,7 @@
                             "VARIABLE": {
                                 "id": "|rP_=L{NHb1P!g19QCKx",
                                 "name": "VARIABLE",
-                                "value": "shuffle choice",
+                                "value": "codelabfeaturedproject.constellations.shuffle_choice",
                                 "variableType": ""
                             }
                         },
@@ -10316,7 +11480,7 @@
                                 "shadow": null
                             }
                         },
-                        "next": "n)+SvuBGv(e8_.PCj8.V",
+                        "next": "o)gPu[,N,QmnNCh2z@Ek",
                         "opcode": "control_if",
                         "parent": "RtHGum)CwAosj$.9iaFk",
                         "shadow": false,
@@ -10465,6 +11629,21 @@
                         "x": "2947",
                         "y": "5428"
                     },
+                    "TszU+sTx/7=)UK/ad_K_": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": "2"
+                            }
+                        },
+                        "id": "TszU+sTx/7=)UK/ad_K_",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_integer",
+                        "parent": ":zFt4X[KG|cC^,#R*~9`",
+                        "shadow": true,
+                        "topLevel": false
+                    },
                     "T~1pK)h)}H+~3#Kh[.j3": {
                         "fields": {
                             "TEXT": {
@@ -10591,6 +11770,25 @@
                         "x": "1796",
                         "y": "1740"
                     },
+                    "UbL~l]0p}5VG7B7X]wdo": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "|6d{#[(c7TB$@e71S~R#",
+                                "name": "VARIABLE",
+                                "value": "Utilise les pentes de deux lignes d'intersection pour obtenir les degr\u00e9s de braquage de Cozmo.",
+                                "variableType": ""
+                            }
+                        },
+                        "id": "UbL~l]0p}5VG7B7X]wdo",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": null,
+                        "shadow": false,
+                        "topLevel": true,
+                        "x": 1232,
+                        "y": 669
+                    },
                     "UhOa^+w*Dp,Lr^@bW#H^": {
                         "fields": {
                             "TEXT": {
@@ -10680,6 +11878,23 @@
                         "x": "169",
                         "y": "469"
                     },
+                    "V=3$!}-IGDrn1{ZbFg7G": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": ""
+                            }
+                        },
+                        "id": "V=3$!}-IGDrn1{ZbFg7G",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 3893.193591026913,
+                        "y": 804.1764708651413
+                    },
                     "V?p?@;drNu0X|r0+2[+%": {
                         "fields": {
                             "LIST": {
@@ -10751,7 +11966,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "cassiopeia can be seen all year from the northern hemisphere."
+                                "value": "codelabfeaturedproject.constellations.cassiopeia_can_be_seen_all_year_from_the_northern_hemisphere"
                             }
                         },
                         "id": "VT?zb/`Qo~Mo]6vC5Ags",
@@ -10963,6 +12178,29 @@
                         "x": "980",
                         "y": "1460"
                     },
+                    "W4nrIulesqq[n=Z5-$P8": {
+                        "fields": {
+                            "OPERATOR": {
+                                "name": "OPERATOR",
+                                "value": "atan"
+                            }
+                        },
+                        "id": "W4nrIulesqq[n=Z5-$P8",
+                        "inputs": {
+                            "NUM": {
+                                "block": "9hi1^fBCC(r2v,GH3GIv",
+                                "name": "NUM",
+                                "shadow": ",,5Nb:Sls:W3C4eHzPMO"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_mathop",
+                        "parent": ",ML5SL/M$r$(xK/DpWdG",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "875",
+                        "y": "1860"
+                    },
                     "WCetxR,!)reV`dN1031V": {
                         "fields": {},
                         "id": "WCetxR,!)reV`dN1031V",
@@ -11075,6 +12313,46 @@
                         "topLevel": false,
                         "x": "3004",
                         "y": "6150"
+                    },
+                    "W~Kd~!HbIK?.)ts8EMuo": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": ""
+                            }
+                        },
+                        "id": "W~Kd~!HbIK?.)ts8EMuo",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 4240.767113594662,
+                        "y": 800.1764708651413
+                    },
+                    "X(p3vXgf%2cWI}4q!t1@": {
+                        "fields": {},
+                        "id": "X(p3vXgf%2cWI}4q!t1@",
+                        "inputs": {
+                            "NUM1": {
+                                "block": "r0ecERiuSk?h)=,A/M?q",
+                                "name": "NUM1",
+                                "shadow": "15LSH/#.%x3PINQa*@y="
+                            },
+                            "NUM2": {
+                                "block": "!/|6|`VS+Z`e?hb;@xS[",
+                                "name": "NUM2",
+                                "shadow": ",qg$bYNB^ObRt.$qHJ@O"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_subtract",
+                        "parent": "0Yp1$pv9Wof=/HheAP6H",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "875",
+                        "y": "895"
                     },
                     "X0@eGkti@WDL_,{#!IK|": {
                         "fields": {
@@ -11247,8 +12525,8 @@
                         "parent": null,
                         "shadow": false,
                         "topLevel": true,
-                        "x": -388,
-                        "y": 1886
+                        "x": -382,
+                        "y": 1789
                     },
                     "Xycs|[g:~p980TOOtn4h": {
                         "fields": {
@@ -11525,6 +12803,23 @@
                         "parent": "SyyQ$mXE%{VuNe-kl(vJ",
                         "shadow": true,
                         "topLevel": false
+                    },
+                    "YRF4*Ojr*L|HnWeSObSr": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": ""
+                            }
+                        },
+                        "id": "YRF4*Ojr*L|HnWeSObSr",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 3341.468893437039,
+                        "y": 860.1764708651413
                     },
                     "YS_pDObgbkFrd#TgMeRn": {
                         "fields": {
@@ -11966,6 +13261,21 @@
                         "shadow": true,
                         "topLevel": false
                     },
+                    "[IDB7tX59P2shF1^]+!F": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": "1"
+                            }
+                        },
+                        "id": "[IDB7tX59P2shF1^]+!F",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": "yEV?4BxABZbQu-C](dOA",
+                        "shadow": true,
+                        "topLevel": false
+                    },
                     "[KymT*@xPK5dPjDkhKFm": {
                         "fields": {
                             "TEXT": {
@@ -12115,6 +13425,23 @@
                         "x": "171",
                         "y": "1254"
                     },
+                    "[hXFP+!3^!@gP/u]z/X@": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": ""
+                            }
+                        },
+                        "id": "[hXFP+!3^!@gP/u]z/X@",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 1549.1308009478378,
+                        "y": 1258.0745067135902
+                    },
                     "[khafSKg/x.4#`:0=TAT": {
                         "fields": {
                             "BROADCAST_OPTION": {
@@ -12133,6 +13460,25 @@
                         "topLevel": true,
                         "x": 472,
                         "y": 918
+                    },
+                    "[mZzoC5_/^mdwydQe$%7": {
+                        "fields": {
+                            "LIST": {
+                                "id": "^nNGTgMVx,H97j@gfS4#",
+                                "name": "LIST",
+                                "value": "x coordinates",
+                                "variableType": "list"
+                            }
+                        },
+                        "id": "[mZzoC5_/^mdwydQe$%7",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_lengthoflist",
+                        "parent": "0!k:sOZ%uDwm}JJ#)5Qv",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "3644",
+                        "y": "1468"
                     },
                     "[mdW0yelxlKrj$jyqS.(": {
                         "fields": {
@@ -12178,6 +13524,23 @@
                         "x": "3787",
                         "y": "4256"
                     },
+                    "[z)^IiVNg9$~!)%GEYQ[": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": ""
+                            }
+                        },
+                        "id": "[z)^IiVNg9$~!)%GEYQ[",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 4961.891222386013,
+                        "y": 808.1764708651413
+                    },
                     "]*a8@;zt~wx-~0TvU1k-": {
                         "fields": {},
                         "id": "]*a8@;zt~wx-~0TvU1k-",
@@ -12195,6 +13558,25 @@
                         "topLevel": false,
                         "x": "309",
                         "y": "1301"
+                    },
+                    "]0tFGd.E@zox.{V,z-7t": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "]@}+e|%V2_oSrWDLLRpa",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.constellations.set_up_the_data_for_the_leo_constellation",
+                                "variableType": ""
+                            }
+                        },
+                        "id": "]0tFGd.E@zox.{V,z-7t",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": null,
+                        "shadow": false,
+                        "topLevel": true,
+                        "x": 1584,
+                        "y": 2805
                     },
                     "]5K;hK@2l$]ZpOjN;jof": {
                         "fields": {
@@ -12562,7 +13944,7 @@
                             "VARIABLE": {
                                 "id": "KnNs`9drP[R4!ji(G;lL",
                                 "name": "VARIABLE",
-                                "value": "constellation count",
+                                "value": "codelabfeaturedproject.constellations.constellation_count",
                                 "variableType": ""
                             }
                         },
@@ -12994,7 +14376,7 @@
                             "VARIABLE": {
                                 "id": "p-izhJ]MUP_NJ%0P@I,n",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.shuffle_random",
+                                "value": "codelabfeaturedproject.constellations.shuffle_random",
                                 "variableType": ""
                             }
                         },
@@ -13041,6 +14423,23 @@
                         "topLevel": true,
                         "x": 2384.5898799896236,
                         "y": 440.4705882352939
+                    },
+                    "`PI$t)HguL,^*k_E6zrj": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": ""
+                            }
+                        },
+                        "id": "`PI$t)HguL,^*k_E6zrj",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 3943.9135898634304,
+                        "y": 800.1764708651413
                     },
                     "`Y;udn[n$IgmNwU32HA.": {
                         "fields": {
@@ -13319,6 +14718,25 @@
                         "shadow": true,
                         "topLevel": false
                     },
+                    "bIV]l+02W$Ejz=W2;4aK": {
+                        "fields": {
+                            "BROADCAST_OPTION": {
+                                "id": "b5ZZbxuiC|*pF9VNej4d",
+                                "name": "BROADCAST_OPTION",
+                                "value": "turn to starting angle",
+                                "variableType": "broadcast_msg"
+                            }
+                        },
+                        "id": "bIV]l+02W$Ejz=W2;4aK",
+                        "inputs": {},
+                        "next": "2}$Tyu}q4k,:J;x2|C3j",
+                        "opcode": "event_whenbroadcastreceived_with_broadcast_input",
+                        "parent": null,
+                        "shadow": false,
+                        "topLevel": true,
+                        "x": 3162,
+                        "y": 736
+                    },
                     "bM9BJhr0WMM@Q+[Nw`:2": {
                         "fields": {
                             "SOUND_MENU": {
@@ -13390,6 +14808,25 @@
                         "topLevel": false,
                         "x": "1984",
                         "y": "1099"
+                    },
+                    "b^}0|_l^%DDr||#i~=2F": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "Lz[@^]l31Y^VXU#+mb3A",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.constellations.enable_cube_taps_and_cozmo_gives_instruction_to_see_the_next_constellation",
+                                "variableType": ""
+                            }
+                        },
+                        "id": "b^}0|_l^%DDr||#i~=2F",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": null,
+                        "shadow": false,
+                        "topLevel": true,
+                        "x": 3168,
+                        "y": 82
                     },
                     "bag,1a7{kkdRRL@jprX6": {
                         "fields": {
@@ -13837,7 +15274,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "in hawaii, scorpius is known as maui's fishhook."
+                                "value": "codelabfeaturedproject.constellations.in_hawaii_scorpius_is_known_as_mauis_fishhook"
                             }
                         },
                         "id": "dhp~:W}a*`Ty_OHUG3|S",
@@ -14189,7 +15626,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "in ancient greek stories, scorpius beat orion in a fight."
+                                "value": "codelabfeaturedproject.constellations.in_ancient_greek_stories_scorpius_beat_orion_in_a_fight"
                             }
                         },
                         "id": "fWM9H{L}iMiS8|B`g3c[",
@@ -14214,6 +15651,23 @@
                         "parent": "x(/?QI$=2QL*|f5dk=6p",
                         "shadow": true,
                         "topLevel": false
+                    },
+                    "fg$CS-mV/I|4?_T.9%`e": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": "1"
+                            }
+                        },
+                        "id": "fg$CS-mV/I|4?_T.9%`e",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_integer",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 3690.7382992788657,
+                        "y": 800.1764708651414
                     },
                     "fhwD[)g-uB4?uZC^l!+m": {
                         "fields": {
@@ -14466,7 +15920,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "orion is one of the most recognizable constellations."
+                                "value": "codelabfeaturedproject.constellations.orion_is_one_of_the_most_recognizable_constellations"
                             }
                         },
                         "id": "gZx5yQq172-k0(TZcI8,",
@@ -14678,6 +16132,29 @@
                         "x": "2952",
                         "y": "6155"
                     },
+                    "hYw9/:S5mB6QalX0xJZ0": {
+                        "fields": {},
+                        "id": "hYw9/:S5mB6QalX0xJZ0",
+                        "inputs": {
+                            "NUM1": {
+                                "block": "nA4V4gvSSd[KEe0TP~Bj",
+                                "name": "NUM1",
+                                "shadow": ")tOXd3FAc6IXQrVKDNnq"
+                            },
+                            "NUM2": {
+                                "block": "v7:eqk6GoS7ocNo(C7Rx",
+                                "name": "NUM2",
+                                "shadow": ";T9/R#o_ZiG8x)p%(2=f"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_divide",
+                        "parent": "HmV]Q=X=yX5HhPVN@=eY",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "875",
+                        "y": "1033"
+                    },
                     "h[D|989]nSw5,mjAWurI": {
                         "fields": {
                             "VARIABLE": {
@@ -14768,8 +16245,8 @@
                         "parent": null,
                         "shadow": false,
                         "topLevel": true,
-                        "x": 1406,
-                        "y": 1413
+                        "x": 1384,
+                        "y": 1528
                     },
                     "hz+7FQs4]Cdw#`T;pr2!": {
                         "fields": {
@@ -15370,6 +16847,23 @@
                         "x": "1972",
                         "y": "702"
                     },
+                    "k82t@SqB5iq%YLjS]i_!": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": ""
+                            }
+                        },
+                        "id": "k82t@SqB5iq%YLjS]i_!",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 4197.201828865658,
+                        "y": 880.1764708651415
+                    },
                     "k9CC~?6guXWAC-zw4esh": {
                         "fields": {
                             "NUM": {
@@ -15404,7 +16898,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "i'd like to visit libra someday and see if they have good tacos."
+                                "value": "codelabfeaturedproject.constellations.id_like_to_visit_libra_someday_and_see_if_they_have_good_tacos"
                             }
                         },
                         "id": "kJ4L_bob^pQ(]T0lo^90",
@@ -15620,6 +17114,25 @@
                         "shadow": true,
                         "topLevel": false
                     },
+                    "lDp2a$goY9YzAuK*%/F6": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "@2(]LhemBX7l_IQQaJ^%",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.constellations.clear_all_data_from_the_project_lists",
+                                "variableType": ""
+                            }
+                        },
+                        "id": "lDp2a$goY9YzAuK*%/F6",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": null,
+                        "shadow": false,
+                        "topLevel": true,
+                        "x": 1388,
+                        "y": 1733
+                    },
                     "lN~?Tv;?{oCpwCCyK04B": {
                         "fields": {
                             "TEXT": {
@@ -15636,6 +17149,25 @@
                         "topLevel": true,
                         "x": 783.2941176470588,
                         "y": 785.8823529411765
+                    },
+                    "lR8_Na%.-b]!5kJS1N{G": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "arBPhf~)-D8x67M7i/e4",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.constellations.loop_through_sets_of_coordinates_to_drive_and_draw_lines_and_dots",
+                                "variableType": ""
+                            }
+                        },
+                        "id": "lR8_Na%.-b]!5kJS1N{G",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": null,
+                        "shadow": false,
+                        "topLevel": true,
+                        "x": 2239,
+                        "y": 83
                     },
                     "l_t^9oS`7qO2HbpkE}6J": {
                         "fields": {
@@ -15876,6 +17408,23 @@
                         "shadow": true,
                         "topLevel": false
                     },
+                    "mH{H:EmuIk%2[`TyHPM#": {
+                        "fields": {
+                            "NUM": {
+                                "name": "NUM",
+                                "value": ""
+                            }
+                        },
+                        "id": "mH{H:EmuIk%2[`TyHPM#",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "math_number",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 1614.250801310234,
+                        "y": 1258.0745067135902
+                    },
                     "mK9-`{lT)x9sb0C@4wb@": {
                         "fields": {
                             "LIST": {
@@ -15906,7 +17455,7 @@
                             "VARIABLE": {
                                 "id": "YuqIV|BhYSs@so$WZ/F]",
                                 "name": "VARIABLE",
-                                "value": "input enabled",
+                                "value": "codelabfeaturedproject.constellations.input_enabled",
                                 "variableType": ""
                             }
                         },
@@ -15981,7 +17530,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "leo can be seen in the night sky from late march through may."
+                                "value": "codelabfeaturedproject.constellations.leo_can_be_seen_in_the_night_sky_from_late_march_through_may"
                             }
                         },
                         "id": "m]INwUq^:J5+R0uZaIii",
@@ -16029,7 +17578,7 @@
                         },
                         "next": "G}fmy8#3Nefg=yiZ.lk!",
                         "opcode": "cozmo_says",
-                        "parent": "T+g^urD|wMP1v`p]gQ]Y",
+                        "parent": "o)gPu[,N,QmnNCh2z@Ek",
                         "shadow": false,
                         "topLevel": false,
                         "x": "2004",
@@ -16108,6 +17657,29 @@
                         "topLevel": true,
                         "x": 1483.045179451213,
                         "y": 828.7058823529409
+                    },
+                    "nA4V4gvSSd[KEe0TP~Bj": {
+                        "fields": {},
+                        "id": "nA4V4gvSSd[KEe0TP~Bj",
+                        "inputs": {
+                            "NUM1": {
+                                "block": "N}y7[jzBI$O~lB)$7Ul6",
+                                "name": "NUM1",
+                                "shadow": "YRF4*Ojr*L|HnWeSObSr"
+                            },
+                            "NUM2": {
+                                "block": ",TZwzIDJ=gie@tg{Vd,6",
+                                "name": "NUM2",
+                                "shadow": "(%N4h::YV-m:=N7]Lp{R"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_subtract",
+                        "parent": "hYw9/:S5mB6QalX0xJZ0",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "875",
+                        "y": "895"
                     },
                     "nAt)k;6v`PD7DfmZ.T~v": {
                         "fields": {
@@ -16268,6 +17840,24 @@
                         "topLevel": true,
                         "x": 2400.480010986328,
                         "y": 1184.0000000000002
+                    },
+                    "o)gPu[,N,QmnNCh2z@Ek": {
+                        "fields": {},
+                        "id": "o)gPu[,N,QmnNCh2z@Ek",
+                        "inputs": {
+                            "BROADCAST_INPUT": {
+                                "block": "#Oh^8L2`s`;=`OeO-~^B",
+                                "name": "BROADCAST_INPUT",
+                                "shadow": "#Oh^8L2`s`;=`OeO-~^B"
+                            }
+                        },
+                        "next": "n)+SvuBGv(e8_.PCj8.V",
+                        "opcode": "event_broadcastandwait_with_broadcast_input",
+                        "parent": "T+g^urD|wMP1v`p]gQ]Y",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": 2880.226779981851,
+                        "y": 2764.270902651068
                     },
                     "oE|@t2kS!xZ0Vd$X}-c1": {
                         "fields": {
@@ -16443,6 +18033,25 @@
                         "shadow": true,
                         "topLevel": false
                     },
+                    "o|o)jH!qvuZccvm}S00o": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "rfbbNRv%Xk={1sCFms+r",
+                                "name": "VARIABLE",
+                                "value": "Get the distance between two coordinates.",
+                                "variableType": ""
+                            }
+                        },
+                        "id": "o|o)jH!qvuZccvm}S00o",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": null,
+                        "shadow": false,
+                        "topLevel": true,
+                        "x": 1234,
+                        "y": 107
+                    },
                     "o~/6`4H^OQ3XXbk9*]F+": {
                         "fields": {
                             "LIST": {
@@ -16545,6 +18154,23 @@
                         "topLevel": true,
                         "x": 44.880747061336706,
                         "y": 2497.435294117647
+                    },
+                    "p;*biLV{yJzP5[,N#TF@": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "0"
+                            }
+                        },
+                        "id": "p;*biLV{yJzP5[,N#TF@",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 1403.6631619784164,
+                        "y": 1142.0745067135902
                     },
                     "pUp5k;Ng].MZ(J;01Hng": {
                         "fields": {
@@ -16696,6 +18322,25 @@
                         "x": "-592",
                         "y": "1556"
                     },
+                    "qPR5oyU0e]]vdO3RU2JR": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "~a=Oa2eRZ)gmuu-Mcsn~",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.constellations.randomly_choose_a_fact_for_cozmo_to_say",
+                                "variableType": ""
+                            }
+                        },
+                        "id": "qPR5oyU0e]]vdO3RU2JR",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": null,
+                        "shadow": false,
+                        "topLevel": true,
+                        "x": 1388,
+                        "y": 1442
+                    },
                     "qYo.myYt7:c+|#CwL#0:": {
                         "fields": {
                             "TEXT": {
@@ -16765,7 +18410,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "orion is a warrior from ancient greek stories."
+                                "value": "codelabfeaturedproject.constellations.orion_is_a_warrior_from_ancient_greek_stories"
                             }
                         },
                         "id": "r/ehZrIa/BdggyY-=Z*5",
@@ -16801,6 +18446,31 @@
                         "x": "2952",
                         "y": "6251"
                     },
+                    "r0ecERiuSk?h)=,A/M?q": {
+                        "fields": {
+                            "LIST": {
+                                "id": "#*1NSDkV6i($ApbNHzTK",
+                                "name": "LIST",
+                                "value": "y coordinates",
+                                "variableType": "list"
+                            }
+                        },
+                        "id": "r0ecERiuSk?h)=,A/M?q",
+                        "inputs": {
+                            "INDEX": {
+                                "block": ":%Fj0},-_ZtRm%*=s!4G",
+                                "name": "INDEX",
+                                "shadow": "Bm+H;i)bNc{32riBg|bk"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "data_itemoflist",
+                        "parent": "X(p3vXgf%2cWI}4q!t1@",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "875",
+                        "y": "1808"
+                    },
                     "r9VURPFMx{Pxe}yGyQww": {
                         "fields": {
                             "TEXT": {
@@ -16835,7 +18505,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "the constellation is named leo because it looks just like a lion."
+                                "value": "codelabfeaturedproject.constellations.the_constellation_is_named_leo_because_it_looks_just_like_a_lion"
                             }
                         },
                         "id": "rFsGu7lug57(k#M_AAVT",
@@ -16992,6 +18662,25 @@
                         "parent": "aJjctD[|V0-h)N7rReeQ",
                         "shadow": true,
                         "topLevel": false
+                    },
+                    "sW]su~AomJ.t|w=r6**z": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "ELj5b9R.r9xIAms-CQwE",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.constellations.use_the_data_from_the_instructions_list_to_decide_whether_to_draw_a_dot_a_line_both_or_neither",
+                                "variableType": ""
+                            }
+                        },
+                        "id": "sW]su~AomJ.t|w=r6**z",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": null,
+                        "shadow": false,
+                        "topLevel": true,
+                        "x": 472,
+                        "y": 1593
                     },
                     "sW|wm@o!QQx-Vp`/+t{g": {
                         "fields": {
@@ -17215,6 +18904,25 @@
                         "topLevel": true,
                         "x": 1405.925179088817,
                         "y": 820.7058823529409
+                    },
+                    "t;U]r|S.,S~KMEJ.hE-r": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "aqN|xXe_n~f^|26av^2A",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.constellations.shuffle_the_constellation_choices_list",
+                                "variableType": ""
+                            }
+                        },
+                        "id": "t;U]r|S.,S~KMEJ.hE-r",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": null,
+                        "shadow": false,
+                        "topLevel": true,
+                        "x": -382,
+                        "y": 2255
                     },
                     "t@@8ODXt;;GM}xv#xG=Y": {
                         "fields": {
@@ -17460,7 +19168,7 @@
                             "VARIABLE": {
                                 "id": "X:Idv9SkW;_?cN7:]OFJ",
                                 "name": "VARIABLE",
-                                "value": "shuffle count",
+                                "value": "codelabfeaturedproject.constellations.shuffle_count",
                                 "variableType": ""
                             }
                         },
@@ -17569,6 +19277,29 @@
                         "x": "3858",
                         "y": "5646"
                     },
+                    "v7:eqk6GoS7ocNo(C7Rx": {
+                        "fields": {},
+                        "id": "v7:eqk6GoS7ocNo(C7Rx",
+                        "inputs": {
+                            "NUM1": {
+                                "block": ":zFt4X[KG|cC^,#R*~9`",
+                                "name": "NUM1",
+                                "shadow": "COZg].kFzrpq3wn)NCUp"
+                            },
+                            "NUM2": {
+                                "block": "0It,nD.AH~Q-oT`/kP5C",
+                                "name": "NUM2",
+                                "shadow": "k82t@SqB5iq%YLjS]i_!"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_subtract",
+                        "parent": "hYw9/:S5mB6QalX0xJZ0",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "875",
+                        "y": "895"
+                    },
                     "v;d_S7oksqIND7){D~OW": {
                         "fields": {
                             "LIST": {
@@ -17624,7 +19355,7 @@
                             "VARIABLE": {
                                 "id": "KnNs`9drP[R4!ji(G;lL",
                                 "name": "VARIABLE",
-                                "value": "constellation count",
+                                "value": "codelabfeaturedproject.constellations.constellation_count",
                                 "variableType": ""
                             }
                         },
@@ -18397,6 +20128,29 @@
                         "x": "1972",
                         "y": "188"
                     },
+                    "yEV?4BxABZbQu-C](dOA": {
+                        "fields": {},
+                        "id": "yEV?4BxABZbQu-C](dOA",
+                        "inputs": {
+                            "NUM1": {
+                                "block": "MWOQg+79MU`^yXEyBy~j",
+                                "name": "NUM1",
+                                "shadow": "[z)^IiVNg9$~!)%GEYQ["
+                            },
+                            "NUM2": {
+                                "block": "[IDB7tX59P2shF1^]+!F",
+                                "name": "NUM2",
+                                "shadow": "[IDB7tX59P2shF1^]+!F"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_subtract",
+                        "parent": "M;H:yL+[u{{MWgVMf$fj",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "2875",
+                        "y": "472"
+                    },
                     "yJlZ1}?m.AY}z9jtmwtm": {
                         "fields": {
                             "VARIABLE": {
@@ -18415,6 +20169,25 @@
                         "topLevel": false,
                         "x": "907",
                         "y": "1090"
+                    },
+                    "yRamfLP*UH`G]|BL~HdH": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "VHX(-cXWv~FiBj#,f7yh",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.constellations.set_up_the_data_for_the_orion_constellation",
+                                "variableType": ""
+                            }
+                        },
+                        "id": "yRamfLP*UH`G]|BL~HdH",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": null,
+                        "shadow": false,
+                        "topLevel": true,
+                        "x": 3494,
+                        "y": 3001
                     },
                     "y]aDJ/:lH(5,jq3$x;_?": {
                         "fields": {
@@ -18859,7 +20632,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "leo is one of the earliest recognized constellations."
+                                "value": "codelabfeaturedproject.constellations.leo_is_one_of_the_earliest_recognized_constellations"
                             }
                         },
                         "id": "{[q5[EtArdLTwtkW??30",
@@ -18960,7 +20733,7 @@
                             "VARIABLE": {
                                 "id": "X:Idv9SkW;_?cN7:]OFJ",
                                 "name": "VARIABLE",
-                                "value": "shuffle count",
+                                "value": "codelabfeaturedproject.constellations.shuffle_count",
                                 "variableType": ""
                             }
                         },
@@ -19381,7 +21154,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "scorpius"
+                                "value": "codelabfeaturedproject.constellations.scorpius"
                             }
                         },
                         "id": "~@@UUf5YTC#^)`@qZQ=C",
@@ -19494,7 +21267,7 @@
                             "VARIABLE": {
                                 "id": "YuqIV|BhYSs@so$WZ/F]",
                                 "name": "VARIABLE",
-                                "value": "input enabled",
+                                "value": "codelabfeaturedproject.constellations.input_enabled",
                                 "variableType": ""
                             }
                         },
@@ -19592,7 +21365,7 @@
                 "currentCostume": 0,
                 "direction": 90,
                 "draggable": false,
-                "id": "-qi(^X9?(e-u?Mqyn0@(",
+                "id": ":EBTxkPO/Njddl_pNl]Q",
                 "isStage": false,
                 "lists": {},
                 "name": "Sprite1",

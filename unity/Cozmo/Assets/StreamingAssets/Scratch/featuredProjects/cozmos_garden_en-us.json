@@ -9,7 +9,7 @@
             "currentCostume": 0,
             "direction": 90,
             "draggable": false,
-            "id": "`}{rn6^RQEWsd:sd8j!v",
+            "id": "njjjFAmz+u)-MX|Y/4H@",
             "isStage": true,
             "lists": {},
             "name": "Stage",
@@ -93,7 +93,7 @@
                     "id": "*FIp.ND~==_]F6_%czy5",
                     "name": "plant roll",
                     "type": "",
-                    "value": 3
+                    "value": 7
                 },
                 "+VOrMNvRVf2+mZzrfBb~": {
                     "id": "+VOrMNvRVf2+mZzrfBb~",
@@ -132,6 +132,7 @@
                     "value": [
                         "#ff0000",
                         "#ff7700",
+                        "#ffff00",
                         "#029900",
                         "#00ffbb",
                         "#0055ff"
@@ -146,12 +147,6 @@
                 "/Nbm9VfO(:.)x^34X)X,": {
                     "id": "/Nbm9VfO(:.)x^34X)X,",
                     "name": "Fill up the feedback list with phrases.",
-                    "type": "",
-                    "value": 0
-                },
-                "/oKDZKV0;zM63LY`[G`q": {
-                    "id": "/oKDZKV0;zM63LY`[G`q",
-                    "name": "Determine which plant(s) to grow.",
                     "type": "",
                     "value": 0
                 },
@@ -227,12 +222,6 @@
                     "type": "",
                     "value": 0
                 },
-                "9cK|U1@iLSOlGNp+|KDY": {
-                    "id": "9cK|U1@iLSOlGNp+|KDY",
-                    "name": "Use Cube lights to show the current state of growth of each non-harvested plant.",
-                    "type": "",
-                    "value": 0
-                },
                 ":z}pMyXWX{Eq,S7v6i59": {
                     "id": ":z}pMyXWX{Eq,S7v6i59",
                     "name": "Initialize game data and begin.",
@@ -286,7 +275,6 @@
                     "name": "garden plants growth",
                     "type": "list",
                     "value": [
-                        "1",
                         "1"
                     ]
                 },
@@ -294,7 +282,7 @@
                     "id": "BJ@[qkF)Brtx-@a3?cZL",
                     "name": "shuffle card",
                     "type": "",
-                    "value": "3"
+                    "value": "1"
                 },
                 "Bgbc~L#XrP]M.IGwPWsJ": {
                     "id": "Bgbc~L#XrP]M.IGwPWsJ",
@@ -320,6 +308,12 @@
                     "type": "broadcast_msg",
                     "value": "shuffle deck"
                 },
+                "E6ZC4o^I=7R`yR^qWyt*": {
+                    "id": "E6ZC4o^I=7R`yR^qWyt*",
+                    "name": "Use Cube lights to show the current state of growth for plants that have not been harvested.",
+                    "type": "",
+                    "value": 0
+                },
                 "ESi]bm*/2%==av=mlpvq": {
                     "id": "ESi]bm*/2%==av=mlpvq",
                     "name": "game over win",
@@ -342,7 +336,7 @@
                     "id": "F_D79IB}b:Ecf:0m^U}a",
                     "name": "count",
                     "type": "",
-                    "value": 2
+                    "value": "1"
                 },
                 "G)k4O3-Nyx1gk$RDI5^c": {
                     "id": "G)k4O3-Nyx1gk$RDI5^c",
@@ -357,6 +351,7 @@
                     "value": [
                         "Tomatoes",
                         "Oranges",
+                        "Lemons",
                         "Broccoli",
                         "Lettuce",
                         "Blueberries"
@@ -367,8 +362,7 @@
                     "name": "garden plants",
                     "type": "list",
                     "value": [
-                        "Grapes",
-                        "Lemons"
+                        "Grapes"
                     ]
                 },
                 "Ign$qg(xXsR@.h)W/,v0": {
@@ -381,7 +375,7 @@
                     "id": "Ip86u5Ta|m`@#q5lKe#0",
                     "name": "shuffle random",
                     "type": "",
-                    "value": 10
+                    "value": 5
                 },
                 "K^H0jB;QOZajNFS{5NK3": {
                     "id": "K^H0jB;QOZajNFS{5NK3",
@@ -394,12 +388,6 @@
                     "name": "instructions max amount",
                     "type": "",
                     "value": "2"
-                },
-                "P?chlOBX!GcS*,I,O{i}": {
-                    "id": "P?chlOBX!GcS*,I,O{i}",
-                    "name": "combos",
-                    "type": "list",
-                    "value": []
                 },
                 "PEdlr[J4sVtEOv1=3g3V": {
                     "id": "PEdlr[J4sVtEOv1=3g3V",
@@ -503,12 +491,6 @@
                     "type": "broadcast_msg",
                     "value": "populate deck"
                 },
-                "cnLaJnYt{Rdf!tZP-UNr": {
-                    "id": "cnLaJnYt{Rdf!tZP-UNr",
-                    "name": "combo",
-                    "type": "",
-                    "value": 0
-                },
                 "d1H$UCFMq(Z}LZUozb?;": {
                     "id": "d1H$UCFMq(Z}LZUozb?;",
                     "name": "feedback",
@@ -526,7 +508,6 @@
                     "name": "garden plants active",
                     "type": "list",
                     "value": [
-                        "1",
                         "1"
                     ]
                 },
@@ -571,13 +552,13 @@
                     "value": [
                         "3",
                         "2",
+                        "1",
                         "2",
                         "1",
+                        "2",
+                        "2",
+                        "2",
                         "3",
-                        "1",
-                        "2",
-                        "2",
-                        "2",
                         "3",
                         "3"
                     ]
@@ -611,8 +592,7 @@
                     "name": "garden plants colors",
                     "type": "list",
                     "value": [
-                        "#bb00ff",
-                        "#ffff00"
+                        "#bb00ff"
                     ]
                 },
                 "r0z]Bf^/|kkr@#qTtWJH": {
@@ -620,6 +600,12 @@
                     "name": "create garden",
                     "type": "broadcast_msg",
                     "value": "create garden"
+                },
+                "t+y)3`kp_riT3=uXD%9j": {
+                    "id": "t+y)3`kp_riT3=uXD%9j",
+                    "name": "Determine which plants to grow.",
+                    "type": "",
+                    "value": 0
                 },
                 "tX-tEBzb5eQ)Rb=u[9Zq": {
                     "id": "tX-tEBzb5eQ)Rb=u[9Zq",
@@ -805,6 +791,25 @@
                     "topLevel": false,
                     "x": "2810",
                     "y": "3828"
+                },
+                "!Xw2JKi1ce(IP~%6Oa,x": {
+                    "fields": {
+                        "VARIABLE": {
+                            "id": "t+y)3`kp_riT3=uXD%9j",
+                            "name": "VARIABLE",
+                            "value": "Determine which plants to grow.",
+                            "variableType": ""
+                        }
+                    },
+                    "id": "!Xw2JKi1ce(IP~%6Oa,x",
+                    "inputs": {},
+                    "next": null,
+                    "opcode": "data_variable",
+                    "parent": null,
+                    "shadow": false,
+                    "topLevel": true,
+                    "x": 399,
+                    "y": 3272
                 },
                 "!_s|hh6BjKcOdh1ef~)O": {
                     "fields": {
@@ -1428,25 +1433,6 @@
                     "shadow": true,
                     "topLevel": false
                 },
-                "(7+*cU_/X4EBcwH:lk%/": {
-                    "fields": {
-                        "VARIABLE": {
-                            "id": "/oKDZKV0;zM63LY`[G`q",
-                            "name": "VARIABLE",
-                            "value": "Determine which plant(s) to grow.",
-                            "variableType": ""
-                        }
-                    },
-                    "id": "(7+*cU_/X4EBcwH:lk%/",
-                    "inputs": {},
-                    "next": null,
-                    "opcode": "data_variable",
-                    "parent": null,
-                    "shadow": false,
-                    "topLevel": true,
-                    "x": 393,
-                    "y": 3254
-                },
                 "(=GF,u~(I!0JzCC.QDz:": {
                     "fields": {
                         "VARIABLE": {
@@ -1737,31 +1723,6 @@
                     "parent": "I10eJ|i1GO|bqC[]5Tfg",
                     "shadow": true,
                     "topLevel": false
-                },
-                ")MZ6G-UffB%e;fg0W6p*": {
-                    "fields": {
-                        "LIST": {
-                            "id": "P?chlOBX!GcS*,I,O{i}",
-                            "name": "LIST",
-                            "value": "combos",
-                            "variableType": "list"
-                        }
-                    },
-                    "id": ")MZ6G-UffB%e;fg0W6p*",
-                    "inputs": {
-                        "ITEM": {
-                            "block": "+?vhA=sp@B32ItXd[qvP",
-                            "name": "ITEM",
-                            "shadow": "+?vhA=sp@B32ItXd[qvP"
-                        }
-                    },
-                    "next": "{UC=AuGcA7REtCup#2%=",
-                    "opcode": "data_addtolist",
-                    "parent": "k(hU=f3%RhjtY.pLHtI`",
-                    "shadow": false,
-                    "topLevel": false,
-                    "x": "-441",
-                    "y": "2830"
                 },
                 ")QrvRI$)yTb:yp3E-m(O": {
                     "fields": {
@@ -2356,21 +2317,6 @@
                     "x": "1230",
                     "y": "2088"
                 },
-                "+?vhA=sp@B32ItXd[qvP": {
-                    "fields": {
-                        "TEXT": {
-                            "name": "TEXT",
-                            "value": "almost a B.L.T."
-                        }
-                    },
-                    "id": "+?vhA=sp@B32ItXd[qvP",
-                    "inputs": {},
-                    "next": null,
-                    "opcode": "text",
-                    "parent": ")MZ6G-UffB%e;fg0W6p*",
-                    "shadow": true,
-                    "topLevel": false
-                },
                 "+@({IWU~bC?7sp#xBn@x": {
                     "fields": {
                         "TEXT": {
@@ -2641,29 +2587,6 @@
                     "x": "756",
                     "y": "1059"
                 },
-                "-+59j}cfF?k+r!eZ=I[j": {
-                    "fields": {},
-                    "id": "-+59j}cfF?k+r!eZ=I[j",
-                    "inputs": {
-                        "CONDITION": {
-                            "block": "zNAY-Nfq}@F[_VcgaG!+",
-                            "name": "CONDITION",
-                            "shadow": null
-                        },
-                        "SUBSTACK": {
-                            "block": "WKg|s/)PR[+/~wV}61Ba",
-                            "name": "SUBSTACK",
-                            "shadow": null
-                        }
-                    },
-                    "next": "-i[^B-v+$a-%f7a7oJ{.",
-                    "opcode": "control_repeat_until",
-                    "parent": ":-m$w.zbH|c!C;_rJZlu",
-                    "shadow": false,
-                    "topLevel": false,
-                    "x": "-21",
-                    "y": "2739"
-                },
                 "-4X^r{5sQocsl?k1[Fm$": {
                     "fields": {
                         "VARIABLE": {
@@ -2917,11 +2840,11 @@
                     },
                     "next": "KV5^8xBug;T6`hg7mX)C",
                     "opcode": "event_broadcastandwait_with_broadcast_input",
-                    "parent": "-+59j}cfF?k+r!eZ=I[j",
+                    "parent": ":-m$w.zbH|c!C;_rJZlu",
                     "shadow": false,
                     "topLevel": false,
-                    "x": 533.9176470588235,
-                    "y": 2254.9529411764706
+                    "x": 553.704705882353,
+                    "y": 2315.363529411765
                 },
                 "-j9PFJqhD{Di.KBTrt`:": {
                     "fields": {
@@ -3263,8 +3186,8 @@
                     "parent": null,
                     "shadow": false,
                     "topLevel": true,
-                    "x": -164,
-                    "y": 1554
+                    "x": -207,
+                    "y": 874
                 },
                 "/F%:ALZ^Q~gPr(Kbz_GD": {
                     "fields": {
@@ -3330,31 +3253,6 @@
                     "topLevel": false,
                     "x": "4809",
                     "y": "140"
-                },
-                "/LJkQ3*/fpH4.PjKpo8[": {
-                    "fields": {
-                        "LIST": {
-                            "id": "P?chlOBX!GcS*,I,O{i}",
-                            "name": "LIST",
-                            "value": "combos",
-                            "variableType": "list"
-                        }
-                    },
-                    "id": "/LJkQ3*/fpH4.PjKpo8[",
-                    "inputs": {
-                        "ITEM": {
-                            "block": "T|j3pBTh2T5D-_T1OJ%{",
-                            "name": "ITEM",
-                            "shadow": "T|j3pBTh2T5D-_T1OJ%{"
-                        }
-                    },
-                    "next": null,
-                    "opcode": "data_addtolist",
-                    "parent": "y6(CsRVlOjUHf(yz{r{I",
-                    "shadow": false,
-                    "topLevel": false,
-                    "x": "-441",
-                    "y": "2702"
                 },
                 "/NA_C7xqixn^WdGE1eP]": {
                     "fields": {
@@ -3746,6 +3644,21 @@
                     "x": "2703",
                     "y": "1025"
                 },
+                "16j|QhNSeyY-F~#{3}+N": {
+                    "fields": {
+                        "TEXT": {
+                            "name": "TEXT",
+                            "value": " rounds"
+                        }
+                    },
+                    "id": "16j|QhNSeyY-F~#{3}+N",
+                    "inputs": {},
+                    "next": null,
+                    "opcode": "text",
+                    "parent": "J8}l2eX:.B[VcFbPBw61",
+                    "shadow": true,
+                    "topLevel": false
+                },
                 "1Bq-mKNN}gG+nfr;1JXh": {
                     "fields": {
                         "VARIABLE": {
@@ -3888,6 +3801,23 @@
                     "topLevel": false,
                     "x": "1126",
                     "y": "3112"
+                },
+                "2%[t;=CYoYkbK]Rl8`}s": {
+                    "fields": {
+                        "TEXT": {
+                            "name": "TEXT",
+                            "value": "cozmo"
+                        }
+                    },
+                    "id": "2%[t;=CYoYkbK]Rl8`}s",
+                    "inputs": {},
+                    "next": null,
+                    "opcode": "text",
+                    "parent": null,
+                    "shadow": true,
+                    "topLevel": true,
+                    "x": 4327.97566986084,
+                    "y": -502
                 },
                 "2)7~}W=L_2=bhha8AkgX": {
                     "fields": {
@@ -4568,7 +4498,7 @@
                     "fields": {
                         "TEXT": {
                             "name": "TEXT",
-                            "value": "Pretty close!"
+                            "value": "We're pretty good at this!"
                         }
                     },
                     "id": "4WYg42`$K+^HyFUy-v@j",
@@ -4629,21 +4559,6 @@
                     "topLevel": true,
                     "x": 3560,
                     "y": 1005
-                },
-                "4p%]=SzV.ZbK,$ii:g/]": {
-                    "fields": {
-                        "TEXT": {
-                            "name": "TEXT",
-                            "value": "0"
-                        }
-                    },
-                    "id": "4p%]=SzV.ZbK,$ii:g/]",
-                    "inputs": {},
-                    "next": null,
-                    "opcode": "text",
-                    "parent": "zNAY-Nfq}@F[_VcgaG!+",
-                    "shadow": true,
-                    "topLevel": false
                 },
                 "4wx{uQ-=BNtXgbdvV$w5": {
                     "fields": {
@@ -4717,6 +4632,29 @@
                     "parent": "yvtJ=g_l*Q+.Bmz`V:v.",
                     "shadow": true,
                     "topLevel": false
+                },
+                "5,L@6yF?kGgc=}-:%_xk": {
+                    "fields": {},
+                    "id": "5,L@6yF?kGgc=}-:%_xk",
+                    "inputs": {
+                        "STRING1": {
+                            "block": "ecFq:!l4Tsu$!B;}z,Dq",
+                            "name": "STRING1",
+                            "shadow": "ecFq:!l4Tsu$!B;}z,Dq"
+                        },
+                        "STRING2": {
+                            "block": "J8}l2eX:.B[VcFbPBw61",
+                            "name": "STRING2",
+                            "shadow": "2%[t;=CYoYkbK]Rl8`}s"
+                        }
+                    },
+                    "next": null,
+                    "opcode": "operator_join",
+                    "parent": "mi1hIjfsb~|@Ezo,qfmO",
+                    "shadow": false,
+                    "topLevel": false,
+                    "x": "3269",
+                    "y": "-278"
                 },
                 "51$PBmWrXXl5Ag+0GfR_": {
                     "fields": {},
@@ -5066,7 +5004,7 @@
                     "fields": {
                         "TEXT": {
                             "name": "TEXT",
-                            "value": "We lost"
+                            "value": ""
                         }
                     },
                     "id": "6@TI1YqV;WuoGhfFZBtC",
@@ -5076,8 +5014,8 @@
                     "parent": null,
                     "shadow": true,
                     "topLevel": true,
-                    "x": 3314.8470588235296,
-                    "y": -448.4588235294118
+                    "x": 3115,
+                    "y": -671
                 },
                 "6M58DfMN]$rPYy%$WO%n": {
                     "fields": {
@@ -6086,7 +6024,7 @@
                             "shadow": null
                         }
                     },
-                    "next": "-+59j}cfF?k+r!eZ=I[j",
+                    "next": "-i[^B-v+$a-%f7a7oJ{.",
                     "opcode": "control_repeat_until",
                     "parent": "43y0zTRB|,~Hw)Cs-|-/",
                     "shadow": false,
@@ -6270,25 +6208,6 @@
                     "parent": "qyqdQ[jicS5Z}f,:4-Y9",
                     "shadow": true,
                     "topLevel": false
-                },
-                ":gofuk:bih:E0}BR~h6P": {
-                    "fields": {
-                        "LIST": {
-                            "id": "P?chlOBX!GcS*,I,O{i}",
-                            "name": "LIST",
-                            "value": "combos",
-                            "variableType": "list"
-                        }
-                    },
-                    "id": ":gofuk:bih:E0}BR~h6P",
-                    "inputs": {},
-                    "next": null,
-                    "opcode": "data_lengthoflist",
-                    "parent": "zNAY-Nfq}@F[_VcgaG!+",
-                    "shadow": false,
-                    "topLevel": false,
-                    "x": "-21",
-                    "y": "2679"
                 },
                 ":iB$Xy5WD9p:QL`F+Yw`": {
                     "fields": {
@@ -9032,6 +8951,29 @@
                     "x": 492.3188235294113,
                     "y": 3903.9454259965364
                 },
+                "J8}l2eX:.B[VcFbPBw61": {
+                    "fields": {},
+                    "id": "J8}l2eX:.B[VcFbPBw61",
+                    "inputs": {
+                        "STRING1": {
+                            "block": "de8y:1uMG~)D^dBr43(^",
+                            "name": "STRING1",
+                            "shadow": "hhGCXBMZ+^]AP}u!E.lg"
+                        },
+                        "STRING2": {
+                            "block": "16j|QhNSeyY-F~#{3}+N",
+                            "name": "STRING2",
+                            "shadow": "16j|QhNSeyY-F~#{3}+N"
+                        }
+                    },
+                    "next": null,
+                    "opcode": "operator_join",
+                    "parent": "5,L@6yF?kGgc=}-:%_xk",
+                    "shadow": false,
+                    "topLevel": false,
+                    "x": "3269",
+                    "y": "-250"
+                },
                 "J=OY+9S{}gO55,RT]x)(": {
                     "fields": {
                         "TEXT": {
@@ -9794,21 +9736,6 @@
                     "shadow": true,
                     "topLevel": false
                 },
-                "Mo9_}o*8C!=^b3c2dLOg": {
-                    "fields": {
-                        "TEXT": {
-                            "name": "TEXT",
-                            "value": "a fruit salad"
-                        }
-                    },
-                    "id": "Mo9_}o*8C!=^b3c2dLOg",
-                    "inputs": {},
-                    "next": null,
-                    "opcode": "text",
-                    "parent": "{UC=AuGcA7REtCup#2%=",
-                    "shadow": true,
-                    "topLevel": false
-                },
                 "Mr9rOq=]?T})NcG?0O4{": {
                     "fields": {
                         "VARIABLE": {
@@ -9844,21 +9771,6 @@
                     "topLevel": true,
                     "x": 1917,
                     "y": 3273.0000000000005
-                },
-                "MvvyGli=4$_5R#LwA)jX": {
-                    "fields": {
-                        "TEXT": {
-                            "name": "TEXT",
-                            "value": "blueberry lemonade"
-                        }
-                    },
-                    "id": "MvvyGli=4$_5R#LwA)jX",
-                    "inputs": {},
-                    "next": null,
-                    "opcode": "text",
-                    "parent": "k(hU=f3%RhjtY.pLHtI`",
-                    "shadow": true,
-                    "topLevel": false
                 },
                 "Mw?`O!:C}V/gBEBig4Z:": {
                     "fields": {},
@@ -10976,8 +10888,8 @@
                     "parent": null,
                     "shadow": false,
                     "topLevel": true,
-                    "x": 3921,
-                    "y": -694
+                    "x": 3824,
+                    "y": -675
                 },
                 "Qv:Ka`-,.P.RyvYNWWHz": {
                     "fields": {
@@ -11380,31 +11292,6 @@
                     "x": "31",
                     "y": "1185"
                 },
-                "S*A7W9WSA+Ya9X6mC)vb": {
-                    "fields": {
-                        "LIST": {
-                            "id": "P?chlOBX!GcS*,I,O{i}",
-                            "name": "LIST",
-                            "value": "combos",
-                            "variableType": "list"
-                        }
-                    },
-                    "id": "S*A7W9WSA+Ya9X6mC)vb",
-                    "inputs": {
-                        "ITEM": {
-                            "block": "W]TKpYpPl-qU[4gh,]}m",
-                            "name": "ITEM",
-                            "shadow": "W]TKpYpPl-qU[4gh,]}m"
-                        }
-                    },
-                    "next": "k(hU=f3%RhjtY.pLHtI`",
-                    "opcode": "data_addtolist",
-                    "parent": "q.$z@6~ID1piCc9:G-ap",
-                    "shadow": false,
-                    "topLevel": false,
-                    "x": "-441",
-                    "y": "2982"
-                },
                 "S?YI5=FQ{nfCrC^bpiQ{": {
                     "fields": {
                         "VARIABLE": {
@@ -11729,23 +11616,6 @@
                     "shadow": true,
                     "topLevel": false
                 },
-                "TipW^,wQ8LK@y2T1(wtO": {
-                    "fields": {
-                        "TEXT": {
-                            "name": "TEXT",
-                            "value": ""
-                        }
-                    },
-                    "id": "TipW^,wQ8LK@y2T1(wtO",
-                    "inputs": {},
-                    "next": null,
-                    "opcode": "text",
-                    "parent": null,
-                    "shadow": true,
-                    "topLevel": true,
-                    "x": 550.4000015258789,
-                    "y": 2048.0000000000005
-                },
                 "TrSY_xF)W(4@Ns~RYtXV": {
                     "fields": {
                         "LIGHT_SELECT": {
@@ -11811,21 +11681,6 @@
                     "topLevel": false,
                     "x": "2502",
                     "y": "2370"
-                },
-                "T|j3pBTh2T5D-_T1OJ%{": {
-                    "fields": {
-                        "TEXT": {
-                            "name": "TEXT",
-                            "value": "a nice red sauce"
-                        }
-                    },
-                    "id": "T|j3pBTh2T5D-_T1OJ%{",
-                    "inputs": {},
-                    "next": null,
-                    "opcode": "text",
-                    "parent": "/LJkQ3*/fpH4.PjKpo8[",
-                    "shadow": true,
-                    "topLevel": false
                 },
                 "U#d(Wy[XiU)zx`qD!:~F": {
                     "fields": {
@@ -12151,7 +12006,7 @@
                     "fields": {
                         "TEXT": {
                             "name": "TEXT",
-                            "value": "That's okay"
+                            "value": "One plant is better than none!"
                         }
                     },
                     "id": "V3QpmGufDpKk%*1~dfrE",
@@ -12466,31 +12321,6 @@
                     "shadow": true,
                     "topLevel": false
                 },
-                "WKg|s/)PR[+/~wV}61Ba": {
-                    "fields": {
-                        "LIST": {
-                            "id": "P?chlOBX!GcS*,I,O{i}",
-                            "name": "LIST",
-                            "value": "combos",
-                            "variableType": "list"
-                        }
-                    },
-                    "id": "WKg|s/)PR[+/~wV}61Ba",
-                    "inputs": {
-                        "INDEX": {
-                            "block": "cJm3ddq4Do:3XK;Uu+5i",
-                            "name": "INDEX",
-                            "shadow": "cJm3ddq4Do:3XK;Uu+5i"
-                        }
-                    },
-                    "next": null,
-                    "opcode": "data_deleteoflist",
-                    "parent": "-+59j}cfF?k+r!eZ=I[j",
-                    "shadow": false,
-                    "topLevel": false,
-                    "x": "-21",
-                    "y": "2443"
-                },
                 "WRg6s8.^@V4JH%4`.Bi,": {
                     "fields": {},
                     "id": "WRg6s8.^@V4JH%4`.Bi,",
@@ -12549,21 +12379,6 @@
                     "topLevel": false,
                     "x": "4809",
                     "y": "435"
-                },
-                "W]TKpYpPl-qU[4gh,]}m": {
-                    "fields": {
-                        "TEXT": {
-                            "name": "TEXT",
-                            "value": "some grape-ade"
-                        }
-                    },
-                    "id": "W]TKpYpPl-qU[4gh,]}m",
-                    "inputs": {},
-                    "next": null,
-                    "opcode": "text",
-                    "parent": "S*A7W9WSA+Ya9X6mC)vb",
-                    "shadow": true,
-                    "topLevel": false
                 },
                 "W^hXJp0#^uKmY4^!+mb]": {
                     "fields": {
@@ -14285,21 +14100,6 @@
                     "x": "4114",
                     "y": "1485"
                 },
-                "^w+Ib[B7N:=ZN)f3/?9|": {
-                    "fields": {
-                        "TEXT": {
-                            "name": "TEXT",
-                            "value": "a fancy salad"
-                        }
-                    },
-                    "id": "^w+Ib[B7N:=ZN)f3/?9|",
-                    "inputs": {},
-                    "next": null,
-                    "opcode": "text",
-                    "parent": "y6(CsRVlOjUHf(yz{r{I",
-                    "shadow": true,
-                    "topLevel": false
-                },
                 "^~}+)nA0OTYO?Nqe2UJP": {
                     "fields": {},
                     "id": "^~}+)nA0OTYO?Nqe2UJP",
@@ -14825,8 +14625,8 @@
                     "parent": "IVHfPXx5evPzSgWn:yJd",
                     "shadow": false,
                     "topLevel": false,
-                    "x": "3043",
-                    "y": "-91"
+                    "x": 3344.6867141723633,
+                    "y": -667
                 },
                 "`h)^{EQc}GC/Y)UMrCx{": {
                     "fields": {
@@ -15359,16 +15159,18 @@
                     "fields": {
                         "TEXT": {
                             "name": "TEXT",
-                            "value": "Hooray! We harvested all the plants!"
+                            "value": ""
                         }
                     },
                     "id": "bA%ABGj#f=-7*_B.%,6s",
                     "inputs": {},
                     "next": null,
                     "opcode": "text",
-                    "parent": "mi1hIjfsb~|@Ezo,qfmO",
+                    "parent": null,
                     "shadow": true,
-                    "topLevel": false
+                    "topLevel": true,
+                    "x": 3973,
+                    "y": -502
                 },
                 "bCQQRInMo9FeW.@|`^8m": {
                     "fields": {},
@@ -15576,8 +15378,8 @@
                     "parent": "nqduA$KiO(:[I|@[Oxxq",
                     "shadow": false,
                     "topLevel": false,
-                    "x": "3043",
-                    "y": "66"
+                    "x": 3462.3411764705884,
+                    "y": -810.2352941176471
                 },
                 "c#JYU*[+wVSr3_BMsu(M": {
                     "fields": {
@@ -15707,20 +15509,24 @@
                     "x": "2935",
                     "y": "-365"
                 },
-                "cJm3ddq4Do:3XK;Uu+5i": {
+                "cIUOLDhl]]=Ooa[wq,j_": {
                     "fields": {
-                        "NUM": {
-                            "name": "NUM",
-                            "value": "1"
+                        "VARIABLE": {
+                            "id": "E6ZC4o^I=7R`yR^qWyt*",
+                            "name": "VARIABLE",
+                            "value": "Use Cube lights to show the current state of growth for plants that have not been harvested.",
+                            "variableType": ""
                         }
                     },
-                    "id": "cJm3ddq4Do:3XK;Uu+5i",
+                    "id": "cIUOLDhl]]=Ooa[wq,j_",
                     "inputs": {},
                     "next": null,
-                    "opcode": "math_integer",
-                    "parent": "WKg|s/)PR[+/~wV}61Ba",
-                    "shadow": true,
-                    "topLevel": false
+                    "opcode": "data_variable",
+                    "parent": null,
+                    "shadow": false,
+                    "topLevel": true,
+                    "x": 1838,
+                    "y": 2999
                 },
                 "cP-yuDK?WRXkVqB@7u]~": {
                     "fields": {
@@ -15975,8 +15781,8 @@
                     "parent": null,
                     "shadow": true,
                     "topLevel": true,
-                    "x": 3543.056897690717,
-                    "y": -440.45882352941186
+                    "x": 3344.6867141723633,
+                    "y": -663
                 },
                 "d[uMRt_}#UmuuPazTfc~": {
                     "fields": {
@@ -16017,6 +15823,25 @@
                     "topLevel": false,
                     "x": "1303",
                     "y": "623"
+                },
+                "de8y:1uMG~)D^dBr43(^": {
+                    "fields": {
+                        "VARIABLE": {
+                            "id": "5FUn|bxv:,H[b;8twf4[",
+                            "name": "VARIABLE",
+                            "value": "card count",
+                            "variableType": ""
+                        }
+                    },
+                    "id": "de8y:1uMG~)D^dBr43(^",
+                    "inputs": {},
+                    "next": null,
+                    "opcode": "data_variable",
+                    "parent": "J8}l2eX:.B[VcFbPBw61",
+                    "shadow": false,
+                    "topLevel": false,
+                    "x": "3484",
+                    "y": "-515"
                 },
                 "djI@7po,ErjsQ}bB|+_[": {
                     "fields": {
@@ -16301,6 +16126,21 @@
                     "topLevel": true,
                     "x": 1349,
                     "y": 615
+                },
+                "ecFq:!l4Tsu$!B;}z,Dq": {
+                    "fields": {
+                        "TEXT": {
+                            "name": "TEXT",
+                            "value": "Hooray! We harvested all the plants in "
+                        }
+                    },
+                    "id": "ecFq:!l4Tsu$!B;}z,Dq",
+                    "inputs": {},
+                    "next": null,
+                    "opcode": "text",
+                    "parent": "5,L@6yF?kGgc=}-:%_xk",
+                    "shadow": true,
+                    "topLevel": false
                 },
                 "efnFuZ5G`Sm[g]9;aO4(": {
                     "fields": {
@@ -17087,8 +16927,8 @@
                     "parent": null,
                     "shadow": false,
                     "topLevel": true,
-                    "x": 3925,
-                    "y": -606
+                    "x": 3826,
+                    "y": -593
                 },
                 "hdMEm-0FrIZPm@C1`E|U": {
                     "fields": {},
@@ -17107,6 +16947,23 @@
                     "topLevel": false,
                     "x": "2935",
                     "y": "-769"
+                },
+                "hhGCXBMZ+^]AP}u!E.lg": {
+                    "fields": {
+                        "TEXT": {
+                            "name": "TEXT",
+                            "value": "anki"
+                        }
+                    },
+                    "id": "hhGCXBMZ+^]AP}u!E.lg",
+                    "inputs": {},
+                    "next": null,
+                    "opcode": "text",
+                    "parent": null,
+                    "shadow": true,
+                    "topLevel": true,
+                    "x": 4375.351669311523,
+                    "y": -498
                 },
                 "hi;(|pvhd/_o_BCR]v0p": {
                     "fields": {
@@ -17540,31 +17397,6 @@
                     "topLevel": false,
                     "x": "1937",
                     "y": "2221"
-                },
-                "k(hU=f3%RhjtY.pLHtI`": {
-                    "fields": {
-                        "LIST": {
-                            "id": "P?chlOBX!GcS*,I,O{i}",
-                            "name": "LIST",
-                            "value": "combos",
-                            "variableType": "list"
-                        }
-                    },
-                    "id": "k(hU=f3%RhjtY.pLHtI`",
-                    "inputs": {
-                        "ITEM": {
-                            "block": "MvvyGli=4$_5R#LwA)jX",
-                            "name": "ITEM",
-                            "shadow": "MvvyGli=4$_5R#LwA)jX"
-                        }
-                    },
-                    "next": ")MZ6G-UffB%e;fg0W6p*",
-                    "opcode": "data_addtolist",
-                    "parent": "S*A7W9WSA+Ya9X6mC)vb",
-                    "shadow": false,
-                    "topLevel": false,
-                    "x": "-441",
-                    "y": "2814"
                 },
                 "k)pe,HS3(qip[Lg0*N7m": {
                     "fields": {},
@@ -18079,7 +17911,7 @@
                     "id": "mi1hIjfsb~|@Ezo,qfmO",
                     "inputs": {
                         "STRING": {
-                            "block": "bA%ABGj#f=-7*_B.%,6s",
+                            "block": "5,L@6yF?kGgc=}-:%_xk",
                             "name": "STRING",
                             "shadow": "bA%ABGj#f=-7*_B.%,6s"
                         }
@@ -18978,7 +18810,7 @@
                             "shadow": "6SglD8o1_bN_VAgKe]TW"
                         }
                     },
-                    "next": "S*A7W9WSA+Ya9X6mC)vb",
+                    "next": null,
                     "opcode": "data_addtolist",
                     "parent": "3q*)t^j@i?Uv]qWq!XNm",
                     "shadow": false,
@@ -19481,7 +19313,7 @@
                     "fields": {
                         "TEXT": {
                             "name": "TEXT",
-                            "value": "Not so good"
+                            "value": "Don't give up! Let's try again."
                         }
                     },
                     "id": "s9Ow)i}Trr({r?Ag3fPV",
@@ -20884,31 +20716,6 @@
                     "shadow": true,
                     "topLevel": false
                 },
-                "y6(CsRVlOjUHf(yz{r{I": {
-                    "fields": {
-                        "LIST": {
-                            "id": "P?chlOBX!GcS*,I,O{i}",
-                            "name": "LIST",
-                            "value": "combos",
-                            "variableType": "list"
-                        }
-                    },
-                    "id": "y6(CsRVlOjUHf(yz{r{I",
-                    "inputs": {
-                        "ITEM": {
-                            "block": "^w+Ib[B7N:=ZN)f3/?9|",
-                            "name": "ITEM",
-                            "shadow": "^w+Ib[B7N:=ZN)f3/?9|"
-                        }
-                    },
-                    "next": "/LJkQ3*/fpH4.PjKpo8[",
-                    "opcode": "data_addtolist",
-                    "parent": "{UC=AuGcA7REtCup#2%=",
-                    "shadow": false,
-                    "topLevel": false,
-                    "x": "-441",
-                    "y": "2803"
-                },
                 "y64CDRfH)z9nm.nG4epL": {
                     "fields": {},
                     "id": "y64CDRfH)z9nm.nG4epL",
@@ -21223,29 +21030,6 @@
                     "x": "4854",
                     "y": "-196"
                 },
-                "zNAY-Nfq}@F[_VcgaG!+": {
-                    "fields": {},
-                    "id": "zNAY-Nfq}@F[_VcgaG!+",
-                    "inputs": {
-                        "OPERAND1": {
-                            "block": ":gofuk:bih:E0}BR~h6P",
-                            "name": "OPERAND1",
-                            "shadow": "TipW^,wQ8LK@y2T1(wtO"
-                        },
-                        "OPERAND2": {
-                            "block": "4p%]=SzV.ZbK,$ii:g/]",
-                            "name": "OPERAND2",
-                            "shadow": "4p%]=SzV.ZbK,$ii:g/]"
-                        }
-                    },
-                    "next": null,
-                    "opcode": "operator_equals",
-                    "parent": "-+59j}cfF?k+r!eZ=I[j",
-                    "shadow": false,
-                    "topLevel": false,
-                    "x": "-21",
-                    "y": "2240"
-                },
                 "zSmIiYp5LBg(i`G1c#S,": {
                     "fields": {
                         "LIST": {
@@ -21330,25 +21114,6 @@
                     "topLevel": false,
                     "x": "2937",
                     "y": "108"
-                },
-                "zcU)J?28*rY$%5nAS`B=": {
-                    "fields": {
-                        "VARIABLE": {
-                            "id": "9cK|U1@iLSOlGNp+|KDY",
-                            "name": "VARIABLE",
-                            "value": "Use Cube lights to show the current state of growth of each non-harvested plant.",
-                            "variableType": ""
-                        }
-                    },
-                    "id": "zcU)J?28*rY$%5nAS`B=",
-                    "inputs": {},
-                    "next": null,
-                    "opcode": "data_variable",
-                    "parent": null,
-                    "shadow": false,
-                    "topLevel": true,
-                    "x": 1836,
-                    "y": 3008
                 },
                 "zj~v]CJ;q}hSdrqeJN?[": {
                     "fields": {
@@ -21522,31 +21287,6 @@
                     "topLevel": false,
                     "x": 3940.835294117647,
                     "y": 1234.830588235294
-                },
-                "{UC=AuGcA7REtCup#2%=": {
-                    "fields": {
-                        "LIST": {
-                            "id": "P?chlOBX!GcS*,I,O{i}",
-                            "name": "LIST",
-                            "value": "combos",
-                            "variableType": "list"
-                        }
-                    },
-                    "id": "{UC=AuGcA7REtCup#2%=",
-                    "inputs": {
-                        "ITEM": {
-                            "block": "Mo9_}o*8C!=^b3c2dLOg",
-                            "name": "ITEM",
-                            "shadow": "Mo9_}o*8C!=^b3c2dLOg"
-                        }
-                    },
-                    "next": "y6(CsRVlOjUHf(yz{r{I",
-                    "opcode": "data_addtolist",
-                    "parent": ")MZ6G-UffB%e;fg0W6p*",
-                    "shadow": false,
-                    "topLevel": false,
-                    "x": "-441",
-                    "y": "2766"
                 },
                 "{dFQlq)97rqcr{%[mH^p": {
                     "fields": {
@@ -22028,8 +21768,8 @@
                     "parent": null,
                     "shadow": false,
                     "topLevel": true,
-                    "x": -176,
-                    "y": 1476
+                    "x": -213,
+                    "y": 797
                 },
                 "}a:6G$^e(-UfiNs$]Gd]": {
                     "fields": {
@@ -22312,7 +22052,7 @@
             "currentCostume": 0,
             "direction": 90,
             "draggable": false,
-            "id": "APOh2%cT:8KCx+tIN8Vx",
+            "id": "p1l(IKzWB:ZzuRTp]5vQ",
             "isStage": false,
             "lists": {},
             "name": "Sprite1",
