@@ -9,8 +9,6 @@
   EXPORT g_CubeBoot
   EXPORT g_CubeBootEnd
 g_CubeBoot
-  ;INCBIN releases\\blinky.bin
-  ;INCBIN releases\\cubetest.bin
   INCBIN releases\\cubeboot.bin
 g_CubeBootEnd
   
