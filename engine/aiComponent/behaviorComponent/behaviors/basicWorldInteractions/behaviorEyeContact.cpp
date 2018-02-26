@@ -39,6 +39,11 @@
 namespace Anki {
 namespace Cozmo {
 
+BehaviorEyeContact::BehaviorEyeContact(const Json::Value& config)
+  : ICozmoBehavior(config)
+{
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorEyeContact::WantsToBeActivatedBehavior() const
 {
@@ -48,15 +53,8 @@ bool BehaviorEyeContact::WantsToBeActivatedBehavior() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEyeContact::OnBehaviorActivated()
 {
-  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::HikingSquintStart));
+    DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::HikingSquintStart));
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorEyeContact::OnBehaviorDeactivated()
-{
-  // TODO not sure what to do here, try to
-  // find another example
-}
-  
 } // namespace Cozmo
 } // namespace Anki

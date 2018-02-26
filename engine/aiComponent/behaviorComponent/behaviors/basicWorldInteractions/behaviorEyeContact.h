@@ -23,30 +23,21 @@ class BehaviorEyeContact : public ICozmoBehavior
 protected:
   // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
-  BehaviorEyeContact(const Json::Value& config) : ICozmoBehavior(config) {};
+  BehaviorEyeContact(const Json::Value& config);
   
 public:
   virtual ~BehaviorEyeContact() override {}
   virtual bool WantsToBeActivatedBehavior() const override;
-  // virtual bool WantsToBeActivatedBehavior() const override
-  // {
-  // PRINT_NAMED_INFO("BehaviorEyeContact.WantsToBeActivatedBehavior","");
-  //  return true;
-  // }
   
 protected:
-  // TODO review modifiers
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
-    modifiers.wantsToBeActivatedWhenOffTreads = true;
-    modifiers.wantsToBeActivatedWhenOnCharger = true;
-    // modifiers.behaviorAlwaysDelegates = false;
+    modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::Standard });
+    modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::Standard });
+    modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingBlinkAmount, EVisionUpdateFrequency::Standard });
   }
 
   virtual void OnBehaviorActivated() override;
-  virtual void OnBehaviorDeactivated() override;
-  
 };
-  
 
 } // namespace Cozmo
 } // namespace Anki
