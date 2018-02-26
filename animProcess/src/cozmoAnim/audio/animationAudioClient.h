@@ -56,12 +56,6 @@ public:
   // Check if there is an event being performed
   bool HasActiveEvents() const;
   
-  // Control Robot's master volume
-  // Volume is [0.0 - 1.0]
-  void SetRobotMasterVolume( AudioEngine::AudioRTPCValue volume,
-                             AudioEngine::AudioTimeMs timeInMilliSeconds = 0,
-                             AudioEngine::AudioCurveType curve = AudioEngine::AudioCurveType::Linear );
-
 
 private:
   

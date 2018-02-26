@@ -85,9 +85,18 @@ void SetWriteAudioOutputCapture( ConsoleFunctionContextRef context )
   }
 }
 
+void SetRobotMasterVolume( ConsoleFunctionContextRef context )
+{
+  if ( sThis != nullptr ) {
+    const float vol = ConsoleArg_Get_Float( context, "robotMasterVolume");
+    sThis->SetRobotMasterVolume( vol );
+  }
+}
+
 // Register console var func
 CONSOLE_FUNC( SetWriteAudioProfilerCapture, "CozmoAudioController", bool writeProfiler );
 CONSOLE_FUNC( SetWriteAudioOutputCapture, "CozmoAudioController", bool writeOutput );
+CONSOLE_FUNC( SetRobotMasterVolume, "CozmoAudioController", float robotMasterVolume );
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -197,6 +206,26 @@ bool CozmoAudioController::WriteAudioOutputCapture( bool write )
   return AudioEngineController::WriteAudioOutputCapture( write, kAudioOutputCaptureFileName );
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void CozmoAudioController::SetRobotMasterVolume( AudioEngine::AudioRTPCValue volume,
+                                                 AudioEngine::AudioTimeMs timeInMilliSeconds,
+                                                 AudioEngine::AudioCurveType curve )
+{
+  AudioEngine::AudioRTPCValue orgVol = volume;
+  volume = Util::Clamp( volume, 0.0f, 1.0f );
+  if ( !Util::IsFltNear( volume, orgVol ) ) {
+    PRINT_NAMED_WARNING( "CozmoAudioController.SetRobotMasterVolume",
+                         "Invalid volume %f - Acceptable volume values are [0.0, 1.0] - Value was Clamped to %f",
+                         orgVol, volume );
+  }
+  SetParameter( ToAudioParameterId( AudioMetaData::GameParameter::ParameterType::Robot_Volume ),
+                volume,
+                kInvalidAudioGameObject,
+                timeInMilliSeconds,
+                curve );
+}
+
+// Private Methods
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CozmoAudioController::RegisterCladGameObjectsWithAudioController()
 {
