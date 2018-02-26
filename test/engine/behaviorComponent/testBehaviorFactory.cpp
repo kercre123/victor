@@ -33,7 +33,7 @@ using namespace Anki::Cozmo;
 
 static const char* kTestBehaviorJson =
 "{"
-"   \"behaviorClass\" : \"PlayAnim\","
+"   \"behaviorClass\" : \"AnimSequence\","
 "   \"behaviorID\" : \"Wait_TestInjectable\","
 "   \"animTriggers\" : [ \"UnitTestAnim\" ],"
 "   \"minTimeBetweenRuns\" : 5.0,"
@@ -115,8 +115,7 @@ void VerifyBehavior(const ICozmoBehaviorPtr inBehavior, const BehaviorContainer&
 
 TEST(BehaviorFactory, CreateAndDestroyBehaviors)
 {
-  CozmoContext context{};
-  TestBehaviorFramework testBehaviorFramework(1, &context);
+  TestBehaviorFramework testBehaviorFramework;
   RobotDataLoader::BehaviorIDJsonMap emptyBehaviorMap;
   Json::Value emptyConfig = ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait , BehaviorID::Anonymous);
   TestBehavior emptyBase(emptyConfig);
@@ -138,8 +137,11 @@ TEST(BehaviorFactory, CreateAndDestroyBehaviors)
   
   BehaviorExternalInterface& behaviorExternalInterface = testBehaviorFramework.GetBehaviorExternalInterface();
   
-  
-  ICozmoBehaviorPtr newBehavior = behaviorContainer.CreateBehaviorFromConfig(testBehaviorJson);
+
+  const bool createdOK = behaviorContainer.CreateAndStoreBehavior(testBehaviorJson);
+  ASSERT_TRUE(createdOK);
+  ICozmoBehaviorPtr newBehavior = behaviorContainer.FindBehaviorByID( BEHAVIOR_ID(Wait_TestInjectable) );
+  ASSERT_TRUE(newBehavior != nullptr);
   newBehavior->Init(behaviorExternalInterface);
   ASSERT_NE(newBehavior, nullptr);
   

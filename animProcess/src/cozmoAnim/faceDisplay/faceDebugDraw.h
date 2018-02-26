@@ -35,7 +35,11 @@ namespace Cozmo {
 namespace RobotInterface {
   struct MicData;
   struct MicDirection;
-} 
+}
+
+namespace WebService {
+  class WebService;
+}
 
 class FaceDebugDraw {
 public:
@@ -54,6 +58,9 @@ public:
 
     Count
   };
+
+  // allow us to send this debug info out to the web server
+  void SetWebService( WebService::WebService* webService ) { _webService = webService; }
 
   // Debug drawing is expected from only one thread
   DrawState GetDrawState() const { return _drawState; }
@@ -94,6 +101,7 @@ private:
   bool _drawFAC = false;
 
   RobotInterface::DrawTextOnScreen _customText;
+  WebService::WebService* _webService;
 };
 
 } // namespace Cozmo

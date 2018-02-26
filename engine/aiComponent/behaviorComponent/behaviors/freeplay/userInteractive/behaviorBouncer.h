@@ -28,8 +28,8 @@ public:
   
 protected:
   
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorBouncer(const Json::Value& config);
   
   // ICozmoBehavior interface

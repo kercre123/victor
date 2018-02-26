@@ -9,7 +9,7 @@
   // element in this list is dispatched to, e.g., setting DevDispatchAfterShake=1 dispatches
   // to the first behavior in the list, 2 to the second, etc.
   "behaviors": [
-    "GlobalInterruptions", 
+    "CoordinateGlobalInterrupts", 
     "ReactToSoundAwake" 
   ]
 }

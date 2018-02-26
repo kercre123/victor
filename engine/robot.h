@@ -119,6 +119,22 @@ enum class RobotToEngineTag : uint8_t;
 } // end namespace RobotInterface
 
 
+// CozmoContext is a coretech class - this wrapper allows the context to work
+// with the dependency managed component interface 
+class ContextWrapper:  public IDependencyManagedComponent<RobotComponentID> {
+public:
+  ContextWrapper(const CozmoContext* context)
+  : IDependencyManagedComponent(this, RobotComponentID::CozmoContext)
+  , context(context){}
+  const CozmoContext* context;
+  
+  virtual ~ContextWrapper(){}
+
+  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override {};
+  virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {};
+  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
+};
+
 // indent 2 spaces << that way !!!! coding standards !!!!
 class Robot : private Util::noncopyable
 {
@@ -167,128 +183,121 @@ public:
   }
   
   template<typename T>
-  T& GetComponent(RobotComponentID componentID) const {return _components->GetValue<T>(componentID);}
+  T& GetComponent() const {return _components->GetValue<T>();}
 
   template<typename T>
-  T& GetComponent(RobotComponentID componentID) {return _components->GetValue<T>(componentID);}
+  T& GetComponent() {return _components->GetValue<T>();}
+
+  
+  template<typename T>
+  T* GetComponentPtr() const {return _components->GetBasePtr<T>();}
 
   template<typename T>
-  T* GetComponentPtr(RobotComponentID componentID) {return _components->GetBasePtr<T>(componentID);}
+  T* GetComponentPtr() {return _components->GetBasePtr<T>();}
+
+
   
-  inline BlockWorld&       GetBlockWorld()       {return GetComponent<BlockWorld>(RobotComponentID::BlockWorld);}
-  inline const BlockWorld& GetBlockWorld() const {return GetComponent<BlockWorld>(RobotComponentID::BlockWorld);}
+  inline BlockWorld&       GetBlockWorld()       {return GetComponent<BlockWorld>();}
+  inline const BlockWorld& GetBlockWorld() const {return GetComponent<BlockWorld>();}
   
-  inline FaceWorld&       GetFaceWorld()       {return GetComponent<FaceWorld>(RobotComponentID::FaceWorld);}
-  inline const FaceWorld& GetFaceWorld() const {return GetComponent<FaceWorld>(RobotComponentID::FaceWorld);}
+  inline FaceWorld&       GetFaceWorld()       {return GetComponent<FaceWorld>();}
+  inline const FaceWorld& GetFaceWorld() const {return GetComponent<FaceWorld>();}
 
-  inline PetWorld&       GetPetWorld()       {return GetComponent<PetWorld>(RobotComponentID::PetWorld);}
-  inline const PetWorld& GetPetWorld() const {return GetComponent<PetWorld>(RobotComponentID::PetWorld);}
+  inline PetWorld&       GetPetWorld()       {return GetComponent<PetWorld>();}
+  inline const PetWorld& GetPetWorld() const {return GetComponent<PetWorld>();}
 
-  inline VisionComponent&       GetVisionComponent()       { return GetComponent<VisionComponent>(RobotComponentID::Vision); }
-  inline const VisionComponent& GetVisionComponent() const { return GetComponent<VisionComponent>(RobotComponentID::Vision); }
+  inline VisionComponent&       GetVisionComponent()       { return GetComponent<VisionComponent>(); }
+  inline const VisionComponent& GetVisionComponent() const { return GetComponent<VisionComponent>(); }
 
-  inline VisionScheduleMediator& GetVisionScheduleMediator() {return GetComponent<VisionScheduleMediator>(RobotComponentID::VisionScheduleMediator); }
-  inline const VisionScheduleMediator& GetVisionScheduleMediator() const {return GetComponent<VisionScheduleMediator>(RobotComponentID::VisionScheduleMediator); }
+  inline VisionScheduleMediator& GetVisionScheduleMediator() {return GetComponent<VisionScheduleMediator>(); }
+  inline const VisionScheduleMediator& GetVisionScheduleMediator() const {return GetComponent<VisionScheduleMediator>(); }
 
-  inline MapComponent&       GetMapComponent()       {return GetComponent<MapComponent>(RobotComponentID::Map);}
-  inline const MapComponent& GetMapComponent() const {return GetComponent<MapComponent>(RobotComponentID::Map);}
+  inline MapComponent&       GetMapComponent()       {return GetComponent<MapComponent>();}
+  inline const MapComponent& GetMapComponent() const {return GetComponent<MapComponent>();}
   
-  inline BlockTapFilterComponent& GetBlockTapFilter() {return GetComponent<BlockTapFilterComponent>(RobotComponentID::BlockTapFilter);}
-  inline const BlockTapFilterComponent& GetBlockTapFilter() const {return GetComponent<BlockTapFilterComponent>(RobotComponentID::BlockTapFilter);}
+  inline BlockTapFilterComponent& GetBlockTapFilter() {return GetComponent<BlockTapFilterComponent>();}
+  inline const BlockTapFilterComponent& GetBlockTapFilter() const {return GetComponent<BlockTapFilterComponent>();}
 
-  inline MovementComponent& GetMoveComponent() {return GetComponent<MovementComponent>(RobotComponentID::Movement);}
-  inline const MovementComponent& GetMoveComponent() const {return GetComponent<MovementComponent>(RobotComponentID::Movement);}
+  inline MovementComponent& GetMoveComponent() {return GetComponent<MovementComponent>();}
+  inline const MovementComponent& GetMoveComponent() const {return GetComponent<MovementComponent>();}
  
-  inline CubeLightComponent& GetCubeLightComponent() {return GetComponent<CubeLightComponent>(RobotComponentID::CubeLights);}
-  inline const CubeLightComponent& GetCubeLightComponent() const {return GetComponent<CubeLightComponent>(RobotComponentID::CubeLights);}
+  inline CubeLightComponent& GetCubeLightComponent() {return GetComponent<CubeLightComponent>();}
+  inline const CubeLightComponent& GetCubeLightComponent() const {return GetComponent<CubeLightComponent>();}
   
-  inline BodyLightComponent& GetBodyLightComponent() {return GetComponent<BodyLightComponent>(RobotComponentID::BodyLights);}
-  inline const BodyLightComponent& GetBodyLightComponent() const {return GetComponent<BodyLightComponent>(RobotComponentID::BodyLights);}
+  inline BodyLightComponent& GetBodyLightComponent() {return GetComponent<BodyLightComponent>();}
+  inline const BodyLightComponent& GetBodyLightComponent() const {return GetComponent<BodyLightComponent>();}
   
-  inline CubeAccelComponent& GetCubeAccelComponent() {return GetComponent<CubeAccelComponent>(RobotComponentID::CubeAccel);}
-  inline const CubeAccelComponent& GetCubeAccelComponent() const {return GetComponent<CubeAccelComponent>(RobotComponentID::CubeAccel);}
+  inline CubeAccelComponent& GetCubeAccelComponent() {return GetComponent<CubeAccelComponent>();}
+  inline const CubeAccelComponent& GetCubeAccelComponent() const {return GetComponent<CubeAccelComponent>();}
 
-  inline CubeCommsComponent& GetCubeCommsComponent() {return GetComponent<CubeCommsComponent>(RobotComponentID::CubeComms);}
-  inline const CubeCommsComponent& GetCubeCommsComponent() const {return GetComponent<CubeCommsComponent>(RobotComponentID::CubeComms);}
+  inline CubeCommsComponent& GetCubeCommsComponent() {return GetComponent<CubeCommsComponent>();}
+  inline const CubeCommsComponent& GetCubeCommsComponent() const {return GetComponent<CubeCommsComponent>();}
   
-  inline const MoodManager& GetMoodManager() const { return GetComponent<MoodManager>(RobotComponentID::MoodManager);}
-  inline MoodManager&       GetMoodManager()       { return GetComponent<MoodManager>(RobotComponentID::MoodManager);}
+  inline const MoodManager& GetMoodManager() const { return GetComponent<MoodManager>();}
+  inline MoodManager&       GetMoodManager()       { return GetComponent<MoodManager>();}
 
   
-  inline const ProgressionUnlockComponent& GetProgressionUnlockComponent() const {return GetComponent<ProgressionUnlockComponent>(RobotComponentID::ProgressionUnlock);}  
-  inline ProgressionUnlockComponent& GetProgressionUnlockComponent() {return GetComponent<ProgressionUnlockComponent>(RobotComponentID::ProgressionUnlock);}
+  inline const ProgressionUnlockComponent& GetProgressionUnlockComponent() const {return GetComponent<ProgressionUnlockComponent>();}  
+  inline ProgressionUnlockComponent& GetProgressionUnlockComponent() {return GetComponent<ProgressionUnlockComponent>();}
 
-  inline const InventoryComponent& GetInventoryComponent() const {return GetComponent<InventoryComponent>(RobotComponentID::Inventory);}
-  inline InventoryComponent& GetInventoryComponent() {return GetComponent<InventoryComponent>(RobotComponentID::Inventory);}
+  inline const InventoryComponent& GetInventoryComponent() const {return GetComponent<InventoryComponent>();}
+  inline InventoryComponent& GetInventoryComponent() {return GetComponent<InventoryComponent>();}
 
-  inline const NVStorageComponent& GetNVStorageComponent() const {return GetComponent<NVStorageComponent>(RobotComponentID::NVStorage);}
-  inline NVStorageComponent& GetNVStorageComponent() {return GetComponent<NVStorageComponent>(RobotComponentID::NVStorage);}
+  inline const NVStorageComponent& GetNVStorageComponent() const {return GetComponent<NVStorageComponent>();}
+  inline NVStorageComponent& GetNVStorageComponent() {return GetComponent<NVStorageComponent>();}
 
-  inline const AIComponent& GetAIComponent() const {return GetComponent<AIComponent>(RobotComponentID::AIComponent);}
-  inline AIComponent& GetAIComponent() {return GetComponent<AIComponent>(RobotComponentID::AIComponent);}
+  inline const AIComponent& GetAIComponent() const {return GetComponent<AIComponent>();}
+  inline AIComponent& GetAIComponent() {return GetComponent<AIComponent>();}
   
-  inline const PublicStateBroadcaster& GetPublicStateBroadcaster() const {return GetComponent<PublicStateBroadcaster>(RobotComponentID::PublicStateBroadcaster);}
-  inline PublicStateBroadcaster& GetPublicStateBroadcaster(){return GetComponent<PublicStateBroadcaster>(RobotComponentID::PublicStateBroadcaster);}
+  inline const PublicStateBroadcaster& GetPublicStateBroadcaster() const {return GetComponent<PublicStateBroadcaster>();}
+  inline PublicStateBroadcaster& GetPublicStateBroadcaster(){return GetComponent<PublicStateBroadcaster>();}
   
-  inline DockingComponent& GetDockingComponent() {return GetComponent<DockingComponent>(RobotComponentID::Docking);}
-  inline const DockingComponent& GetDockingComponent() const {return GetComponent<DockingComponent>(RobotComponentID::Docking);}
+  inline DockingComponent& GetDockingComponent() {return GetComponent<DockingComponent>();}
+  inline const DockingComponent& GetDockingComponent() const {return GetComponent<DockingComponent>();}
   
-  inline CarryingComponent& GetCarryingComponent() {return GetComponent<CarryingComponent>(RobotComponentID::Carrying);}
-  inline const CarryingComponent& GetCarryingComponent() const {return GetComponent<CarryingComponent>(RobotComponentID::Carrying);}
+  inline CarryingComponent& GetCarryingComponent() {return GetComponent<CarryingComponent>();}
+  inline const CarryingComponent& GetCarryingComponent() const {return GetComponent<CarryingComponent>();}
   
-  inline RobotIdleTimeoutComponent& GetIdleTimeoutComponent() {return GetComponent<RobotIdleTimeoutComponent>(RobotComponentID::RobotIdleTimeout);}
-  inline const RobotIdleTimeoutComponent& GetIdleTimeoutComponent() const {return GetComponent<RobotIdleTimeoutComponent>(RobotComponentID::RobotIdleTimeout);}
+  inline RobotIdleTimeoutComponent& GetIdleTimeoutComponent() {return GetComponent<RobotIdleTimeoutComponent>();}
+  inline const RobotIdleTimeoutComponent& GetIdleTimeoutComponent() const {return GetComponent<RobotIdleTimeoutComponent>();}
 
-  inline const PathComponent& GetPathComponent() const { return GetComponent<PathComponent>(RobotComponentID::PathPlanning); }
-  inline       PathComponent& GetPathComponent()       { return GetComponent<PathComponent>(RobotComponentID::PathPlanning); }
+  inline const PathComponent& GetPathComponent() const { return GetComponent<PathComponent>(); }
+  inline       PathComponent& GetPathComponent()       { return GetComponent<PathComponent>(); }
   
-  inline const CliffSensorComponent& GetCliffSensorComponent() const { return GetComponent<CliffSensorComponent>(RobotComponentID::CliffSensor); }
-  inline       CliffSensorComponent& GetCliffSensorComponent()       { return GetComponent<CliffSensorComponent>(RobotComponentID::CliffSensor); }
+  inline const CliffSensorComponent& GetCliffSensorComponent() const { return GetComponent<CliffSensorComponent>(); }
+  inline       CliffSensorComponent& GetCliffSensorComponent()       { return GetComponent<CliffSensorComponent>(); }
   
-  inline const ProxSensorComponent& GetProxSensorComponent() const { return GetComponent<ProxSensorComponent>(RobotComponentID::ProxSensor); }
-  inline       ProxSensorComponent& GetProxSensorComponent()       { return GetComponent<ProxSensorComponent>(RobotComponentID::ProxSensor); }
+  inline const ProxSensorComponent& GetProxSensorComponent() const { return GetComponent<ProxSensorComponent>(); }
+  inline       ProxSensorComponent& GetProxSensorComponent()       { return GetComponent<ProxSensorComponent>(); }
 
-  inline const AnimationComponent& GetAnimationComponent() const { return GetComponent<AnimationComponent>(RobotComponentID::Animation); }
-  inline       AnimationComponent& GetAnimationComponent()       { return GetComponent<AnimationComponent>(RobotComponentID::Animation); }
+  inline const AnimationComponent& GetAnimationComponent() const { return GetComponent<AnimationComponent>(); }
+  inline       AnimationComponent& GetAnimationComponent()       { return GetComponent<AnimationComponent>(); }
   
-  inline const TouchSensorComponent& GetTouchSensorComponent() const { return GetComponent<TouchSensorComponent>(RobotComponentID::TouchSensor); }
-  inline       TouchSensorComponent& GetTouchSensorComponent()       { return GetComponent<TouchSensorComponent>(RobotComponentID::TouchSensor); }
+  inline const TouchSensorComponent& GetTouchSensorComponent() const { return GetComponent<TouchSensorComponent>(); }
+  inline       TouchSensorComponent& GetTouchSensorComponent()       { return GetComponent<TouchSensorComponent>(); }
   
-  const DrivingAnimationHandler& GetDrivingAnimationHandler() const { return GetComponent<DrivingAnimationHandler>(RobotComponentID::DrivingAnimationHandler); }
-  DrivingAnimationHandler& GetDrivingAnimationHandler() { return GetComponent<DrivingAnimationHandler>(RobotComponentID::DrivingAnimationHandler); }
+  const DrivingAnimationHandler& GetDrivingAnimationHandler() const { return GetComponent<DrivingAnimationHandler>(); }
+  DrivingAnimationHandler& GetDrivingAnimationHandler() { return GetComponent<DrivingAnimationHandler>(); }
   
-  const MicDirectionHistory& GetMicDirectionHistory() const { return GetComponent<MicDirectionHistory>(RobotComponentID::MicDirectionHistory); }
-  MicDirectionHistory&       GetMicDirectionHistory()       { return GetComponent<MicDirectionHistory>(RobotComponentID::MicDirectionHistory); }
+  const MicDirectionHistory& GetMicDirectionHistory() const { return GetComponent<MicDirectionHistory>(); }
+  MicDirectionHistory&       GetMicDirectionHistory()       { return GetComponent<MicDirectionHistory>(); }
 
   const PoseOriginList&  GetPoseOriginList() const { return *_poseOrigins.get(); }
   
-  ObjectPoseConfirmer& GetObjectPoseConfirmer() { return GetComponent<ObjectPoseConfirmer>(RobotComponentID::ObjectPoseConfirmer); }
-  const ObjectPoseConfirmer& GetObjectPoseConfirmer() const {return GetComponent<ObjectPoseConfirmer>(RobotComponentID::ObjectPoseConfirmer);}
+  ObjectPoseConfirmer& GetObjectPoseConfirmer() { return GetComponent<ObjectPoseConfirmer>(); }
+  const ObjectPoseConfirmer& GetObjectPoseConfirmer() const {return GetComponent<ObjectPoseConfirmer>();}
   
-  ActionList& GetActionList() { return GetComponent<ActionList>(RobotComponentID::ActionList); }
+  ActionList& GetActionList() { return GetComponent<ActionList>(); }
 
-  Audio::EngineRobotAudioClient* GetAudioClient() { return &GetComponent<Audio::EngineRobotAudioClient>(RobotComponentID::EngineAudioClient); }
-  const Audio::EngineRobotAudioClient* GetAudioClient() const { return &GetComponent<Audio::EngineRobotAudioClient>(RobotComponentID::EngineAudioClient); }
+  Audio::EngineRobotAudioClient* GetAudioClient() { return &GetComponent<Audio::EngineRobotAudioClient>(); }
+  const Audio::EngineRobotAudioClient* GetAudioClient() const { return &GetComponent<Audio::EngineRobotAudioClient>(); }
 
-  RobotStateHistory* GetStateHistory() { return &GetComponent<RobotStateHistory>(RobotComponentID::StateHistory); }
-  const RobotStateHistory* GetStateHistory() const { return &GetComponent<RobotStateHistory>(RobotComponentID::StateHistory); }
+  RobotStateHistory* GetStateHistory() { return GetComponentPtr<RobotStateHistory>(); }
+  const RobotStateHistory* GetStateHistory() const { return GetComponentPtr<RobotStateHistory>(); }
 
-  RobotToEngineImplMessaging& GetRobotToEngineImplMessaging() { return GetComponent<RobotToEngineImplMessaging>(RobotComponentID::RobotToEngineImplMessaging); }
+  RobotToEngineImplMessaging& GetRobotToEngineImplMessaging() { return GetComponent<RobotToEngineImplMessaging>(); }
 
-  const CozmoContext* GetContext() const { return GetComponent<ContextWrapper>(RobotComponentID::CozmoContext).context; }
-  class ContextWrapper:  public IDependencyManagedComponent<RobotComponentID> {
-  public:
-    ContextWrapper(const CozmoContext* context)
-    : IDependencyManagedComponent(this, RobotComponentID::CozmoContext)
-    , context(context){}
-    const CozmoContext* context;
-    
-    virtual ~ContextWrapper(){}
-
-    virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override {};
-    virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {};
-    virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
-  };
+  const CozmoContext* GetContext() const { return GetComponent<ContextWrapper>().context; }
 
   const Util::RandomGenerator& GetRNG() const;
   Util::RandomGenerator& GetRNG();
@@ -564,9 +573,9 @@ public:
   RobotWorldOriginChangedSignal& OnRobotWorldOriginChanged() { return _robotWorldOriginChangedSignal; }
   bool HasExternalInterface() const;
   
-  IExternalInterface* GetExternalInterface();
+  IExternalInterface* GetExternalInterface() const;
   
-  RobotInterface::MessageHandler* GetRobotMessageHandler();
+  RobotInterface::MessageHandler* GetRobotMessageHandler() const;
   void SetImageSendMode(ImageSendMode newMode) { _imageSendMode = newMode; }
   const ImageSendMode GetImageSendMode() const { return _imageSendMode; }
   

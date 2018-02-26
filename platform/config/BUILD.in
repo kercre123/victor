@@ -1,0 +1,18 @@
+asset_project(
+    name = 'platform_config_bin',
+    srcs = subdir_glob([
+                ('bin', '**/*'),
+                ],
+                prefix = 'bin'
+            ),
+),
+asset_project(
+    name = 'platform_config_etc',
+    srcs = subdir_glob([
+                ('etc', '**/*'),
+                ('etc', 'config/*')
+                ],
+                prefix = 'etc'
+            ),
+)
+

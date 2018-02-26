@@ -26,8 +26,6 @@
 #include "engine/components/cubeAccelComponentListeners.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
-#include "engine/needsSystem/needsManager.h"
-#include "engine/needsSystem/needsState.h"
 #include "engine/robotInterface/messageHandler.h"
 #include "engine/robotDataLoader.h"
 
@@ -152,10 +150,6 @@ void BehaviorFeedingEat::BehaviorUpdate()
   if(!_hasRegisteredActionComplete &&
      (currentTime_s > _timeCubeIsSuccessfullyDrained_sec)){
     _hasRegisteredActionComplete = true;
-    if(GetBEI().HasNeedsManager()){
-      auto& needsManager = GetBEI().GetNeedsManager();
-      needsManager.RegisterNeedsActionCompleted(NeedsActionId::Feed);
-    }
     for(auto& listener: _feedingListeners){
       listener->EatingComplete();
     }
@@ -242,8 +236,6 @@ void BehaviorFeedingEat::TransitionToDrivingToFood()
       // can't see the cube, maybe it's obstructed? give up on the cube until we see it again. Let the
       // behavior end (it may get re-selected with a different cube)
       MarkCubeAsBad();
-    } else if( result == ActionResult::NO_PREACTION_POSES){
-      GetBEI().GetAIComponent().GetWhiteboard().SetNoPreDockPosesOnObject(_targetID);
     } else {
       const ActionResultCategory resCat = IActionRunner::GetActionResultCategory(result);
 
@@ -264,14 +256,7 @@ void BehaviorFeedingEat::TransitionToPlacingLiftOnCube()
   SET_STATE(PlacingLiftOnCube);
   
   bool isNeedSevere = false;
-  if(GetBEI().HasNeedsManager()){
-    auto& needsManager = GetBEI().GetNeedsManager();
-    
-    NeedsState& currNeedState = needsManager.GetCurNeedsStateMutable();
-    isNeedSevere = currNeedState.IsNeedAtBracket(NeedId::Energy,
-                                                 NeedBracketId::Critical);
-  }
-  
+
   AnimationTrigger bestAnim = isNeedSevere ?
                                AnimationTrigger::FeedingPlaceLiftOnCube_Severe :
                                AnimationTrigger::FeedingPlaceLiftOnCube_Normal;
@@ -360,24 +345,7 @@ AnimationTrigger BehaviorFeedingEat::CheckNeedsStateAndCalculateAnimation()
   bool isWarningPostFeeding = false;
   bool isFullPostFeeding = false;
   // Eating animation is dependent on both the current and post feeding energy level
-  // Use PredictNeedsActionResult to estimate the ending needs bracket
-  if(GetBEI().HasNeedsManager()){
-    auto& needsManager = GetBEI().GetNeedsManager();
-    NeedsState& currNeedState = needsManager.GetCurNeedsStateMutable();
-    
-    isSeverePreFeeding = currNeedState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Critical);
-    isWarningPreFeeding = currNeedState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Warning);
-    
-    NeedsState predPostFeedNeed;
-    needsManager.PredictNeedsActionResult(NeedsActionId::Feed, predPostFeedNeed);
-    
-    isSeverePostFeeding = predPostFeedNeed.IsNeedAtBracket(NeedId::Energy,
-                                                           NeedBracketId::Critical);
-    isWarningPostFeeding = predPostFeedNeed.IsNeedAtBracket(NeedId::Energy,
-                                                            NeedBracketId::Warning);
-    isFullPostFeeding = predPostFeedNeed.IsNeedAtBracket(NeedId::Energy,
-                                                         NeedBracketId::Full);
-  }
+  // (code was here that set these)
   AnimationTrigger bestAnimation;
   if(isSeverePreFeeding && isSeverePostFeeding){
     bestAnimation = AnimationTrigger::FeedingAteNotFullEnough_Severe;

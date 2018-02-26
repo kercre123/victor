@@ -21,8 +21,8 @@ namespace Cozmo {
 class BehaviorTurn : public ICozmoBehavior
 {
 protected:  
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorTurn(const Json::Value& config);
 
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}

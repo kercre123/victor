@@ -71,8 +71,9 @@ namespace Cozmo {
     
     Result SetProceduralFace(const ProceduralFace& face, u32 duration_ms);    
 
-    void Process_displayFaceImageChunk(const Anki::Cozmo::RobotInterface::DisplayFaceImageBinaryChunk& msg);
-    void Process_displayFaceImageChunk(const Anki::Cozmo::RobotInterface::DisplayFaceImageRGBChunk& msg);
+    void Process_displayFaceImageChunk(const RobotInterface::DisplayFaceImageBinaryChunk& msg);
+    void Process_displayFaceImageChunk(const RobotInterface::DisplayFaceImageGrayscaleChunk& msg);
+    void Process_displayFaceImageChunk(const RobotInterface::DisplayFaceImageRGBChunk& msg);
 
     Result SetFaceImage(const Vision::Image& img, u32 duration_ms);
     Result SetFaceImage(const Vision::ImageRGB565& img, u32 duration_ms);
@@ -153,6 +154,9 @@ namespace Cozmo {
       StopTracks(_tracksInUse);
     }
     
+    template<typename ImageType>
+    Result SetFaceImageHelper(const ImageType& img, const u32 duration_ms);
+    
     const AnimContext* _context = nullptr;
     
     Animation*  _streamingAnimation = nullptr;
@@ -193,8 +197,13 @@ namespace Cozmo {
     // clock)
     TimeStamp_t _streamingTime_ms;
     
-    // When animation is waiting for audio, track how much time has passed so we can abort in needed
-//    TimeStamp_t _audioBufferingTime_ms = 0;
+    // Time when procedural face layer can next be applied.
+    // There's a minimum amount of time that must pass since the last
+    // non-procedural face (which has higher priority) was drawn in order
+    // to smooth over gaps in between non-procedural frames that can occur
+    // when trying to render them at near real-time. Otherwise, procedural
+    // face layers like eye darts could play during these gaps.
+    TimeStamp_t _nextProceduralFaceAllowedTime_ms = 0;
     
     // Last time we streamed anything
     f32 _lastStreamTime = std::numeric_limits<f32>::lowest();
@@ -234,12 +243,20 @@ namespace Cozmo {
     Vision::ImageRGB _procFaceImg;
 
     // Storage and chunk tracking for faceImage data received from engine
+    
+    // Image used for both binary and grayscale images
+    Vision::Image    _faceImageGrayscale;
+    
     // Binary images
-    Vision::Image    _faceImageBinary;
     u32              _faceImageId                       = 0;          // Used only for tracking chunks of the same image as they are received
     u8               _faceImageChunksReceivedBitMask    = 0;
     const u8         kAllFaceImageChunksReceivedMask    = 0x3;        // 2 bits for 2 expected chunks
 
+    // Grayscale images
+    u32                 _faceImageGrayscaleId                    = 0;      // Used only for tracking chunks of the same image as they are received
+    u32                 _faceImageGrayscaleChunksReceivedBitMask = 0;
+    const u32           kAllFaceImageGrayscaleChunksReceivedMask = 0x7fff; // 15 bits for 15 expected chunks (FACE_DISPLAY_NUM_PIXELS / 1200 pixels_per_msg ~= 15)
+    
     // RGB images
     Vision::ImageRGB565 _faceImageRGB565;
     u32                 _faceImageRGBId                    = 0;          // Used only for tracking chunks of the same image as they are received

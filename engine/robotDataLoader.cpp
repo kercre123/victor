@@ -26,7 +26,6 @@
 #include "engine/components/cubeLightComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/events/animationTriggerResponsesContainer.h"
-#include "engine/needsSystem/needsManager.h"
 #include "engine/utils/cozmoExperiments.h"
 #include "engine/utils/cozmoFeatureGate.h"
 #include "threadedPrintStressTester.h"
@@ -527,81 +526,21 @@ void RobotDataLoader::LoadRobotConfigs()
     }
   }
   
+  // userIntentsComponent config (also maps cloud intents to user intents)
+  {
+    static const std::string jsonFilename = "config/engine/behaviorComponent/user_intent_map.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _userIntentsConfig);
+    if(!success)
+    {
+      LOG_ERROR("RobotDataLoader.UserIntentsConfigNotFound",
+                "UserIntents Json config file %s not found or failed to parse",
+                jsonFilename.c_str());
+    }
+  }
+  
   // Voice Command config
   {
     LoadVoiceCommandConfigs();
-  }
-  
-  // needs system config
-  {
-    static const std::string jsonFilename = NeedsManager::GetConfigBaseFilename() + ".json";
-    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _needsSystemConfig);
-    if (!success)
-    {
-      LOG_ERROR("RobotDataLoader.NeedsConfigJsonNotFound",
-                "Needs System Json config file %s not found or failed to parse",
-                jsonFilename.c_str());
-    }
-  }
-  
-  // needs level (star rewards) config
-  {
-    static const std::string jsonFilename = NeedsManager::GetLevelConfigBaseFilename() + ".json";
-    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _starRewardsConfig);
-    if (!success)
-    {
-      LOG_ERROR("RobotDataLoader.StarsConfigJsonNotFound",
-                "Needs Level (star rewards) Json config file %s not found or failed to parse",
-                jsonFilename.c_str());
-    }
-  }
-
-  // needs system actions config
-  {
-    static const std::string jsonFilename = NeedsManager::GetActionConfigBaseFilename() + ".json";
-    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _needsActionConfig);
-    if (!success)
-    {
-      LOG_ERROR("RobotDataLoader.ActionConfigJsonNotFound",
-                "Needs System Action Json config file %s not found or failed to parse",
-                jsonFilename.c_str());
-    }
-  }
-
-  // needs system decay config
-  {
-    static const std::string jsonFilename = NeedsManager::GetDecayConfigBaseFilename() + ".json";
-    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _needsDecayConfig);
-    if (!success)
-    {
-      LOG_ERROR("RobotDataLoader.DecayConfigJsonNotFound",
-                "Needs System Decay Json config file %s not found or failed to parse",
-                jsonFilename.c_str());
-    }
-  }
-
-  // needs "handlers" config (e.g. eye procedural glitches for low repair)
-  {
-    static const std::string jsonFilename = "config/engine/needs_handlers_config.json";
-    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _needsHandlersConfig);
-    if (!success)
-    {
-      LOG_ERROR("RobotDataLoader.NeedsHandlersConfigJsonNotFound",
-                "Needs System Handlers Json config file %s not found or failed to parse",
-                jsonFilename.c_str());
-    }
-  }
-    
-  // local notifications config
-  {
-    static const std::string jsonFilename = "config/engine/local_notification_config.json";
-    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _localNotificationConfig);
-    if (!success)
-    {
-      LOG_ERROR("RobotDataLoader.LocalNotificationConfigJsonNotFound",
-                "Local notification Json config file %s not found or failed to parse",
-                jsonFilename.c_str());
-    }
   }
   
   // DAS event config

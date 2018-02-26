@@ -5,9 +5,13 @@
   "interruptActiveBehavior": true,
 
   "behaviors": [
+    "ReactToCliff",
     "TriggerWordDetected",
-    "FistBumpVoiceCommand",
+    "TimerUtilityCoordinator",
+    "MeetVictor",
+    "ReactToSoundAwake",
     "DevPettingTestSimple",
+    "ReactToUnclaimedIntent",
     "HighLevelAI"
   ]
 }

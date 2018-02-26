@@ -14,7 +14,7 @@
 #define ANKI_COZMO_BASESTATION_COZMO_EXPERIMENTS_H
 
 #include "coretech/common/shared/types.h"
-#include "clad/types/needsSystemTypes.h"
+#include "clad/types/experimentTypes.h"
 #include "engine/components/nvStorageComponent.h"
 #include "engine/utils/cozmoAudienceTags.h"
 #include "util/ankiLab/ankiLab.h"

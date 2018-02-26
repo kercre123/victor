@@ -59,8 +59,7 @@ If you have a question that you get answered (e.g. in a Slack channel) which mig
   - This connection will likely only be temporary, if after power cycling your robot is again not autoconnecting then bring to Al or Nathan
   
 * I get `Failed to connect to non-global ctrl_ifname: wlan0  error: No such file or directory` errors in the [BLE-CLI](../tools/victor-ble-cli) tool
-  - Trying restarting the [wpa_supplicant](https://en.wikipedia.org/wiki/Wpa_supplicant)
-  - `pkill wpa_supplicant` then `wpa_supplicant -iwlan0 -Dnl80211 -c/data/misc/wifi/wpa_supplicant.conf -O/data/misc/wifi/sockets -B`
+  - Reboot the robot and hope!
 
 * Seriously... I cannot get connected to my home WIFI using wifi-set-config ^^
   - These issues should be resolved when we update the OS, but in the meantime:
@@ -87,7 +86,7 @@ If you have a question that you get answered (e.g. in a Slack channel) which mig
 
 * To check the battery level:
   - With the processes running, press the backpack button twice. The battery voltage is in the bottom right. It should be around 4.0v. The backpack lights will blink green when charging (and the processes are running)
-  - Otherwise: `adb shell cat /sys/devices/soc.0/qpnp-linear-charger-8/power_supply/battery/voltage_now`
+  - Otherwise: `adb shell cat /sys/devices/soc/qpnp-linear-charger-8/power_supply/battery/voltage_now`
   
 * Webots Firewall Connection issues?
   - [Create a code signing certificate](/project/build-scripts/webots/FirewallCertificateInstructions.md)
@@ -106,7 +105,21 @@ CMake Error at CMakeLists.txt:9 (project):
   * ... then perform these steps (continued from above)
    	* Install command line tools
     * `sudo xcode-select -s /Applications/Xcode.app/Contents/Developer`# New Document
-    
+   
+* Can't generate Xcode project using `build-victor.sh -g Xcode -C` and getting error output like this
+```
+CMake Error at lib/util/source/3rd/civetweb/cmake/FindWinSock.cmake:77 (if):
+  if given arguments:
+
+    "x86_64" "STREQUAL" "AMD64" "AND" "EQUAL" "4"
+
+  Unknown arguments specified
+Call Stack (most recent call first):
+  lib/util/source/3rd/civetweb/src/CMakeLists.txt:26 (find_package)
+```
+
+  * you forgot `-p mac`
+  
 * My Victor won't turn on/stay on
   - If only the top backpack light blinks when on the charger then the robot is low on battery and will not turn on by just being placed on the charger
   - First turn the robot on with the backpack button and all the lights should turn on as normal
@@ -115,3 +128,40 @@ CMake Error at CMakeLists.txt:9 (project):
 
 * When profiling I see "...doesn't contain symbol table"
   - This is just a warning, there are no symbol tables for the .so files on the device, instead we use symbols from the symbol cache
+
+* How do I decipher this crash in the victor log
+
+```
+12-31 16:22:17.366  2534  2733 F libc    : Fatal signal 11 (SIGSEGV), code 1, fault addr 0x0 in tid 2733 (CozmoRunner)
+12-31 16:22:17.367  1848  1848 W         : debuggerd: handling request: pid=2534 uid=0 gid=0 tid=2733
+12-31 16:22:17.413  2884  2884 E         : debuggerd: Unable to connect to activity manager (connect failed: No such file or directory)
+12-31 16:22:17.465  2884  2884 F DEBUG   : *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
+12-31 16:22:17.465  2884  2884 F DEBUG   : Build fingerprint: 'qcom/msm8909/msm8909:7.1.1/NMF26F/andbui11141045:eng/test-keys'
+12-31 16:22:17.465  2884  2884 F DEBUG   : Revision: '0'
+12-31 16:22:17.466  2884  2884 F DEBUG   : ABI: 'arm'
+12-31 16:22:17.466  2884  2884 F DEBUG   : pid: 2534, tid: 2733, name: CozmoRunner  >>> /data/data/com.anki.cozmoengine/bin/cozmoengined <<<
+12-31 16:22:17.467  2884  2884 F DEBUG   : signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x0
+12-31 16:22:17.467  2884  2884 F DEBUG   :     r0 ffffffff  r1 ffffffff  r2 00000001  r3 00000051
+12-31 16:22:17.468  2884  2884 F DEBUG   :     r4 add70e80  r5 00000000  r6 00000000  r7 ae67f1a0
+12-31 16:22:17.468  2884  2884 F DEBUG   :     r8 00000000  r9 aeaf4760  sl add780d0  fp b1938690
+12-31 16:22:17.468  2884  2884 F DEBUG   :     ip b0b75870  sp ae67f158  lr afd6e92b  pc afd6e960  cpsr a00f0030
+12-31 16:22:17.512  2884  2884 F DEBUG   : 
+12-31 16:22:17.512  2884  2884 F DEBUG   : backtrace:
+12-31 16:22:17.512  2884  2884 F DEBUG   :     #00 pc 00287960  /data/data/com.anki.cozmoengine/lib/libcozmo_engine.so
+12-31 16:22:17.513  2884  2884 F DEBUG   :     #01 pc 002c34a7  /data/data/com.anki.cozmoengine/lib/libcozmo_engine.so
+12-31 16:22:17.513  2884  2884 F DEBUG   :     #02 pc 00273793  /data/data/com.anki.cozmoengine/lib/libcozmo_engine.so
+12-31 16:22:17.513  2884  2884 F DEBUG   :     #03 pc 002751ed  /data/data/com.anki.cozmoengine/lib/libcozmo_engine.so
+```
+
+Looking at the first four lines after `backtrace:` you can see the top four addresses on the stack and the shared library they reside.
+
+  - `victor_addr2line libcozmo_engine.so 00287960 002c34a7 00273793 002751ed`
+
+to get:
+
+```
+0x00287960: .anki/android/ndk-repository/android-ndk-r15b/sources/cxx-stl/llvm-libc++/include/memory:4041
+0x002c34a7: projects/victor/_build/android/Release/../../../engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.cpp:714
+0x00273793: projects/victor/_build/android/Release/../../../engine/aiComponent/behaviorComponent/behaviorStack.cpp:123
+0x002751ed: projects/victor/_build/android/Release/../../../engine/aiComponent/behaviorComponent/behaviorSystemManager.cpp:154
+```

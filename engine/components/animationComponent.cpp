@@ -83,14 +83,13 @@ void AnimationComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& 
   
   // Setup robot message handlers
   RobotInterface::MessageHandler *messageHandler = _robot->GetContext()->GetRobotManager()->GetMsgHandler();
-  RobotID_t robotId = _robot->GetID();
 
   // Subscribe to RobotToEngine messages
   using localHandlerType = void(AnimationComponent::*)(const AnkiEvent<RobotInterface::RobotToEngine>&);
   // Create a helper lambda for subscribing to a tag with a local handler
-  auto doRobotSubscribe = [this, robotId, messageHandler] (RobotInterface::RobotToEngineTag tagType, localHandlerType handler)
+  auto doRobotSubscribe = [this, messageHandler] (RobotInterface::RobotToEngineTag tagType, localHandlerType handler)
   {
-    GetSignalHandles().push_back(messageHandler->Subscribe(robotId, tagType, std::bind(handler, this, std::placeholders::_1)));
+    GetSignalHandles().push_back(messageHandler->Subscribe(tagType, std::bind(handler, this, std::placeholders::_1)));
   };
   
   // bind to specific handlers
@@ -242,7 +241,7 @@ Result AnimationComponent::PlayAnimByName(const std::string& animName,
   // TODO: Is this what interruptRunning should mean?
   //       Or should it queue on anim process side and optionally interrupt currently executing anim?
   if (IsPlayingAnimation() && !interruptRunning) {
-    PRINT_NAMED_WARNING("AnimationComponent.PlayAnimByName.WontInterruptCurrentAnim", "");
+    PRINT_CH_INFO(kLogChannelName, "AnimationComponent.PlayAnimByName.WontInterruptCurrentAnim", "");
     return RESULT_FAIL;
   }
 
@@ -338,7 +337,7 @@ Result AnimationComponent::DisplayFaceImageBinary(const Vision::Image& img, u32 
   // TODO: Is this what interruptRunning should mean?
   //       Or should it queue on anim process side and optionally interrupt currently executing anim?
   if (IsPlayingAnimation() && !interruptRunning) {
-    PRINT_NAMED_WARNING("AnimationComponent.DisplayFaceImageBinary.WontInterruptCurrentAnim", "");
+    PRINT_CH_INFO(kLogChannelName, "AnimationComponent.DisplayFaceImageBinary.WontInterruptCurrentAnim", "");
     return RESULT_FAIL;
   }
 
@@ -385,8 +384,33 @@ Result AnimationComponent::DisplayFaceImageBinary(const Vision::Image& img, u32 
   return RESULT_OK;
 }
 
+Result AnimationComponent::DisplayFaceImage(const Vision::Image& img, u32 duration_ms, bool interruptRunning)
+{
+  return DisplayFaceImageHelper<RobotInterface::DisplayFaceImageGrayscaleChunk>(img, duration_ms, interruptRunning);
+}
+  
 Result AnimationComponent::DisplayFaceImage(const Vision::ImageRGB565& imgRGB565, u32 duration_ms, bool interruptRunning)
 {
+  return DisplayFaceImageHelper<RobotInterface::DisplayFaceImageRGBChunk>(imgRGB565, duration_ms, interruptRunning);
+}
+
+Result AnimationComponent::DisplayFaceImage(const Vision::ImageRGB& img, u32 duration_ms, bool interruptRunning)
+{
+  static Vision::ImageRGB565 img565; // static to avoid repeatedly allocating this once it's used
+  img565.SetFromImageRGB(img);
+  return DisplayFaceImage(img565, duration_ms, interruptRunning);
+}
+
+template <typename MessageType, typename ImageType>
+Result AnimationComponent::DisplayFaceImageHelper(const ImageType& img, u32 duration_ms, bool interruptRunning)
+{
+  // Make sure types logically match (e.g. message type should not be grayscale if image type is RGB)
+  static_assert((std::is_same<MessageType, RobotInterface::DisplayFaceImageGrayscaleChunk>::value &&
+                 std::is_same<ImageType,   Vision::Image>::value) ||
+                (std::is_same<MessageType, RobotInterface::DisplayFaceImageRGBChunk>::value &&
+                 std::is_same<ImageType,   Vision::ImageRGB565>::value),
+                "invalid types");
+  
   if (!_isInitialized) {
     PRINT_NAMED_WARNING("AnimationComponent.DisplayFaceImage.Uninitialized", "");
     return RESULT_FAIL;
@@ -395,43 +419,40 @@ Result AnimationComponent::DisplayFaceImage(const Vision::ImageRGB565& imgRGB565
   // TODO: Is this what interruptRunning should mean?
   //       Or should it queue on anim process side and optionally interrupt currently executing anim?
   if (IsPlayingAnimation() && !interruptRunning) {
-    PRINT_NAMED_WARNING("AnimationComponent.DisplayFaceImage.WontInterruptCurrentAnim", "");
+    PRINT_CH_INFO(kLogChannelName, "AnimationComponent.DisplayFaceImage.WontInterruptCurrentAnim", "");
     return RESULT_FAIL;
   }
-
-  ASSERT_NAMED(imgRGB565.IsContinuous(), "AnimationComponent.DisplayFaceImage.NotContinuous");
   
-  static const int kMaxPixelsPerMsg = RobotInterface::DisplayFaceImageRGBChunk().faceData.size();
+  ASSERT_NAMED(img.IsContinuous(), "AnimationComponent.DisplayFaceImage.NotContinuous");
+  ASSERT_NAMED(img.GetNumRows() == FACE_DISPLAY_HEIGHT, "AnimationComponent.DisplayFaceImage.IncorrectImageHeight");
+  ASSERT_NAMED(img.GetNumCols() == FACE_DISPLAY_WIDTH,  "AnimationComponent.DisplayFaceImage.IncorrectImageWidth");
+  
+  MessageType msg;
+  const int kMaxPixelsPerMsg = msg.faceData.size();
   
   int chunkCount = 0;
   int pixelsLeftToSend = FACE_DISPLAY_NUM_PIXELS;
-  const u16* startIt = imgRGB565.GetRawDataPointer();
+  const auto* startIt = img.GetRawDataPointer();
+  // TODO: Figure out how to make this assert work
+  //static_assert(std::is_same<typename std::remove_pointer<decltype(startIt)>::type, typename decltype(msg.faceData)::value_type>::value, "wrong type");
   while (pixelsLeftToSend > 0) {
-    RobotInterface::DisplayFaceImageRGBChunk msg;
     msg.duration_ms = duration_ms;
     msg.imageId = 0;
     msg.chunkIndex = chunkCount++;
     msg.numPixels = std::min(kMaxPixelsPerMsg, pixelsLeftToSend);
-
+    
     std::copy_n(startIt, msg.numPixels, std::begin(msg.faceData));
-
+    
     pixelsLeftToSend -= msg.numPixels;
     std::advance(startIt, msg.numPixels);
-
-    _robot->SendMessage(RobotInterface::EngineToRobot(std::move(msg)));
+    
+    _robot->SendMessage(RobotInterface::EngineToRobot(MessageType(msg)));
   }
-
+  
   static const int kExpectedNumChunks = static_cast<int>(std::ceilf( (f32)FACE_DISPLAY_NUM_PIXELS / kMaxPixelsPerMsg ));
-  DEV_ASSERT_MSG(chunkCount == kExpectedNumChunks, "AnimationComponent.DisplayFaceImage.UnexpectedNumChunks", "%d", chunkCount);
-
+  DEV_ASSERT_MSG(chunkCount == kExpectedNumChunks, "AnimationComponent.DisplayFaceImageHelper.UnexpectedNumChunks", "%d", chunkCount);
+  
   return RESULT_OK;
-}
-
-Result AnimationComponent::DisplayFaceImage(const Vision::ImageRGB& img, u32 duration_ms, bool interruptRunning)
-{
-  static Vision::ImageRGB565 img565; // static to avoid repeatedly allocating this once it's used
-  img565.SetFromImageRGB(img);
-  return DisplayFaceImage(img565, duration_ms, interruptRunning);
 }
 
 Result AnimationComponent::EnableKeepFaceAlive(bool enable, u32 disableTimeout_ms) const
@@ -545,7 +566,7 @@ void AnimationComponent::HandleMessage(const ExternalInterface::DisplayProcedura
   // TODO: Is this what interruptRunning should mean?
   //       Or should it queue on anim process side and optionally interrupt currently executing anim?
   if (IsPlayingAnimation() && !msg.interruptRunning) {
-    PRINT_NAMED_WARNING("AnimationComponent.DisplayProceduralFace.WontInterruptCurrentAnim", "");
+    PRINT_CH_INFO(kLogChannelName, "AnimationComponent.DisplayProceduralFace.WontInterruptCurrentAnim", "");
     return;
   }
 
@@ -570,7 +591,7 @@ void AnimationComponent::HandleMessage(const ExternalInterface::DisplayFaceImage
   // TODO: Is this what interruptRunning should mean?
   //       Or should it queue on anim process side and optionally interrupt currently executing anim?
   if (IsPlayingAnimation() && !msg.interruptRunning) {
-    PRINT_NAMED_WARNING("AnimationComponent.HandleDisplayFaceImage.WontInterruptCurrentAnim", "");
+    PRINT_CH_INFO(kLogChannelName, "AnimationComponent.HandleDisplayFaceImage.WontInterruptCurrentAnim", "");
     return;
   }
 

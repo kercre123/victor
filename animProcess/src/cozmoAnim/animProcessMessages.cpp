@@ -26,6 +26,7 @@
 #include "audioEngine/multiplexer/audioMultiplexer.h"
 
 #include "coretech/common/engine/utils/timer.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
 
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -40,6 +41,8 @@
 #include "util/console/consoleSystem.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
+
+#include <unistd.h>
 
 // Log options
 #define LOG_CHANNEL    "AnimProcessMessages"
@@ -60,6 +63,12 @@ namespace {
   Anki::Cozmo::Audio::EngineRobotAudioInput* _audioInput = nullptr;
   const Anki::Cozmo::AnimContext*       _context = nullptr;
 
+  // Amount of time the backpack button must be held before sync() is called
+  const f32 kButtonHoldTimeForSync_s = 1.f;
+
+  // Time at which sync() should be called
+  f32 syncTime_s = 0.f;
+
   #ifndef SIMULATOR
   const u8 kNumTicksToCheckForBC = 60; // ~2seconds
   u8 _bcCheckCount = 0;
@@ -67,6 +76,55 @@ namespace {
 
   CONSOLE_VAR(bool, kDebugFaceDraw_CycleWithButton, "DebugFaceDraw", true);   
 
+  static void ListAnimations(ConsoleFunctionContextRef context)
+  {
+    context->channel->WriteLog("<html>\n");
+    context->channel->WriteLog("<h1>Animations</h1>\n");
+    std::vector<std::string> names = _context->GetDataLoader()->GetAnimationNames();
+    for(const auto& name : names) {
+      std::string url = "consolefunccall?func=playanimation&args="+name+"+1";
+      std::string html = "<a href=\""+url+"\">"+name+"</a>&nbsp\n";
+      context->channel->WriteLog(html.c_str());
+    }
+    context->channel->WriteLog("</html>\n");
+  }
+
+  static void PlayAnimation(ConsoleFunctionContextRef context)
+  {
+    const char* name = ConsoleArg_Get_String(context, "name");
+    if (name) {
+      int numLoops = ConsoleArg_GetOptional_Int(context, "numLoops", 1);
+      _animStreamer->SetStreamingAnimation(name, /*tag*/ 1, numLoops, /*interruptRunning*/ true);
+
+      char numLoopsStr[4+1];
+      snprintf(numLoopsStr, sizeof(numLoopsStr), "%d", (numLoops > 9999) ? 9999 : numLoops);
+      std::string text = std::string("Playing ")+name+" "+numLoopsStr+" times<br>";
+      context->channel->WriteLog(text.c_str());
+    } else {
+      context->channel->WriteLog("PlayAnimation name not specified.");
+    }
+  }
+
+  static void AddAnimation(ConsoleFunctionContextRef context)
+  {
+    const char* path = ConsoleArg_Get_String(context, "path");
+    if (path) {
+      const std::string animationFolder = _context->GetDataPlatform()->pathToResource(Anki::Util::Data::Scope::Resources, "/assets/animations/");
+      std::string animationPath = animationFolder + path;
+
+      _context->GetDataLoader()->LoadAnimationFile(animationPath.c_str());
+
+      std::string text = "Adding animation ";
+      text += animationPath;
+      context->channel->WriteLog(text.c_str());
+    } else {
+      context->channel->WriteLog("PlayAnimation name not specified.");
+    }
+  }
+
+  CONSOLE_FUNC(ListAnimations, "Animations");
+  CONSOLE_FUNC(PlayAnimation, "Animations", const char* name, optional int numLoops);
+  CONSOLE_FUNC(AddAnimation, "Animations", const char* path);
 }
 
 namespace Anki {
@@ -125,6 +183,11 @@ void Process_displayFaceImageBinaryChunk(const Anki::Cozmo::RobotInterface::Disp
   _animStreamer->Process_displayFaceImageChunk(msg);
 }
 
+void Process_displayFaceImageGrayscaleChunk(const Anki::Cozmo::RobotInterface::DisplayFaceImageGrayscaleChunk& msg)
+{
+  _animStreamer->Process_displayFaceImageChunk(msg);
+}
+  
 void Process_displayFaceImageRGBChunk(const Anki::Cozmo::RobotInterface::DisplayFaceImageRGBChunk& msg)
 {
   _animStreamer->Process_displayFaceImageChunk(msg);
@@ -334,10 +397,27 @@ static void HandleRobotStateUpdate(const Anki::Cozmo::RobotState& robotState)
 
   static bool buttonWasPressed = false;
   const auto buttonIsPressed = static_cast<bool>(robotState.status & (uint16_t)RobotStatusFlag::IS_BUTTON_PRESSED);
-  const auto buttonReleased = buttonWasPressed && !buttonIsPressed;
+  const auto buttonPressedEvent = !buttonWasPressed && buttonIsPressed;
+  const auto buttonReleasedEvent = buttonWasPressed && !buttonIsPressed;
   buttonWasPressed = buttonIsPressed;
 
-  if (buttonReleased)
+  const auto currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(); 
+
+  if (buttonPressedEvent) {
+    // Get ready to sync(), in case we end up getting power
+    // pulled by long button press, to make sure all 
+    // pending writes are flushed.
+    syncTime_s = currentTime_s + kButtonHoldTimeForSync_s;
+  }
+
+  if (buttonIsPressed) {
+    if (syncTime_s > 0.f && (currentTime_s > syncTime_s)) {
+      sync();
+      syncTime_s = 0.f;
+    }
+  }
+
+  if (buttonReleasedEvent)
   {
     if(kDebugFaceDraw_CycleWithButton)
     {

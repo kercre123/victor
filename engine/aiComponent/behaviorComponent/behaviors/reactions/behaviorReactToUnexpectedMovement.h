@@ -26,7 +26,7 @@ class BehaviorReactToUnexpectedMovement : public ICozmoBehavior
 private:
   using super = ICozmoBehavior;
   
-  friend class BehaviorContainer;
+  friend class BehaviorFactory;
   BehaviorReactToUnexpectedMovement(const Json::Value& config);
   
   UnexpectedMovementSide _unexpectedMovementSide = UnexpectedMovementSide::UNKNOWN;

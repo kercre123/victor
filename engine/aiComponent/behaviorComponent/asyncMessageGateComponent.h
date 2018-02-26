@@ -42,8 +42,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   AsyncMessageGateComponent(IExternalInterface* externalInterface,
-                            RobotInterface::MessageHandler* robotInterface,
-                            RobotID_t robotID);
+                            RobotInterface::MessageHandler* robotInterface);
   virtual ~AsyncMessageGateComponent() {};
 
   //////
@@ -74,7 +73,6 @@ public:
 private:
   IExternalInterface* _externalInterface;
   RobotInterface::MessageHandler* _robotInterface;
-  RobotID_t _robotID;
   bool _isCacheValid;
   
   

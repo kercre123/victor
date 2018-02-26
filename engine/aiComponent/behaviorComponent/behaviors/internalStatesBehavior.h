@@ -15,8 +15,16 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/components/bodyLightComponent.h"
+#include "engine/components/visionScheduleMediator/visionScheduleMediator_fwd.h"
+
+#include <set>
 
 namespace Anki {
+  
+namespace Util {
+class IConsoleFunction;
+}
+  
 namespace Cozmo {
 
 class InternalStatesBehavior : public ICozmoBehavior
@@ -24,10 +32,11 @@ class InternalStatesBehavior : public ICozmoBehavior
 protected:
   // add a named strategy as a transition type that may be referenced in json
   using StrategyFunc = std::function<bool(BehaviorExternalInterface&)>;
-  using PreDefinedStrategiesMap = std::unordered_map<std::string, StrategyFunc>;
+  using LambdaArgsPair = std::pair<StrategyFunc, std::set<VisionModeRequest>>;
+  using PreDefinedStrategiesMap = std::unordered_map<std::string, LambdaArgsPair>;
   
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   InternalStatesBehavior(const Json::Value& config);
   
   // subclasses of InternalStatesBehavior can pass a map of predefined strategies
@@ -68,9 +77,14 @@ protected:
   // from the engine start time
   bool StateExitCooldownExpired(StateID state, float timeout, bool valueIfNeverRun = true) const;
   
+  // Set up a console var under uniqueVarName that transitions to each state type by name
+  void AddConsoleVarTransitions(const char* uniqueVarName, const char* category );
+  
 private:
 
-  void AddPreDefinedStrategy(const std::string& name, StrategyFunc&& func);
+  void AddPreDefinedStrategy(const std::string& name, 
+                             StrategyFunc&& strategyFunc,
+                             std::set<VisionModeRequest>& requiredVisionModes);
   
   class State;
 
@@ -92,7 +106,8 @@ private:
   
   void TransitionToState(StateID targetState);
 
-  std::map< std::string, StateID > _stateNameToID;
+  using NameToIdMapType = std::map< std::string, StateID >;
+  NameToIdMapType _stateNameToID;
 
   using StateMap = std::map< StateID, State >;
   std::unique_ptr< StateMap > _states;
@@ -107,6 +122,9 @@ private:
   bool _debugLightsDirty = false;
   bool _useDebugLights = false;
   float _lastHearbeatLightTime = -1.0f;
+  
+  std::unique_ptr<Anki::Util::IConsoleFunction> _consoleFunc;
+  StateID _consoleFuncState = InvalidStateID;
 };
 
 }

@@ -29,12 +29,12 @@ asset_project(
     srcs = [],
     platform_srcs = [
         ('android', subdir_glob([
-            ('sound/android', '*')
+            ('sound/victor_linux', '*')
             ],
             prefix = 'sound')
         ),
         ('mac', subdir_glob([
-            ('sound/mac', '*')
+            ('sound/dev_mac', '*')
             ],
             prefix = 'sound')
         ),
@@ -86,7 +86,7 @@ asset_project(
             prefix = 'tts')
         ),
         ('android', subdir_glob([
-            ('externals/anki-thirdparty/acapela/AcapelaTTS_for_LinuxEmbedded_V8.511','voices/**/*'),
+            ('externals/anki-thirdparty/acapela/Voices_for_Android_iOS_LinuxEmbedded','**/*'),
             ],
             prefix = 'tts')
         ),

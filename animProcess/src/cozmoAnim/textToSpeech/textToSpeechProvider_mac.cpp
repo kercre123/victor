@@ -204,7 +204,7 @@ Result TextToSpeechProviderImpl::CreateAudioData(const std::string& text,
     const int sampleRate = AcapelaTTS::GetSampleRate();
     const int numChannels = AcapelaTTS::GetNumChannels();
     data.Init(sampleRate, numChannels);
-    data.Append(sampleRate * numChannels, 0);
+    data.AppendSample(0, sampleRate * numChannels);
     return RESULT_OK;
   }
 

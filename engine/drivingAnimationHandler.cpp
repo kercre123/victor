@@ -20,8 +20,6 @@
 #include "engine/drivingAnimationHandler.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/moodSystem/moodManager.h"
-#include "engine/needsSystem/needsManager.h"
-#include "engine/needsSystem/needsState.h"
 #include "engine/robot.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "util/console/consoleInterface.h"
@@ -131,13 +129,7 @@ namespace Anki {
           _currDrivingAnimations = kAngryDrivingAnimations;
         }
         else {
-          NeedsState& currNeedState = _robot->GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
-          if( currNeedState.AreNeedsMet() ) {
-            _currDrivingAnimations = kHappyDrivingAnimations;
-          }
-          else {
-            _currDrivingAnimations = kDefaultDrivingAnimations;
-          }
+          _currDrivingAnimations = kHappyDrivingAnimations;
         }
       }
       else {

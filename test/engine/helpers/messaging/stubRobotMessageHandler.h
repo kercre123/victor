@@ -28,8 +28,7 @@ public:
   virtual void ProcessMessages() override {
   }
 
-  virtual Result SendMessage(const RobotID_t robotId,
-                             const RobotInterface::EngineToRobot& msg,
+  virtual Result SendMessage(const RobotInterface::EngineToRobot& msg,
                              bool reliable = true,
                              bool hot = false) override {
     _msgsToRobot.push_back(msg);

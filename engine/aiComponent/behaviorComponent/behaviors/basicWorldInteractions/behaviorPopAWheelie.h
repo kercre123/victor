@@ -28,8 +28,8 @@ namespace Anki {
     class BehaviorPopAWheelie : public ICozmoBehavior
     {
     protected:
-      // Enforce creation through BehaviorContainer
-      friend class BehaviorContainer;
+      // Enforce creation through BehaviorFactory
+      friend class BehaviorFactory;
       BehaviorPopAWheelie(const Json::Value& config);
       
       virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
@@ -37,11 +37,6 @@ namespace Anki {
       virtual void OnBehaviorDeactivated() override;
       
       virtual bool WantsToBeActivatedBehavior() const override;
-            
-      virtual std::set<ObjectInteractionIntention>
-            GetBehaviorObjectInteractionIntentions() const override {
-              return {ObjectInteractionIntention::PopAWheelieOnObject};
-            }
 
     private:
       

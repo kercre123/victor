@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sync"
 	"time"
 
 	"anki/cloudproc"
@@ -59,23 +60,33 @@ func main() {
 	}
 	fmt.Println("Read", len(data), "samples")
 
-	var conn ipc.Conn
+	var sender cloudproc.Sender
 	if *makeproc {
 		cloudproc.SetVerbose(*verbose)
-		harness, err := harness.CreateProcess()
+		proc, err := harness.CreateMemProcess()
 		if err != nil {
 			fmt.Println("Couldn't create test cloud process:", err)
 			return
 		}
-		conn = harness.Mic
-		defer harness.Close()
+		defer proc.Close()
+		sender = proc
+
+		wg := sync.WaitGroup{}
+		go func() {
+			wg.Add(1)
+			defer wg.Done()
+			intent, _ := proc.ReadIntent()
+			fmt.Println("Got AI response:", intent)
+		}()
+		defer wg.Wait()
 	} else {
-		conn, err = ipc.NewUnixgramClient(ipc.GetSocketPath("cp_test"), "wavtester")
+		conn, err := ipc.NewUnixgramClient(ipc.GetSocketPath("cp_test"), "wavtester")
 		if err != nil {
 			fmt.Println("Couldn't connect to cloud client:", err)
 			return
 		}
 		defer conn.Close()
+		sender = cloudproc.NewIpcSender(conn)
 	}
 
 	// simulate real-time recording and delay between each send
@@ -84,7 +95,7 @@ func main() {
 
 	// send hotword
 	fmt.Println("Sent: 0 samples")
-	conn.Write([]byte(cloudproc.HotwordMessage))
+	sender.SendHotword()
 	buf := data
 	sent := 0
 	for len(buf) >= cloudproc.ChunkSamples {
@@ -98,7 +109,7 @@ func main() {
 		data := &bytes.Buffer{}
 		binary.Write(data, binary.LittleEndian, temp)
 
-		n, err := conn.Write(data.Bytes())
+		n, err := sender.SendAudio(data.Bytes())
 		if n != len(data.Bytes()) || err != nil {
 			fmt.Println("Expected to send", len(data.Bytes()), "but instead sent", n, "with error:", err)
 		}

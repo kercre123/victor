@@ -24,8 +24,8 @@ namespace Cozmo {
 class BehaviorProxGetToDistance : public ICozmoBehavior
 {
 private:
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorProxGetToDistance(const Json::Value& config);
 
 

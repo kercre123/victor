@@ -16,6 +16,7 @@
 
 #include "util/entityComponent/iManageableComponent.h"
 #include "util/helpers/noncopyable.h"
+#include "util/logging/logging.h"
 
 #include <memory>
 
@@ -28,7 +29,7 @@ class TimerHandle{
   public:
     TimerHandle(int totalTime_s)
     : _timerLength(totalTime_s)
-    , _endTime_s(GetCurrentTime_s() + totalTime_s){}
+    , _endTime_s(GetSystemTime_s() + totalTime_s){}
 
     static const int kSecInHour = 3600;
 
@@ -45,7 +46,7 @@ class TimerHandle{
     
     // Return the full time remaining in seconds
     int GetTimeRemaining_s() const {   
-      const int timeRemaining = _endTime_s - GetCurrentTime_s();
+      const int timeRemaining = _endTime_s - GetSystemTime_s();
       return  timeRemaining >= 0 ? timeRemaining : 0;
     }
     // access the "displayable" value for each time unit remaining
@@ -54,7 +55,7 @@ class TimerHandle{
     int GetDisplaySecondsRemaining() const { return SecondsToDisplaySeconds(GetTimeRemaining_s());}
   private:
     // helper for easy access to current time
-    static int GetCurrentTime_s();
+    static int GetSystemTime_s();
 
     const int _timerLength;
     const int _endTime_s;
@@ -74,10 +75,15 @@ public:
 
   SharedHandle StartTimer(int timerLength_s)
   {
+    ANKI_VERIFY(_activeTimer->GetTimeRemaining_s() == 0,
+                "TimerUtility.StartTimer.TimerAlreadySet", 
+                "Current design says we don't overwrite timers - remove this verify if that changes");
     _activeTimer = std::make_shared<TimerHandle>(timerLength_s);
     return _activeTimer;
   }
-  SharedHandle GetActiveTimer() { return _activeTimer; }
+  SharedHandle GetActiveTimer() const { return _activeTimer; }
+
+  int GetSystemTime_s() const;
 
 private:
   SharedHandle _activeTimer;

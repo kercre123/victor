@@ -116,7 +116,7 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenCameraCalibration::PlaypenUpdateI
     // just uses markers detected from the current image, however, we need to store an image
     // so we can grab it later to write to log
     if(!_waitingToStoreImage &&
-       !IsActing() &&
+       !IsControlDelegated() &&
        !robot.GetMoveComponent().IsHeadMoving() &&
        robot.GetVisionComponent().GetNumStoredCameraCalibrationImages() == 0 &&
        _seeingTarget)
@@ -132,7 +132,7 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenCameraCalibration::PlaypenUpdateI
       });
     }
     // Otherwise if we have a calibration image, start computing calibration
-    else if(!IsActing() && robot.GetVisionComponent().GetNumStoredCameraCalibrationImages() == 1)
+    else if(!IsControlDelegated() && robot.GetVisionComponent().GetNumStoredCameraCalibrationImages() == 1)
     {
       robot.GetVisionComponent().EnableMode(VisionMode::ComputingCalibration, true);
       _computingCalibration = true;

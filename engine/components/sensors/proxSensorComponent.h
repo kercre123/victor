@@ -55,9 +55,13 @@ protected:
   
 public:
   // Returns true and populates distance_mm with the latest distance value if the
-  // sensor reading is considered valid (see IsSensorReadingValid()). If the sensor
+  // sensor reading is considered valid (see IsLatestReadingValid()). If the sensor
   // reading is not valid, this returns false and distance_mm is untouched.
   bool GetLatestDistance_mm(u16& distance_mm) const;
+  
+  // Returns true if the latest distance sensor reading is valid,
+  // same as what GetLatestDistance_mm() would return only you don't get distance also.
+  bool IsLatestReadingValid() const;
   
   // Note: If you just need distance data, prefer to use GetLatestDistance_mm() and
   // check its return value rather than calling this method.

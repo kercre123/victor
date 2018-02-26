@@ -40,13 +40,12 @@ class AIComponent;
 class AsyncMessageGateComponent;
 class BEIRobotInfo;
 class BehaviorComponent;
-class BehaviorComponentCloudReceiver;
 class BehaviorContainer;
 class BehaviorEventAnimResponseDirector;
 class BehaviorExternalInterface;
-class BehaviorHelperComponent;
 class BehaviorManager;
 class BehaviorSystemManager;
+class BehaviorTimers;
 class BlockWorld;
 class DelegationComponent;
 class DevBaseBehavior;
@@ -54,6 +53,7 @@ class DevBehaviorComponentMessageHandler;
 class FaceWorld;
 class IBehavior;
 class Robot;
+class UserIntentComponent;
 class BehaviorEventComponent;
   
 namespace Audio {
@@ -102,17 +102,17 @@ public:
               std::string& behaviorDebugStr);
     
   template<typename T>
-  T& GetComponent(BCComponentID componentID) const {return _comps->GetValue<T>(componentID);}
+  T& GetComponent() const {return _comps->GetValue<T>();}
 
   virtual void SubscribeToTags(IBehavior* subscriber, std::set<ExternalInterface::MessageGameToEngineTag>&& tags) const override;
   virtual void SubscribeToTags(IBehavior* subscriber, std::set<ExternalInterface::MessageEngineToGameTag>&& tags) const override;
   virtual void SubscribeToTags(IBehavior* subscriber, std::set<RobotInterface::RobotToEngineTag>&& tags) const override;
   
   inline const BehaviorEventAnimResponseDirector& GetBehaviorEventAnimResponseDirector() const
-    { return GetComponent<BehaviorEventAnimResponseDirector>(BCComponentID::BehaviorEventAnimResponseDirector);}
-
-  inline BehaviorComponentCloudReceiver& GetCloudReceiver() const 
-    { return GetComponent<BehaviorComponentCloudReceiver>(BCComponentID::BehaviorComponentCloudReceiver); }
+    { return GetComponent<BehaviorEventAnimResponseDirector>();}
+  
+  inline UserIntentComponent& GetUserIntentComponent() const
+    { return GetComponent<UserIntentComponent>(); }
            
   
 protected:
@@ -121,14 +121,6 @@ protected:
   friend class AIComponent;
   friend class DevBehaviorComponentMessageHandler;
   friend class TestBehaviorFramework; // for testing access to internals
-  
-
-
-
-  inline const BehaviorHelperComponent& GetBehaviorHelperComponent() const 
-    { return GetComponent<BehaviorHelperComponent>(BCComponentID::BehaviorHelperComponent); }
-  inline BehaviorHelperComponent&       GetBehaviorHelperComponent()
-    { return GetComponent<BehaviorHelperComponent>(BCComponentID::BehaviorHelperComponent); }
   
   // For test only
   BehaviorContainer& GetBehaviorContainer();

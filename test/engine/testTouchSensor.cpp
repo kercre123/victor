@@ -38,6 +38,7 @@
 #include "coretech/common/engine/jsonTools.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/includeGTest.h"
+#include "util/string/stringUtils.h"
 
 // system includes
 #include <iomanip>
@@ -52,8 +53,11 @@ extern Anki::Cozmo::CozmoContext* cozmoContext;
 using namespace Anki;
 using namespace Anki::Cozmo;
 
-const std::string kTestResourcesDir = "test/touchSensorTests/";
-
+namespace {
+  
+  const std::string kTestResourcesDir = "test/touchSensorTests/";
+  
+}
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 // helper class to track messaging events for test purposes
 class TestTouchSensorMessageMonitor
@@ -132,18 +136,14 @@ public:
 
   virtual void SetUp() override
   {
-    _handler = new UiMessageHandler(0, nullptr);
-    _messagingContext = new CozmoContext(nullptr, _handler);
-    _robot = new Robot(0, _messagingContext);
-    _msgMonitor = new TestTouchSensorMessageMonitor(_messagingContext);
+    _robot = new Robot(0, cozmoContext);
+    _msgMonitor = new TestTouchSensorMessageMonitor(_robot->GetContext());
   }
 
   virtual void TearDown() override
   {
     Util::SafeDelete(_msgMonitor);
     Util::SafeDelete(_robot);
-    Util::SafeDelete(_messagingContext);
-    Util::SafeDelete(_handler);
   }
 
   // file-io helper to load the annotations from disk
@@ -210,10 +210,6 @@ public:
   }
 
 public: 
-  UiMessageHandler*  _handler;
-
-  CozmoContext*      _messagingContext;
-
   Robot*             _robot;
 
   TestTouchSensorMessageMonitor* _msgMonitor;
@@ -342,162 +338,14 @@ TEST_F(TouchSensorTest, CalibrateAndClassifyMultirobotTests)
 }
 
 #ifdef ENABLE_PROTOTYPING_ANALYSIS_TESTS
-TEST_F(TouchSensorTest, DISABLED_ParameterSweepTouchDetect)
-{
-  using namespace Anki::Cozmo::ExternalInterface;
 
-  const std::string basePath = cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, kTestResourcesDir);
-  const std::string configFile = "config.json";
-
-  std::vector<std::vector<size_t> > readingsList;
-  std::vector<Annotation> annotations;
-  LoadAnnotationsFromFile(basePath, configFile, readingsList, annotations);
-
-  // progress tracker helper lambda
-  struct ProgressTracker
-  {
-    int count;
-    int total;
-    int stride;
-    int lastPercent;
-    
-    ProgressTracker(int total, int stride)
-    : count(0) 
-    , total(total)
-    , stride(stride)
-    , lastPercent(0)
-    {
-    }
-
-
-    void Tick()
-    {
-      int percent = std::floor(float(100*(++count))/total);
-      if( (lastPercent+stride) == (percent) ) {
-        lastPercent = percent;
-        PRINT_NAMED_INFO("TestTouchSensor","%d%%",percent);
-      }
-    }
-  };
-
-  // parameters to be sweeped:
-  // - debouncer limit (low)
-  // - debouncer limit (high)
-  // - stdev factor for classification post-calib
-  //
-  // create a table to be plotted and inspected later
+namespace {
   
-  int debounceLimLo;
-  int debounceLimHi;
-  float stdevFactor;
-
-  struct ParameterEntry
-  {
-    int dbLimLo;
-    int dbLimHi;
-    float sdFactor;
-  };
-  std::vector<ParameterEntry> paramTable;
-
-  struct ResultScores
-  {
-    float hardTouchPercent;
-    float softTouchPercent;
-    bool didCalibrate;
-    bool noFalsePositiveTouch;
-    
-    // calibration values
-    float calibMean;
-    float calibStdev;
-  };
-
-  // helper lambda -- feed in touch input values in the interval
-  auto helperFeedTouchInputs = [&](const std::vector<size_t>& rst,
-                                  TouchSensorComponent& tscomp,
-                                  IntervalType interval)
-  {
-    for(size_t j=interval.first; j<interval.second; ++j) {
-      uint16_t touch = rst[j];
-      Anki::Cozmo::RobotState msg = _robot->GetDefaultRobotState();
-      msg.backpackTouchSensorRaw = touch;
-      tscomp.Update(msg);
-    }
-  };
-
-  std::stringstream parameterSS;
-
-  for(debounceLimLo = 2; debounceLimLo < 6; debounceLimLo++) {
-    for(debounceLimHi = 2; debounceLimHi < 6; debounceLimHi++) {
-      for(stdevFactor = 1.25f; stdevFactor < 1.75f; stdevFactor += 0.05f) {
-        paramTable.push_back({debounceLimLo, debounceLimHi, stdevFactor});
-        parameterSS << debounceLimLo << ", " << debounceLimHi << ", "
-                    << std::setprecision(3) << std::setw(4)
-                    << stdevFactor << std::endl;
-      }
-    }
-  }
+  // for the purpose of the tests, this number is an upperbound
+  // on the number of readings required by the implementation in
+  // touchSensorComponent.cpp
+  const int kMinNumReadingsToCalibrate = 91;
   
-  Util::FileUtils::WriteFile(basePath+"parameters.csv", parameterSS.str());
-
-  // main test body
-  
-  ProgressTracker progress(int(readingsList.size() * paramTable.size()), 5);
-  std::vector<ResultScores> resultScoresList;
-  for(int i=0; i<readingsList.size(); ++i)
-  {
-    for(int j=0; j<paramTable.size(); ++j)
-    {
-      TouchSensorComponent tscomp(*_robot);
-      
-      tscomp._debouncer._loLimit = paramTable[j].dbLimLo;
-      tscomp._debouncer._hiLimit = paramTable[j].dbLimHi;
-      tscomp._touchDetectStdevFactor = paramTable[j].sdFactor;
-      
-      const auto& rawTouchSensorReadings = readingsList[i];
-      const auto& anot                   = annotations[i];
-
-      // calibrate first
-      _msgMonitor->ResetCountTouchButtonEvent();
-      helperFeedTouchInputs(rawTouchSensorReadings, tscomp, anot.idle);
-      bool noFalsePositiveTouch = _msgMonitor->GetCountTouchButtonEvent()==0;
-      
-      // compute the "score" for each parameter sweep, using the factors:
-      // 
-      // - hard strokes percent
-      // - soft strokes percent
-      // - whether the system is calibrated after the sweep
-      // - whether there are spurious touch detects in the idle data
-       
-      _msgMonitor->ResetCountTouchButtonEvent();
-      helperFeedTouchInputs(rawTouchSensorReadings, tscomp, anot.hard);
-      float hardPercent = float(_msgMonitor->GetCountTouchButtonEvent())/anot.hardCount;
-
-      _msgMonitor->ResetCountTouchButtonEvent();
-      helperFeedTouchInputs(rawTouchSensorReadings, tscomp, anot.soft);
-      float softPercent = float(_msgMonitor->GetCountTouchButtonEvent())/anot.softCount;
-
-      resultScoresList.push_back({hardPercent,
-                                  softPercent, 
-                                  tscomp.IsCalibrated(), 
-                                  noFalsePositiveTouch,
-                                  tscomp._baselineCalib.GetFilteredTouchMean(),
-                                  tscomp._baselineCalib.GetFilteredTouchStdev()});
-      
-      progress.Tick();
-    }
-  }
-
-  std::stringstream resultSS;
-  for(const auto& scores : resultScoresList)
-  {
-    resultSS  << std::setprecision(4) << scores.hardTouchPercent << ","
-              << std::setprecision(4) << scores.softTouchPercent << ","
-              << scores.didCalibrate  << ","
-              << scores.noFalsePositiveTouch << ","
-              << std::setprecision(4) << scores.calibMean << ","
-              << std::setprecision(4) << scores.calibStdev << std::endl;
-  }
-  Util::FileUtils::WriteFile(basePath+"results.csv", resultSS.str());
 }
 
 // An analysis script for parsing multiple logs of touch-sensor data
@@ -532,7 +380,10 @@ TEST_F(TouchSensorTest, DISABLED_AnalyzePlayPenTestsDec17)
 {
   using namespace Anki::Cozmo::ExternalInterface;
   
-  const std::string mfgDataDir = cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,"dvt_dec17");
+  RobotCompMap dummyCompMap;
+  
+  const std::string mfgDataDir = "";
+  // const std::string mfgDataDir = "/Users/arjunm/Code/data/touch_sensor/playpen_dvt1/copy";
   
   PRINT_NAMED_INFO("AnalyzePlayPenTests","%s",mfgDataDir.c_str());
   
@@ -577,6 +428,26 @@ TEST_F(TouchSensorTest, DISABLED_AnalyzePlayPenTestsDec17)
                                                                             "json",
                                                                             true);
   
+  // remove the following named ones: they were identified in a prior pass as invalid
+  {
+    std::vector<std::string> invalidFiles = {
+      "1e1918f5-0001.json",
+      "1d58880c-0004.json",
+      "1d58881a-0005.json",
+      "1e58d9e6-0008.json",
+    };
+    for(auto s : invalidFiles) {
+      auto got = std::find_if(jsonFileList.begin(), jsonFileList.end(),
+                              [s=s](std::string& other)->bool {
+                                return s.compare( Util::FileUtils::GetFileName(other) )==0;
+                              }
+                              );
+      if(got!=jsonFileList.end()) {
+        jsonFileList.erase(got);
+      }
+    }
+  }
+  
   PRINT_NAMED_INFO("AnalyzePlayPenTests", "Found %zd jsons", jsonFileList.size());
   
   // load all the data from disk
@@ -610,7 +481,7 @@ TEST_F(TouchSensorTest, DISABLED_AnalyzePlayPenTestsDec17)
   }
   
   PRINT_NAMED_INFO("AnalyzePlayPenTests", "Parsed %zd touch sensor streams", allTouchSensorTrialData.size());
-  
+
   // compute and organize the data for the CSV dump
   std::stringstream resultStream;
   for(const auto& trial : allTouchSensorTrialData) {
@@ -635,40 +506,23 @@ TEST_F(TouchSensorTest, DISABLED_AnalyzePlayPenTestsDec17)
       resultFullStdev = sqrt(resultFullStdev);
       
       
-      float resultCalibMean;
-      float resultCalibStdev;
-      int resultIndexWhenCalib = -1;
-      int resultCountFalsePosCalib = 0;
-      {
-        _msgMonitor->ResetCountTouchButtonEvent();
-        TouchSensorComponent tscomp(*_robot);
-        
-        resultIndexWhenCalib = -1;
-        for(int i=0; i<readings.size(); ++i) {
-          const auto reading = readings[i];
-          Anki::Cozmo::RobotState msg = _robot->GetDefaultRobotState();
-          msg.backpackTouchSensorRaw = reading;
-          tscomp.Update(msg);
-          
-          if(resultIndexWhenCalib<0 && tscomp._baselineCalib.IsCalibrated()) {
-            resultIndexWhenCalib = i;
-          } else if(resultIndexWhenCalib>=0) {
-            EXPECT_TRUE(tscomp._baselineCalib.IsCalibrated());
-          }
-        }
-        
-        resultCalibMean = tscomp._baselineCalib.GetFilteredTouchMean();
-        resultCalibStdev = tscomp._baselineCalib.GetFilteredTouchStdev();
-        resultCountFalsePosCalib = _msgMonitor->GetCountTouchButtonEvent();
+      _msgMonitor->ResetCountTouchButtonEvent();
+      TouchSensorComponent tscomp;
+      tscomp.InitDependent(_robot,dummyCompMap);
+      
+      DEV_ASSERT(readings.size()>=kMinNumReadingsToCalibrate, "NotEnoughReadingsToCalibrate");
+      
+      for(int i=0; i<kMinNumReadingsToCalibrate; ++i) {
+        const auto reading = readings[i];
+        Anki::Cozmo::RobotState msg = _robot->GetDefaultRobotState();
+        msg.backpackTouchSensorRaw = reading;
+        tscomp.Update(msg);
       }
       
-      
+      resultStream << (int)i << ", ";
       resultStream << resultFullMean << ", ";
       resultStream << resultFullStdev << ", ";
-      resultStream << resultCalibMean << ", ";
-      resultStream << resultCalibStdev << ", ";
-      resultStream << resultIndexWhenCalib << ", ";
-      resultStream << resultCountFalsePosCalib << std::endl;
+      resultStream << tscomp.IsCalibrated() << std::endl;
     }
   }
   
@@ -712,22 +566,30 @@ TEST_F(TouchSensorTest, DISABLED_AnalyzePlayPenTestsDec17)
   // compute an aggregate score (the false positive rate) for
   // each testing skew across all the robot trials
   for(int i=0; i<testTable.size(); ++i) {
+    size_t total = 0;
+    size_t numDidCalib = 0;
     size_t numFalsePositives = 0;
     for(const auto& trial : allTouchSensorTrialData) {
+      total++;
       const auto& calibrationReadings = trial.readingsByScenario[ testTable[i].calibCond ];
       const auto& testingReadings = trial.readingsByScenario[ testTable[i].testCond ];
       
-      TouchSensorComponent tscomp(*_robot);
+      TouchSensorComponent tscomp;
+      
+      tscomp.InitDependent(_robot,dummyCompMap);
       
       // (1) calibrate
-      for(int i=0; i<calibrationReadings.size(); ++i) {
+      DEV_ASSERT(readings.size()>=kMinNumReadingsToCalibrate, "NotEnoughReadingsToCalibrate");
+      for(int i=0; i<kMinNumReadingsToCalibrate; ++i) {
         const auto reading = calibrationReadings[i];
         Anki::Cozmo::RobotState msg = _robot->GetDefaultRobotState();
         msg.backpackTouchSensorRaw = reading;
         tscomp.Update(msg);
       }
       
-      ASSERT_TRUE(tscomp._baselineCalib.IsCalibrated());
+      if( tscomp.IsCalibrated() ) {
+        numDidCalib++;
+      }
       
       // (2) check for false positive touch detections
       _msgMonitor->ResetCountTouchButtonEvent();
@@ -740,14 +602,334 @@ TEST_F(TouchSensorTest, DISABLED_AnalyzePlayPenTestsDec17)
       
       numFalsePositives += _msgMonitor->GetCountTouchButtonEvent()>0;
     }
-    float successRate = 100.0f*float(allTouchSensorTrialData.size() - numFalsePositives)/allTouchSensorTrialData.size();
+    const auto pct = [](size_t n, size_t t)->float {
+      return 100.0f * n / t;
+    };
+    float calibRate = pct(numDidCalib, total);
+    float noFalsePosRate = pct(numDidCalib-numFalsePositives,numDidCalib);
     PRINT_NAMED_INFO("AnalyzePlayPenTests",
-                     "%10s -> %10s (%2zd / %2zd) = %5.2f %%",
+                     "%10s -> %10s | %6.2f%% = %3zd / %3zd | %6.2f%% = %3zd / %3zd",
                      scenToString(testTable[i].calibCond).c_str(),
                      scenToString(testTable[i].testCond).c_str(),
-                     allTouchSensorTrialData.size() - numFalsePositives,
-                     allTouchSensorTrialData.size(),
-                     successRate);
+                     calibRate, numDidCalib, total,
+                     noFalsePosRate, numDidCalib-numFalsePositives, numDidCalib);
   }
 }
+
+// this test takes as inputs:
+// - a dataset of touch sensor readings for multiple robots, under various
+//   electrical environment conditions (motoring and charger status) and
+//   for various forms of touch (ranging between no-touch, and full palm)
+// - an answerkey that labels each of the touch sensor readings with the
+//   expected number of touches to be seen per file
+//
+// So an example data set might contain for robot1, a sample of readings
+// taken when the robot was idle (not moving motors) and on the charger
+// and it was pet 9 times (softly).
+//
+// For the initial run of this test, data was collected the skews of:
+//  - 7 robots
+//  - idle vs moving motors
+//  - on charger vs off charger
+//  - experiencing 4 types of touch (no-touch, petting soft, petting-hard
+//    and sustained contact)
+//
+// With this data, the tests are constructed to first calibrate and count
+// the number of successful calibrations. After calibration, then the test
+// passes in a set of readings, and uses the answer key to determine if
+// the accuracy is high
+//
+// Aggregating this data across all the robots, and touch types, and across
+// various testing conditions, this test is helpful in determining the
+// efficacy of the touch detection algorithm
+TEST_F(TouchSensorTest, DISABLED_AnalyzeManualDataCollection)
+{
+  using namespace std;
+  
+  // answer key is formatted:
+  // ID_MOTORSTATE_CHARGERSTATE_TOUCHTYPE, numTouches
+  //
+  // so the following line item reads
+  // 1d182069_Idle_OffCharger_No_Touch, 0
+  // ID           = 1d182069
+  // MOTORSTATE   = Idle
+  // CHARGERSTATE = OffCharger
+  // TOUCHTYPE    = No_Touch
+  
+  const std::string dataDir = "/Users/arjunm/Code/data/touch_sensor/manual_dvt1/touchDataCollection/rename";
+  
+  // parse the answerkey into a map
+  std::string answerKeyFile = dataDir + "/answerkey";
+  std::string answerKeyContents { Util::FileUtils::ReadFile(answerKeyFile) };
+  std::vector<std::string> lines = Anki::Util::StringSplit(answerKeyContents,'\n');
+  std::map<std::string,int> answerKey;
+  for(const auto& line : lines) {
+    std::vector<std::string> items = Anki::Util::StringSplit(line,',');
+    answerKey[items[0]] = std::stoi(items[1]);
+  }
+  PRINT_NAMED_INFO("AnalyzeManualDataCollection", "Loaded Answer Key (%zd entries)", answerKey.size());
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  // all possible signals are listed here
+  const std::vector<std::string> robotIDs =
+  {
+    "1d182069",
+    "1e99ea7b",
+    "1ed88710",
+    "1ed8889d",
+    "1f19f8bf",
+    "50156d80",
+    "d3ef4932",
+  };
+  
+  const std::vector<std::string> motorStates =
+  {
+    "Idle",
+    "Moving"
+  };
+  
+  const std::vector<std::string> chargerStates =
+  {
+    "OffCharger",
+    "OnCharger"
+  };
+  
+  const std::vector<std::string> touchTypes =
+  {
+    "No_Touch",
+    "Sustained_Contact",
+    "Petting_Soft",
+    "Petting_Hard"
+  };
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Test infrastructure
+  struct Score {
+    int total;
+    int numCalib;
+    int numCorrect; // meets minimum percent correct
+    
+    int numTouchExpected;
+    int numTouchDetected;
+    
+    int numFalsePos;
+    
+    Score()
+    : total(0)
+    , numCalib(0)
+    , numCorrect(0)
+    , numTouchExpected(0)
+    , numTouchDetected(0)
+    , numFalsePos(0)
+    {
+    }
+    
+    Score(int tot, int cal, int cor, int exp, int det, int fal)
+    : total(tot)
+    , numCalib(cal)
+    , numCorrect(cor)
+    , numTouchExpected(exp)
+    , numTouchDetected(det)
+    , numFalsePos(fal)
+    {
+    }
+    
+    Score operator+(const Score& rhs) const {
+      return Score(
+                   total+rhs.total,
+                   numCalib+rhs.numCalib,
+                   numCorrect+rhs.numCorrect,
+                   numTouchExpected+rhs.numTouchExpected,
+                   numTouchDetected+rhs.numTouchDetected,
+                   numFalsePos+rhs.numFalsePos
+                   );
+    }
+  };
+  
+  // helper lambda
+  const auto LoadReadingsFromFile = [](const std::string& filename)->std::vector<int> {
+    std::string contents{ Anki::Util::FileUtils::ReadFile(filename) };
+    std::vector<std::string> items = Anki::Util::StringSplit(contents,'\n');
+    std::vector<int> ret;
+    std::for_each(items.begin(), items.end(), [&ret](const std::string& s)->void { ret.push_back(std::stoi(s)); });
+    return ret;
+  };
+  
+  RobotCompMap dummyCompMap;
+  
+  typedef function<Score(const vector<int>&, const vector<int>&, const int, const float)> TestFuncType;
+  
+  TestFuncType MainCalibAndTestScheme = [this,&dummyCompMap]
+  (const std::vector<int>& calib,
+   const std::vector<int>& test,
+   const int expectedTouchCount,
+   const float minPercentCorrect)
+  -> Score
+  {
+    _msgMonitor->ResetCountTouchButtonEvent();
+    TouchSensorComponent tscomp;
+    tscomp.InitDependent(_robot,dummyCompMap);
+    Score result;
+    
+
+    DEV_ASSERT(calib.size()>=kMinNumReadingsToCalibrate, "NotEnoughReadingsToCalibrate");
+    for(int i=0; i<kMinNumReadingsToCalibrate; ++i) {
+      const auto reading = calib[i];
+      Anki::Cozmo::RobotState msg = _robot->GetDefaultRobotState();
+      msg.backpackTouchSensorRaw = reading;
+      tscomp.Update(msg);
+    }
+    
+    result.total++;
+    
+    if(tscomp.IsCalibrated()) {
+      result.numCalib++;
+      
+      result.numTouchExpected += expectedTouchCount;
+      
+      _msgMonitor->ResetCountTouchButtonEvent();
+      for(int i=0; i<test.size(); ++i) {
+        const auto reading = test[i];
+        Anki::Cozmo::RobotState msg = _robot->GetDefaultRobotState();
+        msg.backpackTouchSensorRaw = reading;
+        tscomp.Update(msg);
+      }
+      
+      result.numTouchDetected = (int)_msgMonitor->GetCountTouchButtonEvent();
+      
+      float percentDetected = float(result.numTouchDetected)/expectedTouchCount;
+      
+      if(expectedTouchCount == 0) {
+        result.numFalsePos += _msgMonitor->GetCountTouchButtonEvent();
+      }
+      
+      result.numCorrect += percentDetected > minPercentCorrect;
+    }
+    
+    return result;
+  };
+  
+  const auto printScore = [](const Score& s)->std::string {
+    std::stringstream ss;
+    ss << std::setw(4) << s.numTouchDetected << ", ";
+    ss << std::setw(4) << s.numTouchExpected;
+    return ss.str();
+  };
+  
+  const auto getFileKey = [](const string& robot,
+                             const string& motorS,
+                             const string& chargerS,
+                             const string& touchT)->string {
+    return string{robot + "_" + motorS + "_" + chargerS + "_" + touchT};
+  };
+  
+  // XXX(agm) switch this to test a different mode
+  auto func = MainCalibAndTestScheme;
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // testing skews
+  // - same motor+charger state for calib and test
+  // - different motor+charger state for calib and test
+  
+  // === SAME MOTOR & CHARGER STATE ===
+  
+  struct MotorChargerState
+  {
+    int motorIdx;
+    int chargerIdx;
+  };
+  
+  std::vector<MotorChargerState> sameMotorChargerStateSkews =
+  {
+    {0,0},
+    {0,1},
+  };
+
+  const float kMinPercent = 0.5;
+  std::stringstream output;
+  
+  for(const auto& cfg : sameMotorChargerStateSkews) {
+    output << endl << endl << endl;
+    std::string motorState = motorStates[cfg.motorIdx];
+    std::string chargerState = chargerStates[cfg.chargerIdx];
+    output << "Calib Condition: " << motorState << " " << chargerState << endl;
+    for(const auto& touchType : vector<string>{"Petting_Soft","Petting_Hard"}) {
+      output << "ACCURACY TESTING (" << touchType << ")" << endl;
+      
+      // header
+      output << "\t" << std::setw(10) << "";
+      output << std::setw(4) << "DET" << std::setw(2) << "";
+      output << std::setw(4) << "EXP" << std::endl;
+      
+      Score score_tot;
+      for(const auto& robot : robotIDs) {
+        Score score_rob;
+        
+        // calibrate
+        std::string calibKey = getFileKey(robot,motorState,chargerState,"No_Touch");
+        std::vector<int> calib = LoadReadingsFromFile(dataDir+"/"+calibKey);
+        
+        // test and score
+        std::string testKey = getFileKey(robot,motorState,chargerState,touchType);
+        std::vector<int> test = LoadReadingsFromFile(dataDir+"/"+testKey);
+        score_rob = func(calib, test, answerKey[testKey], kMinPercent);
+        score_tot = score_tot + score_rob;
+        output << "\t" << std::setw(10) << robot << printScore(score_rob) << endl;
+      }
+      output << "\t" << std::setw(10) << "all" << printScore(score_tot) << endl;
+    }
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // === DIFF MOTOR & CHARGER STATE ===
+  
+  
+  struct CalibAndTestSkew
+  {
+    MotorChargerState calib;
+    MotorChargerState test;
+  };
+  
+  std::vector<CalibAndTestSkew> diffMotorChargerStateSkews =
+  {
+    {{0,0},{0,1}}, //IdleOff -> IdleOn
+    {{0,0},{1,0}}, //IdleOff -> MotorsOff
+    
+    {{0,1},{0,0}}, //IdleOn -> IdleOff
+    {{0,1},{1,0}}, //IdleOn -> MotorsOff
+  };
+  
+  output << std::endl << std::endl << std::endl;
+  output << "FALSE POSITIVE TESTING" << endl;
+  
+  for(const auto& skew : diffMotorChargerStateSkews) {
+    const auto& motorStateCalib = motorStates[skew.calib.motorIdx];
+    const auto& chargerStateCalib = chargerStates[skew.calib.chargerIdx];
+    const auto& motorStateTest = motorStates[skew.test.motorIdx];
+    const auto& chargerStateTest = chargerStates[skew.test.chargerIdx];
+    
+    output << "Calib Condition: " << motorStateCalib << " " << chargerStateCalib << endl;
+    output << "Test Condition: " << motorStateTest << " " << chargerStateTest << endl;
+    
+    Score score_tot;
+    
+    for(const auto& robot : robotIDs) {
+      output << "\tRobot " << robot << " ";
+      std::vector<int> calib = LoadReadingsFromFile(dataDir+"/"+getFileKey(robot,motorStateCalib,chargerStateCalib,"No_Touch"));
+      const auto testKey = getFileKey(robot,motorStateTest,chargerStateTest,"No_Touch");
+      std::vector<int> test = LoadReadingsFromFile(dataDir+"/"+testKey);
+      
+      Score score_rob = func(calib, test, answerKey[testKey], kMinPercent);
+      score_tot = score_tot + score_rob;
+      
+      output << (int)score_rob.numFalsePos << endl;
+    }
+    
+    output << "\tRobot all " << (int)score_tot.numFalsePos << endl;
+  }
+  
+  std::cout << output.str();
+}
+
 #endif // ifdef ENABLE_PROTOTYPING_ANALYSIS_TESTS

@@ -59,7 +59,7 @@ OSState::OSState()
   
   // Set simulated attributes
   _serialNumString = "12345";
-  _osBuildNum = 12345;
+  _osBuildVersion = "12345";
   _ipAddress = "127.0.0.1";
 }
 
@@ -113,45 +113,14 @@ const std::string& OSState::GetSerialNumberAsString()
   return _serialNumString;
 }
   
-u32 OSState::GetOSBuildNumber()
+const std::string& OSState::GetOSBuildVersion()
 {
-  return _osBuildNum;
+  return _osBuildVersion;
 }
 
 std::string OSState::GetIPAddressInternal()
 {
   return _ipAddress;
-}
-
-// Executes the provided command and returns the output as a string
-std::string OSState::ExecCommand(const char* cmd) 
-{
-  try
-  {
-    std::array<char, 128> buffer;
-    std::string result;
-    std::shared_ptr<FILE> pipe(popen(cmd, "r"), pclose);
-    if (!pipe)
-    {
-      PRINT_NAMED_WARNING("EngineMessages.ExecCommand.FailedToOpenPipe", "");
-      return "";
-    }
-
-    while (!feof(pipe.get()))
-    {
-      if (fgets(buffer.data(), 128, pipe.get()) != nullptr)
-      {
-        result += buffer.data();
-      }
-    }
-
-    // Remove the last character as it is a newline
-    return result.substr(0,result.size()-1);
-  }
-  catch(...)
-  {
-    return "";
-  }
 }
 
 } // namespace Cozmo

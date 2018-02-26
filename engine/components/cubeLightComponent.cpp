@@ -946,13 +946,23 @@ void CubeLightComponent::HandleMessage(const ObjectConnectionState& msg)
 template<>
 void CubeLightComponent::HandleMessage(const ExternalInterface::PlayCubeAnim& msg)
 {
-  PlayLightAnim(msg.objectID, msg.trigger, AnimLayerEnum::User);
+  ObjectID objectID = msg.objectID;
+  if(objectID < 0) {
+    objectID = _robot->GetBlockWorld().GetSelectedObject();
+  }
+  
+  PlayLightAnim(objectID, msg.trigger, AnimLayerEnum::User);
 }
 
 template<>
 void CubeLightComponent::HandleMessage(const ExternalInterface::StopCubeAnim& msg)
 {
-  StopLightAnim(msg.trigger, AnimLayerEnum::User, msg.objectID);
+  ObjectID objectID = msg.objectID;
+  if(objectID < 0) {
+    objectID = _robot->GetBlockWorld().GetSelectedObject();
+  }
+  
+  StopLightAnim(msg.trigger, AnimLayerEnum::User, objectID);
 }
 
 template<>

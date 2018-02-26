@@ -270,25 +270,16 @@ namespace Cozmo {
     }
   }
   
-  Result FaceAnimationManager::AddImage(const std::string& animName, const Vision::ImageRGB565& faceImg, u32 holdTime_ms)
+  Result FaceAnimationManager::AddProceduralImage(const Vision::Image& faceImg, u32 holdTime_ms)
   {
-    FaceAnimation* anim = GetAnimationByName(animName);
-    if(nullptr == anim) {
-      return RESULT_FAIL;
-    }
-    
-    anim->AddFrame(faceImg);
-    
-    if(holdTime_ms > ANIM_TIME_STEP_MS)
-    {
-      const s32 numFramesToAdd = holdTime_ms / ANIM_TIME_STEP_MS - 1;
-      for(s32 i=0; i<numFramesToAdd; ++i)
-      {
-        anim->AddFrame(Vision::ImageRGB565{});
-      }
-    }
-
-    return RESULT_OK;
+    const bool isGrayscale = true;
+    return AddProceduralImageHelper(faceImg, isGrayscale, holdTime_ms);
+  }
+  
+  Result FaceAnimationManager::AddProceduralImage(const Vision::ImageRGB565& faceImg, u32 holdTime_ms)
+  {
+    const bool isGrayscale = false;
+    return AddProceduralImageHelper(faceImg, isGrayscale, holdTime_ms);
   }
 
   Result FaceAnimationManager::ClearAnimation(const std::string& animName)
@@ -329,6 +320,40 @@ namespace Cozmo {
     return anim->IsGrayscale();
   }
   
+  template <typename ImageType>
+  Result FaceAnimationManager::AddProceduralImageHelper(const ImageType& faceImg, const bool isGrayscale, const u32 holdTime_ms)
+  {
+    const auto& animName = ProceduralAnimName;
+    
+    FaceAnimation* anim = GetAnimationByName(animName);
+    if(nullptr == anim) {
+      return RESULT_FAIL;
+    }
+    
+    // Set the animation to grayscale/color if not already
+    if (isGrayscale != anim->IsGrayscale()) {
+      const bool animIsEmpty = (anim->GetNumFrames() == 0);
+      if (!animIsEmpty) {
+        PRINT_NAMED_WARNING("FaceAnimationManager.AddProceduralImageHelper.ClearingExisting",
+                            "%s: Clearing existing face animation frames since they are %sgrayscale.",
+                            animName.c_str(),
+                            isGrayscale ? "NOT " : "");
+        anim->Clear();
+      }
+      anim->SetGrayscale(isGrayscale);
+    }
+    
+    anim->AddFrame(faceImg);
+    
+    if(holdTime_ms > ANIM_TIME_STEP_MS) {
+      const s32 numFramesToAdd = holdTime_ms / ANIM_TIME_STEP_MS - 1;
+      for(s32 i=0; i<numFramesToAdd; ++i) {
+        anim->AddFrame(ImageType{});
+      }
+    }
+    
+    return RESULT_OK;
+  }
   
   template <typename ImageType>
   bool FaceAnimationManager::GetFrameHelper(const std::string& animName, u32 frameNum, ImageType& frame)

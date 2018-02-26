@@ -597,7 +597,7 @@ ActionResult ITrackAction::CheckIfDone()
         const f32 kYMax = static_cast<f32>(GetRobot().GetDisplayHeightInPixels()/4);
         GetRobot().GetAnimationComponent().AddOrUpdateEyeShift(_kEyeShiftLayerName,
                                                                eyeShiftX, eyeShiftY,
-                                                               BS_TIME_STEP,
+                                                               BS_TIME_STEP_MS,
                                                                kXMax,
                                                                kYMax,
                                                                kMaxLookUpScale,
@@ -671,7 +671,7 @@ ActionResult ITrackAction::CheckIfDone()
       }
       
       // Remove eye shift once "locked on" target
-      GetRobot().GetAnimationComponent().RemoveEyeShift(_kEyeShiftLayerName, BS_TIME_STEP);
+      GetRobot().GetAnimationComponent().RemoveEyeShift(_kEyeShiftLayerName, BS_TIME_STEP_MS);
 
       break;
     }

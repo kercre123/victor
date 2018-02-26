@@ -29,7 +29,6 @@
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/faceWorld.h"
 #include "engine/moodSystem/moodManager.h"
-#include "engine/needsSystem/needsManager.h"
 #include "engine/robot.h"
 #include "engine/robotInterface/messageHandler.h"
 #include "engine/vision/visionModesHelpers.h"
@@ -264,8 +263,7 @@ namespace Anki {
         }
       };
       
-      _signalHandle = GetRobot().GetRobotMessageHandler()->Subscribe(GetRobot().GetID(),
-                                                                     RobotInterface::RobotToEngineTag::motorActionAck,
+      _signalHandle = GetRobot().GetRobotMessageHandler()->Subscribe(RobotInterface::RobotToEngineTag::motorActionAck,
                                                                      actionStartedLambda);
 
 
@@ -926,8 +924,7 @@ namespace Anki {
         }
       };
       
-      _signalHandle = GetRobot().GetRobotMessageHandler()->Subscribe(GetRobot().GetID(),
-                                                                     RobotInterface::RobotToEngineTag::motorActionAck,
+      _signalHandle = GetRobot().GetRobotMessageHandler()->Subscribe(RobotInterface::RobotToEngineTag::motorActionAck,
                                                                      actionStartedLambda);
 
 
@@ -1164,8 +1161,7 @@ namespace Anki {
         }
       };
       
-      _signalHandle = GetRobot().GetRobotMessageHandler()->Subscribe(GetRobot().GetID(),
-                                                                     RobotInterface::RobotToEngineTag::motorActionAck,
+      _signalHandle = GetRobot().GetRobotMessageHandler()->Subscribe(RobotInterface::RobotToEngineTag::motorActionAck,
                                                                      actionStartedLambda);
 
 
@@ -2089,7 +2085,6 @@ namespace Anki {
                         "id %s returned null",
                         _obsFaceID.GetDebugStr().c_str()) ) {
           // Valid face...        
-          GetRobot().GetContext()->GetNeedsManager()->RegisterNeedsActionCompleted(NeedsActionId::SeeFace);
           Pose3d pose;
           if(true == face->GetHeadPose().GetWithRespectTo(GetRobot().GetPose(), pose)) {
             GetRobot().GetMoodManager().TriggerEmotionEvent("LookAtFaceVerified", MoodManager::GetCurrentTimeInSeconds());
@@ -2217,9 +2212,6 @@ namespace Anki {
           } else {
             // Wait for say name action to finish
             result = _action->Update();
-            if( ActionResult::SUCCESS == result ) {
-              GetRobot().GetContext()->GetNeedsManager()->RegisterNeedsActionCompleted(NeedsActionId::SayName);
-            }
           }
             
           break;
@@ -2303,7 +2295,13 @@ namespace Anki {
     
     void WaitForImagesAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const 
     {
-      requests.insert({ _visionMode, EVisionUpdateFrequency::High });
+      // If the user has subscribed to VisionMode::Count, they are asking to be notified after N
+      // vision processing frames, regardless of mode. This does not require any subscription to 
+      // be made to the VSM since the RobotProcessImage message will be sent even if no modes are
+      // currently enabled.
+      if(_visionMode != VisionMode::Count){
+        requests.insert({ _visionMode, EVisionUpdateFrequency::High });
+      }
     }
 
     ActionResult WaitForImagesAction::Init()

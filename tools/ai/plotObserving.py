@@ -39,10 +39,12 @@ def getEdgeLabel( data ):
   else:
     edgeLabel = ''
   return edgeLabel
-def addEdges( fromNode, edges, transitionJson, edgeStyle='solid', color='black' ):
+def addEdges( options, fromNode, edges, transitionJson, edgeStyle='solid', color='black' ):
   for toData in transitionJson:
     toNode = toData['to']
     edgeLabel = getEdgeLabel( toData )
+    if options.ignoreUserIntents and edgeLabel == 'UserIntentPending':
+      continue
     edge = (fromNode, toNode)
     props = {'style': edgeStyle, 'label': edgeLabel, 'color': color}
     if [fromNode.lower(), toNode.lower()] != sorted([fromNode.lower(), toNode.lower()]):
@@ -51,7 +53,7 @@ def addEdges( fromNode, edges, transitionJson, edgeStyle='solid', color='black' 
     props['fontcolor'] = color
     edges.append( (edge, props) )
 
-def parseJson( nodes, edges, json, filename ):
+def parseJson( nodes, edges, json, filename, options ):
   """ Loads json into nodes and edges """
 
   states = json['states']
@@ -61,17 +63,22 @@ def parseJson( nodes, edges, json, filename ):
       if name not in nodes:
         nodes.append(name)
   for trans in json['transitionDefinitions']:
-    fromNode = trans['from']
-    interruptingTrans = {} if 'interruptingTransitions' not in trans else trans['interruptingTransitions']
-    nonInterruptingTrans = {} if 'nonInterruptingTransitions' not in trans else trans['nonInterruptingTransitions']
-    exitTrans = {} if 'exitTransitions' not in trans else trans['exitTransitions']
+    fromObj = trans['from']
+    if isinstance(fromObj, list):
+      fromList = fromObj
+    else:
+      fromList = [fromObj]
+    for fromNode in fromList:
+      interruptingTrans = {} if 'interruptingTransitions' not in trans else trans['interruptingTransitions']
+      nonInterruptingTrans = {} if 'nonInterruptingTransitions' not in trans else trans['nonInterruptingTransitions']
+      exitTrans = {} if 'exitTransitions' not in trans else trans['exitTransitions']
 
-    if fromNode not in nodes:
-      nodes.append(fromNode)
-    
-    addEdges( fromNode, edges, interruptingTrans, 'solid', '#d55e00' ) #colors are rgb for colorblind ppl
-    addEdges( fromNode, edges, nonInterruptingTrans, 'dashed', '#009e73' )
-    addEdges( fromNode, edges, exitTrans, 'dotted','#0072b2' )
+      if fromNode not in nodes:
+        nodes.append(fromNode)
+      
+      addEdges( options, fromNode, edges, interruptingTrans, 'solid', '#d55e00' ) #colors are rgb for colorblind ppl
+      addEdges( options, fromNode, edges, nonInterruptingTrans, 'dashed', '#009e73' )
+      addEdges( options, fromNode, edges, exitTrans, 'dotted','#0072b2' )
 
 def loadFile( filename ):
   """ Loads json file, after removing comments """
@@ -156,6 +163,8 @@ def main():
   parser = argparse.ArgumentParser(description='Draws a graph of Victor behaviors.')
   parser.add_argument('-o', '--output', action="store", dest='outputFilename', metavar='OUTPUTFILE',
                       help='output file (extension determines filetype)')
+  parser.add_argument('-u', '--ignore-user-intents', action="store_true", dest='ignoreUserIntents',
+                      help='ignores transitions due to user intents')
   parser.add_argument('inputFilename', metavar='INPUTFILE',
                       help='the file victorObservingDemo.json')
   
@@ -177,7 +186,7 @@ def main():
   edges = []
 
   jsonData = loadFile( inputFilename )
-  parseJson( nodes, edges, jsonData, inputFilename )
+  parseJson( nodes, edges, jsonData, inputFilename, args )
 
   # render 
 

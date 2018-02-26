@@ -77,7 +77,12 @@ func GoMain(startRecording, stopRecording C.voidFunc) {
 
 	kill := make(chan struct{})
 	cloudproc.SetVerbose(verbose)
-	go cloudproc.RunProcess(micClient, aiClient, nil, kill)
+
+	receiver := cloudproc.NewIpcReceiver(micClient, kill)
+	process := &cloudproc.Process{}
+	process.AddReceiver(receiver)
+	process.AddIntentWriter(aiClient)
+	go process.Run(kill)
 	defer close(kill)
 
 	micServer := <-micServerDaemon.NewConns()

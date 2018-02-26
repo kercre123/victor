@@ -21,8 +21,8 @@ namespace Cozmo {
 
 class BehaviorDispatcherStrictPriority : public IBehaviorDispatcher
 {
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;  
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;  
   BehaviorDispatcherStrictPriority(const Json::Value& config);
 
 protected:

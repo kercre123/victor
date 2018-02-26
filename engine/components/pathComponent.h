@@ -90,8 +90,6 @@ constexpr const char* ERobotDriveToPoseStatusToString(ERobotDriveToPoseStatus st
 class PathComponent : public IDependencyManagedComponent<RobotComponentID>, private Util::noncopyable
 {
 public:
-  // Constructor takes a robotID because the passed in robot may still be under construction when this
-  // constructor is called, and therefore we shouldn't trust it's contents (just store it and pass it around)
   PathComponent();
   ~PathComponent();
 

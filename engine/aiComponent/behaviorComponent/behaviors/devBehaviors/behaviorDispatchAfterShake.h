@@ -21,7 +21,7 @@ namespace Cozmo {
 
 class BehaviorDispatchAfterShake : public ICozmoBehavior
 {
-  friend class BehaviorContainer;
+  friend class BehaviorFactory;
   explicit BehaviorDispatchAfterShake(const Json::Value& config);
 
 public:

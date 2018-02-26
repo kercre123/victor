@@ -29,9 +29,9 @@ public:
   explicit ConditionTimedDedup(IBEIConditionPtr subCondition,
                                float dedupInterval_ms);
 
-  virtual void ResetInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual void SetActiveInternal(BehaviorExternalInterface& behaviorExternalInterface, bool setActive) override;
 private:
   struct {
     IBEIConditionPtr subCondition;

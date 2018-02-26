@@ -14,6 +14,10 @@
 #include "engine/aiComponent/timerUtility.h"
 #include "coretech/common/engine/utils/timer.h"
 
+#include <ctime>
+#include <ratio>
+#include <chrono>
+
 namespace Anki {
 namespace Cozmo {
   
@@ -22,9 +26,11 @@ namespace{
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-int TimerHandle::GetCurrentTime_s()
+int TimerHandle::GetSystemTime_s()
 {
-  return static_cast<int>(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds());
+  using namespace std::chrono;
+  auto time_s = duration_cast<seconds>(steady_clock::now().time_since_epoch()).count();
+  return static_cast<int>(time_s);
 }
 
 
@@ -33,7 +39,7 @@ int TimerHandle::GetCurrentTime_s()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TimerUtility::TimerUtility()
 {
-
+  _activeTimer = std::make_shared<TimerHandle>(0);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -42,6 +48,14 @@ TimerUtility::~TimerUtility()
 
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+int TimerUtility::GetSystemTime_s() const
+{
+  using namespace std::chrono;
+  auto time_s = duration_cast<seconds>(steady_clock::now().time_since_epoch()).count();
+  return static_cast<int>(time_s);
+}
 
 
 } // namespace Cozmo

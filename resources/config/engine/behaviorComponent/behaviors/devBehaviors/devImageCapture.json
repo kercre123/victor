@@ -13,5 +13,9 @@
 
   // whether or not to use capacitive touch to trigger saving
   // if 0, uses power button istead
-  "use_capacitive_touch" : false
+  "use_capacitive_touch" : false,
+
+  // When in single shot saving, alongside the images save a json file (with the same name, .json extension)
+  // with sensor data like cliff, prox and head angle
+  "save_sensor_data" : true
 }

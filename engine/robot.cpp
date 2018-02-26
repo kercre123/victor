@@ -8,7 +8,7 @@
 //
 
 #include "engine/robot.h"
-#include "androidHAL/androidHAL.h"
+#include "camera/cameraService.h"
 
 #include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/poseOriginList.h"
@@ -241,7 +241,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   GetStateHistory()->Clear();
   _needToSendLocalizationUpdate = false;
 
-  GetRobotToEngineImplMessaging().InitRobotMessageComponent(GetContext()->GetRobotManager()->GetMsgHandler(), robotID, this);
+  GetRobotToEngineImplMessaging().InitRobotMessageComponent(GetContext()->GetRobotManager()->GetMsgHandler(), this);
   
   // Setup audio messages
   GetAudioClient()->SubscribeAudioCallbackMessages(this);
@@ -275,7 +275,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
 #endif
 
   // This will create the AndroidHAL instance if it doesn't yet exist
-  AndroidHAL::getInstance();
+  CameraService::getInstance();
   
 } // Constructor: Robot
     
@@ -1051,7 +1051,10 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     } // if/else on ramp
     
     // Add to history
-    const HistRobotState histState(newPose, msg);
+    const HistRobotState histState(newPose,
+                                   msg,
+                                   GetProxSensorComponent().IsLatestReadingValid(),
+                                   GetCliffSensorComponent().GetCliffDetectedFlags() );
     lastResult = GetStateHistory()->AddRawOdomState(msg.timestamp, histState);
     
     if (lastResult != RESULT_OK) {
@@ -1100,9 +1103,9 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   
 # pragma clang diagnostic push
 # pragma clang diagnostic ignored "-Wdeprecated-declarations" 
-  GetComponent<RobotGyroDriftDetector>(RobotComponentID::GyroDriftDetector).DetectGyroDrift(msg);
+  GetComponent<RobotGyroDriftDetector>().DetectGyroDrift(msg);
 # pragma clang diagnostic pop
-  GetComponent<RobotGyroDriftDetector>(RobotComponentID::GyroDriftDetector).DetectBias(msg);
+  GetComponent<RobotGyroDriftDetector>().DetectBias(msg);
   
   /*
     PRINT_NAMED_INFO("Robot.UpdateFullRobotState.OdometryUpdate",
@@ -1285,8 +1288,8 @@ Result Robot::Update()
      lastUpdateTime = currentTime_sec;
   */
 
-  //////////// Android HAL Update ////////////
-  AndroidHAL::getInstance()->Update();
+  //////////// CameraService Update ////////////
+  CameraService::getInstance()->Update();
 
   //////////// VisionScheduleMediator ////////////
   // Applies the scheduling consequences of the last frame's subscriptions before ticking VisionComponent
@@ -1647,7 +1650,7 @@ Radians Robot::GetPitchAngle() const
   
 bool Robot::WasObjectTappedRecently(const ObjectID& objectID) const
 {
-  return GetComponent<BlockTapFilterComponent>(RobotComponentID::BlockTapFilter).ShouldIgnoreMovementDueToDoubleTap(objectID);
+  return GetComponent<BlockTapFilterComponent>().ShouldIgnoreMovementDueToDoubleTap(objectID);
 }
 
 
@@ -2234,7 +2237,7 @@ Result Robot::SetPoseOnCharger()
     
 Result Robot::SendMessage(const RobotInterface::EngineToRobot& msg, bool reliable, bool hot) const
 {
-  Result sendResult = GetContext()->GetRobotManager()->GetMsgHandler()->SendMessage(_ID, msg, reliable, hot);
+  Result sendResult = GetContext()->GetRobotManager()->GetMsgHandler()->SendMessage(msg, reliable, hot);
   if (sendResult != RESULT_OK) {
     const char* msgTypeName = EngineToRobotTagToString(msg.GetTag());
     Util::sWarningF("Robot.SendMessage", { {DDATA, msgTypeName} }, "Robot %d failed to send a message type %s", _ID, msgTypeName);
@@ -2245,8 +2248,9 @@ Result Robot::SendMessage(const RobotInterface::EngineToRobot& msg, bool reliabl
 // Sync time with physical robot and trigger it robot to send back camera calibration
 Result Robot::SendSyncTime() const
 {
+  // BRC: Why are we call AndroidHAL/CameraService to get a timestamp?
   Result result = SendMessage(RobotInterface::EngineToRobot(
-                                RobotInterface::SyncTime(AndroidHAL::getInstance()->GetTimeStamp(),
+                                RobotInterface::SyncTime(CameraService::getInstance()->GetTimeStamp(),
                                                          DRIVE_CENTER_OFFSET)));
 
   if (result == RESULT_OK) {
@@ -2328,7 +2332,7 @@ bool Robot::HasExternalInterface() const
   return false;
 }
 
-IExternalInterface* Robot::GetExternalInterface()
+IExternalInterface* Robot::GetExternalInterface() const
 {
   DEV_ASSERT(GetContext()->GetExternalInterface() != nullptr, "Robot.ExternalInterface.nullptr");
   return GetContext()->GetExternalInterface();
@@ -2781,7 +2785,7 @@ RobotState Robot::GetDefaultRobotState()
   return state;
 }
 
-RobotInterface::MessageHandler* Robot::GetRobotMessageHandler()
+RobotInterface::MessageHandler* Robot::GetRobotMessageHandler() const
 {
   if ((!_components->GetComponent(RobotComponentID::CozmoContext).IsValueValid()) ||
       (GetContext()->GetRobotManager() == nullptr))

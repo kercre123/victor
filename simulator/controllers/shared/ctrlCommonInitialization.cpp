@@ -60,10 +60,9 @@ Anki::Util::Data::DataPlatform CreateDataPlatformBS(const std::string& runningPa
   const std::string outputPath = path + kRootDirectory + kBuildPath + platformID;
   
   const std::string resourcePath = path + "resources";
-  const std::string filesPath = path + "files";
+  const std::string persistentPath = path + "persistent";
   const std::string& cachePath = outputPath;
-  const std::string& externalPath = outputPath;
-  Anki::Util::Data::DataPlatform dataPlatform(filesPath, cachePath, externalPath, resourcePath);
+  Anki::Util::Data::DataPlatform dataPlatform(persistentPath, cachePath, resourcePath);
   
   return dataPlatform;
 }
@@ -82,10 +81,9 @@ Anki::Util::Data::DataPlatform CreateDataPlatformTest(const std::string& running
   const std::string outputPath = path + kRootDirectory + kBuildPath + platformID;
   
   const std::string resourcePath = path + "temp";
-  const std::string filesPath = path + "temp";
+  const std::string persistentPath = path + "temp";
   const std::string& cachePath = outputPath;
-  const std::string& externalPath = outputPath;
-  Anki::Util::Data::DataPlatform dataPlatform(filesPath, cachePath, externalPath, resourcePath);
+  Anki::Util::Data::DataPlatform dataPlatform(persistentPath, cachePath, resourcePath);
   
   return dataPlatform;
 }

@@ -18,22 +18,25 @@
 namespace Anki {
 namespace Cozmo {
 
+// When adding to this enum be sure to also declare a template specialization
+// in the _impl.cpp file mapping the enum to the class type it is associated with
 enum class BCComponentID{
   AIComponent,
   AsyncMessageComponent,
   BehaviorAudioComponent,
-  BehaviorComponentCloudReceiver,
   BehaviorContainer,
   BehaviorEventAnimResponseDirector,
   BehaviorEventComponent,
   BehaviorExternalInterface,
   BehaviorHelperComponent,
   BehaviorSystemManager,
+  BehaviorTimerManager,
   BlockWorld,
   DelegationComponent,
   DevBehaviorComponentMessageHandler,
   FaceWorld,
   RobotInfo,
+  UserIntentComponent,
   BaseBehaviorWrapper,
   Count
 };

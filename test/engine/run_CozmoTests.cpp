@@ -8,7 +8,7 @@
 #include "coretech/common/robot/matlabInterface.h"
 #include "coretech/common/shared/types.h"
 
-#include "androidHAL/androidHAL.h"
+#include "camera/cameraService.h"
 #include "osState/osState.h"
 #include "cubeBleClient/cubeBleClient.h"
 
@@ -20,6 +20,7 @@
 #include "engine/components/cubeLightComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/visionComponent.h"
+#include "engine/cozmoAPI/comms/uiMessageHandler.h"
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
 #include "engine/ramp.h"
@@ -2375,9 +2376,8 @@ int main(int argc, char ** argv)
     workRoot = workRootChars;
 
   std::string resourcePath;
-  std::string filesPath;
+  std::string persistentPath;
   std::string cachePath;
-  std::string externalPath;
 
   if (configRoot.empty() || workRoot.empty()) {
     char cwdPath[1256];
@@ -2398,23 +2398,21 @@ int main(int argc, char ** argv)
     std::string path = aux.substr(0,pos);
 */
     std::string path = cwdPath;
-    resourcePath = path + "/../../assets/cozmo_resources";
-    filesPath = path + "/files";
-    cachePath = path + "/temp";
-    externalPath = path + "/temp";
+    resourcePath = path + "/../../data/assets/cozmo_resources";
+    persistentPath = path + "/persistent";
+    cachePath = path + "/cache";
   } else {
     // build server specifies configRoot and workRoot
     resourcePath = configRoot + "/resources";
-    filesPath = workRoot + "/files";
-    cachePath = workRoot + "/temp";
-    externalPath = workRoot + "/temp";
+    persistentPath = workRoot + "/persistent";
+    cachePath = workRoot + "/cache";
   }
   
   // Suppress break-on-error for duration of these tests
   Anki::Util::_errBreakOnError = false;
 
-  // Initialize AndroidHAL singleton without supervisor
-  AndroidHAL::SetSupervisor(nullptr);
+  // Initialize CameraService singleton without supervisor
+  CameraService::SetSupervisor(nullptr);
   
   // Initialize OSState singleton without supervisor
   OSState::SetSupervisor(nullptr);
@@ -2423,8 +2421,9 @@ int main(int argc, char ** argv)
   CubeBleClient::SetSupervisor(nullptr);
 
   //LEAKING HERE
-  Anki::Util::Data::DataPlatform* dataPlatform = new Anki::Util::Data::DataPlatform(filesPath, cachePath, externalPath, resourcePath);
-  cozmoContext = new Anki::Cozmo::CozmoContext(dataPlatform, nullptr);
+  Anki::Util::Data::DataPlatform* dataPlatform = new Anki::Util::Data::DataPlatform(persistentPath, cachePath, resourcePath);
+  UiMessageHandler handler(0, nullptr);
+  cozmoContext = new Anki::Cozmo::CozmoContext(dataPlatform, &handler);
   
   cozmoContext->GetDataLoader()->LoadRobotConfigs();
   cozmoContext->GetDataLoader()->LoadNonConfigData();

@@ -32,8 +32,8 @@ class MovementListener;
 class BehaviorFeedingEat : public ICozmoBehavior
 {
 protected:
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;  
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;  
   BehaviorFeedingEat(const Json::Value& config);
 
 public:

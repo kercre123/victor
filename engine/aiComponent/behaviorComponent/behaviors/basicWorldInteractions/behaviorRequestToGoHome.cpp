@@ -146,7 +146,10 @@ void BehaviorRequestToGoHome::TransitionToRequestAnim()
   _state = EState::Requesting;
   
   auto* action = new CompoundActionSequential();
-  action->AddAction(new TurnTowardsLastFacePoseAction());
+  // Turn toward face, but only for non-severe requests
+  if (_currRequestType != ERequestType::Severe) {
+    action->AddAction(new TurnTowardsLastFacePoseAction());
+  }
   action->AddAction(new TriggerAnimationAction(_currRequestParams->requestAnimTrigger));
 
   DelegateIfInControl(action, &BehaviorRequestToGoHome::TransitionToRequestWaitLoopAnim);

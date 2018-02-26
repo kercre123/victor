@@ -5,8 +5,10 @@ Viewpoint {
   orientation 0.011010595984254423 0.5994822291427173 0.8003123288555225 3.129522
   position -0.014606203 1.169959 0.48309053
 }
-VictorChargerSimple {
+VictorCharger {
+  platformTiltAngle 0
   translation -0.19 0 0
+  rotation 0 0 0.9999999999999999 4.712388966
 }
 Background {
   skyColor [
@@ -44,7 +46,7 @@ WebotsKeyboardController {
   userName "Billy"
   filterLogs TRUE
   translation -0.38 0 0.08
-  autoConnect FALSE
+  autoConnect TRUE
 }
 CozmoVizDisplay {
   streamResolution "NHD"

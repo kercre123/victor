@@ -21,5 +21,12 @@ set(ANKI_LIB_AUDIO_PLUGINS
   AE_AK_TONE_GENERATOR_SOURCE
 )
 
+if(VICOS)
+list(APPEND ANKI_LIB_AUDIO_PLUGINS
+  # Sink Plugins
+  AE_AK_ALSA_SINK
+)
+endif()
+
 import(audio "lib/audio")
 

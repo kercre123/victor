@@ -11,10 +11,11 @@ namespace Anki {
     const u32 kDefaultMsPerFrame = 30;
     
     // Based on the current time and the current state of an LED (as indicated by
-    // its LEDParams), returns the new RGBA color in newColor. Returns whether the
-    // color of the LED actually changed.
-    bool GetCurrentLEDcolor(const LightState& ledParams, const TimeStamp_t currentTime, TimeStamp_t& phaseTime,
-                            u32& newColor, const u32 msPerFrame = kDefaultMsPerFrame);
+    // its LEDParams), returns the new RGBA color.
+    u32 GetCurrentLEDcolor(const LightState& ledParams,     // The ledParams struct for this LED
+                           const TimeStamp_t currentTime,   // current timestamp
+                           const TimeStamp_t phaseTime,     // timestamp indicating the 'beginning' of the light animation
+                           const u32 msPerFrame = kDefaultMsPerFrame);
 
   } // namespace Cozmo
 } // namespace Anki

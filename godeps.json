@@ -1,54 +1,22 @@
 {
-  "cloud.google.com/go": {
-    "commit": "c1d6c20e26a9664da077a2bcdac922e4bc2d5766",
-    "branch": "master"
-  },
-  "google.golang.org/api": {
-    "commit": "4c1b07210d562506ab52117997c3b7e294627ac9",
-    "branch": "master"
-  },
   "google.golang.org/genproto": {
-    "commit": "4eb30f4778eed4c258ba66527a0d4f9ec8a36c45",
+    "commit": "2b5a72b8730b0b16380010cfe5286c42108d88e7",
     "branch": "master"
   },
   "google.golang.org/grpc": {
-    "commit": "424e3e9894f9206fca433fb4ba66f639be56e325",
-    "branch": "master"
-  },
-  "github.com/aalpern/go-metrics": {
-    "commit": "e181e095bae94582363434144c61a9653aff6e50",
+    "commit": "d50734d1d6ca477a72646f3022216ec39639f4cd",
     "branch": "master"
   },
   "github.com/anki/sai-chipper-voice": {
-    "commit": "7fb7719e360d07127c0607898441ea840d985787",
+    "commit": "80a4a3b52135ecfbdee3955f90f7fe3265366f1b",
     "branch": "develop"
-  },
-  "github.com/anki/sai-go-util": {
-    "commit": "a96b659ff902ac082274cb82bd22b15d1e1b27a9",
-    "branch": "master"
-  },
-  "github.com/aws/aws-sdk-go": {
-    "commit": "00cca3f093a8236a93fbbeeae7d28ad83811683c",
-    "branch": "master"
-  },
-  "github.com/cenkalti/backoff": {
-    "commit": "2ea60e5f094469f9e65adb9cd103795b73ae743e",
-    "branch": "master"
   },
   "github.com/golang/protobuf": {
     "commit": "bbd03ef6da3a115852eaf24c8a1c46aeb39aa175",
     "branch": "master"
   },
-  "github.com/google/martian": {
-    "commit": "edc2749c00e8e156c2c3bb3d89df11f5416edef4",
-    "branch": "master"
-  },
   "github.com/google/uuid": {
     "commit": "dec09d789f3dba190787f8b4454c7d3c936fed9e",
-    "branch": "master"
-  },
-  "github.com/gorilla/context": {
-    "commit": "08b5f424b9271eedf6f9f0ce86cb9396ed337a42",
     "branch": "master"
   },
   "github.com/youpy/go-riff": {
@@ -60,19 +28,19 @@
     "branch": "master"
   },
   "golang.org/x/net": {
-    "commit": "2fb46b16b8dda405028c50f7c7f0f9dd1fa6bfb1",
-    "branch": "master"
-  },
-  "golang.org/x/oauth2": {
-    "commit": "a032972e28060ca4f5644acffae3dfc268cc09db",
+    "commit": "f5dfe339be1d06f81b22525fe34671ee7d2c8904",
     "branch": "master"
   },
   "golang.org/x/text": {
-    "commit": "e19ae1496984b1c655b8044a65c0300a3c878dd3",
+    "commit": "4e4a3210bb54bb31f6ab2cdca2edcc0b50c420c1",
     "branch": "master"
   },
   "github.com/hashicorp/go-multierror": {
     "commit": "b7773ae218740a7be65057fc60b366a49b538a44",
+    "branch": "master"
+  },
+  "github.com/gwatts/rootcerts": {
+    "commit": "bfd86e4fe5adc76db72b682148820bdcf104f308",
     "branch": "master"
   }
 }

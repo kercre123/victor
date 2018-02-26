@@ -8,7 +8,6 @@
 
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
-#include "engine/needsSystem/needsManager.h"
 #include "engine/perfMetric.h"
 #include "engine/robot.h"
 #include "engine/robotInitialConnection.h"
@@ -82,7 +81,7 @@ void RobotManager::AddRobot(const RobotID_t withID)
   if (_robot == nullptr) {
     LOG_INFO("RobotManager.AddRobot.Adding", "Adding robot with ID=%d", withID);
     _robot.reset(new Robot(withID, _context));
-    _initialConnection.reset(new RobotInitialConnection(withID,_context));
+    _initialConnection.reset(new RobotInitialConnection(_context));
   } else {
     LOG_WARNING("RobotManager.AddRobot.AlreadyAdded", "Robot already exists. Must remove first.");
   }  
@@ -104,7 +103,6 @@ void RobotManager::RemoveRobot(bool robotRejectedConnection)
       _context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDisconnected(0.0f)));
     }
 
-    _context->GetNeedsManager()->OnRobotDisconnected();
     _context->GetPerfMetric()->OnRobotDisconnected();
 
 #if USE_DAS

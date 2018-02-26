@@ -16,7 +16,6 @@
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/cozmoContext.h"
 #include "engine/debug/devLoggingSystem.h"
-#include "engine/needsSystem/needsManager.h"
 #include "engine/robot.h"
 #include "engine/cozmoAPI/comms/directGameComms.h"
 #include "engine/cozmoAPI/comms/tcpSocketComms.h"
@@ -456,8 +455,6 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
         case GameToEngineTag::RestoreRobotFromBackup:           return true;
         case GameToEngineTag::RequestRobotRestoreData:          return true;
         case GameToEngineTag::WipeRobotGameData:                return true;
-        case GameToEngineTag::WipeRobotNeedsData:               return true;
-        case GameToEngineTag::WipeDeviceNeedsData:              return true;
         case GameToEngineTag::RequestUnlockDataFromBackup:      return true;
         case GameToEngineTag::SetRobotImageSendMode:            return true;
         case GameToEngineTag::SaveImages:                       return true;
@@ -466,12 +463,6 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
         case GameToEngineTag::PlannerRunMode:                   return true;
         case GameToEngineTag::StartTestMode:                    return true;
         case GameToEngineTag::TransitionToNextOnboardingState:  return true;
-        case GameToEngineTag::RegisterOnboardingComplete:       return true;
-        case GameToEngineTag::SetNeedsActionWhitelist:          return true;
-        case GameToEngineTag::ForceSetDamagedParts:             return true;
-        case GameToEngineTag::SetNeedsPauseState:               return true;
-        case GameToEngineTag::SetNeedsPauseStates:              return true;
-        case GameToEngineTag::RegisterNeedsActionCompleted:     return true;
         case GameToEngineTag::RequestSetUnlock:                 return true;
         case GameToEngineTag::GetJsonDasLogsMessage:            return true;
         case GameToEngineTag::SaveCalibrationImage:             return true;
@@ -1135,15 +1126,12 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
       _sdkStatus.EnterMode(msg.isExternalSdkMode);
       
       UpdateIsSdkCommunicationEnabled();
-
-      _context->GetNeedsManager()->SetPaused(true);
     }
     
     
     void UiMessageHandler::OnExitSdkMode(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
     {
       const ExternalInterface::ExitSdkMode& msg = event.GetData().Get_ExitSdkMode();
-      _context->GetNeedsManager()->SetPaused(false);
 
       // Note: Robot's message handler also handles this event, and that disconnects the robot
       //       (that's how we ensure that we restore the robot to a safe default state)

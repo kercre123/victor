@@ -2,12 +2,12 @@
   "InitialVisionModes" :
   {
     // If a vision mode is not listed, it will be left in its default state
-    "DetectingMarkers"           : false,
+    "DetectingMarkers"           : true,
     "DetectingFaces"             : false,
     "DetectingPets"              : false,
     "DetectingMotion"            : false,
     "DetectingOverheadEdges"     : false,
-    "CheckingQuality"            : false,
+    "CheckingQuality"            : true,
     "EstimatingFacialExpression" : false,
     "DetectingSmileAmount"       : false,
     "DetectingGaze"              : false,
@@ -15,6 +15,7 @@
     "DetectingLaserPoints"       : false,
     "ComputingStatistics"        : false,
     "BuildingOverheadMap"        : false,
+    "DetectingVisualObstacles"   : false,
     "DetectingGeneralObjects"    : false
   },
   
@@ -97,6 +98,17 @@
   {
     "NumRows"          : 1000,    // Size of the overhead map. Bigger sizes do not impact computation, only memory
     "NumCols"          : 1000
+  },
+
+  "GroundPlaneClassifier" :
+  {
+    "MaxDepth"            : 7,
+    "MinSampleCount"      : 10,
+    "TruncatePrunedTree"  : true,
+    "Use1SERule"          : true,
+    "PositiveWeight"      : 1.0,
+    "OnTheFlyTrain"       : false,
+    "FileOrDirName"       : "config/engine/vision/groundClassifier/deskClassifier.yaml"
   },
   
   "ObjectDetector" :

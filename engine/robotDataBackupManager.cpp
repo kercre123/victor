@@ -44,8 +44,7 @@ RobotDataBackupManager::RobotDataBackupManager(Robot& robot)
 {
   if(_robot.HasExternalInterface())
   {
-    _signalHandles.push_back(_robot.GetRobotMessageHandler()->Subscribe(_robot.GetID(),
-                                                                        RobotInterface::RobotToEngineTag::robotAvailable,
+    _signalHandles.push_back(_robot.GetRobotMessageHandler()->Subscribe(RobotInterface::RobotToEngineTag::robotAvailable,
                                                                         std::bind(&RobotDataBackupManager::RobotConnected, this, std::placeholders::_1)));
     
     using namespace ExternalInterface;

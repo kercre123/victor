@@ -12,6 +12,7 @@
  *
  **/
 
+#include "audioEngine/audioTypeTranslator.h"
 #include "cozmoAnim/audio/cozmoAudioController.h"
 #include "cozmoAnim/animContext.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
@@ -131,7 +132,6 @@ CozmoAudioController::CozmoAudioController( const AnimContext* context )
     config.enableGameSyncPreparation  = true;
     config.enableStreamCache          = true;
 
-
     // Start your Engines!!!
     InitializeAudioEngine( config );
 
@@ -162,6 +162,7 @@ CozmoAudioController::CozmoAudioController( const AnimContext* context )
     if ( kWriteAudioOutputCapture ) {
       WriteAudioOutputCapture( true );
     }
+    SetDefaultListeners( { ToAudioGameObject( AudioMetaData::GameObjectType::Cozmo_Listener ) } );
 
     RegisterCladGameObjectsWithAudioController();
   }

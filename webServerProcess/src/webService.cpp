@@ -11,6 +11,7 @@
  *
  **/
 
+// #include "webServerProcess/src/webService.h"
 #include "webService.h"
 
 #if USE_DAS
@@ -23,6 +24,7 @@
 #include "util/logging/logging.h"
 #include "util/console/consoleSystem.h"
 #include "util/console/consoleChannel.h"
+#include "util/global/globalDefinitions.h"
 #include "util/helpers/ankiDefines.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/string/stringUtils.h"
@@ -52,8 +54,8 @@ namespace {
 
 //  const char* kNominalCPUFreqFile = "/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq";
   const char* kCPUFreqFile = "/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_cur_freq";
-  const char* kTemperatureFile = "/sys/devices/virtual/thermal/thermal_zone8/temp";
-  const char* kBatteryVoltageFile = "/sys/devices/soc.0/qpnp-linear-charger-8/power_supply/battery/voltage_now";
+  const char* kTemperatureFile = "/sys/devices/virtual/thermal/thermal_zone7/temp";
+  const char* kBatteryVoltageFile = "/sys/devices/soc/qpnp-linear-charger-8/power_supply/battery/voltage_now";
 #endif
 
 } // namespace
@@ -206,7 +208,7 @@ ProcessRequest(struct mg_connection *conn, Anki::Cozmo::WebService::WebService::
     bool timedOut = false;
     do
     {
-      std::this_thread::sleep_for(std::chrono::milliseconds(20));
+      std::this_thread::sleep_for(std::chrono::milliseconds(5));
       const auto now = steady_clock::now();
       const auto elapsed_s = duration_cast<seconds>(now - startTime).count();
       if (elapsed_s > kTimeoutDuration_s)
@@ -253,43 +255,20 @@ ConsoleVarSet(struct mg_connection *conn, void *cbdata)
 {
   const mg_request_info* info = mg_get_request_info(conn);
 
-  std::string key;
-  std::string value;
+  std::string query;
 
   if (info->content_length > 0) {
     char buf[info->content_length+1];
     mg_read(conn, buf, sizeof(buf));
     buf[info->content_length] = 0;
-    key = buf;
+    query = buf;
   }
   else if (info->query_string) {
-    key = info->query_string;
+    query = info->query_string;
   }
 
-  int returnCode = 1;
+  const int returnCode = ProcessRequest(conn, WebService::WebService::RequestType::RT_ConsoleVarSet, query, "");
 
-  while (!key.empty()) {
-    if (key.substr(0, 4) == "key=") {
-      std::string remainder;
-
-      size_t amp = key.find('&');
-      if (amp != std::string::npos) {
-        value = key.substr(amp+7);
-        key = key.substr(4, amp-4);
-        size_t amp = value.find('&');
-        if (amp != std::string::npos) {
-          remainder = value.substr(amp+1);
-          value = value.substr(0, amp);
-        }
-      }
-
-      returnCode = ProcessRequest(conn, WebService::WebService::RequestType::RT_ConsoleVarSet, key, value);
-
-      key = remainder;
-    } else {
-      break;
-    }
-  }
   return returnCode;
 }
 
@@ -325,6 +304,24 @@ ConsoleVarList(struct mg_connection *conn, void *cbdata)
   }
   
   const int returnCode = ProcessRequest(conn, WebService::WebService::RequestType::RT_ConsoleVarList, key, "");
+
+  return returnCode;
+}
+
+static int
+ConsoleFuncList(struct mg_connection *conn, void *cbdata)
+{
+  const mg_request_info* info = mg_get_request_info(conn);
+
+  std::string key;
+
+  if (info->query_string) {
+    if (!strncmp(info->query_string, "key=", 4)) {
+      key = std::string(info->query_string + 4);
+    }
+  }
+
+  const int returnCode = ProcessRequest(conn, Anki::Cozmo::WebService::WebService::RequestType::RT_ConsoleFuncList, key, "");
 
   return returnCode;
 }
@@ -379,6 +376,42 @@ ConsoleFuncCall(struct mg_connection *conn, void *cbdata)
 
   return returnCode;
 }
+
+static int
+ProcessRequestFromQueryString(struct mg_connection *conn, void *cbdata, WebService::WebService::RequestType type)
+{
+  const mg_request_info* info = mg_get_request_info(conn);
+  std::string request;
+  if (info->content_length > 0) {
+    char buf[info->content_length+1];
+    mg_read(conn, buf, sizeof(buf));
+    buf[info->content_length] = 0;
+    request = buf;
+  }
+  else if (info->query_string) {
+    request = info->query_string;
+  }
+  int returnCode = ProcessRequest(conn, type, request, "");
+  
+  return returnCode;
+}
+
+static int
+TempAppToEngine(struct mg_connection *conn, void *cbdata)
+{
+  return ProcessRequestFromQueryString( conn,
+                                        cbdata,
+                                        Anki::Cozmo::WebService::WebService::RequestType::RT_TempAppToEngine );
+}
+
+static int
+TempEngineToApp(struct mg_connection *conn, void *cbdata)
+{
+  return ProcessRequestFromQueryString( conn,
+                                        cbdata,
+                                        Anki::Cozmo::WebService::WebService::RequestType::RT_TempEngineToApp );
+}
+
 
 WebService::WebService::Request::Request(RequestType rt,
                                          const std::string& param1,
@@ -469,7 +502,46 @@ static int GetMainRobotInfo(struct mg_connection *conn, void *cbdata)
   const std::string serialNo = osState->GetSerialNumberAsString();
   const std::string ip       = osState->GetIPAddress();
 
-  mg_printf(conn, "%s\n%s\n%s\n", robotID.c_str(), serialNo.c_str(), ip.c_str());
+  const std::string buildConfig =
+#if defined(DEBUG)
+  "DEBUG";
+#elif defined(RELEASE)
+  "RELEASE";
+#elif defined(PROFILE)
+  "PROFILE";
+#elif defined(SHIPPING)
+  "SHIPPING";
+#else
+  "UNKNOWN";
+#endif
+
+#ifdef SIMULATOR
+
+  const std::string procVersion = "n/a (webots)";
+  const std::string procCmdLine = "n/a (webots)";
+
+#else
+
+  // This is a one-time read of info that won't change during the run,
+  // so we don't keep any file streams open
+  std::ifstream fs;
+
+  fs.open("/proc/version", std::ifstream::in);
+  std::string procVersion;
+  std::getline(fs, procVersion);
+  fs.close();
+
+  fs.open("/proc/cmdline", std::ifstream::in);
+  std::string procCmdLine;
+  std::getline(fs, procCmdLine);
+  fs.close();
+
+#endif
+
+  mg_printf(conn, "%s\n%s\n%s\n%s\n%s\n%s\n",
+            robotID.c_str(), serialNo.c_str(), ip.c_str(),
+            buildConfig.c_str(),
+            procVersion.c_str(), procCmdLine.c_str());
   return 1;
 }
 
@@ -515,23 +587,23 @@ static int GetPerfStats(struct mg_connection *conn, void *cbdata)
 
   std::string stat_temperature;
   if (active[1]) {
-    // Update temperature reading; convert milli-Celsius to Celsius
-    uint32_t cpuTemp_mC;
+    // Update temperature reading (Celsius)
+    uint32_t cpuTemp_C;
     _temperatureFile.seekg(0, _temperatureFile.beg);
-    _temperatureFile >> cpuTemp_mC;
-    const float cpuTemp_C = cpuTemp_mC * 0.001f;
-    std::stringstream ss;
-    ss << std::fixed << std::setprecision(3) << cpuTemp_C;
-    stat_temperature = ss.str();
+    _temperatureFile >> cpuTemp_C;
+    stat_temperature = std::to_string(cpuTemp_C);
   }
 
   std::string stat_batteryVoltage;
   if (active[2]) {
     // Battery voltage
-    uint32_t batteryVoltage;
+    uint32_t batteryVoltage_uV;
     _batteryVoltageFile.seekg(0, _batteryVoltageFile.beg);
-    _batteryVoltageFile >> batteryVoltage;
-    stat_batteryVoltage = std::to_string(batteryVoltage);
+    _batteryVoltageFile >> batteryVoltage_uV;
+    const float batteryVoltage_V = batteryVoltage_uV * 0.000001f;
+    std::stringstream ss;
+    ss << std::fixed << std::setprecision(6) << batteryVoltage_V;
+    stat_batteryVoltage = ss.str();
   }
 
 #endif
@@ -583,15 +655,13 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform, const Json::Val
   const std::string webserverPath = platform->pathToResource(Util::Data::Scope::Resources, "webserver");
 
   std::string rewrite;
-  rewrite += "/output=" + platform->pathToResource(Util::Data::Scope::Persistent, "");
+  rewrite += "/persistent=" + platform->pathToResource(Util::Data::Scope::Persistent, "");
   rewrite += ",";
   rewrite += "/resources=" + platform->pathToResource(Util::Data::Scope::Resources, "");
   rewrite += ",";
   rewrite += "/cache=" + platform->pathToResource(Util::Data::Scope::Cache, "");
   rewrite += ",";
   rewrite += "/currentgamelog=" + platform->pathToResource(Util::Data::Scope::CurrentGameLog, "");
-  rewrite += ",";
-  rewrite += "/external=" + platform->pathToResource(Util::Data::Scope::External, "");
 #if USE_DAS
   rewrite += ",";
   rewrite += "/daslog=" + std::string(DASGetLogDir());
@@ -641,12 +711,19 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform, const Json::Val
   mg_set_request_handler(_ctx, "/consolevarset", ConsoleVarSet, 0);
   mg_set_request_handler(_ctx, "/consolevarget", ConsoleVarGet, 0);
   mg_set_request_handler(_ctx, "/consolevarlist", ConsoleVarList, 0);
+  mg_set_request_handler(_ctx, "/consolefunclist", ConsoleFuncList, 0);
   mg_set_request_handler(_ctx, "/consolefunccall", ConsoleFuncCall, 0);
 
   mg_set_request_handler(_ctx, "/dasinfo", dasinfo, 0);
   mg_set_request_handler(_ctx, "/getinitialconfig", GetInitialConfig, 0);
   mg_set_request_handler(_ctx, "/getmainrobotinfo", GetMainRobotInfo, 0);
   mg_set_request_handler(_ctx, "/getperfstats", GetPerfStats, 0);
+
+  // todo (VIC-1398): remove
+  if( ANKI_DEV_CHEATS ) { 
+    mg_set_request_handler(_ctx, "/sendAppMessage", TempAppToEngine, 0);
+    mg_set_request_handler(_ctx, "/getAppMessages", TempEngineToApp, 0);
+  }
 
   const std::string& consoleVarsTemplate = platform->pathToResource(Util::Data::Scope::Resources, "webserver/consolevarsui.html");
   _consoleVarsUIHTMLTemplate = Anki::Util::StringFromContentsOfFile(consoleVarsTemplate);
@@ -720,22 +797,43 @@ void WebService::Update()
           break;
         case RT_ConsoleVarSet:
           {
-            const std::string& key = requestPtr->_param1;
-            const std::string& value = requestPtr->_param2;
+            std::string key = requestPtr->_param1;
 
-            Anki::Util::IConsoleVariable* consoleVar = consoleSystem.FindVariable(key.c_str());
-            if (consoleVar) {
-              if (consoleVar->ParseText(value.c_str() )) {
-                // success
-                PRINT_NAMED_INFO("WebService", "CONSOLE_VAR %s %s", key.c_str(), value.c_str());
-                requestPtr->_result = consoleVar->ToString() + "<br>";
+            while (!key.empty()) {
+              if (key.substr(0, 4) == "key=") {
+                std::string value;
+                std::string remainder;
+
+                size_t amp = key.find('&');
+                if (amp != std::string::npos) {
+                  value = key.substr(amp+7);
+                  key = key.substr(4, amp-4);
+                  size_t amp = value.find('&');
+                  if (amp != std::string::npos) {
+                    remainder = value.substr(amp+1);
+                    value = value.substr(0, amp);
+                  }
+                }
+
+                Anki::Util::IConsoleVariable* consoleVar = consoleSystem.FindVariable(key.c_str());
+                if (consoleVar) {
+                  if (consoleVar->ParseText(value.c_str() )) {
+                    // success
+                    PRINT_NAMED_INFO("WebService", "CONSOLE_VAR %s %s", key.c_str(), value.c_str());
+                    requestPtr->_result += consoleVar->ToString() + "<br>";
+                  }
+                  else {
+                    requestPtr->_result += "Error setting variable "+key+"="+value+"<br>";
+                  }
+                }
+                else {
+                  requestPtr->_result += "Variable not found "+key+"<br>";
+                }
+
+                key = remainder;
+              } else {
+                break;
               }
-              else {
-                requestPtr->_result = "Error setting variable<br>";
-              }
-            }
-            else {
-              requestPtr->_result = "Variable not found<br>";
             }
           }
           break;
@@ -759,6 +857,25 @@ void WebService::Update()
           }
           break;
 
+        case RT_ConsoleFuncList:
+          {
+            const std::string& key = requestPtr->_param1;
+            const auto keyLen = key.length();
+
+            const Anki::Util::ConsoleSystem::FunctionDatabase& funcDatabase = consoleSystem.GetFunctionDatabase();
+            for (Anki::Util::ConsoleSystem::FunctionDatabase::const_iterator it = funcDatabase.begin();
+                 it != funcDatabase.end(); ++it)
+            {
+              std::string label = it->second->GetID();
+              if (keyLen == 0 || Anki::Util::StringCaseInsensitiveEquals(label.substr(0, keyLen), key))
+              {
+                requestPtr->_result += label.c_str();
+                requestPtr->_result += "<br>\n";
+              }
+            }
+          }
+          break;
+
         case RT_ConsoleFuncCall:
           {
             const std::string& func = requestPtr->_param1;
@@ -766,7 +883,8 @@ void WebService::Update()
 
             Anki::Util::IConsoleFunction* consoleFunc = consoleSystem.FindFunction(func.c_str());
             if (consoleFunc) {
-              char outText[255+1];
+              // 256KB to accommodate output of animation names
+              char outText[256*1024+1] = {0};
               uint32_t outTextLength = sizeof(outText);
 
               ExternalOnlyConsoleChannel consoleChannel(outText, outTextLength);
@@ -774,14 +892,26 @@ void WebService::Update()
               bool success = consoleSystem.ParseConsoleFunctionCall(consoleFunc, args.c_str(), consoleChannel);
               if (success) {
                 PRINT_NAMED_INFO("WebService", "CONSOLE_FUNC %s %s success", func.c_str(), args.c_str());
+                requestPtr->_result += outText;
               }
               else {
                 PRINT_NAMED_INFO("WebService", "CONSOLE_FUNC %s %s failed %s", func.c_str(), args.c_str(), outText);
+                requestPtr->_result += outText;
               }
             }
             else {
               PRINT_NAMED_INFO("WebService", "CONSOLE_FUNC %s %s not found", func.c_str(), args.c_str());
             }
+          }
+          break;
+        case RT_TempAppToEngine:
+          {
+            _appToEngineOnData.emit( requestPtr->_param1 );
+          }
+          break;
+        case RT_TempEngineToApp:
+          {
+            requestPtr->_result = _appToEngineRequestData.emit();
           }
           break;
         case RT_WebsocketOnSubscribe:

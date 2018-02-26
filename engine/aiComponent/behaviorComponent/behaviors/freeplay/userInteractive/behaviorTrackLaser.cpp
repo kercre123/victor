@@ -341,7 +341,6 @@ void BehaviorTrackLaser::OnBehaviorDeactivated()
 {
   if(_shouldSendTrackingObjectiveAchieved){
     BehaviorObjectiveAchieved(BehaviorObjective::LaserTracked);
-    NeedActionCompleted();
   }
   
   Cleanup();

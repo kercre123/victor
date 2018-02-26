@@ -682,7 +682,7 @@ namespace Anki {
       f32 currDesiredAngularVel, currDesiredAngle;
       vpg_.Step(currDesiredAngularVel, currDesiredAngle);
 
-      Radians currAngle = Cozmo::Localization::GetCurrPose_angle();
+      const Radians& currAngle = Cozmo::Localization::GetCurrPose_angle();
       
       // Compute the velocity along the arc length equivalent of currAngularVel.
       // currDesiredAngularVel / PI = arcVel / (PI * R)

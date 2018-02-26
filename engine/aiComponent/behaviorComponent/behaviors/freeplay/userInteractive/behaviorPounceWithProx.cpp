@@ -42,7 +42,7 @@ BehaviorPounceWithProx::BehaviorPounceWithProx(const Json::Value& config)
     EngineToGameTag::RobotObservedMotion
   });
   _instanceParams.inRangeCondition =
-    BEIConditionFactory::CreateBEICondition( config["wantsToBeActivatedCondition"] );
+    BEIConditionFactory::CreateBEICondition( config["wantsToBeActivatedCondition"], GetDebugLabel() );
 }
 
 
@@ -63,14 +63,14 @@ void BehaviorPounceWithProx::GetAllDelegates(std::set<IBehavior*>& delegates) co
 void BehaviorPounceWithProx::InitBehavior()
 {
   _instanceParams.inRangeCondition->Init(GetBEI());
-  _instanceParams.inRangeCondition->Reset(GetBEI());
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPounceWithProx::OnBehaviorActivated()
 {
-  
+  _instanceParams.inRangeCondition->SetActive(GetBEI(), true);
+
   const f32 currentTimeInSeconds = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _lifetimeParams = LifetimeParams();
   _lifetimeParams.pounceAtTime_s = currentTimeInSeconds + _instanceParams.pounceTimeout_s;
@@ -80,6 +80,7 @@ void BehaviorPounceWithProx::OnBehaviorActivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPounceWithProx::OnBehaviorDeactivated()
 {
+  _instanceParams.inRangeCondition->SetActive(GetBEI(), false);
 }
 
 

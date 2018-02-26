@@ -20,12 +20,13 @@
 
     var perfAutoUpdate = false;
     var perfAutoUpdatePeriod_ms = 1000;
+    var perfAutoUpdatePeriodMin_ms = 250;   // Minimum auto update period
     var perfAutoUpdateTimerId = 0;
 
     var perfItems = [
         { activeUpdate:true, val:"", hasGraph:true,  graphMax:1500000, desc:"CPU freq (kHz)" },
-        { activeUpdate:true, val:"", hasGraph:true,  graphMax:150,     desc:"Temperature (Celcius)" },
-        { activeUpdate:true, val:"", hasGraph:true,  graphMax:4000000, desc:"Battery voltage" }
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:150,     desc:"Temperature (Celsius)" },
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:5,       desc:"Battery (volts)" }
     ];
 
     function ClearAllPages() {
@@ -38,7 +39,7 @@
     }
 
     function SetPage(pageName) {
-        // Page exit actions:
+        // Page EXIT actions:
         if (curPageName == "page_perf") {
             if (perfAutoUpdate) {
                 clearTimeout(perfAutoUpdateTimerId);
@@ -53,7 +54,7 @@
 
         curPageName = pageName;
 
-        // Page entry actions:
+        // Page ENTRY actions:
         if (pageName == "page_main") {
             if (!mainPageInitialized) {
                 mainPageInitialized = true;
@@ -62,19 +63,25 @@
                     $("#main_robot_id").html(payload[0]);
                     $("#main_robot_serial_number").html(payload[1]);
                     $("#main_robot_ip_address").html(payload[2]);
+                    $("#main_build_config").html(payload[3]);
+                    $("#main_os_version").html(payload[4]);
+                    $("#main_cmd_line").html(payload[5]);
                 })
             }
         } else if (pageName == "page_perf") {
             UpdatePerfHeader();
             var numItems = perfItems.length;
             for (var i = 0; i < numItems; i++) {
-                // Set checkbox states to reflect the internal flags
                 var item = perfItems[i];
+                // Set checkbox states to reflect the internal flags
                 $('#' + 'id_perf_checkbox_' + i).prop("checked", item["activeUpdate"]);
                 if (item["hasGraph"]) {
                     $('#' + 'id_graph_' + i).progressbar({
                         max: parseFloat(item["graphMax"]),
-                        value: parseFloat(item["val"])
+                        value: parseFloat(item["val"]),
+                        create: function(event, ui)
+                            {$(this).find('.ui-widget-header').css
+                            ({'background-color':'darkgrey','height':'16px'})}
                     })
                 }
             }
@@ -102,7 +109,7 @@
     }
     function ButtonHandler_SetUpdatePeriod() {
         var v = $("#update_freq_value").val();
-        perfAutoUpdatePeriod_ms = v;
+        perfAutoUpdatePeriod_ms = Math.max(v, perfAutoUpdatePeriodMin_ms);
         UpdatePerfHeader();
     }
     function ButtonHandler_UpdateNow() {
@@ -118,7 +125,6 @@
         for (var i = 0; i < numItems; i++) {
             whichStats += (perfItems[i]["activeUpdate"] ? "1" : "0");
         }
-        // console.log("SendPerfUpdateRequest: " + triggeredByTimer + "; whichStats=" + whichStats);
         $.post("/getperfstats?" + whichStats, function(data) {
             var payload = data.split("\n");
             for (var i = 0; i < numItems; i++) {
@@ -145,6 +151,7 @@
         $("#btn_toggle_auto_update").click(ButtonHandler_ToggleAutoUpdate);
         $("#btn_set_update_period").click(ButtonHandler_SetUpdatePeriod);
         $("#btn_update_now").click(ButtonHandler_UpdateNow);
+
         $.post("getinitialconfig", function(data) {
             var payload = data.split("\n");
             $("#id_title0").html(payload[0]);
@@ -162,7 +169,7 @@
             var s = "<tr><td><input id='id_perf_checkbox_" + r + "' type='checkbox' onClick='onPerfRowCheckboxClickHandler(" + r + ")'/>" +
                 "</td><td>" + data["desc"] +
                 "</td><td width='100px' id='id_perf_row_value_" + r +
-                "'></td><td width='200px' id='id_graph_" + r + "'></td></tr>";
+                "'></td><td width='300px' id='id_graph_" + r + "'></td></tr>";
             table.append(s);
         }
     });
@@ -177,7 +184,6 @@
                 event.preventDefault();
                 return;
             }
-            // ELSE other button handlers go here
 
             event.preventDefault();
         });
@@ -190,7 +196,6 @@
         });
     });
     </script>
-
 </head>
 
 <!-- page content -->
@@ -214,7 +219,7 @@
         <div id="page_main">
             <table border=0>
                 <tr>
-                    <td style='text-align:right'>Connected to:</td><td id="main_robot_connection_type"></td>
+                    <td width='160px' style='text-align:right'>Connected to:</td><td id="main_robot_connection_type"></td>
                 </tr>
                 <tr>
                     <td style='text-align:right'>Robot ID:</td><td id="main_robot_id"></td>
@@ -224,6 +229,15 @@
                 </tr>
                 <tr>
                     <td style='text-align:right'>IP Address:</td><td id="main_robot_ip_address"></td>
+                </tr>
+                <tr>
+                    <td style='text-align:right'>Build Configuration:</td><td id="main_build_config"></td>
+                </tr>
+                <tr>
+                    <td style='text-align:right'>OS Version:</td><td id="main_os_version"></td>
+                </tr>
+                <tr>
+                    <td style='text-align:right'>Command Line:</td><td id="main_cmd_line"></td>
                 </tr>
             </table>
             <br>
@@ -262,14 +276,14 @@
 
         <div id="page_perf">
             <br>
-            <button id="btn_update_now">Update NOW</button>&nbsp&nbsp&nbsp&nbsp
-            <input id="update_freq_value" type="number" min="1" max="100000"></input>
-            <button id="btn_set_update_period">Set update period (ms)</button>
+            <button id='btn_update_now'>Update NOW</button>&nbsp&nbsp&nbsp&nbsp
+            <input  id='update_freq_value' type='number' max='100000'></input>
+            <button id='btn_set_update_period'>Set update period (ms)</button>
             <span   id='perf_cur_update_period'></span>&nbsp&nbsp&nbsp&nbsp
-            <button id="btn_toggle_auto_update">Toggle Auto Update</button>
+            <button id='btn_toggle_auto_update'>Toggle Auto Update</button>
             <span   id='perf_auto_update'></span>
             <br><br>
-            <table id="perf_table" border=1>
+            <table id='perf_table' border=1>
                 <tr>
                     <th>Active</th><th>Description</th><th>Value</th><th>Graph</th>
                 </tr>
@@ -278,11 +292,10 @@
 
         <div id="page_files">
             <div>
-                <input type="submit" value="output">
+                <input type="submit" value="persistent">
                 <input type="submit" value="resources">
                 <input type="submit" value="cache">
                 <input type="submit" value="currentgamelog">
-                <input type="submit" value="external">
             </div>
         </div>
 

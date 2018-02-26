@@ -90,11 +90,16 @@ std::string ProxSensorComponent::GetLogRow()
 
 bool ProxSensorComponent::GetLatestDistance_mm(u16& distance_mm) const
 {
-  const bool readingValid = IsSensorReadingValid(_latestData);
+  const bool readingValid = IsLatestReadingValid();
   if (readingValid) {
     distance_mm = _latestData.distance_mm;
   }
   return readingValid;
+}
+  
+bool ProxSensorComponent::IsLatestReadingValid() const
+{
+  return IsSensorReadingValid(_latestData);
 }
 
 

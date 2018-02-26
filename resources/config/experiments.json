@@ -26,68 +26,6 @@
             ],
             "audience_tags": [],
             "forced_variations": []
-        },
-        {
-            "key": "unconnected_decay_rates",
-            "version": 0,
-            "activation_mode": "manual",
-            "start_time_utc_iso8601": "2017-09-21T00:00:00Z",
-            "stop_time_utc_iso8601": "2017-11-02T00:00:00Z",
-            "pause_time_utc_iso8601": "",
-            "resume_time_utc_iso8601": "",
-            "pop_frac_pct": 100,
-            "variations": [
-                {
-                    "key": "control",
-                    "pop_frac_pct": 34
-                },
-                {
-                    "key": "variationA",
-                    "pop_frac_pct": 33
-                },
-                {
-                    "key": "variationB",
-                    "pop_frac_pct": 33
-                }
-            ],
-            "audience_tags": [
-                "app_user_d0"
-            ],
-            "forced_variations": []
-        },
-        {
-            "key": "preholiday_tuning",
-            "version": 0,
-            "activation_mode": "manual",
-            "start_time_utc_iso8601": "2017-12-07T00:00:00Z",
-            "stop_time_utc_iso8601": "2018-01-01T00:00:00Z",
-            "pause_time_utc_iso8601": "",
-            "resume_time_utc_iso8601": "",
-            "pop_frac_pct": 100,
-            "variations": [
-                {
-                    "key": "control",
-                    "pop_frac_pct": 80
-                },
-                {
-                    "key": "testAoff",
-                    "pop_frac_pct": 5
-                },
-                {
-                    "key": "testBoff",
-                    "pop_frac_pct": 5
-                },
-                {
-                    "key": "testCoff",
-                    "pop_frac_pct": 5
-                },
-                {
-                    "key": "alloff",
-                    "pop_frac_pct": 5
-                }
-            ],
-            "audience_tags": [],
-            "forced_variations": []
         }
     ]
 }

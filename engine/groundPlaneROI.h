@@ -68,6 +68,9 @@ public:
   
   // Creates the mask on first request and then just returns that one from then on
   const Vision::Image& GetOverheadMask() const;
+
+  // Returns the overhead mask updated with the current head position
+  const Vision::Image GetVisibleOverheadMask(const Matrix_3x3f& H, s32 imgWidth, s32 imgHeight) const;
   
   Point2f GetOverheadImageOrigin() const { return Point2f{_dist, -_widthFar*0.5f}; }
   

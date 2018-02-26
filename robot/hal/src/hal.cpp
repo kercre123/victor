@@ -15,23 +15,17 @@
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 
-//#include "../spine/spine_hal.h"
 #include "../spine/spine.h"
+#include "../spine/cc_commander.h"
 
 #include "schema/messages.h"
 #include "clad/types/proxMessages.h"
 
 #include <errno.h>
 
-#define IMU_WORKING 1
-
-// Debugging Defines
-#define FRAMES_PER_RESPONSE  1  //send response every N input frames
-
-
 namespace Anki {
 namespace Cozmo {
- 
+
 BodyToHead* bodyData_; //buffers are owned by the code that fills them. Spine owns this one
 HeadToBody headData_;  //-we own this one.
 
@@ -43,12 +37,12 @@ namespace { // "Private members"
   std::chrono::steady_clock::time_point timeOffset_ = std::chrono::steady_clock::now();
 
 
-#ifdef USING_ANDROID_PHONE
+#ifdef HAL_DUMMY_BODY
   BodyToHead dummyBodyData_ = {
     .cliffSense = {800, 800, 800, 800}
   };
 #endif
-  
+
   // update every tick of the robot:
   // some touch values are 0xFFFF, which we want to ignore
   // so we cache the last non-0xFFFF value and return this as the latest touch sensor reading
@@ -57,9 +51,6 @@ namespace { // "Private members"
   struct spine_ctx spine_;
   uint8_t frameBuffer_[SPINE_B2H_FRAME_LEN];
   uint8_t readBuffer_[4096];
-
-  bool chargingEnabled_ = false;
-  
 } // "private" namespace
 
 // Forward Declarations
@@ -83,25 +74,13 @@ ssize_t robot_io(spine_ctx_t spine, uint32_t sleepTimeMicroSec = 1000)
     }
   }
   return r;
-
-  // uint8_t buffer[2048];
-  // int fd = spine_get_fd(spine);
-  // ssize_t r = read(fd, buffer, sizeof(buffer));
-  // if (r > 0) {
-  //   r = spine_receive_data(spine, (const void*)buffer, r);
-  // } else if (r < 0) {
-  //   if (errno == EAGAIN) {
-  //     r = 0;
-  //   }
-  // }
-  // return r;
 }
 
 Result spine_wait_for_first_frame(spine_ctx_t spine)
 {
   bool initialized = false;
   int read_count = 0;
-  
+
   while (!initialized) {
     ssize_t r = spine_parse_frame(spine, &frameBuffer_, sizeof(frameBuffer_), NULL);
 
@@ -114,6 +93,14 @@ Result spine_wait_for_first_frame(spine_ctx_t spine)
         const struct spine_frame_b2h* frame = (const struct spine_frame_b2h*)frameBuffer_;
         bodyData_ = (BodyToHead*)&frame->payload;
       }
+      else if (hdr->payload_type == PAYLOAD_CONT_DATA) {
+        ccc_data_process( (ContactData*)(hdr+1) );
+        continue;
+      }
+      else {
+        LOGD("Unknown Frame Type\n");
+      }
+
     } else {
       // r == 0 (waiting)
       if (read_count > 50) {
@@ -139,14 +126,13 @@ Result HAL::Init()
 
 //#if IMU_WORKING
   InitIMU();
-//#endif
 
   if (InitRadio() != RESULT_OK) {
     AnkiError("HAL.Init.InitRadioFailed", "");
     return RESULT_FAIL;
   }
 
-#ifndef USING_ANDROID_PHONE
+#ifndef HAL_DUMMY_BODY
   {
     AnkiInfo("HAL.Init.StartingSpineHAL", "");
 
@@ -172,7 +158,7 @@ Result HAL::Init()
   bodyData_ = &dummyBodyData_;
 #endif
   assert(bodyData_ != nullptr);
-  
+
 
   for (int m = MOTOR_LIFT; m < MOTOR_COUNT; m++) {
     MotorResetPosition((MotorID)m);
@@ -200,6 +186,10 @@ Result spine_get_frame() {
         result = RESULT_OK;
         continue;
       }
+      else {
+        LOGD("Unknown Frame Type\n");
+      }
+
     } else {
       // get more data
       robot_io(&spine_, 1000);
@@ -209,30 +199,39 @@ Result spine_get_frame() {
   return result;
 }
 
+
+extern "C"  ssize_t spine_write_ccc_frame(spine_ctx_t spine, const struct ContactData* ccc_payload);
+
 Result HAL::Step(void)
 {
   Result result = RESULT_OK;
 
-  // Send whatever data we have
-  static int repeater = FRAMES_PER_RESPONSE;
-  if (--repeater <= 0) {
-    repeater = FRAMES_PER_RESPONSE;
-    headData_.framecounter++;
+#ifndef HAL_DUMMY_BODY
+  headData_.framecounter++;
 
-    // Send zero motor power when charging is enabled
-    if(chargingEnabled_)
-    {
-      memset(headData_.motorPower, 0, sizeof(headData_.motorPower));
-    }
+  //check if the charge contact commander is active,
+  //if so, override normal operation
+  bool commander_is_active = ccc_commander_is_active();
+  //  struct HeadToBody* h2bp = (commander_is_active) ? ccc_data_get_response() : &headData_;
+  struct HeadToBody* h2bp =  &headData_;
 
-    spine_write_h2b_frame(&spine_, &headData_);
+  spine_write_h2b_frame(&spine_, h2bp);
+
+  struct ContactData* ccc_response = ccc_text_response();
+  if (ccc_response) {
+    spine_write_ccc_frame(&spine_, ccc_response);
   }
+#endif // #ifndef HAL_DUMMY_BODY
 
   ProcessIMUEvents();
 
+#ifndef HAL_DUMMY_BODY
   do {
     result = spine_get_frame();
   } while(result != RESULT_OK);
+#else
+  dummyBodyData_.framecounter++;
+#endif // #ifndef HAL_DUMMY_BODY
 
   ProcessTouchLevel(); // filter invalid values from touch sensor
 
@@ -278,9 +277,10 @@ void HAL::SetTimeStamp(TimeStamp_t t)
 void HAL::SetLED(LEDId led_id, u32 color)
 {
   assert(led_id >= 0 && led_id < LED_COUNT);
-  
-  const u32 ledIdx = (u32)led_id;
-  
+
+  // Light order is swapped in syscon
+  const u32 ledIdx = LED_COUNT - led_id - 1;
+
   uint8_t r = (color >> LED_RED_SHIFT) & LED_CHANNEL_MASK;
   uint8_t g = (color >> LED_GRN_SHIFT) & LED_CHANNEL_MASK;
   uint8_t b = (color >> LED_BLU_SHIFT) & LED_CHANNEL_MASK;
@@ -355,22 +355,22 @@ bool HAL::BatteryIsCharging()
   static bool isCharging = false;
   static bool wasAboveThresh = false;
   static u32 lastTransition_ms = HAL::GetTimeStamp();
-  
+
   const int32_t thresh = 2000; // raw ADC value?
   const u32 debounceTime_ms = 200U;
-  
+
   const bool isAboveThresh = bodyData_->battery.charger > thresh;
-  
+
   if (isAboveThresh != wasAboveThresh) {
     lastTransition_ms = HAL::GetTimeStamp();
   }
-  
+
   const bool canTransition = HAL::GetTimeStamp() > lastTransition_ms + debounceTime_ms;
-  
+
   if (canTransition) {
     isCharging = isAboveThresh;
   }
-  
+
   wasAboveThresh = isAboveThresh;
   return isCharging;
   //return bodyData_->battery.flags & isCharging;
@@ -385,7 +385,9 @@ bool HAL::BatteryIsOnCharger()
 
 bool HAL::BatteryIsChargerOOS()
 {
-  return bodyData_->battery.flags & chargerOOS;
+  return false;
+  // BRC: no longer supported in DVT2
+  // bodyData_->battery.flags & chargerOOS;
 }
 
 u8 HAL::GetWatchdogResetCounter()

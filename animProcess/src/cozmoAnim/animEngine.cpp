@@ -16,6 +16,8 @@
 
 #include "cozmoAnim/audio/engineRobotAudioInput.h"
 #include "cozmoAnim/animation/animationStreamer.h"
+#include "cozmoAnim/faceDisplay/faceDebugDraw.h"
+#include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "cozmoAnim/robotDataLoader.h"
 #include "cozmoAnim/textToSpeech/textToSpeechComponent.h"
 
@@ -27,6 +29,7 @@
 
 #include "osState/osState.h"
 
+#include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
 #include "util/time/universalTime.h"
 
@@ -99,6 +102,7 @@ Result AnimEngine::Init()
 
   _context->GetWebService()->Start(_context->GetDataPlatform(),
                                    _context->GetDataLoader()->GetWebServerAnimConfig());
+  FaceDisplay::GetDebugDraw()->SetWebService( _context->GetWebService() );
 
   LOG_INFO("AnimEngine.Init.Success","Success");
   _isInitialized = true;

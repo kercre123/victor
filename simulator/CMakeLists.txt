@@ -7,7 +7,7 @@ if (NOT MACOSX)
 endif()
 
 set(CONTROLLERS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/controllers")
-set(BUILT_RESOURCES_DIR "${CMAKE_BINARY_DIR}/assets/cozmo_resources")
+set(BUILT_RESOURCES_DIR "${CMAKE_BINARY_DIR}/data/assets/cozmo_resources")
 
 include(opencv)
 include(symlink_target)
@@ -123,13 +123,8 @@ target_link_libraries(webotsCtrlViz
   PRIVATE
   util
   kazmath
-  cti_common
-  cti_vision
-  cti_messaging
-  cti_common_robot
   cozmo_engine
   webotsCtrlCommon
-  ${OPENCV_LIBS}
   ${PLATFORM_LIBS}
 )
 
@@ -247,9 +242,9 @@ anki_build_cxx_executable(webotsCtrlGameEngine2 ${ANKI_SRCLIST_DIR})
 
 target_link_libraries(webotsCtrlGameEngine2
   PRIVATE
-  androidHAL
   util
   kazmath
+  cameraService
   cti_common
   cti_common_robot
   cti_vision
@@ -286,14 +281,9 @@ target_link_libraries(webotsCtrlKeyboard
   PRIVATE
   util
   kazmath
-  cti_common
-  cti_vision
-  cti_messaging
-  cti_planning
   webotsCtrlCommon
   cozmo_engine
   robot_interface
-  ${OPENCV_LIBS}
   ${PLATFORM_LIBS}
 )
 

@@ -20,7 +20,6 @@
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "engine/components/visionComponent.h"
 #include "engine/deviceData/deviceDataManager.h"
-#include "engine/needsSystem/needsManager.h"
 #include "engine/perfMetric.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/utils/parsingConstants/parsingConstants.h"
@@ -198,15 +197,6 @@ Result CozmoEngine::Init(const Json::Value& config) {
 
   _context->GetExperiments()->InitExperiments();
 
-  const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  _context->GetNeedsManager()->Init(currentTime,
-                                    _context->GetDataLoader()->GetRobotNeedsConfig(),
-                                    _context->GetDataLoader()->GetStarRewardsConfig(),
-                                    _context->GetDataLoader()->GetRobotNeedsActionsConfig(),
-                                    _context->GetDataLoader()->GetRobotNeedsDecayConfig(),
-                                    _context->GetDataLoader()->GetRobotNeedsHandlersConfig(),
-                                    _context->GetDataLoader()->GetLocalNotificationConfig());
-
   _context->GetRobotManager()->Init(_config);
 
   // TODO: Specify random seed from config?
@@ -315,10 +305,10 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
     if (! firstUpdate)
     {
       const double timeSinceLastUpdate = startUpdateTimeMs - lastUpdateTimeMs;
-      const double maxLatency = BS_TIME_STEP + 15.;
+      const double maxLatency = BS_TIME_STEP_MS + 15.;
       if (timeSinceLastUpdate > maxLatency)
       {
-        Anki::Util::sEventF("cozmo_engine.update.sleep.slow", {{DDATA,TO_DDATA_STR(BS_TIME_STEP)}}, "%.2f", timeSinceLastUpdate);
+        Anki::Util::sEventF("cozmo_engine.update.sleep.slow", {{DDATA,TO_DDATA_STR(BS_TIME_STEP_MS)}}, "%.2f", timeSinceLastUpdate);
       }
     }
     lastUpdateTimeMs = startUpdateTimeMs;
@@ -408,9 +398,6 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
         return result;
       }
       
-      const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-      _context->GetNeedsManager()->Update(currentTime_s);
-
       // Let the robot manager do whatever it's gotta do to update the
       // robots in the world.
       _context->GetRobotManager()->UpdateRobot();
@@ -426,10 +413,10 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
   {
     const double endUpdateTimeMs = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
     const double updateLengthMs = endUpdateTimeMs - startUpdateTimeMs;
-    const double maxUpdateDuration = BS_TIME_STEP;
+    const double maxUpdateDuration = BS_TIME_STEP_MS;
     if (updateLengthMs > maxUpdateDuration)
     {
-      static const std::string targetMs = std::to_string(BS_TIME_STEP);
+      static const std::string targetMs = std::to_string(BS_TIME_STEP_MS);
       Anki::Util::sEventF("cozmo_engine.update.run.slow",
                           {{DDATA, targetMs.c_str()}},
                           "%.2f", updateLengthMs);
@@ -591,8 +578,6 @@ Result CozmoEngine::ConnectToRobotProcess()
       return result;
     }
   }
-
-  _context->GetNeedsManager()->InitAfterConnection();
 
   return RESULT_OK;
 }

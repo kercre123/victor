@@ -49,6 +49,13 @@ public:
     return *castPtr;
   }
 
+  template<typename T>
+  T* GetBasePtr() const { 
+    ANKI_VERIFY(IsValueValid(),"ComponentWrapper.GetValue.ValueIsNotValid",""); 
+    auto castPtr = static_cast<T*>(_componentPtr); 
+    return castPtr;
+  }
+
 protected:
   void* _componentPtr = nullptr;
 

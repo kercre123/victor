@@ -13,7 +13,6 @@
 
 
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
-#include "engine/aiComponent/behaviorComponent/behaviorHelpers/iHelper.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/robotDataLoader.h"
 
@@ -61,7 +60,7 @@ class TestBehaviorFramework{
 public:
   // Create the test behavior framework with an appropriate robot
   TestBehaviorFramework(int robotID = 1,
-                        CozmoContext* context = nullptr);
+                        CozmoContext* context = cozmoContext);
   ~TestBehaviorFramework();
   Robot& GetRobot(){ assert(_robot); return *_robot;}
 
@@ -187,115 +186,6 @@ public:
   bool CallCancelDelegates(bool val) { return CancelDelegates(val); }
   
 };
-  
-
-class TestBehaviorWithHelpers : public ICozmoBehavior
-{
-public:
-  
-  TestBehaviorWithHelpers(const Json::Value& config)
-  : ICozmoBehavior(config)
-  {
-  }
-  
-  enum class UpdateResult {
-    UseBaseClass,
-    Running,
-    Complete
-  };
-  
-  // for debugging, controls what UpdateInternal will return
-  void SetUpdateResult(UpdateResult res);
-  
-  void DelegateToHelperOnNextUpdate(HelperHandle handleToRun,
-                                    SimpleCallback successCallback,
-                                    SimpleCallback failureCallback);
-  void StopHelperOnNextUpdate();
-  
-  void SetActionToRunOnNextUpdate(IActionRunner* action);
-  
-  virtual bool WantsToBeActivatedBehavior() const override;
-  
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
-    modifiers.wantsToBeActivatedWhenCarryingObject = true;
-    modifiers.behaviorAlwaysDelegates = false;
-  }
-
-  
-  virtual void OnBehaviorActivated() override;
-  
-  virtual void BehaviorUpdate() override;
-  
-  virtual void  OnBehaviorDeactivated() override;
-  
-  bool _lastDelegateSuccess = false;
-  bool _lastDelegateIfInControlResult = false;
-  int _updateCount = 0;
-  
-private:
-  UpdateResult _updateResult = UpdateResult::UseBaseClass;
-  IActionRunner* _nextActionToRun = nullptr;
-  bool _stopHelper = false;
-  HelperHandle _helperHandleToDelegate;
-  SimpleCallback _successCallbackToDelegate;
-  SimpleCallback _failureCallbackToDelegate;
-};
-
-////////////////////////////////////////////////////////////////////////////////
-// Test Helper which runs actions and delegates to other helpers
-////////////////////////////////////////////////////////////////////////////////
-
-static int _TestHelper_g_num = 0;
-
-class TestHelper : public IHelper
-{
-public:
-  TestHelper(BehaviorExternalInterface& bei,ICozmoBehavior& behavior, const std::string& name = "");
-  
-  void SetActionToRunOnNextUpdate(IActionRunner* action);
-  
-  void StartAutoAction();
-  
-  void StopAutoAction();
-  
-  virtual void OnActivatedHelper() override;
-  
-  virtual void StopInternal(bool isActive) override;
-  virtual bool ShouldCancelDelegates() const override;
-  virtual IHelper::HelperStatus InitBehaviorHelper() override;
-  virtual IHelper::HelperStatus UpdateWhileActiveInternal() override;
-  void CheckActions();
-  
-  WeakHelperHandle GetSubHelper();
-  TestHelper* GetSubHelperRaw();
-  
-  IHelper::HelperStatus _updateResult = IHelper::HelperStatus::Running;
-  mutable bool _cancelDelegates = false;
-  bool _delegateAfterAction = false;
-  bool _thisSucceedsOnActionSuccess = false;
-  bool _immediateCompleteOnSubSuccess = false;
-  
-  int _initOnStackCount = 0;
-  int _stopCount = 0;
-  mutable int _shouldCancelCount = 0;
-  int _initCount = 0;
-  int _updateCount = 0;
-  int _actionCompleteCount = 0;
-  
-  std::string _name;
-  
-private:
-  IActionRunner* _nextActionToRun = nullptr;
-  
-  bool _selfActionDone = false;
-  
-  ICozmoBehavior& _behavior;
-  
-  WeakHelperHandle _subHelper;
-  TestHelper* _subHelperRaw = nullptr;
-};
-
-
   
 }
 }

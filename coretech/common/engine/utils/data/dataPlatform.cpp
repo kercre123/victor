@@ -25,11 +25,9 @@ namespace Util {
 namespace Data {
 
 
-DataPlatform::DataPlatform(const std::string &filesPath, const std::string &cachePath,
-  const std::string &externalPath, const std::string &resourcesPath)
-: _filesPath(filesPath)
+DataPlatform::DataPlatform(const std::string &persistentPath, const std::string &cachePath, const std::string &resourcesPath)
+: _persistentPath(persistentPath)
 , _cachePath(cachePath)
-, _externalPath(externalPath)
 , _resourcesPath(resourcesPath)
 {
 
@@ -47,8 +45,7 @@ std::string DataPlatform::pathToResource(const Scope& resourceScope, const std::
   if (s.empty()) {
     switch (resourceScope) {
       case Scope::Persistent:
-        s += _filesPath;
-        s += "/output";
+        s += _persistentPath;
         break;
       case Scope::Resources:
         s += _resourcesPath;
@@ -59,9 +56,6 @@ std::string DataPlatform::pathToResource(const Scope& resourceScope, const std::
       case Scope::CurrentGameLog:
         s += _cachePath;
         s += "/gameLogs";
-        break;
-      case Scope::External:
-        s += _externalPath;
         break;
     }
     if (!resourceName.empty()) {

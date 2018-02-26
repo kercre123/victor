@@ -85,7 +85,34 @@ bool GroundPlaneROI::GetVisibleGroundQuad(const Matrix_3x3f& H, s32 imgWidth, s3
 
   return intersectsBorder;
 } // GetVisibleGroundQuad()
+
+const Vision::Image GroundPlaneROI::GetVisibleOverheadMask(const Matrix_3x3f& H, s32 imgWidth, s32 imgHeight) const
+{
+  // Start with full overhead mask
+  Vision::Image mask(GetOverheadMask());
   
+  // Blank out anything that is closer than nearx or farther than farx
+  f32 xnearF32, xfarF32;
+  GetVisibleX(H, imgWidth, imgHeight, xnearF32, xfarF32);
+  const s32 xnear = std::round(xnearF32);
+  const s32 xfar  = std::round(xfarF32);
+  if(xnear > 0)
+  {
+    Rectangle<s32> nearROI(0,0,xnear,mask.GetNumRows());
+    Vision::Image ROI = mask.GetROI(nearROI);
+    ROI.FillWith(0);
+  }
+  
+  if(xfar < mask.GetNumCols())
+  {
+    Rectangle<s32> farROI(xfar,0,mask.GetNumCols()-xfar,mask.GetNumRows());
+    Vision::Image ROI = mask.GetROI(farROI);
+    ROI.FillWith(0);
+  }
+  
+  return mask;
+}
+
   
 void GroundPlaneROI::GetVisibleX(const Matrix_3x3f& H, s32 imageWidth, s32 imageHeight,
                                  f32& near, f32& far) const

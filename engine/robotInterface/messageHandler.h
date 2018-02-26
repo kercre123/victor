@@ -56,10 +56,10 @@ public:
 
   virtual Result ProcessMessages();
 
-  virtual Result SendMessage(const RobotID_t robotId, const RobotInterface::EngineToRobot& msg, bool reliable = true, bool hot = false);
+  virtual Result SendMessage(const RobotInterface::EngineToRobot& msg, bool reliable = true, bool hot = false);
 
-  Signal::SmartHandle Subscribe(const uint32_t robotId, const RobotInterface::RobotToEngineTag& tagType, std::function<void(const AnkiEvent<RobotInterface::RobotToEngine>&)> messageHandler) {
-    return _eventMgr.Subscribe(robotId, static_cast<uint32_t>(tagType), messageHandler);
+  Signal::SmartHandle Subscribe(const RobotInterface::RobotToEngineTag& tagType, std::function<void(const AnkiEvent<RobotInterface::RobotToEngine>&)> messageHandler) {
+    return _eventMgr.Subscribe(static_cast<uint32_t>(tagType), messageHandler);
   }
   
   // Handle various event message types
@@ -70,8 +70,6 @@ public:
   bool IsConnected(RobotID_t robotID);
 
   Result AddRobotConnection(RobotID_t robotId);
-
-  Result RemoveRobotConnection(const uint32_t robotId);
   
   void Disconnect();
   
@@ -82,11 +80,11 @@ public:
   void     ResetMessageCounts() { _messageCountRtE = 0; _messageCountEtR = 0; }
 
 protected:
-  void Broadcast(const uint32_t robotId, const RobotInterface::RobotToEngine& message);
-  void Broadcast(const uint32_t robotId, RobotInterface::RobotToEngine&& message);
+  void Broadcast(const RobotInterface::RobotToEngine& message);
+  void Broadcast(RobotInterface::RobotToEngine&& message);
   
 private:
-  AnkiEventMgr<RobotInterface::RobotToEngine, MailboxSignalMap<RobotInterface::RobotToEngine> > _eventMgr;
+  AnkiEventMgr<RobotInterface::RobotToEngine> _eventMgr;
   RobotManager* _robotManager;
   std::unique_ptr<RobotConnectionManager> _robotConnectionManager;
   bool _isInitialized;

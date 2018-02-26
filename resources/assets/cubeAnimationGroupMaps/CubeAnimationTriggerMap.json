@@ -149,6 +149,18 @@
             "AnimName": "speedTapLose"
         },
         {
+            "CladEvent": "TestAllLeds",
+            "AnimName": "testAllLeds"
+        },
+        {
+            "CladEvent": "TestOffset",
+            "AnimName": "testOffset"
+        },
+        {
+            "CladEvent": "TestRotation",
+            "AnimName": "testRotation"
+        },
+        {
             "CladEvent": "Visible",
             "AnimName": "visible"
         },

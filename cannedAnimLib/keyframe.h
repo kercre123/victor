@@ -296,10 +296,13 @@ namespace Cozmo {
     // Return true if the underlying images are stored as grayscale.
     bool IsGrayscale() const;
     
-    // These functions actually retrieves image data and increments the frame count so that it will
-    // retrieve the next image on the next call.
-    bool GetFaceImage(Vision::Image&);
-    bool GetFaceImage(Vision::ImageRGB565&);
+    // These functions actually retrieve image data and increment the frame count so that they will retrieve
+    // the next image on the next call. Returns true if the Image field was populated, false otherwise.
+    // Empty frames are expected for animations that have a duration longer than ANIM_TIME_STEP_MS, and hence
+    // this function may return false even though there are frames remaining. To check if the keyframe is done,
+    // use IsDone() rather than the return value of this function.
+    bool GetFaceImage(Vision::Image& img);
+    bool GetFaceImage(Vision::ImageRGB565& img);
 
     // Resets the keyframe so that the next call to GetFaceImage returns the first image of the set
     void Reset() { _curFrame = 0; }

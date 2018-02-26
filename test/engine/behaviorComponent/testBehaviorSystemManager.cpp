@@ -22,7 +22,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
@@ -38,7 +37,7 @@ using namespace Anki::Cozmo;
 TEST(BehaviorSystemManager, TestDelegationVariants)
 {
   std::unique_ptr<TestSuperPoweredBehavior> baseBehavior = std::make_unique<TestSuperPoweredBehavior>();
-  TestBehaviorFramework testFramework;
+  TestBehaviorFramework testFramework(1, nullptr);
   auto initializeBehavior = [&baseBehavior](const BehaviorComponent::CompononentPtr& comps){
     baseBehavior->SetBehaviorContainer(comps->GetComponent(BCComponentID::BehaviorContainer).GetValue<BehaviorContainer>());
   };
@@ -100,7 +99,7 @@ TEST(BehaviorSystemManager, TestCancelingDelegation)
 {
   // TODO: Ensure that canceling delegates operates as expected
   std::unique_ptr<TestSuperPoweredBehavior> baseBehavior = std::make_unique<TestSuperPoweredBehavior>();
-  TestBehaviorFramework testFramework;
+  TestBehaviorFramework testFramework(1, nullptr);
   auto initializeBehavior = [&baseBehavior](const BehaviorComponent::CompononentPtr& comps){
     baseBehavior->SetBehaviorContainer(comps->GetComponent(BCComponentID::BehaviorContainer).GetValue<BehaviorContainer>());
   };

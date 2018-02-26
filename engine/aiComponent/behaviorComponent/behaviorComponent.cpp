@@ -15,7 +15,6 @@
 
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/aiComponent/behaviorComponent/behaviorComponentCloudReceiver.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorAudioComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
@@ -23,9 +22,10 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTimers.h"
 #include "engine/aiComponent/behaviorComponent/devBehaviorComponentMessageHandler.h"
+#include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorEventAnimResponseDirector.h"
-#include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/faceWorld.h"
 #include "engine/audio/engineRobotAudioClient.h"
@@ -70,13 +70,13 @@ void BehaviorComponent::GenerateManagedComponents(Robot& robot,
   // Face World
   if(!entity->HasComponent(BCComponentID::FaceWorld)){
     entity->AddDependentComponent(BCComponentID::FaceWorld, 
-      robot.GetComponentPtr<FaceWorld>(RobotComponentID::FaceWorld), false);
+      robot.GetComponentPtr<FaceWorld>(), false);
   }
   
   // Block World
   if(!entity->HasComponent(BCComponentID::BlockWorld)){
     entity->AddDependentComponent(BCComponentID::BlockWorld, 
-      robot.GetComponentPtr<BlockWorld>(RobotComponentID::BlockWorld), false);
+      robot.GetComponentPtr<BlockWorld>(), false);
   }
   
   //////
@@ -86,8 +86,7 @@ void BehaviorComponent::GenerateManagedComponents(Robot& robot,
   // Async Message Component
   if(!entity->HasComponent(BCComponentID::AsyncMessageComponent)){
     auto messagePtr = new AsyncMessageGateComponent(robot.HasExternalInterface() ? robot.GetExternalInterface() : nullptr,
-                                                                  robot.GetRobotMessageHandler(),
-                                                                  robot.GetID());
+                                                                  robot.GetRobotMessageHandler());
     entity->AddDependentComponent(BCComponentID::AsyncMessageComponent, std::move(messagePtr));
   }
  
@@ -98,10 +97,10 @@ void BehaviorComponent::GenerateManagedComponents(Robot& robot,
                                   std::move(audioPtr));
   }
 
-  // Cloud Receiver
-  if(!entity->HasComponent(BCComponentID::BehaviorComponentCloudReceiver)){
-    entity->AddDependentComponent(BCComponentID::BehaviorComponentCloudReceiver,
-                                  new BehaviorComponentCloudReceiver(robot));
+  // User intent component (and receiver of cloud intents)
+  if(!entity->HasComponent(BCComponentID::UserIntentComponent)){
+    entity->AddDependentComponent(BCComponentID::UserIntentComponent,
+                                  new UserIntentComponent(robot, robot.GetContext()->GetDataLoader()->GetUserIntentConfig()));
   }
 
   // Behavior Container
@@ -133,7 +132,7 @@ void BehaviorComponent::GenerateManagedComponents(Robot& robot,
       dataLoader->GetVictorFreeplayBehaviorConfig() : blankActivitiesConfig;
     
     
-    BehaviorContainer& bc = entity->GetValue<BehaviorContainer>(BCComponentID::BehaviorContainer);
+    BehaviorContainer& bc = entity->GetValue<BehaviorContainer>();
     if(!behaviorSystemConfig.empty()){
       BehaviorID baseBehaviorID = ICozmoBehavior::ExtractBehaviorIDFromConfig(behaviorSystemConfig);
       baseBehavior = bc.FindBehaviorByID(baseBehaviorID);
@@ -142,8 +141,10 @@ void BehaviorComponent::GenerateManagedComponents(Robot& robot,
     }else{
       // Need a base behavior, so make it base behavior wait
       Json::Value config = ICozmoBehavior::CreateDefaultBehaviorConfig(BEHAVIOR_CLASS(Wait), BEHAVIOR_ID(Wait));
-      bc.CreateBehaviorFromConfig(config);
+      const bool ret = bc.CreateAndStoreBehavior(config);
+      DEV_ASSERT(ret, "BehaviorComponent.CreateWaitBehavior.Failed");
       baseBehavior = bc.FindBehaviorByID(BEHAVIOR_ID(Wait));
+      DEV_ASSERT(baseBehavior != nullptr, "BehaviorComponent.CreateWaitBehavior.WaitNotInContainers");
     }
     entity->AddDependentComponent(BCComponentID::BaseBehaviorWrapper,
                                   new BaseBehaviorWrapper(baseBehavior.get()));
@@ -168,16 +169,16 @@ void BehaviorComponent::GenerateManagedComponents(Robot& robot,
                                   new BehaviorExternalInterface());
   }
 
-  // Behavior Helper Component
-  if(!entity->HasComponent(BCComponentID::BehaviorHelperComponent)){
-    entity->AddDependentComponent(BCComponentID::BehaviorHelperComponent,
-                                  new BehaviorHelperComponent());
-  }
-
   // Behavior System Manager
   if(!entity->HasComponent(BCComponentID::BehaviorSystemManager)){
     entity->AddDependentComponent(BCComponentID::BehaviorSystemManager,
                                   new BehaviorSystemManager());
+  }
+  
+  // Behavior timers
+  if(!entity->HasComponent(BCComponentID::BehaviorTimerManager)){
+    entity->AddDependentComponent(BCComponentID::BehaviorTimerManager,
+                                  new BehaviorTimerManager());
   }
 
   // Delegation Component
@@ -214,14 +215,14 @@ void BehaviorComponent::Update(Robot& robot,
                                std::string& behaviorDebugStr)
 {
 
-  BehaviorExternalInterface& bei = GetComponent<BehaviorExternalInterface>(BCComponentID::BehaviorExternalInterface);
-
-  GetBehaviorHelperComponent().Update();
+  BehaviorExternalInterface& bei = GetComponent<BehaviorExternalInterface>();
   
   {
-    BehaviorSystemManager& bsm = GetComponent<BehaviorSystemManager>(BCComponentID::BehaviorSystemManager);
+    BehaviorSystemManager& bsm = GetComponent<BehaviorSystemManager>();
     bsm.Update(bei);
   }
+  
+  GetUserIntentComponent().Update();
   
   robot.GetContext()->GetVizManager()->SetText(VizManager::BEHAVIOR_STATE, NamedColors::MAGENTA,
                                                "%s", behaviorDebugStr.c_str());
@@ -235,7 +236,7 @@ void BehaviorComponent::Update(Robot& robot,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorComponent::SubscribeToTags(IBehavior* subscriber, std::set<ExternalInterface::MessageGameToEngineTag>&& tags) const
 {
-  AsyncMessageGateComponent& gateComp = GetComponent<AsyncMessageGateComponent>(BCComponentID::AsyncMessageComponent);
+  AsyncMessageGateComponent& gateComp = GetComponent<AsyncMessageGateComponent>();
   gateComp.SubscribeToTags(subscriber, std::move(tags));
 }
 
@@ -243,7 +244,7 @@ void BehaviorComponent::SubscribeToTags(IBehavior* subscriber, std::set<External
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorComponent::SubscribeToTags(IBehavior* subscriber, std::set<ExternalInterface::MessageEngineToGameTag>&& tags) const
 {
-  AsyncMessageGateComponent& gateComp = GetComponent<AsyncMessageGateComponent>(BCComponentID::AsyncMessageComponent);
+  AsyncMessageGateComponent& gateComp = GetComponent<AsyncMessageGateComponent>();
   gateComp.SubscribeToTags(subscriber, std::move(tags));
 }
 
@@ -251,7 +252,7 @@ void BehaviorComponent::SubscribeToTags(IBehavior* subscriber, std::set<External
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorComponent::SubscribeToTags(IBehavior* subscriber, std::set<RobotInterface::RobotToEngineTag>&& tags) const
 {
-  AsyncMessageGateComponent& gateComp = GetComponent<AsyncMessageGateComponent>(BCComponentID::AsyncMessageComponent);
+  AsyncMessageGateComponent& gateComp = GetComponent<AsyncMessageGateComponent>();
   gateComp.SubscribeToTags(subscriber, std::move(tags));
 }
 
@@ -259,7 +260,7 @@ void BehaviorComponent::SubscribeToTags(IBehavior* subscriber, std::set<RobotInt
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorContainer& BehaviorComponent::GetBehaviorContainer()
 {
-  return GetComponent<BehaviorContainer>(BCComponentID::BehaviorContainer);
+  return GetComponent<BehaviorContainer>();
 }
 
   

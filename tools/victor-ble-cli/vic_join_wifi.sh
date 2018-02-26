@@ -16,6 +16,9 @@ fi
 if [ "A" = "$1" ]; then
     robotname="VICTOR_ed3dd846"
     robotip="192.168.40.205"
+elif [ "B" = "$1" ]; then
+    robotname="VICTOR_1e58d9e4"
+    robotip="192.168.40.227"
 elif [ "C" = "$1" ]; then
     robotname="VICTOR_ed3dd857"
     robotip="192.168.40.204"

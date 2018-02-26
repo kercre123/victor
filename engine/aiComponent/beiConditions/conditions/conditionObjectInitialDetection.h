@@ -34,7 +34,9 @@ protected:
   virtual void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
   virtual void HandleEvent(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
-
+  virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requiredVisionModes) const override {
+    requiredVisionModes.insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::Low });
+  }
 private:
   
   // If true, only react to the first time ever seeing this type of object

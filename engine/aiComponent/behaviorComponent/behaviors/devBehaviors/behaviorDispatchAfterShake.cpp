@@ -164,11 +164,10 @@ void BehaviorDispatchAfterShake::BehaviorUpdate()
       if( delegate->WantsToBeActivated() ) {
         DelegateIfInControl( delegate.get() );
         
-        // clear shaken count so you have to shake again to run the behavior again if it completes
-        _countShaken = 0;
-        return;
       }
     }
+    // clear shaken count so you have to shake again to run the behavior again if it completes
+    _countShaken = 0;
   }
 }
 

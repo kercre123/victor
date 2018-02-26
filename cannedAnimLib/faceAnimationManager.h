@@ -60,8 +60,9 @@ namespace Cozmo {
     // animation doesn't exist.
     u32  GetNumFrames(const std::string& animName);
     
-    // Ability to add ImageRGB565 keyframes at runtime, for procedural face streaming
-    Result AddImage(const std::string& animName, const Vision::ImageRGB565& faceImg, u32 holdTime_ms = 0);
+    // Ability to add image keyframes  to the special "procedural" anim at runtime, for procedural face streaming
+    Result AddProceduralImage(const Vision::Image& faceImg, u32 holdTime_ms = 0);
+    Result AddProceduralImage(const Vision::ImageRGB565& faceImg, u32 holdTime_ms = 0);
     
     // Remove all frames from an existing animation
     Result ClearAnimation(const std::string& animName);
@@ -76,6 +77,10 @@ namespace Cozmo {
     
     // Protected default constructor for singleton.
     FaceAnimationManager();
+    
+    // Templated helper to add underlying frames to the procedural FaceAnimation
+    template <typename ImageType>
+    Result AddProceduralImageHelper(const ImageType& faceImg, const bool isGrayscale, const u32 holdTime_ms);
     
     // Templated helper to get the underlying frames from a FaceAnimation
     template <typename ImageType>

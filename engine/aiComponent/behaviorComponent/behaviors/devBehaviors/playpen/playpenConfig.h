@@ -112,12 +112,15 @@ static f32 kVisualDistanceToDistanceSensorObjectThresh_mm = 30;
 // distance sensor behavior json file
 static f32 kDistanceSensorReadingThresh_mm = 20;
 
+// Bias adjustment for raw distance sensor reading when comparing to visual distance
+static f32 kDistanceSensorBiasAdjustment_mm = 30;
+
 // ----------Camera Calibration----------
 // Exposure setting for playpen
-static u16 kExposure_ms                               = 3;
+static u16 kExposure_ms                               = 31;
 
 // Gain setting for playpen
-static f32 kGain                                      = 2.f;
+static f32 kGain                                      = 1.f;
 
 // Tolerance on the calculated camera focal length
 static u32 kFocalLengthTolerance                      = 30;
@@ -144,7 +147,7 @@ static u32 kTimeoutForComputingCalibration_ms         = 5000;
 static u32 kPlaypenCalibTarget                        = 2; // 1 = INVERTED_BOX 2 = QBERT (I don't feel like including cameraCalibrator.h here)
 
 // How big the calibration target's markers are
-static f32 kCalibMarkerSize_mm                        = 15;
+static f32 kCalibMarkerSize_mm                        = 14;
 
 // How big the calibration target's entire marker faces are
 static f32 kCalibMarkerCubeSize_mm                    = 20;

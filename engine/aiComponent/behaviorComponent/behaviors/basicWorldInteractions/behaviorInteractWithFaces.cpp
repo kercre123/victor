@@ -25,7 +25,6 @@
 #include "engine/moodSystem/moodManager.h"
 #include "engine/navMap/mapComponent.h"
 #include "engine/navMap/memoryMap/memoryMapTypes.h"
-#include "engine/needsSystem/needsManager.h"
 #include "engine/viz/vizManager.h"
 
 #include "coretech/common/engine/jsonTools.h"
@@ -160,11 +159,6 @@ void BehaviorInteractWithFaces::BehaviorUpdate()
     if( currTime_s >= _trackFaceUntilTime_s ) {
       BehaviorObjectiveAchieved(BehaviorObjective::InteractedWithFace);
       CancelDelegates();
-      
-      if(GetBEI().HasNeedsManager()){
-        auto& needsManager = GetBEI().GetNeedsManager();
-        needsManager.RegisterNeedsActionCompleted(NeedsActionId::SeeFace);
-      }
     }
   }  
 }

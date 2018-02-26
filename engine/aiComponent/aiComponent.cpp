@@ -30,7 +30,6 @@
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/moodSystem/moodManager.h"
-#include "engine/needsSystem/needsManager.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
@@ -268,22 +267,6 @@ void AIComponent::CheckForSuddenObstacle(Robot& robot)
                         avgProxValue_mm, avgObjectSpeed_mmps, avgRobotSpeed_mmps);
     PRINT_NAMED_INFO("AIComponent.Update.CheckForSuddenObstacle","SuddenObstacleDetected");
   } 
-}
-
-// Support legacy code until move helper comp into delegate component
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const BehaviorHelperComponent& AIComponent::GetBehaviorHelperComponent() const
-{
-  auto& behaviorComponent = GetComponent<BehaviorComponent>(AIComponentID::BehaviorComponent);
-  return behaviorComponent.GetBehaviorHelperComponent();
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorHelperComponent& AIComponent::GetBehaviorHelperComponent()
-{
-  auto& behaviorComponent = GetComponent<BehaviorComponent>(AIComponentID::BehaviorComponent);
-  return behaviorComponent.GetBehaviorHelperComponent();
 }
 
 

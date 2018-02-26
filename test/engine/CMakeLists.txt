@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.6)
 
 project(test_engine)
 
-set(BUILT_RESOURCES_DIR "${CMAKE_BINARY_DIR}/assets/cozmo_resources")
+set(BUILT_RESOURCES_DIR "${CMAKE_BINARY_DIR}/data/assets/cozmo_resources")
 
 set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES "")
@@ -34,7 +34,7 @@ target_link_libraries(test_engine
   cti_vision
   cti_messaging
   engine_clad
-  androidHAL
+  cameraService
   cubeBleClient
   osState
   util

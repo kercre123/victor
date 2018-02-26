@@ -32,7 +32,7 @@ namespace NVStorage {
     NVEntry_GameUnlocks     = 0x182000, /// 1 4k block is enough for 1024 unlocks stored as uint32s
     NVEntry_FaceEnrollData  = 0x183000, /// 1 4k block should be enough for names etc.
     NVEntry_FaceAlbumData   = 0x184000, /// 64k long
-    NVEntry_NurtureGameData = 0x194000, /// 1 4k block is plenty for now
+                                        /// 1 4k block REMOVED (was the old nurture game data)
     NVEntry_InventoryData   = 0x195000, /// 1 4k block is plenty for now
     NVEntry_LabAssignments  = 0x196000, /// 1 4k block is plenty for now
     NVEntry_NEXT_SLOT       = 0x197000, /// ADD NEW ENTRIES HERE
