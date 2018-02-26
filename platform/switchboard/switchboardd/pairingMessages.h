@@ -41,17 +41,20 @@ namespace Switchboard {
   };
 
   enum SecureMessage : uint8_t {
-    CRYPTO_RESERVED           = 0,
-    CRYPTO_CHALLENGE          = 1,
-    CRYPTO_CHALLENGE_RESPONSE = 1,
-    CRYPTO_SEND               = 2,
-    CRYPTO_RECEIVE            = 3,
-    CRYPTO_ACCEPTED           = 4,
-    CRYPTO_WIFI_CREDENTIALS   = 5,
-    CRYPTO_WIFI_STATUS        = 6,
-    CRYPTO_WIFI_REQUEST_IP    = 7,
-    CRYPTO_WIFI_RESPOND_IP    = 8,
-    CRYPTO_UPDATE_URL         = 9,
+    CRYPTO_RESERVED               = 0,
+    CRYPTO_CHALLENGE              = 1,
+    CRYPTO_CHALLENGE_RESPONSE     = 1, // intentionally the same code
+    CRYPTO_SEND                   = 2,
+    CRYPTO_RECEIVE                = 3,
+    CRYPTO_ACCEPTED               = 4,
+    CRYPTO_WIFI_CONNECT_REQUEST   = 5,
+    CRYPTO_WIFI_CONNECT_RESPONSE  = 5,
+    CRYPTO_WIFI_STATUS            = 6,
+    CRYPTO_WIFI_REQUEST_IP        = 7,
+    CRYPTO_WIFI_RESPOND_IP        = 8,
+    CRYPTO_UPDATE_URL             = 9,
+    CRYPTO_WIFI_SCAN_REQUEST      = 10,
+    CRYPTO_WIFI_SCAN_RESPONSE     = 11,
   };
   
   enum WifiStatus : uint8_t {
@@ -212,6 +215,13 @@ namespace Switchboard {
       type = SecureMessage::CRYPTO_WIFI_RESPOND_IP;
     }
   } WifiRespondIpMessage_crypto;
+
+  SB_PackedStruct WifiScanRequestMessage_crypto : Message {
+  public:
+    uint8_t statusCode;
+    uint8_t networksCount;
+    
+  } WifiScanRequestMessage_crypto;
   
   SB_PackedStruct WifiCredentialsMessage_crypto : Message {
   public:
@@ -225,7 +235,7 @@ namespace Switchboard {
       wifiSsid = ssid.c_str();
       pwLen = pw.length();
       wifiPw = pw.c_str();
-      type = SecureMessage::CRYPTO_WIFI_CREDENTIALS;
+      type = SecureMessage::CRYPTO_WIFI_CONNECT_REQUEST;
     }
     
     uint32_t GetBufferSize() {
