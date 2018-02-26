@@ -31,7 +31,7 @@ static int CalculateSignalLevel(const int strength, const int min, const int max
     return (numLevels - 1);
   } else {
     float inputRange = (max - min);
-    float outputRange = (numLevels - 1);
+    float outputRange = numLevels;
     return (int)((float)(strength - min) * outputRange / inputRange);
   }
 }
@@ -198,6 +198,17 @@ std::vector<uint8_t> PackWiFiScanResults(const std::vector<WiFiScanResult>& resu
   }
   return packed_results;
 }
+
+/*bool ConnectToWiFi(std::string ssid) {
+  GError* error = nullptr;
+  GVariant* arg_provider;
+
+  conn_man_bus_manager_call_connect_provider_sync(ConnManBusManager* proxy, 
+    arg_provier,
+    gchar** out_path,
+    nullptr,
+    &error);
+}*/
 
 void EnableWiFiInterface(const bool enable, ExecCommandCallback callback) {
   if (enable) {
