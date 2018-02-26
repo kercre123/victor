@@ -162,9 +162,9 @@ CozmoAudioController::CozmoAudioController( const AnimContext* context )
     if ( kWriteAudioOutputCapture ) {
       WriteAudioOutputCapture( true );
     }
-    SetDefaultListeners( { ToAudioGameObject( AudioMetaData::GameObjectType::Cozmo_Listener ) } );
-
+    
     RegisterCladGameObjectsWithAudioController();
+    SetDefaultListeners( { ToAudioGameObject( AudioMetaData::GameObjectType::Cozmo_Listener ) } );
   }
   if (sThis == nullptr) {
     sThis = this;

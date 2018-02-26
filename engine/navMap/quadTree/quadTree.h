@@ -36,12 +36,6 @@ public:
   ~QuadTree();
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Broadcast
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
-  void GetBroadcastInfo(MemoryMapTypes::MapBroadcastData& info) const;
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -52,8 +46,9 @@ public:
   // return the Processor associated to this QuadTree for queries
         QuadTreeProcessor& GetProcessor()       { return _processor; }
   const QuadTreeProcessor& GetProcessor() const { return _processor; }
+  uint8_t GetLevel() const                      { return _root.GetLevel(); }
   
-  const QuadTreeNode::NodeContent& GetRootNodeContent() const { return _root.GetContent(); }
+  const MemoryMapDataPtr GetRootNodeData() const { return _root.GetData(); }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Operations
@@ -62,17 +57,22 @@ public:
   // notify the QT that the given poly has the specified content
   // shiftAllowedCount: number of shifts we can do for a fully expanded root that still needs to move to
   // fit the data.
-  bool Insert(const FastPolygon& poly, MemoryMapDataPtr data, int shiftAllowedCount);
+  bool Insert(const FastPolygon& poly, MemoryMapDataPtr data);
   
   // modify content bounded by poly. Note that if the poly extends outside the current size of the root node,
   // it will not expand the root node
-  bool Transform(const Poly2f& poly, NodeTransformFunction transform) {return _root.Transform(poly, transform, _processor);}
-  
-  void FindIf(const Poly2f& poly, NodePredicate pred, MemoryMapDataConstList& output) {_root.FindIf(poly, pred, output);}
+  bool Transform(NodeTransformFunction transform);
+  bool Transform(const Poly2f& poly, NodeTransformFunction transform);
   
   // merge the given quadtree into this quad tree, applying to the quads from other the given transform
   bool Merge(const QuadTree& other, const Pose3d& transform);
-  
+
+  // runs the provided accumulator function through all nodes of the tree recursively
+  void Fold(FoldFunctor accumulator)                                  { _root.Fold(accumulator);         }
+  void Fold(FoldFunctor accumulator, const Poly2f& region)            { _root.Fold(accumulator, region); }
+  void Fold(FoldFunctorConst accumulator)                       const { _root.Fold(accumulator);         }
+  void Fold(FoldFunctorConst accumulator, const Poly2f& region) const { _root.Fold(accumulator, region); }
+
 private:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -81,7 +81,7 @@ private:
 
   // Expand the root node so that the given quad/point/triangle is included in the navMesh, up to the max root size limit.
   // shiftAllowedCount: number of shifts we can do if the root reaches the max size upon expanding (or already is at max.)
-  bool Expand(const Poly2f& polyToCover, int shiftAllowedCount);  
+  bool ExpandToFit(const Poly2f& polyToCover);  
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
