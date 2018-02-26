@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <ctype.h>
 #include <fcntl.h>
+#include <assert.h>
 
 
 enum {
@@ -57,8 +58,6 @@ typedef void (*ShutdownFunction)(int);
 
 const struct SpineMessageHeader* hal_read_frame();
 void start_overrride(int count);
-void SetHoldToken(char token);
-int clear_hold(char token, int status);
 extern void request_version(void);
 
 
@@ -66,12 +65,21 @@ enum {
   show_NONE,
   show_BAT,
   show_CLIFF,
-  show_ENCODER,
-  show_SPEED,
+//  show_ENCODER,
+//  show_SPEED,
+  show_MOTOR0,
+  show_MOTOR1,
+  show_MOTOR2,
+  show_MOTOR3,
   show_PROX,
   show_TOUCH,
   show_RSSI,
-  SHOW_LAST
+  show_PACKETS,
+  show_LAST_SENSOR,
+  show_LOGS,
+  show_BSV,
+  show_COUNT
+
 };
 
 enum  {
@@ -87,13 +95,11 @@ typedef struct CozmoCommand_t {
   uint16_t repeat_count;
   int16_t motorValues[MOTOR_COUNT];
   uint16_t printmask;
-  char cmd[3];
+  char cmd[4];
   int result;
   char holdToken;
 } CozmoCommand;
 
-CozmoCommand gActiveState = {0};
-int gRemainingActiveCycles = 0;
 
 //static struct ContactData gResponse;
 //int gRespPending = 0;
@@ -146,6 +152,69 @@ idx_t command_buffer_get(CozmoCommand* data) {
   return 0;
 }
 
+
+/***** Command Tracker  **************************/
+CozmoCommand gPending = {0};
+CozmoCommand gActiveState = {0};
+int gRemainingActiveCycles = 0;
+
+
+void show_command(CozmoCommand* cmd) {
+  ccc_debug_x("CCC {%d, [%d %d %d %d], %x}\n",
+         cmd->repeat_count,
+         cmd->motorValues[0],
+         cmd->motorValues[1],
+         cmd->motorValues[2],
+         cmd->motorValues[3],
+         cmd->printmask);
+}
+
+void PrepCommand(void) { memset(&gPending,0,sizeof(gPending)); }
+void SetRepeats(int n) {gPending.repeat_count = n; }
+void AddPrintFlag(int flag) { gPending.printmask |= flag; }
+void AddMotorCommand(RobotMotor motor, uint8_t power_byte) {
+  int8_t signed_power = (int8_t)*(&power_byte);
+  float power = signed_power / 128.0;
+  if (power > 1.0) { power = 1.0;}
+  if (power < -1.0) { power = -1.0;}
+  gPending.motorValues[motor] = 0x7FFF * power;
+}
+void SetHoldToken(char token)
+{
+    gPending.holdToken = token;
+}
+int ClearHoldToken(char token, int status) {
+  if (token == gActiveState.holdToken) {
+    gActiveState.holdToken=0;
+    gActiveState.result = status;
+    return 1;
+  }
+  ccc_debug_x("token mismatch %c != %c\n", token, gActiveState.holdToken);
+  return 0;
+}
+
+void SubmitCommand() {
+  ccc_debug_x("CCC submitting command");
+  if (!gPending.repeat_count) { gPending.repeat_count=1;}
+  show_command(&gPending);
+  command_buffer_put(&gPending);
+  PrepCommand(); //make sure it is cleared
+}
+
+int ActiveCycleCountdown(void) {
+  return gActiveState.repeat_count;
+}
+int ActiveCyclesModify(int delta) {
+  gActiveState.repeat_count+=delta;
+  return gActiveState.repeat_count;
+}
+
+uint16_t ActivePrintmask(void) {
+  return gActiveState.printmask;
+}
+
+
+
 /************* CIRCULAR BUFFER for outgoing contact text ***************/
 
 #define MIN(a,b) ((a)<(b)?(a):(b))
@@ -188,27 +257,34 @@ idx_t contact_text_buffer_get(struct ContactData* data) {
 }
 
 /***** logging interface  **************************/
+int gLogFd = 0;
 
 int ReadLogN(uint8_t n) {
   if (n>=MAX_KNOWN_LOG) {
     return ERR_SYSTEM;
   }
-  char logline[RESPONSE_CHUNK_SZ];
   char filename[MAX_FACTORY_FILENAME_LEN];
   sprintf(filename, FACTORY_FILENAME_TEMPLATE, n);
-  int fd = open(filename, O_RDONLY);
-  if (!fd) { return ERR_SYSTEM; }
+  int gLogFd = open(filename, O_RDONLY);
+  if (!gLogFd) { return ERR_SYSTEM; }
   print_response(":LOG %d\n", n);
-  while (1) {
-    int nchars = read(fd, logline, RESPONSE_CHUNK_SZ);
-    if (nchars <= 0) {
-      break;
-    }
+
+  SetRepeats(1);
+  AddPrintFlag(show_LOGS);
+  return ERR_PENDING;
+}
+
+int LogShowLine(void) {
+  char logline[RESPONSE_CHUNK_SZ];
+  int nchars = read(gLogFd, logline, RESPONSE_CHUNK_SZ);
+  if (nchars >0 ) {
     print_response("%.32s", logline); //THIS MUST BE <=SIZEOF(ContactData)-SLUG_PAD_SIZE
   }
-  close(fd);
-  return ERR_OK;
-
+  else {
+    close(gLogFd);
+    gLogFd = 0;
+  }
+  return (nchars>0);
 }
 
 
@@ -263,13 +339,14 @@ int get_esn(char buf[], int len)
 
   struct VersionInfo bodyVersion_ = {0};
 
+
   void record_body_version( const struct VersionInfo* info)
   {
     memcpy(&bodyVersion_, info, sizeof(bodyVersion_));
-    print_response(":%d %d\n", bodyVersion_.hw_revision, bodyVersion_.hw_model);
-    print_response(":%.32s\n", bodyVersion_.app_version);
     ccc_debug_x("clearing hold for body version");//
-    clear_hold('b', 0);
+    SetRepeats(3);
+    AddPrintFlag(show_BSV);
+    ClearHoldToken('b', ERR_OK);
   }
   void get_body_version( struct VersionInfo* info_out)
   {
@@ -278,52 +355,18 @@ int get_esn(char buf[], int len)
 
 
 
-/***** pending commands  **************************/
-CozmoCommand gPending = {0};
-
-void show_command(CozmoCommand* cmd) {
-  ccc_debug_x("CCC {%d, [%d %d %d %d], %x}\n",
-         cmd->repeat_count,
-         cmd->motorValues[0],
-         cmd->motorValues[1],
-         cmd->motorValues[2],
-         cmd->motorValues[3],
-         cmd->printmask);
-}
-
-void PrepCommand(void) { memset(&gPending,0,sizeof(gPending)); }
-void SetRepeats(int n) {gPending.repeat_count = n; }
-void AddPrintFlag(int flag) { gPending.printmask |= flag; }
-void AddMotorCommand(RobotMotor motor, uint8_t power_byte) {
-  int8_t signed_power = (int8_t)*(&power_byte);
-  float power = signed_power / 128.0;
-  if (power > 1.0) { power = 1.0;}
-  if (power < -1.0) { power = -1.0;}
-  gPending.motorValues[motor] = 0x7FFF * power;
-}
-void SetHoldToken(char token)
-{
-    gPending.holdToken = token;
-}
-void SubmitCommand() {
-  ccc_debug_x("CCC submitting command");
-  if (!gPending.repeat_count) { gPending.repeat_count=1;}
-  show_command(&gPending);
-  command_buffer_put(&gPending);
-  PrepCommand(); //make sure it is cleared
-}
-
-
 
 
 /********* command parsing **************/
 
 
 
-void AddSensorCommand(uint8_t sensorId) {
-  if (sensorId < SHOW_LAST) {
+int AddSensorCommand(uint8_t sensorId) { //return error
+  if (sensorId >0 && sensorId < show_LAST_SENSOR) {
     AddPrintFlag(1<<sensorId);
+    return ERR_OK;
   }
+  return ERR_SYSTEM;
 }
 
 
@@ -344,7 +387,7 @@ uint8_t handle_bsv_command(const uint8_t args[])
   SetHoldToken('b');
   request_version();
 
-  return ERR_OK;
+  return ERR_PENDING;
 }
 
 
@@ -368,7 +411,7 @@ uint8_t handle_get_command(const uint8_t args[])
 
 uint8_t handle_fcc_command(const uint8_t args[])
 {
-//  RunFccScript(args[0],args[1]);
+  //RunFccScript(args[0],args[1]);
   return ERR_PENDING;
 }
 
@@ -524,6 +567,18 @@ int kbd_command_process(void) {
 }
 #endif
 
+int printable_string(char outbuf[], int outlen, const uint8_t* input, int inlen) {
+  int i;
+  for (i=0;i<inlen&&i<outlen;i++){
+    char c = input[i];
+    outbuf[i] = isprint(c)?c:'*';
+  }
+  assert(i<=outlen);
+  if (i==outlen) { i--; }
+  outbuf[i++]='\0';
+  return i;
+}
+
 bool gather_contact_text(const char* contactData, int len)
 {
   static int linelen = 0;
@@ -582,7 +637,7 @@ const void* get_a_frame(int32_t timeout_ms)
 
 void populate_outgoing_frame(void) {
   gHeadData.framecounter++;
-  if (gActiveState.repeat_count) {
+  if (ActiveCycleCountdown()) {
     int i;
     for (i=0;i<4;i++) {
       gHeadData.motorPower[i] = gActiveState.motorValues[i];
@@ -636,105 +691,199 @@ int print_response(const char* format, ...) {
 
 #endif
 
+#define BSV_LINES 6
+void show_body_version(int linect) {
+  switch (linect) {
+    case 0: {
+      print_response(":%08x %0x8\n", bodyVersion_.hw_revision, bodyVersion_.hw_model);
+      break;
+    }
+    case 1:
+    case 2: {
+      uint32_t lo_part = *((uint32_t*)bodyVersion_.ein+0+8*(linect-1));
+      uint32_t hi_part = *((uint32_t*)bodyVersion_.ein+4+8*(linect-1));
+      print_response(":%08x %0x8\n", lo_part, hi_part);
+      break;
+    }
+    case 3:
+    case 4: {
+      uint32_t lo_part = *((uint32_t*)&bodyVersion_.app_version[0+8*(linect-3)]);
+      uint32_t hi_part = *((uint32_t*)&bodyVersion_.app_version[4+8*(linect-3)]);
+      print_response(":%08x %0x8\n", lo_part, hi_part);
+      break;
+    }
+    case 5:{
+      char sanitized_str[16+1];
+      printable_string(sanitized_str, 16,
+                       bodyVersion_.app_version,
+                       sizeof(bodyVersion_.app_version));
+      print_response("%.16s\n", sanitized_str);
+      break;
+    }
+    default:
+      assert(linect < BSV_LINES);
+  }
+}
+
+
+
 
 uint16_t show_legend(uint16_t mask) {
 //  print_response("framect ");
-  if (mask & (1<<show_ENCODER)) {
-    print_response("encs:left right lift head \n");
+  /* if (mask & (1<<show_ENCODER)) { */
+  /*   print_response("encs:left right lift head \n"); */
+  /* } */
+  /* if (mask & (1<<show_SPEED)) { */
+  /*   print_response("speed:left right lift head \n"); */
+  /* } */
+  if (mask & (1<<show_MOTOR0)) {
+    print_response("LEFT pos speed\n");
   }
-  if (mask & (1<<show_SPEED)) {
-    print_response("speed:left right lift head \n");
+  if (mask & (1<<show_MOTOR1)) {
+    print_response("RIGHT pos speed\n");
   }
+  if (mask & (1<<show_MOTOR2)) {
+    print_response("LIFT pos speed\n");
+  }
+  if (mask & (1<<show_MOTOR3)) {
+    print_response("HEAD pos speed\n");
+  }
+
   if (mask & (1<<show_CLIFF)) {
-    print_response("cliff:fl fr br bl \n");
+    print_response("CLIFF fl fr br bl \n");
   }
   if (mask & (1<<show_BAT)) {
-    print_response("bat \n");
+    print_response("BAT volt temp \n");
   }
   if (mask & (1<<show_PROX)) {
-    print_response("rangeMM \n");
+    print_response("rangeMM spadCt sigRt ambRt\n");
   }
   if (mask & (1<<show_TOUCH)) {
-    print_response("touch0 touch1 \n");
+    print_response("TOUCH BTN\n");
+  }
+  if (mask & (1<<show_RSSI)) {
+    print_response("RSSI\n");
+  }
+  if (mask & (1<<show_PACKETS)) {
+    print_response("PACKETCNT\n");
   }
 //  print_response("\n");
   return mask;
 }
 
 
-static const float HAL_SEC_PER_TICK = (1.0 / 256) / 48000000;
+static const int SYSCON_CLOCK_FREQ = 48000000;
+//static const float HAL_SEC_PER_TICK = (1.0 / 256) / SYSCON_CLOCK_FREQ;
+static const int HAL_TICKS_PER_US =  (SYSCON_CLOCK_FREQ / 1000000) * 256;
+
+
+void show_motor(struct MotorState* motor) {
+  int32_t dist = motor->delta * 1000000;
+  int32_t microsec = motor->time / HAL_TICKS_PER_US;
+  uint32_t speed = microsec ? (dist/microsec) : 0;
+  print_response(":%d %d\n",
+                 motor->position,
+                 speed);
+
+}
+
+void show_packet_count(void) {
+  print_response(":%d\n", -1);
+
+}
+void show_rssi(void) {
+  print_response(":%d\n", -1);
+
+}
 
 
 void process_incoming_frame(struct BodyToHead* bodyData)
 {
   static uint16_t oldmask = 0;
-  if (gActiveState.repeat_count) {
-    if (gActiveState.printmask != oldmask) {
-      oldmask = show_legend(gActiveState.printmask);
+  if (ActiveCycleCountdown()) {
+    uint16_t printmask = ActivePrintmask();
+    if (printmask != oldmask) {
+      oldmask = show_legend(printmask);
     }
 
-    if (gActiveState.printmask) {
-//      print_response("%d ", bodyData->framecounter);
-    }
-
-    if (gActiveState.printmask & (1<<show_ENCODER)) {
-      print_response(":%d %d %d %d \n",
-             bodyData->motor[0].position,
-             bodyData->motor[1].position,
-             bodyData->motor[2].position,
-             bodyData->motor[3].position );
-    }
-    if (gActiveState.printmask & (1<<show_SPEED)) {
-      float speeds[4];
-      int i;
-      for (i=0;i<4;i++) {
-        speeds[i]= bodyData->motor[i].time ?
+/*     if (printmask) { */
+/*       print_response("%d ", bodyData->framecounter); */
+/*     } */
 
 
-          ((float)bodyData->motor[i].delta / bodyData->motor[i].time) / HAL_SEC_PER_TICK : 0;
-      }
-      print_response(":%.2f %.2f %.2f %.2f \n",
-             speeds[0],
-             speeds[1],
-             speeds[2],
-             speeds[3] );
+    if (printmask & (1<<show_MOTOR0)) {
+      show_motor(&bodyData->motor[0]);
     }
-    if (gActiveState.printmask & (1<<show_CLIFF)) {
-      print_response(":%d %d %d %d \n",
+    if (printmask & (1<<show_MOTOR1)) {
+      show_motor(&bodyData->motor[1]);
+    }
+    if (printmask & (1<<show_MOTOR2)) {
+      show_motor(&bodyData->motor[2]);
+    }
+    if (printmask & (1<<show_MOTOR3)) {
+      show_motor(&bodyData->motor[3]);
+    }
+
+    if (printmask & (1<<show_CLIFF)) {
+      print_response(":%u %u %u %u\n",
              bodyData->cliffSense[0],
              bodyData->cliffSense[1],
              bodyData->cliffSense[2],
              bodyData->cliffSense[3] );
     }
-    if (gActiveState.printmask & (1<<show_BAT)) {
-      print_response(":%d \n",
-             bodyData->battery.battery);
+    if (printmask & (1<<show_BAT)) {
+      print_response(":%i %i\n",
+                     bodyData->battery.battery,
+                     bodyData->battery.temperature);
     }
-    if (gActiveState.printmask & (1<<show_PROX)) {
-      print_response(":%d \n",
-             bodyData->proximity.rangeMM);
+    if (printmask & (1<<show_PROX)) {
+      print_response(":%u %u %u %u\n",
+                     bodyData->proximity.rangeMM,
+                     bodyData->proximity.spadCount,
+                     bodyData->proximity.signalRate,
+                     bodyData->proximity.ambientRate);
 
     }
-    if (gActiveState.printmask & (1<<show_TOUCH)) {
-      print_response(":%d %d \n",
+    if (printmask & (1<<show_TOUCH)) {
+      print_response(":%u %u\n",
              bodyData->touchLevel[0],
              bodyData->touchLevel[1]);
     }
-//    print_response("\n");
 
-    if (!gActiveState.holdToken && --gActiveState.repeat_count == 0) {
-      //clear print request at end
-      print_response("<<%.3s %d", gActiveState.cmd, gActiveState.result);
-      gActiveState.printmask = 0;
+    if (printmask & (1<<show_BSV)) {
+      show_body_version(ActiveCycleCountdown()-BSV_LINES);
+    }
+    if (printmask & (1<<show_RSSI)) {
+      show_packet_count();
+    }
+    if (printmask & (1<<show_PACKETS)) {
+      show_packet_count();
+    }
+    if (printmask & (1<<show_LOGS)) {
+      if (LogShowLine()) {
+        ActiveCyclesModify(1); //add 1 to keep running
+      }
     }
 
+    if (!gActiveState.holdToken && ActiveCyclesModify(-1) == 0) {
+      //clear print request at end
+//      ActiveCycleEnd();
+      print_response("<<%.3s %d\n", gActiveState.cmd, gActiveState.result);
+      gActiveState.printmask = 0;
+    }
   }
 }
+
+/* //finish one active cycle */
+/* void ActiveCycleEnd(void) { */
+/*   if (ActiveCyclesModify(-1) == 0) { */
+
+/* } */
 
 #define CCC_COOLDOWN_TIME 100 //half second
 
 void start_overrride(int count) {
-  ccc_debug_x("CCC active for %d cycles", count + gActiveState.repeat_count);
+  ccc_debug_x("CCC active for %d cycles", count + ActiveCycleCountdown());
   gRemainingActiveCycles = count;
 }
 
@@ -745,7 +894,7 @@ void stop_override(void) {
 }
 
 int run_commands(void) {
-  if (gActiveState.repeat_count == 0) {
+  if (ActiveCycleCountdown() == 0) {
     //when no active command, start countingdown active time.
     if (gRemainingActiveCycles>0) {
       --gRemainingActiveCycles;
@@ -762,18 +911,9 @@ int run_commands(void) {
     else {
     }
   }
-  return (gActiveState.repeat_count == 0 && gQuit);
+  return (ActiveCycleCountdown() == 0 && gQuit);
 }
 
-int clear_hold(char token, int status) {
-  if (token == gActiveState.holdToken) {
-    gActiveState.holdToken=0;
-    gActiveState.result = 0;
-    return 1;
-  }
-  ccc_debug_x("token mismatch %c != %c\n", token, gActiveState.holdToken);
-  return 0;
-}
 
 #ifdef STANDALONE_UTILITY
 
@@ -911,7 +1051,7 @@ void ccc_set_shutdown_function(ShutdownFunction fp) {
 
 void ccc_test_result(int status, const char string[32])
 {
-  if (clear_hold('e', status)) {
+  if (ClearHoldToken('e', status)) {
     print_response("%.32s", string);
   }
 
