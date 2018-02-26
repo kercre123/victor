@@ -19,6 +19,12 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#define BEGIN_DONT_RUN_AFTER_PACKOUT \
+  if(!Factory::GetEMR()->PACKED_OUT_FLAG) {
+
+#define END_DONT_RUN_AFTER_PACKOUT \
+  }
+
 namespace Anki {
 namespace Cozmo {
 
@@ -27,6 +33,7 @@ namespace Factory {
   namespace 
   {
     static const char* kEMRFile = "/factory/birthcertificate";
+    // static const char* kEMRFile = "/data/data/com.anki.victor/birthcertificate";
 
     static Factory::EMR* _emr = nullptr;
   
@@ -112,6 +119,13 @@ namespace Factory {
 
   static const Factory::EMR* const GetEMR()
   {
+    #if defined(ANKI_PLATFORM_OSX)
+      static Factory::EMR emr;
+      return &emr;
+    #endif
+
+
+
     // Attempt to read the EMR, will do nothing if it has already been read
     ReadEMR();
 

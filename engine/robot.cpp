@@ -81,6 +81,8 @@
 #include "util/logging/logging.h"
 #include "util/transport/reliableConnection.h"
 
+#include "anki/cozmo/shared/factory/emrHelper.h"
+
 #include "opencv2/calib3d/calib3d.hpp"
 #include "opencv2/highgui/highgui.hpp" // For imwrite() in ProcessImage
 
@@ -248,6 +250,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
 
   _lastDebugStringHash = 0;
       
+  BEGIN_DONT_RUN_AFTER_PACKOUT
   // Read in Mood Manager Json
   if (nullptr != GetContext()->GetDataPlatform())
   {
@@ -276,6 +279,8 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
 
   // This will create the AndroidHAL instance if it doesn't yet exist
   CameraService::getInstance();
+
+  END_DONT_RUN_AFTER_PACKOUT
   
 } // Constructor: Robot
     
@@ -1288,6 +1293,7 @@ Result Robot::Update()
      lastUpdateTime = currentTime_sec;
   */
 
+  BEGIN_DONT_RUN_AFTER_PACKOUT
   //////////// CameraService Update ////////////
   CameraService::getInstance()->Update();
 
@@ -1363,6 +1369,8 @@ Result Robot::Update()
   // Update AI component before behaviors so that behaviors can use the latest information
   GetAIComponent().Update(*this, currentActivityName, _behaviorDebugStr);
 
+  END_DONT_RUN_AFTER_PACKOUT
+
   //////// Update Robot's State Machine /////////////
   const RobotID_t robotID = GetID();
   
@@ -1374,22 +1382,27 @@ Result Robot::Update()
   /////////// Update NVStorage //////////
   GetNVStorageComponent().Update();
 
+  BEGIN_DONT_RUN_AFTER_PACKOUT
   /////////// Update path planning / following ////////////
   GetPathComponent().Update();
+  END_DONT_RUN_AFTER_PACKOUT
   
   /////////// Update cube comms ////////////
   GetCubeCommsComponent().Update();
   
+  BEGIN_DONT_RUN_AFTER_PACKOUT
   // update and broadcast map
   GetMapComponent().Update();
+  END_DONT_RUN_AFTER_PACKOUT
   
   /////////// Update AnimationComponent /////////
   GetAnimationComponent().Update();
 
   /////////// Update visualization ////////////
-      
+  BEGIN_DONT_RUN_AFTER_PACKOUT
   // Draw All Objects by calling their Visualize() methods.
   GetBlockWorld().DrawAllObjects();
+  END_DONT_RUN_AFTER_PACKOUT
 
   // Always draw robot w.r.t. the origin, not in its current frame
   Pose3d robotPoseWrtOrigin = GetPose().GetWithRespectToRoot();
@@ -1465,6 +1478,7 @@ Result Robot::Update()
   GetCubeLightComponent().Update();
   GetBodyLightComponent().Update();
   
+  BEGIN_DONT_RUN_AFTER_PACKOUT
   // Update user facing state information after everything else has been updated
   // so that relevant information is forwarded along to whoever's listening for
   // state changes
@@ -1512,6 +1526,7 @@ Result Robot::Update()
                   GetDockingComponent().CanPickUpObjectFromGround(*obj));
     }
   }
+  END_DONT_RUN_AFTER_PACKOUT
       
   return RESULT_OK;
       

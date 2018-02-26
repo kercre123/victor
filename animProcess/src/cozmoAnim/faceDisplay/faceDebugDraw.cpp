@@ -25,6 +25,8 @@
 #include "json/json.h"
 #include "osState/osState.h"
 
+#include "anki/cozmo/shared/factory/emrHelper.h"
+
 #include <chrono>
 
 namespace Anki {
@@ -100,7 +102,8 @@ void FaceDebugDraw::DrawFAC()
   {
     DrawTextOnScreen({"FAC"},
                      NamedColors::BLACK,
-                     NamedColors::RED,
+                     (Factory::GetEMR()->PLAYPEN_PASSED_FLAG ? 
+                        NamedColors::GREEN : NamedColors::RED),
                      { 0, FACE_DISPLAY_HEIGHT-10 });
   }
 }
