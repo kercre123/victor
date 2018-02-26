@@ -56,7 +56,7 @@ public:
   void Stop();
   
   // send data to any client subscribed to moduleName
-  void SendToWebSockets(const std::string& moduleName, const Json::Value& data) const;
+  void SendToWebSockets(std::string moduleName, const Json::Value& data) const;
   
   inline void SendToWebViz(const std::string& moduleName, const Json::Value& data) const { SendToWebSockets(moduleName, data); }
   

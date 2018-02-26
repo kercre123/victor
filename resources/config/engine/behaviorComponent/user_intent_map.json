@@ -51,6 +51,9 @@
       "app_substitutions": {
         "param": "username"
       }
+    },
+    {
+      "user_intent": "name_object"
     }
   ],
 

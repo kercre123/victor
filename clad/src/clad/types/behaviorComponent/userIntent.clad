@@ -63,6 +63,8 @@ union dupes_allowed UserIntent
   UserIntent_Void system_sleep,
   UserIntent_Void system_wake,
 
+  UserIntent_Void name_object,
+
 
   // for tests
   UserIntent_Void test_SEPARATOR, // used for validation to know when the above ends

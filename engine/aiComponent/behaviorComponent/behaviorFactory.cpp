@@ -9,6 +9,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorFactory.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviors/behaviorHighLevelAI.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/behaviorNameObject.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/behaviorWait.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimGetInLoop.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimSequence.h"
@@ -117,6 +118,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::HighLevelAI:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorHighLevelAI(config));
+      break;
+    }
+    
+    case BehaviorClass::NameObject:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorNameObject(config));
       break;
     }
     

@@ -41,6 +41,7 @@
 #include <thread>
 #include <fstream>
 #include <iomanip>
+#include <algorithm>
 
 using namespace Anki::Cozmo;
 
@@ -1144,8 +1145,10 @@ void WebService::GenerateConsoleVarsUI(std::string& page, const std::string& cat
 }
 
 
-void WebService::SendToWebSockets(const std::string& moduleName, const Json::Value& data) const
+void WebService::SendToWebSockets(std::string moduleName, const Json::Value& data) const
 {
+  std::transform(moduleName.begin(), moduleName.end(), moduleName.begin(), ::tolower);
+  
   Json::Value payload;
   payload["module"] = moduleName;
   payload["data"] = data;
@@ -1252,10 +1255,11 @@ void WebService::OnReceiveWebSocket(struct mg_connection* conn, const Json::Valu
   
   if( it != _webSocketConnections.end() ) {
     if( !data["type"].isNull() && !data["module"].isNull() ) {
-      const std::string& moduleName = data["module"].asString();
+      std::string moduleName = data["module"].asString();
       size_t idx = it - _webSocketConnections.begin();
       
       if( data["type"].asString() == "subscribe" ) {
+        std::transform(moduleName.begin(), moduleName.end(), moduleName.begin(), ::tolower);
         it->subscribedModules.insert( moduleName );
         
         const bool waitAndSendResponse = false;

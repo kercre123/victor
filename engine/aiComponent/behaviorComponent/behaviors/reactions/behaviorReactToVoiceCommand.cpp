@@ -76,7 +76,9 @@ bool BehaviorReactToVoiceCommand::WantsToBeActivatedBehavior() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::OnBehaviorActivated()
 {
+  
   const auto& robotInfo = GetBEI().GetRobotInfo();
+  const float oldHeadAngle = robotInfo.GetHeadAngle();
   
   // Stop all movement so we can listen for a command
   robotInfo.GetMoveComponent().StopAllMotors();
@@ -96,7 +98,7 @@ void BehaviorReactToVoiceCommand::OnBehaviorActivated()
   }
   
   // After waiting let's turn toward the face we know about, if we have one
-  if(_desiredFace.IsValid() && !onCharger){
+  if( false ) {//_desiredFace.IsValid() && !onCharger){
     const bool sayName = true;
     TurnTowardsFaceAction* turnAction = new TurnTowardsFaceAction(_desiredFace,
                                                                   M_PI_F,
@@ -123,6 +125,10 @@ void BehaviorReactToVoiceCommand::OnBehaviorActivated()
     
     actionSeries->AddAction(animAction);
   }
+  
+  // move the head back down to the original position
+  MoveHeadToAngleAction* head = new MoveHeadToAngleAction( oldHeadAngle );
+  actionSeries->AddAction(head);
   
   using namespace ::Anki::Cozmo::VoiceCommand;
   
