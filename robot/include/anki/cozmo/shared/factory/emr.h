@@ -13,6 +13,8 @@
 #ifndef EMR_H
 #define EMR_H
 
+#include <stdint.h>
+
 namespace Anki {
 namespace Cozmo {
 
@@ -34,7 +36,7 @@ namespace Factory {
     #ifdef __GNUC__
     };
     #else
-    }field; //anonomous union not allowed by arm compiler
+    }field; //anonymous union not allowed by arm compiler
     #endif
     
     uint32_t data[256];
