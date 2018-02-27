@@ -40,14 +40,16 @@ namespace {
 
   std::ifstream _cpuFile;
   std::ifstream _tempFile;
+  std::ifstream _batteryVoltageFile;
 
   const char* kNominalCPUFreqFile = "/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq";
   const char* kCPUFreqFile = "/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_cur_freq";
   const char* kTemperatureFile = "/sys/devices/virtual/thermal/thermal_zone7/temp";
+  const char* kBatteryVoltageFile = "/sys/devices/soc/qpnp-linear-charger-8/power_supply/battery/voltage_now";
 
   // System vars
   uint32_t _cpuFreq_kHz; // CPU freq
-  uint32_t _cpuTemp_mC;  // Temperature in milli-Celsius
+  uint32_t _cpuTemp_C;   // Temperature in Celsius
 
   // How often state variables are updated
   uint32_t _updatePeriod_ms = 0;
@@ -69,10 +71,11 @@ OSState::OSState()
   }
   
   _cpuFreq_kHz = kNominalCPUFreq_kHz;
-  _cpuTemp_mC = 0;
+  _cpuTemp_C = 0;
 
   _tempFile.open(kTemperatureFile, std::ifstream::in);
   _cpuFile.open(kCPUFreqFile, std::ifstream::in);
+  _batteryVoltageFile.open(kBatteryVoltageFile, std::ifstream::in);
 }
 
 OSState::~OSState()
@@ -82,6 +85,9 @@ OSState::~OSState()
   }
   if (_cpuFile.is_open()) {
     _cpuFile.close();
+  }
+  if (_batteryVoltageFile.is_open()) {
+    _batteryVoltageFile.close();
   }
 }
 
@@ -97,12 +103,10 @@ void OSState::Update()
     if (now_ms - _lastUpdateTime_ms > _updatePeriod_ms) {
       
       // Update cpu freq
-      _cpuFile.seekg(0, _cpuFile.beg);
-      _cpuFile >> _cpuFreq_kHz;
-      
+      _cpuFreq_kHz = UpdateCPUFreq_kHz();
+
       // Update temperature reading
-      _tempFile.seekg(0, _tempFile.beg);
-      _tempFile >> _cpuTemp_mC;
+      _cpuTemp_C = UpdateTemperature_C();
 
       _lastUpdateTime_ms = now_ms;
     }
@@ -112,6 +116,33 @@ void OSState::Update()
 void OSState::SetUpdatePeriod(uint32_t milliseconds)
 {
   _updatePeriod_ms = milliseconds;
+}
+
+uint32_t OSState::UpdateCPUFreq_kHz() const
+{
+  // Update cpu freq
+  uint32_t cpuFreq_kHz;
+  _cpuFile.seekg(0, _cpuFile.beg);
+  _cpuFile >> cpuFreq_kHz;
+  return cpuFreq_kHz;
+}
+      
+uint32_t OSState::UpdateTemperature_C() const
+{
+  // Update temperature reading
+  uint32_t cpuTemp_C;
+  _tempFile.seekg(0, _tempFile.beg);
+  _tempFile >> cpuTemp_C;
+  return cpuTemp_C;
+}
+
+uint32_t OSState::UpdateBatteryVoltage_uV() const
+{
+  // Update battery voltage reading
+  uint32_t batteryVoltage_uV;
+  _batteryVoltageFile.seekg(0, _batteryVoltageFile.beg);
+  _batteryVoltageFile >> batteryVoltage_uV;
+  return batteryVoltage_uV;
 }
 
 uint32_t OSState::GetCPUFreq_kHz() const
@@ -126,10 +157,10 @@ bool OSState::IsThermalThrottling() const
   return (_cpuFreq_kHz < kNominalCPUFreq_kHz);
 }
 
-uint32_t OSState::GetTemperature_mC() const
+uint32_t OSState::GetTemperature_C() const
 {
   DEV_ASSERT(_updatePeriod_ms != 0, "OSState.GetTemperature_mC.ZeroUpdate");
-  return _cpuTemp_mC;
+  return _cpuTemp_C;
 }
 
 const std::string& OSState::GetSerialNumberAsString()

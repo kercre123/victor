@@ -99,9 +99,9 @@ bool OSState::IsThermalThrottling() const
   return false;
 }
 
-uint32_t OSState::GetTemperature_mC() const
+uint32_t OSState::GetTemperature_C() const
 {
-  DEV_ASSERT(_updatePeriod_ms != 0, "OSState.GetTemperature_mC.ZeroUpdate");
+  DEV_ASSERT(_updatePeriod_ms != 0, "OSState.GetTemperature_C.ZeroUpdate");
 
   // 65C: randomly chosen temperature at which throttling does not appear to occur
   // on physical robot

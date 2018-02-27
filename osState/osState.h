@@ -58,13 +58,22 @@ public:
   // Asserts if update rate is 0
   bool IsThermalThrottling() const;
 
+  // Reads the current CPU frequency and returns it
+  uint32_t UpdateCPUFreq_kHz() const;
+
+  // Reads the temperature in Celsius and returns it
+  uint32_t UpdateTemperature_C() const;
+
+  // Reads the battery voltage in microvolts and returns it
+  uint32_t UpdateBatteryVoltage_uV() const;
+
   // Returns current CPU frequency
   // Asserts if update rate is 0
   uint32_t GetCPUFreq_kHz() const;
   
-  // Returns temperature in milli-Celsius
+  // Returns temperature in Celsius
   // Asserts if update rate is 0
-  uint32_t GetTemperature_mC() const;
+  uint32_t GetTemperature_C() const;
 
   // Returns our ip address
   const std::string& GetIPAddress(bool update = false)
