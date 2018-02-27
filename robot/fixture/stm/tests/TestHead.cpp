@@ -76,6 +76,17 @@ void TestHeadDutProgram(void)
   TestCommon::powerOnProtected(PWR_VBAT, 200, ima_limit_VBAT, 2); 
   TestCommon::powerOnProtected(PWR_VEXT, 200, ima_limit_VEXT, 2);
   
+  //DEBUG
+  if( g_fixmode == FIXMODE_HEAD2 ) {
+    int timeout_s = 10;
+    ConsolePrintf("---DELAY %us FOR MANUAL FORCE_USB---\n", timeout_s);
+    while( timeout_s-- > 0 ) {
+      Timer::delayMs(1000);
+      if( timeout_s ) //&& timeout_s % 10 == 0 )
+        ConsolePrintf("%us\n", timeout_s);
+    }
+  }
+  
   //helper head does the rest
   cmdSend(CMD_IO_HELPER, snformat(b,bz,"dutprogram %u [id=%08x]", timeout_s, head_id), (timeout_s+10)*1000, HEAD_CMD_OPTS | CMD_OPTS_ALLOW_STATUS_ERRS );
   if( cmdStatus() != 0 )
@@ -86,29 +97,7 @@ void TestHeadDutProgram(void)
   }
   
   //XXX: read esn from head (internal UUID)
-  headnfo.esn = HEADID_ESN_EMPTY;
-}
-
-void TestHeadDutProgramManual(void)
-{
-  //FORCE_USB signal at POR preps for OS bootload
-  DUT_CS::reset();
-  DUT_CS::init(MODE_OUTPUT); //voltage divider gnd (disabled for detect)
-  DUT_RESET::set(); 
-  DUT_RESET::init(MODE_OUTPUT); //2.8V -> 1.8V logic level
-  
-  Board::powerOff(PWR_VBAT);
-  Board::powerOff(PWR_VEXT);
-  TestCommon::powerOnProtected(PWR_VBAT, 200, 9999, 2); 
-  TestCommon::powerOnProtected(PWR_VEXT, 200, 9999, 2);
-  
-  int timeout_s = 5*60;
-  ConsolePrintf("FORCE_USB=1 for %us\n", timeout_s);
-  while( timeout_s-- > 0 ) {
-    Timer::delayMs(1000);
-    if( timeout_s && timeout_s % 10 == 0 )
-      ConsolePrintf("%us\n", timeout_s);
-  }
+  headnfo.esn = head_id; //HEADID_ESN_EMPTY;
 }
 
 static void HeadFlexFlowReport(void)
@@ -129,9 +118,9 @@ TestFunction* TestHead1GetTests(void)
 TestFunction* TestHead2GetTests(void)
 {
   static TestFunction m_tests[] = {
-    TestHeadDutProgramManual,
+    TestHeadDutProgram,
     HeadFlexFlowReport,
-    NULL
+    NULL,
   };
   return m_tests;
 }
