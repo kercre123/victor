@@ -158,8 +158,12 @@ void DbgCubeIMeasLoop(char *title)
 //                  Cube Tests
 //-----------------------------------------------------------------------------
 
+static cubeid_t cubeid;
+
 bool TestCubeDetect(void)
 {
+  memset( &cubeid, 0, sizeof(cubeid) );
+  
   // Make sure power is not applied, as it messes up the detection code below
   TestCubeCleanup();
   
@@ -299,7 +303,6 @@ static void OTPbootloader(void)
   bdaddr_generate(&bdaddr, GetRandom ); //use RNG peripheral for proper randomness
   
   //prepare hwardware ids
-  cubeid_t cubeid;
   cubeid.esn = CUBEID_ESN_INVALID;
   cubeid.hwrev = CUBEID_HWREV_DVT2;
   cubeid.model = (g_fixmode == FIXMODE_CUBE1) ? CUBEID_MODEL_CUBE1 : ((g_fixmode == FIXMODE_CUBE2) ? CUBEID_MODEL_CUBE2 : CUBEID_MODEL_INVALID);
@@ -335,6 +338,11 @@ void CubeBootDebug(void)
   TestCommon::consoleBridge(TO_DUT_UART,5000);
 }
 
+static void CubeFlexFlowReport(void)
+{
+  ConsolePrintf("<flex> ESN %08x\n", cubeid.esn);
+}
+
 TestFunction* TestCube0GetTests(void)
 {
   static TestFunction m_tests[] = {
@@ -352,6 +360,7 @@ TestFunction* TestCube1GetTests(void)
     ShortCircuitTest,
     CubeTest,
     OTPbootloader,
+    CubeFlexFlowReport,
     NULL,
   };
   return m_tests;
@@ -363,6 +372,7 @@ TestFunction* TestCube2GetTests(void)
     ShortCircuitTest,
     CubeTest,
     OTPbootloader,
+    CubeFlexFlowReport,
     NULL,
   };
   return m_tests;

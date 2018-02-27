@@ -53,5 +53,16 @@ typedef struct {
   uint16_t  model;
 } bodyid_t;
 
+//-----------------------------------------------------------
+//        Head
+//-----------------------------------------------------------
+
+#define HEADID_ESN_INVALID      0
+#define HEADID_ESN_EMPTY        0xFFFFffff
+
+typedef struct {
+  uint32_t  esn;
+} headid_t;
+
 #endif //HARDWARE_ID_H
 

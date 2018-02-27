@@ -248,6 +248,11 @@ static void BodyBootcheckProductionFirmware(void)
   }
 }
 
+static void BodyFlexFlowReport(void)
+{
+  ConsolePrintf("<flex> ESN %08x\n", bodyid.esn);
+}
+
 /*static void BodyChargeContactElectricalDebug(void)
 {
   BodyLoadTestFirmware();
@@ -319,6 +324,7 @@ TestFunction* TestBody1GetTests(void)
     BodyLoadTestFirmware,
     BodyLoadProductionFirmware,
     BodyBootcheckProductionFirmware,
+    BodyFlexFlowReport,
     NULL,
   };
   return m_tests;
@@ -332,6 +338,7 @@ TestFunction* TestBody2GetTests(void)
     BodyLoadTestFirmware,
     BodyLoadProductionFirmware,
     //BodyBootcheckProductionFirmware,
+    BodyFlexFlowReport,
     NULL,
   };
   return m_tests;
@@ -344,6 +351,7 @@ TestFunction* TestBody3GetTests(void)
     BodyTryReadSerial,
     BodyLoadProductionFirmware,
     //BodyBootcheckProductionFirmware,
+    BodyFlexFlowReport,
     NULL,
   };
   return m_tests;

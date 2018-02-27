@@ -6,6 +6,7 @@
 #include "console.h"
 #include "contacts.h"
 #include "fixture.h"
+#include "hwid.h"
 #include "meter.h"
 #include "portable.h"
 #include "testcommon.h"
@@ -14,8 +15,12 @@
 #define HEAD_CMD_OPTS   (CMD_OPTS_DEFAULT)
 //#define HEAD_CMD_OPTS   (CMD_OPTS_LOG_ERRORS | CMD_OPTS_REQUIRE_STATUS_CODE) /*disable exceptions*/
 
+static headid_t headnfo;
+
 bool TestHeadDetect(void)
 {
+  memset( &headnfo, 0, sizeof(headnfo) );
+  
   // Make sure power is not applied, as it messes up the detection code below
   Board::powerOff(PWR_VEXT);
   Board::powerOff(PWR_VBAT); //just in case
@@ -79,6 +84,9 @@ void TestHeadDutProgram(void)
     ConsolePrintf("programming failed: error %i\n", cmdStatus() );
     throw ERROR_TESTPORT_CMD_FAILED;
   }
+  
+  //XXX: read esn from head (internal UUID)
+  headnfo.esn = HEADID_ESN_EMPTY;
 }
 
 void TestHeadDutProgramManual(void)
@@ -103,10 +111,16 @@ void TestHeadDutProgramManual(void)
   }
 }
 
+static void HeadFlexFlowReport(void)
+{
+  ConsolePrintf("<flex> ESN %08x\n", headnfo.esn);
+}
+
 TestFunction* TestHead1GetTests(void)
 {
   static TestFunction m_tests[] = {
     TestHeadDutProgram,
+    HeadFlexFlowReport,
     NULL,
   };
   return m_tests;
@@ -116,6 +130,7 @@ TestFunction* TestHead2GetTests(void)
 {
   static TestFunction m_tests[] = {
     TestHeadDutProgramManual,
+    HeadFlexFlowReport,
     NULL
   };
   return m_tests;
