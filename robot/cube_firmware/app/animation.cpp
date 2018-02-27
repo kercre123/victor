@@ -64,12 +64,22 @@ void animation_tick(void) {
     Animation* current = current_frame[i];
 
     switch (current->state) {
-    case STATE_STATIC:
-      memcpy(target, current->channel, sizeof(current->channel));
-      target += sizeof(current->channel);
+    case STATE_ATTACK:
+      {
+        int lerp = current->index * 0x100 / current->attack;
+        
+        for (int c = 0; c < COLOR_CHANNELS; c++) {
+          int value = (current->channel[c] * lerp) + (current->next->channel[c] * (0x100 - lerp));
+          *(target++) = value >> 8;
+        }
+      }
+
+      if (++current->index >= current->attack) {
+        current->state = current->hold ? STATE_HOLD : STATE_ATTACK;
+        current->index = 0;
+      }
 
       break ;
-
     case STATE_HOLD:
       memcpy(target, current->channel, sizeof(current->channel));
       target += sizeof(current->channel);
@@ -82,18 +92,9 @@ void animation_tick(void) {
 
       break ;
 
-    case STATE_ATTACK:
-      int lerp = current->index * 0x100 / current->attack;
-      
-      for (int c = 0; c < COLOR_CHANNELS; c++) {
-        int value = (current->channel[c] * lerp) + (current->next->channel[c] * (0x100 - lerp));
-        *(target++) = value >> 8;
-      }
-
-      if (++current->index >= current->attack) {
-        current->state = current->hold ? STATE_HOLD : STATE_ATTACK;
-        current->index = 0;
-      }
+    case STATE_STATIC:
+      memcpy(target, current->channel, sizeof(current->channel));
+      target += sizeof(current->channel);
 
       break ;
     }
