@@ -663,7 +663,7 @@ void QuadTreeNode::Fold(FoldFunctor accumulator, FoldDirection dir)
 
   for ( auto& cPtr : _childrenPtr )
   {
-    if (cPtr) cPtr->Fold(accumulator);
+    if (cPtr) cPtr->Fold(accumulator, dir);
   }
 
   if (FoldDirection::DepthFirst == dir) { accumulator(*this); }
@@ -678,7 +678,7 @@ void QuadTreeNode::Fold(FoldFunctor accumulator, const FastPolygon& region, Fold
     
     for ( auto& cPtr : _childrenPtr )
     {
-      cPtr->Fold(accumulator, region);
+      cPtr->Fold(accumulator, region, dir);
     }
     
     if (FoldDirection::DepthFirst == dir) { accumulator(*this); }
@@ -694,7 +694,7 @@ void QuadTreeNode::Fold(FoldFunctorConst accumulator, FoldDirection dir) const
   {
     // disambiguate const method call
     const QuadTreeNode* constPtr = cPtr.get();
-    if (constPtr) { constPtr->Fold(accumulator); }
+    if (constPtr) { constPtr->Fold(accumulator, dir); }
   }
   
   if (FoldDirection::DepthFirst == dir) { accumulator(*this); }
@@ -711,7 +711,7 @@ void QuadTreeNode::Fold(FoldFunctorConst accumulator, const FastPolygon& region,
     {
       // disambiguate const method call
       const QuadTreeNode* constPtr = cPtr.get();
-      if (constPtr) { constPtr->Fold(accumulator, region); }
+      if (constPtr) { constPtr->Fold(accumulator, region, dir); }
     }
     
     if (FoldDirection::DepthFirst == dir) { accumulator(*this); }
