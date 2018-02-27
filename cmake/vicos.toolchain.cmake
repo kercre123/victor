@@ -1,4 +1,11 @@
-set(vicos_root "/Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin")
+if(DEFINED VICOS_TOOLCHAIN_HOME)
+  set(vicos_root "$ENV{VICOS_TOOLCHAIN_HOME}")
+elseif(DEFINED ENV{VICOS_TOOLCHAIN_HOME})
+  set(vicos_root "$ENV{VICOS_TOOLCHAIN_HOME}")
+else()
+  message(FATAL_ERROR "VICOS_TOOLCHAIN_HOME not set. Define VICOS_TOOLCHAIN_HOME in your environment")
+endif()
+
 set(target_triple "arm-oe-linux-gnueabi")
 
 set(CMAKE_SYSTEM_NAME Linux)
