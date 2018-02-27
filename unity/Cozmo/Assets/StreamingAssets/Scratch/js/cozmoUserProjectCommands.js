@@ -257,6 +257,7 @@
 
     window.openCozmoProjectJSON = function (cozmoProjectJSON) {
         //console.log("ANKIPERFTEST top openCozmoProjectJSON");
+        window.currentProjectUsesJSONFormat = true;
         try {
             window.openCozmoProject(cozmoProjectJSON.projectUUID, cozmoProjectJSON.projectName, cozmoProjectJSON.versionNum, cozmoProjectJSON.projectJSON, null, cozmoProjectJSON.isSampleStr);
         }
@@ -269,6 +270,7 @@
     // DEPRECATED - only used to open user projects that were created before 2.1 and are still in XML
     window.openCozmoProjectXML = function(projectUUID, projectName, projectVersionNum, projectXML, isCozmoSampleProjectStr) {
         //console.log("ANKIPERFTEST top openCozmoProjectXML");
+        window.currentProjectUsesJSONFormat = false;
         window.openCozmoProject(projectUUID, projectName, projectVersionNum, null, projectXML, isCozmoSampleProjectStr);
     }
 

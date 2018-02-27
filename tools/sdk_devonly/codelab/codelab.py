@@ -890,7 +890,7 @@ class CodeLabInterface():
                             # XML
                             project_xml_escaped = self.escape_project_xml(project_xml)
 
-                            project_version_num = 1 # TODO Hack. Figure out how to get the version num here from the messsage. Currently version num is unused in js.
+                            project_version_num = "1" # TODO Hack. Figure out how to get the version num here from the messsage. Currently version num is unused in js.
                             self.send_to_webpage(
                                 "window.openCozmoProjectXML('" + project_uuid + "','" + project_name_escaped + "','" + project_version_num + "',\"" + project_xml_escaped + "\",'" + is_sample_str + "');",
                                 wait_for_page_load=True)

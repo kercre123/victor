@@ -1,6 +1,10 @@
 (function () {
     const Scratch = window.Scratch = window.Scratch || {};
 
+    // If project being loaded is JSON, value is true.
+    // If project being loaded is XML, value is false.
+    window.currentProjectUsesJSONFormat = true;
+
     addLeadingZeros = function(inNum, desiredLength) {
         var paddedString = "" + inNum;
         while (paddedString.length < desiredLength) {
@@ -203,13 +207,23 @@
         // Receipt of new block XML for the selected target.
         vm.on('workspaceUpdate', function(data) {
             //console.log("ANKIPERFTEST vm.on workspaceUpdate top");
+
             try {
                 // Remove and reattach the workspace listener (but allow flyout events)
                 Scratch.workspace.removeChangeListener(Scratch.vm.blockListener);   
                 var domXML = Blockly.Xml.textToDom(data.xml);
-                //console.log("ANKIPERFTEST openBlocklyXML. After textToDom, before clearWorkspaceAndLoadFromXml");
-                Blockly.Xml.clearWorkspaceAndLoadFromXml(domXML, Scratch.workspace);
-                //console.log("ANKIPERFTEST openBlocklyXML. After clearWorkspaceAndLoadFromXml, bascially end of openBlocklyXML");
+
+                if (window.currentProjectUsesJSONFormat) {
+                    // Project is serialized as JSON
+                    //console.log("ANKIPERFTEST openBlocklyXML. After textToDom, before clearWorkspaceAndLoadFromXml");
+                    Blockly.Xml.clearWorkspaceAndLoadFromXml(domXML, Scratch.workspace);
+                    //console.log("ANKIPERFTEST openBlocklyXML. After clearWorkspaceAndLoadFromXml, bascially end of openBlocklyXML");
+                }
+                else {
+                    // Project is serialized as XML
+                    window.Blockly.Xml.domToWorkspace(domXML, workspace);
+                }
+
                 Scratch.workspace.addChangeListener(Scratch.vm.blockListener);
                 Scratch.workspace.clearUndo();
             }
