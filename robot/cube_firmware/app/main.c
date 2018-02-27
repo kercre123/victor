@@ -16,7 +16,8 @@ int main(void) {
   hal_uart_init();
   hal_led_init();
   hal_acc_init();
-  animation_init();
+
+  animation_init(); // Setup animation controller
 }
 
 void deinit(void) {
@@ -31,6 +32,6 @@ void tick(void) {
 
 void recv(uint8_t length, const void* data) {
   if (length < 1) return ;
-  
+
   animation_write(length, data);
 }

@@ -41,7 +41,8 @@ typedef struct {
 } KeyFrame;
 
 typedef struct {
-  uint16_t flags;
+  uint8_t command;
+  uint8_t flags;
   KeyFrame frame[MAX_KEYFRAMES];
 } Payload;
 
@@ -58,7 +59,7 @@ void animation_init(void) {
   for (int i = 0; i < ANIMATION_CHANNELS; i++) {
     Animation* first = &animation[i][0];
     current_frame[i] = first; 
-    animation[i][0].next = first;
+    animation[i][0].next = staging[i][0].next = first;
   }
 }
 
@@ -74,13 +75,14 @@ void animation_tick(void) {
         int lerp = current->index * 0x100 / current->attack;
         
         for (int c = 0; c < COLOR_CHANNELS; c++) {
-          int value = (current->channel[c] * lerp) + (current->next->channel[c] * (0x100 - lerp));
+          int value = (current->channel[c] * (0x100 - lerp)) + (current->next->channel[c] * lerp);
           *(target++) = value >> 8;
         }
       }
 
       if (++current->index >= current->attack) {
         current->state = current->hold ? STATE_HOLD : STATE_ATTACK;
+        current_frame[i] = current->next;
         current->index = 0;
       }
 
@@ -91,7 +93,6 @@ void animation_tick(void) {
 
       if (++current->index >= current->hold) {
         current->state = current->attack ? STATE_ATTACK : STATE_HOLD;
-        current_frame[i] = current->next;
         current->index = 0;
       }
 
@@ -124,10 +125,10 @@ void animation_write(int length, const void* raw) {
     KeyFrame* frame = &payload.frame[i];
     
     // Initial state
-    if (frame->attack) {
-      target->state = STATE_ATTACK;
-    } else if (frame->hold) {
+    if (frame->hold) {
       target->state = STATE_HOLD;
+    } else if (frame->attack) {
+      target->state = STATE_ATTACK;
     } else {
       target->state = STATE_STATIC;
     }
