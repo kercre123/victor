@@ -135,7 +135,7 @@ void BehaviorComeHere::TurnTowardsFace()
 void BehaviorComeHere::AlreadyHere()
 {
   DEBUG_SET_STATE(AlreadyHere);
-  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::ComeHere_AlreadyHere));
+  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::AlreadyAtFace));
 }
 
 

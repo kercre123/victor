@@ -745,7 +745,7 @@ void RobotToEngineImplMessaging::HandlePotentialCliffEvent(const AnkiEvent<Robot
     // - set a timeout value of 3 seconds for this animation
     // - set strictCooldown = true so we do NOT simply choose the animation closest to being off
     //   cooldown when all animations in the group are on cooldown
-    IActionRunner* action = new TriggerLiftSafeAnimationAction(AnimationTrigger::DroneModeCliffEvent, 1,
+    IActionRunner* action = new TriggerLiftSafeAnimationAction(AnimationTrigger::AudioOnlyHuh, 1,
                                                                true, (u8)AnimTrackFlag::NO_TRACKS, 3.f, true);
     robot->GetActionList().QueueAction(QueueActionPosition::NOW, action);
   } else if (!robot->GetContext()->IsInSdkMode()) {

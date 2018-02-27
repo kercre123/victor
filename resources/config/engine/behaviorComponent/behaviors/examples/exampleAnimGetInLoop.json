@@ -1,9 +1,9 @@
 {
   "behaviorID"       : "ExampleAnimGetInLoop",
   "behaviorClass"    : "AnimGetInLoop",
-  "getIn"            : "NeedsSevereLowRepairGetIn",
-  "loopAnimation"    : "PeekABooLowIntensity",
-  "getOut"           : "NeedsSevereLowRepairGetIn",
-  "emergencyGetOut"  : "NeedsSevereLowRepairGetIn"
+  "getIn"            : "CubePounceGetIn",
+  "loopAnimation"    : "DanceMambo",
+  "getOut"           : "CubePounceGetOut",
+  "emergencyGetOut"  : "CubePounceGetOut"
   //"loopEndCondition" : ""
 }
