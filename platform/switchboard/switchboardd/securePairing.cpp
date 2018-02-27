@@ -11,6 +11,7 @@
  **/
 
 #include <sstream>
+#include "anki-wifi/wifi.h"
 #include "switchboardd/securePairing.h"
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -185,6 +186,42 @@ void Anki::Switchboard::SecurePairing::SendChallenge() {
 void Anki::Switchboard::SecurePairing::SendChallengeSuccess() {
   // Send challenge and update state
   SendEncrypted(ChallengeAcceptedMessage_crypto());
+}
+
+void Anki::Switchboard::SecurePairing::SendWifiScanResults() {
+  // TODO: will replace with CLAD message format
+  std::vector<Anki::WiFiScanResult> wifiResults = Anki::ScanForWiFiAccessPoints();
+
+  size_t msgSize = 3;
+
+  for(int i = 0; i < wifiResults.size(); i++) {
+    msgSize += (3 + wifiResults[i].ssid.length());
+  }
+
+  uint8_t* msgBuffer = (uint8_t*)malloc(msgSize);
+
+  size_t pos = 0;
+  msgBuffer[pos++] = CRYPTO_WIFI_SCAN_RESPONSE;
+  msgBuffer[pos++] = (wifiResults.size() > 0)? 0 : (uint8_t)-1;
+  msgBuffer[pos++] = wifiResults.size();
+
+  for(int i = 0; i < wifiResults.size(); i++) {
+    msgBuffer[pos++] = wifiResults[i].auth;
+    msgBuffer[pos++] = wifiResults[i].signal_level;
+    msgBuffer[pos++] = wifiResults[i].ssid.length();
+
+    memcpy(msgBuffer + pos, wifiResults[i].ssid.c_str(), wifiResults[i].ssid.length());
+
+    pos += wifiResults[i].ssid.length();
+  }
+
+  int n = _stream->SendEncrypted(msgBuffer, msgSize);
+
+  if(n != 0) {
+    printf("Failed to send");
+  }
+
+  free(msgBuffer);
 }
 
 void Anki::Switchboard::SecurePairing::SendCancelPairing() {
@@ -385,7 +422,14 @@ void Anki::Switchboard::SecurePairing::HandleEncryptedMessageReceived(uint8_t* b
           Log::Write("Received challenge response in wrong state.");
         }
         break;
-      case Anki::Switchboard::SecureMessage::CRYPTO_WIFI_CREDENTIALS:
+      case Anki::Switchboard::SecureMessage::CRYPTO_WIFI_SCAN_REQUEST:
+        if(_state == PairingState::ConfirmedSharedSecret) {
+          SendWifiScanResults();
+        } else {
+          Log::Write("Received wifi scan request in wrong state.");
+        }
+        break;
+      case Anki::Switchboard::SecureMessage::CRYPTO_WIFI_CONNECT_REQUEST:
         if(_state == PairingState::ConfirmedSharedSecret) {
           char* ssidPtr = (char*)bytes + 2;
           std::string ssid(ssidPtr, bytes[1]);
@@ -395,6 +439,7 @@ void Anki::Switchboard::SecurePairing::HandleEncryptedMessageReceived(uint8_t* b
         } else {
           Log::Write("Received wifi credentials in wrong state.");
         }
+        break;
       default:
         IncrementAbnormalityCount();
         Log::Write("Unknown encrypted message type.");

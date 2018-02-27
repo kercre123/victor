@@ -182,6 +182,7 @@ std::vector<WiFiScanResult> ScanForWiFiAccessPoints() {
       results.push_back(result);
     }
   }
+
   return results;
 }
 
@@ -199,16 +200,16 @@ std::vector<uint8_t> PackWiFiScanResults(const std::vector<WiFiScanResult>& resu
   return packed_results;
 }
 
-/*bool ConnectToWiFi(std::string ssid) {
-  GError* error = nullptr;
+bool ConnectWiFiBySsid(std::string ssid) {
+  /*GError* error = nullptr;
   GVariant* arg_provider;
 
   conn_man_bus_manager_call_connect_provider_sync(ConnManBusManager* proxy, 
     arg_provier,
     gchar** out_path,
     nullptr,
-    &error);
-}*/
+    &error);*/
+}
 
 void EnableWiFiInterface(const bool enable, ExecCommandCallback callback) {
   if (enable) {

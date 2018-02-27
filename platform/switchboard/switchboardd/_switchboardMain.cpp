@@ -54,13 +54,13 @@ void Anki::Switchboard::Daemon::Start() {
   sTaskExecutor = new Anki::TaskExecutor(sLoop);
 
   //####
-  std::vector<WiFiScanResult> wifiNetworks = Anki::ScanForWiFiAccessPoints();
+  /*std::vector<WiFiScanResult> wifiNetworks = Anki::ScanForWiFiAccessPoints();
   for(int i = 0; i < wifiNetworks.size(); i++) {
     bool isWps = wifiNetworks[i].wps;
     bool isEncrypted = wifiNetworks[i].encrypted;
-    bool isEncrypted = wifiNetworks[i].auth;
+    uint8_t auth = wifiNetworks[i].auth;
     printf("Network: %s \t\t\t[%d]\n", wifiNetworks[i].ssid.c_str(), wifiNetworks[i].signal_level);
-  }
+  }*/
   //####
 
   InitializeBle();
@@ -88,19 +88,25 @@ void Anki::Switchboard::Daemon::InitializeBle() {
   sBleClient->OnDisconnectedEvent().SubscribeForever(OnDisconnected);
   sBleClient->Connect();
   sBleClient->StartAdvertising();
+
+  Log::Write("Initialize BLE");
 }
 
 void Anki::Switchboard::Daemon::OnConnected(int connId, INetworkStream* stream) {
-  printf("Connected to a BLE central.\n");
-
-  if(sSecurePairing == nullptr) {
-    sSecurePairing = new Anki::Switchboard::SecurePairing(stream, sLoop);
-    sSecurePairing->OnUpdatedPinEvent().SubscribeForever(OnPinUpdated);
-    ///sWifiHandle = sSecurePairing->OnReceivedWifiCredentialsEvent().ScopedSubscribe(OnReceiveWifiCredentials);
-  }
-  
-  // Initiate pairing process
-  sSecurePairing->BeginPairing();
+  Log::Write("OnConnected");
+  sTaskExecutor->Wake([stream](){
+    Log::Write("Connected to a BLE central.\n");
+    if(sSecurePairing == nullptr) {
+      sSecurePairing = new Anki::Switchboard::SecurePairing(stream, sLoop);
+      sSecurePairing->OnUpdatedPinEvent().SubscribeForever(OnPinUpdated);
+      ///sWifiHandle = sSecurePairing->OnReceivedWifiCredentialsEvent().ScopedSubscribe(OnReceiveWifiCredentials);
+    }
+    
+    // Initiate pairing process
+    sSecurePairing->BeginPairing();
+    Log::Write("Done task\n");
+  });
+  Log::Write("Done OnConnected\n");
 }
 
 void Anki::Switchboard::Daemon::OnDisconnected(int connId, INetworkStream* stream) {

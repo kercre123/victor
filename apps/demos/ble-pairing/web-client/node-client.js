@@ -108,6 +108,7 @@ function handleReceivePlainText(data) {
 function handleReceiveEncrypted(ctext) {
     let CRYPTO_PING = 1;
     let CRYPTO_ACCEPTED = 4;
+    let CRYPTO_WIFI_SCAN_RESPONSE = 11;
 
     let cipher = new Uint8Array(ctext);
     let nonce = new Uint8Array(decryptNonce);
@@ -129,10 +130,37 @@ function handleReceiveEncrypted(ctext) {
         } else if(data[0] == CRYPTO_ACCEPTED) {
             printConnectionMessage("Secure connection has been established...", "\x1b[32m");
 
-            let wifiCred = Buffer.concat([Buffer.from([5]), Buffer.from([13]), Buffer.from("vic-home-wifi"), Buffer.from([8]), Buffer.from("password")]);
+            let wifiScanRequest = Buffer.from([10, 0]);
+            printConnectionMessage("Requesting Victor wifi Scan...", "\x1b[32m");
+            protocolSend(wifiScanRequest, true);
+            //let wifiCred = Buffer.concat([Buffer.from([5]), Buffer.from([13]), Buffer.from("vic-home-wifi"), Buffer.from([8]), Buffer.from("password")]);
+            //console.log(wifiCred);
+            //protocolSend(wifiCred, true);
+        } else if(data[0] == CRYPTO_WIFI_SCAN_RESPONSE) {
+            let wifiScanResponse = []
+            let status = data[1];
+            let n = data[2];
+            let pos = 3;
 
-            console.log(wifiCred);
-            protocolSend(wifiCred, true);
+            for(let i = 0; i < n; i++) {
+                let wifiNetwork = {};
+                wifiNetwork["auth"] = data[pos++];
+                wifiNetwork["signal_strength"] = data[pos++];
+                let ssidSize = data[pos++];
+
+                if(ssidSize == 0) {
+                    continue;
+                }
+                
+                wifiNetwork["ssid"] = stringFromUTF8Array(data.slice(pos, pos + ssidSize));
+                pos += ssidSize;
+
+                wifiScanResponse.push(wifiNetwork);
+            }
+
+            for(let i = 0; i < wifiScanResponse.length; i++) {
+                console.log(wifiScanResponse[i]);
+            }
         }
     } catch(err) {
         console.log("Failed to decrypt");
@@ -418,3 +446,35 @@ function ConvertIntToByteBufferLittleEndian(val) {
     buffer[3] = val >> 24;
     return buffer;
 }
+
+function stringFromUTF8Array(data)
+  {
+    const extraByteMap = [ 1, 1, 1, 1, 2, 2, 3, 0 ];
+    var count = data.length;
+    var str = "";
+    
+    for (var index = 0;index < count;)
+    {
+      var ch = data[index++];
+      if (ch & 0x80)
+      {
+        var extra = extraByteMap[(ch >> 3) & 0x07];
+        if (!(ch & 0x40) || !extra || ((index + extra) > count))
+          return null;
+        
+        ch = ch & (0x3F >> extra);
+        for (;extra > 0;extra -= 1)
+        {
+          var chx = data[index++];
+          if ((chx & 0xC0) != 0x80)
+            return null;
+          
+          ch = (ch << 6) | (chx & 0x3F);
+        }
+      }
+      
+      str += String.fromCharCode(ch);
+    }
+    
+    return str;
+  }
