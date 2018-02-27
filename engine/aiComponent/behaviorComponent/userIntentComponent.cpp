@@ -475,6 +475,11 @@ std::vector<std::string> UserIntentComponent::DevGetCloudIntentsList() const
   return _intentMap->DevGetCloudIntentsList();
 }
   
+std::vector<std::string> UserIntentComponent::DevGetAppIntentsList() const
+{
+  return _intentMap->DevGetAppIntentsList();
+}
+  
 void UserIntentComponent::SendWebVizIntents()
 {
   if( _context != nullptr ) {

@@ -27,6 +27,7 @@
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionLambda.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
+#include "engine/unitTestKey.h"
 #include "util/console/consoleFunction.h"
 #include "util/console/consoleInterface.h"
 
@@ -755,6 +756,25 @@ InternalStatesBehavior::TransitionType InternalStatesBehavior::TransitionTypeFro
     // return something to make the compiler happy
     return TransitionType::Exit;
   }
+}
+  
+std::vector<std::pair<std::string, std::vector<IBEIConditionPtr>>>
+  InternalStatesBehavior::TESTONLY_GetAllTransitions( UnitTestKey key ) const
+{
+  std::vector<std::pair<std::string, std::vector<IBEIConditionPtr>>> ret;
+  for( const auto& statePair : *_states ) {
+    std::vector<IBEIConditionPtr> retTransitions;
+    const State::Transitions* transitionTypes[3] = {&statePair.second._interruptingTransitions,
+                                                    &statePair.second._nonInterruptingTransitions,
+                                                    &statePair.second._exitTransitions};
+    for( const auto& transitions : transitionTypes ) {
+      for( const auto& transPair : *transitions ) {
+        retTransitions.push_back( transPair.second );
+      }
+    }
+    ret.emplace_back( statePair.second._name, std::move(retTransitions) );
+  }
+  return ret;
 }
 
 }

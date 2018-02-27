@@ -129,8 +129,9 @@ public:
   // if there was an error (e.g. malformed json, incorrect data fields, etc)
   bool SetCloudIntentPendingFromJSON(const std::string& cloudJsonStr);
   
-  // get list of cloud intents from json
+  // get list of cloud/app intents from json
   std::vector<std::string> DevGetCloudIntentsList() const;
+  std::vector<std::string> DevGetAppIntentsList() const;
 
 private:
   

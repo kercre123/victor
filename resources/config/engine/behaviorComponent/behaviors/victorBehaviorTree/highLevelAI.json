@@ -366,7 +366,7 @@
         "FistBump",
         "Observing",
         "ReturningToCharger", // to avoid unclaimed intent
-        "Socializing"  
+        "Socializing"
       ],
       "interruptingTransitions": [
         {
@@ -405,6 +405,7 @@
         "DriveOffChargerIntoObserving",
         "DriveOffChargerIntoSocializing",
         "DriveOffChargerIntoPlay",
+        "FistBump",
         "Observing",
         "Socializing",
         "Napping",
