@@ -68,6 +68,8 @@ protected:
   
 private:
   
+  friend class TestBehaviorHighLevelAI; // unit test access
+  
   // accesses the eval func from sMap by name, or returns nullptr if not found
   const EvalUserIntentFunc& GetFromName( const std::string& name ) const;
   

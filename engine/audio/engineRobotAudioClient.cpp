@@ -153,7 +153,7 @@ void EngineRobotAudioClient::SubscribeAudioCallbackMessages( Robot* robot )
   
   IExternalInterface* gameToEngineInterface = _robot->GetContext()->GetExternalInterface();
   if ( gameToEngineInterface ) {
-    _signalHandles.push_back(gameToEngineInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::SetRobotVolume,                                                              robotVolumeCallback));
+    _signalHandles.push_back(gameToEngineInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::SetRobotVolume, robotVolumeCallback));
   }
 }
 

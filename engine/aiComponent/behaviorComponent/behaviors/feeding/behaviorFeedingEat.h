@@ -86,7 +86,6 @@ private:
   void TransitionToReactingToInterruption();
 
   void CubeMovementHandler(const float movementScore);
-  AnimationTrigger CheckNeedsStateAndCalculateAnimation();
 
   // sets the target cube as invalid for future runs of the behavior (unless it is observed again);
   void MarkCubeAsBad();

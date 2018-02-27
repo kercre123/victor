@@ -344,43 +344,25 @@ bool HAL::HandleLatestMicData(SendDataFunction sendDataFunc)
 
 f32 HAL::BatteryGetVoltage()
 {
-  // On charger battery.battery reports ~3520 so scale it to 5v
-  static const f32 kBatteryScale = 5.f/3520;
+  // scale raw ADC counts to voltage (conversion factor from Vandiver)
+  static const f32 kBatteryScale = 2.8f / 2048.f;
   return kBatteryScale * bodyData_->battery.battery;
 }
 
 bool HAL::BatteryIsCharging()
 {
-  // TEMP!! This should be fixed once syscon reports the correct flags for isCharging, etc.
-  static bool isCharging = false;
-  static bool wasAboveThresh = false;
-  static u32 lastTransition_ms = HAL::GetTimeStamp();
-
-  const int32_t thresh = 2000; // raw ADC value?
-  const u32 debounceTime_ms = 200U;
-
-  const bool isAboveThresh = bodyData_->battery.charger > thresh;
-
-  if (isAboveThresh != wasAboveThresh) {
-    lastTransition_ms = HAL::GetTimeStamp();
-  }
-
-  const bool canTransition = HAL::GetTimeStamp() > lastTransition_ms + debounceTime_ms;
-
-  if (canTransition) {
-    isCharging = isAboveThresh;
-  }
-
-  wasAboveThresh = isAboveThresh;
-  return isCharging;
-  //return bodyData_->battery.flags & isCharging;
+  // The POWER_IS_CHARGING flag is set whenever syscon has the charging
+  // circuitry enabled. It does not necessarily mean the charging circuit
+  // is actually charging the battery. It may remain true even after the
+  // battery is fully charged.
+  return bodyData_->battery.flags & POWER_IS_CHARGING;
 }
 
 bool HAL::BatteryIsOnCharger()
 {
-  // TEMP!! This should be fixed once syscon reports the correct flags for isCharging, etc.
-  return HAL::BatteryIsCharging();
-  //return bodyData_->battery.flags & isOnCharger;
+  // The POWER_ON_CHARGER flag is set whenever there is sensed voltage on
+  // the charge contacts.
+  return bodyData_->battery.flags & POWER_ON_CHARGER;
 }
 
 bool HAL::BatteryIsChargerOOS()

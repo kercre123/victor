@@ -51,8 +51,9 @@ public:
   void SanitizeCloudIntentVariables(const std::string& cloudIntent, Json::Value& paramsList) const;
   void SanitizeAppIntentVariables(const std::string& appIntent, Json::Value& paramsList) const;
   
-  // get list of cloud intents from json
+  // get list of cloud/app intents from json
   std::vector<std::string> DevGetCloudIntentsList() const;
+  std::vector<std::string> DevGetAppIntentsList() const;
 
 private:
 

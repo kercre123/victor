@@ -283,5 +283,16 @@ std::vector<std::string> UserIntentMap::DevGetCloudIntentsList() const
   return ret;
 }
 
+std::vector<std::string> UserIntentMap::DevGetAppIntentsList() const
+{
+  std::vector<std::string> ret;
+  ret.reserve( _appToUserMap.size() );
+  for( const auto& pair : _appToUserMap ) {
+    ret.push_back( pair.first );
+  }
+  return ret;
+}
+
+  
 }
 }

@@ -498,7 +498,7 @@ void BehaviorTrackLaser::TransitionToWaitForExposureChange()
   
   if(ShouldStreamline())
   {
-    action->AddAction(new TriggerAnimationAction(AnimationTrigger::VC_LookDownForLaser));
+    action->AddAction(new TriggerAnimationAction(AnimationTrigger::LookDownForLaser));
   }
   
   // Once we've gottena a couple of images, switch to looking for a laser dot

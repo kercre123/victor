@@ -11,7 +11,6 @@
  *
  **/
 
-// #include "webServerProcess/src/webService.h"
 #include "webService.h"
 
 #if USE_DAS
@@ -43,22 +42,6 @@
 #include <iomanip>
 
 using namespace Anki::Cozmo;
-
-
-namespace {
-
-#ifndef SIMULATOR
-  std::ifstream _cpuFile;
-  std::ifstream _temperatureFile;
-  std::ifstream _batteryVoltageFile;
-
-//  const char* kNominalCPUFreqFile = "/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq";
-  const char* kCPUFreqFile = "/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_cur_freq";
-  const char* kTemperatureFile = "/sys/devices/virtual/thermal/thermal_zone7/temp";
-  const char* kBatteryVoltageFile = "/sys/devices/soc/qpnp-linear-charger-8/power_supply/battery/voltage_now";
-#endif
-
-} // namespace
 
 
 // Used websockets codes, see websocket RFC pg 29
@@ -576,30 +559,26 @@ static int GetPerfStats(struct mg_connection *conn, void *cbdata)
 
 #else
 
+  const auto& osState = OSState::getInstance();
+
   std::string stat_cpuFreq;
   if (active[0]) {
     // Update cpu freq
-    uint32_t cpuFreq_kHz;
-    _cpuFile.seekg(0, _cpuFile.beg);
-    _cpuFile >> cpuFreq_kHz;
+    const uint32_t cpuFreq_kHz = osState->UpdateCPUFreq_kHz();
     stat_cpuFreq = std::to_string(cpuFreq_kHz);
   }
 
   std::string stat_temperature;
   if (active[1]) {
     // Update temperature reading (Celsius)
-    uint32_t cpuTemp_C;
-    _temperatureFile.seekg(0, _temperatureFile.beg);
-    _temperatureFile >> cpuTemp_C;
+    const uint32_t cpuTemp_C = osState->UpdateTemperature_C();
     stat_temperature = std::to_string(cpuTemp_C);
   }
 
   std::string stat_batteryVoltage;
   if (active[2]) {
     // Battery voltage
-    uint32_t batteryVoltage_uV;
-    _batteryVoltageFile.seekg(0, _batteryVoltageFile.beg);
-    _batteryVoltageFile >> batteryVoltage_uV;
+    const uint32_t batteryVoltage_uV = osState->UpdateBatteryVoltage_uV();
     const float batteryVoltage_V = batteryVoltage_uV * 0.000001f;
     std::stringstream ss;
     ss << std::fixed << std::setprecision(6) << batteryVoltage_V;
@@ -729,12 +708,6 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform, const Json::Val
   _consoleVarsUIHTMLTemplate = Anki::Util::StringFromContentsOfFile(consoleVarsTemplate);
 
   _requests.clear();
-
-#ifndef SIMULATOR
-  _temperatureFile.open(kTemperatureFile, std::ifstream::in);
-  _cpuFile.open(kCPUFreqFile, std::ifstream::in);
-  _batteryVoltageFile.open(kBatteryVoltageFile, std::ifstream::in);
-#endif
 }
 
 
@@ -963,17 +936,6 @@ void WebService::Update()
 
 void WebService::Stop()
 {
-#ifndef SIMULATOR
-  if (_temperatureFile.is_open()) {
-    _temperatureFile.close();
-  }
-  if (_cpuFile.is_open()) {
-    _cpuFile.close();
-  }
-  if (_batteryVoltageFile.is_open()) {
-    _batteryVoltageFile.close();
-  }
-#endif
   if (_ctx) {
     mg_stop(_ctx);
   }
@@ -1195,7 +1157,7 @@ int WebService::HandleWebSocketsData(struct mg_connection* conn, int bits, char*
       }
     }
       break;
-    
+
     case WebSocketsTypeCloseConnection:
     {
       // agree to close connection, but don't do anything here until the close event fires

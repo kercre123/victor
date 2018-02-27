@@ -27,6 +27,8 @@ class IConsoleFunction;
   
 namespace Cozmo {
 
+class UnitTestKey;
+  
 class InternalStatesBehavior : public ICozmoBehavior
 {
 protected:
@@ -45,6 +47,9 @@ protected:
 public:
 
   virtual ~InternalStatesBehavior();
+  
+  // for unit tests: grab a list of all conditions for each state name
+  std::vector<std::pair<std::string, std::vector<IBEIConditionPtr>>> TESTONLY_GetAllTransitions( UnitTestKey key ) const;
   
 protected:
 

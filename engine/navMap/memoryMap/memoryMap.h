@@ -49,10 +49,10 @@ public:
   virtual bool FillBorder(EContentType typeToReplace, const FullContentArray& neighborsToFillFrom, EContentType newTypeSet, TimeStamp_t timeMeasured) override;
   
   // attempt to apply a transformation function to all nodes in the tree
-  virtual bool TransformContent(NodeTransformFunction transform) override { return _quadTree.Transform(transform); }
+  virtual bool TransformContent(NodeTransformFunction transform) override;
   
   // attempt to apply a transformation function to any node intersecting the poly
-  virtual bool TransformContent(const Poly2f& poly, NodeTransformFunction transform) override { return _quadTree.Transform(poly, transform); }
+  virtual bool TransformContent(const Poly2f& poly, NodeTransformFunction transform) override;
 
   // populate a list of all data that matches the predicate
   virtual void FindContentIf(NodePredicate pred, MemoryMapDataConstList& output) const override;

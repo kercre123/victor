@@ -565,6 +565,10 @@ namespace Cozmo {
     // ANKI_CPU_TICK("ProceduralFaceDrawer", kMaxExpectedFaceDrawTime_ms, 61);
     ANKI_CPU_PROFILE("DrawFace");
 
+    // Make sure output is allocated appropriately.
+    // Will do nothing if already the right size.
+    output.Allocate(ProceduralFace::HEIGHT, ProceduralFace::WIDTH);
+    
     // Static image to do all our drawing in, will be converted to RGB565 at the end
     // This is treated as an HSV image
     static Vision::ImageRGB faceImg;
