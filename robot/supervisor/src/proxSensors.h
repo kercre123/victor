@@ -42,6 +42,8 @@ namespace Anki {
       
       void SetAllCliffDetectThresholds(u16 level);
       
+      u8 GetCliffDetectedFlags();
+      
       u16 GetCliffValue(u32 ind);
 
       // Get corrected ToF distance sensor data
