@@ -2,6 +2,8 @@
 #include "board.h"
 #include "accel.h"
 
+#include "BMA253.h"
+
 static uint16_t* const SPI_PIN_READ  = (uint16_t*)(GPIO_BASE + (GPIO_PORT_0 << 5));
 static uint16_t* const SPI_PIN_SET   = (uint16_t*)(GPIO_BASE + (GPIO_PORT_0 << 5) + 2);
 static uint16_t* const SPI_PIN_RESET = (uint16_t*)(GPIO_BASE + (GPIO_PORT_0 << 5) + 4);
