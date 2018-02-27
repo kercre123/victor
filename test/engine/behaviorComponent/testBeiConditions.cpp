@@ -16,10 +16,12 @@
 #define private public
 #define protected public
 
+#include "clad/types/behaviorComponent/behaviorTimerTypes.h"
 #include "clad/types/behaviorComponent/userIntent.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTimers.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
@@ -698,4 +700,64 @@ TEST(BeiConditions, ConsoleVar)
   kTestBEIConsoleVar = 1;
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
 }
+
+TEST(BeiConditions, BehaviorTimer)
+{
+  BaseStationTimer::getInstance()->UpdateTime(0.0);
+  
+  const std::string json = R"json(
+  {
+    "conditionType": "BehaviorTimer",
+    "timerName": "FistBump",
+    "cooldown_s": 15
+  })json";
+
+  IBEIConditionPtr cond;
+  CreateBEI(json, cond);
+
+  TestBehaviorFramework testBehaviorFramework(1, nullptr);
+  testBehaviorFramework.InitializeStandardBehaviorComponent();
+  BehaviorExternalInterface& bei = testBehaviorFramework.GetBehaviorExternalInterface();
+  
+  cond->Init(bei);
+  cond->SetActive(bei, true);
+  
+  // never been reset before
+  EXPECT_TRUE( cond->AreConditionsMet(bei) );
+  
+  double resetTime1 = 2.0;
+  BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(resetTime1));
+  
+  // never been reset before
+  EXPECT_TRUE( cond->AreConditionsMet(bei) );
+  
+  bei.GetBehaviorTimerManager().GetTimer( BehaviorTimerTypes::FistBump ).Reset();
+  
+  // has been reset, no time elapsed
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+  
+  // prior to expiration
+  BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(resetTime1 + 14.9999));
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+  
+  // just past expiration
+  BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(resetTime1 + 15.0001));
+  EXPECT_TRUE( cond->AreConditionsMet(bei) );
+
+  // works a second time
+  
+  double resetTime2 = resetTime1 + 16.0001; // still valid after first timer
+  BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(resetTime2));
+  EXPECT_TRUE( cond->AreConditionsMet(bei) );
+  
+  bei.GetBehaviorTimerManager().GetTimer( BehaviorTimerTypes::FistBump ).Reset();
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+  
+  BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(resetTime2 + 14.9999));
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+  
+  BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(resetTime2 + 15.0001));
+  EXPECT_TRUE( cond->AreConditionsMet(bei) );
+}
+
 

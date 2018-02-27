@@ -12,7 +12,7 @@ structure UserIntent_Void
 
 structure UserIntent_MeetVictor
 {
-  string name,
+  string username,
 }
 
 structure UserIntent_PlaySpecific

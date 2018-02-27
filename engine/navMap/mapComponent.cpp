@@ -372,7 +372,7 @@ void MapComponent::TimeoutObjects()
     const TimeStamp_t visionTooOld = (currentTime <= kVisionTimeout_ms) ? 0 : currentTime - kVisionTimeout_ms;
 
     NodeTransformFunction timeoutObjects = 
-      [cliffTooOld, visionTooOld, currentTime] (MemoryMapDataPtr data) -> MemoryMapDataPtr
+      [cliffTooOld, visionTooOld] (MemoryMapDataPtr data) -> MemoryMapDataPtr
       {
         const EContentType nodeType = data->type;
         const TimeStamp_t lastObs = data->GetLastObservedTime();
@@ -381,7 +381,7 @@ void MapComponent::TimeoutObjects()
             (EContentType::InterestingEdge    == nodeType && lastObs <= visionTooOld) ||
             (EContentType::NotInterestingEdge == nodeType && lastObs <= visionTooOld)) 
         {
-          return std::make_shared<MemoryMapData>(EContentType::Unknown, currentTime);
+          return MemoryMapDataPtr();
         }
         return data;
       };
@@ -401,12 +401,11 @@ void MapComponent::FlagGroundPlaneROIInterestingEdgesAsUncertain()
   // ask memory map to clear
   INavMap* currentNavMemoryMap = GetCurrentMemoryMap();
   DEV_ASSERT(currentNavMemoryMap, "MapComponent.FlagGroundPlaneROIInterestingEdgesAsUncertain.NullMap");
-  TimeStamp_t t = _robot->GetLastImageTimeStamp();
   
-  NodeTransformFunction transform = [t] (MemoryMapDataPtr oldData) -> MemoryMapDataPtr
+  NodeTransformFunction transform = [] (MemoryMapDataPtr oldData) -> MemoryMapDataPtr
     {
         if (EContentType::InterestingEdge == oldData->type) {
-          return std::make_shared<MemoryMapData>(EContentType::Unknown, t);
+          return MemoryMapDataPtr();
         }
         return oldData;
     };
@@ -430,12 +429,11 @@ void MapComponent::FlagInterestingEdgesAsUseless()
     
   INavMap* currentNavMemoryMap = GetCurrentMemoryMap();
   DEV_ASSERT(currentNavMemoryMap, "MapComponent.FlagInterestingEdgesAsUseless.NullMap");
-  TimeStamp_t t = _robot->GetLastImageTimeStamp();
   
-  NodeTransformFunction transform = [t] (MemoryMapDataPtr oldData) -> MemoryMapDataPtr
+  NodeTransformFunction transform = [] (MemoryMapDataPtr oldData) -> MemoryMapDataPtr
     {
         if (EContentType::InterestingEdge == oldData->type) {
-          return std::make_shared<MemoryMapData>(EContentType::Unknown, t);
+          return MemoryMapDataPtr();
         }
         return oldData;
     };
@@ -810,7 +808,7 @@ void MapComponent::RemoveObservableObject(const ObservableObject& object, PoseOr
         const auto currentCubeData = MemoryMapData::MemoryMapDataCast<const MemoryMapData_ObservableObject>(data);
         if (currentCubeData->id == id) 
         {
-          return std::make_shared<MemoryMapData>( MemoryMapData(removalType, timeStamp) ); 
+          return MemoryMapData(removalType, timeStamp).Clone(); 
         } 
       } 
       return data;

@@ -36,35 +36,28 @@ DataPlatform::DataPlatform(const std::string &persistentPath, const std::string 
 std::string DataPlatform::pathToResource(const Scope& resourceScope, const std::string& resourceName) const
 {
   std::string s = "";
-  if (Scope::Resources == resourceScope) {
-    if (resourceName.empty()) {
-      LOG_WARNING("Platform.pathToResource", "Request for top level resource directory");
+  switch (resourceScope) {
+    case Scope::Persistent:
+      s += _persistentPath;
+      break;
+    case Scope::Resources:
+      s += _resourcesPath;
+      break;
+    case Scope::Cache:
+      s += _cachePath;
+      break;
+    case Scope::CurrentGameLog:
+      s += _cachePath;
+      s += "/gameLogs";
+      break;
+  }
+  if (!resourceName.empty()) {
+    if ('/' != resourceName.front()) {
+      s += "/";
     }
+    s += resourceName;
   }
 
-  if (s.empty()) {
-    switch (resourceScope) {
-      case Scope::Persistent:
-        s += _persistentPath;
-        break;
-      case Scope::Resources:
-        s += _resourcesPath;
-        break;
-      case Scope::Cache:
-        s += _cachePath;
-        break;
-      case Scope::CurrentGameLog:
-        s += _cachePath;
-        s += "/gameLogs";
-        break;
-    }
-    if (!resourceName.empty()) {
-      if ('/' != resourceName.front()) {
-        s += "/";
-      }
-      s += resourceName;
-    }
-  }
   //LOG_DEBUG("DataPlatform", "%s", s.c_str());
   return s;
 }

@@ -111,6 +111,7 @@ public:
   
   // Get/Set the overall face position
   void SetFacePosition(Point<2,Value> center);
+  void SetFacePositionAndKeepCentered(Point<2, Value> center);
   Point<2,Value> const& GetFacePosition() const;
   
   // Get/Set the overall face scale

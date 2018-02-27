@@ -127,7 +127,7 @@ void BehaviorEnrollFace::CheckForIntentData() const
   UserIntent* intent = uic.TakePreservedUserIntentOwnership( USER_INTENT(meet_victor) );
   if( intent != nullptr ) {
     const auto& meetVictor = intent->Get_meet_victor();
-    _settings->name = meetVictor.name;
+    _settings->name = meetVictor.username;
     _settings->observedID = Vision::UnknownFaceID;
     _settings->saveID = 0;
     _settings->saveToRobot = true;

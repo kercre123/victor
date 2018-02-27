@@ -28,6 +28,7 @@ class BehaviorEventComponent;
 class BehaviorExternalInterface;
 class BehaviorHelperComponent;
 class BehaviorSystemManager;
+class BehaviorTimerManager;
 class BlockWorld;
 class DelegationComponent;
 class DevBehaviorComponentMessageHandler;
@@ -57,6 +58,8 @@ template<>
 void GetComponentIDForType<Cozmo::BCComponentID, Cozmo::BehaviorHelperComponent>(Cozmo::BCComponentID& enumToSet){enumToSet =  Cozmo::BCComponentID::BehaviorHelperComponent;}
 template<>
 void GetComponentIDForType<Cozmo::BCComponentID, Cozmo::BehaviorSystemManager>(Cozmo::BCComponentID& enumToSet){enumToSet =  Cozmo::BCComponentID::BehaviorSystemManager;}
+template<>
+void GetComponentIDForType<Cozmo::BCComponentID, Cozmo::BehaviorTimerManager>(Cozmo::BCComponentID& enumToSet){enumToSet =  Cozmo::BCComponentID::BehaviorTimerManager;}
 template<>
 void GetComponentIDForType<Cozmo::BCComponentID, Cozmo::BlockWorld>(Cozmo::BCComponentID& enumToSet){enumToSet =  Cozmo::BCComponentID::BlockWorld;}
 template<>

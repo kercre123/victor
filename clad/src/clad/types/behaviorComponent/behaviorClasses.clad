@@ -41,6 +41,9 @@ enum uint_8 BehaviorClass {
   Turn,
   TurnToFace,
 
+  // coordinators
+  CoordinateGlobalInterrupts,
+
   // devBehaviors
   DevDisplayReadingsOnFace,
   DevImageCapture,

@@ -255,14 +255,8 @@ void BehaviorFeedingEat::TransitionToPlacingLiftOnCube()
 {
   SET_STATE(PlacingLiftOnCube);
   
-  bool isNeedSevere = false;
-
-  AnimationTrigger bestAnim = isNeedSevere ?
-                               AnimationTrigger::FeedingPlaceLiftOnCube_Severe :
-                               AnimationTrigger::FeedingPlaceLiftOnCube_Normal;
-  
-  DelegateIfInControl(new TriggerAnimationAction(bestAnim),
-              &BehaviorFeedingEat::TransitionToEating);
+  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::FeedingPlaceLiftOnCube),
+                      &BehaviorFeedingEat::TransitionToEating);
 }
 
   
@@ -272,7 +266,7 @@ void BehaviorFeedingEat::TransitionToEating()
   SET_STATE(Eating);
   GetBEI().GetRobotInfo().EnableStopOnCliff(false);
   
-  AnimationTrigger eatingAnim = CheckNeedsStateAndCalculateAnimation();
+  AnimationTrigger eatingAnim = AnimationTrigger::FeedingEat;
   
   uint32_t timeDrainCube_s = 0;
   auto* data_ldr = GetBEI().GetRobotInfo().GetContext()->GetDataLoader();
@@ -333,38 +327,6 @@ void BehaviorFeedingEat::TransitionToReactingToInterruption()
   {
     DelegateIfInControl(new TriggerLiftSafeAnimationAction(trigger));
   }
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AnimationTrigger BehaviorFeedingEat::CheckNeedsStateAndCalculateAnimation()
-{
-  bool isSeverePreFeeding  = false;
-  bool isWarningPreFeeding = false;
-  bool isSeverePostFeeding = false;
-  bool isWarningPostFeeding = false;
-  bool isFullPostFeeding = false;
-  // Eating animation is dependent on both the current and post feeding energy level
-  // (code was here that set these)
-  AnimationTrigger bestAnimation;
-  if(isSeverePreFeeding && isSeverePostFeeding){
-    bestAnimation = AnimationTrigger::FeedingAteNotFullEnough_Severe;
-  }else if(isSeverePreFeeding && isWarningPostFeeding){
-    bestAnimation = AnimationTrigger::FeedingAteFullEnough_Severe;
-  }else if(isWarningPreFeeding && !isFullPostFeeding){
-    bestAnimation = AnimationTrigger::FeedingAteNotFullEnough_Normal;
-  }else{
-    bestAnimation = AnimationTrigger::FeedingAteFullEnough_Normal;
-  }
-  
-  PRINT_CH_INFO("Feeding",
-                "BehaviorFeedingEat.UpdateNeedsStateCalcAnim.AnimationSelected",
-                "AnimationTrigger: %s SeverePreFeeding: %d severePostFeeding: %d warningPreFeeding: %d fullyFullPost: %d ",
-                AnimationTriggerToString(bestAnimation),
-                isSeverePreFeeding, isSeverePostFeeding,
-                isWarningPreFeeding, isFullPostFeeding);
-  
-  return bestAnimation;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

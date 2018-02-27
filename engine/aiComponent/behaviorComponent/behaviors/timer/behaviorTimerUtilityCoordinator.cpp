@@ -265,6 +265,15 @@ void BehaviorTimerUtilityCoordinator::BehaviorUpdate()
     TransitionToRinging();
   }
 
+  auto& uic = GetBEI().GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
+  if(IsTimerRinging() && uic.IsTriggerWordPending()){
+    // Clear the pending trigger word and cancel the ringing timer
+    // Its emergency get out will still play
+    uic.ClearPendingTriggerWord();
+    CancelSelf();
+    return;
+  }
+
   if(IsControlDelegated()){
     return;
   }
@@ -309,7 +318,8 @@ void BehaviorTimerUtilityCoordinator::SetupTimerBehaviorFunctions() const
   
   auto startTimerCallback = [&timerUtility, this](){
     _lParams.timerSet = true;
-    timerUtility.StartTimer(_lParams.setTimerIntent->Get_set_timer().time_s);
+    // Add one second to the user's requested timer so that the numbers show up on screen appropriately
+    timerUtility.StartTimer(_lParams.setTimerIntent->Get_set_timer().time_s + 1);
   };
 
   _iParams.setTimerBehavior->SetShowClockCallback(startTimerCallback);
@@ -381,6 +391,14 @@ void BehaviorTimerUtilityCoordinator::TransitionToRinging()
   _iParams.timerRingingBehavior->WantsToBeActivated();
   DelegateNow(_iParams.timerRingingBehavior.get());
 }
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorTimerUtilityCoordinator::IsTimerRinging()
+{ 
+  return _iParams.timerRingingBehavior->IsActivated();
+}
+
 
 } // namespace Cozmo
 } // namespace Anki

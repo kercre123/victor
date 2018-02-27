@@ -9,6 +9,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 
 #include "util/console/consoleInterface.h"
+#include "util/cpuProfiler/cpuProfiler.h"
 #include "util/math/math.h"
 #include "util/math/numericCast.h"
 #include "util/random/randomGenerator.h"
@@ -184,6 +185,7 @@ namespace Cozmo {
     
     // 1. Eye shape poly
     {
+      ANKI_CPU_PROFILE("EyeShapePoly");
       // Upper right corner
       if(upRightRadX > 0 && upRightRadY > 0) {
        cv::ellipse2Poly(cv::Point(std::round(halfEyeWidth  - upRightRadX), std::round(-halfEyeHeight + upRightRadY)),
@@ -223,6 +225,7 @@ namespace Cozmo {
     
     // 2. Lower lid poly
     {
+      ANKI_CPU_PROFILE("LowerLidPoly");
       const f32 lowerLidY = faceData.GetParameter(whichEye, Parameter::LowerLidY) * static_cast<f32>(eyeHeight);
       const f32 angleDeg = faceData.GetParameter(whichEye, Parameter::LowerLidAngle);
       const f32 angleRad = DEG_TO_RAD(angleDeg);
@@ -251,6 +254,7 @@ namespace Cozmo {
     
     // 3. Upper lid poly
     {
+      ANKI_CPU_PROFILE("UpperLidPoly");
       const f32 upperLidY = faceData.GetParameter(whichEye, Parameter::UpperLidY) * static_cast<f32>(eyeHeight);
       const f32 angleDeg = faceData.GetParameter(whichEye, Parameter::UpperLidAngle);
       const f32 angleRad = DEG_TO_RAD(angleDeg);
@@ -277,6 +281,7 @@ namespace Cozmo {
       }
     }
     
+    ANKI_CPU_PROFILE_START(prof_getMat, "GetMatrices");
     Point<2, Value> eyeCenter = (whichEye == WhichEye::Left) ?
                                  Point<2, Value>(ProceduralFace::GetNominalLeftEyeX(), ProceduralFace::GetNominalEyeY()) :
                                  Point<2, Value>(ProceduralFace::GetNominalRightEyeX(), ProceduralFace::GetNominalEyeY());
@@ -297,12 +302,14 @@ namespace Cozmo {
                                                                   (1+glowFraction) * faceData.GetParameter(whichEye, Parameter::EyeScaleY),
                                                                   eyeCenter.x(),
                                                                   eyeCenter.y());                                                        
+    ANKI_CPU_PROFILE_STOP(prof_getMat);
     
     // Initialize bounding box corners at their opposite extremes. We will figure out their
     // true locations as we loop over the eyePoly below.
     Point2f upperLeft(ProceduralFace::WIDTH, ProceduralFace::HEIGHT);
     Point2f bottomRight(0.f,0.f);
     
+    ANKI_CPU_PROFILE_START(prof_applyMat, "ApplyMatrices");
     // Warp the poly and the glow. Use the warped glow (which is a larger shape) to compute
     // the overall eye bounding box 
     for(auto & point : eyePoly)
@@ -337,6 +344,7 @@ namespace Cozmo {
         point.y = std::round(temp.y());
       }
     }
+    ANKI_CPU_PROFILE_STOP(prof_applyMat);
 
     // Make sure the upper left and bottom right points are in bounds (note that we loop over
     // pixels below *inclusive* of the bottom right point, so we use HEIGHT/WIDTH-1)
@@ -390,6 +398,7 @@ namespace Cozmo {
       // Outer Glow = the "halo" effect around the outside of the eye shape
       // Add inner glow to the eye shape, before we compute the outer glow, so that boundaries conditions match.
       if(kProcFace_RenderInnerOuterGlow) {
+        ANKI_CPU_PROFILE("RenderInnerOuterGlow");
         const f32 sigmaX = kProcFace_InnerGlowFrac*scaledEyeWidth;
         const f32 sigmaY = kProcFace_InnerGlowFrac*scaledEyeHeight;
         const f32 invInnerGlowSigmaX_sq = 1.f / (2.f * (sigmaX*sigmaX));
@@ -428,6 +437,7 @@ namespace Cozmo {
       _glowImg.FillWith(0);
 
       if(kProcFace_ApplyGlowFilter) {
+        ANKI_CPU_PROFILE("ApplyGlowFilter");
         if(Util::IsFltGTZero(glowFraction))
         {
           Vision::Image glowImgROI  = _glowImg.GetROI(eyeBoundingBoxS32);
@@ -454,6 +464,7 @@ namespace Cozmo {
 
       // Antialiasing (AFTER glow because it changes eyeShape, which we use to compute the glow above)
       if(kProcFace_AntiAliasingSize > 0) {
+        ANKI_CPU_PROFILE("AntiAliasing");
         if(kProcFace_AntiAliasingSize % 2 == 0) {
           ++kProcFace_AntiAliasingSize; // Antialiasing filter size should be odd
         }
@@ -483,6 +494,7 @@ namespace Cozmo {
       
       // Draw the eye into the face image, adding outer glow, noise, and stylized scanlines
       {
+        ANKI_CPU_PROFILE("DrawEyePixels");
         const Array2d<f32>& noiseImg = GetNoiseImage(rng);
         
         for(s32 i=upperLeft.y(); i<=bottomRight.y(); ++i)
@@ -547,6 +559,16 @@ namespace Cozmo {
                                       const Util::RandomGenerator& rng, 
                                       Vision::ImageRGB565& output)
   {
+    constexpr float kMaxExpectedFaceDrawTime_ms = 13.f;
+    ANKI_CPU_TICK("ProceduralFaceDrawer", kMaxExpectedFaceDrawTime_ms, Util::CpuThreadProfiler::kLogFrequencyNever);
+    // Replace the above line with the below line to see profiling info in the log
+    // ANKI_CPU_TICK("ProceduralFaceDrawer", kMaxExpectedFaceDrawTime_ms, 61);
+    ANKI_CPU_PROFILE("DrawFace");
+
+    // Make sure output is allocated appropriately.
+    // Will do nothing if already the right size.
+    output.Allocate(ProceduralFace::HEIGHT, ProceduralFace::WIDTH);
+    
     // Static image to do all our drawing in, will be converted to RGB565 at the end
     // This is treated as an HSV image
     static Vision::ImageRGB faceImg;
@@ -554,12 +576,16 @@ namespace Cozmo {
     faceImg.FillWith(Vision::PixelRGB(0,0,0));
     
     Rectangle<f32> leftBBox, rightBBox;
-    DrawEye(faceData, WhichEye::Left,  rng, faceImg, leftBBox);
-    DrawEye(faceData, WhichEye::Right, rng, faceImg, rightBBox);
+    {
+      ANKI_CPU_PROFILE("DrawEyes");
+      DrawEye(faceData, WhichEye::Left,  rng, faceImg, leftBBox);
+      DrawEye(faceData, WhichEye::Right, rng, faceImg, rightBBox);
+    }
 
     s32 rowMin = ProceduralFace::HEIGHT-1, rowMax = 0;
     s32 colMin = leftBBox.GetX(), colMax = rightBBox.GetXmax();
 
+    ANKI_CPU_PROFILE_START(prof_applyWholeFaceParams, "ApplyWholeFaceParams");
     // Apply whole-face params
     if(faceData.GetFaceAngle() != 0 || !(faceData.GetFacePosition() == 0) || !(faceData.GetFaceScale() == 1.f)) {
       
@@ -593,10 +619,12 @@ namespace Cozmo {
       rowMin = std::min(leftBBox.GetY(), rightBBox.GetY());
       rowMax = std::max(leftBBox.GetYmax(), rightBBox.GetYmax());
     }
+    ANKI_CPU_PROFILE_STOP(prof_applyWholeFaceParams);
 
     const float scanlineOpacity = faceData.GetScanlineOpacity();
     const bool applyScanlines = !Util::IsNear(scanlineOpacity, 1.f);
     if (applyScanlines) {
+      ANKI_CPU_PROFILE("ApplyScanlines");
       ProceduralFaceDrawer::ApplyScanlines(faceImg, scanlineOpacity);
     }
 
@@ -606,6 +634,7 @@ namespace Cozmo {
 
     if(rowMax > rowMin)
     {   
+      ANKI_CPU_PROFILE("DistortScanlines");
       // Distort the scanlines
       auto scanlineDistorter = faceData.GetScanlineDistorter();
       if(nullptr != scanlineDistorter)

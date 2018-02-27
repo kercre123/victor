@@ -102,6 +102,14 @@ namespace Cozmo {
   // Whether or not to display themal throttling indicator on face
   CONSOLE_VAR(bool, kDisplayThermalThrottling, "AnimationStreamer", true);
 
+  // Temperature beyond which the thermal indicator is displayed on face    
+  CONSOLE_VAR(u32,  kThermalAlertTemp_C,           "AnimationStreamer", 80);
+
+  // Must be at least this hot for CPU throttling to be considered caused
+  // by thermal conditions. It can also throttle because the system is idle
+  // which we don't care to indicate on the face.
+  CONSOLE_VAR(u32,  kThermalThrottlingMinTemp_C,   "AnimationStreamer", 65);
+
   // Overrides whatever faces we're sending with a 3-stripe test pattern
   // (seems more related to the other ProceduralFace console vars, so putting it in that group instead)
   CONSOLE_VAR(bool, kProcFace_DisplayTestPattern, "ProceduralFace", false);
@@ -638,7 +646,7 @@ namespace Cozmo {
     BufferFaceToSend(_faceDrawBuf);
   }
   
-  void AnimationStreamer::BufferFaceToSend(Vision::ImageRGB565& faceImg565, bool allowOverlay)
+  void AnimationStreamer::BufferFaceToSend(Vision::ImageRGB565& faceImg565)
   {
     DEV_ASSERT_MSG(faceImg565.GetNumCols() == FACE_DISPLAY_WIDTH &&
                    faceImg565.GetNumRows() == FACE_DISPLAY_HEIGHT,
@@ -648,14 +656,25 @@ namespace Cozmo {
                    FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT);
     
 
-    // Draw red square in corner of face if thermal throttling
+    // Draw red square in corner of face if thermal issues
+    const bool isCPUThrottling = OSState::getInstance()->IsCPUThrottling();
+    auto tempC = OSState::getInstance()->GetTemperature_C();
+    const bool tempExceedsAlertThreshold = tempC >= kThermalAlertTemp_C;
+    const bool tempExceedsThrottlingThreshold = tempC >= kThermalThrottlingMinTemp_C;
     if (kDisplayThermalThrottling && 
-        allowOverlay &&
-        OSState::getInstance()->IsThermalThrottling()) {
+        ((isCPUThrottling && tempExceedsThrottlingThreshold) || (tempExceedsAlertThreshold)) ) {
 
-      const Rectangle<f32> rect( 0, 0, 20, 20);
-      const ColorRGBA pixel(1.f, 0.f, 0.f);
-      faceImg565.DrawFilledRect(rect, pixel);
+      // Draw square if CPU is being throttled
+      const ColorRGBA alertColor(1.f, 0.f, 0.f);
+      if (isCPUThrottling) {
+        const Rectangle<f32> rect( 0, 0, 20, 20);
+        faceImg565.DrawFilledRect(rect, alertColor);
+      }
+
+      // Display temperature
+      const std::string tempStr = std::to_string(tempC) + "C";
+      const Point2f position(25, 25);
+      faceImg565.DrawText(position, tempStr, alertColor, 1.f);
     }
 
     FaceDisplay::getInstance()->DrawToFace(faceImg565);
@@ -928,7 +947,7 @@ namespace Cozmo {
         
         if (gotImage) {
           DEBUG_STREAM_KEYFRAME_MESSAGE("FaceAnimation");
-          BufferFaceToSend(_faceDrawBuf, false);  // Don't overwrite FaceAnimationKeyFrame images
+          BufferFaceToSend(_faceDrawBuf);
           _nextProceduralFaceAllowedTime_ms = currTime_ms + kMinTimeBetweenLastNonProcFaceAndNextProcFace_ms;
         }
 
@@ -988,8 +1007,6 @@ namespace Cozmo {
   
   Result AnimationStreamer::Update()
   {
-    ANKI_CPU_PROFILE("AnimationStreamer::Update");
-    
     Result lastResult = RESULT_OK;
     
     bool streamUpdated = false;

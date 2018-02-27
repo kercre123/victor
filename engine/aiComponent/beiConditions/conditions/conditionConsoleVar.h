@@ -11,8 +11,8 @@
 **/
 
 
-#ifndef __Engine_AiComponent_BeiConditions_Conditions_ConditionMotionDetected_H__
-#define __Engine_AiComponent_BeiConditions_Conditions_ConditionMotionDetected_H__
+#ifndef __Engine_AiComponent_BeiConditions_Conditions_ConditionConsoleVar_H__
+#define __Engine_AiComponent_BeiConditions_Conditions_ConditionConsoleVar_H__
 
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
 #include "engine/aiComponent/beiConditions/iBEIConditionEventHandler.h"
@@ -49,4 +49,4 @@ private:
 } // namespace
 } // namespace
 
-#endif // endif __Engine_AiComponent_BeiConditions_Conditions_ConditionMotionDetected_H__
+#endif // endif __Engine_AiComponent_BeiConditions_Conditions_ConditionConsoleVar_H__

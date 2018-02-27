@@ -86,7 +86,7 @@ If you have a question that you get answered (e.g. in a Slack channel) which mig
 
 * To check the battery level:
   - With the processes running, press the backpack button twice. The battery voltage is in the bottom right. It should be around 4.0v. The backpack lights will blink green when charging (and the processes are running)
-  - Otherwise: `adb shell cat /sys/devices/soc.0/qpnp-linear-charger-8/power_supply/battery/voltage_now`
+  - Otherwise: `adb shell cat /sys/devices/soc/qpnp-linear-charger-8/power_supply/battery/voltage_now`
   
 * Webots Firewall Connection issues?
   - [Create a code signing certificate](/project/build-scripts/webots/FirewallCertificateInstructions.md)

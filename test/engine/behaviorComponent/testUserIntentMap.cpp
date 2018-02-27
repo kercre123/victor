@@ -65,7 +65,7 @@ const std::string& testMapConfig = R"json(
       "app_intent": "intent_meet_victor",
       "user_intent": "meet_victor",
       "app_substitutions": {
-        "param": "name"
+        "param": "username"
       }
     }
   ],
@@ -290,7 +290,7 @@ TEST(UserIntentMap, AppIntent)
   UserIntent intent;
   EXPECT_TRUE( uic.IsUserIntentPending( USER_INTENT(meet_victor), intent ) );
   EXPECT_EQ( intent.GetTag(), USER_INTENT(meet_victor) );
-  EXPECT_EQ( intent.Get_meet_victor().name, name );
+  EXPECT_EQ( intent.Get_meet_victor().username, name );
   uic.ClearUserIntent( USER_INTENT(meet_victor) );
   EXPECT_FALSE( uic.IsAnyUserIntentPending() );
 }

@@ -111,7 +111,7 @@ void BehaviorPickUpCube::TransitionToDoingInitialReaction()
 {
   DEBUG_SET_STATE(DoingInitialReaction);
   
-  DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::SparkPickupInitialCubeReaction),
+  DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::PickupCubePreperation),
                       &BehaviorPickUpCube::TransitionToPickingUpCube);
 
 }

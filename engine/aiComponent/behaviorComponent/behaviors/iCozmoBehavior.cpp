@@ -25,6 +25,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorFactory.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTimers.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
@@ -69,6 +70,7 @@ static const char* kWantsToBeActivatedCondConfigKey  = "wantsToBeActivatedCondit
 static const char* kRespondToUserIntentsKey          = "respondToUserIntents";
 static const char* kClaimUserIntentDataKey           = "claimUserIntentData";
 static const char* kRespondToTriggerWordKey          = "respondToTriggerWord";
+static const char* kResetTimersKey                   = "resetTimers";
 static const std::string kIdleLockPrefix             = "Behavior_";
 
 // Keys for loading in anonymous behaviors
@@ -261,6 +263,14 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
   }
   
   _respondToTriggerWord = config.get(kRespondToTriggerWordKey, false).asBool();
+  
+  JsonTools::GetVectorOptional(config, kResetTimersKey, _resetTimers);
+  for( const auto& timerName : _resetTimers ) {
+    ANKI_VERIFY( BehaviorTimerManager::IsValidName( timerName ),
+                 "ICozmoBehavior.ReadFromJson.InvalidTimer",
+                 "Timer '%s' is invalid",
+                 timerName.c_str() );
+  }
 
   return true;
 }
@@ -387,6 +397,15 @@ void ICozmoBehavior::InitBehaviorOperationModifiers()
   
   GetBehaviorOperationModifiers(_operationModifiers);
 }
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::SetDontActivateThisTick(const std::string& coordinatorName)
+{
+  _dontActivateCoordinator = coordinatorName;
+  _tickDontActivateSetFor = BaseStationTimer::getInstance()->GetTickCount();
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::AddWaitForUserIntent( UserIntentTag intentTag )
@@ -618,6 +637,12 @@ void ICozmoBehavior::OnActivatedInternal()
   for(auto& strategy: _wantsToBeActivatedConditions){
     strategy->SetActive(GetBEI(), false);
   }
+  
+  // reset any timers
+  for( const auto& timerName : _resetTimers ) {
+    auto timer = BehaviorTimerManager::BehaviorTimerFromString( timerName );
+    GetBEI().GetBehaviorTimerManager().GetTimer( timer  ).Reset();
+  }
 
   OnBehaviorActivated();
 }
@@ -742,6 +767,13 @@ bool ICozmoBehavior::WantsToBeActivatedBase() const
   if (IsActivated()) {
     PRINT_CH_DEBUG("Behaviors", "ICozmoBehavior.WantsToBeActivatedBase", "Behavior %s is already running", GetDebugLabel().c_str());
     return true;
+  }
+
+  if(_tickDontActivateSetFor == BaseStationTimer::getInstance()->GetTickCount()){
+    PRINT_NAMED_INFO("ICozmoBehavior.WantsToBeActivatedBase.DontActivateDueToCoordinator",
+                    "Behavior %s was asked not to activate during tick %zu by coordinator %s", 
+                    GetDebugLabel().c_str(), _tickDontActivateSetFor, _dontActivateCoordinator.c_str());
+    return false;
   }
 
   // check if required processes are running

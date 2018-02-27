@@ -52,6 +52,7 @@ void BehaviorExternalInterface::InitDependent(Robot* robot, const BCCompMap& dep
   auto& aiComponent            = dependentComponents.GetValue<AIComponent>();
   auto& behaviorContainer      = dependentComponents.GetValue<BehaviorContainer>();
   auto& behaviorEventComponent = dependentComponents.GetValue<BehaviorEventComponent>();
+  auto& behaviorTimers         = dependentComponents.GetValue<BehaviorTimerManager>();
   auto& blockWorld             = dependentComponents.GetValue<BlockWorld>();
   auto& delegationComponent    = dependentComponents.GetValue<DelegationComponent>();
   auto& faceWorld              = dependentComponents.GetValue<FaceWorld>();
@@ -61,6 +62,7 @@ void BehaviorExternalInterface::InitDependent(Robot* robot, const BCCompMap& dep
        &robot->GetAnimationComponent(),
        &behaviorContainer,
        &behaviorEventComponent,
+       &behaviorTimers,
        &blockWorld,
        &robot->GetBodyLightComponent(),
        &robot->GetCubeAccelComponent(), 
@@ -88,6 +90,7 @@ void BehaviorExternalInterface::Init(AIComponent*                   aiComponent,
                                      AnimationComponent*            animationComponent,
                                      BehaviorContainer*             behaviorContainer,
                                      BehaviorEventComponent*        behaviorEventComponent,
+                                     BehaviorTimerManager*          behaviorTimers,
                                      BlockWorld*                    blockWorld,
                                      BodyLightComponent*            bodyLightComponent,
                                      CubeAccelComponent*            cubeAccelComponent,
@@ -112,6 +115,7 @@ void BehaviorExternalInterface::Init(AIComponent*                   aiComponent,
                                                      animationComponent,
                                                      behaviorContainer,
                                                      behaviorEventComponent,
+                                                     behaviorTimers,
                                                      blockWorld,
                                                      bodyLightComponent,
                                                      cubeAccelComponent,
@@ -150,6 +154,7 @@ BehaviorExternalInterface::CompArrayWrapper::CompArrayWrapper(AIComponent*      
                                                               AnimationComponent*            animationComponent,
                                                               BehaviorContainer*             behaviorContainer,
                                                               BehaviorEventComponent*        behaviorEventComponent,
+                                                              BehaviorTimerManager*          behaviorTimers,
                                                               BlockWorld*                    blockWorld,
                                                               BodyLightComponent*            bodyLightComponent,
                                                               CubeAccelComponent*            cubeAccelComponent,
@@ -174,6 +179,7 @@ BehaviorExternalInterface::CompArrayWrapper::CompArrayWrapper(AIComponent*      
     {BEIComponentID::Animation,              BEIComponentWrapper(animationComponent)},
     {BEIComponentID::BehaviorContainer,      BEIComponentWrapper(behaviorContainer)},
     {BEIComponentID::BehaviorEvent,          BEIComponentWrapper(behaviorEventComponent)},
+    {BEIComponentID::BehaviorTimerManager,   BEIComponentWrapper(behaviorTimers)},
     {BEIComponentID::BlockWorld,             BEIComponentWrapper(blockWorld)},
     {BEIComponentID::BodyLightComponent,     BEIComponentWrapper(bodyLightComponent)},
     {BEIComponentID::CubeAccel,              BEIComponentWrapper(cubeAccelComponent)},

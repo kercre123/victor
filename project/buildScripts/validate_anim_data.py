@@ -1,17 +1,17 @@
+"""
+This script can be used to help validate that all of the
+audio events used in animations are in fact available.
+"""
 
 import os
 
 
-# This is the audio assets package file (relative to the EXTERNALS directory)
-# that contains the SoundBanks XML file with audio event info
-AUDIO_ASSETS_DIR = os.path.join("victor-audio-assets")
-
-# This is the name of the SoundBanks XML file with audio event info
-SOUNDBANKS_XML_FILE = "SoundbanksInfo.xml"
+# This is the the SoundBanks XML file with audio event info (relative to the EXTERNALS directory)
+SOUNDBANKS_XML_FILE = os.path.join("victor-audio-assets", "metadata", "Dev_Mac", "SoundbanksInfo.xml")
 
 # This is the animations directory (relative to the EXTERNALS directory) that
 # contains animation TAR files
-ANIM_ASSETS_DIR = os.path.join("cozmo-assets", "animations")
+ANIM_ASSETS_DIR = os.path.join("animation-assets", "animations")
 
 # These are the relevant attribute names/values in the animation JSON files
 KEYFRAME_TYPE_ATTR = "Name"
@@ -149,36 +149,29 @@ def get_audio_event_usage_in_anim(json_file, all_available_events):
 
 
 def check_audio_events_all_anims(externals_dir, anim_assets_dir=ANIM_ASSETS_DIR,
-                                 audio_assets_dir=AUDIO_ASSETS_DIR,
-                                 soundbanks_xml_file=SOUNDBANKS_XML_FILE
-                                 ):
+                                 soundbanks_xml_file=SOUNDBANKS_XML_FILE):
     """
     This function will raise ValueError with relevant info if any
     animations use any audio events that are unavailable.
     """
+    problem_msg = "Unable to validate audio events used in animations because: %s"
 
     # Get a list of all available audio events
-    local_soundbanks_xml_file = os.path.join(externals_dir, audio_assets_dir, 'metadata', 'Mac', soundbanks_xml_file)
-    if os.path.isfile(local_soundbanks_xml_file):
-        soundbanks_xml_file = local_soundbanks_xml_file
-    else:
-        tmp_dir = tempfile.mkdtemp()
-        zip_file = os.path.join(externals_dir, audio_assets_dir)
-        try:
-            zip_obj = zipfile.ZipFile(zip_file, 'r')
-        except (IOError, OSError, zipfile.error), e:
-            msg = "Unable to validate audio events used in animations because: %s" % e
-            raise ValueError(msg)
-        zip_obj.extract(soundbanks_xml_file, tmp_dir)
-        zip_obj.close()
-        soundbanks_xml_file = os.path.join(tmp_dir, soundbanks_xml_file)
-    all_audio_events = get_audio_events_in_soundbanks_info_xml_file(soundbanks_xml_file)
+    soundbanks_xml_file = os.path.join(externals_dir, soundbanks_xml_file)
+    #print("Soundbanks XML file = %s" % soundbanks_xml_file)
+    try:
+        all_audio_events = get_audio_events_in_soundbanks_info_xml_file(soundbanks_xml_file)
+    except (IOError, OSError, ValueError, ET.ParseError), e:
+        raise ValueError(problem_msg % e)
 
     # Check all audio events in all animations and keep track of what unavailable
     # audio events are currently being used
     problems = {}
     tar_files_dir = os.path.join(externals_dir, anim_assets_dir)
     tar_files = get_tar_files(tar_files_dir)
+    if not tar_files:
+        this_prob = "No tar files available in %s" % tar_files_dir
+        raise ValueError(problem_msg % this_prob)
     tar_file_dict = fill_file_dict(tar_files)
     for file_name, file_paths in tar_file_dict.items():
         file_path = file_paths[0]

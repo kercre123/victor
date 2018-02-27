@@ -1165,7 +1165,7 @@ namespace Cozmo {
     // will change, but since we don't know what SetFaceToEnroll will be replaced by yet, both messages
     // are being send for now. Eventually there should be one "meet_victor" message and one "I'm changing
     // the name, but don't restart meet victor"
-    std::string json = "{ \"intent\": \"intent_meet_victor\", \"params\": { \"name\": \"" + userName + "\" } }";
+    std::string json = "{ \"intent\": \"intent_names_username\", \"params\": { \"username\": \"" + userName + "\" } }";
     SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::FakeCloudIntent(json)));
   }
   

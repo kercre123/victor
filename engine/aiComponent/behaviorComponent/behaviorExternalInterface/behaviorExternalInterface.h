@@ -37,6 +37,7 @@ class AIComponent;
 class AnimationComponent;
 class BehaviorContainer;
 class BehaviorEventComponent;
+class BehaviorTimerManager;
 class BEIRobotInfo;
 class BlockWorld;
 class BodyLightComponent;
@@ -104,6 +105,7 @@ public:
   { 
     components.insert(BCComponentID::AIComponent);
     components.insert(BCComponentID::BehaviorContainer);
+    components.insert(BCComponentID::BehaviorTimerManager);
     components.insert(BCComponentID::BlockWorld);
     components.insert(BCComponentID::FaceWorld);
     components.insert(BCComponentID::RobotInfo);
@@ -117,6 +119,7 @@ public:
             AnimationComponent*            animationComponent,
             BehaviorContainer*             behaviorContainer,
             BehaviorEventComponent*        behaviorEventComponent,
+            BehaviorTimerManager*          behaviorTimers,
             BlockWorld*                    blockWorld,
             BodyLightComponent*            bodyLightComponent,
             CubeAccelComponent*            cubeAccelComponent,
@@ -150,7 +153,8 @@ public:
   const BlockWorld&        GetBlockWorld()                const { return GetComponentWrapper(BEIComponentID::BlockWorld).GetValue<BlockWorld>();}
   BlockWorld&              GetBlockWorld()                      { return GetComponentWrapper(BEIComponentID::BlockWorld).GetValue<BlockWorld>();}
   const BehaviorContainer& GetBehaviorContainer()         const { return GetComponentWrapper(BEIComponentID::BehaviorContainer).GetValue<BehaviorContainer>();}
-  BehaviorEventComponent&  GetBehaviorEventComponent()      const { return GetComponentWrapper(BEIComponentID::BehaviorEvent).GetValue<BehaviorEventComponent>();}
+  BehaviorEventComponent&  GetBehaviorEventComponent()    const { return GetComponentWrapper(BEIComponentID::BehaviorEvent).GetValue<BehaviorEventComponent>();}
+  BehaviorTimerManager&    GetBehaviorTimerManager()      const { return GetComponentWrapper(BEIComponentID::BehaviorTimerManager).GetValue<BehaviorTimerManager>(); }
 
   // Give behaviors/activities access to information about robot
   BEIRobotInfo& GetRobotInfo() { return GetComponentWrapper(BEIComponentID::RobotInfo).GetValue<BEIRobotInfo>();}
@@ -215,6 +219,7 @@ private:
                        AnimationComponent*            animationComponent,
                        BehaviorContainer*             behaviorContainer,
                        BehaviorEventComponent*        behaviorEventComponent,
+                       BehaviorTimerManager*          behaviorTimers,
                        BlockWorld*                    blockWorld,
                        BodyLightComponent*            bodyLightComponent,
                        CubeAccelComponent*            cubeAccelComponent,

@@ -11,6 +11,7 @@ project(cozmo)
 include(ccache) # Use ccache if it is installed
 
 include(import)
+include(clean_clad_targets)
 
 # These are used by some android cmake toolchains
 # They appear to be ignored by the android-sdk toolchain that works with gradle/Android Studio
@@ -160,3 +161,5 @@ if (MACOSX)
   enable_testing()
 
 endif()
+
+clean_clad_targets()

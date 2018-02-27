@@ -107,6 +107,15 @@ generate_clad_cpp(
     OUTPUT_SRCS CLAD_CPP_GEN_SRCS
 )
 
+file(STRINGS "${ANKI_SRCLIST_DIR}/sdk_clad.srcs.lst" SDK_SRCS)
+generate_clad_cpp(
+    SRCS "${SDK_SRCS}"
+    RELATIVE_SRC_DIR "sdk"
+    OUTPUT_DIR "${OUTPUT_DIR}"
+    INCLUDES "${CLAD_INCLUDES}"
+    OUTPUT_SRCS CLAD_CPP_GEN_SDK_SRCS
+)
+
 generate_clad_py(
     TARGET "engine_viz_clad_python"
     SRCS ${ROBOT_SRCS}
@@ -125,6 +134,15 @@ generate_clad_py(
     OUTPUT_SRCS CLAD_PY_GEN_SRCS
 )
 
+generate_clad_py(
+    TARGET "sdk_clad_python"
+    SRCS "${SDK_SRCS}"
+    RELATIVE_SRC_DIR "sdk"
+    OUTPUT_DIR "${CLAD_PY_OUTPUT_DIR}"
+    INCLUDES "${CLAD_INCLUDES}"
+    OUTPUT_SRCS CLAD_PY_GEN_SDK_SRCS
+)
+
 generate_clad_cs(
     TARGET "engine_viz_clad_csharp"
     SRCS ${ROBOT_SRCS}
@@ -141,6 +159,15 @@ generate_clad_cs(
     OUTPUT_DIR "${CLAD_CS_OUTPUT_DIR}"
     INCLUDES "${CLAD_INCLUDES}"
     OUTPUT_SRCS CLAD_CS_GEN_SRCS
+)
+
+generate_clad_cs(
+    TARGET "sdk_clad_csharp"
+    SRCS "${SDK_SRCS}"
+    RELATIVE_SRC_DIR "sdk"
+    OUTPUT_DIR "${CLAD_CS_OUTPUT_DIR}"
+    INCLUDES "${CLAD_INCLUDES}"
+    OUTPUT_SRCS CLAD_CS_GEN_SDK_SRCS
 )
 
 file(STRINGS "${ANKI_SRCLIST_DIR}/engine_clad.headers.lst" ENGINE_HASH_SRCS)
@@ -181,6 +208,7 @@ add_custom_target(engine_clad_csharp_hash ALL DEPENDS ${CLAD_HASH_CS_GEN_SRCS})
 add_library(engine_clad STATIC
     ${CLAD_CPP_GEN_SRCS}
     ${CLAD_HASH_GEN_SRCS}
+    ${CLAD_CPP_GEN_SDK_SRCS}
     ${CLAD_CPP_GEN_VIZ_SRCS}
 )
 

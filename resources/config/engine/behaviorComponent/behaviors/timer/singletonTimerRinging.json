@@ -1,10 +1,10 @@
 {
   "behaviorID"       : "SingletonTimerRinging",
   "behaviorClass"    : "AnimGetInLoop",
-  "getIn"            : "Hiccup",
-  "loopAnimation"    : "DroneModeBackwardDrivingLoop",
-  "getOut"           : "Hiccup",
-  "emergencyGetOut"  : "GuardDogPlayerSuccess",
+  "getIn"            : "TimerRingGetIn",
+  "loopAnimation"    : "TimerRing",
+  "getOut"           : "TimerRingGetOut",
+  "emergencyGetOut"  : "TimerRingGetOut",
   "loopEndCondition" : {
     "conditionType"  : "RobotTouched",
     "minTouchTime"   : 2.0

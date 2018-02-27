@@ -30,6 +30,7 @@ enum class BCComponentID{
   BehaviorExternalInterface,
   BehaviorHelperComponent,
   BehaviorSystemManager,
+  BehaviorTimerManager,
   BlockWorld,
   DelegationComponent,
   DevBehaviorComponentMessageHandler,

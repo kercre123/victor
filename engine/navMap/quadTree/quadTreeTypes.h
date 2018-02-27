@@ -22,6 +22,7 @@ namespace Anki {
 namespace Cozmo {
 
 class MemoryMapData;
+class QuadTreeNode;
 
 namespace QuadTreeTypes {
 
@@ -40,6 +41,11 @@ struct NodeContent {
   
   MemoryMapTypes::MemoryMapDataPtr data;
 };
+
+using FoldFunctor      = std::function<void (QuadTreeNode& node)>;
+using FoldFunctorConst = std::function<void (const QuadTreeNode& node)>;
+
+enum class FoldDirection { DepthFirst, BreadthFirst };
 
 // position with respect to the parent
 enum class EQuadrant : uint8_t {

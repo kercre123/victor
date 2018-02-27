@@ -16,9 +16,9 @@
 #include "util/helpers/fullEnumToValueArrayChecker.h"
 #include "util/helpers/templateHelpers.h"
 #include "clad/types/memoryMap.h"
+#include "engine/navMap/memoryMap/data/memoryMapDataWrapper.h"
 
 #include <cstdint>
-#include <memory>
 #include <vector>
 #include <unordered_set>
 
@@ -53,8 +53,7 @@ enum class EContentType : uint8_t {
 // each segment in a border region
 struct BorderSegment
 {
-  using DataType = std::shared_ptr<const MemoryMapData>;
-  BorderSegment() : from{}, to{}, normal{}, extraData(nullptr) {}
+  using DataType = MemoryMapDataWrapper<MemoryMapData>;
   BorderSegment(const Point3f& f, const Point3f& t, const Vec3f& n, const DataType& data) :
     from(f), to(t), normal(n), extraData(data) {}
   
@@ -93,15 +92,24 @@ struct MapBroadcastData {
   std::vector<ExternalInterface::MemoryMapQuadInfo> quadInfo;
 };
 
+// Provide a custom hasher for unordered sets
+template<class T>
+struct MemoryMapDataHasher
+{
+  size_t operator()(const MemoryMapDataWrapper<T> & obj) const {
+    return std::hash<std::shared_ptr<T>>()(obj.GetSharedPtr());
+  }
+};
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Common Aliases
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-using MemoryMapDataPtr       = std::shared_ptr<MemoryMapData>;
-using MemoryMapDataConstPtr  = std::shared_ptr<const MemoryMapData>;
+using MemoryMapDataPtr       = MemoryMapDataWrapper<MemoryMapData>;
+using MemoryMapDataConstPtr  = MemoryMapDataWrapper<const MemoryMapData>;
 
-using MemoryMapDataList      = std::unordered_set<MemoryMapDataPtr>;
-using MemoryMapDataConstList = std::unordered_set<MemoryMapDataConstPtr>;
+using MemoryMapDataList      = std::unordered_set<MemoryMapDataPtr, MemoryMapDataHasher<MemoryMapData>>;
+using MemoryMapDataConstList = std::unordered_set<MemoryMapDataConstPtr, MemoryMapDataHasher<const MemoryMapData>>;
 
 using BorderRegionVector     = std::vector<BorderRegion>;
 using NodeTransformFunction  = std::function<MemoryMapDataPtr (MemoryMapDataPtr)>;

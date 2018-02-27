@@ -30,18 +30,7 @@ NodeContent::NodeContent(MemoryMapTypes::MemoryMapDataPtr m)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool NodeContent::operator==(const NodeContent& other) const
 {
-  if (data->type == other.data->type) 
-  {
-    const bool equals =    
-      (data == other.data) || 
-      ((data != nullptr) && (other.data != nullptr) && (data->Equals(other.data.get())));      
-    return equals;
-  }
-  else 
-  {
-    return false;
-  }
-  
+  return (data == other.data);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

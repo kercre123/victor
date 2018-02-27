@@ -355,7 +355,7 @@ void ProceduralFace::SetFromMessage(const ProceduralFaceParameters& msg)
 void ProceduralFace::LookAt(f32 xShift, f32 yShift, f32 xmax, f32 ymax,
                             f32 lookUpMaxScale, f32 lookDownMinScale, f32 outerEyeScaleIncrease)
 {
-  SetFacePosition({xShift, yShift});
+  SetFacePositionAndKeepCentered({xShift, yShift});
   
   // Amount "outer" eye will increase in scale depending on how far left/right we look
   const f32 yscaleLR = 1.f + outerEyeScaleIncrease * std::min(1.f, std::abs(xShift)/xmax);
@@ -521,7 +521,25 @@ void ProceduralFace::SetFacePosition(Point<2, Value> center)
 {
   _faceCenter = center;
 }
-  
+
+void ProceduralFace::SetFacePositionAndKeepCentered(Point<2, Value> center)
+{
+  // Try not to let the eyes drift off the face (ignores outer glow)
+  // NOTE: (1) if you set center and *then* change eye centers/scales, you could still go off screen
+  //       (2) this also doesn't take lid height into account, so if the top lid is half closed and
+  //           you move the eyes way down, it could look like they disappeared, for example
+
+  Value xmin=0, xmax=0, ymin=0, ymax=0;
+  GetEyeBoundingBox(xmin, xmax, ymin, ymax);
+
+  // The most we can move left is the distance b/w left edge of left eye and the
+  // left edge of the screen. The most we can move right is the distance b/w the
+  // right edge of the right eye and the right edge of the screen
+  SetFacePosition({CLIP(center.x(), -xmin, ProceduralFace::WIDTH-xmax),
+                   CLIP(center.y(), -ymin, ProceduralFace::HEIGHT-ymax)});
+}
+
+
 void ProceduralFace::CombineEyeParams(EyeParamArray& eyeArray0, const EyeParamArray& eyeArray1)
 {
   for (std::underlying_type<Parameter>::type iParam=0; iParam < Util::EnumToUnderlying(Parameter::NumParameters); ++iParam)

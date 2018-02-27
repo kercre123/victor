@@ -45,11 +45,13 @@ field and pressing "Shift+C"
 
 ## Script-generated CLAD and behavior container files
 
-To ease the manual work of creating new behaviors,
-[generateBehaviorCode.py](/tools/ai/generateBehaviorCode.py) exists. This script is manually run after you add
-a new behavior class or instance. It scans the appropriate json and code directories, and automatically
-generates BehaviorClass and BehaviorID CLAD entries, as well as an entry into the behavior container to allow
-creation of the factory.
+To ease the manual work of creating new behaviors, [createNewBehavior.py](/tools/ai/createNewBehavior.py)
+exists. This script can be run (interactively or using command line args) to create a new behavior class (.cpp
+and .h file). This script itself will then run [generateBehaviorCode.py](/tools/ai/generateBehaviorCode.py),
+which scans the appropriate json and code directories, and automatically generates BehaviorClass and
+BehaviorID CLAD entries, as well as an entry into the behavior container to allow creation of the
+factory. [generateBehaviorCode.py](/tools/ai/generateBehaviorCode.py) can also be run manually if you create
+your own behavior files.
 
 Note that the file name, class name, and BehaviorClass CLAD enum are all linked. Specifically, if you were to
 create a new behavior for doing the dishes, you'd create `behaviorDoDishes.h` and `behaviorDoDishes.cpp` in
@@ -60,5 +62,5 @@ a new instance file called `doDishesAfterDinner.json` and inside declared it to 
 `"DoDishesAfterDinner"`, then the python script would also create `BehaviorID::DoDishesAfterDinner`
 automatically.
 
-The script also has some checks to ensure that the above conventions are matched and that json files match
-known behavior clases.
+The scripts also have some checks to ensure that the above conventions are matched and that json files match
+known behavior classes.

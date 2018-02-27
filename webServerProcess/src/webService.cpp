@@ -11,7 +11,6 @@
  *
  **/
 
-// #include "webServerProcess/src/webService.h"
 #include "webService.h"
 
 #if USE_DAS
@@ -43,22 +42,6 @@
 #include <iomanip>
 
 using namespace Anki::Cozmo;
-
-
-namespace {
-
-#ifndef SIMULATOR
-  std::ifstream _cpuFile;
-  std::ifstream _temperatureFile;
-  std::ifstream _batteryVoltageFile;
-
-//  const char* kNominalCPUFreqFile = "/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq";
-  const char* kCPUFreqFile = "/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_cur_freq";
-  const char* kTemperatureFile = "/sys/devices/virtual/thermal/thermal_zone8/temp";
-  const char* kBatteryVoltageFile = "/sys/devices/soc.0/qpnp-linear-charger-8/power_supply/battery/voltage_now";
-#endif
-
-} // namespace
 
 
 // Used websockets codes, see websocket RFC pg 29
@@ -255,20 +238,19 @@ ConsoleVarSet(struct mg_connection *conn, void *cbdata)
 {
   const mg_request_info* info = mg_get_request_info(conn);
 
-  std::string key;
-  std::string value;
+  std::string query;
 
   if (info->content_length > 0) {
     char buf[info->content_length+1];
     mg_read(conn, buf, sizeof(buf));
     buf[info->content_length] = 0;
-    key = buf;
+    query = buf;
   }
   else if (info->query_string) {
-    key = info->query_string;
+    query = info->query_string;
   }
 
-  const int returnCode = ProcessRequest(conn, Anki::Cozmo::WebService::WebService::RequestType::RT_ConsoleVarSet, key, "");
+  const int returnCode = ProcessRequest(conn, WebService::WebService::RequestType::RT_ConsoleVarSet, query, "");
 
   return returnCode;
 }
@@ -577,34 +559,30 @@ static int GetPerfStats(struct mg_connection *conn, void *cbdata)
 
 #else
 
+  const auto& osState = OSState::getInstance();
+
   std::string stat_cpuFreq;
   if (active[0]) {
     // Update cpu freq
-    uint32_t cpuFreq_kHz;
-    _cpuFile.seekg(0, _cpuFile.beg);
-    _cpuFile >> cpuFreq_kHz;
+    const uint32_t cpuFreq_kHz = osState->UpdateCPUFreq_kHz();
     stat_cpuFreq = std::to_string(cpuFreq_kHz);
   }
 
   std::string stat_temperature;
   if (active[1]) {
-    // Update temperature reading; convert milli-Celsius to Celsius
-    uint32_t cpuTemp_mC;
-    _temperatureFile.seekg(0, _temperatureFile.beg);
-    _temperatureFile >> cpuTemp_mC;
-    const float cpuTemp_C = cpuTemp_mC * 0.001f;
-    std::stringstream ss;
-    ss << std::fixed << std::setprecision(3) << cpuTemp_C;
-    stat_temperature = ss.str();
+    // Update temperature reading (Celsius)
+    const uint32_t cpuTemp_C = osState->UpdateTemperature_C();
+    stat_temperature = std::to_string(cpuTemp_C);
   }
 
   std::string stat_batteryVoltage;
   if (active[2]) {
     // Battery voltage
-    uint32_t batteryVoltage;
-    _batteryVoltageFile.seekg(0, _batteryVoltageFile.beg);
-    _batteryVoltageFile >> batteryVoltage;
-    stat_batteryVoltage = std::to_string(batteryVoltage);
+    const uint32_t batteryVoltage_uV = osState->UpdateBatteryVoltage_uV();
+    const float batteryVoltage_V = batteryVoltage_uV * 0.000001f;
+    std::stringstream ss;
+    ss << std::fixed << std::setprecision(6) << batteryVoltage_V;
+    stat_batteryVoltage = ss.str();
   }
 
 #endif
@@ -719,7 +697,7 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform, const Json::Val
   mg_set_request_handler(_ctx, "/getinitialconfig", GetInitialConfig, 0);
   mg_set_request_handler(_ctx, "/getmainrobotinfo", GetMainRobotInfo, 0);
   mg_set_request_handler(_ctx, "/getperfstats", GetPerfStats, 0);
-  
+
   // todo (VIC-1398): remove
   if( ANKI_DEV_CHEATS ) { 
     mg_set_request_handler(_ctx, "/sendAppMessage", TempAppToEngine, 0);
@@ -730,12 +708,6 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform, const Json::Val
   _consoleVarsUIHTMLTemplate = Anki::Util::StringFromContentsOfFile(consoleVarsTemplate);
 
   _requests.clear();
-
-#ifndef SIMULATOR
-  _temperatureFile.open(kTemperatureFile, std::ifstream::in);
-  _cpuFile.open(kCPUFreqFile, std::ifstream::in);
-  _batteryVoltageFile.open(kBatteryVoltageFile, std::ifstream::in);
-#endif
 }
 
 
@@ -964,17 +936,6 @@ void WebService::Update()
 
 void WebService::Stop()
 {
-#ifndef SIMULATOR
-  if (_temperatureFile.is_open()) {
-    _temperatureFile.close();
-  }
-  if (_cpuFile.is_open()) {
-    _cpuFile.close();
-  }
-  if (_batteryVoltageFile.is_open()) {
-    _batteryVoltageFile.close();
-  }
-#endif
   if (_ctx) {
     mg_stop(_ctx);
   }
@@ -1196,7 +1157,7 @@ int WebService::HandleWebSocketsData(struct mg_connection* conn, int bits, char*
       }
     }
       break;
-    
+
     case WebSocketsTypeCloseConnection:
     {
       // agree to close connection, but don't do anything here until the close event fires

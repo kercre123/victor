@@ -176,9 +176,9 @@ bool BehaviorContainer::CreateAndStoreBehavior(const Json::Value& behaviorConfig
     const bool addedNewEntry = newEntry.second;
 
     if (addedNewEntry) {
-      PRINT_CH_DEBUG(LOG_CHANNEL, "BehaviorContainer::AddToContainer",
-                     "Added new behavior '%s' %p",
-                     BehaviorIDToString(behaviorID), newBehavior.get());
+      // PRINT_CH_DEBUG(LOG_CHANNEL, "BehaviorContainer::AddToContainer",
+      //                "Added new behavior '%s' %p",
+      //                BehaviorIDToString(behaviorID), newBehavior.get());
       return true;
     }
     else {

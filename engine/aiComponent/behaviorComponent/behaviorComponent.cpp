@@ -22,6 +22,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTimers.h"
 #include "engine/aiComponent/behaviorComponent/devBehaviorComponentMessageHandler.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorEventAnimResponseDirector.h"
@@ -172,6 +173,12 @@ void BehaviorComponent::GenerateManagedComponents(Robot& robot,
   if(!entity->HasComponent(BCComponentID::BehaviorSystemManager)){
     entity->AddDependentComponent(BCComponentID::BehaviorSystemManager,
                                   new BehaviorSystemManager());
+  }
+  
+  // Behavior timers
+  if(!entity->HasComponent(BCComponentID::BehaviorTimerManager)){
+    entity->AddDependentComponent(BCComponentID::BehaviorTimerManager,
+                                  new BehaviorTimerManager());
   }
 
   // Delegation Component

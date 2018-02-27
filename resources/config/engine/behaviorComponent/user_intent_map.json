@@ -26,7 +26,11 @@
     },
     {
       "cloud_intent" : "intent_clock_settimer",
-      "user_intent"  : "set_timer"
+      "user_intent"  : "set_timer",
+      "cloud_substitutions": {
+        "timer-duration.amount": "time_s"
+      },
+      "cloud_numerics": ["timer-duration.amount"]
     },
     {
       "cloud_intent": "intent_system_charger",
@@ -45,10 +49,11 @@
       "user_intent": "play_specific"
     },
     {
-      "app_intent": "intent_meet_victor",
       "user_intent": "meet_victor",
+      "cloud_intent": "intent_names_username",
+      "app_intent": "intent_meet_victor",
       "app_substitutions": {
-        "param": "name"
+        "param": "username"
       }
     }
   ],

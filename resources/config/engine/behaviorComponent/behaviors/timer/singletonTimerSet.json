@@ -7,8 +7,8 @@
     }
   ],
 
-  "getInAnimTrigger" : "Hiccup",
-  "getOutAnimTrigger" : "Hiccup",
+  "getInAnimTrigger" : "TimerSetGetIn",
+  "getOutAnimTrigger" : "TimerSetGetOut",
   "displayClockFor_s" : 5,
 
   "clockTemplate" : [
