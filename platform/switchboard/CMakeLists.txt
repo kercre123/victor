@@ -46,6 +46,11 @@ target_compile_definitions(vic-switchboard
   ${PLATFORM_COMPILE_DEFS}
 )
 
+target_compile_options(vic-switchboard
+  PRIVATE
+  -Wno-error
+)
+
 target_include_directories(vic-switchboard
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
