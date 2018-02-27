@@ -1,5 +1,1 @@
-DVT2
-* Put Accelerometer to sleep on boot
-* Add cube encryption
-
-* Cube application
+* Fix syscon wake on charger with button
