@@ -45,6 +45,11 @@ def addEdges( options, fromNode, edges, transitionJson, edgeStyle='solid', color
     edgeLabel = getEdgeLabel( toData )
     if options.ignoreUserIntents and edgeLabel == 'UserIntentPending':
       continue
+    if options.startNode is not None or options.endNode is not None:
+      if options.startNode is not None and fromNode != options.startNode:
+        continue
+      elif options.endNode is not None and toNode != options.endNode:
+        continue
     edge = (fromNode, toNode)
     props = {'style': edgeStyle, 'label': edgeLabel, 'color': color}
     if [fromNode.lower(), toNode.lower()] != sorted([fromNode.lower(), toNode.lower()]):
@@ -167,6 +172,11 @@ def main():
                       help='ignores transitions due to user intents')
   parser.add_argument('inputFilename', metavar='INPUTFILE',
                       help='the file victorObservingDemo.json')
+  mutex = parser.add_mutually_exclusive_group(required=False)
+  mutex.add_argument('--begin', action="store", dest='startNode', metavar='BEGINBEHAVIOR',
+                     help='only draws edges that originate from BEGINBEHAVIOR')
+  mutex.add_argument('--end', action="store", dest='endNode', metavar='ENDBEHAVIOR',
+                     help='only draws edges that end at ENDBEHAVIOR')
   
 
   args = parser.parse_args()
@@ -187,6 +197,13 @@ def main():
 
   jsonData = loadFile( inputFilename )
   parseJson( nodes, edges, jsonData, inputFilename, args )
+
+  if args.startNode is not None and args.startNode not in nodes:
+    print('Behavior {0} was not found'.format(args.startNode))
+    sys.exit(1)
+  if args.endNode is not None and args.endNode not in nodes:
+    print('Behavior {0} was not found'.format(args.endNode))
+    sys.exit(1)
 
   # render 
 
