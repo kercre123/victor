@@ -1,16 +1,8 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "protocol.h"
 #include "animation.h"
-
-#define ANIMATION_CHANNELS 4
-#define MAX_KEYFRAMES 4
-#define COLOR_CHANNELS 3
-
-enum {
-  ANIM_FLAGS_CHANNEL = 0x03,
-  ANIM_FLAGS_RESET   = 0x08
-};
 
 // Execution State
 enum {
@@ -32,19 +24,6 @@ struct Animation {
   uint8_t attack;
   uint8_t hold;
 };
-
-// Inbound format
-typedef struct {
-  uint16_t color;
-  uint8_t attack;
-  uint8_t hold;
-} KeyFrame;
-
-typedef struct {
-  uint8_t command;
-  uint8_t flags;
-  KeyFrame frame[MAX_KEYFRAMES];
-} Payload;
 
 static Animation animation[ANIMATION_CHANNELS][MAX_KEYFRAMES];
 static Animation staging[ANIMATION_CHANNELS][MAX_KEYFRAMES];
@@ -107,22 +86,17 @@ void animation_tick(void) {
   }
 }
 
-void animation_write(int length, const void* raw) {
+void animation_write(int length, const Payload* payload) {
   // Ignore invalid
   int lights = (length - sizeof(uint16_t) + sizeof(KeyFrame) - 1) / sizeof(KeyFrame);
 
   if (lights <= 0) return ;
 
-  // Align payload
-  Payload payload;
-  memset(&payload, 0, sizeof(Payload));
-  memcpy(&payload, raw, length);
-
-  int channel = payload.flags & ANIM_FLAGS_CHANNEL;
+  int channel = payload->lights.flags & ANIM_FLAGS_CHANNEL;
   Animation* target = staging[channel];
 
   for (int i = 0; i < lights; i++, target++) {
-    KeyFrame* frame = &payload.frame[i];
+    const KeyFrame* frame = &payload->lights.frame[i];
     
     // Initial state
     if (frame->hold) {
@@ -152,7 +126,7 @@ void animation_write(int length, const void* raw) {
   }
 
   // Copy flag was set, reset the animation controller
-  if (payload.flags & ANIM_FLAGS_RESET) {
+  if (payload->lights.flags & ANIM_FLAGS_RESET) {
     for (int i = 0; i < ANIMATION_CHANNELS; i++) {
       memcpy(animation, staging, sizeof(staging));
       current_frame[i] = &animation[i][0];

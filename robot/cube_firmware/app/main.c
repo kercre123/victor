@@ -1,6 +1,7 @@
 #include <stdint.h>
 
 #include "datasheet.h"
+#include "protocol.h"
 #include "board.h"
 #include "lights.h"
 #include "accel.h"
@@ -31,7 +32,17 @@ void tick(void) {
 }
 
 void recv(uint8_t length, const void* data) {
-  if (length < 1) return ;
+  // Must have received at least the header
+  if (length < 2) return ;
 
-  animation_write(length, data);
+  // Align payload
+  Payload payload;
+  memset(&payload, 0, sizeof(Payload));
+  memcpy(&payload, data, length);
+
+  switch (payload.command) {
+    case COMMAND_CUBE_LIGHTS:
+      animation_write(length, data);
+      break ;
+  }
 }

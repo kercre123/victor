@@ -3,6 +3,6 @@
 
 void animation_init(void);
 void animation_tick(void);
-void animation_write(int, const void*);
+void animation_write(int, const Payload*);
 
 #endif
