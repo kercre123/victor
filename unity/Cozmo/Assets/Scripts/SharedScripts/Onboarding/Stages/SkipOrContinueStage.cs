@@ -37,6 +37,10 @@ namespace Onboarding {
         _OldRobotContinueButtonInstance.Initialize(HandleContinueClicked, "Onboarding." + name, "Onboarding");
         _SkipButtonInstance.Initialize(HandleSkipClicked, "Onboarding." + name + ".skip", "Onboarding");
       }
+
+      if (OnboardingManager.Instance.TeacherMode) {
+        Invoke("HandleSkipClicked", 0.25f);
+      }
     }
 
     public override void OnDestroy() {

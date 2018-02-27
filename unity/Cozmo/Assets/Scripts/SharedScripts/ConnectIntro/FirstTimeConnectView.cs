@@ -44,6 +44,9 @@ public class FirstTimeConnectView : BaseView {
   [SerializeField]
   private CozmoButton _BuyCozmoButton;
 
+  [SerializeField]
+  private CozmoText _TeacherModeText;
+
   private IAsyncResult _GetACosmoServerLookup;
   private bool _HasInternetConnection;
   private float _LastConnectionCheck = 0;
@@ -70,6 +73,21 @@ public class FirstTimeConnectView : BaseView {
     StartConnectionCheck();
 
     _BuyCozmoButton.Initialize(HandleBuyCozmoButton, "buy_cozmo_button", "first_time_connect_dialog");
+
+    _TeacherModeText.gameObject.SetActive(false);
+  }
+
+  public void ToggleTeacherMode() {
+    OnboardingManager.Instance.ToggleTeacherMode();
+    DAS.Event("onboarding.teachermode", OnboardingManager.Instance.TeacherMode ? "on" : "off");
+    string textKey = "onboarding.teachermode.on";
+    if (OnboardingManager.Instance.TeacherMode) {
+      _TeacherModeText.gameObject.SetActive(true);
+    }
+    else {
+      textKey = "onboarding.teachermode.off";
+    }
+    _TeacherModeText.key = textKey;
   }
 
   private void InitializePrivacyPolicyButton() {
@@ -122,8 +140,18 @@ public class FirstTimeConnectView : BaseView {
       }
     }
     else {
-      UIManager.OpenModal(_SoundCheckModalPrefab, new ModalPriorityData(), HandleSoundCheckViewCreated);
+      if (OnboardingManager.Instance.TeacherMode) {
+        // Skip sound check in teacher mode
+        ShowProfileCreationScreen();
+      }
+      else {
+        ShowSoundCheckScreen();
+      }
     }
+  }
+
+  private void ShowSoundCheckScreen() {
+    UIManager.OpenModal(_SoundCheckModalPrefab, new ModalPriorityData(), HandleSoundCheckViewCreated);
   }
 
   private void HandleSoundCheckViewCreated(BaseModal newSoundCheckModal) {

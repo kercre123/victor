@@ -52,6 +52,16 @@ public class OnboardingManager : MonoBehaviour {
 
   public bool FirstTime { get; set; }
 
+  private bool _TeacherMode = false;
+  public bool TeacherMode {
+    get {
+      return _TeacherMode;
+    }
+  }
+  public void ToggleTeacherMode() {
+    _TeacherMode = !_TeacherMode;
+  }
+
   private OnboardingPhases _CurrPhase = OnboardingPhases.None;
 
   private GameObject _CurrStageInst = null;
@@ -181,6 +191,9 @@ public class OnboardingManager : MonoBehaviour {
   }
 
   public bool IsOldRobot() {
+    if (TeacherMode) {
+      return true;
+    }
     // FistBump is the first thing unlocked in the new nurture unlock order.
     Debug.LogWarning("IsOldRobot: _LastOnboardingPhaseCompletedRobot " + _LastOnboardingPhaseCompletedRobot + "; fistbump " +
               (UnlockablesManager.Instance.IsUnlocked(UnlockId.FistBump) ? "unlocked" : "locked"));

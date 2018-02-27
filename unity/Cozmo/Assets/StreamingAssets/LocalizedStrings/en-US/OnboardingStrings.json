@@ -161,5 +161,11 @@
   },
   "onboarding.notificationpreprompt.body": {
     "translation": "Would you like Cozmo to send you messages when he needs you?"
+  },
+  "onboarding.teachermode.on": {
+    "translation": "Quick Setup: ON"
+  },
+  "onboarding.teachermode.off": {
+    "translation": "Quick Setup: OFF"
   }
 }

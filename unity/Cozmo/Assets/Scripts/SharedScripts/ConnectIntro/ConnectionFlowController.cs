@@ -296,7 +296,7 @@ public class ConnectionFlowController : MonoBehaviour {
 
   private void HandleConnectionFlowBackgroundCreationFinished(BaseModal newConnectionFlowBackground,
     Action launchAction) {
-    _ConnectionFlowBackgroundModalInstance = (ConnectionFlowBackgroundModal) newConnectionFlowBackground;
+    _ConnectionFlowBackgroundModalInstance = (ConnectionFlowBackgroundModal)newConnectionFlowBackground;
     launchAction();
   }
 
@@ -496,7 +496,7 @@ public class ConnectionFlowController : MonoBehaviour {
   }
 
   private void HandleUpdateAppViewCreated(BaseModal newUpdateAppModal) {
-    _UpdateAppModalInstance = (UpdateAppModal) newUpdateAppModal;
+    _UpdateAppModalInstance = (UpdateAppModal)newUpdateAppModal;
     _UpdateAppModalInstance.ModalClosedWithCloseButtonOrOutside += ReturnToTitle;
   }
 
@@ -524,6 +524,15 @@ public class ConnectionFlowController : MonoBehaviour {
   }
 
   private void CheckForRestoreRobotFlow() {
+    if (OnboardingManager.Instance.TeacherMode) {
+      // If we're in teacher mode, we skip some aspects of onboarding to get them up and running with less interaction
+      SaveFirstTimeUserFlowComplete();
+      // no notifications prompt
+      DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.OSNotificationsPermissionsPromptShown = true;
+      DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.LastTimeAskedAboutNotifications = System.DateTime.Now;
+      DataPersistence.DataPersistenceManager.Instance.Save();
+    }
+
     OnboardingManager.Instance.FirstTime =
       DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeUserFlow;
     IRobot robot = RobotEngineManager.Instance.CurrentRobot;
@@ -531,22 +540,9 @@ public class ConnectionFlowController : MonoBehaviour {
       // we've never connected before so still have setup
       if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeUserFlow) {
         // we are done with first time user flow..
-        DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeUserFlow = false;
-        DataPersistence.DataPersistenceManager.Instance.Save();
+        SaveFirstTimeUserFlowComplete();
 
-        // Need to create the struct that will be written to the NVEntryTag, set values in it, and then pack it into a
-        // memoryStream which will modify the byte array it was constructed with. That byte array is then what is
-        // passed to the NVStorageWrite message.
-        Anki.Cozmo.OnboardingData data = new Anki.Cozmo.OnboardingData();
-        data.hasCompletedOnboarding = true;
-        byte[] byteArr = new byte[data.Size];
-        System.IO.MemoryStream ms = new System.IO.MemoryStream(byteArr);
-        data.Pack(ms);
-
-        robot.NVStorageWrite(Anki.Cozmo.NVStorage.NVEntryTag.NVEntry_OnboardingData, byteArr);
         robot.SendAnimationTrigger(AnimationTrigger.StartSleeping);
-
-
         FinishConnectionFlow();
       }
       // connected before but quit while the "special moments" were still happening so play again rather than normal wakeup
@@ -563,6 +559,23 @@ public class ConnectionFlowController : MonoBehaviour {
       // Robot has disconnected cleanup in HandleRobotDisconnect
       DAS.Info("ConnectionFlowController.CheckForRestoreRobotFlow", "Robot has disconnected");
     }
+  }
+
+  private void SaveFirstTimeUserFlowComplete() {
+    DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeUserFlow = false;
+    DataPersistence.DataPersistenceManager.Instance.Save();
+
+    // Need to create the struct that will be written to the NVEntryTag, set values in it, and then pack it into a
+    // memoryStream which will modify the byte array it was constructed with. That byte array is then what is
+    // passed to the NVStorageWrite message.
+    IRobot robot = RobotEngineManager.Instance.CurrentRobot;
+    Anki.Cozmo.OnboardingData data = new Anki.Cozmo.OnboardingData();
+    data.hasCompletedOnboarding = true;
+    byte[] byteArr = new byte[data.Size];
+    System.IO.MemoryStream ms = new System.IO.MemoryStream(byteArr);
+    data.Pack(ms);
+
+    robot.NVStorageWrite(Anki.Cozmo.NVStorage.NVEntryTag.NVEntry_OnboardingData, byteArr);
   }
 
   private void WakeupSequence() {
@@ -613,7 +626,7 @@ public class ConnectionFlowController : MonoBehaviour {
   }
 
   private void HandlePullCubeTabViewCreated(BaseModal newPullCubeTabModal) {
-    _PullCubeTabModalInstance = (PullCubeTabModal) newPullCubeTabModal;
+    _PullCubeTabModalInstance = (PullCubeTabModal)newPullCubeTabModal;
     _PullCubeTabModalInstance.DialogClosed += HandlePullCubeTabsCompleted;
   }
 
@@ -648,7 +661,7 @@ public class ConnectionFlowController : MonoBehaviour {
   private void RobotConnectionResponse(Anki.Cozmo.ExternalInterface.RobotConnectionResponse message) {
     // Set initial Robot Volume when connecting
     Anki.Cozmo.Audio.GameAudioClient.SetPersistenceVolumeValues(
-      new Anki.Cozmo.Audio.VolumeParameters.VolumeType[] {Anki.Cozmo.Audio.VolumeParameters.VolumeType.Robot});
+      new Anki.Cozmo.Audio.VolumeParameters.VolumeType[] { Anki.Cozmo.Audio.VolumeParameters.VolumeType.Robot });
     DAS.Info("ConnectionFlow.RobotConnectionResponse", message.result.ToString());
 
     HandleRobotConnectResponse(message.result);
@@ -657,50 +670,50 @@ public class ConnectionFlowController : MonoBehaviour {
   private void HandleRobotConnectResponse(RobotConnectionResult response) {
     DAS.Info("ConnectionFlow.HandleRobotConnectResponse", "response: " + response);
     switch (response) {
-      case RobotConnectionResult.Success:
-        // Audio Note: Let scaning loop continue to play
-        RobotConnectResponseSuccess();
-        break;
+    case RobotConnectionResult.Success:
+      // Audio Note: Let scaning loop continue to play
+      RobotConnectResponseSuccess();
+      break;
 
-      case RobotConnectionResult.ConnectionFailure:
-        if (_ConnectingToCozmoScreenInstance != null) {
-          GameObject.Destroy(_ConnectingToCozmoScreenInstance.gameObject);
-        }
+    case RobotConnectionResult.ConnectionFailure:
+      if (_ConnectingToCozmoScreenInstance != null) {
+        GameObject.Destroy(_ConnectingToCozmoScreenInstance.gameObject);
+      }
 
-        // Audio Note: Let scaning loop continue to play
-        ReturnToSearch();
-        break;
+      // Audio Note: Let scaning loop continue to play
+      ReturnToSearch();
+      break;
 
-      case RobotConnectionResult.OutdatedApp:
-        PlayScanLoopAudio(false);
-        UpdateAppScreen();
-        break;
+    case RobotConnectionResult.OutdatedApp:
+      PlayScanLoopAudio(false);
+      UpdateAppScreen();
+      break;
 
-      case RobotConnectionResult.OutdatedFirmware:
-        PlayScanLoopAudio(false);
-        UpdateFirmware();
-        break;
+    case RobotConnectionResult.OutdatedFirmware:
+      PlayScanLoopAudio(false);
+      UpdateFirmware();
+      break;
 
-      case RobotConnectionResult.NeedsPin:
-        // No longer used
-        break;
+    case RobotConnectionResult.NeedsPin:
+      // No longer used
+      break;
 
-      case RobotConnectionResult.InvalidPin:
-        // No longer used
-        break;
+    case RobotConnectionResult.InvalidPin:
+      // No longer used
+      break;
 
-      case RobotConnectionResult.PinMaxAttemptsReached:
-        // No longer used
-        break;
+    case RobotConnectionResult.PinMaxAttemptsReached:
+      // No longer used
+      break;
 
-      case RobotConnectionResult.ConnectionRejected:
-        if (_ConnectingToCozmoScreenInstance != null) {
-          GameObject.Destroy(_ConnectingToCozmoScreenInstance.gameObject);
-        }
+    case RobotConnectionResult.ConnectionRejected:
+      if (_ConnectingToCozmoScreenInstance != null) {
+        GameObject.Destroy(_ConnectingToCozmoScreenInstance.gameObject);
+      }
 
-        PlayScanLoopAudio(false);
-        ConnectionRejected();
-        break;
+      PlayScanLoopAudio(false);
+      ConnectionRejected();
+      break;
     }
   }
 

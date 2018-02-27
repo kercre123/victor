@@ -18,7 +18,12 @@ namespace Onboarding {
 
     public override void Start() {
       base.Start();
-      _RedTableOutline.gameObject.SetActive(false);
+      if (OnboardingManager.Instance.TeacherMode) {
+        base.HandleContinueClicked();
+      }
+      else {
+        _RedTableOutline.gameObject.SetActive(false);
+      }
     }
 
     protected override void HandleContinueClicked() {
