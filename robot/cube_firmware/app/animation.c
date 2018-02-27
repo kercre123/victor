@@ -13,14 +13,17 @@ enum {
 };
 
 // Execution State
-enum AnimationState {
+enum {
   STATE_STATIC,
   STATE_HOLD,
   STATE_ATTACK
 };
 
+typedef uint8_t AnimationState;
+
+typedef struct Animation Animation;
 struct Animation {
-  struct Animation* next;
+  Animation* next;
   AnimationState state;
 
   uint8_t index;
@@ -31,16 +34,16 @@ struct Animation {
 };
 
 // Inbound format
-struct KeyFrame {
+typedef struct {
   uint16_t color;
   uint8_t attack;
   uint8_t hold;
-};
+} KeyFrame;
 
-struct Payload {
+typedef struct {
   uint16_t flags;
   KeyFrame frame[MAX_KEYFRAMES];
-};
+} Payload;
 
 static Animation animation[ANIMATION_CHANNELS][MAX_KEYFRAMES];
 static Animation staging[ANIMATION_CHANNELS][MAX_KEYFRAMES];
@@ -53,7 +56,9 @@ void animation_init(void) {
   memset(&staging, 0, sizeof(staging));
 
   for (int i = 0; i < ANIMATION_CHANNELS; i++) {
-    current_frame[i] = animation[i][0].next = &animation[i][0];
+    Animation* first = &animation[i][0];
+    current_frame[i] = first; 
+    animation[i][0].next = first;
   }
 }
 

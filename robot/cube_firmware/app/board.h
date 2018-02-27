@@ -17,9 +17,7 @@ static const uint32_t SYSTEM_CLOCK = 16*1000000;
 //-----------------------------------------------------------
 //        pin defines
 //-----------------------------------------------------------
-extern "C" {
-  #include "gpio.h"
-}
+#include "gpio.h"
 
 #define GPIO_DEFINE(PORT,PIN,NAME) \
   static const GPIO_PORT  NAME##_PORT = (GPIO_PORT)(PORT); \

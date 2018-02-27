@@ -19,17 +19,17 @@ int main(void) {
   animation_init();
 }
 
-extern "C" void deinit(void) {
+void deinit(void) {
   hal_acc_stop();
   hal_led_stop();
   hal_uart_stop();
 }
 
-extern "C" void tick(void) {
+void tick(void) {
   animation_tick();
 }
 
-extern "C" void recv(uint8_t length, const void* data) {
+void recv(uint8_t length, const void* data) {
   if (length < 1) return ;
   
   animation_write(length, data);
