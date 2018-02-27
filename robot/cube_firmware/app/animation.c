@@ -25,8 +25,8 @@ struct Animation {
   uint8_t hold;
 };
 
-static Animation animation[ANIMATION_CHANNELS][MAX_KEYFRAMES];
-static Animation staging[ANIMATION_CHANNELS][MAX_KEYFRAMES];
+static Animation animation[MAX_KEYFRAMES];
+static Animation staging[MAX_KEYFRAMES];
 static Animation* current_frame[ANIMATION_CHANNELS];
 
 extern uint8_t intensity[ANIMATION_CHANNELS * COLOR_CHANNELS];
@@ -36,9 +36,9 @@ void animation_init(void) {
   memset(&staging, 0, sizeof(staging));
 
   for (int i = 0; i < ANIMATION_CHANNELS; i++) {
-    Animation* first = &animation[i][0];
-    current_frame[i] = first; 
-    animation[i][0].next = staging[i][0].next = first;
+    current_frame[i] =
+    animation[i].next = 
+    staging[i].next = &animation[0];
   }
 }
 
@@ -86,22 +86,14 @@ void animation_tick(void) {
   }
 }
 
-void animation_write(int length, const Payload* payload) {
-  // Ignore invalid
-  int lights = (length - sizeof(uint16_t) + sizeof(KeyFrame) - 1) / sizeof(KeyFrame);
+void animation_frames(int channel, const KeyFrame* frames) {
+  Animation* target = &staging[channel * FRAMES_PER_COMMAND];
 
-  if (lights <= 0) return ;
-
-  int channel = payload->lights.flags & ANIM_FLAGS_CHANNEL;
-  Animation* target = staging[channel];
-
-  for (int i = 0; i < lights; i++, target++) {
-    const KeyFrame* frame = &payload->lights.frame[i];
-    
+  for (int i = 0; i < FRAMES_PER_COMMAND; i++, target++) {
     // Initial state
-    if (frame->hold) {
+    if (frames->hold) {
       target->state = STATE_HOLD;
-    } else if (frame->attack) {
+    } else if (frames->attack) {
       target->state = STATE_ATTACK;
     } else {
       target->state = STATE_STATIC;
@@ -110,26 +102,26 @@ void animation_write(int length, const Payload* payload) {
     target->index = 0;
 
     // Animation settings
-    target->attack = frame->attack;
-    target->hold = frame->hold;
+    target->attack = frames->attack;
+    target->hold = frames->hold;
 
     // Unpack our solid color
-    target->channel[0] = (frame->color & 0xF800) * 0x21 >> (2 + 11);
-    target->channel[1] = (frame->color & 0x07E0) * 0x41 >> (4 +  5);
-    target->channel[2] = (frame->color & 0x001F) * 0x21 >> (2 +  0);
+    target->channel[0] = (frames->color & 0xF800) * 0x21 >> (2 + 11);
+    target->channel[1] = (frames->color & 0x07E0) * 0x41 >> (4 +  5);
+    target->channel[2] = (frames->color & 0x001F) * 0x21 >> (2 +  0);
+  }
+}
 
-    if (lights == i + 1) {
-      target->next = &animation[channel][0];
-    } else {
-      target->next = &animation[channel][i+1];
-    }
+void animation_index(const FrameMap* map) {
+  memcpy(animation, staging, sizeof(staging));
+
+  for (int i = 0, c = 0; c < 4; i += 4, c++) {
+    current_frame[i] = &animation[(map->initial >> i) & 0xF];
   }
 
-  // Copy flag was set, reset the animation controller
-  if (payload->lights.flags & ANIM_FLAGS_RESET) {
-    for (int i = 0; i < ANIMATION_CHANNELS; i++) {
-      memcpy(animation, staging, sizeof(staging));
-      current_frame[i] = &animation[i][0];
-    }
+  for (int i = 0, kf = 0; kf < MAX_KEYFRAMES; i++, kf += 2) {
+    uint8_t index = map->frame_map[i];
+    animation[kf+0].next = &animation[index & 0xF];
+    animation[kf+1].next = &animation[index >> 4];
   }
 }

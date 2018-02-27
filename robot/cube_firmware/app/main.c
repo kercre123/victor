@@ -41,8 +41,11 @@ void recv(uint8_t length, const void* data) {
   memcpy(&payload, data, length);
 
   switch (payload.command) {
-    case COMMAND_CUBE_LIGHTS:
-      animation_write(length, data);
+    case COMMAND_LIGHT_KEYFRAMES:
+      animation_frames(payload.flags, payload.frames);
+      break ;
+    case COMMAND_LIGHT_INDEX:
+      animation_index(&payload.framemap);
       break ;
   }
 }

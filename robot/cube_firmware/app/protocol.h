@@ -3,17 +3,14 @@
 
 #pragma anon_unions
 
+#define MAX_KEYFRAMES 16
 #define ANIMATION_CHANNELS 4
-#define MAX_KEYFRAMES 4
 #define COLOR_CHANNELS 3
+#define FRAMES_PER_COMMAND 4
 
 enum {
-  ANIM_FLAGS_CHANNEL = 0x03,
-  ANIM_FLAGS_RESET   = 0x04
-};
-
-enum {
-  COMMAND_CUBE_LIGHTS
+  COMMAND_LIGHT_KEYFRAMES,
+  COMMAND_LIGHT_INDEX
 };
 
 typedef uint8_t CubeCommand;
@@ -26,14 +23,16 @@ typedef struct {
 } KeyFrame;
 
 typedef struct {
-  uint8_t flags;
-  KeyFrame frame[MAX_KEYFRAMES];
-} LightChannel;
+  uint16_t initial;  // Starting indexes for channels 0..3
+  uint8_t  frame_map[MAX_KEYFRAMES / 2]; 
+} FrameMap;
 
 typedef struct {
   CubeCommand command;
+  uint8_t flags;
   union {
-    LightChannel lights;
+    KeyFrame frames[FRAMES_PER_COMMAND];
+    FrameMap framemap;
   };
 } Payload;
 

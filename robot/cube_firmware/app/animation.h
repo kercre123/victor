@@ -3,6 +3,7 @@
 
 void animation_init(void);
 void animation_tick(void);
-void animation_write(int, const Payload*);
+void animation_frames(int channel, const KeyFrame* frames);
+void animation_index(const FrameMap* map);
 
 #endif
