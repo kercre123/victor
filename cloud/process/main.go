@@ -3,7 +3,6 @@ package main
 import (
 	"anki/cloudproc"
 	"anki/ipc"
-	"flag"
 	"fmt"
 	"time"
 )
@@ -22,7 +21,7 @@ func getSocketWithRetry(name string, client string) ipc.Conn {
 	}
 }
 
-func testReader(serv ipc.Server, ch chan []byte) {
+func testReader(serv ipc.Server, send cloudproc.Sender) {
 	for conn := range serv.NewConns() {
 		go func(conn ipc.Conn) {
 			for {
@@ -31,7 +30,11 @@ func testReader(serv ipc.Server, ch chan []byte) {
 					conn.Close()
 					return
 				}
-				ch <- msg
+				if string(msg) == cloudproc.HotwordMessage {
+					send.SendHotword()
+				} else {
+					send.SendAudio(msg)
+				}
 			}
 		}(conn)
 	}
@@ -39,23 +42,45 @@ func testReader(serv ipc.Server, ch chan []byte) {
 
 func main() {
 	fmt.Println("Hello, world!")
+
+	// don't yet have control over process startup on DVT2, set these as default
+	verbose = true
+	test := true
+
+	// flag.BoolVar(&verbose, "verbose", false, "enable verbose logging")
+	// var test bool
+	// flag.BoolVar(&test, "test", false, "enable test channel")
+	// flag.Parse()
+
 	micSock := getSocketWithRetry(ipc.GetSocketPath("mic_sock"), "cp_mic")
 	defer micSock.Close()
 	aiSock := getSocketWithRetry(ipc.GetSocketPath("ai_sock"), "cp_ai")
 	defer aiSock.Close()
-	testSock, err := ipc.NewUnixgramServer(ipc.GetSocketPath("cp_test"))
-	if err != nil {
-		fmt.Println("Server create error:", err)
+
+	// set up test channel if flags say we should
+	var testRecv *cloudproc.Receiver
+	if test {
+		testSock, err := ipc.NewUnixgramServer(ipc.GetSocketPath("cp_test"))
+		if err != nil {
+			fmt.Println("Server create error:", err)
+		}
+		defer testSock.Close()
+
+		var testSend cloudproc.Sender
+		testSend, testRecv = cloudproc.NewMemPipe()
+		go testReader(testSock, testSend)
+		fmt.Println("Test channel created")
 	}
-	defer testSock.Close()
 	fmt.Println("Sockets successfully created")
 
-	testChan := make(chan []byte)
-	defer close(testChan)
-	go testReader(testSock, testChan)
-
-	flag.BoolVar(&verbose, "verbose", false, "enable verbose logging")
-	flag.Parse()
 	cloudproc.SetVerbose(verbose)
-	cloudproc.RunProcess(micSock, aiSock, testChan, nil)
+	receiver := cloudproc.NewIpcReceiver(micSock, nil)
+
+	process := &cloudproc.Process{}
+	process.AddReceiver(receiver)
+	if testRecv != nil {
+		process.AddReceiver(testRecv)
+	}
+	process.AddIntentWriter(aiSock)
+	process.Run(nil)
 }

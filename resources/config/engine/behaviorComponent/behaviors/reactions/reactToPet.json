@@ -1,5 +1,4 @@
 {
   "behaviorClass": "ReactToPet",
-  "behaviorID": "ReactToPet",
-  "displayNameKey":"behavior.ReactToPet"
+  "behaviorID": "ReactToPet"
 }

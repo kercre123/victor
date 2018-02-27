@@ -32,6 +32,10 @@
 #define M_PI       3.14159265358979323846264338327950288
 #endif
 
+#ifndef M_TWO_PI
+#define M_TWO_PI   (M_PI*2.0)
+#endif
+
 #ifndef M_PI_2
 #define M_PI_2     1.57079632679489661923132169163975144
 #endif
@@ -42,6 +46,10 @@
 
 #ifndef M_PI_F
 #define M_PI_F     ((float)M_PI)
+#endif
+
+#ifndef M_TWO_PI_F
+#define M_TWO_PI_F ((float)M_PI*2.0f)
 #endif
 
 #ifndef M_PI_2_F

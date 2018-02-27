@@ -20,7 +20,6 @@
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "engine/components/visionComponent.h"
 #include "engine/deviceData/deviceDataManager.h"
-#include "engine/needsSystem/needsManager.h"
 #include "engine/perfMetric.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/utils/parsingConstants/parsingConstants.h"
@@ -29,12 +28,12 @@
 #include "engine/robotDataLoader.h"
 #include "engine/robotManager.h"
 #include "engine/util/transferQueue/transferQueueMgr.h"
-#include "engine/util/webService/webService.h"
 #include "engine/utils/cozmoExperiments.h"
 #include "engine/utils/cozmoFeatureGate.h"
 #include "engine/factory/factoryTestLogger.h"
 #include "engine/voiceCommands/voiceCommandComponent.h"
 #include "engine/cozmoAPI/comms/uiMessageHandler.h"
+#include "webServerProcess/src/webService.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
@@ -64,6 +63,8 @@
 #endif
 
 #include "engine/animations/animationTransfer.h"
+
+#define LOG_CHANNEL "CozmoEngine"
 
 #if ANKI_PROFILING_ENABLED
   #define ENABLE_CE_SLEEP_TIME_DIAGNOSTICS 0
@@ -112,7 +113,6 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort
   
   using namespace ExternalInterface;
   helper.SubscribeGameToEngine<MessageGameToEngineTag::ImageRequest>();
-  helper.SubscribeGameToEngine<MessageGameToEngineTag::ReadAnimationFile>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::ReadFaceAnimationDir>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::RedirectViz>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::ResetFirmware>();
@@ -147,8 +147,8 @@ CozmoEngine::~CozmoEngine()
 
 Result CozmoEngine::Init(const Json::Value& config) {
 
-  if(_isInitialized) {
-    PRINT_NAMED_INFO("CozmoEngine.Init.ReInit", "Reinitializing already-initialized CozmoEngineImpl with new config.");
+  if (_isInitialized) {
+    LOG_INFO("CozmoEngine.Init.ReInit", "Reinitializing already-initialized CozmoEngineImpl with new config.");
   }
   
   _isInitialized = false;
@@ -197,16 +197,7 @@ Result CozmoEngine::Init(const Json::Value& config) {
 
   _context->GetExperiments()->InitExperiments();
 
-  const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  _context->GetNeedsManager()->Init(currentTime,
-                                    _context->GetDataLoader()->GetRobotNeedsConfig(),
-                                    _context->GetDataLoader()->GetStarRewardsConfig(),
-                                    _context->GetDataLoader()->GetRobotNeedsActionsConfig(),
-                                    _context->GetDataLoader()->GetRobotNeedsDecayConfig(),
-                                    _context->GetDataLoader()->GetRobotNeedsHandlersConfig(),
-                                    _context->GetDataLoader()->GetLocalNotificationConfig());
-
-  _context->GetRobotManager()->Init(_config, _context->GetDataLoader()->GetDasEventConfig());
+  _context->GetRobotManager()->Init(_config);
 
   // TODO: Specify random seed from config?
   //       Setting to non-zero value for now for repeatable testing.
@@ -218,11 +209,12 @@ Result CozmoEngine::Init(const Json::Value& config) {
 
   _context->GetPerfMetric()->Init();
 
-  PRINT_NAMED_INFO("CozmoEngine.Init.Version", "2");
+  LOG_INFO("CozmoEngine.Init.Version", "2");
 
   SetEngineState(EngineState::LoadingData);
 
-  _context->GetWebService()->Start(_context->GetDataPlatform(), "8888");
+  _context->GetWebService()->Start(_context->GetDataPlatform(),
+                                   _context->GetDataLoader()->GetWebServerEngineConfig());
 
   // DAS Event: "cozmo_engine.init.build_configuration"
   // s_val: Build configuration
@@ -313,10 +305,10 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
     if (! firstUpdate)
     {
       const double timeSinceLastUpdate = startUpdateTimeMs - lastUpdateTimeMs;
-      const double maxLatency = BS_TIME_STEP + 15.;
+      const double maxLatency = BS_TIME_STEP_MS + 15.;
       if (timeSinceLastUpdate > maxLatency)
       {
-        Anki::Util::sEventF("cozmo_engine.update.sleep.slow", {{DDATA,TO_DDATA_STR(BS_TIME_STEP)}}, "%.2f", timeSinceLastUpdate);
+        Anki::Util::sEventF("cozmo_engine.update.sleep.slow", {{DDATA,TO_DDATA_STR(BS_TIME_STEP_MS)}}, "%.2f", timeSinceLastUpdate);
       }
     }
     lastUpdateTimeMs = startUpdateTimeMs;
@@ -331,10 +323,10 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
   _context->GetVoiceCommandComponent()->Update();
 
   _context->GetWebService()->Update();
-  
+
   // Handle UI
   if (!_uiWasConnected && _uiMsgHandler->HasDesiredNumUiDevices()) {
-    PRINT_NAMED_INFO("CozmoEngine.Update.UIConnected", "");
+    LOG_INFO("CozmoEngine.Update.UIConnected", "UI has connected");
     SendSupportInfo();
 
     if (_engineState == EngineState::Running) {
@@ -343,7 +335,7 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
 
     _uiWasConnected = true;
   } else if (_uiWasConnected && !_uiMsgHandler->HasDesiredNumUiDevices()) {
-    PRINT_NAMED_INFO("CozmoEngine.Update.UIDisconnected", "");
+    LOG_INFO("CozmoEngine.Update.UIDisconnected", "UI has disconnected");
     _uiWasConnected = false;
   }
 
@@ -365,11 +357,22 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
       float currentLoadingDone = 0.0f;
       if (_context->GetDataLoader()->DoNonConfigDataLoading(currentLoadingDone))
       {
-        ConnectToRobotProcess();
-        SetEngineState(EngineState::Running);
+        SetEngineState(EngineState::ConnectingToRobot);
       }
-      PRINT_NAMED_INFO("LoadingRatio", "%f", currentLoadingDone);
+      LOG_INFO("CozmoEngine.Update.LoadingRatio", "%f", currentLoadingDone);
       _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::EngineLoadingDataStatus>(currentLoadingDone);
+      break;
+    }
+    case EngineState::ConnectingToRobot:
+    {
+      // Wait for robot process to start up and become ready
+      Result result = ConnectToRobotProcess();
+      if (RESULT_OK != result) {
+        LOG_WARNING("CozmoEngine.Update.ConnectingToRobot", "Unable to connect to robot (result %d)", result);
+        break;
+      }
+      LOG_INFO("CozmoEngine.Update.ConnectingToRobot", "Now connected to robot");
+      SetEngineState(EngineState::Running);
       break;
     }
     case EngineState::UpdatingFirmware:
@@ -389,14 +392,15 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
       // Update OSState
       OSState::getInstance()->Update();
 
-      _context->GetRobotManager()->UpdateRobotConnection();
+      Result result = _context->GetRobotManager()->UpdateRobotConnection();
+      if (RESULT_OK != result) {
+        LOG_ERROR("CozmoEngine.Update.Running", "Unable to update robot connection (result %d)", result);
+        return result;
+      }
       
-      const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-      _context->GetNeedsManager()->Update(currentTime_s);
-
       // Let the robot manager do whatever it's gotta do to update the
       // robots in the world.
-      _context->GetRobotManager()->UpdateAllRobots();
+      _context->GetRobotManager()->UpdateRobot();
       
       UpdateLatencyInfo();
       break;
@@ -409,10 +413,10 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
   {
     const double endUpdateTimeMs = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
     const double updateLengthMs = endUpdateTimeMs - startUpdateTimeMs;
-    const double maxUpdateDuration = BS_TIME_STEP;
+    const double maxUpdateDuration = BS_TIME_STEP_MS;
     if (updateLengthMs > maxUpdateDuration)
     {
-      static const std::string targetMs = std::to_string(BS_TIME_STEP);
+      static const std::string targetMs = std::to_string(BS_TIME_STEP_MS);
       Anki::Util::sEventF("cozmo_engine.update.run.slow",
                           {{DDATA, targetMs.c_str()}},
                           "%.2f", updateLengthMs);
@@ -465,10 +469,10 @@ void CozmoEngine::UpdateLatencyInfo()
 
     // pull image stats from robot if available
     static const Util::Stats::StatsAccumulator nullStats;
-    const Robot* firstRobot = GetFirstRobot();
-    const bool useRobotStats = firstRobot != nullptr;
-    const Util::Stats::StatsAccumulator& imageStats = useRobotStats ? firstRobot->GetImageStats() : nullStats;
-    double currentImageDelay = useRobotStats ? firstRobot->GetCurrentImageDelay() : 0.0;
+    const Robot* robot = GetRobot();
+    const bool useRobotStats = robot != nullptr;
+    const Util::Stats::StatsAccumulator& imageStats = useRobotStats ? robot->GetImageStats() : nullStats;
+    double currentImageDelay = useRobotStats ? robot->GetCurrentImageDelay() : 0.0;
     
     const Util::Stats::StatsAccumulator& unityLatency = _uiMsgHandler->GetLatencyStats(UiConnectionType::UI);
     const Util::Stats::StatsAccumulator& sdk1Latency  = _uiMsgHandler->GetLatencyStats(UiConnectionType::SdkOverUdp);
@@ -560,71 +564,26 @@ Result CozmoEngine::InitInternal()
 Result CozmoEngine::ConnectToRobotProcess()
 {
   const RobotID_t robotID = OSState::getInstance()->GetRobotID();
-  if (HasRobotWithID(robotID)) {
-    PRINT_NAMED_INFO("CozmoEngine.HandleMessage.ConnectToRobotProcess.AlreadyConnected", "Robot already connected");
-    return RESULT_OK;
+
+  auto * robotManager = _context->GetRobotManager();
+  if (!robotManager->DoesRobotExist(robotID)) {
+    robotManager->AddRobot(robotID);
   }
 
-  _context->GetRobotManager()->GetMsgHandler()->AddRobotConnection(robotID);
-
-  // Another exception for hosts: have to tell the basestation to add the robot as well
-  if(AddRobot(robotID) == RESULT_OK) {
-    PRINT_NAMED_INFO("CozmoEngine.ConnectToRobotProcess.Success", "Connected to robot!!!");
-  } else {
-    PRINT_NAMED_ERROR("CozmoEngine.ConnectToRobotProcess.Fail", "Failed to connect to robot!!!");
-    return RESULT_FAIL;
+  auto * msgHandler = robotManager->GetMsgHandler();
+  if (!msgHandler->IsConnected(robotID)) {
+    Result result = msgHandler->AddRobotConnection(robotID);
+    if (RESULT_OK != result) {
+      LOG_WARNING("CozmoEngine.ConnectToRobotProcess", "Unable to connect to robot %d (result %d)", robotID, result);
+      return result;
+    }
   }
-
-  _context->GetNeedsManager()->InitAfterConnection();
 
   return RESULT_OK;
 }
-
-Result CozmoEngine::AddRobot(RobotID_t robotID)
-{
-  Result lastResult = RESULT_OK;
   
-  _context->GetRobotManager()->AddRobot(robotID);
-  Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
-  if(nullptr == robot) {
-    PRINT_NAMED_ERROR("CozmoEngine.AddRobot", "Failed to add robot ID=%d (nullptr returned).", robotID);
-    lastResult = RESULT_FAIL;
-  } else {
-    PRINT_NAMED_INFO("CozmoEngine.AddRobot", "Sending init to the robot %d.", robotID);
-  }
-  
-  return lastResult;
-}
-  
-Robot* CozmoEngine::GetFirstRobot() {
-  return _context->GetRobotManager()->GetFirstRobot();
-}
-  
-int CozmoEngine::GetNumRobots() const {
-  const size_t N = _context->GetRobotManager()->GetNumRobots();
-  assert(N < INT_MAX);
-  return static_cast<int>(N);
-}
-  
-Robot* CozmoEngine::GetRobotByID(const RobotID_t robotID) {
-  return _context->GetRobotManager()->GetRobotByID(robotID);
-}
-
-bool  CozmoEngine::HasRobotWithID(const RobotID_t robotID) const
-{
-  return _context->GetRobotManager()->DoesRobotExist(robotID);
-}
-
-std::vector<RobotID_t> const& CozmoEngine::GetRobotIDList() const {
-  return _context->GetRobotManager()->GetRobotIDList();
-}
-
-template<>
-void CozmoEngine::HandleMessage(const ExternalInterface::ReadAnimationFile& msg)
-{
-  // TODO: Tell animation process to read the anim dir?
-  PRINT_NAMED_WARNING("CozmoEngine.HandleMessage.ReadAnimationFile.NotHookedUp", "");
-  //_context->GetRobotManager()->ReadAnimationDir();
+Robot* CozmoEngine::GetRobot() {
+  return _context->GetRobotManager()->GetRobot();
 }
 
 template<>
@@ -639,7 +598,7 @@ template<>
 void CozmoEngine::HandleMessage(const ExternalInterface::SetRobotImageSendMode& msg)
 {
   const ImageSendMode newMode = msg.mode;
-  Robot* robot = GetFirstRobot();
+  Robot* robot = GetRobot();
   
   if(robot != nullptr) {
     robot->SetImageSendMode(newMode);
@@ -651,7 +610,7 @@ void CozmoEngine::HandleMessage(const ExternalInterface::SetRobotImageSendMode& 
 template<>
 void CozmoEngine::HandleMessage(const ExternalInterface::ImageRequest& msg)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  Robot* robot = GetRobot();
   if(robot != nullptr) {
     return robot->SetImageSendMode(msg.mode);
   }
@@ -660,7 +619,7 @@ void CozmoEngine::HandleMessage(const ExternalInterface::ImageRequest& msg)
 template<>
 void CozmoEngine::HandleMessage(const ExternalInterface::StartTestMode& msg)
 {
-  Robot* robot = GetFirstRobot();
+  Robot* robot = GetRobot();
   if(robot != nullptr) {
     robot->SendRobotMessage<StartControllerTestMode>(msg.p1, msg.p2, msg.p3, msg.mode);
   }

@@ -14,9 +14,9 @@
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToCliff.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/events/ankiEvent.h"
@@ -50,13 +50,22 @@ BehaviorReactToCliff::BehaviorReactToCliff(const Json::Value& config)
     EngineToGameTag::RobotStopped,
     EngineToGameTag::ChargerEvent
   }});
+  
+  _cliffDetectedCondition = BEIConditionFactory::CreateBEICondition(BEIConditionType::CliffDetected, GetDebugLabel());
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToCliff::InitBehavior()
+{
+  _cliffDetectedCondition->Init(GetBEI());
+  _cliffDetectedCondition->SetActive(GetBEI(), true);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToCliff::WantsToBeActivatedBehavior() const
 {
-  return true;
+  return _cliffDetectedCondition->AreConditionsMet(GetBEI());
 }
 
   
@@ -93,10 +102,6 @@ void BehaviorReactToCliff::OnBehaviorActivated()
       
       // skip the "huh" animation if in severe energy or repair
       auto callbackFunc = &BehaviorReactToCliff::TransitionToPlayingStopReaction;
-      NeedId expressedNeed = GetBEI().GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression();
-      if((expressedNeed == NeedId::Energy) || (expressedNeed == NeedId::Repair)){
-        callbackFunc = &BehaviorReactToCliff::TransitionToPlayingCliffReaction;
-      }
 
       WaitForLambdaAction* waitForStopAction = new WaitForLambdaAction(waitForStopLambda);
       DelegateIfInControl(waitForStopAction, callbackFunc);
@@ -155,16 +160,6 @@ void BehaviorReactToCliff::TransitionToPlayingCliffReaction()
     
     
     AnimationTrigger reactionAnim = AnimationTrigger::ReactToCliff;
-    
-    // special animations for maintaining eye shape in severe need states
-    const NeedId severeExpressedNeed = GetBEI().GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression();
-    if(NeedId::Energy == severeExpressedNeed){
-      reactionAnim = AnimationTrigger::NeedsSevereLowEnergyCliffReact;
-    }else if(NeedId::Repair == severeExpressedNeed){
-      reactionAnim = AnimationTrigger::NeedsSevereLowRepairCliffReact;
-    }
-    
-
     auto action = GetCliffPreReactAction(_detectedFlags);
 
     action->AddAction(new TriggerLiftSafeAnimationAction(reactionAnim));

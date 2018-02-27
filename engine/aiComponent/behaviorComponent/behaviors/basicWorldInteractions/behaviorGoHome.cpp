@@ -53,6 +53,11 @@ BehaviorGoHome::BehaviorGoHome(const Json::Value& config)
 
 bool BehaviorGoHome::WantsToBeActivatedBehavior() const
 {
+  const bool isOnCharger = GetBEI().GetRobotInfo().IsOnChargerPlatform();
+  if( isOnCharger ) {
+    return false;
+  }
+  
   // If we have a located Home/charger, then we can be activated.
   
   std::vector<const ObservableObject*> locatedHomes;
@@ -117,24 +122,24 @@ void BehaviorGoHome::TransitionToPlayingNuzzleAnim()
   // Remove driving animations
   PopDrivingAnims();
   
-  DelegateIfInControl(new TriggerAnimationAction(_params.nuzzleAnimTrigger));
+  DelegateIfInControl(new TriggerAnimationAction(_params.nuzzleAnimTrigger),
+                      &BehaviorGoHome::TransitionToOnChargerCheck);
 }
 
 
 void BehaviorGoHome::TransitionToOnChargerCheck()
 {
-  // If we're off the charger, try backing up a little
+  // If we've somehow wiggled off the charge contacts, try the backup
+  // onto charger action again to get us back onto the contacts
   if (!GetBEI().GetRobotInfo().IsOnCharger()) {
-    const float backupDistance_mm = -10.f;
-    const float backupSpeed_mmps = 50.f;
-    DelegateIfInControl(new DriveStraightAction(backupDistance_mm, backupSpeed_mmps));
+    DelegateIfInControl(new BackupOntoChargerAction(_chargerID, true));
   }
 }
   
   
 void BehaviorGoHome::LoadConfig(const Json::Value& config)
 {
-  const std::string& debugName = "Behavior" + GetIDStr() + ".LoadConfig";
+  const std::string& debugName = "Behavior" + GetDebugLabel() + ".LoadConfig";
   
   _params.useCliffSensorCorrection = JsonTools::ParseBool(config, kUseCliffSensorsKey, debugName);
   _params.leftTurnAnimTrigger      = JsonTools::ParseAnimationTrigger(config, kLeftTurnAnimKey, debugName);
@@ -156,7 +161,7 @@ void BehaviorGoHome::PushDrivingAnims()
     drivingAnimHandler.PushDrivingAnimations({_params.backupStartAnimTrigger,
                                               _params.backupLoopAnimTrigger,
                                               _params.backupEndAnimTrigger},
-                                             GetIDStr());
+                                             GetDebugLabel());
     _drivingAnimsPushed = true;
   }
 }
@@ -166,7 +171,7 @@ void BehaviorGoHome::PopDrivingAnims()
 {
   if (_drivingAnimsPushed) {
     auto& drivingAnimHandler = GetBEI().GetRobotInfo().GetDrivingAnimationHandler();
-    drivingAnimHandler.RemoveDrivingAnimations(GetIDStr());
+    drivingAnimHandler.RemoveDrivingAnimations(GetDebugLabel());
     _drivingAnimsPushed = false;
   }
 }

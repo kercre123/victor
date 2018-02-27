@@ -219,7 +219,7 @@ namespace Anki {
         if (t == 0) {
           // If t==0, this is considered to be a command to just update the current pose
           AnkiInfo( "Localization.UpdatePoseWithKeyFrame.SettingPose", "x= %f, y= %f, angle= %f", x, y, angle);
-          SetCurrentMatPose(x, y, angle);
+          SetCurrPose(x, y, angle);
           return RESULT_OK;
         } else if (GetHistIdx(t, i) == RESULT_FAIL) {
           AnkiWarn( "Localization.UpdatePoseWithKeyFrame.TimeNotFound", "Couldn't find timestamp %d in history (oldest(%d) %d, newest(%d) %d)",
@@ -294,11 +294,11 @@ namespace Anki {
             chainedPose = poseAtStartOfFrame.GetWithRespectTo(poseAtEndOfFrame) * chainedPose;
           }
           
-          SetCurrentMatPose(chainedPose.GetX(), chainedPose.GetY(), chainedPose.GetAngle());
+          SetCurrPose(chainedPose.GetX(), chainedPose.GetY(), chainedPose.GetAngle());
         }
         else
         {
-          SetCurrentMatPose(x, y, angle);
+          SetCurrPose(x, y, angle);
           AddPoseToHist(); // Make sure this origin ID gets put in history
         }
 
@@ -400,7 +400,7 @@ namespace Anki {
       /// ========= Localization ==========
 
       Result Init() {
-        SetCurrentMatPose(0,0,0);
+        SetCurrPose(0,0,0);
 
         onRamp_ = false;
 
@@ -523,8 +523,6 @@ namespace Anki {
         orientation_ = angle;
 #else
 
-        bool movement = false;
-
         // Update current pose estimate based on wheel motion
 
         f32 currLeftWheelPos = HAL::MotorGetPosition(MotorID::MOTOR_LEFT_WHEEL);
@@ -534,10 +532,17 @@ namespace Anki {
         f32 lDist = currLeftWheelPos - prevLeftWheelPos_;
         f32 rDist = currRightWheelPos - prevRightWheelPos_;
 
-
         // Compute new pose based on encoders and gyros, but only if there was any motion.
-        movement = (!FLT_NEAR(rDist, 0.f) || !FLT_NEAR(lDist,0.f));
-        if (movement ) {
+        bool movement = (!FLT_NEAR(rDist, 0.f) || !FLT_NEAR(lDist,0.f));
+        
+        // Consider there to be no movement if we're on the charger (VIC-1046).
+        // This is to prevent the estimated pose from wandering if we're trying
+        // to drive on the charger but slipping.
+        if (HAL::BatteryIsOnCharger()) {
+          movement = false;
+        }
+        
+        if (movement) {
 #if(DEBUG_LOCALIZATION)
           PRINT("\ncurrWheelPos (%f, %f)   prevWheelPos (%f, %f)\n",
                 currLeftWheelPos, currRightWheelPos, prevLeftWheelPos_, prevRightWheelPos_);
@@ -772,7 +777,7 @@ namespace Anki {
 #endif
       }
 
-      void SetCurrentMatPose(const f32 &x, const f32 &y, const Radians &angle)
+      void SetCurrPose(const f32 &x, const f32 &y, const Radians &angle)
       {
         x_ = x;
         y_ = y;
@@ -784,7 +789,7 @@ namespace Anki {
         driveCenter_x_ = x_ + driveCenterOffset * cosf(orientation_.ToFloat());
         driveCenter_y_ = y_ + driveCenterOffset * sinf(orientation_.ToFloat());
 
-      } // SetCurrentMatPose()
+      } // SetCurrPose()
 
       void SetDriveCenterPose(const f32 &x, const f32 &y, const Radians &angle)
       {
@@ -798,14 +803,14 @@ namespace Anki {
         x_ = driveCenter_x_ - driveCenterOffset * cosf(orientation_.ToFloat());
         y_ = driveCenter_y_ - driveCenterOffset * sinf(orientation_.ToFloat());
 
-      } // SetCurrentMatPose()
+      } // SetCurrPose()
 
-      void GetCurrentMatPose(f32& x, f32& y, Radians& angle)
+      void GetCurrPose(f32& x, f32& y, Radians& angle)
       {
         x = x_;
         y = y_;
         angle = orientation_;
-      } // GetCurrentMatPose()
+      } // GetCurrPose()
 
       
       f32 GetCurrPose_x()
@@ -818,7 +823,7 @@ namespace Anki {
         return y_;
       }
       
-      Radians GetCurrPose_angle()
+      const Radians& GetCurrPose_angle()
       {
         return orientation_;
       }

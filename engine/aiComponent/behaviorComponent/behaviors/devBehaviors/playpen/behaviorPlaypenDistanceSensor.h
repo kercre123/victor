@@ -22,8 +22,8 @@ class BehaviorPlaypenDistanceSensor : public IBehaviorPlaypen
 {
 protected:
   
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorPlaypenDistanceSensor(const Json::Value& config);
   
 protected:

@@ -36,7 +36,7 @@ namespace Cozmo {
     PRINT_NAMED_WARNING("IBehaviorPlaypen.IgnoringFailure", \
                         "Ignoring %s failure in behavior %s", \
                         EnumToString(result), \
-                        GetIDStr().c_str()); \
+                        GetDebugLabel().c_str()); \
     AddToResultList(result); \
   } \
 }
@@ -49,7 +49,7 @@ namespace Cozmo {
     PRINT_NAMED_WARNING("IBehaviorPlaypen.IgnoringFailure", \
                         "Ignoring %s failure in behavior %s", \
                         EnumToString(result), \
-                        GetIDStr().c_str()); \
+                        GetDebugLabel().c_str()); \
     AddToResultList(result); \
   } \
 }
@@ -62,8 +62,8 @@ class IBehaviorPlaypen : public ICozmoBehavior
 {
 protected:
   
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   IBehaviorPlaypen(const Json::Value& config);
   
 public:

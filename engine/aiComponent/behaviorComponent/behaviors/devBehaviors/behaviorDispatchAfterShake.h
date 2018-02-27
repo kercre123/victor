@@ -21,7 +21,7 @@ namespace Cozmo {
 
 class BehaviorDispatchAfterShake : public ICozmoBehavior
 {
-  friend class BehaviorContainer;
+  friend class BehaviorFactory;
   explicit BehaviorDispatchAfterShake(const Json::Value& config);
 
 public:
@@ -42,9 +42,12 @@ protected:
   
 private:
 
-  BehaviorID _delegateID;
-  ICozmoBehaviorPtr _delegate;
-  bool _hasBeenShaken = false;
+  std::vector<BehaviorID> _delegateIDs;
+  std::vector<ICozmoBehaviorPtr> _delegates;
+  
+  size_t _countShaken = 0;
+  bool _shakingSession = false; // with memory, not instantaneous
+  float _lastChangeTime_s = 0.0f; // either the last time it was shaken, or the last time it was stopped
 };
 
 }

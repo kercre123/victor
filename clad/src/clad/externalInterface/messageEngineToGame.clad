@@ -26,7 +26,6 @@
 #include "clad/types/loadedKnownFace.clad"
 #include "clad/types/logLevels.clad"
 #include "clad/types/motorTypes.clad"
-#include "clad/types/needsSystemTypes.clad"
 #include "clad/types/nvStorageTypes.clad"
 #include "clad/types/objectFamilies.clad"
 #include "clad/types/objectTypes.clad"
@@ -40,7 +39,6 @@
 #include "clad/types/robotStatusAndActions.clad"
 #include "clad/types/sdkStatusTypes.clad"
 #include "clad/types/toolCodes.clad"
-#include "clad/types/touchGestureTypes.clad"
 #include "clad/types/uiConnectionTypes.clad"
 #include "clad/types/unlockTypes.clad"
 #include "clad/types/visionModes.clad"
@@ -209,10 +207,6 @@ message TouchButtonEvent {
   bool  isPressed
 }
 
-message TouchGestureEvent {
-  TouchGesture gesture
-}
-
 // Unexpected movement was detected so robot was stopped and all actions were cancelled
 message UnexpectedMovement {
   uint_32 timestamp,
@@ -288,6 +282,14 @@ message RobotObservedPossibleObject {
     RobotObservedObject possibleObject
 }
 
+// RobotObservedGenericObject - for detecting general objects (not Cozmo accessories with markers on them)
+message RobotObservedGenericObject {
+    CladRect      img_rect,       // Position in the image, if available
+    string        name,
+    uint_32       timestamp,
+    float_32      score
+}
+
 // RobotObservedFace
 message RobotObservedFace {
     int_32        faceID,         // negative: tracked but not recognized; positive: recognized face
@@ -347,21 +349,28 @@ message RobotObservedMotion {
     int_16   ground_y,
 
     // Top area
-    // Area of the supporting region for the point, as a fraction of the image
+    // Area of the supporting region for the point, as a fraction of the top region (size specified in vision_config.json)
     float_32 top_img_area,
     // Pixel coordinate of the point in the image, relative to top-left corner.
     int_16   top_img_x,
     int_16   top_img_y,
 
+    // Bottom area
+    // Area of the supporting region for the point, as a fraction of the bottom region (size specified in vision_config.json)
+    float_32 bottom_img_area,
+    // Pixel coordinate of the point in the image, relative to top-left corner.
+    int_16   bottom_img_x,
+    int_16   bottom_img_y,
+
     // Left area
-    // Area of the supporting region for the point, as a fraction of the image
+    // Area of the supporting region for the point, as a fraction of the left region (size specified in vision_config.json)
     float_32 left_img_area,
     // Pixel coordinate of the point in the image, relative to top-left corner.
     int_16   left_img_x,
     int_16   left_img_y,
 
     // Right area
-    // Area of the supporting region for the point, as a fraction of the image
+    // Area of the supporting region for the point, as a fraction of the right region (size specified in vision_config.json)
     float_32 right_img_area,
     // Pixel coordinate of the point in the image, relative to top-left corner.
     int_16   right_img_x,
@@ -565,70 +574,6 @@ message EndOfMessage {
 
 message MoodState {
   float_32 emotionValues[uint_8]
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// Needs
-///////////////////////////////////////////////////////////////////////////////
-
-message NeedsState {
-  float_32      curNeedLevel[uint_8],
-  NeedBracketId curNeedBracket[uint_8],
-  bool          partIsDamaged[uint_8],
-  int_32        curNeedsUnlockLevel,
-  int_32        numStarsAwarded,
-  int_32        numStarsForNextUnlock,
-  NeedsActionId actionCausingTheUpdate,
-  string        testVariation,
-  int_32        repairRounds,
-}
-
-message NeedsPauseState {
-  bool isPaused
-}
-
-message NeedsPauseStates {
-  bool decayPause[uint_8],
-  bool actionPause[uint_8]
-}
-
-message FreeplaySparksAwarded {
-  int_32        sparksAwarded,
-  string        sparksAwardedDisplayKey,
-}
-
-message StarLevelCompleted {
-  int_32      unlockLevelCompleted,
-  int_32      starsRequiredForNextUnlock,
-  NeedsReward rewards[uint_8]
-}
-
-message StarUnlocked {
-  int_32      unlockLevel,
-  int_32      maxStarsForLevel,
-  int_32      currentStars,
-}
-
-message StarStatus {
-  int_32      timeToNextDay_s,
-  bool        completedToday,
-}
-
-message WantsNeedsOnboarding {
-  int_32 onboardingStageCompleted
-}
-
-structure SongUnlockStatus {
-  bool   unlocked,
-  string songUnlockId,
-}
-
-message SongsList {
-  SongUnlockStatus songUnlockStatuses[uint_8],
-}
-
-message RobotChangedFromLastSession {
-  // no data
 }
 
 ///////////////////////////////////////////////////////////////////////////////

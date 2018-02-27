@@ -56,6 +56,7 @@ protected:
   void LogCliffSensorData();
   
   void FakeCloudIntent();
+  void FakeUserIntent();
   
   void NVStorage_EraseTag();
   void NVStorage_ReadTag();
@@ -63,6 +64,7 @@ protected:
   
   void PickOrPlaceObject();
   void MountSelectedCharger();
+  void FlipSelectedBlock();
   
   void PopAWheelie();
   void RollObject();
@@ -89,8 +91,11 @@ protected:
   void SetUnlock();
   
   void ToggleImageStreaming();
+  void ToggleEyeRendering();
   
-  void FlipSelectedBlock();
+  void ToggleKeepFaceAliveEnable();
+  void SetDefaultKeepFaceAliveParams();
+  void SetKeepFaceAliveParams();
   
   void RequestSingleImageToGame();
   void ToggleImageStreamingToGame();
@@ -114,6 +119,7 @@ protected:
   void PushIdleAnimation();
   void PlayAnimation();
   void PlayAnimationGroup();
+  void PlayAnimationTrigger();
   
   void RunDebugConsoleFunc();
   void SetDebugConsoleVar();
@@ -146,6 +152,7 @@ protected:
   void DriveRight();
   
   void ExecuteRobotTestMode();
+  void PressBackButton();
   
   // ==== End of key press functions ====
   

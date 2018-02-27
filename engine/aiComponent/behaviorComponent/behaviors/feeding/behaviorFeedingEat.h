@@ -15,7 +15,6 @@
 #define __Cozmo_Basestation_Behaviors_Feeding_BehaviorFeedingEat_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/aiComponent/behaviorComponent/feedingCubeController.h"
 #include "engine/components/bodyLightComponent.h"
 
 
@@ -33,8 +32,8 @@ class MovementListener;
 class BehaviorFeedingEat : public ICozmoBehavior
 {
 protected:
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;  
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;  
   BehaviorFeedingEat(const Json::Value& config);
 
 public:
@@ -87,7 +86,6 @@ private:
   void TransitionToReactingToInterruption();
 
   void CubeMovementHandler(const float movementScore);
-  AnimationTrigger CheckNeedsStateAndCalculateAnimation();
 
   // sets the target cube as invalid for future runs of the behavior (unless it is observed again);
   void MarkCubeAsBad();

@@ -15,13 +15,9 @@
 #include "engine/components/publicStateBroadcaster.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/blockWorld/blockConfigurationManager.h"
-#include "engine/blockWorld/blockConfigurationStack.h"
 #include "engine/blockWorld/blockWorld.h"
-#include "engine/blockWorld/stackConfigurationContainer.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/cozmoContext.h"
-#include "engine/needsSystem/needsManager.h"
 #include "engine/robot.h"
 
 
@@ -35,7 +31,7 @@ static const char* const kChannelName = "PublicStateBroadcast";
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 PublicStateBroadcaster::PublicStateBroadcaster()
-: IDependencyManagedComponent<RobotComponentID>(RobotComponentID::PublicStateBroadcaster)
+: IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::PublicStateBroadcaster)
 {
   BehaviorStageStruct empty;
   empty.behaviorStageTag = BehaviorStageTag::Count;
@@ -69,30 +65,7 @@ void PublicStateBroadcaster::Update(Robot& robot)
                   );
   }
   
-  // check for changes to needs level
-  if((robot.GetContext() != nullptr) &&
-     (robot.GetContext()->GetNeedsManager() != nullptr)){
-    const NeedsState& needsState = robot.GetContext()->GetNeedsManager()->GetCurNeedsState();
-    
-    const float energy = needsState.GetNeedLevel(NeedId::Energy);
-    const float repair = needsState.GetNeedLevel(NeedId::Repair);
-    const float play = needsState.GetNeedLevel(NeedId::Play);
 
-    if(!FLT_NEAR(_currentState->needsLevels.energy, energy)){
-      _currentState->needsLevels.energy = energy;
-      currentStateUpdated = true;
-    }
-    if(!FLT_NEAR(_currentState->needsLevels.repair, repair)){
-      _currentState->needsLevels.repair = repair;
-      currentStateUpdated = true;
-    }
-    if(!FLT_NEAR(_currentState->needsLevels.play, play)){
-      _currentState->needsLevels.play = play;
-      currentStateUpdated = true;
-    }
-  }
-
-  
   // After all update checks, if any changed a state property, send the updated state
   if(currentStateUpdated){
     SendUpdatedState();
@@ -144,11 +117,6 @@ void PublicStateBroadcaster::UpdateBroadcastBehaviorStage(BehaviorStageTag stage
       newStruct.currentPyramidConstructionStage = static_cast<PyramidConstructionStage>(stage);
       break;
     }
-    case BehaviorStageTag::Workout:
-    {
-      newStruct.currentWorkoutStage = static_cast<WorkoutStage>(stage);
-      break;
-    }
     case BehaviorStageTag::Count:
     {
       break;
@@ -166,23 +134,6 @@ void PublicStateBroadcaster::UpdateRequestingGame(bool isRequesting)
 {
   _currentState->isRequestingGame = isRequesting;
   SendUpdatedState();
-}
- 
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void PublicStateBroadcaster::NotifyBroadcasterOfConfigurationManagerUpdate(const Robot& robot)
-{
-  const auto& tallestStack = robot.GetBlockWorld().GetBlockConfigurationManager().GetStackCache().GetTallestStack().lock();
-  const bool stackDisappeared = ((tallestStack == nullptr) &&
-                                 (_currentState->tallestStackHeight != 0));
-  const bool stackHeightChanged = (tallestStack != nullptr &&
-                                   (_currentState->tallestStackHeight != tallestStack->GetStackHeight()));
-  
-  if(stackDisappeared || stackHeightChanged){
-    _currentState->tallestStackHeight = (tallestStack != nullptr) ?
-                                           tallestStack->GetStackHeight() : 0;
-    SendUpdatedState();
-  }
 }
 
 
@@ -209,10 +160,6 @@ int PublicStateBroadcaster::GetStageForBehaviorStageType(BehaviorStageTag stageT
     case BehaviorStageTag::PyramidConstruction:
     {
       return Util::EnumToUnderlying(stageStruct.currentPyramidConstructionStage);
-    }
-    case BehaviorStageTag::Workout:
-    {
-      return Util::EnumToUnderlying(stageStruct.currentWorkoutStage);
     }
     case BehaviorStageTag::Count:
     {

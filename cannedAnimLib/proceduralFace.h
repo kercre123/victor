@@ -15,6 +15,7 @@
 
 #include "coretech/common/shared/types.h"
 #include "coretech/common/engine/math/point.h"
+#include "coretech/vision/engine/image.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "clad/types/proceduralFaceTypes.h"
 #include "util/logging/logging.h"
@@ -45,7 +46,7 @@ public:
 
   static const int WIDTH  = FACE_DISPLAY_WIDTH;
   static const int HEIGHT = FACE_DISPLAY_HEIGHT;
-  
+
   // Nominal positions/sizes for everything (these are things that aren't
   // parameterized at dynamically, but could be if we want)
   
@@ -55,6 +56,8 @@ public:
   static constexpr s32   NominalEyeHeight       = 57;  // V1: 40;
   static constexpr s32   NominalEyeWidth        = 43;  // V1: 30;
   
+  static constexpr f32 DefaultHue = 0.566f;
+
   using Value = f32;
   using Parameter = ProceduralEyeParameter;
   
@@ -73,6 +76,8 @@ public:
   
   ~ProceduralFace();
 
+  bool operator==(const ProceduralFace& other) const;
+  
   // Allows setting an instance of ProceduralFace to be used as reset values
   static void SetResetData(const ProceduralFace& newResetData);
   
@@ -95,7 +100,8 @@ public:
   void  SetParameter(WhichEye whichEye, Parameter param, Value value);
   Value GetParameter(WhichEye whichEye, Parameter param) const;
   const EyeParamArray& GetParameters(WhichEye whichEye) const;
-  
+  void SetParameters(WhichEye whichEye, const EyeParamArray& params);
+
   // Set the same value to a parameter for both eyes:
   void SetParameterBothEyes(Parameter param, Value value);
   
@@ -105,6 +111,7 @@ public:
   
   // Get/Set the overall face position
   void SetFacePosition(Point<2,Value> center);
+  void SetFacePositionAndKeepCentered(Point<2, Value> center);
   Point<2,Value> const& GetFacePosition() const;
   
   // Get/Set the overall face scale
@@ -118,6 +125,13 @@ public:
   // Set the global hue of all faces
   static void  SetHue(Value hue); 
   static Value GetHue();
+  
+  // Get an image filled with the current hue value
+  static Vision::Image& GetHueImage();
+  
+  // Get an image filled with a saturation value suitable for
+  // creating an HSV face image
+  static Vision::Image& GetSaturationImage();
 
   // Initialize scanline distortion
   void InitScanlineDistorter(s32 maxAmount_pix, f32 noiseProb);
@@ -164,7 +178,9 @@ public:
   // size and position, without taking into account the current FacePosition (a.k.a.
   // face center) or face angle.
   void GetEyeBoundingBox(Value& xmin, Value& xmax, Value& ymin, Value& ymax);
-  
+
+  void RegisterFaceWithConsoleVars();
+
 private:
   
   std::array<EyeParamArray, 2> _eyeParams{{}};
@@ -203,6 +219,10 @@ inline ProceduralFace::Value ProceduralFace::GetParameter(WhichEye whichEye, Par
 inline const ProceduralFace::EyeParamArray& ProceduralFace::GetParameters(WhichEye whichEye) const
 {
   return _eyeParams[whichEye];
+}
+
+inline void ProceduralFace::SetParameters(WhichEye eye, const EyeParamArray& params) {
+  _eyeParams[eye] = params;
 }
 
 inline void ProceduralFace::SetParameterBothEyes(Parameter param, Value value)
@@ -261,12 +281,24 @@ inline void ProceduralFace::SetHue(Value hue) {
     ClipWarnFcn("Hue", _hue, Value(0), Value(1));
     _hue = Util::Clamp(_hue, Value(0), Value(1));
   }
+  // Update the hue image (used for displaying FaceAnimations):
+  GetHueImage().FillWith(static_cast<u8>(_hue * std::numeric_limits<u8>::max()));
 }
 
 inline ProceduralFace::Value ProceduralFace::GetHue() {
   return _hue;
 }
+  
+inline Vision::Image& ProceduralFace::GetHueImage() {
+  static Vision::Image hueImage(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH, static_cast<u8>(_hue * std::numeric_limits<u8>::max()));
+  return hueImage;
+}
 
+inline Vision::Image& ProceduralFace::GetSaturationImage() {
+  static Vision::Image satImage(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH, std::numeric_limits<u8>::max());
+  return satImage;
+}
+  
 } // namespace Cozmo
 } // namespace Anki
 

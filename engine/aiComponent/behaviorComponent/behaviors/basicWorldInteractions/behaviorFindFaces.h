@@ -23,8 +23,8 @@ class BehaviorFindFaces : public ICozmoBehavior
 {
 protected:
   
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorFindFaces(const Json::Value& config);
   
 public:
@@ -35,7 +35,7 @@ public:
   
 
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
-    modifiers.visionModesForActiveScope->push_back({ VisionMode::DetectingFaces, EVisionUpdateFrequency::High });
+    modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::High });
   }
 
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;

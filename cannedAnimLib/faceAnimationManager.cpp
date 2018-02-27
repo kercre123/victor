@@ -41,13 +41,17 @@ namespace Cozmo {
   // For example, unless a re-read of the face animation dir is triggered, setting this will have no
   // effect on face animations read from disk at startup.
   CONSOLE_VAR(bool, kAddScanlinesToFaceImages, "FaceAnimation", true);
-
+  
   FaceAnimationManager* FaceAnimationManager::_singletonInstance = nullptr;
   const std::string FaceAnimationManager::ProceduralAnimName("_PROCEDURAL_");
   
   FaceAnimationManager::FaceAnimationManager()
   {
-    _availableAnimations[ProceduralAnimName];
+    // Add the special ProceduralAnim to the list of available anims,
+    // and make it use a color underlying image type.
+    FaceAnimation proceduralAnim;
+    proceduralAnim.SetGrayscale(false);
+    _availableAnimations[ProceduralAnimName] = proceduralAnim;
   }
   
   void FaceAnimationManager::removeInstance()
@@ -90,7 +94,7 @@ namespace Cozmo {
       if (animName == ProceduralAnimName)
       {
         PRINT_NAMED_ERROR("FaceAnimationManager.ReadFaceAnimationDir.ReservedName",
-                          "'_PROCEDURAL_' is a reserved face animation name. Ignoring.");
+                          "'%s' is a reserved face animation name. Ignoring.", ProceduralAnimName.c_str());
         nameIter = faceAnimDirNames.erase(nameIter);
         continue;
       }
@@ -113,15 +117,15 @@ namespace Cozmo {
 #endif
       
       if (mapIt == _availableAnimations.end()) {
-        _availableAnimations[animName].lastLoadedTime = tmpSeconds;
+        _availableAnimations[animName].SetLastLoadedTime(tmpSeconds);
       } else if (fromCache) {
         // It should probably be the default behavior to clear the
         // "frames" vector when "loadAnimDir" is true, right?
-        _availableAnimations[animName].frames.clear();
-        _availableAnimations[animName].lastLoadedTime = tmpSeconds;
+        _availableAnimations[animName].Clear();
+        _availableAnimations[animName].SetLastLoadedTime(tmpSeconds);
       } else {
-        if (mapIt->second.lastLoadedTime < tmpSeconds) {
-          mapIt->second.lastLoadedTime = tmpSeconds;
+        if (mapIt->second.GetLastLoadedTime() < tmpSeconds) {
+          mapIt->second.SetLastLoadedTime(tmpSeconds);
         } else {
           // If we already have this anim loaded and its timestamp isn't old, we don't need to reload it
           nameIter = faceAnimDirNames.erase(nameIter);
@@ -138,6 +142,18 @@ namespace Cozmo {
     worker.Process();
     
   } // ReadFaceAnimationDir()
+  
+  
+  bool FaceAnimationManager::GetFrame(const std::string &animName, u32 frameNum, Vision::Image& frame)
+  {
+    return GetFrameHelper<Vision::Image>(animName, frameNum, frame);
+  }
+  
+  
+  bool FaceAnimationManager::GetFrame(const std::string &animName, u32 frameNum, Vision::ImageRGB565& frame)
+  {
+    return GetFrameHelper<Vision::ImageRGB565>(animName, frameNum, frame);
+  }
   
   
   void FaceAnimationManager::LoadAnimationImageFrames(const std::string& animationFolder, const std::string& animName)
@@ -192,14 +208,17 @@ namespace Cozmo {
         return;
       }
       
-      AvailableAnim& anim = _availableAnimations[animName];
+      FaceAnimation& anim = _availableAnimations[animName];
+      
+      // Always read in images from file as grayscale (for now at least)
+      anim.SetGrayscale(true);
       
       // Add empty frames if there's a gap
       if(frameNum > 1) {
         
         s32 emptyFramesAdded = 0;
-        while(anim.frames.size() < frameNum-1) {
-          anim.frames.push_back({});
+        while(anim.GetNumFrames() < frameNum-1) {
+          anim.AddFrame(Vision::Image{});
           ++emptyFramesAdded;
         }
         
@@ -214,7 +233,7 @@ namespace Cozmo {
       
       // Read the image
       const std::string fullFilename = Util::FileUtils::FullFilePath({fullDirName, filename});
-      Vision::ImageRGB img;
+      Vision::Image img;
       Result loadResult = img.Load(fullFilename);
       
       if(loadResult != RESULT_OK) {
@@ -235,11 +254,11 @@ namespace Cozmo {
       //cv::imshow("FaceAnimImage", img);
       //cv::waitKey(30);
       
-      anim.frames.push_back(Vision::ImageRGB565(img));
+      anim.AddFrame(img);
     }
   }
   
-  FaceAnimationManager::AvailableAnim* FaceAnimationManager::GetAnimationByName(const std::string& name)
+  FaceAnimation* FaceAnimationManager::GetAnimationByName(const std::string& name)
   {
     auto animIter = _availableAnimations.find(name);
     if(animIter == _availableAnimations.end()) {
@@ -251,41 +270,32 @@ namespace Cozmo {
     }
   }
   
-  Result FaceAnimationManager::AddImage(const std::string& animName, const Vision::ImageRGB565& faceImg, u32 holdTime_ms)
+  Result FaceAnimationManager::AddProceduralImage(const Vision::Image& faceImg, u32 holdTime_ms)
   {
-    AvailableAnim* anim = GetAnimationByName(animName);
-    if(nullptr == anim) {
-      return RESULT_FAIL;
-    }
-    
-    anim->frames.push_back(faceImg);
-    
-    if(holdTime_ms > ANIM_TIME_STEP_MS)
-    {
-      const s32 numFramesToAdd = holdTime_ms / ANIM_TIME_STEP_MS - 1;
-      for(s32 i=0; i<numFramesToAdd; ++i)
-      {
-        anim->frames.push_back({});
-      }
-    }
-
-    return RESULT_OK;
+    const bool isGrayscale = true;
+    return AddProceduralImageHelper(faceImg, isGrayscale, holdTime_ms);
+  }
+  
+  Result FaceAnimationManager::AddProceduralImage(const Vision::ImageRGB565& faceImg, u32 holdTime_ms)
+  {
+    const bool isGrayscale = false;
+    return AddProceduralImageHelper(faceImg, isGrayscale, holdTime_ms);
   }
 
   Result FaceAnimationManager::ClearAnimation(const std::string& animName)
   {
-    AvailableAnim* anim = GetAnimationByName(animName);
+    FaceAnimation* anim = GetAnimationByName(animName);
     if(anim == nullptr) {
       return RESULT_FAIL;
     } else {
-      anim->frames.clear();
+      anim->Clear();
       return RESULT_OK;
     }
   }
   
   u32 FaceAnimationManager::GetNumFrames(const std::string &animName)
   {
-    AvailableAnim* anim = GetAnimationByName(animName);
+    FaceAnimation* anim = GetAnimationByName(animName);
     if(nullptr == anim) {
       PRINT_NAMED_WARNING("FaceAnimationManager.GetNumFrames",
                           "Unknown animation requested: %s",
@@ -296,7 +306,57 @@ namespace Cozmo {
     }
   } // GetNumFrames()
   
-  bool FaceAnimationManager::GetFrame(const std::string& animName, u32 frameNum, Vision::ImageRGB565& frame)
+  
+  bool FaceAnimationManager::IsGrayscale(const std::string& animName)
+  {
+    const auto* anim = GetAnimationByName(animName);
+    if (anim == nullptr) {
+      PRINT_NAMED_ERROR("FaceAnimationManager.IsGrayscale",
+                        "Unknown animation requested: %s.",
+                        animName.c_str());
+      return false;
+    }
+    
+    return anim->IsGrayscale();
+  }
+  
+  template <typename ImageType>
+  Result FaceAnimationManager::AddProceduralImageHelper(const ImageType& faceImg, const bool isGrayscale, const u32 holdTime_ms)
+  {
+    const auto& animName = ProceduralAnimName;
+    
+    FaceAnimation* anim = GetAnimationByName(animName);
+    if(nullptr == anim) {
+      return RESULT_FAIL;
+    }
+    
+    // Set the animation to grayscale/color if not already
+    if (isGrayscale != anim->IsGrayscale()) {
+      const bool animIsEmpty = (anim->GetNumFrames() == 0);
+      if (!animIsEmpty) {
+        PRINT_NAMED_WARNING("FaceAnimationManager.AddProceduralImageHelper.ClearingExisting",
+                            "%s: Clearing existing face animation frames since they are %sgrayscale.",
+                            animName.c_str(),
+                            isGrayscale ? "NOT " : "");
+        anim->Clear();
+      }
+      anim->SetGrayscale(isGrayscale);
+    }
+    
+    anim->AddFrame(faceImg);
+    
+    if(holdTime_ms > ANIM_TIME_STEP_MS) {
+      const s32 numFramesToAdd = holdTime_ms / ANIM_TIME_STEP_MS - 1;
+      for(s32 i=0; i<numFramesToAdd; ++i) {
+        anim->AddFrame(ImageType{});
+      }
+    }
+    
+    return RESULT_OK;
+  }
+  
+  template <typename ImageType>
+  bool FaceAnimationManager::GetFrameHelper(const std::string& animName, u32 frameNum, ImageType& frame)
   {
     auto animIter = _availableAnimations.find(animName);
     if(animIter == _availableAnimations.end()) {
@@ -305,30 +365,29 @@ namespace Cozmo {
                         animName.c_str());
       return false;
     } else {
-      const AvailableAnim& anim = animIter->second;
-
+      FaceAnimation& anim = animIter->second;
+      
       if ((animName == ProceduralAnimName)) {
-        if (anim.frames.empty()) {
+        if (anim.GetNumFrames() == 0) {
           return false;
         }
-        frame = anim.frames[0];
+        anim.GetFrame(0, frame);
         PopFront();
         return !frame.IsEmpty();
       } else if(frameNum < anim.GetNumFrames()) {
-          
-        frame = anim.frames[frameNum];
+        anim.GetFrame(frameNum, frame);
         return true;
-      
       } else {
         PRINT_NAMED_ERROR("FaceAnimationManager.GetFrame",
                           "Requested frame number %d is invalid. "
                           "Only %lu frames available in animation %s.",
-                          frameNum, (unsigned long)animIter->second.GetNumFrames(),
+                          frameNum, (unsigned long)anim.GetNumFrames(),
                           animName.c_str());
         return false;
       }
     }
-  } // GetFrame()
+  } // GetFrameHelper()
+  
   
   void FaceAnimationManager::PopFront()
   {
@@ -337,10 +396,8 @@ namespace Cozmo {
       PRINT_NAMED_ERROR("FaceAnimationManager.PopFront.NoProceduralAnim", "");
       return;
     } else {
-      AvailableAnim& anim = animIter->second;
-      if (!anim.frames.empty()) {
-        anim.frames.pop_front();
-      }
+      FaceAnimation& anim = animIter->second;
+      anim.PopFront();
     }
   }
 

@@ -25,12 +25,14 @@ set(WEBOTS_LIB_TARGETS
 )
 
 foreach(LIB ${WEBOTS_LIB_TARGETS})
-    add_library(${LIB} SHARED IMPORTED)
-    set_target_properties(${LIB} PROPERTIES
-        IMPORTED_LOCATION
-        "${WEBOTS_LIB_PATH}/lib${LIB}.dylib"
-        INTERFACE_INCLUDE_DIRECTORIES
-        "${WEBOTS_INCLUDE_PATHS}")
+    if (NOT TARGET ${LIB})
+        add_library(${LIB} SHARED IMPORTED)
+        set_target_properties(${LIB} PROPERTIES
+            IMPORTED_LOCATION
+            "${WEBOTS_LIB_PATH}/lib${LIB}.dylib"
+            INTERFACE_INCLUDE_DIRECTORIES
+            "${WEBOTS_INCLUDE_PATHS}")
+    endif()
 endforeach()
 
 

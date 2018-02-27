@@ -21,7 +21,7 @@
 #include "clad/types/animationTypes.h"
 #include "clad/types/animationTrigger.h"
 
-#include "engine/dependencyManagedComponent.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 #include "engine/robotComponents_fwd.h"
 
 #include "util/signals/simpleSignal_fwd.h"

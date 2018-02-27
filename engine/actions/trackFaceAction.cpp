@@ -55,6 +55,11 @@ void TrackFaceAction::OnRobotSet()
   _faceID = GetRobot().GetFaceWorld().GetSmartFaceID(_tmpFaceID);  
 }
 
+void TrackFaceAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const
+{
+  requests.insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::High });
+}
+
 ActionResult TrackFaceAction::InitInternal()
 {
   if(false == GetRobot().HasExternalInterface()) {

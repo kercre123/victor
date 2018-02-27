@@ -29,7 +29,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
@@ -67,6 +66,7 @@ void InitBEIPartial( const BEIComponentMap& map, BehaviorExternalInterface& bei 
            GetFromMap<AnimationComponent>(map, BEIComponentID::Animation),
            GetFromMap<BehaviorContainer>(map, BEIComponentID::BehaviorContainer),
            GetFromMap<BehaviorEventComponent>(map, BEIComponentID::BehaviorEvent),
+           GetFromMap<BehaviorTimerManager>(map, BEIComponentID::BehaviorTimerManager),
            GetFromMap<BlockWorld>(map, BEIComponentID::BlockWorld),
            GetFromMap<BodyLightComponent>(map, BEIComponentID::BodyLightComponent),
            GetFromMap<CubeAccelComponent>(map, BEIComponentID::CubeAccel),
@@ -76,7 +76,6 @@ void InitBEIPartial( const BEIComponentMap& map, BehaviorExternalInterface& bei 
            GetFromMap<MapComponent>(map, BEIComponentID::Map),
            GetFromMap<MicDirectionHistory>(map, BEIComponentID::MicDirectionHistory),
            GetFromMap<MoodManager>(map, BEIComponentID::MoodManager),
-           GetFromMap<NeedsManager>(map, BEIComponentID::NeedsManager),
            GetFromMap<ObjectPoseConfirmer>(map, BEIComponentID::ObjectPoseConfirmer),
            GetFromMap<PetWorld>(map, BEIComponentID::PetWorld),
            GetFromMap<ProgressionUnlockComponent>(map, BEIComponentID::ProgressionUnlock),
@@ -111,7 +110,7 @@ TestBehaviorFramework::~TestBehaviorFramework()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseBehavior,
-                                         std::function<void(const BehaviorComponent::UniqueComponents&)> initializeBehavior,
+                                         std::function<void(const BehaviorComponent::CompononentPtr&)> initializeBehavior,
                                          bool shouldCallInitOnBase)
 {
   BehaviorContainer* empty = nullptr;
@@ -122,7 +121,7 @@ void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseB
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseBehavior,
-                                                                std::function<void(const BehaviorComponent::UniqueComponents&)> initializeBehavior,
+                                                                std::function<void(const BehaviorComponent::CompononentPtr&)> initializeBehavior,
                                                                 bool shouldCallInitOnBase,
                                                                 BehaviorContainer*& customContainer)
 {
@@ -137,6 +136,8 @@ void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseB
   // stack is unused - put an arbitrary behavior on it
   if(baseBehavior == nullptr){
     baseBehavior = _behaviorContainer->FindBehaviorByID(BEHAVIOR_ID(Wait)).get();
+    DEV_ASSERT(baseBehavior != nullptr,
+               "TestBehaviorFramework.InitializeStandardBehaviorComponent.NoDefaultBehaviorInContainer");
     shouldCallInitOnBase = false;
   }
   
@@ -144,25 +145,27 @@ void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseB
   {
     {
       auto aiComp = new AIComponent();
-      _robot->DevReplaceAIComponent(aiComp);
+      _robot->DevReplaceAIComponent(aiComp, true);
     }
-    BehaviorComponent::UniqueComponents subComponents = BehaviorComponent::GenerateManagedComponents(*_robot,
-                                                                                                     _robot->GetAIComponent(),
-                                                                                                     baseBehavior,
-                                                                                                     nullptr,
-                                                                                                     nullptr,
-                                                                                                     _behaviorContainer.get());
     
+    auto entity = std::make_unique<BehaviorComponent::EntityType>();
 
+    entity->AddDependentComponent(BCComponentID::AIComponent, 
+      _robot->GetComponentPtr<AIComponent>(), false);
+    auto wrapper = new BaseBehaviorWrapper(baseBehavior);
+    entity->AddDependentComponent(BCComponentID::BaseBehaviorWrapper, wrapper);
+    entity->AddDependentComponent(BCComponentID::BehaviorContainer, _behaviorContainer.get(), false);
+
+    BehaviorComponent::GenerateManagedComponents(*_robot, entity);
 
     BehaviorComponent* bc = new BehaviorComponent();
     _robot->GetAIComponent().Init(_robot.get(), bc);
     _behaviorComponent = &_robot->GetAIComponent().GetBehaviorComponent();
-    _behaviorComponent->Init(_robot.get(), std::move(subComponents));
+    _behaviorComponent->Init(_robot.get(), std::move(entity));
   }
   
   if(shouldCallInitOnBase){
-    auto& bei = _behaviorComponent->GetComponent<BehaviorExternalInterface>(BCComponentID::BehaviorExternalInterface);
+    auto& bei = _behaviorComponent->GetComponent<BehaviorExternalInterface>();
     baseBehavior->Init(bei);
 
     ICozmoBehavior* cozmoBehavior = dynamic_cast<ICozmoBehavior*>(baseBehavior);
@@ -171,7 +174,7 @@ void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseB
     }
   }
   if(initializeBehavior != nullptr){
-    initializeBehavior(_behaviorComponent->_components);
+    initializeBehavior(_behaviorComponent->_comps);
   }
   
   std::string empty;
@@ -179,50 +182,19 @@ void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseB
   
   // Grab components from the behaviorComponent
   {
-    auto& bei = _behaviorComponent->GetComponent<BehaviorExternalInterface>(BCComponentID::BehaviorExternalInterface);
+    auto& bei = _behaviorComponent->GetComponent<BehaviorExternalInterface>();
     _behaviorExternalInterface = &bei;
   }
   {
-    auto& bsm = _behaviorComponent->GetComponent<BehaviorSystemManager>(BCComponentID::BehaviorSystemManager);
+    auto& bsm = _behaviorComponent->GetComponent<BehaviorSystemManager>();
     _behaviorSystemManager = &bsm;
   }
   {
-    auto& aiComp = _behaviorComponent->GetComponent<AIComponent>(BCComponentID::AIComponent);
+    auto& aiComp = _behaviorComponent->GetComponent<AIComponent>();
     _aiComponent = &aiComp;
   }
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void DoTicks_(TestBehaviorFramework& testFramework, Robot& robot, TestBehaviorWithHelpers& behavior, int num, bool expectComplete)
-{
-  int updateTicks = behavior._updateCount;
-
-  BehaviorComponent& behaviorComponent = testFramework.GetBehaviorComponent();
-  
-  std::string currentActivityName;
-  std::string behaviorDebugStr;
-  bool behaviorIsActive = true;
-  for(int i=0; i<num; i++) {
-    robot.GetActionList().Update();
-    behaviorComponent.Update(robot, currentActivityName, behaviorDebugStr);
-    
-    updateTicks++;
-    ASSERT_EQ(behavior._updateCount, updateTicks) << "behavior not ticked as often as it should be. i=" << i;
-    
-    // If the test behavior with helpers' helper finishes it automatically cancels and won't be activated anymore 
-    behaviorIsActive = (behavior._currentActivationState == IBehavior::ActivationState::Activated);
-    if( expectComplete && !behaviorIsActive ) {
-      break;
-    }
-    ASSERT_TRUE(behaviorIsActive) << "behavior should still be running i="<<i;
-    IncrementBaseStationTimerTicks();
-  }
-  
-  if( expectComplete ) {
-    ASSERT_FALSE(behaviorIsActive) << "behavior was expected to complete";
-  }
-}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void DoBehaviorComponentTicks(Robot& robot, ICozmoBehavior& behavior, BehaviorComponent& behaviorComponent, int num)
@@ -252,7 +224,7 @@ void DoBehaviorInterfaceTicks(Robot& robot, ICozmoBehavior& behavior, int num)
 void InjectBehaviorIntoStack(ICozmoBehavior& injectBehavior, TestBehaviorFramework& testFramework)
 {
   auto& bc = testFramework.GetBehaviorComponent();
-  auto& bsm = bc.GetComponent<BehaviorSystemManager>(BCComponentID::BehaviorSystemManager);
+  auto& bsm = bc.GetComponent<BehaviorSystemManager>();
 
   auto& behaviorStack = bsm._behaviorStack->_behaviorStack;
   if(ANKI_VERIFY(!behaviorStack.empty(),"InjectBehaviorIntoStack.NoBaseBehavior","")){
@@ -478,249 +450,6 @@ bool TestBehavior::CallDelegateIfInControlInternalCallbackRobot(Robot& robot,
   new WaitForLambdaAction([&actionCompleteRef](Robot& r){ return actionCompleteRef; });
   
   return DelegateIfInControl(action, &TestBehavior::Bar);
-}
-
-
-//////////
-/// Setup a test behavior class that uses helpers
-//////////
-
-// for debugging, controls what UpdateInternal will return
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TestBehaviorWithHelpers::SetUpdateResult(UpdateResult res) {
-  _updateResult = res;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TestBehaviorWithHelpers::DelegateToHelperOnNextUpdate(HelperHandle handleToRun,
-                                                           SimpleCallback successCallback,
-                                                           SimpleCallback failureCallback) {
-  _helperHandleToDelegate = handleToRun;
-  _successCallbackToDelegate = successCallback;
-  _failureCallbackToDelegate = failureCallback;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TestBehaviorWithHelpers::StopHelperOnNextUpdate() {
-  _stopHelper = true;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TestBehaviorWithHelpers::SetActionToRunOnNextUpdate(IActionRunner* action) {
-  _nextActionToRun = action;
-  _lastDelegateIfInControlResult = false;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool TestBehaviorWithHelpers::WantsToBeActivatedBehavior() const {
-  return true;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TestBehaviorWithHelpers::OnBehaviorActivated() {
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TestBehaviorWithHelpers::BehaviorUpdate() {
-  if(!IsActivated()){
-    return; 
-  }
-
-  _updateCount++;
-  
-  if( _stopHelper ) {
-    _stopHelper = false;
-    StopHelperWithoutCallback();
-  }
-  
-  if( _helperHandleToDelegate ) {
-    _lastDelegateSuccess = SmartDelegateToHelper(_helperHandleToDelegate,
-                                                 _successCallbackToDelegate,
-                                                 _failureCallbackToDelegate);
-    _helperHandleToDelegate.reset();
-  }
-  
-  if( _nextActionToRun ) {
-    if( IsControlDelegated() ) {
-      printf("TestBehaviorWithHelpers: canceling previous action to start new one\n");
-      CancelDelegates();
-    }
-    
-    printf("TestBehaviorWithHelpers: starting action\n");
-    _lastDelegateIfInControlResult = DelegateIfInControl(_nextActionToRun);
-    _nextActionToRun = nullptr;
-  }
-  
-  switch(_updateResult) {
-    case UpdateResult::UseBaseClass: {
-      printf("TestBehaviorWithHelpers.Update UseBaseClass: IsControlDelegated:%d\n", IsControlDelegated());
-      if(!IsControlDelegated()){
-        CancelSelf();
-        return;
-      }
-    }
-    case UpdateResult::Running: {
-      printf("TestBehaviorWithHelpers.Update Running\n");
-      return;
-    }
-    case UpdateResult::Complete: {
-      printf("TestBehaviorWithHelpers.Update Complete\n");
-      if(GetBEI().HasDelegationComponent()){
-        GetBEI().GetDelegationComponent().CancelSelf(this);
-      }
-    }
-  }
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void  TestBehaviorWithHelpers::OnBehaviorDeactivated() {
-}
-
-
-
-////////////////////////////////////////////////////////////////////////////////
-// Test Helper which runs actions and delegates to other helpers
-////////////////////////////////////////////////////////////////////////////////
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TestHelper::TestHelper(BehaviorExternalInterface& bei, ICozmoBehavior& behavior, const std::string& name)
-: IHelper("", behavior, bei.GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory())
-, _name(name)
-, _behavior(behavior)
-{
-  if( _name.empty() ) {
-    _name = "unnamed";
-  }
-  _name = _name + std::to_string(_TestHelper_g_num++);
-  SetName(name);
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TestHelper::SetActionToRunOnNextUpdate(IActionRunner* action) {
-  _nextActionToRun = action;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TestHelper::StartAutoAction() {
-  _selfActionDone = false;
-  _nextActionToRun = new WaitForLambdaAction([this](Robot& t) {
-    printf("%s: ShouldStopActing: %d\n", _name.c_str(), _selfActionDone);
-    return _selfActionDone;
-  });
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TestHelper::StopAutoAction() {
-  _selfActionDone = true;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TestHelper::OnActivatedHelper() {
-  _initOnStackCount++;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TestHelper::StopInternal(bool isActive) {
-  printf("%s: StopInternal\n", _name.c_str());
-  _stopCount++;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool TestHelper::ShouldCancelDelegates() const {
-  _shouldCancelCount++;
-  printf("%s: ShouldCancel:%d\n", _name.c_str(), _cancelDelegates);
-  bool ret = false;
-  if( _cancelDelegates ) {
-    ret = true;
-    _cancelDelegates = false;
-  }
-  return ret;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IHelper::HelperStatus TestHelper::InitBehaviorHelper() {
-  _initCount++;
-  
-  printf("%s: Init. Action=%p\n", _name.c_str(), _nextActionToRun);
-  
-  CheckActions();
-  
-  return IHelper::HelperStatus::Running;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IHelper::HelperStatus TestHelper::UpdateWhileActiveInternal() {
-  _updateCount++;
-  
-  printf("%s: Update. IsControlDelegated:%d, _delegateAfter:%d\n",
-         _name.c_str(),
-         IsControlDelegated(),
-         _delegateAfterAction);
-  
-  CheckActions();
-  
-  if( !IsActing() && _delegateAfterAction ) {
-    _delegateAfterAction = false;
-    _subHelperRaw = new TestHelper(GetBEI(), _behavior, _name + "_child");
-    _subHelperRaw->Init(GetBEI());
-    _subHelperRaw->StartAutoAction();
-    auto newHelperHandle = std::shared_ptr<IHelper>(_subHelperRaw);
-    _subHelper = newHelperHandle;
-    DelegateProperties delegateProperties;
-    delegateProperties.SetDelegateToSet(newHelperHandle);
-    delegateProperties.SetOnSuccessFunction([this]() {
-      if( _immediateCompleteOnSubSuccess ) {
-        return IHelper::HelperStatus::Complete;
-      }
-      else {
-        _updateResult = IHelper::HelperStatus::Complete;
-        return IHelper::HelperStatus::Running;
-      }
-    });
-    
-    DelegateAfterUpdate(delegateProperties);
-    return IHelper::HelperStatus::Running;
-  }
-  
-  return _updateResult;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TestHelper::CheckActions() {
-  if( _nextActionToRun ) {
-    DelegateIfInControl(_nextActionToRun, [this](ActionResult res) {
-      _actionCompleteCount++;
-      if( _thisSucceedsOnActionSuccess ) {
-        _updateResult = IHelper::HelperStatus::Complete;
-      }});
-    _nextActionToRun = nullptr;
-  }
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-WeakHelperHandle TestHelper::GetSubHelper() {
-  return _subHelper;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TestHelper* TestHelper::GetSubHelperRaw() {
-  return _subHelperRaw;
 }
   
 }

@@ -15,7 +15,6 @@
 
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
-#include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 
@@ -42,13 +41,7 @@ BehaviorReactToRobotShaken::BehaviorReactToRobotShaken(const Json::Value& config
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToRobotShaken::OnBehaviorActivated()
-{  
-  // Clear severe needs expression since eyes are being re-set
-  if(GetBEI().GetAIComponent().GetSevereNeedsComponent().HasSevereNeedExpression())
-  {
-    GetBEI().GetAIComponent().GetSevereNeedsComponent().ClearSevereNeedExpression();
-  }
-  
+{    
   // Reset variables:
   _maxShakingAccelMag = 0.f;
   _shakingStartedTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -121,15 +114,12 @@ void BehaviorReactToRobotShaken::BehaviorUpdate()
       if (_shakenDuration_s > kShakenDurationThresholdHard) {
         DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::DizzyReactionHard));
         _reactionPlayed = EReaction::Hard;
-        NeedActionCompleted(NeedsActionId::DizzyHard);
       } else if (_shakenDuration_s > kShakenDurationThresholdMedium) {
         DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::DizzyReactionMedium));
         _reactionPlayed = EReaction::Medium;
-        NeedActionCompleted(NeedsActionId::DizzyMedium);
       } else {
         DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::DizzyReactionSoft));
         _reactionPlayed = EReaction::Soft;
-        NeedActionCompleted(NeedsActionId::DizzySoft);
       }
       
       _state = EState::Finished;

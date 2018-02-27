@@ -16,7 +16,7 @@
 #include "engine/cozmoObservableObject.h" // alias ActiveID
 
 #include "cubeBleClient/cubeBleClient.h" // alias BleFactoryId (should be moved to CLAD)
-#include "engine/entity.h"
+#include "util/entityComponent/entity.h"
 
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h" // Signal::SmartHandle
@@ -30,6 +30,7 @@ namespace Cozmo {
 class Robot;
 template <typename Type>
 class AnkiEvent;
+struct CubeLights;
 struct ObjectAvailable;
 struct ObjectAccel;
 namespace BlockMessages {
@@ -69,16 +70,19 @@ public:
   void EnableDiscovery(const bool enable = true, const float discoveryTime_sec = 0.f);
   
   // Interface for other components to send messages to light cubes by ActiveId
-  bool SendLightCubeMessage(const ActiveID&, const BlockMessages::LightCubeMessage&);
+  bool SendLightCubeMessage(const ActiveID& activeId, const BlockMessages::LightCubeMessage& lcm);
 
   // Start/stop ObjectAccel message streaming from the specified cube
-  void SetStreamObjectAccel(const ActiveID&, const bool enable=true);
+  bool SetStreamObjectAccel(const ActiveID& activeId, const bool enable=true);
+  
+  // Send CubeLights message to the specified cube
+  bool SendCubeLights(const ActiveID& activeId, const CubeLights& cubeLights);
   
   // Sends current available cube list to game
   void SendBlockPoolData() const;
   
   // Game to engine event handlers
-  void HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>&);
+  void HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   
 private:
   
@@ -92,13 +96,13 @@ private:
   // Handlers for messages from CubeBleClient:
   
   // Handler for ObjectAvailable advertisement message
-  void HandleObjectAvailable(const ObjectAvailable&);
+  void HandleObjectAvailable(const ObjectAvailable& msg);
   
   // Handler for messages from light cubes
-  void HandleLightCubeMessage(const BleFactoryId&, const BlockMessages::LightCubeMessage&);
+  void HandleLightCubeMessage(const BleFactoryId& factoryId, const BlockMessages::LightCubeMessage& lcm);
   
   // Handler for when light cube BLE connection is established/unestablished
-  void HandleConnectionStateChange(const BleFactoryId&, const bool connected);
+  void HandleConnectionStateChange(const BleFactoryId& factoryId, const bool connected);
   
   // If discovering, then we are listening for any advertising cubes and
   // selecting the best ones to connect to.
@@ -128,19 +132,19 @@ private:
   
   // AddCubeToList() generates a new activeId and adds the cube to the _availableCubes list if it's not in there already.
   // Returns true if it was added, false if already there.
-  bool AddCubeToList(const CubeInfo&);
+  bool AddCubeToList(const CubeInfo& cube);
   
   // Remove cube from the list based on BleFactoryId. Returns true if cube was successfully removed.
-  bool RemoveCubeFromList(const BleFactoryId&);
+  bool RemoveCubeFromList(const BleFactoryId& factoryId);
   
   // Clear the list of cubes
   void ClearList();
   
   // Find a cube in the list by ActiveID and return a pointer to it. Returns nullptr if not found.
-  CubeInfo* GetCubeByActiveId(const ActiveID&);
+  CubeInfo* GetCubeByActiveId(const ActiveID& activeId);
   
   // Find a cube in the list by factoryId and return a pointer to it. Returns nullptr if not found.
-  CubeInfo* GetCubeByFactoryId(const BleFactoryId&);
+  CubeInfo* GetCubeByFactoryId(const BleFactoryId& factoryId);
   
 };
 

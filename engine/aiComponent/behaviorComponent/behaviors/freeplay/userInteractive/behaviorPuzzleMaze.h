@@ -49,8 +49,8 @@ public:
   
 protected:
   
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorPuzzleMaze(const Json::Value& config);
   
   // ICozmoBehavior interface

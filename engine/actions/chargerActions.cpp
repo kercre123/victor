@@ -196,7 +196,12 @@ TurnToAlignWithChargerAction::TurnToAlignWithChargerAction(ObjectID chargerID,
   , _rightTurnAnimTrigger(rightTurnAnimTrigger)
 {
 }
-  
+
+void TurnToAlignWithChargerAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const
+{
+  requests.insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::High });
+}
+
 ActionResult TurnToAlignWithChargerAction::Init()
 {
   _compoundAction.reset(new CompoundActionParallel());
@@ -236,7 +241,11 @@ ActionResult TurnToAlignWithChargerAction::Init()
   const auto& robotAngle = GetRobot().GetPose().GetRotation().GetAngleAroundZaxis();
   const bool clockwise = (angleToTurnTo - robotAngle).ToFloat() < 0.f;
   
-  _compoundAction->AddAction(new TriggerAnimationAction(clockwise ? _rightTurnAnimTrigger : _leftTurnAnimTrigger));
+  const auto animationTrigger = clockwise ? _rightTurnAnimTrigger : _leftTurnAnimTrigger;
+  
+  if (animationTrigger != AnimationTrigger::Count) {
+    _compoundAction->AddAction(new TriggerAnimationAction(animationTrigger));
+  }
   
   // Go ahead and do the first Update for the compound action so we don't
   // "waste" the first CheckIfDone call doing so. Proceed so long as this
@@ -264,8 +273,7 @@ BackupOntoChargerAction::BackupOntoChargerAction(ObjectID chargerID,
                                                  bool useCliffSensorCorrection)
   : IDockAction(chargerID,
                 "BackupOntoCharger",
-                RobotActionType::BACKUP_ONTO_CHARGER,
-                false)
+                RobotActionType::BACKUP_ONTO_CHARGER)
   , _useCliffSensorCorrection(useCliffSensorCorrection)
 {
   // We don't expect to be near the pre-action pose of the charger when we
@@ -316,8 +324,7 @@ ActionResult BackupOntoChargerAction::Verify()
 #pragma mark ---- DriveToAndMountChargerAction ----
   
 DriveToAndMountChargerAction::DriveToAndMountChargerAction(const ObjectID& objectID,
-                                                           const bool useCliffSensorCorrection,
-                                                           const bool useManualSpeed)
+                                                           const bool useCliffSensorCorrection)
 : CompoundActionSequential()
 {
   // Get DriveToObjectAction
@@ -325,8 +332,7 @@ DriveToAndMountChargerAction::DriveToAndMountChargerAction(const ObjectID& objec
                                                PreActionPose::ActionType::DOCKING,
                                                0,
                                                false,
-                                               0,
-                                               useManualSpeed);
+                                               0);
   driveToAction->SetPreActionPoseAngleTolerance(DEG_TO_RAD(15.f));
   AddAction(driveToAction);
   AddAction(new TurnToAlignWithChargerAction(objectID));

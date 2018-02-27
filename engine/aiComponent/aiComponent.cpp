@@ -17,22 +17,19 @@
 #include "engine/aiComponent/aiInformationAnalysis/aiInformationAnalyzer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
-#include "engine/aiComponent/doATrickSelector.h"
+#include "engine/aiComponent/continuityComponent.h"
 #include "engine/aiComponent/faceSelectionComponent.h"
-#include "engine/aiComponent/feedingSoundEffectManager.h"
 #include "engine/aiComponent/freeplayDataTracker.h"
 #include "engine/aiComponent/objectInteractionInfoCache.h"
 #include "engine/aiComponent/puzzleComponent.h"
-#include "engine/aiComponent/requestGameComponent.h"
-#include "engine/aiComponent/severeNeedsComponent.h"
-#include "engine/aiComponent/workoutComponent.h"
+#include "engine/aiComponent/templatedImageCache.h"
+#include "engine/aiComponent/timerUtility.h"
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/publicStateBroadcaster.h"
 #include "engine/components/progressionUnlockComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/moodSystem/moodManager.h"
-#include "engine/needsSystem/needsManager.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
@@ -53,31 +50,27 @@ namespace Cozmo {
 namespace ComponentWrappers{
 AIComponentComponents::AIComponentComponents(Robot&                      robot,
                                              BehaviorComponent*&         behaviorComponent,
-                                             DoATrickSelector*           doATrickSelector,
+                                             ContinuityComponent*        continuityComponent,
                                              FaceSelectionComponent*     faceSelectionComponent,
-                                             FeedingSoundEffectManager*  feedingSoundEFfectManager,
                                              FreeplayDataTracker*        freeplayDataTracker,
                                              AIInformationAnalyzer*      infoAnalyzer,
                                              ObjectInteractionInfoCache* objectInteractionInfoCache,
                                              PuzzleComponent*            puzzleComponent,
-                                             RequestGameComponent*       requestGameComponent,
-                                             SevereNeedsComponent*       severeNeedsComponent,
-                                             AIWhiteboard*               aiWhiteboard,
-                                             WorkoutComponent*           workoutComponent)
+                                             TemplatedImageCache*        templatedImageCache,
+                                             TimerUtility*               timerUtility,
+                                             AIWhiteboard*               aiWhiteboard)
 :_robot(robot)
 ,_components({
   {AIComponentID::BehaviorComponent,          ComponentWrapper(behaviorComponent, true)},
-  {AIComponentID::DoATrick,                   ComponentWrapper(doATrickSelector, true)},
+  {AIComponentID::ContinuityComponent,        ComponentWrapper(continuityComponent, true)},
   {AIComponentID::FaceSelection,              ComponentWrapper(faceSelectionComponent, true)},
-  {AIComponentID::FeedingSoundEffect,         ComponentWrapper(feedingSoundEFfectManager, true)},
   {AIComponentID::FreeplayDataTracker,        ComponentWrapper(freeplayDataTracker, true)},
   {AIComponentID::InformationAnalyzer,        ComponentWrapper(infoAnalyzer, true)},
   {AIComponentID::ObjectInteractionInfoCache, ComponentWrapper(objectInteractionInfoCache, true)},
   {AIComponentID::Puzzle,                     ComponentWrapper(puzzleComponent, true)},
-  {AIComponentID::RequestGame,                ComponentWrapper(requestGameComponent, true)},
-  {AIComponentID::SevereNeeds,                ComponentWrapper(severeNeedsComponent, true)},
-  {AIComponentID::Whiteboard,                 ComponentWrapper(aiWhiteboard, true)},
-  {AIComponentID::Workout,                    ComponentWrapper(workoutComponent, true)}
+  {AIComponentID::TemplatedImageCache,        ComponentWrapper(templatedImageCache, true)},
+  {AIComponentID::TimerUtility,               ComponentWrapper(timerUtility, true)},
+  {AIComponentID::Whiteboard,                 ComponentWrapper(aiWhiteboard, true)}
 }){}
 
 AIComponentComponents::~AIComponentComponents()
@@ -90,8 +83,8 @@ AIComponentComponents::~AIComponentComponents()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AIComponent::AIComponent()
-: UnreliableComponent<BCComponentID>(BCComponentID::AIComponent)
-, IDependencyManagedComponent<RobotComponentID>(RobotComponentID::AIComponent)
+: UnreliableComponent<BCComponentID>(this, BCComponentID::AIComponent)
+, IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::AIComponent)
 , _suddenObstacleDetected(false)
 {
 }
@@ -126,23 +119,23 @@ Result AIComponent::Init(Robot* robot, BehaviorComponent*& customBehaviorCompone
     _aiComponents = std::make_unique<ComponentWrappers::AIComponentComponents>(
           *robot,
           behaviorComponent,
-          new DoATrickSelector(robot->GetContext()->GetDataLoader()->GetDoATrickWeightsConfig()),
+          new ContinuityComponent(*robot),
           new FaceSelectionComponent(*robot, robot->GetFaceWorld(), robot->GetMicDirectionHistory()),
-          new FeedingSoundEffectManager(),
           new FreeplayDataTracker(),
           new AIInformationAnalyzer(),
           new ObjectInteractionInfoCache(*robot),
           new PuzzleComponent(*robot),
-          new RequestGameComponent(robot->HasExternalInterface() ? robot->GetExternalInterface() : nullptr,
-                                  robot->GetContext()->GetDataLoader()->GetGameRequestWeightsConfig()),
-          new SevereNeedsComponent(*robot),
-          new AIWhiteboard(*robot),
-          new WorkoutComponent(*robot)
+          new TemplatedImageCache(robot->GetContext()->GetDataLoader()->GetFacePNGPaths()),
+          new TimerUtility(),
+          new AIWhiteboard(*robot)
     );
 
     if(behaviorCompInitRequired){
       auto& behaviorComp = GetComponent<BehaviorComponent>(AIComponentID::BehaviorComponent);
-      behaviorComp.Init(robot, BehaviorComponent::GenerateManagedComponents(*robot, *this, nullptr));
+      auto entity = std::make_unique<BehaviorComponent::EntityType>();
+      entity->AddDependentComponent(BCComponentID::AIComponent, this, false);
+      BehaviorComponent::GenerateManagedComponents(*robot, entity);
+      behaviorComp.Init(robot, std::move(entity));
     }
   }
   
@@ -159,30 +152,9 @@ Result AIComponent::Init(Robot* robot, BehaviorComponent*& customBehaviorCompone
   auto& whiteBoard = GetComponent<AIWhiteboard>(AIComponentID::Whiteboard);
   whiteBoard.Init();
   
-  auto& severeNeedsComp = GetComponent<SevereNeedsComponent>(AIComponentID::SevereNeeds);
-  severeNeedsComp.Init();
-  
   RobotDataLoader* dataLoader = nullptr;
   if(context){
     dataLoader = robot->GetContext()->GetDataLoader();
-  }
-  
-
-  // initialize workout component
-  if(dataLoader != nullptr){
-    auto& puzzleComponent = GetComponent<PuzzleComponent>(AIComponentID::Puzzle);
-
-    puzzleComponent.InitConfigs();
-    
-    auto& workoutComp = GetComponent<WorkoutComponent>(AIComponentID::Workout);
-    const Json::Value& workoutConfig = dataLoader->GetRobotWorkoutConfig();
-
-    const Result res = workoutComp.InitConfiguration(workoutConfig);
-    if( res != RESULT_OK ) {
-      PRINT_NAMED_ERROR("AIComponent.Init.FailedToInitWorkoutComponent",
-                        "Couldn't init workout component, deleting");
-      return res;      
-    }
   }
   
   return RESULT_OK;
@@ -203,10 +175,12 @@ Result AIComponent::Update(Robot& robot, std::string& currentActivityName,
     auto& whiteboard = GetComponent<AIWhiteboard>(AIComponentID::Whiteboard);
     whiteboard.Update();
   }
-
+  
+  // Update continuity component before behavior component to ensure behaviors don't
+  // re-gain control when an action is pending
   {
-    auto& severeNeedsComp = GetComponent<SevereNeedsComponent>(AIComponentID::SevereNeeds);
-    severeNeedsComp.Update();
+    auto& contComponent = GetComponent<ContinuityComponent>(AIComponentID::ContinuityComponent);
+    contComponent.Update();
   }
   
   {
@@ -274,13 +248,15 @@ void AIComponent::CheckForSuddenObstacle(Robot& robot)
   
   varRotation_radsq = fabs(varRotation_radsq - (avgRotation_rad * avgRotation_rad));
 
-  const u16 latestDistance_mm = robot.GetProxSensorComponent().GetLatestDistance_mm();
+  u16 latestDistance_mm = 0;
+  const bool readingIsValid = robot.GetProxSensorComponent().GetLatestDistance_mm(latestDistance_mm);
+  
   f32 avgObjectSpeed_mmps = 2 * fabs(avgProxValue_mm - latestDistance_mm) / kObsSampleWindow_ms;
-
   
   // only trigger if sensor is changing faster than the robot speed, robot is
   // not turning, and sensor is not being changed by noise
-  _suddenObstacleDetected = (avgObjectSpeed_mmps >= kObsTriggerSensitivity * avgRobotSpeed_mmps) &&
+  _suddenObstacleDetected = readingIsValid &&
+                            (avgObjectSpeed_mmps >= kObsTriggerSensitivity * avgRobotSpeed_mmps) &&
                             (varRotation_radsq   <= kObsMaxRotationVariance_rad2) &&
                             (avgObjectSpeed_mmps >= kObsMinObjectSpeed_mmps) &&
                             (avgProxValue_mm     <= kObsMaxObjectDistance_mm);                   
@@ -291,22 +267,6 @@ void AIComponent::CheckForSuddenObstacle(Robot& robot)
                         avgProxValue_mm, avgObjectSpeed_mmps, avgRobotSpeed_mmps);
     PRINT_NAMED_INFO("AIComponent.Update.CheckForSuddenObstacle","SuddenObstacleDetected");
   } 
-}
-
-// Support legacy code until move helper comp into delegate component
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const BehaviorHelperComponent& AIComponent::GetBehaviorHelperComponent() const
-{
-  auto& behaviorComponent = GetComponent<BehaviorComponent>(AIComponentID::BehaviorComponent);
-  return behaviorComponent.GetBehaviorHelperComponent();
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorHelperComponent& AIComponent::GetBehaviorHelperComponent()
-{
-  auto& behaviorComponent = GetComponent<BehaviorComponent>(AIComponentID::BehaviorComponent);
-  return behaviorComponent.GetBehaviorHelperComponent();
 }
 
 

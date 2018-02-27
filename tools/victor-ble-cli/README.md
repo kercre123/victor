@@ -54,6 +54,8 @@ uuid=d03a0a30-5470-5fbb-80ff-a569b6f53782
 
 ```
 
+Note that whitespace characters in the SSID or password are not currently supported.
+
 ## Wifi Connection
 
 To connect your robot to wifi, run the script 

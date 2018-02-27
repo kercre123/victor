@@ -15,6 +15,8 @@
 #ifndef PROX_SENSORS_H_
 #define PROX_SENSORS_H_
 
+#include "clad/types/proxMessages.h"
+
 #include "coretech/common/shared/types.h"
 
 namespace Anki {
@@ -42,7 +44,8 @@ namespace Anki {
       
       u16 GetCliffValue(u32 ind);
 
-      u16 GetRawProxValue();
+      // Get corrected ToF distance sensor data
+      ProxSensorData GetProxData();
 
     } // namespace ProxSensors
   } // namespace Cozmo

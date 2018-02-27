@@ -14,7 +14,7 @@
 #include "textToSpeechProvider_acapela.h"
 #include "textToSpeechProvider_mac.h"
 
-#include "cozmoAnim/cozmoAnimContext.h"
+#include "cozmoAnim/animContext.h"
 
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/data/dataScope.h"
@@ -51,7 +51,7 @@ namespace Cozmo {
 namespace TextToSpeech {
 
 
-TextToSpeechProviderImpl::TextToSpeechProviderImpl(const CozmoAnimContext* ctx,
+TextToSpeechProviderImpl::TextToSpeechProviderImpl(const AnimContext* ctx,
                                                    const Json::Value& tts_platform_config)
 {
   using Locale = Anki::Util::Locale;
@@ -204,7 +204,7 @@ Result TextToSpeechProviderImpl::CreateAudioData(const std::string& text,
     const int sampleRate = AcapelaTTS::GetSampleRate();
     const int numChannels = AcapelaTTS::GetNumChannels();
     data.Init(sampleRate, numChannels);
-    data.Append(sampleRate * numChannels, 0);
+    data.AppendSample(0, sampleRate * numChannels);
     return RESULT_OK;
   }
 

@@ -52,12 +52,11 @@ for file in files:
   with open(file, 'r', encoding='utf-8') as f:
     for num, line in enumerate(f, 1):
       # find pattern "[link text](some/link)"
-      result = re.search("\[([^\[\]]+)\]\(([^)]+)\)", line)
-      if result:
+      for result in re.finditer("\[([^\[\]]+)\]\(([^)]+)\)", line):
         matchedText, linkText, linkPath = result.group(0), result.group(1), result.group(2)
         if not any(x in linkPath for x in excludeTerms):
-          # remove any trailing "#" references
-          linkPath = linkPath.split('#')[0]
+          # remove any trailing "#" references and any trailing '/' characters
+          linkPath = linkPath.split('#')[0].rstrip('/')
           if not linkPath:
             continue
           if linkPath[0] == '/':
@@ -66,8 +65,10 @@ for file in files:
           else: 
             # 'relative' repo link
             fullPath = os.path.join(os.path.dirname(file), linkPath)
-          if not os.path.exists(fullPath) :
-            print("  Broken link in file \"{}\", line {}: \"{}\". File \"{}\" does not exist".format(repoRelativeFilePath, num, matchedText, os.path.relpath(fullPath, start=gitRoot)))
+          # Check if this file/folder exists (use listdir for case sensitivity):
+          dirName, baseName = os.path.split(fullPath)
+          if not os.path.exists(fullPath) or not baseName in os.listdir(dirName):
+            print("  Broken link in file \"{}\", line {}: \"{}\". File or folder \"{}\" does not exist".format(repoRelativeFilePath, num, matchedText, os.path.relpath(fullPath, start=gitRoot)))
             failedFiles.add(file)
 
 if failedFiles:

@@ -52,17 +52,7 @@ namespace Anki {
         
         u8 pktBuffer_[2048];
 
-        // For waiting for a particular message ID
-        const u32 LOOK_FOR_MESSAGE_TIMEOUT = 1000000;
-        RobotInterface::EngineToRobot::Tag lookForID_ = RobotInterface::EngineToRobot::INVALID;
-        u32 lookingStartTime_ = 0;
-
         static RobotState robotState_;
-
-        // History of the last 2 RobotState messages that were sent to the basestation.
-        // Used to avoid repeating a send.
-        TimeStamp_t robotStateSendHist_[2];
-        u8 robotStateSendHistIdx_ = 0;
 
         // Flag for receipt of Init message
         bool initReceived_ = false;
@@ -90,46 +80,19 @@ namespace Anki {
           default:
             AnkiWarn( "Messages.ProcessBadTag_EngineToRobot.Recvd", "Received message with bad tag %x", msg.tag);
         }
-        if (lookForID_ != RobotInterface::EngineToRobot::INVALID)
-        {
-          if (msg.tag == lookForID_)
-          {
-            lookForID_ = RobotInterface::EngineToRobot::INVALID;
-          }
-        }
       } // ProcessMessage()
-
-      void LookForID(const RobotInterface::EngineToRobot::Tag msgID) {
-        lookForID_ = msgID;
-        lookingStartTime_ = HAL::GetMicroCounter();
-      }
-
-      bool StillLookingForID(void) {
-        if(lookForID_ == RobotInterface::EngineToRobot::INVALID) {
-          return false;
-        }
-        else if(HAL::GetMicroCounter() - lookingStartTime_ > LOOK_FOR_MESSAGE_TIMEOUT) {
-            AnkiWarn( "Messages.StillLookingForID.Timeout", "Timed out waiting for message ID %d.", lookForID_);
-            lookForID_ = RobotInterface::EngineToRobot::INVALID;
-          return false;
-        }
-
-        return true;
-
-      }
-
 
       void UpdateRobotStateMsg()
       {
         robotState_.timestamp = HAL::GetTimeStamp();
-        Radians poseAngle;
 
         robotState_.pose_frame_id = Localization::GetPoseFrameId();
         robotState_.pose_origin_id = Localization::GetPoseOriginId();
 
-        Localization::GetCurrentMatPose(robotState_.pose.x, robotState_.pose.y, poseAngle);
+        robotState_.pose.x = Localization::GetCurrPose_x();
+        robotState_.pose.y = Localization::GetCurrPose_y();
         robotState_.pose.z = 0;
-        robotState_.pose.angle = poseAngle.ToFloat();
+        robotState_.pose.angle = Localization::GetCurrPose_angle().ToFloat();
         robotState_.pose.pitch_angle = IMUFilter::GetPitch();
         WheelController::GetFilteredWheelSpeeds(robotState_.lwheel_speed_mmps, robotState_.rwheel_speed_mmps);
         robotState_.headAngle  = HeadController::GetAngleRad();
@@ -146,7 +109,7 @@ namespace Anki {
         for (int i=0 ; i < HAL::CLIFF_COUNT ; i++) {
           robotState_.cliffDataRaw[i] = ProxSensors::GetCliffValue(i);
         }
-        robotState_.proxData = HAL::GetRawProxData();
+        robotState_.proxData = ProxSensors::GetProxData();
         
         robotState_.backpackTouchSensorRaw = HAL::GetButtonState(HAL::BUTTON_CAPACITIVE);
         
@@ -333,13 +296,13 @@ namespace Anki {
 
       void Process_executePath(const RobotInterface::ExecutePath& msg) {
         AnkiInfo( "Messages.Process_executePath.StartingPath", "%d", msg.pathID);
-        PathFollower::StartPathTraversal(msg.pathID, msg.useManualSpeed);
+        PathFollower::StartPathTraversal(msg.pathID);
       }
 
       void Process_dockWithObject(const DockWithObject& msg)
       {
-        AnkiInfo( "Messages.Process_dockWithObject.Recvd", "action %hhu, dockMethod %hhu, doLiftLoadCheck %d, speed %f, acccel %f, decel %f, manualSpeed %d", 
-                 msg.action, msg.dockingMethod, msg.doLiftLoadCheck, msg.speed_mmps, msg.accel_mmps2, msg.decel_mmps2, msg.useManualSpeed);
+        AnkiInfo( "Messages.Process_dockWithObject.Recvd", "action %hhu, dockMethod %hhu, doLiftLoadCheck %d, speed %f, acccel %f, decel %f", 
+                 msg.action, msg.dockingMethod, msg.doLiftLoadCheck, msg.speed_mmps, msg.accel_mmps2, msg.decel_mmps2);
 
         DockingController::SetDockingMethod(msg.dockingMethod);
 
@@ -350,7 +313,6 @@ namespace Anki {
                                             msg.accel_mmps2,
                                             msg.decel_mmps2,
                                             0, 0, 0,
-                                            msg.useManualSpeed,
                                             msg.numRetries);
       }
 
@@ -362,8 +324,7 @@ namespace Anki {
                                               msg.decel_mmps2,
                                               msg.rel_x_mm,
                                               msg.rel_y_mm,
-                                              msg.rel_angle,
-                                              msg.useManualSpeed);
+                                              msg.rel_angle);
       }
 
       void Process_startMotorCalibration(const RobotInterface::StartMotorCalibration& msg) {
@@ -380,14 +341,7 @@ namespace Anki {
       void Process_drive(const RobotInterface::DriveWheels& msg) {
         // Do not process external drive commands if following a test path
         if (PathFollower::IsTraversingPath()) {
-          if (PathFollower::IsInManualSpeedMode()) {
-            // TODO: Maybe want to set manual speed via a different message?
-            //       For now, using average wheel speed.
-            f32 manualSpeed = 0.5f * (msg.lwheel_speed_mmps + msg.rwheel_speed_mmps);
-            PathFollower::SetManualPathSpeed(manualSpeed, 1000, 1000);
-          } else {
-            AnkiInfo( "Messages.Process_drive.IgnoringBecauseAlreadyOnPath", "");
-          }
+          AnkiWarn( "Messages.Process_drive.IgnoringBecauseAlreadyOnPath", "");
           return;
         }
 
@@ -647,30 +601,15 @@ namespace Anki {
 
 // ----------- Send messages -----------------
 
-      Result SendRobotStateMsg(const RobotState* msg)
+      Result SendRobotStateMsg()
       {
         // Don't send robot state updates unless the init message was received
         if (!initReceived_) {
           return RESULT_FAIL;
         }
 
-        const RobotState* m = &robotState_;
-        if (msg) {
-          m = msg;
-        }
 
-        // Check if a state message with this timestamp was already sent
-        for (u8 i=0; i < 2; ++i) {
-          if (robotStateSendHist_[i] == m->timestamp) {
-            return RESULT_FAIL;
-          }
-        }
-
-        if(RobotInterface::SendMessage(*m) == true) {
-          // Update send history
-          robotStateSendHist_[robotStateSendHistIdx_] = m->timestamp;
-          if (++robotStateSendHistIdx_ > 1) robotStateSendHistIdx_ = 0;
-
+        if(RobotInterface::SendMessage(robotState_) == true) {
           #ifdef SIMULATOR
           {
             isForcedDelocalizing_ = false;
@@ -699,6 +638,25 @@ namespace Anki {
         m.motorID = motor;
         m.enabled = enabled;
         return RobotInterface::SendMessage(m) ? RESULT_OK : RESULT_FAIL;
+      }
+
+      Result SendMicDataFunction(const s16* latestMicData, uint32_t numSamples)
+      {
+        RobotInterface::MicData micData{};
+        micData.timestamp = HAL::GetTimeStamp();
+        micData.robotStatusFlags = robotState_.status;
+        micData.robotRotationAngle = robotState_.pose.angle;
+        std::copy(latestMicData, latestMicData + numSamples, micData.data);
+        return RobotInterface::SendMessage(micData) ? RESULT_OK : RESULT_FAIL;
+      }
+
+      Result SendMicDataMsgs()
+      {
+        while (HAL::HandleLatestMicData(&SendMicDataFunction))
+        {
+          // Keep calling HandleLatestMicData until it returns false
+        }
+        return RESULT_OK;
       }
 
       bool ReceivedInit()

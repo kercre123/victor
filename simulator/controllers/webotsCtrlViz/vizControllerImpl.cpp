@@ -113,6 +113,8 @@ void VizControllerImpl::Init()
     std::bind(&VizControllerImpl::ProcessObjectAccelState, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::BehaviorStackDebug,
     std::bind(&VizControllerImpl::ProcessBehaviorStackDebug, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::VisionModeDebug,
+    std::bind(&VizControllerImpl::ProcessVisionModeDebug, this, std::placeholders::_1));
 
 
   // Get display devices
@@ -121,6 +123,7 @@ void VizControllerImpl::Init()
   _moodDisp = _vizSupervisor.getDisplay("cozmo_mood_display");
   _behaviorDisp = _vizSupervisor.getDisplay("cozmo_behavior_display");
   _bsmStackDisp = _vizSupervisor.getDisplay("victor_behavior_stack_display");
+  _visionModeDisp = _vizSupervisor.getDisplay("victor_vision_mode_display");
   _activeObjectDisp = _vizSupervisor.getDisplay("cozmo_active_object_display");
   _cubeAccelDisp = _vizSupervisor.getDisplay("cozmo_cube_accel_display");
 
@@ -165,6 +168,7 @@ void VizControllerImpl::Init()
   _moodDisp->setFont("Lucida Console", 8, true);
   _activeObjectDisp->setFont("Lucida Console", 8, true);
   _bsmStackDisp->setFont("Lucida Console", 8, true);
+  _visionModeDisp->setFont("Lucida Console", 8, true);
 
   DrawText(_activeObjectDisp, 0, (u32)Anki::NamedColors::WHITE, "Slot | Moving | UpAxis");
   
@@ -653,8 +657,6 @@ void VizControllerImpl::ProcessVizDisplayImageMessage(const AnkiEvent<VizInterfa
   auto encImgIter = _encodedImages.find(payload.timestamp);
   if(encImgIter == _encodedImages.end())
   {
-    PRINT_NAMED_WARNING("VizControllerImpl.ProcessVizDisplayImage.InvalidTimestamp",
-                        "t=%u", payload.timestamp);
     return;
   }
   
@@ -780,11 +782,10 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_CLIFF, cliffDetected ? Anki::NamedColors::RED : Anki::NamedColors::GREEN, txt);
 
   const auto& proxData = payload.state.proxData;
-  sprintf(txt, "Dist: %4u mm, sigStrength: %5.3f, status 0x%02X (%s)",
+  sprintf(txt, "Dist: %4u mm, sigStrength: %5.3f, status 0x%02X",
           proxData.distance_mm,
           proxData.signalIntensity / proxData.spadCount,
-          proxData.rangeStatus,
-          proxData.distance_mm < kProxSensorMaxDistance_mm ? "OBJ DETECTED" : "CLEAR");
+          proxData.rangeStatus);
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_DIST, Anki::NamedColors::GREEN, txt);
   
   sprintf(txt, "Speed L: %4d  R: %4d mm/s",
@@ -792,7 +793,7 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
     (int)payload.state.rwheel_speed_mmps);
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_SPEEDS, Anki::NamedColors::GREEN, txt);
 
-  sprintf(txt, "Batt: %2.1f V", payload.state.batteryVoltage);
+  sprintf(txt, "Batt: %2.2f V", payload.state.batteryVoltage);
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_BATTERY, Anki::NamedColors::GREEN, txt);
 
   sprintf(txt, "Anim: %32s [%d], ProcFaceFrames: %d",
@@ -822,9 +823,9 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
     payload.state.status & (uint32_t)RobotStatusFlag::IS_FALLING ? "FALLING" : "");
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_STATUS_FLAG, Anki::NamedColors::GREEN, txt);
   
-  sprintf(txt, "   %10s %7s",
-          payload.state.status & (uint32_t)RobotStatusFlag::IS_CHARGING ? "CHARGING" :
-          (payload.state.status & (uint32_t)RobotStatusFlag::IS_ON_CHARGER ? "ON_CHARGER" : ""),
+  sprintf(txt, "   %8s %10s %7s",
+          payload.state.status & (uint32_t)RobotStatusFlag::IS_CHARGING ? "CHARGING" : "",
+          payload.state.status & (uint32_t)RobotStatusFlag::IS_ON_CHARGER ? "ON_CHARGER" : "",
           payload.state.status & (uint32_t)RobotStatusFlag::IS_BUTTON_PRESSED ? "PWR_BTN" : "");
   
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_STATUS_FLAG_2, Anki::NamedColors::GREEN, txt);
@@ -1507,6 +1508,24 @@ void VizControllerImpl::ProcessBehaviorStackDebug(const AnkiEvent<VizInterface::
   }
 }
 
+void VizControllerImpl::ProcessVisionModeDebug(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  if( _visionModeDisp == nullptr ) {
+    return;
+  }
+
+  // Clear the space
+  _visionModeDisp->setColor(0x0);
+  _visionModeDisp->fillRectangle(0, 0, _visionModeDisp->getWidth(), _visionModeDisp->getHeight());
+
+  const VizInterface::VisionModeDebug& debugData = msg.GetData().Get_VisionModeDebug();
+
+  DrawText(_visionModeDisp, 0, (u32)Anki::NamedColors::WHITE, "Vision Schedule:       Mode:");
+  for( size_t i=0; i < debugData.debugStrings.size(); ++i ) {
+    DrawText(_visionModeDisp, (u32)(i+1), (u32)Anki::NamedColors::GREEN, debugData.debugStrings[i].c_str());
+  }
+
+}
 
 // ========== Start/End of Robot Updates ==========
   

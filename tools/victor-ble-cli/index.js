@@ -93,6 +93,9 @@ var onBLEServiceDiscovery = function (peripheral, error, services, characteristi
         case Victor.SEND_CHAR_UUID:
             send = char;
             break;
+        case Victor.RECV_ENC_CHAR_UUID:
+            char.subscribe();
+            break;
         }
     });
     if (!send || !receive) {
@@ -109,7 +112,9 @@ var onBLEConnect = function (peripheral) {
     peripheral.once('disconnect', onBLEDisconnect.bind(this, peripheral));
     outputResponse("Connected to " + peripheral.advertisement.localName);
     var serviceUUIDs = [Victor.SERVICE_UUID];
-    var characteristicUUIDs = [Victor.RECV_CHAR_UUID, Victor.SEND_CHAR_UUID];
+    var characteristicUUIDs = [Victor.RECV_CHAR_UUID,
+                               Victor.SEND_CHAR_UUID,
+                               Victor.RECV_ENC_CHAR_UUID];
     peripheral.discoverSomeServicesAndCharacteristics(serviceUUIDs, characteristicUUIDs,
                                                       onBLEServiceDiscovery.bind(this, peripheral));
 };

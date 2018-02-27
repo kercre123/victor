@@ -16,17 +16,25 @@
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "coretech/common/engine/array2d_impl.h"
 #include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "coretech/vision/engine/image.h"
 #include "util/helpers/templateHelpers.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
+#include "webServerProcess/src/webService.h"
 
+#include "json/json.h"
 #include "osState/osState.h"
+
+#include "anki/cozmo/shared/factory/emrHelper.h"
+
+#include <chrono>
 
 namespace Anki {
 namespace Cozmo {
 
 FaceDebugDraw::FaceDebugDraw()
 : _scratchDrawingImg(new Vision::ImageRGB565())
+  , _webService( nullptr )
 {
   _scratchDrawingImg->Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
 
@@ -80,6 +88,12 @@ void FaceDebugDraw::ChangeDrawState()
   // draw on state change
   DrawFAC();
   DrawCustomText();
+
+  if(_drawState == DrawState::GeneralInfo)
+  {
+    // Try to update the ip address if we are transitioning to the GeneralInfo screen
+    OSState::getInstance()->GetIPAddress(true);
+  }
 }
 
 void FaceDebugDraw::DrawFAC()
@@ -88,7 +102,8 @@ void FaceDebugDraw::DrawFAC()
   {
     DrawTextOnScreen({"FAC"},
                      NamedColors::BLACK,
-                     NamedColors::RED,
+                     (Factory::GetEMR()->PLAYPEN_PASSED_FLAG ? 
+                        NamedColors::GREEN : NamedColors::RED),
                      { 0, FACE_DISPLAY_HEIGHT-10 });
   }
 }
@@ -99,6 +114,72 @@ void FaceDebugDraw::DrawConfidenceClock(
   uint32_t secondsRemaining,
   bool triggerRecognized)
 {
+  // since we're always sending this data to the server, let's compute the max confidence
+  // values each time and send the pre-computed values to the web server so that if any
+  // of these default values change the server gets them too
+
+  const auto& confList = micData.confidenceList;
+  const auto& winningIndex = micData.direction;
+  auto maxCurConf = (float)micData.confidence;
+  for (int i=0; i<12; ++i)
+  {
+    if (maxCurConf < confList[i])
+    {
+      maxCurConf = confList[i];
+    }
+  }
+
+  // Calculate the current scale for the bars to use, based on filtered and current confidence levels
+  constexpr float filteredConfScale = 2.0f;
+  constexpr float confMaxDefault = 1000.f;
+  static auto filteredConf = confMaxDefault;
+  filteredConf = ((0.98f * filteredConf) + (0.02f * maxCurConf));
+  auto maxConf = filteredConf * filteredConfScale;
+  if (maxConf < maxCurConf)
+  {
+    maxConf = maxCurConf;
+  }
+  if (maxConf < confMaxDefault)
+  {
+    maxConf = confMaxDefault;
+  }
+
+  // pre-calc the delay time as well for use in both web server and face debug ...
+  const auto maxDelayTime_ms = 2000.f * 2.f;
+  const auto delayTime_ms = (int) (maxDelayTime_ms * bufferFullPercent);
+
+
+  // always send web server data until we feel this is too much a perf hit
+  if (nullptr != _webService)
+  {
+    using namespace std::chrono;
+
+    // if we send this data every tick, we crash the robot;
+    // only send the web data every X seconds
+    static double nextWebServerUpdateTime = 0.0;
+    const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSecondsDouble();
+    if (currentTime > nextWebServerUpdateTime)
+    {
+      nextWebServerUpdateTime = currentTime + 0.150;
+
+      Json::Value webData;
+      webData["confidence"] = micData.confidence;
+      webData["dominant"] = micData.direction;
+      webData["maxConfidence"] = maxConf;
+      webData["triggerDetected"] = triggerRecognized;
+      webData["delayTime"] = delayTime_ms;
+
+      Json::Value& directionValues = webData["directions"];
+      for ( float confidence : micData.confidenceList )
+      {
+        directionValues.append(confidence);
+      }
+
+      const std::string moduleName = "micdata";
+      _webService->SendToWebViz( moduleName, webData );
+    }
+  }
+
   if (GetDrawState() != DrawState::MicDirectionClock)
   {
     return;
@@ -129,8 +210,9 @@ void FaceDebugDraw::DrawConfidenceClock(
   constexpr int barWidthB_px = (int) (angleFactorB * (float)barWidth_px * 0.5f); // 0
   constexpr int halfBarWidth_px = (int) ((float)barWidth_px * 0.5f);
 
-  // Multiplying factors (cos/sin) for the clock directions
-  static const std::array<Point2f, 12> barLenFactor = 
+  // Multiplying factors (cos/sin) for the clock directions.
+  // NOTE: Needs to have the 13th value so the unknown direction dot can display properly
+  static const std::array<Point2f, 13> barLenFactor = 
   {{
     {0.f, 1.f}, // 12 o'clock - in front of robot so point down
     {-angleFactorB, angleFactorA}, // 1 o'clock
@@ -143,7 +225,8 @@ void FaceDebugDraw::DrawConfidenceClock(
     {angleFactorA, -angleFactorB}, // 8 o'clock
     {1.f, 0.f}, // 9 o'clock
     {angleFactorA, angleFactorB}, // 10 o'clock
-    {angleFactorB, angleFactorA} // 11 o'clock
+    {angleFactorB, angleFactorA}, // 11 o'clock
+    {0.f, 0.f} // Unknown direction
   }};
 
   // Precalculated offsets for the center of the base of each of the direction bars,
@@ -184,32 +267,6 @@ void FaceDebugDraw::DrawConfidenceClock(
 
   // Draw the outer circle
   drawImg.DrawCircle({(float)center_px.x(), (float)center_px.y()}, NamedColors::BLUE, circleRadius_px, 2);
-
-  const auto& confList = micData.confidenceList;
-  const auto& winningIndex = micData.direction;
-  auto maxCurConf = (float)micData.confidence;
-  for (int i=0; i<12; ++i)
-  {
-    if (maxCurConf < confList[i])
-    {
-      maxCurConf = confList[i];
-    }
-  }
-
-  // Calculate the current scale for the bars to use, based on filtered and current confidence levels
-  constexpr float filteredConfScale = 2.0f;
-  constexpr float confMaxDefault = 1000.f;
-  static auto filteredConf = confMaxDefault;
-  filteredConf = ((0.98f * filteredConf) + (0.02f * maxCurConf));
-  auto maxConf = filteredConf * filteredConfScale;
-  if (maxConf < maxCurConf)
-  {
-    maxConf = maxCurConf;
-  }
-  if (maxConf < confMaxDefault)
-  {
-    maxConf = confMaxDefault;
-  }
 
   // Draw each of the clock directions
   for (int i=0; i<12; ++i)
@@ -287,6 +344,20 @@ void FaceDebugDraw::DrawConfidenceClock(
     {(int) (bufferFullPercent * (float) buffFullBarWidth_px), FACE_DISPLAY_HEIGHT - endOfBarHeight_px + buffFullBarHeight_px / 2}
     }, 
     NamedColors::RED);
+    
+  const std::string confidenceString = std::to_string(micData.confidence);
+  drawImg.DrawText( {0.0f, 10.0f}, confidenceString, NamedColors::WHITE, 0.5f );
+
+  // Also draw the delay time in milliseconds
+  // Copied from kRawAudioPerBuffer_ms in micDataProcessor.h
+  // and doubled for 2 buffers
+  const auto delayStr = std::to_string(delayTime_ms);
+  const Point2f textLoc = {0.f, FACE_DISPLAY_HEIGHT - endOfBarHeight_px};
+  const auto textScale = 0.5f;
+  _scratchDrawingImg->DrawText(textLoc,
+                               delayStr,
+                               NamedColors::WHITE,
+                               textScale);
 
   // Draw the debug page number
   DrawScratch();
@@ -300,9 +371,9 @@ void FaceDebugDraw::DrawStateInfo(const RobotState& state)
   {
     const std::string ip       = OSState::getInstance()->GetIPAddress();
     const std::string serialNo = OSState::getInstance()->GetSerialNumberAsString();
-    const std::string osNum    = std::to_string(OSState::getInstance()->GetOSBuildNumber());
+    const std::string osVer    = OSState::getInstance()->GetOSBuildVersion();
 
-    std::vector<std::string> text = {ip, serialNo, osNum};
+    std::vector<std::string> text = {ip, serialNo, osVer};
 
     if(FACTORY_TEST)
     {

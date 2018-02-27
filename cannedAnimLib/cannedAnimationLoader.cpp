@@ -66,6 +66,21 @@ CannedAnimationContainer* CannedAnimationLoader::LoadAnimations()
   return _cannedAnimations.release();
 }
 
+CannedAnimationContainer* CannedAnimationLoader::LoadAnimationsFromFile(const std::string& path)
+{
+  _cannedAnimations = std::make_unique<CannedAnimationContainer>();
+  _jsonFiles.push_back(path);
+  {
+    ANKI_CPU_PROFILE("CannedAnimationLoader::LoadAnimationFile");
+    LoadAnimationsInternal();
+  }
+
+  // TODO: be able to load a face animation
+
+  // we're done
+  _loadingCompleteRatio.store(1.0f);
+  return _cannedAnimations.release();
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CannedAnimationLoader::CollectAnimFiles()

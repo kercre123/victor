@@ -24,8 +24,8 @@ class BehaviorFistBump : public ICozmoBehavior
 {
 private:
   
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorFistBump(const Json::Value& config);
   
 public:
@@ -36,7 +36,7 @@ protected:
     modifiers.wantsToBeActivatedWhenCarryingObject = true;
     modifiers.behaviorAlwaysDelegates = false;
     modifiers.wantsToBeActivatedWhenOnCharger = false;
-    modifiers.visionModesForActiveScope->push_back({ VisionMode::DetectingFaces, EVisionUpdateFrequency::High });
+    modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::High });
   }
 
 
@@ -88,6 +88,8 @@ private:
 
   std::set<IFistBumpListener*> _fistBumpListeners;
   void ResetTrigger(bool updateLastCompletionTime);
+  
+  void ResetFistBumpTimer() const;
   
 }; // class BehaviorFistBump
   

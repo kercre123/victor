@@ -19,7 +19,7 @@
 #include "clad/robotInterface/messageRobotToEngineTag.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
-#include "engine/entity.h"
+#include "util/entityComponent/entity.h"
 
 #include <set>
 

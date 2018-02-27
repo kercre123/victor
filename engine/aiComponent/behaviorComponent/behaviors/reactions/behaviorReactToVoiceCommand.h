@@ -26,7 +26,7 @@ class BehaviorReactToVoiceCommand : public ICozmoBehavior
 private:
   using super = ICozmoBehavior;
   
-  friend class BehaviorContainer;
+  friend class BehaviorFactory;
   BehaviorReactToVoiceCommand(const Json::Value& config);
   
 public:
@@ -45,9 +45,14 @@ protected:
 
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
+  virtual void BehaviorUpdate() override;
   
 private:
   mutable SmartFaceID _desiredFace;
+  
+  // json params and their defaults
+  AnimationTrigger _animUnmatched = AnimationTrigger::Count;
+  bool _exitOnIntents = true;
   
 }; // class BehaviorReactToVoiceCommand
 

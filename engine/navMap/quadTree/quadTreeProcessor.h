@@ -17,9 +17,9 @@
 
 #include "engine/navMap/quadTree/quadTreeTypes.h"
 #include "engine/navMap/memoryMap/memoryMapTypes.h"
-#include "engine/viz/vizManager.h"
 
 #include "util/helpers/templateHelpers.h"
+#include "coretech/common/engine/math/fastPolygon2d.h"
 
 #include <unordered_map>
 #include <unordered_set>
@@ -28,7 +28,7 @@
 namespace Anki {
 namespace Cozmo {
   
-class QuadTreeNode;
+class QuadTree;
 using namespace MemoryMapTypes;
 using namespace QuadTreeTypes;
 
@@ -42,7 +42,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // constructor
-  QuadTreeProcessor(VizManager* vizManager);
+  QuadTreeProcessor();
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Notifications from nodes
@@ -52,7 +52,7 @@ public:
   // NOTE: (mrw) used to set type from Invalid -> Valid so that only SetRoot and subdivide could create
   //       a validated node in the tree. Any other type of node instantiation would be flagged so that
   //       we know it was not attached to a tree. We could consider adding that safety mechanism back.
-  void SetRoot(QuadTreeNode* node) { _root = node; };
+  void SetRoot(QuadTree* tree) { _quadTree = tree; };
 
   // notification when the content type changes for the given node
   void OnNodeContentTypeChanged(const QuadTreeNode* node, const EContentType& oldContent, const bool wasEmpty);
@@ -76,30 +76,12 @@ public:
   // retrieve the borders for the given combination of content types
   void GetBorders(EContentType innerType, EContentTypePackedType outerTypes, MemoryMapTypes::BorderRegionVector& outBorders);
   
-  // returns true if the given ray collides with the given type (any quads of the given type)
-  bool HasCollisionRayWithTypes(const Point2f& rayFrom, const Point2f& rayTo, EContentTypePackedType types) const;
-  
   // fills content regions of filledType that have borders with any content in fillingTypeFlags, converting the filledType
   // region to the content type given (newContent)
-  void FillBorder(EContentType filledType, EContentTypePackedType fillingTypeFlags, const MemoryMapData& data);
+  bool FillBorder(EContentType filledType, EContentTypePackedType fillingTypeFlags, const MemoryMapData& data);
     
-  // attempt to apply a transformation function to all nodes in the tree
-  void Transform(NodeTransformFunction transform);  
-    
-  // populate a list of all data that matches the predicate
-  void FindIf(NodePredicate pred, MemoryMapDataConstList& output) const;
-  
   // returns true if there are any nodes of the given type, false otherwise
   bool HasContentType(EContentType type) const;
-  
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Debug
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
-  // render debug information for the processor (will only redraw if required)
-  void Draw() const;
-  // remove current debug information
-  void ClearDraw() const;
  
 private:
 
@@ -137,9 +119,6 @@ private:
   // true if we have a need to cache the given content type, false otherwise
   static bool IsCached(EContentType contentType);
   
-  // returns a color used to represent the given contentType for debugging purposes
-  static ColorRGBA GetDebugColor(EContentType contentType);
-  
   // returns a number that represents the given combination inner-outers
   static BorderKeyType GetBorderTypeKey(EContentType innerType, EContentTypePackedType outerTypes);
 
@@ -152,9 +131,6 @@ private:
                                                             EDirection firstEDirection,
                                                             EDirection lastEDirection);
   
-  // returns true if the given contentType is contained within the set of types defined in the packedTypes
-  static bool IsInEContentTypePackedType(EContentType contentType, EContentTypePackedType contentPackedTypes);
-
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Modification
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -183,21 +159,6 @@ private:
   BorderCombination& RefreshBorderCombination(EContentType innerType, EContentTypePackedType outerTypes);
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Collision checks
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
-  // checks if the given node or any of its children collides with the given ray and matches the type
-  bool HasCollisionRayWithTypes(const QuadTreeNode* node, const FastPolygon& poly, EContentTypePackedType types) const;
-  
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Render
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
-  // add quads from the given contentType to the vector for rendering
-  void AddQuadsToDraw(EContentType contentType,
-    VizManager::SimpleQuadVector& quadVector, const ColorRGBA& color, float zOffset) const;
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
@@ -216,19 +177,13 @@ private:
   BorderCombination* _currentBorderCombination;
   
   // pointer to the root of the tree
-  QuadTreeNode* _root;
-  
-  // true if there have been changes since last drawn
-  mutable bool _borderGfxDirty;
+  QuadTree* _quadTree;
   
   // area of all quads that have been explored
   double _totalExploredArea_m2;
   
   // area of all quads that are currently interesting edges
   double _totalInterestingEdgeArea_m2;
-  
-  VizManager* _vizManager;
-  
 }; // class
   
 } // namespace

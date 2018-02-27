@@ -24,8 +24,8 @@ class BehaviorDispatcherRandom : public IBehaviorDispatcher
 {
   using BaseClass = IBehaviorDispatcher;
 
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;  
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;  
   BehaviorDispatcherRandom(const Json::Value& config);
 
 protected:

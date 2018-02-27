@@ -23,8 +23,6 @@
 #include "engine/components/cubeAccelComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/events/animationTriggerHelpers.h"
-#include "engine/needsSystem/needsManager.h"
-#include "engine/needsSystem/needsState.h"
 
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
@@ -55,20 +53,12 @@ BehaviorSinging::BehaviorSinging(const Json::Value& config)
 : ICozmoBehavior(config)
 {
   std::string value;
-  // Assert that displayNameKey exists in the config. All the singing behaviors
-  // need it to display in app text
-  bool res = JsonTools::GetValueOptional(config, "displayNameKey", value);
-  DEV_ASSERT_MSG(res,
-                 "BehaviorSinging.DisplayNameKeyRequired",
-                 "No displayName for singing behavior %s",
-                 GetIDStr().c_str());
-
   // We have to have a audioSwitchGroup otherwise this behavior is useless
-  res = JsonTools::GetValueOptional(config, kAudioSwitchGroup, value);
+  bool res = JsonTools::GetValueOptional(config, kAudioSwitchGroup, value);
   DEV_ASSERT_MSG(res,
                  "BehaviorSinging.NoAudioSwitchGroup",
                  "No audioSwitchGroup for singing behavior %s",
-                 GetIDStr().c_str());
+                 GetDebugLabel().c_str());
   _audioSwitchGroup = AudioMetaData::SwitchState::SwitchGroupTypeFromString(value);
   
   // We have to have a audioSwitch otherwise this behavior is useless
@@ -76,7 +66,7 @@ BehaviorSinging::BehaviorSinging(const Json::Value& config)
   DEV_ASSERT_MSG(res,
                  "BehaviorSinging.NoAudioSwitch",
                  "No audioSwitch for singing behavior %s",
-                 GetIDStr().c_str());
+                 GetDebugLabel().c_str());
 
   // Depending on which SwitchGroup we are using, figure out which
   // specific switch and animation to use
@@ -106,7 +96,7 @@ BehaviorSinging::BehaviorSinging(const Json::Value& config)
       DEV_ASSERT_MSG(false,
                      "BehaviorSinging.NoAudioSwitch",
                      "No audioSwitch for singing behavior %s",
-                     GetIDStr().c_str());
+                     GetDebugLabel().c_str());
       
       // Default to a 80Bpm fallback song
       _audioSwitch = GenericSwitch::Invalid;
@@ -128,24 +118,7 @@ BehaviorSinging::~BehaviorSinging()
 bool BehaviorSinging::WantsToBeActivatedBehavior() const
 {
   // Always activatable, the higher level Singing goal/activity is responsible
-  // for deciding when Cozmo should sing
-  // Except if the needs system has unlocked a song, we want that to be the
-  // next song played
-  if(GetBEI().HasNeedsManager()){
-    auto& needsManager = GetBEI().GetNeedsManager();
-    
-    const NeedsState& currNeedState = needsManager.GetCurNeedsState();
-    const auto& forcedSong = currNeedState._forceNextSong;
-    if (forcedSong == UnlockId::Invalid)
-    {
-      return true;
-    }
-    else
-    {
-      return (forcedSong == GetRequiredUnlockID());
-    }
-  }
-    
+  // for deciding when Cozmo should sing    
   return true;
 }
 
@@ -207,7 +180,6 @@ void BehaviorSinging::OnBehaviorActivated()
     if(res == ActionResult::SUCCESS)
     {
       BehaviorObjectiveAchieved(BehaviorObjective::Singing);
-      NeedActionCompleted(NeedsActionId::CozmoSings);
     }
   });
 }

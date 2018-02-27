@@ -1,6 +1,0 @@
-{
-  "behaviorClass": "CheckForStackAtInterval",
-  "behaviorID": "SparksCheckForStackAtInterval",
-  "displayNameKey":"behavior.CheckForStackAtInterval",
-  "delayBetweenChecks": 15.0
-}

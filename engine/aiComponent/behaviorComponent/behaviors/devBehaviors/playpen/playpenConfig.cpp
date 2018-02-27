@@ -18,8 +18,8 @@ namespace Util {
   
 // ConsoleVar specialization for BodyColor
 template<>
-ConsoleVar<Cozmo::BodyColor>::ConsoleVar(Cozmo::BodyColor& value, const char* id, const char* category)
-: IConsoleVariable( id, category )
+ConsoleVar<Cozmo::BodyColor>::ConsoleVar(Cozmo::BodyColor& value, const char* id, const char* category, bool unregisterInDestructor)
+: IConsoleVariable( id, category, unregisterInDestructor )
 , _value( value )
 , _minValue( Cozmo::BodyColor::UNKNOWN )
 , _maxValue( Cozmo::BodyColor::COUNT )
@@ -67,8 +67,8 @@ template<> void ConsoleVar<Cozmo::BodyColor>::ToggleValue() { _value = (Cozmo::B
 
 // ConsoleVar specialization for CustomObjectMarker
 template<>
-ConsoleVar<Cozmo::CustomObjectMarker>::ConsoleVar(Cozmo::CustomObjectMarker& value, const char* id, const char* category)
-: IConsoleVariable( id, category )
+ConsoleVar<Cozmo::CustomObjectMarker>::ConsoleVar(Cozmo::CustomObjectMarker& value, const char* id, const char* category, bool unregisterInDestructor )
+: IConsoleVariable( id, category, unregisterInDestructor )
 , _value( value )
 , _minValue( Cozmo::CustomObjectMarker(0) )
 , _maxValue( Cozmo::CustomObjectMarker::Count )
@@ -161,7 +161,7 @@ WRAP_EXTERN_CONSOLE_VAR(u32, kFocalLengthTolerance,                      "Plaype
 WRAP_EXTERN_CONSOLE_VAR(u32, kCenterTolerance,                           "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(f32, kRadialDistortionTolerance,                 "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(f32, kTangentialDistortionTolerance,             "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(f32, kHeadAngleToSeeTarget,                      "Playpen");
+WRAP_EXTERN_CONSOLE_VAR(f32, kHeadAngleToSeeTarget_rad,                  "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(u32, kTimeoutWaitingForTarget_ms,                "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(u32, kTimeoutForComputingCalibration_ms,         "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(f32, kCalibMarkerSize_mm,                        "Playpen");

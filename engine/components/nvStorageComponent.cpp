@@ -46,7 +46,6 @@
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
 #include "engine/robotInterface/messageHandler.h"
-#include "engine/robotManager.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -57,7 +56,7 @@
 #include "util/logging/logging.h"
 
 #ifdef SIMULATOR
-#include "androidHAL/androidHAL.h"
+#include "camera/cameraService.h"
 #include "clad/types/imageTypes.h"
 #endif // ifdef SIMULATOR
 
@@ -80,7 +79,7 @@ static constexpr u32 _kMaxNvStorageBlobSize = 1024;
 
 static const char*   _kNVDataFileExtension = ".nvdata";
 
-static const char*   _kFactoryPath = "/data/persist/factory/";
+static const char*   _kFactoryPath = "/factory/nvStorage/";
 
 namespace Anki {
 namespace Cozmo {
@@ -95,7 +94,6 @@ std::map<NVEntryTag, u32> NVStorageComponent::_maxSizeTable = {
                                                           {NVEntryTag::NVEntry_GameUnlocks,     0},
                                                           {NVEntryTag::NVEntry_FaceEnrollData,  0},
                                                           {NVEntryTag::NVEntry_FaceAlbumData,   0},
-                                                          {NVEntryTag::NVEntry_NurtureGameData, 0},
                                                           {NVEntryTag::NVEntry_InventoryData,   0},
                                                           {NVEntryTag::NVEntry_LabAssignments,  0},
                                                           {NVEntryTag::NVEntry_NEXT_SLOT,       0} };
@@ -135,7 +133,7 @@ std::map<NVEntryTag, u32> NVStorageComponent::_maxFactoryEntrySizeTable = {
 
   
 NVStorageComponent::NVStorageComponent()
-: IDependencyManagedComponent<RobotComponentID>(RobotComponentID::NVStorage)
+: IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::NVStorage)
 {
 }
 
@@ -684,7 +682,7 @@ bool NVStorageComponent::HasPendingRequests()
 void NVStorageComponent::LoadSimData()
 {
   // Store simulated camera calibration data
-  const CameraCalibration* camCalib = AndroidHAL::getInstance()->GetHeadCamInfo();
+  const CameraCalibration* camCalib = CameraService::getInstance()->GetHeadCamInfo();
   
   _tagDataMap[static_cast<u32>(NVEntryTag::NVEntry_CameraCalib)].assign(reinterpret_cast<const u8*>(camCalib), reinterpret_cast<const u8*>(camCalib) + sizeof(*camCalib));
 }

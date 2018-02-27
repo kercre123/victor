@@ -147,9 +147,6 @@ namespace Anki {
         bool dockPoseAngleInitialized_;
 #endif
 
-        // Whether or not docking path should be traversed with manually controlled speed
-        bool useManualSpeed_ = false;
-
 #if(RESET_LOC_ON_BLOCK_UPDATE)
         // Since the physical robot currently does not localize,
         // we need to store the transform from docking pose
@@ -388,7 +385,7 @@ namespace Anki {
         // Get current robot pose
         f32 x,y;
         Radians angle;
-        Localization::GetCurrentMatPose(x, y, angle);
+        Localization::GetCurrPose(x, y, angle);
 
         // Get angle field of view edges
         Radians leftEdge = angle + HALF_FOV;
@@ -492,13 +489,9 @@ namespace Anki {
           const f32 liftApproachSlope = (dockingErrSignalMsg_.z_height - fabsf(dockingErrSignalMsg_.z_height-BLOCK_ON_GROUND_DOCK_ERR_Z_HEIGHT_MM)/10.f) / (START_LIFT_TRACKING_DIST_MM - dockOffsetDistX_);
 
           // Compute current estimated distance to marker
-          f32 robotX, robotY;
-          Radians robotAngle;
-          Localization::GetCurrentMatPose(robotX, robotY, robotAngle);
-
-          f32 diffX = (dockPose_.GetX() - robotX);
-          f32 diffY = (dockPose_.GetY() - robotY);
-          f32 estDistToMarker = sqrtf(diffX * diffX + diffY * diffY);
+          const f32 diffX = (dockPose_.GetX() - Localization::GetCurrPose_x());
+          const f32 diffY = (dockPose_.GetY() - Localization::GetCurrPose_y());
+          const f32 estDistToMarker = sqrtf(diffX * diffX + diffY * diffY);
 
           if (estDistToMarker < START_LIFT_TRACKING_DIST_MM) {
             // Compute current desired lift height based on current distance to block.
@@ -884,7 +877,7 @@ namespace Anki {
                                                          HM_ACCEL_MMPS2,
                                                          HM_ACCEL_MMPS2);
                     
-                    createdValidPath_ = PathFollower::StartPathTraversal(0, useManualSpeed_);
+                    createdValidPath_ = PathFollower::StartPathTraversal(0);
                     failureMode_ = HANNS_MANEUVER;
                   }
                   // Special case for aligning and docking to high block -
@@ -1035,14 +1028,13 @@ namespace Anki {
         // robot's current pose
         Anki::Embedded::Pose2d histPose;
         if ((t == 0) || (t == HAL::GetTimeStamp())) {
-          Localization::GetCurrentMatPose(histPose.x(), histPose.y(), histPose.angle());
+          Localization::GetCurrPose(histPose.x(), histPose.y(), histPose.angle());
         }  else {
           Localization::GetHistPoseAtTime(t, histPose);
         }
         
 #if(DEBUG_DOCK_CONTROLLER)
-        Anki::Embedded::Pose2d currPose;
-        Localization::GetCurrentMatPose(currPose.x(), currPose.y(), currPose.angle());
+        Anki::Embedded::Pose2d currPose = Localization::GetCurrPose();
         AnkiDebug( "DockingController.SetRelDockPose", "HistPose %f %f %f (t=%d), currPose %f %f %f (t=%d)\n",
                   histPose.x(), histPose.y(), histPose.angle().getDegrees(), t,
                   currPose.x(), currPose.y(), currPose.angle().getDegrees(), HAL::GetTimeStamp());
@@ -1377,7 +1369,7 @@ namespace Anki {
         }
 
         // Start following path
-        createdValidPath_ = PathFollower::StartPathTraversal(0, useManualSpeed_);
+        createdValidPath_ = PathFollower::StartPathTraversal(0);
 
         // Debug
         if (!createdValidPath_) {
@@ -1387,8 +1379,7 @@ namespace Anki {
 
       }
 
-      void StartDocking_internal(const f32 speed_mmps, const f32 accel_mmps, const f32 decel_mmps,
-                                 const bool useManualSpeed)
+      void StartDocking_internal(const f32 speed_mmps, const f32 accel_mmps, const f32 decel_mmps)
       {
         dockingStarted = true;
         dockingResult_ = DockingResult::DOCK_UNKNOWN;
@@ -1396,7 +1387,6 @@ namespace Anki {
         dockSpeed_mmps_ = speed_mmps;
         dockAccel_mmps2_ = accel_mmps;
         dockDecel_mmps2_ = decel_mmps;
-        useManualSpeed_ = useManualSpeed;
         mode_ = LOOKING_FOR_BLOCK;
         lastDockingErrorSignalRecvdTime_ = HAL::GetTimeStamp();
         numErrSigToAcquireNewSignal_ = 0;
@@ -1410,11 +1400,10 @@ namespace Anki {
 
       void StartDocking(const f32 speed_mmps, const f32 accel_mmps, const f32 decel_mmps,
                         const f32 dockOffsetDistX, const f32 dockOffsetDistY, const f32 dockOffsetAngle,
-                        const bool useManualSpeed,
                         const u32 pointOfNoReturnDistMM,
                         const bool useFirstErrSignalOnly)
       {
-        StartDocking_internal(speed_mmps, accel_mmps, decel_mmps, useManualSpeed);
+        StartDocking_internal(speed_mmps, accel_mmps, decel_mmps);
         
         dockOffsetDistX_ = dockOffsetDistX;
         pointOfNoReturnDistMM_ = pointOfNoReturnDistMM;
@@ -1429,10 +1418,9 @@ namespace Anki {
       }
 
       void StartDockingToRelPose(const f32 speed_mmps, const f32 accel_mmps, const f32 decel_mmps,
-                                 const f32 rel_x, const f32 rel_y, const f32 rel_angle,
-                                 const bool useManualSpeed)
+                                 const f32 rel_x, const f32 rel_y, const f32 rel_angle)
       {
-        StartDocking_internal(speed_mmps, accel_mmps, decel_mmps, useManualSpeed);
+        StartDocking_internal(speed_mmps, accel_mmps, decel_mmps);
 
         markerlessDocking_ = true;
 
@@ -1481,15 +1469,10 @@ namespace Anki {
       }
 
       f32 GetDistToLastDockMarker()
-      {
-        // Get current robot pose
-        f32 x, y;
-        Radians angle;
-        Localization::GetCurrentMatPose(x, y, angle);
-        
+      {        
         // Get distance to last marker location
-        f32 dx = blockPose_.x() - x;
-        f32 dy = blockPose_.y() - y;
+        f32 dx = blockPose_.x() - Localization::GetCurrPose_x();
+        f32 dy = blockPose_.y() - Localization::GetCurrPose_y();
         f32 dist = sqrtf(dx*dx + dy*dy);
         return dist;
       }

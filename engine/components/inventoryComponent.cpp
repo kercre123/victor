@@ -27,7 +27,7 @@ static const int kMinimumTimeBetweenRobotSaves_sec = 5;
 static const std::string kInventoryTypeCapsConfigKey = "InventoryTypeCaps";
 
 InventoryComponent::InventoryComponent()
-: IDependencyManagedComponent<RobotComponentID>(RobotComponentID::Inventory)
+: IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::Inventory)
 , _readFromRobot(false)
 , _timeLastWrittenToRobot(std::chrono::system_clock::now())
 , _robotWritePending(false)

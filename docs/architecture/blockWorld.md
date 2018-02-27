@@ -58,7 +58,7 @@ BlockWorld technically supports any number of **passive objects** of the same ty
 
 For **active objects** like LightCubes, however, we assume/require that there be only one of each type. This assumption makes it possible to associated a visually-observed object with the corresponding type being "heard" over the radio. Other methods for relaxing this assumption have been discussed but are exceedingly complex and not really necessary given the product's direction. Therefore, we can also guarantee a one-to-one mapping between ObjectType and ObjectID for active objects (e.g. LightCubes).
 
-BlockWorldFilters allow you to specify either a set of attributes to "allow" or "ignore" during a query. If not specified, all are allowed. You cannot specify both allowed and ignored sets for the same attribute at the same time. In addition to filtering on the properites described above, you can also use custom filter functions to do special-case filtering. Some commonly-used filters functions are provided as static methods as well: PoseStateKnownFilter, ActiveObjectsFilter, and UniqueObjectsFilter.
+BlockWorldFilters allow you to specify either a set of attributes to "allow" or "ignore" during a query. If not specified, all are allowed. You cannot specify both allowed and ignored sets for the same attribute at the same time. In addition to filtering on the properties described above, you can also use custom filter functions to do special-case filtering. Some commonly-used filters functions are provided as static methods as well: PoseStateKnownFilter, ActiveObjectsFilter, and UniqueObjectsFilter.
 
 <a name="rejiggering"></a>
 ### Origins, Delocalization, and Rejiggering

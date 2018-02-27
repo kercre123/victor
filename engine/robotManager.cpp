@@ -6,32 +6,21 @@
 //  Copyright (c) 2013 Anki, Inc. All rights reserved.
 //
 
-#include "engine/animations/animationContainers/cubeLightAnimationContainer.h"
-#include "engine/animations/animationGroup/animationGroupContainer.h"
 #include "engine/cozmoContext.h"
-#include "engine/events/animationTriggerResponsesContainer.h"
 #include "engine/externalInterface/externalInterface.h"
-#include "engine/needsSystem/needsManager.h"
 #include "engine/perfMetric.h"
 #include "engine/robot.h"
-#include "engine/robotDataLoader.h"
 #include "engine/robotInitialConnection.h"
 #include "engine/robotInterface/messageHandler.h"
 #include "engine/robotManager.h"
-#include "engine/robotToEngineImplMessaging.h"
-#include "engine/utils/cozmoExperiments.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/common/robot/config.h"
 #include "clad/externalInterface/messageEngineToGame.h"
-#include "clad/externalInterface/messageGameToEngine.h"
-#include "clad/types/animationTrigger.h"
 #include "json/json.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
-#include "util/signals/simpleSignal_fwd.h"
 #include "util/time/stepTimers.h"
-#include <vector>
 #include <sys/stat.h>
 
 #include "coretech/common/robot/config.h"
@@ -41,46 +30,24 @@
 #include <DAS/DAS.h>
 #endif
 
+#define LOG_CHANNEL "RobotState"
+
 namespace Anki {
 namespace Cozmo {
 
-const std::string kBlacklistedAnimationTriggersConfigKey = "blacklisted_animation_triggers";
-
 RobotManager::RobotManager(const CozmoContext* context)
-: _context(context)
+: _robot(nullptr)
+, _context(context)
 , _robotEventHandler(context)
-, _backpackLightAnimations(context->GetDataLoader()->GetBackpackLightAnimations())
-, _cubeLightAnimations(context->GetDataLoader()->GetCubeLightAnimations())
-, _animationGroups(context->GetDataLoader()->GetAnimationGroups())
-, _animationTriggerResponses(context->GetDataLoader()->GetAnimationTriggerResponses())
-, _cubeAnimationTriggerResponses(context->GetDataLoader()->GetCubeAnimationTriggerResponses())
 , _robotMessageHandler(new RobotInterface::MessageHandler())
-, _dasBlacklistedAnimationTriggers()
 {
-  using namespace ExternalInterface;
-  
-  auto broadcastAvailableAnimationGroupsCallback = [this](const AnkiEvent<MessageGameToEngine>& event)
-  {
-    this->BroadcastAvailableAnimationGroups();
-  };
-    
-  IExternalInterface* externalInterface = context->GetExternalInterface();
-
-  MessageGameToEngineTag tagGroups = MessageGameToEngineTag::RequestAvailableAnimationGroups;
-    
-  if (externalInterface != nullptr){
-    _signalHandles.push_back( externalInterface->Subscribe(tagGroups, broadcastAvailableAnimationGroupsCallback) );
-  }
 }
 
 RobotManager::~RobotManager()
 {
-  DEV_ASSERT_MSG(_robots.empty(),
-                 "robotmanager_robot_leak",
-                 "RobotManager::~RobotManager. Not all the robots have been destroyed. This is a memory leak");
 }
 
-void RobotManager::Init(const Json::Value& config, const Json::Value& dasEventConfig)
+void RobotManager::Init(const Json::Value& config)
 {
   auto startTime = std::chrono::steady_clock::now();
 
@@ -90,8 +57,6 @@ void RobotManager::Init(const Json::Value& config, const Json::Value& dasEventCo
   
   Anki::Util::Time::PrintTimedSteps();
   Anki::Util::Time::ClearSteps();
-
-  LoadDasBlacklistedAnimationTriggers(dasEventConfig);
   
   auto endTime = std::chrono::steady_clock::now();
   auto timeSpent_millis = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
@@ -101,59 +66,43 @@ void RobotManager::Init(const Json::Value& config, const Json::Value& dasEventCo
     constexpr auto maxInitTime_millis = 3000;
     if (timeSpent_millis > maxInitTime_millis)
     {
-      PRINT_NAMED_WARNING("RobotManager.Init.TimeSpent",
-                          "%lld milliseconds spent initializing, expected %d",
-                          timeSpent_millis,
-                          maxInitTime_millis);
+      LOG_WARNING("RobotManager.Init.TimeSpent",
+                  "%lld milliseconds spent initializing, expected %d",
+                  timeSpent_millis,
+                  maxInitTime_millis);
     }
   }
   
   LOG_EVENT("robot.init.time_spent_ms", "%lld", timeSpent_millis);
 }
 
-void RobotManager::LoadDasBlacklistedAnimationTriggers(const Json::Value& dasEventConfig)
-{
-  const Json::Value& blacklistedTriggers = dasEventConfig[kBlacklistedAnimationTriggersConfigKey];
-  for (int i = 0; i < blacklistedTriggers.size(); i++)
-  {
-    const std::string& trigger = blacklistedTriggers[i].asString();
-    _dasBlacklistedAnimationTriggers.insert(AnimationTriggerFromString(trigger));
-  }
-}
-
 void RobotManager::AddRobot(const RobotID_t withID)
 {
-  if (_robots.find(withID) == _robots.end()) {
-    PRINT_STREAM_INFO("RobotManager.AddRobot", "Adding robot with ID=" << withID);
-    _robots[withID] = new Robot(withID, _context);
-    _IDs.push_back(withID);
-    _initialConnections.emplace(std::piecewise_construct,
-      std::forward_as_tuple(withID),
-      std::forward_as_tuple(withID, _robotMessageHandler.get(), _context->GetExternalInterface()));
+  if (_robot == nullptr) {
+    LOG_INFO("RobotManager.AddRobot.Adding", "Adding robot with ID=%d", withID);
+    _robot.reset(new Robot(withID, _context));
+    _initialConnection.reset(new RobotInitialConnection(_context));
   } else {
-    PRINT_STREAM_WARNING("RobotManager.AddRobot.AlreadyAdded", "Robot with ID " << withID << " already exists. Ignoring.");
+    LOG_WARNING("RobotManager.AddRobot.AlreadyAdded", "Robot already exists. Must remove first.");
   }  
 }
 
-void RobotManager::RemoveRobot(const RobotID_t withID, bool robotRejectedConnection)
+void RobotManager::RemoveRobot(bool robotRejectedConnection)
 {
-  auto iter = _robots.find(withID);
-  if(iter != _robots.end()) {
-    PRINT_NAMED_INFO("RobotManager.RemoveRobot", "Removing robot with ID=%d", withID);
+  if(_robot != nullptr) {
+    LOG_INFO("RobotManager.RemoveRobot.Removing", "Removing robot with ID=%d", _robot->GetID());
     
     // ask initial connection tracker if it's handling this
     bool handledDisconnect = false;
-    auto initialIter = _initialConnections.find(withID);
-    if (initialIter != _initialConnections.end()) {
+    if (_initialConnection) {
       const auto result = robotRejectedConnection ? RobotConnectionResult::ConnectionRejected : RobotConnectionResult::ConnectionFailure;
-      handledDisconnect = initialIter->second.HandleDisconnect(result);
+      handledDisconnect = _initialConnection->HandleDisconnect(result);
     }
     if (!handledDisconnect) {
-      _context->GetExternalInterface()->OnRobotDisconnected(withID);
+      _context->GetExternalInterface()->OnRobotDisconnected(_robot->GetID());
       _context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDisconnected(0.0f)));
     }
 
-    _context->GetNeedsManager()->OnRobotDisconnected();
     _context->GetPerfMetric()->OnRobotDisconnected();
 
 #if USE_DAS
@@ -162,189 +111,86 @@ void RobotManager::RemoveRobot(const RobotID_t withID, bool robotRejectedConnect
     DASPauseUploadingToServer(false);
 #endif
 
-    delete(iter->second);
-    iter = _robots.erase(iter);
-    
-    // Find the ID. This is inefficient, but this isn't a long list
-    for(auto idIter = _IDs.begin(); idIter != _IDs.end(); ++idIter) {
-      if(*idIter == withID) {
-        _IDs.erase(idIter);
-        break;
-      }
-    }
-    _initialConnections.erase(withID);
+    _robot.reset();
+    _initialConnection.reset();
     
     // Clear out the global DAS values that contain the robot hardware IDs.
     Anki::Util::sSetGlobal(DPHYS, nullptr);
     Anki::Util::sSetGlobal(DGROUP, nullptr);
   } else {
-    PRINT_NAMED_WARNING("RobotManager.RemoveRobot", "Robot %d does not exist. Ignoring.", withID);
+    LOG_WARNING("RobotManager.RemoveRobot.NoRobotToRemove", "");
   }
-}
-
-void RobotManager::RemoveRobots()
-{
-  for (auto &kvp : _robots) {
-    delete(kvp.second);
-  }
-  _robots.clear();
-}
-
-std::vector<RobotID_t> const& RobotManager::GetRobotIDList() const
-{
-  return _IDs;
 }
 
 // for when you don't care and you just want a damn robot
-Robot* RobotManager::GetFirstRobot()
+Robot* RobotManager::GetRobot()
 {
-  if (_IDs.empty()) {
-    return nullptr;
-  }
-  return GetRobotByID(_IDs.front());
-}
-
-// Get a pointer to a robot by ID
-Robot* RobotManager::GetRobotByID(const RobotID_t robotID)
-{
-  auto it = _robots.find(robotID);
-  if (it != _robots.end()) {
-    return it->second;
-  }
-  
-  PRINT_NAMED_WARNING("RobotManager.GetRobotByID.InvalidID", "No robot with ID=%d", robotID);
-  
-  return nullptr;
-}
-
-size_t RobotManager::GetNumRobots() const
-{
-  return _robots.size();
+  return _robot.get();
 }
 
 bool RobotManager::DoesRobotExist(const RobotID_t withID) const
 {
-  return _robots.count(withID) > 0;
+  if (_robot) {
+    return _robot->GetID() == withID;
+  }
+  return false;
 }
 
 
-void RobotManager::UpdateAllRobots()
+void RobotManager::UpdateRobot()
 {
-  ANKI_CPU_PROFILE("RobotManager::UpdateAllRobots");
+  ANKI_CPU_PROFILE("RobotManager::UpdateRobot");
 
-  //for (auto &r : _robots) {
-  for(auto r = _robots.begin(); r != _robots.end(); ) {
+  if (_robot) {
     // Call update
-    const RobotID_t robotId = r->first; // have to cache this prior to any ++r calls...
-    Robot* robot = r->second;
-    Result result = robot->Update();
+    Result result = _robot->Update();
     
-    switch(result)
+    switch (result)
     {
       case RESULT_FAIL_IO_TIMEOUT:
       {
-        PRINT_NAMED_WARNING("RobotManager.UpdateAllRobots.FailIOTimeout", "Signaling robot disconnect");
-        const RobotID_t robotIdToRemove = r->first;
-        ++r;
-        const bool robotRejectedConnection = false;
-        RemoveRobot(robotIdToRemove, robotRejectedConnection);
-        
+        LOG_WARNING("RobotManager.UpdateRobot.FailIOTimeout", "Signaling robot disconnect");
+        RemoveRobot(false);
         break;
       }
         
-        // TODO: Handle other return results here
+      // TODO: Handle other return results here
         
       default:
-        // No problems, simply move to next robot
-        ++r;
         break;
     }
 
-    if(robot->HasReceivedRobotState()) {
-      _context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(robot->GetRobotState()));
+    if (_robot->HasReceivedRobotState()) {
+      _context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(_robot->GetRobotState()));
     }
     else {
-      PRINT_PERIODIC_CH_INFO(10, "Unnamed", "RobotManager.UpdateAllRobots",
-                              "Not sending robot %d state (none available).",robotId);
+      LOG_PERIODIC_INFO(10, "RobotManager.UpdateRobot",
+                        "Not sending robot %d state (none available).", _robot->GetID());
     }
-  } // End loop on _robots
+  }
   
 }
 
-void RobotManager::UpdateRobotConnection()
+Result RobotManager::UpdateRobotConnection()
 {
   ANKI_CPU_PROFILE("RobotManager::UpdateRobotConnection");
-  _robotMessageHandler->ProcessMessages();
+  return _robotMessageHandler->ProcessMessages();
 }
 
-void RobotManager::BroadcastAvailableAnimationGroups()
+bool RobotManager::ShouldFilterMessage(const RobotInterface::RobotToEngineTag msgType) const
 {
-  Anki::Util::Time::ScopedStep scopeTimer("BroadcastAvailableAnimationGroups");
-  if (nullptr != _context->GetExternalInterface()) {
-    std::vector<std::string> animNames(_animationGroups->GetAnimationGroupNames());
-    for (std::vector<std::string>::iterator i=animNames.begin(); i != animNames.end(); ++i) {
-      _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::AnimationGroupAvailable>(*i);
-    }
+  if (_initialConnection) {
+    return _initialConnection->ShouldFilterMessage(msgType);
   }
+  return false;
 }
 
-bool RobotManager::HasAnimationGroup(const std::string& groupName)
+bool RobotManager::ShouldFilterMessage(const RobotInterface::EngineToRobotTag msgType) const
 {
-  return _animationGroups->HasGroup(groupName);
-}
-bool RobotManager::HasAnimationForTrigger( AnimationTrigger ev )
-{
-  return _animationTriggerResponses->HasResponse(ev);
-}
-std::string RobotManager::GetAnimationForTrigger( AnimationTrigger ev )
-{
-  return _animationTriggerResponses->GetResponse(ev);
-}
-bool RobotManager::HasCubeAnimationForTrigger( CubeAnimationTrigger ev )
-{
-  return _cubeAnimationTriggerResponses->HasResponse(ev);
-}
-std::string RobotManager::GetCubeAnimationForTrigger( CubeAnimationTrigger ev )
-{
-  return _cubeAnimationTriggerResponses->GetResponse(ev);
-}
-
-bool RobotManager::ShouldFilterMessage(const RobotID_t robotId, const RobotInterface::RobotToEngineTag msgType) const
-{
-  auto iter = _initialConnections.find(robotId);
-  if (iter == _initialConnections.end()) {
-    return false;
+  if (_initialConnection) {
+    return _initialConnection->ShouldFilterMessage(msgType);
   }
-  return iter->second.ShouldFilterMessage(msgType);
-}
-
-bool RobotManager::ShouldFilterMessage(const RobotID_t robotId, const RobotInterface::EngineToRobotTag msgType) const
-{
-  auto iter = _initialConnections.find(robotId);
-  if (iter == _initialConnections.end()) {
-    return false;
-  }
-  return iter->second.ShouldFilterMessage(msgType);
-}
-
-void RobotManager::ReadLabAssignmentsFromRobot(u32 serialNumber) const
-{
-  _context->GetExperiments()->ReadLabAssignmentsFromRobot(serialNumber);
-}
-
-void RobotManager::ConnectRobotToNeedsManager(u32 serialNumber) const
-{
-  _context->GetNeedsManager()->InitAfterSerialNumberAcquired(serialNumber);
-}
-
-bool RobotManager::MakeRobotFirmwareUntrusted(RobotID_t robotId)
-{
-  auto iter = _initialConnections.find(robotId);
-  if (iter == _initialConnections.end()) {
-    return false;
-  }
-  iter->second.MakeFirmwareUntrusted();
-  return true;
+  return false;
 }
 
 } // namespace Cozmo

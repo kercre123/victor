@@ -1,6 +1,0 @@
-{
-  "behaviorClass": "Bouncer",
-  "behaviorID": "Bouncer",
-  "displayNameKey": "behavior.Bouncer"
-  //"requiredUnlockId": "BuildPyramid",    // No unlock requirement
-}

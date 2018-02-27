@@ -19,8 +19,7 @@
 #include "clad/types/imu.clad"
 #include "clad/types/inventoryTypes.clad"
 #include "clad/types/ledTypes.clad"
-#include "clad/types/liveIdleAnimationParameters.clad"
-#include "clad/types/needsSystemTypes.clad"
+#include "clad/types/keepFaceAliveParameters.clad"
 #include "clad/types/objectTypes.clad"
 #include "clad/types/nvStorageTypes.clad"
 #include "clad/types/pathMotionProfile.clad"
@@ -46,7 +45,7 @@ namespace ExternalInterface {
 // DO NOT CHANGE THIS MESSAGE - it must be compatible across all versions so we can reliably handshake with SDK
 //                            - (and by definition this message implies a version mismatch)
 message UiDeviceConnectionWrongVersion {
-  uint_8  reserved, // future-proofing (we can increase tag size to a uint_16 and still retain binary compatability)
+  uint_8  reserved, // future-proofing (we can increase tag size to a uint_16 and still retain binary compatibility)
   UiConnectionType  connectionType,
   uint_32 deviceID,
   string  buildVersion,
@@ -74,10 +73,6 @@ message ConnectToUiDevice {
 message DisconnectFromUiDevice {
     UiConnectionType  connectionType,
     uint_8 deviceID
-}
-
-message ReliableTransportRunMode {
-  bool isSync
 }
 
 // Request feature toggles from engine
@@ -522,14 +517,19 @@ message SetMemoryMapBroadcastFrequency_sec {
 // Behavior Commands
 ///////////////////////////////////////////////////////////////////////////////
 
-// Allows game to fake trigger word detection to the behavior component
+// Fake trigger word detection to the behavior component
 message FakeTriggerWordDetected
 {
 }
 
-// Allows Game to fake an intent coming from the cloud
+// Fake an intent coming from the cloud
 message FakeCloudIntent{
   string intent
+}
+
+// Fake a user intent
+message FakeUserIntent {
+  string intent,
 }
 
 // ExecuteBehavior
@@ -609,8 +609,19 @@ message RequestPyramidPreReqState{
 message NotifyCozmoWakeup{
 }
 
+// The app requests that the robot perform some non-instantaneous action, usually
+// an action with an associated voice command, such as "go to your charger"
+// todo (VIC-1398): eventually AppIntent should be its own union of structures, but
+// currently there's only one intent, with one arg, and it's not possible to transmit
+// a union over the temporary webservice handler. This will need replacing once the
+// real app->engine channel is working
+message AppIntent {
+  string intent,
+  string param,
+}
+
 ///////////////////////////////////////////////////////////////////////////////
-// Blockworld
+// BlockWorld
 ///////////////////////////////////////////////////////////////////////////////
 
 // request currently located instances of objects in the current origin
@@ -693,6 +704,7 @@ message ReadFaceAnimationDir {
 
 // ReadAnimationFile
 message ReadAnimationFile {
+  string full_path
 }
 
 // RequestAvailableAnimations
@@ -705,8 +717,13 @@ message RequestAvailableAnimationGroups{
   
 }
 
-message SetLiveIdleAnimationParameters {
-  LiveIdleAnimationParameter   paramNames[uint_8],
+message EnableKeepFaceAlive {
+  uint_32 disableTimeout_ms,  // If enable == false, the amount of time to wait before actually disabling
+  bool    enable
+}
+
+message SetKeepFaceAliveParameters {
+  KeepFaceAliveParameter       paramNames[uint_8],
   float_32                     paramValues[uint_8], // must be same length as paramNames
   bool                         setUnspecifiedToDefault = 0
 }
@@ -885,85 +902,6 @@ message MoodMessage {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// Needs
-///////////////////////////////////////////////////////////////////////////////
-
-message GetNeedsState {
-}
-
-message ForceSetNeedsLevels {
-  float_32 newNeedLevel[uint_8]
-}
-
-// In this message, I had to add a second, unused field to get CLAD to compile.
-// This is because of a conflict with the constructor that takes uint_8* and
-// length.
-message ForceSetDamagedParts {
-  bool partIsDamaged[uint_8],
-  bool dummyVarToCompileCLAD
-}
-
-message RegisterOnboardingComplete {
-  int_32 onboardingStage,
-  bool   finalStage,
-  bool   onboardingSkipped,
-}
-
-message SetNeedsPauseState {
-  bool pause
-}
-
-message GetNeedsPauseState {
-}
-
-message SetNeedsPauseStates {
-  bool decayPause[uint_8],
-  bool decayDiscardAfterUnpause[uint_8],
-  bool actionPause[uint_8]
-}
-
-message GetNeedsPauseStates {
-}
-
-// Only want to accept certain needs
-message SetNeedsActionWhitelist {
-  bool enable,
-  NeedsActionId whitelistedActions[uint_8],
-}
-
-message RegisterNeedsActionCompleted {
-  NeedsActionId actionCompleted
-}
-
-message GetWantsNeedsOnboarding {
-}
-
-// Wipes all needs data on the robot
-message WipeRobotNeedsData {
-}
-
-// Wipes all needs data on the device
-message WipeDeviceNeedsData {
-  bool reinitializeNeeds
-}
-
-message GetStarStatus {
-}
-
-message GetSongsList {
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// Notifications
-///////////////////////////////////////////////////////////////////////////////
-
-message NotificationsManagerReady {
-}
-
-message RequestNotificationTextKeys {
-}
-
-///////////////////////////////////////////////////////////////////////////////
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -1077,7 +1015,7 @@ message BlockPoolEnabledMessage {
   bool enabled
 }
 
-// Query for E2Gmessage: InitBlockPoolMessage
+// Query for E2GMessage: InitBlockPoolMessage
 message GetBlockPoolMessage {
 }
 
@@ -1228,7 +1166,7 @@ message RequestRobotSettings {
 
 // explicit autounion - this will force the values given, and then add every other messages in this file
 // if you do not want to include messages in this union, use the keyword "structure" instead of "message"
-// DO NOT CHANGE ANY EXPLICITELY DECLARED VALUES - they must be compatible across all versions so we can reliably
+// DO NOT CHANGE ANY EXPLICITLY DECLARED VALUES - they must be compatible across all versions so we can reliably
 // handshake between and App and SDK version combination
 autounion MessageGameToEngine
 {

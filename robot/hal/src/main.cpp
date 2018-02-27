@@ -3,14 +3,15 @@
 #include <thread>
 #include <sys/mman.h>
 #include <sched.h>
+#include <unistd.h>
 
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/logging.h"
 #include "anki/cozmo/robot/cozmoBot.h"
 
 // For development purposes, while HW is scarce, it's useful to be able to run on phones
-#ifdef USING_ANDROID_PHONE
-#define HAL_NOT_PROVIDING_CLOCK 1
+#ifdef HAL_DUMMY_BODY
+  #define HAL_NOT_PROVIDING_CLOCK
 #endif
 
 
@@ -67,6 +68,7 @@ int main(int argc, const char* argv[])
 
 
     if (shutdownSignal != 0 && --shutdownCounter == 0) {
+      sync();
       AnkiInfo("robot.main.shutdown", "%d", shutdownSignal);
       exit(shutdownSignal);
     }

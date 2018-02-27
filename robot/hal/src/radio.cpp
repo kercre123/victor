@@ -37,7 +37,7 @@ namespace Anki {
     Result InitRadio()
     {
       const RobotID_t robotID = HAL::GetID();
-      std::string server_path = std::string(ROBOT_SERVER_PATH) + std::to_string(robotID);
+      const std::string & server_path = std::string(ANIM_ROBOT_SERVER_PATH) + std::to_string(robotID);
 
       AnkiInfo("HAL.InitRadio.StartListening", "Start listening at %s", server_path.c_str());
       if (!server.StartListening(server_path.c_str())) {
@@ -59,12 +59,9 @@ namespace Anki {
       recvBufSize_ = 0;
     }
 
-    bool HAL::RadioSendPacket(const void *buffer, const u32 length, u8 socket)
+    bool HAL::RadioSendPacket(const void *buffer, const u32 length)
     {
-      (void)socket;
-
       if (server.HasClient()) {
-
         const ssize_t bytesSent = server.Send((char*)buffer, length);
         if (bytesSent < (ssize_t) length) {
           AnkiError("HAL.RadioSendPacket.FailedToSend", "Failed to send msg contents (%zd/%zd sent)", bytesSent, length);

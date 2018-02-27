@@ -229,3 +229,134 @@ function(generate_clad_cpp)
     endif()
 
 endfunction()
+
+# calls generate_clad using each of the C++ emitters used for cozmoEngine
+function(generate_clad_py)
+    set(options "")
+    set(oneValueArgs TARGET RELATIVE_SRC_DIR OUTPUT_DIR)
+    set(multiValueArgs SRCS INCLUDES FLAGS OUTPUT_SRCS)
+    cmake_parse_arguments(genclad "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+    set(CLAD_BASE_DIR "${CMAKE_SOURCE_DIR}/tools/message-buffers")
+    set(CLAD_EMITTER_DIR "${CLAD_BASE_DIR}/emitters")
+
+    set(CLAD_PY "${CLAD_EMITTER_DIR}/Python_emitter.py")
+    set(CLAD_PY_EXTS ".py")
+    set(CLAD_PY_FLAGS "${genclad_FLAGS}")
+
+    set(CLAD_PY_DECL "${CMAKE_SOURCE_DIR}/robot/clad/cozmo_Python_declarations_emitter.py")
+    set(CLAD_PY_DECL_EXTS "_declarations.def")
+    set(CLAD_PY_DECL_FLAGS "")
+
+    set(EMITTERS ${CLAD_PY})
+    set(EXTS CLAD_PY_EXTS)
+    set(FLAGS CLAD_PY_FLAGS)
+    list(LENGTH EMITTERS EMITTER_COUNT)
+    math(EXPR EMITTER_COUNT "${EMITTER_COUNT} - 1")
+
+    set(CLAD_GEN_OUTPUTS "")
+
+    foreach(IDX RANGE ${EMITTER_COUNT})
+        list(GET EMITTERS ${IDX} EMITTER)
+
+        list(GET EXTS ${IDX} EXT_LIST_SYM)
+        set(EMITTER_EXTS "${${EXT_LIST_SYM}}")
+
+        if (FLAGS)
+            list(GET FLAGS ${IDX} FLAG_LIST_SYM)
+            set(EMITTER_FLAGS "${${FLAG_LIST_SYM}}")
+        else()
+            set(EMITTER_FLAGS "")
+        endif()
+
+
+        generate_clad(
+            SRCS ${genclad_SRCS}
+            RELATIVE_SRC_DIR ${genclad_RELATIVE_SRC_DIR}
+            OUTPUT_DIR ${genclad_OUTPUT_DIR}
+            EMITTER ${EMITTER}
+            OUTPUT_EXTS ${EMITTER_EXTS}
+            FLAGS ${EMITTER_FLAGS}
+            INCLUDES ${genclad_INCLUDES}
+            OUTPUT_SRCS CLAD_GEN_SRCS
+        )
+
+        list(APPEND CLAD_GEN_OUTPUTS ${CLAD_GEN_SRCS})
+    endforeach()
+
+    set_source_files_properties(${CLAD_GEN_OUTPUTS} PROPERTIES GENERATED TRUE)
+
+    set(${genclad_OUTPUT_SRCS} ${CLAD_GEN_OUTPUTS} PARENT_SCOPE)
+
+    if (genclad_TARGET)
+        add_custom_target(${genclad_TARGET} ALL DEPENDS
+            ${CLAD_GEN_OUTPUTS}
+        )
+    endif()
+
+endfunction()
+
+# calls generate_clad using each of the C# emitters used for cozmoEngine
+function(generate_clad_cs)
+    set(options "")
+    set(oneValueArgs TARGET RELATIVE_SRC_DIR OUTPUT_DIR)
+    set(multiValueArgs SRCS INCLUDES FLAGS OUTPUT_SRCS)
+    cmake_parse_arguments(genclad "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+    set(CLAD_BASE_DIR "${CMAKE_SOURCE_DIR}/tools/message-buffers")
+    set(CLAD_EMITTER_DIR "${CLAD_BASE_DIR}/emitters")
+
+    set(CLAD_CS "${CLAD_EMITTER_DIR}/CSharp_emitter.py")
+    set(CLAD_CS_EXTS ".cs")
+    set(CLAD_CS_FLAGS "${genclad_FLAGS}")
+
+    set(CLAD_CS_DECL "${CMAKE_SOURCE_DIR}/robot/clad/cozmo_CSharp_declarations_emitter.py")
+    set(CLAD_CS_DECL_EXTS "_declarations.def")
+    set(CLAD_CS_DECL_FLAGS "")
+
+    set(EMITTERS ${CLAD_CS})
+    set(EXTS CLAD_CS_EXTS)
+    set(FLAGS CLAD_CS_FLAGS)
+    list(LENGTH EMITTERS EMITTER_COUNT)
+    math(EXPR EMITTER_COUNT "${EMITTER_COUNT} - 1")
+
+    set(CLAD_GEN_OUTPUTS "")
+
+    foreach(IDX RANGE ${EMITTER_COUNT})
+        list(GET EMITTERS ${IDX} EMITTER)
+
+        list(GET EXTS ${IDX} EXT_LIST_SYM)
+        set(EMITTER_EXTS "${${EXT_LIST_SYM}}")
+
+        if (FLAGS)
+            list(GET FLAGS ${IDX} FLAG_LIST_SYM)
+            set(EMITTER_FLAGS "${${FLAG_LIST_SYM}}")
+        else()
+            set(EMITTER_FLAGS "")
+        endif()
+
+        generate_clad(
+            SRCS ${genclad_SRCS}
+            RELATIVE_SRC_DIR ${genclad_RELATIVE_SRC_DIR}
+            OUTPUT_DIR ${genclad_OUTPUT_DIR}
+            EMITTER ${EMITTER}
+            OUTPUT_EXTS ${EMITTER_EXTS}
+            FLAGS ${EMITTER_FLAGS}
+            INCLUDES ${genclad_INCLUDES}
+            OUTPUT_SRCS CLAD_GEN_SRCS
+        )
+
+        list(APPEND CLAD_GEN_OUTPUTS ${CLAD_GEN_SRCS})
+    endforeach()
+
+    set_source_files_properties(${CLAD_GEN_OUTPUTS} PROPERTIES GENERATED TRUE)
+
+    set(${genclad_OUTPUT_SRCS} ${CLAD_GEN_OUTPUTS} PARENT_SCOPE)
+
+    if (genclad_TARGET)
+        add_custom_target(${genclad_TARGET} ALL DEPENDS
+            ${CLAD_GEN_OUTPUTS}
+        )
+    endif()
+
+endfunction()

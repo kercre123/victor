@@ -27,7 +27,6 @@
 #include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/block.h"
-#include "engine/blockWorld/blockConfigurationManager.h"
 #include "engine/bridge.h"
 #include "engine/charger.h"
 #include "engine/components/carryingComponent.h"
@@ -99,8 +98,8 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   BlockWorld::BlockWorld()
-  : UnreliableComponent<BCComponentID>(BCComponentID::BlockWorld)
-  , IDependencyManagedComponent<RobotComponentID>(RobotComponentID::BlockWorld)
+  : UnreliableComponent<BCComponentID>(this, BCComponentID::BlockWorld)
+  , IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::BlockWorld)
   , _lastPlayAreaSizeEventSec(0)
   , _playAreaSizeEventIntervalSec(60)
   , _didObjectsChange(false)
@@ -114,7 +113,6 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
   {
     _robot = robot;
     DEV_ASSERT(_robot != nullptr, "BlockWorld.Constructor.InvalidRobot");
-    _blockConfigurationManager = std::make_unique<BlockConfigurations::BlockConfigurationManager>(*robot);
     
     
     // TODO: Create each known block / matpiece from a configuration/definitions file
@@ -1138,11 +1136,6 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
     // ones as well.
     BroadcastLocatedObjectStates();
     
-    
-    // Since object origins have changed we need to force a configuration
-    // update during the configuration manager's update
-    _blockConfigurationManager->FlagForRebuild();
-    
     return result;
   }
   
@@ -1803,43 +1796,6 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
 
     AddLocatedObject(markerlessObject);
     _didObjectsChange = true;
-    
-    // add cliffs to memory map, or other objects if feature is enabled
-    switch (type) {
-      case ObjectType::CliffDetection:
-      {
-        // cliffs currently have extra data (for directionality and position)
-        Pose3d cliffPose = obsPose.GetWithRespectToRoot();
-        MemoryMapData_Cliff cliffData(cliffPose, lastTimestamp);
-        
-        // calculate cliff quad where it's being placed (wrt origin since memory map is 2d wrt current origin)
-        const Quad2f& cliffQuad = markerlessObject->GetBoundingQuadXY( cliffPose );
-      
-        INavMap* currentNavMemoryMap = _robot->GetMapComponent().GetCurrentMemoryMap();
-        DEV_ASSERT(currentNavMemoryMap, "BlockWorld.AddMarkerlessObject.NoMemoryMap");
-        currentNavMemoryMap->AddQuad(cliffQuad, cliffData);
-        break;
-      }
-      case ObjectType::ProxObstacle:
-      {
-        const Vec3f rotatedFwdVector = _robot->GetPose().GetWithRespectToRoot().GetRotation() * X_AXIS_3D();
-        MemoryMapData_ProxObstacle proxData(Vec2f{rotatedFwdVector.x(), rotatedFwdVector.y()}, lastTimestamp);
-        
-        const Quad2f& proxQuad = markerlessObject->GetBoundingQuadXY( p.GetWithRespectToRoot() );
-        
-        INavMap* currentNavMemoryMap = _robot->GetMapComponent().GetCurrentMemoryMap();
-        DEV_ASSERT(currentNavMemoryMap, "BlockWorld.AddMarkerlessObject.NoMemoryMap");
-        
-        currentNavMemoryMap->AddQuad(proxQuad, proxData);
-        break;
-      }
-      default:
-      {
-        // Don't do anything for object types that don't need to be added to memory map
-        break;
-      }
-    }
-
     _robotMsgTimeStampAtChange = fmax(lastTimestamp, _robot->GetMapComponent().GetCurrentMemoryMap()->GetLastChangedTimeStamp());
     
     return RESULT_OK;
@@ -2314,9 +2270,6 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
         }
       }
     }
-    
-    // notify the block configuration manager
-    _blockConfigurationManager->SetObjectPoseChanged(objectID, object.GetPoseState());
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -2607,10 +2560,6 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
       
       ModifyLocatedObjects(markAsDirty, unobservedCollidingObjectFilter);
     }
-    
-    //Update  block configurations now that all block poses have been updated
-    _blockConfigurationManager->Update(*_robot);
-    
     
     Result lastResult = UpdateMarkerlessObjects(_robot->GetLastImageTimeStamp());
     

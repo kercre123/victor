@@ -120,49 +120,6 @@ namespace Anki {
     #pragma mark ---- RobotAudioAction ----
     // TODO: VIC-30 - Implement RobotAudioAction
 
-    
-    class TriggerCubeAnimationAction : public IAction
-    {
-    private:
-      // This action has a private constructor to prevent usage from within engine code. This is because
-      // this action plays a cube light anim on the User/Game layer instead of the Engine layer
-      // Note: If you want to control cube lights from within engine use PlayLightAnim() in cubeLightComponent
-      friend IActionRunner* GetPlayCubeAnimationHelper(Robot& robot, const ExternalInterface::PlayCubeAnimationTrigger& msg);
-      
-      // Plays a light animation on an object. The action will complete when the animation finishes
-      TriggerCubeAnimationAction(const ObjectID& objectID,
-                                 const CubeAnimationTrigger& trigger);
-      virtual ~TriggerCubeAnimationAction();
-      
-    protected:
-      virtual ActionResult Init() override;
-      virtual ActionResult CheckIfDone() override;
-      
-    private:
-      ObjectID _objectID;
-      CubeAnimationTrigger _trigger = CubeAnimationTrigger::Count;
-      bool _animEnded = false;
-    };
-
-    // if Cozmo is expressing a severe need, this action will automatically play the correct get-out
-    // animation, and clear that need expression. Otherwise, it will succeed immediately
-    class PlayNeedsGetOutAnimIfNeeded : public TriggerAnimationAction
-    {
-      using Base = TriggerAnimationAction;
-    public:
-      PlayNeedsGetOutAnimIfNeeded();
-      
-      virtual ~PlayNeedsGetOutAnimIfNeeded();
-      
-    protected:
-      virtual ActionResult Init() override;
-      virtual ActionResult CheckIfDone() override;
-
-    private:
-      bool _hasClearedExpression = false;
-    };
-      
-  
   }
 }
 

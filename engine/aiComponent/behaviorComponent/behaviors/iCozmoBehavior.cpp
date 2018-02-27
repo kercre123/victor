@@ -19,18 +19,19 @@
 #include "engine/actions/driveToActions.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/aiInformationAnalysis/aiInformationAnalyzer.h"
-#include "engine/aiComponent/behaviorComponent/anonymousBehaviorFactory.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
-#include "engine/aiComponent/behaviorComponent/behaviorComponentCloudReceiver.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorFactory.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTimers.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
-#include "engine/aiComponent/behaviorHelperComponent.h"
-#include "engine/aiComponent/severeNeedsComponent.h"
+#include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
-#include "engine/aiComponent/beiConditions/conditions/conditionCloudIntentPending.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionTriggerWordPending.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionUserIntentPending.h"
+#include "engine/aiComponent/continuityComponent.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/cubeLightComponent.h"
 #include "engine/components/movementComponent.h"
@@ -41,13 +42,11 @@
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/moodSystem/moodManager.h"
-#include "engine/needsSystem/needsManager.h"
 #include "engine/robotInterface/messageHandler.h"
-#include "engine/robotManager.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
-#include "clad/types/behaviorComponent/cloudIntents.h"
+#include "clad/types/behaviorComponent/userIntent.h"
 
 #include "util/enums/stringToEnumMapper.hpp"
 #include "util/fileUtils/fileUtils.h"
@@ -61,23 +60,24 @@ namespace Cozmo {
 namespace {
 static const char* kBehaviorClassKey                 = "behaviorClass";
 static const char* kBehaviorIDConfigKey              = "behaviorID";
-static const char* kNeedsActionIDKey                 = "needsActionID";
-static const char* kDisplayNameKey                   = "displayNameKey";
 
 static const char* kRequiredUnlockKey                = "requiredUnlockId";
-static const char* kRequiredSevereNeedsStateKey      = "requiredSevereNeedsState";
 static const char* kRequiredDriveOffChargerKey       = "requiredRecentDriveOffCharger_sec";
 static const char* kRequiredParentSwitchKey          = "requiredRecentSwitchToParent_sec";
 static const char* kExecutableBehaviorTypeKey        = "executableBehaviorType";
 static const char* kAlwaysStreamlineKey              = "alwaysStreamline";
 static const char* kWantsToBeActivatedCondConfigKey  = "wantsToBeActivatedCondition";
-static const char* kRespondToCloudIntentKey          = "respondToCloudIntent";
+static const char* kRespondToUserIntentsKey          = "respondToUserIntents";
+static const char* kClaimUserIntentDataKey           = "claimUserIntentData";
+static const char* kRespondToTriggerWordKey          = "respondToTriggerWord";
+static const char* kResetTimersKey                   = "resetTimers";
 static const std::string kIdleLockPrefix             = "Behavior_";
 
 // Keys for loading in anonymous behaviors
 static const char* kAnonymousBehaviorMapKey          = "anonymousBehaviors";
 static const char* kAnonymousBehaviorName            = "behaviorName";
-static const char* kAnonymousBehaviorParams          = "params";
+  
+static const char* kBehaviorDebugLabel               = "debugLabel";
 }
 
   
@@ -149,33 +149,37 @@ BehaviorClass ICozmoBehavior::ExtractBehaviorClassFromConfig(const Json::Value& 
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-NeedsActionId ICozmoBehavior::ExtractNeedsActionIDFromConfig(const Json::Value& config)
+std::string ICozmoBehavior::MakeUniqueDebugLabelFromConfig(const Json::Value& config)
 {
-  const Json::Value& needsActionIDJson = config[kNeedsActionIDKey];
-  const char* needsActionIDString = needsActionIDJson.isString() ? needsActionIDJson.asCString() : "";
-  if (!needsActionIDString[0])
-  {
-    return NeedsActionId::NoAction;
+  std::string ret;
+  const BehaviorID behaviorID = ExtractBehaviorIDFromConfig( config );
+  if( config.isMember(kBehaviorDebugLabel) ) {
+    ret = config[kBehaviorDebugLabel].asString();
+  } else {
+    ret = BehaviorTypesWrapper::BehaviorIDToString( behaviorID );
   }
-  return NeedsActionIdFromString(needsActionIDString);
+  // now make it unique and append the instance # if not the very first
+  // this will be unique per BehaviorID instead of per "kBehaviorDebugLabel," but theyre usually the same
+  static std::unordered_map<BehaviorID, unsigned int> counts;
+  const auto index = counts[behaviorID]++; // and post-increment
+  if( index > 0 ) {
+    ret += std::to_string(index);
+  }
+  return ret;
 }
-
-
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ICozmoBehavior::ICozmoBehavior(const Json::Value& config)
-: IBehavior(BehaviorTypesWrapper::BehaviorIDToString(ExtractBehaviorIDFromConfig(config)))
+: IBehavior( MakeUniqueDebugLabelFromConfig( config ) )
 , _requiredProcess( AIInformationAnalysis::EProcess::Invalid )
 , _lastRunTime_s(0.0f)
 , _activatedTime_s(0.0f)
 , _id(ExtractBehaviorIDFromConfig(config))
-, _idString(BehaviorTypesWrapper::BehaviorIDToString(_id))
 , _behaviorClassID(ExtractBehaviorClassFromConfig(config))
-, _needsActionID(ExtractNeedsActionIDFromConfig(config))
 , _executableType(BehaviorTypesWrapper::GetDefaultExecutableBehaviorType())
-, _respondToCloudIntent(CloudIntent::Count)
+, _claimUserIntentData( true )
+, _respondToTriggerWord( false )
 , _requiredUnlockId( UnlockId::Count )
-, _requiredSevereNeed( NeedId::Count )
 , _requiredRecentDriveOffCharger_sec(-1.0f)
 , _requiredRecentSwitchToParent_sec(-1.0f)
 , _isActivated(false)
@@ -190,8 +194,6 @@ ICozmoBehavior::ICozmoBehavior(const Json::Value& config)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
 {
-  JsonTools::GetValueOptional(config, kDisplayNameKey, _displayNameKey);
-
   // - - - - - - - - - -
   // Required unlock
   // - - - - - - - - - -
@@ -205,27 +207,12 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
     if (requiredUnlock != UnlockId::Count) {
       PRINT_CH_DEBUG(LOG_CHANNEL, "ICozmoBehavior.ReadFromJson.RequiredUnlock",
                      "Behavior '%s' requires unlock '%s'",
-                     GetIDStr().c_str(), requiredUnlockJson.asString().c_str());
+                     GetDebugLabel().c_str(), requiredUnlockJson.asString().c_str());
       _requiredUnlockId = requiredUnlock;
     } else {
       PRINT_NAMED_ERROR("ICozmoBehavior.ReadFromJson.InvalidUnlockId", "Could not convert string to unlock id '%s'",
         requiredUnlockJson.asString().c_str());
     }
-  }
-
-  // - - - - - - - - - - - - - -
-  // Required severe needs state
-  // - - - - - - - - - - - - - -
-  const Json::Value& requiredSevereNeedJson = config[kRequiredSevereNeedsStateKey];
-  if( !requiredSevereNeedJson.isNull() ) {
-    DEV_ASSERT(requiredSevereNeedJson.isString(), "ICozmoBehavior.ReadFromJson.NonStringRequiredNeedsState");
-
-    _requiredSevereNeed = NeedIdFromString(requiredSevereNeedJson.asString());
-    ANKI_VERIFY(_requiredSevereNeed != NeedId::Count,
-                "ICozmoBehavior.ReadFromJson.ConfigError.InvalidRequiredSevereNeed",
-                "%s: Required severe need '%s' converted to Count. This field is optional",
-                GetIDStr().c_str(),
-                requiredSevereNeedJson.asCString());
   }
   
   // - - - - - - - - - -
@@ -257,15 +244,32 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
   
   if(config.isMember(kWantsToBeActivatedCondConfigKey)){
     _wantsToBeActivatedConditions.push_back(
-      BEIConditionFactory::CreateBEICondition( config[kWantsToBeActivatedCondConfigKey] ) );
+      BEIConditionFactory::CreateBEICondition( config[kWantsToBeActivatedCondConfigKey], GetDebugLabel() ) );
   }
 
   if(config.isMember(kAnonymousBehaviorMapKey)){
     _anonymousBehaviorMapConfig = config[kAnonymousBehaviorMapKey];
   }    
+  
+  if(config.isMember(kRespondToUserIntentsKey)){
+    // create a ConditionUserIntentPending based on the config json
+    Json::Value json = ConditionUserIntentPending::GenerateConfig( config[kRespondToUserIntentsKey] );
+    // another shared_ptr is kept outside of the regular list _wantsToBeActivatedConditions to avoid casting
+    _respondToUserIntent = std::make_shared<ConditionUserIntentPending>( json );
+    _respondToUserIntent->SetOwnerDebugLabel( GetDebugLabel() );
+    _wantsToBeActivatedConditions.push_back( _respondToUserIntent );
     
-  if(config.isMember(kRespondToCloudIntentKey)){
-    _respondToCloudIntent = CloudIntentFromString(config[kRespondToCloudIntentKey].asCString());
+    _claimUserIntentData = config.get( kClaimUserIntentDataKey, true ).asBool();
+  }
+  
+  _respondToTriggerWord = config.get(kRespondToTriggerWordKey, false).asBool();
+  
+  JsonTools::GetVectorOptional(config, kResetTimersKey, _resetTimers);
+  for( const auto& timerName : _resetTimers ) {
+    ANKI_VERIFY( BehaviorTimerManager::IsValidName( timerName ),
+                 "ICozmoBehavior.ReadFromJson.InvalidTimer",
+                 "Timer '%s' is invalid",
+                 timerName.c_str() );
   }
 
   return true;
@@ -288,9 +292,8 @@ void ICozmoBehavior::InitInternal()
       strategy->Init(GetBEI());
     }
 
-    if(_respondToCloudIntent != CloudIntent::Count){
-      Json::Value config = ConditionCloudIntentPending::GenerateCloudIntentPendingConfig(_respondToCloudIntent);
-      IBEIConditionPtr strategy(BEIConditionFactory::CreateBEICondition(config));
+    if( _respondToTriggerWord ){
+      IBEIConditionPtr strategy(BEIConditionFactory::CreateBEICondition(BEIConditionType::TriggerWordPending, GetDebugLabel()));
       strategy->Init(GetBEI());
       _wantsToBeActivatedConditions.push_back(strategy);
     }
@@ -298,42 +301,71 @@ void ICozmoBehavior::InitInternal()
   }
 
   if(!_anonymousBehaviorMapConfig.empty()){
-    AnonymousBehaviorFactory factory(GetBEI().GetBehaviorContainer()); 
     for(auto& entry: _anonymousBehaviorMapConfig){
       const std::string debugStr = "ICozmoBehavior.ReadFromJson.";
       
-      const std::string behaviorName = JsonTools::ParseString(entry, kAnonymousBehaviorName, debugStr + "BehaviorNameMissing");      
-      const BehaviorClass behaviorClass = BehaviorTypesWrapper::BehaviorClassFromString(
-        JsonTools::ParseString(entry, kBehaviorClassKey, debugStr + "BehaviorClassMissing"));
-      Json::Value params;
-      if(entry.isMember(kAnonymousBehaviorParams)){
-        params = entry[kAnonymousBehaviorParams];
+      const std::string behaviorName = JsonTools::ParseString(entry, kAnonymousBehaviorName, debugStr + "BehaviorNameMissing");
+
+      const bool isBehaviorID = BehaviorTypesWrapper::IsValidBehaviorID(behaviorName);
+      ANKI_VERIFY(!isBehaviorID,
+                  "ICozmoBehavior.InitInternal.AnonymousNameIsABehaviorID",
+                  "behavior '%s' declares an anonymous behavior named '%s', but that matches an existing behavior ID",
+                  GetDebugLabel().c_str(),
+                  behaviorName.c_str());
+      
+      if( !entry.isMember( kBehaviorDebugLabel ) ) {
+        entry[kBehaviorDebugLabel] = "@" + behaviorName;
+      } else {
+        PRINT_NAMED_ERROR("ICozmoBehavior.InitInternal.AnonymousParamIsReserved",
+                          "anon behavior '%s' contains the reserved field '%s'",
+                          GetDebugLabel().c_str(),
+                          kBehaviorDebugLabel );
       }
+
+      if( entry.isMember( kBehaviorIDConfigKey ) ) {
+        PRINT_NAMED_ERROR("ICozmoBehavior.InitInternal.AnonymousBehaviorHasID",
+                          "Anonymous behaviors cannot contain IDs. Anonymous behavior '%s' defined in behavior '%s'"
+                          "had id '%s'. Overwriting with 'Anonymous'",
+                          behaviorName.c_str(),
+                          GetDebugLabel().c_str(),
+                          entry[kBehaviorIDConfigKey].asCString());
+      }
+      
+      entry[kBehaviorIDConfigKey] = BehaviorTypesWrapper::BehaviorIDToString(BEHAVIOR_ID(Anonymous));
 
       // check for duplicate behavior names since maps require a unique key
       auto it = _anonymousBehaviorMap.find(behaviorName);
       if(it == _anonymousBehaviorMap.end()){
-        auto resultPair = _anonymousBehaviorMap.insert(std::make_pair(behaviorName,
-                                                       factory.CreateBehavior(behaviorClass, params)));
+        ICozmoBehaviorPtr newBehavior = BehaviorFactory::CreateBehavior(entry);
+        if( ANKI_VERIFY(newBehavior != nullptr,
+                        "ICozmoBehavior.InitInternal.FailedToCreateAnonymousBehavior",
+                        "Could not create anonymous behavior with name '%s'",
+                        behaviorName.c_str()) ) {
 
-        DEV_ASSERT_MSG(resultPair.first->second != nullptr, "ICozmoBehavior.InitInternal.FailedToAllocateAnonymousBehavior",
-                       "Failed to allocate new anonymous behavior (%s) within behavior %s",
-                       behaviorName.c_str(),
-                       GetIDStr().c_str());
+          auto resultPair = _anonymousBehaviorMap.insert(std::make_pair(behaviorName, newBehavior));
 
-        // we need to initlaize the anon behaviors as well
-        resultPair.first->second->Init(GetBEI());
-        resultPair.first->second->InitBehaviorOperationModifiers();
+          DEV_ASSERT_MSG(resultPair.first->second != nullptr,
+                         "ICozmoBehavior.InitInternal.FailedToAllocateAnonymousBehavior",
+                         "Failed to allocate new anonymous behavior (%s) within behavior %s",
+                         behaviorName.c_str(),
+                         GetDebugLabel().c_str());
+
+          // we need to initlaize the anon behaviors as well
+          newBehavior->Init(GetBEI());
+          newBehavior->InitBehaviorOperationModifiers();
+        }
       }
       else
       {
         PRINT_NAMED_ERROR("ICozmoBehavior.InitInternal.DuplicateAnonymousBehaviorName",
                           "Duplicate anonymous behavior name (%s) found for behavior '%s'",
                           behaviorName.c_str(),
-                          GetIDStr().c_str());
+                          GetDebugLabel().c_str());
       }
     }
   }
+  // Don't need the map anymore, plus map is altered as part of iteration so it's no longer valid
+  _anonymousBehaviorMapConfig.clear();
 
 
   // Allow internal init to happen before subscribing to tags in case additional
@@ -366,23 +398,142 @@ void ICozmoBehavior::InitBehaviorOperationModifiers()
   GetBehaviorOperationModifiers(_operationModifiers);
 }
 
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehavior::SetRespondToCloudIntent(CloudIntent intent)
+void ICozmoBehavior::SetDontActivateThisTick(const std::string& coordinatorName)
+{
+  _dontActivateCoordinator = coordinatorName;
+  _tickDontActivateSetFor = BaseStationTimer::getInstance()->GetTickCount();
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::AddWaitForUserIntent( UserIntentTag intentTag )
+{
+  if( !ANKI_VERIFY( !_initHasBeenCalled,
+                    "ICozmoBehavior.AddWaitForUserIntent.TagAfterInit",
+                    "behavior '%s' trying to set user intent '%s' after init has already been called",
+                    GetDebugLabel().c_str(),
+                    UserIntentTagToString(intentTag) ) )
+  {
+    return;
+  }
+  if( !ANKI_VERIFY( intentTag != USER_INTENT(INVALID),
+                    "ICozmoBehavior.AddWaitForUserIntent.TagInvalid",
+                    "behavior '%s' trying to set invalid user intent. use ClearWaitForUserIntent",
+                    GetDebugLabel().c_str()) )
+  {
+    return;
+  }
+  
+
+  if( _respondToUserIntent == nullptr ) {
+    _respondToUserIntent = std::make_shared<ConditionUserIntentPending>();
+    _respondToUserIntent->SetOwnerDebugLabel( GetDebugLabel() );
+    _wantsToBeActivatedConditions.push_back( _respondToUserIntent );
+  }
+  _respondToUserIntent->AddUserIntent( intentTag );
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::AddWaitForUserIntent( UserIntent&& intent )
+{
+  if( !ANKI_VERIFY( !_initHasBeenCalled,
+                    "ICozmoBehavior.AddWaitForUserIntent.IntentAfterInit",
+                    "behavior '%s' trying to set user intent '%s' after init has already been called",
+                    GetDebugLabel().c_str(),
+                    UserIntentTagToString(intent.GetTag() ) ) )
+  {
+    return;
+  }
+  if( !ANKI_VERIFY( intent.GetTag() != USER_INTENT(INVALID),
+                    "ICozmoBehavior.AddWaitForUserIntent.IntentInvalid",
+                    "behavior '%s' trying to set invalid user intent. use ClearWaitForUserIntent",
+                    GetDebugLabel().c_str()) )
+  {
+    return;
+  }
+  
+
+  if( _respondToUserIntent == nullptr ) {
+    _respondToUserIntent = std::make_shared<ConditionUserIntentPending>();
+    _respondToUserIntent->SetOwnerDebugLabel( GetDebugLabel() );
+    _wantsToBeActivatedConditions.push_back( _respondToUserIntent );
+  }
+  _respondToUserIntent->AddUserIntent( std::move(intent) );
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::AddWaitForUserIntent( UserIntentTag tag, EvalUserIntentFunc&& func )
+{
+  if( !ANKI_VERIFY( !_initHasBeenCalled,
+                    "ICozmoBehavior.AddWaitForUserIntent.FuncAfterInit",
+                    "behavior '%s' trying to set user intent '%s' after init has already been called",
+                    GetDebugLabel().c_str(),
+                    UserIntentTagToString(tag) ) )
+  {
+    return;
+  }
+  if( !ANKI_VERIFY( tag != USER_INTENT(INVALID),
+                    "ICozmoBehavior.AddWaitForUserIntent.FuncTagInvalid",
+                    "behavior '%s' trying to set invalid user intent. use ClearWaitForUserIntent",
+                    GetDebugLabel().c_str()) )
+  {
+    return;
+  }
+  
+  if( !ANKI_VERIFY( func != nullptr,
+                   "ICozmoBehavior.AddWaitForUserIntent.FuncInvalid",
+                   "behavior '%s' trying to set invalid lambda. use an overloaded method",
+                   GetDebugLabel().c_str()) )
+  {
+    return;
+  }
+  
+
+  if( _respondToUserIntent == nullptr ) {
+    _respondToUserIntent = std::make_shared<ConditionUserIntentPending>();
+    _respondToUserIntent->SetOwnerDebugLabel( GetDebugLabel() );
+    _wantsToBeActivatedConditions.push_back( _respondToUserIntent );
+  }
+  _respondToUserIntent->AddUserIntent( tag, std::move(func) );
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::ClearWaitForUserIntent()
+{
+  if( _respondToUserIntent != nullptr ) {
+    auto remIt = std::remove_if( _wantsToBeActivatedConditions.begin(),
+                                 _wantsToBeActivatedConditions.end(),
+                                 [&ref=_respondToUserIntent](const IBEIConditionPtr ptr) {
+                                   return ref == ptr;
+                                 });
+    _wantsToBeActivatedConditions.erase( remIt );
+    _respondToUserIntent.reset();
+  } else {
+    PRINT_NAMED_WARNING( "ICozmoBehavior.ClearWaitForUserIntent.Empty",
+                         "behavior '%s' clearing wait for user intent, but it was never set",
+                         GetDebugLabel().c_str() );
+    
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::SetRespondToTriggerWord(bool shouldRespond)
 {
   if( ANKI_VERIFY( !_initHasBeenCalled,
-                   "ICozmoBehavior.SetRespondToCloudIntent.AfterInit",
-                   "behavior '%s' trying to set cloud intent to '%s' after init has already been called",
-                   GetIDStr().c_str(),
-                   CloudIntentToString(intent)) ) {
-    if( _respondToCloudIntent != CloudIntent::Count ) {
-      PRINT_NAMED_WARNING("ICozmoBehavior.SetRespondToCloudIntent.ReplaceIntent",
-                          "behavior '%s' setting cloud intent to '%s', but it was previously '%s'",
-                          GetIDStr().c_str(),
-                          CloudIntentToString(intent),
-                          CloudIntentToString(_respondToCloudIntent));
+                   "ICozmoBehavior.SetRespondToTriggerWord.AfterInit",
+                   "behavior '%s' trying to set trigger word after init has already been called",
+                   GetDebugLabel().c_str()) ) {
+    if( _respondToTriggerWord ) {
+      PRINT_NAMED_WARNING("ICozmoBehavior.SetRespondToTriggerWord.Replace",
+                          "behavior '%s' setting should respond to %d, but it was previously %d",
+                          GetDebugLabel().c_str(),
+                          shouldRespond,
+                          _respondToTriggerWord);
     }
 
-    _respondToCloudIntent = intent;
+    _respondToTriggerWord = shouldRespond;
   }
 }
 
@@ -408,7 +559,7 @@ void ICozmoBehavior::SubscribeToTags(std::set<RobotInterface::RobotToEngineTag> 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::OnActivatedInternal()
 {
-  PRINT_CH_INFO("Behaviors", (GetIDStr() + ".Init").c_str(), "Starting...");
+  PRINT_CH_INFO("Behaviors", (GetDebugLabel() + ".Init").c_str(), "Starting...");
   
   // Check if there are any engine-generated actions in the action list, because there shouldn't be!
   // If there is, a behavior probably didn't use DelegateIfInControl() where it should have.
@@ -439,27 +590,58 @@ void ICozmoBehavior::OnActivatedInternal()
   if (engineActionStillRunning) {
     PRINT_NAMED_WARNING("ICozmoBehavior.Init.ActionsInQueue",
                         "Initializing %s: %zu actions already in queue",
-                        GetIDStr().c_str(), robot.GetActionList().GetQueueLength(0));
+                        GetDebugLabel().c_str(), robot.GetActionList().GetQueueLength(0));
   }**/
   
   _isActivated = true;
-  _stopRequestedAfterAction = false;
-  _actionCallback = nullptr;
-  _behaviorDelegateCallback = nullptr;
+  _delegationCallback = nullptr;
   _activatedTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _hasSetIdle = false;
   _startCount++;
   
-  // Clear cloud intent if responding to it
-  if(_respondToCloudIntent != CloudIntent::Count){
-    GetBEI().GetAIComponent().GetBehaviorComponent().
-                 GetCloudReceiver().ClearIntentIfPending(_respondToCloudIntent);
+  // Clear user intent if responding to it. Since _respondToUserIntent is initialized, this
+  // behavior has a BEI condition that won't be true unless the specific user intent is pending.
+  // If this behavior was activated, then it must have been true, so it suffices to check if it's
+  // initialized instead of evaluating it here.
+  if( _respondToUserIntent != nullptr ) {
+    auto tag = _respondToUserIntent->GetUserIntentTagSelected();
+    if( tag != USER_INTENT(INVALID) ) {
+      auto& uic = GetBEI().GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
+      if( _claimUserIntentData ) {
+        // u now pwn it
+        _pendingIntent.reset( uic.ClearUserIntentWithOwnership( tag ) );
+      } else {
+        uic.ClearUserIntentWithPreservation( tag, GetID() );
+      }
+    } else {
+      // this can happen in tests
+      PRINT_NAMED_WARNING("ICozmoBehavior.OnActivatedInternal.InvalidTag",
+                          "_respondToUserIntent said it was responding to the INVALID tag" );
+      _pendingIntent.reset();
+    }
+  }
+  
+  // Clear trigger word if responding to it
+  if( _respondToTriggerWord ) {
+    GetBEI().GetAIComponent().GetBehaviorComponent().GetUserIntentComponent().ClearPendingTriggerWord();
   }
 
   // Handle Vision Mode Subscriptions
   if(!_operationModifiers.visionModesForActiveScope->empty()){
     GetBEI().GetVisionScheduleMediator().SetVisionModeSubscriptions(this, 
       *_operationModifiers.visionModesForActiveScope);
+  }
+
+  // Manage state for any IBEIConditions used by this Behavior
+  // Conditions may not be evaluted when the behavior is Active
+  for(auto& strategy: _wantsToBeActivatedConditions){
+    strategy->SetActive(GetBEI(), false);
+  }
+  
+  // reset any timers
+  for( const auto& timerName : _resetTimers ) {
+    auto timer = BehaviorTimerManager::BehaviorTimerFromString( timerName );
+    GetBEI().GetBehaviorTimerManager().GetTimer( timer  ).Reset();
   }
 
   OnBehaviorActivated();
@@ -470,17 +652,19 @@ void ICozmoBehavior::OnEnteredActivatableScopeInternal()
 {
   if ( _requiredProcess != AIInformationAnalysis::EProcess::Invalid ){
     auto& infoProcessor = GetBEI().GetAIComponent().GetAIInformationAnalyzer();
-    infoProcessor.AddEnableRequest(_requiredProcess, GetIDStr().c_str());
-  }
-
-  for( auto& strategy : _wantsToBeActivatedConditions ) {
-    strategy->Reset(GetBEI());
+    infoProcessor.AddEnableRequest(_requiredProcess, GetDebugLabel().c_str());
   }
 
   // Handle Vision Mode Subscriptions
   if(!_operationModifiers.visionModesForActivatableScope->empty()){
     GetBEI().GetVisionScheduleMediator().SetVisionModeSubscriptions(this, 
       *_operationModifiers.visionModesForActivatableScope);
+  }
+
+  // Manage state for any IBEIConditions used by this Behavior
+  // Conditions may be evaluted when the behavior is inside the Activatable Scope
+  for(auto& strategy: _wantsToBeActivatedConditions){
+    strategy->SetActive(GetBEI(), true);
   }
 
 }
@@ -491,27 +675,32 @@ void ICozmoBehavior::OnLeftActivatableScopeInternal()
 {
   if ( _requiredProcess != AIInformationAnalysis::EProcess::Invalid ){
     auto& infoProcessor = GetBEI().GetAIComponent().GetAIInformationAnalyzer();
-    infoProcessor.RemoveEnableRequest(_requiredProcess, GetIDStr().c_str());
+    infoProcessor.RemoveEnableRequest(_requiredProcess, GetDebugLabel().c_str());
   }
 
   GetBEI().GetVisionScheduleMediator().ReleaseAllVisionModeSubscriptions(this);
+
+  // Manage state for any IBEIConditions used by this Behavior
+  // Conditions may not be evaluted when the behavior is outside the Activatable Scope
+  for(auto& strategy: _wantsToBeActivatedConditions){
+    strategy->SetActive(GetBEI(), false);
+  }
+
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::OnDeactivatedInternal()
 {
-  PRINT_CH_INFO("Behaviors", (GetIDStr() + ".Stop").c_str(), "Stopping...");
-
-  // If the behavior delegated off to a helper, stop that first
-  if(!_currentHelperHandle.expired()){
-    StopHelperWithoutCallback();
-  }
+  PRINT_CH_INFO("Behaviors", (GetDebugLabel() + ".Stop").c_str(), "Stopping...");
   
   _isActivated = false;
   OnBehaviorDeactivated();
   _lastRunTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   CancelDelegates(false);
+  
+  // Clear callbacks
+  _delegationCallback = nullptr;
   
   if(_hasSetIdle){
     SmartRemoveIdleAnimation();
@@ -521,6 +710,12 @@ void ICozmoBehavior::OnDeactivatedInternal()
   if(!_operationModifiers.visionModesForActivatableScope->empty()){
     GetBEI().GetVisionScheduleMediator().SetVisionModeSubscriptions(this, 
       *_operationModifiers.visionModesForActivatableScope);
+  }
+
+  // Manage state for any IBEIConditions used by this Behavior:
+  // Conditions may be evaluted when inactive, if in Activatable scope
+  for(auto& strategy: _wantsToBeActivatedConditions){
+    strategy->SetActive(GetBEI(), true);
   }
 
   // clear the path component motion profile if it was set by the behavior
@@ -537,22 +732,14 @@ void ICozmoBehavior::OnDeactivatedInternal()
   _lockingNameToTracksMap.clear();
   _customLightObjects.clear();
   
-  DEV_ASSERT(_smartLockIDs.empty(), "ICozmoBehavior.Stop.DisabledReactionsNotEmpty");
-}
-  
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehavior::StopOnNextActionComplete()
-{
-  if( !_stopRequestedAfterAction ) {
-    PRINT_CH_INFO("Behaviors", (GetIDStr() + ".StopOnNextActionComplete").c_str(),
-                  "Behavior has been asked to stop on the next complete action");
+  if( (_respondToUserIntent != nullptr) && (!_claimUserIntentData) ) {
+    // make sure a delegate of this behavior claimed the intent that we preserved for them, and
+    // remove it if not
+    auto& uic = GetBEI().GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
+    uic.ResetPreservedUserIntents( GetID() );
   }
   
-  // clear the callback and don't let any new actions start
-  _stopRequestedAfterAction = true;
-  _actionCallback = nullptr;
-  _behaviorDelegateCallback = nullptr;
+  DEV_ASSERT(_smartLockIDs.empty(), "ICozmoBehavior.Stop.DisabledReactionsNotEmpty");
 }
 
 
@@ -578,8 +765,15 @@ bool ICozmoBehavior::WantsToBeActivatedBase() const
   // Some reaction trigger strategies allow behaviors to interrupt themselves.
   DEV_ASSERT(!IsActivated(), "ICozmoBehavior.WantsToBeActivatedCalledOnRunningBehavior");
   if (IsActivated()) {
-    PRINT_CH_DEBUG("Behaviors", "ICozmoBehavior.WantsToBeActivatedBase", "Behavior %s is already running", GetIDStr().c_str());
+    PRINT_CH_DEBUG("Behaviors", "ICozmoBehavior.WantsToBeActivatedBase", "Behavior %s is already running", GetDebugLabel().c_str());
     return true;
+  }
+
+  if(_tickDontActivateSetFor == BaseStationTimer::getInstance()->GetTickCount()){
+    PRINT_NAMED_INFO("ICozmoBehavior.WantsToBeActivatedBase.DontActivateDueToCoordinator",
+                    "Behavior %s was asked not to activate during tick %zu by coordinator %s", 
+                    GetDebugLabel().c_str(), _tickDontActivateSetFor, _dontActivateCoordinator.c_str());
+    return false;
   }
 
   // check if required processes are running
@@ -590,16 +784,9 @@ bool ICozmoBehavior::WantsToBeActivatedBase() const
       PRINT_NAMED_ERROR("ICozmoBehavior.WantsToBeActivated.RequiredProcessNotFound",
         "Required process '%s' is not enabled for '%s'",
         AIInformationAnalysis::StringFromEProcess(_requiredProcess),
-        GetIDStr().c_str());
+        GetDebugLabel().c_str());
       return false;
     }
-  }
-
-  // check if a severe needs state is required
-  if( _requiredSevereNeed != NeedId::Count &&
-      _requiredSevereNeed != GetBEI().GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression() ) {
-    // not in the correct state
-    return false;
   }
 
   const float curTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -684,33 +871,11 @@ Util::RandomGenerator& ICozmoBehavior::GetRNG() const {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::UpdateInternal()
 {
-  // fist call the behavior delegation callback if there is one
-  if( IsActivated() &&
-      !IsControlDelegated() &&
-      _behaviorDelegateCallback != nullptr ) {
-
-    // make local copy to avoid any issues with the callback delegating to another behavior
-    auto callback = _behaviorDelegateCallback;
-    _behaviorDelegateCallback = nullptr;
-    callback();
-  }
-
   //// Event handling
   // Call message handling convenience functions
   UpdateMessageHandlingHelpers();
 
-  // Handle stop after requested action finishes
-  if(IsActivated()){
-    if(!IsActing()){
-      if(_stopRequestedAfterAction) {
-        // we've been asked to stop, so do that
-        if(GetBEI().HasDelegationComponent()){
-          auto& delegationComponent = GetBEI().GetDelegationComponent();
-          delegationComponent.CancelSelf(this);
-        }
-      }
-    }
-  }
+  CheckDelegationCallbacks();
 
   // Tick behavior update
   BehaviorUpdate();
@@ -729,15 +894,8 @@ void ICozmoBehavior::UpdateInternal()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::UpdateMessageHandlingHelpers()
-{
+{ 
   const auto& stateChangeComp = GetBEI().GetBehaviorEventComponent();
-  const auto& actionsCompleted = stateChangeComp.GetActionsCompletedThisTick();
-  for(auto& entry: actionsCompleted){
-    if(entry.idTag == _lastActionTag){
-      HandleActionComplete(entry);
-    }
-  }
-  
   for(const auto& event: stateChangeComp.GetGameToEngineEvents()){
     // Handle specific callbacks
     auto iter = _gameToEngineTags.find(event.GetData().GetTag());
@@ -799,18 +957,45 @@ bool ICozmoBehavior::IsControlDelegated() const
   
   return false;
 }
-  
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ICozmoBehavior::IsActing() const
+bool ICozmoBehavior::DelegateNow(IActionRunner* action, RobotCompletedActionCallback callback)
 {
-  if(GetBEI().HasDelegationComponent()){
-    auto& delegationComponent = GetBEI().GetDelegationComponent();
-    return delegationComponent.IsActing(this);
+  if(IsControlDelegated()){
+    CancelDelegates();
   }
-  
-  return false;
+  return DelegateIfInControl(action, callback);
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool ICozmoBehavior::DelegateNow(IActionRunner* action, ActionResultCallback callback)
+{
+  if(IsControlDelegated()){
+    CancelDelegates();
+  }
+  return DelegateIfInControl(action, callback);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool ICozmoBehavior::DelegateNow(IActionRunner* action, SimpleCallback callback)
+{
+  if(IsControlDelegated()){
+    CancelDelegates();
+  }
+  return DelegateIfInControl(action, callback);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool ICozmoBehavior::DelegateNow(IBehavior* delegate, SimpleCallback callback)
+{
+  if(IsControlDelegated()){
+    CancelDelegates();
+  }
+  return DelegateIfInControl(delegate, callback);
+}
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -819,55 +1004,38 @@ bool ICozmoBehavior::DelegateIfInControl(IActionRunner* action, RobotCompletedAc
   if(!GetBEI().HasDelegationComponent()) {
     PRINT_NAMED_ERROR("ICozmoBehavior.DelegateIfInControl.NoDelegationComponent",
                       "Behavior %s attempted to start action while it did not have control of delegation",
-                      GetIDStr().c_str());
+                      GetDebugLabel().c_str());
     delete action;
     return false;
   }
   
   auto& delegationComponent = GetBEI().GetDelegationComponent();
   if(!delegationComponent.HasDelegator(this)){
-    PRINT_NAMED_ERROR("ICozmoBehavior.DelegateIfInControl.NoDelegator",
+    PRINT_NAMED_ERROR("ICozmoBehavior.DelegateIfInControl.ControlAlreadyDelegated",
                       "Behavior %s attempted to start action while it did not have control of delegation",
-                      GetIDStr().c_str());
+                      GetDebugLabel().c_str());
     delete action;
     return false;
   }
   
   auto& delegateWrapper = delegationComponent.GetDelegator(this);
-
-  
-  // needed for StopOnNextActionComplete to work properly, don't allow starting new actions if we've requested
-  // the behavior to stop
-  if( _stopRequestedAfterAction ) {
-    delete action;
-    return false;
-  }
   
   if( !IsActivated() ) {
     PRINT_NAMED_WARNING("ICozmoBehavior.DelegateIfInControl.Failure.NotRunning",
                         "Behavior '%s' can't start %s action because it is not running",
-                        GetIDStr().c_str(), action->GetName().c_str());
+                        GetDebugLabel().c_str(), action->GetName().c_str());
     delete action;
     return false;
   }
 
-  if( IsActing() ) {
-    PRINT_NAMED_WARNING("ICozmoBehavior.DelegateIfInControl.Failure.AlreadyActing",
-                        "Behavior '%s' can't start %s action because it is already running an action in state %s",
-                        GetIDStr().c_str(), action->GetName().c_str(),
-                        GetDebugStateName().c_str());
-    delete action;
-    return false;
-  }
-
-  _actionCallback = callback;
+  _delegationCallback = callback;
   _lastActionTag = action->GetTag();
     
   return delegateWrapper.Delegate(this,
                                   action);
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ICozmoBehavior::DelegateIfInControl(IActionRunner* action, ActionResultCallback callback)
 {
@@ -886,7 +1054,7 @@ bool ICozmoBehavior::DelegateIfInControl(IActionRunner* action, SimpleCallback c
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ICozmoBehavior::DelegateIfInControl(IBehavior* delegate)
+bool ICozmoBehavior::DelegateIfInControl(IBehavior* delegate, BehaviorSimpleCallback callback)
 {
   if((GetBEI().HasDelegationComponent()) &&
      !GetBEI().GetDelegationComponent().IsControlDelegated(this)) {
@@ -894,6 +1062,12 @@ bool ICozmoBehavior::DelegateIfInControl(IBehavior* delegate)
     
     if( delegationComponent.HasDelegator(this)) {
       delegationComponent.GetDelegator(this).Delegate(this, delegate);
+      if(callback != nullptr){
+        _delegationCallback = [callback = std::move(callback)](const ExternalInterface::RobotCompletedAction& msg) 
+        {
+          callback();
+        };
+      }
       return true;
     }
   }
@@ -901,43 +1075,6 @@ bool ICozmoBehavior::DelegateIfInControl(IBehavior* delegate)
   return false;
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ICozmoBehavior::DelegateIfInControl(IBehavior* delegate,
-                                         BehaviorSimpleCallback callback)
-{
-  // TODO:(bn) unit test this!!!
-
-  if( DelegateIfInControl(delegate) ) {
-    _behaviorDelegateCallback = callback;
-    return true;
-  }
-  else {
-    // couldn't delegate (for whatever reason)
-    return false;
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ICozmoBehavior::DelegateNow(IBehavior* delegate)
-{
-  if(GetBEI().HasDelegationComponent()) {
-    auto& delegationComponent = GetBEI().GetDelegationComponent();
-    if( delegationComponent.IsControlDelegated(this) ) {
-      delegationComponent.CancelDelegates(this);
-    }
-    
-    DEV_ASSERT(!delegationComponent.IsControlDelegated(this), "IBehavior.DelegateNow.CanceledButStillNotInControl");
-    
-    if(delegationComponent.HasDelegator(this)) {
-      auto& delegator = delegationComponent.GetDelegator(this);
-      delegator.Delegate(this, delegate);
-      return true;
-    }
-  }
-  
-  return false;
-}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ICozmoBehaviorPtr ICozmoBehavior::FindAnonymousBehaviorByName(const std::string& behaviorName) const
@@ -952,39 +1089,46 @@ ICozmoBehaviorPtr ICozmoBehavior::FindAnonymousBehaviorByName(const std::string&
 
   return foundBehavior;
 }
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehavior::HandleActionComplete(const ExternalInterface::RobotCompletedAction& msg)
-{
-  if( _actionCallback ) {
 
-    // Note that the callback may itself call DelegateIfInControl and set _actionCallback. Because of that, we create
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::CheckDelegationCallbacks()
+{
+  // first call the behavior delegation callback if there is one
+  if( IsActivated() &&
+      !IsControlDelegated() &&
+      _delegationCallback != nullptr) {
+    // Note that the callback may itself call DelegateIfInControl and set _delegationCallback. Because of that, we create
     // a copy here so we can null out the member variable such that it can be re-set by callback (if desired)
-    auto callback = _actionCallback;
-    _actionCallback = nullptr;
-    
-    callback(msg);
+    auto callback = _delegationCallback;
+    _delegationCallback = nullptr;
+
+    // check to see if an action completed and provide the real action completed message
+    const auto& stateChangeComp = GetBEI().GetBehaviorEventComponent();
+    const auto& actionsCompleted = stateChangeComp.GetActionsCompletedThisTick();
+    for(const auto& entry: actionsCompleted){
+      if(entry.idTag == _lastActionTag){
+        callback(entry);
+        return;
+      }
+    }
+
+    // otherwise, it's a behavior callback so give it an empty action message
+    ExternalInterface::RobotCompletedAction empty;
+    callback(empty);
   }
+
+
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ICozmoBehavior::CancelDelegates(bool allowCallback, bool allowHelperToContinue)
+bool ICozmoBehavior::CancelDelegates(bool allowCallback)
 {
-  if( !allowHelperToContinue ) {
-    // stop the helper first. This is generally what we want, because if someone else is stopping an action,
-    // the helper likely won't know how to respond. Note that helpers can't call StopActing
-    if( !_currentHelperHandle.expired() ) {
-      PRINT_CH_INFO("Behaviors", (GetIDStr() + ".StopActing.WithoutCallback.StopHelper").c_str(),
-                    "Stopping behavior helper because action stopped without callback");
-    }
-    StopHelperWithoutCallback();
-  }    
   
   if( IsControlDelegated() ) {
     if(!allowCallback){
-      _actionCallback = nullptr;
-      _behaviorDelegateCallback = nullptr;
+      _delegationCallback = nullptr;
     }
     if(GetBEI().HasDelegationComponent()){
       GetBEI().GetDelegationComponent().CancelDelegates(this);
@@ -1013,35 +1157,20 @@ void ICozmoBehavior::BehaviorObjectiveAchieved(BehaviorObjective objectiveAchiev
   if(broadcastToGame && (robotExternalInterface != nullptr)){
     robotExternalInterface->BroadcastToGame<ExternalInterface::BehaviorObjectiveAchieved>(objectiveAchieved);
   }**/
-  PRINT_CH_INFO("Behaviors", "ICozmoBehavior.BehaviorObjectiveAchieved", "Behavior:%s, Objective:%s", GetIDStr().c_str(), EnumToString(objectiveAchieved));
+  PRINT_CH_INFO("Behaviors", "ICozmoBehavior.BehaviorObjectiveAchieved", "Behavior:%s, Objective:%s", GetDebugLabel().c_str(), EnumToString(objectiveAchieved));
   // send das event
-  Util::sEventF("robot.freeplay_objective_achieved", {{DDATA, EnumToString(objectiveAchieved)}}, "%s", GetIDStr().c_str());
+  Util::sEventF("robot.freeplay_objective_achieved", {{DDATA, EnumToString(objectiveAchieved)}}, "%s", GetDebugLabel().c_str());
 }
   
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehavior::NeedActionCompleted(NeedsActionId needsActionId)
-{
-  if (needsActionId == NeedsActionId::NoAction)
-  {
-    needsActionId = _needsActionID;
-  }
-  
-  if(GetBEI().HasNeedsManager()){
-    auto& needsManager = GetBEI().GetNeedsManager();
-    needsManager.RegisterNeedsActionCompleted(needsActionId);
-  }
-}
-
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::SmartPushIdleAnimation(AnimationTrigger animation)
 {
   if(ANKI_VERIFY(!_hasSetIdle,
                  "ICozmoBehavior.SmartPushIdleAnimation.IdleAlreadySet",
                  "Behavior %s has already set an idle animation",
-                 GetIDStr().c_str())){
+                 GetDebugLabel().c_str())){
     // TODO: Restore idle animations (VIC-366)
-    //robot.GetAnimationStreamer().PushIdleAnimation(animation, kIdleLockPrefix + GetIDStr());
+    //robot.GetAnimationStreamer().PushIdleAnimation(animation, kIdleLockPrefix + GetDebugLabel());
     _hasSetIdle = true;
   }
 }
@@ -1053,9 +1182,9 @@ void ICozmoBehavior::SmartRemoveIdleAnimation()
   if(ANKI_VERIFY(_hasSetIdle,
                  "ICozmoBehavior.SmartRemoveIdleAnimation.NoIdleSet",
                  "Behavior %s is trying to remove an idle, but none is currently set",
-                 GetIDStr().c_str())){
+                 GetDebugLabel().c_str())){
     // TODO: Restore idle animations (VIC-366)
-    //robot.GetAnimationStreamer().RemoveIdleAnimation(kIdleLockPrefix + GetIDStr());
+    //robot.GetAnimationStreamer().RemoveIdleAnimation(kIdleLockPrefix + GetDebugLabel());
     _hasSetIdle = false;
   }
 }
@@ -1146,92 +1275,28 @@ bool ICozmoBehavior::SmartRemoveCustomLightPattern(const ObjectID& objectID,
     return false;
   }
 }
- 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ICozmoBehavior::SmartDelegateToHelper(HelperHandle handleToRun,
-                                           SimpleCallback successCallback,
-                                           SimpleCallback failureCallback)
+UserIntent& ICozmoBehavior::GetTriggeringUserIntent()
 {
-  PRINT_CH_INFO("Behaviors", (GetIDStr() + ".SmartDelegateToHelper").c_str(),
-                "Behavior requesting to delegate to helper %s", handleToRun->GetName().c_str());
-
-  if(!_currentHelperHandle.expired()){
-   PRINT_NAMED_WARNING("ICozmoBehavior.SmartDelegateToHelper",
-                       "Attempted to start a handler while handle already running, stopping running helper");
-   StopHelperWithoutCallback();
+  if( ANKI_VERIFY( _pendingIntent,
+                   "ICozmoBehavior.GetTriggeringUserIntent.NoIntent",
+                   "Behavior '%s' called this without having been activated because of a user intent",
+                   GetDebugLabel().c_str() ) )
+  {
+    return *_pendingIntent;
+  } else {
+    static UserIntent emptyIntent;
+    return emptyIntent;
   }
-  
-  if(!GetBEI().HasDelegationComponent()){
-    PRINT_NAMED_ERROR("ICozmoBehavior.SmartDelegateToHelper.NotInControlOfDelegationComponent",
-                      "Behavior %s attempted to delegate while not in control",
-                      GetIDStr().c_str());
-    return false;
-  }
-  
-  auto& delegationComponent = GetBEI().GetDelegationComponent();
-
-  
-  if(!delegationComponent.HasDelegator(this)){
-    PRINT_NAMED_ERROR("ICozmoBehavior.SmartDelegateToHelper.NotInControlOfDelegator",
-                      "Behavior %s attempted to delegate while not in control",
-                      GetIDStr().c_str());
-    return false;
-  }
-  auto& delegateWrapper = delegationComponent.GetDelegator(this);
-
-  
-  // A bit of a hack while BSM is still under construction - essentially IsControlDelegated
-  // is now overloaded for both helpers and actions, but DelegateIfInControl needs to be able
-  // to distinguish the same IsActing used to indicate only actions - assigning
-  // this tmp handle indicates to behaviors that they've "delegated" and should allow
-  // helpers to queue actions - but if the delegation fails this tmp handle will fall
-  // out of scope as soon as this function ends so that _currentHelperHandle becomes
-  // invalid again
-  HelperHandle tmpHandle = GetBEI().GetAIComponent().GetBehaviorHelperComponent().
-                                        GetBehaviorHelperFactory().CreatePlaceBlockHelper(*this);
-  _currentHelperHandle = tmpHandle;
-  
-  const bool delegateSuccess = delegateWrapper.Delegate(this,
-                                                        handleToRun,
-                                                        successCallback,
-                                                        failureCallback);
-
-  if( delegateSuccess ) {
-    _currentHelperHandle = handleToRun;
-  }
-  else {
-    PRINT_CH_INFO("Behaviors", (GetIDStr() + "SmartDelegateToHelper.Failed").c_str(),
-                  "Failed to delegate to helper");
-  }
-  
-  return delegateSuccess;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorHelperFactory& ICozmoBehavior::GetBehaviorHelperFactory()
+void ICozmoBehavior::PlayEmergencyGetOut(AnimationTrigger anim)
 {
-  return GetBEI().GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ICozmoBehavior::StopHelperWithoutCallback()
-{
-  bool handleStopped = false;
-  auto handle = _currentHelperHandle.lock();
-  if( handle ) {
-    PRINT_CH_INFO("Behaviors", (GetIDStr() + ".SmartStopHelper").c_str(),
-                  "Behavior stopping its helper");
-    if(GetBEI().HasDelegationComponent()){
-      auto& delegationComponent = GetBEI().GetDelegationComponent();
-      delegationComponent.CancelDelegates(this);
-      handleStopped = true;
-    }
-  }
-  
-  return handleStopped;
+  auto& contComp = GetBEI().GetAIComponent().GetComponent<ContinuityComponent>(AIComponentID::ContinuityComponent);
+  contComp.PlayEmergencyGetOut(anim);
 }
 
 

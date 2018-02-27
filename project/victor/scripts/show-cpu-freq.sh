@@ -17,9 +17,11 @@ TOPLEVEL=`$GIT rev-parse --show-toplevel`
 source ${SCRIPT_PATH}/android_env.sh
 
 while true; do 
-  FREQ="$(adb shell cat "/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_cur_freq")"
-  TEMP="$(adb shell cat "/sys/devices/virtual/thermal/thermal_zone8/temp")"
+  # Get frequency and temperature
+  # (Remove trailing newline from cat output)
+  FREQ="$(adb shell "cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_cur_freq | xargs echo -n")"
+  TEMP="$(adb shell "cat /sys/devices/virtual/thermal/thermal_zone7/temp")"
 
-  echo "Freq_kHz: ${FREQ}, Temp_mC: ${TEMP}"
+  echo "Freq_kHz: ${FREQ}, Temp_C: ${TEMP}"
   sleep 1
 done

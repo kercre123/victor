@@ -28,10 +28,13 @@ enum uint_32 GenericState
 
 enum uint_32 Mood
 {
+  Angry = 1206605712,
+  Curious = 620622945,
   Happy = 1427264549,
   Invalid = 0,
   Neutral = 670611050,
   Sad = 443572635,
+  Surprised = 2662801688,
 }
 
 enum uint_32 Music
@@ -90,7 +93,17 @@ enum uint_32 StateGroupType
   Mood = 3128647864,
   Music = 3991942870,
   Music_Dimmer = 920031443,
+  Time_Of_Day = 207908541,
   Voice_Commands_Mode = 522893720,
+}
+
+enum uint_32 Time_Of_Day
+{
+  Afternoon = 390531879,
+  Evening = 2905060079,
+  Invalid = 0,
+  Morning = 1924633667,
+  Night = 1011622525,
 }
 
 enum uint_32 Voice_Commands_Mode

@@ -86,26 +86,10 @@ public:
 
   // Hook this up to whatever is ticking the game "heartbeat"
   Result Update(const BaseStationTime_t currTime_nanosec);
-
-  // Removing this now that robot availability emits a signal.
-  // Get list of available robots
-  //void GetAdvertisingRobots(std::vector<AdvertisingRobot>& advertisingRobots);
-
-  // The advertising robot could specify more information eventually, but for
-  // now, it's just the Robot's ID.
-  using AdvertisingRobot = RobotID_t;
-
-  // TODO: Add IsConnected methods
-  // Check to see if a specified robot / UI device is connected
-  // bool IsRobotConnected(AdvertisingRobot whichRobot) const;
   
   void ListenForRobotConnections(bool listen);
   
-  Robot* GetFirstRobot();
-  int    GetNumRobots() const;
-  Robot* GetRobotByID(const RobotID_t robotID); // returns nullptr for invalid ID
-  bool   HasRobotWithID(const RobotID_t robotID) const;
-  std::vector<RobotID_t> const& GetRobotIDList() const;
+  Robot* GetRobot();
 
   void ExecuteBackgroundTransfers();
 

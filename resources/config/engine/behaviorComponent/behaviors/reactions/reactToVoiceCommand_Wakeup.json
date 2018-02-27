@@ -1,6 +1,0 @@
-{
-  "behaviorClass": "PlayAnim",
-  "behaviorID": "ReactToVoiceCommand_Wakeup",
-  "displayNameKey":"behavior.DriveOffCharger", // Will display that Cozmo is waking up
-  "animTriggers": ["VC_StartledWakeup"]
-}

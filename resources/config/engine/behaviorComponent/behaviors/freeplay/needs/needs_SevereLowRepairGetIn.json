@@ -1,7 +1,0 @@
-{
-  "behaviorClass": "PlayAnimOnNeedsChange",
-  "behaviorID": "Needs_SevereLowRepairGetIn",
-  "displayNameKey":"behavior.Needs_SevereLowRepairGetIn",
-  "animTriggers": ["NeedsSevereLowRepairGetIn"],
-  "need": "Repair"
-}

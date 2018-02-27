@@ -43,8 +43,8 @@ class BehaviorExploreBringCubeToBeacon : public ICozmoBehavior
 {
 private:
 
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorExploreBringCubeToBeacon(const Json::Value& config);
   
 public:

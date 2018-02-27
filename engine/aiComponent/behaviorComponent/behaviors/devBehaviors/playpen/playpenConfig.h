@@ -117,10 +117,10 @@ static f32 kDistanceSensorBiasAdjustment_mm = 30;
 
 // ----------Camera Calibration----------
 // Exposure setting for playpen
-static u16 kExposure_ms                               = 3;
+static u16 kExposure_ms                               = 31;
 
 // Gain setting for playpen
-static f32 kGain                                      = 2.f;
+static f32 kGain                                      = 1.f;
 
 // Tolerance on the calculated camera focal length
 static u32 kFocalLengthTolerance                      = 30;
@@ -135,7 +135,7 @@ static f32 kRadialDistortionTolerance                 = 0.15f;
 static f32 kTangentialDistortionTolerance             = 0.05f;
 
 // Head angle at which we can see the entire calibration target
-static f32 kHeadAngleToSeeTarget                      = MAX_HEAD_ANGLE;
+static f32 kHeadAngleToSeeTarget_rad                  = DEG_TO_RAD(45.f);
 
 // How long we should wait to see the calibration target after looking up at it
 static u32 kTimeoutWaitingForTarget_ms                = 5000;

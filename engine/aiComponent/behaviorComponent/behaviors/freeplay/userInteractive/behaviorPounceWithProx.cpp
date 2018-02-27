@@ -12,12 +12,15 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorPounceWithProx.h"
 
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
+#include "engine/actions/compoundActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
+#include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/visionComponent.h"
 
@@ -38,35 +41,46 @@ BehaviorPounceWithProx::BehaviorPounceWithProx(const Json::Value& config)
   SubscribeToTags({
     EngineToGameTag::RobotObservedMotion
   });
+  _instanceParams.inRangeCondition =
+    BEIConditionFactory::CreateBEICondition( config["wantsToBeActivatedCondition"], GetDebugLabel() );
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorPounceWithProx::WantsToBeActivatedBehavior() const 
+{
+  return true;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPounceWithProx::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
-  delegates.insert(_backupBehavior.get());
-  delegates.insert(_approachBehavior.get());
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPounceWithProx::InitBehavior()
 {
-  _backupBehavior = GetBEI().GetBehaviorContainer().FindBehaviorByID(BEHAVIOR_ID(PounceBackupWithProx));
-  _approachBehavior = GetBEI().GetBehaviorContainer().FindBehaviorByID(BEHAVIOR_ID(PounceApproachWithProx));
+  _instanceParams.inRangeCondition->Init(GetBEI());
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPounceWithProx::OnBehaviorActivated()
 {
-  
+  _instanceParams.inRangeCondition->SetActive(GetBEI(), true);
+
+  const f32 currentTimeInSeconds = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  _lifetimeParams = LifetimeParams();
+  _lifetimeParams.pounceAtTime_s = currentTimeInSeconds + _instanceParams.pounceTimeout_s;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPounceWithProx::OnBehaviorDeactivated()
 {
+  _instanceParams.inRangeCondition->SetActive(GetBEI(), false);
 }
 
 
@@ -78,36 +92,29 @@ void BehaviorPounceWithProx::BehaviorUpdate()
   }
 
   auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetValue<ProxSensorComponent>();
-  if(proxSensor.IsSensorReadingValid()){
+  u16 dummyDistance_mm = 0;
+  const bool isSensorReadingValid = proxSensor.GetLatestDistance_mm(dummyDistance_mm);
+  if(isSensorReadingValid){
     // Transition conditions
-    switch(_pounceState){
-      case PounceState::BackupToIdealDistance:
-      {
-        if(!IsControlDelegated()){
-          if(_backupBehavior->WantsToBeActivated()){
-            DelegateIfInControl(_backupBehavior.get());
-          }else{
-            _pounceState = PounceState::ApproachObject;
-          }
-        }
-        break;
-      }
-      case PounceState::ApproachObject:
-      {
-        if(!IsControlDelegated()){
-          if(_approachBehavior->WantsToBeActivated()){
-            DelegateIfInControl(_approachBehavior.get());
-          }else{
-            _motionObserved = false;
-            _pounceState = PounceState::WaitForMotion;
-          }
-        }
-        break;
-      }
+    switch(_lifetimeParams.pounceState){
       case PounceState::WaitForMotion:
       {
-        if(_motionObserved){
-          _pounceState = PounceState::PounceOnMotion;
+        if(!_instanceParams.inRangeCondition->AreConditionsMet(GetBEI())){
+          CancelSelf();
+          return;
+        }
+
+        const f32 currentTimeInSeconds = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+        if(_lifetimeParams.motionObserved ||
+           (_lifetimeParams.pounceAtTime_s < currentTimeInSeconds)){
+          _lifetimeParams.pounceState = PounceState::PounceOnMotion;
+        }else if(!IsControlDelegated()){
+          DelegateIfInControl(
+            new CompoundActionParallel({
+              new MoveHeadToAngleAction(MoveHeadToAngleAction::Preset::GROUND_PLANE_VISIBLE),
+              new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::CARRY)
+            })
+          );
         }
         break;
       }
@@ -116,9 +123,9 @@ void BehaviorPounceWithProx::BehaviorUpdate()
         // Pounce on the object
         if(!IsControlDelegated()){
           const auto& robotInfo = GetBEI().GetRobotInfo();
-          _prePouncePitch = robotInfo.GetPitchAngle().ToFloat();
+          _lifetimeParams.prePouncePitch = robotInfo.GetPitchAngle().ToFloat();
           TransitionToPounce();
-          _pounceState = PounceState::ReactToPounce;
+          _lifetimeParams.pounceState = PounceState::ReactToPounce;
         }
         break;
       }
@@ -129,12 +136,13 @@ void BehaviorPounceWithProx::BehaviorUpdate()
     }
   }else{
     // Sensor reading not valid - check if lift is in way
-    auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetValue<ProxSensorComponent>();
-    bool liftBlocking = false;
-    proxSensor.IsLiftInFOV(liftBlocking);
-    if(!IsControlDelegated() &&
-      liftBlocking){
-        DelegateIfInControl(new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK));
+    const bool liftBlocking = proxSensor.IsLiftInFOV();
+    if(!IsControlDelegated()){
+      if(liftBlocking){
+        DelegateIfInControl(new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::CARRY));
+      }else{
+        CancelSelf();
+      }
     }
   }
 }
@@ -157,7 +165,7 @@ void BehaviorPounceWithProx::TransitionToResultAnim()
   }
   
   DelegateIfInControl(newAction, [this](){
-                                _pounceState = PounceState::BackupToIdealDistance;
+                                _lifetimeParams.pounceState = PounceState::WaitForMotion;
                               });
 }
 
@@ -169,14 +177,14 @@ bool BehaviorPounceWithProx::IsFingerCaught()
   const float liftHeightThresh = 35.5f;
   const float bodyAngleThresh = 0.02f;
   
-  float robotBodyAngleDelta = robotInfo.GetPitchAngle().ToFloat() - _prePouncePitch;
+  float robotBodyAngleDelta = robotInfo.GetPitchAngle().ToFloat() - _lifetimeParams.prePouncePitch;
   
   // check the lift angle, after some time, transition state
   PRINT_CH_INFO("Behaviors", "BehaviorPounceOnMotion.CheckResult", "lift: %f body: %fdeg (%frad) (%f -> %f)",
                 robotInfo.GetLiftHeight(),
                 RAD_TO_DEG(robotBodyAngleDelta),
                 robotBodyAngleDelta,
-                RAD_TO_DEG(_prePouncePitch),
+                RAD_TO_DEG(_lifetimeParams.prePouncePitch),
                 robotInfo.GetPitchAngle().getDegrees());
   return robotInfo.GetLiftHeight() > liftHeightThresh || robotBodyAngleDelta > bodyAngleThresh;
 }
@@ -185,27 +193,11 @@ bool BehaviorPounceWithProx::IsFingerCaught()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPounceWithProx::TransitionToPounce()
 {  
-  IActionRunner* animation = new PlayAnimationAction("anim_pounce_04");
-  IActionRunner* action = nullptr;
-  if(_motionObserved){
-    _motionObserved = false;
-    const Point2f motionCentroid(_observedX, _observedY);
-    Radians relPanAngle;
-    Radians relTiltAngle;
-    
-    GetBEI().GetVisionComponent().GetCamera().ComputePanAndTiltAngles(motionCentroid, relPanAngle, relTiltAngle);
-    TurnInPlaceAction* turnAction = new TurnInPlaceAction(relPanAngle.ToFloat(), false);
-    turnAction->SetMaxSpeed(MAX_BODY_ROTATION_SPEED_RAD_PER_SEC);
-    turnAction->SetAccel(1000.f);
-    action = new CompoundActionSequential({
-      turnAction,
-      animation
-    });
-  }else{
-    action = animation;
-  }
-
-  DelegateIfInControl(action, &BehaviorPounceWithProx::TransitionToResultAnim);
+  _lifetimeParams.motionObserved = false;
+  AnimationTrigger anim = AnimationTrigger::PounceWProxForward;
+  
+  DelegateIfInControl(new TriggerAnimationAction(anim),
+                      &BehaviorPounceWithProx::TransitionToResultAnim);
 }
 
 
@@ -218,21 +210,19 @@ void BehaviorPounceWithProx::HandleWhileActivated(const EngineToGameEvent& event
     case MessageEngineToGameTag::RobotObservedMotion: {
       // don't update the pounce location while we are active but go back.
       const auto & motionObserved = event.GetData().Get_RobotObservedMotion();
-      const bool inGroundPlane = motionObserved.ground_area > _minGroundAreaForPounce;
+      const bool inGroundPlane = motionObserved.ground_area > _instanceParams.minGroundAreaForPounce;
       
       const float robotOffsetX = motionObserved.ground_x;
       const float robotOffsetY = motionObserved.ground_y;
       
       // we haven't started the pounce, so update the pounce location
-      if ((_pounceState == PounceState::WaitForMotion) && inGroundPlane )
+      if ((_lifetimeParams.pounceState == PounceState::WaitForMotion) && inGroundPlane )
       {
         float dist = std::sqrt( std::pow( robotOffsetX, 2 ) + std::pow( robotOffsetY, 2) );
-        if ( dist <= _maxPounceDist )
+        if ( dist <= (_instanceParams.maxPounceDist*2) )
         {
           //Set the exit state information and then cancel the hang action
-          _observedX = motionObserved.img_x;
-          _observedY = motionObserved.img_y;
-          _motionObserved = true;
+          _lifetimeParams.motionObserved = true;
         }
         else
         {

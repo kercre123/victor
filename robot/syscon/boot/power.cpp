@@ -24,6 +24,8 @@ void Power::init(void) {
                | RCC_APB2ENR_ADC1EN
                ;
 
+  Power::setMode(POWER_ACTIVE);
+
   // Set N pins on motors low for power up
   LN1::reset();
   LN2::reset();
@@ -44,12 +46,27 @@ void Power::init(void) {
   LTN2::mode(MODE_OUTPUT);
 }
 
-void Power::stop(void) {
-  POWER_EN::reset();
-  POWER_EN::pull(PULL_NONE);
-  POWER_EN::mode(MODE_OUTPUT);
+
+void Power::setMode(PowerMode set) {
+  switch (set) {
+    case POWER_STOP:
+      POWER_EN::pull(PULL_NONE);
+      POWER_EN::reset();
+      POWER_EN::mode(MODE_OUTPUT);
+      break ;
+    default:
+      POWER_EN::pull(PULL_UP);
+      POWER_EN::mode(MODE_INPUT);
+      break ;
+  }
 }
 
-void Power::softReset(bool ignore) {
-  NVIC_SystemReset();
+void Power::disableHead(void) {
+  MAIN_EN::mode(MODE_OUTPUT);
+  MAIN_EN::reset();
+}
+
+void Power::enableHead(void) {
+  MAIN_EN::mode(MODE_OUTPUT);
+  MAIN_EN::set();
 }

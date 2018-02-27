@@ -56,6 +56,11 @@ OSState::OSState()
     DEV_ASSERT(robotIDField != nullptr, "OSState.Ctor.MissingRobotIDField");
     _robotID = robotIDField->getSFInt32();
   }
+  
+  // Set simulated attributes
+  _serialNumString = "12345";
+  _osBuildVersion = "12345";
+  _ipAddress = "127.0.0.1";
 }
 
 OSState::~OSState()
@@ -82,85 +87,40 @@ void OSState::SetUpdatePeriod(uint32_t milliseconds)
   _updatePeriod_ms = milliseconds;
 }
 
+bool OSState::IsCPUThrottling() const
+{
+  DEV_ASSERT(_updatePeriod_ms != 0, "OSState.IsCPUThrottling.ZeroUpdate");
+  return false;
+}
+
 uint32_t OSState::GetCPUFreq_kHz() const
 {
   DEV_ASSERT(_updatePeriod_ms != 0, "OSState.GetCPUFreq_kHz.ZeroUpdate");
   return kNominalCPUFreq_kHz;
 }
 
-bool OSState::IsThermalThrottling() const
+uint32_t OSState::GetTemperature_C() const
 {
-  DEV_ASSERT(_updatePeriod_ms != 0, "OSState.IsThermalThrottling.ZeroUpdate");
-  return false;
-}
-
-uint32_t OSState::GetTemperature_mC() const
-{
-  DEV_ASSERT(_updatePeriod_ms != 0, "OSState.GetTemperature_mC.ZeroUpdate");
+  DEV_ASSERT(_updatePeriod_ms != 0, "OSState.GetTemperature_C.ZeroUpdate");
 
   // 65C: randomly chosen temperature at which throttling does not appear to occur
   // on physical robot
-  return 65000;  
+  return 65;  
+}
+  
+const std::string& OSState::GetSerialNumberAsString()
+{
+  return _serialNumString;
+}
+  
+const std::string& OSState::GetOSBuildVersion()
+{
+  return _osBuildVersion;
 }
 
 std::string OSState::GetIPAddressInternal()
 {
-  // Open a socket to figure out the ip adress of the wlan0 (wifi) interface
-  const char* const if_name = "wlan0";
-  struct ifreq ifr;
-  size_t if_name_len=strlen(if_name);
-  if (if_name_len<sizeof(ifr.ifr_name)) {
-    memcpy(ifr.ifr_name,if_name,if_name_len);
-    ifr.ifr_name[if_name_len]=0;
-  } else {
-    ASSERT_NAMED_EVENT(false, "EngineMessages.GetIPAddress.InvalidInterfaceName", "");
-  }
-
-  int fd=socket(AF_INET,SOCK_DGRAM,0);
-  if (fd==-1) {
-    ASSERT_NAMED_EVENT(false, "EngineMessages.GetIPAddress.OpenSocketFail", "");
-  }
-
-  if (ioctl(fd,SIOCGIFADDR,&ifr)==-1) {
-    int temp_errno=errno;
-    close(fd);
-    ASSERT_NAMED_EVENT(false, "EngineMessages.GetIPAddress.IoctlError", "%s", strerror(temp_errno));
-  }
-  close(fd);
-
-  struct sockaddr_in* ipaddr = (struct sockaddr_in*)&ifr.ifr_addr;
-  return std::string(inet_ntoa(ipaddr->sin_addr));
-}
-
-// Executes the provided command and returns the output as a string
-std::string OSState::ExecCommand(const char* cmd) 
-{
-  try
-  {
-    std::array<char, 128> buffer;
-    std::string result;
-    std::shared_ptr<FILE> pipe(popen(cmd, "r"), pclose);
-    if (!pipe)
-    {
-      PRINT_NAMED_WARNING("EngineMessages.ExecCommand.FailedToOpenPipe", "");
-      return "";
-    }
-
-    while (!feof(pipe.get()))
-    {
-      if (fgets(buffer.data(), 128, pipe.get()) != nullptr)
-      {
-        result += buffer.data();
-      }
-    }
-
-    // Remove the last character as it is a newline
-    return result.substr(0,result.size()-1);
-  }
-  catch(...)
-  {
-    return "";
-  }
+  return _ipAddress;
 }
 
 } // namespace Cozmo

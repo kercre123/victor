@@ -22,12 +22,12 @@ class BehaviorPounceWithProx : public ICozmoBehavior
 {
 private:
   
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorPounceWithProx(const Json::Value& config);
   
 public:
-  virtual bool WantsToBeActivatedBehavior() const override { return true;}
+  virtual bool WantsToBeActivatedBehavior() const override;
 
 protected:
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
@@ -42,29 +42,29 @@ protected:
 
 private:
   enum class PounceState{
-    BackupToIdealDistance,
-    ApproachObject,
     WaitForMotion,
     PounceOnMotion,
     ReactToPounce
-  } _pounceState = PounceState::BackupToIdealDistance;
+  };
 
-  ICozmoBehaviorPtr _backupBehavior;
-  ICozmoBehaviorPtr _approachBehavior;
+  struct {
+    float maxPounceDist = 120.0f;
+    float minGroundAreaForPounce = 0.01f;
+    float pounceTimeout_s = 5;
+    IBEIConditionPtr inRangeCondition;
+  } _instanceParams;
 
+  struct LifetimeParams{
+    float prePouncePitch = 0.0f;
+    bool motionObserved = false;
+    float pounceAtTime_s = std::numeric_limits<float>::max();
+    PounceState pounceState = PounceState::WaitForMotion;
+  };
+  LifetimeParams _lifetimeParams;
 
-  float _prePouncePitch = 0.0f;
 
   void TransitionToResultAnim();
   bool IsFingerCaught();
-
-
-  // vision work
-  float _maxPounceDist = 120.0f;
-  int16_t _observedX = 0;
-  int16_t _observedY = 0;
-  bool _motionObserved = false;
-  float _minGroundAreaForPounce = 0.01f;
 
   virtual void HandleWhileActivated(const EngineToGameEvent& event) override;
   void TransitionToPounce();

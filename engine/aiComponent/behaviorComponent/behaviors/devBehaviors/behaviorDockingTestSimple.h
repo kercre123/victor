@@ -41,7 +41,7 @@ namespace Anki {
     class BehaviorDockingTestSimple : public ICozmoBehavior
     {
       protected:
-        friend class BehaviorContainer;
+        friend class BehaviorFactory;
         BehaviorDockingTestSimple(const Json::Value& config);
       
       public:      

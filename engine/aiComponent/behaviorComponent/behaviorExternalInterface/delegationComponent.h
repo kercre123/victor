@@ -17,7 +17,6 @@
 #include "coretech/common/shared/types.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
-#include "engine/aiComponent/behaviorComponent/behaviorHelpers/helperHandle.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 #include "util/signals/simpleSignal_fwd.h"
 
@@ -29,40 +28,31 @@ namespace Cozmo {
 // Forward Declaration
 class BehaviorManager;
 class BehaviorSystemManager;
+class ContinuityComponent;
 class IActionRunner;
 class IBehavior;
-class Robot;
 
 class Delegator : private Util::noncopyable{
 public:
-  Delegator(Robot& robot, BehaviorSystemManager& bsm);
+  Delegator(BehaviorSystemManager& bsm, 
+            ContinuityComponent& continuityComp);
   virtual ~Delegator(){};
   
   bool Delegate(IBehavior* delegatingBehavior, IActionRunner* action);
   bool Delegate(IBehavior* delegatingBehavior, IBehavior* delegated);
-  bool Delegate(IBehavior* delegatingBehavior,
-                HelperHandle helper,
-                BehaviorSimpleCallback successCallback,
-                BehaviorSimpleCallback failureCallback);
   
 protected:
   friend class DelegationComponent;
 
   void HandleActionComplete(u32 actionTag);
   
-private:
-  Robot& _robot;
-  
+private:  
   // Naive tracking for action delegation
   IBehavior* _behaviorThatDelegatedAction;
   u32 _lastActionTag;
 
-  // Naive tracking for helper delegation
-  IBehavior* _behaviorThatDelegatedHelper;
-  WeakHelperHandle _delegateHelperHandle;
-  BehaviorSystemManager* _bsm;
-
-  void EnsureHandleIsUpdated();
+  BehaviorSystemManager& _bsm;
+  ContinuityComponent& _continuityComp;
 };
 
   
@@ -78,6 +68,7 @@ public:
   virtual void UpdateDependent(const BCCompMap& dependentComponents) override {};
   virtual void AdditionalInitAccessibleComponents(BCCompIDSet& components) const override {
     components.insert(BCComponentID::BehaviorSystemManager);
+    components.insert(BCComponentID::AIComponent);
   }
   virtual void GetInitDependencies(BCCompIDSet& dependencies) const override {};
   virtual void GetUpdateDependencies(BCCompIDSet& dependencies) const override {};
@@ -85,7 +76,7 @@ public:
   // end IDependencyManagedComponent functions
   //////
   
-  void Init(Robot& robot, BehaviorSystemManager& bsm);
+  void Init(BehaviorSystemManager* bsm, ContinuityComponent* continuityComp);
   
   bool IsControlDelegated(const IBehavior* delegatingBehavior);
   void CancelDelegates(IBehavior* delegatingBehavior);
@@ -99,21 +90,16 @@ public:
 
   // If control of the passed in behavior is delegated (to another behavior), return the pointer of the
   // behavior that it was delegated to. Otherwise, return nullptr (including if control was delegated to an
-  // action or helper)
+  // action)
   const IBehavior* GetBehaviorDelegatedTo(const IBehavior* delegatingBehavior) const;
   
 private:
   std::unique_ptr<Delegator>   _delegator;
   std::vector<::Signal::SmartHandle> _eventHandles;
     
-  BehaviorSystemManager* _bsm;
+  BehaviorSystemManager* _bsm = nullptr;
+  ContinuityComponent* _continuityComp = nullptr;
   
-  // For supporting legacy code
-  friend class ICozmoBehavior;
-  bool IsActing(const IBehavior* delegatingBehavior);
-  
-  // TMP for helpers only
-  friend class IHelper;
   void CancelActionIfRunning(IBehavior* delegatingBehavior = nullptr);
   
 };

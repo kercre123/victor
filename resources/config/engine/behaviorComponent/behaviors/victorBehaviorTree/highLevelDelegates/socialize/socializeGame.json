@@ -1,0 +1,17 @@
+{
+  "behaviorID" : "SocializeGame",
+  "behaviorClass" : "DispatcherRandom",
+
+  "behaviors" : [
+    {
+      "behavior": "PounceOnMotion_Socialize",
+      "cooldown_s": 900.0,
+      "weight": 0.2
+    },
+    {
+      "behavior": "FistBump",
+      "cooldown_s": 500.0,
+      "weight": 0.4
+    }
+  ]
+}

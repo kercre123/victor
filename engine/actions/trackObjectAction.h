@@ -26,7 +26,9 @@ public:
   virtual ~TrackObjectAction();
 
 protected:
-  
+
+  virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const override;
+
   virtual ActionResult InitInternal() override;
   
   // Required by ITrackAction:

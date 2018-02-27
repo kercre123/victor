@@ -225,6 +225,9 @@ namespace Anki {
           robotStateMessageCounter_ = 0;
         }
 
+        // Now that the robot state msg has been udpated, send mic data (which uses some of robot state)
+        Messages::SendMicDataMsgs();
+
         // Print time profile stats
         END_TIME_PROFILE(CozmoBot);
         END_TIME_PROFILE(CozmoBotMain);

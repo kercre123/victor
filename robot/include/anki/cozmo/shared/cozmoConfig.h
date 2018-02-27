@@ -31,8 +31,8 @@ namespace Cozmo {
   const f32 HEAD_ANGLE_TOL       = DEG_TO_RAD(2.f);
   const f32 LIFT_ANGLE_TOL       = DEG_TO_RAD(1.5f);
   
-  const f32 MIN_HEAD_ANGLE = DEG_TO_RAD(-23.f);  // V2 range: -23 to +44.5 according to McVicar
-  const f32 MAX_HEAD_ANGLE = DEG_TO_RAD( 44.5f);
+  const f32 MIN_HEAD_ANGLE = DEG_TO_RAD(-22.f);
+  const f32 MAX_HEAD_ANGLE = DEG_TO_RAD( 45.f);
   
   const f32 kIdealViewBlockHeadAngle = DEG_TO_RAD(-17.5f);
   const f32 kIdealViewBlockLiftUpHeadAngle = DEG_TO_RAD(-22.5f);
@@ -55,25 +55,22 @@ namespace Cozmo {
   // the drive center is the location between the two wheels)
   const f32 DRIVE_CENTER_OFFSET = -20.f;
   
-  // Length of the forward range sensor (with respect to the sensor's origin)
-  const u16 kProxSensorMinDistance_mm = 25;
-  const u16 kProxSensorMaxDistance_mm = 410;
-  
   // Forward distance sensor measurements (TODO: finalize these dimensions on production robot)
   const float kProxSensorTiltAngle_rad = DEG_TO_RAD(6.5f);    // Angle that the prox sensor is tilted (upward is positive)
-  const float kProxSensorPosition_mm[3] = {10.f, 0.f, 16.f}; // With respect to robot origin
-  const float kProxSensorFullFOV_rad = DEG_TO_RAD(25.f);     // Full Field of View (FOV) of the sensor cone
+  const float kProxSensorPosition_mm[3] = {10.f, 0.f, 16.f};  // With respect to robot origin
+  const float kProxSensorFullFOV_rad = DEG_TO_RAD(25.f);      // Full Field of View (FOV) of the sensor cone
   
   // The height of the lift at various configurations
   // Actual limit in proto is closer to 20.4mm, but there is a weird
   // issue with moving the lift when it is at a limit. The lift arm
   // flies off of the robot and comes back! So for now, we just don't
   // drive the lift down that far. We also skip calibration in sim.
-  const f32 LIFT_HEIGHT_LOWDOCK               = 32.f; // For interfacing with a cube that is on the ground.
-  const f32 LIFT_HEIGHT_OCCLUDING_PROX_SENSOR = 41.f; // At this lift height, the lift crossbar is directly occluding the prox sensor's beam.
-  const f32 LIFT_HEIGHT_HIGHDOCK              = 76.f; // For interfacing with a cube that is stacked on top of another cube.
-  const f32 LIFT_HEIGHT_CARRY                 = 92.f; // Cube carrying height.
-  const f32 LIFT_HEIGHT_LOW_ROLL              = 68.f; // For rolling a cube that is on the ground.
+  const f32 LIFT_HEIGHT_LOWDOCK                   = 32.f; // For interfacing with a cube that is on the ground.
+  const f32 LIFT_HEIGHT_OCCLUDING_PROX_SENSOR_MIN = 36.f; // Between these min/max lift heights, the lift interferes with the prox sensor's beam.
+  const f32 LIFT_HEIGHT_OCCLUDING_PROX_SENSOR_MAX = 50.f; // (see above)
+  const f32 LIFT_HEIGHT_HIGHDOCK                  = 76.f; // For interfacing with a cube that is stacked on top of another cube.
+  const f32 LIFT_HEIGHT_CARRY                     = 92.f; // Cube carrying height.
+  const f32 LIFT_HEIGHT_LOW_ROLL                  = 68.f; // For rolling a cube that is on the ground.
   
   // Distance between the lift shoulder joint and the lift "wrist" joint where arm attaches to fork assembly
   const f32 LIFT_ARM_LENGTH = 66.f;
@@ -245,10 +242,19 @@ namespace Cozmo {
   const u32 CLIFF_EVENT_DELAY_MS = 500;
   
   // Anim process timing consts
-  const u32 ANIM_TIME_STEP_MS = 33; //ms
+  const u32 ANIM_TIME_STEP_MS = 33;
   const u32 ANIM_TIME_STEP_US = ANIM_TIME_STEP_MS * 1000;
   const s32 ANIM_OVERTIME_WARNING_THRESH_MS = 5;
   const s32 ANIM_OVERTIME_WARNING_THRESH_US = ANIM_OVERTIME_WARNING_THRESH_MS * 1000;
+  
+  // Web server process timing consts; much more lax
+  const u32 WEB_SERVER_TIME_STEP_MS = 100;
+  const u32 WEB_SERVER_TIME_STEP_US = WEB_SERVER_TIME_STEP_MS * 1000;
+  const s32 WEB_SERVER_OVERTIME_WARNING_THRESH_MS = 500;
+  const s32 WEB_SERVER_OVERTIME_WARNING_THRESH_US = WEB_SERVER_OVERTIME_WARNING_THRESH_MS * 1000;
+  
+  // Timestep for cube animation LED 'frames'
+  const u32 CUBE_LED_FRAME_LENGTH_MS = 30;
   
   /***************************************************************************
    *
@@ -314,12 +320,16 @@ namespace Cozmo {
   //
   #ifdef SIMULATOR
   constexpr char LOCAL_SOCKET_PATH[]  = "/tmp/";
-  constexpr char ROBOT_SERVER_PATH[]  = "/tmp/_robot_server_";
-  constexpr char ANIM_CLIENT_PATH[]   = "/tmp/_anim_client_";
+  constexpr char ANIM_ROBOT_SERVER_PATH[]  = "/tmp/_anim_robot_server_";
+  constexpr char ANIM_ROBOT_CLIENT_PATH[]  = "/tmp/_anim_robot_client_";
+  constexpr char ENGINE_ANIM_SERVER_PATH[] = "/tmp/_engine_anim_server_";
+  constexpr char ENGINE_ANIM_CLIENT_PATH[] = "/tmp/_engine_anim_client_";
   #else
   constexpr char LOCAL_SOCKET_PATH[]  = "/dev/";
-  constexpr char ROBOT_SERVER_PATH[]  = "/dev/socket/_robot_server_";
-  constexpr char ANIM_CLIENT_PATH[]   = "/dev/socket/_anim_client_";
+  constexpr char ANIM_ROBOT_SERVER_PATH[]  = "/dev/socket/_anim_robot_server_";
+  constexpr char ANIM_ROBOT_CLIENT_PATH[]  = "/dev/socket/_anim_robot_client_";
+  constexpr char ENGINE_ANIM_SERVER_PATH[] = "/dev/socket/_engine_anim_server_";
+  constexpr char ENGINE_ANIM_CLIENT_PATH[] = "/dev/socket/_engine_anim_client_";
   #endif
   
 } // namespace Cozmo

@@ -107,10 +107,12 @@ static inline f32 GetScaleFactor(ImageCache::Size size)
       
     case ImageCache::Size::Half_NN:
     case ImageCache::Size::Half_Linear:
+    case ImageCache::Size::Half_AverageArea:
       return 0.5f;
       
     case ImageCache::Size::Quarter_NN:
     case ImageCache::Size::Quarter_Linear:
+    case ImageCache::Size::Quarter_AverageArea:
       return 0.25f;
   }
 }
@@ -144,6 +146,11 @@ static inline ResizeMethod GetMethod(ImageCache::Size size)
     case ImageCache::Size::Half_Linear:
     case ImageCache::Size::Quarter_Linear:
       return ResizeMethod::Linear;
+
+    case ImageCache::Size::Half_AverageArea:
+    case ImageCache::Size::Quarter_AverageArea:  
+      return ResizeMethod::AverageArea;
+
   }
 }
   
@@ -210,6 +217,7 @@ void ImageCache::ReleaseMemory()
   _origNumRows = 0;
   _origNumCols = 0;
   _hasColor = false;
+  _timeStamp = 0;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -225,8 +233,13 @@ ImageCache::Size ImageCache::GetSize(s32 scale, Vision::ResizeMethod method)
       {
         switch(scale)
         {
-          case 2: size = Size::Half_NN;     break;
-          case 4: size = Size::Quarter_NN;  break;
+          case 2:
+            size = Size::Half_NN;
+            break;
+            
+          case 4:
+            size = Size::Quarter_NN;
+            break;
             
           default:
             DEV_ASSERT(false, "ImageCache.GetSize.UnsupportedScaleNN");
@@ -239,8 +252,13 @@ ImageCache::Size ImageCache::GetSize(s32 scale, Vision::ResizeMethod method)
       {
         switch(scale)
         {
-          case 2: size = Size::Half_Linear;    break;
-          case 4: size = Size::Quarter_Linear; break;
+          case 2:
+            size = Size::Half_Linear;
+            break;
+            
+          case 4:
+            size = Size::Quarter_Linear;
+            break;
             
           default:
             DEV_ASSERT(false, "ImageCache.GetSize.UnsupportedScaleLinear");
@@ -249,6 +267,24 @@ ImageCache::Size ImageCache::GetSize(s32 scale, Vision::ResizeMethod method)
         break;
       }
         
+      case Vision::ResizeMethod::AverageArea:
+      {
+        switch(scale)
+        {
+          case 2:
+            size = Size::Half_AverageArea;
+            break;
+          
+          case 4:
+            size = Size::Quarter_AverageArea;
+            break;
+            
+          default:
+            DEV_ASSERT(false, "ImageCache.GetSize.UnsupportedScaleLinear");
+            break;
+        }
+      }
+
       default:
         DEV_ASSERT(false, "ImageCache.GetSize.UnsupportedMethod");
         break;
@@ -286,6 +322,8 @@ void ImageCache::ResetHelper(const ImageType& img)
   _origNumCols = img.GetNumCols();
   
   _hasColor = (img.GetNumChannels() != 1);
+  
+  _timeStamp = img.GetTimestamp();
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

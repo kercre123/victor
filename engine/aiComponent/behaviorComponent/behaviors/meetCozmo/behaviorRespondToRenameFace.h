@@ -23,8 +23,8 @@ class BehaviorRespondToRenameFace : public ICozmoBehavior
 {
 private:
   
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorRespondToRenameFace(const Json::Value& config);
   
 public:

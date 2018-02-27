@@ -44,6 +44,8 @@ namespace Anki
     float ParseFloat(const Json::Value& config, const char* key, const std::string& debugName);
     uint8_t ParseUint8(const Json::Value& config, const char* key, const std::string& debugName);
     int8_t ParseInt8(const Json::Value& config, const char* key, const std::string& debugName);
+    int32_t ParseInt32(const Json::Value& config, const char* key, const std::string& debugName);
+    uint32_t ParseUInt32(const Json::Value& config, const char* key, const std::string& debugName);
     bool ParseBool(const Json::Value& config, const char* key, const std::string& debugName);
     std::string ParseString(const Json::Value& config, const char* key, const std::string& debugName);
 

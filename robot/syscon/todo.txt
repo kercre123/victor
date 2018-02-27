@@ -1,7 +1,7 @@
 DVT2
-* Write /96 decimator
-* Add cube encryption
+* Disable mics when head is not powered
+* Reenterant gpio alteration
 * Put Accelerometer to sleep on boot
+* Add cube encryption
 
-DVT3
-* Finalize cube application
+* Cube application

@@ -13,30 +13,42 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToVoiceCommand.h"
 
 #include "clad/types/animationTrigger.h"
-#include "clad/types/behaviorComponent/cloudIntents.h"
 #include "coretech/common/engine/math/pose.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/compoundActions.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
-#include "engine/aiComponent/behaviorComponent/behaviorComponentCloudReceiver.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
 #include "engine/voiceCommands/voiceCommandComponent.h"
+#include "util/console/consoleInterface.h"
 
 namespace Anki {
 namespace Cozmo {
 
+namespace {
+const char* kAnimUnmatchedKey = "anim_unmatched";
+const char* kExitOnIntentsKey = "exitOnIntents";
+  
+CONSOLE_VAR( bool, kRespondsToTriggerWord, "BehaviorReactToVoiceCommand", true );
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToVoiceCommand::BehaviorReactToVoiceCommand(const Json::Value& config)
 : ICozmoBehavior(config)
 {
-  SetRespondToCloudIntent(CloudIntent::TriggerDetected);
+  SetRespondToTriggerWord( true );
+  
+  const auto& anim = config.get( kAnimUnmatchedKey,
+                                 AnimationTriggerToString(_animUnmatched) ).asString();
+  _animUnmatched = AnimationTriggerFromString( anim.c_str() );
+  
+  _exitOnIntents = config.get( kExitOnIntentsKey, true ).asBool();
 }
 
 
@@ -56,7 +68,8 @@ bool BehaviorReactToVoiceCommand::WantsToBeActivatedBehavior() const
     }
   }
   
-  return true;
+  
+  return kRespondsToTriggerWord;
 }
 
 
@@ -129,6 +142,36 @@ void BehaviorReactToVoiceCommand::OnBehaviorActivated()
   robotInfo.GetContext()->GetVoiceCommandComponent()->BroadcastVoiceEvent(RespondingToCommandStart(VoiceCommandType::HeyCozmo));
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToVoiceCommand::BehaviorUpdate()
+{
+  auto& uic = GetBEI().GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
+  
+  if( _exitOnIntents && uic.IsAnyUserIntentPending() ) {
+    
+    // kill delegates, and therefore exit this behavior if no other anims get triggered
+    CancelDelegates();
+    
+    const UserIntentTag unmatched = USER_INTENT(unmatched_intent);
+    if( uic.IsUserIntentPending( unmatched ) ) {
+      // we didn't understand the cloud/app intent. play an animation to act confused, then exit.
+      // This is the only listener for unmatched_intent. it's possible that this behavior times
+      // out, and then the unmatched intent is received, but in that case we don't want to react
+      // because so much time has elapsed
+      
+      uic.ClearUserIntent( unmatched );
+      
+      if( _animUnmatched != AnimationTrigger::Count ) {
+        auto* action = new TriggerLiftSafeAnimationAction( _animUnmatched );
+        DelegateIfInControl( action, [](const ActionResult& result) {
+          ANKI_VERIFY( result == ActionResult::SUCCESS,
+                       "BehaviorReactToVoiceCommand.BehaviorUpdate.AnimFail",
+                       "Could not play animation" );
+        });
+      }
+    }
+  }
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::OnBehaviorDeactivated()

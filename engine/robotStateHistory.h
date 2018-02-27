@@ -14,7 +14,8 @@
 #include "coretech/vision/engine/camera.h"
 #include "clad/types/robotStatusAndActions.h"
 
-#include "engine/dependencyManagedComponent.h"
+#include "util/bitFlags/bitFlags.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 #include "engine/robotComponents_fwd.h"
 #include "util/helpers/templateHelpers.h"
 
@@ -31,13 +32,14 @@ namespace Anki {
     public:
       HistRobotState();
       
-      HistRobotState(const Pose3d& pose, const RobotState& state);
+      HistRobotState(const Pose3d& pose,
+                     const RobotState& state,
+                     const bool isProxSensorValid,
+                     const uint8_t cliffDetectedFlags);
       
       HistRobotState(const HistRobotState& other) = default;
       
       HistRobotState& operator=(const HistRobotState& other) = default;
-      
-      void SetAll(const Pose3d& pose, const RobotState& state);
 
       // Only update pose-related information: includes pose frame ID, body pose in the world, and head/lift angles
       void SetPose(const PoseFrameID_t frameID, const Pose3d& pose, const f32 headAngle_rad, const f32 liftAngle_rad);
@@ -49,7 +51,7 @@ namespace Anki {
       const f32           GetHeadAngle_rad()               const {return _state.headAngle;    }
       const f32           GetLiftAngle_rad()               const {return _state.liftAngle;    }
       const f32           GetLiftHeight_mm()               const;
-      const u16           GetCliffData(unsigned int ind=0) const;
+      const u16           GetCliffData(CliffSensor sensor) const;
       const PoseFrameID_t GetFrameId()                     const {return _state.pose_frame_id;}
       const u16           GetProxSensorVal_mm()            const {return _state.proxData.distance_mm;}
       
@@ -61,7 +63,11 @@ namespace Anki {
       bool WasHeadMoving()     const { return !(_state.status & Util::EnumToUnderlying(RobotStatusFlag::HEAD_IN_POS)); }
       bool WasLiftMoving()     const { return !(_state.status & Util::EnumToUnderlying(RobotStatusFlag::LIFT_IN_POS)); }
       bool WereWheelsMoving()  const { return  (_state.status & Util::EnumToUnderlying(RobotStatusFlag::ARE_WHEELS_MOVING)); }
+      bool WasPickedUp()       const { return  (_state.status & Util::EnumToUnderlying(RobotStatusFlag::IS_PICKED_UP)); }
       bool WasCameraMoving()   const { return  (WasHeadMoving() || WereWheelsMoving()); }
+      bool WasProxSensorValid() const { return _wasProxSensorValid; }
+      bool WasCliffDetected(CliffSensor sensor) const;
+
       
       // Returns a new HistRobotState the given fraction between 1 and 2, where fraction is [0,1].
       // Note: always uses histState1's PoseFrameID
@@ -73,9 +79,11 @@ namespace Anki {
     private:
       
       // Note that the _state.pose is not guaranteed to match what's in _pose (COZMO-10225)
-      Pose3d        _pose;  // robot pose
-      RobotState    _state;
-
+      Pose3d                       _pose;  // robot pose
+      RobotState                   _state;
+      
+      bool                         _wasProxSensorValid;
+      Util::BitFlags8<CliffSensor> _cliffDetectedFlags;
     };
     
     // A key associated with each computed pose retrieved from history

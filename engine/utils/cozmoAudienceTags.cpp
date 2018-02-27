@@ -13,7 +13,6 @@
 #include "engine/utils/cozmoAudienceTags.h"
 
 #include "engine/cozmoContext.h"
-#include "engine/needsSystem/needsManager.h"
 #include "util/environment/locale.h"
 #include "util/string/stringUtils.h"
 #include <chrono>
@@ -30,12 +29,10 @@ CozmoAudienceTags::CozmoAudienceTags(const CozmoContext* context)
   // because we're calling this handler from AutoActivateExperiments from constructors, that is
   // happening well before we get to initialize the needs manager and read the 'time created' from
   // device.
-  auto firstDayUserHandler = [context] {
-    using namespace std::chrono;
-    const auto& needsState = context->GetNeedsManager()->GetCurNeedsState();
-    const int64_t creationSec = duration_cast<seconds>(needsState._timeCreated.time_since_epoch()).count();
-    const int64_t currentTime = seconds(std::time(nullptr)).count();
-    const bool firstDayUser = currentTime >= creationSec && (currentTime - creationSec < 60 * 60 * 24);
+  auto firstDayUserHandler = [] {
+    // TODO:  Need to write some other logic to determine first-day user; previously this was
+    // based on the needs system's saved state's 'creation time'
+    const bool firstDayUser = false;
     return firstDayUser;
   };
 

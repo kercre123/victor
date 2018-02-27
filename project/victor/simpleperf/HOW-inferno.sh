@@ -5,7 +5,7 @@ set -eu
 SCRIPTDIR=$(dirname $([ -L $0 ] && echo "$(dirname $0)/$(readlink -n $0)" || echo $0))           
 
 # What do we want to profile?
-: ${ANKI_PROFILE_PROCNAME:="cozmoengined"}
+: ${ANKI_PROFILE_PROCNAME:="vic-engine"}
 
 # How long do we capture? (in seconds)
 : ${ANKI_PROFILE_DURATION:="10"}
@@ -29,9 +29,9 @@ fi
 #
 # Invoke inferno.sh to collect data and generate html report
 #
-${SIMPLEPERF}/inferno.sh \
+${SIMPLEPERF}/inferno.sh -nc \
+  --symfs ${ANKI_PROFILE_SYMBOLCACHE} \
   -np ${ANKI_PROFILE_PROCNAME} \
   -t ${ANKI_PROFILE_DURATION} \
   -f ${ANKI_PROFILE_FREQUENCY} \
-  --symfs ${ANKI_PROFILE_SYMBOLCACHE}
-
+  -o ${ANKI_PROFILE_PROCNAME}

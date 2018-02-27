@@ -25,7 +25,6 @@
 #include "engine/moodSystem/moodManager.h"
 #include "engine/navMap/mapComponent.h"
 #include "engine/navMap/memoryMap/memoryMapTypes.h"
-#include "engine/needsSystem/needsManager.h"
 #include "engine/viz/vizManager.h"
 
 #include "coretech/common/engine/jsonTools.h"
@@ -110,7 +109,7 @@ void BehaviorInteractWithFaces::LoadConfig(const Json::Value& config)
   if( ! ANKI_VERIFY(_configParams.maxTimeToTrackFace_s >= _configParams.minTimeToTrackFace_s,
                     "BehaviorInteractWithFaces.LoadConfig.InvalidTrackingTime",
                     "%s: minTrackTime = %f, maxTrackTime = %f",
-                    GetIDStr().c_str(),
+                    GetDebugLabel().c_str(),
                     _configParams.minTimeToTrackFace_s,
                     _configParams.maxTimeToTrackFace_s) ) {
     _configParams.maxTimeToTrackFace_s = _configParams.minTimeToTrackFace_s;
@@ -124,7 +123,7 @@ void BehaviorInteractWithFaces::LoadConfig(const Json::Value& config)
     if( ! ANKI_VERIFY(_configParams.maxClampPeriod_s >= _configParams.minClampPeriod_s,
                       "BehaviorInteractWithFaces.LoadConfig.InvalidClampPeriod",
                       "%s: minPeriod = %f, maxPeriod = %f",
-                      GetIDStr().c_str(),
+                      GetDebugLabel().c_str(),
                       _configParams.minClampPeriod_s,
                       _configParams.maxClampPeriod_s) ) {
       _configParams.maxClampPeriod_s = _configParams.minClampPeriod_s;
@@ -160,11 +159,6 @@ void BehaviorInteractWithFaces::BehaviorUpdate()
     if( currTime_s >= _trackFaceUntilTime_s ) {
       BehaviorObjectiveAchieved(BehaviorObjective::InteractedWithFace);
       CancelDelegates();
-      
-      if(GetBEI().HasNeedsManager()){
-        auto& needsManager = GetBEI().GetNeedsManager();
-        needsManager.RegisterNeedsActionCompleted(NeedsActionId::SeeFace);
-      }
     }
   }  
 }

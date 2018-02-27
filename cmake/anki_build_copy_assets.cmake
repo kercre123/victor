@@ -1,9 +1,9 @@
 function(anki_build_copy_assets)
     set(options "")
-    set(oneValueArgs TARGET DEP_TARGET SRCLIST_DIR OUTPUT_DIR)
-    set(multiValueArgs OUT_SRCS OUT_DSTS)
+    set(oneValueArgs TARGET DEP_TARGET SRCLIST_DIR OUTPUT_DIR RELATIVE_OUTPUT_DIR)
+    set(multiValueArgs OUT_SRCS OUT_DSTS OUT_RELATIVE_DSTS)
     cmake_parse_arguments(cpassets "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-    
+
     set(_SRCS "")
     set(_DSTS "")
 
@@ -14,7 +14,7 @@ function(anki_build_copy_assets)
     if (EXISTS "${cpassets_SRCLIST_DIR}/${cpassets_TARGET}.dsts.lst")
         file(STRINGS "${cpassets_SRCLIST_DIR}/${cpassets_TARGET}.dsts.lst" _DSTS)
     endif()
-    
+
     if (EXISTS "${cpassets_SRCLIST_DIR}/${cpassets_TARGET}_${ANKI_PLATFORM_NAME}.srcs.lst")
         file(STRINGS "${cpassets_SRCLIST_DIR}/${cpassets_TARGET}_${ANKI_PLATFORM_NAME}.srcs.lst" _PLATFORM_SRCS)
     endif()
@@ -46,14 +46,26 @@ function(anki_build_copy_assets)
             COMMAND ${CMAKE_COMMAND}
             ARGS -E copy_if_different "${SRC_PATH}" "${DST_PATH}"
             DEPENDS ${SRC_PATH}
-            COMMENT "copy ${SRC} ${DST}"
+            COMMENT "cp ${SRC_PATH} ${DST_PATH}"
             VERBATIM
         )
         list(APPEND OUTPUT_FILES ${DST_PATH})
         list(APPEND INPUT_FILES ${SRC_PATH})
+
+        if (cpassets_RELATIVE_OUTPUT_DIR)
+            list(APPEND OUTPUT_RELATIVE_DSTS ${cpassets_RELATIVE_OUTPUT_DIR}/${DST})
+        else()
+            list(APPEND OUTPUT_RELATIVE_DSTS ${DST})
+        endif()
     endforeach()
 
+    list(APPEND OUTPUT_RELATIVE_DSTS ${${cpassets_OUT_RELATIVE_DSTS}})
+    set(${cpassets_OUT_RELATIVE_DSTS} ${OUTPUT_RELATIVE_DSTS} PARENT_SCOPE)
+
+    list(APPEND OUTPUT_FILES ${${cpassets_OUT_DSTS}})
     set(${cpassets_OUT_DSTS} ${OUTPUT_FILES} PARENT_SCOPE)
+
+    list(APPEND INPUT_FILES ${${cpassets_OUT_SRCS}})
     set(${cpassets_OUT_SRCS} ${INPUT_FILES} PARENT_SCOPE)
 
     if (NOT ${cpassets_DEP_TARGET})

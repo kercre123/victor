@@ -46,7 +46,6 @@ public class MockRobot : IRobot {
     _EnrolledFacesLastEnrolledTime.Add(3, -3000000);
 
     PetFaces = new List<PetFace>();
-    CurrentBehaviorDisplayNameKey = string.Empty;
     CurrentReactionTrigger = ReactionTrigger.NoneTrigger;
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.FaceEnrollmentCompleted>(HandleEnrolledFace);
   }

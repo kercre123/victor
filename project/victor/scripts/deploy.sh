@@ -15,11 +15,48 @@ fi
 TOPLEVEL=`$GIT rev-parse --show-toplevel`
 
 source ${SCRIPT_PATH}/android_env.sh
+export -f adb_shell
 
 # Settings can be overridden through environment
 : ${VERBOSE:=0}
 : ${ANKI_BUILD_TYPE:="Debug"}
-: ${INSTALL_ROOT:="/data/data/com.anki.cozmoengine"}
+: ${INSTALL_ROOT:="/anki"}
+
+function usage() {
+  echo "$SCRIPT_NAME [OPTIONS]"
+  echo "  -h                      print this message"
+  echo "  -v                      print verbose output"
+  echo "  -c [CONFIGURATION]      build configuration {Debug,Release}"
+}
+
+while getopts "hvc:" opt; do
+  case $opt in
+    h)
+      usage && exit 0
+      ;;
+    v)
+      VERBOSE=1
+      ;;
+    c)
+      ANKI_BUILD_TYPE="${OPTARG}"
+      ;;
+    *)
+      usage && exit 1
+      ;;
+  esac
+done
+
+# Settings can be overridden through environment
+: ${VERBOSE:=0}
+: ${ANKI_BUILD_TYPE:="Debug"}
+: ${INSTALL_ROOT:="/anki"}
+
+: ${DEVICE_RSYNC_BIN_DIR:="/tmp"}
+: ${DEVICE_RSYNC_CONF_DIR:="/data/rsync"}
+
+# increment the following value if the contents of rsyncd.conf change
+RSYNCD_CONF_VERSION=2
+
 
 function usage() {
   echo "$SCRIPT_NAME [OPTIONS]"
@@ -52,111 +89,62 @@ echo "INSTALL_ROOT: ${INSTALL_ROOT}"
 : ${BUILD_ROOT:="${TOPLEVEL}/_build/android/${ANKI_BUILD_TYPE}"}
 : ${LIB_INSTALL_PATH:="${INSTALL_ROOT}/lib"}
 : ${BIN_INSTALL_PATH:="${INSTALL_ROOT}/bin"}
+: ${RSYNC_BIN_DIR="${TOPLEVEL}/tools/rsync"}
 
 $ADB shell mkdir -p "${INSTALL_ROOT}"
-$ADB shell mkdir -p "${INSTALL_ROOT}/config"
+$ADB shell mkdir -p "${INSTALL_ROOT}/etc"
 $ADB shell mkdir -p "${LIB_INSTALL_PATH}"
 $ADB shell mkdir -p "${BIN_INSTALL_PATH}"
 
-function log_v()
-{
-    if [ $VERBOSE -eq 1 ]; then
-        echo "$1"
-    fi
-}
+# get device IP Address
+DEVICE_IP_ADDRESS=`$ADB shell ip addr show wlan0 | grep "inet\s" | awk '{print $2}' | awk -F'/' '{print $1}'`
+if [ -z $DEVICE_IP_ADDRESS ]; then
+  DEVICE_IP_ADDRESS=`$ADB shell ip addr show lo | grep "inet\s" | awk '{print $2}' | awk -F'/' '{print $1}'`
+  if [ -z $DEVICE_IP_ADDRESS ]; then
+    echo "no valid android device found"
+    exit 1
+  fi
 
-function adb_deploy()
-{
-    SRC="$1"
-    DST="$2"
-    
-    XATTR_KEY="user.com.anki.digest.md5"
+  DEVICE_IP_ADDRESS="$DEVICE_IP_ADDRESS:6010"
+  $ADB forward tcp:6010 tcp:1873
+else
+  DEVICE_IP_ADDRESS="$DEVICE_IP_ADDRESS:1873"
+fi
 
-    NEEDS_INSTALL=0
-    DIGEST=
-    XATTR="${BIN_INSTALL_PATH}/axattr"
+# install rsync binary and config if needed
+set +e
+adb_shell "[ -f "$DEVICE_RSYNC_BIN_DIR/rsync.bin" ]"
+if [ $? -ne 0 ]; then
+  echo "loading rsync to device"
+  $ADB push ${RSYNC_BIN_DIR}/rsync.bin ${DEVICE_RSYNC_BIN_DIR}/rsync.bin
+fi
 
-    FILENAME=$(basename "${SRC}")
-    DST_PATH="${DST}/${FILENAME}"
+RSYNCD_CONF="rsyncd-v${RSYNCD_CONF_VERSION}.conf"
 
-    echo "deploy $DST_PATH"
+adb_shell "[ -f "$DEVICE_RSYNC_CONF_DIR/$RSYNCD_CONF" ]"
+if [ $? -ne 0 ]; then
+  echo "loading rsync config to device"
+  $ADB push ${RSYNC_BIN_DIR}/rsyncd.conf ${DEVICE_RSYNC_CONF_DIR}/$RSYNCD_CONF
+fi
+set -e
 
-    log_v "check $DST_PATH"
+# startup rsync daemon
+$ADB shell "${DEVICE_RSYNC_BIN_DIR}/rsync.bin --daemon --config=${DEVICE_RSYNC_CONF_DIR}/${RSYNCD_CONF}"
 
-    EXISTS=0
-    $ADB shell test -f "${DST_PATH}" || EXISTS=1
+pushd ${BUILD_ROOT} > /dev/null 2>&1
 
-    if [ $EXISTS -eq 0 ]; then
-      log_v "$DST_PATH exists"
-      X_DIGEST=$($ADB shell "${XATTR} -n ${XATTR_KEY} ${DST_PATH}" || true)
-      DIGEST=$(md5 -q "${SRC}")
-      if [ "$DIGEST" != "${X_DIGEST}" ]; then
-        log_v "$DST_PATH differs"
-        NEEDS_INSTALL=1
-      else
-        log_v "$DST_PATH up-to-date [$DIGEST]"
-      fi
-    else
-      log_v "$DST_PATH not found"
-      NEEDS_INSTALL=1
-    fi
+# Since invoking rsync multiple times is expensive.
+# build an include file list so that we can run a single rsync command
+RSYNC_LIST="${BUILD_ROOT}/rsync.$$.lst"
+touch ${RSYNC_LIST}
 
-    if [ $NEEDS_INSTALL -eq 1 ]; then
-      log_v "install $DST_PATH"
-      $ADB push "$SRC" "$DST"
-      if [ -n $DIGEST ]; then
-        DIGEST=$(md5 -q "${SRC}")
-      fi
-      $ADB shell "${XATTR} -n ${XATTR_KEY} -v ${DIGEST} ${DST_PATH}"
-    fi
-}
+find lib -type f -name '*.so' >> ${RSYNC_LIST}
+find bin -type f -not -name '*.full' >> ${RSYNC_LIST}
+find etc >> ${RSYNC_LIST}
+find data >> ${RSYNC_LIST}
 
-function adb_deploy_files()
-{
-    DST="$1"
-    shift
-    SRC_LIST=("$@")
+rsync -rlptD -uzvP --delete --files-from=${RSYNC_LIST} ./ rsync://${DEVICE_IP_ADDRESS}/anki_root/
 
-    for SRC in "${SRC_LIST[@]}"; do
-        echo "deploy $SRC -> $DST"
-        adb_deploy $SRC $DST
-    done
-}
+rm -f ${BUILD_ROOT}/rsync.*.lst
 
-# deploy xattr utility
-# $ADB shell test -f ${BIN_INSTALL_PATH}/axattr && $ADB push ${BUILD_ROOT}/bin/axattr ${BIN_INSTALL_PATH}
-adb_deploy "${BUILD_ROOT}/bin/axattr" "${BIN_INSTALL_PATH}"
-
-export -f log_v
-export -f adb_deploy
-export VERBOSE
-export ADB
-export INSTALL_ROOT
-export BIN_INSTALL_PATH
-export LIB_INSTALL_PATH
-find "${BUILD_ROOT}/lib" -depth 1 -type f -name '*.so' \
-    -exec bash -c \
-    'adb_deploy "${0}" "${LIB_INSTALL_PATH}"' {} \;
-
-find "${BUILD_ROOT}/bin" -type f -not -name '*.full' -not -name 'axattr' \
-     -exec bash -c \
-    'adb_deploy "${0}" "${BIN_INSTALL_PATH}"' {} \;
-
-find "${TOPLEVEL}/project/victor/runtime" -type f -depth 1 \
-    -exec bash -c \
-    'adb_deploy "${0}" "${INSTALL_ROOT}"' {} \;
-
-find "${TOPLEVEL}/project/victor/runtime/config" -type f -depth 1 \
-    -exec bash -c \
-    'adb_deploy "${0}" "${INSTALL_ROOT}/config"' {} \;
-
-# Move the hal.conf file (which contains robot-specific calibration values) to its proper home if needed
-HAL_CONF_PATH=/data/persist
-$ADB shell mkdir -p $HAL_CONF_PATH
-# If hal.conf already exists in com.anki.cozmoengine directory, move it to /data/persist (if folder exists)
-$ADB shell test -f ${INSTALL_ROOT}/hal.conf && $ADB shell mv ${INSTALL_ROOT}/hal.conf $HAL_CONF_PATH
-
-#
-# Put a link in /data/appinit.sh for automatic startup
-#
-$ADB shell ln -sf ${INSTALL_ROOT}/appinit.sh /data/appinit.sh
+popd > /dev/null 2>&1

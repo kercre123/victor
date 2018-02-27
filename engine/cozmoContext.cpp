@@ -2,15 +2,14 @@
 #include "engine/cozmoContext.h"
 
 #include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "engine/appToEngineHandler.h"
 #include "engine/externalInterface/externalInterface.h"
-#include "engine/needsSystem/needsManager.h"
 #include "engine/perfMetric.h"
 #include "engine/robotDataLoader.h"
 #include "engine/robotManager.h"
 #include "engine/util/transferQueue/dasTransferTask.h"
 #include "engine/util/transferQueue/gameLogTransferTask.h"
 #include "engine/util/transferQueue/transferQueueMgr.h"
-#include "engine/util/webService/webService.h"
 #include "engine/utils/cozmoExperiments.h"
 #include "engine/utils/cozmoFeatureGate.h"
 #include "engine/viz/vizManager.h"
@@ -20,6 +19,7 @@
 #include "util/environment/locale.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/random/randomGenerator.h"
+#include "webServerProcess/src/webService.h"
 
 
 namespace Anki {
@@ -46,10 +46,10 @@ CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInte
   , _dasTransferTask(new Anki::Util::DasTransferTask())
   #endif
   , _gameLogTransferTask(new Anki::Util::GameLogTransferTask())
-  , _needsManager(new NeedsManager(this))
   , _cozmoExperiments(new CozmoExperiments(this))
   , _perfMetric(new PerfMetric(this))
   , _webService(new WebService::WebService())
+  , _appToEngineHandler( new AppToEngineHandler() )
   , _threadIdHolder(new ThreadIDInternal)
 {
 
@@ -60,6 +60,8 @@ CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInte
   
   // This needs to happen after the audio server is set up
   _voiceCommandComponent.reset(new VoiceCommand::VoiceCommandComponent(*this));
+
+  _appToEngineHandler->Init( _webService.get(), _externalInterface );
 }
 
 
@@ -70,7 +72,6 @@ CozmoContext::CozmoContext() : CozmoContext(nullptr, nullptr)
 
 CozmoContext::~CozmoContext()
 {
-  _robotMgr->RemoveRobots();
 }
 
 

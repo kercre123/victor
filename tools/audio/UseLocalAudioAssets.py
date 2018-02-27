@@ -50,7 +50,7 @@ import organize_soundbank_products
 __audio_project_name = 'VictorAudio'
 __sound_bank_dir_name = 'GeneratedSoundBanks'
 __audio_metadata_dir_name = 'metadata'
-__robot_bank_list_file_name = 'victor-robot-banks-list.json'
+__victor_bank_list_file_name = 'victor-banks-list.json'
 
 
 
@@ -70,7 +70,7 @@ def main(args):
         Logger.debug('Sound Bank dir found: \'{0}\''.format(sound_bank_path))
 
     # Bank list file path
-    bank_list_filepath = path.join(args.audio_project_repo_dir, __audio_metadata_dir_name, __robot_bank_list_file_name)
+    bank_list_filepath = path.join(args.audio_project_repo_dir, __audio_metadata_dir_name, __victor_bank_list_file_name)
     if not path.exists(bank_list_filepath):
         Logger.error('Victor robot sound bank list does NOT exist: \'{0}\''.format(bank_list_filepath))
     else:
@@ -83,16 +83,16 @@ def main(args):
 
     # Create Directory structure
     tmp_dir = path.join(__victor_external_path, 'tmp')
-    tmp_mac_dir = path.join(tmp_dir, 'mac')
-    tmp_android_dir = path.join(tmp_dir, 'android')
+    tmp_dev_mac_dir = path.join(tmp_dir, 'dev_mac')
+    tmp_linux_dir = path.join(tmp_dir, 'victor_linux')
     dest_metadata_dir = path.join(__victor_external_path, 'metadata')
-    dest_mac_dir = path.join(__victor_external_path, 'victor_robot', 'mac')
-    dest_android_dir = path.join(__victor_external_path, 'victor_robot', 'android')
-    os.makedirs(tmp_mac_dir)
-    os.makedirs(tmp_android_dir)
+    dest_dev_mac_dir = path.join(__victor_external_path, 'victor_robot', 'dev_mac')
+    dest_linux_dir = path.join(__victor_external_path, 'victor_robot', 'victor_linux')
+    os.makedirs(tmp_dev_mac_dir)
+    os.makedirs(tmp_linux_dir)
     os.makedirs(dest_metadata_dir)
-    os.makedirs(dest_mac_dir)
-    os.makedirs(dest_android_dir)
+    os.makedirs(dest_dev_mac_dir)
+    os.makedirs(dest_linux_dir)
     Logger.info('Complete: Make asset directories')
 
     # Perform build steps
@@ -108,16 +108,16 @@ def main(args):
     if args.allow_missing:
         script_commands.append('--allow-missing')
 
-    # Android
-    # NOTE: Victor Robot uses Android Sound Banks
-    bundle_soundbank_products.main([path.join(sound_bank_path, 'Android'), tmp_android_dir] + script_commands)
-    # Mac
-    bundle_soundbank_products.main([path.join(sound_bank_path, 'Mac'), tmp_mac_dir] + script_commands)
+    # Linux
+    # Victor Robot
+    bundle_soundbank_products.main([path.join(sound_bank_path, 'Victor_Linux'), tmp_linux_dir] + script_commands)
+    # Dev Mac - Webots
+    bundle_soundbank_products.main([path.join(sound_bank_path, 'Dev_Mac'), tmp_dev_mac_dir] + script_commands)
     Logger.info('Complete: bundle_soundbank_products')
 
     # Organize Sound Banks in project
-    organize_soundbank_products.main([tmp_android_dir, dest_android_dir, bank_list_filepath] + script_commands)
-    organize_soundbank_products.main([tmp_mac_dir, dest_mac_dir, bank_list_filepath] + script_commands)
+    organize_soundbank_products.main([tmp_linux_dir, dest_linux_dir, bank_list_filepath] + script_commands)
+    organize_soundbank_products.main([tmp_dev_mac_dir, dest_dev_mac_dir, bank_list_filepath] + script_commands)
     Logger.info('Complete: organize_soundbank_products')
 
 

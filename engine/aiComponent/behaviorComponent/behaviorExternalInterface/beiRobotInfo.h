@@ -17,7 +17,7 @@
 #include "coretech/common/shared/types.h"
 #include "coretech/common/engine/math/pose.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
-#include "engine/dependencyManagedComponent.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 #include "clad/types/offTreadsStates.h"
 
 // forward declaration
@@ -28,6 +28,10 @@ namespace Anki {
 class PoseOriginList;
 namespace Util {
 class RandomGenerator;
+
+namespace Data {
+class DataPlatform;
+}
 }
 
 namespace Cozmo {
@@ -55,7 +59,7 @@ struct GyroData;
 class BEIRobotInfo : public IDependencyManagedComponent<BCComponentID> {
 public:
   BEIRobotInfo(Robot& robot)
-  : IDependencyManagedComponent(BCComponentID::RobotInfo)
+  : IDependencyManagedComponent(this, BCComponentID::RobotInfo)
   , _robot(robot){};
   virtual ~BEIRobotInfo();
 
@@ -98,6 +102,8 @@ public:
   Util::RandomGenerator& GetRNG();
   const Pose3d& GetWorldOrigin()  const;
   PoseOriginID_t GetWorldOriginID() const;
+  u32 GetHeadSerialNumber() const;
+  Util::Data::DataPlatform* GetDataPlatform() const;
   bool IsPowerButtonPressed() const;
 
   bool HasExternalInterface() const;

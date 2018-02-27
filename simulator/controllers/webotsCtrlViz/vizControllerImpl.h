@@ -100,6 +100,7 @@ private:
   void ProcessObjectUpAxisState(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessObjectAccelState(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessBehaviorStackDebug(const AnkiEvent<VizInterface::MessageViz>& msg);
+  void ProcessVisionModeDebug(const AnkiEvent<VizInterface::MessageViz>& msg);
   
   bool IsMoodDisplayEnabled() const;
   void ProcessVizRobotMoodMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
@@ -159,6 +160,9 @@ private:
 
   // For the behavior stack
   webots::Display* _bsmStackDisp;
+
+  // For displaying active VisionMode data
+  webots::Display* _visionModeDisp;
 
   // For displaying images
   webots::Display* _camDisp;

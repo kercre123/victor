@@ -14,8 +14,9 @@ function usage() {
     echo "  -c [CONFIGURATION]      build configuration {Debug,Release}"
     echo "  -p [PLATFORM]           build target platform {android,mac}"
     echo "  -a                      append cmake platform argument {arg}"
-    echo "  -g [CMAKE_GENERATOR]    CMake generator {Ninja,Xcode}"
-    echo "  -f                      force-run filelist updates and cmake configure before building, and force-copy assets"
+    echo "  -g [GENERATOR]          CMake generator {Ninja,Xcode,Makefile}"
+    echo "  -f                      force-run filelist updates and cmake configure before building"
+    echo "  -X                      delete build assets, forcing assets to be re-copied"
     echo "  -d                      DEBUG: generate file lists and exit"
     echo "  -x [CMAKE_EXE]          path to cmake executable"
     echo "  -C                      generate build config and exit without building"
@@ -43,11 +44,11 @@ BUILD_SHARED_LIBS=1
 
 CONFIGURATION=Debug
 PLATFORM=android
-CMAKE_GENERATOR=Ninja
+GENERATOR=Ninja
 FEATURES=""
 ADDITIONAL_PLATFORM_ARGS=()
 
-while getopts ":x:c:p:a:t:g:F:hvfdCTeIS" opt; do
+while getopts ":x:c:p:a:t:g:F:hvfdCTeISX" opt; do
     case $opt in
         h)
             usage
@@ -58,7 +59,6 @@ while getopts ":x:c:p:a:t:g:F:hvfdCTeIS" opt; do
             ;;
         f)
             CONFIGURE=1
-            RM_BUILD_ASSETS=1
             ;;
         C)
             CONFIGURE=1
@@ -79,7 +79,7 @@ while getopts ":x:c:p:a:t:g:F:hvfdCTeIS" opt; do
             ;;
         c)
             CONFIGURATION="${OPTARG}"
-            ;; 
+            ;;
         p)
             PLATFORM="${OPTARG}"
             ;;
@@ -87,7 +87,7 @@ while getopts ":x:c:p:a:t:g:F:hvfdCTeIS" opt; do
             ADDITIONAL_PLATFORM_ARGS+=("${OPTARG}")
             ;;
         g)
-            CMAKE_GENERATOR="${OPTARG}"
+            GENERATOR="${OPTARG}"
             ;;
         F)
             FEATURES="${FEATURES} ${OPTARG}"
@@ -103,6 +103,9 @@ while getopts ":x:c:p:a:t:g:F:hvfdCTeIS" opt; do
             ;;
         S)
             BUILD_SHARED_LIBS=0
+            ;;
+        X)
+            RM_BUILD_ASSETS=1
             ;;
         :)
             echo "Option -${OPTARG} required an argument." >&2
@@ -176,18 +179,22 @@ fi
 
 # For non-ninja builds, add generator type to build dir
 BUILD_SYSTEM_TAG=""
-if [ ${CMAKE_GENERATOR} != "Ninja" ]; then
-    BUILD_SYSTEM_TAG="-${CMAKE_GENERATOR}"
+if [ ${GENERATOR} != "Ninja" ]; then
+    BUILD_SYSTEM_TAG="-${GENERATOR}"
 fi
 : ${BUILD_DIR:="${TOPLEVEL}/_build/${PLATFORM}/${CONFIGURATION}${BUILD_SYSTEM_TAG}"}
 
-case ${CMAKE_GENERATOR} in
+case ${GENERATOR} in
     "Ninja")
         PROJECT_FILE="build.ninja"
         ;;
     "Xcode")
         PROJECT_FILE="cozmo.xcodeproj"
         ;;
+    "Makefile") 
+        PROJECT_FILE="Makefile" 
+        GENERATOR="CodeBlocks - Unix Makefiles"
+      ;; 
     "*")
         PROJECT_FILE=""
         ;;
@@ -200,7 +207,7 @@ if [ ${PROJECT_FILE}+_} ]; then
     fi
 else
     # not found
-    echo "Unsupported CMake generator: ${CMAKE_GENERATOR}"
+    echo "Unsupported CMake generator: ${GENERATOR}"
     exit 1
 fi
 
@@ -213,19 +220,34 @@ if [ ! -f ${CMAKE_EXE} ]; then
   exit 1
 fi
 
+if [ -z "${GOROOT+x}" ]; then
+    GO_EXE=`tools/build/tools/ankibuild/go.py`
+    export GOROOT=$(dirname $(dirname $GO_EXE))
+else
+    GO_EXE=$GOROOT/bin/go
+fi
+
+if [ ! -f ${GO_EXE} ]; then
+  echo "Missing Go executable: ${GO_EXE}"
+  echo "Fetch the required Go version by running ${TOPLEVEL}/tools/build/tools/ankibuild/go.py"
+  exit 1
+fi
+
+tools/build/tools/ankibuild/go.py --check-version $GO_EXE
+
 #
 # Remove assets in build directory if requested. This will force the
-# build to re-copy them from the source tree into the build directory. 
+# build to re-copy them from the source tree into the build directory.
 #
 
 if [ $RM_BUILD_ASSETS -eq 1 ]; then
     if [ $VERBOSE -eq 1 ]; then
         RM_VERBOSE_ARG="v"
-        echo "Removing assets in ${BUILD_DIR}/assets"
+        echo "Removing assets in ${BUILD_DIR}/data/assets"
     else
         RM_VERBOSE_ARG=""
     fi
-    rm -rf${RM_VERBOSE_ARG} ${BUILD_DIR}/assets
+    rm -rf${RM_VERBOSE_ARG} ${BUILD_DIR}/data/assets
 fi
 
 #
@@ -245,8 +267,11 @@ if [ $IGNORE_EXTERNAL_DEPENDENCIES -eq 0 ]; then
   # Process BUILD.in files (creates list of Go projects to fetch)
   ${BUILD_TOOLS}/metabuild/metabuild.py --go-output \
       -o ${GEN_SRC_DIR} \
-      ${METABUILD_INPUTS} 
-  time ${TOPLEVEL}/project/victor/scripts/run-go-get.sh -d ${GEN_SRC_DIR}
+      ${METABUILD_INPUTS}
+  # Run go get to pull dependencies
+  ${TOPLEVEL}/project/victor/scripts/run-go-get.sh -d ${GEN_SRC_DIR}
+  # Check out specified revisions of repositories we've versioned
+  (cd ${TOPLEVEL}; GOPATH=$(pwd)/cloud/go PATH="$PATH:$(dirname $GO_EXE)" ./godeps.js execute ${GEN_SRC_DIR})
 else
   echo "Ignore Go dependencies"
 fi
@@ -267,7 +292,7 @@ if [ $CONFIGURE -eq 1 ]; then
     # Process BUILD.in files
     ${BUILD_TOOLS}/metabuild/metabuild.py $METABUILD_VERBOSE \
         -o ${GEN_SRC_DIR} \
-        ${METABUILD_INPUTS} 
+        ${METABUILD_INPUTS}
 
     if [ $GEN_SRC_ONLY -eq 1 ]; then
         exit 0
@@ -320,13 +345,12 @@ if [ $CONFIGURE -eq 1 ]; then
 
     $CMAKE_EXE ${TOPLEVEL} \
         ${VERBOSE_ARG} \
-        -G${CMAKE_GENERATOR} \
+        -G"${GENERATOR}" \
         -DCMAKE_BUILD_TYPE=${CONFIGURATION} \
         -DBUILD_SHARED_LIBS=${BUILD_SHARED_LIBS} \
         ${EXPORT_FLAGS} \
         ${FEATURE_FLAGS} \
-        "${PLATFORM_ARGS[@]}"
-        
+        "${PLATFORM_ARGS[@]}" 
 fi
 
 if [ $RUN_BUILD -ne 1 ]; then

@@ -116,7 +116,7 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(bool isRetry)
   if( ! _targetBlock.IsSet() ) {
     PRINT_NAMED_WARNING("BehaviorPopAWheelie.NoBlockID",
                         "%s: Transitioning to action state, but we don't have a valid block ID",
-                        GetIDStr().c_str());
+                        GetDebugLabel().c_str());
     return;
   }
   
@@ -134,7 +134,6 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(bool isRetry)
   DriveToPopAWheelieAction* goPopAWheelie = new DriveToPopAWheelieAction(_targetBlock,
                                                                          false,
                                                                          0,
-                                                                         false,
                                                                          maxTurnToFaceAngle);
   goPopAWheelie->SetSayNameAnimationTrigger(AnimationTrigger::PopAWheeliePreActionNamedFace);
   goPopAWheelie->SetNoNameAnimationTrigger(AnimationTrigger::PopAWheeliePreActionUnnamedFace);
@@ -158,7 +157,6 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(bool isRetry)
                     _lastBlockReactedTo.UnSet();
                     DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::SuccessfulWheelie));
                     BehaviorObjectiveAchieved(BehaviorObjective::PoppedWheelie);
-                    NeedActionCompleted();
                     break;
                   }
                   case ActionResultCategory::RETRY:

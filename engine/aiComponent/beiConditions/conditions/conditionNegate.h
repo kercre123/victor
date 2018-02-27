@@ -24,9 +24,9 @@ public:
   explicit ConditionNegate(const Json::Value& config);
   explicit ConditionNegate(IBEIConditionPtr subCondition);
 
-  virtual void ResetInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual void SetActiveInternal(BehaviorExternalInterface& behaviorExternalInterface, bool setActive) override;
 private:
 
   IBEIConditionPtr _operand;

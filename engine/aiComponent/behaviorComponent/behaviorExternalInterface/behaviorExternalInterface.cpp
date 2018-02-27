@@ -22,7 +22,6 @@
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/moodSystem/moodManager.h"
-#include "engine/needsSystem/needsManager.h"
 #include "engine/robot.h"
 
 
@@ -50,19 +49,20 @@ BehaviorExternalInterface::~BehaviorExternalInterface()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExternalInterface::InitDependent(Robot* robot, const BCCompMap& dependentComponents)
 {
-  auto& aiComponent            = dependentComponents.find(BCComponentID::AIComponent)->second.GetValue<AIComponent>();
-  auto& behaviorContainer      = dependentComponents.find(BCComponentID::BehaviorContainer)->second.GetValue<BehaviorContainer>();
-  auto& behaviorEventComponent = dependentComponents.find(BCComponentID::BehaviorEventComponent)->second.GetValue<BehaviorEventComponent>();
-  auto& blockWorld             = dependentComponents.find(BCComponentID::BlockWorld)->second.GetValue<BlockWorld>();
-  auto& delegationComponent    = dependentComponents.find(BCComponentID::DelegationComponent)->second.GetValue<DelegationComponent>();
-  auto& faceWorld              = dependentComponents.find(BCComponentID::FaceWorld)->second.GetValue<FaceWorld>();
-  auto& robotInfo              = dependentComponents.find(BCComponentID::RobotInfo)->second.GetValue<BEIRobotInfo>();
-
+  auto& aiComponent            = dependentComponents.GetValue<AIComponent>();
+  auto& behaviorContainer      = dependentComponents.GetValue<BehaviorContainer>();
+  auto& behaviorEventComponent = dependentComponents.GetValue<BehaviorEventComponent>();
+  auto& behaviorTimers         = dependentComponents.GetValue<BehaviorTimerManager>();
+  auto& blockWorld             = dependentComponents.GetValue<BlockWorld>();
+  auto& delegationComponent    = dependentComponents.GetValue<DelegationComponent>();
+  auto& faceWorld              = dependentComponents.GetValue<FaceWorld>();
+  auto& robotInfo              = dependentComponents.GetValue<BEIRobotInfo>();
 
   Init(&aiComponent,
        &robot->GetAnimationComponent(),
        &behaviorContainer,
        &behaviorEventComponent,
+       &behaviorTimers,
        &blockWorld,
        &robot->GetBodyLightComponent(),
        &robot->GetCubeAccelComponent(), 
@@ -72,7 +72,6 @@ void BehaviorExternalInterface::InitDependent(Robot* robot, const BCCompMap& dep
        &robot->GetMapComponent(),
        &robot->GetMicDirectionHistory(),
        &robot->GetMoodManager(),
-       robot->GetContext()->GetNeedsManager(),
        &robot->GetObjectPoseConfirmer(),
        &robot->GetPetWorld(),
        &robot->GetProgressionUnlockComponent(),
@@ -91,6 +90,7 @@ void BehaviorExternalInterface::Init(AIComponent*                   aiComponent,
                                      AnimationComponent*            animationComponent,
                                      BehaviorContainer*             behaviorContainer,
                                      BehaviorEventComponent*        behaviorEventComponent,
+                                     BehaviorTimerManager*          behaviorTimers,
                                      BlockWorld*                    blockWorld,
                                      BodyLightComponent*            bodyLightComponent,
                                      CubeAccelComponent*            cubeAccelComponent,
@@ -100,7 +100,6 @@ void BehaviorExternalInterface::Init(AIComponent*                   aiComponent,
                                      MapComponent*                  mapComponent,
                                      MicDirectionHistory*           micDirectionHistory,
                                      MoodManager*                   moodManager,
-                                     NeedsManager*                  needsManager,
                                      ObjectPoseConfirmer*           objectPoseConfirmer,
                                      PetWorld*                      petWorld,
                                      ProgressionUnlockComponent*    progressionUnlockComponent,
@@ -116,6 +115,7 @@ void BehaviorExternalInterface::Init(AIComponent*                   aiComponent,
                                                      animationComponent,
                                                      behaviorContainer,
                                                      behaviorEventComponent,
+                                                     behaviorTimers,
                                                      blockWorld,
                                                      bodyLightComponent,
                                                      cubeAccelComponent,
@@ -125,7 +125,6 @@ void BehaviorExternalInterface::Init(AIComponent*                   aiComponent,
                                                      mapComponent,
                                                      micDirectionHistory,
                                                      moodManager,
-                                                     needsManager,
                                                      objectPoseConfirmer,
                                                      petWorld,
                                                      progressionUnlockComponent,
@@ -155,6 +154,7 @@ BehaviorExternalInterface::CompArrayWrapper::CompArrayWrapper(AIComponent*      
                                                               AnimationComponent*            animationComponent,
                                                               BehaviorContainer*             behaviorContainer,
                                                               BehaviorEventComponent*        behaviorEventComponent,
+                                                              BehaviorTimerManager*          behaviorTimers,
                                                               BlockWorld*                    blockWorld,
                                                               BodyLightComponent*            bodyLightComponent,
                                                               CubeAccelComponent*            cubeAccelComponent,
@@ -164,7 +164,6 @@ BehaviorExternalInterface::CompArrayWrapper::CompArrayWrapper(AIComponent*      
                                                               MapComponent*                  mapComponent,
                                                               MicDirectionHistory*           micDirectionHistory,
                                                               MoodManager*                   moodManager,
-                                                              NeedsManager*                  needsManager,
                                                               ObjectPoseConfirmer*           objectPoseConfirmer,
                                                               PetWorld*                      petWorld,
                                                               ProgressionUnlockComponent*    progressionUnlockComponent,
@@ -174,12 +173,13 @@ BehaviorExternalInterface::CompArrayWrapper::CompArrayWrapper(AIComponent*      
                                                               BEIRobotInfo*                  robotInfo,
                                                               TouchSensorComponent*          touchSensorComponent,
                                                               VisionComponent*               visionComponent,
-                                                              VisionScheduleMediator* visionScheduleMediator)
+                                                              VisionScheduleMediator*        visionScheduleMediator)
 : _array({
     {BEIComponentID::AIComponent,            BEIComponentWrapper(aiComponent)},
     {BEIComponentID::Animation,              BEIComponentWrapper(animationComponent)},
     {BEIComponentID::BehaviorContainer,      BEIComponentWrapper(behaviorContainer)},
     {BEIComponentID::BehaviorEvent,          BEIComponentWrapper(behaviorEventComponent)},
+    {BEIComponentID::BehaviorTimerManager,   BEIComponentWrapper(behaviorTimers)},
     {BEIComponentID::BlockWorld,             BEIComponentWrapper(blockWorld)},
     {BEIComponentID::BodyLightComponent,     BEIComponentWrapper(bodyLightComponent)},
     {BEIComponentID::CubeAccel,              BEIComponentWrapper(cubeAccelComponent)},
@@ -189,7 +189,6 @@ BehaviorExternalInterface::CompArrayWrapper::CompArrayWrapper(AIComponent*      
     {BEIComponentID::Map,                    BEIComponentWrapper(mapComponent)},
     {BEIComponentID::MicDirectionHistory,    BEIComponentWrapper(micDirectionHistory)},
     {BEIComponentID::MoodManager,            BEIComponentWrapper(moodManager)},
-    {BEIComponentID::NeedsManager,           BEIComponentWrapper(needsManager)},
     {BEIComponentID::ObjectPoseConfirmer,    BEIComponentWrapper(objectPoseConfirmer)},
     {BEIComponentID::PetWorld,               BEIComponentWrapper(petWorld)},
     {BEIComponentID::ProgressionUnlock,      BEIComponentWrapper(progressionUnlockComponent)},

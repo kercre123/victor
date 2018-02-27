@@ -14,13 +14,15 @@
  * limitations under the License.
  */
  
-#include "SimpleTest.h"
-#include "ExplicitUnion.h"
-#include "UnionOfUnion.h"
 #include "DefaultValues.h"
-#include "aligned/AutoUnionTest.h"
-#include "TestEnum.h"
+#include "ExplicitUnion.h"
 #include "JsonSerialization.h"
+#include "SimpleTest.h"
+#include "TestEnum.h"
+#include "UnionOfUnion.h"
+#include "DupesAllowedUnion.h"
+#include "DupesAutoUnion.h"
+#include "aligned/AutoUnionTest.h"
 #include "json/json.h"
 
 
@@ -74,7 +76,7 @@ TEST AnkiEnum_NoClass()
 
   ASSERT_EQ((int)AnkiTypes::AnkiEnumNumEntries, 7);
   ASSERT_EQ((int)AnkiTypes::AnkiNoClassEnumNumEntries, 7);
-  
+
   PASS();
 }
 
@@ -501,6 +503,98 @@ TEST Union_VersionHash() {
   PASS();
 }
 
+
+// For verifying that T(Arg&&) does or does not exist
+template <bool B>
+using bool_constant = std::integral_constant<bool, B>;
+template <typename T, typename Arg>
+struct IsExplicitlyConstructible 
+  : public bool_constant< std::is_constructible<T, Arg&&>::value
+                          && !std::is_convertible<Arg, T>::value >
+{
+};
+
+TEST Union_DupesAllowed() {
+  // This test is only valid if --output-union-helper-constructors is set.
+  // This tests that the union should exist and can be set, and that it should not have
+  // constructors accepting the union member structures if they appear in duplicate
+
+  {
+    DupesAllowedUnion testUnion;
+    DuplicatedType duped;
+    NonDuplicatedType normal;
+
+    testUnion.Set_dupedMember1(duped);
+    ASSERT_EQ(testUnion.GetTag(), DupesAllowedUnionTag::dupedMember1);
+    
+    testUnion.Set_dupedMember2(duped);
+    ASSERT_EQ(testUnion.GetTag(), DupesAllowedUnionTag::dupedMember2);
+
+    testUnion.Set_normalMember(normal);
+    ASSERT_EQ(testUnion.GetTag(), DupesAllowedUnionTag::normalMember);
+  }
+
+  // check ctors for the types we care about
+  constexpr bool dupedTypeHasCtor 
+    = IsExplicitlyConstructible<DupesAllowedUnion, DuplicatedType>::value;
+  constexpr bool nondupedTypeHasCtor 
+    = IsExplicitlyConstructible<DupesAllowedUnion, NonDuplicatedType>::value;
+
+  // if default (non- dupes_allowed) unions have constructors for creating the 
+  // union from the union member type, then --output-union-helper-constructors is 
+  // probably set.
+  const bool otherTypeCtor = IsExplicitlyConstructible<FunkyMessage, Monkey>::value;
+  if( otherTypeCtor ) {
+    ASSERT_EQ( nondupedTypeHasCtor, true ); // no dupes==>possible to construct
+    ASSERT_EQ( dupedTypeHasCtor, false ); // dupes==>no ctor so that we can allow dupes
+  } else {
+    // if the normal one doesnt have the ctors, no one else should either.
+    // perhaps --output-union-helper-constructors was not set.
+    ASSERT_EQ( nondupedTypeHasCtor, false );
+    ASSERT_EQ( dupedTypeHasCtor, false );
+  }
+  
+  PASS();
+}
+
+TEST Autounion_DupesAllowed() {
+  DupesAutoUnion msg;
+
+  AutoWithDupe withDupe{10};
+  AutoNoDupe noDupe{true};
+
+  msg.Set_explicitMember( withDupe );
+  ASSERT_EQ(DupesAutoUnion::Tag::explicitMember, msg.GetTag());
+
+  msg.Set_AutoWithDupe( withDupe );
+  ASSERT_EQ(DupesAutoUnion::Tag::AutoWithDupe, msg.GetTag());
+
+  msg.Set_AutoNoDupe( noDupe );
+  ASSERT_EQ(DupesAutoUnion::Tag::AutoNoDupe, msg.GetTag());
+
+  // check ctors for the types we care about
+  constexpr bool dupedTypeHasCtor 
+    = IsExplicitlyConstructible<DupesAutoUnion, AutoWithDupe>::value;
+  constexpr bool nondupedTypeHasCtor 
+    = IsExplicitlyConstructible<DupesAutoUnion, AutoNoDupe>::value;
+
+  // if default (non- dupes_allowed) unions have constructors for creating the 
+  // union from the union member type, then --output-union-helper-constructors is 
+  // probably set.
+  const bool otherTypeCtor = IsExplicitlyConstructible<FunkyMessage, Monkey>::value;
+  if( otherTypeCtor ) {
+    ASSERT_EQ( nondupedTypeHasCtor, true ); // no dupes==>possible to construct
+    ASSERT_EQ( dupedTypeHasCtor, false ); // dupes==>no ctor so that we can allow dupes
+  } else {
+    // if the normal one doesnt have the ctors, no one else should either.
+    // perhaps --output-union-helper-constructors was not set.
+    ASSERT_EQ( nondupedTypeHasCtor, false );
+    ASSERT_EQ( dupedTypeHasCtor, false );
+  }  
+
+  PASS();
+}
+
 TEST Enum_VersionHash() {
   // This will break if you change the contents of the ExplicitlyTaggedUnion.clad
   // Use the following to re-capture the hash value
@@ -652,6 +746,44 @@ TEST JsonSerialization_BasicTypes() {
   PASS();
 }
 
+TEST JsonSerialization_ListOfEnums() {
+  std::string json = R"json(
+{
+	"vals": ["Zero", "One", "Two", "Five", "One"]
+}
+)json";
+
+  using namespace JsonSerialization;
+  
+  // Load Json from string into jsoncpp Json::Value
+  Json::Reader reader;
+  Json::Value root;
+  ASSERT(reader.parse(json, root));
+
+  // testStruct is the CLAD generated class that we want to serialize into.
+  testStructure_ListOfEnums testStruct;
+  ASSERT(testStruct.SetFromJSON(root));
+
+  // Ensure data in objects matches data from the json string.
+  ASSERT_EQ(testStruct.vals.size(), 5);
+
+  ASSERT_EQ(testStruct.vals[0], testEnum::Zero);
+  ASSERT_EQ(testStruct.vals[1], testEnum::One);
+  ASSERT_EQ(testStruct.vals[2], testEnum::Two);
+  ASSERT_EQ(testStruct.vals[3], testEnum::Five);
+  ASSERT_EQ(testStruct.vals[4], testEnum::One);
+
+  // GetJSON() will serialize a CLAD generated structure into a Json::Value, the
+  // opposite of what we're doing above.
+  // This reloads the output of GetJSON() back into a Json::Value and then back into
+  // another CLAD object, they should then contain the same data.
+  testStructure_ListOfEnums testStructReserialized;
+  testStructReserialized.SetFromJSON(testStruct.GetJSON());
+  ASSERT(testStruct == testStructReserialized);
+
+  PASS();
+}
+
 TEST JsonSerialization_List() {
   std::string json = R"json(
 {
@@ -781,6 +913,52 @@ TEST JsonSerialization_Unions() {
   PASS();
 }
 
+TEST JsonSerialization_Enums() {
+
+  JsonSerialization::testEnum e = JsonSerialization::testEnum::Five;
+  const std::string& str = JsonSerialization::testEnumToString(e);
+  ASSERT_EQ(str, "Five");
+
+  const bool ret1 = JsonSerialization::EnumFromString("One", e);
+  ASSERT(ret1);
+  ASSERT_EQ(e, JsonSerialization::testEnum::One);
+
+  const bool ret2 = JsonSerialization::testEnumFromString("Two", e);
+  ASSERT(ret2);
+  ASSERT_EQ(e, JsonSerialization::testEnum::Two);
+
+  const bool ret3 = JsonSerialization::testEnumFromString("asdf", e);
+  ASSERT(!ret3);
+
+  std::string json = R"json(
+{
+  "enumVal": "Two"
+}
+)json";
+  
+  // Load Json from string into jsoncpp Json::Value
+  Json::Reader reader;
+  Json::Value root;
+  ASSERT(reader.parse(json, root));
+
+  // testStruct is the CLAD generated class that we want to serialize into.
+  JsonSerialization::testStructure_Enums testStruct;
+  ASSERT(testStruct.SetFromJSON(root));
+
+  ASSERT_EQ(testStruct.enumVal, JsonSerialization::testEnum::Two);
+
+  ASSERT_EQ((int)JsonSerialization::testEnum::Two, 2);
+  ASSERT_EQ((int)testStruct.enumVal, 2);
+
+  // Ensure that GetJSON is producing equivalent results as loading from the file.
+  JsonSerialization::testStructure_Enums testStructReserialized;
+  testStructReserialized.SetFromJSON(testStruct.GetJSON());
+  ASSERT(testStruct == testStructReserialized);
+
+  PASS();
+}
+  
+
 TEST JsonSerialization_PartialJson() {
   std::string json = R"json(
 {
@@ -810,6 +988,281 @@ TEST JsonSerialization_PartialJson() {
   testStructReserialized.SetFromJSON(testStruct.GetJSON());
   ASSERT(testStruct == testStructReserialized);
 
+  PASS();
+}
+
+TEST JsonSerialization_ReturnVal()
+{
+  // a list of pairs of json values (as string) and a bool. SetFromJSON should return the same value as the
+  // bool
+
+  std::vector<std::pair<std::string, bool>> jsonMap = {{
+    {R"json(
+{
+  "boolVal": true,
+  "floatVal": 3.14,
+  "intVal": 7,
+  "enumVal": "Five",
+  "unionVal": {
+    "type": "testStruct1",
+    "test": false
+  },
+
+  "boolValList": [],
+  "floatValList": [],
+  "intValList": [],
+  "enumValList": [],
+  "unionValList": []
+})json",
+   true},
+
+    {R"json(
+{
+  "boolVal": true,
+  "floatVal": 3.14,
+  "intVal": 7,
+  "enumVal": "Five",
+  "unionVal": {
+    "type": "asdf",
+    "test": false
+  },
+
+  "boolValList": [],
+  "floatValList": [],
+  "intValList": [],
+  "enumValList": [],
+  "unionValList": []
+})json",
+   false},
+    
+    {R"json(
+{
+  "boolVal": true,
+  "floatVal": 3.14,
+  "intVal": 7,
+  "enumVal": "asdf",
+  "unionVal": {
+    "type": "testStruct1",
+    "test": false
+  },
+
+  "boolValList": [],
+  "floatValList": [],
+  "intValList": [],
+  "enumValList": [],
+  "unionValList": []
+})json",
+   false},
+
+    {R"json(
+{
+  "boolVal": true,
+  "floatVal": 3.14,
+  "intVal": 7,
+  "enumVal": "Five",
+  "unionVal": {
+    "type": "testStruct1",
+    "test": false
+  },
+
+  "boolValList": [true, false, false],
+  "floatValList": [1.05, 2, -99.999, 0.01],
+  "intValList": [1, 2, 3],
+  "enumValList": ["One", "Two", "Five"],
+  "unionValList": [
+    {
+      "type": "testStruct1",
+      "test": true
+    },
+    {
+      "type": "testStruct2",
+      "test": 33
+    },
+    {
+      "type": "testStruct3",
+      "test": "strVal"
+    }
+  ]
+})json",
+   true},
+
+    {R"json(
+{
+  "boolVal": true,
+  "floatVal": 3.14,
+  "intVal": 7,
+  "enumVal": "Five",
+  "unionVal": {
+    "type": "testStruct1",
+    "test": false
+  },
+
+  "boolValList": [true, false, false],
+  "floatValList": [1.05, 2, -99.999, 0.01],
+  "intValList": [1, 2, 3],
+  "enumValList": ["One", "Two", "Five"],
+  "unionValList": [
+    {
+      "type": "testStruct1",
+      "test": true
+    },
+    {
+      "type": "testStruct2_invalid",
+      "test": 33
+    },
+    {
+      "type": "testStruct3",
+      "test": "strVal"
+    }
+  ]
+})json",
+   false},    
+
+    {R"json(
+{
+  "boolVal": true,
+  "floatVal": 3.14,
+  "intVal": 7,
+  "enumVal": "Five",
+  "unionVal": {
+    "type": "testStruct1",
+    "test": false
+  },
+
+  "boolValList": [true, false, false],
+  "floatValList": [1.05, 2, -99.999, 0.01],
+  "intValList": [1, 2, 3],
+  "enumValList": ["One", "Two", "Five", "not_a_val"],
+  "unionValList": []
+})json",
+   false},
+    
+    {R"json(
+{
+  "boolVal": "notABool",
+  "floatVal": 3.14,
+  "intVal": 7,
+  "enumVal": "Five",
+  "unionVal": {
+    "type": "testStruct1",
+    "test": false
+  },
+
+  "boolValList": [],
+  "floatValList": [],
+  "intValList": [],
+  "enumValList": [],
+  "unionValList": []
+})json",
+   false},
+
+    {R"json(
+{
+  "boolVal": true,
+  "floatVal": "notAFloat",
+  "intVal": 7,
+  "enumVal": "Five",
+  "unionVal": {
+    "type": "testStruct1",
+    "test": false
+  },
+
+  "boolValList": [],
+  "floatValList": [],
+  "intValList": [],
+  "enumValList": [],
+  "unionValList": []
+})json",
+   false},
+
+    {R"json(
+{
+  "boolVal": true,
+  "floatVal": 3.14,
+  "intVal": "notAnInt",
+  "enumVal": "Five",
+  "unionVal": {
+    "type": "testStruct1",
+    "test": false
+  },
+
+  "boolValList": [],
+  "floatValList": [],
+  "intValList": [],
+  "enumValList": [],
+  "unionValList": []
+})json",
+   false},
+
+    {R"json(
+{
+  "boolVal": true,
+  "floatVal": 3.14,
+  "intVal": 7,
+  "enumVal": "Five",
+  "unionVal": {
+    "type": "testStruct1",
+    "test": false
+  },
+
+  "boolValList": ["notAbool"],
+  "floatValList": [],
+  "intValList": [],
+  "enumValList": [],
+  "unionValList": []
+})json",
+   false},
+
+    {R"json(
+{
+  "boolVal": true,
+  "floatVal": 3.14,
+  "intVal": 7,
+  "enumVal": "Five",
+  "unionVal": {
+    "type": "testStruct1",
+    "test": false
+  },
+
+  "boolValList": [],
+  "floatValList": [3.1, "notAFloat"],
+  "intValList": [],
+  "enumValList": [],
+  "unionValList": []
+})json",
+   false},
+
+    {R"json(
+{
+  "boolVal": true,
+  "floatVal": 3.14,
+  "intVal": 7,
+  "enumVal": "Five",
+  "unionVal": {
+    "type": "testStruct1",
+    "test": false
+  },
+
+  "boolValList": [],
+  "floatValList": [],
+  "intValList": ["notAnInt", 4],
+  "enumValList": [],
+  "unionValList": []
+})json",
+   false},
+
+    }};
+
+  Json::Reader reader;
+  
+  for( const auto& stringPair : jsonMap ) {
+    Json::Value root;
+    ASSERT(reader.parse(stringPair.first, root));
+
+    JsonSerialization::testStructure_WithLists test;
+    ASSERT_EQ(test.SetFromJSON(root), stringPair.second);
+  }
+  
   PASS();
 }
 
@@ -998,6 +1451,11 @@ SUITE(CPP_Emitter) {
   // Autounion
   RUN_TEST(Autounion_should_exist);
 
+  // Union with dupes_allowed
+  RUN_TEST(Union_DupesAllowed);
+  // Autounion with dupes_allowed
+  RUN_TEST(Autounion_DupesAllowed);
+
   // Template helpies
   RUN_TEST(Union_TagToType);
   RUN_TEST(Union_TemplatedAccessors);
@@ -1015,9 +1473,12 @@ SUITE(CPP_Emitter) {
   // Json Serialization
   RUN_TEST(JsonSerialization_BasicTypes);
   RUN_TEST(JsonSerialization_List);
+  RUN_TEST(JsonSerialization_ListOfEnums);
   RUN_TEST(JsonSerialization_Nested);
   RUN_TEST(JsonSerialization_Unions);
+  RUN_TEST(JsonSerialization_Enums);
   RUN_TEST(JsonSerialization_PartialJson);
+  RUN_TEST(JsonSerialization_ReturnVal);
 
   // Enum Concept
   RUN_TEST(EnumConcept);

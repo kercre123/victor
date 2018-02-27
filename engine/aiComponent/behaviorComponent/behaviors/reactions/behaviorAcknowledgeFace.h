@@ -49,8 +49,8 @@ public:
   void SetFacesToAcknowledge(const std::set<SmartFaceID> targetFaces){_desiredTargets = targetFaces;}
   
 protected:
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorAcknowledgeFace(const Json::Value& config);
 
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}

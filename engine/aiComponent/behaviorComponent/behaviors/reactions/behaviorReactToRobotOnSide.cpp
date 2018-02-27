@@ -46,11 +46,7 @@ void BehaviorReactToRobotOnSide::OnBehaviorActivated()
   // clear bored animation timer
   _timeToPerformBoredAnim_s = -1.0f;
   
-  // play meter damage
-  NeedActionCompleted(NeedsActionId::PlacedOnSide);
-  
   ReactToBeingOnSide();
-  
 }
 
 
@@ -111,9 +107,6 @@ void BehaviorReactToRobotOnSide::HoldingLoop()
       // reset timer
       _timeToPerformBoredAnim_s = -1.0f;
 
-      // play meter damage
-      NeedActionCompleted(NeedsActionId::BoredOnSide);
-      
       // play bored animation sequence, then return to holding
 
       // note: NothingToDoBored anims can move the robot, so Intro/Outro may not work here well, should

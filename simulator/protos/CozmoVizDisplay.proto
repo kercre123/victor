@@ -10,6 +10,7 @@ PROTO CozmoVizDisplay
   field SFBool colorizeStderrOutput FALSE
   field SFInt32 accelPlotObjectId 0
   field SFInt32 numBehaviorStackLines 8
+  field SFInt32 numVisionModeLines 8
 
   field SFInt32 numDebugImageDisplays 0 # Vision debug displays in addition to the camera
 ]
@@ -227,6 +228,30 @@ Supervisor {
       width 180
       # assumes size 8 font
       height %{= fields.numBehaviorStackLines.value * 10 + 16 }%
+    }
+    # Define VisionModeDebug display 
+    Display {
+      #Hide display plane far away
+      translation 1000 0.1 0
+
+      children [
+        DEF SHAPE Shape {
+          appearance Appearance {
+            material Material {
+              diffuseColor 1 1 1
+              specularColor 0 0 0
+              transparency 0.6
+            }
+          }
+          geometry Plane {
+            size 1 1
+          }
+        }
+      ]
+      name "victor_vision_mode_display"
+      width 240
+      #assumes size 8 font
+      height %{= fields.numVisionModeLines.value * 10 + 16 }%
     }
   ]
 

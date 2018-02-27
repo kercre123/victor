@@ -1,9 +1,0 @@
-{
-  "behaviorClass": "RollBlock",
-  "behaviorID": "SparksRollBlock",
-  "needsActionID": "RollACube_Sparked",
-  "executableBehaviorType": "RollBlock",
-  "displayNameKey":"behavior.RollBlock",
-  "requiredUnlockId": "RollCube",
-  "isBlockRotationImportant" : false
-}

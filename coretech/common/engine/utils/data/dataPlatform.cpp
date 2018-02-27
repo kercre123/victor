@@ -18,16 +18,16 @@
 #include "util/helpers/ankiDefines.h"
 #include "util/fileUtils/fileUtils.h"
 
+#define LOG_CHANNEL "DataPlatform"
+
 namespace Anki {
 namespace Util {
 namespace Data {
 
 
-DataPlatform::DataPlatform(const std::string &filesPath, const std::string &cachePath,
-  const std::string &externalPath, const std::string &resourcesPath)
-: _filesPath(filesPath)
+DataPlatform::DataPlatform(const std::string &persistentPath, const std::string &cachePath, const std::string &resourcesPath)
+: _persistentPath(persistentPath)
 , _cachePath(cachePath)
-, _externalPath(externalPath)
 , _resourcesPath(resourcesPath)
 {
 
@@ -36,40 +36,29 @@ DataPlatform::DataPlatform(const std::string &filesPath, const std::string &cach
 std::string DataPlatform::pathToResource(const Scope& resourceScope, const std::string& resourceName) const
 {
   std::string s = "";
-  if (Scope::Resources == resourceScope) {
-    if (resourceName.empty()) {
-      PRINT_NAMED_WARNING("Platform.pathToResource", "Request for top level resource directory");
+  switch (resourceScope) {
+    case Scope::Persistent:
+      s += _persistentPath;
+      break;
+    case Scope::Resources:
+      s += _resourcesPath;
+      break;
+    case Scope::Cache:
+      s += _cachePath;
+      break;
+    case Scope::CurrentGameLog:
+      s += _cachePath;
+      s += "/gameLogs";
+      break;
+  }
+  if (!resourceName.empty()) {
+    if ('/' != resourceName.front()) {
+      s += "/";
     }
+    s += resourceName;
   }
 
-  if (s.empty()) {
-    switch (resourceScope) {
-      case Scope::Persistent:
-        s += _filesPath;
-        s += "/output";
-        break;
-      case Scope::Resources:
-        s += _resourcesPath;
-        break;
-      case Scope::Cache:
-        s += _cachePath;
-        break;
-      case Scope::CurrentGameLog:
-        s += _cachePath;
-        s += "/gameLogs";
-        break;
-      case Scope::External:
-        s += _externalPath;
-        break;
-    }
-    if (!resourceName.empty()) {
-      if ('/' != resourceName.front()) {
-        s += "/";
-      }
-      s += resourceName;
-    }
-  }
-  //PRINT_NAMED_DEBUG("DataPlatform", "%s", s.c_str());
+  //LOG_DEBUG("DataPlatform", "%s", s.c_str());
   return s;
 }
 
@@ -101,10 +90,10 @@ bool DataPlatform::readAsJson(const std::string& resourceName, Json::Value& data
   Json::Reader reader;
   bool success = reader.parse(jsonFile, data);
   if (!success) {
-    PRINT_NAMED_ERROR("DataPlatform.readAsJson", "Failed to read [%s]", resourceName.c_str());
+    LOG_ERROR("DataPlatform.readAsJson", "Failed to read [%s]", resourceName.c_str());
     const std::string& errors = reader.getFormattedErrorMessages();
     if (!errors.empty()) {
-      PRINT_NAMED_DEBUG("DataPlatform.readAsJson", "Json reader errors [%s]", errors.c_str());
+      LOG_DEBUG("DataPlatform.readAsJson", "Json reader errors [%s]", errors.c_str());
     }
   }
   jsonFile.close();
@@ -115,9 +104,9 @@ bool DataPlatform::readAsJson(const std::string& resourceName, Json::Value& data
 bool DataPlatform::writeAsJson(const Scope& resourceScope, const std::string& resourceName, const Json::Value& data) const
 {
   const std::string jsonFilename = pathToResource(resourceScope, resourceName);
-  PRINT_NAMED_INFO("DataPlatform.writeAsJson", "writing to %s", jsonFilename.c_str());
+  LOG_INFO("DataPlatform.writeAsJson", "writing to %s", jsonFilename.c_str());
   if (!Util::FileUtils::CreateDirectory(jsonFilename, true, true)) {
-    PRINT_NAMED_ERROR("DataPlatform.writeAsJson", "Failed to create folder %s", jsonFilename.c_str());
+    LOG_ERROR("DataPlatform.writeAsJson", "Failed to create folder %s", jsonFilename.c_str());
     return false;
   }
   Json::StyledStreamWriter writer;

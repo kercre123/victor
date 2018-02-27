@@ -17,8 +17,9 @@
 #include "engine/aiComponent/aiComponents_fwd.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
 #include "engine/robotComponents_fwd.h"
-#include "engine/entity.h"
-#include "engine/dependencyManagedComponent.h"
+#include "util/entityComponent/componentWrapper.h"
+#include "util/entityComponent/entity.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
 
 #include <assert.h>
@@ -33,34 +34,29 @@ class AIWhiteboard;
 class BEIRobotInfo;
 class BehaviorComponent;
 class BehaviorContainer;
-class BehaviorHelperComponent;
-class DoATrickSelector;
+class ContinuityComponent;
 class FaceSelectionComponent;
-class FeedingSoundEffectManager;
 class FreeplayDataTracker;
 class ObjectInteractionInfoCache;
 class PuzzleComponent;
-class RequestGameComponent;
 class Robot;
-class SevereNeedsComponent;
-class WorkoutComponent;
+class TemplatedImageCache;
+class TimerUtility;
 
 namespace ComponentWrappers{
 class AIComponentComponents{
 public:
   AIComponentComponents(Robot&                      robot,
                         BehaviorComponent*&         behaviorComponent,
-                        DoATrickSelector*           doATrickSelector,
+                        ContinuityComponent*        continuityComponent,
                         FaceSelectionComponent*     faceSelectionComponent,
-                        FeedingSoundEffectManager*  feedingSoundEFfectManager,
                         FreeplayDataTracker*        freeplayDataTracker,
                         AIInformationAnalyzer*      infoAnalyzer,
                         ObjectInteractionInfoCache* objectInteractionInfoCache,
                         PuzzleComponent*            puzzleComponent,
-                        RequestGameComponent*       requestGameComponent,
-                        SevereNeedsComponent*       severeNeedsComponent,
-                        AIWhiteboard*               aiWhiteboard,
-                        WorkoutComponent*           workoutComponent);
+                        TemplatedImageCache*        templatedImageCache,
+                        TimerUtility*               timerUtility,
+                        AIWhiteboard*               aiWhiteboard);
   virtual ~AIComponentComponents();
   
   Robot& _robot;
@@ -105,6 +101,8 @@ public:
   template<typename T>
   T& GetComponent(AIComponentID componentID) const {assert(_aiComponents); return _aiComponents->_components.GetComponent(componentID).GetValue<T>();}
 
+  template<typename T>
+  T* GetBasePtr(AIComponentID componentID) const {assert(_aiComponents); return _aiComponents->_components.GetComponent(componentID).GetBasePtr<T>();}
 
   inline const AIInformationAnalyzer& GetAIInformationAnalyzer() const { return GetComponent<AIInformationAnalyzer>(AIComponentID::InformationAnalyzer);}
   inline AIInformationAnalyzer& GetAIInformationAnalyzer() { return GetComponent<AIInformationAnalyzer>(AIComponentID::InformationAnalyzer);}
@@ -113,9 +111,6 @@ public:
   inline const BehaviorComponent& GetBehaviorComponent() const {  return GetComponent<BehaviorComponent>(AIComponentID::BehaviorComponent); }
   inline BehaviorComponent&       GetBehaviorComponent()       {  return GetComponent<BehaviorComponent>(AIComponentID::BehaviorComponent); }
   
-  // Support legacy code until move helper comp into delegate component
-  const BehaviorHelperComponent& GetBehaviorHelperComponent() const;
-  BehaviorHelperComponent&       GetBehaviorHelperComponent();
   // For test only
   BehaviorContainer& GetBehaviorContainer();
   
@@ -130,23 +125,8 @@ public:
   inline PuzzleComponent&       GetPuzzleComponent()       { return GetComponent<PuzzleComponent>(AIComponentID::Puzzle);}
 
   inline const FaceSelectionComponent& GetFaceSelectionComponent() const {return GetComponent<FaceSelectionComponent>(AIComponentID::FaceSelection);}
-
-  inline const WorkoutComponent& GetWorkoutComponent() const {  return GetComponent<WorkoutComponent>(AIComponentID::Workout); }
-  inline WorkoutComponent&       GetWorkoutComponent()       {  return GetComponent<WorkoutComponent>(AIComponentID::Workout); }
-  
-  inline RequestGameComponent& GetRequestGameComponent()               {  return GetComponent<RequestGameComponent>(AIComponentID::RequestGame);}
-  inline RequestGameComponent& GetNonConstRequestGameComponent() const {  return GetComponent<RequestGameComponent>(AIComponentID::RequestGame);}
-
-  inline FeedingSoundEffectManager& GetFeedingSoundEffectManager() {  return GetComponent<FeedingSoundEffectManager>(AIComponentID::FeedingSoundEffect); };
-  
-  inline DoATrickSelector& GetDoATrickSelector()  {  return GetComponent<DoATrickSelector>(AIComponentID::DoATrick); }
-
+    
   inline FreeplayDataTracker& GetFreeplayDataTracker()  {  return GetComponent<FreeplayDataTracker>(AIComponentID::FreeplayDataTracker); }  
-  
-  inline const SevereNeedsComponent& GetSevereNeedsComponent() const   {  return GetComponent<SevereNeedsComponent>(AIComponentID::SevereNeeds); }
-  inline SevereNeedsComponent& GetSevereNeedsComponent()               {  return GetComponent<SevereNeedsComponent>(AIComponentID::SevereNeeds); }
-  inline SevereNeedsComponent& GetNonConstSevereNeedsComponent() const {  return GetComponent<SevereNeedsComponent>(AIComponentID::SevereNeeds); }
-
   
   ////////////////////////////////////////////////////////////////////////////////
   // Update and init

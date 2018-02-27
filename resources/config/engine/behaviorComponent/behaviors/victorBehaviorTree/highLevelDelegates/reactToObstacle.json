@@ -1,0 +1,9 @@
+{
+  "behaviorClass": "AnimSequence",
+  "behaviorID": "ReactToObstacle",
+  "displayNameKey":"behavior.ReactToObstacle",
+  "animTriggers": ["ReactToObstacle"],
+  "wantsToBeActivatedCondition": {
+    "conditionType" : "ObstacleDetected"
+  }
+}

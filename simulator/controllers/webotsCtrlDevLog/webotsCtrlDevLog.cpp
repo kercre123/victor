@@ -16,6 +16,7 @@
 #include "clad/types/imageTypes.h"
 #include "clad/types/vizTypes.h"
 #include "clad/vizInterface/messageViz.h"
+#include "simulator/controllers/shared/webotsHelpers.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
@@ -210,18 +211,7 @@ int32_t WebotsDevLogController::Update()
 std::string WebotsDevLogController::GetDirectoryPath() const
 {
   std::string dirPath;
-  
-  webots::Field* logNameField = _selfNode->getField(kLogsDirectoryFieldName);
-  if (nullptr == logNameField)
-  {
-    PRINT_NAMED_ERROR("WebotsDevLogController.GetDirectoryPath.MissingDataField",
-                      "Name: %s", kLogsDirectoryFieldName);
-  }
-  else
-  {
-    dirPath = logNameField->getSFString();
-  }
-  
+  WebotsHelpers::GetFieldAsString(_selfNode, kLogsDirectoryFieldName, dirPath);
   return dirPath;
 }
 

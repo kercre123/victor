@@ -17,7 +17,8 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiComponents_fwd.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
-#include "engine/entity.h"
+#include "util/entityComponent/componentWrapper.h"
+#include "util/entityComponent/entity.h"
 
 #include "clad/types/offTreadsStates.h"
 
@@ -36,6 +37,7 @@ class AIComponent;
 class AnimationComponent;
 class BehaviorContainer;
 class BehaviorEventComponent;
+class BehaviorTimerManager;
 class BEIRobotInfo;
 class BlockWorld;
 class BodyLightComponent;
@@ -45,7 +47,6 @@ class DelegationComponent;
 class FaceWorld;
 class ICozmoBehavior;
 class IExternalInterface;
-class NeedsManager;
 class MapComponent;
 class MicDirectionHistory;
 class MoodManager;
@@ -87,7 +88,7 @@ class BEIComponentWrapper : public ComponentWrapper {
 class BehaviorExternalInterface : public IDependencyManagedComponent<BCComponentID>, private Util::noncopyable{
 public:
   BehaviorExternalInterface()
-  :IDependencyManagedComponent(BCComponentID::BehaviorExternalInterface) {}
+  :IDependencyManagedComponent(this, BCComponentID::BehaviorExternalInterface) {}
   
   //////
   // IDependencyManagedComponent functions
@@ -104,6 +105,7 @@ public:
   { 
     components.insert(BCComponentID::AIComponent);
     components.insert(BCComponentID::BehaviorContainer);
+    components.insert(BCComponentID::BehaviorTimerManager);
     components.insert(BCComponentID::BlockWorld);
     components.insert(BCComponentID::FaceWorld);
     components.insert(BCComponentID::RobotInfo);
@@ -117,6 +119,7 @@ public:
             AnimationComponent*            animationComponent,
             BehaviorContainer*             behaviorContainer,
             BehaviorEventComponent*        behaviorEventComponent,
+            BehaviorTimerManager*          behaviorTimers,
             BlockWorld*                    blockWorld,
             BodyLightComponent*            bodyLightComponent,
             CubeAccelComponent*            cubeAccelComponent,
@@ -126,7 +129,6 @@ public:
             MapComponent*                  mapComponent,
             MicDirectionHistory*           micDirectionHistory,
             MoodManager*                   moodManager,
-            NeedsManager*                  needsManager,
             ObjectPoseConfirmer*           objectPoseConfirmer,
             PetWorld*                      petWorld,
             ProgressionUnlockComponent*    progressionUnlockComponent,
@@ -151,7 +153,8 @@ public:
   const BlockWorld&        GetBlockWorld()                const { return GetComponentWrapper(BEIComponentID::BlockWorld).GetValue<BlockWorld>();}
   BlockWorld&              GetBlockWorld()                      { return GetComponentWrapper(BEIComponentID::BlockWorld).GetValue<BlockWorld>();}
   const BehaviorContainer& GetBehaviorContainer()         const { return GetComponentWrapper(BEIComponentID::BehaviorContainer).GetValue<BehaviorContainer>();}
-  BehaviorEventComponent&  GetBehaviorEventComponent()      const { return GetComponentWrapper(BEIComponentID::BehaviorEvent).GetValue<BehaviorEventComponent>();}
+  BehaviorEventComponent&  GetBehaviorEventComponent()    const { return GetComponentWrapper(BEIComponentID::BehaviorEvent).GetValue<BehaviorEventComponent>();}
+  BehaviorTimerManager&    GetBehaviorTimerManager()      const { return GetComponentWrapper(BEIComponentID::BehaviorTimerManager).GetValue<BehaviorTimerManager>(); }
 
   // Give behaviors/activities access to information about robot
   BEIRobotInfo& GetRobotInfo() { return GetComponentWrapper(BEIComponentID::RobotInfo).GetValue<BEIRobotInfo>();}
@@ -171,9 +174,6 @@ public:
   inline bool HasMoodManager() const { return GetComponentWrapper(BEIComponentID::MoodManager).IsValueValid();}
   MoodManager& GetMoodManager() const{ return GetComponentWrapper(BEIComponentID::MoodManager).GetValue<MoodManager>();}
   
-  inline bool HasNeedsManager() const { return GetComponentWrapper(BEIComponentID::NeedsManager).IsValueValid();}
-  NeedsManager& GetNeedsManager() const { return GetComponentWrapper(BEIComponentID::NeedsManager).GetValue<NeedsManager>();}
-
   inline bool HasTouchSensorComponent() const { return GetComponentWrapper(BEIComponentID::TouchSensor).IsValueValid();}
   TouchSensorComponent& GetTouchSensorComponent() const { return GetComponentWrapper(BEIComponentID::TouchSensor).GetValue<TouchSensorComponent>();}
 
@@ -219,6 +219,7 @@ private:
                        AnimationComponent*            animationComponent,
                        BehaviorContainer*             behaviorContainer,
                        BehaviorEventComponent*        behaviorEventComponent,
+                       BehaviorTimerManager*          behaviorTimers,
                        BlockWorld*                    blockWorld,
                        BodyLightComponent*            bodyLightComponent,
                        CubeAccelComponent*            cubeAccelComponent,
@@ -228,7 +229,6 @@ private:
                        MapComponent*                  mapComponent,
                        MicDirectionHistory*           micDirectionHistory,
                        MoodManager*                   moodManager,
-                       NeedsManager*                  needsManager,
                        ObjectPoseConfirmer*           objectPoseConfirmer,
                        PetWorld*                      petWorld,
                        ProgressionUnlockComponent*    progressionUnlockComponent,

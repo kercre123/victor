@@ -54,22 +54,30 @@ public:
   // ever care about CPU freq and temperature.
   void SetUpdatePeriod(uint32_t milliseconds);
 
-  // Returns true if cpu freq falls below kNominalCPUFreq_kHz
-  // Asserts if update rate is 0
-  bool IsThermalThrottling() const;
+  // Returns true if CPU frequncy falls below kNominalCPUFreq_kHz
+  bool IsCPUThrottling() const;
+
+  // Reads the current CPU frequency and returns it
+  uint32_t UpdateCPUFreq_kHz() const;
+
+  // Reads the temperature in Celsius and returns it
+  uint32_t UpdateTemperature_C() const;
+
+  // Reads the battery voltage in microvolts and returns it
+  uint32_t UpdateBatteryVoltage_uV() const;
 
   // Returns current CPU frequency
   // Asserts if update rate is 0
   uint32_t GetCPUFreq_kHz() const;
   
-  // Returns temperature in milli-Celsius
+  // Returns temperature in Celsius
   // Asserts if update rate is 0
-  uint32_t GetTemperature_mC() const;
+  uint32_t GetTemperature_C() const;
 
   // Returns our ip address
-  const std::string& GetIPAddress()
+  const std::string& GetIPAddress(bool update = false)
   {
-    if(_ipAddress.empty())
+    if(_ipAddress.empty() || update)
     {
       _ipAddress = GetIPAddressInternal();
     }
@@ -88,41 +96,21 @@ public:
     return 0;
   }
 
-  const std::string& GetSerialNumberAsString()
-  {
-    if(_serialNumString == "")
-    {
-      _serialNumString = ExecCommand("getprop ro.serialno");
-    }
+  const std::string& GetSerialNumberAsString();
 
-    return _serialNumString;
-  }
-
-  u32 GetOSBuildNumber()
-  {
-    if(_osBuildNum == 0)
-    {
-      std::string osBuildNum = ExecCommand("getprop ro.anki.os_build_number");
-      _osBuildNum = static_cast<u32>(std::stoi(osBuildNum));
-    }
-
-    return _osBuildNum;
-  }
+  const std::string& GetOSBuildVersion();
 
 private:
   // private ctor
   OSState();
 
   std::string GetIPAddressInternal();
-
-  // Executes the provided command and returns the output as a string
-  std::string ExecCommand(const char* cmd);
   
   uint32_t kNominalCPUFreq_kHz = 800000;
 
   std::string _ipAddress       = "";
   std::string _serialNumString = "";
-  u32         _osBuildNum      = 0;
+  std::string _osBuildVersion  = "";
 
 }; // class OSState
   

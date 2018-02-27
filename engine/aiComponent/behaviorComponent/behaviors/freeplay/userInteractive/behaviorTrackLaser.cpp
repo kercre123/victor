@@ -341,7 +341,6 @@ void BehaviorTrackLaser::OnBehaviorDeactivated()
 {
   if(_shouldSendTrackingObjectiveAchieved){
     BehaviorObjectiveAchieved(BehaviorObjective::LaserTracked);
-    NeedActionCompleted();
   }
   
   Cleanup();
@@ -499,7 +498,7 @@ void BehaviorTrackLaser::TransitionToWaitForExposureChange()
   
   if(ShouldStreamline())
   {
-    action->AddAction(new TriggerAnimationAction(AnimationTrigger::VC_LookDownForLaser));
+    action->AddAction(new TriggerAnimationAction(AnimationTrigger::LookDownForLaser));
   }
   
   // Once we've gottena a couple of images, switch to looking for a laser dot
@@ -540,7 +539,7 @@ void BehaviorTrackLaser::TransitionToRespondToLaser()
                                                              {AnimationTrigger::LaserDriveStart,
                                                                AnimationTrigger::LaserDriveLoop,
                                                                AnimationTrigger::LaserDriveEnd},
-                                                             GetIDStr());
+                                                             GetDebugLabel());
     
     _haveAdjustedAnimations = true;
   }
@@ -795,7 +794,7 @@ void BehaviorTrackLaser::Cleanup()
   if(_haveAdjustedAnimations)
   {
     SmartRemoveIdleAnimation();
-    GetBEI().GetRobotInfo().GetDrivingAnimationHandler().RemoveDrivingAnimations(GetIDStr());
+    GetBEI().GetRobotInfo().GetDrivingAnimationHandler().RemoveDrivingAnimations(GetDebugLabel());
     _haveAdjustedAnimations = false;
   }
 }

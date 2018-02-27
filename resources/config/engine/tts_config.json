@@ -20,8 +20,8 @@
   {
     "en":
     {
-      "voice": "Ryan22k_CO",
-      "speed": 85
+      "voice": "Klaus22k_CO",
+      "speed": 79
     },
     "fr":
     {
@@ -41,52 +41,27 @@
       "shaping": 115
     }
   },
-  "ios":
-  {
-    "en":
-    {
-      "voice": "enu_ryan_22k_co.fl",
-      "speed": 85
-    },
-    "fr":
-    {
-      "voice": "frf_bruno_22k_co.fl",
-      "speed": 82
-    },
-    "de":
-    {
-      "voice": "ged_klaus_22k_co.fl",
-      "speed": 79
-    },
-    "ja":
-    {
-      "voice": "ja_jp_sakura_22k_co.fl",
-      "speed": 30,
-      "pitch": 100,
-      "shaping": 115
-    }
-  },
   "android":
   {
     "en":
     {
-      "voice": "Ryan",
-      "speed": 50
+      "voice": "co-German-Klaus-22khz/ged/ged_klaus_22k_co.fl.ini",
+      "speed": 79
     },
     "fr":
     {
-      "voice": "Bruno",
-      "speed": 45
+      "voice": "co-French-Bruno-22khz/frf/frf_bruno_22k_co.fl.ini",
+      "speed": 82
     },
     "de":
     {
-      "voice": "Klaus",
-      "speed": 43
+      "voice": "co-German-Klaus-22khz/ged/ged_klaus_22k_co.fl.ini",
+      "speed": 79
     },
     "ja":
     {
-      "voice": "Sakura",
-      "speed": 101,
+      "voice": "co-Japanese-Sakura-22khz/ja_jp/ja_jp_sakura_22k_co.fl.ini",
+      "speed": 30,
       "pitch": 100,
       "shaping": 115
     }

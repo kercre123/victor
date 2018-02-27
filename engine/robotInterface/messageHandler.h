@@ -54,39 +54,37 @@ public:
 
   virtual void Init(const Json::Value& config, RobotManager* robotMgr, const CozmoContext* context);
 
-  virtual void ProcessMessages();
+  virtual Result ProcessMessages();
 
-  virtual Result SendMessage(const RobotID_t robotId, const RobotInterface::EngineToRobot& msg, bool reliable = true, bool hot = false);
+  virtual Result SendMessage(const RobotInterface::EngineToRobot& msg, bool reliable = true, bool hot = false);
 
-  Signal::SmartHandle Subscribe(const uint32_t robotId, const RobotInterface::RobotToEngineTag& tagType, std::function<void(const AnkiEvent<RobotInterface::RobotToEngine>&)> messageHandler) {
-    return _eventMgr.Subscribe(robotId, static_cast<uint32_t>(tagType), messageHandler);
+  Signal::SmartHandle Subscribe(const RobotInterface::RobotToEngineTag& tagType, std::function<void(const AnkiEvent<RobotInterface::RobotToEngine>&)> messageHandler) {
+    return _eventMgr.Subscribe(static_cast<uint32_t>(tagType), messageHandler);
   }
   
   // Handle various event message types
   template<typename T>
   void HandleMessage(const T& msg);
-  
+
+  // Are we connected to this robot?
+  bool IsConnected(RobotID_t robotID);
+
   Result AddRobotConnection(RobotID_t robotId);
-  Result RemoveRobotConnection(const uint32_t robotId);
   
   void Disconnect();
   
   const Util::Stats::StatsAccumulator& GetQueuedTimes_ms() const;
-
-  void ReadLabAssignmentsFromRobot(u32 serialNumber) const;
-
-  void ConnectRobotToNeedsManager(u32 serialNumber) const;
 
   uint32_t GetMessageCountRtE() const { return _messageCountRtE; }
   uint32_t GetMessageCountEtR() const { return _messageCountEtR; }
   void     ResetMessageCounts() { _messageCountRtE = 0; _messageCountEtR = 0; }
 
 protected:
-  void Broadcast(const uint32_t robotId, const RobotInterface::RobotToEngine& message);
-  void Broadcast(const uint32_t robotId, RobotInterface::RobotToEngine&& message);
+  void Broadcast(const RobotInterface::RobotToEngine& message);
+  void Broadcast(RobotInterface::RobotToEngine&& message);
   
 private:
-  AnkiEventMgr<RobotInterface::RobotToEngine, MailboxSignalMap<RobotInterface::RobotToEngine> > _eventMgr;
+  AnkiEventMgr<RobotInterface::RobotToEngine> _eventMgr;
   RobotManager* _robotManager;
   std::unique_ptr<RobotConnectionManager> _robotConnectionManager;
   bool _isInitialized;

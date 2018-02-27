@@ -24,7 +24,7 @@ namespace Cozmo {
 class TrackPetFaceAction : public ITrackAction
 {
 public:
-  
+
   using FaceID = Vision::FaceID_t;
   
   // Track a specific pet ID
@@ -38,6 +38,8 @@ public:
   virtual void GetCompletionUnion(ActionCompletedUnion& completionInfo) const override;
   
 protected:
+  
+  virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const override;
   
   virtual ActionResult InitInternal() override;
   

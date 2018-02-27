@@ -21,7 +21,7 @@
 #  define ANKI_COZMO_USE_MATLAB_VISION 0
 #endif
 
-
+#include "coretech/common/engine/math/polygon.h"
 #include "coretech/common/shared/types.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
@@ -67,6 +67,7 @@ namespace Vision {
   class ImageCache;
   class ImagingPipeline;
   class MarkerDetector;
+  class ObjectDetector;
   class PetTracker;
 }
   
@@ -81,6 +82,7 @@ namespace Cozmo {
   class OverheadMap;
   class Robot;
   class VizManager;
+  class GroundPlaneClassifier;
   
   // Everything that can be generated from one image in one big package:
   struct VisionProcessingResult
@@ -102,6 +104,8 @@ namespace Cozmo {
     std::list<ToolCodeInfo>                                     toolCodes;
     std::list<ExternalInterface::RobotObservedLaserPoint>       laserPoints;
     std::list<Vision::CameraCalibration>                        cameraCalibration;
+    std::list<ExternalInterface::RobotObservedGenericObject>    generalObjects;
+    std::list<OverheadEdgeFrame>                                visualObstacles;
     
     // Used to pass debug images back to main thread for display:
     DebugImageList<Vision::Image>    debugImages;
@@ -265,13 +269,13 @@ namespace Cozmo {
     
     // These baseline defaults are overridden by whatever we receive from the camera
     f32 _minCameraGain     = 0.1f; 
-    f32 _maxCameraGain     = 4.0f;
+    f32 _maxCameraGain     = 3.8f;
     
     struct CameraParams {
       s32  exposure_ms;
       f32  gain;
     };
-    CameraParams _currentCameraParams{16, 2.0};
+    CameraParams _currentCameraParams{31, 1.0};
     std::pair<bool,CameraParams> _nextCameraParams; // bool represents if set but not yet sent
     
     Util::BitFlags32<VisionMode> _mode;
@@ -310,7 +314,12 @@ namespace Cozmo {
     std::unique_ptr<OverheadEdgesDetector>  _overheadEdgeDetector;
     std::unique_ptr<CameraCalibrator>       _cameraCalibrator;
     std::unique_ptr<OverheadMap>            _overheadMap;
+    std::unique_ptr<GroundPlaneClassifier>  _groundPlaneClassifier;
+
     std::unique_ptr<Vision::Benchmark>      _benchmark;
+    std::unique_ptr<Vision::ObjectDetector> _generalObjectDetector;
+    
+    TimeStamp_t                   _generalObjectDetectionTimestamp = 0;
     
     // Tool code stuff
     TimeStamp_t                   _firstReadToolCodeTime_ms = 0;
@@ -351,12 +360,18 @@ namespace Cozmo {
     Result DetectMotion(Vision::ImageCache& imageCache);
 
     Result UpdateOverheadMap(const Vision::ImageRGB& image);
+
+    Result UpdateGroundPlaneClassifier(const Vision::ImageRGB& image);
+    
+    void CheckForGeneralObjectDetections();
     
     Result ReadToolCode(const Vision::Image& image);
     
     bool ShouldProcessVisionMode(VisionMode mode);
     
     Result EnableMode(VisionMode whichMode, bool enabled);
+
+    Result SaveSensorData() const;
     
     // Contrast-limited adaptive histogram equalization (CLAHE)
     cv::Ptr<cv::CLAHE> _clahe;
@@ -368,8 +383,9 @@ namespace Cozmo {
     std::mutex _mutex;
     std::queue<VisionProcessingResult> _results;
     VisionProcessingResult _currentResult;
-    
-  }; // class VisionSystem
+
+    std::string GetFileNameBasedOnFrameNumber(const char *extension) const;
+}; // class VisionSystem
   
 } // namespace Cozmo
 } // namespace Anki

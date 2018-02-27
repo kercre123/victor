@@ -756,11 +756,12 @@ namespace Anki {
         // Gyro zero-rate bias changes with IMU temperature, so a more aggressive gyro bias filter coefficient
         // is required for times when IMU temperature is changing 'rapidly'. If IMU temperature has changed
         // a lot in the past x seconds, apply a more aggressive gyro bias filter coef.
-        const u32 imuTempReadingRate_ms = 1*1000;
+        // Use a faster rate for playpen, since it needs to log IMU temperature changes.
+        const u32 imuTempReadingRate_ms = FACTORY_TEST ? (1*1000) : (10*1000);
         const f32 temperatureDiffThresh_degC = 0.5f;
         const TimeStamp_t curTime = HAL::GetTimeStamp();
         
-        if (curTime > timeOfLastImuTempSample_ms_ + imuTempReadingRate_ms && HeadController::IsCalibrated()) {
+        if (curTime > timeOfLastImuTempSample_ms_ + imuTempReadingRate_ms && IsBiasFilterComplete()) {
           const bool temperatureChanging = fabsf(lastImuTempSample_degC_ - imu_data_.temperature_degC) > temperatureDiffThresh_degC;
           gyroBiasCoeff_ = temperatureChanging ?
             GYRO_BIAS_FILT_COEFF_TEMP_CHANGING :

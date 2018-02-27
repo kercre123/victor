@@ -1,6 +1,0 @@
-{
-  "behaviorClass": "PlayAnim",
-  "behaviorID": "FeedingReactCubeShake_Severe",
-  
-  "animTriggers": ["FeedingReactToShake_Severe"]
-}

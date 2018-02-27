@@ -1,0 +1,11 @@
+{
+  "behaviorID" : "GoToSleep",
+  "behaviorClass" : "AnimSequence",
+
+  "playOnChargerWithoutBody": true,
+
+  "animTriggers": [
+    "GoToSleepGetIn",
+    "GoToSleepSleeping"
+  ]
+}

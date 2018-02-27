@@ -1,7 +1,7 @@
 {
-  "behaviorClass": "PlayAnim",
+  "behaviorClass": "AnimSequence",
   "behaviorID": "ExamplePetInitialDetection",
-  "animTriggers": ["OnboardingReactToCube"],
+  "animTriggers": ["AcknowledgeObject"],
   "wantsToBeActivatedCondition": {
     "conditionType" : "PetInitialDetection"
   }  

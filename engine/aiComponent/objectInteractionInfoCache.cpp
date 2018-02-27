@@ -16,9 +16,6 @@
 
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/aiWhiteboard.h"
-#include "engine/blockWorld/blockConfigurationManager.h"
-#include "engine/blockWorld/blockConfigurationPyramid.h"
-#include "engine/blockWorld/blockConfigurationStack.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/dockingComponent.h"
@@ -31,7 +28,6 @@ namespace Anki {
 namespace Cozmo {
 
 namespace {
-static const int kMaxStackHeightReach = 2;
 static const float kInvalidObjectCacheUpdateTime_s = -1.0f;
 static const float kTimeObjectInvalidAfterStackFailure_sec = 3.0f;
 static const Radians kAngleToleranceAfterFailure_radians = M_PI;
@@ -56,14 +52,6 @@ static const std::set<ObjectInteractionIntention> stackBottomDependentAxis =
 static const std::set<ObjectInteractionIntention> stackBottomDependentNoAxis =
                                 {ObjectInteractionIntention::StackTopObjectNoAxisCheck};
   
-// pyramid dependencies
-static const std::set<ObjectInteractionIntention> pyramidStaticDependent =
-                                {ObjectInteractionIntention::PyramidBaseObject};
-static const std::set<ObjectInteractionIntention> pyramidTopDependent =
-                                {ObjectInteractionIntention::PyramidBaseObject,
-                                 ObjectInteractionIntention::PyramidStaticObject};
-
-  
 constexpr DependentIntentionArray kDependentIntentionMap = {
   {ObjectInteractionIntention::PickUpObjectNoAxisCheck,           &empty},
   {ObjectInteractionIntention::PickUpObjectAxisCheck,             &empty},
@@ -73,10 +61,7 @@ constexpr DependentIntentionArray kDependentIntentionMap = {
   {ObjectInteractionIntention::StackTopObjectNoAxisCheck,         &empty},
   {ObjectInteractionIntention::RollObjectWithDelegateNoAxisCheck, &empty},
   {ObjectInteractionIntention::RollObjectWithDelegateAxisCheck,   &empty},
-  {ObjectInteractionIntention::PopAWheelieOnObject,               &empty},
-  {ObjectInteractionIntention::PyramidBaseObject,                 &empty},
-  {ObjectInteractionIntention::PyramidStaticObject,               &pyramidStaticDependent},
-  {ObjectInteractionIntention::PyramidTopObject   ,               &pyramidTopDependent}
+  {ObjectInteractionIntention::PopAWheelieOnObject,               &empty}
 };
     
 static_assert(IsSequentialArray(kDependentIntentionMap),
@@ -153,25 +138,6 @@ ObjectInteractionInfoCache::ObjectInteractionInfoCache(const Robot& robot)
   popFilter->AddFilterFcn(std::bind(&ObjectInteractionInfoCache::CanUseForPopAWheelie,
                                     this, std::placeholders::_1));
   
-  // Pyramid Base object
-  BlockWorldFilter *baseFilter = new BlockWorldFilter;
-  baseFilter->SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-  baseFilter->AddFilterFcn(std::bind(&ObjectInteractionInfoCache::CanUseAsBuildPyramidBaseBlock,
-                                     this, std::placeholders::_1));
-  
-  // Pyramid Static object
-  BlockWorldFilter *staticFilter = new BlockWorldFilter;
-  staticFilter->SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-  staticFilter->AddFilterFcn(std::bind(&ObjectInteractionInfoCache::CanUseAsBuildPyramidStaticBlock,
-                                       this, std::placeholders::_1));
-  
-  // Pyramid Top object
-  BlockWorldFilter *topFilter = new BlockWorldFilter;
-  topFilter->SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-  topFilter->AddFilterFcn(std::bind(&ObjectInteractionInfoCache::CanUseAsBuildPyramidTopBlock,
-                                    this, std::placeholders::_1));
-  
-  
   FullValidInteractionArray validInteractionFilters = {
     {ObjectInteractionIntention::PickUpObjectNoAxisCheck,           pickupAnyFilter},
     {ObjectInteractionIntention::PickUpObjectAxisCheck,             pickupWithAxisFilter},
@@ -181,10 +147,7 @@ ObjectInteractionInfoCache::ObjectInteractionInfoCache(const Robot& robot)
     {ObjectInteractionIntention::StackTopObjectNoAxisCheck,         stackTopFilter},
     {ObjectInteractionIntention::RollObjectWithDelegateNoAxisCheck, rollNoAxisFilter},
     {ObjectInteractionIntention::RollObjectWithDelegateAxisCheck,   rollWithAxisFilter},
-    {ObjectInteractionIntention::PopAWheelieOnObject,               popFilter},
-    {ObjectInteractionIntention::PyramidBaseObject,                 baseFilter},
-    {ObjectInteractionIntention::PyramidStaticObject,               staticFilter},
-    {ObjectInteractionIntention::PyramidTopObject,                  topFilter}
+    {ObjectInteractionIntention::PopAWheelieOnObject,               popFilter}
   };
   
   // Function for selecting the best object given distance/position in configurations
@@ -201,10 +164,7 @@ ObjectInteractionInfoCache::ObjectInteractionInfoCache(const Robot& robot)
     {ObjectInteractionIntention::StackTopObjectNoAxisCheck,         defaultBestObjectFunc},
     {ObjectInteractionIntention::RollObjectWithDelegateNoAxisCheck, rollObjectBestObjectFunc},
     {ObjectInteractionIntention::RollObjectWithDelegateAxisCheck,   rollObjectBestObjectFunc},
-    {ObjectInteractionIntention::PopAWheelieOnObject,               defaultBestObjectFunc},
-    {ObjectInteractionIntention::PyramidBaseObject,                 defaultBestObjectFunc},
-    {ObjectInteractionIntention::PyramidStaticObject,               defaultBestObjectFunc},
-    {ObjectInteractionIntention::PyramidTopObject,                  defaultBestObjectFunc}
+    {ObjectInteractionIntention::PopAWheelieOnObject,               defaultBestObjectFunc}
   };
 
   
@@ -326,9 +286,6 @@ const char* ObjectInteractionInfoCache::ObjectUseIntentionToString(ObjectInterac
     case ObjectInteractionIntention::RollObjectWithDelegateAxisCheck: { return "RollObjectWithDelegateAxisCheck"; }
     case ObjectInteractionIntention::RollObjectWithDelegateNoAxisCheck: { return "RollObjectWithDelegateNoAxisCheck"; }
     case ObjectInteractionIntention::PopAWheelieOnObject: { return "PopAWheelieOnObject"; }
-    case ObjectInteractionIntention::PyramidBaseObject: { return "PyramidBaseObject"; }
-    case ObjectInteractionIntention::PyramidStaticObject: { return "PyramidStaticObject"; }
-    case ObjectInteractionIntention::PyramidTopObject: { return "PyramidTopObject"; }
     case ObjectInteractionIntention::Count:
       { DEV_ASSERT(false, "ObjectInteractionInfoCache.InvalidIntention"); return "";}
   };
@@ -496,18 +453,6 @@ bool ObjectInteractionInfoCache::CanRollObjectDelegateNoAxisCheck(const Observab
       return false;
     }
     
-    // If there is a stack of 3, none of the blocks in that stack can be used
-    const auto& stacks = _robot.GetBlockWorld().GetBlockConfigurationManager().GetStackCache().GetStacks();
-    for(const auto& stack: stacks){
-      if(stack->GetStackHeight() > kMaxStackHeightReach){
-        for(const auto& objID: stack->GetAllBlockIDsOrdered()){
-          if(objID == object->GetID()){
-            return false;
-          }
-        }
-      }
-    }
-    
     return true;
   }
   
@@ -524,128 +469,6 @@ bool ObjectInteractionInfoCache::CanRollObjectDelegateAxisCheck(const Observable
 }
 
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ObjectInteractionInfoCache::CanUseAsBuildPyramidBaseBlock(const ObservableObject* object) const
-{
-  const auto& pyramidBases = _robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidBaseCache().GetBases();
-  const auto& pyramids = _robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidCache().GetPyramids();
-  
-  for(const auto& pyramid: pyramids){
-    if(object->GetID() == pyramid->GetPyramidBase().GetBaseBlockID()){
-      return true;
-    }
-  }
-  
-  // If a pyramid exists and this object doesn't match the base, wait to assign that object
-  if(!pyramids.empty()){
-    return false;
-  }
-  
-  for(const auto& pyramidBase: pyramidBases){
-    if(object->GetID() == pyramidBase->GetBaseBlockID()){
-      return true;
-    }
-  }
-  
-  // If a base exists and this object doesn't match the base, wait to assign that object
-  if(!pyramidBases.empty()){
-    return false;
-  }
-  
-  
-  // If there is a stack of 2, the top block should be selected as the base of the pyramid
-  const auto& stacks = _robot.GetBlockWorld().GetBlockConfigurationManager().GetStackCache().GetStacks();
-  for(const auto& stack: stacks){
-    if(stack->GetStackHeight() == kMaxStackHeightReach &&
-       stack->GetTopBlockID() == object->GetID()){
-      return _robot.GetDockingComponent().CanPickUpObject(*object);
-    }
-  }
-  
-  // If the robot is carrying a block, make that the static block
-  if(_robot.GetCarryingComponent().IsCarryingObject()){
-    return _robot.GetCarryingComponent().GetCarryingObject() == object->GetID();
-  }
-  
-  if(!stacks.empty()){
-    return false;
-  }
-  
-  // So long as we can pick the object up, it's a valid base block
-  return _robot.GetDockingComponent().CanPickUpObject(*object);
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ObjectInteractionInfoCache::CanUseAsBuildPyramidStaticBlock(const ObservableObject* object)
-{
-  // Base block must be set before static block can be set
-  auto bestBaseBlock = GetBestObjectForIntention(ObjectInteractionIntention::PyramidBaseObject);
-  if(!bestBaseBlock.IsSet() || (bestBaseBlock == object->GetID())){
-    return false;
-  }
-  
-  const auto& pyramidBases = _robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidBaseCache().GetBases();
-  const auto& pyramids = _robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidCache().GetPyramids();
-  
-  for(const auto& pyramid: pyramids){
-    if((object->GetID() == pyramid->GetPyramidBase().GetStaticBlockID()) &&
-       (bestBaseBlock == pyramid->GetPyramidBase().GetBaseBlockID())){
-      return true;
-    }
-  }
-  
-  // If a pyramid exists and this object doesn't match the static, wait to assign that object
-  if(!pyramids.empty()){
-    return false;
-  }
-  
-  for(const auto& pyramidBase: pyramidBases){
-    if((object->GetID() == pyramidBase->GetStaticBlockID()) &&
-       (bestBaseBlock == pyramidBase->GetBaseBlockID())){
-      return true;
-    }
-  }
-  
-  // If a base exists and this object doesn't match the static, wait to assign that object
-  if(!pyramidBases.empty()){
-    return false;
-  }
-  
-  if(!object->IsRestingAtHeight(0, BlockWorld::kOnCubeStackHeightTolerance)){
-    return false;
-  }
-  
-  return true;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ObjectInteractionInfoCache::CanUseAsBuildPyramidTopBlock(const ObservableObject* object)
-{
-  // Base and static blocks must be set before top block can be set
-  auto bestBaseBlock = GetBestObjectForIntention(ObjectInteractionIntention::PyramidBaseObject);
-  auto bestStaticBlock = GetBestObjectForIntention(ObjectInteractionIntention::PyramidStaticObject);
-  
-  if(!bestBaseBlock.IsSet() ||
-     !bestStaticBlock.IsSet() ||
-     (bestBaseBlock == object->GetID()) ||
-     (bestStaticBlock == object->GetID())){
-    return false;
-  }
-  
-  // If the robot is carrying a block, which is not needed for the base
-  // make that the TopBlock
-  if(_robot.GetCarryingComponent().IsCarryingObject() &&
-     _robot.GetCarryingComponent().GetCarryingObject() == object->GetID()){
-    return true;
-  }
-  
-  return _robot.GetDockingComponent().CanPickUpObject(*object);
-}
-
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ObjectID ObjectInteractionInfoCache::DefaultBestObjectFunction(const std::set<ObjectID>& validObjects)
 {
@@ -659,40 +482,10 @@ ObjectID ObjectInteractionInfoCache::DefaultBestObjectFunction(const std::set<Ob
   const ObservableObject* bestObj = nullptr;
   f32 shortestDistSQ = FLT_MAX;
   f32 currentDistSQ = FLT_MAX;
-  
-  // Give preference to blocks on top of the stack rather than the bottom
-  const auto& stacks = _robot.GetBlockWorld().GetBlockConfigurationManager().
-                                                 GetStackCache().GetStacks();
-  for(const auto& stack: stacks){
-    const ObservableObject* topBlock =  _robot.GetBlockWorld().GetLocatedObjectByID(
-                                                     stack->GetTopBlockID());
-    
-    // only use the stack object if it's a valid object
-    if(validObjects.find(topBlock->GetID()) != validObjects.end()){
-      if(ComputeDistanceSQBetween(_robot.GetPose(), topBlock->GetPose(), currentDistSQ) &&
-         (currentDistSQ < shortestDistSQ)){
-        bestObj = topBlock;
-        shortestDistSQ = currentDistSQ;
-      }
-    }
-  }
 
   for(const auto& objID: validObjects){
     const ObservableObject* obj =  _robot.GetBlockWorld().GetLocatedObjectByID(objID);
     if(obj == nullptr){
-      continue;
-    }
-    
-    // if the block is the base of a stack and we have any other object already
-    // set, give the other object preference
-    bool isBottomBlock = false;
-    for(const auto& stack: stacks){
-      if(obj->GetID() == stack->GetBottomBlockID()){
-        isBottomBlock = true;
-        break;
-      }
-    }
-    if(bestObj != nullptr && isBottomBlock){
       continue;
     }
     

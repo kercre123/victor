@@ -12,11 +12,17 @@
 
 #include "memoryMapTypes.h"
 #include "engine/robot.h"
-#include "engine/viz/vizManager.h"
 
 #include "coretech/common/engine/math/pose.h"
 #include "coretech/common/engine/math/quad.h"
 #include "coretech/common/engine/math/polygon_impl.h"
+
+#include "util/console/consoleInterface.h"
+
+#include <chrono>
+#include <type_traits>
+#include <unordered_map>
+ 
 
 namespace Anki {
 namespace Cozmo {
@@ -24,11 +30,58 @@ namespace Cozmo {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Helpers
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+CONSOLE_VAR(bool, kMapPerformanceTestsEnabled, "ProxSensorComponent", false);
+CONSOLE_VAR(int,  kMapPerformanceTestsSampleWindow, "ProxSensorComponent", 128);
+
 namespace
 {
+#define MONITOR_PERFORMANCE(eval) (kMapPerformanceTestsEnabled) ? PerformanceMonitor([&]() {return eval;}, __FILE__ ":" + std::string(__func__)) : eval
 
-// number of root shifts that should be made to include new content
-static const int numberOfAllowedShiftsToIncludeContent = 1;
+struct PerformanceRecord { double avgTime_us = 0; u32 samples = 0; };
+static std::unordered_map<std::string, PerformanceRecord> sPerformanceRecords;
+
+static void UpdatePerformanceRecord(const double& time_us, const std::string& recordName) {
+  auto& record = sPerformanceRecords[recordName];
+  if (record.samples > kMapPerformanceTestsSampleWindow ) {
+    // approximate rolling window average to save memory
+    record.avgTime_us += (time_us - record.avgTime_us) / kMapPerformanceTestsSampleWindow;
+  } else {
+    record.avgTime_us += time_us / kMapPerformanceTestsSampleWindow;
+  }
+  
+  // print info (faster than modulo for powers of 2)
+  if ((++record.samples & kMapPerformanceTestsSampleWindow - 1) == 0) {
+    DEV_ASSERT((kMapPerformanceTestsSampleWindow & (kMapPerformanceTestsSampleWindow - 1)) == 0,
+      "Performance sample window not a power of 2");
+    PRINT_NAMED_INFO("PerformanceMonitor", "Average time for '%s' is %f us", recordName.c_str(), record.avgTime_us);
+  }
+}
+
+// handle non-void methods
+template<typename T>
+static auto PerformanceMonitor(T f, const std::string& method, 
+  typename std::enable_if<!std::is_void<decltype(f())>::value>::type* = nullptr) -> decltype(f()) {
+
+  const auto start = std::chrono::system_clock::now();
+  const auto retv = f();
+  const auto time_us = (std::chrono::system_clock::now() - start).count();
+
+  UpdatePerformanceRecord(time_us, method);
+  return retv;
+}
+
+// handle void methods
+template<typename T>
+static auto PerformanceMonitor(T f, const std::string& method, 
+  typename std::enable_if<std::is_void<decltype(f())>::value>::type* = nullptr) -> decltype(f()) {
+    
+  const auto start = std::chrono::system_clock::now();
+  f();
+  const auto time_us = (std::chrono::system_clock::now() - start).count();
+
+  UpdatePerformanceRecord(time_us, method);
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 EContentTypePackedType ConvertContentArrayToFlags(const MemoryMapTypes::FullContentArray& array)
@@ -55,22 +108,22 @@ EContentTypePackedType ConvertContentArrayToFlags(const MemoryMapTypes::FullCont
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // MemoryMap
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-MemoryMap::MemoryMap(VizManager* vizManager)
-: _quadTree(vizManager, MemoryMapData(EContentType::Unknown, 0.f))
+MemoryMap::MemoryMap()
+: _quadTree(MemoryMapDataPtr())
 {
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MemoryMap::Merge(const INavMap* other, const Pose3d& transform)
+bool MemoryMap::Merge(const INavMap* other, const Pose3d& transform)
 {
   DEV_ASSERT(other != nullptr, "MemoryMap.Merge.NullMap");
   DEV_ASSERT(dynamic_cast<const MemoryMap*>(other), "MemoryMap.Merge.UnsupportedClass");
   const MemoryMap* otherMap = static_cast<const MemoryMap*>(other);
-  _quadTree.Merge( otherMap->_quadTree, transform );
+  return MONITOR_PERFORMANCE( _quadTree.Merge( otherMap->_quadTree, transform ) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MemoryMap::FillBorderInternal(EContentType typeToReplace, const FullContentArray& neighborsToFillFrom, EContentType newTypeSet, TimeStamp_t timeMeasured)
+bool MemoryMap::FillBorder(EContentType typeToReplace, const FullContentArray& neighborsToFillFrom, EContentType newTypeSet, TimeStamp_t timeMeasured)
 {
   // convert into node types and emtpy (no extra info) node content
   using namespace QuadTreeTypes;
@@ -78,24 +131,19 @@ void MemoryMap::FillBorderInternal(EContentType typeToReplace, const FullContent
   MemoryMapData data(newTypeSet, timeMeasured);
 
   // ask the processor to do it
-  _quadTree.GetProcessor().FillBorder(typeToReplace, nodeNeighborsToFillFrom, data);
-  _quadTree.ForceRedraw();
-}
-
-void MemoryMap::TransformContent(NodeTransformFunction transform)
-{
-  _quadTree.GetProcessor().Transform(transform);
-}
-
-void MemoryMap::TransformContent(const Poly2f& poly, NodeTransformFunction transform)
-{
-  _quadTree.Transform(poly, transform);
+  return MONITOR_PERFORMANCE( _quadTree.GetProcessor().FillBorder(typeToReplace, nodeNeighborsToFillFrom, data) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MemoryMap::FindContentIf(NodePredicate pred, MemoryMapDataConstList& output) const
+bool MemoryMap::TransformContent(NodeTransformFunction transform)
 {
-  _quadTree.GetProcessor().FindIf(pred, output);
+  return MONITOR_PERFORMANCE( _quadTree.Transform(transform) );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool MemoryMap::TransformContent(const Poly2f& poly, NodeTransformFunction transform)
+{
+  return MONITOR_PERFORMANCE( _quadTree.Transform(poly, transform) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -139,7 +187,7 @@ void MemoryMap::CalculateBorders(EContentType innerType, const FullContentArray&
   const EContentTypePackedType outerNodeTypes = ConvertContentArrayToFlags(outerTypes);
   
   // delegate on processor
-  _quadTree.GetProcessor().GetBorders(innerType, outerNodeTypes, outBorders);
+  MONITOR_PERFORMANCE( _quadTree.GetProcessor().GetBorders(innerType, outerNodeTypes, outBorders) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -147,9 +195,15 @@ bool MemoryMap::HasCollisionRayWithTypes(const Point2f& rayFrom, const Point2f& 
 {
   // convert type to quadtree node content and to flag (since processor takes in flags)
   const EContentTypePackedType nodeTypeFlags = ConvertContentArrayToFlags(types);
+
+  bool hasCollision = false;
+
+  QuadTreeTypes::FoldFunctorConst accumulator = 
+    [&hasCollision, &nodeTypeFlags] (const QuadTreeNode& node) {
+      hasCollision |= IsInEContentTypePackedType(node.GetData()->type, nodeTypeFlags);
+    };
   
-  // ask the processor about the collision with the converted type
-  const bool hasCollision = _quadTree.GetProcessor().HasCollisionRayWithTypes(rayFrom, rayTo, nodeTypeFlags);
+  MONITOR_PERFORMANCE( _quadTree.Fold(accumulator, Poly2f({rayFrom, rayTo})) );
   return hasCollision;
 }
 
@@ -162,21 +216,54 @@ bool MemoryMap::HasContentType(EContentType type) const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MemoryMap::DrawDebugProcessorInfo() const
+bool MemoryMap::Insert(const Poly2f& poly, const MemoryMapData& data)
 {
-  _quadTree.GetProcessor().Draw();
+  // clone data to make into a shared pointer.
+  return MONITOR_PERFORMANCE( _quadTree.Insert(poly, data.Clone()) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MemoryMap::ClearDraw() const
-{
-  _quadTree.ClearDraw();
+void MemoryMap::GetBroadcastInfo(MemoryMapTypes::MapBroadcastData& info) const 
+{ 
+  // get data for each node
+  QuadTreeTypes::FoldFunctorConst accumulator = 
+    [&info, this] (const QuadTreeNode& node) {
+      // if the root done, populate header info
+      if ( node.IsRootNode() ){
+        std::stringstream instanceId;
+        instanceId << "QuadTree_" << this;
+
+        info.mapInfo = ExternalInterface::MemoryMapInfo(
+          node.GetLevel(),
+          node.GetSideLen(),
+          node.GetCenter().x(),
+          node.GetCenter().y(),
+          node.GetCenter().z(),
+          instanceId.str());
+      }
+
+      // leaf node
+      if ( !node.IsSubdivided() )
+      {
+        info.quadInfo.emplace_back(
+          ExternalInterface::MemoryMapQuadInfo(ConvertContentType(node.GetData()->type), node.GetLevel()));
+      }
+    };
+
+  _quadTree.Fold(accumulator);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MemoryMap::Insert(const Poly2f& poly, const MemoryMapData& data)
+void MemoryMap::FindContentIf(NodePredicate pred, MemoryMapDataConstList& output) const
 {
-  _quadTree.Insert(poly, data, numberOfAllowedShiftsToIncludeContent);
+  QuadTreeTypes::FoldFunctorConst accumulator = [&output, &pred] (const QuadTreeNode& node) {
+    MemoryMapDataPtr data = node.GetData();
+    if (pred(data)) {
+      output.insert( MemoryMapDataConstPtr(node.GetData()) );
+    }
+  };
+
+  MONITOR_PERFORMANCE( _quadTree.Fold(accumulator) );
 }
 
 } // namespace Cozmo

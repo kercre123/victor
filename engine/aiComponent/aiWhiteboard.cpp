@@ -18,9 +18,6 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/objectInteractionInfoCache.h"
 #include "engine/ankiEventUtil.h"
-#include "engine/blockWorld/blockConfigurationManager.h"
-#include "engine/blockWorld/blockConfigurationPyramid.h"
-#include "engine/blockWorld/blockConfigurationStack.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/dockingComponent.h"
@@ -28,8 +25,6 @@
 #include "engine/drivingAnimationHandler.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/faceWorld.h"
-#include "engine/needsSystem/needsManager.h"
-#include "engine/needsSystem/needsState.h"
 #include "engine/robot.h"
 
 #include "coretech/common/engine/math/point_impl.h"

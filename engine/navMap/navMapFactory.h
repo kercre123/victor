@@ -21,7 +21,7 @@ namespace Cozmo {
 namespace NavMapFactory {
 
 // creates the proper nav memory map (through default, config, etc)
-INavMap* CreateMemoryMap(VizManager* vizManager);
+INavMap* CreateMemoryMap();
   
 } // namespace
 } // namespace

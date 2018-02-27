@@ -24,8 +24,8 @@ class BehaviorTrackLaser : public ICozmoBehavior
 {
 private:
   
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorTrackLaser(const Json::Value& config);
   
 public:  

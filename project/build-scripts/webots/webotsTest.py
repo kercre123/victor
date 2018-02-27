@@ -251,6 +251,7 @@ def sign_webot_executables(build_type, password):
 
   executables = [
     'webotsCtrlBuildServerTest',
+    'webotsCtrlWebServer',
     'webotsCtrlGameEngine',
     'webotsCtrlRobot',
     'webotsCtrlGameEngine2',
@@ -647,7 +648,7 @@ def generate_combined_webots_devLog(log_folder, log_file_name, didFail, test_con
 
 def clear_out_unwanted_persistent_files():
   # clear out the persistant needsState file
-  fullPath = get_subpath(os.path.join("simulator","controllers"), "webotsCtrlGameEngine2", "files", "output", "nurture", "needsState.json")
+  fullPath = get_subpath(os.path.join("simulator","controllers"), "webotsCtrlGameEngine2", "persistent", "nurture", "needsState.json")
   if os.path.exists(fullPath):
     os.remove(fullPath)
 
@@ -884,8 +885,9 @@ def main():
     print("Enter your password to set up firewall exceptions:")
     sign_webot_executables(options.build_type, getpass.getpass()) # prompt for password
     sys.exit(0)
-    
-  sign_webot_executables(options.build_type, options.password)
+  
+  if options.password:
+    sign_webot_executables(options.build_type, options.password)
 
   num_of_failed_runs = 0
   num_of_passed_runs = 0

@@ -22,8 +22,8 @@ namespace Cozmo {
 
 class BehaviorObservingLookAtFaces : public ICozmoBehavior
 {
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;  
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;  
   BehaviorObservingLookAtFaces(const Json::Value& config);
 
 public:
@@ -35,7 +35,7 @@ public:
 
 protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
-    modifiers.visionModesForActiveScope->push_back({ VisionMode::DetectingFaces, EVisionUpdateFrequency::Standard });
+    modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::Standard });
   }
 
 

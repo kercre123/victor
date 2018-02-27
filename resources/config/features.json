@@ -42,10 +42,6 @@
   {
     "feature": "Singing",
     "enabled": true
-  },
-  {
-    "feature": "LocalNotifications",
-    "enabled": true
   }
 ]
 

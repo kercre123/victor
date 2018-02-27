@@ -13,7 +13,7 @@ Each mood is phrased as a positive, e.g. `Happy`. The values range from -1.0 to 
 reflect the opposite emotion.
 
 * The opposite of `Happy` is `Sad`
-* The opposite of `Confident` is `Furstrated`. This is updated primarily when Victor succeeds or fails at something
+* The opposite of `Confident` is `Frustrated`. This is updated primarily when Victor succeeds or fails at something
 * The opposite of `Social` is `Lonely`. Seeing and interacting with people effects this emotion
 
 Emotions shift over time. In general, they decay towards 0, the default state. Note that "default" for Cozmo

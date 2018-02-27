@@ -28,8 +28,8 @@ class BehaviorAcknowledgeCubeMoved : public ICozmoBehavior
 {
   
 private:
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorAcknowledgeCubeMoved(const Json::Value& config);
 
 

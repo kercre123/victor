@@ -369,6 +369,11 @@ message BehaviorStackDebug
   string debugStrings[uint_8]
 }
 
+message VisionModeDebug
+{
+  string debugStrings[uint_8]
+}
+
 message StartRobotUpdate
 {
 }

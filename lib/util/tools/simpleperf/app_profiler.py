@@ -261,6 +261,7 @@ class AppProfiler(object):
 
     def _download_simpleperf(self):
         simpleperf_binary = get_target_binary_path(self.app_arch, 'simpleperf')
+        self.adb.check_run(['shell', 'mkdir', '-p', '/data/local/tmp'])
         self.adb.check_run(['push', simpleperf_binary, '/data/local/tmp'])
         self.adb.check_run(['shell', 'chmod', 'a+x', '/data/local/tmp/simpleperf'])
 
@@ -374,7 +375,7 @@ class AppProfiler(object):
                                               self.config['perf_data_path']])
         if self.config['collect_binaries']:
             config = copy.copy(self.config)
-            config['binary_cache_dir'] = 'binary_cache'
+            # Anki, passed in. config['binary_cache_dir'] = 'binary_cache'
             config['symfs_dirs'] = []
             if self.config['native_lib_dir']:
                 config['symfs_dirs'].append(self.config['native_lib_dir'])
@@ -410,6 +411,9 @@ Like -np surfaceflinger.""")
 """Run a cmd and profile it. Like -cmd "pm -l".""")
     parser.add_argument('-lib', '--native_lib_dir', help=
 """Path to find debug version of native shared libraries used in the app.""")
+    # Anki, override binary_cache via the command-line
+    parser.add_argument('-bin', '--binary_cache_dir', default="binary_cache", help=
+"""Path to collected binaries from the device used in profiling data.""")
     parser.add_argument('-nc', '--skip_recompile', action='store_true', help=
 """When profiling an Android app, by default we recompile java bytecode to native instructions
 to profile java code. It takes some time. You can skip it if the code has been compiled or you
@@ -447,6 +451,8 @@ already running, download simpleperf on device, start simpleperf record, and sta
     config['native_program'] = args.native_program
     config['cmd'] = args.cmd
     config['native_lib_dir'] = args.native_lib_dir
+    # Anki, override binary_cache via the command-line
+    config['binary_cache_dir'] = args.binary_cache_dir
     config['recompile_app'] = args.app and not args.skip_recompile
     config['apk_file_path'] = args.apk
 

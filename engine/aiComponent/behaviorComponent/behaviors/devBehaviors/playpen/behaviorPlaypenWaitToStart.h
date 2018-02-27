@@ -24,8 +24,8 @@ class BehaviorPlaypenWaitToStart : public IBehaviorPlaypen
 {
 protected:
   
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorPlaypenWaitToStart(const Json::Value& config);
   
 protected:

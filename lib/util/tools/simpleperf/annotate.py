@@ -277,10 +277,10 @@ class SourceFileAnnotator(object):
         for name in config_names:
             if name not in config:
                 log_exit('config [%s] is missing' % name)
-        symfs_dir = 'binary_cache'
+        symfs_dir = config['symfs'] # Anki, from command-line arguments symfs_dir = 'binary_cache'
         if not os.path.isdir(symfs_dir):
             symfs_dir = None
-        kallsyms = 'binary_cache/kallsyms'
+        kallsyms = config['symfs']+'/kallsyms' # Anki, from command-line arguments kallsyms = 'binary_cache/kallsyms'
         if not os.path.isfile(kallsyms):
             kallsyms = None
         source_dirs = config['source_dirs']
@@ -305,7 +305,7 @@ class SourceFileAnnotator(object):
             self.tid_filter = None
         self.dso_filter = set(config['dso_filters']) if config.get('dso_filters') else None
 
-        config['annotate_dest_dir'] = 'annotated_files'
+        # Anki, from command-line argumments config['annotate_dest_dir'] = 'annotated_files'
         output_dir = config['annotate_dest_dir']
         if os.path.isdir(output_dir):
             shutil.rmtree(output_dir)
@@ -654,6 +654,11 @@ generate annotated source files in annotated_files directory.""")
 """Use samples only in selected binaries.""")
     parser.add_argument('--addr2line', help=
 """Set the path of addr2line.""")
+# Anki, override symbol cache and destination directory via command-line arguments
+    parser.add_argument('--symfs', help=
+"""Set the path to find binaries with symbols and debug info.""")
+    parser.add_argument('-o', '--annotate_dest_dir', default='annotated_files', help=
+"""Directories to output annotated files.""")
 
     args = parser.parse_args()
     config = {}
@@ -667,9 +672,16 @@ generate annotated source files in annotated_files directory.""")
     config['dso_filters'] = flatten_arg_list(args.dso)
     config['addr2line_path'] = args.addr2line
 
+    # Anki, override symbol cache
+    if args.symfs:
+        config['symfs'] = args.symfs
+    else:
+        config['symfs'] = 'binary_cache'
+    config['annotate_dest_dir'] = args.annotate_dest_dir
     annotator = SourceFileAnnotator(config)
     annotator.annotate()
-    log_info('annotate finish successfully, please check result in annotated_files/.')
+    # Anki, override destination directory
+    log_info('annotate finish successfully, please check result in '+args.annotate_dest_dir+'/.')
 
 if __name__ == '__main__':
     main()

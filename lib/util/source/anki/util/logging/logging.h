@@ -413,6 +413,11 @@ PRINT_PERIODIC_CH_HELPER(sChanneledDebugF, num_calls_between_prints, channel, na
 #define LOG_INFO(name, fmt, ...)    PRINT_CH_INFO(LOG_CHANNEL, name, fmt, ##__VA_ARGS__)
 #define LOG_DEBUG(name, fmt, ...)   PRINT_CH_DEBUG(LOG_CHANNEL, name, fmt, ##__VA_ARGS__)
 
+#define LOG_PERIODIC_INFO(period, name, fmt, ...) \
+  PRINT_PERIODIC_CH_INFO(period, LOG_CHANNEL, name, fmt, ##__VA_ARGS__)
+#define LOG_PERIODIC_DEBUG(period, name, fmt, ...) \
+  PRINT_PERIODIC_CH_DEBUG(period, LOG_CHANNEL, name, fmt, ##__VA_ARGS__)
+
 //
 // Compact version of PRINT_CH_INFO & PRINT_CH_DEBUG macros.
 // These macros can be used in header files or templates

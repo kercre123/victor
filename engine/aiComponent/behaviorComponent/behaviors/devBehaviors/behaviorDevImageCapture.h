@@ -22,7 +22,7 @@ namespace Cozmo {
 
 class BehaviorDevImageCapture : public ICozmoBehavior
 {
-  friend class BehaviorContainer;
+  friend class BehaviorFactory;
   explicit BehaviorDevImageCapture(const Json::Value& config);
 
 public:
@@ -54,6 +54,7 @@ private:
 
   std::string _imageSavePath;
   int8_t _imageSaveQuality;
+  bool _saveSensorData = false;
   
   bool  _useCapTouch = false;
   float _touchStartedTime_s = -1.0f;

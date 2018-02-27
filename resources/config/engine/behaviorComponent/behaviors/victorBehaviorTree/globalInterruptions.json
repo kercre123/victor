@@ -1,0 +1,17 @@
+{
+  "behaviorID" : "GlobalInterruptions",
+  "behaviorClass" : "DispatcherStrictPriority",
+
+  "interruptActiveBehavior": true,
+
+  "behaviors": [
+    "ReactToCliff",
+    "TriggerWordDetected",
+    "TimerUtilityCoordinator",
+    "MeetVictor",
+    "ReactToSoundAwake",
+    "DevPettingTestSimple",
+    "ReactToUnclaimedIntent",
+    "HighLevelAI"
+  ]
+}

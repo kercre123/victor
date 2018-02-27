@@ -16,7 +16,6 @@
 #include "objectPoseConfirmer.h"
 
 #include "engine/activeObject.h"
-#include "engine/blockWorld/blockConfigurationManager.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/navMap/mapComponent.h"
 #include "engine/components/carryingComponent.h"
@@ -54,7 +53,7 @@ CONSOLE_VAR(bool, kDisableStillMovingCheck, "PoseConfirmation", true);
 }
   
 ObjectPoseConfirmer::ObjectPoseConfirmer()
-: IDependencyManagedComponent(RobotComponentID::ObjectPoseConfirmer)
+: IDependencyManagedComponent(this, RobotComponentID::ObjectPoseConfirmer)
 {
   
 }

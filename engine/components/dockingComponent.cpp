@@ -27,7 +27,7 @@ namespace Cozmo {
 CONSOLE_VAR(f32, kDockingRotatingTooFastThresh_degPerSec, "WasRotatingTooFast.Dock.Body_deg/s", RAD_TO_DEG(0.4f));
 
 DockingComponent::DockingComponent()
-: IDependencyManagedComponent(RobotComponentID::Docking)
+: IDependencyManagedComponent(this, RobotComponentID::Docking)
 {
   
 }
@@ -49,7 +49,6 @@ Result DockingComponent::DockWithObject(const ObjectID objectID,
                                         const f32 placementOffsetX_mm,
                                         const f32 placementOffsetY_mm,
                                         const f32 placementOffsetAngle_rad,
-                                        const bool useManualSpeed,
                                         const u8 numRetries,
                                         const DockingMethod dockingMethod,
                                         const bool doLiftLoadCheck)
@@ -114,7 +113,6 @@ Result DockingComponent::DockWithObject(const ObjectID objectID,
                                                                              accel_mmps2,
                                                                              decel_mmps2,
                                                                              dockAction,
-                                                                             useManualSpeed,
                                                                              numRetries,
                                                                              dockingMethod,
                                                                              doLiftLoadCheck);

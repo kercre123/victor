@@ -1,0 +1,51 @@
+#!/usr/bin/env expect -f
+
+set robot [lindex $argv 0]
+
+if { $robot == "" } {
+    puts "Usage: <robot name>\n"
+    exit 1
+}
+
+spawn node ./index.js
+
+sleep 2
+send "scan\r"
+set timeout 30
+expect {
+    "Found $robot" {}
+    timeout {
+        send "quit\r"
+        puts "Robot $robot not found."
+        exit
+    }
+}
+
+send "connect $robot\r"
+set timeout 10
+expect {
+  "Fully connected to $robot" {}
+  timeout {
+    send "quit\r"
+    puts "Unable to connect to $robot"
+    exit
+  }
+}
+
+sleep 1
+send "ifconfig wlan0\r"
+expect {
+    "inet addr:" {}
+    timeout {
+        send "disconnect\r"
+        send "quit\r"
+        puts "Robot $robot did not show IP address in ifconfig."
+        exit
+    }
+}
+
+sleep 1
+send "disconnect\r"
+
+sleep 1
+send "quit\r"

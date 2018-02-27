@@ -50,16 +50,14 @@ namespace Anki {
                                              const PreActionPose::ActionType& actionType,
                                              const f32 predockOffsetDistX_mm,
                                              const bool useApproachAngle,
-                                             const f32 approachAngle_rad,
-                                             const bool useManualSpeed)
+                                             const f32 approachAngle_rad)
     : IAction("DriveToObject",
               RobotActionType::DRIVE_TO_OBJECT,
-              (useManualSpeed ? 0 : (u8)AnimTrackFlag::BODY_TRACK))
+              (u8)AnimTrackFlag::BODY_TRACK)
     , _objectID(objectID)
     , _actionType(actionType)
     , _distance_mm(-1.f)
     , _predockOffsetDistX_mm(predockOffsetDistX_mm)
-    , _useManualSpeed(useManualSpeed)
     , _compoundAction()
     , _useApproachAngle(useApproachAngle)
     , _approachAngle_rad(approachAngle_rad)
@@ -74,16 +72,14 @@ namespace Anki {
     }
     
     DriveToObjectAction::DriveToObjectAction(const ObjectID& objectID,
-                                             const f32 distance,
-                                             const bool useManualSpeed)
+                                             const f32 distance)
     : IAction("DriveToObject",
               RobotActionType::DRIVE_TO_OBJECT,
-              (useManualSpeed ? 0 : (u8)AnimTrackFlag::BODY_TRACK))
+              (u8)AnimTrackFlag::BODY_TRACK)
     , _objectID(objectID)
     , _actionType(PreActionPose::ActionType::NONE)
     , _distance_mm(distance)
     , _predockOffsetDistX_mm(0)
-    , _useManualSpeed(useManualSpeed)
     , _compoundAction()
     , _useApproachAngle(false)
     , _approachAngle_rad(0)
@@ -273,7 +269,7 @@ namespace Anki {
       if(result == ActionResult::SUCCESS) {
         if(!alreadyInPosition) {
           
-          DriveToPoseAction* driveToPoseAction = new DriveToPoseAction(true, _useManualSpeed);
+          DriveToPoseAction* driveToPoseAction = new DriveToPoseAction(true);
           driveToPoseAction->SetGoals(possiblePoses, object->GetPose());
           _compoundAction.AddAction(driveToPoseAction);
         }
@@ -411,15 +407,13 @@ namespace Anki {
     DriveToPlaceCarriedObjectAction::DriveToPlaceCarriedObjectAction(const Pose3d& placementPose,
                                                                      const bool placeOnGround,
                                                                      const bool useExactRotation,
-                                                                     const bool useManualSpeed,
                                                                      const bool checkDestinationFree,
                                                                      const float destinationObjectPadding_mm)
     : DriveToObjectAction(0,
                           placeOnGround ? PreActionPose::PLACE_ON_GROUND : PreActionPose::PLACE_RELATIVE,
                           0,
                           false,
-                          0,
-                          useManualSpeed)
+                          0)
     , _placementPose(placementPose)
     , _useExactRotation(useExactRotation)
     , _checkDestinationFree(checkDestinationFree)
@@ -535,17 +529,15 @@ namespace Anki {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #pragma mark ---- DriveToPoseAction ----
     
-    DriveToPoseAction::DriveToPoseAction(const bool forceHeadDown,
-                                         const bool useManualSpeed) //, const Pose3d& pose)
+    DriveToPoseAction::DriveToPoseAction(const bool forceHeadDown)
     : IAction("DriveToPose",
               RobotActionType::DRIVE_TO_POSE,
-              (useManualSpeed ? 0 : (u8)AnimTrackFlag::BODY_TRACK))
+              (u8)AnimTrackFlag::BODY_TRACK)
     , _isGoalSet(false)
     , _driveWithHeadDown(forceHeadDown)
     , _selectedGoalIndex(new Planning::GoalID(0))
     , _goalDistanceThreshold(DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM)
     , _goalAngleThreshold(DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD)
-    , _useManualSpeed(useManualSpeed)
     , _maxPlanningTime(DEFAULT_MAX_PLANNER_COMPUTATION_TIME_S)
     , _maxReplanPlanningTime(DEFAULT_MAX_PLANNER_REPLAN_COMPUTATION_TIME_S)
     , _timeToAbortPlanning(-1.0f)
@@ -555,12 +547,11 @@ namespace Anki {
     
     DriveToPoseAction::DriveToPoseAction(const Pose3d& pose,
                                          const bool forceHeadDown,
-                                         const bool useManualSpeed,
                                          const Point3f& distThreshold,
                                          const Radians& angleThreshold,
                                          const float maxPlanningTime,
                                          const float maxReplanPlanningTime)
-    : DriveToPoseAction(forceHeadDown, useManualSpeed)
+    : DriveToPoseAction(forceHeadDown)
     {
       _maxPlanningTime = maxPlanningTime;
       _maxReplanPlanningTime = maxReplanPlanningTime;
@@ -570,12 +561,11 @@ namespace Anki {
     
     DriveToPoseAction::DriveToPoseAction(const std::vector<Pose3d>& poses,
                                          const bool forceHeadDown,
-                                         const bool useManualSpeed,
                                          const Point3f& distThreshold,
                                          const Radians& angleThreshold,
                                          const float maxPlanningTime,
                                          const float maxReplanPlanningTime)
-    : DriveToPoseAction(forceHeadDown, useManualSpeed)
+    : DriveToPoseAction(forceHeadDown)
     {
       _maxPlanningTime = maxPlanningTime;
       _maxReplanPlanningTime = maxReplanPlanningTime;
@@ -667,7 +657,12 @@ namespace Anki {
       _useObjectPose = true;
       return SetGoals(poses, distThreshold, angleThreshold);
     }
-        
+
+    void DriveToPoseAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const
+    {
+      requests.insert({ VisionMode::DetectingMarkers , EVisionUpdateFrequency::High });
+    }
+
     f32 DriveToPoseAction::GetTimeoutInSeconds() const { return kDriveToPoseTimeout; }  
 
     ActionResult DriveToPoseAction::Init()
@@ -702,8 +697,7 @@ namespace Anki {
         *_selectedGoalIndex = 0;
                 
         planningResult = pathComponent.StartDrivingToPose(_goalPoses,
-                                                          _selectedGoalIndex,
-                                                          _useManualSpeed);
+                                                          _selectedGoalIndex);
         
         if(planningResult != RESULT_OK) {
           PRINT_CH_INFO("Actions", "DriveToPoseAction.Init.FailedToFindPath",
@@ -886,7 +880,6 @@ namespace Anki {
                                                            const f32 predockOffsetDistX_mm,
                                                            const bool useApproachAngle,
                                                            const f32 approachAngle_rad,
-                                                           const bool useManualSpeed,
                                                            const Radians& maxTurnTowardsFaceAngle_rad,
                                                            const bool sayName)
     : CompoundActionSequential()
@@ -897,8 +890,7 @@ namespace Anki {
                                                                    actionType,
                                                                    predockOffsetDistX_mm,
                                                                    useApproachAngle,
-                                                                   approachAngle_rad,
-                                                                   useManualSpeed);
+                                                                   approachAngle_rad);
 
       // TODO: Use the function-based ShouldIgnoreFailure option for AddAction to catch some failures of DriveToObject earlier
       //  (Started to do this but it started to feel messy/dangerous right before ship)
@@ -1013,14 +1005,12 @@ namespace Anki {
     }
     
     IDriveToInteractWithObject::IDriveToInteractWithObject(const ObjectID& objectID,
-                                                           const f32 distance,
-                                                           const bool useManualSpeed)
+                                                           const f32 distance)
     : CompoundActionSequential()
     , _objectID(objectID)
     {
       _driveToObjectAction = AddAction(new DriveToObjectAction(_objectID,
-                                                               distance,
-                                                               useManualSpeed),
+                                                               distance),
                                        true);
 
     }
@@ -1237,7 +1227,6 @@ namespace Anki {
                                                                const bool useApproachAngle,
                                                                const f32 approachAngle_rad,
                                                                const AlignmentType alignmentType,
-                                                               const bool useManualSpeed,
                                                                Radians maxTurnTowardsFaceAngle_rad,
                                                                const bool sayName)
     : IDriveToInteractWithObject(objectID,
@@ -1245,15 +1234,13 @@ namespace Anki {
                                  0,
                                  useApproachAngle,
                                  approachAngle_rad,
-                                 useManualSpeed,
                                  maxTurnTowardsFaceAngle_rad,
                                  sayName)
     {
       AlignWithObjectAction* action = new AlignWithObjectAction(
                                                objectID,
                                                distanceFromMarker_mm,
-                                               alignmentType,
-                                               useManualSpeed);
+                                               alignmentType);
       AddDockAction(action);
       SetProxyTag(action->GetTag());
     }
@@ -1263,7 +1250,6 @@ namespace Anki {
     DriveToPickupObjectAction::DriveToPickupObjectAction(const ObjectID& objectID,
                                                          const bool useApproachAngle,
                                                          const f32 approachAngle_rad,
-                                                         const bool useManualSpeed,
                                                          Radians maxTurnTowardsFaceAngle_rad,
                                                          const bool sayName,
                                                          AnimationTrigger animBeforeDock)
@@ -1272,7 +1258,6 @@ namespace Anki {
                                  0,
                                  useApproachAngle,
                                  approachAngle_rad,
-                                 useManualSpeed,
                                  maxTurnTowardsFaceAngle_rad,
                                  sayName)
     {
@@ -1280,7 +1265,7 @@ namespace Anki {
         AddAction(new TriggerAnimationAction(animBeforeDock));
       }
       
-      PickupObjectAction* rawPickup = new PickupObjectAction(objectID, useManualSpeed);
+      PickupObjectAction* rawPickup = new PickupObjectAction(objectID);
       const u32 pickUpTag = rawPickup->GetTag();
       _pickupAction = AddDockAction(rawPickup);
       SetProxyTag(pickUpTag);
@@ -1311,7 +1296,6 @@ namespace Anki {
     DriveToPlaceOnObjectAction::DriveToPlaceOnObjectAction(const ObjectID& objectID,
                                                            const bool useApproachAngle,
                                                            const f32 approachAngle_rad,
-                                                           const bool useManualSpeed,
                                                            Radians maxTurnTowardsFaceAngle_rad,
                                                            const bool sayName)
     : IDriveToInteractWithObject(objectID,
@@ -1319,15 +1303,13 @@ namespace Anki {
                                  0,
                                  useApproachAngle,
                                  approachAngle_rad,
-                                 useManualSpeed,
                                  maxTurnTowardsFaceAngle_rad,
                                  sayName)
     {
       PlaceRelObjectAction* action = new PlaceRelObjectAction(objectID,
                                                               false,
                                                               0,
-                                                              0,
-                                                              useManualSpeed);
+                                                              0);
       AddDockAction(action);
       SetProxyTag(action->GetTag());
     }
@@ -1341,7 +1323,6 @@ namespace Anki {
                                                              const f32 placementOffsetY_mm,
                                                              const bool useApproachAngle,
                                                              const f32 approachAngle_rad,
-                                                             const bool useManualSpeed,
                                                              Radians maxTurnTowardsFaceAngle_rad,
                                                              const bool sayName,
                                                              const bool relativeCurrentMarker)
@@ -1350,7 +1331,6 @@ namespace Anki {
                                  0,
                                  useApproachAngle,
                                  approachAngle_rad,
-                                 useManualSpeed,
                                  maxTurnTowardsFaceAngle_rad,
                                  sayName)
     {
@@ -1358,7 +1338,6 @@ namespace Anki {
                                                               placingOnGround,
                                                               placementOffsetX_mm,
                                                               placementOffsetY_mm,
-                                                              useManualSpeed,
                                                               relativeCurrentMarker);
       AddDockAction(action);
       SetProxyTag(action->GetTag());
@@ -1403,7 +1382,6 @@ namespace Anki {
     DriveToRollObjectAction::DriveToRollObjectAction(const ObjectID& objectID,
                                                      const bool useApproachAngle,
                                                      const f32 approachAngle_rad,
-                                                     const bool useManualSpeed,
                                                      Radians maxTurnTowardsFaceAngle_rad,
                                                      const bool sayName)
     : IDriveToInteractWithObject(objectID,
@@ -1411,12 +1389,11 @@ namespace Anki {
                                  0,
                                  useApproachAngle,
                                  approachAngle_rad,
-                                 useManualSpeed,
                                  maxTurnTowardsFaceAngle_rad,
                                  sayName)
     , _objectID(objectID)
     {
-      _rollAction = AddDockAction(new RollObjectAction(objectID, useManualSpeed));
+      _rollAction = AddDockAction(new RollObjectAction(objectID));
       SetProxyTag(_rollAction.lock().get()->GetTag());
     }
 
@@ -1549,7 +1526,6 @@ namespace Anki {
     DriveToPopAWheelieAction::DriveToPopAWheelieAction(const ObjectID& objectID,
                                                        const bool useApproachAngle,
                                                        const f32 approachAngle_rad,
-                                                       const bool useManualSpeed,
                                                        Radians maxTurnTowardsFaceAngle_rad,
                                                        const bool sayName)
     : IDriveToInteractWithObject(objectID,
@@ -1557,11 +1533,10 @@ namespace Anki {
                                  0,
                                  useApproachAngle,
                                  approachAngle_rad,
-                                 useManualSpeed,
                                  maxTurnTowardsFaceAngle_rad,
                                  sayName)
     {
-      PopAWheelieAction* action = new PopAWheelieAction(objectID, useManualSpeed);
+      PopAWheelieAction* action = new PopAWheelieAction(objectID);
       AddDockAction(action);
       SetProxyTag(action->GetTag());
     }
@@ -1572,7 +1547,6 @@ namespace Anki {
     DriveToFacePlantAction::DriveToFacePlantAction(const ObjectID& objectID,
                                                    const bool useApproachAngle,
                                                    const f32 approachAngle_rad,
-                                                   const bool useManualSpeed,
                                                    Radians maxTurnTowardsFaceAngle_rad,
                                                    const bool sayName)
     : IDriveToInteractWithObject(objectID,
@@ -1580,11 +1554,10 @@ namespace Anki {
                                  0,
                                  useApproachAngle,
                                  approachAngle_rad,
-                                 useManualSpeed,
                                  maxTurnTowardsFaceAngle_rad,
                                  sayName)
     {
-      FacePlantAction* action = new FacePlantAction(objectID, useManualSpeed);
+      FacePlantAction* action = new FacePlantAction(objectID);
       AddDockAction(action);
       SetProxyTag(action->GetTag());
     }
@@ -1593,7 +1566,6 @@ namespace Anki {
 #pragma mark ---- DriveToAndTraverseObjectAction ----
     
     DriveToAndTraverseObjectAction::DriveToAndTraverseObjectAction(const ObjectID& objectID,
-                                                                   const bool useManualSpeed,
                                                                    Radians maxTurnTowardsFaceAngle_rad,
                                                                    const bool sayName)
     : IDriveToInteractWithObject(objectID,
@@ -1601,11 +1573,10 @@ namespace Anki {
                                  0,
                                  false,
                                  0,
-                                 useManualSpeed,
                                  maxTurnTowardsFaceAngle_rad,
                                  sayName)
     {
-      TraverseObjectAction* action = new TraverseObjectAction(objectID, useManualSpeed);
+      TraverseObjectAction* action = new TraverseObjectAction(objectID);
       SetProxyTag(action->GetTag());
       AddAction(action);
     }

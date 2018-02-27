@@ -60,6 +60,11 @@ void BehaviorSleeping::OnBehaviorActivated()
   
   
 }
+  
+void BehaviorSleeping::OnBehaviorDeactivated()
+{
+  PlayEmergencyGetOut(AnimationTrigger::WakeupGetout);
+}
 
 void BehaviorSleeping::TransitionToSleeping()
 {

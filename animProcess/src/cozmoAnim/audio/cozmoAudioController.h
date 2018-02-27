@@ -23,7 +23,7 @@ namespace AudioEngine {
 class SoundbankLoader;
 }
 namespace Cozmo {
-class CozmoAnimContext;
+class AnimContext;
 namespace Audio {
 
 
@@ -32,7 +32,7 @@ class CozmoAudioController : public AudioEngine::AudioEngineController
 
 public:
 
-  CozmoAudioController(const CozmoAnimContext* context);
+  CozmoAudioController(const AnimContext* context);
 
   virtual ~CozmoAudioController();
   
@@ -40,6 +40,12 @@ public:
   bool WriteProfilerCapture( bool write );
   // Save session audio output to a file
   bool WriteAudioOutputCapture( bool write );
+  
+  // Control Robot's master volume
+  // Valid Volume values are [0.0 - 1.0]
+  void SetRobotMasterVolume( AudioEngine::AudioRTPCValue volume,
+                             AudioEngine::AudioTimeMs timeInMilliSeconds = 0,
+                             AudioEngine::AudioCurveType curve = AudioEngine::AudioCurveType::Linear );
 
 
 private:

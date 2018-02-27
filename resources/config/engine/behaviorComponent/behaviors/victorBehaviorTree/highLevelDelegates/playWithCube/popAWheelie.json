@@ -1,0 +1,9 @@
+{
+  "behaviorClass": "PopAWheelie",
+  "behaviorID": "PopAWheelie",
+  "displayNameKey":"behavior.PopAWheelie",
+  "requiredUnlockId": "PopAWheelieAction",
+  "shouldHandleConfirmedObject": false,
+  "shouldHandlePossibleObject": false,
+  "considerThisHasRunForBehaviorObjective": "PoppedWheelie"
+}
