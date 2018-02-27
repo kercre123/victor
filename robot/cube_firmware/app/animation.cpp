@@ -64,38 +64,40 @@ void animation_tick(void) {
     Animation* current = current_frame[i];
 
     switch (current->state) {
-      case STATE_STATIC:
-        memcpy(target, current->channel, sizeof(current->channel));
-        target += sizeof(current->channel);
+    case STATE_STATIC:
+      memcpy(target, current->channel, sizeof(current->channel));
+      target += sizeof(current->channel);
 
-        continue ;
+      break ;
 
-      case STATE_HOLD:
-        memcpy(target, current->channel, sizeof(current->channel));
-        target += sizeof(current->channel);
+    case STATE_HOLD:
+      memcpy(target, current->channel, sizeof(current->channel));
+      target += sizeof(current->channel);
 
-        if (++current->index < current->hold) continue ;
-
+      if (++current->index >= current->hold) {
         current->state = current->attack ? STATE_ATTACK : STATE_HOLD;
-        break ;
+        current_frame[i] = current->next;
+        current->index = 0;
+      }
 
-      case STATE_ATTACK:
-        int lerp = current->index * 0x100 / current->attack;
-        
-        for (int c = 0; c < COLOR_CHANNELS; c++) {
-          int value = (current->channel[c] * lerp) + (current->next->channel[c] * (0x100 - lerp));
-          *(target++) = value >> 8;
-        }
+      break ;
 
-        if (++current->index < current->attack) continue ;
+    case STATE_ATTACK:
+      int lerp = current->index * 0x100 / current->attack;
+      
+      for (int c = 0; c < COLOR_CHANNELS; c++) {
+        int value = (current->channel[c] * lerp) + (current->next->channel[c] * (0x100 - lerp));
+        *(target++) = value >> 8;
+      }
 
+      if (++current->index >= current->attack) {
         current->state = current->hold ? STATE_HOLD : STATE_ATTACK;
-        break ;
-    }
+        current->index = 0;
+      }
 
-    current->index = 0;
-    current_frame[i] = current->next;
-   }
+      break ;
+    }
+  }
 }
 
 void animation_write(int length, const void* raw) {
