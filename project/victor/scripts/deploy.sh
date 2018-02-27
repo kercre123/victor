@@ -86,7 +86,8 @@ done
 # echo "ANKI_BUILD_TYPE: ${ANKI_BUILD_TYPE}"
 echo "INSTALL_ROOT: ${INSTALL_ROOT}"
 
-: ${BUILD_ROOT:="${TOPLEVEL}/_build/android/${ANKI_BUILD_TYPE}"}
+: ${PLATFORM_NAME:="android"}
+: ${BUILD_ROOT:="${TOPLEVEL}/_build/${PLATFORM_NAME}/${ANKI_BUILD_TYPE}"}
 : ${LIB_INSTALL_PATH:="${INSTALL_ROOT}/lib"}
 : ${BIN_INSTALL_PATH:="${INSTALL_ROOT}/bin"}
 : ${RSYNC_BIN_DIR="${TOPLEVEL}/tools/rsync"}
@@ -138,10 +139,21 @@ pushd ${BUILD_ROOT} > /dev/null 2>&1
 RSYNC_LIST="${BUILD_ROOT}/rsync.$$.lst"
 touch ${RSYNC_LIST}
 
-find lib -type f -name '*.so' >> ${RSYNC_LIST}
-find bin -type f -not -name '*.full' >> ${RSYNC_LIST}
-find etc >> ${RSYNC_LIST}
-find data >> ${RSYNC_LIST}
+if [ -d lib ]; then
+  find lib -type f -name '*.so' >> ${RSYNC_LIST}
+fi
+
+if [ -d bin ]; then
+  find bin -type f -not -name '*.full' >> ${RSYNC_LIST}
+fi
+
+if [ -d etc ]; then
+  find etc >> ${RSYNC_LIST}
+fi
+
+if [ -d data ]; then
+  find data >> ${RSYNC_LIST}
+fi
 
 rsync -rlptD -uzvP --delete --files-from=${RSYNC_LIST} ./ rsync://${DEVICE_IP_ADDRESS}/anki_root/
 
