@@ -159,10 +159,11 @@ static void BodyLoadTestFirmware(void)
   Timer::delayMs(150); //wait for systest to boot into main and enable battery power
   Contacts::setModeRx(); //switch to comms mode
   
-  /*/DEBUG: console bridge, manual testing
-  cmdSend(CMD_IO_CONTACTS, "echo on", CMD_DEFAULT_TIMEOUT, CMD_OPTS_DEFAULT & ~CMD_OPTS_EXCEPTION_EN);
-  TestCommon::consoleBridge(TO_CONTACTS,1000);
-  //-*/
+  //DEBUG: console bridge, manual testing
+  if( g_fixmode < FIXMODE_BODY1 ) {
+    //cmdSend(CMD_IO_CONTACTS, "echo on", CMD_DEFAULT_TIMEOUT, CMD_OPTS_DEFAULT & ~CMD_OPTS_EXCEPTION_EN);
+    TestCommon::consoleBridge(TO_CONTACTS,5000);
+  }
   
   //Run some tests
   cmdSend(CMD_IO_CONTACTS, "getvers");
@@ -247,7 +248,7 @@ static void BodyBootcheckProductionFirmware(void)
   }
 }
 
-static void BodyChargeContactElectricalDebug(void)
+/*static void BodyChargeContactElectricalDebug(void)
 {
   BodyLoadTestFirmware();
   
@@ -257,7 +258,7 @@ static void BodyChargeContactElectricalDebug(void)
   Timer::delayMs(150); //wait for systest to boot into main and enable battery power
   Contacts::setModeRx(); //switch to comms mode
   
-  //while(1)
+  while(1)
   {
     //DEBUG: various TX/RX lengths to test VEXT analog performance
     for(int x=0; x<10; x++)
@@ -288,33 +289,23 @@ static void BodyChargeContactElectricalDebug(void)
   
   Board::powerOff(PWR_VEXT);
   Board::powerOff(PWR_VBAT);
-}
-
-static void BodyChargeContactSoftwareDebug(void)
-{
-  Board::powerOn(PWR_VEXT,0); //must provide VEXT to wake up the mcu
-  if( g_fixmode < FIXMODE_BODY3 )
-    Board::powerOn(PWR_VBAT, 0);
-  Timer::delayMs(150); //wait for systest to boot into main and enable battery power
-  Contacts::setModeRx(); //switch to comms mode
-  
-  //permanent bridge
-  TestCommon::consoleBridge(TO_CONTACTS,0);
-}
+}*/
 
 TestFunction* TestBody0GetTests(void)
 {
   static TestFunction m_tests_0a[] = {
     ShortCircuitTest,
-    BodyTryReadSerial,
-    BodyLoadProductionFirmware,
-    BodyChargeContactSoftwareDebug,
+    //BodyTryReadSerial, --skip serial read. forces blank state
+    BodyLoadTestFirmware,
+    //BodyChargeContactElectricalDebug,
     NULL,
   };
   static TestFunction m_tests_0[] = {
     ShortCircuitTest,
-    //BodyTryReadSerial, --skip serial read. forces blank state
+    BodyTryReadSerial,
+    BodyLoadTestFirmware,
     BodyLoadProductionFirmware,
+    BodyBootcheckProductionFirmware,
     NULL,
   };
   return (g_fixmode == FIXMODE_BODY0A) ? m_tests_0a : m_tests_0;
@@ -337,8 +328,10 @@ TestFunction* TestBody2GetTests(void)
 {
   static TestFunction m_tests[] = {
     ShortCircuitTest,
-    BodyTryReadSerial,
-    BodyChargeContactElectricalDebug,
+    //BodyTryReadSerial, --skip serial read. forces blank state
+    BodyLoadTestFirmware,
+    BodyLoadProductionFirmware,
+    //BodyBootcheckProductionFirmware,
     NULL,
   };
   return m_tests;
