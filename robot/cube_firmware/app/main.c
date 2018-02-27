@@ -35,7 +35,7 @@ void recv(uint8_t length, const void* data) {
   // Must have received at least the header
   if (length < 2) return ;
 
-  // Align payload
+  // Zero payload
   Payload payload;
   memset(&payload, 0, sizeof(Payload));
   memcpy(&payload, data, length);

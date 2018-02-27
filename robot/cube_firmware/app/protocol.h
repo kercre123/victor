@@ -18,8 +18,8 @@ typedef uint8_t CubeCommand;
 // Inbound format
 typedef struct {
   uint16_t color;
-  uint8_t attack;
   uint8_t hold;
+  uint8_t decay;
 } KeyFrame;
 
 typedef struct {

@@ -58,12 +58,7 @@ static volatile uint16_t* led_port;
 static uint16_t led_pin;
 
 static IrqCallback swtim_irq;
-uint8_t intensity[LED_COUNT] = {
-  0xFF, 0xFF, 0xFF,
-  0xFF, 0x00, 0x00,
-  0x00, 0xFF, 0x00,
-  0x00, 0x00, 0xFF
-};
+uint8_t intensity[LED_COUNT];
 
 // These are mass pin set values
 void hal_led_init(void) {
