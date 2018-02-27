@@ -374,25 +374,21 @@ void QuadTreeNode::TryAutoMerge(QuadTreeProcessor& processor)
   }
   
   bool allChildrenEqual = true;
-  TimeStamp_t firstObservedTime = _childrenPtr[3]->GetData()->GetFirstObservedTime();
-  TimeStamp_t lastObservedTime  = _childrenPtr[3]->GetData()->GetLastObservedTime();
   
   // check if all children classified the same content (assumes node content equality is transitive)
   for(size_t i=0; i<_childrenPtr.size()-1; ++i)
   {
-    firstObservedTime = fmin(firstObservedTime, _childrenPtr[i]->GetData()->GetFirstObservedTime());
-    lastObservedTime  = fmax(lastObservedTime,  _childrenPtr[i]->GetData()->GetLastObservedTime());
     allChildrenEqual &= (_childrenPtr[i]->GetContent() == _childrenPtr[i+1]->GetContent());
   }
   
   // we can merge and set that type on this parent
   if ( allChildrenEqual )
   {
-    MemoryMapDataPtr childContent = _childrenPtr[0]->GetData(); // do a copy since merging will destroy children
-    childContent->SetFirstObservedTime(firstObservedTime);
-    childContent->SetLastObservedTime(lastObservedTime);
+    MemoryMapDataPtr nodeData = _childrenPtr[0]->GetData(); // do a copy since merging will destroy children
+    nodeData->SetFirstObservedTime(GetData()->GetFirstObservedTime());
+    nodeData->SetLastObservedTime(GetData()->GetLastObservedTime());
     
-    Merge( childContent, processor );
+    Merge( nodeData, processor );
   }
 }
 
