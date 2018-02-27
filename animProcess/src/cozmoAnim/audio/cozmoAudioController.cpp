@@ -69,6 +69,7 @@ CONSOLE_VAR( bool, kWriteAudioProfilerCapture, "CozmoAudioController", false );
 CONSOLE_VAR( bool, kWriteAudioOutputCapture, "CozmoAudioController", false );
 
 // Console Functions
+// Session Logs
 void SetWriteAudioProfilerCapture( ConsoleFunctionContextRef context )
 {
   kWriteAudioProfilerCapture = ConsoleArg_Get_Bool( context, "writeProfiler" );
@@ -85,6 +86,7 @@ void SetWriteAudioOutputCapture( ConsoleFunctionContextRef context )
   }
 }
 
+// Robot helpers
 void SetRobotMasterVolume( ConsoleFunctionContextRef context )
 {
   if ( sThis != nullptr ) {
@@ -93,10 +95,68 @@ void SetRobotMasterVolume( ConsoleFunctionContextRef context )
   }
 }
 
+// Generic Audio Interface
+void PostAudioEvent( ConsoleFunctionContextRef context )
+{
+  if ( sThis != nullptr ) {
+    const char* event = ConsoleArg_Get_String( context, "event" );
+    const uint64_t gameObjectId = ConsoleArg_GetOptional_UInt64( context,
+                                                                 "gameObjectId",
+                                                                 static_cast<uint64_t>(AudioMetaData::GameObjectType::Default) );
+    sThis->PostAudioEvent( event, gameObjectId );
+  }
+}
+  
+void SetAudioState( ConsoleFunctionContextRef context )
+{
+  if ( sThis != nullptr ) {
+    const char* stateGroup = ConsoleArg_Get_String( context, "stateGroup" );
+    const char* state = ConsoleArg_Get_String( context, "state" );
+    sThis->SetState( AudioEngineController::GetAudioIdFromString( stateGroup ),
+                     AudioEngineController::GetAudioIdFromString( state ) );
+  }
+}
+
+void SetAudioSwitchState( ConsoleFunctionContextRef context )
+{
+  if ( sThis != nullptr ) {
+    const char* switchGroup = ConsoleArg_Get_String( context, "switchGroup" );
+    const char* state = ConsoleArg_Get_String( context, "state" );
+    const uint64_t gameObjectId = ConsoleArg_Get_UInt64( context, "gameObjectId" );
+    sThis->SetSwitchState( AudioEngineController::GetAudioIdFromString( switchGroup ),
+                           AudioEngineController::GetAudioIdFromString( state ),
+                           gameObjectId );
+  }
+}
+
+void SetAudioParameter( ConsoleFunctionContextRef context )
+{
+  if ( sThis != nullptr ) {
+    const char* parameter = ConsoleArg_Get_String( context, "parameter" );
+    const float value = ConsoleArg_Get_Float( context, "value" );
+    uint64_t gameObjectId = ConsoleArg_GetOptional_UInt64( context, "gameObjectId", kInvalidAudioGameObject );
+    sThis->SetParameter( AudioEngineController::GetAudioIdFromString( parameter ), value, gameObjectId );
+  }
+}
+
+void StopAllAudioEvents( ConsoleFunctionContextRef context )
+{
+  if ( sThis != nullptr ) {
+    uint64_t gameObjectId = ConsoleArg_GetOptional_UInt64( context, "gameObjectId", kInvalidAudioGameObject );
+    sThis->StopAllAudioEvents( gameObjectId );
+  }
+}
+
 // Register console var func
-CONSOLE_FUNC( SetWriteAudioProfilerCapture, "CozmoAudioController", bool writeProfiler );
-CONSOLE_FUNC( SetWriteAudioOutputCapture, "CozmoAudioController", bool writeOutput );
-CONSOLE_FUNC( SetRobotMasterVolume, "CozmoAudioController", float robotMasterVolume );
+const char* consolePath = "CozmoAudioController";
+CONSOLE_FUNC( SetWriteAudioProfilerCapture, consolePath, bool writeProfiler );
+CONSOLE_FUNC( SetWriteAudioOutputCapture, consolePath, bool writeOutput );
+CONSOLE_FUNC( SetRobotMasterVolume, consolePath, float robotMasterVolume );
+CONSOLE_FUNC( PostAudioEvent, consolePath, const char* event, optional uint64 gameObjectId );
+CONSOLE_FUNC( SetAudioState, consolePath, const char* stateGroup, const char* state );
+CONSOLE_FUNC( SetAudioSwitchState, consolePath, const char* switchGroup, const char* state, uint64 gameObjectId );
+CONSOLE_FUNC( SetAudioParameter, consolePath, const char* parameter, float value, optional uint64 gameObjectId );
+CONSOLE_FUNC( StopAllAudioEvents, consolePath, optional uint64 gameObjectId );
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

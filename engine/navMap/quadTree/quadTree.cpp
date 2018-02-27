@@ -106,7 +106,7 @@ bool QuadTree::Insert(const FastPolygon& poly, MemoryMapDataPtr data)
 
   // try to cleanup tree
   QuadTreeNode::FoldFunctor merge = [this] (QuadTreeNode& node) { node.TryAutoMerge(_processor); };
-  _root.Fold(merge, QuadTreeNode::FoldDirection::DepthFirst);
+  _root.Fold(merge, poly, QuadTreeNode::FoldDirection::DepthFirst);
 
   return contentChanged;
 }
@@ -130,7 +130,7 @@ bool QuadTree::Transform(const Poly2f& poly, NodeTransformFunction transform)
 
   // try to cleanup tree
   QuadTreeNode::FoldFunctor merge = [this] (QuadTreeNode& node) { node.TryAutoMerge(_processor); };
-  _root.Fold(merge, QuadTreeNode::FoldDirection::DepthFirst);
+  _root.Fold(merge, poly, QuadTreeNode::FoldDirection::DepthFirst);
   
   return contentChanged;
 }
