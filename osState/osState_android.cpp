@@ -151,15 +151,16 @@ uint32_t OSState::GetCPUFreq_kHz() const
   return _cpuFreq_kHz;
 }
 
-bool OSState::IsThermalThrottling() const
+
+bool OSState::IsCPUThrottling() const
 {
-  DEV_ASSERT(_updatePeriod_ms != 0, "OSState.IsThermalThrottling.ZeroUpdate");
+  DEV_ASSERT(_updatePeriod_ms != 0, "OSState.IsCPUThrottling.ZeroUpdate");
   return (_cpuFreq_kHz < kNominalCPUFreq_kHz);
 }
 
 uint32_t OSState::GetTemperature_C() const
 {
-  DEV_ASSERT(_updatePeriod_ms != 0, "OSState.GetTemperature_mC.ZeroUpdate");
+  DEV_ASSERT(_updatePeriod_ms != 0, "OSState.GetTemperature_C.ZeroUpdate");
   return _cpuTemp_C;
 }
 

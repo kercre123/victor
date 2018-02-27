@@ -54,9 +54,8 @@ public:
   // ever care about CPU freq and temperature.
   void SetUpdatePeriod(uint32_t milliseconds);
 
-  // Returns true if cpu freq falls below kNominalCPUFreq_kHz
-  // Asserts if update rate is 0
-  bool IsThermalThrottling() const;
+  // Returns true if CPU frequncy falls below kNominalCPUFreq_kHz
+  bool IsCPUThrottling() const;
 
   // Reads the current CPU frequency and returns it
   uint32_t UpdateCPUFreq_kHz() const;

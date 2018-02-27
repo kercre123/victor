@@ -87,16 +87,16 @@ void OSState::SetUpdatePeriod(uint32_t milliseconds)
   _updatePeriod_ms = milliseconds;
 }
 
+bool OSState::IsCPUThrottling() const
+{
+  DEV_ASSERT(_updatePeriod_ms != 0, "OSState.IsCPUThrottling.ZeroUpdate");
+  return false;
+}
+
 uint32_t OSState::GetCPUFreq_kHz() const
 {
   DEV_ASSERT(_updatePeriod_ms != 0, "OSState.GetCPUFreq_kHz.ZeroUpdate");
   return kNominalCPUFreq_kHz;
-}
-
-bool OSState::IsThermalThrottling() const
-{
-  DEV_ASSERT(_updatePeriod_ms != 0, "OSState.IsThermalThrottling.ZeroUpdate");
-  return false;
 }
 
 uint32_t OSState::GetTemperature_C() const
@@ -105,7 +105,7 @@ uint32_t OSState::GetTemperature_C() const
 
   // 65C: randomly chosen temperature at which throttling does not appear to occur
   // on physical robot
-  return 65000;  
+  return 65;  
 }
   
 const std::string& OSState::GetSerialNumberAsString()
