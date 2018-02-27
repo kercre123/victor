@@ -100,6 +100,7 @@ namespace Switchboard {
     void SendChallenge();
     void SendCancelPairing();
     void SendChallengeSuccess();
+    void SendWifiScanResults();
     
     void IncrementAbnormalityCount();
     void IncrementChallengeCount();

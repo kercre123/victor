@@ -217,11 +217,27 @@ namespace Switchboard {
   } WifiRespondIpMessage_crypto;
 
   SB_PackedStruct WifiScanRequestMessage_crypto : Message {
+  public:    
+    uint8_t RESERVED = 0;
+
+    WifiScanRequestMessage_crypto() {
+      type = SecureMessage::CRYPTO_WIFI_SCAN_REQUEST;
+    }
+
+  } WifiScanRequestMessage_crypto;
+
+  SB_PackedStruct WifiScanResponseMessage_crypto : Message {
   public:
     uint8_t statusCode;
     uint8_t networksCount;
     
-  } WifiScanRequestMessage_crypto;
+    WifiScanResponseMessage_crypto() {
+
+
+      type = SecureMessage::CRYPTO_WIFI_SCAN_RESPONSE;
+    }
+
+  } WifiScanResponseMessage_crypto;
   
   SB_PackedStruct WifiCredentialsMessage_crypto : Message {
   public:
