@@ -34,10 +34,10 @@ namespace {
   
   const float kBaselineInitial = 500.0f;
   
-  const int kBoxFilterSize = 7;
+  const int kBoxFilterSize = 8;
   
   // constant size difference between detect and undetect levels
-  const int kDynamicThreshGap = 14;
+  const int kDynamicThreshGap = 9;
   
   // the offset from the input reading that detect level is set to
   const int kDynamicThreshDetectFollowOffset = 7;
@@ -46,10 +46,15 @@ namespace {
   const int kDynamicThreshUndetectFollowOffset = 7;
   
   // the highest reachable detect level offset from baseline
-  const int kDynamicThreshMininumUndetectOffset = 8;
+  const int kDynamicThreshMininumUndetectOffset = 13;
   
   // the lowest reachable undetect level offset from baseline
-  const int kDynamicThreshMaximumDetectOffset = 55;
+  const int kDynamicThreshMaximumDetectOffset = 50;
+  
+  // minimum number of consecutive readings that are below/above detect level
+  // before we update the thresholds dynamically
+  // note: this counters the impact of noise on the dynamic thresholds
+  const int kMinConsecCountToUpdateThresholds = 8;
   
   bool devSendTouchSensor = false;
   bool devTouchSensorPressed = false;
@@ -74,6 +79,8 @@ TouchSensorComponent::TouchSensorComponent()
 , _undetectOffsetFromBase(kDynamicThreshMininumUndetectOffset)
 , _isPressed(false)
 , _numConsecCalibReadings(0)
+, _countAboveDetectLevel(0)
+, _countBelowUndetectLevel(0)
 , _touchPressTime(std::numeric_limits<float>::max())
 {
 }
@@ -178,20 +185,43 @@ bool TouchSensorComponent::ProcessWithDynamicThreshold(const int baseline, const
     _isPressed = true;
     // monotonically increasing
     if ((input-detectLevel) > kDynamicThreshDetectFollowOffset) {
-      const auto candidateDetectOffset = input - kDynamicThreshDetectFollowOffset - baseline;
-      _detectOffsetFromBase = MIN(kDynamicThreshMaximumDetectOffset, candidateDetectOffset);
-      // detect and undetect levels move in lockstep
-      _undetectOffsetFromBase = _detectOffsetFromBase - kDynamicThreshGap;
+      _countAboveDetectLevel++;
+      _countBelowUndetectLevel = 0;
+      if(_countAboveDetectLevel > kMinConsecCountToUpdateThresholds) {
+        const auto candidateDetectOffset = input - kDynamicThreshDetectFollowOffset - baseline;
+        _detectOffsetFromBase = MIN(kDynamicThreshMaximumDetectOffset, candidateDetectOffset);
+        // detect and undetect levels move in lockstep
+        _undetectOffsetFromBase = _detectOffsetFromBase - kDynamicThreshGap;
+        _countAboveDetectLevel = 0;
+      }
+    } else {
+      // tracks count of *consecutive* readings which are
+      // above or below the respective detect or undetect thresholds
+      _countAboveDetectLevel = 0;
+      _countBelowUndetectLevel = 0;
     }
   } else if (input < undetectLevel) {
     _isPressed = false;
     // monotonically decreasing
     if ((undetectLevel-input) > kDynamicThreshUndetectFollowOffset) {
-      auto candidateUndetectOffset = input + kDynamicThreshUndetectFollowOffset - baseline;
-      _undetectOffsetFromBase = MAX(kDynamicThreshMininumUndetectOffset, candidateUndetectOffset);
-      // detect and undetect levels move in lockstep
-      _detectOffsetFromBase = _undetectOffsetFromBase + kDynamicThreshGap;
+      _countBelowUndetectLevel++;
+      _countAboveDetectLevel = 0;
+      if(_countBelowUndetectLevel > kDynamicThreshDetectFollowOffset) {
+        auto candidateUndetectOffset = input + kDynamicThreshUndetectFollowOffset - baseline;
+        _undetectOffsetFromBase = MAX(kDynamicThreshMininumUndetectOffset, candidateUndetectOffset);
+        // detect and undetect levels move in lockstep
+        _detectOffsetFromBase = _undetectOffsetFromBase + kDynamicThreshGap;
+        _countBelowUndetectLevel = 0;
+      }
+    } else {
+      // tracks count of *consecutive* readings which are
+      // above or below the respective detect or undetect thresholds
+      _countAboveDetectLevel = 0;
+      _countBelowUndetectLevel = 0;
     }
+  } else {
+    _countAboveDetectLevel = 0;
+    _countBelowUndetectLevel = 0;
   }
   
   return lastPressed != _isPressed;
