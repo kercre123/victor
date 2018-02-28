@@ -8,12 +8,7 @@
 #include "uart.h"
 #include "animation.h"
 
-extern void (*ble_send)(uint8_t length, const void* data);
-
 int main(void) {
-  static const uint8_t BOOT_MESSAGE[] = "hello!";
-  ble_send(sizeof(BOOT_MESSAGE), BOOT_MESSAGE);
-
   hal_uart_init();
   hal_led_init();
   hal_acc_init();
@@ -29,6 +24,7 @@ void deinit(void) {
 
 void tick(void) {
   animation_tick();
+  hal_acc_tick();
 }
 
 void recv(uint8_t length, const void* data) {

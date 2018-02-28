@@ -9,6 +9,7 @@
 
   <project>
     <PathAndName>.\cube_firmware.uvprojx</PathAndName>
+    <NodeIsExpanded>1</NodeIsExpanded>
   </project>
 
   <project>
