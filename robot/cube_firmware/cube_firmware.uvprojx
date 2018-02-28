@@ -792,6 +792,11 @@
               <FileType>1</FileType>
               <FilePath>.\src\user_app\user_peripheral.c</FilePath>
             </File>
+            <File>
+              <FileName>xxtea.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\user_app\xxtea.c</FilePath>
+            </File>
           </Files>
         </Group>
       </Groups>
