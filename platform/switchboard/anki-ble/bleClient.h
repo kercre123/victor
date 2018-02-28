@@ -25,7 +25,8 @@ namespace Switchboard {
     // Constructor
     BleClient(struct ev_loop* loop)
       : IPCClient(loop)
-      , _connectionId(-1) {
+      , _connectionId(-1)
+      , _stream(nullptr) {
     }
 
     // Types
