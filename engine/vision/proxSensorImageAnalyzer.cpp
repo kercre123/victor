@@ -32,8 +32,8 @@ namespace Cozmo {
 
 namespace {
 # define CONSOLE_GROUP_NAME "Vision.ProxSensorImageAnalyzer"
-CONSOLE_VAR(f32,  kMotionDetection_MaxBodyAngleChange_deg,    CONSOLE_GROUP_NAME, 0.1f);
-CONSOLE_VAR(f32,  kMotionDetection_MaxPoseChange_mm,          CONSOLE_GROUP_NAME, 0.5f);
+CONSOLE_VAR(f32,  kProxSensorImageAnalyzer_MaxBodyAngleChange_deg,    CONSOLE_GROUP_NAME, 0.1f);
+CONSOLE_VAR(f32,  kProxSensorImageAnalyzer_MaxPoseChange_mm,          CONSOLE_GROUP_NAME, 0.5f);
 # undef CONSOLE_GROUP_NAME
 }
 
@@ -55,10 +55,19 @@ Result ProxSensorImageAnalyzer::Update(const Vision::ImageRGB& image, const Visi
   }
 
   const bool poseSame = crntPoseData.IsBodyPoseSame(prevPoseData,
-                                                    DEG_TO_RAD(kMotionDetection_MaxBodyAngleChange_deg),
-                                                    kMotionDetection_MaxPoseChange_mm);
+                                                    DEG_TO_RAD(kProxSensorImageAnalyzer_MaxBodyAngleChange_deg),
+                                                    kProxSensorImageAnalyzer_MaxPoseChange_mm);
   if (poseSame) {
     // Not moving, no need to do stuff
+
+    if (DEBUG_VISUALIZATION) {
+      // just send a bogus image to signal no movement
+      GroundPlaneROI groundPlaneROI;
+      const Matrix_3x3f& H = crntPoseData.groundPlaneHomography;
+      const Vision::ImageRGB groundPLaneImage = groundPlaneROI.GetOverheadImage(image, H);
+      debugImageRGBs.emplace_back("ProxSensorOnGroundPlane", groundPLaneImage);
+    }
+
     return RESULT_OK;
   }
 
