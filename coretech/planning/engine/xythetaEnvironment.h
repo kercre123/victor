@@ -465,6 +465,10 @@ public:
   float GetDistanceBetween(const State_c& start, const State& end) const;
   static float GetDistanceBetween(const State_c& start, const State_c& end);
 
+  // TEMP:
+  float GetDistanceBetweenTEMP(const State_c& start, const State& end) const;
+
+
   float GetMinAngleBetween(const State_c& start, const State& end) const;
   static float GetMinAngleBetween(const State_c& start, const State_c& end);
 

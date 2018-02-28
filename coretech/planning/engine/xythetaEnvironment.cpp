@@ -27,6 +27,9 @@
 #include <math.h>
 #include <stdio.h>
 
+// TEMP:
+#include "coretech/planning/engine/openList.h"
+
 using namespace std;
 
 namespace Anki {
@@ -1094,7 +1097,7 @@ bool xythetaEnvironment::ParseObstacles(const Json::Value& config)
           return false;
         }
 
-        Cost c = Util::numeric_cast<Cost>(obsConfig["cost"].asFloat());
+        Cost c = Util::numeric_cast<Cost>(obsConfig["cost"].asFloat()); // TEMP: hack to MAX_OBSTACLE_COST to make fatal
         Poly2f p;
 
         for( const auto& ptConfig : obsConfig["poly"] ) {
@@ -1482,7 +1485,7 @@ bool MotionPrimitive::Import(const Json::Value& config)
 
     id = config["action_index"].asInt();
     startTheta = config["start_theta"].asInt();
-    cost = config["cost"].asFloat();
+    cost = config["cost"].asFloat(); // TEMP:  hack to MAX_OBSTACLE_COST to make fatal
     if( ! endStateOffset.Import(config["end_state_offset"]) ) {
       return false;
     }
@@ -1697,6 +1700,169 @@ float xythetaEnvironment::GetDistanceBetween(const State_c& start, const State_c
     + pow(end.y_mm - start.y_mm, 2);
 
   return sqrtf(distSq);
+}
+
+float xythetaEnvironment::GetDistanceBetweenTEMP(const State_c& start_c, const State& end) const
+{
+  // TEMP: hacky test code
+  static std::map< StateID, float > costMap;
+  static OpenList q;
+  static StateID currStartID;
+  static ofstream outfile;
+
+  // TEMP: 
+  auto Point2StateID = [](const Point& p) {
+    State temp(p.x, p.y, 0);
+    return temp.GetStateID();
+  };
+
+  // TEMP: start is constant over search (and is the goal), end changes
+  
+  const State start = State_c2State(start_c);
+  const Point startPoint(start.x, start.y);
+  
+  StateID startID = Point2StateID(startPoint);
+  
+  if( currStartID != startID ) {
+    PRINT_NAMED_WARNING("TEMP.CLEARING_THE_SHIT", "this could be bad if you see it twice");
+    costMap.clear();
+    q.clear();
+    q.insert(startID, 0.0f);
+    currStartID = startID;
+    outfile.open( "heur.txt" );
+  }
+
+  const Point endPoint(end.x, end.y);
+
+  const StateID endID = Point2StateID(endPoint);
+
+  // TEMP:
+  int printer = 0;
+  
+  // shitty dijkstras implementation until start is found
+  if( costMap.find(endID) == costMap.end() ) {
+    while(!q.empty()) {
+
+      float c = q.topF();
+      StateID curr = q.pop();
+      
+      if( curr == endID ) {
+        // done
+        break;
+      }
+
+      // 8-connected search in increments of 1 StateXY
+      State currState(curr);
+      Point currPoint(currState.x, currState.y);
+
+      // TEMP: uncomment to dump heur files (slow)
+      // then you can plot in gnuplot with: plot 'heur.txt' using 1:2:3 with points palette
+      // outfile << currPoint.x << ' ' << currPoint.y << ' ' << c << ' ' << GetDistanceBetween(start_c, State2State_c(currState)) << '\n';
+
+      if( (printer++) % 1000 == 0 ) {
+        PRINT_NAMED_INFO("TEMP.expansion",
+                         "c=%f, state=(%d, %d), end=(%d,%d), q=%d map=%zu res=%f",
+                         c,
+                         currPoint.x,
+                         currPoint.y,
+                         endPoint.x,
+                         endPoint.y,
+                         q.size(),
+                         costMap.size(),
+                         resolution_mm_);
+      }
+
+      auto getPointCost = [this](const Point& p, float dist) {
+        // use the minimium cost across all obstacle angles
+        // TODO:(bn) obviously not this
+        float minCost = std::numeric_limits<float>::max();
+        for( size_t obs_theta = 0; obs_theta < obstaclesPerAngle_.size(); obs_theta++) {          
+          float cost = dist;
+          for( const auto& obs : obstaclesPerAngle_[obs_theta] ) {
+            if( obs.first.Contains( GetX_mm(p.x), GetY_mm(p.y) ) ) {
+              // TEMP: this is probably wrong
+              cost += obs.second * _robotParams.maxVelocity_mmps * dist; // TODO:(bn) inefficient!
+              // PRINT_NAMED_INFO("TEMP.TEMP.TEMP.collision", "theta %zu, point(%f, %f)",
+              //                  obs_theta,
+              //                  GetX_mm(p.x),
+              //                  GetY_mm(p.y));
+            }
+            else {
+              // PRINT_NAMED_INFO("TEMP.TEMP.TEMP.safe", "theta %zu, point(%f, %f)",
+              //                  obs_theta,
+              //                  GetX_mm(p.x),
+              //                  GetY_mm(p.y));
+            }
+          }
+          if( cost < minCost ) {
+            minCost = cost;
+          }
+        }
+        return minCost;
+      };
+
+      auto addSuccessor = [this, &getPointCost, &Point2StateID](StateXY x, StateXY y, float dist, float currCost) {
+        Point p(x, y);
+        StateID nextID = Point2StateID(p);
+        float newC = currCost + getPointCost(p, dist);
+
+        if( newC > MAX_OBSTACLE_COST * _robotParams.maxVelocity_mmps ) {
+          // PRINT_NAMED_INFO("TEMP.TEMP.collision", "point(%f, %f)",
+          //                  GetX_mm(p.x),
+          //                  GetY_mm(p.y));
+          return;
+        }
+        // PRINT_NAMED_INFO("TEMP.TEMP.safe", "point(%f, %f)",
+        //                  GetX_mm(p.x),
+        //                  GetY_mm(p.y));
+
+        auto newIt = costMap.find(nextID);
+        if(newIt == costMap.end() ) {
+          costMap.emplace(nextID, newC);
+          q.insert(nextID, newC);
+        }
+        else if( newC < newIt->second ) {
+          newIt->second = newC;
+          // TEMP: this is broken (need to remove old one / update cost)
+          q.insert(nextID, newC);
+        }
+        // else this is a worse way to get to nextID, so ignore it
+      };
+
+      // TODO: FML
+      const StateXY one = ((StateXY)1);
+      
+      // 4 connected
+      addSuccessor( currPoint.x - one, currPoint.y      , resolution_mm_, c );
+      addSuccessor( currPoint.x + one, currPoint.y      , resolution_mm_, c );
+      addSuccessor( currPoint.x      , currPoint.y - one, resolution_mm_, c );
+      addSuccessor( currPoint.x      , currPoint.y + one, resolution_mm_, c );
+
+      // 8 connected
+      static const float sqrt2 = sqrtf(2.0f);
+      addSuccessor( currPoint.x - one, currPoint.y - one, (sqrt2*resolution_mm_), c );
+      addSuccessor( currPoint.x - one, currPoint.y + one, (sqrt2*resolution_mm_), c );
+      addSuccessor( currPoint.x + one, currPoint.y - one, (sqrt2*resolution_mm_), c );
+      addSuccessor( currPoint.x + one, currPoint.y + one, (sqrt2*resolution_mm_), c );
+
+    }
+  }
+
+  const auto it = costMap.find(endID);
+  if( it != costMap.end() ) {
+    // TEMP:
+    // PRINT_NAMED_INFO("ASDF.H", "iter=%d h=%f old_h=%f", printer, it->second, GetDistanceBetween(start_c, end));
+    return it->second;
+  }
+  else {
+    // TEMP:
+    static bool printed = false;
+    if( !printed) {
+      PRINT_NAMED_ERROR("TEMP.HeurFail", "failed to find dijkstras cost");
+      printed = true;
+    }
+    return GetDistanceBetween(start_c, end);
+  }
 }
 
 float xythetaEnvironment::GetMinAngleBetween(const State_c& start, const State& end) const

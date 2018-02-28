@@ -41,7 +41,7 @@ namespace Anki {
 
     namespace {
       CONSOLE_VAR(bool, kEnablePredockDistanceCheckFix, "DriveToActions", true);
-      CONSOLE_VAR(f32, kDriveToPoseTimeout, "DriveToActions", 30.f);
+      CONSOLE_VAR(f32, kDriveToPoseTimeout, "DriveToActions", 30000000.f);
     }
     
 #pragma mark ---- DriveToObjectAction ----

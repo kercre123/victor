@@ -344,6 +344,12 @@ bool xythetaPlannerImpl::InitializeHeuristic()
                        (int)goalIDPair.first,
                        costOutsideHeurMap);
     }
+    else {
+      // TEMP:
+      PRINT_NAMED_INFO("xythetaPlanner.GoalIsClear",
+                       "Goal is not in a collision");
+    }
+           
     if( costOutsideHeurMap > MAX_COST_HEUR_EXPANSIONS ) {
       PRINT_NAMED_WARNING("xythetaPlanner.HeurMap.Fail",
                           "very high cost of _costOutsideHeurMap = %f, so removing goal %d",
@@ -414,7 +420,7 @@ Cost xythetaPlannerImpl::ExpandCollisionStatesFromGoal(const StateID& goalStateI
       numEscapes++;
 
       if( numEscapes >= COLLISION_GOAL_HEURISTIC_NUM_ESCAPES ) {
-        PRINT_NAMED_INFO("xythetaPlanner.ExpandCollisionStatesFromGoal", 
+        PRINT_NAMED_WARNING("xythetaPlanner.ExpandCollisionStatesFromGoal",  // TEMP: 
                          "expanded %u states for heuristic, reached free space %d times with cost of %f and have %lu in heurMap",
                          heurExpansions,
                          numEscapes,
@@ -475,7 +481,7 @@ Cost xythetaPlannerImpl::ExpandCollisionStatesFromGoal(const StateID& goalStateI
   // We should usually be able to escape form a soft collision, but if we run out of states to expand, it
   // means we couldn't escape, but hopefully we filled up heurMap enough to plan. This could happen if the
   // start and goal were both inside a soft obstacle that had a hard obstacle around it
-  PRINT_NAMED_INFO("xythetaPlanner.ExpandCollisionStatesFromGoal.EmptyOpenList",
+  PRINT_NAMED_WARNING("xythetaPlanner.ExpandCollisionStatesFromGoal.EmptyOpenList", // TEMP: 
                    "ran out of open list entries during ExpandStatesForHeur after %u exps!",
                    heurExpansions);
   return minCostOutside;
@@ -736,13 +742,13 @@ Cost xythetaPlannerImpl::heur_internal(StateID sid)
     const auto& goal = _goals_c[i].second;
     // we checked i is in bounds when adding to the cost vector so dont here
     Cost costOutsideHeurMap = _costOutsideHeurMapPerGoal[i].second;
-    Cost d = _context.env.GetDistanceBetween(goal, s) * _context.env.GetOneOverMaxVelocity() + costOutsideHeurMap;
+    Cost d = _context.env.GetDistanceBetweenTEMP(goal, s) * _context.env.GetOneOverMaxVelocity() + costOutsideHeurMap;
     if (d < minCost) {
       minCost = d;
     }
   }
   
-  return minCost;
+  return 100.0*minCost; // TEMP: change weight here
 }
 
 void xythetaPlannerImpl::BuildPlan()
