@@ -146,6 +146,7 @@ enum uint_8 BehaviorClass {
   ComeHere,
   ReactToSound,
   ReactToUnclaimedIntent,
+  SnakeGame,
 }
 
 }

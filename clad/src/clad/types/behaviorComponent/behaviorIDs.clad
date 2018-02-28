@@ -46,6 +46,9 @@ enum uint_8 BehaviorID {
   PlaypenTest,
   PlaypenWaitToStart,
 
+  // devBehaviors
+  SnakeGame,
+
   // examples
   ExampleAnimGetInLoop,
   ExampleAnonymousBehaviors,

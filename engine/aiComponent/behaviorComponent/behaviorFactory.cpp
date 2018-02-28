@@ -101,6 +101,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorComeHere.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorReactToSound.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorReactToUnclaimedIntent.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorSnakeGame.h"
 
 #include "clad/types/behaviorComponent/behaviorTypes.h"
 
@@ -670,6 +671,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::ReactToUnclaimedIntent:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorReactToUnclaimedIntent(config));
+      break;
+    }
+    
+    case BehaviorClass::SnakeGame:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorSnakeGame(config));
       break;
     }
     
