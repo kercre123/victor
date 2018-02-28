@@ -936,7 +936,8 @@ namespace Cozmo {
 
   Result VisionSystem::UpdateProxSensorAnalyzer(const Vision::ImageRGB& image)
   {
-    const Result result = _proxSensorImageAnalyzer->Update(image, _poseData, _currentResult.debugImageRGBs);
+    const Result result = _proxSensorImageAnalyzer->Update(image, _poseData, _prevPoseData,
+                                                           _currentResult.debugImageRGBs);
     return result;
   }
 
