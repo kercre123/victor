@@ -1,4 +1,4 @@
-;#<FEEDBACK># ARM Linker, 5060183: Last Updated: Wed Jan 31 13:49:07 2018
+;#<FEEDBACK># ARM Linker, 5060183: Last Updated: Tue Feb 27 17:49:54 2018
 ;VERSION 0.2
 ;FILE adc.o
 adc_calibrate <= USED 0
@@ -164,3 +164,6 @@ wkupct_disable_irq <= USED 0
 wkupct_enable_irq <= USED 0
 wkupct_quad_disable_IRQ <= USED 0
 wkupct_register_callback <= USED 0
+;FILE xxtea.o
+xxtea_decrypt <= USED 0
+xxtea_encrypt <= USED 0

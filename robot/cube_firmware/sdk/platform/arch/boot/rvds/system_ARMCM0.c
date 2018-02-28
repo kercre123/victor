@@ -55,6 +55,9 @@
  * @brief  Setup the microcontroller system.
  *         Initialize the System.
  */
+ 
+extern void FirstBoot(void);
+
 void SystemInit (void)
 {
     int i;
@@ -95,6 +98,8 @@ void SystemInit (void)
     ARM_GPIO2->IE = 0;
     ARM_GPIO2->DIR = 0;
 #endif
+
+    FirstBoot();
 }
 
 

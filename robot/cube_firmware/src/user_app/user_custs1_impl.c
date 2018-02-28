@@ -36,6 +36,7 @@ static timer_hnd app_timer = EASY_TIMER_INVALID_TIMER;
 static ApplicationMap* const app_current = (ApplicationMap*) 0x20005800;
 static uint8_t* app_write_address = (uint8_t*) app_current;
 static const int minimum_length = 0x24;
+static const uint8_t xxtea_key[16] = {0x88, 0xdb, 0x37, 0x96, 0x76, 0x8f, 0x86, 0x91, 0x42, 0x24, 0xf4, 0x35, 0xc1, 0xfd, 0x7f, 0xd3};
 
 static uint32_t crc32_tab[] = {
   0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
