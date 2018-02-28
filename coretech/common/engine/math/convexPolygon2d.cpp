@@ -39,21 +39,27 @@ ConvexPolygon::ConvexPolygon(const Poly2f& basePolygon)
 }
 
 bool ConvexPolygon::IsConvex(const Poly2f& poly)
-{
-  f32 lastAngle = poly.GetEdgeAngle(0);
-  // force to [-π, π) and get direction
-  const bool dir = std::signbit(std::fmod(poly.GetEdgeAngle(1) - lastAngle + 2 * M_PI, 2 * M_PI) - M_PI);
-  bool retv = true;
-  
-  for (int i = 1; i < poly.size(); ++i)
+{ 
+  // should only check for poly with 3 or more points
+  for (int i = 2; i < poly.size(); ++i)
   {
-    f32 angle = poly.GetEdgeAngle(i);
-    f32 d_angle = std::fmod(angle - lastAngle + 2 * M_PI, 2 * M_PI) - M_PI;    // force to [-π, π)
-    retv &= (std::signbit(d_angle) == dir);
-    lastAngle = angle;
+    // get internal angles formed by last 3 line segments
+    Radians angle1 = poly.GetEdgeAngle(i-2);
+    Radians angle2 = poly.GetEdgeAngle(i-1);
+    Radians angle3 = poly.GetEdgeAngle(i);
+    Radians d_angle1 = angle2 - angle1;
+    Radians d_angle2 = angle3 - angle2;
+
+    // we may end up with straight line segments, so make sure floating point precision doesnt break anything
+    if ( !d_angle1.IsNear(0) && !d_angle2.IsNear(0) ) { 
+      // make sure the direction of both angles is the same
+      if (std::signbit(d_angle1.ToFloat()) != std::signbit(d_angle2.ToFloat())) {
+        return false;
+      }
+    }
   }
   
-  return retv;
+  return true;
 }
 
 void ConvexPolygon::RadialExpand(f32 d) {
