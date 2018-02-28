@@ -4,6 +4,7 @@ const os = require('os');
 var noble = require('noble');
 var math = require('mathjs');
 const _sodium = require('libsodium-wrappers');
+var readline = require('readline');
 let sodium = null;
 
 let pingChar;
@@ -68,8 +69,6 @@ function handleReceivePlainText(data) {
         let foreignKey = data.slice(1);
         let clientKeys = sodium.crypto_kx_client_session_keys(keys.publicKey, keys.privateKey, foreignKey);
 
-        var readline = require('readline');
-
         rl = readline.createInterface({
             input: process.stdin,
             output: process.stdout
@@ -109,6 +108,7 @@ function handleReceiveEncrypted(ctext) {
     let CRYPTO_PING = 1;
     let CRYPTO_ACCEPTED = 4;
     let CRYPTO_WIFI_SCAN_RESPONSE = 11;
+    let CRYPTO_WIFI_CONNECT_RESPONSE = 5;
 
     let cipher = new Uint8Array(ctext);
     let nonce = new Uint8Array(decryptNonce);
@@ -133,9 +133,6 @@ function handleReceiveEncrypted(ctext) {
             let wifiScanRequest = Buffer.from([10, 0]);
             printConnectionMessage("Requesting Victor wifi Scan...", "\x1b[32m");
             protocolSend(wifiScanRequest, true);
-            //let wifiCred = Buffer.concat([Buffer.from([5]), Buffer.from([13]), Buffer.from("vic-home-wifi"), Buffer.from([8]), Buffer.from("password")]);
-            //console.log(wifiCred);
-            //protocolSend(wifiCred, true);
         } else if(data[0] == CRYPTO_WIFI_SCAN_RESPONSE) {
             let wifiScanResponse = []
             let status = data[1];
@@ -161,6 +158,25 @@ function handleReceiveEncrypted(ctext) {
             for(let i = 0; i < wifiScanResponse.length; i++) {
                 console.log(wifiScanResponse[i]);
             }
+
+            rl.close();
+            rl = readline.createInterface({
+                input: process.stdin,
+                output: process.stdout
+            });
+    
+            rl.question("Enter <ssid password>:", function(line) {
+                let ssid = line.split(" ", 2)[0];
+                let pw = line.split(" ", 2)[1];
+                let wifiCred = Buffer.concat([Buffer.from([5]), 
+                                              Buffer.from([ssid.length]), Buffer.from(ssid),
+                                              Buffer.from([pw.length]), Buffer.from(pw)]);
+
+                protocolSend(wifiCred, true);
+            });
+
+        } else if(data[0] == CRYPTO_WIFI_CONNECT_RESPONSE) {
+            console.log("Wifi connection status: " + (data[1]==1)?"true":"false");
         }
     } catch(err) {
         console.log("Failed to decrypt");

@@ -46,22 +46,12 @@ Anki::Switchboard::SecurePairing* Anki::Switchboard::Daemon::sSecurePairing;
 
 void Test();
 void OnPinUpdated(std::string pin);
-void OnConnected(int connId, Anki::Switchboard::IpcBleStream* stream);
-void OnDisconnected(int connId, Anki::Switchboard::IpcBleStream* stream);
+void OnConnected(int connId, Anki::Switchboard::INetworkStream* stream);
+void OnDisconnected(int connId, Anki::Switchboard::INetworkStream* stream);
 
 void Anki::Switchboard::Daemon::Start() {
   sLoop = ev_default_loop(0);
   sTaskExecutor = new Anki::TaskExecutor(sLoop);
-
-  //####
-  /*std::vector<WiFiScanResult> wifiNetworks = Anki::ScanForWiFiAccessPoints();
-  for(int i = 0; i < wifiNetworks.size(); i++) {
-    bool isWps = wifiNetworks[i].wps;
-    bool isEncrypted = wifiNetworks[i].encrypted;
-    uint8_t auth = wifiNetworks[i].auth;
-    printf("Network: %s \t\t\t[%d]\n", wifiNetworks[i].ssid.c_str(), wifiNetworks[i].signal_level);
-  }*/
-  //####
 
   InitializeBle();
 

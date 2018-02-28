@@ -238,6 +238,17 @@ namespace Switchboard {
     }
 
   } WifiScanResponseMessage_crypto;
+
+  SB_PackedStruct WifiConnectResponseMessage_crypto : Message {
+  public:
+    uint8_t isConnected;
+    
+    WifiConnectResponseMessage_crypto(bool success) {
+      isConnected = success;
+      type = SecureMessage::CRYPTO_WIFI_CONNECT_RESPONSE;
+    }
+
+  } WifiConnectResponseMessage_crypto;
   
   SB_PackedStruct WifiCredentialsMessage_crypto : Message {
   public:

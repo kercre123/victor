@@ -188,7 +188,7 @@ void Anki::Switchboard::SecurePairing::SendChallengeSuccess() {
   SendEncrypted(ChallengeAcceptedMessage_crypto());
 }
 
-void Anki::Switchboard::SecurePairing::SendWifiScanResults() {
+void Anki::Switchboard::SecurePairing::SendWifiScanResult() {
   // TODO: will replace with CLAD message format
   std::vector<Anki::WiFiScanResult> wifiResults = Anki::ScanForWiFiAccessPoints();
 
@@ -215,13 +215,19 @@ void Anki::Switchboard::SecurePairing::SendWifiScanResults() {
     pos += wifiResults[i].ssid.length();
   }
 
+  Log::Write("Sending wifi scan results to client.");
   int n = _stream->SendEncrypted(msgBuffer, msgSize);
 
   if(n != 0) {
-    printf("Failed to send");
+    Log::Write("Failed to send wifi networks");
   }
 
   free(msgBuffer);
+}
+
+void Anki::Switchboard::SecurePairing::SendWifiConnectResult(bool success) {
+  // Send challenge and update state
+  SendEncrypted(WifiConnectResponseMessage_crypto(success));
 }
 
 void Anki::Switchboard::SecurePairing::SendCancelPairing() {
@@ -424,7 +430,7 @@ void Anki::Switchboard::SecurePairing::HandleEncryptedMessageReceived(uint8_t* b
         break;
       case Anki::Switchboard::SecureMessage::CRYPTO_WIFI_SCAN_REQUEST:
         if(_state == PairingState::ConfirmedSharedSecret) {
-          SendWifiScanResults();
+          SendWifiScanResult();
         } else {
           Log::Write("Received wifi scan request in wrong state.");
         }
@@ -435,7 +441,15 @@ void Anki::Switchboard::SecurePairing::HandleEncryptedMessageReceived(uint8_t* b
           std::string ssid(ssidPtr, bytes[1]);
           std::string pw(ssidPtr + bytes[1] + 1, bytes[2 + bytes[1]]);
           
-          _receivedWifiCredentialSignal.emit(ssid, pw);
+          bool connected = Anki::ConnectWiFiBySsid(ssid, pw);
+          
+          SendWifiConnectResult(connected);
+
+          if(connected) {
+            Log::Write("Connected to wifi.");
+          } else {
+            Log::Write("Could not connect to wifi.");
+          }
         } else {
           Log::Write("Received wifi credentials in wrong state.");
         }
