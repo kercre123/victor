@@ -18,6 +18,7 @@
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/animationComponent.h"
 #include "engine/components/animTrackHelpers.h"
+#include "engine/components/batteryComponent.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/cozmoContext.h"
@@ -564,7 +565,7 @@ template<>
 void MovementComponent::HandleMessage(const ExternalInterface::EnterSdkMode& msg)
 {
   if (!kAllowMovementOnChargerInSdkMode &&
-      _robot->IsOnCharger() &&
+      _robot->GetBatteryComponent().IsOnCharger() &&
       !AreAllTracksLockedBy(kAllMotorTracks, kOnChargerInSdkStr))
   {
     // If SDK mode starts _while_ we are on the charger (and not already locked), lock tracks
@@ -575,7 +576,7 @@ void MovementComponent::HandleMessage(const ExternalInterface::EnterSdkMode& msg
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::ExitSdkMode& msg)
 {
-  if (!kAllowMovementOnChargerInSdkMode && _robot->IsOnCharger())
+  if (!kAllowMovementOnChargerInSdkMode && _robot->GetBatteryComponent().IsOnCharger())
   {
     // If SDK ends _while_ we are on the charger, make sure to unlock tracks
     UnlockTracks(kAllMotorTracks, kOnChargerInSdkStr);

@@ -365,13 +365,6 @@ bool HAL::BatteryIsOnCharger()
   return bodyData_->battery.flags & POWER_ON_CHARGER;
 }
 
-bool HAL::BatteryIsChargerOOS()
-{
-  return false;
-  // BRC: no longer supported in DVT2
-  // bodyData_->battery.flags & chargerOOS;
-}
-
 u8 HAL::GetWatchdogResetCounter()
 {
   // not (yet) implemented in HAL in V2

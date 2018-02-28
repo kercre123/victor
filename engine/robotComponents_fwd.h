@@ -32,6 +32,7 @@ enum class RobotComponentID{
   AIComponent,
   ActionList,
   Animation,
+  Battery,
   BlockTapFilter,
   BlockWorld,
   BodyLights,

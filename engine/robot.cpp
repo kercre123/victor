@@ -46,6 +46,7 @@
 #include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/components/visionScheduleMediator/visionScheduleMediator.h"
+#include "engine/components/batteryComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/micDirectionHistory.h"
 #include "engine/navMap/mapComponent.h"
@@ -219,6 +220,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
     _components->AddDependentComponent(RobotComponentID::RobotToEngineImplMessaging, new RobotToEngineImplMessaging());
     _components->AddDependentComponent(RobotComponentID::RobotIdleTimeout,           new RobotIdleTimeoutComponent());
     _components->AddDependentComponent(RobotComponentID::MicDirectionHistory,        new MicDirectionHistory());
+    _components->AddDependentComponent(RobotComponentID::Battery,                    new BatteryComponent());
     _components->InitComponents(this);
   }
       
@@ -271,80 +273,7 @@ Robot::~Robot()
   // ActionList must be cleared before it is destroyed because pending actions may attempt to make use of the pointer.
   GetActionList().Clear();
 }
-    
-void Robot::SetOnCharger(bool onCharger)
-{
-  // If we are being set on a charger, we can update the instance of the charger in the current world to
-  // match the robot. If we don't have an instance, we can add an instance now
-  if (onCharger)
-  {
-    const Pose3d& poseWrtRobot = Charger::GetDockPoseRelativeToRobot(*this);
-    
-    // find instance in current origin
-    BlockWorldFilter filter;
-    filter.AddAllowedFamily(ObjectFamily::Charger);
-    filter.AddAllowedType(ObjectType::Charger_Basic);
-    ObservableObject* chargerInstance = GetBlockWorld().FindLocatedMatchingObject(filter);
-    if (nullptr == chargerInstance)
-    {
-      // there's currently no located instance, we need to create one.
-      chargerInstance = new Charger();
-      chargerInstance->SetID();
-    }
 
-    // pretend the instance we created was an observation. Note that lastObservedTime will be 0 in this case, since
-    // that timestamp refers to visual observations only (TODO: maybe that should be more explicit or any
-    // observation should set that timestamp)
-    GetObjectPoseConfirmer().AddRobotRelativeObservation(chargerInstance, poseWrtRobot, PoseState::Known);
-  }
-  
-  // log events when onCharger status changes
-  if (onCharger && !_isOnCharger)
-  {
-    // if we are on the charger, we must also be on the charger platform.
-    SetOnChargerPlatform(true);
-	  
-    // offCharger -> onCharger
-    LOG_EVENT("robot.on_charger", "");
-    Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ChargerEvent(true)));
-  }
-  else if (!onCharger && _isOnCharger)
-  {
-    // onCharger -> offCharger
-    LOG_EVENT("robot.off_charger", "");
-    Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ChargerEvent(false)));
-  }
-
-  // update flag now (note this gets updated after notifying; this might be an issue for listeners)
-  _isOnCharger = onCharger;
-}
-
-void Robot::SetOnChargerPlatform(bool onPlatform)
-{
-  // Can only not be on platform if not on charge contacts
-  onPlatform = onPlatform || IsOnCharger();
-  
-  const bool stateChanged = _isOnChargerPlatform != onPlatform;
-  _isOnChargerPlatform = onPlatform;
-  
-  if (stateChanged) {
-    Broadcast(
-      ExternalInterface::MessageEngineToGame(
-        ExternalInterface::RobotOnChargerPlatformEvent(_isOnChargerPlatform))
-      );
-
-    // pause the freeplay tracking if we are on the charger
-    GetAIComponent().GetComponent<FreeplayDataTracker>().SetFreeplayPauseFlag(_isOnChargerPlatform, FreeplayPauseFlag::OnCharger);
-  }
-}
-
-void Robot::SetIsCharging(bool isCharging)
-{
-  if (isCharging != _isCharging) {
-    _lastChargingChange_ms = GetLastMsgTimestamp();
-    _isCharging = isCharging;
-  }
-}
 
 bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
 {
@@ -516,7 +445,7 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
     // if the robot was on the charging platform and its state changes it's not on the platform anymore
     if (_offTreadsState != OffTreadsState::OnTreads)
     {
-      SetOnChargerPlatform(false);
+      GetBatteryComponent().SetOnChargerPlatform(false);
     }
     
     offTreadsStateChanged = true;
@@ -893,18 +822,15 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   //robot->SetCarryingBlock( isCarryingObject ); // Still needed?
   GetDockingComponent().SetPickingOrPlacing(IS_STATUS_FLAG_SET(IS_PICKING_OR_PLACING));
   _isPickedUp = IS_STATUS_FLAG_SET(IS_PICKED_UP);
-  SetOnCharger(IS_STATUS_FLAG_SET(IS_ON_CHARGER));
-  SetIsCharging(IS_STATUS_FLAG_SET(IS_CHARGING));
-  _chargerOOS = IS_STATUS_FLAG_SET(IS_CHARGER_OOS);
   _powerButtonPressed = IS_STATUS_FLAG_SET(IS_BUTTON_PRESSED);
 
   // Save the entire flag for sending to game
   _lastStatusFlags = msg.status;
 
+  GetBatteryComponent().NotifyOfRobotState(msg);
+  
   GetMoveComponent().NotifyOfRobotState(msg);
-      
-  _battVoltage = msg.batteryVoltage;
-      
+  
   _leftWheelSpeed_mmps = msg.lwheel_speed_mmps;
   _rightWheelSpeed_mmps = msg.rwheel_speed_mmps;
       
@@ -1272,7 +1198,7 @@ Result Robot::Update()
   // need this information. This state is useful for knowing not to play a cliff react when just driving off
   // the charger.
 
-  if (_isOnChargerPlatform && _offTreadsState == OffTreadsState::OnTreads) {
+  if (GetBatteryComponent().IsOnChargerPlatform() && _offTreadsState == OffTreadsState::OnTreads) {
     BlockWorldFilter filter;
     filter.SetAllowedFamilies({ObjectFamily::Charger});
     // Assuming there is only one charger in the world
@@ -1283,12 +1209,12 @@ Result Robot::Update()
       const bool isOnChargerPlatform = charger->GetBoundingQuadXY().Intersects(GetBoundingQuadXY());
       if( !isOnChargerPlatform )
       {
-        SetOnChargerPlatform(false);
+        GetBatteryComponent().SetOnChargerPlatform(false);
       }
     }
     else {
       // if we can't connect / talk to the charger, consider the robot to be off the platform
-      SetOnChargerPlatform(false);
+      GetBatteryComponent().SetOnChargerPlatform(false);
     }
   }
   
@@ -1359,7 +1285,7 @@ Result Robot::Update()
            GetMoveComponent().IsHeadMoving() ? 'H' : ' ',
            GetMoveComponent().IsMoving() ? 'B' : ' ',
            GetCarryingComponent().IsCarryingObject() ? 'C' : ' ',
-           IsOnChargerPlatform() ? 'P' : ' ',
+           GetBatteryComponent().IsOnChargerPlatform() ? 'P' : ' ',
            GetNVStorageComponent().HasPendingRequests() ? 'R' : ' ',
            // SimpleMoodTypeToString(GetMoodManager().GetSimpleMood()),
            // _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::LIFT_TRACK) ? 'L' : ' ',
@@ -2654,7 +2580,7 @@ ExternalInterface::RobotState Robot::GetRobotState() const
       
   msg.localizedToObjectID = GetLocalizedTo();
 
-  msg.batteryVoltage = GetBatteryVoltage();
+  msg.batteryVoltage = GetBatteryComponent().GetRawBatteryVolts();
       
   msg.lastImageTimeStamp = GetVisionComponent().GetLastProcessedImageTimeStamp();
       

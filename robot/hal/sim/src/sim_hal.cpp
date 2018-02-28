@@ -840,11 +840,6 @@ namespace Anki {
       // BatteryIsCharging()
       return HAL::BatteryIsCharging();
     }
-    
-    bool HAL::BatteryIsChargerOOS()
-    {
-      return false;
-    }
 
     extern "C" {
     void EnableIRQ() {}

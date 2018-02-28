@@ -23,6 +23,7 @@
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/components/batteryComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
@@ -100,7 +101,7 @@ namespace Anki {
       const RobotInterface::FWVersionInfo& fw = robot.GetRobotToEngineImplMessaging().GetFWVersionInfo();
       std::stringstream ss;
       ss << "RobotSN: " << robot.GetHeadSerialNumber() << "\n";
-      ss << "Battery(V): " << robot.GetBatteryVoltage() << "\n\n";
+      ss << "Battery(V): " << robot.GetBatteryComponent().GetRawBatteryVolts() << "\n\n";
       ss << "Firmware Version\n";
       ss << "Body Version: " << std::hex << fw.bodyVersion << "\n";
       ss << "RTIP Version: " << std::hex << fw.rtipVersion << "\n";

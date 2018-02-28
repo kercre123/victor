@@ -15,6 +15,7 @@
 
 #include "engine/actions/basicActions.h"
 #include "engine/actions/compoundActions.h"
+#include "engine/components/batteryComponent.h"
 #include "engine/factory/factoryTestLogger.h"
 #include "engine/robot.h"
 
@@ -44,9 +45,10 @@ Result BehaviorPlaypenEndChecks::OnBehaviorActivatedInternal()
   // be removed
   Robot& robot = GetBEI().GetRobotInfo()._robot;
 
-  if(robot.GetBatteryVoltage() < PlaypenConfig::kMinBatteryVoltage)
+  const float batteryVolts = robot.GetBatteryComponent().GetRawBatteryVolts();
+  if(batteryVolts < PlaypenConfig::kMinBatteryVoltage)
   {
-    PRINT_NAMED_WARNING("BehaviorPlaypenEndChecks.OnActivated.BatteryTooLow", "%fv", robot.GetBatteryVoltage());
+    PRINT_NAMED_WARNING("BehaviorPlaypenEndChecks.OnActivated.BatteryTooLow", "%fv", batteryVolts);
     PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::BATTERY_TOO_LOW, RESULT_FAIL);
   }
   

@@ -17,6 +17,7 @@
 #include "engine/actions/driveToActions.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/charger.h"
+#include "engine/components/batteryComponent.h"
 #include "engine/drivingAnimationHandler.h"
 #include "engine/robot.h"
 
@@ -311,7 +312,7 @@ ActionResult BackupOntoChargerAction::SelectDockAction(ActionableObject* object)
 ActionResult BackupOntoChargerAction::Verify()
 {
   // Verify that robot is on charger
-  if (GetRobot().IsOnCharger()) {
+  if (GetRobot().GetBatteryComponent().IsOnCharger()) {
     PRINT_CH_INFO("Actions", "BackupOntoChargerAction.Verify.MountingChargerComplete",
                 "Robot has mounted charger.");
     return ActionResult::SUCCESS;
