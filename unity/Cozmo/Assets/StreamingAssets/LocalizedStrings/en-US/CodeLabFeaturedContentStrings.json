@@ -276,6 +276,9 @@
     "codeLabFeaturedProject.Constellations.randomly_choose_a_fact_for_cozmo_to_say": {
         "translation": "Randomly choose a fact for Cozmo to say."
     },
+    "codeLabFeaturedProject.Constellations.reset_choices": {
+        "translation": "reset choices"
+    },
     "codeLabFeaturedProject.Constellations.reset_lists": {
         "translation": "reset lists"
     },
@@ -293,6 +296,9 @@
     },
     "codeLabFeaturedProject.Constellations.set_casseopeia_data": {
         "translation": "set casseopeia data"
+    },
+    "codeLabFeaturedProject.Constellations.set_cassiopeia_data": {
+        "translation": "set cassiopeia data"
     },
     "codeLabFeaturedProject.Constellations.set_leo_data": {
         "translation": "set leo data"
@@ -1557,9 +1563,6 @@
     "codeLabFeaturedProject.CozmosGarden.all_the_plants_were_harvested_successfully": {
         "translation": "All the plants were harvested successfully."
     },
-    "codeLabFeaturedProject.CozmosGarden.almost_ready": {
-        "translation": "almost ready"
-    },
     "codeLabFeaturedProject.CozmosGarden.and": {
         "translation": "and"
     },
@@ -1577,9 +1580,6 @@
     },
     "codeLabFeaturedProject.CozmosGarden.bug_plants": {
         "translation": "bug plants"
-    },
-    "codeLabFeaturedProject.CozmosGarden.bugs": {
-        "translation": "Bugs"
     },
     "codeLabFeaturedProject.CozmosGarden.bugs_count": {
         "translation": "bugs count"
@@ -1635,9 +1635,6 @@
     "codeLabFeaturedProject.CozmosGarden.cozmo_displays_a_sun_on_his_face": {
         "translation": "Cozmo displays a sun on his face."
     },
-    "codeLabFeaturedProject.CozmosGarden.cozmo_displays_a_watering_can_on_his_face": {
-        "translation": "Cozmo displays a watering can on his face."
-    },
     "codeLabFeaturedProject.CozmosGarden.cozmo_displays_blueberries_on_his_face": {
         "translation": "Cozmo displays blueberries on his face."
     },
@@ -1662,6 +1659,9 @@
     "codeLabFeaturedProject.CozmosGarden.cozmo_displays_tomatoes_on_his_face": {
         "translation": "Cozmo displays tomatoes on his face."
     },
+    "codeLabFeaturedProject.CozmosGarden.cozmo_displays_water_on_his_face": {
+        "translation": "Cozmo displays water on his face."
+    },
     "codeLabFeaturedProject.CozmosGarden.create_garden": {
         "translation": "create garden"
     },
@@ -1683,17 +1683,47 @@
     "codeLabFeaturedProject.CozmosGarden.dont_give_up_lets_try_again": {
         "translation": "Don't give up! Let's try again."
     },
+    "codeLabFeaturedProject.CozmosGarden.draw_a_drop_of_water": {
+        "translation": "Draw a drop of water."
+    },
+    "codeLabFeaturedProject.CozmosGarden.draw_bugs": {
+        "translation": "draw bugs"
+    },
+    "codeLabFeaturedProject.CozmosGarden.draw_drop": {
+        "translation": "draw drop"
+    },
     "codeLabFeaturedProject.CozmosGarden.draw_mode": {
         "translation": "draw mode"
     },
     "codeLabFeaturedProject.CozmosGarden.draw_next_card": {
         "translation": "draw next card"
     },
+    "codeLabFeaturedProject.CozmosGarden.draw_sun": {
+        "translation": "draw sun"
+    },
     "codeLabFeaturedProject.CozmosGarden.draw_the_next_card_from_the_deck": {
         "translation": "Draw the next card from the deck."
     },
-    "codeLabFeaturedProject.CozmosGarden.excellent_gardening_skills": {
-        "translation": "Excellent gardening skills"
+    "codeLabFeaturedProject.CozmosGarden.draw_water": {
+        "translation": "draw water"
+    },
+    "codeLabFeaturedProject.CozmosGarden.drop_line_position_y": {
+        "translation": "drop line position y"
+    },
+    "codeLabFeaturedProject.CozmosGarden.drop_line_width": {
+        "translation": "drop line width"
+    },
+    "codeLabFeaturedProject.CozmosGarden.drop_radius": {
+        "translation": "drop radius"
+    },
+    "codeLabFeaturedProject.CozmosGarden.drop_scale": {
+        "translation": "drop scale"
+    },
+    "codeLabFeaturedProject.CozmosGarden.drop_x": {
+        "translation": "drop x"
+    },
+    "codeLabFeaturedProject.CozmosGarden.drop_y": {
+        "translation": "drop y"
     },
     "codeLabFeaturedProject.CozmosGarden.feedback": {
         "translation": "feedback"
@@ -1712,9 +1742,6 @@
     },
     "codeLabFeaturedProject.CozmosGarden.fill_up_the_deck_of_cards_list": {
         "translation": "Fill up the deck of cards list."
-    },
-    "codeLabFeaturedProject.CozmosGarden.fill_up_the_feedback_list_with_phrases": {
-        "translation": "Fill up the feedback list with phrases."
     },
     "codeLabFeaturedProject.CozmosGarden.fill_up_the_plant_types_and_plant_colors_lists": {
         "translation": "Fill up the plant types and plant colors lists."
@@ -1740,17 +1767,11 @@
     "codeLabFeaturedProject.CozmosGarden.garden_plants_to_harvest": {
         "translation": "garden plants to harvest"
     },
-    "codeLabFeaturedProject.CozmosGarden.give_feedback": {
-        "translation": "give feedback"
-    },
     "codeLabFeaturedProject.CozmosGarden.got_em": {
         "translation": "Got 'em!"
     },
     "codeLabFeaturedProject.CozmosGarden.grapes": {
         "translation": "Grapes"
-    },
-    "codeLabFeaturedProject.CozmosGarden.great_job": {
-        "translation": "great job!"
     },
     "codeLabFeaturedProject.CozmosGarden.grow_active_plant": {
         "translation": "grow active plant"
@@ -1774,7 +1795,7 @@
         "translation": "harvested plants"
     },
     "codeLabFeaturedProject.CozmosGarden.hey_no_fair_bugs": {
-        "translation": "Hey! No fair, bugs!"
+        "translation": "Hey! No fair bugs!"
     },
     "codeLabFeaturedProject.CozmosGarden.hi": {
         "translation": "Hi"
@@ -1799,12 +1820,6 @@
     },
     "codeLabFeaturedProject.CozmosGarden.lettuce": {
         "translation": "Lettuce"
-    },
-    "codeLabFeaturedProject.CozmosGarden.look_tasty": {
-        "translation": "look tasty"
-    },
-    "codeLabFeaturedProject.CozmosGarden.looks_good": {
-        "translation": "looks good"
     },
     "codeLabFeaturedProject.CozmosGarden.make_sure_no_plant_can_have_less_than_0_or_more_than_4_points": {
         "translation": "Make sure no plant can have less than 0, or more than 4 points."
@@ -1854,9 +1869,6 @@
     "codeLabFeaturedProject.CozmosGarden.populate_deck": {
         "translation": "populate deck"
     },
-    "codeLabFeaturedProject.CozmosGarden.populate_feedback_list": {
-        "translation": "populate feedback list"
-    },
     "codeLabFeaturedProject.CozmosGarden.populate_plant_list": {
         "translation": "populate plant list"
     },
@@ -1877,9 +1889,6 @@
     },
     "codeLabFeaturedProject.CozmosGarden.ran_out_of_cards_before_all_plants_were_harvested": {
         "translation": "Ran out of cards before all plants were harvested."
-    },
-    "codeLabFeaturedProject.CozmosGarden.randomly_choose_a_feedback_phrase_for_cozmo_to_say": {
-        "translation": "Randomly choose a feedback phrase for Cozmo to say."
     },
     "codeLabFeaturedProject.CozmosGarden.randomly_choose_a_phrase_for_cozmo_to_say_when_the_bugs_were_hit": {
         "translation": "Randomly choose a phrase for Cozmo to say when the bugs were hit."
@@ -1922,9 +1931,6 @@
     },
     "codeLabFeaturedProject.CozmosGarden.shuffle_the_deck_of_cards": {
         "translation": "Shuffle the deck of cards."
-    },
-    "codeLabFeaturedProject.CozmosGarden.smart_choice": {
-        "translation": "Smart choice!"
     },
     "codeLabFeaturedProject.CozmosGarden.smile_to_shine_the_sun_on_our_plants": {
         "translation": "Smile to shine the sun on our plants"
@@ -1970,9 +1976,6 @@
     },
     "codeLabFeaturedProject.CozmosGarden.were_pretty_good_at_this": {
         "translation": "We're pretty good at this!"
-    },
-    "codeLabFeaturedProject.CozmosGarden.what_a_nice_garden": {
-        "translation": "What a nice garden."
     },
     "codeLabFeaturedProject.CozmosGarden.when_cozmo_sees_the_player_smile_activate_the_sun": {
         "translation": "When Cozmo sees the player smile, activate the sun."

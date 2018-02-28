@@ -13,7 +13,7 @@
                 "currentCostume": 0,
                 "direction": 90,
                 "draggable": false,
-                "id": "7=QSu8YiYz`MCm9mRve5",
+                "id": "Y2C~tejc{1M9|1]79SGK",
                 "isStage": true,
                 "lists": {},
                 "name": "Stage",
@@ -23,162 +23,151 @@
                 "variables": {
                     "$S8$I=50KH}6]bhktY%$": {
                         "id": "$S8$I=50KH}6]bhktY%$",
-                        "name": "check if cozmo is upside down",
+                        "name": "codelabfeaturedproject.wakeupcozmo.check_if_cozmo_is_upside_down",
                         "type": "broadcast_msg",
                         "value": "check if Cozmo is upside down"
                     },
                     "$|Cx6`%@1/|)Nt0}Tv-O": {
                         "id": "$|Cx6`%@1/|)Nt0}Tv-O",
-                        "isCloud": false,
-                        "name": "initialize variables and start the game.",
+                        "name": "codelabfeaturedproject.wakeupcozmo.initialize_variables_and_start_the_game",
                         "type": "",
                         "value": 0
                     },
                     "%|DMxBS{6[~~tL}]wPw~": {
                         "id": "%|DMxBS{6[~~tL}]wPw~",
-                        "isCloud": false,
-                        "name": "codelabfeaturedproject.cozmosgarden.player_activated",
+                        "name": "codelabfeaturedproject.wakeupcozmo.player_activated",
                         "type": "",
                         "value": "1"
                     },
                     ".%Eqy6~KlTl}r4~qkW;z": {
                         "id": ".%Eqy6~KlTl}r4~qkW;z",
-                        "name": "flip cozmo",
+                        "name": "codelabfeaturedproject.wakeupcozmo.flip_cozmo",
                         "type": "broadcast_msg",
                         "value": "flip Cozmo"
                     },
                     "3Bx%jDs6drNus1XUPfF;": {
                         "id": "3Bx%jDs6drNus1XUPfF;",
-                        "isCloud": false,
-                        "name": "choose a random phrase for cozmo to say at the start of the game.",
+                        "name": "codelabfeaturedproject.wakeupcozmo.choose_a_random_phrase_for_cozmo_to_say_at_the_start_of_the_game",
                         "type": "",
                         "value": 0
                     },
                     ";HUdjT[@e9N0FRR.f5J^": {
                         "id": ";HUdjT[@e9N0FRR.f5J^",
-                        "isCloud": false,
-                        "name": "when a cube is tapped, check to see if cozmo is woken up or not.",
+                        "name": "codelabfeaturedproject.wakeupcozmo.when_a_cube_is_tapped_check_to_see_if_cozmo_is_woken_up_or_not",
                         "type": "",
                         "value": 0
                     },
                     "A+Jeyve1)AqQy+k}),{^": {
                         "id": "A+Jeyve1)AqQy+k}),{^",
-                        "name": "random number",
+                        "name": "codelabfeaturedproject.wakeupcozmo.random_number",
                         "type": "",
-                        "value": 2
+                        "value": 1
                     },
                     "B/A4@k-9jYO1@T!$zTBZ": {
                         "id": "B/A4@k-9jYO1@T!$zTBZ",
-                        "name": "play again",
+                        "name": "codelabfeaturedproject.wakeupcozmo.play_again",
                         "type": "broadcast_msg",
                         "value": "play again"
                     },
                     "DG]McJ^9.B^vvjK7?-Po": {
                         "id": "DG]McJ^9.B^vvjK7?-Po",
-                        "name": "cozmo is upside down",
+                        "name": "codelabfeaturedproject.wakeupcozmo.cozmo_is_upside_down",
                         "type": "",
                         "value": "1"
                     },
                     "K:lEEN{a-Pk24+%=kK^q": {
                         "id": "K:lEEN{a-Pk24+%=kK^q",
-                        "name": "choose wake up phrase",
+                        "name": "codelabfeaturedproject.wakeupcozmo.choose_wake_up_phrase",
                         "type": "broadcast_msg",
                         "value": "choose wake up phrase"
                     },
                     "NaZQ.NV)OP*8F~ISJ^I=": {
                         "id": "NaZQ.NV)OP*8F~ISJ^I=",
-                        "name": "game number",
+                        "name": "codelabfeaturedproject.wakeupcozmo.game_number",
                         "type": "",
                         "value": "0"
                     },
                     "TCE^eUf};Pvh6]9BDMny": {
                         "id": "TCE^eUf};Pvh6]9BDMny",
-                        "name": "codelabfeaturedproject.cozmosgarden.input_mode",
+                        "name": "codelabfeaturedproject.wakeupcozmo.input_mode",
                         "type": "",
                         "value": "1"
                     },
                     "UdMm0.SuvuD-]@[UA{4:": {
                         "id": "UdMm0.SuvuD-]@[UA{4:",
-                        "name": "choose bedtime phrase",
+                        "name": "codelabfeaturedproject.wakeupcozmo.choose_bedtime_phrase",
                         "type": "broadcast_msg",
                         "value": "choose bedtime phrase"
                     },
                     "X%l,N0)L~Gx/I#P].UjO": {
                         "id": "X%l,N0)L~Gx/I#P].UjO",
-                        "isCloud": false,
-                        "name": "disable cubes input and turn the lights off.",
+                        "name": "codelabfeaturedproject.wakeupcozmo.disable_cubes_input_and_turn_the_lights_off",
                         "type": "",
                         "value": 0
                     },
                     "]@A3AZ1*=`7E[JXk7_Ea": {
                         "id": "]@A3AZ1*=`7E[JXk7_Ea",
-                        "isCloud": false,
-                        "name": "advance to the next turn and enable cubes for input.",
+                        "name": "codelabfeaturedproject.wakeupcozmo.advance_to_the_next_turn_and_enable_cubes_for_input",
                         "type": "",
                         "value": 0
                     },
                     "`Go~.|Ued.~#+H3`e4ZZ": {
                         "id": "`Go~.|Ued.~#+H3`e4ZZ",
-                        "isCloud": false,
-                        "name": "cozmo asks to be turned upside down to begin.",
+                        "name": "codelabfeaturedproject.wakeupcozmo.cozmo_asks_to_be_turned_upside_down_to_begin",
                         "type": "",
                         "value": 0
                     },
                     "ac9vv19Xi5iCFWN8o%WC": {
                         "id": "ac9vv19Xi5iCFWN8o%WC",
-                        "isCloud": false,
-                        "name": "choose a random phrase for cozmo to say when he continues sleeping.",
+                        "name": "codelabfeaturedproject.wakeupcozmo.choose_a_random_phrase_for_cozmo_to_say_when_he_continues_sleeping",
                         "type": "",
                         "value": 0
                     },
                     "cyS{4_L3`Y6j3ER7NUpn": {
                         "id": "cyS{4_L3`Y6j3ER7NUpn",
-                        "name": "choose sleeping phrase",
+                        "name": "codelabfeaturedproject.wakeupcozmo.choose_sleeping_phrase",
                         "type": "broadcast_msg",
                         "value": "choose sleeping phrase"
                     },
                     "fL?zga~sb8P%X4)qYMAC": {
                         "id": "fL?zga~sb8P%X4)qYMAC",
-                        "name": "disable cubes",
+                        "name": "codelabfeaturedproject.wakeupcozmo.disable_cubes",
                         "type": "broadcast_msg",
                         "value": "disable Cubes"
                     },
                     "fRAJA.^P-l,$diwyY5Z2": {
                         "id": "fRAJA.^P-l,$diwyY5Z2",
-                        "name": "next turn",
+                        "name": "codelabfeaturedproject.wakeupcozmo.next_turn",
                         "type": "broadcast_msg",
                         "value": "next turn"
                     },
                     "m%^FUNOwI/a~8adX!IZ+": {
                         "id": "m%^FUNOwI/a~8adX!IZ+",
-                        "isCloud": false,
-                        "name": "choose a random phrase for cozmo to say when he wakes up.",
+                        "name": "codelabfeaturedproject.wakeupcozmo.choose_a_random_phrase_for_cozmo_to_say_when_he_wakes_up",
                         "type": "",
                         "value": 0
                     },
                     "uqJONWA$*ttc7?y%heu,": {
                         "id": "uqJONWA$*ttc7?y%heu,",
-                        "name": "turn",
+                        "name": "codelabfeaturedproject.wakeupcozmo.turn",
                         "type": "",
-                        "value": 2
+                        "value": 1
                     },
                     "x(-N%PHu_7lvBm;Sf6gz": {
                         "id": "x(-N%PHu_7lvBm;Sf6gz",
-                        "name": "flip turn",
+                        "name": "codelabfeaturedproject.wakeupcozmo.flip_turn",
                         "type": "",
                         "value": 3
                     },
                     "yY|A;94ZvRzOiD.fUOFO": {
                         "id": "yY|A;94ZvRzOiD.fUOFO",
-                        "isCloud": false,
-                        "name": "once the game is over, reset and offer to play again.",
+                        "name": "codelabfeaturedproject.wakeupcozmo.once_the_game_is_over_reset_and_offer_to_play_again",
                         "type": "",
                         "value": 0
                     },
                     "~b#Im`7TLYW?84kuQ7HS": {
                         "id": "~b#Im`7TLYW?84kuQ7HS",
-                        "isCloud": false,
-                        "name": "if cozmo has been turned over, the game can begin.",
+                        "name": "codelabfeaturedproject.wakeupcozmo.if_cozmo_has_been_turned_over_the_game_can_begin",
                         "type": "",
                         "value": 0
                     }
@@ -323,7 +312,7 @@
                             "VARIABLE": {
                                 "id": "A+Jeyve1)AqQy+k}),{^",
                                 "name": "VARIABLE",
-                                "value": "random number",
+                                "value": "codelabfeaturedproject.wakeupcozmo.random_number",
                                 "variableType": ""
                             }
                         },
@@ -353,15 +342,15 @@
                         "parent": null,
                         "shadow": false,
                         "topLevel": true,
-                        "x": 461.4729411764706,
-                        "y": 1973.3564705882352
+                        "x": 461,
+                        "y": 1973
                     },
                     "*-rclw_J5G-8D;9*,VbJ": {
                         "fields": {
                             "VARIABLE": {
                                 "id": "uqJONWA$*ttc7?y%heu,",
                                 "name": "VARIABLE",
-                                "value": "turn",
+                                "value": "codelabfeaturedproject.wakeupcozmo.turn",
                                 "variableType": ""
                             }
                         },
@@ -506,7 +495,7 @@
                             "VARIABLE": {
                                 "id": "uqJONWA$*ttc7?y%heu,",
                                 "name": "VARIABLE",
-                                "value": "turn",
+                                "value": "codelabfeaturedproject.wakeupcozmo.turn",
                                 "variableType": ""
                             }
                         },
@@ -667,7 +656,7 @@
                             "VARIABLE": {
                                 "id": "A+Jeyve1)AqQy+k}),{^",
                                 "name": "VARIABLE",
-                                "value": "random number",
+                                "value": "codelabfeaturedproject.wakeupcozmo.random_number",
                                 "variableType": ""
                             }
                         },
@@ -686,7 +675,7 @@
                             "VARIABLE": {
                                 "id": "A+Jeyve1)AqQy+k}),{^",
                                 "name": "VARIABLE",
-                                "value": "random number",
+                                "value": "codelabfeaturedproject.wakeupcozmo.random_number",
                                 "variableType": ""
                             }
                         },
@@ -762,8 +751,8 @@
                         "parent": null,
                         "shadow": false,
                         "topLevel": true,
-                        "x": 1299.0776470588235,
-                        "y": 2318.6976470588233
+                        "x": 1299,
+                        "y": 2318
                     },
                     "1xL#~|r3aB_,jh2E~llX": {
                         "fields": {},
@@ -799,7 +788,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "190"
+                                "value": "200"
                             }
                         },
                         "id": "2P:EO1=w+t9C+EU_)Tq)",
@@ -815,7 +804,7 @@
                             "VARIABLE": {
                                 "id": "%|DMxBS{6[~~tL}]wPw~",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.player_activated",
+                                "value": "codelabfeaturedproject.wakeupcozmo.player_activated",
                                 "variableType": ""
                             }
                         },
@@ -893,7 +882,7 @@
                             "VARIABLE": {
                                 "id": "NaZQ.NV)OP*8F~ISJ^I=",
                                 "name": "VARIABLE",
-                                "value": "game number",
+                                "value": "codelabfeaturedproject.wakeupcozmo.game_number",
                                 "variableType": ""
                             }
                         },
@@ -1027,7 +1016,7 @@
                             "VARIABLE": {
                                 "id": "%|DMxBS{6[~~tL}]wPw~",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.player_activated",
+                                "value": "codelabfeaturedproject.wakeupcozmo.player_activated",
                                 "variableType": ""
                             }
                         },
@@ -1069,7 +1058,7 @@
                             "VARIABLE": {
                                 "id": ";HUdjT[@e9N0FRR.f5J^",
                                 "name": "VARIABLE",
-                                "value": "when a cube is tapped, check to see if cozmo is woken up or not.",
+                                "value": "codelabfeaturedproject.wakeupcozmo.when_a_cube_is_tapped_check_to_see_if_cozmo_is_woken_up_or_not",
                                 "variableType": ""
                             }
                         },
@@ -1080,8 +1069,8 @@
                         "parent": null,
                         "shadow": false,
                         "topLevel": true,
-                        "x": 1295.141294117647,
-                        "y": 120.25976470588262
+                        "x": 1295,
+                        "y": 120
                     },
                     "6w@PAKgFsrfC_l:-$3{b": {
                         "fields": {
@@ -1141,7 +1130,7 @@
                             "VARIABLE": {
                                 "id": "DG]McJ^9.B^vvjK7?-Po",
                                 "name": "VARIABLE",
-                                "value": "cozmo is upside down",
+                                "value": "codelabfeaturedproject.wakeupcozmo.cozmo_is_upside_down",
                                 "variableType": ""
                             }
                         },
@@ -1153,7 +1142,7 @@
                                 "shadow": ",+tp73(;[noF-n_u(d}^"
                             }
                         },
-                        "next": "trHLiqp].UXG0T+NIjDJ",
+                        "next": null,
                         "opcode": "data_setvariableto",
                         "parent": "NTyPe`Tk%q2f!6u?+J}?",
                         "shadow": false,
@@ -1236,7 +1225,7 @@
                         "shadow": false,
                         "topLevel": true,
                         "x": 470,
-                        "y": 1448.8835294117648
+                        "y": 1448
                     },
                     ";6azOqGsSfZlaVs@a{r(": {
                         "fields": {
@@ -1290,7 +1279,7 @@
                             "VARIABLE": {
                                 "id": "]@A3AZ1*=`7E[JXk7_Ea",
                                 "name": "VARIABLE",
-                                "value": "advance to the next turn and enable cubes for input.",
+                                "value": "codelabfeaturedproject.wakeupcozmo.advance_to_the_next_turn_and_enable_cubes_for_input",
                                 "variableType": ""
                             }
                         },
@@ -1301,8 +1290,8 @@
                         "parent": null,
                         "shadow": false,
                         "topLevel": true,
-                        "x": 467.1565887194865,
-                        "y": 1893.565079347859
+                        "x": 467,
+                        "y": 1893
                     },
                     "?8gMswZG8t5Yt#X8zhjv": {
                         "fields": {
@@ -1376,7 +1365,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "hey! now i'm wide awake!"
+                                "value": "codelabfeaturedproject.wakeupcozmo.hey_now_im_wide_awake"
                             }
                         },
                         "id": "@%8u1=@BOmG$16X|9j!B",
@@ -1505,7 +1494,7 @@
                             "VARIABLE": {
                                 "id": "yY|A;94ZvRzOiD.fUOFO",
                                 "name": "VARIABLE",
-                                "value": "once the game is over, reset and offer to play again.",
+                                "value": "codelabfeaturedproject.wakeupcozmo.once_the_game_is_over_reset_and_offer_to_play_again",
                                 "variableType": ""
                             }
                         },
@@ -1516,15 +1505,15 @@
                         "parent": null,
                         "shadow": false,
                         "topLevel": true,
-                        "x": 1296.7071764705884,
-                        "y": 2227.937411764705
+                        "x": 1296,
+                        "y": 2227
                     },
                     "BbZ=3ia]A2;zGtPSdSYb": {
                         "fields": {
                             "VARIABLE": {
                                 "id": "X%l,N0)L~Gx/I#P].UjO",
                                 "name": "VARIABLE",
-                                "value": "disable cubes input and turn the lights off.",
+                                "value": "codelabfeaturedproject.wakeupcozmo.disable_cubes_input_and_turn_the_lights_off",
                                 "variableType": ""
                             }
                         },
@@ -1535,8 +1524,8 @@
                         "parent": null,
                         "shadow": false,
                         "topLevel": true,
-                        "x": 449.93188283713357,
-                        "y": 2579.0300793478546
+                        "x": 449,
+                        "y": 2579
                     },
                     "Cic^U[mWg[K!F@bi;h]P": {
                         "fields": {},
@@ -1583,7 +1572,7 @@
                             "VARIABLE": {
                                 "id": "A+Jeyve1)AqQy+k}),{^",
                                 "name": "VARIABLE",
-                                "value": "random number",
+                                "value": "codelabfeaturedproject.wakeupcozmo.random_number",
                                 "variableType": ""
                             }
                         },
@@ -1608,7 +1597,7 @@
                             "VARIABLE": {
                                 "id": "A+Jeyve1)AqQy+k}),{^",
                                 "name": "VARIABLE",
-                                "value": "random number",
+                                "value": "codelabfeaturedproject.wakeupcozmo.random_number",
                                 "variableType": ""
                             }
                         },
@@ -1678,7 +1667,7 @@
                             "VARIABLE": {
                                 "id": "A+Jeyve1)AqQy+k}),{^",
                                 "name": "VARIABLE",
-                                "value": "random number",
+                                "value": "codelabfeaturedproject.wakeupcozmo.random_number",
                                 "variableType": ""
                             }
                         },
@@ -1764,7 +1753,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "who woke me up?"
+                                "value": "codelabfeaturedproject.wakeupcozmo.who_woke_me_up"
                             }
                         },
                         "id": "G`Q}3{pni0)wWD;S6rIN",
@@ -1780,7 +1769,7 @@
                             "VARIABLE": {
                                 "id": "TCE^eUf};Pvh6]9BDMny",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.input_mode",
+                                "value": "codelabfeaturedproject.wakeupcozmo.input_mode",
                                 "variableType": ""
                             }
                         },
@@ -1804,7 +1793,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "it's exhausting being me"
+                                "value": "codelabfeaturedproject.wakeupcozmo.its_exhausting_being_me"
                             }
                         },
                         "id": "H)T+:ffMC7EGNc6lj~B-",
@@ -1849,7 +1838,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "no! i didn't get enough sleep!"
+                                "value": "codelabfeaturedproject.wakeupcozmo.no_i_didnt_get_enough_sleep"
                             }
                         },
                         "id": "IkYqqk*G[Hho9UwT#(*?",
@@ -1865,7 +1854,7 @@
                             "VARIABLE": {
                                 "id": "A+Jeyve1)AqQy+k}),{^",
                                 "name": "VARIABLE",
-                                "value": "random number",
+                                "value": "codelabfeaturedproject.wakeupcozmo.random_number",
                                 "variableType": ""
                             }
                         },
@@ -1925,7 +1914,7 @@
                             "VARIABLE": {
                                 "id": "ac9vv19Xi5iCFWN8o%WC",
                                 "name": "VARIABLE",
-                                "value": "choose a random phrase for cozmo to say when he continues sleeping.",
+                                "value": "codelabfeaturedproject.wakeupcozmo.choose_a_random_phrase_for_cozmo_to_say_when_he_continues_sleeping",
                                 "variableType": ""
                             }
                         },
@@ -1936,14 +1925,14 @@
                         "parent": null,
                         "shadow": false,
                         "topLevel": true,
-                        "x": 2162.640117647059,
-                        "y": 129.9682352941205
+                        "x": 2162,
+                        "y": 129
                     },
                     "K7PA|p8D4LCav)`a/?[x": {
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "hey! i'm too tired for this"
+                                "value": "codelabfeaturedproject.wakeupcozmo.hey_im_too_tired_for_this"
                             }
                         },
                         "id": "K7PA|p8D4LCav)`a/?[x",
@@ -2075,21 +2064,6 @@
                         "x": "286",
                         "y": "1024"
                     },
-                    "N_KI2/zm]K*a9A|:5RK%": {
-                        "fields": {
-                            "TEXT": {
-                                "name": "TEXT",
-                                "value": "anim_gotosleep_sleeploop_0"
-                            }
-                        },
-                        "id": "N_KI2/zm]K*a9A|:5RK%",
-                        "inputs": {},
-                        "next": null,
-                        "opcode": "text",
-                        "parent": "trHLiqp].UXG0T+NIjDJ",
-                        "shadow": true,
-                        "topLevel": false
-                    },
                     "O0,Jdm6pVT/@sjB:gqJB": {
                         "fields": {
                             "TEXT": {
@@ -2110,7 +2084,7 @@
                             "VARIABLE": {
                                 "id": "DG]McJ^9.B^vvjK7?-Po",
                                 "name": "VARIABLE",
-                                "value": "cozmo is upside down",
+                                "value": "codelabfeaturedproject.wakeupcozmo.cozmo_is_upside_down",
                                 "variableType": ""
                             }
                         },
@@ -2309,7 +2283,7 @@
                             "VARIABLE": {
                                 "id": "TCE^eUf};Pvh6]9BDMny",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.input_mode",
+                                "value": "codelabfeaturedproject.wakeupcozmo.input_mode",
                                 "variableType": ""
                             }
                         },
@@ -2334,7 +2308,7 @@
                             "VARIABLE": {
                                 "id": "uqJONWA$*ttc7?y%heu,",
                                 "name": "VARIABLE",
-                                "value": "turn",
+                                "value": "codelabfeaturedproject.wakeupcozmo.turn",
                                 "variableType": ""
                             }
                         },
@@ -2359,7 +2333,7 @@
                             "VARIABLE": {
                                 "id": "~b#Im`7TLYW?84kuQ7HS",
                                 "name": "VARIABLE",
-                                "value": "if cozmo has been turned over, the game can begin.",
+                                "value": "codelabfeaturedproject.wakeupcozmo.if_cozmo_has_been_turned_over_the_game_can_begin",
                                 "variableType": ""
                             }
                         },
@@ -2370,8 +2344,8 @@
                         "parent": null,
                         "shadow": false,
                         "topLevel": true,
-                        "x": 468.7224710724279,
-                        "y": 1375.2580205243294
+                        "x": 468,
+                        "y": 1375
                     },
                     "RqohItYC/XpjZ2]xiar5": {
                         "fields": {},
@@ -2474,7 +2448,7 @@
                             "VARIABLE": {
                                 "id": "$|Cx6`%@1/|)Nt0}Tv-O",
                                 "name": "VARIABLE",
-                                "value": "initialize variables and start the game.",
+                                "value": "codelabfeaturedproject.wakeupcozmo.initialize_variables_and_start_the_game",
                                 "variableType": ""
                             }
                         },
@@ -2485,15 +2459,15 @@
                         "parent": null,
                         "shadow": false,
                         "topLevel": true,
-                        "x": 484.0142352941176,
-                        "y": 98.10252941176276
+                        "x": 484,
+                        "y": 98
                     },
                     "UzRW`ol80led(h5/;Xu_": {
                         "fields": {
                             "VARIABLE": {
                                 "id": "A+Jeyve1)AqQy+k}),{^",
                                 "name": "VARIABLE",
-                                "value": "random number",
+                                "value": "codelabfeaturedproject.wakeupcozmo.random_number",
                                 "variableType": ""
                             }
                         },
@@ -2557,7 +2531,7 @@
                             "VARIABLE": {
                                 "id": "`Go~.|Ued.~#+H3`e4ZZ",
                                 "name": "VARIABLE",
-                                "value": "cozmo asks to be turned upside down to begin.",
+                                "value": "codelabfeaturedproject.wakeupcozmo.cozmo_asks_to_be_turned_upside_down_to_begin",
                                 "variableType": ""
                             }
                         },
@@ -2568,8 +2542,8 @@
                         "parent": null,
                         "shadow": false,
                         "topLevel": true,
-                        "x": 471.4871764705883,
-                        "y": 677.1658235294129
+                        "x": 471,
+                        "y": 677
                     },
                     "V`ABHy{:Nhk/cEKwShf!": {
                         "fields": {
@@ -2614,7 +2588,7 @@
                             "VARIABLE": {
                                 "id": "A+Jeyve1)AqQy+k}),{^",
                                 "name": "VARIABLE",
-                                "value": "random number",
+                                "value": "codelabfeaturedproject.wakeupcozmo.random_number",
                                 "variableType": ""
                             }
                         },
@@ -2633,7 +2607,7 @@
                             "VARIABLE": {
                                 "id": "DG]McJ^9.B^vvjK7?-Po",
                                 "name": "VARIABLE",
-                                "value": "cozmo is upside down",
+                                "value": "codelabfeaturedproject.wakeupcozmo.cozmo_is_upside_down",
                                 "variableType": ""
                             }
                         },
@@ -2734,7 +2708,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "i'm so tired"
+                                "value": "codelabfeaturedproject.wakeupcozmo.im_so_tired"
                             }
                         },
                         "id": "Y;jbzxWgkJGm:e:}Avf(",
@@ -2767,7 +2741,7 @@
                             "VARIABLE": {
                                 "id": "NaZQ.NV)OP*8F~ISJ^I=",
                                 "name": "VARIABLE",
-                                "value": "game number",
+                                "value": "codelabfeaturedproject.wakeupcozmo.game_number",
                                 "variableType": ""
                             }
                         },
@@ -2880,7 +2854,7 @@
                             "VARIABLE": {
                                 "id": "x(-N%PHu_7lvBm;Sf6gz",
                                 "name": "VARIABLE",
-                                "value": "flip turn",
+                                "value": "codelabfeaturedproject.wakeupcozmo.flip_turn",
                                 "variableType": ""
                             }
                         },
@@ -3114,7 +3088,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "let sleeping robots lie"
+                                "value": "codelabfeaturedproject.wakeupcozmo.let_sleeping_robots_lie"
                             }
                         },
                         "id": "avS+[RJ@x@VUIL}Kf))v",
@@ -3129,7 +3103,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "turn me upside down so i can sleep"
+                                "value": "codelabfeaturedproject.wakeupcozmo.turn_me_upside_down_so_i_can_sleep"
                             }
                         },
                         "id": "b)p2(bKbda.LqdYStnLK",
@@ -3281,7 +3255,7 @@
                             "VARIABLE": {
                                 "id": "uqJONWA$*ttc7?y%heu,",
                                 "name": "VARIABLE",
-                                "value": "turn",
+                                "value": "codelabfeaturedproject.wakeupcozmo.turn",
                                 "variableType": ""
                             }
                         },
@@ -3348,7 +3322,7 @@
                             "VARIABLE": {
                                 "id": "%|DMxBS{6[~~tL}]wPw~",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.player_activated",
+                                "value": "codelabfeaturedproject.wakeupcozmo.player_activated",
                                 "variableType": ""
                             }
                         },
@@ -3422,7 +3396,7 @@
                             "VARIABLE": {
                                 "id": "NaZQ.NV)OP*8F~ISJ^I=",
                                 "name": "VARIABLE",
-                                "value": "game number",
+                                "value": "codelabfeaturedproject.wakeupcozmo.game_number",
                                 "variableType": ""
                             }
                         },
@@ -3470,7 +3444,7 @@
                             "VARIABLE": {
                                 "id": "A+Jeyve1)AqQy+k}),{^",
                                 "name": "VARIABLE",
-                                "value": "random number",
+                                "value": "codelabfeaturedproject.wakeupcozmo.random_number",
                                 "variableType": ""
                             }
                         },
@@ -3518,7 +3492,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "ahhh. goodnight!"
+                                "value": "ahh. good night!"
                             }
                         },
                         "id": "lHJ:zt*F5+qeu=fEsO.b",
@@ -3556,7 +3530,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "170"
+                                "value": "160"
                             }
                         },
                         "id": "l{P:uQj`(r:ad3)@1pzm",
@@ -3621,8 +3595,8 @@
                         "parent": null,
                         "shadow": false,
                         "topLevel": true,
-                        "x": 474.86823529411765,
-                        "y": 761.8058823529411
+                        "x": 474,
+                        "y": 761
                     },
                     "msdSCCWzufPpHQL(LwY;": {
                         "fields": {
@@ -3685,7 +3659,7 @@
                             "VARIABLE": {
                                 "id": "A+Jeyve1)AqQy+k}),{^",
                                 "name": "VARIABLE",
-                                "value": "random number",
+                                "value": "codelabfeaturedproject.wakeupcozmo.random_number",
                                 "variableType": ""
                             }
                         },
@@ -3727,7 +3701,7 @@
                             "VARIABLE": {
                                 "id": "x(-N%PHu_7lvBm;Sf6gz",
                                 "name": "VARIABLE",
-                                "value": "flip turn",
+                                "value": "codelabfeaturedproject.wakeupcozmo.flip_turn",
                                 "variableType": ""
                             }
                         },
@@ -3809,7 +3783,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "i need a nap"
+                                "value": "codelabfeaturedproject.wakeupcozmo.i_need_a_nap"
                             }
                         },
                         "id": "qvrHsZcR@/0UM[3]S5uS",
@@ -3824,7 +3798,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "flip me over to play again"
+                                "value": "codelabfeaturedproject.wakeupcozmo.flip_me_over_to_play_again"
                             }
                         },
                         "id": "r(%Pd:m4W{MeuTNmmu}t",
@@ -3852,7 +3826,7 @@
                             "VARIABLE": {
                                 "id": "TCE^eUf};Pvh6]9BDMny",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.input_mode",
+                                "value": "codelabfeaturedproject.wakeupcozmo.input_mode",
                                 "variableType": ""
                             }
                         },
@@ -3871,7 +3845,7 @@
                             "VARIABLE": {
                                 "id": "A+Jeyve1)AqQy+k}),{^",
                                 "name": "VARIABLE",
-                                "value": "random number",
+                                "value": "codelabfeaturedproject.wakeupcozmo.random_number",
                                 "variableType": ""
                             }
                         },
@@ -3918,7 +3892,7 @@
                             "VARIABLE": {
                                 "id": "DG]McJ^9.B^vvjK7?-Po",
                                 "name": "VARIABLE",
-                                "value": "cozmo is upside down",
+                                "value": "codelabfeaturedproject.wakeupcozmo.cozmo_is_upside_down",
                                 "variableType": ""
                             }
                         },
@@ -3970,24 +3944,6 @@
                         "shadow": true,
                         "topLevel": false
                     },
-                    "trHLiqp].UXG0T+NIjDJ": {
-                        "fields": {},
-                        "id": "trHLiqp].UXG0T+NIjDJ",
-                        "inputs": {
-                            "ANIM_NAME": {
-                                "block": "N_KI2/zm]K*a9A|:5RK%",
-                                "name": "ANIM_NAME",
-                                "shadow": "N_KI2/zm]K*a9A|:5RK%"
-                            }
-                        },
-                        "next": null,
-                        "opcode": "cozmo_play_animation_by_name",
-                        "parent": "9U7xGH`N.wlO6sT$!jYM",
-                        "shadow": false,
-                        "topLevel": false,
-                        "x": "364",
-                        "y": "1601"
-                    },
                     "ukkZLfP~TOmQa:MNh=o}": {
                         "fields": {
                             "ANIM_SELECT": {
@@ -4021,7 +3977,7 @@
                             "VARIABLE": {
                                 "id": "3Bx%jDs6drNus1XUPfF;",
                                 "name": "VARIABLE",
-                                "value": "choose a random phrase for cozmo to say at the start of the game.",
+                                "value": "codelabfeaturedproject.wakeupcozmo.choose_a_random_phrase_for_cozmo_to_say_at_the_start_of_the_game",
                                 "variableType": ""
                             }
                         },
@@ -4032,8 +3988,8 @@
                         "parent": null,
                         "shadow": false,
                         "topLevel": true,
-                        "x": 1292.0095294117648,
-                        "y": 1396.7670588235321
+                        "x": 1292,
+                        "y": 1396
                     },
                     "v(i.oZ%RR`;{}yVKe;39": {
                         "fields": {
@@ -4066,8 +4022,8 @@
                         "parent": null,
                         "shadow": false,
                         "topLevel": true,
-                        "x": 1294.4729411764706,
-                        "y": 1481.2011764705883
+                        "x": 1294,
+                        "y": 1481
                     },
                     "vnBfxJX]_keAAr9prw?9": {
                         "fields": {
@@ -4089,7 +4045,7 @@
                             "VARIABLE": {
                                 "id": "m%^FUNOwI/a~8adX!IZ+",
                                 "name": "VARIABLE",
-                                "value": "choose a random phrase for cozmo to say when he wakes up.",
+                                "value": "codelabfeaturedproject.wakeupcozmo.choose_a_random_phrase_for_cozmo_to_say_when_he_wakes_up",
                                 "variableType": ""
                             }
                         },
@@ -4100,8 +4056,8 @@
                         "parent": null,
                         "shadow": false,
                         "topLevel": true,
-                        "x": 2154.810705882353,
-                        "y": 907.8985882352944
+                        "x": 2154,
+                        "y": 907
                     },
                     "w24x2.$~@+s`ul_v,t:/": {
                         "fields": {},
@@ -4189,8 +4145,8 @@
                         "parent": null,
                         "shadow": false,
                         "topLevel": true,
-                        "x": 455.46941176470585,
-                        "y": 2658.9529411764706
+                        "x": 455,
+                        "y": 2658
                     },
                     "xSD=vdMUWtnD./qK%WB8": {
                         "fields": {},
@@ -4277,7 +4233,7 @@
                             "VARIABLE": {
                                 "id": "TCE^eUf};Pvh6]9BDMny",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.input_mode",
+                                "value": "codelabfeaturedproject.wakeupcozmo.input_mode",
                                 "variableType": ""
                             }
                         },
@@ -4549,7 +4505,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "shh. i'm trying to sleep."
+                                "value": "codelabfeaturedproject.wakeupcozmo.shh_im_trying_to_sleep"
                             }
                         },
                         "id": "|x):3n2m,b-f2QL-|nOq",
@@ -4741,7 +4697,7 @@
                 "currentCostume": 0,
                 "direction": 90,
                 "draggable": false,
-                "id": "+PmFqZ.2ZMg:9^rwJ2|2",
+                "id": "EQUGdVw+}291UR0d@ey-",
                 "isStage": false,
                 "lists": {},
                 "name": "Sprite1",

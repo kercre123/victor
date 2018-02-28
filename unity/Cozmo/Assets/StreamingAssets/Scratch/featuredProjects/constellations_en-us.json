@@ -13,7 +13,7 @@
             "currentCostume": 0,
             "direction": 90,
             "draggable": false,
-            "id": "_n]QO)_e2?kkhR*u:U^T",
+            "id": "yiq*^SPtRY`^)EB%zQdI",
             "isStage": true,
             "lists": {},
             "name": "Stage",
@@ -25,18 +25,32 @@
                     "id": "!k:T,WTKGBD8twaz2y3o",
                     "name": "x1",
                     "type": "",
-                    "value": "88"
+                    "value": "23"
                 },
                 "#*1NSDkV6i($ApbNHzTK": {
                     "id": "#*1NSDkV6i($ApbNHzTK",
                     "name": "y coordinates",
                     "type": "list",
                     "value": [
-                        "13",
-                        "29",
-                        "26",
+                        "33",
+                        "30",
+                        "34",
+                        "37",
+                        "47",
+                        "54",
+                        "56",
                         "45",
-                        "31"
+                        "35",
+                        "24",
+                        "19",
+                        "19",
+                        "6",
+                        "9",
+                        "19",
+                        "18",
+                        "27",
+                        "19",
+                        "36"
                     ]
                 },
                 "#3%4J0D$LQ,#{{O9o;SZ": {
@@ -49,24 +63,24 @@
                     "id": "#C:O~$ySde0t?3!+-f.I",
                     "name": "x3",
                     "type": "",
-                    "value": ""
+                    "value": "41"
                 },
                 "#zAde}MYuoTYt:UOy0R-": {
                     "id": "#zAde}MYuoTYt:UOy0R-",
                     "name": "factoids",
                     "type": "list",
                     "value": [
-                        "Cassiopeia can be seen all year from the northern hemisphere.",
-                        "Cassiopeia's brightest star shines 40 times brighter than the Sun.",
-                        "Cassiopeia used to be called the Lady of the Chair.",
-                        "My cousin's name is Cassiopeia. She's a keyboard."
+                        "Scorpius is best seen in the July night sky.",
+                        "Scorpius was discovered by a man named Ptolemy. Say that three times fast!",
+                        "In ancient Greek stories, Scorpius beat Orion in a fight.",
+                        "In Hawaii, Scorpius is known as Maui's fishhook."
                     ]
                 },
                 "$:(}5a.ZyjT}vSF5*S;v": {
                     "id": "$:(}5a.ZyjT}vSF5*S;v",
                     "name": "line distance",
                     "type": "",
-                    "value": 19.72308292331602
+                    "value": 10.44030650891055
                 },
                 "(@_tdwd4*,bDFr5Uu|Uu": {
                     "id": "(@_tdwd4*,bDFr5Uu|Uu",
@@ -108,19 +122,19 @@
                     "id": "/f(9DGKhF5n8^Z:UA2C}",
                     "name": "constellation name",
                     "type": "",
-                    "value": "Cassiopeia"
+                    "value": "Scorpius"
                 },
                 "9GaS_/,wE.7mm(g%kBN-": {
                     "id": "9GaS_/,wE.7mm(g%kBN-",
                     "name": "drive distance",
                     "type": "",
-                    "value": 118.33849753989612
+                    "value": 62.6418390534633
                 },
                 "9s9sg?duxZO{ld.P3j*I": {
                     "id": "9s9sg?duxZO{ld.P3j*I",
                     "name": "turn angle",
                     "type": "",
-                    "value": -14.534455080540127
+                    "value": 93.85680098558984
                 },
                 ":l/#YnDX^0_JtNeNiZP*": {
                     "id": ":l/#YnDX^0_JtNeNiZP*",
@@ -142,7 +156,6 @@
                 },
                 "?XVmzOUgYiz(QA-:KvAt": {
                     "id": "?XVmzOUgYiz(QA-:KvAt",
-                    "isCloud": false,
                     "name": "Turn Cozmo back to his starting position.",
                     "type": "",
                     "value": 0
@@ -157,7 +170,7 @@
                     "id": "@C$*7V!5T}x{y(kPJH|g",
                     "name": "y2",
                     "type": "",
-                    "value": "36"
+                    "value": "47"
                 },
                 "ANzBheuzB(vk`Iqw!t*e": {
                     "id": "ANzBheuzB(vk`Iqw!t*e",
@@ -179,6 +192,20 @@
                         "0",
                         "0",
                         "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "2",
+                        "1",
+                        "0",
+                        "2",
+                        "1",
                         "0"
                     ]
                 },
@@ -187,6 +214,13 @@
                     "name": "draw dot",
                     "type": "",
                     "value": "1"
+                },
+                "E:lZ(.7FH3avR,3`.)a_": {
+                    "id": "E:lZ(.7FH3avR,3`.)a_",
+                    "isCloud": false,
+                    "name": "set cassiopeia data",
+                    "type": "broadcast_msg",
+                    "value": "set cassiopeia data"
                 },
                 "ELj5b9R.r9xIAms-CQwE": {
                     "id": "ELj5b9R.r9xIAms-CQwE",
@@ -222,13 +256,13 @@
                     "id": "J(hMMQ3~)A?r9u7lY6XP",
                     "name": "x2",
                     "type": "",
-                    "value": "98"
+                    "value": "26"
                 },
                 "KnNs`9drP[R4!ji(G;lL": {
                     "id": "KnNs`9drP[R4!ji(G;lL",
                     "name": "constellation count",
                     "type": "",
-                    "value": 1
+                    "value": 2
                 },
                 "LNj8/]aCE+Z4]wMQHDzn": {
                     "id": "LNj8/]aCE+Z4]wMQHDzn",
@@ -246,13 +280,13 @@
                     "id": "QMIEL.M@_GPc|Ut7@#;Q",
                     "name": "pair y",
                     "type": "",
-                    "value": 17
+                    "value": 10
                 },
                 "Tc.Y9##7SyDgLTXNQ?xC": {
                     "id": "Tc.Y9##7SyDgLTXNQ?xC",
                     "name": "slope1",
                     "type": "",
-                    "value": 1.7
+                    "value": -0.375
                 },
                 "V?p[M:HVR!Q^*rGSidH$": {
                     "id": "V?p[M:HVR!Q^*rGSidH$",
@@ -270,7 +304,7 @@
                     "id": "X1)-Ybg6%(;IbJ=1.wlf",
                     "name": "slope2",
                     "type": "",
-                    "value": 1
+                    "value": 3.3333333333333335
                 },
                 "X:Idv9SkW;_?cN7:]OFJ": {
                     "id": "X:Idv9SkW;_?cN7:]OFJ",
@@ -300,7 +334,7 @@
                     "id": "Z@YM/DWcuqzo?p2d%6%{",
                     "name": "y1",
                     "type": "",
-                    "value": "19"
+                    "value": "37"
                 },
                 "ZG=|W.TfM3U87b_uo.b{": {
                     "id": "ZG=|W.TfM3U87b_uo.b{",
@@ -319,11 +353,25 @@
                     "name": "x coordinates",
                     "type": "list",
                     "value": [
-                        "30",
-                        "43",
-                        "55",
-                        "70",
-                        "84"
+                        "41",
+                        "38",
+                        "31",
+                        "23",
+                        "26",
+                        "41",
+                        "53",
+                        "58",
+                        "62",
+                        "75",
+                        "81",
+                        "88",
+                        "101",
+                        "105",
+                        "88",
+                        "105",
+                        "101",
+                        "88",
+                        "98"
                     ]
                 },
                 "_{TUL?som_nzvV^I~7w:": {
@@ -372,13 +420,13 @@
                     "id": "gpZ+sHST8X#$E@$v9{?_",
                     "name": "pair x",
                     "type": "",
-                    "value": 10
+                    "value": 3
                 },
                 "n(Y:S#Q8jt{e}8=uMn8+": {
                     "id": "n(Y:S#Q8jt{e}8=uMn8+",
                     "name": "y3",
                     "type": "",
-                    "value": ""
+                    "value": "54"
                 },
                 "oLO]runH8=u/*t{cwPeh": {
                     "id": "oLO]runH8=u/*t{cwPeh",
@@ -408,7 +456,14 @@
                     "id": "vA)9-FHNND6-@A+8KAev",
                     "name": "instructions count",
                     "type": "",
-                    "value": 18
+                    "value": 4
+                },
+                "v|JfUTGMW4^p31Z4Lkn_": {
+                    "id": "v|JfUTGMW4^p31Z4Lkn_",
+                    "isCloud": false,
+                    "name": "reset choices",
+                    "type": "broadcast_msg",
+                    "value": "reset choices"
                 },
                 "x=yOYlHq#-h-_A*irBzd": {
                     "id": "x=yOYlHq#-h-_A*irBzd",
@@ -421,18 +476,18 @@
                     "name": "choices",
                     "type": "list",
                     "value": [
-                        "1",
-                        "3",
                         "2",
+                        "5",
+                        "1",
                         "4",
-                        "5"
+                        "3"
                     ]
                 },
                 "yzuYw$2k}WWhxxPgllKg": {
                     "id": "yzuYw$2k}WWhxxPgllKg",
                     "name": "count",
                     "type": "",
-                    "value": 20
+                    "value": 6
                 },
                 "|6d{#[(c7TB$@e71S~R#": {
                     "id": "|6d{#[(c7TB$@e71S~R#",
@@ -450,7 +505,7 @@
                     "id": "~.0NM9Clmo_)/.No(P]a",
                     "name": "constellation number",
                     "type": "",
-                    "value": "1"
+                    "value": "5"
                 },
                 "~a=Oa2eRZ)gmuu-Mcsn~": {
                     "id": "~a=Oa2eRZ)gmuu-Mcsn~",
@@ -1420,7 +1475,7 @@
                             "shadow": "pjXRs,jn[sX-eaOj$sW*"
                         }
                     },
-                    "next": "Gir@e4SsdU%=bWz0yVp{",
+                    "next": "4p!}Q8y3]3m,`$3^r~z+",
                     "opcode": "data_setvariableto",
                     "parent": "0#^G*V{rxhpP.Ajw):?h",
                     "shadow": false,
@@ -1897,6 +1952,24 @@
                     "topLevel": true,
                     "x": 585.5270576477051,
                     "y": 1971.8235294117646
+                },
+                ")]kU2?]KrcpMx^m%0fo-": {
+                    "fields": {},
+                    "id": ")]kU2?]KrcpMx^m%0fo-",
+                    "inputs": {
+                        "BROADCAST_INPUT": {
+                            "block": "0A?@ku}RIbKAnB2EM^*e",
+                            "name": "BROADCAST_INPUT",
+                            "shadow": "0A?@ku}RIbKAnB2EM^*e"
+                        }
+                    },
+                    "next": "/=AUz]!0hS3kYJ{/Rfa]",
+                    "opcode": "event_broadcastandwait_with_broadcast_input",
+                    "parent": "PO-SGo%k.$a33hj5k*Kt",
+                    "shadow": false,
+                    "topLevel": false,
+                    "x": "-198",
+                    "y": "1368"
                 },
                 ")^UYZm_fEpzw#x?j[{Ua": {
                     "fields": {
@@ -2409,7 +2482,7 @@
                             "shadow": null
                         }
                     },
-                    "next": "4ju5F_oX`|cz7SYS9]jw",
+                    "next": null,
                     "opcode": "control_repeat_until",
                     "parent": "=6F%%qr38x:QL?$n|)zY",
                     "shadow": false,
@@ -3245,11 +3318,11 @@
                     },
                     "next": "i_@TfWI8V7h;Uy;G_aSm",
                     "opcode": "event_broadcastandwait_with_broadcast_input",
-                    "parent": "PO-SGo%k.$a33hj5k*Kt",
+                    "parent": ")]kU2?]KrcpMx^m%0fo-",
                     "shadow": false,
                     "topLevel": false,
-                    "x": "-158",
-                    "y": "1156"
+                    "x": 269.4117647058823,
+                    "y": 345.17647058823525
                 },
                 "/EIfy`du[|~jyly7X3B{": {
                     "fields": {
@@ -3588,6 +3661,23 @@
                     "x": 1561.5381232429957,
                     "y": 380.23529411764684
                 },
+                "0A?@ku}RIbKAnB2EM^*e": {
+                    "fields": {
+                        "BROADCAST_OPTION": {
+                            "id": "v|JfUTGMW4^p31Z4Lkn_",
+                            "name": "BROADCAST_OPTION",
+                            "value": "reset choices",
+                            "variableType": "broadcast_msg"
+                        }
+                    },
+                    "id": "0A?@ku}RIbKAnB2EM^*e",
+                    "inputs": {},
+                    "next": null,
+                    "opcode": "event_broadcast_menu_with_broadcast_input",
+                    "parent": ")]kU2?]KrcpMx^m%0fo-",
+                    "shadow": true,
+                    "topLevel": false
+                },
                 "0It,nD.AH~Q-oT`/kP5C": {
                     "fields": {
                         "LIST": {
@@ -3749,8 +3839,8 @@
                     "parent": null,
                     "shadow": false,
                     "topLevel": true,
-                    "x": 3160.3776470588236,
-                    "y": 656.5317647058782
+                    "x": 3160,
+                    "y": 656
                 },
                 "1;#p2CiAXP.u8%3M;C?N": {
                     "fields": {},
@@ -3986,23 +4076,6 @@
                     "next": null,
                     "opcode": "event_broadcast_menu",
                     "parent": "m+I;Eqb^kz$B]WV-9Rek",
-                    "shadow": true,
-                    "topLevel": false
-                },
-                "2Bd3M:sbUwzcR43{n~6w": {
-                    "fields": {
-                        "BROADCAST_OPTION": {
-                            "id": "_{TUL?som_nzvV^I~7w:",
-                            "name": "BROADCAST_OPTION",
-                            "value": "set casseopeia data",
-                            "variableType": "broadcast_msg"
-                        }
-                    },
-                    "id": "2Bd3M:sbUwzcR43{n~6w",
-                    "inputs": {},
-                    "next": null,
-                    "opcode": "event_broadcast_menu",
-                    "parent": "3lW0j9pr?AWx/!g3RvTq",
                     "shadow": true,
                     "topLevel": false
                 },
@@ -4300,24 +4373,6 @@
                     "x": 1514.5422378708336,
                     "y": 372.2352941176469
                 },
-                "3lW0j9pr?AWx/!g3RvTq": {
-                    "fields": {},
-                    "id": "3lW0j9pr?AWx/!g3RvTq",
-                    "inputs": {
-                        "BROADCAST_INPUT": {
-                            "block": "2Bd3M:sbUwzcR43{n~6w",
-                            "name": "BROADCAST_INPUT",
-                            "shadow": "2Bd3M:sbUwzcR43{n~6w"
-                        }
-                    },
-                    "next": null,
-                    "opcode": "event_broadcastandwait_with_broadcast_input",
-                    "parent": "V2I1G^CJ0/re2X?qC;=h",
-                    "shadow": false,
-                    "topLevel": false,
-                    "x": "236",
-                    "y": "990"
-                },
                 "3rVV?hP)yXc0JvQ[74RN": {
                     "fields": {
                         "TEXT": {
@@ -4528,11 +4583,11 @@
                     },
                     "next": null,
                     "opcode": "control_repeat_until",
-                    "parent": "+r=L~Y,hHf9TfMbC#8V)",
+                    "parent": "e~TtR,qIrLiN9M?a.k~X",
                     "shadow": false,
                     "topLevel": false,
-                    "x": "826",
-                    "y": "3120"
+                    "x": 1394,
+                    "y": 2417
                 },
                 "4mq_VpU3lb%N`=*s52V5": {
                     "fields": {
@@ -4558,6 +4613,24 @@
                     "topLevel": false,
                     "x": "804",
                     "y": "919"
+                },
+                "4p!}Q8y3]3m,`$3^r~z+": {
+                    "fields": {},
+                    "id": "4p!}Q8y3]3m,`$3^r~z+",
+                    "inputs": {
+                        "BROADCAST_INPUT": {
+                            "block": "5`ePGN.o7g^=%bmo5*TH",
+                            "name": "BROADCAST_INPUT",
+                            "shadow": "5`ePGN.o7g^=%bmo5*TH"
+                        }
+                    },
+                    "next": "Gir@e4SsdU%=bWz0yVp{",
+                    "opcode": "event_broadcastandwait_with_broadcast_input",
+                    "parent": "%g=_Viwu38W9LVmX%PUr",
+                    "shadow": false,
+                    "topLevel": false,
+                    "x": "-225",
+                    "y": "1561"
                 },
                 "4unUWdi2(aphmLM*+Yov": {
                     "fields": {
@@ -4749,6 +4822,23 @@
                     "topLevel": false,
                     "x": "955",
                     "y": "2683"
+                },
+                "5`ePGN.o7g^=%bmo5*TH": {
+                    "fields": {
+                        "BROADCAST_OPTION": {
+                            "id": ".G{_CxSWHuZHI5M/,zvQ",
+                            "name": "BROADCAST_OPTION",
+                            "value": "reset lists",
+                            "variableType": "broadcast_msg"
+                        }
+                    },
+                    "id": "5`ePGN.o7g^=%bmo5*TH",
+                    "inputs": {},
+                    "next": null,
+                    "opcode": "event_broadcast_menu_with_broadcast_input",
+                    "parent": "4p!}Q8y3]3m,`$3^r~z+",
+                    "shadow": true,
+                    "topLevel": false
                 },
                 "5gv-L5FaeG0M/i[PHQ:n": {
                     "fields": {
@@ -5515,25 +5605,6 @@
                     "parent": "jZW=z;ocf;t%*tugcs|a",
                     "shadow": true,
                     "topLevel": false
-                },
-                "9CAuBor@sE8Z*3E6FPp_": {
-                    "fields": {
-                        "BROADCAST_OPTION": {
-                            "id": "_{TUL?som_nzvV^I~7w:",
-                            "name": "BROADCAST_OPTION",
-                            "value": "set casseopeia data",
-                            "variableType": "broadcast_msg"
-                        }
-                    },
-                    "id": "9CAuBor@sE8Z*3E6FPp_",
-                    "inputs": {},
-                    "next": "M=/di;S[{woEL=xruG:w",
-                    "opcode": "event_whenbroadcastreceived_with_broadcast_input",
-                    "parent": null,
-                    "shadow": false,
-                    "topLevel": true,
-                    "x": 488,
-                    "y": 2743
                 },
                 "9EV.JQ~/H*Kze$/-p9bv": {
                     "fields": {
@@ -6759,6 +6830,24 @@
                     "topLevel": true,
                     "x": 1235,
                     "y": 764
+                },
+                "@;,+G$t`*kaK[m3n:Du#": {
+                    "fields": {},
+                    "id": "@;,+G$t`*kaK[m3n:Du#",
+                    "inputs": {
+                        "BROADCAST_INPUT": {
+                            "block": "xBmwhV?`%u_8a-;wP2|T",
+                            "name": "BROADCAST_INPUT",
+                            "shadow": "xBmwhV?`%u_8a-;wP2|T"
+                        }
+                    },
+                    "next": null,
+                    "opcode": "event_broadcastandwait_with_broadcast_input",
+                    "parent": "V2I1G^CJ0/re2X?qC;=h",
+                    "shadow": false,
+                    "topLevel": false,
+                    "x": "-603",
+                    "y": "947"
                 },
                 "@@@;;xdKYW7fIHSqXp8N": {
                     "fields": {
@@ -8358,9 +8447,9 @@
                             "shadow": "CHd=rmH`D;L4e{yn%z|!"
                         }
                     },
-                    "next": "c]V;E|04[?!#Dv)h{Dp]",
+                    "next": "YZuRDbTsn^qlZD8_-fgx",
                     "opcode": "event_broadcastandwait_with_broadcast_input",
-                    "parent": "%g=_Viwu38W9LVmX%PUr",
+                    "parent": "4p!}Q8y3]3m,`$3^r~z+",
                     "shadow": false,
                     "topLevel": false,
                     "x": "-219",
@@ -8641,8 +8730,8 @@
                     "parent": null,
                     "shadow": false,
                     "topLevel": true,
-                    "x": 479,
-                    "y": 1672
+                    "x": 473.3058823529412,
+                    "y": 1753.1411764705883
                 },
                 "Hk~*aEPE,2E}rv/aa;-C": {
                     "fields": {
@@ -9704,11 +9793,11 @@
                     },
                     "next": "W!s.NrllM6$8~7j2zWjF",
                     "opcode": "data_setvariableto",
-                    "parent": "9CAuBor@sE8Z*3E6FPp_",
+                    "parent": "mm~}WK@dc)c],Q.Fx1AP",
                     "shadow": false,
                     "topLevel": false,
-                    "x": "225",
-                    "y": "1198"
+                    "x": -31.58823529411768,
+                    "y": 2964.670588235294
                 },
                 "M?`rV6szjT8}R$9zd5+m": {
                     "fields": {
@@ -9879,8 +9968,8 @@
                     "parent": null,
                     "shadow": false,
                     "topLevel": true,
-                    "x": 485,
-                    "y": 2654
+                    "x": 475.0352941176471,
+                    "y": 2760.764705882353
                 },
                 "Mu;AzA).;?`{pD{VJ?_J": {
                     "fields": {
@@ -10808,7 +10897,7 @@
                             "shadow": "t@@8ODXt;;GM}xv#xG=Y"
                         }
                     },
-                    "next": "/=AUz]!0hS3kYJ{/Rfa]",
+                    "next": ")]kU2?]KrcpMx^m%0fo-",
                     "opcode": "event_broadcastandwait_with_broadcast_input",
                     "parent": "#YR#,0E.{+y~H`dtCTAL",
                     "shadow": false,
@@ -10897,8 +10986,8 @@
                     "parent": null,
                     "shadow": false,
                     "topLevel": true,
-                    "x": 1584,
-                    "y": 2897
+                    "x": 1588.1683788235293,
+                    "y": 3080.408668235294
                 },
                 "Q-Px[2p)e%*yjXj*Y:lV": {
                     "fields": {
@@ -11865,7 +11954,7 @@
                             "shadow": null
                         },
                         "SUBSTACK": {
-                            "block": "3lW0j9pr?AWx/!g3RvTq",
+                            "block": "@;,+G$t`*kaK[m3n:Du#",
                             "name": "SUBSTACK",
                             "shadow": null
                         }
@@ -12836,6 +12925,23 @@
                     "shadow": true,
                     "topLevel": false
                 },
+                "YZuRDbTsn^qlZD8_-fgx": {
+                    "fields": {
+                        "ANIMATION_TRACK": {
+                            "name": "ANIMATION_TRACK",
+                            "value": "wheels"
+                        }
+                    },
+                    "id": "YZuRDbTsn^qlZD8_-fgx",
+                    "inputs": {},
+                    "next": "nw[fFHtzJ?6-#NSMLtF/",
+                    "opcode": "cozmo_vert_disable_animation_track",
+                    "parent": "Gir@e4SsdU%=bWz0yVp{",
+                    "shadow": false,
+                    "topLevel": false,
+                    "x": "-198",
+                    "y": "848"
+                },
                 "YloAI[SlJ[ex`W)ITg.K": {
                     "fields": {
                         "LIST": {
@@ -13575,8 +13681,8 @@
                     "parent": null,
                     "shadow": false,
                     "topLevel": true,
-                    "x": 1584,
-                    "y": 2805
+                    "x": 1588.1683788235293,
+                    "y": 2992.5770470588236
                 },
                 "]5K;hK@2l$]ZpOjN;jof": {
                     "fields": {
@@ -15009,7 +15115,7 @@
                     },
                     "next": "j#YANdW-j+!(Cq;JRrbJ",
                     "opcode": "cozmo_says",
-                    "parent": "Gir@e4SsdU%=bWz0yVp{",
+                    "parent": "nw[fFHtzJ?6-#NSMLtF/",
                     "shadow": false,
                     "topLevel": false,
                     "x": -387.0576470588237,
@@ -15476,6 +15582,25 @@
                     "parent": "M=/di;S[{woEL=xruG:w",
                     "shadow": true,
                     "topLevel": false
+                },
+                "e~TtR,qIrLiN9M?a.k~X": {
+                    "fields": {
+                        "BROADCAST_OPTION": {
+                            "id": "v|JfUTGMW4^p31Z4Lkn_",
+                            "name": "BROADCAST_OPTION",
+                            "value": "reset choices",
+                            "variableType": "broadcast_msg"
+                        }
+                    },
+                    "id": "e~TtR,qIrLiN9M?a.k~X",
+                    "inputs": {},
+                    "next": "4ju5F_oX`|cz7SYS9]jw",
+                    "opcode": "event_whenbroadcastreceived_with_broadcast_input",
+                    "parent": null,
+                    "shadow": false,
+                    "topLevel": true,
+                    "x": 1394.0171080175403,
+                    "y": 2510.157900670047
                 },
                 "f7gsiz8EixKmK..}K7@n": {
                     "fields": {
@@ -17566,6 +17691,25 @@
                     "x": "326",
                     "y": "1335"
                 },
+                "mm~}WK@dc)c],Q.Fx1AP": {
+                    "fields": {
+                        "BROADCAST_OPTION": {
+                            "id": "E:lZ(.7FH3avR,3`.)a_",
+                            "name": "BROADCAST_OPTION",
+                            "value": "set cassiopeia data",
+                            "variableType": "broadcast_msg"
+                        }
+                    },
+                    "id": "mm~}WK@dc)c],Q.Fx1AP",
+                    "inputs": {},
+                    "next": "M=/di;S[{woEL=xruG:w",
+                    "opcode": "event_whenbroadcastreceived_with_broadcast_input",
+                    "parent": null,
+                    "shadow": false,
+                    "topLevel": true,
+                    "x": 474.1541245991879,
+                    "y": 2833.0302355113613
+                },
                 "n)+SvuBGv(e8_.PCj8.V": {
                     "fields": {},
                     "id": "n)+SvuBGv(e8_.PCj8.V",
@@ -17823,6 +17967,24 @@
                     "parent": "-Oj*;q++w!y]r8U:tg*G",
                     "shadow": true,
                     "topLevel": false
+                },
+                "nw[fFHtzJ?6-#NSMLtF/": {
+                    "fields": {},
+                    "id": "nw[fFHtzJ?6-#NSMLtF/",
+                    "inputs": {
+                        "ANIMATION": {
+                            "block": "y7r|;I]ci9$;1?W-*18!",
+                            "name": "ANIMATION",
+                            "shadow": "y7r|;I]ci9$;1?W-*18!"
+                        }
+                    },
+                    "next": "c]V;E|04[?!#Dv)h{Dp]",
+                    "opcode": "cozmo_play_animation_from_dropdown",
+                    "parent": "YZuRDbTsn^qlZD8_-fgx",
+                    "shadow": false,
+                    "topLevel": false,
+                    "x": "-198",
+                    "y": "628"
                 },
                 "nyW6AH6C4oSJcN}f63;v": {
                     "fields": {
@@ -18679,8 +18841,8 @@
                     "parent": null,
                     "shadow": false,
                     "topLevel": true,
-                    "x": 472,
-                    "y": 1593
+                    "x": 464.88235294117646,
+                    "y": 1676.9882352941177
                 },
                 "sW|wm@o!QQx-Vp`/+t{g": {
                     "fields": {
@@ -19875,6 +20037,23 @@
                     "x": "1984",
                     "y": "1422"
                 },
+                "xBmwhV?`%u_8a-;wP2|T": {
+                    "fields": {
+                        "BROADCAST_OPTION": {
+                            "id": "E:lZ(.7FH3avR,3`.)a_",
+                            "name": "BROADCAST_OPTION",
+                            "value": "set cassiopeia data",
+                            "variableType": "broadcast_msg"
+                        }
+                    },
+                    "id": "xBmwhV?`%u_8a-;wP2|T",
+                    "inputs": {},
+                    "next": null,
+                    "opcode": "event_broadcast_menu_with_broadcast_input",
+                    "parent": "@;,+G$t`*kaK[m3n:Du#",
+                    "shadow": true,
+                    "topLevel": false
+                },
                 "xG2CM3XA6%k(?hrCxAJn": {
                     "fields": {
                         "NUM": {
@@ -20098,6 +20277,21 @@
                     "next": null,
                     "opcode": "text",
                     "parent": "H-OW1jU}-[]}J4{b9kLV",
+                    "shadow": true,
+                    "topLevel": false
+                },
+                "y7r|;I]ci9$;1?W-*18!": {
+                    "fields": {
+                        "ANIMATION_SELECT": {
+                            "name": "ANIMATION_SELECT",
+                            "value": "8"
+                        }
+                    },
+                    "id": "y7r|;I]ci9$;1?W-*18!",
+                    "inputs": {},
+                    "next": null,
+                    "opcode": "cozmo_animation_select_menu",
+                    "parent": "nw[fFHtzJ?6-#NSMLtF/",
                     "shadow": true,
                     "topLevel": false
                 },
@@ -21365,7 +21559,7 @@
             "currentCostume": 0,
             "direction": 90,
             "draggable": false,
-            "id": ":EBTxkPO/Njddl_pNl]Q",
+            "id": "{TNh7G7y~3U{uzYXd,q`",
             "isStage": false,
             "lists": {},
             "name": "Sprite1",
