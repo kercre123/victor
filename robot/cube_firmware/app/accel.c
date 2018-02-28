@@ -8,9 +8,9 @@
 
 extern void (*ble_send)(uint8_t length, const void* data);
 
-static uint16_t* const SPI_READ  = (uint16_t*)(GPIO_BASE + (GPIO_PORT_0 << 5));
-static uint16_t* const SPI_SET   = (uint16_t*)(GPIO_BASE + (GPIO_PORT_0 << 5) + 2);
-static uint16_t* const SPI_RESET = (uint16_t*)(GPIO_BASE + (GPIO_PORT_0 << 5) + 4);
+static volatile uint16_t* const SPI_READ  = (uint16_t*)(GPIO_BASE + (GPIO_PORT_0 << 5));
+static volatile uint16_t* const SPI_SET   = (uint16_t*)(GPIO_BASE + (GPIO_PORT_0 << 5) + 2);
+static volatile uint16_t* const SPI_RESET = (uint16_t*)(GPIO_BASE + (GPIO_PORT_0 << 5) + 4);
 
 static const uint16_t BIT_ACC_nCS = 1 << ACC_nCS_PIN;
 static const uint16_t BIT_ACC_SCK = 1 << ACC_SCK_PIN;
@@ -30,8 +30,9 @@ uint8_t spi_read8() {
     *SPI_RESET = BIT_ACC_SCK;
     __nop(); __nop();
     *SPI_SET = BIT_ACC_SCK;
-    if (*SPI_READ & BIT_ACC_SDA) value |= i;
+    if (BIT_ACC_SDA & *SPI_READ) value |= i;
   }
+
   return value;
 }
 
@@ -57,8 +58,25 @@ void hal_acc_init(void) {
   GPIO_INIT_PIN(ACC_SCK, OUTPUT, PID_GPIO, 1, GPIO_POWER_RAIL_3V );
   GPIO_INIT_PIN(ACC_nCS, OUTPUT, PID_GPIO, 1, GPIO_POWER_RAIL_3V );
 
+  for (int i = 70; i > 0; i--) __nop();  // About 32us
+
   static const uint8_t SOFT_RESET = 0xB6;
   spi_write(BGW_SOFTRESET, sizeof(SOFT_RESET), &SOFT_RESET);
+
+  for (int i = 4800; i > 0; i--) __nop();  // About 1.8ms
+
+  static const uint8_t MODE_SPI3 = 0x01;
+  spi_write(0x34, sizeof(MODE_SPI3), &MODE_SPI3);
+
+  uint8_t chip_id;
+  spi_read (BGW_CHIPID, sizeof(chip_id), &chip_id);
+  if (chip_id != 0xFA) {
+    Payload p;
+    p.command = COMMAND_ACCEL_FAILURE;
+    ble_send(sizeof(p), &p);
+  }
+
+  // CONFIGURE ACCEROMETER
 }
 
 void hal_acc_stop(void) {
@@ -69,15 +87,4 @@ void hal_acc_stop(void) {
 }
 
 void hal_acc_tick(void) {
-  static int countdown = 200;
-  if (countdown && !--countdown) {
-    // Enter Half-duplex SPI mode
-    static const uint8_t MODE_SPI3 = 0x01;
-    uint8_t chip_id;
-
-    spi_write(0x34, sizeof(MODE_SPI3), &MODE_SPI3);
-    spi_read (BGW_CHIPID, sizeof(chip_id), &chip_id);
-
-    ble_send(sizeof(chip_id), &chip_id);
-  }
 }

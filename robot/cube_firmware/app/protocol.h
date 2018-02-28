@@ -10,7 +10,8 @@
 
 enum {
   COMMAND_LIGHT_INDEX = 0,
-  COMMAND_LIGHT_KEYFRAMES = 1
+  COMMAND_LIGHT_KEYFRAMES = 1,
+  COMMAND_ACCEL_FAILURE = 2
 };
 
 typedef uint8_t CubeCommand;

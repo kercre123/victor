@@ -8,6 +8,7 @@ factory.on('advertised', (info) => {
 });
 
 factory.on('connected', async (cube) => {
+	console.log("Connected");
 	cube.on('disconnect', () => console.log('Disconnected'));
 
 	const complete = await cube.upload(fs.readFileSync(process.argv[2]));
