@@ -91,7 +91,7 @@ void BehaviorComeHere::TurnTowardsFace()
     }
   }
 
-  const auto& faceSelectionComp = GetBEI().GetAIComponent().GetFaceSelectionComponent();
+  const auto& faceSelectionComp = GetAIComp<FaceSelectionComponent>();
   // Select face based on priority penalties
   FaceSelectionComponent::FaceSelectionFactorMap map;
   for(auto& priority: _facePriorities){

@@ -103,7 +103,7 @@ void DevBehaviorComponentMessageHandler::SetupUserIntentEvents()
   // fake trigger word
   auto fakeTriggerWordCallback = [this]( const GameToEngineEvent& event ) {
     PRINT_CH_INFO("BehaviorSystem","DevBehaviorComponentMessageHandler.ReceivedFakeTriggerWordDetected","");
-    auto& uic = _robot.GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
+    auto& uic = _robot.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
     uic.SetTriggerWordPending();
   };
   _eventHandles.push_back( EI->Subscribe( GameToEngineTag::FakeTriggerWordDetected, fakeTriggerWordCallback ) );
@@ -111,7 +111,7 @@ void DevBehaviorComponentMessageHandler::SetupUserIntentEvents()
   // fake cloud intent
   auto fakeCloudIntentCallback = [this]( const GameToEngineEvent& event ) {
     PRINT_CH_INFO("BehaviorSystem","DevBehaviorComponentMessageHandler.FakeCloudIntentReceived","");
-    auto& uic = _robot.GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
+    auto& uic = _robot.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
     const auto& intent = event.GetData().Get_FakeCloudIntent().intent;
     if( (intent.find("{") != std::string::npos) // super awesome json detection
         && (intent.find("}") != std::string::npos) )
@@ -127,7 +127,7 @@ void DevBehaviorComponentMessageHandler::SetupUserIntentEvents()
   // fake user intent
   auto fakeUserIntentCallback = [this]( const GameToEngineEvent& event ) {
     PRINT_CH_INFO("BehaviorSystem","DevBehaviorComponentMessageHandler.FakeUserIntentReceived","");
-    auto& uic = _robot.GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
+    auto& uic = _robot.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
     const auto& intent = event.GetData().Get_FakeUserIntent().intent;
     
     UserIntentTag tag;
@@ -213,7 +213,7 @@ void DevBehaviorComponentMessageHandler::SubscribeToWebViz(BehaviorExternalInter
       auto onSubscribedIntents = [this](const std::function<void(const Json::Value&)>& sendToClient) {
         // client just connected, send all {user/cloud} intents and current pending {user/cloud} intent
         
-        auto& uic = _robot.GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
+        auto& uic = _robot.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
         
         Json::Value allCloudIntents = Json::arrayValue;
         std::vector<std::string> allCloudIntentsStr = uic.DevGetCloudIntentsList();
@@ -264,7 +264,7 @@ void DevBehaviorComponentMessageHandler::SubscribeToWebViz(BehaviorExternalInter
         sendToClient( toSend );
       };
       auto onDataIntents = [this](const Json::Value& data, const std::function<void(const Json::Value&)>& sendToClient) {
-        auto& uic = _robot.GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
+        auto& uic = _robot.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
         const auto& type = data["intentType"].asString();
         const auto& request = data["request"].asString();
         if( type == "user" ) {

@@ -99,6 +99,10 @@ public:
   const ImagePathMap& GetFacePNGPaths()       const { return _facePNGPaths; }
 
   bool IsCustomAnimLoadEnabled() const;
+
+  #if ANKI_DEV_CHEATS
+  Json::Value& GetRobotVisionConfigUpdatableRef()           { return _robotVisionConfig; }
+  #endif
   
 private:
   void CollectAnimFiles();

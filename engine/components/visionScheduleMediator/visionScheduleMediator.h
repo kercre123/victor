@@ -53,11 +53,10 @@ public:
     dependencies.insert(RobotComponentID::CozmoContext);
   }
   virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
+  virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
+
   // IDependencyManagedComponent
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-  // Update called from Robot for the time being. May shift to UpdateDependent later
-  void Update();
 
   // Set up baseline subscriptions to manage VisionMode defaults via the VSM
   void GetInternalSubscriptions(std::set<VisionModeRequest>& baselineSubscriptions) const {

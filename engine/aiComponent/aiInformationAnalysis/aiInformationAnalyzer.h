@@ -17,7 +17,8 @@
 // processes
 #include "informationAnalysisProcesses/aiInfoAnalysisProcCalculateInterestingRegions.h"
 
-#include "util/entityComponent/iManageableComponent.h"
+#include "engine/aiComponent/aiComponents_fwd.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 #include "engine/navMap/iNavMap.h"
 
 #include <map>
@@ -32,7 +33,7 @@ class Robot;
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // AIInformationAnalyzer
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class AIInformationAnalyzer : public IManageableComponent
+class AIInformationAnalyzer : public IDependencyManagedComponent<AIComponentID>
 {
   // make processes friends so they can access private API not available to public (alternatively could use an interface)
   friend void AIInfoAnalysisProcCalculateInterestingRegions(AIInformationAnalyzer& analyzer, Robot& robot);
@@ -57,8 +58,10 @@ public:
   // Processes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  // runs the processes currently requested
-  void Update(Robot& robot);
+  // IDependencyManagedComponent<AIComponentID> functions
+  virtual void InitDependent(Cozmo::Robot* robot, const AICompMap& dependentComponents) override;
+  virtual void UpdateDependent(const AICompMap& dependentComps) override;
+  // end IDependencyManagedComponent<AIComponentID> functions
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Process requests
@@ -85,7 +88,7 @@ public:
   const INavMap::BorderRegionVector& GetDetectedInterestingRegions() const { return _interestingRegions; }
 
 private:
-
+  Robot* _robot = nullptr;
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Types
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

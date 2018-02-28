@@ -39,7 +39,7 @@ public:
   ISensorComponent(const std::string& logDirName);
   virtual ~ISensorComponent();
 
-  void Update(const RobotState& msg);
+  void NotifyOfRobotState(const RobotState& msg);
   
   // Start logging raw data from the sensor for the specified duration.
   // Specifying 0 for duration will continue logging indefinitely
@@ -51,7 +51,7 @@ protected:
   void InitBase(Robot* robot) { _robot = robot;}
 
   // Derived class update function
-  virtual void UpdateInternal(const RobotState& msg) = 0;
+  virtual void NotifyOfRobotStateInternal(const RobotState& msg) = 0;
   
   // GetLogHeader() should return a comma-separated header line that describes the data being logged
   virtual std::string GetLogHeader() = 0;

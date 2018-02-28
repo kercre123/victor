@@ -14,15 +14,17 @@
 
 #include "engine/aiComponent/aiBeacon.h"
 
+#include "engine/aiComponent/aiComponents_fwd.h"
 #include "engine/externalInterface/externalInterface_fwd.h"
 
 #include "coretech/common/engine/math/pose.h"
 #include "coretech/common/engine/objectIDs.h"
 #include "coretech/vision/engine/faceIdTypes.h"
-#include "util/entityComponent/iManageableComponent.h"
+
 #include "clad/types/objectFamilies.h"
 #include "clad/types/objectTypes.h"
 
+#include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
 
@@ -48,7 +50,8 @@ constexpr static const float kObjectInvalidAfterFailureRadius_mm = 60.f;
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // AIWhiteboard
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class AIWhiteboard : public IManageableComponent, private Util::noncopyable
+class AIWhiteboard : public IDependencyManagedComponent<AIComponentID>, 
+                     private Util::noncopyable
 {
 public:
   
@@ -84,6 +87,13 @@ public:
     PlaceObjectAt,   // place object at location
     RollOrPopAWheelie // roll or pop a wheelie on a block
   };
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // IDependencyManagedComponent<AIComponentID> functions
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  virtual void InitDependent(Cozmo::Robot* robot, 
+                             const AICompMap& dependentComps) override;
+
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Initialization/destruction
@@ -93,12 +103,10 @@ public:
   AIWhiteboard(Robot& robot);
 
   virtual ~AIWhiteboard();
-  
-  // initializes the whiteboard, registers to events
-  void Init();
 
-  // Tick the whiteboard
-  void Update();
+  // IDependencyManagedComponent<AIComponentID> functions
+  virtual void UpdateDependent(const AICompMap& dependentComps) override;
+  // end IDependencyManagedComponent<AIComponentID> functions
   
   // what to do when the robot is delocalized
   void OnRobotDelocalized();
@@ -266,10 +274,6 @@ private:
   void UpdatePossibleObjectRender();
   // update render of beacons
   void UpdateBeaconRender();
-
-  // update things for the victor observing demo
-  void Victor_Update();
-
 
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

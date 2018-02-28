@@ -35,7 +35,8 @@ void RecursiveDelegation(Robot& robot,
                          TestBehaviorFramework& testFramework,
                          std::map<IBehavior*,std::set<IBehavior*>>& delegateMap)
 {
-  robot.GetActionList().Update();
+  Anki::DependencyManagedEntity<RobotComponentID> robotComps;
+  robot.GetActionList().UpdateDependent(robotComps);
   if(delegateMap.empty()){
     return;
   }else{

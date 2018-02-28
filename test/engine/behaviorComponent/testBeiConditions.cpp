@@ -537,7 +537,7 @@ TEST(BeiConditions, TriggerWordPending)
   
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
   
-  auto& uic = bei.GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
+  auto& uic = bei.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
   uic.SetTriggerWordPending();
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
@@ -600,7 +600,7 @@ TEST(BeiConditions, UserIntentPending)
   
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
   
-  auto& uic = bei.GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
+  auto& uic = bei.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
   
   // (1) test_user_intent_1  matches the tag
   

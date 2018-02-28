@@ -29,13 +29,22 @@ namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AIInformationAnalyzer::AIInformationAnalyzer()
+: IDependencyManagedComponent<AIComponentID>(this, AIComponentID::InformationAnalyzer)
 {
   // register the callbacks
   _processes[EProcess::CalculateInterestingRegions]._callback = &AIInfoAnalysisProcCalculateInterestingRegions;
 }
 
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AIInformationAnalyzer::Update(Robot& robot)
+void AIInformationAnalyzer::InitDependent(Cozmo::Robot* robot, const AICompMap& dependentComponents)
+{
+  _robot = robot;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AIInformationAnalyzer::UpdateDependent(const AICompMap& dependentComps)
 {
   // iterate every process and run the ones that need to
   for( const auto& infoPair : _processes )
@@ -46,7 +55,7 @@ void AIInformationAnalyzer::Update(Robot& robot)
     {
       // run the process
       if ( info._callback ) {
-        info._callback(*this, robot);
+        info._callback(*this, *_robot);
       } else {
         PRINT_NAMED_ERROR("AIInformationAnalyzer.Update","Process wants to run, but no code provided");
       }

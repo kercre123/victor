@@ -123,7 +123,7 @@ bool LocationCalculator::IsLocationFreeForObject(const int row, const int col, P
   }
   
   // calculate if candidate pose is close to a previous failure
-  const bool isLocationFailureInWhiteboard = beiRef.GetAIComponent().GetWhiteboard().DidFailToUse(-1,
+  const bool isLocationFailureInWhiteboard = beiRef.GetAIComponent().GetComponent<AIWhiteboard>().DidFailToUse(-1,
     AIWhiteboard::ObjectActionFailure::PlaceObjectAt,
     recentFailureCooldown_sec,
     outPose, kLocationFailureDist_mm, kLocationFailureRot_rad);
@@ -190,7 +190,7 @@ void BehaviorExploreBringCubeToBeacon::LoadConfig(const Json::Value& config)
 bool BehaviorExploreBringCubeToBeacon::WantsToBeActivatedBehavior() const
 {
   _candidateObjects.clear();
-  const AIWhiteboard& whiteboard = GetBEI().GetAIComponent().GetWhiteboard();
+  const AIWhiteboard& whiteboard = GetAIComp<AIWhiteboard>();
   
   // check that we have an active beacon
   const AIBeacon* selectedBeacon = whiteboard.GetActiveBeacon();
@@ -272,7 +272,7 @@ void BehaviorExploreBringCubeToBeacon::OnBehaviorActivated()
   // the beacon as not valid anymore
   bool shouldControlBeDelegated = true;
   if ( !IsControlDelegated() ) {
-    const AIBeacon* activeBeacon = GetBEI().GetAIComponent().GetWhiteboard().GetActiveBeacon();
+    const AIBeacon* activeBeacon = GetAIComp<AIWhiteboard>().GetActiveBeacon();
     const float lastBeaconFailure = activeBeacon->GetLastTimeFailedToFindLocation();
     const float curTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     const bool beaconFlaggedFail = FLT_NEAR(curTime, lastBeaconFailure);
@@ -388,7 +388,7 @@ void BehaviorExploreBringCubeToBeacon::TransitionToPickUpObject(int attempt)
       if ( pickUpFinalFail ) {
         const ObservableObject* failedObject = GetBEI().GetBlockWorld().GetLocatedObjectByID( _selectedObjectID );
         if ( failedObject ) {
-          GetBEI().GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectActionFailure::PickUpObject);
+          GetAIComp<AIWhiteboard>().SetFailedToUse(*failedObject, AIWhiteboard::ObjectActionFailure::PickUpObject);
         }
         
         // rsam: considering this, but pickUp action would already fire emotion events
@@ -458,7 +458,7 @@ void BehaviorExploreBringCubeToBeacon::TryToStackOn(const ObjectID& bottomCubeID
     if ( stackOnCubeFinalFail ) {
       const ObservableObject* failedObject = GetBEI().GetBlockWorld().GetLocatedObjectByID( bottomCubeID );
       if (failedObject) {
-        GetBEI().GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectActionFailure::StackOnObject);
+        GetAIComp<AIWhiteboard>().SetFailedToUse(*failedObject, AIWhiteboard::ObjectActionFailure::StackOnObject);
       }
       
       // rsam: considering this, but placeOn action would already fire emotion events
@@ -527,7 +527,7 @@ void BehaviorExploreBringCubeToBeacon::TryToPlaceAt(const Pose3d& pose, int atte
     if ( placeAtCubeFinalFail ) {
       const ObservableObject* failedObject = GetBEI().GetBlockWorld().GetLocatedObjectByID( _selectedObjectID );
       if (failedObject) {
-        GetBEI().GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectActionFailure::PlaceObjectAt, pose);
+        GetAIComp<AIWhiteboard>().SetFailedToUse(*failedObject, AIWhiteboard::ObjectActionFailure::PlaceObjectAt, pose);
       }
 
       // rsam: considering this, but placeAt action would already fire emotion events
@@ -546,7 +546,7 @@ void BehaviorExploreBringCubeToBeacon::FireEmotionEvents()
 {
   if(GetBEI().HasMoodManager()){
     auto& moodManager = GetBEI().GetMoodManager();
-    const bool allCubesInBeacons = GetBEI().GetAIComponent().GetWhiteboard().AreAllCubesInBeacons();
+    const bool allCubesInBeacons = GetAIComp<AIWhiteboard>().AreAllCubesInBeacons();
     if ( allCubesInBeacons )
     {
       // fire emotion event, Cozmo is happy he brought the last cube to the beacon
@@ -581,7 +581,7 @@ void BehaviorExploreBringCubeToBeacon::TransitionToObjectPickedUp()
     }
     
     // grab the selected beacon (there should be one)
-    AIWhiteboard& whiteboard = GetBEI().GetAIComponent().GetWhiteboard();
+    AIWhiteboard& whiteboard = GetAIComp<AIWhiteboard>();
     AIBeacon* selectedBeacon = whiteboard.GetActiveBeacon();
     if (nullptr == selectedBeacon) {
       DEV_ASSERT(nullptr!= selectedBeacon, "BehaviorExploreBringCubeToBeacon.TransitionToObjectPickedUp.NullBeacon");
@@ -678,7 +678,7 @@ const ObservableObject* BehaviorExploreBringCubeToBeacon::FindFreeCubeToStackOn(
     }
     
     // if we don't want to stack on this cube, skip
-    const AIWhiteboard& whiteboard = GetBEI().GetAIComponent().GetWhiteboard();
+    const AIWhiteboard& whiteboard = GetAIComp<AIWhiteboard>();
     const Pose3d& currentPose = blockPtr->GetPose();
     const bool recentFail = whiteboard.DidFailToUse(blockPtr->GetID(),
       AIWhiteboard::ObjectActionFailure::StackOnObject,
@@ -821,7 +821,7 @@ bool BehaviorExploreBringCubeToBeacon::FindFreePoseInBeacon(
   
   // compute directionality when there are cubes inside the beacon
   AIWhiteboard::ObjectInfoList objectsInBeacon;
-  const bool hasObjectsInBeacon = behaviorExternalInterface.GetAIComponent().GetWhiteboard().FindCubesInBeacon(beacon, objectsInBeacon);
+  const bool hasObjectsInBeacon = behaviorExternalInterface.GetAIComponent().GetComponent<AIWhiteboard>().FindCubesInBeacon(beacon, objectsInBeacon);
   if ( hasObjectsInBeacon )
   {
     const BlockWorld& world = behaviorExternalInterface.GetBlockWorld();

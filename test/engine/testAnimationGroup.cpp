@@ -13,12 +13,17 @@
 
 #include "gtest/gtest.h"
 
-#include "util/math/math.h"
+#include "coretech/common/engine/utils/timer.h"
+
 #include "engine/moodSystem/moodManager.h"
 #include "engine/animations/animationGroup/animationGroup.h"
 #include "engine/animations/animationGroup/animationGroupContainer.h"
+
+#include "util/entityComponent/dependencyManagedEntity.h"
 #include "util/logging/logging.h"
+#include "util/math/math.h"
 #include "util/random/randomGenerator.h"
+
 #include "json/json.h"
 #include <assert.h>
 
@@ -277,7 +282,9 @@ TEST(AnimationGroup, GetAnimationNameBeforeCooldownSingle)
   
   moodManager.SetEmotion(EmotionType::Happy, 0.5);
   
-  moodManager.Update(0);
+  Anki::DependencyManagedEntity<RobotComponentID> dependencies;
+  Anki::BaseStationTimer::getInstance()->UpdateTime( Anki::Util::SecToNanoSec( 0.f ) );
+  moodManager.UpdateDependent(dependencies);
   
   AnimationGroup group = DeserializeAnimationGroupFromJson(kOneAnimationDefaultMoodCooldownJson);
   
@@ -285,7 +292,8 @@ TEST(AnimationGroup, GetAnimationNameBeforeCooldownSingle)
   
   EXPECT_EQ(kMajorWin, name);
   
-  moodManager.Update(5);
+  Anki::BaseStationTimer::getInstance()->UpdateTime( Anki::Util::SecToNanoSec( 5.f ) );
+  moodManager.UpdateDependent(dependencies);
   
   const std::string& name2 = group.GetAnimationName(moodManager, groupContainer);
 
@@ -300,7 +308,9 @@ TEST(AnimationGroup, GetAnimationNameBeforeCooldownMultiple)
   
   moodManager.SetEmotion(EmotionType::Happy, 0.5);
   
-  moodManager.Update(0);
+  Anki::DependencyManagedEntity<RobotComponentID> dependencies;
+  Anki::BaseStationTimer::getInstance()->UpdateTime( Anki::Util::SecToNanoSec( 0.f ) );
+  moodManager.UpdateDependent(dependencies);
   
   AnimationGroup group = DeserializeAnimationGroupFromJson(kTwoAnimationsDefaultMoodWithCooldownJson);
   
@@ -318,7 +328,8 @@ TEST(AnimationGroup, GetAnimationNameBeforeCooldownMultiple)
     }
   }
   
-  moodManager.Update(5);
+  Anki::BaseStationTimer::getInstance()->UpdateTime( Anki::Util::SecToNanoSec( 5.f ) );
+  moodManager.UpdateDependent(dependencies);
   
   const std::string& name2 = group.GetAnimationName(moodManager, groupContainer);
 
@@ -333,7 +344,9 @@ TEST(AnimationGroup, GetAnimationNameOnCooldown)
   
   moodManager.SetEmotion(EmotionType::Happy, 0.5);
   
-  moodManager.Update(0);
+  Anki::DependencyManagedEntity<RobotComponentID> dependencies;
+  Anki::BaseStationTimer::getInstance()->UpdateTime( Anki::Util::SecToNanoSec( 0.f ) );
+  moodManager.UpdateDependent(dependencies);
   
   AnimationGroup group = DeserializeAnimationGroupFromJson(kOneAnimationDefaultMoodCooldownJson);
   
@@ -341,8 +354,9 @@ TEST(AnimationGroup, GetAnimationNameOnCooldown)
   
   EXPECT_EQ(kMajorWin, name);
   
-  moodManager.Update(10);
-  
+  Anki::BaseStationTimer::getInstance()->UpdateTime( Anki::Util::SecToNanoSec( 10.f ) );
+  moodManager.UpdateDependent(dependencies);
+
   const std::string& name2 = group.GetAnimationName(moodManager, groupContainer);
   
   EXPECT_EQ(kMajorWin, name2);
@@ -355,7 +369,9 @@ TEST(AnimationGroup, GetAnimationNameAfterCooldown)
   
   moodManager.SetEmotion(EmotionType::Happy, 0.5);
   
-  moodManager.Update(0);
+  Anki::DependencyManagedEntity<RobotComponentID> dependencies;
+  Anki::BaseStationTimer::getInstance()->UpdateTime( Anki::Util::SecToNanoSec( 0.f ) );
+  moodManager.UpdateDependent(dependencies);
   
   AnimationGroup group = DeserializeAnimationGroupFromJson(kOneAnimationDefaultMoodCooldownJson);
   
@@ -363,7 +379,8 @@ TEST(AnimationGroup, GetAnimationNameAfterCooldown)
   
   EXPECT_EQ(kMajorWin, name);
   
-  moodManager.Update(15);
+  Anki::BaseStationTimer::getInstance()->UpdateTime( Anki::Util::SecToNanoSec( 15.f ) );
+  moodManager.UpdateDependent(dependencies);
   
   const std::string& name2 = group.GetAnimationName(moodManager, groupContainer);
   

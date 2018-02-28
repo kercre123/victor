@@ -47,7 +47,7 @@ public:
 
   ~UserIntentComponent();
   
-  void Update();
+  virtual void UpdateDependent(const BCCompMap& dependentComps) override;
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Trigger word:

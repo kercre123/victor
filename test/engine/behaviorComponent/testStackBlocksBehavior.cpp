@@ -140,6 +140,8 @@ void SetupStackTest(Robot& robot, ICozmoBehaviorPtr& stackBehavior,
                     TestBehaviorFramework& testBehaviorFramework,
                     ObjectID& objID1, ObjectID& objID2)
 {
+  DependencyManagedEntity<RobotComponentID> dependencies;
+
   auto& aiComponent = testBehaviorFramework.GetAIComponent();
   auto& behaviorExternalInterface = testBehaviorFramework.GetBehaviorExternalInterface();
 
@@ -147,15 +149,12 @@ void SetupStackTest(Robot& robot, ICozmoBehaviorPtr& stackBehavior,
 
   ASSERT_FALSE(stackBehavior->WantsToBeActivated()) << "behavior should not be activatable without cubes";
   
-  std::string currentActivityName;
-  std::string behaviorDebugStr;
-  
   IncrementBaseStationTimerTicks();
-  aiComponent.Update(robot, currentActivityName, behaviorDebugStr);
+  aiComponent.UpdateDependent(dependencies);
   IncrementBaseStationTimerTicks();
-  aiComponent.Update(robot, currentActivityName, behaviorDebugStr);
+  aiComponent.UpdateDependent(dependencies);
   IncrementBaseStationTimerTicks();
-  aiComponent.Update(robot, currentActivityName, behaviorDebugStr);
+  aiComponent.UpdateDependent(dependencies);
   ASSERT_FALSE(stackBehavior->WantsToBeActivated()) << "behavior should not be activatable without cubes after update";
 
   auto& blockWorld = robot.GetBlockWorld();
@@ -163,7 +162,7 @@ void SetupStackTest(Robot& robot, ICozmoBehaviorPtr& stackBehavior,
   blockWorld.AddConnectedActiveObject(1, 1, ObjectType::Block_LIGHTCUBE2);
 
   IncrementBaseStationTimerTicks();
-  aiComponent.Update(robot, currentActivityName, behaviorDebugStr);
+  aiComponent.UpdateDependent(dependencies);
   ASSERT_FALSE(stackBehavior->WantsToBeActivated()) << "behavior should not be activatable with unknown cubes";
 
   // Add two objects
@@ -261,11 +260,9 @@ TEST(StackBlocksBehavior, DeleteCubeCrash)
     ObservableObject* object2 = blockWorld.GetLocatedObjectByID(objID2);
     ASSERT_TRUE(object2 == nullptr) << "object should have been deleted";
   }
-
-  std::string currentActivityName;
-  std::string behaviorDebugStr;
-  
-  aiComponent.Update(robot, currentActivityName, behaviorDebugStr);
+    
+  DependencyManagedEntity<RobotComponentID> dependencies;
+  aiComponent.UpdateDependent(dependencies);
   //auto result =
   stackBehavior->WantsToBeActivated();
   stackBehavior->OnActivated();

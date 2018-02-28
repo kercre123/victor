@@ -72,7 +72,7 @@ void BlockTapFilterComponent::InitDependent(Cozmo::Robot* robot, const RobotComp
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BlockTapFilterComponent::Update()
+void BlockTapFilterComponent::UpdateDependent(const RobotCompMap& dependentComps)
 {
   ANKI_CPU_PROFILE("BlockTapFilterComponent::Update");
   

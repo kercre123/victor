@@ -366,7 +366,7 @@ bool UserIntentComponent::SetCloudIntentPendingFromJSON(const std::string& cloud
   return true;
 }
 
-void UserIntentComponent::Update()
+void UserIntentComponent::UpdateDependent(const BCCompMap& dependentComps)
 {
   
   {

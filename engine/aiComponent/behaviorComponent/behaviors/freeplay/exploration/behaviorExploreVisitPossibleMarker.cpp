@@ -55,7 +55,7 @@ BehaviorExploreVisitPossibleMarker::~BehaviorExploreVisitPossibleMarker()
 bool BehaviorExploreVisitPossibleMarker::WantsToBeActivatedBehavior() const
 {
   // check whiteboard for known markers
-  const AIWhiteboard& whiteboard = GetBEI().GetAIComponent().GetWhiteboard();
+  const AIWhiteboard& whiteboard = GetAIComp<AIWhiteboard>();
   whiteboard.GetPossibleObjectsWRTOrigin(_possibleObjects);
 
   const bool canRun = !_possibleObjects.empty(); // TODO: consider distance limit
@@ -250,7 +250,7 @@ void BehaviorExploreVisitPossibleMarker::MarkPossiblePoseAsEmpty(ObjectType obje
   PRINT_NAMED_INFO("BehaviorExploreVisitPossibleMarker.ClearPose",
                    "robot looked at pose, so clear it");
 
-  GetBEI().GetAIComponent().GetWhiteboard().FinishedSearchForPossibleCubeAtPose(objectType, pose);
+  GetAIComp<AIWhiteboard>().FinishedSearchForPossibleCubeAtPose(objectType, pose);
 }
 
 

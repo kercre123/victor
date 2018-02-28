@@ -91,7 +91,7 @@ void BehaviorProceduralClock::InitBehavior()
   if(_instanceParams.getDigitFunctions.size() == 0){
     // TODO: find a way to load this in from data - for now init the clock as one that counts up based on time
     // and allow behaviors to re-set functionality in code only
-    auto& timerUtility = GetBEI().GetAIComponent().GetComponent<TimerUtility>(AIComponentID::TimerUtility);
+    auto& timerUtility = GetBEI().GetAIComponent().GetComponent<TimerUtility>();
     
     std::map<DigitID, std::function<int()>> countUpFuncs;
     // Ten Mins Digit
@@ -175,8 +175,9 @@ void BehaviorProceduralClock::TransitionToShowClock()
   if(_instanceParams.showClockCallback != nullptr){
     _instanceParams.showClockCallback();
   }
+
   _lifetimeParams.currentState = BehaviorState::ShowClock;
-  auto& timerUtility = GetBEI().GetAIComponent().GetComponent<TimerUtility>(AIComponentID::TimerUtility);
+  auto& timerUtility = GetBEI().GetAIComponent().GetComponent<TimerUtility>();
   _lifetimeParams.timeShowClockStarted = timerUtility.GetSystemTime_s();
   // displaying time on face handled in update loop
 }
@@ -200,7 +201,7 @@ void BehaviorProceduralClock::BehaviorUpdate()
   }
 
   if(_lifetimeParams.currentState == BehaviorState::ShowClock){
-    auto& timerUtility = GetBEI().GetAIComponent().GetComponent<TimerUtility>(AIComponentID::TimerUtility);
+    auto& timerUtility = GetBEI().GetAIComponent().GetComponent<TimerUtility>();
     const int currentTime_s = timerUtility.GetSystemTime_s();
 
     if(currentTime_s >= (_lifetimeParams.timeShowClockStarted + _instanceParams.totalTimeDisplayClock)){
@@ -251,7 +252,7 @@ void BehaviorProceduralClock::BuildAndDisplayTimer(std::map<std::string, std::st
     }
   }
   // build the full image
-  auto& imageCache = GetBEI().GetAIComponent().GetComponent<TemplatedImageCache>(AIComponentID::TemplatedImageCache);
+  auto& imageCache = GetBEI().GetAIComponent().GetComponent<TemplatedImageCache>();
   const auto& image = imageCache.BuildImage(GetDebugLabel(), 
                                             FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT, 
                                             _instanceParams.templateJSON, quadrantMap);
@@ -290,7 +291,7 @@ SmartFaceID BehaviorProceduralClock::UpdateTargetFace()
     smartFaces.insert(GetBEI().GetFaceWorld().GetSmartFaceID(entry));
   }
 
-  const auto& faceSelection = GetBEI().GetAIComponent().GetFaceSelectionComponent();
+  const auto& faceSelection = GetAIComp<FaceSelectionComponent>();
   FaceSelectionComponent::FaceSelectionFactorMap criteriaMap;
   criteriaMap.insert(std::make_pair(FaceSelectionComponent::FaceSelectionPenaltyMultiplier::RelativeHeadAngleRadians, 1));
   criteriaMap.insert(std::make_pair(FaceSelectionComponent::FaceSelectionPenaltyMultiplier::RelativeBodyAngleRadians, 3));

@@ -106,7 +106,8 @@ void BodyLightComponent::UpdateChargingLightConfig()
   }
 }
 
-void BodyLightComponent::Update()
+
+void BodyLightComponent::UpdateDependent(const RobotCompMap& dependentComps)
 {
   UpdateChargingLightConfig();
   

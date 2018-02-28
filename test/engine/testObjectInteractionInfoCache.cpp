@@ -117,7 +117,7 @@ TEST(ObjectInteractionInfoCache, BestObjectConsistency)
   // Use pickup object - details should not be important for this test, we're looking
   // to test default expected behavior
   ObjectInteractionIntention intent = ObjectInteractionIntention::PickUpObjectNoAxisCheck;
-  ObjectInteractionInfoCache& objCache = robot.GetAIComponent().GetObjectInteractionInfoCache();
+  ObjectInteractionInfoCache& objCache = robot.GetAIComponent().GetComponent<ObjectInteractionInfoCache>();
   
   {
     // both objects should be valid for pickup

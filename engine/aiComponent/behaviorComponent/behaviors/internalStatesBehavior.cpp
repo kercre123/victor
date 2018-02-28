@@ -568,7 +568,7 @@ void InternalStatesBehavior::State::AddExitTransition(StateID toState, IBEICondi
 void InternalStatesBehavior::State::OnActivated(BehaviorExternalInterface& bei)
 {
   if( _clearIntent != USER_INTENT(INVALID) ) {
-    auto& uic = bei.GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
+    auto& uic = bei.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
     if( uic.IsUserIntentPending( _clearIntent ) ) {
       uic.ClearUserIntent( _clearIntent );
     }

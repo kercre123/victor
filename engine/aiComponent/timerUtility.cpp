@@ -38,6 +38,7 @@ int TimerHandle::GetSystemTime_s()
 // TimerUtility
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TimerUtility::TimerUtility()
+: IDependencyManagedComponent<AIComponentID>(this, AIComponentID::TimerUtility)
 {
   _activeTimer = std::make_shared<TimerHandle>(0);
 }

@@ -219,7 +219,7 @@ bool ConditionUserIntentPending::AreConditionsMetInternal( BehaviorExternalInter
     return false;
   }
   
-  const auto& uic = behaviorExternalInterface.GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
+  const auto& uic = behaviorExternalInterface.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
   if( !uic.IsAnyUserIntentPending() ) {
     return false;
   }

@@ -606,7 +606,7 @@ void ICozmoBehavior::OnActivatedInternal()
   if( _respondToUserIntent != nullptr ) {
     auto tag = _respondToUserIntent->GetUserIntentTagSelected();
     if( tag != USER_INTENT(INVALID) ) {
-      auto& uic = GetBEI().GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
+      auto& uic = GetBehaviorComp<UserIntentComponent>();
       if( _claimUserIntentData ) {
         // u now pwn it
         _pendingIntent.reset( uic.ClearUserIntentWithOwnership( tag ) );
@@ -623,7 +623,7 @@ void ICozmoBehavior::OnActivatedInternal()
   
   // Clear trigger word if responding to it
   if( _respondToTriggerWord ) {
-    GetBEI().GetAIComponent().GetBehaviorComponent().GetUserIntentComponent().ClearPendingTriggerWord();
+    GetBehaviorComp<UserIntentComponent>().ClearPendingTriggerWord();
   }
 
   // Handle Vision Mode Subscriptions
@@ -651,7 +651,7 @@ void ICozmoBehavior::OnActivatedInternal()
 void ICozmoBehavior::OnEnteredActivatableScopeInternal()
 {
   if ( _requiredProcess != AIInformationAnalysis::EProcess::Invalid ){
-    auto& infoProcessor = GetBEI().GetAIComponent().GetAIInformationAnalyzer();
+    auto& infoProcessor = GetAIComp<AIInformationAnalyzer>();
     infoProcessor.AddEnableRequest(_requiredProcess, GetDebugLabel().c_str());
   }
 
@@ -674,7 +674,7 @@ void ICozmoBehavior::OnEnteredActivatableScopeInternal()
 void ICozmoBehavior::OnLeftActivatableScopeInternal()
 {
   if ( _requiredProcess != AIInformationAnalysis::EProcess::Invalid ){
-    auto& infoProcessor = GetBEI().GetAIComponent().GetAIInformationAnalyzer();
+    auto& infoProcessor = GetAIComp<AIInformationAnalyzer>();
     infoProcessor.RemoveEnableRequest(_requiredProcess, GetDebugLabel().c_str());
   }
 
@@ -735,7 +735,7 @@ void ICozmoBehavior::OnDeactivatedInternal()
   if( (_respondToUserIntent != nullptr) && (!_claimUserIntentData) ) {
     // make sure a delegate of this behavior claimed the intent that we preserved for them, and
     // remove it if not
-    auto& uic = GetBEI().GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
+    auto& uic = GetBehaviorComp<UserIntentComponent>();
     uic.ResetPreservedUserIntents( GetID() );
   }
   
@@ -779,7 +779,7 @@ bool ICozmoBehavior::WantsToBeActivatedBase() const
   // check if required processes are running
   if ( _requiredProcess != AIInformationAnalysis::EProcess::Invalid )
   {
-    const bool isProcessOn = GetBEI().GetAIComponent().GetAIInformationAnalyzer().IsProcessRunning(_requiredProcess);
+    const bool isProcessOn = GetAIComp<AIInformationAnalyzer>().IsProcessRunning(_requiredProcess);
     if ( !isProcessOn ) {
       PRINT_NAMED_ERROR("ICozmoBehavior.WantsToBeActivated.RequiredProcessNotFound",
         "Required process '%s' is not enabled for '%s'",
@@ -809,7 +809,7 @@ bool ICozmoBehavior::WantsToBeActivatedBase() const
   const bool requiresRecentDriveOff = FLT_GE(_requiredRecentDriveOffCharger_sec, 0.0f);
   if ( requiresRecentDriveOff )
   {
-    const float lastDriveOff = GetBEI().GetAIComponent().GetWhiteboard().GetTimeAtWhichRobotGotOffCharger();
+    const float lastDriveOff = GetAIComp<AIWhiteboard>().GetTimeAtWhichRobotGotOffCharger();
     const bool hasDrivenOff = FLT_GE(lastDriveOff, 0.0f);
     if ( !hasDrivenOff ) {
       // never driven off the charger, can't run
@@ -1295,7 +1295,7 @@ UserIntent& ICozmoBehavior::GetTriggeringUserIntent()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::PlayEmergencyGetOut(AnimationTrigger anim)
 {
-  auto& contComp = GetBEI().GetAIComponent().GetComponent<ContinuityComponent>(AIComponentID::ContinuityComponent);
+  auto& contComp = GetBEI().GetAIComponent().GetComponent<ContinuityComponent>();
   contComp.PlayEmergencyGetOut(anim);
 }
 

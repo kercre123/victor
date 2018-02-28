@@ -14,7 +14,8 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_TimerUtility_H__
 #define __Cozmo_Basestation_BehaviorSystem_TimerUtility_H__
 
-#include "util/entityComponent/iManageableComponent.h"
+#include "engine/aiComponent/aiComponents_fwd.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
 #include "util/logging/logging.h"
 
@@ -64,7 +65,8 @@ class TimerHandle{
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // TimerUtility
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class TimerUtility : public IManageableComponent , private Util::noncopyable
+class TimerUtility : public IDependencyManagedComponent<AIComponentID>, 
+                     private Util::noncopyable
 {
 public:
   using SharedHandle = std::shared_ptr<TimerHandle>;

@@ -121,8 +121,9 @@ void BehaviorSystemManager::ResetBehaviorStack(IBehavior* baseBehavior)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorSystemManager::Update(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorSystemManager::UpdateDependent(const BCCompMap& dependentComponents)
 {
+  auto& bei = dependentComponents.GetValue<BehaviorExternalInterface>();
   ANKI_CPU_PROFILE("BehaviorSystemManager::Update");
   
   if(_initializationStage == InitializationStage::SystemNotInitialized) {
@@ -143,7 +144,7 @@ void BehaviorSystemManager::Update(BehaviorExternalInterface& behaviorExternalIn
   }
 
   for( const auto& completionMsg : _actionsCompletedThisTick ) {
-    behaviorExternalInterface.GetDelegationComponent().HandleActionComplete( completionMsg.idTag );
+    bei.GetDelegationComponent().HandleActionComplete( completionMsg.idTag );
   }
   
   _asyncMessageComponent->PrepareCache();
@@ -151,14 +152,14 @@ void BehaviorSystemManager::Update(BehaviorExternalInterface& behaviorExternalIn
   std::set<IBehavior*> behaviorsUpdatesTickedInStack;
   // First update the behavior stack and allow it to make any delegation/canceling
   // decisions that it needs to make
-  _behaviorStack->UpdateBehaviorStack(behaviorExternalInterface,
+  _behaviorStack->UpdateBehaviorStack(bei,
                                       _actionsCompletedThisTick,
                                       *_asyncMessageComponent,
                                       behaviorsUpdatesTickedInStack);
   _actionsCompletedThisTick.clear();
   // Then once all of that's done, update anything that's in activatable scope
   // but isn't currently on the behavior stack
-  UpdateInActivatableScope(behaviorExternalInterface, behaviorsUpdatesTickedInStack);
+  UpdateInActivatableScope(bei, behaviorsUpdatesTickedInStack);
   
   _asyncMessageComponent->ClearCache();
 } // Update()

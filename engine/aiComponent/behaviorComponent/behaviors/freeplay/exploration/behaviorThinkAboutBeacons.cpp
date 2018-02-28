@@ -47,7 +47,7 @@ bool BehaviorThinkAboutBeacons::WantsToBeActivatedBehavior() const
   bool needsBeacon = true;
   
   // check current beacon
-  const AIWhiteboard& whiteboard = GetBEI().GetAIComponent().GetWhiteboard();
+  const AIWhiteboard& whiteboard = GetAIComp<AIWhiteboard>();
   const AIBeacon* activeBeacon = whiteboard.GetActiveBeacon();
   if ( nullptr != activeBeacon )
   {
@@ -90,7 +90,7 @@ void BehaviorThinkAboutBeacons::LoadConfig(const Json::Value& config)
 void BehaviorThinkAboutBeacons::SelectNewBeacon()
 {
   // TODO implement the real deal
-   AIWhiteboard& whiteboard = GetBEI().GetAIComponent().GetWhiteboard();
+   AIWhiteboard& whiteboard = GetAIComp<AIWhiteboard>();
   whiteboard.AddBeacon( GetBEI().GetRobotInfo().GetPose().GetWithRespectToRoot(), _configParams.beaconRadius_mm );
 }
 

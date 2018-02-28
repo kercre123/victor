@@ -55,7 +55,7 @@ ProxSensorComponent::ProxSensorComponent()
 }
 
 
-void ProxSensorComponent::UpdateInternal(const RobotState& msg)
+void ProxSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
 {
   if (kProxSensorEnabled)
   {

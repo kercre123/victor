@@ -51,14 +51,18 @@ public:
   // IDependencyManagedComponent functions
   //////
   virtual void InitDependent(Robot* robot, const BCCompMap& dependentComponents) override;
-  virtual void UpdateDependent(const BCCompMap& dependentComponents) override {};
+  virtual void UpdateDependent(const BCCompMap& dependentComponents) override;
   virtual void GetInitDependencies(BCCompIDSet& dependencies) const override 
   {
     dependencies.insert(BCComponentID::BaseBehaviorWrapper);
     dependencies.insert(BCComponentID::BehaviorExternalInterface);
     dependencies.insert(BCComponentID::AsyncMessageComponent);
   }
-  virtual void GetUpdateDependencies(BCCompIDSet& dependencies) const override {};
+
+  virtual void AdditionalUpdateAccessibleComponents(BCCompIDSet& components) const override
+  {
+    components.insert(BCComponentID::BehaviorExternalInterface);
+  };
   //////
   // end IDependencyManagedComponent functions
   //////
@@ -76,9 +80,6 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   //
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
-  // Calls the current behavior's Update() method until it returns COMPLETE or FAILURE.
-  void Update(BehaviorExternalInterface& behaviorExternalInterface) override;
   
   bool IsControlDelegated(const IBehavior* delegator) override;
   bool CanDelegate(IBehavior* delegator) override;

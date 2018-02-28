@@ -126,7 +126,7 @@ void BehaviorDriveOffCharger::BehaviorUpdate()
   if( !IsControlDelegated() ) {
     // store in whiteboard our success
     const float curTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    GetBEI().GetAIComponent().GetWhiteboard().GotOffChargerAtTime( curTime );
+    GetAIComp<AIWhiteboard>().GotOffChargerAtTime( curTime );
   }
 }
   

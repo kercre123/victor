@@ -87,7 +87,7 @@ void VisionScheduleMediator::InitDependent(Cozmo::Robot* robot, const RobotCompM
   return;
 }
 
-void VisionScheduleMediator::Update()
+void VisionScheduleMediator::UpdateDependent(const RobotCompMap& dependentComps)
 {
   // Update the VisionSchedule, if necessary
   if(_subscriptionRecordIsDirty){

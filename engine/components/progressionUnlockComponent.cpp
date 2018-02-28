@@ -44,12 +44,6 @@ ProgressionUnlockComponent::ProgressionUnlockComponent()
 void ProgressionUnlockComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
 {
   _robot = robot;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ProgressionUnlockComponent::Init()
-{
   Json::Value config;
   InitConfig(_robot->GetContext(), config);
 
@@ -87,6 +81,7 @@ void ProgressionUnlockComponent::Init()
     helper.SubscribeGameToEngine< MessageGameToEngineTag::RequestSetUnlock >();
   }
 }
+
 
 const std::set<UnlockId>& ProgressionUnlockComponent::GetDefaultUnlocks(const CozmoContext* context)
 {
@@ -288,7 +283,7 @@ void ProgressionUnlockComponent::SendUnlockStatus() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ProgressionUnlockComponent::Update()
+void ProgressionUnlockComponent::UpdateDependent(const RobotCompMap& dependentComps)
 {
 
 }

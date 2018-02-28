@@ -76,23 +76,19 @@ public:
   // IDependencyManagedComponent functions
   //////
   virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
-  virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {};
+  virtual void AdditionalInitAccessibleComponents(RobotCompIDSet& components) const override {
+      components.insert(RobotComponentID::CozmoContext);
+  };
   virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
+  virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
   //////
   // end IDependencyManagedComponent functions
   //////
   
-  void Init(const Json::Value& inJson);
-  
-  // =========== Mood =============
-
-  // Load in all data-driven emotion events // TODO: move to mood manager?
-  void LoadEmotionEvents(const RobotDataLoader::FileJsonMap& emotionEventData);      
+  // =========== Mood =============   
   
   void Reset();
-  
-  void Update(float currentTime);
-  
+    
   // ==================== Modify Emotions ====================
   
   void TriggerEmotionEvent(const std::string& eventName, float currentTimeInSeconds);
@@ -151,6 +147,9 @@ public:
   static float GetCurrentTimeInSeconds();
   
 private:
+  void ReadMoodConfig(const Json::Value& inJson);
+  // Load in all data-driven emotion events // TODO: move to mood manager?
+  void LoadEmotionEvents(const RobotDataLoader::FileJsonMap& emotionEventData);   
   bool LoadEmotionEvents(const Json::Value& inJson);
 
   // ============================== Private Member Funcs ==============================

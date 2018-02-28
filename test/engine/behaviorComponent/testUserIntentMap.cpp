@@ -254,15 +254,14 @@ TEST(UserIntentMap, AppIntent)
   
   Robot& robot = testBehaviorFramework.GetRobot();
   
-  auto& uic = testBehaviorFramework.GetBehaviorComponent().GetUserIntentComponent();
+  auto& uic = testBehaviorFramework.GetBehaviorComponent().GetComponent<UserIntentComponent>();
   
   EXPECT_FALSE( uic.IsAnyUserIntentPending() );
   
   // tick the behavior to make sure ticking has no effect, unless we broadcast
   {
-    std::string currentActivityName;
-    std::string behaviorDebugStr;
-    testBehaviorFramework.GetBehaviorComponent().Update(robot, currentActivityName, behaviorDebugStr);
+    AICompMap emptyMap;
+    testBehaviorFramework.GetBehaviorComponent().UpdateDependent(emptyMap);
   }
   
   EXPECT_FALSE( uic.IsAnyUserIntentPending() );
@@ -280,9 +279,8 @@ TEST(UserIntentMap, AppIntent)
   
   // Tick the behavior component to send the message to the user intent component
   {
-    std::string currentActivityName;
-    std::string behaviorDebugStr;
-    testBehaviorFramework.GetBehaviorComponent().Update(robot, currentActivityName, behaviorDebugStr);
+    AICompMap emptyMap;
+    testBehaviorFramework.GetBehaviorComponent().UpdateDependent(emptyMap);
   }
   
   EXPECT_TRUE( uic.IsAnyUserIntentPending() );
@@ -303,7 +301,8 @@ TEST(UserIntentMap, IntentExpiration)
   CreateComponent(testMapConfig, comp, robot);
 
   BaseStationTimer::getInstance()->UpdateTime(0);
-  comp->Update();
+  BCCompMap emptyMap;
+  comp->UpdateDependent(emptyMap);
   
   comp->SetUserIntentPending(USER_INTENT(test_user_intent_1));
   EXPECT_TRUE(comp->IsAnyUserIntentPending());
@@ -313,7 +312,7 @@ TEST(UserIntentMap, IntentExpiration)
 
   for( float t=0.1f; t<1.0f; t+=0.1f ) {
     BaseStationTimer::getInstance()->UpdateTime(t);
-    comp->Update();
+    comp->UpdateDependent(emptyMap);
   }
 
   EXPECT_FALSE(comp->IsAnyUserIntentPending());

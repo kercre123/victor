@@ -85,7 +85,7 @@ TouchSensorComponent::TouchSensorComponent()
 {
 }
 
-void TouchSensorComponent::UpdateInternal(const RobotState& msg)
+void TouchSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
 {
   if(FACTORY_TEST &&_dataToRecord != nullptr)
   {

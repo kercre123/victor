@@ -138,7 +138,8 @@ void AnimationComponent::Init()
   
 }
   
-void AnimationComponent::Update()
+
+void AnimationComponent::UpdateDependent(const RobotCompMap& dependentComps)
 {
   if (_isInitialized) {
     DoleAvailableAnimations();

@@ -37,10 +37,10 @@ ISensorComponent::ISensorComponent(const std::string& logDirName)
 
 ISensorComponent::~ISensorComponent() = default;
 
-void ISensorComponent::Update(const RobotState& msg)
+void ISensorComponent::NotifyOfRobotState(const RobotState& msg)
 {
   // Update the derived class
-  UpdateInternal(msg);
+  NotifyOfRobotStateInternal(msg);
   
   // Log stuff if necessary
   Log();

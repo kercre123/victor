@@ -16,8 +16,9 @@
 
 #include "clad/types/animationTrigger.h"
 #include "engine/actions/actionInterface.h"
+#include "engine/aiComponent/aiComponents_fwd.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
-#include "util/entityComponent/iManageableComponent.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
 
 namespace Anki {
@@ -25,11 +26,16 @@ namespace Cozmo {
 
 class Robot;
 
-class ContinuityComponent : public IManageableComponent, private Util::noncopyable{
+class ContinuityComponent : public IDependencyManagedComponent<AIComponentID>,  
+                            private Util::noncopyable
+{
 public:
   ContinuityComponent(Robot& robot);
   
-  void Update();
+  // IDependencyManagedComponent<AIComponentID> functions
+  virtual void UpdateDependent(const AICompMap& dependentComps) override;
+  // end IDependencyManagedComponent<AIComponentID> functions
+
   
   // Inform the continuity component of the next desired action
   bool GetIntoAction(IActionRunner* action);

@@ -145,7 +145,7 @@ void BehaviorReactToVoiceCommand::OnBehaviorActivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::BehaviorUpdate()
 {
-  auto& uic = GetBEI().GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
+  auto& uic = GetBehaviorComp<UserIntentComponent>();
   
   if( _exitOnIntents && uic.IsAnyUserIntentPending() ) {
     

@@ -84,7 +84,7 @@ void MovementComponent::OnRobotDelocalized()
   _unexpectedMovement.Reset();
 }
   
-void MovementComponent::Update(const Cozmo::RobotState& robotState)
+void MovementComponent::NotifyOfRobotState(const Cozmo::RobotState& robotState)
 {
   _isMoving     =  static_cast<bool>(robotState.status & (uint16_t)RobotStatusFlag::IS_MOVING);
   _isHeadMoving = !static_cast<bool>(robotState.status & (uint16_t)RobotStatusFlag::HEAD_IN_POS);

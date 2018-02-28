@@ -60,7 +60,7 @@ void BehaviorReactToRobotOnBack::FlipDownIfNeeded()
     if (robotInfo.GetCliffSensorComponent().IsCliffDetected()) {
       AnimationTrigger anim = AnimationTrigger::FlipDownFromBack;
       
-      if(GetBEI().GetAIComponent().GetWhiteboard().HasHiccups())
+      if(GetAIComp<AIWhiteboard>().HasHiccups())
       {
         anim = AnimationTrigger::HiccupRobotOnBack;
       }

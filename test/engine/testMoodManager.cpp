@@ -54,11 +54,12 @@ Anki::Util::GraphEvaluator2d kTestDecayGraph({{0.0f, 1.0f }, {0.5f, 1.0f }, {1.0
 // Helper - tick mood manager for N ticks with a given timestep
 void TickMoodManager(MoodManager& moodManager, uint32_t numTicks, float tickTimeStep)
 {
+  DependencyManagedEntity<RobotComponentID> dependencies;
   for (uint32_t i=0; i < numTicks; ++i)
   {
     gCurrentTime += tickTimeStep;
-    moodManager.Update(gCurrentTime);
     BaseStationTimer::getInstance()->UpdateTime( Util::SecToNanoSec( gCurrentTime ) );
+    moodManager.UpdateDependent(dependencies);
   }
 }
 

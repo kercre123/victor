@@ -25,6 +25,7 @@
 #include "engine/faceWorld.h"
 #include "engine/petWorld.h"
 #include "engine/robot.h"
+#include "engine/robotDataLoader.h"
 #include "engine/robotStateHistory.h"
 #include "engine/vision/visionModesHelpers.h"
 #include "engine/vision/visionSystem.h"
@@ -156,10 +157,16 @@ namespace Cozmo {
 
     // "Special" viz identifier for the main camera feed
     _vizDisplayIndexMap["camera"] = 0;
+
+    auto& context = dependentComponents.GetValue<ContextWrapper>().context;
+
+    if (nullptr != context->GetDataPlatform())
+    {
+      ReadVisionConfig(context->GetDataLoader()->GetRobotVisionConfig());
+    }
   }
 
-
-  Result VisionComponent::Init(const Json::Value& config)
+  void VisionComponent::ReadVisionConfig(const Json::Value& config)
   {
     _isInitialized = false;
 
@@ -169,7 +176,7 @@ namespace Cozmo {
     do { \
       if(!JsonTools::GetValueOptional(__json__, __fieldName__, __variable__)) { \
         PRINT_NAMED_ERROR("VisionSystem.Init.MissingJsonParameter", "%s", __fieldName__); \
-        return RESULT_FAIL; \
+        return; \
     }} while(0)
 
     const Json::Value& imageQualityConfig = config[JsonKey::ImageQualityGroup];
@@ -184,7 +191,7 @@ namespace Cozmo {
     Result result = _visionSystem->Init(config);
     if(RESULT_OK != result) {
       PRINT_NAMED_ERROR("VisionComponent.Init.VisionSystemInitFailed", "");
-      return result;
+      return;
     }
 
     // Request face album data from the robot
@@ -213,11 +220,9 @@ namespace Cozmo {
     _dropStats.SetChannelName("VisionComponent");
     _dropStats.SetRecentWindowLength(kDropStatsWindowLength_sec * kCameraFrameRate_fps);
 
-    _isInitialized = true;
-    return RESULT_OK;
-
-  } //Init()
-
+    _isInitialized = true;    
+  } //ReadVisionConfig()
+  
   void VisionComponent::SetCameraCalibration(std::shared_ptr<Vision::CameraCalibration> camCalib)
   {
     const bool calibChanged = _camera->SetCalibration(camCalib);
@@ -406,23 +411,23 @@ namespace Cozmo {
     return lastResult;
   }
 
-  Result VisionComponent::Update()
+  void VisionComponent::UpdateDependent(const RobotCompMap& dependentComps)
   {
     if(!_isInitialized) {
       PRINT_NAMED_WARNING("VisionComponent.Update.NotInitialized", "");
-      return RESULT_FAIL;
+      return;
     }
 
     if (!_enabled) {
       PRINT_CH_INFO("VisionComponent", "VisionComponent.Update.NotEnabled", "");
-      return RESULT_OK;
+      return;
     }
 
     if(!IsCameraCalibrationSet())
     {
       PRINT_NAMED_WARNING("VisionComponent.Update.NoCameraCalibration",
-                          "Camera calibration should be set before calling Update().");
-      return RESULT_FAIL;
+                          "Camera calibration should be set before calling UpdateDependent().");
+      return;
     }
 
     if(_bufferedImg.IsEmpty())
@@ -455,7 +460,7 @@ namespace Cozmo {
             _lastReceivedImageTimeStamp_ms = 0;
             _lastProcessedImageTimeStamp_ms = 0;
             ReleaseImage(_bufferedImg);
-            return RESULT_FAIL;
+            return;
           }
           _framePeriod_ms = _bufferedImg.GetTimestamp() - _lastReceivedImageTimeStamp_ms;
         }
@@ -488,7 +493,7 @@ namespace Cozmo {
 
         ReleaseImage(_bufferedImg);
 
-        return RESULT_OK;
+        return;
       }
 
       // Do we have anything in state history at least as new as this image yet?
@@ -555,7 +560,9 @@ namespace Cozmo {
       } // if(!haveHistStateAtLeastAsNewAsImage)
     } // if(_bufferedImg.IsEmpty())
 
-    return RESULT_OK;
+    
+    UpdateAllResults();
+    return;
   }
 
   Result VisionComponent::SetNextImage(Vision::ImageRGB& image)

@@ -113,7 +113,7 @@ AnticTracker::AnticTracker(const Json::Value& config)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AnticTracker::PlayingAntic(BehaviorExternalInterface& bei)
 {
-  auto& timerUtility = bei.GetAIComponent().GetComponent<TimerUtility>(AIComponentID::TimerUtility);
+  auto& timerUtility = bei.GetAIComponent().GetComponent<TimerUtility>();
   _lastAnticPlayed_s = timerUtility.GetSystemTime_s();
 }
 
@@ -125,7 +125,7 @@ bool AnticTracker::GetMinTimeTillNextAntic(BehaviorExternalInterface& bei,
 {
   auto iter = GetApplicableRule(timer);
   if(iter != _recurranceRules.end()){
-    auto& timerUtility = bei.GetAIComponent().GetComponent<TimerUtility>(AIComponentID::TimerUtility);
+    auto& timerUtility = bei.GetAIComponent().GetComponent<TimerUtility>();
     const int currentTime_s = timerUtility.GetSystemTime_s();
     const int timeSinceLastAntic = currentTime_s - _lastAnticPlayed_s;
 
@@ -145,7 +145,7 @@ bool AnticTracker::GetMaxTimeTillNextAntic(BehaviorExternalInterface& bei,
 {
   auto iter = GetApplicableRule(timer);
   if(iter != _recurranceRules.end()){
-    auto& timerUtility = bei.GetAIComponent().GetComponent<TimerUtility>(AIComponentID::TimerUtility);
+    auto& timerUtility = bei.GetAIComponent().GetComponent<TimerUtility>();
     const int currentTime_s = timerUtility.GetSystemTime_s();
     const int timeSinceLastAntic = currentTime_s - _lastAnticPlayed_s;
 
@@ -229,7 +229,7 @@ void BehaviorTimerUtilityCoordinator::GetAllDelegates(std::set<IBehavior*>& dele
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorTimerUtilityCoordinator::WantsToBeActivatedBehavior() const 
 {
-  auto& uic = GetBEI().GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
+  auto& uic = GetBehaviorComp<UserIntentComponent>();
   const bool setTimerWantsToRun = uic.IsUserIntentPending(Anki::Cozmo::UserIntentTag::set_timer, *_lParams.setTimerIntent);
   const bool timerShouldRing    = TimerShouldRing();
   
@@ -266,7 +266,7 @@ void BehaviorTimerUtilityCoordinator::BehaviorUpdate()
     TransitionToRinging();
   }
 
-  auto& uic = GetBEI().GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
+  auto& uic = GetBehaviorComp<UserIntentComponent>();
   const bool robotPickedUp = GetBEI().GetRobotInfo().GetOffTreadsState() != OffTreadsState::OnTreads;
   const bool shouldCancelTimer = robotPickedUp || uic.IsTriggerWordPending();
   if(IsTimerRinging() && shouldCancelTimer){
@@ -309,7 +309,7 @@ bool BehaviorTimerUtilityCoordinator::TimerShouldRing() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const TimerUtility& BehaviorTimerUtilityCoordinator::GetTimerUtility() const
 {
-  return GetBEI().GetAIComponent().GetComponent<TimerUtility>(AIComponentID::TimerUtility);
+  return GetBEI().GetAIComponent().GetComponent<TimerUtility>();
 }
 
   
@@ -317,7 +317,7 @@ const TimerUtility& BehaviorTimerUtilityCoordinator::GetTimerUtility() const
 void BehaviorTimerUtilityCoordinator::SetupTimerBehaviorFunctions() const
 {
   using DigitID = BehaviorProceduralClock::DigitID;
-  auto& timerUtility = GetBEI().GetAIComponent().GetComponent<TimerUtility>(AIComponentID::TimerUtility);
+  auto& timerUtility = GetBEI().GetAIComponent().GetComponent<TimerUtility>();
   
   auto startTimerCallback = [&timerUtility, this](){
     _lParams.timerSet = true;

@@ -219,7 +219,7 @@ void BehaviorVisitInterestingEdge::OnBehaviorActivated()
   DEV_ASSERT(_cache.IsSet(), "BehaviorVisitInterestingEdge.InitInternal.CantTrustCache");
   
   // make sure we are not updating borders while running the behavior (useless)
-  GetBEI().GetAIComponent().GetAIInformationAnalyzer().AddDisableRequest(AIInformationAnalysis::EProcess::CalculateInterestingRegions, GetDebugLabel());
+  GetAIComp<AIInformationAnalyzer>().AddDisableRequest(AIInformationAnalysis::EProcess::CalculateInterestingRegions, GetDebugLabel());
 
   // reset operating state to pick the starting one
   _operatingState = EOperatingState::Invalid;
@@ -234,7 +234,7 @@ void BehaviorVisitInterestingEdge::OnBehaviorActivated()
 void BehaviorVisitInterestingEdge::OnBehaviorDeactivated()
 {
   // remove our request to disable the analysis process
-  GetBEI().GetAIComponent().GetAIInformationAnalyzer().RemoveDisableRequest(AIInformationAnalysis::EProcess::CalculateInterestingRegions, GetDebugLabel());
+  GetAIComp<AIInformationAnalyzer>().RemoveDisableRequest(AIInformationAnalysis::EProcess::CalculateInterestingRegions, GetDebugLabel());
 
   const auto& robotInfo = GetBEI().GetRobotInfo();
   // clear debug render
@@ -392,7 +392,7 @@ void BehaviorVisitInterestingEdge::PickGoals(BorderRegionScoreVector& validGoals
   validGoals.clear();
 
   // ask the information analyzer about the regions it has detected (should have been this frame)
-  const INavMap::BorderRegionVector& interestingRegions = GetBEI().GetAIComponent().GetAIInformationAnalyzer().GetDetectedInterestingRegions();
+  const INavMap::BorderRegionVector& interestingRegions = GetAIComp<AIInformationAnalyzer>().GetDetectedInterestingRegions();
   
   // process them and see if we can pick one
   if ( !interestingRegions.empty() && GetBEI().HasMapComponent() )
@@ -698,7 +698,7 @@ void BehaviorVisitInterestingEdge::TransitionToS3_ObserveFromClose()
 
   // we know the distance to the closest border, so we can get as close as we want before playing the anim
   const float robotLen = (ROBOT_BOUNDING_X_FRONT + ROBOT_BOUNDING_X_LIFT);
-  const float lastEdgeDistance_mm = GetBEI().GetAIComponent().GetWhiteboard().GetLastEdgeClosestDistance();
+  const float lastEdgeDistance_mm = GetAIComp<AIWhiteboard>().GetLastEdgeClosestDistance();
   DEV_ASSERT(!std::isnan(lastEdgeDistance_mm), "BehaviorVisitInterestingEdge.TransitionToS3_ObserveFromClose.NaNEdgeDist");
   const float distanceToMoveForward_mm = lastEdgeDistance_mm - robotLen - _configParams.observationDistanceFromBorder_mm;
   
@@ -825,7 +825,7 @@ void BehaviorVisitInterestingEdge::StateUpdate_GatheringAccurateEdge()
   _waitForImagesActionTag = ActionConstants::INVALID_TAG;
   
   // check distance to closest detected edge
-  const float lastEdgeDistance_mm = GetBEI().GetAIComponent().GetWhiteboard().GetLastEdgeClosestDistance();
+  const float lastEdgeDistance_mm = GetAIComp<AIWhiteboard>().GetLastEdgeClosestDistance();
   const bool detectedEdges = !std::isnan(lastEdgeDistance_mm);
   if ( detectedEdges && GetBEI().HasMapComponent() )
   { 

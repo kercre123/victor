@@ -266,7 +266,7 @@ bool BehaviorBouncer::WantsToBeActivatedBehavior() const
     smartIDs.insert(faceWorld.GetSmartFaceID(entry));
   }
 
-  const auto& faceSelection = GetBEI().GetAIComponent().GetFaceSelectionComponent();
+  const auto& faceSelection = GetAIComp<FaceSelectionComponent>();
   FaceSelectionComponent::FaceSelectionFactorMap criteriaMap;
   criteriaMap.insert(std::make_pair(FaceSelectionComponent::FaceSelectionPenaltyMultiplier::UnnamedFace, 1000));
   criteriaMap.insert(std::make_pair(FaceSelectionComponent::FaceSelectionPenaltyMultiplier::RelativeHeadAngleRadians, 1));

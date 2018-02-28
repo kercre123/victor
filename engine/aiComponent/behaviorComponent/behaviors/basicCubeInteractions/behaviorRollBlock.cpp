@@ -125,7 +125,7 @@ void BehaviorRollBlock::CalculateTargetID(ObjectID& targetID) const
   const Intent intent = (_iConfig.isBlockRotationImportant ?
                          Intent::RollObjectWithDelegateAxisCheck :
                          Intent::RollObjectWithDelegateNoAxisCheck);
-  auto& objInfoCache = GetBEI().GetAIComponent().GetObjectInteractionInfoCache();
+  auto& objInfoCache = GetAIComp<ObjectInteractionInfoCache>();
   targetID = objInfoCache.GetBestObjectForIntention(intent);
 }
   
@@ -158,7 +158,7 @@ void BehaviorRollBlock::TransitionToPerformingAction()
       auto& blockWorld = GetBEI().GetBlockWorld();
       const ObservableObject* pickupObj = blockWorld.GetLocatedObjectByID(_dVars.targetID);
       if(pickupObj != nullptr){
-        auto& whiteboard = GetBEI().GetAIComponent().GetWhiteboard();	
+        auto& whiteboard = GetAIComp<AIWhiteboard>();	
         whiteboard.SetFailedToUse(*pickupObj,	
                                   AIWhiteboard::ObjectActionFailure::RollOrPopAWheelie);
       }

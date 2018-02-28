@@ -66,7 +66,7 @@ void CubeCommsComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& 
 }
 
 
-void CubeCommsComponent::Update()
+void CubeCommsComponent::UpdateDependent(const RobotCompMap& dependentComps)
 {
   // Update the CubeBleClient instance
   const auto& result = _cubeBleClient->Update();
