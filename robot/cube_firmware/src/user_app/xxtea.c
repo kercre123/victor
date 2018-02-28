@@ -18,68 +18,7 @@
 #include "xxtea.h"
 
 #include <string.h>
-#if defined(_MSC_VER) && _MSC_VER < 1600
-typedef unsigned __int8 uint8_t;
-typedef unsigned __int32 uint32_t;
-#else
-#if defined(__FreeBSD__) && __FreeBSD__ < 5
-/* FreeBSD 4 doesn't have stdint.h file */
-#include <inttypes.h>
-#else
 #include <stdint.h>
-#endif
-#endif
-
-#include <sys/types.h> /* This will likely define BYTE_ORDER */
-
-#ifndef BYTE_ORDER
-#if (BSD >= 199103)
-# include <machine/endian.h>
-#else
-#if defined(linux) || defined(__linux__)
-# include <endian.h>
-#else
-#define LITTLE_ENDIAN   1234    /* least-significant byte first (vax, pc) */
-#define BIG_ENDIAN  4321    /* most-significant byte first (IBM, net) */
-#define PDP_ENDIAN  3412    /* LSB first in word, MSW first in long (pdp)*/
-
-#if defined(__i386__) || defined(__x86_64__) || defined(__amd64__) || \
-   defined(vax) || defined(ns32000) || defined(sun386) || \
-   defined(MIPSEL) || defined(_MIPSEL) || defined(BIT_ZERO_ON_RIGHT) || \
-   defined(__alpha__) || defined(__alpha)
-#define BYTE_ORDER    LITTLE_ENDIAN
-#endif
-
-#if defined(sel) || defined(pyr) || defined(mc68000) || defined(sparc) || \
-    defined(is68k) || defined(tahoe) || defined(ibm032) || defined(ibm370) || \
-    defined(MIPSEB) || defined(_MIPSEB) || defined(_IBMR2) || defined(DGUX) ||\
-    defined(apollo) || defined(__convex__) || defined(_CRAY) || \
-    defined(__hppa) || defined(__hp9000) || \
-    defined(__hp9000s300) || defined(__hp9000s700) || \
-    defined (BIT_ZERO_ON_LEFT) || defined(m68k) || defined(__sparc)
-#define BYTE_ORDER  BIG_ENDIAN
-#endif
-#endif /* linux */
-#endif /* BSD */
-#endif /* BYTE_ORDER */
-
-#ifndef BYTE_ORDER
-#ifdef __BYTE_ORDER
-#if defined(__LITTLE_ENDIAN) && defined(__BIG_ENDIAN)
-#ifndef LITTLE_ENDIAN
-#define LITTLE_ENDIAN __LITTLE_ENDIAN
-#endif
-#ifndef BIG_ENDIAN
-#define BIG_ENDIAN __BIG_ENDIAN
-#endif
-#if (__BYTE_ORDER == __LITTLE_ENDIAN)
-#define BYTE_ORDER LITTLE_ENDIAN
-#else
-#define BYTE_ORDER BIG_ENDIAN
-#endif
-#endif
-#endif
-#endif
 
 #define MX (((z >> 5) ^ (y << 2)) + ((y >> 3) ^ (z << 4))) ^ ((sum ^ y) + (key[(p & 3) ^ e] ^ z))
 #define DELTA 0x9e3779b9
@@ -94,9 +33,6 @@ typedef unsigned __int32 uint32_t;
 
 static uint32_t * xxtea_to_uint_array(const uint8_t * data, size_t len, int inc_len, size_t * out_len) {
     uint32_t *out;
-#if !(defined(BYTE_ORDER) && (BYTE_ORDER == LITTLE_ENDIAN))
-    size_t i;
-#endif
     size_t n;
 
     n = (((len & 3) == 0) ? (len >> 2) : ((len >> 2) + 1));
@@ -112,22 +48,13 @@ static uint32_t * xxtea_to_uint_array(const uint8_t * data, size_t len, int inc_
         if (!out) return NULL;
         *out_len = n;
     }
-#if defined(BYTE_ORDER) && (BYTE_ORDER == LITTLE_ENDIAN)
     memcpy(out, data, len);
-#else
-    for (i = 0; i < len; ++i) {
-        out[i >> 2] |= (uint32_t)data[i] << ((i & 3) << 3);
-    }
-#endif
 
     return out;
 }
 
 static uint8_t * xxtea_to_ubyte_array(const uint32_t * data, size_t len, int inc_len, size_t * out_len) {
     uint8_t *out;
-#if !(defined(BYTE_ORDER) && (BYTE_ORDER == LITTLE_ENDIAN))
-    size_t i;
-#endif
     size_t m, n;
 
     n = len << 2;
@@ -141,13 +68,7 @@ static uint8_t * xxtea_to_ubyte_array(const uint32_t * data, size_t len, int inc
 
     out = (uint8_t *)malloc(n + 1);
 
-#if defined(BYTE_ORDER) && (BYTE_ORDER == LITTLE_ENDIAN)
     memcpy(out, data, n);
-#else
-    for (i = 0; i < n; ++i) {
-        out[i] = (uint8_t)(data[i >> 2] >> ((i & 3) << 3));
-    }
-#endif
 
     out[n] = '\0';
     *out_len = n;
@@ -248,7 +169,6 @@ static uint8_t * xxtea_ubyte_decrypt(const uint8_t * data, size_t len, const uin
 }
 
 // public functions
-
 void * xxtea_encrypt(const void * data, size_t len, const void * key, size_t * out_len) {
     FIXED_KEY
     return xxtea_ubyte_encrypt((const uint8_t *)data, len, fixed_key, out_len);
