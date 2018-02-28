@@ -265,6 +265,7 @@ enum uint_8 BehaviorClass {
   ReactToTouchPetting,
   ReactToUnclaimedIntent,
   RobustChargerObservation,
+  SnakeGame,
   TrackCube,
   TrackFace,
 

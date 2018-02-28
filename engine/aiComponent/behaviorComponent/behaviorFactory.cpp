@@ -182,6 +182,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorReactToTouchPetting.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorReactToUnclaimedIntent.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorRobustChargerObservation.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorSnakeGame.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorTrackCube.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorTrackFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/volume/behaviorVolume.h"
@@ -1242,6 +1243,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::RobustChargerObservation:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorRobustChargerObservation(config));
+      break;
+    }
+    
+    case BehaviorClass::SnakeGame:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorSnakeGame(config));
       break;
     }
     
