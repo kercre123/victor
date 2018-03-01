@@ -1,0 +1,21 @@
+//
+//  main.m
+//  mac-client
+//
+//  Created by Paul Aluri on 2/28/18.
+//  Copyright © 2018 Paul Aluri. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+#import "BleCentral.h"
+
+int main(int argc, const char * argv[]) {
+  @autoreleasepool {
+    // insert code here...
+    BleCentral* central = [[BleCentral alloc] init];
+    
+    [central StartScanning];
+    dispatch_main();
+  }
+  return 0;
+}

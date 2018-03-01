@@ -5,17 +5,55 @@
 
 namespace Anki {
 namespace Victor {
-namespace ExternalInterface {
+namespace DeviceToRobot {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Actions
 
 // ====================================================
-//                 Initial Pairing Flow
+//          Robot Transport Security Messages
 // ====================================================
 
-// Respond to a pairing request from the robot, with the minimum of robot's and
-// the app's pairing protocol version (the highest compatible version)
+// Request initial pairing, supplying the robot's highest pairing protocol
+// version
+message RTSInitializationMessage 
+{
+    uint8		INITIALIZATION_TYPE,
+    uint8	    PUBLIC_KEY[32]
+}
+
+message RTSAckMessage {
+    uint8		RTS_MESSAGE_TYPE
+}
+
+message RTSChallengeMessage {
+    uint32  	NUMBER
+}
+
+message RTSWifiScanRequestMessage {
+    //
+}
+
+// [Clad, device]
+message RTSWifiConnectRequestMessage {
+    string		SSID,
+    string		PW
+}
+
+message RTSWifiIpRequestMessage {
+    //
+}
+
+message RTSDisconnectionMessage {
+    //
+}
+
+message RTSStatusRequestMessage {
+    //
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 message PairingProtocolResponse
 {
     uint_16 version
