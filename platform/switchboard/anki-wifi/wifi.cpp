@@ -323,7 +323,7 @@ bool ConnectWiFiBySsid(std::string ssid, std::string pw) {
 
       if(serviceOnline) {
         // early out--we are already connected!
-        return true;
+        //return true;
       }
     }
   }
@@ -374,9 +374,9 @@ bool ConnectWiFiBySsid(std::string ssid, std::string pw) {
   if(!didConnect && error != nullptr) {
     // 24 -- timeout ? wrong password
     // 36 -- Already connected
-    //printf("Error code: %d domain: %d\n", error->code, error->domain);
+    printf("Error code: %d domain: %d\n", error->code, error->domain);
 
-    //printf(std::string(error->message).c_str());
+    printf(std::string(error->message).c_str());
   }  
 
   return (bool)didConnect;
