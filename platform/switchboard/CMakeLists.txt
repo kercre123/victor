@@ -27,6 +27,7 @@ set(PLATFORM_LIBS
 target_link_libraries(vic-switchboard
 PRIVATE
   ${PLATFORM_LIBS}
+  sdk_clad_cpp
   #${SODIUM_LIBS}
   libglib-2.0.so
   libgio-2.0.so
@@ -58,6 +59,7 @@ target_include_directories(vic-switchboard
   $<BUILD_INTERFACE:${vicos_root}/sysroot/usr/include/gio-unix-2.0>
   $<BUILD_INTERFACE:${vicos_root}/sysroot/usr/include/glib-2.0>
   $<BUILD_INTERFACE:${vicos_root}/sysroot/usr/lib/glib-2.0/include>
+  $<BUILD_INTERFACE:${vicos_root}/generated/clad/externalInterface>
   ${PLATFORM_INCLUDES}
 )
 
