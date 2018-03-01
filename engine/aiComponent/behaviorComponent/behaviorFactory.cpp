@@ -81,6 +81,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorAcknowledgeObject.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToCliff.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToFrustration.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToMicDirection.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToMotorCalibration.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToPet.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToPlacedOnSlope.h"
@@ -89,6 +90,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToRobotOnFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToRobotOnSide.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToRobotShaken.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToSound.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToUnexpectedMovement.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToVoiceCommand.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/sleeping/behaviorSleeping.h"
@@ -96,7 +98,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorTimerUtilityCoordinator.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorComeHere.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorPetting.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorReactToSound.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorReactToUnclaimedIntent.h"
 
 #include "clad/types/behaviorComponent/behaviorTypes.h"
@@ -643,6 +644,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::ReactToSound:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorReactToSound(config));
+      break;
+    }
+
+    case BehaviorClass::ReactToMicDirection:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToMicDirection(config));
       break;
     }
     

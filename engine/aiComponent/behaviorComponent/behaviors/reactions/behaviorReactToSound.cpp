@@ -11,7 +11,7 @@
  **********************************************************************************************************************/
 
 
-// #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorReactToSound.h"
+// #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToSound.h"
 #include "behaviorReactToSound.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"

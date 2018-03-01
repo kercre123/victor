@@ -130,6 +130,8 @@ enum uint_8 BehaviorClass {
   ReactToRobotShaken,
   ReactToUnexpectedMovement,
   ReactToVoiceCommand,
+  ReactToSound,
+  ReactToMicDirection,
 
   // sleeping
   Sleeping,
@@ -141,7 +143,6 @@ enum uint_8 BehaviorClass {
   // victor
   ComeHere,
   Petting,
-  ReactToSound,
   ReactToUnclaimedIntent,
 }
 

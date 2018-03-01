@@ -168,6 +168,7 @@ enum uint_8 BehaviorID {
   ObservingLookAtFaces,
   ObservingOnCharger,
   ObservingOnChargerIdle,
+  ReactToSoundAwake,
 
   // victorBehaviorTree/highLevelDelegates
   PickupCube,
@@ -201,6 +202,7 @@ enum uint_8 BehaviorID {
   GoToSleep,
   Sleeping,
   SleepingWakeUp,
+  ReactToSoundAsleep,
 
   // victorBehaviorTree/highLevelDelegates/socialize
   DriveOffChargerIntoSocializing,
@@ -217,8 +219,7 @@ enum uint_8 BehaviorID {
 
   // victorBehaviorTree
   Petting,
-  ReactToSoundAsleep,
-  ReactToSoundAwake,
+  ReactToTriggerDirectionAwake,
   ReactToUnclaimedIntent,
   SingletonICantDoThat,
   TriggerWordDetected,
