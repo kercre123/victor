@@ -64,7 +64,7 @@ Result BehaviorPlaypenInitChecks::OnBehaviorActivatedInternal()
   }
   
   // Make sure we are considered on the charger and charging
-  if(!(robot.GetBatteryComponent().IsOnCharger() && robot.GetBatteryComponent().IsCharging()))
+  if(!(robot.GetBatteryComponent().IsOnChargerContacts() && robot.GetBatteryComponent().IsCharging()))
   {
     PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::CHARGER_UNDETECTED, RESULT_FAIL);
   }

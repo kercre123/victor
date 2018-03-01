@@ -24,6 +24,7 @@
 namespace Anki {
 namespace Cozmo {
 
+class BlockWorldFilter;
 class Robot;
 struct RobotState;
 
@@ -50,7 +51,7 @@ public:
   bool IsCharging() const { return _isCharging; }
   
   // Indicates that the robot is sensing voltage on its charge contacts
-  bool IsOnCharger() const { return _isOnCharger; }
+  bool IsOnChargerContacts() const { return _isOnChargerContacts; }
   
   // True if we think the robot is on a charger. This becomes true only when the robot touches the charger
   // contacts, and remains true until we think the robot has driven off the charger. It will not become true
@@ -61,13 +62,13 @@ public:
   // Return the message timestamp of the last time the value of IsCharging changed
   TimeStamp_t GetLastChargingStateChangeTimestamp() const { return _lastChargingChange_ms; }
   
-  void SetOnChargerPlatform(const bool onPlatform);
+  void SetOnChargerPlatform(bool onPlatform);
   
 private:
   
   void Init(Robot* _robot);
   
-  void SetOnCharger(const bool onCharger);
+  void SetOnChargeContacts(const bool onChargeContacts);
   void SetIsCharging(const bool isCharging);
   
   Robot* _robot = nullptr;
@@ -75,15 +76,15 @@ private:
   float _rawBatteryVolts = 0.f;
 
   bool _isCharging = false;
-  
-  bool _isOnCharger = false;
-  
+  bool _isOnChargerContacts = false;
   bool _isOnChargerPlatform = false;
   
   TimeStamp_t _lastChargingChange_ms = 0;
   
   // The timestamp of the RobotState message with the latest data
   TimeStamp_t _lastMsgTimestamp = 0;
+  
+  std::unique_ptr<BlockWorldFilter> _chargerFilter;
 };
 
 

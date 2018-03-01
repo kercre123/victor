@@ -97,7 +97,7 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenWaitToStart::PlaypenUpdateInterna
                            _buttonPressed) || 
                           !robot.IsPhysical();
 
-  if(touchGood && buttonGood && (robot.GetBatteryComponent().IsOnCharger() || robot.GetBatteryComponent().IsCharging()))
+  if(touchGood && buttonGood && (robot.GetBatteryComponent().IsOnChargerContacts() || robot.GetBatteryComponent().IsCharging()))
   {
     // Draw nothing on the screen to clear it
     robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::DrawTextOnScreen(true,

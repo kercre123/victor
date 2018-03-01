@@ -461,12 +461,12 @@ TEST(BeiConditions, OnCharger)
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
 
   // charger implies platform here
-  robot.GetBatteryComponent().SetOnCharger(true);
+  robot.GetBatteryComponent().SetOnChargeContacts(true);
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
 
   // off charger, but still on platform
-  robot.GetBatteryComponent().SetOnCharger(false);
+  robot.GetBatteryComponent().SetOnChargeContacts(false);
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
 

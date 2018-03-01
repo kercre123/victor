@@ -565,7 +565,7 @@ template<>
 void MovementComponent::HandleMessage(const ExternalInterface::EnterSdkMode& msg)
 {
   if (!kAllowMovementOnChargerInSdkMode &&
-      _robot->GetBatteryComponent().IsOnCharger() &&
+      _robot->GetBatteryComponent().IsOnChargerContacts() &&
       !AreAllTracksLockedBy(kAllMotorTracks, kOnChargerInSdkStr))
   {
     // If SDK mode starts _while_ we are on the charger (and not already locked), lock tracks
@@ -576,7 +576,7 @@ void MovementComponent::HandleMessage(const ExternalInterface::EnterSdkMode& msg
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::ExitSdkMode& msg)
 {
-  if (!kAllowMovementOnChargerInSdkMode && _robot->GetBatteryComponent().IsOnCharger())
+  if (!kAllowMovementOnChargerInSdkMode && _robot->GetBatteryComponent().IsOnChargerContacts())
   {
     // If SDK ends _while_ we are on the charger, make sure to unlock tracks
     UnlockTracks(kAllMotorTracks, kOnChargerInSdkStr);

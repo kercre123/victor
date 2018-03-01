@@ -244,9 +244,9 @@ bool BEIRobotInfo::IsLiftCalibrated() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BEIRobotInfo::IsOnCharger() const
+bool BEIRobotInfo::IsOnChargerContacts() const
 {
-  return _robot.GetBatteryComponent().IsOnCharger();
+  return _robot.GetBatteryComponent().IsOnChargerContacts();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -68,7 +68,7 @@ void BodyLightComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& 
 void BodyLightComponent::UpdateChargingLightConfig()
 {
   BackpackLightsState state = BackpackLightsState::OffCharger;
-  if(_robot->GetBatteryComponent().IsOnCharger())
+  if(_robot->GetBatteryComponent().IsOnChargerContacts())
   {
     if(_robot->GetBatteryComponent().IsCharging())
     {

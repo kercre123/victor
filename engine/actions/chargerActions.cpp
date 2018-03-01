@@ -312,7 +312,7 @@ ActionResult BackupOntoChargerAction::SelectDockAction(ActionableObject* object)
 ActionResult BackupOntoChargerAction::Verify()
 {
   // Verify that robot is on charger
-  if (GetRobot().GetBatteryComponent().IsOnCharger()) {
+  if (GetRobot().GetBatteryComponent().IsOnChargerContacts()) {
     PRINT_CH_INFO("Actions", "BackupOntoChargerAction.Verify.MountingChargerComplete",
                 "Robot has mounted charger.");
     return ActionResult::SUCCESS;

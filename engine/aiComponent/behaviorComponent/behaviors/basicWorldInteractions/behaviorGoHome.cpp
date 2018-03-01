@@ -131,7 +131,7 @@ void BehaviorGoHome::TransitionToOnChargerCheck()
 {
   // If we've somehow wiggled off the charge contacts, try the backup
   // onto charger action again to get us back onto the contacts
-  if (!GetBEI().GetRobotInfo().IsOnCharger()) {
+  if (!GetBEI().GetRobotInfo().IsOnChargerContacts()) {
     DelegateIfInControl(new BackupOntoChargerAction(_chargerID, true));
   }
 }

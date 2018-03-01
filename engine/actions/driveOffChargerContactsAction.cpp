@@ -47,7 +47,7 @@ DriveOffChargerContactsAction::DriveOffChargerContactsAction()
 
 ActionResult DriveOffChargerContactsAction::Init()
 {
-  _startedOnCharger = GetRobot().GetBatteryComponent().IsOnCharger();
+  _startedOnCharger = GetRobot().GetBatteryComponent().IsOnChargerContacts();
   if(_startedOnCharger)
   {
     return DriveStraightAction::Init();
@@ -74,7 +74,7 @@ ActionResult DriveOffChargerContactsAction::CheckIfDone()
   }
   
   // If drive straight has finished, check that we are no longer on the charger
-  if(!GetRobot().GetBatteryComponent().IsOnCharger())
+  if(!GetRobot().GetBatteryComponent().IsOnChargerContacts())
   {
     return ActionResult::SUCCESS;
   }

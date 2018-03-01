@@ -169,7 +169,7 @@ void BehaviorDevTouchDataCollection::EnqueueMotorActions()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 bool BehaviorDevTouchDataCollection::RobotConfigMatchesExpected(BehaviorExternalInterface& bexi) const
 {
-  const bool onCharger = bexi.GetRobotInfo().IsOnCharger();
+  const bool onCharger = bexi.GetRobotInfo().IsOnChargerContacts();
   
   const bool isMotoring = IsControlDelegated();
 
