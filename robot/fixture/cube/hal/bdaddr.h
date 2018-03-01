@@ -23,11 +23,11 @@ typedef struct {
 //@return true==valid
 bool bdaddr_valid(bdaddr_t *bdaddr);
 
-//parse bdaddr to string. format [hex] "##-##-##-##-##-##" LSB to MSB
+//parse bdaddr to string. format [hex] "##:##:##:##:##:##" LSB to MSB
 //@return str (static internal - valid until next call)
 char* bdaddr2str(bdaddr_t *bdaddr);
 
-//parse string to bdaddr. expected format format [hex] "##-##-##-##-##-##" LSB to MSB
+//parse string to bdaddr. expected format format [hex] "##:##:##:##:##:##" LSB to MSB
 //(Note, currently very little format validation is performed)
 //@return out_bdaddr [shortcut]. Set to all 0 (invalid) on parse error.
 bdaddr_t* str2bdaddr(char* str, bdaddr_t *out_bdaddr);
