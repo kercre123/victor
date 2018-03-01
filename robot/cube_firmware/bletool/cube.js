@@ -7,15 +7,6 @@ const APP_READ_UUID = '43ef14af5fb17b8136472a9477824cab';
 
 const MAX_BYTES_PER_PACKET = 20;
 
-function checksum(buf)
-{
-  for (let i = 0; i < buf.length; i++) {
-    crc = crc32_tab[(crc ^ buf[i]) & 0xFF] ^ (crc >>> 8);
-  }
-
-  return (~crc) >>> 0;
-}
-
 class Cube extends EventEmitter {
 	constructor(device, characteristics) {
 		super();
@@ -75,6 +66,7 @@ class Cube extends EventEmitter {
   				let packet = data.slice(offset, offset + MAX_BYTES_PER_PACKET);
           offset += packet.length;
 
+          console.log(packet);
   				this._ota_target.write(packet, false, next);
   			} else {
   				accept();

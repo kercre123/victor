@@ -260,53 +260,15 @@ void user_catch_rest_hndl(ke_msg_id_t const msgid,
                    user_custs1_ota_target_wr_ind_handler(msgid, msg_param, dest_id, src_id);
                    break;
 
-                case CUST1_IDX_LOADED_APP_NTF_CFG:
-                    user_custs1_loaded_app_cfg_ind_handler(msgid, msg_param, dest_id, src_id);
-                    break;
-
                 case CUST1_IDX_APP_WRITE_VAL:
-                   user_custs1_app_write_wr_ind_handler(msgid, msg_param, dest_id, src_id);
-                   break;
-
-                case CUST1_IDX_APP_READ_NTF_CFG:
-                    user_custs1_app_read_cfg_ind_handler(msgid, msg_param, dest_id, src_id);
+                    user_custs1_app_write_wr_ind_handler(msgid, msg_param, dest_id, src_id);
                     break;
 
                 default:
                     break;
             }
-        } break;
-
-        case CUSTS1_VAL_NTF_CFM:
-        {
-            struct custs1_val_ntf_cfm const *msg_param = (struct custs1_val_ntf_cfm const *)(param);
-
-            switch (msg_param->handle)
-            {
-                case CUST1_IDX_LOADED_APP_VAL:
-                    break;
-
-                case CUST1_IDX_APP_READ_VAL:
-                    break;
-
-                default:
-                    break;
-            }
-        } break;
-
-        case GAPC_PARAM_UPDATED_IND:
-        {
-            // Cast the void pointer to the appropriate message structure
-            struct gapc_param_updated_ind const *msg_param = (struct gapc_param_updated_ind const *)(param);
-
-            // Check if updated Conn Params filled to preffered ones
-            if ((msg_param->con_interval >= user_connection_param_conf.intv_min) &&
-                (msg_param->con_interval <= user_connection_param_conf.intv_max) &&
-                (msg_param->con_latency == user_connection_param_conf.latency) &&
-                (msg_param->sup_to == user_connection_param_conf.time_out))
-            {
-            }
-        } break;
+            break;
+        } 
 
         default:
             break;
