@@ -10,13 +10,11 @@
  *
  **/
 
-#include "wifi.h"
 #include "connmanbus.h"
 #include "exec_command.h"
 #include "fileutils.h"
 #include "log.h"
-
-#include <glib.h>
+#include "wifi.h"
 
 #include <algorithm>
 #include <fstream>
@@ -204,7 +202,7 @@ void HandleOutputCallback(int rc, const std::string& output) {
   // noop
 }
 
-bool ConnectWiFiBySsid(std::string ssid, std::string pw) {
+bool ConnectWiFiBySsid(std::string ssid, std::string pw, GAsyncReadyCallback cb, gpointer userData) {
   ConnManBusTechnology* tech_proxy;
   GError* error;
   bool success;
@@ -363,23 +361,23 @@ bool ConnectWiFiBySsid(std::string ssid, std::string pw) {
                                   nullptr,
                                   &error);
 
-  // first check if we are already connected -- if so, simply return true
+  conn_man_bus_service_call_connect(service, nullptr, cb, userData);
 
+  //gboolean didConnect = conn_man_bus_service_call_connect_sync (
+  //                                service,
+  //                                nullptr,
+  //                                &error);
 
-  gboolean didConnect = conn_man_bus_service_call_connect_sync (
-                                  service,
-                                  nullptr,
-                                  &error);
+  // if(!didConnect && error != nullptr) {
+  //   // 24 -- timeout ? wrong password
+  //   // 36 -- Already connected
+  //   printf("Error code: %d domain: %d\n", error->code, error->domain);
 
-  if(!didConnect && error != nullptr) {
-    // 24 -- timeout ? wrong password
-    // 36 -- Already connected
-    printf("Error code: %d domain: %d\n", error->code, error->domain);
+  //   printf(std::string(error->message).c_str());
+  // }  
 
-    printf(std::string(error->message).c_str());
-  }  
-
-  return (bool)didConnect;
+  //return (bool)didConnect;
+  return true;
 }
 
 void EnableWiFiInterface(const bool enable, ExecCommandCallback callback) {
