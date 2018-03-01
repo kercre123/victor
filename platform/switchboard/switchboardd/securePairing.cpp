@@ -16,6 +16,8 @@
 #include "clad/externalInterface/messageRobotToDevice.h"
 #include "clad/externalInterface/messageDeviceToRobot.h"
 
+#define USE_CLAD 0
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Constructors
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -154,9 +156,19 @@ void Anki::Switchboard::SecurePairing::SendHandshake() {
 void Anki::Switchboard::SecurePairing::SendPublicKey() {
   // Generate public, private key
   uint8_t* publicKey = (uint8_t*)_keyExchange->GenerateKeys();
-  
+
+  #if USE_CLAD
+  std::array<uint8_t, 32> publicKeyArray;
+  memcpy(std::begin(publicKeyArray), publicKey, 32);
+  Anki::Victor::RobotToDevice::RTSInitializationMessage msg = Anki::Victor::RobotToDevice::RTSInitializationMessage(0, publicKeyArray);
+
+  std::vector<uint8_t> messageData(msg.Size());
+  const size_t packedSize = msg.Pack(messageData.data(), msg.Size());
+  _stream->SendPlainText(messageData.data(), packedSize);
+  #else  
   // Send message and update our state
   SendPlainText(PublicKeyMessage((char*)publicKey));
+  #endif
 }
 
 void Anki::Switchboard::SecurePairing::SendNonce() {
@@ -410,6 +422,10 @@ void Anki::Switchboard::SecurePairing::HandleMessageReceived(uint8_t* bytes, uin
   });
 }
 
+void HandleWifiResult(GObject* sourceObject, GAsyncResult* result, gpointer userData) {
+  printf("wtf\n");
+}
+
 void Anki::Switchboard::SecurePairing::HandleEncryptedMessageReceived(uint8_t* bytes, uint32_t length) {
   _taskExecutor->WakeSync([this, bytes, length]() {
     Log::Write("Handling encrypted message received.");
@@ -443,7 +459,9 @@ void Anki::Switchboard::SecurePairing::HandleEncryptedMessageReceived(uint8_t* b
           std::string ssid(ssidPtr, bytes[1]);
           std::string pw(ssidPtr + bytes[1] + 1, bytes[2 + bytes[1]]);
           
-          bool connected = Anki::ConnectWiFiBySsid(ssid, pw);
+          gpointer userData;
+
+          bool connected = Anki::ConnectWiFiBySsid(ssid, pw, HandleWifiResult, userData);
           
           SendWifiConnectResult(connected);
 

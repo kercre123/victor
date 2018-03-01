@@ -19,6 +19,9 @@
 #include <string>
 #include <vector>
 
+#include <glib.h>
+#include <glib-object.h>
+#include <gio/gio.h>
 
 namespace Anki {
 
@@ -42,7 +45,7 @@ class WiFiScanResult {
   std::string ssid;
 };
 
-bool ConnectWiFiBySsid(std::string ssid, std::string pw);
+bool ConnectWiFiBySsid(std::string ssid, std::string pw, GAsyncReadyCallback cb, gpointer userData);
 std::vector<WiFiScanResult> ScanForWiFiAccessPoints();
 std::vector<uint8_t> PackWiFiScanResults(const std::vector<WiFiScanResult>& results);
 void EnableWiFiInterface(const bool enable, ExecCommandCallback callback);

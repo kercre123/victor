@@ -88,9 +88,9 @@ namespace Switchboard {
   
   SB_PackedStruct HandshakeMessage : Message {
   public:
-    uint16_t version;
+    uint32_t version;
     
-    HandshakeMessage(uint16_t vers) {
+    HandshakeMessage(uint32_t vers) {
       version = vers;
       type = SetupMessage::MSG_HANDSHAKE;
     }
