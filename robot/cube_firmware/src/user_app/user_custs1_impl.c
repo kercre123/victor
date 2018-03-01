@@ -83,7 +83,7 @@ void app_start() {
   if (!app_valid || app_running) return ;
 
   app_running = true;
-  app_current->BLE_Recv = app_send_target;
+  app_current->BLE_Send = app_send_target;
   app_current->AppInit();
   app_timer = app_easy_timer(1, app_tick);
 }

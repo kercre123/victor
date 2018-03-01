@@ -47,10 +47,10 @@ static const uint16_t SET_R2 = (1 << 1) | (1 << 2) | (1 << 3) | (1 << 4) | (1 <<
                              | (1 << 6) | (1 << 7) | (1 << 8) | (1 << 9);
 
 // Timing registers and constants
-#define LED_COUNT       12
-#define TOTAL_TIME      (16000000 / 2 / 200)  // 200hz period at a /2 clock divider
-#define LED_SHIFT       4
-#define LIGHT_MINIMUM   0x40                  // Minimum time for a light pattern
+static const int LED_COUNT = 12;
+static const uint16_t TOTAL_TIME = (16000000 / 2 / 200);  // 200hz period at a /2 clock divider
+static const int LED_SHIFT = 4;
+static const int LIGHT_MINIMUM = 0x40;  // Minimum time for a light pattern
 
 static LedSlot led_slot[LED_COUNT+1];
 static LedSlot* led_current;
