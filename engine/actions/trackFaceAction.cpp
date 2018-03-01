@@ -57,7 +57,7 @@ void TrackFaceAction::OnRobotSet()
 
 void TrackFaceAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const
 {
-  requests.insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::High });
+  requests.insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::Med });
 }
 
 ActionResult TrackFaceAction::InitInternal()

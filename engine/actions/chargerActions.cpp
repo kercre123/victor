@@ -200,7 +200,7 @@ TurnToAlignWithChargerAction::TurnToAlignWithChargerAction(ObjectID chargerID,
 
 void TurnToAlignWithChargerAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const
 {
-  requests.insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::High });
+  requests.insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::Low });
 }
 
 ActionResult TurnToAlignWithChargerAction::Init()

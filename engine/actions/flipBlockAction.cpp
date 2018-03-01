@@ -281,7 +281,7 @@ void FlipBlockAction::SetShouldCheckPreActionPose(bool shouldCheck)
 
 void FlipBlockAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const
 {
-  requests.insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::High });
+  requests.insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::Low });
 }
 
 ActionResult FlipBlockAction::Init()
