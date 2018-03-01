@@ -1,0 +1,36 @@
+{
+  "emotionEvents" : [
+    {
+      "name" : "FistBumpSuccess",
+      "emotionAffectors" : [										  
+        {
+          "emotionType" : "Happy",
+          "value" : 0.8
+        },{
+          "emotionType" : "Stimulated",
+          "value" : 0.9
+        },
+        {
+          "emotionType" : "Social",
+          "value" : 1.0
+        }
+      ]
+    },
+    {
+      "name" : "FistBumpLeftHanging",
+      "emotionAffectors" : [										  
+        {
+          "emotionType" : "Happy",
+          "value" : -0.8
+        },{
+          "emotionType" : "Stimulated",
+          "value" : -0.2
+        },
+        {
+          "emotionType" : "Social",
+          "value" : -0.3
+        }
+      ]
+    }
+  ]
+}

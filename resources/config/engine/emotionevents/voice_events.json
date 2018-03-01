@@ -1,0 +1,17 @@
+{
+  "emotionEvents" : [
+    {
+      "name" : "ReactToTriggerWord",
+      "emotionAffectors" : [										  
+        {
+          "emotionType" : "Stimulated",
+          "value" : 0.9
+        },
+        {
+          "emotionType" : "Social",
+          "value" : 0.5
+        }
+      ]
+    }
+  ]
+}

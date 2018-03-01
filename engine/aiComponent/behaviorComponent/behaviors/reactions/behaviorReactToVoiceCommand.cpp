@@ -25,6 +25,7 @@
 #include "engine/components/movementComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
+#include "engine/moodSystem/moodManager.h"
 #include "engine/voiceCommands/voiceCommandComponent.h"
 #include "util/console/consoleInterface.h"
 
@@ -76,6 +77,11 @@ bool BehaviorReactToVoiceCommand::WantsToBeActivatedBehavior() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::OnBehaviorActivated()
 {
+  if(GetBEI().HasMoodManager()){
+    auto& moodManager = GetBEI().GetMoodManager();
+    moodManager.TriggerEmotionEvent("ReactToTriggerWord", MoodManager::GetCurrentTimeInSeconds());
+  }
+
   const auto& robotInfo = GetBEI().GetRobotInfo();
   
   // Stop all movement so we can listen for a command

@@ -10,19 +10,22 @@
  **/
 
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorFistBump.h"
-#include "clad/types/behaviorComponent/behaviorTimerTypes.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
-#include "engine/aiComponent/behaviorComponent/behaviorListenerInterfaces/iFistBumpListener.h"
-#include "engine/aiComponent/behaviorComponent/behaviorTimers.h"
+
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/dockActions.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/aiComponent/behaviorComponent/behaviorListenerInterfaces/iFistBumpListener.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTimers.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/faceWorld.h"
+#include "engine/moodSystem/moodManager.h"
 
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
+
+#include "clad/types/behaviorComponent/behaviorTimerTypes.h"
 
 #include "util/console/consoleInterface.h"
 
@@ -271,7 +274,18 @@ void BehaviorFistBump::BehaviorUpdate()
     {
       // Should only be sending FistBumpSuccess or FistBumpLeftHanging if this not the sparks Fist bump
       // since we don't want the sparks fist bumps to reset the cooldown timer in the trigger strategy.
-      BehaviorObjectiveAchieved(_state == State::CompleteSuccess ? BehaviorObjective::FistBumpSuccess : BehaviorObjective::FistBumpLeftHanging);
+      BehaviorObjectiveAchieved(_state == State::CompleteSuccess ?
+                                BehaviorObjective::FistBumpSuccess :
+                                BehaviorObjective::FistBumpLeftHanging);
+
+      if(GetBEI().HasMoodManager()){
+        auto& moodManager = GetBEI().GetMoodManager();
+        moodManager.TriggerEmotionEvent(_state == State::CompleteSuccess ?
+                                        "FistBumpSuccess" :
+                                        "FistBumpLeftHanging",
+                                        MoodManager::GetCurrentTimeInSeconds());
+      }
+
       
       // Fall through
     }
