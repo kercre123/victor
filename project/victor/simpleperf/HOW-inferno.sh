@@ -26,6 +26,10 @@ if [ ! -d ${ANKI_PROFILE_SYMBOLCACHE} ] ; then
   bash ${SCRIPTDIR}/make_symbol_cache.sh ${ANKI_PROFILE_SYMBOLCACHE}
 fi
 
+if [ ! -d ${ANKI_PROFILE_PROCNAME} ] ; then
+  mkdir ${ANKI_PROFILE_PROCNAME}
+fi
+
 #
 # Invoke inferno.sh to collect data and generate html report
 #
@@ -34,4 +38,5 @@ ${SIMPLEPERF}/inferno.sh -nc \
   -np ${ANKI_PROFILE_PROCNAME} \
   -t ${ANKI_PROFILE_DURATION} \
   -f ${ANKI_PROFILE_FREQUENCY} \
-  -o ${ANKI_PROFILE_PROCNAME}
+  --record_file ${ANKI_PROFILE_PROCNAME}/perf.data \
+  -o ${ANKI_PROFILE_PROCNAME}/report.html
