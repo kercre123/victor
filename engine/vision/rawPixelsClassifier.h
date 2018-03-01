@@ -64,6 +64,8 @@ public:
    */
   bool Train(const OverheadMap::PixelSet& drivablePixels, const OverheadMap::PixelSet& nonDrivablePixels);
 
+  virtual bool Train(const cv::Mat& allInputs, const cv::Mat& allClasses, uint numberOfPositives) = 0;
+
   /*
    * This function is used mainly for testing the class and debugging
    */
@@ -102,8 +104,6 @@ protected:
   cv::Mat _trainingLabels;
   const CozmoContext* _context;
   Anki::Vision::Profiler* _profiler;
-
-  virtual bool Train(const cv::Mat& allInputs, const cv::Mat& allClasses, uint numberOfPositives) = 0;
 
   /*
    * Write a cv::Mat to a file
@@ -159,6 +159,7 @@ public:
 
   using GMMRawPixelsClassifier::PredictClass;
   uchar PredictClass(const std::vector<FeatureType>& values) const override;
+  bool Train(const cv::Mat& allInputs, const cv::Mat& allClasses, uint numberOfPositives) override;
 
   bool Serialize(const char *filename) override
   {
@@ -175,8 +176,6 @@ public:
   }
 
 protected:
-
-  bool Train(const cv::Mat& allInputs, const cv::Mat& allClasses, uint numberOfPositives) override;
 
   float _positiveClassWeight = 1.2; // This parameter should be overwritten by the Json config file
   float _trainingAlpha = 0.5;       // This parameter should be overwritten by the Json config file
@@ -203,6 +202,7 @@ public:
   bool TrainFromFiles(const char *positiveDataFileName, const char *negativeDataFileName) override;
 
   bool TrainFromFile(const char* positiveDataFilename);
+  bool Train(const cv::Mat& allInputs, const cv::Mat&, uint) override;
 
   bool Serialize(const char *filename) override
   {
@@ -219,7 +219,6 @@ public:
   }
 
 protected:
-  bool Train(const cv::Mat& allInputs, const cv::Mat&, uint) override;
 
   float FindThreshold(std::vector<float>& distances) const;
 
@@ -251,9 +250,10 @@ public:
 
   bool DeSerialize(const char *filename) override;
 
+  bool Train(const cv::Mat& allInputs, const cv::Mat& allClasses, uint numberOfPositives) override;
+
 protected:
   cv::Ptr<cv::ml::DTrees> _dtree;
-  bool Train(const cv::Mat& allInputs, const cv::Mat& allClasses, uint numberOfPositives) override;
 
 };
 
