@@ -9,7 +9,7 @@
             "currentCostume": 0,
             "direction": 90,
             "draggable": false,
-            "id": "Q?1*H[.7{~L~yEQn@eyD",
+            "id": "CmThi4mn9`wVLVKm~~j)",
             "isStage": true,
             "lists": {},
             "name": "Stage",
@@ -64,12 +64,6 @@
                     "name": "harvest active plant",
                     "type": "broadcast_msg",
                     "value": "harvest active plant"
-                },
-                "%!W?_?F2wdJN`{8|])Tg": {
-                    "id": "%!W?_?F2wdJN`{8|])Tg",
-                    "name": "Cozmo displays tomatoes on his face.",
-                    "type": "",
-                    "value": 0
                 },
                 "%L-3Ev.(rOhz7[?pASC*": {
                     "id": "%L-3Ev.(rOhz7[?pASC*",
@@ -352,12 +346,6 @@
                     "type": "",
                     "value": 4
                 },
-                "G)k4O3-Nyx1gk$RDI5^c": {
-                    "id": "G)k4O3-Nyx1gk$RDI5^c",
-                    "name": "Cozmo displays lettuce on his face.",
-                    "type": "",
-                    "value": 0
-                },
                 "G31Q;U-x(u/6@)Hr1MIb": {
                     "id": "G31Q;U-x(u/6@)Hr1MIb",
                     "name": "plant types",
@@ -415,12 +403,6 @@
                     "type": "",
                     "value": 0
                 },
-                "T:l7Ai[SsyoE+o,+a/6.": {
-                    "id": "T:l7Ai[SsyoE+o,+a/6.",
-                    "name": "Cozmo displays grapes on his face.",
-                    "type": "",
-                    "value": 0
-                },
                 "T^PguIZROp!C~_1!QJ$!": {
                     "id": "T^PguIZROp!C~_1!QJ$!",
                     "name": "bug plant",
@@ -433,12 +415,6 @@
                     "type": "broadcast_msg",
                     "value": "clear bug plants"
                 },
-                "UuoA/scSlT_[sOg(43P(": {
-                    "id": "UuoA/scSlT_[sOg(43P(",
-                    "name": "Cozmo displays broccoli on his face.",
-                    "type": "",
-                    "value": 0
-                },
                 "XWi|$W/H?r*io8iAbbEz": {
                     "id": "XWi|$W/H?r*io8iAbbEz",
                     "name": "present card",
@@ -450,12 +426,6 @@
                     "name": "constrain plant growth",
                     "type": "broadcast_msg",
                     "value": "constrain plant growth"
-                },
-                "[NP:(q{?ifH^ow`hjFmu": {
-                    "id": "[NP:(q{?ifH^ow`hjFmu",
-                    "name": "feedback random",
-                    "type": "",
-                    "value": 0
                 },
                 "]3u(n[21w(Sgnwn$.LYs": {
                     "id": "]3u(n[21w(Sgnwn$.LYs",
@@ -487,12 +457,6 @@
                     "type": "broadcast_msg",
                     "value": "say got bugs phrase"
                 },
-                "_[LMkiKFeJ:$V)5-Req)": {
-                    "id": "_[LMkiKFeJ:$V)5-Req)",
-                    "name": "Cozmo displays blueberries on his face.",
-                    "type": "",
-                    "value": 0
-                },
                 "_l0SC,-IC8xK=bn^VV,E": {
                     "id": "_l0SC,-IC8xK=bn^VV,E",
                     "name": "Water the plant the player has chosen.",
@@ -516,12 +480,6 @@
                     "name": "populate deck",
                     "type": "broadcast_msg",
                     "value": "populate deck"
-                },
-                "d1H$UCFMq(Z}LZUozb?;": {
-                    "id": "d1H$UCFMq(Z}LZUozb?;",
-                    "name": "feedback",
-                    "type": "list",
-                    "value": []
                 },
                 "dZdRU]:2;1`I1B`lngut": {
                     "id": "dZdRU]:2;1`I1B`lngut",
@@ -654,18 +612,6 @@
                     "name": "drop line position y",
                     "type": "",
                     "value": 15.5
-                },
-                "t~up$A9_P;qcve1{Zdi3": {
-                    "id": "t~up$A9_P;qcve1{Zdi3",
-                    "name": "Cozmo displays oranges on his face.",
-                    "type": "",
-                    "value": 0
-                },
-                "un@KO:(xf/!y^$.7x4$5": {
-                    "id": "un@KO:(xf/!y^$.7x4$5",
-                    "name": "Cozmo displays lemons on his face.",
-                    "type": "",
-                    "value": 0
                 },
                 "w;|cA6ScT/?q_G_HjV*s": {
                     "id": "w;|cA6ScT/?q_G_HjV*s",
@@ -1474,31 +1420,6 @@
                     "x": "249",
                     "y": "653"
                 },
-                "%WK}6.VfXS%Bcy4MF|j|": {
-                    "fields": {
-                        "LIST": {
-                            "id": "i-C]NntbJ,ZEs^2=bO9z",
-                            "name": "LIST",
-                            "value": "deck",
-                            "variableType": "list"
-                        }
-                    },
-                    "id": "%WK}6.VfXS%Bcy4MF|j|",
-                    "inputs": {
-                        "ITEM": {
-                            "block": "c1ueOYoGS.c^GnH?2XfA",
-                            "name": "ITEM",
-                            "shadow": "c1ueOYoGS.c^GnH?2XfA"
-                        }
-                    },
-                    "next": "D?.%9]g2Idz)^(vE*$_*",
-                    "opcode": "data_addtolist",
-                    "parent": "pN|pi{*}|V):HP.!rM]]",
-                    "shadow": false,
-                    "topLevel": false,
-                    "x": "609",
-                    "y": "844"
-                },
                 "%Z7cH(4!Sl~~0n+/|=vS": {
                     "fields": {},
                     "id": "%Z7cH(4!Sl~~0n+/|=vS",
@@ -1679,21 +1600,6 @@
                     "topLevel": false,
                     "x": "4854",
                     "y": "-15"
-                },
-                "(=K`UECi:c~frFXZ@7=)": {
-                    "fields": {
-                        "TEXT": {
-                            "name": "TEXT",
-                            "value": "2"
-                        }
-                    },
-                    "id": "(=K`UECi:c~frFXZ@7=)",
-                    "inputs": {},
-                    "next": null,
-                    "opcode": "text",
-                    "parent": "P3DL?`]I!AH|tb+kE^+^",
-                    "shadow": true,
-                    "topLevel": false
                 },
                 "(@T%:z:|)(I2g1(G2aN.": {
                     "fields": {
@@ -2332,6 +2238,29 @@
                     "shadow": true,
                     "topLevel": false
                 },
+                "*5~n[/wiP(=VCRsa7luF": {
+                    "fields": {},
+                    "id": "*5~n[/wiP(=VCRsa7luF",
+                    "inputs": {
+                        "SUBSTACK": {
+                            "block": ":p2U%_/uZmdmB2LE-;G+",
+                            "name": "SUBSTACK",
+                            "shadow": null
+                        },
+                        "TIMES": {
+                            "block": "DO7m7qDZ{[-atmUnxu47",
+                            "name": "TIMES",
+                            "shadow": "DO7m7qDZ{[-atmUnxu47"
+                        }
+                    },
+                    "next": "+]O9[LL-1suDc|RcWxp;",
+                    "opcode": "control_repeat",
+                    "parent": "*D.^48GQu{#L~W$Rr+_(",
+                    "shadow": false,
+                    "topLevel": false,
+                    "x": "1574",
+                    "y": "160"
+                },
                 "*6R5i4ct.4:l`ZP=tL64": {
                     "fields": {
                         "NUM": {
@@ -2371,6 +2300,29 @@
                     "topLevel": false,
                     "x": 498.4705882352939,
                     "y": 1343.7647058823522
+                },
+                "*D.^48GQu{#L~W$Rr+_(": {
+                    "fields": {},
+                    "id": "*D.^48GQu{#L~W$Rr+_(",
+                    "inputs": {
+                        "SUBSTACK": {
+                            "block": "qyqdQ[jicS5Z}f,:4-Y9",
+                            "name": "SUBSTACK",
+                            "shadow": null
+                        },
+                        "TIMES": {
+                            "block": "p1_HQeKC5It}hM*LrwU.",
+                            "name": "TIMES",
+                            "shadow": "p1_HQeKC5It}hM*LrwU."
+                        }
+                    },
+                    "next": "*5~n[/wiP(=VCRsa7luF",
+                    "opcode": "control_repeat",
+                    "parent": "^g[,=s(/IcN[Qx=^::a|",
+                    "shadow": false,
+                    "topLevel": false,
+                    "x": "1574",
+                    "y": "160"
                 },
                 "*KW7Xct-O:TuO:orvy*-": {
                     "fields": {},
@@ -2787,6 +2739,29 @@
                     "parent": "6PvkYA~?zs``.a!O]l~e",
                     "shadow": true,
                     "topLevel": false
+                },
+                "+]O9[LL-1suDc|RcWxp;": {
+                    "fields": {},
+                    "id": "+]O9[LL-1suDc|RcWxp;",
+                    "inputs": {
+                        "SUBSTACK": {
+                            "block": "-j9PFJqhD{Di.KBTrt`:",
+                            "name": "SUBSTACK",
+                            "shadow": null
+                        },
+                        "TIMES": {
+                            "block": "vg|bM3upo|5-Krn?X8Te",
+                            "name": "TIMES",
+                            "shadow": "vg|bM3upo|5-Krn?X8Te"
+                        }
+                    },
+                    "next": "jhtJshWRfd5l2y)#,3,!",
+                    "opcode": "control_repeat",
+                    "parent": "*5~n[/wiP(=VCRsa7luF",
+                    "shadow": false,
+                    "topLevel": false,
+                    "x": "1574",
+                    "y": "160"
                 },
                 "+awjUXjGp+X*sdjRIkd$": {
                     "fields": {
@@ -3307,13 +3282,13 @@
                             "shadow": "P1))jr(K={QNXVvIEkFr"
                         }
                     },
-                    "next": "jhtJshWRfd5l2y)#,3,!",
+                    "next": null,
                     "opcode": "data_addtolist",
-                    "parent": "I%5r~1NjOAJ)3;KmHhR(",
+                    "parent": "+]O9[LL-1suDc|RcWxp;",
                     "shadow": false,
                     "topLevel": false,
-                    "x": "610",
-                    "y": "811"
+                    "x": 1867.5176470588235,
+                    "y": 763
                 },
                 "-o7r?`ME!*Ox_i1Ak[(;": {
                     "fields": {
@@ -5936,21 +5911,6 @@
                     "x": "1303",
                     "y": "659"
                 },
-                "6nb{nzzVJaZkg6:_=O|`": {
-                    "fields": {
-                        "TEXT": {
-                            "name": "TEXT",
-                            "value": "3"
-                        }
-                    },
-                    "id": "6nb{nzzVJaZkg6:_=O|`",
-                    "inputs": {},
-                    "next": null,
-                    "opcode": "text",
-                    "parent": "pN|pi{*}|V):HP.!rM]]",
-                    "shadow": true,
-                    "topLevel": false
-                },
                 "6on.gqK81a8*ki[vvz:U": {
                     "fields": {
                         "BROADCAST_OPTION": {
@@ -7189,13 +7149,13 @@
                             "shadow": "BLy:p|]U(@HOF`*s(dY1"
                         }
                     },
-                    "next": "ickiNJaD^e^,@n#2[iC/",
+                    "next": null,
                     "opcode": "data_addtolist",
-                    "parent": "N*!yBN=vv1$4R2N!RGaL",
+                    "parent": "*5~n[/wiP(=VCRsa7luF",
                     "shadow": false,
                     "topLevel": false,
-                    "x": "504",
-                    "y": "470"
+                    "x": 1877.4823529411765,
+                    "y": 612.8588235294118
                 },
                 ":ps_P6m2bX)+%HM4UKNt": {
                     "fields": {
@@ -8684,31 +8644,6 @@
                     "x": 1549.774823576981,
                     "y": 1086.1968806503214
                 },
-                "D?.%9]g2Idz)^(vE*$_*": {
-                    "fields": {
-                        "LIST": {
-                            "id": "i-C]NntbJ,ZEs^2=bO9z",
-                            "name": "LIST",
-                            "value": "deck",
-                            "variableType": "list"
-                        }
-                    },
-                    "id": "D?.%9]g2Idz)^(vE*$_*",
-                    "inputs": {
-                        "ITEM": {
-                            "block": "Ilvh-r.H8Q])_oELso|[",
-                            "name": "ITEM",
-                            "shadow": "Ilvh-r.H8Q])_oELso|["
-                        }
-                    },
-                    "next": "I%5r~1NjOAJ)3;KmHhR(",
-                    "opcode": "data_addtolist",
-                    "parent": "%WK}6.VfXS%Bcy4MF|j|",
-                    "shadow": false,
-                    "topLevel": false,
-                    "x": "610",
-                    "y": "811"
-                },
                 "D?=y^MyRsQc:L8xe_3Un": {
                     "fields": {
                         "VARIABLE": {
@@ -8768,6 +8703,21 @@
                     "next": null,
                     "opcode": "text",
                     "parent": "A$1hNeA0C#v_D%gZ.K;r",
+                    "shadow": true,
+                    "topLevel": false
+                },
+                "DO7m7qDZ{[-atmUnxu47": {
+                    "fields": {
+                        "NUM": {
+                            "name": "NUM",
+                            "value": "5"
+                        }
+                    },
+                    "id": "DO7m7qDZ{[-atmUnxu47",
+                    "inputs": {},
+                    "next": null,
+                    "opcode": "math_whole_number_with_validator",
+                    "parent": "*5~n[/wiP(=VCRsa7luF",
                     "shadow": true,
                     "topLevel": false
                 },
@@ -10001,31 +9951,6 @@
                     "x": "4854",
                     "y": "-196"
                 },
-                "I%5r~1NjOAJ)3;KmHhR(": {
-                    "fields": {
-                        "LIST": {
-                            "id": "i-C]NntbJ,ZEs^2=bO9z",
-                            "name": "LIST",
-                            "value": "deck",
-                            "variableType": "list"
-                        }
-                    },
-                    "id": "I%5r~1NjOAJ)3;KmHhR(",
-                    "inputs": {
-                        "ITEM": {
-                            "block": "Yz.,m}-i/hP!1#nz7;d%",
-                            "name": "ITEM",
-                            "shadow": "Yz.,m}-i/hP!1#nz7;d%"
-                        }
-                    },
-                    "next": "-j9PFJqhD{Di.KBTrt`:",
-                    "opcode": "data_addtolist",
-                    "parent": "D?.%9]g2Idz)^(vE*$_*",
-                    "shadow": false,
-                    "topLevel": false,
-                    "x": "1216",
-                    "y": "586"
-                },
                 "I10eJ|i1GO|bqC[]5Tfg": {
                     "fields": {},
                     "id": "I10eJ|i1GO|bqC[]5Tfg",
@@ -10148,21 +10073,6 @@
                     "topLevel": false,
                     "x": "322",
                     "y": "3644"
-                },
-                "Ilvh-r.H8Q])_oELso|[": {
-                    "fields": {
-                        "TEXT": {
-                            "name": "TEXT",
-                            "value": "3"
-                        }
-                    },
-                    "id": "Ilvh-r.H8Q])_oELso|[",
-                    "inputs": {},
-                    "next": null,
-                    "opcode": "text",
-                    "parent": "D?.%9]g2Idz)^(vE*$_*",
-                    "shadow": true,
-                    "topLevel": false
                 },
                 "Iq]L5zeR@4rY:[b%(9s9": {
                     "fields": {
@@ -11210,21 +11120,6 @@
                     "x": 4555,
                     "y": -563
                 },
-                "M0wS0_2d7D3/EZ=5Jt+k": {
-                    "fields": {
-                        "TEXT": {
-                            "name": "TEXT",
-                            "value": "2"
-                        }
-                    },
-                    "id": "M0wS0_2d7D3/EZ=5Jt+k",
-                    "inputs": {},
-                    "next": null,
-                    "opcode": "text",
-                    "parent": "ickiNJaD^e^,@n#2[iC/",
-                    "shadow": true,
-                    "topLevel": false
-                },
                 "M5(v6`96$Caa]gS_[b{3": {
                     "fields": {
                         "VARIABLE": {
@@ -11390,31 +11285,6 @@
                     "topLevel": false,
                     "x": "4809",
                     "y": "-194"
-                },
-                "N*!yBN=vv1$4R2N!RGaL": {
-                    "fields": {
-                        "LIST": {
-                            "id": "i-C]NntbJ,ZEs^2=bO9z",
-                            "name": "LIST",
-                            "value": "deck",
-                            "variableType": "list"
-                        }
-                    },
-                    "id": "N*!yBN=vv1$4R2N!RGaL",
-                    "inputs": {
-                        "ITEM": {
-                            "block": "x[r0sIoi}EPHP4%^.2k/",
-                            "name": "ITEM",
-                            "shadow": "x[r0sIoi}EPHP4%^.2k/"
-                        }
-                    },
-                    "next": ":p2U%_/uZmdmB2LE-;G+",
-                    "opcode": "data_addtolist",
-                    "parent": "qyqdQ[jicS5Z}f,:4-Y9",
-                    "shadow": false,
-                    "topLevel": false,
-                    "x": "504",
-                    "y": "470"
                 },
                 "N*;q_H_;$)Q]C%lKl^Y5": {
                     "fields": {
@@ -12062,31 +11932,6 @@
                     "topLevel": false,
                     "x": "756",
                     "y": "953"
-                },
-                "P3DL?`]I!AH|tb+kE^+^": {
-                    "fields": {
-                        "LIST": {
-                            "id": "i-C]NntbJ,ZEs^2=bO9z",
-                            "name": "LIST",
-                            "value": "deck",
-                            "variableType": "list"
-                        }
-                    },
-                    "id": "P3DL?`]I!AH|tb+kE^+^",
-                    "inputs": {
-                        "ITEM": {
-                            "block": "(=K`UECi:c~frFXZ@7=)",
-                            "name": "ITEM",
-                            "shadow": "(=K`UECi:c~frFXZ@7=)"
-                        }
-                    },
-                    "next": "pN|pi{*}|V):HP.!rM]]",
-                    "opcode": "data_addtolist",
-                    "parent": "`3yh%V5^|^KSQo3Q_JpF",
-                    "shadow": false,
-                    "topLevel": false,
-                    "x": "504",
-                    "y": "470"
                 },
                 "P4[FweMuI52b,R[|]yml": {
                     "fields": {
@@ -14387,21 +14232,6 @@
                     "x": "6",
                     "y": "756"
                 },
-                "X4padcV[]srdLLXPq#xr": {
-                    "fields": {
-                        "TEXT": {
-                            "name": "TEXT",
-                            "value": "2"
-                        }
-                    },
-                    "id": "X4padcV[]srdLLXPq#xr",
-                    "inputs": {},
-                    "next": null,
-                    "opcode": "text",
-                    "parent": "`3yh%V5^|^KSQo3Q_JpF",
-                    "shadow": true,
-                    "topLevel": false
-                },
                 "X7+8t0^ESElq{W{y*sK5": {
                     "fields": {
                         "VARIABLE": {
@@ -15136,21 +14966,6 @@
                     "topLevel": false,
                     "x": "2855",
                     "y": "250"
-                },
-                "Yz.,m}-i/hP!1#nz7;d%": {
-                    "fields": {
-                        "TEXT": {
-                            "name": "TEXT",
-                            "value": "3"
-                        }
-                    },
-                    "id": "Yz.,m}-i/hP!1#nz7;d%",
-                    "inputs": {},
-                    "next": null,
-                    "opcode": "text",
-                    "parent": "I%5r~1NjOAJ)3;KmHhR(",
-                    "shadow": true,
-                    "topLevel": false
                 },
                 "Y|i0-[8R#1r6O).vp9U~": {
                     "fields": {
@@ -16321,7 +16136,7 @@
                     },
                     "id": "^g[,=s(/IcN[Qx=^::a|",
                     "inputs": {},
-                    "next": "qyqdQ[jicS5Z}f,:4-Y9",
+                    "next": "*D.^48GQu{#L~W$Rr+_(",
                     "opcode": "event_whenbroadcastreceived_with_broadcast_input",
                     "parent": null,
                     "shadow": false,
@@ -16723,31 +16538,6 @@
                     "x": 4655,
                     "y": 1484
                 },
-                "`3yh%V5^|^KSQo3Q_JpF": {
-                    "fields": {
-                        "LIST": {
-                            "id": "i-C]NntbJ,ZEs^2=bO9z",
-                            "name": "LIST",
-                            "value": "deck",
-                            "variableType": "list"
-                        }
-                    },
-                    "id": "`3yh%V5^|^KSQo3Q_JpF",
-                    "inputs": {
-                        "ITEM": {
-                            "block": "X4padcV[]srdLLXPq#xr",
-                            "name": "ITEM",
-                            "shadow": "X4padcV[]srdLLXPq#xr"
-                        }
-                    },
-                    "next": "P3DL?`]I!AH|tb+kE^+^",
-                    "opcode": "data_addtolist",
-                    "parent": "sp]g%hr_y2l1bQ~s8.I]",
-                    "shadow": false,
-                    "topLevel": false,
-                    "x": "504",
-                    "y": "492"
-                },
                 "`?8x0x*Hk|yE?R7*^BB2": {
                     "fields": {
                         "NUM": {
@@ -17139,8 +16929,8 @@
                     "parent": null,
                     "shadow": false,
                     "topLevel": true,
-                    "x": 1350,
-                    "y": 699
+                    "x": 1266,
+                    "y": 670
                 },
                 "a%^qu3TuQ(FHy~?o.93V": {
                     "fields": {
@@ -17861,21 +17651,6 @@
                     "topLevel": false,
                     "x": "1004",
                     "y": "3373"
-                },
-                "c1ueOYoGS.c^GnH?2XfA": {
-                    "fields": {
-                        "TEXT": {
-                            "name": "TEXT",
-                            "value": "3"
-                        }
-                    },
-                    "id": "c1ueOYoGS.c^GnH?2XfA",
-                    "inputs": {},
-                    "next": null,
-                    "opcode": "text",
-                    "parent": "%WK}6.VfXS%Bcy4MF|j|",
-                    "shadow": true,
-                    "topLevel": false
                 },
                 "c;+v$3.t4tru!,}mI3JK": {
                     "fields": {
@@ -18619,8 +18394,8 @@
                     "parent": null,
                     "shadow": false,
                     "topLevel": true,
-                    "x": 1349,
-                    "y": 615
+                    "x": 1255,
+                    "y": 580
                 },
                 "ecFq:!l4Tsu$!B;}z,Dq": {
                     "fields": {
@@ -19802,31 +19577,6 @@
                     "shadow": true,
                     "topLevel": false
                 },
-                "ickiNJaD^e^,@n#2[iC/": {
-                    "fields": {
-                        "LIST": {
-                            "id": "i-C]NntbJ,ZEs^2=bO9z",
-                            "name": "LIST",
-                            "value": "deck",
-                            "variableType": "list"
-                        }
-                    },
-                    "id": "ickiNJaD^e^,@n#2[iC/",
-                    "inputs": {
-                        "ITEM": {
-                            "block": "M0wS0_2d7D3/EZ=5Jt+k",
-                            "name": "ITEM",
-                            "shadow": "M0wS0_2d7D3/EZ=5Jt+k"
-                        }
-                    },
-                    "next": "sp]g%hr_y2l1bQ~s8.I]",
-                    "opcode": "data_addtolist",
-                    "parent": ":p2U%_/uZmdmB2LE-;G+",
-                    "shadow": false,
-                    "topLevel": false,
-                    "x": "504",
-                    "y": "470"
-                },
                 "igdl[EHSoalPL4k%M0eA": {
                     "fields": {},
                     "id": "igdl[EHSoalPL4k%M0eA",
@@ -20059,11 +19809,11 @@
                     },
                     "next": "Xb#J0v-c9Ftck-8HOGuT",
                     "opcode": "data_addtolist",
-                    "parent": "-j9PFJqhD{Di.KBTrt`:",
+                    "parent": "+]O9[LL-1suDc|RcWxp;",
                     "shadow": false,
                     "topLevel": false,
-                    "x": 2278.9176470588236,
-                    "y": 652.9882352941177
+                    "x": 2251.8705882352942,
+                    "y": 728.4352941176471
                 },
                 "jr5:HC,V{CQie3iaV!r}": {
                     "fields": {
@@ -21574,6 +21324,21 @@
                     "x": "369",
                     "y": "3771"
                 },
+                "p1_HQeKC5It}hM*LrwU.": {
+                    "fields": {
+                        "NUM": {
+                            "name": "NUM",
+                            "value": "2"
+                        }
+                    },
+                    "id": "p1_HQeKC5It}hM*LrwU.",
+                    "inputs": {},
+                    "next": null,
+                    "opcode": "math_whole_number_with_validator",
+                    "parent": "*D.^48GQu{#L~W$Rr+_(",
+                    "shadow": true,
+                    "topLevel": false
+                },
                 "p6~k/wB!V6GrD;i(C)=B": {
                     "fields": {
                         "VARIABLE": {
@@ -21598,31 +21363,6 @@
                     "topLevel": false,
                     "x": "2935",
                     "y": "588"
-                },
-                "pN|pi{*}|V):HP.!rM]]": {
-                    "fields": {
-                        "LIST": {
-                            "id": "i-C]NntbJ,ZEs^2=bO9z",
-                            "name": "LIST",
-                            "value": "deck",
-                            "variableType": "list"
-                        }
-                    },
-                    "id": "pN|pi{*}|V):HP.!rM]]",
-                    "inputs": {
-                        "ITEM": {
-                            "block": "6nb{nzzVJaZkg6:_=O|`",
-                            "name": "ITEM",
-                            "shadow": "6nb{nzzVJaZkg6:_=O|`"
-                        }
-                    },
-                    "next": "%WK}6.VfXS%Bcy4MF|j|",
-                    "opcode": "data_addtolist",
-                    "parent": "P3DL?`]I!AH|tb+kE^+^",
-                    "shadow": false,
-                    "topLevel": false,
-                    "x": "504",
-                    "y": "470"
                 },
                 "pc#?68a=0=LIsW[%cd:M": {
                     "fields": {
@@ -22121,13 +21861,13 @@
                             "shadow": ":g-#+gt,5[s])FQII|r5"
                         }
                     },
-                    "next": "N*!yBN=vv1$4R2N!RGaL",
+                    "next": null,
                     "opcode": "data_addtolist",
-                    "parent": "^g[,=s(/IcN[Qx=^::a|",
+                    "parent": "*D.^48GQu{#L~W$Rr+_(",
                     "shadow": false,
                     "topLevel": false,
-                    "x": 2165.035294117647,
-                    "y": 208.9764705882353
+                    "x": 1884.6,
+                    "y": 484.11764705882354
                 },
                 "q{$~z+IMFluQ-AJ14q(|": {
                     "fields": {
@@ -22531,21 +22271,6 @@
                     "x": 3083.2482368199967,
                     "y": 3300.8214868440177
                 },
-                "sk%NvV*p)q-}p`KP|iy^": {
-                    "fields": {
-                        "TEXT": {
-                            "name": "TEXT",
-                            "value": "2"
-                        }
-                    },
-                    "id": "sk%NvV*p)q-}p`KP|iy^",
-                    "inputs": {},
-                    "next": null,
-                    "opcode": "text",
-                    "parent": "sp]g%hr_y2l1bQ~s8.I]",
-                    "shadow": true,
-                    "topLevel": false
-                },
                 "skS27~-~_AWD9j(#vC@d": {
                     "fields": {
                         "CUBE_SELECT": {
@@ -22626,31 +22351,6 @@
                     "topLevel": false,
                     "x": "1743",
                     "y": "1186"
-                },
-                "sp]g%hr_y2l1bQ~s8.I]": {
-                    "fields": {
-                        "LIST": {
-                            "id": "i-C]NntbJ,ZEs^2=bO9z",
-                            "name": "LIST",
-                            "value": "deck",
-                            "variableType": "list"
-                        }
-                    },
-                    "id": "sp]g%hr_y2l1bQ~s8.I]",
-                    "inputs": {
-                        "ITEM": {
-                            "block": "sk%NvV*p)q-}p`KP|iy^",
-                            "name": "ITEM",
-                            "shadow": "sk%NvV*p)q-}p`KP|iy^"
-                        }
-                    },
-                    "next": "`3yh%V5^|^KSQo3Q_JpF",
-                    "opcode": "data_addtolist",
-                    "parent": "ickiNJaD^e^,@n#2[iC/",
-                    "shadow": false,
-                    "topLevel": false,
-                    "x": "504",
-                    "y": "551"
                 },
                 "sr!udBq4j+I}a/F?F,nU": {
                     "fields": {
@@ -23401,6 +23101,21 @@
                     "x": 2212.3188235294115,
                     "y": 2172.4988235294113
                 },
+                "vg|bM3upo|5-Krn?X8Te": {
+                    "fields": {
+                        "NUM": {
+                            "name": "NUM",
+                            "value": "5"
+                        }
+                    },
+                    "id": "vg|bM3upo|5-Krn?X8Te",
+                    "inputs": {},
+                    "next": null,
+                    "opcode": "math_whole_number_with_validator",
+                    "parent": "+]O9[LL-1suDc|RcWxp;",
+                    "shadow": true,
+                    "topLevel": false
+                },
                 "vq_GD=)~q0ZCfbjhEak7": {
                     "fields": {
                         "TEXT": {
@@ -23839,21 +23554,6 @@
                     "topLevel": false,
                     "x": "152",
                     "y": "1844"
-                },
-                "x[r0sIoi}EPHP4%^.2k/": {
-                    "fields": {
-                        "TEXT": {
-                            "name": "TEXT",
-                            "value": "1"
-                        }
-                    },
-                    "id": "x[r0sIoi}EPHP4%^.2k/",
-                    "inputs": {},
-                    "next": null,
-                    "opcode": "text",
-                    "parent": "N*!yBN=vv1$4R2N!RGaL",
-                    "shadow": true,
-                    "topLevel": false
                 },
                 "xaE7^Sn;SOWeHbaRoLu?": {
                     "fields": {
@@ -25645,7 +25345,7 @@
             "currentCostume": 0,
             "direction": 90,
             "draggable": false,
-            "id": "4rja{:(|3FF3JhJe1@EX",
+            "id": ";9E/Ce}chT6}k#8S|v@S",
             "isStage": false,
             "lists": {},
             "name": "Sprite1",

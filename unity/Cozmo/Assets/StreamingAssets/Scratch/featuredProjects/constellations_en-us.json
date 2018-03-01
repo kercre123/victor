@@ -374,12 +374,6 @@
                         "98"
                     ]
                 },
-                "_{TUL?som_nzvV^I~7w:": {
-                    "id": "_{TUL?som_nzvV^I~7w:",
-                    "name": "set casseopeia data",
-                    "type": "broadcast_msg",
-                    "value": "set casseopeia data"
-                },
                 "`D(U_1^VDw40cu=}fg08": {
                     "id": "`D(U_1^VDw40cu=}fg08",
                     "name": "When the user taps a Cube, get the next constellation.",

@@ -294,9 +294,6 @@
     "codeLabFeaturedProject.Constellations.scorpius_was_discovered_by_a_man_named_ptolemy_say_that_three_times_fast": {
         "translation": "Scorpius was discovered by a man named Ptolemy. Say that three times fast!"
     },
-    "codeLabFeaturedProject.Constellations.set_casseopeia_data": {
-        "translation": "set casseopeia data"
-    },
     "codeLabFeaturedProject.Constellations.set_cassiopeia_data": {
         "translation": "set cassiopeia data"
     },
@@ -1635,29 +1632,8 @@
     "codeLabFeaturedProject.CozmosGarden.cozmo_displays_a_sun_on_his_face": {
         "translation": "Cozmo displays a sun on his face."
     },
-    "codeLabFeaturedProject.CozmosGarden.cozmo_displays_blueberries_on_his_face": {
-        "translation": "Cozmo displays blueberries on his face."
-    },
-    "codeLabFeaturedProject.CozmosGarden.cozmo_displays_broccoli_on_his_face": {
-        "translation": "Cozmo displays broccoli on his face."
-    },
     "codeLabFeaturedProject.CozmosGarden.cozmo_displays_bugs_on_his_face": {
         "translation": "Cozmo displays bugs on his face."
-    },
-    "codeLabFeaturedProject.CozmosGarden.cozmo_displays_grapes_on_his_face": {
-        "translation": "Cozmo displays grapes on his face."
-    },
-    "codeLabFeaturedProject.CozmosGarden.cozmo_displays_lemons_on_his_face": {
-        "translation": "Cozmo displays lemons on his face."
-    },
-    "codeLabFeaturedProject.CozmosGarden.cozmo_displays_lettuce_on_his_face": {
-        "translation": "Cozmo displays lettuce on his face."
-    },
-    "codeLabFeaturedProject.CozmosGarden.cozmo_displays_oranges_on_his_face": {
-        "translation": "Cozmo displays oranges on his face."
-    },
-    "codeLabFeaturedProject.CozmosGarden.cozmo_displays_tomatoes_on_his_face": {
-        "translation": "Cozmo displays tomatoes on his face."
     },
     "codeLabFeaturedProject.CozmosGarden.cozmo_displays_water_on_his_face": {
         "translation": "Cozmo displays water on his face."
@@ -1724,12 +1700,6 @@
     },
     "codeLabFeaturedProject.CozmosGarden.drop_y": {
         "translation": "drop y"
-    },
-    "codeLabFeaturedProject.CozmosGarden.feedback": {
-        "translation": "feedback"
-    },
-    "codeLabFeaturedProject.CozmosGarden.feedback_random": {
-        "translation": "feedback random"
     },
     "codeLabFeaturedProject.CozmosGarden.ff0000": {
         "translation": "#ff0000"
