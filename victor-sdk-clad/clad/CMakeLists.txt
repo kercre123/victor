@@ -18,13 +18,14 @@ if(NOT ANKI_SRCLIST_DIR)
 endif()
 file(STRINGS "${ANKI_SRCLIST_DIR}/sdk_clad.srcs.lst" SDK_SRCS)
 
-if(CLAD_OUTPUT_DIR_CPP)
+if(CLAD_VICTOR_EMIT_CPP)
     generate_clad_cpp(
         SRCS "${SDK_SRCS}"
         RELATIVE_SRC_DIR "sdk"
         OUTPUT_DIR "${CLAD_OUTPUT_DIR_CPP}"
         INCLUDES "${CLAD_INCLUDES}"
         OUTPUT_SRCS CLAD_CPP_GEN_SDK_SRCS
+        EXCLUDE_JSON
     )
 
     add_library(sdk_clad_cpp STATIC
@@ -41,7 +42,7 @@ if(CLAD_OUTPUT_DIR_CPP)
     )
 endif()
 
-if(CLAD_OUTPUT_DIR_PYTHON)
+if(CLAD_VICTOR_EMIT_PYTHON)
     generate_clad_py(
         TARGET "sdk_clad_python"
         SRCS "${SDK_SRCS}"
@@ -52,7 +53,7 @@ if(CLAD_OUTPUT_DIR_PYTHON)
     )
 endif()
 
-if(CLAD_OUTPUT_DIR_CSHARP)
+if(CLAD_VICTOR_EMIT_CSHARP)
     generate_clad_cs(
         TARGET "sdk_clad_csharp"
         SRCS "${SDK_SRCS}"

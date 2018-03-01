@@ -213,7 +213,7 @@ endfunction()
 
 # calls generate_clad using each of the C++ emitters used for cozmoEngine
 function(generate_clad_cpp)
-    set(options "")
+    set(options EXCLUDE_JSON)
     set(oneValueArgs LIBRARY RELATIVE_SRC_DIR OUTPUT_DIR)
     set(multiValueArgs SRCS INCLUDES FLAGS OUTPUT_SRCS)
     cmake_parse_arguments(genclad "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
@@ -222,9 +222,15 @@ function(generate_clad_cpp)
 
     set(CLAD_CPP "${CLAD_EMITTER_DIR}/CPP_emitter.py")
     set(CLAD_CPP_EXTS ".h" ".cpp")
+
+    set(OUTPUT_JSON "")
+    if(NOT genclad_EXCLUDE_JSON)
+    set(OUTPUT_JSON "--output-json")
+    endif(NOT genclad_EXCLUDE_JSON)
+
     set(CLAD_CPP_FLAGS
         "--output-union-helper-constructors"
-        "--output-json"
+        "${OUTPUT_JSON}"
         "${genclad_FLAGS}")
 
     set(CLAD_CPP_DECL "${CLAD_VICTOR_EMITTER_DIR}/cozmo_CPP_declarations_emitter.py")

@@ -16,7 +16,7 @@ namespace RobotToDevice {
 
 // Request initial pairing, supplying the robot's highest pairing protocol
 // version
-enum RTSMode
+enum uint_8 RTSMode
 {
     RAW,
     CLAD,
@@ -25,26 +25,25 @@ enum RTSMode
 
 message RTSInitializationMessage 
 {
-    uint8		INITIALIZATION_TYPE,
-    uint8	    PUBLIC_KEY[32]
+    uint_8		INITIALIZATION_TYPE,
+    uint_8	    PUBLIC_KEY[32]
 }
 
 message RTSNonceMessage {
-    uint8_t[24]	NONCE		// TODO: WE MIGHT WANT 2 NONCES
+    uint_8  	NONCE[24]		// TODO: WE MIGHT WANT 2 NONCES
 }
 
 message RTSAckMessage {
-    uint8		RTS_MESSAGE_TYPE
+    uint_8		RTS_MESSAGE_TYPE
 }
 
 message RTSChallengeMessage {
-    uint32  	NUMBER
+    uint_32  	NUMBER
 }
 
 message RTSConnectionMessage {
     //
 }
-
 
 // [Clad, device]
 message RTSWifiConnectRequestMessage {
@@ -64,87 +63,29 @@ message RTSStatusRequestMessage {
     //
 }
 
+message RTSOtaUpdateResponseMessage {
+    uint_8      STATUS,
+    uint_8      PROGRESS,
+}
+
+message RTSCancelPairingMessage {
+    //
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// Send a generated public key to the app
-message PairingPublicKey
-{
-    uint_8  publicKey[32] // Make this array length a clad constant
-}
-
-// Send a nonce to the app to test encryption
-message PairingNonce
-{
-    uint_8  nonce[24] // Make this array length a clad constant
-}
-
-// Send an acknoweledgement to the app
-message PairingAck
-{
-    uint_8  ack,
-    uint_8  nonce[24] // Make this array length a clad constant
-}
-
-// Send a challenge to the app test encryption
-message PairingCryptoChallengeRequest
-{
-    uint_32 number
-}
-
-// Tell the app a cryptography challenge/response has been accepted and that the
-// robot is ready for secure encrypted communication
-message PairingCryptoAccepted
-{
-    uint_8  statusCode
-}
-
-// The robot can inform the app to cancel the pairing process at any stage
-message PairingCancel
-{
-}
-
-// ====================================================
-//                   Wifi Connection
-// ====================================================
-
-// Tell the app which networks are visible to the robot's wifi
-message WifiNetworkListResponse
-{
-    string  ssidList[uint_16]
-}
-
-// Tell the app to send credentials to connect to a wifi network
-// NOTE: This may be unnecessary, as victor could simply respond to sent network
-//       credentials initiated by the app in response to the network list
-message WifiNetworkCredentialsRequest
-{
-}
-
-// Tell the app whether the supplied wifi network was successfully connected to
-message WifiConnectionResponse
-{
-    bool    success,
-    string  error // most likely enum, change when we figure the enums out
-}
-
-// Tell the app the robot's IP address on the active wifi network
-message RobotIPAddressResponse
-{
-    string  ipAddress
-}
-
-union Connection {
-    PairingProtocolVersion          pairingProtocolVersion          = 0x00,
-    PairingPublicKey                pairingPublicKey                = 0x01,
-    PairingNonce                    pairingNonce                    = 0x02,
-    PairingAck                      pairingAck                      = 0x03,
-    PairingCryptoChallengeRequest   pairingCryptoChallengeRequest   = 0x04,
-    PairingCryptoAccepted           pairingCryptoAccepted           = 0x05,
-    PairingCancel                   pairingCancel                   = 0x06,
-    WifiNetworkListResponse         wifiNetworkListResponse         = 0x07,
-    WifiNetworkCredentialsRequest   wifiNetworkCredentialsRequest   = 0x08,
-    WifiConnectionResponse          wifiConnectionResponse          = 0x09,
-    RobotIPAddressResponse          robotIPAddressResponse          = 0x0A
+union RtsConnection {
+    RTSInitializationMessage        rtsInitializationMessage        = 0x00,
+    RTSNonceMessage                 rtsNonceMessage                 = 0x01,
+    RTSAckMessage                   rtsAckMessage                   = 0x02,
+    RTSChallengeMessage             rtsChallengeMessage             = 0x03,
+    RTSConnectionMessage            rtsConnectionMessage            = 0x04,
+    RTSWifiConnectRequestMessage    rtsWifiConnectRequestMessage    = 0x05,
+    RTSWifiIpRequestMessage         rtsWifiIpRequestMessage         = 0x06,
+    RTSDisconnectionMessage         rtsDisconnectionMessage         = 0x07,
+    RTSStatusRequestMessage         rtsStatusRequestMessage         = 0x08,
+    RTSOtaUpdateResponseMessage     rtsOtaUpdateResponseMessage     = 0x09,
+    RTSCancelPairingMessage         rtsCancelPairingMessage         = 0x0A,
 }
 
 // ====================================================
@@ -204,7 +145,7 @@ union MeetVictor {
 // ====================================================
 
 union RobotToDevice {
-    Connection                  connection                  = 0x00,
+    RtsConnection               rtsConnection               = 0x00,
     AppGeneral                  appGeneral                  = 0x01,
     MeetVictor                  meetVictor                  = 0x02
 }

@@ -18,16 +18,16 @@ namespace DeviceToRobot {
 // version
 message RTSInitializationMessage 
 {
-    uint8		INITIALIZATION_TYPE,
-    uint8	    PUBLIC_KEY[32]
+    uint_8		INITIALIZATION_TYPE,
+    uint_8	    PUBLIC_KEY[32]
 }
 
 message RTSAckMessage {
-    uint8		RTS_MESSAGE_TYPE
+    uint_8		RTS_MESSAGE_TYPE
 }
 
 message RTSChallengeMessage {
-    uint32  	NUMBER
+    uint_32  	NUMBER
 }
 
 message RTSWifiScanRequestMessage {
@@ -52,74 +52,27 @@ message RTSStatusRequestMessage {
     //
 }
 
+message RTSOtaUpdateRequestMessage {
+    string      URL
+}
+
+message RTSCancelPairingMessage {
+    //
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-message PairingProtocolResponse
-{
-    uint_16 version
-}
-
-// Send a generated public key to the robot
-message PairingPublicKey
-{
-    uint_8  publicKey[32] // make this array length a constant
-}
-
-// Respond to the robot's nonce with a modified nonce
-message PairingAck
-{
-    uint_8  ack,
-    uint_8  nonce[24] // Make this array length a clad constant
-}
-
-// Responds to the robot's encryption challenge with response
-message PairingCryptoChallengeResponse
-{
-    uint_32 number
-}
-
-// The app can inform the robot to cancel the pairing at any stage
-message PairingCancel
-{
-}
-
-// ====================================================
-//                   Wifi Connection
-// ====================================================
-
-// Request a list of visible wifi networks from the robot
-message WifiNetworkListRequest
-{
-}
-
-// Tell the robot which wifi ssid to connect to and which password to send it
-message WifiSendNetworkCredentials
-{
-    string  ssid,
-    string  password
-}
-
-// Request the robot's IP address on the active wifi network
-message RobotIPAddressRequest
-{
-}
-
-// Tell the robot the address of Anki cloud services
-message SendOTAAddress
-{
-    string  address
-}
-
-union Connection {
-    PairingProtocolResponse         pairingProtocolResponse         = 0x00,
-    PairingPublicKey                pairingPublicKey                = 0x01,
-    PairingAck                      pairingAck                      = 0x02,
-    PairingCryptoChallengeResponse  pairingCryptoChallengeResponse  = 0x03,
-    PairingCancel                   pairingCancel                   = 0x04,
-    WifiNetworkListRequest          wifiNetworkListRequest          = 0x05,
-    WifiSendNetworkCredentials      wifiSendNetworkCredentials      = 0x06,
-    RobotIPAddressRequest           robotIPAddressRequest           = 0x07,
-    SendOTAAddress                  sendOTAAddress                  = 0x08
+union RtsConnection {
+    RTSInitializationMessage        rtsInitializationMessage        = 0x00,
+    RTSAckMessage                   rtsAckMessage                   = 0x01,
+    RTSChallengeMessage             rtsChallengeMessage             = 0x02,
+    RTSWifiScanRequestMessage       rtsWifiScanRequestMessage       = 0x03,
+    RTSWifiConnectRequestMessage    rtsWifiConnectRequestMessage    = 0x04,
+    RTSWifiIpRequestMessage         rtsWifiIpRequestMessage         = 0x05,
+    RTSDisconnectionMessage         rtsDisconnectionMessage         = 0x06,
+    RTSStatusRequestMessage         rtsStatusRequestMessage         = 0x07,
+    RTSOtaUpdateRequestMessage      rtsOtaUpdateRequestMessage      = 0x08,
+    RTSCancelPairingMessage         rtsCancelPairingMessage         = 0x09,
 }
 
 // ====================================================
@@ -168,7 +121,7 @@ union MeetVictor {
 // ====================================================
 
 union DeviceToRobot {
-    Connection                  connection                  = 0x00,
+    RtsConnection               rtsConnection               = 0x00,
     AppGeneral                  appGeneral                  = 0x01,
     MeetVictor                  meetVictor                  = 0x02
 }
