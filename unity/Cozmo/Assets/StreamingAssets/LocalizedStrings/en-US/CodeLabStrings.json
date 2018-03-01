@@ -1516,5 +1516,29 @@
   },
   "codeLab.toomanyprojectsDialog.dialogTitle": {
     "translation": "You have reached the maximum number of projects. Please delete a project before creating a new one."
+  },
+  "codeLabGlossary.block_definitions.title.cozmo_sound_song_play_all_notes": {
+    "translation": "play all notes in song"
+  },
+  "codeLabGlossary.block_definitions.description.cozmo_sound_song_play_all_notes": {
+    "translation": "You can compose songs for Cozmo to sing. This blocks will play all notes that you've previously added to his song. Note that if you haven't added notes, he won't sing anything. He can sing 4 bars (the length of 16 whole notes) of music at a time, so consider splitting up your song into smaller chunks if it's longer than 4 bars."
+  },
+  "codeLabGlossary.block_definitions.title.cozmo_sound_song_clear_all_notes": {
+    "translation": "clear all notes in song"
+  },
+  "codeLabGlossary.block_definitions.description.cozmo_sound_song_clear_all_notes": {
+    "translation": "This removes all notes from the song you're composing for Cozmo to sing."
+  },
+  "codeLabGlossary.block_definitions.title.cozmo_sound_song_add_note": {
+    "translation": "add note to song: [pitch] pitch, [duration] duration"
+  },
+  "codeLabGlossary.block_definitions.description.cozmo_sound_song_add_note": {
+    "translation": "This adds a note to the song you're composing for Cozmo to sing. Pitch controls how high or low the note is. Duration controls how long the note is."
+  },
+  "codeLabGlossary.block_definitions.title.cozmo_sound_song_add_rest": {
+    "translation": "add rest to song: [duration] duration"
+  },
+  "codeLabGlossary.block_definitions.description.cozmo_sound_song_add_rest": {
+    "translation": "This adds a rest to the song you're composing for Cozmo to sing. Duration controls how long the rest is."
   }
 }

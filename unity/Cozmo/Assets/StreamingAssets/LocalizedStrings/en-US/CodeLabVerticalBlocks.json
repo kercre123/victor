@@ -13,7 +13,7 @@
     ]
   },
   "codeLabVertical.SONG_ADD_NOTE": {
-    "translation": "add note %1 with duration %2"
+    "translation": "add note to song: %1 pitch, %2 duration"
   },
   "codeLabVertical.NOTE_C2": {
     "translation": "C"
@@ -58,25 +58,25 @@
     "translation": "C#/Db"
   },
   "codeLabVertical.SONG_ADD_REST": {
-    "translation": "add rest with duration %1"
+    "translation": "add rest to song: %1 duration"
   },
   "codeLabVertical.NOTE_DURATION_QUARTER": {
-    "translation": "1/4"
+    "translation": "quarter"
   },
   "codeLabVertical.NOTE_DURATION_HALF": {
-    "translation": "1/2"
+    "translation": "half"
   },
   "codeLabVertical.NOTE_DURATION_THREE_QUARTER": {
-    "translation": "3/4"
+    "translation": "three-quarter"
   },
   "codeLabVertical.NOTE_DURATION_WHOLE": {
-    "translation": "Whole"
+    "translation": "whole"
   },
   "codeLabVertical.CLEAR_ALL_NOTES": {
-    "translation": "clear all notes"
+    "translation": "clear all notes in song"
   },
   "codeLabVertical.PLAY_ALL_NOTES": {
-    "translation": "play all notes (4 measures max)"
+    "translation": "play all notes in song"
   },
   "codeLabVertical.COZMO_VERT_DRIVE": {
     "translation": "drive %1mm at %2mm/s"

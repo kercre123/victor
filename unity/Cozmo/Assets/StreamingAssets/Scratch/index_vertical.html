@@ -225,8 +225,6 @@
                     <shadow type="cozmo_animation_select_menu"></shadow>
                 </value>
               </block>
-              <block type="cozmo_vert_enable_animation_track"></block>
-              <block type="cozmo_vert_disable_animation_track"></block>
               <sep gap="50"></sep>
               <block type="cozmo_sound_play">
                 <value name="SOUND_MENU">
@@ -244,10 +242,10 @@
                 </value>
               </block>
               <sep gap="50"></sep>
+              <block type="cozmo_sound_song_play_all_notes"></block>
+              <block type="cozmo_sound_song_clear_all_notes"></block>
               <block type="cozmo_sound_song_add_note"></block>
               <block type="cozmo_sound_song_add_rest"></block>
-              <block type="cozmo_sound_song_clear_all_notes"></block>
-              <block type="cozmo_sound_song_play_all_notes"></block>
               <sep gap="50"></sep>
               <block type="cozmo_play_animation_by_name">
                 <value name="ANIM_NAME">
@@ -263,6 +261,8 @@
                     </shadow>
                 </value>
               </block>
+              <block type="cozmo_vert_enable_animation_track"></block>
+              <block type="cozmo_vert_disable_animation_track"></block>
             </category>
 
             <category name="codeLab.Category.Events" colour="#f4b606" secondaryColour="0">
