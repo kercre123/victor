@@ -37,6 +37,7 @@ static ApplicationMap* const app_current = (ApplicationMap*) app_location;
 static uint8_t* app_write_address = (uint8_t*) app_location;
 static const uint8_t xxtea_key[16] = {0x88, 0xdb, 0x37, 0x96, 0x76, 0x8f, 0x86, 0x91, 0x42, 0x24, 0xf4, 0x35, 0xc1, 0xfd, 0x7f, 0xd3};
 static const uint8_t xxtea_nonce[16] = {0x3d, 0x70, 0x7a, 0x86, 0x10, 0x3c, 0xef, 0x4f, 0x83, 0x2f, 0xa8, 0xa6, 0x64, 0x20, 0xba, 0xdf};
+static int write_offset = 0;
 
 void app_send_version() {
   int length = app_valid ? sizeof(app_current->version) : 0;
@@ -106,6 +107,7 @@ void app_recv_target(uint8_t length, const void* data) {
 void app_erase() {
   if (!app_valid) return ;
 
+  write_offset = 0;
   app_stop();
   app_valid = false;
   app_send_version();
@@ -152,27 +154,25 @@ void user_custs1_ota_target_wr_ind_handler(ke_msg_id_t const msgid,
                                       ke_task_id_t const dest_id,
                                       ke_task_id_t const src_id)
 {
-  static int offset = 0;
   int length = param->length & ~3;
 
-  if (offset + length > sizeof(ApplicationMap)) {
-    app_erase();
-    offset = 0;
+  app_erase();
+  
+  if (write_offset + length > sizeof(ApplicationMap)) {
+    write_offset = 0;
     return ;
   }
-  
-  memcpy(&app_write_address[offset], param->value, length);
-  offset += length;
+
+  memcpy(&app_write_address[write_offset], param->value, length);
+  write_offset += length;
 
   if (param->length & 3) {
     // Erase upper memory (anti-hack)
-    memset(&app_write_address[offset], 0, sizeof(ApplicationMap) - offset);
-    xxtea((uint32_t*)app_location, offset / sizeof(uint32_t), (const uint32_t*)&xxtea_key);
-
-    offset = 0;
+    memset(&app_write_address[write_offset], 0, sizeof(ApplicationMap) - write_offset);
+    xxtea((uint32_t*)app_location, write_offset / sizeof(uint32_t), (const uint32_t*)&xxtea_key);
 
     if (memcmp(xxtea_nonce, app_current->nonce, sizeof(xxtea_nonce)) != 0) {
-      app_erase();
+      write_offset = 0;
       return ;
     }
 
