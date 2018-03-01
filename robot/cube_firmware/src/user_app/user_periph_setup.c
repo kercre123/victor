@@ -77,6 +77,7 @@ static const LED_Pin LEDs[] = {
   { GPIOPP(D11) },
 };
 
+extern void bootmsg(void);
 void FirstBoot(void) {
   // Power up peripherals' power domain
   SetBits16(PMU_CTRL_REG, PERIPH_SLEEP, 0);
@@ -99,6 +100,9 @@ void FirstBoot(void) {
   GPIO_INIT_PIN(D11, OUTPUT, PID_GPIO, 1, GPIO_POWER_RAIL_3V );
 
   __nop(); __nop(); __nop(); __nop(); __nop();
+
+  //print boot info
+  bootmsg();
 
   // Blink pattern
   for (int p = 0; p < 12; p++) {
