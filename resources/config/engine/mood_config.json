@@ -26,15 +26,6 @@
          ]
       },
      {
-       "emotionType": "WantToPlay",
-       "nodes": [
-         {
-           "x": 0,
-           "y": 1
-         }
-       ]
-     },
-     {
        "emotionType": "Social",
        "nodes": [
          {
@@ -76,6 +67,27 @@
          },
          {
            "x": 70,
+           "y": 0
+         }
+       ]
+     },
+     {
+       "emotionType": "Stimulated",
+       "nodes": [
+         {
+           "x": 0,
+           "y": 1
+         },
+         {
+           "x": 1.5,
+           "y": 1
+         },
+         {
+           "x": 1.8,
+           "y": 0.9
+         },
+         {
+           "x": 300.0,
            "y": 0
          }
        ]

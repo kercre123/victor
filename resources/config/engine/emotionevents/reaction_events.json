@@ -1,38 +1,15 @@
 {
   "emotionEvents": [
     {
-      "name": "FinishedMinorFrustration",
-      "emotionAffectors": [										  
-         {
-            "emotionType": "Confident",
-            "value": 0.1
-         }
-      ]
-    },
-    {
-      "name": "FinishedMajorFrustration",
-      "emotionAffectors": [										  
-         {
-            "emotionType": "Confident",
-            "value": 1.0
-         }
-      ]
-    },
-    {
-      "name": "TooManyResumesCliffOrMovement",
-      "emotionAffectors": [
-          {
-            "emotionType": "Confident",
-            "value": -1.0
-          }
-        ]
-    },
-    {
       "name": "ReactToUnexpectedMovement",
       "emotionAffectors": [
          {
             "emotionType": "Confident",
             "value": -0.2
+         },
+         {
+             "emotionType" : "Stimulated",
+             "value" : 0.1
          }
       ]
     }

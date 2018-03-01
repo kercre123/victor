@@ -4,17 +4,8 @@
       "name" : "FoundObservedObject",
       "emotionAffectors" : [										  
         {
-          "emotionType" : "Excited",
+          "emotionType" : "Stimulated",
           "value" : 0.08
-        }
-      ]
-    },
-    {
-      "name": "FoundPossibleObject",
-      "emotionAffectors" : [
-        {
-          "emotionType" : "Excited",
-          "value" : 0.03
         }
       ]
     }
