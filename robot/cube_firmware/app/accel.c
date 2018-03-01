@@ -12,9 +12,9 @@ static volatile uint16_t* const SPI_READ  = (uint16_t*)(GPIO_BASE + (GPIO_PORT_0
 static volatile uint16_t* const SPI_SET   = (uint16_t*)(GPIO_BASE + (GPIO_PORT_0 << 5) + 2);
 static volatile uint16_t* const SPI_RESET = (uint16_t*)(GPIO_BASE + (GPIO_PORT_0 << 5) + 4);
 
-static const uint16_t BIT_ACC_nCS = 1 << ACC_nCS_PIN;
-static const uint16_t BIT_ACC_SCK = 1 << ACC_SCK_PIN;
-static const uint16_t BIT_ACC_SDA = 1 << ACC_SDA_PIN;
+#define BIT_ACC_nCS (1 << ACC_nCS_PIN)
+#define BIT_ACC_SCK (1 << ACC_SCK_PIN)
+#define BIT_ACC_SDA (1 << ACC_SDA_PIN)
 
 static void spi_write_byte(uint8_t value) {
   for (int i = 0x80; i; i >>= 1) {
@@ -28,7 +28,7 @@ static uint8_t spi_read_byte() {
   uint8_t value = 0;
   for (int i = 0x80; i; i >>= 1) {
     *SPI_RESET = BIT_ACC_SCK;
-    __nop(); __nop();
+    __asm("nop"); __asm("nop");
     *SPI_SET = BIT_ACC_SCK;
     if (BIT_ACC_SDA & *SPI_READ) value |= i;
   }
@@ -68,10 +68,10 @@ void hal_acc_init(void) {
   GPIO_INIT_PIN(ACC_SCK, OUTPUT, PID_GPIO, 1, GPIO_POWER_RAIL_3V );
   GPIO_INIT_PIN(ACC_nCS, OUTPUT, PID_GPIO, 1, GPIO_POWER_RAIL_3V );
 
-  for (int i = 70; i > 0; i--) __nop();  // About 32us
+  for (int i = 70; i > 0; i--) __asm("nop");  // About 32us
   //spi_write8(BGW_SOFTRESET, 0xB6);  // Soft Reset Accelerometer
 
-  //for (int i = 4800; i > 0; i--) __nop();  // About 1.8ms
+  for (int i = 4800; i > 0; i--) __asm("nop");  // About 1.8ms
   spi_write8(BGW_SPI3_WDT, 0x01);   // Enter three wire SPI mode
 
   //spi_write8(PMU_LOW_POWER, 0x40);  // Low power mode
