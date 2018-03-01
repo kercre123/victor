@@ -90,10 +90,11 @@ void app_start() {
 void app_stop() {
   if (!app_running) return ;
 
-  app_running = false;
-  app_current->AppDeInit();
   app_easy_timer_cancel(app_timer);
   app_timer = EASY_TIMER_INVALID_TIMER;
+
+  app_running = false;
+  app_current->AppDeInit();
 }
 
 void app_recv_target(uint8_t length, const void* data) {

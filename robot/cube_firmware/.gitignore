@@ -10,3 +10,5 @@ EventRecorderStub.scvd
 !*.obj
 !*.ini
 JLinkSettings.ini
+*.o
+*.elf

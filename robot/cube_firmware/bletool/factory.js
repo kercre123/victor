@@ -8,7 +8,7 @@ const CUBE_SERVICE = 'c6f6c70fd219598bfb4c308e1f22f830';
 
 noble.on('stateChange', function(state) {
   if (state === 'poweredOn') {
-    noble.startScanning();
+    noble.startScanning([CUBE_SERVICE]);  // Only cubes, allow duplicates
   } else {
     noble.stopScanning();
   }
@@ -17,9 +17,7 @@ noble.on('stateChange', function(state) {
 noble.on('discover', function (device) {
   var data = device.advertisement.manufacturerData;
 
-  // Check manufacturer ID and service ID to confirm this is a cube
-  if (!data || data.length < 2 || data.readUInt16BE(0) != 0xBEEF) return ;
-  if (device.advertisement.serviceUuids.indexOf(CUBE_SERVICE) < 0) return ;
+  console.log(device.address);
 
   emitter.emit('advertised', {
     device,
