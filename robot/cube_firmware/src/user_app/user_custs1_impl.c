@@ -104,15 +104,6 @@ void app_recv_target(uint8_t length, const void* data) {
   app_current->BLE_Recv(length, data);
 }
 
-void app_erase() {
-  if (!app_valid) return ;
-
-  write_offset = 0;
-  app_stop();
-  app_valid = false;
-  app_send_version();
-}
-
 /*
  * FUNCTION DEFINITIONS
  ****************************************************************************************
@@ -156,8 +147,13 @@ void user_custs1_ota_target_wr_ind_handler(ke_msg_id_t const msgid,
 {
   int length = param->length & ~3;
 
-  app_erase();
-  
+  if (app_valid) {
+    write_offset = 0;
+    app_stop();
+    app_valid = false;
+    app_send_version();
+  }
+
   if (write_offset + length > sizeof(ApplicationMap)) {
     write_offset = 0;
     return ;
