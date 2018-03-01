@@ -26,6 +26,7 @@ set(ANKI_BUILD_CXX_COMPILE_OPTIONS
   -g
   -Wall
   -Wconditional-uninitialized
+  -Werror
   -Wformat
   -Wformat-security
   -Wheader-guard
