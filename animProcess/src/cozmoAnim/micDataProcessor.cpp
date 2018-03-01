@@ -426,7 +426,7 @@ void MicDataProcessor::ProcessRawLoop()
     auto& rawAudioToProcess = _rawAudioBuffers[_rawAudioProcessingIndex];
     while (rawAudioToProcess.size() > 0)
     {
-      ANKI_CPU_TICK("MicDataProcessor", maxProcessingTimePerDrop_ms, Util::CpuThreadProfiler::kLogFrequencyNever);
+      ANKI_CPU_TICK("MicDataProcessorRaw", maxProcessingTimePerDrop_ms, Util::CpuThreadProfiler::kLogFrequencyNever);
       ANKI_CPU_PROFILE("ProcessLoop");
 
       const auto& nextData = rawAudioToProcess.front();
@@ -493,7 +493,7 @@ void MicDataProcessor::ProcessTriggerLoop()
   while (!_processThreadStop)
   {
     static constexpr uint32_t maxTriggerProcTime_ms = 10;
-    ANKI_CPU_TICK("MicDataProcessor", maxTriggerProcTime_ms, Util::CpuThreadProfiler::kLogFrequencyNever);
+    ANKI_CPU_TICK("MicDataProcessorTrigger", maxTriggerProcTime_ms, Util::CpuThreadProfiler::kLogFrequencyNever);
     ANKI_CPU_PROFILE("ProcessTriggerLoop");
     TimedMicData* readyDataSpot = nullptr;
     {
