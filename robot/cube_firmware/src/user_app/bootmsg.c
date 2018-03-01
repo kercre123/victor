@@ -130,7 +130,7 @@ static inline void delayus(uint32_t us) {
 void bootmsg(void)
 {
   bdaddr_t bdaddr;
-  struct { uint32_t esn; uint32_t hwrev; uint32_t model; } info;
+  uint32_t info[4];
   
   //read factory programmed info from OTP header
   otp_read( OTP_ADDR_HEADER+OTP_HEADER_BDADDR_OFFSET, BDADDR_SIZE, bdaddr.addr );
@@ -139,9 +139,10 @@ void bootmsg(void)
   /*/DEBUG
   #warning DEBUG
   memcpy(bdaddr.addr, "\x01\x02\x03\x04\x05\x06", 6);
-  info.esn = 0x12345678;
-  info.hwrev = 0xabcdef12;
-  info.model = 0x1a2b3c4d;
+  info[0] = 0x12345678;
+  info[1] = 0xabcdef12;
+  info[2] = 0x1a2b3c4d;
+  info[3] = 0xa5b6c7d8;
   //-*/
   
   //AN-B-001 Booting from serial interfaces: 'start TX' char 0x02
@@ -158,16 +159,12 @@ void bootmsg(void)
     if( i < BDADDR_SIZE-1 )
       hal_uart_putchar(':');
   }
-  hal_uart_putchar(' ');
   
-  //print factory info
-  print32(info.esn);
-  hal_uart_putchar(' ');
-  
-  print32(info.hwrev);
-  hal_uart_putchar(' ');
-  
-  print32(info.model);
+  //factory defined fields
+  for(int x=0; x < sizeof(info)/4; x++) {
+    hal_uart_putchar(' ');
+    print32(info[x]); //info[0]==esn, info[1]==hwrev, info[2]==model, info[3]==hash/signature
+  }
   hal_uart_write("\n\n");
   
   //cleanup
