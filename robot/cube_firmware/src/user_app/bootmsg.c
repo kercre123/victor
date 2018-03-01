@@ -13,7 +13,7 @@
 static inline void hal_uart_init(void)
 {
   //connect pins
-  GPIO_INIT_PIN(UTX, OUTPUT, PID_UART1_TX, 0, GPIO_POWER_RAIL_3V );
+  GPIO_INIT_PIN(UTX, OUTPUT, PID_UART1_TX, 1, GPIO_POWER_RAIL_3V );
   //GPIO_INIT_PIN(URX, INPUT,  PID_UART1_RX, 0, GPIO_POWER_RAIL_3V );
   GPIO_INIT_PIN(URX, INPUT_PULLUP, PID_GPIO, 1, GPIO_POWER_RAIL_3V );
   
@@ -118,24 +118,40 @@ static inline void otp_read(uint32_t addr, int len, uint8_t *buf)
 #include "bdaddr.h"
 #include "da14580_otp_header.h"
 
+static inline void delayus(uint32_t us) {
+  //loop is ~4 instructions + n*nop() -> 16 (@16MHz ~= 1us)
+  for ( ; us > 0; us--) {
+    __nop(); __nop(); __nop(); __nop();
+    __nop(); __nop(); __nop(); __nop();
+    __nop(); __nop(); __nop(); __nop();
+  }
+}
+
 void bootmsg(void)
 {
   bdaddr_t bdaddr;
-  struct { uint32_t esn; uint32_t hwrev; uint32_t model; } info;
+  uint32_t info[4];
   
   //read factory programmed info from OTP header
   otp_read( OTP_ADDR_HEADER+OTP_HEADER_BDADDR_OFFSET, BDADDR_SIZE, bdaddr.addr );
   otp_read( OTP_ADDR_HEADER+offsetof(da14580_otp_header_t,custom_field), sizeof(info), (uint8_t*)&info );
   
   /*/DEBUG
+  #warning DEBUG
   memcpy(bdaddr.addr, "\x01\x02\x03\x04\x05\x06", 6);
-  info.esn = 0x12345678;
-  info.hwrev = 0xabcdef12;
-  info.model = 0x1a2b3c4d;
+  info[0] = 0x12345678;
+  info[1] = 0xabcdef12;
+  info[2] = 0x1a2b3c4d;
+  info[3] = 0xa5b6c7d8;
   //-*/
   
+  //AN-B-001 Booting from serial interfaces: 'start TX' char 0x02
+  //cubeboot sync byte 0xb2, 1) doesn't conflict with ascii parsers and 2) is distinct from dialog bootloader sync byte
   hal_uart_init();
-  hal_uart_write("\n\n\n\ncubeboot "); //XXX: pick a sync byte that 1) doesn't conflict with ascii parsers and 2) is distinct from dialog bootloader sync bytes
+  delayus(250);
+  hal_uart_write("\xB2\xB2\xB2\xB2");
+  delayus(1000);
+  hal_uart_write("cubeboot ");
   
   //optimized bdaddr2str(): [hex] "##:##:##:##:##:##" LSB to MSB
   for(int i=0; i<BDADDR_SIZE; i++) {
@@ -143,24 +159,17 @@ void bootmsg(void)
     if( i < BDADDR_SIZE-1 )
       hal_uart_putchar(':');
   }
-  hal_uart_putchar(' ');
   
-  //print factory info
-  print32(info.esn);
-  hal_uart_putchar(' ');
-  
-  print32(info.hwrev);
-  hal_uart_putchar(' ');
-  
-  print32(info.model);
-  hal_uart_write("\n\n\n");
+  //factory defined fields
+  for(int x=0; x < sizeof(info)/4; x++) {
+    hal_uart_putchar(' ');
+    print32(info[x]); //info[0]==esn, info[1]==hwrev, info[2]==model, info[3]==hash/signature
+  }
+  hal_uart_write("\n\n");
   
   //cleanup
   hal_uart_tx_flush();
-  
-  //extra delay for final stop bit and receiver sync
-  for (volatile int i = 70*4; i > 0; i--) __nop();  // About 128us??
-  
+  delayus(1000); //extra delay for final stop bit and receiver sync
   hal_uart_deinit();
 }
 
