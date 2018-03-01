@@ -69,7 +69,7 @@ void hal_acc_init(void) {
   GPIO_INIT_PIN(ACC_nCS, OUTPUT, PID_GPIO, 1, GPIO_POWER_RAIL_3V );
 
   for (int i = 70; i > 0; i--) __asm("nop");  // About 32us
-  //spi_write8(BGW_SOFTRESET, 0xB6);  // Soft Reset Accelerometer
+  spi_write8(BGW_SOFTRESET, 0xB6);  // Soft Reset Accelerometer
 
   for (int i = 4800; i > 0; i--) __asm("nop");  // About 1.8ms
   spi_write8(BGW_SPI3_WDT, 0x01);   // Enter three wire SPI mode
@@ -101,16 +101,18 @@ void hal_acc_stop(void) {
 }
 
 void hal_acc_tick(void) {
-  static uint8_t data[18];
-  static int bytes;
+  static uint8_t data[18] = { 0xCD };
+  static int bytes = 1;
 
-  while (spi_read8(FIFO_STATUS) & 0x7F) 
+  //while (spi_read8(FIFO_STATUS) & 0x7F) 
   {
-    data[bytes++] = spi_read8(FIFO_DATA);
+    //data[bytes++] = spi_read8(FIFO_DATA);
+    data[bytes++] = spi_read8(ACCD_X_LSB);
+    data[bytes++] = spi_read8(ACCD_X_MSB);
 
     if (bytes == sizeof(data)) {
-      ble_send(sizeof(data), data);
-      bytes = 0;
+      ble_send(bytes, data);
+      bytes = 1;
     }
   }
 }

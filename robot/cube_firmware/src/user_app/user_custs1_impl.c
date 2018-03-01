@@ -83,6 +83,7 @@ void app_start() {
   if (!app_valid || app_running) return ;
 
   app_running = true;
+  app_current->BLE_Recv = app_send_target;
   app_current->AppInit();
   app_timer = app_easy_timer(1, app_tick);
 }
@@ -90,11 +91,10 @@ void app_start() {
 void app_stop() {
   if (!app_running) return ;
 
-  app_easy_timer_cancel(app_timer);
-  app_timer = EASY_TIMER_INVALID_TIMER;
-
   app_running = false;
   app_current->AppDeInit();
+  app_easy_timer_cancel(app_timer);
+  app_timer = EASY_TIMER_INVALID_TIMER;
 }
 
 void app_recv_target(uint8_t length, const void* data) {
@@ -169,9 +169,10 @@ void user_custs1_ota_target_wr_ind_handler(ke_msg_id_t const msgid,
     memset(&app_write_address[offset], 0, sizeof(ApplicationMap) - offset);
     xxtea((uint32_t*)app_location, offset / sizeof(uint32_t), (const uint32_t*)&xxtea_key);
 
+    offset = 0;
+
     if (memcmp(xxtea_nonce, app_current->nonce, sizeof(xxtea_nonce)) != 0) {
       app_erase();
-      offset = 0;
       return ;
     }
 
