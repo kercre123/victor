@@ -15,7 +15,7 @@
         <TargetCommonOption>
           <Device>ARMCM0</Device>
           <Vendor>ARM</Vendor>
-          <PackID>ARM.CMSIS.5.0.0</PackID>
+          <PackID>ARM.CMSIS.5.0.1</PackID>
           <PackURL>http://www.keil.com/pack/</PackURL>
           <Cpu>IROM(0x0,0x0) IRAM(0x0,0x0) CPUTYPE("Cortex-M0") CLOCK(12000000) ESEL ELITTLE</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
@@ -347,7 +347,6 @@
             <NoWarn>0</NoWarn>
             <uSurpInc>0</uSurpInc>
             <useXO>0</useXO>
-            <uClangAs>0</uClangAs>
             <VariousControls>
               <MiscControls></MiscControls>
               <Define></Define>
@@ -794,14 +793,9 @@
               <FilePath>.\src\user_app\user_peripheral.c</FilePath>
             </File>
             <File>
-              <FileName>xxtea.c</FileName>
+              <FileName>firstboot.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\src\user_app\xxtea.c</FilePath>
-            </File>
-            <File>
-              <FileName>bootmsg.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\src\user_app\bootmsg.c</FilePath>
+              <FilePath>.\src\user_app\firstboot.c</FilePath>
             </File>
           </Files>
         </Group>

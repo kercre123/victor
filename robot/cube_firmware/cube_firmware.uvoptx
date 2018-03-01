@@ -1191,8 +1191,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>.\src\user_app\xxtea.c</PathWithFileName>
-      <FilenameWithoutPath>xxtea.c</FilenameWithoutPath>
+      <PathWithFileName>.\src\user_app\firstboot.c</PathWithFileName>
+      <FilenameWithoutPath>firstboot.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
