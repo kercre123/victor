@@ -53,10 +53,6 @@ void TestHeadDutProgram(void)
   const int timeout_s = 120 + 60; //XXX: first working version clocked in at ~120s. Add some margin.
   char b[40]; int bz = sizeof(b);
   
-  //XXX: get a unique id/sn for the head
-  srand( Timer::get() );
-  int head_id = (rand() << 16) | (rand() & 0xffff); //RAND_MAX is < 0xFFFFffff
-  
   //Power cycle to reset DUT head
   Board::powerOff(PWR_VEXT);
   Board::powerOff(PWR_VBAT);
@@ -87,17 +83,22 @@ void TestHeadDutProgram(void)
     }
   }
   
+  //provision ESN
+  headnfo.esn = fixtureGetSerial();
+  
   //helper head does the rest
-  cmdSend(CMD_IO_HELPER, snformat(b,bz,"dutprogram %u [id=%08x]", timeout_s, head_id), (timeout_s+10)*1000, HEAD_CMD_OPTS | CMD_OPTS_ALLOW_STATUS_ERRS );
+  cmdSend(CMD_IO_HELPER, snformat(b,bz,"dutprogram %u %08x", timeout_s, headnfo.esn), (timeout_s+10)*1000, HEAD_CMD_OPTS | CMD_OPTS_ALLOW_STATUS_ERRS );
   if( cmdStatus() != 0 )
   {
     //map programming error to appropriate fixture error
-    ConsolePrintf("programming failed: error %i\n", cmdStatus() );
-    throw ERROR_TESTPORT_CMD_FAILED;
+    switch( cmdStatus() )
+    {
+      case ERROR_OUT_OF_CLOUD_CERTS:
+        throw ERROR_OUT_OF_CLOUD_CERTS;
+      default:
+        throw ERROR_TESTPORT_CMD_FAILED;
+    }
   }
-  
-  //XXX: read esn from head (internal UUID)
-  headnfo.esn = head_id; //HEADID_ESN_EMPTY;
 }
 
 static void HeadFlexFlowReport(void)

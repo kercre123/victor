@@ -320,6 +320,7 @@ typedef int error_t;
 #define ERROR_SERIAL_EXISTS         908
 #define ERROR_LOT_CODE              909
 #define ERROR_OUT_OF_SERIALS        910   // When the fixture itself runs out of 500000 serial numbers
+#define ERROR_OUT_OF_CLOUD_CERTS    911   // The fixture has run out of cloud certificates
 
 //#define ERROR_BIN_SIZE              911   // Binary too large
 #define ERROR_FLASH_VERIFY          912   // Flash verification failed
