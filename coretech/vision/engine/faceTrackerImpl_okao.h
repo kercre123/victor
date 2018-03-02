@@ -13,6 +13,7 @@
 
 #include "coretech/vision/engine/image.h"
 #include "coretech/vision/engine/faceTracker.h"
+#include "coretech/vision/engine/eyeContact.h"
 #include "coretech/vision/engine/trackedFace.h"
 #include "coretech/vision/engine/profiler.h"
 
@@ -46,7 +47,9 @@ namespace Vision {
   class FaceTracker::Impl : public Profiler
   {
   public:
-    Impl(const std::string& modelPath, const Json::Value& config);
+    Impl(const Camera&        camera,
+         const std::string&   modelPath,
+         const Json::Value&   config);
     ~Impl();
     
     void SetRecognitionIsSynchronous(bool isSynchronous);
@@ -108,6 +111,9 @@ namespace Vision {
     
     Result DetectGazeAndBlink(INT32 nWidth, INT32 nHeight, RAWIMAGE* dataPtr,
                               Vision::TrackedFace& face);
+
+    bool DetectEyeContact(const TrackedFace& face,
+                          const TimeStamp_t& frameOrig);
   
     bool IsEnrollable(const DETECTION_INFO& detectionInfo, const TrackedFace& face);
     
@@ -118,6 +124,8 @@ namespace Vision {
     bool _detectBlinks  = false;
     
     Json::Value _config;
+
+    const Camera& _camera;
     
     static const s32   MaxFaces = 10; // detectable at once
     
@@ -153,6 +161,7 @@ namespace Vision {
     
     std::unique_ptr<Util::RandomGenerator> _rng;
     
+    std::map<FaceID_t, EyeContact> _facesEyeContact;
   }; // class FaceTracker::Impl
   
 } // namespace Vision
