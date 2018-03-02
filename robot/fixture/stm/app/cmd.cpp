@@ -286,13 +286,20 @@ uint32_t cmdParseHex32(char* s)
 {
   if(s)
   {
-    errno = 0;
-    char *endptr;
-    long val = strtol(s, &endptr, 16); //enforce hex
-
-    //check conversion errs, limit numerical range, and verify entire arg was parsed (stops at whitespace, invalid chars...)
-    if( errno == 0 && val <= UINT_MAX && endptr > s && *endptr == '\0' )
-      return val;
+    int len = strlen(s);
+    if( len <= 10 )
+    {
+      char buf[11];
+      memcpy(buf, s, len);
+      buf[len] = '\0';
+      
+      errno = 0;
+      uint32_t low = strtol(buf+len-4,0,16); //last 4 chars
+      buf[len-4] = '\0'; //remove low
+      uint32_t high = strtol(buf,0,16);
+      
+      return (high << 16) | low;
+    }
   }
   errno = -1;
   return 0; //parse error
