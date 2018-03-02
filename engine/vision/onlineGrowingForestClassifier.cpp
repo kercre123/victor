@@ -134,7 +134,7 @@ OnlineGrowingForestClassifier::PredictClass(const Array2d<RawPixelsClassifier::F
   const std::vector<float> normalizedWeights = GetNormalizedWeights();
 
   std::vector<uchar> predictions;
-  predictions.reserve(features.GetNumRows());
+  predictions.reserve((unsigned long)(features.GetNumRows()));
 
   // for each individual prediction, calculate the weighted average. if it's > 0.5 then the class is 1
   // TODO this is literally the Matrix product of the decaying weights times all the Predicitons [n_features * n_trees]
@@ -207,6 +207,7 @@ bool OnlineGrowingForestClassifier::UpdateChunk(const cv::Mat& allInputs, const 
 void OnlineGrowingForestClassifier::CreateNewTree(const cv::Mat& allInputs, const cv::Mat& allClasses)
 {
   DTRawPixelsClassifier clf(_config, _context);
+  clf.SetScaleOutput(false);
 
   // train the new classifier on the data
   clf.Train(allInputs, allClasses, 0);
@@ -227,7 +228,7 @@ void OnlineGrowingForestClassifier::CreateNewTree(const cv::Mat& allInputs, cons
       // TODO maybe check for |a-b| < eps?
 
       // new boy in town is good
-      _trees.push_back(clf);
+      _trees.push_back(std::move(clf));
 
       // the new cumulative score is the average of the others
       const float  newComulativeScore =average(_cumulativeScores);
@@ -243,7 +244,7 @@ void OnlineGrowingForestClassifier::CreateNewTree(const cv::Mat& allInputs, cons
   }
   else {
     // no trees, add the new one
-    _trees.push_back(clf);
+    _trees.push_back(std::move(clf));
     _cumulativeScores.push_back(newClassifierScore);
     _latestScores.push_back(newClassifierScore);
     _decayingWeights.push_back(1.0);
@@ -264,13 +265,14 @@ void OnlineGrowingForestClassifier::UpdateTrees(const cv::Mat& allInputs, const 
 
   // new guy to replace a sad loser
   DTRawPixelsClassifier clf(_config, _context);
+  clf.SetScaleOutput(false);
   clf.Train(allInputs, allClasses, 0);
   const float newScore = Score(clf, allInputs, allClasses);
 
   // the tree with lowest score gets kicked out
   if (newScore > _latestScores[minScoreIndex]) {
     // replace the loser
-    _trees[minScoreIndex] = clf;
+    _trees[minScoreIndex] = std::move(clf);
     _latestScores[minScoreIndex] = newScore;
     // the new guy gets the average of the previous scores
     _cumulativeScores[minScoreIndex] = average(_cumulativeScores);
@@ -301,6 +303,16 @@ void OnlineGrowingForestClassifier::UpdateScores(const cv::Mat& allInputs, const
   for (int i = 0; i < _cumulativeScores.size(); ++i) {
     _cumulativeScores[i] += newScores[i];
   }
+}
+
+bool OnlineGrowingForestClassifier::DeSerialize(const char *filename)
+{
+  return false;
+}
+
+bool OnlineGrowingForestClassifier::Serialize(const char *filename)
+{
+  return false;
 }
 
 } // namespace Cozmo

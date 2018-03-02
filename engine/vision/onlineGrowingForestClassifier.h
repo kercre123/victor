@@ -39,7 +39,12 @@ public:
   std::vector<uchar> PredictClass(const Anki::Array2d<FeatureType>& features) const override;
 
 protected:
+public:
+  bool Serialize(const char *filename) override;
 
+  bool DeSerialize(const char *filename) override;
+
+protected:
   bool UpdateChunk(const cv::Mat& allInputs, const cv::Mat& allClasses);
 
   void CreateNewTree(const cv::Mat& allInputs, const cv::Mat& allClasses);
