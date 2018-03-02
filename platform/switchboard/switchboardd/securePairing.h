@@ -22,6 +22,7 @@
 #include "switchboardd/keyExchange.h"
 #include "switchboardd/pairingMessages.h"
 #include "switchboardd/taskExecutor.h"
+#include "switchboardd/externalCommsCladHandler.h"
 
 namespace Anki {
 namespace Switchboard {
@@ -32,6 +33,12 @@ namespace Switchboard {
     AwaitingNonceAck,
     AwaitingChallengeResponse,
     ConfirmedSharedSecret
+  };
+
+  enum CommsState : uint8_t {
+    Raw,
+    Clad,
+    SecureClad
   };
   
   class SecurePairing {
@@ -78,6 +85,9 @@ namespace Switchboard {
     template <class T>
     typename std::enable_if<std::is_base_of<Anki::Switchboard::Message, T>::value, int>::type
     SendEncrypted(const T& message);
+
+    template<typename T, typename... Args>
+    int SendRtsMessage(Args&&... args);
     
     // Methods
     void Init();
@@ -121,6 +131,7 @@ namespace Switchboard {
     uint32_t _pingChallenge;
     uint32_t _abnormalityCount;
     
+    CommsState _commsState;
     INetworkStream* _stream;
     PairingState _state = PairingState::Initial;
     
