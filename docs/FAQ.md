@@ -76,6 +76,7 @@ If you have a question that you get answered (e.g. in a Slack channel) which mig
   - You can safely remove the cache and output folders with `adb shell rm -rf /data/data/com.anki.cozmoengine/cache /data/data/com.anki.cozmoengine/files/output`
   - If this isn't enough, in `adb shell` you can check disk usage with `df` to list percentage of space each section has free, you should only care about the `/data` section. The percentage indicates how much space the section is using out of how much total space it has.
   - You can then inspect space usage within `/data` with `du -h /data` which will list disk usage of all directories in `/data`.    Everything that gets deployed lives in `/data/data/com.anki.cozmoengine`
+  - Additional safe shell command to try to free space: `journalctl --vacuum-size=10M`
   
 * How do I run unit tests
   - https://ankiinc.atlassian.net/wiki/spaces/VD/pages/149363555/Victor+Unit+Tests
