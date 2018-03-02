@@ -86,16 +86,16 @@ Result AnimEngine::Init()
   RobotDataLoader * dataLoader = _context->GetDataLoader();
   dataLoader->LoadConfigData();
   dataLoader->LoadNonConfigData();
-  
+
   _ttsComponent = std::make_unique<TextToSpeechComponent>(_context.get());
 
   // animation streamer must be initialized after loading non config data (otherwise there are no animations loaded)
   _animationStreamer->Init();
-  
+
   // Create and set up EngineRobotAudioInput to receive Engine->Robot messages and broadcast Robot->Engine
   auto* audioMux = _context->GetAudioMultiplexer();
   auto regId = audioMux->RegisterInput( new Audio::EngineRobotAudioInput() );
-  
+
   // Set up message handler
   auto * audioInput = static_cast<Audio::EngineRobotAudioInput*>(audioMux->GetInput(regId));
   AnimProcessMessages::Init(this, _animationStreamer.get(), audioInput, _context.get());
@@ -113,13 +113,16 @@ Result AnimEngine::Init()
 Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
 {
   //ANKI_CPU_PROFILE("AnimEngine::Update");
-  
   if (!_isInitialized) {
     LOG_ERROR("AnimEngine.Update", "Cannot update AnimEngine before it is initialized.");
     return RESULT_FAIL;
   }
 
-  
+  // Declare some invariants
+  DEV_ASSERT(_context, "AnimEngine.Update.InvalidContext");
+  DEV_ASSERT(_ttsComponent, "AnimEngine.Update.InvalidTTSComponent");
+  DEV_ASSERT(_animationStreamer, "AnimEngine.Update.InvalidAnimationStreamer");
+
 #if ENABLE_CE_SLEEP_TIME_DIAGNOSTICS || ENABLE_CE_RUN_TIME_DIAGNOSTICS
   const double startUpdateTimeMs = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
 #endif
@@ -128,7 +131,7 @@ Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
     static bool firstUpdate = true;
     static double lastUpdateTimeMs = 0.0;
     //const double currentTimeMs = (double)currTime_nanosec / 1e+6;
-    if (! firstUpdate)
+    if (!firstUpdate)
     {
       const double timeSinceLastUpdate = startUpdateTimeMs - lastUpdateTimeMs;
       const double maxLatency = ANIM_TIME_STEP_MS + ANIM_OVERTIME_WARNING_THRESH_MS;
@@ -141,20 +144,23 @@ Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
     firstUpdate = false;
   }
 #endif // ENABLE_CE_SLEEP_TIME_DIAGNOSTICS
-  
+
   BaseStationTimer::getInstance()->UpdateTime(currTime_nanosec);
 
   _context->GetWebService()->Update();
-  
+
   Result result = AnimProcessMessages::Update(currTime_nanosec);
   if (RESULT_OK != result) {
     LOG_WARNING("AnimEngine.Update", "Unable to process messages (result %d)", result);
     return result;
   }
-  
+
   OSState::getInstance()->Update();
+
+  _ttsComponent->Update();
+
   _animationStreamer->Update();
-  
+
 #if ENABLE_CE_RUN_TIME_DIAGNOSTICS
   {
     const double endUpdateTimeMs = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
@@ -174,11 +180,13 @@ Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
 
 void AnimEngine::HandleMessage(const RobotInterface::TextToSpeechStart & msg)
 {
+  DEV_ASSERT(_ttsComponent, "AnimEngine.HandleMessage.TextToSpeechStart.InvalidTTSComponent");
   _ttsComponent->HandleMessage(msg);
 }
 
 void AnimEngine::HandleMessage(const RobotInterface::TextToSpeechStop & msg)
 {
+  DEV_ASSERT(_ttsComponent, "AnimEngine.HandleMessage.TextToSpeechStop.InvalidTTSComponent");
   _ttsComponent->HandleMessage(msg);
 }
 

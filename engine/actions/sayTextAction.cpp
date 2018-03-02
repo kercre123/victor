@@ -209,6 +209,7 @@ ActionResult SayTextAction::Init()
   // of data associated with each utterance.
 
   _ttsID = GetNextID();
+  _ttsState = TextToSpeechState::Preparing;
 
   // When does this action expire?
   _expiration_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + _timeout_sec;
