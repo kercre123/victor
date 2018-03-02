@@ -109,7 +109,7 @@ int main(int argc, char **argv)
 
   // Create the standalone web server
   Json::Value wsConfig;
-  static const std::string & wsConfigPath = "webserver/webServerConfig_robot.json";
+  static const std::string & wsConfigPath = "webserver/webServerConfig_standalone.json";
   const bool success = dataPlatform.readAsJson(Util::Data::Scope::Resources, wsConfigPath, wsConfig);
   if (!success)
   {

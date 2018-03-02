@@ -120,7 +120,7 @@ int main(void)
 
   // Create and init cozmoWebServer
   Json::Value wsConfig;
-  static const std::string & wsConfigPath = "webserver/webServerConfig_robot.json";
+  static const std::string & wsConfigPath = "webserver/webServerConfig_standalone.json";
   const bool success = dataPlatform->readAsJson(Util::Data::Scope::Resources, wsConfigPath, wsConfig);
   if (!success)
   {

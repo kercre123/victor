@@ -18,16 +18,35 @@
     var connectedToWebotsSim = false;
     var curPageName = "";
 
+    var allowPerfPage = true;
     var perfAutoUpdate = false;
     var perfAutoUpdatePeriod_ms = 1000;
     var perfAutoUpdatePeriodMin_ms = 250;   // Minimum auto update period
     var perfAutoUpdateTimerId = 0;
 
     var perfItems = [
-        { activeUpdate:true, val:"", hasGraph:true,  graphMax:1500000, desc:"CPU freq (kHz)" },
-        { activeUpdate:true, val:"", hasGraph:true,  graphMax:150,     desc:"Temperature (Celsius)" },
-        { activeUpdate:true, val:"", hasGraph:true,  graphMax:5,       desc:"Battery (volts)" }
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:1500000, desc:"CPU freq",        units:"kHz" },
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:150,     desc:"Temperature",     units:"Celsius" },
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:5,       desc:"Battery",         units:"volts" },
+        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,       desc:"Uptime",          units:"seconds" },
+        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,       desc:"Idle time",       units:"seconds" },
+        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,       desc:"Real time clock", units:"" },
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:429268,  desc:"Memory",          units:"kB",      updateFunction:MemUseInfo },
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:100,     desc:"Overall CPU",     units:"%",       updateFunction:CPUTimeInfo },
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:100,     desc:"CPU0",            units:"%",       updateFunction:CPUTimeInfo },
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:100,     desc:"CPU1",            units:"%",       updateFunction:CPUTimeInfo },
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:100,     desc:"CPU2",            units:"%",       updateFunction:CPUTimeInfo },
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:100,     desc:"CPU3",            units:"%",       updateFunction:CPUTimeInfo }
     ];
+
+    const kNumCPUTimeValues = 8;    // Number of time values to read per cpu
+    var prevCpuTime = {
+        ' ':{ prevUsedTime:0, prevTotalTime:0 },
+        '0':{ prevUsedTime:0, prevTotalTime:0 },
+        '1':{ prevUsedTime:0, prevTotalTime:0 },
+        '2':{ prevUsedTime:0, prevTotalTime:0 },
+        '3':{ prevUsedTime:0, prevTotalTime:0 }
+    };
 
     function ClearAllPages() {
         $('div[id^="page_"]').hide();
@@ -70,24 +89,39 @@
             }
         } else if (pageName == "page_perf") {
             UpdatePerfHeader();
-            var numItems = perfItems.length;
-            for (var i = 0; i < numItems; i++) {
-                var item = perfItems[i];
-                // Set checkbox states to reflect the internal flags
-                $('#' + 'id_perf_checkbox_' + i).prop("checked", item["activeUpdate"]);
-                if (item["hasGraph"]) {
-                    $('#' + 'id_graph_' + i).progressbar({
-                        max: parseFloat(item["graphMax"]),
-                        value: parseFloat(item["val"]),
-                        create: function(event, ui)
-                            {$(this).find('.ui-widget-header').css
-                            ({'background-color':'darkgrey','height':'16px'})}
-                    })
+            if (allowPerfPage && !connectedToWebotsSim) {
+                $("#perf_page_disabled").hide();
+                $("#perf_page_disabled_webots").hide();
+                var numItems = perfItems.length;
+                for (var i = 0; i < numItems; i++) {
+                    var item = perfItems[i];
+                    // Set checkbox states to reflect the internal flags
+                    $('#' + 'id_perf_checkbox_' + i).prop("checked", item["activeUpdate"]);
+                    if (item["hasGraph"]) {
+                        $('#' + 'id_graph_' + i).progressbar({
+                            max: parseFloat(item["graphMax"]),
+                            value: parseFloat(item["val"]),
+                            create: function(event, ui)
+                                {$(this).find('.ui-widget-header').css
+                                ({'background-color':'darkgrey','height':'14px'})}
+                        });
+                    }
+                }
+                if (perfAutoUpdate) {
+                    // When entering perf page and auto-update is on, do the first update immediately
+                    perfAutoUpdateTimerId = setTimeout(SendPerfUpdateRequest, 0, true);
                 }
             }
-            if (perfAutoUpdate) {
-                // When entering perf page and auto-update is on, do the first update immediately
-                perfAutoUpdateTimerId = setTimeout(SendPerfUpdateRequest, 0, true);
+            else {                
+                $("#perf_main_section").hide();
+                if (connectedToWebotsSim) {
+                    $("#perf_page_disabled_webots").show();
+                    $("#perf_page_disabled").hide();
+                }
+                else {
+                    $("#perf_page_disabled_webots").hide();
+                    $("#perf_page_disabled").show();
+                }
             }
         }
     }
@@ -131,12 +165,18 @@
                 var item = perfItems[i];
                 if (item["activeUpdate"]) {
                     var v = payload[i];
-                    item["val"] = v;
-                    $("#id_perf_row_value_" + i).html(v);
-                    if (item["hasGraph"]) {
-                        var graph = $('#' + 'id_graph_' + i);
-                        graph.progressbar( "option", "value", parseFloat(v) );
-                        graph.progressbar( "option", "max", parseFloat(item["graphMax"]) );
+                    var uf = item["updateFunction"];
+                    if (uf !== undefined) {
+                        uf(v, i);
+                    }
+                    else {
+                        item["val"] = v;
+                        $("#id_perf_row_value_" + i).html(v);
+                        if (item["hasGraph"]) {
+                            var graph = $('#' + 'id_graph_' + i);
+                            graph.progressbar( "option", "value", parseFloat(v) );
+                            graph.progressbar( "option", "max", parseFloat(item["graphMax"]) );
+                        }
                     }
                 }
             }
@@ -144,6 +184,47 @@
         if (perfAutoUpdate && triggeredByTimer) {
             perfAutoUpdateTimerId = setTimeout(SendPerfUpdateRequest, perfAutoUpdatePeriod_ms, true);
         }
+    }
+
+    function MemUseInfo(payload, itemIndex) {
+        var values = payload.split(',');
+        var totalMem_kB = parseInt(values[0]);
+        var freeMem_kB = parseInt(values[1]);
+        var usedMem_kB = totalMem_kB - freeMem_kB;
+        var v = usedMem_kB + " used, " + freeMem_kB + " free";
+        $("#id_perf_row_value_" + itemIndex).html(v);
+        var graph = $('#' + 'id_graph_' + itemIndex);
+        graph.progressbar( "option", "value", usedMem_kB );
+        graph.progressbar( "option", "max", totalMem_kB );
+    }
+
+    function CPUTimeInfo(payload, itemIndex) {
+        var whichCPU = payload.charAt(3);
+        payload = payload.substring(5); // Strip cpu name and space(s)
+        // Parse the first 8 integers out of the line:
+        var stringValues = payload.split(' ');
+        var values = [];
+        var totalTime = 0;
+        for (var i = 0; i < kNumCPUTimeValues; i++) {
+            var v = parseInt(stringValues[i]);
+            values[i] = v;
+            totalTime += v;
+        }
+        var idleTime = values[3] + values[4];   // 'idle' + 'iowait'
+        var usedTime = totalTime - idleTime;
+        var prev = prevCpuTime[whichCPU];
+        var deltaTotalTime = totalTime - prev["prevTotalTime"];
+        var deltaUsedTime = usedTime - prev["prevUsedTime"];
+
+        var usedPct = deltaUsedTime * 100 / deltaTotalTime;
+        // Note: In future, more of this data could be displayed.  Perhaps in a multi-section progress bar
+        $("#id_perf_row_value_" + itemIndex).html(usedPct.toFixed(3));
+        var graph = $('#' + 'id_graph_' + itemIndex);
+        graph.progressbar( "option", "value", usedPct );
+
+        // Save the last reading for this CPU so it can be used next call
+        prev["prevUsedTime"] = usedTime;
+        prev["prevTotalTime"] = totalTime;
     }
 
     $(document).ready(function() {
@@ -159,6 +240,7 @@
             var startPage = payload[2];
             connectedToWebotsSim = (payload[3] === "true");
             $("#main_robot_connection_type").html(connectedToWebotsSim ? "Webots Simulator" : "Physical Robot");
+            allowPerfPage = (payload[4] === "true");
             SetPage(startPage);
         });
         // Initialize the perf table
@@ -166,10 +248,10 @@
         var numRows = perfItems.length;
         for (var r = 0; r < numRows; r++) {
             var data = perfItems[r];
-            var s = "<tr><td><input id='id_perf_checkbox_" + r + "' type='checkbox' onClick='onPerfRowCheckboxClickHandler(" + r + ")'/>" +
-                "</td><td>" + data["desc"] +
-                "</td><td width='100px' id='id_perf_row_value_" + r +
-                "'></td><td width='300px' id='id_graph_" + r + "'></td></tr>";
+            var s = "<tr height='34px'><td><input id='id_perf_checkbox_" + r + "' type='checkbox' onClick='onPerfRowCheckboxClickHandler(" + r + ")'/>" +
+                "</td><td style='text-align:right'>" + data["desc"] +
+                "</td><td style='text-align:right' width='180px' id='id_perf_row_value_" + r +
+                "'></td><td>" + data["units"] + "</td><td width='300px' id='id_graph_" + r + "'></td></tr>";
             table.append(s);
         }
     });
@@ -265,6 +347,9 @@
                     <td>Get console variable</td><td>/consolevarget?key=name_of_variable</td>
                 </tr>
                 <tr>
+                    <td>List console functions matching</td><td>/consolefunclist?key=search_key</td>
+                </tr>
+                <tr>
                     <td>Call console function</td><td>/consolefunccall?func=name_of_function&amp;args=arguments</td>
                 </tr>
             </table>
@@ -277,18 +362,22 @@
 
         <div id="page_perf">
             <br>
-            <button id='btn_update_now'>Update NOW</button>&nbsp&nbsp&nbsp&nbsp
-            <input  id='update_freq_value' type='number' max='100000'></input>
-            <button id='btn_set_update_period'>Set update period (ms)</button>
-            <span   id='perf_cur_update_period'></span>&nbsp&nbsp&nbsp&nbsp
-            <button id='btn_toggle_auto_update'>Toggle Auto Update</button>
-            <span   id='perf_auto_update'></span>
-            <br><br>
-            <table id='perf_table' border=1>
-                <tr>
-                    <th>Active</th><th>Description</th><th>Value</th><th>Graph</th>
-                </tr>
-            </table>
+            <div id='perf_main_section'>
+                <button id='btn_update_now'>Update NOW</button>&nbsp&nbsp&nbsp&nbsp
+                <input  id='update_freq_value' type='number' max='100000'></input>
+                <button id='btn_set_update_period'>Set update period (ms)</button>
+                <span   id='perf_cur_update_period'></span>&nbsp&nbsp&nbsp&nbsp
+                <button id='btn_toggle_auto_update'>Toggle Auto Update</button>
+                <span   id='perf_auto_update'></span>
+                <br><br>
+                <table id='perf_table' border=1>
+                    <tr>
+                        <th>Active</th><th>Description</th><th>Value</th><th>Units</th><th>Graph</th>
+                    </tr>
+                </table>
+            </div>
+            <div id='perf_page_disabled'>The perf page is disabled in the Anim webserver.  Use the standalone or engine webserver instead.</div>
+            <div id='perf_page_disabled_webots'>The perf page is disabled in pure webots sim, since it is for actual robot stats.</div>
         </div>
 
         <div id="page_files">

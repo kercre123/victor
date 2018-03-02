@@ -467,9 +467,10 @@ static int GetInitialConfig(struct mg_connection *conn, void *cbdata)
 #else
   const std::string webotsSim = "false";
 #endif
+  const std::string allowPerfPage = that->GetConfig()["allowPerfPage"].asString();
 
-  mg_printf(conn, "%s\n%s\n%s\n%s\n", title0.c_str(), title1.c_str(),
-            startPage.c_str(), webotsSim.c_str());
+  mg_printf(conn, "%s\n%s\n%s\n%s\n%s\n", title0.c_str(), title1.c_str(),
+            startPage.c_str(), webotsSim.c_str(), allowPerfPage.c_str());
   return 1;
 }
 
@@ -529,12 +530,28 @@ static int GetMainRobotInfo(struct mg_connection *conn, void *cbdata)
 }
 
 
+#ifndef SIMULATOR
 static int GetPerfStats(struct mg_connection *conn, void *cbdata)
 {
   using namespace std::chrono;
   const auto startTime = steady_clock::now();
 
-  static const int kNumStats = 3;
+  enum {
+    kStat_CpuFreq,
+    kStat_Temperature,
+    kStat_BatteryVoltage,
+    kStat_Uptime,
+    kStat_IdleTime,
+    kStat_RealTimeClock,
+    kStat_MemoryInfo,
+    kStat_OverallCpu,
+    kStat_Cpu0,
+    kStat_Cpu1,
+    kStat_Cpu2,
+    kStat_Cpu3,
+    kNumStats
+  };
+
   bool active[kNumStats];
 
   const mg_request_info* info = mg_get_request_info(conn);
@@ -550,42 +567,75 @@ static int GetPerfStats(struct mg_connection *conn, void *cbdata)
     active[i] = false;
   }
 
-#ifdef SIMULATOR
-
-  // On webots simulator, most if not all of these don't apply
-  const std::string stat_cpuFreq = "n/a";
-  const std::string stat_temperature = "n/a";
-  const std::string stat_batteryVoltage = "n/a";
-
-#else
-
   const auto& osState = OSState::getInstance();
 
   std::string stat_cpuFreq;
-  if (active[0]) {
+  if (active[kStat_CpuFreq]) {
     // Update cpu freq
-    const uint32_t cpuFreq_kHz = osState->UpdateCPUFreq_kHz();
+    const uint32_t cpuFreq_kHz = osState->GetCPUFreq_kHz();
     stat_cpuFreq = std::to_string(cpuFreq_kHz);
   }
 
   std::string stat_temperature;
-  if (active[1]) {
+  if (active[kStat_Temperature]) {
     // Update temperature reading (Celsius)
-    const uint32_t cpuTemp_C = osState->UpdateTemperature_C();
+    const uint32_t cpuTemp_C = osState->GetTemperature_C();
     stat_temperature = std::to_string(cpuTemp_C);
   }
 
   std::string stat_batteryVoltage;
-  if (active[2]) {
+  if (active[kStat_BatteryVoltage]) {
     // Battery voltage
-    const uint32_t batteryVoltage_uV = osState->UpdateBatteryVoltage_uV();
+    const uint32_t batteryVoltage_uV = osState->GetBatteryVoltage_uV();
     const float batteryVoltage_V = batteryVoltage_uV * 0.000001f;
     std::stringstream ss;
     ss << std::fixed << std::setprecision(6) << batteryVoltage_V;
     stat_batteryVoltage = ss.str();
   }
 
-#endif
+  std::string stat_uptime;
+  std::string stat_idleTime;
+  if (active[kStat_Uptime] || active[kStat_IdleTime]) {
+    // Up time/idle time
+    float idleTime = 0.0f;
+    const float uptime = osState->GetUptimeAndIdleTime(idleTime);
+    std::stringstream ss;
+    ss << std::fixed << std::setprecision(2) << uptime;
+    stat_uptime = ss.str();
+    std::stringstream ss2;
+    ss2 << std::fixed << std::setprecision(2) << idleTime;
+    stat_idleTime = ss2.str();
+  }
+
+  std::string stat_rtc;
+  if (active[kStat_RealTimeClock]) {
+    // Date/time on robot
+    const auto now = system_clock::now();
+    auto in_time_t = std::chrono::system_clock::to_time_t(now);
+    std::stringstream ss;
+    ss << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %X");
+    stat_rtc = ss.str();
+  }
+
+  std::string stat_mem;
+  if (active[kStat_MemoryInfo]) {
+    // Memory use
+    uint32_t freeMem_kB;
+    const uint32_t totalMem_kB = osState->GetMemoryInfo(freeMem_kB);
+    stat_mem = std::to_string(totalMem_kB) + "," + std::to_string(freeMem_kB);
+  }
+
+  std::vector<std::string> stat_cpuStat;
+  if (active[kStat_OverallCpu] ||
+      active[kStat_Cpu0] || active[kStat_Cpu1] ||
+      active[kStat_Cpu2] || active[kStat_Cpu3]) {
+    // CPU time stats
+    stat_cpuStat = osState->GetCPUTimeStats();
+  }
+  else {
+    static const size_t kNumCPUTimeStats = 5;
+    stat_cpuStat.resize(kNumCPUTimeStats);
+  }
 
   const auto now = steady_clock::now();
   const auto elapsed_us = duration_cast<microseconds>(now - startTime).count();
@@ -595,13 +645,24 @@ static int GetPerfStats(struct mg_connection *conn, void *cbdata)
             "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
             "close\r\n\r\n");
 
-  mg_printf(conn, "%s\n%s\n%s\n",
+  mg_printf(conn, "%s\n%s\n%s\n%s\n%s\n%s\n%s\n",
             stat_cpuFreq.c_str(),
             stat_temperature.c_str(),
-            stat_batteryVoltage.c_str());
+            stat_batteryVoltage.c_str(),
+            stat_uptime.c_str(),
+            stat_idleTime.c_str(),
+            stat_rtc.c_str(),
+            stat_mem.c_str());
+  mg_printf(conn, "%s\n%s\n%s\n%s\n%s\n",
+            stat_cpuStat[0].c_str(),
+            stat_cpuStat[1].c_str(),
+            stat_cpuStat[2].c_str(),
+            stat_cpuStat[3].c_str(),
+            stat_cpuStat[4].c_str());
 
   return 1;
 }
+#endif  // #ifndef SIMULATOR
 
 
 namespace Anki {
@@ -696,7 +757,9 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform, const Json::Val
   mg_set_request_handler(_ctx, "/dasinfo", dasinfo, 0);
   mg_set_request_handler(_ctx, "/getinitialconfig", GetInitialConfig, 0);
   mg_set_request_handler(_ctx, "/getmainrobotinfo", GetMainRobotInfo, 0);
+#ifndef SIMULATOR
   mg_set_request_handler(_ctx, "/getperfstats", GetPerfStats, 0);
+#endif
 
   // todo (VIC-1398): remove
   if( ANKI_DEV_CHEATS ) { 
