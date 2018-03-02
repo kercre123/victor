@@ -210,7 +210,7 @@ namespace Cozmo {
 
     _motionDetector.reset(new MotionDetector(_camera, _vizManager, config));
 
-    _proxSensorImageAnalyzer.reset(new ProxSensorImageAnalyzer(config));
+    _proxSensorImageAnalyzer.reset(new ProxSensorImageAnalyzer(config, _context));
 
     if (!config.isMember("OverheadMap")) {
       PRINT_NAMED_ERROR("VisionSystem.Init.MissingJsonParameter", "OverheadMap");
