@@ -182,7 +182,7 @@ int cmd_process(char* s)
   }//-*/
   
   //==========================
-  //>>otp {write} {bd_address} {ESN:0x########} {hw.rev} {model}
+  //>>otp {write} {bd_address} {ESN:0x########} {hw.rev} {model} {CRC:0x########}
   //  example: 'otp write 01:02:03:04:05:C6 0x12345678 1 2'
   //==========================
   if( !strcmp(cmd, "otp") )
@@ -216,14 +216,15 @@ int cmd_process(char* s)
 //    else 
       if( !strcmp(console_getargl(s,1), "write") )
     {
-      //Parse write params (ESN, hw.revision, model#) ---------------------------------
+      //Parse write params (ESN, hw.revision, model#, CRC) ---------------------------------
       
-      if( nargs >= 6 ) {
+      if( nargs >= 7 ) {
         binhead->custom_field[0] = strtol(console_getargl(s,3),0,0); //ESN
         binhead->custom_field[1] = strtol(console_getargl(s,4),0,0); //hw rev
         binhead->custom_field[2] = strtol(console_getargl(s,5),0,0); //model
+        binhead->custom_field[3] = strtol(console_getargl(s,6),0,0); //CRC
       }
-      writes_( snformat(b,bz,"ESN,hwrev,model = %08x,%u,%u\n", binhead->custom_field[0], binhead->custom_field[1], binhead->custom_field[2] ) );
+      writes_( snformat(b,bz,"ESN,hwrev,model,CRC = %08x,%u,%u,%08x\n", binhead->custom_field[0], binhead->custom_field[1], binhead->custom_field[2], binhead->custom_field[3] ) );
       
       //validate parameters
       if( binhead->custom_field[0]/*ESN*/ == 0 ||
