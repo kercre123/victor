@@ -3,6 +3,11 @@ prebuilt_jar(
   binary_jar = 'project/android/cozmojava/lib/unity-classes.jar'
 )
 
+android_resource(
+  name = 'cozmo-notification-icons',
+  res = subdir_glob([('project/android/res', '**')]),
+  package = 'com.anki.cozmo',
+)
 
 android_prebuilt_aar(
   name = 'play-services-gcm',
@@ -83,7 +88,8 @@ android_aar(
     '//lib/util/android:play-services-base',
     '//lib/util/android:play-services-basement',
     '//lib/util/android:support-compat',
-    '//lib/util/android:support-v4'
+    '//lib/util/android:support-v4',
+    ':cozmo-notification-icons'
   ]
 )
 

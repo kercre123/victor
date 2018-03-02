@@ -10,6 +10,7 @@ import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -511,7 +512,8 @@ public class Manager {
                 .setDefaults((soundUri == null) ? NotificationCompat.DEFAULT_ALL : NotificationCompat.DEFAULT_LIGHTS | NotificationCompat.DEFAULT_VIBRATE)
                 .setContentText(text)
                 .setContentIntent(contentIntent)
-                .setAutoCancel(true);
+                .setAutoCancel(true)
+                .setColor(Color.parseColor("#00a5f9")); // Anki/Cozmo change - setting accent color on notification
 
         // Android version prior 5 crop oversized icons instead of scaling them. Let's help it.
         if (android.os.Build.VERSION.SDK_INT < 21 && android.os.Build.VERSION.SDK_INT >= 11) {
