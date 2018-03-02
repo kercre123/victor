@@ -56,6 +56,8 @@ def collect_data(args):
         app_profiler_args.append("-nc")
     if args.disable_adb_root:
         app_profiler_args.append("--disable_adb_root")
+    if args.record_file:
+        app_profiler_args += ["--perf_data_path", args.record_file]
     record_arg_str = ""
     if args.dwarf_unwinding:
         record_arg_str += "-g "

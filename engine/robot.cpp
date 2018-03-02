@@ -46,6 +46,7 @@
 #include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/components/visionScheduleMediator/visionScheduleMediator.h"
+#include "engine/components/batteryComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/micDirectionHistory.h"
 #include "engine/navMap/mapComponent.h"
@@ -219,15 +220,12 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
     _components->AddDependentComponent(RobotComponentID::RobotToEngineImplMessaging, new RobotToEngineImplMessaging());
     _components->AddDependentComponent(RobotComponentID::RobotIdleTimeout,           new RobotIdleTimeoutComponent());
     _components->AddDependentComponent(RobotComponentID::MicDirectionHistory,        new MicDirectionHistory());
+    _components->AddDependentComponent(RobotComponentID::Battery,                    new BatteryComponent());
     _components->InitComponents(this);
   }
       
   _pose.SetName("Robot_" + std::to_string(_ID));
   _driveCenterPose.SetName("RobotDriveCenter_" + std::to_string(_ID));
-  
-  // initialize AI - pass in null behavior component to use default
-  BehaviorComponent* useDefault = nullptr;
-  GetAIComponent().Init(this, useDefault);
   
   // Initializes _pose, _poseOrigins, and _worldOrigin:
   Delocalize(false);
@@ -247,27 +245,10 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   GetAudioClient()->SubscribeAudioCallbackMessages(this);
 
   _lastDebugStringHash = 0;
-      
-  // Read in Mood Manager Json
-  if (nullptr != GetContext()->GetDataPlatform())
-  {
-    GetMoodManager().Init(GetContext()->GetDataLoader()->GetRobotMoodConfig());
-    GetMoodManager().LoadEmotionEvents(GetContext()->GetDataLoader()->GetEmotionEventJsons());
-  }
-  
-  // Initialize progression
-  GetProgressionUnlockComponent().Init();
-  
-  GetInventoryComponent().Init(GetContext()->GetDataLoader()->GetInventoryConfig());
-  
+
   // Setting camera pose according to current head angle.
   // (Not using SetHeadAngle() because _isHeadCalibrated is initially false making the function do nothing.)
   GetVisionComponent().GetCamera().SetPose(GetCameraPose(_currentHeadAngle));
-        
-  if (nullptr != GetContext()->GetDataPlatform())
-  {
-    GetVisionComponent().Init(GetContext()->GetDataLoader()->GetRobotVisionConfig());
-  }
 
   // Used for CONSOLE_FUNCTION "PlayAnimationByName" above
 #if REMOTE_CONSOLE_ENABLED
@@ -284,7 +265,7 @@ Robot::~Robot()
   LOG_EVENT("robot.destructor", "%d", GetID());
   
   // force an update to the freeplay data manager, so we'll send a DAS event before the tracker is destroyed
-  GetAIComponent().GetFreeplayDataTracker().ForceUpdate();
+  GetAIComponent().GetComponent<FreeplayDataTracker>().ForceUpdate();
   
   AbortAll();
   
@@ -292,80 +273,7 @@ Robot::~Robot()
   // ActionList must be cleared before it is destroyed because pending actions may attempt to make use of the pointer.
   GetActionList().Clear();
 }
-    
-void Robot::SetOnCharger(bool onCharger)
-{
-  // If we are being set on a charger, we can update the instance of the charger in the current world to
-  // match the robot. If we don't have an instance, we can add an instance now
-  if (onCharger)
-  {
-    const Pose3d& poseWrtRobot = Charger::GetDockPoseRelativeToRobot(*this);
-    
-    // find instance in current origin
-    BlockWorldFilter filter;
-    filter.AddAllowedFamily(ObjectFamily::Charger);
-    filter.AddAllowedType(ObjectType::Charger_Basic);
-    ObservableObject* chargerInstance = GetBlockWorld().FindLocatedMatchingObject(filter);
-    if (nullptr == chargerInstance)
-    {
-      // there's currently no located instance, we need to create one.
-      chargerInstance = new Charger();
-      chargerInstance->SetID();
-    }
 
-    // pretend the instance we created was an observation. Note that lastObservedTime will be 0 in this case, since
-    // that timestamp refers to visual observations only (TODO: maybe that should be more explicit or any
-    // observation should set that timestamp)
-    GetObjectPoseConfirmer().AddRobotRelativeObservation(chargerInstance, poseWrtRobot, PoseState::Known);
-  }
-  
-  // log events when onCharger status changes
-  if (onCharger && !_isOnCharger)
-  {
-    // if we are on the charger, we must also be on the charger platform.
-    SetOnChargerPlatform(true);
-	  
-    // offCharger -> onCharger
-    LOG_EVENT("robot.on_charger", "");
-    Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ChargerEvent(true)));
-  }
-  else if (!onCharger && _isOnCharger)
-  {
-    // onCharger -> offCharger
-    LOG_EVENT("robot.off_charger", "");
-    Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ChargerEvent(false)));
-  }
-
-  // update flag now (note this gets updated after notifying; this might be an issue for listeners)
-  _isOnCharger = onCharger;
-}
-
-void Robot::SetOnChargerPlatform(bool onPlatform)
-{
-  // Can only not be on platform if not on charge contacts
-  onPlatform = onPlatform || IsOnCharger();
-  
-  const bool stateChanged = _isOnChargerPlatform != onPlatform;
-  _isOnChargerPlatform = onPlatform;
-  
-  if (stateChanged) {
-    Broadcast(
-      ExternalInterface::MessageEngineToGame(
-        ExternalInterface::RobotOnChargerPlatformEvent(_isOnChargerPlatform))
-      );
-
-    // pause the freeplay tracking if we are on the charger
-    GetAIComponent().GetFreeplayDataTracker().SetFreeplayPauseFlag(_isOnChargerPlatform, FreeplayPauseFlag::OnCharger);
-  }
-}
-
-void Robot::SetIsCharging(bool isCharging)
-{
-  if (isCharging != _isCharging) {
-    _lastChargingChange_ms = GetLastMsgTimestamp();
-    _isCharging = isCharging;
-  }
-}
 
 bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
 {
@@ -537,7 +445,7 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
     // if the robot was on the charging platform and its state changes it's not on the platform anymore
     if (_offTreadsState != OffTreadsState::OnTreads)
     {
-      SetOnChargerPlatform(false);
+      GetBatteryComponent().SetOnChargerPlatform(false);
     }
     
     offTreadsStateChanged = true;
@@ -555,7 +463,7 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
   if (offTreadsStateChanged) {
     // pause the freeplay tracking if we are not on the treads
     const bool isPaused = (_offTreadsState != OffTreadsState::OnTreads);
-    GetAIComponent().GetFreeplayDataTracker().SetFreeplayPauseFlag(isPaused, FreeplayPauseFlag::OffTreads);
+    GetAIComponent().GetComponent<FreeplayDataTracker>().SetFreeplayPauseFlag(isPaused, FreeplayPauseFlag::OffTreads);
   }
   
   return offTreadsStateChanged;
@@ -874,9 +782,9 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   _pitchAngle = Radians(msg.pose.pitch_angle);
   
   // Update sensor components:
-  GetCliffSensorComponent().Update(msg);
-  GetProxSensorComponent().Update(msg);
-  GetTouchSensorComponent().Update(msg);
+  GetCliffSensorComponent().NotifyOfRobotState(msg);
+  GetProxSensorComponent().NotifyOfRobotState(msg);
+  GetTouchSensorComponent().NotifyOfRobotState(msg);
 
   // update current path segment in the path component
   GetPathComponent().UpdateCurrentPathSegment(msg.currPathSegment);
@@ -914,18 +822,15 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   //robot->SetCarryingBlock( isCarryingObject ); // Still needed?
   GetDockingComponent().SetPickingOrPlacing(IS_STATUS_FLAG_SET(IS_PICKING_OR_PLACING));
   _isPickedUp = IS_STATUS_FLAG_SET(IS_PICKED_UP);
-  SetOnCharger(IS_STATUS_FLAG_SET(IS_ON_CHARGER));
-  SetIsCharging(IS_STATUS_FLAG_SET(IS_CHARGING));
-  _chargerOOS = IS_STATUS_FLAG_SET(IS_CHARGER_OOS);
   _powerButtonPressed = IS_STATUS_FLAG_SET(IS_BUTTON_PRESSED);
 
   // Save the entire flag for sending to game
   _lastStatusFlags = msg.status;
 
-  GetMoveComponent().Update(msg);
-      
-  _battVoltage = msg.batteryVoltage;
-      
+  GetBatteryComponent().NotifyOfRobotState(msg);
+  
+  GetMoveComponent().NotifyOfRobotState(msg);
+  
   _leftWheelSpeed_mmps = msg.lwheel_speed_mmps;
   _rightWheelSpeed_mmps = msg.rwheel_speed_mmps;
       
@@ -1255,9 +1160,7 @@ Result Robot::Update()
   ANKI_CPU_PROFILE("Robot::Update");
   
   const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  
-  GetIdleTimeoutComponent().Update(currentTime);
-  
+    
   // Check for syncTimeAck taking too long to arrive
   if (_syncTimeSentTime_sec > 0.0f && currentTime > _syncTimeSentTime_sec + kMaxSyncTimeAckDelay_sec) {
     LOG_WARNING("Robot.Update.SyncTimeAckNotReceived", "");
@@ -1291,40 +1194,11 @@ Result Robot::Update()
   //////////// CameraService Update ////////////
   CameraService::getInstance()->Update();
 
-  //////////// VisionScheduleMediator ////////////
-  // Applies the scheduling consequences of the last frame's subscriptions before ticking VisionComponent
-  GetVisionScheduleMediator().Update();
-
-  //////////// VisionComponent //////////  
-  if (GetVisionComponent().GetCamera().IsCalibrated())
-  {
-    GetVisionComponent().Update();
-  
-    // NOTE: Also updates BlockWorld and FaceWorld using markers/faces that were detected
-    Result visionResult = GetVisionComponent().UpdateAllResults();
-    if (RESULT_OK != visionResult) {
-      LOG_WARNING("Robot.Update.VisionComponentUpdateFail", "");
-      return visionResult;
-    }
-  } // if (GetCamera().IsCalibrated())
-  
-  // If anything in updating block world caused a localization update, notify
-  // the physical robot now:
-  if (_needToSendLocalizationUpdate) {
-    SendAbsLocalizationUpdate();
-    _needToSendLocalizationUpdate = false;
-  }
-  
-  ///////// MemoryMap ///////////
-      
-  // update the memory map based on the current's robot pose
-  GetMapComponent().UpdateRobotPose();
-  
   // Check if we have driven off the charger platform - this has to happen before the behaviors which might
   // need this information. This state is useful for knowing not to play a cliff react when just driving off
   // the charger.
 
-  if (_isOnChargerPlatform && _offTreadsState == OffTreadsState::OnTreads) {
+  if (GetBatteryComponent().IsOnChargerPlatform() && _offTreadsState == OffTreadsState::OnTreads) {
     BlockWorldFilter filter;
     filter.SetAllowedFamilies({ObjectFamily::Charger});
     // Assuming there is only one charger in the world
@@ -1335,57 +1209,24 @@ Result Robot::Update()
       const bool isOnChargerPlatform = charger->GetBoundingQuadXY().Intersects(GetBoundingQuadXY());
       if( !isOnChargerPlatform )
       {
-        SetOnChargerPlatform(false);
+        GetBatteryComponent().SetOnChargerPlatform(false);
       }
     }
     else {
       // if we can't connect / talk to the charger, consider the robot to be off the platform
-      SetOnChargerPlatform(false);
+      GetBatteryComponent().SetOnChargerPlatform(false);
     }
   }
-      
-  ///////// Update the behavior manager ///////////
-      
-  // TODO: This object encompasses, for the time-being, what some higher level
-  // module(s) would do.  e.g. Some combination of game state, build planner,
-  // personality planner, etc.
-
-  GetMoodManager().Update(currentTime);
-
-  GetInventoryComponent().Update(currentTime);
-
-  GetProgressionUnlockComponent().Update();
-
-  GetBlockTapFilter().Update();
-
-  std::string currentActivityName;
   
-  // Update AI component before behaviors so that behaviors can use the latest information
-  GetAIComponent().Update(*this, currentActivityName, _behaviorDebugStr);
+  _components->UpdateComponents();
 
-  //////// Update Robot's State Machine /////////////
-  const RobotID_t robotID = GetID();
-  
-  Result result = GetActionList().Update();
-  if (result != RESULT_OK) {
-    LOG_INFO("Robot.Update.ActionList", "Robot %d had an action list failure (%d)", robotID, result);
+  // If anything in updating block world caused a localization update, notify
+  // the physical robot now:
+  if (_needToSendLocalizationUpdate) {
+    SendAbsLocalizationUpdate();
+    _needToSendLocalizationUpdate = false;
   }
   
-  /////////// Update NVStorage //////////
-  GetNVStorageComponent().Update();
-
-  /////////// Update path planning / following ////////////
-  GetPathComponent().Update();
-  
-  /////////// Update cube comms ////////////
-  GetCubeCommsComponent().Update();
-  
-  // update and broadcast map
-  GetMapComponent().Update();
-  
-  /////////// Update AnimationComponent /////////
-  GetAnimationComponent().Update();
-
   /////////// Update visualization ////////////
       
   // Draw All Objects by calling their Visualize() methods.
@@ -1444,7 +1285,7 @@ Result Robot::Update()
            GetMoveComponent().IsHeadMoving() ? 'H' : ' ',
            GetMoveComponent().IsMoving() ? 'B' : ' ',
            GetCarryingComponent().IsCarryingObject() ? 'C' : ' ',
-           IsOnChargerPlatform() ? 'P' : ' ',
+           GetBatteryComponent().IsOnChargerPlatform() ? 'P' : ' ',
            GetNVStorageComponent().HasPendingRequests() ? 'R' : ' ',
            // SimpleMoodTypeToString(GetMoodManager().GetSimpleMood()),
            // _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::LIFT_TRACK) ? 'L' : ' ',
@@ -1461,15 +1302,6 @@ Result Robot::Update()
     SendDebugString(buffer);
     _lastDebugStringHash = curr_hash;
   }
-  
-  GetCubeLightComponent().Update();
-  GetBodyLightComponent().Update();
-  
-  // Update user facing state information after everything else has been updated
-  // so that relevant information is forwarded along to whoever's listening for
-  // state changes
-  GetPublicStateBroadcaster().Update(*this);
-
 
   if (kDebugPossibleBlockInteraction) {
     // print a bunch of info helpful for debugging block states
@@ -2748,7 +2580,7 @@ ExternalInterface::RobotState Robot::GetRobotState() const
       
   msg.localizedToObjectID = GetLocalizedTo();
 
-  msg.batteryVoltage = GetBatteryVoltage();
+  msg.batteryVoltage = GetBatteryComponent().GetRawBatteryVolts();
       
   msg.lastImageTimeStamp = GetVisionComponent().GetLastProcessedImageTimeStamp();
       

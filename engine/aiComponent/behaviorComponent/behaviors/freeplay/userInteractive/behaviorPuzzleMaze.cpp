@@ -234,7 +234,7 @@ void BehaviorPuzzleMaze::OnBehaviorActivated()
 {
   LOG_TRACE("BehaviorPuzzleMaze.InitInternal", "Init behavior");
   
-  const auto& currMaze = GetBEI().GetAIComponent().GetPuzzleComponent().GetCurrentMaze();
+  const auto& currMaze = GetAIComp<PuzzleComponent>().GetCurrentMaze();
   _currFacing = MazeWalls::South;
   _currPos = currMaze._start;
   _path.clear();
@@ -254,7 +254,7 @@ void BehaviorPuzzleMaze::OnBehaviorActivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPuzzleMaze::SingleStepMaze()
 {
-  const auto& currMaze = GetBEI().GetAIComponent().GetPuzzleComponent().GetCurrentMaze();
+  const auto& currMaze = GetAIComp<PuzzleComponent>().GetCurrentMaze();
   // This function is called once we've reached the end of an animation, so update our tile position
   _currPos = _nextPos;
   // step if we're not at the end.
@@ -316,7 +316,7 @@ void BehaviorPuzzleMaze::UpdateMaze()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPuzzleMaze::DrawMaze(Vision::Image& image)
 {
-  const auto& currMaze = GetBEI().GetAIComponent().GetPuzzleComponent().GetCurrentMaze();
+  const auto& currMaze = GetAIComp<PuzzleComponent>().GetCurrentMaze();
   size_t h = currMaze.GetHeight();
   size_t w = currMaze.GetWidth();
   

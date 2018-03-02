@@ -3,6 +3,9 @@ cmake_minimum_required(VERSION 3.6)
 
 project(robot)
 
+include(anki_build_cxx)
+include(android_strip)
+
 add_library(robot_interface INTERFACE IMPORTED GLOBAL)
 set_property(TARGET robot_interface
              PROPERTY INTERFACE_INCLUDE_DIRECTORIES
@@ -46,10 +49,16 @@ target_include_directories(robot_hal
   $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot/hal/sim/include>
 )
 
+target_compile_options(robot_hal
+  PRIVATE
+  ${ANKI_BUILD_CXX_COMPILE_OPTIONS}
+)
+
 target_compile_definitions(robot_hal
   PRIVATE
   COZMO_ROBOT
   ${PLATFORM_COMPILE_DEFS}
+  ${ANKI_BUILD_CXX_COMPILE_DEFINITIONS}
   #HAL_DUMMY_BODY # Uncomment if deploying on head only
 )
 
@@ -88,9 +97,6 @@ elseif (MACOSX)
       ${CMAKE_SOURCE_DIR}/simulator/robot/sim_overlayDisplay.cpp
   )
 endif()
-
-
-include(anki_build_cxx)
 
 anki_build_cxx_library(robot_transport ${ANKI_SRCLIST_DIR} STATIC)
 
@@ -136,11 +142,6 @@ target_include_directories(supervisor
   PUBLIC
   ${PLATFORM_INCLUDES}
 )
-
-
-
-include(anki_build_cxx)
-include(android_strip)
 
 set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES "")

@@ -31,6 +31,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionUserIntentPending.h"
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
 #include "engine/moodSystem/moodManager.h"
+#include "engine/components/batteryComponent.h"
 #include "engine/robot.h"
 #include "test/engine/behaviorComponent/testBehaviorFramework.h"
 #include "util/math/math.h"
@@ -460,21 +461,21 @@ TEST(BeiConditions, OnCharger)
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
 
   // charger implies platform here
-  robot.SetOnCharger(true);
+  robot.GetBatteryComponent().SetOnChargeContacts(true);
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
 
   // off charger, but still on platform
-  robot.SetOnCharger(false);
+  robot.GetBatteryComponent().SetOnChargeContacts(false);
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
 
-  robot.SetOnChargerPlatform(false);
+  robot.GetBatteryComponent().SetOnChargerPlatform(false);
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
 
   // just on platform
-  robot.SetOnChargerPlatform(true);
+  robot.GetBatteryComponent().SetOnChargerPlatform(true);
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
 }
@@ -537,7 +538,7 @@ TEST(BeiConditions, TriggerWordPending)
   
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
   
-  auto& uic = bei.GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
+  auto& uic = bei.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
   uic.SetTriggerWordPending();
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
@@ -600,7 +601,7 @@ TEST(BeiConditions, UserIntentPending)
   
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
   
-  auto& uic = bei.GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
+  auto& uic = bei.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
   
   // (1) test_user_intent_1  matches the tag
   

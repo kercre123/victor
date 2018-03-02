@@ -79,10 +79,17 @@ MoodManager::~MoodManager()
 void MoodManager::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
 {
   _robot = robot;
+  auto& context = dependentComponents.GetValue<ContextWrapper>().context;
+
+  if (nullptr != context->GetDataPlatform())
+  {
+    ReadMoodConfig(context->GetDataLoader()->GetRobotMoodConfig());
+    LoadEmotionEvents(context->GetDataLoader()->GetEmotionEventJsons());
+  }
 }
 
 
-void MoodManager::Init(const Json::Value& inJson)
+void MoodManager::ReadMoodConfig(const Json::Value& inJson)
 {
   GetStaticMoodData().Init(inJson);
 
@@ -172,10 +179,11 @@ void MoodManager::Reset()
 }
 
 
-void MoodManager::Update(const float currentTime)
+void MoodManager::UpdateDependent(const RobotCompMap& dependentComps)
 {
   ANKI_CPU_PROFILE("MoodManager::Update");
-  
+  const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
   const float kMinTimeStep = 0.0001f; // minimal sensible timestep, should be at least > epsilon
   float timeDelta = (_lastUpdateTime != 0.0f) ? (currentTime - _lastUpdateTime) : kMinTimeStep;
   if (timeDelta < kMinTimeStep)

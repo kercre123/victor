@@ -17,6 +17,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
 #include "engine/aiComponent/behaviorComponent/iBehaviorMessageSubscriber.h"
+#include "engine/aiComponent/aiComponents_fwd.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/entityComponent/dependencyManagedEntity.h"
 #include "util/entityComponent/iManageableComponent.h"
@@ -80,7 +81,9 @@ public:
 
 };
 
-class BehaviorComponent : public IBehaviorMessageSubscriber, public IManageableComponent, private Util::noncopyable
+class BehaviorComponent : public IBehaviorMessageSubscriber, 
+                          public IDependencyManagedComponent<AIComponentID>,  
+                          private Util::noncopyable
 {
 public:
   BehaviorComponent();
@@ -89,31 +92,35 @@ public:
   using EntityType = DependencyManagedEntity<BCComponentID>;
   using CompononentPtr = std::unique_ptr<EntityType>;
   
+  // IDependencyManagedComponent<AIComponentID> functions
+  virtual void InitDependent(Robot* robot, const AICompMap& dependentComponents) override;
+
+  virtual void GetUpdateDependencies(AICompIDSet& dependencies) const override {
+    dependencies.insert(AIComponentID::InformationAnalyzer);
+    dependencies.insert(AIComponentID::ContinuityComponent);
+    dependencies.insert(AIComponentID::Whiteboard);
+  };
+
+  virtual void UpdateDependent(const AICompMap& dependentComps) override;
+
+
+  // end IDependencyManagedComponent<AIComponentID> functions
 
   // Pass in any components that have already been initialized as part of the entity
   // all other required components will be automatically generated
   static void GenerateManagedComponents(Robot& robot,
                                         CompononentPtr& entity);
   
-  void Init(Robot* robot, CompononentPtr&& components);
+  // NOTE: BehaviorComponent
+  void SetComponents(CompononentPtr&& components);
 
-  void Update(Robot& robot,
-              std::string& currentActivityName,
-              std::string& behaviorDebugStr);
-    
+
   template<typename T>
   T& GetComponent() const {return _comps->GetValue<T>();}
 
   virtual void SubscribeToTags(IBehavior* subscriber, std::set<ExternalInterface::MessageGameToEngineTag>&& tags) const override;
   virtual void SubscribeToTags(IBehavior* subscriber, std::set<ExternalInterface::MessageEngineToGameTag>&& tags) const override;
   virtual void SubscribeToTags(IBehavior* subscriber, std::set<RobotInterface::RobotToEngineTag>&& tags) const override;
-  
-  inline const BehaviorEventAnimResponseDirector& GetBehaviorEventAnimResponseDirector() const
-    { return GetComponent<BehaviorEventAnimResponseDirector>();}
-  
-  inline UserIntentComponent& GetUserIntentComponent() const
-    { return GetComponent<UserIntentComponent>(); }
-           
   
 protected:
   // Support legacy cozmo code

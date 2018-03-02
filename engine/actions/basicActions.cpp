@@ -629,7 +629,7 @@ namespace Anki {
 
     void DriveStraightAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const
     {
-      requests.insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::High });
+      requests.insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::Low });
     }
 
     void DriveStraightAction::SetAccel(f32 accel_mmps2)
@@ -1410,7 +1410,7 @@ namespace Anki {
 
     void TurnTowardsObjectAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const
     {
-      requests.insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::High });
+      requests.insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::Low });
     }
 
     void TurnTowardsObjectAction::UseCustomObject(ObservableObject* objectPtr)
@@ -1969,7 +1969,7 @@ namespace Anki {
 
     void TurnTowardsFaceAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const
     {
-      requests.insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::High });
+      requests.insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::Low });
     }
 
     ActionResult TurnTowardsFaceAction::Init()

@@ -150,18 +150,20 @@ void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseB
     
     auto entity = std::make_unique<BehaviorComponent::EntityType>();
 
-    entity->AddDependentComponent(BCComponentID::AIComponent, 
-      _robot->GetComponentPtr<AIComponent>(), false);
+    entity->AddDependentComponent(BCComponentID::AIComponent, _robot->GetComponentPtr<AIComponent>(), false);
     auto wrapper = new BaseBehaviorWrapper(baseBehavior);
     entity->AddDependentComponent(BCComponentID::BaseBehaviorWrapper, wrapper);
     entity->AddDependentComponent(BCComponentID::BehaviorContainer, _behaviorContainer.get(), false);
 
     BehaviorComponent::GenerateManagedComponents(*_robot, entity);
 
-    BehaviorComponent* bc = new BehaviorComponent();
-    _robot->GetAIComponent().Init(_robot.get(), bc);
-    _behaviorComponent = &_robot->GetAIComponent().GetBehaviorComponent();
-    _behaviorComponent->Init(_robot.get(), std::move(entity));
+    DependencyManagedEntity<RobotComponentID> dependencies;
+    _robot->GetAIComponent().InitDependent(_robot.get(), dependencies);
+    _behaviorComponent = _robot->GetAIComponent().GetBasePtr<BehaviorComponent>();
+
+    _behaviorComponent->SetComponents(std::move(entity));
+    DependencyManagedEntity<AIComponentID> dependentComps;
+    _behaviorComponent->InitDependent(_robot.get(), dependentComps);
   }
   
   if(shouldCallInitOnBase){
@@ -177,8 +179,8 @@ void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseB
     initializeBehavior(_behaviorComponent->_comps);
   }
   
-  std::string empty;
-  _behaviorComponent->Update(*_robot, empty, empty);
+  DependencyManagedEntity<AIComponentID> dependentComps;
+  _behaviorComponent->UpdateDependent(dependentComps);
   
   // Grab components from the behaviorComponent
   {
@@ -199,11 +201,11 @@ void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseB
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void DoBehaviorComponentTicks(Robot& robot, ICozmoBehavior& behavior, BehaviorComponent& behaviorComponent, int num)
 {
-  std::string currentActivityName;
-  std::string behaviorDebugStr;
+  DependencyManagedEntity<RobotComponentID> robotComps;
+  DependencyManagedEntity<AIComponentID> aiComps;
   for(int i=0; i<num; i++) {
-    robot.GetActionList().Update();
-    behaviorComponent.Update(robot, currentActivityName, behaviorDebugStr);
+    robot.GetActionList().UpdateDependent(robotComps);
+    behaviorComponent.UpdateDependent(aiComps);
     IncrementBaseStationTimerTicks();
   }
 }
@@ -212,8 +214,9 @@ void DoBehaviorComponentTicks(Robot& robot, ICozmoBehavior& behavior, BehaviorCo
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void DoBehaviorInterfaceTicks(Robot& robot, ICozmoBehavior& behavior, int num)
 {
+  DependencyManagedEntity<RobotComponentID> dependentComps;
   for(int i=0; i<num; i++) {
-    robot.GetActionList().Update();
+    robot.GetActionList().UpdateDependent(dependentComps);
     behavior.Update();
     IncrementBaseStationTimerTicks();
   }

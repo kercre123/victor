@@ -77,7 +77,7 @@ void BehaviorPopAWheelie::OnBehaviorDeactivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPopAWheelie::UpdateTargetBlock() const
 {
-  _targetBlock = GetBEI().GetAIComponent().GetObjectInteractionInfoCache().
+  _targetBlock = GetAIComp<ObjectInteractionInfoCache>().
        GetBestObjectForIntention(ObjectInteractionIntention::PopAWheelieOnObject);
 }
 
@@ -180,7 +180,7 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(bool isRetry)
                     // mark the block as inaccessible
                     const ObservableObject* failedObject = failedObject = GetBEI().GetBlockWorld().GetLocatedObjectByID(_targetBlock);
                     if(failedObject){
-                      GetBEI().GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectActionFailure::RollOrPopAWheelie);
+                      GetAIComp<AIWhiteboard>().SetFailedToUse(*failedObject, AIWhiteboard::ObjectActionFailure::RollOrPopAWheelie);
                     }
                     break;
                   }

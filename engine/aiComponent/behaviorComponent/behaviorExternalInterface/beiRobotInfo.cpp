@@ -15,6 +15,7 @@
 
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "engine/robot.h"
+#include "engine/components/batteryComponent.h"
 
 
 namespace Anki {
@@ -112,7 +113,7 @@ const RobotID_t BEIRobotInfo::GetID() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TimeStamp_t BEIRobotInfo::GetLastChargingStateChangeTimestamp() const
 {
-  return _robot.GetLastChargingStateChangeTimestamp();
+  return _robot.GetBatteryComponent().GetLastChargingStateChangeTimestamp();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -227,7 +228,7 @@ Result BEIRobotInfo::ComputeHeadAngleToSeePose(const Pose3d& pose, Radians& head
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BEIRobotInfo::IsCharging() const
 {
-  return _robot.IsCharging();
+  return _robot.GetBatteryComponent().IsCharging();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -243,15 +244,15 @@ bool BEIRobotInfo::IsLiftCalibrated() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BEIRobotInfo::IsOnCharger() const
+bool BEIRobotInfo::IsOnChargerContacts() const
 {
-  return _robot.IsOnCharger();
+  return _robot.GetBatteryComponent().IsOnChargerContacts();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BEIRobotInfo::IsOnChargerPlatform() const
 {
-  return _robot.IsOnChargerPlatform();
+  return _robot.GetBatteryComponent().IsOnChargerPlatform();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

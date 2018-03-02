@@ -33,12 +33,7 @@ public:
   //////
   // IDependencyManagedComponent functions
   //////
-  // Maintain the chain of initializations currently in robot - it might be possible to
-  // change the order of initialization down the line, but be sure to check for ripple effects
-  // when changing this function
-  virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
-    dependencies.insert(RobotComponentID::CliffSensor);
-  };
+  virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {};
   virtual void InitDependent(Robot* robot, const RobotCompMap& dependentComponents) override {
     InitBase(robot);
   };
@@ -48,7 +43,7 @@ public:
   //////
 
 protected:
-  virtual void UpdateInternal(const RobotState& msg) override;
+  virtual void NotifyOfRobotStateInternal(const RobotState& msg) override;
   
   virtual std::string GetLogHeader() override;
   virtual std::string GetLogRow() override;

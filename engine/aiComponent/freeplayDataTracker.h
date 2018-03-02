@@ -14,7 +14,8 @@
 #define __Cozmo_Basestation_AiComponent_FreeplayDataTracker_H__
 
 #include "coretech/common/engine/utils/timer.h"
-#include "util/entityComponent/iManageableComponent.h"
+#include "engine/aiComponent/aiComponents_fwd.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 
 #include "util/helpers/noncopyable.h"
 
@@ -31,21 +32,32 @@ enum class FreeplayPauseFlag
   OnCharger
 };
 
-class FreeplayDataTracker : public IManageableComponent, private Util::noncopyable
+class FreeplayDataTracker : public IDependencyManagedComponent<AIComponentID>, 
+                            private Util::noncopyable
 {
 public:
 
   FreeplayDataTracker();
-  
-  // process tick, possibly send events
-  void Update();
 
   // Force a data send (if there is data to send). Useful, e.g. during a disconnect
   void ForceUpdate();
 
   // set (or clear) the given freeplay pause flag. If no flags are set, freeplay is not paused.
   void SetFreeplayPauseFlag(bool value, FreeplayPauseFlag flag);
-  
+
+  // IDependencyManagedComponent<AIComponentID> functions
+  virtual void InitDependent(Cozmo::Robot* robot, 
+                             const AICompMap& dependentComps) override;
+
+  // IDependencyManagedComponent<AIComponentID> functions
+  virtual void GetUpdateDependencies(AICompIDSet& dependencies) const override {
+    dependencies.insert(AIComponentID::BehaviorComponent);
+  };
+
+  virtual void UpdateDependent(const AICompMap& dependentComps) override;
+  // end IDependencyManagedComponent<AIComponentID> functions
+
+
 private:
 
   // This is a set of flags, each of which is a reason we might be paused. Multiple can be active at a

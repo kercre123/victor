@@ -2,6 +2,8 @@
   "behaviorClass" : "TimerUtilityCoordinator",
   "behaviorID"    : "TimerUtilityCoordinator",
 
+  "minValidTimer_s" : 1,
+  "maxValidTimer_s" : 3600,
   "anticConfig" : [
     {
       "recurIntervalMin_s" : 180,

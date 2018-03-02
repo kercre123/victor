@@ -326,7 +326,8 @@ void PathComponent::UpdateCurrentPathSegment(s8 currPathSegment)
   }
 }
 
-void PathComponent::Update()
+
+void PathComponent::UpdateDependent(const RobotCompMap& dependentComps)
 {
   if( _plannerActive ) {
     UpdatePlanning();

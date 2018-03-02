@@ -114,7 +114,7 @@ public:
   bool IsCharging() const;
   bool IsHeadCalibrated() const;
   bool IsLiftCalibrated() const;
-  bool IsOnCharger() const;
+  bool IsOnChargerContacts() const;
   bool IsOnChargerPlatform() const;
   bool IsPhysical() const;
   bool IsPickedUp() const;

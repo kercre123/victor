@@ -47,18 +47,17 @@ public:
   // IDependencyManagedComponent functions
   //////
   virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
-  // Maintain the chain of initializations currently in robot - it might be possible to
-  // change the order of initialization down the line, but be sure to check for ripple effects
-  // when changing this function
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
-    dependencies.insert(RobotComponentID::ProgressionUnlock);
+    dependencies.insert(RobotComponentID::CozmoContext);
   };
-  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
+  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {
+    dependencies.insert(RobotComponentID::CubeComms);
+    dependencies.insert(RobotComponentID::CubeAccel);
+  };
+  virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
   //////
   // end IDependencyManagedComponent functions
   //////
-  
-  void Update();
   
   bool ShouldIgnoreMovementDueToDoubleTap(const ObjectID& objectID);
   

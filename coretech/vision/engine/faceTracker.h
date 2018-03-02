@@ -35,7 +35,9 @@ namespace Vision {
   {
   public:
     
-    FaceTracker(const std::string& modelPath, const Json::Value& config);
+    FaceTracker(const Camera& camera,
+                const std::string& modelPath,
+                const Json::Value& config);
     
     ~FaceTracker();
     

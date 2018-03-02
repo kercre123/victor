@@ -115,7 +115,13 @@ void CubeLightComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& 
 }
 
 
-void CubeLightComponent::Update(bool shouldPickNextAnim)
+void CubeLightComponent::UpdateDependent(const RobotCompMap& dependentComps)
+{
+  UpdateInternal(true);
+}
+
+
+void CubeLightComponent::UpdateInternal(bool shouldPickNextAnim)
 {
   const TimeStamp_t curTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
   
@@ -540,7 +546,7 @@ void CubeLightComponent::StopAllAnimsOnLayer(const AnimLayerEnum& layer, const O
   }
   
   // Manually update so the anims are immediately stopped
-  Update();
+  UpdateInternal(true);
 }
 
 bool CubeLightComponent::StopLightAnimAndResumePrevious(const CubeAnimationTrigger& animTrigger,
@@ -593,7 +599,7 @@ bool CubeLightComponent::StopLightAnim(const CubeAnimationTrigger& animTrigger,
   }
   
   // Manually update so the anims are immediately stopped
-  Update(shouldPickNextAnim);
+  UpdateInternal(shouldPickNextAnim);
 
   std::stringstream ss;
   for( const auto& objectInfoPair : _objectInfo ){

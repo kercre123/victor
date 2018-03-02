@@ -211,8 +211,8 @@ Result HAL::Step(void)
 
   //check if the charge contact commander is active,
   //if so, override normal operation
-  bool commander_is_active = ccc_commander_is_active();
-  //  struct HeadToBody* h2bp = (commander_is_active) ? ccc_data_get_response() : &headData_;
+  // bool commander_is_active = ccc_commander_is_active();
+  // struct HeadToBody* h2bp = (commander_is_active) ? ccc_data_get_response() : &headData_;
   struct HeadToBody* h2bp =  &headData_;
 
   spine_write_h2b_frame(&spine_, h2bp);
@@ -363,13 +363,6 @@ bool HAL::BatteryIsOnCharger()
   // The POWER_ON_CHARGER flag is set whenever there is sensed voltage on
   // the charge contacts.
   return bodyData_->battery.flags & POWER_ON_CHARGER;
-}
-
-bool HAL::BatteryIsChargerOOS()
-{
-  return false;
-  // BRC: no longer supported in DVT2
-  // bodyData_->battery.flags & chargerOOS;
 }
 
 u8 HAL::GetWatchdogResetCounter()

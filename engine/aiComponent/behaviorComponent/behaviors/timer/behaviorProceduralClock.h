@@ -46,6 +46,7 @@ protected:
   BehaviorProceduralClock(const Json::Value& config);
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override{
     modifiers.behaviorAlwaysDelegates = false;
+    modifiers.wantsToBeActivatedWhenOffTreads = true;
   }
 
   virtual void OnBehaviorActivated() override;

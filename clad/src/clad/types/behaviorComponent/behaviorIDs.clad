@@ -107,6 +107,8 @@ enum uint_8 BehaviorID {
   Singing_YellowRose,
 
   // timer
+  SingletonCancelTimer,
+  SingletonTimerAlreadySet,
   SingletonTimerAntic,
   SingletonTimerRinging,
   SingletonTimerSet,
@@ -214,6 +216,7 @@ enum uint_8 BehaviorID {
   ReactToSoundAsleep,
   ReactToSoundAwake,
   ReactToUnclaimedIntent,
+  SingletonICantDoThat,
   TriggerWordDetected,
 }
 

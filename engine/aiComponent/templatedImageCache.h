@@ -14,21 +14,24 @@
 #ifndef __Cozmo_Basestation_AIComponent_TemplatedImageCache_H__
 #define __Cozmo_Basestation_AIComponent_TemplatedImageCache_H__
 
-#include "engine/robotDataLoader.h"
 #include "coretech/vision/engine/colorPixelTypes.h"
 #include "coretech/vision/engine/image.h"
-#include "util/entityComponent/iManageableComponent.h"
+#include "engine/robotDataLoader.h"
+#include "engine/aiComponent/aiComponents_fwd.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
 
 namespace Anki {
 namespace Cozmo {
 
   
-class TemplatedImageCache : public IManageableComponent, private Util::noncopyable
+class TemplatedImageCache : public IDependencyManagedComponent<AIComponentID>, 
+                            private Util::noncopyable
 {
 public:
   TemplatedImageCache(const RobotDataLoader::ImagePathMap& imageMap)
-  : _imagePathMap(imageMap){}
+  : IDependencyManagedComponent<AIComponentID>(this, AIComponentID::TemplatedImageCache)
+  , _imagePathMap(imageMap){}
   // Pass in the template and a map of quadrant name to image name
   // If an image with the same name has been built and cached, only the quadrants
   // different from the cached image will be re-drawn 

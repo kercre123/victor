@@ -46,7 +46,7 @@ PROFILER=${SIMPLEPERF}/app_profiler.py
 
 python ${PROFILER} -nc -nb \
   -np ${ANKI_PROFILE_PROCNAME} \
-  -r "-e cpu-cycles:u -f ${ANKI_PROFILE_FREQUENCY} --duration ${ANKI_PROFILE_DURATION}" \
+  -r "-e cpu-cycles:u -f ${ANKI_PROFILE_FREQUENCY} --duration ${ANKI_PROFILE_DURATION} --call-graph dwarf" \
   -lib ${ANKI_PROFILE_SYMBOLCACHE} \
   -o ${ANKI_PROFILE_PERFDATA}
 

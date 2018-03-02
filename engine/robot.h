@@ -105,6 +105,7 @@ class TouchSensorComponent;
 class AnimationComponent;
 class MapComponent;
 class MicDirectionHistory;
+class BatteryComponent;
 
 namespace Audio {
   class EngineRobotAudioClient;
@@ -281,6 +282,9 @@ public:
   
   const MicDirectionHistory& GetMicDirectionHistory() const { return GetComponent<MicDirectionHistory>(); }
   MicDirectionHistory&       GetMicDirectionHistory()       { return GetComponent<MicDirectionHistory>(); }
+  
+  const BatteryComponent&    GetBatteryComponent()    const { return GetComponent<BatteryComponent>(); }
+  BatteryComponent&          GetBatteryComponent()          { return GetComponent<BatteryComponent>(); }
 
   const PoseOriginList&  GetPoseOriginList() const { return *_poseOrigins.get(); }
   
@@ -343,22 +347,6 @@ public:
     
   // Just sets the ramp to use and in which direction, not whether robot is on it yet
   void SetRamp(const ObjectID& rampID, const Ramp::TraversalDirection direction);
-
-  // True if robot is on charger
-  bool   IsOnCharger()         const { return _isOnCharger; }
-
-  // True if we think the robot is on a charger. This becomes true only when the robot touches the charger
-  // contacts, and remains true until we think the robot has driven off the charger. It will not become true
-  // based on localization or observing the charger marker, only based on feeling the charger. A robot on the
-  // charger contacts is always on the platform (NOTE: even if it thinks it's in the air or on it's side)
-  bool   IsOnChargerPlatform() const { return _isOnChargerPlatform; }
-  
-  // True if robot is charging
-  bool   IsCharging()          const { return _isCharging; }
-  // True if charger is out of spec
-  bool   IsChargerOOS()        const { return _chargerOOS; }
-  // Return the message timestamp of the last time the value of IsCharging changed
-  TimeStamp_t GetLastChargingStateChangeTimestamp() const { return _lastChargingChange_ms; }
   
   // Updates pose to be on charger
   Result SetPoseOnCharger();
@@ -541,9 +529,6 @@ public:
   // ======== Power button ========
 
   bool IsPowerButtonPressed() const { return _powerButtonPressed; }
-
-  // =========  Other State  ============
-  f32 GetBatteryVoltage() const { return _battVoltage; }
       
   // Abort everything the robot is doing, including path following, actions,
   // animations, and docking. This is like the big red E-stop button.
@@ -708,16 +693,10 @@ protected:
   ObjectID         _chargerID;
   
   // State
-  bool             _isOnCharger              = false;
-  bool             _isCharging               = false;
-  TimeStamp_t      _lastChargingChange_ms    = 0;
-  bool             _chargerOOS               = false;
-  f32              _battVoltage              = 5;
   ImageSendMode    _imageSendMode            = ImageSendMode::Off;
   u32              _lastSentImageID          = 0;
   bool             _powerButtonPressed       = false;
   bool             _isPickedUp               = false;
-  bool             _isOnChargerPlatform      = false;
   bool             _isCliffReactionDisabled  = false;
   bool             _gotStateMsgAfterTimeSync = false;
   u32              _lastStatusFlags          = 0;
@@ -748,12 +727,6 @@ protected:
   double       _timeSinceLastImage_s = 0.0;
   double       _lastImageLatencyTime_s = 0.0;
   Util::Stats::RecentStatsAccumulator _imageStats{50};
-
-  ///////// Modifiers ////////
-  
-  void SetOnCharger(bool onCharger);
-  void SetOnChargerPlatform(bool onPlatform);
-  void SetIsCharging(bool isCharging);
   
   // returns whether the tread state was updated or not
   bool CheckAndUpdateTreadsState(const RobotState& msg);

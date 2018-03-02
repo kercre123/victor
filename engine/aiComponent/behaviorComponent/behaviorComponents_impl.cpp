@@ -11,6 +11,7 @@
 **/
 
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
+#include "util/entityComponent/componentTypeEnumMap.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -40,39 +41,51 @@ class UserIntentComponent;
 } // namespace Cozmo
 
 // Template specializations mapping enums from the _fwd.h file to the class forward declarations above
+LINK_COMPONENT_TYPE_TO_ENUM(AIComponent,                        BCComponentID, AIComponent)
+LINK_COMPONENT_TYPE_TO_ENUM(AsyncMessageGateComponent,          BCComponentID, AsyncMessageComponent)
+LINK_COMPONENT_TYPE_TO_ENUM(Audio::BehaviorAudioComponent,      BCComponentID, BehaviorAudioComponent)
+LINK_COMPONENT_TYPE_TO_ENUM(BehaviorContainer,                  BCComponentID, BehaviorContainer)
+LINK_COMPONENT_TYPE_TO_ENUM(BehaviorEventAnimResponseDirector,  BCComponentID, BehaviorEventAnimResponseDirector)
+LINK_COMPONENT_TYPE_TO_ENUM(BehaviorEventComponent,             BCComponentID, BehaviorEventComponent)
+LINK_COMPONENT_TYPE_TO_ENUM(BehaviorExternalInterface,          BCComponentID, BehaviorExternalInterface)
+LINK_COMPONENT_TYPE_TO_ENUM(BehaviorHelperComponent,            BCComponentID, BehaviorHelperComponent)
+LINK_COMPONENT_TYPE_TO_ENUM(BehaviorSystemManager,              BCComponentID, BehaviorSystemManager)
+LINK_COMPONENT_TYPE_TO_ENUM(BehaviorTimerManager,               BCComponentID, BehaviorTimerManager)
+LINK_COMPONENT_TYPE_TO_ENUM(BlockWorld,                         BCComponentID, BlockWorld)
+LINK_COMPONENT_TYPE_TO_ENUM(DelegationComponent,                BCComponentID, DelegationComponent)
+LINK_COMPONENT_TYPE_TO_ENUM(DevBehaviorComponentMessageHandler, BCComponentID, DevBehaviorComponentMessageHandler)
+LINK_COMPONENT_TYPE_TO_ENUM(FaceWorld,                          BCComponentID, FaceWorld)
+LINK_COMPONENT_TYPE_TO_ENUM(BEIRobotInfo,                       BCComponentID, RobotInfo)
+LINK_COMPONENT_TYPE_TO_ENUM(BaseBehaviorWrapper,                BCComponentID, BaseBehaviorWrapper)
+LINK_COMPONENT_TYPE_TO_ENUM(UserIntentComponent,                BCComponentID, UserIntentComponent)
+
+// Translate entity into string
 template<>
-void GetComponentIDForType<Cozmo::BCComponentID, Cozmo::AIComponent>(Cozmo::BCComponentID& enumToSet){enumToSet = Cozmo::BCComponentID::AIComponent;}
+std::string GetEntityNameForEnumType<Cozmo::BCComponentID>(){ return "BehaviorComponent"; }
+
 template<>
-void GetComponentIDForType<Cozmo::BCComponentID, Cozmo::AsyncMessageGateComponent>(Cozmo::BCComponentID& enumToSet){enumToSet = Cozmo::BCComponentID::AsyncMessageComponent;}
-template<>
-void GetComponentIDForType<Cozmo::BCComponentID, Cozmo::Audio::BehaviorAudioComponent>(Cozmo::BCComponentID& enumToSet){enumToSet =  Cozmo::BCComponentID::BehaviorAudioComponent;}
-template<>
-void GetComponentIDForType<Cozmo::BCComponentID, Cozmo::BehaviorContainer>(Cozmo::BCComponentID& enumToSet){enumToSet =  Cozmo::BCComponentID::BehaviorContainer;}
-template<>
-void GetComponentIDForType<Cozmo::BCComponentID, Cozmo::BehaviorEventAnimResponseDirector>(Cozmo::BCComponentID& enumToSet){enumToSet =  Cozmo::BCComponentID::BehaviorEventAnimResponseDirector;}
-template<>
-void GetComponentIDForType<Cozmo::BCComponentID, Cozmo::BehaviorEventComponent>(Cozmo::BCComponentID& enumToSet){enumToSet =  Cozmo::BCComponentID::BehaviorEventComponent;}
-template<>
-void GetComponentIDForType<Cozmo::BCComponentID, Cozmo::BehaviorExternalInterface>(Cozmo::BCComponentID& enumToSet){enumToSet =  Cozmo::BCComponentID::BehaviorExternalInterface;}
-template<>
-void GetComponentIDForType<Cozmo::BCComponentID, Cozmo::BehaviorHelperComponent>(Cozmo::BCComponentID& enumToSet){enumToSet =  Cozmo::BCComponentID::BehaviorHelperComponent;}
-template<>
-void GetComponentIDForType<Cozmo::BCComponentID, Cozmo::BehaviorSystemManager>(Cozmo::BCComponentID& enumToSet){enumToSet =  Cozmo::BCComponentID::BehaviorSystemManager;}
-template<>
-void GetComponentIDForType<Cozmo::BCComponentID, Cozmo::BehaviorTimerManager>(Cozmo::BCComponentID& enumToSet){enumToSet =  Cozmo::BCComponentID::BehaviorTimerManager;}
-template<>
-void GetComponentIDForType<Cozmo::BCComponentID, Cozmo::BlockWorld>(Cozmo::BCComponentID& enumToSet){enumToSet =  Cozmo::BCComponentID::BlockWorld;}
-template<>
-void GetComponentIDForType<Cozmo::BCComponentID, Cozmo::DelegationComponent>(Cozmo::BCComponentID& enumToSet){enumToSet =  Cozmo::BCComponentID::DelegationComponent;}
-template<>
-void GetComponentIDForType<Cozmo::BCComponentID, Cozmo::DevBehaviorComponentMessageHandler>(Cozmo::BCComponentID& enumToSet){enumToSet =  Cozmo::BCComponentID::DevBehaviorComponentMessageHandler;}
-template<>
-void GetComponentIDForType<Cozmo::BCComponentID, Cozmo::FaceWorld>(Cozmo::BCComponentID& enumToSet){enumToSet =  Cozmo::BCComponentID::FaceWorld;}
-template<>
-void GetComponentIDForType<Cozmo::BCComponentID, Cozmo::BEIRobotInfo>(Cozmo::BCComponentID& enumToSet){enumToSet =  Cozmo::BCComponentID::RobotInfo;}
-template<>
-void GetComponentIDForType<Cozmo::BCComponentID, Cozmo::BaseBehaviorWrapper>(Cozmo::BCComponentID& enumToSet){enumToSet =  Cozmo::BCComponentID::BaseBehaviorWrapper;}
-template<>
-void GetComponentIDForType<Cozmo::BCComponentID, Cozmo::UserIntentComponent>(Cozmo::BCComponentID& enumToSet){enumToSet = Cozmo::BCComponentID::UserIntentComponent;}
+std::string GetComponentStringForID<Cozmo::BCComponentID>(Cozmo::BCComponentID enumID)
+{
+  switch(enumID){
+    case Cozmo::BCComponentID::AIComponent:                        { return "AIComponent";}
+    case Cozmo::BCComponentID::AsyncMessageComponent:              { return "AsyncMessageComponent";}
+    case Cozmo::BCComponentID::BehaviorAudioComponent:             { return "BehaviorAudioComponent";}
+    case Cozmo::BCComponentID::BehaviorContainer:                  { return "BehaviorContainer";}
+    case Cozmo::BCComponentID::BehaviorEventAnimResponseDirector:  { return "BehaviorEventAnimResponseDirector";}
+    case Cozmo::BCComponentID::BehaviorEventComponent:             { return "BehaviorEventComponent";}
+    case Cozmo::BCComponentID::BehaviorExternalInterface:          { return "BehaviorExternalInterface";}
+    case Cozmo::BCComponentID::BehaviorHelperComponent:            { return "BehaviorHelperComponent";}
+    case Cozmo::BCComponentID::BehaviorSystemManager:              { return "BehaviorSystemManager";}
+    case Cozmo::BCComponentID::BlockWorld:                         { return "BlockWorld";}
+    case Cozmo::BCComponentID::DelegationComponent:                { return "DelegationComponent";}
+    case Cozmo::BCComponentID::DevBehaviorComponentMessageHandler: { return "DevBehaviorComponentMessageHandler";}
+    case Cozmo::BCComponentID::FaceWorld:                          { return "FaceWorld";}
+    case Cozmo::BCComponentID::RobotInfo:                          { return "RobotInfo";}
+    case Cozmo::BCComponentID::BaseBehaviorWrapper:                { return "BaseBehaviorWrapper";}
+    case Cozmo::BCComponentID::UserIntentComponent:                { return "UserIntentComponent";}
+    case Cozmo::BCComponentID::BehaviorTimerManager:               { return "BehaviorTimerManager";}
+    case Cozmo::BCComponentID::Count:                              { return "Count";}
+  }
+}
 
 } // namespace Anki

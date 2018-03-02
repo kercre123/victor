@@ -49,11 +49,11 @@ PublicStateBroadcaster::PublicStateBroadcaster()
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void PublicStateBroadcaster::Update(Robot& robot)
+void PublicStateBroadcaster::UpdateDependent(const RobotCompMap& dependentComps)
 {
   bool currentStateUpdated = false;
   
-  const bool isCarryingObject = robot.GetCarryingComponent().IsCarryingObject();
+  const bool isCarryingObject = _robot->GetCarryingComponent().IsCarryingObject();
   // Check if a cube has been added to/removed from the lift
   if(isCarryingObject != _currentState->isCubeInLift){
     _currentState->isCubeInLift = isCarryingObject;
@@ -64,7 +64,6 @@ void PublicStateBroadcaster::Update(Robot& robot)
                   isCarryingObject ? "is now" : "is no longer"
                   );
   }
-  
 
   // After all update checks, if any changed a state property, send the updated state
   if(currentStateUpdated){

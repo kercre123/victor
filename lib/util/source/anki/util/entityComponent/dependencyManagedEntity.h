@@ -237,8 +237,22 @@ void DependencyManagedEntity<EnumType>::InitComponents(Cozmo::Robot* robot)
   // Build the cache if necessary
   if(_cachedInitOrder.empty()){
     OrderedDependentVector orderedComponents = GetInitDependentOrder();
+    PRINT_NAMED_INFO("DependencyManagedEntity.InitComponents.InitOrder",
+                     "Components for entity %s will be initialized in the following order:",
+                     GetEntityNameForEnumType<EnumType>().c_str());
+    int initIdxForPrint = 0;
     for(const auto& ptrWrapper: orderedComponents){
       auto compPtr = ptrWrapper._ptr;
+      // Print info
+      EnumType enumID = EnumType::Count;
+      compPtr->GetTypeDependent(enumID);
+      PRINT_NAMED_INFO("DependencyManagedEntity.InitComponents.InitOrder",
+                       "Component %d: %s %s",
+                       initIdxForPrint, 
+                       GetComponentStringForID<EnumType>(enumID).c_str(),
+                       compPtr->IsUnreliableComponent() ? "- Unreliable Comp" : "");
+      initIdxForPrint++;
+      // Add component and all its dependencies to the cached map
       std::set<EnumType> componentNames;
       compPtr->GetInitDependencies(componentNames);
       compPtr->AdditionalInitAccessibleComponents(componentNames);
@@ -260,8 +274,22 @@ void DependencyManagedEntity<EnumType>::UpdateComponents()
   // Build the cache if necessary
   if(_cachedUpdateOrder.empty()){
     OrderedDependentVector orderedComponents = GetUpdateDependentOrder();
+    PRINT_NAMED_INFO("DependencyManagedEntity.UpdateComponents.UpdateOrder",
+                     "Components for entity %s will be updated in the following order:",
+                     GetEntityNameForEnumType<EnumType>().c_str());
+    int initIdxForPrint = 0;
     for(const auto& ptrWrapper: orderedComponents){
       auto compPtr = ptrWrapper._ptr;
+      // Print info
+      EnumType enumID = EnumType::Count;
+      compPtr->GetTypeDependent(enumID);
+      PRINT_NAMED_INFO("DependencyManagedEntity.UpdateComponents.UpdateOrder",
+                       "Component %d: %s %s",
+                       initIdxForPrint, 
+                       GetComponentStringForID<EnumType>(enumID).c_str(),
+                       compPtr->IsUnreliableComponent() ? "- Unreliable Comp" : "");
+      initIdxForPrint++;
+      // Add component and all its dependencies to the cached map
       std::set<EnumType> componentNames;
       compPtr->GetUpdateDependencies(componentNames);
       compPtr->AdditionalUpdateAccessibleComponents(componentNames);

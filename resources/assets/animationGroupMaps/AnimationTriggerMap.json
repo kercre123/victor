@@ -521,6 +521,10 @@
       "AnimName": "ag_hiking_getin"
     },
     {
+      "CladEvent": "ICantDoThat",
+      "AnimName": "ag_hiccups"
+    },
+    {
       "CladEvent": "IdleOnCharger",
       "AnimName": "ag_sleeploop"
     },
@@ -1145,6 +1149,10 @@
       "AnimName": "ag_surprise"
     },
     {
+      "CladEvent": "TimerCancelTimer",
+      "AnimName": "ag_timer_timecancel"
+    },
+    {
       "CladEvent": "TimerSetGetIn",
       "AnimName": "ag_timer_set_getin"
     },
@@ -1158,7 +1166,7 @@
     },
     {
       "CladEvent": "TimerRing",
-      "AnimName": "ag_explorer_drvback_loop"
+      "AnimName": "ag_timer_beep"
     },
     {
       "CladEvent": "TimerRingGetOut",

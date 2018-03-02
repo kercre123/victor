@@ -23,6 +23,7 @@
 #include "engine/ankiEventUtil.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/charger.h"
+#include "engine/components/batteryComponent.h"
 #include "engine/components/blockTapFilterComponent.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
@@ -725,7 +726,7 @@ void RobotToEngineImplMessaging::HandlePotentialCliffEvent(const AnkiEvent<Robot
   
   // Ignore potential cliff events while on the charger platform because we expect them
   // while driving off the charger
-  if (robot->IsOnChargerPlatform())
+  if (robot->GetBatteryComponent().IsOnChargerPlatform())
   {
     LOG_DEBUG("Robot.HandlePotentialCliffEvent.OnChargerPlatform",
               "Ignoring potential cliff event while on charger platform");

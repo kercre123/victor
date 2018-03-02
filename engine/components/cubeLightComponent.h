@@ -95,21 +95,19 @@ public:
   // IDependencyManagedComponent functions
   //////
   virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
-  // Maintain the chain of initializations currently in robot - it might be possible to
-  // change the order of initialization down the line, but be sure to check for ripple effects
-  // when changing this function
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
-    dependencies.insert(RobotComponentID::ObjectPoseConfirmer);
+    dependencies.insert(RobotComponentID::CozmoContext);
   };
-  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
+  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {
+    dependencies.insert(RobotComponentID::AIComponent);
+    dependencies.insert(RobotComponentID::BlockWorld);
+    dependencies.insert(RobotComponentID::CubeComms);
+  };
+  virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
   //////
   // end IDependencyManagedComponent functions
   //////
   
-  // Updates the currently playing anims
-  // shouldPickNextAnim determines if we can immediately pick a default anim to
-  // start playing on the State layer should there be no Engine anims left
-  void Update(bool shouldPickNextAnim = true);
   
   using AnimCompletedCallback = std::function<void(void)>;
   
@@ -242,6 +240,8 @@ private:
     u32 actionTagCallbackIsFrom = 0;
   };
   
+  void UpdateInternal(bool shouldPickNextAnim);
+
   // Only TriggerCubeAnimationAction should call this PlayLightAnim function because
   // the action will play the animation on the user layer instead of the engine layer
   friend class TriggerCubeAnimationAction;

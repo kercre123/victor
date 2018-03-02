@@ -14,7 +14,8 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_TimerUtility_H__
 #define __Cozmo_Basestation_BehaviorSystem_TimerUtility_H__
 
-#include "util/entityComponent/iManageableComponent.h"
+#include "engine/aiComponent/aiComponents_fwd.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
 #include "util/logging/logging.h"
 
@@ -64,7 +65,8 @@ class TimerHandle{
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // TimerUtility
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class TimerUtility : public IManageableComponent , private Util::noncopyable
+class TimerUtility : public IDependencyManagedComponent<AIComponentID>, 
+                     private Util::noncopyable
 {
 public:
   using SharedHandle = std::shared_ptr<TimerHandle>;
@@ -73,15 +75,11 @@ public:
   TimerUtility();
   virtual ~TimerUtility();
 
-  SharedHandle StartTimer(int timerLength_s)
-  {
-    ANKI_VERIFY(_activeTimer->GetTimeRemaining_s() == 0,
-                "TimerUtility.StartTimer.TimerAlreadySet", 
-                "Current design says we don't overwrite timers - remove this verify if that changes");
-    _activeTimer = std::make_shared<TimerHandle>(timerLength_s);
-    return _activeTimer;
-  }
-  SharedHandle GetActiveTimer() const { return _activeTimer; }
+  SharedHandle GetTimerHandle() const { return _activeTimer; }
+  SharedHandle StartTimer(int timerLength_s);
+  void ClearTimer();
+
+
 
   int GetSystemTime_s() const;
 

@@ -38,14 +38,30 @@ int TimerHandle::GetSystemTime_s()
 // TimerUtility
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TimerUtility::TimerUtility()
-{
-  _activeTimer = std::make_shared<TimerHandle>(0);
-}
+: IDependencyManagedComponent<AIComponentID>(this, AIComponentID::TimerUtility){}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TimerUtility::~TimerUtility()
 {
 
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TimerUtility::SharedHandle TimerUtility::StartTimer(int timerLength_s)
+{
+  ANKI_VERIFY(_activeTimer == nullptr,
+              "TimerUtility.StartTimer.TimerAlreadySet", 
+              "Current design says we don't overwrite timers - remove this verify if that changes");
+  _activeTimer = std::make_shared<TimerHandle>(timerLength_s);
+  return _activeTimer;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void TimerUtility::ClearTimer()
+{
+  _activeTimer.reset();
 }
 
 

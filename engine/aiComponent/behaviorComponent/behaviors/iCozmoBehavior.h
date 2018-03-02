@@ -16,6 +16,8 @@
 
 #include "engine/actions/actionContainers.h"
 #include "engine/aiComponent/aiInformationAnalysis/aiInformationAnalysisProcessTypes.h"
+#include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/iBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
@@ -416,6 +418,16 @@ protected:
 
   // Helper function to play an emergency get out through the continuity component
   void PlayEmergencyGetOut(AnimationTrigger anim);
+
+  template<typename T>
+  T& GetAIComp() const {
+    return GetBEI().GetAIComponent(). template GetComponent<T>();
+  }
+
+  template<typename T>
+  T& GetBehaviorComp() const {
+    return GetBEI().GetAIComponent().GetComponent<BehaviorComponent>(). template GetComponent<T>();
+  }
   
   // If a behavior requires that an AIInformationProcess is running for the behavior
   // to operate properly, the behavior should set this variable directly so that

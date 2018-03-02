@@ -207,9 +207,6 @@ bool BatteryIsCharging();
 /// Return whether or not the robot is connected to a charger
 bool BatteryIsOnCharger();
 
-/// Return whether the USB charger is out of spec (cannot supply enough current)
-bool BatteryIsChargerOOS();
-
 /************************************************************************
  * \section Leds
  */

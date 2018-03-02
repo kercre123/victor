@@ -24,6 +24,7 @@
 #include "clad/robotInterface/messageRobotToEngine.h"
 
 #include <array>
+#include <condition_variable>
 #include <cstdint>
 #include <memory>
 #include <mutex>
@@ -98,6 +99,7 @@ private:
   // Index of the buffer that is currently being used by the processing thread
   uint32_t _rawAudioProcessingIndex = 0;
   std::thread _processThread;
+  std::thread _processTriggerThread;
   std::mutex _rawMicDataMutex;
   bool _processThreadStop = false;
   bool _robotWasMoving = false;
@@ -113,6 +115,11 @@ private:
     TimeStamp_t timestamp;
   };
   Util::FixedCircularBuffer<TimedMicData, kImmediateBufferSize> _immediateAudioBuffer;
+  Util::FixedCircularBuffer<TimedMicData, kImmediateBufferSize> _xferAudioBuffer;
+  std::mutex _procAudioXferMutex;
+  std::condition_variable _dataReadyCondition;
+  std::condition_variable _xferAvailableCondition;
+  uint32_t _procAudioXferCount = 0;
 
   // Members for holding outgoing messages
   std::vector<std::unique_ptr<RobotInterface::RobotToEngine>> _msgsToEngine;
@@ -120,7 +127,7 @@ private:
 
   void InitVAD();
   void TriggerWordDetectCallback(const char* resultFound, float score);
-  bool ProcessRawAudio(TimeStamp_t timestamp,
+  void ProcessRawAudio(TimeStamp_t timestamp,
                        const AudioUtil::AudioSample* audioChunk,
                        uint32_t robotStatus,
                        float robotAngle);
@@ -130,7 +137,8 @@ private:
                                         uint32_t robotStatus,
                                         float robotAngle);
 
-  void ProcessLoop();
+  void ProcessRawLoop();
+  void ProcessTriggerLoop();
   void ClearCurrentStreamingJob();
   float GetIncomingMicDataPercentUsed();
 };

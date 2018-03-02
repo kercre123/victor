@@ -18,16 +18,19 @@
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/events/animationTriggerHelpers.h"
 #include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/timer.h"
 
 namespace Anki {
 namespace Cozmo {
 
 namespace {
-const char* kGetInAnimationKey  = "getIn";
-const char* kLoopAnimationKey   = "loopAnimation";
-const char* kGetOutAnimationKey = "getOut";
+const char* kGetInAnimationKey           = "getIn";
+const char* kLoopAnimationKey            = "loopAnimation";
+const char* kGetOutAnimationKey          = "getOut";
 const char* kEmergencyGetOutAnimationKey = "emergencyGetOut";
-const char* kLoopEndConditionKey = "loopEndCondition";
+const char* kLoopEndConditionKey         = "loopEndCondition";
+const char* kLoopIntervalKey             = "loopInterval_s"; // If less than length of animation, will not interrupt
+const char* kCheckEndCondKey             = "shouldCheckEndCondDuringAnim";
 }
 
 
@@ -44,20 +47,31 @@ BehaviorAnimGetInLoop::BehaviorAnimGetInLoop(const Json::Value& config)
             key);
   };
   
-  loadTrigger(_instanceParams.getInTrigger,  kGetInAnimationKey);
-  loadTrigger(_instanceParams.loopTrigger,   kLoopAnimationKey);
-  loadTrigger(_instanceParams.getOutTrigger, kGetOutAnimationKey);
+  loadTrigger(_iConfig.getInTrigger,  kGetInAnimationKey);
+  loadTrigger(_iConfig.loopTrigger,   kLoopAnimationKey);
+  loadTrigger(_iConfig.getOutTrigger, kGetOutAnimationKey);
 
   if(config.isMember(kEmergencyGetOutAnimationKey)){
-    loadTrigger(_instanceParams.emergencyGetOutTrigger, kEmergencyGetOutAnimationKey);
+    loadTrigger(_iConfig.emergencyGetOutTrigger, kEmergencyGetOutAnimationKey);
   }
 
   if(config.isMember(kLoopEndConditionKey)){
-    _instanceParams.endLoopCondition = BEIConditionFactory::CreateBEICondition(config[kLoopEndConditionKey], GetDebugLabel()); 
-   ANKI_VERIFY(_instanceParams.endLoopCondition != nullptr,
+    _iConfig.endLoopCondition = BEIConditionFactory::CreateBEICondition(config[kLoopEndConditionKey], GetDebugLabel()); 
+   ANKI_VERIFY(_iConfig.endLoopCondition != nullptr,
                "BehaviorAnimGetInLoop.Constructor.InvalidEndLoopCondition",
                "End loop condition specified, but did not build properly");
   }
+
+  if(config.isMember(kCheckEndCondKey)){
+    std::string debugStr = "BehaviorAnimGetInLoop.Constructor.CheckEndCondIssue";
+    _iConfig.checkEndConditionDuringAnim = JsonTools::ParseBool(config, kLoopEndConditionKey, debugStr);
+  }
+
+  if(config.isMember(kLoopIntervalKey)){
+    std::string debugStr = "BehaviorAnimGetInLoop.Constructor.LoopInterval";
+    _iConfig.loopInterval_s = JsonTools::ParseFloat(config, kLoopIntervalKey, debugStr);
+  }
+
 }
   
   
@@ -77,8 +91,8 @@ bool BehaviorAnimGetInLoop::WantsToBeActivatedBehavior() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAnimGetInLoop::InitBehavior()
 {
-  if(_instanceParams.endLoopCondition != nullptr){
-    _instanceParams.endLoopCondition->Init(GetBEI());
+  if(_iConfig.endLoopCondition != nullptr){
+    _iConfig.endLoopCondition->Init(GetBEI());
   }
 }
 
@@ -86,20 +100,48 @@ void BehaviorAnimGetInLoop::InitBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAnimGetInLoop::OnBehaviorActivated()
 {
-  _instanceParams.endLoopCondition->SetActive(GetBEI(), true);
-  _lifetimeParams = LifetimeParams();
+  _iConfig.endLoopCondition->SetActive(GetBEI(), true);
+  _dVars = DynamicVariables();
   TransitionToGetIn();
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorAnimGetInLoop::BehaviorUpdate() 
+{
+  if(!IsActivated()){
+    return;
+  }
+  if(_iConfig.checkEndConditionDuringAnim){
+    _dVars.shouldLoopEnd |= _iConfig.endLoopCondition->AreConditionsMet(GetBEI());
+  }
+
+  if(IsControlDelegated()){
+    return;
+  }
+
+  if(_dVars.shouldLoopEnd){
+    TransitionToGetOut();
+  }
+  
+
+  const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  if((_dVars.stage <= BehaviorStage::GetOut) &&
+     (_dVars.nextLoopTime_s  < currentTime_sec)){
+    _dVars.nextLoopTime_s = currentTime_sec + _iConfig.loopInterval_s;
+    TransitionToLoop();
+  }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAnimGetInLoop::OnBehaviorDeactivated()
 {
-  _instanceParams.endLoopCondition->SetActive(GetBEI(), false);
+  _iConfig.endLoopCondition->SetActive(GetBEI(), false);
 
-  if((_lifetimeParams.stage == BehaviorStage::Loop) &&
-     (_instanceParams.emergencyGetOutTrigger != AnimationTrigger::Count)){
-    PlayEmergencyGetOut(_instanceParams.emergencyGetOutTrigger);
+  if((_dVars.stage == BehaviorStage::Loop) &&
+     (_iConfig.emergencyGetOutTrigger != AnimationTrigger::Count)){
+    PlayEmergencyGetOut(_iConfig.emergencyGetOutTrigger);
   }
 }
 
@@ -107,31 +149,24 @@ void BehaviorAnimGetInLoop::OnBehaviorDeactivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAnimGetInLoop::TransitionToGetIn()
 {
-  DelegateIfInControl(new TriggerAnimationAction(_instanceParams.getInTrigger),
-                      &BehaviorAnimGetInLoop::TransitionToLoop);
+  _dVars.stage = BehaviorStage::GetIn;
+  DelegateIfInControl(new TriggerAnimationAction(_iConfig.getInTrigger));
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAnimGetInLoop::TransitionToLoop()
 {
-  if(_instanceParams.endLoopCondition != nullptr){
-    _lifetimeParams.shouldLoopEnd |= _instanceParams.endLoopCondition->AreConditionsMet(GetBEI());
-  }
-
-  if(_lifetimeParams.shouldLoopEnd){
-    TransitionToGetOut();
-  }else{
-    DelegateIfInControl(new TriggerAnimationAction(_instanceParams.loopTrigger),
-                        &BehaviorAnimGetInLoop::TransitionToLoop);
-  }
+  _dVars.stage = BehaviorStage::Loop;
+  DelegateIfInControl(new TriggerAnimationAction(_iConfig.loopTrigger));
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAnimGetInLoop::TransitionToGetOut()
 {
-  DelegateIfInControl(new TriggerAnimationAction(_instanceParams.getOutTrigger));
+  _dVars.stage = BehaviorStage::GetOut;
+  DelegateIfInControl(new TriggerAnimationAction(_iConfig.getOutTrigger));
 }
 
 

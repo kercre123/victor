@@ -123,7 +123,7 @@ BehaviorEnrollFace::BehaviorEnrollFace(const Json::Value& config)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEnrollFace::CheckForIntentData() const
 {
-  auto& uic = GetBEI().GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
+  auto& uic = GetBehaviorComp<UserIntentComponent>();
   UserIntent* intent = uic.TakePreservedUserIntentOwnership( USER_INTENT(meet_victor) );
   if( intent != nullptr ) {
     const auto& meetVictor = intent->Get_meet_victor();
@@ -379,7 +379,7 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
 
   const auto& robotInfo = GetBEI().GetRobotInfo();
   // if on the charger, we're exiting to the on charger reaction, unity is going to try to cancel but too late.
-  if( robotInfo.IsOnCharger() )
+  if( robotInfo.IsOnChargerContacts() )
   {
     PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.StopInternal.CancelBecauseOnCharger","");
     SET_STATE(Cancelled);

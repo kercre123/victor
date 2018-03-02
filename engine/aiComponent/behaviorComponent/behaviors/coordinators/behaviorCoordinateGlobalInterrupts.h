@@ -15,7 +15,6 @@
 #define __Engine_Behaviors_BehaviorCoordinateGlobalInterrupts_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "clad/types/behaviorComponent/userIntent.h"
 
 namespace Anki {
 namespace Cozmo {

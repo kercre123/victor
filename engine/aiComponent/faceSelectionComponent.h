@@ -15,7 +15,8 @@
 #define __Cozmo_Basestation_AIComponent_FaceSelectionComponent_H__
 
 #include "coretech/common/shared/types.h"
-#include "util/entityComponent/iManageableComponent.h"
+#include "engine/aiComponent/aiComponents_fwd.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
 
 #include <set>
@@ -38,7 +39,8 @@ class SmartFaceID;
 
 
   
-class FaceSelectionComponent : public IManageableComponent, private Util::noncopyable
+class FaceSelectionComponent : public IDependencyManagedComponent<AIComponentID>,  
+                               private Util::noncopyable
 {
 public:
   // Enum that specifies the way that score penalties are applied when selecting face
@@ -55,7 +57,8 @@ public:
   using FaceSelectionFactorMap = std::unordered_map<FaceSelectionPenaltyMultiplier, float>;
   
   explicit FaceSelectionComponent(const Robot& robot, const FaceWorld& faceWorld, const MicDirectionHistory& micDirectionHistory)
-  : _robot(robot)
+  : IDependencyManagedComponent<AIComponentID>(this, AIComponentID::FaceSelection)
+  , _robot(robot)
   , _faceWorld(faceWorld)
   , _micDirectionHistory(micDirectionHistory){}
   ~FaceSelectionComponent();

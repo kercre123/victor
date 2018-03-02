@@ -84,7 +84,7 @@ bool BehaviorGuardDog::WantsToBeActivatedBehavior() const
   }
   
   // Don't run if we currently have the hiccups:
-  if (GetBEI().GetAIComponent().GetWhiteboard().HasHiccups()) {
+  if (GetAIComp<AIWhiteboard>().HasHiccups()) {
     return false;
   }
   

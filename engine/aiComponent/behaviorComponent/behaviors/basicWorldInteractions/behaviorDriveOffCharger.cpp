@@ -50,7 +50,7 @@ bool BehaviorDriveOffCharger::WantsToBeActivatedBehavior() const
 {
   const auto& robotInfo = GetBEI().GetRobotInfo();
   // assumes it's not possible to be OnCharger without being OnChargerPlatform
-  DEV_ASSERT(robotInfo.IsOnChargerPlatform() || !robotInfo.IsOnCharger(),
+  DEV_ASSERT(robotInfo.IsOnChargerPlatform() || !robotInfo.IsOnChargerContacts(),
              "BehaviorDriveOffCharger.WantsToBeActivatedBehavior.InconsistentChargerFlags");
 
   // can run any time we are on the charger platform
@@ -126,7 +126,7 @@ void BehaviorDriveOffCharger::BehaviorUpdate()
   if( !IsControlDelegated() ) {
     // store in whiteboard our success
     const float curTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    GetBEI().GetAIComponent().GetWhiteboard().GotOffChargerAtTime( curTime );
+    GetAIComp<AIWhiteboard>().GotOffChargerAtTime( curTime );
   }
 }
   

@@ -134,7 +134,7 @@ bool BehaviorStackBlocks::CanUseNonUprightBlocks() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorStackBlocks::CalculateTargetBlocks(ObjectID& bottomBlock, ObjectID& topBlock) const
 {
-  auto& objInfoCache = GetBEI().GetAIComponent().GetObjectInteractionInfoCache();
+  auto& objInfoCache = GetAIComp<ObjectInteractionInfoCache>();
   
   if(CanUseNonUprightBlocks()){
     topBlock = objInfoCache.GetBestObjectForIntention(ObjectInteractionIntention::StackTopObjectNoAxisCheck);
@@ -161,7 +161,7 @@ void BehaviorStackBlocks::BehaviorUpdate()
     bottomBlockIntention  = ObjectInteractionIntention::StackBottomObjectNoAxisCheck;
   }
   
-  auto& objInfoCache = GetBEI().GetAIComponent().GetObjectInteractionInfoCache();
+  auto& objInfoCache = GetAIComp<ObjectInteractionInfoCache>();
 
   // Verify that blocks are still valid
   auto validTopObjs = objInfoCache.GetValidObjectsForIntention(topBlockIntention);
@@ -264,9 +264,8 @@ void BehaviorStackBlocks::TransitionToStackingBlock()
                           auto& blockWorld = GetBEI().GetBlockWorld();
                           const ObservableObject* bottomObj = blockWorld.GetLocatedObjectByID(_dVars.targetBlockBottom);
                           if(bottomObj != nullptr){
-                            auto& whiteboard = GetBEI().GetAIComponent().GetWhiteboard();	
-                            whiteboard.SetFailedToUse(*bottomObj,	
-                                                      AIWhiteboard::ObjectActionFailure::StackOnObject);
+                            GetAIComp<AIWhiteboard>().SetFailedToUse(*bottomObj,	
+                                                                     AIWhiteboard::ObjectActionFailure::StackOnObject);
                           }
                         }        
                       });
@@ -316,7 +315,7 @@ ObjectID BehaviorStackBlocks::GetClosestValidBottom(ObjectInteractionIntention b
   DEV_ASSERT(_dVars.targetBlockBottom.IsSet(),
              "BehaviorStackBlocks.GetClosestValidBottom.TargetBlockNotValid");
   
-  auto& objInfoCache = GetBEI().GetAIComponent().GetObjectInteractionInfoCache();
+  auto& objInfoCache = GetAIComp<ObjectInteractionInfoCache>();
 
   ObjectID bestBottom = _dVars.targetBlockBottom;
   const ObservableObject* currentTarget =  GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.targetBlockBottom);

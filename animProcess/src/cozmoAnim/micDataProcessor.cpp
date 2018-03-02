@@ -170,7 +170,8 @@ MicDataProcessor::MicDataProcessor(const std::string& writeLocation, const std::
               "Failed to start listening on socket %s",
               sockName.c_str());
 
-  _processThread = std::thread(&MicDataProcessor::ProcessLoop, this);
+  _processThread = std::thread(&MicDataProcessor::ProcessRawLoop, this);
+  _processTriggerThread = std::thread(&MicDataProcessor::ProcessTriggerLoop, this);
 }
 
 void MicDataProcessor::InitVAD()
@@ -238,7 +239,10 @@ void MicDataProcessor::TriggerWordDetectCallback(const char* resultFound, float 
 MicDataProcessor::~MicDataProcessor()
 {
   _processThreadStop = true;
+  _xferAvailableCondition.notify_all();
+  _dataReadyCondition.notify_all();
   _processThread.join();
+  _processTriggerThread.join();
 
   _udpServer->StopListening();
 
@@ -246,7 +250,7 @@ MicDataProcessor::~MicDataProcessor()
   _recognizer->Stop();
 }
 
-bool MicDataProcessor::ProcessRawAudio(TimeStamp_t timestamp,
+void MicDataProcessor::ProcessRawAudio(TimeStamp_t timestamp,
                                        const AudioUtil::AudioSample* audioChunk,
                                        uint32_t robotStatus,
                                        float robotAngle)
@@ -269,13 +273,40 @@ bool MicDataProcessor::ProcessRawAudio(TimeStamp_t timestamp,
   // If we aren't starting a block, we're finishing it - time to convert to a single channel
   if (!_inProcessAudioBlockFirstHalf)
   {
-    TimedMicData& nextSample = _immediateAudioBuffer.push_back();
+    TimedMicData* nextSampleSpot = nullptr;
+    {
+      // Note we don't bother to free any slots here that have been consumed (by comparing size to _procAudioXferCount)
+      // because it's unnecessary with the circular buffer.
+
+      std::unique_lock<std::mutex> lock(_procAudioXferMutex);
+      auto xferAvailableCheck = [this] () {
+        return _processThreadStop || _procAudioXferCount < _xferAudioBuffer.capacity();
+      };
+      _xferAvailableCondition.wait(lock, xferAvailableCheck);
+
+      if (_processThreadStop)
+      {
+        return;
+      }
+
+      // Now we can be sure we have a free slot, so go ahead and grab it
+      nextSampleSpot = &_xferAudioBuffer.push_back();
+    }
+
+    TimedMicData& nextSample = *nextSampleSpot;
     nextSample.timestamp = timestamp;
     MicDirectionData directionResult = ProcessMicrophonesSE(
       _inProcessAudioBlock.data(),
       nextSample.audioBlock.data(),
       robotStatus,
       robotAngle);
+
+    // Now we're done filling out this slot, update the count so it can be consumed
+    {
+      std::lock_guard<std::mutex> lock(_procAudioXferMutex);
+      ++_procAudioXferCount;
+    }
+    _dataReadyCondition.notify_all();
 
     // Store off this most recent result in our immedate direction tracking
     _micImmediateDirection->AddDirectionSample(directionResult);
@@ -300,8 +331,6 @@ bool MicDataProcessor::ProcessRawAudio(TimeStamp_t timestamp,
   }
   
   _inProcessAudioBlockFirstHalf = !_inProcessAudioBlockFirstHalf;
-  
-  return _inProcessAudioBlockFirstHalf;
 }
 
 MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSample* audioChunk,
@@ -374,9 +403,9 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
   return result;
 }
 
-void MicDataProcessor::ProcessLoop()
+void MicDataProcessor::ProcessRawLoop()
 {
-  Anki::Util::SetThreadName(pthread_self(), "MicDataProc");
+  Anki::Util::SetThreadName(pthread_self(), "MicProcRaw");
   static constexpr uint32_t expectedAudioDropsPerAnimLoop = 7;
   static constexpr uint32_t maxProcessingTimePerDrop_ms = 5;
   static constexpr uint32_t maxProcTime_ms = expectedAudioDropsPerAnimLoop * maxProcessingTimePerDrop_ms;
@@ -397,23 +426,21 @@ void MicDataProcessor::ProcessLoop()
     auto& rawAudioToProcess = _rawAudioBuffers[_rawAudioProcessingIndex];
     while (rawAudioToProcess.size() > 0)
     {
-      ANKI_CPU_TICK("MicDataProcessor", maxProcessingTimePerDrop_ms, Util::CpuThreadProfiler::kLogFrequencyNever);
+      ANKI_CPU_TICK("MicDataProcessorRaw", maxProcessingTimePerDrop_ms, Util::CpuThreadProfiler::kLogFrequencyNever);
       ANKI_CPU_PROFILE("ProcessLoop");
 
       const auto& nextData = rawAudioToProcess.front();
       const auto* audioChunk = nextData.data;
       
-      // Steal the current set of jobs we have for recording audio, so the list can be added to while processing
+      // Copy the current set of jobs we have for recording audio, so the list can be added to while processing
       // continues
-      std::deque<std::shared_ptr<MicDataInfo>> stolenJobs;
+      std::deque<std::shared_ptr<MicDataInfo>> jobs;
       {
         std::lock_guard<std::recursive_mutex> lock(_dataRecordJobMutex);
-        stolenJobs = std::move(_micProcessingJobs);
-        _micProcessingJobs.clear();
+        jobs = _micProcessingJobs;
       }
-
       // Collect the raw audio if desired
-      for (auto& job : stolenJobs)
+      for (auto& job : jobs)
       {
         job->CollectRawAudio(audioChunk, kRawAudioChunkSize);
       }
@@ -422,62 +449,30 @@ void MicDataProcessor::ProcessLoop()
       if(!FACTORY_TEST)
       {
         // Process the audio into a single channel, and collect it if desired
-        bool audioBlockReady = ProcessRawAudio(
+        (void) ProcessRawAudio(
           nextData.timestamp,
           audioChunk,
           nextData.robotStatusFlags,
           nextData.robotRotationAngle);
-        if (audioBlockReady)
-        {
-          const auto& processedAudio = _immediateAudioBuffer.back().audioBlock;
-          for (auto& job : stolenJobs)
-          {
-            job->CollectProcessedAudio(processedAudio.data(), processedAudio.size());
-          }
-
-          kMicData_NextTriggerIndex = Util::Clamp(kMicData_NextTriggerIndex, 0, kTriggerDataListLen-1);
-          if (kMicData_NextTriggerIndex != _currentTriggerSearchIndex)
-          {
-            _currentTriggerSearchIndex = kMicData_NextTriggerIndex;
-            _recognizer->SetRecognizerIndex(_currentTriggerSearchIndex);
-          }
-          // Run the trigger detection, which will use the callback defined above
-          if (_micImmediateDirection->GetLatestSample().activeState != 0)
-          {
-            ANKI_CPU_PROFILE("RecognizeTriggerWord");
-            bool streamingInProgress = false;
-            {
-              std::lock_guard<std::recursive_mutex> lock(_dataRecordJobMutex);
-              streamingInProgress = (_currentStreamingJob != nullptr);
-            }
-            if (!streamingInProgress)
-            {
-              _recognizer->Update(processedAudio.data(), (unsigned int)processedAudio.size());
-            }
-          }
-        }
       }
       
-      // Check if each of the jobs are done, removing the ones that are
-      auto jobIter = stolenJobs.begin();
-      while (jobIter != stolenJobs.end())
-      {
-        (*jobIter)->UpdateForNextChunk();
-        bool jobDone = (*jobIter)->CheckDone();
-        if (jobDone)
-        {
-          jobIter = stolenJobs.erase(jobIter);
-        }
-        else
-        {
-          ++jobIter;
-        }
-      }
-      
-      // Add back the remaining stolen jobs
       {
         std::lock_guard<std::recursive_mutex> lock(_dataRecordJobMutex);
-        _micProcessingJobs.insert(_micProcessingJobs.begin(), stolenJobs.begin(), stolenJobs.end());
+        // Check if each of the jobs are done, removing the ones that are
+        auto jobIter = _micProcessingJobs.begin();
+        while (jobIter != _micProcessingJobs.end())
+        {
+          (*jobIter)->UpdateForNextChunk();
+          bool jobDone = (*jobIter)->CheckDone();
+          if (jobDone)
+          {
+            jobIter = _micProcessingJobs.erase(jobIter);
+          }
+          else
+          {
+            ++jobIter;
+          }
+        }
       }
       
       rawAudioToProcess.pop_front();
@@ -488,6 +483,75 @@ void MicDataProcessor::ProcessLoop()
     if (elapsedTime < maxProcTime)
     {
       std::this_thread::sleep_for(maxProcTime - elapsedTime);
+    }
+  }
+}
+
+void MicDataProcessor::ProcessTriggerLoop()
+{
+  Anki::Util::SetThreadName(pthread_self(), "MicProcTrigger");
+  while (!_processThreadStop)
+  {
+    static constexpr uint32_t maxTriggerProcTime_ms = 10;
+    ANKI_CPU_TICK("MicDataProcessorTrigger", maxTriggerProcTime_ms, Util::CpuThreadProfiler::kLogFrequencyNever);
+    ANKI_CPU_PROFILE("ProcessTriggerLoop");
+    TimedMicData* readyDataSpot = nullptr;
+    {
+      ANKI_CPU_PROFILE("WaitForData");
+      std::unique_lock<std::mutex> lock(_procAudioXferMutex);
+      auto dataReadyCheck = [this] () { return _processThreadStop || _procAudioXferCount > 0; };
+      _dataReadyCondition.wait(lock, dataReadyCheck);
+
+      // Special case if we're being signalled to shut down
+      if (_processThreadStop)
+      {
+        return;
+      }
+
+      // Grab a handle to the next available data. Note the producer only fills up to capacity-1,
+      // leaving the last spot untouched so we can copy the data out without holding the mutex
+      readyDataSpot = &_xferAudioBuffer.front();
+    }
+
+    // Copy the data (can be done without the mutex), then let it go by decrementing the count
+    _immediateAudioBuffer.push_back() = *readyDataSpot;
+    {
+      std::lock_guard<std::mutex> lock(_procAudioXferMutex);
+      _xferAudioBuffer.pop_front();
+      --_procAudioXferCount;
+    }
+    _xferAvailableCondition.notify_all();
+
+    const auto& processedAudio = _immediateAudioBuffer.back().audioBlock;
+    std::deque<std::shared_ptr<MicDataInfo>> jobs;
+    {
+      std::lock_guard<std::recursive_mutex> lock(_dataRecordJobMutex);
+      jobs = _micProcessingJobs;
+    }
+    for (auto& job : jobs)
+    {
+      job->CollectProcessedAudio(processedAudio.data(), processedAudio.size());
+    }
+
+    kMicData_NextTriggerIndex = Util::Clamp(kMicData_NextTriggerIndex, 0, kTriggerDataListLen-1);
+    if (kMicData_NextTriggerIndex != _currentTriggerSearchIndex)
+    {
+      _currentTriggerSearchIndex = kMicData_NextTriggerIndex;
+      _recognizer->SetRecognizerIndex(_currentTriggerSearchIndex);
+    }
+    // Run the trigger detection, which will use the callback defined above
+    if (_micImmediateDirection->GetLatestSample().activeState != 0)
+    {
+      ANKI_CPU_PROFILE("RecognizeTriggerWord");
+      bool streamingInProgress = false;
+      {
+        std::lock_guard<std::recursive_mutex> lock(_dataRecordJobMutex);
+        streamingInProgress = (_currentStreamingJob != nullptr);
+      }
+      if (!streamingInProgress)
+      {
+        _recognizer->Update(processedAudio.data(), (unsigned int)processedAudio.size());
+      }
     }
   }
 }

@@ -13,9 +13,17 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_Behavior_Components_fwd_H__
 #define __Cozmo_Basestation_BehaviorSystem_Behavior_Components_fwd_H__
 
-#include "util/entityComponent/iDependencyManagedComponent.h"
+#include <set>
 
 namespace Anki {
+
+// forward declarations
+template<typename EnumType>
+class DependencyManagedEntity;
+
+template<typename EnumType>
+class IDependencyManagedComponent;
+
 namespace Cozmo {
 
 // When adding to this enum be sure to also declare a template specialization

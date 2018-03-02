@@ -16,6 +16,7 @@
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "engine/animations/animationContainers/backpackLightAnimationContainer.h"
 #include "engine/ankiEventUtil.h"
+#include "engine/components/batteryComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/events/ankiEvent.h"
@@ -67,13 +68,9 @@ void BodyLightComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& 
 void BodyLightComponent::UpdateChargingLightConfig()
 {
   BackpackLightsState state = BackpackLightsState::OffCharger;
-  if(_robot->IsOnCharger())
+  if(_robot->GetBatteryComponent().IsOnChargerContacts())
   {
-    if(_robot->IsChargerOOS())
-    {
-      state = BackpackLightsState::BadCharger;
-    }
-    else if(_robot->IsCharging())
+    if(_robot->GetBatteryComponent().IsCharging())
     {
       state = BackpackLightsState::Charging;
     }
@@ -82,7 +79,7 @@ void BodyLightComponent::UpdateChargingLightConfig()
       state = BackpackLightsState::Charged;
     }
   }
-  else if(_robot->GetBatteryVoltage() < LOW_BATTERY_THRESH_VOLTS)
+  else if(_robot->GetBatteryComponent().GetRawBatteryVolts() < LOW_BATTERY_THRESH_VOLTS)
   {
     // Both charger out of spec and low battery backpack lights are the same
     // so instead of duplicating a lightPattern in json just use what we've already got
@@ -106,7 +103,8 @@ void BodyLightComponent::UpdateChargingLightConfig()
   }
 }
 
-void BodyLightComponent::Update()
+
+void BodyLightComponent::UpdateDependent(const RobotCompMap& dependentComps)
 {
   UpdateChargingLightConfig();
   

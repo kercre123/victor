@@ -98,7 +98,7 @@ void BehaviorPickUpCube::BehaviorUpdate()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPickUpCube::CalculateTargetID(ObjectID& outTargetID) const
 {  
-  auto& objInfoCache = GetBEI().GetAIComponent().GetObjectInteractionInfoCache();
+  auto& objInfoCache = GetAIComp<ObjectInteractionInfoCache>();
   const ObjectInteractionIntention intent = ObjectInteractionIntention::PickUpObjectNoAxisCheck;
   const ObjectID& possiblyBestObjID = objInfoCache.GetBestObjectForIntention(intent);
 
@@ -133,7 +133,7 @@ void BehaviorPickUpCube::TransitionToPickingUpCube()
       auto& blockWorld = GetBEI().GetBlockWorld();
       const ObservableObject* pickupObj = blockWorld.GetLocatedObjectByID(_dVars.targetBlockID);
       if(pickupObj != nullptr){
-        auto& whiteboard = GetBEI().GetAIComponent().GetWhiteboard();	
+        auto& whiteboard = GetAIComp<AIWhiteboard>();	
         whiteboard.SetFailedToUse(*pickupObj,	
                                   AIWhiteboard::ObjectActionFailure::PickUpObject);
       }
