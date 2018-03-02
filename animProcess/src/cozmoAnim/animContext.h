@@ -75,7 +75,7 @@ public:
   virtual ~AnimContext();
   
   Util::Data::DataPlatform*             GetDataPlatform() const { return _dataPlatform; }
-  Util::Locale *                        GetLocale() const { return _locale.get(); }
+  Util::Locale*                         GetLocale() const { return _locale.get(); }
   Util::RandomGenerator*                GetRandom() const { return _random.get(); }
   RobotDataLoader*                      GetDataLoader() const { return _dataLoader.get(); }
   Audio::CozmoAudioController*          GetAudioController() const; // Can return nullptr

@@ -19,15 +19,14 @@
 
 #include "coretech/common/engine/colorRGBA.h"
 #include "coretech/vision/engine/image.h"
+#include "cannedAnimLib/audioKeyFrameTypes.h"
 #include "cannedAnimLib/faceAnimationManager.h"
 #include "cannedAnimLib/proceduralFace.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/ledTypes.h"
-#include "clad/audio/audioEventTypes.h"
 #include "util/random/randomGenerator.h"
 #include "json/json-forwards.h"
 
-#define kNoAudioRefIndex -1
 #ifndef CAN_STREAM
 #define CAN_STREAM true
 #endif
@@ -202,24 +201,7 @@ namespace Cozmo {
   {
   public:
     
-    struct AudioRef {
-      AudioMetaData::GameEvent::GenericEvent audioEvent;
-      float volume;
-      float probability;   // random play weight
-      bool audioAlts; // The audio event has alternate or random audio track playback, avoid replaying event
-      
-      AudioRef( AudioMetaData::GameEvent::GenericEvent audioEvent = AudioMetaData::GameEvent::GenericEvent::Invalid,
-                float volume      = 1.0f,
-                float probability = 1.0f,
-                bool audioAlts    = false )
-      : audioEvent( audioEvent ),
-        volume( volume )
-      , probability( probability )
-      , audioAlts( audioAlts ) {};
-    };
-    
-    RobotAudioKeyFrame() { }
-    RobotAudioKeyFrame( AudioRef&& audioRef, TimeStamp_t triggerTime_ms );
+    RobotAudioKeyFrame() {}
     
     Result DefineFromFlatBuf(const CozmoAnim::RobotAudio* audioKeyframe, const std::string& animNameDebug);
 
@@ -232,34 +214,23 @@ namespace Cozmo {
       static const std::string ClassName("RobotAudioKeyFrame");
       return ClassName;
     }
-
-    // The GetAudioRefIndex() method will return the index that should be used to return the audio
-    // reference from '_audioReferences'. By default, this method will take the probability of each
-    // audio reference into account, but that can be overridden by passing in 'false'. This method
-    // will return 'kNoAudioRefIndex' if '_audioReferences' is empty, if the total probability of
-    // all audio events combined exceeds 1.0 or if probabilities were taken into account and no
-    // audio event should be used.
-    const int8_t GetAudioRefIndex(bool useProbability = true) const;
-
-    // The GetNumAudioRefs() method will return the number of audio references for
-    // this RobotAudioKeyFrame (which is the size of the '_audioReferences' vector)
-    const int8_t GetNumAudioRefs() const;
-
-    // The GetAudioRef() method will return an AudioRef. Callers should specify which one to return
-    // as an '_audioReferences' index and GetAudioRefIndex() can be used to lookup that index.
-    const AudioRef& GetAudioRef(const int8_t selectedAudioIndex) const;
+    
+    using AudioRefList = std::vector<AudioKeyFrameType::AudioRef>;
+    
+    const AudioRefList& GetAudioReferencesList() const { return _audioReferences; }
     
     virtual TimeStamp_t GetKeyFrameFinalTimestamp_ms() const override { return _triggerTime_ms;}
     
   protected:
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
+    Result SetMembersFromDeprecatedJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "");
     virtual Result SetMembersFromFlatBuf(const CozmoAnim::RobotAudio* audioKeyframe, const std::string& animNameDebug = "");
     
   private:
     
-    Result AddAudioRef(AudioRef&& audioRef);
+    Result AddAudioRef(AudioKeyFrameType::AudioRef&& audioRef);
 
-    std::vector<AudioRef> _audioReferences;
+    std::vector<AudioKeyFrameType::AudioRef> _audioReferences;
     
   }; // class RobotAudioKeyFrame
     

@@ -36,6 +36,7 @@ namespace Audio {
 
 using namespace AudioEngine;
 using namespace AudioMetaData;
+using namespace AudioKeyFrameType;
 
 static const AudioGameObject kAnimGameObj = ToAudioGameObject(GameObjectType::Cozmo_OnDevice);
   
@@ -58,34 +59,72 @@ void AnimationAudioClient::Update() const
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AnimationAudioClient::PlayAudioKeyFrame( const RobotAudioKeyFrame& keyFrame )
+void AnimationAudioClient::PlayAudioKeyFrame( const RobotAudioKeyFrame& keyFrame, Util::RandomGenerator* randomGen )
 {
-  const int8_t audioRefIdx = keyFrame.GetAudioRefIndex(kEnableAudioEventProbability);
-
-  // Check if the probability driven selection has chosen to not play any event
-  if ( audioRefIdx < 0 ) {
-    AUDIO_DEBUG_LOG("AnimationAudioClient.PlayAudioKeyFrame",
-                    "No audio event chosen to post due to probability selection");
-    return;
+  // Set states, switches and parameters before events events.
+  // NOTE: The order is corrected when loading the animation. (see keyframe.cpp RobotAudioKeyFrame methods)
+  // NOTE: If the same State, Switch or Parameter is set more then once on a single frame, last one in wins!
+  const RobotAudioKeyFrame::AudioRefList& audioRefs = keyFrame.GetAudioReferencesList();
+  for ( const auto& ref : audioRefs ) {
+    switch ( ref.Tag ) {
+      case AudioRefTag::EventGroup:
+        HandleAudioRef( ref.EventGroup, randomGen );
+        break;
+      case AudioRefTag::State:
+        HandleAudioRef( ref.State );
+        break;
+      case AudioRefTag::Switch:
+        HandleAudioRef( ref.Switch );
+        break;
+      case AudioRefTag::Parameter:
+        HandleAudioRef( ref.Parameter );
+        break;
+    }
   }
-
-  const RobotAudioKeyFrame::AudioRef& audioRef = keyFrame.GetAudioRef(audioRefIdx);
-
-  // Abort if audio event is not valid
-  if ( AudioMetaData::GameEvent::GenericEvent::Invalid == audioRef.audioEvent ) {
-    PRINT_NAMED_ERROR("AnimationAudioClient.PlayAudioKeyFrame", "Invalid audio event in RobotAudioKeyFrame");
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AnimationAudioClient::HandleAudioRef( const AudioEventGroupRef& eventRef, Util::RandomGenerator* randomGen )
+{
+  const AudioEventGroupRef::EventDef* anEvent = eventRef.RetrieveEvent( true, randomGen );
+  if (nullptr == anEvent) {
+    // Chance has chosen not to play an event
     return;
   }
 
   // Play valid event
-  const auto playId = PostCozmoEvent( audioRef.audioEvent );
+  const auto playId = PostCozmoEvent( anEvent->AudioEvent );
   if ( playId != kInvalidAudioPlayingId ) {
     // Apply volume to event
-    SetCozmoEventParameter(playId, GameParameter::ParameterType::Event_Volume, audioRef.volume);
+    SetCozmoEventParameter( playId, GameParameter::ParameterType::Event_Volume, anEvent->Volume );
   }
   AUDIO_DEBUG_LOG("AnimationAudioClient.PlayAudioKeyFrame",
                   "Posted audio event '%s' (volume %f, probability %f)",
                   EnumToString(audioRef.audioEvent), audioRef.volume, audioRef.probability);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AnimationAudioClient::HandleAudioRef( const AudioStateRef& stateRef )
+{
+  _audioController->SetState( ToAudioStateGroupId( stateRef.StateGroup ), ToAudioStateId( stateRef.State ) );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AnimationAudioClient::HandleAudioRef( const AudioSwitchRef& switchRef )
+{
+  _audioController->SetSwitchState( ToAudioSwitchGroupId( switchRef.SwitchGroup ),
+                                    ToAudioSwitchStateId( switchRef.State ),
+                                    kAnimGameObj );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AnimationAudioClient::HandleAudioRef( const AudioParameterRef& parameterRef )
+{
+  _audioController->SetParameter( ToAudioParameterId( parameterRef.Parameter ),
+                                  ToAudioRTPCValue( parameterRef.Value ),
+                                  kAnimGameObj,
+                                  ToAudioTimeMs( parameterRef.Time_ms ),
+                                  ToAudioCurveType( parameterRef.Curve ) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -117,7 +156,8 @@ AudioEngine::AudioPlayingId AnimationAudioClient::PostCozmoEvent( AudioMetaData:
   audioCallbackContext->SetExecuteAsync( false );
   // Register callbacks for event
   audioCallbackContext->SetEventCallbackFunc ( [ callbackFunc = std::move(callbackFunc) ]
-                                               ( const AudioCallbackContext* thisContext, const AudioCallbackInfo& callbackInfo )
+                                               ( const AudioCallbackContext* thisContext,
+                                                 const AudioCallbackInfo& callbackInfo )
                                                {
                                                  callbackFunc( callbackInfo );
                                                } );
@@ -125,7 +165,6 @@ AudioEngine::AudioPlayingId AnimationAudioClient::PostCozmoEvent( AudioMetaData:
   const AudioEngine::AudioPlayingId playId = _audioController->PostAudioEvent( audioEventId,
                                                                                kAnimGameObj,
                                                                                audioCallbackContext );
-
   // Track event playback
   AddActiveEvent( playId );
 
