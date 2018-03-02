@@ -1,3 +1,0 @@
-* Add cube encryption
-* Cube accelerometer streaming
-
