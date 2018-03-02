@@ -350,7 +350,7 @@ static void OTPbootloader(void)
   
   //prepare hwardware ids
   cubeid.esn = CUBEID_ESN_INVALID;
-  cubeid.hwrev = CUBEID_HWREV_DVT2;
+  cubeid.hwrev = CUBEID_HWREV_DVT3;
   cubeid.model = (g_fixmode == FIXMODE_CUBE1) ? CUBEID_MODEL_CUBE1 : ((g_fixmode == FIXMODE_CUBE2) ? CUBEID_MODEL_CUBE2 : CUBEID_MODEL_INVALID);
   
   //pull a new s/n for release builds only (limited supply, don't waste during debug)
