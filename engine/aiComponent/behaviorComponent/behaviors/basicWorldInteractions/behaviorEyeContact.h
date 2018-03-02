@@ -22,7 +22,7 @@ class BehaviorEyeContact : public ICozmoBehavior
 {
 protected:
   // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;
+  friend class BehaviorFactory;
   BehaviorEyeContact(const Json::Value& config);
   
 public:
