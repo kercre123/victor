@@ -19,6 +19,7 @@
 #include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
 #include "coretech/vision/engine/image_impl.h"
+#include "engine/vision/onlineGrowingForestClassifier.h"
 
 #include "proxSensorImageAnalyzer.h"
 
@@ -39,7 +40,12 @@ CONSOLE_VAR(f32,  kProxSensorImageAnalyzer_MaxPoseChange_mm,          CONSOLE_GR
 
 static const char* kLogChannelName = "VisionSystem";
 
-ProxSensorImageAnalyzer::ProxSensorImageAnalyzer(const Json::Value& config)
+ProxSensorImageAnalyzer::ProxSensorImageAnalyzer(const Json::Value& config, const CozmoContext *context)
+{
+  _onlineClf.reset(new OnlineGrowingForestClassifier(context, 10, 10));
+}
+
+ProxSensorImageAnalyzer::~ProxSensorImageAnalyzer()
 {
 
 }
@@ -107,7 +113,27 @@ Result ProxSensorImageAnalyzer::Update(const Vision::ImageRGB& image, const Visi
                                 3);
       }
 
-      GetDrivableNonDrivable(groundPLaneImage, minRow, maxRow, col, imageToDisplay, debugImageRGBs);
+      Anki::Array2d<float> drivable, nonDrivable;
+      std::tie(drivable, nonDrivable) = GetDrivableNonDrivable(groundPLaneImage, minRow, maxRow, col,
+                                                               imageToDisplay, debugImageRGBs);
+
+      {
+        // create training data and feed it to the classifier
+        const cv::Mat_<float> drivableMat = drivable.get_CvMat_();
+        const cv::Mat_<float> nonDrivableMat = nonDrivable.get_CvMat_();
+        cv::Mat allInputs, allClasses;
+        cv::vconcat(drivableMat, nonDrivableMat, allInputs);
+
+        const uint numberOfPositives = uint(drivable.GetNumRows());
+        cv::vconcat(cv::Mat::ones(numberOfPositives, 1, CV_32FC1),
+                    cv::Mat::zeros(allInputs.rows - numberOfPositives, 1, CV_32FC1),
+                    allClasses);
+
+        DEV_ASSERT(allInputs.rows == allClasses.rows, "ProxSensorImageAnalyzer.Update.WrongConcatSizes");
+
+        _onlineClf->Train(allInputs, allClasses, numberOfPositives);
+      }
+
     } // if (actual_distance < imageToDisplay.GetNumCols())
 
   } // if (hist.WasProxSensorValid())

@@ -28,21 +28,25 @@ namespace Cozmo {
 
 // Forward declaration:
 struct VisionPoseData;
+class OnlineGrowingForestClassifier;
 
 class ProxSensorImageAnalyzer
 {
 public:
 
-  explicit ProxSensorImageAnalyzer(const Json::Value& config);
+  explicit ProxSensorImageAnalyzer(const Json::Value& config, const CozmoContext *context);
+  ~ProxSensorImageAnalyzer();
   Result Update(const Vision::ImageRGB& image, const VisionPoseData& crntPoseData,
                   const VisionPoseData& prevPoseData,
                   DebugImageList <Anki::Vision::ImageRGB>& debugImageRGBs) const;
 
-private:
+protected:
   std::pair<Anki::Array2d<float>, Anki::Array2d<float>>
   GetDrivableNonDrivable(const Vision::ImageRGB& image, const float minRow, const float maxRow,
                            const float col, Vision::ImageRGB& debugImage,
                            DebugImageList <Anki::Vision::ImageRGB>& debugImageRGBs) const;
+
+  std::unique_ptr<OnlineGrowingForestClassifier> _onlineClf;
 };
 
 } // namespace Cozmo
