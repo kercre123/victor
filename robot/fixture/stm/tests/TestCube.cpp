@@ -16,10 +16,58 @@
 #include "testcommon.h"
 #include "tests.h"
 #include "timer.h"
+  
+//generate signature for the cube bootloader binary
+uint32_t cubebootSignature(bool dbg_print)
+{
+  //OTP stub contains nested cubeboot.bin application. location/size info is reported at hard-coded addresses...
+  uint32_t cubeboot_magic = ((uint32_t*)g_CubeStub)[40];
+  uint32_t cubeboot_start = ((uint32_t*)g_CubeStub)[41] & 0x0FFFffff; //ignore dialog's OTP/Ram section placements
+  uint32_t cubeboot_end   = ((uint32_t*)g_CubeStub)[42] & 0x0FFFffff; //ignore dialog's OTP/Ram section placements
+  int cubeboot_size = cubeboot_end - cubeboot_start;
+  int cubestub_size = g_CubeStubEnd - g_CubeStub;
+  
+  //validate header
+  if( cubeboot_magic != 0xc0beb007 || cubeboot_size < 4000 || cubeboot_size >= cubestub_size || cubeboot_start >= cubestub_size || cubeboot_end >= cubestub_size ) {
+    ConsolePrintf("CubeStub[CubeBoot] bad header:\n");
+    ConsolePrintf("  g_CubeStub: %08x-%08x (%i)\n", 0, cubestub_size-1, cubestub_size);
+    ConsolePrintf("  g_CubeBoot: %08x-%08x (%i) magic %08x\n", cubeboot_start, cubeboot_end-1, cubeboot_size, cubeboot_magic);
+    throw ERROR_CUBE_BAD_BINARY;
+    //return 0;
+  }
+  
+  //DEBUG: byte-for-byte compare to actual binary
+  const int cubeboot_raw_size = g_CubeBootEnd-g_CubeBoot;
+  if( cubeboot_raw_size > 0 ) //must be included by 'binaries.s'. Development check.
+  {
+    int mismatch_cnt = 0;
+    ConsolePrintf("CubeStub[CubeBoot] binary compare to cubeboot.bin:\n");
+    ConsolePrintf("  size: %u, %u(raw) %s\n", cubeboot_size, cubeboot_raw_size, cubeboot_size != cubeboot_raw_size ? "--MISMATCH--" : "" );
+    
+    for( int x=0; x < MIN(cubeboot_size,cubeboot_raw_size); x++ ) {
+      if( g_CubeStub[cubeboot_start+x] != g_CubeBoot[x] ) {
+        ConsolePrintf(" MISMATCH @ %08x: %02x,%02x\n", x, g_CubeStub[cubeboot_start+x], g_CubeBoot[x] );
+        if( ++mismatch_cnt > 20 )
+          break;
+      }
+    }
+    
+    if( cubeboot_size != cubeboot_raw_size || mismatch_cnt > 0 )
+      throw ERROR_CUBE_BAD_BINARY; //return 0;
+  }
+  
+  //XXX: crc initial value??
+  uint32_t crc = crc32(0xFFFFffff, g_CubeStub+cubeboot_start, cubeboot_size );
+  if( dbg_print )
+    ConsolePrintf("cubeboot crc32=%08x\n", crc);
+  return crc;
+}
 
 //-----------------------------------------------------------------------------
 //                  Dialog Load
 //-----------------------------------------------------------------------------
+
+static const int CURRENT_HW_REV = CUBEID_HWREV_DVT3;
 
 //Dialog DA14580, AN-B-001, Table 5: UART boot protocol
 //  Byte nr.  DA1458x UTX     DA1458x URX
@@ -74,7 +122,9 @@ static void da14580_load_program_(const uint8_t *bin, int size, const char* name
   Tstart = Timer::get();
   while(1)
   {
-    if( DUT_UART::getchar() == 0x02 )
+    int c = DUT_UART::getchar();
+    
+    if( c == 0x02 ) //Dialog bootloader
     {
       //Send boot header (quick! need to engage bootloader. take time to print after...)
       DUT_UART::putchar( 0x01 );
@@ -85,36 +135,73 @@ static void da14580_load_program_(const uint8_t *bin, int size, const char* name
       
       if( ack != 0x06 ) //Note: 0x15 == NACK
         throw ERROR_CUBE_CANNOT_WRITE; //bootloader rejected length, or protocol error etc.
+      
+      //send application image
+      int crc_local = 0;
+      ConsolePrintf("send %u bytes ", size);
+      for(int n=0; n < size; n++)
+      {
+        DUT_UART::putchar( bin[n] );
+        crc_local ^= bin[n]; //generate expected crc
+        if( (n & 0x1FF) == 0 ) //%512 == 0
+          ConsolePrintf(".");
+      }
+      ConsolePrintf("done\n");
+      
+      //verify CRC
+      int crc = DUT_UART::getchar(100*1000);
+      ConsolePrintf("CRC: 0x%02x == 0x%02x\n", crc, crc_local);
+      if( crc != crc_local )
+        throw ERROR_CUBE_VERIFY_FAILED;
+      
+      //send ACK to run the image
+      DUT_UART::putchar(0x06); //ACK
+      Timer::wait(1000); //make sure ack clears the output SR before disabling UART
+      //ConsolePrintf("pgm time: %ums\n", Timer::elapsedUs(Tstart)/1000); //XXX: this doesn't work. Timer isn't updated if not polling...
+      
       break;
+    }
+    
+    if( c == 0xB2 ) //sync char from programmed cube
+    {
+      ConsolePrintf("found cube sync char\n");
+      
+      char buf[75]; int len = 0;
+      char *rsp = DUT_UART::getline(buf, sizeof(buf), 50*1000, &len); //discards non-ascii (repeat sync chars)
+      if( len > 0 )
+      {
+        ConsolePrintf("rx '%s'\n", buf); //includes incomplete lines...
+        int nargs = !rsp ? 0 : cmdNumArgs(rsp);
+        
+        if( rsp && nargs >= 6 && !strcmp(cmdGetArg(rsp,0), "cubeboot") ) //cube POR boot message
+        {
+          bdaddr_t bdaddr_, *bdaddr = str2bdaddr(cmdGetArg(rsp,1), &bdaddr_);
+          struct { uint32_t esn; uint32_t hwrev; uint32_t model; uint32_t crc; } info;
+          for(int i=0; i<4; i++)
+            ((uint32_t*)&info)[i] = cmdParseHex32( cmdGetArg(rsp,2+i) );
+          
+          ConsolePrintf("Cube Found: esn=%08x hwrev=%u model=%u crc=%08x\n", info.esn, info.hwrev, info.model, info.crc);
+          ConsolePrintf("Cube Addr : %s\n", bdaddr2str(bdaddr));
+          
+          uint32_t crc_current = cubebootSignature(0);
+          uint32_t expected_model = g_fixmode == FIXMODE_CUBE2 ? CUBEID_MODEL_CUBE2 : CUBEID_MODEL_CUBE1;
+          if( info.hwrev != CURRENT_HW_REV || info.model != expected_model || info.crc != crc_current ) {
+            if( info.crc != crc_current )
+              ConsolePrintf("CRC mismatch != %08x\n", crc_current);
+            throw ERROR_CUBE_FW_MISMATCH;
+          }
+          
+          //running fw matches! ...but still an error because we can't test
+          throw ERROR_CUBE_FW_MATCH; //already programmed
+          //break;
+        }
+      }
     }
     
     if( Timer::elapsedUs(Tstart) > 500*1000 ) //timeout waiting for bootloader start char
       throw ERROR_CUBE_NO_COMMUNICATION;
   }
   
-  //send application image
-  int crc_local = 0;
-  ConsolePrintf("send %u bytes ", size);
-  for(int n=0; n < size; n++)
-  {
-    DUT_UART::putchar( bin[n] );
-    crc_local ^= bin[n]; //generate expected crc
-    if( (n & 0x1FF) == 0 ) //%512 == 0
-      ConsolePrintf(".");
-  }
-  ConsolePrintf("done\n");
-  
-  //verify CRC
-  int crc = DUT_UART::getchar(100*1000);
-  ConsolePrintf("CRC: 0x%02x == 0x%02x\n", crc, crc_local);
-  if( crc != crc_local )
-    throw ERROR_CUBE_VERIFY_FAILED;
-  
-  //send ACK to run the image
-  DUT_UART::putchar(0x06); //ACK
-  //ConsolePrintf("pgm time: %ums\n", Timer::elapsedUs(Tstart)/1000); //XXX: this doesn't work. Timer isn't updated if not polling...
-  
-  Timer::wait(1000); //make sure ack clears the output SR before disabling UART
   DUT_UART::deinit();
   //DUT_RESET::init(MODE_INPUT, PULL_NONE);
   
@@ -153,52 +240,6 @@ void DbgCubeIMeasLoop(char *title)
   }
   
   DUT_UART::init(57600);
-}
-
-//generate signature for the cube bootloader binary
-uint32_t cubebootSignature(bool dbg_print)
-{
-  //OTP stub contains nested cubeboot.bin application. location/size info is reported at hard-coded addresses...
-  uint32_t cubeboot_magic = ((uint32_t*)g_CubeStub)[40];
-  uint32_t cubeboot_start = ((uint32_t*)g_CubeStub)[41] & 0x0FFFffff; //ignore dialog's OTP/Ram section placements
-  uint32_t cubeboot_end   = ((uint32_t*)g_CubeStub)[42] & 0x0FFFffff; //ignore dialog's OTP/Ram section placements
-  int cubeboot_size = cubeboot_end - cubeboot_start;
-  int cubestub_size = g_CubeStubEnd - g_CubeStub;
-  
-  //validate header
-  if( cubeboot_magic != 0xc0beb007 || cubeboot_size < 4000 || cubeboot_size >= cubestub_size || cubeboot_start >= cubestub_size || cubeboot_end >= cubestub_size ) {
-    ConsolePrintf("CubeStub[CubeBoot] bad header:\n");
-    ConsolePrintf("  g_CubeStub: %08x-%08x (%i)\n", 0, cubestub_size-1, cubestub_size);
-    ConsolePrintf("  g_CubeBoot: %08x-%08x (%i) magic %08x\n", cubeboot_start, cubeboot_end-1, cubeboot_size, cubeboot_magic);
-    throw ERROR_CUBE_BAD_BINARY;
-    //return 0;
-  }
-  
-  //DEBUG: byte-for-byte compare to actual binary
-  const int cubeboot_raw_size = g_CubeBootEnd-g_CubeBoot;
-  if( cubeboot_raw_size > 0 ) //must be included by 'binaries.s'. Development check.
-  {
-    int mismatch_cnt = 0;
-    ConsolePrintf("CubeStub[CubeBoot] binary compare to cubeboot.bin:\n");
-    ConsolePrintf("  size: %u, %u(raw) %s\n", cubeboot_size, cubeboot_raw_size, cubeboot_size != cubeboot_raw_size ? "--MISMATCH--" : "" );
-    
-    for( int x=0; x < MIN(cubeboot_size,cubeboot_raw_size); x++ ) {
-      if( g_CubeStub[cubeboot_start+x] != g_CubeBoot[x] ) {
-        ConsolePrintf(" MISMATCH @ %08x: %02x,%02x\n", x, g_CubeStub[cubeboot_start+x], g_CubeBoot[x] );
-        if( ++mismatch_cnt > 20 )
-          break;
-      }
-    }
-    
-    if( cubeboot_size != cubeboot_raw_size || mismatch_cnt > 0 )
-      throw ERROR_CUBE_BAD_BINARY; //return 0;
-  }
-  
-  //XXX: crc initial value??
-  uint32_t crc = crc32(0xFFFFffff, g_CubeStub+cubeboot_start, cubeboot_size );
-  if( dbg_print )
-    ConsolePrintf("cubeboot crc32=%08x\n", crc);
-  return crc;
 }
 
 //-----------------------------------------------------------------------------
@@ -351,7 +392,7 @@ static void OTPbootloader(void)
   
   //prepare hwardware ids
   cubeid.esn = CUBEID_ESN_INVALID;
-  cubeid.hwrev = CUBEID_HWREV_DVT3;
+  cubeid.hwrev = CURRENT_HW_REV;
   cubeid.model = (g_fixmode == FIXMODE_CUBE1) ? CUBEID_MODEL_CUBE1 : ((g_fixmode == FIXMODE_CUBE2) ? CUBEID_MODEL_CUBE2 : CUBEID_MODEL_INVALID);
   
   //pull a new s/n for release builds only (limited supply, don't waste during debug)

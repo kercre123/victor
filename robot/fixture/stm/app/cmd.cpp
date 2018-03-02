@@ -340,6 +340,9 @@ char* cmdGetArg(char *s, int n, char* out_buf, int buflen)
 
 int cmdNumArgs(char *s)
 {
+  if( s == NULL )
+    return 0;
+  
   int n = isWhitespace_(*s) ? 0 : 1;
   while( (s = nextArg_(s)) != NULL )
     n++;
