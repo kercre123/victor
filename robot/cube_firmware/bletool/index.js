@@ -7,31 +7,14 @@ factory.on('advertised', (info) => {
   info.device.connect();
 });
 
-factory.on('connected', async (cube) => {
+factory.on('connected', (cube) => {
+	cube.upload(fs.readFileSync(process.argv[2]));
+	setTimeout(() => {
+		cube.send(new Buffer([0x00, 0xFF,0xFF,0xFF, 50, 100,0x00,0x00,0x00, 50, 100]));
+		cube.send(new Buffer([0x01, 0xFF,0xFF,0xFF, 50, 100,0x00,0x00,0x00, 50, 100]));
+		cube.send(new Buffer([0x02, 0xFF,0xFF,0xFF, 50, 100,0x00,0x00,0x00, 50, 100]));
+		cube.send(new Buffer([0x0F, 0xFF,0xFF,0xFF, 50, 100,0x00,0x00,0x00, 50, 100]));
+	}, 1000);
+
 	cube.on('disconnect', () => console.log('Disconnected'));
-
-	const complete = await cube.upload(fs.readFileSync(process.argv[2]));
-
-	console.log("Firmware upload complete");
-
-	// Send key frame
-	cube.send(new Buffer([
-		0x01, 0x00, // Command: Key Frames (0)
-			0xFF, 0xFF, 10, 50,	// White (10 frame hold. 20 decay)
-			0x00, 0x00, 10, 50
-	]));
-
-	cube.send(new Buffer([
-		0x01, 0x01, // Command: Key Frames (1)
-			0x00, 0x00, 15, 0,
-			0x00, 0x00, 30, 0,
-			0x00, 0x00, 45, 0,
-			0x00, 0x00, 60, 0,
-	]));
-
-	cube.send(new Buffer([
-		0x00, 0x00, // Command: Set frame mapping
-			0x45, 0x67, // Initial frames
-			0x01, 0x00, 0x11, 0x11	// Frame sequence
-	]));
 });
