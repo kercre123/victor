@@ -73,7 +73,9 @@ class Cube extends EventEmitter {
   			}
   		}
 
-  		next();
+      // send an 'erase'
+  		//this._ota_target.write(new Buffer([0xFF]), false, next);
+      next();
     });
   }
 }

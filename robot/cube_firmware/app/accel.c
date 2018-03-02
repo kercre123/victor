@@ -77,11 +77,11 @@ void hal_acc_init(void) {
   spi_write8(PMU_LOW_POWER, 0x40);  // Low power mode
   spi_write8(PMU_LPW, 0x80);        // Suspend
 
+  spi_write8(PMU_LPW, 0x00);        // Normal operating mode
+
   spi_write8(PMU_RANGE, 0x05);      // +4g range
   spi_write8(PMU_BW, 0x0E);         // 500hz BW
-  spi_write8(FIFO_CONFIG_1, 0x40);  // FIFO mode (XYZ)
-
-  spi_write8(PMU_LPW, 0x00);        // Normal operating mode
+  spi_write8(FIFO_CONFIG_1, 0x41);  // FIFO mode (XYZ)
 
   uint8_t chip_id = spi_read8(BGW_CHIPID);
   if (chip_id != 0xFA)
@@ -102,14 +102,20 @@ void hal_acc_tick(void) {
   static uint8_t data[19];
   static int bytes = 1;
 
+  static int frames = 0;
+  static int total = 0;
+
   int count = (spi_read8(FIFO_STATUS) & 0x7F);
   data[0] = count;
   while (count-- > 0) {
     data[bytes++] = spi_read8(FIFO_DATA);
-
-    if (bytes == sizeof(data)) {
-      ble_send(sizeof(data), data);
-      bytes = 1;
-    }
+    if (bytes >= sizeof(data)) bytes = 0;
+    total++;
+  }
+  
+  if (++frames == 200) {
+    ble_send(sizeof(total), &total);
+    total = 0;
+    frames = 0;
   }
 }
