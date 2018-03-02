@@ -108,7 +108,7 @@ def addCodeLabStrings(name, desc, instructions):
         f.write(jsondump)
 
 def copyImages(name, framingCardPath, activeIconPath, idleIconPath):
-    framingCardDestPath = "{SCRATCH_DIR}/extra/images/featured/framing_card{}_feat.png".format(CamelCaseName(name), **Paths)
+    framingCardDestPath = "{SCRATCH_DIR}/extra/images/featured/framing_card{}_feat.jpg".format(CamelCaseName(name), **Paths)
     copyfile(framingCardPath, framingCardDestPath)
     
     activeIconDestPath = "{SCRATCH_DIR}/images/ui/play-now-modal/icon_{}_active.jpg".format(CamelCaseName(name).lower(), **Paths)
