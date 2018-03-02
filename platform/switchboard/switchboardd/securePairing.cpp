@@ -13,8 +13,7 @@
 #include <sstream>
 #include "anki-wifi/wifi.h"
 #include "switchboardd/securePairing.h"
-#include "clad/externalInterface/messageRobotToDevice.h"
-#include "clad/externalInterface/messageDeviceToRobot.h"
+#include "clad/externalInterface/messageExternalComms.h"
 
 #define USE_CLAD 0
 
