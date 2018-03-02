@@ -52,9 +52,6 @@ public:
   using FoldFunctor    = QuadTreeTypes::FoldFunctor;
   using FoldDirection  = QuadTreeTypes::FoldDirection;
   
-  // type of overlap for two sets
-  enum class ESetOverlap { Disjoint, Intersecting, SupersetOf, SubsetOf};
-  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Initialization
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -98,6 +95,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // run the provided accumulator function recursively over the tree for all nodes intersecting with region (if provided).
+  // NOTE: any recursive call through the QTN should be implemented by fold so all collision checks happen in a consistant manner
   void Fold(FoldFunctor accumulator, FoldDirection dir = FoldDirection::BreadthFirst);
   void Fold(FoldFunctor accumulator, const FastPolygon& region, FoldDirection dir = FoldDirection::BreadthFirst);
 
@@ -134,8 +132,8 @@ public:
   // Collision checks
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  // calculates in what manner the sets defined by the node and poly may intersect
-  ESetOverlap GetOverlapType(const FastPolygon& poly) const;
+  // calculates if the polygon intersects the node
+  bool Intersects(const FastPolygon& poly) const;
   
   // returns true if this node FULLY contains the given poly
   bool Contains(const FastPolygon& poly) const;
@@ -153,11 +151,13 @@ private:
     AxisAlignedQuad(const Point2f& p, const Point2f& q);
     bool Contains(const Point2f& p) const;
     
-    Point2f lowerLeft; 
-    Point2f lowerRight; 
-    Point2f upperLeft; 
-    Point2f upperRight; 
-    std::array<LineSegment, 2> diagonals;
+    // sorted in CW order for convenience
+    inline const Point2f& GetLowerLeft()  const { return corners[0]; }
+    inline const Point2f& GetUpperLeft()  const { return corners[1]; }
+    inline const Point2f& GetUpperRight() const { return corners[2]; }
+    inline const Point2f& GetLowerRight() const { return corners[3]; }
+    
+    std::vector<const Point2f> corners;
   };
   
   // info about moving towards a neighbor

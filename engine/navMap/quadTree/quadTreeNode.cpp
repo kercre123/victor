@@ -22,6 +22,7 @@
 
 #include <unordered_map>
 #include <limits>
+#include <algorithm>
 
 namespace Anki {
 namespace Cozmo {
@@ -47,20 +48,17 @@ QuadTreeNode::QuadTreeNode(const Point3f &center, float sideLength, uint8_t leve
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 QuadTreeNode::AxisAlignedQuad::AxisAlignedQuad(const Point2f& p, const Point2f& q)
-: lowerLeft(  Point2f(fmin(p.x(), q.x()), fmin(p.y(), q.y())) )
-, lowerRight( Point2f(fmax(p.x(), q.x()), fmin(p.y(), q.y())) )
-, upperLeft(  Point2f(fmin(p.x(), q.x()), fmax(p.y(), q.y())) )
-, upperRight( Point2f(fmax(p.x(), q.x()), fmax(p.y(), q.y())) )
-, diagonals{{ 
-    LineSegment( lowerLeft, upperRight), 
-    LineSegment( Point2f(fmax(p.x(), q.x()), fmin(p.y(), q.y())), Point2f(fmin(p.x(), q.x()), fmax(p.y(), q.y())) ),
-  }} {} 
+: corners{{ 
+    Point2f(fmin(p.x(), q.x()), fmin(p.y(), q.y())),
+    Point2f(fmin(p.x(), q.x()), fmax(p.y(), q.y())),
+    Point2f(fmax(p.x(), q.x()), fmax(p.y(), q.y())),
+    Point2f(fmax(p.x(), q.x()), fmin(p.y(), q.y())) }} {}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool QuadTreeNode::AxisAlignedQuad::Contains(const Point2f& p) const
 {
-  return FLT_GE(p.x(), lowerLeft.x()) && FLT_LE(p.x(), upperRight.x()) && 
-         FLT_GE(p.y(), lowerLeft.y()) && FLT_LE(p.y(), upperRight.y());
+  return FLT_GE(p.x(), GetLowerLeft().x()) && FLT_LE(p.x(), GetUpperRight().x()) && 
+         FLT_GE(p.y(), GetLowerLeft().y()) && FLT_LE(p.y(), GetUpperRight().y());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -73,21 +71,34 @@ void QuadTreeNode::ResetBoundingBox()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool QuadTreeNode::Contains(const FastPolygon& poly) const
 {
-  for (const auto& pt : poly.GetSimplePolygon()) 
-  {
-    if (!_boundingBox.Contains(pt)) return false;
-  }
-  return true;
+  // return true if all of the vertices of poly are contained by the bounding box
+  return std::all_of(poly.GetSimplePolygon().begin(), poly.GetSimplePolygon().end(),[&](auto& p) {return _boundingBox.Contains(p);});
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool QuadTreeNode::IsContainedBy(const FastPolygon& poly) const
 {
-  if (!poly.Contains(_boundingBox.lowerLeft))  { return false; }
-  if (!poly.Contains(_boundingBox.lowerRight)) { return false; }
-  if (!poly.Contains(_boundingBox.upperLeft))  { return false; }
-  if (!poly.Contains(_boundingBox.upperRight)) { return false; }
-  return true;
+  // return true if all of the vertices of bounding box are contained by the poly
+  return std::all_of(_boundingBox.corners.begin(), _boundingBox.corners.end(),[&](auto& p) {return poly.Contains(p);});
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool QuadTreeNode::Intersects(const FastPolygon& poly) const
+{
+  // check if any of the bounding box edges create a separating axis
+  if ( poly.GetMinX() > _boundingBox.GetUpperRight().x() ) { return false; }
+  if ( poly.GetMaxX() < _boundingBox.GetLowerLeft().x()  ) { return false; }
+  if ( poly.GetMinY() > _boundingBox.GetUpperRight().y() ) { return false; }
+  if ( poly.GetMaxY() < _boundingBox.GetLowerLeft().y()  ) { return false; }
+
+  // FastPolygon LineSegments should always be orientated CW, so if all node corners
+  // have a negative dot product with a line segment, then a separating axis exists
+  auto IsSeparatingAxis = [&](const LineSegment& l) {
+    return std::all_of(_boundingBox.corners.begin(), _boundingBox.corners.end(), [&l](const Point2f& p) { return FLT_LT(l.Dot(p), 0.f); }); 
+  };
+
+  // if one of the poly lines is a separating axis, then there is no intersection
+  return std::none_of(poly.GetEdgeSegments().begin(), poly.GetEdgeSegments().end(), IsSeparatingAxis);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -601,56 +612,8 @@ void QuadTreeNode::AddSmallestNeighbors(EDirection direction,
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-QuadTreeNode::ESetOverlap QuadTreeNode::GetOverlapType(const FastPolygon& poly) const
-{  
-  bool containsOne = false;
-  bool containsAll = true;
-  
-  for (const auto& pt : poly.GetSimplePolygon()) 
-  {
-    bool containsThis = _boundingBox.Contains(pt); 
-    containsOne |= containsThis;
-    containsAll &= containsThis;
-
-    // exit early if we know the only case is the two sets are itersecting
-    if ( containsOne && !containsAll ) 
-    {
-      return ESetOverlap::Intersecting;
-    }
-  }
-
-  // all of the poly points are fully contained within the current node
-  if (containsAll)
-  {
-    return ESetOverlap::SubsetOf;
-  }
-  
-  size_t numVerticies = poly.Size();
-  if (numVerticies > 1) // skip for point inserts
-  {
-    // check all edges of the polygon
-    for (const auto& diag : _boundingBox.diagonals)
-    {
-      for (const auto& curLine : poly.GetEdgeSegments())
-      {
-        if (curLine.IntersectsWith(diag)) 
-        {
-          return ESetOverlap::Intersecting;
-        }
-      }
-    }
-    
-    // there are no line intersections and none of the poly points are in the quad. Therefor, if at least one of
-    // the quad points is contained in the poly, then all points of the quad are in the poly.
-    bool containsAnyAndAll = poly.Contains( _boundingBox.lowerLeft );
-    if ( containsAnyAndAll ) 
-    {
-      return ESetOverlap::SupersetOf;
-    }  
-  }
-
-  return ESetOverlap::Disjoint;
-}
+// Fold Implementations
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void QuadTreeNode::Fold(FoldFunctor accumulator, FoldDirection dir)
@@ -666,22 +629,6 @@ void QuadTreeNode::Fold(FoldFunctor accumulator, FoldDirection dir)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeNode::Fold(FoldFunctor accumulator, const FastPolygon& region, FoldDirection dir)
-{
-  if ( ESetOverlap::Disjoint != GetOverlapType(region) )
-  {    
-    if (FoldDirection::BreadthFirst == dir) { accumulator(*this); } 
-    
-    for ( auto& cPtr : _childrenPtr )
-    {
-      cPtr->Fold(accumulator, region, dir);
-    }
-    
-    if (FoldDirection::DepthFirst == dir) { accumulator(*this); }
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void QuadTreeNode::Fold(FoldFunctorConst accumulator, FoldDirection dir) const
 { 
   if (FoldDirection::BreadthFirst == dir) { accumulator(*this); } 
@@ -690,27 +637,77 @@ void QuadTreeNode::Fold(FoldFunctorConst accumulator, FoldDirection dir) const
   {
     // disambiguate const method call
     const QuadTreeNode* constPtr = cPtr.get();
-    if (constPtr) { constPtr->Fold(accumulator, dir); }
+    constPtr->Fold(accumulator, dir);
   }
   
   if (FoldDirection::DepthFirst == dir) { accumulator(*this); }
 }
 
+/*
+  For calls that are constrained by some convex region, first we can potnetially avoid excess collision checks
+  if the current node is fully contained by the Fold Region. In the example below, nodes 1 through 6 need intersection 
+  checks, but nodes A through D do not since their parent is fully contained by Fold Region
+ 
+                    +-----------------+------------------+
+                    |                 |                  |
+                    |                 |                  |
+                    |                 |                  |
+                    |         1       |        2         |
+                    |                 |                  |
+                    |    . . . . . . . . .<- Fold        |
+                    |    .            |  .   Region      |
+                    +----+----#########--+---------------+
+                    |    .    # A | B #  .               |
+                    |    4    #---+---#  .               |
+                    |    .    # D | C #  .               |
+                    +----+----#########  .     3         |
+                    |    .    |       |  .               |
+                    |    6 . .|. .5. .|. .               |
+                    |         |       |                  |
+                    +---------+-------+------------------+
+
+*/
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void QuadTreeNode::Fold(FoldFunctor accumulator, const FastPolygon& region, FoldDirection dir)
+{
+  if ( Intersects(region) )
+  {    
+    // check if we can stop doing overlap checks
+    if ( IsContainedBy(region) )
+    {
+      Fold(accumulator, dir);
+    } else {
+      if (FoldDirection::BreadthFirst == dir) { accumulator(*this); } 
+      for ( auto& cPtr : _childrenPtr )
+      {
+        cPtr->Fold(accumulator, region, dir);
+      }
+      if (FoldDirection::DepthFirst == dir) { accumulator(*this); }
+    }
+  }
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void QuadTreeNode::Fold(FoldFunctorConst accumulator, const FastPolygon& region, FoldDirection dir) const
 {
-  if ( ESetOverlap::Disjoint != GetOverlapType(region) )
+  if ( Intersects(region) )
   {    
-    if (FoldDirection::BreadthFirst == dir) { accumulator(*this); } 
-
-    for ( const auto& cPtr : _childrenPtr )
+    // check if we can stop doing overlap checks
+    if ( IsContainedBy(region) )
     {
-      // disambiguate const method call
-      const QuadTreeNode* constPtr = cPtr.get();
-      if (constPtr) { constPtr->Fold(accumulator, region, dir); }
+      Fold(accumulator, dir);
+    } else {
+      if (FoldDirection::BreadthFirst == dir) { accumulator(*this); } 
+      for ( auto& cPtr : _childrenPtr )
+      {
+        // disambiguate const method call
+        const QuadTreeNode* constPtr = cPtr.get();
+        constPtr->Fold(accumulator, region, dir);
+      }
+      if (FoldDirection::DepthFirst == dir) { accumulator(*this); }
     }
-    
-    if (FoldDirection::DepthFirst == dir) { accumulator(*this); }
   }
 }
 
