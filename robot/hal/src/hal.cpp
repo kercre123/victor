@@ -211,8 +211,8 @@ Result HAL::Step(void)
 
   //check if the charge contact commander is active,
   //if so, override normal operation
-  bool commander_is_active = ccc_commander_is_active();
-  //  struct HeadToBody* h2bp = (commander_is_active) ? ccc_data_get_response() : &headData_;
+  // bool commander_is_active = ccc_commander_is_active();
+  // struct HeadToBody* h2bp = (commander_is_active) ? ccc_data_get_response() : &headData_;
   struct HeadToBody* h2bp =  &headData_;
 
   spine_write_h2b_frame(&spine_, h2bp);
