@@ -23,7 +23,7 @@ g_CubeStubEnd
   EXPORT g_CubeBoot
   EXPORT g_CubeBootEnd
 g_CubeBoot
-  INCBIN releases\\cubeboot.bin
+  //INCBIN releases\\cubeboot.bin
 g_CubeBootEnd
 
   ALIGN

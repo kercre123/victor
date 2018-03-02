@@ -170,7 +170,8 @@ uint32_t cubebootSignature(bool dbg_print)
     ConsolePrintf("CubeStub[CubeBoot] bad header:\n");
     ConsolePrintf("  g_CubeStub: %08x-%08x (%i)\n", 0, cubestub_size-1, cubestub_size);
     ConsolePrintf("  g_CubeBoot: %08x-%08x (%i) magic %08x\n", cubeboot_start, cubeboot_end-1, cubeboot_size, cubeboot_magic);
-    return 0;
+    throw ERROR_CUBE_BAD_BINARY;
+    //return 0;
   }
   
   //DEBUG: byte-for-byte compare to actual binary
@@ -190,7 +191,7 @@ uint32_t cubebootSignature(bool dbg_print)
     }
     
     if( cubeboot_size != cubeboot_raw_size || mismatch_cnt > 0 )
-      return 0;
+      throw ERROR_CUBE_BAD_BINARY; //return 0;
   }
   
   //XXX: crc initial value??
@@ -367,7 +368,7 @@ static void OTPbootloader(void)
     cmdSend(CMD_IO_DUT_UART, cmd, 60*1000, (CMD_OPTS_DEFAULT | CMD_OPTS_ALLOW_STATUS_ERRS) & ~CMD_OPTS_EXCEPTION_EN );
     write_result = cmdStatus();
     
-    //DEBUG: console bridge, manual testing
+    /*/DEBUG: console bridge, manual testing
     //cmdSend(CMD_IO_DUT_UART, "echo on");
     TestCommon::consoleBridge(TO_DUT_UART,2000);
     //-*/

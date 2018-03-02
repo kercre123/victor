@@ -288,6 +288,7 @@ typedef int error_t;
 #define ERROR_CUBE_LED_D4           707   // Detected bad LED [D4]
 #define ERROR_CUBE_ACCEL            708   // Accelerometer cannot communicate
 #define ERROR_CUBE_ACCEL_PWR        709   // Accelerometer power fault
+#define ERROR_CUBE_BAD_BINARY       710   // Fixture has corrupted binary (contact Anki for firmware update)
 //#define ERROR_CUBE_CANNOT_READ      705   // Broken wire or MCU is locked 
 //#define ERROR_CUBEX_NOT_SET         706   // Cube not programmed - CUBEX requires cube to be already programmed
 //#define ERROR_CUBE_SCAN_FAILED      707   // Did not detect advertising packets from the cube's radio
