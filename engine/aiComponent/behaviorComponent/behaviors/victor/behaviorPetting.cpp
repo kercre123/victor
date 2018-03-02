@@ -1,5 +1,5 @@
 /**
- * File: BehaviorDevPettingTestSimple.cpp
+ * File: BehaviorPetting.cpp
  *
  * Author: Arjun Menon
  * Date:   09/12/2017
@@ -11,7 +11,7 @@
  * Copyright: Anki, Inc. 2017
  **/
 
-#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevPettingTestSimple.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorPetting.h"
 
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/common/engine/jsonTools.h"
@@ -46,7 +46,7 @@ namespace {
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorDevPettingTestSimple::BehaviorDevPettingTestSimple(const Json::Value& config)
+BehaviorPetting::BehaviorPetting(const Json::Value& config)
 : ICozmoBehavior(config)
 , _animTrigPetting()
 , _timeTilTouchCheck(5.0f)
@@ -64,12 +64,12 @@ BehaviorDevPettingTestSimple::BehaviorDevPettingTestSimple(const Json::Value& co
 , _reachedBliss(false)
 , _isPressedPrevTick(false)
 {
-  const char* kDebugStr = "BehaviorDevPettingTestSimple.Ctor";
+  const char* kDebugStr = "BehaviorPetting.Ctor";
   
   _timeTilTouchCheck = JsonTools::ParseFloat( config, "timeTilTouchCheck", kDebugStr);
   
   std::vector<std::string> tmp;
-  ANKI_VERIFY(JsonTools::GetVectorOptional(config, "animGroupNames", tmp),"BehaviorDevPettingTestSimple.Ctor.MissingVectorOfAnimTriggers","");
+  ANKI_VERIFY(JsonTools::GetVectorOptional(config, "animGroupNames", tmp),"BehaviorPetting.Ctor.MissingVectorOfAnimTriggers","");
   for(const auto& t : tmp) {
     _animTrigPetting.push_back( AnimationTriggerFromString(t) );
   }
@@ -96,7 +96,7 @@ BehaviorDevPettingTestSimple::BehaviorDevPettingTestSimple(const Json::Value& co
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDevPettingTestSimple::AlwaysHandleInScope(const EngineToGameEvent& event)
+void BehaviorPetting::AlwaysHandleInScope(const EngineToGameEvent& event)
 {
   const EngineToGameTag& tag = event.GetData().GetTag();
   switch( tag )
@@ -116,7 +116,7 @@ void BehaviorDevPettingTestSimple::AlwaysHandleInScope(const EngineToGameEvent& 
     }
       break;
     default: {
-      PRINT_NAMED_ERROR("BehaviorDevPettingTestSimple.AlwaysHandle.InvalidEvent",
+      PRINT_NAMED_ERROR("BehaviorPetting.AlwaysHandle.InvalidEvent",
                         "%s", MessageEngineToGameTagToString(tag));
       break;
     }
@@ -124,14 +124,14 @@ void BehaviorDevPettingTestSimple::AlwaysHandleInScope(const EngineToGameEvent& 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorDevPettingTestSimple::WantsToBeActivatedBehavior() const
+bool BehaviorPetting::WantsToBeActivatedBehavior() const
 {
   return _isPressed;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDevPettingTestSimple::InitBehavior()
+void BehaviorPetting::InitBehavior()
 {
   _reachedBliss = false;
   _numPressesAtCurrentBlissLevel = 0;
@@ -140,14 +140,14 @@ void BehaviorDevPettingTestSimple::InitBehavior()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDevPettingTestSimple::OnBehaviorActivated()
+void BehaviorPetting::OnBehaviorActivated()
 {
   // GETIN
   TriggerAnimationAction* action = new TriggerAnimationAction( _animTrigPettingGetin, kPlayAnimOnce, kCanAnimationInterrupt, _tracksToLock);
   CancelAndPlayAction(action);
 }
 
-void BehaviorDevPettingTestSimple::AudioStateMachine(int ticksVolumeIncPeriod,
+void BehaviorPetting::AudioStateMachine(int ticksVolumeIncPeriod,
                                                      int volumeLevelInc) const
 {
   using AMD_GE_GE = AudioMetaData::GameEvent::GenericEvent;
@@ -174,7 +174,7 @@ void BehaviorDevPettingTestSimple::AudioStateMachine(int ticksVolumeIncPeriod,
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDevPettingTestSimple::CancelAndPlayAction(TriggerAnimationAction* action, bool doCancelSelf)
+void BehaviorPetting::CancelAndPlayAction(TriggerAnimationAction* action, bool doCancelSelf)
 {
   CancelDelegates();
   DelegateIfInControl(action,
@@ -186,7 +186,7 @@ void BehaviorDevPettingTestSimple::CancelAndPlayAction(TriggerAnimationAction* a
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDevPettingTestSimple::BehaviorUpdate()
+void BehaviorPetting::BehaviorUpdate()
 {
   if(!IsActivated()){
     return;
@@ -266,7 +266,7 @@ void BehaviorDevPettingTestSimple::BehaviorUpdate()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorDevPettingTestSimple::OnBehaviorDeactivated()
+void BehaviorPetting::OnBehaviorDeactivated()
 {
   _numPressesAtCurrentBlissLevel = 0;
   _currBlissLevel = 0;

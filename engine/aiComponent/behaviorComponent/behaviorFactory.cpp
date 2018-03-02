@@ -32,7 +32,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/coordinators/behaviorCoordinateGlobalInterrupts.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevDisplayReadingsOnFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevImageCapture.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevPettingTestSimple.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevTouchDataCollection.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevTurnInPlaceTest.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDispatchAfterShake.h"
@@ -99,6 +98,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorProceduralClock.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorTimerUtilityCoordinator.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorComeHere.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorPetting.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorReactToSound.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorReactToUnclaimedIntent.h"
 
@@ -256,12 +256,6 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::DevImageCapture:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorDevImageCapture(config));
-      break;
-    }
-    
-    case BehaviorClass::DevPettingTestSimple:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorDevPettingTestSimple(config));
       break;
     }
     
@@ -658,6 +652,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::ComeHere:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorComeHere(config));
+      break;
+    }
+    
+    case BehaviorClass::Petting:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorPetting(config));
       break;
     }
     

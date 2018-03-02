@@ -1,6 +1,6 @@
 {
-  "behaviorClass" : "DevPettingTestSimple",
-  "behaviorID"    : "DevPettingTestSimple",
+  "behaviorClass" : "Petting",
+  "behaviorID"    : "Petting",
   "animGroupGetin" : "PettingGetin",
   "animGroupGetout": "PettingBlissGetout",
   "animGroupNames" : ["PettingLevel1", "PettingLevel2", "PettingLevel3","PettingBlissLoop"],

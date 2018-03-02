@@ -23,12 +23,12 @@ enum uint_8 BehaviorID {
   DevBaseBehavior,
   DevDisplayReadingsOnFace,
   DevImageCapture,
-  DevPettingTestSimple,
   DevTouchDataCollection,
   DevTurnInPlaceTest,
   DockingTestSimple,
   FactoryCentroidExtractor,
   LiftLoadTest,
+  Petting,
 
   // devBehaviors/playpen
   PlaypenCameraCalibration,

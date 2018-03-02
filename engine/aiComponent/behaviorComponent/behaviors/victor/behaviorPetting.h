@@ -1,5 +1,5 @@
 /**
- * File: BehaviorDevPettingTestSimple.h
+ * File: BehaviorPetting.h
  *
  * Author: Arjun Menon
  * Date:   09/12/2017
@@ -11,8 +11,8 @@
  * Copyright: Anki, Inc. 2017
  **/
 
-#ifndef __Cozmo_Basestation_Behaviors_BehaviorDevPettingTestSimple_H__
-#define __Cozmo_Basestation_Behaviors_BehaviorDevPettingTestSimple_H__
+#ifndef __Cozmo_Basestation_Behaviors_BehaviorPetting_H__
+#define __Cozmo_Basestation_Behaviors_BehaviorPetting_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include <vector>
@@ -23,17 +23,17 @@ namespace Cozmo {
 class IBEICondition;
 class TriggerAnimationAction;
   
-class BehaviorDevPettingTestSimple : public ICozmoBehavior
+class BehaviorPetting : public ICozmoBehavior
 {
 public:
   
-  virtual ~BehaviorDevPettingTestSimple() { }
+  virtual ~BehaviorPetting() { }
   virtual bool WantsToBeActivatedBehavior() const override;
   
 protected:
   
   friend class BehaviorFactory;
-  BehaviorDevPettingTestSimple(const Json::Value& config);
+  BehaviorPetting(const Json::Value& config);
   
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
     modifiers.behaviorAlwaysDelegates = false;
@@ -112,4 +112,4 @@ private:
 }
 }
 
-#endif // __Cozmo_Basestation_Behaviors_BehaviorDevPettingTestSimple_H__
+#endif // __Cozmo_Basestation_Behaviors_BehaviorPetting_H__
