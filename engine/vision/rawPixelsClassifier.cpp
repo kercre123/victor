@@ -637,6 +637,10 @@ uchar DTRawPixelsClassifier::PredictClass(const std::vector<FeatureType>& values
 bool DTRawPixelsClassifier::Train(const cv::Mat& allInputs, const cv::Mat& allClasses, uint)
 {
 
+  DEV_ASSERT(allInputs.rows > 0, "DTRawPixelsClassifier.Train.InputRowsEqualZero");
+  DEV_ASSERT(allInputs.cols > 0, "DTRawPixelsClassifier.Train.InputColsEqualZero");
+  DEV_ASSERT(allClasses.rows > 0, "DTRawPixelsClassifier.Train.ClassesRowsEqualZero");
+  DEV_ASSERT(allClasses.cols > 0, "DTRawPixelsClassifier.Train.ClassesColsEqualZero");
   DEV_ASSERT(allInputs.cols % 3 == 0, "Input matrix must have a multiple of 3 columns");
   DEV_ASSERT(allInputs.channels() == 1, "Input matrix must have 1 channel");
   DEV_ASSERT(allInputs.type() == CV_32F, "Input matrix must have CV_32F type");
