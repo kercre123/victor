@@ -75,15 +75,11 @@ public:
   TimerUtility();
   virtual ~TimerUtility();
 
-  SharedHandle StartTimer(int timerLength_s)
-  {
-    ANKI_VERIFY(_activeTimer->GetTimeRemaining_s() == 0,
-                "TimerUtility.StartTimer.TimerAlreadySet", 
-                "Current design says we don't overwrite timers - remove this verify if that changes");
-    _activeTimer = std::make_shared<TimerHandle>(timerLength_s);
-    return _activeTimer;
-  }
-  SharedHandle GetActiveTimer() const { return _activeTimer; }
+  SharedHandle GetTimerHandle() const { return _activeTimer; }
+  SharedHandle StartTimer(int timerLength_s);
+  void ClearTimer();
+
+
 
   int GetSystemTime_s() const;
 

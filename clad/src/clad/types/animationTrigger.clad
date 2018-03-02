@@ -147,6 +147,7 @@ enum int_32 AnimationTrigger
   HikingSquintLoop,             // when Cozmo is focusing on stuff (normally edges) - loop
   HikingSquintStart,            // when Cozmo is focusing on stuff (normally edges) - start
   HikingWakeUpOffCharger,       // when Cozmo wakes up directly into hiking. This may not be needed for final product
+  ICantDoThat,
   IdleOnCharger,
   InteractWithFaceTrackingIdle,
   InteractWithFacesInitialNamed,
@@ -345,6 +346,7 @@ enum int_32 AnimationTrigger
   SuccessfulWheelie,
   Surprise,
   
+  TimerCancelTimer,
   TimerSetGetIn,
   TimerSetGetOut,
   TimerRingGetIn,
