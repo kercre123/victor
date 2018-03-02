@@ -254,6 +254,12 @@ public:
 
 protected:
   cv::Ptr<cv::ml::DTrees> _dtree;
+public:
+
+  void SetScaleOutput(bool scaleOutput);
+
+protected:
+  bool _scaleOutput = true; // if true the output of PredictClass will be scaled to be 255 rather than 1
 
 };
 

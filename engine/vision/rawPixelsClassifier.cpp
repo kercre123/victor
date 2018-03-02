@@ -256,7 +256,7 @@ void RawPixelsClassifier::SetTrainingData(const cv::Mat& trainingSamples, const 
 }
 
 /****************************************************************
- *                     GMMDrivingSurfaceClassifier               *
+ *                    GMMDrivingSurfaceClassifier               *
  ****************************************************************/
 
 GMMRawPixelsClassifier::GMMRawPixelsClassifier(const Json::Value& config, const CozmoContext *context)
@@ -724,10 +724,16 @@ std::vector<uchar> DTRawPixelsClassifier::PredictClass(const Array2d<RawPixelsCl
   const auto& tree = *_dtree;
   tree.predict(cvFeatures, output);
 
-  // now convert to a std::vector uchar scaling 1 to 255
+  // now convert to a std::vector uchar optionally changing 1 to 255 (for visualization)
   std::vector<uchar> toRet;
-  output.convertTo(toRet, CV_8U, 255);
+  const double scale = _scaleOutput ? 255.0 : 1.0;
+  output.convertTo(toRet, CV_8U, scale);
   return toRet;
+}
+
+void DTRawPixelsClassifier::SetScaleOutput(bool scaleOutput)
+{
+  _scaleOutput = scaleOutput;
 }
 
 
