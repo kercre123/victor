@@ -115,6 +115,13 @@ __Vectors       DCD     __initial_sp              ; Top of Stack
                 DCD     GPIO4_Handler
 __Vectors_End
 
+;Report nested cubeboot.bin location and size
+                IMPORT  g_CubeBoot
+                IMPORT  g_CubeBootEnd
+                DCD     0xc0beb007
+                DCD     g_CubeBoot
+                DCD     g_CubeBootEnd
+                
 __Vectors_Size         EQU     __Vectors_End - __Vectors
                 AREA    |.text|, CODE, READONLY
 
