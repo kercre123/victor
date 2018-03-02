@@ -69,26 +69,24 @@ void hal_acc_init(void) {
   GPIO_INIT_PIN(ACC_nCS, OUTPUT, PID_GPIO, 1, GPIO_POWER_RAIL_3V );
 
   for (int i = 70; i > 0; i--) __nop();  // About 32us
-  //spi_write8(BGW_SOFTRESET, 0xB6);  // Soft Reset Accelerometer
+  spi_write8(BGW_SOFTRESET, 0xB6);  // Soft Reset Accelerometer
 
-  //for (int i = 4800; i > 0; i--) __nop();  // About 1.8ms
+  for (int i = 4800; i > 0; i--) __nop();  // About 1.8ms
   spi_write8(BGW_SPI3_WDT, 0x01);   // Enter three wire SPI mode
 
-  //spi_write8(PMU_LOW_POWER, 0x40);  // Low power mode
-  //spi_write8(PMU_LPW, 0x80);        // Suspend
+  spi_write8(PMU_LOW_POWER, 0x40);  // Low power mode
+  spi_write8(PMU_LPW, 0x80);        // Suspend
 
-  //spi_write8(PMU_RANGE, 0x05);      // +4g range
-  //spi_write8(PMU_BW, 0x0E);         // 500hz BW
-  //spi_write8(FIFO_CONFIG_1, 0x41);  // FIFO mode (XYZ)
+  spi_write8(PMU_RANGE, 0x05);      // +4g range
+  spi_write8(PMU_BW, 0x0E);         // 500hz BW
+  spi_write8(FIFO_CONFIG_1, 0x40);  // FIFO mode (XYZ)
 
-  //spi_write8(PMU_LPW, 0x00);        // Normal operating mode
+  spi_write8(PMU_LPW, 0x00);        // Normal operating mode
 
   uint8_t chip_id = spi_read8(BGW_CHIPID);
   if (chip_id != 0xFA)
   {
-    Payload p;
-    p.command = COMMAND_ACCEL_FAILURE;
-    p.flags = chip_id;
+    uint8_t p[] = { COMMAND_ACCEL_FAILURE, chip_id };
     ble_send(sizeof(p), &p);
   }
 }
@@ -101,16 +99,17 @@ void hal_acc_stop(void) {
 }
 
 void hal_acc_tick(void) {
-  static uint8_t data[18];
-  static int bytes;
+  static uint8_t data[19];
+  static int bytes = 1;
 
-  while (spi_read8(FIFO_STATUS) & 0x7F) 
-  {
+  int count = (spi_read8(FIFO_STATUS) & 0x7F);
+  data[0] = count;
+  while (count-- > 0) {
     data[bytes++] = spi_read8(FIFO_DATA);
 
     if (bytes == sizeof(data)) {
       ble_send(sizeof(data), data);
-      bytes = 0;
+      bytes = 1;
     }
   }
 }

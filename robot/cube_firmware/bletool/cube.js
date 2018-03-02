@@ -41,7 +41,7 @@ class Cube extends EventEmitter {
 	}
 
 	_versionData(data) {
-		console.log('APP VERSION:', data);
+    this.emit('version', data.toString('utf8'));
 	}
 
 	_appRead(data) {
@@ -54,7 +54,7 @@ class Cube extends EventEmitter {
 
 	upload(data) {
     return new Promise((accept, reject) => {
-  		let offset = 0;
+  		let offset = 0x10;
 
   		let next = (err) => {
   			if (err) {
