@@ -140,6 +140,7 @@ Result MessageHandler::SendMessage(const RobotInterface::EngineToRobot& msg, boo
 
   const auto expectedSize = msg.Size();
   std::vector<uint8_t> messageData(msg.Size());
+  
   const auto packedSize = msg.Pack(messageData.data(), expectedSize);
   DEV_ASSERT(packedSize == expectedSize, "MessageHandler.SendMessage.MessageSizeMismatch");
   if (packedSize != expectedSize)

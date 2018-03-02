@@ -13,9 +13,8 @@
 #include <sstream>
 #include "anki-wifi/wifi.h"
 #include "switchboardd/securePairing.h"
-#include "clad/externalInterface/messageExternalComms.h"
 
-#define USE_CLAD 0
+#define USE_CLAD 1
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Constructors
@@ -29,6 +28,7 @@ _totalPairingAttempts(0),
 _numPinDigits(0),
 _pingChallenge(0),
 _abnormalityCount(0),
+_commsState(CommsState::Raw),
 _stream(stream),
 _loop(evloop)
 {
@@ -147,6 +147,8 @@ void Anki::Switchboard::SecurePairing::Reset(bool forced) {
 // Send data methods
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+using namespace Anki::Victor::ExternalComms;
+
 void Anki::Switchboard::SecurePairing::SendHandshake() {
   // Send versioning handshake
   SendPlainText(HandshakeMessage(PairingProtocolVersion::CURRENT));
@@ -157,13 +159,9 @@ void Anki::Switchboard::SecurePairing::SendPublicKey() {
   uint8_t* publicKey = (uint8_t*)_keyExchange->GenerateKeys();
 
   #if USE_CLAD
-  std::array<uint8_t, 32> publicKeyArray;
-  memcpy(std::begin(publicKeyArray), publicKey, 32);
-  Anki::Victor::RobotToDevice::RTSInitializationMessage msg = Anki::Victor::RobotToDevice::RTSInitializationMessage(0, publicKeyArray);
-
-  std::vector<uint8_t> messageData(msg.Size());
-  const size_t packedSize = msg.Pack(messageData.data(), msg.Size());
-  _stream->SendPlainText(messageData.data(), packedSize);
+  std::array<uint8_t, crypto_kx_PUBLICKEYBYTES> publicKeyArray;
+  memcpy(std::begin(publicKeyArray), publicKey, crypto_kx_PUBLICKEYBYTES);
+  SendRtsMessage<RtsConnRequest>(publicKeyArray);
   #else  
   // Send message and update our state
   SendPlainText(PublicKeyMessage((char*)publicKey));
@@ -181,8 +179,14 @@ void Anki::Switchboard::SecurePairing::SendNonce() {
   // Give our nonce to the network stream
   _stream->SetNonce(nonce);
   
+  #if USE_CLAD
+  std::array<uint8_t, crypto_aead_xchacha20poly1305_ietf_NPUBBYTES> nonceArray;
+  memcpy(std::begin(nonceArray), nonce, crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
+  SendRtsMessage<RtsNonceMessage>(nonceArray);
+  #else
   // Send nonce (in the clear) to client, update our state
   SendPlainText(NonceMessage((char*)nonce));
+  #endif
 }
 
 void Anki::Switchboard::SecurePairing::SendChallenge() {
@@ -192,19 +196,43 @@ void Anki::Switchboard::SecurePairing::SendChallenge() {
   // Create random challenge value
   randombytes_buf(&_pingChallenge, sizeof(uint32_t));
   
+  #if USE_CLAD
+  SendRtsMessage<RtsChallengeMessage>(_pingChallenge);
+  #else
   // Send challenge and update state
   SendEncrypted(ChallengeMessage_crypto(_pingChallenge));
+  #endif
 }
 
 void Anki::Switchboard::SecurePairing::SendChallengeSuccess() {
   // Send challenge and update state
+  #if USE_CLAD
+  SendRtsMessage<RtsChallengeSuccessMessage>();
+  #else
   SendEncrypted(ChallengeAcceptedMessage_crypto());
+  #endif
 }
 
 void Anki::Switchboard::SecurePairing::SendWifiScanResult() {
   // TODO: will replace with CLAD message format
   std::vector<Anki::WiFiScanResult> wifiResults = Anki::ScanForWiFiAccessPoints();
 
+  #if USE_CLAD
+  const uint8_t statusCode = wifiResults.size() > 0? 0 : 1;
+
+  std::vector<Anki::Victor::ExternalComms::RtsWifiScanResult> wifiScanResults;
+
+  for(int i = 0; i < wifiResults.size(); i++) {
+    Anki::Victor::ExternalComms::RtsWifiScanResult result = Anki::Victor::ExternalComms::RtsWifiScanResult(wifiResults[i].auth,
+      wifiResults[i].signal_level,
+      wifiResults[i].ssid);
+
+      wifiScanResults.push_back(result);
+  }
+
+  SendRtsMessage<RtsWifiScanResponse>(statusCode, wifiScanResults);
+
+  #else
   size_t msgSize = 3;
 
   for(int i = 0; i < wifiResults.size(); i++) {
@@ -236,16 +264,25 @@ void Anki::Switchboard::SecurePairing::SendWifiScanResult() {
   }
 
   free(msgBuffer);
+  #endif
 }
 
 void Anki::Switchboard::SecurePairing::SendWifiConnectResult(bool success) {
   // Send challenge and update state
+  #if USE_CLAD
+  SendRtsMessage<RtsWifiConnectResponse>((uint8_t)success);
+  #else
   SendEncrypted(WifiConnectResponseMessage_crypto(success));
+  #endif
 }
 
 void Anki::Switchboard::SecurePairing::SendCancelPairing() {
   // Send challenge and update state
+  #if USE_CLAD
+  SendRtsMessage<RtsCancelPairing>();
+  #else
   SendPlainText(CancelMessage());
+  #endif
   Log::Write("Canceling pairing.");
 }
 
@@ -527,6 +564,14 @@ Anki::Switchboard::SecurePairing::SendEncrypted(const T& message) {
   uint8_t* buffer = (uint8_t*)Anki::Switchboard::Message::CastToBuffer<T>((T*)&message, &length);
   
   return _stream->SendEncrypted(buffer, length);
+}
+
+template<typename T, typename... Args>
+int Anki::Switchboard::SecurePairing::SendRtsMessage(Args&&... args) {
+  ExternalComms msg = ExternalComms(RtsConnection(T(std::forward<Args>(args)...)));
+  std::vector<uint8_t> messageData(msg.Size());
+  const size_t packedSize = msg.Pack(messageData.data(), msg.Size());
+  return _stream->SendPlainText(messageData.data(), packedSize);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

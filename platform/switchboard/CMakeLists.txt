@@ -64,7 +64,7 @@ target_include_directories(vic-switchboard
   $<BUILD_INTERFACE:${vicos_root}/sysroot/usr/include/gio-unix-2.0>
   $<BUILD_INTERFACE:${vicos_root}/sysroot/usr/include/glib-2.0>
   $<BUILD_INTERFACE:${vicos_root}/sysroot/usr/lib/glib-2.0/include>
-  $<BUILD_INTERFACE:${vicos_root}/generated/clad/externalInterface>
+  $<BUILD_INTERFACE:${vicos_root}/generated/clad/clad/externalInterface>
   ${PLATFORM_INCLUDES}
 )
 
