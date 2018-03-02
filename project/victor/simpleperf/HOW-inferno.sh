@@ -32,8 +32,9 @@ fi
 
 #
 # Invoke inferno.sh to collect data and generate html report
+# Use -du (ARM DWARF unwinding) for better callgraph
 #
-${SIMPLEPERF}/inferno.sh -nc \
+${SIMPLEPERF}/inferno.sh -nc -du \
   --symfs ${ANKI_PROFILE_SYMBOLCACHE} \
   -np ${ANKI_PROFILE_PROCNAME} \
   -t ${ANKI_PROFILE_DURATION} \
