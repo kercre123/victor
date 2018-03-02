@@ -12,6 +12,7 @@
 
 #include <numeric>
 #include "coretech/common/engine/math/logisticRegression.h" // for calculateError
+#include "coretech/common/engine/array2d_impl.h"
 #include "onlineGrowingForestClassifier.h"
 
 namespace Anki {
@@ -97,6 +98,10 @@ bool OnlineGrowingForestClassifier::Train(const cv::Mat& allInputs, const cv::Ma
 uchar OnlineGrowingForestClassifier::PredictClass(
     const std::vector<RawPixelsClassifier::FeatureType>& values) const
 {
+
+  if (_trees.empty()) {
+    return 1;
+  }
   // first get the predictions of all the trees
   std::vector<uchar> allTreesPredictions;
   allTreesPredictions.reserve(_trees.size());
@@ -121,6 +126,11 @@ uchar OnlineGrowingForestClassifier::PredictClass(
 std::vector<uchar>
 OnlineGrowingForestClassifier::PredictClass(const Array2d<RawPixelsClassifier::FeatureType>& features) const
 {
+
+  // if there's no trees return a default all-drivable (all ones)
+  if (_trees.empty()) {
+    return std::vector<uchar>(static_cast<unsigned long>(features.GetNumRows()), 1);
+  }
 
   // first get the predictions of all the trees
   std::vector<std::vector<uchar>> allTreesPredictions;

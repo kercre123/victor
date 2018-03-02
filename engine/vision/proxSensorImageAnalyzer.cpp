@@ -21,7 +21,8 @@
 #include "coretech/vision/engine/image_impl.h"
 #include "engine/vision/onlineGrowingForestClassifier.h"
 
-#include "proxSensorImageAnalyzer.h"
+#include "engine/vision/proxSensorImageAnalyzer.h"
+#include "engine/vision/groundPlaneClassifier.h"
 
 #include <vector>
 
@@ -36,13 +37,21 @@ namespace {
 CONSOLE_VAR(f32,  kProxSensorImageAnalyzer_MaxBodyAngleChange_deg,    CONSOLE_GROUP_NAME, 0.1f);
 CONSOLE_VAR(f32,  kProxSensorImageAnalyzer_MaxPoseChange_mm,          CONSOLE_GROUP_NAME, 0.5f);
 # undef CONSOLE_GROUP_NAME
+
+const uint padding = 1;
+const uint kernelSize = 2*padding+1; // constant?
+
 }
 
 static const char* kLogChannelName = "VisionSystem";
 
 ProxSensorImageAnalyzer::ProxSensorImageAnalyzer(const Json::Value& config, const CozmoContext *context)
 {
-  _onlineClf.reset(new OnlineGrowingForestClassifier(context, 10, 10));
+  int maxNumberOfTrees = 5;
+  int maxDepth = 10;
+  float drivableClassWeight = 2.0;
+  _onlineClf.reset(new OnlineGrowingForestClassifier(context, maxNumberOfTrees,
+                                                     maxDepth, drivableClassWeight));
 }
 
 ProxSensorImageAnalyzer::~ProxSensorImageAnalyzer()
@@ -66,13 +75,13 @@ Result ProxSensorImageAnalyzer::Update(const Vision::ImageRGB& image, const Visi
   if (poseSame) {
     // Not moving, no need to do stuff
 
-    if (DEBUG_VISUALIZATION) {
-      // just send a bogus image to signal no movement
-      GroundPlaneROI groundPlaneROI;
-      const Matrix_3x3f& H = crntPoseData.groundPlaneHomography;
-      const Vision::ImageRGB groundPLaneImage = groundPlaneROI.GetOverheadImage(image, H);
-      debugImageRGBs.emplace_back("ProxSensorOnGroundPlane", groundPLaneImage);
-    }
+//    if (DEBUG_VISUALIZATION) {
+//      // just send a bogus image to signal no movement
+//      GroundPlaneROI groundPlaneROI;
+//      const Matrix_3x3f& H = crntPoseData.groundPlaneHomography;
+//      const Vision::ImageRGB groundPLaneImage = groundPlaneROI.GetOverheadImage(image, H);
+//      debugImageRGBs.emplace_back("ProxSensorOnGroundPlane", groundPLaneImage);
+//    }
 
     return RESULT_OK;
   }
@@ -80,10 +89,10 @@ Result ProxSensorImageAnalyzer::Update(const Vision::ImageRGB& image, const Visi
   // Obtain the overhead ground plane image
   GroundPlaneROI groundPlaneROI;
   const Matrix_3x3f& H = crntPoseData.groundPlaneHomography;
-  const Vision::ImageRGB groundPLaneImage = groundPlaneROI.GetOverheadImage(image, H);
+  const Vision::ImageRGB groundPlaneImage = groundPlaneROI.GetOverheadImage(image, H);
   Vision::ImageRGB imageToDisplay;
   if (DEBUG_VISUALIZATION) {
-    groundPLaneImage.CopyTo(imageToDisplay);
+    groundPlaneImage.CopyTo(imageToDisplay);
   }
   
   // Get the prox sensor reading
@@ -114,8 +123,12 @@ Result ProxSensorImageAnalyzer::Update(const Vision::ImageRGB& image, const Visi
       }
 
       Anki::Array2d<float> drivable, nonDrivable;
-      std::tie(drivable, nonDrivable) = GetDrivableNonDrivable(groundPLaneImage, minRow, maxRow, col,
+      std::tie(drivable, nonDrivable) = GetDrivableNonDrivable(groundPlaneImage, minRow, maxRow, col,
                                                                imageToDisplay, debugImageRGBs);
+      if ((drivable.GetNumElements() == 0) || (nonDrivable.GetNumElements()==0)) {
+        // TODO why would this happen?
+        return RESULT_OK;
+      }
 
       {
         // create training data and feed it to the classifier
@@ -138,7 +151,17 @@ Result ProxSensorImageAnalyzer::Update(const Vision::ImageRGB& image, const Visi
 
   } // if (hist.WasProxSensorValid())
 
-  debugImageRGBs.emplace_back("ProxSensorOnGroundPlane", imageToDisplay);
+  if (DEBUG_VISUALIZATION) {
+    debugImageRGBs.emplace_back("ProxSensorOnGroundPlane", imageToDisplay);
+
+    // get the classification image from the classifier
+    Vision::Image rawClassifiedImage(groundPlaneImage.GetNumRows(), groundPlaneImage.GetNumCols(), u8(0));
+    MeanFeaturesExtractor featuresExtractor(padding);
+    ClassifyImage(*(_onlineClf.get()), featuresExtractor, groundPlaneImage, rawClassifiedImage);
+    // all the 1s become 255s
+    rawClassifiedImage *= 255;
+    debugImageRGBs.emplace_back("OnlineClassifierImage", Vision::ImageRGB(rawClassifiedImage));
+  }
 
   return RESULT_OK;
 }
@@ -151,7 +174,6 @@ ProxSensorImageAnalyzer::GetDrivableNonDrivable(const Vision::ImageRGB& image, c
 
   // TODO doing the mean image here, shouldn't have to. Need to reconsider the data flow
   cv::Mat meanImage;
-  const uint kernelSize = 3; // constant?
   cv::boxFilter(image.get_CvMat_(), meanImage, CV_32F,
                 cv::Size(kernelSize, kernelSize),
                 cv::Point(-1, -1), true,
@@ -213,13 +235,13 @@ ProxSensorImageAnalyzer::GetDrivableNonDrivable(const Vision::ImageRGB& image, c
                                           triangleUpperPoint.get_CvPoint_()};
       cv::fillConvexPoly(nonDrivableMask, points, cv::Scalar(255));
     }
-    if (DEBUG_VISUALIZATION) {
-      // this looks like a lot of work to go from cv::Mat to Vision::ImageRGB
-      Vision::Image tmp1((cv::Mat_<u8>(drivableMask)));
-      debugImageRGBs.emplace_back("DrivableMask", Vision::ImageRGB(tmp1));
-      Vision::Image tmp2((cv::Mat_<u8>(nonDrivableMask)));
-      debugImageRGBs.emplace_back("NonDrivableMask", Vision::ImageRGB(tmp2));
-    }
+//    if (DEBUG_VISUALIZATION) {
+//      // this looks like a lot of work to go from cv::Mat to Vision::ImageRGB
+//      Vision::Image tmp1((cv::Mat_<u8>(drivableMask)));
+//      debugImageRGBs.emplace_back("DrivableMask", Vision::ImageRGB(tmp1));
+//      Vision::Image tmp2((cv::Mat_<u8>(nonDrivableMask)));
+//      debugImageRGBs.emplace_back("NonDrivableMask", Vision::ImageRGB(tmp2));
+//    }
 
     // TODO is this the most efficient way to do this?
     std::vector<cv::Point3f> drivableVector;
@@ -263,9 +285,9 @@ ProxSensorImageAnalyzer::GetDrivableNonDrivable(const Vision::ImageRGB& image, c
       }
     }
     PRINT_CH_DEBUG(kLogChannelName, "ProxSensorImageAnalyzer.GetDrivableNonDrivable.EffectiveDrivableAndNonDrivable",
-                   "Effective number of drivable and non-drivable pixels is (%lu, %lu)",
-                   drivableVector.size(),
-                   nonDrivableVector.size());
+                   "Effective number of drivable and non-drivable pixels is (%u, %u)",
+                   uint(drivableVector.size()),
+                   uint(nonDrivableVector.size()));
     // first build a cv::Mat, (has to copy), then assign to the Array2d
     {
       const cv::Mat drivableMat(drivableVector, true);
