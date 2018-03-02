@@ -73,9 +73,17 @@ If you have a question that you get answered (e.g. in a Slack channel) which mig
   - If nothing seems to help consider bringing to HW team, could be a bad antenna
   
 * Deploying to the robot fails (possibly complains about out of disk space?)
-  - You can safely remove the cache and output folders with `adb shell rm -rf /data/data/com.anki.cozmoengine/cache /data/data/com.anki.cozmoengine/files/output`
-  - If this isn't enough, in `adb shell` you can check disk usage with `df` to list percentage of space each section has free, you should only care about the `/data` section. The percentage indicates how much space the section is using out of how much total space it has.
-  - You can then inspect space usage within `/data` with `du -h /data` which will list disk usage of all directories in `/data`.    Everything that gets deployed lives in `/data/data/com.anki.cozmoengine`
+  - You can safely remove the cache and persistent folders with `adb shell rm -rf /data/data/com.anki.victor/cache /data/data/com.anki.victor/persistent`
+  - If this isn't enough, in `adb shell` you can check disk usage with `df` to list percentage of space each section has free, you should only care about the `/ and `/data` sections. The percentage indicates how much space the section is using out of how much total space it has.
+  - You can then inspect space usage with `du -h /anki` which will list disk usage of all directories in `/anki`. Most things that get deployed live in `/anki`. Files that get generated at run-time may be stored in `/data/data/com.anki.victor`.
+  - You can also delete the `/anki` folder with `rm -rf /anki`, but in general you should never have to do. It may be useful when the you get an error like this.
+  
+```
+$ victor_deploy
+INSTALL_ROOT: /anki
+rsync: failed to connect to 192.168.42.251: Connection refused (61)
+rsync error: error in socket IO (code 10) at /BuildRoot/Library/Caches/com.apple.xbs/Sources/rsync/rsync-51/rsync/clientserver.c(106) [sender=2.6.9]
+```
   
 * How do I run unit tests
   - https://ankiinc.atlassian.net/wiki/spaces/VD/pages/149363555/Victor+Unit+Tests
