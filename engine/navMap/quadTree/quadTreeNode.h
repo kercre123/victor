@@ -102,17 +102,6 @@ public:
   void Fold(FoldFunctorConst accumulator, FoldDirection dir = FoldDirection::BreadthFirst) const;
   void Fold(FoldFunctorConst accumulator, const FastPolygon& region, FoldDirection dir = FoldDirection::BreadthFirst) const;
 
-  // moves this node's center towards the required points, so that they can be included in this node
-  // returns true if the root shifts, false if it can't shift to accomodate all points or the points are already contained
-  bool ShiftRoot(const Poly2f& requiredPoints, QuadTreeProcessor& processor);
-
-  // Convert this node into a parent of its level, delegating its children to the new child that substitutes it
-  // In order for a quadtree to be valid, the only way this could work without further operations is calling this
-  // on a root node. Such responsibility lies in the caller, not in this node
-  // Returns true if successfully expanded, false otherwise
-  // maxRootLevel: it won't upgrade if the root is already higher level than the specified
-  bool UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLevel, QuadTreeProcessor& processor);
- 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Exploration
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -198,9 +187,6 @@ private:
   
   // read the note in destructor on why we manually destroy nodes when they are removed
   static void DestroyNodes(ChildrenVector& nodes, QuadTreeProcessor& processor);
-  
-  // reset the parameters of the AABB after center or size have changed
-  void ResetBoundingBox();
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Exploration

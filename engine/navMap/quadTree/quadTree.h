@@ -23,7 +23,7 @@ namespace Anki {
 namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class QuadTree
+class QuadTree : public QuadTreeNode
 {
 public:
 
@@ -32,7 +32,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // constructor/destructor
-  QuadTree(MemoryMapDataPtr rootData);
+  QuadTree();
   ~QuadTree();
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -46,9 +46,6 @@ public:
   // return the Processor associated to this QuadTree for queries
         QuadTreeProcessor& GetProcessor()       { return _processor; }
   const QuadTreeProcessor& GetProcessor() const { return _processor; }
-  uint8_t GetLevel() const                      { return _root.GetLevel(); }
-  
-  const MemoryMapDataPtr GetRootNodeData() const { return _root.GetData(); }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Operations
@@ -67,12 +64,6 @@ public:
   // merge the given quadtree into this quad tree, applying to the quads from other the given transform
   bool Merge(const QuadTree& other, const Pose3d& transform);
 
-  // runs the provided accumulator function through all nodes of the tree recursively
-  void Fold(FoldFunctor accumulator)                                  { _root.Fold(accumulator);         }
-  void Fold(FoldFunctor accumulator, const Poly2f& region)            { _root.Fold(accumulator, region); }
-  void Fold(FoldFunctorConst accumulator)                       const { _root.Fold(accumulator);         }
-  void Fold(FoldFunctorConst accumulator, const Poly2f& region) const { _root.Fold(accumulator, region); }
-
 private:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -83,6 +74,24 @@ private:
   // shiftAllowedCount: number of shifts we can do if the root reaches the max size upon expanding (or already is at max.)
   bool ExpandToFit(const Poly2f& polyToCover);  
 
+  // quadTrees are always the highest level node, so we cannot change it's parent. If needed, a Merge can insert
+  // a quadtree into an existing tree
+  void ChangeParent(const QuadTreeNode* newParent) = delete;
+
+  // moves this node's center towards the required points, so that they can be included in this node
+  // returns true if the root shifts, false if it can't shift to accomodate all points or the points are already contained
+  bool ShiftRoot(const Poly2f& requiredPoints, QuadTreeProcessor& processor);
+
+  // Convert this node into a parent of its level, delegating its children to the new child that substitutes it
+  // In order for a quadtree to be valid, the only way this could work without further operations is calling this
+  // on a root node. Such responsibility lies in the caller, not in this node
+  // Returns true if successfully expanded, false otherwise
+  // maxRootLevel: it won't upgrade if the root is already higher level than the specified
+  bool UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLevel, QuadTreeProcessor& processor);
+
+  // reset the parameters of the AABB after center or size have changed
+  void ResetBoundingBox();
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -90,8 +99,6 @@ private:
   // processor for this quadtree
   QuadTreeProcessor _processor;
 
-  // current root of the tree. It expands as needed
-  QuadTreeNode _root; 
 }; // class
   
 } // namespace

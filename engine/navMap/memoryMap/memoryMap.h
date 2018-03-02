@@ -88,7 +88,7 @@ public:
 
   // get the timestamp the QT was last measured (we can update the QT with a new timestamp even if the content
   // does not change)
-  virtual TimeStamp_t GetLastChangedTimeStamp() const override {return _quadTree.GetRootNodeData()->GetLastObservedTime();}
+  virtual TimeStamp_t GetLastChangedTimeStamp() const override {return _quadTree.GetData()->GetLastObservedTime();}
 
 private:
 
