@@ -36,7 +36,8 @@
       font: 12px sans-serif;
     }
 
-    .container {
+    #container,
+    #popouts {
       width: 800px;
       margin: 20px auto;
 
@@ -130,15 +131,22 @@
     }
 
     .tab-content {
-      display: none;
       background: #ededed;
       padding: 15px;
       border: 1px solid #AAA;
       border-top:none;
+      position:relative;
+    }
+    .tab-content:not(.poppedOut),
+    .tab-content.tab-placeholder {
+      display: none;
     }
 
     .tab-content.current {
       display: inherit;
+    }
+    .tab-placeholder {
+      height:10px;
     }
 
     #tab-overview p {
@@ -153,6 +161,28 @@
       color:red;
     }
 
+    .popoutIcon,
+    .nowItsAPinIcon {
+      position:absolute;
+      top:0px;
+      right:0px;
+      width:16px;
+      height:16px;
+      background-image:url(images/webVizPins.png);
+      cursor:pointer;
+    }
+    .nowItsAPinIcon {
+      background-position: -16px 0px;
+    }
+
+    #popouts {
+      margin-top: 50px;
+    }
+    #popouts .tab-content {
+      border-top: 1px solid #AAA;
+      margin-bottom:20px;
+    }
+
     
   </style>
 
@@ -164,7 +194,7 @@
 <body>
 
   <div id="status">Not connected to robot</div>
-  <div class="container">
+  <div id="container">
 
     <ul class="tabs">
       <li class="tab-link current" data-tab="tab-overview">Overview</li>
@@ -179,6 +209,9 @@
     </div>
 
     
+  </div>
+
+  <div id="popouts">
   </div>
 
 
@@ -246,7 +279,8 @@
         $('ul.tabs').append('<li class="tab-link" data-tab="tab-' + moduleName + '">' 
                             + originalName 
                             + '</li>');
-        $('.container').append('<div id="tab-' + moduleName + '" class="tab-content"></div>');
+        var tab = $('<div id="tab-' + moduleName + '" class="tab-content"></div>').appendTo('#container');
+        tab.append('<div class="popoutIcon"></div>');
       }
       // handle tab clicks (assumes no new tabs created after this)
       $('ul.tabs li').click(function(){
@@ -254,9 +288,15 @@
 
         $('ul.tabs li').removeClass('current');
         $('.tab-content').removeClass('current');
+        $('.tab-placeholder').hide();
 
         $(this).addClass('current');
-        $('#'+tab_id).addClass('current');
+        var tab = $('#'+tab_id);
+        if( tab.hasClass('poppedOut') ) {
+          $('.tab-placeholder').show();
+        } else {
+          tab.addClass('current');
+        }
 
         var moduleName = tab_id.substring(4); // after "tab-"
         if( typeof modules[moduleName] === 'undefined' ) {
@@ -275,6 +315,23 @@
           modules[moduleName].init($('#' + tab_id)[0]);
         }
       });
+      $('.popoutIcon').click(function(){
+        var tab = $(this).parent();
+        if( !$(this).hasClass('nowItsAPinIcon') ) {
+          tab.detach().addClass('poppedOut').appendTo('#popouts');
+          $(this).addClass('nowItsAPinIcon');
+          $('.tab-placeholder').show();
+        } else {
+          tab.detach().removeClass('poppedOut').appendTo('#container');
+          $(this).removeClass('nowItsAPinIcon');
+          var currTab = $('.tab-link.current').attr('data-tab');
+          if( currTab == tab.attr('id') ) {
+            $('.tab-placeholder').hide();
+          }
+        }
+      });
+      // add a placeholder for when tabs are popped out
+      $('<div class="tab-content tab-placeholder"></div>').appendTo('#container');
     }
 
     var isSubscribed = function(moduleName) {

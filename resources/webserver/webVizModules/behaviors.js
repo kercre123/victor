@@ -114,6 +114,9 @@
     update(treeData);
   };
   var updateTimeCursor = function() {
+    if( typeof svgGroups.timeBarsGroup === 'undefined' ) {
+      return; // can happen if using this with another port
+    }
     var timeBar = svgGroups.timeBarsGroup.selectAll('line.currentTimeLine');
     if( timeCursorPosition >= 0 ) {
       timeBar.attr('x1', timeCursorPosition)
