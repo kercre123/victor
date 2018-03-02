@@ -577,6 +577,11 @@
               <FilePath>.\lib\crc16.c</FilePath>
             </File>
             <File>
+              <FileName>crc32.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\lib\crc32.c</FilePath>
+            </File>
+            <File>
               <FileName>nvReset.c</FileName>
               <FileType>8</FileType>
               <FilePath>.\lib\nvReset.c</FilePath>
