@@ -3,14 +3,12 @@ include(anki_build_source_list)
 
 # internal use - set up build environment for go, based on platform
 # vars that should already be set up: __gobuild_out
-macro(__anki_setup_go_environment target_basedir gopath)
+macro(__anki_setup_go_environment target_basedir)
 
-  get_filename_component(__gobuild_gopath "${CMAKE_SOURCE_DIR}/${gopath}" ABSOLUTE)
   get_filename_component(__gobuild_basedir "${CMAKE_SOURCE_DIR}/${target_basedir}" ABSOLUTE)
   file(RELATIVE_PATH __gobuild_basedir ${CMAKE_CURRENT_BINARY_DIR} "${__gobuild_basedir}")
 
-  set(__go_compile_env "GOPATH=${__gobuild_gopath}")
-  list(APPEND __go_compile_env "CGO_ENABLED=1")
+  set(__go_compile_env "CGO_ENABLED=1")
   set(__go_build_flags "")
   set(__go_deps "")
 
@@ -69,7 +67,7 @@ endmacro()
 
 #
 # Helper macro to strip an object file (exe or lib) and store debug symbols
-# into a ".full" file.  This macro assumes that CMAKE_STRIP and CMAKE_OBJCOPY 
+# into a ".full" file.  This macro assumes that CMAKE_STRIP and CMAKE_OBJCOPY
 # are set appropriately for the current toolchain.
 #
 # The symbol file depends on the object file, so it will be rebuilt
@@ -77,7 +75,7 @@ endmacro()
 #
 # These commands duplicate logic in android_strip.cmake, but they are
 # repackaged to work with custom go targets.
-# 
+#
 
 macro(anki_build_go_android_strip output output_full)
   add_custom_command(
@@ -107,7 +105,7 @@ macro(anki_build_go_c_library target_name gensrc_var srclist_dir)
   # add header to output list
   list(APPEND __gobuild_out ${__gobuild_header})
 
-  __anki_setup_go_environment(${_ab_GO_DIR} ${_ab_GO_PATH})
+  __anki_setup_go_environment(${_ab_GO_DIR})
 
   # add our c-library-specific build flag
   # TODO: can't build archives for android/arm, need to either try linux/arm (need a toolchain for that also?)
@@ -157,7 +155,7 @@ macro(anki_build_go_executable target_name srclist_dir)
                                                   ANKI_OUT_PATH ${__gobuild_out}
                                                   EXCLUDE_FROM_ALL FALSE)
 
-  __anki_setup_go_environment(${_ab_GO_DIR} ${_ab_GO_PATH})
+  __anki_setup_go_environment(${_ab_GO_DIR})
   __anki_run_go_build(${target_name})
 
 

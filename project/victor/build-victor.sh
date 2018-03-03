@@ -226,6 +226,7 @@ if [ -z "${GOROOT+x}" ]; then
 else
     GO_EXE=$GOROOT/bin/go
 fi
+export GOPATH=${TOPLEVEL}/cloud/go
 
 if [ ! -f ${GO_EXE} ]; then
   echo "Missing Go executable: ${GO_EXE}"
@@ -268,10 +269,8 @@ if [ $IGNORE_EXTERNAL_DEPENDENCIES -eq 0 ]; then
   ${BUILD_TOOLS}/metabuild/metabuild.py --go-output \
       -o ${GEN_SRC_DIR} \
       ${METABUILD_INPUTS}
-  # Run go get to pull dependencies
-  ${TOPLEVEL}/project/victor/scripts/run-go-get.sh -d ${GEN_SRC_DIR}
   # Check out specified revisions of repositories we've versioned
-  (cd ${TOPLEVEL}; GOPATH=$(pwd)/cloud/go PATH="$PATH:$(dirname $GO_EXE)" ./godeps.js execute ${GEN_SRC_DIR})
+  (cd ${TOPLEVEL}; PATH="$PATH:$(dirname $GO_EXE)" ./godeps.js execute ${GEN_SRC_DIR})
 else
   echo "Ignore Go dependencies"
 fi
