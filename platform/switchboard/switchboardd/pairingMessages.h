@@ -31,13 +31,13 @@ namespace Switchboard {
   
   enum SetupMessage : uint8_t {
     MSG_RESERVED              = 0,
-    MSG_ACK                   = 1,
+    MSG_ACK                   = 7,
     MSG_REQUEST_INITIAL_PAIR  = 2,
     MSG_REQUEST_RENEW         = 3,
     MSG_PUBLIC_KEY            = 4,
     MSG_NONCE                 = 5,
     MSG_CANCEL_SETUP          = 6,
-    MSG_HANDSHAKE             = 7,
+    MSG_HANDSHAKE             = 1,
   };
 
   enum SecureMessage : uint8_t {

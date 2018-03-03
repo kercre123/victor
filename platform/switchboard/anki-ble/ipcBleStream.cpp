@@ -23,7 +23,11 @@ void Anki::Switchboard::IpcBleStream::HandleSendRawEncrypted(uint8_t* buffer, si
 }
 
 void Anki::Switchboard::IpcBleStream::HandleReceivePlainText(uint8_t* buffer, size_t size) {
-  INetworkStream::ReceivePlainText(buffer, (int)size);
+  if(_encryptedChannelEstablished) {
+    INetworkStream::ReceiveEncrypted(buffer, (int)size);
+  } else {
+    INetworkStream::ReceivePlainText(buffer, (int)size);
+  }
 }
 
 void Anki::Switchboard::IpcBleStream::HandleReceiveEncrypted(uint8_t* buffer, size_t size) {
@@ -31,7 +35,11 @@ void Anki::Switchboard::IpcBleStream::HandleReceiveEncrypted(uint8_t* buffer, si
 }
 
 int Anki::Switchboard::IpcBleStream::SendPlainText(uint8_t* bytes, int length) {
-  _bleMessageProtocolPlainText->SendMessage(bytes, (size_t)length);
+  if(_encryptedChannelEstablished) {
+    return SendEncrypted(bytes, length);
+  } else {
+    _bleMessageProtocolPlainText->SendMessage(bytes, (size_t)length);
+  }
   return 0;
 }
 
@@ -53,7 +61,11 @@ int Anki::Switchboard::IpcBleStream::SendEncrypted(uint8_t* bytes, int length) {
 }
 
 void Anki::Switchboard::IpcBleStream::ReceivePlainText(uint8_t* bytes, int length) {
-  _bleMessageProtocolPlainText->ReceiveRawBuffer(bytes, (size_t)length);
+  if(_encryptedChannelEstablished) {
+    _bleMessageProtocolEncrypted->ReceiveRawBuffer(bytes, (size_t)length);
+  } else {
+    _bleMessageProtocolPlainText->ReceiveRawBuffer(bytes, (size_t)length);
+  }
 }
 
 void Anki::Switchboard::IpcBleStream::ReceiveEncrypted(uint8_t* bytes, int length) {

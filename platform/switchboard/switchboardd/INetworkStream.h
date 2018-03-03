@@ -113,6 +113,8 @@ namespace Switchboard {
     }
     
     const char ENCRYPTION_SUCCESS = 0;
+
+    bool _encryptedChannelEstablished = false;
     
   private:
     ReceivedSignal _receivedPlainTextSignal;
@@ -122,7 +124,6 @@ namespace Switchboard {
     std::vector<uint8_t*> _buffers;
     std::vector<int> _bufferSizes;
   
-    bool _encryptedChannelEstablished = false;
     uint8_t _DecryptKey[crypto_kx_SESSIONKEYBYTES];
     uint8_t _EncryptKey[crypto_kx_SESSIONKEYBYTES];
     uint8_t _DecryptNonce[crypto_aead_xchacha20poly1305_ietf_NPUBBYTES];
