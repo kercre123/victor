@@ -48,7 +48,7 @@ static const char* kLogChannelName = "VisionSystem";
 ProxSensorImageAnalyzer::ProxSensorImageAnalyzer(const Json::Value& config, const CozmoContext *context)
 {
   int maxNumberOfTrees = 5;
-  int maxDepth = 10;
+  int maxDepth = 5;
   float drivableClassWeight = 2.0;
   _onlineClf.reset(new OnlineGrowingForestClassifier(context, maxNumberOfTrees,
                                                      maxDepth, drivableClassWeight));

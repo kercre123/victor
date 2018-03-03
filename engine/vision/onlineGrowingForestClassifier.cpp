@@ -68,9 +68,8 @@ OnlineGrowingForestClassifier::OnlineGrowingForestClassifier(const CozmoContext 
                                                              int maxDepth,
                                                              float drivableClassWeight, float minScoreToAddATree,
                                                              float weightDecayRate,
-                                                             float minWeightToBeDeleted,
-                                                             Vision::Profiler *profiler)
-    : RawPixelsClassifier(context, profiler)
+                                                             float minWeightToBeDeleted)
+    : RawPixelsClassifier(context, new Vision::Profiler("OnlineGrowingForestClassifier"))
     , _maxNumberOfTrees(maxNumberOfTrees)
     , _maxDepth(maxDepth)
     , _drivableClassWeight(drivableClassWeight)
@@ -87,11 +86,19 @@ OnlineGrowingForestClassifier::OnlineGrowingForestClassifier(const CozmoContext 
   _config["PositiveWeight"] = _drivableClassWeight;
   _config["OnTheFlyTrain"] = false;
   _config["FileOrDirName"] = "";
+
+  _profiler->SetPrintFrequency(1000);
+}
+
+OnlineGrowingForestClassifier::~OnlineGrowingForestClassifier()
+{
+  delete _profiler;
 }
 
 bool OnlineGrowingForestClassifier::Train(const cv::Mat& allInputs, const cv::Mat& allClasses,
                                                        uint)
 {
+  auto tictoc = _profiler->TicToc("OnlineGrowingForestClassifier.Train");
   return UpdateChunk(allInputs, allClasses);
 }
 
@@ -127,6 +134,7 @@ std::vector<uchar>
 OnlineGrowingForestClassifier::PredictClass(const Array2d<RawPixelsClassifier::FeatureType>& features) const
 {
 
+  auto tictoc = _profiler->TicToc("PredictClass");
   // if there's no trees return a default all-drivable (all ones)
   if (_trees.empty()) {
     return std::vector<uchar>(static_cast<unsigned long>(features.GetNumRows()), 1);
@@ -178,10 +186,12 @@ bool OnlineGrowingForestClassifier::UpdateChunk(const cv::Mat& allInputs, const 
   _latestScores.clear();
 
   if (_trees.size() < _maxNumberOfTrees) {
+    auto tictoc = _profiler->TicToc("UpdateChunk.AddingNewTree");
     CreateNewTree(allInputs, allClasses);
     UpdateScores(allInputs, allClasses);
   }
   else {
+    auto tictoc = _profiler->TicToc("UpdateChunk.UpdatingTrees");
     UpdateTrees(allInputs, allClasses);
     // cumulative scores are updated in UpdateTrees
   }

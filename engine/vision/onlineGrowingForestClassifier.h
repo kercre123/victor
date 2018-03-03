@@ -14,8 +14,10 @@
 #define __Anki_Cozmo_OnlineGrowingForestClassifier_H__
 
 #include "engine/vision/rawPixelsClassifier.h"
+#include "coretech/vision/engine/profiler.h"
 
 #include <vector>
+
 
 namespace Anki {
 namespace Cozmo {
@@ -29,8 +31,9 @@ public:
                                 float drivableClassWeight = 1.0,
                                 float minScoreToAddATree=0.85,
                                 float weightDecayRate=0.8,
-                                float minWeightToBeDeleted=0.05,
-                                Vision::Profiler *profiler= nullptr);
+                                float minWeightToBeDeleted=0.05);
+
+  ~OnlineGrowingForestClassifier() override;
 
   bool Train(const cv::Mat& allInputs, const cv::Mat& allClasses, uint numberOfPositives) override;
 
@@ -38,11 +41,11 @@ public:
 
   std::vector<uchar> PredictClass(const Anki::Array2d<FeatureType>& features) const override;
 
-protected:
-public:
   bool Serialize(const char *filename) override;
 
   bool DeSerialize(const char *filename) override;
+
+
 
 protected:
   bool UpdateChunk(const cv::Mat& allInputs, const cv::Mat& allClasses);
@@ -59,7 +62,6 @@ protected:
    * @param allClasses
    */
   void UpdateScores(const cv::Mat& allInputs, const cv::Mat& allClasses);
-
 
   int _maxNumberOfTrees;
   int _maxDepth;
