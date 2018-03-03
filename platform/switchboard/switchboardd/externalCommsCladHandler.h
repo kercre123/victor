@@ -53,12 +53,6 @@ namespace Switchboard {
       
       if(extComms.GetTag() == Anki::Victor::ExternalComms::ExternalCommsTag::RtsConnection) {
         Anki::Victor::ExternalComms::RtsConnection rtsMsg = extComms.Get_RtsConnection();
-
-        printf("Received msg: ");
-        for(int i = 0; i < length; i++) {
-          printf("%X ", buffer[i]);
-        }
-        printf("\n");
         
         switch(rtsMsg.GetTag()) {
           case Anki::Victor::ExternalComms::RtsConnectionTag::Error:

@@ -251,6 +251,7 @@ void Anki::Switchboard::SecurePairing::SendWifiScanResult() {
       wifiScanResults.push_back(result);
   }
 
+  Log::Write("Sending wifi scan results.");
   SendRtsMessage<RtsWifiScanResponse>(statusCode, wifiScanResults);
 
   #else
@@ -349,9 +350,31 @@ void Anki::Switchboard::SecurePairing::HandleRtsChallengeMessage(const Victor::E
   }
 }
 
+void HandleWifiResult(GObject* sourceObject, GAsyncResult* result, gpointer userData) {
+  printf("wtf\n");
+}
+
 void Anki::Switchboard::SecurePairing::HandleRtsWifiConnectRequest(const Victor::ExternalComms::RtsConnection& msg) {
   if(_commsState != CommsState::SecureClad) {
     return;
+  }
+
+  if(_state == PairingState::ConfirmedSharedSecret) {
+    Anki::Victor::ExternalComms::RtsWifiConnectRequest challengeMessage = msg.Get_RtsWifiConnectRequest();
+    
+    gpointer userData;
+
+    bool connected = Anki::ConnectWiFiBySsid(challengeMessage.ssid, challengeMessage.password, HandleWifiResult, userData);
+    
+    SendWifiConnectResult(connected);
+
+    if(connected) {
+      Log::Write("Connected to wifi.");
+    } else {
+      Log::Write("Could not connect to wifi.");
+    }
+  } else {
+    Log::Write("Received wifi credentials in wrong state.");
   }
 }
 
@@ -370,6 +393,12 @@ void Anki::Switchboard::SecurePairing::HandleRtsStatusRequest(const Victor::Exte
 void Anki::Switchboard::SecurePairing::HandleRtsWifiScanRequest(const Victor::ExternalComms::RtsConnection& msg) {
   if(_commsState != CommsState::SecureClad) {
     return;
+  }
+
+  if(_state == PairingState::ConfirmedSharedSecret) {
+    SendWifiScanResult();
+  } else {
+    Log::Write("Received wifi scan request in wrong state.");
   }
 }
 
@@ -574,10 +603,6 @@ void Anki::Switchboard::SecurePairing::HandleMessageReceived(uint8_t* bytes, uin
         break;
     }
   });
-}
-
-void HandleWifiResult(GObject* sourceObject, GAsyncResult* result, gpointer userData) {
-  printf("wtf\n");
 }
 
 void Anki::Switchboard::SecurePairing::HandleEncryptedMessageReceived(uint8_t* bytes, uint32_t length) {
