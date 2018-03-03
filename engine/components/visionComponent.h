@@ -257,11 +257,17 @@ struct DockingErrorSignal;
     Result EraseFace(Vision::FaceID_t faceID);
     void   EraseAllFaces();
     
+    // Get a list of names and their IDs
+    void RequestEnrolledNames();
+    
     // Will assign a new name to a given face ID. The old name is provided as a
     // safety measure: the rename will only happen if the given old name matches
     // the one currently assigned to faceID. Otherwise, failure is returned.
     // On success, a RobotLoadedKnownFace message with the new ID/name pairing is broadcast.
     Result RenameFace(Vision::FaceID_t faceID, const std::string& oldName, const std::string& newName);
+    
+    // Returns true if the provided name has been enrolled
+    bool IsNameTaken(const std::string& name);
     
     // Load/Save face album data to/from robot's NVStorage
     Result SaveFaceAlbumToRobot();

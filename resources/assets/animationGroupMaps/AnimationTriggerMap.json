@@ -625,6 +625,14 @@
       "AnimName": "ag_meetcozmo_interrupt"
     },
     {
+      "CladEvent": "MeetCozmoDuplicateName",
+      "AnimName": "ag_pounceonmotionfail"
+    },
+    {
+      "CladEvent": "MeetCozmoConfusion",
+      "AnimName": "ag_attention_lookatdevice"
+    },
+    {
       "CladEvent": "MemoryMatchPlayerWinHand",
       "AnimName": "ag_memorymatch_successhand_player"
     },

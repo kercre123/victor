@@ -926,6 +926,11 @@ namespace Vision {
     _recognizer.EraseAllFaces();
   }
   
+  std::vector<Vision::LoadedKnownFace> FaceTracker::Impl::GetEnrolledNames() const
+  {
+    return _recognizer.GetEnrolledNames();
+  }
+  
   Result FaceTracker::Impl::SaveAlbum(const std::string& albumName)
   {
     return _recognizer.SaveAlbum(albumName);

@@ -143,6 +143,7 @@ namespace Cozmo {
       helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableVisionMode>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::EraseAllEnrolledFaces>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::EraseEnrolledFaceByID>();
+      helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestEnrolledNames>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::LoadFaceAlbumFromFile>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::SaveFaceAlbumToFile>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::UpdateEnrolledFaceByID>();
@@ -2254,6 +2255,18 @@ namespace Cozmo {
     SaveFaceAlbumToRobot();
     _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotErasedAllEnrolledFaces()));
   }
+  
+  void VisionComponent::RequestEnrolledNames()
+  {
+    ExternalInterface::EnrolledNamesResponse response;
+    Lock();
+    response.faces = _visionSystem->GetEnrolledNames();
+    Unlock();
+    
+    _robot->Broadcast( ExternalInterface::MessageEngineToGame( std::move(response) ) );
+  }
+  
+  
 
   Result VisionComponent::RenameFace(Vision::FaceID_t faceID, const std::string& oldName, const std::string& newName)
   {
@@ -2269,6 +2282,25 @@ namespace Cozmo {
     }
 
     return result;
+  }
+  
+  bool VisionComponent::IsNameTaken(const std::string& name)
+  {
+    Lock();
+    auto namePairList = _visionSystem->GetEnrolledNames();
+    Unlock();
+    
+    auto tolower = [](const char c) { return std::tolower(c); };
+    std::string lcName{name};
+    std::transform(lcName.begin(), lcName.end(), lcName.begin(), tolower);
+    for( const auto& nameEntry : namePairList ) {
+      std::string existingNameCopy = nameEntry.name;
+      std::transform(existingNameCopy.begin(), existingNameCopy.end(), existingNameCopy.begin(), tolower);
+      if( existingNameCopy == lcName ) {
+        return true;
+      }
+    }
+    return false;
   }
 
   void VisionComponent::BroadcastLoadedNamesAndIDs(const std::list<Vision::LoadedKnownFace>& loadedFaces) const
@@ -2482,6 +2514,12 @@ namespace Cozmo {
   void VisionComponent::HandleMessage(const ExternalInterface::EraseAllEnrolledFaces& msg)
   {
     EraseAllFaces();
+  }
+  
+  template<>
+  void VisionComponent::HandleMessage(const ExternalInterface::RequestEnrolledNames& msg)
+  {
+    RequestEnrolledNames();
   }
 
   // Helper function to get the full path to face albums if isRelative=true

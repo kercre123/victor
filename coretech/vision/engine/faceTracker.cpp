@@ -98,6 +98,11 @@ namespace Vision {
     return _pImpl->EraseAllFaces();
   }
   
+  std::vector<Vision::LoadedKnownFace> FaceTracker::GetEnrolledNames() const
+  {
+    return _pImpl->GetEnrolledNames();
+  }
+  
   Result FaceTracker::RenameFace(FaceID_t faceID, const std::string& oldName, const std::string& newName,
                                  Vision::RobotRenamedEnrolledFace& renamedFace)
   {

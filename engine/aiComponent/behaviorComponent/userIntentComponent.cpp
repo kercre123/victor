@@ -206,10 +206,6 @@ UserIntent* UserIntentComponent::TakePreservedUserIntentOwnership(UserIntentTag 
   });
   if( it != _preservedIntents.end() ) {
     UserIntent* intent = it->intent.release();
-    ANKI_VERIFY( intent != nullptr,
-                 "UserIntentComponent.TakePreservedUserIntentOwnership.AlreadyClaimed",
-                 "Intent '%s' has been claimed already",
-                 UserIntentTagToString(userIntent) );
     return intent;
   } else {
     PRINT_NAMED_WARNING( "UserIntentComponent.TakePreservedUserIntentOwnership.NotFound",

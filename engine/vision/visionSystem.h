@@ -188,6 +188,8 @@ namespace Cozmo {
     Result EraseFace(Vision::FaceID_t faceID);
     void   EraseAllFaces();
     
+    std::vector<Vision::LoadedKnownFace> GetEnrolledNames() const;
+    
     Result RenameFace(Vision::FaceID_t faceID, const std::string& oldName, const std::string& newName,
                       Vision::RobotRenamedEnrolledFace& renamedFace);
     

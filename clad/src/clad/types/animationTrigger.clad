@@ -175,6 +175,8 @@ enum int_32 AnimationTrigger
   MeetCozmoReEnrollmentSayName,         // 3b. Re-enrollment, say player's name
   MeetCozmoRenameFaceSayName,           // Say player's new name when rename occurs
   MeetCozmoLookFaceInterrupt,           // Triggered when the scanning is interrupted
+  MeetCozmoDuplicateName,               // the given name is already taken
+  MeetCozmoConfusion,                   // too many faces, a different name to the same face, etc.
   MemoryMatchPlayerWinHand,
   MemoryMatchPlayerWinHandLong,
   MemoryMatchPlayerWinHandSolo,

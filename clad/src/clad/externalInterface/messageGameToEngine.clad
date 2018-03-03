@@ -465,6 +465,10 @@ message CancelFaceEnrollment {
 
 }
 
+message RequestEnrolledNames {
+
+}
+
 // Erase a face record by ID
 message EraseEnrolledFaceByID {
   int_32 faceID

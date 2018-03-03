@@ -85,6 +85,8 @@ namespace Vision {
     void     EraseAllFaces();
     Result   RenameFace(FaceID_t faceID, const std::string& oldName, const std::string& newName,
                         Vision::RobotRenamedEnrolledFace& renamedFace);
+    
+    std::vector<LoadedKnownFace> GetEnrolledNames() const;
 
     Result LoadAlbum(const std::string& albumName, std::list<LoadedKnownFace>& loadedFaces);
     Result SaveAlbum(const std::string& albumName);

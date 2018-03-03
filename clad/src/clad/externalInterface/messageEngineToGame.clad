@@ -466,10 +466,24 @@ message FaceEnrollmentCompleted
   string               name
 }
 
+// Tell the app the robot is starting a facial scan for the Meet Victor flow
+message MeetVictorFaceScanStarted
+{
+}
+
+// Tell the app the robot is finishing a facial scan for the Meet Victor flow
+message MeetVictorFaceScanComplete
+{
+}
+
 // NOTE: This is separate from deleting an _observed_ face.
 message RobotErasedEnrolledFace {
     int_32 faceID,
     string name
+}
+
+message EnrolledNamesResponse {
+  Vision::LoadedKnownFace faces[uint_8],
 }
 
 // Sent if all enrolled faces are cleared, e.g. when a new face album is loaded from

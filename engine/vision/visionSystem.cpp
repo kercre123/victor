@@ -770,6 +770,11 @@ namespace Cozmo {
     _faceTracker->EraseAllFaces();
   }
   
+  std::vector<Vision::LoadedKnownFace> VisionSystem::GetEnrolledNames() const
+  {
+    return _faceTracker->GetEnrolledNames();
+  }
+  
   Result VisionSystem::RenameFace(Vision::FaceID_t faceID, const std::string& oldName, const std::string& newName,
                                   Vision::RobotRenamedEnrolledFace& renamedFace)
   {
