@@ -65,7 +65,7 @@ bool QuadTreeNode::AxisAlignedQuad::Contains(const Point2f& p) const
 bool QuadTreeNode::Contains(const FastPolygon& poly) const
 {
   // return true if all of the vertices of poly are contained by the bounding box
-  return std::all_of(poly.GetSimplePolygon().begin(), poly.GetSimplePolygon().end(),[&](auto& p) {return _boundingBox.Contains(p);});
+  return std::all_of(poly.begin(), poly.end(),[&](auto& p) {return _boundingBox.Contains(p);});
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

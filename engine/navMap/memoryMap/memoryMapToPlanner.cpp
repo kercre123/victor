@@ -481,11 +481,11 @@ void TestNavMemoryMapToPlanner(Robot& robot)
     static u32 prevPolyIDLimit = 0;   // this is to clear a previous call
     u32 polyID = 666;                 // initial number because of how IDs work in Viz (should port to string identifiers)
     for( const auto& p : cHullsInteresting ) {
-      vizMgr->DrawPoly(polyID, p.GetSimplePolygon(), NamedColors::CYAN);
+      vizMgr->DrawPoly(polyID, p, NamedColors::CYAN);
       ++polyID;
     }
     for( const auto& p : cHullsNotInteresting ) {
-      vizMgr->DrawPoly(polyID, p.GetSimplePolygon(), NamedColors::RED);
+      vizMgr->DrawPoly(polyID, p, NamedColors::RED);
       ++polyID;
     }
     

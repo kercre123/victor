@@ -265,11 +265,6 @@ namespace Anki {
                                const Polygon<2,T>& poly,
                                const ColorRGBA& color);
 
-      void DrawPlannerObstacle(const bool isReplan,
-                               const u32 quadID,
-                               const FastPolygon& poly,
-                               const ColorRGBA& color);
-
       template<typename T>
       void DrawPoseMarker(const u32 quadID,
                           const Quadrilateral<2,T>& quad,
@@ -288,10 +283,6 @@ namespace Anki {
       template<typename T>
       void DrawPoly(const u32 polyID,
                     const Polygon<2,T>& poly,
-                    const ColorRGBA& color);
-
-      void DrawPoly(const u32 polyID,
-                    const FastPolygon& poly,
                     const ColorRGBA& color);
 
       // ==== Erase functions =====

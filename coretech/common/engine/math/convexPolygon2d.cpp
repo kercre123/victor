@@ -21,7 +21,7 @@
 namespace Anki {
   
 ConvexPolygon::ConvexPolygon(const Poly2f& basePolygon)
-: _poly(basePolygon)
+: Poly2f(basePolygon)
 , _currDirection(CW)
 {
   // check convexity only if in dev code, otherwise assume it is good
@@ -30,10 +30,10 @@ ConvexPolygon::ConvexPolygon(const Poly2f& basePolygon)
   // only check internal angle orientation if basePolygon is not a point or line
   if (basePolygon.size() > 2)  {
     // check first internal angle and force to [0, 2π) to get current clock direction
-    f32 internalAngle = std::fmod(_poly.GetEdgeAngle(1) - _poly.GetEdgeAngle(0) + 2 * M_PI, 2 * M_PI);
+    f32 internalAngle = std::fmod(GetEdgeAngle(1) - GetEdgeAngle(0) + 2 * M_PI, 2 * M_PI);
     if (internalAngle < M_PI) // poly inserted is oriented counter clockwise, so reverse it to CW
     {
-      std::reverse(_poly.begin(), _poly.end());
+      std::reverse(begin(), end());
     }
   }
 }
@@ -65,9 +65,9 @@ bool ConvexPolygon::IsConvex(const Poly2f& poly)
 void ConvexPolygon::RadialExpand(f32 d) {
   if (d >= 0) 
   {
-    Point2f center = _poly.ComputeCentroid();
+    Point2f center = ComputeCentroid();
     
-    for (Point2f& p : _poly) {
+    for (Point2f& p : _points) {
       Point2f centeredPoint = p - center;
       f32 length = std::hypot(centeredPoint.x(), centeredPoint.y());      
       // (point / length) is a unit vector, therefor offset is a push scaled by `d` on this vector           

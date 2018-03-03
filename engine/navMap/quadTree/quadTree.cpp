@@ -75,7 +75,7 @@ bool QuadTree::Insert(const FastPolygon& poly, MemoryMapDataPtr data)
   // if the root does not contain the poly, expand
   if ( !Contains( poly ) )
   {
-    ExpandToFit( poly.GetSimplePolygon());
+    ExpandToFit( poly );
   }
   
   // run the insert on the expanded QT

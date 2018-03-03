@@ -63,10 +63,10 @@ public:
   // TODO:(bn) define equality operators?
 
   // Get min/max coordinates (e.g. for bounding box)
-  T GetMinX(void) const;
-  T GetMinY(void) const;
-  T GetMaxX(void) const;
-  T GetMaxY(void) const;
+  virtual T GetMinX(void) const;
+  virtual T GetMinY(void) const;
+  virtual T GetMaxX(void) const;
+  virtual T GetMaxY(void) const;
 
   // TODO:(bn) implement the rest of the helper functions like in Quad (e.g. Contains point, intersects, etc...)
 
@@ -97,8 +97,8 @@ public:
 
   void pop_back();
 
-  Point<N,T>& operator[] (size_t idx);
-  const Point<N,T>& operator[] (size_t idx) const;
+  virtual       Point<N,T>& operator[] (size_t idx);
+  virtual const Point<N,T>& operator[] (size_t idx) const;
 
   size_t size() const;
 

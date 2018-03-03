@@ -1126,7 +1126,7 @@ void xythetaEnvironment::DumpObstacles(Util::JsonWriter& writer) const
       writer.AddEntry("cost", obs.second);
 
       writer.StartList("poly");      
-      for(const auto pt : obs.first.GetSimplePolygon()) {
+      for(const auto pt : obs.first) {
         writer.NextListItem();
         writer.AddEntry("x", pt.x());
         writer.AddEntry("y", pt.y());

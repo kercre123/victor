@@ -40,7 +40,7 @@
 
 namespace Anki {
 
-class FastPolygon
+class FastPolygon : public ConvexPolygon
 {
 public:
 
@@ -53,14 +53,8 @@ public:
   // convenience function
   bool Contains(const Point2f& pt) const;
 
-  const Poly2f& GetSimplePolygon() const {return _poly.GetSimplePolygon();}
-  
-  const Point2f& operator[] (size_t idx) const {return _poly[idx];}
-  
   const std::vector<LineSegment>& GetEdgeSegments() const { return _edgeSegments; }
   
-  size_t Size() const {return _poly.size();}
-
   // getters for testing / plotting
 
   // Returns the center point of the circles used for quick checks
@@ -77,10 +71,10 @@ public:
   // be faster
   void SortEdgeVectors();
 
-  float GetMinX() const {return _minX;}
-  float GetMaxX() const {return _maxX;}
-  float GetMinY() const {return _minY;}
-  float GetMaxY() const {return _maxY;}
+  virtual float GetMinX() const override {return _minX;}
+  virtual float GetMaxX() const override {return _maxX;}
+  virtual float GetMinY() const override {return _minY;}
+  virtual float GetMaxY() const override {return _maxY;}
 
   static void ResetCounts();
   static int _numChecks;
@@ -93,9 +87,6 @@ public:
 #endif
 
 private:
-  // ConvexPolygon constructor enforces CW direction and convexity
-  const ConvexPolygon _poly;
-
   // outermost bounding-box of poly
   float _minX;
   float _maxX;
@@ -127,12 +118,6 @@ private:
   std::vector< std::pair< Vec2f, size_t> > _perpendicularEdgeVectors;
   std::vector< LineSegment > _edgeSegments;
   
-
-
-  // helper functions
-
-  void ComputeCenter();
-
   void ComputeCircles();
 
   // create (unsorted) edge vectors

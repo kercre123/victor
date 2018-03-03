@@ -883,7 +883,7 @@ void LatticePlannerImpl::ImportBlockworldObstaclesIfNeeded(const bool isReplanni
           // multi-angle stuff. For now just draw the poly with
           // padding
           _robot->GetContext()->GetVizManager()->DrawPoly (
-            vizID++, boundingPoly.GetSimplePolygon(), *vizColor );
+            vizID++, boundingPoly, *vizColor );
         }
         numAdded++;
       }
