@@ -18,7 +18,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/basicCubeInteractions/behaviorPutDownBlock.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicCubeInteractions/behaviorRollBlock.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorDriveOffCharger.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorEyeContact.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorFindFaces.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorFindHome.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorGoHome.h"
@@ -77,6 +76,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorTrackLaser.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/meetCozmo/behaviorEnrollFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/meetCozmo/behaviorRespondToRenameFace.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/observing/behaviorObservingEyeContact.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/observing/behaviorObservingLookAtFaces.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/observing/behaviorObservingOnCharger.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/proxBehaviors/behaviorProxGetToDistance.h"
@@ -176,9 +176,9 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
-    case BehaviorClass::EyeContact:
+    case BehaviorClass::ObservingEyeContact:
     {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorEyeContact(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorObservingEyeContact(config));
       break;
     }
     

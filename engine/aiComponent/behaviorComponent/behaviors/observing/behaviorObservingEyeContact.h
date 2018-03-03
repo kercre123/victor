@@ -1,5 +1,5 @@
 /**
-* File: behaviorEyeContact.h
+* File: behaviorObservingEyeContact.h
 *
 * Author: Robert Cosgriff
 * Created: 2/5/18
@@ -18,21 +18,21 @@
 namespace Anki {
 namespace Cozmo {
   
-class BehaviorEyeContact : public ICozmoBehavior
+class BehaviorObservingEyeContact : public ICozmoBehavior
 {
 protected:
   // Enforce creation through BehaviorContainer
   friend class BehaviorFactory;
-  BehaviorEyeContact(const Json::Value& config);
+  BehaviorObservingEyeContact(const Json::Value& config);
   
 public:
-  virtual ~BehaviorEyeContact() override {}
+  virtual ~BehaviorObservingEyeContact() override {}
   virtual bool WantsToBeActivatedBehavior() const override;
   
 protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
     modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::Standard });
-    modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::Standard });
+    modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingGaze, EVisionUpdateFrequency::Standard });
     modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingBlinkAmount, EVisionUpdateFrequency::Standard });
   }
 

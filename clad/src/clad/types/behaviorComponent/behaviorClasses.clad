@@ -29,7 +29,6 @@ enum uint_8 BehaviorClass {
 
   // basicWorldInteractions
   DriveOffCharger,
-  EyeContact,
   FindFaces,
   FindHome,
   GoHome,
@@ -112,6 +111,7 @@ enum uint_8 BehaviorClass {
   RespondToRenameFace,
 
   // observing
+  ObservingEyeContact,
   ObservingLookAtFaces,
   ObservingOnCharger,
 

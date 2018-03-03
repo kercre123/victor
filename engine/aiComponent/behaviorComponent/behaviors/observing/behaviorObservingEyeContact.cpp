@@ -12,19 +12,16 @@
 
 // TODO these need to stripped down, let's get it compiling 
 // and then start to get rid of the one that aren't needed
-#include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorEyeContact.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/observing/behaviorObservingEyeContact.h"
 
 #include "engine/actions/animActions.h"
-#include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/faceWorld.h"
 
-#include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/imageTypes.h"
 
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/jsonTools.h"
-#include "coretech/common/engine/utils/timer.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/components/bodyLightComponent.h"
@@ -39,19 +36,19 @@
 namespace Anki {
 namespace Cozmo {
 
-BehaviorEyeContact::BehaviorEyeContact(const Json::Value& config)
+BehaviorObservingEyeContact::BehaviorObservingEyeContact(const Json::Value& config)
   : ICozmoBehavior(config)
 {
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorEyeContact::WantsToBeActivatedBehavior() const
+bool BehaviorObservingEyeContact::WantsToBeActivatedBehavior() const
 {
   return GetBEI().GetFaceWorld().IsMakingEyeContact();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorEyeContact::OnBehaviorActivated()
+void BehaviorObservingEyeContact::OnBehaviorActivated()
 {
     DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::HikingSquintStart));
 }

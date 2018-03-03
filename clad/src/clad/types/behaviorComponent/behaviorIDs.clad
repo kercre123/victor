@@ -26,7 +26,6 @@ enum uint_8 BehaviorID {
   DevTouchDataCollection,
   DevTurnInPlaceTest,
   DockingTestSimple,
-  EyeContact,
   FactoryCentroidExtractor,
   LiftLoadTest,
 
@@ -164,6 +163,7 @@ enum uint_8 BehaviorID {
   DriveOffChargerIntoObserving,
   DriveOffChargerIntoPlay,
   Observing,
+  ObservingEyeContact,
   ObservingFailedToFindCharger,
   ObservingFindFaces,
   ObservingLookAtFaces,
