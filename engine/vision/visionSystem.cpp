@@ -1323,6 +1323,8 @@ namespace Cozmo {
   // This is the regular Update() call
   Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& imageCache)
   {
+    return RESULT_OK;
+    
     Result lastResult = RESULT_OK;
     
     if(!_isInitialized || !_camera.IsCalibrated())

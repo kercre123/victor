@@ -25,9 +25,11 @@ namespace Anki {
 }
 namespace Anki {
   namespace Cozmo {
+    struct RobotState;
     namespace RobotInterface {
       struct TextToSpeechStart;
       struct TextToSpeechStop;
+      struct StartDoom;
     }
   }
 }
@@ -57,6 +59,9 @@ public:
   // Message handlers
   void HandleMessage(const RobotInterface::TextToSpeechStart& msg);
   void HandleMessage(const RobotInterface::TextToSpeechStop& msg);
+  
+  void HandleMessage(const RobotInterface::StartDoom& msg);
+  void HandleMessage(const Anki::Cozmo::RobotState& robotState);
 
 protected:
   

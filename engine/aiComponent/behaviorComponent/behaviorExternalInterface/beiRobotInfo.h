@@ -124,6 +124,7 @@ public:
   bool IsPoseInWorldOrigin(const Pose3d& pose) const;
 
   void EnableStopOnCliff(const bool enable);
+  void StartDoom();
   
 private:
   // let the test classes access robot directly

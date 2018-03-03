@@ -391,6 +391,11 @@ message SetFaceHue
     float_32 hue // [0,1]
 }
 
+message StartDoom
+{
+    
+}
+
 
 // TODO: Move to messageGameToEngine.clad or shared file
 // DisplayFaceImageBinaryChunk
@@ -578,6 +583,8 @@ union EngineToRobot
   RunDebugConsoleFuncMessage    runDebugConsoleFuncMessage  = 0x91,
   TextToSpeechStart             textToSpeechStart           = 0x92,
   TextToSpeechStop              textToSpeechStop            = 0x93,
+
+  StartDoom startDoom = 0x94,
 
   // 0xB0 to 0xFE: To engine, see messageRobotToEngine.clad
 }

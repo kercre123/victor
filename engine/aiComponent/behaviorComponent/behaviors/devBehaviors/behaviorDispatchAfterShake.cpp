@@ -15,6 +15,7 @@
 
 #include "coretech/common/engine/utils/timer.h"
 
+#include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
@@ -102,6 +103,9 @@ void BehaviorDispatchAfterShake::GetBehaviorJsonKeys(std::set<const char*>& expe
 void BehaviorDispatchAfterShake::OnBehaviorActivated()
 {
   _dVars.countShaken = 0;
+  
+  MoveHeadToAngleAction* moveHeadUp = new MoveHeadToAngleAction(0.0f);
+  DelegateIfInControl(moveHeadUp);
 }
 
 

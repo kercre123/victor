@@ -74,7 +74,7 @@ namespace {
   u8 _bcCheckCount = 0;
   #endif
 
-  CONSOLE_VAR(bool, kDebugFaceDraw_CycleWithButton, "DebugFaceDraw", true);   
+  CONSOLE_VAR(bool, kDebugFaceDraw_CycleWithButton, "DebugFaceDraw", false);   
 
   static void ListAnimations(ConsoleFunctionContextRef context)
   {
@@ -350,6 +350,11 @@ void Process_textToSpeechStop(const RobotInterface::TextToSpeechStop& msg)
 {
   _animEngine->HandleMessage(msg);
 }
+  
+void Process_startDoom(const RobotInterface::StartDoom& msg)
+{
+  _animEngine->HandleMessage(msg);
+}
 
 void AnimProcessMessages::ProcessMessageFromEngine(const RobotInterface::EngineToRobot& msg)
 {
@@ -457,6 +462,7 @@ void AnimProcessMessages::ProcessMessageFromRobot(const RobotInterface::RobotToE
     break;
     case RobotInterface::RobotToEngine::Tag_state:
     {
+      _animEngine->HandleMessage( msg.state );
       HandleRobotStateUpdate(msg.state);
     }
     break;

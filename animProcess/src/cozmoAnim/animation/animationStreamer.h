@@ -24,9 +24,12 @@
 
 #include <list>
 #include <memory>
+class DoomPort;
 
 namespace Anki {
 namespace Cozmo {
+  
+  
   
   // Forward declaration
   class ProceduralFace;
@@ -36,12 +39,16 @@ namespace Cozmo {
   
   namespace Audio {
     class AnimationAudioClient;
+    class CozmoAudioController;
   }
   
   
   class AnimationStreamer
   {
   public:
+    
+    void StartGame(const std::string& path, Anki::Cozmo::Audio::CozmoAudioController* audioController);
+    void HandleMessage(const Anki::Cozmo::RobotState& robotState);
     
     using Tag = AnimationTag;
     using FaceTrack = Animations::Track<ProceduralFaceKeyFrame>;
@@ -238,6 +245,10 @@ namespace Cozmo {
     // Time to wait before forcing KeepFaceAlive() after the latest stream has stopped
     f32 _longEnoughSinceLastStreamTimeout_s;
 
+    
+    void DrawGameScreen();
+    std::unique_ptr<DoomPort> _doom;
+    
     // Image buffer that is fed directly to face display (in RGB565 format)
     Vision::ImageRGB565 _faceDrawBuf;
 

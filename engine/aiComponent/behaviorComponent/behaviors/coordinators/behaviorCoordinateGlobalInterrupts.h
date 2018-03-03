@@ -17,6 +17,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherPassThrough.h"
 
+
 namespace Anki {
 namespace Cozmo {
 
@@ -25,7 +26,7 @@ class BehaviorHighLevelAI;
 class BehaviorTimerUtilityCoordinator;
 
 
-class BehaviorCoordinateGlobalInterrupts : public BehaviorDispatcherPassThrough
+class BehaviorCoordinateGlobalInterrupts : public ICozmoBehavior
 {
 public:
   virtual ~BehaviorCoordinateGlobalInterrupts();
@@ -35,19 +36,20 @@ protected:
   friend class BehaviorFactory;  
   BehaviorCoordinateGlobalInterrupts(const Json::Value& config);
 
-  virtual void InitPassThrough() override;
-  virtual void OnPassThroughActivated() override;
-  virtual void PassThroughUpdate() override;
-  virtual void OnPassThroughDeactivated() override;
+  virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
+  
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}
+  
+  //virtual void InitBehavior() override;
+  virtual void OnBehaviorActivated() override;
+  //virtual void OnBehaviorDeactivated() override;
+  //virtual void BehaviorUpdate() override;
+  virtual bool WantsToBeActivatedBehavior() const override;
 
 private:
   struct InstanceConfig{
     InstanceConfig();
-    IBEIConditionPtr  triggerWordPendingCond;
-    ICozmoBehaviorPtr wakeWordBehavior;
-    std::shared_ptr<BehaviorTimerUtilityCoordinator> timerCoordBehavior;
-    ICozmoBehaviorPtr highLevelAIBehavior;
-    ICozmoBehaviorPtr sleepingBehavior;
   };
 
   struct DynamicVariables{

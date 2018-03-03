@@ -13,15 +13,15 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/coordinators/behaviorCoordinateGlobalInterrupts.h"
 
+#include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimGetInLoop.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/behaviorHighLevelAI.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorTimerUtilityCoordinator.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
-#include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
-#include "util/helpers/boundedWhile.h"
+#include "engine/components/movementComponent.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -49,7 +49,7 @@ BehaviorCoordinateGlobalInterrupts::DynamicVariables::DynamicVariables()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorCoordinateGlobalInterrupts::BehaviorCoordinateGlobalInterrupts(const Json::Value& config)
-: BehaviorDispatcherPassThrough(config)
+: ICozmoBehavior(config)
 {
 }
 
@@ -61,71 +61,29 @@ BehaviorCoordinateGlobalInterrupts::~BehaviorCoordinateGlobalInterrupts()
 }
 
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorCoordinateGlobalInterrupts::InitPassThrough()
+void BehaviorCoordinateGlobalInterrupts::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
-  const auto& BC = GetBEI().GetBehaviorContainer();
-  _iConfig.wakeWordBehavior         = BC.FindBehaviorByID(BEHAVIOR_ID(TriggerWordDetected));
-
-  BC.FindBehaviorByIDAndDowncast(BEHAVIOR_ID(TimerUtilityCoordinator),
-                                 BEHAVIOR_CLASS(TimerUtilityCoordinator),
-                                 _iConfig.timerCoordBehavior);
   
-  _iConfig.highLevelAIBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(HighLevelAI));
-  _iConfig.sleepingBehavior    = BC.FindBehaviorByID(BEHAVIOR_ID(Sleeping));
-
-  _iConfig.triggerWordPendingCond = BEIConditionFactory::CreateBEICondition(BEIConditionType::TriggerWordPending, GetDebugLabel());
-  _iConfig.triggerWordPendingCond->Init(GetBEI());
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorCoordinateGlobalInterrupts::OnPassThroughActivated() 
+bool BehaviorCoordinateGlobalInterrupts::WantsToBeActivatedBehavior() const
 {
-  _iConfig.triggerWordPendingCond->SetActive(GetBEI(), true);
+  // always wants to be activated
+  return true;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
+void BehaviorCoordinateGlobalInterrupts::OnBehaviorActivated()
 {
-  if(!IsActivated()){
-    return;
-  }
-  const bool triggerWordPending = _iConfig.triggerWordPendingCond->AreConditionsMet(GetBEI());
-  const bool isTimerRinging     = _iConfig.timerCoordBehavior->IsTimerRinging();
-  if(triggerWordPending && isTimerRinging){
-    // Timer is ringing and will handle the pending trigger word instead of the wake word behavior
-    _iConfig.wakeWordBehavior->SetDontActivateThisTick(GetDebugLabel());
-  }
+  auto& robotInfo = GetBEI().GetRobotInfo();
   
-  if( triggerWordPending ) {
-    bool highLevelRunning = false;
-    const IBehavior* behavior = this;
-    const auto& bsm = GetBEI().GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<BehaviorSystemManager>();
-    BOUNDED_WHILE( 100, (behavior != nullptr) && "Stack too deep to find sleeping" ) {
-      behavior = bsm.GetBehaviorDelegatedTo( behavior );
-      if( highLevelRunning && (behavior == _iConfig.sleepingBehavior.get()) ) {
-        // High level AI is running the Sleeping behavior (probably through the Napping state).
-        // Wake word serves as the wakeup for a napping robot, so disable the wake word behavior and let
-        // high level AI resume. It will clear the pending trigger and resume in some other state. (The
-        // wake up animation is the getout for napping)
-        _iConfig.wakeWordBehavior->SetDontActivateThisTick(GetDebugLabel());
-        
-        break;
-      }
-      if( behavior == _iConfig.highLevelAIBehavior.get() ) {
-        highLevelRunning = true;
-      }
-    }
-  }
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorCoordinateGlobalInterrupts::OnPassThroughDeactivated()
-{
-  _iConfig.triggerWordPendingCond->SetActive(GetBEI(), false);
+  robotInfo.StartDoom();
+  
+  robotInfo.GetMoveComponent().EnableLiftPower(false);
+  robotInfo.GetMoveComponent().EnableHeadPower(false);
 }
 
 
