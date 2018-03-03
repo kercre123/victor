@@ -780,10 +780,9 @@ class GamePlatformConfiguration(object):
                          ankibuild.util.File.mkdir_p(os.path.dirname(copy_destFile))
                          ankibuild.util.File.cp(copy_srcFile, copy_destFile)
 
-        # Scans through all of the human readable featured codelab project json files and collapses them into a single
-        # file for each language.  The resulting file will store each project as an encoded string rather than pretty
-        # printed json.  This single file will improve loadtimes, while the version controlled source files will be
-        # far easier to diff.
+        # Scans through all of the pretty-printed featured codelab project json files. For each file, create
+        # a new file with the serialized project stored as an encoded string rather than pretty
+        # printed json.
         #
         # This script operates only on codelab featured projects.
         print_status('Collapsing codelab featured projects...')

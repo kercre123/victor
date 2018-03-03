@@ -41,7 +41,6 @@ namespace CodeLab {
     public string FeaturedProjectBackgroundColor;
     public string FeaturedProjectTitleTextColor;
     public string FeaturedProjectInstructions;
-    public string ProjectJSON;
     public SimpleDate StartDate; // Optional start date for content availability
     public SimpleDate EndDate; // Optional end date for content availability
     public bool IsInvisible; // Used to hide featured content, e.g. content for future releases
@@ -357,7 +356,7 @@ namespace CodeLab {
 
     // Return featured projects as list.
     private List<CodeLabFeaturedProject> LoadFeaturedProjects() {
-      string projectFolder = "/Scratch/encodedFeaturedProjects/";
+      string projectFolder = "/Scratch/";
 #if UNITY_EDITOR || UNITY_IOS
       string streamingAssetsPath = Application.streamingAssetsPath + projectFolder;
 #elif UNITY_ANDROID
@@ -365,8 +364,7 @@ namespace CodeLab {
 #endif
 
       // Load featured projects' data from file
-      string locale = Localization.GetStringsLocale();
-      string path = streamingAssetsPath + "featured-projects_" + locale.ToLower() + ".json";
+      string path = streamingAssetsPath + "featured-projects.json";
       string json = File.ReadAllText(path);
       List<CodeLabFeaturedProject> codeLabFeaturedProjects = JsonConvert.DeserializeObject<List<CodeLabFeaturedProject>>(json);
 
@@ -1508,7 +1506,8 @@ namespace CodeLab {
           Predicate<CodeLabFeaturedProject> findFeaturedProject = (CodeLabFeaturedProject p) => { return p.ProjectUUID == featuredProjectGuid; };
           CodeLabFeaturedProject featuredProject = _CodeLabFeaturedProjects.Find(findFeaturedProject);
           if (featuredProject != null) {
-            codeLabProject = new CodeLabProject(featuredProject.ProjectName, featuredProject.ProjectJSON, true);
+            String serializedProjectJSON = GetFeaturedProjectJSON(featuredProject.ProjectJSONFile);
+            codeLabProject = new CodeLabProject(featuredProject.ProjectName, serializedProjectJSON, true);
             codeLabProject.BaseDASProjectName = featuredProject.DASProjectName;
             codeLabProject.VersionNum = featuredProject.VersionNum;
           }
@@ -3548,7 +3547,7 @@ namespace CodeLab {
             SessionState.DAS_Event("robot.code_lab.open_featured_project", codeLabFeaturedProject.DASProjectName, DASUtil.FormatExtraData(wasLoadedFromWhatsNew ? "1" : "0"));
             _SessionState.SetCurrentProjectData(ProjectType.Featured, codeLabFeaturedProject.DASProjectName);
 
-            String serializedProjectJSON = codeLabFeaturedProject.ProjectJSON;
+            String serializedProjectJSON = GetFeaturedProjectJSON(codeLabFeaturedProject.ProjectJSONFile);
             if (serializedProjectJSON != null) {
               String featuredProjectName = null;
               if (codeLabFeaturedProject.ProjectName != null) {
@@ -3590,6 +3589,41 @@ namespace CodeLab {
       Invoke("UnhideWebView", delayInSeconds);
 
       SetupCubeLights();
+    }
+
+    private String GetFeaturedProjectJSON(String featuredProjectJSONFileNameStartsWith) {
+      String serializedProjectJSON = null;
+      if (!String.IsNullOrEmpty(featuredProjectJSONFileNameStartsWith)) {
+        // Create the file name. The parameter featuredProjectJSONFileNameStartsWith
+        // contains the start of the string, such as "HotPotato". To that, add the locale and ".json"
+        // to create a file name like "HotPotato_en-US.json", as it is stored on disk.
+        string featuredProjectJSONFileName = featuredProjectJSONFileNameStartsWith + "_" + Localization.GetStringsLocale() + ".json";
+
+        string featuredProjectJSONFile = "/Scratch/encodedFeaturedProjects/" + featuredProjectJSONFileName.ToLower();
+#if UNITY_EDITOR || UNITY_IOS
+        string streamingAssetsPath = Application.streamingAssetsPath + featuredProjectJSONFile;
+#elif UNITY_ANDROID
+            string streamingAssetsPath = PlatformUtil.GetResourcesBaseFolder() + featuredProjectJSONFile;
+#endif
+
+        String jsonFileContents = File.ReadAllText(streamingAssetsPath);
+        if (!String.IsNullOrEmpty(jsonFileContents)) {
+          // File should contain a single CodeLabFeaturedSerializedProject entry.
+          CodeLabFeaturedSerializedProject entry = JsonUtility.FromJson<CodeLabFeaturedSerializedProject>(jsonFileContents);
+          serializedProjectJSON = entry.ProjectJSON;
+          if (String.IsNullOrEmpty(serializedProjectJSON)) {
+            DAS.Error("Codelab.GetFeaturedProjectJSON.NullSerializedProjectJSON", "Featured serialized Project JSON is null for file: " + featuredProjectJSONFileName);
+          }
+        }
+        else {
+          DAS.Error("Codelab.GetFeaturedProjectJSON.NullJSON", "Featured project file data is null for file: " + featuredProjectJSONFileName);
+        }
+      }
+      else {
+        DAS.Error("Codelab.GetFeaturedProjectJSON.NullProjectName", "File containing serialized featured project data is not defined");
+      }
+
+      return serializedProjectJSON;
     }
 
     private String EscapeProjectText(String projectText) {
