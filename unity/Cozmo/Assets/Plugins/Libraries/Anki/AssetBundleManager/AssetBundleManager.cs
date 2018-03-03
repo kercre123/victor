@@ -30,7 +30,7 @@ namespace Anki {
       private List<string> _InProgressAssetBundles = new List<string>();
 
       private string _AssetBundleFolder;
-
+      
 #if UNITY_EDITOR
       static int m_SimulateAssetBundleInEditor = -1;
       const string kSimulateAssetBundles = "SimulateAssetBundles";
@@ -87,7 +87,7 @@ namespace Anki {
       public void Initialize(Action<bool> callback) {
         Log(LogType.Log, "AssetBundleManager.Initialize", "Initializing Asset Manager");
         _sInstance = this;
-
+        
 #if UNITY_EDITOR
         // In simulator mode we don't load any bundles
         Log(LogType.Log, "AssetBundleManager.Initialize.SetSimulationMode",
@@ -434,18 +434,9 @@ namespace Anki {
         string assetBundlePath = _AssetBundleFolder + assetBundleName;
         AssetBundle assetBundle;
 
-        if (!assetBundlePath.StartsWith("jar:")) {
-          AssetBundleCreateRequest request = AssetBundle.LoadFromFileAsync(assetBundlePath);
-          yield return request;
-          assetBundle = request.assetBundle;
-        }
-        else {
-          // This case happens when we have the bundles embeded in the apk file on Android. In this case we can't use LoadFromFileAsync directly.
-          WWW www = WWW.LoadFromCacheOrDownload(assetBundlePath, 0);
-          yield return www;
-          assetBundle = www.assetBundle;
-          www.Dispose();
-        }
+        AssetBundleCreateRequest request = AssetBundle.LoadFromFileAsync(assetBundlePath);
+        yield return request;
+        assetBundle = request.assetBundle;
 
         _InProgressAssetBundles.Remove(assetBundleName);
 
