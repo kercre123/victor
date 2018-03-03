@@ -7,9 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		DA5470702047985E004FDA9F /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = DA54706F2047985E004FDA9F /* main.m */; };
+		DA5470702047985E004FDA9F /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = DA54706F2047985E004FDA9F /* main.mm */; };
 		DA54707720479890004FDA9F /* BleCentral.mm in Sources */ = {isa = PBXBuildFile; fileRef = DA54707620479890004FDA9F /* BleCentral.mm */; };
 		DA54707B20479928004FDA9F /* CoreBluetooth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA54707A20479928004FDA9F /* CoreBluetooth.framework */; };
+		DAE361C62049D1500053ED2F /* libsodium.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DAE361C52049D1500053ED2F /* libsodium.a */; };
+		DAE361CF2049D27B0053ED2F /* libclad.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DAE361CE2049D27B0053ED2F /* libclad.a */; };
+		DAE361D52049D4AE0053ED2F /* bleMessageProtocol.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DAE361D32049D4AE0053ED2F /* bleMessageProtocol.cpp */; };
+		DAE361EC2049DF030053ED2F /* messageExternalComms.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DAE361E72049DF030053ED2F /* messageExternalComms.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -26,10 +30,23 @@
 
 /* Begin PBXFileReference section */
 		DA54706C2047985E004FDA9F /* mac-client */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "mac-client"; sourceTree = BUILT_PRODUCTS_DIR; };
-		DA54706F2047985E004FDA9F /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		DA54706F2047985E004FDA9F /* main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
 		DA54707620479890004FDA9F /* BleCentral.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = BleCentral.mm; sourceTree = "<group>"; };
 		DA5470782047989C004FDA9F /* BleCentral.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BleCentral.h; sourceTree = "<group>"; };
 		DA54707A20479928004FDA9F /* CoreBluetooth.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreBluetooth.framework; path = System/Library/Frameworks/CoreBluetooth.framework; sourceTree = SDKROOT; };
+		DAE361C42049D1410053ED2F /* include */ = {isa = PBXFileReference; lastKnownFileType = folder; path = include; sourceTree = "<group>"; };
+		DAE361C52049D1500053ED2F /* libsodium.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libsodium.a; sourceTree = "<group>"; };
+		DAE361CE2049D27B0053ED2F /* libclad.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libclad.a; sourceTree = "<group>"; };
+		DAE361D32049D4AE0053ED2F /* bleMessageProtocol.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = bleMessageProtocol.cpp; sourceTree = "<group>"; };
+		DAE361D42049D4AE0053ED2F /* bleMessageProtocol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = bleMessageProtocol.h; sourceTree = "<group>"; };
+		DAE361D62049D5250053ED2F /* simpleSignal_fwd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = simpleSignal_fwd.h; sourceTree = "<group>"; };
+		DAE361D72049D5250053ED2F /* simpleSignal.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = simpleSignal.hpp; sourceTree = "<group>"; };
+		DAE361D82049D5250053ED2F /* signalHolder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = signalHolder.h; sourceTree = "<group>"; };
+		DAE361E72049DF030053ED2F /* messageExternalComms.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = messageExternalComms.cpp; sourceTree = "<group>"; };
+		DAE361E82049DF030053ED2F /* messageExternalComms_declarations.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = messageExternalComms_declarations.def; sourceTree = "<group>"; };
+		DAE361E92049DF030053ED2F /* messageExternalComms_switch.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = messageExternalComms_switch.def; sourceTree = "<group>"; };
+		DAE361EA2049DF030053ED2F /* messageExternalComms.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = messageExternalComms.h; sourceTree = "<group>"; };
+		DAE361EB2049DF030053ED2F /* messageExternalCommsTag.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = messageExternalCommsTag.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -37,6 +54,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DAE361C62049D1500053ED2F /* libsodium.a in Frameworks */,
+				DAE361CF2049D27B0053ED2F /* libclad.a in Frameworks */,
 				DA54707B20479928004FDA9F /* CoreBluetooth.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -47,6 +66,7 @@
 		DA5470632047985E004FDA9F = {
 			isa = PBXGroup;
 			children = (
+				DAE361D92049DE4D0053ED2F /* clad */,
 				DA54706E2047985E004FDA9F /* mac-client */,
 				DA54706D2047985E004FDA9F /* Products */,
 				DA54707920479928004FDA9F /* Frameworks */,
@@ -64,7 +84,11 @@
 		DA54706E2047985E004FDA9F /* mac-client */ = {
 			isa = PBXGroup;
 			children = (
-				DA54706F2047985E004FDA9F /* main.m */,
+				DAE361D32049D4AE0053ED2F /* bleMessageProtocol.cpp */,
+				DAE361D42049D4AE0053ED2F /* bleMessageProtocol.h */,
+				DAE361C82049D1940053ED2F /* signals */,
+				DAE361C32049D12B0053ED2F /* sodium */,
+				DA54706F2047985E004FDA9F /* main.mm */,
 				DA5470782047989C004FDA9F /* BleCentral.h */,
 				DA54707620479890004FDA9F /* BleCentral.mm */,
 			);
@@ -74,9 +98,49 @@
 		DA54707920479928004FDA9F /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				DAE361CE2049D27B0053ED2F /* libclad.a */,
+				DAE361C52049D1500053ED2F /* libsodium.a */,
 				DA54707A20479928004FDA9F /* CoreBluetooth.framework */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		DAE361C32049D12B0053ED2F /* sodium */ = {
+			isa = PBXGroup;
+			children = (
+				DAE361C42049D1410053ED2F /* include */,
+			);
+			path = sodium;
+			sourceTree = "<group>";
+		};
+		DAE361C82049D1940053ED2F /* signals */ = {
+			isa = PBXGroup;
+			children = (
+				DAE361D82049D5250053ED2F /* signalHolder.h */,
+				DAE361D62049D5250053ED2F /* simpleSignal_fwd.h */,
+				DAE361D72049D5250053ED2F /* simpleSignal.hpp */,
+			);
+			path = signals;
+			sourceTree = "<group>";
+		};
+		DAE361D92049DE4D0053ED2F /* clad */ = {
+			isa = PBXGroup;
+			children = (
+				DAE361E02049DEA00053ED2F /* externalInterface */,
+			);
+			path = clad;
+			sourceTree = "<group>";
+		};
+		DAE361E02049DEA00053ED2F /* externalInterface */ = {
+			isa = PBXGroup;
+			children = (
+				DAE361E82049DF030053ED2F /* messageExternalComms_declarations.def */,
+				DAE361E92049DF030053ED2F /* messageExternalComms_switch.def */,
+				DAE361E72049DF030053ED2F /* messageExternalComms.cpp */,
+				DAE361EA2049DF030053ED2F /* messageExternalComms.h */,
+				DAE361EB2049DF030053ED2F /* messageExternalCommsTag.h */,
+			);
+			path = externalInterface;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -136,7 +200,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				DA5470702047985E004FDA9F /* main.m in Sources */,
+				DAE361EC2049DF030053ED2F /* messageExternalComms.cpp in Sources */,
+				DAE361D52049D4AE0053ED2F /* bleMessageProtocol.cpp in Sources */,
+				DA5470702047985E004FDA9F /* main.mm in Sources */,
 				DA54707720479890004FDA9F /* BleCentral.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -252,6 +318,11 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 6N4JN4E7V7;
+				HEADER_SEARCH_PATHS = "/Users/paul/Development/victor-code/victor/tools/message-buffers/support/cpp/include/**";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -261,6 +332,11 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 6N4JN4E7V7;
+				HEADER_SEARCH_PATHS = "/Users/paul/Development/victor-code/victor/tools/message-buffers/support/cpp/include/**";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
