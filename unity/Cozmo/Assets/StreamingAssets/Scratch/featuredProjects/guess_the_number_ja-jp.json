@@ -13,7 +13,7 @@
                 "currentCostume": 0,
                 "direction": 90,
                 "draggable": false,
-                "id": "((Rrfwg%x1GnLOzTBNkH",
+                "id": "r+}Yko`]^HYxXdFa_V~x",
                 "isStage": true,
                 "lists": {},
                 "name": "Stage",
@@ -91,19 +91,13 @@
                         "id": "I]C.SU[:`mS]Fm)I:p4q",
                         "name": "codelabfeaturedproject.guessthenumber.max",
                         "type": "",
-                        "value": 35
+                        "value": 46
                     },
                     "V2rWPMh}?bCZTB/jIKWD": {
                         "id": "V2rWPMh}?bCZTB/jIKWD",
                         "name": "codelabfeaturedproject.guessthenumber.guess",
                         "type": "",
-                        "value": 30
-                    },
-                    "ZdQ+4Z8GDf4v1wwX|-`y": {
-                        "id": "ZdQ+4Z8GDf4v1wwX|-`y",
-                        "name": "codelabfeaturedproject.guessthenumber.nextstate",
-                        "type": "",
-                        "value": 0
+                        "value": 44
                     },
                     "^(T~92_uxQ0;_cHe4ZC#": {
                         "id": "^(T~92_uxQ0;_cHe4ZC#",
@@ -133,7 +127,7 @@
                         "id": "kf;Ezn.ORl:3j.v:.v`$",
                         "name": "codelabfeaturedproject.guessthenumber.min",
                         "type": "",
-                        "value": 25
+                        "value": 42
                     },
                     "oij$a?yKBJb+o5+Ol.=,": {
                         "id": "oij$a?yKBJb+o5+Ol.=,",
@@ -145,7 +139,7 @@
                         "id": "qURdyL-v$_9]]+;ox,ya",
                         "name": "codelabfeaturedproject.guessthenumber.totalguesses",
                         "type": "",
-                        "value": 4
+                        "value": 6
                     },
                     "uj1v/FX)*u*BPrq$mv:a": {
                         "id": "uj1v/FX)*u*BPrq$mv:a",
@@ -169,7 +163,7 @@
                         "id": "}[neTF)o8A@8u%1[?`BN",
                         "name": "codelabfeaturedproject.guessthenumber.tapon",
                         "type": "",
-                        "value": "1"
+                        "value": "0"
                     },
                     "~S9R6L^F[.MO15G:THcj": {
                         "id": "~S9R6L^F[.MO15G:THcj",
@@ -233,8 +227,8 @@
                         "parent": null,
                         "shadow": false,
                         "topLevel": true,
-                        "x": 396.74117647058824,
-                        "y": 2992.9529411764706
+                        "x": 396,
+                        "y": 2992
                     },
                     "$zk,T-mqS@A+0Id{4NMv": {
                         "fields": {
@@ -347,8 +341,8 @@
                         "parent": null,
                         "shadow": false,
                         "topLevel": true,
-                        "x": 394.27058823529416,
-                        "y": 1584.4588235294116
+                        "x": 394,
+                        "y": 1584
                     },
                     "(s6gY6~pRl?X@g/i8u1w": {
                         "fields": {
@@ -1069,8 +1063,8 @@
                         "parent": null,
                         "shadow": false,
                         "topLevel": true,
-                        "x": 399.38823529411764,
-                        "y": 1665.729411764706
+                        "x": 399,
+                        "y": 1665
                     },
                     "6rg/@R9]8.6^{vG$WMdx": {
                         "fields": {
@@ -1128,7 +1122,7 @@
                         "inputs": {},
                         "next": "JB%HkLHJswZ;d,i%uoT8",
                         "opcode": "cozmo_vert_enable_animation_track",
-                        "parent": "Z)G;#-]KPaD)S5ge^p?t",
+                        "parent": ";#QZ*mo:T~#/f2?L7d{x",
                         "shadow": false,
                         "topLevel": false,
                         "x": "-434",
@@ -1393,6 +1387,31 @@
                         "topLevel": false,
                         "x": 874.330588235294,
                         "y": 1230.1164705882352
+                    },
+                    ";#QZ*mo:T~#/f2?L7d{x": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "}[neTF)o8A@8u%1[?`BN",
+                                "name": "VARIABLE",
+                                "value": "codelabfeaturedproject.guessthenumber.tapon",
+                                "variableType": ""
+                            }
+                        },
+                        "id": ";#QZ*mo:T~#/f2?L7d{x",
+                        "inputs": {
+                            "VALUE": {
+                                "block": "_j%dUq}JK;Y`52%uLvF2",
+                                "name": "VALUE",
+                                "shadow": "_j%dUq}JK;Y`52%uLvF2"
+                            }
+                        },
+                        "next": "6{/EyPW4c1_v`o:`X)N2",
+                        "opcode": "data_setvariableto",
+                        "parent": "Z)G;#-]KPaD)S5ge^p?t",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-387",
+                        "y": "688"
                     },
                     ";+=[G|F0d^(-dbsvHPD|": {
                         "fields": {},
@@ -2002,8 +2021,8 @@
                         "parent": null,
                         "shadow": false,
                         "topLevel": true,
-                        "x": 394.38823529411764,
-                        "y": 2643.470588235294
+                        "x": 394,
+                        "y": 2643
                     },
                     "E[qkbR9X-S(A|[my]w=j": {
                         "fields": {
@@ -2754,8 +2773,8 @@
                         "parent": null,
                         "shadow": false,
                         "topLevel": true,
-                        "x": 397.3176470588235,
-                        "y": 3088.2235294117645
+                        "x": 397,
+                        "y": 3088
                     },
                     "SN]$Z)3huBO2{2y,sB0;": {
                         "fields": {},
@@ -3111,7 +3130,7 @@
                                 "shadow": null
                             },
                             "SUBSTACK": {
-                                "block": "6{/EyPW4c1_v`o:`X)N2",
+                                "block": ";#QZ*mo:T~#/f2?L7d{x",
                                 "name": "SUBSTACK",
                                 "shadow": null
                             },
@@ -3385,6 +3404,21 @@
                         "next": null,
                         "opcode": "cozmo_sound_sounds_menu",
                         "parent": ",Hm=X)#8:Z4}_6T_2RL:",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "_j%dUq}JK;Y`52%uLvF2": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "0"
+                            }
+                        },
+                        "id": "_j%dUq}JK;Y`52%uLvF2",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": ";#QZ*mo:T~#/f2?L7d{x",
                         "shadow": true,
                         "topLevel": false
                     },
@@ -4326,8 +4360,8 @@
                         "parent": null,
                         "shadow": false,
                         "topLevel": true,
-                        "x": 391.8117647058823,
-                        "y": 2566.3176470588232
+                        "x": 391,
+                        "y": 2566
                     },
                     "v*n?KGN__n)orN_$9btN": {
                         "fields": {
@@ -4732,7 +4766,7 @@
                 "currentCostume": 0,
                 "direction": 90,
                 "draggable": false,
-                "id": "`_?0*1VX!OXG:?#CU;SM",
+                "id": "0i5AocyP`Wxe5|nuc7*I",
                 "isStage": false,
                 "lists": {},
                 "name": "Sprite1",

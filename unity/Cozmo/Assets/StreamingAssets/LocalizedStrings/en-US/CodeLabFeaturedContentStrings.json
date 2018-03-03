@@ -2016,9 +2016,6 @@
     "codeLabFeaturedProject.GuessTheNumber.new_guess": {
         "translation": "new guess"
     },
-    "codeLabFeaturedProject.GuessTheNumber.nextstate": {
-        "translation": "nextState"
-    },
     "codeLabFeaturedProject.GuessTheNumber.reset_lights": {
         "translation": "reset lights"
     },
