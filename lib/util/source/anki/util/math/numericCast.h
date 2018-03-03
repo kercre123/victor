@@ -5,7 +5,7 @@
  * Created: 30/06/15
  *
  * Description: numeric_cast<> for asserting that a value won't under/over-flow into the new type
- *              resolves to a constexpr static_cast<> in SHIPPING
+ *              resolves to a constexpr static_cast<> in NDEBUG
  *              numeric_cast_clamped<> clamps the value to the new types lowest..max in all build configs
  *              both utlize a bunch of helper functions
  *

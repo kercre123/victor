@@ -23,9 +23,6 @@ if (MACOSX)
     SIMULATOR
   )
 elseif (ANDROID)
-  set(PLATFORM_COMPILE_DEFS
-    DEVELOPMENT
-  )
 endif()
 
 
@@ -70,9 +67,6 @@ set(PLATFORM_FLAGS "")
 if (ANDROID)
   set(PLATFORM_LIBS
     robot_hal
-  )
-  set(PLATFORM_COMPILE_DEFS
-    DEVELOPMENT
   )
 elseif (MACOSX)
   include(webots)
@@ -129,7 +123,6 @@ target_compile_definitions(supervisor
   PRIVATE
   COZMO_ROBOT
   CORETECH_ROBOT
-  _DEBUG
   ${PLATFORM_COMPILE_DEFS}
 )
 
@@ -149,9 +142,6 @@ set(PLATFORM_COMPILE_DEFS "")
 set(PLATFORM_FLAGS "")
 if (ANDROID)
   set(PLATFORM_LIBS android log)
-  set(PLATFORM_COMPILE_DEFS
-    DEVELOPMENT
-  )
 elseif (MACOSX)
   find_library(FOUNDATION Foundation)
   set(PLATFORM_LIBS
@@ -195,7 +185,6 @@ if (ANDROID)
     PRIVATE
     COZMO_ROBOT
     CORETECH_ROBOT
-    _DEBUG
     ${PLATFORM_COMPILE_DEFS}
     #HAL_DUMMY_BODY # Uncomment if deploying on head only
   )

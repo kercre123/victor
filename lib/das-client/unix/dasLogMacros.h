@@ -17,10 +17,10 @@
 
 #define LOGD(...) {fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n");}
 
-#ifdef DEBUG
-#define LOGV(...) {fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n");}
-#else
+#ifdef NDEBUG
 #define LOGV(...)
+#else
+#define LOGV(...) {fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n");}
 #endif
 
 #endif // __DasLogMacros_H__

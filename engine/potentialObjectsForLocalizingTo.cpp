@@ -38,7 +38,7 @@ namespace Anki {
 namespace Cozmo {
   
 // Using a function vs. a macro here to make sure we continue to compile all the code
-// where this gets used below, even when the DEBUG flag is disabled.
+// where this gets used below, even when the NDEBUG flag is enabled.
 static void VERBOSE_DEBUG_PRINT(const char* eventName, const char* description, ...)
 {
 # if BLOCK_BASED_LOCALIZATION_DEBUG

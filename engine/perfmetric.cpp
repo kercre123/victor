@@ -32,7 +32,7 @@
 #endif
 
 // To enable PerfMetric in a shipping build, define PERF_METRIC_ENABLED
-#if !defined(SHIPPING)
+#if !defined(NDEBUG)
   #define PERF_METRIC_ENABLED
 #endif
 
@@ -286,16 +286,10 @@ void PerfMetric::Dump(const DumpType dumpType, const bool dumpAll, const std::st
   const DAS::IDASPlatform* platform = DASGetPlatform();
 #endif
   sprintf(_lineBuffer, "Summary:  (%s build; %s; %s; %s; %i engine ticks; %.3f seconds total)",
-#if defined(DEBUG)
-                "DEBUG"
-#elif defined(RELEASE)
+#if defined(NDEBUG)
                 "RELEASE"
-#elif defined(PROFILE)
-                "PROFILE"
-#elif defined(SHIPPING)
-                "SHIPPING"
 #else
-                "UNKNOWN"
+                "DEBUG"
 #endif
                 ,
 #if defined(ANKI_PLATFORM_IOS)
@@ -461,16 +455,10 @@ void PerfMetric::DumpFiles() const
   Util::FileUtils::CreateDirectory(logDir);
   std::ostringstream sstr;
   sstr << logDir << "/" << _logBaseFileName << std::put_time(&tm, "%Y-%m-%d_%H-%M-%S");
-#if defined(DEBUG)
-  sstr << "_D";
-#elif defined(RELEASE)
+#if defined(NDEBUG)
   sstr << "_R";
-#elif defined(PROFILE)
-  sstr << "_P";
-#elif defined(SHIPPING)
-  sstr << "_S";
 #else
-  sstr << "_U";
+  sstr << "_D";
 #endif
   const std::string logFileNameText = sstr.str() + ".txt";
   const std::string logFileNameCSV = sstr.str() + ".csv";

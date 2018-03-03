@@ -492,7 +492,9 @@ void MicDataProcessor::ProcessTriggerLoop()
   Anki::Util::SetThreadName(pthread_self(), "MicProcTrigger");
   while (!_processThreadStop)
   {
+#if ANKI_CPU_PROFILER_ENABLED
     static constexpr uint32_t maxTriggerProcTime_ms = 10;
+#endif
     ANKI_CPU_TICK("MicDataProcessorTrigger", maxTriggerProcTime_ms, Util::CpuThreadProfiler::kLogFrequencyNever);
     ANKI_CPU_PROFILE("ProcessTriggerLoop");
     TimedMicData* readyDataSpot = nullptr;

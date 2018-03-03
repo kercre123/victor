@@ -163,7 +163,6 @@ target_compile_definitions(webotsCtrlRobot2
   PRIVATE
   COZMO_ROBOT
   SIMULATOR
-  _DEBUG
 )
 
 symlink_target(
@@ -294,7 +293,7 @@ target_include_directories(webotsCtrlKeyboard
 
 target_compile_definitions(webotsCtrlKeyboard
   PRIVATE
-  CORETECH_ENGINE=1
+  CORETECH_ENGINE
 )
 
 symlink_target(
@@ -333,7 +332,7 @@ target_include_directories(webotsCtrlBuildServerTest
 
 target_compile_definitions(webotsCtrlBuildServerTest
   PRIVATE
-  CORETECH_ENGINE=1
+  CORETECH_ENGINE
 )
 
 symlink_target(

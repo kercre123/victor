@@ -56,10 +56,10 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define NO_INLINE
 #endif
 
-#ifdef _DEBUG
-#define ANKI_DEBUG_LEVEL ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS
-#else
+#ifdef NDEBUG
 #define ANKI_DEBUG_LEVEL ANKI_DEBUG_ERRORS
+#else
+#define ANKI_DEBUG_LEVEL ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS
 #endif
 
 #ifndef USE_M4_HOST_INTRINSICS
@@ -119,10 +119,10 @@ For internal use only. No part of this code may be used without a signed non-dis
 #if defined(__ARM_ARCH_7A__) // GCC on ARM Cortex A
 #define ANKI_DEBUG_LEVEL ANKI_DEBUG_ERRORS
 #else // GCC on a PC
-#if defined(_DEBUG) || defined(DEBUG)
-#define ANKI_DEBUG_LEVEL ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS
-#else
+#if defined(NDEBUG)
 #define ANKI_DEBUG_LEVEL ANKI_DEBUG_ERRORS
+#else
+#define ANKI_DEBUG_LEVEL ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS
 #endif
 #endif
 

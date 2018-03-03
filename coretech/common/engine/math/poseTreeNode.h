@@ -26,12 +26,12 @@
 
 // Make a separate define so we can easily dissociate "Dev" pose checks from debug/release/shipping decisions
 // (i.e., we may want to switch back to doing them only in Debug)
-#if defined(DEBUG)
-#  define DO_DEV_POSE_CHECKS     1
-#elif defined(SHIPPING)
-#  define DO_DEV_POSE_CHECKS     0
-#else // Release
-#  define DO_DEV_POSE_CHECKS     1
+#if !defined(DO_DEV_POSE_CHECKS)
+#if defined(NDEBUG)
+#  define DO_DEV_POSE_CHECKS     1 // disabled in release builds when VIC-1575 is solved
+#else
+#  define DO_DEV_POSE_CHECKS     1 // enabled for debug tests as a requirement for unit tests
+#endif
 #endif
 
 namespace Anki {

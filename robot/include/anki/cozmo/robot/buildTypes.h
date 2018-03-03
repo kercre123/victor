@@ -7,20 +7,18 @@
 #ifndef _BUILD_TYPES_H_
 #define _BUILD_TYPES_H_
 
-#if defined(RELEASE)
-#define ANKI_DEBUG_LEVEL  ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS
+#if defined(NDEBUG)
+#define ANKI_DEBUG_LEVEL  ANKI_DEBUG_ERRORS
 #define ANKI_DEBUG_INFO   0
-#define ANKI_DEBUG_EVENTS 1
+#define ANKI_DEBUG_EVENTS 0
 #elif defined(SIMULATOR)
 #define ANKI_DEBUG_LEVEL  ANKI_DEBUG_ALL
 #define ANKI_DEBUG_INFO   1
 #define ANKI_DEBUG_EVENTS 1
-#elif defined(DEVELOPMENT) // Default is development build
+#else // Default is development build
 #define ANKI_DEBUG_LEVEL  ANKI_DEBUG_ALL
 #define ANKI_DEBUG_INFO   1
 #define ANKI_DEBUG_EVENTS 1
-#else
-#error "Unsupported build type"
 #endif
 
 // Which errors will be checked and reported?

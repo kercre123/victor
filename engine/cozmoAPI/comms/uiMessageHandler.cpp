@@ -66,12 +66,12 @@ namespace Anki {
 
 #if (defined(ANKI_PLATFORM_IOS) || defined(ANKI_PLATFORM_ANDROID))
   #define ANKI_ENABLE_SDK_OVER_UDP  0
-  #if defined(SHIPPING)
+  #if defined(NDEBUG)
     CONSOLE_VAR(bool, kEnableSdkCommsInInternalSdk,  "Sdk", false);
   #else
     CONSOLE_VAR(bool, kEnableSdkCommsInInternalSdk, "Sdk", true);
   #endif
-  // TODO: This variable may not make sense in a world where all 
+  // TODO: This variable may not make sense in a world where all
   // communication is through an SDK interface.
   CONSOLE_VAR(bool, kEnableSdkCommsAlways,  "Sdk", true);
 #else
@@ -79,12 +79,13 @@ namespace Anki {
   CONSOLE_VAR(bool, kEnableSdkCommsAlways,  "Sdk", true);
   CONSOLE_VAR(bool, kEnableSdkCommsInInternalSdk, "Sdk", true);
 #endif
-    
-#if defined(SHIPPING)
-    static_assert(!kEnableSdkCommsAlways, "Must be const and false - we cannot leave the socket open outside of sdk for released builds!");
-    static_assert(!kEnableSdkCommsInInternalSdk, "Must be const and false - we cannot leave the socket open outside of sdk for released builds!");
-#endif
-    
+
+// see https://ankiinc.atlassian.net/browse/VIC-1544
+//#if defined(NDEBUG)
+//    static_assert(!kEnableSdkCommsAlways, "Must be const and false - we cannot leave the socket open outside of sdk for released builds!");
+//    static_assert(!kEnableSdkCommsInInternalSdk, "Must be const and false - we cannot leave the socket open outside of sdk for released builds!");
+//#endif
+
 CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enabled in non-SHIPPING apps, for internal dev
     
 
@@ -135,7 +136,7 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
         case UiConnectionType::SdkOverUdp:
         {
         #if ANKI_ENABLE_SDK_OVER_UDP
-          #if defined(SHIPPING)
+          #if defined(NDEBUG)
             #error To enable SDK over UDP in SHIPPING builds requires support for closing the socket outside of SDK mode
           #endif
           return new UdpSocketComms(type);

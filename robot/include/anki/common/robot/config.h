@@ -56,10 +56,10 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define NO_INLINE
 #endif
 
-#ifdef _DEBUG
-#define ANKI_DEBUG_LEVEL ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS
-#else
+#ifdef NDEBUG
 #define ANKI_DEBUG_LEVEL ANKI_DEBUG_ERRORS
+#else
+#define ANKI_DEBUG_LEVEL ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS
 #endif
 
 #ifndef USE_M4_HOST_INTRINSICS

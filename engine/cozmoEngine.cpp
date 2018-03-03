@@ -220,16 +220,10 @@ Result CozmoEngine::Init(const Json::Value& config) {
   // s_val: Build configuration
   // data: Unused
   Anki::Util::sEvent("cozmo_engine.init.build_configuration", {},
-#if defined(DEBUG)
-                     "DEBUG");
-#elif defined(RELEASE)
+#if defined(NDEBUG)
                      "RELEASE");
-#elif defined(PROFILE)
-                     "PROFILE");
-#elif defined(SHIPPING)
-                     "SHIPPING");
 #else
-                     "UNKNOWN");
+                     "DEBUG");
 #endif
 
   _isInitialized = true;

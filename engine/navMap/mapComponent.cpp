@@ -39,7 +39,7 @@
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/console/consoleInterface.h"
 
-// Giving this its own local define, in case we want to control it independently of DEV_CHEATS / SHIPPING, etc.
+// Giving this its own local define, in case we want to control it independently of DEV_CHEATS / NDEBUG, etc.
 #define ENABLE_DRAWING ANKI_DEV_CHEATS
 
 namespace Anki {

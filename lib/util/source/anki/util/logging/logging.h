@@ -296,10 +296,10 @@ PRINT_PERIODIC_CH_HELPER(sChanneledDebugF, num_calls_between_prints, channel, na
 
 
 // Anki assert definition
-#if (!defined(NDEBUG)) && !(defined(UNIT_TEST))
-#define DEBUG_ABORT __builtin_trap()
-#else
+#if defined(NDEBUG) || defined(UNIT_TEST)
 #define DEBUG_ABORT ((void)0)
+#else
+#define DEBUG_ABORT __builtin_trap()
 #endif
 
 #define ASSERT_NAMED(expr, name) do {                       \

@@ -32,18 +32,18 @@
 extern "C" {
 #endif
 
-#ifdef DEBUG
-int DASNetworkingDisabled = 0xffff; // disable it for debug
-static bool sPrintGlobalsAndData = true;
-#else
+#if defined(NDEBUG)
 int DASNetworkingDisabled = 0; // default to networking enabled
 static bool sPrintGlobalsAndData = false;
+#else
+int DASNetworkingDisabled = 0xffff; // disable it for debug
+static bool sPrintGlobalsAndData = true;
 #endif
 
-#if (!defined(NDEBUG)) && !(defined(UNIT_TEST))
-int DAS_AssertionEnabled = 1;
-#else
+#if defined(NDEBUG) || defined(UNIT_TEST)
 int DAS_AssertionEnabled = 0;
+#else
+int DAS_AssertionEnabled = 1;
 #endif
 
 static bool DASNeedsInit = true;

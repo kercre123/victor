@@ -487,16 +487,10 @@ static int GetMainRobotInfo(struct mg_connection *conn, void *cbdata)
   const std::string ip       = osState->GetIPAddress();
 
   const std::string buildConfig =
-#if defined(DEBUG)
-  "DEBUG";
-#elif defined(RELEASE)
+#if defined(NDEBUG)
   "RELEASE";
-#elif defined(PROFILE)
-  "PROFILE";
-#elif defined(SHIPPING)
-  "SHIPPING";
 #else
-  "UNKNOWN";
+  "DEBUG";
 #endif
 
 #ifdef SIMULATOR
@@ -707,6 +701,7 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform, const Json::Val
   rewrite += "/daslog=" + std::string(DASGetLogDir());
 #endif
 
+//https://ankiinc.atlassian.net/browse/VIC-1554
 //  const std::string& passwordFile = platform->pathToResource(Util::Data::Scope::Resources, "webserver/htpasswd");
 
   const char *options[] = {
@@ -718,13 +713,15 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform, const Json::Val
     "4",
     "url_rewrite_patterns",
     rewrite.c_str(),
+//https://ankiinc.atlassian.net/browse/VIC-1554
 //    "put_delete_auth_file",
 //    passwordFile.c_str(),
 //    "authentication_domain",
 //    "anki.com",
     "websocket_timeout_ms",
     "3600000", // 1 hour
-//#if defined(SHIPPING)
+//https://ankiinc.atlassian.net/browse/VIC-1554
+//#if defined(NDEBUG)
 //    "global_auth_file",
 //    passwordFile.c_str(),
 //#endif

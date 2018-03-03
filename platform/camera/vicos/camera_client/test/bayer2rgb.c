@@ -188,7 +188,7 @@ int main(int argc, char* argv[])
       perror("Faild mmaping output");
       return 1;
   }
-#ifdef DEBUG
+#ifndef NDEBUG
   printf("%p -> %p\n", bayer, rgb);
 
   printf("%s: %s(%d) %s(%d) %d %d %d\n", argv[0], infile, in_size, outfile, out_size, out_width, out_height, out_bpp );
@@ -201,7 +201,7 @@ int main(int argc, char* argv[])
 
   bayer_bggr10_downsample((const uint8_t*)bayer, (uint8_t*)rgb_start, in_width, in_height, in_bpp);
 
-#if DEBUG
+#ifndef NDEBUG
 	printf("Last few In: %x %x %x %x\n", 
 			((uint32_t*)bayer)[0],
 			((uint32_t*)bayer)[1],

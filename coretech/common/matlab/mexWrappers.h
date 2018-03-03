@@ -15,10 +15,10 @@
 #include "opencv2/core/core.hpp"
 #endif
 
-#ifndef _NDEBUG
-#define DEBUG_MSG(__verbosity__, ...) if(VERBOSITY >= (__verbosity__)) { mexPrintf(__VA_ARGS__); }
-#else
+#ifdef NDEBUG
 #define DEBUG_MSG(...)
+#else
+#define DEBUG_MSG(__verbosity__, ...) if(VERBOSITY >= (__verbosity__)) { mexPrintf(__VA_ARGS__); }
 #endif
 
 ///////////////////////////////////////////////////////////////////////////
