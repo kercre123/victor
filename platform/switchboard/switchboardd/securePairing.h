@@ -87,7 +87,19 @@ namespace Switchboard {
     SendEncrypted(const T& message);
 
     template<typename T, typename... Args>
-    int SendRtsMessage(Args&&... args);
+    int SendRtsMessage(Args&&... args) {
+      Anki::Victor::ExternalComms::ExternalComms msg = Anki::Victor::ExternalComms::ExternalComms(Anki::Victor::ExternalComms::RtsConnection(T(std::forward<Args>(args)...)));
+      std::vector<uint8_t> messageData(msg.Size());
+      const size_t packedSize = msg.Pack(messageData.data(), msg.Size());
+
+      if(_commsState == CommsState::Clad) {
+        return _stream->SendPlainText(messageData.data(), packedSize);
+      } else if(_commsState == CommsState::SecureClad) {
+        return _stream->SendEncrypted(messageData.data(), packedSize);
+      }
+
+      return -1;
+    }
     
     // Methods
     void Init();
@@ -103,6 +115,8 @@ namespace Switchboard {
     void HandleNonceAck();
     void HandleTimeout();
     void HandleChallengeResponse(uint8_t* bytes, uint32_t length);
+
+    void SubscribeToCladMessages();
     
     void SendHandshake();
     void SendPublicKey();
@@ -115,6 +129,33 @@ namespace Switchboard {
     
     void IncrementAbnormalityCount();
     void IncrementChallengeCount();
+
+    Signal::SmartHandle _rtsConnResponseHandle;
+    void HandleRtsConnResponse(const Victor::ExternalComms::RtsConnection& msg);
+
+    Signal::SmartHandle _rtsChallengeMessageHandle;
+    void HandleRtsChallengeMessage(const Victor::ExternalComms::RtsConnection& msg);
+
+    Signal::SmartHandle _rtsWifiConnectRequestHandle;
+    void HandleRtsWifiConnectRequest(const Victor::ExternalComms::RtsConnection& msg);
+
+    Signal::SmartHandle _rtsWifiIpRequestHandle;
+    void HandleRtsWifiIpRequest(const Victor::ExternalComms::RtsConnection& msg);
+
+    Signal::SmartHandle _rtsRtsStatusRequestHandle;
+    void HandleRtsStatusRequest(const Victor::ExternalComms::RtsConnection& msg);
+
+    Signal::SmartHandle _rtsWifiScanRequestHandle;
+    void HandleRtsWifiScanRequest(const Victor::ExternalComms::RtsConnection& msg);
+
+    Signal::SmartHandle _rtsOtaUpdateRequestHandle;
+    void HandleRtsOtaUpdateRequest(const Victor::ExternalComms::RtsConnection& msg);
+
+    Signal::SmartHandle _rtsCancelPairingHandle;
+    void HandleRtsCancelPairing(const Victor::ExternalComms::RtsConnection& msg);
+
+    Signal::SmartHandle _rtsAckHandle;
+    void HandleRtsAck(const Victor::ExternalComms::RtsConnection& msg);
     
     // Variables
     const uint8_t kMaxMatchAttempts = 5;
@@ -137,6 +178,7 @@ namespace Switchboard {
     
     std::unique_ptr<KeyExchange> _keyExchange;
     std::unique_ptr<TaskExecutor> _taskExecutor;
+    std::unique_ptr<ExternalCommsCladHandler> _cladHandler;
     
     Signal::SmartHandle _onReceivePlainTextHandle;
     Signal::SmartHandle _onReceiveEncryptedHandle;
