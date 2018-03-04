@@ -51,6 +51,12 @@
   [_centralManager stopScan];
 }
 
+- (void)printSuccess:(const char *)txt {
+  NSLog(@"\033[0;32m");
+  NSLog(@"%s", txt);
+  NSLog(@"\033[0m");
+}
+
 // ----------------------------------------------------------------------------------------------------------------
 - (void)peripheral:(CBPeripheral *)peripheral
 didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
@@ -278,7 +284,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
 }
 
 - (void) HandleChallengeSuccessMessage:(const Anki::Victor::ExternalComms::RtsChallengeSuccessMessage&)msg {
-  NSLog(@"### Successfully Created Encrypted Channel ###");
+  [self printSuccess:"### Successfully Created Encrypted Channel ###"];
   Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiScanRequest>(self);
 }
 

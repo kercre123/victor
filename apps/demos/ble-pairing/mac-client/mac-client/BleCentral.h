@@ -67,6 +67,8 @@ enum RtsState {
 - (void) StartScanning;
 - (void) StopScanning;
 
+- (void) printSuccess:(const char*) txt;
+
 @end
 
 class Clad {
