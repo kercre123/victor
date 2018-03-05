@@ -14,8 +14,6 @@
 #include "anki-wifi/wifi.h"
 #include "switchboardd/securePairing.h"
 
-#define USE_CLAD 1
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Constructors
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -40,7 +38,7 @@ _loop(evloop)
               this, std::placeholders::_1, std::placeholders::_2));
   
   _onReceiveEncryptedHandle = _stream->OnReceivedEncryptedEvent().ScopedSubscribe(
-    std::bind(&SecurePairing::HandleEncryptedMessageReceived,
+    std::bind(&SecurePairing::HandleMessageReceived,
               this, std::placeholders::_1, std::placeholders::_2));
   
   _onFailedDecryptionHandle = _stream->OnFailedDecryptionEvent().ScopedSubscribe(
@@ -167,26 +165,43 @@ void Anki::Switchboard::SecurePairing::Reset(bool forced) {
 using namespace Anki::Victor::ExternalComms;
 
 void Anki::Switchboard::SecurePairing::SendHandshake() {
+  if(!AssertState(CommsState::Raw)) {
+    return;
+  }
   // Send versioning handshake
-  SendPlainText(HandshakeMessage(PairingProtocolVersion::CURRENT));
+  // ************************************************************
+  // Handshake Message (first message)
+  // This message is fixed. Cannot change. Ever. 
+  // If you are thinking about changing the code in this message,
+  // DON'T. All Victor's for all time must send this message.
+  // ************************************************************
+  const uint8_t kHandshakeMessageLength = 5;
+  uint8_t handshakeMessage[kHandshakeMessageLength];
+  handshakeMessage[0] = SetupMessage::MSG_HANDSHAKE;
+  *(uint32_t*)(&handshakeMessage[1]) = PairingProtocolVersion::CURRENT;
+
+  _stream->SendPlainText(handshakeMessage, sizeof(handshakeMessage));
 }
 
 void Anki::Switchboard::SecurePairing::SendPublicKey() {
+  if(!AssertState(CommsState::Clad)) {
+    return;
+  }
+
   // Generate public, private key
   uint8_t* publicKey = (uint8_t*)_keyExchange->GenerateKeys();
 
-  #if USE_CLAD
   _commsState = CommsState::Clad;
   std::array<uint8_t, crypto_kx_PUBLICKEYBYTES> publicKeyArray;
   memcpy(std::begin(publicKeyArray), publicKey, crypto_kx_PUBLICKEYBYTES);
   SendRtsMessage<RtsConnRequest>(publicKeyArray);
-  #else  
-  // Send message and update our state
-  SendPlainText(PublicKeyMessage((char*)publicKey));
-  #endif
 }
 
 void Anki::Switchboard::SecurePairing::SendNonce() {
+  if(!AssertState(CommsState::Clad)) {
+    return;
+  }
+
   // Send nonce
   const uint8_t NONCE_BYTES = crypto_aead_xchacha20poly1305_ietf_NPUBBYTES;
   
@@ -197,17 +212,16 @@ void Anki::Switchboard::SecurePairing::SendNonce() {
   // Give our nonce to the network stream
   _stream->SetNonce(nonce);
   
-  #if USE_CLAD
   std::array<uint8_t, crypto_aead_xchacha20poly1305_ietf_NPUBBYTES> nonceArray;
   memcpy(std::begin(nonceArray), nonce, crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
   SendRtsMessage<RtsNonceMessage>(nonceArray);
-  #else
-  // Send nonce (in the clear) to client, update our state
-  SendPlainText(NonceMessage((char*)nonce));
-  #endif
 }
 
 void Anki::Switchboard::SecurePairing::SendChallenge() {
+  if(!AssertState(CommsState::SecureClad)) {
+    return;
+  }
+
   // Tell the stream that we can now send over encrypted channel
   _stream->SetEncryptedChannelEstablished(true);
   // Update state to secureClad
@@ -217,28 +231,26 @@ void Anki::Switchboard::SecurePairing::SendChallenge() {
   // Create random challenge value
   randombytes_buf(&_pingChallenge, sizeof(uint32_t));
   
-  #if USE_CLAD
   SendRtsMessage<RtsChallengeMessage>(_pingChallenge);
-  #else
-  // Send challenge and update state
-  SendEncrypted(ChallengeMessage_crypto(_pingChallenge));
-  #endif
 }
 
 void Anki::Switchboard::SecurePairing::SendChallengeSuccess() {
+  if(!AssertState(CommsState::SecureClad)) {
+    return;
+  }
+
   // Send challenge and update state
-  #if USE_CLAD
   SendRtsMessage<RtsChallengeSuccessMessage>();
-  #else
-  SendEncrypted(ChallengeAcceptedMessage_crypto());
-  #endif
 }
 
 void Anki::Switchboard::SecurePairing::SendWifiScanResult() {
+  if(!AssertState(CommsState::SecureClad)) {
+    return;
+  }
+
   // TODO: will replace with CLAD message format
   std::vector<Anki::WiFiScanResult> wifiResults = Anki::ScanForWiFiAccessPoints();
 
-  #if USE_CLAD
   const uint8_t statusCode = wifiResults.size() > 0? 0 : 1;
 
   std::vector<Anki::Victor::ExternalComms::RtsWifiScanResult> wifiScanResults;
@@ -253,58 +265,20 @@ void Anki::Switchboard::SecurePairing::SendWifiScanResult() {
 
   Log::Write("Sending wifi scan results.");
   SendRtsMessage<RtsWifiScanResponse>(statusCode, wifiScanResults);
-
-  #else
-  size_t msgSize = 3;
-
-  for(int i = 0; i < wifiResults.size(); i++) {
-    msgSize += (3 + wifiResults[i].ssid.length());
-  }
-
-  uint8_t* msgBuffer = (uint8_t*)malloc(msgSize);
-
-  size_t pos = 0;
-  msgBuffer[pos++] = CRYPTO_WIFI_SCAN_RESPONSE;
-  msgBuffer[pos++] = (wifiResults.size() > 0)? 0 : (uint8_t)-1;
-  msgBuffer[pos++] = wifiResults.size();
-
-  for(int i = 0; i < wifiResults.size(); i++) {
-    msgBuffer[pos++] = wifiResults[i].auth;
-    msgBuffer[pos++] = wifiResults[i].signal_level;
-    msgBuffer[pos++] = wifiResults[i].ssid.length();
-
-    memcpy(msgBuffer + pos, wifiResults[i].ssid.c_str(), wifiResults[i].ssid.length());
-
-    pos += wifiResults[i].ssid.length();
-  }
-
-  Log::Write("Sending wifi scan results to client.");
-  int n = _stream->SendEncrypted(msgBuffer, msgSize);
-
-  if(n != 0) {
-    Log::Write("Failed to send wifi networks");
-  }
-
-  free(msgBuffer);
-  #endif
 }
 
 void Anki::Switchboard::SecurePairing::SendWifiConnectResult(bool success) {
+  if(!AssertState(CommsState::SecureClad)) {
+    return;
+  }
+
   // Send challenge and update state
-  #if USE_CLAD
   SendRtsMessage<RtsWifiConnectResponse>((uint8_t)success);
-  #else
-  SendEncrypted(WifiConnectResponseMessage_crypto(success));
-  #endif
 }
 
 void Anki::Switchboard::SecurePairing::SendCancelPairing() {
   // Send challenge and update state
-  #if USE_CLAD
   SendRtsMessage<RtsCancelPairing>();
-  #else
-  SendPlainText(CancelMessage());
-  #endif
   Log::Write("Canceling pairing.");
 }
 
@@ -313,7 +287,7 @@ void Anki::Switchboard::SecurePairing::SendCancelPairing() {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 void Anki::Switchboard::SecurePairing::HandleRtsConnResponse(const Anki::Victor::ExternalComms::RtsConnection& msg) {
-  if(_commsState != CommsState::Clad) {
+  if(!AssertState(CommsState::Clad)) {
     return;
   }
 
@@ -335,7 +309,7 @@ void Anki::Switchboard::SecurePairing::HandleRtsConnResponse(const Anki::Victor:
 }
 
 void Anki::Switchboard::SecurePairing::HandleRtsChallengeMessage(const Victor::ExternalComms::RtsConnection& msg) {
-  if(_commsState != CommsState::SecureClad) {
+  if(!AssertState(CommsState::SecureClad)) {
     return;
   }
 
@@ -355,7 +329,7 @@ void HandleWifiResult(GObject* sourceObject, GAsyncResult* result, gpointer user
 }
 
 void Anki::Switchboard::SecurePairing::HandleRtsWifiConnectRequest(const Victor::ExternalComms::RtsConnection& msg) {
-  if(_commsState != CommsState::SecureClad) {
+  if(!AssertState(CommsState::SecureClad)) {
     return;
   }
 
@@ -379,19 +353,19 @@ void Anki::Switchboard::SecurePairing::HandleRtsWifiConnectRequest(const Victor:
 }
 
 void Anki::Switchboard::SecurePairing::HandleRtsWifiIpRequest(const Victor::ExternalComms::RtsConnection& msg) {
-  if(_commsState != CommsState::SecureClad) {
+  if(!AssertState(CommsState::SecureClad)) {
     return;
   }
 }
 
 void Anki::Switchboard::SecurePairing::HandleRtsStatusRequest(const Victor::ExternalComms::RtsConnection& msg) {
-  if(_commsState != CommsState::SecureClad) {
+  if(!AssertState(CommsState::SecureClad)) {
     return;
   }
 }
 
 void Anki::Switchboard::SecurePairing::HandleRtsWifiScanRequest(const Victor::ExternalComms::RtsConnection& msg) {
-  if(_commsState != CommsState::SecureClad) {
+  if(!AssertState(CommsState::SecureClad)) {
     return;
   }
 
@@ -403,18 +377,19 @@ void Anki::Switchboard::SecurePairing::HandleRtsWifiScanRequest(const Victor::Ex
 }
 
 void Anki::Switchboard::SecurePairing::HandleRtsOtaUpdateRequest(const Victor::ExternalComms::RtsConnection& msg) {
-  if(_commsState != CommsState::SecureClad) {
+  if(!AssertState(CommsState::SecureClad)) {
     return;
   }
+  
+  Log::Write("Todo: Execute Rts Ota Update request.");
 }
 
 void Anki::Switchboard::SecurePairing::HandleRtsCancelPairing(const Victor::ExternalComms::RtsConnection& msg) {
-
+  Log::Write("Stopping pairing due to client request.");
+  StopPairing();
 }
 
 void Anki::Switchboard::SecurePairing::HandleRtsAck(const Victor::ExternalComms::RtsConnection& msg) {
-  Log::Write("Handliing Rts Ack");
-
   Anki::Victor::ExternalComms::RtsAck ack = msg.Get_RtsAck();
   if(_state == PairingState::AwaitingNonceAck && 
     ack.rtsConnectionTag == (uint8_t)Anki::Victor::ExternalComms::RtsConnectionTag::RtsNonceMessage) {
@@ -518,6 +493,10 @@ void Anki::Switchboard::SecurePairing::HandleChallengeResponse(uint8_t* pingChal
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Receive messages method
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 void Anki::Switchboard::SecurePairing::HandleMessageReceived(uint8_t* bytes, uint32_t length) {
   _taskExecutor->WakeSync([this, bytes, length]() {
     Log::Write("Handling plain text message received.");
@@ -525,27 +504,20 @@ void Anki::Switchboard::SecurePairing::HandleMessageReceived(uint8_t* bytes, uin
       Log::Write("Length is less than kMinMessageSize.");
       return;
     }
-    
-    if(_commsState != CommsState::Raw) {
-      Log::Write("CommsState is Clad or SecureClad.");
-      _cladHandler->ReceiveExternalCommsMsg(bytes, length);
-      return;
-    }
 
-    // First byte has message type
-    Anki::Switchboard::SetupMessage messageType = (Anki::Switchboard::SetupMessage)bytes[0];
-    
-    switch(messageType) {
-      case Anki::Switchboard::SetupMessage::MSG_HANDSHAKE: {
-        if(_state == PairingState::Initial ||
-           _state == PairingState::AwaitingHandshake) {
-          
-          HandshakeMessage* handshakeMessage = Message::CastFromBuffer<HandshakeMessage>((char*)bytes);
-          bool handleHandshake = HandleHandshake(handshakeMessage->version);
+    if(_commsState == CommsState::Raw) {
+      if(_state == PairingState::Initial ||
+        _state == PairingState::AwaitingHandshake) {
+        // ************************************************************
+        // Handshake Message (first message)
+        // This message is fixed. Cannot change. Ever.
+        // ************************************************************
+        if((Anki::Switchboard::SetupMessage)bytes[0] == Anki::Switchboard::SetupMessage::MSG_HANDSHAKE) {
+          uint32_t clientVersion = *(uint32_t*)(bytes + 1);
+          bool handleHandshake = HandleHandshake(clientVersion);
           
           if(handleHandshake) {
             SendPublicKey();
-            
             _state = PairingState::AwaitingPublicKey;
           } else {
             // If we can't handle handshake, must cancel
@@ -555,113 +527,17 @@ void Anki::Switchboard::SecurePairing::HandleMessageReceived(uint8_t* bytes, uin
           }
         } else {
           // ignore msg
-          IncrementAbnormalityCount();
-          Log::Write("Received handshake request in wrong state.");
-        }
-        
-        break;
-      }
-      case Anki::Switchboard::SetupMessage::MSG_REQUEST_INITIAL_PAIR: {
-        if(_state == PairingState::AwaitingPublicKey) {
-          PublicKeyMessage* pKeyMsg = Message::CastFromBuffer<PublicKeyMessage>((char*)bytes);
-          
-          HandleInitialPair((uint8_t*)pKeyMsg->publicKey, crypto_kx_PUBLICKEYBYTES);
-          _state = PairingState::AwaitingNonceAck;
-        } else {
-          // ignore msg
-          IncrementAbnormalityCount();
-          Log::Write("Received initial pair request in wrong state.");
-        }
-        break;
-      }
-      case Anki::Switchboard::SetupMessage::MSG_REQUEST_RENEW: {
-        SendNonce();
-        Log::Write("Received renew connection request.");
-        break;
-      }
-      case Anki::Switchboard::SetupMessage::MSG_ACK:
-      {
-        if(bytes[1] == Anki::Switchboard::SetupMessage::MSG_NONCE) {
-          if(_state == PairingState::AwaitingNonceAck) {
-            HandleNonceAck();
-            _state = PairingState::AwaitingChallengeResponse;
-          } else {
-            // ignore msg
-            IncrementAbnormalityCount();
-            
-            std::ostringstream ss;
-            ss << "Received nonce ack in wrong state '" << _state << "'.";
-            Log::Write(ss.str().c_str());
-          }
-        }
-        
-        break;
-      }
-      default:
         IncrementAbnormalityCount();
-        Log::Write("Unknown plain text message type.");
-        break;
-    }
-  });
-}
-
-void Anki::Switchboard::SecurePairing::HandleEncryptedMessageReceived(uint8_t* bytes, uint32_t length) {
-  _taskExecutor->WakeSync([this, bytes, length]() {
-    Log::Write("Handling encrypted message received.");
-    if(length < kMinMessageSize) {
-      return;
-    }
-
-    if(_commsState != CommsState::Raw) {
+        Log::Write("Received raw message that is not handshake.");
+        }
+      } else{
+        // ignore msg
+        IncrementAbnormalityCount();
+        Log::Write("Internal state machine error. Assuming raw message, but state is not initial.");
+      }
+    } else {
+      Log::Write("CommsState is Clad or SecureClad.");
       _cladHandler->ReceiveExternalCommsMsg(bytes, length);
-      return;
-    }
-    
-    // first byte has type
-    Anki::Switchboard::SecureMessage messageType = (Anki::Switchboard::SecureMessage)bytes[0];
-    
-    switch(messageType) {
-      case Anki::Switchboard::SecureMessage::CRYPTO_CHALLENGE_RESPONSE:
-        if(_state == PairingState::AwaitingChallengeResponse) {
-          HandleChallengeResponse(bytes+1, length-1);
-        } else {
-          // ignore msg
-          IncrementAbnormalityCount();
-          Log::Write("Received challenge response in wrong state.");
-        }
-        break;
-      case Anki::Switchboard::SecureMessage::CRYPTO_WIFI_SCAN_REQUEST:
-        if(_state == PairingState::ConfirmedSharedSecret) {
-          SendWifiScanResult();
-        } else {
-          Log::Write("Received wifi scan request in wrong state.");
-        }
-        break;
-      case Anki::Switchboard::SecureMessage::CRYPTO_WIFI_CONNECT_REQUEST:
-        if(_state == PairingState::ConfirmedSharedSecret) {
-          char* ssidPtr = (char*)bytes + 2;
-          std::string ssid(ssidPtr, bytes[1]);
-          std::string pw(ssidPtr + bytes[1] + 1, bytes[2 + bytes[1]]);
-          
-          gpointer userData;
-
-          bool connected = Anki::ConnectWiFiBySsid(ssid, pw, HandleWifiResult, userData);
-          
-          SendWifiConnectResult(connected);
-
-          if(connected) {
-            Log::Write("Connected to wifi.");
-          } else {
-            Log::Write("Could not connect to wifi.");
-          }
-        } else {
-          Log::Write("Received wifi credentials in wrong state.");
-        }
-        break;
-      default:
-        IncrementAbnormalityCount();
-        Log::Write("Unknown encrypted message type.");
-        break;
     }
   });
 }
@@ -693,25 +569,22 @@ void Anki::Switchboard::SecurePairing::IncrementAbnormalityCount() {
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Send messages methods
+// Send messages method
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-template<class T>
-typename std::enable_if<std::is_base_of<Anki::Switchboard::Message, T>::value, int>::type
-Anki::Switchboard::SecurePairing::SendPlainText(const T& message) {
-  uint32_t length;
-  uint8_t* buffer = (uint8_t*)Anki::Switchboard::Message::CastToBuffer<T>((T*)&message, &length);
-  
-  return _stream->SendPlainText(buffer, length);
-}
+template<typename T, typename... Args>
+int Anki::Switchboard::SecurePairing::SendRtsMessage(Args&&... args) {
+  Anki::Victor::ExternalComms::ExternalComms msg = Anki::Victor::ExternalComms::ExternalComms(Anki::Victor::ExternalComms::RtsConnection(T(std::forward<Args>(args)...)));
+  std::vector<uint8_t> messageData(msg.Size());
+  const size_t packedSize = msg.Pack(messageData.data(), msg.Size());
 
-template<class T>
-typename std::enable_if<std::is_base_of<Anki::Switchboard::Message, T>::value, int>::type
-Anki::Switchboard::SecurePairing::SendEncrypted(const T& message) {
-  uint32_t length;
-  uint8_t* buffer = (uint8_t*)Anki::Switchboard::Message::CastToBuffer<T>((T*)&message, &length);
-  
-  return _stream->SendEncrypted(buffer, length);
+  if(_commsState == CommsState::Clad) {
+    return _stream->SendPlainText(messageData.data(), packedSize);
+  } else if(_commsState == CommsState::SecureClad) {
+    return _stream->SendEncrypted(messageData.data(), packedSize);
+  }
+
+  return -1;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
