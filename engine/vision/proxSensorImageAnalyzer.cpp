@@ -76,7 +76,8 @@ Vision::Image ProxSensorImageAnalyzer::ProcessClassifiedImage(const Vision::Imag
 
 Result ProxSensorImageAnalyzer::Update(const Vision::ImageRGB& image, const VisionPoseData& crntPoseData,
                                        const VisionPoseData& prevPoseData,
-                                       DebugImageList <Anki::Vision::ImageRGB>& debugImageRGBs) const
+                                       DebugImageList <Anki::Vision::ImageRGB>& debugImageRGBs,
+                                       std::list<OverheadEdgeFrame>& outEdges) const
 {
 
   if (! crntPoseData.groundPlaneVisible) {
@@ -177,6 +178,9 @@ Result ProxSensorImageAnalyzer::Update(const Vision::ImageRGB& image, const Visi
   // find the leading edges
   OverheadEdgeFrame edgeFrame = extractOverheadEdgeFrame(groundPlaneROI, classifiedMask);
   const OverheadEdgeChainVector& candidateChains = edgeFrame.chains;
+
+  // Actually return the resulting edges in the provided list
+  outEdges.emplace_back(std::move(edgeFrame));
 
   if (DEBUG_VISUALIZATION) {
     debugImageRGBs.emplace_back("ProxSensorOnGroundPlane", imageToDisplay);

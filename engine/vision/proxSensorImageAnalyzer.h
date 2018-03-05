@@ -13,6 +13,7 @@
 #ifndef __Anki_Cozmo_DevProxSensorVisualizer_H__
 #define __Anki_Cozmo_DevProxSensorVisualizer_H__
 
+#include "engine/overheadEdge.h"
 #include "coretech/common/shared/types.h"
 #include "engine/debugImageList.h"
 
@@ -38,7 +39,9 @@ public:
   ~ProxSensorImageAnalyzer();
   Result Update(const Vision::ImageRGB& image, const VisionPoseData& crntPoseData,
                   const VisionPoseData& prevPoseData,
-                  DebugImageList <Anki::Vision::ImageRGB>& debugImageRGBs) const;
+                  DebugImageList <Anki::Vision::ImageRGB>& debugImageRGBs,
+                std::list<OverheadEdgeFrame>& outEdges
+               ) const;
 
 protected:
   std::pair<Anki::Array2d<float>, Anki::Array2d<float>>
