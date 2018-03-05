@@ -75,13 +75,13 @@ void hal_acc_init(void) {
   spi_write8(BGW_SPI3_WDT, 0x01);   // Enter three wire SPI mode
 
   spi_write8(PMU_LOW_POWER, 0x40);  // Low power mode
-  spi_write8(PMU_LPW, 0x80);        // Suspend
+  //spi_write8(PMU_LPW, 0x80);        // Suspend
 
   spi_write8(PMU_LPW, 0x00);        // Normal operating mode
 
   spi_write8(PMU_RANGE, 0x05);      // +4g range
-  spi_write8(PMU_BW, 0x0E);         // 500hz BW
-  spi_write8(FIFO_CONFIG_1, 0x41);  // FIFO mode (XYZ)
+  spi_write8(PMU_BW, 0x0D);         // 250hz BW (1000 samples per second)
+  spi_write8(FIFO_CONFIG_1, 0x40);  // FIFO mode (XYZ)
 
   uint8_t chip_id = spi_read8(BGW_CHIPID);
   if (chip_id != 0xFA)
@@ -98,24 +98,66 @@ void hal_acc_stop(void) {
   GPIO_CLR(ACC_PWR);
 }
 
+#define TAP_DEBOUNCE  90        // 90ms before tap is recognized
+#define TAP_DURATION  10        // 10ms is max length of a tap (anything slower is rejected)
+#define TAP_THRESH    (90*32)   // Equivalent to EP1/2G 10 (since I shift less and use 4G)
+
 void hal_acc_tick(void) {
-  static uint8_t data[19];
-  static int bytes = 1;
+  static TapCommand accel = { COMMAND_ACCEL_DATA };
 
-  static int frames = 0;
-  static int total = 0;
+  int frames = spi_read8(FIFO_STATUS) & 0x7F;
+  while (frames-- > 0) {
+    spi_read(FIFO_DATA, sizeof(accel.axis), (uint8_t*)&accel.axis);
 
-  int count = (spi_read8(FIFO_STATUS) & 0x7F);
-  data[0] = count;
-  while (count-- > 0) {
-    data[bytes++] = spi_read8(FIFO_DATA);
-    if (bytes >= sizeof(data)) bytes = 0;
-    total++;
+    static int16_t last = 0;
+    static uint8_t debounce = 0;
+    static int16_t tapPos;
+    static int16_t tapNeg;
+    static int8_t  tapTime;
+    static bool    posFirst;
+    
+    int16_t current = accel.axis[2];
+    int16_t diff = current - last;
+    last = current;
+
+    if (debounce > 0) { // If debouncing...
+      if (debounce > (TAP_DEBOUNCE-TAP_DURATION) && (diff < (posFirst ? -TAP_THRESH : TAP_DEBOUNCE)))
+      {
+        accel.tap_count++;
+        accel.tap_time = tapTime;
+        accel.tap_pos = tapPos;
+        accel.tap_neg = tapNeg;
+
+        debounce = TAP_DEBOUNCE - TAP_DURATION;
+      }
+      debounce--;
+    } else { // If not debouncing, look for a tap
+      // Look for something big enough to start the debounce
+      if (diff > TAP_THRESH)
+        posFirst = 1;
+      else if (diff < -TAP_THRESH)
+        posFirst = 0;
+      else
+        continue;   // Nothing, just continue looking
+      
+      debounce = TAP_DEBOUNCE;
+      tapPos = tapNeg = 0;      // New potential tap, reset min/max
+    }
+
+    tapTime++;
+
+    // If we get here, we are in a potential tap, track min/max absolute acceleration
+    if (tapNeg < diff)
+      tapNeg = diff;
+    if (tapPos > diff)
+      tapPos = diff;
   }
+
+  // Every 20ms
+  static int count;
   
-  if (++frames == 200) {
-    ble_send(sizeof(total), &total);
-    total = 0;
-    frames = 0;
+  if (count++ >= 4) {
+    ble_send(sizeof(accel), &accel);
+    count = 0;
   }
 }

@@ -32,16 +32,16 @@ void recv(uint8_t length, const void* data) {
   if (length < 2) return ;
 
   // Zero payload
-  Payload payload;
-  memset(&payload, 0, sizeof(Payload));
+  __align(2) BaseCommand payload;
+  memset(&payload, 0, sizeof(payload));
   memcpy(&payload, data, length);
 
   switch (payload.command) {
     case COMMAND_LIGHT_KEYFRAMES:
-      animation_frames(payload.flags, payload.frames);
+      animation_frames((const FrameCommand*) &payload);
       break ;
     case COMMAND_LIGHT_INDEX:
-      animation_index(&payload.framemap);
+      animation_index((const MapCommand*) &payload);
       break ;
   }
 }

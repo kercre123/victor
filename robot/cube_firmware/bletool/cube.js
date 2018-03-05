@@ -45,7 +45,7 @@ class Cube extends EventEmitter {
 	}
 
 	_appRead(data) {
-		console.log('APP DATA:', data);
+		this.emit('data', data);
 	}
 
 	send(packet) {

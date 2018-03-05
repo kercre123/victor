@@ -64,22 +64,24 @@ void animation_init(void) {
   }
 }
 
-void animation_frames(int channel, const KeyFrame* frames) {
-  AnimationFrame* target = &staging[channel * FRAMES_PER_COMMAND];
+void animation_frames(const FrameCommand* frames) {
+  AnimationFrame* target = &staging[frames->flags * FRAMES_PER_COMMAND];
+  const KeyFrame* source = frames->frames;
 
-  for (int i = 0; i < FRAMES_PER_COMMAND; i++, target++, frames++) {
+  
+  for (int i = 0; i < FRAMES_PER_COMMAND; i++, target++, source++) {
     // Animation settings
-    target->decay = frames->decay;
-    target->hold = frames->hold;
+    target->decay = source->decay;
+    target->hold = source->hold;
 
     // Unpack our solid color
-    target->colors[0] = (frames->color & 0xF800) * 0x21 >> 13;
-    target->colors[1] = (frames->color & 0x07E0) * 0x41 >>  9;
-    target->colors[2] = (frames->color & 0x001F) * 0x21 >>  2;
+    target->colors[0] = (source->color & 0xF800) * 0x21 >> 13;
+    target->colors[1] = (source->color & 0x07E0) * 0x41 >>  9;
+    target->colors[2] = (source->color & 0x001F) * 0x21 >>  2;
   }
 }
 
-void animation_index(const FrameMap* map) {
+void animation_index(const MapCommand* map) {
   AnimationFrame* target = animation;
   memcpy(animation, staging, sizeof(animation));
   
