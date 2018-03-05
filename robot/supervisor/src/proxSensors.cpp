@@ -44,7 +44,7 @@ namespace Anki {
         const int _nCliffSensors = HAL::CLIFF_COUNT;
         u16 _cliffVals[_nCliffSensors] = {0};
         
-        // Bits correspond to each of the cliff sensors (4 for V2, 1 otherwise)
+        // Bits correspond to each of the cliff sensors
         uint8_t _cliffDetectedFlags = 0;
         
         bool _enableCliffDetect = true;
@@ -81,6 +81,11 @@ namespace Anki {
         }
       }
 
+      u8 GetCliffDetectedFlags()
+      {
+        return _cliffDetectedFlags;
+      }
+      
       u16 GetCliffValue(u32 ind)
       {
         AnkiConditionalErrorAndReturnValue(ind < HAL::CLIFF_COUNT, 0, "ProxSensors.GetCliffValue.InvalidIndex", "Index %d is not valid", ind);

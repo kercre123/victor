@@ -44,6 +44,7 @@ protected:
   
   virtual void InitBehavior() override;
   virtual void OnBehaviorActivated() override;
+  virtual void BehaviorUpdate() override;
   virtual void OnBehaviorDeactivated() override;
 
 
@@ -60,6 +61,7 @@ private:
     AnimationTrigger getOutTrigger = AnimationTrigger::Count;
     AnimationTrigger emergencyGetOutTrigger = AnimationTrigger::Count;
     IBEIConditionPtr endLoopCondition;
+    bool             checkEndConditionDuringAnim = true;
   };
 
   struct LifetimeParams {

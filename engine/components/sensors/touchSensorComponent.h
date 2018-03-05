@@ -139,6 +139,12 @@ private:
   
   size_t _numConsecCalibReadings;
   
+  // counters to debounce the monotonic increase/decrease
+  // of the detect and undetect thresholds
+  // otherwise noise would constantly be shifting the thresholds
+  int _countAboveDetectLevel;
+  int _countBelowUndetectLevel;
+  
   // time in seconds of the last touch press
   float _touchPressTime;
 };
