@@ -52,6 +52,87 @@ void ClassifyImage(const RawPixelsClassifier& clf, const Anki::Cozmo::IFeaturesE
   // That's all folks!
 }
 
+OverheadEdgeFrame extractOverheadEdgeFrame(const GroundPlaneROI& groundPlaneROI,
+                                           const Vision::Image& classifiedMask)
+{
+  OverheadEdgeFrame edgeFrame;
+  OverheadEdgeChainVector& candidateChains = edgeFrame.chains;
+  OverheadEdgePoint edgePoint;
+  const Vision::Image& overheadMask = groundPlaneROI.GetOverheadMask();
+  for(s32 i=0; i<classifiedMask.GetNumRows(); ++i)
+  {
+    const u8* overheadMask_i   = overheadMask.GetRow(i);
+    const u8* classifiedMask_i = classifiedMask.GetRow(i);
+
+    // Walk along the row and look for the first transition from not
+    const Point2f& overheadOrigin = groundPlaneROI.GetOverheadImageOrigin();
+    for(s32 j=1; j<classifiedMask.GetNumCols(); ++j)
+    {
+      // *Both* pixels must be *in* the overhead mask so we don't get leading edges of the boundary of
+      // the ground plane quad itself!
+      const bool bothInMask = ((overheadMask_i[j-1] > 0) && (overheadMask_i[j] > 0));
+      if(bothInMask)
+      {
+        // To be a leading edge of an obstacle according to the classifier, first pixel should be "on" (drivable) and
+        // second pixel should be "off" (not drivable)
+        const bool isLeadingEdge = ((classifiedMask_i[j-1]>0) && (classifiedMask_i[j]==0));
+        if(isLeadingEdge)
+        {
+          // Note that rows in ground plane image are robot y, and cols are robot x.
+          // Just need to offset them to the right origin.
+          edgePoint.position.x() = static_cast<f32>(j) + overheadOrigin.x();
+          edgePoint.position.y() = static_cast<f32>(i) + overheadOrigin.y();
+          edgePoint.gradient = 0.f; // TODO: Do we need the gradient for anything?
+
+          candidateChains.AddEdgePoint(edgePoint, true);
+
+          // No need to keep looking at this row as soon as a leading edge is found
+          break;
+        }
+      }
+    }
+  }
+
+  // TODO this can be a parameter
+  const u32 kMinChainLength_mm = 5;
+  candidateChains.RemoveChainsShorterThan(kMinChainLength_mm);
+  return edgeFrame;
+}
+
+void displayLeadingEdges(const GroundPlaneROI& groundPlaneROI,
+                         const OverheadEdgeChainVector& candidateChains,
+                         Vision::ImageRGB& leadingEdgeDisp)
+{
+  static const std::__1::vector<ColorRGBA> lineColorList = {
+      NamedColors::RED, NamedColors::GREEN, NamedColors::BLUE,
+      NamedColors::ORANGE, NamedColors::CYAN, NamedColors::YELLOW,
+  };
+  auto color = lineColorList.begin();
+
+  const Point2f& overheadOrigin = groundPlaneROI.GetOverheadImageOrigin();
+
+  for (const auto &chain : candidateChains.GetVector())
+  {
+    // Draw line segments between all pairs of points in this chain
+    Point2f startPoint(chain.points[0].position);
+    startPoint -= overheadOrigin;
+
+    for (s32 i = 1; i < chain.points.size(); ++i) {
+      Point2f endPoint(chain.points[i].position);
+      endPoint -= overheadOrigin;
+
+      leadingEdgeDisp.DrawLine(startPoint, endPoint, *color, 3);
+      std::__1::swap(endPoint, startPoint);
+    }
+
+    // Switch colors for next segment
+    ++color;
+    if (color == lineColorList.end()) {
+      color = lineColorList.begin();
+    }
+  }
+}
+
 /****************************************************************
  *                    Ground Plane Classifier                   *
  ****************************************************************/
@@ -133,47 +214,9 @@ Result GroundPlaneClassifier::Update(const Vision::ImageRGB& image, const Vision
   const Vision::Image classifiedMask = ProcessClassifiedImage(rawClassifiedImage);
 
   // STEP 3: Find leading edge in the classified mask (i.e. closest edge of obstacle to robot)
-  OverheadEdgeFrame edgeFrame;
-  OverheadEdgeChainVector& candidateChains = edgeFrame.chains;
-  OverheadEdgePoint edgePoint;
-  const Vision::Image& overheadMask = groundPlaneROI.GetOverheadMask();
-  for(s32 i=0; i<classifiedMask.GetNumRows(); ++i)
-  {
-    const u8* overheadMask_i   = overheadMask.GetRow(i);
-    const u8* classifiedMask_i = classifiedMask.GetRow(i);
+  OverheadEdgeFrame edgeFrame = extractOverheadEdgeFrame(groundPlaneROI, classifiedMask);
+  const OverheadEdgeChainVector& candidateChains = edgeFrame.chains;
 
-    // Walk along the row and look for the first transition from not
-    const Point2f& overheadOrigin = groundPlaneROI.GetOverheadImageOrigin();
-    for(s32 j=1; j<classifiedMask.GetNumCols(); ++j)
-    {
-      // *Both* pixels must be *in* the overhead mask so we don't get leading edges of the boundary of
-      // the ground plane quad itself!
-      const bool bothInMask = ((overheadMask_i[j-1] > 0) && (overheadMask_i[j] > 0));
-      if(bothInMask)
-      {
-        // To be a leading edge of an obstacle according to the classifier, first pixel should be "on" (drivable) and
-        // second pixel should be "off" (not drivable)
-        const bool isLeadingEdge = ((classifiedMask_i[j-1]>0) && (classifiedMask_i[j]==0));
-        if(isLeadingEdge)
-        {
-          // Note that rows in ground plane image are robot y, and cols are robot x.
-          // Just need to offset them to the right origin.
-          edgePoint.position.x() = static_cast<f32>(j) + overheadOrigin.x();
-          edgePoint.position.y() = static_cast<f32>(i) + overheadOrigin.y();
-          edgePoint.gradient = 0.f; // TODO: Do we need the gradient for anything?
-
-          candidateChains.AddEdgePoint(edgePoint, true);
-
-          // No need to keep looking at this row as soon as a leading edge is found
-          break;
-        }
-      }
-    }
-  }
-
-  // TODO this can be a parameter
-  const u32 kMinChainLength_mm = 5;
-  candidateChains.RemoveChainsShorterThan(kMinChainLength_mm);
   // TODO add other post-processing step (e.g. ray trace from the robot to remove obstacles "behind" others
 
   if(DEBUG_DISPLAY_IMAGES)
@@ -182,34 +225,7 @@ Result GroundPlaneClassifier::Update(const Vision::ImageRGB& image, const Vision
 
     Vision::ImageRGB leadingEdgeDisp(classifiedMask);
 
-    static const std::vector<ColorRGBA> lineColorList = {
-      NamedColors::RED, NamedColors::GREEN, NamedColors::BLUE,
-      NamedColors::ORANGE, NamedColors::CYAN, NamedColors::YELLOW,
-    };
-    auto color = lineColorList.begin();
-
-    const Point2f& overheadOrigin = groundPlaneROI.GetOverheadImageOrigin();
-
-    for (const auto &chain : candidateChains.GetVector())
-    {
-      // Draw line segments between all pairs of points in this chain
-      Anki::Point2f startPoint(chain.points[0].position);
-      startPoint -= overheadOrigin;
-
-      for (s32 i = 1; i < chain.points.size(); ++i) {
-        Anki::Point2f endPoint(chain.points[i].position);
-        endPoint -= overheadOrigin;
-
-        leadingEdgeDisp.DrawLine(startPoint, endPoint, *color, 3);
-        std::swap(endPoint, startPoint);
-      }
-
-      // Switch colors for next segment
-      ++color;
-      if (color == lineColorList.end()) {
-        color = lineColorList.begin();
-      }
-    }
+    displayLeadingEdges(groundPlaneROI, candidateChains, leadingEdgeDisp);
 
     debugImageRGBs.emplace_back("LeadingEdges", std::move(leadingEdgeDisp));
 
@@ -346,13 +362,21 @@ Array2d<RawPixelsClassifier::FeatureType> MeanFeaturesExtractor::Extract(const V
   const cv::Mat& cvImage = image.get_CvMat_();
 
   // Calculate mean over all image
-  cv::Mat meanImage;
+  cv::Mat unmaskedMeanImage;
   const uint kernelSize = 2*_padding + 1;
   // NOTE: not using optimized Image::BoxFilter because we use float data here, not uint8
   // TODO use NEON optimized boxFilter when available for float data
-  cv::boxFilter(cvImage, meanImage, CV_32F, cv::Size(kernelSize, kernelSize),
+  cv::boxFilter(cvImage, unmaskedMeanImage, CV_32F, cv::Size(kernelSize, kernelSize),
                 cv::Point(-1, -1), true,
                 cv::BORDER_REPLICATE);
+
+  // TODO this might be too many copies
+  cv::Mat meanImage(unmaskedMeanImage.rows, unmaskedMeanImage.cols, CV_32FC3, cv::Scalar(0.0));
+  // black pixels in the original image are zeroed out
+  const Vision::Image greyImage = image.ToGray();
+  const cv::Mat& greyMat = greyImage.get_CvMat_();
+  DEV_ASSERT(greyMat.type() == CV_8U, "MeanFeaturesExtractor.Extract.WrongGreyType");
+  unmaskedMeanImage.copyTo(meanImage, greyMat);
 
   DEV_ASSERT(meanImage.type() == CV_32FC3, "MeanFeaturesExtractor.Extract.WrongOutputType");
 

@@ -14,6 +14,7 @@
 #ifndef __Anki_Cozmo_Basestation_GroundplaneClassifier_H__
 #define __Anki_Cozmo_Basestation_GroundplaneClassifier_H__
 
+#include <overheadEdge.h>
 #include "coretech/common/engine/math/polygon.h"
 #include "coretech/common/shared/types.h"
 #include "coretech/vision/engine/image.h"
@@ -140,6 +141,12 @@ void CVMatToVector(const cv::Mat& mat, std::vector<T2>& vec)
   }
 
 }
+
+OverheadEdgeFrame extractOverheadEdgeFrame(const GroundPlaneROI& groundPlaneROI, const Vision::Image& classifiedMask);
+
+void
+displayLeadingEdges(const GroundPlaneROI& groundPlaneROI, const Anki::Cozmo::OverheadEdgeChainVector& candidateChains,
+                    Vision::ImageRGB& leadingEdgeDisp);
 
 /****************************************************************
  *                    Ground Plane Classifier                   *
