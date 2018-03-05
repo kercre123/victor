@@ -103,7 +103,7 @@ void displayLeadingEdges(const GroundPlaneROI& groundPlaneROI,
                          const OverheadEdgeChainVector& candidateChains,
                          Vision::ImageRGB& leadingEdgeDisp)
 {
-  static const std::__1::vector<ColorRGBA> lineColorList = {
+  static const std::vector<ColorRGBA> lineColorList = {
       NamedColors::RED, NamedColors::GREEN, NamedColors::BLUE,
       NamedColors::ORANGE, NamedColors::CYAN, NamedColors::YELLOW,
   };
@@ -122,7 +122,7 @@ void displayLeadingEdges(const GroundPlaneROI& groundPlaneROI,
       endPoint -= overheadOrigin;
 
       leadingEdgeDisp.DrawLine(startPoint, endPoint, *color, 3);
-      std::__1::swap(endPoint, startPoint);
+      std::swap(endPoint, startPoint);
     }
 
     // Switch colors for next segment
